@@ -296,6 +296,16 @@ bool Group::AddMember(const uint64 &guid, const char* name)
                 player->SetDifficulty(m_difficulty);
                 player->SendDungeonDifficulty(true);
             }
+			// Group Interfactions interactions (test)
+			if(sWorld.getConfig(CONFIG_ALLOW_TWO_SIDE_INTERACTION_GROUP))
+			{
+				Group *group = player->GetGroup();
+				if(Player *leader = objmgr.GetPlayer(group->GetLeaderGUID()))
+				{
+					player->setFactionForRace(leader->getRace());
+					sLog.outDebug( "WORLD: Group Interfaction Interactions - Faction changed (AddMember)" );
+				}
+			}			
         }
         player->SetGroupUpdateFlag(GROUP_UPDATE_FULL);
         UpdatePlayerOutOfRange(player);
@@ -340,7 +350,12 @@ uint32 Group::RemoveMember(const uint64 &guid, const uint8 &method)
                 data << uint64(0) << uint64(0) << uint64(0);
                 player->GetSession()->SendPacket(&data);
             }
-
+			// Restore original faction if needed
+			if(sWorld.getConfig(CONFIG_ALLOW_TWO_SIDE_INTERACTION_GROUP))
+			{
+				player->setFactionForRace(player->getRace());
+				sLog.outDebug( "WORLD: Group Interfaction Interactions - Restore original faction (RemoveMember)" );
+			}
             _homebindIfInstance(player);
         }
 
@@ -438,6 +453,13 @@ void Group::Disband(bool hideDestroy)
         CharacterDatabase.PExecute("DELETE FROM group_member WHERE leaderGuid='%u'", GUID_LOPART(m_leaderGuid));
         CharacterDatabase.CommitTransaction();
         ResetInstances(INSTANCE_RESET_GROUP_DISBAND, NULL);
+
+		// Restore original faction if needed
+		if(sWorld.getConfig(CONFIG_ALLOW_TWO_SIDE_INTERACTION_GROUP))
+		{
+			player->setFactionForRace(player->getRace());
+			sLog.outDebug( "WORLD: Group Interfaction Interactions - Restore original faction (Disband)" );
+		}
     }
 
     m_leaderGuid = 0;
