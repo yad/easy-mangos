@@ -9311,7 +9311,6 @@ uint8 Player::CanStoreItems( Item **pItems,int count) const
 
             if (b_found) continue;
 
-            /* until proper implementation
             if(pProto->BagFamily & BAG_FAMILY_MASK_CURRENCY_TOKENS)
             {
                 for(uint32 t = CURRENCYTOKEN_SLOT_START; t < CURRENCYTOKEN_SLOT_END; ++t)
@@ -9326,7 +9325,6 @@ uint8 Player::CanStoreItems( Item **pItems,int count) const
             }
 
             if (b_found) continue;
-            */
 
             for(int t = INVENTORY_SLOT_BAG_START; !b_found && t < INVENTORY_SLOT_BAG_END; t++)
             {
@@ -16260,28 +16258,22 @@ void Player::PetSpellInitialize()
 
     for(CreatureSpellCooldowns::const_iterator itr = pet->m_CreatureSpellCooldowns.begin(); itr != pet->m_CreatureSpellCooldowns.end(); ++itr)
     {
-        time_t cooldown = 0;
-
-        if(itr->second > curTime)
-            cooldown = (itr->second - curTime) * IN_MILISECONDS;
+        time_t cooldown = (itr->second > curTime) ? (itr->second - curTime) * IN_MILISECONDS : 0;
 
         data << uint16(itr->first);                         // spellid
         data << uint16(0);                                  // spell category?
-        data << uint32(itr->second);                        // cooldown
+        data << uint32(cooldown);                           // cooldown
         data << uint32(0);                                  // category cooldown
     }
 
     for(CreatureSpellCooldowns::const_iterator itr = pet->m_CreatureCategoryCooldowns.begin(); itr != pet->m_CreatureCategoryCooldowns.end(); ++itr)
     {
-        time_t cooldown = 0;
-
-        if(itr->second > curTime)
-            cooldown = (itr->second - curTime) * IN_MILISECONDS;
+        time_t cooldown = (itr->second > curTime) ? (itr->second - curTime) * IN_MILISECONDS : 0;
 
         data << uint16(itr->first);                         // spellid
         data << uint16(0);                                  // spell category?
         data << uint32(0);                                  // cooldown
-        data << uint32(itr->second);                        // category cooldown
+        data << uint32(cooldown);                           // category cooldown
     }
 
     GetSession()->SendPacket(&data);
