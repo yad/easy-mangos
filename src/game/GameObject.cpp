@@ -97,7 +97,7 @@ bool GameObject::Create(uint32 guidlow, uint32 name_id, Map *map, uint32 phaseMa
 
     if(!IsPositionValid())
     {
-        sLog.outError("ERROR: Gameobject (GUID: %u Entry: %u ) not created. Suggested coordinates isn't valid (X: %f Y: %f)",guidlow,name_id,x,y);
+        sLog.outError("Gameobject (GUID: %u Entry: %u ) not created. Suggested coordinates isn't valid (X: %f Y: %f)",guidlow,name_id,x,y);
         return false;
     }
 
@@ -121,28 +121,11 @@ bool GameObject::Create(uint32 guidlow, uint32 name_id, Map *map, uint32 phaseMa
     SetFloatValue(GAMEOBJECT_POS_X, x);
     SetFloatValue(GAMEOBJECT_POS_Y, y);
     SetFloatValue(GAMEOBJECT_POS_Z, z);
-    SetFloatValue(GAMEOBJECT_FACING, ang);                  //this is not facing angle
-
-    int64 rotation = 0;
-
-    double f_rot1 = sin(ang / 2.0f);
-    int64 i_rot1 = int64(f_rot1 / atan(pow(2.0f, -20.0f)));
-    rotation |= (i_rot1 << 43 >> 43) & 0x00000000001FFFFF;
-
-    //float f_rot2 = sin(0.0f / 2.0f);
-    //int64 i_rot2 = f_rot2 / atan(pow(2.0f, -20.0f));
-    //rotation |= (((i_rot2 << 22) >> 32) >> 11) & 0x000003FFFFE00000;
-
-    //float f_rot3 = sin(0.0f / 2.0f);
-    //int64 i_rot3 = f_rot3 / atan(pow(2.0f, -21.0f));
-    //rotation |= (i_rot3 >> 42) & 0x7FFFFC0000000000;
-
-    SetUInt64Value(GAMEOBJECT_ROTATION, rotation);
 
     SetFloatValue(GAMEOBJECT_PARENTROTATION+0, rotation0);
     SetFloatValue(GAMEOBJECT_PARENTROTATION+1, rotation1);
-    SetFloatValue(GAMEOBJECT_PARENTROTATION+2, rotation2);
-    SetFloatValue(GAMEOBJECT_PARENTROTATION+3, rotation3);
+
+    UpdateRotationFields(rotation2,rotation3);              // GAMEOBJECT_FACING, GAMEOBJECT_ROTATION, GAMEOBJECT_PARENTROTATION+2/3
 
     SetFloatValue(OBJECT_FIELD_SCALE_X, goinfo->size);
 
@@ -577,7 +560,7 @@ bool GameObject::LoadFromDB(uint32 guid, Map *map)
 
     if( !data )
     {
-        sLog.outErrorDb("ERROR: Gameobject (GUID: %u) not found in table `gameobject`, can't load. ",guid);
+        sLog.outErrorDb("Gameobject (GUID: %u) not found in table `gameobject`, can't load. ",guid);
         return false;
     }
 
@@ -603,37 +586,34 @@ bool GameObject::LoadFromDB(uint32 guid, Map *map)
     if (!Create(guid,entry, map, phaseMask, x, y, z, ang, rotation0, rotation1, rotation2, rotation3, animprogress, go_state) )
         return false;
 
-    switch(GetGOInfo()->type)
+    if(!GetDespawnPossibility())
     {
-        case GAMEOBJECT_TYPE_DOOR:
-        case GAMEOBJECT_TYPE_BUTTON:
-            /* this code (in comment) isn't correct because in battlegrounds we need despawnable doors and buttons, pls remove
-            SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_NODESPAWN);
+        SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_NODESPAWN);
+        m_spawnedByDefault = true;
+        m_respawnDelayTime = 0;
+        m_respawnTime = 0;
+    }
+    else
+    {
+        if(data->spawntimesecs >= 0)
+        {
             m_spawnedByDefault = true;
-            m_respawnDelayTime = 0;
-            m_respawnTime = 0;
-            break;*/
-        default:
-            if(data->spawntimesecs >= 0)
-            {
-                m_spawnedByDefault = true;
-                m_respawnDelayTime = data->spawntimesecs;
-                m_respawnTime = objmgr.GetGORespawnTime(m_DBTableGuid, map->GetInstanceId());
+            m_respawnDelayTime = data->spawntimesecs;
+            m_respawnTime = objmgr.GetGORespawnTime(m_DBTableGuid, map->GetInstanceId());
 
-                                                            // ready to respawn
-                if(m_respawnTime && m_respawnTime <= time(NULL))
-                {
-                    m_respawnTime = 0;
-                    objmgr.SaveGORespawnTime(m_DBTableGuid,GetInstanceId(),0);
-                }
-            }
-            else
+            // ready to respawn
+            if(m_respawnTime && m_respawnTime <= time(NULL))
             {
-                m_spawnedByDefault = false;
-                m_respawnDelayTime = -data->spawntimesecs;
                 m_respawnTime = 0;
+                objmgr.SaveGORespawnTime(m_DBTableGuid,GetInstanceId(),0);
             }
-            break;
+        }
+        else
+        {
+            m_spawnedByDefault = false;
+            m_respawnDelayTime = -data->spawntimesecs;
+            m_respawnTime = 0;
+        }
     }
 
     return true;
@@ -645,11 +625,6 @@ void GameObject::DeleteFromDB()
     objmgr.DeleteGOData(m_DBTableGuid);
     WorldDatabase.PExecuteLog("DELETE FROM gameobject WHERE guid = '%u'", m_DBTableGuid);
     WorldDatabase.PExecuteLog("DELETE FROM game_event_gameobject WHERE guid = '%u'", m_DBTableGuid);
-}
-
-GameObject* GameObject::GetGameObject(WorldObject& object, uint64 guid)
-{
-    return ObjectAccessor::GetGameObject(object,guid);
 }
 
 GameObjectInfo const *GameObject::GetGOInfo() const
@@ -993,12 +968,9 @@ void GameObject::Use(Unit* user)
 
             Player* player = (Player*)user;
 
-            if(info->camera.cinematicId)
-            {
-                WorldPacket data(SMSG_TRIGGER_CINEMATIC, 4);
-                data << info->camera.cinematicId;
-                player->GetSession()->SendPacket(&data);
-            }
+            if (info->camera.cinematicId)
+                player->SendCinematicStart(info->camera.cinematicId);
+
             return;
         }
         //fishing bobber
@@ -1050,6 +1022,7 @@ void GameObject::Use(Unit* user)
                         if (ok)
                         {
                             player->SendLoot(ok->GetGUID(),LOOT_FISHINGHOLE);
+                            player->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_FISH_IN_GAMEOBJECT, ok->GetGOInfo()->id);
                             SetLootState(GO_JUST_DEACTIVATED);
                         }
                         else
@@ -1316,4 +1289,27 @@ const char* GameObject::GetNameForLocaleIdx(int32 loc_idx) const
     }
 
     return GetName();
+}
+
+void GameObject::UpdateRotationFields(float rotation2 /*=0.0f*/, float rotation3 /*=0.0f*/)
+{
+    static double const atan_pow = atan(pow(2.0f, -20.0f));
+
+    SetFloatValue(GAMEOBJECT_FACING, GetOrientation());
+
+    double f_rot1 = sin(GetOrientation() / 2.0f);
+    double f_rot2 = cos(GetOrientation() / 2.0f);
+
+    int64 i_rot1 = int64(f_rot1 / atan_pow *(f_rot2 >= 0 ? 1.0f : -1.0f));
+    int64 rotation = (i_rot1 << 43 >> 43) & 0x00000000001FFFFF;
+    SetUInt64Value(GAMEOBJECT_ROTATION, rotation);
+
+    if(rotation2==0.0f && rotation3==0.0f)
+    {
+        rotation2 = f_rot1;
+        rotation3 = f_rot2;
+    }
+
+    SetFloatValue(GAMEOBJECT_PARENTROTATION+2, rotation2);
+    SetFloatValue(GAMEOBJECT_PARENTROTATION+3, rotation3);
 }

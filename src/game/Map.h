@@ -24,7 +24,7 @@
 #include "zthread/Lockable.h"
 #include "zthread/Mutex.h"
 #include "zthread/FairReadWriteLock.h"
-#include "Database/DBCStructure.h"
+#include "DBCStructure.h"
 #include "GridDefines.h"
 #include "Cell.h"
 #include "Object.h"
@@ -178,7 +178,7 @@ class GridMap
     bool  loadLiquidData(FILE *in, uint32 offset, uint32 size);
 
     // Get height functions and pointers
-    typedef float (GridMap::*pGetHeightPtr) (float x, float y) const; 
+    typedef float (GridMap::*pGetHeightPtr) (float x, float y) const;
     pGetHeightPtr m_gridGetHeight;
     float  getHeightFromFloat(float x, float y) const;
     float  getHeightFromUint16(float x, float y) const;
@@ -299,9 +299,8 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
         time_t GetGridExpiry(void) const { return i_gridExpiry; }
         uint32 GetId(void) const { return i_id; }
 
-        static bool ExistMap(uint32 mapid, int x, int y);
-        static bool ExistVMap(uint32 mapid, int x, int y);
-        void LoadMapAndVMap(uint32 mapid, uint32 instanceid, int x, int y);
+        static bool ExistMap(uint32 mapid, int gx, int gy);
+        static bool ExistVMap(uint32 mapid, int gx, int gy);
 
         static void InitStateMachine();
         static void DeleteStateMachine();
@@ -403,9 +402,14 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
         void RemoveFromActive(T* obj) { RemoveFromActiveHelper(obj); }
 
         void RemoveFromActive(Creature* obj);
+
+        Creature* GetCreature(uint64 guid);
+        GameObject* GetGameObject(uint64 guid);
+        DynamicObject* GetDynamicObject(uint64 guid);
     private:
-        void LoadVMap(int pX, int pY);
-        void LoadMap(uint32 mapid, uint32 instanceid, int x,int y);
+        void LoadMapAndVMap(int gx, int gy);
+        void LoadVMap(int gx, int gy);
+        void LoadMap(int gx,int gy);
         GridMap *GetGrid(float x, float y);
 
         void SetTimer(uint32 t) { i_gridExpiry = t < MIN_GRID_DELAY ? MIN_GRID_DELAY : t; }
@@ -425,8 +429,9 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
         CreatureMoveList i_creaturesToMove;
 
         bool loaded(const GridPair &) const;
-        void EnsureGridLoaded(const Cell&, Player* player = NULL);
-        void  EnsureGridCreated(const GridPair &);
+        void EnsureGridCreated(const GridPair &);
+        bool EnsureGridLoaded(Cell const&);
+        void EnsureGridLoadedAtEnter(Cell const&, Player* player = NULL);
 
         void buildNGridLinkage(NGridType* pNGridType) { pNGridType->link(this); }
 
@@ -530,7 +535,6 @@ class MANGOS_DLL_SPEC InstanceMap : public Map
         uint32 GetScriptId() { return i_script_id; }
         InstanceData* GetInstanceData() { return i_data; }
         void PermBindAllPlayers(Player *player);
-        time_t GetResetTime();
         void UnloadAll(bool pForce);
         bool CanEnter(Player* player);
         void SendResetWarnings(uint32 timeLeft) const;

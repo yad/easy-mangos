@@ -16,12 +16,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef DBCSTORES_H
-#define DBCSTORES_H
+#ifndef MANGOS_DBCSTORES_H
+#define MANGOS_DBCSTORES_H
 
 #include "Common.h"
-//#include "DataStore.h"
-#include "dbcfile.h"
+#include "Database/DBCStore.h"
 #include "DBCStructure.h"
 
 #include <list>
@@ -59,77 +58,6 @@ uint32 GetTalentInspectBitPosInTab(uint32 talentId);
 uint32 GetTalentTabInspectBitSize(uint32 talentTabId);
 uint32 const* /*[3]*/ GetTalentTabPages(uint32 cls);
 
-template<class T>
-class DBCStorage
-{
-    typedef std::list<char*> StringPoolList;
-    public:
-        explicit DBCStorage(const char *f) : nCount(0), fieldCount(0), fmt(f), indexTable(NULL), m_dataTable(NULL) { }
-        ~DBCStorage() { Clear(); }
-
-        T const* LookupEntry(uint32 id) const { return (id>=nCount)?NULL:indexTable[id]; }
-        uint32  GetNumRows() const { return nCount; }
-        char const* GetFormat() const { return fmt; }
-        uint32 GetFieldCount() const { return fieldCount; }
-
-        bool Load(char const* fn)
-        {
-            DBCFile dbc;
-            // Check if load was sucessful, only then continue
-            if(!dbc.Load(fn, fmt))
-                return false;
-
-            fieldCount = dbc.GetCols();
-            m_dataTable = (T*)dbc.AutoProduceData(fmt,nCount,(char**&)indexTable);
-            m_stringPoolList.push_back(dbc.AutoProduceStrings(fmt,(char*)m_dataTable));
-
-            // error in dbc file at loading if NULL
-            return indexTable!=NULL;
-        }
-
-        bool LoadStringsFrom(char const* fn)
-        {
-            // DBC must be already loaded using Load
-            if(!indexTable)
-                return false;
-
-            DBCFile dbc;
-            // Check if load was successful, only then continue
-            if(!dbc.Load(fn, fmt))
-                return false;
-
-            m_stringPoolList.push_back(dbc.AutoProduceStrings(fmt,(char*)m_dataTable));
-
-            return true;
-        }
-
-        void Clear()
-        {
-            if (!indexTable)
-                return;
-
-            delete[] ((char*)indexTable);
-            indexTable = NULL;
-            delete[] ((char*)m_dataTable);
-            m_dataTable = NULL;
-
-            while(!m_stringPoolList.empty())
-            {
-                delete[] m_stringPoolList.front();
-                m_stringPoolList.pop_front();
-            }
-            nCount = 0;
-        }
-
-    private:
-        uint32 nCount;
-        uint32 fieldCount;
-        char const* fmt;
-        T** indexTable;
-        T* m_dataTable;
-        StringPoolList m_stringPoolList;
-};
-
 extern DBCStorage <AchievementEntry>             sAchievementStore;
 extern DBCStorage <AchievementCriteriaEntry>     sAchievementCriteriaStore;
 extern DBCStorage <AreaTableEntry>               sAreaStore;// recommend access using functions
@@ -144,12 +72,15 @@ extern DBCStorage <CharStartOutfitEntry>         sCharStartOutfitStore;
 extern DBCStorage <CharTitlesEntry>              sCharTitlesStore;
 extern DBCStorage <ChrClassesEntry>              sChrClassesStore;
 extern DBCStorage <ChrRacesEntry>                sChrRacesStore;
+extern DBCStorage <CinematicSequencesEntry>      sCinematicSequencesStore;
 extern DBCStorage <CreatureDisplayInfoEntry>     sCreatureDisplayInfoStore;
 extern DBCStorage <CreatureFamilyEntry>          sCreatureFamilyStore;
 extern DBCStorage <CreatureSpellDataEntry>       sCreatureSpellDataStore;
 extern DBCStorage <CreatureTypeEntry>            sCreatureTypeStore;
+extern DBCStorage <CurrencyTypesEntry>           sCurrencyTypesStore;
 extern DBCStorage <DurabilityCostsEntry>         sDurabilityCostsStore;
 extern DBCStorage <DurabilityQualityEntry>       sDurabilityQualityStore;
+extern DBCStorage <EmotesEntry>                  sEmotesStore;
 extern DBCStorage <EmotesTextEntry>              sEmotesTextStore;
 extern DBCStorage <FactionEntry>                 sFactionStore;
 extern DBCStorage <FactionTemplateEntry>         sFactionTemplateStore;
@@ -169,6 +100,7 @@ extern DBCStorage <GtRegenHPPerSptEntry>         sGtRegenHPPerSptStore;
 extern DBCStorage <GtRegenMPPerSptEntry>         sGtRegenMPPerSptStore;
 extern DBCStorage <HolidaysEntry>                sHolidaysStore;
 extern DBCStorage <ItemEntry>                    sItemStore;
+extern DBCStorage <ItemBagFamilyEntry>           sItemBagFamilyStore;
 //extern DBCStorage <ItemDisplayInfoEntry>      sItemDisplayInfoStore; -- not used currently
 extern DBCStorage <ItemExtendedCostEntry>        sItemExtendedCostStore;
 extern DBCStorage <ItemLimitCategoryEntry>       sItemLimitCategoryStore;
@@ -178,6 +110,7 @@ extern DBCStorage <ItemSetEntry>                 sItemSetStore;
 extern DBCStorage <LockEntry>                    sLockStore;
 extern DBCStorage <MailTemplateEntry>            sMailTemplateStore;
 extern DBCStorage <MapEntry>                     sMapStore;
+extern DBCStorage <MovieEntry>                   sMovieStore;
 extern DBCStorage <QuestSortEntry>               sQuestSortStore;
 extern DBCStorage <RandomPropertiesPointsEntry>  sRandomPropertiesPointsStore;
 extern DBCStorage <ScalingStatDistributionEntry> sScalingStatDistributionStore;
@@ -204,6 +137,7 @@ extern DBCStorage <TalentTabEntry>               sTalentTabStore;
 extern DBCStorage <TaxiNodesEntry>               sTaxiNodesStore;
 extern DBCStorage <TaxiPathEntry>                sTaxiPathStore;
 extern TaxiMask                                  sTaxiNodesMask;
+extern TaxiMask                                  sOldContinentsNodesMask;
 extern TaxiPathSetBySource                       sTaxiPathSetBySource;
 extern TaxiPathNodesByPath                       sTaxiPathNodesByPath;
 extern DBCStorage <TotemCategoryEntry>           sTotemCategoryStore;
@@ -222,4 +156,6 @@ MANGOS_DLL_SPEC DBCStorage <SpellRangeEntry>            const* GetSpellRangeStor
 MANGOS_DLL_SPEC DBCStorage <FactionEntry>               const* GetFactionStore();
 MANGOS_DLL_SPEC DBCStorage <ItemEntry>                  const* GetItemDisplayStore();
 MANGOS_DLL_SPEC DBCStorage <CreatureDisplayInfoEntry>   const* GetCreatureDisplayStore();
+MANGOS_DLL_SPEC DBCStorage <EmotesEntry>                const* GetEmotesStore();
+MANGOS_DLL_SPEC DBCStorage <EmotesTextEntry>            const* GetEmotesTextStore();
 #endif

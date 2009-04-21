@@ -34,6 +34,7 @@
 #include "MapReference.h"
 #include "Util.h"                                           // for Tokens typedef
 #include "AchievementMgr.h"
+#include "ReputationMgr.h"
 #include "BattleGround.h"
 
 #include<string>
@@ -49,7 +50,6 @@ class Transport;
 class UpdateMask;
 class SpellCastTargets;
 class PlayerSocial;
-class AchievementMgr;
 class Vehicle;
 
 typedef std::deque<Mail*> PlayerMails;
@@ -270,31 +270,6 @@ struct Runes
             runeState &= ~(1 << index);                     // on cooldown
     }
 };
-
-enum FactionFlags
-{
-    FACTION_FLAG_VISIBLE            = 0x01,                 // makes visible in client (set or can be set at interaction with target of this faction)
-    FACTION_FLAG_AT_WAR             = 0x02,                 // enable AtWar-button in client. player controlled (except opposition team always war state), Flag only set on initial creation
-    FACTION_FLAG_HIDDEN             = 0x04,                 // hidden faction from reputation pane in client (player can gain reputation, but this update not sent to client)
-    FACTION_FLAG_INVISIBLE_FORCED   = 0x08,                 // always overwrite FACTION_FLAG_VISIBLE and hide faction in rep.list, used for hide opposite team factions
-    FACTION_FLAG_PEACE_FORCED       = 0x10,                 // always overwrite FACTION_FLAG_AT_WAR, used for prevent war with own team factions
-    FACTION_FLAG_INACTIVE           = 0x20,                 // player controlled, state stored in characters.data ( CMSG_SET_FACTION_INACTIVE )
-    FACTION_FLAG_RIVAL              = 0x40                  // flag for the two competing outland factions
-};
-
-typedef uint32 RepListID;
-struct FactionState
-{
-    uint32 ID;
-    RepListID ReputationListID;
-    uint32 Flags;
-    int32  Standing;
-    bool Changed;
-};
-
-typedef std::map<RepListID,FactionState> FactionStateList;
-
-typedef std::map<uint32,ReputationRank> ForcedReactions;
 
 typedef std::set<uint64> GuardianPetList;
 
@@ -562,7 +537,9 @@ enum PlayerSlots
     PLAYER_SLOTS_COUNT          = (PLAYER_SLOT_END - PLAYER_SLOT_START)
 };
 
-enum EquipmentSlots
+#define INVENTORY_SLOT_BAG_0    255
+
+enum EquipmentSlots                                         // 19 slots
 {
     EQUIPMENT_SLOT_START        = 0,
     EQUIPMENT_SLOT_HEAD         = 0,
@@ -587,121 +564,59 @@ enum EquipmentSlots
     EQUIPMENT_SLOT_END          = 19
 };
 
-enum InventorySlots
+enum InventorySlots                                         // 4 slots
 {
-    INVENTORY_SLOT_BAG_0        = 255,
     INVENTORY_SLOT_BAG_START    = 19,
-    INVENTORY_SLOT_BAG_1        = 19,
-    INVENTORY_SLOT_BAG_2        = 20,
-    INVENTORY_SLOT_BAG_3        = 21,
-    INVENTORY_SLOT_BAG_4        = 22,
-    INVENTORY_SLOT_BAG_END      = 23,
+    INVENTORY_SLOT_BAG_END      = 23
+};
 
+enum InventoryPackSlots                                     // 16 slots
+{
     INVENTORY_SLOT_ITEM_START   = 23,
-    INVENTORY_SLOT_ITEM_1       = 23,
-    INVENTORY_SLOT_ITEM_2       = 24,
-    INVENTORY_SLOT_ITEM_3       = 25,
-    INVENTORY_SLOT_ITEM_4       = 26,
-    INVENTORY_SLOT_ITEM_5       = 27,
-    INVENTORY_SLOT_ITEM_6       = 28,
-    INVENTORY_SLOT_ITEM_7       = 29,
-    INVENTORY_SLOT_ITEM_8       = 30,
-    INVENTORY_SLOT_ITEM_9       = 31,
-    INVENTORY_SLOT_ITEM_10      = 32,
-    INVENTORY_SLOT_ITEM_11      = 33,
-    INVENTORY_SLOT_ITEM_12      = 34,
-    INVENTORY_SLOT_ITEM_13      = 35,
-    INVENTORY_SLOT_ITEM_14      = 36,
-    INVENTORY_SLOT_ITEM_15      = 37,
-    INVENTORY_SLOT_ITEM_16      = 38,
     INVENTORY_SLOT_ITEM_END     = 39
 };
 
-enum BankSlots
+enum BankItemSlots                                          // 28 slots
 {
     BANK_SLOT_ITEM_START        = 39,
-    BANK_SLOT_ITEM_1            = 39,
-    BANK_SLOT_ITEM_2            = 40,
-    BANK_SLOT_ITEM_3            = 41,
-    BANK_SLOT_ITEM_4            = 42,
-    BANK_SLOT_ITEM_5            = 43,
-    BANK_SLOT_ITEM_6            = 44,
-    BANK_SLOT_ITEM_7            = 45,
-    BANK_SLOT_ITEM_8            = 46,
-    BANK_SLOT_ITEM_9            = 47,
-    BANK_SLOT_ITEM_10           = 48,
-    BANK_SLOT_ITEM_11           = 49,
-    BANK_SLOT_ITEM_12           = 50,
-    BANK_SLOT_ITEM_13           = 51,
-    BANK_SLOT_ITEM_14           = 52,
-    BANK_SLOT_ITEM_15           = 53,
-    BANK_SLOT_ITEM_16           = 54,
-    BANK_SLOT_ITEM_17           = 55,
-    BANK_SLOT_ITEM_18           = 56,
-    BANK_SLOT_ITEM_19           = 57,
-    BANK_SLOT_ITEM_20           = 58,
-    BANK_SLOT_ITEM_21           = 59,
-    BANK_SLOT_ITEM_22           = 60,
-    BANK_SLOT_ITEM_23           = 61,
-    BANK_SLOT_ITEM_24           = 62,
-    BANK_SLOT_ITEM_25           = 63,
-    BANK_SLOT_ITEM_26           = 64,
-    BANK_SLOT_ITEM_27           = 65,
-    BANK_SLOT_ITEM_28           = 66,
-    BANK_SLOT_ITEM_END          = 67,
+    BANK_SLOT_ITEM_END          = 67
+};
 
+enum BankBagSlots                                           // 7 slots
+{
     BANK_SLOT_BAG_START         = 67,
-    BANK_SLOT_BAG_1             = 67,
-    BANK_SLOT_BAG_2             = 68,
-    BANK_SLOT_BAG_3             = 69,
-    BANK_SLOT_BAG_4             = 70,
-    BANK_SLOT_BAG_5             = 71,
-    BANK_SLOT_BAG_6             = 72,
-    BANK_SLOT_BAG_7             = 73,
     BANK_SLOT_BAG_END           = 74
 };
 
-enum BuyBackSlots
+enum BuyBackSlots                                           // 12 slots
 {
     // stored in m_buybackitems
     BUYBACK_SLOT_START          = 74,
-    BUYBACK_SLOT_1              = 74,
-    BUYBACK_SLOT_2              = 75,
-    BUYBACK_SLOT_3              = 76,
-    BUYBACK_SLOT_4              = 77,
-    BUYBACK_SLOT_5              = 78,
-    BUYBACK_SLOT_6              = 79,
-    BUYBACK_SLOT_7              = 80,
-    BUYBACK_SLOT_8              = 81,
-    BUYBACK_SLOT_9              = 82,
-    BUYBACK_SLOT_10             = 83,
-    BUYBACK_SLOT_11             = 84,
-    BUYBACK_SLOT_12             = 85,
     BUYBACK_SLOT_END            = 86
 };
 
-enum KeyRingSlots
+enum KeyRingSlots                                           // 32 slots
 {
     KEYRING_SLOT_START          = 86,
     KEYRING_SLOT_END            = 118
 };
 
-enum VanityPetSlots
+enum VanityPetSlots                                         // 18 slots
 {
     VANITYPET_SLOT_START        = 118,                      // not use, vanity pets stored as spells
-    VANITYPET_SLOT_END          = 136                       // not alloed any content in.
+    VANITYPET_SLOT_END          = 136                       // not allowed any content in.
 };
 
-enum CurrencyTokenSlots
+enum CurrencyTokenSlots                                     // 32 slots
 {
     CURRENCYTOKEN_SLOT_START    = 136,
     CURRENCYTOKEN_SLOT_END      = 168
 };
 
-enum QuestBagSlots
+enum QuestBagSlots                                          // 32 slots
 {
-    QUESTBAG_SLOT_START         = 168,
-    QUESTBAG_SLOT_END           = 200
+    QUESTBAG_SLOT_START         = 168,                      // not use
+    QUESTBAG_SLOT_END           = 200                       // not allowed any content in.
 };
 
 struct ItemPosCount
@@ -769,11 +684,6 @@ struct MovementInfo
         unk1 = 0;
         x = y = z = o = t_x = t_y = t_z = t_o = s_pitch = j_unk = j_sinAngle = j_cosAngle = j_xyspeed = u_unk1 = 0.0f;
         t_guid = 0;
-    }
-
-    void SetMovementFlags(uint32 _flags)
-    {
-        flags = _flags;
     }
 };
 
@@ -851,7 +761,6 @@ enum PlayerLoginQueryIndex
     PLAYER_LOGIN_QUERY_LOADCRITERIAPROGRESS     = 20,
     MAX_PLAYER_LOGIN_QUERY                      = 21
 };
-
 
 // Player summoning auto-decline time (in secs)
 #define MAX_PLAYER_SUMMON_DELAY                   (2*MINUTE)
@@ -970,7 +879,9 @@ class MANGOS_DLL_SPEC Player : public Unit
         void SendTransferAborted(uint32 mapid, uint8 reason, uint8 arg = 0);
         void SendInstanceResetWarning(uint32 mapid, uint32 time);
 
+        Creature* GetNPCIfCanInteractWith(uint64 guid, uint32 npcflagmask);
         bool CanInteractWithNPCs(bool alive = true) const;
+        GameObject* GetGameObjectIfCanInteractWith(uint64 guid, GameobjectTypes type) const;
 
         bool ToggleAFK();
         bool ToggleDND();
@@ -1161,7 +1072,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         void AddArmorProficiency(uint32 newflag) { m_ArmorProficiency |= newflag; }
         uint32 GetWeaponProficiency() const { return m_WeaponProficiency; }
         uint32 GetArmorProficiency() const { return m_ArmorProficiency; }
-        bool IsInFeralForm() const { return m_form == FORM_CAT || m_form == FORM_BEAR || m_form == FORM_DIREBEAR; }
         bool IsUseEquipedWeapon( bool mainhand ) const
         {
             // disarm applied only to mainhand weapon
@@ -1279,6 +1189,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         void CastedCreatureOrGO( uint32 entry, uint64 guid, uint32 spell_id );
         void TalkedToCreature( uint32 entry, uint64 guid );
         void MoneyChanged( uint32 value );
+        void ReputationChanged(FactionEntry const* factionEntry );
         bool HasQuestForItem( uint32 itemid ) const;
         bool HasQuestForGO(int32 GOId) const;
         void UpdateForQuestsGO();
@@ -1462,6 +1373,9 @@ class MANGOS_DLL_SPEC Player : public Unit
         bool resetTalents(bool no_cost = false);
         uint32 resetTalentsCost() const;
         void InitTalentForLevel();
+
+        void LearnTalent(uint32 talentId, uint32 talentRank);
+        void LearnPetTalent(uint64 petGuid, uint32 talentId, uint32 talentRank);
 
         uint32 CalculateTalentsPoints() const;
 
@@ -1667,8 +1581,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         void SendDelayResponse(const uint32);
         void SendLogXPGain(uint32 GivenXP,Unit* victim,uint32 RestXP);
 
-        //Low Level Packets
-        void PlaySound(uint32 Sound, bool OnlySelf);
         //notifiers
         void SendAttackSwingCantAttack();
         void SendAttackSwingCancelAttack();
@@ -1743,8 +1655,12 @@ class MANGOS_DLL_SPEC Player : public Unit
         bool HasSkill(uint32 skill) const;
         void learnSkillRewardedSpells(uint32 id, uint32 value);
 
-        void SetDontMove(bool dontMove);
-        bool GetDontMove() const { return m_dontMove; }
+        WorldLocation& GetTeleportDest() { return m_teleport_dest; }
+        bool IsBeingTeleported() const { return mSemaphoreTeleport_Near || mSemaphoreTeleport_Far; }
+        bool IsBeingTeleportedNear() const { return mSemaphoreTeleport_Near; }
+        bool IsBeingTeleportedFar() const { return mSemaphoreTeleport_Far; }
+        void SetSemaphoreTeleportNear(bool semphsetting) { mSemaphoreTeleport_Near = semphsetting; }
+        void SetSemaphoreTeleportFar(bool semphsetting) { mSemaphoreTeleport_Far = semphsetting; }
 
         void CheckExploreSystem(void);
 
@@ -1755,41 +1671,15 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         bool IsAtGroupRewardDistance(WorldObject const* pRewardSource) const;
         bool RewardPlayerAndGroupAtKill(Unit* pVictim);
+        void RewardPlayerAndGroupAtEvent(uint32 creature_id,WorldObject* pRewardSource);
         bool isHonorOrXPTarget(Unit* pVictim);
 
-        FactionStateList m_factions;
-        ForcedReactions m_forcedReactions;
-        FactionStateList const& GetFactionStateList() { return m_factions; }
-        uint32 GetDefaultReputationFlags(const FactionEntry *factionEntry) const;
-        int32 GetBaseReputation(const FactionEntry *factionEntry) const;
-        int32 GetReputation(uint32 faction_id) const;
-        int32 GetReputation(const FactionEntry *factionEntry) const;
-        ReputationRank GetReputationRank(uint32 faction) const;
-        ReputationRank GetReputationRank(const FactionEntry *factionEntry) const;
-        ReputationRank GetBaseReputationRank(const FactionEntry *factionEntry) const;
-        ReputationRank ReputationToRank(int32 standing) const;
-        const static int32 ReputationRank_Length[MAX_REPUTATION_RANK];
-        const static int32 Reputation_Cap    =  42999;
-        const static int32 Reputation_Bottom = -42000;
-        bool ModifyFactionReputation(uint32 FactionTemplateId, int32 DeltaReputation);
-        bool ModifyFactionReputation(FactionEntry const* factionEntry, int32 standing);
-        bool ModifyOneFactionReputation(FactionEntry const* factionEntry, int32 standing);
-        bool SetFactionReputation(uint32 FactionTemplateId, int32 standing);
-        bool SetFactionReputation(FactionEntry const* factionEntry, int32 standing);
-        bool SetOneFactionReputation(FactionEntry const* factionEntry, int32 standing);
-        int32 CalculateReputationGain(uint32 creatureOrQuestLevel, int32 rep, bool for_quest);
+        ReputationMgr&       GetReputationMgr()       { return m_reputationMgr; }
+        ReputationMgr const& GetReputationMgr() const { return m_reputationMgr; }
+        ReputationRank GetReputationRank(uint32 faction_id) const;
         void RewardReputation(Unit *pVictim, float rate);
         void RewardReputation(Quest const *pQuest);
-        void SetInitialFactions();
-        void UpdateReputation() const;
-        void SendFactionState(FactionState const* faction) const;
-        void SendInitialReputations();
-        FactionState const* GetFactionState( FactionEntry const* factionEntry) const;
-        void SetFactionAtWar(FactionState* faction, bool atWar);
-        void SetFactionInactive(FactionState* faction, bool inactive);
-        void SetFactionVisible(FactionState* faction);
-        void SetFactionVisibleForFactionTemplateId(uint32 FactionTemplateId);
-        void SetFactionVisibleForFactionId(uint32 FactionId);
+
         void UpdateSkillsForLevel();
         void UpdateSkillsToMaxSkillsForLevel();             // for .levelup
         void ModifySkillBonus(uint32 skillid,int32 val, bool talent);
@@ -1978,6 +1868,7 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         bool GetBGAccessByLevel(BattleGroundTypeId bgTypeId) const;
         bool CanUseBattleGroundObject();
+        bool isTotalImmune();
         bool CanCaptureTowerPoint();
 
         /*********************************************************/
@@ -1993,7 +1884,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         /***              ENVIROMENTAL SYSTEM                  ***/
         /*********************************************************/
 
-        void EnvironmentalDamage(uint64 guid, EnviromentalDamage type, uint32 damage);
+        void EnvironmentalDamage(EnviromentalDamage type, uint32 damage);
 
         /*********************************************************/
         /***               FLOOD FILTER SYSTEM                 ***/
@@ -2007,8 +1898,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         /***                 VARIOUS SYSTEMS                   ***/
         /*********************************************************/
         MovementInfo m_movementInfo;
-        uint32 m_lastFallTime;
-        float  m_lastFallZ;
+        void UpdateFallInformationIfNeed(MovementInfo const& minfo,uint16 opcode);
         Unit *m_mover;
         void SetFallInformation(uint32 time, float z)
         {
@@ -2090,8 +1980,12 @@ class MANGOS_DLL_SPEC Player : public Unit
         // Temporarily removed pet cache
         uint32 GetTemporaryUnsummonedPetNumber() const { return m_temporaryUnsummonedPetNumber; }
         void SetTemporaryUnsummonedPetNumber(uint32 petnumber) { m_temporaryUnsummonedPetNumber = petnumber; }
-        uint32 GetOldPetSpell() const { return m_oldpetspell; }
-        void SetOldPetSpell(uint32 petspell) { m_oldpetspell = petspell; }
+        void UnsummonPetTemporaryIfAny();
+        void ResummonPetTemporaryUnSummonedIfAny();
+        bool IsPetNeedBeTemporaryUnsummoned() const { return !IsInWorld() || !isAlive() || IsMounted() /*+in flight*/; }
+
+        void SendCinematicStart(uint32 CinematicSequenceId);
+        void SendMovieStart(uint32 MovieId);
 
         /*********************************************************/
         /***                 INSTANCE SYSTEM                   ***/
@@ -2143,8 +2037,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         MapReference &GetMapRef() { return m_mapRef; }
 
         bool isAllowedToLoot(Creature* creature);
-
-        WorldLocation& GetTeleportDest() { return m_teleport_dest; }
 
         DeclinedName const* GetDeclinedNames() const { return m_declinedname; }
         uint8 GetRunesState() const { return m_runes->runeState; }
@@ -2216,7 +2108,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         void _LoadQuestStatus(QueryResult *result);
         void _LoadDailyQuestStatus(QueryResult *result);
         void _LoadGroup(QueryResult *result);
-        void _LoadReputation(QueryResult *result);
         void _LoadSkills();
         void _LoadSpells(QueryResult *result);
         void _LoadTutorials(QueryResult *result);
@@ -2235,7 +2126,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         void _SaveMail();
         void _SaveQuestStatus();
         void _SaveDailyQuestStatus();
-        void _SaveReputation();
         void _SaveSpells();
         void _SaveTutorials();
 
@@ -2250,10 +2140,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         void StopMirrorTimer(MirrorTimerType Type);
         void HandleDrowning(uint32 time_diff);
         int32 getMaxTimer(MirrorTimerType timer);
-        int32 m_MirrorTimer[MAX_TIMERS];
-        uint8 m_MirrorTimerFlags;
-        uint8 m_MirrorTimerFlagsLast;
-        bool m_isInWater;
 
         /*********************************************************/
         /***                  HONOR SYSTEM                     ***/
@@ -2318,8 +2204,6 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         typedef std::list<Channel*> JoinedChannelsList;
         JoinedChannelsList m_channels;
-
-        bool m_dontMove;
 
         int m_cinematic;
 
@@ -2386,10 +2270,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         uint32 m_groupUpdateMask;
         uint64 m_auraUpdateMask;
 
-        // Temporarily removed pet cache
-        uint32 m_temporaryUnsummonedPetNumber;
-        uint32 m_oldpetspell;
-
         uint64 m_miniPet;
         GuardianPetList m_guardianPets;
 
@@ -2400,12 +2280,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         float  m_summon_y;
         float  m_summon_z;
 
-        // Far Teleport
-        WorldLocation m_teleport_dest;
-
         DeclinedName *m_declinedname;
         Runes *m_runes;
-        AchievementMgr m_achievementMgr;
     private:
         // internal common parts for CanStore/StoreItem functions
         uint8 _CanStoreItem_InSpecificSlot( uint8 bag, uint8 slot, ItemPosCountVec& dest, ItemPrototype const *pProto, uint32& count, bool swap, Item *pSrcItem ) const;
@@ -2413,10 +2289,32 @@ class MANGOS_DLL_SPEC Player : public Unit
         uint8 _CanStoreItem_InInventorySlots( uint8 slot_begin, uint8 slot_end, ItemPosCountVec& dest, ItemPrototype const *pProto, uint32& count, bool merge, Item *pSrcItem, uint8 skip_bag, uint8 skip_slot ) const;
         Item* _StoreItem( uint16 pos, Item *pItem, uint32 count, bool clone, bool update );
 
+        void UpdateKnownCurrencies(uint32 itemId, bool apply);
+        int32 CalculateReputationGain(uint32 creatureOrQuestLevel, int32 rep, bool for_quest);
         void AdjustQuestReqItemCount( Quest const* pQuest, QuestStatusData& questStatusData );
 
         GridReference<Player> m_gridRef;
         MapReference m_mapRef;
+
+        uint32 m_lastFallTime;
+        float  m_lastFallZ;
+
+        int32 m_MirrorTimer[MAX_TIMERS];
+        uint8 m_MirrorTimerFlags;
+        uint8 m_MirrorTimerFlagsLast;
+        bool m_isInWater;
+
+        // Current teleport data
+        WorldLocation m_teleport_dest;
+        bool mSemaphoreTeleport_Near;
+        bool mSemaphoreTeleport_Far;
+
+        // Temporary removed pet cache
+        uint32 m_temporaryUnsummonedPetNumber;
+        uint32 m_oldpetspell;
+
+        AchievementMgr m_achievementMgr;
+        ReputationMgr  m_reputationMgr;
 };
 
 void AddItemsSetItem(Player*player,Item *item);

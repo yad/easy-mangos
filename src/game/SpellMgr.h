@@ -23,7 +23,7 @@
 // For more high level function for sSpellStore data
 
 #include "SharedDefines.h"
-#include "Database/DBCStructure.h"
+#include "DBCStructure.h"
 #include "Database/SQLStorage.h"
 
 #include "Utilities/UnorderedMap.h"
@@ -145,7 +145,8 @@ inline bool IsLootCraftingSpell(SpellEntry const *spellInfo)
 }
 
 int32 CompareAuraRanks(uint32 spellId_1, uint32 effIndex_1, uint32 spellId_2, uint32 effIndex_2);
-bool IsSingleFromSpellSpecificPerCaster(uint32 spellSpec1,uint32 spellSpec2);
+bool IsSingleFromSpellSpecificPerCaster(SpellSpecific spellSpec1,SpellSpecific spellSpec2);
+bool IsSingleFromSpellSpecificRanksPerTarget(SpellSpecific spellId_spec, SpellSpecific i_spellId_spec);
 bool IsPassiveSpell(uint32 spellId);
 
 inline bool IsPassiveSpellStackableWithRanks(SpellEntry const* spellProto)
@@ -180,6 +181,7 @@ inline bool IsAreaEffectTarget( Targets target )
 {
     switch (target )
     {
+        case TARGET_AREAEFFECT_INSTANT:
         case TARGET_AREAEFFECT_CUSTOM:
         case TARGET_ALL_ENEMY_IN_AREA:
         case TARGET_ALL_ENEMY_IN_AREA_INSTANT:

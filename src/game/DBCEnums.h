@@ -42,12 +42,16 @@ enum AchievementFactionFlags
 
 enum AchievementFlags
 {
-    ACHIEVEMENT_FLAG_COUNTER          = 0x00000001,
-    ACHIEVEMENT_FLAG_REACH_LEVEL      = 0x00000004,
-    ACHIEVEMENT_FLAG_RERERED_MAX      = 0x00000010,         // displays the maximum criteria of a refered achievement
-    ACHIEVEMENT_FLAG_AVERAGE          = 0x00000040,
-    ACHIEVEMENT_FLAG_REALM_FIRST_REACH= 0x00000100,
-    ACHIEVEMENT_FLAG_REALM_FIRST_KILL = 0x00000200,
+    ACHIEVEMENT_FLAG_COUNTER           = 0x00000001,        // Just count statistic (never stop and complete)
+    ACHIEVEMENT_FLAG_UNK2              = 0x00000002,        // not used
+    ACHIEVEMENT_FLAG_STORE_MAX_VALUE   = 0x00000004,        // Store only max value? used only in "Reach level xx"
+    ACHIEVEMENT_FLAG_SUMM              = 0x00000008,        // Use summ criteria value from all reqirements (and calculate max value)
+    ACHIEVEMENT_FLAG_MAX_USED          = 0x00000010,        // Show max criteria (and calculate max value ??)
+    ACHIEVEMENT_FLAG_REQ_COUNT         = 0x00000020,        // Use not zero req count (and calculate max value)
+    ACHIEVEMENT_FLAG_AVERANGE          = 0x00000040,        // Show as averange value (value / time_in_days) depend from other flag (by def use last criteria value)
+    ACHIEVEMENT_FLAG_BAR               = 0x00000080,        // Show as progress bar (value / max vale) depend from other flag (by def use last criteria value)
+    ACHIEVEMENT_FLAG_REALM_FIRST_REACH = 0x00000100,        //
+    ACHIEVEMENT_FLAG_REALM_FIRST_KILL  = 0x00000200,        //
 };
 
 enum AchievementCriteriaCondition
@@ -63,8 +67,12 @@ enum AchievementCriteriaCondition
 
 enum AchievementCriteriaCompletionFlags
 {
-    // some Achievements (like 698) have several criteria but only one has to be fulfilled. These are identified by this flag.
-    ACHIEVEMENT_CRITERIA_COMPLETE_FLAG_ALL = 2,
+    ACHIEVEMENT_CRITERIA_FLAG_SHOW_PROGRESS_BAR = 0x00000001,         // Show progress as bar
+    ACHIEVEMENT_CRITERIA_FLAG_HIDE_CRITERIA     = 0x00000002,         // Not show criteria in client
+    ACHIEVEMENT_CRITERIA_FLAG_UNK3              = 0x00000004,         // BG related??
+    ACHIEVEMENT_CRITERIA_FLAG_UNK4              = 0x00000008,         //
+    ACHIEVEMENT_CRITERIA_FLAG_UNK5              = 0x00000010,         // not used
+    ACHIEVEMENT_CRITERIA_FLAG_MONEY_COUNTER     = 0x00000020,         // Displays counter as money
 };
 
 enum AchievementCriteriaGroupFlags
@@ -88,7 +96,6 @@ enum AchievementCriteriaTypes
     ACHIEVEMENT_CRITERIA_TYPE_COMPLETE_DAILY_QUEST = 14,
     ACHIEVEMENT_CRITERIA_TYPE_COMPLETE_BATTLEGROUND= 15,
     ACHIEVEMENT_CRITERIA_TYPE_DEATH_AT_MAP= 16,
-    // TODO: this can be both arena and total deaths. Where is this difference in the dbc?
     ACHIEVEMENT_CRITERIA_TYPE_DEATH= 17,
     ACHIEVEMENT_CRITERIA_TYPE_DEATH_IN_DUNGEON = 18,
     ACHIEVEMENT_CRITERIA_TYPE_COMPLETE_RAID = 19,
@@ -274,50 +281,50 @@ enum TotemCategoryType
 };
 
 // SummonProperties.dbc, col 1
-/*enum SummonGroup
+enum SummonPropGroup
 {
-    SUMMON_GROUP_UNKNOWN1       = 0,                        // 1160 spells in 3.0.3
-    SUMMON_GROUP_UNKNOWN2       = 1,                        // 861 spells in 3.0.3
-    SUMMON_GROUP_PETS           = 2,                        // 52 spells in 3.0.3, pets mostly
-    SUMMON_GROUP_CONTROLLABLE   = 3,                        // 13 spells in 3.0.3, mostly controllable
-    SUMMON_GROUP_UNKNOWN3       = 4                         // 86 spells in 3.0.3, taxi/mounts
+    SUMMON_PROP_GROUP_UNKNOWN1       = 0,                   // 1160 spells in 3.0.3
+    SUMMON_PROP_GROUP_UNKNOWN2       = 1,                   // 861 spells in 3.0.3
+    SUMMON_PROP_GROUP_PETS           = 2,                   // 52 spells in 3.0.3, pets mostly
+    SUMMON_PROP_GROUP_CONTROLLABLE   = 3,                   // 13 spells in 3.0.3, mostly controllable
+    SUMMON_PROP_GROUP_UNKNOWN3       = 4                    // 86 spells in 3.0.3, taxi/mounts
 };
 
 // SummonProperties.dbc, col 3
-enum SummonType
+enum SummonPropType
 {
-    SUMMON_TYPE_UNKNOWN         = 0,                        // different summons, 1330 spells in 3.0.3
-    SUMMON_TYPE_SUMMON          = 1,                        // generic summons, 49 spells in 3.0.3
-    SUMMON_TYPE_GUARDIAN        = 2,                        // summon guardian, 393 spells in 3.0.3
-    SUMMON_TYPE_ARMY            = 3,                        // summon army, 5 spells in 3.0.3
-    SUMMON_TYPE_TOTEM           = 4,                        // summon totem, 169 spells in 3.0.3
-    SUMMON_TYPE_CRITTER         = 5,                        // critter/minipet, 195 spells in 3.0.3
-    SUMMON_TYPE_DK              = 6,                        // summon DRW/Ghoul, 2 spells in 3.0.3
-    SUMMON_TYPE_BOMB            = 7,                        // summon bot/bomb, 4 spells in 3.0.3
-    SUMMON_TYPE_PHASING         = 8,                        // something todo with DK prequest line, 2 spells in 3.0.3
-    SUMMON_TYPE_SIEGE_VEH       = 9,                        // summon different vehicles, 14 spells in 3.0.3
-    SUMMON_TYPE_DRAKE_VEH       = 10,                       // summon drake (vehicle), 3 spells
-    SUMMON_TYPE_LIGHTWELL       = 11                        // summon lightwell, 6 spells in 3.0.3
+    SUMMON_PROP_TYPE_UNKNOWN         = 0,                   // different summons, 1330 spells in 3.0.3
+    SUMMON_PROP_TYPE_SUMMON          = 1,                   // generic summons, 49 spells in 3.0.3
+    SUMMON_PROP_TYPE_GUARDIAN        = 2,                   // summon guardian, 393 spells in 3.0.3
+    SUMMON_PROP_TYPE_ARMY            = 3,                   // summon army, 5 spells in 3.0.3
+    SUMMON_PROP_TYPE_TOTEM           = 4,                   // summon totem, 169 spells in 3.0.3
+    SUMMON_PROP_TYPE_CRITTER         = 5,                   // critter/minipet, 195 spells in 3.0.3
+    SUMMON_PROP_TYPE_DK              = 6,                   // summon DRW/Ghoul, 2 spells in 3.0.3
+    SUMMON_PROP_TYPE_BOMB            = 7,                   // summon bot/bomb, 4 spells in 3.0.3
+    SUMMON_PROP_TYPE_PHASING         = 8,                   // something todo with DK prequest line, 2 spells in 3.0.3
+    SUMMON_PROP_TYPE_SIEGE_VEH       = 9,                   // summon different vehicles, 14 spells in 3.0.3
+    SUMMON_PROP_TYPE_DRAKE_VEH       = 10,                  // summon drake (vehicle), 3 spells
+    SUMMON_PROP_TYPE_LIGHTWELL       = 11                   // summon lightwell, 6 spells in 3.0.3
 };
 
 // SummonProperties.dbc, col 5
-enum SummonFlags
+enum SummonPropFlags
 {
-    SUMMON_FLAG_NONE            = 0x0000,                   // 1342 spells in 3.0.3
-    SUMMON_FLAG_UNK1            = 0x0001,                   // 75 spells in 3.0.3, something unfriendly
-    SUMMON_FLAG_UNK2            = 0x0002,                   // 616 spells in 3.0.3, something friendly
-    SUMMON_FLAG_UNK3            = 0x0004,                   // 22 spells in 3.0.3, no idea...
-    SUMMON_FLAG_UNK4            = 0x0008,                   // 49 spells in 3.0.3, some mounts
-    SUMMON_FLAG_UNK5            = 0x0010,                   // 25 spells in 3.0.3, quest related?
-    SUMMON_FLAG_UNK6            = 0x0020,                   // 0 spells in 3.0.3, unused
-    SUMMON_FLAG_UNK7            = 0x0040,                   // 12 spells in 3.0.3, no idea
-    SUMMON_FLAG_UNK8            = 0x0080,                   // 4 spells in 3.0.3, no idea
-    SUMMON_FLAG_UNK9            = 0x0100,                   // 51 spells in 3.0.3, no idea, many quest related
-    SUMMON_FLAG_UNK10           = 0x0200,                   // 51 spells in 3.0.3, something defensive
-    SUMMON_FLAG_UNK11           = 0x0400,                   // 3 spells, requires something near?
-    SUMMON_FLAG_UNK12           = 0x0800,                   // 30 spells in 3.0.3, no idea
-    SUMMON_FLAG_UNK13           = 0x1000,                   // 8 spells in 3.0.3, siege vehicle
-    SUMMON_FLAG_UNK14           = 0x2000,                   // 2 spells in 3.0.3, escort?
+    SUMMON_PROP_FLAG_NONE            = 0x0000,              // 1342 spells in 3.0.3
+    SUMMON_PROP_FLAG_UNK1            = 0x0001,              // 75 spells in 3.0.3, something unfriendly
+    SUMMON_PROP_FLAG_UNK2            = 0x0002,              // 616 spells in 3.0.3, something friendly
+    SUMMON_PROP_FLAG_UNK3            = 0x0004,              // 22 spells in 3.0.3, no idea...
+    SUMMON_PROP_FLAG_UNK4            = 0x0008,              // 49 spells in 3.0.3, some mounts
+    SUMMON_PROP_FLAG_UNK5            = 0x0010,              // 25 spells in 3.0.3, quest related?
+    SUMMON_PROP_FLAG_UNK6            = 0x0020,              // 0 spells in 3.0.3, unused
+    SUMMON_PROP_FLAG_UNK7            = 0x0040,              // 12 spells in 3.0.3, no idea
+    SUMMON_PROP_FLAG_UNK8            = 0x0080,              // 4 spells in 3.0.3, no idea
+    SUMMON_PROP_FLAG_UNK9            = 0x0100,              // 51 spells in 3.0.3, no idea, many quest related
+    SUMMON_PROP_FLAG_UNK10           = 0x0200,              // 51 spells in 3.0.3, something defensive
+    SUMMON_PROP_FLAG_UNK11           = 0x0400,              // 3 spells, requires something near?
+    SUMMON_PROP_FLAG_UNK12           = 0x0800,              // 30 spells in 3.0.3, no idea
+    SUMMON_PROP_FLAG_UNK13           = 0x1000,              // 8 spells in 3.0.3, siege vehicle
+    SUMMON_PROP_FLAG_UNK14           = 0x2000,              // 2 spells in 3.0.3, escort?
 };
-*/
+
 #endif

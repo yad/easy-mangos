@@ -365,14 +365,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\game\AddonHandler.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\game\AddonHandler.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\src\game\ArenaTeamHandler.cpp"
 				>
 			</File>
@@ -949,6 +941,22 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\game\CreatureEventAI.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\game\CreatureEventAI.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\game\CreatureEventAIMgr.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\game\CreatureEventAIMgr.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\game\FleeingMovementGenerator.cpp"
 				>
 			</File>
@@ -1145,6 +1153,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\game\ReputationMgr.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\game\ReputationMgr.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\game\SocialMgr.cpp"
 				>
 			</File>
@@ -1240,6 +1256,26 @@
 		<Filter
 			Name="Server"
 			>
+			<File
+				RelativePath="..\..\src\game\DBCEnums.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\game\DBCfmt.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\game\DBCStores.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\game\DBCStores.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\game\DBCStructure.h"
+				>
+			</File>
 			<File
 				RelativePath="..\..\src\game\GlobalEvents.cpp"
 				>

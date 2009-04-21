@@ -16,8 +16,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef DBCSTRUCTURE_H
-#define DBCSTRUCTURE_H
+#ifndef MANGOS_DBCSTRUCTURE_H
+#define MANGOS_DBCSTRUCTURE_H
 
 #include "DBCEnums.h"
 #include "Platform/Define.h"
@@ -52,8 +52,8 @@ struct AchievementEntry
     //uint32    icon;                                       // 42 icon (from SpellIcon.dbc)
     //char *titleReward[16];                                // 43-58
     //uint32 titleReward_flags;                             // 59
-    //uint32 count;                                         // 60 - need this count Criteria for complete
-    uint32 refAchievement;                                  // 61 - related achievement?
+    uint32 count;                                           // 60 - need this count of completed criterias (own or referenced achievement criterias)
+    uint32 refAchievement;                                  // 61 - referenced achievement (counting of all completed criterias)
 };
 
 struct AchievementCategoryEntry
@@ -374,6 +374,7 @@ struct AchievementCriteriaEntry
         struct
         {
             uint32  itemID;                                 // 3
+            uint32  count;                                  // 4
         } equip_item;
 
         // ACHIEVEMENT_CRITERIA_TYPE_MONEY_FROM_QUEST_REWARD= 62
@@ -418,7 +419,7 @@ struct AchievementCriteriaEntry
         {
             uint32  skillLine;                              // 3
             uint32  spellCount;                             // 4
-        } learn_skilline_spell;
+        } learn_skillline_spell;
 
         // ACHIEVEMENT_CRITERIA_TYPE_WIN_DUEL               = 76
         struct
@@ -475,7 +476,7 @@ struct AchievementCriteriaEntry
         struct
         {
             uint32  field3;                                 // 3 main requirement
-            uint32  field4;                                 // 4 main requirement count
+            uint32  count;                                  // 4 main requirement count
             uint32  additionalRequirement1_type;            // 5 additional requirement 1 type
             uint32  additionalRequirement1_value;           // 6 additional requirement 1 value
             uint32  additionalRequirement2_type;            // 7 additional requirement 2 type
@@ -647,6 +648,27 @@ struct ChrRacesEntry
     uint32      addon;                                      // 68 (0 - original race, 1 - tbc addon, ...)
 };
 
+/* not used
+struct CinematicCameraEntry
+{
+    uint32      id;                                         // 0 index
+    char*       filename;                                   // 1
+    uint32      soundid;                                    // 2 in SoundEntries.dbc or 0
+    float       start_x;                                    // 3
+    float       start_y;                                    // 4
+    float       start_z;                                    // 5
+    float       unk6;                                       // 6 speed?     
+};
+*/
+
+struct CinematicSequencesEntry
+{
+    uint32      Id;                                         // 0 index
+    //uint32      unk1;                                     // 1 always 0
+    //uint32      cinematicCamera;                          // 2 id in CinematicCamera.dbc
+                                                            // 3-9 always 0
+};
+
 struct CreatureDisplayInfoEntry
 {
     uint32      Displayid;                                  // 0        m_ID
@@ -696,6 +718,23 @@ struct CreatureTypeEntry
     //uint32    no_expirience;                              // 18 no exp? critters, non-combat pets, gas cloud.
 };
 
+/* not used
+struct CurrencyCategoryEntry
+{
+    uint32    ID;                                           // 0
+    uint32    Unk1;                                         // 1        0 for known categories and 3 for unknown one (3.0.9)
+    char*   Name[16];                                       // 2-17     name
+    //                                                      // 18       string flags
+};
+*/
+
+struct CurrencyTypesEntry
+{
+    //uint32    ID;                                         // 0        not used
+    uint32    ItemId;                                       // 1        used as real index
+    uint32    BitIndex;                                     // 2        bit index in PLAYER_FIELD_KNOWN_CURRENCIES (1 << (index-1))
+};
+
 struct DurabilityCostsEntry
 {
     uint32    Itemlvl;                                      // 0
@@ -706,6 +745,17 @@ struct DurabilityQualityEntry
 {
     uint32    Id;                                           // 0
     float     quality_mod;                                  // 1
+};
+
+struct EmotesEntry
+{
+    uint32  Id;                                             // 0
+    //char*   Name;                                         // 1, internal name
+    //uint32  AnimationId;                                  // 2, ref to animationData
+    uint32  Flags;                                          // 3, bitmask, may be unit_flags
+    uint32  EmoteType;                                      // 4, Can be 0, 1 or 2 (determine how emote are shown)
+    uint32  UnitStandState;                                 // 5, uncomfirmed, may be enum UnitStandStateType
+    //uint32  SoundId;                                      // 6, ref to soundEntries
 };
 
 struct EmotesTextEntry
@@ -900,6 +950,13 @@ struct ItemEntry
    uint32   Sheath;                                         // 7
 };
 
+struct ItemBagFamilyEntry
+{
+    uint32   ID;                                            // 0
+    //char*     name[16]                                    // 1-16     m_name_lang
+    //                                                      // 17       name flags
+};
+
 struct ItemDisplayInfoEntry
 {
     uint32      ID;                                         // 0        m_ID
@@ -1050,6 +1107,13 @@ struct MapEntry
     {
         return MapID == 0 || MapID == 1 || MapID == 530 || MapID == 571;
     }
+};
+
+struct MovieEntry
+{
+    uint32      Id;                                         // 0 index
+    //char*       filename;                                 // 1
+    //uint32      unk2;                                     // 2 always 100
 };
 
 struct QuestSortEntry
@@ -1264,6 +1328,9 @@ struct SpellEntry
     uint32    runeCostID;                                   // 229      m_runeCostID
     //uint32    spellMissileID;                             // 230      m_spellMissileID not used
 
+    // helpers
+    int32 CalculateSimpleValue(uint8 eff) const { return EffectBasePoints[eff]+int32(EffectBaseDice[eff]); }
+
     private:
         // prevent creating custom entries (copy data from original in fact)
         SpellEntry(SpellEntry const&);                      // DON'T must have implementation
@@ -1385,15 +1452,20 @@ struct StableSlotPricesEntry
     uint32 Price;
 };
 
-/*struct SummonPropertiesEntry
+/* unused currently
+struct SummonPropertiesEntry
 {
     uint32  Id;                                             // 0
-    uint32  Group;                                          // 1, 0 - can't be controlled?, 1 - something guardian?, 2 - pet?, 3 - something controllable?, 4 - taxi/mount?
-    uint32  Unk2;                                           // 2, 14 rows > 0
-    uint32  Type;                                           // 3, see enum
-    uint32  Slot;                                           // 4, 0-6
-    uint32  Flags;                                          // 5
-};*/
+    uint32  Group;                                          // 1, enum SummonPropGroup,  0 - can't be controlled?, 1 - something guardian?, 2 - pet?, 3 - something controllable?, 4 - taxi/mount?
+    uint32  Unk2;                                           // 2,                        14 rows > 0
+    uint32  Type;                                           // 3, enum SummonPropType
+    uint32  Slot;                                           // 4,                        0-6
+    uint32  Flags;                                          // 5, enum SummonPropFlags
+};
+*/
+
+#define MAX_TALENT_RANK 5
+#define MAX_PET_TALENT_RANK 3                               // use in calculations, expected <= MAX_TALENT_RANK
 
 struct TalentEntry
 {
@@ -1401,7 +1473,7 @@ struct TalentEntry
     uint32    TalentTab;                                    // 1 index in TalentTab.dbc (TalentTabEntry)
     uint32    Row;                                          // 2
     uint32    Col;                                          // 3
-    uint32    RankID[5];                                    // 4-8
+    uint32    RankID[MAX_TALENT_RANK];                      // 4-8
                                                             // 9-12 not used, always 0, maybe not used high ranks
     uint32    DependsOn;                                    // 13 index in Talent.dbc (TalentEntry)
                                                             // 14-15 not used
@@ -1565,6 +1637,7 @@ struct WorldMapAreaEntry
     float   x1;                                             // 6
     float   x2;                                             // 7
     int32   virtual_map_id;                                 // 8 -1 (map_id have correct map) other: virtual map where zone show (map_id - where zone in fact internally)
+    // int32   dungeonMap_id;                               // 9 pointer to DungeonMap.dbc (owerride x1,x2,y1,y2 coordinates)
 };
 
 struct WorldSafeLocsEntry
@@ -1581,7 +1654,7 @@ struct WorldSafeLocsEntry
 struct WorldMapOverlayEntry
 {
     uint32    ID;                                           // 0
-    uint32    areatableID;                                  // 2
+    uint32    areatableID[4];                               // 2-5
 };
 
 // GCC have alternative #pragma pack() syntax and old gcc version not support pack(pop), also any gcc version not support it at some platform

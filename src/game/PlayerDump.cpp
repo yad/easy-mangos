@@ -24,7 +24,7 @@
 #include "ObjectMgr.h"
 
 // Character Dump tables
-#define DUMP_TABLE_COUNT 19
+#define DUMP_TABLE_COUNT 21
 
 struct DumpTable
 {
@@ -34,25 +34,27 @@ struct DumpTable
 
 static DumpTable dumpTables[DUMP_TABLE_COUNT] =
 {
-    { "characters",               DTT_CHARACTER  },
-    { "character_queststatus",    DTT_CHAR_TABLE },
-    { "character_reputation",     DTT_CHAR_TABLE },
-    { "character_spell",          DTT_CHAR_TABLE },
-    { "character_spell_cooldown", DTT_CHAR_TABLE },
-    { "character_action",         DTT_CHAR_TABLE },
-    { "character_aura",           DTT_CHAR_TABLE },
-    { "character_homebind",       DTT_CHAR_TABLE },
-    { "character_ticket",         DTT_CHAR_TABLE },
-    { "character_inventory",      DTT_INVENTORY  },
-    { "mail",                     DTT_MAIL       },
-    { "mail_items",               DTT_MAIL_ITEM  },
-    { "item_instance",            DTT_ITEM       },
-    { "character_gifts",          DTT_ITEM_GIFT  },
-    { "item_text",                DTT_ITEM_TEXT  },
-    { "character_pet",            DTT_PET        },
-    { "pet_aura",                 DTT_PET_TABLE  },
-    { "pet_spell",                DTT_PET_TABLE  },
-    { "pet_spell_cooldown",       DTT_PET_TABLE  },
+    { "characters",                       DTT_CHARACTER  },
+    { "character_achievement",            DTT_CHAR_TABLE },
+    { "character_achievement_progress",   DTT_CHAR_TABLE },
+    { "character_queststatus",            DTT_CHAR_TABLE },
+    { "character_reputation",             DTT_CHAR_TABLE },
+    { "character_spell",                  DTT_CHAR_TABLE },
+    { "character_spell_cooldown",         DTT_CHAR_TABLE },
+    { "character_action",                 DTT_CHAR_TABLE },
+    { "character_aura",                   DTT_CHAR_TABLE },
+    { "character_homebind",               DTT_CHAR_TABLE },
+    { "character_ticket",                 DTT_CHAR_TABLE },
+    { "character_inventory",              DTT_INVENTORY  },
+    { "mail",                             DTT_MAIL       },
+    { "mail_items",                       DTT_MAIL_ITEM  },
+    { "item_instance",                    DTT_ITEM       },
+    { "character_gifts",                  DTT_ITEM_GIFT  },
+    { "item_text",                        DTT_ITEM_TEXT  },
+    { "character_pet",                    DTT_PET        },
+    { "pet_aura",                         DTT_PET_TABLE  },
+    { "pet_spell",                        DTT_PET_TABLE  },
+    { "pet_spell_cooldown",               DTT_PET_TABLE  },
 };
 
 // Low level functions
@@ -328,6 +330,36 @@ void PlayerDumpWriter::DumpTable(std::string& dump, uint32 guid, char const*tabl
 std::string PlayerDumpWriter::GetDump(uint32 guid)
 {
     std::string dump;
+    
+    dump += "IMPORTANT NOTE: This sql queries not created for apply directly, use '.pdump load' command in console or client chat instead.\n";
+    dump += "IMPORTANT NOTE: NOT APPLY ITS DIRECTLY to character DB or you will DAMAGE and CORRUPT character DB\n\n";
+
+    // revision check guard
+    QueryResult* result = CharacterDatabase.Query("SELECT * FROM character_db_version LIMIT 1");
+    if(result)
+    {
+        QueryResult::FieldNames const& namesMap = result->GetFieldNames();
+        std::string reqName;
+        for(QueryResult::FieldNames::const_iterator itr = namesMap.begin(); itr != namesMap.end(); ++itr)
+        {
+            if(itr->second.substr(0,9)=="required_")
+            {
+                reqName = itr->second;
+                break;
+            }
+        }
+
+        if(!reqName.empty())
+        {
+            // this will fail at wrong character DB version
+            dump += "UPDATE character_db_version SET "+reqName+" = 1 WHERE FALSE;\n\n";
+        }
+        else
+            sLog.outError("Table 'character_db_version' not have revision guard field, revision guard query not added to pdump.");
+    }
+    else
+        sLog.outError("Character DB not have 'character_db_version' table, revision guard query not added to pdump.");
+
     for(int i = 0; i < DUMP_TABLE_COUNT; i++)
         DumpTable(dump, guid, dumpTables[i].name, dumpTables[i].name, dumpTables[i].type);
 
@@ -435,8 +467,22 @@ DumpReturn PlayerDumpReader::LoadDump(const std::string& file, uint32 account, s
         std::string line; line.assign(buf);
 
         // skip empty strings
-        if(line.find_first_not_of(" \t\n\r\7")==std::string::npos)
+        size_t nw_pos = line.find_first_not_of(" \t\n\r\7");
+        if(nw_pos==std::string::npos)
             continue;
+
+        // skip NOTE
+        if(line.substr(nw_pos,15)=="IMPORTANT NOTE:")
+            continue;
+
+        // add required_ check
+        if(line.substr(nw_pos,41)=="UPDATE character_db_version SET required_")
+        {
+            if(!CharacterDatabase.Execute(line.c_str()))
+                ROLLBACK(DUMP_FILE_BROKEN);
+
+            continue;
+        }
 
         // determine table name and load type
         std::string tn = gettablename(line);

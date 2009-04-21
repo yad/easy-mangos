@@ -445,8 +445,6 @@ class MANGOS_DLL_SPEC WorldObject : public Object
         virtual void SendMessageToSetInRange(WorldPacket *data, float dist, bool self);
         void BuildHeartBeatMsg( WorldPacket *data ) const;
         void BuildTeleportAckMsg( WorldPacket *data, float x, float y, float z, float ang) const;
-        bool IsBeingTeleported() { return mSemaphoreTeleport; }
-        void SetSemaphoreTeleport(bool semphsetting) { mSemaphoreTeleport = semphsetting; }
 
         void MonsterSay(const char* text, uint32 language, uint64 TargetGuid);
         void MonsterYell(const char* text, uint32 language, uint64 TargetGuid);
@@ -456,7 +454,11 @@ class MANGOS_DLL_SPEC WorldObject : public Object
         void MonsterYell(int32 textId, uint32 language, uint64 TargetGuid);
         void MonsterTextEmote(int32 textId, uint64 TargetGuid, bool IsBossEmote = false);
         void MonsterWhisper(int32 textId, uint64 receiver, bool IsBossWhisper = false);
+        void MonsterYellToZone(int32 textId, uint32 language, uint64 TargetGuid);
         void BuildMonsterChat(WorldPacket *data, uint8 msgtype, char const* text, uint32 language, char const* name, uint64 TargetGuid) const;
+
+        void PlayDistanceSound(uint32 sound_id, Player* target = NULL);
+        void PlayDirectSound(uint32 sound_id, Player* target = NULL);
 
         void SendObjectDeSpawnAnim(uint64 guid);
 
@@ -490,7 +492,5 @@ class MANGOS_DLL_SPEC WorldObject : public Object
         float m_positionY;
         float m_positionZ;
         float m_orientation;
-
-        bool mSemaphoreTeleport;
 };
 #endif

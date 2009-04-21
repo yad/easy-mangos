@@ -32,8 +32,6 @@ libmangosgame_a_SOURCES = \
 	AccountMgr.h \
 	AchievementMgr.h \
 	AchievementMgr.cpp \
-	AddonHandler.cpp \
-	AddonHandler.h \
 	AggressorAI.cpp \
 	AggressorAI.h \
 	AnimalRandomMovementGenerator.h \
@@ -97,8 +95,17 @@ libmangosgame_a_SOURCES = \
 	CreatureAIRegistry.h \
 	CreatureAISelector.cpp \
 	CreatureAISelector.h \
+	CreatureEventAI.cpp \
+	CreatureEventAI.h \
+	CreatureEventAIMgr.cpp \
+	CreatureEventAIMgr.h \
 	Creature.cpp \
 	Creature.h \
+	DBCEnums.h \
+	DBCfmt.h \
+	DBCStores.cpp \
+	DBCStores.h \
+	DBCStructure.h	\
 	debugcmds.cpp \
 	DestinationHolder.cpp \
 	DestinationHolder.h \
@@ -216,6 +223,8 @@ libmangosgame_a_SOURCES = \
 	RandomMovementGenerator.h \
 	ReactorAI.cpp \
 	ReactorAI.h \
+	ReputationMgr.cpp \
+	ReputationMgr.h \
 	ScriptCalls.cpp \
 	ScriptCalls.h \
 	SharedDefines.h \

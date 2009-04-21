@@ -1017,7 +1017,7 @@ void Object::RemoveByteFlag( uint16 index, uint8 offset, uint8 oldFlag )
 
 bool Object::PrintIndexError(uint32 index, bool set) const
 {
-    sLog.outError("ERROR: Attempt %s non-existed value field: %u (count: %u) for object typeid: %u type mask: %u",(set ? "set value to" : "get value from"),index,m_valuesCount,GetTypeId(),m_objectType);
+    sLog.outError("Attempt %s non-existed value field: %u (count: %u) for object typeid: %u type mask: %u",(set ? "set value to" : "get value from"),index,m_valuesCount,GetTypeId(),m_objectType);
 
     // assert must fail after function call
     return false;
@@ -1025,8 +1025,7 @@ bool Object::PrintIndexError(uint32 index, bool set) const
 
 WorldObject::WorldObject()
     : m_mapId(0), m_InstanceId(0), m_phaseMask(PHASEMASK_NORMAL),
-    m_positionX(0.0f), m_positionY(0.0f), m_positionZ(0.0f), m_orientation(0.0f),
-    mSemaphoreTeleport(false)
+    m_positionX(0.0f), m_positionY(0.0f), m_positionZ(0.0f), m_orientation(0.0f)
 {
 }
 
@@ -1159,6 +1158,10 @@ float WorldObject::GetAngle( const float x, const float y ) const
 
 bool WorldObject::HasInArc(const float arcangle, const WorldObject* obj) const
 {
+    // always have self in arc
+    if(obj == this)
+        return true;
+
     float arc = arcangle;
 
     // move arc to range 0.. 2*pi
@@ -1303,6 +1306,19 @@ void WorldObject::MonsterYell(int32 textId, uint32 language, uint64 TargetGuid)
     TypeContainerVisitor<MaNGOS::PlayerDistWorker<MaNGOS::LocalizedPacketDo<MaNGOS::MonsterChatBuilder> >, WorldTypeMapContainer > message(say_worker);
     CellLock<GridReadGuard> cell_lock(cell, p);
     cell_lock->Visit(cell_lock, message, *GetMap());
+}
+
+void WorldObject::MonsterYellToZone(int32 textId, uint32 language, uint64 TargetGuid)
+{
+    MaNGOS::MonsterChatBuilder say_build(*this, CHAT_MSG_MONSTER_YELL, textId,language,TargetGuid);
+    MaNGOS::LocalizedPacketDo<MaNGOS::MonsterChatBuilder> say_do(say_build);
+
+    uint32 zoneid = GetZoneId();
+
+    Map::PlayerList const& pList = GetMap()->GetPlayers();
+    for(Map::PlayerList::const_iterator itr = pList.begin(); itr != pList.end(); ++itr)
+        if(itr->getSource()->GetZoneId()==zoneid)
+            say_do(itr->getSource());
 }
 
 void WorldObject::MonsterTextEmote(int32 textId, uint64 TargetGuid, bool IsBossEmote)
@@ -1457,7 +1473,7 @@ Creature* WorldObject::SummonCreature(uint32 id, float x, float y, float z, floa
 
     if(!pCreature->IsPositionValid())
     {
-        sLog.outError("ERROR: Creature (guidlow %d, entry %d) not summoned. Suggested coordinates isn't valid (X: %f Y: %f)",pCreature->GetGUIDLow(),pCreature->GetEntry(),pCreature->GetPositionX(),pCreature->GetPositionY());
+        sLog.outError("Creature (guidlow %d, entry %d) not summoned. Suggested coordinates isn't valid (X: %f Y: %f)",pCreature->GetGUIDLow(),pCreature->GetEntry(),pCreature->GetPositionX(),pCreature->GetPositionY());
         delete pCreature;
         return NULL;
     }
@@ -1687,4 +1703,25 @@ void WorldObject::SetPhaseMask(uint32 newPhaseMask, bool update)
 
     if(update && IsInWorld())
         ObjectAccessor::UpdateObjectVisibility(this);
+}
+
+void WorldObject::PlayDistanceSound( uint32 sound_id, Player* target /*= NULL*/ )
+{
+    WorldPacket data(SMSG_PLAY_OBJECT_SOUND,4+8);
+    data << uint32(sound_id);
+    data << GetGUID();
+    if (target)
+        target->SendDirectMessage( &data );
+    else
+        SendMessageToSet( &data, true );
+}
+
+void WorldObject::PlayDirectSound( uint32 sound_id, Player* target /*= NULL*/ )
+{
+    WorldPacket data(SMSG_PLAY_SOUND, 4);
+    data << uint32(sound_id);
+    if (target)
+        target->SendDirectMessage( &data );
+    else
+        SendMessageToSet( &data, true );
 }

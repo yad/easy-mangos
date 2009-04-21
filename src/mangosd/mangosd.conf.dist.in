@@ -25,11 +25,15 @@ ConfVersion=2008080101
 #    WorldDatabaseInfo
 #    CharacterDatabaseInfo
 #        Database connection settings for the world server.
-#        Default: hostname;port;username;password;database
-#                 .;somenumber;username;password;database - use named pipes at Windows
-#                    Named pipes: mySQL required adding "enable-named-pipe" to [mysqld] section my.ini
-#                .;/path/to/unix_socket;username;password;database - use Unix sockets at Unix/Linux
-#                    Unix sockets: experimental, not tested
+#        Default:
+#                ---MYSQL---
+#                    hostname;port;username;password;database
+#                    .;somenumber;username;password;database - use named pipes at Windows
+#                        Named pipes: mySQL required adding "enable-named-pipe" to [mysqld] section my.ini
+#                    .;/path/to/unix_socket;username;password;database - use Unix sockets at Unix/Linux
+#                ---PGSQL---
+#                    hostname;port;username;password;database
+#                    .;/path/to/unix_socket/DIRECTORY or . for default path;username;password;database - use Unix sockets at Unix/Linux
 #
 #    MaxPingTime
 #        Settings for maximum database-ping interval (minutes between pings)
@@ -1000,6 +1004,14 @@ Visibility.Distance.Grey.Object = 10
 #         Reputation Gain rate
 #         Default: 1
 #
+#    Rate.Reputation.LowLevel.Kill
+#         Reputation Gain form low level kill (grey creture)
+#         Default: 1
+#
+#    Rate.Reputation.LowLevel.Quest
+#         Reputation Gain rate
+#         Default: 1
+#
 #    Rate.InstanceResetTime
 #        Multiplier for the number of days in between global raid/heroic instance resets.
 #        Default: 1
@@ -1092,6 +1104,9 @@ Rate.Mining.Amount = 1
 Rate.Mining.Next   = 1
 Rate.Talent = 1
 Rate.Reputation.Gain = 1
+Rate.Reputation.LowLevel.Kill    = 1
+Rate.Reputation.LowLevel.Quest   = 1
+
 Rate.InstanceResetTime = 1
 SkillGain.Crafting = 1
 SkillGain.Defense = 1

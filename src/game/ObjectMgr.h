@@ -417,14 +417,6 @@ class ObjectMgr
             return mGameObjectForQuestSet.find(entry) != mGameObjectForQuestSet.end();
         }
 
-        bool IsGuildVaultGameObject(Player *player, uint64 guid) const
-        {
-            if(GameObject *go = ObjectAccessor::GetGameObject(*player, guid))
-                if(go->GetGoType() == GAMEOBJECT_TYPE_GUILD_BANK)
-                    return true;
-            return false;
-        }
-
         GossipText const* GetGossipText(uint32 Text_ID) const;
 
         WorldSafeLocsEntry const *GetClosestGraveYard(float x, float y, float z, uint32 MapId, uint32 team);

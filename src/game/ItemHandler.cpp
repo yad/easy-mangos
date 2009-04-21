@@ -516,7 +516,7 @@ void WorldSession::HandleSellItemOpcode( WorldPacket & recv_data )
     if(!itemguid)
         return;
 
-    Creature *pCreature = ObjectAccessor::GetNPCIfCanInteractWith(*_player, vendorguid,UNIT_NPC_FLAG_VENDOR);
+    Creature *pCreature = GetPlayer()->GetNPCIfCanInteractWith(vendorguid,UNIT_NPC_FLAG_VENDOR);
     if (!pCreature)
     {
         sLog.outDebug( "WORLD: HandleSellItemOpcode - Unit (GUID: %u) not found or you can't interact with him.", uint32(GUID_LOPART(vendorguid)) );
@@ -621,7 +621,7 @@ void WorldSession::HandleBuybackItem(WorldPacket & recv_data)
 
     recv_data >> vendorguid >> slot;
 
-    Creature *pCreature = ObjectAccessor::GetNPCIfCanInteractWith(*_player, vendorguid,UNIT_NPC_FLAG_VENDOR);
+    Creature *pCreature = GetPlayer()->GetNPCIfCanInteractWith(vendorguid,UNIT_NPC_FLAG_VENDOR);
     if (!pCreature)
     {
         sLog.outDebug( "WORLD: HandleBuybackItem - Unit (GUID: %u) not found or you can't interact with him.", uint32(GUID_LOPART(vendorguid)) );
@@ -708,7 +708,7 @@ void WorldSession::SendListInventory( uint64 vendorguid )
 {
     sLog.outDebug(  "WORLD: Sent SMSG_LIST_INVENTORY" );
 
-    Creature *pCreature = ObjectAccessor::GetNPCIfCanInteractWith(*_player, vendorguid,UNIT_NPC_FLAG_VENDOR);
+    Creature *pCreature = GetPlayer()->GetNPCIfCanInteractWith(vendorguid,UNIT_NPC_FLAG_VENDOR);
     if (!pCreature)
     {
         sLog.outDebug( "WORLD: SendListInventory - Unit (GUID: %u) not found or you can't interact with him.", uint32(GUID_LOPART(vendorguid)) );
@@ -825,9 +825,22 @@ void WorldSession::HandleAutoStoreBagItemOpcode( WorldPacket & recv_data )
     _player->StoreItem( dest, pItem, true );
 }
 
-void WorldSession::HandleBuyBankSlotOpcode(WorldPacket& /*recvPacket*/)
+void WorldSession::HandleBuyBankSlotOpcode(WorldPacket& recvPacket)
 {
+    CHECK_PACKET_SIZE(recvPacket, 8);
+
     sLog.outDebug("WORLD: CMSG_BUY_BANK_SLOT");
+
+    uint64 guid;
+    recvPacket >> guid;
+
+    // cheating protection
+    Creature *pCreature = GetPlayer()->GetNPCIfCanInteractWith(guid, UNIT_NPC_FLAG_BANKER);
+    if(!pCreature)
+    {
+        sLog.outDebug( "WORLD: HandleBuyBankSlotOpcode - Unit (GUID: %u) not found or you can't interact with him.", uint32(GUID_LOPART(guid)) );
+        return;
+    }
 
     uint32 slot = _player->GetByteValue(PLAYER_BYTES_2, 2);
 

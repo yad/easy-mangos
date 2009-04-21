@@ -103,7 +103,7 @@ bool ChatHandler::HandleNpcWhisperCommand(const char* args)
     char* text = strtok(NULL, "");
 
     uint64 guid = m_session->GetPlayer()->GetSelection();
-    Creature* pCreature = ObjectAccessor::GetCreature(*m_session->GetPlayer(), guid);
+    Creature* pCreature = m_session->GetPlayer()->GetMap()->GetCreature(guid);
 
     if(!pCreature || !receiver_str || !text)
     {
@@ -149,7 +149,7 @@ bool ChatHandler::HandleNotifyCommand(const char* args)
 }
 
 //Enable\Dissable GM Mode
-bool ChatHandler::HandleGMmodeCommand(const char* args)
+bool ChatHandler::HandleGMCommand(const char* args)
 {
     if(!*args)
     {
@@ -223,7 +223,7 @@ bool ChatHandler::HandleGMChatCommand(const char* args)
 }
 
 //Enable\Dissable Invisible mode
-bool ChatHandler::HandleVisibleCommand(const char* args)
+bool ChatHandler::HandleGMVisibleCommand(const char* args)
 {
     if (!*args)
     {
@@ -362,7 +362,7 @@ bool ChatHandler::HandleNamegoCommand(const char* args)
         if (HasLowerSecurity(chr, 0))
             return false;
 
-        if(chr->IsBeingTeleported()==true)
+        if(chr->IsBeingTeleported())
         {
             PSendSysMessage(LANG_IS_TELEPORTED, nameLink.c_str());
             SetSentErrorMessage(true);
@@ -511,7 +511,7 @@ bool ChatHandler::HandleGonameCommand(const char* args)
             // remember current position as entry point for return at bg end teleportation
             _player->SetBattleGroundEntryPoint(_player->GetMapId(),_player->GetPositionX(),_player->GetPositionY(),_player->GetPositionZ(),_player->GetOrientation());
         }
-        else if(cMap->IsDungeon() && cMap->Instanceable())
+        else if(cMap->IsDungeon())
         {
             // we have to go to instance, and can go to player only if:
             //   1) we are in his group (either as leader or as member)
@@ -1971,35 +1971,6 @@ bool ChatHandler::HandleWhispersCommand(const char* args)
     return false;
 }
 
-//Play sound
-bool ChatHandler::HandlePlaySoundCommand(const char* args)
-{
-    // USAGE: .debug playsound #soundid
-    // #soundid - ID decimal number from SoundEntries.dbc (1st column)
-    // this file have about 5000 sounds.
-    // In this realization only caller can hear this sound.
-    if( *args )
-    {
-        uint32 dwSoundId = atoi((char*)args);
-
-        if( !sSoundEntriesStore.LookupEntry(dwSoundId) )
-        {
-            PSendSysMessage(LANG_SOUND_NOT_EXIST, dwSoundId);
-            SetSentErrorMessage(true);
-            return false;
-        }
-
-        WorldPacket data(SMSG_PLAY_OBJECT_SOUND,4+8);
-        data << uint32(dwSoundId) << m_session->GetPlayer()->GetGUID();
-        m_session->SendPacket(&data);
-
-        PSendSysMessage(LANG_YOU_HEAR_SOUND, dwSoundId);
-        return true;
-    }
-
-    return false;
-}
-
 //Save all players in the world
 bool ChatHandler::HandleSaveAllCommand(const char* /*args*/)
 {
@@ -2089,7 +2060,7 @@ bool ChatHandler::HandleSendMailCommand(const char* args)
 }
 
 // teleport player to given game_tele.entry
-bool ChatHandler::HandleNameTeleCommand(const char * args)
+bool ChatHandler::HandleTeleNameCommand(const char * args)
 {
     if(!*args)
         return false;
@@ -2166,7 +2137,7 @@ bool ChatHandler::HandleNameTeleCommand(const char * args)
 }
 
 //Teleport group to given game_tele.entry
-bool ChatHandler::HandleGroupTeleCommand(const char * args)
+bool ChatHandler::HandleTeleGroupCommand(const char * args)
 {
     if(!*args)
         return false;
@@ -2461,6 +2432,11 @@ bool ChatHandler::HandleGoZoneXYCommand(const char* args)
 
     float x = (float)atof(px);
     float y = (float)atof(py);
+
+    // prevent accept wrong numeric args
+    if (x==0.0f && *px!='0' || y==0.0f && *py!='0')
+        return false;
+
     uint32 areaid = cAreaId ? (uint32)atoi(cAreaId) : _player->GetZoneId();
 
     AreaTableEntry const* areaEntry = GetAreaEntryByAreaID(areaid);
@@ -2557,7 +2533,7 @@ bool ChatHandler::HandleGoGridCommand(const char* args)
     return true;
 }
 
-bool ChatHandler::HandleDrunkCommand(const char* args)
+bool ChatHandler::HandleModifyDrunkCommand(const char* args)
 {
     if(!*args)    return false;
 
