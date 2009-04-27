@@ -66,7 +66,7 @@ void GuardAI::EnterEvadeMode()
         i_state = STATE_NORMAL;
 
         i_victimGuid = 0;
-        m_creature->CombatStop();
+        m_creature->CombatStop(true);
         m_creature->DeleteThreatList();
         return;
     }
@@ -97,7 +97,7 @@ void GuardAI::EnterEvadeMode()
     m_creature->RemoveAllAuras();
     m_creature->DeleteThreatList();
     i_victimGuid = 0;
-    m_creature->CombatStop();
+    m_creature->CombatStop(true);
     i_state = STATE_NORMAL;
 
     // Remove TargetedMovementGenerator from MotionMaster stack list, and add HomeMovementGenerator instead
@@ -137,11 +137,11 @@ void GuardAI::AttackStart(Unit *u)
     //    DEBUG_LOG("Creature %s tagged a victim to kill [guid=%u]", i_creature.GetName(), u->GetGUIDLow());
     if(m_creature->Attack(u,true))
     {
+        i_victimGuid = u->GetGUID();
+        m_creature->AddThreat(u, 0.0f);
         m_creature->SetInCombatWith(u);
         u->SetInCombatWith(m_creature);
 
-        m_creature->AddThreat(u, 0.0f);
-        i_victimGuid = u->GetGUID();
         m_creature->GetMotionMaster()->MoveChase(u);
     }
 }

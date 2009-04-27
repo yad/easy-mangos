@@ -80,7 +80,7 @@ void WorldSession::HandlePetitionBuyOpcode(WorldPacket & recv_data)
     sLog.outDebug("Petitioner with GUID %u tried sell petition: name %s", GUID_LOPART(guidNPC), name.c_str());
 
     // prevent cheating
-    Creature *pCreature = ObjectAccessor::GetNPCIfCanInteractWith(*_player, guidNPC,UNIT_NPC_FLAG_PETITIONER);
+    Creature *pCreature = GetPlayer()->GetNPCIfCanInteractWith(guidNPC,UNIT_NPC_FLAG_PETITIONER);
     if (!pCreature)
     {
         sLog.outDebug("WORLD: HandlePetitionBuyOpcode - Unit (GUID: %u) not found or you can't interact with him.", GUID_LOPART(guidNPC));
@@ -279,8 +279,8 @@ void WorldSession::HandlePetitionShowSignOpcode(WorldPacket & recv_data)
 
     for(uint8 i = 1; i <= signs; i++)
     {
-        Field *fields = result->Fetch();
-        uint64 plguid = fields[0].GetUInt64();
+        Field *fields2 = result->Fetch();
+        uint64 plguid = fields2[0].GetUInt64();
 
         data << plguid;                                     // Player GUID
         data << (uint32)0;                                  // there 0 ...
@@ -690,8 +690,8 @@ void WorldSession::HandleOfferPetitionOpcode(WorldPacket & recv_data)
 
     for(uint8 i = 1; i <= signs; i++)
     {
-        Field *fields = result->Fetch();
-        uint64 plguid = fields[0].GetUInt64();
+        Field *fields2 = result->Fetch();
+        plguid = fields2[0].GetUInt64();
 
         data << plguid;                                     // Player GUID
         data << (uint32)0;                                  // there 0 ...
@@ -904,7 +904,7 @@ void WorldSession::HandlePetitionShowListOpcode(WorldPacket & recv_data)
 
 void WorldSession::SendPetitionShowList(uint64 guid)
 {
-    Creature *pCreature = ObjectAccessor::GetNPCIfCanInteractWith(*_player, guid, UNIT_NPC_FLAG_PETITIONER);
+    Creature *pCreature = GetPlayer()->GetNPCIfCanInteractWith(guid, UNIT_NPC_FLAG_PETITIONER);
     if (!pCreature)
     {
         sLog.outDebug("WORLD: HandlePetitionShowListOpcode - Unit (GUID: %u) not found or you can't interact with him.", uint32(GUID_LOPART(guid)));

@@ -600,12 +600,12 @@ void ObjectMgr::LoadCreatureTemplates()
                 sLog.outErrorDb("Creature (Entry: %u) has non-existing PetSpellDataId (%u)", cInfo->Entry, cInfo->PetSpellDataId);
         }
 
-        for(int i = 0; i < CREATURE_MAX_SPELLS; ++i)
+        for(int j = 0; j < CREATURE_MAX_SPELLS; ++j)
         {
-            if(cInfo->spells[i] && !sSpellStore.LookupEntry(cInfo->spells[i]))
+            if(cInfo->spells[j] && !sSpellStore.LookupEntry(cInfo->spells[j]))
             {
-                sLog.outErrorDb("Creature (Entry: %u) has non-existing Spell%d (%u), set to 0", cInfo->Entry, i+1,cInfo->spells[i]);
-                const_cast<CreatureInfo*>(cInfo)->spells[i] = 0;
+                sLog.outErrorDb("Creature (Entry: %u) has non-existing Spell%d (%u), set to 0", cInfo->Entry, j+1,cInfo->spells[j]);
+                const_cast<CreatureInfo*>(cInfo)->spells[j] = 0;
             }
         }
 
@@ -1081,7 +1081,15 @@ void ObjectMgr::LoadGameobjects()
         data.rotation3      = fields[10].GetFloat();
         data.spawntimesecs  = fields[11].GetInt32();
         data.animprogress   = fields[12].GetUInt32();
-        data.go_state       = fields[13].GetUInt32();
+
+        uint32 go_state     = fields[13].GetUInt32();
+        if (go_state >= MAX_GO_STATE)
+        {
+            sLog.outErrorDb("Table `gameobject` have gameobject (GUID: %u Entry: %u) with invalid `state` (%u) value, skip",guid,data.id,go_state);
+            continue;
+        }
+        data.go_state       = GOState(go_state);
+
         data.spawnMask      = fields[14].GetUInt8();
         data.phaseMask      = fields[15].GetUInt16();
         int16 gameEvent     = fields[16].GetInt16();
@@ -2686,15 +2694,15 @@ void ObjectMgr::LoadGroups()
     result = CharacterDatabase.Query("SELECT memberGuid, assistant, subgroup, leaderGuid FROM group_member ORDER BY leaderGuid");
     if(!result)
     {
-        barGoLink bar( 1 );
-        bar.step();
+        barGoLink bar2( 1 );
+        bar2.step();
     }
     else
     {
-        barGoLink bar( result->GetRowCount() );
+        barGoLink bar2( result->GetRowCount() );
         do
         {
-            bar.step();
+            bar2.step();
             Field *fields = result->Fetch();
             count++;
             leaderGuid = MAKE_NEW_GUID(fields[3].GetUInt32(), 0, HIGHGUID_PLAYER);
@@ -2746,15 +2754,15 @@ void ObjectMgr::LoadGroups()
 
     if(!result)
     {
-        barGoLink bar( 1 );
-        bar.step();
+        barGoLink bar2( 1 );
+        bar2.step();
     }
     else
     {
-        barGoLink bar( result->GetRowCount() );
+        barGoLink bar2( result->GetRowCount() );
         do
         {
-            bar.step();
+            bar2.step();
             Field *fields = result->Fetch();
             count++;
             leaderGuid = MAKE_NEW_GUID(fields[0].GetUInt32(), 0, HIGHGUID_PLAYER);
@@ -3141,7 +3149,7 @@ void ObjectMgr::LoadQuests()
                 {
                     sLog.outErrorDb("Quest %u has `ReqSpellCast%d` = %u but spell %u does not exist, quest can't be done.",
                         qinfo->GetQuestId(),j+1,id,id);
-                    // no changes, quest can't be done for this requirement
+                    continue;
                 }
 
                 if(!qinfo->ReqCreatureOrGOId[j])
@@ -3680,6 +3688,16 @@ void ObjectMgr::LoadScripts(ScriptMapMap& scripts, char const* tablename)
                 break;
             }
 
+            case SCRIPT_COMMAND_EMOTE:
+            {
+                if(!sEmotesStore.LookupEntry(tmp.datalong))
+                {
+                    sLog.outErrorDb("Table `%s` has invalid emote id (datalong = %u) in SCRIPT_COMMAND_EMOTE for script id %u",tablename,tmp.datalong,tmp.id);
+                    continue;
+                }
+                break;
+            }
+
             case SCRIPT_COMMAND_TELEPORT_TO:
             {
                 if(!sMapStore.LookupEntry(tmp.datalong))
@@ -4164,23 +4182,6 @@ void ObjectMgr::LoadInstanceTemplate()
 
     sLog.outString( ">> Loaded %u Instance Template definitions", sInstanceTemplate.RecordCount );
     sLog.outString();
-}
-
-bool ObjectMgr::IsGameObjectOfTypeInRange(Player *player, uint64 guid, GameobjectTypes type) const
-{
-    if(GameObject *go = ObjectAccessor::GetGameObject(*player, guid))
-    {
-        if(go->GetGoType() == type)
-        {
-            // TODO: find out how the client calculates the maximal usage distance to spellless working
-            // gameobjects like guildbanks and mailboxes - 10.0 is a just an abitrary choosen number
-            if (go->IsWithinDistInMap(player, 10.0f))
-                return true;
-            sLog.outError("IsGameObjectOfTypeInRange: GameObject '%s' [GUID: %u] is too far away from player %s [GUID: %u] to be used by him (distance=%f, maximal 10 is allowed)", go->GetGOInfo()->name,
-                    go->GetGUIDLow(), player->GetName(), player->GetGUIDLow(), go->GetDistance(player));
-        }
-    }
-    return false;
 }
 
 GossipText const *ObjectMgr::GetGossipText(uint32 Text_ID) const
@@ -7398,13 +7399,16 @@ void ObjectMgr::CheckScripts(ScriptMapMap const& scripts,std::set<int32>& ids)
     {
         for(ScriptMap::const_iterator itrM = itrMM->second.begin(); itrM != itrMM->second.end(); ++itrM)
         {
-            if(itrM->second.dataint)
+            switch(itrM->second.command)
             {
-                if(!GetMangosStringLocale (itrM->second.dataint))
-                    sLog.outErrorDb( "Table `db_script_string` has not existed string id  %u", itrM->first);
+                case SCRIPT_COMMAND_TALK:
+                {
+                    if(!GetMangosStringLocale (itrM->second.dataint))
+                        sLog.outErrorDb( "Table `db_script_string` not has string id  %u used db script (ID: %u)", itrM->second.dataint, itrMM->first);
 
-                if(ids.count(itrM->second.dataint))
-                    ids.erase(itrM->second.dataint);
+                    if(ids.count(itrM->second.dataint))
+                        ids.erase(itrM->second.dataint);
+                }
             }
         }
     }

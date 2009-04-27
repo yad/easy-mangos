@@ -60,8 +60,8 @@ AggressorAI::MoveInLineOfSight(Unit *u)
             }
             else if(sMapStore.LookupEntry(m_creature->GetMapId())->IsDungeon())
             {
-                u->SetInCombatWith(m_creature);
                 m_creature->AddThreat(u, 0.0f);
+                u->SetInCombatWith(m_creature);
             }
         }
     }
@@ -73,7 +73,7 @@ void AggressorAI::EnterEvadeMode()
     {
         DEBUG_LOG("Creature stopped attacking cuz his dead [guid=%u]", m_creature->GetGUIDLow());
         i_victimGuid = 0;
-        m_creature->CombatStop();
+        m_creature->CombatStop(true);
         m_creature->DeleteThreatList();
         return;
     }
@@ -114,7 +114,7 @@ void AggressorAI::EnterEvadeMode()
 
     m_creature->DeleteThreatList();
     i_victimGuid = 0;
-    m_creature->CombatStop();
+    m_creature->CombatStop(true);
     m_creature->SetLootRecipient(NULL);
 }
 
@@ -152,12 +152,12 @@ AggressorAI::AttackStart(Unit *u)
 
     if(m_creature->Attack(u,true))
     {
-        m_creature->SetInCombatWith(u);
-        u->SetInCombatWith(m_creature);
-
-        m_creature->AddThreat(u, 0.0f);
         //    DEBUG_LOG("Creature %s tagged a victim to kill [guid=%u]", m_creature->GetName(), u->GetGUIDLow());
         i_victimGuid = u->GetGUID();
+
+        m_creature->AddThreat(u, 0.0f);
+        m_creature->SetInCombatWith(u);
+        u->SetInCombatWith(m_creature);
 
         m_creature->GetMotionMaster()->MoveChase(u);
     }

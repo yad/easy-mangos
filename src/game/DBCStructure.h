@@ -419,7 +419,7 @@ struct AchievementCriteriaEntry
         {
             uint32  skillLine;                              // 3
             uint32  spellCount;                             // 4
-        } learn_skilline_spell;
+        } learn_skillline_spell;
 
         // ACHIEVEMENT_CRITERIA_TYPE_WIN_DUEL               = 76
         struct
@@ -509,7 +509,8 @@ struct AreaTableEntry
 struct AreaGroupEntry
 {
     uint32  AreaGroupId;                                    // 0
-    uint32  AreaId[7];                                      // 1-7
+    uint32  AreaId[6];                                      // 1-6
+    uint32  nextGroup;                                      // 7 index of next group
 };
 
 struct AreaTriggerEntry
@@ -745,6 +746,17 @@ struct DurabilityQualityEntry
 {
     uint32    Id;                                           // 0
     float     quality_mod;                                  // 1
+};
+
+struct EmotesEntry
+{
+    uint32  Id;                                             // 0
+    //char*   Name;                                         // 1, internal name
+    //uint32  AnimationId;                                  // 2, ref to animationData
+    uint32  Flags;                                          // 3, bitmask, may be unit_flags
+    uint32  EmoteType;                                      // 4, Can be 0, 1 or 2 (determine how emote are shown)
+    uint32  UnitStandState;                                 // 5, uncomfirmed, may be enum UnitStandStateType
+    //uint32  SoundId;                                      // 6, ref to soundEntries
 };
 
 struct EmotesTextEntry
@@ -1441,15 +1453,17 @@ struct StableSlotPricesEntry
     uint32 Price;
 };
 
-/*struct SummonPropertiesEntry
+/* unused currently
+struct SummonPropertiesEntry
 {
     uint32  Id;                                             // 0
-    uint32  Group;                                          // 1, 0 - can't be controlled?, 1 - something guardian?, 2 - pet?, 3 - something controllable?, 4 - taxi/mount?
-    uint32  Unk2;                                           // 2, 14 rows > 0
-    uint32  Type;                                           // 3, see enum
-    uint32  Slot;                                           // 4, 0-6
-    uint32  Flags;                                          // 5
-};*/
+    uint32  Group;                                          // 1, enum SummonPropGroup,  0 - can't be controlled?, 1 - something guardian?, 2 - pet?, 3 - something controllable?, 4 - taxi/mount?
+    uint32  Unk2;                                           // 2,                        14 rows > 0
+    uint32  Type;                                           // 3, enum SummonPropType
+    uint32  Slot;                                           // 4,                        0-6
+    uint32  Flags;                                          // 5, enum SummonPropFlags
+};
+*/
 
 #define MAX_TALENT_RANK 5
 #define MAX_PET_TALENT_RANK 3                               // use in calculations, expected <= MAX_TALENT_RANK
@@ -1627,6 +1641,18 @@ struct WorldMapAreaEntry
     // int32   dungeonMap_id;                               // 9 pointer to DungeonMap.dbc (owerride x1,x2,y1,y2 coordinates)
 };
 
+#define MAX_WORLD_MAP_OVERLAY_AREA_IDX 4
+
+struct WorldMapOverlayEntry
+{
+    uint32    ID;                                           // 0
+    //uint32    worldMapAreaId;                             // 1 idx in WorldMapArea.dbc
+    uint32    areatableID[MAX_WORLD_MAP_OVERLAY_AREA_IDX];  // 2-5
+                                                            // 6-7 always 0, possible part of areatableID[]
+    //char* internal_name                                   // 8
+                                                            // 9-16 some ints
+};
+
 struct WorldSafeLocsEntry
 {
     uint32    ID;                                           // 0
@@ -1636,12 +1662,6 @@ struct WorldSafeLocsEntry
     float     z;                                            // 4
     //char*   name[16]                                      // 5-20 name, unused
                                                             // 21 name flags, unused
-};
-
-struct WorldMapOverlayEntry
-{
-    uint32    ID;                                           // 0
-    uint32    areatableID[4];                               // 2-5
 };
 
 // GCC have alternative #pragma pack() syntax and old gcc version not support pack(pop), also any gcc version not support it at some platform
