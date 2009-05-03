@@ -411,6 +411,12 @@ void Group::Disband(bool hideDestroy)
                 player->SetOriginalGroup(NULL);
             else
                 player->SetGroup(NULL);
+			// Restore original faction if needed
+			if(sWorld.getConfig(CONFIG_ALLOW_TWO_SIDE_INTERACTION_GROUP))
+			{
+				player->setFactionForRace(player->getRace());
+				sLog.outDebug( "WORLD: Group Interfaction Interactions - Restore original faction (Disband)" );
+			}
         }
 
         // quest related GO state dependent from raid membership
@@ -453,13 +459,6 @@ void Group::Disband(bool hideDestroy)
         CharacterDatabase.PExecute("DELETE FROM group_member WHERE leaderGuid='%u'", GUID_LOPART(m_leaderGuid));
         CharacterDatabase.CommitTransaction();
         ResetInstances(INSTANCE_RESET_GROUP_DISBAND, NULL);
-
-		// Restore original faction if needed
-		if(sWorld.getConfig(CONFIG_ALLOW_TWO_SIDE_INTERACTION_GROUP))
-		{
-			player->setFactionForRace(player->getRace());
-			sLog.outDebug( "WORLD: Group Interfaction Interactions - Restore original faction (Disband)" );
-		}
     }
 
     m_leaderGuid = 0;
