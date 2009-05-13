@@ -1,8 +1,10 @@
 #ifndef AUCTION_HOUSE_BOT_H
 #define AUCTION_HOUSE_BOT_H
+
 #include "Common.h"
 #include "Log.h"
 #include "Config/ConfigEnv.h"
+
 #define AHB_GREY        0
 #define AHB_WHITE       1
 #define AHB_GREEN       2
@@ -912,8 +914,21 @@ public:
     {
     }
 };
-void AuctionHouseBot();
-void AuctionHouseBotInit();
-void AuctionHouseBotLoadValues(AHBConfig*);
-void AuctionHouseBotCommands(uint32, uint32, uint32, char*);
+
+class AuctionHouseBot
+{
+public:
+    AuctionHouseBot();
+    ~AuctionHouseBot();
+    void Update();
+    void Initialize();
+    void LoadValues(AHBConfig*);
+    void Commands(uint32, uint32, uint32, char*);
+private:
+    static void addNewAuctions(Player *AHBplayer, AHBConfig *config);
+    static void addNewAuctionBuyerBotBid(Player *AHBplayer, AHBConfig *config, WorldSession *session);
+};
+
+#define auctionbot MaNGOS::Singleton<AuctionHouseBot>::Instance()
+
 #endif

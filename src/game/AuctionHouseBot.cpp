@@ -13,6 +13,10 @@
 #include <vector>
 #include <iostream>
 
+#include "Policies/SingletonImp.h"
+
+INSTANTIATE_SINGLETON_1( AuctionHouseBot );
+
 using namespace std;
 
 static bool debug_Out = sConfig.GetIntDefault("AuctionHouseBot.DEBUG", 0);
@@ -65,7 +69,7 @@ static inline uint32 minValue(uint32 a, uint32 b)
 ///////////////////////////////////////////////////////////////////////////////
 //
 ///////////////////////////////////////////////////////////////////////////////
-static void addNewAuctions(Player *AHBplayer, AHBConfig *config)
+void AuctionHouseBot::addNewAuctions(Player *AHBplayer, AHBConfig *config)
 {
     if (!AHBSeller)
         return;
@@ -473,7 +477,7 @@ static void addNewAuctions(Player *AHBplayer, AHBConfig *config)
     }
 }
 
-static void addNewAuctionBuyerBotBid(Player *AHBplayer, AHBConfig *config, WorldSession *session)
+void AuctionHouseBot::addNewAuctionBuyerBotBid(Player *AHBplayer, AHBConfig *config, WorldSession *session)
 {
     if (!AHBBuyer)
         return;
@@ -776,7 +780,7 @@ static void addNewAuctionBuyerBotBid(Player *AHBplayer, AHBConfig *config, World
 ///////////////////////////////////////////////////////////////////////////////
 //
 ///////////////////////////////////////////////////////////////////////////////
-void AuctionHouseBot()
+void AuctionHouseBot::Update()
 {
     time_t _newrun = time(NULL);
     if ((!AHBSeller) && (!AHBBuyer))
@@ -813,7 +817,19 @@ void AuctionHouseBot()
 ///////////////////////////////////////////////////////////////////////////////
 //
 ///////////////////////////////////////////////////////////////////////////////
-void AuctionHouseBotInit()
+AuctionHouseBot::AuctionHouseBot()
+{
+}
+///////////////////////////////////////////////////////////////////////////////
+//
+///////////////////////////////////////////////////////////////////////////////
+AuctionHouseBot::~AuctionHouseBot()
+{
+}
+///////////////////////////////////////////////////////////////////////////////
+//
+///////////////////////////////////////////////////////////////////////////////
+void AuctionHouseBot::Initialize()
 {
     AHBSeller = sConfig.GetBoolDefault("AuctionHouseBot.EnableSeller", 0);
     AHBBuyer = sConfig.GetBoolDefault("AuctionHouseBot.EnableBuyer", 0);
@@ -825,10 +841,10 @@ void AuctionHouseBotInit()
 
     if(!sWorld.getConfig(CONFIG_ALLOW_TWO_SIDE_INTERACTION_AUCTION))
     {
-        AuctionHouseBotLoadValues(&AllianceConfig);
-        AuctionHouseBotLoadValues(&HordeConfig);
+        LoadValues(&AllianceConfig);
+        LoadValues(&HordeConfig);
     }
-    AuctionHouseBotLoadValues(&NeutralConfig);
+    LoadValues(&NeutralConfig);
 
     if (AHBSeller)
     {
@@ -1074,7 +1090,7 @@ void AuctionHouseBotInit()
     sLog.outString("AuctionHouseBot now includes AHBuyer by Kerbe and Paradox");
 
 }
-void AuctionHouseBotCommands(uint32 command, uint32 ahMapID, uint32 col, char* args)
+void AuctionHouseBot::Commands(uint32 command, uint32 ahMapID, uint32 col, char* args)
 {
     AHBConfig *config;
     switch (ahMapID)
@@ -1270,7 +1286,7 @@ void AuctionHouseBotCommands(uint32 command, uint32 ahMapID, uint32 col, char* a
         break;
     }
 }
-void AuctionHouseBotLoadValues(AHBConfig *config)
+void AuctionHouseBot::LoadValues(AHBConfig *config)
 {
     if (AHBSeller)
     {
