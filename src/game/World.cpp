@@ -62,6 +62,7 @@
 #include "WaypointManager.h"
 #include "GMTicketMgr.h"
 #include "Util.h"
+#include "AuctionHouseBot.h"
 
 INSTANTIATE_SINGLETON_1( World );
 
@@ -1421,6 +1422,9 @@ void World::SetInitialWorldSettings()
     uint32 nextGameEvent = gameeventmgr.Initialize();
     m_timers[WUPDATE_EVENTS].SetInterval(nextGameEvent);    //depend on next event
 
+    sLog.outString("Initialize AuctionHouseBot...");
+    AuctionHouseBotInit();
+
     sLog.outString( "WORLD: World initialized" );
 }
 
@@ -1490,6 +1494,7 @@ void World::Update(uint32 diff)
     /// <ul><li> Handle auctions when the timer has passed
     if (m_timers[WUPDATE_AUCTIONS].Passed())
     {
+        AuctionHouseBot();
         m_timers[WUPDATE_AUCTIONS].Reset();
 
         ///- Update mails (return old mails with item, or delete them)
