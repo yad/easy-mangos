@@ -10,7 +10,6 @@
 #include "World.h"
 #include "WorldSession.h"
 #include "time.h"
-#include <vector>
 #include <iostream>
 
 #include "Policies/SingletonImp.h"
@@ -19,56 +18,36 @@ INSTANTIATE_SINGLETON_1( AuctionHouseBot );
 
 using namespace std;
 
-static bool debug_Out = sConfig.GetIntDefault("AuctionHouseBot.DEBUG", 0);
+AuctionHouseBot::AuctionHouseBot()
+{
+    AHBSeller = 0;
+    AHBBuyer = 0;
 
-static vector<uint32> npcItems;
-static vector<uint32> lootItems;
-static vector<uint32> greyTradeGoodsBin;
-static vector<uint32> whiteTradeGoodsBin;
-static vector<uint32> greenTradeGoodsBin;
-static vector<uint32> blueTradeGoodsBin;
-static vector<uint32> purpleTradeGoodsBin;
-static vector<uint32> orangeTradeGoodsBin;
-static vector<uint32> yellowTradeGoodsBin;
-static vector<uint32> greyItemsBin;
-static vector<uint32> whiteItemsBin;
-static vector<uint32> greenItemsBin;
-static vector<uint32> blueItemsBin;
-static vector<uint32> purpleItemsBin;
-static vector<uint32> orangeItemsBin;
-static vector<uint32> yellowItemsBin;
+    Vendor_Items = 0;
+    Loot_Items = 0;
+    Other_Items = 0;
 
-static bool AHBSeller = 0;
-static bool AHBBuyer = 0;
+    No_Bind = 0;
+    Bind_When_Picked_Up = 0;
+    Bind_When_Equipped = 0;
+    Bind_When_Use = 0;
+    Bind_Quest_Item = 0;
 
-static bool Vendor_Items = 0;
-static bool Loot_Items = 0;
-static bool Other_Items = 0;
+    AllianceConfig = AHBConfig(2);
+    HordeConfig = AHBConfig(6);
+    NeutralConfig = AHBConfig(7);
+}
 
-static bool No_Bind = 0;
-static bool Bind_When_Picked_Up = 0;
-static bool Bind_When_Equipped = 0;
-static bool Bind_When_Use = 0;
-static bool Bind_Quest_Item = 0;
+AuctionHouseBot::~AuctionHouseBot()
+{
 
-static AHBConfig AllianceConfig = AHBConfig(2);
-static AHBConfig HordeConfig = AHBConfig(6);
-static AHBConfig NeutralConfig = AHBConfig(7);
-time_t _lastrun_a;
-time_t _lastrun_h;
-time_t _lastrun_n;
+}
 
-///////////////////////////////////////////////////////////////////////////////
-//
-///////////////////////////////////////////////////////////////////////////////
-static inline uint32 minValue(uint32 a, uint32 b)
+inline uint32 AuctionHouseBot::minValue(uint32 a, uint32 b)
 {
     return a <= b ? a : b;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-//
-///////////////////////////////////////////////////////////////////////////////
 void AuctionHouseBot::addNewAuctions(Player *AHBplayer, AHBConfig *config)
 {
     if (!AHBSeller)
@@ -777,9 +756,7 @@ void AuctionHouseBot::addNewAuctionBuyerBotBid(Player *AHBplayer, AHBConfig *con
         delete auction;
     }
 }
-///////////////////////////////////////////////////////////////////////////////
-//
-///////////////////////////////////////////////////////////////////////////////
+
 void AuctionHouseBot::Update()
 {
     time_t _newrun = time(NULL);
@@ -814,21 +791,7 @@ void AuctionHouseBot::Update()
     }
     ObjectAccessor::Instance().RemoveObject(&_AHBplayer);
 }
-///////////////////////////////////////////////////////////////////////////////
-//
-///////////////////////////////////////////////////////////////////////////////
-AuctionHouseBot::AuctionHouseBot()
-{
-}
-///////////////////////////////////////////////////////////////////////////////
-//
-///////////////////////////////////////////////////////////////////////////////
-AuctionHouseBot::~AuctionHouseBot()
-{
-}
-///////////////////////////////////////////////////////////////////////////////
-//
-///////////////////////////////////////////////////////////////////////////////
+
 void AuctionHouseBot::Initialize()
 {
     AHBSeller = sConfig.GetBoolDefault("AuctionHouseBot.EnableSeller", 0);
@@ -1090,6 +1053,7 @@ void AuctionHouseBot::Initialize()
     sLog.outString("AuctionHouseBot now includes AHBuyer by Kerbe and Paradox");
 
 }
+
 void AuctionHouseBot::Commands(uint32 command, uint32 ahMapID, uint32 col, char* args)
 {
     AHBConfig *config;
@@ -1286,6 +1250,7 @@ void AuctionHouseBot::Commands(uint32 command, uint32 ahMapID, uint32 col, char*
         break;
     }
 }
+
 void AuctionHouseBot::LoadValues(AHBConfig *config)
 {
     if (AHBSeller)

@@ -1,9 +1,11 @@
 #ifndef AUCTION_HOUSE_BOT_H
 #define AUCTION_HOUSE_BOT_H
 
+#include "Player.h"
 #include "Common.h"
 #include "Log.h"
 #include "Config/ConfigEnv.h"
+#include "ace/Vector_T.h"
 
 #define AHB_GREY        0
 #define AHB_WHITE       1
@@ -28,6 +30,7 @@
 #define AHB_YELLOW_I    13
 #define AHBplayerAccount sConfig.GetIntDefault("AuctionHouseBot.Account", 0)
 #define AHBplayerGUID sConfig.GetIntDefault("AuctionHouseBot.GUID", 0)
+#define debug_Out sConfig.GetIntDefault("AuctionHouseBot.DEBUG", 0)
 #define ItemsPerCycle sConfig.GetIntDefault("AuctionHouseBot.ItemsPerCycle", 200)
 #define SellMethod sConfig.GetIntDefault("AuctionHouseBot.UseBuyPriceForSeller", 1)
 #define BuyMethod sConfig.GetIntDefault("AuctionHouseBot.UseBuyPriceForBuyer", 0)
@@ -917,6 +920,49 @@ public:
 
 class AuctionHouseBot
 {
+private:
+    ACE_Vector<uint32> npcItems;
+    ACE_Vector<uint32> lootItems;
+    ACE_Vector<uint32> greyTradeGoodsBin;
+    ACE_Vector<uint32> whiteTradeGoodsBin;
+    ACE_Vector<uint32> greenTradeGoodsBin;
+    ACE_Vector<uint32> blueTradeGoodsBin;
+    ACE_Vector<uint32> purpleTradeGoodsBin;
+    ACE_Vector<uint32> orangeTradeGoodsBin;
+    ACE_Vector<uint32> yellowTradeGoodsBin;
+    ACE_Vector<uint32> greyItemsBin;
+    ACE_Vector<uint32> whiteItemsBin;
+    ACE_Vector<uint32> greenItemsBin;
+    ACE_Vector<uint32> blueItemsBin;
+    ACE_Vector<uint32> purpleItemsBin;
+    ACE_Vector<uint32> orangeItemsBin;
+    ACE_Vector<uint32> yellowItemsBin;
+
+    bool AHBSeller; 
+    bool AHBBuyer;
+
+    bool Vendor_Items;
+    bool Loot_Items;
+    bool Other_Items;
+
+    bool No_Bind;
+    bool Bind_When_Picked_Up;
+    bool Bind_When_Equipped;
+    bool Bind_When_Use;
+    bool Bind_Quest_Item;
+
+    AHBConfig AllianceConfig;
+    AHBConfig HordeConfig;
+    AHBConfig NeutralConfig;
+
+    time_t _lastrun_a;
+    time_t _lastrun_h;
+    time_t _lastrun_n;
+
+    inline uint32 minValue(uint32 a, uint32 b);
+    void addNewAuctions(Player *AHBplayer, AHBConfig *config);
+    void addNewAuctionBuyerBotBid(Player *AHBplayer, AHBConfig *config, WorldSession *session);
+
 public:
     AuctionHouseBot();
     ~AuctionHouseBot();
@@ -924,9 +970,6 @@ public:
     void Initialize();
     void LoadValues(AHBConfig*);
     void Commands(uint32, uint32, uint32, char*);
-private:
-    static void addNewAuctions(Player *AHBplayer, AHBConfig *config);
-    static void addNewAuctionBuyerBotBid(Player *AHBplayer, AHBConfig *config, WorldSession *session);
 };
 
 #define auctionbot MaNGOS::Singleton<AuctionHouseBot>::Instance()
