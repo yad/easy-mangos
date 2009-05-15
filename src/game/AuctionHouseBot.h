@@ -1,9 +1,7 @@
 #ifndef AUCTION_HOUSE_BOT_H
 #define AUCTION_HOUSE_BOT_H
 
-#include "Player.h"
-#include "Common.h"
-#include "Log.h"
+#include "World.h"
 #include "Config/ConfigEnv.h"
 #include "ace/Vector_T.h"
 
@@ -28,12 +26,6 @@
 #define AHB_PURPLE_I    11
 #define AHB_ORANGE_I    12
 #define AHB_YELLOW_I    13
-#define AHBplayerAccount sConfig.GetIntDefault("AuctionHouseBot.Account", 0)
-#define AHBplayerGUID sConfig.GetIntDefault("AuctionHouseBot.GUID", 0)
-#define debug_Out sConfig.GetIntDefault("AuctionHouseBot.DEBUG", 0)
-#define ItemsPerCycle sConfig.GetIntDefault("AuctionHouseBot.ItemsPerCycle", 200)
-#define SellMethod sConfig.GetIntDefault("AuctionHouseBot.UseBuyPriceForSeller", 1)
-#define BuyMethod sConfig.GetIntDefault("AuctionHouseBot.UseBuyPriceForBuyer", 0)
 
 class AHBConfig
 {
@@ -118,6 +110,7 @@ private:
     uint32 purpleip;
     uint32 orangeip;
     uint32 yellowip;
+
 public:
     AHBConfig(uint32 ahid)
     {
@@ -938,8 +931,16 @@ private:
     ACE_Vector<uint32> orangeItemsBin;
     ACE_Vector<uint32> yellowItemsBin;
 
-    bool AHBSeller; 
+    bool AHBSeller;
     bool AHBBuyer;
+    bool BuyMethod;
+    bool SellMethod;
+
+    uint32 AHBplayerAccount;
+    uint32 AHBplayerGUID;
+    uint32 ItemsPerCycle;
+
+    bool debug_Out;
 
     bool Vendor_Items;
     bool Loot_Items;
@@ -959,7 +960,7 @@ private:
     time_t _lastrun_h;
     time_t _lastrun_n;
 
-    inline uint32 minValue(uint32 a, uint32 b);
+    inline uint32 minValue(uint32 a, uint32 b) { return a <= b ? a : b; };
     void addNewAuctions(Player *AHBplayer, AHBConfig *config);
     void addNewAuctionBuyerBotBid(Player *AHBplayer, AHBConfig *config, WorldSession *session);
 
@@ -970,6 +971,7 @@ public:
     void Initialize();
     void LoadValues(AHBConfig*);
     void Commands(uint32, uint32, uint32, char*);
+    uint32 GetAHBplayerGUID() { return AHBplayerGUID; };
 };
 
 #define auctionbot MaNGOS::Singleton<AuctionHouseBot>::Instance()
