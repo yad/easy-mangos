@@ -3200,7 +3200,7 @@ Spell* Unit::FindCurrentSpellBySpellId(uint32 spell_id) const
     return NULL;
 }
 
-bool Unit::isInFront(Unit const* target, float distance,  float arc) const
+bool Unit::isInFrontInMap(Unit const* target, float distance,  float arc) const
 {
     return IsWithinDistInMap(target, distance) && HasInArc( arc, target );
 }
@@ -3210,7 +3210,7 @@ void Unit::SetInFront(Unit const* target)
     SetOrientation(GetAngle(target));
 }
 
-bool Unit::isInBack(Unit const* target, float distance, float arc) const
+bool Unit::isInBackInMap(Unit const* target, float distance, float arc) const
 {
     return IsWithinDistInMap(target, distance) && !HasInArc( 2 * M_PI - arc, target );
 }
@@ -9070,9 +9070,7 @@ bool Unit::isVisibleForOrDetect(Unit const* u, bool detect, bool inVisibleList, 
         return true;
 
     // If there is collision rogue is seen regardless of level difference
-    // TODO: check sizes in DB
-    float distance = GetDistance(u);
-    if (distance < 0.24f)
+    if (IsWithinDist(u,0.24f))
         return true;
 
     //If a mob or player is stunned he will not be able to detect stealth
@@ -9083,14 +9081,14 @@ bool Unit::isVisibleForOrDetect(Unit const* u, bool detect, bool inVisibleList, 
     if(u->GetTypeId() != TYPEID_PLAYER)
     {
         //Always invisible from back and out of aggro range
-        bool isInFront = u->isInFront(this,((Creature const*)u)->GetAttackDistance(this));
+        bool isInFront = u->isInFrontInMap(this,((Creature const*)u)->GetAttackDistance(this));
         if(!isInFront)
             return false;
     }
     else
     {
         //Always invisible from back
-        bool isInFront = u->isInFront(this,(GetTypeId()==TYPEID_PLAYER || GetCharmerOrOwnerGUID()) ? World::GetMaxVisibleDistanceForPlayer() : World::GetMaxVisibleDistanceForCreature());
+        bool isInFront = u->isInFrontInMap(this,(GetTypeId()==TYPEID_PLAYER || GetCharmerOrOwnerGUID()) ? World::GetMaxVisibleDistanceForPlayer() : World::GetMaxVisibleDistanceForCreature());
         if(!isInFront)
             return false;
     }
@@ -9116,7 +9114,7 @@ bool Unit::isVisibleForOrDetect(Unit const* u, bool detect, bool inVisibleList, 
         //based on wowwiki every 5 mod we have 1 more level diff in calculation
         visibleDistance += (int32(u->GetTotalAuraModifier(SPELL_AURA_MOD_DETECT)) - stealthMod)/5.0f;
 
-        if(distance > visibleDistance)
+        if(!IsWithinDist(u,visibleDistance))
             return false;
     }
 
@@ -10398,20 +10396,30 @@ void CharmInfo::InitCharmCreateSpells()
 
 bool CharmInfo::AddSpellToAB(uint32 oldid, uint32 newid, ActiveStates newstate)
 {
+    // new spell already listed for example in case prepered switch to lesser rank in Pet::removeSpell
+    for(uint8 i = 0; i < 10; ++i)
+        if (PetActionBar[i].Type == ACT_DISABLED || PetActionBar[i].Type == ACT_ENABLED || PetActionBar[i].Type == ACT_PASSIVE)
+            if (newid && PetActionBar[i].SpellOrAction == newid)
+                return true;
+
+    // old spell can be leasted for example in case learn high rank
     for(uint8 i = 0; i < 10; ++i)
     {
-        if((PetActionBar[i].Type == ACT_DISABLED || PetActionBar[i].Type == ACT_ENABLED || PetActionBar[i].Type == ACT_PASSIVE) && PetActionBar[i].SpellOrAction == oldid)
+        if (PetActionBar[i].Type == ACT_DISABLED || PetActionBar[i].Type == ACT_ENABLED || PetActionBar[i].Type == ACT_PASSIVE)
         {
-            PetActionBar[i].SpellOrAction = newid;
-            if(!oldid)
+            if (PetActionBar[i].SpellOrAction == oldid)
             {
-                if(newstate == ACT_DECIDE)
-                    PetActionBar[i].Type = ACT_DISABLED;
-                else
-                    PetActionBar[i].Type = newstate;
-            }
+                PetActionBar[i].SpellOrAction = newid;
+                if (!oldid)
+                {
+                    if (newstate == ACT_DECIDE)
+                        PetActionBar[i].Type = ACT_DISABLED;
+                    else
+                        PetActionBar[i].Type = newstate;
+                }
 
-            return true;
+                return true;
+            }
         }
     }
     return false;
@@ -11401,6 +11409,7 @@ Pet* Unit::CreateTamedPetFrom(Creature* creatureTarget,uint32 spell_id)
     // this enables pet details window (Shift+P)
     pet->AIM_Initialize();
     pet->InitPetCreateSpells();
+    pet->InitLevelupSpellsForLevel();
     pet->InitTalentForLevel();
     pet->SetHealth(pet->GetMaxHealth());
 

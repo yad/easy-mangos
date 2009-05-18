@@ -1424,8 +1424,8 @@ void Player::BuildEnumData( QueryResult * result, WorldPacket * p_data )
 
     *p_data << uint8(getLevel());                           // player level
     // do not use GetMap! it will spawn a new instance since the bound instances are not loaded
-    uint32 zoneId = MapManager::Instance().GetZoneId(GetMapId(), GetPositionX(),GetPositionY(),GetPositionZ());
-    sLog.outDebug("Player::BuildEnumData: m:%u, x:%f, y:%f, z:%f zone:%u", GetMapId(), GetPositionX(), GetPositionY(), GetPositionZ(), zoneId);
+    uint32 zoneId = fields[10].GetUInt32();
+    sLog.outDebug("Player::BuildEnumData: map:%u, x:%f, y:%f, z:%f zone:%u", GetMapId(), GetPositionX(), GetPositionY(), GetPositionZ(), zoneId);
     *p_data << uint32(zoneId);
     *p_data << uint32(GetMapId());
 
@@ -1434,7 +1434,7 @@ void Player::BuildEnumData( QueryResult * result, WorldPacket * p_data )
     *p_data << GetPositionZ();
 
     // guild id
-    *p_data << (result ? fields[13].GetUInt32() : 0);
+    *p_data << uint32(fields[14].GetUInt32());
 
     uint32 char_flags = 0;
     if(HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_HIDE_HELM))
@@ -1445,7 +1445,12 @@ void Player::BuildEnumData( QueryResult * result, WorldPacket * p_data )
         char_flags |= CHARACTER_FLAG_GHOST;
     if(HasAtLoginFlag(AT_LOGIN_RENAME))
         char_flags |= CHARACTER_FLAG_RENAME;
-    if(sWorld.getConfig(CONFIG_DECLINED_NAMES_USED) && (fields[14].GetCppString() != ""))
+    if(sWorld.getConfig(CONFIG_DECLINED_NAMES_USED))
+    {
+        if(!fields[15].GetCppString().empty())
+            char_flags |= CHARACTER_FLAG_DECLINED;
+    }
+    else
         char_flags |= CHARACTER_FLAG_DECLINED;
 
     *p_data << uint32(char_flags);                          // character flags
@@ -1462,12 +1467,12 @@ void Player::BuildEnumData( QueryResult * result, WorldPacket * p_data )
         // show pet at selection character in character list  only for non-ghost character
         if (result && isAlive() && (pClass == CLASS_WARLOCK || pClass == CLASS_HUNTER || pClass == CLASS_DEATH_KNIGHT))
         {
-            uint32 entry = fields[10].GetUInt32();
+            uint32 entry = fields[11].GetUInt32();
             CreatureInfo const* cInfo = sCreatureStorage.LookupEntry<CreatureInfo>(entry);
             if(cInfo)
             {
-                petDisplayId = fields[11].GetUInt32();
-                petLevel     = fields[12].GetUInt32();
+                petDisplayId = fields[12].GetUInt32();
+                petLevel     = fields[13].GetUInt32();
                 petFamily    = cInfo->family;
             }
         }
@@ -1611,7 +1616,7 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
         if (!(options & TELE_TO_NOT_UNSUMMON_PET))
         {
             //same map, only remove pet if out of range for new position
-            if(pet && pet->GetDistance(x,y,z) >= OWNER_MAX_DISTANCE)
+            if(pet && !pet->IsWithinDist3d(x,y,z, OWNER_MAX_DISTANCE))
                 UnsummonPetTemporaryIfAny();
         }
 
@@ -2068,11 +2073,17 @@ void Player::SetGameMaster(bool on)
         setFaction(35);
         SetFlag(PLAYER_FLAGS, PLAYER_FLAGS_GM);
 
+        if (Pet* pet = GetPet())
+        {
+            pet->setFaction(35);
+            pet->getHostilRefManager().setOnlineOfflineState(false);
+        }
+
         RemoveByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP);
         ResetContestedPvP();
 
         getHostilRefManager().setOnlineOfflineState(false);
-        CombatStop();
+        CombatStopWithPets();
 
         SetPhaseMask(PHASEMASK_ANYWHERE,false);             // see and visible in all phases
     }
@@ -2085,6 +2096,12 @@ void Player::SetGameMaster(bool on)
         m_ExtraFlags &= ~ PLAYER_EXTRA_GM_ON;
         setFactionForRace(getRace());
         RemoveFlag(PLAYER_FLAGS, PLAYER_FLAGS_GM);
+
+        if (Pet* pet = GetPet())
+        {
+            pet->setFaction(getFaction());
+            pet->getHostilRefManager().setOnlineOfflineState(true);
+        }
 
         // restore FFA PvP Server state
         if(sWorld.IsFFAPvPRealm())
@@ -2297,10 +2314,10 @@ void Player::GiveLevel(uint32 level)
     SetPower(POWER_FOCUS, 0);
     SetPower(POWER_HAPPINESS, 0);
 
-    // give level to summoned pet
-    Pet* pet = GetPet();
-    if(pet && pet->getPetType()==SUMMON_PET)
-        pet->GivePetLevel(level);
+    // update level to hunter/summon pet
+    if (Pet* pet = GetPet())
+        pet->SynchronizeLevelWithOwner();
+
     GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_REACH_LEVEL);
 }
 
@@ -2486,6 +2503,10 @@ void Player::InitStatsForLevel(bool reapplyMods)
     SetPower(POWER_FOCUS, 0);
     SetPower(POWER_HAPPINESS, 0);
     SetPower(POWER_RUNIC_POWER, 0);
+
+    // update level to hunter/summon pet
+    if (Pet* pet = GetPet())
+        pet->SynchronizeLevelWithOwner();
 }
 
 void Player::SendInitialSpells()
@@ -6355,7 +6376,7 @@ void Player::_ApplyItemBonuses(ItemPrototype const *proto, uint8 slot, bool appl
         }
         else
         {
-            if (proto->StatsCount >= i)
+            if (i >= proto->StatsCount)
                 continue;
             statType = proto->ItemStat[i].ItemStatType;
             val = proto->ItemStat[i].ItemStatValue;
@@ -6518,6 +6539,9 @@ void Player::_ApplyItemBonuses(ItemPrototype const *proto, uint8 slot, bool appl
         if (uint32 ssvarmor = ssv->getArmorMod(proto->ScalingStatValue))
             armor = ssvarmor;
     }
+    // Add armor bonus from ArmorDamageModifier if > 0
+    if (proto->ArmorDamageModifier > 0)
+        armor+=proto->ArmorDamageModifier;
     if (armor)
         HandleStatModifier(UNIT_MOD_ARMOR, BASE_VALUE, float(armor), apply);
 
@@ -6559,14 +6583,14 @@ void Player::_ApplyItemBonuses(ItemPrototype const *proto, uint8 slot, bool appl
     float minDamage = proto->Damage[0].DamageMin;
     float maxDamage = proto->Damage[0].DamageMax;
     int32 extraDPS = 0;
-    // If set dpsMod in ScalingStatValue use it for min (70% from avernge), max (130% from averange) damage
+    // If set dpsMod in ScalingStatValue use it for min (70% from average), max (130% from average) damage
     if (ssv)
     {
         if (extraDPS = ssv->getDPSMod(proto->ScalingStatValue))
         {
-            float averange = extraDPS * proto->Delay / 1000.0f;
-            minDamage = 0.7f * averange;
-            maxDamage = 1.3f * averange;
+            float average = extraDPS * proto->Delay / 1000.0f;
+            minDamage = 0.7f * average;
+            maxDamage = 1.3f * average;
         }
     }
     if (minDamage > 0 )
@@ -9592,17 +9616,17 @@ uint8 Player::CanEquipItem( uint8 slot, uint16 &dest, Item *pItem, bool swap, bo
                 return EQUIP_ERR_ITEM_CANT_BE_EQUIPPED;
 
             uint8 eslot = FindEquipSlot( pProto, slot, swap );
-            if( eslot == NULL_SLOT )
+            if (eslot == NULL_SLOT)
                 return EQUIP_ERR_ITEM_CANT_BE_EQUIPPED;
 
-            uint8 msg = CanUseItem( pItem , not_loading );
-            if( msg != EQUIP_ERR_OK )
+            uint8 msg = CanUseItem(pItem , not_loading);
+            if (msg != EQUIP_ERR_OK)
                 return msg;
-            if( !swap && GetItemByPos( INVENTORY_SLOT_BAG_0, eslot ) )
+            if (!swap && GetItemByPos(INVENTORY_SLOT_BAG_0, eslot))
                 return EQUIP_ERR_NO_EQUIPMENT_SLOT_AVAILABLE;
 
             // if swap ignore item (equipped also)
-            if(uint8 res2 = CanEquipUniqueItem(pItem, swap ? eslot : NULL_SLOT))
+            if (uint8 res2 = CanEquipUniqueItem(pItem, swap ? eslot : NULL_SLOT))
                 return res2;
 
             // check unique-equipped special item classes
@@ -9610,19 +9634,16 @@ uint8 Player::CanEquipItem( uint8 slot, uint16 &dest, Item *pItem, bool swap, bo
             {
                 for(int i = INVENTORY_SLOT_BAG_START; i < INVENTORY_SLOT_BAG_END; ++i)
                 {
-                    if( Item* pBag = GetItemByPos( INVENTORY_SLOT_BAG_0, i ) )
+                    if (Item* pBag = GetItemByPos(INVENTORY_SLOT_BAG_0, i))
                     {
-                        if( pBag != pItem )
+                        if (pBag != pItem)
                         {
-                            if( ItemPrototype const* pBagProto = pBag->GetProto() )
+                            if (ItemPrototype const* pBagProto = pBag->GetProto())
                             {
-                                if( pBagProto->Class==pProto->Class && (!swap || pBag->GetSlot() != eslot ) )
-                                {
-                                    if(pBagProto->SubClass == ITEM_SUBCLASS_AMMO_POUCH)
-                                        return EQUIP_ERR_CAN_EQUIP_ONLY1_AMMOPOUCH;
-                                    else
-                                        return EQUIP_ERR_CAN_EQUIP_ONLY1_QUIVER;
-                                }
+                                if (pBagProto->Class==pProto->Class && (!swap || pBag->GetSlot() != eslot))
+                                    return (pBagProto->SubClass == ITEM_SUBCLASS_AMMO_POUCH)
+                                        ? EQUIP_ERR_CAN_EQUIP_ONLY1_AMMOPOUCH
+                                        : EQUIP_ERR_CAN_EQUIP_ONLY1_QUIVER;
                             }
                         }
                     }
@@ -9631,25 +9652,25 @@ uint8 Player::CanEquipItem( uint8 slot, uint16 &dest, Item *pItem, bool swap, bo
 
             uint32 type = pProto->InventoryType;
 
-            if(eslot == EQUIPMENT_SLOT_OFFHAND)
+            if (eslot == EQUIPMENT_SLOT_OFFHAND)
             {
                 if (type == INVTYPE_WEAPON || type == INVTYPE_WEAPONOFFHAND)
                 {
-                    if(!CanDualWield())
+                    if (!CanDualWield())
                         return EQUIP_ERR_CANT_DUAL_WIELD;
                 }
                 else if (type == INVTYPE_2HWEAPON)
                 {
-                    if(!CanDualWield() || !CanTitanGrip())
+                    if (!CanDualWield() || !CanTitanGrip())
                         return EQUIP_ERR_CANT_DUAL_WIELD;
                 }
 
-                if(IsTwoHandUsed())
+                if (IsTwoHandUsed())
                     return EQUIP_ERR_CANT_EQUIP_WITH_TWOHANDED;
             }
 
             // equip two-hand weapon case (with possible unequip 2 items)
-            if( type == INVTYPE_2HWEAPON )
+            if (type == INVTYPE_2HWEAPON)
             {
                 if (eslot == EQUIPMENT_SLOT_OFFHAND)
                 {
@@ -9664,9 +9685,9 @@ uint8 Player::CanEquipItem( uint8 slot, uint16 &dest, Item *pItem, bool swap, bo
                     // offhand item must can be stored in inventory for offhand item and it also must be unequipped
                     Item *offItem = GetItemByPos( INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND );
                     ItemPosCountVec off_dest;
-                    if( offItem && (!not_loading ||
+                    if (offItem && (!not_loading ||
                         CanUnequipItem(uint16(INVENTORY_SLOT_BAG_0) << 8 | EQUIPMENT_SLOT_OFFHAND,false) !=  EQUIP_ERR_OK ||
-                        CanStoreItem( NULL_BAG, NULL_SLOT, off_dest, offItem, false ) !=  EQUIP_ERR_OK ) )
+                        CanStoreItem( NULL_BAG, NULL_SLOT, off_dest, offItem, false ) !=  EQUIP_ERR_OK ))
                         return swap ? EQUIP_ERR_ITEMS_CANT_BE_SWAPPED : EQUIP_ERR_INVENTORY_FULL;
                 }
             }
@@ -9674,10 +9695,8 @@ uint8 Player::CanEquipItem( uint8 slot, uint16 &dest, Item *pItem, bool swap, bo
             return EQUIP_ERR_OK;
         }
     }
-    if( !swap )
-        return EQUIP_ERR_ITEM_NOT_FOUND;
-    else
-        return EQUIP_ERR_ITEMS_CANT_BE_SWAPPED;
+
+    return !swap ? EQUIP_ERR_ITEM_NOT_FOUND : EQUIP_ERR_ITEMS_CANT_BE_SWAPPED;
 }
 
 uint8 Player::CanUnequipItem( uint16 pos, bool swap ) const
@@ -9896,38 +9915,49 @@ uint8 Player::CanBankItem( uint8 bag, uint8 slot, ItemPosCountVec &dest, Item *p
 
 uint8 Player::CanUseItem( Item *pItem, bool not_loading ) const
 {
-    if( pItem )
+    if (pItem)
     {
         sLog.outDebug( "STORAGE: CanUseItem item = %u", pItem->GetEntry());
-        if( !isAlive() && not_loading )
+
+        if (!isAlive() && not_loading)
             return EQUIP_ERR_YOU_ARE_DEAD;
-        //if( isStunned() )
+
+        //if (isStunned())
         //    return EQUIP_ERR_YOU_ARE_STUNNED;
+
         ItemPrototype const *pProto = pItem->GetProto();
-        if( pProto )
+        if (pProto)
         {
-            if( pItem->IsBindedNotWith(GetGUID()) )
+            if (pItem->IsBindedNotWith(GetGUID()))
                 return EQUIP_ERR_DONT_OWN_THAT_ITEM;
-            if( (pProto->AllowableClass & getClassMask()) == 0 || (pProto->AllowableRace & getRaceMask()) == 0 )
+
+            if ((pProto->AllowableClass & getClassMask()) == 0 || (pProto->AllowableRace & getRaceMask()) == 0)
                 return EQUIP_ERR_YOU_CAN_NEVER_USE_THAT_ITEM;
-            if( pItem->GetSkill() != 0  )
+
+            if (pItem->GetSkill() != 0)
             {
-                if( GetSkillValue( pItem->GetSkill() ) == 0 )
+                if (GetSkillValue( pItem->GetSkill() ) == 0)
                     return EQUIP_ERR_NO_REQUIRED_PROFICIENCY;
             }
-            if( pProto->RequiredSkill != 0  )
+
+            if (pProto->RequiredSkill != 0)
             {
-                if( GetSkillValue( pProto->RequiredSkill ) == 0 )
+                if (GetSkillValue( pProto->RequiredSkill ) == 0)
                     return EQUIP_ERR_NO_REQUIRED_PROFICIENCY;
-                else if( GetSkillValue( pProto->RequiredSkill ) < pProto->RequiredSkillRank )
+
+                if (GetSkillValue( pProto->RequiredSkill ) < pProto->RequiredSkillRank)
                     return EQUIP_ERR_ERR_CANT_EQUIP_SKILL;
             }
-            if( pProto->RequiredSpell != 0 && !HasSpell( pProto->RequiredSpell ) )
+
+            if (pProto->RequiredSpell != 0 && !HasSpell(pProto->RequiredSpell))
                 return EQUIP_ERR_NO_REQUIRED_PROFICIENCY;
-            if( pProto->RequiredReputationFaction && uint32(GetReputationRank(pProto->RequiredReputationFaction)) < pProto->RequiredReputationRank )
+
+            if (pProto->RequiredReputationFaction && uint32(GetReputationRank(pProto->RequiredReputationFaction)) < pProto->RequiredReputationRank)
                 return EQUIP_ERR_CANT_EQUIP_REPUTATION;
-            if( getLevel() < pProto->RequiredLevel )
+
+            if (getLevel() < pProto->RequiredLevel)
                 return EQUIP_ERR_CANT_EQUIP_LEVEL_I;
+
             return EQUIP_ERR_OK;
         }
     }
@@ -11608,6 +11638,14 @@ void Player::ApplyEnchantment(Item *item,EnchantmentSlot slot,bool apply, bool a
                     sLog.outDebug("Adding %u to stat nb %u",enchant_amount,enchant_spell_id);
                     switch (enchant_spell_id)
                     {
+                        case ITEM_MOD_MANA:
+                            sLog.outDebug("+ %u MANA",enchant_amount);
+                            HandleStatModifier(UNIT_MOD_MANA, BASE_VALUE, float(enchant_amount), apply);
+                            break;
+                        case ITEM_MOD_HEALTH:
+                            sLog.outDebug("+ %u HEALTH",enchant_amount);
+                            HandleStatModifier(UNIT_MOD_HEALTH, BASE_VALUE, float(enchant_amount), apply);
+                            break;
                         case ITEM_MOD_AGILITY:
                             sLog.outDebug("+ %u AGILITY",enchant_amount);
                             HandleStatModifier(UNIT_MOD_STAT_AGILITY, TOTAL_VALUE, float(enchant_amount), apply);
@@ -13655,20 +13693,23 @@ void Player::SendQuestUpdateAddCreatureOrGo( Quest const* pQuest, uint64 guid, u
 bool Player::MinimalLoadFromDB( QueryResult *result, uint32 guid )
 {
     bool delete_result = true;
-    if(!result)
+    if (!result)
     {
-        //                                        0     1     2     3           4           5           6    7          8          9
-        result = CharacterDatabase.PQuery("SELECT guid, data, name, position_x, position_y, position_z, map, totaltime, leveltime, at_login FROM characters WHERE guid = '%u'",guid);
-        if(!result) return false;
+        //                                          0     1     2     3           4           5           6    7          8          9         10
+        result = CharacterDatabase.PQuery("SELECT guid, data, name, position_x, position_y, position_z, map, totaltime, leveltime, at_login, zone FROM characters WHERE guid = '%u'",guid);
+        if (!result)
+            return false;
     }
-    else delete_result = false;
+    else
+        delete_result = false;
 
     Field *fields = result->Fetch();
 
-    if(!LoadValues( fields[1].GetString()))
+    if (!LoadValues( fields[1].GetString()))
     {
         sLog.outError("Player #%d have broken data in `data` field. Can't be loaded for character list.",GUID_LOPART(guid));
-        if(delete_result) delete result;
+        if (delete_result)
+            delete result;
         return false;
     }
 
@@ -13691,12 +13732,13 @@ bool Player::MinimalLoadFromDB( QueryResult *result, uint32 guid )
 
     _LoadBoundInstances();*/
 
-    if (delete_result) delete result;
+    if (delete_result)
+        delete result;
 
     for (int i = 0; i < PLAYER_SLOTS_COUNT; ++i)
         m_items[i] = NULL;
 
-    if( HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_GHOST) )
+    if (HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_GHOST))
         m_deathState = DEAD;
 
     return true;
@@ -16379,11 +16421,11 @@ void Player::PetSpellInitialize()
         // spells loop
         for (PetSpellMap::const_iterator itr = pet->m_spells.begin(); itr != pet->m_spells.end(); ++itr)
         {
-            if(itr->second->state == PETSPELL_REMOVED)
+            if(itr->second.state == PETSPELL_REMOVED)
                 continue;
 
             data << uint16(itr->first);
-            data << uint16(itr->second->active);            // pet spell active state isn't boolean
+            data << uint16(itr->second.active);             // pet spell active state isn't boolean
             ++addlist;
         }
     }
@@ -20002,4 +20044,3 @@ bool Player::canSeeSpellClickOn(Creature const *c) const
     }
     return false;
 }
-

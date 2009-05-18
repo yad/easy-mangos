@@ -184,6 +184,10 @@ pkgdata_DATA = \
 	7796_02_mangos_mangos_string.sql \
 	7802_01_characters_character_achievement.sql \
 	7802_02_characters_character_achievement_progress.sql \
+	7823_01_mangos_item_template.sql \
+	7830_01_mangos_spell_chain.sql \
+	7839_01_mangos_mangos_string.sql \
+	7839_02_mangos_command.sql \
 	README
 
 ## Additional files to include when running 'make dist'
@@ -348,4 +352,8 @@ EXTRA_DIST = \
 	7796_02_mangos_mangos_string.sql \
 	7802_01_characters_character_achievement.sql \
 	7802_02_characters_character_achievement_progress.sql \
+	7823_01_mangos_item_template.sql \
+	7830_01_mangos_spell_chain.sql \
+	7839_01_mangos_mangos_string.sql \
+	7839_02_mangos_command.sql \
 	README

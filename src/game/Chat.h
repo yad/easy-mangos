@@ -301,6 +301,7 @@ class ChatHandler
         bool HandleReloadAllNpcCommand(const char* args);
         bool HandleReloadAllQuestCommand(const char* args);
         bool HandleReloadAllScriptsCommand(const char* args);
+        bool HandleReloadAllEventAICommand(const char* args);
         bool HandleReloadAllSpellCommand(const char* args);
         bool HandleReloadAllLocalesCommand(const char* args);
 
@@ -311,6 +312,9 @@ class ChatHandler
         bool HandleReloadAreaTriggerTavernCommand(const char* args);
         bool HandleReloadAreaTriggerTeleportCommand(const char* args);
         bool HandleReloadEventScriptsCommand(const char* args);
+        bool HandleReloadEventAITextsCommand(const char* args);
+        bool HandleReloadEventAISummonsCommand(const char* args);
+        bool HandleReloadEventAIScriptsCommand(const char* args);
         bool HandleReloadCommandCommand(const char* args);
         bool HandleReloadCreatureQuestRelationsCommand(const char* args);
         bool HandleReloadCreatureQuestInvRelationsCommand(const char* args);
@@ -485,10 +489,15 @@ class ChatHandler
         char*     extractKeyFromLink(char* text, char const* linkType, char** something1 = NULL);
         char*     extractKeyFromLink(char* text, char const* const* linkTypes, int* found_idx, char** something1 = NULL);
 
+        // if args have single value then it return in arg2 and arg1 == NULL
+        void      extractOptFirstArg(char* args, char** arg1, char** arg2);
+
         uint32    extractSpellIdFromLink(char* text);
         uint64    extractGuidFromLink(char* text);
         GameTele const* extractGameTeleFromLink(char* text);
         std::string extractPlayerNameFromLink(char* text);
+        // select by arg (name/link) or in-game selection online/offline player
+        bool extractPlayerTarget(char* args, Player** player, uint64* player_guid = NULL, std::string* player_name = NULL);
 
         std::string playerLink(std::string const& name) const { return m_session ? "|cffffffff|Hplayer:"+name+"|h["+name+"]|h|r" : name; }
         virtual std::string GetNameLink() const { return GetNameLink(m_session->GetPlayer()); }

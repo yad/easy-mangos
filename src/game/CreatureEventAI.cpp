@@ -39,6 +39,7 @@ int CreatureEventAI::Permissible(const Creature *creature)
 
 CreatureEventAI::CreatureEventAI(Creature *c ) : CreatureAI(c)
 {
+    // Need make copy for filter unneeded steps and safe in case table reload
     CreatureEventAI_Event_Map::const_iterator CreatureEvents = CreatureEAI_Mgr.GetCreatureEventAIMap().find(m_creature->GetEntry());
     if (CreatureEvents != CreatureEAI_Mgr.GetCreatureEventAIMap().end())
     {
@@ -1277,13 +1278,10 @@ void CreatureEventAI::UpdateAI(const uint32 diff)
                         break;
                     case EVENT_T_RANGE:
                         if (Combat)
-                        {
-                            if (m_creature->IsWithinDistInMap(m_creature->getVictim(),(float)(*i).Event.event_param2))
-                            {
-                                if (m_creature->GetDistance(m_creature->getVictim()) >= (float)(*i).Event.event_param1)
+                            if (m_creature->IsInMap(m_creature->getVictim()))
+                                if (m_creature->IsInRange(m_creature->getVictim(),
+                                    (float)(*i).Event.event_param1,(float)(*i).Event.event_param2))
                                     ProcessEvent(*i);
-                            }
-                        }
                         break;
                 }
             }
@@ -1305,7 +1303,7 @@ void CreatureEventAI::UpdateAI(const uint32 diff)
 
 bool CreatureEventAI::IsVisible(Unit *pl) const
 {
-    return m_creature->GetDistance(pl) < sWorld.getConfig(CONFIG_SIGHT_MONSTER)
+    return m_creature->IsWithinDist(pl,sWorld.getConfig(CONFIG_SIGHT_MONSTER))
         && pl->isVisibleForOrDetect(m_creature,true);
 }
 
@@ -1584,7 +1582,7 @@ bool CreatureEventAI::CanCast(Unit* Target, SpellEntry const *Spell, bool Trigge
         return false;
 
     //Unit is out of range of this spell
-    if (m_creature->GetDistance(Target) > TempRange->maxRange || m_creature->GetDistance(Target) < TempRange->minRange)
+    if (!m_creature->IsInRange(Target,TempRange->minRange,TempRange->maxRange))
         return false;
 
     return true;
