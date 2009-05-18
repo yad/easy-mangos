@@ -9391,13 +9391,6 @@ void Unit::SetHover(bool on)
 
 void Unit::setDeathState(DeathState s)
 {
-    if (m_deathState != ALIVE && s == ALIVE)
-    {
-        //_ApplyAllAuraMods();
-    }
-
-    m_deathState = s;
-
     if (s != ALIVE && s!= JUST_ALIVED)
     {
         CombatStop();
@@ -9423,6 +9416,12 @@ void Unit::setDeathState(DeathState s)
     {
         RemoveFlag (UNIT_FIELD_FLAGS, UNIT_FLAG_SKINNABLE); // clear skinnable for creature and player (at battleground)
     }
+
+    if (m_deathState != ALIVE && s == ALIVE)
+    {
+        //_ApplyAllAuraMods();
+    }
+    m_deathState = s;
 }
 
 /*########################################
