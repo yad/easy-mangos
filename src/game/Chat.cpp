@@ -114,6 +114,7 @@ ChatCommand * ChatHandler::getCommandTable()
         { "delete",         SEC_CONSOLE,        true,  &ChatHandler::HandleCharacterDeleteCommand,     "", NULL },
         { "level",          SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleCharacterLevelCommand,      "", NULL },
         { "rename",         SEC_GAMEMASTER,     true,  &ChatHandler::HandleCharacterRenameCommand,     "", NULL },
+        { "reputation",     SEC_GAMEMASTER,     true,  &ChatHandler::HandleCharacterReputationCommand, "", NULL },
         { NULL,             0,                  false, NULL,                                           "", NULL }
     };
 
@@ -1579,6 +1580,16 @@ bool ChatHandler::needReportToTarget(Player* chr) const
     return pl != chr && pl->IsVisibleGloballyFor(chr);
 }
 
+LocaleConstant ChatHandler::GetSessionDbcLocale() const
+{
+    return m_session->GetSessionDbcLocale();
+}
+
+int ChatHandler::GetSessionDbLocaleIndex() const
+{
+    return m_session->GetSessionDbLocaleIndex();
+}
+
 const char *CliHandler::GetMangosString(int32 entry) const
 {
     return objmgr.GetMangosStringForDBCLocale(entry);
@@ -1606,3 +1617,12 @@ bool CliHandler::needReportToTarget(Player* /*chr*/) const
     return true;
 }
 
+LocaleConstant CliHandler::GetSessionDbcLocale() const
+{
+    return sWorld.GetDefaultDbcLocale();
+}
+
+int CliHandler::GetSessionDbLocaleIndex() const
+{
+    return objmgr.GetDBCLocaleIndex();
+}
