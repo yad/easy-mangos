@@ -28,7 +28,6 @@ class Player;
 class WorldObject;
 
 #define EVENT_UPDATE_TIME               500
-#define SPELL_RUN_AWAY                  8225
 #define MAX_ACTIONS                     3
 #define MAX_PHASE                       32
 
@@ -44,7 +43,7 @@ enum EventAI_Type
     EVENT_T_EVADE                   = 7,                    // NONE
     EVENT_T_SPELLHIT                = 8,                    // SpellID, School, RepeatMin, RepeatMax
     EVENT_T_RANGE                   = 9,                    // MinDist, MaxDist, RepeatMin, RepeatMax
-    EVENT_T_OOC_LOS                 = 10,                   // NoHostile, NoFriendly, RepeatMin, RepeatMax
+    EVENT_T_OOC_LOS                 = 10,                   // NoHostile, MaxRnage, RepeatMin, RepeatMax
     EVENT_T_SPAWNED                 = 11,                   // NONE
     EVENT_T_TARGET_HP               = 12,                   // HPMax%, HPMin%, RepeatMin, RepeatMax
     EVENT_T_TARGET_CASTING          = 13,                   // RepeatMin, RepeatMax
@@ -63,45 +62,46 @@ enum EventAI_Type
 
 enum EventAI_ActionType
 {
-    ACTION_T_NONE                       = 0,                //*No action
-    ACTION_T_TEXT                       = 1,                //*-TextId1, optionally -TextId2, optionally -TextId3(if -TextId2 exist). If more than just -TextId1 is defined, randomize. Negative values.
-    ACTION_T_SET_FACTION                = 2,                //*FactionId (or 0 for default)
-    ACTION_T_MORPH_TO_ENTRY_OR_MODEL    = 3,                //*Creature_template entry(param1) OR ModelId (param2) (or 0 for both to demorph)
-    ACTION_T_SOUND                      = 4,                //*SoundId
-    ACTION_T_EMOTE                      = 5,                //*EmoteId
-    ACTION_T_RANDOM_SAY                 = 6,                //*UNUSED
-    ACTION_T_RANDOM_YELL                = 7,                //*UNUSED
-    ACTION_T_RANDOM_TEXTEMOTE           = 8,                //*UNUSED
-    ACTION_T_RANDOM_SOUND               = 9,                //SoundId1, SoundId2, SoundId3 (-1 in any field means no output if randomed that field)
-    ACTION_T_RANDOM_EMOTE               = 10,               //*EmoteId1, EmoteId2, EmoteId3 (-1 in any field means no output if randomed that field)
-    ACTION_T_CAST                       = 11,               //*SpellId, Target, CastFlags
-    ACTION_T_SUMMON                     = 12,               //*CreatureID, Target, Duration in ms
-    ACTION_T_THREAT_SINGLE_PCT          = 13,               //*Threat%, Target
-    ACTION_T_THREAT_ALL_PCT             = 14,               //Threat%
-    ACTION_T_QUEST_EVENT                = 15,               //*QuestID, Target
-    ACTION_T_CAST_EVENT                 = 16,               //*QuestID, SpellId, Target - must be removed as hack?
-    ACTION_T_SET_UNIT_FIELD             = 17,               //*Field_Number, Value, Target
-    ACTION_T_SET_UNIT_FLAG              = 18,               //*Flags (may be more than one field OR'd together), Target
-    ACTION_T_REMOVE_UNIT_FLAG           = 19,               //*Flags (may be more than one field OR'd together), Target
-    ACTION_T_AUTO_ATTACK                = 20,               //AllowAttackState (0 = stop attack, anything else means continue attacking)
-    ACTION_T_COMBAT_MOVEMENT            = 21,               //AllowCombatMovement (0 = stop combat based movement, anything else continue attacking)
-    ACTION_T_SET_PHASE                  = 22,               //*Phase
-    ACTION_T_INC_PHASE                  = 23,               //*Value (may be negative to decrement phase, should not be 0)
-    ACTION_T_EVADE                      = 24,               //No Params
-    ACTION_T_FLEE                       = 25,               //No Params
-    ACTION_T_QUEST_EVENT_ALL            = 26,               //*QuestID
-    ACTION_T_CAST_EVENT_ALL             = 27,               //*QuestId, SpellId
-    ACTION_T_REMOVEAURASFROMSPELL       = 28,               //*Target, Spellid
-    ACTION_T_RANGED_MOVEMENT            = 29,               //Distance, Angle
-    ACTION_T_RANDOM_PHASE               = 30,               //PhaseId1, PhaseId2, PhaseId3
-    ACTION_T_RANDOM_PHASE_RANGE         = 31,               //PhaseMin, PhaseMax
-    ACTION_T_SUMMON_ID                  = 32,               //*CreatureId, Target, SpawnId
-    ACTION_T_KILLED_MONSTER             = 33,               //*CreatureId, Target
-    ACTION_T_SET_INST_DATA              = 34,               //*Field, Data
-    ACTION_T_SET_INST_DATA64            = 35,               //*Field, Target
-    ACTION_T_UPDATE_TEMPLATE            = 36,               //*Entry, Team
-    ACTION_T_DIE                        = 37,               //No Params
-    ACTION_T_ZONE_COMBAT_PULSE          = 38,               //No Params
+    ACTION_T_NONE                       = 0,                // No action
+    ACTION_T_TEXT                       = 1,                // TextId1, optionally -TextId2, optionally -TextId3(if -TextId2 exist). If more than just -TextId1 is defined, randomize. Negative values.
+    ACTION_T_SET_FACTION                = 2,                // FactionId (or 0 for default)
+    ACTION_T_MORPH_TO_ENTRY_OR_MODEL    = 3,                // Creature_template entry(param1) OR ModelId (param2) (or 0 for both to demorph)
+    ACTION_T_SOUND                      = 4,                // SoundId
+    ACTION_T_EMOTE                      = 5,                // EmoteId
+    ACTION_T_RANDOM_SAY                 = 6,                // UNUSED
+    ACTION_T_RANDOM_YELL                = 7,                // UNUSED
+    ACTION_T_RANDOM_TEXTEMOTE           = 8,                // UNUSED
+    ACTION_T_RANDOM_SOUND               = 9,                // SoundId1, SoundId2, SoundId3 (-1 in any field means no output if randomed that field)
+    ACTION_T_RANDOM_EMOTE               = 10,               // EmoteId1, EmoteId2, EmoteId3 (-1 in any field means no output if randomed that field)
+    ACTION_T_CAST                       = 11,               // SpellId, Target, CastFlags
+    ACTION_T_SUMMON                     = 12,               // CreatureID, Target, Duration in ms
+    ACTION_T_THREAT_SINGLE_PCT          = 13,               // Threat%, Target
+    ACTION_T_THREAT_ALL_PCT             = 14,               // Threat%
+    ACTION_T_QUEST_EVENT                = 15,               // QuestID, Target
+    ACTION_T_CAST_EVENT                 = 16,               // QuestID, SpellId, Target - must be removed as hack?
+    ACTION_T_SET_UNIT_FIELD             = 17,               // Field_Number, Value, Target
+    ACTION_T_SET_UNIT_FLAG              = 18,               // Flags (may be more than one field OR'd together), Target
+    ACTION_T_REMOVE_UNIT_FLAG           = 19,               // Flags (may be more than one field OR'd together), Target
+    ACTION_T_AUTO_ATTACK                = 20,               // AllowAttackState (0 = stop attack, anything else means continue attacking)
+    ACTION_T_COMBAT_MOVEMENT            = 21,               // AllowCombatMovement (0 = stop combat based movement, anything else continue attacking)
+    ACTION_T_SET_PHASE                  = 22,               // Phase
+    ACTION_T_INC_PHASE                  = 23,               // Value (may be negative to decrement phase, should not be 0)
+    ACTION_T_EVADE                      = 24,               // No Params
+    ACTION_T_FLEE_FOR_ASSIST            = 25,               // No Params
+    ACTION_T_QUEST_EVENT_ALL            = 26,               // QuestID
+    ACTION_T_CAST_EVENT_ALL             = 27,               // CreatureId, SpellId
+    ACTION_T_REMOVEAURASFROMSPELL       = 28,               // Target, Spellid
+    ACTION_T_RANGED_MOVEMENT            = 29,               // Distance, Angle
+    ACTION_T_RANDOM_PHASE               = 30,               // PhaseId1, PhaseId2, PhaseId3
+    ACTION_T_RANDOM_PHASE_RANGE         = 31,               // PhaseMin, PhaseMax
+    ACTION_T_SUMMON_ID                  = 32,               // CreatureId, Target, SpawnId
+    ACTION_T_KILLED_MONSTER             = 33,               // CreatureId, Target
+    ACTION_T_SET_INST_DATA              = 34,               // Field, Data
+    ACTION_T_SET_INST_DATA64            = 35,               // Field, Target
+    ACTION_T_UPDATE_TEMPLATE            = 36,               // Entry, Team
+    ACTION_T_DIE                        = 37,               // No Params
+    ACTION_T_ZONE_COMBAT_PULSE          = 38,               // No Params
+    ACTION_T_CALL_FOR_HELP              = 39,               // Radius
 
     ACTION_T_END,
 };
@@ -346,12 +346,17 @@ struct CreatureEventAI_Action
             uint32 field;
             uint32 target;
         } set_inst_data64;
-        // ACTION_T_UPDATE_TEMPLATE                         = 36,               //*Entry, Team
+        // ACTION_T_UPDATE_TEMPLATE                         = 36
         struct  
         {
             uint32 creatureId;
             uint32 team;
         } update_template;
+        // ACTION_T_CALL_FOR_HELP                           = 39
+        struct
+        {
+            uint32 radius;
+        } call_for_help;
         // RAW
         struct
         {
@@ -376,23 +381,116 @@ struct CreatureEventAI_Event
 
     union
     {
-        uint32 event_param1;
-        int32 event_param1_s;
-    };
-    union
-    {
-        uint32 event_param2;
-        int32 event_param2_s;
-    };
-    union
-    {
-        uint32 event_param3;
-        int32 event_param3_s;
-    };
-    union
-    {
-        uint32 event_param4;
-        int32 event_param4_s;
+        // EVENT_T_TIMER                                    = 0
+        // EVENT_T_TIMER_OOC                                = 1
+        struct
+        {
+            uint32 initialMin;
+            uint32 initialMax;
+            uint32 repeatMin;
+            uint32 repeatMax;
+        } timer;
+        // EVENT_T_HP                                       = 2
+        // EVENT_T_MANA                                     = 3
+        // EVENT_T_TARGET_HP                                = 12
+        // EVENT_T_TARGET_MANA                              = 18
+        struct
+        {
+            uint32 percentMax;
+            uint32 percentMin;
+            uint32 repeatMin;
+            uint32 repeatMax;
+        } percent_range;
+        // EVENT_T_KILL                                     = 5
+        struct
+        {
+            uint32 repeatMin;
+            uint32 repeatMax;
+        } kill;
+        // EVENT_T_SPELLHIT                                 = 8
+        struct
+        {
+            uint32 spellId;
+            uint32 schoolMask;                              // -1 (==0xffffffff) is ok value for full mask, or must be more limited mask like (0 < 1) = 1 for normal/physical school
+            uint32 repeatMin;
+            uint32 repeatMax;
+        } spell_hit;
+        // EVENT_T_RANGE                                    = 9
+        struct
+        {
+            uint32 minDist;
+            uint32 maxDist;
+            uint32 repeatMin;
+            uint32 repeatMax;
+        } range;
+        // EVENT_T_OOC_LOS                                  = 10
+        struct
+        {
+            uint32 noHostile;
+            uint32 maxRange;
+            uint32 repeatMin;
+            uint32 repeatMax;
+        } ooc_los;
+        // EVENT_T_TARGET_CASTING                           = 13
+        struct
+        {
+            uint32 repeatMin;
+            uint32 repeatMax;
+        } target_casting;
+        // EVENT_T_FRIENDLY_HP                              = 14
+        struct
+        {
+            uint32 hpDeficit;
+            uint32 radius;
+            uint32 repeatMin;
+            uint32 repeatMax;
+        } friendly_hp;
+        // EVENT_T_FRIENDLY_IS_CC                           = 15
+        struct
+        {
+            uint32 dispelType;                              // unused ?
+            uint32 radius;
+            uint32 repeatMin;
+            uint32 repeatMax;
+        } friendly_is_cc;
+        // EVENT_T_FRIENDLY_MISSING_BUFF                    = 16
+        struct
+        {
+            uint32 spellId;
+            uint32 radius;
+            uint32 repeatMin;
+            uint32 repeatMax;
+        } friendly_buff;
+        // EVENT_T_SUMMONED_UNIT                            = 17
+        struct
+        {
+            uint32 creatureId;
+            uint32 repeatMin;
+            uint32 repeatMax;
+        } summon_unit;
+        // EVENT_T_QUEST_ACCEPT                             = 19
+        // EVENT_T_QUEST_COMPLETE                           = 20
+        struct
+        {
+            uint32 questId;
+        } quest;
+        // EVENT_T_RECEIVE_EMOTE                            = 22
+        struct
+        {
+            uint32 emoteId;
+            uint32 condition;
+            uint32 conditionValue1;
+            uint32 conditionValue2;
+        } receive_emote;
+
+        // RAW
+        struct 
+        {
+            uint32 param1;
+            uint32 param2;
+            uint32 param3;
+            uint32 param4;
+        } raw;
     };
 
     CreatureEventAI_Action action[MAX_ACTIONS];
@@ -421,6 +519,9 @@ struct CreatureEventAIHolder
     CreatureEventAI_Event Event;
     uint32 Time;
     bool Enabled;
+
+    // helper
+    bool UpdateRepeatTimer(Creature* creature, uint32 repeatMin, uint32 repeatMax);
 };
 
 class MANGOS_DLL_SPEC CreatureEventAI : public CreatureAI
