@@ -167,7 +167,8 @@ void AuctionHouseBot::addNewAuctions(Player *AHBplayer, AHBConfig *config)
     for (uint32 cnt = 1;cnt <= items;cnt++)
     {
         uint32 itemID = 0;
-        while (itemID == 0)
+        uint32 loopBreaker = 0;                     // This will prevent endless looping condition where AHBot
+        while (itemID == 0 && loopBreaker < 50)     //  cannot allocate an item.
         {
             uint32 choice = urand(0, 13);
             switch (choice)
@@ -274,6 +275,14 @@ void AuctionHouseBot::addNewAuctions(Player *AHBplayer, AHBConfig *config)
                 sLog.outString("AuctionHouseBot: itemID Switch - Default Reached");
                 break;
             }
+
+            ++loopBreaker;
+        }
+
+        if (itemID == 0)
+        {
+            sLog.outString("AuctionHouseBot: Item::CreateItem() - Unable to find item");
+            continue;
         }
 
         ItemPrototype const* prototype = objmgr.GetItemPrototype(itemID);
@@ -1029,7 +1038,7 @@ void AuctionHouseBot::Initialize()
         sLog.outString("loaded %d orange items", orangeItemsBin.size());
         sLog.outString("loaded %d yellow items", yellowItemsBin.size());
     }
-    sLog.outString("AuctionHouseBot [AHBot-004] is now loaded");
+    sLog.outString("AuctionHouseBot [AHBot-004-HotFix-01] is now loaded");
     sLog.outString("AuctionHouseBot updated Naicisum (original by ChrisK and Paradox)");
     sLog.outString("AuctionHouseBot now includes AHBuyer by Kerbe and Paradox");
 }
