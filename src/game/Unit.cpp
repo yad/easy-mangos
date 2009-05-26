@@ -4893,6 +4893,25 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                 triggered_spell_id = 29077;
                 break;
             }
+
+            //Arcane Potency
+            if (dummySpell->SpellIconID == 2120)
+            {
+                if(!procSpell)
+                    return false;
+
+                target = this;
+                switch (dummySpell->Id)
+                {
+                    case 31571: triggered_spell_id = 57529; break;
+                    case 31572: triggered_spell_id = 57531; break;
+                    default:
+                        sLog.outError("Unit::HandleDummyAuraProc: non handled spell id: %u",dummySpell->Id);
+                        return false;
+                }
+                break;
+            }
+
             // Hot Streak
             if (dummySpell->SpellIconID == 2999)
             {
@@ -5139,9 +5158,8 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                 if(triggeredByAura->GetCasterGUID() != pVictim->GetGUID())
                     return false;
 
-                // energize amount
-                basepoints0 = triggerAmount*damage/100;
-                pVictim->CastCustomSpell(pVictim,34919,&basepoints0,NULL,NULL,true,castItem,triggeredByAura);
+                // Energize 0.25% of max. mana
+                pVictim->CastSpell(pVictim,57669,true,castItem,triggeredByAura);
                 return true;                                // no hidden cooldown
             }
             // Divine Aegis
@@ -5812,7 +5830,6 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
             // Ancestral Awakening
             if (dummySpell->SpellIconID == 3065)
             {
-                // TODO: frite dummy fot triggered spell
                 triggered_spell_id = 52759;
                 basepoints0 = triggerAmount * damage / 100;
                 target = this;
@@ -10510,6 +10527,7 @@ bool InitTriggerAuraData()
     isTriggerAura[SPELL_AURA_PRAYER_OF_MENDING] = true;
     isTriggerAura[SPELL_AURA_PROC_TRIGGER_SPELL_WITH_VALUE] = true;
     isTriggerAura[SPELL_AURA_MOD_DAMAGE_FROM_CASTER] = true;
+    isTriggerAura[SPELL_AURA_MOD_SPELL_CRIT_CHANCE] = true;
 
     isNonTriggerAura[SPELL_AURA_MOD_POWER_REGEN]=true;
     isNonTriggerAura[SPELL_AURA_REDUCE_PUSHBACK]=true;
@@ -11399,6 +11417,9 @@ Pet* Unit::CreateTamedPetFrom(Creature* creatureTarget,uint32 spell_id)
     if(GetTypeId()==TYPEID_PLAYER)
         pet->SetUInt32Value(UNIT_FIELD_FLAGS, UNIT_FLAG_PVP_ATTACKABLE);
 
+    if(IsPvP())
+        pet->SetPvP(true);
+
     uint32 level = (creatureTarget->getLevel() < (getLevel() - 5)) ? (getLevel() - 5) : creatureTarget->getLevel();
 
     if(!pet->InitStatsForLevel(level))
@@ -11602,4 +11623,22 @@ void Unit::NearTeleportTo( float x, float y, float z, float orientation, bool ca
         BuildHeartBeatMsg(&data);
         SendMessageToSet(&data, false);
     }
+}
+
+void Unit::SetPvP( bool state )
+{
+    if(state)
+        SetByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_PVP);
+    else
+        RemoveByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_PVP);
+
+    if(Pet* pet = GetPet())
+        pet->SetPvP(state);
+    if(Unit* charmed = GetCharm())
+        charmed->SetPvP(state);
+
+    for (int8 i = 0; i < MAX_TOTEM; ++i)
+        if(m_TotemSlot[i])
+            if(Creature *totem = GetMap()->GetCreature(m_TotemSlot[i]))
+                totem->SetPvP(state);
 }

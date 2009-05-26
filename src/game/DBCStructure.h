@@ -704,11 +704,13 @@ struct CreatureFamilyEntry
                                                             // 27       m_iconFile
 };
 
+#define MAX_CREATURE_SPELL_DATA_SLOT 4
+
 struct CreatureSpellDataEntry
 {
     uint32    ID;                                           // 0        m_ID
-    //uint32    spellId[4];                                 // 1-4      m_spells[4]
-    //uint32    availability[4];                            // 4-7      m_availability[4]
+    uint32    spellId[MAX_CREATURE_SPELL_DATA_SLOT];        // 1-4      m_spells[4]
+    //uint32    availability[MAX_CREATURE_SPELL_DATA_SLOT]; // 4-7      m_availability[4]
 };
 
 struct CreatureTypeEntry
@@ -943,7 +945,7 @@ struct ItemEntry
 {
    uint32   ID;                                             // 0
    uint32   Class;                                          // 1
-   //uint32   SubClass;                                     // 2 some items have strnage subclasses
+   uint32   SubClass;                                       // 2 some items have strnage subclasses
    int32    Unk0;                                           // 3
    int32    Material;                                       // 4
    uint32   DisplayId;                                      // 5
