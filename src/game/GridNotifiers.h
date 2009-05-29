@@ -445,6 +445,25 @@ namespace MaNGOS
         template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) {}
     };
 
+    template<class Do>
+    struct MANGOS_DLL_DECL CreatureWorker
+    {
+        uint32 i_phaseMask;
+        Do& i_do;
+
+        CreatureWorker(WorldObject const* searcher, Do& _do)
+            : i_phaseMask(searcher->GetPhaseMask()), i_do(_do) {}
+
+        void Visit(CreatureMapType &m)
+        {
+            for(CreatureMapType::iterator itr=m.begin(); itr != m.end(); ++itr)
+                if(itr->getSource()->InSamePhase(i_phaseMask))
+                    i_do(itr->getSource());
+        }
+
+        template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) {}
+    };
+
     // Player searchers
 
     template<class Check>
@@ -494,7 +513,7 @@ namespace MaNGOS
         void Visit(PlayerMapType &m)
         {
             for(PlayerMapType::iterator itr=m.begin(); itr != m.end(); ++itr)
-                if(itr->getSource()->InSamePhase(i_searcher) && itr->getSource()->GetDistance(i_searcher) <= i_dist)
+                if (itr->getSource()->InSamePhase(i_searcher) && itr->getSource()->IsWithinDist(i_searcher,i_dist))
                     i_do(itr->getSource());
         }
 
@@ -504,6 +523,53 @@ namespace MaNGOS
     // CHECKS && DO classes
 
     // WorldObject check classes
+    class RaiseDeadObjectCheck
+    {
+        public:
+            RaiseDeadObjectCheck(Unit* funit, float range) : i_funit(funit), i_range(range) {}
+            bool operator()(Creature* u)
+            {
+                if (i_funit->GetTypeId()!=TYPEID_PLAYER || !((Player*)i_funit)->isHonorOrXPTarget(u) ||
+                    u->getDeathState() != CORPSE || u->isDeadByDefault() || u->isInFlight() ||
+                    ( u->GetCreatureTypeMask() & (1 << (CREATURE_TYPE_HUMANOID-1)) )==0 ||
+                    (u->GetDisplayId() != u->GetNativeDisplayId()))
+                    return false;
+
+                return i_funit->IsWithinDistInMap(u, i_range);
+            }
+            template<class NOT_INTERESTED> bool operator()(NOT_INTERESTED*) { return false; }
+        private:
+            Unit* const i_funit;
+            float i_range;
+    };
+
+    class ExplodeCorpseObjectCheck
+    {
+        public:
+            ExplodeCorpseObjectCheck(Unit* funit, float range) : i_funit(funit), i_range(range) {}
+            bool operator()(Player* u)
+            {
+                if (u->getDeathState()!=CORPSE || u->isInFlight() ||
+                    u->HasAuraType(SPELL_AURA_GHOST) || (u->GetDisplayId() != u->GetNativeDisplayId()))
+                    return false;
+
+                return i_funit->IsWithinDistInMap(u, i_range);
+            }
+            bool operator()(Creature* u)
+            {
+                if (u->getDeathState()!=CORPSE || u->isInFlight() || u->isDeadByDefault() ||
+                    (u->GetDisplayId() != u->GetNativeDisplayId()) ||
+                    (u->GetCreatureTypeMask() & CREATURE_TYPEMASK_MECHANICAL_OR_ELEMENTAL)!=0)
+                    return false;
+
+                return i_funit->IsWithinDistInMap(u, i_range);
+            }
+            template<class NOT_INTERESTED> bool operator()(NOT_INTERESTED*) { return false; }
+        private:
+            Unit* const i_funit;
+            float i_range;
+    };
+
     class CannibalizeObjectCheck
     {
         public:
@@ -513,22 +579,16 @@ namespace MaNGOS
                 if( i_funit->IsFriendlyTo(u) || u->isAlive() || u->isInFlight() )
                     return false;
 
-                if(i_funit->IsWithinDistInMap(u, i_range) )
-                    return true;
-
-                return false;
+                return i_funit->IsWithinDistInMap(u, i_range);
             }
             bool operator()(Corpse* u);
             bool operator()(Creature* u)
             {
-                if( i_funit->IsFriendlyTo(u) || u->isAlive() || u->isInFlight() ||
+                if (i_funit->IsFriendlyTo(u) || u->isAlive() || u->isInFlight() ||
                     (u->GetCreatureTypeMask() & CREATURE_TYPEMASK_HUMANOID_OR_UNDEAD)==0)
                     return false;
 
-                if(i_funit->IsWithinDistInMap(u, i_range) )
-                    return true;
-
-                return false;
+                return i_funit->IsWithinDistInMap(u, i_range);
             }
             template<class NOT_INTERESTED> bool operator()(NOT_INTERESTED*) { return false; }
         private:
@@ -852,6 +912,38 @@ namespace MaNGOS
             Unit* const i_funit;
             Unit* const i_enemy;
             float i_range;
+    };
+
+    class NearestAssistCreatureInCreatureRangeCheck
+    {
+        public:
+            NearestAssistCreatureInCreatureRangeCheck(Creature* obj, Unit* enemy, float range)
+                : i_obj(obj), i_enemy(enemy), i_range(range) {}
+
+            bool operator()(Creature* u)
+            {
+                if(u == i_obj)
+                    return false;
+                if(!u->CanAssistTo(i_obj,i_enemy))
+                    return false;
+                    
+                if(!i_obj->IsWithinDistInMap(u, i_range))
+                    return false;
+                
+                if(!i_obj->IsWithinLOSInMap(u))
+                    return false;
+
+                i_range = i_obj->GetDistance(u);            // use found unit range as new range limit for next check
+                return true;
+            }
+            float GetLastRange() const { return i_range; }
+        private:
+            Creature* const i_obj;
+            Unit* const i_enemy;
+            float  i_range;
+
+            // prevent clone this object
+            NearestAssistCreatureInCreatureRangeCheck(NearestAssistCreatureInCreatureRangeCheck const&);
     };
 
     // Success at unit in range, range update for next check (this can be use with CreatureLastSearcher to find nearest creature)

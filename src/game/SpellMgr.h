@@ -140,8 +140,10 @@ inline bool IsExplicitDiscoverySpell(SpellEntry const *spellInfo)
 
 inline bool IsLootCraftingSpell(SpellEntry const *spellInfo)
 {
-    return spellInfo->Effect[0]==SPELL_EFFECT_CREATE_ITEM_2 &&
-        (spellInfo->Effect[1]==SPELL_EFFECT_SCRIPT_EFFECT || !spellInfo->EffectItemType[0]);
+    return spellInfo->Effect[0]==SPELL_EFFECT_CREATE_ITEM_2 && (
+        spellInfo->Effect[1]==SPELL_EFFECT_SCRIPT_EFFECT || // see IsExplicitDiscoverySpell
+        !spellInfo->EffectItemType[0] ||                    // result item not provided
+        spellInfo->TotemCategory[0] == 121);                // different random cards from Inscription (121==Virtuoso Inking Set category)
 }
 
 int32 CompareAuraRanks(uint32 spellId_1, uint32 effIndex_1, uint32 spellId_2, uint32 effIndex_2);
@@ -470,9 +472,9 @@ class PetAura
                 return itr->second;
             else
             {
-                std::map<uint16, uint16>::const_iterator itr = auras.find(0);
-                if(itr != auras.end())
-                    return itr->second;
+                std::map<uint16, uint16>::const_iterator itr2 = auras.find(0);
+                if(itr2 != auras.end())
+                    return itr2->second;
                 else
                     return 0;
             }
@@ -559,8 +561,17 @@ typedef std::multimap<uint32, SpellLearnSpellNode> SpellLearnSpellMap;
 
 typedef std::multimap<uint32, SkillLineAbilityEntry const*> SkillLineAbilityMap;
 
-typedef std::map<uint32, uint32> PetLevelupSpellSet;
+typedef std::multimap<uint32, uint32> PetLevelupSpellSet;
 typedef std::map<uint32, PetLevelupSpellSet> PetLevelupSpellMap;
+
+struct PetDefaultSpellsEntry
+{
+    uint32 spellid[MAX_CREATURE_SPELL_DATA_SLOT];
+};
+
+// < 0 for petspelldata id, > 0 for creature_id
+typedef std::map<int32, PetDefaultSpellsEntry> PetDefaultSpellsMap;
+
 
 inline bool IsPrimaryProfessionSkill(uint32 skill)
 {
@@ -649,9 +660,9 @@ class SpellMgr
             // Not found, try lookup for 1 spell rank if exist
             if (uint32 rank_1 = GetFirstSpellInChain(spellId))
             {
-                SpellBonusMap::const_iterator itr = mSpellBonusMap.find(rank_1);
-                if( itr != mSpellBonusMap.end( ) )
-                    return &itr->second;
+                SpellBonusMap::const_iterator itr2 = mSpellBonusMap.find(rank_1);
+                if( itr2 != mSpellBonusMap.end( ) )
+                    return &itr2->second;
             }
             return NULL;
         }
@@ -812,6 +823,15 @@ class SpellMgr
                 return NULL;
         }
 
+        // < 0 for petspelldata id, > 0 for creature_id
+        PetDefaultSpellsEntry const* GetPetDefaultSpellsEntry(int32 id) const
+        {
+            PetDefaultSpellsMap::const_iterator itr = mPetDefaultSpellsMap.find(id);
+            if(itr != mPetDefaultSpellsMap.end())
+                return &itr->second;
+            return NULL;
+        }
+
         SpellCastResult GetSpellAllowedInLocationError(SpellEntry const *spellInfo, uint32 map_id, uint32 zone_id, uint32 area_id, Player const* player = NULL);
 
         SpellAreaMapBounds GetSpellAreaMapBounds(uint32 spell_id) const
@@ -860,6 +880,7 @@ class SpellMgr
         void LoadSkillLineAbilityMap();
         void LoadSpellPetAuras();
         void LoadPetLevelupSpellMap();
+        void LoadPetDefaultSpells();
         void LoadSpellAreas();
 
     private:
@@ -876,6 +897,7 @@ class SpellMgr
         SkillLineAbilityMap mSkillLineAbilityMap;
         SpellPetAuraMap     mSpellPetAuraMap;
         PetLevelupSpellMap  mPetLevelupSpellMap;
+        PetDefaultSpellsMap mPetDefaultSpellsMap;           // only spells not listed in related mPetLevelupSpellMap entry
         SpellAreaMap         mSpellAreaMap;
         SpellAreaForQuestMap mSpellAreaForQuestMap;
         SpellAreaForQuestMap mSpellAreaForActiveQuestMap;

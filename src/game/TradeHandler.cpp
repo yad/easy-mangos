@@ -132,7 +132,7 @@ void WorldSession::SendUpdateTrade()
     data << (uint32) _player->pTrader->tradeGold;           // trader gold
     data << (uint32) 0;                                     // spell casted on lowest slot item
 
-    for(uint8 i = 0; i < TRADE_SLOT_COUNT; i++)
+    for(uint8 i = 0; i < TRADE_SLOT_COUNT; ++i)
     {
         item = (_player->pTrader->tradeItems[i] != NULL_SLOT ? _player->pTrader->GetItemByPos( _player->pTrader->tradeItems[i] ) : NULL);
 
@@ -177,7 +177,7 @@ void WorldSession::SendUpdateTrade()
 
 void WorldSession::moveItems(Item* myItems[], Item* hisItems[])
 {
-    for(int i=0; i<TRADE_SLOT_TRADED_COUNT; i++)
+    for(int i=0; i<TRADE_SLOT_TRADED_COUNT; ++i)
     {
         ItemPosCountVec traderDst;
         ItemPosCountVec playerDst;
@@ -276,7 +276,7 @@ void WorldSession::HandleAcceptTradeOpcode(WorldPacket& /*recvPacket*/)
     }
 
     // not accept if some items now can't be trade (cheating)
-    for(int i=0; i<TRADE_SLOT_TRADED_COUNT; i++)
+    for(int i=0; i<TRADE_SLOT_TRADED_COUNT; ++i)
     {
         if(_player->tradeItems[i] != NULL_SLOT )
         {
@@ -309,7 +309,7 @@ void WorldSession::HandleAcceptTradeOpcode(WorldPacket& /*recvPacket*/)
         _player->pTrader->GetSession()->SendTradeStatus(TRADE_STATUS_TRADE_ACCEPT);
 
         // store items in local list and set 'in-trade' flag
-        for(int i=0; i<TRADE_SLOT_TRADED_COUNT; i++)
+        for(int i=0; i<TRADE_SLOT_TRADED_COUNT; ++i)
         {
             if(_player->tradeItems[i] != NULL_SLOT )
             {
@@ -334,7 +334,7 @@ void WorldSession::HandleAcceptTradeOpcode(WorldPacket& /*recvPacket*/)
         myCanCompleteTrade = (_player->CanStoreItems( hisItems,TRADE_SLOT_TRADED_COUNT ) == EQUIP_ERR_OK);
 
         // clear 'in-trade' flag
-        for(int i=0; i<TRADE_SLOT_TRADED_COUNT; i++)
+        for(int i=0; i<TRADE_SLOT_TRADED_COUNT; ++i)
         {
             if(myItems[i])  myItems[i]->SetInTrade(false);
             if(hisItems[i]) hisItems[i]->SetInTrade(false);
@@ -359,7 +359,7 @@ void WorldSession::HandleAcceptTradeOpcode(WorldPacket& /*recvPacket*/)
         }
 
         // execute trade: 1. remove
-        for(int i=0; i<TRADE_SLOT_TRADED_COUNT; i++)
+        for(int i=0; i<TRADE_SLOT_TRADED_COUNT; ++i)
         {
             if(myItems[i])
             {
@@ -459,30 +459,30 @@ void WorldSession::HandleInitiateTradeOpcode(WorldPacket& recvPacket)
 {
     CHECK_PACKET_SIZE(recvPacket,8);
 
-    if( GetPlayer()->pTrader )
+    if (GetPlayer()->pTrader)
         return;
 
     uint64 ID;
 
-    if( !GetPlayer()->isAlive() )
+    if (!GetPlayer()->isAlive())
     {
         SendTradeStatus(TRADE_STATUS_YOU_DEAD);
         return;
     }
 
-    if( GetPlayer()->hasUnitState(UNIT_STAT_STUNNED) )
+    if (GetPlayer()->hasUnitState(UNIT_STAT_STUNNED))
     {
         SendTradeStatus(TRADE_STATUS_YOU_STUNNED);
         return;
     }
 
-    if( isLogingOut() )
+    if (isLogingOut())
     {
         SendTradeStatus(TRADE_STATUS_YOU_LOGOUT);
         return;
     }
 
-    if( GetPlayer()->isInFlight() )
+    if (GetPlayer()->isInFlight())
     {
         SendTradeStatus(TRADE_STATUS_TARGET_TO_FAR);
         return;
@@ -492,55 +492,55 @@ void WorldSession::HandleInitiateTradeOpcode(WorldPacket& recvPacket)
 
     Player* pOther = ObjectAccessor::FindPlayer( ID );
 
-    if( !pOther )
+    if (!pOther)
     {
         SendTradeStatus(TRADE_STATUS_NO_TARGET);
         return;
     }
 
-    if( pOther == GetPlayer() || pOther->pTrader )
+    if (pOther == GetPlayer() || pOther->pTrader)
     {
         SendTradeStatus(TRADE_STATUS_BUSY);
         return;
     }
 
-    if( !pOther->isAlive() )
+    if (!pOther->isAlive())
     {
         SendTradeStatus(TRADE_STATUS_TARGET_DEAD);
         return;
     }
 
-    if( pOther->isInFlight() )
+    if (pOther->isInFlight())
     {
         SendTradeStatus(TRADE_STATUS_TARGET_TO_FAR);
         return;
     }
 
-    if( pOther->hasUnitState(UNIT_STAT_STUNNED) )
+    if (pOther->hasUnitState(UNIT_STAT_STUNNED))
     {
         SendTradeStatus(TRADE_STATUS_TARGET_STUNNED);
         return;
     }
 
-    if( pOther->GetSession()->isLogingOut() )
+    if (pOther->GetSession()->isLogingOut())
     {
         SendTradeStatus(TRADE_STATUS_TARGET_LOGOUT);
         return;
     }
 
-    if( pOther->GetSocial()->HasIgnore(GetPlayer()->GetGUIDLow()) )
+    if (pOther->GetSocial()->HasIgnore(GetPlayer()->GetGUIDLow()))
     {
         SendTradeStatus(TRADE_STATUS_IGNORE_YOU);
         return;
     }
 
-    if(pOther->GetTeam() !=_player->GetTeam() )
+    if (pOther->GetTeam() !=_player->GetTeam() )
     {
         SendTradeStatus(TRADE_STATUS_WRONG_FACTION);
         return;
     }
 
-    if( pOther->GetDistance2d( _player ) > 10.0f )
+    if (!pOther->IsWithinDistInMap(_player,10.0f,false))
     {
         SendTradeStatus(TRADE_STATUS_TARGET_TO_FAR);
         return;

@@ -24,6 +24,7 @@
 #include "Corpse.h"
 #include "Player.h"
 #include "Vehicle.h"
+#include "SpellAuras.h"
 #include "MapManager.h"
 #include "Transports.h"
 #include "BattleGround.h"
@@ -249,7 +250,7 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
         if (plMover && !plMover->m_transport)
         {
             // elevators also cause the client to send MOVEMENTFLAG_ONTRANSPORT - just unmount if the guid can be found in the transport list
-            for (MapManager::TransportSet::iterator iter = MapManager::Instance().m_Transports.begin(); iter != MapManager::Instance().m_Transports.end(); ++iter)
+            for (MapManager::TransportSet::const_iterator iter = MapManager::Instance().m_Transports.begin(); iter != MapManager::Instance().m_Transports.end(); ++iter)
             {
                 if ((*iter)->GetGUID() == movementInfo.t_guid)
                 {
@@ -475,8 +476,8 @@ void WorldSession::HandleDismissControlledVehicle(WorldPacket &recv_data)
     // using charm guid, because we don't have vehicle guid...
     if(Vehicle *vehicle = ObjectAccessor::GetVehicle(vehicleGUID))
     {
-        _player->ExitVehicle(vehicle);
-        vehicle->Dismiss();
+        // Aura::HandleAuraControlVehicle will call Player::ExitVehicle
+        vehicle->RemoveSpellsCausingAura(SPELL_AURA_CONTROL_VEHICLE);
     }
 }
 

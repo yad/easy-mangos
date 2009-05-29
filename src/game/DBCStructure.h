@@ -509,7 +509,8 @@ struct AreaTableEntry
 struct AreaGroupEntry
 {
     uint32  AreaGroupId;                                    // 0
-    uint32  AreaId[7];                                      // 1-7
+    uint32  AreaId[6];                                      // 1-6
+    uint32  nextGroup;                                      // 7 index of next group
 };
 
 struct AreaTriggerEntry
@@ -703,11 +704,13 @@ struct CreatureFamilyEntry
                                                             // 27       m_iconFile
 };
 
+#define MAX_CREATURE_SPELL_DATA_SLOT 4
+
 struct CreatureSpellDataEntry
 {
     uint32    ID;                                           // 0        m_ID
-    //uint32    spellId[4];                                 // 1-4      m_spells[4]
-    //uint32    availability[4];                            // 4-7      m_availability[4]
+    uint32    spellId[MAX_CREATURE_SPELL_DATA_SLOT];        // 1-4      m_spells[4]
+    //uint32    availability[MAX_CREATURE_SPELL_DATA_SLOT]; // 4-7      m_availability[4]
 };
 
 struct CreatureTypeEntry
@@ -942,7 +945,7 @@ struct ItemEntry
 {
    uint32   ID;                                             // 0
    uint32   Class;                                          // 1
-   //uint32   SubClass;                                     // 2 some items have strnage subclasses
+   uint32   SubClass;                                       // 2 some items have strnage subclasses
    int32    Unk0;                                           // 3
    int32    Material;                                       // 4
    uint32   DisplayId;                                      // 5
@@ -1135,7 +1138,7 @@ struct RandomPropertiesPointsEntry
 struct ScalingStatDistributionEntry
 {
     uint32  Id;
-    uint32  StatMod[10];
+    int32   StatMod[10];
     uint32  Modifier[10];
     uint32  MaxLevel;
 };
@@ -1144,7 +1147,58 @@ struct ScalingStatValuesEntry
 {
     uint32  Id;
     uint32  Level;
-    uint32  Multiplier[17];
+    uint32  ssdMultiplier[5];                               // Multiplier for ScalingStatDistribution
+    uint32  armorMod[4];                                    // Armor for level
+    uint32  dpsMod[6];                                      // DPS mod for level
+    uint32  spellBonus;                                     // not sure.. TODO: need more info about
+    uint32  feralBonus;                                     // Feral AP bonus
+
+    uint32  getssdMultiplier(uint32 mask) const
+    {
+        if (mask&0x001F)
+        {
+            if(mask & 0x00000001) return ssdMultiplier[0];
+            if(mask & 0x00000002) return ssdMultiplier[1];
+            if(mask & 0x00000004) return ssdMultiplier[2];
+            if(mask & 0x00000008) return ssdMultiplier[3];
+            if(mask & 0x00000010) return ssdMultiplier[4];
+        }
+        return 0;
+    }
+    uint32  getArmorMod(uint32 mask) const
+    {
+        if (mask&0x01E0)
+        {
+            if(mask & 0x00000020) return armorMod[0];
+            if(mask & 0x00000040) return armorMod[1];
+            if(mask & 0x00000080) return armorMod[2];
+            if(mask & 0x00000100) return armorMod[3];
+        }
+        return 0;
+    }
+    uint32 getDPSMod(uint32 mask) const
+    {
+        if (mask&0x7E00)
+        {
+            if(mask & 0x00000200) return dpsMod[0];
+            if(mask & 0x00000400) return dpsMod[1];
+            if(mask & 0x00000800) return dpsMod[2];
+            if(mask & 0x00001000) return dpsMod[3];
+            if(mask & 0x00002000) return dpsMod[4];
+            if(mask & 0x00004000) return dpsMod[5];
+        }
+        return 0;
+    }
+    uint32 getSpellBonus(uint32 mask) const
+    {
+        if (mask & 0x00008000) return spellBonus;
+        return 0;
+    }
+    uint32 getFeralBonus(uint32 mask) const
+    {
+        if (mask & 0x00010000) return feralBonus;
+        return 0;
+    }
 };
 
 //struct SkillLineCategoryEntry{
@@ -1479,10 +1533,9 @@ struct TalentEntry
                                                             // 14-15 not used
     uint32    DependsOnRank;                                // 16
                                                             // 17-18 not used
-    //uint32  unk1;                                         // 19, 0 or 1
+    //uint32  needAddInSpellBook;                           // 19  also need disable higest ranks on reset talent tree
     //uint32  unk2;                                         // 20, all 0
-    //uint32  unkFlags1;                                    // 21, related to hunter pet talents
-    //uint32  unkFlags2;                                    // 22, related to hunter pet talents
+    //uint64  allowForPet;                                  // 21 its a 64 bit mask for pet 1<<m_categoryEnumID in CreatureFamily.dbc
 };
 
 struct TalentTabEntry
@@ -1505,7 +1558,7 @@ struct TaxiNodesEntry
     float     x;                                            // 2        m_x
     float     y;                                            // 3        m_y
     float     z;                                            // 4        m_z
-    //char*     name[16];                                   // 5-21     m_Name_lang
+    char*     name[16];                                     // 5-21     m_Name_lang
                                                             // 22 string flags
     uint32    MountCreatureID[2];                           // 23-24    m_MountCreatureID[2]
 };
@@ -1640,6 +1693,18 @@ struct WorldMapAreaEntry
     // int32   dungeonMap_id;                               // 9 pointer to DungeonMap.dbc (owerride x1,x2,y1,y2 coordinates)
 };
 
+#define MAX_WORLD_MAP_OVERLAY_AREA_IDX 4
+
+struct WorldMapOverlayEntry
+{
+    uint32    ID;                                           // 0
+    //uint32    worldMapAreaId;                             // 1 idx in WorldMapArea.dbc
+    uint32    areatableID[MAX_WORLD_MAP_OVERLAY_AREA_IDX];  // 2-5
+                                                            // 6-7 always 0, possible part of areatableID[]
+    //char* internal_name                                   // 8
+                                                            // 9-16 some ints
+};
+
 struct WorldSafeLocsEntry
 {
     uint32    ID;                                           // 0
@@ -1649,12 +1714,6 @@ struct WorldSafeLocsEntry
     float     z;                                            // 4
     //char*   name[16]                                      // 5-20 name, unused
                                                             // 21 name flags, unused
-};
-
-struct WorldMapOverlayEntry
-{
-    uint32    ID;                                           // 0
-    uint32    areatableID[4];                               // 2-5
 };
 
 // GCC have alternative #pragma pack() syntax and old gcc version not support pack(pop), also any gcc version not support it at some platform

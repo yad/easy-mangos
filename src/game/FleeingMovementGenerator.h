@@ -53,9 +53,26 @@ class MANGOS_DLL_SPEC FleeingMovementGenerator
         float i_last_distance_from_caster;
         float i_to_distance_from_caster;
         float i_cur_angle;
-        TimeTracker i_nextCheckTime;
         uint64 i_frightGUID;
+        TimeTracker i_nextCheckTime;
 
         DestinationHolder< Traveller<T> > i_destinationHolder;
 };
+
+class MANGOS_DLL_SPEC TimedFleeingMovementGenerator
+: public FleeingMovementGenerator<Creature>
+{
+    public:
+        TimedFleeingMovementGenerator(uint64 fright, uint32 time) :
+            FleeingMovementGenerator<Creature>(fright),
+            i_totalFleeTime(time) {}
+
+        MovementGeneratorType GetMovementGeneratorType() { return TIMED_FLEEING_MOTION_TYPE; }
+        bool Update(Unit &, const uint32 &);
+        void Finalize(Unit &);
+
+    private:
+        TimeTracker i_totalFleeTime;
+};
+
 #endif

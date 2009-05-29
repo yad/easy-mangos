@@ -299,7 +299,7 @@ void Item::SaveToDB()
             CharacterDatabase.PExecute( "DELETE FROM item_instance WHERE guid = '%u'", guid );
             std::ostringstream ss;
             ss << "INSERT INTO item_instance (guid,owner_guid,data) VALUES (" << guid << "," << GUID_LOPART(GetOwnerGUID()) << ",'";
-            for(uint16 i = 0; i < m_valuesCount; i++ )
+            for(uint16 i = 0; i < m_valuesCount; ++i )
                 ss << GetUInt32Value(i) << " ";
             ss << "' )";
             CharacterDatabase.Execute( ss.str().c_str() );
@@ -308,7 +308,7 @@ void Item::SaveToDB()
         {
             std::ostringstream ss;
             ss << "UPDATE item_instance SET data = '";
-            for(uint16 i = 0; i < m_valuesCount; i++ )
+            for(uint16 i = 0; i < m_valuesCount; ++i )
                 ss << GetUInt32Value(i) << " ";
             ss << "', owner_guid = '" << GUID_LOPART(GetOwnerGUID()) << "' WHERE guid = '" << guid << "'";
 
@@ -409,7 +409,7 @@ bool Item::LoadFromDB(uint32 guid, uint64 owner_guid, QueryResult *result)
     {
         std::ostringstream ss;
         ss << "UPDATE item_instance SET data = '";
-        for(uint16 i = 0; i < m_valuesCount; i++ )
+        for(uint16 i = 0; i < m_valuesCount; ++i )
             ss << GetUInt32Value(i) << " ";
         ss << "', owner_guid = '" << GUID_LOPART(GetOwnerGUID()) << "' WHERE guid = '" << guid << "'";
 
@@ -696,18 +696,19 @@ bool Item::IsEquipped() const
     return !IsInBag() && m_slot < EQUIPMENT_SLOT_END;
 }
 
-bool Item::CanBeTraded() const
+bool Item::CanBeTraded(bool mail) const
 {
-    if(IsSoulBound())
-        return false;
-    if(IsBag() && (Player::IsBagPos(GetPos()) || !((Bag const*)this)->IsEmpty()) )
+    if ((!mail || !IsBoundAccountWide()) && IsSoulBound())
         return false;
 
-    if(Player* owner = GetOwner())
+    if (IsBag() && (Player::IsBagPos(GetPos()) || !((Bag const*)this)->IsEmpty()) )
+        return false;
+
+    if (Player* owner = GetOwner())
     {
-        if(owner->CanUnequipItem(GetPos(),false) !=  EQUIP_ERR_OK )
+        if (owner->CanUnequipItem(GetPos(),false) !=  EQUIP_ERR_OK )
             return false;
-        if(owner->GetLootGUID()==GetGUID())
+        if (owner->GetLootGUID()==GetGUID())
             return false;
     }
 
@@ -940,4 +941,30 @@ Item* Item::CloneItem( uint32 count, Player const* player ) const
     newItem->SetUInt32Value( ITEM_FIELD_DURATION,     GetUInt32Value( ITEM_FIELD_DURATION ) );
     newItem->SetItemRandomProperties(GetItemRandomPropertyId());
     return newItem;
+}
+
+bool Item::IsBindedNotWith( Player const* player ) const
+{
+    // not binded item
+    if(!IsSoulBound())
+        return false;
+
+    // own item
+    if(GetOwnerGUID()== player->GetGUID())
+        return false;
+
+    // not BOA item case
+    if(!IsBoundAccountWide())
+        return true;
+
+    // online
+    if(Player* owner = objmgr.GetPlayer(GetOwnerGUID()))
+    {
+        return owner->GetSession()->GetAccountId() != player->GetSession()->GetAccountId();
+    }
+    // offline slow case
+    else
+    {
+        return objmgr.GetPlayerAccountIdByGUID(GetOwnerGUID()) != player->GetSession()->GetAccountId();
+    }
 }

@@ -101,7 +101,7 @@ void UpdateData::Compress(void* dst, uint32 *dst_size, void* src, int src_size)
     *dst_size = c_stream.total_out;
 }
 
-bool UpdateData::BuildPacket(WorldPacket *packet, bool hasTransport)
+bool UpdateData::BuildPacket(WorldPacket *packet, bool /*hasTransport*/)
 {
     ByteBuffer buf(m_data.size() + 10 + m_outOfRangeGUIDs.size()*8);
 
@@ -114,7 +114,7 @@ bool UpdateData::BuildPacket(WorldPacket *packet, bool hasTransport)
         buf << (uint32) m_outOfRangeGUIDs.size();
 
         for(std::set<uint64>::const_iterator i = m_outOfRangeGUIDs.begin();
-            i != m_outOfRangeGUIDs.end(); i++)
+            i != m_outOfRangeGUIDs.end(); ++i)
         {
             //buf.appendPackGUID(*i);
             buf << (uint8)0xFF;
