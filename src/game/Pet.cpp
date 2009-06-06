@@ -165,7 +165,7 @@ bool Pet::LoadPetFromDB( Player* owner, uint32 petentry, uint32 petnumber, bool 
     }
 
     setPetType(PetType(fields[18].GetUInt8()));
-    SetUInt32Value(UNIT_FIELD_FACTIONTEMPLATE, owner->getFaction());
+    setFaction(owner->getFaction());
     SetUInt32Value(UNIT_CREATED_BY_SPELL, summon_spell_id);
 
     CreatureInfo const *cinfo = GetCreatureInfo();
@@ -183,7 +183,7 @@ bool Pet::LoadPetFromDB( Player* owner, uint32 petentry, uint32 petnumber, bool 
     SetDisplayId(fields[3].GetUInt32());
     SetNativeDisplayId(fields[3].GetUInt32());
     uint32 petlevel = fields[4].GetUInt32();
-    SetUInt32Value(UNIT_NPC_FLAGS, 0);
+    SetUInt32Value(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_NONE);
     SetName(fields[8].GetString());
 
     switch (getPetType())
@@ -769,7 +769,7 @@ bool Pet::CreateBaseAtCreature(Creature* creature)
     SetUInt32Value(UNIT_FIELD_PET_NAME_TIMESTAMP, 0);
     SetUInt32Value(UNIT_FIELD_PETEXPERIENCE, 0);
     SetUInt32Value(UNIT_FIELD_PETNEXTLEVELEXP, objmgr.GetXPForLevel(creature->getLevel())/4);
-    SetUInt32Value(UNIT_NPC_FLAGS, 0);
+    SetUInt32Value(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_NONE);
 
     if(CreatureFamilyEntry const* cFamily = sCreatureFamilyStore.LookupEntry(cinfo->family))
         SetName(cFamily->Name[sWorld.GetDefaultDbcLocale()]);
@@ -1089,17 +1089,7 @@ void Pet::_LoadSpells()
         {
             Field *fields = result->Fetch();
 
-            uint32 spell_id = fields[0].GetUInt32();
-
-            // load only pet talents, other spell types auto-learned
-            if(GetTalentSpellCost(spell_id)==0)
-            {
-                CharacterDatabase.PExecute("DELETE FROM pet_spell WHERE spell = '%u'",spell_id);
-                sLog.outError("Table `pet_spell` have non-talent spell %u , spell removed from table for all pets.",spell_id);
-                continue;
-            }
-
-            addSpell(spell_id, ActiveStates(fields[1].GetUInt16()), PETSPELL_UNCHANGED,PETSPELL_TALENT);
+            addSpell(fields[0].GetUInt32(), ActiveStates(fields[1].GetUInt16()), PETSPELL_UNCHANGED);
         }
         while( result->NextRow() );
 
@@ -1113,8 +1103,8 @@ void Pet::_SaveSpells()
     {
         ++next;
 
-        // save only talent spells for pets, other spells auto-applied
-        if (itr->second.type != PETSPELL_TALENT)
+        // prevent saving family passives to DB
+        if (itr->second.type == PETSPELL_FAMILY)
             continue;
 
         switch(itr->second.state)
@@ -1325,9 +1315,6 @@ bool Pet::addSpell(uint32 spell_id,ActiveStates active /*= ACT_DECIDE*/, PetSpel
     // talent: unlearn all other talent ranks (high and low)
     if(TalentSpellPos const* talentPos = GetTalentSpellPos(spell_id))
     {
-        // propertly mark spell for allow save
-        newspell.type = PETSPELL_TALENT;
-
         if(TalentEntry const *talentInfo = sTalentStore.LookupEntry( talentPos->talent_id ))
         {
             for(int i=0; i < MAX_TALENT_RANK; ++i)
