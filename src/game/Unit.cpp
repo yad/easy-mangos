@@ -5508,8 +5508,8 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                 {
                     if (pVictim->getPowerType() == POWER_MANA)
                     {
-                        // 2% of maximum mana
-                        basepoints0 = int32(pVictim->GetMaxPower(POWER_MANA) * 2 / 100);
+                        // 2% of maximum base mana
+                        basepoints0 = int32(pVictim->GetCreateMana() * 2 / 100);
                         pVictim->CastCustomSpell(pVictim, 20268, &basepoints0, NULL, NULL, true, NULL, triggeredByAura);
                     }
                     return true;
@@ -5545,8 +5545,8 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                     }
                     break;
                 }
-                // Blessing of Sanctuary
-                case 20911:
+                case 25899:                                 // Greater Blessing of Sanctuary
+                case 20911:                                 // Blessing of Sanctuary
                 {
                     if (target->GetTypeId() != TYPEID_PLAYER)
                         return false;
