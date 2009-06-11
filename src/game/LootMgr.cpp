@@ -46,7 +46,7 @@ LootStore LootTemplates_Prospecting(  "prospecting_loot_template",  "item entry 
 LootStore LootTemplates_QuestMail(    "quest_mail_loot_template",   "quest id (with mail template)",false);
 LootStore LootTemplates_Reference(    "reference_loot_template",    "reference id",                 false);
 LootStore LootTemplates_Skinning(     "skinning_loot_template",     "creature skinning id",         true);
-LootStore LootTemplates_Spell(        "spell_loot_template",        "spell id (explicitly discovering ability)",false);
+LootStore LootTemplates_Spell(        "spell_loot_template",        "spell id (random item creating)",false);
 
 class LootTemplate::LootGroup                               // A set of loot definitions for items (refs are not allowed)
 {
@@ -239,7 +239,7 @@ void LootStore::ReportNotExistedId(uint32 id) const
 // RATE_DROP_ITEMS is no longer used for all types of entries
 bool LootStoreItem::Roll(bool rate) const
 {
-    if(chance>=100.f)
+    if(chance>=100.0f)
         return true;
 
     if(mincountOrRef < 0)                                   // reference case
@@ -817,7 +817,7 @@ LootStoreItem const * LootTemplate::LootGroup::Roll() const
 
         for (uint32 i=0; i<ExplicitlyChanced.size(); ++i)    //check each explicitly chanced entry in the template and modify its chance based on quality.
         {
-            if(ExplicitlyChanced[i].chance>=100.f)
+            if(ExplicitlyChanced[i].chance>=100.0f)
                 return &ExplicitlyChanced[i];
 
             Roll -= ExplicitlyChanced[i].chance;
@@ -1330,7 +1330,7 @@ void LoadLootTemplates_Spell()
     }
 
     // output error for any still listed (not referenced from appropriate table) ids
-    LootTemplates_QuestMail.ReportUnusedIds(ids_set);
+    LootTemplates_Spell.ReportUnusedIds(ids_set);
 }
 
 void LoadLootTemplates_Reference()

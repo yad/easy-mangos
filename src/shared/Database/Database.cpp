@@ -108,7 +108,8 @@ bool Database::PExecuteLog(const char * format,...)
 
 void Database::SetResultQueue(SqlResultQueue * queue)
 {
-    m_queryQueues[ZThread::ThreadImpl::current()] = queue;
+    m_queryQueues[ACE_Based::Thread::current()] = queue;
+
 }
 
 QueryResult* Database::PQuery(const char *format,...)
@@ -128,6 +129,25 @@ QueryResult* Database::PQuery(const char *format,...)
     }
 
     return Query(szQuery);
+}
+
+QueryNamedResult* Database::PQueryNamed(const char *format,...)
+{
+    if(!format) return NULL;
+
+    va_list ap;
+    char szQuery [MAX_QUERY_LEN];
+    va_start(ap, format);
+    int res = vsnprintf( szQuery, MAX_QUERY_LEN, format, ap );
+    va_end(ap);
+
+    if(res==-1)
+    {
+        sLog.outError("SQL Query truncated (and not execute) for format: %s",format);
+        return false;
+    }
+
+    return QueryNamed(szQuery);
 }
 
 bool Database::PExecute(const char * format,...)

@@ -537,7 +537,7 @@ int WorldSocket::handle_input_payload (void)
 
 int WorldSocket::handle_input_missing_data (void)
 {
-    char buf [1024];
+    char buf [4096];
 
     ACE_Data_Block db ( sizeof (buf),
                         ACE_Message_Block::MB_DATA,
@@ -981,10 +981,10 @@ int WorldSocket::HandleAuthSession (WorldPacket& recvPacket)
     // NOTE ATM the socket is single-threaded, have this in mind ...
     ACE_NEW_RETURN (m_Session, WorldSession (id, this, AccountTypes(security), expansion, mutetime, locale), -1);
 
-    m_Crypt.SetKey (&K);
-    m_Crypt.Init ();
+    m_Crypt.Init(&K);
 
     m_Session->LoadAccountData();
+    m_Session->LoadTutorialsData();
     m_Session->ReadAddonsInfo(recvPacket);
 
     // In case needed sometime the second arg is in microseconds 1 000 000 = 1 sec

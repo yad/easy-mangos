@@ -66,7 +66,7 @@ void WorldSession::HandlePetAction( WorldPacket & recv_data )
     CharmInfo *charmInfo = pet->GetCharmInfo();
     if(!charmInfo)
     {
-        sLog.outError("WorldSession::HandlePetAction: object "I64FMTD" is considered pet-like but doesn't have a charminfo!", pet->GetGUID());
+        sLog.outError("WorldSession::HandlePetAction: object (GUID: %u TypeId: %u) is considered pet-like but doesn't have a charminfo!", pet->GetGUIDLow(), pet->GetTypeId());
         return;
     }
 
@@ -215,8 +215,6 @@ void WorldSession::HandlePetAction( WorldPacket & recv_data )
             if(result == SPELL_CAST_OK)
             {
                 ((Creature*)pet)->AddCreatureSpellCooldown(spellid);
-                if (((Creature*)pet)->isPet())
-                    ((Pet*)pet)->CheckLearning(spellid);
 
                 unit_target = spell->m_targets.getUnitTarget();
 
@@ -247,19 +245,7 @@ void WorldSession::HandlePetAction( WorldPacket & recv_data )
             else
             {
                 if(pet->HasAuraType(SPELL_AURA_MOD_POSSESS))
-                {
-                    WorldPacket data(SMSG_CAST_FAILED, (4+1+1));
-                    data << uint8(0) << uint32(spellid) << uint8(result);
-                    switch (result)
-                    {
-                        case SPELL_FAILED_REQUIRES_SPELL_FOCUS:
-                            data << uint32(spellInfo->RequiresSpellFocus);
-                            break;
-                        default:
-                            break;
-                    }
-                    SendPacket(&data);
-                }
+                    Spell::SendCastResult(GetPlayer(),spellInfo,0,result);
                 else
                     pet->SendPetCastFail(spellid, result);
 
@@ -346,7 +332,7 @@ void WorldSession::HandlePetSetAction( WorldPacket & recv_data )
     CharmInfo *charmInfo = pet->GetCharmInfo();
     if(!charmInfo)
     {
-        sLog.outError("WorldSession::HandlePetSetAction: object "I64FMTD" is considered pet-like but doesn't have a charminfo!", pet->GetGUID());
+        sLog.outError("WorldSession::HandlePetSetAction: object (GUID: %u TypeId: %u) is considered pet-like but doesn't have a charminfo!", pet->GetGUIDLow(), pet->GetTypeId());
         return;
     }
 
@@ -359,7 +345,11 @@ void WorldSession::HandlePetSetAction( WorldPacket & recv_data )
 
         sLog.outDetail( "Player %s has changed pet spell action. Position: %u, Spell: %u, State: 0x%X", _player->GetName(), position, spell_id, act_state);
 
-                                                            //if it's act for spell (en/disable/cast) and there is a spell given (0 = remove spell) which pet doesn't know, don't add
+        //ignore invalid position
+        if(position >= MAX_UNIT_ACTION_BAR_INDEX)
+            return;
+
+        //if it's act for spell (en/disable/cast) and there is a spell given (0 = remove spell) which pet doesn't know, don't add
         if(!((act_state == ACT_ENABLED || act_state == ACT_DISABLED || act_state == ACT_PASSIVE) && spell_id && !pet->HasSpell(spell_id)))
         {
             //sign for autocast
@@ -379,8 +369,7 @@ void WorldSession::HandlePetSetAction( WorldPacket & recv_data )
                     ((Pet*)pet)->ToggleAutocast(spell_id, false);
             }
 
-            charmInfo->GetActionBarEntry(position)->Type = act_state;
-            charmInfo->GetActionBarEntry(position)->SpellOrAction = spell_id;
+            charmInfo->SetActionBar(position,spell_id,ActiveStates(act_state));
         }
     }
 }
@@ -514,10 +503,11 @@ void WorldSession::HandlePetUnlearnOpcode(WorldPacket& recvPacket)
     CharmInfo *charmInfo = pet->GetCharmInfo();
     if(!charmInfo)
     {
-        sLog.outError("WorldSession::HandlePetUnlearnOpcode: object "I64FMTD" is considered pet-like but doesn't have a charminfo!", pet->GetGUID());
+        sLog.outError("WorldSession::HandlePetUnlearnOpcode: object (GUID: %u TypeId: %u) is considered pet-like but doesn't have a charminfo!", pet->GetGUIDLow(), pet->GetTypeId());
         return;
     }
     pet->resetTalents();
+    _player->SendTalentsInfoData(true);
 }
 
 void WorldSession::HandlePetSpellAutocastOpcode( WorldPacket& recvPacket )
@@ -552,7 +542,7 @@ void WorldSession::HandlePetSpellAutocastOpcode( WorldPacket& recvPacket )
     CharmInfo *charmInfo = pet->GetCharmInfo();
     if(!charmInfo)
     {
-        sLog.outError("WorldSession::HandlePetSpellAutocastOpcod: object "I64FMTD" is considered pet-like but doesn't have a charminfo!", pet->GetGUID());
+        sLog.outError("WorldSession::HandlePetSpellAutocastOpcod: object (GUID: %u TypeId: %u) is considered pet-like but doesn't have a charminfo!", pet->GetGUIDLow(), pet->GetTypeId());
         return;
     }
 
@@ -562,11 +552,7 @@ void WorldSession::HandlePetSpellAutocastOpcode( WorldPacket& recvPacket )
     else
         ((Pet*)pet)->ToggleAutocast(spellid, state);
 
-    for(uint8 i = 0; i < 10; ++i)
-    {
-        if((charmInfo->GetActionBarEntry(i)->Type == ACT_ENABLED || charmInfo->GetActionBarEntry(i)->Type == ACT_DISABLED) && spellid == charmInfo->GetActionBarEntry(i)->SpellOrAction)
-            charmInfo->GetActionBarEntry(i)->Type = state ? ACT_ENABLED : ACT_DISABLED;
-    }
+    charmInfo->SetSpellAutocast(spellid,state);
 }
 
 void WorldSession::HandlePetCastSpellOpcode( WorldPacket& recvPacket )
@@ -627,11 +613,9 @@ void WorldSession::HandlePetCastSpellOpcode( WorldPacket& recvPacket )
         pet->AddCreatureSpellCooldown(spellid);
         if(pet->isPet())
         {
-            Pet* p = (Pet*)pet;
-            p->CheckLearning(spellid);
             //10% chance to play special pet attack talk, else growl
             //actually this only seems to happen on special spells, fire shield for imp, torment for voidwalker, but it's stupid to check every spell
-            if(p->getPetType() == SUMMON_PET && (urand(0, 100) < 10))
+            if(((Pet*)pet)->getPetType() == SUMMON_PET && (urand(0, 100) < 10))
                 pet->SendPetTalk((uint32)PET_TALK_SPECIAL_SPELL);
             else
                 pet->SendPetAIReaction(guid);
@@ -677,4 +661,31 @@ void WorldSession::HandlePetLearnTalent( WorldPacket & recv_data )
     recv_data >> guid >> talent_id >> requested_rank;
 
     _player->LearnPetTalent(guid, talent_id, requested_rank);
+    _player->SendTalentsInfoData(true);
+}
+
+void WorldSession::HandleLearnPreviewTalentsPet( WorldPacket & recv_data )
+{
+    sLog.outDebug("CMSG_LEARN_PREVIEW_TALENTS_PET");
+
+    CHECK_PACKET_SIZE(recv_data, 8+4);
+
+    uint64 guid;
+    recv_data >> guid;
+
+    uint32 talentsCount;
+    recv_data >> talentsCount;
+
+    uint32 talentId, talentRank;
+
+    for(uint32 i = 0; i < talentsCount; ++i)
+    {
+        CHECK_PACKET_SIZE(recv_data, recv_data.rpos()+4+4);
+
+        recv_data >> talentId >> talentRank;
+
+        _player->LearnPetTalent(guid, talentId, talentRank);
+    }
+
+    _player->SendTalentsInfoData(true);
 }

@@ -21,7 +21,7 @@
 #include "Util.h"
 #include "Policies/SingletonImp.h"
 #include "Platform/Define.h"
-#include "../src/zthread/ThreadImpl.h"
+#include "Threading.h"
 #include "DatabaseEnv.h"
 #include "Database/PGSQLDelayThread.h"
 #include "Database/SqlOperations.h"
@@ -115,32 +115,27 @@ bool DatabasePostgre::Initialize(const char *infoString)
 
 }
 
-QueryResult* DatabasePostgre::Query(const char *sql)
+bool DatabasePostgre::_Query(const char *sql, PGresult** pResult, uint64* pRowCount, uint32* pFieldCount)
 {
     if (!mPGconn)
         return 0;
 
-    uint64 rowCount = 0;
-    uint32 fieldCount = 0;
-
     // guarded block for thread-safe request
-    ZThread::Guard<ZThread::FastMutex> query_connection_guard(mMutex);
+    ACE_Guard<ACE_Thread_Mutex> query_connection_guard(mMutex);
     #ifdef MANGOS_DEBUG
     uint32 _s = getMSTime();
     #endif
     // Send the query
-    PGresult * result = PQexec(mPGconn, sql);
-    if (!result )
-    {
-        return NULL;
-    }
+    *pResult = PQexec(mPGconn, sql);
+    if(!*pResult )
+        return false;
 
-    if (PQresultStatus(result) != PGRES_TUPLES_OK)
+    if (PQresultStatus(*pResult) != PGRES_TUPLES_OK)
     {
         sLog.outErrorDb( "SQL : %s", sql );
         sLog.outErrorDb( "SQL %s", PQerrorMessage(mPGconn));
-        PQclear(result);
-        return NULL;
+        PQclear(*pResult);
+        return false;
     }
     else
     {
@@ -149,20 +144,56 @@ QueryResult* DatabasePostgre::Query(const char *sql)
         #endif
     }
 
-    rowCount = PQntuples(result);
-    fieldCount = PQnfields(result);
+    *pRowCount = PQntuples(*pResult);
+    *pFieldCount = PQnfields(*pResult);
     // end guarded block
 
-    if (!rowCount)
+    if (!*pRowCount)
     {
-        PQclear(result);
-        return NULL;
+        PQclear(*pResult);
+        return false;
     }
+    return true;
+}
+
+QueryResult* DatabasePostgre::Query(const char *sql)
+{
+    if (!mPGconn)
+        return 0;
+
+    PGresult* result = NULL;
+    uint64 rowCount = 0;
+    uint32 fieldCount = 0;
+
+    if(!_Query(sql,&result,&rowCount,&fieldCount))
+        return NULL;
 
     QueryResultPostgre * queryResult = new QueryResultPostgre(result, rowCount, fieldCount);
     queryResult->NextRow();
 
     return queryResult;
+}
+
+QueryNamedResult* DatabasePostgre::QueryNamed(const char *sql)
+{
+    if (!mPGconn)
+        return 0;
+
+    PGresult* result = NULL;
+    uint64 rowCount = 0;
+    uint32 fieldCount = 0;
+
+    if(!_Query(sql,&result,&rowCount,&fieldCount))
+        return NULL;
+
+    QueryFieldNames names(fieldCount);
+    for (uint32 i = 0; i < fieldCount; i++)
+        names[i] = PQfname(result, i);
+
+    QueryResultPostgre * queryResult = new QueryResultPostgre(result, rowCount, fieldCount);
+    queryResult->NextRow();
+
+    return new QueryNamedResult(queryResult,names);
 }
 
 bool DatabasePostgre::Execute(const char *sql)
@@ -172,9 +203,10 @@ bool DatabasePostgre::Execute(const char *sql)
         return false;
 
     // don't use queued execution if it has not been initialized
-    if (!m_threadBody) return DirectExecute(sql);
+    if (!m_threadBody)
+        return DirectExecute(sql);
 
-    tranThread = ZThread::ThreadImpl::current();            // owner of this transaction
+    tranThread = ACE_Based::Thread::current();              // owner of this transaction
     TransactionQueues::iterator i = m_tranQueues.find(tranThread);
     if (i != m_tranQueues.end() && i->second != NULL)
     {                                                       // Statement for transaction
@@ -195,7 +227,7 @@ bool DatabasePostgre::DirectExecute(const char* sql)
         return false;
     {
         // guarded block for thread-safe  request
-        ZThread::Guard<ZThread::FastMutex> query_connection_guard(mMutex);
+        ACE_Guard<ACE_Thread_Mutex> query_connection_guard(mMutex);
         #ifdef MANGOS_DEBUG
         uint32 _s = getMSTime();
         #endif
@@ -245,7 +277,7 @@ bool DatabasePostgre::BeginTransaction()
     // don't use queued execution if it has not been initialized
     if (!m_threadBody)
     {
-        if (tranThread==ZThread::ThreadImpl::current())
+        if (tranThread == ACE_Based::Thread::current())
             return false;                                   // huh? this thread already started transaction
         mMutex.acquire();
         if (!_TransactionCmd("START TRANSACTION"))
@@ -256,7 +288,7 @@ bool DatabasePostgre::BeginTransaction()
         return true;
     }
     // transaction started
-    tranThread = ZThread::ThreadImpl::current();            // owner of this transaction
+    tranThread = ACE_Based::Thread::current();              // owner of this transaction
     TransactionQueues::iterator i = m_tranQueues.find(tranThread);
     if (i != m_tranQueues.end() && i->second != NULL)
         // If for thread exists queue and also contains transaction
@@ -276,14 +308,14 @@ bool DatabasePostgre::CommitTransaction()
     // don't use queued execution if it has not been initialized
     if (!m_threadBody)
     {
-        if (tranThread!=ZThread::ThreadImpl::current())
+        if (tranThread != ACE_Based::Thread::current())
             return false;
         bool _res = _TransactionCmd("COMMIT");
         tranThread = NULL;
         mMutex.release();
         return _res;
     }
-    tranThread = ZThread::ThreadImpl::current();
+    tranThread = ACE_Based::Thread::current();
     TransactionQueues::iterator i = m_tranQueues.find(tranThread);
     if (i != m_tranQueues.end() && i->second != NULL)
     {
@@ -302,14 +334,14 @@ bool DatabasePostgre::RollbackTransaction()
     // don't use queued execution if it has not been initialized
     if (!m_threadBody)
     {
-        if (tranThread!=ZThread::ThreadImpl::current())
+        if (tranThread != ACE_Based::Thread::current())
             return false;
         bool _res = _TransactionCmd("ROLLBACK");
         tranThread = NULL;
         mMutex.release();
         return _res;
     }
-    tranThread = ZThread::ThreadImpl::current();
+    tranThread = ACE_Based::Thread::current();
     TransactionQueues::iterator i = m_tranQueues.find(tranThread);
     if (i != m_tranQueues.end() && i->second != NULL)
     {
@@ -332,7 +364,8 @@ void DatabasePostgre::InitDelayThread()
     assert(!m_delayThread);
 
     //New delay thread for delay execute
-    m_delayThread = new ZThread::Thread(m_threadBody = new PGSQLDelayThread(this));
+    m_threadBody = new PGSQLDelayThread(this);
+    m_delayThread = new ACE_Based::Thread(*m_threadBody);
 }
 
 void DatabasePostgre::HaltDelayThread()

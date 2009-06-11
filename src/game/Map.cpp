@@ -117,7 +117,7 @@ void Map::LoadVMap(int gx,int gy)
     }
 }
 
-void Map::LoadMap(int gx,int gy)
+void Map::LoadMap(int gx,int gy, bool reload)
 {
     if( i_InstanceId != 0 )
     {
@@ -134,6 +134,9 @@ void Map::LoadMap(int gx,int gy)
         GridMaps[gx][gy] = baseMap->GridMaps[gx][gy];
         return;
     }
+
+    if(GridMaps[gx][gy] && !reload)
+        return;
 
     //map already load, delete it before reloading (Is it necessary? Do we really need the ability the reload maps during runtime?)
     if(GridMaps[gx][gy])
@@ -183,8 +186,9 @@ void Map::DeleteStateMachine()
 
 Map::Map(uint32 id, time_t expiry, uint32 InstanceId, uint8 SpawnMode)
   : i_mapEntry (sMapStore.LookupEntry(id)), i_spawnMode(SpawnMode),
-  i_id(id), i_InstanceId(InstanceId), m_unloadTimer(0), i_gridExpiry(expiry),
-  m_activeNonPlayersIter(m_activeNonPlayers.end())
+  i_id(id), i_InstanceId(InstanceId), m_unloadTimer(0),
+  m_activeNonPlayersIter(m_activeNonPlayers.end()),
+  i_gridExpiry(expiry)
 {
     for(unsigned int idx=0; idx < MAX_NUMBER_OF_GRIDS; ++idx)
     {
@@ -424,7 +428,7 @@ Map::Add(T *obj)
 
     if(p.x_coord >= TOTAL_NUMBER_OF_CELLS_PER_MAP || p.y_coord >= TOTAL_NUMBER_OF_CELLS_PER_MAP )
     {
-        sLog.outError("Map::Add: Object " I64FMTD " have invalid coordinates X:%f Y:%f grid cell [%u:%u]", obj->GetGUID(), obj->GetPositionX(), obj->GetPositionY(), p.x_coord, p.y_coord);
+        sLog.outError("Map::Add: Object (GUID: %u TypeId: %u) have invalid coordinates X:%f Y:%f grid cell [%u:%u]", obj->GetGUIDLow(), obj->GetTypeId(), obj->GetPositionX(), obj->GetPositionY(), p.x_coord, p.y_coord);
         return;
     }
 
@@ -478,7 +482,7 @@ void Map::MessageBroadcast(WorldObject *obj, WorldPacket *msg)
 
     if(p.x_coord >= TOTAL_NUMBER_OF_CELLS_PER_MAP || p.y_coord >= TOTAL_NUMBER_OF_CELLS_PER_MAP )
     {
-        sLog.outError("Map::MessageBroadcast: Object " I64FMTD " have invalid coordinates X:%f Y:%f grid cell [%u:%u]", obj->GetGUID(), obj->GetPositionX(), obj->GetPositionY(), p.x_coord, p.y_coord);
+        sLog.outError("Map::MessageBroadcast: Object (GUID: %u TypeId: %u) have invalid coordinates X:%f Y:%f grid cell [%u:%u]", obj->GetGUIDLow(), obj->GetTypeId(), obj->GetPositionX(), obj->GetPositionY(), p.x_coord, p.y_coord);
         return;
     }
 
@@ -523,7 +527,7 @@ void Map::MessageDistBroadcast(WorldObject *obj, WorldPacket *msg, float dist)
 
     if(p.x_coord >= TOTAL_NUMBER_OF_CELLS_PER_MAP || p.y_coord >= TOTAL_NUMBER_OF_CELLS_PER_MAP )
     {
-        sLog.outError("Map::MessageBroadcast: Object " I64FMTD " have invalid coordinates X:%f Y:%f grid cell [%u:%u]", obj->GetGUID(), obj->GetPositionX(), obj->GetPositionY(), p.x_coord, p.y_coord);
+        sLog.outError("Map::MessageBroadcast: Object (GUID: %u TypeId: %u) have invalid coordinates X:%f Y:%f grid cell [%u:%u]", obj->GetGUIDLow(), obj->GetTypeId(), obj->GetPositionX(), obj->GetPositionY(), p.x_coord, p.y_coord);
         return;
     }
 
@@ -728,7 +732,7 @@ Map::Remove(T *obj, bool remove)
     CellPair p = MaNGOS::ComputeCellPair(obj->GetPositionX(), obj->GetPositionY());
     if(p.x_coord >= TOTAL_NUMBER_OF_CELLS_PER_MAP || p.y_coord >= TOTAL_NUMBER_OF_CELLS_PER_MAP )
     {
-        sLog.outError("Map::Remove: Object " I64FMT " have invalid coordinates X:%f Y:%f grid cell [%u:%u]", obj->GetGUID(), obj->GetPositionX(), obj->GetPositionY(), p.x_coord, p.y_coord);
+        sLog.outError("Map::Remove: Object (GUID: %u TypeId:%u) have invalid coordinates X:%f Y:%f grid cell [%u:%u]", obj->GetGUIDLow(), obj->GetTypeId(), obj->GetPositionX(), obj->GetPositionY(), p.x_coord, p.y_coord);
         return;
     }
 
@@ -736,7 +740,7 @@ Map::Remove(T *obj, bool remove)
     if( !loaded(GridPair(cell.data.Part.grid_x, cell.data.Part.grid_y)) )
         return;
 
-    DEBUG_LOG("Remove object " I64FMT " from grid[%u,%u]", obj->GetGUID(), cell.data.Part.grid_x, cell.data.Part.grid_y);
+    DEBUG_LOG("Remove object (GUID: %u TypeId:%u) from grid[%u,%u]", obj->GetGUIDLow(), obj->GetTypeId(), cell.data.Part.grid_x, cell.data.Part.grid_y);
     NGridType *grid = getNGrid(cell.GridX(), cell.GridY());
     assert( grid != NULL );
 
@@ -1226,7 +1230,7 @@ uint16 GridMap::getArea(float x, float y)
     return m_area_map[lx*16 + ly];
 }
 
-float  GridMap::getHeightFromFlat(float x, float y) const
+float  GridMap::getHeightFromFlat(float /*x*/, float /*y*/) const
 {
     return m_gridHeight;
 }
@@ -1640,10 +1644,72 @@ uint16 Map::GetAreaFlag(float x, float y, float z) const
         case 2456:                                          // Death's Breach (Eastern Plaguelands)
             if(z > 350.0f) areaflag = 1950; break;
         // Dalaran
-        case 1593:                                          // Crystalsong Forest
-        case 2484:                                          // The Twilight Rivulet (Crystalsong Forest)
         case 2492:                                          // Forlorn Woods (Crystalsong Forest)
-            if (x > 5568.0f && x < 6116.0f && y > 282.0f && y < 982.0f && z > 563.0f) areaflag = 2153; break;
+            if (x > 5568.0f && x < 6116.0f && y > 282.0f && y < 982.0f && z > 563.0f)
+            {
+                // Krasus' Landing (Dalaran), fast check
+                if (x > 5758.77f && x < 5869.03f && y < 510.46f)
+                {
+                    // Krasus' Landing (Dalaran), with open east side
+                    if (y < 449.33f || (x-5813.9f)*(x-5813.9f)+(y-449.33f)*(y-449.33f) < 1864.0f)
+                    {
+                        areaflag = 2533;                    // Note: also 2633, possible one flight allowed and other not allowed case
+                        break;
+                    }
+                }
+
+                // Dalaran
+                areaflag = 2153;
+            }
+            break;
+        // The Violet Citadel (Dalaran) or Dalaran
+        case 2484:                                          // The Twilight Rivulet (Crystalsong Forest)
+        case 1593:                                          // Crystalsong Forest
+            // Dalaran
+            if (x > 5568.0f && x < 6116.0f && y > 282.0f && y < 982.0f && z > 563.0f)
+            {
+                // The Violet Citadel (Dalaran), fast check
+                if (x > 5721.1f && x < 5884.66f && y > 764.4f && y < 948.0f)
+                {
+                    // The Violet Citadel (Dalaran)
+                    if ((x-5803.0f)*(x-5803.0f)+(y-846.18f)*(y-846.18f) < 6690.0f)
+                    {
+                        areaflag = 2696;
+                        break;
+                    }
+                }
+
+                // Dalaran
+                areaflag = 2153;
+            }
+            break;
+        // Vargoth's Retreat (Dalaran) or The Violet Citadel (Dalaran) or Dalaran
+        case 2504:                                          // Violet Stand (Crystalsong Forest)
+            // Dalaran
+            if (x > 5568.0f && x < 6116.0f && y > 282.0f && y < 982.0f && z > 563.0f)
+            {
+                // The Violet Citadel (Dalaran), fast check
+                if (x > 5721.1f && x < 5884.66f && y > 764.4f && y < 948.0f)
+                {
+                    // Vargoth's Retreat (Dalaran), nice slow circle with upper limit
+                    if (z < 898.0f && (x-5765.0f)*(x-5765.0f)+(y-862.4f)*(y-862.4f) < 262.0f)
+                    {
+                        areaflag = 2748;
+                        break;
+                    }
+
+                    // The Violet Citadel (Dalaran)
+                    if ((x-5803.0f)*(x-5803.0f)+(y-846.18f)*(y-846.18f) < 6690.0f)
+                    {
+                        areaflag = 2696;
+                        break;
+                    }
+                }
+
+                // Dalaran
+                areaflag = 2153;
+            }
+            break;
         // Maw of Neltharion (cave)
         case 164:                                           // Dragonblight
         case 1797:                                          // Obsidian Dragonshrine (Dragonblight)
@@ -1878,12 +1944,9 @@ void Map::SendInitSelf( Player * player )
 
     UpdateData data;
 
-    bool hasTransport = false;
-
     // attach to player data current transport data
     if(Transport* transport = player->GetTransport())
     {
-        hasTransport = true;
         transport->BuildCreateUpdateBlockForPlayer(&data, player);
     }
 
@@ -1897,14 +1960,13 @@ void Map::SendInitSelf( Player * player )
         {
             if(player!=(*itr) && player->HaveAtClient(*itr))
             {
-                hasTransport = true;
                 (*itr)->BuildCreateUpdateBlockForPlayer(&data, player);
             }
         }
     }
 
     WorldPacket packet;
-    data.BuildPacket(&packet, hasTransport);
+    data.BuildPacket(&packet);
     player->GetSession()->SendPacket(&packet);
 }
 
@@ -1921,20 +1983,17 @@ void Map::SendInitTransports( Player * player )
 
     MapManager::TransportSet& tset = tmap[player->GetMapId()];
 
-    bool hasTransport = false;
-
     for (MapManager::TransportSet::const_iterator i = tset.begin(); i != tset.end(); ++i)
     {
         // send data for current transport in other place
         if((*i) != player->GetTransport() && (*i)->GetMapId()==i_id)
         {
-            hasTransport = true;
             (*i)->BuildCreateUpdateBlockForPlayer(&transData, player);
         }
     }
 
     WorldPacket packet;
-    transData.BuildPacket(&packet, hasTransport);
+    transData.BuildPacket(&packet);
     player->GetSession()->SendPacket(&packet);
 }
 

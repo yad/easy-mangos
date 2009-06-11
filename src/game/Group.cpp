@@ -105,7 +105,7 @@ bool Group::Create(const uint64 &guid, const char * name)
         CharacterDatabase.PExecute("DELETE FROM groups WHERE leaderGuid ='%u'", GUID_LOPART(m_leaderGuid));
         CharacterDatabase.PExecute("DELETE FROM group_member WHERE leaderGuid ='%u'", GUID_LOPART(m_leaderGuid));
         CharacterDatabase.PExecute("INSERT INTO groups(leaderGuid,mainTank,mainAssistant,lootMethod,looterGuid,lootThreshold,icon1,icon2,icon3,icon4,icon5,icon6,icon7,icon8,isRaid,difficulty) "
-            "VALUES('%u','%u','%u','%u','%u','%u','" I64FMTD "','" I64FMTD "','" I64FMTD "','" I64FMTD "','" I64FMTD "','" I64FMTD "','" I64FMTD "','" I64FMTD "','%u','%u')",
+            "VALUES('%u','%u','%u','%u','%u','%u','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','%u','%u')",
             GUID_LOPART(m_leaderGuid), GUID_LOPART(m_mainTank), GUID_LOPART(m_mainAssistant), uint32(m_lootMethod),
             GUID_LOPART(m_looterGuid), uint32(m_lootThreshold), m_targetIcons[0], m_targetIcons[1], m_targetIcons[2], m_targetIcons[3], m_targetIcons[4], m_targetIcons[5], m_targetIcons[6], m_targetIcons[7], isRaidGroup(), m_difficulty);
     }
@@ -208,7 +208,7 @@ void Group::ConvertToRaid()
     // update quest related GO states (quest activity dependent from raid membership)
     for(member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
         if(Player* player = objmgr.GetPlayer(citr->guid))
-            player->UpdateForQuestsGO();
+            player->UpdateForQuestWorldObjects();
 }
 
 bool Group::AddInvite(Player *player)
@@ -302,7 +302,7 @@ bool Group::AddMember(const uint64 &guid, const char* name)
 
         // quest related GO state dependent from raid memebership
         if(isRaidGroup())
-            player->UpdateForQuestsGO();
+            player->UpdateForQuestWorldObjects();
     }
 
     return true;
@@ -319,7 +319,7 @@ uint32 Group::RemoveMember(const uint64 &guid, const uint8 &method)
         {
             // quest related GO state dependent from raid membership
             if(isRaidGroup())
-                player->UpdateForQuestsGO();
+                player->UpdateForQuestWorldObjects();
 
             WorldPacket data;
 
@@ -400,7 +400,7 @@ void Group::Disband(bool hideDestroy)
 
         // quest related GO state dependent from raid membership
         if(isRaidGroup())
-            player->UpdateForQuestsGO();
+            player->UpdateForQuestWorldObjects();
 
         if(!player->GetSession())
             continue;
@@ -567,7 +567,7 @@ void Group::GroupLoot(const uint64& playerGUID, Loot *loot, Creature *creature)
                     continue;
                 if ( i->AllowedForPlayer(member) )
                 {
-                    if (member->GetDistance2d(creature) < sWorld.getConfig(CONFIG_GROUP_XP_DISTANCE))
+                    if (member->IsWithinDist(creature,sWorld.getConfig(CONFIG_GROUP_XP_DISTANCE),false))
                     {
                         r->playerVote[member->GetGUID()] = NOT_EMITED_YET;
                         ++r->totalPlayersRolling;
@@ -617,7 +617,7 @@ void Group::NeedBeforeGreed(const uint64& playerGUID, Loot *loot, Creature *crea
 
                 if (playerToRoll->CanUseItem(item) && i->AllowedForPlayer(playerToRoll) )
                 {
-                    if (playerToRoll->GetDistance2d(creature) < sWorld.getConfig(CONFIG_GROUP_XP_DISTANCE))
+                    if (playerToRoll->IsWithinDist(creature,sWorld.getConfig(CONFIG_GROUP_XP_DISTANCE),false))
                     {
                         r->playerVote[playerToRoll->GetGUID()] = NOT_EMITED_YET;
                         ++r->totalPlayersRolling;
@@ -665,7 +665,7 @@ void Group::MasterLoot(const uint64& playerGUID, Loot* /*loot*/, Creature *creat
         if (!looter->IsInWorld())
             continue;
 
-        if (looter->GetDistance2d(creature) < sWorld.getConfig(CONFIG_GROUP_XP_DISTANCE))
+        if (looter->IsWithinDist(creature,sWorld.getConfig(CONFIG_GROUP_XP_DISTANCE),false))
         {
             data << looter->GetGUID();
             ++real_count;
@@ -677,7 +677,7 @@ void Group::MasterLoot(const uint64& playerGUID, Loot* /*loot*/, Creature *creat
     for(GroupReference *itr = GetFirstMember(); itr != NULL; itr = itr->next())
     {
         Player *looter = itr->getSource();
-        if (looter->GetDistance2d(creature) < sWorld.getConfig(CONFIG_GROUP_XP_DISTANCE))
+        if (looter->IsWithinDist(creature,sWorld.getConfig(CONFIG_GROUP_XP_DISTANCE),false))
             looter->GetSession()->SendPacket(&data);
     }
 }
@@ -1334,7 +1334,7 @@ void Group::UpdateLooterGuid( Creature* creature, bool ifneed )
         {
             // not update if only update if need and ok
             Player* looter = ObjectAccessor::FindPlayer(guid_itr->guid);
-            if(looter && looter->GetDistance2d(creature) < sWorld.getConfig(CONFIG_GROUP_XP_DISTANCE))
+            if(looter && looter->IsWithinDist(creature,sWorld.getConfig(CONFIG_GROUP_XP_DISTANCE),false))
                 return;
         }
         ++guid_itr;
@@ -1347,7 +1347,7 @@ void Group::UpdateLooterGuid( Creature* creature, bool ifneed )
         {
             if(Player* pl = ObjectAccessor::FindPlayer(itr->guid))
             {
-                if (pl->GetDistance2d(creature) < sWorld.getConfig(CONFIG_GROUP_XP_DISTANCE))
+                if (pl->IsWithinDist(creature,sWorld.getConfig(CONFIG_GROUP_XP_DISTANCE),false))
                 {
                     bool refresh = pl->GetLootGUID()==creature->GetGUID();
 
@@ -1368,7 +1368,7 @@ void Group::UpdateLooterGuid( Creature* creature, bool ifneed )
     {
         if(Player* pl = ObjectAccessor::FindPlayer(itr->guid))
         {
-            if (pl->GetDistance2d(creature) < sWorld.getConfig(CONFIG_GROUP_XP_DISTANCE))
+            if (pl->IsWithinDist(creature,sWorld.getConfig(CONFIG_GROUP_XP_DISTANCE),false))
             {
                 bool refresh = pl->GetLootGUID()==creature->GetGUID();
 

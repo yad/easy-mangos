@@ -104,6 +104,21 @@ enum Gossip_Guard_Skill
     GOSSIP_GUARD_SKILL_ENGINERING   = 91
 };
 
+enum GossipOptionIcon
+{
+    GOSSIP_ICON_CHAT                = 0,                    //white chat bubble
+    GOSSIP_ICON_VENDOR              = 1,                    //brown bag
+    GOSSIP_ICON_TAXI                = 2,                    //flight
+    GOSSIP_ICON_TRAINER             = 3,                    //book
+    GOSSIP_ICON_INTERACT_1          = 4,                    //interaction wheel
+    GOSSIP_ICON_INTERACT_2          = 5,                    //interaction wheel
+    GOSSIP_ICON_MONEY_BAG           = 6,                    //brown bag with yellow dot
+    GOSSIP_ICON_TALK                = 7,                    //white chat bubble with black dots
+    GOSSIP_ICON_TABARD              = 8,                    //tabard
+    GOSSIP_ICON_BATTLE              = 9,                    //two swords
+    GOSSIP_ICON_DOT                 = 10                    //yellow dot
+};
+
 struct GossipOption
 {
     uint32 Id;
@@ -127,6 +142,7 @@ enum CreatureFlagsExtra
     CREATURE_FLAG_EXTRA_NO_CRUSH        = 0x00000020,       // creature can't do crush attacks
     CREATURE_FLAG_EXTRA_NO_XP_AT_KILL   = 0x00000040,       // creature kill not provide XP
     CREATURE_FLAG_EXTRA_INVISIBLE       = 0x00000080,       // creature is always invisible for player (mostly trigger creatures)
+    CREATURE_FLAG_EXTRA_NOT_TAUNTABLE   = 0x00000100,       // creature is immune to taunt auras and effect attack me
 };
 
 // GCC have alternative #pragma pack(N) syntax and old gcc version not support pack(push,N), also any gcc version not support it at some platform
@@ -141,6 +157,8 @@ struct CreatureInfo
 {
     uint32  Entry;
     uint32  HeroicEntry;
+    uint32  unk1;
+    uint32  unk2;
     uint32  DisplayID_A;
     uint32  DisplayID_A2;
     uint32  DisplayID_H;
@@ -165,15 +183,17 @@ struct CreatureInfo
     float   maxdmg;
     uint32  dmgschool;
     uint32  attackpower;
+    float   dmg_multiplier;
     uint32  baseattacktime;
     uint32  rangeattacktime;
+    uint32  unit_class;                                     // enum Classes. Note only 4 classes are known for creatures.
     uint32  unit_flags;                                     // enum UnitFlags mask values
     uint32  dynamicflags;
     uint32  family;                                         // enum CreatureFamily values (optional)
     uint32  trainer_type;
     uint32  trainer_spell;
-    uint32  classNum;
-    uint32  race;
+    uint32  trainer_class;
+    uint32  trainer_race;
     float   minrangedmg;
     float   maxrangedmg;
     uint32  rangedattackpower;
@@ -198,6 +218,8 @@ struct CreatureInfo
     float   unk16;
     float   unk17;
     bool    RacialLeader;
+    uint32  questItems[4];
+    uint32  movementId;
     bool    RegenHealth;
     uint32  equipmentId;
     uint32  MechanicImmuneMask;
@@ -217,9 +239,13 @@ struct CreatureInfo
             return SKILL_SKINNING;                          // normal case
     }
 
-    bool isTameable() const
+    bool isTameable(bool exotic) const
     {
-        return type == CREATURE_TYPE_BEAST && family != 0 && (type_flags & CREATURE_TYPEFLAGS_TAMEABLE);
+        if(type != CREATURE_TYPE_BEAST || family == 0 || (type_flags & CREATURE_TYPEFLAGS_TAMEABLE)==0)
+            return false;
+
+        // if can tame exotic then can tame any temable
+        return exotic || (type_flags & CREATURE_TYPEFLAGS_EXOTIC)==0;
     }
 };
 
@@ -279,7 +305,6 @@ struct CreatureDataAddon
 {
     uint32 guidOrEntry;
     uint32 mount;
-    uint32 bytes0;
     uint32 bytes1;
     uint32 bytes2;
     uint32 emote;
@@ -586,9 +611,13 @@ class MANGOS_DLL_SPEC Creature : public Unit
 
         float GetAttackDistance(Unit const* pl) const;
 
+        void DoFleeToGetAssistance();
+        void CallForHelp(float fRadius);
         void CallAssistance();
         void SetNoCallAssistance(bool val) { m_AlreadyCallAssistance = val; }
-        bool CanAssistTo(const Unit* u, const Unit* enemy) const;
+        void SetNoSearchAssistance(bool val) { m_AlreadySearchedAssistance = val; }
+        bool HasSearchedAssistance() { return m_AlreadySearchedAssistance; }
+        bool CanAssistTo(const Unit* u, const Unit* enemy, bool checkfaction = true) const;
 
         MovementGeneratorType GetDefaultMovementType() const { return m_defaultMovementType; }
         void SetDefaultMovementType(MovementGeneratorType mgt) { m_defaultMovementType = mgt; }
@@ -600,6 +629,7 @@ class MANGOS_DLL_SPEC Creature : public Unit
         bool IsVisibleInGridForPlayer(Player* pl) const;
 
         void RemoveCorpse();
+        bool isDeadByDefault() const { return m_isDeadByDefault; };
 
         time_t const& GetRespawnTime() const { return m_respawnTime; }
         time_t GetRespawnTimeEx() const;
@@ -678,6 +708,7 @@ class MANGOS_DLL_SPEC Creature : public Unit
         uint32 m_equipmentId;
 
         bool m_AlreadyCallAssistance;
+        bool m_AlreadySearchedAssistance;
         bool m_regenHealth;
         bool m_AI_locked;
         bool m_isDeadByDefault;

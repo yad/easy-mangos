@@ -126,7 +126,8 @@ void WorldSession::SendDoFlight( uint16 MountId, uint32 path, uint32 pathNode )
     while(GetPlayer()->GetMotionMaster()->GetCurrentMovementGeneratorType()==FLIGHT_MOTION_TYPE)
         GetPlayer()->GetMotionMaster()->MovementExpired(false);
 
-    GetPlayer()->Mount( MountId );
+    if (MountId)
+        GetPlayer()->Mount( MountId );
     GetPlayer()->GetMotionMaster()->MoveTaxiFlight(path,pathNode);
 }
 
@@ -154,7 +155,7 @@ bool WorldSession::SendLearnNewTaxiNode( Creature* unit )
         return false;
 }
 
-void WorldSession::HandleActivateTaxiFarOpcode ( WorldPacket & recv_data )
+void WorldSession::HandleActivateTaxiExpressOpcode ( WorldPacket & recv_data )
 {
     CHECK_PACKET_SIZE(recv_data,8+4+4);
 
@@ -168,7 +169,7 @@ void WorldSession::HandleActivateTaxiFarOpcode ( WorldPacket & recv_data )
     Creature *npc = GetPlayer()->GetNPCIfCanInteractWith(guid, UNIT_NPC_FLAG_FLIGHTMASTER);
     if (!npc)
     {
-        sLog.outDebug( "WORLD: HandleActivateTaxiFarOpcode - Unit (GUID: %u) not found or you can't interact with it.", uint32(GUID_LOPART(guid)) );
+        sLog.outDebug( "WORLD: HandleActivateTaxiExpressOpcode - Unit (GUID: %u) not found or you can't interact with it.", uint32(GUID_LOPART(guid)) );
         return;
     }
     // recheck
@@ -188,10 +189,10 @@ void WorldSession::HandleActivateTaxiFarOpcode ( WorldPacket & recv_data )
 
     sLog.outDebug( "WORLD: Received CMSG_ACTIVATETAXIEXPRESS from %d to %d" ,nodes.front(),nodes.back());
 
-    GetPlayer()->ActivateTaxiPathTo(nodes, 0, npc);
+    GetPlayer()->ActivateTaxiPathTo(nodes, npc);
 }
 
-void WorldSession::HandleTaxiNextDestinationOpcode(WorldPacket& /*recv_data*/)
+void WorldSession::HandleMoveSplineDoneOpcode(WorldPacket& /*recv_data*/)
 {
     sLog.outDebug( "WORLD: Received CMSG_MOVE_SPLINE_DONE" );
 
@@ -273,5 +274,5 @@ void WorldSession::HandleActivateTaxiOpcode( WorldPacket & recv_data )
         return;
     }
 
-    GetPlayer()->ActivateTaxiPathTo(nodes, 0, npc);
+    GetPlayer()->ActivateTaxiPathTo(nodes, npc);
 }

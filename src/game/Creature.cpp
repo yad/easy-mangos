@@ -85,8 +85,7 @@ VendorItem const* VendorItemData::FindItem(uint32 item_id) const
 
 bool AssistDelayEvent::Execute(uint64 /*e_time*/, uint32 /*p_time*/)
 {
-    Unit* victim = Unit::GetUnit(m_owner, m_victim);
-    if (victim)
+    if(Unit* victim = Unit::GetUnit(m_owner, m_victim))
     {
         while (!m_assistants.empty())
         {
@@ -112,7 +111,7 @@ m_deathTimer(0), m_respawnTime(0), m_respawnDelay(25), m_corpseDelay(60), m_resp
 m_gossipOptionLoaded(false), m_isPet(false), m_isVehicle(false), m_isTotem(false),
 m_defaultMovementType(IDLE_MOTION_TYPE), m_DBTableGuid(0), m_equipmentId(0), m_AlreadyCallAssistance(false),
 m_regenHealth(true), m_AI_locked(false), m_isDeadByDefault(false), m_meleeDamageSchoolMask(SPELL_SCHOOL_MASK_NORMAL),
-m_creatureInfo(NULL), m_isActiveObject(false)
+m_creatureInfo(NULL), m_isActiveObject(false), m_AlreadySearchedAssistance(false)
 {
     m_regenTimer = 200;
     m_valuesCount = UNIT_END;
@@ -123,7 +122,7 @@ m_creatureInfo(NULL), m_isActiveObject(false)
     m_CreatureSpellCooldowns.clear();
     m_CreatureCategoryCooldowns.clear();
     m_GlobalCooldown = 0;
-    m_unit_movement_flags = MOVEMENTFLAG_WALK_MODE;
+    m_unit_movement_flags = MONSTER_MOVE_WALK;
 }
 
 Creature::~Creature()
@@ -198,6 +197,12 @@ bool Creature::InitEntry(uint32 Entry, uint32 team, const CreatureData *data )
     SetEntry(Entry);                                        // normal entry always
     m_creatureInfo = cinfo;                                 // map mode related always
 
+    // equal to player Race field, but creature does not have race
+    SetByteValue(UNIT_FIELD_BYTES_0, 0, 0);
+
+    // known valid are: CLASS_WARRIOR,CLASS_PALADIN,CLASS_ROGUE,CLASS_MAGE
+    SetByteValue(UNIT_FIELD_BYTES_0, 1, uint8(cinfo->unit_class));
+
     if (cinfo->DisplayID_A == 0 || cinfo->DisplayID_H == 0) // Cancel load if no model defined
     {
         sLog.outErrorDb("Creature (Entry: %u) has no model defined for Horde or Alliance in table `creature_template`, can't load. ",Entry);
@@ -257,13 +262,13 @@ bool Creature::UpdateEntry(uint32 Entry, uint32 team, const CreatureData *data )
     m_regenHealth = GetCreatureInfo()->RegenHealth;
 
     // creatures always have melee weapon ready if any
-    SetByteValue(UNIT_FIELD_BYTES_2, 0, SHEATH_STATE_MELEE );
+    SetSheath(SHEATH_STATE_MELEE);
 
     SelectLevel(GetCreatureInfo());
     if (team == HORDE)
-        SetUInt32Value(UNIT_FIELD_FACTIONTEMPLATE, GetCreatureInfo()->faction_H);
+        setFaction(GetCreatureInfo()->faction_H);
     else
-        SetUInt32Value(UNIT_FIELD_FACTIONTEMPLATE, GetCreatureInfo()->faction_A);
+        setFaction(GetCreatureInfo()->faction_A);
 
     SetUInt32Value(UNIT_NPC_FLAGS,GetCreatureInfo()->npcflag);
 
@@ -507,6 +512,36 @@ void Creature::RegenerateHealth()
     ModifyHealth(addvalue);
 }
 
+void Creature::DoFleeToGetAssistance()
+{
+    if (!getVictim())
+        return;
+
+    float radius = sWorld.getConfig(CONFIG_CREATURE_FAMILY_FLEE_ASSISTANCE_RADIUS);
+    if (radius >0)
+    {
+        Creature* pCreature = NULL;
+
+        CellPair p(MaNGOS::ComputeCellPair(GetPositionX(), GetPositionY()));
+        Cell cell(p);
+        cell.data.Part.reserved = ALL_DISTRICT;
+        cell.SetNoCreate();
+        MaNGOS::NearestAssistCreatureInCreatureRangeCheck u_check(this, getVictim(), radius);
+        MaNGOS::CreatureLastSearcher<MaNGOS::NearestAssistCreatureInCreatureRangeCheck> searcher(this, pCreature, u_check);
+
+        TypeContainerVisitor<MaNGOS::CreatureLastSearcher<MaNGOS::NearestAssistCreatureInCreatureRangeCheck>, GridTypeMapContainer > grid_creature_searcher(searcher);
+
+        CellLock<GridReadGuard> cell_lock(cell, p);
+        cell_lock->Visit(cell_lock, grid_creature_searcher, *GetMap());
+
+        SetNoSearchAssistance(true);
+        if(!pCreature)
+            SetFeared(true, getVictim()->GetGUID(), 0 ,sWorld.getConfig(CONFIG_CREATURE_FAMILY_FLEE_DELAY));
+        else
+            GetMotionMaster()->MoveSeekAssistance(pCreature->GetPositionX(), pCreature->GetPositionY(), pCreature->GetPositionZ());
+    }
+}
+
 bool Creature::AIM_Initialize()
 {
     // make sure nothing can change the AI during AI update
@@ -576,12 +611,12 @@ bool Creature::isCanTrainingOf(Player* pPlayer, bool msg) const
     switch(GetCreatureInfo()->trainer_type)
     {
         case TRAINER_TYPE_CLASS:
-            if(pPlayer->getClass()!=GetCreatureInfo()->classNum)
+            if(pPlayer->getClass()!=GetCreatureInfo()->trainer_class)
             {
                 if(msg)
                 {
                     pPlayer->PlayerTalkClass->ClearMenus();
-                    switch(GetCreatureInfo()->classNum)
+                    switch(GetCreatureInfo()->trainer_class)
                     {
                         case CLASS_DRUID:  pPlayer->PlayerTalkClass->SendGossipMenu( 4913,GetGUID()); break;
                         case CLASS_HUNTER: pPlayer->PlayerTalkClass->SendGossipMenu(10090,GetGUID()); break;
@@ -606,12 +641,12 @@ bool Creature::isCanTrainingOf(Player* pPlayer, bool msg) const
             }
             break;
         case TRAINER_TYPE_MOUNTS:
-            if(GetCreatureInfo()->race && pPlayer->getRace() != GetCreatureInfo()->race)
+            if(GetCreatureInfo()->trainer_race && pPlayer->getRace() != GetCreatureInfo()->trainer_race)
             {
                 if(msg)
                 {
                     pPlayer->PlayerTalkClass->ClearMenus();
-                    switch(GetCreatureInfo()->classNum)
+                    switch(GetCreatureInfo()->trainer_class)
                     {
                         case RACE_DWARF:        pPlayer->PlayerTalkClass->SendGossipMenu(5865,GetGUID()); break;
                         case RACE_GNOME:        pPlayer->PlayerTalkClass->SendGossipMenu(4881,GetGUID()); break;
@@ -681,7 +716,7 @@ bool Creature::isCanTrainingAndResetTalentsOf(Player* pPlayer) const
 {
     return pPlayer->getLevel() >= 10
         && GetCreatureInfo()->trainer_type == TRAINER_TYPE_CLASS
-        && pPlayer->getClass() == GetCreatureInfo()->classNum;
+        && pPlayer->getClass() == GetCreatureInfo()->trainer_class;
 }
 
 void Creature::prepareGossipMenu( Player *pPlayer,uint32 gossipid )
@@ -742,7 +777,7 @@ void Creature::prepareGossipMenu( Player *pPlayer,uint32 gossipid )
                             cantalking=false;
                         break;
                     case GOSSIP_OPTION_UNLEARNPETSKILLS:
-                        if(!pPlayer->GetPet() || pPlayer->GetPet()->getPetType() != HUNTER_PET || pPlayer->GetPet()->m_spells.size() <= 1 || GetCreatureInfo()->trainer_type != TRAINER_TYPE_PETS || GetCreatureInfo()->classNum != CLASS_HUNTER)
+                        if(!pPlayer->GetPet() || pPlayer->GetPet()->getPetType() != HUNTER_PET || pPlayer->GetPet()->m_spells.size() <= 1 || GetCreatureInfo()->trainer_type != TRAINER_TYPE_PETS || GetCreatureInfo()->trainer_class != CLASS_HUNTER)
                             cantalking=false;
                         break;
                     case GOSSIP_OPTION_TAXIVENDOR:
@@ -1175,6 +1210,8 @@ void Creature::SelectLevel(const CreatureInfo *cinfo)
     SetMaxPower(POWER_MANA, mana);                          //MAX Mana
     SetPower(POWER_MANA, mana);
 
+    // TODO: set UNIT_FIELD_POWER*, for some creature class case (energy, etc)
+
     SetModifierValue(UNIT_MOD_HEALTH, BASE_VALUE, health);
     SetModifierValue(UNIT_MOD_MANA, BASE_VALUE, mana);
 
@@ -1268,7 +1305,7 @@ bool Creature::CreateFromProto(uint32 guidlow, uint32 Entry, uint32 team, const 
     Map *map = MapManager::Instance().FindMap(GetMapId(), GetInstanceId());
     if(map && map->IsDungeon() && ((InstanceMap*)map)->GetInstanceData())
     {
-        ((InstanceMap*)map)->GetInstanceData()->OnCreatureCreate(this, Entry);
+        ((InstanceMap*)map)->GetInstanceData()->OnCreatureCreate(this);
     }
 
     return true;
@@ -1464,8 +1501,8 @@ void Creature::setDeathState(DeathState s)
 
     if(s == JUST_DIED)
     {
-        SetUInt64Value (UNIT_FIELD_TARGET,0);               // remove target selection in any cases (can be set at aura remove in Unit::setDeathState)
-        SetUInt32Value(UNIT_NPC_FLAGS, 0);
+        SetUInt64Value(UNIT_FIELD_TARGET,0);                // remove target selection in any cases (can be set at aura remove in Unit::setDeathState)
+        SetUInt32Value(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_NONE);
 
         if(!isPet() && GetCreatureInfo()->SkinLootId)
             if ( LootTemplates_Skinning.HaveLootFor(GetCreatureInfo()->SkinLootId) )
@@ -1474,6 +1511,7 @@ void Creature::setDeathState(DeathState s)
         if (canFly() && FallGround())
             return;
 
+        SetNoSearchAssistance(false);
         Unit::setDeathState(CORPSE);
     }
     if(s == JUST_ALIVED)
@@ -1484,7 +1522,7 @@ void Creature::setDeathState(DeathState s)
         CreatureInfo const *cinfo = GetCreatureInfo();
         SetUInt32Value(UNIT_DYNAMIC_FLAGS, 0);
         RemoveFlag (UNIT_FIELD_FLAGS, UNIT_FLAG_SKINNABLE);
-        AddUnitMovementFlag(MOVEMENTFLAG_WALK_MODE);
+        AddUnitMovementFlag(MONSTER_MOVE_WALK);
         SetUInt32Value(UNIT_NPC_FLAGS, cinfo->npcflag);
         clearUnitState(UNIT_STAT_ALL_STATE);
         i_motionMaster.Clear();
@@ -1546,6 +1584,20 @@ bool Creature::IsImmunedToSpellEffect(SpellEntry const* spellInfo, uint32 index)
 {
     if (GetCreatureInfo()->MechanicImmuneMask & (1 << (spellInfo->EffectMechanic[index] - 1)))
         return true;
+
+    // Taunt immunity special flag check
+    if (GetCreatureInfo()->flags_extra & CREATURE_FLAG_EXTRA_NOT_TAUNTABLE)
+    {
+        // Taunt aura apply check
+        if (spellInfo->Effect[index] == SPELL_EFFECT_APPLY_AURA)
+        {
+            if (spellInfo->EffectApplyAuraName[index] == SPELL_AURA_MOD_TAUNT)
+                return true;
+        }
+        // Spell effect taunt check
+        else if (spellInfo->Effect[index] == SPELL_EFFECT_ATTACK_ME)
+            return true;
+    }
 
     return Unit::IsImmunedToSpellEffect(spellInfo, index);
 }
@@ -1725,26 +1777,53 @@ void Creature::CallAssistance()
     }
 }
 
-bool Creature::CanAssistTo(const Unit* u, const Unit* enemy) const
+void Creature::CallForHelp(float fRadius)
+{
+    if (fRadius <= 0.0f || !getVictim() || isPet() || isCharmed())
+        return;
+
+    CellPair p(MaNGOS::ComputeCellPair(GetPositionX(), GetPositionY()));
+    Cell cell(p);
+    cell.data.Part.reserved = ALL_DISTRICT;
+    cell.SetNoCreate();
+
+    MaNGOS::CallOfHelpCreatureInRangeDo u_do(this, getVictim(), fRadius);
+    MaNGOS::CreatureWorker<MaNGOS::CallOfHelpCreatureInRangeDo> worker(this, u_do);
+
+    TypeContainerVisitor<MaNGOS::CreatureWorker<MaNGOS::CallOfHelpCreatureInRangeDo>, GridTypeMapContainer >  grid_creature_searcher(worker);
+
+    CellLock<GridReadGuard> cell_lock(cell, p);
+    cell_lock->Visit(cell_lock, grid_creature_searcher, *GetMap());
+}
+
+bool Creature::CanAssistTo(const Unit* u, const Unit* enemy, bool checkfaction /*= true*/) const
 {
     // we don't need help from zombies :)
-    if( !isAlive() )
+    if (!isAlive())
         return false;
 
     // skip fighting creature
-    if( isInCombat() )
-        return false;
-
-    // only from same creature faction
-    if(getFaction() != u->getFaction() )
+    if (isInCombat())
         return false;
 
     // only free creature
-    if( GetCharmerOrOwnerGUID() )
+    if (GetCharmerOrOwnerGUID())
         return false;
 
+    // only from same creature faction
+    if (checkfaction)
+    {
+        if (getFaction() != u->getFaction())
+            return false;
+    }
+    else
+    {
+        if (!IsFriendlyTo(u))
+            return false;
+    }
+
     // skip non hostile to caster enemy creatures
-    if( !IsHostileTo(enemy) )
+    if (!IsHostileTo(enemy))
         return false;
 
     return true;
@@ -1778,12 +1857,12 @@ bool Creature::IsOutOfThreatArea(Unit* pVictim) const
     if(sMapStore.LookupEntry(GetMapId())->IsDungeon())
         return false;
 
-    float length = pVictim->GetDistance(CombatStartX,CombatStartY,CombatStartZ);
     float AttackDist = GetAttackDistance(pVictim);
     uint32 ThreatRadius = sWorld.getConfig(CONFIG_THREAT_RADIUS);
 
     //Use AttackDistance in distance check if threat radius is lower. This prevents creature bounce in and out of combat every update tick.
-    return ( length > (ThreatRadius > AttackDist ? ThreatRadius : AttackDist));
+    return !pVictim->IsWithinDist3d(CombatStartX,CombatStartY,CombatStartZ,
+        ThreatRadius > AttackDist ? ThreatRadius : AttackDist);
 }
 
 CreatureDataAddon const* Creature::GetCreatureAddon() const
@@ -1808,14 +1887,34 @@ bool Creature::LoadCreaturesAddon(bool reload)
     if (cainfo->mount != 0)
         Mount(cainfo->mount);
 
-    if (cainfo->bytes0 != 0)
-        SetUInt32Value(UNIT_FIELD_BYTES_0, cainfo->bytes0);
-
     if (cainfo->bytes1 != 0)
-        SetUInt32Value(UNIT_FIELD_BYTES_1, cainfo->bytes1);
+    {
+        // 0 StandState
+        // 1 FreeTalentPoints   Pet only, so always 0 for default creature
+        // 2 StandFlags
+        // 3 StandMiscFlags
+
+        SetByteValue(UNIT_FIELD_BYTES_1, 0, uint8(cainfo->bytes1 & 0xFF));
+        //SetByteValue(UNIT_FIELD_BYTES_1, 1, uint8((cainfo->bytes1 >> 8) & 0xFF));
+        SetByteValue(UNIT_FIELD_BYTES_1, 1, 0);
+        SetByteValue(UNIT_FIELD_BYTES_1, 2, uint8((cainfo->bytes1 >> 16) & 0xFF));
+        SetByteValue(UNIT_FIELD_BYTES_1, 3, uint8((cainfo->bytes1 >> 24) & 0xFF));
+    }
 
     if (cainfo->bytes2 != 0)
-        SetUInt32Value(UNIT_FIELD_BYTES_2, cainfo->bytes2);
+    {
+        // 0 SheathState
+        // 1 Bytes2Flags
+        // 2 UnitRename         Pet only, so always 0 for default creature
+        // 3 ShapeshiftForm     Must be determined/set by shapeshift spell/aura
+
+        SetByteValue(UNIT_FIELD_BYTES_2, 0, uint8(cainfo->bytes2 & 0xFF));
+        SetByteValue(UNIT_FIELD_BYTES_2, 1, uint8((cainfo->bytes2 >> 8) & 0xFF));
+        //SetByteValue(UNIT_FIELD_BYTES_2, 2, uint8((cainfo->bytes2 >> 16) & 0xFF));
+        SetByteValue(UNIT_FIELD_BYTES_2, 2, 0);
+        //SetByteValue(UNIT_FIELD_BYTES_2, 3, uint8((cainfo->bytes2 >> 24) & 0xFF));
+        SetByteValue(UNIT_FIELD_BYTES_2, 3, 0);
+    }
 
     if (cainfo->emote != 0)
         SetUInt32Value(UNIT_NPC_EMOTESTATE, cainfo->emote);

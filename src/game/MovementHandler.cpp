@@ -24,6 +24,7 @@
 #include "Corpse.h"
 #include "Player.h"
 #include "Vehicle.h"
+#include "SpellAuras.h"
 #include "MapManager.h"
 #include "Transports.h"
 #include "BattleGround.h"
@@ -170,7 +171,7 @@ void WorldSession::HandleMoveTeleportAck(WorldPacket& recv_data)
 
     recv_data >> guid;
     recv_data >> flags >> time;
-    DEBUG_LOG("Guid " I64FMTD,guid);
+    DEBUG_LOG("Guid " UI64FMTD,guid);
     DEBUG_LOG("Flags %u, time %u",flags, time/IN_MILISECONDS);
 
     Unit *mover = _player->m_mover;
@@ -295,7 +296,6 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
     {
         plMover->SetPosition(movementInfo.x, movementInfo.y, movementInfo.z, movementInfo.o);
         plMover->m_movementInfo = movementInfo;
-        plMover->SetUnitMovementFlags(movementInfo.flags);
         plMover->UpdateFallInformationIfNeed(movementInfo,recv_data.GetOpcode());
 
         if(plMover->isMovingOrTurning())
@@ -475,8 +475,8 @@ void WorldSession::HandleDismissControlledVehicle(WorldPacket &recv_data)
     // using charm guid, because we don't have vehicle guid...
     if(Vehicle *vehicle = ObjectAccessor::GetVehicle(vehicleGUID))
     {
-        _player->ExitVehicle(vehicle);
-        vehicle->Dismiss();
+        // Aura::HandleAuraControlVehicle will call Player::ExitVehicle
+        vehicle->RemoveSpellsCausingAura(SPELL_AURA_CONTROL_VEHICLE);
     }
 }
 

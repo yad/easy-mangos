@@ -23,7 +23,7 @@ DROP TABLE IF EXISTS `db_version`;
 CREATE TABLE `db_version` (
   `version` varchar(120) default NULL,
   `creature_ai_version` varchar(120) default NULL,
-  `required_7720_01_mangos_mangos_string` bit(1) default NULL
+  `required_7988_09_mangos_spell_proc_event` bit(1) default NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 ROW_FORMAT=FIXED COMMENT='Used DB version notes';
 
 --
@@ -271,9 +271,9 @@ INSERT INTO `command` VALUES
 ('ban account',3,'Syntax: .ban account $Name $bantime $reason\r\nBan account kick player.\r\n$bantime: negative value leads to permban, otherwise use a timestring like \"4d20h3s\".'),
 ('ban character',3,'Syntax: .ban character $Name $bantime $reason\r\nBan account and kick player.\r\n$bantime: negative value leads to permban, otherwise use a timestring like \"4d20h3s\".'),
 ('ban ip',3,'Syntax: .ban ip $Ip $bantime $reason\r\nBan IP.\r\n$bantime: negative value leads to permban, otherwise use a timestring like \"4d20h3s\".'),
-('baninfo account',3,'Syntax: .baninfo account\r\nWatch full information about a specific ban.'),
-('baninfo character',3,'Syntax: .baninfo character\r\nWatch full information about a specific ban.'),
-('baninfo ip',3,'Syntax: .baninfo ip\r\nWatch full information about a specific ban.'),
+('baninfo account',3,'Syntax: .baninfo account $accountid\r\nWatch full information about a specific ban.'),
+('baninfo character',3,'Syntax: .baninfo character $charactername \r\nWatch full information about a specific ban.'),
+('baninfo ip',3,'Syntax: .baninfo ip $ip\r\nWatch full information about a specific ban.'),
 ('bank',3,'Syntax: .bank\r\n\r\nShow your bank inventory.'),
 ('banlist account',3,'Syntax: .banlist account [$Name]\r\nSearches the banlist for a account name pattern or show full list account bans.'),
 ('banlist character',3,'Syntax: .banlist character $Name\r\nSearches the banlist for a character name pattern. Pattern required.'),
@@ -287,6 +287,7 @@ INSERT INTO `command` VALUES
 ('character delete',4,'Syntax: .character delete $name\r\n\r\nDelete character $name.'),
 ('character level',3,'Syntax: .character level [$playername] [#level]\r\n\r\nSet the level of character with $playername (or the selected if not name provided) by #numberoflevels Or +1 if no #numberoflevels provided). If #numberoflevels is omitted, the level will be increase by 1. If #numberoflevels is 0, the same level will be restarted. If no character is selected and name not provided, increase your level. Command can be used for offline character. All stats and dependent values recalculated. At level decrease talents can be reset if need. Also at level decrease equipped items with greater level requirement can be lost.'),
 ('character rename',2,'Syntax: .character rename [$name]\r\n\r\nMark selected in game or by $name in command character for rename at next login.'),
+('character reputation',2,'Syntax: .character reputation [$player_name]\r\n\r\nShow reputation information for selected player or player find by $player_name.'),
 ('combatstop',2,'Syntax: .combatstop [$playername]\r\nStop combat for selected character. If selected non-player then command applied to self. If $playername provided then attempt applied to online player $playername.'),
 ('commands',0,'Syntax: .commands\r\n\r\nDisplay a list of available commands for your account level.'),
 ('cooldown',3,'Syntax: .cooldown [#spell_id]\r\n\r\nRemove all (if spell_id not provided) or #spel_id spell cooldown from selected character or you (if no selection).'),
@@ -323,6 +324,7 @@ INSERT INTO `command` VALUES
 ('go graveyard',1,'Syntax: .go graveyard #graveyardId\r\n Teleport to graveyard with the graveyardId specified.'),
 ('go grid',1,'Syntax: .go grid #gridX #gridY [#mapId]\r\n\r\nTeleport the gm to center of grid with provided indexes at map #mapId (or current map if it not provided).'),
 ('go object',1,'Syntax: .go object #object_guid\r\nTeleport your character to gameobject with guid #object_guid'),
+('go taxinode',1,'Syntax: .go taxinode #taxinode\r\n\r\nTeleport player to taxinode coordinates. You can look up zone using .lookup taxinode $namepart'),
 ('go trigger',1,'Syntax: .go trigger #trigger_id\r\n\r\nTeleport your character to areatrigger with id #trigger_id. Character will be teleported to trigger target if selected areatrigger is telporting trigger.'),
 ('go xy',1,'Syntax: .go xy #x #y [#mapid]\r\n\r\nTeleport player to point with (#x,#y) coordinates at ground(water) level at map #mapid or same map if #mapid not provided.'),
 ('go xyz',1,'Syntax: .go xyz #x #y #z [#mapid]\r\n\r\nTeleport player to point with (#x,#y,#z) coordinates at ground(water) level at map #mapid or same map if #mapid not provided.'),
@@ -334,15 +336,15 @@ INSERT INTO `command` VALUES
 ('gobject setphase',2,'Syntax: .gobject setphase #guid #phasemask\r\n\r\nGameobject with DB guid #guid phasemask changed to #phasemask with related world vision update for players. Gameobject state saved to DB and persistent.'),
 ('gobject turn',2,'Syntax: .gobject turn #goguid \r\n\r\nSet for gameobject #goguid orientation same as current character orientation.'),
 ('gobject target',2,'Syntax: .gobject target [#go_id|#go_name_part]\r\n\r\nLocate and show position nearest gameobject. If #go_id or #go_name_part provide then locate and show position of nearest gameobject with gameobject template id #go_id or name included #go_name_part as part.'),
-('goname',1,'Syntax: .goname $charactername\r\n\r\nTeleport to the given character. Either specify the character name or click on the character\'s portrait, e.g. when you are in a group.'),
+('goname',1,'Syntax: .goname [$charactername]\r\n\r\nTeleport to the given character. Either specify the character name or click on the character\'s portrait, e.g. when you are in a group. Character can be offline.'),
 ('gps',1,'Syntax: .gps [$name|$shift-link]\r\n\r\nDisplay the position information for a selected character or creature (also if player name $name provided then for named player, or if creature/gameobject shift-link provided then pointed creature/gameobject if it loaded). Position information includes X, Y, Z, and orientation, map Id and zone Id'),
-('groupgo',1,'Syntax: .groupgo $charactername\r\n\r\nTeleport the given character and his group to you.'),
+('groupgo',1,'Syntax: .groupgo [$charactername]\r\n\r\nTeleport the given character and his group to you. Teleported only online characters but original selected group member can be offline.'),
 ('guid',2,'Syntax: .guid\r\n\r\nDisplay the GUID for the selected character.'),
-('guild create',2,'Syntax: .guild create $GuildLeaderName $GuildName\r\n\r\nCreate a guild named $GuildName with the player $GuildLeaderName as leader.'),
-('guild delete',2,'Syntax: .guild delete $GuildName\r\n\r\nDelete guild $GuildName.'),
-('guild invite',2,'Syntax: .guild invite $CharacterName $GuildName\r\n\r\nAdd $CharacterName into a guild $GuildName.'),
+('guild create',2,'Syntax: .guild create [$GuildLeaderName] "$GuildName"\r\n\r\nCreate a guild named $GuildName with the player $GuildLeaderName (or selected) as leader.  Guild name must in quotes.'),
+('guild delete',2,'Syntax: .guild delete "$GuildName"\r\n\r\nDelete guild $GuildName. Guild name must in quotes.'),
+('guild invite',2,'Syntax: .guild invite [$CharacterName] "$GuildName"\r\n\r\nAdd player $CharacterName (or selected) into a guild $GuildName. Guild name must in quotes.'),
 ('guild rank',2,'Syntax: .guild rank $CharacterName #Rank\r\n\r\nSet for $CharacterName rank #Rank in a guild.'),
-('guild uninvite',2,'Syntax: .guild uninvite $CharacterName\r\n\r\nRemove $CharacterName from a guild.'),
+('guild uninvite',2,'Syntax: .guild uninvite [$CharacterName]\r\n\r\nRemove player $CharacterName (or selected) from a guild.'),
 ('help',0,'Syntax: .help [$command]\r\n\r\nDisplay usage instructions for the given $command. If no $command provided show list available commands.'),
 ('hidearea',3,'Syntax: .hidearea #areaid\r\n\r\nHide the area of #areaid to the selected character. If no character is selected, hide this area to you.'),
 ('honor add',2,'Syntax: .honor add $amount\r\n\r\nAdd a certain amount of honor (gained today) to the selected player.'),
@@ -385,6 +387,7 @@ INSERT INTO `command` VALUES
 ('lookup quest',3,'Syntax: .lookup quest $namepart\r\n\r\nLooks up a quest by $namepart, and returns all matches with their quest ID\'s.'),
 ('lookup skill',3,'Syntax: .lookup skill $$namepart\r\n\r\nLooks up a skill by $namepart, and returns all matches with their skill ID\'s.'),
 ('lookup spell',3,'Syntax: .lookup spell $namepart\r\n\r\nLooks up a spell by $namepart, and returns all matches with their spell ID\'s.'),
+('lookup taxinode',3,'Syntax: .lookup taxinode $substring\r\n\r\nSearch and output all taxinodes with provide $substring in name.'),
 ('lookup tele',1,'Syntax: .lookup tele $substring\r\n\r\nSearch and output all .tele command locations with provide $substring in name.'),
 ('maxskill',3,'Syntax: .maxskill\r\nSets all skills of the targeted player to their maximum VALUESfor its current level.'),
 ('modify arena',1,'Syntax: .modify arena #value\r\nAdd $amount arena points to the selected player.'),
@@ -412,8 +415,8 @@ INSERT INTO `command` VALUES
 ('modify swim',1,'Syntax: .modify swim #rate\r\n\r\nModify the swim speed of the selected player to \"normal swim speed\"*rate. If no player is selected, modify your speed.\r\n\r\n #rate may range from 0.1 to 10.'),
 ('modify titles',1,'Syntax: .modify titles #mask\r\n\r\nAllows user to use all titles from #mask.\r\n\r\n #mask=0 disables the title-choose-field'),
 ('movegens',3,'Syntax: .movegens\r\n  Show movement generators stack for selected creature or player.'),
-('mute',1,'Syntax: .mute $playerName $timeInMinutes\r\n\r\nDisible chat messaging for any character from account of character $playerName at $timeInMinutes minutes.'),
-('namego',1,'Syntax: .namego $charactername\r\n\r\nTeleport the given character to you.'),
+('mute',1,'Syntax: .mute [$playerName] $timeInMinutes\r\n\r\nDisible chat messaging for any character from account of character $playerName (or currently selected) at $timeInMinutes minutes. Player can be offline.'),
+('namego',1,'Syntax: .namego [$charactername]\r\n\r\nTeleport the given character to you. Character can be offline.'),
 ('neargrave',3,'Syntax: .neargrave [alliance|horde]\r\n\r\nFind nearest graveyard linked to zone (or only nearest from accepts alliance or horde faction ghosts).'),
 ('notify',1,'Syntax: .notify $MessageToBroadcast\r\n\r\nSend a global message to all players online in screen.'),
 ('npc add',2,'Syntax: .npc add #creatureid\r\n\r\nSpawn a creature by the given template id of #creatureid.'),
@@ -444,7 +447,7 @@ INSERT INTO `command` VALUES
 ('npc unfollow',2,'Syntax: .npc unfollow\r\n\r\nSelected creature (non pet) stop follow you.'),
 ('pdump write',3,'Syntax: .pdump write $filename $playerNameOrGUID\r\nWrite character dump with name/guid $playerNameOrGUID to file $filename.'),
 ('pdump load',3,'Syntax: .pdump load $filename $account [$newname] [$newguid]\r\nLoad character dump from dump file into character list of $account with saved or $newname, with saved (or first free) or $newguid guid.'),
-('pinfo',2,'Syntax: .pinfo [$player_name] [rep]\r\n\r\nOutput account information for selected player or player find by $player_name. If \"rep\" parameter provided show reputation information for player.'),
+('pinfo',2,'Syntax: .pinfo [$player_name]\r\n\r\nOutput account information for selected player or player find by $player_name.'),
 ('quest add',3,'Syntax: .quest add #quest_id\r\n\r\nAdd to character quest log quest #quest_id. Quest started from item can\'t be added by this command but correct .additem call provided in command output.'),
 ('quest complete',3,'Syntax: .quest complete #questid\r\nMark all quest objectives as completed for target character active quest. After this target character can go and get quest reward.'),
 ('quest remove',3,'Syntax: .quest remove #quest_id\r\n\r\nSet quest #quest_id state to not completed and not active (and remove from active quest list) for selected player.'),
@@ -495,7 +498,7 @@ INSERT INTO `command` VALUES
 ('tele add',3,'Syntax: .tele add $name\r\n\r\nAdd current your position to .tele command target locations list with name $name.'),
 ('tele del',3,'Syntax: .tele del $name\r\n\r\nRemove location with name $name for .tele command locations list.'),
 ('tele group',1,'Syntax: .tele group#location\r\n\r\nTeleport a selected player and his group members to a given location.'),
-('tele name',1,'Syntax: .tele name #playername #location\r\n\r\nTeleport a player to a given location.'),
+('tele name',1,'Syntax: .tele name [#playername] #location\r\n\r\nTeleport the given character to a given location. Character can be offline.'),
 ('ticket',2,'Syntax: .ticket on\r\n        .ticket off\r\n        .ticket #num\r\n        .ticket $character_name\r\n\r\non/off for GMs to show or not a new ticket directly, $character_name to show ticket of this character, #num to show ticket #num.'),
 ('unaura',3,'Syntax: .unaura #spellid\r\n\r\nRemove aura due to spell #spellid from the selected Unit.'),
 ('unban account',3,'Syntax: .unban account $Name\r\nUnban accounts for account name pattern.'),
@@ -561,7 +564,6 @@ DROP TABLE IF EXISTS `creature_addon`;
 CREATE TABLE `creature_addon` (
   `guid` int(11) NOT NULL default '0',
   `mount` mediumint(8) unsigned NOT NULL default '0',
-  `bytes0` int(10) unsigned NOT NULL default '0',
   `bytes1` int(10) unsigned NOT NULL default '0',
   `bytes2` int(10) unsigned NOT NULL default '0',
   `emote` int(10) unsigned NOT NULL default '0',
@@ -786,6 +788,8 @@ DROP TABLE IF EXISTS `creature_template`;
 CREATE TABLE `creature_template` (
   `entry` mediumint(8) unsigned NOT NULL default '0',
   `heroic_entry` mediumint(8) unsigned NOT NULL default '0',
+  `unk1` int(11) UNSIGNED DEFAULT '0' NOT NULL,
+  `unk2` int(11) UNSIGNED DEFAULT '0' NOT NULL,
   `modelid_A` mediumint(8) unsigned NOT NULL default '0',
   `modelid_A2` mediumint(8) unsigned NOT NULL default '0',
   `modelid_H` mediumint(8) unsigned NOT NULL default '0',
@@ -810,15 +814,17 @@ CREATE TABLE `creature_template` (
   `maxdmg` float NOT NULL default '0',
   `dmgschool` tinyint(4) NOT NULL default '0',
   `attackpower` int(10) unsigned NOT NULL default '0',
+  `dmg_multiplier` float NOT NULL default '1',
   `baseattacktime` int(10) unsigned NOT NULL default '0',
   `rangeattacktime` int(10) unsigned NOT NULL default '0',
+  `unit_class` tinyint(3) unsigned NOT NULL default '0',
   `unit_flags` int(10) unsigned NOT NULL default '0',
   `dynamicflags` int(10) unsigned NOT NULL default '0',
   `family` tinyint(4) NOT NULL default '0',
   `trainer_type` tinyint(4) NOT NULL default '0',
   `trainer_spell` mediumint(8) unsigned NOT NULL default '0',
-  `class` tinyint(3) unsigned NOT NULL default '0',
-  `race` tinyint(3) unsigned NOT NULL default '0',
+  `trainer_class` tinyint(3) unsigned NOT NULL default '0',
+  `trainer_race` tinyint(3) unsigned NOT NULL default '0',
   `minrangedmg` float NOT NULL default '0',
   `maxrangedmg` float NOT NULL default '0',
   `rangedattackpower` smallint(5) unsigned NOT NULL default '0',
@@ -846,6 +852,11 @@ CREATE TABLE `creature_template` (
   `unk16` float NOT NULL default '1',
   `unk17` float NOT NULL default '1',
   `RacialLeader` tinyint(3) unsigned NOT NULL default '0',
+  `questItem1` int(11) UNSIGNED DEFAULT '0' NOT NULL,
+  `questItem2` int(11) UNSIGNED DEFAULT '0' NOT NULL,
+  `questItem3` int(11) UNSIGNED DEFAULT '0' NOT NULL,
+  `questItem4` int(11) UNSIGNED DEFAULT '0' NOT NULL,
+  `movementId` int(11) UNSIGNED DEFAULT '0' NOT NULL,
   `RegenHealth` tinyint(3) unsigned NOT NULL default '1',
   `equipment_id` mediumint(8) unsigned NOT NULL default '0',
   `mechanic_immune_mask` int(10) unsigned NOT NULL default '0',
@@ -861,7 +872,7 @@ CREATE TABLE `creature_template` (
 LOCK TABLES `creature_template` WRITE;
 /*!40000 ALTER TABLE `creature_template` DISABLE KEYS */;
 INSERT INTO `creature_template` VALUES
-(1,0,10045,0,10045,0,'Waypoint(Only GM can see it)','Visual',NULL,1,1,64,64,0,0,0,35,35,0,0.91,1,0,14,15,0,100,2000,2200,4096,0,0,0,0,0,0,1.76,2.42,100,8,5242886,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,3,1.0,1.0,0,1,0,0,0x82,'');
+(1,0,0,0,10045,0,10045,0,'Waypoint(Only GM can see it)','Visual',NULL,1,1,64,64,0,0,0,35,35,0,0.91,1,0,14,15,0,100,1,2000,2200,8,4096,0,0,0,0,0,0,1.76,2.42,100,8,5242886,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,3,1.0,1.0,0,0,0,0,0,0,1,0,0,0x82,'');
 /*!40000 ALTER TABLE `creature_template` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -873,7 +884,6 @@ DROP TABLE IF EXISTS `creature_template_addon`;
 CREATE TABLE `creature_template_addon` (
   `entry` mediumint(8) unsigned NOT NULL default '0',
   `mount` mediumint(8) unsigned NOT NULL default '0',
-  `bytes0` int(10) unsigned NOT NULL default '0',
   `bytes1` int(10) unsigned NOT NULL default '0',
   `bytes2` int(10) unsigned NOT NULL default '0',
   `emote` mediumint(8) unsigned NOT NULL default '0',
@@ -1538,9 +1548,14 @@ CREATE TABLE `gameobject_template` (
   `name` varchar(100) NOT NULL default '',
   `IconName` varchar(100) NOT NULL default '',
   `castBarCaption` varchar(100) NOT NULL default '',
+  `unk1` varchar(100) NOT NULL default '',
   `faction` smallint(5) unsigned NOT NULL default '0',
   `flags` int(10) unsigned NOT NULL default '0',
   `size` float NOT NULL default '1',
+  `questItem1` int(11) UNSIGNED DEFAULT '0' NOT NULL,
+  `questItem2` int(11) UNSIGNED DEFAULT '0' NOT NULL,
+  `questItem3` int(11) UNSIGNED DEFAULT '0' NOT NULL,
+  `questItem4` int(11) UNSIGNED DEFAULT '0' NOT NULL,
   `data0` int(10) unsigned NOT NULL default '0',
   `data1` int(10) unsigned NOT NULL default '0',
   `data2` int(10) unsigned NOT NULL default '0',
@@ -1657,6 +1672,27 @@ LOCK TABLES `item_loot_template` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `item_required_target`
+--
+
+DROP TABLE IF EXISTS `item_required_target`;
+CREATE TABLE `item_required_target` (
+  `entry` mediumint(8) unsigned NOT NULL,
+  `type` tinyint(3) unsigned NOT NULL default '0',
+  `targetEntry` mediumint(8) unsigned NOT NULL default '0',
+  UNIQUE KEY `entry_type_target` (`entry`,`type`,`targetEntry`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 ROW_FORMAT=FIXED;
+
+--
+-- Dumping data for table `item_required_target`
+--
+
+LOCK TABLES `item_required_target` WRITE;
+/*!40000 ALTER TABLE `item_required_target` DISABLE KEYS */;
+/*!40000 ALTER TABLE `item_required_target` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `item_template`
 --
 
@@ -1710,22 +1746,13 @@ CREATE TABLE `item_template` (
   `stat_type10` tinyint(3) unsigned NOT NULL default '0',
   `stat_value10` smallint(6) NOT NULL default '0',
   `ScalingStatDistribution` smallint(6) NOT NULL default '0',
-  `ScalingStatValue` smallint(6) NOT NULL default '0',
+  `ScalingStatValue` int(6) unsigned NOT NULL default '0',
   `dmg_min1` float NOT NULL default '0',
   `dmg_max1` float NOT NULL default '0',
   `dmg_type1` tinyint(3) unsigned NOT NULL default '0',
   `dmg_min2` float NOT NULL default '0',
   `dmg_max2` float NOT NULL default '0',
   `dmg_type2` tinyint(3) unsigned NOT NULL default '0',
-  `dmg_min3` float NOT NULL default '0',
-  `dmg_max3` float NOT NULL default '0',
-  `dmg_type3` tinyint(3) unsigned NOT NULL default '0',
-  `dmg_min4` float NOT NULL default '0',
-  `dmg_max4` float NOT NULL default '0',
-  `dmg_type4` tinyint(3) unsigned NOT NULL default '0',
-  `dmg_min5` float NOT NULL default '0',
-  `dmg_max5` float NOT NULL default '0',
-  `dmg_type5` tinyint(3) unsigned NOT NULL default '0',
   `armor` smallint(5) unsigned NOT NULL default '0',
   `holy_res` tinyint(3) unsigned NOT NULL default '0',
   `fire_res` tinyint(3) unsigned NOT NULL default '0',
@@ -1801,6 +1828,7 @@ CREATE TABLE `item_template` (
   `ArmorDamageModifier` float NOT NULL default '0',
   `Duration` int(11) NOT NULL default '0' COMMENT 'Duration in seconds. Negative value means realtime, postive value ingame time',
   `ItemLimitCategory` smallint(6) NOT NULL default '0',
+  `HolidayId` int(11) UNSIGNED DEFAULT '0' NOT NULL,
   `ScriptName` varchar(64) NOT NULL default '',
   `DisenchantID` mediumint(8) unsigned NOT NULL default '0',
   `FoodType` tinyint(3) unsigned NOT NULL default '0',
@@ -1817,93 +1845,93 @@ CREATE TABLE `item_template` (
 LOCK TABLES `item_template` WRITE;
 /*!40000 ALTER TABLE `item_template` DISABLE KEYS */;
 INSERT INTO `item_template` VALUES
-(25,2,7,-1,'Worn Shortsword',1542,1,0,1,35,7,21,32767,511,2,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1900,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,1,0,0,0,1,3,0,0,0,0,20,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(35,2,10,-1,'Bent Staff',472,1,0,1,47,9,17,2047,255,2,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2900,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,2,2,0,0,0,0,25,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(36,2,4,-1,'Worn Mace',5194,1,0,1,38,7,21,2047,255,2,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1900,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,2,3,0,0,0,0,20,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(37,2,0,-1,'Worn Axe',14029,1,0,1,38,7,21,2047,255,2,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,1,3,0,0,0,0,20,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(38,4,0,-1,'Recruit\'s Shirt',9891,1,0,1,1,1,4,-1,-1,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(39,4,1,-1,'Recruit\'s Pants',9892,0,0,1,5,1,7,32767,511,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,25,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(40,4,0,-1,'Recruit\'s Boots',10141,1,0,1,4,1,8,32767,511,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(43,4,0,-1,'Squire\'s Boots',9938,1,0,1,4,1,8,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(44,4,1,-1,'Squire\'s Pants',9937,0,0,1,4,1,7,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,25,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(45,4,0,-1,'Squire\'s Shirt',3265,1,0,1,1,1,4,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(47,4,0,-1,'Footpad\'s Shoes',9915,1,0,1,4,1,8,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(48,4,1,-1,'Footpad\'s Pants',9913,0,0,1,4,1,7,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,25,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(49,4,0,-1,'Footpad\'s Shirt',9906,1,0,1,1,1,4,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(51,4,0,-1,'Neophyte\'s Boots',9946,1,0,1,5,1,8,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(52,4,1,-1,'Neophyte\'s Pants',9945,0,0,1,5,1,7,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,25,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(53,4,0,-1,'Neophyte\'s Shirt',9944,1,0,1,1,1,4,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(55,4,0,-1,'Apprentice\'s Boots',9929,1,0,1,5,1,8,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(56,4,1,-1,'Apprentice\'s Robe',12647,0,0,1,5,1,20,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,35,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(57,4,1,-1,'Acolyte\'s Robe',12645,0,0,1,5,1,20,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,35,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(59,4,0,-1,'Acolyte\'s Shoes',3261,1,0,1,5,1,8,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(117,0,0,-1,'Tough Jerky',2473,1,0,6,25,1,0,2047,255,5,1,0,0,0,0,0,0,0,0,20,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,433,0,-1,0,-1,11,1000,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(120,4,1,-1,'Thug Pants',10006,0,0,1,4,1,7,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,25,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(121,4,0,-1,'Thug Boots',10008,1,0,1,4,1,8,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(127,4,0,-1,'Trapper\'s Shirt',9996,1,0,1,1,1,4,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(139,4,1,-1,'Brawler\'s Pants',9988,0,0,1,4,1,7,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,25,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(140,4,0,-1,'Brawler\'s Boots',9992,1,0,1,4,1,8,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(147,4,1,-1,'Rugged Trapper\'s Pants',9975,0,0,1,5,1,7,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,25,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(148,4,0,-1,'Rugged Trapper\'s Shirt',9976,1,0,1,1,1,4,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(153,4,2,-1,'Primitive Kilt',10050,0,0,1,5,1,7,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,14,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,8,0,0,0,0,0,30,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(154,4,0,-1,'Primitive Mantle',10058,1,0,1,1,1,4,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(159,0,0,-1,'Refreshing Spring Water',18084,1,0,6,25,1,0,2047,255,5,1,0,0,0,0,0,0,0,0,20,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,430,0,-1,0,-1,59,1000,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(1395,4,1,-1,'Apprentice\'s Pants',9924,0,0,1,5,1,7,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,25,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(1396,4,1,-1,'Acolyte\'s Pants',3260,0,0,1,4,1,7,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,25,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(2070,0,0,-1,'Darnassian Bleu',6353,1,0,6,25,1,0,2047,255,5,1,0,0,0,0,0,0,0,0,20,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,433,0,-1,0,-1,11,1000,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(2092,2,15,-1,'Worn Dagger',6442,1,0,1,35,7,13,2047,255,2,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1600,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,1,3,0,0,0,0,16,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(2101,11,2,-1,'Light Quiver',21328,1,0,1,4,1,18,2047,255,1,1,0,0,0,0,0,0,0,0,1,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,14824,1,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,'',0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(2102,11,3,-1,'Small Ammo Pouch',1816,1,0,1,4,1,18,2047,255,1,1,0,0,0,0,0,0,0,0,1,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,14824,1,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,'',0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(2105,4,0,-1,'Thug Shirt',10005,1,0,1,5,1,4,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(2361,2,5,-1,'Battleworn Hammer',8690,1,0,1,45,9,17,2047,255,2,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2900,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,2,1,0,0,0,0,25,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(2362,4,6,-1,'Worn Wooden Shield',18730,0,0,1,7,1,14,32767,511,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,1,4,0,0,1,0,20,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(2504,2,2,-1,'Worn Shortbow',8106,1,0,1,29,5,15,2047,255,2,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2300,2,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,2,0,0,0,0,0,20,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(2508,2,3,-1,'Old Blunderbuss',6606,1,0,1,27,5,26,2047,255,2,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2300,3,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,1,0,0,0,0,0,20,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(2512,6,2,-1,'Rough Arrow',5996,1,0,1,10,0,24,2047,255,5,1,0,0,0,0,0,0,0,0,200,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,2,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(2516,6,3,-1,'Light Shot',5998,1,0,1,10,0,24,2047,255,5,1,0,0,0,0,0,0,0,0,200,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,2,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(2947,15,0,-1,'Small Throwing Knife',16754,1,0,1,15,0,0,2047,255,3,1,0,0,0,0,0,0,0,0,200,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2000,4,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(3661,2,10,-1,'Handcrafted Staff',18530,1,0,1,45,9,17,2047,255,2,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2900,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,2,2,0,0,0,0,25,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(4536,0,0,-1,'Shiny Red Apple',6410,1,0,6,25,1,0,2047,255,5,1,0,0,0,0,0,0,0,0,20,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,433,0,-1,0,-1,11,100,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(4540,0,0,-1,'Tough Hunk of Bread',6399,1,0,6,25,1,0,2047,255,5,1,0,0,0,0,0,0,0,0,20,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,433,0,-1,0,-1,11,1000,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(4604,0,0,-1,'Forest Mushroom Cap',15852,1,0,6,25,1,0,2047,255,5,1,0,0,0,0,0,0,0,0,20,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,433,0,-1,0,-1,11,1000,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(6096,4,0,-1,'Apprentice\'s Shirt',2163,1,0,1,1,1,4,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(6097,4,0,-1,'Acolyte\'s Shirt',2470,1,0,1,1,1,4,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(6098,4,1,-1,'Neophyte\'s Robe',12679,0,0,1,4,1,20,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,35,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(6119,4,1,-1,'Neophyte\'s Robe',12681,0,0,1,4,1,20,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,35,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(6123,4,1,-1,'Novice\'s Robe',12683,0,0,1,4,1,20,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,35,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(6124,4,1,-1,'Novice\'s Pants',9987,0,0,1,5,1,7,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,25,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(6125,4,0,-1,'Brawler\'s Harness',9995,1,0,1,1,1,4,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(6126,4,1,-1,'Trapper\'s Pants',10002,0,0,1,5,1,7,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,25,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(6127,4,0,-1,'Trapper\'s Boots',10003,1,0,1,5,1,8,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(6129,4,1,-1,'Acolyte\'s Robe',12646,0,0,1,5,1,20,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,35,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(6134,4,0,-1,'Primitive Mantle',10108,1,0,1,1,1,4,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(6135,4,2,-1,'Primitive Kilt',10109,0,0,1,5,1,7,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,14,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,8,0,0,0,0,0,30,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(6139,4,1,-1,'Novice\'s Robe',12684,0,0,1,4,1,20,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,35,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(6140,4,1,-1,'Apprentice\'s Robe',12649,0,0,1,4,1,20,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,35,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(6144,4,1,-1,'Neophyte\'s Robe',12680,0,0,1,5,1,20,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,35,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(6948,15,0,-1,'Hearthstone',6418,1,64,1,0,0,0,32767,511,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,8690,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,'',0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(12282,2,1,-1,'Worn Battleaxe',22291,1,0,1,43,8,17,2047,255,2,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2900,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,1,1,0,0,0,0,25,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(14646,12,0,-1,'Northshire Gift Voucher',18499,1,0,1,0,0,0,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,'',0,0,0,5805,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(14647,12,0,-1,'Coldridge Valley Gift Voucher',18499,1,0,1,0,0,0,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,'',0,0,0,5841,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(14648,12,0,-1,'Shadowglen Gift Voucher',18499,1,0,1,0,0,0,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,'',0,0,0,5842,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(14649,12,0,-1,'Valley of Trials Gift Voucher',18499,1,0,1,0,0,0,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,'',0,0,0,5843,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(14650,12,0,-1,'Camp Narache Gift Voucher',18499,1,0,1,0,0,0,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,'',0,0,0,5844,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(14651,12,0,-1,'Deathknell Gift Voucher',18499,1,0,1,0,0,0,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,'',0,0,0,5847,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(25861,2,16,-1,'Crude Throwing Axe',20777,1,0,1,15,0,25,2047,255,3,1,0,0,0,0,0,0,0,0,200,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2000,4,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,'internalItemHandler',0,0,0,0,0),
-(34648,4,4,-1,'Acherus Knight\'s Greaves',51496,2,32768,1,51,10,8,-1,-1,60,55,0,0,0,0,0,0,0,0,1,0,3,4,10,7,12,3,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,392,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,1,'',0,0,0,0,0,6,0,0,0,0,0,55,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,'',0,0,0,0),
-(34649,4,4,-1,'Acherus Knight\'s Gauntlets',51498,2,32768,1,34,6,10,-1,-1,60,55,0,0,0,0,0,0,0,0,1,0,3,4,15,7,6,32,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,356,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,1,'',0,0,0,0,0,6,0,0,0,0,0,40,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,'',0,0,0,0),
-(34650,4,4,-1,'Acherus Knight\'s Tunic',51494,2,32768,1,69,13,5,-1,-1,60,55,0,0,0,0,0,0,0,0,1,0,3,4,20,7,11,32,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,570,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,1,'',0,0,0,0,0,6,0,0,0,0,0,115,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,'',0,0,0,0),
-(34651,4,4,-1,'Acherus Knight\'s Girdle',51497,2,32768,1,35,7,6,-1,-1,60,55,0,0,0,0,0,0,0,0,1,0,2,4,10,32,15,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,320,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,1,'',0,0,0,0,0,6,0,0,0,0,0,40,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,'',0,0,0,0),
-(34652,4,4,-1,'Acherus Knight\'s Hood',51495,2,32768,1,52,10,1,-1,-1,60,55,0,0,0,0,0,0,0,0,1,0,3,4,15,7,15,32,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,463,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,1,'',0,0,0,0,0,6,0,0,0,0,0,70,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,'',0,0,0,0),
-(34653,4,4,-1,'Acherus Knight\'s Wristguard',51500,2,32768,1,36,7,9,-1,-1,60,55,0,0,0,0,0,0,0,0,1,0,3,4,7,31,7,7,11,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,249,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,1,'',0,0,0,0,0,6,0,0,0,0,0,40,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,'',0,0,0,0),
-(34655,4,4,-1,'Acherus Knight\'s Pauldrons',51501,2,32768,1,54,10,3,-1,-1,60,55,0,0,0,0,0,0,0,0,1,0,3,4,11,3,9,7,11,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,427,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,1,'',0,0,0,0,0,6,0,0,0,0,0,70,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,'',0,0,0,0),
-(34656,4,4,-1,'Acherus Knight\'s Cover',51499,2,32768,1,73,14,7,-1,-1,60,55,0,0,0,0,0,0,0,0,1,0,3,4,13,3,10,7,15,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,499,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,1,'',0,0,0,0,0,6,0,0,0,0,0,85,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,'',0,0,0,0),
-(34657,4,0,-1,'Choker of Damnation',6539,2,32768,1,2303,575,2,-1,-1,60,55,0,0,0,0,0,0,0,0,1,0,3,4,9,7,8,31,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,1,'',0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,'',0,0,0,0),
-(34658,4,0,-1,'Plague Band',963,2,32768,1,534,133,11,-1,-1,60,55,0,0,0,0,0,0,0,0,1,0,3,4,11,3,6,7,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,1,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,'',0,0,0,0),
-(34659,4,1,-1,'Acherus Knight\'s Shroud',49738,2,32768,1,31,6,16,-1,-1,60,55,0,0,0,0,0,0,0,0,1,0,2,4,12,7,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,39,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,1,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,'',0,0,0,0),
-(38145,1,0,-1,'Deathweave Bag',1282,1,32768,1,0,0,18,-1,-1,35,0,0,0,0,0,0,0,0,0,1,12,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,1,'',0,0,0,0,0,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,'',0,0,0,0),
-(38147,4,0,-1,'Corrupted Band',963,2,32768,1,534,133,11,-1,-1,60,55,0,0,0,0,0,0,0,0,1,0,3,4,11,3,6,32,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,1,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,'',0,0,0,0),
-(41751,0,5,-1,'Black Mushroom',36728,1,0,1,100,5,0,-1,-1,65,55,0,0,0,0,0,0,0,0,20,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,27094,0,-1,0,0,11,1000,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,'',0,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,'',0,0,0,0);
+(25,2,7,-1,'Worn Shortsword',1542,1,0,1,35,7,21,32767,511,2,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,3,0,0,0,0,0,0,0,0,0,0,0,1900,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,1,0,0,0,1,3,0,0,0,0,20,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(35,2,10,-1,'Bent Staff',472,1,0,1,47,9,17,2047,255,2,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,5,0,0,0,0,0,0,0,0,0,0,0,2900,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,2,2,0,0,0,0,25,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(36,2,4,-1,'Worn Mace',5194,1,0,1,38,7,21,2047,255,2,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,3,0,0,0,0,0,0,0,0,0,0,0,1900,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,2,3,0,0,0,0,20,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(37,2,0,-1,'Worn Axe',14029,1,0,1,38,7,21,2047,255,2,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,3,0,0,0,0,0,0,0,0,0,0,0,2000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,1,3,0,0,0,0,20,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(38,4,0,-1,'Recruit\'s Shirt',9891,1,0,1,1,1,4,-1,-1,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(39,4,1,-1,'Recruit\'s Pants',9892,0,0,1,5,1,7,32767,511,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,25,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(40,4,0,-1,'Recruit\'s Boots',10141,1,0,1,4,1,8,32767,511,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(43,4,0,-1,'Squire\'s Boots',9938,1,0,1,4,1,8,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(44,4,1,-1,'Squire\'s Pants',9937,0,0,1,4,1,7,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,25,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(45,4,0,-1,'Squire\'s Shirt',3265,1,0,1,1,1,4,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(47,4,0,-1,'Footpad\'s Shoes',9915,1,0,1,4,1,8,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(48,4,1,-1,'Footpad\'s Pants',9913,0,0,1,4,1,7,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,25,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(49,4,0,-1,'Footpad\'s Shirt',9906,1,0,1,1,1,4,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(51,4,0,-1,'Neophyte\'s Boots',9946,1,0,1,5,1,8,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(52,4,1,-1,'Neophyte\'s Pants',9945,0,0,1,5,1,7,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,25,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(53,4,0,-1,'Neophyte\'s Shirt',9944,1,0,1,1,1,4,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(55,4,0,-1,'Apprentice\'s Boots',9929,1,0,1,5,1,8,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(56,4,1,-1,'Apprentice\'s Robe',12647,0,0,1,5,1,20,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,35,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(57,4,1,-1,'Acolyte\'s Robe',12645,0,0,1,5,1,20,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,35,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(59,4,0,-1,'Acolyte\'s Shoes',3261,1,0,1,5,1,8,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(117,0,0,-1,'Tough Jerky',2473,1,0,6,25,1,0,2047,255,5,1,0,0,0,0,0,0,0,0,20,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,433,0,-1,0,-1,11,1000,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(120,4,1,-1,'Thug Pants',10006,0,0,1,4,1,7,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,25,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(121,4,0,-1,'Thug Boots',10008,1,0,1,4,1,8,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(127,4,0,-1,'Trapper\'s Shirt',9996,1,0,1,1,1,4,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(139,4,1,-1,'Brawler\'s Pants',9988,0,0,1,4,1,7,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,25,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(140,4,0,-1,'Brawler\'s Boots',9992,1,0,1,4,1,8,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(147,4,1,-1,'Rugged Trapper\'s Pants',9975,0,0,1,5,1,7,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,25,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(148,4,0,-1,'Rugged Trapper\'s Shirt',9976,1,0,1,1,1,4,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(153,4,2,-1,'Primitive Kilt',10050,0,0,1,5,1,7,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,14,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,8,0,0,0,0,0,30,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(154,4,0,-1,'Primitive Mantle',10058,1,0,1,1,1,4,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(159,0,0,-1,'Refreshing Spring Water',18084,1,0,6,25,1,0,2047,255,5,1,0,0,0,0,0,0,0,0,20,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,430,0,-1,0,-1,59,1000,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(1395,4,1,-1,'Apprentice\'s Pants',9924,0,0,1,5,1,7,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,25,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(1396,4,1,-1,'Acolyte\'s Pants',3260,0,0,1,4,1,7,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,25,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(2070,0,0,-1,'Darnassian Bleu',6353,1,0,6,25,1,0,2047,255,5,1,0,0,0,0,0,0,0,0,20,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,433,0,-1,0,-1,11,1000,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(2092,2,15,-1,'Worn Dagger',6442,1,0,1,35,7,13,2047,255,2,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,2,0,0,0,0,0,0,0,0,0,0,0,1600,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,1,3,0,0,0,0,16,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(2101,11,2,-1,'Light Quiver',21328,1,0,1,4,1,18,2047,255,1,1,0,0,0,0,0,0,0,0,1,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,14824,1,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,'',0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(2102,11,3,-1,'Small Ammo Pouch',1816,1,0,1,4,1,18,2047,255,1,1,0,0,0,0,0,0,0,0,1,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,14824,1,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,'',0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(2105,4,0,-1,'Thug Shirt',10005,1,0,1,5,1,4,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(2361,2,5,-1,'Battleworn Hammer',8690,1,0,1,45,9,17,2047,255,2,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,5,0,0,0,0,0,0,0,0,0,0,0,2900,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,2,1,0,0,0,0,25,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(2362,4,6,-1,'Worn Wooden Shield',18730,0,0,1,7,1,14,32767,511,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,1,4,0,0,1,0,20,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(2504,2,2,-1,'Worn Shortbow',8106,1,0,1,29,5,15,2047,255,2,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,5,0,0,0,0,0,0,0,0,0,0,0,2300,2,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,2,0,0,0,0,0,20,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(2508,2,3,-1,'Old Blunderbuss',6606,1,0,1,27,5,26,2047,255,2,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,5,0,0,0,0,0,0,0,0,0,0,0,2300,3,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,1,0,0,0,0,0,20,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(2512,6,2,-1,'Rough Arrow',5996,1,0,1,10,0,24,2047,255,5,1,0,0,0,0,0,0,0,0,200,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,2,0,0,0,0,0,0,0,0,0,0,0,3000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,2,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(2516,6,3,-1,'Light Shot',5998,1,0,1,10,0,24,2047,255,5,1,0,0,0,0,0,0,0,0,200,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,2,0,0,0,0,0,0,0,0,0,0,0,3000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,2,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(2947,15,0,-1,'Small Throwing Knife',16754,1,0,1,15,0,0,2047,255,3,1,0,0,0,0,0,0,0,0,200,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,3,0,0,0,0,0,0,0,0,0,0,0,2000,4,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(3661,2,10,-1,'Handcrafted Staff',18530,1,0,1,45,9,17,2047,255,2,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,5,0,0,0,0,0,0,0,0,0,0,0,2900,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,2,2,0,0,0,0,25,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(4536,0,0,-1,'Shiny Red Apple',6410,1,0,6,25,1,0,2047,255,5,1,0,0,0,0,0,0,0,0,20,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,433,0,-1,0,-1,11,100,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(4540,0,0,-1,'Tough Hunk of Bread',6399,1,0,6,25,1,0,2047,255,5,1,0,0,0,0,0,0,0,0,20,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,433,0,-1,0,-1,11,1000,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(4604,0,0,-1,'Forest Mushroom Cap',15852,1,0,6,25,1,0,2047,255,5,1,0,0,0,0,0,0,0,0,20,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,433,0,-1,0,-1,11,1000,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(6096,4,0,-1,'Apprentice\'s Shirt',2163,1,0,1,1,1,4,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(6097,4,0,-1,'Acolyte\'s Shirt',2470,1,0,1,1,1,4,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(6098,4,1,-1,'Neophyte\'s Robe',12679,0,0,1,4,1,20,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,35,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(6119,4,1,-1,'Neophyte\'s Robe',12681,0,0,1,4,1,20,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,35,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(6123,4,1,-1,'Novice\'s Robe',12683,0,0,1,4,1,20,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,35,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(6124,4,1,-1,'Novice\'s Pants',9987,0,0,1,5,1,7,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,25,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(6125,4,0,-1,'Brawler\'s Harness',9995,1,0,1,1,1,4,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(6126,4,1,-1,'Trapper\'s Pants',10002,0,0,1,5,1,7,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,25,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(6127,4,0,-1,'Trapper\'s Boots',10003,1,0,1,5,1,8,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(6129,4,1,-1,'Acolyte\'s Robe',12646,0,0,1,5,1,20,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,35,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(6134,4,0,-1,'Primitive Mantle',10108,1,0,1,1,1,4,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(6135,4,2,-1,'Primitive Kilt',10109,0,0,1,5,1,7,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,14,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,8,0,0,0,0,0,30,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(6139,4,1,-1,'Novice\'s Robe',12684,0,0,1,4,1,20,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,35,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(6140,4,1,-1,'Apprentice\'s Robe',12649,0,0,1,4,1,20,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,35,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(6144,4,1,-1,'Neophyte\'s Robe',12680,0,0,1,5,1,20,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,7,0,0,0,0,0,35,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(6948,15,0,-1,'Hearthstone',6418,1,64,1,0,0,0,32767,511,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,8690,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,'',0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(12282,2,1,-1,'Worn Battleaxe',22291,1,0,1,43,8,17,2047,255,2,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,5,0,0,0,0,0,0,0,0,0,0,0,2900,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,1,1,0,0,0,0,25,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(14646,12,0,-1,'Northshire Gift Voucher',18499,1,0,1,0,0,0,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,'',0,0,0,5805,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(14647,12,0,-1,'Coldridge Valley Gift Voucher',18499,1,0,1,0,0,0,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,'',0,0,0,5841,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(14648,12,0,-1,'Shadowglen Gift Voucher',18499,1,0,1,0,0,0,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,'',0,0,0,5842,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(14649,12,0,-1,'Valley of Trials Gift Voucher',18499,1,0,1,0,0,0,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,'',0,0,0,5843,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(14650,12,0,-1,'Camp Narache Gift Voucher',18499,1,0,1,0,0,0,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,'',0,0,0,5844,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(14651,12,0,-1,'Deathknell Gift Voucher',18499,1,0,1,0,0,0,2047,255,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,'',0,0,0,5847,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(25861,2,16,-1,'Crude Throwing Axe',20777,1,0,1,15,0,25,2047,255,3,1,0,0,0,0,0,0,0,0,200,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,3,0,0,0,0,0,0,0,0,0,0,0,2000,4,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'internalItemHandler',0,0,0,0),
+(34648,4,4,-1,'Acherus Knight\'s Greaves',51496,2,32768,1,51,10,8,-1,-1,60,55,0,0,0,0,0,0,0,0,1,0,3,4,10,7,12,3,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,392,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,1,'',0,0,0,0,0,6,0,0,0,0,0,55,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'',0,0,0,0),
+(34649,4,4,-1,'Acherus Knight\'s Gauntlets',51498,2,32768,1,34,6,10,-1,-1,60,55,0,0,0,0,0,0,0,0,1,0,3,4,15,7,6,32,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,356,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,1,'',0,0,0,0,0,6,0,0,0,0,0,40,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'',0,0,0,0),
+(34650,4,4,-1,'Acherus Knight\'s Tunic',51494,2,32768,1,69,13,5,-1,-1,60,55,0,0,0,0,0,0,0,0,1,0,3,4,20,7,11,32,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,570,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,1,'',0,0,0,0,0,6,0,0,0,0,0,115,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'',0,0,0,0),
+(34651,4,4,-1,'Acherus Knight\'s Girdle',51497,2,32768,1,35,7,6,-1,-1,60,55,0,0,0,0,0,0,0,0,1,0,2,4,10,32,15,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,320,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,1,'',0,0,0,0,0,6,0,0,0,0,0,40,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'',0,0,0,0),
+(34652,4,4,-1,'Acherus Knight\'s Hood',51495,2,32768,1,52,10,1,-1,-1,60,55,0,0,0,0,0,0,0,0,1,0,3,4,15,7,15,32,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,463,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,1,'',0,0,0,0,0,6,0,0,0,0,0,70,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'',0,0,0,0),
+(34653,4,4,-1,'Acherus Knight\'s Wristguard',51500,2,32768,1,36,7,9,-1,-1,60,55,0,0,0,0,0,0,0,0,1,0,3,4,7,31,7,7,11,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,249,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,1,'',0,0,0,0,0,6,0,0,0,0,0,40,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'',0,0,0,0),
+(34655,4,4,-1,'Acherus Knight\'s Pauldrons',51501,2,32768,1,54,10,3,-1,-1,60,55,0,0,0,0,0,0,0,0,1,0,3,4,11,3,9,7,11,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,427,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,1,'',0,0,0,0,0,6,0,0,0,0,0,70,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'',0,0,0,0),
+(34656,4,4,-1,'Acherus Knight\'s Cover',51499,2,32768,1,73,14,7,-1,-1,60,55,0,0,0,0,0,0,0,0,1,0,3,4,13,3,10,7,15,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,499,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,1,'',0,0,0,0,0,6,0,0,0,0,0,85,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'',0,0,0,0),
+(34657,4,0,-1,'Choker of Damnation',6539,2,32768,1,2303,575,2,-1,-1,60,55,0,0,0,0,0,0,0,0,1,0,3,4,9,7,8,31,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,1,'',0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'',0,0,0,0),
+(34658,4,0,-1,'Plague Band',963,2,32768,1,534,133,11,-1,-1,60,55,0,0,0,0,0,0,0,0,1,0,3,4,11,3,6,7,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,1,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'',0,0,0,0),
+(34659,4,1,-1,'Acherus Knight\'s Shroud',49738,2,32768,1,31,6,16,-1,-1,60,55,0,0,0,0,0,0,0,0,1,0,2,4,12,7,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,39,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,1,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'',0,0,0,0),
+(38145,1,0,-1,'Deathweave Bag',1282,1,32768,1,0,0,18,-1,-1,35,0,0,0,0,0,0,0,0,0,1,12,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,1,'',0,0,0,0,0,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'',0,0,0,0),
+(38147,4,0,-1,'Corrupted Band',963,2,32768,1,534,133,11,-1,-1,60,55,0,0,0,0,0,0,0,0,1,0,3,4,11,3,6,32,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,1,'',0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'',0,0,0,0),
+(41751,0,5,-1,'Black Mushroom',36728,1,0,1,100,5,0,-1,-1,65,55,0,0,0,0,0,0,0,0,20,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,27094,0,-1,0,0,11,1000,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,'',0,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'',0,0,0,0);
 /*!40000 ALTER TABLE `item_template` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -2538,6 +2566,7 @@ INSERT INTO `mangos_string` VALUES
 (168,'Locations found are:\n %s',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (169,'Mail sent to %s',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (170,'You try to hear sound %u but it doesn\'t exist.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+(171,'You can\'t teleport self to self!',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (172,'server console command',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (173,'You changed runic power of %s to %i/%i.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (174,'%s changed your runic power to %i/%i.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
@@ -2625,7 +2654,6 @@ INSERT INTO `mangos_string` VALUES
 (280,'Vendor has too many items (max 128)',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (281,'You can\'t kick self, logout instead',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (282,'Player %s kicked.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
-(283,'Player %s not found.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (284,'Accepting Whisper: %s',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (285,'Accepting Whisper: ON',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (286,'Accepting Whisper: OFF',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
@@ -2689,6 +2717,7 @@ INSERT INTO `mangos_string` VALUES
 (344,'You already have pet.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (345,'Forced customize for player %s will be requested at next login.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (346,'Forced customize for player %s (GUID #%u) will be requested at next login.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+(347,'TaxiNode ID %u not found!',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (400,'|cffff0000[System Message]:|rScripts reloaded',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (401,'You change security level of account %s to %i.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (402,'%s changed your security level to %i.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
@@ -2754,6 +2783,7 @@ INSERT INTO `mangos_string` VALUES
 (463,'Teleport location added.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (464,'Teleport location NOT added: database error.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (465,'Teleport location deleted.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+(466,'No taxinodes found!',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (467,'Target unit has %d auras:',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (468,'id: %d eff: %d type: %d duration: %d maxduration: %d name: %s%s%s caster: %s %u',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (469,'Target unit has %d auras of type %d:',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
@@ -3053,6 +3083,8 @@ INSERT INTO `mangos_string` VALUES
 (1125,'Your pet learned all talents',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (1126,'Your pet talents have been reset.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (1127,'Talents of %s\'s pet reset.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+(1128,'%d - |cffffffff|Htaxinode:%u|h[%s %s]|h|r (Map:%u X:%f Y:%f Z:%f)',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+(1129,'%d - %s %s (Map:%u X:%f Y:%f Z:%f)',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (1200,'You try to view cinemitic %u but it doesn\'t exist.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (1201,'You try to view movie %u but it doesn\'t exist.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
 /*!40000 ALTER TABLE `mangos_string` ENABLE KEYS */;
@@ -3151,6 +3183,27 @@ CREATE TABLE `npc_option` (
 LOCK TABLES `npc_option` WRITE;
 /*!40000 ALTER TABLE `npc_option` DISABLE KEYS */;
 /*!40000 ALTER TABLE `npc_option` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `npc_spellclick_spells`
+--
+
+DROP TABLE IF EXISTS `npc_spellclick_spells`;
+CREATE TABLE `npc_spellclick_spells` (
+    `npc_entry` INT UNSIGNED NOT NULL COMMENT 'reference to creature_template',
+    `spell_id` INT UNSIGNED NOT NULL COMMENT 'spell which should be casted ',
+    `quest_id` INT UNSIGNED NOT NULL COMMENT 'reference to quest_template',
+    `cast_flags` TINYINT UNSIGNED NOT NULL COMMENT 'first bit defines caster: 1=player, 0=creature; second bit defines target, same mapping as caster bit'
+) ENGINE = MYISAM DEFAULT CHARSET=utf8;
+
+--
+-- Dumping data for table `npc_spellclick_spells`
+--
+
+LOCK TABLES `npc_spellclick_spells` WRITE;
+/*!40000 ALTER TABLE `npc_spellclick_spells` DISABLE KEYS */;
+/*!40000 ALTER TABLE `npc_spellclick_spells` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -3630,29 +3683,6 @@ INSERT INTO `pet_name_generation` (`word`,`entry`,`half`) VALUES
 ('tom',17252,1);
 
 /*!40000 ALTER TABLE `pet_name_generation` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `petcreateinfo_spell`
---
-
-DROP TABLE IF EXISTS `petcreateinfo_spell`;
-CREATE TABLE `petcreateinfo_spell` (
-  `entry` mediumint(8) unsigned NOT NULL default '0',
-  `Spell1` mediumint(8) unsigned NOT NULL default '0',
-  `Spell2` mediumint(8) unsigned NOT NULL default '0',
-  `Spell3` mediumint(8) unsigned NOT NULL default '0',
-  `Spell4` mediumint(8) unsigned NOT NULL default '0',
-  PRIMARY KEY  (`entry`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC COMMENT='Pet Create Spells';
-
---
--- Dumping data for table `petcreateinfo_spell`
---
-
-LOCK TABLES `petcreateinfo_spell` WRITE;
-/*!40000 ALTER TABLE `petcreateinfo_spell` DISABLE KEYS */;
-/*!40000 ALTER TABLE `petcreateinfo_spell` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -12932,7 +12962,9 @@ CREATE TABLE `pool_creature` (
   `guid` int(10) unsigned NOT NULL default '0',
   `pool_entry` mediumint(8) unsigned NOT NULL default '0',
   `chance` float unsigned NOT NULL default '0',
-  PRIMARY KEY  (`pool_entry`,`guid`)
+  `description` varchar(255) NOT NULL,
+  PRIMARY KEY  (`pool_entry`,`guid`),
+  INDEX `idx_guid`(`guid`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 
@@ -12954,7 +12986,9 @@ CREATE TABLE `pool_gameobject` (
   `guid` int(10) unsigned NOT NULL default '0',
   `pool_entry` mediumint(8) unsigned NOT NULL default '0',
   `chance` float unsigned NOT NULL default '0',
-  PRIMARY KEY  (`guid`,`pool_entry`)
+  `description` varchar(255) NOT NULL,
+  PRIMARY KEY  (`guid`,`pool_entry`),
+  INDEX `idx_guid`(`guid`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 --
@@ -12975,6 +13009,7 @@ CREATE TABLE `pool_pool` (
   `pool_id` mediumint(8) unsigned NOT NULL default '0',
   `mother_pool` mediumint(8) unsigned NOT NULL default '0',
   `chance` float NOT NULL default '0',
+  `description` varchar(255) NOT NULL,
   PRIMARY KEY  (`pool_id`,`mother_pool`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
@@ -12995,6 +13030,7 @@ DROP TABLE IF EXISTS `pool_template`;
 CREATE TABLE `pool_template` (
   `entry` mediumint(8) unsigned NOT NULL default '0' COMMENT 'Pool entry',
   `max_limit` int(10) unsigned NOT NULL default '0' COMMENT 'Max number of objects (0) is no limit',
+  `description` varchar(255) NOT NULL,
   PRIMARY KEY  (`entry`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
@@ -13253,12 +13289,20 @@ CREATE TABLE `quest_template` (
   `DetailsEmote2` smallint(5) unsigned NOT NULL default '0',
   `DetailsEmote3` smallint(5) unsigned NOT NULL default '0',
   `DetailsEmote4` smallint(5) unsigned NOT NULL default '0',
+  `DetailsEmoteDelay1` int(11) unsigned NOT NULL default '0',
+  `DetailsEmoteDelay2` int(11) unsigned NOT NULL default '0',
+  `DetailsEmoteDelay3` int(11) unsigned NOT NULL default '0',
+  `DetailsEmoteDelay4` int(11) unsigned NOT NULL default '0',
   `IncompleteEmote` smallint(5) unsigned NOT NULL default '0',
   `CompleteEmote` smallint(5) unsigned NOT NULL default '0',
   `OfferRewardEmote1` smallint(5) unsigned NOT NULL default '0',
   `OfferRewardEmote2` smallint(5) unsigned NOT NULL default '0',
   `OfferRewardEmote3` smallint(5) unsigned NOT NULL default '0',
   `OfferRewardEmote4` smallint(5) unsigned NOT NULL default '0',
+  `OfferRewardEmoteDelay1` int(11) unsigned NOT NULL default '0',
+  `OfferRewardEmoteDelay2` int(11) unsigned NOT NULL default '0',
+  `OfferRewardEmoteDelay3` int(11) unsigned NOT NULL default '0',
+  `OfferRewardEmoteDelay4` int(11) unsigned NOT NULL default '0',
   `StartScript` mediumint(8) unsigned NOT NULL default '0',
   `CompleteScript` mediumint(8) unsigned NOT NULL default '0',
   PRIMARY KEY  (`entry`)
@@ -13579,7 +13623,7 @@ INSERT INTO spell_chain VALUES
 (33043,33042,31661,4,0),
 (42949,33043,31661,5,0),
 (42950,42949,31661,6,0),
-/*FireBlast*/
+/*Fire Blast*/
 (2136,0,2136,1,0),
 (2137,2136,2136,2,0),
 (2138,2137,2136,3,0),
@@ -13591,7 +13635,7 @@ INSERT INTO spell_chain VALUES
 (27079,27078,2136,9,0),
 (42872,27079,2136,10,0),
 (42873,42872,2136,11,0),
-/*FireWard*/
+/*Fire Ward*/
 (543,0,543,1,0),
 (8457,543,543,2,0),
 (8458,8457,543,3,0),
@@ -13616,6 +13660,9 @@ INSERT INTO spell_chain VALUES
 (38692,27070,133,14,0),
 (42832,38692,133,15,0),
 (42833,42832,133,16,0),
+/*Fiery Payback*/
+(64353,0,64353,1,0),
+(64357,64353,64353,2,0),
 /*Flamestrike*/
 (2120,0,2120,1,0),
 (2121,2120,2120,2,0),
@@ -13881,6 +13928,9 @@ INSERT INTO spell_chain VALUES
 (32546,0,32546,1,0),
 (48119,32546,32546,2,0),
 (48120,48119,32546,3,0),
+/*Body and Soul*/
+(64127,0,64127,1,0),
+(64129,64127,64127,2,0),
 /*Circle of Healing*/
 (34861,0,34861,1,0),
 (34863,34861,34861,2,0),
@@ -13899,6 +13949,10 @@ INSERT INTO spell_chain VALUES
 (25437,19243,19236,7,0),
 (48172,25437,19236,8,0),
 (48173,48172,19236,9,0),
+/*Empowered Renew*/
+(63534,0,63534,1,0),
+(63542,63534,63534,2,0),
+(63543,63542,63534,3,0),
 /*FlashHeal*/
 (2061,0,2061,1,0),
 (9472,2061,2061,2,0),
@@ -13994,6 +14048,10 @@ INSERT INTO spell_chain VALUES
 (20770,10881,2006,5,0),
 (25435,20770,2006,6,0),
 (48171,25435,2006,7,0),
+/*Serendipity*/
+(63730,0,63730,1,0),
+(63733,63730,63730,2,0),
+(63737,63733,63730,3,0),
 /*Smite*/
 (585,0,585,1,0),
 (591,585,585,2,0),
@@ -14020,6 +14078,10 @@ INSERT INTO spell_chain VALUES
 (25467,19280,2944,7,0),
 (48299,25467,2944,8,0),
 (48300,48299,2944,9,0),
+/*Improved Devouring Plague*/
+(63625,0,63625,1,0),
+(63626,63625,63625,2,0),
+(63627,63626,63625,3,0),
 /*Mind Blast*/
 (8092,0,8092,1,0),
 (8102,8092,8092,2,0),
@@ -14138,13 +14200,6 @@ INSERT INTO spell_chain VALUES
 (26998,9898,99,6,0),
 (48559,26998,99,7,0),
 (48560,48559,99,8,0),
-/*Faerie Fire (Feral)*/
-(16857,0,16857,1,0),
-(17390,16857,16857,2,0),
-(17391,17390,16857,3,0),
-(17392,17391,16857,4,0),
-(27011,17392,16857,5,0),
-(48475,27011,16857,6,0),
 /*Ferocious Bite*/
 (22568,0,22568,1,0),
 (22827,22568,22568,2,0),
@@ -14470,7 +14525,7 @@ INSERT INTO spell_chain VALUES
 /*------------------
 --(189)Pet-Felhunter
 ------------------*/
-/*DevourMagic*/
+/*Devour Magic*/
 (19505,0,19505,1,0),
 (19731,19505,19505,2,0),
 (19734,19731,19505,3,0),
@@ -14478,13 +14533,19 @@ INSERT INTO spell_chain VALUES
 (27276,19736,19505,5,0),
 (27277,27276,19505,6,0),
 (48011,27277,19505,7,0),
-/*ShadowBite*/
+/*Fel Intelligence*/
+(54424,0,54424,1,0),
+(57564,54424,54424,2,0),
+(57565,57564,54424,3,0),
+(57566,57565,54424,4,0),
+(57567,57566,54424,5,0),
+/*Shadow Bite*/
 (54049,0,54049,1,0),
 (54050,54049,54049,2,0),
 (54051,54050,54049,3,0),
 (54052,54051,54049,4,0),
 (54053,54052,54049,5,0),
-/*SpellLock*/
+/*Spell Lock*/
 (19244,0,19244,1,0),
 (19647,19244,19244,2,0),
 /*------------------
@@ -14654,13 +14715,6 @@ INSERT INTO spell_chain VALUES
 (49974,49973,49966,9,0),
 (52475,49974,49966,10,0),
 (52476,52475,49966,11,0),
-/*Thunderstomp*/
-(26090,0,26090,1,0),
-(26187,26090,26090,2,0),
-(26188,26187,26090,3,0),
-(27063,26188,26090,4,0),
-(55572,27063,26090,5,0),
-(55573,55572,26090,6,0),
 /*------------------
 --(217)Pet-Raptor
 ------------------*/
@@ -15005,6 +15059,12 @@ INSERT INTO spell_chain VALUES
 (27149,10293,465,8,0),
 (48941,27149,465,9,0),
 (48942,48941,465,10,0),
+/*Divinity*/
+(63646,0,63646,1,0),
+(63647,63646,63646,2,0),
+(63648,63647,63646,3,0),
+(63649,63648,63646,4,0),
+(63650,63649,63646,5,0),
 /*Fire Resistance Aura*/
 (19891,0,19891,1,0),
 (19899,19891,19891,2,0),
@@ -15062,7 +15122,7 @@ INSERT INTO spell_chain VALUES
 (1756,1755,1742,5,0),
 (16697,1756,1742,6,0),
 (27048,16697,1742,7,0),
-/*GreatResistance*/
+/*Great Resistance*/
 (53427,0,53427,1,0),
 (53429,53427,53427,2,0),
 (53430,53429,53427,3,0),
@@ -15076,6 +15136,15 @@ INSERT INTO spell_chain VALUES
 (14921,14920,2649,7,0),
 (27047,14921,2649,8,0),
 (61676,27047,2649,9,0),
+/*Shark Attack*/
+(62759,0,62759,1,0),
+(62760,62759,62759,2,0),
+/*Silverback*/
+(62764,0,62764,1,0),
+(62765,62764,62764,2,0),
+/*Wild Hunt*/
+(62758,0,62758,1,0),
+(62762,62758,62758,2,0),
 /*------------------
 -- (333) Enchanting
 ------------------*/
@@ -15124,6 +15193,9 @@ INSERT INTO spell_chain VALUES
 (28172,17728,2362,4,0),
 (47886,28172,2362,5,0),
 (47888,47886,2362,6,0),
+/*Decimation*/
+(63156,0,63156,1,0),
+(63158,63156,63156,2,0),
 /*DemonArmor*/
 (706,0,706,1,0),
 (1086,706,706,2,0),
@@ -15156,6 +15228,10 @@ INSERT INTO spell_chain VALUES
 (11695,11694,755,7,0),
 (27259,11695,755,8,0),
 (47856,27259,755,9,0),
+/*Nemesis*/
+(63117,0,63117,1,0),
+(63121,63117,63117,2,0),
+(63123,63121,63117,3,0),
 /*RitualofSouls*/
 (29893,0,29893,1,0),
 (58887,29893,29893,2,0),
@@ -15194,13 +15270,6 @@ INSERT INTO spell_chain VALUES
 (603,0,603,1,0),
 (30910,603,603,2,0),
 (47867,30910,603,3,0),
-/*Curse of Recklessness*/
-(704,0,704,1,0),
-(7658,704,704,2,0),
-(7659,7658,704,3,0),
-(11717,7659,704,4,0),
-(27226,11717,704,5,0),
-(57595,27226,704,6,0),
 /*Curse of the Elements*/
 (1490,0,1490,1,0),
 (11721,1490,1490,2,0),
@@ -15266,15 +15335,6 @@ INSERT INTO spell_chain VALUES
 (27243,0,27243,1,0),
 (47835,27243,27243,2,0),
 (47836,47835,27243,3,0),
-/*SiphonLife*/
-(18265,0,18265,1,0),
-(18879,18265,18265,2,0),
-(18880,18879,18265,3,0),
-(18881,18880,18265,4,0),
-(27264,18881,18265,5,0),
-(30911,27264,18265,6,0),
-(47861,30911,18265,7,0),
-(47862,47861,18265,8,0),
 /*UnstableAffliction*/
 (30108,0,30108,1,0),
 (30404,30108,30108,2,0),
@@ -15338,6 +15398,9 @@ INSERT INTO spell_chain VALUES
 (58794,25500,8033,7,0),
 (58795,58794,8033,8,0),
 (58796,58795,8033,9,0),
+/*Frozen Power*/
+(63373,0,63373,1,0),
+(63374,63373,63373,2,0),
 /*Life Tap*/
 (1454,0,1454,1,0),
 (1455,1454,1454,2,0),
@@ -15494,6 +15557,9 @@ INSERT INTO spell_chain VALUES
 /*------------------
 -- (375) Elemental Combat
 ------------------*/
+/*Booming Echoes*/
+(63370,0,63370,1,0),
+(63372,63370,63370,2,0),
 /*Chain Lightning*/
 (421,0,421,1,0),
 (930,421,421,2,0),
@@ -15644,6 +15710,9 @@ INSERT INTO spell_chain VALUES
 (26979,26978,5185,13,0),
 (48377,26979,5185,14,0),
 (48378,48377,5185,15,0),
+/*Improved Barkskin*/
+(63410,0,63410,1,0),
+(63411,63410,63410,2,0),
 /*Lifebloom*/
 (33763,0,33763,1,0),
 (48450,33763,33763,2,0),
@@ -15739,13 +15808,6 @@ INSERT INTO spell_chain VALUES
 (17329,16813,16689,6,9853),
 (27009,17329,16689,7,26989),
 (53312,27009,16689,8,53308),
-/*FaerieFire*/
-(770,0,770,1,0),
-(778,770,770,2,0),
-(9749,778,770,3,0),
-(9907,9749,770,4,0),
-(26993,9907,770,5,0),
-(48476,26993,770,6,0),
 /*Hibernate*/
 (2637,0,2637,1,0),
 (18657,2637,2637,2,0),
@@ -15846,15 +15908,6 @@ INSERT INTO spell_chain VALUES
 (59170,50796,50796,2,0),
 (59171,59170,50796,3,0),
 (59172,59171,50796,4,0),
-/*Conflagrate*/
-(17962,0,17962,1,0),
-(18930,17962,17962,2,0),
-(18931,18930,17962,3,0),
-(18932,18931,17962,4,0),
-(27266,18932,17962,5,0),
-(30912,27266,17962,6,0),
-(47828,30912,17962,7,0),
-(47829,47828,17962,8,0),
 /*Hellfire*/
 (1949,0,1949,1,0),
 (11683,1949,1949,2,0),
@@ -15878,6 +15931,10 @@ INSERT INTO spell_chain VALUES
 (32231,29722,29722,2,0),
 (47837,32231,29722,3,0),
 (47838,47837,29722,4,0),
+/*Molten Skin*/
+(63349,0,63349,1,0),
+(63350,63349,63349,2,0),
+(63351,63350,63349,3,0),
 /*RainofFire*/
 (5740,0,5740,1,0),
 (6219,5740,5740,2,0),
@@ -16041,6 +16098,10 @@ INSERT INTO spell_chain VALUES
 (27841,14819,14752,4,0),
 (25312,27841,14752,5,0),
 (48073,25312,14752,6,0),
+/*Improved Flash Heal*/
+(63504,0,63504,1,0),
+(63505,63504,63504,2,0),
+(63506,63505,63504,3,0),
 /*InnerFire*/
 (588,0,588,1,0),
 (7128,588,588,2,0),
@@ -16193,7 +16254,7 @@ INSERT INTO spell_chain VALUES
 /*------------------
 --(770)Blood
 ------------------*/
-/*BloodBoil*/
+/*Blood Boil*/
 (48721,0,48721,1,0),
 (49939,48721,48721,2,0),
 (49940,49939,48721,3,0),
@@ -16205,14 +16266,26 @@ INSERT INTO spell_chain VALUES
 (49928,49927,45902,4,0),
 (49929,49928,45902,5,0),
 (49930,49929,45902,6,0),
-/*HeartStrike*/
+/*Death Coil*/
+(62900,0,62900,1,0),
+(62901,62900,62900,2,0),
+(62902,62901,62900,3,0),
+(62903,62902,62900,4,0),
+(62904,62903,62900,5,0),
+/*Heart Strike*/
 (55050,0,55050,1,0),
 (55258,55050,55050,2,0),
 (55259,55258,55050,3,0),
 (55260,55259,55050,4,0),
 (55261,55260,55050,5,0),
 (55262,55261,55050,6,0),
-/*ImprovedRuneTap*/
+/*Improved Blood Presence*/
+(50365,0,50365,1,0),
+(50371,50365,50365,2,0),
+/*Improved Death Strike*/
+(62905,0,62905,1,0),
+(62908,62905,62905,2,0),
+/*Improved Rune Tap*/
 (48985,0,48985,1,0),
 (49488,48985,48985,2,0),
 (49489,49488,48985,3,0),
@@ -16245,12 +16318,11 @@ INSERT INTO spell_chain VALUES
 /*HornofWinter*/
 (57330,0,57330,1,0),
 (57623,57330,57330,2,0),
-/*HowlingBlast*/
+/*Howling Blast*/
 (49184,0,49184,1,0),
-(51408,49184,49184,2,0),
-(51409,51408,49184,3,0),
-(51410,51409,49184,4,0),
-(51411,51410,49184,5,0),
+(51409,49184,49184,2,0),
+(51410,51409,49184,3,0),
+(51411,51410,49184,4,0),
 /*IcyTalons*/
 (50880,0,50880,1,0),
 (50884,50880,50880,2,0),
@@ -16263,7 +16335,10 @@ INSERT INTO spell_chain VALUES
 (49903,49896,45477,3,0),
 (49904,49903,45477,4,0),
 (49909,49904,45477,5,0),
-/*ImprovedIcyTouch*/
+/*Improved Frost Presence*/
+(50384,0,50384,1,0),
+(50385,50384,50384,2,0),
+/*Improved Icy Touch*/
 (49175,0,49175,1,0),
 (50031,49175,49175,2,0),
 (51456,50031,49175,3,0),
@@ -16286,7 +16361,7 @@ INSERT INTO spell_chain VALUES
 (49936,43265,43265,2,0),
 (49937,49936,43265,3,0),
 (49938,49937,43265,4,0),
-/*DeathCoil*/
+/*Death Coil*/
 (47541,0,47541,1,0),
 (49892,47541,47541,2,0),
 (49893,49892,47541,3,0),
@@ -16298,12 +16373,13 @@ INSERT INTO spell_chain VALUES
 (45463,49999,49998,3,0),
 (49923,45463,49998,4,0),
 (49924,49923,49998,5,0),
-/*MagicSuppression*/
+/*Improved Unholy Presence*/
+(50391,0,50391,1,0),
+(50392,50391,50391,2,0),
+/*Magic Suppression*/
 (49224,0,49224,1,0),
 (49610,49224,49224,2,0),
 (49611,49610,49224,3,0),
-(49612,49611,49224,4,0),
-(49614,49612,49224,5,0),
 /*Outbreak*/
 (49013,0,49013,1,0),
 (55236,49013,49013,2,0),
@@ -16810,13 +16886,8 @@ INSERT INTO `spell_proc_event` VALUES
 (14892, 0x00000000,  6, 0x10001E00, 0x00010004, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (15088, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (15128, 0x00000004,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(15268, 0x00000020,  6, 0x06080000, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (15277, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 6.000000, 0.000000,  0),
 (15286, 0x00000020,  6, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(15323, 0x00000020,  6, 0x06080000, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(15324, 0x00000020,  6, 0x06080000, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(15325, 0x00000020,  6, 0x06080000, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(15326, 0x00000020,  6, 0x06080000, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (15337, 0x00000000,  6, 0x00002000, 0x00000002, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (15338, 0x00000000,  6, 0x00002000, 0x00000002, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (15346, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 6.000000, 0.000000,  0),
@@ -16861,12 +16932,7 @@ INSERT INTO `spell_proc_event` VALUES
 (17364, 0x00000008,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (17495, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000040, 0.000000, 0.000000,  0),
 (17793, 0x00000000,  5, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
-(17794, 0x00000020,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000001, 0.000000, 0.000000,  0),
 (17796, 0x00000000,  5, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
-(17797, 0x00000020,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(17798, 0x00000020,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(17799, 0x00000020,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(17800, 0x00000020,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (17801, 0x00000000,  5, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (17802, 0x00000000,  5, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (17803, 0x00000000,  5, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
@@ -16878,9 +16944,6 @@ INSERT INTO `spell_proc_event` VALUES
 (18120, 0x00000000,  5, 0x000003E5, 0x000010C0, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (18820, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00010000, 0.000000, 0.000000,  0),
 (19184, 0x00000000,  9, 0x00000014, 0x00002000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(19228, 0x00000000,  0, 0x00000040, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(19232, 0x00000000,  9, 0x00000040, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(19233, 0x00000000,  9, 0x00000040, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (19387, 0x00000000,  9, 0x00000014, 0x00002000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (19388, 0x00000000,  9, 0x00000014, 0x00002000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (19572, 0x00000000,  9, 0x00800000, 0x00000000, 0x00000000, 0x00004000, 0x00000000, 0.000000, 0.000000,  0),
@@ -17007,26 +17070,20 @@ INSERT INTO `spell_proc_event` VALUES
 (30293, 0x00000000,  5, 0x00000381, 0x000000C0, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (30295, 0x00000000,  5, 0x00000381, 0x000000C0, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (30296, 0x00000000,  5, 0x00000381, 0x000000C0, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(30299, 0x00000024,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(30301, 0x00000024,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(30302, 0x00000024,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
+(30299, 0x0000007E,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
+(30301, 0x0000007E,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
+(30302, 0x0000007E,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (30675, 0x00000000, 11, 0x00000003, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (30678, 0x00000000, 11, 0x00000003, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (30679, 0x00000000, 11, 0x00000003, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(30680, 0x00000000, 11, 0x00000003, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(30681, 0x00000000, 11, 0x00000003, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (30701, 0x0000001C,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (30705, 0x0000001C,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (30802, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (30803, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (30804, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (30805, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
-(30806, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
-(30807, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (30808, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (30809, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
-(30810, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
-(30811, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (30823, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 10.500000, 0.000000,  0),
 (30881, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  5),
 (30883, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  5),
@@ -17095,6 +17152,7 @@ INSERT INTO `spell_proc_event` VALUES
 (33882, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (33883, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (33953, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00004000, 0x00000000, 0.000000, 0.000000, 45),
+(34074, 0x00000000,  9, 0x0007FA43, 0x00881081, 0x00000201, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (34080, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000008, 0.000000, 0.000000,  0),
 (34138, 0x00000000, 11, 0x00000080, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (34139, 0x00000000, 10, 0x40000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
@@ -17132,7 +17190,6 @@ INSERT INTO `spell_proc_event` VALUES
 (35086, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 60),
 (35100, 0x00000000,  9, 0x00003001, 0x00000000, 0x00000000, 0x00010140, 0x00000000, 0.000000, 0.000000,  0),
 (35102, 0x00000000,  9, 0x00003001, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(35103, 0x00000000,  9, 0x00003001, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (35121, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (36096, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000800, 0.000000, 0.000000,  0),
 (36111, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
@@ -17277,9 +17334,6 @@ INSERT INTO `spell_proc_event` VALUES
 (47203, 0x00000000,  5, 0x00000008, 0x00040000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (47204, 0x00000000,  5, 0x00000008, 0x00040000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (47205, 0x00000000,  5, 0x00000008, 0x00040000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(47232, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
-(47234, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
-(47235, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (47245, 0x00000020,  5, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (47246, 0x00000020,  5, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (47247, 0x00000020,  5, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
@@ -17297,15 +17351,6 @@ INSERT INTO `spell_proc_event` VALUES
 (47535, 0x00000000,  6, 0x00001800, 0x00800000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (47536, 0x00000000,  6, 0x00001800, 0x00800000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (47537, 0x00000000,  6, 0x00001800, 0x00800000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(47538, 0x00000000,  6, 0x00001800, 0x00800000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(47539, 0x00000000,  6, 0x00001800, 0x00800000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(47549, 0x00000000,  6, 0x00000000, 0x00020000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(47551, 0x00000000,  6, 0x00000000, 0x00020000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(47552, 0x00000000,  6, 0x00000000, 0x00020000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(47555, 0x00000000,  6, 0x00001800, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(47556, 0x00000000,  6, 0x00001800, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(47557, 0x00000000,  6, 0x00001800, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(47572, 0x00000000,  6, 0x00010000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (47580, 0x00000000,  6, 0x00000000, 0x00000000, 0x00000040, 0x00000000, 0x00010000, 0.000000, 0.000000,  0),
 (47581, 0x00000000,  6, 0x00000000, 0x00000000, 0x00000040, 0x00000000, 0x00010000, 0.000000, 0.000000,  0),
 (47582, 0x00000000,  6, 0x00000000, 0x00000000, 0x00000040, 0x00000000, 0x00010000, 0.000000, 0.000000,  0),
@@ -17346,8 +17391,6 @@ INSERT INTO `spell_proc_event` VALUES
 (49504, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (49529, 0x00000000, 15, 0x01400000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (49530, 0x00000000, 15, 0x01400000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(49531, 0x00000000, 15, 0x01400000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(49532, 0x00000000, 15, 0x01400000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (49622, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 60),
 (49657, 0x00000000, 15, 0x00000000, 0x00004000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (50781, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
@@ -17431,13 +17474,9 @@ INSERT INTO `spell_proc_event` VALUES
 (53290, 0x00000000,  9, 0x00000800, 0x7FFFFFFF, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (53291, 0x00000000,  9, 0x00000800, 0x7FFFFFFF, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (53292, 0x00000000,  9, 0x00000800, 0x7FFFFFFF, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
-(53293, 0x00000000,  9, 0x00000800, 0x7FFFFFFF, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
-(53294, 0x00000000,  9, 0x00000800, 0x7FFFFFFF, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (53380, 0x00000000, 10, 0x00800000, 0x00020000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (53381, 0x00000000, 10, 0x00800000, 0x00020000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (53382, 0x00000000, 10, 0x00800000, 0x00020000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
-(53383, 0x00000000, 10, 0x00800000, 0x00020000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
-(53384, 0x00000000, 10, 0x00800000, 0x00020000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (53486, 0x00000000, 10, 0x00800000, 0x00028000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (53488, 0x00000000, 10, 0x00800000, 0x00028000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (53501, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
@@ -17470,8 +17509,6 @@ INSERT INTO `spell_proc_event` VALUES
 (54939, 0x00000000, 10, 0x00008000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (55380, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 45),
 (55440, 0x00000000, 11, 0x00000040, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(55620, 0x00000000, 15, 0x00000001, 0x08000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(55623, 0x00000000, 15, 0x00000001, 0x08000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (55640, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 45),
 (55666, 0x00000000, 15, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (55667, 0x00000000, 15, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
@@ -17484,9 +17521,6 @@ INSERT INTO `spell_proc_event` VALUES
 (55768, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 45),
 (55776, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 45),
 (56218, 0x00000000,  5, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(56333, 0x00000000,  9, 0x00000004, 0x00000000, 0x00000200, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(56336, 0x00000000,  9, 0x00000004, 0x00000000, 0x00000200, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(56337, 0x00000000,  9, 0x00000004, 0x00000000, 0x00000200, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (56342, 0x00000000,  9, 0x00004000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (56343, 0x00000000,  9, 0x00004000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (56344, 0x00000000,  9, 0x00004000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
@@ -17513,8 +17547,6 @@ INSERT INTO `spell_proc_event` VALUES
 (58372, 0x00000000,  4, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (58386, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000020, 0.000000, 0.000000,  0),
 (58435, 0x00000000,  5, 0x00000002, 0x00000100, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(58436, 0x00000000,  5, 0x00000002, 0x00000100, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(58437, 0x00000000,  5, 0x00000002, 0x00000100, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (58616, 0x00000000, 15, 0x00040000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (58620, 0x00000000, 15, 0x00000000, 0x00004000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (58626, 0x00000000, 15, 0x02000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
@@ -17773,7 +17805,6 @@ INSERT INTO `spell_bonus_data` VALUES
 ('172', '0', '0.3', '0', 'Warlock - Corruption'),
 ('348', '0.2', '0.2', '0', 'Warlock - Immolate'),
 ('27243', '0.22', '0.25', '0', 'Warlock - Seed of Corruption'),
-('18265', '0', '0.1', '0', 'Warlock - Siphon Life'),
 ('30108', '0', '0.24', '0', 'Warlock - Unstable Affliction'),
 ('31117', '1.8', '0', '0', 'Warlock - Unstable Affliction Dispell'),
 ('17962', '0.4286', '0', '0', 'Warlock - Conflagrate'),

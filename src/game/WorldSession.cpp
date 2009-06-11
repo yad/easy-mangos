@@ -42,7 +42,8 @@ WorldSession::WorldSession(uint32 id, WorldSocket *sock, AccountTypes sec, uint8
 LookingForGroup_auto_join(false), LookingForGroup_auto_add(false), m_muteTime(mute_time),
 _player(NULL), m_Socket(sock),_security(sec), _accountId(id), m_expansion(expansion),
 m_sessionDbcLocale(sWorld.GetAvailableDbcLocale(locale)), m_sessionDbLocaleIndex(objmgr.GetIndexForLocale(locale)),
-_logoutTime(0), m_inQueue(false), m_playerLoading(false), m_playerLogout(false), m_playerRecentlyLogout(false), m_latency(0)
+_logoutTime(0), m_inQueue(false), m_playerLoading(false), m_playerLogout(false), m_playerRecentlyLogout(false),
+m_latency(0), m_TutorialsChanged(false)
 {
     if (sock)
     {
@@ -118,8 +119,8 @@ void WorldSession::SendPacket(WorldPacket const* packet)
     {
         uint64 minTime = uint64(cur_time - lastTime);
         uint64 fullTime = uint64(lastTime - firstTime);
-        sLog.outDetail("Send all time packets count: " I64FMTD " bytes: " I64FMTD " avr.count/sec: %f avr.bytes/sec: %f time: %u",sendPacketCount,sendPacketBytes,float(sendPacketCount)/fullTime,float(sendPacketBytes)/fullTime,uint32(fullTime));
-        sLog.outDetail("Send last min packets count: " I64FMTD " bytes: " I64FMTD " avr.count/sec: %f avr.bytes/sec: %f",sendLastPacketCount,sendLastPacketBytes,float(sendLastPacketCount)/minTime,float(sendLastPacketBytes)/minTime);
+        sLog.outDetail("Send all time packets count: " UI64FMTD " bytes: " UI64FMTD " avr.count/sec: %f avr.bytes/sec: %f time: %u",sendPacketCount,sendPacketBytes,float(sendPacketCount)/fullTime,float(sendPacketBytes)/fullTime,uint32(fullTime));
+        sLog.outDetail("Send last min packets count: " UI64FMTD " bytes: " UI64FMTD " avr.count/sec: %f avr.bytes/sec: %f",sendLastPacketCount,sendLastPacketBytes,float(sendLastPacketCount)/minTime,float(sendLastPacketBytes)/minTime);
 
         lastTime = cur_time;
         sendLastPacketCount = 1;
@@ -184,7 +185,7 @@ bool WorldSession::Update(uint32 /*diff*/)
                         (this->*opHandle.handler)(*packet);
                     // lag can cause STATUS_LOGGEDIN opcodes to arrive after the player started a transfer
                     break;
-                case STATUS_TRANSFER_PENDING:
+                case STATUS_TRANSFER:
                     if(!_player)
                         logUnexpectedOpcode(packet, "the player has not logged in yet");
                     else if(_player->IsInWorld())
@@ -344,12 +345,12 @@ void WorldSession::LogoutPlayer(bool Save)
         if(Save)
         {
             uint32 eslot;
-            for(int j = BUYBACK_SLOT_START; j < BUYBACK_SLOT_END; j++)
+            for(int j = BUYBACK_SLOT_START; j < BUYBACK_SLOT_END; ++j)
             {
                 eslot = j - BUYBACK_SLOT_START;
-                _player->SetUInt64Value(PLAYER_FIELD_VENDORBUYBACK_SLOT_1+eslot*2,0);
-                _player->SetUInt32Value(PLAYER_FIELD_BUYBACK_PRICE_1+eslot,0);
-                _player->SetUInt32Value(PLAYER_FIELD_BUYBACK_TIMESTAMP_1+eslot,0);
+                _player->SetUInt64Value(PLAYER_FIELD_VENDORBUYBACK_SLOT_1 + (eslot * 2), 0);
+                _player->SetUInt32Value(PLAYER_FIELD_BUYBACK_PRICE_1 + eslot, 0);
+                _player->SetUInt32Value(PLAYER_FIELD_BUYBACK_TIMESTAMP_1 + eslot, 0);
             }
             _player->SaveToDB();
         }
@@ -563,6 +564,65 @@ void WorldSession::SetAccountData(uint32 type, time_t time_, std::string data)
     CharacterDatabase.CommitTransaction ();
 }
 
+void WorldSession::LoadTutorialsData()
+{
+    for ( int aX = 0 ; aX < 8 ; ++aX )
+        m_Tutorials[ aX ] = 0;
+
+    QueryResult *result = CharacterDatabase.PQuery("SELECT tut0,tut1,tut2,tut3,tut4,tut5,tut6,tut7 FROM character_tutorial WHERE account = '%u'", GetAccountId());
+
+    if(result)
+    {
+        do
+        {
+            Field *fields = result->Fetch();
+
+            for (int iI = 0; iI < 8; ++iI)
+                m_Tutorials[iI] = fields[iI].GetUInt32();
+        }
+        while( result->NextRow() );
+
+        delete result;
+    }
+
+    m_TutorialsChanged = false;
+}
+
+void WorldSession::SendTutorialsData()
+{
+    WorldPacket data(SMSG_TUTORIAL_FLAGS, 4*8);
+    for(uint32 i = 0; i < 8; ++i)
+        data << m_Tutorials[i];
+    SendPacket(&data);
+}
+
+void WorldSession::SaveTutorialsData()
+{
+    if(!m_TutorialsChanged)
+        return;
+
+    uint32 Rows=0;
+    // it's better than rebuilding indexes multiple times
+    QueryResult *result = CharacterDatabase.PQuery("SELECT count(*) AS r FROM character_tutorial WHERE account = '%u'", GetAccountId());
+    if(result)
+    {
+        Rows = result->Fetch()[0].GetUInt32();
+        delete result;
+    }
+
+    if (Rows)
+    {
+        CharacterDatabase.PExecute("UPDATE character_tutorial SET tut0='%u', tut1='%u', tut2='%u', tut3='%u', tut4='%u', tut5='%u', tut6='%u', tut7='%u' WHERE account = '%u'",
+            m_Tutorials[0], m_Tutorials[1], m_Tutorials[2], m_Tutorials[3], m_Tutorials[4], m_Tutorials[5], m_Tutorials[6], m_Tutorials[7], GetAccountId());
+    }
+    else
+    {
+        CharacterDatabase.PExecute("INSERT INTO character_tutorial (account,tut0,tut1,tut2,tut3,tut4,tut5,tut6,tut7) VALUES ('%u', '%u', '%u', '%u', '%u', '%u', '%u', '%u', '%u')", GetAccountId(), m_Tutorials[0], m_Tutorials[1], m_Tutorials[2], m_Tutorials[3], m_Tutorials[4], m_Tutorials[5], m_Tutorials[6], m_Tutorials[7]);
+    }
+
+    m_TutorialsChanged = false;
+}
+
 void WorldSession::ReadMovementInfo(WorldPacket &data, MovementInfo *mi)
 {
     CHECK_PACKET_SIZE(data, data.rpos()+4+2+4+4+4+4+4);
@@ -576,8 +636,10 @@ void WorldSession::ReadMovementInfo(WorldPacket &data, MovementInfo *mi)
 
     if(mi->flags & MOVEMENTFLAG_ONTRANSPORT)
     {
-        CHECK_PACKET_SIZE(data, data.rpos()+8+4+4+4+4+4+1);
-        data >> mi->t_guid;
+        if(!data.readPackGUID(mi->t_guid))
+            return;
+
+        CHECK_PACKET_SIZE(data, data.rpos()+4+4+4+4+4+1);
         data >> mi->t_x;
         data >> mi->t_y;
         data >> mi->t_z;
@@ -692,22 +754,22 @@ void WorldSession::SendAddonsInfo()
 
     for(AddonsList::iterator itr = m_addonsList.begin(); itr != m_addonsList.end(); ++itr)
     {
-        uint8 state = (itr->Enabled ? 2 : 1);
+        uint8 state = 2;                                    // 2 is sent here
         data << uint8(state);
 
-        uint8 unk1 = (itr->Enabled ? 1 : 0);
+        uint8 unk1 = 1;                                     // 1 is sent here
         data << uint8(unk1);
         if (unk1)
         {
             uint8 unk2 = (itr->CRC != 0x4c1c776d);          // If addon is Standard addon CRC
             data << uint8(unk2);
-            if (unk2)
+            if (unk2)                                       // if CRC is wrong, add public key (client need it)
                 data.append(tdata, sizeof(tdata));
 
             data << uint32(0);
         }
 
-        uint8 unk3 = (itr->Enabled ? 0 : 1);
+        uint8 unk3 = 0;                                     // 0 is sent here
         data << uint8(unk3);
         if (unk3)
         {

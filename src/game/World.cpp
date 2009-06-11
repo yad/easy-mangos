@@ -244,6 +244,8 @@ World::AddSession_ (WorldSession* s)
     s->SendPacket (&packet);
 
     s->SendAddonsInfo();
+    s->SendTutorialsData();
+
     UpdateMaxSessionCounters ();
 
     // Updates the population
@@ -877,8 +879,10 @@ void World::LoadConfigSettings(bool reload)
 
     m_configs[CONFIG_EVENT_ANNOUNCE] = sConfig.GetIntDefault("Event.Announce",0);
 
+    m_configs[CONFIG_CREATURE_FAMILY_FLEE_ASSISTANCE_RADIUS] = sConfig.GetIntDefault("CreatureFamilyFleeAssistanceRadius",30);
     m_configs[CONFIG_CREATURE_FAMILY_ASSISTANCE_RADIUS] = sConfig.GetIntDefault("CreatureFamilyAssistanceRadius",10);
     m_configs[CONFIG_CREATURE_FAMILY_ASSISTANCE_DELAY]  = sConfig.GetIntDefault("CreatureFamilyAssistanceDelay",1500);
+    m_configs[CONFIG_CREATURE_FAMILY_FLEE_DELAY]        = sConfig.GetIntDefault("CreatureFamilyFleeDelay",7000);
 
     m_configs[CONFIG_WORLD_BOSS_LEVEL_DIFF] = sConfig.GetIntDefault("WorldBossLevelDiff",3);
 
@@ -973,7 +977,7 @@ void World::LoadConfigSettings(bool reload)
         sLog.outError("Visibility.Distance.Player can't be greater %f",MAX_VISIBILITY_DISTANCE - m_VisibleUnitGreyDistance);
         m_MaxVisibleDistanceForPlayer = MAX_VISIBILITY_DISTANCE - m_VisibleUnitGreyDistance;
     }
-    m_MaxVisibleDistanceForObject    = sConfig.GetFloatDefault("Visibility.Distance.Gameobject",   DEFAULT_VISIBILITY_DISTANCE);
+    m_MaxVisibleDistanceForObject    = sConfig.GetFloatDefault("Visibility.Distance.Object",   DEFAULT_VISIBILITY_DISTANCE);
     if(m_MaxVisibleDistanceForObject < INTERACTION_DISTANCE)
     {
         sLog.outError("Visibility.Distance.Object can't be less max aggro radius %f",float(INTERACTION_DISTANCE));
@@ -1150,17 +1154,23 @@ void World::SetInitialWorldSettings()
     sLog.outString( "Loading SpellsScriptTarget...");
     spellmgr.LoadSpellScriptTarget();                       // must be after LoadCreatureTemplates and LoadGameobjectInfo
 
+    sLog.outString( "Loading ItemRequiredTarget...");
+    objmgr.LoadItemRequiredTarget();
+
     sLog.outString( "Loading Creature Reputation OnKill Data..." );
     objmgr.LoadReputationOnKill();
 
     sLog.outString( "Loading Points Of Interest Data..." );
     objmgr.LoadPointsOfInterest();
 
-    sLog.outString( "Loading Pet Create Spells..." );
-    objmgr.LoadPetCreateSpells();
-
     sLog.outString( "Loading Creature Data..." );
     objmgr.LoadCreatures();
+
+    sLog.outString( "Loading pet levelup spells..." );
+    spellmgr.LoadPetLevelupSpellMap();
+
+    sLog.outString( "Loading pet default spell additional to levelup spells..." );
+    spellmgr.LoadPetDefaultSpells();
 
     sLog.outString( "Loading Creature Addon Data..." );
     sLog.outString();
@@ -1198,6 +1208,9 @@ void World::SetInitialWorldSettings()
     sLog.outString( ">>> Quests Relations loaded" );
     sLog.outString();
 
+    sLog.outString( "Loading UNIT_NPC_FLAG_SPELLCLICK Data..." );
+    objmgr.LoadNPCSpellClickSpells();
+
     sLog.outString( "Loading SpellArea Data..." );          // must be after quest load
     spellmgr.LoadSpellAreas();
 
@@ -1224,9 +1237,6 @@ void World::SetInitialWorldSettings()
 
     sLog.outString( "Loading spell pet auras..." );
     spellmgr.LoadSpellPetAuras();
-
-    sLog.outString( "Loading pet levelup spells..." );
-    spellmgr.LoadPetLevelupSpellMap();
 
     sLog.outString( "Loading Player Create Info & Level Stats..." );
     sLog.outString();
@@ -1367,7 +1377,7 @@ void World::SetInitialWorldSettings()
     sprintf( isoDate, "%04d-%02d-%02d %02d:%02d:%02d",
         local.tm_year+1900, local.tm_mon+1, local.tm_mday, local.tm_hour, local.tm_min, local.tm_sec);
 
-    loginDatabase.PExecute("INSERT INTO uptime (realmid, starttime, startstring, uptime) VALUES('%u', " I64FMTD ", '%s', 0)",
+    loginDatabase.PExecute("INSERT INTO uptime (realmid, starttime, startstring, uptime) VALUES('%u', " UI64FMTD ", '%s', 0)",
         realmID, uint64(m_startTime), isoDate);
 
     m_timers[WUPDATE_OBJECTS].SetInterval(0);
@@ -1537,7 +1547,7 @@ void World::Update(uint32 diff)
         uint32 maxClientsNum = GetMaxActiveSessionCount();
 
         m_timers[WUPDATE_UPTIME].Reset();
-        loginDatabase.PExecute("UPDATE uptime SET uptime = %u, maxplayers = %u WHERE realmid = %u AND starttime = " I64FMTD, tmpDiff, maxClientsNum, realmID, uint64(m_startTime));
+        loginDatabase.PExecute("UPDATE uptime SET uptime = %u, maxplayers = %u WHERE realmid = %u AND starttime = " UI64FMTD, tmpDiff, maxClientsNum, realmID, uint64(m_startTime));
     }
 
     /// <li> Handle all other objects
@@ -2196,12 +2206,6 @@ void World::ScriptsProcess()
                     break;
                 }
 
-                if(!source->isType(TYPEMASK_UNIT))
-                {
-                    sLog.outError("SCRIPT_COMMAND_CAST_SPELL source caster isn't unit (TypeId: %u), skipping.",source->GetTypeId());
-                    break;
-                }
-
                 Object* cmdTarget = step.script->datalong2 & 0x01 ? source : target;
 
                 if(!cmdTarget)
@@ -2447,31 +2451,6 @@ void World::KickAllLess(AccountTypes sec)
     for (SessionMap::const_iterator itr = m_sessions.begin(); itr != m_sessions.end(); ++itr)
         if(itr->second->GetSecurity() < sec)
             itr->second->KickPlayer();
-}
-
-/// Kick (and save) the designated player
-bool World::KickPlayer(const std::string& playerName)
-{
-    SessionMap::const_iterator itr;
-
-    // session not removed at kick and will removed in next update tick
-    for (itr = m_sessions.begin(); itr != m_sessions.end(); ++itr)
-    {
-        if(!itr->second)
-            continue;
-        Player *player = itr->second->GetPlayer();
-        if(!player)
-            continue;
-        if( player->IsInWorld() )
-        {
-            if (playerName == player->GetName())
-            {
-                itr->second->KickPlayer();
-                return true;
-            }
-        }
-    }
-    return false;
 }
 
 /// Ban an account or ban an IP address, duration will be parsed using TimeStringToSecs if it is positive, otherwise permban

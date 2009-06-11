@@ -27,6 +27,7 @@
 struct SpellEntry;
 class Bag;
 class QueryResult;
+class Unit;
 
 struct ItemSetEffect
 {
@@ -116,8 +117,11 @@ enum InventoryChangeFailure
     EQUIP_ERR_TOO_MUCH_GOLD                      = 77,
     EQUIP_ERR_NOT_DURING_ARENA_MATCH             = 78,
     EQUIP_ERR_CANNOT_TRADE_THAT                  = 79,
-    EQUIP_ERR_PERSONAL_ARENA_RATING_TOO_LOW      = 80
-    // probably exist more
+    EQUIP_ERR_PERSONAL_ARENA_RATING_TOO_LOW      = 80,
+    // no output                                 = 81,
+    EQUIP_ERR_ARTEFACTS_ONLY_FOR_OWN_CHARACTERS  = 82,
+    // no output                                 = 83,
+    // crash client                              = 84,
 };
 
 enum BuyFailure
@@ -163,7 +167,7 @@ enum EnchantmentSlot
     MAX_ENCHANTMENT_SLOT            = 12
 };
 
-#define MAX_VISIBLE_ITEM_OFFSET       18                    // 18 fields per visible item (creator(2) + enchantments(13) + properties(1) + seed(1) + pad(1))
+#define MAX_VISIBLE_ITEM_OFFSET       2                     // 2 fields per visible item (entry+enchantment)
 
 #define MAX_GEM_SOCKETS               MAX_ITEM_PROTO_SOCKETS// (BONUS_ENCHANTMENT_SLOT-SOCK_ENCHANTMENT_SLOT) and item proto size, equal value expected
 
@@ -192,6 +196,24 @@ enum ItemUpdateState
     ITEM_REMOVED                                 = 3
 };
 
+enum ItemRequiredTargetType
+{
+    ITEM_TARGET_TYPE_CREATURE   = 1,
+    ITEM_TARGET_TYPE_DEAD       = 2
+};
+
+#define MAX_ITEM_REQ_TARGET_TYPE 2
+
+struct ItemRequiredTarget
+{
+    ItemRequiredTarget(ItemRequiredTargetType uiType, uint32 uiTargetEntry) : m_uiType(uiType), m_uiTargetEntry(uiTargetEntry) {}
+    ItemRequiredTargetType m_uiType;
+    uint32 m_uiTargetEntry;
+
+    // helpers
+    bool IsFitToRequirements(Unit* pUnitTarget) const;
+};
+
 bool ItemCanGoIntoBag(ItemPrototype const *proto, ItemPrototype const *pBagProto);
 
 class MANGOS_DLL_SPEC Item : public Object
@@ -212,8 +234,8 @@ class MANGOS_DLL_SPEC Item : public Object
 
         void SetBinding(bool val) { ApplyModFlag(ITEM_FIELD_FLAGS,ITEM_FLAGS_BINDED,val); }
         bool IsSoulBound() const { return HasFlag(ITEM_FIELD_FLAGS, ITEM_FLAGS_BINDED); }
-        bool IsAccountBound() const { return HasFlag(ITEM_FIELD_FLAGS, ITEM_FLAGS_BOA); }
-        bool IsBindedNotWith(uint64 guid) const { return IsSoulBound() && GetOwnerGUID()!= guid; }
+        bool IsBoundAccountWide() const { return HasFlag(ITEM_FIELD_FLAGS, ITEM_FLAGS_BOA); }
+        bool IsBindedNotWith(Player const* player) const;
         bool IsBoundByEnchant() const;
         virtual void SaveToDB();
         virtual bool LoadFromDB(uint32 guid, uint64 owner_guid, QueryResult *result = NULL);
@@ -222,11 +244,12 @@ class MANGOS_DLL_SPEC Item : public Object
 
         bool IsBag() const { return GetProto()->InventoryType == INVTYPE_BAG; }
         bool IsBroken() const { return GetUInt32Value(ITEM_FIELD_MAXDURABILITY) > 0 && GetUInt32Value(ITEM_FIELD_DURABILITY) == 0; }
-        bool CanBeTraded() const;
+        bool CanBeTraded(bool mail = false) const;
         void SetInTrade(bool b = true) { mb_in_trade = b; }
         bool IsInTrade() const { return mb_in_trade; }
 
         bool IsFitToSpellRequirements(SpellEntry const* spellInfo) const;
+        bool IsTargetValidForItemUse(Unit* pUnitTarget);
         bool IsLimitedToAnotherMapOrZone( uint32 cur_mapId, uint32 cur_zoneId) const;
         bool GemsFitSockets() const;
 
@@ -289,6 +312,7 @@ class MANGOS_DLL_SPEC Item : public Object
         bool hasInvolvedQuest(uint32 /*quest_id*/) const { return false; }
         bool IsPotion() const { return GetProto()->IsPotion(); }
         bool IsConjuredConsumable() const { return GetProto()->IsConjuredConsumable(); }
+
     private:
         uint8 m_slot;
         Bag *m_container;

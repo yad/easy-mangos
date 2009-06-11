@@ -43,9 +43,21 @@ class MANGOS_DLL_SPEC PointMovementGenerator
 
         bool GetDestination(float& x, float& y, float& z) const { x=i_x; y=i_y; z=i_z; return true; }
     private:
-        TimeTracker i_nextMoveTime;
-        float i_x,i_y,i_z;
         uint32 id;
+        float i_x,i_y,i_z;
+        TimeTracker i_nextMoveTime;
         DestinationHolder< Traveller<T> > i_destinationHolder;
 };
+
+class MANGOS_DLL_SPEC AssistanceMovementGenerator
+: public PointMovementGenerator<Creature>
+{
+    public:
+        AssistanceMovementGenerator(float _x, float _y, float _z) :
+            PointMovementGenerator<Creature>(0, _x, _y, _z) {}
+
+        MovementGeneratorType GetMovementGeneratorType() { return ASSISTANCE_MOTION_TYPE; }
+        void Finalize(Unit &);
+};
+
 #endif

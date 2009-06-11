@@ -132,8 +132,7 @@ void MapManager::LoadTransports()
 
 Transport::Transport() : GameObject()
 {
-                                                            // 2.3.2 - 0x5A
-    m_updateFlag = (UPDATEFLAG_TRANSPORT | UPDATEFLAG_LOWGUID | UPDATEFLAG_HIGHGUID | UPDATEFLAG_HAS_POSITION);
+    m_updateFlag = (UPDATEFLAG_TRANSPORT | UPDATEFLAG_HIGHGUID | UPDATEFLAG_HAS_POSITION | UPDATEFLAG_ROTATION);
 }
 
 bool Transport::Create(uint32 guidlow, uint32 mapid, float x, float y, float z, float ang, uint32 animprogress, uint32 dynflags)
@@ -540,7 +539,7 @@ void Transport::UpdateForMap(Map const* targetMap)
                 UpdateData transData;
                 BuildCreateUpdateBlockForPlayer(&transData, itr->getSource());
                 WorldPacket packet;
-                transData.BuildPacket(&packet, true);
+                transData.BuildPacket(&packet);
                 itr->getSource()->SendDirectMessage(&packet);
             }
         }
@@ -550,7 +549,7 @@ void Transport::UpdateForMap(Map const* targetMap)
         UpdateData transData;
         BuildOutOfRangeUpdateBlock(&transData);
         WorldPacket out_packet;
-        transData.BuildPacket(&out_packet, true);
+        transData.BuildPacket(&out_packet);
 
         for(Map::PlayerList::const_iterator itr = pl.begin(); itr != pl.end(); ++itr)
             if(this != itr->getSource()->GetTransport())

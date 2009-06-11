@@ -465,7 +465,7 @@ void BattleGround::SendPacketToAll(WorldPacket *packet)
         if (plr)
             plr->GetSession()->SendPacket(packet);
         else
-            sLog.outError("BattleGround: Player " I64FMTD " not found!", itr->first);
+            sLog.outError("BattleGround: Player (GUID: %u) not found!", GUID_LOPART(itr->first));
     }
 }
 
@@ -477,7 +477,7 @@ void BattleGround::SendPacketToTeam(uint32 TeamID, WorldPacket *packet, Player *
 
         if (!plr)
         {
-            sLog.outError("BattleGround: Player " I64FMTD " not found!", itr->first);
+            sLog.outError("BattleGround: Player (GUID: %u) not found!", GUID_LOPART(itr->first));
             continue;
         }
 
@@ -509,7 +509,7 @@ void BattleGround::PlaySoundToTeam(uint32 SoundID, uint32 TeamID)
 
         if (!plr)
         {
-            sLog.outError("BattleGround: Player " I64FMTD " not found!", itr->first);
+            sLog.outError("BattleGround: Player (GUID: %u) not found!", GUID_LOPART(itr->first));
             continue;
         }
 
@@ -532,7 +532,7 @@ void BattleGround::CastSpellOnTeam(uint32 SpellID, uint32 TeamID)
 
         if (!plr)
         {
-            sLog.outError("BattleGround: Player " I64FMTD " not found!", itr->first);
+            sLog.outError("BattleGround: Player (GUID: %u) not found!", GUID_LOPART(itr->first));
             continue;
         }
 
@@ -552,7 +552,7 @@ void BattleGround::RewardHonorToTeam(uint32 Honor, uint32 TeamID)
 
         if (!plr)
         {
-            sLog.outError("BattleGround: Player " I64FMTD " not found!", itr->first);
+            sLog.outError("BattleGround: Player (GUID: %u) not found!", GUID_LOPART(itr->first));
             continue;
         }
 
@@ -577,7 +577,7 @@ void BattleGround::RewardReputationToTeam(uint32 faction_id, uint32 Reputation, 
 
         if (!plr)
         {
-            sLog.outError("BattleGround: Player " I64FMTD " not found!", itr->first);
+            sLog.outError("BattleGround: Player (GUID: %u) not found!", GUID_LOPART(itr->first));
             continue;
         }
 
@@ -676,7 +676,7 @@ void BattleGround::EndBattleGround(uint32 winner)
                 else
                     loser_arena_team->OfflineMemberLost(itr->first, winner_rating);
             }
-            sLog.outError("BattleGround: Player " I64FMTD " not found!", itr->first);
+            sLog.outError("BattleGround: Player (GUID: %u) not found!", GUID_LOPART(itr->first));
             continue;
         }
 
@@ -697,20 +697,28 @@ void BattleGround::EndBattleGround(uint32 winner)
         if (isArena() && isRated() && winner_arena_team && loser_arena_team)
         {
             if (team == winner)
+            {
+                // update achievement BEFORE personal rating update
+                plr->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_WIN_RATED_ARENA, winner_arena_team->GetMember(plr->GetGUID())->personal_rating);
+
                 winner_arena_team->MemberWon(plr,loser_rating);
+            }
             else
+            {
                 loser_arena_team->MemberLost(plr,winner_rating);
+
+                // Arena lost => reset the win_rated_arena having the "no_loose" condition
+                plr->GetAchievementMgr().ResetAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_WIN_RATED_ARENA, ACHIEVEMENT_CRITERIA_CONDITION_NO_LOOSE);
+            }
         }
 
         if (team == winner)
         {
             RewardMark(plr,ITEM_WINNER_COUNT);
-            RewardQuest(plr);
+            RewardQuestComplete(plr);
         }
         else
-        {
             RewardMark(plr,ITEM_LOSER_COUNT);
-        }
 
         plr->CombatStopWithPets(true);
 
@@ -764,10 +772,6 @@ uint32 BattleGround::GetBattlemasterEntry() const
 
 void BattleGround::RewardMark(Player *plr,uint32 count)
 {
-    // 'Inactive' this aura prevents the player from gaining honor points and battleground tokens
-    if (plr->GetDummyAura(SPELL_AURA_PLAYER_INACTIVE))
-        return;
-
     BattleGroundMarks mark;
     bool IsSpell;
     switch(GetTypeID())
@@ -802,22 +806,52 @@ void BattleGround::RewardMark(Player *plr,uint32 count)
     }
 
     if (IsSpell)
-        plr->CastSpell(plr, mark, true);
-    else if (objmgr.GetItemPrototype( mark ) )
+        RewardSpellCast(plr,mark);
+    else
+        RewardItem(plr,mark,count);
+}
+
+void BattleGround::RewardSpellCast(Player *plr, uint32 spell_id)
+{
+    // 'Inactive' this aura prevents the player from gaining honor points and battleground tokens
+    if (plr->GetDummyAura(SPELL_AURA_PLAYER_INACTIVE))
+        return;
+
+    SpellEntry const *spellInfo = sSpellStore.LookupEntry(spell_id);
+    if(!spellInfo)
     {
-        ItemPosCountVec dest;
-        uint32 no_space_count = 0;
-        uint8 msg = plr->CanStoreNewItem( NULL_BAG, NULL_SLOT, dest, mark, count, &no_space_count );
-        if( msg != EQUIP_ERR_OK )                       // convert to possible store amount
-            count -= no_space_count;
-
-        if( count != 0 && !dest.empty())                // can add some
-            if (Item* item = plr->StoreNewItem( dest, mark, true, 0))
-                plr->SendNewItem(item,count,false,true);
-
-        if (no_space_count > 0)
-            SendRewardMarkByMail(plr,mark,no_space_count);
+        sLog.outError("Battleground reward casting spell %u not exist.",spell_id);
+        return;
     }
+
+    plr->CastSpell(plr, spellInfo, true);
+}
+
+void BattleGround::RewardItem(Player *plr, uint32 item_id, uint32 count)
+{
+    // 'Inactive' this aura prevents the player from gaining honor points and battleground tokens
+    if (plr->GetDummyAura(SPELL_AURA_PLAYER_INACTIVE))
+        return;
+
+    ItemPosCountVec dest;
+    uint32 no_space_count = 0;
+    uint8 msg = plr->CanStoreNewItem( NULL_BAG, NULL_SLOT, dest, item_id, count, &no_space_count );
+
+    if( msg == EQUIP_ERR_ITEM_NOT_FOUND)
+    {
+        sLog.outErrorDb("Battleground reward item (Entry %u) not exist in `item_template`.",item_id);
+        return;
+    }
+
+    if( msg != EQUIP_ERR_OK )                               // convert to possible store amount
+        count -= no_space_count;
+
+    if( count != 0 && !dest.empty())                        // can add some
+        if (Item* item = plr->StoreNewItem( dest, item_id, true, 0))
+            plr->SendNewItem(item,count,false,true);
+
+    if (no_space_count > 0)
+        SendRewardMarkByMail(plr,item_id,no_space_count);
 }
 
 void BattleGround::SendRewardMarkByMail(Player *plr,uint32 mark, uint32 count)
@@ -857,12 +891,8 @@ void BattleGround::SendRewardMarkByMail(Player *plr,uint32 mark, uint32 count)
     }
 }
 
-void BattleGround::RewardQuest(Player *plr)
+void BattleGround::RewardQuestComplete(Player *plr)
 {
-    // 'Inactive' this aura prevents the player from gaining honor points and battleground tokens
-    if (plr->GetDummyAura(SPELL_AURA_PLAYER_INACTIVE))
-        return;
-
     uint32 quest;
     switch(GetTypeID())
     {
@@ -882,7 +912,7 @@ void BattleGround::RewardQuest(Player *plr)
             return;
     }
 
-    plr->CastSpell(plr, quest, true);
+    RewardSpellCast(plr, quest);
 }
 
 void BattleGround::BlockMovement(Player *plr)
@@ -1443,6 +1473,7 @@ Creature* BattleGround::AddCreature(uint32 entry, uint32 type, uint32 teamval, f
     if (!pCreature->IsPositionValid())
     {
         sLog.outError("Creature (guidlow %d, entry %d) not added to battleground. Suggested coordinates isn't valid (X: %f Y: %f)",pCreature->GetGUIDLow(),pCreature->GetEntry(),pCreature->GetPositionX(),pCreature->GetPositionY());
+        delete pCreature;
         return NULL;
     }
 
