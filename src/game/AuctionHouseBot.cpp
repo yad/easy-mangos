@@ -281,7 +281,8 @@ void AuctionHouseBot::addNewAuctions(Player *AHBplayer, AHBConfig *config)
 
         if (itemID == 0)
         {
-            sLog.outString("AuctionHouseBot: Item::CreateItem() - Unable to find item");
+            if (debug_Out)
+                sLog.outString("AuctionHouseBot: Item::CreateItem() - Unable to find item");
             continue;
         }
 
