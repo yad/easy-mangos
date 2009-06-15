@@ -562,7 +562,7 @@ enum NPCFlags
     UNIT_NPC_FLAG_AUCTIONEER            = 0x00200000,       // 100%
     UNIT_NPC_FLAG_STABLEMASTER          = 0x00400000,       // 100%
     UNIT_NPC_FLAG_GUILD_BANKER          = 0x00800000,       // cause client to send 997 opcode
-    UNIT_NPC_FLAG_SPELLCLICK            = 0x01000000,       // cause client to send 1015 opcode (spell click)
+    UNIT_NPC_FLAG_SPELLCLICK            = 0x01000000,       // cause client to send 1015 opcode (spell click), dynamic, set at loading and don't must be set in DB
     UNIT_NPC_FLAG_GUARD                 = 0x10000000,       // custom flag for guards
 };
 
@@ -858,6 +858,8 @@ enum ReactiveType
 
 #define MAX_REACTIVE 3
 #define MAX_TOTEM 4
+
+typedef std::set<uint64> GuardianPetList;
 
 // delay time next attack to prevent client attack animation problems
 #define ATTACK_DISPLAY_DELAY 200
@@ -1190,6 +1192,11 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
 
         void SetPet(Pet* pet);
         void SetCharm(Unit* pet);
+
+        void AddGuardian(Pet* pet);
+        void RemoveGuardian(Pet* pet);
+        void RemoveGuardians();
+        bool HasGuardianWithEntry(uint32 entry);
 
         bool isCharmed() const { return GetCharmerGUID() != 0; }
 
@@ -1581,5 +1588,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         FollowerRefManager m_FollowingRefManager;
 
         ComboPointHolderSet m_ComboPointHolders;
+
+        GuardianPetList m_guardianPets;
 };
 #endif

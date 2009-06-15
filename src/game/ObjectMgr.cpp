@@ -106,6 +106,25 @@ LanguageDesc const* GetLanguageDescByID(uint32 lang)
     return NULL;
 }
 
+bool SpellClickInfo::IsFitToRequirements(Player const* player) const
+{
+    if(questStart)
+    {
+        // not in expected required quest state
+        if(!player || (!questStartCanActive || !player->IsActiveQuest(questStart)) && !player->GetQuestRewardStatus(questStart))
+            return false;
+    }
+
+    if(questEnd)
+    {
+        // not in expected forbidden quest state
+        if(!player || player->GetQuestRewardStatus(questEnd))
+            return false;
+    }
+
+    return true;
+}
+
 ObjectMgr::ObjectMgr()
 {
     m_hiCharGuid        = 1;
@@ -552,51 +571,74 @@ void ObjectMgr::LoadCreatureTemplates()
             sLog.outErrorDb("Creature (Entry: %u) has non-existing faction_H template (%u)", cInfo->Entry, cInfo->faction_H);
 
         // used later for scale
-        CreatureDisplayInfoEntry const* displayEntryA = cInfo->DisplayID_A ? sCreatureDisplayInfoStore.LookupEntry(cInfo->DisplayID_A) : NULL;
-        if (cInfo->DisplayID_A && !displayEntryA)
-            sLog.outErrorDb("Creature (Entry: %u) has non-existing DisplayID_A id (%u), can crash client", cInfo->Entry, cInfo->DisplayID_A);
-
-        if (cInfo->DisplayID_A2)
+        CreatureDisplayInfoEntry const* displayScaleEntry = NULL;
+        
+        if (cInfo->DisplayID_A[0])
         {
-            CreatureDisplayInfoEntry const* displayEntry = sCreatureDisplayInfoStore.LookupEntry(cInfo->DisplayID_A2);
-            if (!displayEntry)
+            CreatureDisplayInfoEntry const* displayEntry = sCreatureDisplayInfoStore.LookupEntry(cInfo->DisplayID_A[0]);
+            if(!displayEntry)
             {
-                sLog.outErrorDb("Creature (Entry: %u) has non-existing DisplayID_A2 id (%u), can crash client", cInfo->Entry, cInfo->DisplayID_A2);
-                const_cast<CreatureInfo*>(cInfo)->DisplayID_A2 = 0;
+                sLog.outErrorDb("Creature (Entry: %u) has non-existing DisplayID_A id (%u), can crash client", cInfo->Entry, cInfo->DisplayID_A[0]);
+                const_cast<CreatureInfo*>(cInfo)->DisplayID_A[0] = 0;
             }
+            else if(!displayScaleEntry)
+                displayScaleEntry = displayEntry;
+
+            CreatureModelInfo const* minfo = sCreatureModelStorage.LookupEntry<CreatureModelInfo>(cInfo->DisplayID_A[0]);
+            if (!minfo)
+                sLog.outErrorDb("Creature (Entry: %u) not has model data for DisplayID_A (%u)", cInfo->Entry, cInfo->DisplayID_A[0]);
         }
 
-        // used later for scale
-        CreatureDisplayInfoEntry const* displayEntryH = cInfo->DisplayID_H ? sCreatureDisplayInfoStore.LookupEntry(cInfo->DisplayID_H) : NULL;
-        if (cInfo->DisplayID_H && !displayEntryH)
-            sLog.outErrorDb("Creature (Entry: %u) has non-existing DisplayID_H id (%u), can crash client", cInfo->Entry, cInfo->DisplayID_H);
-
-        if (cInfo->DisplayID_H2)
+        if (cInfo->DisplayID_A[1])
         {
-            CreatureDisplayInfoEntry const* displayEntry = sCreatureDisplayInfoStore.LookupEntry(cInfo->DisplayID_H2);
-            if (!displayEntry)
+            CreatureDisplayInfoEntry const* displayEntry = sCreatureDisplayInfoStore.LookupEntry(cInfo->DisplayID_A[1]);
+            if(!displayEntry)
             {
-                sLog.outErrorDb("Creature (Entry: %u) has non-existing DisplayID_H2 id (%u), can crash client", cInfo->Entry, cInfo->DisplayID_H2);
-                const_cast<CreatureInfo*>(cInfo)->DisplayID_H2 = 0;
+                sLog.outErrorDb("Creature (Entry: %u) has non-existing DisplayID_A2 id (%u), can crash client", cInfo->Entry, cInfo->DisplayID_A[1]);
+                const_cast<CreatureInfo*>(cInfo)->DisplayID_A[1] = 0;
             }
-        }
+            else if(!displayScaleEntry)
+                displayScaleEntry = displayEntry;
 
-        if (!displayEntryA && !displayEntryH)
-            sLog.outErrorDb("Creature (Entry: %u) has non-existing both DisplayID_A and DisplayID_H", cInfo->Entry);
-
-        if (cInfo->DisplayID_A)
-        {
-            CreatureModelInfo const* minfo = sCreatureModelStorage.LookupEntry<CreatureModelInfo>(cInfo->DisplayID_A);
+            CreatureModelInfo const* minfo = sCreatureModelStorage.LookupEntry<CreatureModelInfo>(cInfo->DisplayID_A[1]);
             if (!minfo)
-                sLog.outErrorDb("Creature (Entry: %u) has non-existing modelId_A (%u)", cInfo->Entry, cInfo->DisplayID_A);
+                sLog.outErrorDb("Creature (Entry: %u) not has model data for DisplayID_A2 (%u)", cInfo->Entry, cInfo->DisplayID_A[1]);
         }
 
-        if (cInfo->DisplayID_H)
+        if (cInfo->DisplayID_H[0])
         {
-            CreatureModelInfo const* minfo = sCreatureModelStorage.LookupEntry<CreatureModelInfo>(cInfo->DisplayID_H);
+            CreatureDisplayInfoEntry const* displayEntry = sCreatureDisplayInfoStore.LookupEntry(cInfo->DisplayID_H[0]);
+            if(!displayEntry)
+            {
+                sLog.outErrorDb("Creature (Entry: %u) has non-existing DisplayID_H id (%u), can crash client", cInfo->Entry, cInfo->DisplayID_H[0]);
+                const_cast<CreatureInfo*>(cInfo)->DisplayID_H[0] = 0;
+            }
+            else if(!displayScaleEntry)
+                displayScaleEntry = displayEntry;
+
+            CreatureModelInfo const* minfo = sCreatureModelStorage.LookupEntry<CreatureModelInfo>(cInfo->DisplayID_H[0]);
             if (!minfo)
-                sLog.outErrorDb("Creature (Entry: %u) has non-existing modelId_H (%u)", cInfo->Entry, cInfo->DisplayID_H);
+                sLog.outErrorDb("Creature (Entry: %u) not has model data for DisplayID_H (%u)", cInfo->Entry, cInfo->DisplayID_H[0]);
         }
+
+        if (cInfo->DisplayID_H[1])
+        {
+            CreatureDisplayInfoEntry const* displayEntry = sCreatureDisplayInfoStore.LookupEntry(cInfo->DisplayID_H[1]);
+            if(!displayEntry)
+            {
+                sLog.outErrorDb("Creature (Entry: %u) has non-existing DisplayID_H2 id (%u), can crash client", cInfo->Entry, cInfo->DisplayID_H[1]);
+                const_cast<CreatureInfo*>(cInfo)->DisplayID_H[1] = 0;
+            }
+            else if(!displayScaleEntry)
+                displayScaleEntry = displayEntry;
+
+            CreatureModelInfo const* minfo = sCreatureModelStorage.LookupEntry<CreatureModelInfo>(cInfo->DisplayID_H[1]);
+            if (!minfo)
+                sLog.outErrorDb("Creature (Entry: %u) not has model data for DisplayID_H2 (%u)", cInfo->Entry, cInfo->DisplayID_H[1]);
+        }
+
+        if (!displayScaleEntry)
+            sLog.outErrorDb("Creature (Entry: %u) not has any existed display id in DisplayID_A/DisplayID_A2/DisplayID_H/DisplayID_H2", cInfo->Entry);
 
         if (cInfo->unit_class && ((1 << (cInfo->unit_class-1)) & CLASSMASK_ALL_CREATURES) == 0)
             sLog.outErrorDb("Creature (Entry: %u) has invalid unit_class(%u) for creature_template", cInfo->Entry, cInfo->unit_class);
@@ -612,6 +654,12 @@ void ObjectMgr::LoadCreatureTemplates()
 
         if(cInfo->rangeattacktime == 0)
             const_cast<CreatureInfo*>(cInfo)->rangeattacktime = BASE_ATTACK_TIME;
+
+        if(cInfo->npcflag & UNIT_NPC_FLAG_SPELLCLICK)
+        {
+            sLog.outErrorDb("Creature (Entry: %u) has dynamic flag UNIT_NPC_FLAG_SPELLCLICK (%u) set, it expect to be set by code base at `npc_spellclick_spells` content.",cInfo->Entry,UNIT_NPC_FLAG_SPELLCLICK);
+            const_cast<CreatureInfo*>(cInfo)->npcflag &= ~UNIT_NPC_FLAG_SPELLCLICK;
+        }
 
         if((cInfo->npcflag & UNIT_NPC_FLAG_TRAINER) && cInfo->trainer_type >= MAX_TRAINER_TYPE)
             sLog.outErrorDb("Creature (Entry: %u) has wrong trainer type %u",cInfo->Entry,cInfo->trainer_type);
@@ -669,10 +717,8 @@ void ObjectMgr::LoadCreatureTemplates()
         /// if not set custom creature scale then load scale from CreatureDisplayInfo.dbc
         if(cInfo->scale <= 0.0f)
         {
-            if(displayEntryA)
-                const_cast<CreatureInfo*>(cInfo)->scale = displayEntryA->scale;
-            else if(displayEntryH)
-                const_cast<CreatureInfo*>(cInfo)->scale = displayEntryH->scale;
+            if(displayScaleEntry)
+                const_cast<CreatureInfo*>(cInfo)->scale = displayScaleEntry->scale;
             else
                 const_cast<CreatureInfo*>(cInfo)->scale = 1.0f;
         }
@@ -871,20 +917,36 @@ CreatureModelInfo const* ObjectMgr::GetCreatureModelInfo(uint32 modelid)
     return sCreatureModelStorage.LookupEntry<CreatureModelInfo>(modelid);
 }
 
-uint32 ObjectMgr::ChooseDisplayId(uint32 team, const CreatureInfo *cinfo, const CreatureData *data)
+uint32 ObjectMgr::ChooseDisplayId(uint32 team, const CreatureInfo *cinfo, const CreatureData *data /*= NULL*/)
 {
     // Load creature model (display id)
+    if (data && data->displayid)
+        return data->displayid;
+
+    // use defaults from the template
     uint32 display_id;
-    if (!data || data->displayid == 0)                      // use defaults from the template
+
+    // DisplayID_A is used if no team is given
+    if (team == HORDE)
     {
-        // DisplayID_A is used if no team is given
-        if (team == HORDE)
-            display_id = (cinfo->DisplayID_H2 != 0 && urand(0,1) == 0) ? cinfo->DisplayID_H2 : cinfo->DisplayID_H;
+        if(cinfo->DisplayID_H[0])
+            display_id = cinfo->DisplayID_H[1] ? cinfo->DisplayID_H[urand(0,1)] : cinfo->DisplayID_H[0];
         else
-            display_id = (cinfo->DisplayID_A2 != 0 && urand(0,1) == 0) ? cinfo->DisplayID_A2 : cinfo->DisplayID_A;
+            display_id = cinfo->DisplayID_H[1];
+
+        if(!display_id)
+            display_id = cinfo->DisplayID_A[0] ? cinfo->DisplayID_A[0] : cinfo->DisplayID_A[1];
     }
-    else                                                    // overridden in creature data
-        display_id = data->displayid;
+    else
+    {
+        if(cinfo->DisplayID_A[0])
+            display_id = cinfo->DisplayID_A[1] ? cinfo->DisplayID_A[urand(0,1)] : cinfo->DisplayID_A[0];
+        else
+            display_id = cinfo->DisplayID_A[1];
+
+        if(!display_id)
+            display_id = cinfo->DisplayID_H[0] ? cinfo->DisplayID_H[0] : cinfo->DisplayID_H[1];
+    }
 
     return display_id;
 }
@@ -914,6 +976,29 @@ CreatureModelInfo const* ObjectMgr::GetCreatureModelRandomGender(uint32 display_
 void ObjectMgr::LoadCreatureModelInfo()
 {
     sCreatureModelStorage.Load();
+
+    // post processing
+    for(uint32 i = 1; i < sCreatureModelStorage.MaxEntry; ++i)
+    {
+        CreatureModelInfo const *minfo = sCreatureModelStorage.LookupEntry<CreatureModelInfo>(i);
+        if (!minfo)
+            continue;
+
+        if (!sCreatureDisplayInfoStore.LookupEntry(minfo->modelid))
+            sLog.outErrorDb("Table `creature_model_info` has model for not existed display id (%u).", minfo->modelid);
+
+        if (minfo->gender > GENDER_NONE)
+        {
+            sLog.outErrorDb("Table `creature_model_info` has wrong gender (%u) for display id (%u).", uint32(minfo->gender), minfo->modelid);
+            const_cast<CreatureModelInfo*>(minfo)->gender = GENDER_MALE;
+        }
+
+        if (minfo->modelid_other_gender && !sCreatureDisplayInfoStore.LookupEntry(minfo->modelid_other_gender))
+        {
+            sLog.outErrorDb("Table `creature_model_info` has not existed alt.gender model (%u) for existed display id (%u).", minfo->modelid_other_gender, minfo->modelid);
+            const_cast<CreatureModelInfo*>(minfo)->modelid_other_gender = 0;
+        }
+    }
 
     sLog.outString( ">> Loaded %u creature model based info", sCreatureModelStorage.RecordCount );
     sLog.outString();
@@ -4793,11 +4878,11 @@ void ObjectMgr::GetTaxiPath( uint32 source, uint32 destination, uint32 &path, ui
     path = dest_i->second.ID;
 }
 
-uint16 ObjectMgr::GetTaxiMount( uint32 id, uint32 team, bool allowed_alt_team /* = false */)
+uint32 ObjectMgr::GetTaxiMountDisplayId( uint32 id, uint32 team, bool allowed_alt_team /* = false */)
 {
     uint16 mount_entry = 0;
-    uint16 mount_id = 0;
 
+    // select mount creature id
     TaxiNodesEntry const* node = sTaxiNodesStore.LookupEntry(id);
     if(node)
     {
@@ -4806,34 +4891,27 @@ uint16 ObjectMgr::GetTaxiMount( uint32 id, uint32 team, bool allowed_alt_team /*
             mount_entry = node->MountCreatureID[1];
             if(!mount_entry && allowed_alt_team)
                 mount_entry = node->MountCreatureID[0];
-
-            CreatureInfo const *ci = GetCreatureTemplate(mount_entry);
-            if(ci)
-                mount_id = ci->DisplayID_A;
         }
-        if (team == HORDE)
+        else if (team == HORDE)
         {
             mount_entry = node->MountCreatureID[0];
 
             if(!mount_entry && allowed_alt_team)
                 mount_entry = node->MountCreatureID[1];
-
-            CreatureInfo const *ci = GetCreatureTemplate(mount_entry);
-            if(ci)
-                mount_id = ci->DisplayID_H;
         }
     }
 
-    CreatureModelInfo const *minfo = GetCreatureModelInfo(mount_id);
-    if(!minfo)
-    {
-        sLog.outErrorDb("Taxi mount (Entry: %u) for taxi node (Id: %u) for team %u has model %u not found in table `creature_model_info`, can't load. ",
-            mount_entry,id,team,mount_id);
+    CreatureInfo const *mount_info = GetCreatureTemplate(mount_entry);
+    if (!mount_info)
+        return 0;
 
-        return false;
-    }
-    if(minfo->modelid_other_gender!=0)
-        mount_id = urand(0,1) ? mount_id : minfo->modelid_other_gender;
+    uint16 mount_id = objmgr.ChooseDisplayId(team,mount_info);
+    if (!mount_id)
+        return 0;
+
+    CreatureModelInfo const *minfo = objmgr.GetCreatureModelRandomGender(mount_id);
+    if (minfo)
+        mount_id = minfo->modelid;
 
     return mount_id;
 }
@@ -6094,8 +6172,8 @@ void ObjectMgr::LoadNPCSpellClickSpells()
     uint32 count = 0;
 
     mSpellClickInfoMap.clear();
-
-    QueryResult *result = WorldDatabase.Query("SELECT npc_entry, spell_id, quest_id, cast_flags FROM npc_spellclick_spells");
+    //                                                0          1         2            3                   4          5
+    QueryResult *result = WorldDatabase.Query("SELECT npc_entry, spell_id, quest_start, quest_start_active, quest_end, cast_flags FROM npc_spellclick_spells");
 
     if(!result)
     {
@@ -6131,25 +6209,45 @@ void ObjectMgr::LoadNPCSpellClickSpells()
             continue;
         }
 
-        uint32 quest = fields[2].GetUInt32();
+        uint32 quest_start = fields[2].GetUInt32();
 
         // quest might be 0 to enable spellclick independent of any quest
-        if (quest)
+        if (quest_start)
         {
-            if(mQuestTemplates.find(quest) == mQuestTemplates.end())
+            if(mQuestTemplates.find(quest_start) == mQuestTemplates.end())
             {
-                sLog.outErrorDb("Table npc_spellclick_spells references unknown quest %u. Skipping entry.", spellid);
+                sLog.outErrorDb("Table npc_spellclick_spells references unknown start quest %u. Skipping entry.", quest_start);
                 continue;
             }
 
         }
 
-        uint8 castFlags = fields[3].GetUInt8();
+        bool quest_start_active = fields[3].GetBool();
+
+        uint32 quest_end = fields[4].GetUInt32();
+        // quest might be 0 to enable spellclick active infinity after start quest
+        if (quest_end)
+        {
+            if(mQuestTemplates.find(quest_end) == mQuestTemplates.end())
+            {
+                sLog.outErrorDb("Table npc_spellclick_spells references unknown end quest %u. Skipping entry.", quest_end);
+                continue;
+            }
+
+        }
+
+        uint8 castFlags = fields[5].GetUInt8();
         SpellClickInfo info;
         info.spellId = spellid;
-        info.questId = quest;
+        info.questStart = quest_start;
+        info.questStartCanActive = quest_start_active;
+        info.questEnd = quest_end;
         info.castFlags = castFlags;
         mSpellClickInfoMap.insert(SpellClickInfoMap::value_type(npc_entry, info));
+
+        // mark creature template as spell clickable
+        const_cast<CreatureInfo*>(cInfo)->npcflag |= UNIT_NPC_FLAG_SPELLCLICK;
+
         ++count;
     } while (result->NextRow());
 

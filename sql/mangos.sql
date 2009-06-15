@@ -23,7 +23,7 @@ DROP TABLE IF EXISTS `db_version`;
 CREATE TABLE `db_version` (
   `version` varchar(120) default NULL,
   `creature_ai_version` varchar(120) default NULL,
-  `required_7988_09_mangos_spell_proc_event` bit(1) default NULL
+  `required_8021_01_mangos_spell_proc_event` bit(1) default NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 ROW_FORMAT=FIXED COMMENT='Used DB version notes';
 
 --
@@ -3191,10 +3191,12 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `npc_spellclick_spells`;
 CREATE TABLE `npc_spellclick_spells` (
-    `npc_entry` INT UNSIGNED NOT NULL COMMENT 'reference to creature_template',
-    `spell_id` INT UNSIGNED NOT NULL COMMENT 'spell which should be casted ',
-    `quest_id` INT UNSIGNED NOT NULL COMMENT 'reference to quest_template',
-    `cast_flags` TINYINT UNSIGNED NOT NULL COMMENT 'first bit defines caster: 1=player, 0=creature; second bit defines target, same mapping as caster bit'
+    `npc_entry`   int unsigned NOT NULL COMMENT 'reference to creature_template',
+    `spell_id`    int unsigned NOT NULL COMMENT 'spell which should be casted ',
+    `quest_start`        mediumint(8) unsigned NOT NULL COMMENT 'reference to quest_template',
+    `quest_start_active` tinyint(1) unsigned NOT NULL default '0',
+    `quest_end`          mediumint(8) unsigned NOT NULL default '0',
+    `cast_flags`  tinyint unsigned NOT NULL COMMENT 'first bit defines caster: 1=player, 0=creature; second bit defines target, same mapping as caster bit'
 ) ENGINE = MYISAM DEFAULT CHARSET=utf8;
 
 --
@@ -17408,6 +17410,9 @@ INSERT INTO `spell_proc_event` VALUES
 (51474, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00010000, 0.000000, 0.000000,  0),
 (51478, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00010000, 0.000000, 0.000000,  0),
 (51479, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00010000, 0.000000, 0.000000,  0),
+(51483, 0x00000001, 11, 0x20000000, 0x00000000, 0x00000000, 0x00004000, 0x00000000, 0.000000, 0.000000,  0),
+(51485, 0x00000001, 11, 0x20000000, 0x00000000, 0x00000000, 0x00004000, 0x00000000, 0.000000, 0.000000,  0),
+(51486, 0x00000001, 11, 0x20000000, 0x00000000, 0x00000000, 0x00004000, 0x00000000, 0.000000, 0.000000,  0),
 (51556, 0x00000000, 11, 0x000000C0, 0x00000000, 0x00000010, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (51557, 0x00000000, 11, 0x000000C0, 0x00000000, 0x00000010, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (51558, 0x00000000, 11, 0x000000C0, 0x00000000, 0x00000010, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
