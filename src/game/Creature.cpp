@@ -122,7 +122,7 @@ m_creatureInfo(NULL), m_isActiveObject(false), m_AlreadySearchedAssistance(false
     m_CreatureSpellCooldowns.clear();
     m_CreatureCategoryCooldowns.clear();
     m_GlobalCooldown = 0;
-    m_unit_movement_flags = MOVEMENTFLAG_WALK_MODE;
+    m_unit_movement_flags = MONSTER_MOVE_WALK;
 }
 
 Creature::~Creature()
@@ -182,8 +182,8 @@ bool Creature::InitEntry(uint32 Entry, uint32 team, const CreatureData *data )
     CreatureInfo const *cinfo = normalInfo;
     if(normalInfo->HeroicEntry)
     {
-        Map *map = MapManager::Instance().FindMap(GetMapId(), GetInstanceId());
-        if(map && map->IsHeroic())
+        //we already have valid Map pointer for current creature!
+        if(GetMap()->IsHeroic())
         {
             cinfo = objmgr.GetCreatureTemplate(normalInfo->HeroicEntry);
             if(!cinfo)
@@ -203,21 +203,21 @@ bool Creature::InitEntry(uint32 Entry, uint32 team, const CreatureData *data )
     // known valid are: CLASS_WARRIOR,CLASS_PALADIN,CLASS_ROGUE,CLASS_MAGE
     SetByteValue(UNIT_FIELD_BYTES_0, 1, uint8(cinfo->unit_class));
 
-    if (cinfo->DisplayID_A == 0 || cinfo->DisplayID_H == 0) // Cancel load if no model defined
-    {
-        sLog.outErrorDb("Creature (Entry: %u) has no model defined for Horde or Alliance in table `creature_template`, can't load. ",Entry);
-        return false;
-    }
-
     uint32 display_id = objmgr.ChooseDisplayId(team, GetCreatureInfo(), data);
-    CreatureModelInfo const *minfo = objmgr.GetCreatureModelRandomGender(display_id);
-    if (!minfo)
+    if (!display_id)                                        // Cancel load if no display id
     {
         sLog.outErrorDb("Creature (Entry: %u) has model %u not found in table `creature_model_info`, can't load. ", Entry, display_id);
         return false;
     }
-    else
-        display_id = minfo->modelid;                        // it can be different (for another gender)
+
+    CreatureModelInfo const *minfo = objmgr.GetCreatureModelRandomGender(display_id);
+    if (!minfo)                                             // Cancel load if no model defined
+    {
+        sLog.outErrorDb("Creature (Entry: %u) has no model defined in table `creature_template`, can't load. ",Entry);
+        return false;
+    }
+
+    display_id = minfo->modelid;                            // it can be different (for another gender)
 
     SetDisplayId(display_id);
     SetNativeDisplayId(display_id);
@@ -266,9 +266,9 @@ bool Creature::UpdateEntry(uint32 Entry, uint32 team, const CreatureData *data )
 
     SelectLevel(GetCreatureInfo());
     if (team == HORDE)
-        SetUInt32Value(UNIT_FIELD_FACTIONTEMPLATE, GetCreatureInfo()->faction_H);
+        setFaction(GetCreatureInfo()->faction_H);
     else
-        SetUInt32Value(UNIT_FIELD_FACTIONTEMPLATE, GetCreatureInfo()->faction_A);
+        setFaction(GetCreatureInfo()->faction_A);
 
     SetUInt32Value(UNIT_NPC_FLAGS,GetCreatureInfo()->npcflag);
 
@@ -1107,19 +1107,30 @@ void Creature::SaveToDB(uint32 mapid, uint8 spawnMask, uint32 phaseMask)
 
     // check if it's a custom model and if not, use 0 for displayId
     CreatureInfo const *cinfo = GetCreatureInfo();
-    if(cinfo)
+    if (cinfo)
     {
-        if(displayId != cinfo->DisplayID_A && displayId != cinfo->DisplayID_H)
+        if (displayId != cinfo->DisplayID_A[0] && displayId != cinfo->DisplayID_A[1] &&
+            displayId != cinfo->DisplayID_H[0] && displayId != cinfo->DisplayID_H[1])
         {
-            CreatureModelInfo const *minfo = objmgr.GetCreatureModelInfo(cinfo->DisplayID_A);
-            if(!minfo || displayId != minfo->modelid_other_gender)
-            {
-                minfo = objmgr.GetCreatureModelInfo(cinfo->DisplayID_H);
-                if(minfo && displayId == minfo->modelid_other_gender)
-                    displayId = 0;
-            }
-            else
-                displayId = 0;
+            if (cinfo->DisplayID_A[0])
+                if (CreatureModelInfo const *minfo = objmgr.GetCreatureModelInfo(cinfo->DisplayID_A[0]))
+                    if(displayId == minfo->modelid_other_gender)
+                        displayId = 0;
+
+            if (displayId && cinfo->DisplayID_A[1])
+                if (CreatureModelInfo const *minfo = objmgr.GetCreatureModelInfo(cinfo->DisplayID_A[1]))
+                    if(displayId == minfo->modelid_other_gender)
+                        displayId = 0;
+
+            if (displayId && cinfo->DisplayID_H[0])
+                if (CreatureModelInfo const *minfo = objmgr.GetCreatureModelInfo(cinfo->DisplayID_H[0]))
+                    if(displayId == minfo->modelid_other_gender)
+                        displayId = 0;
+
+            if (displayId && cinfo->DisplayID_H[1])
+                if (CreatureModelInfo const *minfo = objmgr.GetCreatureModelInfo(cinfo->DisplayID_H[1]))
+                    if(displayId == minfo->modelid_other_gender)
+                        displayId = 0;
         }
         else
             displayId = 0;
@@ -1501,8 +1512,8 @@ void Creature::setDeathState(DeathState s)
 
     if(s == JUST_DIED)
     {
-        SetUInt64Value (UNIT_FIELD_TARGET,0);               // remove target selection in any cases (can be set at aura remove in Unit::setDeathState)
-        SetUInt32Value(UNIT_NPC_FLAGS, 0);
+        SetUInt64Value(UNIT_FIELD_TARGET,0);                // remove target selection in any cases (can be set at aura remove in Unit::setDeathState)
+        SetUInt32Value(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_NONE);
 
         if(!isPet() && GetCreatureInfo()->SkinLootId)
             if ( LootTemplates_Skinning.HaveLootFor(GetCreatureInfo()->SkinLootId) )
@@ -1522,7 +1533,7 @@ void Creature::setDeathState(DeathState s)
         CreatureInfo const *cinfo = GetCreatureInfo();
         SetUInt32Value(UNIT_DYNAMIC_FLAGS, 0);
         RemoveFlag (UNIT_FIELD_FLAGS, UNIT_FLAG_SKINNABLE);
-        AddUnitMovementFlag(MOVEMENTFLAG_WALK_MODE);
+        AddUnitMovementFlag(MONSTER_MOVE_WALK);
         SetUInt32Value(UNIT_NPC_FLAGS, cinfo->npcflag);
         clearUnitState(UNIT_STAT_ALL_STATE);
         i_motionMaster.Clear();
@@ -1777,6 +1788,25 @@ void Creature::CallAssistance()
     }
 }
 
+void Creature::CallForHelp(float fRadius)
+{
+    if (fRadius <= 0.0f || !getVictim() || isPet() || isCharmed())
+        return;
+
+    CellPair p(MaNGOS::ComputeCellPair(GetPositionX(), GetPositionY()));
+    Cell cell(p);
+    cell.data.Part.reserved = ALL_DISTRICT;
+    cell.SetNoCreate();
+
+    MaNGOS::CallOfHelpCreatureInRangeDo u_do(this, getVictim(), fRadius);
+    MaNGOS::CreatureWorker<MaNGOS::CallOfHelpCreatureInRangeDo> worker(this, u_do);
+
+    TypeContainerVisitor<MaNGOS::CreatureWorker<MaNGOS::CallOfHelpCreatureInRangeDo>, GridTypeMapContainer >  grid_creature_searcher(worker);
+
+    CellLock<GridReadGuard> cell_lock(cell, p);
+    cell_lock->Visit(cell_lock, grid_creature_searcher, *GetMap());
+}
+
 bool Creature::CanAssistTo(const Unit* u, const Unit* enemy, bool checkfaction /*= true*/) const
 {
     // we don't need help from zombies :)
@@ -1869,10 +1899,33 @@ bool Creature::LoadCreaturesAddon(bool reload)
         Mount(cainfo->mount);
 
     if (cainfo->bytes1 != 0)
-        SetUInt32Value(UNIT_FIELD_BYTES_1, cainfo->bytes1);
+    {
+        // 0 StandState
+        // 1 FreeTalentPoints   Pet only, so always 0 for default creature
+        // 2 StandFlags
+        // 3 StandMiscFlags
+
+        SetByteValue(UNIT_FIELD_BYTES_1, 0, uint8(cainfo->bytes1 & 0xFF));
+        //SetByteValue(UNIT_FIELD_BYTES_1, 1, uint8((cainfo->bytes1 >> 8) & 0xFF));
+        SetByteValue(UNIT_FIELD_BYTES_1, 1, 0);
+        SetByteValue(UNIT_FIELD_BYTES_1, 2, uint8((cainfo->bytes1 >> 16) & 0xFF));
+        SetByteValue(UNIT_FIELD_BYTES_1, 3, uint8((cainfo->bytes1 >> 24) & 0xFF));
+    }
 
     if (cainfo->bytes2 != 0)
-        SetUInt32Value(UNIT_FIELD_BYTES_2, cainfo->bytes2);
+    {
+        // 0 SheathState
+        // 1 Bytes2Flags
+        // 2 UnitRename         Pet only, so always 0 for default creature
+        // 3 ShapeshiftForm     Must be determined/set by shapeshift spell/aura
+
+        SetByteValue(UNIT_FIELD_BYTES_2, 0, uint8(cainfo->bytes2 & 0xFF));
+        SetByteValue(UNIT_FIELD_BYTES_2, 1, uint8((cainfo->bytes2 >> 8) & 0xFF));
+        //SetByteValue(UNIT_FIELD_BYTES_2, 2, uint8((cainfo->bytes2 >> 16) & 0xFF));
+        SetByteValue(UNIT_FIELD_BYTES_2, 2, 0);
+        //SetByteValue(UNIT_FIELD_BYTES_2, 3, uint8((cainfo->bytes2 >> 24) & 0xFF));
+        SetByteValue(UNIT_FIELD_BYTES_2, 3, 0);
+    }
 
     if (cainfo->emote != 0)
         SetUInt32Value(UNIT_NPC_EMOTESTATE, cainfo->emote);

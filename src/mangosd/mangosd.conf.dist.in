@@ -912,9 +912,9 @@ GM.AllowAchievementGain  = 1
 #    Visibility.Distance.Creature
 #    Visibility.Distance.Player
 #        Visibility distance for different in game object
-#        Max limited by active player zone: ~ 166
+#        Max limited by active player zone: ~ 333
 #        Min limit dependent from objects
-#        Default: 66 (cell size)
+#        Default: 132 (cell size)
 #        Min limit is max aggro radius (45) * Rate.Creature.Aggro
 #
 #    Visibility.Distance.Object
@@ -940,10 +940,10 @@ GM.AllowAchievementGain  = 1
 ###################################################################################################################
 
 Visibility.GroupMode = 0
-Visibility.Distance.Creature      = 66
-Visibility.Distance.Player        = 66
-Visibility.Distance.Object        = 66
-Visibility.Distance.InFlight      = 66
+Visibility.Distance.Creature      = 100
+Visibility.Distance.Player        = 100
+Visibility.Distance.Object        = 100
+Visibility.Distance.InFlight      = 100
 Visibility.Distance.Grey.Unit   = 1
 Visibility.Distance.Grey.Object = 10
 
@@ -974,10 +974,6 @@ Visibility.Distance.Grey.Object = 10
 #    Rate.Drop.Item.Referenced
 #    Rate.Drop.Money
 #         Drop rates (items by quality and money)
-#         Default: 1
-#
-#    Rate.Drop.Money
-#         Drop rates
 #         Default: 1
 #
 #    Rate.XP.Kill
@@ -1117,7 +1113,6 @@ Rate.Talent = 1
 Rate.Reputation.Gain = 1
 Rate.Reputation.LowLevel.Kill    = 1
 Rate.Reputation.LowLevel.Quest   = 1
-
 Rate.InstanceResetTime = 1
 SkillGain.Crafting = 1
 SkillGain.Defense = 1
@@ -1138,7 +1133,6 @@ Death.CorpseReclaimDelay.PvP = 1
 Death.CorpseReclaimDelay.PvE = 1
 Death.Bones.World = 1
 Death.Bones.BattlegroundOrArena = 1
-
 
 ###################################################################################################################
 # BATTLEGROUND CONFIG
@@ -1181,7 +1175,6 @@ Battleground.QueueAnnouncer.PlayerOnly = 0
 Battleground.InvitationType = 0
 BattleGround.PrematureFinishTimer = 300000
 BattleGround.PremadeGroupWaitForMatch = 1800000
-
 
 ###################################################################################################################
 # ARENA CONFIG
@@ -1231,7 +1224,6 @@ Arena.AutoDistributeInterval = 7
 Arena.QueueAnnouncer.Enable = 0
 Arena.ArenaSeason.ID = 1
 Arena.ArenaSeason.InProgress = 1
-
 
 ###################################################################################################################
 # NETWORK CONFIG

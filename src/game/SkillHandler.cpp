@@ -34,9 +34,33 @@ void WorldSession::HandleLearnTalentOpcode( WorldPacket & recv_data )
     recv_data >> talent_id >> requested_rank;
 
     _player->LearnTalent(talent_id, requested_rank);
+    _player->SendTalentsInfoData(false);
 }
 
-void WorldSession::HandleTalentWipeOpcode( WorldPacket & recv_data )
+void WorldSession::HandleLearnPreviewTalents(WorldPacket& recvPacket)
+{
+    sLog.outDebug("CMSG_LEARN_PREVIEW_TALENTS");
+
+    CHECK_PACKET_SIZE(recvPacket, 4);
+
+    uint32 talentsCount;
+    recvPacket >> talentsCount;
+
+    uint32 talentId, talentRank;
+
+    for(uint32 i = 0; i < talentsCount; ++i)
+    {
+        CHECK_PACKET_SIZE(recvPacket, recvPacket.rpos()+4+4);
+
+        recvPacket >> talentId >> talentRank;
+
+        _player->LearnTalent(talentId, talentRank);
+    }
+
+    _player->SendTalentsInfoData(false);
+}
+
+void WorldSession::HandleTalentWipeConfirmOpcode( WorldPacket & recv_data )
 {
     CHECK_PACKET_SIZE(recv_data,8);
 
@@ -47,7 +71,7 @@ void WorldSession::HandleTalentWipeOpcode( WorldPacket & recv_data )
     Creature *unit = GetPlayer()->GetNPCIfCanInteractWith(guid,UNIT_NPC_FLAG_TRAINER);
     if (!unit)
     {
-        sLog.outDebug( "WORLD: HandleTalentWipeOpcode - Unit (GUID: %u) not found or you can't interact with him.", uint32(GUID_LOPART(guid)) );
+        sLog.outDebug( "WORLD: HandleTalentWipeConfirmOpcode - Unit (GUID: %u) not found or you can't interact with him.", uint32(GUID_LOPART(guid)) );
         return;
     }
 
@@ -64,6 +88,7 @@ void WorldSession::HandleTalentWipeOpcode( WorldPacket & recv_data )
         return;
     }
 
+    _player->SendTalentsInfoData(false);
     unit->CastSpell(_player, 14867, true);                  //spell: "Untalent Visual Effect"
 }
 

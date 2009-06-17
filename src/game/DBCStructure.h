@@ -571,6 +571,7 @@ struct BattlemasterListEntry
     char*   name[16];                                       // 16-31
                                                             // 32 string flag, unused
                                                             // 33 unused
+    //uint32 unk;                                           // 34 new 3.1
 };
 
 #define MAX_OUTFIT_ITEMS 24
@@ -735,7 +736,8 @@ struct CurrencyTypesEntry
 {
     //uint32    ID;                                         // 0        not used
     uint32    ItemId;                                       // 1        used as real index
-    uint32    BitIndex;                                     // 2        bit index in PLAYER_FIELD_KNOWN_CURRENCIES (1 << (index-1))
+    //uint32    Category;                                   // 2        may be category
+    uint32    BitIndex;                                     // 3        bit index in PLAYER_FIELD_KNOWN_CURRENCIES (1 << (index-1))
 };
 
 struct DurabilityCostsEntry
@@ -830,6 +832,15 @@ struct FactionTemplateEntry
         return hostileMask == 0 && friendlyMask == 0;
     }
     bool IsContestedGuardFaction() const { return (factionFlags & FACTION_TEMPLATE_FLAG_CONTESTED_GUARD)!=0; }
+};
+
+struct GameObjectDisplayInfoEntry
+{
+    uint32      Displayid;                                  // 0        m_ID
+    // char* filename;                                      // 1
+    // uint32 unknown2[10];                                 // 2-11     unknown data
+    // float  unknown12[6];                                 // 12-17    unknown data
+    // uint32 unknown18;                                    // 18       unknown data
 };
 
 struct GemPropertiesEntry
@@ -939,6 +950,7 @@ struct HolidaysEntry
     //uint32 unk51;                                         // 51
     //uint32 unk52;                                         // 52
     //uint32 unk53;                                         // 53
+    //uint32 unk54;                                         // 54
 };
 
 struct ItemEntry
@@ -999,8 +1011,8 @@ struct ItemLimitCategoryEntry
     uint32      ID;                                         // 0 Id
     //char*     name[16]                                    // 1-16     m_name_lang
                                                             // 17 name flags
-    uint32      maxCount;                                  // max allowed equipped as item or in gem slot
-    //uint32      unk;                                        // 1 for prismatic gems only...
+    uint32      maxCount;                                   // 18, max allowed equipped as item or in gem slot
+    //uint32      unk;                                      // 19, 1 for gems only...
 };
 
 struct ItemRandomPropertiesEntry
@@ -1087,8 +1099,8 @@ struct MapEntry
     // Helpers
     uint32 Expansion() const { return addon; }
 
-
     bool IsDungeon() const { return map_type == MAP_INSTANCE || map_type == MAP_RAID; }
+    bool IsNonRaidDungeon() const { return map_type == MAP_INSTANCE; }
     bool Instanceable() const { return map_type == MAP_INSTANCE || map_type == MAP_RAID || map_type == MAP_BATTLEGROUND || map_type == MAP_ARENA; }
     bool IsRaid() const { return map_type == MAP_RAID; }
     bool IsBattleGround() const { return map_type == MAP_BATTLEGROUND; }
@@ -1237,7 +1249,7 @@ struct SkillLineEntry
     uint32    spellIcon;                                    // 37       m_spellIconID
     //char*     alternateVerb[16];                          // 38-53    m_alternateVerb_lang
                                                             // 54 string flags
-                                                            // 55       m_canLink
+    uint32    canLink;                                      // 55       m_canLink (prof. with recipes
 };
 
 struct SkillLineAbilityEntry
@@ -1270,6 +1282,7 @@ struct SoundEntriesEntry
                                                             // 26       m_minDistance
                                                             // 27       m_distanceCutoff
                                                             // 28       m_EAXDef
+                                                            // 29       new in 3.1
 };
 
 struct SpellEntry
@@ -1381,6 +1394,7 @@ struct SpellEntry
     uint32    SchoolMask;                                   // 228      m_schoolMask
     uint32    runeCostID;                                   // 229      m_runeCostID
     //uint32    spellMissileID;                             // 230      m_spellMissileID not used
+    //uint32  PowerDisplayId;                               // 231 PowerDisplay.dbc, new in 3.1
 
     // helpers
     int32 CalculateSimpleValue(uint8 eff) const { return EffectBasePoints[eff]+int32(EffectBaseDice[eff]); }
@@ -1428,7 +1442,9 @@ struct SpellRangeEntry
 {
     uint32    ID;
     float     minRange;
+    float     minRangeFriendly;
     float     maxRange;
+    float     maxRangeFriendly;
 };
 
 struct SpellRuneCostEntry
@@ -1487,6 +1503,7 @@ struct SpellItemEnchantmentEntry
     uint32      EnchantmentCondition;                       // 34       m_condition_id
     //uint32      requiredSkill;                            // 35       m_requiredSkillID
     //uint32      requiredSkillValue;                       // 36       m_requiredSkillRank
+                                                            // 37       new in 3.1
 };
 
 struct SpellItemEnchantmentConditionEntry
@@ -1511,7 +1528,7 @@ struct SummonPropertiesEntry
 {
     uint32  Id;                                             // 0
     uint32  Group;                                          // 1, enum SummonPropGroup,  0 - can't be controlled?, 1 - something guardian?, 2 - pet?, 3 - something controllable?, 4 - taxi/mount?
-    uint32  Unk2;                                           // 2,                        14 rows > 0
+    uint32  FactionId;                                      // 2,                        14 rows > 0
     uint32  Type;                                           // 3, enum SummonPropType
     uint32  Slot;                                           // 4,                        0-6
     uint32  Flags;                                          // 5, enum SummonPropFlags
@@ -1608,25 +1625,28 @@ struct VehicleEntry
     float   m_cameraFadeDistScalarMin;                      // 15
     float   m_cameraFadeDistScalarMax;                      // 16
     float   m_cameraPitchOffset;                            // 17
-    int     m_powerType[3];                                 // 18-20
-    int     m_powerToken[3];                                // 21-23
-    float   m_facingLimitRight;                             // 24
-    float   m_facingLimitLeft;                              // 25
-    float   m_msslTrgtTurnLingering;                        // 26
-    float   m_msslTrgtPitchLingering;                       // 27
-    float   m_msslTrgtMouseLingering;                       // 28
-    float   m_msslTrgtEndOpacity;                           // 29
-    float   m_msslTrgtArcSpeed;                             // 30
-    float   m_msslTrgtArcRepeat;                            // 31
-    float   m_msslTrgtArcWidth;                             // 32
-    float   m_msslTrgtImpactRadius[2];                      // 33-34
-    char*   m_msslTrgtArcTexture;                           // 35
-    char*   m_msslTrgtImpactTexture;                        // 36
-    char*   m_msslTrgtImpactModel[2];                       // 37-38
-    float   m_cameraYawOffset;                              // 39
-    uint32  m_uiLocomotionType;                             // 40
-    float   m_msslTrgtImpactTexRadius;                      // 41
-    uint32  m_uiSeatIndicatorType;                          // 42
+    //int     m_powerType[3];                               //       removed in 3.1
+    //int     m_powerToken[3];                              //       removed in 3.1
+    float   m_facingLimitRight;                             // 18
+    float   m_facingLimitLeft;                              // 19
+    float   m_msslTrgtTurnLingering;                        // 20
+    float   m_msslTrgtPitchLingering;                       // 21
+    float   m_msslTrgtMouseLingering;                       // 22
+    float   m_msslTrgtEndOpacity;                           // 23
+    float   m_msslTrgtArcSpeed;                             // 24
+    float   m_msslTrgtArcRepeat;                            // 25
+    float   m_msslTrgtArcWidth;                             // 26
+    float   m_msslTrgtImpactRadius[2];                      // 27-28
+    char*   m_msslTrgtArcTexture;                           // 29
+    char*   m_msslTrgtImpactTexture;                        // 30
+    char*   m_msslTrgtImpactModel[2];                       // 31-32
+    float   m_cameraYawOffset;                              // 33
+    uint32  m_uiLocomotionType;                             // 34
+    float   m_msslTrgtImpactTexRadius;                      // 35
+    uint32  m_uiSeatIndicatorType;                          // 36
+                                                            // 37, new in 3.1
+                                                            // 38, new in 3.1
+                                                            // 39, new in 3.1
 };
 
 struct VehicleSeatEntry
@@ -1677,6 +1697,7 @@ struct VehicleSeatEntry
     uint32  m_exitUISoundID;                                // 43
     int32   m_uiSkin;                                       // 44
     uint32  m_flagsB;                                       // 45
+                                                            // 46-57 added in 3.1, floats mostly
 };
 
 struct WorldMapAreaEntry

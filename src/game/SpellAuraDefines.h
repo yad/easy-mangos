@@ -88,11 +88,11 @@ enum AuraType
     SPELL_AURA_PROC_TRIGGER_DAMAGE = 43,
     SPELL_AURA_TRACK_CREATURES = 44,
     SPELL_AURA_TRACK_RESOURCES = 45,
-    SPELL_AURA_46 = 46,                               // Ignore all Gear test spells
+    SPELL_AURA_46 = 46,                                     // Ignore all Gear test spells
     SPELL_AURA_MOD_PARRY_PERCENT = 47,
-    SPELL_AURA_48 = 48,                               // One periodic spell
+    SPELL_AURA_48 = 48,                                     // One periodic spell
     SPELL_AURA_MOD_DODGE_PERCENT = 49,
-    SPELL_AURA_MOD_CRITICAL_HEALING_BONUS = 50,
+    SPELL_AURA_MOD_CRITICAL_HEALING_AMOUNT = 50,
     SPELL_AURA_MOD_BLOCK_PERCENT = 51,
     SPELL_AURA_MOD_CRIT_PERCENT = 52,
     SPELL_AURA_PERIODIC_LEECH = 53,
@@ -132,7 +132,7 @@ enum AuraType
     SPELL_AURA_MOD_DAMAGE_PERCENT_TAKEN = 87,
     SPELL_AURA_MOD_HEALTH_REGEN_PERCENT = 88,
     SPELL_AURA_PERIODIC_DAMAGE_PERCENT = 89,
-    SPELL_AURA_90 = 90,                                 // old SPELL_AURA_MOD_RESIST_CHANCE
+    SPELL_AURA_90 = 90,                                     // old SPELL_AURA_MOD_RESIST_CHANCE
     SPELL_AURA_MOD_DETECT_RANGE = 91,
     SPELL_AURA_PREVENTS_FLEEING = 92,
     SPELL_AURA_MOD_UNATTACKABLE = 93,
@@ -327,11 +327,17 @@ enum AuraType
     SPELL_AURA_MOD_BASE_HEALTH_PCT = 282,
     SPELL_AURA_MOD_HEALING_RECEIVED = 283,                  // Possibly only for some spell family class spells
     SPELL_AURA_284,
-    SPELL_AURA_285,
+    SPELL_AURA_MOD_ATTACK_POWER_OF_ARMOR = 285,
     SPELL_AURA_286,
     SPELL_AURA_DEFLECT_SPELLS,
     SPELL_AURA_288,
-    TOTAL_AURAS = 289
+    SPELL_AURA_289,
+    SPELL_AURA_290,
+    SPELL_AURA_291,
+    SPELL_AURA_292,
+    SPELL_AURA_293,
+    SPELL_AURA_294,
+    TOTAL_AURAS = 295
 };
 
 enum AreaAuraType

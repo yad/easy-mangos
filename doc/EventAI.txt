@@ -80,6 +80,8 @@ Some events such as EVENT_T_AGGRO, EVENT_T_DEATH, EVENT_T_SPAWNED, and EVENT_T_E
 18   EVENT_T_TARGET_MANA         ManaMax%, ManaMin%, RepeatMin, RepeatMax
 21   EVENT_T_REACHED_HOME        NONE                                                    Expires when creature reach it's home(spawn) location after Evade.
 22   EVENT_T_RECEIVE_EMOTE       EmoteId, Condition, CondValue1, CondValue2              Expires when creature receive emote with text emote id(enum TextEmotes). Condition can be defined. If set, then most conditions has additional value (see enum ConditionType)
+23   EVENT_T_BUFFED              SpellID, AmmountInStack, RepeatMin, RepeatMax           Expires when creature have spell (Param1) auras applied stack greater or equal provided in Param2 amount. Will repeat every (Param3) and (Param4).
+24   EVENT_T_TARGET_BUFFED       SpellID, AmmountInStack, RepeatMin, RepeatMax           Expires when target unit have spell (Param1) auras applied stack greater or equal provided in Param2 amount. Will repeat every (Param3) and (Param4).
 
 =========================================
 Action Types
@@ -339,6 +341,22 @@ Most commonly used to cast spells that can not be casted in EVENT_T_EVADE and ot
 Expires only when creature receive emote from player. Valid text emote id's are in Mangos source (enum TextEmotes)
 Event does not require any conditions to process, however many are ecpected to have condition.
 
+---------------------------
+23 = EVENT_T_BUFFED       :
+---------------------------
+Parameter 1: SpellId - This is the SpellID That the Aura Check will look for
+Parameter 2: Amount -  This is the amount of SpellID's auras at creature required for event expire.
+Parameter 3: RepeatMin - Minimum Time used to calculate Random Repeat Expire
+Parameter 4: RepeatMax - Maximum Time used to calculate Random Repeat Expire
+
+---------------------------
+24 = EVENT_T_TARGET_BUFFED:
+---------------------------
+Parameter 1: SpellId - This is the SpellID That the Aura Check will look for
+Parameter 2: Amount -  This is the amount of SpellID's auras at target unit required for event expire.
+Parameter 3: RepeatMin - Minimum Time used to calculate Random Repeat Expire
+Parameter 4: RepeatMax - Maximum Time used to calculate Random Repeat Expire
+
 EventAI use conditions from available in Mangos (enum ConditionType)
 Current implemented conditions:
 CONDITION_NONE (0)            0            0
@@ -530,10 +548,12 @@ This is commonly used in combination with EVENT_T_RANGE and ACTION_T_COMBAT_MOVE
 21 = ACTION_T_COMBAT_MOVEMENT:
 ------------------------------
 Parameter 1: If zero, then the creature will stop moving towards its victim (if its victim gets out of melee range) and will be stationary. If non-zero, then the creature will either continue to follow its victim (the action would have no effect) or it will start to follow the target with the top threat if its movement was disabled before. 
+Parameter 2: If non-zero, then stop melee combat state (if param1=0) or start melee combat state (if param1!=0) and creature in combat with selected target. 
 
 This action controls whether or not the creature will always move towards its target.
 NOTE: The ACID Dev Team has conformed to using either 0 or 1 for the Param values. (0 = Stop Movement, 1 = Start Movement)
 This is commonly used with EVENT_T_RANGE and ACTION_T_AUTO_ATTACK for NPC's who engage in Ranged Comabt (Either Spells or Ranged Attacks)
+Parameter 2 specialy used for ranged combat proper client side visual show ranged weapon in proper state.
 
 ------------------------
 22 = ACTION_T_SET_PHASE:
