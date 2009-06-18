@@ -3229,12 +3229,12 @@ bool Unit::isInAccessablePlaceFor(Creature const* c) const
 
 bool Unit::IsInWater() const
 {
-    return MapManager::Instance().GetBaseMap(GetMapId())->IsInWater(GetPositionX(),GetPositionY(), GetPositionZ());
+    return GetBaseMap()->IsInWater(GetPositionX(),GetPositionY(), GetPositionZ());
 }
 
 bool Unit::IsUnderWater() const
 {
-    return MapManager::Instance().GetBaseMap(GetMapId())->IsUnderWater(GetPositionX(),GetPositionY(),GetPositionZ());
+    return GetBaseMap()->IsUnderWater(GetPositionX(),GetPositionY(),GetPositionZ());
 }
 
 void Unit::DeMorph()
@@ -4891,7 +4891,7 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                 break;
             }
 
-            //Arcane Potency
+            // Arcane Potency
             if (dummySpell->SpellIconID == 2120)
             {
                 if(!procSpell)
@@ -7584,7 +7584,7 @@ void Unit::RemoveGuardians()
     }
 }
 
-bool Unit::HasGuardianWithEntry(uint32 entry)
+Pet* Unit::FindGuardianWithEntry(uint32 entry)
 {
     // pet guid middle part is entry (and creature also)
     // and in guardian list must be guardians with same entry _always_
@@ -7592,10 +7592,10 @@ bool Unit::HasGuardianWithEntry(uint32 entry)
     {
         if(Pet* pet = ObjectAccessor::GetPet(*itr))
             if (pet->GetEntry() == entry)
-                return true;
+                return pet;
     }
 
-    return false;
+    return NULL;
 }
 
 void Unit::UnsummonAllTotems()
@@ -10918,6 +10918,10 @@ void Unit::ProcDamageAndSpellFor( bool isVictim, Unit * pTarget, uint32 procFlag
             case SPELL_AURA_MOD_DAMAGE_FROM_CASTER:
                 // Compare casters
                 if (triggeredByAura->GetCasterGUID() != pTarget->GetGUID())
+                    continue;
+                break;
+            case SPELL_AURA_MOD_SPELL_CRIT_CHANCE:
+                if (!procSpell)
                     continue;
                 break;
             default:
