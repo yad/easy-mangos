@@ -5123,7 +5123,7 @@ bool ChatHandler::HandleResetTalentsCommand(const char * args)
         return true;
     }
 
-    // Try reset talenents as Hunter Pet
+    // Try reset talents as Hunter Pet
     Creature* creature = getSelectedCreature();
     if (creature && creature->isPet() && ((Pet *)creature)->getPetType() == HUNTER_PET)
     {
