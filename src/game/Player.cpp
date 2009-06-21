@@ -3256,12 +3256,7 @@ void Player::RemoveSpellCooldown( uint32 spell_id, bool update /* = false */ )
     m_spellCooldowns.erase(spell_id);
 
     if(update)
-    {
-        WorldPacket data(SMSG_CLEAR_COOLDOWN, 4+8);
-        data << uint32(spell_id);
-        data << uint64(GetGUID());
-        SendDirectMessage(&data);
-    }
+        SendClearCooldown(spell_id, this);
 }
 
 void Player::RemoveArenaSpellCooldowns()
@@ -3279,13 +3274,8 @@ void Player::RemoveArenaSpellCooldowns()
             entry->RecoveryTime <= 15 * MINUTE * IN_MILISECONDS &&
             entry->CategoryRecoveryTime <= 15 * MINUTE * IN_MILISECONDS )
         {
-            // notify player
-            WorldPacket data(SMSG_CLEAR_COOLDOWN, 4+8);
-            data << uint32(itr->first);
-            data << uint64(GetGUID());
-            GetSession()->SendPacket(&data);
-            // remove cooldown
-            m_spellCooldowns.erase(itr);
+            // remove & notify
+            RemoveSpellCooldown(itr->first, true);
         }
     }
 }
@@ -3295,12 +3285,8 @@ void Player::RemoveAllSpellCooldown()
     if(!m_spellCooldowns.empty())
     {
         for(SpellCooldowns::const_iterator itr = m_spellCooldowns.begin();itr != m_spellCooldowns.end(); ++itr)
-        {
-            WorldPacket data(SMSG_CLEAR_COOLDOWN, 4+8);
-            data << uint32(itr->first);
-            data << uint64(GetGUID());
-            GetSession()->SendPacket(&data);
-        }
+            SendClearCooldown(itr->first, this);
+
         m_spellCooldowns.clear();
     }
 }
@@ -3402,10 +3388,7 @@ bool Player::resetTalents(bool no_cost)
 {
     // not need after this call
     if(HasAtLoginFlag(AT_LOGIN_RESET_TALENTS))
-    {
-        m_atLoginFlags = m_atLoginFlags & ~AT_LOGIN_RESET_TALENTS;
-        CharacterDatabase.PExecute("UPDATE characters set at_login = at_login & ~ %u WHERE guid ='%u'", uint32(AT_LOGIN_RESET_TALENTS), GetGUIDLow());
-    }
+        RemoveAtLoginFlag(AT_LOGIN_RESET_TALENTS,true);
 
     uint32 talentPointsForLevel = CalculateTalentsPoints();
 
@@ -6291,22 +6274,6 @@ void Player::DuelComplete(DuelCompleteType type)
         if (duel->opponent)
             duel->opponent->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_WIN_DUEL, 1);
     }
-
-    // cool-down duel spell
-    /*data.Initialize(SMSG_SPELL_COOLDOWN, 17);
-
-    data<<GetGUID();
-    data<<uint8(0x0);
-
-    data<<(uint32)7266;
-    data<<uint32(0x0);
-    GetSession()->SendPacket(&data);
-    data.Initialize(SMSG_SPELL_COOLDOWN, 17);
-    data<<duel->opponent->GetGUID();
-    data<<uint8(0x0);
-    data<<(uint32)7266;
-    data<<uint32(0x0);
-    duel->opponent->GetSession()->SendPacket(&data);*/
 
     //Remove Duel Flag object
     GameObject* obj = GetMap()->GetGameObject(GetUInt64Value(PLAYER_DUEL_ARBITER));
@@ -18088,10 +18055,7 @@ void Player::resetSpells()
 {
     // not need after this call
     if(HasAtLoginFlag(AT_LOGIN_RESET_SPELLS))
-    {
-        m_atLoginFlags = m_atLoginFlags & ~AT_LOGIN_RESET_SPELLS;
-        CharacterDatabase.PExecute("UPDATE characters SET at_login = at_login & ~ %u WHERE guid ='%u'", uint32(AT_LOGIN_RESET_SPELLS), GetGUIDLow());
-    }
+        RemoveAtLoginFlag(AT_LOGIN_RESET_SPELLS,true);
 
     // make full copy of map (spells removed and marked as deleted at another spell remove
     // and we can't use original map for safe iterative with visit each spell at loop end
@@ -20297,4 +20261,20 @@ void Player::ActivateSpec(uint32 specNum)
         return;
 
     resetTalents(true);
+}
+
+void Player::RemoveAtLoginFlag( AtLoginFlags f, bool in_db_also /*= false*/ )
+{
+    m_atLoginFlags &= ~f;
+
+    if(in_db_also)
+        CharacterDatabase.PExecute("UPDATE characters set at_login = at_login & ~ %u WHERE guid ='%u'", uint32(f), GetGUIDLow());
+}
+
+void Player::SendClearCooldown( uint32 spell_id, Unit* target )
+{
+    WorldPacket data(SMSG_CLEAR_COOLDOWN, 4+8);
+    data << uint32(spell_id);
+    data << uint64(target->GetGUID());
+    SendDirectMessage(&data);
 }
