@@ -1196,7 +1196,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         void AddGuardian(Pet* pet);
         void RemoveGuardian(Pet* pet);
         void RemoveGuardians();
-        bool HasGuardianWithEntry(uint32 entry);
+        Pet* FindGuardianWithEntry(uint32 entry);
 
         bool isCharmed() const { return GetCharmerGUID() != 0; }
 
@@ -1495,8 +1495,6 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         void SendPetCastFail(uint32 spellid, SpellCastResult msg);
         void SendPetActionFeedback (uint8 msg);
         void SendPetTalk (uint32 pettalk);
-        void SendPetSpellCooldown (uint32 spellid, time_t cooltime);
-        void SendPetClearCooldown (uint32 spellid);
         void SendPetAIReaction(uint64 guid);
         ///----------End of Pet responses methods----------
 
