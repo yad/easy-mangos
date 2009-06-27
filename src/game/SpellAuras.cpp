@@ -3174,7 +3174,7 @@ void Aura::HandleModPossessPet(bool apply, bool Real)
     {
         pet->AttackStop();
         pet->GetMotionMaster()->MoveFollow(caster, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE);
-        pet->SetUnitMovementFlags(MONSTER_MOVE_WALK);
+        pet->AddMonsterMoveFlag(MONSTER_MOVE_WALK);
     }
 }
 
@@ -3415,10 +3415,10 @@ void Aura::HandleAuraModStun(bool apply, bool Real)
 
         // Creature specific
         if(m_target->GetTypeId() != TYPEID_PLAYER)
-            ((Creature*)m_target)->StopMoving();
+            m_target->StopMoving();
         else
         {
-            ((Player*)m_target)->m_movementInfo.flags = 0;  // Clear movement flags
+            ((Player*)m_target)->m_movementInfo.SetMovementFlags(MOVEMENTFLAG_NONE);
             m_target->SetStandState(UNIT_STAND_STATE_STAND);// in 1.5 client
         }
 
@@ -3702,10 +3702,10 @@ void Aura::HandleAuraModRoot(bool apply, bool Real)
             m_target->SendMessageToSet(&data, true);
 
             //Clear unit movement flags
-            ((Player*)m_target)->m_movementInfo.flags = 0;
+            ((Player*)m_target)->m_movementInfo.SetMovementFlags(MOVEMENTFLAG_NONE);
         }
         else
-            ((Creature *)m_target)->StopMoving();
+            m_target->StopMoving();
     }
     else
     {
@@ -4161,10 +4161,23 @@ void Aura::HandleAuraModStalked(bool apply, bool /*Real*/)
 void Aura::HandlePeriodicTriggerSpell(bool apply, bool /*Real*/)
 {
     m_isPeriodic = apply;
-    if (m_spellProto->Id == 66 && !apply)
+
+    if (!apply)
     {
-        if (m_removeMode == AURA_REMOVE_BY_DEFAULT && m_duration<=0)
-            m_target->CastSpell(m_target, 32612, true, NULL, this);
+        switch(m_spellProto->Id)
+        {
+            case 66:                                        // Invisibility
+                if (m_removeMode == AURA_REMOVE_BY_DEFAULT && m_duration<=0)
+                    m_target->CastSpell(m_target, 32612, true, NULL, this);
+
+                return;
+            case 42783:                                     //Wrath of the Astrom...
+                if (m_removeMode == AURA_REMOVE_BY_DEFAULT && GetEffIndex() + 1 < 3)
+                    m_target->CastSpell(m_target, m_spellProto->CalculateSimpleValue(GetEffIndex()+1), true);
+                return;
+            default:
+                break;
+        }
     }
 }
 

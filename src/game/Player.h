@@ -687,10 +687,42 @@ enum InstanceResetWarningType
     RAID_INSTANCE_EXPIRED           = 5
 };
 
+// used in most movement packets (send and received)
+enum MovementFlags
+{
+    MOVEMENTFLAG_NONE           = 0x00000000,
+    MOVEMENTFLAG_FORWARD        = 0x00000001,
+    MOVEMENTFLAG_BACKWARD       = 0x00000002,
+    MOVEMENTFLAG_STRAFE_LEFT    = 0x00000004,
+    MOVEMENTFLAG_STRAFE_RIGHT   = 0x00000008,
+    MOVEMENTFLAG_LEFT           = 0x00000010,
+    MOVEMENTFLAG_RIGHT          = 0x00000020,
+    MOVEMENTFLAG_PITCH_UP       = 0x00000040,
+    MOVEMENTFLAG_PITCH_DOWN     = 0x00000080,
+    MOVEMENTFLAG_WALK_MODE      = 0x00000100,               // Walking
+    MOVEMENTFLAG_ONTRANSPORT    = 0x00000200,               // Used for flying on some creatures
+    MOVEMENTFLAG_LEVITATING     = 0x00000400,
+    MOVEMENTFLAG_FLY_UNK1       = 0x00000800,
+    MOVEMENTFLAG_JUMPING        = 0x00001000,
+    MOVEMENTFLAG_UNK4           = 0x00002000,
+    MOVEMENTFLAG_FALLING        = 0x00004000,
+    // 0x8000, 0x10000, 0x20000, 0x40000, 0x80000, 0x100000
+    MOVEMENTFLAG_SWIMMING       = 0x00200000,               // appears with fly flag also
+    MOVEMENTFLAG_FLY_UP         = 0x00400000,
+    MOVEMENTFLAG_CAN_FLY        = 0x00800000,
+    MOVEMENTFLAG_FLYING         = 0x01000000,
+    MOVEMENTFLAG_FLYING2        = 0x02000000,               // Actual flying mode
+    MOVEMENTFLAG_SPLINE         = 0x04000000,               // used for flight paths
+    MOVEMENTFLAG_SPLINE2        = 0x08000000,               // used for flight paths
+    MOVEMENTFLAG_WATERWALKING   = 0x10000000,               // prevent unit from falling through water
+    MOVEMENTFLAG_SAFE_FALL      = 0x20000000,               // active rogue safe fall spell (passive)
+    MOVEMENTFLAG_UNK3           = 0x40000000
+};
+
 struct MovementInfo
 {
     // common
-    uint32  flags;
+    uint32 flags;                                           // see enum MovementFlags
     uint16  unk1;
     uint32  time;
     float   x, y, z, o;
@@ -710,16 +742,18 @@ struct MovementInfo
 
     MovementInfo()
     {
-        flags = 0;
+        flags = MOVEMENTFLAG_NONE;
         time = t_time = fallTime = 0;
         unk1 = 0;
         x = y = z = o = t_x = t_y = t_z = t_o = s_pitch = j_unk = j_sinAngle = j_cosAngle = j_xyspeed = u_unk1 = 0.0f;
         t_guid = 0;
     }
 
-    uint32 GetMovementFlags() { return flags; }
-    void AddMovementFlag(uint32 flag) { flags |= flag; }
-    bool HasMovementFlag(uint32 flag) const { return flags & flag; }
+    void AddMovementFlag(MovementFlags f) { flags |= f; }
+    void RemoveMovementFlag(MovementFlags f) { flags &= ~f; }
+    bool HasMovementFlag(MovementFlags f) const { return flags & f; }
+    MovementFlags GetMovementFlags() const { return MovementFlags(flags); }
+    void SetMovementFlags(MovementFlags f) { flags = f; }
 };
 
 // flags that use in movement check for example at spell casting
@@ -885,7 +919,7 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         bool TeleportTo(WorldLocation const &loc, uint32 options = 0)
         {
-            return TeleportTo(loc.mapid, loc.coord_x, loc.coord_y, loc.coord_z, options);
+            return TeleportTo(loc.mapid, loc.coord_x, loc.coord_y, loc.coord_z, loc.orientation, options);
         }
 
         void SetSummonPoint(uint32 mapid, float x, float y, float z)
@@ -902,7 +936,7 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         void Update( uint32 time );
 
-        void BuildEnumData( QueryResult * result,  WorldPacket * p_data );
+        static bool BuildEnumData( QueryResult * result,  WorldPacket * p_data );
 
         void SetInWater(bool apply);
 
@@ -1261,6 +1295,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         static uint32 GetUInt32ValueFromDB(uint16 index, uint64 guid);
         static float  GetFloatValueFromDB(uint16 index, uint64 guid);
         static uint32 GetZoneIdFromDB(uint64 guid);
+        static uint32 GetLevelFromDB(uint64 guid);
         static bool   LoadPositionFromDB(uint32& mapid, float& x,float& y,float& z,float& o, bool& in_flight, uint64 guid);
 
         /*********************************************************/
@@ -1269,6 +1304,7 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         void SaveToDB();
         void SaveInventoryAndGoldToDB();                    // fast save function for item/money cheating preventing
+        void SaveGoldToDB();
         void SaveDataFieldToDB();
         static bool SaveValuesArrayInDB(Tokens const& data,uint64 guid);
         static void SetUInt32ValueInArray(Tokens& data,uint16 index, uint32 value);
@@ -1934,6 +1970,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         /***                 VARIOUS SYSTEMS                   ***/
         /*********************************************************/
         MovementInfo m_movementInfo;
+        bool HasMovementFlag(MovementFlags f) const;        // for script access to m_movementInfo.HasMovementFlag
         void UpdateFallInformationIfNeed(MovementInfo const& minfo,uint16 opcode);
         Unit *m_mover;
         void SetFallInformation(uint32 time, float z)
@@ -1942,6 +1979,8 @@ class MANGOS_DLL_SPEC Player : public Unit
             m_lastFallZ = z;
         }
         void HandleFall(MovementInfo const& movementInfo);
+
+        void BuildTeleportAckMsg( WorldPacket *data, float x, float y, float z, float ang) const;
 
         bool isMoving() const { return m_movementInfo.HasMovementFlag(movementFlagsMask); }
         bool isMovingOrTurning() const { return m_movementInfo.HasMovementFlag(movementOrTurningFlagsMask); }
@@ -2187,8 +2226,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         void outDebugValues() const;
         uint64 m_lootGuid;
 
-        uint32 m_race;
-        uint32 m_class;
         uint32 m_team;
         uint32 m_nextSave;
         time_t m_speakTime;
