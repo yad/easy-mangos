@@ -680,6 +680,29 @@ AllowTwoSide.AddFriend = 0
 TalentsInspecting = 1
 
 ###################################################################################################################
+# AUTO BROADCAST
+#
+#    AutoBroadcast.On
+#        Enable auto broadcast
+#        Default: 0 - off
+#                 1 - on
+#
+#    AutoBroadcast.Center
+#        Display method
+#        Default: 0 - announce
+#                 1 - notify
+#                 2 - both
+#
+#    AutoBroadcast.Timer
+#        Timer for auto broadcast
+#
+###################################################################################################################
+
+AutoBroadcast.On = 1
+AutoBroadcast.Center = 2
+AutoBroadcast.Timer = 30000
+
+###################################################################################################################
 # CREATURE SETTINGS
 #
 #    ThreatRadius
