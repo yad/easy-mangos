@@ -90,7 +90,7 @@ CreatureEventAI::CreatureEventAI(Creature *c ) : CreatureAI(c)
     Phase = 0;
     CombatMovementEnabled = true;
     MeleeEnabled = true;
-    AttackDistance = 0;
+    AttackDistance = 0.0f;
     AttackAngle = 0.0f;
 
     //Handle Spawned Events
@@ -110,13 +110,6 @@ bool CreatureEventAI::ProcessEvent(CreatureEventAIHolder& pHolder, Unit* pAction
 
     //Check the inverse phase mask (event doesn't trigger if current phase bit is set in mask)
     if (pHolder.Event.event_inverse_phase_mask & (1 << Phase))
-        return false;
-
-    //Store random here so that all random actions match up
-    uint32 rnd = rand();
-
-    //Return if chance for event is not met
-    if (pHolder.Event.event_chance <= rnd % 100)
         return false;
 
     CreatureEventAI_Event const& event = pHolder.Event;
@@ -274,8 +267,8 @@ bool CreatureEventAI::ProcessEvent(CreatureEventAIHolder& pHolder, Unit* pAction
 
             //Repeat Timers
             pHolder.UpdateRepeatTimer(m_creature,event.summon_unit.repeatMin,event.summon_unit.repeatMax);
+            break;
         }
-        break;
         case EVENT_T_TARGET_MANA:
         {
             if (!m_creature->isInCombat() || !m_creature->getVictim() || !m_creature->getVictim()->GetMaxPower(POWER_MANA))
@@ -293,6 +286,34 @@ bool CreatureEventAI::ProcessEvent(CreatureEventAIHolder& pHolder, Unit* pAction
         case EVENT_T_REACHED_HOME:
         case EVENT_T_RECEIVE_EMOTE:
             break;
+        case EVENT_T_BUFFED:
+        {
+            //Note: checked only aura for effect 0, if need check aura for effect 1/2 then
+            // possible way: pack in event.buffed.amount 2 uint16 (ammount+effectIdx)
+            Aura* aura = m_creature->GetAura(event.buffed.spellId,0);
+            if(!aura || aura->GetStackAmount() < event.buffed.amount)
+                return false;
+
+            //Repeat Timers
+            pHolder.UpdateRepeatTimer(m_creature,event.buffed.repeatMin,event.buffed.repeatMax);
+            break;
+        }
+        case EVENT_T_TARGET_BUFFED:
+        {
+            //Prevent event from occuring on no unit
+            if (!pActionInvoker)
+                return false;
+
+            //Note: checked only aura for effect 0, if need check aura for effect 1/2 then
+            // possible way: pack in event.buffed.amount 2 uint16 (ammount+effectIdx)
+            Aura* aura = pActionInvoker->GetAura(event.buffed.spellId,0);
+            if(!aura || aura->GetStackAmount() < event.buffed.amount)
+                return false;
+
+            //Repeat Timers
+            pHolder.UpdateRepeatTimer(m_creature,event.buffed.repeatMin,event.buffed.repeatMax);
+            break;
+        }
         default:
             sLog.outErrorDb("CreatureEventAI: Creature %u using Event %u has invalid Event Type(%u), missing from ProcessEvent() Switch.", m_creature->GetEntry(), pHolder.Event.event_id, pHolder.Event.event_type);
             break;
@@ -301,6 +322,13 @@ bool CreatureEventAI::ProcessEvent(CreatureEventAIHolder& pHolder, Unit* pAction
     //Disable non-repeatable events
     if (!(pHolder.Event.event_flags & EFLAG_REPEATABLE))
         pHolder.Enabled = false;
+
+    //Store random here so that all random actions match up
+    uint32 rnd = rand();
+
+    //Return if chance for event is not met
+    if (pHolder.Event.event_chance <= rnd % 100)
+        return false;
 
     //Process actions
     for (uint32 j = 0; j < MAX_ACTIONS; j++)
@@ -384,9 +412,8 @@ void CreatureEventAI::ProcessAction(CreatureEventAI_Action const& action, uint32
                 {
                     if (CreatureInfo const* ci = GetCreatureTemplateStore(action.morph.creatureId))
                     {
-                        //use default display
-                        if (ci->DisplayID_A)
-                            m_creature->SetDisplayId(ci->DisplayID_A);
+                        uint32 display_id = objmgr.ChooseDisplayId(0,ci);
+                        m_creature->SetDisplayId(display_id);
                     }
                 }
                 //if no param1, then use value from param2 (modelId)
@@ -455,8 +482,8 @@ void CreatureEventAI::ProcessAction(CreatureEventAI_Action const& action, uint32
                         {
                             if (m_creature->GetMotionMaster()->GetCurrentMovementGeneratorType() == TARGETED_MOTION_TYPE)
                             {
-                                AttackDistance = 0;
-                                AttackAngle = 0;
+                                AttackDistance = 0.0f;
+                                AttackAngle = 0.0f;
 
                                 m_creature->GetMotionMaster()->Clear(false);
                                 m_creature->GetMotionMaster()->MoveChase(m_creature->getVictim(), AttackDistance, AttackAngle);
@@ -625,8 +652,8 @@ void CreatureEventAI::ProcessAction(CreatureEventAI_Action const& action, uint32
                 target->RemoveAurasDueToSpell(action.remove_aura.spellId);
             break;
         case ACTION_T_RANGED_MOVEMENT:
-            AttackDistance = action.ranged_movement.distance;
-            AttackAngle = ((float)action.ranged_movement.angle/180)*M_PI;
+            AttackDistance = (float)action.ranged_movement.distance;
+            AttackAngle = action.ranged_movement.angle/180.0f*M_PI;
 
             if (CombatMovementEnabled)
             {
@@ -734,15 +761,10 @@ void CreatureEventAI::ProcessAction(CreatureEventAI_Action const& action, uint32
             m_creature->DealDamage(m_creature, m_creature->GetMaxHealth(),NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, NULL, false);
             break;
         case ACTION_T_ZONE_COMBAT_PULSE:
-            if (!m_creature->isInCombat() || !m_creature->GetMap()->IsDungeon())
-            {
-
-                sLog.outErrorDb("CreatureEventAI: Event %d ACTION_T_ZONE_COMBAT_PULSE on creature out of combat or in non-dungeon map. Creature %d", EventId, m_creature->GetEntry());
-                return;
-            }
-
-            DoZoneInCombat(m_creature);
+        {
+            m_creature->SetInCombatWithZone();
             break;
+        }
         case ACTION_T_CALL_FOR_HELP:
         {
             m_creature->CallForHelp(action.call_for_help.radius);
@@ -751,6 +773,11 @@ void CreatureEventAI::ProcessAction(CreatureEventAI_Action const& action, uint32
         case ACTION_T_SET_SHEATH:
         {
             m_creature->SetSheath(SheathState(action.set_sheath.sheath));
+            break;
+        }
+        case ACTION_T_FORCE_DESPAWN:
+        {
+            m_creature->ForcedDespawn();
             break;
         }
     }
@@ -850,6 +877,9 @@ void CreatureEventAI::JustDied(Unit* killer)
         if ((*i).Event.event_type == EVENT_T_DEATH)
             ProcessEvent(*i, killer);
     }
+
+    // reset phase after any death state events
+    Phase = 0;
 }
 
 void CreatureEventAI::KilledUnit(Unit* victim)
@@ -1283,33 +1313,6 @@ void CreatureEventAI::DoScriptText(int32 textEntry, WorldObject* pSource, Unit* 
             pSource->MonsterYellToZone(textEntry, (*i).second.Language, target ? target->GetGUID() : 0);
             break;
     }
-}
-
-void CreatureEventAI::DoZoneInCombat(Unit* pUnit)
-{
-    if (!pUnit)
-        pUnit = m_creature;
-
-    Map *map = pUnit->GetMap();
-
-    if (!map->IsDungeon())                                  //use IsDungeon instead of Instanceable, in case battlegrounds will be instantiated
-    {
-        sLog.outErrorDb("CreatureEventAI: DoZoneInCombat call for map that isn't an instance (pUnit entry = %d)", pUnit->GetTypeId() == TYPEID_UNIT ? ((Creature*)pUnit)->GetEntry() : 0);
-        return;
-    }
-
-    if (!pUnit->CanHaveThreatList() || pUnit->getThreatManager().isThreatListEmpty())
-    {
-        sLog.outErrorDb("CreatureEventAI: DoZoneInCombat called for creature that either cannot have threat list or has empty threat list (pUnit entry = %d)", pUnit->GetTypeId() == TYPEID_UNIT ? ((Creature*)pUnit)->GetEntry() : 0);
-
-        return;
-    }
-
-    Map::PlayerList const &PlayerList = map->GetPlayers();
-    for(Map::PlayerList::const_iterator i = PlayerList.begin(); i != PlayerList.end(); ++i)
-        if (Player* i_pl = i->getSource())
-            if (!i_pl->isGameMaster())
-                pUnit->AddThreat(i_pl, 0.0f);
 }
 
 void CreatureEventAI::DoMeleeAttackIfReady()

@@ -1074,6 +1074,9 @@ bool ChatHandler::HandleUnLearnCommand(const char* args)
     else
         SendSysMessage(LANG_FORGET_SPELL);
 
+    if(GetTalentSpellCost(spell_id))
+        target->SendTalentsInfoData(false);
+
     return true;
 }
 
@@ -2015,6 +2018,10 @@ bool ChatHandler::HandleLearnCommand(const char* args)
         targetPlayer->learnSpellHighRank(spell);
     else
         targetPlayer->learnSpell(spell,false);
+
+    uint32 first_spell = spellmgr.GetFirstSpellInChain(spell);
+    if(GetTalentSpellCost(first_spell))
+        targetPlayer->SendTalentsInfoData(false);
 
     return true;
 }
@@ -3931,11 +3938,7 @@ void ChatHandler::HandleCharacterLevel(Player* player, uint64 player_guid, uint3
     else
     {
         // update level and XP at level, all other will be updated at loading
-        Tokens values;
-        Player::LoadValuesArrayFromDB(values,player_guid);
-        Player::SetUInt32ValueInArray(values,UNIT_FIELD_LEVEL,newlevel);
-        Player::SetUInt32ValueInArray(values,PLAYER_XP,0);
-        Player::SaveValuesArrayInDB(values,player_guid);
+        CharacterDatabase.PExecute("UPDATE characters SET level = '%u', xp = 0 WHERE guid = '%u'", newlevel, GUID_LOPART(player_guid));
     }
 }
 
@@ -3960,7 +3963,7 @@ bool ChatHandler::HandleCharacterLevelCommand(const char* args)
     if(!extractPlayerTarget(nameStr,&target,&target_guid,&target_name))
         return false;
 
-    int32 oldlevel = target ? target->getLevel() : Player::GetUInt32ValueFromDB(UNIT_FIELD_LEVEL,target_guid);
+    int32 oldlevel = target ? target->getLevel() : Player::GetLevelFromDB(target_guid);
     int32 newlevel = levelStr ? atoi(levelStr) : oldlevel;
 
     if(newlevel < 1)
@@ -3999,7 +4002,7 @@ bool ChatHandler::HandleLevelUpCommand(const char* args)
     if(!extractPlayerTarget(nameStr,&target,&target_guid,&target_name))
         return false;
 
-    int32 oldlevel = target ? target->getLevel() : Player::GetUInt32ValueFromDB(UNIT_FIELD_LEVEL,target_guid);
+    int32 oldlevel = target ? target->getLevel() : Player::GetLevelFromDB(target_guid);
     int32 addlevel = levelStr ? atoi(levelStr) : 1;
     int32 newlevel = oldlevel + addlevel;
 
@@ -4501,9 +4504,6 @@ bool ChatHandler::HandleResetHonorCommand (const char * args)
 
 static bool HandleResetStatsOrLevelHelper(Player* player)
 {
-    PlayerInfo const *info = objmgr.GetPlayerInfo(player->getRace(), player->getClass());
-    if(!info) return false;
-
     ChrClassesEntry const* cEntry = sChrClassesStore.LookupEntry(player->getClass());
     if(!cEntry)
     {
@@ -4526,21 +4526,7 @@ static bool HandleResetStatsOrLevelHelper(Player* player)
 
     // reset only if player not in some form;
     if(player->m_form==FORM_NONE)
-    {
-        switch(player->getGender())
-        {
-            case GENDER_FEMALE:
-                player->SetDisplayId(info->displayId_f);
-                player->SetNativeDisplayId(info->displayId_f);
-                break;
-            case GENDER_MALE:
-                player->SetDisplayId(info->displayId_m);
-                player->SetNativeDisplayId(info->displayId_m);
-                break;
-            default:
-                break;
-        }
-    }
+        player->InitDisplayIds();
 
     player->SetByteValue(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_PVP );
     player->SetByteValue(UNIT_FIELD_BYTES_2, 3, player->m_form);
@@ -4632,39 +4618,49 @@ bool ChatHandler::HandleResetTalentsCommand(const char * args)
     uint64 target_guid;
     std::string target_name;
     if (!extractPlayerTarget((char*)args,&target,&target_guid,&target_name))
+    {
+        // Try reset talents as Hunter Pet
+        Creature* creature = getSelectedCreature();
+        if (!*args && creature && creature->isPet())
+        {
+            Unit *owner = creature->GetOwner();
+            if(owner && owner->GetTypeId() == TYPEID_PLAYER && ((Pet *)creature)->IsPermanentPetFor((Player*)owner))
+            {
+                ((Pet *)creature)->resetTalents(true);
+                ((Player*)owner)->SendTalentsInfoData(true);
+
+                ChatHandler((Player*)owner).SendSysMessage(LANG_RESET_PET_TALENTS);
+                if(!m_session || m_session->GetPlayer()!=((Player*)owner))
+                    PSendSysMessage(LANG_RESET_PET_TALENTS_ONLINE,GetNameLink((Player*)owner).c_str());
+            }
+            return true;
+        }
+
+        SendSysMessage(LANG_NO_CHAR_SELECTED);
+        SetSentErrorMessage(true);
         return false;
+    }
 
     if (target)
     {
         target->resetTalents(true);
-
+        target->SendTalentsInfoData(false);
         ChatHandler(target).SendSysMessage(LANG_RESET_TALENTS);
         if (!m_session || m_session->GetPlayer()!=target)
             PSendSysMessage(LANG_RESET_TALENTS_ONLINE,GetNameLink(target).c_str());
 
+        Pet* pet = target->GetPet();
+        Pet::resetTalentsForAllPetsOf(target,pet);
+        if(pet)
+            target->SendTalentsInfoData(true);
         return true;
     }
     else if (target_guid)
     {
-        CharacterDatabase.PExecute("UPDATE characters SET at_login = at_login | '%u' WHERE guid = '%u'",uint32(AT_LOGIN_RESET_TALENTS), GUID_LOPART(target_guid) );
+        uint32 at_flags = AT_LOGIN_NONE | AT_LOGIN_RESET_PET_TALENTS;
+        CharacterDatabase.PExecute("UPDATE characters SET at_login = at_login | '%u' WHERE guid = '%u'",at_flags, GUID_LOPART(target_guid) );
         std::string nameLink = playerLink(target_name);
         PSendSysMessage(LANG_RESET_TALENTS_OFFLINE,nameLink.c_str());
-        return true;
-    }
-
-    // Try reset talenents as Hunter Pet
-    Creature* creature = getSelectedCreature();
-    if (creature && creature->isPet() && ((Pet *)creature)->getPetType() == HUNTER_PET)
-    {
-        ((Pet *)creature)->resetTalents(true);
-        Unit *owner = creature->GetOwner();
-        if (owner && owner->GetTypeId() == TYPEID_PLAYER)
-        {
-            Player* owner_player = (Player *)owner;
-            ChatHandler(owner_player).SendSysMessage(LANG_RESET_PET_TALENTS);
-            if(!m_session || m_session->GetPlayer()!=owner_player)
-                PSendSysMessage(LANG_RESET_PET_TALENTS_ONLINE,GetNameLink(owner_player).c_str());
-        }
         return true;
     }
 
@@ -4692,7 +4688,7 @@ bool ChatHandler::HandleResetAllCommand(const char * args)
     }
     else if(casename=="talents")
     {
-        atLogin = AT_LOGIN_RESET_TALENTS;
+        atLogin = AtLoginFlags(AT_LOGIN_RESET_TALENTS | AT_LOGIN_RESET_PET_TALENTS);
         sWorld.SendWorldText(LANG_RESETALL_TALENTS);
         if(!m_session)
             SendSysMessage(LANG_RESETALL_TALENTS);
@@ -5610,18 +5606,18 @@ bool ChatHandler::HandlePDumpLoadCommand(const char *args)
     char* name_str = strtok(NULL, " ");
 
     std::string name;
-    if(name_str)
+    if (name_str)
     {
         name = name_str;
         // normalize the name if specified and check if it exists
-        if(!normalizePlayerName(name))
+        if (!normalizePlayerName(name))
         {
             PSendSysMessage(LANG_INVALID_CHARACTER_NAME);
             SetSentErrorMessage(true);
             return false;
         }
 
-        if(!ObjectMgr::IsValidName(name,true))
+        if (ObjectMgr::CheckPlayerName(name,true) != CHAR_NAME_SUCCESS)
         {
             PSendSysMessage(LANG_INVALID_CHARACTER_NAME);
             SetSentErrorMessage(true);
@@ -5633,17 +5629,17 @@ bool ChatHandler::HandlePDumpLoadCommand(const char *args)
 
     uint32 guid = 0;
 
-    if(guid_str)
+    if (guid_str)
     {
         guid = atoi(guid_str);
-        if(!guid)
+        if (!guid)
         {
             PSendSysMessage(LANG_INVALID_CHARACTER_GUID);
             SetSentErrorMessage(true);
             return false;
         }
 
-        if(objmgr.GetPlayerAccountIdByGUID(guid))
+        if (objmgr.GetPlayerAccountIdByGUID(guid))
         {
             PSendSysMessage(LANG_CHARACTER_GUID_IN_USE,guid);
             SetSentErrorMessage(true);
@@ -6051,7 +6047,7 @@ bool ChatHandler::HandleComeToMeCommand(const char *args)
 
     uint32 newFlags = atoi(newFlagStr);
 
-    caster->SetUnitMovementFlags(newFlags);
+    caster->SetMonsterMoveFlags(MonsterMovementFlags(newFlags));
 
     Player* pl = m_session->GetPlayer();
 
@@ -6549,8 +6545,7 @@ bool ChatHandler::HandleModifyGenderCommand(const char *args)
     player->SetByteValue(PLAYER_BYTES_3, 0, gender);
 
     // Change display ID
-    player->SetDisplayId(gender ? info->displayId_f : info->displayId_m);
-    player->SetNativeDisplayId(gender ? info->displayId_f : info->displayId_m);
+    player->InitDisplayIds();
 
     char const* gender_full = gender ? "female" : "male";
 

@@ -159,10 +159,8 @@ struct CreatureInfo
     uint32  HeroicEntry;
     uint32  unk1;
     uint32  unk2;
-    uint32  DisplayID_A;
-    uint32  DisplayID_A2;
-    uint32  DisplayID_H;
-    uint32  DisplayID_H2;
+    uint32  DisplayID_A[2];
+    uint32  DisplayID_H[2];
     char*   Name;
     char*   SubName;
     char*   IconName;
@@ -296,7 +294,7 @@ struct CreatureData
 
 struct CreatureDataAddonAura
 {
-    uint16 spell_id;
+    uint32 spell_id;
     uint8 effect_idx;
 };
 
@@ -452,7 +450,7 @@ typedef std::map<uint32,time_t> CreatureSpellCooldowns;
 // max different by z coordinate for creature aggro reaction
 #define CREATURE_Z_ATTACK_RANGE 3
 
-#define MAX_VENDOR_ITEMS 255                                // Limitation in item count field size in SMSG_LIST_INVENTORY
+#define MAX_VENDOR_ITEMS 150                                // Limitation in 3.x.x item count in SMSG_LIST_INVENTORY
 
 class MANGOS_DLL_SPEC Creature : public Unit
 {
@@ -519,8 +517,17 @@ class MANGOS_DLL_SPEC Creature : public Unit
 
         bool AIM_Initialize();
 
-        void AI_SendMoveToPacket(float x, float y, float z, uint32 time, uint32 MovementFlags, uint8 type);
+        void AI_SendMoveToPacket(float x, float y, float z, uint32 time, MonsterMovementFlags MovementFlags, uint8 type);
         CreatureAI* AI() { return i_AI; }
+
+        void AddMonsterMoveFlag(MonsterMovementFlags f) { m_monsterMoveFlags = MonsterMovementFlags(m_monsterMoveFlags | f); }
+        void RemoveMonsterMoveFlag(MonsterMovementFlags f) { m_monsterMoveFlags = MonsterMovementFlags(m_monsterMoveFlags & ~f); }
+        bool HasMonsterMoveFlag(MonsterMovementFlags f) const { return m_monsterMoveFlags & f; }
+        MonsterMovementFlags GetMonsterMoveFlags() const { return m_monsterMoveFlags; }
+        void SetMonsterMoveFlags(MonsterMovementFlags f) { m_monsterMoveFlags = f; }
+
+        void SendMonsterMoveWithSpeed(float x, float y, float z, uint32 transitTime = 0, Player* player = NULL);
+        void SendMonsterMoveWithSpeedToCurrentDestination(Player* player = NULL);
 
         uint32 GetShieldBlockValue() const                  //dunno mob block value
         {
@@ -631,6 +638,8 @@ class MANGOS_DLL_SPEC Creature : public Unit
         void RemoveCorpse();
         bool isDeadByDefault() const { return m_isDeadByDefault; };
 
+        void ForcedDespawn();
+
         time_t const& GetRespawnTime() const { return m_respawnTime; }
         time_t GetRespawnTimeEx() const;
         void SetRespawnTime(uint32 respawn) { m_respawnTime = respawn ? time(NULL) + respawn : 0; }
@@ -648,6 +657,8 @@ class MANGOS_DLL_SPEC Creature : public Unit
 
         void SendZoneUnderAttackMessage(Player* attacker);
 
+        void SetInCombatWithZone();
+
         bool hasQuest(uint32 quest_id) const;
         bool hasInvolvedQuest(uint32 quest_id)  const;
 
@@ -656,10 +667,10 @@ class MANGOS_DLL_SPEC Creature : public Unit
         virtual uint8 GetPetAutoSpellSize() const { return CREATURE_MAX_SPELLS; }
         virtual uint32 GetPetAutoSpellOnPos(uint8 pos) const
         {
-            if (pos >= CREATURE_MAX_SPELLS || m_charmInfo->GetCharmSpell(pos)->active != ACT_ENABLED)
+            if (pos >= CREATURE_MAX_SPELLS || m_charmInfo->GetCharmSpell(pos)->GetType() != ACT_ENABLED)
                 return 0;
             else
-                return m_charmInfo->GetCharmSpell(pos)->spellId;
+                return m_charmInfo->GetCharmSpell(pos)->GetAction();
         }
 
         void SetCombatStartPosition(float x, float y, float z) { CombatStartX = x; CombatStartY = y; CombatStartZ = z; }
@@ -723,6 +734,7 @@ class MANGOS_DLL_SPEC Creature : public Unit
         GridReference<Creature> m_gridRef;
         CreatureInfo const* m_creatureInfo;                 // in heroic mode can different from ObjMgr::GetCreatureTemplate(GetEntry())
         bool m_isActiveObject;
+        MonsterMovementFlags m_monsterMoveFlags;
 };
 
 class AssistDelayEvent : public BasicEvent

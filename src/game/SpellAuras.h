@@ -184,6 +184,7 @@ class MANGOS_DLL_SPEC Aura
         void HandleAuraModRangedAttackPowerPercent(bool apply, bool Real);
         void HandleAuraModRangedAttackPowerOfStatPercent(bool apply, bool Real);
         void HandleAuraModAttackPowerOfStatPercent(bool apply, bool Real);
+        void HandleAuraModAttackPowerOfArmor(bool apply, bool Real);
         void HandleSpiritOfRedemption(bool apply, bool Real);
         void HandleModManaRegen(bool apply, bool Real);
         void HandleComprehendLanguage(bool apply, bool Real);
@@ -323,6 +324,8 @@ class MANGOS_DLL_SPEC Aura
         bool isAffectedOnSpell(SpellEntry const *spell) const;
     protected:
         Aura(SpellEntry const* spellproto, uint32 eff, int32 *currentBasePoints, Unit *target, Unit *caster = NULL, Item* castItem = NULL);
+
+        bool IsCritFromAbilityAura(Unit* caster, uint32& damage);
 
         Modifier m_modifier;
         SpellModifier *m_spellmod;

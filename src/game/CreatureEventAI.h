@@ -56,6 +56,8 @@ enum EventAI_Type
     EVENT_T_QUEST_COMPLETE          = 20,                   //
     EVENT_T_REACHED_HOME            = 21,                   // NONE
     EVENT_T_RECEIVE_EMOTE           = 22,                   // EmoteId, Condition, CondValue1, CondValue2
+    EVENT_T_BUFFED                  = 23,                   // Param1 = SpellID, Param2 = Number of Time STacked, Param3/4 Repeat Min/Max
+    EVENT_T_TARGET_BUFFED           = 24,                   // Param1 = SpellID, Param2 = Number of Time STacked, Param3/4 Repeat Min/Max
 
     EVENT_T_END,
 };
@@ -103,6 +105,7 @@ enum EventAI_ActionType
     ACTION_T_ZONE_COMBAT_PULSE          = 38,               // No Params
     ACTION_T_CALL_FOR_HELP              = 39,               // Radius
     ACTION_T_SET_SHEATH                 = 40,               // Sheath (0-passive,1-melee,2-ranged)
+    ACTION_T_FORCE_DESPAWN              = 41,               // No Params
     ACTION_T_END,
 };
 
@@ -501,6 +504,15 @@ struct CreatureEventAI_Event
             uint32 conditionValue1;
             uint32 conditionValue2;
         } receive_emote;
+        // EVENT_T_BUFFED                                   = 23
+        // EVENT_T_TARGET_BUFFED                            = 24
+        struct
+        {
+            uint32 spellId;
+            uint32 amount;
+            uint32 repeatMin;
+            uint32 repeatMax;
+        } buffed;
 
         // RAW
         struct
@@ -576,7 +588,6 @@ class MANGOS_DLL_SPEC CreatureEventAI : public CreatureAI
         inline Unit* SelectUnit(AttackingTarget target, uint32 position);
 
         void DoScriptText(int32 textEntry, WorldObject* pSource, Unit* target);
-        void DoZoneInCombat(Unit* pUnit);
         void DoMeleeAttackIfReady();
         bool CanCast(Unit* Target, SpellEntry const *Spell, bool Triggered);
 
@@ -596,7 +607,7 @@ class MANGOS_DLL_SPEC CreatureEventAI : public CreatureAI
         uint8 Phase;                                        //Current phase, max 32 phases
         bool CombatMovementEnabled;                         //If we allow targeted movment gen (movement twoards top threat)
         bool MeleeEnabled;                                  //If we allow melee auto attack
-        uint32 AttackDistance;                              //Distance to attack from
+        float AttackDistance;                               //Distance to attack from
         float AttackAngle;                                  //Angle of attack
 };
 #endif

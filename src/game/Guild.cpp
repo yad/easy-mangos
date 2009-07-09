@@ -281,7 +281,7 @@ bool Guild::LoadRanksFromDB(uint32 GuildId)
             std::string name = m_ranks[i].name;
             uint32 rights = m_ranks[i].rights;
             CharacterDatabase.escape_string(name);
-            CharacterDatabase.PExecute( "INSERT INTO guild_rank (guildid,rid,rname,rights) VALUES ('%u', '%u', '%s', '%u')", GuildId, i+1, name.c_str(), rights);
+            CharacterDatabase.PExecute( "INSERT INTO guild_rank (guildid,rid,rname,rights) VALUES ('%u', '%u', '%s', '%u')", GuildId, uint32(i+1), name.c_str(), rights);
         }
         CharacterDatabase.CommitTransaction();
     }
@@ -352,17 +352,14 @@ bool Guild::FillPlayerData(uint64 guid, MemberSlot* memslot)
     }
     else
     {
-        QueryResult *result = CharacterDatabase.PQuery("SELECT name,data,zone,class FROM characters WHERE guid = '%u'", GUID_LOPART(guid));
+        QueryResult *result = CharacterDatabase.PQuery("SELECT name,level,zone,class FROM characters WHERE guid = '%u'", GUID_LOPART(guid));
         if(!result)
             return false;                                   // player doesn't exist
 
         Field *fields = result->Fetch();
 
         plName = fields[0].GetCppString();
-
-        Tokens data = StrSplit(fields[1].GetCppString(), " ");
-        plLevel = Player::GetUInt32ValueFromArray(data,UNIT_FIELD_LEVEL);
-
+        plLevel = fields[1].GetUInt32();
         plZone = fields[2].GetUInt32();
         plClass = fields[3].GetUInt32();
         delete result;

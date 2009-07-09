@@ -133,17 +133,6 @@ enum ActionButtonUpdateState
     ACTIONBUTTON_DELETED   = 3
 };
 
-struct ActionButton
-{
-    ActionButton() : action(0), type(0), misc(0), uState( ACTIONBUTTON_NEW ) {}
-    ActionButton(uint16 _action, uint8 _type, uint8 _misc) : action(_action), type(_type), misc(_misc), uState( ACTIONBUTTON_NEW ) {}
-
-    uint16 action;
-    uint8 type;
-    uint8 misc;
-    ActionButtonUpdateState uState;
-};
-
 enum ActionButtonType
 {
     ACTION_BUTTON_SPELL = 0,
@@ -151,6 +140,32 @@ enum ActionButtonType
     ACTION_BUTTON_MACRO = 64,
     ACTION_BUTTON_CMACRO= 65,
     ACTION_BUTTON_ITEM  = 128
+};
+
+#define ACTION_BUTTON_ACTION(X) (uint32(X) & 0x00FFFFFF)
+#define ACTION_BUTTON_TYPE(X)   ((uint32(X) & 0xFF000000) >> 24)
+#define MAX_ACTION_BUTTON_ACTION_VALUE (0x00FFFFFF+1)
+
+struct ActionButton
+{
+    ActionButton() : packedData(0), uState( ACTIONBUTTON_NEW ) {}
+
+    uint32 packedData;
+    ActionButtonUpdateState uState;
+
+    // helpers
+    ActionButtonType GetType() const { return ActionButtonType(ACTION_BUTTON_TYPE(packedData)); }
+    uint32 GetAction() const { return ACTION_BUTTON_ACTION(packedData); }
+    void SetActionAndType(uint32 action, ActionButtonType type)
+    {
+        uint32 newData = action | (uint32(type) << 24);
+        if (newData != packedData)
+        {
+            packedData = newData;
+            if (uState != ACTIONBUTTON_NEW)
+                uState = ACTIONBUTTON_CHANGED;
+        }
+    }
 };
 
 #define  MAX_ACTION_BUTTONS 132                             //checked in 2.3.0
@@ -190,6 +205,18 @@ struct PlayerLevelInfo
 
 typedef std::list<uint32> PlayerCreateInfoSpells;
 
+struct PlayerCreateInfoAction
+{
+    PlayerCreateInfoAction() : button(0), type(0), action(0) {}
+    PlayerCreateInfoAction(uint8 _button, uint32 _action, uint8 _type) : button(_button), type(_type), action(_action) {}
+
+    uint8 button;
+    uint8 type;
+    uint32 action;
+};
+
+typedef std::list<PlayerCreateInfoAction> PlayerCreateInfoActions;
+
 struct PlayerInfo
 {
                                                             // existence checked by displayId != 0             // existence checked by displayId != 0
@@ -206,7 +233,7 @@ struct PlayerInfo
     uint16 displayId_f;
     PlayerCreateInfoItems item;
     PlayerCreateInfoSpells spell;
-    std::list<uint16> action[4];
+    PlayerCreateInfoActions action;
 
     PlayerLevelInfo* levelInfo;                             //[level-1] 0..MaxPlayerLevel-1
 };
@@ -272,8 +299,6 @@ struct Runes
             runeState &= ~(1 << index);                     // on cooldown
     }
 };
-
-typedef std::set<uint64> GuardianPetList;
 
 struct EnchantDuration
 {
@@ -370,6 +395,8 @@ enum DrunkenState
     DRUNKEN_DRUNK   = 2,
     DRUNKEN_SMASHED = 3
 };
+
+#define MAX_DRUNKEN   4
 
 enum PlayerFlags
 {
@@ -507,11 +534,12 @@ enum PlayerExtraFlags
 // 2^n values
 enum AtLoginFlags
 {
-    AT_LOGIN_NONE          = 0,
-    AT_LOGIN_RENAME        = 1,
-    AT_LOGIN_RESET_SPELLS  = 2,
-    AT_LOGIN_RESET_TALENTS = 4,
-    AT_LOGIN_CUSTOMIZE     = 8
+    AT_LOGIN_NONE              = 0x00,
+    AT_LOGIN_RENAME            = 0x01,
+    AT_LOGIN_RESET_SPELLS      = 0x02,
+    AT_LOGIN_RESET_TALENTS     = 0x04,
+    AT_LOGIN_CUSTOMIZE         = 0x08,
+    AT_LOGIN_RESET_PET_TALENTS = 0x10,
 };
 
 typedef std::map<uint32, QuestStatusData> QuestStatusMap;
@@ -682,13 +710,46 @@ enum InstanceResetWarningType
     RAID_INSTANCE_WARNING_HOURS     = 1,                    // WARNING! %s is scheduled to reset in %d hour(s).
     RAID_INSTANCE_WARNING_MIN       = 2,                    // WARNING! %s is scheduled to reset in %d minute(s)!
     RAID_INSTANCE_WARNING_MIN_SOON  = 3,                    // WARNING! %s is scheduled to reset in %d minute(s). Please exit the zone or you will be returned to your bind location!
-    RAID_INSTANCE_WELCOME           = 4                     // Welcome to %s. This raid instance is scheduled to reset in %s.
+    RAID_INSTANCE_WELCOME           = 4,                    // Welcome to %s. This raid instance is scheduled to reset in %s.
+    RAID_INSTANCE_EXPIRED           = 5
+};
+
+// used in most movement packets (send and received)
+enum MovementFlags
+{
+    MOVEMENTFLAG_NONE           = 0x00000000,
+    MOVEMENTFLAG_FORWARD        = 0x00000001,
+    MOVEMENTFLAG_BACKWARD       = 0x00000002,
+    MOVEMENTFLAG_STRAFE_LEFT    = 0x00000004,
+    MOVEMENTFLAG_STRAFE_RIGHT   = 0x00000008,
+    MOVEMENTFLAG_LEFT           = 0x00000010,
+    MOVEMENTFLAG_RIGHT          = 0x00000020,
+    MOVEMENTFLAG_PITCH_UP       = 0x00000040,
+    MOVEMENTFLAG_PITCH_DOWN     = 0x00000080,
+    MOVEMENTFLAG_WALK_MODE      = 0x00000100,               // Walking
+    MOVEMENTFLAG_ONTRANSPORT    = 0x00000200,               // Used for flying on some creatures
+    MOVEMENTFLAG_LEVITATING     = 0x00000400,
+    MOVEMENTFLAG_FLY_UNK1       = 0x00000800,
+    MOVEMENTFLAG_JUMPING        = 0x00001000,
+    MOVEMENTFLAG_UNK4           = 0x00002000,
+    MOVEMENTFLAG_FALLING        = 0x00004000,
+    // 0x8000, 0x10000, 0x20000, 0x40000, 0x80000, 0x100000
+    MOVEMENTFLAG_SWIMMING       = 0x00200000,               // appears with fly flag also
+    MOVEMENTFLAG_FLY_UP         = 0x00400000,
+    MOVEMENTFLAG_CAN_FLY        = 0x00800000,
+    MOVEMENTFLAG_FLYING         = 0x01000000,
+    MOVEMENTFLAG_FLYING2        = 0x02000000,               // Actual flying mode
+    MOVEMENTFLAG_SPLINE         = 0x04000000,               // used for flight paths
+    MOVEMENTFLAG_SPLINE2        = 0x08000000,               // used for flight paths
+    MOVEMENTFLAG_WATERWALKING   = 0x10000000,               // prevent unit from falling through water
+    MOVEMENTFLAG_SAFE_FALL      = 0x20000000,               // active rogue safe fall spell (passive)
+    MOVEMENTFLAG_UNK3           = 0x40000000
 };
 
 struct MovementInfo
 {
     // common
-    uint32  flags;
+    uint32 flags;                                           // see enum MovementFlags
     uint16  unk1;
     uint32  time;
     float   x, y, z, o;
@@ -708,16 +769,18 @@ struct MovementInfo
 
     MovementInfo()
     {
-        flags = 0;
+        flags = MOVEMENTFLAG_NONE;
         time = t_time = fallTime = 0;
         unk1 = 0;
         x = y = z = o = t_x = t_y = t_z = t_o = s_pitch = j_unk = j_sinAngle = j_cosAngle = j_xyspeed = u_unk1 = 0.0f;
         t_guid = 0;
     }
 
-    uint32 GetMovementFlags() { return flags; }
-    void AddMovementFlag(uint32 flag) { flags |= flag; }
-    bool HasMovementFlag(uint32 flag) const { return flags & flag; }
+    void AddMovementFlag(MovementFlags f) { flags |= f; }
+    void RemoveMovementFlag(MovementFlags f) { flags &= ~f; }
+    bool HasMovementFlag(MovementFlags f) const { return flags & f; }
+    MovementFlags GetMovementFlags() const { return MovementFlags(flags); }
+    void SetMovementFlags(MovementFlags f) { flags = f; }
 };
 
 // flags that use in movement check for example at spell casting
@@ -793,6 +856,14 @@ enum PlayerLoginQueryIndex
     PLAYER_LOGIN_QUERY_LOADCRITERIAPROGRESS     = 19,
     PLAYER_LOGIN_QUERY_LOADEQUIPMENTSETS        = 20,
     MAX_PLAYER_LOGIN_QUERY                      = 21
+};
+
+enum PlayerDelayedOperations
+{
+    DELAYED_SAVE_PLAYER = 1,
+    DELAYED_RESURRECT_PLAYER = 2,
+    DELAYED_SPELL_CAST_DESERTER = 4,
+    DELAYED_END
 };
 
 // Player summoning auto-decline time (in secs)
@@ -883,7 +954,7 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         bool TeleportTo(WorldLocation const &loc, uint32 options = 0)
         {
-            return TeleportTo(loc.mapid, loc.x, loc.y, loc.z, options);
+            return TeleportTo(loc.mapid, loc.coord_x, loc.coord_y, loc.coord_z, loc.orientation, options);
         }
 
         void SetSummonPoint(uint32 mapid, float x, float y, float z)
@@ -900,7 +971,7 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         void Update( uint32 time );
 
-        void BuildEnumData( QueryResult * result,  WorldPacket * p_data );
+        static bool BuildEnumData( QueryResult * result,  WorldPacket * p_data );
 
         void SetInWater(bool apply);
 
@@ -910,7 +981,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         void SendInitialPacketsBeforeAddToMap();
         void SendInitialPacketsAfterAddToMap();
         void SendTransferAborted(uint32 mapid, uint8 reason, uint8 arg = 0);
-        void SendInstanceResetWarning(uint32 mapid, uint32 time);
+        void SendInstanceResetWarning(uint32 mapid, uint32 difficulty, uint32 time);
 
         Creature* GetNPCIfCanInteractWith(uint64 guid, uint32 npcflagmask);
         bool CanInteractWithNPCs(bool alive = true) const;
@@ -988,10 +1059,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         void RemoveMiniPet();
         Pet* GetMiniPet();
         void SetMiniPet(Pet* pet) { m_miniPet = pet->GetGUID(); }
-        void RemoveGuardians();
-        bool HasGuardianWithEntry(uint32 entry);
-        void AddGuardian(Pet* pet) { m_guardianPets.insert(pet->GetGUID()); }
-        GuardianPetList const& GetGuardians() const { return m_guardianPets; }
         void Uncharm();
         uint32 GetPhaseMaskForSpawn() const;                // used for proper set phase for DB at GM-mode creature/GO spawn
 
@@ -1119,7 +1186,7 @@ class MANGOS_DLL_SPEC Player : public Unit
             return mainItem && mainItem->GetProto()->InventoryType == INVTYPE_2HWEAPON && !CanTitanGrip();
         }
         void SendNewItem( Item *item, uint32 count, bool received, bool created, bool broadcast = false );
-        bool BuyItemFromVendor(uint64 vendorguid, uint32 item, uint8 count, uint64 bagguid, uint8 slot);
+        bool BuyItemFromVendor(uint64 vendorguid, uint32 item, uint8 count, uint8 bag, uint8 slot);
 
         float GetReputationPriceDiscount( Creature const* pCreature ) const;
         Player* GetTrader() const { return pTrader; }
@@ -1263,6 +1330,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         static uint32 GetUInt32ValueFromDB(uint16 index, uint64 guid);
         static float  GetFloatValueFromDB(uint16 index, uint64 guid);
         static uint32 GetZoneIdFromDB(uint64 guid);
+        static uint32 GetLevelFromDB(uint64 guid);
         static bool   LoadPositionFromDB(uint32& mapid, float& x,float& y,float& z,float& o, bool& in_flight, uint64 guid);
 
         /*********************************************************/
@@ -1271,6 +1339,7 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         void SaveToDB();
         void SaveInventoryAndGoldToDB();                    // fast save function for item/money cheating preventing
+        void SaveGoldToDB();
         void SaveDataFieldToDB();
         static bool SaveValuesArrayInDB(Tokens const& data,uint64 guid);
         static void SetUInt32ValueInArray(Tokens& data,uint16 index, uint32 value);
@@ -1373,6 +1442,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         void PetSpellInitialize();
         void CharmSpellInitialize();
         void PossessSpellInitialize();
+        void RemovePetActionBar();
+
         bool HasSpell(uint32 spell) const;
         bool HasActiveSpell(uint32 spell) const;            // show in spellbook
         TrainerSpellState GetTrainerSpellState(TrainerSpell const* trainer_spell) const;
@@ -1383,7 +1454,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         void SendInitialSpells();
         bool addSpell(uint32 spell_id, bool active, bool learning, bool dependent, bool disabled);
         void learnSpell(uint32 spell_id, bool dependent);
-        void removeSpell(uint32 spell_id, bool disabled = false, bool update_action_bar_for_low_rank = false);
+        void removeSpell(uint32 spell_id, bool disabled = false, bool learn_low_rank = true);
         void resetSpells();
         void learnDefaultSpells();
         void learnQuestRewardedSpells();
@@ -1423,11 +1494,15 @@ class MANGOS_DLL_SPEC Player : public Unit
         PlayerSpellMap const& GetSpellMap() const { return m_spells; }
         PlayerSpellMap      & GetSpellMap()       { return m_spells; }
 
+        SpellCooldowns const& GetSpellCooldownMap() const { return m_spellCooldowns; }
+
         void AddSpellMod(SpellModifier* mod, bool apply);
         bool IsAffectedBySpellmod(SpellEntry const *spellInfo, SpellModifier *mod, Spell const* spell = NULL);
         template <class T> T ApplySpellMod(uint32 spellId, SpellModOp op, T &basevalue, Spell const* spell = NULL);
         void RemoveSpellMods(Spell const* spell);
 
+        static uint32 const infinityCooldownDelay = MONTH;  // used for set "infinity cooldowns" for spells and check
+        static uint32 const infinityCooldownDelayCheck = MONTH/2;
         bool HasSpellCooldown(uint32 spell_id) const
         {
             SpellCooldowns::const_iterator itr = m_spellCooldowns.find(spell_id);
@@ -1444,6 +1519,9 @@ class MANGOS_DLL_SPEC Player : public Unit
         void SendCooldownEvent(SpellEntry const *spellInfo, uint32 itemId = 0, Spell* spell = NULL);
         void ProhibitSpellScholl(SpellSchoolMask idSchoolMask, uint32 unTimeMs );
         void RemoveSpellCooldown(uint32 spell_id, bool update = false);
+        void RemoveSpellCategoryCooldown(uint32 cat, bool update = false);
+        void SendClearCooldown( uint32 spell_id, Unit* target );
+
         void RemoveArenaSpellCooldowns();
         void RemoveAllSpellCooldown();
         void _LoadSpellCooldowns(QueryResult *result);
@@ -1475,7 +1553,7 @@ class MANGOS_DLL_SPEC Player : public Unit
             m_cinematic = cine;
         }
 
-        bool addActionButton(uint8 button, uint16 action, uint8 type, uint8 misc);
+        ActionButton* addActionButton(uint8 button, uint32 action, uint8 type);
         void removeActionButton(uint8 button);
         void SendInitialActionButtons() const;
 
@@ -1535,6 +1613,7 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         void SetDifficulty(uint32 dungeon_difficulty) { m_dungeonDifficulty = dungeon_difficulty; }
         uint8 GetDifficulty() { return m_dungeonDifficulty; }
+        bool IsHeroic() { return m_dungeonDifficulty == DIFFICULTY_HEROIC; }
 
         bool UpdateSkill(uint32 skill_id, uint32 step);
         bool UpdateSkillPro(uint16 SkillId, int32 Chance, uint32 step);
@@ -1612,11 +1691,10 @@ class MANGOS_DLL_SPEC Player : public Unit
         void SendDelayResponse(const uint32);
         void SendLogXPGain(uint32 GivenXP,Unit* victim,uint32 RestXP);
 
-        //notifiers
+        // notifiers
         void SendAttackSwingCantAttack();
         void SendAttackSwingCancelAttack();
         void SendAttackSwingDeadTarget();
-        void SendAttackSwingNotStanding();
         void SendAttackSwingNotInRange();
         void SendAttackSwingBadFacingAttack();
         void SendAutoRepeatCancel();
@@ -1692,6 +1770,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         bool IsBeingTeleportedFar() const { return mSemaphoreTeleport_Far; }
         void SetSemaphoreTeleportNear(bool semphsetting) { mSemaphoreTeleport_Near = semphsetting; }
         void SetSemaphoreTeleportFar(bool semphsetting) { mSemaphoreTeleport_Far = semphsetting; }
+        void ProcessDelayedOperations();
 
         void CheckExploreSystem(void);
 
@@ -1699,6 +1778,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         uint32 GetTeam() const { return m_team; }
         static uint32 getFactionForRace(uint8 race);
         void setFactionForRace(uint8 race);
+
+        void InitDisplayIds();
 
         bool IsAtGroupRewardDistance(WorldObject const* pRewardSource) const;
         bool RewardPlayerAndGroupAtKill(Unit* pVictim);
@@ -1934,6 +2015,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         /***                 VARIOUS SYSTEMS                   ***/
         /*********************************************************/
         MovementInfo m_movementInfo;
+        bool HasMovementFlag(MovementFlags f) const;        // for script access to m_movementInfo.HasMovementFlag
         void UpdateFallInformationIfNeed(MovementInfo const& minfo,uint16 opcode);
         Unit *m_mover;
         void SetFallInformation(uint32 time, float z)
@@ -1943,6 +2025,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         }
         void HandleFall(MovementInfo const& movementInfo);
 
+        void BuildTeleportAckMsg( WorldPacket *data, float x, float y, float z, float ang) const;
+
         bool isMoving() const { return m_movementInfo.HasMovementFlag(movementFlagsMask); }
         bool isMovingOrTurning() const { return m_movementInfo.HasMovementFlag(movementOrTurningFlagsMask); }
 
@@ -1951,6 +2035,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         bool IsAllowUseFlyMountsHere() const;
 
         void SetClientControl(Unit* target, uint8 allowMove);
+        void SetMover(Unit* target) { m_mover = target ? target : this; }
 
         void EnterVehicle(Vehicle *vehicle);
         void ExitVehicle(Vehicle *vehicle);
@@ -2010,6 +2095,7 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         bool HasAtLoginFlag(AtLoginFlags f) const { return m_atLoginFlags & f; }
         void SetAtLoginFlag(AtLoginFlags f) { m_atLoginFlags |= f; }
+        void RemoveAtLoginFlag(AtLoginFlags f, bool in_db_also = false);
 
         LookingForGroup m_lookingForGroup;
 
@@ -2186,8 +2272,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         void outDebugValues() const;
         uint64 m_lootGuid;
 
-        uint32 m_race;
-        uint32 m_class;
         uint32 m_team;
         uint32 m_nextSave;
         time_t m_speakTime;
@@ -2308,7 +2392,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         uint64 m_auraUpdateMask;
 
         uint64 m_miniPet;
-        GuardianPetList m_guardianPets;
 
         // Player summoning
         time_t m_summon_expire;
@@ -2331,6 +2414,13 @@ class MANGOS_DLL_SPEC Player : public Unit
         int32 CalculateReputationGain(uint32 creatureOrQuestLevel, int32 rep, int32 faction, bool for_quest);
         void AdjustQuestReqItemCount( Quest const* pQuest, QuestStatusData& questStatusData );
 
+        bool IsCanDelayTeleport() const { return m_bCanDelayTeleport; }
+        void SetCanDelayTeleport(bool setting) { m_bCanDelayTeleport = setting; }
+        bool IsHasDelayedTeleport() const { return m_bHasDelayedTeleport; }
+        void SetDelayedTeleportFlag(bool setting) { m_bHasDelayedTeleport = setting; }
+
+        void ScheduleDelayedOperation(uint32 operation);
+
         GridReference<Player> m_gridRef;
         MapReference m_mapRef;
 
@@ -2344,8 +2434,13 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         // Current teleport data
         WorldLocation m_teleport_dest;
+        uint32 m_teleport_options;
         bool mSemaphoreTeleport_Near;
         bool mSemaphoreTeleport_Far;
+
+        uint32 m_DelayedOperations;
+        bool m_bCanDelayTeleport;
+        bool m_bHasDelayedTeleport;
 
         // Temporary removed pet cache
         uint32 m_temporaryUnsummonedPetNumber;

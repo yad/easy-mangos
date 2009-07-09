@@ -378,6 +378,20 @@ void CreatureEventAIMgr::LoadCreatureEventAI_Scripts()
                     break;
                 }
 
+                case EVENT_T_BUFFED:
+                case EVENT_T_TARGET_BUFFED:
+                {
+                    SpellEntry const* pSpell = sSpellStore.LookupEntry(temp.buffed.spellId);
+                    if (!pSpell)
+                    {
+                        sLog.outErrorDb("CreatureEventAI:  Creature %u has non-existant SpellID(%u) defined in event %u.", temp.creature_id, temp.spell_hit.spellId, i);
+                        continue;
+                    }
+                    if (temp.buffed.repeatMax < temp.buffed.repeatMin)
+                        sLog.outErrorDb("CreatureEventAI:  Creature %u are using repeatable event(%u) with param4 < param3 (RepeatMax < RepeatMin). Event will never repeat.", temp.creature_id, i);
+                    break;
+                }
+
                 default:
                     sLog.outErrorDb("CreatureEventAI: Creature %u using not checked at load event (%u) in event %u. Need check code update?", temp.creature_id, temp.event_id, i);
                     break;
@@ -459,9 +473,8 @@ void CreatureEventAIMgr::LoadCreatureEventAI_Scripts()
                                     action.morph.modelId = 0;
                                 }
                             }
-
-                            break;
                         }
+                        break;
                     case ACTION_T_SOUND:
                         if (!sSoundEntriesStore.LookupEntry(action.sound.soundId))
                             sLog.outErrorDb("CreatureEventAI:  Event %u Action %u uses non-existant SoundID %u.", i, j+1, action.sound.soundId);
@@ -652,6 +665,7 @@ void CreatureEventAIMgr::LoadCreatureEventAI_Scripts()
                     case ACTION_T_FLEE_FOR_ASSIST:          //No Params
                     case ACTION_T_DIE:                      //No Params
                     case ACTION_T_ZONE_COMBAT_PULSE:        //No Params
+                    case ACTION_T_FORCE_DESPAWN:            //No Params
                     case ACTION_T_AUTO_ATTACK:              //AllowAttackState (0 = stop attack, anything else means continue attacking)
                     case ACTION_T_COMBAT_MOVEMENT:          //AllowCombatMovement (0 = stop combat based movement, anything else continue attacking)
                     case ACTION_T_RANGED_MOVEMENT:          //Distance, Angle

@@ -102,10 +102,16 @@ class MANGOS_DLL_DECL ObjectAccessor : public MaNGOS::Singleton<ObjectAccessor, 
                 return NULL;
 
             if (IS_PLAYER_GUID(guid))
-                return (Unit*)HashMapHolder<Player>::Find(guid);
+            {
+                Unit * u = (Unit*)HashMapHolder<Player>::Find(guid);
+                if(!u || !u->IsInWorld())
+                    return NULL;
 
-            if (Unit* u = (Unit*)HashMapHolder<Pet>::Find(guid))
                 return u;
+            }
+
+            if (IS_PET_GUID(guid))
+                return (Unit*)HashMapHolder<Pet>::Find(guid);
 
             return (Unit*)HashMapHolder<Creature>::Find(guid);
         }
@@ -186,7 +192,6 @@ class MANGOS_DLL_DECL ObjectAccessor : public MaNGOS::Singleton<ObjectAccessor, 
         }
 
         void Update(uint32 diff);
-        void UpdatePlayers(uint32 diff);
 
         Corpse* GetCorpseForPlayerGUID(uint64 guid);
         void RemoveCorpse(Corpse *corpse);

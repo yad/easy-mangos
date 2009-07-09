@@ -51,15 +51,17 @@ enum AchievementCriteriaDataType
     ACHIEVEMENT_CRITERIA_DATA_TYPE_S_AREA              = 6, // area id        0
     ACHIEVEMENT_CRITERIA_DATA_TYPE_T_AURA              = 7, // spell_id       effect_idx
     ACHIEVEMENT_CRITERIA_DATA_TYPE_VALUE               = 8, // minvalue                     value provided with achievement update must be not less that limit
-    ACHIEVEMENT_CRITERIA_DATA_TYPE_T_LEVEL             = 9, // minlevel						minlevel of target
-    ACHIEVEMENT_CRITERIA_DATA_TYPE_T_GENDER            = 10,// gender						0=male; 1=female	
+    ACHIEVEMENT_CRITERIA_DATA_TYPE_T_LEVEL             = 9, // minlevel                     minlevel of target
+    ACHIEVEMENT_CRITERIA_DATA_TYPE_T_GENDER            = 10,// gender                       0=male; 1=female
     ACHIEVEMENT_CRITERIA_DATA_TYPE_DISABLED            = 11,//                              used to prevent achievement creteria complete if not all requirement implemented and listed in table
     ACHIEVEMENT_CRITERIA_DATA_TYPE_MAP_DIFFICULTY      = 12,// difficulty                   normal/heroic difficulty for current event map
     ACHIEVEMENT_CRITERIA_DATA_TYPE_MAP_PLAYER_COUNT    = 13,// count                        "with less than %u people in the zone"
     ACHIEVEMENT_CRITERIA_DATA_TYPE_T_TEAM              = 14,// team                         HORDE(67), ALLIANCE(469)
+    ACHIEVEMENT_CRITERIA_DATA_TYPE_S_DRUNK             = 15,// drunken_state  0             (enum DrunkenState) of player
+    ACHIEVEMENT_CRITERIA_DATA_TYPE_HOLIDAY             = 16,// holiday_id     0             event in holiday time
 };
 
-#define MAX_ACHIEVEMENT_CRITERIA_DATA_TYPE               15 // maximum value in AchievementCriteriaDataType enum
+#define MAX_ACHIEVEMENT_CRITERIA_DATA_TYPE               17 // maximum value in AchievementCriteriaDataType enum
 
 class Player;
 class Unit;
@@ -134,6 +136,16 @@ struct AchievementCriteriaData
         {
             uint32 team;
         } team;
+        // ACHIEVEMENT_CRITERIA_DATA_TYPE_S_DRUNK           = 15
+        struct
+        {
+            uint32 state;
+        } drunk;
+        // ACHIEVEMENT_CRITERIA_DATA_TYPE_HOLIDAY
+        struct
+        {
+            uint16 id;
+        } holiday;
         // ...
         struct
         {

@@ -1053,6 +1053,10 @@ WorldObject::WorldObject()
 {
 }
 
+void WorldObject::CleanupsBeforeDelete()
+{
+}
+
 void WorldObject::_Create( uint32 guidlow, HighGuid guidhigh, uint32 mapid, uint32 phaseMask )
 {
     Object::_Create(guidlow, 0, guidhigh);
@@ -1063,17 +1067,17 @@ void WorldObject::_Create( uint32 guidlow, HighGuid guidhigh, uint32 mapid, uint
 
 uint32 WorldObject::GetZoneId() const
 {
-    return MapManager::Instance().GetBaseMap(m_mapId)->GetZoneId(m_positionX, m_positionY, m_positionZ);
+    return GetBaseMap()->GetZoneId(m_positionX, m_positionY, m_positionZ);
 }
 
 uint32 WorldObject::GetAreaId() const
 {
-    return MapManager::Instance().GetBaseMap(m_mapId)->GetAreaId(m_positionX, m_positionY, m_positionZ);
+    return GetBaseMap()->GetAreaId(m_positionX, m_positionY, m_positionZ);
 }
 
 void WorldObject::GetZoneAndAreaId(uint32& zoneid, uint32& areaid) const
 {
-    MapManager::Instance().GetBaseMap(m_mapId)->GetZoneAndAreaId(zoneid, areaid, m_positionX, m_positionY, m_positionZ);
+    GetBaseMap()->GetZoneAndAreaId(zoneid, areaid, m_positionX, m_positionY, m_positionZ);
 }
 
 InstanceData* WorldObject::GetInstanceData()
@@ -1345,7 +1349,7 @@ void WorldObject::GetRandomPoint( float x, float y, float z, float distance, flo
 
 void WorldObject::UpdateGroundPositionZ(float x, float y, float &z) const
 {
-    float new_z = MapManager::Instance().GetBaseMap(GetMapId())->GetHeight(x,y,z,true);
+    float new_z = GetBaseMap()->GetHeight(x,y,z,true);
     if(new_z > INVALID_HEIGHT)
         z = new_z+ 0.05f;                                   // just to be sure that we are not a few pixel under the surface
 }
@@ -1511,51 +1515,20 @@ void WorldObject::BuildMonsterChat(WorldPacket *data, uint8 msgtype, char const*
     *data << (uint8)0;                                      // ChatTag
 }
 
-void WorldObject::BuildHeartBeatMsg(WorldPacket *data) const
-{
-    //Heartbeat message cannot be used for non-units
-    if (!isType(TYPEMASK_UNIT))
-        return;
-
-    data->Initialize(MSG_MOVE_HEARTBEAT, 32);
-    data->append(GetPackGUID());
-    *data << uint32(((Unit*)this)->GetUnitMovementFlags()); // movement flags
-    *data << uint16(0);                                     // 2.3.0
-    *data << uint32(getMSTime());                           // time
-    *data << m_positionX;
-    *data << m_positionY;
-    *data << m_positionZ;
-    *data << m_orientation;
-    *data << uint32(0);
-}
-
-void WorldObject::BuildTeleportAckMsg(WorldPacket *data, float x, float y, float z, float ang) const
-{
-    //TeleportAck message cannot be used for non-units
-    if (!isType(TYPEMASK_UNIT))
-        return;
-
-    data->Initialize(MSG_MOVE_TELEPORT_ACK, 41);
-    data->append(GetPackGUID());
-    *data << uint32(0);                                     // this value increments every time
-    *data << uint32(((Unit*)this)->GetUnitMovementFlags()); // movement flags
-    *data << uint16(0);                                     // 2.3.0
-    *data << uint32(getMSTime());                           // time
-    *data << x;
-    *data << y;
-    *data << z;
-    *data << ang;
-    *data << uint32(0);
-}
-
 void WorldObject::SendMessageToSet(WorldPacket *data, bool /*bToSelf*/)
 {
-    GetMap()->MessageBroadcast(this, data);
+    //if object is in world, map for it already created!
+    Map * _map = IsInWorld() ? GetMap() : MapManager::Instance().FindMap(GetMapId(), GetInstanceId());
+    if(_map)
+        _map->MessageBroadcast(this, data);
 }
 
 void WorldObject::SendMessageToSetInRange(WorldPacket *data, float dist, bool /*bToSelf*/)
 {
-    GetMap()->MessageDistBroadcast(this, data, dist);
+    //if object is in world, map for it already created!
+    Map * _map = IsInWorld() ? GetMap() : MapManager::Instance().FindMap(GetMapId(), GetInstanceId());
+    if(_map)
+        _map->MessageDistBroadcast(this, data, dist);
 }
 
 void WorldObject::SendObjectDeSpawnAnim(uint64 guid)
@@ -1572,19 +1545,12 @@ Map* WorldObject::GetMap() const
 
 Map const* WorldObject::GetBaseMap() const
 {
-    return MapManager::Instance().GetBaseMap(GetMapId());
+    return MapManager::Instance().CreateBaseMap(GetMapId());
 }
 
 void WorldObject::AddObjectToRemoveList()
 {
-    Map* map = GetMap();
-    if(!map)
-    {
-        sLog.outError("Object (TypeId: %u Entry: %u GUID: %u) at attempt add to move list not have valid map (Id: %u).",GetTypeId(),GetEntry(),GetGUIDLow(),GetMapId());
-        return;
-    }
-
-    map->AddObjectToRemoveList(this);
+    GetMap()->AddObjectToRemoveList(this);
 }
 
 Creature* WorldObject::SummonCreature(uint32 id, float x, float y, float z, float ang,TempSummonType spwtype,uint32 despwtime)
