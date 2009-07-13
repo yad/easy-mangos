@@ -310,12 +310,6 @@ void Spell::EffectSchoolDMG(uint32 effect_idx)
         {
             case SPELLFAMILY_GENERIC:
             {
-                //Gore
-                if (m_spellInfo->SpellIconID == 2269 )
-                {
-                    damage+= rand()%2 ? damage : 0;
-                }
-
                 switch(m_spellInfo->Id)                     // better way to check unknown
                 {
                     // Meteor like spells (divided damage to targets)
@@ -436,26 +430,15 @@ void Spell::EffectSchoolDMG(uint32 effect_idx)
                     m_caster->SetPower(POWER_ENERGY,0);
                 }
                 // Rake
-                else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000000000001000))
+                else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000000000001000) && m_spellInfo->Effect[2]==SPELL_EFFECT_ADD_COMBO_POINTS)
                 {
+                    // $AP*0.01 bonus
                     damage += int32(m_caster->GetTotalAttackPowerValue(BASE_ATTACK) / 100);
                 }
                 // Swipe
                 else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0010000000000000))
                 {
                     damage += int32(m_caster->GetTotalAttackPowerValue(BASE_ATTACK)*0.08f);
-                }
-                //Mangle Bonus for the initial damage of Lacerate and Rake
-                if ((m_spellInfo->SpellFamilyFlags==UI64LIT(0x0000000000001000) && m_spellInfo->SpellIconID==494) ||
-                    (m_spellInfo->SpellFamilyFlags==UI64LIT(0x0000010000000000) && m_spellInfo->SpellIconID==2246))
-                {
-                    Unit::AuraList const& mDummyAuras = unitTarget->GetAurasByType(SPELL_AURA_DUMMY);
-                    for(Unit::AuraList::const_iterator i = mDummyAuras.begin(); i != mDummyAuras.end(); ++i)
-                        if(((*i)->GetSpellProto()->SpellFamilyFlags & UI64LIT(0x0000044000000000)) && (*i)->GetSpellProto()->SpellFamilyName==SPELLFAMILY_DRUID)
-                        {
-                            damage = int32(damage*(100.0f+(*i)->GetModifier()->m_amount)/100.0f);
-                            break;
-                        }
                 }
                 break;
             }
@@ -527,8 +510,13 @@ void Spell::EffectSchoolDMG(uint32 effect_idx)
             }
             case SPELLFAMILY_HUNTER:
             {
+                //Gore
+                if (m_spellInfo->SpellIconID == 1578)
+                {
+                    damage+= rand()%2 ? damage : 0;
+                }
                 // Mongoose Bite
-                if ((m_spellInfo->SpellFamilyFlags & UI64LIT(0x000000002)) && m_spellInfo->SpellVisual[0]==342)
+                else if ((m_spellInfo->SpellFamilyFlags & UI64LIT(0x000000002)) && m_spellInfo->SpellVisual[0]==342)
                 {
                     damage += int32(m_caster->GetTotalAttackPowerValue(BASE_ATTACK)*0.2f);
                 }
