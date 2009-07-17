@@ -1254,9 +1254,6 @@ void World::SetInitialWorldSettings()
     sLog.outString( "Loading Spell target coordinates..." );
     spellmgr.LoadSpellTargetPositions();
 
-    sLog.outString( "Loading SpellAffect definitions..." );
-    spellmgr.LoadSpellAffects();
-
     sLog.outString( "Loading spell pet auras..." );
     spellmgr.LoadSpellPetAuras();
 
