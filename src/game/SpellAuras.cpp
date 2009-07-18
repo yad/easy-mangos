@@ -1282,19 +1282,13 @@ void Aura::HandleAddModifier(bool apply, bool Real)
         mod->spellId = GetId();
 
         uint32 const *ptr;
-        SpellAffectEntry const *spellAffect = spellmgr.GetSpellAffect(GetId(), m_effIndex);
-        if (spellAffect)
-            ptr = &spellAffect->SpellClassMask[0];
-        else
+        switch (m_effIndex)
         {
-            switch (m_effIndex)
-            {
-                case 0: ptr = &m_spellProto->EffectSpellClassMaskA[0]; break;
-                case 1: ptr = &m_spellProto->EffectSpellClassMaskB[0]; break;
-                case 2: ptr = &m_spellProto->EffectSpellClassMaskC[0]; break;
-                default:
-                    return;
-            }
+            case 0: ptr = &m_spellProto->EffectSpellClassMaskA[0]; break;
+            case 1: ptr = &m_spellProto->EffectSpellClassMaskB[0]; break;
+            case 2: ptr = &m_spellProto->EffectSpellClassMaskC[0]; break;
+            default:
+                return;
         }
 
         mod->mask = (uint64)ptr[0] | (uint64)ptr[1]<<32;
@@ -1328,19 +1322,13 @@ void Aura::HandleAddTargetTrigger(bool apply, bool /*Real*/)
         mod->spellId = GetId();
 
         uint32 const *ptr;
-        SpellAffectEntry const *spellAffect = spellmgr.GetSpellAffect(GetId(), m_effIndex);
-        if (spellAffect)
-            ptr = &spellAffect->SpellClassMask[0];
-        else
+        switch (m_effIndex)
         {
-            switch (m_effIndex)
-            {
-                case 0: ptr = &m_spellProto->EffectSpellClassMaskA[0]; break;
-                case 1: ptr = &m_spellProto->EffectSpellClassMaskB[0]; break;
-                case 2: ptr = &m_spellProto->EffectSpellClassMaskC[0]; break;
-                default:
-                    return;
-            }
+            case 0: ptr = &m_spellProto->EffectSpellClassMaskA[0]; break;
+            case 1: ptr = &m_spellProto->EffectSpellClassMaskB[0]; break;
+            case 2: ptr = &m_spellProto->EffectSpellClassMaskC[0]; break;
+            default:
+                return;
         }
 
         mod->mask = (uint64)ptr[0] | (uint64)ptr[1]<<32;
@@ -4306,10 +4294,10 @@ void Aura::HandlePeriodicDamage(bool apply, bool Real)
             case SPELLFAMILY_DRUID:
             {
                 // Rake
-                if (m_spellProto->SpellFamilyFlags & UI64LIT(0x0000000000001000))
+                if (m_spellProto->SpellFamilyFlags & UI64LIT(0x0000000000001000) && m_spellProto->Effect[2]==SPELL_EFFECT_ADD_COMBO_POINTS)
                 {
-                    // $AP*0.06 bonus per tick
-                    m_modifier.m_amount += int32(caster->GetTotalAttackPowerValue(BASE_ATTACK) * 6 / 100);
+                    // $AP*0.18 bonus per tick
+                    m_modifier.m_amount += int32(caster->GetTotalAttackPowerValue(BASE_ATTACK) * 18 / 100);
                     return;
                 }
                 // Lacerate
