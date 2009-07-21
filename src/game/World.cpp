@@ -1446,9 +1446,11 @@ void World::SetInitialWorldSettings()
     poolhandler.Initialize();
 
     sLog.outString("Starting Autobroadcast system by Xeross..." );
+
     sLog.outString("Starting Game Event system..." );
     uint32 nextGameEvent = gameeventmgr.Initialize();
     m_timers[WUPDATE_EVENTS].SetInterval(nextGameEvent);    //depend on next event
+
     sLog.outString( "WORLD: World initialized" );
 }
 
