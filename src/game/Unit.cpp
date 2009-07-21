@@ -3138,8 +3138,8 @@ void Unit::InterruptSpell(uint32 spellType, bool withDelayed)
         // send autorepeat cancel message for autorepeat spells
         if (spellType == CURRENT_AUTOREPEAT_SPELL)
         {
-            if(GetTypeId()==TYPEID_PLAYER)
-                ((Player*)this)->SendAutoRepeatCancel();
+            if(GetTypeId() == TYPEID_PLAYER)
+                ((Player*)this)->SendAutoRepeatCancel(this);
         }
 
         if (m_currentSpells[spellType]->getState() != SPELL_STATE_FINISHED)
@@ -7456,6 +7456,34 @@ void Unit::RemoveAllAttackers()
     }
 }
 
+bool Unit::HasAuraStateForCaster(AuraState flag, uint64 caster) const
+{
+    if(!HasAuraState(flag))
+        return false;
+
+    // single per-caster aura state
+    if(flag == AURA_STATE_CONFLAGRATE)
+    {
+        Unit::AuraList const& dotList = GetAurasByType(SPELL_AURA_PERIODIC_DAMAGE);
+        for(Unit::AuraList::const_iterator i = dotList.begin(); i != dotList.end(); ++i)
+        {
+            if ((*i)->GetSpellProto()->SpellFamilyName == SPELLFAMILY_WARLOCK &&
+                (*i)->GetCasterGUID() == caster &&
+                //  Immolate
+                (((*i)->GetSpellProto()->SpellFamilyFlags & UI64LIT(0x0000000000000004)) ||
+                // Shadowflame
+                ((*i)->GetSpellProto()->SpellFamilyFlags2 & 0x00000002)))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    return true;
+}
+
 void Unit::ModifyAuraState(AuraState flag, bool apply)
 {
     if (apply)
@@ -7508,7 +7536,6 @@ void Unit::ModifyAuraState(AuraState flag, bool apply)
         }
     }
 }
-
 Unit *Unit::GetOwner() const
 {
     if(uint64 ownerid = GetOwnerGUID())
