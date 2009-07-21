@@ -372,7 +372,7 @@ Weather* World::AddWeather(uint32 zone_id)
     if(!weatherChances)
         return NULL;
 
-    Weather* w = new Weather(zone_id,weatherChances);
+    Weather* w = new Weather(zone_id,weatherChances);sLog.outString("Starting Autobroadcast system by Xeross..." );
     m_weathers[w->GetZone()] = w;
     w->ReGenerate();
     w->UpdateWeather();
@@ -1445,10 +1445,10 @@ void World::SetInitialWorldSettings()
     sLog.outString("Starting objects Pooling system..." );
     poolhandler.Initialize();
 
+    sLog.outString("Starting Autobroadcast system by Xeross..." );
     sLog.outString("Starting Game Event system..." );
     uint32 nextGameEvent = gameeventmgr.Initialize();
     m_timers[WUPDATE_EVENTS].SetInterval(nextGameEvent);    //depend on next event
-    sLog.outString("Starting Autobroadcast system by Xeross..." );
     sLog.outString( "WORLD: World initialized" );
 }
 
