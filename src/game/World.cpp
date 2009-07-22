@@ -372,7 +372,7 @@ Weather* World::AddWeather(uint32 zone_id)
     if(!weatherChances)
         return NULL;
 
-    Weather* w = new Weather(zone_id,weatherChances);sLog.outString("Starting Autobroadcast system by Xeross..." );
+    Weather* w = new Weather(zone_id,weatherChances);
     m_weathers[w->GetZone()] = w;
     w->ReGenerate();
     w->UpdateWeather();
