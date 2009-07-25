@@ -23,7 +23,7 @@ DROP TABLE IF EXISTS `db_version`;
 CREATE TABLE `db_version` (
   `version` varchar(120) default NULL,
   `creature_ai_version` varchar(120) default NULL,
-  `required_8213_01_mangos_spell_bonus_data` bit(1) default NULL
+  `required_8247_01_mangos_spell_bonus_data` bit(1) default NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 ROW_FORMAT=FIXED COMMENT='Used DB version notes';
 
 --
@@ -17676,7 +17676,10 @@ INSERT INTO `spell_proc_event` VALUES
 (63108, 0x00000000,  5, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (63156, 0x00000000,  0, 0x00000001, 0x00000040, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (63158, 0x00000000,  0, 0x00000001, 0x00000040, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(63245, 0x00000000,  5, 0x00000100, 0x00800000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0);
+(63245, 0x00000000,  5, 0x00000100, 0x00800000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
+(63730, 0x00000000,  6, 0x00000800, 0x00000004, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
+(63733, 0x00000000,  6, 0x00000800, 0x00000004, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
+(63737, 0x00000000,  6, 0x00000800, 0x00000004, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0);
 /*!40000 ALTER TABLE `spell_proc_event` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -17696,6 +17699,21 @@ CREATE TABLE `spell_bonus_data` (
 LOCK TABLES `spell_bonus_data` WRITE;
 /*!40000 ALTER TABLE `spell_bonus_data` DISABLE KEYS */;
 INSERT INTO `spell_bonus_data` VALUES
+('49941', '0', '0', '0.04', 'Death Knight - Blood Boil'),
+('55078', '0', '0', '0.055', 'Death Knight - Blood Plague Dummy Proc'),
+('50444', '0', '0', '0.105', 'Death Knight - Corpse Explosion Triggered'),
+('52212', '0', '0', '0.0475', 'Death Knight - Death and Decay Triggered'),
+('47632', '0', '0', '0.15', 'Death Knight - Death Coil Damage'),
+('47633', '0', '0', '0.15', 'Death Knight - Death Coil Heal'),
+('55095', '0', '0', '0.055', 'Death Knight - Frost Fever'),
+('49184', '0', '0', '0.1', 'Death Knight - Howling Blast'),
+('45477', '0', '0', '0.1', 'Death Knight - Icy Touch'),
+('50842', '0', '0', '0.04', 'Death Knight - Pestilence'),
+('47476', '0', '0', '0.06', 'Death Knight - Strangulate'),
+('50536', '0', '0', '0.013', 'Death Knight - Unholy Blight Triggered'),
+('50401', '0', '0', '0', 'Death Knight - Razor Frost'),
+('56903', '0', '0', '0', 'Death Knight - Lichflame'),
+
 ('5185', '1.6104', '0', '0', 'Druid - Healing Touch'),
 ('33763', '0', '0.09518', '0', 'Druid - Lifebloom'),
 ('774', '0', '0.37604', '0', 'Druid - Rejuvenation'),
