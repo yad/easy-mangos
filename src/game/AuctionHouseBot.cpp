@@ -441,7 +441,7 @@ void AuctionHouseBot::addNewAuctionBuyerBotBid(Player *AHBplayer, AHBConfig *con
         }
     }
 
-    for (uint32 count = 1;count < config->GetBidsPerInterval();++count)
+    for (uint32 count = 0;count < config->GetBidsPerInterval();++count)
     {
 
         // Do we have anything to bid? If not, stop here.
@@ -1039,7 +1039,7 @@ void AuctionHouseBot::Initialize()
         sLog.outString("loaded %d orange items", orangeItemsBin.size());
         sLog.outString("loaded %d yellow items", yellowItemsBin.size());
     }
-    sLog.outString("AuctionHouseBot [AHBot-004-HotFix-01] is now loaded");
+    sLog.outString("AuctionHouseBot [AHBot-004-HotFix-02] is now loaded");
     sLog.outString("AuctionHouseBot updated Naicisum (original by ChrisK and Paradox)");
     sLog.outString("AuctionHouseBot now includes AHBuyer by Kerbe and Paradox");
 }
