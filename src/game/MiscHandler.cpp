@@ -149,7 +149,7 @@ void WorldSession::HandleWhoOpcode( WorldPacket & recv_data )
     uint32 team = _player->GetTeam();
     uint32 security = GetSecurity();
     bool allowTwoSideWhoList = sWorld.getConfig(CONFIG_ALLOW_TWO_SIDE_WHO_LIST);
-    bool gmInWhoList         = sWorld.getConfig(CONFIG_GM_IN_WHO_LIST);
+    uint32 gmLevelInWhoList  = sWorld.getConfig(CONFIG_GM_LEVEL_IN_WHO_LIST);
 
     WorldPacket data( SMSG_WHO, 50 );                       // guess size
     data << clientcount;                                    // clientcount place holder
@@ -166,9 +166,13 @@ void WorldSession::HandleWhoOpcode( WorldPacket & recv_data )
                 continue;
 
             // player can see MODERATOR, GAME MASTER, ADMINISTRATOR only if CONFIG_GM_IN_WHO_LIST
-            if ((itr->second->GetSession()->GetSecurity() > SEC_PLAYER && !gmInWhoList))
+            if ((itr->second->GetSession()->GetSecurity() > gmLevelInWhoList))
                 continue;
         }
+
+        //do not process players which are not in world
+        if(!(itr->second->IsInWorld()))
+            continue;
 
         // check if target is globally visible for player
         if (!(itr->second->IsVisibleGloballyFor(_player)))
@@ -276,7 +280,7 @@ void WorldSession::HandleLogoutRequestOpcode( WorldPacket & /*recv_data*/ )
     if( GetPlayer()->isInCombat() ||                        //...is in combat
         GetPlayer()->duel         ||                        //...is in Duel
                                                             //...is jumping ...is falling
-        GetPlayer()->m_movementInfo.HasMovementFlag(MOVEMENTFLAG_JUMPING | MOVEMENTFLAG_FALLING))
+        GetPlayer()->m_movementInfo.HasMovementFlag(MovementFlags(MOVEMENTFLAG_JUMPING | MOVEMENTFLAG_FALLING)))
     {
         WorldPacket data( SMSG_LOGOUT_RESPONSE, (2+4) ) ;
         data << (uint8)0xC;
@@ -958,10 +962,11 @@ void WorldSession::HandleRequestAccountData(WorldPacket& recv_data)
 
     uint32 size = adata->Data.size();
 
-    ByteBuffer dest;
-    dest.resize(size);
+    uLongf destSize = compressBound(size);
 
-    uLongf destSize = size;
+    ByteBuffer dest;
+    dest.resize(destSize);
+
     if(size && compress(const_cast<uint8*>(dest.contents()), &destSize, (uint8*)adata->Data.c_str(), size) != Z_OK)
     {
         sLog.outDebug("RAD: Failed to compress account data");
@@ -984,40 +989,41 @@ void WorldSession::HandleSetActionButtonOpcode(WorldPacket& recv_data)
     CHECK_PACKET_SIZE(recv_data,1+2+1+1);
 
     sLog.outDebug(  "WORLD: Received CMSG_SET_ACTION_BUTTON" );
-    uint8 button, misc, type;
-    uint16 action;
-    recv_data >> button >> action >> misc >> type;
-    sLog.outDetail( "BUTTON: %u ACTION: %u TYPE: %u MISC: %u", button, action, type, misc );
-    if(action==0)
+    uint8 button;
+    uint32 packetData;
+    recv_data >> button >> packetData;
+
+    uint32 action = ACTION_BUTTON_ACTION(packetData);
+    uint8  type   = ACTION_BUTTON_TYPE(packetData);
+
+    sLog.outDetail( "BUTTON: %u ACTION: %u TYPE: %u", button, action, type );
+    if (!packetData)
     {
         sLog.outDetail( "MISC: Remove action from button %u", button );
-
         GetPlayer()->removeActionButton(button);
     }
     else
     {
-        if(type==ACTION_BUTTON_MACRO || type==ACTION_BUTTON_CMACRO)
+        switch(type)
         {
-            sLog.outDetail( "MISC: Added Macro %u into button %u", action, button );
-            GetPlayer()->addActionButton(button,action,type,misc);
+            case ACTION_BUTTON_MACRO:
+            case ACTION_BUTTON_CMACRO:
+                sLog.outDetail( "MISC: Added Macro %u into button %u", action, button );
+                break;
+            case ACTION_BUTTON_EQSET:
+                sLog.outDetail( "MISC: Added EquipmentSet %u into button %u", action, button );
+                break;
+            case ACTION_BUTTON_SPELL:
+                sLog.outDetail( "MISC: Added Spell %u into button %u", action, button );
+                break;
+            case ACTION_BUTTON_ITEM:
+                sLog.outDetail( "MISC: Added Item %u into button %u", action, button );
+                break;
+            default:
+                sLog.outError( "MISC: Unknown action button type %u for action %u into button %u", type, action, button );
+                return;
         }
-        else if(type==ACTION_BUTTON_EQSET)
-        {
-            sLog.outDetail( "MISC: Added EquipmentSet %u into button %u", action, button );
-            GetPlayer()->addActionButton(button,action,type,misc);
-        }
-        else if(type==ACTION_BUTTON_SPELL)
-        {
-            sLog.outDetail( "MISC: Added Spell %u into button %u", action, button );
-            GetPlayer()->addActionButton(button,action,type,misc);
-        }
-        else if(type==ACTION_BUTTON_ITEM)
-        {
-            sLog.outDetail( "MISC: Added Item %u into button %u", action, button );
-            GetPlayer()->addActionButton(button,action,type,misc);
-        }
-        else
-            sLog.outError( "MISC: Unknown action button type %u for action %u into button %u", type, action, button );
+        GetPlayer()->addActionButton(button,action,type);
     }
 }
 
@@ -1154,15 +1160,17 @@ void WorldSession::HandleWardenDataOpcode(WorldPacket& /*recv_data*/)
     */
 }
 
-void WorldSession::HandlePlayedTime(WorldPacket& /*recv_data*/)
+void WorldSession::HandlePlayedTime(WorldPacket& recv_data)
 {
-    uint32 TotalTimePlayed = GetPlayer()->GetTotalPlayedTime();
-    uint32 LevelPlayedTime = GetPlayer()->GetLevelPlayedTime();
+    CHECK_PACKET_SIZE(recv_data, 1);
 
-    WorldPacket data(SMSG_PLAYED_TIME, 9);
-    data << TotalTimePlayed;
-    data << LevelPlayedTime;
-    data << uint8(0);
+    uint8 unk1;
+    recv_data >> unk1;                                      // 0 or 1 expected
+
+    WorldPacket data(SMSG_PLAYED_TIME, 4 + 4 + 1);
+    data << uint32(_player->GetTotalPlayedTime());
+    data << uint32(_player->GetLevelPlayedTime());
+    data << uint8(unk1);                                    // 0 - will not show in chat frame
     SendPacket(&data);
 }
 
@@ -1421,7 +1429,7 @@ void WorldSession::HandleSetTitleOpcode( WorldPacket & recv_data )
     recv_data >> title;
 
     // -1 at none
-    if(title > 0 && title < 192)
+    if(title > 0 && title < MAX_TITLE_INDEX)
     {
        if(!GetPlayer()->HasTitle(title))
             return;
@@ -1542,7 +1550,7 @@ void WorldSession::HandleMoveSetCanFlyAckOpcode( WorldPacket & recv_data )
 
     recv_data >> guid >> unk >> flags;
 
-    _player->m_movementInfo.flags = flags;
+    _player->m_movementInfo.SetMovementFlags(MovementFlags(flags));
 }
 
 void WorldSession::HandleRequestPetInfoOpcode( WorldPacket & /*recv_data */)

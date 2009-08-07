@@ -215,9 +215,10 @@ class MANGOS_DLL_SPEC Aura
         virtual ~Aura();
 
         void SetModifier(AuraType t, int32 a, uint32 pt, int32 miscValue);
-        Modifier* GetModifier() {return &m_modifier;}
-        int32 GetMiscValue() {return m_spellProto->EffectMiscValue[m_effIndex];}
-        int32 GetMiscBValue() {return m_spellProto->EffectMiscValueB[m_effIndex];}
+        Modifier*       GetModifier()       { return &m_modifier; }
+        Modifier const* GetModifier() const { return &m_modifier; }
+        int32 GetMiscValue() const { return m_spellProto->EffectMiscValue[m_effIndex]; }
+        int32 GetMiscBValue() const { return m_spellProto->EffectMiscValueB[m_effIndex]; }
 
         SpellEntry const* GetSpellProto() const { return m_spellProto; }
         uint32 GetId() const{ return m_spellProto->Id; }
@@ -296,7 +297,7 @@ class MANGOS_DLL_SPEC Aura
         void ApplyModifier(bool apply, bool Real = false);
 
         void _AddAura();
-        void _RemoveAura();
+        bool _RemoveAura();
 
         bool IsUpdated() { return m_updated; }
         void SetUpdated(bool val) { m_updated = val; }
@@ -310,6 +311,7 @@ class MANGOS_DLL_SPEC Aura
 
         // add/remove SPELL_AURA_MOD_SHAPESHIFT (36) linked auras
         void HandleShapeshiftBoosts(bool apply);
+        void HandleSpellSpecificBoosts(bool apply);
 
         // Allow Apply Aura Handler to modify and access m_AuraDRGroup
         void setDiminishGroup(DiminishingGroup group) { m_AuraDRGroup = group; }
@@ -324,6 +326,8 @@ class MANGOS_DLL_SPEC Aura
         bool isAffectedOnSpell(SpellEntry const *spell) const;
     protected:
         Aura(SpellEntry const* spellproto, uint32 eff, int32 *currentBasePoints, Unit *target, Unit *caster = NULL, Item* castItem = NULL);
+
+        bool IsCritFromAbilityAura(Unit* caster, uint32& damage);
 
         Modifier m_modifier;
         SpellModifier *m_spellmod;

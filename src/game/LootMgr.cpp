@@ -1149,7 +1149,7 @@ void LoadLootTemplates_Gameobject()
     {
         if(GameObjectInfo const* gInfo = sGOStorage.LookupEntry<GameObjectInfo>(i))
         {
-            if(uint32 lootid = GameObject::GetLootId(gInfo))
+            if(uint32 lootid = gInfo->GetLootId())
             {
                 if(!ids_set.count(lootid))
                     LootTemplates_Gameobject.ReportNotExistedId(lootid);
@@ -1320,10 +1320,12 @@ void LoadLootTemplates_Spell()
 
         if(!ids_set.count(spell_id))
         {
-            // not report about not trainable spells (optionally supported by DB) except with SPELL_ATTR_EX2_UNK14 (clams)
-            // 61756 (Northrend Inscription Research (FAST QA VERSION) for example
-            if ((spellInfo->Attributes & SPELL_ATTR_UNK5) || (spellInfo->AttributesEx2 & SPELL_ATTR_EX2_UNK14))
+            // not report about not trainable spells (optionally supported by DB)
+            // ignore 61756 (Northrend Inscription Research (FAST QA VERSION) for example
+            if (!(spellInfo->Attributes & SPELL_ATTR_NOT_SHAPESHIFT) || (spellInfo->Attributes & SPELL_ATTR_UNK5))
+            {
                 LootTemplates_Spell.ReportNotExistedId(spell_id);
+            }
         }
         else
             ids_set.erase(spell_id);

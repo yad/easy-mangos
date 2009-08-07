@@ -78,7 +78,7 @@ WorldSession::~WorldSession()
 
 void WorldSession::SizeError(WorldPacket const& packet, uint32 size) const
 {
-    sLog.outError("Client (account %u) send packet %s (%u) with size %u but expected %u (attempt crash server?), skipped",
+    sLog.outError("Client (account %u) send packet %s (%u) with size " SIZEFMTD " but expected %u (attempt crash server?), skipped",
         GetAccountId(),LookupOpcodeName(packet.GetOpcode()),packet.GetOpcode(),packet.size(),size);
 }
 
@@ -307,7 +307,16 @@ void WorldSession::LogoutPlayer(bool Save)
 
         ///- Teleport to home if the player is in an invalid instance
         if(!_player->m_InstanceValid && !_player->isGameMaster())
+        {
             _player->TeleportTo(_player->m_homebindMapId, _player->m_homebindX, _player->m_homebindY, _player->m_homebindZ, _player->GetOrientation());
+            //this is a bad place to call for far teleport because we need player to be in world for successful logout
+            //maybe we should implement delayed far teleport logout?
+        }
+
+        // FG: finish pending transfers after starting the logout
+        // this should fix players beeing able to logout and login back with full hp at death position
+        while(_player->IsBeingTeleportedFar())
+            HandleMoveWorldportAckOpcode();
 
         for (int i=0; i < PLAYER_MAX_BATTLEGROUND_QUEUES; ++i)
         {
@@ -379,15 +388,9 @@ void WorldSession::LogoutPlayer(bool Save)
         // the player may not be in the world when logging out
         // e.g if he got disconnected during a transfer to another map
         // calls to GetMap in this case may cause crashes
-        if(_player->IsInWorld()) _player->GetMap()->Remove(_player, false);
-        // RemoveFromWorld does cleanup that requires the player to be in the accessor
-        ObjectAccessor::Instance().RemoveObject(_player);
-
-        ///- Delete the player object
-        _player->CleanupsBeforeDelete();                    // do some cleanup before deleting to prevent crash at crossreferences to already deleted data
-
-        delete _player;
-        _player = NULL;
+        Map* _map = _player->GetMap();
+        _map->Remove(_player, true);
+        _player = NULL;                                     // deleted in Remove call
 
         ///- Send the 'logout complete' packet to the client
         WorldPacket data( SMSG_LOGOUT_COMPLETE, 0 );
@@ -635,7 +638,7 @@ void WorldSession::ReadMovementInfo(WorldPacket &data, MovementInfo *mi)
     data >> mi->z;
     data >> mi->o;
 
-    if(mi->flags & MOVEMENTFLAG_ONTRANSPORT)
+    if(mi->HasMovementFlag(MOVEMENTFLAG_ONTRANSPORT))
     {
         if(!data.readPackGUID(mi->t_guid))
             return;
@@ -649,7 +652,7 @@ void WorldSession::ReadMovementInfo(WorldPacket &data, MovementInfo *mi)
         data >> mi->t_seat;
     }
 
-    if((mi->flags & (MOVEMENTFLAG_SWIMMING | MOVEMENTFLAG_FLYING2)) || (mi->unk1 & 0x20))
+    if((mi->HasMovementFlag(MovementFlags(MOVEMENTFLAG_SWIMMING | MOVEMENTFLAG_FLYING2))) || (mi->unk1 & 0x20))
     {
         CHECK_PACKET_SIZE(data, data.rpos()+4);
         data >> mi->s_pitch;
@@ -658,7 +661,7 @@ void WorldSession::ReadMovementInfo(WorldPacket &data, MovementInfo *mi)
     CHECK_PACKET_SIZE(data, data.rpos()+4);
     data >> mi->fallTime;
 
-    if(mi->flags & MOVEMENTFLAG_JUMPING)
+    if(mi->HasMovementFlag(MOVEMENTFLAG_JUMPING))
     {
         CHECK_PACKET_SIZE(data, data.rpos()+4+4+4+4);
         data >> mi->j_unk;
@@ -667,7 +670,7 @@ void WorldSession::ReadMovementInfo(WorldPacket &data, MovementInfo *mi)
         data >> mi->j_xyspeed;
     }
 
-    if(mi->flags & MOVEMENTFLAG_SPLINE)
+    if(mi->HasMovementFlag(MOVEMENTFLAG_SPLINE))
     {
         CHECK_PACKET_SIZE(data, data.rpos()+4);
         data >> mi->u_unk1;

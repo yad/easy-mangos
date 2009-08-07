@@ -27,6 +27,7 @@
 #include "Spell.h"
 #include "ScriptCalls.h"
 #include "Totem.h"
+#include "SpellAuras.h"
 
 void WorldSession::HandleUseItemOpcode(WorldPacket& recvPacket)
 {
@@ -132,11 +133,11 @@ void WorldSession::HandleUseItemOpcode(WorldPacket& recvPacket)
         // send spell error
         if (SpellEntry const* spellInfo = sSpellStore.LookupEntry(spellid))
         {
-            // for implicit area/coord target spells 
+            // for implicit area/coord target spells
             if (IsPointEffectTarget(Targets(spellInfo->EffectImplicitTargetA[0])) ||
                 IsAreaEffectTarget(Targets(spellInfo->EffectImplicitTargetA[0])))
                 Spell::SendCastResult(_player,spellInfo,cast_count,SPELL_FAILED_NO_VALID_TARGETS);
-            // for explicit target spells 
+            // for explicit target spells
             else
                 Spell::SendCastResult(_player,spellInfo,cast_count,SPELL_FAILED_BAD_TARGETS);
         }
@@ -377,10 +378,6 @@ void WorldSession::HandleCancelAuraOpcode( WorldPacket& recvPacket)
 {
     CHECK_PACKET_SIZE(recvPacket,4);
 
-    // ignore for remote control state
-    if(_player->m_mover != _player)
-        return;
-
     uint32 spellId;
     recvPacket >> spellId;
 
@@ -388,9 +385,33 @@ void WorldSession::HandleCancelAuraOpcode( WorldPacket& recvPacket)
     if (!spellInfo)
         return;
 
-    // not allow remove non positive spells and spells with attr SPELL_ATTR_CANT_CANCEL
-    if(!IsPositiveSpell(spellId) || (spellInfo->Attributes & SPELL_ATTR_CANT_CANCEL))
+    if (spellInfo->Attributes & SPELL_ATTR_CANT_CANCEL)
         return;
+
+    if(!IsPositiveSpell(spellId))
+    {
+        // ignore for remote control state
+        if (_player->m_mover != _player)
+        {
+            // except own aura spells
+            bool allow = false;
+            for(int k = 0; k < 3; ++k)
+            {
+                if (spellInfo->EffectApplyAuraName[k] == SPELL_AURA_MOD_POSSESS ||
+                    spellInfo->EffectApplyAuraName[k] == SPELL_AURA_MOD_POSSESS_PET)
+                {
+                    allow = true;
+                    break;
+                }
+            }
+
+            // this also include case when aura not found
+            if(!allow)
+                return;
+        }
+        else
+            return;
+    }
 
     // channeled spell case (it currently casted then)
     if (IsChanneledSpell(spellInfo))

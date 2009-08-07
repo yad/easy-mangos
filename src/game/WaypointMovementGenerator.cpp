@@ -38,6 +38,7 @@ alter table creature_movement add `wpguid` int(11) default '0';
 #include "DestinationHolderImp.h"
 #include "CreatureAI.h"
 #include "WaypointManager.h"
+#include "WorldPacket.h"
 
 #include <cassert>
 
@@ -105,22 +106,22 @@ bool WaypointMovementGenerator<Creature>::Update(Creature &creature, const uint3
     {
         if( i_nextMoveTime.Passed()) // Timer has elapsed, meaning this part controlled it
         {
-            SetStopedByPlayer(false);
+            SetStoppedByPlayer(false);
             // Now we re-set destination to same node and start travel
             creature.addUnitState(UNIT_STAT_ROAMING);
             if (creature.canFly())
-                creature.AddUnitMovementFlag(MONSTER_MOVE_FLY);
+                creature.AddMonsterMoveFlag(MONSTER_MOVE_FLY);
             const WaypointNode &node = i_path->at(i_currentNode);
             i_destinationHolder.SetDestination(traveller, node.x, node.y, node.z);
             i_nextMoveTime.Reset(i_destinationHolder.GetTotalTravelTime());
         }
         else // if( !i_nextMoveTime.Passed())
         { // unexpected end of timer && creature stopped && not at end of segment
-            if (!IsStopedByPlayer())
+            if (!IsStoppedByPlayer())
             {                                                   // Put 30 seconds delay
                 i_destinationHolder.IncreaseTravelTime(STOP_TIME_FOR_PLAYER);
                 i_nextMoveTime.Reset(STOP_TIME_FOR_PLAYER);
-                SetStopedByPlayer(true);                        // Mark we did it
+                SetStoppedByPlayer(true);                        // Mark we did it
             }
         }
         return true;    // Abort here this update
@@ -172,7 +173,7 @@ bool WaypointMovementGenerator<Creature>::Update(Creature &creature, const uint3
         {
             creature.addUnitState(UNIT_STAT_ROAMING);
             if (creature.canFly())
-                creature.AddUnitMovementFlag(MONSTER_MOVE_FLY);
+                creature.AddMonsterMoveFlag(MONSTER_MOVE_FLY);
             const WaypointNode &node = i_path->at(i_currentNode);
             i_destinationHolder.SetDestination(traveller, node.x, node.y, node.z);
             i_nextMoveTime.Reset(i_destinationHolder.GetTotalTravelTime());
@@ -193,7 +194,7 @@ bool WaypointMovementGenerator<Creature>::Update(Creature &creature, const uint3
         else // If not stopped then stop it and set the reset of TimeTracker to waittime
         {
             creature.StopMoving();
-            SetStopedByPlayer(false);
+            SetStoppedByPlayer(false);
             i_nextMoveTime.Reset(i_path->at(i_currentNode).delay);
             ++i_currentNode;
             if( i_currentNode >= i_path->size() )
@@ -261,7 +262,9 @@ void FlightPathMovementGenerator::Finalize(Player & player)
         if(player.pvpInfo.inHostileArea)
             player.CastSpell(&player, 2479, true);
 
-        player.SetUnitMovementFlags(MONSTER_MOVE_WALK);
+        // update z position to ground and orientation for landing point
+        // this prevent cheating with landing  point at lags
+        // when client side flight end early in comparison server side
         player.StopMoving();
     }
 }

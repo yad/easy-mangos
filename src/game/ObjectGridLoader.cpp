@@ -123,6 +123,7 @@ void LoadHelper(CellGuidSet const& guid_set, CellPair &cell, GridRefManager<T> &
         obj->GetGridRef().link(&m, obj);
 
         addUnitState(obj,cell);
+        obj->SetMap(map);
         obj->AddToWorld();
         if(obj->isActiveObject())
             map->AddToActive(obj);
@@ -151,6 +152,7 @@ void LoadHelper(CellCorpseSet const& cell_corpses, CellPair &cell, CorpseMapType
         obj->GetGridRef().link(&m, obj);
 
         addUnitState(obj,cell);
+        obj->SetMap(map);
         obj->AddToWorld();
         if(obj->isActiveObject())
             map->AddToActive(obj);
@@ -254,6 +256,10 @@ template<class T>
 void
 ObjectGridUnloader::Visit(GridRefManager<T> &m)
 {
+    // remove all cross-reference before deleting
+    for(typename GridRefManager<T>::iterator iter=m.begin(); iter != m.end(); ++iter)
+        iter->getSource()->CleanupsBeforeDelete();
+
     while(!m.isEmpty())
     {
         T *obj = m.getFirst()->getSource();
@@ -262,25 +268,6 @@ ObjectGridUnloader::Visit(GridRefManager<T> &m)
             obj->SaveRespawnTime();
         ///- object must be out of world before delete
         obj->RemoveFromWorld();
-        ///- object will get delinked from the manager when deleted
-        delete obj;
-    }
-}
-
-template<>
-void
-ObjectGridUnloader::Visit(CreatureMapType &m)
-{
-    // remove all cross-reference before deleting
-    for(CreatureMapType::iterator iter=m.begin(); iter != m.end(); ++iter)
-        iter->getSource()->CleanupsBeforeDelete();
-
-    while(!m.isEmpty())
-    {
-        Creature *obj = m.getFirst()->getSource();
-        // if option set then object already saved at this moment
-        if(!sWorld.getConfig(CONFIG_SAVE_RESPAWN_TIME_IMMEDIATLY))
-            obj->SaveRespawnTime();
         ///- object will get delinked from the manager when deleted
         delete obj;
     }

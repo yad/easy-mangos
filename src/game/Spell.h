@@ -83,6 +83,7 @@ enum SpellCastFlags
 enum SpellNotifyPushType
 {
     PUSH_IN_FRONT,
+    PUSH_IN_FRONT_30,
     PUSH_IN_BACK,
     PUSH_SELF_CENTER,
     PUSH_DEST_CENTER,
@@ -229,11 +230,11 @@ class Spell
         void EffectQuestComplete(uint32 i);
         void EffectCreateItem(uint32 i);
         void EffectCreateItem2(uint32 i);
+        void EffectCreateRandomItem(uint32 i);
         void EffectPersistentAA(uint32 i);
         void EffectEnergize(uint32 i);
         void EffectOpenLock(uint32 i);
         void EffectSummonChangeItem(uint32 i);
-        void EffectOpenSecretSafe(uint32 i);
         void EffectProficiency(uint32 i);
         void EffectApplyAreaAura(uint32 i);
         void EffectSummonType(uint32 i);
@@ -288,6 +289,7 @@ class Spell
         void EffectSelfResurrect(uint32 i);
         void EffectSkinning(uint32 i);
         void EffectCharge(uint32 i);
+        void EffectCharge2(uint32 i);
         void EffectProspecting(uint32 i);
         void EffectMilling(uint32 i);
         void EffectRenamePet(uint32 i);
@@ -319,6 +321,7 @@ class Spell
         void EffectActivateRune(uint32 i);
         void EffectTitanGrip(uint32 i);
         void EffectEnchantItemPrismatic(uint32 i);
+        void EffectPlayMusic(uint32 i);
 
         Spell( Unit* Caster, SpellEntry const *info, bool triggered, uint64 originalCasterGUID = 0, Spell** triggeringContainer = NULL );
         ~Spell();
@@ -332,7 +335,6 @@ class Spell
         void TakeRunePower();
         void TakeReagents();
         void TakeCastItem();
-        void TriggerSpell();
 
         SpellCastResult CheckCast(bool strict);
         SpellCastResult CheckPetCast(Unit* target);
@@ -368,9 +370,9 @@ class Spell
         void SetTargetMap(uint32 i,uint32 cur,UnitList& TagUnitMap);
 
         void FillAreaTargets( UnitList& TagUnitMap, float x, float y, float radius, SpellNotifyPushType pushType, SpellTargets spellTargets );
-        void FillRaidOrPartyTargets( UnitList &TagUnitMap, Unit* target, float radius, bool raid, bool withPets, bool withcaster );
-        void FillRaidOrPartyManaPriorityTargets( UnitList &TagUnitMap, Unit* target, float radius, uint32 count, bool raid, bool withPets, bool withcaster );
-        void FillRaidOrPartyHealthPriorityTargets( UnitList &TagUnitMap, Unit* target, float radius, uint32 count, bool raid, bool withPets, bool withcaster );
+        void FillRaidOrPartyTargets( UnitList &TagUnitMap, Unit* member, Unit* center, float radius, bool raid, bool withPets, bool withcaster );
+        void FillRaidOrPartyManaPriorityTargets( UnitList &TagUnitMap, Unit* member, Unit* center, float radius, uint32 count, bool raid, bool withPets, bool withcaster );
+        void FillRaidOrPartyHealthPriorityTargets( UnitList &TagUnitMap, Unit* member, Unit* center, float radius, uint32 count, bool raid, bool withPets, bool withcaster );
 
         template<typename T> WorldObject* FindCorpseUsing();
 
@@ -398,7 +400,6 @@ class Spell
         Item* m_CastItem;
         uint8 m_cast_count;
         uint32 m_glyphIndex;
-        uint32 m_preCastSpell;
         SpellCastTargets m_targets;
 
         int32 GetCastTime() const { return m_casttime; }
@@ -438,7 +439,12 @@ class Spell
 
         bool CheckTargetCreatureType(Unit* target) const;
 
-        void AddTriggeredSpell(SpellEntry const* spell) { m_TriggerSpells.push_back(spell); }
+        void AddTriggeredSpell(SpellEntry const* spellInfo) { m_TriggerSpells.push_back(spellInfo); }
+        void AddPrecastSpell(SpellEntry const* spellInfo) { m_preCastSpells.push_back(spellInfo); }
+        void AddTriggeredSpell(uint32 spellId);
+        void AddPrecastSpell(uint32 spellId);
+        void CastPreCastSpells(Unit* target);
+        void CastTriggerSpells();
 
         void CleanupTargetList();
     protected:
@@ -557,8 +563,9 @@ class Spell
         // -------------------------------------------
 
         //List For Triggered Spells
-        typedef std::list<SpellEntry const*> TriggerSpells;
-        TriggerSpells m_TriggerSpells;
+        typedef std::list<SpellEntry const*> SpellInfoList;
+        SpellInfoList m_TriggerSpells;                      // casted by caster to same targets settings in m_targets at success finish of current spell
+        SpellInfoList m_preCastSpells;                      // casted by caster to each target at spell hit before spell effects apply
 
         uint32 m_spellState;
         uint32 m_timer;
@@ -698,6 +705,10 @@ namespace MaNGOS
                 {
                     case PUSH_IN_FRONT:
                         if(i_spell.GetCaster()->isInFrontInMap((Unit*)(itr->getSource()), i_radius, 2*M_PI/3 ))
+                            i_data->push_back(itr->getSource());
+                        break;
+                    case PUSH_IN_FRONT_30:
+                        if(i_spell.GetCaster()->isInFrontInMap((Unit*)(itr->getSource()), i_radius, M_PI/6 ))
                             i_data->push_back(itr->getSource());
                         break;
                     case PUSH_IN_BACK:

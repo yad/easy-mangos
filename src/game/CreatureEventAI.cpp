@@ -93,6 +93,8 @@ CreatureEventAI::CreatureEventAI(Creature *c ) : CreatureAI(c)
     AttackDistance = 0.0f;
     AttackAngle = 0.0f;
 
+    InvinceabilityHpLevel = 0;
+
     //Handle Spawned Events
     if (!bEmptyList)
     {
@@ -110,13 +112,6 @@ bool CreatureEventAI::ProcessEvent(CreatureEventAIHolder& pHolder, Unit* pAction
 
     //Check the inverse phase mask (event doesn't trigger if current phase bit is set in mask)
     if (pHolder.Event.event_inverse_phase_mask & (1 << Phase))
-        return false;
-
-    //Store random here so that all random actions match up
-    uint32 rnd = rand();
-
-    //Return if chance for event is not met
-    if (pHolder.Event.event_chance <= rnd % 100)
         return false;
 
     CreatureEventAI_Event const& event = pHolder.Event;
@@ -329,6 +324,13 @@ bool CreatureEventAI::ProcessEvent(CreatureEventAIHolder& pHolder, Unit* pAction
     //Disable non-repeatable events
     if (!(pHolder.Event.event_flags & EFLAG_REPEATABLE))
         pHolder.Enabled = false;
+
+    //Store random here so that all random actions match up
+    uint32 rnd = rand();
+
+    //Return if chance for event is not met
+    if (pHolder.Event.event_chance <= rnd % 100)
+        return false;
 
     //Process actions
     for (uint32 j = 0; j < MAX_ACTIONS; j++)
@@ -778,6 +780,14 @@ void CreatureEventAI::ProcessAction(CreatureEventAI_Action const& action, uint32
         case ACTION_T_FORCE_DESPAWN:
         {
             m_creature->ForcedDespawn();
+            break;
+        }
+        case ACTION_T_SET_INVINCIBILITY_HP_LEVEL:
+        {
+            if(action.invincibility_hp_level.is_percent)
+                InvinceabilityHpLevel = m_creature->GetMaxHealth()*action.invincibility_hp_level.hp_level/100;
+            else
+                InvinceabilityHpLevel = action.invincibility_hp_level.hp_level;
             break;
         }
     }
@@ -1377,6 +1387,17 @@ void CreatureEventAI::ReceiveEmote(Player* pPlayer, uint32 text_emote)
                 ProcessEvent(*itr, pPlayer);
             }
         }
+    }
+}
+
+void CreatureEventAI::DamageTaken( Unit* done_by, uint32& damage )
+{
+    if(InvinceabilityHpLevel > 0 && m_creature->GetHealth() < InvinceabilityHpLevel+damage)
+    {
+        if(m_creature->GetHealth() <= InvinceabilityHpLevel)
+            damage = 0;
+        else
+            damage = m_creature->GetHealth() - InvinceabilityHpLevel;
     }
 }
 

@@ -43,18 +43,18 @@ template<class T>
 void
 TargetedMovementGenerator<T>::_setTargetLocation(T &owner)
 {
-    if( !i_target.isValid() || !&owner )
+    if (!i_target.isValid() || !i_target->IsInWorld())
         return;
 
-    if( owner.hasUnitState(UNIT_STAT_ROOT | UNIT_STAT_STUNNED | UNIT_STAT_DISTRACTED) )
+    if (owner.hasUnitState(UNIT_STAT_ROOT | UNIT_STAT_STUNNED | UNIT_STAT_DISTRACTED))
         return;
 
     // prevent redundant micro-movement for pets, other followers.
-    if(i_offset && i_target->IsWithinDistInMap(&owner,2*i_offset))
+    if (i_offset && i_target->IsWithinDistInMap(&owner,2*i_offset))
         return;
 
     float x, y, z;
-    if(!i_offset)
+    if (!i_offset)
     {
         // to nearest contact position
         i_target->GetContactPoint( &owner, x, y, z );
@@ -85,21 +85,26 @@ TargetedMovementGenerator<T>::_setTargetLocation(T &owner)
     i_destinationHolder.SetDestination(traveller, x, y, z);
     owner.addUnitState(UNIT_STAT_CHASE);
     if (owner.GetTypeId() == TYPEID_UNIT && ((Creature*)&owner)->canFly())
-        owner.AddUnitMovementFlag(MONSTER_MOVE_FLY);
+        ((Creature&)owner).AddMonsterMoveFlag(MONSTER_MOVE_FLY);
 }
 
-template<class T>
-void
-TargetedMovementGenerator<T>::Initialize(T &owner)
+template<>
+void TargetedMovementGenerator<Creature>::Initialize(Creature &owner)
 {
-    if (owner.GetTypeId() == TYPEID_UNIT && ((Creature*)&owner)->HasSearchedAssistance())
-        owner.AddUnitMovementFlag(MONSTER_MOVE_WALK);
+    if (owner.HasSearchedAssistance())
+        owner.AddMonsterMoveFlag(MONSTER_MOVE_WALK);
     else
-        owner.RemoveUnitMovementFlag(MONSTER_MOVE_WALK);
+        owner.RemoveMonsterMoveFlag(MONSTER_MOVE_WALK);
 
-    if (owner.GetTypeId() == TYPEID_UNIT && ((Creature*)&owner)->canFly())
-        owner.AddUnitMovementFlag(MONSTER_MOVE_FLY);
+    if (((Creature*)&owner)->canFly())
+        owner.AddMonsterMoveFlag(MONSTER_MOVE_FLY);
 
+    _setTargetLocation(owner);
+}
+
+template<>
+void TargetedMovementGenerator<Player>::Initialize(Player &owner)
+{
     _setTargetLocation(owner);
 }
 
@@ -121,13 +126,13 @@ template<class T>
 bool
 TargetedMovementGenerator<T>::Update(T &owner, const uint32 & time_diff)
 {
-    if(!i_target.isValid())
+    if (!i_target.isValid() || !i_target->IsInWorld())
         return false;
 
-    if( !&owner || !owner.isAlive())
+    if (!owner.isAlive())
         return true;
 
-    if( owner.hasUnitState(UNIT_STAT_ROOT | UNIT_STAT_STUNNED | UNIT_STAT_FLEEING | UNIT_STAT_DISTRACTED) )
+    if (owner.hasUnitState(UNIT_STAT_ROOT | UNIT_STAT_STUNNED | UNIT_STAT_FLEEING | UNIT_STAT_DISTRACTED))
         return true;
 
     // prevent movement while casting spells with cast time or channel time
@@ -150,7 +155,7 @@ TargetedMovementGenerator<T>::Update(T &owner, const uint32 & time_diff)
     {
         owner.addUnitState(UNIT_STAT_CHASE);
         if (owner.GetTypeId() == TYPEID_UNIT && ((Creature*)&owner)->canFly())
-            owner.AddUnitMovementFlag(MONSTER_MOVE_FLY);
+            ((Creature&)owner).AddMonsterMoveFlag(MONSTER_MOVE_FLY);
 
         i_destinationHolder.StartTravel(traveller);
         return true;
@@ -199,8 +204,6 @@ TargetedMovementGenerator<T>::GetTarget() const
 
 template void TargetedMovementGenerator<Player>::_setTargetLocation(Player &);
 template void TargetedMovementGenerator<Creature>::_setTargetLocation(Creature &);
-template void TargetedMovementGenerator<Player>::Initialize(Player &);
-template void TargetedMovementGenerator<Creature>::Initialize(Creature &);
 template void TargetedMovementGenerator<Player>::Finalize(Player &);
 template void TargetedMovementGenerator<Creature>::Finalize(Creature &);
 template void TargetedMovementGenerator<Player>::Reset(Player &);
