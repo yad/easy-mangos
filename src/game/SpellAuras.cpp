@@ -4032,7 +4032,7 @@ void Aura::HandleModMechanicImmunity(bool apply, bool /*Real*/)
 
     if(apply && GetSpellProto()->AttributesEx & SPELL_ATTR_EX_DISPEL_AURAS_ON_IMMUNITY)
     {
-        uint32 mechanic = 1 << m_modifier.m_miscvalue;
+        uint32 mechanic = 1 << misc;
 
         //immune movement impairment and loss of control
         if(GetId()==42292 || GetId()==59752)
@@ -5544,23 +5544,19 @@ void Aura::HandleSpellSpecificBoosts(bool apply)
         }
         case SPELLFAMILY_HUNTER:
         {
-            if(GetSpellSpecific(m_spellProto->Id) != SPELL_ASPECT)
-                return;
-
-            // Aspect of the Dragonhawk dodge
-            if (GetSpellProto()->SpellFamilyFlags2 & 0x00001000)
-                spellId1 = 61848;
             // The Beast Within and Bestial Wrath - immunity
-            else if (GetId() == 19574 || GetId() == 34471)
+            if (GetId() == 19574 || GetId() == 34471)
             {
                 spellId1 = 24395;
                 spellId2 = 24396;
                 spellId3 = 24397;
                 spellId4 = 26592;
             }
+            // Aspect of the Dragonhawk dodge
+            else if(GetSpellProto()->SpellFamilyFlags2 & 0x00001000)
+                spellId1 = 61848;
             else
                 return;
-
             break;
         }
         case SPELLFAMILY_PALADIN:
@@ -5857,32 +5853,26 @@ void Aura::HandleSchoolAbsorb(bool apply, bool Real)
         switch(m_spellProto->SpellFamilyName)
         {
             case SPELLFAMILY_PRIEST:
-                if(m_spellProto->SpellFamilyFlags == 0x1) //PW:S
-                {
-                    //+30% from +healing bonus
-                    DoneActualBenefit = caster->SpellBaseHealingBonus(GetSpellSchoolMask(m_spellProto)) * 0.3f;
-                    break;
-                }
+                // Power Word: Shield
+                if (m_spellProto->SpellFamilyFlags & UI64LIT(0x0000000000000001))
+                    //+80.68% from +spell bonus
+                    DoneActualBenefit = caster->SpellBaseHealingBonus(GetSpellSchoolMask(m_spellProto)) * 0.8068f;
                 break;
             case SPELLFAMILY_MAGE:
-                if (m_spellProto->SpellFamilyFlags == UI64LIT(0x80100) ||
-                    m_spellProto->SpellFamilyFlags == UI64LIT(0x8) ||
-                    m_spellProto->SpellFamilyFlags == UI64LIT(0x100000000))
-                {
-                    //frost ward, fire ward, ice barrier
-                    //+10% from +spd bonus
+                // Frost Ward, Fire Ward
+                if (m_spellProto->SpellFamilyFlags & UI64LIT(0x0000000000000108))
+                    //+10% from +spell bonus
                     DoneActualBenefit = caster->SpellBaseDamageBonus(GetSpellSchoolMask(m_spellProto)) * 0.1f;
-                    break;
-                }
+                // Ice Barrier
+                else if (m_spellProto->SpellFamilyFlags & UI64LIT(0x0000000100000000))
+                    //+80.67% from +spell bonus
+                    DoneActualBenefit = caster->SpellBaseDamageBonus(GetSpellSchoolMask(m_spellProto)) * 0.8067f;
                 break;
             case SPELLFAMILY_WARLOCK:
-                if(m_spellProto->SpellFamilyFlags == 0x00)
-                {
-                    //shadow ward
-                    //+10% from +spd bonus
-                    DoneActualBenefit = caster->SpellBaseDamageBonus(GetSpellSchoolMask(m_spellProto)) * 0.1f;
-                    break;
-                }
+                // Shadow Ward
+                if (m_spellProto->SpellFamilyFlags2 & 0x00000040)
+                    //+30% from +spell bonus
+                    DoneActualBenefit = caster->SpellBaseDamageBonus(GetSpellSchoolMask(m_spellProto)) * 0.30f;
                 break;
             default:
                 break;

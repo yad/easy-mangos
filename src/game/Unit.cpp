@@ -1520,9 +1520,7 @@ void Unit::DealMeleeDamage(CalcDamageInfo *damageInfo, bool durabilityLoss)
            {
                alreadyDone.insert(*i);
                uint32 damage=(*i)->GetModifier()->m_amount;
-               SpellEntry const *spellProto = sSpellStore.LookupEntry((*i)->GetId());
-               if(!spellProto)
-                   continue;
+               SpellEntry const *i_spellProto = (*i)->GetSpellProto();
                //Calculate absorb resist ??? no data in opcode for this possibly unable to absorb or resist?
                //uint32 absorb;
                //uint32 resist;
@@ -1534,13 +1532,13 @@ void Unit::DealMeleeDamage(CalcDamageInfo *damageInfo, bool durabilityLoss)
                WorldPacket data(SMSG_SPELLDAMAGESHIELD,(8+8+4+4+4+4));
                data << uint64(pVictim->GetGUID());
                data << uint64(GetGUID());
-               data << uint32(spellProto->Id);
+               data << uint32(i_spellProto->Id);
                data << uint32(damage);                  // Damage
                data << uint32(0);                       // Overkill
-               data << uint32(spellProto->SchoolMask);
+               data << uint32(i_spellProto->SchoolMask);
                pVictim->SendMessageToSet(&data, true );
 
-               pVictim->DealDamage(this, damage, 0, SPELL_DIRECT_DAMAGE, GetSpellSchoolMask(spellProto), spellProto, true);
+               pVictim->DealDamage(this, damage, 0, SPELL_DIRECT_DAMAGE, GetSpellSchoolMask(i_spellProto), i_spellProto, true);
 
                i = vDamageShields.begin();
            }
@@ -4728,32 +4726,11 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                     break;
                 }
                 /*
-                // TODO: need find item for aura and triggered spells
                 // Sunwell Exalted Caster Neck (??? neck)
                 // cast ??? Light's Wrath if Exalted by Aldor
                 // cast ??? Arcane Bolt if Exalted by Scryers*/
                 case 46569:
-                    return false;                           // disable for while
-                /*
-                {
-                    if(GetTypeId() != TYPEID_PLAYER)
-                        return false;
-
-                    // Get Aldor reputation rank
-                    if (((Player *)this)->GetReputationRank(932) == REP_EXALTED)
-                    {
-                        target = this;
-                        triggered_spell_id = ???
-                        break;
-                    }
-                    // Get Scryers reputation rank
-                    if (((Player *)this)->GetReputationRank(934) == REP_EXALTED)
-                    {
-                        triggered_spell_id = ???
-                        break;
-                    }
-                    return false;
-                }*/
+                    return false;                           // old unused version
                 // Sunwell Exalted Caster Neck (Shattered Sun Pendant of Acumen neck)
                 // cast 45479 Light's Wrath if Exalted by Aldor
                 // cast 45429 Arcane Bolt if Exalted by Scryers
@@ -4772,6 +4749,21 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                     // Get Scryers reputation rank
                     if (((Player *)this)->GetReputationRank(934) == REP_EXALTED)
                     {
+                        // triggered at positive/self casts also, current attack target used then
+                        if(IsFriendlyTo(target))
+                        {
+                            target = getVictim();
+                            if(!target)
+                            {
+                                uint64 selected_guid = ((Player *)this)->GetSelection();
+                                target = ObjectAccessor::GetUnit(*this,selected_guid);
+                                if(!target)
+                                    return false;
+                            }
+                            if(IsFriendlyTo(target))
+                                return false;
+                        }
+
                         triggered_spell_id = 45429;
                         break;
                     }
@@ -7989,12 +7981,37 @@ uint32 Unit::SpellDamageBonus(Unit *pVictim, SpellEntry const *spellProto, uint3
     }
 
     // Custom scripted damage
-    // Ice Lance
-    if (spellProto->SpellFamilyName == SPELLFAMILY_MAGE && spellProto->SpellIconID == 186)
+    switch(spellProto->SpellFamilyName)
     {
-        if (pVictim->isFrozen())
-            DoneTotalMod *= 3.0f;
+        case SPELLFAMILY_MAGE:
+        {
+            // Ice Lance
+            if (spellProto->SpellIconID == 186)
+            {
+                if (pVictim->isFrozen())
+                    DoneTotalMod *= 3.0f;
+            }
+            // Torment the weak affected (Arcane Barrage, Arcane Blast, Frostfire Bolt, Arcane Missiles, Fireball)
+            if ((spellProto->SpellFamilyFlags & UI64LIT(0x0000900020200021)) && 
+                (pVictim->HasAuraType(SPELL_AURA_MOD_DECREASE_SPEED) || pVictim->HasAuraType(SPELL_AURA_MELEE_SLOW)))
+            {
+                //Search for Torment the weak dummy aura
+                Unit::AuraList const& ttw = GetAurasByType(SPELL_AURA_DUMMY);
+                for(Unit::AuraList::const_iterator i = ttw.begin(); i != ttw.end(); ++i)
+                {
+                    if ((*i)->GetSpellProto()->SpellIconID == 3263)
+                    {
+                        DoneTotalMod *= ((*i)->GetModifier()->m_amount+100.0f) / 100.0f;
+                        break;
+                    }
+                }
+            }
+            break;
+        }
+        default:
+            break;
     }
+
 
     // ..taken
     AuraList const& mModDamagePercentTaken = pVictim->GetAurasByType(SPELL_AURA_MOD_DAMAGE_PERCENT_TAKEN);
@@ -10548,7 +10565,7 @@ CharmInfo* Unit::InitCharmInfo(Unit *charm)
 CharmInfo::CharmInfo(Unit* unit)
 : m_unit(unit), m_CommandState(COMMAND_FOLLOW), m_reactState(REACT_PASSIVE), m_petnumber(0)
 {
-    for(int i =0; i<4; ++i)
+    for(int i = 0; i < CREATURE_MAX_SPELLS; ++i)
         m_charmspells[i].SetActionAndType(0,ACT_DISABLED);
 }
 
