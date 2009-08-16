@@ -1200,10 +1200,21 @@ void Spell::DoSpellHitOnUnit(Unit *unit, const uint32 effectMask)
                 return;
             }
 
-            unit->RemoveSpellsCausingAura(SPELL_AURA_MOD_STEALTH);
+            // not break stealth by cast targeting
+            if (!(m_spellInfo->AttributesEx & SPELL_ATTR_EX_NOT_BREAK_STEALTH))
+                unit->RemoveSpellsCausingAura(SPELL_AURA_MOD_STEALTH);
 
-            if (!(m_spellInfo->AttributesEx & SPELL_ATTR_EX_NO_INITIAL_AGGRO))
+            // can cause back attack (if detected)
+            if (!(m_spellInfo->AttributesEx & SPELL_ATTR_EX_NO_INITIAL_AGGRO) && !IsPositiveSpell(m_spellInfo->Id) &&
+                m_caster->isVisibleForOrDetect(unit,false)) // stealth removed at Spell::cast if spell break it
             {
+                // use speedup check to avoid re-remove after above lines
+                if (m_spellInfo->AttributesEx & SPELL_ATTR_EX_NOT_BREAK_STEALTH)
+                    unit->RemoveSpellsCausingAura(SPELL_AURA_MOD_STEALTH);
+
+                // caster can be detected but have stealth aura
+                m_caster->RemoveSpellsCausingAura(SPELL_AURA_MOD_STEALTH);
+
                 if (!unit->IsStandState() && !unit->hasUnitState(UNIT_STAT_STUNNED))
                     unit->SetStandState(UNIT_STAND_STATE_STAND);
 
@@ -1679,12 +1690,19 @@ void Spell::SetTargetMap(uint32 i,uint32 cur,UnitList& TagUnitMap)
         case TARGET_ALL_ENEMY_IN_AREA_INSTANT:
         {
             // targets the ground, not the units in the area
-            if (m_spellInfo->Effect[i]!=SPELL_EFFECT_PERSISTENT_AREA_AURA)
+            switch(m_spellInfo->Effect[i])
             {
-                FillAreaTargets(TagUnitMap,m_targets.m_destX, m_targets.m_destY,radius,PUSH_DEST_CENTER,SPELL_TARGETS_AOE_DAMAGE);
+                case SPELL_EFFECT_PERSISTENT_AREA_AURA:
+                    break;
+                case SPELL_EFFECT_SUMMON:
+                    TagUnitMap.push_back(m_caster);
+                    break;
+                default:
+                    FillAreaTargets(TagUnitMap,m_targets.m_destX, m_targets.m_destY,radius,PUSH_DEST_CENTER,SPELL_TARGETS_AOE_DAMAGE);
 
-                // exclude caster (this can be important if this not original caster)
-                TagUnitMap.remove(m_caster);
+                    // exclude caster (this can be important if this not original caster)
+                    TagUnitMap.remove(m_caster);
+                    break;
             }
             break;
         }
@@ -2092,6 +2110,39 @@ void Spell::SetTargetMap(uint32 i,uint32 cur,UnitList& TagUnitMap)
             if(DynamicObject* dynObj = m_caster->GetDynObject(m_triggeredByAuraSpell ? m_triggeredByAuraSpell->Id : m_spellInfo->Id))
                 m_targets.setDestination(dynObj->GetPositionX(), dynObj->GetPositionY(), dynObj->GetPositionZ());
             break;
+        case TARGET_POINT_AT_NORTH:
+        case TARGET_POINT_AT_SOUTH:
+        case TARGET_POINT_AT_EAST:
+        case TARGET_POINT_AT_WEST:
+        case TARGET_POINT_AT_NE:
+        case TARGET_POINT_AT_NW:
+        case TARGET_POINT_AT_SE:
+        case TARGET_POINT_AT_SW:
+        {
+
+            if (!(m_targets.m_targetMask & TARGET_FLAG_DEST_LOCATION))
+            {
+                Unit* currentTarget = m_targets.getUnitTarget() ? m_targets.getUnitTarget() : m_caster;
+                float angle = currentTarget != m_caster ? currentTarget->GetAngle(m_caster) : m_caster->GetOrientation();
+
+                switch(cur)
+                {
+                    case TARGET_POINT_AT_NORTH:                    break;
+                    case TARGET_POINT_AT_SOUTH: angle +=   M_PI;   break;
+                    case TARGET_POINT_AT_EAST:  angle -=   M_PI/2; break;
+                    case TARGET_POINT_AT_WEST:  angle +=   M_PI/2; break;
+                    case TARGET_POINT_AT_NE:    angle -=   M_PI/4; break;
+                    case TARGET_POINT_AT_NW:    angle +=   M_PI/4; break;
+                    case TARGET_POINT_AT_SE:    angle -= 3*M_PI/4; break;
+                    case TARGET_POINT_AT_SW:    angle += 3*M_PI/4; break;
+                }
+
+                float x,y;
+                currentTarget->GetNearPoint2D(x,y,radius,angle);
+                m_targets.setDestination(x,y,currentTarget->GetPositionZ());
+            }
+            break;
+        }
         case TARGET_DIRECTLY_FORWARD:
         {
             if (!(m_targets.m_targetMask & TARGET_FLAG_DEST_LOCATION))
@@ -2327,6 +2378,9 @@ void Spell::cast(bool skipCheck)
             if (m_spellInfo->Mechanic == MECHANIC_SHIELD &&
                 (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000000000000001)))
                 AddPrecastSpell(6788);                      // Weakened Soul
+            // Prayer of Mending (jump animation), we need formal caster instead original for correct animation
+            else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000002000000000))
+                AddTriggeredSpell(41637);
 
             switch(m_spellInfo->Id)
             {
@@ -2344,6 +2398,14 @@ void Spell::cast(bool skipCheck)
             }
             break;
         }
+        case SPELLFAMILY_ROGUE:
+            // Fan of Knives (main hand)
+            if (m_spellInfo->Id == 51723 && m_caster->GetTypeId() == TYPEID_PLAYER &&
+                ((Player*)m_caster)->haveOffhandWeapon())
+            {
+                AddTriggeredSpell(52874);                   // Fan of Knives (offhand)
+            }
+            break;
         case SPELLFAMILY_PALADIN:
         {
             // Divine Shield, Divine Protection or Hand of Protection
@@ -2765,12 +2827,16 @@ void Spell::finish(bool ok)
         // Not drop combopoints if negative spell and if any miss on enemy exist
         bool needDrop = true;
         if (!IsPositiveSpell(m_spellInfo->Id))
-        for(std::list<TargetInfo>::const_iterator ihit= m_UniqueTargetInfo.begin();ihit != m_UniqueTargetInfo.end();++ihit)
-            if (ihit->missCondition != SPELL_MISS_NONE && ihit->targetGUID!=m_caster->GetGUID())
+        {
+            for(std::list<TargetInfo>::const_iterator ihit= m_UniqueTargetInfo.begin();ihit != m_UniqueTargetInfo.end();++ihit)
             {
-                needDrop = false;
-                break;
+                if (ihit->missCondition != SPELL_MISS_NONE && ihit->targetGUID!=m_caster->GetGUID())
+                {
+                    needDrop = false;
+                    break;
+                }
             }
+        }
         if (needDrop)
             ((Player*)m_caster)->ClearComboPoints();
     }
@@ -3778,11 +3844,21 @@ SpellCastResult Spell::CheckCast(bool strict)
 
             // auto selection spell rank implemented in WorldSession::HandleCastSpellOpcode
             // this case can be triggered if rank not found (too low-level target for first rank)
-            if(m_caster->GetTypeId() == TYPEID_PLAYER && !IsPassiveSpell(m_spellInfo->Id) && !m_CastItem)
+            if (m_caster->GetTypeId() == TYPEID_PLAYER && !IsPassiveSpell(m_spellInfo->Id) && !m_CastItem)
+            {
                 for(int i=0;i<3;++i)
-                    if(IsPositiveEffect(m_spellInfo->Id, i) && m_spellInfo->Effect[i] == SPELL_EFFECT_APPLY_AURA)
-                        if(target->getLevel() + 10 < m_spellInfo->spellLevel)
-                            return SPELL_FAILED_LOWLEVEL;
+                {
+                    // check only spell that apply positive auras
+                    if (IsPositiveEffect(m_spellInfo->Id, i) && m_spellInfo->Effect[i] == SPELL_EFFECT_APPLY_AURA &&
+                        // at not self target
+                        !IsCasterSourceTarget(m_spellInfo->EffectImplicitTargetA[i]) &&
+                        // and target low level
+                        target->getLevel() + 10 < m_spellInfo->spellLevel)
+                    {
+                        return SPELL_FAILED_LOWLEVEL;
+                    }
+                }
+            }
         }
         else if (m_caster->GetTypeId() == TYPEID_PLAYER)    // Target - is player caster
         {
@@ -4324,6 +4400,7 @@ SpellCastResult Spell::CheckCast(bool strict)
                     case SUMMON_TYPE_DEMON:
                     case SUMMON_TYPE_SUMMON:
                     case SUMMON_TYPE_ELEMENTAL:
+                    case SUMMON_TYPE_INFERNO:
                     {
                         if(m_caster->GetPetGUID())
                             return SPELL_FAILED_ALREADY_HAVE_SUMMON;
@@ -4547,16 +4624,16 @@ SpellCastResult Spell::CheckCast(bool strict)
 
                 break;
             }
-            case SPELL_AURA_MOD_INCREASE_FLIGHT_SPEED:
             case SPELL_AURA_FLY:
+            case SPELL_AURA_MOD_INCREASE_FLIGHT_SPEED:
             {
-                // not allow cast fly spells at old maps by players (all spells is self target)
-                if(m_caster->GetTypeId() == TYPEID_PLAYER)
+                // not allow cast fly spells if not have req. skills  (all spells is self target)
+                // allow always ghost flight spells
+                if (m_caster->GetTypeId() == TYPEID_PLAYER && m_caster->isAlive())
                 {
-                    if( !((Player*)m_caster)->IsAllowUseFlyMountsHere() )
-                        return SPELL_FAILED_NOT_HERE;
+                    if (!((Player*)m_caster)->IsKnowHowFlyIn(m_caster->GetMapId(),zone))
+                        return m_IsTriggeredSpell ? SPELL_FAILED_DONT_REPORT : SPELL_FAILED_NOT_HERE;
                 }
-
                 break;
             }
             case SPELL_AURA_PERIODIC_MANA_LEECH:
@@ -5440,8 +5517,10 @@ bool Spell::CheckTargetCreatureType(Unit* target) const
 {
     uint32 spellCreatureTargetMask = m_spellInfo->TargetCreatureType;
 
-    // Curse of Doom : not find another way to fix spell target check :/
-    if(m_spellInfo->SpellFamilyName==SPELLFAMILY_WARLOCK && m_spellInfo->SpellFamilyFlags == UI64LIT(0x0200000000))
+    // Curse of Doom & Exorcism: not find another way to fix spell target check :/
+    if (m_spellInfo->SpellFamilyName==SPELLFAMILY_WARLOCK && m_spellInfo->Category == 1179 ||
+        // TODO: will be removed in 3.2.x
+        m_spellInfo->SpellFamilyName==SPELLFAMILY_PALADIN && m_spellInfo->Category == 19)
     {
         // not allow cast at player
         if(target->GetTypeId()==TYPEID_PLAYER)
