@@ -2313,6 +2313,21 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                     }
                     return;
                 }
+                //Dragonmaw Illusion
+                case 40214 :
+                {
+                    if(apply)
+                    {
+                        m_target->CastSpell(m_target, 40216, true);
+                        m_target->CastSpell(m_target, 42016, true);
+                    }
+                    else
+                    {
+                        m_target->RemoveAurasDueToSpell(40216);
+                        m_target->RemoveAurasDueToSpell(42016);
+                    }
+                    return;
+                }
                 // LK Intro VO (1)
                 case 58204:
                     if(m_target->GetTypeId() == TYPEID_PLAYER)
@@ -2473,9 +2488,9 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                 uint32 spell_id;
                 switch(GetId())
                 {
-                    case 48384: spell_id = 50170;           //Rank 1
-                    case 48395: spell_id = 50171;           //Rank 2
-                    case 48396: spell_id = 50172;           //Rank 3
+                    case 48384: spell_id = 50170; break;    //Rank 1
+                    case 48395: spell_id = 50171; break;    //Rank 2
+                    case 48396: spell_id = 50172; break;    //Rank 3
                     default:
                         sLog.outError("HandleAuraDummy: Not handled rank of IMF (Spell: %u)",GetId());
                         return;
