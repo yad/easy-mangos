@@ -816,14 +816,16 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
                     if (i == CURRENT_CHANNELED_SPELL)
                         continue;
 
-                    if(Spell* spell = pVictim->m_currentSpells[i])
+                    if(Spell* spell = pVictim->GetCurrentSpell(CurrentSpellTypes(i)))
+                    {
                         if(spell->getState() == SPELL_STATE_PREPARING)
                         {
                             if(spell->m_spellInfo->InterruptFlags & SPELL_INTERRUPT_FLAG_ABORT_ON_DMG)
-                                pVictim->InterruptSpell(i);
+                                pVictim->InterruptSpell(CurrentSpellTypes(i));
                             else
                                 spell->Delayed();
                         }
+                    }
                 }
             }
 
@@ -879,7 +881,7 @@ void Unit::CastStop(uint32 except_spellid)
 {
     for (uint32 i = CURRENT_FIRST_NON_MELEE_SPELL; i < CURRENT_MAX_SPELL; ++i)
         if (m_currentSpells[i] && m_currentSpells[i]->m_spellInfo->Id!=except_spellid)
-            InterruptSpell(i,false);
+            InterruptSpell(CurrentSpellTypes(i),false);
 }
 
 void Unit::CastSpell(Unit* Victim, uint32 spellId, bool triggered, Item *castItem, Aura* triggeredByAura, uint64 originalCaster)
@@ -2705,13 +2707,9 @@ float Unit::MeleeMissChanceCalc(const Unit *pVictim, WeaponAttackType attType) c
             }
         }
         if (isNormal || m_currentSpells[CURRENT_MELEE_SPELL])
-        {
             misschance = 5.0f;
-        }
         else
-        {
             misschance = 24.0f;
-        }
     }
 
     // PvP : PvE melee misschances per leveldif > 2
@@ -3107,9 +3105,11 @@ void Unit::SetCurrentCastedSpell( Spell * pSpell )
     // set new current spell
     m_currentSpells[CSpellType] = pSpell;
     pSpell->SetReferencedFromCurrent(true);
+
+    pSpell->m_selfContainer = &(m_currentSpells[pSpell->GetCurrentContainer()]);
 }
 
-void Unit::InterruptSpell(uint32 spellType, bool withDelayed)
+void Unit::InterruptSpell(CurrentSpellTypes spellType, bool withDelayed)
 {
     assert(spellType < CURRENT_MAX_SPELL);
 
@@ -3133,6 +3133,19 @@ void Unit::InterruptSpell(uint32 spellType, bool withDelayed)
         }
     }
 }
+
+void Unit::FinishSpell(CurrentSpellTypes spellType, bool ok /*= true*/)
+{
+    Spell* spell = m_currentSpells[spellType];
+    if (!spell)
+        return;
+
+    if (spellType == CURRENT_CHANNELED_SPELL)
+        spell->SendChannelUpdate(0);
+
+    spell->finish(ok);
+}
+
 
 bool Unit::IsNonMeleeSpellCasted(bool withDelayed, bool skipChanneled, bool skipAutorepeat) const
 {
@@ -3618,9 +3631,8 @@ bool Unit::RemoveNoStackAurasDueToAura(Aura *Aur)
 
         SpellSpecific i_spellId_spec = GetSpellSpecific(i_spellId);
 
+        // single allowed spell specific from same caster
         bool is_sspc = IsSingleFromSpellSpecificPerCaster(spellId_spec,i_spellId_spec);
-        bool is_sspt = IsSingleFromSpellSpecificRanksPerTarget(spellId_spec,i_spellId_spec);
-
         if( is_sspc && Aur->GetCasterGUID() == (*i).second->GetCasterGUID() )
         {
             // cannot remove higher rank
@@ -3640,8 +3652,15 @@ bool Unit::RemoveNoStackAurasDueToAura(Aura *Aur)
                 break;
             else
                 next =  m_Auras.begin();
+
+            continue;
         }
-        else if( is_sspt && Aur->GetCasterGUID() != (*i).second->GetCasterGUID() && spellmgr.IsRankSpellDueToSpell(spellProto, i_spellId) )
+
+        // spell with spell specific that allow single ranks for spell from diff caster
+        // same caster case processed or early or later
+        bool is_sspt = IsSingleFromSpellSpecificRanksPerTarget(spellId_spec,i_spellId_spec);
+        if ( is_sspt && Aur->GetCasterGUID() != (*i).second->GetCasterGUID() &&
+            (spellProto->Id == i_spellId || spellmgr.IsRankSpellDueToSpell(spellProto, i_spellId)))
         {
             // cannot remove higher rank
             if(CompareAuraRanks(spellId, effIndex, i_spellId, i_effIndex) < 0)
@@ -3659,8 +3678,12 @@ bool Unit::RemoveNoStackAurasDueToAura(Aura *Aur)
                 break;
             else
                 next =  m_Auras.begin();
+
+            continue;
         }
-        else if( !is_sspc && spellmgr.IsNoStackSpellDueToSpell(spellId, i_spellId) )
+
+        // non single per caster spell specific (possible single per target spells at caster)
+        if( !is_sspc && spellmgr.IsNoStackSpellDueToSpell(spellId, i_spellId) )
         {
             // Its a parent aura (create this aura in ApplyModifier)
             if ((*i).second->IsInUse())
@@ -3674,9 +3697,12 @@ bool Unit::RemoveNoStackAurasDueToAura(Aura *Aur)
                 break;
             else
                 next =  m_Auras.begin();
+
+            continue;
         }
+
         // Potions stack aura by aura (elixirs/flask already checked)
-        else if( spellProto->SpellFamilyName == SPELLFAMILY_POTION && i_spellProto->SpellFamilyName == SPELLFAMILY_POTION )
+        if( spellProto->SpellFamilyName == SPELLFAMILY_POTION && i_spellProto->SpellFamilyName == SPELLFAMILY_POTION )
         {
             if (IsNoStackAuraDueToAura(spellId, effIndex, i_spellId, i_effIndex))
             {
@@ -4511,6 +4537,68 @@ bool Unit::HandleHasteAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
     return true;
 }
 
+bool Unit::HandleSpellCritChanceAuraProc(Unit *pVictim, uint32 /*damage*/, Aura* triggeredByAura, SpellEntry const * /*procSpell*/, uint32 /*procFlag*/, uint32 /*procEx*/, uint32 cooldown)
+{
+    SpellEntry const *triggeredByAuraSpell = triggeredByAura->GetSpellProto();
+
+    Item* castItem = triggeredByAura->GetCastItemGUID() && GetTypeId()==TYPEID_PLAYER
+        ? ((Player*)this)->GetItemByGuid(triggeredByAura->GetCastItemGUID()) : NULL;
+
+    uint32 triggered_spell_id = 0;
+    Unit* target = pVictim;
+    int32 basepoints0 = 0;
+
+    switch(triggeredByAuraSpell->SpellFamilyName)
+    {
+        case SPELLFAMILY_MAGE:
+        {
+            switch(triggeredByAuraSpell->Id)
+            {
+                // Focus Magic
+                case 54646:
+                {
+                    Unit* caster = triggeredByAura->GetCaster();
+                    if(!caster)
+                        return false;
+
+                    triggered_spell_id = 54648;
+                    target = caster;
+                    break;
+                }
+            }
+        }
+    }
+
+    // processed charge only counting case
+    if(!triggered_spell_id)
+        return true;
+
+    SpellEntry const* triggerEntry = sSpellStore.LookupEntry(triggered_spell_id);
+
+    if(!triggerEntry)
+    {
+        sLog.outError("Unit::HandleHasteAuraProc: Spell %u have not existed triggered spell %u",triggeredByAuraSpell->Id,triggered_spell_id);
+        return false;
+    }
+
+    // default case
+    if(!target || target!=this && !target->isAlive())
+        return false;
+
+    if( cooldown && GetTypeId()==TYPEID_PLAYER && ((Player*)this)->HasSpellCooldown(triggered_spell_id))
+        return false;
+
+    if(basepoints0)
+        CastCustomSpell(target,triggered_spell_id,&basepoints0,NULL,NULL,true,castItem,triggeredByAura);
+    else
+        CastSpell(target,triggered_spell_id,true,castItem,triggeredByAura);
+
+    if( cooldown && GetTypeId()==TYPEID_PLAYER )
+        ((Player*)this)->AddSpellCooldown(triggered_spell_id,0,time(NULL) + cooldown);
+
+    return true;
+}
+
 bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAura, SpellEntry const * procSpell, uint32 procFlag, uint32 procEx, uint32 cooldown)
 {
     SpellEntry const *dummySpell = triggeredByAura->GetSpellProto ();
@@ -5210,6 +5298,7 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                 pVictim->CastSpell(pVictim,57669,true,castItem,triggeredByAura);
                 return true;                                // no hidden cooldown
             }
+
             // Divine Aegis
             if (dummySpell->SpellIconID == 2820)
             {
@@ -5217,6 +5306,17 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                 triggered_spell_id = 47753;
                 break;
             }
+            // Improved Shadowform
+            else if (dummySpell->SpellIconID == 217)
+            {
+                if(!roll_chance_i(triggerAmount))
+                    return false;
+
+                RemoveSpellsCausingAura(SPELL_AURA_MOD_ROOT);
+                RemoveSpellsCausingAura(SPELL_AURA_MOD_DECREASE_SPEED);
+                break;
+            }
+
             switch(dummySpell->Id)
             {
                 // Vampiric Embrace
@@ -10956,6 +11056,10 @@ void Unit::ProcDamageAndSpellFor( bool isVictim, Unit * pTarget, uint32 procFlag
     // Fill procTriggered list
     for(AuraMap::const_iterator itr = GetAuras().begin(); itr!= GetAuras().end(); ++itr)
     {
+        // skip deleted auras (possible at recursive triggered call
+        if(itr->second->IsDeleted())
+            continue;
+
         SpellProcEventEntry const* spellProcEvent = NULL;
         if(!IsTriggeredAtSpellProcEvent(pTarget, itr->second, procSpell, procFlag, procExtra, attType, isVictim, (damage > 0), spellProcEvent))
            continue;
@@ -11113,6 +11217,12 @@ void Unit::ProcDamageAndSpellFor( bool isVictim, Unit * pTarget, uint32 procFlag
                 break;
             case SPELL_AURA_MOD_SPELL_CRIT_CHANCE:
                 if (!procSpell)
+                {
+                    triggeredByAura->SetInUse(false);
+                    continue;
+                }
+                sLog.outDebug("ProcDamageAndSpell: casting spell id %u (triggered by %s spell crit chance aura of spell %u)", spellInfo->Id,(isVictim?"a victim's":"an attacker's"), triggeredByAura->GetId());
+                if (!HandleSpellCritChanceAuraProc(pTarget, damage, triggeredByAura, procSpell, procFlag, procExtra, cooldown))
                 {
                     triggeredByAura->SetInUse(false);
                     continue;

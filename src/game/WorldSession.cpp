@@ -141,12 +141,21 @@ void WorldSession::QueuePacket(WorldPacket* new_packet)
 }
 
 /// Logging helper for unexpected opcodes
-void WorldSession::logUnexpectedOpcode(WorldPacket* packet, const char *reason)
+void WorldSession::LogUnexpectedOpcode(WorldPacket* packet, const char *reason)
 {
     sLog.outError( "SESSION: received unexpected opcode %s (0x%.4X) %s",
         LookupOpcodeName(packet->GetOpcode()),
         packet->GetOpcode(),
         reason);
+}
+
+/// Logging helper for unexpected opcodes
+void WorldSession::LogUnprocessedTail(WorldPacket *packet)
+{
+    sLog.outError( "SESSION: opcode %s (0x%.4X) have unprocessed tail data (read stop at %u from %u)",
+        LookupOpcodeName(packet->GetOpcode()),
+        packet->GetOpcode(),
+        packet->rpos(),packet->wpos());
 }
 
 /// Update the WorldSession (triggered by World update)
@@ -173,43 +182,66 @@ bool WorldSession::Update(uint32 /*diff*/)
         else
         {
             OpcodeHandler& opHandle = opcodeTable[packet->GetOpcode()];
-            switch (opHandle.status)
+            try
             {
-                case STATUS_LOGGEDIN:
-                    if(!_player)
-                    {
-                        // skip STATUS_LOGGEDIN opcode unexpected errors if player logout sometime ago - this can be network lag delayed packets
-                        if(!m_playerRecentlyLogout)
-                            logUnexpectedOpcode(packet, "the player has not logged in yet");
-                    }
-                    else if(_player->IsInWorld())
-                        (this->*opHandle.handler)(*packet);
-                    // lag can cause STATUS_LOGGEDIN opcodes to arrive after the player started a transfer
-                    break;
-                case STATUS_TRANSFER:
-                    if(!_player)
-                        logUnexpectedOpcode(packet, "the player has not logged in yet");
-                    else if(_player->IsInWorld())
-                        logUnexpectedOpcode(packet, "the player is still in world");
-                    else
-                        (this->*opHandle.handler)(*packet);
-                    break;
-                case STATUS_AUTHED:
-                    // prevent cheating with skip queue wait
-                    if(m_inQueue)
-                    {
-                        logUnexpectedOpcode(packet, "the player not pass queue yet");
+                switch (opHandle.status)
+                {
+                    case STATUS_LOGGEDIN:
+                        if(!_player)
+                        {
+                            // skip STATUS_LOGGEDIN opcode unexpected errors if player logout sometime ago - this can be network lag delayed packets
+                            if(!m_playerRecentlyLogout)
+                                LogUnexpectedOpcode(packet, "the player has not logged in yet");
+                        }
+                        else if(_player->IsInWorld())
+                        {
+                            (this->*opHandle.handler)(*packet);
+                            if (sLog.IsOutDebug() && packet->rpos() < packet->wpos())
+                                LogUnprocessedTail(packet);
+                        }
+                        // lag can cause STATUS_LOGGEDIN opcodes to arrive after the player started a transfer
                         break;
-                    }
+                    case STATUS_TRANSFER:
+                        if(!_player)
+                            LogUnexpectedOpcode(packet, "the player has not logged in yet");
+                        else if(_player->IsInWorld())
+                            LogUnexpectedOpcode(packet, "the player is still in world");
+                        else
+                        {
+                            (this->*opHandle.handler)(*packet);
+                            if (sLog.IsOutDebug() && packet->rpos() < packet->wpos())
+                                LogUnprocessedTail(packet);
+                        }
+                        break;
+                    case STATUS_AUTHED:
+                        // prevent cheating with skip queue wait
+                        if(m_inQueue)
+                        {
+                            LogUnexpectedOpcode(packet, "the player not pass queue yet");
+                            break;
+                        }
 
-                    m_playerRecentlyLogout = false;
-                    (this->*opHandle.handler)(*packet);
-                    break;
-                case STATUS_NEVER:
-                    sLog.outError( "SESSION: received not allowed opcode %s (0x%.4X)",
-                        LookupOpcodeName(packet->GetOpcode()),
-                        packet->GetOpcode());
-                    break;
+                        m_playerRecentlyLogout = false;
+                        (this->*opHandle.handler)(*packet);
+                        if (sLog.IsOutDebug() && packet->rpos() < packet->wpos())
+                            LogUnprocessedTail(packet);
+                        break;
+                    case STATUS_NEVER:
+                        sLog.outError( "SESSION: received not allowed opcode %s (0x%.4X)",
+                            LookupOpcodeName(packet->GetOpcode()),
+                            packet->GetOpcode());
+                        break;
+                }
+            }
+            catch(ByteBufferException &)
+            {
+                sLog.outError("WorldSession::Update ByteBufferException occured while parsing a packet (opcode: %u) from client %s, accountid=%i. Skipped packet.",
+                        packet->GetOpcode(), GetRemoteAddress().c_str(), GetAccountId());
+                if(sLog.IsOutDebug())
+                {
+                    sLog.outDebug("Dumping error causing packet:");
+                    packet->hexlike();
+                }
             }
         }
 
@@ -336,7 +368,7 @@ void WorldSession::LogoutPlayer(bool Save)
         Guild *guild = objmgr.GetGuildById(_player->GetGuildId());
         if(guild)
         {
-            guild->LoadPlayerStatsByGuid(_player->GetGUID());
+            guild->SetMemberStats(_player->GetGUID());
             guild->UpdateLogoutTime(_player->GetGUID());
 
             WorldPacket data(SMSG_GUILD_EVENT, (1+1+12+8)); // name limited to 12 in character table.
@@ -629,7 +661,6 @@ void WorldSession::SaveTutorialsData()
 
 void WorldSession::ReadMovementInfo(WorldPacket &data, MovementInfo *mi)
 {
-    CHECK_PACKET_SIZE(data, data.rpos()+4+2+4+4+4+4+4);
     data >> mi->flags;
     data >> mi->unk1;
     data >> mi->time;
@@ -643,7 +674,6 @@ void WorldSession::ReadMovementInfo(WorldPacket &data, MovementInfo *mi)
         if(!data.readPackGUID(mi->t_guid))
             return;
 
-        CHECK_PACKET_SIZE(data, data.rpos()+4+4+4+4+4+1);
         data >> mi->t_x;
         data >> mi->t_y;
         data >> mi->t_z;
@@ -654,16 +684,13 @@ void WorldSession::ReadMovementInfo(WorldPacket &data, MovementInfo *mi)
 
     if((mi->HasMovementFlag(MovementFlags(MOVEMENTFLAG_SWIMMING | MOVEMENTFLAG_FLYING2))) || (mi->unk1 & 0x20))
     {
-        CHECK_PACKET_SIZE(data, data.rpos()+4);
         data >> mi->s_pitch;
     }
 
-    CHECK_PACKET_SIZE(data, data.rpos()+4);
     data >> mi->fallTime;
 
     if(mi->HasMovementFlag(MOVEMENTFLAG_JUMPING))
     {
-        CHECK_PACKET_SIZE(data, data.rpos()+4+4+4+4);
         data >> mi->j_unk;
         data >> mi->j_sinAngle;
         data >> mi->j_cosAngle;
@@ -672,7 +699,6 @@ void WorldSession::ReadMovementInfo(WorldPacket &data, MovementInfo *mi)
 
     if(mi->HasMovementFlag(MOVEMENTFLAG_SPLINE))
     {
-        CHECK_PACKET_SIZE(data, data.rpos()+4);
         data >> mi->u_unk1;
     }
 }
@@ -686,6 +712,12 @@ void WorldSession::ReadAddonsInfo(WorldPacket &data)
 
     if(!size)
         return;
+
+    if(size > 0xFFFFF)
+    {
+        sLog.outError("WorldSession::ReadAddonsInfo addon info too big, size %u", size);
+        return;
+    }
 
     uLongf uSize = size;
 
@@ -710,10 +742,6 @@ void WorldSession::ReadAddonsInfo(WorldPacket &data)
                 return;
 
             addonInfo >> addonName;
-
-            // recheck next addon data format correctness
-            if(addonInfo.rpos()+1+4+4 > addonInfo.size())
-                return;
 
             addonInfo >> enabled >> crc >> unk1;
 

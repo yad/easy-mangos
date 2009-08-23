@@ -82,6 +82,17 @@ pkgdata_DATA = \
 	8342_01_mangos_spell_proc_event.sql \
 	8361_01_mangos_spell_bonus_data.sql \
 	8364_01_mangos_db_version.sql \
+	8377_01_mangos_spell_area.sql \
+	8392_01_mangos_spell_proc_event.sql \
+	8392_02_mangos_spell_chain.sql \
+	8394_01_mangos_spell_proc_event.sql \
+	8397_01_mangos_spell_chain.sql \
+	8397_02_mangos_spell_threat.sql \
+	8397_03_characters_character_spell.sql \
+	8399_01_mangos_spell_elixir.sql \
+	8402_01_characters_guild_eventlog.sql \
+	8402_02_characters_guild_bank_eventlog.sql \
+	8409_01_characters_guild.sql \
 	README
 
 ## Additional files to include when running 'make dist'
@@ -144,4 +155,15 @@ EXTRA_DIST = \
 	8342_01_mangos_spell_proc_event.sql \
 	8361_01_mangos_spell_bonus_data.sql \
 	8364_01_mangos_db_version.sql \
+	8377_01_mangos_spell_area.sql \
+	8392_01_mangos_spell_proc_event.sql \
+	8392_02_mangos_spell_chain.sql \
+	8394_01_mangos_spell_proc_event.sql \
+	8397_01_mangos_spell_chain.sql \
+	8397_02_mangos_spell_threat.sql \
+	8397_03_characters_character_spell.sql \
+	8399_01_mangos_spell_elixir.sql \
+	8402_01_characters_guild_eventlog.sql \
+	8402_02_characters_guild_bank_eventlog.sql \
+	8409_01_characters_guild.sql \
 	README
