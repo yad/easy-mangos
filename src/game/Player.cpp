@@ -436,8 +436,7 @@ Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputa
     for (int i = 0; i < MAX_COMBAT_RATING; ++i)
         m_baseRatingValue[i] = 0;
 
-    m_baseSpellDamage = 0;
-    m_baseSpellHealing = 0;
+    m_baseSpellPower = 0;
     m_baseFeralAP = 0;
     m_baseManaRegen = 0;
 
@@ -800,10 +799,10 @@ void Player::StopMirrorTimer(MirrorTimerType Type)
     GetSession()->SendPacket( &data );
 }
 
-void Player::EnvironmentalDamage(EnviromentalDamage type, uint32 damage)
+uint32 Player::EnvironmentalDamage(EnviromentalDamage type, uint32 damage)
 {
     if(!isAlive() || isGameMaster())
-        return;
+        return 0;
 
     // Absorb, resist some environmental damage type
     uint32 absorb = 0;
@@ -825,7 +824,7 @@ void Player::EnvironmentalDamage(EnviromentalDamage type, uint32 damage)
     data << uint32(resist);
     SendMessageToSet(&data, true);
 
-    DealDamage(this, damage, NULL, SELF_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, NULL, false);
+    uint32 final_damage = DealDamage(this, damage, NULL, SELF_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, NULL, false);
 
     if(!isAlive())
     {
@@ -840,6 +839,8 @@ void Player::EnvironmentalDamage(EnviromentalDamage type, uint32 damage)
 
         GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_DEATHS_FROM, 1, type);
     }
+
+    return final_damage;
 }
 
 int32 Player::getMaxTimer(MirrorTimerType timer)
@@ -3976,6 +3977,7 @@ void Player::DeleteFromDB(uint64 playerguid, uint32 accountId, bool updateRealmC
     }
 
     CharacterDatabase.PExecute("DELETE FROM characters WHERE guid = '%u'",guid);
+    CharacterDatabase.PExecute("DELETE FROM character_account_data WHERE guid = '%u'",guid);
     CharacterDatabase.PExecute("DELETE FROM character_declinedname WHERE guid = '%u'",guid);
     CharacterDatabase.PExecute("DELETE FROM character_action WHERE guid = '%u'",guid);
     CharacterDatabase.PExecute("DELETE FROM character_aura WHERE guid = '%u'",guid);
@@ -6660,12 +6662,6 @@ void Player::_ApplyItemBonuses(ItemPrototype const *proto, uint8 slot, bool appl
             case ITEM_MOD_FERAL_ATTACK_POWER:
                 ApplyFeralAPBonus(int32(val), apply);
                 break;
-            case ITEM_MOD_SPELL_HEALING_DONE:
-                ApplySpellHealingBonus(int32(val), apply);
-                break;
-            case ITEM_MOD_SPELL_DAMAGE_DONE:
-                ApplySpellDamageBonus(int32(val), apply);
-                break;
             case ITEM_MOD_MANA_REGENERATION:
                 ApplyManaRegenBonus(int32(val), apply);
                 break;
@@ -6673,8 +6669,11 @@ void Player::_ApplyItemBonuses(ItemPrototype const *proto, uint8 slot, bool appl
                 ApplyRatingMod(CR_ARMOR_PENETRATION, int32(val), apply);
                 break;
             case ITEM_MOD_SPELL_POWER:
-                ApplySpellHealingBonus(int32(val), apply);
-                ApplySpellDamageBonus(int32(val), apply);
+                ApplySpellPowerBonus(int32(val), apply);
+                break;
+            // depricated item mods
+            case ITEM_MOD_SPELL_HEALING_DONE:
+            case ITEM_MOD_SPELL_DAMAGE_DONE:
                 break;
         }
     }
@@ -11933,14 +11932,6 @@ void Player::ApplyEnchantment(Item *item, EnchantmentSlot slot, bool apply, bool
                             ((Player*)this)->ApplyFeralAPBonus(enchant_amount, apply);
                             sLog.outDebug("+ %u FERAL_ATTACK_POWER", enchant_amount);
                             break;
-                        case ITEM_MOD_SPELL_HEALING_DONE:
-                            ((Player*)this)->ApplySpellHealingBonus(enchant_amount, apply);
-                            sLog.outDebug("+ %u SPELL_HEALING_DONE", enchant_amount);
-                            break;
-                        case ITEM_MOD_SPELL_DAMAGE_DONE:
-                            ((Player*)this)->ApplySpellDamageBonus(enchant_amount, apply);
-                            sLog.outDebug("+ %u SPELL_DAMAGE_DONE", enchant_amount);
-                            break;
                         case ITEM_MOD_MANA_REGENERATION:
                             ((Player*)this)->ApplyManaRegenBonus(enchant_amount, apply);
                             sLog.outDebug("+ %u MANA_REGENERATION", enchant_amount);
@@ -11950,10 +11941,11 @@ void Player::ApplyEnchantment(Item *item, EnchantmentSlot slot, bool apply, bool
                             sLog.outDebug("+ %u ARMOR PENETRATION", enchant_amount);
                             break;
                         case ITEM_MOD_SPELL_POWER:
-                            ((Player*)this)->ApplySpellHealingBonus(enchant_amount, apply);
-                            ((Player*)this)->ApplySpellDamageBonus(enchant_amount, apply);
+                            ((Player*)this)->ApplySpellPowerBonus(enchant_amount, apply);
                             sLog.outDebug("+ %u SPELL_POWER", enchant_amount);
                             break;
+                        case ITEM_MOD_SPELL_HEALING_DONE:   // deprecated
+                        case ITEM_MOD_SPELL_DAMAGE_DONE:    // deprecated
                         default:
                             break;
                     }
@@ -19886,10 +19878,11 @@ void Player::HandleFall(MovementInfo const& movementInfo)
                 if (GetDummyAura(43621))
                     damage = GetMaxHealth()/2;
 
-                EnvironmentalDamage(DAMAGE_FALL, damage);
+                uint32 original_health = GetHealth();
+                uint32 final_damage = EnvironmentalDamage(DAMAGE_FALL, damage);
 
-                // recheck alive, might have died of EnvironmentalDamage
-                if (isAlive())
+                // recheck alive, might have died of EnvironmentalDamage, avoid cases when player die in fact like Spirit of Redemption case
+                if (isAlive() && final_damage < original_health)
                     GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_FALL_WITHOUT_DYING, uint32(z_diff*100));
             }
 

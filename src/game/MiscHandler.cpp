@@ -40,9 +40,11 @@
 #include "Pet.h"
 #include "SocialMgr.h"
 
-void WorldSession::HandleRepopRequestOpcode( WorldPacket & /*recv_data*/ )
+void WorldSession::HandleRepopRequestOpcode( WorldPacket & recv_data )
 {
     sLog.outDebug( "WORLD: Recvd CMSG_REPOP_REQUEST Message" );
+
+    recv_data.read_skip<uint8>();
 
     if(GetPlayer()->isAlive()||GetPlayer()->HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_GHOST))
         return;
@@ -866,7 +868,7 @@ void WorldSession::HandleUpdateAccountData(WorldPacket &recv_data)
 
     if(decompressedSize == 0)                               // erase
     {
-        SetAccountData(type, 0, "");
+        SetAccountData(AccountDataType(type), 0, "");
 
         WorldPacket data(SMSG_UPDATE_ACCOUNT_DATA_COMPLETE, 4+4);
         data << uint32(type);
@@ -899,7 +901,7 @@ void WorldSession::HandleUpdateAccountData(WorldPacket &recv_data)
     std::string adata;
     dest >> adata;
 
-    SetAccountData(type, timestamp, adata);
+    SetAccountData(AccountDataType(type), timestamp, adata);
 
     WorldPacket data(SMSG_UPDATE_ACCOUNT_DATA_COMPLETE, 4+4);
     data << uint32(type);
@@ -919,7 +921,7 @@ void WorldSession::HandleRequestAccountData(WorldPacket& recv_data)
     if(type > NUM_ACCOUNT_DATA_TYPES)
         return;
 
-    AccountData *adata = GetAccountData(type);
+    AccountData *adata = GetAccountData(AccountDataType(type));
 
     uint32 size = adata->Data.size();
 
