@@ -151,11 +151,11 @@ bool Guild::AddMember(uint64 plGuid, uint32 plRank)
         Field *fields    = result->Fetch();
         newmember.name   = fields[0].GetCppString();
         newmember.zoneId = fields[1].GetUInt32();
-        newmember.level  = fields[2].GetUInt32();
-        newmember.Class  = fields[3].GetUInt32();
+        newmember.level  = fields[2].GetUInt8();
+        newmember.Class  = fields[3].GetUInt8();
         delete result;
-        if(newmember.level < 1 || newmember.level > STRONG_MAX_LEVEL
-            || newmember.Class < CLASS_WARRIOR || newmember.Class >= MAX_CLASSES)
+        if (newmember.level < 1 || newmember.level > STRONG_MAX_LEVEL ||
+            newmember.Class < CLASS_WARRIOR || newmember.Class >= MAX_CLASSES)
         {
             sLog.outError("Player (GUID: %u) has a broken data in field `characters` table, cannot add him to guild.",GUID_LOPART(plGuid));
             return false;
@@ -297,7 +297,11 @@ bool Guild::LoadRanksFromDB(uint32 GuildId)
     QueryResult *result = CharacterDatabase.PQuery("SELECT rid,rname,rights,BankMoneyPerDay FROM guild_rank WHERE guildid = '%u' ORDER BY rid ASC", GuildId);
 
     if(!result)
-        return false;
+    {
+        sLog.outError("Guild %u has broken `guild_rank` data, creating new...",GuildId);
+        CreateDefaultGuildRanks(0);
+        return true;
+    }
 
     bool broken_ranks = false;
 
@@ -341,7 +345,6 @@ bool Guild::LoadRanksFromDB(uint32 GuildId)
         CharacterDatabase.PExecute("DELETE FROM guild_rank WHERE guildid='%u'", GuildId);
         for(size_t i = 0; i < m_Ranks.size(); ++i)
         {
-            // guild_rank.rid always store rank+1
             std::string name = m_Ranks[i].name;
             uint32 rights = m_Ranks[i].rights;
             CharacterDatabase.escape_string(name);
@@ -389,9 +392,9 @@ bool Guild::LoadMembersFromDB(uint32 GuildId)
         }
 
         newmember.name                  = fields[18].GetCppString();
-        newmember.level                 = fields[19].GetUInt32();
+        newmember.level                 = fields[19].GetUInt8();
         newmember.zoneId                = fields[20].GetUInt32();
-        newmember.Class                 = fields[21].GetUInt32();
+        newmember.Class                 = fields[21].GetUInt8();
         newmember.logout_time           = fields[22].GetUInt64();
 
         //this code will remove unexisting character guids from guild
@@ -641,7 +644,8 @@ void Guild::AddRank(const std::string& name_,uint32 rights, uint32 money)
 
 void Guild::DelRank()
 {
-    if(m_Ranks.empty())
+    // client won't allow to have less than GUILD_RANKS_MIN_COUNT ranks in guild
+    if(m_Ranks.size() <= GUILD_RANKS_MIN_COUNT)
         return;
 
     // delete lowest guild_rank
@@ -676,7 +680,7 @@ void Guild::SetRankName(uint32 rankId, std::string name_)
 
     // name now can be used for encoding to DB
     CharacterDatabase.escape_string(name_);
-    CharacterDatabase.PExecute("UPDATE guild_rank SET rname='%s' WHERE rid='%u' AND guildid='%u'", name_.c_str(), (rankId+1), m_Id);
+    CharacterDatabase.PExecute("UPDATE guild_rank SET rname='%s' WHERE rid='%u' AND guildid='%u'", name_.c_str(), rankId, m_Id);
 }
 
 void Guild::SetRankRights(uint32 rankId, uint32 rights)
@@ -686,7 +690,7 @@ void Guild::SetRankRights(uint32 rankId, uint32 rights)
 
     m_Ranks[rankId].rights = rights;
 
-    CharacterDatabase.PExecute("UPDATE guild_rank SET rights='%u' WHERE rid='%u' AND guildid='%u'", rights, (rankId+1), m_Id);
+    CharacterDatabase.PExecute("UPDATE guild_rank SET rights='%u' WHERE rid='%u' AND guildid='%u'", rights, rankId, m_Id);
 }
 
 int32 Guild::GetRank(uint32 LowGuid)
@@ -1398,7 +1402,7 @@ void Guild::SetBankMoneyPerDay(uint32 rankId, uint32 money)
         if (itr->second.RankId == rankId)
             itr->second.BankResetTimeMoney = 0;
 
-    CharacterDatabase.PExecute("UPDATE guild_rank SET BankMoneyPerDay='%u' WHERE rid='%u' AND guildid='%u'", money, (rankId+1), m_Id);
+    CharacterDatabase.PExecute("UPDATE guild_rank SET BankMoneyPerDay='%u' WHERE rid='%u' AND guildid='%u'", money, rankId, m_Id);
     CharacterDatabase.PExecute("UPDATE guild_member SET BankResetTimeMoney='0' WHERE guildid='%u' AND rank='%u'", m_Id, rankId);
 }
 
