@@ -237,25 +237,25 @@ struct GuildBankTab
 
 struct GuildItemPosCount
 {
-    GuildItemPosCount(uint8 _slot, uint32 _count) : slot(_slot), count(_count) {}
+    GuildItemPosCount(uint8 _slot, uint32 _count) : Slot(_slot), Count(_count) {}
 
     bool isContainedIn(std::vector<GuildItemPosCount> const& vec) const;
 
-    uint8 slot;
-    uint32 count;
+    uint8 Slot;
+    uint32 Count;
 };
 typedef std::vector<GuildItemPosCount> GuildItemPosCountVec;
 
 struct MemberSlot
 {
-    uint64 logout_time;
-    std::string name;
+    std::string Name;
+    uint32 RankId;
+    uint8 Level;
+    uint8 Class;
+    uint32 ZoneId;
+    uint64 LogoutTime;
     std::string Pnote;
     std::string OFFnote;
-    uint32 RankId;
-    uint32 zoneId;
-    uint8 level;
-    uint8 Class;
     uint32 BankResetTimeMoney;
     uint32 BankRemMoney;
     uint32 BankResetTimeTab[GUILD_BANK_MAX_TABS];
@@ -264,7 +264,7 @@ struct MemberSlot
 
 struct RankInfo
 {
-    RankInfo(const std::string& _name, uint32 _rights, uint32 _money) : name(_name), rights(_rights), BankMoneyPerDay(_money)
+    RankInfo(const std::string& _name, uint32 _rights, uint32 _money) : Name(_name), Rights(_rights), BankMoneyPerDay(_money)
     {
         for(uint8 i = 0; i < GUILD_BANK_MAX_TABS; ++i)
         {
@@ -273,8 +273,8 @@ struct RankInfo
         }
     }
 
-    std::string name;
-    uint32 rights;
+    std::string Name;
+    uint32 Rights;
     uint32 BankMoneyPerDay;
     uint32 TabRight[GUILD_BANK_MAX_TABS];
     uint32 TabSlotPerDay[GUILD_BANK_MAX_TABS];
@@ -295,19 +295,19 @@ class Guild
 
         uint32 GetId(){ return m_Id; }
         const uint64& GetLeader(){ return m_LeaderGuid; }
-        std::string GetName(){ return m_Name; }
-        std::string GetMOTD(){ return MOTD; }
-        std::string GetGINFO(){ return GINFO; }
+        std::string const& GetName() const { return m_Name; }
+        std::string const& GetMOTD() const { return MOTD; }
+        std::string const& GetGINFO() const { return GINFO; }
 
-        uint32 GetCreatedYear(){ return m_CreatedYear; }
-        uint32 GetCreatedMonth(){ return m_CreatedMonth; }
-        uint32 GetCreatedDay(){ return m_CreatedDay; }
+        uint32 GetCreatedYear() const { return m_CreatedYear; }
+        uint32 GetCreatedMonth() const { return m_CreatedMonth; }
+        uint32 GetCreatedDay() const { return m_CreatedDay; }
 
-        uint32 GetEmblemStyle(){ return m_EmblemStyle; }
-        uint32 GetEmblemColor(){ return m_EmblemColor; }
-        uint32 GetBorderStyle(){ return m_BorderStyle; }
-        uint32 GetBorderColor(){ return m_BorderColor; }
-        uint32 GetBackgroundColor(){ return m_BackgroundColor; }
+        uint32 GetEmblemStyle() const { return m_EmblemStyle; }
+        uint32 GetEmblemColor() const { return m_EmblemColor; }
+        uint32 GetBorderStyle() const { return m_BorderStyle; }
+        uint32 GetBorderColor() const { return m_BorderColor; }
+        uint32 GetBackgroundColor() const { return m_BackgroundColor; }
 
         void SetLeader(uint64 guid);
         bool AddMember(uint64 plGuid, uint32 plRank);
@@ -365,7 +365,7 @@ class Guild
         {
             for(MemberList::iterator itr = members.begin(); itr != members.end(); ++itr)
             {
-                if(itr->second.name == name)
+                if(itr->second.Name == name)
                 {
                     guid = itr->first;
                     return &itr->second;
@@ -374,7 +374,7 @@ class Guild
             return NULL;
         }
 
-        void Roster(WorldSession *session);
+        void Roster(WorldSession *session = NULL);          // NULL = broadcast
         void Query(WorldSession *session);
 
         void   UpdateLogoutTime(uint64 guid);

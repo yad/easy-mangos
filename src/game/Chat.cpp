@@ -1178,7 +1178,7 @@ valid examples:
                     char c = reader.peek();
 
                     // ignore enchants etc.
-                    while(c >='0' && c <='9' || c==':')
+                    while ((c >= '0' && c <= '9') || c== ':')
                     {
                         reader.ignore(1);
                         c = reader.peek();
@@ -1481,7 +1481,7 @@ valid examples:
                         bool foundName = false;
                         for(uint8 i=0; i<MAX_LOCALE; ++i)
                         {
-                            if (*linkedAchievement->name[i], strcmp(linkedAchievement->name[i], buffer) == 0)
+                            if (*linkedAchievement->name[i] && strcmp(linkedAchievement->name[i], buffer) == 0)
                             {
                                 foundName = true;
                                 break;
