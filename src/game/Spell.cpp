@@ -960,7 +960,7 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
     // Do healing and triggers
     if (m_healing)
     {
-        bool crit = caster->isSpellCrit(NULL, m_spellInfo, m_spellSchoolMask);
+        bool crit = caster->isSpellCrit(unitTarget, m_spellInfo, m_spellSchoolMask);
         uint32 addhealth = m_healing;
         if (crit)
         {
@@ -3540,7 +3540,7 @@ SpellCastResult Spell::CheckRuneCost(uint32 runeCostID)
 
     for(uint32 i = 0; i < MAX_RUNES; ++i)
     {
-        uint8 rune = plr->GetCurrentRune(i);
+        RuneType rune = plr->GetCurrentRune(i);
         if((plr->GetRuneCooldown(i) == 0) && (runeCost[rune] > 0))
             runeCost[rune]--;
     }
@@ -3583,7 +3583,7 @@ void Spell::TakeRunePower()
 
     for(uint32 i = 0; i < MAX_RUNES; ++i)
     {
-        uint8 rune = plr->GetCurrentRune(i);
+        RuneType rune = plr->GetCurrentRune(i);
         if((plr->GetRuneCooldown(i) == 0) && (runeCost[rune] > 0))
         {
             plr->SetRuneCooldown(i, RUNE_COOLDOWN);         // 5*2=10 sec
@@ -3597,7 +3597,7 @@ void Spell::TakeRunePower()
     {
         for(uint32 i = 0; i < MAX_RUNES; ++i)
         {
-            uint8 rune = plr->GetCurrentRune(i);
+            RuneType rune = plr->GetCurrentRune(i);
             if((plr->GetRuneCooldown(i) == 0) && (rune == RUNE_DEATH))
             {
                 plr->SetRuneCooldown(i, RUNE_COOLDOWN);     // 5*2=10 sec

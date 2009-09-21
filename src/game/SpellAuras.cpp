@@ -448,6 +448,13 @@ m_isRemovedOnShapeLost(true), m_in_use(0), m_deleted(false)
                               m_spellProto->Stances &&
                             !(m_spellProto->AttributesEx2 & SPELL_ATTR_EX2_NOT_NEED_SHAPESHIFT) &&
                             !(m_spellProto->Attributes & SPELL_ATTR_NOT_SHAPESHIFT));
+
+    if (caster && m_spellProto->Id == 22959)                // Improved Scorch
+    {
+        // Glyph of Improved Scorch
+        if (Aura* glyph = caster->GetDummyAura(56371))
+            m_stackAmount = glyph->GetModifier()->m_amount;
+    }
 }
 
 Aura::~Aura()
@@ -6129,6 +6136,15 @@ void Aura::HandleSchoolAbsorb(bool apply, bool Real)
                         //+30% from +spell bonus
                         DoneActualBenefit = caster->SpellBaseDamageBonus(GetSpellSchoolMask(m_spellProto)) * 0.30f;
                     break;
+                case SPELLFAMILY_PALADIN:
+                    // Sacred Shield
+                    // (check not strictly needed, only Sacred Shield has SPELL_AURA_SCHOOL_ABSORB in SPELLFAMILY_PALADIN at this time)
+                    if (m_spellProto->SpellFamilyFlags & UI64LIT(0x0008000000000000))
+                    {
+                        // +75% from spell power
+                        DoneActualBenefit = caster->SpellBaseHealingBonus(GetSpellSchoolMask(m_spellProto)) * 0.75f;
+                    }
+                    break;
                 case SPELLFAMILY_DRUID:
                     // Savage Defense (amount store original percent of attack power applied)
                     if (m_spellProto->SpellIconID == 50)    // only spell with this aura fit
@@ -6141,6 +6157,26 @@ void Aura::HandleSchoolAbsorb(bool apply, bool Real)
             DoneActualBenefit *= caster->CalculateLevelPenalty(GetSpellProto());
 
             m_modifier.m_amount += (int32)DoneActualBenefit;
+
+            // now that the correct amount is computed, apply caster aura, if any
+            switch(m_spellProto->SpellFamilyName)
+            {
+                case SPELLFAMILY_PRIEST:
+                    // Power Word: Shield
+                    if (m_spellProto->SpellFamilyFlags & UI64LIT(0x0000000000000001))
+                    {
+                        // Glyph of Power Word: Shield
+                        if(Aura* glyph = caster->GetAura(55672,0))
+                        {
+                            // instant heal glyph m_amount% of the absorbed amount
+                            int32 heal = (glyph->GetModifier()->m_amount * m_modifier.m_amount)/100;
+                            caster->CastCustomSpell(m_target, 56160, &heal, NULL, NULL, true, 0, this);
+                        }
+                    }
+                    break;
+                default:
+                    break;
+            }
         }
     }
     else
@@ -7163,7 +7199,7 @@ void Aura::HandleManaShield(bool apply, bool Real)
             switch(m_spellProto->SpellFamilyName)
             {
                 case SPELLFAMILY_MAGE:
-                    if(m_spellProto->SpellFamilyFlags & UI64LIT(0x8000))
+                    if(m_spellProto->SpellFamilyFlags & UI64LIT(0x0000000000008000))
                     {
                         // Mana Shield
                         // +50% from +spd bonus
@@ -7244,13 +7280,13 @@ void Aura::HandleAuraConvertRune(bool apply, bool Real)
         {
             if(!plr->GetRuneCooldown(i))
             {
-                plr->ConvertRune(i, GetSpellProto()->EffectMiscValueB[m_effIndex]);
+                plr->ConvertRune(i, RuneType(GetSpellProto()->EffectMiscValueB[m_effIndex]));
                 break;
             }
         }
         else
         {
-            if(plr->GetCurrentRune(i) == GetSpellProto()->EffectMiscValueB[m_effIndex])
+            if(plr->GetCurrentRune(i) == RuneType(GetSpellProto()->EffectMiscValueB[m_effIndex]))
             {
                 plr->ConvertRune(i, plr->GetBaseRune(i));
                 break;
