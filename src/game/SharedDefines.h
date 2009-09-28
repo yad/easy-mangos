@@ -1035,6 +1035,7 @@ enum Targets
     TARGET_AREAEFFECT_PARTY            = 37,
     TARGET_SCRIPT                      = 38,
     TARGET_SELF_FISHING                = 39,
+    TARGET_FOCUS_OR_SCRIPTED_GAMEOBJECT= 40,
     TARGET_TOTEM_EARTH                 = 41,
     TARGET_TOTEM_WATER                 = 42,
     TARGET_TOTEM_AIR                   = 43,
@@ -1047,11 +1048,15 @@ enum Targets
     TARGET_DYNAMIC_OBJECT_RIGHT_SIDE   = 50,
     TARGET_AREAEFFECT_CUSTOM_2         = 52,
     TARGET_CURRENT_ENEMY_COORDINATES   = 53,                // set unit coordinates as dest, only 16 target B imlemented
+    TARGET_LARGE_FRONTAL_CONE          = 54,
     TARGET_ALL_RAID_AROUND_CASTER      = 56,
     TARGET_SINGLE_FRIEND_2             = 57,
+    TARGET_NARROW_FRONTAL_CONE         = 60,
     TARGET_AREAEFFECT_PARTY_AND_CLASS  = 61,
     TARGET_DUELVSPLAYER_COORDINATES    = 63,
-    TARGET_BEHIND_VICTIM               = 65,                // uses in teleport behind spells, caster/target dependent from spell effect
+    TARGET_BEHIND_VICTIM               = 65,                // used in teleport behind spells, caster/target dependent from spell effect
+    TARGET_RANDOM_NEARBY_LOC           = 72,                // used in teleport onto nearby locations
+    TARGET_RANDOM_CIRCUMFERENCE_POINT  = 73,
     TARGET_DYNAMIC_OBJECT_COORDINATES  = 76,
     TARGET_SINGLE_ENEMY                = 77,
     TARGET_POINT_AT_NORTH              = 78,                // 78-85 possible _COORDINATES at radius with pi/4 step around target in unknown order, N?
@@ -1062,6 +1067,7 @@ enum Targets
     TARGET_POINT_AT_NW                 = 83,                // from spell desc: "(NW)"
     TARGET_POINT_AT_SE                 = 84,                // from spell desc: "(SE)"
     TARGET_POINT_AT_SW                 = 85,                // from spell desc: "(SW)"
+    TARGET_RANDOM_NEARBY_DEST          = 86,                // "Test Nearby Dest Random" - random around selected destination
     TARGET_SELF2                       = 87,
     TARGET_DIRECTLY_FORWARD            = 89,
     TARGET_NONCOMBAT_PET               = 90,

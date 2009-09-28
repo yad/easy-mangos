@@ -488,10 +488,13 @@ void Spell::FillTargetMap()
         if(m_spellInfo->Effect[i] == 0)
             continue;
 
-        // targets for TARGET_SCRIPT_COORDINATES (A) and TARGET_SCRIPT  filled in Spell::CheckCast call
+        // targets for TARGET_SCRIPT_COORDINATES (A) and TARGET_SCRIPT
+        // and TARGET_FOCUS_OR_SCRIPTED_GAMEOBJECT (A) if no RequiresSpellFocus set
+        // filled in Spell::CheckCast call
         if( m_spellInfo->EffectImplicitTargetA[i] == TARGET_SCRIPT_COORDINATES ||
             m_spellInfo->EffectImplicitTargetA[i] == TARGET_SCRIPT ||
-            m_spellInfo->EffectImplicitTargetB[i] == TARGET_SCRIPT && m_spellInfo->EffectImplicitTargetA[i] != TARGET_SELF )
+            (m_spellInfo->EffectImplicitTargetA[i] == TARGET_FOCUS_OR_SCRIPTED_GAMEOBJECT && !m_spellInfo->RequiresSpellFocus) ||
+            (m_spellInfo->EffectImplicitTargetB[i] == TARGET_SCRIPT && m_spellInfo->EffectImplicitTargetA[i] != TARGET_SELF) )
             continue;
 
         // TODO: find a way so this is not needed?
@@ -1313,6 +1316,64 @@ void Spell::SetTargetMap(uint32 effIndex,uint32 targetMode,UnitList& TagUnitMap)
 
     switch(targetMode)
     {
+        case TARGET_FOCUS_OR_SCRIPTED_GAMEOBJECT:
+        {
+            if(m_spellInfo->RequiresSpellFocus)
+            {
+                CellPair p(MaNGOS::ComputeCellPair(m_caster->GetPositionX(), m_caster->GetPositionY()));
+                Cell cell(p);
+                cell.data.Part.reserved = ALL_DISTRICT;
+
+                GameObject* goTarget = NULL;
+                MaNGOS::GameObjectFocusCheck go_check(m_caster, m_spellInfo->RequiresSpellFocus);
+                MaNGOS::GameObjectSearcher<MaNGOS::GameObjectFocusCheck> checker(m_caster, goTarget, go_check);
+
+                TypeContainerVisitor<MaNGOS::GameObjectSearcher<MaNGOS::GameObjectFocusCheck>, GridTypeMapContainer > object_checker(checker);
+                CellLock<GridReadGuard> cell_lock(cell, p);
+                Map& map = *m_caster->GetMap();
+                cell_lock->Visit(cell_lock, object_checker, map, *m_caster, map.GetVisibilityDistance());
+
+                if(goTarget)
+                    AddGOTarget(goTarget, effIndex);
+            }
+            else if(m_targets.getGOTarget())
+                AddGOTarget(m_targets.getGOTarget(), effIndex);
+
+            break;
+        }
+        case TARGET_RANDOM_NEARBY_LOC:
+            radius *= sqrt(rand_norm()); // Get a random point in circle. Use sqrt(rand) to correct distribution when converting polar to Cartesian coordinates.
+                                         // no 'break' expected since we use code in case TARGET_RANDOM_CIRCUMFERENCE_POINT!!!
+        case TARGET_RANDOM_CIRCUMFERENCE_POINT:
+        {
+            float angle = 2.0 * M_PI * rand_norm();
+            float dest_x = m_caster->GetPositionX() + cos(angle) * radius;
+            float dest_y = m_caster->GetPositionY() + sin(angle) * radius;
+            float dest_z = m_caster->GetMap()->GetHeight(dest_x, dest_y, MAX_HEIGHT);
+            m_targets.setDestination(dest_x, dest_y, dest_z);
+
+            TagUnitMap.push_back(m_caster);
+            break;
+        }
+        case TARGET_RANDOM_NEARBY_DEST:
+        {
+            radius *= sqrt(rand_norm()); // Get a random point in circle. Use sqrt(rand) to correct distribution when converting polar to Cartesian coordinates.
+            float angle = 2.0 * M_PI * rand_norm();
+            float dest_x = m_targets.m_destX + cos(angle) * radius;
+            float dest_y = m_targets.m_destY + sin(angle) * radius;
+            float dest_z = m_caster->GetMap()->GetHeight(dest_x, dest_y, MAX_HEIGHT);
+            m_targets.setDestination(dest_x, dest_y, dest_z);
+
+            if (radius > 0.0f)
+            {
+                // caster included here?
+                FillAreaTargets(TagUnitMap, dest_x, dest_y, radius, PUSH_DEST_CENTER, SPELL_TARGETS_AOE_DAMAGE);
+            }
+            else
+                TagUnitMap.push_back(m_caster);
+
+            break;
+        }
         case TARGET_TOTEM_EARTH:
         case TARGET_TOTEM_WATER:
         case TARGET_TOTEM_AIR:
@@ -1715,6 +1776,12 @@ void Spell::SetTargetMap(uint32 effIndex,uint32 targetMode,UnitList& TagUnitMap)
             FillAreaTargets(TagUnitMap,m_caster->GetPositionX(), m_caster->GetPositionY(),radius,inFront ? PUSH_IN_FRONT : PUSH_IN_BACK,SPELL_TARGETS_AOE_DAMAGE);
             break;
         }
+        case TARGET_LARGE_FRONTAL_CONE:
+            FillAreaTargets(TagUnitMap,m_caster->GetPositionX(), m_caster->GetPositionY(), radius, PUSH_IN_FRONT_90, SPELL_TARGETS_AOE_DAMAGE);
+            break;
+        case TARGET_NARROW_FRONTAL_CONE:
+            FillAreaTargets(TagUnitMap,m_caster->GetPositionX(), m_caster->GetPositionY(), radius, PUSH_IN_FRONT_15, SPELL_TARGETS_AOE_DAMAGE);
+            break;
         case TARGET_IN_FRONT_OF_CASTER_30:
             FillAreaTargets(TagUnitMap,m_caster->GetPositionX(), m_caster->GetPositionY(), radius, PUSH_IN_FRONT_30, SPELL_TARGETS_AOE_DAMAGE);
             break;
@@ -2205,12 +2272,14 @@ void Spell::SetTargetMap(uint32 effIndex,uint32 targetMode,UnitList& TagUnitMap)
                                 TagUnitMap.push_back(owner);
                     }
                     break;
+
                 default:
                     break;
             }
             break;
         }
         default:
+            //sLog.outError( "SPELL: Unknown implicit target (%u) for spell ID %u", targetMode, m_spellInfo->Id );
             break;
     }
 
@@ -4065,8 +4134,10 @@ SpellCastResult Spell::CheckCast(bool strict)
             if( m_spellInfo->EffectImplicitTargetA[j] == TARGET_SCRIPT ||
                 m_spellInfo->EffectImplicitTargetB[j] == TARGET_SCRIPT && m_spellInfo->EffectImplicitTargetA[j] != TARGET_SELF ||
                 m_spellInfo->EffectImplicitTargetA[j] == TARGET_SCRIPT_COORDINATES ||
-                m_spellInfo->EffectImplicitTargetB[j] == TARGET_SCRIPT_COORDINATES )
+                m_spellInfo->EffectImplicitTargetB[j] == TARGET_SCRIPT_COORDINATES ||
+                m_spellInfo->EffectImplicitTargetA[j] == TARGET_FOCUS_OR_SCRIPTED_GAMEOBJECT )
             {
+
                 SpellScriptTargetBounds bounds = spellmgr.GetSpellScriptTargetBounds(m_spellInfo->Id);
                 if(bounds.first==bounds.second)
                     sLog.outErrorDb("Spell (ID: %u) has effect EffectImplicitTargetA/EffectImplicitTargetB = TARGET_SCRIPT or TARGET_SCRIPT_COORDINATES, but does not have record in `spell_script_target`",m_spellInfo->Id);
