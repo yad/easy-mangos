@@ -150,7 +150,7 @@ void BattleGroundWS::RespawnFlagAfterDrop(uint32 team)
 
     PlaySoundToAll(BG_WS_SOUND_FLAGS_RESPAWNED);
 
-    GameObject *obj = HashMapHolder<GameObject>::Find(GetDroppedFlagGUID(team));
+    GameObject *obj = GetBgMap()->GetGameObject(GetDroppedFlagGUID(team));
     if (obj)
         obj->Delete();
     else
@@ -534,7 +534,7 @@ void BattleGroundWS::Reset()
         m_FlagState[i]       = BG_WS_FLAG_STATE_ON_BASE;
         m_TeamScores[i]      = 0;
     }
-    bool isBGWeekend = sBattleGroundMgr.IsBGWeekend(GetTypeID());
+    bool isBGWeekend = BattleGroundMgr::IsBGWeekend(GetTypeID());
     m_ReputationCapture = (isBGWeekend) ? 45 : 35;
     m_HonorWinKills = (isBGWeekend) ? 3 : 1;
     m_HonorEndKills = (isBGWeekend) ? 4 : 2;
