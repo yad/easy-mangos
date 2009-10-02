@@ -1033,6 +1033,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         bool CanInteractWithNPCs(bool alive = true) const;
         GameObject* GetGameObjectIfCanInteractWith(uint64 guid, GameobjectTypes type) const;
 
+        void UpdateVisibilityForPlayer();
+
         bool ToggleAFK();
         bool ToggleDND();
         bool isAFK() const { return HasFlag(PLAYER_FLAGS,PLAYER_FLAGS_AFK); };
@@ -2207,6 +2209,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         bool isAllowedToLoot(Creature* creature);
 
         DeclinedName const* GetDeclinedNames() const { return m_declinedname; }
+
+        // Rune functions, need check  getClass() == CLASS_DEATH_KNIGHT before access
         uint8 GetRunesState() const { return m_runes->runeState; }
         RuneType GetBaseRune(uint8 index) const { return RuneType(m_runes->runes[index].BaseRune); }
         RuneType GetCurrentRune(uint8 index) const { return RuneType(m_runes->runes[index].CurrentRune); }
@@ -2219,6 +2223,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         void ResyncRunes(uint8 count);
         void AddRunePower(uint8 index);
         void InitRunes();
+
         AchievementMgr& GetAchievementMgr() { return m_achievementMgr; }
         void UpdateAchievementCriteria(AchievementCriteriaTypes type, uint32 miscvalue1=0, uint32 miscvalue2=0, Unit *unit=NULL, uint32 time=0);
         bool HasTitle(uint32 bitIndex);

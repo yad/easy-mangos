@@ -1693,12 +1693,20 @@ void Spell::SetTargetMap(uint32 effIndex,uint32 targetMode,UnitList& TagUnitMap)
             FillAreaTargets(TagUnitMap, m_targets.m_destX, m_targets.m_destY, radius, PUSH_SELF_CENTER, SPELL_TARGETS_HOSTILE);
             break;
         case TARGET_ALL_FRIENDLY_UNITS_AROUND_CASTER:
-            // special target order
-            if (m_spellInfo->Id==64904)                     // Hymn of Hope
-                // target amount stored in parent spell dummy effect but hard for access
-                FillRaidOrPartyManaPriorityTargets(TagUnitMap, m_caster, m_caster, radius, 3, true, false, false);
-            else
-                FillAreaTargets(TagUnitMap, m_targets.m_destX, m_targets.m_destY, radius, PUSH_SELF_CENTER, SPELL_TARGETS_FRIENDLY);
+            switch (m_spellInfo->Id)
+            {
+                case 64844:                                     // Divine Hymn
+                    // target amount stored in parent spell dummy effect but hard to access
+                    FillRaidOrPartyHealthPriorityTargets(TagUnitMap, m_caster, m_caster, radius, 3, true, false, false);
+                    break;
+                case 64904:                                     // Hymn of Hope
+                    // target amount stored in parent spell dummy effect but hard to access
+                    FillRaidOrPartyManaPriorityTargets(TagUnitMap, m_caster, m_caster, radius, 3, true, false, false);
+                    break;
+                default:
+                    FillAreaTargets(TagUnitMap, m_targets.m_destX, m_targets.m_destY, radius, PUSH_SELF_CENTER, SPELL_TARGETS_FRIENDLY);
+                    break;
+            }
             break;
         case TARGET_ALL_FRIENDLY_UNITS_IN_AREA:
             // Wild Growth
@@ -3156,7 +3164,7 @@ void Spell::SendSpellGo()
     if ( castFlags & CAST_FLAG_UNKNOWN7 )                   // rune cooldowns list
     {
         uint8 v1 = m_runesState;
-        uint8 v2 = ((Player*)m_caster)->GetRunesState();
+        uint8 v2 =  m_caster->getClass() == CLASS_DEATH_KNIGHT ? ((Player*)m_caster)->GetRunesState() : 0;
         data << uint8(v1);                                  // runes state before
         data << uint8(v2);                                  // runes state after
         for(uint8 i = 0; i < MAX_RUNES; ++i)
