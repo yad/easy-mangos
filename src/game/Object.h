@@ -32,10 +32,13 @@
 #define CONTACT_DISTANCE            0.5f
 #define INTERACTION_DISTANCE        5.0f
 #define ATTACK_DISTANCE             5.0f
-#define MAX_VISIBILITY_DISTANCE  (5*SIZE_OF_GRID_CELL/2.0f) // max distance for visible object show, limited by active zone for player based at cell size (active zone = 5x5 cells)
-#define DEFAULT_VISIBILITY_DISTANCE (SIZE_OF_GRID_CELL)     // default visible distance
+#define MAX_VISIBILITY_DISTANCE     333.0f      // max distance for visible object show, limited in 333 yards
+#define DEFAULT_VISIBILITY_DISTANCE 90.0f       // default visible distance, 90 yards on continents
+#define DEFAULT_VISIBILITY_INSTANCE 120.0f      // default visible distance in instances, 120 yards
+#define DEFAULT_VISIBILITY_BGARENAS 180.0f      // default visible distance in BG/Arenas, 180 yards
 
 #define DEFAULT_WORLD_OBJECT_SIZE   0.388999998569489f      // player size, also currently used (correctly?) for any non Unit world objects
+#define MAX_STEALTH_DETECT_RANGE    45.0f
 
 enum TypeMask
 {
@@ -85,7 +88,6 @@ enum PhaseMasks
 
 class WorldPacket;
 class UpdateData;
-class ByteBuffer;
 class WorldSession;
 class Creature;
 class Player;
@@ -144,12 +146,11 @@ class MANGOS_DLL_SPEC Object
         bool isType(uint16 mask) const { return (mask & m_objectType); }
 
         virtual void BuildCreateUpdateBlockForPlayer( UpdateData *data, Player *target ) const;
-        void SendUpdateToPlayer(Player* player);
+        void SendCreateUpdateToPlayer(Player* player);
 
         void BuildValuesUpdateBlockForPlayer( UpdateData *data, Player *target ) const;
         void BuildOutOfRangeUpdateBlock( UpdateData *data ) const;
         void BuildMovementUpdateBlock( UpdateData * data, uint32 flags = 0 ) const;
-        void BuildUpdate(UpdateDataMapType &);
 
         virtual void DestroyForPlayer( Player *target, bool anim = false ) const;
 
@@ -287,7 +288,6 @@ class MANGOS_DLL_SPEC Object
         }
 
         void ClearUpdateMask(bool remove);
-        void SendUpdateObjectToAllExcept(Player* exceptPlayer);
 
         bool LoadValues(const char* data);
 
@@ -471,6 +471,8 @@ class MANGOS_DLL_SPEC WorldObject : public Object
 
         virtual void SaveRespawnTime() {}
         void AddObjectToRemoveList();
+
+        void UpdateObjectVisibility();
 
         // main visibility check function in normal case (ignore grey zone distance check)
         bool isVisibleFor(Player const* u, WorldObject const* viewPoint) const { return isVisibleForInState(u,viewPoint,false); }

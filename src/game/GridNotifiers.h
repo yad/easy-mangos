@@ -20,7 +20,6 @@
 #define MANGOS_GRIDNOTIFIERS_H
 
 #include "ObjectGridLoader.h"
-#include "ByteBuffer.h"
 #include "UpdateData.h"
 #include <iostream>
 
@@ -720,7 +719,7 @@ namespace MaNGOS
             bool operator()(Unit* u)
             {
                 if(u->isAlive() && u->isInCombat() && !i_obj->IsHostileTo(u) && i_obj->IsWithinDistInMap(u, i_range) &&
-                    (u->isFeared() || u->isCharmed() || u->isFrozen() || u->hasUnitState(UNIT_STAT_STUNNED) || u->hasUnitState(UNIT_STAT_CONFUSED)))
+                    (u->isFeared() || u->isCharmed() || u->isFrozen() || u->hasUnitState(UNIT_STAT_STUNNED | UNIT_STAT_CONFUSED | UNIT_STAT_DIED)))
                 {
                     return true;
                 }

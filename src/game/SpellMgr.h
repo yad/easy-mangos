@@ -125,6 +125,8 @@ inline float GetSpellMaxRange(SpellRangeEntry const *range, bool friendly = fals
 inline uint32 GetSpellRecoveryTime(SpellEntry const *spellInfo) { return spellInfo->RecoveryTime > spellInfo->CategoryRecoveryTime ? spellInfo->RecoveryTime : spellInfo->CategoryRecoveryTime; }
 int32 GetSpellDuration(SpellEntry const *spellInfo);
 int32 GetSpellMaxDuration(SpellEntry const *spellInfo);
+uint16 GetSpellAuraMaxTicks(SpellEntry const* spellInfo);
+WeaponAttackType GetWeaponAttackType(SpellEntry const *spellInfo);
 
 inline bool IsSpellHaveEffect(SpellEntry const *spellInfo, SpellEffects effect)
 {
@@ -156,7 +158,9 @@ inline bool IsSealSpell(SpellEntry const *spellInfo)
 {
     //Collection of all the seal family flags. No other paladin spell has any of those.
     return spellInfo->SpellFamilyName == SPELLFAMILY_PALADIN &&
-        ( spellInfo->SpellFamilyFlags & SPELLFAMILYFLAG_PALADIN_SEALS );
+        ( spellInfo->SpellFamilyFlags & SPELLFAMILYFLAG_PALADIN_SEALS ) &&
+        // avoid counting target triggered effect as seal for avoid remove it or seal by it.
+        spellInfo->EffectImplicitTargetA[0] == TARGET_SELF;
 }
 
 inline bool IsElementalShield(SpellEntry const *spellInfo)
@@ -196,6 +200,12 @@ inline bool IsPassiveSpellStackableWithRanks(SpellEntry const* spellProto)
     return !IsSpellHaveEffect(spellProto,SPELL_EFFECT_APPLY_AURA);
 }
 
+inline bool IsDeathOnlySpell(SpellEntry const *spellInfo)
+{
+    return spellInfo->AttributesEx3 & SPELL_ATTR_EX3_CAST_ON_DEAD
+        || spellInfo->Id == 2584
+        || spellInfo->Id == 22011;
+}
 
 inline bool IsDeathPersistentSpell(SpellEntry const *spellInfo)
 {

@@ -90,6 +90,60 @@ uint32 GetSpellCastTime(SpellEntry const* spellInfo, Spell const* spell)
     return (castTime > 0) ? uint32(castTime) : 0;
 }
 
+uint16 GetSpellAuraMaxTicks(SpellEntry const* spellInfo)
+{
+    int32 DotDuration = GetSpellDuration(spellInfo);
+    if(DotDuration == 0)
+        return 1;
+
+    // 200% limit
+    if(DotDuration > 30000)
+        DotDuration = 30000;
+
+    int j = 0;
+    for( ; j < 3; j++)
+    {
+        if( spellInfo->Effect[j] == SPELL_EFFECT_APPLY_AURA && (
+            spellInfo->EffectApplyAuraName[j] == SPELL_AURA_PERIODIC_DAMAGE ||
+            spellInfo->EffectApplyAuraName[j] == SPELL_AURA_PERIODIC_HEAL ||
+            spellInfo->EffectApplyAuraName[j] == SPELL_AURA_PERIODIC_LEECH) )
+        {
+            break;
+        }
+    }
+
+    if(spellInfo->EffectAmplitude[j] != 0)
+        return DotDuration / spellInfo->EffectAmplitude[j];
+
+    return 6;
+}
+
+WeaponAttackType GetWeaponAttackType(SpellEntry const *spellInfo)
+{
+    if(!spellInfo)
+        return BASE_ATTACK;
+
+    switch (spellInfo->DmgClass)
+    {
+        case SPELL_DAMAGE_CLASS_MELEE:
+            if (spellInfo->AttributesEx3 & SPELL_ATTR_EX3_REQ_OFFHAND)
+                return OFF_ATTACK;
+            else
+                return BASE_ATTACK;
+            break;
+        case SPELL_DAMAGE_CLASS_RANGED:
+            return RANGED_ATTACK;
+            break;
+        default:
+                                                            // Wands
+            if (spellInfo->AttributesEx2 & SPELL_ATTR_EX2_AUTOREPEAT_FLAG)
+                return RANGED_ATTACK;
+            else
+                return BASE_ATTACK;
+            break;
+    }
+}
+
 bool IsPassiveSpell(uint32 spellId)
 {
     SpellEntry const *spellInfo = sSpellStore.LookupEntry(spellId);
@@ -1501,6 +1555,10 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                 // Savage Roar and Savage Roar (triggered)
                 if (spellInfo_1->SpellIconID == 2865 && spellInfo_2->SpellIconID == 2865)
                     return false;
+
+                // Frenzied Regeneration and Savage Defense
+                if( spellInfo_1->Id == 22842 && spellInfo_2->Id == 62606 || spellInfo_2->Id == 22842 && spellInfo_1->Id == 62606 )
+                    return false;
             }
 
             // Leader of the Pack and Scroll of Stamina (multi-family check)
@@ -2085,7 +2143,7 @@ void SpellMgr::LoadSpellScriptTarget()
 
     QueryResult *result = WorldDatabase.Query("SELECT entry,type,targetEntry FROM spell_script_target");
 
-    if(!result)
+    if (!result)
     {
         barGoLink bar(1);
 
@@ -2109,44 +2167,72 @@ void SpellMgr::LoadSpellScriptTarget()
 
         SpellEntry const* spellProto = sSpellStore.LookupEntry(spellId);
 
-        if(!spellProto)
+        if (!spellProto)
         {
             sLog.outErrorDb("Table `spell_script_target`: spellId %u listed for TargetEntry %u does not exist.",spellId,targetEntry);
             continue;
         }
 
         bool targetfound = false;
-        for(int i = 0; i <3; ++i)
+        for (int i = 0; i < 3; ++i)
         {
-            if( spellProto->EffectImplicitTargetA[i]==TARGET_SCRIPT ||
-                spellProto->EffectImplicitTargetB[i]==TARGET_SCRIPT ||
-                spellProto->EffectImplicitTargetA[i]==TARGET_SCRIPT_COORDINATES ||
-                spellProto->EffectImplicitTargetB[i]==TARGET_SCRIPT_COORDINATES )
+            if( spellProto->EffectImplicitTargetA[i] == TARGET_SCRIPT ||
+                spellProto->EffectImplicitTargetB[i] == TARGET_SCRIPT ||
+                spellProto->EffectImplicitTargetA[i] == TARGET_SCRIPT_COORDINATES ||
+                spellProto->EffectImplicitTargetB[i] == TARGET_SCRIPT_COORDINATES ||
+                spellProto->EffectImplicitTargetA[i] == TARGET_FOCUS_OR_SCRIPTED_GAMEOBJECT ||
+                spellProto->EffectImplicitTargetB[i] == TARGET_FOCUS_OR_SCRIPTED_GAMEOBJECT )
             {
                 targetfound = true;
                 break;
             }
         }
-        if(!targetfound)
+        if (!targetfound)
         {
-            sLog.outErrorDb("Table `spell_script_target`: spellId %u listed for TargetEntry %u does not have any implicit target TARGET_SCRIPT(38) or TARGET_SCRIPT_COORDINATES (46).",spellId,targetEntry);
+            sLog.outErrorDb("Table `spell_script_target`: spellId %u listed for TargetEntry %u does not have any implicit target TARGET_SCRIPT(38) or TARGET_SCRIPT_COORDINATES (46) or TARGET_FOCUS_OR_SCRIPTED_GAMEOBJECT (40).", spellId, targetEntry);
             continue;
         }
 
-        if( type >= MAX_SPELL_TARGET_TYPE )
+        if (type >= MAX_SPELL_TARGET_TYPE)
         {
             sLog.outErrorDb("Table `spell_script_target`: target type %u for TargetEntry %u is incorrect.",type,targetEntry);
             continue;
         }
 
-        switch(type)
+        // More checks on TARGET_FOCUS_OR_SCRIPTED_GAMEOBJECT
+        bool ok = true;
+        for (int i = 0; i < 3; ++i)
+        {
+            if (spellProto->EffectImplicitTargetA[i] == TARGET_FOCUS_OR_SCRIPTED_GAMEOBJECT ||
+                spellProto->EffectImplicitTargetB[i] == TARGET_FOCUS_OR_SCRIPTED_GAMEOBJECT)
+            {
+                if (spellProto->RequiresSpellFocus)
+                {
+                    sLog.outErrorDb("Table `spell_script_target`: spellId %u for TargetEnty %u of type TARGET_FOCUS_OR_SCRIPTED_GAMEOBJECT is wrong because spell has implicit ReqSpellFocus %u.", spellId, targetEntry, spellProto->RequiresSpellFocus);
+                    ok = false;
+                    break;
+                }
+
+                if (type != SPELL_TARGET_TYPE_GAMEOBJECT)
+                {
+                    sLog.outErrorDb("Table `spell_script_target`: spellId %u has target type TARGET_FOCUS_OR_SCRIPTED_GAMEOBJECT but target in table is creature (must be gameobject).", spellId);
+                    ok = false;
+                    break;
+                }
+            }
+        }
+        if (!ok)
+            continue;
+
+        // Checks by target type
+        switch (type)
         {
             case SPELL_TARGET_TYPE_GAMEOBJECT:
             {
-                if( targetEntry==0 )
+                if (!targetEntry)
                     break;
 
-                if(!sGOStorage.LookupEntry<GameObjectInfo>(targetEntry))
+                if (!sGOStorage.LookupEntry<GameObjectInfo>(targetEntry))
                 {
                     sLog.outErrorDb("Table `spell_script_target`: gameobject template entry %u does not exist.",targetEntry);
                     continue;
@@ -2154,26 +2240,25 @@ void SpellMgr::LoadSpellScriptTarget()
                 break;
             }
             default:
-            {
-                if( targetEntry==0 )
+                if (!targetEntry)
                 {
                     sLog.outErrorDb("Table `spell_script_target`: target entry == 0 for not GO target type (%u).",type);
                     continue;
                 }
-                if(!sCreatureStorage.LookupEntry<CreatureInfo>(targetEntry))
+                if (const CreatureInfo* cInfo = sCreatureStorage.LookupEntry<CreatureInfo>(targetEntry))
+                {
+                    if (spellId == 30427 && !cInfo->SkinLootId)
+                    {
+                        sLog.outErrorDb("Table `spell_script_target` has creature %u as a target of spellid 30427, but this creature has no skinlootid. Gas extraction will not work!", cInfo->Entry);
+                        continue;
+                    }
+                }
+                else
                 {
                     sLog.outErrorDb("Table `spell_script_target`: creature template entry %u does not exist.",targetEntry);
                     continue;
                 }
-                const CreatureInfo* cInfo = sCreatureStorage.LookupEntry<CreatureInfo>(targetEntry);
-
-                if(spellId == 30427 && !cInfo->SkinLootId)
-                {
-                    sLog.outErrorDb("Table `spell_script_target` has creature %u as a target of spellid 30427, but this creature has no skinlootid. Gas extraction will not work!", cInfo->Entry);
-                    continue;
-                }
                 break;
-            }
         }
 
         mSpellScriptTarget.insert(SpellScriptTarget::value_type(spellId,SpellTargetEntry(SpellTargetType(type),targetEntry)));
@@ -2797,67 +2882,77 @@ SpellCastResult SpellMgr::GetSpellAllowedInLocationError(SpellEntry const *spell
     }
 
     // bg spell checks
+
+    // do not allow spells to be cast in arenas
+    // - with SPELL_ATTR_EX4_NOT_USABLE_IN_ARENA flag
+    // - with greater than 15 min CD
+    if ((spellInfo->AttributesEx4 & SPELL_ATTR_EX4_NOT_USABLE_IN_ARENA) ||
+         (GetSpellRecoveryTime(spellInfo) > 15 * MINUTE * IN_MILISECONDS && !(spellInfo->AttributesEx4 & SPELL_ATTR_EX4_USABLE_IN_ARENA)))
+        if (player && player->InArena())
+            return SPELL_FAILED_NOT_IN_ARENA;
+
+    // Spell casted only on battleground
+    if ((spellInfo->AttributesEx3 & SPELL_ATTR_EX3_BATTLEGROUND))
+        if (!player || !player->InBattleGround())
+            return SPELL_FAILED_ONLY_BATTLEGROUNDS;
+
     switch(spellInfo->Id)
     {
+        // a trinket in alterac valley allows to teleport to the boss
+        case 22564:                                         // recall
+        case 22563:                                         // recall
+        {
+            if (!player)
+                return SPELL_FAILED_REQUIRES_AREA;
+            BattleGround* bg = player->GetBattleGround();
+            return map_id == 30 && bg
+                && bg->GetStatus() != STATUS_WAIT_JOIN ? SPELL_CAST_OK : SPELL_FAILED_REQUIRES_AREA;
+        }
         case 23333:                                         // Warsong Flag
         case 23335:                                         // Silverwing Flag
             return map_id == 489 && player && player->InBattleGround() ? SPELL_CAST_OK : SPELL_FAILED_REQUIRES_AREA;
         case 34976:                                         // Netherstorm Flag
             return map_id == 566 && player && player->InBattleGround() ? SPELL_CAST_OK : SPELL_FAILED_REQUIRES_AREA;
         case 2584:                                          // Waiting to Resurrect
+        case 42792:                                         // Recently Dropped Flag
+        case 43681:                                         // Inactive
+        {
+            return player && player->InBattleGround() ? SPELL_CAST_OK : SPELL_FAILED_ONLY_BATTLEGROUNDS;
+        }
         case 22011:                                         // Spirit Heal Channel
         case 22012:                                         // Spirit Heal
         case 24171:                                         // Resurrection Impact Visual
-        case 42792:                                         // Recently Dropped Flag
-        case 43681:                                         // Inactive
         case 44535:                                         // Spirit Heal (mana)
         {
             MapEntry const* mapEntry = sMapStore.LookupEntry(map_id);
             if (!mapEntry)
                 return SPELL_FAILED_INCORRECT_AREA;
-
-            return mapEntry->IsBattleGround() && player && player->InBattleGround() ? SPELL_CAST_OK : SPELL_FAILED_REQUIRES_AREA;
+            return mapEntry->IsBattleGround()? SPELL_CAST_OK : SPELL_FAILED_ONLY_BATTLEGROUNDS;
         }
         case 44521:                                         // Preparation
         {
             if (!player)
                 return SPELL_FAILED_REQUIRES_AREA;
 
-            MapEntry const* mapEntry = sMapStore.LookupEntry(map_id);
-            if (!mapEntry)
-                return SPELL_FAILED_INCORRECT_AREA;
-
-            if (!mapEntry->IsBattleGround())
-                return SPELL_FAILED_REQUIRES_AREA;
-
             BattleGround* bg = player->GetBattleGround();
-            return bg && bg->GetStatus()==STATUS_WAIT_JOIN ? SPELL_CAST_OK : SPELL_FAILED_REQUIRES_AREA;
+            return bg && bg->GetStatus()==STATUS_WAIT_JOIN ? SPELL_CAST_OK : SPELL_FAILED_ONLY_BATTLEGROUNDS;
         }
         case 32724:                                         // Gold Team (Alliance)
         case 32725:                                         // Green Team (Alliance)
         case 35774:                                         // Gold Team (Horde)
         case 35775:                                         // Green Team (Horde)
         {
-            MapEntry const* mapEntry = sMapStore.LookupEntry(map_id);
-            if (!mapEntry)
-                return SPELL_FAILED_INCORRECT_AREA;
-
-            return mapEntry->IsBattleArena() && player && player->InBattleGround() ? SPELL_CAST_OK : SPELL_FAILED_REQUIRES_AREA;
+            return player && player->InArena() ? SPELL_CAST_OK : SPELL_FAILED_ONLY_IN_ARENA;
         }
         case 32727:                                         // Arena Preparation
         {
             if (!player)
                 return SPELL_FAILED_REQUIRES_AREA;
-
-            MapEntry const* mapEntry = sMapStore.LookupEntry(map_id);
-            if (!mapEntry)
-                return SPELL_FAILED_INCORRECT_AREA;
-
-            if (!mapEntry->IsBattleArena())
+            if (!player->InArena())
                 return SPELL_FAILED_REQUIRES_AREA;
 
             BattleGround* bg = player->GetBattleGround();
-            return bg && bg->GetStatus()==STATUS_WAIT_JOIN ? SPELL_CAST_OK : SPELL_FAILED_REQUIRES_AREA;
+            return bg && bg->GetStatus()==STATUS_WAIT_JOIN ? SPELL_CAST_OK : SPELL_FAILED_ONLY_IN_ARENA;
         }
     }
 

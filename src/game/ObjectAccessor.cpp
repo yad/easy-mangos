@@ -183,50 +183,16 @@ ObjectAccessor::SaveAllPlayers()
 }
 
 void
-ObjectAccessor::UpdateObject(Object* obj, Player* exceptPlayer)
-{
-    UpdateDataMapType update_players;
-    obj->BuildUpdate(update_players);
-
-    WorldPacket packet;
-    for(UpdateDataMapType::iterator iter = update_players.begin(); iter != update_players.end(); ++iter)
-    {
-        if(iter->first == exceptPlayer)
-            continue;
-
-        iter->second.BuildPacket(&packet);
-        iter->first->GetSession()->SendPacket(&packet);
-        packet.clear();
-    }
-}
-
-void
 ObjectAccessor::_buildUpdateObject(Object *obj, UpdateDataMapType &update_players)
 {
-    bool build_for_all = true;
-    Player *pl = NULL;
-    if( obj->isType(TYPEMASK_ITEM) )
+    if(obj->isType(TYPEMASK_ITEM))
     {
         Item *item = static_cast<Item *>(obj);
-        pl = item->GetOwner();
-        build_for_all = false;
+        if (Player* pl = item->GetOwner())
+            _buildPacket(pl, obj, update_players);
     }
-
-    if( pl != NULL )
-        _buildPacket(pl, obj, update_players);
-
-    // Capt: okey for all those fools who think its a real fix
-    //       THIS IS A TEMP FIX
-    if( build_for_all )
-    {
-        WorldObject * temp = dynamic_cast<WorldObject*>(obj);
-
-        //assert(dynamic_cast<WorldObject*>(obj)!=NULL);
-        if (temp)
-            _buildChangeObjectForPlayer(temp, update_players);
-        else
-            sLog.outDebug("ObjectAccessor: Ln 405 Temp bug fix");
-    }
+    else
+         _buildChangeObjectForPlayer(static_cast<WorldObject*>(obj), update_players);
 }
 
 void
@@ -254,7 +220,9 @@ ObjectAccessor::_buildChangeObjectForPlayer(WorldObject *obj, UpdateDataMapType 
     WorldObjectChangeAccumulator notifier(*obj, update_players);
     TypeContainerVisitor<WorldObjectChangeAccumulator, WorldTypeMapContainer > player_notifier(notifier);
     CellLock<GridReadGuard> cell_lock(cell, p);
-    cell_lock->Visit(cell_lock, player_notifier, *obj->GetMap());
+    Map& map = *obj->GetMap();
+    //we must build packets for all visible players
+    cell_lock->Visit(cell_lock, player_notifier, map, *obj, map.GetVisibilityDistance());
 }
 
 Pet*
@@ -438,36 +406,6 @@ ObjectAccessor::WorldObjectChangeAccumulator::Visit(PlayerMapType &m)
     for(PlayerMapType::iterator iter = m.begin(); iter != m.end(); ++iter)
         if(iter->getSource()->HaveAtClient(&i_object))
             ObjectAccessor::_buildPacket(iter->getSource(), &i_object, i_updateDatas);
-}
-
-void
-ObjectAccessor::UpdateObjectVisibility(WorldObject *obj)
-{
-    CellPair p = MaNGOS::ComputeCellPair(obj->GetPositionX(), obj->GetPositionY());
-    Cell cell(p);
-
-    obj->GetMap()->UpdateObjectVisibility(obj, cell, p);
-}
-
-void ObjectAccessor::UpdateVisibilityForPlayer( Player* player )
-{
-    WorldObject const* viewPoint = player->GetViewPoint();
-    Map* m = player->GetMap();
-
-    CellPair p(MaNGOS::ComputeCellPair(player->GetPositionX(), player->GetPositionY()));
-    Cell cell(p);
-
-    m->UpdatePlayerVisibility(player, cell, p);
-
-    if (player!=viewPoint)
-    {
-        CellPair pView(MaNGOS::ComputeCellPair(viewPoint->GetPositionX(), viewPoint->GetPositionY()));
-        Cell cellView(pView);
-
-        m->UpdateObjectsVisibilityFor(player, cellView, pView);
-    }
-    else
-        m->UpdateObjectsVisibilityFor(player, cell, p);
 }
 
 /// Define the static member of HashMapHolder

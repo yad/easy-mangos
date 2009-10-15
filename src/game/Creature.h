@@ -217,7 +217,7 @@ struct CreatureInfo
     float   unk16;
     float   unk17;
     bool    RacialLeader;
-    uint32  questItems[4];
+    uint32  questItems[6];
     uint32  movementId;
     bool    RegenHealth;
     uint32  equipmentId;
@@ -619,6 +619,8 @@ class MANGOS_DLL_SPEC Creature : public Unit
 
         float GetAttackDistance(Unit const* pl) const;
 
+        void SendAIReaction(AiReaction reactionType);
+
         void DoFleeToGetAssistance();
         void CallForHelp(float fRadius);
         void CallAssistance();
@@ -683,6 +685,8 @@ class MANGOS_DLL_SPEC Creature : public Unit
 
         bool isActiveObject() const { return m_isActiveObject || HasAuraType(SPELL_AURA_BIND_SIGHT) || HasAuraType(SPELL_AURA_FAR_SIGHT); }
         void SetActiveObjectState(bool on);
+
+        void SendAreaSpiritHealerQueryOpcode(Player *pl);
 
     protected:
         bool CreateFromProto(uint32 guidlow,uint32 Entry,uint32 team, const CreatureData *data = NULL);
