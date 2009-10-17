@@ -438,7 +438,9 @@ bool IsPositiveEffect(uint32 spellId, uint32 effIndex)
             // some explicitly required dummy effect sets
             switch(spellId)
             {
-                case 28441: return false;                   // AB Effect 000
+                case 28441:                                 // AB Effect 000
+                case 44689:                                 // Relay Race Accept Hidden Debuff - DND
+                    return false;
                 default:
                     break;
             }
@@ -1632,6 +1634,10 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
 
                 // Beacon of Light and Light's Beacon
                 if ((spellInfo_1->SpellIconID == 3032) && (spellInfo_2->SpellIconID == 3032))
+                    return false;
+
+                // Concentration Aura and Improved Concentration Aura and Aura Mastery
+                if ((spellInfo_1->SpellIconID == 1487) && (spellInfo_2->SpellIconID == 1487))
                     return false;
             }
 
@@ -3309,23 +3315,33 @@ DiminishingGroup GetDiminishingReturnsGroupForSpell(SpellEntry const* spellproto
 
     // Get by mechanic
     uint32 mechanic = GetAllSpellMechanicMask(spellproto);
-    if (mechanic == MECHANIC_NONE)          return DIMINISHING_NONE;
-    if (mechanic & ((1<<MECHANIC_STUN) |
-                    (1<<MECHANIC_SHACKLE))) return triggered ? DIMINISHING_TRIGGER_STUN : DIMINISHING_CONTROL_STUN;
-    if (mechanic & (1<<MECHANIC_SLEEP))     return DIMINISHING_FREEZE_SLEEP;
-    if (mechanic & (1<<MECHANIC_POLYMORPH)) return DIMINISHING_POLYMORPH_GOUGE_SAP;
-    if (mechanic & (1<<MECHANIC_ROOT))      return triggered ? DIMINISHING_TRIGGER_ROOT : DIMINISHING_CONTROL_ROOT;
-    if (mechanic & ((1<<MECHANIC_FEAR) |
-                    (1<<MECHANIC_TURN)))    return DIMINISHING_FEAR_BLIND;
-    if (mechanic & (1<<MECHANIC_CHARM))     return DIMINISHING_CHARM;
-    if (mechanic & (1<<MECHANIC_SILENCE))   return DIMINISHING_SILENCE;
-    if (mechanic & (1<<MECHANIC_DISARM))    return DIMINISHING_DISARM;
-    if (mechanic & (1<<MECHANIC_FREEZE))    return DIMINISHING_FREEZE_SLEEP;
-    if (mechanic & ((1<<MECHANIC_KNOCKOUT) |
-                    (1<<MECHANIC_SAPPED)))  return DIMINISHING_POLYMORPH_GOUGE_SAP;
-    if (mechanic & (1<<MECHANIC_BANISH))    return DIMINISHING_BANISH;
-    if (mechanic & (1<<MECHANIC_HORROR))    return DIMINISHING_DEATHCOIL;
+    if (!mechanic)
+        return DIMINISHING_NONE;
 
+    if (mechanic & ((1<<(MECHANIC_STUN-1))|(1<<(MECHANIC_SHACKLE-1))))
+        return triggered ? DIMINISHING_TRIGGER_STUN : DIMINISHING_CONTROL_STUN;
+    if (mechanic & (1<<(MECHANIC_SLEEP-1)))
+        return DIMINISHING_FREEZE_SLEEP;
+    if (mechanic & (1<<(MECHANIC_POLYMORPH-1)))
+        return DIMINISHING_POLYMORPH_GOUGE_SAP;
+    if (mechanic & (1<<(MECHANIC_ROOT-1)))
+        return triggered ? DIMINISHING_TRIGGER_ROOT : DIMINISHING_CONTROL_ROOT;
+    if (mechanic & ((1<<(MECHANIC_FEAR-1))|(1<<(MECHANIC_TURN-1))))
+        return DIMINISHING_FEAR_BLIND;
+    if (mechanic & (1<<(MECHANIC_CHARM-1)))
+        return DIMINISHING_CHARM;
+    if (mechanic & (1<<(MECHANIC_SILENCE-1)))
+        return DIMINISHING_SILENCE;
+    if (mechanic & (1<<(MECHANIC_DISARM-1)))
+        return DIMINISHING_DISARM;
+    if (mechanic & (1<<(MECHANIC_FREEZE-1)))
+        return DIMINISHING_FREEZE_SLEEP;
+    if (mechanic & ((1<<(MECHANIC_KNOCKOUT-1))|(1<<(MECHANIC_SAPPED-1))))
+        return DIMINISHING_POLYMORPH_GOUGE_SAP;
+    if (mechanic & (1<<(MECHANIC_BANISH-1)))
+        return DIMINISHING_BANISH;
+    if (mechanic & (1<<(MECHANIC_HORROR-1)))
+        return DIMINISHING_DEATHCOIL;
 
     return DIMINISHING_NONE;
 }

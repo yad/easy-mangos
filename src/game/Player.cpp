@@ -6106,6 +6106,7 @@ bool Player::RewardHonor(Unit *uVictim, uint32 groupsize, float honor)
     if (uVictim != NULL)
     {
         honor *= sWorld.getRate(RATE_HONOR);
+        honor *= (GetMaxPositiveAuraModifier(SPELL_AURA_MOD_HONOR_GAIN) + 100.0f)/100.0f;
 
         if(groupsize > 1)
             honor /= groupsize;
@@ -16563,9 +16564,13 @@ void Player::Whisper(const std::string& text, uint32 language,uint64 receiver)
         BuildPlayerChat(&data, CHAT_MSG_WHISPER, text, language);
         rPlayer->GetSession()->SendPacket(&data);
 
-        data.Initialize(SMSG_MESSAGECHAT, 200);
-        rPlayer->BuildPlayerChat(&data, CHAT_MSG_REPLY, text, language);
-        GetSession()->SendPacket(&data);
+        // not send confirmation for addon messages
+        if (language != LANG_ADDON)
+        {
+            data.Initialize(SMSG_MESSAGECHAT, 200);
+            rPlayer->BuildPlayerChat(&data, CHAT_MSG_REPLY, text, language);
+            GetSession()->SendPacket(&data);
+        }
     }
     else
     {
@@ -18816,7 +18821,7 @@ void Player::UpdateForQuestWorldObjects()
     {
         if(IS_GAMEOBJECT_GUID(*itr))
         {
-            GameObject *obj = HashMapHolder<GameObject>::Find(*itr);
+            GameObject *obj = GetMap()->GetGameObject(*itr);
             if(obj)
                 obj->BuildValuesUpdateBlockForPlayer(&udata,this);
         }
