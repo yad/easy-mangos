@@ -2098,15 +2098,14 @@ Player::GetNPCIfCanInteractWith(uint64 guid, uint32 npcflagmask)
         return NULL;
 
     // player check
-    if(!CanInteractWithNPCs(!unit->isSpiritService()))
+    if(!CanInteractWithNPCs(!(unit->GetCreatureInfo()->flags_extra & CREATURE_FLAG_EXTRA_GHOST)))
         return NULL;
 
     // appropriate npc type
     if(npcflagmask && !unit->HasFlag( UNIT_NPC_FLAGS, npcflagmask ))
         return NULL;
 
-    // alive or spirit healer
-    if(!unit->isAlive() && (!unit->isSpiritService() || isAlive() ))
+    if (isAlive() && !unit->isAlive())
         return NULL;
 
     // not allow interaction under control, but allow with own pets
@@ -12570,6 +12569,13 @@ bool Player::CanRewardQuest( Quest const *pQuest, uint32 reward, bool msg )
     }
 
     return true;
+}
+
+void Player::SendPetTameFailure(PetTameFailureReason reason)
+{
+    WorldPacket data(SMSG_PET_TAME_FAILURE, 1);
+    data << uint8(reason);
+    GetSession()->SendPacket(&data);
 }
 
 void Player::AddQuest( Quest const *pQuest, Object *questGiver )
