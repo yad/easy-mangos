@@ -439,7 +439,6 @@ bool IsPositiveEffect(uint32 spellId, uint32 effIndex)
             switch(spellId)
             {
                 case 28441:                                 // AB Effect 000
-                case 44689:                                 // Relay Race Accept Hidden Debuff - DND
                     return false;
                 default:
                     break;
@@ -471,6 +470,7 @@ bool IsPositiveEffect(uint32 spellId, uint32 effIndex)
                         case 38638:                         // Nether Exhaustion (green)
                         case 38639:                         // Nether Exhaustion (blue)
                         case 11196:                         // Recently Bandaged
+                        case 44689:                         // Relay Race Accept Hidden Debuff - DND
                             return false;
                         // some spells have unclear target modes for selection, so just make effect positive
                         case 27184:
@@ -2204,31 +2204,6 @@ void SpellMgr::LoadSpellScriptTarget()
             sLog.outErrorDb("Table `spell_script_target`: target type %u for TargetEntry %u is incorrect.",type,targetEntry);
             continue;
         }
-
-        // More checks on TARGET_FOCUS_OR_SCRIPTED_GAMEOBJECT
-        bool ok = true;
-        for (int i = 0; i < 3; ++i)
-        {
-            if (spellProto->EffectImplicitTargetA[i] == TARGET_FOCUS_OR_SCRIPTED_GAMEOBJECT ||
-                spellProto->EffectImplicitTargetB[i] == TARGET_FOCUS_OR_SCRIPTED_GAMEOBJECT)
-            {
-                if (spellProto->RequiresSpellFocus)
-                {
-                    sLog.outErrorDb("Table `spell_script_target`: spellId %u for TargetEnty %u of type TARGET_FOCUS_OR_SCRIPTED_GAMEOBJECT is wrong because spell has implicit ReqSpellFocus %u.", spellId, targetEntry, spellProto->RequiresSpellFocus);
-                    ok = false;
-                    break;
-                }
-
-                if (type != SPELL_TARGET_TYPE_GAMEOBJECT)
-                {
-                    sLog.outErrorDb("Table `spell_script_target`: spellId %u has target type TARGET_FOCUS_OR_SCRIPTED_GAMEOBJECT but target in table is creature (must be gameobject).", spellId);
-                    ok = false;
-                    break;
-                }
-            }
-        }
-        if (!ok)
-            continue;
 
         // Checks by target type
         switch (type)
