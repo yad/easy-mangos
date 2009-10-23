@@ -1568,17 +1568,17 @@ void Unit::HandleEmoteCommand(uint32 anim_id)
 uint32 Unit::CalcNotIgnoreAbsorbDamage( uint32 damage, SpellSchoolMask damageSchoolMask, SpellEntry const* spellInfo /*= NULL*/)
 {
     float absorb_affected_rate = 1.0f;
-    Unit::AuraList const& ignoreAbsorb = GetAurasByType(SPELL_AURA_MOD_IGNORE_ABSORB_SCHOOL);
-    for(Unit::AuraList::const_iterator i = ignoreAbsorb.begin(); i != ignoreAbsorb.end(); ++i)
+    Unit::AuraList const& ignoreAbsorbSchool = GetAurasByType(SPELL_AURA_MOD_IGNORE_ABSORB_SCHOOL);
+    for(Unit::AuraList::const_iterator i = ignoreAbsorbSchool.begin(); i != ignoreAbsorbSchool.end(); ++i)
         if ((*i)->GetMiscValue() & damageSchoolMask)
             absorb_affected_rate *= (100.0f - (*i)->GetModifier()->m_amount)/100.0f;
 
     if(spellInfo)
     {
-        Unit::AuraList const& ignoreAbsorb = GetAurasByType(SPELL_AURA_MOD_IGNORE_ABSORB_FOR_SPELL);
-        for(Unit::AuraList::const_iterator i = ignoreAbsorb.begin(); i != ignoreAbsorb.end(); ++i)
-            if ((*i)->isAffectedOnSpell(spellInfo))
-                absorb_affected_rate *= (100.0f - (*i)->GetModifier()->m_amount)/100.0f;
+        Unit::AuraList const& ignoreAbsorbForSpell = GetAurasByType(SPELL_AURA_MOD_IGNORE_ABSORB_FOR_SPELL);
+        for(Unit::AuraList::const_iterator citr = ignoreAbsorbForSpell.begin(); citr != ignoreAbsorbForSpell.end(); ++citr)
+            if ((*citr)->isAffectedOnSpell(spellInfo))
+                absorb_affected_rate *= (100.0f - (*citr)->GetModifier()->m_amount)/100.0f;
     }
 
     return absorb_affected_rate <= 0.0f ? 0 : (absorb_affected_rate < 1.0f  ? uint32(damage * absorb_affected_rate) : damage);
@@ -2665,7 +2665,7 @@ SpellMissInfo Unit::MagicSpellHitResult(Unit *pVictim, SpellEntry const *spell)
     uint32 rand = urand(0,10000);
 
     if (rand < tmp)
-        return SPELL_MISS_RESIST;
+        return SPELL_MISS_MISS;
 
     // cast by caster in front of victim
     if (pVictim->HasInArc(M_PI,this))
@@ -7235,6 +7235,12 @@ bool Unit::HandleProcTriggerSpell(Unit *pVictim, uint32 damage, Aura* triggeredB
                 return false;
             break;
         }
+        // Druid - Savage Defense
+        case 62606:
+        {
+            basepoints[0] = int32(GetTotalAttackPowerValue(BASE_ATTACK) * triggerAmount / 100);
+            break;
+        }
     }
 
     if( cooldown && GetTypeId()==TYPEID_PLAYER && ((Player*)this)->HasSpellCooldown(trigger_spell_id))
@@ -8345,6 +8351,16 @@ uint32 Unit::SpellDamageBonus(Unit *pVictim, SpellEntry const *spellProto, uint3
                         break;
                     }
                 }
+            }
+            break;
+        }
+        case SPELLFAMILY_WARLOCK:
+        {
+            // Drain Soul
+            if (spellProto->SpellFamilyFlags & UI64LIT(0x0000000000004000))
+            {
+                if (pVictim->GetHealth() * 100 / pVictim->GetMaxHealth() <= 25)
+                  DoneTotalMod *= 4;
             }
             break;
         }
@@ -9613,7 +9629,7 @@ bool Unit::isTargetableForAttack(bool inverseAlive /*=false*/) const
     if ((isAlive() && !isInvisibleForAlive()) == inverseAlive)
         return false;
 
-    return IsInWorld() && !hasUnitState(UNIT_STAT_DIED)&& !isInFlight() /*&& !isStealth()*/;
+    return IsInWorld() && !hasUnitState(UNIT_STAT_DIED) && !isInFlight();
 }
 
 int32 Unit::ModifyHealth(int32 dVal)
@@ -9772,6 +9788,10 @@ bool Unit::isVisibleForOrDetect(Unit const* u, WorldObject const* viewPoint, boo
             return false;
     }
 
+    if (u->isAlive() && isInvisibleForAlive())
+        if (u->GetTypeId() == TYPEID_PLAYER && !((Player *)u)->isGameMaster())
+            return false;
+
     // Visible units, always are visible for all units, except for units under invisibility and phases
     if (m_Visibility == VISIBILITY_ON && u->m_invisibilityMask==0 && InSamePhase(u))
         return true;
@@ -9784,9 +9804,6 @@ bool Unit::isVisibleForOrDetect(Unit const* u, WorldObject const* viewPoint, boo
         else
             return true;
     }
-
-    if (u->isAlive() && isInvisibleForAlive())
-        return false;
 
     // non faction visibility non-breakable for non-GMs
     if (m_Visibility == VISIBILITY_OFF)

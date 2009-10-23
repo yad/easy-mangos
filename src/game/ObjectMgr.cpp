@@ -130,10 +130,8 @@ ObjectMgr::ObjectMgr()
     m_hiCharGuid        = 1;
     m_hiCreatureGuid    = 1;
     m_hiPetGuid         = 1;
-    m_hiVehicleGuid     = 1;
     m_hiItemGuid        = 1;
     m_hiGoGuid          = 1;
-    m_hiDoGuid          = 1;
     m_hiCorpseGuid      = 1;
     m_hiPetNumber       = 1;
     m_ItemTextId        = 1;
@@ -1041,6 +1039,14 @@ void ObjectMgr::LoadCreatures()
             if(cInfo->HeroicEntry)
                 heroicCreatures.insert(cInfo->HeroicEntry);
 
+    // build single time for check spawnmask
+    std::map<uint32,uint32> spawnMasks;
+    for(uint32 i = 0; i < sMapStore.GetNumRows(); ++i)
+        if(sMapStore.LookupEntry(i))
+            for(int k = 0; k < MAX_DIFFICULTY; ++k)
+                if (GetMapDifficultyData(i,Difficulty(k)))
+                    spawnMasks[i] |= (1 << k);
+
     barGoLink bar(result->GetRowCount());
 
     do
@@ -1087,21 +1093,8 @@ void ObjectMgr::LoadCreatures()
             continue;
         }
 
-        if(mapEntry->IsNonRaidDungeon())
-        {
-            if(data.spawnMask & ~SPAWNMASK_DUNGEON_ALL)
-                sLog.outErrorDb("Table `creature` have creature (GUID: %u) that have wrong spawn mask %u for non-raid dungeon map (Id: %u).",guid, data.spawnMask, data.mapid );
-        }
-        else if(mapEntry->IsRaid())
-        {
-            if(data.spawnMask & ~SPAWNMASK_RAID_ALL)
-                sLog.outErrorDb("Table `creature` have creature (GUID: %u) that have wrong spawn mask %u for raid dungeon map (Id: %u).",guid, data.spawnMask, data.mapid );
-        }
-        else
-        {
-            if(data.spawnMask & ~SPAWNMASK_CONTINENT)
-                sLog.outErrorDb("Table `creature` have creature (GUID: %u) that have wrong spawn mask %u for non-dungeon map (Id: %u).",guid, data.spawnMask, data.mapid );
-        }
+        if (data.spawnMask & ~spawnMasks[data.mapid])
+            sLog.outErrorDb("Table `creature` have creature (GUID: %u) that have wrong spawn mask %u including not supported difficulty modes for map (Id: %u).",guid, data.spawnMask, data.mapid );
 
         if(heroicCreatures.find(data.id)!=heroicCreatures.end())
         {
@@ -1231,6 +1224,14 @@ void ObjectMgr::LoadGameobjects()
         return;
     }
 
+    // build single time for check spawnmask
+    std::map<uint32,uint32> spawnMasks;
+    for(uint32 i = 0; i < sMapStore.GetNumRows(); ++i)
+        if(sMapStore.LookupEntry(i))
+            for(int k = 0; k < MAX_DIFFICULTY; ++k)
+                if (GetMapDifficultyData(i,Difficulty(k)))
+                    spawnMasks[i] |= (1 << k);
+
     barGoLink bar(result->GetRowCount());
 
     do
@@ -1288,21 +1289,8 @@ void ObjectMgr::LoadGameobjects()
             continue;
         }
 
-        if(mapEntry->IsNonRaidDungeon())
-        {
-            if(data.spawnMask & ~SPAWNMASK_DUNGEON_ALL)
-                sLog.outErrorDb("Table `gameobject` have gameobject (GUID: %u Entry: %u) that have wrong spawn mask %u for non-raid dungeon map (Id: %u), skip", guid, data.id, data.spawnMask, data.mapid);
-        }
-        else if(mapEntry->IsRaid())
-        {
-            if(data.spawnMask & ~SPAWNMASK_RAID_ALL)
-                sLog.outErrorDb("Table `gameobject` have gameobject (GUID: %u Entry: %u) that have wrong spawn mask %u for raid dungeon map (Id: %u), skip", guid, data.id, data.spawnMask, data.mapid);
-        }
-        else
-        {
-            if(data.spawnMask & ~SPAWNMASK_CONTINENT)
-                sLog.outErrorDb("Table `gameobject` have gameobject (GUID: %u Entry: %u) that have wrong spawn mask %u for non-dungeon map (Id: %u), skip", guid, data.id, data.spawnMask, data.mapid);
-        }
+        if (data.spawnMask & ~spawnMasks[data.mapid])
+            sLog.outErrorDb("Table `gameobject` have gameobject (GUID: %u Entry: %u) that have wrong spawn mask %u including not supported difficulty modes for map (Id: %u), skip", guid, data.id, data.spawnMask, data.mapid);
 
         if (data.spawntimesecs == 0 && gInfo->IsDespawnAtAction())
         {
@@ -5696,13 +5684,6 @@ uint32 ObjectMgr::GenerateLowGuid(HighGuid guidhigh)
                 World::StopNow(ERROR_EXIT_CODE);
             }
             return m_hiPetGuid++;
-        case HIGHGUID_VEHICLE:
-            if(m_hiVehicleGuid>=0x00FFFFFF)
-            {
-                sLog.outError("Vehicle guid overflow!! Can't continue, shutting down server. ");
-                World::StopNow(ERROR_EXIT_CODE);
-            }
-            return m_hiVehicleGuid++;
         case HIGHGUID_PLAYER:
             if(m_hiCharGuid>=0xFFFFFFFE)
             {
@@ -5724,13 +5705,6 @@ uint32 ObjectMgr::GenerateLowGuid(HighGuid guidhigh)
                 World::StopNow(ERROR_EXIT_CODE);
             }
             return m_hiCorpseGuid++;
-        case HIGHGUID_DYNAMICOBJECT:
-            if(m_hiDoGuid>=0xFFFFFFFE)
-            {
-                sLog.outError("DynamicObject guid overflow!! Can't continue, shutting down server. ");
-                World::StopNow(ERROR_EXIT_CODE);
-            }
-            return m_hiDoGuid++;
         default:
             ASSERT(0);
     }
