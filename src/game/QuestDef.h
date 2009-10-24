@@ -32,6 +32,7 @@ class ObjectMgr;
 #define MAX_QUEST_LOG_SIZE 25
 
 #define QUEST_OBJECTIVES_COUNT 4
+#define QUEST_ITEM_OBJECTIVES_COUNT 6
 #define QUEST_SOURCE_ITEM_IDS_COUNT 4
 #define QUEST_REWARD_CHOICES_COUNT 6
 #define QUEST_REWARDS_COUNT 4
@@ -132,6 +133,9 @@ enum __QuestFlags
     QUEST_FLAGS_AUTO_REWARDED  = 0x00000400,                // These quests are automatically rewarded on quest complete and they will never appear in quest log client side.
     QUEST_FLAGS_TBC_RACES      = 0x00000800,                // Not used currently: Blood elf/Draenei starting zone quests
     QUEST_FLAGS_DAILY          = 0x00001000,                // Used to know quest is Daily one
+    QUEST_FLAGS_UNK3           = 0x00002000,
+    QUEST_FLAGS_UNK4           = 0x00004000,                // ? Membership Card Renewal
+    QUEST_FLAGS_WEEKLY         = 0x00008000,                // Not used currently: Weekly quests
 
     // Mangos flags for set SpecialFlags in DB if required but used only at server
     QUEST_MANGOS_FLAGS_REPEATABLE           = 0x010000,     // Set by 1 in SpecialFlags from DB
@@ -228,8 +232,8 @@ class Quest
 
         // multiple values
         std::string ObjectiveText[QUEST_OBJECTIVES_COUNT];
-        uint32 ReqItemId[QUEST_OBJECTIVES_COUNT];
-        uint32 ReqItemCount[QUEST_OBJECTIVES_COUNT];
+        uint32 ReqItemId[QUEST_ITEM_OBJECTIVES_COUNT];
+        uint32 ReqItemCount[QUEST_ITEM_OBJECTIVES_COUNT];
         uint32 ReqSourceId[QUEST_SOURCE_ITEM_IDS_COUNT];
         uint32 ReqSourceCount[QUEST_SOURCE_ITEM_IDS_COUNT];
         int32  ReqCreatureOrGOId[QUEST_OBJECTIVES_COUNT];   // >0 Creature <0 Gameobject
@@ -329,7 +333,7 @@ struct QuestStatusData
         : m_status(QUEST_STATUS_NONE),m_rewarded(false),
         m_explored(false), m_timer(0), uState(QUEST_NEW)
     {
-        memset(m_itemcount, 0, QUEST_OBJECTIVES_COUNT * sizeof(uint32));
+        memset(m_itemcount, 0, QUEST_ITEM_OBJECTIVES_COUNT * sizeof(uint32));
         memset(m_creatureOrGOcount, 0, QUEST_OBJECTIVES_COUNT * sizeof(uint32));
     }
 
@@ -339,7 +343,7 @@ struct QuestStatusData
     uint32 m_timer;
     QuestUpdateState uState;
 
-    uint32 m_itemcount[ QUEST_OBJECTIVES_COUNT ];
+    uint32 m_itemcount[ QUEST_ITEM_OBJECTIVES_COUNT ];
     uint32 m_creatureOrGOcount[ QUEST_OBJECTIVES_COUNT ];
 };
 #endif

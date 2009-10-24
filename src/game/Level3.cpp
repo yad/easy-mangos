@@ -5265,7 +5265,7 @@ bool ChatHandler::HandleQuestComplete(const char* args)
     }
 
     // Add quest items for quests that require items
-    for(uint8 x = 0; x < QUEST_OBJECTIVES_COUNT; ++x)
+    for(uint8 x = 0; x < QUEST_ITEM_OBJECTIVES_COUNT; ++x)
     {
         uint32 id = pQuest->ReqItemId[x];
         uint32 count = pQuest->ReqItemCount[x];
@@ -5275,11 +5275,11 @@ bool ChatHandler::HandleQuestComplete(const char* args)
         uint32 curItemCount = player->GetItemCount(id,true);
 
         ItemPosCountVec dest;
-        uint8 msg = player->CanStoreNewItem( NULL_BAG, NULL_SLOT, dest, id, count-curItemCount );
+        uint8 msg = player->CanStoreNewItem( NULL_BAG, NULL_SLOT, dest, id, count - curItemCount );
         if( msg == EQUIP_ERR_OK )
         {
             Item* item = player->StoreNewItem( dest, id, true);
-            player->SendNewItem(item,count-curItemCount,true,false);
+            player->SendNewItem(item,count-curItemCount, true, false);
         }
     }
 
@@ -6431,8 +6431,11 @@ bool ChatHandler::HandleInstanceUnbindCommand(const char* args)
     uint32 mapid = 0;
     bool got_map = false;
 
-    if (args != "all")
+    if (strncmp(args,"all",strlen(args)) != 0)
     {
+        if(!isNumeric(args[0]))
+            return false;
+
         got_map = true;
         mapid = atoi(args);
     }
