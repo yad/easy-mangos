@@ -547,7 +547,7 @@ bool ChatHandler::HandleReloadAllCommand(const char*)
 
 bool ChatHandler::HandleReloadAllAchievementCommand(const char*)
 {
-    HandleReloadAchievementCriteriaDataCommand("");
+    HandleReloadAchievementCriteriaRequirementCommand("");
     HandleReloadAchievementRewardCommand("");
     return true;
 }
@@ -667,11 +667,11 @@ bool ChatHandler::HandleReloadConfigCommand(const char* /*args*/)
     return true;
 }
 
-bool ChatHandler::HandleReloadAchievementCriteriaDataCommand(const char*)
+bool ChatHandler::HandleReloadAchievementCriteriaRequirementCommand(const char*)
 {
-    sLog.outString( "Re-Loading Additional Achievement Criteria Data..." );
-    achievementmgr.LoadAchievementCriteriaData();
-    SendGlobalSysMessage("DB table `achievement_criteria_data` reloaded.");
+    sLog.outString( "Re-Loading Additional Achievement Criteria Requirements Data..." );
+    achievementmgr.LoadAchievementCriteriaRequirements();
+    SendGlobalSysMessage("DB table `achievement_criteria_requirement` reloaded.");
     return true;
 }
 
@@ -6381,9 +6381,9 @@ bool ChatHandler::HandleInstanceListBindsCommand(const char* /*args*/)
             std::string timeleft = GetTimeString(save->GetResetTime() - time(NULL));
             if (const MapEntry* entry = sMapStore.LookupEntry(itr->first))
             {
-                PSendSysMessage("map: %d (%s) inst: %d perm: %s diff: %s canReset: %s TTR: %s",
+                PSendSysMessage("map: %d (%s) inst: %d perm: %s diff: %d canReset: %s TTR: %s",
                     itr->first, entry->name[m_session->GetSessionDbcLocale()], save->GetInstanceId(), itr->second.perm ? "yes" : "no",
-                    save->GetDifficulty() == DUNGEON_DIFFICULTY_NORMAL ? "normal" : "heroic", save->CanReset() ? "yes" : "no", timeleft.c_str());
+                    save->GetDifficulty(), save->CanReset() ? "yes" : "no", timeleft.c_str());
             }
             else
                 PSendSysMessage("bound for a nonexistant map %u", itr->first);
@@ -6404,9 +6404,9 @@ bool ChatHandler::HandleInstanceListBindsCommand(const char* /*args*/)
                 std::string timeleft = GetTimeString(save->GetResetTime() - time(NULL));
                 if (const MapEntry* entry = sMapStore.LookupEntry(itr->first))
                 {
-                    PSendSysMessage("map: %d (%s) inst: %d perm: %s diff: %s canReset: %s TTR: %s",
+                    PSendSysMessage("map: %d (%s) inst: %d perm: %s diff: %d canReset: %s TTR: %s",
                         itr->first, entry->name[m_session->GetSessionDbcLocale()], save->GetInstanceId(), itr->second.perm ? "yes" : "no",
-                        save->GetDifficulty() == DUNGEON_DIFFICULTY_NORMAL ? "normal" : "heroic", save->CanReset() ? "yes" : "no", timeleft.c_str());
+                        save->GetDifficulty(), save->CanReset() ? "yes" : "no", timeleft.c_str());
                 }
                 else
                     PSendSysMessage("bound for a nonexistant map %u", itr->first);
@@ -6457,9 +6457,9 @@ bool ChatHandler::HandleInstanceUnbindCommand(const char* args)
 
                 if (const MapEntry* entry = sMapStore.LookupEntry(itr->first))
                 {
-                    PSendSysMessage("unbinding map: %d (%s) inst: %d perm: %s diff: %s canReset: %s TTR: %s",
+                    PSendSysMessage("unbinding map: %d (%s) inst: %d perm: %s diff: %d canReset: %s TTR: %s",
                         itr->first, entry->name[m_session->GetSessionDbcLocale()], save->GetInstanceId(), itr->second.perm ? "yes" : "no",
-                        save->GetDifficulty() == DUNGEON_DIFFICULTY_NORMAL ? "normal" : "heroic", save->CanReset() ? "yes" : "no", timeleft.c_str());
+                        save->GetDifficulty(), save->CanReset() ? "yes" : "no", timeleft.c_str());
                 }
                 else
                     PSendSysMessage("bound for a nonexistant map %u", itr->first);
