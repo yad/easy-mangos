@@ -34,6 +34,7 @@
 #include "CellImpl.h"
 #include "InstanceData.h"
 #include "BattleGround.h"
+#include "BattleGroundAV.h"
 #include "Util.h"
 
 GameObject::GameObject() : WorldObject()
@@ -59,23 +60,26 @@ GameObject::GameObject() : WorldObject()
 
 GameObject::~GameObject()
 {
-    CleanupsBeforeDelete();
 }
 
-void GameObject::CleanupsBeforeDelete()
+void GameObject::AddToWorld()
 {
-    if(m_uint32Values)                                      // field array can be not exist if GameOBject not loaded
+    ///- Register the gameobject for guid lookup
+    if(!IsInWorld())
+        GetMap()->GetObjectsStore().insert<GameObject>(GetGUID(), (GameObject*)this);
+
+    Object::AddToWorld();
+}
+
+void GameObject::RemoveFromWorld()
+{
+    ///- Remove the gameobject from the accessor
+    if(IsInWorld())
     {
-        // Possible crash at access to deleted GO in Unit::m_gameobj
+        // Remove GO from owner
         if(uint64 owner_guid = GetOwnerGUID())
         {
-            Unit* owner = NULL;
-            if(IS_PLAYER_GUID(owner_guid))
-                owner = ObjectAccessor::GetObjectInWorld(owner_guid, (Player*)NULL);
-            else
-                owner = ObjectAccessor::GetUnit(*this,owner_guid);
-
-            if(owner)
+            if (Unit* owner = ObjectAccessor::GetUnit(*this,owner_guid))
                 owner->RemoveGameObject(this,false);
             else
             {
@@ -89,20 +93,10 @@ void GameObject::CleanupsBeforeDelete()
                     GetGUIDLow(), GetGOInfo()->id, m_spellId, GetGOInfo()->GetLinkedGameObjectEntry(), GUID_LOPART(owner_guid), ownerType);
             }
         }
+
+        GetMap()->GetObjectsStore().erase<GameObject>(GetGUID(), (GameObject*)NULL);
     }
-}
 
-void GameObject::AddToWorld()
-{
-    ///- Register the gameobject for guid lookup
-    if(!IsInWorld()) ObjectAccessor::Instance().AddObject(this);
-    Object::AddToWorld();
-}
-
-void GameObject::RemoveFromWorld()
-{
-    ///- Remove the gameobject from the accessor
-    if(IsInWorld()) ObjectAccessor::Instance().RemoveObject(this);
     Object::RemoveFromWorld();
 }
 
@@ -150,9 +144,10 @@ bool GameObject::Create(uint32 guidlow, uint32 name_id, Map *map, uint32 phaseMa
 
     SetUInt32Value(GAMEOBJECT_DISPLAYID, goinfo->displayId);
 
+    // GAMEOBJECT_BYTES_1, index at 0, 1, 2 and 3
     SetGoState(go_state);
     SetGoType(GameobjectTypes(goinfo->type));
-
+    SetGoArtKit(0);                                         // unknown what this is
     SetGoAnimProgress(animprogress);
 
     //Notify the map's instance data.
@@ -240,11 +235,7 @@ void GameObject::Update(uint32 /*p_time*/)
                             Unit* caster = GetOwner();
                             if(caster && caster->GetTypeId()==TYPEID_PLAYER)
                             {
-                                if(caster->m_currentSpells[CURRENT_CHANNELED_SPELL])
-                                {
-                                    caster->m_currentSpells[CURRENT_CHANNELED_SPELL]->SendChannelUpdate(0);
-                                    caster->m_currentSpells[CURRENT_CHANNELED_SPELL]->finish(false);
-                                }
+                                caster->FinishSpell(CURRENT_CHANNELED_SPELL);
 
                                 WorldPacket data(SMSG_FISH_NOT_HOOKED,0);
                                 ((Player*)caster)->GetSession()->SendPacket(&data);
@@ -322,13 +313,13 @@ void GameObject::Update(uint32 /*p_time*/)
                         CellLock<GridReadGuard> cell_lock(cell, p);
 
                         TypeContainerVisitor<MaNGOS::UnitSearcher<MaNGOS::AnyUnfriendlyUnitInObjectRangeCheck>, GridTypeMapContainer > grid_object_checker(checker);
-                        cell_lock->Visit(cell_lock, grid_object_checker, *GetMap());
+                        cell_lock->Visit(cell_lock, grid_object_checker, *GetMap(), *this, radius);
 
                         // or unfriendly player/pet
                         if(!ok)
                         {
                             TypeContainerVisitor<MaNGOS::UnitSearcher<MaNGOS::AnyUnfriendlyUnitInObjectRangeCheck>, WorldTypeMapContainer > world_object_checker(checker);
-                            cell_lock->Visit(cell_lock, world_object_checker, *GetMap());
+                            cell_lock->Visit(cell_lock, world_object_checker, *GetMap(), *this, radius);
                         }
                     }
                     else                                        // environmental trap
@@ -343,7 +334,7 @@ void GameObject::Update(uint32 /*p_time*/)
                         CellLock<GridReadGuard> cell_lock(cell, p);
 
                         TypeContainerVisitor<MaNGOS::PlayerSearcher<MaNGOS::AnyPlayerInObjectRangeCheck>, WorldTypeMapContainer > world_object_checker(checker);
-                        cell_lock->Visit(cell_lock, world_object_checker, *GetMap());
+                        cell_lock->Visit(cell_lock, world_object_checker, *GetMap(), *this, radius);
                         ok = p_ok;
                     }
 
@@ -389,6 +380,7 @@ void GameObject::Update(uint32 /*p_time*/)
                     if (GetGOInfo()->GetAutoCloseTime() && (m_cooldownTime < time(NULL)))
                         ResetDoorOrButton();
                     break;
+                default: break;
             }
             break;
         }
@@ -451,7 +443,7 @@ void GameObject::Update(uint32 /*p_time*/)
             if(sWorld.getConfig(CONFIG_SAVE_RESPAWN_TIME_IMMEDIATLY))
                 SaveRespawnTime();
 
-            ObjectAccessor::UpdateObjectVisibility(this);
+            UpdateObjectVisibility();
 
             break;
         }
@@ -604,7 +596,7 @@ bool GameObject::LoadFromDB(uint32 guid, Map *map)
     if (!Create(guid,entry, map, phaseMask, x, y, z, ang, rotation0, rotation1, rotation2, rotation3, animprogress, go_state) )
         return false;
 
-    if(!GetGOInfo()->GetDespawnPossibility() && !GetGOInfo()->IsDespawnAtAction())
+    if (!GetGOInfo()->GetDespawnPossibility() && !GetGOInfo()->IsDespawnAtAction() && data->spawntimesecs >= 0)
     {
         SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_NODESPAWN);
         m_spawnedByDefault = true;
@@ -643,6 +635,7 @@ void GameObject::DeleteFromDB()
     objmgr.DeleteGOData(m_DBTableGuid);
     WorldDatabase.PExecuteLog("DELETE FROM gameobject WHERE guid = '%u'", m_DBTableGuid);
     WorldDatabase.PExecuteLog("DELETE FROM game_event_gameobject WHERE guid = '%u'", m_DBTableGuid);
+    WorldDatabase.PExecuteLog("DELETE FROM gameobject_battleground WHERE guid = '%u'", m_DBTableGuid);
 }
 
 GameObjectInfo const *GameObject::GetGOInfo() const
@@ -694,10 +687,14 @@ void GameObject::SaveRespawnTime()
         objmgr.SaveGORespawnTime(m_DBTableGuid,GetInstanceId(),m_respawnTime);
 }
 
-bool GameObject::isVisibleForInState(Player const* u, bool inVisibleList) const
+bool GameObject::isVisibleForInState(Player const* u, WorldObject const* viewPoint, bool inVisibleList) const
 {
     // Not in world
     if(!IsInWorld() || !u->IsInWorld())
+        return false;
+
+    // invisible at client always
+    if(!GetGOInfo()->displayId)
         return false;
 
     // Transport always visible at this step implementation
@@ -721,7 +718,7 @@ bool GameObject::isVisibleForInState(Player const* u, bool inVisibleList) const
     }
 
     // check distance
-    return IsWithinDistInMap(u,World::GetMaxVisibleDistanceForObject() +
+    return IsWithinDistInMap(viewPoint,World::GetMaxVisibleDistanceForObject() +
         (inVisibleList ? World::GetVisibleObjectGreyDistance() : 0.0f), false);
 }
 
@@ -745,7 +742,14 @@ bool GameObject::ActivateToQuest( Player *pTarget)const
         case GAMEOBJECT_TYPE_CHEST:
         {
             if(LootTemplates_Gameobject.HaveQuestLootForPlayer(GetGOInfo()->GetLootId(), pTarget))
+            {
+                //look for battlegroundAV for some objects which are only activated after mine gots captured by own team
+                if (GetEntry() == BG_AV_OBJECTID_MINE_N || GetEntry() == BG_AV_OBJECTID_MINE_S)
+                    if (BattleGround *bg = pTarget->GetBattleGround())
+                        if (bg->GetTypeID() == BATTLEGROUND_AV && !(((BattleGroundAV*)bg)->PlayerCanDoMineQuest(GetEntry(),pTarget->GetTeam())))
+                            return false;
                 return true;
+            }
             break;
         }
         case GAMEOBJECT_TYPE_GOOBER:
@@ -786,7 +790,7 @@ void GameObject::TriggeringLinkedGameObject( uint32 trapEntry, Unit* target)
 
         TypeContainerVisitor<MaNGOS::GameObjectLastSearcher<MaNGOS::NearestGameObjectEntryInObjectRangeCheck>, GridTypeMapContainer > object_checker(checker);
         CellLock<GridReadGuard> cell_lock(cell, p);
-        cell_lock->Visit(cell_lock, object_checker, *GetMap());
+        cell_lock->Visit(cell_lock, object_checker, *GetMap(), *target, range);
     }
 
     // found correct GO
@@ -808,7 +812,7 @@ GameObject* GameObject::LookupFishingHoleAround(float range)
     CellLock<GridReadGuard> cell_lock(cell, p);
 
     TypeContainerVisitor<MaNGOS::GameObjectSearcher<MaNGOS::NearestGameObjectFishingHole>, GridTypeMapContainer > grid_object_checker(checker);
-    cell_lock->Visit(cell_lock, grid_object_checker, *GetMap());
+    cell_lock->Visit(cell_lock, grid_object_checker, *GetMap(), *this, range);
 
     return ok;
 }
@@ -1033,7 +1037,8 @@ void GameObject::Use(Unit* user)
                         //fish catched
                         player->UpdateFishingSkill();
 
-                        GameObject* ok = LookupFishingHoleAround(DEFAULT_VISIBILITY_DISTANCE);
+                        //TODO: find reasonable value for fishing hole search
+                        GameObject* ok = LookupFishingHoleAround(20.0f + CONTACT_DISTANCE);
                         if (ok)
                         {
                             player->SendLoot(ok->GetGUID(),LOOT_FISHINGHOLE);
@@ -1065,11 +1070,7 @@ void GameObject::Use(Unit* user)
                 }
             }
 
-            if(player->m_currentSpells[CURRENT_CHANNELED_SPELL])
-            {
-                player->m_currentSpells[CURRENT_CHANNELED_SPELL]->SendChannelUpdate(0);
-                player->m_currentSpells[CURRENT_CHANNELED_SPELL]->finish();
-            }
+            player->FinishSpell(CURRENT_CHANNELED_SPELL);
             return;
         }
 
@@ -1100,7 +1101,7 @@ void GameObject::Use(Unit* user)
             // in case summoning ritual caster is GO creator
             spellCaster = caster;
 
-            if(!caster->m_currentSpells[CURRENT_CHANNELED_SPELL])
+            if(!caster->GetCurrentSpell(CURRENT_CHANNELED_SPELL))
                 return;
 
             spellId = info->summoningRitual.spellId;
@@ -1113,8 +1114,7 @@ void GameObject::Use(Unit* user)
             }
 
             // finish spell
-            caster->m_currentSpells[CURRENT_CHANNELED_SPELL]->SendChannelUpdate(0);
-            caster->m_currentSpells[CURRENT_CHANNELED_SPELL]->finish();
+            player->FinishSpell(CURRENT_CHANNELED_SPELL);
 
             // can be deleted now
             SetLootState(GO_JUST_DEACTIVATED);

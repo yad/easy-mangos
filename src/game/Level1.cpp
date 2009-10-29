@@ -393,7 +393,7 @@ bool ChatHandler::HandleNamegoCommand(const char* args)
             // when porting out from the bg, it will be reset to 0
             target->SetBattleGroundId(m_session->GetPlayer()->GetBattleGroundId(), m_session->GetPlayer()->GetBattleGroundTypeId());
             // remember current position as entry point for return at bg end teleportation
-            target->SetBattleGroundEntryPoint(target->GetMapId(),target->GetPositionX(),target->GetPositionY(),target->GetPositionZ(),target->GetOrientation());
+            target->SetBattleGroundEntryPoint();
         }
         else if (pMap->IsDungeon())
         {
@@ -420,7 +420,7 @@ bool ChatHandler::HandleNamegoCommand(const char* args)
 
         PSendSysMessage(LANG_SUMMONING, nameLink.c_str(),"");
         if (needReportToTarget(target))
-            ChatHandler(target).PSendSysMessage(LANG_SUMMONED_BY, nameLink.c_str());
+            ChatHandler(target).PSendSysMessage(LANG_SUMMONED_BY, playerLink(_player->GetName()).c_str());
 
         // stop flight if need
         if (target->isInFlight())
@@ -507,7 +507,7 @@ bool ChatHandler::HandleGonameCommand(const char* args)
             // when porting out from the bg, it will be reset to 0
             _player->SetBattleGroundId(target->GetBattleGroundId(), target->GetBattleGroundTypeId());
             // remember current position as entry point for return at bg end teleportation
-            _player->SetBattleGroundEntryPoint(_player->GetMapId(),_player->GetPositionX(),_player->GetPositionY(),_player->GetPositionZ(),_player->GetOrientation());
+            _player->SetBattleGroundEntryPoint();
         }
         else if(cMap->IsDungeon())
         {
@@ -537,19 +537,22 @@ bool ChatHandler::HandleGonameCommand(const char* args)
 
             // if the player or the player's group is bound to another instance
             // the player will not be bound to another one
-            InstancePlayerBind *pBind = _player->GetBoundInstance(target->GetMapId(), target->GetDifficulty());
+            InstancePlayerBind *pBind = _player->GetBoundInstance(target->GetMapId(), target->GetDifficulty(cMap->IsRaid()));
             if (!pBind)
             {
                 Group *group = _player->GetGroup();
                 // if no bind exists, create a solo bind
-                InstanceGroupBind *gBind = group ? group->GetBoundInstance(target->GetMapId(), target->GetDifficulty()) : NULL;
+                InstanceGroupBind *gBind = group ? group->GetBoundInstance(target) : NULL;
                 // if no bind exists, create a solo bind
                 if (!gBind)
                     if (InstanceSave *save = sInstanceSaveManager.GetInstanceSave(target->GetInstanceId()))
                         _player->BindToInstance(save, !save->CanReset());
             }
 
-            _player->SetDifficulty(target->GetDifficulty());
+            if(cMap->IsRaid())
+                _player->SetRaidDifficulty(target->GetRaidDifficulty());
+            else
+                _player->SetDungeonDifficulty(target->GetDungeonDifficulty());
         }
 
         PSendSysMessage(LANG_APPEARING_AT, chrNameLink.c_str());
@@ -658,7 +661,7 @@ bool ChatHandler::HandleModifyKnownTitlesCommand(const char* args)
 
     uint64 titles2 = titles;
 
-    for(int i = 1; i < sCharTitlesStore.GetNumRows(); ++i)
+    for(uint32 i = 1; i < sCharTitlesStore.GetNumRows(); ++i)
         if(CharTitlesEntry const* tEntry = sCharTitlesStore.LookupEntry(i))
             titles2 &= ~(uint64(1) << tEntry->bit_index);
 
@@ -2275,7 +2278,7 @@ bool ChatHandler::HandleGoTaxinodeCommand(const char* args)
         return false;
     }
 
-    if (node->x == 0.0f && node->y == 0.0f && node->z == 0.0f ||
+    if ((node->x == 0.0f && node->y == 0.0f && node->z == 0.0f) ||
         !MapManager::IsValidMapCoord(node->map_id,node->x,node->y,node->z))
     {
         PSendSysMessage(LANG_INVALID_TARGET_COORD,node->x,node->y,node->map_id);
@@ -2412,7 +2415,7 @@ bool ChatHandler::HandleGoZoneXYCommand(const char* args)
     float y = (float)atof(py);
 
     // prevent accept wrong numeric args
-    if (x==0.0f && *px!='0' || y==0.0f && *py!='0')
+    if ((x==0.0f && *px!='0') || (y==0.0f && *py!='0'))
         return false;
 
     uint32 areaid = cAreaId ? (uint32)atoi(cAreaId) : _player->GetZoneId();

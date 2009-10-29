@@ -50,6 +50,7 @@
 #include "InstanceSaveMgr.h"
 #include "InstanceData.h"
 #include "CreatureEventAIMgr.h"
+#include "DBCEnums.h"
 
 //reload commands
 bool ChatHandler::HandleReloadAllCommand(const char*)
@@ -75,7 +76,7 @@ bool ChatHandler::HandleReloadAllCommand(const char*)
 
 bool ChatHandler::HandleReloadAllAchievementCommand(const char*)
 {
-    HandleReloadAchievementCriteriaDataCommand("");
+    HandleReloadAchievementCriteriaRequirementCommand("");
     HandleReloadAchievementRewardCommand("");
     return true;
 }
@@ -190,15 +191,16 @@ bool ChatHandler::HandleReloadConfigCommand(const char* /*args*/)
 {
     sLog.outString( "Re-Loading config settings..." );
     sWorld.LoadConfigSettings(true);
+    MapManager::Instance().InitializeVisibilityDistanceInfo();
     SendGlobalSysMessage("World config settings reloaded.");
     return true;
 }
 
-bool ChatHandler::HandleReloadAchievementCriteriaDataCommand(const char*)
+bool ChatHandler::HandleReloadAchievementCriteriaRequirementCommand(const char*)
 {
-    sLog.outString( "Re-Loading Additional Achievement Criteria Data..." );
-    achievementmgr.LoadAchievementCriteriaData();
-    SendGlobalSysMessage("DB table `achievement_criteria_data` reloaded.");
+    sLog.outString( "Re-Loading Additional Achievement Criteria Requirements Data..." );
+    achievementmgr.LoadAchievementCriteriaRequirements();
+    SendGlobalSysMessage("DB table `achievement_criteria_requirement` reloaded.");
     return true;
 }
 
@@ -358,12 +360,12 @@ bool ChatHandler::HandleReloadLootTemplatesProspectingCommand(const char*)
     return true;
 }
 
-bool ChatHandler::HandleReloadLootTemplatesQuestMailCommand(const char*)
+bool ChatHandler::HandleReloadLootTemplatesMailCommand(const char*)
 {
-    sLog.outString( "Re-Loading Loot Tables... (`quest_mail_loot_template`)" );
-    LoadLootTemplates_QuestMail();
-    LootTemplates_QuestMail.CheckLootRefs();
-    SendGlobalSysMessage("DB table `quest_mail_loot_template` reloaded.");
+    sLog.outString( "Re-Loading Loot Tables... (`mail_loot_template`)" );
+    LoadLootTemplates_Mail();
+    LootTemplates_Mail.CheckLootRefs();
+    SendGlobalSysMessage("DB table `mail_loot_template` reloaded.");
     return true;
 }
 
@@ -593,6 +595,14 @@ bool ChatHandler::HandleReloadItemRequiredTragetCommand(const char*)
     return true;
 }
 
+bool ChatHandler::HandleReloadBattleEventCommand(const char*)
+{
+    sLog.outString( "Re-Loading BattleGround Eventindexes..." );
+    sBattleGroundMgr.LoadBattleEventIndexes();
+    SendGlobalSysMessage("DB table `gameobject_battleground` and `creature_battleground` reloaded.");
+    return true;
+}
+
 bool ChatHandler::HandleReloadGameObjectScriptsCommand(const char* arg)
 {
     if(sWorld.IsScriptScheduled())
@@ -637,7 +647,7 @@ bool ChatHandler::HandleReloadEventAITextsCommand(const char* arg)
 {
 
     sLog.outString( "Re-Loading Texts from `creature_ai_texts`...");
-    CreatureEAI_Mgr.LoadCreatureEventAI_Texts();
+    CreatureEAI_Mgr.LoadCreatureEventAI_Texts(true);
     SendGlobalSysMessage("DB table `creature_ai_texts` reloaded.");
     return true;
 }
@@ -645,7 +655,7 @@ bool ChatHandler::HandleReloadEventAITextsCommand(const char* arg)
 bool ChatHandler::HandleReloadEventAISummonsCommand(const char* arg)
 {
     sLog.outString( "Re-Loading Summons from `creature_ai_summons`...");
-    CreatureEAI_Mgr.LoadCreatureEventAI_Summons();
+    CreatureEAI_Mgr.LoadCreatureEventAI_Summons(true);
     SendGlobalSysMessage("DB table `creature_ai_summons` reloaded.");
     return true;
 }
@@ -853,7 +863,7 @@ bool ChatHandler::HandleAccountSetGmLevelCommand(const char* args)
             return false;
 
         targetAccountName = arg1;
-        if(!AccountMgr::normilizeString(targetAccountName))
+        if (!AccountMgr::normalizeString(targetAccountName))
         {
             PSendSysMessage(LANG_ACCOUNT_NOT_EXIST,targetAccountName.c_str());
             SetSentErrorMessage(true);
@@ -919,7 +929,7 @@ bool ChatHandler::HandleAccountSetPasswordCommand(const char* args)
         return false;
 
     std::string account_name = szAccount;
-    if(!AccountMgr::normilizeString(account_name))
+    if (!AccountMgr::normalizeString(account_name))
     {
         PSendSysMessage(LANG_ACCOUNT_NOT_EXIST,account_name.c_str());
         SetSentErrorMessage(true);
@@ -2935,7 +2945,7 @@ bool ChatHandler::HandleLookupQuestCommand(const char* args)
                         }
 
                         if (m_session)
-                            PSendSysMessage(LANG_QUEST_LIST_CHAT,qinfo->GetQuestId(),qinfo->GetQuestId(),title.c_str(),statusStr);
+                            PSendSysMessage(LANG_QUEST_LIST_CHAT,qinfo->GetQuestId(),qinfo->GetQuestId(),qinfo->GetQuestLevel(),title.c_str(),statusStr);
                         else
                             PSendSysMessage(LANG_QUEST_LIST_CONSOLE,qinfo->GetQuestId(),title.c_str(),statusStr);
                         ++counter;
@@ -2969,7 +2979,7 @@ bool ChatHandler::HandleLookupQuestCommand(const char* args)
             }
 
             if (m_session)
-                PSendSysMessage(LANG_QUEST_LIST_CHAT,qinfo->GetQuestId(),qinfo->GetQuestId(),title.c_str(),statusStr);
+                PSendSysMessage(LANG_QUEST_LIST_CHAT,qinfo->GetQuestId(),qinfo->GetQuestId(),qinfo->GetQuestLevel(),title.c_str(),statusStr);
             else
                 PSendSysMessage(LANG_QUEST_LIST_CONSOLE,qinfo->GetQuestId(),title.c_str(),statusStr);
 
@@ -3210,7 +3220,7 @@ bool ChatHandler::HandleGuildCreateCommand(const char* args)
     }
 
     Guild *guild = new Guild;
-    if (!guild->create (target,guildname))
+    if (!guild->Create (target,guildname))
     {
         delete guild;
         SendSysMessage (LANG_GUILD_NOT_CREATED);
@@ -4134,30 +4144,6 @@ bool ChatHandler::HandleChangeWeather(const char* args)
     return true;
 }
 
-bool ChatHandler::HandleSet32Bit(const char* args)
-{
-    if(!*args)
-        return false;
-
-    char* px = strtok((char*)args, " ");
-    char* py = strtok(NULL, " ");
-
-    if (!px || !py)
-        return false;
-
-    uint32 Opcode = (uint32)atoi(px);
-    uint32 Value = (uint32)atoi(py);
-    if (Value > 32)                                         //uint32 = 32 bits
-        return false;
-
-    sLog.outDebug(GetMangosString(LANG_SET_32BIT), Opcode, Value);
-
-    m_session->GetPlayer( )->SetUInt32Value( Opcode , 2^Value );
-
-    PSendSysMessage(LANG_SET_32BIT_FIELD, Opcode,1);
-    return true;
-}
-
 bool ChatHandler::HandleTeleAddCommand(const char * args)
 {
     if(!*args)
@@ -4581,7 +4567,7 @@ bool ChatHandler::HandleServerRestartCommand(const char* args)
     int32 time = atoi (time_str);
 
     ///- Prevent interpret wrong arg value as 0 secs shutdown time
-    if(time == 0 && (time_str[0]!='0' || time_str[1]!='\0') || time < 0)
+    if ((time == 0 && (time_str[0]!='0' || time_str[1]!='\0')) || time < 0)
         return false;
 
     if (exitcode_str)
@@ -4616,7 +4602,7 @@ bool ChatHandler::HandleServerIdleRestartCommand(const char* args)
     int32 time = atoi (time_str);
 
     ///- Prevent interpret wrong arg value as 0 secs shutdown time
-    if(time == 0 && (time_str[0]!='0' || time_str[1]!='\0') || time < 0)
+    if ((time == 0 && (time_str[0]!='0' || time_str[1]!='\0')) || time < 0)
         return false;
 
     if (exitcode_str)
@@ -4651,7 +4637,7 @@ bool ChatHandler::HandleServerIdleShutDownCommand(const char* args)
     int32 time = atoi (time_str);
 
     ///- Prevent interpret wrong arg value as 0 secs shutdown time
-    if(time == 0 && (time_str[0]!='0' || time_str[1]!='\0') || time < 0)
+    if ((time == 0 && (time_str[0]!='0' || time_str[1]!='\0')) || time < 0)
         return false;
 
     if (exitcode_str)
@@ -4686,7 +4672,7 @@ bool ChatHandler::HandleQuestAdd(const char* args)
     }
 
     // .addquest #entry'
-    // number or [name] Shift-click form |color|Hquest:quest_id|h[name]|h|r
+    // number or [name] Shift-click form |color|Hquest:quest_id:quest_level|h[name]|h|r
     char* cId = extractKeyFromLink((char*)args,"Hquest");
     if(!cId)
         return false;
@@ -4740,7 +4726,7 @@ bool ChatHandler::HandleQuestRemove(const char* args)
     }
 
     // .removequest #entry'
-    // number or [name] Shift-click form |color|Hquest:quest_id|h[name]|h|r
+    // number or [name] Shift-click form |color|Hquest:quest_id:quest_level|h[name]|h|r
     char* cId = extractKeyFromLink((char*)args,"Hquest");
     if(!cId)
         return false;
@@ -4790,7 +4776,7 @@ bool ChatHandler::HandleQuestComplete(const char* args)
     }
 
     // .quest complete #entry
-    // number or [name] Shift-click form |color|Hquest:quest_id|h[name]|h|r
+    // number or [name] Shift-click form |color|Hquest:quest_id:quest_level|h[name]|h|r
     char* cId = extractKeyFromLink((char*)args,"Hquest");
     if(!cId)
         return false;
@@ -4808,7 +4794,7 @@ bool ChatHandler::HandleQuestComplete(const char* args)
     }
 
     // Add quest items for quests that require items
-    for(uint8 x = 0; x < QUEST_OBJECTIVES_COUNT; ++x)
+    for(uint8 x = 0; x < QUEST_ITEM_OBJECTIVES_COUNT; ++x)
     {
         uint32 id = pQuest->ReqItemId[x];
         uint32 count = pQuest->ReqItemCount[x];
@@ -4818,11 +4804,11 @@ bool ChatHandler::HandleQuestComplete(const char* args)
         uint32 curItemCount = player->GetItemCount(id,true);
 
         ItemPosCountVec dest;
-        uint8 msg = player->CanStoreNewItem( NULL_BAG, NULL_SLOT, dest, id, count-curItemCount );
+        uint8 msg = player->CanStoreNewItem( NULL_BAG, NULL_SLOT, dest, id, count - curItemCount );
         if( msg == EQUIP_ERR_OK )
         {
             Item* item = player->StoreNewItem( dest, id, true);
-            player->SendNewItem(item,count-curItemCount,true,false);
+            player->SendNewItem(item,count-curItemCount, true, false);
         }
     }
 
@@ -4906,7 +4892,7 @@ bool ChatHandler::HandleBanHelper(BanMode mode, const char* args)
     switch(mode)
     {
         case BAN_ACCOUNT:
-            if(!AccountMgr::normilizeString(nameOrIP))
+            if (!AccountMgr::normalizeString(nameOrIP))
             {
                 PSendSysMessage(LANG_ACCOUNT_NOT_EXIST,nameOrIP.c_str());
                 SetSentErrorMessage(true);
@@ -4986,7 +4972,7 @@ bool ChatHandler::HandleUnBanHelper(BanMode mode, const char* args)
     switch(mode)
     {
         case BAN_ACCOUNT:
-            if(!AccountMgr::normilizeString(nameOrIP))
+            if (!AccountMgr::normalizeString(nameOrIP))
             {
                 PSendSysMessage(LANG_ACCOUNT_NOT_EXIST,nameOrIP.c_str());
                 SetSentErrorMessage(true);
@@ -5021,11 +5007,11 @@ bool ChatHandler::HandleBanInfoAccountCommand(const char* args)
         return false;
 
     char* cname = strtok((char*)args, "");
-    if(!cname)
+    if (!cname)
         return false;
 
     std::string account_name = cname;
-    if(!AccountMgr::normilizeString(account_name))
+    if (!AccountMgr::normalizeString(account_name))
     {
         PSendSysMessage(LANG_ACCOUNT_NOT_EXIST,account_name.c_str());
         SetSentErrorMessage(true);
@@ -5033,7 +5019,7 @@ bool ChatHandler::HandleBanInfoAccountCommand(const char* args)
     }
 
     uint32 accountid = accmgr.GetId(account_name);
-    if(!accountid)
+    if (!accountid)
     {
         PSendSysMessage(LANG_ACCOUNT_NOT_EXIST,account_name.c_str());
         return true;
@@ -5046,13 +5032,13 @@ bool ChatHandler::HandleBanInfoCharacterCommand(const char* args)
 {
     Player* target;
     uint64 target_guid;
-    if(!extractPlayerTarget((char*)args,&target,&target_guid))
+    if (!extractPlayerTarget((char*)args,&target,&target_guid))
         return false;
 
     uint32 accountid = target ? target->GetSession()->GetAccountId() : objmgr.GetPlayerAccountIdByGUID(target_guid);
 
     std::string accountname;
-    if(!accmgr.GetName(accountid,accountname))
+    if (!accmgr.GetName(accountid,accountname))
     {
         PSendSysMessage(LANG_BANINFO_NOCHARACTER);
         return true;
@@ -5390,15 +5376,15 @@ bool ChatHandler::HandlePDumpLoadCommand(const char *args)
         return false;
 
     char * file = strtok((char*)args, " ");
-    if(!file)
+    if (!file)
         return false;
 
     char * account = strtok(NULL, " ");
-    if(!account)
+    if (!account)
         return false;
 
     std::string account_name = account;
-    if(!AccountMgr::normilizeString(account_name))
+    if (!AccountMgr::normalizeString(account_name))
     {
         PSendSysMessage(LANG_ACCOUNT_NOT_EXIST,account_name.c_str());
         SetSentErrorMessage(true);
@@ -5406,10 +5392,10 @@ bool ChatHandler::HandlePDumpLoadCommand(const char *args)
     }
 
     uint32 account_id = accmgr.GetId(account_name);
-    if(!account_id)
+    if (!account_id)
     {
         account_id = atoi(account);                             // use original string
-        if(!account_id)
+        if (!account_id)
         {
             PSendSysMessage(LANG_ACCOUNT_NOT_EXIST,account_name.c_str());
             SetSentErrorMessage(true);
@@ -5417,7 +5403,7 @@ bool ChatHandler::HandlePDumpLoadCommand(const char *args)
         }
     }
 
-    if(!accmgr.GetName(account_id,account_name))
+    if (!accmgr.GetName(account_id,account_name))
     {
         PSendSysMessage(LANG_ACCOUNT_NOT_EXIST,account_name.c_str());
         SetSentErrorMessage(true);
@@ -5742,13 +5728,7 @@ bool ChatHandler::HandleCastBackCommand(const char* args)
 
     bool triggered = (trig_str != NULL);
 
-    // update orientation at server
-    caster->SetOrientation(caster->GetAngle(m_session->GetPlayer()));
-
-    // and client
-    WorldPacket data;
-    caster->BuildHeartBeatMsg(&data);
-    caster->SendMessageToSet(&data,true);
+    caster->SetFacingToObject(m_session->GetPlayer());
 
     caster->CastSpell(m_session->GetPlayer(),spell,triggered);
 
@@ -5833,13 +5813,7 @@ bool ChatHandler::HandleCastTargetCommand(const char* args)
 
     bool triggered = (trig_str != NULL);
 
-    // update orientation at server
-    caster->SetOrientation(caster->GetAngle(m_session->GetPlayer()));
-
-    // and client
-    WorldPacket data;
-    caster->BuildHeartBeatMsg(&data);
-    caster->SendMessageToSet(&data,true);
+    caster->SetFacingToObject(m_session->GetPlayer());
 
     caster->CastSpell(caster->getVictim(),spell,triggered);
 
@@ -5927,14 +5901,21 @@ bool ChatHandler::HandleInstanceListBindsCommand(const char* /*args*/)
     Player* player = getSelectedPlayer();
     if (!player) player = m_session->GetPlayer();
     uint32 counter = 0;
-    for(uint8 i = 0; i < TOTAL_DIFFICULTIES; ++i)
+    for(uint8 i = 0; i < MAX_DIFFICULTY; ++i)
     {
-        Player::BoundInstancesMap &binds = player->GetBoundInstances(i);
+        Player::BoundInstancesMap &binds = player->GetBoundInstances(Difficulty(i));
         for(Player::BoundInstancesMap::const_iterator itr = binds.begin(); itr != binds.end(); ++itr)
         {
             InstanceSave *save = itr->second.save;
             std::string timeleft = GetTimeString(save->GetResetTime() - time(NULL));
-            PSendSysMessage("map: %d inst: %d perm: %s diff: %s canReset: %s TTR: %s", itr->first, save->GetInstanceId(), itr->second.perm ? "yes" : "no",  save->GetDifficulty() == DIFFICULTY_NORMAL ? "normal" : "heroic", save->CanReset() ? "yes" : "no", timeleft.c_str());
+            if (const MapEntry* entry = sMapStore.LookupEntry(itr->first))
+            {
+                PSendSysMessage("map: %d (%s) inst: %d perm: %s diff: %d canReset: %s TTR: %s",
+                    itr->first, entry->name[m_session->GetSessionDbcLocale()], save->GetInstanceId(), itr->second.perm ? "yes" : "no",
+                    save->GetDifficulty(), save->CanReset() ? "yes" : "no", timeleft.c_str());
+            }
+            else
+                PSendSysMessage("bound for a nonexistant map %u", itr->first);
             counter++;
         }
     }
@@ -5943,14 +5924,21 @@ bool ChatHandler::HandleInstanceListBindsCommand(const char* /*args*/)
     Group *group = player->GetGroup();
     if(group)
     {
-        for(uint8 i = 0; i < TOTAL_DIFFICULTIES; ++i)
+        for(uint8 i = 0; i < MAX_DIFFICULTY; ++i)
         {
-            Group::BoundInstancesMap &binds = group->GetBoundInstances(i);
+            Group::BoundInstancesMap &binds = group->GetBoundInstances(Difficulty(i));
             for(Group::BoundInstancesMap::const_iterator itr = binds.begin(); itr != binds.end(); ++itr)
             {
                 InstanceSave *save = itr->second.save;
                 std::string timeleft = GetTimeString(save->GetResetTime() - time(NULL));
-                PSendSysMessage("map: %d inst: %d perm: %s diff: %s canReset: %s TTR: %s", itr->first, save->GetInstanceId(), itr->second.perm ? "yes" : "no",  save->GetDifficulty() == DIFFICULTY_NORMAL ? "normal" : "heroic", save->CanReset() ? "yes" : "no", timeleft.c_str());
+                if (const MapEntry* entry = sMapStore.LookupEntry(itr->first))
+                {
+                    PSendSysMessage("map: %d (%s) inst: %d perm: %s diff: %d canReset: %s TTR: %s",
+                        itr->first, entry->name[m_session->GetSessionDbcLocale()], save->GetInstanceId(), itr->second.perm ? "yes" : "no",
+                        save->GetDifficulty(), save->CanReset() ? "yes" : "no", timeleft.c_str());
+                }
+                else
+                    PSendSysMessage("bound for a nonexistant map %u", itr->first);
                 counter++;
             }
         }
@@ -5965,31 +5953,53 @@ bool ChatHandler::HandleInstanceUnbindCommand(const char* args)
     if(!*args)
         return false;
 
-    std::string cmd = args;
-    if(cmd == "all")
+    Player* player = getSelectedPlayer();
+    if (!player)
+        player = m_session->GetPlayer();
+    uint32 counter = 0;
+    uint32 mapid = 0;
+    bool got_map = false;
+
+    if (strncmp(args,"all",strlen(args)) != 0)
     {
-        Player* player = getSelectedPlayer();
-        if (!player) player = m_session->GetPlayer();
-        uint32 counter = 0;
-        for(uint8 i = 0; i < TOTAL_DIFFICULTIES; ++i)
+        if(!isNumeric(args[0]))
+            return false;
+
+        got_map = true;
+        mapid = atoi(args);
+    }
+
+    for(uint8 i = 0; i < MAX_DIFFICULTY; ++i)
+    {
+        Player::BoundInstancesMap &binds = player->GetBoundInstances(Difficulty(i));
+        for(Player::BoundInstancesMap::iterator itr = binds.begin(); itr != binds.end();)
         {
-            Player::BoundInstancesMap &binds = player->GetBoundInstances(i);
-            for(Player::BoundInstancesMap::iterator itr = binds.begin(); itr != binds.end();)
+            if (got_map && mapid != itr->first)
             {
-                if(itr->first != player->GetMapId())
+                ++itr;
+                continue;
+            }
+            if(itr->first != player->GetMapId())
+            {
+                InstanceSave *save = itr->second.save;
+                std::string timeleft = GetTimeString(save->GetResetTime() - time(NULL));
+
+                if (const MapEntry* entry = sMapStore.LookupEntry(itr->first))
                 {
-                    InstanceSave *save = itr->second.save;
-                    std::string timeleft = GetTimeString(save->GetResetTime() - time(NULL));
-                    PSendSysMessage("unbinding map: %d inst: %d perm: %s diff: %s canReset: %s TTR: %s", itr->first, save->GetInstanceId(), itr->second.perm ? "yes" : "no",  save->GetDifficulty() == DIFFICULTY_NORMAL ? "normal" : "heroic", save->CanReset() ? "yes" : "no", timeleft.c_str());
-                    player->UnbindInstance(itr, i);
-                    counter++;
+                    PSendSysMessage("unbinding map: %d (%s) inst: %d perm: %s diff: %d canReset: %s TTR: %s",
+                        itr->first, entry->name[m_session->GetSessionDbcLocale()], save->GetInstanceId(), itr->second.perm ? "yes" : "no",
+                        save->GetDifficulty(), save->CanReset() ? "yes" : "no", timeleft.c_str());
                 }
                 else
-                    ++itr;
+                    PSendSysMessage("bound for a nonexistant map %u", itr->first);
+                player->UnbindInstance(itr, Difficulty(i));
+                counter++;
             }
+            else
+                ++itr;
         }
-        PSendSysMessage("instances unbound: %d", counter);
     }
+    PSendSysMessage("instances unbound: %d", counter);
     return true;
 }
 
@@ -6074,10 +6084,10 @@ bool ChatHandler::HandleAccountSetAddonCommand(const char* args)
     std::string account_name;
     uint32 account_id;
 
-    if(!szExp)
+    if (!szExp)
     {
         Player* player = getSelectedPlayer();
-        if(!player)
+        if (!player)
             return false;
 
         account_id = player->GetSession()->GetAccountId();
@@ -6088,7 +6098,7 @@ bool ChatHandler::HandleAccountSetAddonCommand(const char* args)
     {
         ///- Convert Account name to Upper Format
         account_name = szAcc;
-        if(!AccountMgr::normilizeString(account_name))
+        if (!AccountMgr::normalizeString(account_name))
         {
             PSendSysMessage(LANG_ACCOUNT_NOT_EXIST,account_name.c_str());
             SetSentErrorMessage(true);
@@ -6096,7 +6106,7 @@ bool ChatHandler::HandleAccountSetAddonCommand(const char* args)
         }
 
         account_id = accmgr.GetId(account_name);
-        if(!account_id)
+        if (!account_id)
         {
             PSendSysMessage(LANG_ACCOUNT_NOT_EXIST,account_name.c_str());
             SetSentErrorMessage(true);
@@ -6182,7 +6192,7 @@ bool ChatHandler::HandleSendItemsCommand(const char* args)
         }
 
         uint32 item_count = itemCountStr ? atoi(itemCountStr) : 1;
-        if(item_count < 1 || item_proto->MaxCount > 0 && item_count > uint32(item_proto->MaxCount))
+        if (item_count < 1 || (item_proto->MaxCount > 0 && item_count > uint32(item_proto->MaxCount)))
         {
             PSendSysMessage(LANG_COMMAND_INVALID_ITEM_COUNT, item_count,item_id);
             SetSentErrorMessage(true);

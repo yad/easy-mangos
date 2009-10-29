@@ -158,7 +158,7 @@ enum CreatureFlagsExtra
 struct CreatureInfo
 {
     uint32  Entry;
-    uint32  HeroicEntry;
+    uint32  DifficultyEntry1;
     uint32  KillCredit[MAX_KILL_CREDIT];
     uint32  DisplayID_A[2];
     uint32  DisplayID_H[2];
@@ -217,7 +217,7 @@ struct CreatureInfo
     float   unk16;
     float   unk17;
     bool    RacialLeader;
-    uint32  questItems[4];
+    uint32  questItems[6];
     uint32  movementId;
     bool    RegenHealth;
     uint32  equipmentId;
@@ -238,13 +238,18 @@ struct CreatureInfo
             return SKILL_SKINNING;                          // normal case
     }
 
+    bool IsExotic() const
+    {
+        return (type_flags & CREATURE_TYPEFLAGS_EXOTIC);
+    }
+
     bool isTameable(bool exotic) const
     {
-        if(type != CREATURE_TYPE_BEAST || family == 0 || (type_flags & CREATURE_TYPEFLAGS_TAMEABLE)==0)
+        if(type != CREATURE_TYPE_BEAST || family == 0 || (type_flags & CREATURE_TYPEFLAGS_TAMEABLE) == 0)
             return false;
 
         // if can tame exotic then can tame any temable
-        return exotic || (type_flags & CREATURE_TYPEFLAGS_EXOTIC)==0;
+        return exotic || !IsExotic();
     }
 };
 
@@ -619,6 +624,8 @@ class MANGOS_DLL_SPEC Creature : public Unit
 
         float GetAttackDistance(Unit const* pl) const;
 
+        void SendAIReaction(AiReaction reactionType);
+
         void DoFleeToGetAssistance();
         void CallForHelp(float fRadius);
         void CallAssistance();
@@ -681,8 +688,10 @@ class MANGOS_DLL_SPEC Creature : public Unit
 
         void SetDeadByDefault (bool death_state) { m_isDeadByDefault = death_state; }
 
-        bool isActiveObject() const { return m_isActiveObject; }
+        bool isActiveObject() const { return m_isActiveObject || HasAuraType(SPELL_AURA_BIND_SIGHT) || HasAuraType(SPELL_AURA_FAR_SIGHT); }
         void SetActiveObjectState(bool on);
+
+        void SendAreaSpiritHealerQueryOpcode(Player *pl);
 
     protected:
         bool CreateFromProto(uint32 guidlow,uint32 Entry,uint32 team, const CreatureData *data = NULL);
@@ -733,7 +742,7 @@ class MANGOS_DLL_SPEC Creature : public Unit
         float CombatStartZ;
     private:
         GridReference<Creature> m_gridRef;
-        CreatureInfo const* m_creatureInfo;                 // in heroic mode can different from ObjMgr::GetCreatureTemplate(GetEntry())
+        CreatureInfo const* m_creatureInfo;                 // in difficulty mode > 0 can different from ObjMgr::GetCreatureTemplate(GetEntry())
         bool m_isActiveObject;
         MonsterMovementFlags m_monsterMoveFlags;
 };

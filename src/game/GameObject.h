@@ -45,7 +45,7 @@ struct GameObjectInfo
     uint32  faction;
     uint32  flags;
     float   size;
-    uint32  questItems[4];
+    uint32  questItems[6];
     union                                                   // different GO types have different data field
     {
         //0 GAMEOBJECT_TYPE_DOOR
@@ -559,21 +559,12 @@ class MANGOS_DLL_SPEC GameObject : public WorldObject
 
         void AddToWorld();
         void RemoveFromWorld();
-        void CleanupsBeforeDelete();
 
         bool Create(uint32 guidlow, uint32 name_id, Map *map, uint32 phaseMask, float x, float y, float z, float ang, float rotation0, float rotation1, float rotation2, float rotation3, uint32 animprogress, GOState go_state);
         void Update(uint32 p_time);
         GameObjectInfo const* GetGOInfo() const;
 
         bool IsTransport() const;
-
-        void SetOwnerGUID(uint64 owner)
-        {
-            m_spawnedByDefault = false;                     // all object with owner is despawned after delay
-            SetUInt64Value(OBJECT_FIELD_CREATED_BY, owner);
-        }
-        uint64 GetOwnerGUID() const { return GetUInt64Value(OBJECT_FIELD_CREATED_BY); }
-        Unit* GetOwner() const;
 
         uint32 GetDBTableGUIDLow() const { return m_DBTableGuid; }
 
@@ -592,6 +583,21 @@ class MANGOS_DLL_SPEC GameObject : public WorldObject
         void SaveToDB(uint32 mapid, uint8 spawnMask, uint32 phaseMask);
         bool LoadFromDB(uint32 guid, Map *map);
         void DeleteFromDB();
+
+        void SetOwnerGUID(uint64 owner)
+        {
+            m_spawnedByDefault = false;                     // all object with owner is despawned after delay
+            SetUInt64Value(OBJECT_FIELD_CREATED_BY, owner);
+        }
+        uint64 GetOwnerGUID() const { return GetUInt64Value(OBJECT_FIELD_CREATED_BY); }
+        Unit* GetOwner() const;
+
+        void SetSpellId(uint32 id)
+        {
+            m_spawnedByDefault = false;                     // all summoned object is despawned after delay
+            m_spellId = id;
+        }
+        uint32 GetSpellId() const { return m_spellId;}
 
         time_t GetRespawnTime() const { return m_respawnTime; }
         time_t GetRespawnTimeEx() const
@@ -619,8 +625,6 @@ class MANGOS_DLL_SPEC GameObject : public WorldObject
         uint32 GetRespawnDelay() const { return m_respawnDelayTime; }
         void Refresh();
         void Delete();
-        void SetSpellId(uint32 id) { m_spellId = id;}
-        uint32 GetSpellId() const { return m_spellId;}
         void getFishLoot(Loot *loot, Player* loot_owner);
         GameobjectTypes GetGoType() const { return GameobjectTypes(GetByteValue(GAMEOBJECT_BYTES_1, 1)); }
         void SetGoType(GameobjectTypes type) { SetByteValue(GAMEOBJECT_BYTES_1, 1, type); }
@@ -665,7 +669,7 @@ class MANGOS_DLL_SPEC GameObject : public WorldObject
 
         void TriggeringLinkedGameObject( uint32 trapEntry, Unit* target);
 
-        bool isVisibleForInState(Player const* u, bool inVisibleList) const;
+        bool isVisibleForInState(Player const* u, WorldObject const* viewPoint, bool inVisibleList) const;
 
         GameObject* LookupFishingHoleAround(float range);
 

@@ -81,12 +81,6 @@
 #include <signal.h>
 #include <assert.h>
 
-#if PLATFORM == PLATFORM_WINDOWS
-#define STRCASECMP stricmp
-#else
-#define STRCASECMP strcasecmp
-#endif
-
 #include <set>
 #include <list>
 #include <string>
@@ -102,7 +96,6 @@
 #include <ace/Guard_T.h>
 #include <ace/RW_Thread_Mutex.h>
 #include <ace/Thread_Mutex.h>
-
 
 #if PLATFORM == PLATFORM_WINDOWS
 #  define FD_SETSIZE 4096
@@ -128,9 +121,7 @@
 #define I32FMT "%08I32X"
 #define I64FMT "%016I64X"
 #define snprintf _snprintf
-#define atoll __atoi64
 #define vsnprintf _vsnprintf
-#define strdup _strdup
 #define finite(X) _finite(X)
 
 #else
@@ -193,6 +184,13 @@ enum LocaleConstant
 extern char const* localeNames[MAX_LOCALE];
 
 LocaleConstant GetLocaleByName(const std::string& name);
+//operator new[] based version of strdup() function! Release memory by using operator delete[] !
+inline char * mangos_strdup(const char * source)
+{
+    char * dest = new char[strlen(source) + 1];
+    strcpy(dest, source);
+    return dest;
+}
 
 // we always use stdlibc++ std::max/std::min, undefine some not C++ standard defines (Win API and some pother platforms)
 #ifdef max

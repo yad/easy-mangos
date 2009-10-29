@@ -700,11 +700,20 @@ bool ChatHandler::HandleGameObjectAddCommand(const char* args)
 
     char* spawntimeSecs = strtok(NULL, " ");
 
-    const GameObjectInfo *goI = objmgr.GetGameObjectInfo(id);
+    const GameObjectInfo *gInfo = objmgr.GetGameObjectInfo(id);
 
-    if (!goI)
+    if (!gInfo)
     {
         PSendSysMessage(LANG_GAMEOBJECT_NOT_EXIST,id);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    if (gInfo->displayId && !sGameObjectDisplayInfoStore.LookupEntry(gInfo->displayId))
+    {
+        // report to DB errors log as in loading case
+        sLog.outErrorDb("Gameobject (Entry %u GoType: %u) have invalid displayId (%u), not spawned.",id, gInfo->type, gInfo->displayId);
+        PSendSysMessage(LANG_GAMEOBJECT_HAVE_INVALID_DATA,id);
         SetSentErrorMessage(true);
         return false;
     }
@@ -719,7 +728,7 @@ bool ChatHandler::HandleGameObjectAddCommand(const char* args)
     GameObject* pGameObj = new GameObject;
     uint32 db_lowGUID = objmgr.GenerateLowGuid(HIGHGUID_GAMEOBJECT);
 
-    if(!pGameObj->Create(db_lowGUID, goI->id, map, chr->GetPhaseMaskForSpawn(), x, y, z, o, 0.0f, 0.0f, 0.0f, 0.0f, 0, GO_STATE_READY))
+    if(!pGameObj->Create(db_lowGUID, gInfo->id, map, chr->GetPhaseMaskForSpawn(), x, y, z, o, 0.0f, 0.0f, 0.0f, 0.0f, 0, GO_STATE_READY))
     {
         delete pGameObj;
         return false;
@@ -742,14 +751,14 @@ bool ChatHandler::HandleGameObjectAddCommand(const char* args)
         return false;
     }
 
-    sLog.outDebug(GetMangosString(LANG_GAMEOBJECT_CURRENT), goI->name, db_lowGUID, x, y, z, o);
+    sLog.outDebug(GetMangosString(LANG_GAMEOBJECT_CURRENT), gInfo->name, db_lowGUID, x, y, z, o);
 
     map->Add(pGameObj);
 
     // TODO: is it really necessary to add both the real and DB table guid here ?
     objmgr.AddGameobjectToGrid(db_lowGUID, objmgr.GetGOData(db_lowGUID));
 
-    PSendSysMessage(LANG_GAMEOBJECT_ADD,id,goI->name,db_lowGUID,x,y,z);
+    PSendSysMessage(LANG_GAMEOBJECT_ADD,id,gInfo->name,db_lowGUID,x,y,z);
     return true;
 }
 
@@ -3171,7 +3180,7 @@ bool ChatHandler::HandleWpShowCommand(const char* args)
             }
 
             wpCreature->SetVisibility(VISIBILITY_OFF);
-            sLog.outDebug("DEBUG: UPDATE creature_movement SET wpguid = '%u");
+            sLog.outDebug("DEBUG: UPDATE creature_movement SET wpguid = '%u", wpCreature->GetGUIDLow());
             // set "wpguid" column to the visual waypoint
             WorldDatabase.PExecuteLog("UPDATE creature_movement SET wpguid = '%u' WHERE id = '%u' and point = '%u'", wpCreature->GetGUIDLow(), lowguid, point);
 
@@ -3708,24 +3717,38 @@ bool ChatHandler::HandleLookupEventCommand(const char* args)
     return true;
 }
 
-bool ChatHandler::HandleEventActiveListCommand(const char* /*args*/)
+bool ChatHandler::HandleEventListCommand(const char* args)
 {
     uint32 counter = 0;
+    bool all = false;
+    std::string arg = args;
+    if (arg == "all")
+        all = true;
 
     GameEventMgr::GameEventDataMap const& events = gameeventmgr.GetEventMap();
     GameEventMgr::ActiveEvents const& activeEvents = gameeventmgr.GetActiveEventList();
 
     char const* active = GetMangosString(LANG_ACTIVE);
+    char const* inactive = GetMangosString(LANG_FACTION_INACTIVE);
+    char const* state = "";
 
-    for(GameEventMgr::ActiveEvents::const_iterator itr = activeEvents.begin(); itr != activeEvents.end(); ++itr )
+    for (uint32 event_id = 0; event_id < events.size(); ++event_id)
     {
-        uint32 event_id = *itr;
+        if (activeEvents.find(event_id) == activeEvents.end())
+        {
+            if (!all)
+                continue;
+            state = inactive;
+        }
+        else
+            state = active;
+
         GameEventData const& eventData = events[event_id];
 
         if(m_session)
-            PSendSysMessage(LANG_EVENT_ENTRY_LIST_CHAT,event_id,event_id,eventData.description.c_str(),active );
+            PSendSysMessage(LANG_EVENT_ENTRY_LIST_CHAT, event_id, event_id, eventData.description.c_str(), state);
         else
-            PSendSysMessage(LANG_EVENT_ENTRY_LIST_CONSOLE,event_id,eventData.description.c_str(),active );
+            PSendSysMessage(LANG_EVENT_ENTRY_LIST_CONSOLE, event_id, eventData.description.c_str(), state);
 
         ++counter;
     }
@@ -3822,6 +3845,7 @@ bool ChatHandler::HandleEventStartCommand(const char* args)
         return false;
     }
 
+    PSendSysMessage(LANG_EVENT_STARTED, event_id, eventData.description.c_str());
     gameeventmgr.StartEvent(event_id,true);
     return true;
 }
@@ -3864,6 +3888,7 @@ bool ChatHandler::HandleEventStopCommand(const char* args)
         return false;
     }
 
+    PSendSysMessage(LANG_EVENT_STOPPED, event_id, eventData.description.c_str());
     gameeventmgr.StopEvent(event_id,true);
     return true;
 }
@@ -3879,7 +3904,7 @@ bool ChatHandler::HandleCombatStopCommand(const char* args)
         return false;
 
     target->CombatStop();
-    target->getHostilRefManager().deleteReferences();
+    target->getHostileRefManager().deleteReferences();
     return true;
 }
 
@@ -3919,8 +3944,6 @@ void ChatHandler::HandleLearnSkillRecipesHelper(Player* player,uint32 skill_id)
 
 bool ChatHandler::HandleLearnAllCraftsCommand(const char* /*args*/)
 {
-    uint32 classmask = m_session->GetPlayer()->getClassMask();
-
     for (uint32 i = 0; i < sSkillLineStore.GetNumRows(); ++i)
     {
         SkillLineEntry const *skillInfo = sSkillLineStore.LookupEntry(i);
@@ -3960,8 +3983,6 @@ bool ChatHandler::HandleLearnAllRecipesCommand(const char* args)
 
     // converting string that we try to find to lower case
     wstrToLower( wnamepart );
-
-    uint32 classmask = m_session->GetPlayer()->getClassMask();
 
     std::string name;
 
@@ -4043,7 +4064,7 @@ bool ChatHandler::HandleLookupPlayerAccountCommand(const char* args)
     char* limit_str = strtok (NULL, " ");
     int32 limit = limit_str ? atoi (limit_str) : -1;
 
-    if (!AccountMgr::normilizeString (account))
+    if (!AccountMgr::normalizeString (account))
         return false;
 
     loginDatabase.escape_string (account);

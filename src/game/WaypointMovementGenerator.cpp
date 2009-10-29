@@ -83,7 +83,7 @@ bool WaypointMovementGenerator<Creature>::Update(Creature &creature, const uint3
 
     // Waypoint movement can be switched on/off
     // This is quite handy for escort quests and other stuff
-    if(creature.hasUnitState(UNIT_STAT_ROOT | UNIT_STAT_STUNNED | UNIT_STAT_DISTRACTED))
+    if(creature.hasUnitState(UNIT_STAT_ROOT | UNIT_STAT_STUNNED | UNIT_STAT_DISTRACTED | UNIT_STAT_DIED))
         return true;
 
     // prevent a crash at empty waypoint path.
@@ -160,10 +160,10 @@ bool WaypointMovementGenerator<Creature>::Update(Creature &creature, const uint3
                     else
                         creature.Say(behavior->textid[0], 0, 0);
                 }
-
-                i_hasDone[idx] = true;
-                MovementInform(creature);
             }                                               // wpBehaviour found
+
+            i_hasDone[idx] = true;
+            MovementInform(creature);
         }                                                   // HasDone == false
     }                                                       // i_creature.IsStopped()
 
@@ -233,7 +233,7 @@ uint32 FlightPathMovementGenerator::GetPathAtMapEnd() const
 
 void FlightPathMovementGenerator::Initialize(Player &player)
 {
-    player.getHostilRefManager().setOnlineOfflineState(false);
+    player.getHostileRefManager().setOnlineOfflineState(false);
     player.addUnitState(UNIT_STAT_IN_FLIGHT);
     player.SetFlag(UNIT_FIELD_FLAGS,UNIT_FLAG_DISABLE_MOVE | UNIT_FLAG_TAXI_FLIGHT);
     LoadPath(player);
@@ -258,7 +258,7 @@ void FlightPathMovementGenerator::Finalize(Player & player)
 
     if(player.m_taxi.empty())
     {
-        player.getHostilRefManager().setOnlineOfflineState(true);
+        player.getHostileRefManager().setOnlineOfflineState(true);
         if(player.pvpInfo.inHostileArea)
             player.CastSpell(&player, 2479, true);
 
@@ -310,7 +310,7 @@ void FlightPathMovementGenerator::SetCurrentNodeAfterTeleport()
         return;
 
     uint32 map0 = i_mapIds[0];
-    for(int i = 1; i < i_mapIds.size(); ++i)
+    for (size_t i = 1; i < i_mapIds.size(); ++i)
     {
         if(i_mapIds[i]!=map0)
         {

@@ -76,7 +76,7 @@ MotionMaster::~MotionMaster()
 void
 MotionMaster::UpdateMotion(uint32 diff)
 {
-    if( i_owner->hasUnitState(UNIT_STAT_ROOT | UNIT_STAT_STUNNED) )
+    if( i_owner->hasUnitState(UNIT_STAT_ROOT | UNIT_STAT_STUNNED | UNIT_STAT_DIED) )
         return;
     assert( !empty() );
     m_cleanFlag |= MMCF_UPDATE;
@@ -90,7 +90,7 @@ MotionMaster::UpdateMotion(uint32 diff)
 
     if (m_expList)
     {
-        for (int i = 0; i < m_expList->size(); ++i)
+        for (size_t i = 0; i < m_expList->size(); ++i)
         {
             MovementGenerator* mg = (*m_expList)[i];
             if (!isStatic(mg))

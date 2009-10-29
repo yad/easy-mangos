@@ -19,6 +19,11 @@
 #ifndef DBCENUMS_H
 #define DBCENUMS_H
 
+// Client expected level limitation, like as used in DBC item max levels for "until max player level"
+// use as default max player level, must be fit max level for used client
+// also see MAX_LEVEL and STRONG_MAX_LEVEL define
+#define DEFAULT_MAX_LEVEL 80
+
 // client supported max level for player/pets/etc. Avoid overflow or client stability affected.
 // also see GT_MAX_LEVEL define
 #define MAX_LEVEL    100
@@ -225,6 +230,40 @@ enum AreaFlags
     AREA_FLAG_UNK9             = 0x02000000,                // unknown
     AREA_FLAG_UNK10            = 0x04000000,                // unknown
     AREA_FLAG_OUTDOOR_PVP2     = 0x08000000                 // Wintergrasp and it's subzones
+};
+
+enum Difficulty
+{
+    DUNGEON_DIFFICULTY_NORMAL    = 0,
+    DUNGEON_DIFFICULTY_HEROIC    = 1,
+
+    RAID_DIFFICULTY_10MAN_NORMAL = 0,
+    RAID_DIFFICULTY_25MAN_NORMAL = 1,
+    RAID_DIFFICULTY_10MAN_HEROIC = 2,
+    RAID_DIFFICULTY_25MAN_HEROIC = 3,
+};
+
+#define MAX_DUNGEON_DIFFICULTY     2
+#define MAX_RAID_DIFFICULTY        4
+#define MAX_DIFFICULTY             4
+
+enum SpawnMask
+{
+    SPAWNMASK_CONTINENT         = 1,                        // any any maps without spawn modes
+
+    SPAWNMASK_DUNGEON_NORMAL    = (1 << DUNGEON_DIFFICULTY_NORMAL),
+    SPAWNMASK_DUNGEON_HEROIC    = (1 << DUNGEON_DIFFICULTY_HEROIC),
+    SPAWNMASK_DUNGEON_ALL       = (SPAWNMASK_DUNGEON_NORMAL | SPAWNMASK_DUNGEON_HEROIC),
+
+    SPAWNMASK_RAID_10MAN_NORMAL = (1 << RAID_DIFFICULTY_10MAN_NORMAL),
+    SPAWNMASK_RAID_25MAN_NORMAL = (1 << RAID_DIFFICULTY_25MAN_NORMAL),
+    SPAWNMASK_RAID_NORMAL_ALL   = (SPAWNMASK_RAID_10MAN_NORMAL | SPAWNMASK_RAID_25MAN_NORMAL),
+
+    SPAWNMASK_RAID_10MAN_HEROIC = (1 << RAID_DIFFICULTY_10MAN_HEROIC),
+    SPAWNMASK_RAID_25MAN_HEROIC = (1 << RAID_DIFFICULTY_25MAN_HEROIC),
+    SPAWNMASK_RAID_HEROIC_ALL   = (SPAWNMASK_RAID_10MAN_HEROIC | SPAWNMASK_RAID_25MAN_HEROIC),
+
+    SPAWNMASK_RAID_ALL          = (SPAWNMASK_RAID_NORMAL_ALL | SPAWNMASK_RAID_HEROIC_ALL),
 };
 
 enum FactionTemplateFlags

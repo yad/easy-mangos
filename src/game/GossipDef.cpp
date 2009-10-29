@@ -519,8 +519,8 @@ void PlayerMenu::SendQuestQueryResponse( Quest const *pQuest )
     Details = pQuest->GetDetails();
     Objectives = pQuest->GetObjectives();
     EndText = pQuest->GetEndText();
-    for (int i=0;i<QUEST_OBJECTIVES_COUNT;++i)
-        ObjectiveText[i]=pQuest->ObjectiveText[i];
+    for (int i = 0; i < QUEST_OBJECTIVES_COUNT; ++i)
+        ObjectiveText[i] = pQuest->ObjectiveText[i];
 
     int loc_idx = pSession->GetSessionDbLocaleIndex();
     if (loc_idx >= 0)
@@ -537,21 +537,21 @@ void PlayerMenu::SendQuestQueryResponse( Quest const *pQuest )
             if (ql->EndText.size() > loc_idx && !ql->EndText[loc_idx].empty())
                 EndText=ql->EndText[loc_idx];
 
-            for (int i=0;i<QUEST_OBJECTIVES_COUNT;++i)
+            for (int i = 0;i < QUEST_OBJECTIVES_COUNT; ++i)
                 if (ql->ObjectiveText[i].size() > loc_idx && !ql->ObjectiveText[i][loc_idx].empty())
-                    ObjectiveText[i]=ql->ObjectiveText[i][loc_idx];
+                    ObjectiveText[i] = ql->ObjectiveText[i][loc_idx];
         }
     }
 
     WorldPacket data( SMSG_QUEST_QUERY_RESPONSE, 100 );     // guess size
 
-    data << uint32(pQuest->GetQuestId());
+    data << uint32(pQuest->GetQuestId());                   // quest id
     data << uint32(pQuest->GetQuestMethod());               // Accepted values: 0, 1 or 2. 0==IsAutoComplete() (skip objectives/details)
     data << uint32(pQuest->GetQuestLevel());                // may be 0, static data, in other cases must be used dynamic level: Player::GetQuestLevel
     data << uint32(pQuest->GetZoneOrSort());                // zone or sort to display in quest log
 
-    data << uint32(pQuest->GetType());
-    data << uint32(pQuest->GetSuggestedPlayers());
+    data << uint32(pQuest->GetType());                      // quest type
+    data << uint32(pQuest->GetSuggestedPlayers());          // suggested players count
 
     data << uint32(pQuest->GetRepObjectiveFaction());       // shown in quest log as part of quest objective
     data << uint32(pQuest->GetRepObjectiveValue());         // shown in quest log as part of quest objective
@@ -564,7 +564,7 @@ void PlayerMenu::SendQuestQueryResponse( Quest const *pQuest )
     if (pQuest->HasFlag(QUEST_FLAGS_HIDDEN_REWARDS))
         data << uint32(0);                                  // Hide money rewarded
     else
-        data << uint32(pQuest->GetRewOrReqMoney());
+        data << uint32(pQuest->GetRewOrReqMoney());         // reward money (below max lvl)
 
     data << uint32(pQuest->GetRewMoneyMaxLevel());          // used in XP calculation at client
     data << uint32(pQuest->GetRewSpell());                  // reward spell, this spell will display (icon) (casted if RewSpellCast==0)
@@ -572,8 +572,8 @@ void PlayerMenu::SendQuestQueryResponse( Quest const *pQuest )
 
     // rewarded honor points
     data << uint32(MaNGOS::Honor::hk_honor_at_level(pSession->GetPlayer()->getLevel(), pQuest->GetRewHonorableKills()));
-    data << uint32(pQuest->GetSrcItemId());
-    data << uint32(pQuest->GetFlags() & 0xFFFF);
+    data << uint32(pQuest->GetSrcItemId());                 // source item id
+    data << uint32(pQuest->GetFlags() & 0xFFFF);            // quest flags
     data << uint32(pQuest->GetCharTitleId());               // CharTitleId, new 2.4.0, player gets this title (id from CharTitles)
     data << uint32(pQuest->GetPlayersSlain());              // players slain
     data << uint32(pQuest->GetBonusTalents());              // bonus talents
@@ -626,14 +626,11 @@ void PlayerMenu::SendQuestQueryResponse( Quest const *pQuest )
         data << uint32(pQuest->ReqSourceId[iI]);
     }
 
-    for (iI = 0; iI < QUEST_OBJECTIVES_COUNT; ++iI)
+    for (iI = 0; iI < QUEST_ITEM_OBJECTIVES_COUNT; ++iI)
     {
         data << uint32(pQuest->ReqItemId[iI]);
         data << uint32(pQuest->ReqItemCount[iI]);
     }
-
-    data << uint32(0);                                      // TODO: 5 item objective
-    data << uint32(0);
 
     for (iI = 0; iI < QUEST_OBJECTIVES_COUNT; ++iI)
         data << ObjectiveText[iI];
@@ -780,9 +777,10 @@ void PlayerMenu::SendQuestGiverRequestItems( Quest const *pQuest, uint64 npcGUID
 
     data << uint32( pQuest->GetReqItemsCount() );
     ItemPrototype const *pItem;
-    for (int i = 0; i < QUEST_OBJECTIVES_COUNT; ++i)
+    for (int i = 0; i < QUEST_ITEM_OBJECTIVES_COUNT; ++i)
     {
-        if ( !pQuest->ReqItemId[i] ) continue;
+        if ( !pQuest->ReqItemId[i] )
+            continue;
         pItem = objmgr.GetItemPrototype(pQuest->ReqItemId[i]);
         data << uint32(pQuest->ReqItemId[i]);
         data << uint32(pQuest->ReqItemCount[i]);

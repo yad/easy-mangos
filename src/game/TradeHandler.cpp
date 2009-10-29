@@ -451,14 +451,12 @@ void WorldSession::SendCancelTrade()
 void WorldSession::HandleCancelTradeOpcode(WorldPacket& /*recvPacket*/)
 {
     // sended also after LOGOUT COMPLETE
-    if(_player)                                             // needed because STATUS_AUTHED
+    if(_player)                                             // needed because STATUS_LOGGEDIN_OR_RECENTLY_LOGGOUT
         _player->TradeCancel(true);
 }
 
 void WorldSession::HandleInitiateTradeOpcode(WorldPacket& recvPacket)
 {
-    CHECK_PACKET_SIZE(recvPacket,8);
-
     if (GetPlayer()->pTrader)
         return;
 
@@ -558,8 +556,6 @@ void WorldSession::HandleInitiateTradeOpcode(WorldPacket& recvPacket)
 
 void WorldSession::HandleSetTradeGoldOpcode(WorldPacket& recvPacket)
 {
-    CHECK_PACKET_SIZE(recvPacket,4);
-
     if(!_player->pTrader)
         return;
 
@@ -575,8 +571,6 @@ void WorldSession::HandleSetTradeGoldOpcode(WorldPacket& recvPacket)
 
 void WorldSession::HandleSetTradeItemOpcode(WorldPacket& recvPacket)
 {
-    CHECK_PACKET_SIZE(recvPacket,1+1+1);
-
     if(!_player->pTrader)
         return;
 
@@ -598,7 +592,7 @@ void WorldSession::HandleSetTradeItemOpcode(WorldPacket& recvPacket)
 
     // check cheating, can't fail with correct client operations
     Item* item = _player->GetItemByPos(bag,slot);
-    if(!item || tradeSlot!=TRADE_SLOT_NONTRADED && !item->CanBeTraded())
+    if (!item || (tradeSlot != TRADE_SLOT_NONTRADED && !item->CanBeTraded()))
     {
         SendTradeStatus(TRADE_STATUS_TRADE_CANCELED);
         return;
@@ -624,8 +618,6 @@ void WorldSession::HandleSetTradeItemOpcode(WorldPacket& recvPacket)
 
 void WorldSession::HandleClearTradeItemOpcode(WorldPacket& recvPacket)
 {
-    CHECK_PACKET_SIZE(recvPacket,1);
-
     if(!_player->pTrader)
         return;
 

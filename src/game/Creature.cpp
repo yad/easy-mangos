@@ -37,6 +37,7 @@
 #include "WaypointMovementGenerator.h"
 #include "InstanceData.h"
 #include "BattleGroundMgr.h"
+#include "Spell.h"
 #include "Util.h"
 #include "GridNotifiers.h"
 #include "GridNotifiersImpl.h"
@@ -140,27 +141,35 @@ Creature::~Creature()
 void Creature::AddToWorld()
 {
     ///- Register the creature for guid lookup
-    if(!IsInWorld()) ObjectAccessor::Instance().AddObject(this);
+    if(!IsInWorld() && GetGUIDHigh()==HIGHGUID_UNIT)
+        GetMap()->GetObjectsStore().insert<Creature>(GetGUID(), (Creature*)this);
+
     Unit::AddToWorld();
 }
 
 void Creature::RemoveFromWorld()
 {
     ///- Remove the creature from the accessor
-    if(IsInWorld()) ObjectAccessor::Instance().RemoveObject(this);
+    if(IsInWorld() && GetGUIDHigh()==HIGHGUID_UNIT)
+        GetMap()->GetObjectsStore().erase<Creature>(GetGUID(), (Creature*)NULL);
+
     Unit::RemoveFromWorld();
 }
 
 void Creature::RemoveCorpse()
 {
-    if( getDeathState()!=CORPSE && !m_isDeadByDefault || getDeathState()!=ALIVE && m_isDeadByDefault )
+    if ((getDeathState() != CORPSE && !m_isDeadByDefault) || (getDeathState() != ALIVE && m_isDeadByDefault))
         return;
 
     m_deathTimer = 0;
     setDeathState(DEAD);
-    ObjectAccessor::UpdateObjectVisibility(this);
+    UpdateObjectVisibility();
     loot.clear();
-    m_respawnTime = time(NULL) + m_respawnDelay;
+    uint32 respawnDelay = m_respawnDelay;
+    if (AI())
+        AI()->CorpseRemoved(respawnDelay);
+
+    m_respawnTime = time(NULL) + respawnDelay;
 
     float x,y,z,o;
     GetRespawnCoord(x, y, z, &o);
@@ -179,18 +188,19 @@ bool Creature::InitEntry(uint32 Entry, uint32 team, const CreatureData *data )
         return false;
     }
 
-    // get heroic mode entry
+    // get difficulty 1 mode entry
     uint32 actualEntry = Entry;
     CreatureInfo const *cinfo = normalInfo;
-    if(normalInfo->HeroicEntry)
+    if(normalInfo->DifficultyEntry1)
     {
         //we already have valid Map pointer for current creature!
-        if(GetMap()->IsHeroic())
+        //FIXME: spawn modes 2-3 must have own case DifficultyEntryN
+        if(GetMap()->GetSpawnMode() > 0)
         {
-            cinfo = objmgr.GetCreatureTemplate(normalInfo->HeroicEntry);
+            cinfo = objmgr.GetCreatureTemplate(normalInfo->DifficultyEntry1);
             if(!cinfo)
             {
-                sLog.outErrorDb("Creature::UpdateEntry creature heroic entry %u does not exist.", actualEntry);
+                sLog.outErrorDb("Creature::UpdateEntry creature difficulty 1 entry %u does not exist.", actualEntry);
                 return false;
             }
         }
@@ -352,12 +362,15 @@ void Creature::Update(uint32 diff)
                 else
                     setDeathState( JUST_ALIVED );
 
+                if (GetMap()->IsBattleGround() && ((BattleGroundMap*)GetMap())->GetBG())
+                    ((BattleGroundMap*)GetMap())->GetBG()->OnCreatureRespawn(this); // for alterac valley needed to adjust the correct level again
+
                 //Call AI respawn virtual function
                 i_AI->JustRespawned();
 
                 uint16 poolid = poolhandler.IsPartOfAPool(GetGUIDLow(), GetTypeId());
                 if (poolid)
-                    poolhandler.UpdatePool(poolid, GetGUIDLow(), GetTypeId());
+                    poolhandler.UpdatePool(poolid, GetGUIDLow(), TYPEID_UNIT);
                 else
                     GetMap()->Add(this);
             }
@@ -444,7 +457,7 @@ void Creature::Update(uint32 diff)
 
             RegenerateMana();
 
-            m_regenTimer = 2000;
+            m_regenTimer = REGEN_TIME_FULL;
             break;
         }
         case DEAD_FALLING:
@@ -534,7 +547,7 @@ void Creature::DoFleeToGetAssistance()
         TypeContainerVisitor<MaNGOS::CreatureLastSearcher<MaNGOS::NearestAssistCreatureInCreatureRangeCheck>, GridTypeMapContainer > grid_creature_searcher(searcher);
 
         CellLock<GridReadGuard> cell_lock(cell, p);
-        cell_lock->Visit(cell_lock, grid_creature_searcher, *GetMap());
+        cell_lock->Visit(cell_lock, grid_creature_searcher, *GetMap(), *this, radius);
 
         SetNoSearchAssistance(true);
         if(!pCreature)
@@ -694,6 +707,9 @@ bool Creature::isCanInteractWithBattleMaster(Player* pPlayer, bool msg) const
         return false;
 
     BattleGroundTypeId bgTypeId = sBattleGroundMgr.GetBattleMasterBG(GetEntry());
+    if (bgTypeId == BATTLEGROUND_TYPE_NONE)
+        return false;
+
     if(!msg)
         return pPlayer->GetBGAccessByLevel(bgTypeId);
 
@@ -951,6 +967,11 @@ void Creature::OnGossipSelect(Player* player, uint32 option)
         case GOSSIP_OPTION_BATTLEFIELD:
         {
             BattleGroundTypeId bgTypeId = sBattleGroundMgr.GetBattleMasterBG(GetEntry());
+            if (bgTypeId == BATTLEGROUND_TYPE_NONE)
+            {
+                sLog.outError("a user (guid %u) requested battlegroundlist from a npc who is no battlemaster", player->GetGUIDLow());
+                return;
+            }
             player->GetSession()->SendBattlegGroundList( GetGUID(), bgTypeId );
             break;
         }
@@ -1450,6 +1471,7 @@ void Creature::DeleteFromDB()
     WorldDatabase.PExecuteLog("DELETE FROM creature_movement WHERE id = '%u'", m_DBTableGuid);
     WorldDatabase.PExecuteLog("DELETE FROM game_event_creature WHERE guid = '%u'", m_DBTableGuid);
     WorldDatabase.PExecuteLog("DELETE FROM game_event_model_equip WHERE guid = '%u'", m_DBTableGuid);
+    WorldDatabase.PExecuteLog("DELETE FROM creature_battleground WHERE guid = '%u'", m_DBTableGuid);
     WorldDatabase.CommitTransaction();
 }
 
@@ -1459,10 +1481,10 @@ float Creature::GetAttackDistance(Unit const* pl) const
     if(aggroRate==0)
         return 0.0f;
 
-    int32 playerlevel   = pl->getLevelForTarget(this);
-    int32 creaturelevel = getLevelForTarget(pl);
+    uint32 playerlevel   = pl->getLevelForTarget(this);
+    uint32 creaturelevel = getLevelForTarget(pl);
 
-    int32 leveldif       = playerlevel - creaturelevel;
+    int32 leveldif       = int32(playerlevel) - int32(creaturelevel);
 
     // "The maximum Aggro Radius has a cap of 25 levels under. Example: A level 30 char has the same Aggro Radius of a level 5 char on a level 60 mob."
     if ( leveldif < - 25)
@@ -1511,7 +1533,7 @@ void Creature::setDeathState(DeathState s)
 
     if(s == JUST_DIED)
     {
-        SetUInt64Value(UNIT_FIELD_TARGET,0);                // remove target selection in any cases (can be set at aura remove in Unit::setDeathState)
+        SetTargetGUID(0);                                   // remove target selection in any cases (can be set at aura remove in Unit::setDeathState)
         SetUInt32Value(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_NONE);
 
         if(!isPet() && GetCreatureInfo()->SkinLootId)
@@ -1528,12 +1550,12 @@ void Creature::setDeathState(DeathState s)
     {
         SetHealth(GetMaxHealth());
         SetLootRecipient(NULL);
-        Unit::setDeathState(ALIVE);
         CreatureInfo const *cinfo = GetCreatureInfo();
         SetUInt32Value(UNIT_DYNAMIC_FLAGS, 0);
         RemoveFlag (UNIT_FIELD_FLAGS, UNIT_FLAG_SKINNABLE);
         AddMonsterMoveFlag(MONSTER_MOVE_WALK);
         SetUInt32Value(UNIT_NPC_FLAGS, cinfo->npcflag);
+        Unit::setDeathState(ALIVE);
         clearUnitState(UNIT_STAT_ALL_STATE);
         i_motionMaster.Clear();
         SetMeleeDamageSchool(SpellSchools(cinfo->dmgschool));
@@ -1567,9 +1589,9 @@ void Creature::Respawn()
     // forced recreate creature object at clients
     UnitVisibility currentVis = GetVisibility();
     SetVisibility(VISIBILITY_RESPAWN);
-    ObjectAccessor::UpdateObjectVisibility(this);
+    UpdateObjectVisibility();
     SetVisibility(currentVis);                              // restore visibility state
-    ObjectAccessor::UpdateObjectVisibility(this);
+    UpdateObjectVisibility();
 
     if(getDeathState()==DEAD)
     {
@@ -1725,12 +1747,13 @@ bool Creature::IsVisibleInGridForPlayer(Player* pl) const
     if(pl->isGameMaster())
         return true;
 
+    if (GetCreatureInfo()->flags_extra & CREATURE_FLAG_EXTRA_INVISIBLE)
+        return false;
+
     // Live player (or with not release body see live creatures or death creatures with corpse disappearing time > 0
     if(pl->isAlive() || pl->GetDeathTimer() > 0)
     {
-        if(GetCreatureInfo()->flags_extra & CREATURE_FLAG_EXTRA_INVISIBLE)
-            return false;
-        return isAlive() || m_deathTimer > 0 || m_isDeadByDefault && m_deathState==CORPSE;
+        return (isAlive() || m_deathTimer > 0 || (m_isDeadByDefault && m_deathState == CORPSE));
     }
 
     // Dead player see live creatures near own corpse
@@ -1745,12 +1768,24 @@ bool Creature::IsVisibleInGridForPlayer(Player* pl) const
         }
     }
 
-    // Dead player see Spirit Healer or Spirit Guide
-    if(isSpiritService())
+    // Dead player can see ghosts
+    if (GetCreatureInfo()->type_flags & CREATURE_TYPEFLAGS_GHOST_VISIBLE)
         return true;
 
     // and not see any other
     return false;
+}
+
+void Creature::SendAIReaction(AiReaction reactionType)
+{
+    WorldPacket data(SMSG_AI_REACTION, 12);
+
+    data << uint64(GetGUID());
+    data << uint32(reactionType);
+
+    ((WorldObject*)this)->SendMessageToSet(&data, true);
+
+    sLog.outDebug("WORLD: Sent SMSG_AI_REACTION, type %u.", reactionType);
 }
 
 void Creature::CallAssistance()
@@ -1776,7 +1811,7 @@ void Creature::CallAssistance()
                 TypeContainerVisitor<MaNGOS::CreatureListSearcher<MaNGOS::AnyAssistCreatureInRangeCheck>, GridTypeMapContainer >  grid_creature_searcher(searcher);
 
                 CellLock<GridReadGuard> cell_lock(cell, p);
-                cell_lock->Visit(cell_lock, grid_creature_searcher, *GetMap());
+                cell_lock->Visit(cell_lock, grid_creature_searcher, *GetMap(), *this, radius);
             }
 
             if (!assistList.empty())
@@ -1810,7 +1845,7 @@ void Creature::CallForHelp(float fRadius)
     TypeContainerVisitor<MaNGOS::CreatureWorker<MaNGOS::CallOfHelpCreatureInRangeDo>, GridTypeMapContainer >  grid_creature_searcher(worker);
 
     CellLock<GridReadGuard> cell_lock(cell, p);
-    cell_lock->Visit(cell_lock, grid_creature_searcher, *GetMap());
+    cell_lock->Visit(cell_lock, grid_creature_searcher, *GetMap(), *this, fRadius);
 }
 
 bool Creature::CanAssistTo(const Unit* u, const Unit* enemy, bool checkfaction /*= true*/) const
@@ -1894,7 +1929,7 @@ CreatureDataAddon const* Creature::GetCreatureAddon() const
             return addon;
     }
 
-    // dependent from heroic mode entry
+    // dependent from difficulty mode entry
     return ObjectMgr::GetCreatureTemplateAddon(GetCreatureInfo()->Entry);
 }
 
@@ -2012,7 +2047,7 @@ void Creature::SetInCombatWithZone()
             if (pPlayer->isAlive())
             {
                 pPlayer->SetInCombatWith(this);
-                AddThreat(pPlayer, 0.0f);
+                AddThreat(pPlayer);
             }
         }
     }
@@ -2307,4 +2342,14 @@ void Creature::SendMonsterMoveWithSpeed(float x, float y, float z, uint32 transi
     }
     //float orientation = (float)atan2((double)dy, (double)dx);
     SendMonsterMove(x, y, z, 0, GetMonsterMoveFlags(), transitTime, player);
+}
+
+void Creature::SendAreaSpiritHealerQueryOpcode(Player *pl)
+{
+    uint32 next_resurrect = 0;
+    if (Spell* pcurSpell = GetCurrentSpell(CURRENT_CHANNELED_SPELL))
+        next_resurrect = pcurSpell->GetCastedTime();
+    WorldPacket data(SMSG_AREA_SPIRIT_HEALER_TIME, 8 + 4);
+    data << GetGUID() << next_resurrect;
+    pl->SendDirectMessage(&data);
 }

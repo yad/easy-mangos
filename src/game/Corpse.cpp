@@ -126,7 +126,7 @@ void Corpse::SaveToDB()
 void Corpse::DeleteBonesFromWorld()
 {
     assert(GetType() == CORPSE_BONES);
-    Corpse* corpse = ObjectAccessor::GetCorpse(*this, GetGUID());
+    Corpse* corpse = GetMap()->GetCorpse(GetGUID());
 
     if (!corpse)
     {
@@ -227,7 +227,7 @@ bool Corpse::LoadFromDB(uint32 guid, Field *fields)
     return true;
 }
 
-bool Corpse::isVisibleForInState(Player const* u, bool inVisibleList) const
+bool Corpse::isVisibleForInState(Player const* u, WorldObject const* viewPoint, bool inVisibleList) const
 {
-    return IsInWorld() && u->IsInWorld() && IsWithinDistInMap(u, World::GetMaxVisibleDistanceForObject() + (inVisibleList ? World::GetVisibleObjectGreyDistance() : 0.0f), false);
+    return IsInWorld() && u->IsInWorld() && IsWithinDistInMap(viewPoint, World::GetMaxVisibleDistanceForObject() + (inVisibleList ? World::GetVisibleObjectGreyDistance() : 0.0f), false);
 }

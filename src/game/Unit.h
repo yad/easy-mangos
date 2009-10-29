@@ -73,7 +73,7 @@ enum SpellAuraInterruptFlags
     AURA_INTERRUPT_FLAG_UNK15                       = 0x00008000,   // 15   removed by casting a spell?
     AURA_INTERRUPT_FLAG_UNK16                       = 0x00010000,   // 16
     AURA_INTERRUPT_FLAG_MOUNTING                    = 0x00020000,   // 17   removed by mounting
-    AURA_INTERRUPT_FLAG_NOT_SEATED                  = 0x00040000,   // 18   removed by standing up
+    AURA_INTERRUPT_FLAG_NOT_SEATED                  = 0x00040000,   // 18   removed by standing up (used by food and drink mostly and sleep/Fake Death like)
     AURA_INTERRUPT_FLAG_CHANGE_MAP                  = 0x00080000,   // 19   leaving map/getting teleported
     AURA_INTERRUPT_FLAG_IMMUNE_OR_LOST_SELECTION    = 0x00100000,   // 20   removed by auras that make you invulnerable, or make other to loose selection on you
     AURA_INTERRUPT_FLAG_UNK21                       = 0x00200000,   // 21
@@ -323,7 +323,8 @@ enum AuraRemoveMode
     AURA_REMOVE_BY_STACK,                                   // at replace by similar aura
     AURA_REMOVE_BY_CANCEL,
     AURA_REMOVE_BY_DISPEL,
-    AURA_REMOVE_BY_DEATH
+    AURA_REMOVE_BY_DEATH,
+    AURA_REMOVE_BY_DELETE,                                  // use for speedup and prevent unexpected effects at player logout/pet unsummon (must be used _only_ after save), delete.
 };
 
 enum UnitMods
@@ -428,15 +429,6 @@ enum UnitMoveType
 
 extern float baseMoveSpeed[MAX_MOVE_TYPE];
 
-enum WeaponAttackType
-{
-    BASE_ATTACK   = 0,
-    OFF_ATTACK    = 1,
-    RANGED_ATTACK = 2
-};
-
-#define MAX_ATTACK  3
-
 enum CombatRating
 {
     CR_WEAPON_SKILL             = 0,
@@ -478,6 +470,12 @@ enum DamageEffectType
     SELF_DAMAGE             = 5
 };
 
+/// internal used flags for marking special auras - for example some dummy-auras
+enum UnitAuraFlags
+{
+    UNIT_AURAFLAG_ALIVE_INVISIBLE   = 0x1,                  // aura which makes unit invisible for alive
+};
+
 enum UnitVisibility
 {
     VISIBILITY_OFF                = 0,                      // absolute, not detectable, GM-like, can see all other
@@ -491,38 +489,38 @@ enum UnitVisibility
 // Value masks for UNIT_FIELD_FLAGS
 enum UnitFlags
 {
-    UNIT_FLAG_UNK_0            = 0x00000001,
-    UNIT_FLAG_NON_ATTACKABLE   = 0x00000002,                // not attackable
-    UNIT_FLAG_DISABLE_MOVE     = 0x00000004,
-    UNIT_FLAG_PVP_ATTACKABLE   = 0x00000008,                // allow apply pvp rules to attackable state in addition to faction dependent state
-    UNIT_FLAG_RENAME           = 0x00000010,
-    UNIT_FLAG_PREPARATION      = 0x00000020,                // don't take reagents for spells with SPELL_ATTR_EX5_NO_REAGENT_WHILE_PREP
-    UNIT_FLAG_UNK_6            = 0x00000040,
-    UNIT_FLAG_NOT_ATTACKABLE_1 = 0x00000080,                // ?? (UNIT_FLAG_PVP_ATTACKABLE | UNIT_FLAG_NOT_ATTACKABLE_1) is NON_PVP_ATTACKABLE
-    UNIT_FLAG_UNK_8            = 0x00000100,                // 2.0.8
-    UNIT_FLAG_UNK_9            = 0x00000200,                // 3.0.3 - makes you unable to attack everything
-    UNIT_FLAG_LOOTING          = 0x00000400,                // loot animation
-    UNIT_FLAG_PET_IN_COMBAT    = 0x00000800,                // in combat?, 2.0.8
-    UNIT_FLAG_PVP              = 0x00001000,                // changed in 3.0.3
-    UNIT_FLAG_SILENCED         = 0x00002000,                // silenced, 2.1.1
-    UNIT_FLAG_UNK_14           = 0x00004000,                // 2.0.8
-    UNIT_FLAG_UNK_15           = 0x00008000,
-    UNIT_FLAG_UNK_16           = 0x00010000,
-    UNIT_FLAG_PACIFIED         = 0x00020000,                // 3.0.3 ok
-    UNIT_FLAG_STUNNED          = 0x00040000,                // 3.0.3 ok
-    UNIT_FLAG_IN_COMBAT        = 0x00080000,
-    UNIT_FLAG_TAXI_FLIGHT      = 0x00100000,                // disable casting at client side spell not allowed by taxi flight (mounted?), probably used with 0x4 flag
-    UNIT_FLAG_DISARMED         = 0x00200000,                // 3.0.3, disable melee spells casting..., "Required melee weapon" added to melee spells tooltip.
-    UNIT_FLAG_CONFUSED         = 0x00400000,
-    UNIT_FLAG_FLEEING          = 0x00800000,
-    UNIT_FLAG_PLAYER_CONTROLLED= 0x01000000,                // used in spell Eyes of the Beast for pet... let attack by controlled creature
-    UNIT_FLAG_NOT_SELECTABLE   = 0x02000000,
-    UNIT_FLAG_SKINNABLE        = 0x04000000,
-    UNIT_FLAG_MOUNT            = 0x08000000,
-    UNIT_FLAG_UNK_28           = 0x10000000,
-    UNIT_FLAG_UNK_29           = 0x20000000,                // used in Feing Death spell
-    UNIT_FLAG_SHEATHE          = 0x40000000,
-    UNIT_FLAG_UNK_31           = 0x80000000
+    UNIT_FLAG_UNK_0                 = 0x00000001,
+    UNIT_FLAG_NON_ATTACKABLE        = 0x00000002,           // not attackable
+    UNIT_FLAG_DISABLE_MOVE          = 0x00000004,
+    UNIT_FLAG_PVP_ATTACKABLE        = 0x00000008,           // allow apply pvp rules to attackable state in addition to faction dependent state
+    UNIT_FLAG_RENAME                = 0x00000010,
+    UNIT_FLAG_PREPARATION           = 0x00000020,           // don't take reagents for spells with SPELL_ATTR_EX5_NO_REAGENT_WHILE_PREP
+    UNIT_FLAG_UNK_6                 = 0x00000040,
+    UNIT_FLAG_NOT_ATTACKABLE_1      = 0x00000080,           // ?? (UNIT_FLAG_PVP_ATTACKABLE | UNIT_FLAG_NOT_ATTACKABLE_1) is NON_PVP_ATTACKABLE
+    UNIT_FLAG_OOC_NOT_ATTACKABLE    = 0x00000100,           // 2.0.8 - (OOC Out Of Combat) Can not be attacked when not in combat. Removed if unit for some reason enter combat.
+    UNIT_FLAG_UNK_9                 = 0x00000200,           // 3.0.3 - makes you unable to attack everything
+    UNIT_FLAG_LOOTING               = 0x00000400,           // loot animation
+    UNIT_FLAG_PET_IN_COMBAT         = 0x00000800,           // in combat?, 2.0.8
+    UNIT_FLAG_PVP                   = 0x00001000,           // changed in 3.0.3
+    UNIT_FLAG_SILENCED              = 0x00002000,           // silenced, 2.1.1
+    UNIT_FLAG_UNK_14                = 0x00004000,           // 2.0.8
+    UNIT_FLAG_UNK_15                = 0x00008000,
+    UNIT_FLAG_UNK_16                = 0x00010000,           // removes attackable icon
+    UNIT_FLAG_PACIFIED              = 0x00020000,           // 3.0.3 ok
+    UNIT_FLAG_STUNNED               = 0x00040000,           // 3.0.3 ok
+    UNIT_FLAG_IN_COMBAT             = 0x00080000,
+    UNIT_FLAG_TAXI_FLIGHT           = 0x00100000,           // disable casting at client side spell not allowed by taxi flight (mounted?), probably used with 0x4 flag
+    UNIT_FLAG_DISARMED              = 0x00200000,           // 3.0.3, disable melee spells casting..., "Required melee weapon" added to melee spells tooltip.
+    UNIT_FLAG_CONFUSED              = 0x00400000,
+    UNIT_FLAG_FLEEING               = 0x00800000,
+    UNIT_FLAG_PLAYER_CONTROLLED     = 0x01000000,           // used in spell Eyes of the Beast for pet... let attack by controlled creature
+    UNIT_FLAG_NOT_SELECTABLE        = 0x02000000,
+    UNIT_FLAG_SKINNABLE             = 0x04000000,
+    UNIT_FLAG_MOUNT                 = 0x08000000,
+    UNIT_FLAG_UNK_28                = 0x10000000,
+    UNIT_FLAG_UNK_29                = 0x20000000,           // used in Feing Death spell
+    UNIT_FLAG_SHEATHE               = 0x40000000,
+    UNIT_FLAG_UNK_31                = 0x80000000            // set skinnable icon and also changes color of portrait
 };
 
 // Value masks for UNIT_FIELD_FLAGS_2
@@ -646,7 +644,7 @@ struct CalcDamageInfo
 {
     Unit  *attacker;             // Attacker
     Unit  *target;               // Target for damage
-    uint32 damageSchoolMask;
+    SpellSchoolMask damageSchoolMask;
     uint32 damage;
     uint32 absorb;
     uint32 resist;
@@ -692,9 +690,9 @@ struct SpellPeriodicAuraLogInfo
 
     Aura   *aura;
     uint32 damage;
+    uint32 overDamage;                                      // overkill/overheal
     uint32 absorb;
     uint32 resist;
-    uint32 overDamage;                                      // overkill/overheal
     float  multiplier;
     bool   critical;
 };
@@ -710,13 +708,15 @@ struct DeclinedName
 
 enum CurrentSpellTypes
 {
-    CURRENT_MELEE_SPELL = 0,
-    CURRENT_FIRST_NON_MELEE_SPELL = 1,                      // just counter
-    CURRENT_GENERIC_SPELL = 1,
-    CURRENT_AUTOREPEAT_SPELL = 2,
-    CURRENT_CHANNELED_SPELL = 3,
-    CURRENT_MAX_SPELL = 4                                   // just counter
+    CURRENT_MELEE_SPELL             = 0,
+    CURRENT_GENERIC_SPELL           = 1,
+    CURRENT_AUTOREPEAT_SPELL        = 2,
+    CURRENT_CHANNELED_SPELL         = 3
 };
+
+#define CURRENT_FIRST_NON_MELEE_SPELL 1
+#define CURRENT_MAX_SPELL             4
+
 
 enum ActiveStates
 {
@@ -829,7 +829,7 @@ struct CharmInfo
 
         Unit* m_unit;
         UnitActionBarEntry PetActionBar[MAX_UNIT_ACTION_BAR_INDEX];
-        CharmSpellEntry m_charmspells[4];
+        CharmSpellEntry m_charmspells[CREATURE_MAX_SPELLS];
         CommandStates   m_CommandState;
         ReactStates     m_reactState;
         uint32          m_petnumber;
@@ -853,6 +853,10 @@ typedef std::set<uint64> GuardianPetList;
 // delay time next attack to prevent client attack animation problems
 #define ATTACK_DISPLAY_DELAY 200
 #define MAX_PLAYER_STEALTH_DETECT_RANGE 45.0f               // max distance for detection targets by player
+
+// Regeneration defines
+#define REGEN_TIME_FULL     2000                            // For this time difference is computed regen value
+#define REGEN_TIME_PRECISE  500                             // Used in Spell::CheckPower for precise regeneration in spell cast time
 
 struct SpellProcEventEntry;                                 // used only privately
 
@@ -919,7 +923,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         Unit* getVictim() const { return m_attacking; }
         void CombatStop(bool includingCast = false);
         void CombatStopWithPets(bool includingCast = false);
-        Unit* SelectNearbyTarget() const;
+        Unit* SelectNearbyTarget(Unit* except = NULL) const;
         bool hasNegativeAuraWithInterruptFlag(uint32 flag);
         void SendMeleeAttackStop(Unit* victim);
         void SendMeleeAttackStart(Unit* pVictim);
@@ -930,7 +934,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         bool CanFreeMove() const
         {
             return !hasUnitState(UNIT_STAT_CONFUSED | UNIT_STAT_FLEEING | UNIT_STAT_IN_FLIGHT |
-                UNIT_STAT_ROOT | UNIT_STAT_STUNNED | UNIT_STAT_DISTRACTED ) && GetOwnerGUID()==0;
+                UNIT_STAT_ROOT | UNIT_STAT_STUNNED | UNIT_STAT_DISTRACTED | UNIT_STAT_DIED ) && GetOwnerGUID()==0;
         }
 
         uint32 getLevel() const { return GetUInt32Value(UNIT_FIELD_LEVEL); }
@@ -1030,6 +1034,21 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         void CalculateSpellDamage(SpellNonMeleeDamage *damageInfo, int32 damage, SpellEntry const *spellInfo, WeaponAttackType attackType = BASE_ATTACK);
         void DealSpellDamage(SpellNonMeleeDamage *damageInfo, bool durabilityLoss);
 
+        // player or player's pet resilience (-1%)
+        float GetMeleeCritChanceReduction() const { return GetCombatRatingReduction(CR_CRIT_TAKEN_MELEE); }
+        float GetRangedCritChanceReduction() const { return GetCombatRatingReduction(CR_CRIT_TAKEN_RANGED); }
+        float GetSpellCritChanceReduction() const { return GetCombatRatingReduction(CR_CRIT_TAKEN_SPELL); }
+
+        // player or player's pet resilience (-1%)
+        uint32 GetMeleeCritDamageReduction(uint32 damage) const { return GetCombatRatingDamageReduction(CR_CRIT_TAKEN_MELEE, 2.2f, 33.0f, damage); }
+        uint32 GetRangedCritDamageReduction(uint32 damage) const { return GetCombatRatingDamageReduction(CR_CRIT_TAKEN_RANGED, 2.2f, 33.0f, damage); }
+        uint32 GetSpellCritDamageReduction(uint32 damage) const { return GetCombatRatingDamageReduction(CR_CRIT_TAKEN_SPELL, 2.2f, 33.0f, damage); }
+
+        // player or player's pet resilience (-1%), cap 100%
+        uint32 GetMeleeDamageReduction(uint32 damage) const { return GetCombatRatingDamageReduction(CR_CRIT_TAKEN_MELEE, 1.0f, 100.0f, damage); }
+        uint32 GetRangedDamageReduction(uint32 damage) const { return GetCombatRatingDamageReduction(CR_CRIT_TAKEN_MELEE, 1.0f, 100.0f, damage); }
+        uint32 GetSpellDamageReduction(uint32 damage) const { return GetCombatRatingDamageReduction(CR_CRIT_TAKEN_MELEE, 1.0f, 100.0f, damage); }
+
         float  MeleeSpellMissChance(Unit *pVictim, WeaponAttackType attType, int32 skillDiff, SpellEntry const *spell);
         SpellMissInfo MeleeSpellHitResult(Unit *pVictim, SpellEntry const *spell);
         SpellMissInfo MagicSpellHitResult(Unit *pVictim, SpellEntry const *spell);
@@ -1104,7 +1123,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
 
         void RemoveSpellbyDamageTaken(AuraType auraType, uint32 damage);
 
-        bool isTargetableForAttack() const;
+        bool isTargetableForAttack(bool inversAlive = false) const;
         virtual bool IsInWater() const;
         virtual bool IsUnderWater() const;
         bool isInAccessablePlaceFor(Creature const* c) const;
@@ -1149,10 +1168,16 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         void SetOwnerGUID(uint64 owner) { SetUInt64Value(UNIT_FIELD_SUMMONEDBY, owner); }
         uint64 GetCreatorGUID() const { return GetUInt64Value(UNIT_FIELD_CREATEDBY); }
         void SetCreatorGUID(uint64 creator) { SetUInt64Value(UNIT_FIELD_CREATEDBY, creator); }
-        uint64 GetPetGUID() const { return  GetUInt64Value(UNIT_FIELD_SUMMON); }
+        uint64 GetPetGUID() const { return GetUInt64Value(UNIT_FIELD_SUMMON); }
+        void SetPetGUID(uint64 pet) { SetUInt64Value(UNIT_FIELD_SUMMON, pet); }
         uint64 GetCharmerGUID() const { return GetUInt64Value(UNIT_FIELD_CHARMEDBY); }
         void SetCharmerGUID(uint64 owner) { SetUInt64Value(UNIT_FIELD_CHARMEDBY, owner); }
-        uint64 GetCharmGUID() const { return  GetUInt64Value(UNIT_FIELD_CHARM); }
+        uint64 GetCharmGUID() const { return GetUInt64Value(UNIT_FIELD_CHARM); }
+        void SetCharmGUID(uint64 charm) { SetUInt64Value(UNIT_FIELD_CHARM, charm); }
+        uint64 GetTargetGUID() const { return GetUInt64Value(UNIT_FIELD_TARGET); }
+        void SetTargetGUID(uint64 targetGuid) { SetUInt64Value(UNIT_FIELD_TARGET, targetGuid); }
+        uint64 GetChannelObjectGUID() const { return GetUInt64Value(UNIT_FIELD_CHANNEL_OBJECT); }
+        void SetChannelObjectGUID(uint64 targetGuid) { SetUInt64Value(UNIT_FIELD_CHANNEL_OBJECT, targetGuid); }
 
         uint64 GetCharmerOrOwnerGUID() const { return GetCharmerGUID() ? GetCharmerGUID() : GetOwnerGUID(); }
         uint64 GetCharmerOrOwnerOrOwnGUID() const
@@ -1197,7 +1222,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
 
         bool AddAura(Aura *aur);
 
-        void RemoveAura(Aura* aura);
+        void RemoveAura(Aura* aura, AuraRemoveMode mode = AURA_REMOVE_BY_DEFAULT);
         void RemoveAura(AuraMap::iterator &i, AuraRemoveMode mode = AURA_REMOVE_BY_DEFAULT);
         void RemoveAura(uint32 spellId, uint32 effindex, Aura* except = NULL);
         void RemoveSingleSpellAurasFromStack(uint32 spellId);
@@ -1205,11 +1230,13 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         void RemoveAurasDueToSpell(uint32 spellId, Aura* except = NULL);
         void RemoveAurasDueToItemSpell(Item* castItem,uint32 spellId);
         void RemoveAurasByCasterSpell(uint32 spellId, uint64 casterGUID);
+        void RemoveAurasByCasterSpell(uint32 spellId, uint32 effindex, uint64 casterGUID);
         void RemoveAurasDueToSpellByDispel(uint32 spellId, uint64 casterGUID, Unit *dispeler);
         void RemoveAurasDueToSpellBySteal(uint32 spellId, uint64 casterGUID, Unit *stealer);
         void RemoveAurasDueToSpellByCancel(uint32 spellId);
         void RemoveAurasAtChanneledTarget(SpellEntry const* spellInfo);
         void RemoveNotOwnSingleTargetAuras(uint32 newPhase = 0x0);
+        void RemoveAurasAtMechanicImmunity(uint32 mechMask, uint32 exceptSpellId, bool non_positive = false);
 
         void RemoveSpellsCausingAura(AuraType auraType);
         void RemoveRankAurasDueToSpell(uint32 spellId);
@@ -1217,7 +1244,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         void RemoveAurasWithInterruptFlags(uint32 flags);
         void RemoveAurasWithDispelType( DispelType type );
 
-        void RemoveAllAuras();
+        void RemoveAllAuras(AuraRemoveMode mode = AURA_REMOVE_BY_DEFAULT);
         void RemoveArenaAuras(bool onleave = false);
         void RemoveAllAurasOnDeath();
         void DelayAura(uint32 spellId, uint32 effindex, int32 delaytime);
@@ -1249,7 +1276,8 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
 
         void SetCurrentCastedSpell(Spell * pSpell);
         virtual void ProhibitSpellScholl(SpellSchoolMask /*idSchoolMask*/, uint32 /*unTimeMs*/ ) { }
-        void InterruptSpell(uint32 spellType, bool withDelayed = true);
+        void InterruptSpell(CurrentSpellTypes spellType, bool withDelayed = true);
+        void FinishSpell(CurrentSpellTypes spellType, bool ok = true);
 
         // set withDelayed to true to account delayed spells as casted
         // delayed+channeled spells are always accounted as casted
@@ -1260,9 +1288,8 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         // delayed+channeled spells are always interrupted
         void InterruptNonMeleeSpells(bool withDelayed, uint32 spellid = 0);
 
+        Spell* GetCurrentSpell(CurrentSpellTypes spellType) const { return m_currentSpells[spellType]; }
         Spell* FindCurrentSpellBySpellId(uint32 spell_id) const;
-
-        Spell* m_currentSpells[CURRENT_MAX_SPELL];
 
         uint32 m_addDmgOnce;
         uint64 m_TotemSlot[MAX_TOTEM];
@@ -1308,23 +1335,23 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         float GetWeaponDamageRange(WeaponAttackType attType ,WeaponDamageRange type) const;
         void SetBaseWeaponDamage(WeaponAttackType attType ,WeaponDamageRange damageRange, float value) { m_weaponDamage[attType][damageRange] = value; }
 
-        bool isInFrontInMap(Unit const* target,float distance, float arc = M_PI) const;
         void SetInFront(Unit const* target);
-        bool isInBackInMap(Unit const* target, float distance, float arc = M_PI) const;
+        void SetFacingToObject(WorldObject* pObject);
 
         // Visibility system
         UnitVisibility GetVisibility() const { return m_Visibility; }
         void SetVisibility(UnitVisibility x);
 
         // common function for visibility checks for player/creatures with detection code
-        bool isVisibleForOrDetect(Unit const* u, bool detect, bool inVisibleList = false, bool is3dDistance = true) const;
+        bool isVisibleForOrDetect(Unit const* u, WorldObject const* viewPoint, bool detect, bool inVisibleList = false, bool is3dDistance = true) const;
         bool canDetectInvisibilityOf(Unit const* u) const;
         void SetPhaseMask(uint32 newPhaseMask, bool update);// overwrite WorldObject::SetPhaseMask
 
         // virtual functions for all world objects types
-        bool isVisibleForInState(Player const* u, bool inVisibleList) const;
+        bool isVisibleForInState(Player const* u, WorldObject const* viewPoint, bool inVisibleList) const;
         // function for low level grid visibility checks in player/creature cases
         virtual bool IsVisibleInGridForPlayer(Player* pl) const = 0;
+        bool isInvisibleForAlive() const;
 
         AuraList      & GetSingleCastAuras()       { return m_scAuras; }
         AuraList const& GetSingleCastAuras() const { return m_scAuras; }
@@ -1332,16 +1359,16 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
 
         // Threat related methods
         bool CanHaveThreatList() const;
-        void AddThreat(Unit* pVictim, float threat, SpellSchoolMask schoolMask = SPELL_SCHOOL_MASK_NORMAL, SpellEntry const *threatSpell = NULL);
+        void AddThreat(Unit* pVictim, float threat = 0.0f, bool crit = false, SpellSchoolMask schoolMask = SPELL_SCHOOL_MASK_NONE, SpellEntry const *threatSpell = NULL);
         float ApplyTotalThreatModifier(float threat, SpellSchoolMask schoolMask = SPELL_SCHOOL_MASK_NORMAL);
         void DeleteThreatList();
-        bool SelectHostilTarget();
+        bool SelectHostileTarget();
         void TauntApply(Unit* pVictim);
         void TauntFadeOut(Unit *taunter);
         ThreatManager& getThreatManager() { return m_ThreatManager; }
-        void addHatedBy(HostilReference* pHostilReference) { m_HostilRefManager.insertFirst(pHostilReference); };
-        void removeHatedBy(HostilReference* /*pHostilReference*/ ) { /* nothing to do yet */ }
-        HostilRefManager& getHostilRefManager() { return m_HostilRefManager; }
+        void addHatedBy(HostileReference* pHostileReference) { m_HostileRefManager.insertFirst(pHostileReference); };
+        void removeHatedBy(HostileReference* /*pHostileReference*/ ) { /* nothing to do yet */ }
+        HostileRefManager& getHostileRefManager() { return m_HostileRefManager; }
 
         uint32 GetVisibleAura(uint8 slot)
         {
@@ -1385,6 +1412,8 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
 
         Aura* GetDummyAura(uint32 spell_id) const;
 
+        uint32 m_AuraFlags;
+
         uint32 GetDisplayId() { return GetUInt32Value(UNIT_FIELD_DISPLAYID); }
         void SetDisplayId(uint32 modelId);
         uint32 GetNativeDisplayId() { return GetUInt32Value(UNIT_FIELD_NATIVEDISPLAYID); }
@@ -1423,12 +1452,20 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         uint32 SpellCriticalDamageBonus(SpellEntry const *spellProto, uint32 damage, Unit *pVictim);
         uint32 SpellCriticalHealingBonus(SpellEntry const *spellProto, uint32 damage, Unit *pVictim);
 
-        void SetLastManaUse(uint32 spellCastTime) { m_lastManaUse = spellCastTime; }
-        bool IsUnderLastManaUseEffect() const;
+        void SetLastManaUse()
+        {
+            if (GetTypeId() == TYPEID_PLAYER && !IsUnderLastManaUseEffect())
+                RemoveFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_REGENERATE_POWER);
+
+            m_lastManaUseTimer = 5000;
+        }
+        bool IsUnderLastManaUseEffect() const { return m_lastManaUseTimer; }
+
+        uint32 GetRegenTimer() const { return m_regenTimer; }
 
         void SetContestedPvP(Player *attackedPlayer = NULL);
 
-        void MeleeDamageBonus(Unit *pVictim, uint32 *damage, WeaponAttackType attType, SpellEntry const *spellProto = NULL);
+        uint32 MeleeDamageBonus(Unit *pVictim, uint32 damage, WeaponAttackType attType, SpellEntry const *spellProto = NULL, DamageEffectType damagetype = DIRECT_DAMAGE, uint32 stack =1);
         uint32 GetCastingTimeForBonus( SpellEntry const *spellProto, DamageEffectType damagetype, uint32 CastingTime );
 
         void ApplySpellImmune(uint32 spellId, uint32 op, uint32 type, bool apply);
@@ -1440,7 +1477,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
                                                             // redefined in Creature
 
         uint32 CalcArmorReducedDamage(Unit* pVictim, const uint32 damage);
-        void CalcAbsorbResist(Unit *pVictim, SpellSchoolMask schoolMask, DamageEffectType damagetype, const uint32 damage, uint32 *absorb, uint32 *resist);
+        void CalcAbsorbResist(Unit *pVictim, SpellSchoolMask schoolMask, DamageEffectType damagetype, const uint32 damage, uint32 *absorb, uint32 *resist, bool canReflect = false);
 
         void  UpdateSpeed(UnitMoveType mtype, bool forced);
         float GetSpeed( UnitMoveType mtype ) const;
@@ -1450,10 +1487,15 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         void SetHover(bool on);
         bool isHover() const { return HasAuraType(SPELL_AURA_HOVER); }
 
+        void KnockBackFrom(Unit* target, float horizintalSpeed, float verticalSpeed);
+
         void _RemoveAllAuraMods();
         void _ApplyAllAuraMods();
 
         int32 CalculateSpellDamage(SpellEntry const* spellProto, uint8 effect_index, int32 basePoints, Unit const* target);
+
+        uint32 CalcNotIgnoreAbsorbDamage( uint32 damage, SpellSchoolMask damageSchoolMask, SpellEntry const* spellInfo = NULL);
+        uint32 CalcNotIgnoreDamageRedunction( uint32 damage, SpellSchoolMask damageSchoolMask);
         int32 CalculateSpellDuration(SpellEntry const* spellProto, uint8 effect_index, Unit const* target);
         float CalculateLevelPenalty(SpellEntry const* spellProto) const;
 
@@ -1466,8 +1508,9 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         bool IsStopped() const { return !(hasUnitState(UNIT_STAT_MOVING)); }
         void StopMoving();
 
-        void SetFeared(bool apply, uint64 casterGUID = 0, uint32 spellID = 0, uint32 time = 0);
-        void SetConfused(bool apply, uint64 casterGUID = 0, uint32 spellID = 0);
+        void SetFeared(bool apply, uint64 const& casterGUID = 0, uint32 spellID = 0, uint32 time = 0);
+        void SetConfused(bool apply, uint64 const& casterGUID = 0, uint32 spellID = 0);
+        void SetFeignDeath(bool apply, uint64 const& casterGUID = 0, uint32 spellID = 0);
 
         void AddComboPointHolder(uint32 lowguid) { m_ComboPointHolders.insert(lowguid); }
         void RemoveComboPointHolder(uint32 lowguid) { m_ComboPointHolders.erase(lowguid); }
@@ -1514,8 +1557,10 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         DeathState m_deathState;
 
         AuraMap m_Auras;
+        AuraMap::iterator m_AurasUpdateIterator;            // != end() in Unit::m_Auras update and point to next element
+        AuraList m_deletedAuras;                            // auras removed while in ApplyModifier and waiting deleted
 
-        std::list<Aura *> m_scAuras;                        // casted singlecast auras
+        AuraList m_scAuras;                                 // casted by unit single per-caster auras
 
         typedef std::list<uint64> DynObjectGUIDs;
         DynObjectGUIDs m_dynObjGUIDs;
@@ -1524,7 +1569,6 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         GameObjectList m_gameObj;
         bool m_isSorted;
         uint32 m_transform;
-        uint32 m_removedAuras;
 
         AuraList m_modAuras[TOTAL_AURAS];
         float m_auraModifiersGroup[UNIT_MOD_END][MODIFIER_TYPE_END];
@@ -1543,18 +1587,25 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
 
         uint32 m_reactiveTimer[MAX_REACTIVE];
         uint32 m_regenTimer;
+        uint32 m_lastManaUseTimer;
 
     private:
         bool IsTriggeredAtSpellProcEvent(Unit *pVictim, Aura* aura, SpellEntry const* procSpell, uint32 procFlag, uint32 procExtra, WeaponAttackType attType, bool isVictim, bool active, SpellProcEventEntry const*& spellProcEvent );
         bool HandleDummyAuraProc(   Unit *pVictim, uint32 damage, Aura* triggredByAura, SpellEntry const *procSpell, uint32 procFlag, uint32 procEx, uint32 cooldown);
         bool HandleHasteAuraProc(   Unit *pVictim, uint32 damage, Aura* triggredByAura, SpellEntry const *procSpell, uint32 procFlag, uint32 procEx, uint32 cooldown);
+        bool HandleSpellCritChanceAuraProc(   Unit *pVictim, uint32 damage, Aura* triggredByAura, SpellEntry const *procSpell, uint32 procFlag, uint32 procEx, uint32 cooldown);
         bool HandleProcTriggerSpell(Unit *pVictim, uint32 damage, Aura* triggredByAura, SpellEntry const *procSpell, uint32 procFlag, uint32 procEx, uint32 cooldown);
         bool HandleOverrideClassScriptAuraProc(Unit *pVictim, uint32 damage, Aura* triggredByAura, SpellEntry const *procSpell, uint32 cooldown);
-        bool HandleMeandingAuraProc(Aura* triggeredByAura);
+        bool HandleMendingAuraProc(Aura* triggeredByAura);
+
+        // player or player's pet
+        float GetCombatRatingReduction(CombatRating cr) const;
+        uint32 GetCombatRatingDamageReduction(CombatRating cr, float rate, float cap, uint32 damage) const;
 
         uint32 m_state;                                     // Even derived shouldn't modify
         uint32 m_CombatTimer;
-        uint32 m_lastManaUse;                               // msecs
+
+        Spell* m_currentSpells[CURRENT_MAX_SPELL];
 
         UnitVisibility m_Visibility;
 
@@ -1562,7 +1613,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         // Manage all Units threatening us
         ThreatManager m_ThreatManager;
         // Manage all Units that are threatened by us
-        HostilRefManager m_HostilRefManager;
+        HostileRefManager m_HostileRefManager;
 
         FollowerRefManager m_FollowingRefManager;
 

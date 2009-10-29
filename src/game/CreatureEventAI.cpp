@@ -69,8 +69,7 @@ CreatureEventAI::CreatureEventAI(Creature *c ) : CreatureAI(c)
             #endif
             if (m_creature->GetMap()->IsDungeon())
             {
-                if( (m_creature->GetMap()->IsHeroic() && (*i).event_flags & EFLAG_HEROIC) ||
-                    (!m_creature->GetMap()->IsHeroic() && (*i).event_flags & EFLAG_NORMAL))
+                if ((1 << (m_creature->GetMap()->GetSpawnMode()+1)) & (*i).event_flags)
                 {
                     //event flagged for instance mode
                     CreatureEventAIList.push_back(CreatureEventAIHolder(*i));
@@ -345,24 +344,17 @@ void CreatureEventAI::ProcessAction(CreatureEventAI_Action const& action, uint32
     {
         case ACTION_T_TEXT:
         {
-            if (!action.text.TextId1)
+            if (!action.text.TextId[0])
                 return;
 
             int32 temp = 0;
 
-            if (action.text.TextId2 && action.text.TextId3)
-            {
-                switch( rand()%3 )
-                {
-                    case 0: temp = action.text.TextId1; break;
-                    case 1: temp = action.text.TextId2; break;
-                    case 2: temp = action.text.TextId3; break;
-                }
-            }
-            else if (action.text.TextId2 && urand(0,1))
-                temp = action.text.TextId2;
+            if (action.text.TextId[1] && action.text.TextId[2])
+                temp = action.text.TextId[rand()%3];
+            else if (action.text.TextId[1] && urand(0,1))
+                temp = action.text.TextId[1];
             else
-                temp = action.text.TextId1;
+                temp = action.text.TextId[0];
 
             if (temp)
             {
@@ -378,7 +370,7 @@ void CreatureEventAI::ProcessAction(CreatureEventAI_Action const& action, uint32
                             target = owner;
                     }
                 }
-                else if (target = m_creature->getVictim())
+                else if ((target = m_creature->getVictim()))
                 {
                     if (target->GetTypeId() != TYPEID_PLAYER)
                         if (Unit* owner = target->GetOwner())
@@ -531,8 +523,8 @@ void CreatureEventAI::ProcessAction(CreatureEventAI_Action const& action, uint32
             break;
         case ACTION_T_THREAT_ALL_PCT:
         {
-            std::list<HostilReference*>& threatList = m_creature->getThreatManager().getThreatList();
-            for (std::list<HostilReference*>::iterator i = threatList.begin(); i != threatList.end(); ++i)
+            std::list<HostileReference*>& threatList = m_creature->getThreatManager().getThreatList();
+            for (std::list<HostileReference*>::iterator i = threatList.begin(); i != threatList.end(); ++i)
                 if(Unit* Temp = Unit::GetUnit(*m_creature,(*i)->getUnitGuid()))
                     m_creature->getThreatManager().modifyThreatPercent(Temp, action.threat_all_pct.percent);
             break;
@@ -642,8 +634,8 @@ void CreatureEventAI::ProcessAction(CreatureEventAI_Action const& action, uint32
             break;
         case ACTION_T_CAST_EVENT_ALL:
         {
-            std::list<HostilReference*>& threatList = m_creature->getThreatManager().getThreatList();
-            for (std::list<HostilReference*>::iterator i = threatList.begin(); i != threatList.end(); ++i)
+            std::list<HostileReference*>& threatList = m_creature->getThreatManager().getThreatList();
+            for (std::list<HostileReference*>::iterator i = threatList.begin(); i != threatList.end(); ++i)
                 if (Unit* Temp = Unit::GetUnit(*m_creature,(*i)->getUnitGuid()))
                     if (Temp->GetTypeId() == TYPEID_PLAYER)
                         ((Player*)Temp)->CastedCreatureOrGO(action.cast_event_all.creatureId, m_creature->GetGUID(), action.cast_event_all.spellId);
@@ -955,7 +947,7 @@ void CreatureEventAI::AttackStart(Unit *who)
 
     if (m_creature->Attack(who, MeleeEnabled))
     {
-        m_creature->AddThreat(who, 0.0f);
+        m_creature->AddThreat(who);
         m_creature->SetInCombatWith(who);
         who->SetInCombatWith(m_creature);
 
@@ -1001,7 +993,7 @@ void CreatureEventAI::MoveInLineOfSight(Unit *who)
     if (m_creature->isCivilian() || m_creature->IsNeutralToAll())
         return;
 
-    if (!m_creature->hasUnitState(UNIT_STAT_STUNNED) && who->isTargetableForAttack() &&
+    if (!m_creature->hasUnitState(UNIT_STAT_STUNNED | UNIT_STAT_DIED) && who->isTargetableForAttack() &&
         m_creature->IsHostileTo(who) && who->isInAccessablePlaceFor(m_creature))
     {
         if (!m_creature->canFly() && m_creature->GetDistanceZ(who) > CREATURE_Z_ATTACK_RANGE)
@@ -1017,7 +1009,7 @@ void CreatureEventAI::MoveInLineOfSight(Unit *who)
             }
             else if (m_creature->GetMap()->IsDungeon())
             {
-                m_creature->AddThreat(who, 0.0f);
+                m_creature->AddThreat(who);
                 who->SetInCombatWith(m_creature);
             }
         }
@@ -1041,7 +1033,7 @@ void CreatureEventAI::SpellHit(Unit* pUnit, const SpellEntry* pSpell)
 void CreatureEventAI::UpdateAI(const uint32 diff)
 {
     //Check if we are in combat (also updates calls threat update code)
-    bool Combat = m_creature->SelectHostilTarget() && m_creature->getVictim();
+    bool Combat = m_creature->SelectHostileTarget() && m_creature->getVictim();
 
     //Must return if creature isn't alive. Normally select hostil target and get victim prevent this
     if (!m_creature->isAlive())
@@ -1089,9 +1081,11 @@ void CreatureEventAI::UpdateAI(const uint32 diff)
                         break;
                     case EVENT_T_RANGE:
                         if (Combat)
-                            if (m_creature->IsInMap(m_creature->getVictim()))
-                                if (m_creature->IsInRange(m_creature->getVictim(),(float)(*i).Event.range.minDist,(float)(*i).Event.range.maxDist))
+                        {
+                            if (m_creature->getVictim() && m_creature->IsInMap(m_creature->getVictim()))
+                                if (m_creature->IsInRange(m_creature->getVictim(), (float)(*i).Event.range.minDist, (float)(*i).Event.range.maxDist))
                                     ProcessEvent(*i);
+                        }
                         break;
                 }
             }
@@ -1114,15 +1108,15 @@ void CreatureEventAI::UpdateAI(const uint32 diff)
 bool CreatureEventAI::IsVisible(Unit *pl) const
 {
     return m_creature->IsWithinDist(pl,sWorld.getConfig(CONFIG_SIGHT_MONSTER))
-        && pl->isVisibleForOrDetect(m_creature,true);
+        && pl->isVisibleForOrDetect(m_creature,m_creature,true);
 }
 
 inline Unit* CreatureEventAI::SelectUnit(AttackingTarget target, uint32 position)
 {
     //ThreatList m_threatlist;
-    std::list<HostilReference*>& m_threatlist = m_creature->getThreatManager().getThreatList();
-    std::list<HostilReference*>::iterator i = m_threatlist.begin();
-    std::list<HostilReference*>::reverse_iterator r = m_threatlist.rbegin();
+    std::list<HostileReference*>& m_threatlist = m_creature->getThreatManager().getThreatList();
+    std::list<HostileReference*>::iterator i = m_threatlist.begin();
+    std::list<HostileReference*>::reverse_iterator r = m_threatlist.rbegin();
 
     if (position >= m_threatlist.size() || !m_threatlist.size())
         return NULL;
@@ -1212,7 +1206,7 @@ Unit* CreatureEventAI::DoSelectLowestHpFriendly(float range, uint32 MinHPDiff)
     TypeContainerVisitor<MaNGOS::UnitLastSearcher<MaNGOS::MostHPMissingInRange>, GridTypeMapContainer >  grid_unit_searcher(searcher);
 
     CellLock<GridReadGuard> cell_lock(cell, p);
-    cell_lock->Visit(cell_lock, grid_unit_searcher, *m_creature->GetMap());
+    cell_lock->Visit(cell_lock, grid_unit_searcher, *m_creature->GetMap(), *m_creature, range);
     return pUnit;
 }
 
@@ -1229,7 +1223,7 @@ void CreatureEventAI::DoFindFriendlyCC(std::list<Creature*>& _list, float range)
     TypeContainerVisitor<MaNGOS::CreatureListSearcher<MaNGOS::FriendlyCCedInRange>, GridTypeMapContainer >  grid_creature_searcher(searcher);
 
     CellLock<GridReadGuard> cell_lock(cell, p);
-    cell_lock->Visit(cell_lock, grid_creature_searcher, *m_creature->GetMap());
+    cell_lock->Visit(cell_lock, grid_creature_searcher, *m_creature->GetMap(), *m_creature, range);
 }
 
 void CreatureEventAI::DoFindFriendlyMissingBuff(std::list<Creature*>& _list, float range, uint32 spellid)
@@ -1245,7 +1239,7 @@ void CreatureEventAI::DoFindFriendlyMissingBuff(std::list<Creature*>& _list, flo
     TypeContainerVisitor<MaNGOS::CreatureListSearcher<MaNGOS::FriendlyMissingBuffInRange>, GridTypeMapContainer >  grid_creature_searcher(searcher);
 
     CellLock<GridReadGuard> cell_lock(cell, p);
-    cell_lock->Visit(cell_lock, grid_creature_searcher, *m_creature->GetMap());
+    cell_lock->Visit(cell_lock, grid_creature_searcher, *m_creature->GetMap(), *m_creature, range);
 }
 
 //*********************************
@@ -1346,7 +1340,8 @@ bool CreatureEventAI::CanCast(Unit* Target, SpellEntry const *Spell, bool Trigge
         return false;
 
     //Silenced so we can't cast
-    if (!Triggered && m_creature->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_SILENCED))
+    if (!Triggered && (m_creature->hasUnitState(UNIT_STAT_CONFUSED | UNIT_STAT_STUNNED | UNIT_STAT_FLEEING | UNIT_STAT_DIED)
+        || m_creature->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PACIFIED)))
         return false;
 
     //Check for power

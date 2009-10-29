@@ -421,7 +421,7 @@ uint32 GameEventMgr::Initialize()                           // return the next e
     m_ActiveEvents.clear();
     uint32 delay = Update();
     sLog.outBasic("Game Event system initialized." );
-    isSystemInit = true;
+    m_IsGameEventsInit = true;
     return delay;
 }
 
@@ -445,11 +445,14 @@ uint32 GameEventMgr::Update()                               // return the next e
                 StopEvent(itr);
             else
             {
-                if (!isSystemInit)
+                if (!m_IsGameEventsInit)
                 {
                     int16 event_nid = (-1) * (itr);
                     // spawn all negative ones for this event
                     GameEventSpawn(event_nid);
+
+                    // disable any event specific quest (for cases where creature is spawned, but event not active).
+                    UpdateEventQuests(itr, false);
                 }
             }
         }
@@ -519,7 +522,7 @@ void GameEventMgr::GameEventSpawn(int16 event_id)
             // Spawn if necessary (loaded grids only)
             Map* map = const_cast<Map*>(MapManager::Instance().CreateBaseMap(data->mapid));
             // We use spawn coords to spawn
-            if(!map->Instanceable() && !map->IsRemovalGrid(data->posX,data->posY))
+            if(!map->Instanceable() && map->IsLoaded(data->posX,data->posY))
             {
                 Creature* pCreature = new Creature;
                 //sLog.outDebug("Spawning creature %u",*itr);
@@ -552,7 +555,7 @@ void GameEventMgr::GameEventSpawn(int16 event_id)
             // this base map checked as non-instanced and then only existed
             Map* map = const_cast<Map*>(MapManager::Instance().CreateBaseMap(data->mapid));
             // We use current coords to unspawn, not spawn coords since creature can have changed grid
-            if(!map->Instanceable() && !map->IsRemovalGrid(data->posX, data->posY))
+            if(!map->Instanceable() && map->IsLoaded(data->posX, data->posY))
             {
                 GameObject* pGameobject = new GameObject;
                 //sLog.outDebug("Spawning gameobject %u", *itr);
@@ -577,7 +580,9 @@ void GameEventMgr::GameEventSpawn(int16 event_id)
 
     for (IdList::iterator itr = mGameEventPoolIds[internal_event_id].begin();itr != mGameEventPoolIds[internal_event_id].end();++itr)
     {
-        poolhandler.SpawnPool(*itr);
+        poolhandler.SpawnPool(*itr, 0, 0);
+        poolhandler.SpawnPool(*itr, 0, TYPEID_GAMEOBJECT);
+        poolhandler.SpawnPool(*itr, 0, TYPEID_UNIT);
     }
 }
 
@@ -598,7 +603,7 @@ void GameEventMgr::GameEventUnspawn(int16 event_id)
         {
             objmgr.RemoveCreatureFromGrid(*itr, data);
 
-            if( Creature* pCreature = ObjectAccessor::Instance().GetObjectInWorld(MAKE_NEW_GUID(*itr, data->id, HIGHGUID_UNIT), (Creature*)NULL) )
+            if( Creature* pCreature = ObjectAccessor::GetCreatureInWorld(MAKE_NEW_GUID(*itr, data->id, HIGHGUID_UNIT)) )
                 pCreature->AddObjectToRemoveList();
         }
     }
@@ -616,7 +621,7 @@ void GameEventMgr::GameEventUnspawn(int16 event_id)
         {
             objmgr.RemoveGameobjectFromGrid(*itr, data);
 
-            if( GameObject* pGameobject = ObjectAccessor::Instance().GetObjectInWorld(MAKE_NEW_GUID(*itr, data->id, HIGHGUID_GAMEOBJECT), (GameObject*)NULL) )
+            if( GameObject* pGameobject = ObjectAccessor::Instance().GetGameObjectInWorld(MAKE_NEW_GUID(*itr, data->id, HIGHGUID_GAMEOBJECT)) )
                 pGameobject->AddObjectToRemoveList();
         }
     }
@@ -642,7 +647,7 @@ void GameEventMgr::ChangeEquipOrModel(int16 event_id, bool activate)
             continue;
 
         // Update if spawned
-        Creature* pCreature = ObjectAccessor::Instance().GetObjectInWorld(MAKE_NEW_GUID(itr->first, data->id,HIGHGUID_UNIT), (Creature*)NULL);
+        Creature* pCreature = ObjectAccessor::GetCreatureInWorld(MAKE_NEW_GUID(itr->first, data->id,HIGHGUID_UNIT));
         if (pCreature)
         {
             if (activate)
@@ -740,7 +745,7 @@ void GameEventMgr::UpdateEventQuests(uint16 event_id, bool Activate)
 
 GameEventMgr::GameEventMgr()
 {
-    isSystemInit = false;
+    m_IsGameEventsInit = false;
 }
 
 MANGOS_DLL_SPEC bool IsHolidayActive( HolidayIds id )

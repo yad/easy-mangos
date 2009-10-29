@@ -178,6 +178,8 @@ enum WorldConfigs
     CONFIG_SILENTLY_GM_JOIN_TO_CHANNEL,
     CONFIG_TALENTS_INSPECTING,
     CONFIG_CHAT_FAKE_MESSAGE_PREVENTING,
+    CONFIG_CHAT_STRICT_LINK_CHECKING_SEVERITY,
+    CONFIG_CHAT_STRICT_LINK_CHECKING_KICK,
     CONFIG_CORPSE_DECAY_NORMAL,
     CONFIG_CORPSE_DECAY_RARE,
     CONFIG_CORPSE_DECAY_ELITE,
@@ -191,7 +193,6 @@ enum WorldConfigs
     CONFIG_DEATH_BONES_BG_OR_ARENA,
     CONFIG_THREAT_RADIUS,
     CONFIG_INSTANT_LOGOUT,
-    CONFIG_DISABLE_BREATHING,
     CONFIG_ALL_TAXI_PATHS,
     CONFIG_DECLINED_NAMES_USED,
     CONFIG_LISTEN_RANGE_SAY,
@@ -212,6 +213,15 @@ enum WorldConfigs
     CONFIG_ARENA_SEASON_ID,
     CONFIG_ARENA_SEASON_IN_PROGRESS,
     CONFIG_OFFHAND_CHECK_AT_TALENTS_RESET,
+    CONFIG_CLIENTCACHE_VERSION,
+    CONFIG_GUILD_EVENT_LOG_COUNT,
+    CONFIG_GUILD_BANK_EVENT_LOG_COUNT,
+    CONFIG_TIMERBAR_FATIGUE_GMLEVEL,
+    CONFIG_TIMERBAR_FATIGUE_MAX,
+    CONFIG_TIMERBAR_BREATH_GMLEVEL,
+    CONFIG_TIMERBAR_BREATH_MAX,
+    CONFIG_TIMERBAR_FIRE_GMLEVEL,
+    CONFIG_TIMERBAR_FIRE_MAX,
     CONFIG_VALUE_COUNT
 };
 
@@ -489,12 +499,14 @@ class World
         bool IsScriptScheduled() const { return m_scheduledScripts > 0; }
 
         // for max speed access
-        static float GetMaxVisibleDistanceForCreature() { return m_MaxVisibleDistanceForCreature; }
-        static float GetMaxVisibleDistanceForPlayer()   { return m_MaxVisibleDistanceForPlayer;   }
-        static float GetMaxVisibleDistanceForObject()   { return m_MaxVisibleDistanceForObject;   }
-        static float GetMaxVisibleDistanceInFlight()    { return m_MaxVisibleDistanceInFlight;    }
-        static float GetVisibleUnitGreyDistance()       { return m_VisibleUnitGreyDistance;       }
-        static float GetVisibleObjectGreyDistance()     { return m_VisibleObjectGreyDistance;     }
+        static float GetMaxVisibleDistanceOnContinents()    { return m_MaxVisibleDistanceOnContinents; }
+        static float GetMaxVisibleDistanceInInstances()     { return m_MaxVisibleDistanceInInctances;  }
+        static float GetMaxVisibleDistanceInBGArenas()      { return m_MaxVisibleDistanceInBGArenas;   }
+        static float GetMaxVisibleDistanceForObject()       { return m_MaxVisibleDistanceForObject;   }
+
+        static float GetMaxVisibleDistanceInFlight()        { return m_MaxVisibleDistanceInFlight;    }
+        static float GetVisibleUnitGreyDistance()           { return m_VisibleUnitGreyDistance;       }
+        static float GetVisibleObjectGreyDistance()         { return m_VisibleObjectGreyDistance;     }
 
         void ProcessCliCommands();
         void QueueCliCommand( CliCommandHolder::Print* zprintf, char const* input ) { cliCmdQueue.add(new CliCommandHolder(input, zprintf)); }
@@ -555,9 +567,11 @@ class World
         std::string m_dataPath;
 
         // for max speed access
-        static float m_MaxVisibleDistanceForCreature;
-        static float m_MaxVisibleDistanceForPlayer;
+        static float m_MaxVisibleDistanceOnContinents;
+        static float m_MaxVisibleDistanceInInctances;
+        static float m_MaxVisibleDistanceInBGArenas;
         static float m_MaxVisibleDistanceForObject;
+
         static float m_MaxVisibleDistanceInFlight;
         static float m_VisibleUnitGreyDistance;
         static float m_VisibleObjectGreyDistance;

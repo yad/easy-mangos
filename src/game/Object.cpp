@@ -31,7 +31,6 @@
 #include "UpdateMask.h"
 #include "Util.h"
 #include "MapManager.h"
-#include "ObjectAccessor.h"
 #include "Log.h"
 #include "Transports.h"
 #include "TargetedMovementGenerator.h"
@@ -80,17 +79,21 @@ Object::Object( ) : m_PackGUID(sizeof(uint64)+1)
 
 Object::~Object( )
 {
+    if(IsInWorld())
+    {
+        ///- Do NOT call RemoveFromWorld here, if the object is a player it will crash
+        sLog.outError("Object::~Object (GUID: %u TypeId: %u) deleted but still in world!!", GetGUIDLow(), GetTypeId());
+        ASSERT(false);
+    }
+
     if(m_objectUpdated)
-        ObjectAccessor::Instance().RemoveUpdateObject(this);
+    {
+        sLog.outError("Object::~Object (GUID: %u TypeId: %u) deleted but still have updated status!!", GetGUIDLow(), GetTypeId());
+        ASSERT(false);
+    }
 
     if(m_uint32Values)
     {
-        if(IsInWorld())
-        {
-            ///- Do NOT call RemoveFromWorld here, if the object is a player it will crash
-            sLog.outError("Object::~Object (GUID: %u TypeId: %u) deleted but still in world!!", GetGUIDLow(), GetTypeId());
-            //assert(0);
-        }
 
         //DEBUG_LOG("Object desctr 1 check (%p)",(void*)this);
         delete [] m_uint32Values;
@@ -128,7 +131,7 @@ void Object::BuildMovementUpdateBlock(UpdateData * data, uint32 flags ) const
     buf << uint8( UPDATETYPE_MOVEMENT );
     buf.append(GetPackGUID());
 
-    _BuildMovementUpdate(&buf, flags, 0x00000000);
+    BuildMovementUpdate(&buf, flags, 0x00000000);
 
     data->AddUpdateBlock(buf);
 }
@@ -177,7 +180,7 @@ void Object::BuildCreateUpdateBlockForPlayer(UpdateData *data, Player *target) c
 
         if(isType(TYPEMASK_UNIT))
         {
-            if(((Unit*)this)->getVictim())
+            if(((Unit*)this)->GetTargetGUID())
                 flags |= UPDATEFLAG_HAS_TARGET;
         }
     }
@@ -189,31 +192,21 @@ void Object::BuildCreateUpdateBlockForPlayer(UpdateData *data, Player *target) c
     buf.append(GetPackGUID());
     buf << (uint8)m_objectTypeId;
 
-    _BuildMovementUpdate(&buf, flags, flags2);
+    BuildMovementUpdate(&buf, flags, flags2);
 
     UpdateMask updateMask;
     updateMask.SetCount( m_valuesCount );
     _SetCreateBits( &updateMask, target );
-    _BuildValuesUpdate(updatetype, &buf, &updateMask, target);
+    BuildValuesUpdate(updatetype, &buf, &updateMask, target);
     data->AddUpdateBlock(buf);
 }
 
-void Object::BuildUpdate(UpdateDataMapType &update_players)
+void Object::SendCreateUpdateToPlayer(Player* player)
 {
-    ObjectAccessor::_buildUpdateObject(this,update_players);
-    ClearUpdateMask(true);
-}
-
-void Object::SendUpdateToPlayer(Player* player)
-{
-    // send update to another players
-    SendUpdateObjectToAllExcept(player);
-
     // send create update to player
     UpdateData upd;
     WorldPacket packet;
 
-    upd.Clear();
     BuildCreateUpdateBlockForPlayer(&upd, player);
     upd.BuildPacket(&packet);
     player->GetSession()->SendPacket(&packet);
@@ -230,7 +223,7 @@ void Object::BuildValuesUpdateBlockForPlayer(UpdateData *data, Player *target) c
     updateMask.SetCount( m_valuesCount );
 
     _SetUpdateBits( &updateMask, target );
-    _BuildValuesUpdate(UPDATETYPE_VALUES, &buf, &updateMask, target);
+    BuildValuesUpdate(UPDATETYPE_VALUES, &buf, &updateMask, target);
 
     data->AddUpdateBlock(buf);
 }
@@ -250,7 +243,7 @@ void Object::DestroyForPlayer( Player *target, bool anim ) const
     target->GetSession()->SendPacket( &data );
 }
 
-void Object::_BuildMovementUpdate(ByteBuffer * data, uint16 flags, uint32 flags2) const
+void Object::BuildMovementUpdate(ByteBuffer * data, uint16 flags, uint32 flags2) const
 {
     uint16 unk_flags = ((GetTypeId() == TYPEID_PLAYER) ? ((Player*)this)->m_movementInfo.unk1 : 0);
 
@@ -267,7 +260,7 @@ void Object::_BuildMovementUpdate(ByteBuffer * data, uint16 flags, uint32 flags2
         {
             case TYPEID_UNIT:
             {
-                flags2 = ((Unit*)this)->isInFlight() ? (MOVEMENTFLAG_FORWARD | MOVEMENTFLAG_LEVITATING) : MOVEMENTFLAG_NONE;
+                flags2 = ((Creature*)this)->canFly() ? (MOVEMENTFLAG_FORWARD | MOVEMENTFLAG_LEVITATING) : MOVEMENTFLAG_NONE;
             }
             break;
             case TYPEID_PLAYER:
@@ -554,10 +547,7 @@ void Object::_BuildMovementUpdate(ByteBuffer * data, uint16 flags, uint32 flags2
     // 0x4
     if(flags & UPDATEFLAG_HAS_TARGET)                       // packed guid (current target guid)
     {
-        if(Unit *victim = ((Unit*)this)->getVictim())
-            data->append(victim->GetPackGUID());
-        else
-            *data << uint8(0);
+        data->appendPackGUID(((Unit*)this)->GetTargetGUID());
     }
 
     // 0x2
@@ -580,7 +570,7 @@ void Object::_BuildMovementUpdate(ByteBuffer * data, uint16 flags, uint32 flags2
     }
 }
 
-void Object::_BuildValuesUpdate(uint8 updatetype, ByteBuffer * data, UpdateMask *updateMask, Player *target) const
+void Object::BuildValuesUpdate(uint8 updatetype, ByteBuffer * data, UpdateMask *updateMask, Player *target) const
 {
     if(!target)
         return;
@@ -592,10 +582,9 @@ void Object::_BuildValuesUpdate(uint8 updatetype, ByteBuffer * data, UpdateMask 
         if (isType(TYPEMASK_GAMEOBJECT) && !((GameObject*)this)->IsTransport())
         {
             if ( ((GameObject*)this)->ActivateToQuest(target) || target->isGameMaster())
-            {
                 IsActivateToQuest = true;
-                updateMask->SetBit(GAMEOBJECT_DYNAMIC);
-            }
+
+            updateMask->SetBit(GAMEOBJECT_DYNAMIC);
         }
         else if (isType(TYPEMASK_UNIT))
         {
@@ -644,8 +633,17 @@ void Object::_BuildValuesUpdate(uint8 updatetype, ByteBuffer * data, UpdateMask 
                     // remove custom flag before sending
                     uint32 appendValue = m_uint32Values[ index ] & ~UNIT_NPC_FLAG_GUARD;
 
-                    if (GetTypeId() == TYPEID_UNIT && !target->canSeeSpellClickOn((Creature*)this))
-                        appendValue &= ~UNIT_NPC_FLAG_SPELLCLICK;
+                    if (GetTypeId() == TYPEID_UNIT)
+                    {
+                        if (!target->canSeeSpellClickOn((Creature*)this))
+                            appendValue &= ~UNIT_NPC_FLAG_SPELLCLICK;
+
+                        if (appendValue & UNIT_NPC_FLAG_TRAINER)
+                        {
+                            if (!((Creature*)this)->isCanTrainingOf(target, false))
+                                appendValue &= ~(UNIT_NPC_FLAG_TRAINER | UNIT_NPC_FLAG_TRAINER_CLASS | UNIT_NPC_FLAG_TRAINER_PROFESSION);
+                        }
+                    }
 
                     *data << uint32(appendValue);
                 }
@@ -711,18 +709,27 @@ void Object::_BuildValuesUpdate(uint8 updatetype, ByteBuffer * data, UpdateMask 
                         switch(((GameObject*)this)->GetGoType())
                         {
                             case GAMEOBJECT_TYPE_CHEST:
-                                *data << uint32(9);         // enable quest object. Represent 9, but 1 for client before 2.3.0
+                                // enable quest object. Represent 9, but 1 for client before 2.3.0
+                                *data << uint16(9);
+                                *data << uint16(-1);
                                 break;
                             case GAMEOBJECT_TYPE_GOOBER:
-                                *data << uint32(1);
+                                *data << uint16(1);
+                                *data << uint16(-1);
                                 break;
                             default:
-                                *data << uint32(0);         // unknown, not happen.
+                                // unknown, not happen.
+                                *data << uint16(0);
+                                *data << uint16(-1);
                                 break;
                         }
                     }
                     else
-                        *data << uint32(0);                 // disable quest object
+                    {
+                        // disable quest object
+                        *data << uint16(0);
+                        *data << uint16(-1);
+                    }
                 }
                 else
                     *data << m_uint32Values[ index ];       // other cases
@@ -744,31 +751,21 @@ void Object::_BuildValuesUpdate(uint8 updatetype, ByteBuffer * data, UpdateMask 
 
 void Object::ClearUpdateMask(bool remove)
 {
-    for( uint16 index = 0; index < m_valuesCount; ++index )
+    if(m_uint32Values)
     {
-        if(m_uint32Values_mirror[index]!= m_uint32Values[index])
-            m_uint32Values_mirror[index] = m_uint32Values[index];
+        for( uint16 index = 0; index < m_valuesCount; ++index )
+        {
+            if(m_uint32Values_mirror[index]!= m_uint32Values[index])
+                m_uint32Values_mirror[index] = m_uint32Values[index];
+        }
     }
+
     if(m_objectUpdated)
     {
         if(remove)
-            ObjectAccessor::Instance().RemoveUpdateObject(this);
+            RemoveFromClientUpdateList();
         m_objectUpdated = false;
     }
-}
-
-// Send current value fields changes to all viewers
-void Object::SendUpdateObjectToAllExcept(Player* exceptPlayer)
-{
-    // changes will be send in create packet
-    if(!IsInWorld())
-        return;
-
-    // nothing do
-    if(!m_objectUpdated)
-        return;
-
-    ObjectAccessor::UpdateObject(this,exceptPlayer);
 }
 
 bool Object::LoadValues(const char* data)
@@ -820,7 +817,7 @@ void Object::SetInt32Value( uint16 index, int32 value )
         {
             if(!m_objectUpdated)
             {
-                ObjectAccessor::Instance().AddUpdateObject(this);
+                AddToClientUpdateList();
                 m_objectUpdated = true;
             }
         }
@@ -839,7 +836,7 @@ void Object::SetUInt32Value( uint16 index, uint32 value )
         {
             if(!m_objectUpdated)
             {
-                ObjectAccessor::Instance().AddUpdateObject(this);
+                AddToClientUpdateList();
                 m_objectUpdated = true;
             }
         }
@@ -858,7 +855,7 @@ void Object::SetUInt64Value( uint16 index, const uint64 &value )
         {
             if(!m_objectUpdated)
             {
-                ObjectAccessor::Instance().AddUpdateObject(this);
+                AddToClientUpdateList();
                 m_objectUpdated = true;
             }
         }
@@ -877,7 +874,7 @@ void Object::SetFloatValue( uint16 index, float value )
         {
             if(!m_objectUpdated)
             {
-                ObjectAccessor::Instance().AddUpdateObject(this);
+                AddToClientUpdateList();
                 m_objectUpdated = true;
             }
         }
@@ -903,7 +900,7 @@ void Object::SetByteValue( uint16 index, uint8 offset, uint8 value )
         {
             if(!m_objectUpdated)
             {
-                ObjectAccessor::Instance().AddUpdateObject(this);
+                AddToClientUpdateList();
                 m_objectUpdated = true;
             }
         }
@@ -929,7 +926,7 @@ void Object::SetUInt16Value( uint16 index, uint8 offset, uint16 value )
         {
             if(!m_objectUpdated)
             {
-                ObjectAccessor::Instance().AddUpdateObject(this);
+                AddToClientUpdateList();
                 m_objectUpdated = true;
             }
         }
@@ -998,7 +995,7 @@ void Object::SetFlag( uint16 index, uint32 newFlag )
         {
             if(!m_objectUpdated)
             {
-                ObjectAccessor::Instance().AddUpdateObject(this);
+                AddToClientUpdateList();
                 m_objectUpdated = true;
             }
         }
@@ -1019,7 +1016,7 @@ void Object::RemoveFlag( uint16 index, uint32 oldFlag )
         {
             if(!m_objectUpdated)
             {
-                ObjectAccessor::Instance().AddUpdateObject(this);
+                AddToClientUpdateList();
                 m_objectUpdated = true;
             }
         }
@@ -1044,7 +1041,7 @@ void Object::SetByteFlag( uint16 index, uint8 offset, uint8 newFlag )
         {
             if(!m_objectUpdated)
             {
-                ObjectAccessor::Instance().AddUpdateObject(this);
+                AddToClientUpdateList();
                 m_objectUpdated = true;
             }
         }
@@ -1069,7 +1066,7 @@ void Object::RemoveByteFlag( uint16 index, uint8 offset, uint8 oldFlag )
         {
             if(!m_objectUpdated)
             {
-                ObjectAccessor::Instance().AddUpdateObject(this);
+                AddToClientUpdateList();
                 m_objectUpdated = true;
             }
         }
@@ -1084,6 +1081,38 @@ bool Object::PrintIndexError(uint32 index, bool set) const
     return false;
 }
 
+void Object::BuildUpdateDataForPlayer(Player* pl, UpdateDataMapType& update_players)
+{
+    UpdateDataMapType::iterator iter = update_players.find(pl);
+
+    if (iter == update_players.end())
+    {
+        std::pair<UpdateDataMapType::iterator, bool> p = update_players.insert( UpdateDataMapType::value_type(pl, UpdateData()) );
+        assert(p.second);
+        iter = p.first;
+    }
+
+    BuildValuesUpdateBlockForPlayer(&iter->second, iter->first);
+}
+
+void Object::AddToClientUpdateList()
+{
+    sLog.outError("Unexpected call of Object::AddToClientUpdateList for object (TypeId: %u Update fields: %u)",GetTypeId(), m_valuesCount);
+    ASSERT(false);
+}
+
+void Object::RemoveFromClientUpdateList()
+{
+    sLog.outError("Unexpected call of Object::RemoveFromClientUpdateList for object (TypeId: %u Update fields: %u)",GetTypeId(), m_valuesCount);
+    ASSERT(false);
+}
+
+void Object::BuildUpdateData( UpdateDataMapType& update_players )
+{
+    sLog.outError("Unexpected call of Object::BuildUpdateData for object (TypeId: %u Update fields: %u)",GetTypeId(), m_valuesCount);
+    ASSERT(false);
+}
+
 WorldObject::WorldObject()
     : m_mapId(0), m_InstanceId(0), m_phaseMask(PHASEMASK_NORMAL),
     m_positionX(0.0f), m_positionY(0.0f), m_positionZ(0.0f), m_orientation(0.0f), m_currMap(NULL)
@@ -1092,6 +1121,7 @@ WorldObject::WorldObject()
 
 void WorldObject::CleanupsBeforeDelete()
 {
+    RemoveFromWorld();
 }
 
 void WorldObject::_Create( uint32 guidlow, HighGuid guidhigh, uint32 phaseMask )
@@ -1359,6 +1389,16 @@ bool WorldObject::HasInArc(const float arcangle, const WorldObject* obj) const
     return (( angle >= lborder ) && ( angle <= rborder ));
 }
 
+bool WorldObject::isInFrontInMap(WorldObject const* target, float distance,  float arc) const
+{
+    return IsWithinDistInMap(target, distance) && HasInArc( arc, target );
+}
+
+bool WorldObject::isInBackInMap(WorldObject const* target, float distance, float arc) const
+{
+    return IsWithinDistInMap(target, distance) && !HasInArc( 2 * M_PI - arc, target );
+}
+
 void WorldObject::GetRandomPoint( float x, float y, float z, float distance, float &rand_x, float &rand_y, float &rand_z) const
 {
     if(distance == 0)
@@ -1412,7 +1452,7 @@ void WorldObject::MonsterTextEmote(const char* text, uint64 TargetGuid, bool IsB
 {
     WorldPacket data(SMSG_MESSAGECHAT, 200);
     BuildMonsterChat(&data,IsBossEmote ? CHAT_MSG_RAID_BOSS_EMOTE : CHAT_MSG_MONSTER_EMOTE,text,LANG_UNIVERSAL,GetName(),TargetGuid);
-    SendMessageToSetInRange(&data,sWorld.getConfig(CONFIG_LISTEN_RANGE_TEXTEMOTE),true);
+    SendMessageToSetInRange(&data,sWorld.getConfig(IsBossEmote ? CONFIG_LISTEN_RANGE_YELL : CONFIG_LISTEN_RANGE_TEXTEMOTE),true);
 }
 
 void WorldObject::MonsterWhisper(const char* text, uint64 receiver, bool IsBossWhisper)
@@ -1464,7 +1504,7 @@ void WorldObject::MonsterSay(int32 textId, uint32 language, uint64 TargetGuid)
     MaNGOS::PlayerDistWorker<MaNGOS::LocalizedPacketDo<MaNGOS::MonsterChatBuilder> > say_worker(this,sWorld.getConfig(CONFIG_LISTEN_RANGE_SAY),say_do);
     TypeContainerVisitor<MaNGOS::PlayerDistWorker<MaNGOS::LocalizedPacketDo<MaNGOS::MonsterChatBuilder> >, WorldTypeMapContainer > message(say_worker);
     CellLock<GridReadGuard> cell_lock(cell, p);
-    cell_lock->Visit(cell_lock, message, *GetMap());
+    cell_lock->Visit(cell_lock, message, *GetMap(), *this, sWorld.getConfig(CONFIG_LISTEN_RANGE_SAY));
 }
 
 void WorldObject::MonsterYell(int32 textId, uint32 language, uint64 TargetGuid)
@@ -1480,7 +1520,7 @@ void WorldObject::MonsterYell(int32 textId, uint32 language, uint64 TargetGuid)
     MaNGOS::PlayerDistWorker<MaNGOS::LocalizedPacketDo<MaNGOS::MonsterChatBuilder> > say_worker(this,sWorld.getConfig(CONFIG_LISTEN_RANGE_YELL),say_do);
     TypeContainerVisitor<MaNGOS::PlayerDistWorker<MaNGOS::LocalizedPacketDo<MaNGOS::MonsterChatBuilder> >, WorldTypeMapContainer > message(say_worker);
     CellLock<GridReadGuard> cell_lock(cell, p);
-    cell_lock->Visit(cell_lock, message, *GetMap());
+    cell_lock->Visit(cell_lock, message, *GetMap(), *this, sWorld.getConfig(CONFIG_LISTEN_RANGE_YELL));
 }
 
 void WorldObject::MonsterYellToZone(int32 textId, uint32 language, uint64 TargetGuid)
@@ -1509,7 +1549,7 @@ void WorldObject::MonsterTextEmote(int32 textId, uint64 TargetGuid, bool IsBossE
     MaNGOS::PlayerDistWorker<MaNGOS::LocalizedPacketDo<MaNGOS::MonsterChatBuilder> > say_worker(this,sWorld.getConfig(CONFIG_LISTEN_RANGE_TEXTEMOTE),say_do);
     TypeContainerVisitor<MaNGOS::PlayerDistWorker<MaNGOS::LocalizedPacketDo<MaNGOS::MonsterChatBuilder> >, WorldTypeMapContainer > message(say_worker);
     CellLock<GridReadGuard> cell_lock(cell, p);
-    cell_lock->Visit(cell_lock, message, *GetMap());
+    cell_lock->Visit(cell_lock, message, *GetMap(), *this, sWorld.getConfig(IsBossEmote ? CONFIG_LISTEN_RANGE_YELL : CONFIG_LISTEN_RANGE_TEXTEMOTE));
 }
 
 void WorldObject::MonsterWhisper(int32 textId, uint64 receiver, bool IsBossWhisper)
@@ -1643,7 +1683,7 @@ namespace MaNGOS
 
                 float x,y,z;
 
-                if( !c->isAlive() || c->hasUnitState(UNIT_STAT_ROOT | UNIT_STAT_STUNNED | UNIT_STAT_DISTRACTED) ||
+                if( !c->isAlive() || c->hasUnitState(UNIT_STAT_ROOT | UNIT_STAT_STUNNED | UNIT_STAT_DISTRACTED | UNIT_STAT_DIED) ||
                     !c->GetMotionMaster()->GetDestination(x,y,z) )
                 {
                     x = c->GetPositionX();
@@ -1740,8 +1780,8 @@ void WorldObject::GetNearPoint(WorldObject const* searcher, float &x, float &y, 
         TypeContainerVisitor<MaNGOS::WorldObjectWorker<MaNGOS::NearUsedPosDo>, WorldTypeMapContainer > world_obj_worker(worker);
 
         CellLock<GridReadGuard> cell_lock(cell, p);
-        cell_lock->Visit(cell_lock, grid_obj_worker,  *GetMap());
-        cell_lock->Visit(cell_lock, world_obj_worker, *GetMap());
+        cell_lock->Visit(cell_lock, grid_obj_worker,  *GetMap(), *this, distance2d);
+        cell_lock->Visit(cell_lock, world_obj_worker, *GetMap(), *this, distance2d);
     }
 
     // maybe can just place in primary position
@@ -1834,7 +1874,7 @@ void WorldObject::SetPhaseMask(uint32 newPhaseMask, bool update)
     m_phaseMask = newPhaseMask;
 
     if(update && IsInWorld())
-        ObjectAccessor::UpdateObjectVisibility(this);
+        UpdateObjectVisibility();
 }
 
 void WorldObject::PlayDistanceSound( uint32 sound_id, Player* target /*= NULL*/ )
@@ -1856,4 +1896,53 @@ void WorldObject::PlayDirectSound( uint32 sound_id, Player* target /*= NULL*/ )
         target->SendDirectMessage( &data );
     else
         SendMessageToSet( &data, true );
+}
+
+void WorldObject::UpdateObjectVisibility()
+{
+    CellPair p = MaNGOS::ComputeCellPair(GetPositionX(), GetPositionY());
+    Cell cell(p);
+
+    GetMap()->UpdateObjectVisibility(this, cell, p);
+}
+
+void WorldObject::AddToClientUpdateList()
+{
+    GetMap()->AddUpdateObject(this);
+}
+
+void WorldObject::RemoveFromClientUpdateList()
+{
+    GetMap()->RemoveUpdateObject(this);
+}
+
+struct WorldObjectChangeAccumulator
+{
+    UpdateDataMapType &i_updateDatas;
+    WorldObject &i_object;
+    WorldObjectChangeAccumulator(WorldObject &obj, UpdateDataMapType &d) : i_updateDatas(d), i_object(obj) {}
+    void Visit(PlayerMapType &m)
+    {
+        for(PlayerMapType::iterator iter = m.begin(); iter != m.end(); ++iter)
+            if(iter->getSource()->HaveAtClient(&i_object))
+                i_object.BuildUpdateDataForPlayer(iter->getSource(), i_updateDatas);
+    }
+
+    template<class SKIP> void Visit(GridRefManager<SKIP> &) {}
+};
+
+void WorldObject::BuildUpdateData( UpdateDataMapType & update_players)
+{
+    CellPair p = MaNGOS::ComputeCellPair(GetPositionX(), GetPositionY());
+    Cell cell(p);
+    cell.data.Part.reserved = ALL_DISTRICT;
+    cell.SetNoCreate();
+    WorldObjectChangeAccumulator notifier(*this, update_players);
+    TypeContainerVisitor<WorldObjectChangeAccumulator, WorldTypeMapContainer > player_notifier(notifier);
+    CellLock<GridReadGuard> cell_lock(cell, p);
+    Map* aMap = GetMap();
+    //we must build packets for all visible players
+    cell_lock->Visit(cell_lock, player_notifier, *aMap, *this, aMap->GetVisibilityDistance());
+
+    ClearUpdateMask(false);
 }

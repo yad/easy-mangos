@@ -135,12 +135,8 @@ uint32 TimeStringToSecs(const std::string& timestring)
     {
         if(isdigit(*itr))
         {
-            std::string str;                                //very complicated typecast char->const char*; is there no better way?
-            str += *itr;
-            const char* tmp = str.c_str();
-
             buffer*=10;
-            buffer+=atoi(tmp);
+            buffer+= (*itr)-'0';
         }
         else
         {
@@ -419,3 +415,49 @@ bool Utf8FitTo(const std::string& str, std::wstring search)
 
     return true;
 }
+
+void utf8printf(FILE *out, const char *str, ...)
+{
+    va_list ap;
+    va_start(ap, str);
+    vutf8printf(stdout, str, &ap);
+    va_end(ap);
+}
+
+void vutf8printf(FILE *out, const char *str, va_list* ap)
+{
+#if PLATFORM == PLATFORM_WINDOWS
+    char temp_buf[32*1024];
+    wchar_t wtemp_buf[32*1024];
+
+    size_t temp_len = vsnprintf(temp_buf, 32*1024, str, *ap);
+
+    size_t wtemp_len = 32*1024-1;
+    Utf8toWStr(temp_buf, temp_len, wtemp_buf, wtemp_len);
+
+    CharToOemBuffW(&wtemp_buf[0], &temp_buf[0], wtemp_len+1);
+    fprintf(out, temp_buf);
+#else
+    vfprintf(out, str, *ap);
+#endif
+}
+
+void hexEncodeByteArray(uint8* bytes, uint32 arrayLen, std::string& result)
+{
+    std::ostringstream ss;
+    for(uint32 i=0; i<arrayLen; ++i)
+    {
+        for(uint8 j=0; j<2; ++j)
+        {
+            unsigned char nibble = 0x0F & (bytes[i]>>((1-j)*4));
+            char encodedNibble;
+            if(nibble < 0x0A)
+                encodedNibble = '0'+nibble;
+            else
+                encodedNibble = 'A'+nibble-0x0A;
+            ss << encodedNibble;
+        }
+    }
+    result = ss.str();
+}
+

@@ -21,7 +21,6 @@
 #include "Policies/SingletonImp.h"
 #include "Database/DatabaseEnv.h"
 #include "Log.h"
-#include "ObjectAccessor.h"
 #include "Transports.h"
 #include "GridDefines.h"
 #include "MapInstanced.h"
@@ -68,6 +67,12 @@ MapManager::Initialize()
     }
 
     InitMaxInstanceId();
+}
+
+void MapManager::InitializeVisibilityDistanceInfo()
+{
+    for(MapMapType::iterator iter=i_maps.begin(); iter != i_maps.end(); ++iter)
+        (*iter).second->InitVisibilityDistance();
 }
 
 // debugging code, should be deleted some day
@@ -176,10 +181,16 @@ bool MapManager::CanPlayerEnter(uint32 mapid, Player* player)
         }
 
         //The player has a heroic mode and tries to enter into instance which has no a heroic mode
-        if (!entry->SupportsHeroicMode() && player->GetDifficulty() == DIFFICULTY_HEROIC)
+        MapDifficulty const* mapDiff = GetMapDifficultyData(entry->MapID,player->GetDifficulty(entry->map_type == MAP_RAID));
+        if (!mapDiff)
         {
+            bool isNormalTargetMap = entry->map_type == MAP_RAID
+                ? (player->GetRaidDifficulty()    == RAID_DIFFICULTY_10MAN_NORMAL)
+                : (player->GetDungeonDifficulty() == DUNGEON_DIFFICULTY_NORMAL);
+
             //Send aborted message
-            player->SendTransferAborted(mapid, TRANSFER_ABORT_DIFFICULTY, DIFFICULTY_HEROIC);
+            // FIX ME: what about absent normal/heroic mode with specific players limit...
+            player->SendTransferAborted(mapid, TRANSFER_ABORT_DIFFICULTY, isNormalTargetMap ? DUNGEON_DIFFICULTY_NORMAL : DUNGEON_DIFFICULTY_HEROIC);
             return false;
         }
 
@@ -256,7 +267,6 @@ MapManager::Update(uint32 diff)
         iter->second->Update(i_timer.GetCurrent());
     }
 
-    ObjectAccessor::Instance().Update(i_timer.GetCurrent());
     for (TransportSet::iterator iter = m_Transports.begin(); iter != m_Transports.end(); ++iter)
         (*iter)->Update(i_timer.GetCurrent());
 
