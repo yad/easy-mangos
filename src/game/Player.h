@@ -1199,6 +1199,97 @@ class MANGOS_DLL_SPEC Player : public Unit
         void AutoStoreLoot(uint8 bag, uint8 slot, uint32 loot_id, LootStore const& store, bool broadcast = false);
         void AutoStoreLoot(uint32 loot_id, LootStore const& store, bool broadcast = false) { AutoStoreLoot(NULL_BAG,NULL_SLOT,loot_id,store,broadcast); }
 
+        /// Flying mounts everywhere mode
+        void FlyingMountsSpellsToItems();
+        bool CanUseFlyingMounts(SpellEntry const* spellInfo);
+        //helpers
+        bool isFlyingSpell(SpellEntry const* spellInfo) const
+        {
+            return spellInfo->EffectApplyAuraName[0]==SPELL_AURA_MOUNTED && 
+            spellInfo->EffectApplyAuraName[1]==SPELL_AURA_MOD_INCREASE_FLIGHT_SPEED && 
+            spellInfo->EffectApplyAuraName[2]==SPELL_AURA_MOD_INCREASE_MOUNTED_SPEED;
+        }
+
+        bool isRunningSpell(SpellEntry const* spellInfo) const
+        {
+            return spellInfo->EffectApplyAuraName[0]==SPELL_AURA_MOUNTED &&
+            spellInfo->EffectApplyAuraName[1]==SPELL_AURA_MOD_INCREASE_MOUNTED_SPEED; 
+        }
+
+        bool isFlyingFormSpell(SpellEntry const* spellInfo) const
+        { 
+            return spellInfo->EffectApplyAuraName[0]==SPELL_AURA_MOD_SHAPESHIFT && 
+            spellInfo->EffectApplyAuraName[1]==SPELL_AURA_MECHANIC_IMMUNITY &&
+            spellInfo->EffectApplyAuraName[2]==SPELL_AURA_FLY;
+        }
+
+        bool isRunningFormSpell(SpellEntry const* spellInfo) const
+        { 
+            return spellInfo->EffectApplyAuraName[0]==SPELL_AURA_MOD_SHAPESHIFT &&
+            spellInfo->EffectApplyAuraName[1]==SPELL_AURA_MECHANIC_IMMUNITY &&
+            spellInfo->EffectApplyAuraName[2]!=SPELL_AURA_FLY;
+        }
+
+        void RemoveFlyingSpells()
+        { 
+            Unmount(); 
+            RemoveSpellsCausingAura(SPELL_AURA_MOUNTED); 
+            RemoveSpellsCausingAura(SPELL_AURA_MOD_INCREASE_FLIGHT_SPEED);
+            RemoveSpellsCausingAura(SPELL_AURA_MOD_INCREASE_MOUNTED_SPEED);
+        }
+
+        void RemoveFlyingFormSpells()
+        { 
+            RemoveSpellsCausingAura(SPELL_AURA_MOD_SHAPESHIFT);
+            RemoveSpellsCausingAura(SPELL_AURA_MECHANIC_IMMUNITY);
+            RemoveSpellsCausingAura(SPELL_AURA_FLY);
+        }
+
+        void RemoveRunningFormSpells()
+        { 
+            RemoveSpellsCausingAura(SPELL_AURA_MOD_SHAPESHIFT);
+            RemoveSpellsCausingAura(SPELL_AURA_MECHANIC_IMMUNITY);
+        }
+
+        void RemoveAllFlyingSpells()
+        {
+            RemoveFlyingSpells();
+            RemoveFlyingFormSpells();
+        }
+
+        bool HasAuraTypeFlyingSpell()
+        {
+            return HasAuraType(SPELL_AURA_MOUNTED) &&
+            HasAuraType(SPELL_AURA_MOD_INCREASE_FLIGHT_SPEED) &&
+            HasAuraType(SPELL_AURA_MOD_INCREASE_MOUNTED_SPEED);
+        }
+
+        bool HasAuraTypeFlyingFormSpell()
+        {
+            return HasAuraType(SPELL_AURA_MOD_SHAPESHIFT) &&
+            HasAuraType(SPELL_AURA_MECHANIC_IMMUNITY) &&
+            HasAuraType(SPELL_AURA_FLY);
+        }
+
+        bool HasAuraTypeRunningFormSpell()
+        {
+            return HasAuraType(SPELL_AURA_MOD_SHAPESHIFT) &&
+            HasAuraType(SPELL_AURA_MECHANIC_IMMUNITY) &&
+            !HasAuraType(SPELL_AURA_FLY);
+        }
+
+        bool GetFlyingMountTimer()
+        {
+            return m_flytimer < time(NULL);
+        }
+
+        void SetFlyingMountTimer()
+        {
+            m_flytimer = time(NULL) + 0.5;
+        }
+        //end of helpers.
+        ///end of Flying mounts everywhere mode
+
         uint8 _CanTakeMoreSimilarItems(uint32 entry, uint32 count, Item* pItem, uint32* no_space_count = NULL) const;
         uint8 _CanStoreItem( uint8 bag, uint8 slot, ItemPosCountVec& dest, uint32 entry, uint32 count, Item *pItem = NULL, bool swap = false, uint32* no_space_count = NULL ) const;
 
@@ -2418,6 +2509,7 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         uint32 m_deathTimer;
         time_t m_deathExpireTime;
+        time_t m_flytimer;
 
         uint32 m_restTime;
 
