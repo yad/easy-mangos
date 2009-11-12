@@ -1586,6 +1586,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         MotionMaster i_motionMaster;
 
         uint32 m_reactiveTimer[MAX_REACTIVE];
+        float baseMoveSpeed[MAX_MOVE_TYPE];
         uint32 m_regenTimer;
         uint32 m_lastManaUseTimer;
 

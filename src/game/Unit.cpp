@@ -48,19 +48,6 @@
 
 #include <math.h>
 
-float baseMoveSpeed[MAX_MOVE_TYPE] =
-{
-    2.5f,                                                   // MOVE_WALK
-    7.0f,                                                   // MOVE_RUN
-    1.25f,                                                  // MOVE_RUN_BACK
-    4.722222f,                                              // MOVE_SWIM
-    4.5f,                                                   // MOVE_SWIM_BACK
-    3.141594f,                                              // MOVE_TURN_RATE
-    7.0f,                                                   // MOVE_FLIGHT
-    4.5f,                                                   // MOVE_FLIGHT_BACK
-    3.14f                                                   // MOVE_PITCH_RATE
-};
-
 // Used for prepare can/can`t triggr aura
 static bool InitTriggerAuraData();
 // Define can trigger auras
@@ -155,6 +142,29 @@ Unit::Unit()
     // remove aurastates allowing special moves
     for(int i=0; i < MAX_REACTIVE; ++i)
         m_reactiveTimer[i] = 0;
+
+    baseMoveSpeed[MOVE_WALK] = 2.5f;
+    baseMoveSpeed[MOVE_RUN] = 7.0f;
+    baseMoveSpeed[MOVE_RUN_BACK] = 1.25f;
+    baseMoveSpeed[MOVE_SWIM] = 4.722222f;
+    baseMoveSpeed[MOVE_SWIM_BACK] = 4.5f;
+    baseMoveSpeed[MOVE_TURN_RATE] = 3.141594f;
+    baseMoveSpeed[MOVE_FLIGHT] = 7.0f;
+    baseMoveSpeed[MOVE_FLIGHT_BACK] = 4.5f;
+    baseMoveSpeed[MOVE_PITCH_RATE] = 3.14f;
+
+    /*float baseMoveSpeed[MAX_MOVE_TYPE] =
+    {
+        2.5f,                                                   // MOVE_WALK
+        7.0f,                                                   // MOVE_RUN
+        1.25f,                                                  // MOVE_RUN_BACK
+        4.722222f,                                              // MOVE_SWIM
+        4.5f,                                                   // MOVE_SWIM_BACK
+        3.141594f,                                              // MOVE_TURN_RATE
+        7.0f,                                                   // MOVE_FLIGHT
+        4.5f,                                                   // MOVE_FLIGHT_BACK
+        3.14f                                                   // MOVE_PITCH_RATE
+    };*/
 }
 
 Unit::~Unit()

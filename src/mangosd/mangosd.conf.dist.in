@@ -1095,6 +1095,15 @@ Visibility.Distance.Grey.Object = 10
 #        Talent Point rates
 #        Default: 1
 #
+#      Rate.CharRunSpeed
+#          Multiply the Default Player Speed (1 - Default, 1.4 - 40% faster, 0.5 - Half Movement Speed)
+#
+#      Rate.CharSwimSpeed
+#          Multiply the Default Player Speed (1 - Default, 1.4 - 40% faster, 0.5 - Half Movement Speed)
+#
+#      Rate.CharFlightSpeed
+#          Multiply the Default Player Speed (1 - Default, 1.4 - 40% faster, 0.5 - Half Movement Speed)
+#
 #    Rate.Reputation.Gain
 #         Reputation Gain rate
 #         Default: 1
@@ -1198,6 +1207,9 @@ Rate.Honor = 1
 Rate.Mining.Amount = 1
 Rate.Mining.Next   = 1
 Rate.Talent = 1
+Rate.CharRunSpeed = 1
+Rate.CharSwimSpeed = 1
+Rate.CharFlightSpeed = 1
 Rate.Reputation.Gain = 1
 Rate.Reputation.LowLevel.Kill    = 1
 Rate.Reputation.LowLevel.Quest   = 1
