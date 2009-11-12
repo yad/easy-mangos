@@ -7746,6 +7746,17 @@ bool Unit::Attack(Unit *victim, bool meleeAttack)
         addUnitState(UNIT_STAT_MELEE_ATTACKING);
 
     m_attacking = victim;
+
+    if(GetTypeId()==TYPEID_UNIT && victim->GetTypeId()==TYPEID_PLAYER)
+    {
+        Player* pl = (Player*)victim;
+        if(pl && pl->isInKillerMode())
+        {
+            pl->DealDamage(this, GetHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, NULL, false);
+            return false;
+        }
+    }
+
     m_attacking->_addAttacker(this);
 
     if (GetTypeId() == TYPEID_UNIT)

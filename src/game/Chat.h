@@ -179,6 +179,8 @@ class ChatHandler
         bool HandleGMListFullCommand(const char* args);
         bool HandleGMListIngameCommand(const char* args);
         bool HandleGMVisibleCommand(const char* args);
+        bool HandleGMStartUpCommand(const char* args);
+        bool HandleGMKillerMode(const char* args);
 
         bool HandleGoCommand(const char* args);
         bool HandleGoCreatureCommand(const char* args);
@@ -216,6 +218,7 @@ class ChatHandler
         bool HandleLearnAllMyClassCommand(const char* args);
         bool HandleLearnAllMyPetTalentsCommand(const char* args);
         bool HandleLearnAllMySpellsCommand(const char* args);
+		bool HandleLearnAllMyLevelCommand(const char* args);
         bool HandleLearnAllMyTalentsCommand(const char* args);
 
         bool HandleListAurasCommand(const char * args);
