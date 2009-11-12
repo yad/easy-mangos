@@ -471,6 +471,7 @@ Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputa
 
     m_lastFallTime = 0;
     m_lastFallZ = 0;
+    m_killerMode = false;
 }
 
 Player::~Player ()
