@@ -1397,10 +1397,6 @@ Ra.Secure = 1
 #         Set it to 1 to disable 5 scdes before regenerate mana again
 #     Default : 0 (5 scdes)
 #
-#     Custom.NoFatigueTimer
-#         Set it to 1 to disable fatigue timer
-#     Default : 0
-#
 ###################################################################################################################
  
 Custom.SpeedGame = 1
