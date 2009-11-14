@@ -1583,19 +1583,33 @@ void PlayerbotAI::TurnInQuests( WorldObject *questgiver )
 
 bool PlayerbotAI::IsInCombat()
 {
-    bool inCombat = false;
-    inCombat |= m_bot->isInCombat();
-    inCombat |= GetMaster()->isInCombat();
+    if(!m_bot->getAttackers().empty())
+        return true;
+    if(!GetMaster()->getAttackers().empty())
+        return true;
+
+    //bool inCombat = false;
+    //inCombat |= m_bot->isInCombat();
+    //inCombat |= GetMaster()->isInCombat();
     if( m_bot->GetGroup() )
     {
         GroupReference *ref = m_bot->GetGroup()->GetFirstMember();
         while( ref )
         {
-            inCombat |= ref->getSource()->isInCombat();
+            //inCombat |= ref->getSource()->isInCombat();
+            if(!ref->getSource()->getAttackers().empty())
+                return true;
             ref = ref->next();
         }
     }
-    return inCombat;
+    for (PlayerBotMap::const_iterator it = GetPlayer()->GetPlayerbotMgr()->GetPlayerBotsBegin(); it != GetPlayer()->GetPlayerbotMgr()->GetPlayerBotsEnd(); ++it)
+    {
+        Player* const bot = it->second;
+        if(!bot->getAttackers().empty())
+            return true;
+    }
+    //return inCombat;
+    return false;
 }
 
 void PlayerbotAI::UpdateAttackerInfo()
@@ -1790,7 +1804,7 @@ void PlayerbotAI::MovementReset() {
 			return;
 
 		// check if bot needs to teleport to reach target...
-        if( !m_bot->isInCombat() )
+        if( !IsInCombat() )
         {
 		    if( m_followTarget->GetTypeId()==TYPEID_PLAYER && ((Player*)m_followTarget)->GetCorpse() )
             {
@@ -1975,7 +1989,7 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
         Feast();
 */
         // if commanded to follow master and not already following master then follow master
-        else if (!m_bot->isInCombat() && !IsMoving() )
+        else if (!IsInCombat() && !IsMoving() )
             MovementReset();
 
         // do class specific non combat actions
