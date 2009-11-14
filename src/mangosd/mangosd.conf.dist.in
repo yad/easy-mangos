@@ -311,7 +311,7 @@ GmLogFile = ""
 GmLogTimestamp = 0
 GmLogPerAccount = 0
 RaLogFile = ""
-LogColors = ""
+LogColors = "13 7 11 9"
 
 ###################################################################################################################
 # SERVER SETTINGS
@@ -681,7 +681,7 @@ SkillChance.Milling = 0
 OffhandCheckAtTalentsReset = 0
 ClientCacheVersion = 0
 Event.Announce = 0
-BeepAtStart = 1
+BeepAtStart = 0
 Motd = "Welcome to the Massive Network Game Object Server."
 
 ###################################################################################################################
