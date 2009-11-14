@@ -785,6 +785,686 @@ bool Player::StoreNewItemInBestSlots(uint32 titem_id, uint32 titem_amount)
     return false;
 }
 
+void Player::AutoEquipItem()
+{
+    for(int i = INVENTORY_SLOT_ITEM_START; i < INVENTORY_SLOT_ITEM_END; i++)
+    {
+        if(Item* pItem = GetItemByPos( INVENTORY_SLOT_BAG_0, i ))
+        {
+            uint16 eDest;
+            // equip offhand weapon/shield if it attempt equipped before main-hand weapon
+            uint8 msg = CanEquipItem( NULL_SLOT, eDest, pItem, false );
+            if( msg == EQUIP_ERR_OK )
+            {
+                RemoveItem(INVENTORY_SLOT_BAG_0, i,true);
+                EquipItem( eDest, pItem, true);
+            }
+            // move other items to more appropriate slots (ammo not equipped in special bag)
+            else
+            {
+                ItemPosCountVec sDest;
+                msg = CanStoreItem( NULL_BAG, NULL_SLOT, sDest, pItem, false );
+                if( msg == EQUIP_ERR_OK )
+                {
+                    RemoveItem(INVENTORY_SLOT_BAG_0, i,true);
+                    pItem = StoreItem( sDest, pItem, true);
+                }
+
+                // if  this is ammo then use it
+                uint8 msg = CanUseAmmo( pItem->GetEntry() );
+                if( msg == EQUIP_ERR_OK )
+                    SetAmmo( pItem->GetEntry() );
+            }
+        }
+    }
+
+    // look for items in main bag 
+    for (int slot=INVENTORY_SLOT_ITEM_START; slot < INVENTORY_SLOT_ITEM_END; ++slot)
+    {
+        const ItemPrototype *new_item = NULL;
+        Item* const pItem = GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
+        if (!pItem) // si il n'y a pas d'objet dans l'emplacement sac
+            continue;
+        new_item = pItem->GetProto();
+        if (new_item->InventoryType == INVTYPE_NON_EQUIP) // si l'objet n'est pas equipable
+            continue;
+        if (new_item->RequiredLevel > getLevel() ) // si je n'ai pas le niveau
+            continue;
+        for (int i = EQUIPMENT_SLOT_START; i < EQUIPMENT_SLOT_END; i++)
+        {
+            const ItemPrototype *mon_item = NULL;
+            Item *item = GetItemByPos(INVENTORY_SLOT_BAG_0, i);
+            if(item) //Si il y a un item alors si
+            {
+                mon_item = item->GetProto();
+                if(mon_item->ItemId == new_item->ItemId) //C'est le même donc osef...
+                    continue;
+                if(mon_item->ItemLevel > new_item->ItemLevel) //Il est moins bien (couleur) donc osef...
+                    continue;
+            }
+            switch( new_item->InventoryType )
+            {
+                case INVTYPE_HEAD:
+                {
+                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                        break;
+                    else if(i == EQUIPMENT_SLOT_HEAD)
+                    {
+                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
+                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                        SwapItem(src, dst);
+                    }
+                    break;
+                }
+                case INVTYPE_NECK:
+                    /*if(i == EQUIPMENT_SLOT_NECK)*/
+                    break;
+                case INVTYPE_SHOULDERS:
+                {
+                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                        break;
+                    else if(i == EQUIPMENT_SLOT_SHOULDERS)
+                    {
+                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
+                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                        SwapItem(src, dst);
+                    }
+                    break;
+                }
+                case INVTYPE_BODY:
+                {
+                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                        break;
+                    else if(i == EQUIPMENT_SLOT_BODY)
+                    {
+                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
+                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                        SwapItem(src, dst);
+                    }
+                    break;
+                }
+                case INVTYPE_CHEST:
+                {
+                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                        break;
+                    else if(i == EQUIPMENT_SLOT_CHEST)
+                    {
+                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
+                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                        SwapItem(src, dst);
+                    }
+                    break;
+                }
+                case INVTYPE_ROBE:
+                {
+                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                        break;
+                    else if(i == EQUIPMENT_SLOT_CHEST)
+                    {
+                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
+                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                        SwapItem(src, dst);
+                    }
+                    break;
+                }
+                case INVTYPE_WAIST:
+                {
+                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                        break;
+                    else if(i == EQUIPMENT_SLOT_WAIST)
+                    {
+                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
+                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                        SwapItem(src, dst);
+                    }
+                    break;
+                }
+                case INVTYPE_LEGS:
+                {
+                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                        break;
+                    else if(i == EQUIPMENT_SLOT_LEGS)
+                    {
+                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
+                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                        SwapItem(src, dst);
+                    }
+                    break;
+                }
+                case INVTYPE_FEET:
+                {
+                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                        break;
+                    else if(i == EQUIPMENT_SLOT_FEET)
+                    {
+                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
+                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                        SwapItem(src, dst);
+                    }
+                    break;
+                }
+                case INVTYPE_WRISTS:
+                {
+                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                        break;
+                    else if(i == EQUIPMENT_SLOT_WRISTS)
+                    {
+                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
+                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                        SwapItem(src, dst);
+                    }
+                    break;
+                }
+                case INVTYPE_HANDS:
+                {
+                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                        break;
+                    else if(i == EQUIPMENT_SLOT_HANDS)
+                    {
+                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
+                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                        SwapItem(src, dst);
+                    }
+                    break;
+                }
+                case INVTYPE_FINGER:
+                    //if(i == EQUIPMENT_SLOT_FINGER1 || i = EQUIPMENT_SLOT_FINGER2)
+                    break;
+                case INVTYPE_TRINKET:
+                    //if(i == EQUIPMENT_SLOT_TRINKET1 || i == EQUIPMENT_SLOT_TRINKET2)
+                    break;
+                case INVTYPE_CLOAK:
+                {
+                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                        break;
+                    else if(i ==  EQUIPMENT_SLOT_BACK)
+                    {
+                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
+                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                        SwapItem(src, dst);
+                    }
+                    break;
+                }
+                case INVTYPE_WEAPON:
+                {
+                    if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
+                        break;
+                    else if(i == EQUIPMENT_SLOT_MAINHAND)
+                    {
+                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
+                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                        SwapItem(src, dst);
+                    }
+                    break;
+                        /*if(CanDualWield())    slots[1] = EQUIPMENT_SLOT_OFFHAND;*/
+                }
+                case INVTYPE_SHIELD:
+                {
+                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                        break;
+                    else if(i == EQUIPMENT_SLOT_OFFHAND)
+                    {
+                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
+                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                        SwapItem(src, dst);
+                    }
+                    break;
+                }
+                case INVTYPE_RANGED:
+                {
+                    if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
+                        break;
+                    else if(i == EQUIPMENT_SLOT_RANGED)
+                    {
+                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
+                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                        SwapItem(src, dst);
+                    }
+                    break;
+                }
+                case INVTYPE_2HWEAPON:
+                {
+                    if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
+                        break;
+                    else if(i == EQUIPMENT_SLOT_MAINHAND)
+                    {
+                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
+                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                        SwapItem(src, dst);
+                    }
+                    /*if (CanDualWield() && CanTitanGrip())    slots[1] = EQUIPMENT_SLOT_OFFHAND;*/
+                break;
+                }
+                case INVTYPE_TABARD:
+                    //if(i == EQUIPMENT_SLOT_TABARD)
+                    break;
+                case INVTYPE_WEAPONMAINHAND:
+                {
+                    if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
+                        break;
+                    else if(i == EQUIPMENT_SLOT_MAINHAND)
+                    {
+                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
+                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                        SwapItem(src, dst);
+                    }
+                    break;
+                }
+                case INVTYPE_WEAPONOFFHAND:
+                {
+                    if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
+                        break;
+                    else if(i == EQUIPMENT_SLOT_OFFHAND)
+                    {
+                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
+                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                        SwapItem(src, dst);
+                    }
+                    break;
+                }
+                case INVTYPE_HOLDABLE:
+                    //if(i == EQUIPMENT_SLOT_OFFHAND)
+                    break;
+                case INVTYPE_THROWN:
+                {
+                    if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
+                        break;
+                    else if(i == EQUIPMENT_SLOT_RANGED)
+                    {
+                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
+                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                        SwapItem(src, dst);
+                    }
+                    break;
+                }
+                case INVTYPE_RANGEDRIGHT:
+                {
+                    if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
+                        break;
+                    else if(i == EQUIPMENT_SLOT_RANGED)
+                    {
+                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
+                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                        SwapItem(src, dst);
+                    }
+                    break;
+                }
+                case INVTYPE_BAG:
+                    /*if(i == INVENTORY_SLOT_BAG_START + 0 || i == INVENTORY_SLOT_BAG_START + 1 ||
+                        i == INVENTORY_SLOT_BAG_START + 2 || i == INVENTORY_SLOT_BAG_START + 3)
+                    {
+                        if(mon_item && new_item && mon_item->ContainerSlots >= new_item->ContainerSlots)
+                            break;
+                        else
+                        {
+                            uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
+                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                            SwapItem(src, dst);
+                        }
+                    }*/                    
+                    break;
+                case INVTYPE_RELIC:
+                {
+                    /*switch(proto->SubClass)
+                    {
+                        case ITEM_SUBCLASS_ARMOR_LIBRAM:
+                            if (pClass == CLASS_PALADIN)
+                                if(i == EQUIPMENT_SLOT_RANGED;
+                            break;
+                        case ITEM_SUBCLASS_ARMOR_IDOL:
+                            if (pClass == CLASS_DRUID)
+                                if(i == EQUIPMENT_SLOT_RANGED;
+                            break;
+                        case ITEM_SUBCLASS_ARMOR_TOTEM:
+                            if (pClass == CLASS_SHAMAN)
+                                if(i == EQUIPMENT_SLOT_RANGED;
+                            break;
+                        case ITEM_SUBCLASS_ARMOR_MISC:
+                            if (pClass == CLASS_WARLOCK)
+                                if(i == EQUIPMENT_SLOT_RANGED;
+                            break;
+                        case ITEM_SUBCLASS_ARMOR_SIGIL:
+                            if (pClass == CLASS_DEATH_KNIGHT)
+                                if(i == EQUIPMENT_SLOT_RANGED;
+                            break;
+                    }*/
+                    break;
+                }
+                default :
+                    break;
+            }
+        }
+    }
+
+    // for all for items in other bags
+    for (int bag = INVENTORY_SLOT_BAG_START; bag < INVENTORY_SLOT_BAG_END; ++bag)
+    {
+        Bag* const pBag = (Bag*)GetItemByPos(INVENTORY_SLOT_BAG_0, bag);
+        if (!pBag)
+            continue;
+        for (int slot = 0; slot < pBag->GetBagSize(); ++slot)
+        {
+            const ItemPrototype *new_item = NULL;
+            Item* const pItem = GetItemByPos(bag, slot);
+            if (!pItem) // si il n'y a pas d'objet dans l'emplacement sac
+                continue;
+            new_item = pItem->GetProto();
+            if (new_item->InventoryType == INVTYPE_NON_EQUIP) // si l'objet n'est pas equipable
+                continue;
+            if (new_item->RequiredLevel > getLevel() ) // si je n'ai pas le niveau
+                continue;
+            for (int i = EQUIPMENT_SLOT_START; i < EQUIPMENT_SLOT_END; i++)
+            {
+                const ItemPrototype *mon_item = NULL;
+                Item *item = GetItemByPos(INVENTORY_SLOT_BAG_0, i);
+                if(item) //Si il y a un item alors si
+                {
+                    mon_item = item->GetProto();
+                    if(mon_item->ItemId == new_item->ItemId) //C'est le même donc osef...
+                        continue;
+                    if(mon_item->ItemLevel > new_item->ItemLevel) //Il est moins bien (couleur) donc osef...
+                        continue;
+                }
+                switch( new_item->InventoryType )
+                {
+                    case INVTYPE_HEAD:
+                    {
+                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                            break;
+                        else if(i == EQUIPMENT_SLOT_HEAD)
+                        {
+                            uint16 src = ((bag << 8) | slot);
+                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                            SwapItem(src, dst);
+                        }
+                        break;
+                    }
+                    case INVTYPE_NECK:
+                    {
+                        //if(i == EQUIPMENT_SLOT_NECK)
+                        break;
+                    }
+                    case INVTYPE_SHOULDERS:
+                    {
+                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                            break;
+                        else if(i == EQUIPMENT_SLOT_SHOULDERS)
+                        {
+                            uint16 src = ((bag << 8) | slot);
+                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                            SwapItem(src, dst);
+                        }
+                        break;
+                    }
+                    case INVTYPE_BODY:
+                    {
+                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                            break;
+                        else if(i == EQUIPMENT_SLOT_BODY)
+                        {
+                            uint16 src = ((bag << 8) | slot);
+                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                            SwapItem(src, dst);
+                        }
+                        break;
+                    }
+                    case INVTYPE_CHEST:
+                    {
+                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                            break;
+                        else if(i == EQUIPMENT_SLOT_CHEST)
+                        {
+                            uint16 src = ((bag << 8) | slot);
+                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                            SwapItem(src, dst);
+                        }
+                        break;
+                    }
+                    case INVTYPE_ROBE:
+                    {
+                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                            break;
+                        else if(i == EQUIPMENT_SLOT_CHEST)
+                        {
+                            uint16 src = ((bag << 8) | slot);
+                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                            SwapItem(src, dst);
+                        }
+                        break;
+                    }
+                    case INVTYPE_WAIST:
+                    {
+                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                            break;
+                        else if(i == EQUIPMENT_SLOT_WAIST)
+                        {
+                            uint16 src = ((bag << 8) | slot);
+                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                            SwapItem(src, dst);
+                        }
+                        break;
+                    }
+                    case INVTYPE_LEGS:
+                    {
+                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                            break;
+                        else if(i == EQUIPMENT_SLOT_LEGS)
+                        {
+                            uint16 src = ((bag << 8) | slot);
+                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                            SwapItem(src, dst);
+                        }
+                        break;
+                    }
+                    case INVTYPE_FEET:
+                    {
+                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                            break;
+                        else if(i == EQUIPMENT_SLOT_FEET)
+                        {
+                            uint16 src = ((bag << 8) | slot);
+                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                            SwapItem(src, dst);
+                        }
+                        break;
+                    }
+                    case INVTYPE_WRISTS:
+                    {
+                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                            break;
+                        else if(i == EQUIPMENT_SLOT_WRISTS)
+                        {
+                            uint16 src = ((bag << 8) | slot);
+                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                            SwapItem(src, dst);
+                        }
+                        break;
+                    }
+                    case INVTYPE_HANDS:
+                    {
+                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                            break;
+                        else if(i == EQUIPMENT_SLOT_HANDS)
+                        {
+                            uint16 src = ((bag << 8) | slot);
+                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                            SwapItem(src, dst);
+                        }
+                        break;
+                    }
+                    case INVTYPE_FINGER:
+                        //if(i == EQUIPMENT_SLOT_FINGER1 || i = EQUIPMENT_SLOT_FINGER2)
+                        break;
+                    case INVTYPE_TRINKET:
+                        //if(i == EQUIPMENT_SLOT_TRINKET1 || i == EQUIPMENT_SLOT_TRINKET2)
+                        break;
+                    case INVTYPE_CLOAK:
+                    {
+                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                            break;
+                        else if(i ==  EQUIPMENT_SLOT_BACK)
+                        {
+                            uint16 src = ((bag << 8) | slot);
+                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                            SwapItem(src, dst);
+                        }
+                        break;
+                    }
+                    case INVTYPE_WEAPON:
+                    {
+                        if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
+                            break;
+                        else if(i == EQUIPMENT_SLOT_MAINHAND)
+                        {
+                            uint16 src = ((bag << 8) | slot);
+                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                            SwapItem(src, dst);
+                        }                        
+                        /*if(CanDualWield()) slots[1] = EQUIPMENT_SLOT_OFFHAND;*/
+                        break;
+                    }
+                    case INVTYPE_SHIELD:
+                    {
+                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                            break;
+                        else if(i == EQUIPMENT_SLOT_OFFHAND)
+                        {
+                            uint16 src = ((bag << 8) | slot);
+                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                            SwapItem(src, dst);
+                        }                        
+                        break;
+                    }
+                    case INVTYPE_RANGED:
+                    {
+                        if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
+                            break;
+                        else if(i == EQUIPMENT_SLOT_RANGED)
+                        {
+                            uint16 src = ((bag << 8) | slot);
+                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                            SwapItem(src, dst);
+                        }                        
+                        break;
+                    }
+                    case INVTYPE_2HWEAPON:
+                    {
+                        if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
+                            break;
+                        else if(i == EQUIPMENT_SLOT_MAINHAND)
+                        {
+                            uint16 src = ((bag << 8) | slot);
+                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                            SwapItem(src, dst);
+                        }                        
+                        /*if (CanDualWield() && CanTitanGrip()) slots[1] = EQUIPMENT_SLOT_OFFHAND;*/
+                        break;
+                    }
+                    case INVTYPE_TABARD:
+                        //if(i == EQUIPMENT_SLOT_TABARD)
+                        break;
+                    case INVTYPE_WEAPONMAINHAND:
+                    {
+                        if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
+                            break;
+                        else if(i == EQUIPMENT_SLOT_MAINHAND)
+                        {
+                            uint16 src = ((bag << 8) | slot);
+                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                            SwapItem(src, dst);
+                        }                        
+                        break;
+                    }
+                    case INVTYPE_WEAPONOFFHAND:
+                    {
+                        if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
+                            break;
+                        else if(i == EQUIPMENT_SLOT_OFFHAND)
+                        {
+                            uint16 src = ((bag << 8) | slot);
+                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                            SwapItem(src, dst);
+                        }                        
+                        break;
+                    }
+                    case INVTYPE_HOLDABLE:
+                        //if(i == EQUIPMENT_SLOT_OFFHAND)
+                        break;
+                    case INVTYPE_THROWN:
+                    {
+                        if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
+                            break;
+                        else if(i == EQUIPMENT_SLOT_RANGED)
+                        {
+                            uint16 src = ((bag << 8) | slot);
+                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                            SwapItem(src, dst);
+                        }                        
+                        break;
+                    }
+                    case INVTYPE_RANGEDRIGHT:
+                    {
+                        if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
+                            break;
+                        else if(i == EQUIPMENT_SLOT_RANGED)
+                        {
+                            uint16 src = ((bag << 8) | slot);
+                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                            SwapItem(src, dst);
+                        }                        
+                        break;
+                    }
+                    case INVTYPE_BAG:
+                    {
+                        /*if(i == INVENTORY_SLOT_BAG_START + 0 || i == INVENTORY_SLOT_BAG_START + 1 ||
+                            i == INVENTORY_SLOT_BAG_START + 2 || i == INVENTORY_SLOT_BAG_START + 3)
+                        {
+                            if(mon_item && new_item && mon_item->ContainerSlots >= new_item->ContainerSlots)
+                                break;
+                            else
+                            {
+                                uint16 src = ((bag << 8) | slot);
+                                uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                                SwapItem(src, dst);
+                            }
+                        }*/
+                        break;
+                    }
+                    case INVTYPE_RELIC:
+                    {
+                        /*switch(proto->SubClass)
+                        {
+                            case ITEM_SUBCLASS_ARMOR_LIBRAM:
+                                if (pClass == CLASS_PALADIN)
+                                    if(i == EQUIPMENT_SLOT_RANGED;
+                                break;
+                            case ITEM_SUBCLASS_ARMOR_IDOL:
+                                if (pClass == CLASS_DRUID)
+                                    if(i == EQUIPMENT_SLOT_RANGED;
+                                break;
+                            case ITEM_SUBCLASS_ARMOR_TOTEM:
+                                if (pClass == CLASS_SHAMAN)
+                                    if(i == EQUIPMENT_SLOT_RANGED;
+                                break;
+                            case ITEM_SUBCLASS_ARMOR_MISC:
+                                if (pClass == CLASS_WARLOCK)
+                                    if(i == EQUIPMENT_SLOT_RANGED;
+                                break;
+                            case ITEM_SUBCLASS_ARMOR_SIGIL:
+                                if (pClass == CLASS_DEATH_KNIGHT)
+                                    if(i == EQUIPMENT_SLOT_RANGED;
+                                break;
+                        }*/
+                        break;
+                    }
+                    default :
+                        break;
+                }
+            }
+        }
+    }
+}
+
 void Player::SendMirrorTimer(MirrorTimerType Type, uint32 MaxValue, uint32 CurrentValue, int32 Regen)
 {
     if (int(MaxValue) == DISABLED_MIRROR_TIMER)
@@ -20744,684 +21424,4 @@ void Player::SendDuelCountdown(uint32 counter)
     WorldPacket data(SMSG_DUEL_COUNTDOWN, 4);
     data << uint32(counter);                                // seconds
     GetSession()->SendPacket(&data);
-}
-
-void Player::AutoEquipItem()
-{
-    for(int i = INVENTORY_SLOT_ITEM_START; i < INVENTORY_SLOT_ITEM_END; i++)
-    {
-        if(Item* pItem = GetItemByPos( INVENTORY_SLOT_BAG_0, i ))
-        {
-            uint16 eDest;
-            // equip offhand weapon/shield if it attempt equipped before main-hand weapon
-            uint8 msg = CanEquipItem( NULL_SLOT, eDest, pItem, false );
-            if( msg == EQUIP_ERR_OK )
-            {
-                RemoveItem(INVENTORY_SLOT_BAG_0, i,true);
-                EquipItem( eDest, pItem, true);
-            }
-            // move other items to more appropriate slots (ammo not equipped in special bag)
-            else
-            {
-                ItemPosCountVec sDest;
-                msg = CanStoreItem( NULL_BAG, NULL_SLOT, sDest, pItem, false );
-                if( msg == EQUIP_ERR_OK )
-                {
-                    RemoveItem(INVENTORY_SLOT_BAG_0, i,true);
-                    pItem = StoreItem( sDest, pItem, true);
-                }
-
-                // if  this is ammo then use it
-                uint8 msg = CanUseAmmo( pItem->GetEntry() );
-                if( msg == EQUIP_ERR_OK )
-                    SetAmmo( pItem->GetEntry() );
-            }
-        }
-    }
-
-    // look for items in main bag 
-    for (int slot=INVENTORY_SLOT_ITEM_START; slot < INVENTORY_SLOT_ITEM_END; ++slot)
-    {
-        const ItemPrototype *new_item = NULL;
-        Item* const pItem = GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
-        if (!pItem) // si il n'y a pas d'objet dans l'emplacement sac
-            continue;
-        new_item = pItem->GetProto();
-        if (new_item->InventoryType == INVTYPE_NON_EQUIP) // si l'objet n'est pas equipable
-            continue;
-        if (new_item->RequiredLevel > getLevel() ) // si je n'ai pas le niveau
-            continue;
-        for (int i = EQUIPMENT_SLOT_START; i < EQUIPMENT_SLOT_END; i++)
-        {
-            const ItemPrototype *mon_item = NULL;
-            Item *item = GetItemByPos(INVENTORY_SLOT_BAG_0, i);
-            if(item) //Si il y a un item alors si
-            {
-                mon_item = item->GetProto();
-                if(mon_item->ItemId == new_item->ItemId) //C'est le même donc osef...
-                    continue;
-                if(mon_item->ItemLevel > new_item->ItemLevel) //Il est moins bien (couleur) donc osef...
-                    continue;
-            }
-            switch( new_item->InventoryType )
-            {
-                case INVTYPE_HEAD:
-                {
-                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                        break;
-                    else if(i == EQUIPMENT_SLOT_HEAD)
-                    {
-                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
-                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                        SwapItem(src, dst);
-                    }
-                    break;
-                }
-                case INVTYPE_NECK:
-                    /*if(i == EQUIPMENT_SLOT_NECK)*/
-                    break;
-                case INVTYPE_SHOULDERS:
-                {
-                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                        break;
-                    else if(i == EQUIPMENT_SLOT_SHOULDERS)
-                    {
-                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
-                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                        SwapItem(src, dst);
-                    }
-                    break;
-                }
-                case INVTYPE_BODY:
-                {
-                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                        break;
-                    else if(i == EQUIPMENT_SLOT_BODY)
-                    {
-                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
-                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                        SwapItem(src, dst);
-                    }
-                    break;
-                }
-                case INVTYPE_CHEST:
-                {
-                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                        break;
-                    else if(i == EQUIPMENT_SLOT_CHEST)
-                    {
-                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
-                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                        SwapItem(src, dst);
-                    }
-                    break;
-                }
-                case INVTYPE_ROBE:
-                {
-                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                        break;
-                    else if(i == EQUIPMENT_SLOT_CHEST)
-                    {
-                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
-                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                        SwapItem(src, dst);
-                    }
-                    break;
-                }
-                case INVTYPE_WAIST:
-                {
-                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                        break;
-                    else if(i == EQUIPMENT_SLOT_WAIST)
-                    {
-                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
-                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                        SwapItem(src, dst);
-                    }
-                    break;
-                }
-                case INVTYPE_LEGS:
-                {
-                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                        break;
-                    else if(i == EQUIPMENT_SLOT_LEGS)
-                    {
-                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
-                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                        SwapItem(src, dst);
-                    }
-                    break;
-                }
-                case INVTYPE_FEET:
-                {
-                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                        break;
-                    else if(i == EQUIPMENT_SLOT_FEET)
-                    {
-                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
-                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                        SwapItem(src, dst);
-                    }
-                    break;
-                }
-                case INVTYPE_WRISTS:
-                {
-                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                        break;
-                    else if(i == EQUIPMENT_SLOT_WRISTS)
-                    {
-                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
-                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                        SwapItem(src, dst);
-                    }
-                    break;
-                }
-                case INVTYPE_HANDS:
-                {
-                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                        break;
-                    else if(i == EQUIPMENT_SLOT_HANDS)
-                    {
-                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
-                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                        SwapItem(src, dst);
-                    }
-                    break;
-                }
-                case INVTYPE_FINGER:
-                    //if(i == EQUIPMENT_SLOT_FINGER1 || i = EQUIPMENT_SLOT_FINGER2)
-                    break;
-                case INVTYPE_TRINKET:
-                    //if(i == EQUIPMENT_SLOT_TRINKET1 || i == EQUIPMENT_SLOT_TRINKET2)
-                    break;
-                case INVTYPE_CLOAK:
-                {
-                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                        break;
-                    else if(i ==  EQUIPMENT_SLOT_BACK)
-                    {
-                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
-                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                        SwapItem(src, dst);
-                    }
-                    break;
-                }
-                case INVTYPE_WEAPON:
-                {
-                    if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
-                        break;
-                    else if(i == EQUIPMENT_SLOT_MAINHAND)
-                    {
-                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
-                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                        SwapItem(src, dst);
-                    }
-                    break;
-                        /*if(CanDualWield())    slots[1] = EQUIPMENT_SLOT_OFFHAND;*/
-                }
-                case INVTYPE_SHIELD:
-                {
-                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                        break;
-                    else if(i == EQUIPMENT_SLOT_OFFHAND)
-                    {
-                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
-                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                        SwapItem(src, dst);
-                    }
-                    break;
-                }
-                case INVTYPE_RANGED:
-                {
-                    if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
-                        break;
-                    else if(i == EQUIPMENT_SLOT_RANGED)
-                    {
-                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
-                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                        SwapItem(src, dst);
-                    }
-                    break;
-                }
-                case INVTYPE_2HWEAPON:
-                {
-                    if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
-                        break;
-                    else if(i == EQUIPMENT_SLOT_MAINHAND)
-                    {
-                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
-                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                        SwapItem(src, dst);
-                    }
-                    /*if (CanDualWield() && CanTitanGrip())    slots[1] = EQUIPMENT_SLOT_OFFHAND;*/
-                break;
-                }
-                case INVTYPE_TABARD:
-                    //if(i == EQUIPMENT_SLOT_TABARD)
-                    break;
-                case INVTYPE_WEAPONMAINHAND:
-                {
-                    if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
-                        break;
-                    else if(i == EQUIPMENT_SLOT_MAINHAND)
-                    {
-                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
-                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                        SwapItem(src, dst);
-                    }
-                    break;
-                }
-                case INVTYPE_WEAPONOFFHAND:
-                {
-                    if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
-                        break;
-                    else if(i == EQUIPMENT_SLOT_OFFHAND)
-                    {
-                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
-                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                        SwapItem(src, dst);
-                    }
-                    break;
-                }
-                case INVTYPE_HOLDABLE:
-                    //if(i == EQUIPMENT_SLOT_OFFHAND)
-                    break;
-                case INVTYPE_THROWN:
-                {
-                    if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
-                        break;
-                    else if(i == EQUIPMENT_SLOT_RANGED)
-                    {
-                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
-                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                        SwapItem(src, dst);
-                    }
-                    break;
-                }
-                case INVTYPE_RANGEDRIGHT:
-                {
-                    if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
-                        break;
-                    else if(i == EQUIPMENT_SLOT_RANGED)
-                    {
-                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
-                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                        SwapItem(src, dst);
-                    }
-                    break;
-                }
-                case INVTYPE_BAG:
-                    /*if(i == INVENTORY_SLOT_BAG_START + 0 || i == INVENTORY_SLOT_BAG_START + 1 ||
-                        i == INVENTORY_SLOT_BAG_START + 2 || i == INVENTORY_SLOT_BAG_START + 3)
-                    {
-                        if(mon_item && new_item && mon_item->ContainerSlots >= new_item->ContainerSlots)
-                            break;
-                        else
-                        {
-                            uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
-                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                            SwapItem(src, dst);
-                        }
-                    }*/                    
-                    break;
-                case INVTYPE_RELIC:
-                {
-                    /*switch(proto->SubClass)
-                    {
-                        case ITEM_SUBCLASS_ARMOR_LIBRAM:
-                            if (pClass == CLASS_PALADIN)
-                                if(i == EQUIPMENT_SLOT_RANGED;
-                            break;
-                        case ITEM_SUBCLASS_ARMOR_IDOL:
-                            if (pClass == CLASS_DRUID)
-                                if(i == EQUIPMENT_SLOT_RANGED;
-                            break;
-                        case ITEM_SUBCLASS_ARMOR_TOTEM:
-                            if (pClass == CLASS_SHAMAN)
-                                if(i == EQUIPMENT_SLOT_RANGED;
-                            break;
-                        case ITEM_SUBCLASS_ARMOR_MISC:
-                            if (pClass == CLASS_WARLOCK)
-                                if(i == EQUIPMENT_SLOT_RANGED;
-                            break;
-                        case ITEM_SUBCLASS_ARMOR_SIGIL:
-                            if (pClass == CLASS_DEATH_KNIGHT)
-                                if(i == EQUIPMENT_SLOT_RANGED;
-                            break;
-                    }*/
-                    break;
-                }
-                default :
-                    break;
-            }
-        }
-    }
-
-    // for all for items in other bags
-    for (int bag = INVENTORY_SLOT_BAG_START; bag < INVENTORY_SLOT_BAG_END; ++bag)
-    {
-        Bag* const pBag = (Bag*)GetItemByPos(INVENTORY_SLOT_BAG_0, bag);
-        if (!pBag)
-            continue;
-        for (int slot = 0; slot < pBag->GetBagSize(); ++slot)
-        {
-            const ItemPrototype *new_item = NULL;
-            Item* const pItem = GetItemByPos(bag, slot);
-            if (!pItem) // si il n'y a pas d'objet dans l'emplacement sac
-                continue;
-            new_item = pItem->GetProto();
-            if (new_item->InventoryType == INVTYPE_NON_EQUIP) // si l'objet n'est pas equipable
-                continue;
-            if (new_item->RequiredLevel > getLevel() ) // si je n'ai pas le niveau
-                continue;
-            for (int i = EQUIPMENT_SLOT_START; i < EQUIPMENT_SLOT_END; i++)
-            {
-                const ItemPrototype *mon_item = NULL;
-                Item *item = GetItemByPos(INVENTORY_SLOT_BAG_0, i);
-                if(item) //Si il y a un item alors si
-                {
-                    mon_item = item->GetProto();
-                    if(mon_item->ItemId == new_item->ItemId) //C'est le même donc osef...
-                        continue;
-                    if(mon_item->ItemLevel > new_item->ItemLevel) //Il est moins bien (couleur) donc osef...
-                        continue;
-                }
-                switch( new_item->InventoryType )
-                {
-                    case INVTYPE_HEAD:
-                    {
-                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                            break;
-                        else if(i == EQUIPMENT_SLOT_HEAD)
-                        {
-                            uint16 src = ((bag << 8) | slot);
-                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                            SwapItem(src, dst);
-                        }
-                        break;
-                    }
-                    case INVTYPE_NECK:
-                    {
-                        //if(i == EQUIPMENT_SLOT_NECK)
-                        break;
-                    }
-                    case INVTYPE_SHOULDERS:
-                    {
-                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                            break;
-                        else if(i == EQUIPMENT_SLOT_SHOULDERS)
-                        {
-                            uint16 src = ((bag << 8) | slot);
-                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                            SwapItem(src, dst);
-                        }
-                        break;
-                    }
-                    case INVTYPE_BODY:
-                    {
-                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                            break;
-                        else if(i == EQUIPMENT_SLOT_BODY)
-                        {
-                            uint16 src = ((bag << 8) | slot);
-                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                            SwapItem(src, dst);
-                        }
-                        break;
-                    }
-                    case INVTYPE_CHEST:
-                    {
-                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                            break;
-                        else if(i == EQUIPMENT_SLOT_CHEST)
-                        {
-                            uint16 src = ((bag << 8) | slot);
-                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                            SwapItem(src, dst);
-                        }
-                        break;
-                    }
-                    case INVTYPE_ROBE:
-                    {
-                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                            break;
-                        else if(i == EQUIPMENT_SLOT_CHEST)
-                        {
-                            uint16 src = ((bag << 8) | slot);
-                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                            SwapItem(src, dst);
-                        }
-                        break;
-                    }
-                    case INVTYPE_WAIST:
-                    {
-                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                            break;
-                        else if(i == EQUIPMENT_SLOT_WAIST)
-                        {
-                            uint16 src = ((bag << 8) | slot);
-                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                            SwapItem(src, dst);
-                        }
-                        break;
-                    }
-                    case INVTYPE_LEGS:
-                    {
-                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                            break;
-                        else if(i == EQUIPMENT_SLOT_LEGS)
-                        {
-                            uint16 src = ((bag << 8) | slot);
-                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                            SwapItem(src, dst);
-                        }
-                        break;
-                    }
-                    case INVTYPE_FEET:
-                    {
-                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                            break;
-                        else if(i == EQUIPMENT_SLOT_FEET)
-                        {
-                            uint16 src = ((bag << 8) | slot);
-                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                            SwapItem(src, dst);
-                        }
-                        break;
-                    }
-                    case INVTYPE_WRISTS:
-                    {
-                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                            break;
-                        else if(i == EQUIPMENT_SLOT_WRISTS)
-                        {
-                            uint16 src = ((bag << 8) | slot);
-                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                            SwapItem(src, dst);
-                        }
-                        break;
-                    }
-                    case INVTYPE_HANDS:
-                    {
-                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                            break;
-                        else if(i == EQUIPMENT_SLOT_HANDS)
-                        {
-                            uint16 src = ((bag << 8) | slot);
-                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                            SwapItem(src, dst);
-                        }
-                        break;
-                    }
-                    case INVTYPE_FINGER:
-                        //if(i == EQUIPMENT_SLOT_FINGER1 || i = EQUIPMENT_SLOT_FINGER2)
-                        break;
-                    case INVTYPE_TRINKET:
-                        //if(i == EQUIPMENT_SLOT_TRINKET1 || i == EQUIPMENT_SLOT_TRINKET2)
-                        break;
-                    case INVTYPE_CLOAK:
-                    {
-                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                            break;
-                        else if(i ==  EQUIPMENT_SLOT_BACK)
-                        {
-                            uint16 src = ((bag << 8) | slot);
-                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                            SwapItem(src, dst);
-                        }
-                        break;
-                    }
-                    case INVTYPE_WEAPON:
-                    {
-                        if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
-                            break;
-                        else if(i == EQUIPMENT_SLOT_MAINHAND)
-                        {
-                            uint16 src = ((bag << 8) | slot);
-                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                            SwapItem(src, dst);
-                        }                        
-                        /*if(CanDualWield()) slots[1] = EQUIPMENT_SLOT_OFFHAND;*/
-                        break;
-                    }
-                    case INVTYPE_SHIELD:
-                    {
-                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                            break;
-                        else if(i == EQUIPMENT_SLOT_OFFHAND)
-                        {
-                            uint16 src = ((bag << 8) | slot);
-                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                            SwapItem(src, dst);
-                        }                        
-                        break;
-                    }
-                    case INVTYPE_RANGED:
-                    {
-                        if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
-                            break;
-                        else if(i == EQUIPMENT_SLOT_RANGED)
-                        {
-                            uint16 src = ((bag << 8) | slot);
-                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                            SwapItem(src, dst);
-                        }                        
-                        break;
-                    }
-                    case INVTYPE_2HWEAPON:
-                    {
-                        if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
-                            break;
-                        else if(i == EQUIPMENT_SLOT_MAINHAND)
-                        {
-                            uint16 src = ((bag << 8) | slot);
-                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                            SwapItem(src, dst);
-                        }                        
-                        /*if (CanDualWield() && CanTitanGrip()) slots[1] = EQUIPMENT_SLOT_OFFHAND;*/
-                        break;
-                    }
-                    case INVTYPE_TABARD:
-                        //if(i == EQUIPMENT_SLOT_TABARD)
-                        break;
-                    case INVTYPE_WEAPONMAINHAND:
-                    {
-                        if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
-                            break;
-                        else if(i == EQUIPMENT_SLOT_MAINHAND)
-                        {
-                            uint16 src = ((bag << 8) | slot);
-                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                            SwapItem(src, dst);
-                        }                        
-                        break;
-                    }
-                    case INVTYPE_WEAPONOFFHAND:
-                    {
-                        if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
-                            break;
-                        else if(i == EQUIPMENT_SLOT_OFFHAND)
-                        {
-                            uint16 src = ((bag << 8) | slot);
-                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                            SwapItem(src, dst);
-                        }                        
-                        break;
-                    }
-                    case INVTYPE_HOLDABLE:
-                        //if(i == EQUIPMENT_SLOT_OFFHAND)
-                        break;
-                    case INVTYPE_THROWN:
-                    {
-                        if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
-                            break;
-                        else if(i == EQUIPMENT_SLOT_RANGED)
-                        {
-                            uint16 src = ((bag << 8) | slot);
-                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                            SwapItem(src, dst);
-                        }                        
-                        break;
-                    }
-                    case INVTYPE_RANGEDRIGHT:
-                    {
-                        if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
-                            break;
-                        else if(i == EQUIPMENT_SLOT_RANGED)
-                        {
-                            uint16 src = ((bag << 8) | slot);
-                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                            SwapItem(src, dst);
-                        }                        
-                        break;
-                    }
-                    case INVTYPE_BAG:
-                    {
-                        /*if(i == INVENTORY_SLOT_BAG_START + 0 || i == INVENTORY_SLOT_BAG_START + 1 ||
-                            i == INVENTORY_SLOT_BAG_START + 2 || i == INVENTORY_SLOT_BAG_START + 3)
-                        {
-                            if(mon_item && new_item && mon_item->ContainerSlots >= new_item->ContainerSlots)
-                                break;
-                            else
-                            {
-                                uint16 src = ((bag << 8) | slot);
-                                uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                                SwapItem(src, dst);
-                            }
-                        }*/
-                        break;
-                    }
-                    case INVTYPE_RELIC:
-                    {
-                        /*switch(proto->SubClass)
-                        {
-                            case ITEM_SUBCLASS_ARMOR_LIBRAM:
-                                if (pClass == CLASS_PALADIN)
-                                    if(i == EQUIPMENT_SLOT_RANGED;
-                                break;
-                            case ITEM_SUBCLASS_ARMOR_IDOL:
-                                if (pClass == CLASS_DRUID)
-                                    if(i == EQUIPMENT_SLOT_RANGED;
-                                break;
-                            case ITEM_SUBCLASS_ARMOR_TOTEM:
-                                if (pClass == CLASS_SHAMAN)
-                                    if(i == EQUIPMENT_SLOT_RANGED;
-                                break;
-                            case ITEM_SUBCLASS_ARMOR_MISC:
-                                if (pClass == CLASS_WARLOCK)
-                                    if(i == EQUIPMENT_SLOT_RANGED;
-                                break;
-                            case ITEM_SUBCLASS_ARMOR_SIGIL:
-                                if (pClass == CLASS_DEATH_KNIGHT)
-                                    if(i == EQUIPMENT_SLOT_RANGED;
-                                break;
-                        }*/
-                        break;
-                    }
-                    default :
-                        break;
-                }
-            }
-        }
-    }
 }
