@@ -599,7 +599,7 @@ class ObjectMgr
         std::string GetSpellName( uint32 id )
         {
             SpellNameMap::const_iterator itr = mSpellNames.find( id );
-            if ( itr != mItemTexts.end() )
+            if ( itr != mSpellNames.end() )
                 return itr->second;
             else
                 return "There is no name for this spell";

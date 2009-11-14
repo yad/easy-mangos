@@ -1602,12 +1602,13 @@ bool PlayerbotAI::IsInCombat()
             ref = ref->next();
         }
     }
-    for (PlayerBotMap::const_iterator it = GetPlayer()->GetPlayerbotMgr()->GetPlayerBotsBegin(); it != GetPlayer()->GetPlayerbotMgr()->GetPlayerBotsEnd(); ++it)
+    /*//This code cause crashes...
+	for (PlayerBotMap::const_iterator it = GetPlayer()->GetPlayerbotMgr()->GetPlayerBotsBegin(); it != GetPlayer()->GetPlayerbotMgr()->GetPlayerBotsEnd(); ++it)
     {
         Player* const bot = it->second;
         if(!bot->getAttackers().empty())
             return true;
-    }
+    }*/
     //return inCombat;
     return false;
 }
