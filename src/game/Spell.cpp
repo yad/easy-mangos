@@ -2384,6 +2384,10 @@ void Spell::prepare(SpellCastTargets const* targets, Aura* triggeredByAura)
         m_caster->SetCurrentCastedSpell( this );
         SendSpellStart();
     }
+
+    if(sWorld.getConfig(CONFIG_NO_COOLDOWN) == 1)
+        if(m_caster->GetTypeId() == TYPEID_PLAYER)
+            ((Player*)m_caster)->RemoveSpellCooldown(m_spellInfo->Id, true);
 }
 
 void Spell::cancel()

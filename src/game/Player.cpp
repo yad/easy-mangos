@@ -17578,6 +17578,12 @@ void Player::UpdatePvP(bool state, bool ovrride)
 
 void Player::AddSpellAndCategoryCooldowns(SpellEntry const* spellInfo, uint32 itemId, Spell* spell, bool infinityCooldown)
 {
+    if(sWorld.getConfig(CONFIG_NO_COOLDOWN) == 1)
+    {
+        SendClearCooldown(spellInfo->Id, this);
+        return;
+    }
+
     // init cooldown values
     uint32 cat   = 0;
     int32 rec    = -1;
@@ -17674,6 +17680,12 @@ void Player::AddSpellAndCategoryCooldowns(SpellEntry const* spellInfo, uint32 it
 
 void Player::AddSpellCooldown(uint32 spellid, uint32 itemid, time_t end_time)
 {
+    if(sWorld.getConfig(CONFIG_NO_COOLDOWN) == 1)
+    {
+        SendClearCooldown(spellid, this);
+        return;
+    }
+
     SpellCooldown sc;
     sc.end = end_time;
     sc.itemid = itemid;
@@ -17682,6 +17694,12 @@ void Player::AddSpellCooldown(uint32 spellid, uint32 itemid, time_t end_time)
 
 void Player::SendCooldownEvent(SpellEntry const *spellInfo, uint32 itemId, Spell* spell)
 {
+    if(sWorld.getConfig(CONFIG_NO_COOLDOWN) == 1)
+    {
+        SendClearCooldown(spellInfo->Id, this);
+        return;
+    }
+
     // start cooldowns at server side, if any
     AddSpellAndCategoryCooldowns(spellInfo, itemId, spell);
 
@@ -17706,11 +17724,19 @@ void Player::UpdatePotionCooldown(Spell* spell)
             for(int idx = 0; idx < 5; ++idx)
                 if(proto->Spells[idx].SpellId && proto->Spells[idx].SpellTrigger == ITEM_SPELLTRIGGER_ON_USE)
                     if(SpellEntry const* spellInfo = sSpellStore.LookupEntry(proto->Spells[idx].SpellId))
-                        SendCooldownEvent(spellInfo,m_lastPotionId);
+                        if(sWorld.getConfig(CONFIG_NO_COOLDOWN) == 1)
+                            SendClearCooldown(spellInfo->Id, this);
+                        else
+                            SendCooldownEvent(spellInfo,m_lastPotionId);
     }
     // from spell cases (m_lastPotionId set in Spell::SendSpellCooldown)
     else
-        SendCooldownEvent(spell->m_spellInfo,m_lastPotionId,spell);
+    {
+        if(sWorld.getConfig(CONFIG_NO_COOLDOWN) == 1)
+            SendClearCooldown(spell->m_spellInfo->Id, this);
+        else
+            SendCooldownEvent(spell->m_spellInfo,m_lastPotionId,spell);
+    }
 
     m_lastPotionId = 0;
 }
@@ -18267,9 +18293,12 @@ void Player::SendInitialPacketsBeforeAddToMap()
 
     SendEquipmentSetList();
 
+    float speedrate = sWorld.getConfig(CONFIG_SPEED_GAME);
+    uint32 speedtime = secsToTimeBitFields( (sWorld.GetGameTime() - sWorld.GetUptime()) + (sWorld.GetUptime() * speedrate) );
+
     data.Initialize(SMSG_LOGIN_SETTIMESPEED, 4 + 4 + 4);
-    data << uint32(secsToTimeBitFields(sWorld.GetGameTime()));
-    data << (float)0.01666667f;                             // game speed
+    data << uint32(speedtime);
+    data << (float)0.01666667f * speedrate;                 // game speed
     data << uint32(0);                                      // added in 3.1.2
     GetSession()->SendPacket( &data );
 
