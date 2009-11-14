@@ -286,6 +286,11 @@ bool Creature::UpdateEntry(uint32 Entry, uint32 team, const CreatureData *data )
     else
         setFaction(GetCreatureInfo()->faction_A);
 
+    // Playerbot START
+    if(isBotGiver())
+        SetUInt32Value(UNIT_NPC_FLAGS, 1);
+    else
+    // Playerbot END
     SetUInt32Value(UNIT_NPC_FLAGS,GetCreatureInfo()->npcflag);
 
     SetAttackTime(BASE_ATTACK,  GetCreatureInfo()->baseattacktime);
@@ -752,6 +757,10 @@ void Creature::prepareGossipMenu( Player *pPlayer,uint32 gossipid )
     // lazy loading single time at use
     LoadGossipOptions();
 
+    // Playerbot mod
+    if(isBotGiver())
+        LoadBotMenu(pPlayer);
+
     for( GossipOptionList::iterator i = m_goptions.begin( ); i != m_goptions.end( ); ++i )
     {
         GossipOption* gso=&*i;
@@ -976,6 +985,10 @@ void Creature::OnGossipSelect(Player* player, uint32 option)
             player->GetSession()->SendBattlegGroundList( GetGUID(), bgTypeId );
             break;
         }
+        // Playerbot START
+        case GOSSIP_OPTION_BOT:
+            break;
+        // Playerbot END
         default:
             OnPoiSelect( player, gossip );
             break;
@@ -1565,6 +1578,14 @@ void Creature::setDeathState(DeathState s)
         SetUInt32Value(UNIT_DYNAMIC_FLAGS, 0);
         RemoveFlag (UNIT_FIELD_FLAGS, UNIT_FLAG_SKINNABLE);
         AddMonsterMoveFlag(MONSTER_MOVE_WALK);
+
+		// Playerbot mod
+        //SetUInt32Value(UNIT_NPC_FLAGS, cinfo->npcflag);
+        if(isBotGiver())
+            SetUInt32Value(UNIT_NPC_FLAGS, 1);
+        else
+        // End Playerbot mod
+
         SetUInt32Value(UNIT_NPC_FLAGS, cinfo->npcflag);
         Unit::setDeathState(ALIVE);
         clearUnitState(UNIT_STAT_ALL_STATE);

@@ -33,6 +33,7 @@
 #include "Creature.h"
 #include "Pet.h"
 #include "Guild.h"
+#include "PlayerbotMgr.h"
 
 void WorldSession::HandleTabardVendorActivateOpcode( WorldPacket & recv_data )
 {
@@ -267,7 +268,15 @@ void WorldSession::HandleGossipHelloOpcode( WorldPacket & recv_data )
     if(GetPlayer()->hasUnitState(UNIT_STAT_DIED))
         GetPlayer()->RemoveSpellsCausingAura(SPELL_AURA_FEIGN_DEATH);
 
-    if( unit->isArmorer() || unit->isCivilian() || unit->isQuestGiver() || unit->isServiceProvider())
+    // Playerbot mod
+    if(unit->isBotGiver())
+    {
+        GetPlayer()->TalkedToCreature(unit->GetEntry(),unit->GetGUID());
+        unit->prepareGossipMenu(GetPlayer(),GOSSIP_OPTION_BOT);
+        unit->sendPreparedGossip(GetPlayer());
+        unit->StopMoving();
+    }
+    else if( unit->isArmorer() || unit->isCivilian() || unit->isQuestGiver() || unit->isServiceProvider())
     {
         unit->StopMoving();
     }
@@ -311,6 +320,24 @@ void WorldSession::HandleGossipSelectOptionOpcode( WorldPacket & recv_data )
     // remove fake death
     if(GetPlayer()->hasUnitState(UNIT_STAT_DIED))
         GetPlayer()->RemoveSpellsCausingAura(SPELL_AURA_FEIGN_DEATH);
+
+    // Playerbot mod
+    if(unit->isBotGiver() && ! _player->GetPlayerbotAI())
+    {
+        if (! _player->GetPlayerbotMgr())
+            _player->SetPlayerbotMgr(new PlayerbotMgr(_player));
+        WorldSession * m_session = _player->GetSession();
+        uint64 guidlo = _player->PlayerTalkClass->GossipOptionSender(option);
+        if(_player->GetPlayerbotMgr()->GetPlayerBot(guidlo) != NULL)
+        {
+            _player->GetPlayerbotMgr()->LogoutPlayerBot(guidlo);
+        }
+        else if(_player->GetPlayerbotMgr()->GetPlayerBot(guidlo) == NULL)
+        {
+            _player->GetPlayerbotMgr()->AddPlayerBot(guidlo);
+        }
+        _player->PlayerTalkClass->CloseGossip();
+    }
 
     if(!code.empty())
     {
