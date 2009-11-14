@@ -188,12 +188,13 @@ uint32 PlayerbotAI::getSpellId(const char* args, bool master) const
         if (itr->second->state == PLAYERSPELL_REMOVED || itr->second->disabled || IsPassiveSpell(spellId))
             continue;
 
-        const SpellEntry* pSpellInfo = sSpellStore.LookupEntry(spellId);
-        if (!pSpellInfo)
+        //const std::string name = pSpellInfo->SpellName[loc];
+        const std::string name = sObjectMgr.GetSpellName(spellId);
+        if (name.empty() || !Utf8FitTo(name, wnamepart))
             continue;
 
-        const std::string name = pSpellInfo->SpellName[loc];
-        if (name.empty() || !Utf8FitTo(name, wnamepart))
+        const SpellEntry* pSpellInfo = sSpellStore.LookupEntry(spellId);
+        if (!pSpellInfo)
             continue;
 
         bool isExactMatch = (name.length() == wnamepart.length()) ? true : false;
