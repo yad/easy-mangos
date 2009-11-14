@@ -4387,7 +4387,7 @@ void ObjectMgr::LoadSpellScripts()
 
 void ObjectMgr::LoadSpellNames()
 {
-    QueryResult *result = CharacterDatabase.Query("SELECT entry, name FROM spell_names");
+    QueryResult *result = WorldDatabase.Query("SELECT entry, name FROM spell_names");
 
     uint32 count = 0;
 
