@@ -556,16 +556,18 @@ void Creature::LoadBotMenu(Player *pPlayer)
                 pPlayer->SetPlayerbotMgr(new PlayerbotMgr(pPlayer));
             if(pPlayer->GetPlayerbotMgr()->GetPlayerBot(guidlo) == NULL) // add (if not already in game)
             {
-                word += "Recruit ";
+                //word += "Recruit ";
+                word += "Recruter : ";
                 word += name;
-                word += " as a Bot.";
+                //word += " as a Bot.";
                 pPlayer->PlayerTalkClass->GetGossipMenu().AddMenuItem((uint8)9, word, guidlo, guidlo, word, false);
             }
             else if(pPlayer->GetPlayerbotMgr()->GetPlayerBot(guidlo) != NULL) // remove (if in game)
             {
-                word += "Dismiss ";
+                //word += "Dismiss ";
+                word += "Abandonner : ";
                 word += name;
-                word += " from duty.";
+                //word += " from duty.";
                 pPlayer->PlayerTalkClass->GetGossipMenu().AddMenuItem((uint8)0, word, guidlo, guidlo, word, false);
             }
         }
