@@ -666,9 +666,9 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
 
                 // send bot the message
                 std::ostringstream whisper;
-                whisper << "J'ai |cff00ff00" << po
-                        << "|r|cfffffc00g|r|cff00ff00" << pa
-                        << "|r|cffcdcdcds|r|cff00ff00" << pc
+                whisper << "J'ai |cff00ff00" << gold
+                        << "|r|cfffffc00g|r|cff00ff00" << silver
+                        << "|r|cffcdcdcds|r|cff00ff00" << copper
                         << "|r|cffffd333c|r" << " et les objets suivants :";
                 SendWhisper(whisper.str().c_str(), *(m_bot->GetTrader()));
                 ChatHandler ch(m_bot->GetTrader());
