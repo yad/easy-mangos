@@ -1889,7 +1889,6 @@ void Player::RemoveFromWorld()
     if(IsInWorld())
     {
         ///- Release charmed creatures, unsummon totems and remove pets/guardians
-        Uncharm();
         UnsummonAllTotems();
         RemoveMiniPet();
     }
@@ -16454,16 +16453,6 @@ Pet* Player::GetMiniPet()
     if(!m_miniPet)
         return NULL;
     return GetMap()->GetPet(m_miniPet);
-}
-
-void Player::Uncharm()
-{
-    Unit* charm = GetCharm();
-    if(!charm)
-        return;
-
-    charm->RemoveSpellsCausingAura(SPELL_AURA_MOD_CHARM);
-    charm->RemoveSpellsCausingAura(SPELL_AURA_MOD_POSSESS);
 }
 
 void Player::BuildPlayerChat(WorldPacket *data, uint8 msgtype, const std::string& text, uint32 language) const
