@@ -294,7 +294,7 @@ void PlayerbotAI::SendNotEquipList(Player& player)
         }
     }
 
-    TellMaster("Here's all the items in my inventory that I can equip.");
+    TellMaster("Voici tous les objets de mon inventaire que je peux porter.");
     ChatHandler ch(GetMaster());
 
     const std::string descr[] = { "head", "neck", "shoulders", "body", "chest",
@@ -342,7 +342,7 @@ void PlayerbotAI::SendQuestItemList( Player& player )
             << "]|h|r";
     }
 
-    TellMaster( "Here's a list of all items I need for quests:" );
+    TellMaster( "Voici la liste des objets dont j'ai besoin pour mes quetes :" );
     TellMaster( out.str().c_str() );
 }
 
@@ -446,7 +446,7 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
 
         case SMSG_INVENTORY_CHANGE_FAILURE:
         {
-            TellMaster("I can't use that.");
+            TellMaster("Je ne peux pas l'utiliser.");
             return;
         }
         case SMSG_SPELL_FAILURE:
@@ -570,7 +570,7 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
                 WorldPacket p;
                 if (!canObeyCommandFrom(*inviter))
                 {
-                    std::string buf = "I can't accept your invite unless you first invite my master ";
+                    std::string buf = "Je ne peux pas accepter l'invitation tant que mon maitre n'est pas dans le groupe.";
                     buf += GetMaster()->GetName();
                     buf += ".";
                     SendWhisper(buf, *inviter);
@@ -605,7 +605,7 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
 
                 if (!canObeyCommandFrom(*(m_bot->GetTrader())))
                 {
-                    SendWhisper("I'm not allowed to trade you any of my items, but you are free to give me money or items.", *(m_bot->GetTrader()));
+                    SendWhisper("Je n'ai pas le droit de vous donner mes objets. Mais je peux accepter les votres ainsi que votre or.", *(m_bot->GetTrader()));
                     return;
                 }
 
@@ -666,10 +666,10 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
 
                 // send bot the message
                 std::ostringstream whisper;
-                whisper << "I have |cff00ff00" << gold
-                        << "|r|cfffffc00g|r|cff00ff00" << silver
-                        << "|r|cffcdcdcds|r|cff00ff00" << copper
-                        << "|r|cffffd333c|r" << " and the following items:";
+                whisper << "J'ai |cff00ff00" << po
+                        << "|r|cfffffc00g|r|cff00ff00" << pa
+                        << "|r|cffcdcdcds|r|cff00ff00" << pc
+                        << "|r|cffffd333c|r" << " et les objets suivants :";
                 SendWhisper(whisper.str().c_str(), *(m_bot->GetTrader()));
                 ChatHandler ch(m_bot->GetTrader());
                 ch.SendSysMessage(out.str().c_str());
@@ -1083,7 +1083,7 @@ Item* PlayerbotAI::FindPoison() const
 
 void PlayerbotAI::InterruptCurrentCastingSpell()
 {
-    //TellMaster("I'm interrupting my current spell!");
+    //TellMaster("Je stoppe mon incantation !");
     WorldPacket* const packet = new WorldPacket(CMSG_CANCEL_CAST, 5);  //changed from thetourist suggestion
     *packet << m_CurrentlyCastingSpellId;
     *packet << m_targetGuidCommand;   //changed from thetourist suggestion
@@ -1111,11 +1111,12 @@ void PlayerbotAI::Feast()
         Item* pItem = FindDrink();
         if (pItem != NULL)
         {
+            //TellMaster("Je mange un morceau..."); (pourquoi en remarque ?)
             UseItem(*pItem);
             m_TimeDoneDrinking = currentTime + 30;
             return;
         }
-        TellMaster("I need water.");
+        TellMaster("J'ai besoin d'eau...");
     }
 
     // should we eat another
@@ -1124,19 +1125,19 @@ void PlayerbotAI::Feast()
         Item* pItem = FindFood();
         if (pItem != NULL)
         {
-            //TellMaster("eating now...");
+            //TellMaster("Je mange un morceau..."); (pourquoi en remarque ?)
             UseItem(*pItem);
             m_TimeDoneEating = currentTime + 30;
             return;
         }
-        TellMaster("I need food.");
+        TellMaster("J'ai besoin de nourriture.");
     }
 
     // if we are no longer eating or drinking
     // because we are out of items or we are above 80% in both stats
     if (currentTime > m_TimeDoneEating && currentTime > m_TimeDoneDrinking)
     {
-        TellMaster("done feasting!");
+        TellMaster("Festin fini !");
         m_bot->SetStandState(UNIT_STAND_STATE_STAND);
     }
 }
@@ -1167,12 +1168,12 @@ void PlayerbotAI::GetCombatTarget( Unit* forcedTarget )
             forcedTarget = newTarget;
             m_targetType = TARGET_THREATEN;
             if( m_mgr->m_confDebugWhisper )
-                TellMaster( "Changing target to %s to protect %s", forcedTarget->GetName(), m_targetProtect->GetName() );
+                TellMaster( "Changement de la cible de %s pour la protection de %s", forcedTarget->GetName(), m_targetProtect->GetName() );
         }
     } else if( forcedTarget )
     {
 		if( m_mgr->m_confDebugWhisper )
-            TellMaster( "Changing target to %s by force!", forcedTarget->GetName() );
+            TellMaster( "Changement obligatoire de cible de %s !", forcedTarget->GetName() );
         m_targetType = (m_combatOrder==ORDERS_TANK ? TARGET_THREATEN : TARGET_NORMAL);
     }
 
@@ -1191,7 +1192,7 @@ void PlayerbotAI::GetCombatTarget( Unit* forcedTarget )
     {
 		m_targetCombat = FindAttacker( (ATTACKERINFOTYPE)(AIT_VICTIMNOTSELF|AIT_LOWESTTHREAT), m_targetAssist );
         if( m_mgr->m_confDebugWhisper && m_targetCombat )
-            TellMaster( "Attacking %s to assist %s", m_targetCombat->GetName(), m_targetAssist->GetName() );
+            TellMaster( "J'attaque %s pour assister %s", m_targetCombat->GetName(), m_targetAssist->GetName() );
         m_targetType = (m_combatOrder==ORDERS_TANK ? TARGET_THREATEN : TARGET_NORMAL);
         m_targetChanged = true;
     }
@@ -1323,7 +1324,7 @@ void PlayerbotAI::SetQuestNeedItems()
 
 void PlayerbotAI::SetState( BotState state )
 {
-    //sLog.outDebug( "[PlayerbotAI]: %s switch state %d to %d", m_bot->GetName(), m_botState, state );
+    //sLog.outDebug( "[PlayerbotAI]: %s passage de statut de %d a %d", m_bot->GetName(), m_botState, state );
     m_botState = state;
 }
 
@@ -1331,7 +1332,7 @@ void PlayerbotAI::DoLoot()
 {
     if( !m_lootCurrent && m_lootCreature.empty() )
     {
-        //sLog.outDebug( "[PlayerbotAI]: %s reset loot list / go back to idle", m_bot->GetName() );
+        //sLog.outDebug( "[PlayerbotAI]: %s initialise la liste de loot / mode standby actif", m_bot->GetName() );
         m_botState = BOTSTATE_NORMAL;
         SetQuestNeedItems();
         return;
@@ -1349,7 +1350,7 @@ void PlayerbotAI::DoLoot()
             return;
         }
         m_bot->GetMotionMaster()->MovePoint( c->GetMapId(), c->GetPositionX(), c->GetPositionY(), c->GetPositionZ() );
-        //sLog.outDebug( "[PlayerbotAI]: %s is going to loot '%s' deathState=%d", m_bot->GetName(), c->GetName(), c->getDeathState() );
+        //sLog.outDebug( "[PlayerbotAI]: %s est sur le point de looter '%s' deathState=%d", m_bot->GetName(), c->GetName(), c->getDeathState() );
     }
     else
     {
@@ -1365,7 +1366,7 @@ void PlayerbotAI::DoLoot()
             m_bot->SendLoot( m_lootCurrent, LOOT_CORPSE );
             Loot *loot = &c->loot;
             uint32 lootNum = loot->GetMaxSlotInLootFor( m_bot );
-            //sLog.outDebug( "[PlayerbotAI]: %s looting: '%s' got %d items", m_bot->GetName(), c->GetName(), loot->GetMaxSlotInLootFor( m_bot ) );
+            //sLog.outDebug( "[PlayerbotAI]: %s loot '%s' et prend %d items", m_bot->GetName(), c->GetName(), loot->GetMaxSlotInLootFor( m_bot ) );
             for( uint32 l=0; l<lootNum; l++ )
             {
                 QuestItem *qitem=0, *ffaitem=0, *conditem=0;
@@ -1381,7 +1382,7 @@ void PlayerbotAI::DoLoot()
 
                 if( m_needItemList[item->itemid]>0 )
                 {
-                    //sLog.outDebug( "[PlayerbotAI]: %s looting: needed item '%s'", m_bot->GetName(), sObjectMgr.GetItemLocale(item->itemid)->Name );
+                    //sLog.outDebug( "[PlayerbotAI]: %s loot les objets necessaires '%s'", m_bot->GetName(), sObjectMgr.GetItemLocale(item->itemid)->Name );
                     ItemPosCountVec dest;
                     if( m_bot->CanStoreNewItem( NULL_BAG, NULL_SLOT, dest, item->itemid, item->count ) == EQUIP_ERR_OK )
                     {
@@ -1481,7 +1482,7 @@ void PlayerbotAI::TurnInQuests( WorldObject *questgiver )
     uint64 giverGUID = questgiver->GetGUID();
 
     if( !m_bot->IsInMap( questgiver ) )
-        TellMaster("hey you are turning in quests without me!");
+        TellMaster("Hey, tu prends des quetes sans moi !");
     else
     {
         m_bot->SetSelection( giverGUID );
@@ -1513,7 +1514,7 @@ void PlayerbotAI::TurnInQuests( WorldObject *questgiver )
                         if (m_bot->CanRewardQuest(pQuest, false))
                         {
                             m_bot->RewardQuest(pQuest, 0, questgiver, false);
-                            out << "Quest complete: |cff808080|Hquest:" << questID << ':' << pQuest->GetQuestLevel() << "|h[" << questTitle << "]|h|r";
+                            out << "Quete finie : |cff808080|Hquetes:" << questID << ':' << pQuest->GetQuestLevel() << "|h[" << questTitle << "]|h|r";
                         }
                         else
                         {
@@ -1535,14 +1536,14 @@ void PlayerbotAI::TurnInQuests( WorldObject *questgiver )
                             std::string itemName = pRewardItem->Name1;
                             ItemLocalization(itemName, pRewardItem->ItemId);
                             
-                            out << "Quest complete: "
+                            out << "Quete(s) finie(s) : "
                                 << " |cff808080|Hquest:" << questID << ':' << pQuest->GetQuestLevel() 
                                 << "|h[" << questTitle << "]|h|r reward: |cffffffff|Hitem:" 
                                 << pRewardItem->ItemId << ":0:0:0:0:0:0:0" << "|h[" << itemName << "]|h|r";
                         }
                         else
                         {
-                            out << "|cffff0000Unable to turn quest in:|r "
+                            out << "|cffff0000Impossible de prendre la quete :|r "
                                 << "|cff808080|Hquest:" << questID << ':' 
                                 << pQuest->GetQuestLevel() << "|h[" << questTitle << "]|h|r"
                                 << " reward: |cffffffff|Hitem:" 
@@ -1552,7 +1553,7 @@ void PlayerbotAI::TurnInQuests( WorldObject *questgiver )
                     
                     // else multiple rewards - let master pick
                     else {
-                        out << "What reward should I take for |cff808080|Hquest:" << questID << ':' << pQuest->GetQuestLevel() 
+                        out << "Quelle recompense dois-je prendre|cff808080|Hquest:" << questID << ':' << pQuest->GetQuestLevel() 
                             << "|h[" << questTitle << "]|h|r? ";
                         for (uint8 i=0; i < pQuest->GetRewChoiceItemsCount(); ++i)
                         {
@@ -1566,12 +1567,12 @@ void PlayerbotAI::TurnInQuests( WorldObject *questgiver )
             }
 
             else if (status == QUEST_STATUS_INCOMPLETE) {
-                out << "|cffff0000Quest incomplete:|r " 
+                out << "|cffff0000Quete(s) incomplete(s):|r " 
                     << " |cff808080|Hquest:" << questID << ':' << pQuest->GetQuestLevel() << "|h[" << questTitle << "]|h|r";
             }
 
             else if (status == QUEST_STATUS_AVAILABLE){
-                out << "|cff00ff00Quest available:|r " 
+                out << "|cff00ff00Quete(s) active(s):|r " 
                     << " |cff808080|Hquest:" << questID << ':' << pQuest->GetQuestLevel() << "|h[" << questTitle << "]|h|r";
             }
 
@@ -1950,7 +1951,7 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
             PlayerbotChatHandler ch(GetMaster());
             if (! ch.revive(*m_bot))
             {
-                ch.sysmessage(".. could not be revived ..");
+                ch.sysmessage(".. ne peut pas ressuciter ..");
                 return;
             }
             // set back to normal
@@ -2074,7 +2075,7 @@ bool PlayerbotAI::CastSpell(uint32 spellId)
     const SpellEntry* const pSpellInfo = sSpellStore.LookupEntry(spellId);
     if (!pSpellInfo)
     {
-        TellMaster("missing spell entry in CastSpell.");
+        TellMaster("Il me manque le nom du sort a lancer.");
         return false;
     }
 
@@ -2409,7 +2410,7 @@ bool PlayerbotAI::FollowCheckTeleport( WorldObject &obj )
         PlayerbotChatHandler ch(GetMaster());
         if (! ch.teleport(*m_bot))
         {
-            ch.sysmessage(".. could not be teleported ..");
+            ch.sysmessage(".. Teleportation impossible ..");
             //sLog.outDebug( "[PlayerbotAI]: %s failed to teleport", m_bot->GetName() );
             return false;
         }
@@ -2487,7 +2488,7 @@ void PlayerbotAI::HandleCommand(const std::string& text, Player& fromPlayer)
     // if message is not from a player in the masters account auto reply and ignore
     if (!canObeyCommandFrom(fromPlayer))
     {
-        std::string msg = "I can't talk to you. Please speak to my master ";
+        std::string msg = "Je ne peux pas vous parler. Contactez plutot mon maitre ";
         msg += GetMaster()->GetName();
         SendWhisper(msg, fromPlayer);
         m_bot->HandleEmoteCommand(EMOTE_ONESHOT_NO);
@@ -2503,11 +2504,11 @@ void PlayerbotAI::HandleCommand(const std::string& text, Player& fromPlayer)
         std::list<uint32> itemIds;
         extractItemIds(text, itemIds);
         if (itemIds.size() == 0)
-            SendWhisper("Show me what item you want by shift clicking the item in the chat window.", fromPlayer);
+            SendWhisper("Indiquez-moi dans le Tchat ce que vous voulez (MAJ+Clic sur l'objet).", fromPlayer);
         else if( !strncmp( text.c_str(), "nt ", 3 ) ) 
         {
             if( itemIds.size() > 1 )
-                SendWhisper( "There is only one 'Will not be traded' slot. Shift-click just one item, please!", fromPlayer );
+                SendWhisper( "Il n'y a qu'un seul emplacement 'Ne sera pas echange'. MAJ+Clic sur un seul objet, s'il vous plait !", fromPlayer );
             else
             {
                 std::list<Item*> itemList;
@@ -2516,7 +2517,7 @@ void PlayerbotAI::HandleCommand(const std::string& text, Player& fromPlayer)
                 if( itemList.size()>0 )
                     TradeItem( (**itemList.begin()), TRADE_SLOT_NONTRADED );
                 else
-                    SendWhisper( "I do not have this item equipped or in my bags!", fromPlayer );
+                    SendWhisper( "Je n'ai pas cet objet dans mon inventaire ou dans mon equipement !", fromPlayer );
             }
         }
         else
@@ -2564,7 +2565,7 @@ void PlayerbotAI::HandleCommand(const std::string& text, Player& fromPlayer)
         }
         else
         {
-            TellMaster("No target is selected.");
+            TellMaster("Pas de cible.");
             m_bot->HandleEmoteCommand(EMOTE_ONESHOT_TALK);
         }
     }
@@ -2613,10 +2614,10 @@ void PlayerbotAI::HandleCommand(const std::string& text, Player& fromPlayer)
 	{
 		bool hasIncompleteQuests = false;
     	std::ostringstream incomout;
-    	incomout << "my incomplete quests are:";
+    	incomout << "Mes quetes non finies:";
 		bool hasCompleteQuests = false;
     	std::ostringstream comout;
-    	comout << "my complete quests are:";
+    	comout << "Mes quetes finies:";
 	    for (uint16 slot = 0; slot < MAX_QUEST_LOG_SIZE; ++slot)
 		{
 	        if(uint32 questId = m_bot->GetQuestSlotQuestId(slot))
@@ -2637,7 +2638,7 @@ void PlayerbotAI::HandleCommand(const std::string& text, Player& fromPlayer)
 	    if (hasIncompleteQuests)
 	    	SendWhisper(incomout.str(), fromPlayer);
 	    if (! hasCompleteQuests && ! hasIncompleteQuests)
-	    	SendWhisper("I have no quests!", fromPlayer);
+	    	SendWhisper("Je n'ai pas de quete !", fromPlayer);
 	}
 	
     // drop a quest
@@ -2699,9 +2700,9 @@ void PlayerbotAI::HandleCommand(const std::string& text, Player& fromPlayer)
         }
 
         ChatHandler ch(&fromPlayer);
-        SendWhisper("here's my non-attack spells:", fromPlayer);
+        SendWhisper("Voici mes sorts non offensifs:", fromPlayer);
         ch.SendSysMessage(posOut.str().c_str());
-        SendWhisper("and here's my attack spells:", fromPlayer);
+        SendWhisper("et voici mes sorts offensifs:", fromPlayer);
         ch.SendSysMessage(negOut.str().c_str());
     }
     
@@ -2757,7 +2758,7 @@ void PlayerbotAI::HandleCommand(const std::string& text, Player& fromPlayer)
 
     	}
         else {
-            std::string msg = "What? follow, stay, (c)ast <spellname>, spells, (e)quip <itemlink>, (u)se <itemlink>, drop <questlink>, report, quests";
+            std::string msg = "Comment ? follow, stay, (c)ast <nom du sort>, spells, (e)quip <itemlink>, (u)se <itemlink>, drop <questlink>, report, quests (Pour obtenir un <itemlink> ou <questlink> faites MAJ+Clic sur l'objet ou sur la quete pour le linker dans le canal de tchat)";
             SendWhisper(msg, fromPlayer);
             m_bot->HandleEmoteCommand(EMOTE_ONESHOT_TALK);
         }
