@@ -171,11 +171,11 @@ uint32 PlayerbotAI::getSpellId(const char* args, bool master) const
     // converting string that we try to find to lower case
     wstrToLower(wnamepart);
 
-    int loc = 0;
-	if (master)
-		loc = GetMaster()->GetSession()->GetSessionDbcLocale();
-	else
-		loc = m_bot->GetSession()->GetSessionDbcLocale();
+    /*int loc = 0;
+    if (master)
+        loc = GetMaster()->GetSession()->GetSessionDbcLocale();
+    else
+        loc = m_bot->GetSession()->GetSessionDbcLocale();*/
 
     uint32 foundSpellId = 0;
     bool foundExactMatch = false;
@@ -1872,7 +1872,10 @@ void PlayerbotAI::SetInFront( const Unit* obj )
 
 void PlayerbotAI::UpdateAI(const uint32 p_time)
 {
-    if (m_bot->IsBeingTeleported() || m_bot->GetTrader())
+    if(!IsMoving())
+        SetMovementOrder( MOVEMENT_FOLLOW, GetMaster() );
+		
+    if (m_bot->IsBeingTeleported() /*|| m_bot->GetTrader()*/)
         return;
 
     time_t currentTime = time(0);
@@ -1973,7 +1976,8 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
         }
 
         // handle combat (either self/master/group in combat, or combat state and valid target)
-        else if ( IsInCombat() || (m_botState == BOTSTATE_COMBAT && m_targetCombat) )
+        //else if ( IsInCombat() || (m_botState == BOTSTATE_COMBAT && m_targetCombat) )
+        else if ( IsInCombat() )
             DoNextCombatManeuver();
 
         // bot was in combat recently - loot now
@@ -1995,7 +1999,10 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
 
         // do class specific non combat actions
         else if (GetClassAI())
+        {
             (GetClassAI())->DoNonCombatActions();
+            SetMovementOrder( MOVEMENT_FOLLOW, GetMaster() );
+        }
     }
 }
 
@@ -2416,11 +2423,16 @@ void PlayerbotAI::HandleTeleportAck()
     m_bot->GetMotionMaster()->Clear(true);
     if (m_bot->IsBeingTeleportedNear())
     {
-        WorldPacket p = WorldPacket(MSG_MOVE_TELEPORT_ACK, 8 + 4 + 4);
+        /*WorldPacket p = WorldPacket(MSG_MOVE_TELEPORT_ACK, 8 + 4 + 4);
         p << m_bot->GetGUID();
         p << (uint32) 0; // supposed to be flags? not used currently
         p << (uint32) time(0); // time - not currently used
-        m_bot->GetSession()->HandleMoveTeleportAck(p);
+        m_bot->GetSession()->HandleMoveTeleportAck(p);*/
+        WorldPacket data;
+        m_bot->BuildTeleportAckMsg(&data, GetMaster()->GetPositionX(), GetMaster()->GetPositionY(), GetMaster()->GetPositionZ(), GetMaster()->GetOrientation());
+        m_bot->GetSession()->SendPacket(&data);
+        m_bot->SetPosition(GetMaster()->GetPositionX(), GetMaster()->GetPositionY(), GetMaster()->GetPositionZ(), GetMaster()->GetOrientation(), false);
+        m_bot->SetSemaphoreTeleportNear(false);
     }
     else if (m_bot->IsBeingTeleportedFar())
         m_bot->GetSession()->HandleMoveWorldportAckOpcode();
