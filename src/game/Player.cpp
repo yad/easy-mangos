@@ -1261,6 +1261,9 @@ void Player::Update( uint32 p_time )
 
         if (!m_regenTimer)
             RegenerateAll();
+
+        if (sWorld.getConfig(CONFIG_NO_COOLDOWN) == 1)
+            RemoveAllSpellCooldown();
     }
 
     if (m_deathState == JUST_DIED)
@@ -17567,12 +17570,6 @@ void Player::UpdatePvP(bool state, bool ovrride)
 
 void Player::AddSpellAndCategoryCooldowns(SpellEntry const* spellInfo, uint32 itemId, Spell* spell, bool infinityCooldown)
 {
-    if(sWorld.getConfig(CONFIG_NO_COOLDOWN) == 1)
-    {
-        SendClearCooldown(spellInfo->Id, this);
-        return;
-    }
-
     // init cooldown values
     uint32 cat   = 0;
     int32 rec    = -1;
@@ -17669,12 +17666,6 @@ void Player::AddSpellAndCategoryCooldowns(SpellEntry const* spellInfo, uint32 it
 
 void Player::AddSpellCooldown(uint32 spellid, uint32 itemid, time_t end_time)
 {
-    if(sWorld.getConfig(CONFIG_NO_COOLDOWN) == 1)
-    {
-        SendClearCooldown(spellid, this);
-        return;
-    }
-
     SpellCooldown sc;
     sc.end = end_time;
     sc.itemid = itemid;
@@ -17683,12 +17674,6 @@ void Player::AddSpellCooldown(uint32 spellid, uint32 itemid, time_t end_time)
 
 void Player::SendCooldownEvent(SpellEntry const *spellInfo, uint32 itemId, Spell* spell)
 {
-    if(sWorld.getConfig(CONFIG_NO_COOLDOWN) == 1)
-    {
-        SendClearCooldown(spellInfo->Id, this);
-        return;
-    }
-
     // start cooldowns at server side, if any
     AddSpellAndCategoryCooldowns(spellInfo, itemId, spell);
 
@@ -17713,19 +17698,11 @@ void Player::UpdatePotionCooldown(Spell* spell)
             for(int idx = 0; idx < 5; ++idx)
                 if(proto->Spells[idx].SpellId && proto->Spells[idx].SpellTrigger == ITEM_SPELLTRIGGER_ON_USE)
                     if(SpellEntry const* spellInfo = sSpellStore.LookupEntry(proto->Spells[idx].SpellId))
-                        if(sWorld.getConfig(CONFIG_NO_COOLDOWN) == 1)
-                            SendClearCooldown(spellInfo->Id, this);
-                        else
                             SendCooldownEvent(spellInfo,m_lastPotionId);
     }
     // from spell cases (m_lastPotionId set in Spell::SendSpellCooldown)
     else
-    {
-        if(sWorld.getConfig(CONFIG_NO_COOLDOWN) == 1)
-            SendClearCooldown(spell->m_spellInfo->Id, this);
-        else
-            SendCooldownEvent(spell->m_spellInfo,m_lastPotionId,spell);
-    }
+        SendCooldownEvent(spell->m_spellInfo,m_lastPotionId,spell);
 
     m_lastPotionId = 0;
 }
