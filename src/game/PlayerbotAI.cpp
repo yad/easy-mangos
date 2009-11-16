@@ -143,6 +143,7 @@ PlayerbotAI::PlayerbotAI(PlayerbotMgr* const mgr, Player* const bot) :
             m_classAI = (PlayerbotClassAI*)new PlayerbotDeathKnightAI(GetMaster(), m_bot, this);
             break;
     }
+    CheckMount();
 }
 
 PlayerbotAI::~PlayerbotAI()
@@ -473,17 +474,7 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
             uint64 guid = extractGuid(p);
             if (guid != GetMaster()->GetGUID())
                 return;
-            if (GetMaster()->IsMounted() && !m_bot->IsMounted())
-            {
-                Item* const pItem = m_bot->GetPlayerbotAI()->FindMount(300);
-                if (pItem)
-                    m_bot->GetPlayerbotAI()->UseItem(*pItem);
-            }
-            else if (!GetMaster()->IsMounted() && m_bot->IsMounted())
-            {
-                WorldPacket emptyPacket;
-                m_bot->GetSession()->HandleCancelMountAuraOpcode(emptyPacket);  //updated code
-            }
+            CheckMount();
             return;
         }
 
@@ -882,6 +873,48 @@ Item* PlayerbotAI::FindMount(uint32 matchingRidingSkill) const
         }
     }
     return partialMatch;
+}
+
+void PlayerbotAI::CheckMount()
+{
+    if (GetMaster()->IsMounted() && !m_bot->IsMounted())
+    {
+        Item* pItem = NULL;
+
+        pItem = m_bot->GetPlayerbotAI()->FindMount(300);
+        if (pItem)
+        {
+            m_bot->GetPlayerbotAI()->UseItem(*pItem);
+            return;
+        }
+        pItem = m_bot->GetPlayerbotAI()->FindMount(225);
+        if (pItem)
+        {
+            m_bot->GetPlayerbotAI()->UseItem(*pItem);
+            return;
+        }
+        pItem = m_bot->GetPlayerbotAI()->FindMount(150);
+        if (pItem)
+        {
+            m_bot->GetPlayerbotAI()->UseItem(*pItem);
+            return;
+        }
+        pItem = m_bot->GetPlayerbotAI()->FindMount(75);
+        if (pItem)
+        {
+            m_bot->GetPlayerbotAI()->UseItem(*pItem);
+            return;
+        }
+    }
+    else if (!GetMaster()->IsMounted() && m_bot->IsMounted())
+    {
+        WorldPacket emptyPacket;
+        m_bot->GetSession()->HandleCancelMountAuraOpcode(emptyPacket);  //updated code
+        m_bot->Unmount(); 
+        m_bot->RemoveSpellsCausingAura(SPELL_AURA_MOUNTED); 
+        m_bot->RemoveSpellsCausingAura(SPELL_AURA_MOD_INCREASE_FLIGHT_SPEED);
+        m_bot->RemoveSpellsCausingAura(SPELL_AURA_MOD_INCREASE_MOUNTED_SPEED);
+    }
 }
 
 Item* PlayerbotAI::FindFood() const
@@ -1873,9 +1906,9 @@ void PlayerbotAI::SetInFront( const Unit* obj )
 
 void PlayerbotAI::UpdateAI(const uint32 p_time)
 {
-    if(!IsMoving())
-        SetMovementOrder( MOVEMENT_FOLLOW, GetMaster() );
-		
+    /*if(!IsMoving() && !IsInCombat())
+        SetMovementOrder( MOVEMENT_FOLLOW, GetMaster() );*/
+
     if (m_bot->IsBeingTeleported() /*|| m_bot->GetTrader()*/)
         return;
 
@@ -1996,7 +2029,10 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
 */
         // if commanded to follow master and not already following master then follow master
         else if (!IsInCombat() && !IsMoving() )
+        {
             MovementReset();
+            SetMovementOrder( MOVEMENT_FOLLOW, GetMaster() );
+        }
 
         // do class specific non combat actions
         else if (GetClassAI())
@@ -2408,7 +2444,7 @@ bool PlayerbotAI::FollowCheckTeleport( WorldObject &obj )
     {
         m_ignoreAIUpdatesUntilTime = time(0) + 6;
         PlayerbotChatHandler ch(GetMaster());
-        if (! ch.teleport(*m_bot))
+        if (!ch.teleport(*m_bot))
         {
             ch.sysmessage(".. Teleportation impossible ..");
             //sLog.outDebug( "[PlayerbotAI]: %s failed to teleport", m_bot->GetName() );

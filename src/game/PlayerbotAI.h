@@ -162,6 +162,7 @@ class MANGOS_DLL_SPEC PlayerbotAI
         Item* FindBandage() const;
         Item* FindPoison() const;
         Item* FindMount(uint32 matchingRidingSkill) const;
+        void CheckMount();
 
         // ******* Actions ****************************************
         // Your handlers can call these actions to make the bot do things.
