@@ -79,7 +79,7 @@ public:
 };
 
 PlayerbotAI::PlayerbotAI(PlayerbotMgr* const mgr, Player* const bot) :
-    m_mgr(mgr), m_bot(bot), m_ignoreAIUpdatesUntilTime(0),
+    m_mgr(mgr), m_bot(bot), m_ignoreAIUpdatesUntilTime(0), m_ignoreTeleport(0),
     m_combatOrder(ORDERS_NONE), m_ScenarioType(SCENARIO_PVEEASY),
     m_TimeDoneEating(0), m_TimeDoneDrinking(0),
     m_CurrentlyCastingSpellId(0), m_spellIdCommand(0), 
@@ -1962,7 +1962,7 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
         return;
 
     // default updates occur every two seconds
-    m_ignoreAIUpdatesUntilTime = time(0) + 2;
+    m_ignoreAIUpdatesUntilTime = time(0) + 1;
 
 	// send heartbeat
 	MovementUpdate();
@@ -2488,6 +2488,9 @@ bool PlayerbotAI::TradeCopper(uint32 copper)
 bool PlayerbotAI::FollowCheckTeleport( WorldObject &obj )
 {
     // if bot has strayed too far from the master, teleport bot
+    time_t currentTime = time(0);
+    if (currentTime < m_ignoreTeleport)
+        return false;
 	
     if (!m_bot->IsWithinDistInMap( &obj, 100, true ))
     {
@@ -2499,13 +2502,15 @@ bool PlayerbotAI::FollowCheckTeleport( WorldObject &obj )
             //sLog.outDebug( "[PlayerbotAI]: %s failed to teleport", m_bot->GetName() );
             return false;
         }
+        else
+            SetIgnoreTeleport(15);
     }
     return true;
 }
 
 void PlayerbotAI::HandleTeleportAck()
 {
-    m_ignoreAIUpdatesUntilTime = time(0) + 6;
+    //m_ignoreAIUpdatesUntilTime = time(0) + 6;
     m_bot->GetMotionMaster()->Clear(true);
     if (m_bot->IsBeingTeleportedNear())
     {

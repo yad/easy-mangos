@@ -184,6 +184,7 @@ class MANGOS_DLL_SPEC PlayerbotAI
         void DoNextCombatManeuver();
 		void DoCombatMovement();
         void SetIgnoreUpdateTime(uint8 t) {m_ignoreAIUpdatesUntilTime=time(0) + t; };
+        void SetIgnoreTeleport(uint8 t) {m_ignoreTeleport=time(0) + t; };
 
         Player *GetPlayerBot() const {return m_bot;}
         Player *GetPlayer() const {return m_bot;}
@@ -236,7 +237,7 @@ class MANGOS_DLL_SPEC PlayerbotAI
         // ignores AI updates until time specified
         // no need to waste CPU cycles during casting etc
         time_t m_ignoreAIUpdatesUntilTime;
-
+        time_t m_ignoreTeleport;
 		CombatStyle m_combatStyle;
         CombatOrderType m_combatOrder;
 		MovementOrderType m_movementOrder;
