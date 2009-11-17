@@ -1879,7 +1879,6 @@ void Player::RemoveFromWorld()
     if(IsInWorld())
     {
         ///- Release charmed creatures, unsummon totems and remove pets/guardians
-        Uncharm();
         UnsummonAllTotems();
         RemoveMiniPet();
     }
@@ -3470,6 +3469,10 @@ void Player::_SaveSpellCooldowns()
     time_t curTime = time(NULL);
     time_t infTime = curTime + infinityCooldownDelayCheck;
 
+    /* copied following sql-code partly from achievementmgr */
+    bool first_round = true;
+    std::ostringstream ss;
+
     // remove outdated and save active
     for(SpellCooldowns::iterator itr = m_spellCooldowns.begin();itr != m_spellCooldowns.end();)
     {
@@ -3477,12 +3480,24 @@ void Player::_SaveSpellCooldowns()
             m_spellCooldowns.erase(itr++);
         else if(itr->second.end <= infTime)                 // not save locked cooldowns, it will be reset or set at reload
         {
-            CharacterDatabase.PExecute("INSERT INTO character_spell_cooldown (guid,spell,item,time) VALUES ('%u', '%u', '%u', '" UI64FMTD "')", GetGUIDLow(), itr->first, itr->second.itemid, uint64(itr->second.end));
+            if (first_round)
+            {
+                ss << "INSERT INTO character_spell_cooldown (guid,spell,item,time) VALUES ";
+                first_round = false;
+            }
+            // next new/changed record prefix
+            else
+                ss << ", ";
+            ss << "(" << GetGUIDLow() << "," << itr->first << "," << itr->second.itemid << "," << uint64(itr->second.end) << ")";
             ++itr;
         }
         else
             ++itr;
+
     }
+    // if something changed execute
+    if (!first_round)
+        CharacterDatabase.Execute( ss.str().c_str() );
 }
 
 uint32 Player::resetTalentsCost() const
@@ -5548,18 +5563,24 @@ void Player::SendInitialActionButtons() const
     sLog.outDetail( "Action Buttons for '%u' Initialized", GetGUIDLow() );
 }
 
-ActionButton* Player::addActionButton(uint8 button, uint32 action, uint8 type)
+bool Player::IsActionButtonDataValid(uint8 button, uint32 action, uint8 type, Player* player)
 {
     if(button >= MAX_ACTION_BUTTONS)
     {
-        sLog.outError( "Action %u not added into button %u for player %s: button must be < 144", action, button, GetName() );
-        return NULL;
+        if (player)
+            sLog.outError( "Action %u not added into button %u for player %s: button must be < %u", action, button, player->GetName(), MAX_ACTION_BUTTONS );
+        else
+            sLog.outError( "Table `playercreateinfo_action` have action %u into button %u : button must be < %u", action, button, MAX_ACTION_BUTTONS );
+        return false;
     }
 
     if(action >= MAX_ACTION_BUTTON_ACTION_VALUE)
     {
-        sLog.outError( "Action %u not added into button %u for player %s: action must be < %u", action, button, GetName(), MAX_ACTION_BUTTON_ACTION_VALUE );
-        return NULL;
+        if (player)
+            sLog.outError( "Action %u not added into button %u for player %s: action must be < %u", action, button, player->GetName(), MAX_ACTION_BUTTON_ACTION_VALUE );
+        else
+            sLog.outError( "Table `playercreateinfo_action` have action %u into button %u : action must be < %u", action, button, MAX_ACTION_BUTTON_ACTION_VALUE );
+        return false;
     }
 
     switch(type)
@@ -5567,27 +5588,41 @@ ActionButton* Player::addActionButton(uint8 button, uint32 action, uint8 type)
         case ACTION_BUTTON_SPELL:
             if(!sSpellStore.LookupEntry(action))
             {
-                sLog.outError( "Action %u not added into button %u for player %s: spell not exist", action, button, GetName() );
-                return NULL;
+                if (player)
+                    sLog.outError( "Spell action %u not added into button %u for player %s: spell not exist", action, button, player->GetName() );
+                else
+                    sLog.outError( "Table `playercreateinfo_action` have spell action %u into button %u: spell not exist", action, button );
+                return false;
             }
 
-            if(!HasSpell(action))
+            if(player && !player->HasSpell(action))
             {
-                sLog.outError( "Action %u not added into button %u for player %s: player don't known this spell", action, button, GetName() );
-                return NULL;
+                sLog.outError( "Spell action %u not added into button %u for player %s: player don't known this spell", action, button, player->GetName() );
+                return false;
             }
             break;
         case ACTION_BUTTON_ITEM:
             if(!ObjectMgr::GetItemPrototype(action))
             {
-                sLog.outError( "Action %u not added into button %u for player %s: item not exist", action, button, GetName() );
-                return NULL;
+                if (player)
+                    sLog.outError( "Item action %u not added into button %u for player %s: item not exist", action, button, player->GetName() );
+                else
+                    sLog.outError( "Table `playercreateinfo_action` have item action %u into button %u: item not exist", action, button );
+                return false;
             }
             break;
         default:
-            break;                                          // pther cases not checked at this moment
+            break;                                          // other cases not checked at this moment
     }
 
+    return true;
+}
+
+ActionButton* Player::addActionButton(uint8 button, uint32 action, uint8 type)
+{
+
+    if (!IsActionButtonDataValid(button,action,type,this))
+        return NULL;
 
     // it create new button (NEW state) if need or return existed
     ActionButton& ab = m_actionButtons[button];
@@ -15828,6 +15863,9 @@ void Player::_SaveAuras()
     spellEffectPair lastEffectPair = auras.begin()->first;
     uint32 stackCounter = 1;
 
+    /* copied following sql-code partly from achievementmgr */
+    bool first_round = true;
+    std::ostringstream ss;
     for(AuraMap::const_iterator itr = auras.begin(); ; ++itr)
     {
         if(itr == auras.end() || lastEffectPair != itr->first)
@@ -15840,9 +15878,20 @@ void Player::_SaveAuras()
             //do not save single target auras (unless they were cast by the player)
             if (!itr2->second->IsPassive() && (itr2->second->GetCasterGUID() == GetGUID() || !itr2->second->IsSingleTarget()))
             {
-                CharacterDatabase.PExecute("INSERT INTO character_aura (guid,caster_guid,spell,effect_index,stackcount,amount,maxduration,remaintime,remaincharges) "
-                    "VALUES ('%u', '" UI64FMTD "' ,'%u', '%u', '%u', '%d', '%d', '%d', '%d')",
-                    GetGUIDLow(), itr2->second->GetCasterGUID(), (uint32)itr2->second->GetId(), (uint32)itr2->second->GetEffIndex(), stackCounter, itr2->second->GetModifier()->m_amount,int(itr2->second->GetAuraMaxDuration()),int(itr2->second->GetAuraDuration()),int(itr2->second->GetAuraCharges()));
+                if (first_round)
+                {
+                    ss << "INSERT INTO character_aura (guid,caster_guid,spell,effect_index,stackcount,amount,maxduration,remaintime,remaincharges)VALUES ";
+                    first_round = false;
+                }
+                // next new/changed record prefix
+                else
+                    ss << ", ";
+
+                ss << "("<< GetGUIDLow() << "," << itr2->second->GetCasterGUID() << ","
+                    << (uint32)itr2->second->GetId() << "," << (uint32)itr2->second->GetEffIndex() << ","
+                    << stackCounter << "," << itr2->second->GetModifier()->m_amount << ","
+                    <<int(itr2->second->GetAuraMaxDuration()) << "," << int(itr2->second->GetAuraDuration()) << ","
+                    << int(itr2->second->GetAuraCharges()) << ")";
             }
 
             if(itr == auras.end())
@@ -15857,6 +15906,10 @@ void Player::_SaveAuras()
             stackCounter = 1;
         }
     }
+
+    // if something changed execute
+    if (!first_round)
+        CharacterDatabase.Execute( ss.str().c_str() );
 }
 
 void Player::_SaveInventory()
@@ -16479,16 +16532,6 @@ Pet* Player::GetMiniPet()
     if(!m_miniPet)
         return NULL;
     return GetMap()->GetPet(m_miniPet);
-}
-
-void Player::Uncharm()
-{
-    Unit* charm = GetCharm();
-    if(!charm)
-        return;
-
-    charm->RemoveSpellsCausingAura(SPELL_AURA_MOD_CHARM);
-    charm->RemoveSpellsCausingAura(SPELL_AURA_MOD_POSSESS);
 }
 
 void Player::BuildPlayerChat(WorldPacket *data, uint8 msgtype, const std::string& text, uint32 language) const
