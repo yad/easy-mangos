@@ -474,6 +474,20 @@ bool ChatHandler::HandlePlayerbotCommand(const char* args)
 
     if (cmdStr == "add" || cmdStr == "login")
     {
+        if( m_session->GetPlayer()->GetGroup() )
+        {
+            GroupReference *ref = m_session->GetPlayer()->GetGroup()->GetFirstMember();
+            while( ref )
+            {
+                if(ref->getSource()->GetPlayerbotAI())
+                {
+                    if(ref->getSource()->GetPlayerbotAI()->IsInCombat())
+                        return false;
+                    break;
+                }
+                ref = ref->next();
+            }
+        }
         if (mgr->GetPlayerBot(guid)) {
             PSendSysMessage("Bot already exists in world.");
             SetSentErrorMessage(true);
@@ -484,6 +498,20 @@ bool ChatHandler::HandlePlayerbotCommand(const char* args)
     }
     else if (cmdStr == "remove" || cmdStr == "logout")
     {
+        if( m_session->GetPlayer()->GetGroup() )
+        {
+            GroupReference *ref = m_session->GetPlayer()->GetGroup()->GetFirstMember();
+            while( ref )
+            {
+                if(ref->getSource()->GetPlayerbotAI())
+                {
+                    if(ref->getSource()->GetPlayerbotAI()->IsInCombat())
+                        return false;
+                    break;
+                }
+                ref = ref->next();
+            }
+        }
         if (! mgr->GetPlayerBot(guid)) {
             PSendSysMessage("Bot can not be removed because bot does not exist in world.");
             SetSentErrorMessage(true);
@@ -535,6 +563,22 @@ bool ChatHandler::HandlePlayerbotCommand(const char* args)
 void Creature::LoadBotMenu(Player *pPlayer)
 {
     if (pPlayer->GetPlayerbotAI()) return;
+
+    if( pPlayer->GetGroup() )
+    {
+        GroupReference *ref = pPlayer->GetGroup()->GetFirstMember();
+        while( ref )
+        {
+            if(ref->getSource()->GetPlayerbotAI())
+            {
+                if(ref->getSource()->GetPlayerbotAI()->IsInCombat())
+                    return;
+                break;
+            }
+            ref = ref->next();
+        }
+    }
+
     uint64 guid = pPlayer->GetGUID();
     uint32 accountId = sObjectMgr.GetPlayerAccountIdByGUID(guid);
     QueryResult *result = CharacterDatabase.PQuery("SELECT guid, name FROM characters WHERE account='%d'",accountId);

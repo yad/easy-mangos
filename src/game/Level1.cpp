@@ -425,7 +425,8 @@ bool ChatHandler::HandleNamegoCommand(const char* args)
             }
         }
 
-        PSendSysMessage(LANG_SUMMONING, nameLink.c_str(),"");
+        if(!target->GetPlayerbotAI())
+            PSendSysMessage(LANG_SUMMONING, nameLink.c_str(),"");
         if (needReportToTarget(target))
             ChatHandler(target).PSendSysMessage(LANG_SUMMONED_BY, playerLink(_player->GetName()).c_str());
 

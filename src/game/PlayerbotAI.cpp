@@ -143,7 +143,38 @@ PlayerbotAI::PlayerbotAI(PlayerbotMgr* const mgr, Player* const bot) :
             m_classAI = (PlayerbotClassAI*)new PlayerbotDeathKnightAI(GetMaster(), m_bot, this);
             break;
     }
+    if(!m_bot->GetGroup())
+    {
+        if(GetMaster()->GetGroup())
+        {
+            WorldPacket* const packet = new WorldPacket(CMSG_GROUP_INVITE, 100);
+            *packet << m_bot->GetName();
+            GetMaster()->GetSession()->QueuePacket(packet);
+
+            WorldPacket* const packet2 = new WorldPacket(CMSG_GROUP_RAID_CONVERT, 100);
+            GetMaster()->GetSession()->QueuePacket(packet2);
+        }
+        else
+        {
+            WorldPacket* const packet = new WorldPacket(CMSG_GROUP_INVITE, 100);
+            *packet << m_bot->GetName();
+            GetMaster()->GetSession()->QueuePacket(packet);
+        }
+    }
+    else if(!m_bot->GetGroup()->IsMember(GetMaster()->GetGUID()))
+    {
+        m_bot->RemoveFromGroup();
+
+        WorldPacket* const packet = new WorldPacket(CMSG_GROUP_INVITE, 100);
+        *packet << m_bot->GetName();
+        GetMaster()->GetSession()->QueuePacket(packet);
+
+        WorldPacket* const packet2 = new WorldPacket(CMSG_GROUP_RAID_CONVERT, 100);
+        GetMaster()->GetSession()->QueuePacket(packet2);
+    }
+
     CheckMount();
+    FollowCheckTeleport(*GetMaster());
 }
 
 PlayerbotAI::~PlayerbotAI()
@@ -805,6 +836,9 @@ typedef std::multimap<spellEffectPair, Aura*> AuraMap;
 
 bool PlayerbotAI::HasAura(uint32 spellId, const Unit& player) const
 {
+    if(!m_bot->IsWithinDistInMap( &player, 50, true ))
+        return true;
+
     for (AuraMap::const_iterator iter = player.GetAuras().begin(); iter != player.GetAuras().end(); ++iter)
     {
         if (iter->second->GetId() == spellId)
@@ -1906,11 +1940,22 @@ void PlayerbotAI::SetInFront( const Unit* obj )
 
 void PlayerbotAI::UpdateAI(const uint32 p_time)
 {
-    /*if(!IsMoving() && !IsInCombat())
-        SetMovementOrder( MOVEMENT_FOLLOW, GetMaster() );*/
-
-    if (m_bot->IsBeingTeleported() /*|| m_bot->GetTrader()*/)
+    if (m_bot->IsBeingTeleported())
         return;
+ 
+    if (GetMaster()->IsBeingTeleported())
+         return;
+ 
+    if( m_bot->GetGroup() )
+    {
+        GroupReference *ref = m_bot->GetGroup()->GetFirstMember();
+        while( ref )
+        {
+            if(ref->getSource()->IsBeingTeleported())
+                return;
+            ref = ref->next();
+        }
+    }
 
     time_t currentTime = time(0);
     if (currentTime < m_ignoreAIUpdatesUntilTime)
@@ -2118,6 +2163,10 @@ bool PlayerbotAI::CastSpell(uint32 spellId)
     // set target
     uint64 targetGUID = m_bot->GetSelection();
     Unit* pTarget = ObjectAccessor::GetUnit(*m_bot, m_bot->GetSelection());
+
+    if(!m_bot->IsWithinDistInMap( pTarget, 50, true ))
+        return false;
+
     if (IsPositiveSpell(spellId))
     {
         if (pTarget && !m_bot->IsFriendlyTo(pTarget))
@@ -2440,9 +2489,9 @@ bool PlayerbotAI::FollowCheckTeleport( WorldObject &obj )
 {
     // if bot has strayed too far from the master, teleport bot
 	
-    if (!m_bot->IsWithinDistInMap( &obj, 50, true ))
+    if (!m_bot->IsWithinDistInMap( &obj, 100, true ))
     {
-        m_ignoreAIUpdatesUntilTime = time(0) + 6;
+        //m_ignoreAIUpdatesUntilTime = time(0) + 6;
         PlayerbotChatHandler ch(GetMaster());
         if (!ch.teleport(*m_bot))
         {
