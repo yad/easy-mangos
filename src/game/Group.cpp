@@ -328,7 +328,7 @@ bool Group::AddMember(const uint64 &guid, const char* name)
 			if(sWorld.getConfig(CONFIG_ALLOW_TWO_SIDE_INTERACTION_GROUP))
 			{
 				Group *group = player->GetGroup();
-				if(Player *leader = objmgr.GetPlayer(group->GetLeaderGUID()))
+				if(Player *leader = sObjectMgr.GetPlayer(group->GetLeaderGUID()))
 				{
 					player->setFactionForRace(leader->getRace());
 					sLog.outDebug( "WORLD: Group Interfaction Interactions - Faction changed (AddMember)" );
