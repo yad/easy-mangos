@@ -1337,3 +1337,34 @@ Ra.IP = 0.0.0.0
 Ra.Port = 3443
 Ra.MinLevel = 3
 Ra.Secure = 1
+
+###################################################################################################################
+#
+#     Custom.SpeedGame
+#         Set it to a number upper than 1 to speed up realm timer
+#     Default : 1 (Real Time)
+#     Example : 60 to force 1scde (real time) = 1 minute (realm timer)
+#
+#     Custom.NoCastTime
+#         Set it to 1 to disable cast time
+#     Default : 0 (Cast Time Enable)
+#
+#     Custom.NoCooldown
+#         Set it to 1 to disable cooldown
+#     Default : 0 (Cooldown Enable)
+#
+#     Custom.HurtInRealTime
+#         Set it to 1 to disable autohurt with weapon
+#     Default : 0 (Autohurt Enable)
+#
+#     Custom.NoWaitAfterCast
+#         Set it to 1 to disable 5 scdes before regenerate mana again
+#     Default : 0 (5 scdes)
+#
+###################################################################################################################
+ 
+Custom.SpeedGame = 1
+Custom.NoCastTime = 0
+Custom.NoCooldown = 0
+Custom.HurtInRealTime = 0
+Custom.NoWaitAfterCast = 0

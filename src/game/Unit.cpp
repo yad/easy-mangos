@@ -237,7 +237,20 @@ void Unit::Update( uint32 p_time )
 
     if(uint32 base_att = getAttackTimer(BASE_ATTACK))
     {
-        setAttackTimer(BASE_ATTACK, (p_time >= base_att ? 0 : base_att - p_time) );
+        if(sWorld.getConfig(CONFIG_HURT_IN_REAL_TIME) != 1) // Normal MaNGOS mod
+            setAttackTimer(BASE_ATTACK, (p_time >= base_att ? 0 : base_att - p_time) );
+        else
+        {
+            if(GetTypeId() == TYPEID_PLAYER)
+            {
+                setAttackTimer(BASE_ATTACK, 0);
+                if(((Player*)this)->CanDualWield() && haveOffhandWeapon())
+                    setAttackTimer(OFF_ATTACK, 0);
+                ((Player*)this)->AttackStop();
+            }
+            else
+                setAttackTimer(BASE_ATTACK, (p_time >= base_att ? 0 : base_att - p_time) );
+        }
     }
 
     // update abilities available only for fraction of time
@@ -12306,6 +12319,14 @@ Aura* Unit::GetDummyAura( uint32 spell_id ) const
             return *itr;
 
     return NULL;
+}
+
+bool Unit::IsUnderLastManaUseEffect() const
+{
+    if( (sWorld.getConfig(CONFIG_NO_WAIT_AFTER_CAST) == 1) && (GetTypeId() == TYPEID_PLAYER) )
+        return false;
+    else
+        return m_lastManaUseTimer;
 }
 
 void Unit::SetContestedPvP(Player *attackedPlayer)

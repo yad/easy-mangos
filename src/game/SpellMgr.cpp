@@ -87,7 +87,10 @@ uint32 GetSpellCastTime(SpellEntry const* spellInfo, Spell const* spell)
     if (spellInfo->Attributes & SPELL_ATTR_RANGED && (!spell || !(spell->IsAutoRepeat())))
         castTime += 500;
 
-    return (castTime > 0) ? uint32(castTime) : 0;
+    if(sWorld.getConfig(CONFIG_NO_CAST_TIME) != 1)
+        return (castTime > 0) ? uint32(castTime) : 0;
+    else
+        return 0;
 }
 
 uint16 GetSpellAuraMaxTicks(SpellEntry const* spellInfo)

@@ -1954,6 +1954,9 @@ void Player::Update( uint32 p_time )
 
         if (!m_regenTimer)
             RegenerateAll();
+
+        if (sWorld.getConfig(CONFIG_NO_COOLDOWN) == 1)
+            RemoveAllSpellCooldown();
     }
 
     if (m_deathState == JUST_DIED)
@@ -18424,7 +18427,7 @@ void Player::UpdatePotionCooldown(Spell* spell)
             for(int idx = 0; idx < 5; ++idx)
                 if(proto->Spells[idx].SpellId && proto->Spells[idx].SpellTrigger == ITEM_SPELLTRIGGER_ON_USE)
                     if(SpellEntry const* spellInfo = sSpellStore.LookupEntry(proto->Spells[idx].SpellId))
-                        SendCooldownEvent(spellInfo,m_lastPotionId);
+                            SendCooldownEvent(spellInfo,m_lastPotionId);
     }
     // from spell cases (m_lastPotionId set in Spell::SendSpellCooldown)
     else
@@ -18985,9 +18988,12 @@ void Player::SendInitialPacketsBeforeAddToMap()
 
     SendEquipmentSetList();
 
+    float speedrate = sWorld.getConfig(CONFIG_SPEED_GAME);
+    uint32 speedtime = secsToTimeBitFields( (sWorld.GetGameTime() - sWorld.GetUptime()) + (sWorld.GetUptime() * speedrate) );
+
     data.Initialize(SMSG_LOGIN_SETTIMESPEED, 4 + 4 + 4);
-    data << uint32(secsToTimeBitFields(sWorld.GetGameTime()));
-    data << (float)0.01666667f;                             // game speed
+    data << uint32(speedtime);
+    data << (float)0.01666667f * speedrate;                 // game speed
     data << uint32(0);                                      // added in 3.1.2
     GetSession()->SendPacket( &data );
 

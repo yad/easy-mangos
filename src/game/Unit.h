@@ -1466,7 +1466,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
 
             m_lastManaUseTimer = 5000;
         }
-        bool IsUnderLastManaUseEffect() const { return m_lastManaUseTimer; }
+        bool IsUnderLastManaUseEffect() const;
 
         uint32 GetRegenTimer() const { return m_regenTimer; }
 
