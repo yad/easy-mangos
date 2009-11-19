@@ -510,6 +510,24 @@ void World::LoadConfigSettings(bool reload)
         sLog.outError("Rate.Talent (%f) mustbe > 0. Using 1 instead.",rate_values[RATE_TALENT]);
         rate_values[RATE_TALENT] = 1.0f;
     }
+    rate_values[RATE_CHARRUNSPEED] = sConfig.GetFloatDefault("Rate.CharRunSpeed",1);
+    if(rate_values[RATE_CHARRUNSPEED] <= 0)
+    {
+        sLog.outError("Rate.CharRunSpeed (%f) mustbe > 0. Using 1 instead.",rate_values[RATE_CHARRUNSPEED]);
+        rate_values[RATE_CHARRUNSPEED] = 1;
+    }
+    rate_values[RATE_CHARSWIMSPEED] = sConfig.GetFloatDefault("Rate.CharSwimSpeed",1);
+    if(rate_values[RATE_CHARSWIMSPEED] <= 0)
+    {
+        sLog.outError("Rate.CharSwimSpeed (%f) mustbe > 0. Using 1 instead.",rate_values[RATE_CHARSWIMSPEED]);
+        rate_values[RATE_CHARSWIMSPEED] = 1;
+    }
+    rate_values[RATE_CHARFLIGHTSPEED] = sConfig.GetFloatDefault("Rate.CharFlightSpeed",1);
+    if(rate_values[RATE_CHARFLIGHTSPEED] <= 0)
+    {
+        sLog.outError("Rate.CharFlightSpeed (%f) mustbe > 0. Using 1 instead.",rate_values[RATE_CHARFLIGHTSPEED]);
+        rate_values[RATE_CHARFLIGHTSPEED] = 1;
+    }
     rate_values[RATE_CORPSE_DECAY_LOOTED] = sConfig.GetFloatDefault("Rate.Corpse.Decay.Looted",0.1f);
 
     rate_values[RATE_TARGET_POS_RECALCULATION_RANGE] = sConfig.GetFloatDefault("TargetPosRecalculateRange",1.5f);
