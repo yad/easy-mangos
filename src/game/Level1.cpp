@@ -401,9 +401,12 @@ bool ChatHandler::HandleNamegoCommand(const char* args)
             if (cMap->Instanceable() && cMap->GetInstanceId() != pMap->GetInstanceId())
             {
                 // cannot summon from instance to instance
-                PSendSysMessage(LANG_CANNOT_SUMMON_TO_INST,nameLink.c_str());
-                SetSentErrorMessage(true);
-                return false;
+                if(!target->GetPlayerbotAI())
+                {   //normal player
+                    PSendSysMessage(LANG_CANNOT_SUMMON_TO_INST,nameLink.c_str());
+                    SetSentErrorMessage(true);
+                    return false;
+                }
             }
 
             // we are in instance, and can summon only player in our group with us as lead
@@ -412,13 +415,18 @@ bool ChatHandler::HandleNamegoCommand(const char* args)
                 (m_session->GetPlayer()->GetGroup()->GetLeaderGUID() != m_session->GetPlayer()->GetGUID()))
                 // the last check is a bit excessive, but let it be, just in case
             {
-                PSendSysMessage(LANG_CANNOT_SUMMON_TO_INST,nameLink.c_str());
-                SetSentErrorMessage(true);
-                return false;
+                // cannot summon from instance to instance
+                if(!target->GetPlayerbotAI())
+                {   //normal player
+                    PSendSysMessage(LANG_CANNOT_SUMMON_TO_INST,nameLink.c_str());
+                    SetSentErrorMessage(true);
+                    return false;
+                }
             }
         }
 
-        PSendSysMessage(LANG_SUMMONING, nameLink.c_str(),"");
+        if(!target->GetPlayerbotAI())
+            PSendSysMessage(LANG_SUMMONING, nameLink.c_str(),"");
         if (needReportToTarget(target))
             ChatHandler(target).PSendSysMessage(LANG_SUMMONED_BY, playerLink(_player->GetName()).c_str());
 

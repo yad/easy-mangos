@@ -1378,6 +1378,9 @@ void World::SetInitialWorldSettings()
     sLog.outString( "Returning old mails..." );
     sObjectMgr.ReturnOrDeleteOldMails(false);
 
+    sLog.outString( "Loading Spell Names..." );
+    sObjectMgr.LoadSpellNames();
+
     ///- Load and initialize scripts
     sLog.outString( "Loading Scripts..." );
     sLog.outString();
