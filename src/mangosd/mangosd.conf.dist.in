@@ -988,54 +988,6 @@ GM.LowerSecurity         = 0
 GM.AllowAchievementGain  = 1
 
 ###################################################################################################################
-# VISIBILITY AND RADIUSES
-#
-#    Visibility.GroupMode
-#        Group visibility modes
-#        Default: 0 (standard setting: only members from same group can 100% auto detect invisible player)
-#                 1 (raid members 100% auto detect invisible player from same raid)
-#                 2 (players from same team can 100% auto detect invisible player)
-#
-#    Visibility.Distance.Continents
-#    Visibility.Distance.Instances
-#    Visibility.Distance.BGArenas
-#        Visibility distance for different ingame object in different maps.
-#        Visibility on continents on offy ~90 yards. In BG/Arenas ~180. For instances default ~120.
-#        Max limited by active player zone: ~ 333
-#        Min limit is max aggro radius (45) * Rate.Creature.Aggro
-#
-#    Visibility.Distance.Object
-#        Visible distance for gameobject, dynobject, bodies, corpses, bones
-#        Min limit is iteraction distance (5)
-#
-#    Visibility.Distance.InFlight
-#        Visible distance for player in flight
-#        Min limit is 0 (not show any objects)
-#
-#    Visibility.Distance.Grey.Unit
-#        Visibility grey distance for creatures/players (fast changing objects)
-#        addition to appropriate object type Visibility.Distance.* use in case visibility removing to
-#        object (except corpse around distences) If � is distance and G is grey distance then object
-#        make visible if distance to it <= D but make non visible if distance > D+G
-#        Default: 1 (yard)
-#
-#    Visibility.Distance.Grey.Object
-#        Visibility grey distance for dynobjects/gameobjects/corpses/creature bodies
-#        Default: 10 (yards)
-#
-#
-###################################################################################################################
-
-Visibility.GroupMode = 0
-Visibility.Distance.Continents    = 90
-Visibility.Distance.Instances     = 120
-Visibility.Distance.BGArenas      = 180
-Visibility.Distance.Object        = 100
-Visibility.Distance.InFlight      = 100
-Visibility.Distance.Grey.Unit   = 1
-Visibility.Distance.Grey.Object = 10
-
-###################################################################################################################
 # SERVER RATES
 #
 #    Rate.Health
