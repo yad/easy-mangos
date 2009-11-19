@@ -1074,6 +1074,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         void SetAcceptWhispers(bool on) { if(on) m_ExtraFlags |= PLAYER_EXTRA_ACCEPT_WHISPERS; else m_ExtraFlags &= ~PLAYER_EXTRA_ACCEPT_WHISPERS; }
         bool isGameMaster() const { return m_ExtraFlags & PLAYER_EXTRA_GM_ON; }
         void SetGameMaster(bool on);
+        bool isInKillerMode() const { return m_killerMode; }
+        void SetInKillerMode(bool enable) { m_killerMode = enable; }
         bool isGMChat() const { return GetSession()->GetSecurity() >= SEC_MODERATOR && (m_ExtraFlags & PLAYER_EXTRA_GM_CHAT); }
         void SetGMChat(bool on) { if(on) m_ExtraFlags |= PLAYER_EXTRA_GM_CHAT; else m_ExtraFlags &= ~PLAYER_EXTRA_GM_CHAT; }
         bool isTaxiCheater() const { return m_ExtraFlags & PLAYER_EXTRA_TAXICHEAT; }
@@ -1195,6 +1197,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         Item* EquipItem( uint16 pos, Item *pItem, bool update );
         void AutoUnequipOffhandIfNeed();
         bool StoreNewItemInBestSlots(uint32 item_id, uint32 item_count);
+        void AutoEquipItem();
         void AutoStoreLoot(uint8 bag, uint8 slot, uint32 loot_id, LootStore const& store, bool broadcast = false);
         void AutoStoreLoot(uint32 loot_id, LootStore const& store, bool broadcast = false) { AutoStoreLoot(NULL_BAG,NULL_SLOT,loot_id,store,broadcast); }
 
@@ -2355,6 +2358,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         bool m_itemUpdateQueueBlocked;
 
         uint32 m_ExtraFlags;
+        bool m_killerMode;
         uint64 m_curSelection;
 
         uint64 m_comboTarget;

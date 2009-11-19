@@ -1813,40 +1813,257 @@ bool ChatHandler::HandleLearnAllMyClassCommand(const char* /*args*/)
 
 bool ChatHandler::HandleLearnAllMySpellsCommand(const char* /*args*/)
 {
-    ChrClassesEntry const* clsEntry = sChrClassesStore.LookupEntry(m_session->GetPlayer()->getClass());
+    Player* player = m_session->GetPlayer();
+ 
+    ChrClassesEntry const* clsEntry = sChrClassesStore.LookupEntry(player->getClass());
+ 
+    if(!clsEntry)
+        return true;
+ 
+    uint32 family = clsEntry->spellfamily;
+ 
+    for (uint32 id = 0; id< sCreatureStorage.MaxEntry; ++id)
+    {
+        CreatureInfo const *cinfo = sObjectMgr.GetCreatureTemplate(id);
+        if(cinfo)
+        {
+            if((cinfo->npcflag & UNIT_NPC_FLAG_TRAINER) && ( (cinfo->trainer_class == player->getClass()) 
+                                                                || id == 2704 || id == 11865 || id == 11866 
+                                                                || id == 11867 || id == 11868 || id == 11869 
+                                                                || id == 11870 || id == 13084 || id == 16621 
+                                                                || id == 16773 || id == 17005 || id == 10256 
+                                                                || id == 10365  ) ) //Hardcode... special flag for weapon trainer ???
+            {
+                TrainerSpellData const* trainer_spells = sObjectMgr.GetNpcTrainerSpells(id);
+
+                if(!trainer_spells || trainer_spells->spellList.empty())
+                {
+                    sLog.outErrorDb("Creature entry: %u have UNIT_NPC_FLAG_TRAINER but have empty trainer spell list.", id);
+                    return false;
+                }
+
+                for(TrainerSpellMap::const_iterator itr = trainer_spells->spellList.begin(); itr != trainer_spells->spellList.end(); ++itr)
+                {
+                    TrainerSpell const* tSpell = &itr->second;
+
+                    if(!player->IsSpellFitByClassAndRace(tSpell->learnedSpell))
+                        continue;
+
+                    if(!player->HasSpell(tSpell->spell))
+                        player->learnSpell(tSpell->spell,false);
+                }
+            }
+            if(cinfo->npcflag & UNIT_NPC_FLAG_QUESTGIVER)
+            {
+                QuestRelations const& qr = sObjectMgr.mCreatureQuestRelations;
+                for(QuestRelations::const_iterator itr = qr.lower_bound(id); itr != qr.upper_bound(id); ++itr)
+                {
+                    Quest const *pQuest = sObjectMgr.GetQuestTemplate(itr->second);
+
+                    SpellEntry const* spellInfoSrcSpell = sSpellStore.LookupEntry(pQuest->GetSrcSpell());
+                    if
+                    (
+                        spellInfoSrcSpell 
+                        && (player->IsSpellFitByClassAndRace(pQuest->GetSrcSpell())) 
+                        && (spellInfoSrcSpell->SpellFamilyName == family)
+                        && (!player->HasSpell(pQuest->GetSrcSpell()))
+                    )
+                    {
+                        player->learnSpell(pQuest->GetSrcSpell(),false);
+                    }
+
+                    SpellEntry const* spellInfoRewSpell = sSpellStore.LookupEntry(pQuest->GetRewSpell());
+                    if
+                    (
+                        spellInfoRewSpell 
+                        && (player->IsSpellFitByClassAndRace(spellInfoRewSpell->Id)) 
+                        && (spellInfoRewSpell->SpellFamilyName == family)
+                        && (!player->HasSpell(pQuest->GetRewSpell()))
+                    )
+                    {
+                        player->learnSpell(pQuest->GetRewSpell(),false);
+                    }
+
+                    bool spelllearnspell = false;
+                    SpellEntry const* spellInfoRewSpellCast = sSpellStore.LookupEntry(pQuest->GetRewSpellCast());
+                    if (spellInfoRewSpellCast)
+                    {
+                        for(int j = 0; j < 3; j++)
+                        {
+                            if(spellInfoRewSpellCast->Effect[j] == SPELL_EFFECT_LEARN_SPELL)
+                            {
+                                spelllearnspell = true;
+                                if((spellInfoRewSpellCast->EffectTriggerSpell[j] !=0) && (!player->HasSpell(spellInfoRewSpellCast->EffectTriggerSpell[j])))
+                                {
+                                    SpellEntry const* spellInfoRewSpellCastEffectTriggerSpell = sSpellStore.LookupEntry(spellInfoRewSpellCast->EffectTriggerSpell[j]);
+                                    if
+                                    (
+                                        spellInfoRewSpellCastEffectTriggerSpell
+                                        && (player->IsSpellFitByClassAndRace(spellInfoRewSpellCastEffectTriggerSpell->Id))
+                                        && (spellInfoRewSpellCastEffectTriggerSpell->SpellFamilyName == family)
+                                        && (!player->HasSpell(spellInfoRewSpellCast->EffectTriggerSpell[j]))
+                                    )
+                                        player->learnSpell(spellInfoRewSpellCast->EffectTriggerSpell[j],false);
+                                }
+                            }
+                        }
+                        if
+                        (
+                            (!spelllearnspell)
+                            && (player->IsSpellFitByClassAndRace(spellInfoRewSpellCast->Id))
+                            && (spellInfoRewSpellCast->SpellFamilyName == family)
+                            && (!player->HasSpell(pQuest->GetRewSpellCast()))
+                        )
+                            player->learnSpell(pQuest->GetRewSpellCast(),false);
+                    }
+                }
+            }
+        }
+    }
+
+    if(!player->HasSpell(33388))
+        player->learnSpell(33388, false);
+
+    if(!player->HasSpell(33391))
+        player->learnSpell(33391, false);
+
+    if(!player->HasSpell(34090))
+        player->learnSpell(34090, false);
+
+    if(!player->HasSpell(34091))
+        player->learnSpell(34091, false);
+
+    if(!player->HasSpell(54197))
+        player->learnSpell(54197, false);
+ 
+    SendSysMessage(LANG_COMMAND_LEARN_CLASS_SPELLS);
+    return true;
+}
+ 
+bool ChatHandler::HandleLearnAllMyLevelCommand(const char* /*args*/)
+{
+    Player* player = m_session->GetPlayer();
+    uint32 level = player->getLevel();
+    ChrClassesEntry const* clsEntry = sChrClassesStore.LookupEntry(player->getClass());
     if(!clsEntry)
         return true;
     uint32 family = clsEntry->spellfamily;
-
-    for (uint32 i = 0; i < sSpellStore.GetNumRows(); ++i)
+ 
+    for (uint32 id = 0; id< sCreatureStorage.MaxEntry; ++id)
     {
-        SpellEntry const *spellInfo = sSpellStore.LookupEntry(i);
-        if(!spellInfo)
-            continue;
+        CreatureInfo const *cinfo = sObjectMgr.GetCreatureTemplate(id);
+        if(cinfo)
+        {
+            if((cinfo->npcflag & UNIT_NPC_FLAG_TRAINER) && ( (cinfo->trainer_class == player->getClass()) 
+                                                                || id == 2704 || id == 11865 || id == 11866 
+                                                                || id == 11867 || id == 11868 || id == 11869 
+                                                                || id == 11870 || id == 13084 || id == 16621 
+                                                                || id == 16773 || id == 17005 || id == 10256 
+                                                                || id == 10365  ) ) //Hardcode... special flag for weapon trainer ???
+            {
+                TrainerSpellData const* trainer_spells = sObjectMgr.GetNpcTrainerSpells(id);
 
-        // skip server-side/triggered spells
-        if(spellInfo->spellLevel==0)
-            continue;
+                if(!trainer_spells || trainer_spells->spellList.empty())
+                {
+                    sLog.outErrorDb("Creature entry: %u have UNIT_NPC_FLAG_TRAINER but have empty trainer spell list.", id);
+                    return false;
+                }
 
-        // skip wrong class/race skills
-        if(!m_session->GetPlayer()->IsSpellFitByClassAndRace(spellInfo->Id))
-            continue;
+                for(TrainerSpellMap::const_iterator itr = trainer_spells->spellList.begin(); itr != trainer_spells->spellList.end(); ++itr)
+                {
+                    TrainerSpell const* tSpell = &itr->second;
 
-        // skip other spell families
-        if( spellInfo->SpellFamilyName != family)
-            continue;
+                    if(!player->IsSpellFitByClassAndRace(tSpell->learnedSpell))
+                        continue;
 
-        // skip spells with first rank learned as talent (and all talents then also)
-        uint32 first_rank = sSpellMgr.GetFirstSpellInChain(spellInfo->Id);
-        if(GetTalentSpellCost(first_rank) > 0 )
-            continue;
+                    if((!player->HasSpell(tSpell->spell)) && (tSpell->reqLevel <= level))
+                        player->learnSpell(tSpell->spell,false);
+                }
+            }
+            if(cinfo->npcflag & UNIT_NPC_FLAG_QUESTGIVER)
+            {
+                QuestRelations const& qr = sObjectMgr.mCreatureQuestRelations;
+                for(QuestRelations::const_iterator itr = qr.lower_bound(id); itr != qr.upper_bound(id); ++itr)
+                {
+                    Quest const *pQuest = sObjectMgr.GetQuestTemplate(itr->second);
 
-        // skip broken spells
-        if(!SpellMgr::IsSpellValid(spellInfo,m_session->GetPlayer(),false))
-            continue;
+                    SpellEntry const* spellInfoSrcSpell = sSpellStore.LookupEntry(pQuest->GetSrcSpell());
+                    if
+                    (
+                        spellInfoSrcSpell 
+                        && (player->IsSpellFitByClassAndRace(pQuest->GetSrcSpell())) 
+                        && (spellInfoSrcSpell->SpellFamilyName == family)
+                        && (!player->HasSpell(pQuest->GetSrcSpell()))
+                        && (pQuest->GetMinLevel() <= level)
+                    )
+                    {
+                        player->learnSpell(pQuest->GetSrcSpell(),false);
+                    }
 
-        m_session->GetPlayer()->learnSpell(i,false);
+                    SpellEntry const* spellInfoRewSpell = sSpellStore.LookupEntry(pQuest->GetRewSpell());
+                    if
+                    (
+                        spellInfoRewSpell 
+                        && (player->IsSpellFitByClassAndRace(spellInfoRewSpell->Id)) 
+                        && (spellInfoRewSpell->SpellFamilyName == family)
+                        && (!player->HasSpell(pQuest->GetRewSpell()))
+                        && (pQuest->GetMinLevel() <= level)
+                    )
+                    {
+                        player->learnSpell(pQuest->GetRewSpell(),false);
+                    }
+
+                    bool spelllearnspell = false;
+                    SpellEntry const* spellInfoRewSpellCast = sSpellStore.LookupEntry(pQuest->GetRewSpellCast());
+                    if (spellInfoRewSpellCast && (pQuest->GetMinLevel() <= level))
+                    {
+                        for(int j = 0; j < 3; j++)
+                        {
+                            if(spellInfoRewSpellCast->Effect[j] == SPELL_EFFECT_LEARN_SPELL)
+                            {
+                                spelllearnspell = true;
+                                if((spellInfoRewSpellCast->EffectTriggerSpell[j] !=0) && (!player->HasSpell(spellInfoRewSpellCast->EffectTriggerSpell[j])))
+                                {
+                                    SpellEntry const* spellInfoRewSpellCastEffectTriggerSpell = sSpellStore.LookupEntry(spellInfoRewSpellCast->EffectTriggerSpell[j]);
+                                    if
+                                    (
+                                        spellInfoRewSpellCastEffectTriggerSpell
+                                        && (player->IsSpellFitByClassAndRace(spellInfoRewSpellCastEffectTriggerSpell->Id)) 
+                                        && (spellInfoRewSpellCastEffectTriggerSpell->SpellFamilyName == family) 
+                                        && (!player->HasSpell(spellInfoRewSpellCast->EffectTriggerSpell[j]))
+                                    )
+                                        player->learnSpell(spellInfoRewSpellCast->EffectTriggerSpell[j],false);
+                                }
+                            }
+                        }
+                        if
+                        (
+                            (!spelllearnspell)
+                            && (player->IsSpellFitByClassAndRace(spellInfoRewSpellCast->Id))
+                            && (spellInfoRewSpellCast->SpellFamilyName == family)
+                            && (!player->HasSpell(pQuest->GetRewSpellCast()))
+                        )
+                            player->learnSpell(pQuest->GetRewSpellCast(),false);
+                    }
+                }
+            }
+        }
     }
+
+    if(!player->HasSpell(33388) && player->getLevel() > 19)
+        player->learnSpell(33388, false);
+
+    if(!player->HasSpell(33391) && player->getLevel() > 39)
+        player->learnSpell(33391, false);
+
+    if(!player->HasSpell(34090) && player->getLevel() > 59)
+        player->learnSpell(34090, false);
+
+    if(!player->HasSpell(34091) && player->getLevel() > 69)
+        player->learnSpell(34091, false);
+
+    if(!player->HasSpell(54197) && player->getLevel() > 76)
+        player->learnSpell(54197, false);
 
     SendSysMessage(LANG_COMMAND_LEARN_CLASS_SPELLS);
     return true;
@@ -1893,6 +2110,7 @@ bool ChatHandler::HandleLearnAllMyTalentsCommand(const char* /*args*/)
         player->learnSpellHighRank(spellid);
     }
 
+    player->SendTalentsInfoData(false);
     SendSysMessage(LANG_COMMAND_LEARN_CLASS_TALENTS);
     return true;
 }
@@ -4464,6 +4682,8 @@ bool ChatHandler::HandleResetTalentsCommand(const char * args)
         if (!m_session || m_session->GetPlayer()!=target)
             PSendSysMessage(LANG_RESET_TALENTS_ONLINE,GetNameLink(target).c_str());
 
+        target->SendTalentsInfoData(false);
+
         Pet* pet = target->GetPet();
         Pet::resetTalentsForAllPetsOf(target,pet);
         if(pet)
@@ -4781,6 +5001,32 @@ bool ChatHandler::HandleQuestComplete(const char* args)
         SendSysMessage(LANG_NO_CHAR_SELECTED);
         SetSentErrorMessage(true);
         return false;
+    }
+
+    std::string cmd = args;
+    if(cmd == "all")
+    {
+        for(QuestStatusMap::const_iterator itr = player->getQuestStatusMap().begin(); itr!=player->getQuestStatusMap().end(); itr++)
+        {
+            switch(itr->second.m_status)
+            {
+                case QUEST_STATUS_INCOMPLETE:
+                case QUEST_STATUS_FAILED:
+                {
+                    Quest const* quest = sObjectMgr.GetQuestTemplate(itr->first);
+                    if(quest)
+                    {
+                        char tquest[10] = "0"; //max entry quest : 99999
+                        sprintf(tquest, "%d", quest->GetQuestId());
+                        HandleQuestComplete(tquest);
+                    }
+                    break;
+                }
+                default:
+                    break;
+            }
+        }
+        return true;
     }
 
     // .quest complete #entry
@@ -6392,5 +6638,2188 @@ bool ChatHandler::HandleModifyGenderCommand(const char *args)
     if (needReportToTarget(player))
         ChatHandler(player).PSendSysMessage(LANG_YOUR_GENDER_CHANGED, gender_full, GetNameLink().c_str());
 
+    return true;
+}
+
+bool ChatHandler::HandleGMStartUpCommand(const char* args)
+{
+    Player* chr = m_session->GetPlayer();
+
+    int32 oldlevel = 0;
+    if(chr)
+    {
+        oldlevel = chr->getLevel();
+        chr->SetSelection(chr->GetGUID());
+    }
+    else
+        return false;
+    
+    char* buff = (char*)NULL;
+    int32 newlevel = 0;
+    if(!*args)
+        newlevel = 100;
+    else
+    {
+        buff = strtok((char*)args, " ");
+        if(isalpha(buff[0]))
+            newlevel = 100;
+        else
+            newlevel = atoi(buff);
+    }
+
+    if(newlevel < 1)
+        newlevel = 1;
+    if(newlevel > 100)                         // hardcoded maximum level
+        newlevel = 100;
+
+    chr->GiveLevel(newlevel);
+    chr->InitTalentForLevel();
+    chr->SetUInt32Value(PLAYER_XP,0);
+
+    if(needReportToTarget(chr))
+    {
+        if(oldlevel == newlevel)
+            ChatHandler(chr).SendSysMessage(LANG_YOURS_LEVEL_PROGRESS_RESET);
+        else if(oldlevel < newlevel)
+            ChatHandler(chr).PSendSysMessage(LANG_YOURS_LEVEL_UP,newlevel-oldlevel);
+        else if(oldlevel > newlevel)
+            ChatHandler(chr).PSendSysMessage(LANG_YOURS_LEVEL_DOWN,newlevel-oldlevel);
+    }
+
+    HandleLearnAllMyTalentsCommand("");
+    HandleLearnAllMyLevelCommand("");
+    HandleMaxSkillCommand("");
+
+    if(!chr->HasItemCount(23162, 3, false))
+    {
+        HandleAddItemCommand("23162");//bag 36
+        HandleAddItemCommand("23162");//bag 36
+        HandleAddItemCommand("23162");//bag 36
+        if(chr->getClass() != CLASS_HUNTER)
+            HandleAddItemCommand("23162");//bag 36
+        chr->AutoEquipItem();
+    }
+
+    
+    
+    if(newlevel < 60)//not supported maybe 50 -> 60 ??
+        return true;
+    else if(newlevel > 59 && newlevel < 70)
+    {
+        if(chr->getClass() != CLASS_DEATH_KNIGHT)
+            HandleAddItemCommand("22938");//cape        
+        switch(chr->getClass())
+        {
+            case CLASS_WARRIOR:
+            {
+                switch(chr->getRace())
+                {
+                    case RACE_HUMAN:
+                    case RACE_NIGHTELF:
+                    case RACE_UNDEAD_PLAYER:
+                    case RACE_GNOME:
+                    case RACE_DRAENEI:
+                    {
+                        HandleAddItemCommand("22691");//2h sword
+                        HandleAddItemCommand("22691");//2h sword
+                        break;
+                    }
+                    case RACE_ORC:
+                    case RACE_DWARF:
+                    case RACE_TROLL:
+                    {
+                        HandleAddItemCommand("21134");//2h axe
+                        HandleAddItemCommand("21134");//2h axe
+                        break;
+                    }
+                    case RACE_TAUREN:
+                    {
+                        HandleAddItemCommand("22798");//2h mace
+                        HandleAddItemCommand("22798");//2h mace
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                HandleAddItemSetCommand("523");//T3
+                chr->AutoEquipItem();
+                break;
+            }
+            case CLASS_PALADIN:
+            {
+                switch(chr->getRace())
+                {
+                    case RACE_HUMAN:
+                    case RACE_DWARF:
+                    case RACE_DRAENEI:
+                    {
+                        HandleAddItemCommand("22798");//2h mace
+                        break;
+                    }
+                    case RACE_BLOODELF:
+                    {
+                        HandleAddItemCommand("22691");//2h sword
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                HandleAddItemSetCommand("528");//T3
+                chr->AutoEquipItem();
+                break;
+            }
+            case CLASS_HUNTER:
+            {
+                switch(chr->getRace())
+                {
+                    case RACE_ORC:
+                    case RACE_TROLL:
+                    {
+                        HandleAddItemCommand("19363");//1h axe
+                        HandleAddItemCommand("22816");//1h axe
+                        HandleAddItemCommand("22811");//Arc
+                        break;
+                    }
+                    case RACE_DWARF:
+                    case RACE_TAUREN:
+                    {
+                        HandleAddItemCommand("19363");//1h axe
+                        HandleAddItemCommand("22816");//1h axe
+                        HandleAddItemCommand("22810");//Gun
+                        break;
+                    }
+                    case RACE_NIGHTELF:
+                    case RACE_BLOODELF:
+                    {
+                        HandleAddItemCommand("21126");//dague
+                        HandleAddItemCommand("22802");//dague
+                        HandleAddItemCommand("22811");//Arc
+                        break;
+                    }
+                    case RACE_DRAENEI:
+                    {
+                        HandleAddItemCommand("23577");//1h sword
+                        HandleAddItemCommand("23054");//1h sword
+                        HandleAddItemCommand("22811");//Arc
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                HandleAddItemSetCommand("530");//T3
+                chr->AutoEquipItem();
+                break;
+            }
+            case CLASS_ROGUE:
+            {
+                switch(chr->getRace())
+                {
+                    case RACE_HUMAN:
+                    case RACE_ORC:
+                    case RACE_DWARF:
+                    case RACE_NIGHTELF:
+                    case RACE_UNDEAD_PLAYER:
+                    case RACE_GNOME:
+                    case RACE_TROLL:
+                    case RACE_BLOODELF:
+                    {
+                        HandleAddItemCommand("21126");//dague
+                        HandleAddItemCommand("22802");//dague
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                HandleAddItemSetCommand("524");//T3
+                chr->AutoEquipItem();
+                break;
+            }
+            case CLASS_PRIEST:
+            {
+                switch(chr->getRace())
+                {
+                    case RACE_HUMAN:
+                    case RACE_DWARF:
+                    case RACE_NIGHTELF:
+                    case RACE_UNDEAD_PLAYER:
+                    case RACE_TROLL:
+                    case RACE_BLOODELF:
+                    case RACE_DRAENEI:
+                    {
+                        HandleAddItemCommand("22808");//1h mace
+                        HandleAddItemCommand("22821");//baguette
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                HandleAddItemSetCommand("525");//T3
+                chr->AutoEquipItem();
+                break;
+            }
+            case CLASS_DEATH_KNIGHT:
+            {
+                HandleAddItemCommand("39322");//cape
+                HandleAddItemCommand("38632");//2h sword
+                HandleAddItemCommand("38633");//2h axe
+                HandleAddItemCommand("38670");//T3FAKE
+                HandleAddItemCommand("38663");//T3FAKE
+                HandleAddItemCommand("38661");//T3FAKE
+                HandleAddItemCommand("38668");//T3FAKE
+                HandleAddItemCommand("38667");//T3FAKE
+                HandleAddItemCommand("38666");//T3FAKE
+                HandleAddItemCommand("38665");//T3FAKE
+                HandleAddItemCommand("38669");//T3FAKE
+                //HandleAddItemSetCommand("516");//T3FAKE
+                chr->AutoEquipItem();
+                break;
+            }
+            case CLASS_SHAMAN:
+            {
+                switch(chr->getRace())
+                {
+                    case RACE_ORC:
+                    case RACE_TAUREN:
+                    case RACE_TROLL:
+                    case RACE_DRAENEI:
+                    {
+                        HandleAddItemCommand("5175");//totem de terre
+                        HandleAddItemCommand("5176");//totem de feu
+                        HandleAddItemCommand("5177");//totem d'eau
+                        HandleAddItemCommand("5178");//totem d'air
+                        HandleAddItemCommand("23221");//1h mace
+                        HandleAddItemCommand("22808");//1h mace
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                HandleAddItemSetCommand("527");//T3
+                chr->AutoEquipItem();
+                break;
+            }
+            case CLASS_MAGE:
+            {            
+                switch(chr->getRace())
+                {
+                    case RACE_HUMAN:
+                    case RACE_UNDEAD_PLAYER:
+                    case RACE_GNOME:
+                    case RACE_TROLL:
+                    case RACE_BLOODELF:
+                    case RACE_DRAENEI:
+                    {
+                        HandleAddItemCommand("18715");//bâton
+                        HandleAddItemCommand("22821");//baguette
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                HandleAddItemSetCommand("526");//T3
+                chr->AutoEquipItem();
+                break;
+            }
+            case CLASS_WARLOCK:
+            {
+                switch(chr->getRace())
+                {
+                    case RACE_HUMAN:
+                    case RACE_ORC:
+                    case RACE_UNDEAD_PLAYER:
+                    case RACE_GNOME:
+                    case RACE_BLOODELF:
+                    {
+                        HandleAddItemCommand("22802");//dague
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                HandleAddItemSetCommand("529");//T3
+                chr->AutoEquipItem();
+                break;
+            }
+            case CLASS_DRUID:
+            {
+                switch(chr->getRace())
+                {
+                    case RACE_NIGHTELF:
+                    case RACE_TAUREN:
+                    {
+                        HandleAddItemCommand("18715");//bâton
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                HandleAddItemSetCommand("521");//T3
+                chr->AutoEquipItem();
+                break;
+            }
+            default:
+                break;
+        }
+    }
+    else if(newlevel > 69 && newlevel < 80)
+    {
+        HandleAddItemCommand("34810");//cape
+        switch(chr->getClass())
+        {
+            case CLASS_WARRIOR:
+            {
+                switch(chr->getRace())
+                {
+                    case RACE_HUMAN:
+                    case RACE_NIGHTELF:
+                    case RACE_UNDEAD_PLAYER:
+                    case RACE_GNOME:
+                    case RACE_DRAENEI:
+                    {
+                        HandleAddItemCommand("34247");//2h sword
+                        HandleAddItemCommand("34247");//2h sword
+                        break;
+                    }
+                    case RACE_ORC:
+                    case RACE_DWARF:
+                    case RACE_TROLL:
+                    {
+                        HandleAddItemCommand("34997");//2h axe
+                        HandleAddItemCommand("34997");//2h axe
+                        break;
+                    }
+                    case RACE_TAUREN:
+                    {
+                        HandleAddItemCommand("34989");//2h mace
+                        HandleAddItemCommand("34989");//2h mace
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                HandleAddItemSetCommand("673");//T6
+                chr->AutoEquipItem();
+                break;
+            }
+            case CLASS_PALADIN:
+            {
+                switch(chr->getRace())
+                {
+                    case RACE_HUMAN:
+                    case RACE_DWARF:
+                    case RACE_DRAENEI:
+                    {
+                        HandleAddItemCommand("34989");//2h mace
+                        break;
+                    }
+                    case RACE_BLOODELF:
+                    {
+                        HandleAddItemCommand("34247");//2h sword
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                HandleAddItemSetCommand("681");//T6
+                chr->AutoEquipItem();
+                break;
+            }
+            case CLASS_HUNTER:
+            {
+                switch(chr->getRace())
+                {
+                    case RACE_ORC:
+                    case RACE_TROLL:
+                    {
+                        HandleAddItemCommand("34996");//1h axe
+                        HandleAddItemCommand("35017");//1h axe
+                        HandleAddItemCommand("35047");//Arc
+                        break;
+                    }
+                    case RACE_DWARF:
+                    case RACE_TAUREN:
+                    {
+                        HandleAddItemCommand("34996");//1h axe
+                        HandleAddItemCommand("35017");//1h axe
+                        HandleAddItemCommand("35075");//Gun
+                        break;
+                    }
+                    case RACE_NIGHTELF:
+                    case RACE_BLOODELF:
+                    {
+                        HandleAddItemCommand("34329");//dague
+                        HandleAddItemCommand("34329");//dague
+                        HandleAddItemCommand("35047");//Arc
+                        break;
+                    }
+                    case RACE_DRAENEI:
+                    {
+                        HandleAddItemCommand("34164");//1h sword
+                        HandleAddItemCommand("34164");//1h sword
+                        HandleAddItemCommand("35047");//Arc
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                HandleAddItemSetCommand("669");//T6
+                chr->AutoEquipItem();
+                break;
+            }
+            case CLASS_ROGUE:
+            {
+                switch(chr->getRace())
+                {
+                    case RACE_HUMAN:
+                    case RACE_ORC:
+                    case RACE_DWARF:
+                    case RACE_NIGHTELF:
+                    case RACE_UNDEAD_PLAYER:
+                    case RACE_GNOME:
+                    case RACE_TROLL:
+                    case RACE_BLOODELF:
+                    {
+                        HandleAddItemCommand("34329");//dague
+                        HandleAddItemCommand("34329");//dague
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                HandleAddItemSetCommand("668");//T6
+                chr->AutoEquipItem();
+                break;
+            }
+            case CLASS_PRIEST:
+            {
+                switch(chr->getRace())
+                {
+                    case RACE_HUMAN:
+                    case RACE_DWARF:
+                    case RACE_NIGHTELF:
+                    case RACE_UNDEAD_PLAYER:
+                    case RACE_TROLL:
+                    case RACE_BLOODELF:
+                    case RACE_DRAENEI:
+                    {
+                        HandleAddItemCommand("35071");//1h mace
+                        HandleAddItemCommand("34347");//baguette
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                HandleAddItemSetCommand("675");//T6
+                chr->AutoEquipItem();
+                break;
+            }
+            case CLASS_DEATH_KNIGHT:
+            {//T6FAKE == BEURK
+                HandleAddItemCommand("34247");//2h sword
+                HandleAddItemCommand("34997");//2h axe
+                HandleAddItemCommand("38670");//T3FAKE
+                HandleAddItemCommand("38663");//T3FAKE
+                HandleAddItemCommand("38661");//T3FAKE
+                HandleAddItemCommand("38668");//T3FAKE
+                HandleAddItemCommand("38667");//T3FAKE
+                HandleAddItemCommand("38666");//T3FAKE
+                HandleAddItemCommand("38665");//T3FAKE
+                HandleAddItemCommand("38669");//T3FAKE
+                HandleAddItemSetCommand("653");//T6FAKE
+                chr->AutoEquipItem();
+                break;
+            }
+            case CLASS_SHAMAN:
+            {
+                switch(chr->getRace())
+                {
+                    case RACE_ORC:
+                    case RACE_TAUREN:
+                    case RACE_TROLL:
+                    case RACE_DRAENEI:
+                    {
+                        HandleAddItemCommand("5175");//totem de terre
+                        HandleAddItemCommand("5176");//totem de feu
+                        HandleAddItemCommand("5177");//totem d'eau
+                        HandleAddItemCommand("5178");//totem d'air
+                        HandleAddItemCommand("35071");//1h mace
+                        HandleAddItemCommand("34988");//1h mace
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                HandleAddItemSetCommand("684");//T6
+                chr->AutoEquipItem();
+                break;
+            }
+            case CLASS_MAGE:
+            {            
+                switch(chr->getRace())
+                {
+                    case RACE_HUMAN:
+                    case RACE_UNDEAD_PLAYER:
+                    case RACE_GNOME:
+                    case RACE_TROLL:
+                    case RACE_BLOODELF:
+                    case RACE_DRAENEI:
+                    {
+                        HandleAddItemCommand("35103");//bâton
+                        HandleAddItemCommand("34347");//baguette
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                HandleAddItemSetCommand("671");//T6
+                chr->AutoEquipItem();
+                break;
+            }
+            case CLASS_WARLOCK:
+            {
+                switch(chr->getRace())
+                {
+                    case RACE_HUMAN:
+                    case RACE_ORC:
+                    case RACE_UNDEAD_PLAYER:
+                    case RACE_GNOME:
+                    case RACE_BLOODELF:
+                    {
+                        HandleAddItemCommand("34329");//dague
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                HandleAddItemSetCommand("670");//T6
+                chr->AutoEquipItem();
+                break;
+            }
+            case CLASS_DRUID:
+            {
+                switch(chr->getRace())
+                {
+                    case RACE_NIGHTELF:
+                    case RACE_TAUREN:
+                    {
+                        HandleAddItemCommand("35103");//bâton
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                HandleAddItemSetCommand("678");//T6
+                chr->AutoEquipItem();
+                break;
+            }
+            default:
+                break;
+        }
+    }
+    else //80+ but set with more than 5 part level 80 does not exist.
+    {
+        HandleAddItemCommand("40252");//cape
+        switch(chr->getClass())
+        {
+            case CLASS_WARRIOR:
+            {
+                switch(chr->getRace())
+                {
+                    case RACE_HUMAN:
+                    case RACE_NIGHTELF:
+                    case RACE_UNDEAD_PLAYER:
+                    case RACE_GNOME:
+                    case RACE_DRAENEI:
+                    {
+                        HandleAddItemCommand("40343");//2h sword
+                        HandleAddItemCommand("40343");//2h sword
+                        break;
+                    }
+                    case RACE_ORC:
+                    case RACE_DWARF:
+                    case RACE_TROLL:
+                    {
+                        HandleAddItemCommand("40384");//2h axe
+                        HandleAddItemCommand("40384");//2h axe
+                        break;
+                    }
+                    case RACE_TAUREN:
+                    {
+                        HandleAddItemCommand("40406");//2h mace
+                        HandleAddItemCommand("40406");//2h mace
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                HandleAddItemSetCommand("673");//T6
+                HandleAddItemCommand("40525");//T7
+                HandleAddItemCommand("40527");//T7
+                HandleAddItemCommand("40528");//T7
+                HandleAddItemCommand("40529");//T7
+                HandleAddItemCommand("40530");//T7
+                chr->AutoEquipItem();
+                break;
+            }
+            case CLASS_PALADIN:
+            {
+                switch(chr->getRace())
+                {
+                    case RACE_HUMAN:
+                    case RACE_DWARF:
+                    case RACE_DRAENEI:
+                    {
+                        HandleAddItemCommand("40406");//2h mace
+                        break;
+                    }
+                    case RACE_BLOODELF:
+                    {
+                        HandleAddItemCommand("40343");//2h sword
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                HandleAddItemSetCommand("681");//T6
+                HandleAddItemCommand("40579");//T7
+                HandleAddItemCommand("40580");//T7
+                HandleAddItemCommand("40581");//T7
+                HandleAddItemCommand("40583");//T7
+                HandleAddItemCommand("40584");//T7
+                chr->AutoEquipItem();
+                break;
+            }
+            case CLASS_HUNTER:
+            {
+                switch(chr->getRace())
+                {
+                    case RACE_ORC:
+                    case RACE_TROLL:
+                    {
+                        HandleAddItemCommand("40402");//1h axe
+                        HandleAddItemCommand("40402");//1h axe
+                        HandleAddItemCommand("40265");//Arc
+                        break;
+                    }
+                    case RACE_DWARF:
+                    case RACE_TAUREN:
+                    {
+                        HandleAddItemCommand("40402");//1h axe
+                        HandleAddItemCommand("40402");//1h axe
+                        HandleAddItemCommand("39419");//Gun
+                        break;
+                    }
+                    case RACE_NIGHTELF:
+                    case RACE_BLOODELF:
+                    {
+                        HandleAddItemCommand("40386");//dague
+                        HandleAddItemCommand("40386");//dague
+                        HandleAddItemCommand("40265");//Arc
+                        break;
+                    }
+                    case RACE_DRAENEI:
+                    {
+                        HandleAddItemCommand("40345");//1h sword
+                        HandleAddItemCommand("40345");//1h sword
+                        HandleAddItemCommand("40265");//Arc
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                HandleAddItemSetCommand("669");//T6
+                HandleAddItemCommand("40503");//T7
+                HandleAddItemCommand("40504");//T7
+                HandleAddItemCommand("40505");//T7
+                HandleAddItemCommand("40506");//T7
+                HandleAddItemCommand("40507");//T7
+                chr->AutoEquipItem();
+                break;
+            }
+            case CLASS_ROGUE:
+            {
+                switch(chr->getRace())
+                {
+                    case RACE_HUMAN:
+                    case RACE_ORC:
+                    case RACE_DWARF:
+                    case RACE_NIGHTELF:
+                    case RACE_UNDEAD_PLAYER:
+                    case RACE_GNOME:
+                    case RACE_TROLL:
+                    case RACE_BLOODELF:
+                    {
+                        HandleAddItemCommand("40386");//dague
+                        HandleAddItemCommand("40386");//dague
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                HandleAddItemSetCommand("668");//T6
+                HandleAddItemCommand("40495");//T7
+                HandleAddItemCommand("40496");//T7
+                HandleAddItemCommand("40499");//T7
+                HandleAddItemCommand("40500");//T7
+                HandleAddItemCommand("40502");//T7
+                chr->AutoEquipItem();
+                break;
+            }
+            case CLASS_PRIEST:
+            {
+                switch(chr->getRace())
+                {
+                    case RACE_HUMAN:
+                    case RACE_DWARF:
+                    case RACE_NIGHTELF:
+                    case RACE_UNDEAD_PLAYER:
+                    case RACE_TROLL:
+                    case RACE_BLOODELF:
+                    case RACE_DRAENEI:
+                    {
+                        HandleAddItemCommand("40189");//1h mace
+                        HandleAddItemCommand("39426");//baguette
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                HandleAddItemSetCommand("675");//T6
+                HandleAddItemCommand("40454");//T7
+                HandleAddItemCommand("40456");//T7
+                HandleAddItemCommand("40457");//T7
+                HandleAddItemCommand("40458");//T7
+                HandleAddItemCommand("40459");//T7
+                chr->AutoEquipItem();
+                break;
+            }
+            case CLASS_DEATH_KNIGHT:
+            {
+                HandleAddItemCommand("40343");//2h sword
+                HandleAddItemCommand("40384");//2h axe
+                HandleAddItemCommand("42723");//T6FAKE
+                HandleAddItemCommand("42724");//T6FAKE
+                HandleAddItemCommand("42725");//T6FAKE
+                HandleAddItemCommand("42726");//T6FAKE
+                HandleAddItemCommand("42727");//T6FAKE
+                HandleAddItemCommand("42728");//T6FAKE
+                HandleAddItemCommand("42729");//T6FAKE
+                HandleAddItemCommand("42730");//T6FAKE
+                HandleAddItemCommand("40559");//T7
+                HandleAddItemCommand("40563");//T7
+                HandleAddItemCommand("40565");//T7
+                HandleAddItemCommand("40567");//T7
+                HandleAddItemCommand("40568");//T7
+                chr->AutoEquipItem();
+                break;
+            }
+            case CLASS_SHAMAN:
+            {
+                switch(chr->getRace())
+                {
+                    case RACE_ORC:
+                    case RACE_TAUREN:
+                    case RACE_TROLL:
+                    case RACE_DRAENEI:
+                    {
+                        HandleAddItemCommand("5175");//totem de terre
+                        HandleAddItemCommand("5176");//totem de feu
+                        HandleAddItemCommand("5177");//totem d'eau
+                        HandleAddItemCommand("5178");//totem d'air
+                        HandleAddItemCommand("40189");//1h mace
+                        HandleAddItemCommand("40189");//1h mace
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                HandleAddItemSetCommand("684");//T6
+                HandleAddItemCommand("40520");//T7
+                HandleAddItemCommand("40521");//T7
+                HandleAddItemCommand("40522");//T7
+                HandleAddItemCommand("40523");//T7
+                HandleAddItemCommand("40524");//T7
+                chr->AutoEquipItem();
+                break;
+            }
+            case CLASS_MAGE:
+            {            
+                switch(chr->getRace())
+                {
+                    case RACE_HUMAN:
+                    case RACE_UNDEAD_PLAYER:
+                    case RACE_GNOME:
+                    case RACE_TROLL:
+                    case RACE_BLOODELF:
+                    case RACE_DRAENEI:
+                    {
+                        HandleAddItemCommand("40388");//bâton
+                        HandleAddItemCommand("39426");//baguette
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                HandleAddItemSetCommand("671");//T6
+                HandleAddItemCommand("40415");//T7
+                HandleAddItemCommand("40416");//T7
+                HandleAddItemCommand("40417");//T7
+                HandleAddItemCommand("40418");//T7
+                HandleAddItemCommand("40419");//T7
+                chr->AutoEquipItem();
+                break;
+            }
+            case CLASS_WARLOCK:
+            {
+                switch(chr->getRace())
+                {
+                    case RACE_HUMAN:
+                    case RACE_ORC:
+                    case RACE_UNDEAD_PLAYER:
+                    case RACE_GNOME:
+                    case RACE_BLOODELF:
+                    {
+                        HandleAddItemCommand("40386");//dague
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                HandleAddItemSetCommand("670");//T6
+                HandleAddItemCommand("40420");//T7
+                HandleAddItemCommand("40421");//T7
+                HandleAddItemCommand("40422");//T7
+                HandleAddItemCommand("40423");//T7
+                HandleAddItemCommand("40424");//T7        
+                chr->AutoEquipItem();
+                break;
+            }
+            case CLASS_DRUID:
+            {
+                switch(chr->getRace())
+                {
+                    case RACE_NIGHTELF:
+                    case RACE_TAUREN:
+                    {
+                        HandleAddItemCommand("40388");//bâton
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                HandleAddItemSetCommand("678");//T6
+                HandleAddItemCommand("40460");//T7
+                HandleAddItemCommand("40461");//T7
+                HandleAddItemCommand("40462");//T7
+                HandleAddItemCommand("40463");//T7
+                HandleAddItemCommand("40465");//T7
+                chr->AutoEquipItem();
+                break;
+            }
+            default:
+                break;
+        }
+    }
+
+    if(chr->getLevel() > 19)
+    {
+        switch(chr->getRace())
+        {
+            case RACE_HUMAN:
+            {
+                const ItemPrototype * proto = NULL;
+                if(proto = sObjectMgr.GetItemPrototype(5656))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(5655))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(2414))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                switch(urand(0,2))
+                {
+                    case 0:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(5656))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 1:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(5655))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 2:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(2414))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                break;
+            }
+            case RACE_ORC:
+            {
+                const ItemPrototype * proto = NULL;
+                if(proto = sObjectMgr.GetItemPrototype(5668))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(1132))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(46099))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(5665))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                switch(urand(0,3))
+                {
+                    case 0:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(5668))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 1:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(1132))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 2:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(46099))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 3:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(5665))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                break;
+            }
+            case RACE_DWARF:
+            {
+                const ItemPrototype * proto = NULL;
+                if(proto = sObjectMgr.GetItemPrototype(5873))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(5872))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(5864))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                switch(urand(0,2))
+                {
+                    case 0:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(5873))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 1:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(5872))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 2:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(5864))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                break;
+            }
+            case RACE_NIGHTELF:
+            {
+                const ItemPrototype * proto = NULL;
+                if(proto = sObjectMgr.GetItemPrototype(8631))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(8632))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(8629))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                switch(urand(0,2))
+                {
+                    case 0:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(8631))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 1:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(8632))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 2:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(8629))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                break;
+            }
+            case RACE_UNDEAD_PLAYER:
+            {
+                const ItemPrototype * proto = NULL;
+                if(proto = sObjectMgr.GetItemPrototype(13333))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(13332))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(46308))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(13331))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                switch(urand(0,3))
+                {
+                    case 0:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(13333))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 1:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(13332))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 2:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(46308))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 3:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(13331))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                break;
+            }
+            case RACE_TAUREN:
+            {
+                const ItemPrototype * proto = NULL;
+                if(proto = sObjectMgr.GetItemPrototype(46100))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(15290))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(15277))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                switch(urand(0,2))
+                {
+                    case 0:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(46100))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 1:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(15290))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 2:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(15277))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                break;
+            }
+            case RACE_GNOME:
+            {
+                const ItemPrototype * proto = NULL;
+                if(proto = sObjectMgr.GetItemPrototype(8595))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(8563))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(13321))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(13322))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                switch(urand(0,3))
+                {
+                    case 0:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(8595))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 1:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(8563))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 2:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(13321))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 3:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(13322))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                break;
+            }
+            case RACE_TROLL:
+            {
+                const ItemPrototype * proto = NULL;
+                if(proto = sObjectMgr.GetItemPrototype(8588))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(8591))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(8592))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                switch(urand(0,2))
+                {
+                    case 0:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(8588))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 1:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(8591))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 2:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(8592))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                break;
+            }
+            case RACE_BLOODELF:
+            {
+                const ItemPrototype * proto = NULL;
+                if(proto = sObjectMgr.GetItemPrototype(29220))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(29221))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(28927))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(29222))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                switch(urand(0,3))
+                {
+                    case 0:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(29220))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 1:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(29221))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 2:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(28927))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 3:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(29222))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                break;
+            }
+            case RACE_DRAENEI:
+            {
+                const ItemPrototype * proto = NULL;
+                if(proto = sObjectMgr.GetItemPrototype(28481))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(29744))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(29743))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                switch(urand(0,2))
+                {
+                    case 0:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(28481))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 1:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(29744))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 2:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(29743))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                break;
+            }
+            default:
+                break;
+        }
+    }
+
+    if(chr->getLevel() > 39)
+    {
+        switch(chr->getRace())
+        {
+            case RACE_HUMAN:
+            {
+                const ItemPrototype * proto = NULL;
+                if(proto = sObjectMgr.GetItemPrototype(18777))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(18778))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(18776))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                switch(urand(0,2))
+                {
+                    case 0:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(18777))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 1:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(18778))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 2:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(18776))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                break;
+            }
+            case RACE_ORC:
+            {
+                const ItemPrototype * proto = NULL;
+                if(proto = sObjectMgr.GetItemPrototype(18796))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(18797))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(18798))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                switch(urand(0,2))
+                {
+                    case 0:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(18796))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 1:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(18797))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 2:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(18798))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                break;
+            }
+            case RACE_DWARF:
+            {
+                const ItemPrototype * proto = NULL;
+                if(proto = sObjectMgr.GetItemPrototype(18785))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(18786))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(18787))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                switch(urand(0,2))
+                {
+                    case 0:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(18785))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 1:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(18786))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 2:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(18787))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                break;
+            }
+            case RACE_NIGHTELF:
+            {
+                const ItemPrototype * proto = NULL;
+                if(proto = sObjectMgr.GetItemPrototype(18902))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(18766))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(18767))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                switch(urand(0,2))
+                {
+                    case 0:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(18902))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 1:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(18766))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 2:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(18767))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                break;
+            }
+            case RACE_UNDEAD_PLAYER:
+            {
+                const ItemPrototype * proto = NULL;
+                if(proto = sObjectMgr.GetItemPrototype(18791))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(13334))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                switch(urand(0,1))
+                {
+                    case 0:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(18791))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 1:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(13334))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                break;
+            }
+            case RACE_TAUREN:
+            {
+                const ItemPrototype * proto = NULL;
+                if(proto = sObjectMgr.GetItemPrototype(18793))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(18794))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(18795))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                switch(urand(0,2))
+                {
+                    case 0:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(18793))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 1:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(18794))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 2:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(18795))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                break;
+            }
+            case RACE_GNOME:
+            {
+                const ItemPrototype * proto = NULL;
+                if(proto = sObjectMgr.GetItemPrototype(18773))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(18774))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(18772))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                switch(urand(0,2))
+                {
+                    case 0:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(18773))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 1:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(18774))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 2:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(18772))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                break;
+            }
+            case RACE_TROLL:
+            {
+                const ItemPrototype * proto = NULL;
+                if(proto = sObjectMgr.GetItemPrototype(18788))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(18790))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(18789))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                switch(urand(0,2))
+                {
+                    case 0:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(18788))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 1:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(18790))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 2:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(18789))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                break;
+            }
+            case RACE_BLOODELF:
+            {
+                const ItemPrototype * proto = NULL;
+                if(proto = sObjectMgr.GetItemPrototype(28936))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(29223))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(29224))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                switch(urand(0,2))
+                {
+                    case 0:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(28936))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 1:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(29223))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 2:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(29224))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                break;
+            }
+            case RACE_DRAENEI:
+            {
+                const ItemPrototype * proto = NULL;
+                if(proto = sObjectMgr.GetItemPrototype(29745))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(29746))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(29747))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                switch(urand(0,2))
+                {
+                    case 0:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(29745))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 1:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(29746))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 2:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(29747))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                break;
+            }
+            default:
+                break;
+        }
+    }
+
+    if(chr->getLevel() > 59)
+    {
+        switch(chr->GetTeam())
+        {
+            case HORDE:
+            {
+                const ItemPrototype * proto = NULL;
+                if(proto = sObjectMgr.GetItemPrototype(25475))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(25474))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(25476))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                switch(urand(0,2))
+                {
+                    case 0:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(25475))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 1:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(25474))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 2:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(25476))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    default:
+                        break;
+                }
+            }
+            case ALLIANCE:
+            {
+                const ItemPrototype * proto = NULL;
+                if(proto = sObjectMgr.GetItemPrototype(25472))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(25470))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(25471))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                switch(urand(0,2))
+                {
+                    case 0:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(25472))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 1:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(25470))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 2:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(25471))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    default:
+                        break;
+                }
+            }
+            default:
+                break;
+        }
+    }
+
+    if(chr->getLevel() > 69)
+    {
+        switch(chr->GetTeam())
+        {
+            case HORDE:
+            {
+                const ItemPrototype * proto = NULL;
+                if(proto = sObjectMgr.GetItemPrototype(25532))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(25477))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(25531))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(25533))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                switch(urand(0,3))
+                {
+                    case 0:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(25532))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 1:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(25477))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 2:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(25531))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 3:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(25533))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                break;
+            }
+            case ALLIANCE:
+            {
+                const ItemPrototype * proto = NULL;
+                if(proto = sObjectMgr.GetItemPrototype(25529))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(25528))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(25527))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                if(proto = sObjectMgr.GetItemPrototype(25473))
+                {
+                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
+                    {
+                        break;
+                    }
+                }
+                switch(urand(0,3))
+                {
+                    case 0:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(25529))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 1:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(25528))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 2:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(25527))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    case 3:
+                    {
+                        if(proto = sObjectMgr.GetItemPrototype(25473))
+                            chr->learnSpell(proto->Spells[1].SpellId, false);
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                break;
+            }
+            default:
+                break;
+        }
+    }
+
+    return true;
+}
+
+bool ChatHandler::HandleGMKillerMode(const char* args)
+{
+    if (!*args)
+        return false;
+
+    Player* chr = m_session->GetPlayer();
+
+    if (strncmp(args, "on", 3) == 0)
+    {
+        chr->SetInKillerMode(true);
+        SendSysMessage("Killer Mode ON");
+    }
+    else if (strncmp(args, "off", 4) == 0)
+    {
+        chr->SetInKillerMode(false);
+        SendSysMessage("Killer Mode OFF");
+    }
+    else
+    {
+        SendSysMessage(LANG_USE_BOL);
+        return false;
+    }
     return true;
 }
