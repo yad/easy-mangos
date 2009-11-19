@@ -2814,6 +2814,28 @@ void SpellMgr::LoadSpellAreas()
 
 SpellCastResult SpellMgr::GetSpellAllowedInLocationError(SpellEntry const *spellInfo, uint32 map_id, uint32 zone_id, uint32 area_id, Player const* player)
 {
+    if (sWorld.getConfig(CONFIG_ALLOW_FLYING_MOUNTS_EVERYWHERE) == 1)
+    {
+        if(player && (player->isFlyingSpell(spellInfo) || player->isFlyingFormSpell(spellInfo)))
+        {
+            uint32 v_map = GetVirtualMapForMapAndZone(map_id, zone_id);
+            MapEntry const* mapEntry = sMapStore.LookupEntry(v_map);
+            if(!mapEntry)
+                return SPELL_FAILED_NOT_HERE;
+            /*else if(mapEntry->Instanceable())
+                return SPELL_FAILED_NOT_HERE;*/
+            else if(mapEntry->IsDungeon())
+                return SPELL_FAILED_NOT_HERE;
+            else if(mapEntry->IsRaid())
+                return SPELL_FAILED_NOT_HERE;
+            else if(mapEntry->IsBattleArena())
+                return SPELL_FAILED_NOT_HERE;
+            else if(mapEntry->IsBattleGround())
+                return SPELL_FAILED_NOT_HERE;
+            else
+                return SPELL_CAST_OK;
+        }
+    }
     // normal case
     if (spellInfo->AreaGroupId > 0)
     {

@@ -1379,6 +1379,11 @@ PlayerbotAI.FollowDistanceMax = 1.0
 #         Set it to 1 to disable 5 scdes before regenerate mana again
 #     Default : 0 (5 scdes)
 #
+#     Custom.AllowFlyingMountsEverywhere
+#         Set it to 1 to enable flying mounts everywhere
+#         If you do it, mounts are now used as item...
+#     Default : 0
+#
 ###################################################################################################################
  
 Custom.SpeedGame = 1
@@ -1386,3 +1391,4 @@ Custom.NoCastTime = 0
 Custom.NoCooldown = 0
 Custom.HurtInRealTime = 0
 Custom.NoWaitAfterCast = 0
+Custom.AllowFlyingMountsEverywhere = 0

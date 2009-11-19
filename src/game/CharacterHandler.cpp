@@ -724,6 +724,9 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
     if(!pCurrChar->isAlive())
         pCurrChar->SendCorpseReclaimDelay(true);
 
+    if (sWorld.getConfig(CONFIG_ALLOW_FLYING_MOUNTS_EVERYWHERE) == 1)
+        pCurrChar->FlyingMountsSpellsToItems();
+
     pCurrChar->SendInitialPacketsBeforeAddToMap();
 
     //Show cinematic at the first time that player login
