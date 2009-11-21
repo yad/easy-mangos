@@ -7216,7 +7216,7 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                 break;
         }
     }
-    else //80+ but set with more than 5 part level 80 does not exist.
+    else //80+
     {
         switch(chr->getClass())
         {
@@ -7251,7 +7251,7 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                         HandleAddItemCommand("47523"); // Arme à feu Horde
                         break;
                     }
-		     case RACE_DWARF:
+                    case RACE_DWARF:
                     case RACE_TROLL:
                     {
                         HandleAddItemCommand("47446");//2h axe
@@ -7300,8 +7300,8 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                         break;
                 }
                 // HandleAddItemSetCommand("673");//T6
-		 HandleAddItemCommand("48513"); // Epée pour les deux factions
-		 HandleAddItemCommand("41164"); // Munitions
+                HandleAddItemCommand("48513"); // Epée pour les deux factions
+                HandleAddItemCommand("41164"); // Munitions
                 chr->AutoEquipItem();
                 break;
             }
@@ -7357,7 +7357,7 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                         break;
                 }
                 // HandleAddItemSetCommand("681");//T6
- 		 HandleAddItemCommand("42854"); // Libram
+                HandleAddItemCommand("42854"); // Libram
                 chr->AutoEquipItem();
                 break;
             }
@@ -7523,8 +7523,8 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                         break;
                 }
                 // HandleAddItemSetCommand("669");//T6
- 		 HandleAddItemCommand("41164"); // Balles comment ajouter la quantité ?
- 		 HandleAddItemCommand("41165"); // Fleches comment ajouter la quantité ?
+                HandleAddItemCommand("41164"); // Balles comment ajouter la quantité ?
+                HandleAddItemCommand("41165"); // Fleches comment ajouter la quantité ?
                 chr->AutoEquipItem();
                 break;
             }
@@ -7582,7 +7582,7 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                         break;
                 }
                 // HandleAddItemSetCommand("668");//T6
- 		 HandleAddItemCommand("47659"); // Arme de jet comment ajouter la quantité ?
+                HandleAddItemCommand("47659"); // Arme de jet comment ajouter la quantité ?
                 chr->AutoEquipItem();
                 break;
             }
@@ -7707,8 +7707,8 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                     default:
                         break;
                 }
- 		 HandleAddItemCommand("47672"); // Cachet de DK 
- 		 HandleAddItemCommand("48513"); // Epée pour les deux factions
+                HandleAddItemCommand("47672"); // Cachet de DK 
+                HandleAddItemCommand("48513"); // Epée pour les deux factions
                 chr->AutoEquipItem();
                 break;
             }
@@ -7768,7 +7768,7 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                 HandleAddItemCommand("5176");//totem de feu
                 HandleAddItemCommand("5177");//totem d'eau
                 HandleAddItemCommand("5178");//totem d'air
- 		 HandleAddItemCommand("47666"); // Totem Elem
+                HandleAddItemCommand("47666"); // Totem Elem
                 chr->AutoEquipItem();
                 break;
             }
@@ -7941,7 +7941,7 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                         break;
                 }
                 // HandleAddItemSetCommand("678");//T6
- 		 HandleAddItemCommand("47668"); // Idole Feral
+                HandleAddItemCommand("47668"); // Idole Feral
                 chr->AutoEquipItem();
                 break;
             }
