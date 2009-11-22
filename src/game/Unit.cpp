@@ -768,6 +768,10 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
         if(pVictim->getTransForm() && pVictim->hasUnitState(UNIT_STAT_CONFUSED))
             pVictim->RemoveAurasDueToSpell(pVictim->getTransForm());
 
+        //hex
+        if(pVictim->HasAura(51514) && roll_chance_f(75))
+            pVictim->RemoveAurasDueToSpell(51514);
+
         if(damagetype == DIRECT_DAMAGE || damagetype == SPELL_DIRECT_DAMAGE)
         {
             if (!spellProto || !(spellProto->AuraInterruptFlags&AURA_INTERRUPT_FLAG_DIRECT_DAMAGE))
