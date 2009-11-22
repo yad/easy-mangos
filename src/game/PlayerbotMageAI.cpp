@@ -382,14 +382,14 @@ void PlayerbotMageAI::DoNonCombatActions()
 
     if (pItem == NULL && CONJURE_WATER && ai->GetBaseManaPercent() >= 48)
     {
-        ai->TellMaster("I'm conjuring some water.");
+        ai->TellMaster("J'invoque de l'eau.");
         ai->CastSpell(CONJURE_WATER, *m_bot);
 		ai->SetIgnoreUpdateTime(3);
         return;
     }
     else if (pItem != NULL && ai->GetManaPercent() < 30)
     {
-        ai->TellMaster("I could use a drink.");
+        ai->TellMaster("J'ai besoin de boire un peu...");
         ai->UseItem(*pItem);
         ai->SetIgnoreUpdateTime(30);
         return;
@@ -399,7 +399,7 @@ void PlayerbotMageAI::DoNonCombatActions()
 
     if (pItem == NULL && CONJURE_FOOD && ai->GetBaseManaPercent() >= 48)
     {
-        ai->TellMaster("I'm conjuring some food.");
+        ai->TellMaster("J'invoque de la nourriture.");
         ai->CastSpell(CONJURE_FOOD, *m_bot);
 		ai->SetIgnoreUpdateTime(3);
     }
@@ -412,14 +412,14 @@ void PlayerbotMageAI::DoNonCombatActions()
 
     if (pItem != NULL && ai->GetHealthPercent() < 30)
     {
-        ai->TellMaster("I could use some food.");
+        ai->TellMaster("J'ai besoin de manger un peu...");
         ai->UseItem(*pItem);
         ai->SetIgnoreUpdateTime(30);
         return;
     }
 	else if (pItem == NULL && fItem != NULL && !m_bot->HasAura(RECENTLY_BANDAGED, 0) && ai->GetHealthPercent() < 70)
     {
-        ai->TellMaster("I could use first aid.");
+        ai->TellMaster("J'ai besoin de me faire un bandage...");
         ai->UseItem(*fItem);
         ai->SetIgnoreUpdateTime(8);
         return;

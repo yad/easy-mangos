@@ -176,7 +176,7 @@ void PlayerbotDruidAI::DoNextCombatManeuver(Unit *pTarget)
             }
 			else if (HURRICANE > 0 && m_bot->HasAura(MOONKIN_FORM, 0) && ai->GetAttackerCount()>=5 && DruidSpellCombat < 4 && ai->GetManaPercent() >= 91)
             {
-				//ai->TellMaster("casting hurricane!");
+				//ai->TellMaster("Je lance Ouragan !");
                 ai->CastSpell(HURRICANE, *pTarget);
 				ai->SetIgnoreUpdateTime(10);
                 DruidSpellCombat++;
@@ -202,7 +202,7 @@ void PlayerbotDruidAI::DoNextCombatManeuver(Unit *pTarget)
             }
 			else if (FORCE_OF_NATURE > 0 && m_bot->HasAura(MOONKIN_FORM, 0) && DruidSpellCombat < 8 && ai->GetManaPercent() >= 12)
             {
-				//ai->TellMaster("summoning treants.");
+				//ai->TellMaster("J'invoque les Tréans.");
                 ai->CastSpell(FORCE_OF_NATURE);
                 DruidSpellCombat++;
                 break;
@@ -640,14 +640,14 @@ void PlayerbotDruidAI::DoNonCombatActions()
 
     if (pItem != NULL && ai->GetHealthPercent() < 30)
     {
-        ai->TellMaster("I could use some food.");
+        ai->TellMaster("J'ai besoin de manger un peu...");
         ai->UseItem(*pItem);
         ai->SetIgnoreUpdateTime(30);
         return;
     }
     else if (pItem == NULL && fItem != NULL && !m_bot->HasAura(RECENTLY_BANDAGED, 0) && ai->GetHealthPercent() < 70)
     {
-        ai->TellMaster("I could use first aid.");
+        ai->TellMaster("Je dois me faire un bandage.");
         ai->UseItem(*fItem);
         ai->SetIgnoreUpdateTime(8);
         return;

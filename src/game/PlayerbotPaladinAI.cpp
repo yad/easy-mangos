@@ -392,7 +392,7 @@ void PlayerbotPaladinAI::DoNonCombatActions()
 
     if (pItem != NULL && ai->GetManaPercent() < 40)
     {
-        ai->TellMaster("I could use a drink.");
+        ai->TellMaster("J'ai besoin de boire un peu...");
         ai->UseItem(*pItem);
         ai->SetIgnoreUpdateTime(30);
         return;
@@ -406,14 +406,14 @@ void PlayerbotPaladinAI::DoNonCombatActions()
 
     if (pItem != NULL && ai->GetHealthPercent() < 40)
     {
-        ai->TellMaster("I could use some food.");
+        ai->TellMaster("J'ai besoin de manger un peu...");
         ai->UseItem(*pItem);
         ai->SetIgnoreUpdateTime(30);
         return;
     }
     else if (pItem == NULL && fItem != NULL && !m_bot->HasAura(RECENTLY_BANDAGED, 0) && ai->GetHealthPercent() < 70)
     {
-        ai->TellMaster("I could use first aid.");
+        ai->TellMaster("Je dois me faire un bandage...");
         ai->UseItem(*fItem);
         ai->SetIgnoreUpdateTime(8);
         return;

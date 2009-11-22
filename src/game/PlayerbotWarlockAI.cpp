@@ -202,7 +202,7 @@ void PlayerbotWarlockAI::DoNextCombatManeuver(Unit *pTarget)
 			else if (HOWL_OF_TERROR > 0 && !pTarget->HasAura(HOWL_OF_TERROR, 0) && ai->GetAttackerCount()>3 && LastSpellAffliction < 10 && ai->GetManaPercent() >= 11)
             {
                 ai->CastSpell(HOWL_OF_TERROR, *pTarget);
-				ai->TellMaster("casting howl of terror!");
+				ai->TellMaster("Je lance hurlement de terreur !");
                 SpellSequence = SPELL_DESTRUCTION;
                 LastSpellAffliction = LastSpellAffliction +1;
                 break;
@@ -210,7 +210,7 @@ void PlayerbotWarlockAI::DoNextCombatManeuver(Unit *pTarget)
 			else if (FEAR > 0 && !pTarget->HasAura(FEAR, 0) && pVictim==m_bot && ai->GetAttackerCount()>=2 && LastSpellAffliction < 11 && ai->GetManaPercent() >= 12)
             {
                 ai->CastSpell(FEAR, *pTarget);
-				//ai->TellMaster("casting fear!");
+				//ai->TellMaster("Je lance une peur !");
 				ai->SetIgnoreUpdateTime(1.5);
                 SpellSequence = SPELL_DESTRUCTION;
                 LastSpellAffliction = LastSpellAffliction +1;
@@ -246,7 +246,7 @@ void PlayerbotWarlockAI::DoNextCombatManeuver(Unit *pTarget)
 			  else if (RAIN_OF_FIRE > 0 && LastSpellDestruction < 3 && ai->GetAttackerCount()>=3 && ai->GetManaPercent() >= 77)
               {
                   ai->CastSpell(RAIN_OF_FIRE, *pTarget);
-				  //ai->TellMaster("casting rain of fire!");
+				  //ai->TellMaster("Je lance pluie de feu !");
 				  ai->SetIgnoreUpdateTime(8);
                   SpellSequence = SPELL_CURSES;
                   LastSpellDestruction = LastSpellDestruction + 1;
@@ -312,7 +312,7 @@ void PlayerbotWarlockAI::DoNextCombatManeuver(Unit *pTarget)
 			  else if (HELLFIRE > 0 && LastSpellDestruction < 12 && !m_bot->HasAura(HELLFIRE, 0) && ai->GetAttackerCount()>=5 && ai->GetHealthPercent() >= 10 && ai->GetManaPercent() >= 87)
               {
                   ai->CastSpell(HELLFIRE);
-				  ai->TellMaster("casting hellfire!");
+				  ai->TellMaster("Je lance flammes infernales !");
 				  ai->SetIgnoreUpdateTime(15);
                   SpellSequence = SPELL_CURSES;
                   LastSpellDestruction = LastSpellDestruction + 1;
@@ -363,7 +363,7 @@ void PlayerbotWarlockAI::DoNonCombatActions()
 
     if (pItem != NULL && ai->GetManaPercent() < 25)
     {
-        ai->TellMaster("I could use a drink.");
+        ai->TellMaster("J'ai besoin de boire un peu...");
         ai->UseItem(*pItem);
         ai->SetIgnoreUpdateTime(30);
         return;
@@ -372,14 +372,14 @@ void PlayerbotWarlockAI::DoNonCombatActions()
 		&& (pItem == NULL && DARK_PACT>0 && ai->GetManaPercent() <= 50 && pet->GetPower(POWER_MANA) > 0) )
     {
 		ai->CastSpell(DARK_PACT, *m_bot);
-        //ai->TellMaster("casting dark pact.");
+        //ai->TellMaster("Je lance pacte noir.");
         return;
     }
 	else if(( !pet )
 		&& (pItem == NULL && LIFE_TAP>0 && ai->GetManaPercent() <= 50 && ai->GetHealthPercent() > 25) )
     {
 		ai->CastSpell(LIFE_TAP, *m_bot);
-        //ai->TellMaster("casting life tap.");
+        //ai->TellMaster("Je lance connexion.");
         return;
     }
 
@@ -391,14 +391,14 @@ void PlayerbotWarlockAI::DoNonCombatActions()
 
     if (pItem != NULL && ai->GetHealthPercent() < 30)
     {
-        ai->TellMaster("I could use some food.");
+        ai->TellMaster("J'ai besoin de manger un peu...");
         ai->UseItem(*pItem);
         ai->SetIgnoreUpdateTime(30);
 		return;
     }
 	else if (pItem == NULL && fItem != NULL && !m_bot->HasAura(RECENTLY_BANDAGED, 0) && ai->GetHealthPercent() < 70)
     {
-        ai->TellMaster("I could use first aid.");
+        ai->TellMaster("J'ia besoin de me faire un bandage...");
         ai->UseItem(*fItem);
         ai->SetIgnoreUpdateTime(8);
         return;
@@ -407,7 +407,7 @@ void PlayerbotWarlockAI::DoNonCombatActions()
 		&& (pItem == NULL && fItem == NULL && CONSUME_SHADOWS>0 && !m_bot->HasAura(CONSUME_SHADOWS, 0) && ai->GetHealthPercent() < 75) )
     {
 		ai->CastSpell(CONSUME_SHADOWS, *m_bot);
-        //ai->TellMaster("casting consume shadows.");
+        //ai->TellMaster("Je lance consumer les ombres.");
         return;
     }
 
@@ -418,19 +418,19 @@ void PlayerbotWarlockAI::DoNonCombatActions()
         {
             // summon demon
 			if( SUMMON_FELGUARD>0 && ai->CastSpell(SUMMON_FELGUARD,*m_bot) )
-                ai->TellMaster( "summoning felguard." );
+                ai->TellMaster( "J'invoque un gangregarde." );
 			else if( SUMMON_FELHUNTER>0 && ai->CastSpell(SUMMON_FELHUNTER,*m_bot) )
-                ai->TellMaster( "summoning felhunter." );
+                ai->TellMaster( "J'invoque un chasseur corrompu." );
 			else if( SUMMON_SUCCUBUS>0 && ai->CastSpell(SUMMON_SUCCUBUS,*m_bot) )
-                ai->TellMaster( "summoning succubus." );
+                ai->TellMaster( "J'invoque une succube." );
 			else if( SUMMON_VOIDWALKER>0 && ai->CastSpell(SUMMON_VOIDWALKER,*m_bot) )
-                ai->TellMaster( "summoning voidwalker." );
+                ai->TellMaster( "J'invoque un marcheur du vide." );
 			else if( SUMMON_IMP>0 && ai->GetManaPercent() >= 64 && ai->CastSpell(SUMMON_IMP,*m_bot) )
-                ai->TellMaster( "summoning imp." );
+                ai->TellMaster( "J'invoque un diablotin." );
             else
             {
                 m_demonSummonFailed = true;
-                //ai->TellMaster( "summon demon failed!" );
+                //ai->TellMaster( "L'invocation ne marche pas !" );
             }
         }
     }
@@ -439,19 +439,19 @@ void PlayerbotWarlockAI::DoNonCombatActions()
 	if(( pet )
 		&& ( SOUL_LINK>0 && !m_bot->HasAura(SOUL_LINK,0) && ai->GetManaPercent() >= 16 && ai->CastSpell(SOUL_LINK,*m_bot) ))
 		{
-			//ai->TellMaster( "casting soul link." );
+			//ai->TellMaster( "Je lance lien spirituel." );
 			return;
 		}
 	else if(( pet )
 		&& ( BLOOD_PACT>0 && !m_bot->HasAura(BLOOD_PACT,0) && ai->CastSpell(BLOOD_PACT,*m_bot) ))
 		{
-			//ai->TellMaster( "casting blood pact." );
+			//ai->TellMaster( "Je lance pacte de sang." );
 			return;
 		}
 	else if(( pet )
 		&& ( FEL_INTELLIGENCE>0 && !m_bot->HasAura(FEL_INTELLIGENCE, 0) && ai->CastSpell(FEL_INTELLIGENCE,*m_bot) ))
 		{
-			//ai->TellMaster( "casting fel intelligence." );
+			//ai->TellMaster( "Je lance intelligence gangrenee." );
 			return;
 		}
 } // end DoNonCombatActions

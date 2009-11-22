@@ -257,24 +257,24 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
                     Player* const bot = it->second;
                     
                     if (bot->GetQuestStatus(quest) == QUEST_STATUS_COMPLETE)
-                        bot->GetPlayerbotAI()->TellMaster("I already completed that quest.");
+                        bot->GetPlayerbotAI()->TellMaster("J'ai deja fini cette quete.");
                     else if (! bot->CanTakeQuest(qInfo, false))
                     {                    	
         				if (! bot->SatisfyQuestStatus(qInfo, false))
-                            bot->GetPlayerbotAI()->TellMaster("I already have that quest.");
+                            bot->GetPlayerbotAI()->TellMaster("Je suis deja sur cette quete.");
                         else
-                            bot->GetPlayerbotAI()->TellMaster("I can't take that quest.");
+                            bot->GetPlayerbotAI()->TellMaster("Je ne peux pas prendre cette quete.");
                     }
                     else if (! bot->SatisfyQuestLog(false))
-                        bot->GetPlayerbotAI()->TellMaster("My quest log is full.");
+                        bot->GetPlayerbotAI()->TellMaster("Mon journal de quete est plein.");
                     else if (! bot->CanAddQuest(qInfo, false))
-                        bot->GetPlayerbotAI()->TellMaster("I can't take that quest because it requires that I take items, but my bags are full!");
+                        bot->GetPlayerbotAI()->TellMaster("Je ne peux pas prendre cette quete car je dois ramasser des objets pour la terminer et mes sacs sont pleins :(");
 
                     else
                     {
                         p.rpos(0); // reset reader
                         bot->GetSession()->HandleQuestgiverAcceptQuestOpcode(p);
-                        bot->GetPlayerbotAI()->TellMaster("Got the quest.");
+                        bot->GetPlayerbotAI()->TellMaster("J'ai pris la quete.");
                     }
                 }
             }
