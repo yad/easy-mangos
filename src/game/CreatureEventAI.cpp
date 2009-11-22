@@ -292,7 +292,7 @@ bool CreatureEventAI::ProcessEvent(CreatureEventAIHolder& pHolder, Unit* pAction
             //Note: checked only aura for effect 0, if need check aura for effect 1/2 then
             // possible way: pack in event.buffed.amount 2 uint16 (ammount+effectIdx)
             Aura* aura = m_creature->GetAura(event.buffed.spellId,0);
-            if(!aura || aura->GetStackAmount() < event.buffed.amount)
+            if (!aura || aura->GetStackAmount() < event.buffed.amount)
                 return false;
 
             //Repeat Timers
@@ -523,8 +523,8 @@ void CreatureEventAI::ProcessAction(CreatureEventAI_Action const& action, uint32
             break;
         case ACTION_T_THREAT_ALL_PCT:
         {
-            std::list<HostileReference*>& threatList = m_creature->getThreatManager().getThreatList();
-            for (std::list<HostileReference*>::iterator i = threatList.begin(); i != threatList.end(); ++i)
+            ThreatList& threatList = m_creature->getThreatManager().getThreatList();
+            for (ThreatList::iterator i = threatList.begin(); i != threatList.end(); ++i)
                 if(Unit* Temp = Unit::GetUnit(*m_creature,(*i)->getUnitGuid()))
                     m_creature->getThreatManager().modifyThreatPercent(Temp, action.threat_all_pct.percent);
             break;
@@ -634,8 +634,8 @@ void CreatureEventAI::ProcessAction(CreatureEventAI_Action const& action, uint32
             break;
         case ACTION_T_CAST_EVENT_ALL:
         {
-            std::list<HostileReference*>& threatList = m_creature->getThreatManager().getThreatList();
-            for (std::list<HostileReference*>::iterator i = threatList.begin(); i != threatList.end(); ++i)
+            ThreatList& threatList = m_creature->getThreatManager().getThreatList();
+            for (ThreatList::iterator i = threatList.begin(); i != threatList.end(); ++i)
                 if (Unit* Temp = Unit::GetUnit(*m_creature,(*i)->getUnitGuid()))
                     if (Temp->GetTypeId() == TYPEID_PLAYER)
                         ((Player*)Temp)->CastedCreatureOrGO(action.cast_event_all.creatureId, m_creature->GetGUID(), action.cast_event_all.spellId);
@@ -1114,9 +1114,9 @@ bool CreatureEventAI::IsVisible(Unit *pl) const
 inline Unit* CreatureEventAI::SelectUnit(AttackingTarget target, uint32 position)
 {
     //ThreatList m_threatlist;
-    std::list<HostileReference*>& m_threatlist = m_creature->getThreatManager().getThreatList();
-    std::list<HostileReference*>::iterator i = m_threatlist.begin();
-    std::list<HostileReference*>::reverse_iterator r = m_threatlist.rbegin();
+    ThreatList& m_threatlist = m_creature->getThreatManager().getThreatList();
+    ThreatList::iterator i = m_threatlist.begin();
+    ThreatList::reverse_iterator r = m_threatlist.rbegin();
 
     if (position >= m_threatlist.size() || !m_threatlist.size())
         return NULL;
