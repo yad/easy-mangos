@@ -291,8 +291,6 @@ int Master::Run()
     uint32 realCurrTime, realPrevTime;
     realCurrTime = realPrevTime = getMSTime();
 
-    uint32 socketSelecttime = sWorld.getConfig(CONFIG_SOCKET_SELECTTIME);
-
     ///- Start up freeze catcher thread
     if(uint32 freeze_delay = sConfig.GetIntDefault("MaxCoreStuckTime", 0))
     {
@@ -414,12 +412,19 @@ bool Master::_StartDB()
     }
 
     if(!WorldDatabase.CheckRequiredField("db_version",REVISION_DB_MANGOS))
+    {
+        ///- Wait for already started DB delay threads to end
+        WorldDatabase.HaltDelayThread();
         return false;
+    }
 
     dbstring = sConfig.GetStringDefault("CharacterDatabaseInfo", "");
     if(dbstring.empty())
     {
         sLog.outError("Character Database not specified in configuration file");
+
+        ///- Wait for already started DB delay threads to end
+        WorldDatabase.HaltDelayThread();
         return false;
     }
     sLog.outString("Character Database: %s", dbstring.c_str());
@@ -428,17 +433,29 @@ bool Master::_StartDB()
     if(!CharacterDatabase.Initialize(dbstring.c_str()))
     {
         sLog.outError("Cannot connect to Character database %s",dbstring.c_str());
+
+        ///- Wait for already started DB delay threads to end
+        WorldDatabase.HaltDelayThread();
         return false;
     }
 
     if(!CharacterDatabase.CheckRequiredField("character_db_version",REVISION_DB_CHARACTERS))
+    {
+        ///- Wait for already started DB delay threads to end
+        WorldDatabase.HaltDelayThread();
+        CharacterDatabase.HaltDelayThread();
         return false;
+    }
 
     ///- Get login database info from configuration file
     dbstring = sConfig.GetStringDefault("LoginDatabaseInfo", "");
     if(dbstring.empty())
     {
         sLog.outError("Login database not specified in configuration file");
+
+        ///- Wait for already started DB delay threads to end
+        WorldDatabase.HaltDelayThread();
+        CharacterDatabase.HaltDelayThread();
         return false;
     }
 
@@ -447,17 +464,32 @@ bool Master::_StartDB()
     if(!loginDatabase.Initialize(dbstring.c_str()))
     {
         sLog.outError("Cannot connect to login database %s",dbstring.c_str());
+
+        ///- Wait for already started DB delay threads to end
+        WorldDatabase.HaltDelayThread();
+        CharacterDatabase.HaltDelayThread();
         return false;
     }
 
     if(!loginDatabase.CheckRequiredField("realmd_db_version",REVISION_DB_REALMD))
+    {
+        ///- Wait for already started DB delay threads to end
+        WorldDatabase.HaltDelayThread();
+        CharacterDatabase.HaltDelayThread();
+        loginDatabase.HaltDelayThread();
         return false;
+    }
 
     ///- Get the realm Id from the configuration file
     realmID = sConfig.GetIntDefault("RealmID", 0);
     if(!realmID)
     {
         sLog.outError("Realm ID not defined in configuration file");
+
+        ///- Wait for already started DB delay threads to end
+        WorldDatabase.HaltDelayThread();
+        CharacterDatabase.HaltDelayThread();
+        loginDatabase.HaltDelayThread();
         return false;
     }
 

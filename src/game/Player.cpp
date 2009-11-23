@@ -42,6 +42,7 @@
 #include "CellImpl.h"
 #include "ObjectMgr.h"
 #include "ObjectAccessor.h"
+#include "ObjectDefines.h"
 #include "CreatureAI.h"
 #include "Formulas.h"
 #include "Group.h"
@@ -4319,7 +4320,8 @@ void Player::CreateCorpse()
 void Player::SpawnCorpseBones()
 {
     if(sObjectAccessor.ConvertCorpseForPlayer(GetGUID()))
-        SaveToDB();                                         // prevent loading as ghost without corpse
+        if (!GetSession()->PlayerLogoutWithSave())          // at logout we will already store the player
+            SaveToDB();                                     // prevent loading as ghost without corpse
 }
 
 Corpse* Player::GetCorpse() const
@@ -9004,11 +9006,11 @@ uint8 Player::_CanStoreItem_InBag( uint8 bag, ItemPosCountVec &dest, ItemPrototy
         Item* pItem2 = GetItemByPos( bag, j );
 
         // ignore move item (this slot will be empty at move)
-        if (pItem2==pSrcItem)
+        if (pItem2 == pSrcItem)
             pItem2 = NULL;
 
         // if merge skip empty, if !merge skip non-empty
-        if ((pItem2!=NULL)!=merge)
+        if ((pItem2 != NULL) != merge)
             continue;
 
         if (pItem2)
@@ -9065,7 +9067,7 @@ uint8 Player::_CanStoreItem_InInventorySlots( uint8 slot_begin, uint8 slot_end, 
             pItem2 = NULL;
 
         // if merge skip empty, if !merge skip non-empty
-        if ((pItem2!=NULL)!=merge)
+        if ((pItem2 != NULL) != merge)
             continue;
 
         if (pItem2)
@@ -9969,6 +9971,9 @@ uint8 Player::CanBankItem( uint8 bag, uint8 slot, ItemPosCountVec &dest, Item *p
 {
     if (!pItem)
         return swap ? EQUIP_ERR_ITEMS_CANT_BE_SWAPPED : EQUIP_ERR_ITEM_NOT_FOUND;
+
+    if (pItem->m_lootGenerated)
+        return EQUIP_ERR_ITEM_LOCKED;
 
     uint32 count = pItem->GetCount();
 
@@ -14526,6 +14531,8 @@ bool Player::LoadFromDB( uint32 guid, SqlQueryHolder *holder )
     // clear charm/summon related fields
     SetCharm(NULL);
     SetPet(NULL);
+    SetTargetGUID(0);
+    SetChannelObjectGUID(0);
     SetCharmerGUID(0);
     SetOwnerGUID(0);
     SetCreatorGUID(0);
@@ -15674,6 +15681,7 @@ bool Player::_LoadHomeBind(QueryResult *result)
 
 void Player::SaveToDB()
 {
+    // we should assure this: assert((m_nextSave != sWorld.getConfig(CONFIG_INTERVAL_SAVE)));
     // delay auto save at any saves (manual, in code, or autosave)
     m_nextSave = sWorld.getConfig(CONFIG_INTERVAL_SAVE);
 

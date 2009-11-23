@@ -137,13 +137,18 @@ enum UnitStandStateType
     UNIT_STAND_STATE_SIT_MEDIUM_CHAIR  = 5,
     UNIT_STAND_STATE_SIT_HIGH_CHAIR    = 6,
     UNIT_STAND_STATE_DEAD              = 7,
-    UNIT_STAND_STATE_KNEEL             = 8
+    UNIT_STAND_STATE_KNEEL             = 8,
+    UNIT_STAND_STATE_SUBMERGED         = 9
 };
 
 // byte flag value (UNIT_FIELD_BYTES_1,2)
 enum UnitStandFlags
 {
+    UNIT_STAND_FLAGS_UNK1         = 0x01,
     UNIT_STAND_FLAGS_CREEP        = 0x02,
+    UNIT_STAND_FLAGS_UNK3         = 0x04,
+    UNIT_STAND_FLAGS_UNK4         = 0x08,
+    UNIT_STAND_FLAGS_UNK5         = 0x10,
     UNIT_STAND_FLAGS_ALL          = 0xFF
 };
 
@@ -151,6 +156,7 @@ enum UnitStandFlags
 enum UnitBytes1_Flags
 {
     UNIT_BYTE1_FLAG_ALWAYS_STAND = 0x01,
+    UNIT_BYTE1_FLAG_UNK_2        = 0x02,
     UNIT_BYTE1_FLAG_UNTRACKABLE  = 0x04,
     UNIT_BYTE1_FLAG_ALL          = 0xFF
 };
@@ -195,7 +201,7 @@ enum SheathState
 #define MAX_SHEATH_STATE    3
 
 // byte (1 from 0..3) of UNIT_FIELD_BYTES_2
-enum UnitBytes2_Flags
+enum UnitPVPStateFlags
 {
     UNIT_BYTE2_FLAG_PVP         = 0x01,
     UNIT_BYTE2_FLAG_UNK1        = 0x02,
@@ -1155,6 +1161,11 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         void SendMonsterMove(float NewPosX, float NewPosY, float NewPosZ, uint8 type, MonsterMovementFlags flags, uint32 Time, Player* player = NULL);
         void SendMonsterMoveByPath(Path const& path, uint32 start, uint32 end, MonsterMovementFlags flags);
 
+        void SendHighestThreatUpdate(HostileReference* pHostileReference);
+        void SendThreatClear();
+        void SendThreatRemove(HostileReference* pHostileReference);
+        void SendThreatUpdate();
+
         void BuildHeartBeatMsg( WorldPacket *data ) const;
 
         virtual void MoveOutOfRange(Player &) {  };
@@ -1367,6 +1378,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         void TauntApply(Unit* pVictim);
         void TauntFadeOut(Unit *taunter);
         ThreatManager& getThreatManager() { return m_ThreatManager; }
+        ThreatManager const& getThreatManager() const { return m_ThreatManager; }
         void addHatedBy(HostileReference* pHostileReference) { m_HostileRefManager.insertFirst(pHostileReference); };
         void removeHatedBy(HostileReference* /*pHostileReference*/ ) { /* nothing to do yet */ }
         HostileRefManager& getHostileRefManager() { return m_HostileRefManager; }

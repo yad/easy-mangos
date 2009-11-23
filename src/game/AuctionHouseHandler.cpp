@@ -22,6 +22,7 @@
 #include "Log.h"
 #include "World.h"
 #include "ObjectMgr.h"
+#include "ObjectDefines.h"
 #include "Player.h"
 #include "UpdateMask.h"
 #include "AuctionHouseMgr.h"
@@ -329,7 +330,7 @@ void WorldSession::HandleAuctionPlaceBid( WorldPacket & recv_data )
     }
 
     // cheating
-    if(price <= auction->bid)
+    if(price <= auction->bid || price < auction->startbid)
         return;
 
     // price too low for next bid if not buyout

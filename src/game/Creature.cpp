@@ -21,6 +21,7 @@
 #include "WorldPacket.h"
 #include "World.h"
 #include "ObjectMgr.h"
+#include "ObjectDefines.h"
 #include "SpellMgr.h"
 #include "Creature.h"
 #include "QuestDef.h"
@@ -306,14 +307,13 @@ bool Creature::UpdateEntry(uint32 Entry, uint32 team, const CreatureData *data )
     SetCanModifyStats(true);
     UpdateAllStats();
 
-    FactionTemplateEntry const* factionTemplate = sFactionTemplateStore.LookupEntry(GetCreatureInfo()->faction_A);
-    if (factionTemplate)                                    // check and error show at loading templates
+    // checked and error show at loading templates
+    if (FactionTemplateEntry const* factionTemplate = sFactionTemplateStore.LookupEntry(GetCreatureInfo()->faction_A))
     {
-        FactionEntry const* factionEntry = sFactionStore.LookupEntry(factionTemplate->faction);
-        if (factionEntry)
-            if( !(GetCreatureInfo()->flags_extra & CREATURE_FLAG_EXTRA_CIVILIAN) &&
-                (factionEntry->team == ALLIANCE || factionEntry->team == HORDE) )
-                SetPvP(true);
+        if (factionTemplate->factionFlags & FACTION_TEMPLATE_FLAG_PVP)
+            SetPvP(true);
+        else
+            SetPvP(false);
     }
 
     for(int i=0; i < CREATURE_MAX_SPELLS; ++i)
@@ -838,9 +838,9 @@ void Creature::prepareGossipMenu( Player *pPlayer,uint32 gossipid )
                     NpcOptionLocale const *no = sObjectMgr.GetNpcOptionLocale(gso->Id);
                     if (no)
                     {
-                        if (no->OptionText.size() > loc_idx && !no->OptionText[loc_idx].empty())
+                        if (no->OptionText.size() > (size_t)loc_idx && !no->OptionText[loc_idx].empty())
                             OptionText=no->OptionText[loc_idx];
-                        if (no->BoxText.size() > loc_idx && !no->BoxText[loc_idx].empty())
+                        if (no->BoxText.size() > (size_t)loc_idx && !no->BoxText[loc_idx].empty())
                             BoxText=no->BoxText[loc_idx];
                     }
                 }
@@ -1971,12 +1971,12 @@ bool Creature::LoadCreaturesAddon(bool reload)
     if (cainfo->bytes2 != 0)
     {
         // 0 SheathState
-        // 1 Bytes2Flags
+        // 1 UnitPVPStateFlags  Set at Creature::UpdateEntry (SetPvp())
         // 2 UnitRename         Pet only, so always 0 for default creature
         // 3 ShapeshiftForm     Must be determined/set by shapeshift spell/aura
 
         SetByteValue(UNIT_FIELD_BYTES_2, 0, uint8(cainfo->bytes2 & 0xFF));
-        SetByteValue(UNIT_FIELD_BYTES_2, 1, uint8((cainfo->bytes2 >> 8) & 0xFF));
+        //SetByteValue(UNIT_FIELD_BYTES_2, 1, uint8((cainfo->bytes2 >> 8) & 0xFF));
         //SetByteValue(UNIT_FIELD_BYTES_2, 2, uint8((cainfo->bytes2 >> 16) & 0xFF));
         SetByteValue(UNIT_FIELD_BYTES_2, 2, 0);
         //SetByteValue(UNIT_FIELD_BYTES_2, 3, uint8((cainfo->bytes2 >> 24) & 0xFF));
@@ -2301,7 +2301,7 @@ const char* Creature::GetNameForLocaleIdx(int32 loc_idx) const
         CreatureLocale const *cl = sObjectMgr.GetCreatureLocale(GetEntry());
         if (cl)
         {
-            if (cl->Name.size() > loc_idx && !cl->Name[loc_idx].empty())
+            if (cl->Name.size() > (size_t)loc_idx && !cl->Name[loc_idx].empty())
                 return cl->Name[loc_idx].c_str();
         }
     }

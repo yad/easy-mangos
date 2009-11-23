@@ -27,6 +27,7 @@
 #include "Player.h"
 #include "Vehicle.h"
 #include "ObjectMgr.h"
+#include "ObjectDefines.h"
 #include "UpdateData.h"
 #include "UpdateMask.h"
 #include "Util.h"
@@ -180,8 +181,8 @@ void Object::BuildCreateUpdateBlockForPlayer(UpdateData *data, Player *target) c
 
         if(isType(TYPEMASK_UNIT))
         {
-            if(((Unit*)this)->GetTargetGUID())
-                flags |= UPDATEFLAG_HAS_TARGET;
+            if(((Unit*)this)->getVictim())
+                flags |= UPDATEFLAG_HAS_ATTACKING_TARGET;
         }
     }
 
@@ -545,9 +546,12 @@ void Object::BuildMovementUpdate(ByteBuffer * data, uint16 flags, uint32 flags2)
     }
 
     // 0x4
-    if(flags & UPDATEFLAG_HAS_TARGET)                       // packed guid (current target guid)
+    if(flags & UPDATEFLAG_HAS_ATTACKING_TARGET)             // packed guid (current target guid)
     {
-        data->appendPackGUID(((Unit*)this)->GetTargetGUID());
+        if (((Unit*)this)->getVictim())
+            data->append(((Unit*)this)->getVictim()->GetPackGUID());
+        else
+            data->appendPackGUID(0);
     }
 
     // 0x2
@@ -1114,8 +1118,8 @@ void Object::BuildUpdateData( UpdateDataMapType& update_players )
 }
 
 WorldObject::WorldObject()
-    : m_mapId(0), m_InstanceId(0), m_phaseMask(PHASEMASK_NORMAL),
-    m_positionX(0.0f), m_positionY(0.0f), m_positionZ(0.0f), m_orientation(0.0f), m_currMap(NULL)
+    : m_currMap(NULL), m_mapId(0), m_InstanceId(0), m_phaseMask(PHASEMASK_NORMAL),
+    m_positionX(0.0f), m_positionY(0.0f), m_positionZ(0.0f), m_orientation(0.0f)
 {
 }
 
