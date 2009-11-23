@@ -2977,6 +2977,15 @@ void Spell::finish(bool ok)
     if( m_spellInfo->Attributes & SPELL_ATTR_STOP_ATTACK_TARGET )
         m_caster->AttackStop();
 
+    // Some hacks to replace wrong DBC data...
+    //Missile Barrage
+    if (m_spellInfo->SpellFamilyName == SPELLFAMILY_MAGE && 
+     (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000000000000800)) &&
+      m_caster->HasAura(44401))
+    {
+      m_caster->RemoveAurasDueToSpell(44401);
+    }
+
     // For SPELL_AURA_IGNORE_UNIT_STATE charges
     // TODO: find way without this hack
     bool break_for = false;
