@@ -2483,13 +2483,6 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                     else
                         m_target->m_AuraFlags |= ~UNIT_AURAFLAG_ALIVE_INVISIBLE;
                     return;
-                // HasTabard (Championing System)
-                case 57818:
-                    if (caster && caster->GetTypeId() == TYPEID_PLAYER)
-                    {
-                        ((Player*)caster)->m_HasTabard = apply;
-                    }
-                    return;
             }
             break;
         }

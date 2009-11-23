@@ -2184,7 +2184,6 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         void UpdateHomebindTime(uint32 time);
 
-        bool m_HasTabard;
         uint32 m_HomebindTimer;
         bool m_InstanceValid;
         // permanent binds and solo binds by difficulty
