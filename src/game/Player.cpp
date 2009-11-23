@@ -428,6 +428,7 @@ Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputa
 
     /////////////////// Instance System /////////////////////
 
+    m_HasTabard = false;
     m_HomebindTimer = 0;
     m_InstanceValid = true;
     m_dungeonDifficulty = DUNGEON_DIFFICULTY_NORMAL;
@@ -5908,15 +5909,32 @@ void Player::RewardReputation(Unit *pVictim, float rate)
         return;
 
     ReputationOnKillEntry const* Rep = sObjectMgr.GetReputationOnKilEntry(((Creature*)pVictim)->GetCreatureInfo()->Entry);
+    uint32 tabardFactionID = 0;
 
     if(!Rep)
         return;
 
+    // Championing System
+    if (m_HasTabard)
+    {
+        InstanceTemplate const* mInstance = sObjectMgr.GetInstanceTemplate(pVictim->GetMapId());
+        MapEntry const* StoredMap = sMapStore.LookupEntry(pVictim->GetMapId());
+        bool heroic = pVictim->GetMap()->IsHeroic();
+
+        // All reputation gains while in level 80 dungeons will be applied to your standing with <faction>.
+        if (mInstance->levelMin == 80 || (StoredMap->Expansion() == 2 && heroic))
+        {
+            Item* tabard = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_TABARD);
+            if (tabard)
+                tabardFactionID = tabard->GetProto()->RequiredReputationFaction;
+        }
+    }
+
     if(Rep->repfaction1 && (!Rep->team_dependent || GetTeam()==ALLIANCE))
     {
-        int32 donerep1 = CalculateReputationGain(pVictim->getLevel(), Rep->repvalue1, Rep->repfaction1, false);
+        int32 donerep1 = CalculateReputationGain(pVictim->getLevel(), Rep->repvalue1, (tabardFactionID) ? tabardFactionID : Rep->repfaction1, false);
         donerep1 = int32(donerep1*rate);
-        FactionEntry const *factionEntry1 = sFactionStore.LookupEntry(Rep->repfaction1);
+        FactionEntry const *factionEntry1 = sFactionStore.LookupEntry((tabardFactionID) ? tabardFactionID : Rep->repfaction1);
         uint32 current_reputation_rank1 = GetReputationMgr().GetRank(factionEntry1);
         if (factionEntry1 && current_reputation_rank1 <= Rep->reputation_max_cap1)
             GetReputationMgr().ModifyReputation(factionEntry1, donerep1);
@@ -5932,9 +5950,9 @@ void Player::RewardReputation(Unit *pVictim, float rate)
 
     if(Rep->repfaction2 && (!Rep->team_dependent || GetTeam()==HORDE))
     {
-        int32 donerep2 = CalculateReputationGain(pVictim->getLevel(), Rep->repvalue2, Rep->repfaction2, false);
+        int32 donerep2 = CalculateReputationGain(pVictim->getLevel(), Rep->repvalue2, (tabardFactionID) ? tabardFactionID : Rep->repfaction2, false);
         donerep2 = int32(donerep2*rate);
-        FactionEntry const *factionEntry2 = sFactionStore.LookupEntry(Rep->repfaction2);
+        FactionEntry const *factionEntry2 = sFactionStore.LookupEntry((tabardFactionID) ? tabardFactionID : Rep->repfaction2);
         uint32 current_reputation_rank2 = GetReputationMgr().GetRank(factionEntry2);
         if (factionEntry2 && current_reputation_rank2 <= Rep->reputation_max_cap2)
             GetReputationMgr().ModifyReputation(factionEntry2, donerep2);
