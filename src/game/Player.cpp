@@ -5919,7 +5919,7 @@ void Player::RewardReputation(Unit *pVictim, float rate)
     {
         InstanceTemplate const* mInstance = sObjectMgr.GetInstanceTemplate(pVictim->GetMapId());
         MapEntry const* StoredMap = sMapStore.LookupEntry(pVictim->GetMapId());
-        bool heroic = pVictim->GetMap()->IsHeroic();
+        bool heroic = pVictim->GetMap()->IsRaidOrHeroicDungeon();
 
         // All reputation gains while in level 80 dungeons will be applied to your standing with <faction>.
         if (mInstance->levelMin == 80 || (StoredMap->Expansion() == 2 && heroic))
