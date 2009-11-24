@@ -1431,6 +1431,10 @@ void Spell::EffectDummy(uint32 i)
                     rage2 = rage2 - 300;
                     rage2 = rage2<lastrage?lastrage:rage2;
                  }
+
+                if(rage > 30)
+                    rage = 30;
+
                 // Glyph of Execution bonus
                 uint32 rage_modified = rage;
 
@@ -1445,7 +1449,7 @@ void Spell::EffectDummy(uint32 i)
                 if (lastrage != 0)
                      m_caster->SetPower(POWER_RAGE,rage2);
                 else
-                     m_caster->SetPower(POWER_RAGE,0);
+                     m_caster->SetPower(POWER_RAGE,m_caster->GetPower(POWER_RAGE)-rage);
                 return;
             }
             // Slam
