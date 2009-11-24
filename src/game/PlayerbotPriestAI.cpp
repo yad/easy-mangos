@@ -72,37 +72,37 @@ void PlayerbotPriestAI::HealTarget(Unit &target, uint8 hp)
 
     if (hp < 25 && FLASH_HEAL > 0 && ai->GetManaPercent() >= 20)
     {
-        ai->TellMaster("I'm casting flash heal.");
+        ai->TellMaster("Je lance un soin rapide.");
         ai->CastSpell(FLASH_HEAL, target);
     }
     else if (hp < 30 && GREAT_HEAL > 0 && ai->GetManaPercent() >= 36)
     {
-        ai->TellMaster("I'm casting one of the sorted heal spells.");
+        ai->TellMaster("Je lance un de mes sorts de soins.");
         ai->CastSpell(GREAT_HEAL, target);
     }
     else if (hp < 33 && BINDING_HEAL > 0 && ai->GetManaPercent() >= 27)
     {
-        ai->TellMaster("I'm casting binding heal.");
+        ai->TellMaster("Je lance soins de lien.");
         ai->CastSpell(BINDING_HEAL, target);
     }
     else if (hp < 40 && PRAYER_OF_HEALING > 0 && ai->GetManaPercent() >= 54)
     {
-        ai->TellMaster("I'm casting prayer of healing.");
+        ai->TellMaster("Je lance une priere de soins.");
         ai->CastSpell(PRAYER_OF_HEALING, target);
     }
     else if (hp < 50 && CIRCLE_OF_HEALING > 0 && ai->GetManaPercent() >= 24)
     {
-        ai->TellMaster("I'm casting circle of healing.");
+        ai->TellMaster("Je lance un cercle de soins.");
         ai->CastSpell(CIRCLE_OF_HEALING, target);
     }
     else if (hp < 60 && HEAL > 0 && ai->GetManaPercent() >= 36)
     {
-        ai->TellMaster("I'm casting one of the sorted heal spells.");
+        ai->TellMaster("Je lance un de mes sorts de soins.");
         ai->CastSpell(HEAL, target);
     }
     else if (hp < 80 && RENEW > 0 && ai->GetManaPercent() >= 19)
     {
-        //ai->TellMaster("I'm casting renew.");
+        //ai->TellMaster("Je lance renovation.");
         ai->CastSpell(RENEW, target);
     }
 
@@ -137,12 +137,12 @@ void PlayerbotPriestAI::DoNextCombatManeuver(Unit *pTarget)
     // Heal myself
     if (ai->GetHealthPercent() < 15 && FADE > 0 && !m_bot->HasAura(FADE, 0))
     {
-        ai->TellMaster("I'm casting fade.");
+        ai->TellMaster("Je lance disparition.");
         ai->CastSpell(FADE);
     }
     else if (ai->GetHealthPercent() < 25 && PWS > 0 && !m_bot->HasAura(PWS, 0))
     {
-        ai->TellMaster("I'm casting pws on myself.");
+        ai->TellMaster("Je me soigne d'urgence.");
         ai->CastSpell(PWS);
     }
     else if (ai->GetHealthPercent() < 80)
@@ -189,7 +189,7 @@ void PlayerbotPriestAI::DoNextCombatManeuver(Unit *pTarget)
             }
             else if (MANA_BURN > 0 && LastSpellHoly <2 && pTarget->GetPower(POWER_MANA) > 0 && ai->GetManaPercent() < 70 && ai->GetManaPercent() >= 14)
             {
-                //ai->TellMaster("I'm casting mana burn.");
+                //ai->TellMaster("Je lance brulure de mana.");
                 ai->CastSpell(MANA_BURN, *pTarget);
 				ai->SetIgnoreUpdateTime(3);
                 SpellSequence = SPELL_SHADOWMAGIC;
@@ -198,7 +198,7 @@ void PlayerbotPriestAI::DoNextCombatManeuver(Unit *pTarget)
             }
             else if (HOLY_NOVA > 0 && LastSpellHoly <3 && ai->GetManaPercent() >= 22)
             {
-                //ai->TellMaster("I'm casting holy nova.");
+                //ai->TellMaster("Je lance nova sacree.");
                 ai->CastSpell(HOLY_NOVA);
                 SpellSequence = SPELL_SHADOWMAGIC;
                 LastSpellHoly = LastSpellHoly +1;
@@ -206,7 +206,7 @@ void PlayerbotPriestAI::DoNextCombatManeuver(Unit *pTarget)
              }
              else if (HOLY_FIRE > 0 && LastSpellHoly <4 && !pTarget->HasAura(HOLY_FIRE, 0) && ai->GetManaPercent() >= 13)
              {
-                 //ai->TellMaster("I'm casting holy fire.");
+                 //ai->TellMaster("Je lance flammes sacrees");
                  ai->CastSpell(HOLY_FIRE, *pTarget);
                  SpellSequence = SPELL_SHADOWMAGIC;
                  LastSpellHoly = LastSpellHoly +1;
@@ -225,7 +225,7 @@ void PlayerbotPriestAI::DoNextCombatManeuver(Unit *pTarget)
         case SPELL_SHADOWMAGIC:
             if (PAIN > 0 && LastSpellShadowMagic <1 && !pTarget->HasAura(PAIN, 0) && ai->GetManaPercent() >= 25)
             {
-                //ai->TellMaster("I'm casting pain.");
+                //ai->TellMaster("Je lance mots de douleur.");
                 ai->CastSpell(PAIN, *pTarget);
                 SpellSequence = SPELL_DISCIPLINE;
                 LastSpellShadowMagic = LastSpellShadowMagic +1;
@@ -233,7 +233,7 @@ void PlayerbotPriestAI::DoNextCombatManeuver(Unit *pTarget)
             }
             else if (MIND_BLAST > 0 && LastSpellShadowMagic <2 && ai->GetManaPercent() >= 19)
             {
-                //ai->TellMaster("I'm casting mind blast.");
+                //ai->TellMaster("Je lance attaque mentale.");
                 ai->CastSpell(MIND_BLAST, *pTarget);
                 SpellSequence = SPELL_DISCIPLINE;
                 LastSpellShadowMagic = LastSpellShadowMagic +1;
@@ -241,7 +241,7 @@ void PlayerbotPriestAI::DoNextCombatManeuver(Unit *pTarget)
             }
            else if (SCREAM > 0 && LastSpellShadowMagic <3 && ai->GetAttackerCount()>=3 && ai->GetManaPercent() >= 15)
             {
-                ai->TellMaster("I'm casting scream.");
+                ai->TellMaster("Je lance cri psychique.");
                 ai->CastSpell(SCREAM);
                 SpellSequence = SPELL_DISCIPLINE;
                 (LastSpellShadowMagic = LastSpellShadowMagic +1);
@@ -250,7 +250,7 @@ void PlayerbotPriestAI::DoNextCombatManeuver(Unit *pTarget)
 
             else if (MIND_FLAY > 0 && LastSpellShadowMagic <4 && !pTarget->HasAura(MIND_FLAY, 0) && ai->GetManaPercent() >= 10)
             {
-                //ai->TellMaster("I'm casting mind flay.");
+                //ai->TellMaster("Je lance fouet mental.");
                 ai->CastSpell(MIND_FLAY, *pTarget);
 				ai->SetIgnoreUpdateTime(3);
                 SpellSequence = SPELL_DISCIPLINE;
@@ -306,7 +306,7 @@ void PlayerbotPriestAI::DoNextCombatManeuver(Unit *pTarget)
         case SPELL_DISCIPLINE:
             if (FEAR_WARD > 0 && LastSpellDiscipline <1 && ai->GetManaPercent() >= 3)
             {
-                //ai->TellMaster("I'm casting fear ward");
+                //ai->TellMaster("Je lance gardien de peur.");
                 ai->CastSpell(FEAR_WARD, *(GetMaster()));
                 SpellSequence = SPELL_HOLY;
                 LastSpellDiscipline = LastSpellDiscipline + 1;
@@ -314,7 +314,7 @@ void PlayerbotPriestAI::DoNextCombatManeuver(Unit *pTarget)
             }
             else if (POWER_INFUSION > 0 && LastSpellDiscipline <2 && ai->GetManaPercent() >= 16)
             {
-                //ai->TellMaster("I'm casting power infusion");
+                //ai->TellMaster("Je lance infusion de puissance.");
                 ai->CastSpell(POWER_INFUSION, *(GetMaster()));
                 SpellSequence = SPELL_HOLY;
                 LastSpellDiscipline = LastSpellDiscipline + 1;
@@ -322,7 +322,7 @@ void PlayerbotPriestAI::DoNextCombatManeuver(Unit *pTarget)
             }
             else if (MASS_DISPEL > 0 && LastSpellDiscipline <3 && ai->GetManaPercent() >= 33)
             {
-                //ai->TellMaster("I'm casting mass dispel");
+                //ai->TellMaster("Je lance dissipation de groupe.");
                 ai->CastSpell(MASS_DISPEL);
                 SpellSequence = SPELL_HOLY;
                 LastSpellDiscipline = LastSpellDiscipline + 1;
@@ -330,7 +330,7 @@ void PlayerbotPriestAI::DoNextCombatManeuver(Unit *pTarget)
             }
 			else if (INNER_FOCUS > 0 && !m_bot->HasAura(INNER_FOCUS, 0) && LastSpellDiscipline <4)
             {
-                //ai->TellMaster("I'm casting inner focus");
+                //ai->TellMaster("Je lance focalisation amelioree.");
                 ai->CastSpell(INNER_FOCUS, *m_bot);
                 SpellSequence = SPELL_HOLY;
                 LastSpellDiscipline = LastSpellDiscipline + 1;
@@ -338,7 +338,7 @@ void PlayerbotPriestAI::DoNextCombatManeuver(Unit *pTarget)
             }
             else if (PENANCE > 0 && LastSpellDiscipline <5 && ai->GetManaPercent() >= 16)
             {
-                //ai->TellMaster("I'm casting PENANCE");
+                //ai->TellMaster("Je lance penitence.");
                 ai->CastSpell(PENANCE);
                 SpellSequence = SPELL_HOLY;
                 LastSpellDiscipline = LastSpellDiscipline + 1;
@@ -387,7 +387,7 @@ void PlayerbotPriestAI::DoNonCombatActions()
 
     if (pItem != NULL && ai->GetManaPercent() < 30)
     {
-        ai->TellMaster("I could use a drink.");
+        ai->TellMaster("J'ai besoin de boire un peu...");
         ai->UseItem(*pItem);
         ai->SetIgnoreUpdateTime(30);
         return;
@@ -401,14 +401,14 @@ void PlayerbotPriestAI::DoNonCombatActions()
 
     if (pItem != NULL && ai->GetHealthPercent() < 30)
     {
-        ai->TellMaster("I could use some food.");
+        ai->TellMaster("J'ai besoin de manger un peu...");
         ai->UseItem(*pItem);
         ai->SetIgnoreUpdateTime(30);
         return;
     }
     else if (pItem == NULL && fItem != NULL && !m_bot->HasAura(RECENTLY_BANDAGED, 0) && ai->GetHealthPercent() < 70)
     {
-        ai->TellMaster("I could use first aid.");
+        ai->TellMaster("J'ai besoin de me faire un bandage.");
         ai->UseItem(*fItem);
         ai->SetIgnoreUpdateTime(8);
         return;

@@ -94,13 +94,13 @@ void PlayerbotRogueAI::DoNextCombatManeuver(Unit *pTarget)
     /*if (pVictim)
     {
         if( pVictim!=m_bot && !m_bot->hasUnitState(UNIT_STAT_FOLLOW) && !pTarget->isInBackInMap(m_bot,10) ) {
-            GetAI()->TellMaster( "getting behind target" );
+            GetAI()->TellMaster( "Je vais derriere la cible" );
             m_bot->GetMotionMaster()->Clear( true );
             m_bot->GetMotionMaster()->MoveFollow( pTarget, 1, 2*M_PI );
         }
         else if( pVictim==m_bot && m_bot->hasUnitState(UNIT_STAT_FOLLOW) )
         {
-            GetAI()->TellMaster( "chasing attacking target" );
+            GetAI()->TellMaster( "Je me mets en chasse de la cible." );
             m_bot->GetMotionMaster()->Clear( true );
             m_bot->GetMotionMaster()->MoveChase( pTarget );
         }
@@ -112,14 +112,14 @@ void PlayerbotRogueAI::DoNextCombatManeuver(Unit *pTarget)
         m_bot->RemoveAllAttackers();
         ai->CastSpell(VANISH);
 //        m_bot->RemoveAllSpellCooldown();
-        GetAI()->TellMaster("AttackStop, CombatStop, Vanish");
+        GetAI()->TellMaster("Je stoppe tout, je vais me cacher.");
     }*/
 
     // decide what to do:
     if( pVictim==m_bot && CLOAK_OF_SHADOWS>0 && pVictim->HasAura(SPELL_AURA_PERIODIC_DAMAGE) && !m_bot->HasAura(CLOAK_OF_SHADOWS,0) && ai->CastSpell(CLOAK_OF_SHADOWS) )
     {
         if( ai->GetManager()->m_confDebugWhisper )
-            ai->TellMaster( "CoS!" );
+            ai->TellMaster( "Cape d'ombre !" );
         return;
     }
     else if( m_bot->HasAura( STEALTH ) )
@@ -261,14 +261,14 @@ void PlayerbotRogueAI::DoNonCombatActions()
 
     if (pItem != NULL && GetAI()->GetHealthPercent() < 30)
     {
-        GetAI()->TellMaster("I could use some food.");
+        GetAI()->TellMaster("J'ai besoin de manger un peu...");
         GetAI()->UseItem(*pItem);
         GetAI()->SetIgnoreUpdateTime(30);
         return;
     }
     else if (pItem == NULL && fItem != NULL && !m_bot->HasAura(RECENTLY_BANDAGED, 0) && GetAI()->GetHealthPercent() < 70)
     {
-        GetAI()->TellMaster("I could use first aid.");
+        GetAI()->TellMaster("J'ai besoin de me faire un bandage...");
         GetAI()->UseItem(*fItem);
         GetAI()->SetIgnoreUpdateTime(8);
         return;
@@ -310,7 +310,7 @@ void PlayerbotRogueAI::DoNonCombatActions()
 
     if (pItem != NULL)
     {
-        GetAI()->TellMaster("I could use some poison.");
+        GetAI()->TellMaster("Il me faut des poisons...");
 //        GetAI()->UseItem(*pItem);
         m_bot->ApplyEnchantment(item,TEMP_ENCHANTMENT_SLOT,true);
         GetAI()->SetIgnoreUpdateTime(10);

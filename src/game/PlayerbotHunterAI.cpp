@@ -97,7 +97,7 @@ void PlayerbotHunterAI::DoNextCombatManeuver(Unit *pTarget)
 		&& ( ((float)pet->GetHealth()/(float)pet->GetMaxHealth()) < 0.5f )
 		&& ( PET_MEND>0 && !pet->getDeathState() != ALIVE && pVictim != m_bot && !pet->HasAura(PET_MEND,0) && ai->GetManaPercent()>=13 && ai->CastSpell(PET_MEND,*m_bot) ))
 		{
-			ai->TellMaster( "healing pet." );
+			ai->TellMaster( "Je soigne mon familier." );
 			return;
 		}
 	else if(( pet )
@@ -114,7 +114,7 @@ void PlayerbotHunterAI::DoNextCombatManeuver(Unit *pTarget)
         // switch to melee combat (target in melee range, out of ammo)
         m_rangedCombat = false;
         if( !m_bot->GetUInt32Value(PLAYER_AMMO_ID) )
-            ai->TellMaster( "Out of ammo!" );
+            ai->TellMaster( "Plus de munition !" );
         // become monkey (increases dodge chance)...
         ( ASPECT_OF_THE_MONKEY>0 && !m_bot->HasAura(ASPECT_OF_THE_MONKEY, 0) && ai->CastSpell(ASPECT_OF_THE_MONKEY,*m_bot) );
     }
@@ -252,7 +252,7 @@ void PlayerbotHunterAI::DoNonCombatActions()
 
     if (pItem != NULL && ai->GetManaPercent() < 30)
     {
-        ai->TellMaster("I could use a drink.");
+        ai->TellMaster("J'ai besoin de boire un peu...");
         ai->UseItem(*pItem);
         ai->SetIgnoreUpdateTime(30);
         return;
@@ -266,14 +266,14 @@ void PlayerbotHunterAI::DoNonCombatActions()
 
     if (pItem != NULL && ai->GetHealthPercent() < 30)
     {
-        ai->TellMaster("I could use some food.");
+        ai->TellMaster("J'ai besoin de manger un peu...");
         ai->UseItem(*pItem);
         ai->SetIgnoreUpdateTime(30);
         return;
     }
 	else if (pItem == NULL && fItem != NULL && !m_bot->HasAura(RECENTLY_BANDAGED, 0) && ai->GetHealthPercent() < 70)
     {
-        ai->TellMaster("I could use first aid.");
+        ai->TellMaster("J'ai besoin de me faire un bandage...");
         ai->UseItem(*fItem);
         ai->SetIgnoreUpdateTime(8);
         return;
@@ -288,24 +288,24 @@ void PlayerbotHunterAI::DoNonCombatActions()
         {
             // summon pet
             if( PET_SUMMON>0 && ai->CastSpell(PET_SUMMON,*m_bot) )
-                ai->TellMaster( "summoning pet." );
+                ai->TellMaster( "J'appelle mon familier." );
             else
             {
                 m_petSummonFailed = true;
-                ai->TellMaster( "summon pet failed!" );
+                ai->TellMaster( "Mon familier ne vient pas !" );
             }
         }
         else if( pet->getDeathState() != ALIVE )
         {
             // revive pet
             if( PET_REVIVE>0 && ai->GetManaPercent()>=80 && ai->CastSpell(PET_REVIVE,*m_bot) )
-                ai->TellMaster( "reviving pet." );
+                ai->TellMaster( "Je rescussite mon familier." );
         }
         else if( ((float)pet->GetHealth()/(float)pet->GetMaxHealth()) < 0.5f )
         {
             // heal pet when health lower 50%
             if( PET_MEND>0 && !pet->getDeathState() != ALIVE && !pet->HasAura(PET_MEND,0) && ai->GetManaPercent()>=13 && ai->CastSpell(PET_MEND,*m_bot) )
-                ai->TellMaster( "healing pet." );
+                ai->TellMaster( "Je soigne mon familier." );
         }
         else if(pet->GetHappinessState() != HAPPY) // if pet is hungry
 		{
@@ -326,7 +326,7 @@ void PlayerbotHunterAI::DoNonCombatActions()
 						int32 benefit = pet->GetCurrentFoodBenefitLevel(pItemProto->ItemLevel); // nutritional value of food
 						m_bot->DestroyItemCount(pItem,count,true); // remove item from inventory
 						m_bot->CastCustomSpell(m_bot,PET_FEED,&benefit,NULL,NULL,true); // feed pet
-						ai->TellMaster( "feeding pet." );
+						ai->TellMaster( "Je nourris mon familier." );
 						ai->SetIgnoreUpdateTime(10);
 						return;
 					}
@@ -354,7 +354,7 @@ void PlayerbotHunterAI::DoNonCombatActions()
 							  int32 benefit = pet->GetCurrentFoodBenefitLevel(pItemProto->ItemLevel); // nutritional value of food
 							  m_bot->DestroyItemCount(pItem,count,true); // remove item from inventory
 							  m_bot->CastCustomSpell(m_bot,PET_FEED,&benefit,NULL,NULL,true); // feed pet
-							  ai->TellMaster( "feeding pet." );
+							  ai->TellMaster( "Je nourris mon familier." );
 							  ai->SetIgnoreUpdateTime(10);
 							  return;
 						  }
