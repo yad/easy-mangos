@@ -2514,16 +2514,11 @@ void PlayerbotAI::HandleTeleportAck()
     m_bot->GetMotionMaster()->Clear(true);
     if (m_bot->IsBeingTeleportedNear())
     {
-        /*WorldPacket p = WorldPacket(MSG_MOVE_TELEPORT_ACK, 8 + 4 + 4);
-        p << m_bot->GetGUID();
+        WorldPacket p = WorldPacket(MSG_MOVE_TELEPORT_ACK, 8 + 4 + 4);
+        p.appendPackGUID(m_bot->GetGUID());
         p << (uint32) 0; // supposed to be flags? not used currently
         p << (uint32) time(0); // time - not currently used
-        m_bot->GetSession()->HandleMoveTeleportAck(p);*/
-        WorldPacket data;
-        m_bot->BuildTeleportAckMsg(&data, GetMaster()->GetPositionX(), GetMaster()->GetPositionY(), GetMaster()->GetPositionZ(), GetMaster()->GetOrientation());
-        m_bot->GetSession()->SendPacket(&data);
-        m_bot->SetPosition(GetMaster()->GetPositionX(), GetMaster()->GetPositionY(), GetMaster()->GetPositionZ(), GetMaster()->GetOrientation(), false);
-        m_bot->SetSemaphoreTeleportNear(false);
+        m_bot->GetSession()->HandleMoveTeleportAck(p);
     }
     else if (m_bot->IsBeingTeleportedFar())
         m_bot->GetSession()->HandleMoveWorldportAckOpcode();
