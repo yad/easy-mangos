@@ -9848,10 +9848,6 @@ bool Unit::isVisibleForOrDetect(Unit const* u, WorldObject const* viewPoint, boo
             return false;
     }
 
-    // always seen by owner
-    if (GetCharmerOrOwnerGUID()==u->GetGUID())
-        return true;
-
     // always seen by far sight caster
     if (u->GetTypeId()==TYPEID_PLAYER && ((Player*)u)->GetFarSight()==GetGUID())
         return true;
@@ -9895,6 +9891,10 @@ bool Unit::isVisibleForOrDetect(Unit const* u, WorldObject const* viewPoint, boo
         if (!IsWithinDistInMap(viewPoint, _map.GetVisibilityDistance() + (inVisibleList ? World::GetVisibleUnitGreyDistance() : 0.0f), is3dDistance))
             return false;
     }
+
+    // always seen by owner
+    if (GetCharmerOrOwnerGUID()==u->GetGUID())
+        return true;
 
     // isInvisibleForAlive() those units can only be seen by dead or if other
     // unit is also invisible for alive.. if an isinvisibleforalive unit dies we
@@ -12821,4 +12821,44 @@ void Unit::SendThreatRemove(HostileReference* pHostileReference)
     data.append(GetPackGUID());
     data.appendPackGUID(pHostileReference->getUnitGuid());
     SendMessageToSet(&data, false);
+}
+
+void Unit::StopAttackFaction(uint32 faction_id)
+{
+    if (Unit* victim = getVictim())
+    {
+        if (victim->getFactionTemplateEntry()->faction==faction_id)
+        {
+            AttackStop();
+            if (IsNonMeleeSpellCasted(false))
+                InterruptNonMeleeSpells(false);
+
+            // melee and ranged forced attack cancel
+            if (GetTypeId() == TYPEID_PLAYER)
+                ((Player*)this)->SendAttackSwingCancelAttack();
+        }
+    }
+
+    AttackerSet const& attackers = getAttackers();
+    for(AttackerSet::const_iterator itr = attackers.begin(); itr != attackers.end();)
+    {
+        if ((*itr)->getFactionTemplateEntry()->faction==faction_id)
+        {
+            (*itr)->AttackStop();
+            itr = attackers.begin();
+        }
+        else
+            ++itr;
+    }
+
+    getHostileRefManager().deleteReferencesForFaction(faction_id);
+
+    if(Pet* pet = GetPet())
+        pet->StopAttackFaction(faction_id);
+    if(Unit* charm = GetCharm())
+        charm->StopAttackFaction(faction_id);
+
+    for(GuardianPetList::const_iterator itr = m_guardianPets.begin(); itr != m_guardianPets.end(); ++itr)
+        if(Unit* guardian = Unit::GetUnit(*this,*itr))
+            guardian->StopAttackFaction(faction_id);
 }
