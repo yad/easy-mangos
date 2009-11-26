@@ -18399,7 +18399,7 @@ void Player::SendInitialPacketsAfterAddToMap()
         GetSession()->SendPacket(&aura_update);
     }
     //TEMP: Fifth aniversary achiev
-    AchievementEntry const *AchievFifthAniversary = GetAchievementStore()->LookupEntry(4400);
+    AchievementEntry const *AchievFifthAniversary = sAchievementMgr.GetAchievementEntry(4400);
     if(AchievFifthAniversary)
         GetAchievementMgr().CompletedAchievement(AchievFifthAniversary);
 }

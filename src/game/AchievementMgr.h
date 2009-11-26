@@ -259,6 +259,7 @@ class AchievementMgr
 class AchievementGlobalMgr
 {
     public:
+        AchievementEntry const* GetAchievementEntry(uint32 entry);
         AchievementCriteriaEntryList const& GetAchievementCriteriaByType(AchievementCriteriaTypes type);
         AchievementCriteriaEntryList const* GetAchievementCriteriaByAchievement(uint32 id)
         {
