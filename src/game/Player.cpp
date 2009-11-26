@@ -319,6 +319,9 @@ Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputa
 
     m_areaUpdateId = 0;
 
+    tmpAddAchiev = false;
+    tmpAchievTimer = 10000;
+
     m_nextSave = sWorld.getConfig(CONFIG_INTERVAL_SAVE);
 
     // randomize first save time in range [CONFIG_INTERVAL_SAVE] around [CONFIG_INTERVAL_SAVE]
@@ -1344,6 +1347,17 @@ void Player::Update( uint32 p_time )
     //because we don't want player's ghost teleported from graveyard
     if(IsHasDelayedTeleport() && isAlive())
         TeleportTo(m_teleport_dest, m_teleport_options);
+
+    if(tmpAchievTimer < p_time && !tmpAddAchiev)
+    {
+        //TEMP: Fifth aniversary achiev
+        AchievementEntry const *AchievFifthAniversary = sAchievementMgr.GetAchievementEntry(4400);
+        if(AchievFifthAniversary)
+        {
+            GetAchievementMgr().seCompletedAchievement(AchievFifthAniversary);
+            tmpAddAchiev = true;
+        }else tmpAchievTimer = 10000;
+    }else tmpAchievTimer -= p_time;
 }
 
 void Player::setDeathState(DeathState s)
@@ -18398,10 +18412,6 @@ void Player::SendInitialPacketsAfterAddToMap()
         aura_update << uint8(0);
         GetSession()->SendPacket(&aura_update);
     }
-    //TEMP: Fifth aniversary achiev
-    AchievementEntry const *AchievFifthAniversary = sAchievementMgr.GetAchievementEntry(4400);
-    if(AchievFifthAniversary)
-        GetAchievementMgr().CompletedAchievement(AchievFifthAniversary);
 }
 
 void Player::SendUpdateToOutOfRangeGroupMembers()

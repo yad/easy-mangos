@@ -1787,7 +1787,7 @@ AchievementCriteriaEntryList const& AchievementGlobalMgr::GetAchievementCriteria
 {
     return m_AchievementCriteriasByType[type];
 }
-AchievementEntry const* GetAchievementEntry(uint32 entry)
+AchievementEntry const* AchievementGlobalMgr::GetAchievementEntry(uint32 entry)
 {
     if(entry)
         return sAchievementStore.LookupEntry(entry);
