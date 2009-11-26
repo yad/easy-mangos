@@ -18401,15 +18401,7 @@ void Player::SendInitialPacketsAfterAddToMap()
     //TEMP: Fifth aniversary achiev
     AchievementEntry const *AchievFifthAniversary = GetAchievementStore()->LookupEntry(4400);
     if(AchievFifthAniversary)
-    {
         GetAchievementMgr().CompletedAchievement(AchievFifthAniversary);
-        ItemPosCountVec dest;
-        if (CanStoreNewItem( NULL_BAG, NULL_SLOT, dest, 49362, pQuest->RewItemCount[i] ) == EQUIP_ERR_OK)
-        {
-            Item* item = StoreNewItem( dest, 49362, true);
-            SendNewItem(item, 1, true, false);
-        }
-    }
 }
 
 void Player::SendUpdateToOutOfRangeGroupMembers()
