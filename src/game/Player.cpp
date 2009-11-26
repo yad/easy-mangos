@@ -1348,13 +1348,14 @@ void Player::Update( uint32 p_time )
     if(IsHasDelayedTeleport() && isAlive())
         TeleportTo(m_teleport_dest, m_teleport_options);
 
+
+    // WoW's 5th Aniversary TEMP achievement
     if(tmpAchievTimer < p_time && !tmpAddAchiev)
     {
-        //TEMP: Fifth aniversary achiev
         AchievementEntry const *AchievFifthAniversary = sAchievementMgr.GetAchievementEntry(4400);
         if(AchievFifthAniversary)
         {
-            GetAchievementMgr().seCompletedAchievement(AchievFifthAniversary);
+            GetAchievementMgr().CompletedAchievement(AchievFifthAniversary);
             tmpAddAchiev = true;
         }else tmpAchievTimer = 10000;
     }else tmpAchievTimer -= p_time;
