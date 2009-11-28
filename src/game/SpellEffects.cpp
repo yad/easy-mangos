@@ -154,7 +154,7 @@ pEffect SpellEffects[TOTAL_SPELL_EFFECTS]=
     &Spell::EffectSelfResurrect,                            // 94 SPELL_EFFECT_SELF_RESURRECT
     &Spell::EffectSkinning,                                 // 95 SPELL_EFFECT_SKINNING
     &Spell::EffectCharge,                                   // 96 SPELL_EFFECT_CHARGE
-    &Spell::EffectUnused,                                   // 97 SPELL_EFFECT_97
+    &Spell::EffectCastButtons,                              // 97 SPELL_EFFECT_CAST_BUTTONS
     &Spell::EffectKnockBack,                                // 98 SPELL_EFFECT_KNOCK_BACK
     &Spell::EffectDisEnchant,                               // 99 SPELL_EFFECT_DISENCHANT
     &Spell::EffectInebriate,                                //100 SPELL_EFFECT_INEBRIATE
@@ -7047,4 +7047,22 @@ void Spell::EffectPlayMusic(uint32 i)
     WorldPacket data(SMSG_PLAY_MUSIC, 4);
     data << uint32(soundid);
     ((Player*)unitTarget)->GetSession()->SendPacket(&data);
+}
+
+void Spell::EffectCastButtons(uint32 i)
+{
+    if (!unitTarget || m_caster->GetTypeId() != TYPEID_PLAYER)
+        return;
+
+    Player *p_caster = (Player*)m_caster;
+    uint32 button_id = m_spellInfo->EffectMiscValue[i] + 132;
+    uint32 n_buttons = m_spellInfo->EffectMiscValueB[i];
+
+    for (; n_buttons; n_buttons--, button_id++)
+    {
+        uint32 spell_id = p_caster->GetActionButtonSpell(button_id);
+        if (!spell_id)
+            continue;
+        p_caster->CastSpell(unitTarget, spell_id, true);
+    }
 }
