@@ -91,7 +91,7 @@ bool ChatHandler::HandleServerInfoCommand(const char* /*args*/)
     uint32 maxQueuedClientsNum = sWorld.GetMaxQueuedSessionCount();
     std::string str = secsToTimeString(sWorld.GetUptime());
 
-    SendSysMessage("Revision [28.11.2009][pr25] - MaNGOS modified for Valhalla Server");
+    SendSysMessage("Revision [28.11.2009][pr26] - MaNGOS modified for Valhalla Server");
     char const* full;
     if(m_session)
         full = _FULLVERSION(REVISION_DATE,REVISION_TIME,REVISION_NR,"|cffffffff|Hurl:" REVISION_ID "|h" REVISION_ID "|h|r");

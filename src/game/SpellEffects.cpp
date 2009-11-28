@@ -7012,6 +7012,14 @@ void Spell::EffectTitanGrip(uint32 /*eff_idx*/)
 {
     if (unitTarget && unitTarget->GetTypeId() == TYPEID_PLAYER)
         ((Player*)unitTarget)->SetCanTitanGrip(true);
+    // titans grip dmg penalty for 2h weapons
+    if (!unitTarget->HasAura(49152))
+    {
+        if(((Player*)unitTarget)->IsTwoHandUsedInDualWield())
+        {
+            unitTarget->CastSpell(unitTarget, 49152, true);
+        }
+    }
 }
 
 void Spell::EffectRenamePet(uint32 /*eff_idx*/)
