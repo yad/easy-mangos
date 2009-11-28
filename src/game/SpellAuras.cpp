@@ -4220,6 +4220,8 @@ void Aura::HandleAuraModDecreaseSpeed(bool apply, bool Real)
     if(!Real)
         return;
 
+    Unit* caster = GetCaster()->GetOwner();
+
     if (apply)
     {
         switch(GetId()
@@ -4231,18 +4233,17 @@ void Aura::HandleAuraModDecreaseSpeed(bool apply, bool Real)
                 break;
             //Earthen Power
             case 3600:
-                Unit* caster = GetCaster()->GetOwner();
-                if(caster)
-                {
-                    float chance = 0;
-                    if (caster->HasAura(51524))
-                        chance = 100;
-                    else if (caster->HasAura(51523))
-                        chance = 50;
+                if(!caster)
+                    break;
 
-                    if (roll_chance_f(chance))
-                        caster->CastSpell(GetCaster(), 59566, true);
-                }
+                float chance = 0;
+                if (caster->HasAura(51524))
+                    chance = 100;
+                else if (caster->HasAura(51523))
+                    chance = 50;
+
+                if (roll_chance_f(chance))
+                    caster->CastSpell(GetCaster(), 59566, true);
                 break;
             default:
                 break;
