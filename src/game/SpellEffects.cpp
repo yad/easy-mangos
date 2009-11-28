@@ -706,6 +706,29 @@ void Spell::EffectSchoolDMG(uint32 effect_idx)
                 }
                 break;
             }
+            case SPELLFAMILY_SHAMAN:
+            {
+                switch(m_spellInfo->Id)
+                {
+                    case 8056:
+                    case 8058:
+                    case 10472:
+                    case 10473:
+                    case 25464:
+                    case 49235:
+                    case 49236:    // Frost Shocks + Frozen Power
+                    {
+                        float chance = 0;
+                        if( m_caster->HasAura(63374) )
+                            chance = 100;
+                        else if( m_caster->HasAura(63373) )
+                            chance = 50;
+
+                        if ( roll_chance_f(chance) && !unitTarget->IsWithinDistInMap(m_caster, 15) )
+                            m_caster->CastSpell(unitTarget, 63685, true);
+                    }
+                }            
+            }
         }
 
         if(damage >= 0)
