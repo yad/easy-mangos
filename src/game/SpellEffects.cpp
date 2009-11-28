@@ -3419,13 +3419,15 @@ void Spell::EffectSummonType(uint32 i)
         case SUMMON_TYPE_POSESSED2:
         case SUMMON_TYPE_FORCE_OF_NATURE:
         case SUMMON_TYPE_GUARDIAN2:
-        case SUMMON_TYPE_GUARDIAN3:
             // Jewelery statue case (totem like)
             if(m_spellInfo->SpellIconID == 2056)
                 EffectSummonTotem(i);
             else
                 EffectSummonGuardian(i);
             break;
+        case SUMMON_TYPE_FERAL_SPIRIT:
+           EffectSummon(i);
+           EffectSummonGuardian(i,1);
         case SUMMON_TYPE_WILD:
         case SUMMON_TYPE_QUEST_WILD:
         case SUMMON_TYPE_CREATURE:
@@ -3866,7 +3868,7 @@ void Spell::EffectSummonWild(uint32 i)
     }
 }
 
-void Spell::EffectSummonGuardian(uint32 i)
+void Spell::EffectSummonGuardian(uint32 i, uint8 p)
 {
     uint32 pet_entry = m_spellInfo->EffectMiscValue[i];
     if (!pet_entry)
@@ -3907,6 +3909,10 @@ void Spell::EffectSummonGuardian(uint32 i)
     float radius = GetSpellRadius(sSpellRadiusStore.LookupEntry(m_spellInfo->EffectRadiusIndex[i]));
 
     int32 amount = damage > 0 ? damage : 1;
+
+   //Feral spirit case
+   if (p == 1)
+       amount = 1; 
 
     for(int32 count = 0; count < amount; ++count)
     {
