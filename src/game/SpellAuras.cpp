@@ -4224,7 +4224,7 @@ void Aura::HandleAuraModDecreaseSpeed(bool apply, bool Real)
 
     if (apply)
     {
-        switch(GetId()
+        switch(GetId())
         {
             // Gronn Lord's Grasp, becomes stoned
             case 33572:
