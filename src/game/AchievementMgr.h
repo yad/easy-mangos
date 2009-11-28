@@ -236,7 +236,6 @@ class AchievementMgr
         void UpdateAchievementCriteria(AchievementCriteriaTypes type, uint32 miscvalue1=0, uint32 miscvalue2=0, Unit *unit=NULL, uint32 time=0);
         void CheckAllAchievementCriteria();
         void SendAllAchievementData();
-        void CompletedAchievement(AchievementEntry const* entry);
         void SendRespondInspectAchievements(Player* player);
         Player* GetPlayer() { return m_player;}
 
@@ -248,6 +247,7 @@ class AchievementMgr
         void CompletedCriteriaFor(AchievementEntry const* achievement);
         bool IsCompletedCriteria(AchievementCriteriaEntry const* criteria, AchievementEntry const* achievement);
         bool IsCompletedAchievement(AchievementEntry const* entry);
+        void CompletedAchievement(AchievementEntry const* entry);
         void CompleteAchievementsWithRefs(AchievementEntry const* entry);
         void BuildAllDataPacket(WorldPacket *data);
 
@@ -259,7 +259,6 @@ class AchievementMgr
 class AchievementGlobalMgr
 {
     public:
-        AchievementEntry const* GetAchievementEntry(uint32 entry);
         AchievementCriteriaEntryList const& GetAchievementCriteriaByType(AchievementCriteriaTypes type);
         AchievementCriteriaEntryList const* GetAchievementCriteriaByAchievement(uint32 id)
         {
