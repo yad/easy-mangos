@@ -3451,6 +3451,7 @@ void Spell::EffectSummonType(uint32 i)
         case SUMMON_TYPE_FERAL_SPIRIT:
            EffectSummon(i);
            EffectSummonGuardian(i,1);
+           break;
         case SUMMON_TYPE_WILD:
         case SUMMON_TYPE_QUEST_WILD:
         case SUMMON_TYPE_CREATURE:
