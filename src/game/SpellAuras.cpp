@@ -4224,18 +4224,18 @@ void Aura::HandleAuraModDecreaseSpeed(bool apply, bool Real)
 
     if (apply)
     {
-        switch(GetId())
+        // Gronn Lord's Grasp, becomes stoned
+        if (GetId() == 33572)
         {
-            // Gronn Lord's Grasp, becomes stoned
-            case 33572:
-                if (GetStackAmount() >= 5 && !m_target->HasAura(33652))
-                    m_target->CastSpell(m_target, 33652, true);
-                break;
-            //Earthen Power
-            case 3600:
-                if(!caster)
-                    break;
-
+            if (GetStackAmount() >= 5 && !m_target->HasAura(33652))
+                m_target->CastSpell(m_target, 33652, true);
+        }
+        //Earthen Power
+        else if(GetId() == 3600)
+        {
+            Unit* caster = this->GetCaster()->GetOwner();
+            if(caster)
+            {
                 float chance = 0;
                 if (caster->HasAura(51524))
                     chance = 100;
@@ -4244,9 +4244,7 @@ void Aura::HandleAuraModDecreaseSpeed(bool apply, bool Real)
 
                 if (roll_chance_f(chance))
                     caster->CastSpell(GetCaster(), 59566, true);
-                break;
-            default:
-                break;
+            }
         }
     }
 
