@@ -10171,6 +10171,22 @@ void Unit::UpdateSpeed(UnitMoveType mtype, bool forced)
     float stack_bonus     = 1.0f;
     float non_stack_bonus = 1.0f;
 
+    //dash check
+    if(getClass() == CLASS_DRUID && mtype == MOVE_RUN)
+    {
+        AuraList const& mSpeed = GetAurasByType(SPELL_AURA_MOD_INCREASE_SPEED);
+        for(AuraList::const_iterator i = mSpeed.begin(); i != mSpeed.end(); ++i)
+        {
+            if ((*i)->GetSpellProto()->SpellFamilyName == SPELLFAMILY_DRUID && (*i)->GetSpellProto()->SpellIconID == 959)
+            {
+               if(m_form != FORM_CAT)
+                   (*i)->SetModifier((*i)->GetModifier()->m_auraname, 0, (*i)->GetModifier()->periodictime, (*i)->GetModifier()->m_miscvalue);
+               else
+                   (*i)->SetModifier((*i)->GetModifier()->m_auraname, ((*i)->GetSpellProto()->EffectBasePoints[0]+1), (*i)->GetModifier()->periodictime, (*i)->GetModifier()->m_miscvalue);
+            } 
+        }
+    }
+
     switch(mtype)
     {
         case MOVE_WALK:

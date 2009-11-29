@@ -3097,6 +3097,8 @@ void Aura::HandleAuraModShapeshift(bool apply, bool Real)
     }
 
     // adding/removing linked auras
+    // update speed to enable/disable dash modifier
+    m_target->UpdateSpeed(MOVE_RUN, true);
     // add/remove the shapeshift aura's boosts
     HandleShapeshiftBoosts(apply);
 
