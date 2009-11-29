@@ -2499,7 +2499,7 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                 else
                 {
                     int32 bp0 = m_modifier.m_amount;
-                    caster->CastCustomSpell(caster,48210,&bp0,NULL,NULL,true);
+                    m_target->CastCustomSpell(caster,48210,&bp0,NULL,NULL,true);
                 }
             }
             break;
@@ -4428,16 +4428,37 @@ void Aura::HandlePeriodicEnergize(bool apply, bool Real)
     if (!Real)
         return;
 
-    if (apply)
+    // For prevent double apply bonuses
+    bool loading = (m_target->GetTypeId() == TYPEID_PLAYER && ((Player*)m_target)->GetSession()->PlayerLoading());
+
+    if (apply && !loading)
     {
         switch (GetId())
         {
+            case 54833:                                     // Glyph of Innervate (value%/2 of casters base mana)
+            {
+                Unit* caster = GetCaster();
+                m_modifier.m_amount = int32(caster->GetCreateMana() * GetBasePoints() / (200 * m_maxduration / m_periodicTimer));
+                break;
+
+            }
+            case 29166:                                     // Innervate (value% of casters base mana)
+            {
+                Unit* caster = GetCaster();
+
+                // Glyph of Innervate
+                if (caster && caster->HasAura(54832))
+                    caster->CastSpell(caster,54833,true,NULL,this);
+
+                m_modifier.m_amount = int32(caster->GetCreateMana() * GetBasePoints() / (100 * m_maxduration / m_periodicTimer));
+                break;
+            }
             case 48391:                                     // Owlkin Frenzy 2% base mana
                 m_modifier.m_amount = m_target->GetCreateMana() * 2 / 100;
                 break;
-            case 57669:                                     // Replenishment (0.25% from max)
+            case 57669:                                     // Replenishment (0.2% from max)
             case 61782:                                     // Infinite Replenishment
-                m_modifier.m_amount = m_target->GetMaxPower(POWER_MANA) * 25 / 10000;
+                m_modifier.m_amount = m_target->GetMaxPower(POWER_MANA) * 2 / 1000;
                 break;
             default:
                 break;
@@ -4461,8 +4482,6 @@ void Aura::HandleAuraPeriodicDummy(bool apply, bool Real)
     // For prevent double apply bonuses
     bool loading = (m_target->GetTypeId() == TYPEID_PLAYER && ((Player*)m_target)->GetSession()->PlayerLoading());
 
-    Unit* caster = GetCaster();
-
     SpellEntry const*spell = GetSpellProto();
     switch( spell->SpellFamilyName)
     {
@@ -4482,6 +4501,8 @@ void Aura::HandleAuraPeriodicDummy(bool apply, bool Real)
         }
         case SPELLFAMILY_HUNTER:
         {
+            Unit* caster = GetCaster();
+
             // Explosive Shot
             if (apply && !loading && caster)
                 m_modifier.m_amount += int32(caster->GetTotalAttackPowerValue(RANGED_ATTACK) * 14 / 100);
