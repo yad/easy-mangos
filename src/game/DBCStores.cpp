@@ -327,11 +327,11 @@ void LoadDBCStores(const std::string& dataPath)
 
     //Shaman totem bar hack-fix
     SpellEntry *sfix1 = const_cast<SpellEntry*>(sSpellStore.LookupEntry(66842));
-    sfix1->EffectImplicitTargetA0 = TARGET_SELF;
+    sfix1->EffectImplicitTargetA[0] = TARGET_SELF;
     SpellEntry *sfix2 = const_cast<SpellEntry*>(sSpellStore.LookupEntry(66843));
-    sfix2->EffectImplicitTargetA0 = TARGET_SELF;
+    sfix2->EffectImplicitTargetA[0] = TARGET_SELF;
     SpellEntry *sfix3 = const_cast<SpellEntry*>(sSpellStore.LookupEntry(66844));
-    sfix3->EffectImplicitTargetA0 = TARGET_SELF;
+    sfix3->EffectImplicitTargetA[0] = TARGET_SELF;
 
     for (uint32 j = 0; j < sSkillLineAbilityStore.GetNumRows(); ++j)
     {
