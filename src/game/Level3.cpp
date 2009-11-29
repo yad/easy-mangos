@@ -7216,19 +7216,38 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                 break;
         }
     }
-    else //80+
+    else //80+ but set with more than 5 part level 80 does not exist.
     {
         switch(chr->getClass())
         {
             case CLASS_WARRIOR:
             {
+                HandleAddItemCommand("48513"); // Epée pour les deux factions
+                HandleAddItemCommand("41164"); // Munitions
                 switch(chr->getRace())
                 {
                     case RACE_HUMAN:
                     case RACE_NIGHTELF:
                     case RACE_GNOME:
                     case RACE_DRAENEI:
-                    case RACE_ORC:
+                    {
+                        HandleAddItemCommand("47515");//2h sword
+                        HandleAddItemCommand("47515");//2h sword
+                        HandleAddItemCommand("48381");//T9.9
+                        HandleAddItemCommand("48382");//T9.9
+                        HandleAddItemCommand("48383");//T9.9
+                        HandleAddItemCommand("48384");//T9.9
+                        HandleAddItemCommand("48385");//T9.9
+                        HandleAddItemCommand("47549");//cape
+                        HandleAddItemCommand("47085"); // Bouclier off-tank Alliance
+                        HandleAddItemCommand("47060"); // Amulette DPS Physique Alliance
+                        HandleAddItemCommand("47075"); // Anneau DPS Physique 1 Alliance
+                        HandleAddItemCommand("46966"); // Anneau DPS Physique 2 Alliance
+                        HandleAddItemCommand("47088"); // Trinket DPS Physique 1 Alliance
+                        HandleAddItemCommand("47464"); // Trinket DPS Physique 2 Alliance
+                        HandleAddItemCommand("47521"); // Arme … feu Alliance
+                        break;
+                    }
                     case RACE_UNDEAD_PLAYER:
                     {
                         HandleAddItemCommand("47516");//2h sword
@@ -7245,13 +7264,29 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                         HandleAddItemCommand("47443"); // Anneau DPS Physique 2 Horde
                         HandleAddItemCommand("47451"); // Trinket DPS Physique 1 Horde
                         HandleAddItemCommand("47131"); // Trinket DPS Physique 2 Horde
-                        HandleAddItemCommand("47459"); // Brassard DPS Physique Horde
-                        HandleAddItemCommand("47429"); // Ceinture DPS Physique Horde
-                        HandleAddItemCommand("47473"); // Bottes DPS Physique Horde
-                        HandleAddItemCommand("47523"); // Arme à feu Horde
+                        HandleAddItemCommand("47523"); // Arme … feu Horde
                         break;
                     }
                     case RACE_DWARF:
+                    {
+                        HandleAddItemCommand("47078");//2h axe
+                        HandleAddItemCommand("47078");//2h axe
+                        HandleAddItemCommand("48381");//T9.9
+                        HandleAddItemCommand("48382");//T9.9
+                        HandleAddItemCommand("48383");//T9.9
+                        HandleAddItemCommand("48384");//T9.9
+                        HandleAddItemCommand("48385");//T9.9
+                        HandleAddItemCommand("47549");//cape
+                        HandleAddItemCommand("47085"); // Bouclier off-tank Alliance
+                        HandleAddItemCommand("47060"); // Amulette DPS Physique Alliance
+                        HandleAddItemCommand("47075"); // Anneau DPS Physique 1 Alliance
+                        HandleAddItemCommand("46966"); // Anneau DPS Physique 2 Alliance
+                        HandleAddItemCommand("47088"); // Trinket DPS Physique 1 Alliance
+                        HandleAddItemCommand("47464"); // Trinket DPS Physique 2 Alliance
+                        HandleAddItemCommand("47521"); // Arme … feu Alliance
+                        break;
+                    }
+                    case RACE_ORC:
                     case RACE_TROLL:
                     {
                         HandleAddItemCommand("47446");//2h axe
@@ -7268,10 +7303,7 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                         HandleAddItemCommand("47443"); // Anneau DPS Physique 2 Horde
                         HandleAddItemCommand("47451"); // Trinket DPS Physique 1 Horde
                         HandleAddItemCommand("47131"); // Trinket DPS Physique 2 Horde
-                        HandleAddItemCommand("47459"); // Brassard DPS Physique Horde
-                        HandleAddItemCommand("47429"); // Ceinture DPS Physique Horde
-                        HandleAddItemCommand("47473"); // Bottes DPS Physique Horde
-                        HandleAddItemCommand("47523"); // Arme à feu Horde
+                        HandleAddItemCommand("47523"); // Arme … feu Horde
                         break;
                     }
                     case RACE_TAUREN:
@@ -7290,18 +7322,13 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                         HandleAddItemCommand("47443"); // Anneau DPS Physique 2 Horde
                         HandleAddItemCommand("47451"); // Trinket DPS Physique 1 Horde
                         HandleAddItemCommand("47131"); // Trinket DPS Physique 2 Horde
-                        HandleAddItemCommand("47459"); // Brassard DPS Physique Horde
-                        HandleAddItemCommand("47429"); // Ceinture DPS Physique Horde
-                        HandleAddItemCommand("47473"); // Bottes DPS Physique Horde
-                        HandleAddItemCommand("47523"); // Arme à feu Horde
+                        HandleAddItemCommand("47523"); // Arme … feu Horde
                         break;
                     }
                     default:
                         break;
                 }
                 // HandleAddItemSetCommand("673");//T6
-                HandleAddItemCommand("48513"); // Epée pour les deux factions
-                HandleAddItemCommand("41164"); // Munitions
                 chr->AutoEquipItem();
                 break;
             }
@@ -7357,12 +7384,14 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                         break;
                 }
                 // HandleAddItemSetCommand("681");//T6
-                HandleAddItemCommand("42854"); // Libram
+ 		 HandleAddItemCommand("42854"); // Libram
                 chr->AutoEquipItem();
                 break;
             }
             case CLASS_HUNTER:
             {
+                HandleAddItemCommand("41164"); // Balles comment ajouter la quantité ?
+                HandleAddItemCommand("41165"); // Fleches comment ajouter la quantité ?
                 switch(chr->getRace())
                 {
                     case RACE_ORC:
@@ -7381,7 +7410,7 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                         HandleAddItemCommand("47443"); // Anneau DPS Physique 2 Horde
                         HandleAddItemCommand("47451"); // Trinket DPS Physique 1 Horde
                         HandleAddItemCommand("47131"); // Trinket DPS Physique 2 Horde
-                        // HandleAddItemCommand("47523"); // Arme à feu Horde
+                        HandleAddItemCommand("47523"); // Arme à feu Horde
                         HandleAddItemCommand("47442"); // Brassard DPS Physique Horde
                         HandleAddItemCommand("47472"); // Ceinture DPS Physique Horde
                         HandleAddItemCommand("47457"); // Bottes DPS Physique Horde
@@ -7425,7 +7454,7 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                         HandleAddItemCommand("46966"); // Anneau DPS Physique 2 Alliance
                         HandleAddItemCommand("47088"); // Trinket DPS Physique 1 Alliance
                         HandleAddItemCommand("47464"); // Trinket DPS Physique 2 Alliance
-                        // HandleAddItemCommand("47521"); // Arme à feu Alliance
+                        HandleAddItemCommand("47521"); // Arme à feu Alliance
                         HandleAddItemCommand("47074"); // Brassard DPS Physique Alliance
                         HandleAddItemCommand("47153"); // Ceinture DPS Physique Alliance
                         HandleAddItemCommand("47109"); // Bottes DPS Physique Alliance
@@ -7447,7 +7476,7 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                         HandleAddItemCommand("47443"); // Anneau DPS Physique 2 Horde
                         HandleAddItemCommand("47451"); // Trinket DPS Physique 1 Horde
                         HandleAddItemCommand("47131"); // Trinket DPS Physique 2 Horde
-                        // HandleAddItemCommand("47523"); // Arme à feu Horde
+                        HandleAddItemCommand("47523"); // Arme à feu Horde
                         HandleAddItemCommand("47442"); // Brassard DPS Physique Horde
                         HandleAddItemCommand("47472"); // Ceinture DPS Physique Horde
                         HandleAddItemCommand("47457"); // Bottes DPS Physique Horde
@@ -7523,13 +7552,12 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                         break;
                 }
                 // HandleAddItemSetCommand("669");//T6
-                HandleAddItemCommand("41164"); // Balles comment ajouter la quantité ?
-                HandleAddItemCommand("41165"); // Fleches comment ajouter la quantité ?
                 chr->AutoEquipItem();
                 break;
             }
             case CLASS_ROGUE:
             {
+                HandleAddItemCommand("47659"); // Arme de jet
                 switch(chr->getRace())
                 {
                     case RACE_HUMAN:
@@ -7582,7 +7610,6 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                         break;
                 }
                 // HandleAddItemSetCommand("668");//T6
-                HandleAddItemCommand("47659"); // Arme de jet comment ajouter la quantité ?
                 chr->AutoEquipItem();
                 break;
             }
@@ -7595,13 +7622,13 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                     case RACE_NIGHTELF:
                     case RACE_DRAENEI:
                     {
-                        // HandleAddItemCommand("47526");//1h mace
-                        // HandleAddItemCommand("47922");//baguette
-                        HandleAddItemCommand("47758");//T9.9
-                        HandleAddItemCommand("47759");//T9.9
-                        HandleAddItemCommand("47760");//T9.9
-                        HandleAddItemCommand("47761");//T9.9
-                        HandleAddItemCommand("47762");//T9.9
+                        HandleAddItemCommand("47526");//1h mace
+                        HandleAddItemCommand("47922");//baguette
+                        HandleAddItemCommand("48082");//T9.9
+                        HandleAddItemCommand("48083");//T9.9
+                        HandleAddItemCommand("48084");//T9.9
+                        HandleAddItemCommand("48085");//T9.9
+                        HandleAddItemCommand("48086");//T9.9
                         HandleAddItemCommand("47552");//cape
                         HandleAddItemCommand("47922"); // Baguette DPS Magique Alliance
                         HandleAddItemCommand("47206"); // Masse DPS Magique Alliance
@@ -7620,13 +7647,13 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                     case RACE_TROLL:
                     case RACE_BLOODELF:
                     {
-                        // HandleAddItemCommand("47528");//1h mace
-                        // HandleAddItemCommand("47995");//baguette
-                        HandleAddItemCommand("47763");//T9.9
-                        HandleAddItemCommand("47764");//T9.9
-                        HandleAddItemCommand("47765");//T9.9
-                        HandleAddItemCommand("47766");//T9.9
-                        HandleAddItemCommand("47767");//T9.9
+                        HandleAddItemCommand("47528");//1h mace
+                        HandleAddItemCommand("47995");//baguette
+                        HandleAddItemCommand("48087");//T9.9
+                        HandleAddItemCommand("48088");//T9.9
+                        HandleAddItemCommand("48089");//T9.9
+                        HandleAddItemCommand("48090");//T9.9
+                        HandleAddItemCommand("48091");//T9.9
                         HandleAddItemCommand("47551");//cape
                         HandleAddItemCommand("47995"); // Baguette DPS Magique Horde
                         HandleAddItemCommand("47483"); // Masse DPS Magique Horde
@@ -7650,6 +7677,8 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
             }
             case CLASS_DEATH_KNIGHT:
             {
+                HandleAddItemCommand("47672"); // Cachet de DK 
+                HandleAddItemCommand("48513"); // Epée pour les deux factions
                 switch(chr->getRace())
                 {
                     case RACE_HUMAN:
@@ -7707,8 +7736,6 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                     default:
                         break;
                 }
-                HandleAddItemCommand("47672"); // Cachet de DK 
-                HandleAddItemCommand("48513"); // Epée pour les deux factions
                 chr->AutoEquipItem();
                 break;
             }
@@ -7720,8 +7747,8 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                     case RACE_TAUREN:
                     case RACE_TROLL:
                     {
-                        HandleAddItemCommand("47206");//1h mace
-                        HandleAddItemCommand("47206");//1h mace
+                        HandleAddItemCommand("47483");//1h mace
+                        HandleAddItemCommand("47483");//1h mace
                         HandleAddItemCommand("48356");//T9.9
                         HandleAddItemCommand("48357");//T9.9
                         HandleAddItemCommand("48358");//T9.9
@@ -7741,8 +7768,8 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                     }
                     case RACE_DRAENEI:
                     {
-                        HandleAddItemCommand("47483");//1h mace
-                        HandleAddItemCommand("47483");//1h mace
+                        HandleAddItemCommand("47206");//1h mace
+                        HandleAddItemCommand("47206");//1h mace
                         HandleAddItemCommand("48351");//T9.9
                         HandleAddItemCommand("48352");//T9.9
                         HandleAddItemCommand("48353");//T9.9
@@ -7780,15 +7807,14 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                     case RACE_TROLL:
                     case RACE_BLOODELF:
                     {
-                        HandleAddItemCommand("47463");//bâton
-                        // HandleAddItemCommand("47995");//baguette
+                        HandleAddItemCommand("47525");//bâton
+                        HandleAddItemCommand("47995");//baguette
                         HandleAddItemCommand("47763");//T9.9
                         HandleAddItemCommand("47764");//T9.9
                         HandleAddItemCommand("47765");//T9.9
                         HandleAddItemCommand("47766");//T9.9
                         HandleAddItemCommand("47767");//T9.9
                         HandleAddItemCommand("47554");//cape
-                        HandleAddItemCommand("47995"); // Baguette DPS Magique Horde
                         HandleAddItemCommand("47422"); // Dague DPS Magique Horde
                         HandleAddItemCommand("47437"); // 2ème main DPS Magique Horde
                         HandleAddItemCommand("47468"); // Amulette DPS Magique Horde
@@ -7806,14 +7832,13 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                     case RACE_GNOME:
                     {
                         HandleAddItemCommand("47130");//bâton
-                        // HandleAddItemCommand("47922");//baguette
+                        HandleAddItemCommand("47922");//baguette
                         HandleAddItemCommand("47758");//T9.9
                         HandleAddItemCommand("47759");//T9.9
                         HandleAddItemCommand("47760");//T9.9
                         HandleAddItemCommand("47761");//T9.9
                         HandleAddItemCommand("47762");//T9.9
                         HandleAddItemCommand("47553");//cape
-                        HandleAddItemCommand("47922"); // Baguette DPS Magique Alliance
                         HandleAddItemCommand("46980"); // Dague DPS Magique Alliance
                         HandleAddItemCommand("47064"); // 2ème main DPS Magique Alliance
                         HandleAddItemCommand("47144"); // Amulette DPS Magique Alliance
@@ -7841,7 +7866,7 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                     case RACE_UNDEAD_PLAYER:
                     case RACE_BLOODELF:
                     {
-                        // HandleAddItemCommand("47422");//dague
+                        HandleAddItemCommand("47422");//dague
                         HandleAddItemCommand("47793");//T9.9
                         HandleAddItemCommand("47794");//T9.9
                         HandleAddItemCommand("47795");//T9.9
@@ -7864,7 +7889,7 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                     case RACE_HUMAN:
                     case RACE_GNOME:
                     {
-                        // HandleAddItemCommand("46980");//dague
+                        HandleAddItemCommand("46980");//dague
                         HandleAddItemCommand("47788");//T9.9
                         HandleAddItemCommand("47789");//T9.9
                         HandleAddItemCommand("47790");//T9.9
@@ -7893,6 +7918,7 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
             }
             case CLASS_DRUID:
             {
+                HandleAddItemCommand("47668"); // Idole Feral
                 switch(chr->getRace())
                 {
                     case RACE_NIGHTELF:
@@ -7941,7 +7967,6 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                         break;
                 }
                 // HandleAddItemSetCommand("678");//T6
-                HandleAddItemCommand("47668"); // Idole Feral
                 chr->AutoEquipItem();
                 break;
             }
