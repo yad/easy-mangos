@@ -3996,7 +3996,7 @@ SpellCastResult Spell::CheckCast(bool strict)
     }
      //check caster for combat
     if(m_caster->isInCombat() && IsNonCombatSpell(m_spellInfo) && !m_caster->isIgnoreUnitState(m_spellInfo) 
-       && m_spellInfo->Id != 11327 && m_spellInfo->Id != 11329 && m_spellInfo->Id != 26888)  // Vanish hack
+       && m_spellInfo->Id != 11327 && m_spellInfo->Id != 11329 && m_spellInfo->Id != 26888 && m_spellInfo->Id != 18461)  // Vanish hack
         return SPELL_FAILED_AFFECTING_COMBAT;
 
     // cancel autorepeat spells if cast start when moving
