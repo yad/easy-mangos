@@ -1466,18 +1466,9 @@ void Spell::EffectDummy(uint32 i)
                     return;
 
                 uint32 rage = m_caster->GetPower(POWER_RAGE);
-                uint32 rage2 = rage;
                 uint32 lastrage=0;
-                //Sudden Death
-                if(m_caster->HasAura(52437))
-                {
-                    if(m_caster->HasAura(29723)) lastrage=30;
-                    else if (m_caster->HasAura(29725)) lastrage=70;
-                    else if (m_caster->HasAura(29724)) lastrage=100;
-                    rage2 = rage2 - 300;
-                    rage2 = rage2<lastrage?lastrage:rage2;
-                 }
 
+                // up to max 30 rage cost
                 if(rage > 30)
                     rage = 30;
 
@@ -1491,11 +1482,19 @@ void Spell::EffectDummy(uint32 i)
                                                  m_caster->GetTotalAttackPowerValue(BASE_ATTACK)*0.2f);
 
                 m_caster->CastCustomSpell(unitTarget, 20647, &basePoints0, NULL, NULL, true, 0);
+
                 //Sudden Death
-                if (lastrage != 0)
-                     m_caster->SetPower(POWER_RAGE,rage2);
-                else
-                     m_caster->SetPower(POWER_RAGE,m_caster->GetPower(POWER_RAGE)-rage);
+                if(m_caster->HasAura(52437))
+                {
+                    if(m_caster->HasAura(29723)) lastrage=3;
+                    else if (m_caster->HasAura(29725)) lastrage=7;
+                    else if (m_caster->HasAura(29724)) lastrage=10;
+
+                    if(lastrage < rage)
+                        rage -= lastrage;
+                }
+
+                m_caster->SetPower(POWER_RAGE,m_caster->GetPower(POWER_RAGE)-rage);
                 return;
             }
             // Slam
