@@ -2185,6 +2185,24 @@ void Aura::TriggerSpell()
 
                 break;
             }
+            // Earthen Power
+            case 6474:
+            {
+                if ( Unit *caster = GetCaster() )
+                    if( Unit *owner = caster->GetOwner() ) 
+                    {
+                        float chance = 0;
+                        if ( owner->HasAura(51524) )
+                            chance = 100;
+                        else if ( owner->HasAura(51523) )
+                            chance = 50;
+
+                        if (roll_chance_f(chance))
+                            caster->CastSpell( caster, 59566, true );
+
+                        break;
+                    }
+            }
             // Mana Tide
             case 16191:
             {
@@ -4245,22 +4263,6 @@ void Aura::HandleAuraModDecreaseSpeed(bool apply, bool Real)
         {
             if (GetStackAmount() >= 5 && !m_target->HasAura(33652))
                 m_target->CastSpell(m_target, 33652, true);
-        }
-        //Earthen Power
-        else if(GetId() == 3600)
-        {
-           if ( Unit *caster = GetCaster() )
-               if( Unit *owner = caster->GetOwner() ) 
-               {
-                   float chance = 0;
-                   if ( owner->HasAura(51524) )
-                       chance = 100;
-                   else if ( owner->HasAura(51523) )
-                       chance = 50;
-
-                   if (roll_chance_f(chance))
-                      caster->CastSpell( caster, 59566, true );
-                }
         }
     }
 
