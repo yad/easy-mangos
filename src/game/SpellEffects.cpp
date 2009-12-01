@@ -1483,15 +1483,22 @@ void Spell::EffectDummy(uint32 i)
 
                 m_caster->CastCustomSpell(unitTarget, 20647, &basePoints0, NULL, NULL, true, 0);
 
-                //Sudden Death
+                // Sudden Death
                 if(m_caster->HasAura(52437))
                 {
-                    if(m_caster->HasAura(29723)) lastrage=3;
-                    else if (m_caster->HasAura(29725)) lastrage=7;
-                    else if (m_caster->HasAura(29724)) lastrage=10;
-
-                    if(lastrage < rage)
-                        rage -= lastrage;
+                    Unit::AuraList const& auras = m_caster->GetAurasByType(SPELL_AURA_PROC_TRIGGER_SPELL);
+                    for (Unit::AuraList::const_iterator itr = auras.begin(); itr != auras.end(); ++itr)
+                    {
+                        // Only Sudden Death have this SpellIconID with SPELL_AURA_PROC_TRIGGER_SPELL
+                        if ((*itr)->GetSpellProto()->SpellIconID == 1989)
+                        {
+                            // saved rage top stored in next affect
+                            uint32 lastrage = (*itr)->GetSpellProto()->CalculateSimpleValue(1);
+                            if(lastrage < rage)
+                                rage -= lastrage;
+                            break;
+                        }
+                    }
                 }
 
                 m_caster->SetPower(POWER_RAGE,m_caster->GetPower(POWER_RAGE)-rage);
