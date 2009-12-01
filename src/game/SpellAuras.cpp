@@ -2189,6 +2189,7 @@ void Aura::TriggerSpell()
             case 6474:
             {
                 if ( Unit *caster = GetCaster() )
+                {
                     if( Unit *owner = caster->GetOwner() ) 
                     {
                         float chance = 0;
@@ -2200,8 +2201,10 @@ void Aura::TriggerSpell()
                         if (roll_chance_f(chance))
                             caster->CastSpell( caster, 59566, true );
 
-                        break;
+                        
                     }
+                }
+                break;
             }
             // Mana Tide
             case 16191:
@@ -4253,8 +4256,6 @@ void Aura::HandleAuraModDecreaseSpeed(bool apply, bool Real)
     // all applied/removed only at real aura add/remove
     if(!Real)
         return;
-
-    Unit* caster = GetCaster()->GetOwner();
 
     if (apply)
     {
