@@ -431,13 +431,7 @@ void GameObject::Update(uint32 /*p_time*/)
             if(!m_respawnDelayTime)
                 return;
 
-            if(!m_spawnedByDefault)
-            {
-                m_respawnTime = 0;
-                return;
-            }
-
-            m_respawnTime = time(NULL) + m_respawnDelayTime;
+            m_respawnTime = m_spawnedByDefault ? time(NULL) + m_respawnDelayTime : 0;
 
             // if option not set then object will be saved at grid unload
             if(sWorld.getConfig(CONFIG_SAVE_RESPAWN_TIME_IMMEDIATLY))
