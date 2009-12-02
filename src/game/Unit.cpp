@@ -6276,6 +6276,17 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                     triggered_spell_id = 58879;
                     break;
                 }
+                //Frozen power
+                case 63373:
+                case 63374:
+                {
+                    if ( pVictim && !pVictim->IsWithinDistInMap(this, 10.8f ) ) // 10.8 is 15y on client side
+                        triggered_spell_id = 63685;
+
+                    if ( !roll_chance_i( dummySpell->EffectBasePoints[effIndex] + 1 ) )
+                        return false;
+                    break;
+                }
                 // Shaman T8 Elemental 4P Bonus
                 case 64928:
                 {
