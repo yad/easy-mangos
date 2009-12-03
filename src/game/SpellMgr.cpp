@@ -1642,6 +1642,13 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                 // Concentration Aura and Improved Concentration Aura and Aura Mastery
                 if ((spellInfo_1->SpellIconID == 1487) && (spellInfo_2->SpellIconID == 1487))
                     return false;
+
+                // Sacred Shield and Blessing of Sanctuary
+                if ((( spellInfo_1->SpellFamilyFlags & UI64LIT(0x0008000000000000)) &&
+                    (spellInfo_2->Id == 25899 || spellInfo_2->Id == 20911)) ||
+                    (( spellInfo_2->SpellFamilyFlags & UI64LIT(0x0008000000000000))
+                    && (spellInfo_1->Id == 25899 || spellInfo_1->Id == 20911)))
+                    return false;
             }
 
             // Combustion and Fire Protection Aura (multi-family check)
