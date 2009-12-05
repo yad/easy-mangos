@@ -629,9 +629,9 @@ LogColors = "13 7 11 9"
 ###################################################################################################################
 
 GameType = 1
-RealmZone = 1
+RealmZone = 10
 Expansion = 2
-DBC.Locale = 255
+DBC.Locale = 2
 DeclinedNames = 0
 StrictPlayerNames = 0
 StrictCharterNames = 0
