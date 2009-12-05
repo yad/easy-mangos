@@ -2057,7 +2057,16 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
         // handle combat (either self/master/group in combat, or combat state and valid target)
         //else if ( IsInCombat() || (m_botState == BOTSTATE_COMBAT && m_targetCombat) )
         else if ( IsInCombat() )
+        {
+            if (m_bot->getAttackers().empty() && !m_bot->IsWithinDistInMap( GetMaster(), 100, true ))
+            {
+                //m_ignoreAIUpdatesUntilTime = time(0) + 6;
+                PlayerbotChatHandler ch(GetMaster());
+                if (ch.teleport(*m_bot))
+                    SetIgnoreTeleport(15);
+            }
             DoNextCombatManeuver();
+        }
 
         // bot was in combat recently - loot now
         else if (m_botState == BOTSTATE_COMBAT)
