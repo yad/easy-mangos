@@ -58,6 +58,15 @@ PlayerbotPriestAI::PlayerbotPriestAI(Player* const master, Player* const bot, Pl
 	INNER_FOCUS        = ai->getSpellId("inner focus");
 
 	RECENTLY_BANDAGED  = 11196; // first aid check
+
+	// racial
+	ARCANE_TORRENT          = ai->getSpellId("arcane torrent"); // blood elf
+	GIFT_OF_THE_NAARU       = ai->getSpellId("gift of the naaru"); // draenei
+	STONEFORM               = ai->getSpellId("stoneform"); // dwarf
+	EVERY_MAN_FOR_HIMSELF   = ai->getSpellId("every man for himself"); // human
+	SHADOWMELD              = ai->getSpellId("shadowmeld"); // night elf
+	BERSERKING              = ai->getSpellId("berserking"); // troll
+	WILL_OF_THE_FORSAKEN    = ai->getSpellId("will of the forsaken"); // undead
 }
 
 PlayerbotPriestAI::~PlayerbotPriestAI() {}

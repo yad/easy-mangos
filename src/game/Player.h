@@ -2296,6 +2296,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         PlayerbotAI* GetPlayerbotAI() { return m_playerbotAI; }
         void SetPlayerbotMgr(PlayerbotMgr* mgr) { assert(!m_playerbotAI && !m_playerbotMgr); m_playerbotMgr=mgr; }
         PlayerbotMgr* GetPlayerbotMgr() { return m_playerbotMgr; }
+        void SetBotDeathTimer() { m_deathTimer = 0; }
 
     protected:
 
