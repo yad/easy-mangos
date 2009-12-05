@@ -2454,6 +2454,9 @@ float Unit::CalculateLevelPenalty(SpellEntry const* spellProto) const
     if(spellProto->spellLevel <= 0)
         return 1.0f;
 
+    if(spellProto->AttributesEx2 & SPELL_ATTR_EX2_IGN_LVL_PENALTY) // some spells ignore level penalty
+        return 1.0f;
+
     float LvlPenalty = 0.0f;
 
     if(spellProto->spellLevel < 20)
