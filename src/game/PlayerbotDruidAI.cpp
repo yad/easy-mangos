@@ -58,7 +58,11 @@ PlayerbotDruidAI::PlayerbotDruidAI(Player* const master, Player* const bot, Play
 	ENRAGE              = ai->getSpellId("enrage");
 	GROWL               = ai->getSpellId("growl");
 
-	RECENTLY_BANDAGED    = 11196; // first aid check
+	RECENTLY_BANDAGED   = 11196; // first aid check
+
+	// racial
+	SHADOWMELD              = ai->getSpellId("shadowmeld"); // night elf
+	WAR_STOMP               = ai->getSpellId("war stomp"); // tauren
 }
 
 PlayerbotDruidAI::~PlayerbotDruidAI() {}

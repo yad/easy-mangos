@@ -59,6 +59,13 @@ PlayerbotWarlockAI::PlayerbotWarlockAI(Player* const master, Player* const bot, 
 
 	RECENTLY_BANDAGED     = 11196; // first aid check
 
+	// racial
+	ARCANE_TORRENT        = ai->getSpellId("arcane torrent"); // blood elf
+	ESCAPE_ARTIST         = ai->getSpellId("escape artist"); // gnome
+	EVERY_MAN_FOR_HIMSELF = ai->getSpellId("every man for himself"); // human
+	BLOOD_FURY            = ai->getSpellId("blood fury"); // orc
+	WILL_OF_THE_FORSAKEN  = ai->getSpellId("will of the forsaken"); // undead
+
 	m_demonSummonFailed = false;
 }
 

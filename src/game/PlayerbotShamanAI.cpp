@@ -60,6 +60,12 @@ PlayerbotShamanAI::PlayerbotShamanAI(Player* const master, Player* const bot, Pl
     FIRE_ELEMENTAL_TOTEM     = ai->getSpellId("fire elemental totem");
 
 	RECENTLY_BANDAGED        = 11196; // first aid check
+
+	// racial
+	GIFT_OF_THE_NAARU        = ai->getSpellId("gift of the naaru"); // draenei
+	BLOOD_FURY               = ai->getSpellId("blood fury"); // orc
+	WAR_STOMP                = ai->getSpellId("war stomp"); // tauren
+	BERSERKING               = ai->getSpellId("berserking"); // troll
 }
 
 PlayerbotShamanAI::~PlayerbotShamanAI() {}
