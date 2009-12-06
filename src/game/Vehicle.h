@@ -89,6 +89,8 @@ class Vehicle : public Creature
         uint32 GetVehicleFlags() { return m_VehicleData ? m_VehicleData->v_flags : NULL; }
         uint32 GetCreationTime() { return m_creation_time; }
         void BuildVehicleActionBar(Player *plr) const;
+        void InstallAllAccessories();
+        Unit *GetPassenger(int8 seatId) const;
     protected:
         uint32 m_vehicleId;
         VehicleEntry const *m_vehicleInfo;
@@ -97,6 +99,7 @@ class Vehicle : public Creature
         SeatMap m_Seats;
         bool despawn;
         int32 m_spawnduration;
+        void InstallAccessory(uint32 entry, int8 seatId, bool minion = true);
     private:
         void SaveToDB(uint32, uint8)                        // overwrited of Creature::SaveToDB     - don't must be called
         {
