@@ -1544,7 +1544,6 @@ struct StableSlotPricesEntry
     uint32 Price;
 };
 
-/* unused currently
 struct SummonPropertiesEntry
 {
     uint32  Id;                                             // 0
@@ -1554,7 +1553,6 @@ struct SummonPropertiesEntry
     uint32  Slot;                                           // 4,                        0-6
     uint32  Flags;                                          // 5, enum SummonPropFlags
 };
-*/
 
 #define MAX_TALENT_RANK 5
 #define MAX_PET_TALENT_RANK 3                               // use in calculations, expected <= MAX_TALENT_RANK

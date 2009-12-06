@@ -129,7 +129,7 @@ template<>
 bool
 RandomMovementGenerator<Creature>::Update(Creature &creature, const uint32 &diff)
 {
-    if(creature.hasUnitState(UNIT_STAT_ROOT | UNIT_STAT_STUNNED | UNIT_STAT_DISTRACTED | UNIT_STAT_DIED))
+    if(creature.hasUnitState(UNIT_STAT_ROOT | UNIT_STAT_STUNNED | UNIT_STAT_DISTRACTED | UNIT_STAT_DIED | UNIT_STAT_ON_VEHICLE))
     {
         i_nextMoveTime.Update(i_nextMoveTime.GetExpiry());    // Expire the timer
         creature.clearUnitState(UNIT_STAT_ROAMING);

@@ -282,6 +282,9 @@ void Object::BuildMovementUpdate(ByteBuffer * data, uint16 flags, uint32 flags2)
                         */
                     }
                 }
+                if(((Unit*)this)->GetVehicleGUID())
+                    flags2 |= (MOVEMENTFLAG_ONTRANSPORT | MOVEMENTFLAG_FLY_UNK1);
+
             }
             break;
             case TYPEID_PLAYER:
@@ -295,6 +298,9 @@ void Object::BuildMovementUpdate(ByteBuffer * data, uint16 flags, uint32 flags2)
 
                 // remove unknown, unused etc flags for now
                 flags2 &= ~MOVEMENTFLAG_SPLINE2;            // will be set manually
+
+                if(((Unit*)this)->GetVehicleGUID())
+                    flags2 |= (MOVEMENTFLAG_ONTRANSPORT | MOVEMENTFLAG_FLY_UNK1);
 
                 if(((Player*)this)->isInFlight())
                 {
@@ -318,7 +324,18 @@ void Object::BuildMovementUpdate(ByteBuffer * data, uint16 flags, uint32 flags2)
         // 0x00000200
         if(flags2 & MOVEMENTFLAG_ONTRANSPORT)
         {
-            if(GetTypeId() == TYPEID_PLAYER)
+            if((GetTypeId() == TYPEID_PLAYER || GetTypeId() == TYPEID_UNIT) && ((Unit*)this)->GetVehicleGUID())
+            {
+                uint32 veh_time = getMSTimeDiff(((Unit*)this)->m_SeatData.c_time,getMSTime());
+                data->appendPackGUID(((Unit*)this)->GetVehicleGUID());          // transport guid
+                *data << (float)((Unit*)this)->m_SeatData.OffsetX;              // transport offsetX
+                *data << (float)((Unit*)this)->m_SeatData.OffsetY;              // transport offsetY
+                *data << (float)((Unit*)this)->m_SeatData.OffsetZ;              // transport offsetZ
+                *data << (float)((Unit*)this)->m_SeatData.Orientation;          // transport orientation
+                *data << (uint32)veh_time;                                      // transport time
+                *data << (int8)((Unit*)this)->m_SeatData.seat;                  // seat
+            }
+            else if(GetTypeId() == TYPEID_PLAYER)
             {
                 data->append(((Player*)this)->GetTransport()->GetPackGUID());
                 *data << (float)((Player*)this)->GetTransOffsetX();
@@ -1688,6 +1705,42 @@ Creature* WorldObject::SummonCreature(uint32 id, float x, float y, float z, floa
     return pCreature;
 }
 
+Vehicle* WorldObject::SummonVehicle(uint32 id, float x, float y, float z, float ang, uint32 vehicleId)
+{
+    Vehicle *v = new Vehicle;
+
+    Map *map = GetMap();
+    uint32 team = 0;
+    if (GetTypeId()==TYPEID_PLAYER)
+        team = ((Player*)this)->GetTeam();
+
+    if(!v->Create(sObjectMgr.GenerateLowGuid(HIGHGUID_VEHICLE), map, GetPhaseMask(), id, vehicleId, team))
+    {
+        delete v;
+        return NULL;
+    }
+
+    if (x == 0.0f && y == 0.0f && z == 0.0f)
+        GetClosePoint(x, y, z, v->GetObjectSize());
+
+    v->Relocate(x, y, z, ang);
+
+    if(!v->IsPositionValid())
+    {
+        sLog.outError("ERROR: Vehicle (guidlow %d, entry %d) not created. Suggested coordinates isn't valid (X: %f Y: %f)",
+            v->GetGUIDLow(), v->GetEntry(), v->GetPositionX(), v->GetPositionY());
+        delete v;
+        return NULL;
+    }
+    map->Add((Creature*)v);
+    v->AIM_Initialize();
+
+    if(GetTypeId()==TYPEID_UNIT && ((Creature*)this)->AI())
+        ((Creature*)this)->AI()->JustSummoned((Creature*)v);
+
+    return v;
+}
+
 namespace MaNGOS
 {
     class NearUsedPosDo
@@ -1707,7 +1760,7 @@ namespace MaNGOS
 
                 float x,y,z;
 
-                if( !c->isAlive() || c->hasUnitState(UNIT_STAT_ROOT | UNIT_STAT_STUNNED | UNIT_STAT_DISTRACTED | UNIT_STAT_DIED) ||
+                if( !c->isAlive() || c->hasUnitState(UNIT_STAT_ROOT | UNIT_STAT_STUNNED | UNIT_STAT_DISTRACTED | UNIT_STAT_DIED | UNIT_STAT_ON_VEHICLE) ||
                     !c->GetMotionMaster()->GetDestination(x,y,z) )
                 {
                     x = c->GetPositionX();

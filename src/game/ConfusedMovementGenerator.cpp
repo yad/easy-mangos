@@ -102,7 +102,7 @@ ConfusedMovementGenerator<T>::Update(T &unit, const uint32 &diff)
     if(!&unit)
         return true;
 
-    if(unit.hasUnitState(UNIT_STAT_ROOT | UNIT_STAT_STUNNED | UNIT_STAT_DISTRACTED | UNIT_STAT_DIED))
+    if(unit.hasUnitState(UNIT_STAT_ROOT | UNIT_STAT_STUNNED | UNIT_STAT_DISTRACTED | UNIT_STAT_DIED | UNIT_STAT_ON_VEHICLE))
         return true;
 
     if( i_nextMoveTime.Passed() )

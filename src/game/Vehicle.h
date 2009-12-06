@@ -22,6 +22,28 @@
 #include "ObjectDefines.h"
 #include "Creature.h"
 #include "Unit.h"
+#include "ObjectMgr.h"
+
+struct VehicleSeat
+{
+    //VehicleSeatEntry const *seatInfo;
+    Unit* passenger;
+    uint8 flags;
+    uint32 vs_flags;
+};
+
+enum VehicleSeatFlags
+{
+    SEAT_FREE           = 0x01,                             // free seat
+    SEAT_FULL           = 0x02,                             // seat occupied by player/creature
+    // special cases
+    SEAT_VEHICLE_FREE   = 0x04,                             // seat occupied by vehicle, but that vehicle is free
+    SEAT_VEHICLE_FULL   = 0x08                              // seat occupied by vehicle and that vehicle is full too
+};
+
+#define MAX_SEAT 8
+
+typedef std::map<int8, VehicleSeat> SeatMap;
 
 class Vehicle : public Creature
 {
@@ -32,19 +54,49 @@ class Vehicle : public Creature
         void AddToWorld();
         void RemoveFromWorld();
 
-        bool Create (uint32 guidlow, Map *map, uint32 Entry, uint32 vehicleId, uint32 team);
+        bool Create (uint32 guidlow, Map *map, uint32 phaseMask, uint32 Entry, uint32 vehicleId, uint32 team, const CreatureData *data = NULL);
 
         void setDeathState(DeathState s);                   // overwrite virtual Creature::setDeathState and Unit::setDeathState
         void Update(uint32 diff);                           // overwrite virtual Creature::Update and Unit::Update
 
         uint32 GetVehicleId() { return m_vehicleId; }
-        void SetVehicleId(uint32 vehicleid) { m_vehicleId = vehicleid; }
+        bool SetVehicleId(uint32 vehicleid);
+
+        void InitSeats();
+
+        void ChangeSeatFlag(uint8 seat, uint8 flag);
+        Vehicle* FindFreeSeat(int8 *seatid, bool force = true);
+        Vehicle* GetNextEmptySeat(int8 *seatId, bool next = true, bool force = true);
+        Vehicle* GetFirstEmptySeat(int8 *seatId, bool force = true);
+        int8 GetEmptySeatsCount(bool force = true);
+        void EmptySeatsCountChanged();
+        int8 GetTotalSeatsCount() { return m_Seats.size(); }
 
         void Dismiss();
 
+        void RellocatePassengers(Map *map);
+        void AddPassenger(Unit *unit, int8 seatId, bool force = true);
+        void RemovePassenger(Unit *unit);
+        void RemoveAllPassengers();
+
+        bool HasSpell(uint32 spell) const;
+        void SetSpawnDuration(int32 duration)
+        {
+            duration < 1 ? despawn = false : despawn = true;
+            m_spawnduration = duration;
+        }
+        VehicleDataStructure const* GetVehicleData() { return m_VehicleData; }
+        uint32 GetVehicleFlags() { return m_VehicleData ? m_VehicleData->v_flags : NULL; }
+        uint32 GetCreationTime() { return m_creation_time; }
+        void BuildVehicleActionBar(Player *plr) const;
     protected:
         uint32 m_vehicleId;
-
+        VehicleEntry const *m_vehicleInfo;
+        VehicleDataStructure const *m_VehicleData;
+        uint32 m_creation_time;
+        SeatMap m_Seats;
+        bool despawn;
+        int32 m_spawnduration;
     private:
         void SaveToDB(uint32, uint8)                        // overwrited of Creature::SaveToDB     - don't must be called
         {

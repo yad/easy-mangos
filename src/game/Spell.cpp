@@ -203,7 +203,7 @@ void SpellCastTargets::Update(Unit* caster)
     }
 }
 
-bool SpellCastTargets::read ( WorldPacket * data, Unit *caster )
+bool SpellCastTargets::read ( WorldPacket * data, Unit *caster, SpellEntry const* spell )
 {
     if(data->rpos() + 4 > data->size())
         return false;
@@ -215,8 +215,20 @@ bool SpellCastTargets::read ( WorldPacket * data, Unit *caster )
         m_destX = caster->GetPositionX();
         m_destY = caster->GetPositionY();
         m_destZ = caster->GetPositionZ();
-        m_unitTarget = caster;
-        m_unitTargetGUID = caster->GetGUID();
+        bool skiptarget = false;
+        if(spell)
+        {
+            for(int j=0;j<3;j++)
+            {
+                // this is requiered, otherwise it will return SPELL_FAILED_BAD_TARGETS
+                skiptarget |= (spell->EffectImplicitTargetA[j] == TARGET_IN_FRONT_OF_CASTER || spell->EffectImplicitTargetA[j] == TARGET_SCRIPT || spell->EffectImplicitTargetA[j] == TARGET_EFFECT_SELECT);
+            }
+        }
+        if(!skiptarget)
+        {
+            m_unitTarget = caster;
+            m_unitTargetGUID = caster->GetGUID();
+        }
         return true;
     }
 
@@ -1358,10 +1370,15 @@ void Spell::SetTargetMap(uint32 effIndex,uint32 targetMode,UnitList& TagUnitMap)
         case TARGET_SELF:
         case TARGET_SELF2:
         case TARGET_AREAEFFECT_CUSTOM:
-        case TARGET_AREAEFFECT_CUSTOM_2:
         case TARGET_SUMMON:
             TagUnitMap.push_back(m_caster);
             break;
+        case TARGET_AREAEFFECT_CUSTOM_2:
+        {
+            // used for targeting gameobjects
+            TagUnitMap.push_back(m_caster);
+            break;
+        }
         case TARGET_RANDOM_ENEMY_CHAIN_IN_AREA:
         {
             m_targets.m_targetMask = 0;
@@ -4115,11 +4132,16 @@ SpellCastResult Spell::CheckCast(bool strict)
         return locRes;
 
     // not let players cast spells at mount (and let do it to creatures)
-    if (m_caster->IsMounted() && m_caster->GetTypeId()==TYPEID_PLAYER && !m_IsTriggeredSpell &&
+    if ((m_caster->IsMounted() || m_caster->GetVehicleGUID()) && m_caster->GetTypeId()==TYPEID_PLAYER && !m_IsTriggeredSpell &&
         !IsPassiveSpell(m_spellInfo->Id) && !(m_spellInfo->Attributes & SPELL_ATTR_CASTABLE_WHILE_MOUNTED))
     {
         if (m_caster->isInFlight())
             return SPELL_FAILED_NOT_ON_TAXI;
+        else if(m_caster->GetVehicleGUID())
+        {
+            if(!(m_caster->m_SeatData.s_flags & SF_CAN_CAST))
+                return SPELL_FAILED_NOT_MOUNTED;
+        }
         else
             return SPELL_FAILED_NOT_MOUNTED;
     }
@@ -4890,7 +4912,7 @@ SpellCastResult Spell::CheckPetCast(Unit* target)
                                                             //TARGET_DUELVSPLAYER is positive AND negative
                     duelvsplayertar |= (m_spellInfo->EffectImplicitTargetA[j] == TARGET_DUELVSPLAYER);
                 }
-                if(m_caster->IsFriendlyTo(target) && !duelvsplayertar)
+                if(m_caster->IsFriendlyTo(_target) && !duelvsplayertar)
                 {
                     return SPELL_FAILED_BAD_TARGETS;
                 }
@@ -4901,6 +4923,7 @@ SpellCastResult Spell::CheckPetCast(Unit* target)
             return SPELL_FAILED_NOT_READY;
     }
 
+    // NOTE : this is done twice, also in spell->prepare(&(spell->m_targets));
     return CheckCast(true);
 }
 
@@ -5775,7 +5798,8 @@ bool Spell::CheckTarget( Unit* target, uint32 eff )
         // in case TARGET_SCRIPT target selected by server always and can't be cheated
         if( target->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE) &&
             m_spellInfo->EffectImplicitTargetA[eff] != TARGET_SCRIPT &&
-            m_spellInfo->EffectImplicitTargetB[eff] != TARGET_SCRIPT )
+            m_spellInfo->EffectImplicitTargetB[eff] != TARGET_SCRIPT &&
+            m_spellInfo->EffectImplicitTargetA[eff] != TARGET_MASTER )
             return false;
     }
 
