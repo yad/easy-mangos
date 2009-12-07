@@ -24,7 +24,7 @@ CREATE TABLE `db_version` (
   `version` varchar(120) default NULL,
   `creature_ai_version` varchar(120) default NULL,
   `cache_id` int(10) default '0',
-  `required_8923_01_mangos_gossip` bit(1) default NULL
+  `required_8932_01_mangos_spell_chain` bit(1) default NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 ROW_FORMAT=FIXED COMMENT='Used DB version notes';
 
 --
@@ -1978,7 +1978,34 @@ INSERT INTO gossip_menu_option VALUES
 (0,13,1,'GOSSIP_OPTION_ARMORER',15,4096,0,0,0,0,0,NULL,0,0,0,0,0,0,0,0,0),
 (0,14,2,'GOSSIP_OPTION_UNLEARNTALENTS',16,16,0,0,0,0,0,NULL,0,0,0,0,0,0,0,0,0),
 (0,15,2,'GOSSIP_OPTION_UNLEARNPETSKILLS',17,16,0,0,0,0,0,NULL,0,0,0,0,0,0,0,0,0);
-/*!40000 ALTER TABLE `gossip_menu` ENABLE KEYS */;
+/*!40000 ALTER TABLE `gossip_menu_option` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `gossip_scripts`
+--
+
+DROP TABLE IF EXISTS `gossip_scripts`;
+CREATE TABLE `gossip_scripts` (
+  `id` mediumint(8) unsigned NOT NULL default '0',
+  `delay` int(10) unsigned NOT NULL default '0',
+  `command` mediumint(8) unsigned NOT NULL default '0',
+  `datalong` mediumint(8) unsigned NOT NULL default '0',
+  `datalong2` int(10) unsigned NOT NULL default '0',
+  `dataint` int(11) NOT NULL default '0',
+  `x` float NOT NULL default '0',
+  `y` float NOT NULL default '0',
+  `z` float NOT NULL default '0',
+  `o` float NOT NULL default '0'
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+--
+-- Dumping data for table `gossip_scripts`
+--
+
+LOCK TABLES `gossip_scripts` WRITE;
+/*!40000 ALTER TABLE `gossip_scripts` DISABLE KEYS */;
+/*!40000 ALTER TABLE `gossip_scripts` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -14121,7 +14148,7 @@ INSERT INTO `spell_bonus_data` VALUES
 (3606,  0.1667, 0,       0,     'Shaman - Searing Totem Attack'),
 /* Warlock */
 (17962, 0,      0,       0,     'Warlock - Conflagrate'),
-(172,   0,      0.3,     0,     'Warlock - Corruption'),
+(172,   0,      0.2,     0,     'Warlock - Corruption'),
 (980,   0,      0.1,     0,     'Warlock - Curse of Agony'),
 (603,   0,      2,       0,     'Warlock - Curse of Doom'),
 (18220, 0.96,   0,       0,     'Warlock - Dark Pact'),
@@ -17067,6 +17094,16 @@ INSERT INTO spell_chain VALUES
 (53597,53596,50274,5,0),
 (53598,53597,50274,6,0),
 /*------------------
+--(767)Pet - Ravager
+------------------*/
+/*Ravage*/
+(50518,0,50518,1,0),
+(53558,50518,50518,2,0),
+(53559,53558,50518,3,0),
+(53560,53559,50518,4,0),
+(53561,53560,50518,5,0),
+(53562,53561,50518,6,0),
+/*------------------
 --(768)Pet-Serpent
 ------------------*/
 /*PoisonSpit*/
@@ -18364,6 +18401,7 @@ INSERT INTO `spell_proc_event` VALUES
 (58364, 0x00000000,  4, 0x00000400, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (58372, 0x00000000,  4, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (58386, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000020, 0.000000, 0.000000,  0),
+(58597, 0x00000000, 10, 0x40000000, 0x00000000, 0x00000000, 0x00008000, 0x00000000, 0.000000, 100.000000,0),
 (58616, 0x00000000, 15, 0x01000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (58620, 0x00000000, 15, 0x00000000, 0x00004000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (58626, 0x00000000, 15, 0x02000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
