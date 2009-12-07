@@ -1019,18 +1019,9 @@ bool Creature::CreateFromProto(uint32 guidlow, uint32 Entry, uint32 team, const 
     }
     m_originalEntry = Entry;
 
-    CreatureDataAddon const *addon = ObjectMgr::GetCreatureAddon(guidlow);
+   Object::_Create(guidlow, Entry, HIGHGUID_UNIT);
 
-    uint32 vehId; 
-    if(addon->vehicle_id != 0)
-        vehId = addon->vehicle_id;
-
-    if(vehId && !CreateVehicleKit(vehId))
-        vehId = 0;
-
-    Object::_Create(guidlow, Entry, vehId ? HIGHGUID_VEHICLE : HIGHGUID_UNIT);
-
-    if(!UpdateEntry(Entry, team, data))
+   if(!UpdateEntry(Entry, team, data))
         return false;
 
     return true;
@@ -2107,14 +2098,4 @@ void Creature::SendAreaSpiritHealerQueryOpcode(Player *pl)
     WorldPacket data(SMSG_AREA_SPIRIT_HEALER_TIME, 8 + 4);
     data << GetGUID() << next_resurrect;
     pl->SendDirectMessage(&data);
-}
-bool Creature::CreateVehicleKit(uint32 id)
-{
-    VehicleEntry const *vehInfo = sVehicleStore.LookupEntry(id);
-    if(!vehInfo)
-        return false;
-
-    m_vehicleKit = new Vehicle();
-    m_updateFlag |= UPDATEFLAG_VEHICLE;
-    return true;
 }
