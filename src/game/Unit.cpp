@@ -2453,11 +2453,11 @@ float Unit::CalculateLevelPenalty(SpellEntry const* spellProto) const
 {
     if(spellProto->maxLevel <= 0)
         return 1.0f;
-    float LvlPenalty;
     //if caster level is lower that max caster level
     if(getLevel() < spellProto->maxLevel)
-        LvlPenalty = 0.0f;
+        return 1.0f;
 
+    float LvlPenalty = 0.0f;
     LvlPenalty = (22.0f + float (spellProto->maxLevel) - float (getLevel())) / 20.0f;
     //to prevent positive effect
     if(LvlPenalty > 1.0f)
