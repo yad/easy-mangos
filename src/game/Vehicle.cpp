@@ -671,3 +671,11 @@ Unit *Vehicle::GetPassenger(int8 seatId) const
     if(seat == m_Seats.end()) return NULL;
     return seat->second.passenger;
 }
+void Vehicle::Die()
+{
+    for (SeatMap::iterator itr = m_Seats.begin(); itr != m_Seats.end(); ++itr)
+        if(Unit *passenger = itr->second.passenger)
+            if(((Creature*)passenger)->isVehicle())
+                passenger->setDeathState(JUST_DIED);
+    RemoveAllPassengers();
+}

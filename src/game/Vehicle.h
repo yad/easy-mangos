@@ -54,6 +54,7 @@ class Vehicle : public Creature
         void AddToWorld();
         void RemoveFromWorld();
 
+        void Die();
         bool Create (uint32 guidlow, Map *map, uint32 phaseMask, uint32 Entry, uint32 vehicleId, uint32 team, const CreatureData *data = NULL);
 
         void setDeathState(DeathState s);                   // overwrite virtual Creature::setDeathState and Unit::setDeathState

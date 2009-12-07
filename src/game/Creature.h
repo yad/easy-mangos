@@ -398,6 +398,8 @@ class MANGOS_DLL_SPEC Creature : public Unit
 
         bool isPet() const { return m_isPet; }
         bool isVehicle() const { return m_isVehicle; }
+        bool CreateVehicleKit(uint32 id);
+        Vehicle *GetVehicleKit()const { return m_vehicleKit; }
         void SetCorpseDelay(uint32 delay) { m_corpseDelay = delay; }
         bool isTotem() const { return m_isTotem; }
         bool isRacialLeader() const { return GetCreatureInfo()->RacialLeader; }
@@ -641,6 +643,7 @@ class MANGOS_DLL_SPEC Creature : public Unit
         float CombatStartX;
         float CombatStartY;
         float CombatStartZ;
+        Vehicle* m_vehicleKit;
     private:
         GridReference<Creature> m_gridRef;
         CreatureInfo const* m_creatureInfo;                 // in difficulty mode > 0 can different from ObjMgr::GetCreatureTemplate(GetEntry())
