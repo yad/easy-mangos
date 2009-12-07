@@ -516,12 +516,14 @@ void Spell::EffectSchoolDMG(uint32 effect_idx)
                 // Ferocious Bite
                 if (m_caster->GetTypeId()==TYPEID_PLAYER && (m_spellInfo->SpellFamilyFlags & UI64LIT(0x000800000)) && m_spellInfo->SpellVisual[0]==6587)
                 {
-                    // converts each extra point of energy into ($f1+$AP/410) additional damage
+                    // converts up to 30 points of energy into ($f1+$AP/410) additional damage
                     float ap = m_caster->GetTotalAttackPowerValue(BASE_ATTACK);
                     float multiple = ap / 410 + m_spellInfo->DmgMultiplier[effect_idx];
-                    damage += int32(m_caster->GetPower(POWER_ENERGY) * multiple);
                     damage += int32(((Player*)m_caster)->GetComboPoints() * ap * 7 / 100);
-                    m_caster->SetPower(POWER_ENERGY,0);
+                    uint32 energy = m_caster->GetPower(POWER_ENERGY);
+                    uint32 used_energy = energy > 30 ? 30 : energy;
+                    damage += int32(used_energy * multiple);
+                    m_caster->SetPower(POWER_ENERGY,energy-used_energy);
                 }
                 // Rake
                 else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000000000001000) && m_spellInfo->Effect[2]==SPELL_EFFECT_ADD_COMBO_POINTS)
@@ -2679,7 +2681,7 @@ void Spell::EffectHeal( uint32 /*i*/ )
         }
         // Death Pact (percent heal)
         else if (m_spellInfo->Id==48743)
-            addhealth = addhealth * m_caster->GetMaxHealth() / 100;
+            addhealth = addhealth * unitTarget->GetMaxHealth() / 100;
         // Swiftmend - consumes Regrowth or Rejuvenation
         else if (m_spellInfo->TargetAuraState == AURA_STATE_SWIFTMEND && unitTarget->HasAuraState(AURA_STATE_SWIFTMEND))
         {
