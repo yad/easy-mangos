@@ -99,7 +99,7 @@ class Vehicle : public Creature
         SeatMap m_Seats;
         bool despawn;
         int32 m_spawnduration;
-        void InstallAccessory(uint32 entry, int8 seatId, bool minion = true);
+        void InstallAccessory(uint32 entry, int8 seatId, bool isVehicle = false, bool minion = true);
     private:
         void SaveToDB(uint32, uint8)                        // overwrited of Creature::SaveToDB     - don't must be called
         {

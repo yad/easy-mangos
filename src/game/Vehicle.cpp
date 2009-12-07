@@ -606,15 +606,15 @@ void Vehicle::InstallAllAccessories()
     switch(GetEntry())
     {
         //case 27850:InstallAccessory(27905,1);break;
-        case 28782:InstallAccessory(28768,0,false);break; // Acherus Deathcharger
-        case 28312:InstallAccessory(28319,7);break;
-        case 32627:InstallAccessory(32629,7);break;
+        case 28782:InstallAccessory(28768,0,false, false);break; // Acherus Deathcharger
+        case 28312:InstallAccessory(28319,7,true);break;
+        case 32627:InstallAccessory(32629,7,true);break;
         case 32930:
             InstallAccessory(32933,0);
             InstallAccessory(32934,1);
             break;
         case 33109:InstallAccessory(33167,1);break;
-        case 33060:InstallAccessory(33067,7);break;
+        case 33060:InstallAccessory(33067,7, true);break;
         case 33113:
             InstallAccessory(33114,0);
             InstallAccessory(33114,1);
@@ -626,11 +626,11 @@ void Vehicle::InstallAllAccessories()
             InstallAccessory(33143,2); // Overload Control Device
             InstallAccessory(33142,1); // Leviathan Defense Turret
             break;
-        case 33214:InstallAccessory(33218,1,false);break; // Mechanolift 304-A
+        case 33214:InstallAccessory(33218,1,false,false);break; // Mechanolift 304-A
     }
 }
 
-void Vehicle::InstallAccessory(uint32 entry, int8 seatId, bool minion)
+void Vehicle::InstallAccessory(uint32 entry, int8 seatId, bool isVehicle, bool minion)
 {
     if(Unit *passenger = GetPassenger(seatId))
     {
@@ -644,13 +644,25 @@ void Vehicle::InstallAccessory(uint32 entry, int8 seatId, bool minion)
     }
 
     //TODO: accessory should be minion
-    if(Creature *accessory = SummonCreature(entry, 0, 0, 0, 0, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 30000))
+    if(isVehicle)
     {
-        accessory->EnterVehicle(this, seatId);
-        // This is not good, we have to send update twice
-        WorldPacket data;
-        accessory->BuildHeartBeatMsg(&data);
-        accessory->SendMessageToSet(&data, false);
+        if(Vehicle *accessory = SummonVehicle(entry, 0, 0, 0, 0))
+        {
+            accessory->EnterVehicle(this, seatId);
+            // This is not good, we have to send update twice
+            WorldPacket data;
+            accessory->BuildHeartBeatMsg(&data);
+            accessory->SendMessageToSet(&data, false);
+        }
+    }else{
+        if(Creature *accessory = SummonCreature(entry, 0, 0, 0, 0, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 30000))
+        {
+            accessory->EnterVehicle(this, seatId);
+            // This is not good, we have to send update twice
+            WorldPacket data;
+            accessory->BuildHeartBeatMsg(&data);
+            accessory->SendMessageToSet(&data, false);
+        }
     }
 }
 Unit *Vehicle::GetPassenger(int8 seatId) const
