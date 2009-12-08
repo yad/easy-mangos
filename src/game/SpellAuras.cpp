@@ -2984,84 +2984,34 @@ void Aura::HandleAuraModShapeshift(bool apply, bool Real)
     switch(form)
     {
         case FORM_CAT:
-            if(Player::TeamForRace(m_target->getRace()) == ALLIANCE)
-                modelid = 892;
-            else
-                modelid = 8571;
             PowerType = POWER_ENERGY;
             break;
-        case FORM_TRAVEL:
-            modelid = 632;
-            break;
-        case FORM_AQUA:
-            if(Player::TeamForRace(m_target->getRace()) == ALLIANCE)
-                modelid = 2428;
-            else
-                modelid = 2428;
-            break;
         case FORM_BEAR:
-            if(Player::TeamForRace(m_target->getRace()) == ALLIANCE)
-                modelid = 2281;
-            else
-                modelid = 2289;
-            PowerType = POWER_RAGE;
-            break;
-        case FORM_GHOUL:
-            if(Player::TeamForRace(m_target->getRace()) == ALLIANCE)
-                modelid = 10045;
-            break;
         case FORM_DIREBEAR:
-            if(Player::TeamForRace(m_target->getRace()) == ALLIANCE)
-                modelid = 2281;
-            else
-                modelid = 2289;
-            PowerType = POWER_RAGE;
-            break;
-        case FORM_CREATUREBEAR:
-            modelid = 902;
-            break;
-        case FORM_GHOSTWOLF:
-            modelid = 4613;
-            break;
-        case FORM_FLIGHT:
-            if(Player::TeamForRace(m_target->getRace()) == ALLIANCE)
-                modelid = 20857;
-            else
-                modelid = 20872;
-            break;
-        case FORM_MOONKIN:
-            if(Player::TeamForRace(m_target->getRace()) == ALLIANCE)
-                modelid = 15374;
-            else
-                modelid = 15375;
-            break;
-        case FORM_FLIGHT_EPIC:
-            if(Player::TeamForRace(m_target->getRace()) == ALLIANCE)
-                modelid = 21243;
-            else
-                modelid = 21244;
-            break;
-        case FORM_METAMORPHOSIS:
-            modelid = 25277;
-            break;
-        case FORM_AMBIENT:
-        case FORM_SHADOW:
-        case FORM_STEALTH:
-            break;
-        case FORM_TREE:
-            modelid = 864;
-            break;
         case FORM_BATTLESTANCE:
         case FORM_BERSERKERSTANCE:
         case FORM_DEFENSIVESTANCE:
             PowerType = POWER_RAGE;
             break;
-        case FORM_SPIRITOFREDEMPTION:
-            modelid = 16031;
+        case FORM_TRAVEL:
+        case FORM_AQUA:
+        case FORM_GHOUL:
+        case FORM_CREATUREBEAR:
+        case FORM_GHOSTWOLF:
+        case FORM_FLIGHT:
+        case FORM_MOONKIN:
+        case FORM_FLIGHT_EPIC:
+        case FORM_METAMORPHOSIS:
+        case FORM_AMBIENT:
+        case FORM_SHADOW:
+        case FORM_STEALTH:
+        case FORM_TREE:
             break;
         default:
             sLog.outError("Auras: Unknown Shapeshift Type: %u, SpellId %u.", m_modifier.m_miscvalue, GetId());
     }
+
+    modelid = m_target->GetModelForForm(form);
 
     // remove polymorph before changing display id to keep new display id
     switch ( form )
