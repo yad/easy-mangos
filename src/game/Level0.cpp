@@ -91,7 +91,6 @@ bool ChatHandler::HandleServerInfoCommand(const char* /*args*/)
     uint32 maxQueuedClientsNum = sWorld.GetMaxQueuedSessionCount();
     std::string str = secsToTimeString(sWorld.GetUptime());
 
-    SendSysMessage("Revision [7.12.2009][pr62] - MaNGOS modified for Valhalla Server");
     char const* full;
     if(m_session)
         full = _FULLVERSION(REVISION_DATE,REVISION_TIME,REVISION_NR,"|cffffffff|Hurl:" REVISION_ID "|h" REVISION_ID "|h|r");
@@ -104,6 +103,8 @@ bool ChatHandler::HandleServerInfoCommand(const char* /*args*/)
     PSendSysMessage(LANG_USING_EVENT_AI,sWorld.GetCreatureEventAIVersion());
     PSendSysMessage(LANG_CONNECTED_USERS, activeClientsNum, maxActiveClientsNum, queuedClientsNum, maxQueuedClientsNum);
     PSendSysMessage(LANG_UPTIME, str.c_str());
+    SendSysMessage("Revision [8.12.2009][pr63] - MaNGOS modified for Valhalla Server");
+    SendSysMessage("Changelog: http://valhalla-team.com/forum/showthread.php?tid=2663");
 
     return true;
 }
