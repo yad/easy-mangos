@@ -103,7 +103,7 @@ bool ChatHandler::HandleServerInfoCommand(const char* /*args*/)
     PSendSysMessage(LANG_USING_EVENT_AI,sWorld.GetCreatureEventAIVersion());
     PSendSysMessage(LANG_CONNECTED_USERS, activeClientsNum, maxActiveClientsNum, queuedClientsNum, maxQueuedClientsNum);
     PSendSysMessage(LANG_UPTIME, str.c_str());
-    SendSysMessage("Revision [8.12.2009][pr63] - MaNGOS modified for Valhalla Server");
+    SendSysMessage("Revision [8.12.2009][pr64] - MaNGOS modified for Valhalla Server");
     SendSysMessage("Changelog: http://valhalla-team.com/forum/showthread.php?tid=2663");
 
     return true;
