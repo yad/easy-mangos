@@ -10682,6 +10682,18 @@ float Unit::ApplyTotalThreatModifier(float threat, SpellSchoolMask schoolMask)
 
 void Unit::AddThreat(Unit* pVictim, float threat /*= 0.0f*/, bool crit /*= false*/, SpellSchoolMask schoolMask /*= SPELL_SCHOOL_MASK_NONE*/, SpellEntry const *threatSpell /*= NULL*/)
 {
+    //Misdirection hack
+    if (pVictim->GetTypeId() == TYPEID_PLAYER && pVictim->HasAura(34477, 1))
+        if (Group *pGroup = ((Player*)pVictim)->GetGroup())
+            for (GroupReference *itr = pGroup->GetFirstMember(); itr != NULL; itr = itr->next())
+                if (Unit* realVictim = itr->getSource())
+                    if (Aura* misdirection = realVictim->GetDummyAura(35079))
+                        if (pVictim->GetGUID() == misdirection->GetCasterGUID() && realVictim->IsInMap(pVictim))
+                        {
+                            pVictim = realVictim;
+                            break;
+                        }
+
     // Only mobs can manage threat lists
     if(CanHaveThreatList())
         m_ThreatManager.addThreat(pVictim, threat, crit, schoolMask, threatSpell);
