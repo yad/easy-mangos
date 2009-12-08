@@ -1299,14 +1299,12 @@ class MANGOS_DLL_SPEC Player : public Unit
         /***                    GOSSIP SYSTEM                  ***/
         /*********************************************************/
 
-        void PrepareGossipMenu(WorldObject *pSource, uint32 gossipid = 0);
+        void PrepareGossipMenu(WorldObject *pSource, uint32 menuId = 0);
         void SendPreparedGossip(WorldObject *pSource);
-        void OnGossipSelect(WorldObject *pSource, uint32 option);
-        void OnPoiSelect(WorldObject *pSource, GossipOption const *gossip);
+        void OnGossipSelect(WorldObject *pSource, uint32 gossipListId, uint32 menuId);
 
-        uint32 GetGossipTextId(uint32 action, uint32 zoneid);
+        uint32 GetGossipTextId(uint32 menuId);
         uint32 GetGossipTextId(WorldObject *pSource);
-        GossipOption const* GetGossipOption(WorldObject *pSource, uint32 id) const;
 
         /*********************************************************/
         /***                    QUEST SYSTEM                   ***/
@@ -1550,6 +1548,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         TrainerSpellState GetTrainerSpellState(TrainerSpell const* trainer_spell) const;
         bool IsSpellFitByClassAndRace( uint32 spell_id ) const;
         bool IsNeedCastPassiveSpellAtLearn(SpellEntry const* spellInfo) const;
+        bool IsImmunedToSpellEffect(SpellEntry const* spellInfo, uint32 index) const;
 
         void SendProficiency(uint8 pr1, uint32 pr2);
         void SendInitialSpells();
