@@ -3419,7 +3419,7 @@ void Spell::EffectSummonType(uint32 i)
                 case SUMMON_PROP_TYPE_DRAKE_VEH:
                 {
                     // TODO
-                    // EffectSummonVehicle(i);
+                    EffectSummonVehicle(i);
                     break;
                 }
                 case SUMMON_PROP_TYPE_TOTEM:
@@ -3475,78 +3475,26 @@ void Spell::EffectSummonType(uint32 i)
                 EffectSummonGuardian(i, summon_prop->FactionId);
             else
                 EffectSummon(i);
-            return;
+            break;
         }
         case SUMMON_PROP_GROUP_CONTROLLABLE:
         {
             // no type here
             // maybe wrong - but thats the handler currently used for those
             EffectSummonGuardian(i, summon_prop->FactionId);
-            return;
+            break;
         }
         case SUMMON_PROP_GROUP_VEHICLE:
         {
             // TODO
-            // EffectSummonVehicle(i);
-            return;
+            EffectSummonVehicle(i);
+            break;
         }
         default:
             sLog.outError("EffectSummonType: Unhandled summon group type %u", summon_prop->Group);
             break;
     }
-
-    SummonPropertiesEntry const *properties = sSummonPropertiesStore.LookupEntry(m_spellInfo->EffectMiscValueB[i]);
-    if(!properties)
-    {
-        sLog.outError("EffectSummonType: Unknow summon properties %u", m_spellInfo->EffectMiscValueB[i]);
-        return;
-    }
-
-    // more generic way, but incorrect in some cases
-    switch(properties->Group)
-    {
-        case SUMMON_CATEGORY_WILD:
-            EffectSummonWild(i);
-            break;
-        case SUMMON_CATEGORY_PET:
-            switch(properties->Type)
-            {
-                case SUMMON_MASK_SUMMON:
-                    EffectSummon(i);
-                    break;
-                default:
-                    EffectSummonGuardian(i);
-                    break;
-            }
-            break;
-        case SUMMON_CATEGORY_ALLY:
-        case SUMMON_CATEGORY_POSSESSED:
-            switch(properties->Type)
-            {
-                case SUMMON_MASK_NONE:
-                    EffectSummonWild(i);
-                    break;
-                case SUMMON_MASK_TOTEM:
-                    EffectSummonTotem(i);
-                    break;
-                case (SUMMON_MASK_SUMMON | SUMMON_MASK_TOTEM):
-                    EffectSummonCritter(i);
-                    break;
-                default:
-                    EffectSummonGuardian(i);
-                    break;
-            }
-            break;
-        case SUMMON_CATEGORY_VEHICLE:
-            // probably more types of vehicles here
-            EffectSummonVehicle(i);
-            break;
-        default:
-            break;
-   }
-
 }
-
 void Spell::EffectSummon(uint32 i)
 {
     if (m_caster->GetPetGUID())
