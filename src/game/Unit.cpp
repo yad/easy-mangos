@@ -6475,7 +6475,7 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                         uint32 spell = (*itr)->GetSpellProto()->EffectTriggerSpell[(*itr)->GetEffIndex()];
                         CastSpell(this, spell, true, castItem, triggeredByAura);
                         if ((*itr)->DropAuraCharge())
-                            RemoveAurasDueToSpell((*itr)->GetId());
+                            RemoveSingleSpellAurasFromStack((*itr)->GetId());
                         return true;
                     }
                 }
@@ -6577,7 +6577,7 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                         }
                         CastSpell(target, spell, true, castItem, triggeredByAura);
                         if ((*itr)->DropAuraCharge())
-                            RemoveAurasDueToSpell((*itr)->GetId());
+                            RemoveSingleSpellAurasFromStack((*itr)->GetId());
                         return true;
                     }
                 }
@@ -9053,10 +9053,9 @@ bool Unit::isSpellCrit(Unit *pVictim, SpellEntry const *spellProto, SpellSchoolM
         case SPELL_DAMAGE_CLASS_RANGED:
         {
             if (pVictim)
-            {
                 crit_chance = GetUnitCriticalChance(attackType, pVictim);
-                crit_chance+= GetTotalAuraModifierByMiscMask(SPELL_AURA_MOD_SPELL_CRIT_CHANCE_SCHOOL, schoolMask);
-            }
+
+            crit_chance+= GetTotalAuraModifierByMiscMask(SPELL_AURA_MOD_SPELL_CRIT_CHANCE_SCHOOL, schoolMask);
             break;
         }
         default:
@@ -12029,7 +12028,7 @@ void Unit::ProcDamageAndSpellFor( bool isVictim, Unit * pTarget, uint32 procFlag
         removedSpells.unique();
         // Remove auras from removedAuras
         for(RemoveSpellList::const_iterator i = removedSpells.begin(); i != removedSpells.end();++i)
-            RemoveAurasDueToSpell(*i);
+            RemoveSingleSpellAurasFromStack(*i);
     }
 }
 
