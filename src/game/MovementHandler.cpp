@@ -55,7 +55,7 @@ void WorldSession::HandleMoveWorldportAckOpcode()
         // stop teleportation else we would try this again and again in LogoutPlayer...
         GetPlayer()->SetSemaphoreTeleportFar(false);
         // and teleport the player to a valid place
-        GetPlayer()->TeleportTo(GetPlayer()->m_homebindMapId, GetPlayer()->m_homebindX, GetPlayer()->m_homebindY, GetPlayer()->m_homebindZ, GetPlayer()->GetOrientation());
+        GetPlayer()->TeleportToHomebind();
         return;
     }
 
@@ -84,7 +84,7 @@ void WorldSession::HandleMoveWorldportAckOpcode()
         sLog.outError("WorldSession::HandleMoveWorldportAckOpcode: player %s (%d) was teleported far but couldn't be added to map. (map:%u, x:%f, y:%f, "
             "z:%f) We port him to his homebind instead..", GetPlayer()->GetName(), GetPlayer()->GetGUIDLow(), loc.mapid, loc.coord_x, loc.coord_y, loc.coord_z);
         // teleport the player home
-        GetPlayer()->TeleportTo(GetPlayer()->m_homebindMapId, GetPlayer()->m_homebindX, GetPlayer()->m_homebindY, GetPlayer()->m_homebindZ, GetPlayer()->GetOrientation());
+        GetPlayer()->TeleportToHomebind();
         return;
     }
 
@@ -238,40 +238,6 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
     ReadMovementInfo(recv_data, &movementInfo);
     /*----------------*/
 
-    if(!(movementInfo.flags & MOVEMENTFLAG_ONTRANSPORT) && _player->GetVehicleGUID())
-    {
-        if(mover->GetGUID() == _player->GetGUID())
-        {
-            return;
-        }
-    }
-    // we sent a movement packet with MOVEMENTFLAG_ONTRANSPORT and we are on vehicle
-    // this can be moving on vehicle or entering another transport (eg. boat)
-    if((movementInfo.flags & MOVEMENTFLAG_ONTRANSPORT) && _player->GetVehicleGUID())
-    {
-        // we are controlling that vehicle
-        if(mover->GetGUID() == _player->GetVehicleGUID())
-        {
-            // we sent movement packet, related to movement ON vehicle,
-            // but not WITH vehicle, so mover = player
-            if(_player->GetVehicleGUID() == movementInfo.t_guid)
-            {
-                // this is required to avoid client crash, otherwise it will result
-                // in moving with vehicle on the same vehicle and that = crash
-                mover = _player;
-                plMover = _player;
-            }
-        }
-        if(_player->GetVehicleGUID() == movementInfo.t_guid)
-        {
-            _player->m_SeatData.OffsetX = movementInfo.t_x;
-            _player->m_SeatData.OffsetY = movementInfo.t_y;
-            _player->m_SeatData.OffsetZ = movementInfo.t_z;
-            _player->m_SeatData.Orientation = movementInfo.t_o;
-        }
-    }
-
-        recv_data.rpos(recv_data.wpos());                   // prevent warnings spam
     if (!MaNGOS::IsValidMapCoord(movementInfo.x, movementInfo.y, movementInfo.z, movementInfo.o))
     {
         recv_data.rpos(recv_data.wpos());                   // prevent warnings spam
