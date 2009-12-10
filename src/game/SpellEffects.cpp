@@ -2378,7 +2378,7 @@ void Spell::EffectTeleportUnits(uint32 i)
             if (unitTarget->GetTypeId() != TYPEID_PLAYER)
                 return;
 
-            ((Player*)unitTarget)->TeleportTo(((Player*)unitTarget)->m_homebindMapId,((Player*)unitTarget)->m_homebindX,((Player*)unitTarget)->m_homebindY,((Player*)unitTarget)->m_homebindZ,unitTarget->GetOrientation(),unitTarget==m_caster ? TELE_TO_SPELL : 0);
+            ((Player*)unitTarget)->TeleportToHomebind(unitTarget==m_caster ? TELE_TO_SPELL : 0);
             return;
         }
         case TARGET_AREAEFFECT_INSTANT:                     // in all cases first TARGET_TABLE_X_Y_Z_COORDINATES
@@ -2814,21 +2814,21 @@ void Spell::EffectHealthLeech(uint32 i)
 
     sLog.outDebug("HealthLeech :%i", damage);
 
+    uint32 curHealth = unitTarget->GetHealth();
+    damage = m_caster->SpellNonMeleeDamageLog(unitTarget, m_spellInfo->Id, damage );
+    if (curHealth < damage)
+        damage = curHealth;
+
     float multiplier = m_spellInfo->EffectMultipleValue[i];
 
     if (Player *modOwner = m_caster->GetSpellModOwner())
         modOwner->ApplySpellMod(m_spellInfo->Id, SPELLMOD_MULTIPLE_VALUE, multiplier);
 
-    int32 new_damage = int32(damage*multiplier);
-    uint32 curHealth = unitTarget->GetHealth();
-    new_damage = m_caster->SpellNonMeleeDamageLog(unitTarget, m_spellInfo->Id, new_damage );
-    if (curHealth < new_damage)
-        new_damage = curHealth;
-
+    uint32 heal = uint32(damage*multiplier);
     if (m_caster->isAlive())
     {
-        new_damage = m_caster->SpellHealingBonus(m_caster, m_spellInfo, new_damage, HEAL);
-        m_caster->DealHeal(m_caster, uint32(new_damage), m_spellInfo);
+        heal = m_caster->SpellHealingBonus(m_caster, m_spellInfo, heal, HEAL);
+        m_caster->DealHeal(m_caster, heal, m_spellInfo);
     }
 }
 
@@ -5855,7 +5855,7 @@ void Spell::EffectStuck(uint32 /*i*/)
         return;
 
     // homebind location is loaded always
-    pTarget->TeleportTo(pTarget->m_homebindMapId,pTarget->m_homebindX,pTarget->m_homebindY,pTarget->m_homebindZ,pTarget->GetOrientation(), (unitTarget==m_caster ? TELE_TO_SPELL : 0));
+    pTarget->TeleportToHomebind(unitTarget==m_caster ? TELE_TO_SPELL : 0);
 
     // Stuck spell trigger Hearthstone cooldown
     SpellEntry const *spellInfo = sSpellStore.LookupEntry(8690);

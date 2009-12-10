@@ -691,8 +691,8 @@ void Spell::prepareDataForTriggerSystem()
                 if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000800000000060))
                     m_canTrigger = true;
                 break;
-            case SPELLFAMILY_PRIEST:  // For Penance heal/damage triggers need do it
-                if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0001800000000000))
+            case SPELLFAMILY_PRIEST: // For Penance,Mind Sear,Mind Flay heal/damage triggers need do it
+                if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0001800000800000) || (m_spellInfo->SpellFamilyFlags2 & 0x00000040))
                     m_canTrigger = true;
                 break;
             case SPELLFAMILY_ROGUE:   // For poisons need do it
@@ -5056,7 +5056,7 @@ SpellCastResult Spell::CheckCasterAuras() const
         Unit::AuraList const& casingLimit = m_caster->GetAurasByType(SPELL_AURA_ALLOW_ONLY_ABILITY);
         for(Unit::AuraList::const_iterator itr = casingLimit.begin(); itr != casingLimit.end(); ++itr)
         {
-            if(m_spellInfo->SpellFamilyFlags != (uint64)(*itr)->getAuraSpellClassMask())
+            if(!IsAffectedByAura(*itr))
             {
                prevented_reason = SPELL_FAILED_CASTER_AURASTATE;
                break;
@@ -5817,7 +5817,7 @@ void Spell::UpdatePointers()
     m_targets.Update(m_caster);
 }
 
-bool Spell::IsAffectedByAura(Aura *aura)
+bool Spell::IsAffectedByAura(Aura *aura) const
 {
     return sSpellMgr.IsAffectedByMod(m_spellInfo, aura->getAuraSpellMod());
 }
