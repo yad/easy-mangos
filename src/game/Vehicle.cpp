@@ -69,6 +69,7 @@ void Vehicle::setDeathState(DeathState s)                       // overwrite vir
 void Vehicle::Update(uint32 diff)
 {
     Creature::Update(diff);
+    InstallAllAccessories();
     if(despawn)
     {
         m_spawnduration -= diff;
