@@ -648,6 +648,43 @@ void Creature::LoadBotMenu(Player *pPlayer)
         }
     }
 
+    AccountInfos m_AccountInfos = pPlayer->GetAccountInfos();
+    for(AccountInfos::iterator itr = m_AccountInfos.begin(); itr != m_AccountInfos.end(); ++itr)
+    {
+        uint64 guid = pPlayer->GetGUID();
+        uint64 guidlo = itr->second.Guid;
+        std::string name = itr->second.Name;
+        std::string word = "";
+
+        if( (guid == 0) || (guid == guidlo) )
+        {
+            //not found or himself
+        }
+        else
+        {
+            if(sConfig.GetBoolDefault("PlayerbotAI.DisableBots", false)) return;
+            // create the manager if it doesn't already exist
+            if (! pPlayer->GetPlayerbotMgr())
+                pPlayer->SetPlayerbotMgr(new PlayerbotMgr(pPlayer));
+            if(pPlayer->GetPlayerbotMgr()->GetPlayerBot(guidlo) == NULL) // add (if not already in game)
+            {
+                //word += "Recruit ";
+                word += "Recruter : ";
+                word += name;
+                //word += " as a Bot.";
+                pPlayer->PlayerTalkClass->GetGossipMenu().AddMenuItem((uint8)9, word, guidlo, guidlo, word, false);
+            }
+            else if(pPlayer->GetPlayerbotMgr()->GetPlayerBot(guidlo) != NULL) // remove (if in game)
+            {
+                //word += "Dismiss ";
+                word += "Abandonner : ";
+                word += name;
+                //word += " from duty.";
+                pPlayer->PlayerTalkClass->GetGossipMenu().AddMenuItem((uint8)0, word, guidlo, guidlo, word, false);
+            }
+        }
+    }
+    /*
     uint64 guid = pPlayer->GetGUID();
     uint32 accountId = sObjectMgr.GetPlayerAccountIdByGUID(guid);
     QueryResult *result = CharacterDatabase.PQuery("SELECT guid, name FROM characters WHERE account='%d'",accountId);
@@ -688,6 +725,7 @@ void Creature::LoadBotMenu(Player *pPlayer)
     }
     while (result->NextRow());
     delete result;
+	*/
 }
 
 bool Creature::isBotGiver()

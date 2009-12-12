@@ -12420,6 +12420,14 @@ void Player::OnGossipSelect(WorldObject* pSource, uint32 gossipListId, uint32 me
     if (menuId != gossipmenu.GetMenuId())
         return;
 
+    if(pSource->GetTypeId() == TYPEID_UNIT)
+    {
+        Unit* pUnit = ((Unit*)pSource);
+        Creature *pCreature = ((Creature*)pUnit);
+        if(pCreature && pCreature->isBotGiver())
+            return;
+    }
+
     uint32 gossipOptionId = gossipmenu.GetItem(gossipListId).m_gOptionId;
     uint64 guid = pSource->GetGUID();
 
@@ -12521,10 +12529,6 @@ void Player::OnGossipSelect(WorldObject* pSource, uint32 gossipListId, uint32 me
             GetSession()->SendBattlegGroundList(guid, bgTypeId);
             break;
         }
-        // Playerbot START
-	case GOSSIP_OPTION_BOT:
-	    break;
-	// Playerbot END    
     }
 }
 
@@ -21178,6 +21182,32 @@ void Player::_SaveEquipmentSets()
                 break;
         }
     }
+}
+
+void Player::_LoadAccountInfos()
+{
+	QueryResult *result = result = CharacterDatabase.PQuery("SELECT guid, name FROM characters WHERE account = '%d'", GetSession()->GetAccountId());
+    if (!result)
+        return;
+
+    uint32 count = 0;
+    do
+    {
+        Field *fields = result->Fetch();
+
+        AccountInfo aInfo;
+
+        aInfo.Guid      = fields[0].GetUInt64();
+        aInfo.Name      = fields[1].GetCppString();
+
+        m_AccountInfos[count] = aInfo;
+
+        ++count;
+
+        if(count >= 40)                // client limit
+            break;
+    } while (result->NextRow());
+    delete result;
 }
 
 void Player::_SaveBGData()
