@@ -9099,9 +9099,32 @@ bool Unit::isSpellCrit(Unit *pVictim, SpellEntry const *spellProto, SpellSchoolM
             break;
         }
         case SPELL_DAMAGE_CLASS_MELEE:
+        case SPELL_DAMAGE_CLASS_RANGED:
         {
+            if (pVictim)
+            {
+                crit_chance = GetUnitCriticalChance(attackType, pVictim);
+                crit_chance+= GetTotalAuraModifierByMiscMask(SPELL_AURA_MOD_SPELL_CRIT_CHANCE_SCHOOL, schoolMask);
+            }
+
+            // Rend and Tear - eff:1
+            if(spellProto->SpellFamilyName == SPELLFAMILY_DRUID && spellProto->SpellIconID == 1680 && spellProto->SpellFamilyFlags & UI64LIT(0x00800000))
+            {
+                if(pVictim->HasAuraState(AURA_STATE_MECHANIC_BLEED))
+                {
+                    AuraList const& dummyAuras = GetAurasByType(SPELL_AURA_DUMMY);
+                    for(AuraList::const_iterator i = dummyAuras.begin(); i != dummyAuras.end(); ++i)
+                    {
+                        if((*i)->GetEffIndex() == 1 && (*i)->GetSpellProto()->SpellIconID == 2859)
+                        {
+                            crit_chance += (*i)->GetModifier()->m_amount;
+                            break;
+                        }
+                    }
+                }
+            }
             // Judgement of Command proc always crits on stunned target
-            if(spellProto->SpellFamilyName == SPELLFAMILY_PALADIN)
+            else if(spellProto->SpellFamilyName == SPELLFAMILY_PALADIN)
             {
                 if(spellProto->SpellFamilyFlags & 0x0000000000800000LL && spellProto->SpellIconID == 561)
                 {
@@ -9109,14 +9132,6 @@ bool Unit::isSpellCrit(Unit *pVictim, SpellEntry const *spellProto, SpellSchoolM
                         return true;
                 }
             }
-        }
-        case SPELL_DAMAGE_CLASS_RANGED:
-        {
-            if (pVictim)
-                crit_chance = GetUnitCriticalChance(attackType, pVictim);
-
-            crit_chance+= GetTotalAuraModifierByMiscMask(SPELL_AURA_MOD_SPELL_CRIT_CHANCE_SCHOOL, schoolMask);
-            break;
         }
         default:
             return false;
@@ -9562,9 +9577,9 @@ uint32 Unit::MeleeDamageBonus(Unit *pVictim, uint32 pdamage,WeaponAttackType att
     uint32 schoolMask       = spellProto ? spellProto->SchoolMask : GetMeleeDamageSchoolMask();
     uint32 mechanicMask     = spellProto ? GetAllSpellMechanicMask(spellProto) : 0;
 
-    // Shred also have bonus as MECHANIC_BLEED damages
-    if (spellProto && spellProto->SpellFamilyName==SPELLFAMILY_DRUID && spellProto->SpellFamilyFlags & UI64LIT(0x00008000))
-        mechanicMask |= (1 << (MECHANIC_BLEED-1));
+    // Shred and Maul also have bonus as MECHANIC_BLEED damages
+    if (spellProto && spellProto->SpellFamilyName==SPELLFAMILY_DRUID && spellProto->SpellFamilyFlags & UI64LIT(0x00008800))
+         mechanicMask |= (1 << (MECHANIC_BLEED-1));
 
 
     // FLAT damage bonus auras
@@ -9662,6 +9677,28 @@ uint32 Unit::MeleeDamageBonus(Unit *pVictim, uint32 pdamage,WeaponAttackType att
     Unit *owner = GetOwner();
     if (!owner)
         owner = this;
+
+    // ..done (dummy auras)
+    if(spellProto)
+    {
+        AuraList const& casterDummyAuras = owner->GetAurasByType(SPELL_AURA_DUMMY);
+        for(AuraList::const_iterator i = casterDummyAuras.begin(); i != casterDummyAuras.end(); ++i)
+        {
+            if (!(*i)->isAffectedOnSpell(spellProto))
+                continue;
+
+            switch((*i)->GetSpellProto()->SpellIconID)
+            {
+                // Rend and Tear - eff:0
+                case 2859:
+                {
+                    if(pVictim->HasAuraState(AURA_STATE_MECHANIC_BLEED))
+                        DonePercent *= (100.0f+(*i)->GetModifier()->m_amount)/100.0f;
+                    break;
+                }
+            }
+        }
+    }
 
     // ..done (class scripts)
     if(spellProto)
