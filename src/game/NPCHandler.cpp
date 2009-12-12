@@ -286,8 +286,8 @@ void WorldSession::HandleGossipHelloOpcode(WorldPacket & recv_data)
     if(pCreature->isBotGiver())
     {
         GetPlayer()->TalkedToCreature(pCreature->GetEntry(),pCreature->GetGUID());
-        GetPlayer()->PrepareGossipMenu(pCreature,GOSSIP_OPTION_BOT);
-        GetPlayer()->SendPreparedGossip(pCreature);
+        _player->PrepareGossipMenu(pCreature,GOSSIP_OPTION_BOT);
+        _player->SendPreparedGossip(pCreature);
         pCreature->StopMoving();
     }
     else if (!pCreature->IsStopped())
@@ -299,7 +299,7 @@ void WorldSession::HandleGossipHelloOpcode(WorldPacket & recv_data)
     if (!Script->GossipHello(_player, pCreature))
     {
         _player->TalkedToCreature(pCreature->GetEntry(), pCreature->GetGUID());
-        _player->PrepareGossipMenu(pCreature);
+        _player->PrepareGossipMenu(pCreature, pCreature->GetCreatureInfo()->GossipMenuId);
         _player->SendPreparedGossip(pCreature);
     }
 }
@@ -308,14 +308,14 @@ void WorldSession::HandleGossipSelectOptionOpcode( WorldPacket & recv_data )
 {
     sLog.outDebug("WORLD: CMSG_GOSSIP_SELECT_OPTION");
 
-    uint32 option;
+    uint32 gossipListId;
     uint32 menuId;
     uint64 guid;
     std::string code = "";
 
-    recv_data >> guid >> menuId >> option;
+    recv_data >> guid >> menuId >> gossipListId;
 
-    if (_player->PlayerTalkClass->GossipOptionCoded(option))
+    if (_player->PlayerTalkClass->GossipOptionCoded(gossipListId))
     {
         sLog.outBasic("reading string");
         recv_data >> code;
@@ -335,12 +335,12 @@ void WorldSession::HandleGossipSelectOptionOpcode( WorldPacket & recv_data )
         GetPlayer()->RemoveSpellsCausingAura(SPELL_AURA_FEIGN_DEATH);
 
     // Playerbot mod
-    if(pCreature->isBotGiver() && ! _player->GetPlayerbotAI())
+    if(pCreature->isBotGiver() && !_player->GetPlayerbotAI())
     {
-        if (! _player->GetPlayerbotMgr())
+        if (!_player->GetPlayerbotMgr())
             _player->SetPlayerbotMgr(new PlayerbotMgr(_player));
         WorldSession * m_session = _player->GetSession();
-        uint64 guidlo = _player->PlayerTalkClass->GossipOptionSender(option);
+        uint64 guidlo = _player->PlayerTalkClass->GossipOptionSender(gossipListId);
         if(_player->GetPlayerbotMgr()->GetPlayerBot(guidlo) != NULL)
         {
             _player->GetPlayerbotMgr()->LogoutPlayerBot(guidlo);
@@ -352,15 +352,40 @@ void WorldSession::HandleGossipSelectOptionOpcode( WorldPacket & recv_data )
         _player->PlayerTalkClass->CloseGossip();
     }
 
-    if (!code.empty())
+    // TODO: determine if scriptCall is needed for GO and also if scriptCall can be same as current, with modified argument WorldObject*
+
+    if (IS_CREATURE_GUID(guid))
     {
-        if (!Script->GossipSelectWithCode(_player, pCreature, _player->PlayerTalkClass->GossipOptionSender(option), _player->PlayerTalkClass->GossipOptionAction(option), code.c_str()))
-            _player->OnGossipSelect(pCreature, option);
+        Creature *pCreature = GetPlayer()->GetNPCIfCanInteractWith(guid, UNIT_NPC_FLAG_NONE);
+
+        if (!pCreature)
+        {
+            sLog.outDebug("WORLD: HandleGossipSelectOptionOpcode - Creature (GUID: %u) not found or you can't interact with it.", uint32(GUID_LOPART(guid)));
+            return;
+        }
+
+        if (!code.empty())
+        {
+            if (!Script->GossipSelectWithCode(_player, pCreature, _player->PlayerTalkClass->GossipOptionSender(gossipListId), _player->PlayerTalkClass->GossipOptionAction(gossipListId), code.c_str()))
+                _player->OnGossipSelect(pCreature, gossipListId, menuId);
+        }
+        else
+        {
+            if (!Script->GossipSelect(_player, pCreature, _player->PlayerTalkClass->GossipOptionSender(gossipListId), _player->PlayerTalkClass->GossipOptionAction(gossipListId)))
+                _player->OnGossipSelect(pCreature, gossipListId, menuId);
+        }
     }
-    else
+    else if (IS_GAMEOBJECT_GUID(guid))
     {
-        if (!Script->GossipSelect(_player, pCreature, _player->PlayerTalkClass->GossipOptionSender(option), _player->PlayerTalkClass->GossipOptionAction(option)))
-           _player->OnGossipSelect(pCreature, option);
+        GameObject *pGo = GetPlayer()->GetGameObjectIfCanInteractWith(guid);
+
+        if (!pGo)
+        {
+            sLog.outDebug("WORLD: HandleGossipSelectOptionOpcode - GameObject (GUID: %u) not found or you can't interact with it.", uint32(GUID_LOPART(guid)));
+            return;
+        }
+
+        _player->OnGossipSelect(pGo, gossipListId, menuId);
     }
 }
 
@@ -450,13 +475,7 @@ void WorldSession::SendBindPoint(Creature *npc)
     uint32 bindspell = 3286;
     uint32 zone_id = _player->GetZoneId();
 
-    // update sql homebind
-    CharacterDatabase.PExecute("UPDATE character_homebind SET map = '%u', zone = '%u', position_x = '%f', position_y = '%f', position_z = '%f' WHERE guid = '%u'", _player->GetMapId(), zone_id, _player->GetPositionX(), _player->GetPositionY(), _player->GetPositionZ(), _player->GetGUIDLow());
-    _player->m_homebindMapId = _player->GetMapId();
-    _player->m_homebindZoneId = zone_id;
-    _player->m_homebindX = _player->GetPositionX();
-    _player->m_homebindY = _player->GetPositionY();
-    _player->m_homebindZ = _player->GetPositionZ();
+    _player->SetHomebindToCurrentPos();
 
     // send spell for bind 3286 bind magic
     npc->CastSpell(_player, bindspell, true);
