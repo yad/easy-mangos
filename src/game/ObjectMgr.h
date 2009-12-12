@@ -93,6 +93,7 @@ extern ScriptMapMap sQuestStartScripts;
 extern ScriptMapMap sSpellScripts;
 extern ScriptMapMap sGameObjectScripts;
 extern ScriptMapMap sEventScripts;
+extern ScriptMapMap sGossipScripts;
 
 struct SpellClickInfo
 {
@@ -162,7 +163,7 @@ typedef UNORDERED_MAP<uint32,QuestLocale> QuestLocaleMap;
 typedef UNORDERED_MAP<uint32,NpcTextLocale> NpcTextLocaleMap;
 typedef UNORDERED_MAP<uint32,PageTextLocale> PageTextLocaleMap;
 typedef UNORDERED_MAP<int32,MangosStringLocale> MangosStringLocaleMap;
-typedef UNORDERED_MAP<uint32,NpcOptionLocale> NpcOptionLocaleMap;
+typedef UNORDERED_MAP<uint32,GossipMenuItemsLocale> GossipMenuItemsLocaleMap;
 typedef UNORDERED_MAP<uint32,PointOfInterestLocale> PointOfInterestLocaleMap;
 
 typedef std::multimap<uint32,uint32> QuestRelations;
@@ -216,6 +217,38 @@ struct PointOfInterest
     std::string icon_name;
 };
 
+struct GossipMenuItems
+{
+    uint32          menu_id;
+    uint32          id;
+    uint8           option_icon;
+    std::string     option_text;
+    uint32          option_id;
+    uint32          npc_option_npcflag;
+    uint32          action_menu_id;
+    uint32          action_poi_id;
+    uint32          action_script_id;
+    bool            box_coded;
+    uint32          box_money;
+    std::string     box_text;
+    uint16          cond_1;
+    uint16          cond_2;
+    uint16          cond_3;
+};
+
+struct GossipMenus
+{
+    uint32          entry;
+    uint32          text_id;
+    uint16          cond_1;
+    uint16          cond_2;
+};
+
+typedef std::multimap<uint32,GossipMenus> GossipMenusMap;
+typedef std::pair<GossipMenusMap::const_iterator, GossipMenusMap::const_iterator> GossipMenusMapBounds;
+typedef std::multimap<uint32,GossipMenuItems> GossipMenuItemsMap;
+typedef std::pair<GossipMenuItemsMap::const_iterator, GossipMenuItemsMap::const_iterator> GossipMenuItemsMapBounds;
+
 #define WEATHER_SEASONS 4
 struct WeatherSeasonChances
 {
@@ -251,9 +284,10 @@ enum ConditionType
     CONDITION_AD_COMMISSION_AURA    = 10,                   // 0            0,      for condition true while one from AD commission aura active
     CONDITION_NO_AURA               = 11,                   // spell_id     effindex
     CONDITION_ACTIVE_EVENT          = 12,                   // event_id
+    CONDITION_AREA_FLAG             = 13                    // area_flag    area_flag_not
 };
 
-#define MAX_CONDITION                 13                    // maximum value in ConditionType enum
+#define MAX_CONDITION                 14                    // maximum value in ConditionType enum
 
 struct PlayerCondition
 {
@@ -275,7 +309,6 @@ struct PlayerCondition
 
 // NPC gossip text id
 typedef UNORDERED_MAP<uint32, uint32> CacheNpcTextIdMap;
-typedef std::list<GossipOption> CacheNpcOptionList;
 
 typedef UNORDERED_MAP<uint32, VendorItemData> CacheVendorItemMap;
 typedef UNORDERED_MAP<uint32, TrainerSpellData> CacheTrainerSpellMap;
@@ -505,6 +538,7 @@ class ObjectMgr
         void LoadQuestStartScripts();
         void LoadEventScripts();
         void LoadSpellScripts();
+        void LoadGossipScripts();
 
         bool LoadMangosStrings(DatabaseType& db, char const* table, int32 min_value, int32 max_value);
         bool LoadMangosStrings() { return LoadMangosStrings(WorldDatabase,"mangos_string",MIN_MANGOS_STRING_ID,MAX_MANGOS_STRING_ID); }
@@ -525,7 +559,7 @@ class ObjectMgr
         void LoadQuestLocales();
         void LoadNpcTextLocales();
         void LoadPageTextLocales();
-        void LoadNpcOptionLocales();
+        void LoadGossipMenuItemsLocales();
         void LoadPointOfInterestLocales();
         void LoadInstanceTemplate();
         void LoadMailLevelRewards();
@@ -557,8 +591,11 @@ class ObjectMgr
         void LoadWeatherZoneChances();
         void LoadGameTele();
 
-        void LoadNpcOptions();
         void LoadNpcTextId();
+
+        void LoadGossipMenu();
+        void LoadGossipMenuItems();
+
         void LoadVendors();
         void LoadTrainerSpell();
 
@@ -669,10 +706,10 @@ class ObjectMgr
             if(itr==mPageTextLocaleMap.end()) return NULL;
             return &itr->second;
         }
-        NpcOptionLocale const* GetNpcOptionLocale(uint32 entry) const
+        GossipMenuItemsLocale const* GetGossipMenuItemsLocale(uint32 entry) const
         {
-            NpcOptionLocaleMap::const_iterator itr = mNpcOptionLocaleMap.find(entry);
-            if(itr==mNpcOptionLocaleMap.end()) return NULL;
+            GossipMenuItemsLocaleMap::const_iterator itr = mGossipMenuItemsLocaleMap.find(entry);
+            if(itr==mGossipMenuItemsLocaleMap.end()) return NULL;
             return &itr->second;
         }
         PointOfInterestLocale const* GetPointOfInterestLocale(uint32 poi_id) const
@@ -751,8 +788,6 @@ class ObjectMgr
         bool AddGameTele(GameTele& data);
         bool DeleteGameTele(const std::string& name);
 
-        CacheNpcOptionList const& GetNpcOptions() const { return m_mCacheNpcOptionList; }
-
         uint32 GetNpcGossip(uint32 entry) const
         {
             CacheNpcTextIdMap::const_iterator iter = m_mCacheNpcTextIdMap.find(entry);
@@ -800,6 +835,16 @@ class ObjectMgr
             return ItemRequiredTargetMapBounds(m_ItemRequiredTarget.lower_bound(uiItemEntry),m_ItemRequiredTarget.upper_bound(uiItemEntry));
         }
 
+        GossipMenusMapBounds GetGossipMenusMapBounds(uint32 uiMenuId) const
+        {
+            return GossipMenusMapBounds(m_mGossipMenusMap.lower_bound(uiMenuId),m_mGossipMenusMap.upper_bound(uiMenuId));
+        }
+
+        GossipMenuItemsMapBounds GetGossipMenuItemsMapBounds(uint32 uiMenuId) const
+        {
+            return GossipMenuItemsMapBounds(m_mGossipMenuItemsMap.lower_bound(uiMenuId),m_mGossipMenuItemsMap.upper_bound(uiMenuId));
+        }
+
     protected:
 
         // first free id for selected id type
@@ -841,7 +886,9 @@ class ObjectMgr
 
         RepOnKillMap        mRepOnKill;
 
-        PointOfInterestMap mPointsOfInterest;
+        GossipMenusMap      m_mGossipMenusMap;
+        GossipMenuItemsMap  m_mGossipMenuItemsMap;
+        PointOfInterestMap  mPointsOfInterest;
 
         WeatherZoneMap      mWeatherZoneMap;
 
@@ -905,7 +952,7 @@ class ObjectMgr
         NpcTextLocaleMap mNpcTextLocaleMap;
         PageTextLocaleMap mPageTextLocaleMap;
         MangosStringLocaleMap mMangosStringLocaleMap;
-        NpcOptionLocaleMap mNpcOptionLocaleMap;
+        GossipMenuItemsLocaleMap mGossipMenuItemsLocaleMap;
         PointOfInterestLocaleMap mPointOfInterestLocaleMap;
         RespawnTimes mCreatureRespawnTimes;
         RespawnTimes mGORespawnTimes;
@@ -914,7 +961,6 @@ class ObjectMgr
         typedef std::vector<PlayerCondition> ConditionStore;
         ConditionStore mConditions;
 
-        CacheNpcOptionList m_mCacheNpcOptionList;
         CacheNpcTextIdMap m_mCacheNpcTextIdMap;
         CacheVendorItemMap m_mCacheVendorItemMap;
         CacheTrainerSpellMap m_mCacheTrainerSpellMap;
