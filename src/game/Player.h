@@ -693,9 +693,20 @@ struct EquipmentSet
     EquipmentSetUpdateState state;
 };
 
+struct AccountInfo
+{
+    AccountInfo() : Guid(0), Name("")
+    {
+    }
+
+    uint64 Guid;
+    std::string Name;
+};
+
 #define MAX_EQUIPMENT_SET_INDEX 10                          // client limit
 
 typedef std::map<uint32, EquipmentSet> EquipmentSets;
+typedef std::map<uint32, AccountInfo> AccountInfos;
 
 struct ItemPosCount
 {
@@ -2387,6 +2398,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         void SetPlayerbotMgr(PlayerbotMgr* mgr) { assert(!m_playerbotAI && !m_playerbotMgr); m_playerbotMgr=mgr; }
         PlayerbotMgr* GetPlayerbotMgr() { return m_playerbotMgr; }
         void SetBotDeathTimer() { m_deathTimer = 0; }
+        AccountInfos GetAccountInfos() {return m_AccountInfos; }
 
     protected:
 
@@ -2440,6 +2452,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         void _LoadDeclinedNames(QueryResult *result);
         void _LoadArenaTeamInfo(QueryResult *result);
         void _LoadEquipmentSets(QueryResult *result);
+        void _LoadAccountInfos();
         void _LoadBGData(QueryResult* result);
 
         /*********************************************************/
@@ -2636,9 +2649,10 @@ class MANGOS_DLL_SPEC Player : public Unit
         GridReference<Player> m_gridRef;
         MapReference m_mapRef;
 
-         // Playerbot mod:
+        // Playerbot mod:
         PlayerbotAI* m_playerbotAI;
-	PlayerbotMgr* m_playerbotMgr;
+        PlayerbotMgr* m_playerbotMgr;
+        AccountInfos m_AccountInfos;
  
         // Homebind coordinates
         uint32 m_homebindMapId;
