@@ -322,7 +322,7 @@ pAuraHandler AuraHandler[TOTAL_AURAS]=
     &Aura::HandleNoImmediateEffect,                         //269 SPELL_AURA_MOD_IGNORE_DAMAGE_REDUCTION_SCHOOL   implemented in Unit::CalcNotIgnoreDamageRedunction
     &Aura::HandleUnused,                                    //270 SPELL_AURA_MOD_IGNORE_TARGET_RESIST (unused in 3.2.2a)
     &Aura::HandleNoImmediateEffect,                         //271 SPELL_AURA_MOD_DAMAGE_FROM_CASTER    implemented in Unit::SpellDamageBonus
-    &Aura::HandleNULL,                                      //272 reduce spell cast time?
+    &Aura::HandleNoImmediateEffect,                         //272 SPELL_AURA_MAELSTROM_WEAPON (unclear use for aura, it used in (3.2.2a...3.3.0) in single spell 53817 that spellmode stacked and charged spell expected to be drop as stack
     &Aura::HandleNoImmediateEffect,                         //273 SPELL_AURA_X_RAY (client side implementation)
     &Aura::HandleNULL,                                      //274 proc free shot?
     &Aura::HandleNoImmediateEffect,                         //275 SPELL_AURA_MOD_IGNORE_SHAPESHIFT Use SpellClassMask for spell select
@@ -5906,7 +5906,7 @@ void Aura::HandleShapeshiftBoosts(bool apply)
 
 void Aura::HandleSpellSpecificBoosts(bool apply)
 {
-    bool cast_at_remove = false;                            // if spell must be casted at aura remove
+    bool cast_at_remove = false;                            // if spell must be casted at last aura from stack remove
     uint32 spellId1 = 0;
     uint32 spellId2 = 0;
     uint32 spellId3 = 0;
@@ -5916,7 +5916,7 @@ void Aura::HandleSpellSpecificBoosts(bool apply)
     {
         case SPELLFAMILY_MAGE:
         {
-            // Ice Barrier
+            // Ice Barrier (non stacking from one caster)
             if (m_spellProto->SpellIconID == 32)        
             {
                 if (!apply && (m_removeMode == AURA_REMOVE_BY_DISPEL || (m_removeMode == AURA_REMOVE_BY_DEFAULT && !GetModifier()->m_amount)))
@@ -5963,7 +5963,7 @@ void Aura::HandleSpellSpecificBoosts(bool apply)
             break;
         }
         case SPELLFAMILY_WARLOCK:
-            // Fear
+            // Fear (non stacking)
             if (m_spellProto->SpellFamilyFlags & UI64LIT(0x0000040000000000))
             {
                 if(!apply)
