@@ -539,6 +539,7 @@ class ObjectMgr
         void LoadEventScripts();
         void LoadSpellScripts();
         void LoadGossipScripts();
+        void LoadSpellNames();
 
         bool LoadMangosStrings(DatabaseType& db, char const* table, int32 min_value, int32 max_value);
         bool LoadMangosStrings() { return LoadMangosStrings(WorldDatabase,"mangos_string",MIN_MANGOS_STRING_ID,MAX_MANGOS_STRING_ID); }
@@ -630,6 +631,15 @@ class ObjectMgr
                 return itr->second;
             else
                 return "There is no info for this item";
+        }
+
+        std::string GetSpellName( uint32 id )
+        {
+            SpellNameMap::const_iterator itr = mSpellNames.find( id );
+            if ( itr != mSpellNames.end() )
+                return itr->second;
+            else
+                return "There is no name for this spell";
         }
 
         typedef std::multimap<int32, uint32> ExclusiveQuestGroups;
@@ -870,12 +880,15 @@ class ObjectMgr
         typedef UNORDERED_MAP<uint32, std::string> ItemTextMap;
         typedef std::set<uint32> TavernAreaTriggerSet;
         typedef std::set<uint32> GameObjectForQuestSet;
+        typedef UNORDERED_MAP<uint32, std::string> SpellNameMap;
 
         GroupSet            mGroupSet;
         GuildMap            mGuildMap;
         ArenaTeamMap        mArenaTeamMap;
 
         ItemTextMap         mItemTexts;
+
+        SpellNameMap         mSpellNames;
 
         QuestAreaTriggerMap mQuestAreaTriggerMap;
         TavernAreaTriggerSet mTavernAreaTriggerSet;
