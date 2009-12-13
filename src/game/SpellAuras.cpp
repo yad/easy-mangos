@@ -1384,7 +1384,7 @@ bool Aura::isAffectedOnSpell(SpellEntry const *spell) const
     return false;
 }
 
-void Aura::ReapplyAffectedPassiveAuras( Unit* target )
+void Aura::ReapplyAffectedPassiveAuras( Unit* target, bool owner_mode )
 {
     std::set<uint32> affectedSelf;
     std::set<uint32> affectedAuraCaster;
@@ -1392,16 +1392,17 @@ void Aura::ReapplyAffectedPassiveAuras( Unit* target )
     for(Unit::AuraMap::const_iterator itr = target->GetAuras().begin(); itr != target->GetAuras().end(); ++itr)
     {
         // permanent passive or permanent area aura
-        if (itr->second->IsPermanent() && (itr->second->IsPassive() || itr->second->IsAreaAura()) &&
+        // passive spells can be affected only by own or owner spell mods)
+        if (itr->second->IsPermanent() && (owner_mode && itr->second->IsPassive() || itr->second->IsAreaAura()) &&
             // non deleted and not same aura (any with same spell id)
             !itr->second->IsDeleted() && itr->second->GetId() != GetId() &&
             // and affected by aura
             isAffectedOnSpell(itr->second->GetSpellProto()))
         {
             // only applied by self or aura caster
-            if(itr->second->GetCasterGUID() == target->GetGUID())
+            if (itr->second->GetCasterGUID() == target->GetGUID())
                 affectedSelf.insert(itr->second->GetId());
-            else if(itr->second->GetCasterGUID() == GetCasterGUID())
+            else if (itr->second->GetCasterGUID() == GetCasterGUID())
                 affectedAuraCaster.insert(itr->second->GetId());
         }
     }
@@ -1482,25 +1483,26 @@ void Aura::HandleAddModifier(bool apply, bool Real)
     ((Player*)m_target)->AddSpellMod(m_spellmod, apply);
 
     // reapply talents to own passive persistent auras
-    ReapplyAffectedPassiveAuras(m_target);
+    ReapplyAffectedPassiveAuras(m_target, true);
 
     // re-apply talents/passives/area auras applied to pet (it affected by player spellmods)
     if(Pet* pet = m_target->GetPet())
-        ReapplyAffectedPassiveAuras(pet);
+        ReapplyAffectedPassiveAuras(pet, true);
 
     // re-apply talents/passives/area auras applied to totems (it affected by player spellmods)
     for(int i = 0; i < MAX_TOTEM; ++i)
         if(m_target->m_TotemSlot[i])
             if(Creature* totem = m_target->GetMap()->GetCreature(m_target->m_TotemSlot[i]))
-                ReapplyAffectedPassiveAuras(totem);
+                ReapplyAffectedPassiveAuras(totem, true);
 
     // re-apply talents/passives/area auras applied to group members (it affected by player spellmods)
     if (Group* group = ((Player*)m_target)->GetGroup())
         for(GroupReference *itr = group->GetFirstMember(); itr != NULL; itr = itr->next())
             if (Player* member = itr->getSource())
                 if (member != m_target && member->IsInMap(m_target))
-                    ReapplyAffectedPassiveAuras(member);
+                    ReapplyAffectedPassiveAuras(member, false);
 }
+
 void Aura::HandleAddTargetTrigger(bool apply, bool /*Real*/)
 {
     // Use SpellModifier structure for check
@@ -5410,7 +5412,7 @@ void Aura::HandleAuraModCritPercent(bool apply, bool Real)
     if(Real)
     {
         for(int i = 0; i < MAX_ATTACK; ++i)
-            if(Item* pItem = ((Player*)m_target)->GetWeaponForAttack(WeaponAttackType(i)))
+            if(Item* pItem = ((Player*)m_target)->GetWeaponForAttack(WeaponAttackType(i),true,false))
                 ((Player*)m_target)->_ApplyWeaponDependentAuraCritMod(pItem, WeaponAttackType(i), this, apply);
     }
 
@@ -5610,7 +5612,7 @@ void Aura::HandleModDamageDone(bool apply, bool Real)
     if(Real && m_target->GetTypeId() == TYPEID_PLAYER)
     {
         for(int i = 0; i < MAX_ATTACK; ++i)
-            if(Item* pItem = ((Player*)m_target)->GetWeaponForAttack(WeaponAttackType(i)))
+            if(Item* pItem = ((Player*)m_target)->GetWeaponForAttack(WeaponAttackType(i),true,false))
                 ((Player*)m_target)->_ApplyWeaponDependentAuraDamageMod(pItem, WeaponAttackType(i), this, apply);
     }
 
@@ -5693,7 +5695,7 @@ void Aura::HandleModDamagePercentDone(bool apply, bool Real)
     if(Real && m_target->GetTypeId() == TYPEID_PLAYER)
     {
         for(int i = 0; i < MAX_ATTACK; ++i)
-            if(Item* pItem = ((Player*)m_target)->GetWeaponForAttack(WeaponAttackType(i)))
+            if(Item* pItem = ((Player*)m_target)->GetWeaponForAttack(WeaponAttackType(i),true,false))
                 ((Player*)m_target)->_ApplyWeaponDependentAuraDamageMod(pItem, WeaponAttackType(i), this, apply);
     }
 
@@ -6020,6 +6022,18 @@ void Aura::HandleSpellSpecificBoosts(bool apply)
 
     switch(GetSpellProto()->SpellFamilyName)
     {
+        case SPELLFAMILY_GENERIC:
+        {
+            // Illusionary Barrier
+            if(GetId() == 57350 && !apply && m_target->getPowerType() == POWER_MANA)
+            {
+                cast_at_remove = true;
+                spellId1 = 60242;                           // Darkmoon Card: Illusion
+            }
+            else
+                return;
+            break;
+        }
         case SPELLFAMILY_MAGE:
         {
             // Ice Barrier (non stacking from one caster)
