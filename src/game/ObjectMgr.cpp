@@ -376,7 +376,7 @@ void ObjectMgr::LoadGossipMenuItemsLocales()
 
         for(int i = 1; i < MAX_LOCALE; ++i)
         {
-            std::string str = fields[1+2*(i-1)].GetCppString();
+            std::string str = fields[2+2*(i-1)].GetCppString();
             if(!str.empty())
             {
                 int idx = GetOrNewIndexForLocale(LocaleConstant(i));
@@ -388,7 +388,7 @@ void ObjectMgr::LoadGossipMenuItemsLocales()
                     data.OptionText[idx] = str;
                 }
             }
-            str = fields[1+2*(i-1)+1].GetCppString();
+            str = fields[2+2*(i-1)+1].GetCppString();
             if(!str.empty())
             {
                 int idx = GetOrNewIndexForLocale(LocaleConstant(i));
@@ -7244,6 +7244,19 @@ bool PlayerCondition::Meets(Player const * player) const
             return !player->HasAura(value1, value2);
         case CONDITION_ACTIVE_EVENT:
             return sGameEventMgr.IsActiveEvent(value1);
+        case CONDITION_AREA_FLAG:
+        {
+            if (AreaTableEntry const *pAreaEntry = GetAreaEntryByAreaID(player->GetAreaId()))
+            {
+                if ((!value1 || (pAreaEntry->flags & value1)) && (!value2 || !(pAreaEntry->flags & value2)))
+                    return true;
+            }
+            return false;
+        }
+        case CONDITION_RACE_CLASS:
+            if ((!value1 || (player->getRaceMask() & value1)) && (!value2 || (player->getClassMask() & value2)))
+                return true;
+            return false;
         default:
             return false;
     }
@@ -7384,6 +7397,36 @@ bool PlayerCondition::IsValid(ConditionType condition, uint32 value1, uint32 val
             if(value1 >=events.size() || !events[value1].isValid())
             {
                 sLog.outErrorDb("Active event condition requires existed event id (%u), skipped", value1);
+                return false;
+            }
+            break;
+        }
+        case CONDITION_AREA_FLAG:
+        {
+            if (!value1 && !value2)
+            {
+                sLog.outErrorDb("Area flag condition has both values like 0, skipped");
+                return false;
+            }
+            break;
+        }
+        case CONDITION_RACE_CLASS:
+        {
+            if (!value1 && !value2)
+            {
+                sLog.outErrorDb("Race_class condition has both values like 0, skipped");
+                return false;
+            }
+
+            if (value1 && !(value1 & RACEMASK_ALL_PLAYABLE))
+            {
+                sLog.outErrorDb("Race_class condition has invalid player class %u, skipped", value1);
+                return false;
+            }
+
+            if (value2 && !(value2 & CLASSMASK_ALL_PLAYABLE))
+            {
+                sLog.outErrorDb("Race_class condition has invalid race mask %u, skipped", value2);
                 return false;
             }
             break;
@@ -7992,6 +8035,9 @@ void ObjectMgr::LoadGossipMenuItems()
             sLog.outErrorDb("Table gossip_menu_option for menu %u, id %u has unknown icon id %u. Replacing with GOSSIP_ICON_CHAT", gMenuItem.menu_id, gMenuItem.id, gMenuItem.option_icon);
             gMenuItem.option_icon = GOSSIP_ICON_CHAT;
         }
+
+        if (gMenuItem.option_id == GOSSIP_OPTION_NONE)
+            sLog.outErrorDb("Table gossip_menu_option for menu %u, id %u use option id GOSSIP_OPTION_NONE. Option will never be used", gMenuItem.menu_id, gMenuItem.id);
 
         if (gMenuItem.option_id >= GOSSIP_OPTION_MAX)
             sLog.outErrorDb("Table gossip_menu_option for menu %u, id %u has unknown option id %u. Option will not be used", gMenuItem.menu_id, gMenuItem.id, gMenuItem.option_id);
