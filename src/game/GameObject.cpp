@@ -51,7 +51,6 @@ GameObject::GameObject() : WorldObject()
     m_spawnedByDefault = true;
     m_usetimes = 0;
     m_spellId = 0;
-    m_actualHealth = 0;
     m_cooldownTime = 0;
     m_goInfo = NULL;
 
@@ -80,7 +79,7 @@ void GameObject::RemoveFromWorld()
         // Remove GO from owner
         if(uint64 owner_guid = GetOwnerGUID())
         {
-            if (Unit* owner = IS_PLAYER_GUID(owner_guid) ? ObjectAccessor::FindPlayer(owner_guid) : GetMap()->GetCreatureOrPet(owner_guid))
+            if (Unit* owner = ObjectAccessor::GetUnit(*this,owner_guid))
                 owner->RemoveGameObject(this,false);
             else
             {
@@ -150,10 +149,6 @@ bool GameObject::Create(uint32 guidlow, uint32 name_id, Map *map, uint32 phaseMa
     SetGoType(GameobjectTypes(goinfo->type));
     SetGoArtKit(0);                                         // unknown what this is
     SetGoAnimProgress(animprogress);
-
-    // Spell charges for GAMEOBJECT_TYPE_DESTRUCTIBLE_BUILDING (33)
-    if (goinfo->type == GAMEOBJECT_TYPE_DESTRUCTIBLE_BUILDING)
-        m_actualHealth = goinfo->destructibleBuilding.intactNumHits;
 
     //Notify the map's instance data.
     //Only works if you create the object in it, not if it is moves to that map.
@@ -436,13 +431,7 @@ void GameObject::Update(uint32 /*p_time*/)
             if(!m_respawnDelayTime)
                 return;
 
-            if(!m_spawnedByDefault)
-            {
-                m_respawnTime = 0;
-                return;
-            }
-
-            m_respawnTime = time(NULL) + m_respawnDelayTime;
+            m_respawnTime = m_spawnedByDefault ? time(NULL) + m_respawnDelayTime : 0;
 
             // if option not set then object will be saved at grid unload
             if(sWorld.getConfig(CONFIG_SAVE_RESPAWN_TIME_IMMEDIATLY))
@@ -1342,16 +1331,4 @@ void GameObject::UpdateRotationFields(float rotation2 /*=0.0f*/, float rotation3
 
     SetFloatValue(GAMEOBJECT_PARENTROTATION+2, rotation2);
     SetFloatValue(GAMEOBJECT_PARENTROTATION+3, rotation3);
-}
-
-void GameObject::DealSiegeDamage(uint32 damage)
-{
-    m_actualHealth -= damage;
-
-    // TODO : there are a lot of thinghts to do here
-    if(m_actualHealth < 0)
-    {
-        m_actualHealth = GetGOInfo()->destructibleBuilding.intactNumHits;
-        SetLootState(GO_JUST_DEACTIVATED);
-    }
 }
