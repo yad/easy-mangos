@@ -6038,6 +6038,24 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                 // 4 damage tick
                 basepoints0 = triggerAmount*damage/400;
                 triggered_spell_id = 61840;
+
+                // get previous aura
+                if ( target )
+                {
+                    Unit::AuraList const &periodicAuras = target->GetAurasByType( SPELL_AURA_PERIODIC_DAMAGE );
+                    for( Unit::AuraList::const_iterator i = periodicAuras.begin(); i != periodicAuras.end(); ++i )
+                    {
+                        if ( (*i)->GetCasterGUID() == GetGUID() && (*i)->GetSpellProto()->SpellIconID == 3025 )
+                        {
+                            // add remaining damage to new aura
+                            Modifier const* mod = (*i)->GetModifier();
+                            int32 tickDamage = mod->m_amount;
+                            int32 tickCount = 1 + int32( (*i)->GetAuraDuration() / mod->periodictime );
+                            basepoints0 += int32( tickDamage * tickCount / 4 );
+                            break;
+                        }
+                    }
+                }
                 break;
             }
             // Sheath of Light
@@ -6046,6 +6064,24 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                 // 4 healing tick
                 basepoints0 = triggerAmount*damage/400;
                 triggered_spell_id = 54203;
+
+                // get previous aura
+                if ( target )
+                {
+                    Unit::AuraList const &periodicAuras = target->GetAurasByType( SPELL_AURA_PERIODIC_HEAL );
+                    for( Unit::AuraList::const_iterator i = periodicAuras.begin(); i != periodicAuras.end(); ++i )
+                    {
+                        if ( (*i)->GetCasterGUID() == GetGUID() && (*i)->GetSpellProto()->SpellIconID == 3030 )
+                        {
+                            // add remaining heal to new aura
+                            Modifier const* mod = (*i)->GetModifier();
+                            int32 tickDamage = mod->m_amount;
+                            int32 tickCount = 1 + int32( (*i)->GetAuraDuration() / mod->periodictime );
+                            basepoints0 += int32( tickDamage * tickCount / 4 );
+                            break;
+                        }
+                    }
+                }
                 break;
             }
             switch(dummySpell->Id)
@@ -6139,67 +6175,29 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                     triggered_spell_id = 31786;
                     break;
                 }
-               // Righteous Vengeance
-               if (dummySpell->SpellIconID == 3025)
-               {
-                   // 4 damage tick
-                   int32 TickCD = 3000;
-                   Aura const* PrevAura = NULL;
+                // Seal of Vengeance (damage calc on apply aura)
+                case 31801:
+                {
+                    if(effIndex != 0)                       // effect 1,2 used by seal unleashing code
+                        return false;
 
-                   Unit::AuraList const &mPeriodic = target->GetAurasByType( SPELL_AURA_PERIODIC_DAMAGE );
-                   for( Unit::AuraList::const_iterator i = mPeriodic.begin(); i != mPeriodic.end(); ++i )
-                   {
-                       if ( (*i)->GetCasterGUID() != this->GetGUID() )
-                           continue;
+                    triggered_spell_id = 31803;
 
-                       if ( (*i)->GetSpellProto()->SpellIconID == 3025 )
-                       {
-                           PrevAura = *i;
-                           break;
-                       }
-                   }
-
-                   if ( PrevAura )
-                   {
-                       int32 PrevTickDmg = SpellDamageBonus(target, PrevAura->GetSpellProto(), PrevAura->GetModifier()->m_amount, DOT);
-                       int32 RemainingTicks = 1 + PrevAura->GetAuraDuration() / TickCD;
-                       basepoints0 = RemainingTicks * PrevTickDmg;
-                   }
-
-                   basepoints0 = ( basepoints0 +  triggerAmount * damage / 100 ) / 4;
-                   triggered_spell_id = 61840;
-                   break;
-               }
-               // Sheath of Light
-               if (dummySpell->SpellIconID == 3030)
-               {
-                   int32 TickCD = 3000;
-                   Aura const* PrevAura = NULL;
-
-                   Unit::AuraList const &mPeriodic = target->GetAurasByType( SPELL_AURA_PERIODIC_HEAL );
-                   for( Unit::AuraList::const_iterator i = mPeriodic.begin(); i != mPeriodic.end(); ++i )
-                   {
-                       if ( (*i)->GetCasterGUID() != this->GetGUID() )
-                           continue;
-
-                       if ( (*i)->GetSpellProto()->SpellIconID == 3030 )
-                       {
-                           PrevAura = *i;
-                           break;
-                       }
-                   }
-
-                   if ( PrevAura )
-                   {
-                       int32 PrevTickDmg = SpellDamageBonus(target, PrevAura->GetSpellProto(), PrevAura->GetModifier()->m_amount, DOT);
-                       int32 RemainingTicks = 1 + PrevAura->GetAuraDuration() / TickCD;
-                       basepoints0 = RemainingTicks * PrevTickDmg;
-                   }
-
-                   basepoints0 = ( basepoints0 +  triggerAmount * damage / 100 ) / 4;
-                   triggered_spell_id = 54203;
-                   break;
-                }
+                    // Add 5-stack effect
+                    int8 stacks = 0;
+                    AuraList const& auras = target->GetAurasByType(SPELL_AURA_PERIODIC_DAMAGE);
+                    for(AuraList::const_iterator itr = auras.begin(); itr!=auras.end(); ++itr)
+                    {
+                        if( ((*itr)->GetId() == 31803) && (*itr)->GetCasterGUID()==GetGUID())
+                        {
+                            stacks = (*itr)->GetStackAmount();
+                            break;
+                        }
+                    }
+                    if(stacks >= 5)
+                        CastSpell(target,42463,true,NULL,triggeredByAura);
+                    break;
+                    }
                 // Judgements of the Wise
                 case 31876:
                 case 31877:
