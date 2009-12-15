@@ -127,11 +127,15 @@ bool Vehicle::Create(uint32 guidlow, Map *map, uint32 phaseMask, uint32 Entry, u
         {
             this->setPowerType(POWER_ENERGY);
             this->SetMaxPower(POWER_ENERGY, 100);
+            this->SetPower(POWER_ENERGY, 0);
+            this->SetPower(POWER_ENERGY, 100);
         }
         else if(m_vehicleInfo->m_powerType == POWER_PYRITE)
         {
             this->setPowerType(POWER_ENERGY);
             this->SetMaxPower(POWER_ENERGY, 50);
+            this->SetPower(POWER_ENERGY, 0);
+            this->SetPower(POWER_ENERGY, 50);
         }
         else
         {
@@ -150,6 +154,8 @@ bool Vehicle::Create(uint32 guidlow, Map *map, uint32 phaseMask, uint32 Entry, u
                 {
                     this->setPowerType(POWER_ENERGY);
                     this->SetMaxPower(POWER_ENERGY, 100);
+                    this->SetPower(POWER_ENERGY, 0);
+                    this->SetPower(POWER_ENERGY, 100);
                     break;
                 }
             }
