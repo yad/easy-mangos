@@ -2608,6 +2608,20 @@ void Spell::cast(bool skipCheck)
 
     FillTargetMap();
 
+    // let not attack nearby enemies when Seal of Command is not triggered by single target attack
+    if (m_spellInfo->Id == 20424)
+   {
+       bool aoeAttack = false;
+       if( m_caster->FindCurrentSpellBySpellId(53385) )    // Divine Storm
+           aoeAttack = true;
+       if( m_caster->FindCurrentSpellBySpellId(53595) )    // Hammer of the Righteous
+           aoeAttack = true;
+        
+       if( aoeAttack )
+            for (int numTargets = m_UniqueTargetInfo.size(); numTargets > 1; numTargets--)
+                m_UniqueTargetInfo.pop_back();
+   }
+
     if(m_spellState == SPELL_STATE_FINISHED)                // stop cast if spell marked as finish somewhere in FillTargetMap
     {
         SetExecutedCurrently(false);

@@ -6167,8 +6167,8 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                 {
                     if(effIndex != 0)                       // effect 1,2 used by seal unleashing code
                         return false;
-
-                    triggered_spell_id = 31803;
+                   if( ( procFlag & PROC_FLAG_SUCCESSFUL_MELEE_HIT ) || ( procSpell && procSpell->Id == 53595 ) )
+                       triggered_spell_id = 31803;
 
                     // Add 5-stack effect
                     int8 stacks = 0;
@@ -6268,7 +6268,8 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                     if(effIndex != 0)                       // effect 1,2 used by seal unleashing code
                         return false;
 
-                    triggered_spell_id = 53742;
+                   if( ( procFlag & PROC_FLAG_SUCCESSFUL_MELEE_HIT ) || ( procSpell && procSpell->Id == 53595 ) )
+                       triggered_spell_id = 53742;
 
                     // Add 5-stack effect
                     int8 stacks = 0;
