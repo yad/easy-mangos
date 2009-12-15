@@ -344,7 +344,7 @@ MANGOS_DLL_SPEC LanguageDesc const* GetLanguageDescByID(uint32 lang);
 
 class PlayerDumpReader;
 // vehicle system
-#define MAX_VEHICLE_SPELLS 10
+#define MAX_VEHICLE_SPELLS 6
 
 struct VehicleDataStructure
 {

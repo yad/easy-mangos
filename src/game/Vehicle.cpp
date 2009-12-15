@@ -121,7 +121,40 @@ bool Vehicle::Create(uint32 guidlow, Map *map, uint32 phaseMask, uint32 Entry, u
     {
         ((InstanceMap*)map)->GetInstanceData()->OnCreatureCreate(this);
     }
+    if(Creature *cre = dynamic_cast<Creature*>(this))
+    {
+        if(m_vehicleInfo->m_powerType == POWER_STEAM)
+        {
+            this->setPowerType(POWER_ENERGY);
+            this->SetMaxPower(POWER_ENERGY, 100);
+        }
+        else if(m_vehicleInfo->m_powerType == POWER_PYRITE)
+        {
+            this->setPowerType(POWER_ENERGY);
+            this->SetMaxPower(POWER_ENERGY, 50);
+        }
+        else
+        {
+            for (uint32 i = 0; i < MAX_VEHICLE_SPELLS; ++i)
+            {
+                if(!cre->m_spells[i])
+                    continue;
+                SpellEntry const *spellInfo = sSpellStore.LookupEntry(cre->m_spells[i]);
+                if(!spellInfo)
+                    continue;
 
+                if(spellInfo->powerType == POWER_MANA)
+                    break;
+
+                if(spellInfo->powerType == POWER_ENERGY)
+                {
+                    this->setPowerType(POWER_ENERGY);
+                    this->SetMaxPower(POWER_ENERGY, 100);
+                    break;
+                }
+            }
+        }
+    }
     InstallAllAccessories();
 
     return true;
