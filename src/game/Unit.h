@@ -1249,7 +1249,6 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         void RemoveAurasByCasterSpell(uint32 spellId, uint32 effindex, uint64 casterGUID);
         void RemoveAurasDueToSpellBySteal(uint32 spellId, uint64 casterGUID, Unit *stealer);
         void RemoveAurasDueToSpellByCancel(uint32 spellId);
-        void RemoveAurasAtChanneledTarget(SpellEntry const* spellInfo);
 
         // removing unknown aura stacks by diff reasons and selections
         void RemoveNotOwnSingleTargetAuras(uint32 newPhase = 0x0);
@@ -1622,6 +1621,8 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         float m_lastAuraProcRoll;
 
     private:
+        void CleanupDeletedAuars();
+
         bool IsTriggeredAtSpellProcEvent(Unit *pVictim, Aura* aura, SpellEntry const* procSpell, uint32 procFlag, uint32 procExtra, WeaponAttackType attType, bool isVictim, bool active, SpellProcEventEntry const*& spellProcEvent );
         bool HandleDummyAuraProc(   Unit *pVictim, uint32 damage, Aura* triggredByAura, SpellEntry const *procSpell, uint32 procFlag, uint32 procEx, uint32 cooldown);
         bool HandleHasteAuraProc(   Unit *pVictim, uint32 damage, Aura* triggredByAura, SpellEntry const *procSpell, uint32 procFlag, uint32 procEx, uint32 cooldown);
