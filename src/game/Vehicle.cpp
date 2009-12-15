@@ -70,6 +70,7 @@ void Vehicle::Update(uint32 diff)
 {
     Creature::Update(diff);
     InstallAllAccessories();
+
     if(despawn)
     {
         m_spawnduration -= diff;
@@ -77,6 +78,33 @@ void Vehicle::Update(uint32 diff)
             Dismiss();
         despawn = false;
     }
+
+    if(m_regenTimer <= diff)
+    {
+        Regenerate(getPowerType());
+        m_regenTimer = 4000;
+    }
+    else
+        m_regenTimer -= diff;
+}
+
+void Vehicle::Regenerate(Powers power)
+{
+    uint32 curValue = GetPower(power);
+    uint32 maxValue = GetMaxPower(power);
+
+    if (curValue >= maxValue)
+        return;
+
+    float addvalue = 0.0f;
+
+    if(m_vehicleInfo->m_powerType == POWER_STEAM)
+        addvalue = 20.0;
+    else 
+        if(m_vehicleInfo->m_powerType == POWER_PYRITE)
+            return;
+
+    ModifyPower(power, (int32)addvalue);
 }
 
 bool Vehicle::Create(uint32 guidlow, Map *map, uint32 phaseMask, uint32 Entry, uint32 vehicleId, uint32 team, const CreatureData *data)
@@ -127,14 +155,12 @@ bool Vehicle::Create(uint32 guidlow, Map *map, uint32 phaseMask, uint32 Entry, u
         {
             this->setPowerType(POWER_ENERGY);
             this->SetMaxPower(POWER_ENERGY, 100);
-            this->SetPower(POWER_ENERGY, 0);
             this->SetPower(POWER_ENERGY, 100);
         }
         else if(m_vehicleInfo->m_powerType == POWER_PYRITE)
         {
             this->setPowerType(POWER_ENERGY);
             this->SetMaxPower(POWER_ENERGY, 50);
-            this->SetPower(POWER_ENERGY, 0);
             this->SetPower(POWER_ENERGY, 50);
         }
         else
@@ -154,7 +180,6 @@ bool Vehicle::Create(uint32 guidlow, Map *map, uint32 phaseMask, uint32 Entry, u
                 {
                     this->setPowerType(POWER_ENERGY);
                     this->SetMaxPower(POWER_ENERGY, 100);
-                    this->SetPower(POWER_ENERGY, 0);
                     this->SetPower(POWER_ENERGY, 100);
                     break;
                 }

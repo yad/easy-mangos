@@ -66,6 +66,8 @@ class Vehicle : public Creature
         void setDeathState(DeathState s);                   // overwrite virtual Creature::setDeathState and Unit::setDeathState
         void Update(uint32 diff);                           // overwrite virtual Creature::Update and Unit::Update
 
+        void Regenerate(Powers power);
+
         uint32 GetVehicleId() { return m_vehicleId; }
         bool SetVehicleId(uint32 vehicleid);
 
