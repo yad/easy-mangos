@@ -7758,7 +7758,7 @@ void Player::SendInitWorldStates(uint32 zoneid, uint32 areaid)
             NumberOfFields = 83;
             break;
         case 3277:
-            NumberOfFields = 16;
+            NumberOfFields = 17;
             break;
         case 3358:
         case 3820:
@@ -7917,6 +7917,7 @@ void Player::SendInitWorldStates(uint32 zoneid, uint32 areaid)
                 data << uint32(0x641) << uint32(0x3);       // 12 1601 unk (max flag captures?)
                 data << uint32(0x922) << uint32(0x1);       // 13 2338 horde (0 - hide, 1 - flag ok, 2 - flag picked up (flashing), 3 - flag picked up (not flashing)
                 data << uint32(0x923) << uint32(0x1);       // 14 2339 alliance (0 - hide, 1 - flag ok, 2 - flag picked up (flashing), 3 - flag picked up (not flashing)
+                data << uint32(0x1098)<< uint32(0x19);      // 15 4248 time remaining in minutes
             }
             break;
         case 3358:                                          // AB
