@@ -3030,6 +3030,54 @@ void Aura::HandleAuraModShapeshift(bool apply, bool Real)
     uint32 modelid = 0;
     Powers PowerType = POWER_MANA;
     ShapeshiftForm form = ShapeshiftForm(m_modifier.m_miscvalue);
+
+    SpellShapeshiftEntry const* ssEntry = sSpellShapeshiftStore.LookupEntry(form);
+    if(ssEntry && ssEntry->modelID_A)
+    {
+        // i will asume that creatures will always take the defined model from the dbc
+        // since no field in creature_templates describes wether an alliance or
+        // horde modelid should be used at shapeshifting
+        if (m_target->GetTypeId() != TYPEID_PLAYER)
+            modelid = ssEntry->modelID_A;
+        else
+        {
+            // players are a bit difficult since the dbc has seldomly an horde modelid
+            // so we add hacks here to set the right model
+            if (Player::TeamForRace(m_target->getRace()) == ALLIANCE)
+                modelid = ssEntry->modelID_A;
+            else                                            // 3.2.3 only the moonkin form has this information
+                modelid = ssEntry->modelID_H;
+
+            // no model found, if player is horde we look here for our hardcoded modelids
+            if (!modelid && Player::TeamForRace(m_target->getRace()) == HORDE)
+            {
+
+                switch(form)
+                {
+                    case FORM_CAT:
+                        modelid = 8571;
+                        break;
+                    case FORM_BEAR:
+                    case FORM_DIREBEAR:
+                        modelid = 2289;
+                        break;
+                    case FORM_FLIGHT:
+                        modelid = 20872;
+                        break;
+                    case FORM_FLIGHT_EPIC:
+                        modelid = 21244;
+                        break;
+                    // per default use alliance modelid
+                    // mostly horde and alliance share the same
+                    default:
+                        modelid = ssEntry->modelID_A;
+                        break;
+                }
+            }
+        }
+    }
+
+    // now only powertype must be set
     switch(form)
     {
         case FORM_SHADOWDANCE:
@@ -3058,7 +3106,7 @@ void Aura::HandleAuraModShapeshift(bool apply, bool Real)
         case FORM_TREE:
             break;
         default:
-            sLog.outError("Auras: Unknown Shapeshift Type: %u, SpellId %u.", m_modifier.m_miscvalue, GetId());
+            break;
     }
 
     modelid = m_target->GetModelForForm(form);
