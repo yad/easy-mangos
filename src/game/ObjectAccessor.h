@@ -38,6 +38,7 @@
 class Creature;
 class Unit;
 class GameObject;
+class Vehicle;
 class WorldObject;
 class Map;
 
@@ -91,13 +92,21 @@ class MANGOS_DLL_DECL ObjectAccessor : public MaNGOS::Singleton<ObjectAccessor, 
         // global (obj used for map only location local guid objects (pets currently)
         static Unit*   GetUnitInWorld(WorldObject const& obj, uint64 guid);
 
-        // FIXME: map local object with global search
+        // map local object with global search
         static Creature*   GetCreatureInWorld(uint64 guid)   { return FindHelper<Creature>(guid); }
         static GameObject* GetGameObjectInWorld(uint64 guid) { return FindHelper<GameObject>(guid); }
+        static Pet*        GetGameObjectInWorld(uint64 guid, Pet*        /*fake*/) { return FindHelper<Pet>(guid); }
+        static Vehicle*    GetGameObjectInWorld(uint64 guid, Vehicle*    /*fake*/) { return FindHelper<Vehicle>(guid); }
 
         // possible local search for specific object map
         static Object* GetObjectByTypeMask(WorldObject const &, uint64, uint32 typemask);
+        static Creature* GetCreatureOrPetOrVehicle(WorldObject const &, uint64);
         static Unit* GetUnit(WorldObject const &, uint64);
+        //static Player* GetPlayer(Unit const &, uint64 guid) { return FindPlayer(guid); }
+        //static Corpse* GetCorpse(WorldObject const &u, uint64 guid);
+        //static Pet* GetPet(uint64 guid) { return GetObjectInWorld(guid, (Pet*)NULL); }
+        static Vehicle* GetVehicle(uint64 guid) { return GetGameObjectInWorld(guid, (Vehicle*)NULL); }
+        //static Player* FindPlayer(uint64);
 
         // Player access
         static Player* FindPlayer(uint64 guid);

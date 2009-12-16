@@ -25,6 +25,10 @@ CreatureAI::~CreatureAI()
 
 void CreatureAI::AttackedBy( Unit* attacker )
 {
+    // vehicle dont have threat list, so this is unnecessary, because it calls move chase
+    if(m_creature->isVehicle())
+        return;
+
     if(!m_creature->getVictim())
         AttackStart(attacker);
 }

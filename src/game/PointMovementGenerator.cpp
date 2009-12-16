@@ -42,7 +42,7 @@ bool PointMovementGenerator<T>::Update(T &unit, const uint32 &diff)
     if(!&unit)
         return false;
 
-    if(unit.hasUnitState(UNIT_STAT_ROOT | UNIT_STAT_STUNNED | UNIT_STAT_DIED))
+    if(unit.hasUnitState(UNIT_STAT_ROOT | UNIT_STAT_STUNNED | UNIT_STAT_DIED | UNIT_STAT_ON_VEHICLE))
         return true;
 
     Traveller<T> traveller(unit);

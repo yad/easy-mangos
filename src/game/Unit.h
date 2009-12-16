@@ -293,6 +293,7 @@ class Item;
 class Pet;
 class Path;
 class PetAura;
+class Vehicle;
 
 struct SpellImmune
 {
@@ -416,6 +417,7 @@ enum UnitState
     UNIT_STAT_DISTRACTED      = 0x1000,
     UNIT_STAT_ISOLATED        = 0x2000,                     // area auras do not affect other players
     UNIT_STAT_ATTACK_PLAYER   = 0x4000,
+    UNIT_STAT_ON_VEHICLE      = 0x8000,
     UNIT_STAT_ALL_STATE       = 0xffff                      //(UNIT_STAT_STOPPED | UNIT_STAT_MOVING | UNIT_STAT_IN_COMBAT | UNIT_STAT_IN_FLIGHT)
 };
 
@@ -867,6 +869,24 @@ typedef std::set<uint64> GuardianPetList;
 
 struct SpellProcEventEntry;                                 // used only privately
 
+// vehicle system
+struct SeatData
+{
+    SeatData() : OffsetX(0.0f), OffsetY(0.0f),  OffsetZ(0.0f), Orientation(0.0f),
+                c_time(0), dbc_seat(0), seat(0), s_flags(0), v_flags(0) {}
+
+    float OffsetX;
+    float OffsetY;
+    float OffsetZ;
+    float Orientation;
+    uint32 c_time;
+    uint32 dbc_seat;
+    uint8 seat;
+    //custom, used as speedup
+    uint32 s_flags;
+    uint32 v_flags;
+};
+
 class MANGOS_DLL_SPEC Unit : public WorldObject
 {
     public:
@@ -942,7 +962,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         bool CanFreeMove() const
         {
             return !hasUnitState(UNIT_STAT_CONFUSED | UNIT_STAT_FLEEING | UNIT_STAT_IN_FLIGHT |
-                UNIT_STAT_ROOT | UNIT_STAT_STUNNED | UNIT_STAT_DISTRACTED | UNIT_STAT_DIED ) && GetOwnerGUID()==0;
+                UNIT_STAT_ROOT | UNIT_STAT_STUNNED | UNIT_STAT_DISTRACTED | UNIT_STAT_DIED | UNIT_STAT_ON_VEHICLE ) && GetOwnerGUID()==0;
         }
 
         uint32 getLevel() const { return GetUInt32Value(UNIT_FIELD_LEVEL); }
@@ -1119,6 +1139,10 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         }
         bool HasAura(uint32 spellId) const;
 
+        const uint64& GetAuraUpdateMask() const { return m_auraUpdateMask; }
+        void SetAuraUpdateMask(uint8 slot) { m_auraUpdateMask |= (uint64(1) << slot); }
+        void ResetAuraUpdateMask() { m_auraUpdateMask = 0; }
+
         bool virtual HasSpell(uint32 /*spellID*/) const { return false; }
 
         bool HasStealthAura()      const { return HasAuraType(SPELL_AURA_MOD_STEALTH); }
@@ -1210,6 +1234,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         Unit* GetCharm() const;
         void Uncharm();
         Unit* GetCharmerOrOwner() const { return GetCharmerGUID() ? GetCharmer() : GetOwner(); }
+        Unit* GetCharmOrPet() const { return GetCharmGUID() ? GetCharm() : (Unit*)GetPet(); }
         Unit* GetCharmerOrOwnerOrSelf()
         {
             if(Unit* u = GetCharmerOrOwner())
@@ -1563,6 +1588,15 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         void RemovePetAura(PetAura const* petSpell);
 
         uint32 GetModelForForm(ShapeshiftForm form);
+         // vehicle system
+         void EnterVehicle(Vehicle *vehicle, int8 seat_id, bool force = false);
+         void ExitVehicle();
+         uint64 GetVehicleGUID() { return m_vehicleGUID; }
+         void SetVehicleGUID(uint64 guid) { m_vehicleGUID = guid; }
+         // using extra variables to avoid problems with transports
+         SeatData m_SeatData;
+         void BuildVehicleInfo(Unit *target = NULL);
+
     protected:
         explicit Unit ();
 
@@ -1613,6 +1647,8 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         uint32 m_regenTimer;
         uint32 m_lastManaUseTimer;
         float m_lastAuraProcRoll;
+        uint64  m_auraUpdateMask;
+        uint64 m_vehicleGUID;
 
     private:
         void CleanupDeletedAuars();
