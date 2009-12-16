@@ -3219,11 +3219,19 @@ void Spell::SendSpellGo()
     if(IsRangedSpell())
         castFlags |= CAST_FLAG_AMMO;                        // arrows/bullets visual
 
-    if((m_caster->GetTypeId() == TYPEID_PLAYER) && (m_caster->getClass() == CLASS_DEATH_KNIGHT) && m_spellInfo->runeCostID)
+    if(m_caster->GetTypeId() == TYPEID_PLAYER)
     {
-        castFlags |= CAST_FLAG_UNKNOWN10;                   // same as in SMSG_SPELL_START
-        castFlags |= CAST_FLAG_UNKNOWN6;                    // makes cooldowns visible
-        castFlags |= CAST_FLAG_UNKNOWN7;                    // rune cooldowns list
+        if (m_powerCost)
+        {
+            castFlags |= CAST_FLAG_UNKNOWN10;
+            castFlags |= CAST_FLAG_UNKNOWN6;                // set new amount of power
+        }
+        if((m_caster->getClass() == CLASS_DEATH_KNIGHT) && m_spellInfo->runeCostID)
+        {
+            castFlags |= CAST_FLAG_UNKNOWN10;               // same as in SMSG_SPELL_START
+            castFlags |= CAST_FLAG_UNKNOWN6;                // makes cooldowns visible
+            castFlags |= CAST_FLAG_UNKNOWN7;                // rune cooldowns list
+        }
     }
 
     WorldPacket data(SMSG_SPELL_GO, 50);                    // guess size
@@ -3243,8 +3251,16 @@ void Spell::SendSpellGo()
 
     m_targets.write(&data);
 
-    if ( castFlags & CAST_FLAG_UNKNOWN6 )                   // unknown wotlk, predicted power?
-        data << uint32(0);
+    if ( castFlags & CAST_FLAG_UNKNOWN6 )                   // predicted power, triggers at-casting mana regeneration on client
+    {
+        uint32 powerValue;
+        if (m_spellInfo->powerType == POWER_HEALTH)
+            powerValue = m_caster->GetHealth();
+        else
+            powerValue = m_caster->GetPower((Powers)m_spellInfo->powerType);
+
+        data << powerValue;
+    }
 
     if ( castFlags & CAST_FLAG_UNKNOWN7 )                   // rune cooldowns list
     {
