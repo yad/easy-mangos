@@ -4900,7 +4900,7 @@ void Aura::HandlePeriodicDamage(bool apply, bool Real)
             case SPELLFAMILY_PALADIN:
             {
                 // Holy Vengeance / Blood Corruption
-                if ( m_spellProto->SpellIconID == 2292 && m_spellProto->SpellVisual&#91;0&#93; == 7902 )
+                if ( m_spellProto->SpellIconID == 2292 && m_spellProto->SpellVisual[0] == 7902 )
                 {
                     if (caster->GetTypeId() != TYPEID_PLAYER)
                         return;
