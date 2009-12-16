@@ -7669,7 +7669,20 @@ void Aura::HandleArenaPreparation(bool apply, bool Real)
     if(apply)
         m_target->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PREPARATION);
     else
+    {
         m_target->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PREPARATION);
+
+        // find auras with duration less than 25s and remove them
+        Unit::AuraMap const& auras = m_target->GetAuras();
+        for( Unit::AuraMap::const_iterator itr = auras.begin(); itr != auras.end(); ++itr )
+        {
+            Aura* aur = (*itr).second;
+            if( aur->GetAuraDuration() < 25000 )
+                for(int j = 0; j < aur->GetStackAmount(); ++j)
+                    m_target->RemoveAura( aur );
+                    
+        }
+    }
 }
 
 /**
