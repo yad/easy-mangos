@@ -990,6 +990,7 @@ void Spell::EffectDummy(uint32 i)
                     m_caster->CastSpell(m_caster, 23783, true);
                     return;
                 case 25860:                                 // Reindeer Transformation
+                case 62061:
                 {
                     if (!m_caster->HasAuraType(SPELL_AURA_MOUNTED))
                         return;
