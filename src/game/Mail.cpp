@@ -922,7 +922,7 @@ void MailDraft::SendReturnToSender(uint32 sender_acc, uint32 sender_guid, uint32
 void MailDraft::SendMailTo(MailReceiver const& receiver, MailSender const& sender, MailCheckMask checked, uint32 deliver_delay)
 {
     Player* pReceiver = receiver.GetPlayer();               // can be NULL
-    
+
     if (receiver.GetPlayerGUIDLow() == auctionbot.GetAHBplayerGUID())
     {
         if (sender.GetMailMessageType() == MAIL_AUCTION && m_items.size())
@@ -931,7 +931,6 @@ void MailDraft::SendMailTo(MailReceiver const& receiver, MailSender const& sende
         }
         return;
     }
-
 
     if (pReceiver)
         prepareItems(pReceiver);                            // generate mail template items
