@@ -4701,6 +4701,16 @@ void Spell::EffectWeaponDmg(uint32 i)
             }
             break;
         }
+        case SPELLFAMILY_DRUID:
+        {
+            // Shred
+            if( m_spellInfo->SpellFamilyFlags2 & 0x40000 )
+            {
+                    spellBonusNeedWeaponDamagePercentMod = true;
+                    spell_bonus += m_spellInfo->EffectBasePoints[0];
+            }
+            break;
+        }
         case SPELLFAMILY_HUNTER:
         {
             switch(m_spellInfo->Id)
