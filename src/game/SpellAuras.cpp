@@ -4968,7 +4968,7 @@ void Aura::HandlePeriodicDamage(bool apply, bool Real)
                     float ap = caster->GetTotalAttackPowerValue(BASE_ATTACK);
                     int32 holy = ((Player*)caster)->SpellBaseDamageBonus(GetSpellSchoolMask(m_spellProto)) +
                                  ((Player*)caster)->SpellBaseDamageBonusForVictim(GetSpellSchoolMask(m_spellProto), GetTarget());
-                    m_modifier.m_amount += int32(ap * 0.025f) + int32(holy * 13 / 1000);
+                    m_modifier.m_amount += int32(GetStackAmount()) * (int32(ap * 0.025f) + int32(holy * 13 / 1000));
                     return;
                 }
                 break;
