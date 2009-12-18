@@ -4052,7 +4052,8 @@ void Unit::RemoveSingleAuraDueToSpellByDispel(uint32 spellId, uint64 casterGUID,
         {
             if(Unit* caster = dot->GetCaster())
             {
-                int32 bp0 = 8 * dot->GetModifier()->m_amount;
+                int32 bp0 = dot->GetModifier()->m_amount;
+                bp0 = 8 * caster->SpellDamageBonus(this, spellEntry, bp0, DOT, 1);
 
                 // Remove spell auras from stack
                 RemoveSingleSpellAurasByCasterSpell(spellId, casterGUID, AURA_REMOVE_BY_DISPEL);
