@@ -504,7 +504,7 @@ void ObjectMgr::LoadCreatureTemplates()
 
             if (difficultyEntries[diff].find(i) != difficultyEntries[diff].end())
             {
-                sLog.outErrorDb("Creature (Entry: %u) listed as difficulty %u but have value in `difficulty_entry_1`.", i, diff + 1);
+                sLog.outErrorDb("Creature (Entry: %u) listed as difficulty %u but have value in `difficulty_entry_%u`.", i, diff + 1, diff + 1);
                 continue;
             }
 
@@ -8283,6 +8283,7 @@ void ObjectMgr::LoadDbScriptStrings()
     CheckScripts(sSpellScripts,ids);
     CheckScripts(sGameObjectScripts,ids);
     CheckScripts(sEventScripts,ids);
+    CheckScripts(sGossipScripts,ids);
 
     sWaypointMgr.CheckTextsExistance(ids);
 
