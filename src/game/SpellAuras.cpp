@@ -628,27 +628,20 @@ void Aura::Update(uint32 diff)
             return;
         }
 
-        // Get spell range
-        float radius;
-        SpellModOp mod;
-        if (m_spellProto->EffectRadiusIndex[GetEffIndex()])
+        // need check distance for channeled target only
+        if (caster->GetChannelObjectGUID() == m_target->GetGUID())
         {
-            radius = GetSpellRadius(sSpellRadiusStore.LookupEntry(m_spellProto->EffectRadiusIndex[GetEffIndex()]));
-            mod = SPELLMOD_RADIUS;
-        }
-        else
-        {
-            radius = GetSpellMaxRange(sSpellRangeStore.LookupEntry(m_spellProto->rangeIndex));
-            mod = SPELLMOD_RANGE;
-        }
+            // Get spell range
+            float max_range = GetSpellMaxRange(sSpellRangeStore.LookupEntry(m_spellProto->rangeIndex));
 
-        if(Player* modOwner = caster->GetSpellModOwner())
-            modOwner->ApplySpellMod(GetId(), mod, radius, NULL);
+            if(Player* modOwner = caster->GetSpellModOwner())
+                modOwner->ApplySpellMod(GetId(), SPELLMOD_RANGE, max_range, NULL);
 
-        if(!caster->IsWithinDistInMap(m_target, radius))
-        {
-            m_target->RemoveAura(GetId(), GetEffIndex());
-            return;
+            if(!caster->IsWithinDistInMap(m_target, max_range))
+            {
+                m_target->RemoveAura(GetId(), GetEffIndex());
+                return;
+            }
         }
     }
 
@@ -2280,9 +2273,15 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                             }
                         }
                         return;
-                    case 46699:                                     // Requires No Ammo
-                        if(m_target->GetTypeId() == TYPEID_PLAYER)
-                            ((Player*)m_target)->RemoveAmmo();      // not use ammo and not allow use
+                    case 46699:                             // Requires No Ammo
+                        if (m_target->GetTypeId() == TYPEID_PLAYER)
+                            // not use ammo and not allow use
+                            ((Player*)m_target)->RemoveAmmo();
+                        return;
+                    case 62061:                             // Festive Holiday Mount
+                        if (m_target->HasAuraType(SPELL_AURA_MOUNTED))
+                            // Reindeer Transformation
+                            m_target->CastSpell(m_target, 25860, true, NULL, this);
                         return;
                 }
                 break;
@@ -2579,7 +2578,7 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
             break;
         case SPELLFAMILY_WARLOCK:
         {
-            // Haunt 
+            // Haunt
             if (GetSpellProto()->SpellIconID == 3172 && (GetSpellProto()->SpellFamilyFlags & UI64LIT(0x0004000000000000)))
             {
                 // NOTE: for avoid use additional field damage stored in dummy value (replace unused 100%
@@ -2930,86 +2929,74 @@ void Aura::HandleAuraModShapeshift(bool apply, bool Real)
     uint32 modelid = 0;
     Powers PowerType = POWER_MANA;
     ShapeshiftForm form = ShapeshiftForm(m_modifier.m_miscvalue);
+
+    SpellShapeshiftEntry const* ssEntry = sSpellShapeshiftStore.LookupEntry(form);
+    if (!ssEntry)
+    {
+        sLog.outError("Unknown shapeshift form %u in spell %u", form, GetId());
+        return;
+    }
+
+    if (ssEntry->modelID_A)
+    {
+        // i will asume that creatures will always take the defined model from the dbc
+        // since no field in creature_templates describes wether an alliance or
+        // horde modelid should be used at shapeshifting
+        if (m_target->GetTypeId() != TYPEID_PLAYER)
+            modelid = ssEntry->modelID_A;
+        else
+        {
+            // players are a bit difficult since the dbc has seldomly an horde modelid
+            // so we add hacks here to set the right model
+            if (Player::TeamForRace(m_target->getRace()) == ALLIANCE)
+                modelid = ssEntry->modelID_A;
+            else                                            // 3.2.3 only the moonkin form has this information
+                modelid = ssEntry->modelID_H;
+
+            // no model found, if player is horde we look here for our hardcoded modelids
+            if (!modelid && Player::TeamForRace(m_target->getRace()) == HORDE)
+            {
+
+                switch(form)
+                {
+                    case FORM_CAT:
+                        modelid = 8571;
+                        break;
+                    case FORM_BEAR:
+                    case FORM_DIREBEAR:
+                        modelid = 2289;
+                        break;
+                    case FORM_FLIGHT:
+                        modelid = 20872;
+                        break;
+                    case FORM_FLIGHT_EPIC:
+                        modelid = 21244;
+                        break;
+                    // per default use alliance modelid
+                    // mostly horde and alliance share the same
+                    default:
+                        modelid = ssEntry->modelID_A;
+                        break;
+                }
+            }
+        }
+    }
+
+    // now only powertype must be set
     switch(form)
     {
         case FORM_CAT:
-            if(Player::TeamForRace(m_target->getRace()) == ALLIANCE)
-                modelid = 892;
-            else
-                modelid = 8571;
             PowerType = POWER_ENERGY;
             break;
-        case FORM_TRAVEL:
-            modelid = 632;
-            break;
-        case FORM_AQUA:
-            if(Player::TeamForRace(m_target->getRace()) == ALLIANCE)
-                modelid = 2428;
-            else
-                modelid = 2428;
-            break;
         case FORM_BEAR:
-            if(Player::TeamForRace(m_target->getRace()) == ALLIANCE)
-                modelid = 2281;
-            else
-                modelid = 2289;
-            PowerType = POWER_RAGE;
-            break;
-        case FORM_GHOUL:
-            if(Player::TeamForRace(m_target->getRace()) == ALLIANCE)
-                modelid = 10045;
-            break;
         case FORM_DIREBEAR:
-            if(Player::TeamForRace(m_target->getRace()) == ALLIANCE)
-                modelid = 2281;
-            else
-                modelid = 2289;
-            PowerType = POWER_RAGE;
-            break;
-        case FORM_CREATUREBEAR:
-            modelid = 902;
-            break;
-        case FORM_GHOSTWOLF:
-            modelid = 4613;
-            break;
-        case FORM_FLIGHT:
-            if(Player::TeamForRace(m_target->getRace()) == ALLIANCE)
-                modelid = 20857;
-            else
-                modelid = 20872;
-            break;
-        case FORM_MOONKIN:
-            if(Player::TeamForRace(m_target->getRace()) == ALLIANCE)
-                modelid = 15374;
-            else
-                modelid = 15375;
-            break;
-        case FORM_FLIGHT_EPIC:
-            if(Player::TeamForRace(m_target->getRace()) == ALLIANCE)
-                modelid = 21243;
-            else
-                modelid = 21244;
-            break;
-        case FORM_METAMORPHOSIS:
-            modelid = 25277;
-            break;
-        case FORM_AMBIENT:
-        case FORM_SHADOW:
-        case FORM_STEALTH:
-            break;
-        case FORM_TREE:
-            modelid = 864;
-            break;
         case FORM_BATTLESTANCE:
         case FORM_BERSERKERSTANCE:
         case FORM_DEFENSIVESTANCE:
             PowerType = POWER_RAGE;
             break;
-        case FORM_SPIRITOFREDEMPTION:
-            modelid = 16031;
-            break;
         default:
-            sLog.outError("Auras: Unknown Shapeshift Type: %u, SpellId %u.", m_modifier.m_miscvalue, GetId());
+            break;
     }
 
     // remove polymorph before changing display id to keep new display id
@@ -3137,6 +3124,14 @@ void Aura::HandleAuraModShapeshift(bool apply, bool Real)
 
         m_target->m_ShapeShiftFormSpellId = GetId();
         m_target->m_form = form;
+
+        // a form can give the player a new castbar with some spells.. this is a clientside process..
+        // serverside just needs to register the new spells so that player isn't kicked as cheater
+        if (m_target->GetTypeId() == TYPEID_PLAYER)
+            for (uint32 i = 0; i < 8; ++i)
+                if (ssEntry->spellId[i])
+                    ((Player*)m_target)->addSpell(ssEntry->spellId[i], true, false, false, false);
+
     }
     else
     {
@@ -3165,6 +3160,13 @@ void Aura::HandleAuraModShapeshift(bool apply, bool Real)
             default:
                 break;
         }
+
+        // look at the comment in apply-part
+        if (m_target->GetTypeId() == TYPEID_PLAYER)
+            for (uint32 i = 0; i < 8; ++i)
+                if (ssEntry->spellId[i])
+                    ((Player*)m_target)->removeSpell(ssEntry->spellId[i], false, false, false);
+
     }
 
     // adding/removing linked auras
@@ -4256,13 +4258,18 @@ void Aura::HandleAuraModIncreaseSpeed(bool /*apply*/, bool Real)
     m_target->UpdateSpeed(MOVE_RUN, true);
 }
 
-void Aura::HandleAuraModIncreaseMountedSpeed(bool /*apply*/, bool Real)
+void Aura::HandleAuraModIncreaseMountedSpeed(bool apply, bool Real)
 {
     // all applied/removed only at real aura add/remove
     if(!Real)
         return;
 
     m_target->UpdateSpeed(MOVE_RUN, true);
+
+    // Festive Holiday Mount
+    if (apply && GetSpellProto()->SpellIconID != 1794 && m_target->HasAura(62061))
+        // Reindeer Transformation
+        m_target->CastSpell(m_target, 25860, true, NULL, this);
 }
 
 void Aura::HandleAuraModIncreaseFlightSpeed(bool apply, bool Real)
@@ -4290,6 +4297,11 @@ void Aura::HandleAuraModIncreaseFlightSpeed(bool apply, bool Real)
         // Dragonmaw Illusion (overwrite mount model, mounted aura already applied)
         if( apply && m_target->HasAura(42016,0) && m_target->GetMountID())
             m_target->SetUInt32Value(UNIT_FIELD_MOUNTDISPLAYID,16314);
+
+        // Festive Holiday Mount
+        if (apply && GetSpellProto()->SpellIconID != 1794 && m_target->HasAura(62061))
+            // Reindeer Transformation
+            m_target->CastSpell(m_target, 25860, true, NULL, this);
     }
 
     m_target->UpdateSpeed(MOVE_FLIGHT, true);
@@ -4776,8 +4788,8 @@ void Aura::HandlePeriodicDamage(bool apply, bool Real)
                 // Serpent Sting
                 if (m_spellProto->SpellFamilyFlags & UI64LIT(0x0000000000004000))
                 {
-                    // $RAP*0.1/5 bonus per tick
-                    m_modifier.m_amount += int32(caster->GetTotalAttackPowerValue(RANGED_ATTACK) * 10 / 500);
+                    // $RAP*0.2/5 bonus per tick
+                    m_modifier.m_amount += int32(caster->GetTotalAttackPowerValue(RANGED_ATTACK) * 0.2 / 5);
                     return;
                 }
                 // Immolation Trap
@@ -5922,7 +5934,7 @@ void Aura::HandleSpellSpecificBoosts(bool apply)
         case SPELLFAMILY_MAGE:
         {
             // Ice Barrier (non stacking from one caster)
-            if (m_spellProto->SpellIconID == 32)        
+            if (m_spellProto->SpellIconID == 32)
             {
                 if (!apply && (m_removeMode == AURA_REMOVE_BY_DISPEL || (m_removeMode == AURA_REMOVE_BY_DEFAULT && !GetModifier()->m_amount)))
                 {
@@ -6017,7 +6029,7 @@ void Aura::HandleSpellSpecificBoosts(bool apply)
                     for(Unit::AuraList::const_iterator itr = dummyAuras.begin(); itr != dummyAuras.end(); ++itr)
                     {
                         // Shadow Affinity
-                        if ((*itr)->GetSpellProto()->SpellFamilyName == SPELLFAMILY_PRIEST 
+                        if ((*itr)->GetSpellProto()->SpellFamilyName == SPELLFAMILY_PRIEST
                             && (*itr)->GetSpellProto()->SpellIconID == 178)
                         {
                             // custom cast code
@@ -6646,7 +6658,11 @@ void Aura::PeriodicTick()
 
             // send critical in hit info for threat calculation
             if (isCrit)
+            {
                 cleanDamage.hitOutCome = MELEE_HIT_CRIT;
+                // Resilience - reduce crit damage
+                pdamage -= m_target->GetSpellCritDamageReduction(pdamage);
+            }
 
             // only from players
             // FIXME: need use SpellDamageBonus instead?
