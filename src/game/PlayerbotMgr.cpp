@@ -730,8 +730,13 @@ void Creature::LoadBotMenu(Player *pPlayer)
 
 bool Creature::isBotGiver()
 {
-    std::string scriptname = GetScriptName();
-    if( scriptname == "bot_giver" )
+    CreatureInfo const* crI = GetCreatureInfo();
+    if(!crI)
+        return false;
+
+    std::string name = crI->SubName;
+    
+    if( name == "BotGiver" )
         return true;
     return false;
 }
