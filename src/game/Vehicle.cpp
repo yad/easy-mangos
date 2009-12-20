@@ -678,7 +678,7 @@ void Vehicle::InstallAllAccessories()
             InstallAccessory(32933,0);
             InstallAccessory(32934,1);
             break;
-        case 33109:InstallAccessory(33167,1);break;
+        case 33109:InstallAccessory(33167,1, true);break;
         case 33060:InstallAccessory(33067,7, true);break;
         case 33113:
             InstallAccessory(33114,0);
