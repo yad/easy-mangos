@@ -269,16 +269,17 @@ void WorldSession::HandleGossipHelloOpcode(WorldPacket & recv_data)
     if (GetPlayer()->hasUnitState(UNIT_STAT_DIED))
         GetPlayer()->RemoveSpellsCausingAura(SPELL_AURA_FEIGN_DEATH);
 
+    if (!pCreature->IsStopped())
+        pCreature->StopMoving();
+
     // Playerbot mod
     if(pCreature->isBotGiver())
     {
         GetPlayer()->TalkedToCreature(pCreature->GetEntry(),pCreature->GetGUID());
         _player->PrepareGossipMenu(pCreature,GOSSIP_OPTION_BOT);
         _player->SendPreparedGossip(pCreature);
-        pCreature->StopMoving();
+        return;
     }
-    else if (!pCreature->IsStopped())
-        pCreature->StopMoving();
 
     if (pCreature->isSpiritGuide())
         pCreature->SendAreaSpiritHealerQueryOpcode(_player);
@@ -337,6 +338,7 @@ void WorldSession::HandleGossipSelectOptionOpcode( WorldPacket & recv_data )
             _player->GetPlayerbotMgr()->AddPlayerBot(guidlo);
         }
         _player->PlayerTalkClass->CloseGossip();
+        return;
     }
 
     // TODO: determine if scriptCall is needed for GO and also if scriptCall can be same as current, with modified argument WorldObject*

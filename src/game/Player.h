@@ -701,6 +701,7 @@ struct AccountInfo
 
     uint64 Guid;
     std::string Name;
+    float Angle;
 };
 
 #define MAX_EQUIPMENT_SET_INDEX 10                          // client limit

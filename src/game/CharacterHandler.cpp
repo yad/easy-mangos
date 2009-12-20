@@ -830,8 +830,7 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
     if(!pCurrChar->IsStandState() && !pCurrChar->hasUnitState(UNIT_STAT_STUNNED))
         pCurrChar->SetStandState(UNIT_STAND_STATE_STAND);
 
-    if(!pCurrChar->GetPlayerbotAI())
-        pCurrChar->_LoadAccountInfos();
+    pCurrChar->_LoadAccountInfos();
 
     m_playerLoading = false;
     delete holder;

@@ -12227,7 +12227,10 @@ void Player::PrepareGossipMenu(WorldObject *pSource, uint32 menuId)
     Creature *pCreature = (Creature*)pSource;
 
     if(pCreature->isBotGiver())
+    {
         pCreature->LoadBotMenu(this);
+        return;
+    }
 
     // if default menuId and no menu options exist for this, use options from default options
     if (pMenuItemBounds.first == pMenuItemBounds.second && menuId == GetDefaultGossipMenuForSource(pSource))
@@ -12429,9 +12432,13 @@ void Player::OnGossipSelect(WorldObject* pSource, uint32 gossipListId, uint32 me
     if(pSource->GetTypeId() == TYPEID_UNIT)
     {
         Unit* pUnit = ((Unit*)pSource);
-        Creature *pCreature = ((Creature*)pUnit);
-        if(pCreature && pCreature->isBotGiver())
-            return;
+        if(pUnit)
+        {
+            Creature *pCreature = ((Creature*)pUnit);
+            if(pCreature)
+                if(pCreature->isBotGiver())
+                    return;
+        }
     }
 
     uint32 gossipOptionId = gossipmenu.GetItem(gossipListId).m_gOptionId;
@@ -21192,7 +21199,7 @@ void Player::_SaveEquipmentSets()
 
 void Player::_LoadAccountInfos()
 {
-	QueryResult *result = result = CharacterDatabase.PQuery("SELECT guid, name FROM characters WHERE account = '%d'", GetSession()->GetAccountId());
+    QueryResult *result = result = CharacterDatabase.PQuery("SELECT guid, name FROM characters WHERE account = '%d'", GetSession()->GetAccountId());
     if (!result)
         return;
 
@@ -21205,12 +21212,63 @@ void Player::_LoadAccountInfos()
 
         aInfo.Guid      = fields[0].GetUInt64();
         aInfo.Name      = fields[1].GetCppString();
+        aInfo.Angle     = 0.0f;
+
+        switch(count)
+        {
+            case 0:
+            {
+                aInfo.Angle = 0.0f * M_PI / 1.0f;
+                break;
+            }
+            case 1:
+            {
+                aInfo.Angle = 1.0f * M_PI / 1.0f;
+                break;
+            }
+            case 2:
+            {
+                aInfo.Angle = -1.0f * M_PI / 6.0f;
+                break;
+            }
+            case 3:
+            {
+                aInfo.Angle = -5.0f * M_PI / 6.0f;
+                break;
+            }
+            case 4:
+            {
+                aInfo.Angle = -1.0f * M_PI / 4.0f;
+                break;
+            }
+            case 5:
+            {
+                aInfo.Angle = -3.0f * M_PI / 4.0f;
+                break;
+            }
+            case 6:
+            {
+                aInfo.Angle = -1.0f * M_PI / 3.0f;
+                break;
+            }
+            case 7:
+            {
+                aInfo.Angle = -2.0f * M_PI / 3.0f;
+                break;
+            }
+            default:
+            {
+                aInfo.Angle = -1.0f * M_PI / 2.0f;
+                break;
+            }
+        }
+        
 
         m_AccountInfos[count] = aInfo;
 
         ++count;
 
-        if(count >= 40)                // client limit
+        if(count >= 10)
             break;
     } while (result->NextRow());
     delete result;
