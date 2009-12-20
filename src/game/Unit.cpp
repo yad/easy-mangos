@@ -4923,6 +4923,14 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
         {
             switch (dummySpell->Id)
             {
+                //Explode Corpse
+                case 49555:
+                    triggered_spell_id = 49618;
+                    break;
+                //Explode Corpse heroic
+                case 59807:
+                    triggered_spell_id = 59809;
+                    break;
                 // Eye for an Eye
                 case 9799:
                 case 25988:
