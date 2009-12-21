@@ -43,8 +43,8 @@ enum VehicleSeatFlags
 
 enum PowerType
 {
-    POWER_STEAM     = 61,
-    POWER_PYRITE    = 41,
+    POWER_TYPE_PYRITE = 41,
+    POWER_TYPE_STEAM  = 61
 };
 
 #define MAX_SEAT 8
@@ -66,7 +66,7 @@ class Vehicle : public Creature
         void setDeathState(DeathState s);                   // overwrite virtual Creature::setDeathState and Unit::setDeathState
         void Update(uint32 diff);                           // overwrite virtual Creature::Update and Unit::Update
 
-        void Regenerate(Powers power);
+        void RegeneratePower(Powers power);
 
         uint32 GetVehicleId() { return m_vehicleId; }
         bool SetVehicleId(uint32 vehicleid);
