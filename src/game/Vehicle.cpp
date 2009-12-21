@@ -81,14 +81,14 @@ void Vehicle::Update(uint32 diff)
 
     if(m_regenTimer <= diff)
     {
-        Regenerate(getPowerType());
+        RegeneratePower(getPowerType());
         m_regenTimer = 4000;
     }
     else
         m_regenTimer -= diff;
 }
 
-void Vehicle::Regenerate(Powers power)
+void Vehicle::RegeneratePower(Powers power)
 {
     uint32 curValue = GetPower(power);
     uint32 maxValue = GetMaxPower(power);
@@ -98,11 +98,12 @@ void Vehicle::Regenerate(Powers power)
 
     float addvalue = 0.0f;
 
-    if(m_vehicleInfo->m_powerType == POWER_STEAM)
-        addvalue = 20.0;
-    else 
-        if(m_vehicleInfo->m_powerType == POWER_PYRITE)
-            return;
+    // hack: needs more research of power type from the dbc. 
+    // It must contains some info about vehicles like Salvaged Chopper.
+    if(m_vehicleInfo->m_powerType == POWER_TYPE_PYRITE)
+        return;
+
+    addvalue = 20.0f;
 
     ModifyPower(power, (int32)addvalue);
 }
@@ -149,43 +150,42 @@ bool Vehicle::Create(uint32 guidlow, Map *map, uint32 phaseMask, uint32 Entry, u
     {
         ((InstanceMap*)map)->GetInstanceData()->OnCreatureCreate(this);
     }
-    if(Creature *cre = dynamic_cast<Creature*>(this))
+    
+    if(m_vehicleInfo->m_powerType == POWER_TYPE_STEAM)
     {
-        if(m_vehicleInfo->m_powerType == POWER_STEAM)
+        setPowerType(POWER_ENERGY);
+        SetMaxPower(POWER_ENERGY, 100);
+        SetPower(POWER_ENERGY, 100);
+    }
+    else if(m_vehicleInfo->m_powerType == POWER_TYPE_PYRITE)
+    {
+        setPowerType(POWER_ENERGY);
+        SetMaxPower(POWER_ENERGY, 50);
+        SetPower(POWER_ENERGY, 50);
+    }
+    else
+    {
+        for (uint32 i = 0; i < MAX_VEHICLE_SPELLS; ++i)
         {
-            this->setPowerType(POWER_ENERGY);
-            this->SetMaxPower(POWER_ENERGY, 100);
-            this->SetPower(POWER_ENERGY, 100);
-        }
-        else if(m_vehicleInfo->m_powerType == POWER_PYRITE)
-        {
-            this->setPowerType(POWER_ENERGY);
-            this->SetMaxPower(POWER_ENERGY, 50);
-            this->SetPower(POWER_ENERGY, 50);
-        }
-        else
-        {
-            for (uint32 i = 0; i < MAX_VEHICLE_SPELLS; ++i)
+            if(!GetVehicleData()->v_spells[i])
+                continue;
+            SpellEntry const *spellInfo = sSpellStore.LookupEntry(GetVehicleData()->v_spells[i]);
+            if(!spellInfo)
+                continue;
+
+            if(spellInfo->powerType == POWER_MANA)
+                break;
+
+            if(spellInfo->powerType == POWER_ENERGY)
             {
-                if(!cre->m_spells[i])
-                    continue;
-                SpellEntry const *spellInfo = sSpellStore.LookupEntry(cre->m_spells[i]);
-                if(!spellInfo)
-                    continue;
-
-                if(spellInfo->powerType == POWER_MANA)
-                    break;
-
-                if(spellInfo->powerType == POWER_ENERGY)
-                {
-                    this->setPowerType(POWER_ENERGY);
-                    this->SetMaxPower(POWER_ENERGY, 100);
-                    this->SetPower(POWER_ENERGY, 100);
-                    break;
-                }
+                setPowerType(POWER_ENERGY);
+                SetMaxPower(POWER_ENERGY, 100);
+                SetPower(POWER_ENERGY, 100);
+                break;
             }
         }
     }
+
     InstallAllAccessories();
 
     return true;
@@ -681,10 +681,10 @@ void Vehicle::InstallAllAccessories()
         case 33109:InstallAccessory(33167,1, true);break;
         case 33060:InstallAccessory(33067,7, true);break;
         case 33113:
-            InstallAccessory(33114,0);
-            InstallAccessory(33114,1);
-            InstallAccessory(33114,2);
-            InstallAccessory(33114,3);
+            InstallAccessory(33114,0, true);
+            InstallAccessory(33114,1, true);
+            InstallAccessory(33114,2, true);
+            InstallAccessory(33114,3, true);
             InstallAccessory(33139,7);
             break;
         case 33114:
