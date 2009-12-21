@@ -201,7 +201,7 @@ void Unit::Update( uint32 p_time )
     m_Events.Update( p_time );
     _UpdateSpells( p_time );
 
-    CleanupDeletedAuars();
+    CleanupDeletedAuras();
 
     if (m_lastManaUseTimer)
     {
@@ -5969,8 +5969,18 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                 // This effect only from Rapid Killing (mana regen)
                 if (!(procSpell->SpellFamilyFlags & UI64LIT(0x0100000000000000)))
                     return false;
-                triggered_spell_id = 56654;
+
                 target = this;
+
+                switch(dummySpell->Id)
+                {
+                    case 53228:                             // Rank 1
+                        triggered_spell_id = 56654;
+                        break;
+                    case 53232:                             // Rank 2
+                        triggered_spell_id = 58882;
+                        break;
+                }
                 break;
             }
             break;
@@ -6542,13 +6552,8 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                 }
                 // No thread generated mod
                 // TODO: exist special flag in spell attributes for this, need found and use!
-                SpellModifier *mod = new SpellModifier;
-                mod->op = SPELLMOD_THREAT;
-                mod->value = -100;
-                mod->type = SPELLMOD_PCT;
-                mod->spellId = dummySpell->Id;
-                mod->mask = UI64LIT(0x0000000000000003);
-                mod->mask2= UI64LIT(0x0);
+                SpellModifier *mod = new SpellModifier(SPELLMOD_THREAT,SPELLMOD_PCT,-100,triggeredByAura);
+
                 ((Player*)this)->AddSpellMod(mod, true);
 
                 // Remove cooldown (Chain Lightning - have Category Recovery time)
@@ -6598,7 +6603,25 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                     }
                 }
                 return false;
-                break;
+            }
+            // Frozen Power
+            if (dummySpell->SpellIconID == 3780)
+            {
+                Unit *caster = triggeredByAura->GetCaster();
+
+                if (!procSpell || !caster)
+                    return false;
+
+                float distance = caster->GetDistance(pVictim);
+                int32 chance = triggerAmount;
+
+                if (distance < 15.0f || !roll_chance_i(chance))
+                    return false;
+
+                // make triggered cast apply after current damage spell processing for prevent remove by it
+                if(Spell* spell = GetCurrentSpell(CURRENT_GENERIC_SPELL))
+                    spell->AddTriggeredSpell(63685);
+                return true;
             }
             break;
         }
@@ -11382,7 +11405,7 @@ void Unit::RemoveFromWorld()
         RemoveGuardians();
         RemoveAllGameObjects();
         RemoveAllDynObjects();
-        CleanupDeletedAuars();
+        CleanupDeletedAuras();
     }
 
     Object::RemoveFromWorld();
@@ -12772,13 +12795,7 @@ bool Unit::HandleMendingAuraProc( Aura* triggeredByAura )
             if(Player* target = ((Player*)this)->GetNextRandomRaidMember(radius))
             {
                 // aura will applied from caster, but spell casted from current aura holder
-                SpellModifier *mod = new SpellModifier;
-                mod->op = SPELLMOD_CHARGES;
-                mod->value = jumps-5;               // negative
-                mod->type = SPELLMOD_FLAT;
-                mod->spellId = spellProto->Id;
-                mod->mask  = spellProto->SpellFamilyFlags;
-                mod->mask2 = spellProto->SpellFamilyFlags2;
+                SpellModifier *mod = new SpellModifier(SPELLMOD_CHARGES,SPELLMOD_FLAT,jumps-5,spellProto->Id,spellProto->SpellFamilyFlags,spellProto->SpellFamilyFlags2);
 
                 // remove before apply next (locked against deleted)
                 triggeredByAura->SetInUse(true);
@@ -13160,7 +13177,7 @@ void Unit::StopAttackFaction(uint32 faction_id)
             guardian->StopAttackFaction(faction_id);
 }
 
-void Unit::CleanupDeletedAuars()
+void Unit::CleanupDeletedAuras()
 {
     // really delete auras "deleted" while processing its ApplyModify code
     for(AuraList::const_iterator itr = m_deletedAuras.begin(); itr != m_deletedAuras.end(); ++itr)
