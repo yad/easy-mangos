@@ -925,9 +925,9 @@ void MailDraft::SendMailTo(MailReceiver const& receiver, MailSender const& sende
 
     if (receiver.GetPlayerGUIDLow() == auctionbot.GetAHBplayerGUID())
     {
-        if (sender.GetMailMessageType() == MAIL_AUCTION && m_items.size())
+        if (sender.GetMailMessageType() == MAIL_AUCTION && !m_items.empty())
         {
-            deleteIncludedItems();
+            deleteIncludedItems(true);
         }
         return;
     }
