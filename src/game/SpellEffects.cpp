@@ -365,16 +365,12 @@ void Spell::EffectSchoolDMG(uint32 effect_idx)
                 }
                 break;
             }
-
             case SPELLFAMILY_MAGE:
-            {
-                // Arcane Blast
-                if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x20000000))
-                {
-                    m_caster->CastSpell(m_caster, 36032, true);
-                }
+                // remove Arcane Blast buffs at any non-Arcane Blast arcane damage spell.
+                // NOTE: it removed at hit instead cast because currently spell done-damage calculated at hit instead cast
+                if ((m_spellInfo->SchoolMask & SPELL_SCHOOL_MASK_ARCANE) && !(m_spellInfo->SpellFamilyFlags & UI64LIT(0x20000000)))
+                    m_caster->RemoveAurasDueToSpell(36032); // Arcane Blast buff
                 break;
-            }
             case SPELLFAMILY_WARRIOR:
             {
                 // Bloodthirst
@@ -475,7 +471,8 @@ void Spell::EffectSchoolDMG(uint32 effect_idx)
                     // found Immolate or Shadowflame
                     if (aura)
                     {
-                        int32 damagetick = aura->GetModifier()->m_amount;
+                        // DoT not have applied spell bonuses in m_amount
+                        int32 damagetick = m_caster->SpellDamageBonus(unitTarget, aura->GetSpellProto(), aura->GetModifier()->m_amount, DOT);
                         damage += damagetick * 4;
 
                         // Glyph of Conflagrate
@@ -670,22 +667,6 @@ void Spell::EffectSchoolDMG(uint32 effect_idx)
                     // + 10% for each application of Holy Vengeance on the target
                     if(stacks)
                         damage += damage * stacks * 10 /100;
-                }
-                // Avenger's Shield ($m1+0.07*$SPH+0.07*$AP) - ranged sdb for future
-                else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000000000004000))
-                {
-                    float ap = m_caster->GetTotalAttackPowerValue(BASE_ATTACK);
-                    int32 holy = m_caster->SpellBaseDamageBonus(GetSpellSchoolMask(m_spellInfo)) +
-                                 m_caster->SpellBaseDamageBonusForVictim(GetSpellSchoolMask(m_spellInfo), unitTarget);
-                    damage += int32(ap * 0.07f) + int32(holy * 7 / 100);
-                }
-                // Hammer of Wrath ($m1+0.15*$SPH+0.15*$AP) - ranged type sdb future fix
-                else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000008000000000))
-                {
-                    float ap = m_caster->GetTotalAttackPowerValue(BASE_ATTACK);
-                    int32 holy = m_caster->SpellBaseDamageBonus(GetSpellSchoolMask(m_spellInfo)) +
-                                 m_caster->SpellBaseDamageBonusForVictim(GetSpellSchoolMask(m_spellInfo), unitTarget);
-                    damage += int32(ap * 0.15f) + int32(holy * 15 / 100);
                 }
                 // Hammer of the Righteous
                 else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0004000000000000))
@@ -3015,6 +2996,7 @@ void Spell::EffectEnergize(uint32 i)
             level_multiplier = 4;
             break;
         case 31930:                                         // Judgements of the Wise
+        case 48542:                                         // Revitalize (mana restore case)
         case 63375:                                         // Improved Stormstrike
             damage = damage * unitTarget->GetCreateMana() / 100;
             break;
