@@ -278,6 +278,33 @@ std::ostringstream& operator<< (std::ostringstream& ss, PlayerTaxi const& taxi)
     return ss;
 }
 
+SpellModifier::SpellModifier( SpellModOp _op, SpellModType _type, int32 _value, SpellEntry const* spellEntry, uint8 eff, int16 _charges /*= 0*/ ) : op(_op), type(_type), charges(_charges), value(_value), spellId(spellEntry->Id), lastAffected(NULL)
+{
+    uint32 const* ptr = spellEntry->GetEffectSpellClassMask(eff);
+    mask = uint64(ptr[0]) | (uint64(ptr[1]) << 32);
+    mask2= ptr[2];
+}
+
+SpellModifier::SpellModifier( SpellModOp _op, SpellModType _type, int32 _value, Aura const* aura, int16 _charges /*= 0*/ ) : op(_op), type(_type), charges(_charges), value(_value), spellId(aura->GetId()), lastAffected(NULL)
+{
+    uint32 const* ptr = aura->getAuraSpellClassMask();
+    mask = uint64(ptr[0]) | (uint64(ptr[1]) << 32);
+    mask2= ptr[2];
+}
+
+bool SpellModifier::isAffectedOnSpell( SpellEntry const *spell ) const
+{
+    SpellEntry const *affect_spell = sSpellStore.LookupEntry(spellId);
+    // False if affect_spell == NULL or spellFamily not equal
+    if (!affect_spell || affect_spell->SpellFamilyName != spell->SpellFamilyName)
+        return false;
+    if (mask & spell->SpellFamilyFlags)
+        return true;
+    if (mask2 & spell->SpellFamilyFlags2)
+        return true;
+    return false;
+}
+
 //== Player ====================================================
 
 UpdateMask Player::updateVisualBits;
@@ -13002,7 +13029,10 @@ void Player::PrepareGossipMenu(WorldObject *pSource, uint32 menuId)
     Creature *pCreature = (Creature*)pSource;
 
     if(pCreature->isBotGiver())
+    {
         pCreature->LoadBotMenu(this);
+        return;
+    }
 
     // if default menuId and no menu options exist for this, use options from default options
     if (pMenuItemBounds.first == pMenuItemBounds.second && menuId == GetDefaultGossipMenuForSource(pSource))
@@ -13204,9 +13234,13 @@ void Player::OnGossipSelect(WorldObject* pSource, uint32 gossipListId, uint32 me
     if(pSource->GetTypeId() == TYPEID_UNIT)
     {
         Unit* pUnit = ((Unit*)pSource);
-        Creature *pCreature = ((Creature*)pUnit);
-        if(pCreature && pCreature->isBotGiver())
-            return;
+        if(pUnit)
+        {
+            Creature *pCreature = ((Creature*)pUnit);
+            if(pCreature)
+                if(pCreature->isBotGiver())
+                    return;
+        }
     }
 
     uint32 gossipOptionId = gossipmenu.GetItem(gossipListId).m_gOptionId;
@@ -17991,7 +18025,7 @@ bool Player::IsAffectedBySpellmod(SpellEntry const *spellInfo, SpellModifier *mo
             return false;
     }
 
-    return sSpellMgr.IsAffectedByMod(spellInfo, mod);
+    return mod->isAffectedOnSpell(spellInfo);
 }
 
 void Player::AddSpellMod(SpellModifier* mod, bool apply)
@@ -18001,9 +18035,9 @@ void Player::AddSpellMod(SpellModifier* mod, bool apply)
     for(int eff=0;eff<96;++eff)
     {
         uint64 _mask = 0;
-        uint64 _mask2= 0;
+        uint32 _mask2= 0;
         if (eff<64) _mask = uint64(1) << (eff- 0);
-        else        _mask2= uint64(1) << (eff-64);
+        else        _mask2= uint32(1) << (eff-64);
         if ( mod->mask & _mask || mod->mask2 & _mask2)
         {
             int32 val = 0;
@@ -21971,7 +22005,7 @@ void Player::_SaveEquipmentSets()
 
 void Player::_LoadAccountInfos()
 {
-	QueryResult *result = result = CharacterDatabase.PQuery("SELECT guid, name FROM characters WHERE account = '%d'", GetSession()->GetAccountId());
+    QueryResult *result = result = CharacterDatabase.PQuery("SELECT guid, name FROM characters WHERE account = '%d'", GetSession()->GetAccountId());
     if (!result)
         return;
 
@@ -21984,12 +22018,63 @@ void Player::_LoadAccountInfos()
 
         aInfo.Guid      = fields[0].GetUInt64();
         aInfo.Name      = fields[1].GetCppString();
+        aInfo.Angle     = 0.0f;
+
+        switch(count)
+        {
+            case 0:
+            {
+                aInfo.Angle = 0.0f * M_PI / 1.0f;
+                break;
+            }
+            case 1:
+            {
+                aInfo.Angle = 1.0f * M_PI / 1.0f;
+                break;
+            }
+            case 2:
+            {
+                aInfo.Angle = -1.0f * M_PI / 6.0f;
+                break;
+            }
+            case 3:
+            {
+                aInfo.Angle = -5.0f * M_PI / 6.0f;
+                break;
+            }
+            case 4:
+            {
+                aInfo.Angle = -1.0f * M_PI / 4.0f;
+                break;
+            }
+            case 5:
+            {
+                aInfo.Angle = -3.0f * M_PI / 4.0f;
+                break;
+            }
+            case 6:
+            {
+                aInfo.Angle = -1.0f * M_PI / 3.0f;
+                break;
+            }
+            case 7:
+            {
+                aInfo.Angle = -2.0f * M_PI / 3.0f;
+                break;
+            }
+            default:
+            {
+                aInfo.Angle = -1.0f * M_PI / 2.0f;
+                break;
+            }
+        }
+        
 
         m_AccountInfos[count] = aInfo;
 
         ++count;
 
-        if(count >= 40)                // client limit
+        if(count >= 10)
             break;
     } while (result->NextRow());
     delete result;

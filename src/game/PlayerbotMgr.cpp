@@ -734,9 +734,9 @@ bool Creature::isBotGiver()
     if(!crI)
         return false;
 
-    std::string name = crI->SubName;
+    std::string subname = crI->SubName;
     
-    if( name == "BotGiver" )
+    if( subname == "BotGiver" )
         return true;
     return false;
 }

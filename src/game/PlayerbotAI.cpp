@@ -173,7 +173,6 @@ PlayerbotAI::PlayerbotAI(PlayerbotMgr* const mgr, Player* const bot) :
         GetMaster()->GetSession()->QueuePacket(packet2);
     }
 
-    CheckMount();
     FollowCheckTeleport(*GetMaster());
 }
 
@@ -249,7 +248,6 @@ uint32 PlayerbotAI::getSpellId(const char* args, bool master) const
             foundMatchUsesNoReagents = usesNoReagents;
         }
     }
-
     return foundSpellId;
 }
 
@@ -911,8 +909,35 @@ Item* PlayerbotAI::FindMount(uint32 matchingRidingSkill) const
 
 void PlayerbotAI::CheckMount()
 {
+    if(GetMaster()->IsMounted() && GetMaster()->isInFlight())
+    {
+        m_bot->SetSpeed(MOVE_RUN, GetMaster()->GetSpeed(MOVE_FLIGHT), true);
+        m_bot->SetSpeed(MOVE_RUN_BACK, GetMaster()->GetSpeed(MOVE_FLIGHT_BACK), true);
+    }
+    else if(GetMaster()->IsMounted() && !GetMaster()->isInFlight())
+    {
+        m_bot->SetSpeed(MOVE_RUN, GetMaster()->GetSpeed(MOVE_RUN), true);
+        m_bot->SetSpeed(MOVE_RUN_BACK, GetMaster()->GetSpeed(MOVE_RUN_BACK), true);
+    }
+
     if (GetMaster()->IsMounted() && !m_bot->IsMounted())
     {
+        m_bot->SetSpeed(MOVE_WALK, GetMaster()->GetSpeed(MOVE_WALK), true);
+
+        m_bot->SetSpeed(MOVE_FLIGHT, GetMaster()->GetSpeed(MOVE_FLIGHT), true);
+        m_bot->SetSpeed(MOVE_FLIGHT_BACK, GetMaster()->GetSpeed(MOVE_FLIGHT_BACK), true);
+
+        if(GetMaster()->isInFlight())
+        {
+            m_bot->SetSpeed(MOVE_RUN, GetMaster()->GetSpeed(MOVE_FLIGHT), true);
+            m_bot->SetSpeed(MOVE_RUN_BACK, GetMaster()->GetSpeed(MOVE_FLIGHT_BACK), true);
+        }
+        else
+        {
+            m_bot->SetSpeed(MOVE_RUN, GetMaster()->GetSpeed(MOVE_RUN), true);
+            m_bot->SetSpeed(MOVE_RUN_BACK, GetMaster()->GetSpeed(MOVE_RUN_BACK), true);
+        }
+
         Item* pItem = NULL;
 
         pItem = m_bot->GetPlayerbotAI()->FindMount(300);
@@ -991,7 +1016,7 @@ void PlayerbotAI::CheckMount()
                 }
             }
             if(spellMount > 0) m_bot->CastSpell(m_bot, spellMount, false);
-		}
+        }
     }
     else if (!GetMaster()->IsMounted() && m_bot->IsMounted())
     {
@@ -1001,6 +1026,14 @@ void PlayerbotAI::CheckMount()
         m_bot->RemoveSpellsCausingAura(SPELL_AURA_MOUNTED); 
         m_bot->RemoveSpellsCausingAura(SPELL_AURA_MOD_INCREASE_FLIGHT_SPEED);
         m_bot->RemoveSpellsCausingAura(SPELL_AURA_MOD_INCREASE_MOUNTED_SPEED);
+
+        m_bot->UpdateSpeed(MOVE_WALK, true);
+
+        m_bot->UpdateSpeed(MOVE_RUN, true);
+        m_bot->UpdateSpeed(MOVE_RUN_BACK, true);
+
+        m_bot->UpdateSpeed(MOVE_FLIGHT, true);
+        m_bot->UpdateSpeed(MOVE_FLIGHT_BACK, true);
     }
 }
 
@@ -1392,25 +1425,49 @@ void PlayerbotAI::DoNextCombatManeuver()
 }
 
 void PlayerbotAI::DoCombatMovement() {
-	if( !m_targetCombat ) return;
+    if( !m_targetCombat ) return;
 
-	float targetDist = m_bot->GetDistance( m_targetCombat );
+    float targetDist = m_bot->GetDistance( m_targetCombat );
 
-	if( m_combatStyle==COMBAT_MELEE && !m_bot->hasUnitState( UNIT_STAT_CHASE ) && ( (m_movementOrder==MOVEMENT_STAY && targetDist<=ATTACK_DISTANCE) || (m_movementOrder!=MOVEMENT_STAY) ) ) 
-	{
-		// melee combat - chase target if in range or if we are not forced to stay
-		m_bot->GetMotionMaster()->MoveChase( m_targetCombat );
-	} 
-	else if( m_combatStyle==COMBAT_RANGED && m_movementOrder!=MOVEMENT_STAY ) 
-	{
-		// ranged combat - just move within spell range
-		// TODO: just follow in spell range! how to determine bots spell range?
-		if( targetDist>25.0f ) {
-			m_bot->GetMotionMaster()->MoveChase( m_targetCombat );
-		} else {
-			MovementClear();
-		}
-	}
+    if( m_combatStyle==COMBAT_MELEE && m_movementOrder!=MOVEMENT_STAY ) 
+    {
+        float angle = rand_float(0, M_PI);
+        float dist = rand_float( 1.0f, 3.0f );
+
+        AccountInfos m_AccountInfos = m_bot->GetAccountInfos();
+        for(AccountInfos::iterator itr = m_AccountInfos.begin(); itr != m_AccountInfos.end(); ++itr)
+        {
+            if(itr->second.Guid == m_bot->GetGUID())
+            {
+                angle = itr->second.Angle;
+                break;
+            }
+        }
+        m_bot->GetMotionMaster()->MoveFollow( m_targetCombat, dist, angle );
+        m_bot->SetFacingToObject( m_targetCombat );
+    } 
+    else if( m_combatStyle==COMBAT_RANGED && m_movementOrder!=MOVEMENT_STAY ) 
+    {
+        // ranged combat - just move within spell range
+        // TODO: just follow in spell range! how to determine bots spell range?
+        if( targetDist>50.0f )
+        {
+            float angle = rand_float(0, M_PI);
+            float dist = rand_float( 10.0f, 20.0f );
+
+            AccountInfos m_AccountInfos = m_bot->GetAccountInfos();
+            for(AccountInfos::iterator itr = m_AccountInfos.begin(); itr != m_AccountInfos.end(); ++itr)
+            {
+                if(itr->second.Guid == m_bot->GetGUID())
+                {
+                    angle = itr->second.Angle;
+                    break;
+                }
+            }
+            m_bot->GetMotionMaster()->MoveFollow( m_targetCombat, dist, angle );
+            m_bot->SetFacingToObject( m_targetCombat );
+        }
+    }
 }
 
 void PlayerbotAI::SetQuestNeedItems()
@@ -1940,11 +1997,21 @@ void PlayerbotAI::MovementReset() {
 
         if( m_bot->isAlive() )
         {
-			float angle = rand_float(0, M_PI);
-		    float dist = rand_float( m_mgr->m_confFollowDistance[0], m_mgr->m_confFollowDistance[1] );
-			m_bot->GetMotionMaster()->MoveFollow( m_followTarget, dist, angle );
+            float angle = rand_float(0, M_PI);
+            float dist = rand_float( 5.0f, 10.0f );
+
+            AccountInfos m_AccountInfos = m_bot->GetAccountInfos();
+            for(AccountInfos::iterator itr = m_AccountInfos.begin(); itr != m_AccountInfos.end(); ++itr)
+            {
+                if(itr->second.Guid == m_bot->GetGUID())
+                {
+                    angle = itr->second.Angle;
+                    break;
+                }
+            }
+            m_bot->GetMotionMaster()->MoveFollow( m_followTarget, dist, angle );
         }
-	}
+    }
 }
 
 void PlayerbotAI::MovementUpdate() 
@@ -1955,7 +2022,7 @@ void PlayerbotAI::MovementUpdate()
 	m_bot->SendMessageToSet( &data, false );
 
     // call set position (updates states, exploration, etc.)
-    m_bot->SetPosition( m_bot->GetPositionX(), m_bot->GetPositionY(), m_bot->GetPositionZ(), m_bot->GetOrientation(), false );
+    m_bot->SetPosition( m_bot->GetPositionX(), m_bot->GetPositionY(), m_bot->GetPositionZ(), m_bot->GetOrientation(), false );	
 }
 
 void PlayerbotAI::MovementClear() 
@@ -2014,7 +2081,7 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
     if (currentTime < m_ignoreAIUpdatesUntilTime)
         return;
 
-    // default updates occur every two seconds
+    // default updates occur every one second
     m_ignoreAIUpdatesUntilTime = time(0) + 1;
 
 	// send heartbeat
@@ -2111,7 +2178,7 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
                 //m_ignoreAIUpdatesUntilTime = time(0) + 6;
                 PlayerbotChatHandler ch(GetMaster());
                 if (ch.teleport(*m_bot))
-                    SetIgnoreTeleport(15);
+                    SetIgnoreTeleport(5);
             }
             DoNextCombatManeuver();
         }
@@ -2134,6 +2201,7 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
         {
             MovementReset();
             SetMovementOrder( MOVEMENT_FOLLOW, GetMaster() );
+            CheckMount();
         }
 
         // do class specific non combat actions
@@ -2141,6 +2209,7 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
         {
             (GetClassAI())->DoNonCombatActions();
             SetMovementOrder( MOVEMENT_FOLLOW, GetMaster() );
+            CheckMount();
         }
     }
 }
@@ -2216,6 +2285,8 @@ bool PlayerbotAI::CastSpell(uint32 spellId)
         TellMaster("Il me manque le nom du sort a lancer.");
         return false;
     }
+	/*else
+		TellMaster(pSpellInfo->SpellName[2]);*/
 
     // set target
     uint64 targetGUID = m_bot->GetSelection();
@@ -2560,7 +2631,7 @@ bool PlayerbotAI::FollowCheckTeleport( WorldObject &obj )
             return false;
         }
         else
-            SetIgnoreTeleport(15);
+            SetIgnoreTeleport(5);
     }
     return true;
 }

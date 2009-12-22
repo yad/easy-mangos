@@ -419,7 +419,7 @@ void PlayerbotWarlockAI::DoNonCombatActions()
     }
 
     // check for demon
-    if( SUMMON_FELGUARD>0 || SUMMON_FELHUNTER>0 || SUMMON_SUCCUBUS>0 || SUMMON_VOIDWALKER>0 || SUMMON_IMP>0 && !m_demonSummonFailed )
+    if( (SUMMON_FELGUARD>0 || SUMMON_FELHUNTER>0 || SUMMON_SUCCUBUS>0 || SUMMON_VOIDWALKER>0 || SUMMON_IMP>0) && !m_demonSummonFailed )
     {
         if( !pet )
         {
