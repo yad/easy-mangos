@@ -28,6 +28,7 @@
 #include "Group.h"
 #include "SocialMgr.h"
 #include "Util.h"
+#include "PlayerbotMgr.h"
 
 /* differeces from off:
     -you can uninvite yourself - is is useful
@@ -335,6 +336,7 @@ void WorldSession::HandleGroupDisbandOpcode( WorldPacket & /*recv_data*/ )
     // everything's fine, do it
     SendPartyResult(PARTY_OP_LEAVE, GetPlayer()->GetName(), PARTY_RESULT_OK);
 
+    GetPlayer()->GetPlayerbotMgr()->RemoveAllBotsFromGroup();
     GetPlayer()->RemoveFromGroup();
 }
 
