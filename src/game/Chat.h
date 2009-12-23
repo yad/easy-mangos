@@ -500,7 +500,8 @@ class ChatHandler
         bool HandleWaterwalkCommand(const char* args);
         bool HandleQuitCommand(const char* args);
         bool HandlePlayerbotCommand(const char* args);
-
+        bool HandleGMBotCommand(const char* args);
+		
         //! Development Commands
         bool HandleSaveAllCommand(const char* args);
 

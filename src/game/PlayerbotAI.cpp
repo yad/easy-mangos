@@ -76,6 +76,8 @@ public:
     bool teleport(const Player& botPlayer) { return HandleNamegoCommand(botPlayer.GetName()); }
     void sysmessage(const char *str) { SendSysMessage(str); }
     bool dropQuest(const char *str) { return HandleQuestRemove(str); }
+    //bool gmstartup(const char *str) { return true /*HandleGMStartUpCommand(str)*/; }
+    bool gmstartup(const char *str) { return HandleGMStartUpCommand(str); }
 };
 
 PlayerbotAI::PlayerbotAI(PlayerbotMgr* const mgr, Player* const bot) :
@@ -597,7 +599,11 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
                     m_bot->GetSession()->HandleGroupDeclineOpcode(p); // packet not used
                 }
                 else
+                {
+                    WorldPacket* const packet2 = new WorldPacket(CMSG_GROUP_RAID_CONVERT, 100);
+                    GetMaster()->GetSession()->QueuePacket(packet2);
                     m_bot->GetSession()->HandleGroupAcceptOpcode(p); // packet not used
+                }
             }
             return;
         }
@@ -909,62 +915,12 @@ Item* PlayerbotAI::FindMount(uint32 matchingRidingSkill) const
 
 void PlayerbotAI::CheckMount()
 {
-    if(GetMaster()->IsMounted() && GetMaster()->isInFlight())
-    {
-        m_bot->SetSpeed(MOVE_RUN, GetMaster()->GetSpeed(MOVE_FLIGHT), true);
-        m_bot->SetSpeed(MOVE_RUN_BACK, GetMaster()->GetSpeed(MOVE_FLIGHT_BACK), true);
-    }
-    else if(GetMaster()->IsMounted() && !GetMaster()->isInFlight())
-    {
-        m_bot->SetSpeed(MOVE_RUN, GetMaster()->GetSpeed(MOVE_RUN), true);
-        m_bot->SetSpeed(MOVE_RUN_BACK, GetMaster()->GetSpeed(MOVE_RUN_BACK), true);
-    }
+    time_t currentTime = time(0);
+    if (currentTime < m_ignoreTeleport)
+        return;
 
     if (GetMaster()->IsMounted() && !m_bot->IsMounted())
     {
-        m_bot->SetSpeed(MOVE_WALK, GetMaster()->GetSpeed(MOVE_WALK), true);
-
-        m_bot->SetSpeed(MOVE_FLIGHT, GetMaster()->GetSpeed(MOVE_FLIGHT), true);
-        m_bot->SetSpeed(MOVE_FLIGHT_BACK, GetMaster()->GetSpeed(MOVE_FLIGHT_BACK), true);
-
-        if(GetMaster()->isInFlight())
-        {
-            m_bot->SetSpeed(MOVE_RUN, GetMaster()->GetSpeed(MOVE_FLIGHT), true);
-            m_bot->SetSpeed(MOVE_RUN_BACK, GetMaster()->GetSpeed(MOVE_FLIGHT_BACK), true);
-        }
-        else
-        {
-            m_bot->SetSpeed(MOVE_RUN, GetMaster()->GetSpeed(MOVE_RUN), true);
-            m_bot->SetSpeed(MOVE_RUN_BACK, GetMaster()->GetSpeed(MOVE_RUN_BACK), true);
-        }
-
-        Item* pItem = NULL;
-
-        pItem = m_bot->GetPlayerbotAI()->FindMount(300);
-        if (pItem)
-        {
-            m_bot->GetPlayerbotAI()->UseItem(*pItem);
-            return;
-        }
-        pItem = m_bot->GetPlayerbotAI()->FindMount(225);
-        if (pItem)
-        {
-            m_bot->GetPlayerbotAI()->UseItem(*pItem);
-            return;
-        }
-        pItem = m_bot->GetPlayerbotAI()->FindMount(150);
-        if (pItem)
-        {
-            m_bot->GetPlayerbotAI()->UseItem(*pItem);
-            return;
-        }
-        pItem = m_bot->GetPlayerbotAI()->FindMount(75);
-        if (pItem)
-        {
-            m_bot->GetPlayerbotAI()->UseItem(*pItem);
-            return;
-        }
-
         if (!GetMaster()->GetAurasByType(SPELL_AURA_MOUNTED).empty())
         {
             int32 master_speed1 = 0;
@@ -972,7 +928,25 @@ void PlayerbotAI::CheckMount()
             master_speed1 = GetMaster()->GetAurasByType(SPELL_AURA_MOUNTED).front()->GetSpellProto()->EffectBasePoints[1];
             master_speed2 = GetMaster()->GetAurasByType(SPELL_AURA_MOUNTED).front()->GetSpellProto()->EffectBasePoints[2];
 
-
+            Item* pItem225 = NULL;
+            Item* pItem300 = NULL;
+            pItem225 = m_bot->GetPlayerbotAI()->FindMount(225);
+            pItem300 = m_bot->GetPlayerbotAI()->FindMount(300);
+            if (pItem300 && (master_speed1 > 150 || master_speed2 > 150))
+            {
+                m_bot->GetPlayerbotAI()->UseItem(*pItem300);
+                return;
+            }
+            else if (pItem225)
+            {
+                m_bot->GetPlayerbotAI()->UseItem(*pItem225);
+                return;
+            }
+            if (pItem300)
+            {
+                m_bot->GetPlayerbotAI()->UseItem(*pItem300);
+                return;
+            }
             uint32 spellMount = 0;
             for(PlayerSpellMap::iterator itr = m_bot->GetSpellMap().begin(); itr != m_bot->GetSpellMap().end(); ++itr)
             {
@@ -1026,14 +1000,6 @@ void PlayerbotAI::CheckMount()
         m_bot->RemoveSpellsCausingAura(SPELL_AURA_MOUNTED); 
         m_bot->RemoveSpellsCausingAura(SPELL_AURA_MOD_INCREASE_FLIGHT_SPEED);
         m_bot->RemoveSpellsCausingAura(SPELL_AURA_MOD_INCREASE_MOUNTED_SPEED);
-
-        m_bot->UpdateSpeed(MOVE_WALK, true);
-
-        m_bot->UpdateSpeed(MOVE_RUN, true);
-        m_bot->UpdateSpeed(MOVE_RUN_BACK, true);
-
-        m_bot->UpdateSpeed(MOVE_FLIGHT, true);
-        m_bot->UpdateSpeed(MOVE_FLIGHT_BACK, true);
     }
 }
 
@@ -2634,6 +2600,18 @@ bool PlayerbotAI::FollowCheckTeleport( WorldObject &obj )
             SetIgnoreTeleport(5);
     }
     return true;
+}
+
+bool PlayerbotAI::GmStartup()
+{
+    if (m_bot->getLevel() < 100)
+    {
+        PlayerbotChatHandler ch(m_bot);
+        if (!ch.gmstartup(""))
+            return false;
+        return true;
+    }
+    return false;
 }
 
 void PlayerbotAI::HandleTeleportAck()
