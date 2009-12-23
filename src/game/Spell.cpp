@@ -4118,15 +4118,6 @@ SpellCastResult Spell::CheckCast(bool strict)
 
         bool non_caster_target = target != m_caster && !IsSpellWithCasterSourceTargetsOnly(m_spellInfo);
 
-        //Mind Flay hack
-        if(m_spellInfo->Id == 15407 ||
-          (m_spellInfo->Id > 17310 && m_spellInfo->Id < 17315)
-           m_spellInfo->Id == 18807 ||
-           m_spellInfo->Id == 25387 ||
-           m_spellInfo->Id == 48155 ||
-           m_spellInfo->Id == 48156)
-            return SPELL_CAST_OK;
-
         if(non_caster_target)
         {
             // target state requirements (apply to non-self only), to allow cast affects to self like Dirty Deeds
