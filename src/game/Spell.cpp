@@ -2406,7 +2406,7 @@ void Spell::prepare(SpellCastTargets const* targets, Aura* triggeredByAura)
     // else triggered with cast time will execute execute at next tick or later
     // without adding to cast type slot
     // will not show cast bar but will show effects at casting time etc
-
+	
     if(sWorld.getConfig(CONFIG_NO_COOLDOWN) == 1)
         if(m_caster->GetTypeId() == TYPEID_PLAYER)
             ((Player*)m_caster)->RemoveSpellCooldown(m_spellInfo->Id, true);
