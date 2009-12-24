@@ -2945,9 +2945,25 @@ void Aura::HandleAuraModShapeshift(bool apply, bool Real)
         case FORM_DEFENSIVESTANCE:
             PowerType = POWER_RAGE;
             break;
+        case FORM_TRAVEL:
+        case FORM_AQUA:
+        case FORM_GHOUL:
+        case FORM_CREATUREBEAR:
+        case FORM_GHOSTWOLF:
+        case FORM_FLIGHT:
+        case FORM_MOONKIN:
+        case FORM_FLIGHT_EPIC:
+        case FORM_METAMORPHOSIS:
+        case FORM_AMBIENT:
+        case FORM_SHADOW:
+        case FORM_STEALTH:
+        case FORM_TREE:
+            break;
         default:
             break;
     }
+
+    modelid = m_target->GetModelForForm(form);
 
     // remove polymorph before changing display id to keep new display id
     switch ( form )
