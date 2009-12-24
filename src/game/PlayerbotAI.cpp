@@ -176,6 +176,7 @@ PlayerbotAI::PlayerbotAI(PlayerbotMgr* const mgr, Player* const bot) :
     }
 
     FollowCheckTeleport(*GetMaster());
+    SetIgnoreSpell(5);
 }
 
 PlayerbotAI::~PlayerbotAI()
@@ -2234,6 +2235,10 @@ bool PlayerbotAI::CastSpell(uint32 spellId, Unit& target)
 
 bool PlayerbotAI::CastSpell(uint32 spellId)
 {
+    time_t currentTime = time(0);
+    if (currentTime < m_bot->GetPlayerbotAI()->GetIgnoreSpell())
+        return false;
+
     // some AIs don't check if the bot doesn't have spell before using it
     // so just return false when this happens
     if (spellId == 0)
@@ -2257,6 +2262,17 @@ bool PlayerbotAI::CastSpell(uint32 spellId)
     // set target
     uint64 targetGUID = m_bot->GetSelection();
     Unit* pTarget = ObjectAccessor::GetUnit(*m_bot, m_bot->GetSelection());
+
+    if(!pTarget)
+        return false;
+
+    if(pTarget->GetTypeId() == TYPEID_PLAYER)
+    {
+        Player *plTarget = (Player*)pTarget;
+        if(plTarget && plTarget->GetPlayerbotAI())
+            if (currentTime < plTarget->GetPlayerbotAI()->GetIgnoreSpell())
+                return false;
+    }
 
     if(!m_bot->IsWithinDistInMap( pTarget, 50, true ))
         return false;
