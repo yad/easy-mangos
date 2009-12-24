@@ -6559,6 +6559,7 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                 CastSpell(pVictim, spellId, true, castItem, triggeredByAura);
 
                 ((Player*)this)->AddSpellMod(mod, false);
+                delete mod;
 
                 if( cooldown && GetTypeId()==TYPEID_PLAYER )
                     ((Player*)this)->AddSpellCooldown(dummySpell->Id,0,time(NULL) + cooldown);
@@ -12831,6 +12832,7 @@ bool Unit::HandleMendingAuraProc( Aura* triggeredByAura )
                 caster->AddSpellMod(mod, true);
                 CastCustomSpell(target,spellProto->Id,&heal,NULL,NULL,true,NULL,triggeredByAura,caster->GetGUID());
                 caster->AddSpellMod(mod, false);
+                delete mod;
                 triggeredByAura->SetInUse(false);
             }
         }
