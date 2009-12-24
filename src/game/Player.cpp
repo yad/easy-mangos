@@ -12250,12 +12250,9 @@ void Player::PrepareGossipMenu(WorldObject *pSource, uint32 menuId)
 
     GossipMenuItemsMapBounds pMenuItemBounds = sObjectMgr.GetGossipMenuItemsMapBounds(menuId);
 
-    // Playerbot mod
-    Creature *pCreature = (Creature*)pSource;
-
-    if(pCreature->isBotGiver())
+    if(pSource->GetTypeId() == TYPEID_UNIT && ((Creature*)pSource)->isBotGiver())
     {
-        pCreature->LoadBotMenu(this);
+        ((Creature*)pSource)->LoadBotMenu(this);
         return;
     }
 
