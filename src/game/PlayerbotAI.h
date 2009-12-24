@@ -182,9 +182,11 @@ class MANGOS_DLL_SPEC PlayerbotAI
         void GetCombatTarget( Unit* forcedTarged = 0 );
         Unit *GetCurrentTarget() { return m_targetCombat; };
         void DoNextCombatManeuver();
-		void DoCombatMovement();
+        void DoCombatMovement();
         void SetIgnoreUpdateTime(uint8 t) {m_ignoreAIUpdatesUntilTime=time(0) + t; };
         void SetIgnoreTeleport(uint8 t) {m_ignoreTeleport=time(0) + t; };
+        void SetIgnoreSpell(uint8 t) { m_ignoreSpell=time(0) + t; };
+        time_t GetIgnoreSpell() { return m_ignoreSpell; };
 
         Player *GetPlayerBot() const {return m_bot;}
         Player *GetPlayer() const {return m_bot;}
@@ -239,9 +241,10 @@ class MANGOS_DLL_SPEC PlayerbotAI
         // no need to waste CPU cycles during casting etc
         time_t m_ignoreAIUpdatesUntilTime;
         time_t m_ignoreTeleport;
-		CombatStyle m_combatStyle;
+        time_t m_ignoreSpell;
+        CombatStyle m_combatStyle;
         CombatOrderType m_combatOrder;
-		MovementOrderType m_movementOrder;
+        MovementOrderType m_movementOrder;
 
         ScenarioType m_ScenarioType;
 
