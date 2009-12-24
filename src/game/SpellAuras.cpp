@@ -7745,15 +7745,36 @@ void Aura::HandleArenaPreparation(bool apply, bool Real)
     {
         m_target->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PREPARATION);
 
+        Player *player = (Player*)m_target;
+        if (!player)
+            return;
+
         // find auras with duration less than 25s and remove them
-        Unit::AuraMap const& auras = m_target->GetAuras();
-        for( Unit::AuraMap::const_iterator itr = auras.begin(); itr != auras.end(); ++itr )
+        Unit::AuraMap const& auras = player->GetAuras();
+        for( Unit::AuraMap::const_iterator itr = auras.begin(); itr != auras.end(); )
         {
-            Aura* aur = (*itr).second;
+            Aura* aur = itr->second;
             if( aur->GetAuraDuration() < 25000 )
-                for(int j = 0; j < aur->GetStackAmount(); ++j)
-                    m_target->RemoveAura( aur );
+            {
+                player->RemoveAura( aur );
+                itr = auras.begin();
+            }
+            else
+                itr++;
                     
+        }
+        // Set rage and runic power to 0
+        Powers power = player->getPowerType();
+        switch ( power )
+        {
+            case POWER_RAGE:
+            case POWER_RUNIC_POWER:
+            {
+                player->SetPower( power, 0 );
+                break;
+            }
+            default:
+                break;
         }
     }
 }
