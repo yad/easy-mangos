@@ -18066,7 +18066,6 @@ void Player::AddSpellMod(SpellModifier* mod, bool apply)
         if (mod->charges == -1)
             --m_SpellModRemoveCount;
         m_spellMods[mod->op].remove(mod);
-        delete mod;
     }
 }
 
