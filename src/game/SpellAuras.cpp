@@ -1447,6 +1447,7 @@ void Aura::HandleAddModifier(bool apply, bool Real)
             case 51124:                                     // Killing Machine
             case 54741:                                     // Firestarter
             case 57761:                                     // Fireball!
+            case 64823:                                     // Elune's Wrath (Balance druid t8 set
                 SetAuraCharges(1);
                 break;
         }
@@ -2513,6 +2514,16 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                 m_target->CastSpell(m_target, 47287, true, NULL, this);
                 return;
             }
+        }
+
+        // Living Bomb
+        if (m_spellProto->SpellFamilyName == SPELLFAMILY_MAGE && (m_spellProto->SpellFamilyFlags & UI64LIT(0x2000000000000)))
+        {
+            // Zero duration is equal to AURA_REMOVE_BY_DEFAULT. We can't use it directly, as it is set even
+            // when removing aura from one target due to casting Living Bomb at other.
+            if (m_duration == 0 || m_removeMode == AURA_REMOVE_BY_DISPEL)
+                m_target->CastSpell(m_target,m_modifier.m_amount,true,NULL,this);
+            return;
         }
 
         if (m_removeMode == AURA_REMOVE_BY_DEATH)
