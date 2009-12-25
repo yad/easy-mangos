@@ -2185,6 +2185,12 @@ void Spell::EffectTriggerSpell(uint32 effIndex)
                 pet->CastSpell(pet, 28305, true);
             return;
         }
+        //Mirror image
+        case 58832:
+        {
+            (Player*)m_caster->DeleteMirrorImages();
+            break;
+        }
     }
 
     // normal case
@@ -3885,6 +3891,10 @@ void Spell::EffectSummonWild(uint32 i, uint32 forceFaction)
 
             if(forceFaction)
                 summon->setFaction(forceFaction);
+
+            //Mirror image
+            if(m_spellInfo->Id == 58831)
+                (Player*)m_caster->AddMirrorImage(summon);
         }
     }
 }

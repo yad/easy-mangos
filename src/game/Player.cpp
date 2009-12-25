@@ -307,6 +307,8 @@ UpdateMask Player::updateVisualBits;
 
 Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputationMgr(this)
 {
+    m_uiLastImage = 0;
+
     m_transport = 0;
 
     m_speakTime = 0;
