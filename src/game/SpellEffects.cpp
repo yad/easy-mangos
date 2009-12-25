@@ -6308,7 +6308,8 @@ void Spell::EffectLeapForward(uint32 i)
         //Check use of vamps//
         bool useVmap = false;
         bool swapZone = true;
-        if( MapManager::Instance().GetMap(mapid, unitTarget)->GetHeight(cx, cy, cz, false) <  MapManager::Instance().GetMap(mapid, unitTarget)->GetHeight(cx, cy, cz, true) )
+
+        if( unitTarget->GetMap()->GetHeight(cx, cy, cz, false) <  unitTarget->GetMap()->GetHeight(cx, cy, cz, true) )
             useVmap = true;
 
         const int itr = int(dis/0.5f);
@@ -6325,7 +6326,7 @@ void Spell::EffectLeapForward(uint32 i)
             dy += _dy;
             MaNGOS::NormalizeMapCoord(dx);
             MaNGOS::NormalizeMapCoord(dy);
-            dz = MapManager::Instance().GetMap(mapid, unitTarget)->GetHeight(dx, dy, cz, useVmap);
+            dz = unitTarget->GetMap()->GetHeight(dx, dy, cz, useVmap);
              
             //Prevent climbing and go around object maybe 2.0f is to small? use 3.0f?
             if( (dz-cz) < 2.0f && (dz-cz) > -2.0f && (unitTarget->IsWithinLOS(dx, dy, dz)))
@@ -6363,7 +6364,7 @@ void Spell::EffectLeapForward(uint32 i)
         if(unitTarget->GetTypeId() == TYPEID_PLAYER)
             ((Player*)unitTarget)->TeleportTo(mapid, cx, cy, cz, unitTarget->GetOrientation(), TELE_TO_NOT_LEAVE_COMBAT | TELE_TO_NOT_UNSUMMON_PET | (unitTarget==m_caster ? TELE_TO_SPELL : 0));
         else
-            MapManager::Instance().GetMap(mapid, unitTarget)->CreatureRelocation((Creature*)unitTarget, cx, cy, cz, unitTarget->GetOrientation());
+            unitTarget->GetMap()->CreatureRelocation((Creature*)unitTarget, cx, cy, cz, unitTarget->GetOrientation());
     }
 }
 
