@@ -2084,6 +2084,15 @@ void Spell::EffectTriggerSpell(uint32 effIndex)
     // special cases
     switch(triggered_spell_id)
     {
+        // Mirror Image
+        case 58832:
+        {
+            // Glyph of Mirror Image
+            if (m_caster->HasAura(63093))
+               m_caster->CastSpell(m_caster, 65047, true); // Mirror Image
+
+            break;
+        }
         // Vanish (not exist)
         case 18461:
         {
@@ -2184,12 +2193,6 @@ void Spell::EffectTriggerSpell(uint32 effIndex)
             if (Unit *pet = unitTarget->GetPet())
                 pet->CastSpell(pet, 28305, true);
             return;
-        }
-        //Mirror image
-        case 58832:
-        {
-            (Player*)m_caster->DeleteMirrorImages();
-            break;
         }
     }
 
@@ -3889,12 +3892,18 @@ void Spell::EffectSummonWild(uint32 i, uint32 forceFaction)
             summon->SetUInt32Value(UNIT_CREATED_BY_SPELL, m_spellInfo->Id);
             summon->SetCreatorGUID(m_caster->GetGUID());
 
+            //Mirror image
+            if(creature_entry == 31216)
+            {
+                summon->SetLevel(m_caster->getLevel());
+                summon->SetHealth(28 + 30*m_caster->getLevel());
+                summon->setPowerType(POWER_MANA);
+                summon->SetPower(POWER_MANA, 28 + 30*m_caster->getLevel());
+                summon->SetPvP(true);
+            }
+
             if(forceFaction)
                 summon->setFaction(forceFaction);
-
-            //Mirror image
-            if(m_spellInfo->Id == 58831)
-                (Player*)m_caster->AddMirrorImage(summon);
         }
     }
 }

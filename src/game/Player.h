@@ -393,9 +393,6 @@ struct LookingForGroup
     uint8 roles;
 };
 
-//hack - REALLY HACK!
-typedef std::map<uint64, uint8> MirrorImagesList;
-
 enum PlayerMovementType
 {
     MOVE_ROOT       = 1,
@@ -2308,23 +2305,6 @@ class MANGOS_DLL_SPEC Player : public Unit
             ActionButtonList::const_iterator ab = m_actionButtons.find(button);
             return ab != m_actionButtons.end() && ab->second.uState != ACTIONBUTTON_DELETED && ab->second.GetType() == ACTION_BUTTON_SPELL ? ab->second.GetAction() : 0;
         }
-        uint8 GetMirrorImageID(uint64 guid)
-        {
-            MirrorImagesList::const_iterator img = m_mirrorImages.find(guid);
-            return img->second;
-        }
-        void AddMirrorImage(Unit *image)
-        {
-            if(!image)
-                return;
-            m_uiLastImage++;
-            m_mirrorImages[image->GetGUID()] = m_uiLastImage;
-        }
-        void DeleteMirrorImages()
-        {
-            m_mirrorImages.clear();
-            m_uiLastImage = 0;
-        }
     protected:
 
         uint32 m_contestedPvPTimer;
@@ -2451,9 +2431,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         uint32 m_specsCount;
 
         ActionButtonList m_actionButtons;
-
-        MirrorImagesList m_mirrorImages;
-        uint32 m_uiLastImage;
 
         float m_auraBaseMod[BASEMOD_END][MOD_END];
         int16 m_baseRatingValue[MAX_COMBAT_RATING];
