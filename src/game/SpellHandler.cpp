@@ -624,17 +624,16 @@ void WorldSession::HandleSpellClick( WorldPacket & recv_data )
 void WorldSession::HandleMirrrorImageDataRequest( WorldPacket & recv_data )
 {
     sLog.outDebug("WORLD: CMSG_GET_MIRRORIMAGE_DATA");
-    CHECK_PACKET_SIZE(recv_data, 8);
     uint64 guid;
     recv_data >> guid;
 
     // Get unit for which data is needed by client
-    Unit *unit = ObjectAccessor::GetObjectInWorld(guid, (Unit*)NULL);
+    Unit *unit = ObjectAccessor::GetUnit(*_player, guid);
     if (!unit)
         return;
 
     // Get creator of the unit
-    Unit *creator = ObjectAccessor::GetObjectInWorld(unit->GetCreatorGUID(), (Unit*)NULL);
+    Unit *creator = ObjectAccessor::GetUnit(*_player, unit->GetCreatorGUID());
     if (!creator)
         return;
 
