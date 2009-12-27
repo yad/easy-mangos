@@ -783,6 +783,14 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
         if(pVictim->HasAura(51514) && roll_chance_f(75))
             pVictim->RemoveAurasDueToSpell(51514);
 
+        //Shiver
+        if(pVictim->HasAura(57949))
+           CastSpell(pVictim, 57952, true);
+
+        //Shiver heroic
+        if(pVictim->HasAura(59978))
+            CastSpell(pVictim, 59979, true);
+
         if(damagetype == DIRECT_DAMAGE || damagetype == SPELL_DIRECT_DAMAGE)
         {
             if (!spellProto || !(spellProto->AuraInterruptFlags&AURA_INTERRUPT_FLAG_DIRECT_DAMAGE))
