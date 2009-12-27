@@ -3892,16 +3892,6 @@ void Spell::EffectSummonWild(uint32 i, uint32 forceFaction)
             summon->SetUInt32Value(UNIT_CREATED_BY_SPELL, m_spellInfo->Id);
             summon->SetCreatorGUID(m_caster->GetGUID());
 
-            //Mirror image
-            if(creature_entry == 31216)
-            {
-                summon->SetLevel(m_caster->getLevel());
-                summon->SetHealth(28 + 30*m_caster->getLevel());
-                summon->setPowerType(POWER_MANA);
-                summon->SetPower(POWER_MANA, 28 + 30*m_caster->getLevel());
-                summon->SetPvP(true);
-            }
-
             if(forceFaction)
                 summon->setFaction(forceFaction);
         }
