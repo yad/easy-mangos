@@ -39,13 +39,8 @@ char const* petTypeSuffix[MAX_PET_TYPE] =
 
 Pet::Pet(PetType type) :
 Creature(), m_removed(false), m_petType(type), m_happinessTimer(7500), m_duration(0), m_resetTalentsCost(0),
-<<<<<<< HEAD
 m_bonusdamage(0), m_resetTalentsTime(0), m_usedTalentCount(0), m_loading(false),
-m_declinedname(NULL)
-=======
-m_bonusdamage(0), m_resetTalentsTime(0), m_usedTalentCount(0), m_auraUpdateMask(0), m_loading(false),
 m_declinedname(NULL), m_petModeFlags(PET_MODE_DEFAULT)
->>>>>>> ed2abc70045c39483e5178a6adf369878d91a7eb
 {
     m_isPet = true;
     m_name = "Pet";
