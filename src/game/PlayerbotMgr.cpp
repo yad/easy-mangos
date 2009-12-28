@@ -17,7 +17,7 @@ class CharacterHandler;
 PlayerbotMgr::PlayerbotMgr(Player* const master) : m_master(master) 
 {
     // load config variables
-	m_confDisableBots = sConfig.GetBoolDefault( "PlayerbotAI.DisableBots", false );
+    m_confDisableBots = sConfig.GetBoolDefault( "PlayerbotAI.DisableBots", false );
     m_confDebugWhisper = sConfig.GetBoolDefault( "PlayerbotAI.DebugWhisper", false );
     m_confFollowDistance[0] = sConfig.GetFloatDefault( "PlayerbotAI.FollowDistanceMin", 0.5f );
     m_confFollowDistance[1] = sConfig.GetFloatDefault( "PlayerbotAI.FollowDistanceMin", 1.0f );
@@ -160,7 +160,7 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
                 {
                     Player* const bot = GetPlayerBot(m_master->GetSelection());
                     if (bot)
-						bot->GetPlayerbotAI()->SetMovementOrder( PlayerbotAI::MOVEMENT_STAY );
+                        bot->GetPlayerbotAI()->SetMovementOrder( PlayerbotAI::MOVEMENT_STAY );
                     else
                     {
                         for (PlayerBotMap::const_iterator it = GetPlayerBotsBegin(); it != GetPlayerBotsEnd(); ++it)
@@ -197,17 +197,17 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
         case CMSG_GAMEOBJ_USE:
             {
                 WorldPacket p(packet);
-        	    p.rpos(0); // reset reader
-        	    uint64 objGUID;
-        	    p >> objGUID;
+                p.rpos(0); // reset reader
+                uint64 objGUID;
+                p >> objGUID;
 
                 GameObject *obj = m_master->GetMap()->GetGameObject( objGUID );
                 if( !obj )
                     return;
 
-            	for (PlayerBotMap::const_iterator it = GetPlayerBotsBegin(); it != GetPlayerBotsEnd(); ++it)
-            	{
-            		Player* const bot = it->second;
+                for (PlayerBotMap::const_iterator it = GetPlayerBotsBegin(); it != GetPlayerBotsEnd(); ++it)
+                {
+                    Player* const bot = it->second;
 
                     if( obj->GetGoType() == GAMEOBJECT_TYPE_QUESTGIVER )
                     {
@@ -223,23 +223,23 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
         case CMSG_GOSSIP_HELLO:
         case CMSG_QUESTGIVER_HELLO:
         {
-        	WorldPacket p(packet);
-        	p.rpos(0); // reset reader
-        	uint64 npcGUID;
-        	p >> npcGUID;
-        	
-        	WorldObject* pNpc = m_master->GetMap()->GetWorldObject( npcGUID );
-        	if (!pNpc)
-        		return;
+            WorldPacket p(packet);
+            p.rpos(0); // reset reader
+            uint64 npcGUID;
+            p >> npcGUID;
+            
+            WorldObject* pNpc = m_master->GetMap()->GetWorldObject( npcGUID );
+            if (!pNpc)
+                return;
 
-        	// for all master's bots
-        	for (PlayerBotMap::const_iterator it = GetPlayerBotsBegin(); it != GetPlayerBotsEnd(); ++it)
-        	{
-        		Player* const bot = it->second;
+            // for all master's bots
+            for (PlayerBotMap::const_iterator it = GetPlayerBotsBegin(); it != GetPlayerBotsEnd(); ++it)
+            {
+                Player* const bot = it->second;
                 bot->GetPlayerbotAI()->TurnInQuests( pNpc );
-        	}
-        	        
-        	return;
+            }
+                    
+            return;
         }
 
         // if master accepts a quest, bots should also try to accept quest
@@ -260,8 +260,8 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
                     if (bot->GetQuestStatus(quest) == QUEST_STATUS_COMPLETE)
                         bot->GetPlayerbotAI()->TellMaster("J'ai deja fini cette quete.");
                     else if (! bot->CanTakeQuest(qInfo, false))
-                    {                    	
-        				if (! bot->SatisfyQuestStatus(qInfo, false))
+                    {                        
+                        if (! bot->SatisfyQuestStatus(qInfo, false))
                             bot->GetPlayerbotAI()->TellMaster("Je suis deja sur cette quete.");
                         else
                             bot->GetPlayerbotAI()->TellMaster("Je ne peux pas prendre cette quete.");
@@ -281,65 +281,65 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
             }
             return;
         }
-		case CMSG_LOOT_ROLL:
-		{
+        case CMSG_LOOT_ROLL:
+        {
 
-			WorldPacket p(packet); //WorldPacket packet for CMSG_LOOT_ROLL, (8+4+1)
-			uint64 Guid;
-			uint32 NumberOfPlayers;
-			uint8 rollType;
-			p.rpos(0); //reset packet pointer
-			p >> Guid; //guid of the item rolled
-			p >> NumberOfPlayers; //number of players invited to roll
-			p >> rollType; //need,greed or pass on roll
+            WorldPacket p(packet); //WorldPacket packet for CMSG_LOOT_ROLL, (8+4+1)
+            uint64 Guid;
+            uint32 NumberOfPlayers;
+            uint8 rollType;
+            p.rpos(0); //reset packet pointer
+            p >> Guid; //guid of the item rolled
+            p >> NumberOfPlayers; //number of players invited to roll
+            p >> rollType; //need,greed or pass on roll
 
 
-			for (PlayerBotMap::const_iterator it = GetPlayerBotsBegin(); it != GetPlayerBotsEnd(); ++it)
-				{
+            for (PlayerBotMap::const_iterator it = GetPlayerBotsBegin(); it != GetPlayerBotsEnd(); ++it)
+                {
 
-					uint32 choice = urand(0,2); //returns 0,1,or 2
+                    uint32 choice = urand(0,2); //returns 0,1,or 2
 
-					Player* const bot = it->second;
-					if(!bot)
-						return;
+                    Player* const bot = it->second;
+                    if(!bot)
+                        return;
 
-					Group* group = bot->GetGroup();
-					if(!group)
-						return;
+                    Group* group = bot->GetGroup();
+                    if(!group)
+                        return;
 
-					switch (group->GetLootMethod())
-						{
-						case GROUP_LOOT:
-							// bot random roll
-							group->CountRollVote(bot->GetGUID(), Guid, NumberOfPlayers, choice);
-							break;
-						case NEED_BEFORE_GREED:
-							choice = 1;
-							// bot need roll
-							group->CountRollVote(bot->GetGUID(), Guid, NumberOfPlayers, choice);
-							break;
-						case MASTER_LOOT:
-							choice = 0;
-							// bot pass on roll
-							group->CountRollVote(bot->GetGUID(), Guid, NumberOfPlayers, choice);
-							break;
-						default:
-							break;
-						}
+                    switch (group->GetLootMethod())
+                        {
+                        case GROUP_LOOT:
+                            // bot random roll
+                            group->CountRollVote(bot->GetGUID(), Guid, NumberOfPlayers, choice);
+                            break;
+                        case NEED_BEFORE_GREED:
+                            choice = 1;
+                            // bot need roll
+                            group->CountRollVote(bot->GetGUID(), Guid, NumberOfPlayers, choice);
+                            break;
+                        case MASTER_LOOT:
+                            choice = 0;
+                            // bot pass on roll
+                            group->CountRollVote(bot->GetGUID(), Guid, NumberOfPlayers, choice);
+                            break;
+                        default:
+                            break;
+                        }
 
-					switch (rollType)
-						{
-						case ROLL_NEED:
-							bot->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_ROLL_NEED, 1);
-							break;
-						case ROLL_GREED:
-							bot->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_ROLL_GREED, 1);
-							break;
-						}
+                    switch (rollType)
+                        {
+                        case ROLL_NEED:
+                            bot->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_ROLL_NEED, 1);
+                            break;
+                        case ROLL_GREED:
+                            bot->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_ROLL_GREED, 1);
+                            break;
+                        }
 
-				}
-		return;
-		}
+                }
+        return;
+        }
 
 
         /*
@@ -375,7 +375,7 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
 }
 void PlayerbotMgr::HandleMasterOutgoingPacket(const WorldPacket& packet)
 {
-	/**
+    /**
     switch (packet.GetOpcode())
     {
         // maybe our bots should only start looting after the master loots?
@@ -401,7 +401,7 @@ void PlayerbotMgr::HandleMasterOutgoingPacket(const WorldPacket& packet)
             sLog.outError(out.str().c_str());
         }
     }
-	 */
+     */
 }
 
 void PlayerbotMgr::LogoutAllBots()
@@ -772,28 +772,28 @@ bool ChatHandler::HandleGMBotCommand(const char* args)
         return false;
     }
 
-	Player* pPlayer = m_session->GetPlayer();
+    Player* pPlayer = m_session->GetPlayer();
 
-	if (pPlayer->GetPlayerbotAI())
-		return false;
+    if (pPlayer->GetPlayerbotAI())
+        return false;
 
     AccountInfos m_AccountInfos = pPlayer->GetAccountInfos();
     for(AccountInfos::iterator itr = m_AccountInfos.begin(); itr != m_AccountInfos.end(); ++itr)
-	{
-		if(itr->second.Guid != pPlayer->GetGUID())
-		{
-			Unit* target = ObjectAccessor::GetUnit( *m_session->GetPlayer(), itr->second.Guid );
-			if( target && target->IsInWorld() )
-			{
-				Player* plTarget = (Player*)target;
-				if(plTarget && plTarget->GetPlayerbotAI())
-				{
-					plTarget->GetPlayerbotAI()->GmStartup();
-				}
-			}
-		}
-	}
-	return true;
+    {
+        if(itr->second.Guid != pPlayer->GetGUID())
+        {
+            Unit* target = ObjectAccessor::GetUnit( *m_session->GetPlayer(), itr->second.Guid );
+            if( target && target->IsInWorld() )
+            {
+                Player* plTarget = (Player*)target;
+                if(plTarget && plTarget->GetPlayerbotAI())
+                {
+                    plTarget->GetPlayerbotAI()->GmStartup();
+                }
+            }
+        }
+    }
+    return true;
 }
 
 void Creature::LoadBotMenu(Player *pPlayer)
@@ -868,7 +868,7 @@ void Creature::LoadBotMenu(Player *pPlayer)
         }
         else
         {
-			if(sConfig.GetBoolDefault("PlayerbotAI.DisableBots", false)) return;
+            if(sConfig.GetBoolDefault("PlayerbotAI.DisableBots", false)) return;
             // create the manager if it doesn't already exist
             if (! pPlayer->GetPlayerbotMgr())
                 pPlayer->SetPlayerbotMgr(new PlayerbotMgr(pPlayer));
@@ -892,7 +892,7 @@ void Creature::LoadBotMenu(Player *pPlayer)
     }
     while (result->NextRow());
     delete result;
-	*/
+    */
 }
 
 bool Creature::isBotGiver()

@@ -336,7 +336,8 @@ void WorldSession::HandleGroupDisbandOpcode( WorldPacket & /*recv_data*/ )
     // everything's fine, do it
     SendPartyResult(PARTY_OP_LEAVE, GetPlayer()->GetName(), PARTY_RESULT_OK);
 
-    GetPlayer()->GetPlayerbotMgr()->RemoveAllBotsFromGroup();
+    if (GetPlayer()->GetPlayerbotMgr())
+        GetPlayer()->GetPlayerbotMgr()->RemoveAllBotsFromGroup();
     GetPlayer()->RemoveFromGroup();
 }
 
