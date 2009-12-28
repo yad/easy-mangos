@@ -17,6 +17,7 @@ class MANGOS_DLL_SPEC PlayerbotMageAI : PlayerbotClassAI
     public:
         PlayerbotMageAI(Player* const master, Player* const bot, PlayerbotAI* const ai);
         virtual ~PlayerbotMageAI();
+        void InitSpells(PlayerbotAI* const ai);
 
         // all combat actions go here
         void DoNextCombatManeuver(Unit*);
@@ -40,11 +41,11 @@ class MANGOS_DLL_SPEC PlayerbotMageAI : PlayerbotClassAI
         // buffs
         uint32 FROST_ARMOR, ICE_ARMOR, MAGE_ARMOR, MOLTEN_ARMOR, ARCANE_INTELLECT, ARCANE_BRILLIANCE, DALARAN_INTELLECT, DALARAN_BRILLIANCE, MANA_SHIELD, DAMPEN_MAGIC, AMPLIFY_MAGIC;
 
-		// first aid
-		uint32 RECENTLY_BANDAGED;
+        // first aid
+        uint32 RECENTLY_BANDAGED;
 
-		// racial
-		uint32 ARCANE_TORRENT, GIFT_OF_THE_NAARU, STONEFORM, ESCAPE_ARTIST, EVERY_MAN_FOR_HIMSELF, SHADOWMELD, BLOOD_FURY, WAR_STOMP, BERSERKING, WILL_OF_THE_FORSAKEN;
+        // racial
+        uint32 ARCANE_TORRENT, GIFT_OF_THE_NAARU, STONEFORM, ESCAPE_ARTIST, EVERY_MAN_FOR_HIMSELF, SHADOWMELD, BLOOD_FURY, WAR_STOMP, BERSERKING, WILL_OF_THE_FORSAKEN;
 
         uint32 SpellSequence, LastSpellArcane, LastSpellFire, LastSpellFrost, CONJURE_WATER, CONJURE_FOOD;
 };

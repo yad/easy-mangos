@@ -16,6 +16,7 @@ class MANGOS_DLL_SPEC PlayerbotHunterAI : PlayerbotClassAI
     public:
         PlayerbotHunterAI(Player* const master, Player* const bot, PlayerbotAI* const ai);
         virtual ~PlayerbotHunterAI();
+        void InitSpells(PlayerbotAI* const ai);        
         bool HasPet(Player* bot);
 
         // all combat actions go here
@@ -38,11 +39,11 @@ class MANGOS_DLL_SPEC PlayerbotHunterAI : PlayerbotClassAI
         uint32 BEAR_TRAP, FREEZING_TRAP, IMMOLATION_TRAP, FROST_TRAP, EXPLOSIVE_TRAP, ARCANE_TRAP, SNAKE_TRAP;
         uint32 ASPECT_OF_THE_HAWK, ASPECT_OF_THE_MONKEY, RAPID_FIRE, TRUESHOT_AURA, MISDIRECTION;
 
-		// first aid
-		uint32 RECENTLY_BANDAGED;
+        // first aid
+        uint32 RECENTLY_BANDAGED;
 
-		// racial
-		uint32 ARCANE_TORRENT, GIFT_OF_THE_NAARU, STONEFORM, ESCAPE_ARTIST, EVERY_MAN_FOR_HIMSELF, SHADOWMELD, BLOOD_FURY, WAR_STOMP, BERSERKING, WILL_OF_THE_FORSAKEN;
+        // racial
+        uint32 ARCANE_TORRENT, GIFT_OF_THE_NAARU, STONEFORM, ESCAPE_ARTIST, EVERY_MAN_FOR_HIMSELF, SHADOWMELD, BLOOD_FURY, WAR_STOMP, BERSERKING, WILL_OF_THE_FORSAKEN;
 };
 
 #endif

@@ -17,6 +17,7 @@ class MANGOS_DLL_SPEC PlayerbotShamanAI : PlayerbotClassAI
     public:
         PlayerbotShamanAI(Player* const master, Player* const bot, PlayerbotAI* const ai);
         virtual ~PlayerbotShamanAI();
+        void InitSpells(PlayerbotAI* const ai);
 
         // all combat actions go here
         void DoNextCombatManeuver(Unit*);
@@ -40,11 +41,11 @@ class MANGOS_DLL_SPEC PlayerbotShamanAI : PlayerbotClassAI
         // ELEMENTAL
         uint32 LIGHTNING_BOLT, EARTH_SHOCK, STONECLAW_TOTEM, FLAME_SHOCK, SEARING_TOTEM, PURGE, FIRE_NOVA_TOTEM, WIND_SHOCK, FROST_SHOCK, MAGMA_TOTEM, CHAIN_LIGHTNING, TOTEM_OF_WRATH, FIRE_ELEMENTAL_TOTEM, LAVA_BURST, EARTHBIND_TOTEM, HEX;
 
-		// first aid
-		uint32 RECENTLY_BANDAGED;
+        // first aid
+        uint32 RECENTLY_BANDAGED;
 
-		// racial
-		uint32 ARCANE_TORRENT, GIFT_OF_THE_NAARU, STONEFORM, ESCAPE_ARTIST, EVERY_MAN_FOR_HIMSELF, SHADOWMELD, BLOOD_FURY, WAR_STOMP, BERSERKING, WILL_OF_THE_FORSAKEN;
+        // racial
+        uint32 ARCANE_TORRENT, GIFT_OF_THE_NAARU, STONEFORM, ESCAPE_ARTIST, EVERY_MAN_FOR_HIMSELF, SHADOWMELD, BLOOD_FURY, WAR_STOMP, BERSERKING, WILL_OF_THE_FORSAKEN;
 
         uint32 SpellSequence, LastSpellEnhancement, LastSpellRestoration, LastSpellElemental;
 };

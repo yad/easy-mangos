@@ -19,6 +19,7 @@ class MANGOS_DLL_SPEC PlayerbotClassAI
     public:
         PlayerbotClassAI(Player* const master, Player* const bot, PlayerbotAI* const ai);
         virtual ~PlayerbotClassAI();
+        virtual void InitSpells(PlayerbotAI* const ai);        
 
         // all combat actions go here
         virtual bool DoFirstCombatManeuver(Unit*);

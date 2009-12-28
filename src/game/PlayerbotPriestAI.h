@@ -17,6 +17,7 @@ class MANGOS_DLL_SPEC PlayerbotPriestAI : PlayerbotClassAI
     public:
         PlayerbotPriestAI(Player* const master, Player* const bot, PlayerbotAI* const ai);
         virtual ~PlayerbotPriestAI();
+        void InitSpells(PlayerbotAI* const ai);
 
         // all combat actions go here
         void DoNextCombatManeuver(Unit*);
@@ -40,11 +41,11 @@ class MANGOS_DLL_SPEC PlayerbotPriestAI : PlayerbotClassAI
         // discipline
         uint32 PWS, INNER_FIRE, FORTITUDE, TOUCH_OF_WEAKNESS, FEAR_WARD, DSPIRIT, POWER_INFUSION, MASS_DISPEL, PENANCE, DIVINE_SPIRIT, INNER_FOCUS;
 
-		// first aid
-		uint32 RECENTLY_BANDAGED;
+        // first aid
+        uint32 RECENTLY_BANDAGED;
 
-		// racial
-		uint32 ARCANE_TORRENT, GIFT_OF_THE_NAARU, STONEFORM, ESCAPE_ARTIST, EVERY_MAN_FOR_HIMSELF, SHADOWMELD, BLOOD_FURY, WAR_STOMP, BERSERKING, WILL_OF_THE_FORSAKEN;
+        // racial
+        uint32 ARCANE_TORRENT, GIFT_OF_THE_NAARU, STONEFORM, ESCAPE_ARTIST, EVERY_MAN_FOR_HIMSELF, SHADOWMELD, BLOOD_FURY, WAR_STOMP, BERSERKING, WILL_OF_THE_FORSAKEN;
 
         uint32 SpellSequence, LastSpellHoly, LastSpellShadowMagic, LastSpellDiscipline;
 };
