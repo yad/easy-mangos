@@ -3622,9 +3622,10 @@ bool Unit::AddAura(Aura *Aur)
                     else if (aur2->GetSpellProto()->AttributesEx4 & SPELL_ATTR_EX4_STACK_DOT_MODIFIER && aurName == SPELL_AURA_PERIODIC_DAMAGE && aur2->GetAuraDuration() > 0)
                     {
                         int32 remainingTicks = 1 + (aur2->GetAuraDuration() / aur2->GetModifier()->periodictime);
-                        int32 maxTicks = aur2->GetAuraMaxDuration() / aur2->GetModifier()->periodictime;
+                        int32 remainingDamage = aur2->GetModifier()->m_amount * remainingTicks;
 
-                        Aur->GetModifier()->m_amount += int32(remainingTicks * aur2->GetModifier()->m_amount / maxTicks);
+                        int32 maxTicks = Aur->GetAuraMaxDuration() / Aur->GetModifier()->periodictime;
+                        Aur->GetModifier()->m_amount += int32(remainingDamage / maxTicks);
                     }
                     // can be only single (this check done at _each_ aura add
                     RemoveAura(i2,AURA_REMOVE_BY_STACK);
@@ -7037,8 +7038,12 @@ bool Unit::HandleProcTriggerSpell(Unit *pVictim, uint32 damage, Aura* triggeredB
                     case 12867: basepoints[0] = int32(weaponDamage * 48 / 100); break;
                     // Impossible case
                     default:
+                        sLog.outError("Unit::HandleProcTriggerSpell: DW unknown spell rank %u",auraSpellInfo->Id);
                         return false;
                 }
+
+                // 1 tick/sec * 6 sec = 6 ticks
+                basepoints[0] /= 6;
 
                 trigger_spell_id = 12721;
                 break;
@@ -8381,6 +8386,9 @@ float Unit::GetCombatDistance( const Unit* target ) const
 void Unit::SetPet(Pet* pet)
 {
     SetPetGUID(pet ? pet->GetGUID() : 0);
+
+    if(pet && GetTypeId() == TYPEID_PLAYER)
+        ((Player*)this)->SendPetGUIDs();
 
     // FIXME: hack, speed must be set only at follow
     if(pet && GetTypeId()==TYPEID_PLAYER)
@@ -9866,9 +9874,9 @@ float Unit::GetPPMProcChance(uint32 WeaponSpeed, float PPM) const
     return WeaponSpeed * PPM / 600.0f;                      // result is chance in percents (probability = Speed_in_sec * (PPM / 60))
 }
 
-void Unit::Mount(uint32 mount)
+void Unit::Mount(uint32 mount, uint32 spellId)
 {
-    if(!mount)
+    if (!mount)
         return;
 
     RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_MOUNTING);
@@ -9877,9 +9885,27 @@ void Unit::Mount(uint32 mount)
 
     SetFlag( UNIT_FIELD_FLAGS, UNIT_FLAG_MOUNT );
 
-    // unsummon pet
-    if(GetTypeId() == TYPEID_PLAYER)
-        ((Player*)this)->UnsummonPetTemporaryIfAny();
+    if (GetTypeId() == TYPEID_PLAYER)
+    {
+        // Called by Taxi system / GM command
+        if (!spellId)
+            ((Player*)this)->UnsummonPetTemporaryIfAny();
+        // Called by mount aura
+        else if (SpellEntry const* spellInfo = sSpellStore.LookupEntry(spellId))
+        {
+            // Flying case (Unsummon any pet)
+            if (IsSpellHaveAura(spellInfo, SPELL_AURA_MOD_INCREASE_FLIGHT_SPEED))
+                ((Player*)this)->UnsummonPetTemporaryIfAny();
+            // Normal case (Unsummon only permanent pet)
+            else if (Pet* pet = GetPet())
+            {
+                if (pet->IsPermanentPetFor((Player*)this))
+                    ((Player*)this)->UnsummonPetTemporaryIfAny();
+                else
+                    pet->ApplyModeFlags(PET_MODE_DISABLE_ACTIONS,true);
+            }
+        }
+    }
 }
 
 void Unit::Unmount()
@@ -9896,7 +9922,12 @@ void Unit::Unmount()
     // this prevents adding a pet to a not created map which would otherwise cause a crash
     // (it could probably happen when logging in after a previous crash)
     if(GetTypeId() == TYPEID_PLAYER)
-        ((Player*)this)->ResummonPetTemporaryUnSummonedIfAny();
+    {
+        if(Pet* pet = GetPet())
+            pet->ApplyModeFlags(PET_MODE_DISABLE_ACTIONS,false);
+        else
+            ((Player*)this)->ResummonPetTemporaryUnSummonedIfAny();
+    }
 }
 
 void Unit::SetInCombatWith(Unit* enemy)
