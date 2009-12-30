@@ -7279,13 +7279,20 @@ void Aura::PeriodicDummyTick()
 //              case 50493: break;
 //              // Love Rocket Barrage
 //              case 50530: break;
-                case 50792:                                 // Summon iron dwarf (left or right)
-                case 59859:
+                case 50789:                                 // Summon iron dwarf (left or right)
+                case 59860:
                     m_target->CastSpell(m_target, roll_chance_i(50) ? 50790 : 50791, true, NULL, this);
+                    return;
+                case 50792:                                 // Summon iron trogg (left or right)
+                case 59859:
+                    m_target->CastSpell(m_target, roll_chance_i(50) ? 50793 : 50794, true, NULL, this);
                     return;
                 case 50801:                                 // Summon malformed ooze (left or right)
                 case 59858:
                     m_target->CastSpell(m_target, roll_chance_i(50) ? 50802 : 50803, true, NULL, this);
+                    return;
+                case 50824:                                 // Summon earthen dwarf
+                    m_target->CastSpell(m_target, roll_chance_i(50) ? 50825 : 50826, true, NULL, this);
                     return;
 // Exist more after, need add later
                 default:
