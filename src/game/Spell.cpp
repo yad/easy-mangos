@@ -4240,16 +4240,26 @@ SpellCastResult Spell::CheckCast(bool strict)
             // check target for pet/charmed casts (not self targeted), self targeted cast used for area effects and etc
             else if (m_caster->GetTypeId() == TYPEID_UNIT && m_caster->GetCharmerOrOwnerGUID())
             {
-                // check correctness positive/negative cast target (pet cast real check and cheating check)
-                if(IsPositiveSpell(m_spellInfo->Id))
+                bool eff_dispel = false;
+                for(int j = 0; j < 3; ++j)
                 {
-                    if(m_caster->IsHostileTo(target))
-                        return SPELL_FAILED_BAD_TARGETS;
+                   // SPELL_EFFECT_DISPEL may be considered as positive/negative
+                   if(m_spellInfo->Effect[j] == SPELL_EFFECT_DISPEL)
+                      eff_dispel = true;
                 }
-                else
+                if(!eff_dispel)
                 {
-                    if(m_caster->IsFriendlyTo(target))
-                        return SPELL_FAILED_BAD_TARGETS;
+                    // check correctness positive/negative cast target (pet cast real check and cheating check)
+                   if(IsPositiveSpell(m_spellInfo->Id))
+                   {
+                       if(m_caster->IsHostileTo(target))
+                           return SPELL_FAILED_BAD_TARGETS;
+                   }
+                   else
+                   {
+                       if(m_caster->IsFriendlyTo(target))
+                          return SPELL_FAILED_BAD_TARGETS;
+                   }
                 }
             }
         }
@@ -5078,22 +5088,32 @@ SpellCastResult Spell::CheckPetCast(Unit* target)
             if(!_target->isAlive())
                 return SPELL_FAILED_BAD_TARGETS;
 
-            if(IsPositiveSpell(m_spellInfo->Id))
+            bool eff_dispel = false;
+            for(int j = 0; j < 3; ++j)
             {
-                if(m_caster->IsHostileTo(_target))
-                    return SPELL_FAILED_BAD_TARGETS;
+                // SPELL_EFFECT_DISPEL may be considered as positive/negative
+                if(m_spellInfo->Effect[j] == SPELL_EFFECT_DISPEL)
+                    eff_dispel = true;
             }
-            else
+            if(!eff_dispel)
             {
-                bool duelvsplayertar = false;
-                for(int j = 0; j < 3; ++j)
-                {
-                                                            //TARGET_DUELVSPLAYER is positive AND negative
-                    duelvsplayertar |= (m_spellInfo->EffectImplicitTargetA[j] == TARGET_DUELVSPLAYER);
+                if(IsPositiveSpell(m_spellInfo->Id))
+                { 
+                    if(m_caster->IsHostileTo(_target))
+                        return SPELL_FAILED_BAD_TARGETS;
                 }
-                if(m_caster->IsFriendlyTo(_target) && !duelvsplayertar)
+                else
                 {
-                    return SPELL_FAILED_BAD_TARGETS;
+                    bool duelvsplayertar = false;
+                    for(int j = 0; j < 3; ++j)
+                    {
+                                                            //TARGET_DUELVSPLAYER is positive AND negative
+                        duelvsplayertar |= (m_spellInfo->EffectImplicitTargetA[j] == TARGET_DUELVSPLAYER);
+                    }
+                    if(m_caster->IsFriendlyTo(target) && !duelvsplayertar)
+                    {
+                        return SPELL_FAILED_BAD_TARGETS;
+                    }
                 }
             }
         }
