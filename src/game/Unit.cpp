@@ -6069,24 +6069,6 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                 // 4 damage tick
                 basepoints0 = triggerAmount*damage/400;
                 triggered_spell_id = 61840;
-
-                // get previous aura
-                if ( target )
-                {
-                    Unit::AuraList const &periodicAuras = target->GetAurasByType( SPELL_AURA_PERIODIC_DAMAGE );
-                    for( Unit::AuraList::const_iterator i = periodicAuras.begin(); i != periodicAuras.end(); ++i )
-                    {
-                        if ( (*i)->GetCasterGUID() == GetGUID() && (*i)->GetSpellProto()->SpellIconID == 3025 )
-                        {
-                            // add remaining damage to new aura
-                            Modifier const* mod = (*i)->GetModifier();
-                            int32 tickDamage = mod->m_amount;
-                            int32 tickCount = 1 + int32( (*i)->GetAuraDuration() / mod->periodictime );
-                            basepoints0 += int32( tickDamage * tickCount / 4 );
-                            break;
-                        }
-                    }
-                }
                 break;
             }
             // Sheath of Light
@@ -6095,24 +6077,6 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                 // 4 healing tick
                 basepoints0 = triggerAmount*damage/400;
                 triggered_spell_id = 54203;
-
-                // get previous aura
-                if ( target )
-                {
-                    Unit::AuraList const &periodicAuras = target->GetAurasByType( SPELL_AURA_PERIODIC_HEAL );
-                    for( Unit::AuraList::const_iterator i = periodicAuras.begin(); i != periodicAuras.end(); ++i )
-                    {
-                        if ( (*i)->GetCasterGUID() == GetGUID() && (*i)->GetSpellProto()->SpellIconID == 3030 )
-                        {
-                            // add remaining heal to new aura
-                            Modifier const* mod = (*i)->GetModifier();
-                            int32 tickDamage = mod->m_amount;
-                            int32 tickCount = 1 + int32( (*i)->GetAuraDuration() / mod->periodictime );
-                            basepoints0 += int32( tickDamage * tickCount / 4 );
-                            break;
-                        }
-                    }
-                }
                 break;
             }
             switch(dummySpell->Id)
