@@ -452,7 +452,7 @@ void InstanceSaveManager::LoadResetTimes()
             // update the reset time if the hour in the configs changes
             uint64 newresettime = (oldresettime / DAY) * DAY + diff;
             if(oldresettime != newresettime)
-                CharacterDatabase.DirectPExecute("UPDATE instance_reset SET resettime = '"UI64FMTD"' WHERE mapid = '%u' AND difficulty = '%u'", newresettime, mapid, difficulty);
+                CharacterDatabase.DirectPExecute("UPDATE instance_reset SET resettime = '"UI64FMTD"' WHERE mapid = '%u' AND difficulty = '%u'", uint64(newresettime), mapid, difficulty);
 
             SetResetTimeFor(mapid,difficulty,newresettime);
         } while(result->NextRow());
@@ -639,7 +639,7 @@ void InstanceSaveManager::_ResetOrWarnAll(uint32 mapid, Difficulty difficulty, b
         uint32 period = mapDiff->resetTime * DAY;
         uint64 next_reset = ((now + timeLeft + MINUTE) / DAY * DAY) + period + diff;
         // update it in the DB
-        CharacterDatabase.PExecute("UPDATE instance_reset SET resettime = '"UI64FMTD"' WHERE mapid = '%d' AND difficulty = '%d'", next_reset, mapid, difficulty);
+        CharacterDatabase.PExecute("UPDATE instance_reset SET resettime = '"UI64FMTD"' WHERE mapid = '%d' AND difficulty = '%d'", uint64(next_reset), mapid, difficulty);
     }
 
     // note: this isn't fast but it's meant to be executed very rarely
