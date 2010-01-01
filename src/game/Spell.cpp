@@ -1336,7 +1336,6 @@ void Spell::SetTargetMap(uint32 effIndex, uint32 targetMode, UnitList& targetUni
                     break;
                 case 29213: // Curse of the Plaguebringer
                 case 28796: // Poison Bolt Volley
-                case 28796:
                 case 31298:
                     unMaxTargets = 3;
                     break;
@@ -1428,7 +1427,7 @@ void Spell::SetTargetMap(uint32 effIndex, uint32 targetMode, UnitList& targetUni
         case TARGET_AREAEFFECT_CUSTOM_2:
         {
             // used for targeting gameobjects
-            TagUnitMap.push_back(m_caster);
+            targetUnitMap.push_back(m_caster);
             break;
         }
         case TARGET_RANDOM_ENEMY_CHAIN_IN_AREA:
@@ -1847,9 +1846,9 @@ void Spell::SetTargetMap(uint32 effIndex, uint32 targetMode, UnitList& targetUni
         case TARGET_IN_FRONT_OF_CASTER_2:
         {
             if (m_spellInfo->SpellFamilyName == SPELLFAMILY_GENERIC)
-                FillAreaTargets(TagUnitMap,m_caster->GetPositionX(), m_caster->GetPositionY(), radius, PUSH_IN_FRONT_30, SPELL_TARGETS_AOE_DAMAGE);
+                FillAreaTargets(targetUnitMap,m_caster->GetPositionX(), m_caster->GetPositionY(), radius, PUSH_IN_FRONT_30, SPELL_TARGETS_AOE_DAMAGE);
             else
-                FillAreaTargets(TagUnitMap,m_caster->GetPositionX(), m_caster->GetPositionY(), radius, PUSH_IN_FRONT, SPELL_TARGETS_AOE_DAMAGE);
+                FillAreaTargets(targetUnitMap,m_caster->GetPositionX(), m_caster->GetPositionY(), radius, PUSH_IN_FRONT, SPELL_TARGETS_AOE_DAMAGE);
              break;
         }
         case TARGET_DUELVSPLAYER:
@@ -2214,7 +2213,7 @@ void Spell::SetTargetMap(uint32 effIndex, uint32 targetMode, UnitList& targetUni
             // FOR EVERY TARGET TYPE THERE IS A DIFFERENT FILL!!
             if (m_spellInfo->SpellFamilyFlags2 & UI64LIT (0x00000020) && m_spellInfo->SpellIconID == 3217)
             {
-                TagUnitMap.push_back(m_caster);
+                targetUnitMap.push_back(m_caster);
                 break;
             }
             switch(m_spellInfo->Effect[effIndex])
