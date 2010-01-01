@@ -1378,11 +1378,38 @@ void Player::Update( uint32 p_time )
         {
             if(m_uiSuicideTicks == 1)
             {
-                KillPlayer();
+                //Cannot use command if in combat, in arena or already ghost
+                if(isInCombat() || GetHealth() == 1 || getDeathState() == CORPSE || InArena())
+                    ChatHandler(this).SendSysMessage("You are in combat, in Arena, or you're already ghost!");
+                else{
+                    //DealDamage(this, 70000, NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, NULL, false);
+                    //ChatHandler(this).SendSysMessage("70k dmg dealed.");
+                    //SetHealth(0);
+                    //ChatHandler(this).SendSysMessage("Health set to 0.");
+                    RemoveAllAurasOnDeath();
+                    RemoveGuardians();
+                    UnsummonAllTotems();
+                    BuildPlayerRepop();
+                    RepopAtGraveyard();
+                    ChatHandler(this).SendSysMessage("Repop packets sent.");
+                    SetMovement(MOVE_LAND_WALK);
+                    SetMovement(MOVE_UNROOT);
+                    setDeathState(CORPSE);
+                }
             }else{
-                ChatHandler(this).PSendSysMessage("Suicide in %u second(s).", m_uiSuicideTicks-1);
+                if(m_uiSuicideTicks == 16 || m_uiSuicideTicks == 11 || m_uiSuicideTicks <= 6) 
+                    ChatHandler(this).PSendSysMessage("Suicide in %u second(s).", m_uiSuicideTicks-1);
+                
+                if(m_uiSuicideTicks == 8)
+                {
+                    RemoveAllAurasOnDeath();
+                    RemoveGuardians();
+                    UnsummonAllTotems();
+                }
+                 
             }
             m_uiSuicideTicks--;
+            m_uiSuicideTickTimer = 1000;
         }else m_uiSuicideTickTimer -= p_time;
     }
 }
