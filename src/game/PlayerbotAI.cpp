@@ -493,7 +493,7 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
 
         case SMSG_INVENTORY_CHANGE_FAILURE:
         {
-            TellMaster("Je ne peux pas l'utiliser.");
+            //TellMaster("Je ne peux pas l'utiliser.");
             return;
         }
         case SMSG_SPELL_FAILURE:
