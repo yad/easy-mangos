@@ -1332,6 +1332,16 @@ void Spell::SetTargetMap(uint32 effIndex, uint32 targetMode, UnitList& targetUni
             }
             break;
         }
+        case SPELLFAMILY_PRIEST:
+            if(m_spellInfo->SpellVisual[0] == 8253)         // Circle of Healing
+            {
+                unMaxTargets = 5;
+                
+                // Glyph of Circle of Healing
+                if(Aura const* glyph = m_caster->GetDummyAura(55675))
+                    unMaxTargets += glyph->GetModifier()->m_amount;
+            }
+            break;
         case SPELLFAMILY_DRUID:
         {
             if (m_spellInfo->SpellFamilyFlags2 & 0x00000100)// Starfall
@@ -4110,29 +4120,65 @@ SpellCastResult Spell::CheckCast(bool strict)
         if(non_caster_target)
         {
             // simple cases
-            if (IsExplicitPositiveTarget(m_spellInfo->EffectImplicitTargetA[0]))
+            bool explicit_target_mode = false;
+            bool target_hostile = false;
+            bool target_hostile_checked = false;
+            bool target_friendly = false;
+            bool target_friendly_checked = false;
+            for(int k = 0; k < 3;  ++k)
             {
-                if(m_caster->IsHostileTo(target))
-                    return SPELL_FAILED_BAD_TARGETS;
-            }
-            else if (IsExplicitNegativeTarget(m_spellInfo->EffectImplicitTargetA[0]))
-            {
-                if(m_caster->IsFriendlyTo(target))
-                    return SPELL_FAILED_BAD_TARGETS;
+                if (IsExplicitPositiveTarget(m_spellInfo->EffectImplicitTargetA[k]))
+                {
+                    if (!target_hostile_checked)
+                    {
+                        target_hostile_checked = true;
+                        target_hostile = m_caster->IsHostileTo(target);
+                    }
+
+                    if(target_hostile)
+                        return SPELL_FAILED_BAD_TARGETS;
+
+                    explicit_target_mode = true;
+                }
+                else if (IsExplicitNegativeTarget(m_spellInfo->EffectImplicitTargetA[k]))
+                {
+                    if (!target_friendly_checked)
+                    {
+                        target_friendly_checked = true;
+                        target_friendly = m_caster->IsFriendlyTo(target);
+                    }
+
+                    if(target_friendly)
+                        return SPELL_FAILED_BAD_TARGETS;
+
+                    explicit_target_mode = true;
+                }
             }
             // TODO: this check can be applied and for player to prevent cheating when IsPositiveSpell will return always correct result.
             // check target for pet/charmed casts (not self targeted), self targeted cast used for area effects and etc
-            else if (m_caster->GetTypeId() == TYPEID_UNIT && m_caster->GetCharmerOrOwnerGUID())
+            if (!explicit_target_mode && m_caster->GetTypeId() == TYPEID_UNIT && m_caster->GetCharmerOrOwnerGUID())
             {
                 // check correctness positive/negative cast target (pet cast real check and cheating check)
                 if(IsPositiveSpell(m_spellInfo->Id))
                 {
-                    if(m_caster->IsHostileTo(target))
+                    if (!target_hostile_checked)
+                    {
+                        target_hostile_checked = true;
+                        target_hostile = m_caster->IsHostileTo(target);
+                    }
+
+                    if(target_hostile)
                         return SPELL_FAILED_BAD_TARGETS;
                 }
                 else
                 {
-                    if(m_caster->IsFriendlyTo(target))
+                    if (!target_friendly_checked)
+                    {
+                        target_friendly_checked = true;
+                        target_friendly = m_caster->IsFriendlyTo(target);
+                    }
+
+                    if(target_friendly)
                         return SPELL_FAILED_BAD_TARGETS;
                 }
             }
