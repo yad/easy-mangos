@@ -670,7 +670,6 @@ ChatCommand * ChatHandler::getCommandTable()
         { "repairitems",    SEC_GAMEMASTER,     true,  &ChatHandler::HandleRepairitemsCommand,         "", NULL },
         { "waterwalk",      SEC_GAMEMASTER,     false, &ChatHandler::HandleWaterwalkCommand,           "", NULL },
         { "quit",           SEC_CONSOLE,        true,  &ChatHandler::HandleQuitCommand,                "", NULL },
-        { "suicide",        SEC_PLAYER,         true,  &ChatHandler::HandleSuicideCommand,             "", NULL },
 
         { NULL,             0,                  false, NULL,                                           "", NULL }
     };

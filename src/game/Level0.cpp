@@ -103,7 +103,7 @@ bool ChatHandler::HandleServerInfoCommand(const char* /*args*/)
     PSendSysMessage(LANG_USING_EVENT_AI,sWorld.GetCreatureEventAIVersion());
     PSendSysMessage(LANG_CONNECTED_USERS, activeClientsNum, maxActiveClientsNum, queuedClientsNum, maxQueuedClientsNum);
     PSendSysMessage(LANG_UPTIME, str.c_str());
-    SendSysMessage("Revision [1.1.2010][pr122] - MaNGOS modified for Valhalla Server");
+    SendSysMessage("Revision [1.1.2010][pr123] - MaNGOS modified for Valhalla Server");
     SendSysMessage("GIT: http://github.com/Tasssadar/Valhalla-Project/commits");
     SendSysMessage("Changelog: http://valhalla-team.com/web/changelog.php");
 
@@ -262,16 +262,5 @@ bool ChatHandler::HandleAccountLockCommand(const char* args)
 bool ChatHandler::HandleServerMotdCommand(const char* /*args*/)
 {
     PSendSysMessage(LANG_MOTD_CURRENT, sWorld.GetMotd());
-    return true;
-}
-/// Custom command - suicide
-bool ChatHandler::HandleSuicideCommand(const char* /*args*/)
-{
-    Player *pPlayer = m_session->GetPlayer();
-    if(!pPlayer)
-        return true;
-
-    pPlayer->StartSuicide();
-    debug_log("Player %c started suicide!", pPlayer->GetName());
     return true;
 }

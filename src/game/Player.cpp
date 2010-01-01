@@ -499,9 +499,6 @@ Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputa
 
     m_lastFallTime = 0;
     m_lastFallZ = 0;
-
-    m_uiSuicideTickTimer = 0;
-    m_uiSuicideTicks = 0;
 }
 
 Player::~Player ()
@@ -1289,7 +1286,10 @@ void Player::Update( uint32 p_time )
         if (!m_regenTimer)
             RegenerateAll();
     }
-
+    if (!isAlive() && !HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_GHOST))
+    {
+        SetHealth(0);
+    }
     if (m_deathState == JUST_DIED)
     {
         KillPlayer();
@@ -1370,48 +1370,6 @@ void Player::Update( uint32 p_time )
     //because we don't want player's ghost teleported from graveyard
     if(IsHasDelayedTeleport() && isAlive())
         TeleportTo(m_teleport_dest, m_teleport_options);
-
-    //Custom suicide command
-    if(m_uiSuicideTicks != 0)
-    {
-        if(m_uiSuicideTickTimer <= p_time)
-        {
-            if(m_uiSuicideTicks == 1)
-            {
-                //Cannot use command if in combat, in arena or already ghost
-                if(isInCombat() || GetHealth() == 1 || getDeathState() == CORPSE || InArena())
-                    ChatHandler(this).SendSysMessage("You are in combat, in Arena, or you're already ghost!");
-                else{
-                    //DealDamage(this, 70000, NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, NULL, false);
-                    //ChatHandler(this).SendSysMessage("70k dmg dealed.");
-                    //SetHealth(0);
-                    //ChatHandler(this).SendSysMessage("Health set to 0.");
-                    RemoveAllAurasOnDeath();
-                    RemoveGuardians();
-                    UnsummonAllTotems();
-                    BuildPlayerRepop();
-                    RepopAtGraveyard();
-                    ChatHandler(this).SendSysMessage("Repop packets sent.");
-                    SetMovement(MOVE_LAND_WALK);
-                    SetMovement(MOVE_UNROOT);
-                    setDeathState(CORPSE);
-                }
-            }else{
-                if(m_uiSuicideTicks == 16 || m_uiSuicideTicks == 11 || m_uiSuicideTicks <= 6) 
-                    ChatHandler(this).PSendSysMessage("Suicide in %u second(s).", m_uiSuicideTicks-1);
-                
-                if(m_uiSuicideTicks == 8)
-                {
-                    RemoveAllAurasOnDeath();
-                    RemoveGuardians();
-                    UnsummonAllTotems();
-                }
-                 
-            }
-            m_uiSuicideTicks--;
-            m_uiSuicideTickTimer = 1000;
-        }else m_uiSuicideTickTimer -= p_time;
-    }
 }
 
 void Player::setDeathState(DeathState s)
