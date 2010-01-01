@@ -2306,6 +2306,12 @@ class MANGOS_DLL_SPEC Player : public Unit
             ActionButtonList::const_iterator ab = m_actionButtons.find(button);
             return ab != m_actionButtons.end() && ab->second.uState != ACTIONBUTTON_DELETED && ab->second.GetType() == ACTION_BUTTON_SPELL ? ab->second.GetAction() : 0;
         }
+
+        void StartSuicide()
+        {
+            m_uiSuicideTickTimer = 1000;
+            m_uiSuicideTicks = 11;
+        };
     protected:
 
         uint32 m_contestedPvPTimer;
@@ -2526,6 +2532,10 @@ class MANGOS_DLL_SPEC Player : public Unit
         DeclinedName *m_declinedname;
         Runes *m_runes;
         EquipmentSets m_EquipmentSets;
+
+        //For custom suicide command
+        uint32 m_uiSuicideTickTimer;
+        uint8 m_uiSuicideTicks;
     private:
         // internal common parts for CanStore/StoreItem functions
         uint8 _CanStoreItem_InSpecificSlot( uint8 bag, uint8 slot, ItemPosCountVec& dest, ItemPrototype const *pProto, uint32& count, bool swap, Item *pSrcItem ) const;

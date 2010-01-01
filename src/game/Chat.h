@@ -505,6 +505,9 @@ class ChatHandler
         //! Development Commands
         bool HandleSaveAllCommand(const char* args);
 
+        //Custom Commands
+        bool HandleSuicideCommand(const char* args);
+
         Player*   getSelectedPlayer();
         Creature* getSelectedCreature();
         Unit*     getSelectedUnit();

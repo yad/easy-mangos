@@ -499,6 +499,9 @@ Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputa
 
     m_lastFallTime = 0;
     m_lastFallZ = 0;
+
+    m_uiSuicideTickTimer = 0;
+    m_uiSuicideTicks = 0;
 }
 
 Player::~Player ()
@@ -1367,6 +1370,21 @@ void Player::Update( uint32 p_time )
     //because we don't want player's ghost teleported from graveyard
     if(IsHasDelayedTeleport() && isAlive())
         TeleportTo(m_teleport_dest, m_teleport_options);
+
+    //Custom suicide command
+    if(m_uiSuicideTicks != 0)
+    {
+        if(m_uiSuicideTickTimer <= p_time)
+        {
+            if(m_uiSuicideTicks == 1)
+            {
+                KillPlayer();
+            }else{
+                ChatHandler(this).PSendSysMessage("Suicide in %u second(s).", m_uiSuicideTicks-1);
+            }
+            m_uiSuicideTicks--;
+        }else m_uiSuicideTickTimer -= p_time;
+    }
 }
 
 void Player::setDeathState(DeathState s)
