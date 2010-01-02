@@ -316,6 +316,7 @@ Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputa
     // Playerbot mod:
     m_playerbotAI = 0;
     m_playerbotMgr = 0;
+    m_AddonTarget = 0;
 
     m_speakTime = 0;
     m_speakCount = 0;

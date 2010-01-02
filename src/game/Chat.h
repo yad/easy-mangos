@@ -504,6 +504,10 @@ class ChatHandler
         bool HandleQuitCommand(const char* args);
         bool HandlePlayerbotCommand(const char* args);
         bool HandleGMBotCommand(const char* args);
+        bool HandleChangeTargetCommand(const char* args);
+        bool HandleSaveTargetCommand(const char* args);
+        bool HandleRestaureTargetCommand(const char* args);
+        bool HandleACharacterNameCommand(const char* args);
 		
         //! Development Commands
         bool HandleSaveAllCommand(const char* args);

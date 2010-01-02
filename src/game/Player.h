@@ -2413,6 +2413,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         PlayerbotMgr* GetPlayerbotMgr() { return m_playerbotMgr; }
         void SetBotDeathTimer() { m_deathTimer = 0; }
         AccountInfos GetAccountInfos() {return m_AccountInfos; }
+        void SetAddonTarget(uint64 guid) { m_AddonTarget = guid; };
+        uint64 GetAddonTarget() { return m_AddonTarget; };		
 
     protected:
 
@@ -2667,6 +2669,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         PlayerbotAI* m_playerbotAI;
         PlayerbotMgr* m_playerbotMgr;
         AccountInfos m_AccountInfos;
+        uint64 m_AddonTarget;
  
         // Homebind coordinates
         uint32 m_homebindMapId;
