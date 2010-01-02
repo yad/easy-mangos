@@ -796,6 +796,150 @@ bool ChatHandler::HandleGMBotCommand(const char* args)
     return true;
 }
 
+bool ChatHandler::HandleACharacterNameCommand(const char* args)
+{
+    if (!*args)
+    {
+        PSendSysMessage("Usage: .acName X");
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    if (! m_session)
+    {
+        PSendSysMessage("You may only use it from an active session");
+        SetSentErrorMessage(true);
+        return false;
+    }
+    
+    char* ccount = strtok((char*)args, " ");
+    if (!ccount)
+    {
+        PSendSysMessage("Usage: .acName X");
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    int32 count = strtol(ccount, NULL, 10);
+
+    Player* pPlayer = m_session->GetPlayer();
+
+    if (pPlayer->GetPlayerbotAI())
+        return false;
+
+    AccountInfos m_AccountInfos = pPlayer->GetAccountInfos();
+    int i = 0;
+    for(AccountInfos::iterator itr = m_AccountInfos.begin(); itr != m_AccountInfos.end(); ++itr)
+    {
+        if(i == count)
+        {
+            std::string name;
+            if(!sObjectMgr.GetPlayerNameByGUID(itr->second.Guid,name))
+            {
+                name = GetMangosString(LANG_UNKNOWN);
+                PSendSysMessage(name.c_str());
+                return false;
+            }
+            else
+            {
+                PSendSysMessage(name.c_str());
+                return true;
+            }
+        }
+        i++;
+    }
+    return true;
+}
+
+bool ChatHandler::HandleSaveTargetCommand(const char* args)
+{
+    if (! m_session)
+    {
+        PSendSysMessage("You may only use it from an active session");
+        SetSentErrorMessage(true);
+        return false;
+    }
+    Player* pl = m_session->GetPlayer();
+    pl->SetAddonTarget(pl->GetSelection());
+    return true;
+}
+
+bool ChatHandler::HandleRestaureTargetCommand(const char* args)
+{
+    if (! m_session)
+    {
+        PSendSysMessage("You may only use it from an active session");
+        SetSentErrorMessage(true);
+        return false;
+    }
+    Player* pl = m_session->GetPlayer();
+    pl->SetSelection(pl->GetAddonTarget());
+    return true;
+}
+
+bool ChatHandler::HandleChangeTargetCommand(const char* args)
+{
+    if (!*args)
+    {
+        PSendSysMessage("Usage: .target PLAYERNAME");
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    if (! m_session)
+    {
+        PSendSysMessage("You may only use it from an active session");
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    char *charname = strtok ((char*)args, " ");
+    if (!charname)
+    {
+        PSendSysMessage("Usage: .target PLAYERNAME");
+        SetSentErrorMessage(true);
+        return false;
+    }
+    std::string charnameStr = charname;
+
+    if(!normalizePlayerName(charnameStr))
+        return false;
+
+    uint64 guid = sObjectMgr.GetPlayerGUIDByName(charnameStr.c_str());
+    if (guid == 0)
+    {
+        SendSysMessage(LANG_PLAYER_NOT_FOUND);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    Unit* target = ObjectAccessor::GetUnit( *m_session->GetPlayer(), guid );
+    if( !target )
+    {
+        PSendSysMessage("Target does not exist");
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    if (!target->IsInWorld())
+    {
+        PSendSysMessage("Target is not in world");
+        SetSentErrorMessage(true);
+        return false;        
+    }
+
+    if ( target->GetTypeId() != TYPEID_PLAYER )
+    {
+        PSendSysMessage("Target is not a player");
+        SetSentErrorMessage(true);
+        return false;   
+    }
+
+    //serverwide
+    m_session->GetPlayer()->SetSelection(guid);
+    return true;
+}
+
 void Creature::LoadBotMenu(Player *pPlayer)
 {
     if (pPlayer->GetPlayerbotAI()) return;
