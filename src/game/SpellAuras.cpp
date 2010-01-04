@@ -7824,14 +7824,13 @@ void Aura::HandleArenaPreparation(bool apply, bool Real)
         for( Unit::AuraMap::const_iterator itr = auras.begin(); itr != auras.end(); )
         {
             Aura* aur = itr->second;
-            if( aur->GetAuraDuration() < 25000 )
+            if( aur->GetAuraDuration() < 25000 && aur->GetAuraDuration() > 1 )
             {
                 player->RemoveAura( aur );
                 itr = auras.begin();
             }
             else
                 itr++;
-                    
         }
         // Set rage and runic power to 0
         Powers power = player->getPowerType();
