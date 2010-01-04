@@ -1435,15 +1435,9 @@ void Spell::SetTargetMap(uint32 effIndex, uint32 targetMode, UnitList& targetUni
         case TARGET_SELF:
         case TARGET_SELF2:
         case TARGET_AREAEFFECT_CUSTOM:
-        case TARGET_SUMMON:
-            targetUnitMap.push_back(m_caster);
-            break;
         case TARGET_AREAEFFECT_CUSTOM_2:
-        {
-            // used for targeting gameobjects
             targetUnitMap.push_back(m_caster);
             break;
-        }
         case TARGET_RANDOM_ENEMY_CHAIN_IN_AREA:
         {
             m_targets.m_targetMask = 0;
