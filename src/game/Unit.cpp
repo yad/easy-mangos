@@ -3675,9 +3675,10 @@ bool Unit::AddAura(Aura *Aur)
                     else if (aur2->GetSpellProto()->AttributesEx4 & SPELL_ATTR_EX4_STACK_DOT_MODIFIER && aurName == SPELL_AURA_PERIODIC_DAMAGE && aur2->GetAuraDuration() > 0)
                     {
                         int32 remainingTicks = 1 + (aur2->GetAuraDuration() / aur2->GetModifier()->periodictime);
-                        int32 maxTicks = aur2->GetAuraMaxDuration() / aur2->GetModifier()->periodictime;
+                        int32 remainingDamage = aur2->GetModifier()->m_amount * remainingTicks;
 
-                        Aur->GetModifier()->m_amount += int32(remainingTicks * aur2->GetModifier()->m_amount / maxTicks);
+                        int32 maxTicks = Aur->GetAuraMaxDuration() / Aur->GetModifier()->periodictime;
+                        Aur->GetModifier()->m_amount += int32(remainingDamage / maxTicks);
                     }
                     // can be only single (this check done at _each_ aura add
                     RemoveAura(i2,AURA_REMOVE_BY_STACK);
@@ -7124,6 +7125,8 @@ bool Unit::HandleProcTriggerSpell(Unit *pVictim, uint32 damage, Aura* triggeredB
                     default:
                         return false;
                 }
+                // 1 tick/sec * 6 sec = 6 ticks
+                basepoints[0] /= 6;
 
                 trigger_spell_id = 12721;
                 break;
