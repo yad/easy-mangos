@@ -1212,7 +1212,7 @@ bool GridMap::loadData(char *filename)
             return false;
         }
         // loadup height data
-        if (header.heightMapOffset && !loadHeihgtData(in, header.heightMapOffset, header.heightMapSize))
+        if (header.heightMapOffset && !loadHeightData(in, header.heightMapOffset, header.heightMapSize))
         {
             sLog.outError("Error loading map height data\n");
             fclose(in);
@@ -1265,7 +1265,7 @@ bool GridMap::loadAreaData(FILE *in, uint32 offset, uint32 size)
     return true;
 }
 
-bool  GridMap::loadHeihgtData(FILE *in, uint32 offset, uint32 size)
+bool  GridMap::loadHeightData(FILE *in, uint32 offset, uint32 size)
 {
     map_heightHeader header;
     fseek(in, offset, SEEK_SET);
@@ -1767,6 +1767,11 @@ uint16 Map::GetAreaFlag(float x, float y, float z) const
         case 1661:                                          // Winterfin Village
             if (x > 3823.0f && x < 4141.5f && y > 6247.0f && y < 64890.0f && z < 42.5f)
                 areaflag = 1723;
+            break;
+        // Moonrest Gardens
+        case 1787:
+            if (x > 3315.3f && x < 3361.6f && y > 2469.4f && y < 2565.8f && z > 197.0f)
+                areaflag = 1786;                            // Surge Needle (cords not entirely correct, will need round circle if this is really needed(see spell 47097 eff 77))
             break;
         // Dalaran
         case 2492:                                          // Forlorn Woods (Crystalsong Forest)
