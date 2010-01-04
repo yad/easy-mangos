@@ -523,6 +523,27 @@ void Spell::FillTargetMap()
                         break;
                 }
                 break;
+            case TARGET_SELF:
+                switch(m_spellInfo->EffectImplicitTargetB[i])
+                {
+                    case 0:
+                    case TARGET_EFFECT_SELECT:
+                        SetTargetMap(i, m_spellInfo->EffectImplicitTargetA[i], tmpUnitMap);
+                        break;
+                    case TARGET_AREAEFFECT_INSTANT:         // use B case that not dependent from from A in fact
+                        if((m_targets.m_targetMask & TARGET_FLAG_DEST_LOCATION) == 0)
+                            m_targets.setDestination(m_caster->GetPositionX(), m_caster->GetPositionY(), m_caster->GetPositionZ());
+                        SetTargetMap(i, m_spellInfo->EffectImplicitTargetB[i], tmpUnitMap);
+                        break;
+                    case TARGET_BEHIND_VICTIM:              // use B case that not dependent from from A in fact
+                        SetTargetMap(i, m_spellInfo->EffectImplicitTargetB[i], tmpUnitMap);
+                        break;
+                    default:
+                        SetTargetMap(i, m_spellInfo->EffectImplicitTargetA[i], tmpUnitMap);
+                        SetTargetMap(i, m_spellInfo->EffectImplicitTargetB[i], tmpUnitMap);
+                        break;
+                }
+                break;
             case TARGET_EFFECT_SELECT:
                 switch(m_spellInfo->EffectImplicitTargetB[i])
                 {
@@ -550,27 +571,6 @@ void Spell::FillTargetMap()
                         SetTargetMap(i, m_spellInfo->EffectImplicitTargetB[i], tmpUnitMap);
                         break;
                     default:
-                        SetTargetMap(i, m_spellInfo->EffectImplicitTargetB[i], tmpUnitMap);
-                        break;
-                }
-                break;
-            case TARGET_SELF:
-                switch(m_spellInfo->EffectImplicitTargetB[i])
-                {
-                    case 0:
-                    case TARGET_EFFECT_SELECT:
-                        SetTargetMap(i, m_spellInfo->EffectImplicitTargetA[i], tmpUnitMap);
-                        break;
-                    case TARGET_AREAEFFECT_INSTANT:         // use B case that not dependent from from A in fact
-                        if((m_targets.m_targetMask & TARGET_FLAG_DEST_LOCATION) == 0)
-                            m_targets.setDestination(m_caster->GetPositionX(), m_caster->GetPositionY(), m_caster->GetPositionZ());
-                        SetTargetMap(i, m_spellInfo->EffectImplicitTargetB[i], tmpUnitMap);
-                        break;
-                    case TARGET_BEHIND_VICTIM:              // use B case that not dependent from from A in fact
-                        SetTargetMap(i, m_spellInfo->EffectImplicitTargetB[i], tmpUnitMap);
-                        break;
-                    default:
-                        SetTargetMap(i, m_spellInfo->EffectImplicitTargetA[i], tmpUnitMap);
                         SetTargetMap(i, m_spellInfo->EffectImplicitTargetB[i], tmpUnitMap);
                         break;
                 }
@@ -619,6 +619,19 @@ void Spell::FillTargetMap()
                         SetTargetMap(i, m_spellInfo->EffectImplicitTargetA[i], tmpUnitMap);
                         SetTargetMap(i, m_spellInfo->EffectImplicitTargetB[i], tmpUnitMap);
                     break;
+                }
+                break;
+            case TARGET_SELF2:
+                switch(m_spellInfo->EffectImplicitTargetB[i])
+                {
+                    case 0:
+                    case TARGET_EFFECT_SELECT:
+                        SetTargetMap(i, m_spellInfo->EffectImplicitTargetA[i], tmpUnitMap);
+                        break;
+                    // most A/B target pairs is slef->negative and not expect adding caster to target list
+                    default:
+                        SetTargetMap(i, m_spellInfo->EffectImplicitTargetB[i], tmpUnitMap);
+                        break;
                 }
                 break;
             default:
@@ -1327,6 +1340,7 @@ void Spell::SetTargetMap(uint32 effIndex, uint32 targetMode, UnitList& targetUni
         case SPELLFAMILY_GENERIC:
             switch(m_spellInfo->Id)
             {
+                case 31347:                                 // Doom TODO: exclude top threat target from target selection
                 case 33711:                                 // Murmur's Touch
                 case 38794:                                 // Murmur's Touch (h)
                     unMaxTargets = 1;
@@ -1369,7 +1383,7 @@ void Spell::SetTargetMap(uint32 effIndex, uint32 targetMode, UnitList& targetUni
         }
         default:
             break;
-    }
+	}
 
     Unit::AuraList const& mod = m_caster->GetAurasByType(SPELL_AURA_MOD_MAX_AFFECTED_TARGETS);
     for(Unit::AuraList::const_iterator m = mod.begin(); m != mod.end(); ++m)
@@ -1761,6 +1775,20 @@ void Spell::SetTargetMap(uint32 effIndex, uint32 targetMode, UnitList& targetUni
                     if (Unit* target = m_caster->GetMap()->GetPet(((Player*)m_caster)->GetSelection()))
                         targetUnitMap.push_back(target);
             }
+            // Circle of Healing
+            else if (m_spellInfo->SpellFamilyName == SPELLFAMILY_PRIEST && m_spellInfo->SpellVisual[0] == 8253)
+            {
+                Unit* target = m_targets.getUnitTarget();
+                if(!target)
+                    target = m_caster;
+
+                uint32 count = 5;
+                // Glyph of Circle of Healing
+                if(Aura const* glyph = m_caster->GetDummyAura(55675))
+                    count += glyph->GetModifier()->m_amount;
+
+                FillRaidOrPartyHealthPriorityTargets(targetUnitMap, m_caster, target, radius, count, true, false, true);
+            }
             // Wild Growth
             else if (m_spellInfo->SpellFamilyName == SPELLFAMILY_DRUID && m_spellInfo->SpellIconID == 2864)
             {
@@ -2140,16 +2168,19 @@ void Spell::SetTargetMap(uint32 effIndex, uint32 targetMode, UnitList& targetUni
             break;
 
         case TARGET_DYNAMIC_OBJECT_FRONT:
+        case TARGET_DYNAMIC_OBJECT_BEHIND:
         case TARGET_DYNAMIC_OBJECT_LEFT_SIDE:
         case TARGET_DYNAMIC_OBJECT_RIGHT_SIDE:
+        {
             if (!(m_targets.m_targetMask & TARGET_FLAG_DEST_LOCATION))
             {
                 float angle = m_caster->GetOrientation();
                 switch(targetMode)
                 {
-                    case TARGET_DYNAMIC_OBJECT_FRONT:                         break;
-                    case TARGET_DYNAMIC_OBJECT_LEFT_SIDE:  angle -= 3*M_PI/4; break;
-                    case TARGET_DYNAMIC_OBJECT_RIGHT_SIDE: angle += 3*M_PI/4; break;
+                    case TARGET_DYNAMIC_OBJECT_FRONT:                        break;
+                    case TARGET_DYNAMIC_OBJECT_BEHIND:      angle += M_PI;   break;
+                    case TARGET_DYNAMIC_OBJECT_LEFT_SIDE:   angle += M_PI/2; break;
+                    case TARGET_DYNAMIC_OBJECT_RIGHT_SIDE:  angle -= M_PI/2; break;
                 }
 
                 float x,y;
@@ -2159,7 +2190,7 @@ void Spell::SetTargetMap(uint32 effIndex, uint32 targetMode, UnitList& targetUni
 
             targetUnitMap.push_back(m_caster);
             break;
-
+        }
         case TARGET_POINT_AT_NORTH:
         case TARGET_POINT_AT_SOUTH:
         case TARGET_POINT_AT_EAST:
