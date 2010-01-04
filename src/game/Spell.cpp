@@ -4312,8 +4312,8 @@ SpellCastResult Spell::CheckCast(bool strict)
             // check target for pet/charmed casts (not self targeted), self targeted cast used for area effects and etc
             if (!explicit_target_mode && m_caster->GetTypeId() == TYPEID_UNIT && m_caster->GetCharmerOrOwnerGUID())
             {
-                bool eff_dispel = false;
-                for(int j = 0; j < 3; ++j)
+                // check correctness positive/negative cast target (pet cast real check and cheating check)
+                if(IsPositiveSpell(m_spellInfo->Id))
                 {
                     if (!target_hostile_checked)
                     {
@@ -4324,7 +4324,7 @@ SpellCastResult Spell::CheckCast(bool strict)
                     if(target_hostile)
                         return SPELL_FAILED_BAD_TARGETS;
                 }
-                if(!eff_dispel)
+                else
                 {
                     if (!target_friendly_checked)
                     {
@@ -5162,32 +5162,22 @@ SpellCastResult Spell::CheckPetCast(Unit* target)
             if(!_target->isAlive())
                 return SPELL_FAILED_BAD_TARGETS;
 
-            bool eff_dispel = false;
-            for(int j = 0; j < 3; ++j)
+            if(IsPositiveSpell(m_spellInfo->Id))
             {
-                // SPELL_EFFECT_DISPEL may be considered as positive/negative
-                if(m_spellInfo->Effect[j] == SPELL_EFFECT_DISPEL)
-                    eff_dispel = true;
+                if(m_caster->IsHostileTo(_target))
+                    return SPELL_FAILED_BAD_TARGETS;
             }
-            if(!eff_dispel)
+            else
             {
-                if(IsPositiveSpell(m_spellInfo->Id))
-                { 
-                    if(m_caster->IsHostileTo(_target))
-                        return SPELL_FAILED_BAD_TARGETS;
-                }
-                else
+                bool duelvsplayertar = false;
+                for(int j = 0; j < 3; ++j)
                 {
-                    bool duelvsplayertar = false;
-                    for(int j = 0; j < 3; ++j)
-                    {
                                                             //TARGET_DUELVSPLAYER is positive AND negative
-                        duelvsplayertar |= (m_spellInfo->EffectImplicitTargetA[j] == TARGET_DUELVSPLAYER);
-                    }
-                    if(m_caster->IsFriendlyTo(target) && !duelvsplayertar)
-                    {
-                        return SPELL_FAILED_BAD_TARGETS;
-                    }
+                    duelvsplayertar |= (m_spellInfo->EffectImplicitTargetA[j] == TARGET_DUELVSPLAYER);
+                }
+                if(m_caster->IsFriendlyTo(target) && !duelvsplayertar)
+                {
+                    return SPELL_FAILED_BAD_TARGETS;
                 }
             }
         }
