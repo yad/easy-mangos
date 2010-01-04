@@ -4061,7 +4061,7 @@ void Aura::HandleModStealth(bool apply, bool Real)
                         m_target->CastCustomSpell(m_target,31665,&bp,NULL,NULL,true);
                     }
                     // Overkill
-                    else if ((*i)->GetId() == 58426 && GetSpellProto()->SpellFamilyFlags & UI64LIT(0x0000000000400000))
+                    else if ((*i)->GetId() == 58426 && GetSpellProto()->SpellFamilyFlags & UI64LIT(0x0000000000400000)|| UI64LIT(0x0000000000000800))
                     {
                         m_target->RemoveAurasDueToSpell(58428);
                         m_target->CastSpell(m_target, 58427, true);
