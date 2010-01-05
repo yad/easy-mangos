@@ -18768,7 +18768,6 @@ void Player::SendComboPoints()
         WorldPacket data;
         if(!GetVehicleGUID()){
             data.Initialize(SMSG_UPDATE_COMBO_POINTS, combotarget->GetPackGUID().size()+1);
-            data.append(combotarget->GetPackGUID());
         }else{
             if(Unit *vehicle = ObjectAccessor::GetUnit(*this, GetVehicleGUID()))
             {
@@ -18776,6 +18775,7 @@ void Player::SendComboPoints()
                 data.append(vehicle->GetPackGUID());
             }else return;
         }
+        data.append(combotarget->GetPackGUID());
         data << uint8(m_comboPoints);
         GetSession()->SendPacket(&data);
     }
