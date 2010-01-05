@@ -598,9 +598,6 @@ class ObjectMgr
         void LoadGossipMenu();
         void LoadGossipMenuItems();
 
-        void LoadVendors();
-        void LoadTrainerSpell();
-
 		// Loads the jail conf out of the database
         void LoadJailConf(void);
 
@@ -623,6 +620,9 @@ class ObjectMgr
 		uint32 m_jailconf_horde_m;
 		uint32 m_jailconf_ban;          // Ban acc if max. jailtimes is reached?
 		uint32 m_jailconf_radius;       // Radius in which a jailed char can walk
+
+        void LoadVendors();
+        void LoadTrainerSpell();
 
         std::string GeneratePetName(uint32 entry);
         uint32 GetBaseXP(uint32 level);
