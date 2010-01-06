@@ -2094,8 +2094,11 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
         else if( m_botState == BOTSTATE_DEAD )
         {
             // become ghost
-            if( m_bot->GetCorpse() )
+            if( m_bot->GetCorpse() ){
+                //sLog.outDebug( "[PlayerbotAI]: %s already has a corpse...", m_bot->GetName() );
+                SetState( BOTSTATE_DEADRELEASED );
                 return;
+            }
 
             m_bot->SetBotDeathTimer();
             m_bot->BuildPlayerRepop();
