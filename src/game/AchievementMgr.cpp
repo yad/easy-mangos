@@ -1821,6 +1821,7 @@ AchievementCriteriaEntryList const& AchievementGlobalMgr::GetAchievementCriteria
 {
     return m_AchievementCriteriasByType[type];
 }
+
 void AchievementGlobalMgr::LoadAchievementCriteriaList()
 {
     if(sAchievementCriteriaStore.GetNumRows()==0)
