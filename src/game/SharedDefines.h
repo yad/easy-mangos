@@ -2454,8 +2454,8 @@ enum CustomVehicleFLags
     VF_CAN_BE_HEALED                = 0x0010,                   // vehicle can be healed
     VF_GIVE_EXP                     = 0x0020,                   // vehicle will give exp for killing enemies
     VF_MOVEMENT                     = 0x0040,                   // vehicle will move on its own, not depending on rider, however rider can cast spells
-    VF_NON_SELECTABLE               = 0x0080                    // vehicle will be not selectable after rider enter
-    //VF_HAS_FUEL                     = 0x0100,                   // TODO : find out what energy type is fuel and implement this
+    VF_NON_SELECTABLE               = 0x0080,                   // vehicle will be not selectable after rider enter
+    VF_FLYING                       = 0x0100                    // Hack for now (256 in DB)
 };
 
 enum CustomVehicleSeatFLags

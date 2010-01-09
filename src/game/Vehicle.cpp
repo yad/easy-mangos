@@ -471,6 +471,9 @@ void Vehicle::AddPassenger(Unit *unit, int8 seatId, bool force)
                 data3 << (uint32)(0);
                 SendMessageToSet(&data3,false);
             }
+            //Make vehicle fly
+            if(GetVehicleFlags() & VF_FLYING)
+                CastSpell(this, 49303, false);
         }
 
         SpellClickInfoMapBounds clickPair = sObjectMgr.GetSpellClickInfoMapBounds(GetEntry());
