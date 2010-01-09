@@ -5010,6 +5010,10 @@ void Aura::HandlePeriodicDamage(bool apply, bool Real)
         // Parasitic Shadowfiend - handle summoning of two Shadowfiends on DoT expire
         if(m_spellProto->Id == 41917)
             m_target->CastSpell(m_target, 41915, true);
+        else if (m_spellProto->Id == 29865) // Deathbloom 
+            m_target->CastSpell(m_target, 55594, true, NULL, this);
+        else if (m_spellProto->Id == 55053) // Deathbloom heroic
+            m_target->CastSpell(m_target, 55601, true, NULL, this); 
     }
 }
 
