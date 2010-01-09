@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19181,16 +19181,16 @@ bool Player::GetBGAccessByLevel(BattleGroundTypeId bgTypeId) const
     return true;
 }
 
-BGQueueIdBasedOnLevel Player::GetBattleGroundQueueIdFromLevel() const
+BattleGroundBracketId Player::GetBattleGroundBracketIdFromLevel() const
 {
     // for ranges 0 - 19, 20 - 29, 30 - 39, 40 - 49, 50 - 59, 60 - 69, 70 - 79, 80
-    uint32 queue_id = ( getLevel() / 10) - 1;
-    if( queue_id >= MAX_BATTLEGROUND_QUEUES )
+    uint32 bracket_id = ( getLevel() / 10) - 1;
+    if( bracket_id >= MAX_BATTLEGROUND_BRACKETS )
     {
-        sLog.outError("BattleGround: too high queue_id %u for player %u (acc: %u) with level %u", queue_id, GetGUIDLow(), GetSession()->GetAccountId(), getLevel());
-        return QUEUE_ID_MAX_LEVEL_80;
+        sLog.outError("BattleGround: too high bracket_id %u for player %u (acc: %u) with level %u", bracket_id, GetGUIDLow(), GetSession()->GetAccountId(), getLevel());
+        return BG_BRACKET_ID_LAST;
     }
-    return BGQueueIdBasedOnLevel(queue_id);
+    return BattleGroundBracketId(bracket_id);
 }
 
 float Player::GetReputationPriceDiscount( Creature const* pCreature ) const
