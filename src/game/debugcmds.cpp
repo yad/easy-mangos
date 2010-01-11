@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,6 +30,7 @@
 #include "BattleGroundMgr.h"
 #include <fstream>
 #include "ObjectMgr.h"
+#include "ObjectDefines.h"
 #include "SpellMgr.h"
 
 bool ChatHandler::HandleDebugSendSpellFailCommand(const char* args)
@@ -614,7 +615,7 @@ bool ChatHandler::HandleDebugSpawnVehicle(const char* args)
     uint32 entry = (uint32)atoi(e);
     uint32 id = (uint32)atoi(i);
 
-    CreatureInfo const *ci = objmgr.GetCreatureTemplate(entry);
+    CreatureInfo const *ci = ObjectMgr::GetCreatureTemplate(entry);
 
     if (!ci)
         return false;
@@ -653,7 +654,7 @@ bool ChatHandler::HandleDebugSpawnVehicle(const char* args)
 bool ChatHandler::HandleDebugSpellCheckCommand(const char* /*args*/)
 {
     sLog.outString( "Check expected in code spell properties base at table 'spell_check' content...");
-    spellmgr.CheckUsedSpells("spell_check");
+    sSpellMgr.CheckUsedSpells("spell_check");
     return true;
 }
 

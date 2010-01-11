@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -44,23 +44,33 @@ void WorldSession::HandlePetAction( WorldPacket & recv_data )
     // used also for charmed creature
     Unit* pet= ObjectAccessor::GetUnit(*_player, guid1);
     sLog.outDetail("HandlePetAction.Pet %u flag is %u, spellid is %u, target %u.", uint32(GUID_LOPART(guid1)), uint32(flag), spellid, uint32(GUID_LOPART(guid2)) );
-    if(!pet)
+    if (!pet)
     {
         sLog.outError( "Pet %u not exist.", uint32(GUID_LOPART(guid1)) );
         return;
     }
 
-    if(pet != GetPlayer()->GetPet() && pet != GetPlayer()->GetCharm())
+    if (pet != GetPlayer()->GetPet() && pet != GetPlayer()->GetCharm())
     {
         sLog.outError("HandlePetAction.Pet %u isn't pet of player %s.", uint32(GUID_LOPART(guid1)), GetPlayer()->GetName() );
         return;
     }
 
-    if(!pet->isAlive())
+    if (!pet->isAlive())
         return;
 
-    if(pet->GetTypeId() == TYPEID_PLAYER && !(flag == ACT_COMMAND && spellid == COMMAND_ATTACK))
-        return;
+    if (pet->GetTypeId() == TYPEID_PLAYER)
+    {
+        // controller player can only do melee attack
+        if (!(flag == ACT_COMMAND && spellid == COMMAND_ATTACK))
+            return;
+    }
+    else if (((Creature*)pet)->isPet())
+    {
+        // pet can have action bar disabled
+        if(((Pet*)pet)->GetModeFlags() & PET_MODE_DISABLE_ACTIONS)
+            return;
+    }
 
     CharmInfo *charmInfo = pet->GetCharmInfo();
     if(!charmInfo)
@@ -316,6 +326,10 @@ void WorldSession::HandlePetSetAction( WorldPacket & recv_data )
         return;
     }
 
+    // pet can have action bar disabled
+    if(pet->isPet() && ((Pet*)pet)->GetModeFlags() & PET_MODE_DISABLE_ACTIONS)
+        return;
+
     CharmInfo *charmInfo = pet->GetCharmInfo();
     if(!charmInfo)
     {
@@ -324,22 +338,64 @@ void WorldSession::HandlePetSetAction( WorldPacket & recv_data )
     }
 
     count = (recv_data.size() == 24) ? 2 : 1;
+
+    uint32 position[2];
+    uint32 data[2];
+    bool move_command = false;
+
     for(uint8 i = 0; i < count; ++i)
     {
-        uint32 position;
-        uint32 data;
+        recv_data >> position[i];
+        recv_data >> data[i];
 
-        recv_data >> position;
-        recv_data >> data;
-
-        uint32 spell_id = UNIT_ACTION_BUTTON_ACTION(data);
-        uint8 act_state = UNIT_ACTION_BUTTON_TYPE(data);
-
-        sLog.outDetail( "Player %s has changed pet spell action. Position: %u, Spell: %u, State: 0x%X", _player->GetName(), position, spell_id, uint32(act_state));
+        uint8 act_state = UNIT_ACTION_BUTTON_TYPE(data[i]);
 
         //ignore invalid position
-        if(position >= MAX_UNIT_ACTION_BAR_INDEX)
+        if(position[i] >= MAX_UNIT_ACTION_BAR_INDEX)
             return;
+
+        // in the normal case, command and reaction buttons can only be moved, not removed
+        // at moving count ==2, at removing count == 1
+        // ignore attempt to remove command|reaction buttons (not possible at normal case)
+        if (act_state == ACT_COMMAND || act_state == ACT_REACTION)
+        {
+            if (count == 1)
+                return;
+
+            move_command = true;
+        }
+    }
+
+    // check swap (at command->spell swap client remove spell first in another packet, so check only command move correctness)
+    if (move_command)
+    {
+        uint8 act_state_0 = UNIT_ACTION_BUTTON_TYPE(data[0]);
+        if(act_state_0 == ACT_COMMAND || act_state_0 == ACT_REACTION)
+        {
+            uint32 spell_id_0 = UNIT_ACTION_BUTTON_ACTION(data[0]);
+            UnitActionBarEntry const* actionEntry_1 = charmInfo->GetActionBarEntry(position[1]);
+            if (!actionEntry_1 || spell_id_0 != actionEntry_1->GetAction() ||
+                act_state_0 != actionEntry_1->GetType())
+                return;
+        }
+
+        uint8 act_state_1 = UNIT_ACTION_BUTTON_TYPE(data[1]);
+        if(act_state_1 == ACT_COMMAND || act_state_1 == ACT_REACTION)
+        {
+            uint32 spell_id_1 = UNIT_ACTION_BUTTON_ACTION(data[1]);
+            UnitActionBarEntry const* actionEntry_0 = charmInfo->GetActionBarEntry(position[0]);
+            if (!actionEntry_0 || spell_id_1 != actionEntry_0->GetAction() ||
+                act_state_1 != actionEntry_0->GetType())
+                return;
+        }
+    }
+
+    for(uint8 i = 0; i < count; ++i)
+    {
+        uint32 spell_id = UNIT_ACTION_BUTTON_ACTION(data[i]);
+        uint8 act_state = UNIT_ACTION_BUTTON_TYPE(data[i]);
+
+        sLog.outDetail( "Player %s has changed pet spell action. Position: %u, Spell: %u, State: 0x%X", _player->GetName(), position[i], spell_id, uint32(act_state));
 
         //if it's act for spell (en/disable/cast) and there is a spell given (0 = remove spell) which pet doesn't know, don't add
         if(!((act_state == ACT_ENABLED || act_state == ACT_DISABLED || act_state == ACT_PASSIVE) && spell_id && !pet->HasSpell(spell_id)))
@@ -361,7 +417,7 @@ void WorldSession::HandlePetSetAction( WorldPacket & recv_data )
                     ((Pet*)pet)->ToggleAutocast(spell_id, false);
             }
 
-            charmInfo->SetActionBar(position,spell_id,ActiveStates(act_state));
+            charmInfo->SetActionBar(position[i],spell_id,ActiveStates(act_state));
         }
     }
 }
@@ -380,9 +436,9 @@ void WorldSession::HandlePetRename( WorldPacket & recv_data )
     recv_data >> name;
     recv_data >> isdeclined;
 
-    Pet* pet = ObjectAccessor::GetPet(petguid);
+    Pet* pet = _player->GetMap()->GetPet(petguid);
                                                             // check it!
-    if( !pet || !pet->isPet() || ((Pet*)pet)->getPetType()!= HUNTER_PET ||
+    if( !pet || pet->getPetType() != HUNTER_PET ||
         pet->GetByteValue(UNIT_FIELD_BYTES_2, 2) != UNIT_RENAME_ALLOWED ||
         pet->GetOwnerGUID() != _player->GetGUID() || !pet->GetCharmInfo() )
         return;
@@ -394,7 +450,7 @@ void WorldSession::HandlePetRename( WorldPacket & recv_data )
         return;
     }
 
-    if(objmgr.IsReservedName(name))
+    if(sObjectMgr.IsReservedName(name))
     {
         SendPetNameInvalid(PET_NAME_RESERVED, name, NULL);
         return;
@@ -402,9 +458,8 @@ void WorldSession::HandlePetRename( WorldPacket & recv_data )
 
     pet->SetName(name);
 
-    Unit *owner = pet->GetOwner();
-    if(owner && (owner->GetTypeId() == TYPEID_PLAYER) && ((Player*)owner)->GetGroup())
-        ((Player*)owner)->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_PET_NAME);
+    if(_player->GetGroup())
+        _player->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_PET_NAME);
 
     pet->SetByteValue(UNIT_FIELD_BYTES_2, 2, UNIT_RENAME_NOT_ALLOWED);
 

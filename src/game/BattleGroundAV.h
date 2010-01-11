@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -308,8 +308,6 @@ class BattleGroundAV : public BattleGround
 
         /* inherited from BattlegroundClass */
         virtual void AddPlayer(Player *plr);
-        virtual void OnObjectDBLoad(Creature* creature);
-        virtual void OnCreatureRespawn(Creature* creature);
 
         virtual void StartingEventCloseDoors();
         virtual void StartingEventOpenDoors();

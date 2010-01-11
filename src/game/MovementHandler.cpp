@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -50,13 +50,18 @@ void WorldSession::HandleMoveWorldportAckOpcode()
     // possible errors in the coordinate validity check
     if(!MapManager::IsValidMapCoord(loc.mapid, loc.coord_x, loc.coord_y, loc.coord_z, loc.orientation))
     {
-        LogoutPlayer(false);
+        sLog.outError("WorldSession::HandleMoveWorldportAckOpcode: player %s (%d) was teleported far to a not valid location. (map:%u, x:%f, y:%f, "
+            "z:%f) We port him to his homebind instead..", GetPlayer()->GetName(), GetPlayer()->GetGUIDLow(), loc.mapid, loc.coord_x, loc.coord_y, loc.coord_z);
+        // stop teleportation else we would try this again and again in LogoutPlayer...
+        GetPlayer()->SetSemaphoreTeleportFar(false);
+        // and teleport the player to a valid place
+        GetPlayer()->TeleportToHomebind();
         return;
     }
 
     // get the destination map entry, not the current one, this will fix homebind and reset greeting
     MapEntry const* mEntry = sMapStore.LookupEntry(loc.mapid);
-    InstanceTemplate const* mInstance = objmgr.GetInstanceTemplate(loc.mapid);
+    InstanceTemplate const* mInstance = ObjectMgr::GetInstanceTemplate(loc.mapid);
 
     // reset instance validity, except if going to an instance inside an instance
     if(GetPlayer()->m_InstanceValid == false && !mInstance)
@@ -65,7 +70,7 @@ void WorldSession::HandleMoveWorldportAckOpcode()
     GetPlayer()->SetSemaphoreTeleportFar(false);
 
     // relocate the player to the teleport destination
-    GetPlayer()->SetMap(MapManager::Instance().CreateMap(loc.mapid, GetPlayer()));
+    GetPlayer()->SetMap(sMapMgr.CreateMap(loc.mapid, GetPlayer()));
     GetPlayer()->Relocate(loc.coord_x, loc.coord_y, loc.coord_z, loc.orientation);
 
     GetPlayer()->SendInitialPacketsBeforeAddToMap();
@@ -76,14 +81,10 @@ void WorldSession::HandleMoveWorldportAckOpcode()
         //if player wasn't added to map, reset his map pointer!
         GetPlayer()->ResetMap();
 
-        sLog.outDebug("WORLD: teleport of player %s (%d) to location %d, %f, %f, %f, %f failed", GetPlayer()->GetName(), GetPlayer()->GetGUIDLow(), loc.mapid, loc.coord_x, loc.coord_y, loc.coord_z, loc.orientation);
+        sLog.outError("WorldSession::HandleMoveWorldportAckOpcode: player %s (%d) was teleported far but couldn't be added to map. (map:%u, x:%f, y:%f, "
+            "z:%f) We port him to his homebind instead..", GetPlayer()->GetName(), GetPlayer()->GetGUIDLow(), loc.mapid, loc.coord_x, loc.coord_y, loc.coord_z);
         // teleport the player home
-        if(!GetPlayer()->TeleportTo(GetPlayer()->m_homebindMapId, GetPlayer()->m_homebindX, GetPlayer()->m_homebindY, GetPlayer()->m_homebindZ, GetPlayer()->GetOrientation()))
-        {
-            // the player must always be able to teleport home
-            sLog.outError("WORLD: failed to teleport player %s (%d) to homebind location %d, %f, %f, %f, %f!", GetPlayer()->GetName(), GetPlayer()->GetGUIDLow(), GetPlayer()->m_homebindMapId, GetPlayer()->m_homebindX, GetPlayer()->m_homebindY, GetPlayer()->m_homebindZ, GetPlayer()->GetOrientation());
-            assert(false);
-        }
+        GetPlayer()->TeleportToHomebind();
         return;
     }
 
@@ -133,23 +134,21 @@ void WorldSession::HandleMoveWorldportAckOpcode()
         {
             GetPlayer()->ResurrectPlayer(0.5f);
             GetPlayer()->SpawnCorpseBones();
-            GetPlayer()->SaveToDB();
         }
     }
 
     if (mInstance)
     {
-        if(mEntry->IsRaid())
+        Difficulty diff = GetPlayer()->GetDifficulty(mEntry->IsRaid());
+        if(MapDifficulty const* mapDiff = GetMapDifficultyData(mEntry->MapID,diff))
         {
-            uint32 timeleft = sInstanceSaveManager.GetResetTimeFor(GetPlayer()->GetMapId()) - time(NULL);
-            GetPlayer()->SendInstanceResetWarning(GetPlayer()->GetMapId(), GetPlayer()->GetRaidDifficulty(), timeleft);
-        }
-        else if(mEntry->IsNonRaidDungeon() && GetPlayer()->GetDungeonDifficulty() > DUNGEON_DIFFICULTY_NORMAL)
-        {
-            if(MapDifficulty const* mapDiff = GetMapDifficultyData(mEntry->MapID,GetPlayer()->GetDungeonDifficulty()))
+            if (mapDiff->resetTime)
             {
-                uint32 timeleft = sInstanceSaveManager.GetResetTimeFor(GetPlayer()->GetMapId()) - time(NULL);
-                GetPlayer()->SendInstanceResetWarning(GetPlayer()->GetMapId(), GetPlayer()->GetDungeonDifficulty(), timeleft);
+                if (uint32 timeReset = sInstanceSaveMgr.GetResetTimeFor(mEntry->MapID,diff))
+                {
+                    uint32 timeleft = timeReset - time(NULL);
+                    GetPlayer()->SendInstanceResetWarning(mEntry->MapID, diff, timeleft);
+                }
             }
         }
     }
@@ -245,7 +244,6 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
     ReadMovementInfo(recv_data, &movementInfo);
     /*----------------*/
 
-        recv_data.rpos(recv_data.wpos());                   // prevent warnings spam
     if (!MaNGOS::IsValidMapCoord(movementInfo.x, movementInfo.y, movementInfo.z, movementInfo.o))
     {
         recv_data.rpos(recv_data.wpos());                   // prevent warnings spam
@@ -256,8 +254,8 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
     if (movementInfo.HasMovementFlag(MOVEMENTFLAG_ONTRANSPORT))
     {
         // transports size limited
-        // (also received at zeppelin leave by some reason with t_* as absolute in continent coordinates, can be safely skipped)
-        if( movementInfo.t_x > 50 || movementInfo.t_y > 50 || movementInfo.t_z > 50 )
+        // (also received at zeppelin/lift leave by some reason with t_* as absolute in continent coordinates, can be safely skipped)
+        if( movementInfo.t_x > 50 || movementInfo.t_y > 50 || movementInfo.t_z > 100 )
         {
             recv_data.rpos(recv_data.wpos());                   // prevent warnings spam
             return;
@@ -274,7 +272,7 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
         if (plMover && !plMover->m_transport)
         {
             // elevators also cause the client to send MOVEMENTFLAG_ONTRANSPORT - just unmount if the guid can be found in the transport list
-            for (MapManager::TransportSet::const_iterator iter = MapManager::Instance().m_Transports.begin(); iter != MapManager::Instance().m_Transports.end(); ++iter)
+            for (MapManager::TransportSet::const_iterator iter = sMapMgr.m_Transports.begin(); iter != sMapMgr.m_Transports.end(); ++iter)
             {
                 if ((*iter)->GetGUID() == movementInfo.t_guid)
                 {

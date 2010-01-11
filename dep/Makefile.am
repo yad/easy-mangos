@@ -1,4 +1,4 @@
-# Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+# Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,6 +22,9 @@ SUBDIRS = include lib src
 if MANGOS_BUILD_ACE
 SUBDIRS += ACE_wrappers
 endif
+
+# Intel's TBB
+SUBDIRS += tbb
 
 ## Additional files to include when running 'make dist'
 #  Nothing yet.

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,12 +21,13 @@
 #include "WorldPacket.h"
 #include "World.h"
 #include "ObjectMgr.h"
+#include "ObjectDefines.h"
 #include "SpellMgr.h"
 #include "Creature.h"
 #include "QuestDef.h"
 #include "GossipDef.h"
 #include "Player.h"
-#include "PoolHandler.h"
+#include "PoolManager.h"
 #include "Opcodes.h"
 #include "Log.h"
 #include "LootMgr.h"
@@ -104,12 +105,18 @@ bool AssistDelayEvent::Execute(uint64 /*e_time*/, uint32 /*p_time*/)
     return true;
 }
 
+bool ForcedDespawnDelayEvent::Execute(uint64 /*e_time*/, uint32 /*p_time*/)
+{
+    m_owner.ForcedDespawn();
+    return true;
+}
+
 Creature::Creature() :
 Unit(), i_AI(NULL),
 lootForPickPocketed(false), lootForBody(false), m_groupLootTimer(0), lootingGroupLeaderGUID(0),
 m_lootMoney(0), m_lootRecipient(0),
 m_deathTimer(0), m_respawnTime(0), m_respawnDelay(25), m_corpseDelay(60), m_respawnradius(0.0f),
-m_gossipOptionLoaded(false), m_isPet(false), m_isVehicle(false), m_isTotem(false),
+m_isPet(false), m_isVehicle(false), m_isTotem(false),
 m_defaultMovementType(IDLE_MOTION_TYPE), m_DBTableGuid(0), m_equipmentId(0),
 m_AlreadyCallAssistance(false), m_AlreadySearchedAssistance(false),
 m_regenHealth(true), m_AI_locked(false), m_isDeadByDefault(false), m_meleeDamageSchoolMask(SPELL_SCHOOL_MASK_NORMAL),
@@ -141,7 +148,7 @@ Creature::~Creature()
 void Creature::AddToWorld()
 {
     ///- Register the creature for guid lookup
-    if(!IsInWorld())
+    if(!IsInWorld() && GetGUIDHigh()==HIGHGUID_UNIT)
         GetMap()->GetObjectsStore().insert<Creature>(GetGUID(), (Creature*)this);
 
     Unit::AddToWorld();
@@ -150,7 +157,7 @@ void Creature::AddToWorld()
 void Creature::RemoveFromWorld()
 {
     ///- Remove the creature from the accessor
-    if(IsInWorld())
+    if(IsInWorld() && GetGUIDHigh()==HIGHGUID_UNIT)
         GetMap()->GetObjectsStore().erase<Creature>(GetGUID(), (Creature*)NULL);
 
     Unit::RemoveFromWorld();
@@ -181,26 +188,31 @@ void Creature::RemoveCorpse()
  */
 bool Creature::InitEntry(uint32 Entry, uint32 team, const CreatureData *data )
 {
-    CreatureInfo const *normalInfo = objmgr.GetCreatureTemplate(Entry);
+    CreatureInfo const *normalInfo = ObjectMgr::GetCreatureTemplate(Entry);
     if(!normalInfo)
     {
         sLog.outErrorDb("Creature::UpdateEntry creature entry %u does not exist.", Entry);
         return false;
     }
 
-    // get heroic mode entry
+    // get difficulty 1 mode entry
     uint32 actualEntry = Entry;
     CreatureInfo const *cinfo = normalInfo;
-    if(normalInfo->HeroicEntry)
+    // TODO correctly implement spawnmodes for non-bg maps
+    for (uint32 diff = 0; diff < MAX_DIFFICULTY - 1; ++diff)
     {
-        //we already have valid Map pointer for current creature!
-        if(GetMap()->IsHeroic())
+        if (normalInfo->DifficultyEntry[diff])
         {
-            cinfo = objmgr.GetCreatureTemplate(normalInfo->HeroicEntry);
-            if(!cinfo)
+            // we already have valid Map pointer for current creature!
+            if (GetMap()->GetSpawnMode() > diff)
             {
-                sLog.outErrorDb("Creature::UpdateEntry creature heroic entry %u does not exist.", actualEntry);
-                return false;
+                cinfo = ObjectMgr::GetCreatureTemplate(normalInfo->DifficultyEntry[diff]);
+                if (!cinfo)
+                {
+                    // maybe check such things already at startup
+                    sLog.outErrorDb("Creature::UpdateEntry creature difficulty %u entry %u does not exist.", diff + 1, actualEntry);
+                    return false;
+                }
             }
         }
     }
@@ -214,14 +226,14 @@ bool Creature::InitEntry(uint32 Entry, uint32 team, const CreatureData *data )
     // known valid are: CLASS_WARRIOR,CLASS_PALADIN,CLASS_ROGUE,CLASS_MAGE
     SetByteValue(UNIT_FIELD_BYTES_0, 1, uint8(cinfo->unit_class));
 
-    uint32 display_id = objmgr.ChooseDisplayId(team, GetCreatureInfo(), data);
+    uint32 display_id = sObjectMgr.ChooseDisplayId(team, GetCreatureInfo(), data);
     if (!display_id)                                        // Cancel load if no display id
     {
         sLog.outErrorDb("Creature (Entry: %u) has model %u not found in table `creature_model_info`, can't load. ", Entry, display_id);
         return false;
     }
 
-    CreatureModelInfo const *minfo = objmgr.GetCreatureModelRandomGender(display_id);
+    CreatureModelInfo const *minfo = sObjectMgr.GetCreatureModelRandomGender(display_id);
     if (!minfo)                                             // Cancel load if no model defined
     {
         sLog.outErrorDb("Creature (Entry: %u) has no model defined in table `creature_template`, can't load. ",Entry);
@@ -301,14 +313,13 @@ bool Creature::UpdateEntry(uint32 Entry, uint32 team, const CreatureData *data )
     SetCanModifyStats(true);
     UpdateAllStats();
 
-    FactionTemplateEntry const* factionTemplate = sFactionTemplateStore.LookupEntry(GetCreatureInfo()->faction_A);
-    if (factionTemplate)                                    // check and error show at loading templates
+    // checked and error show at loading templates
+    if (FactionTemplateEntry const* factionTemplate = sFactionTemplateStore.LookupEntry(GetCreatureInfo()->faction_A))
     {
-        FactionEntry const* factionEntry = sFactionStore.LookupEntry(factionTemplate->faction);
-        if (factionEntry)
-            if( !(GetCreatureInfo()->flags_extra & CREATURE_FLAG_EXTRA_CIVILIAN) &&
-                (factionEntry->team == ALLIANCE || factionEntry->team == HORDE) )
-                SetPvP(true);
+        if (factionTemplate->factionFlags & FACTION_TEMPLATE_FLAG_PVP)
+            SetPvP(true);
+        else
+            SetPvP(false);
     }
 
     for(int i=0; i < CREATURE_MAX_SPELLS; ++i)
@@ -361,15 +372,12 @@ void Creature::Update(uint32 diff)
                 else
                     setDeathState( JUST_ALIVED );
 
-                if (GetMap()->IsBattleGround() && ((BattleGroundMap*)GetMap())->GetBG())
-                    ((BattleGroundMap*)GetMap())->GetBG()->OnCreatureRespawn(this); // for alterac valley needed to adjust the correct level again
-
                 //Call AI respawn virtual function
                 i_AI->JustRespawned();
 
-                uint16 poolid = poolhandler.IsPartOfAPool(GetGUIDLow(), GetTypeId());
+                uint16 poolid = sPoolMgr.IsPartOfAPool(GetGUIDLow(), GetTypeId());
                 if (poolid)
-                    poolhandler.UpdatePool(poolid, GetGUIDLow(), TYPEID_UNIT);
+                    sPoolMgr.UpdatePool(poolid, GetGUIDLow(), TYPEID_UNIT);
                 else
                     GetMap()->Add(this);
             }
@@ -396,7 +404,7 @@ void Creature::Update(uint32 diff)
                     }
                     else
                     {
-                        Group* group = objmgr.GetGroupByLeader(lootingGroupLeaderGUID);
+                        Group* group = sObjectMgr.GetGroupByLeader(lootingGroupLeaderGUID);
                         if (group)
                             group->EndRoll();
                         m_groupLootTimer = 0;
@@ -573,7 +581,7 @@ bool Creature::AIM_Initialize()
     return true;
 }
 
-bool Creature::Create (uint32 guidlow, Map *map, uint32 phaseMask, uint32 Entry, uint32 team, const CreatureData *data)
+bool Creature::Create(uint32 guidlow, Map *map, uint32 phaseMask, uint32 Entry, uint32 team, const CreatureData *data)
 {
     ASSERT(map);
     SetMap(map);
@@ -742,324 +750,6 @@ bool Creature::isCanTrainingAndResetTalentsOf(Player* pPlayer) const
         && pPlayer->getClass() == GetCreatureInfo()->trainer_class;
 }
 
-void Creature::prepareGossipMenu( Player *pPlayer,uint32 gossipid )
-{
-    PlayerMenu* pm=pPlayer->PlayerTalkClass;
-    pm->ClearMenus();
-
-    // lazy loading single time at use
-    LoadGossipOptions();
-
-    for( GossipOptionList::iterator i = m_goptions.begin( ); i != m_goptions.end( ); ++i )
-    {
-        GossipOption* gso=&*i;
-        if(gso->GossipId == gossipid)
-        {
-            bool cantalking=true;
-            if(gso->Id==1)
-            {
-                uint32 textid=GetNpcTextId();
-                GossipText const* gossiptext=objmgr.GetGossipText(textid);
-                if(!gossiptext)
-                    cantalking=false;
-            }
-            else
-            {
-                switch (gso->Action)
-                {
-                    case GOSSIP_OPTION_QUESTGIVER:
-                        pPlayer->PrepareQuestMenu(GetGUID());
-                        //if (pm->GetQuestMenu()->MenuItemCount() == 0)
-                        cantalking=false;
-                        //pm->GetQuestMenu()->ClearMenu();
-                        break;
-                    case GOSSIP_OPTION_ARMORER:
-                        cantalking=false;                   // added in special mode
-                        break;
-                    case GOSSIP_OPTION_SPIRITHEALER:
-                        if( !pPlayer->isDead() )
-                            cantalking=false;
-                        break;
-                    case GOSSIP_OPTION_VENDOR:
-                    {
-                        VendorItemData const* vItems = GetVendorItems();
-                        if(!vItems || vItems->Empty())
-                        {
-                            sLog.outErrorDb("Creature %u (Entry: %u) have UNIT_NPC_FLAG_VENDOR but have empty trading item list.",
-                                GetGUIDLow(),GetEntry());
-                            cantalking=false;
-                        }
-                        break;
-                    }
-                    case GOSSIP_OPTION_TRAINER:
-                        if(!isCanTrainingOf(pPlayer,false))
-                            cantalking=false;
-                        break;
-                    case GOSSIP_OPTION_UNLEARNTALENTS:
-                        if(!isCanTrainingAndResetTalentsOf(pPlayer))
-                            cantalking=false;
-                        break;
-                    case GOSSIP_OPTION_UNLEARNPETSKILLS:
-                        if(!pPlayer->GetPet() || pPlayer->GetPet()->getPetType() != HUNTER_PET || pPlayer->GetPet()->m_spells.size() <= 1 || GetCreatureInfo()->trainer_type != TRAINER_TYPE_PETS || GetCreatureInfo()->trainer_class != CLASS_HUNTER)
-                            cantalking=false;
-                        break;
-                    case GOSSIP_OPTION_TAXIVENDOR:
-                        if ( pPlayer->GetSession()->SendLearnNewTaxiNode(this) )
-                            return;
-                        break;
-                    case GOSSIP_OPTION_BATTLEFIELD:
-                        if(!isCanInteractWithBattleMaster(pPlayer,false))
-                            cantalking=false;
-                        break;
-                    case GOSSIP_OPTION_SPIRITGUIDE:
-                    case GOSSIP_OPTION_INNKEEPER:
-                    case GOSSIP_OPTION_BANKER:
-                    case GOSSIP_OPTION_PETITIONER:
-                    case GOSSIP_OPTION_STABLEPET:
-                    case GOSSIP_OPTION_TABARDDESIGNER:
-                    case GOSSIP_OPTION_AUCTIONEER:
-                        break;                              // no checks
-                    default:
-                        sLog.outErrorDb("Creature %u (entry: %u) have unknown gossip option %u",GetDBTableGUIDLow(),GetEntry(),gso->Action);
-                        break;
-                }
-            }
-
-            //note for future dev: should have database fields for BoxMessage & BoxMoney
-            if(!gso->OptionText.empty() && cantalking)
-            {
-                std::string OptionText = gso->OptionText;
-                std::string BoxText = gso->BoxText;
-                int loc_idx = pPlayer->GetSession()->GetSessionDbLocaleIndex();
-                if (loc_idx >= 0)
-                {
-                    NpcOptionLocale const *no = objmgr.GetNpcOptionLocale(gso->Id);
-                    if (no)
-                    {
-                        if (no->OptionText.size() > loc_idx && !no->OptionText[loc_idx].empty())
-                            OptionText=no->OptionText[loc_idx];
-                        if (no->BoxText.size() > loc_idx && !no->BoxText[loc_idx].empty())
-                            BoxText=no->BoxText[loc_idx];
-                    }
-                }
-                pm->GetGossipMenu().AddMenuItem((uint8)gso->Icon,OptionText, gossipid,gso->Action,BoxText,gso->BoxMoney,gso->Coded);
-            }
-        }
-    }
-
-    ///some gossips aren't handled in normal way ... so we need to do it this way .. TODO: handle it in normal way ;-)
-    if(pm->Empty())
-    {
-        if(HasFlag(UNIT_NPC_FLAGS,UNIT_NPC_FLAG_TRAINER))
-        {
-            isCanTrainingOf(pPlayer,true);                  // output error message if need
-        }
-        if(HasFlag(UNIT_NPC_FLAGS,UNIT_NPC_FLAG_BATTLEMASTER))
-        {
-            isCanInteractWithBattleMaster(pPlayer,true);     // output error message if need
-        }
-    }
-}
-
-void Creature::sendPreparedGossip(Player* player)
-{
-    if(!player)
-        return;
-
-    // in case no gossip flag and quest menu not empty, open quest menu (client expect gossip menu with this flag)
-    if (!HasFlag(UNIT_NPC_FLAGS,UNIT_NPC_FLAG_GOSSIP) && !player->PlayerTalkClass->GetQuestMenu().Empty())
-    {
-        player->SendPreparedQuest(GetGUID());
-        return;
-    }
-
-    // in case non empty gossip menu (that not included quests list size) show it
-    // (quest entries from quest menu will be included in list)
-    player->PlayerTalkClass->SendGossipMenu(GetNpcTextId(), GetGUID());
-}
-
-void Creature::OnGossipSelect(Player* player, uint32 option)
-{
-    GossipMenu& gossipmenu = player->PlayerTalkClass->GetGossipMenu();
-
-    if(option >= gossipmenu.MenuItemCount())
-        return;
-
-    uint32 action=gossipmenu.GetItem(option).m_gAction;
-    uint32 zoneid=GetZoneId();
-    uint64 guid=GetGUID();
-
-    GossipOption const *gossip=GetGossipOption( action );
-    if(!gossip)
-    {
-        zoneid=0;
-        gossip=GetGossipOption( action );
-        if(!gossip)
-            return;
-    }
-
-    switch (gossip->Action)
-    {
-        case GOSSIP_OPTION_GOSSIP:
-        {
-            uint32 textid = GetGossipTextId(action, zoneid);
-            if (textid == 0)
-                textid=GetNpcTextId();
-
-            player->PlayerTalkClass->CloseGossip();
-            player->PlayerTalkClass->SendTalking(textid);
-            break;
-        }
-        case GOSSIP_OPTION_SPIRITHEALER:
-            if (player->isDead())
-                CastSpell(this,17251,true,NULL,NULL,player->GetGUID());
-            break;
-        case GOSSIP_OPTION_QUESTGIVER:
-            player->PrepareQuestMenu( guid );
-            player->SendPreparedQuest( guid );
-            break;
-        case GOSSIP_OPTION_VENDOR:
-        case GOSSIP_OPTION_ARMORER:
-            player->GetSession()->SendListInventory(guid);
-            break;
-        case GOSSIP_OPTION_STABLEPET:
-            player->GetSession()->SendStablePet(guid);
-            break;
-        case GOSSIP_OPTION_TRAINER:
-            player->GetSession()->SendTrainerList(guid);
-            break;
-        case GOSSIP_OPTION_UNLEARNTALENTS:
-            player->PlayerTalkClass->CloseGossip();
-            player->SendTalentWipeConfirm(guid);
-            break;
-        case GOSSIP_OPTION_UNLEARNPETSKILLS:
-            player->PlayerTalkClass->CloseGossip();
-            player->SendPetSkillWipeConfirm();
-            break;
-        case GOSSIP_OPTION_TAXIVENDOR:
-            player->GetSession()->SendTaxiMenu(this);
-            break;
-        case GOSSIP_OPTION_INNKEEPER:
-            player->PlayerTalkClass->CloseGossip();
-            player->SetBindPoint( guid );
-            break;
-        case GOSSIP_OPTION_BANKER:
-            player->GetSession()->SendShowBank( guid );
-            break;
-        case GOSSIP_OPTION_PETITIONER:
-            player->PlayerTalkClass->CloseGossip();
-            player->GetSession()->SendPetitionShowList( guid );
-            break;
-        case GOSSIP_OPTION_TABARDDESIGNER:
-            player->PlayerTalkClass->CloseGossip();
-            player->GetSession()->SendTabardVendorActivate( guid );
-            break;
-        case GOSSIP_OPTION_AUCTIONEER:
-            player->GetSession()->SendAuctionHello( guid, this );
-            break;
-        case GOSSIP_OPTION_SPIRITGUIDE:
-        case GOSSIP_GUARD_SPELLTRAINER:
-        case GOSSIP_GUARD_SKILLTRAINER:
-            prepareGossipMenu( player,gossip->Id );
-            sendPreparedGossip( player );
-            break;
-        case GOSSIP_OPTION_BATTLEFIELD:
-        {
-            BattleGroundTypeId bgTypeId = sBattleGroundMgr.GetBattleMasterBG(GetEntry());
-            if (bgTypeId == BATTLEGROUND_TYPE_NONE)
-            {
-                sLog.outError("a user (guid %u) requested battlegroundlist from a npc who is no battlemaster", player->GetGUIDLow());
-                return;
-            }
-            player->GetSession()->SendBattlegGroundList( GetGUID(), bgTypeId );
-            break;
-        }
-        default:
-            OnPoiSelect( player, gossip );
-            break;
-    }
-
-}
-
-void Creature::OnPoiSelect(Player* player, GossipOption const *gossip)
-{
-    if(gossip->GossipId==GOSSIP_GUARD_SPELLTRAINER || gossip->GossipId==GOSSIP_GUARD_SKILLTRAINER)
-    {
-        Poi_Icon icon = ICON_POI_BLANK;
-        //need add more case.
-        switch(gossip->Action)
-        {
-            case GOSSIP_GUARD_BANK:
-                icon=ICON_POI_SMALL_HOUSE;
-                break;
-            case GOSSIP_GUARD_RIDE:
-                icon=ICON_POI_RWHORSE;
-                break;
-            case GOSSIP_GUARD_GUILD:
-                icon=ICON_POI_BLUETOWER;
-                break;
-            default:
-                icon=ICON_POI_GREYTOWER;
-                break;
-        }
-        uint32 textid = GetGossipTextId( gossip->Action, GetZoneId() );
-        player->PlayerTalkClass->SendTalking(textid);
-        // std::string areaname= gossip->OptionText;
-        // how this could worked player->PlayerTalkClass->SendPointOfInterest( x, y, icon, 2, 15, areaname.c_str() );
-    }
-}
-
-uint32 Creature::GetGossipTextId(uint32 action, uint32 zoneid)
-{
-    QueryResult *result= WorldDatabase.PQuery("SELECT textid FROM npc_gossip_textid WHERE action = '%u' AND zoneid ='%u'", action, zoneid );
-
-    if(!result)
-        return 0;
-
-    Field *fields = result->Fetch();
-    uint32 id = fields[0].GetUInt32();
-
-    delete result;
-
-    return id;
-}
-
-uint32 Creature::GetNpcTextId()
-{
-    if (!m_DBTableGuid)
-        return DEFAULT_GOSSIP_MESSAGE;
-
-    if(uint32 pos = objmgr.GetNpcGossip(m_DBTableGuid))
-        return pos;
-
-    return DEFAULT_GOSSIP_MESSAGE;
-}
-
-GossipOption const* Creature::GetGossipOption( uint32 id ) const
-{
-    for( GossipOptionList::const_iterator i = m_goptions.begin( ); i != m_goptions.end( ); ++i )
-    {
-        if(i->Action==id )
-            return &*i;
-    }
-    return NULL;
-}
-
-void Creature::LoadGossipOptions()
-{
-    if(m_gossipOptionLoaded)
-        return;
-
-    uint32 npcflags=GetUInt32Value(UNIT_NPC_FLAGS);
-
-    CacheNpcOptionList const& noList = objmgr.GetNpcOptions ();
-    for (CacheNpcOptionList::const_iterator i = noList.begin (); i != noList.end (); ++i)
-        if(i->NpcFlag & npcflags)
-            addGossipOption(*i);
-
-    m_gossipOptionLoaded = true;
-}
-
 void Creature::AI_SendMoveToPacket(float x, float y, float z, uint32 time, MonsterMovementFlags flags, uint8 type)
 {
     /*    uint32 timeElap = getMSTime();
@@ -1114,7 +804,7 @@ void Creature::SaveToDB()
 {
     // this should only be used when the creature has already been loaded
     // preferably after adding to map, because mapid may not be valid otherwise
-    CreatureData const *data = objmgr.GetCreatureData(m_DBTableGuid);
+    CreatureData const *data = sObjectMgr.GetCreatureData(m_DBTableGuid);
     if(!data)
     {
         sLog.outError("Creature::SaveToDB failed, cannot get creature data!");
@@ -1129,7 +819,7 @@ void Creature::SaveToDB(uint32 mapid, uint8 spawnMask, uint32 phaseMask)
     // update in loaded data
     if (!m_DBTableGuid)
         m_DBTableGuid = GetGUIDLow();
-    CreatureData& data = objmgr.NewOrExistCreatureData(m_DBTableGuid);
+    CreatureData& data = sObjectMgr.NewOrExistCreatureData(m_DBTableGuid);
 
     uint32 displayId = GetNativeDisplayId();
 
@@ -1141,22 +831,22 @@ void Creature::SaveToDB(uint32 mapid, uint8 spawnMask, uint32 phaseMask)
             displayId != cinfo->DisplayID_H[0] && displayId != cinfo->DisplayID_H[1])
         {
             if (cinfo->DisplayID_A[0])
-                if (CreatureModelInfo const *minfo = objmgr.GetCreatureModelInfo(cinfo->DisplayID_A[0]))
+                if (CreatureModelInfo const *minfo = sObjectMgr.GetCreatureModelInfo(cinfo->DisplayID_A[0]))
                     if(displayId == minfo->modelid_other_gender)
                         displayId = 0;
 
             if (displayId && cinfo->DisplayID_A[1])
-                if (CreatureModelInfo const *minfo = objmgr.GetCreatureModelInfo(cinfo->DisplayID_A[1]))
+                if (CreatureModelInfo const *minfo = sObjectMgr.GetCreatureModelInfo(cinfo->DisplayID_A[1]))
                     if(displayId == minfo->modelid_other_gender)
                         displayId = 0;
 
             if (displayId && cinfo->DisplayID_H[0])
-                if (CreatureModelInfo const *minfo = objmgr.GetCreatureModelInfo(cinfo->DisplayID_H[0]))
+                if (CreatureModelInfo const *minfo = sObjectMgr.GetCreatureModelInfo(cinfo->DisplayID_H[0]))
                     if(displayId == minfo->modelid_other_gender)
                         displayId = 0;
 
             if (displayId && cinfo->DisplayID_H[1])
-                if (CreatureModelInfo const *minfo = objmgr.GetCreatureModelInfo(cinfo->DisplayID_H[1]))
+                if (CreatureModelInfo const *minfo = sObjectMgr.GetCreatureModelInfo(cinfo->DisplayID_H[1]))
                     if(displayId == minfo->modelid_other_gender)
                         displayId = 0;
         }
@@ -1212,7 +902,7 @@ void Creature::SaveToDB(uint32 mapid, uint8 spawnMask, uint32 phaseMask)
         << (m_isDeadByDefault ? 1 : 0) << ","               //is_dead
         << GetDefaultMovementType() << ")";                 //default movement generator type
 
-    WorldDatabase.PExecuteLog( ss.str( ).c_str( ) );
+    WorldDatabase.PExecuteLog("%s", ss.str().c_str());
 
     WorldDatabase.CommitTransaction();
 }
@@ -1325,7 +1015,7 @@ float Creature::GetSpellDamageMod(int32 Rank)
 
 bool Creature::CreateFromProto(uint32 guidlow, uint32 Entry, uint32 team, const CreatureData *data)
 {
-    CreatureInfo const *cinfo = objmgr.GetCreatureTemplate(Entry);
+    CreatureInfo const *cinfo = ObjectMgr::GetCreatureTemplate(Entry);
     if(!cinfo)
     {
         sLog.outErrorDb("Creature entry %u does not exist.", Entry);
@@ -1343,7 +1033,7 @@ bool Creature::CreateFromProto(uint32 guidlow, uint32 Entry, uint32 team, const 
 
 bool Creature::LoadFromDB(uint32 guid, Map *map)
 {
-    CreatureData const* data = objmgr.GetCreatureData(guid);
+    CreatureData const* data = sObjectMgr.GetCreatureData(guid);
 
     if(!data)
     {
@@ -1352,7 +1042,17 @@ bool Creature::LoadFromDB(uint32 guid, Map *map)
     }
 
     m_DBTableGuid = guid;
-    if (map->GetInstanceId() != 0) guid = objmgr.GenerateLowGuid(HIGHGUID_UNIT);
+    if (map->GetInstanceId() == 0)
+    {
+        // Creature can be loaded already in map if grid has been unloaded while creature walk to another grid
+        // FIXME: until creature guids is global and for instances used dynamic generated guids
+        // in instance possible load creature duplicates with same DB guid but different in game guids
+        // This will be until implementing per-map creature guids
+        if (map->GetCreature(MAKE_NEW_GUID(guid,data->id,HIGHGUID_UNIT)))
+            return false;
+    }
+    else
+        guid = sObjectMgr.GenerateLowGuid(HIGHGUID_UNIT);
 
     uint16 team = 0;
     if(!Create(guid,map,data->phaseMask,data->id,team,data))
@@ -1372,7 +1072,7 @@ bool Creature::LoadFromDB(uint32 guid, Map *map)
     m_isDeadByDefault = data->is_dead;
     m_deathState = m_isDeadByDefault ? DEAD : ALIVE;
 
-    m_respawnTime  = objmgr.GetCreatureRespawnTime(m_DBTableGuid,GetInstanceId());
+    m_respawnTime  = sObjectMgr.GetCreatureRespawnTime(m_DBTableGuid,GetInstanceId());
     if(m_respawnTime > time(NULL))                          // not ready to respawn
     {
         m_deathState = DEAD;
@@ -1386,7 +1086,7 @@ bool Creature::LoadFromDB(uint32 guid, Map *map)
     else if(m_respawnTime)                                  // respawn time set but expired
     {
         m_respawnTime = 0;
-        objmgr.SaveCreatureRespawnTime(m_DBTableGuid,GetInstanceId(),0);
+        sObjectMgr.SaveCreatureRespawnTime(m_DBTableGuid,GetInstanceId(),0);
     }
 
     uint32 curhealth = data->curhealth;
@@ -1422,7 +1122,7 @@ void Creature::LoadEquipment(uint32 equip_entry, bool force)
         return;
     }
 
-    EquipmentInfo const *einfo = objmgr.GetEquipmentInfo(equip_entry);
+    EquipmentInfo const *einfo = sObjectMgr.GetEquipmentInfo(equip_entry);
     if (!einfo)
         return;
 
@@ -1433,7 +1133,7 @@ void Creature::LoadEquipment(uint32 equip_entry, bool force)
 
 bool Creature::hasQuest(uint32 quest_id) const
 {
-    QuestRelations const& qr = objmgr.mCreatureQuestRelations;
+    QuestRelations const& qr = sObjectMgr.mCreatureQuestRelations;
     for(QuestRelations::const_iterator itr = qr.lower_bound(GetEntry()); itr != qr.upper_bound(GetEntry()); ++itr)
     {
         if(itr->second==quest_id)
@@ -1444,7 +1144,7 @@ bool Creature::hasQuest(uint32 quest_id) const
 
 bool Creature::hasInvolvedQuest(uint32 quest_id) const
 {
-    QuestRelations const& qr = objmgr.mCreatureQuestInvolvedRelations;
+    QuestRelations const& qr = sObjectMgr.mCreatureQuestInvolvedRelations;
     for(QuestRelations::const_iterator itr = qr.lower_bound(GetEntry()); itr != qr.upper_bound(GetEntry()); ++itr)
     {
         if(itr->second==quest_id)
@@ -1461,8 +1161,8 @@ void Creature::DeleteFromDB()
         return;
     }
 
-    objmgr.SaveCreatureRespawnTime(m_DBTableGuid,GetInstanceId(),0);
-    objmgr.DeleteCreatureData(m_DBTableGuid);
+    sObjectMgr.SaveCreatureRespawnTime(m_DBTableGuid,GetInstanceId(),0);
+    sObjectMgr.DeleteCreatureData(m_DBTableGuid);
 
     WorldDatabase.BeginTransaction();
     WorldDatabase.PExecuteLog("DELETE FROM creature WHERE guid = '%u'", m_DBTableGuid);
@@ -1514,29 +1214,29 @@ float Creature::GetAttackDistance(Unit const* pl) const
 
 void Creature::setDeathState(DeathState s)
 {
-    if((s == JUST_DIED && !m_isDeadByDefault)||(s == JUST_ALIVED && m_isDeadByDefault))
+    if ((s == JUST_DIED && !m_isDeadByDefault)||(s == JUST_ALIVED && m_isDeadByDefault))
     {
         m_deathTimer = m_corpseDelay*IN_MILISECONDS;
 
         // always save boss respawn time at death to prevent crash cheating
-        if(sWorld.getConfig(CONFIG_SAVE_RESPAWN_TIME_IMMEDIATLY) || isWorldBoss())
+        if (sWorld.getConfig(CONFIG_SAVE_RESPAWN_TIME_IMMEDIATLY) || isWorldBoss())
             SaveRespawnTime();
 
         if (canFly() && FallGround())
             return;
 
-        if(!IsStopped())
+        if (!IsStopped())
             StopMoving();
     }
     Unit::setDeathState(s);
 
-    if(s == JUST_DIED)
+    if (s == JUST_DIED)
     {
         SetTargetGUID(0);                                   // remove target selection in any cases (can be set at aura remove in Unit::setDeathState)
         SetUInt32Value(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_NONE);
 
-        if(!isPet() && GetCreatureInfo()->SkinLootId)
-            if ( LootTemplates_Skinning.HaveLootFor(GetCreatureInfo()->SkinLootId) )
+        if (!isPet() && GetCreatureInfo()->SkinLootId)
+            if (LootTemplates_Skinning.HaveLootFor(GetCreatureInfo()->SkinLootId))
                 SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_SKINNABLE);
 
         if (canFly() && FallGround())
@@ -1545,7 +1245,7 @@ void Creature::setDeathState(DeathState s)
         SetNoSearchAssistance(false);
         Unit::setDeathState(CORPSE);
     }
-    if(s == JUST_ALIVED)
+    if (s == JUST_ALIVED)
     {
         SetHealth(GetMaxHealth());
         SetLootRecipient(NULL);
@@ -1595,14 +1295,24 @@ void Creature::Respawn()
     if(getDeathState()==DEAD)
     {
         if (m_DBTableGuid)
-            objmgr.SaveCreatureRespawnTime(m_DBTableGuid,GetInstanceId(),0);
+            sObjectMgr.SaveCreatureRespawnTime(m_DBTableGuid,GetInstanceId(),0);
         m_respawnTime = time(NULL);                         // respawn at next tick
     }
 }
 
-void Creature::ForcedDespawn()
+void Creature::ForcedDespawn(uint32 timeMSToDespawn)
 {
-    setDeathState(JUST_DIED);
+    if (timeMSToDespawn)
+    {
+        ForcedDespawnDelayEvent *pEvent = new ForcedDespawnDelayEvent(*this);
+
+        m_Events.AddEvent(pEvent, m_Events.CalculateTime(timeMSToDespawn));
+        return;
+    }
+
+    if (isAlive())
+        setDeathState(JUST_DIED);
+
     RemoveCorpse();
     SetHealth(0);                                           // just for nice GM-mode view
 }
@@ -1890,9 +1600,9 @@ void Creature::SaveRespawnTime()
         return;
 
     if(m_respawnTime > time(NULL))                          // dead (no corpse)
-        objmgr.SaveCreatureRespawnTime(m_DBTableGuid,GetInstanceId(),m_respawnTime);
+        sObjectMgr.SaveCreatureRespawnTime(m_DBTableGuid,GetInstanceId(),m_respawnTime);
     else if(m_deathTimer > 0)                               // dead (corpse)
-        objmgr.SaveCreatureRespawnTime(m_DBTableGuid,GetInstanceId(),time(NULL)+m_respawnDelay+m_deathTimer/IN_MILISECONDS);
+        sObjectMgr.SaveCreatureRespawnTime(m_DBTableGuid,GetInstanceId(),time(NULL)+m_respawnDelay+m_deathTimer/IN_MILISECONDS);
 }
 
 bool Creature::IsOutOfThreatArea(Unit* pVictim) const
@@ -1928,7 +1638,7 @@ CreatureDataAddon const* Creature::GetCreatureAddon() const
             return addon;
     }
 
-    // dependent from heroic mode entry
+    // dependent from difficulty mode entry
     return ObjectMgr::GetCreatureTemplateAddon(GetCreatureInfo()->Entry);
 }
 
@@ -1959,12 +1669,12 @@ bool Creature::LoadCreaturesAddon(bool reload)
     if (cainfo->bytes2 != 0)
     {
         // 0 SheathState
-        // 1 Bytes2Flags
+        // 1 UnitPVPStateFlags  Set at Creature::UpdateEntry (SetPvp())
         // 2 UnitRename         Pet only, so always 0 for default creature
         // 3 ShapeshiftForm     Must be determined/set by shapeshift spell/aura
 
         SetByteValue(UNIT_FIELD_BYTES_2, 0, uint8(cainfo->bytes2 & 0xFF));
-        SetByteValue(UNIT_FIELD_BYTES_2, 1, uint8((cainfo->bytes2 >> 8) & 0xFF));
+        //SetByteValue(UNIT_FIELD_BYTES_2, 1, uint8((cainfo->bytes2 >> 8) & 0xFF));
         //SetByteValue(UNIT_FIELD_BYTES_2, 2, uint8((cainfo->bytes2 >> 16) & 0xFF));
         SetByteValue(UNIT_FIELD_BYTES_2, 2, 0);
         //SetByteValue(UNIT_FIELD_BYTES_2, 3, uint8((cainfo->bytes2 >> 24) & 0xFF));
@@ -2127,27 +1837,28 @@ void Creature::GetRespawnCoord( float &x, float &y, float &z, float* ori, float*
 {
     if (m_DBTableGuid)
     {
-        if (CreatureData const* data = objmgr.GetCreatureData(GetDBTableGUIDLow()))
+        if (CreatureData const* data = sObjectMgr.GetCreatureData(GetDBTableGUIDLow()))
         {
             x = data->posX;
             y = data->posY;
             z = data->posZ;
-            if(ori)
+            if (ori)
                 *ori = data->orientation;
-            if(dist)
+            if (dist)
                 *dist = data->spawndist;
 
             return;
         }
     }
 
-    x = GetPositionX();
-    y = GetPositionY();
-    z = GetPositionZ();
-    if(ori)
-        *ori = GetOrientation();
-    if(dist)
-        *dist = 0;
+    float orient;
+
+    GetSummonPoint(x, y, z, orient);
+
+    if (ori)
+        *ori = orient;
+    if (dist)
+        *dist = GetRespawnRadius();
 }
 
 void Creature::AllLootRemovedFromCorpse()
@@ -2191,7 +1902,7 @@ std::string Creature::GetAIName() const
 
 std::string Creature::GetScriptName() const
 {
-    return objmgr.GetScriptName(GetScriptId());
+    return sObjectMgr.GetScriptName(GetScriptId());
 }
 
 uint32 Creature::GetScriptId() const
@@ -2201,7 +1912,7 @@ uint32 Creature::GetScriptId() const
 
 VendorItemData const* Creature::GetVendorItems() const
 {
-    return objmgr.GetNpcVendorItemList(GetEntry());
+    return sObjectMgr.GetNpcVendorItemList(GetEntry());
 }
 
 uint32 Creature::GetVendorItemCurrentCount(VendorItem const* vItem)
@@ -2223,7 +1934,7 @@ uint32 Creature::GetVendorItemCurrentCount(VendorItem const* vItem)
 
     if( vCount->lastIncrementTime + vItem->incrtime <= ptime )
     {
-        ItemPrototype const* pProto = objmgr.GetItemPrototype(vItem->item);
+        ItemPrototype const* pProto = ObjectMgr::GetItemPrototype(vItem->item);
 
         uint32 diff = uint32((ptime - vCount->lastIncrementTime)/vItem->incrtime);
         if((vCount->count + diff * pProto->BuyCount) >= vItem->maxcount )
@@ -2262,7 +1973,7 @@ uint32 Creature::UpdateVendorItemCurrentCount(VendorItem const* vItem, uint32 us
 
     if( vCount->lastIncrementTime + vItem->incrtime <= ptime )
     {
-        ItemPrototype const* pProto = objmgr.GetItemPrototype(vItem->item);
+        ItemPrototype const* pProto = ObjectMgr::GetItemPrototype(vItem->item);
 
         uint32 diff = uint32((ptime - vCount->lastIncrementTime)/vItem->incrtime);
         if((vCount->count + diff * pProto->BuyCount) < vItem->maxcount )
@@ -2278,7 +1989,7 @@ uint32 Creature::UpdateVendorItemCurrentCount(VendorItem const* vItem, uint32 us
 
 TrainerSpellData const* Creature::GetTrainerSpells() const
 {
-    return objmgr.GetNpcTrainerSpells(GetEntry());
+    return sObjectMgr.GetNpcTrainerSpells(GetEntry());
 }
 
 // overwrite WorldObject function for proper name localization
@@ -2286,10 +1997,10 @@ const char* Creature::GetNameForLocaleIdx(int32 loc_idx) const
 {
     if (loc_idx >= 0)
     {
-        CreatureLocale const *cl = objmgr.GetCreatureLocale(GetEntry());
+        CreatureLocale const *cl = sObjectMgr.GetCreatureLocale(GetEntry());
         if (cl)
         {
-            if (cl->Name.size() > loc_idx && !cl->Name[loc_idx].empty())
+            if (cl->Name.size() > (size_t)loc_idx && !cl->Name[loc_idx].empty())
                 return cl->Name[loc_idx].c_str();
         }
     }

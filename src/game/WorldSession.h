@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,7 +26,6 @@
 #include "Common.h"
 #include "SharedDefines.h"
 
-class MailItemsInfo;
 struct ItemPrototype;
 struct AuctionEntry;
 struct DeclinedName;
@@ -39,7 +38,6 @@ class Player;
 class Unit;
 class WorldPacket;
 class WorldSocket;
-class WorldSession;
 class QueryResult;
 class LoginQueryHolder;
 class CharacterHandler;
@@ -115,6 +113,8 @@ class MANGOS_DLL_SPEC WorldSession
 
         bool PlayerLoading() const { return m_playerLoading; }
         bool PlayerLogout() const { return m_playerLogout; }
+        bool PlayerLogoutWithSave() const { return m_playerLogout && m_playerSave; }
+
 
         void SizeError(WorldPacket const& packet, uint32 size) const;
 
@@ -220,12 +220,8 @@ class MANGOS_DLL_SPEC WorldSession
                 m_TutorialsChanged = true;
             }
         }
-
-        //mail
-                                                            //used with item_page table
+                                                             //used with item_page table
         bool SendItemInfo( uint32 itemid, WorldPacket data );
-        static void SendReturnToSender(uint8 messageType, uint32 sender_acc, uint32 sender_guid, uint32 receiver_guid, const std::string& subject, uint32 itemTextId, MailItemsInfo *mi, uint32 money, uint16 mailTemplateId = 0);
-        static void SendMailTo(Player* receiver, uint8 messageType, uint8 stationery, uint32 sender_guidlow_or_entry, uint32 received_guidlow, std::string subject, uint32 itemTextId, MailItemsInfo* mi, uint32 money, uint32 COD, uint32 checked, uint32 deliver_delay = 0, uint16 mailTemplateId = 0);
 
         //auction
         void SendAuctionHello( uint64 guid, Creature * unit );
@@ -754,6 +750,7 @@ class MANGOS_DLL_SPEC WorldSession
         bool m_playerLoading;                               // code processed in LoginPlayer
         bool m_playerLogout;                                // code processed in LogoutPlayer
         bool m_playerRecentlyLogout;
+        bool m_playerSave;                                  // code processed in LogoutPlayer with save request
         LocaleConstant m_sessionDbcLocale;
         int m_sessionDbLocaleIndex;
         uint32 m_latency;

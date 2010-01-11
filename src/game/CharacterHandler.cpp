@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@
 #include "Log.h"
 #include "World.h"
 #include "ObjectMgr.h"
+#include "ObjectDefines.h"
 #include "Player.h"
 #include "Guild.h"
 #include "UpdateMask.h"
@@ -84,6 +85,7 @@ bool LoginQueryHolder::Initialize()
     res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADEQUIPMENTSETS,   "SELECT setguid, setindex, name, iconname, item0, item1, item2, item3, item4, item5, item6, item7, item8, item9, item10, item11, item12, item13, item14, item15, item16, item17, item18 FROM character_equipmentsets WHERE guid = '%u' ORDER BY setindex", GUID_LOPART(m_guid));
     res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADBGDATA,          "SELECT instance_id, team, join_x, join_y, join_z, join_o, join_map, taxi_start, taxi_end, mount_spell FROM character_battleground_data WHERE guid = '%u'", GUID_LOPART(m_guid));
     res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADACCOUNTDATA,     "SELECT type, time, data FROM character_account_data WHERE guid='%u'", GUID_LOPART(m_guid));
+    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADSKILLS,          "SELECT skill, value, max FROM character_skills WHERE guid = '%u'", GUID_LOPART(m_guid));
 
     return res;
 }
@@ -255,14 +257,14 @@ void WorldSession::HandleCharCreateOpcode( WorldPacket & recv_data )
         return;
     }
 
-    if (GetSecurity() == SEC_PLAYER && objmgr.IsReservedName(name))
+    if (GetSecurity() == SEC_PLAYER && sObjectMgr.IsReservedName(name))
     {
         data << (uint8)CHAR_NAME_RESERVED;
         SendPacket( &data );
         return;
     }
 
-    if (objmgr.GetPlayerGUIDByName(name))
+    if (sObjectMgr.GetPlayerGUIDByName(name))
     {
         data << (uint8)CHAR_CREATE_NAME_IN_USE;
         SendPacket( &data );
@@ -432,7 +434,7 @@ void WorldSession::HandleCharCreateOpcode( WorldPacket & recv_data )
     recv_data >> hairStyle >> hairColor >> facialHair >> outfitId;
 
     Player *pNewChar = new Player(this);
-    if(!pNewChar->Create( objmgr.GenerateLowGuid(HIGHGUID_PLAYER), name, race_, class_, gender, skin, face, hairStyle, hairColor, facialHair, outfitId ))
+    if(!pNewChar->Create( sObjectMgr.GenerateLowGuid(HIGHGUID_PLAYER), name, race_, class_, gender, skin, face, hairStyle, hairColor, facialHair, outfitId ))
     {
         // Player not create (race/class problem?)
         delete pNewChar;
@@ -469,14 +471,14 @@ void WorldSession::HandleCharDeleteOpcode( WorldPacket & recv_data )
     recv_data >> guid;
 
     // can't delete loaded character
-    if(objmgr.GetPlayer(guid))
+    if(sObjectMgr.GetPlayer(guid))
         return;
 
     uint32 accountId = 0;
     std::string name;
 
     // is guild leader
-    if(objmgr.GetGuildByLeader(guid))
+    if(sObjectMgr.GetGuildByLeader(guid))
     {
         WorldPacket data(SMSG_CHAR_DELETE, 1);
         data << (uint8)CHAR_DELETE_FAILED_GUILD_LEADER;
@@ -485,7 +487,7 @@ void WorldSession::HandleCharDeleteOpcode( WorldPacket & recv_data )
     }
 
     // is arena team captain
-    if(objmgr.GetArenaTeamByCaptain(guid))
+    if(sObjectMgr.GetArenaTeamByCaptain(guid))
     {
         WorldPacket data(SMSG_CHAR_DELETE, 1);
         data << (uint8)CHAR_DELETE_FAILED_ARENA_CAPTAIN;
@@ -637,7 +639,7 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
 
     if(pCurrChar->GetGuildId() != 0)
     {
-        Guild* guild = objmgr.GetGuildById(pCurrChar->GetGuildId());
+        Guild* guild = sObjectMgr.GetGuildById(pCurrChar->GetGuildId());
         if(guild)
         {
             data.Initialize(SMSG_GUILD_EVENT, (2+guild->GetMOTD().size()+1));
@@ -692,20 +694,20 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
 
     if (!pCurrChar->GetMap()->Add(pCurrChar))
     {
-        AreaTrigger const* at = objmgr.GetGoBackTrigger(pCurrChar->GetMapId());
+        AreaTrigger const* at = sObjectMgr.GetGoBackTrigger(pCurrChar->GetMapId());
         if(at)
             pCurrChar->TeleportTo(at->target_mapId, at->target_X, at->target_Y, at->target_Z, pCurrChar->GetOrientation());
         else
-            pCurrChar->TeleportTo(pCurrChar->m_homebindMapId, pCurrChar->m_homebindX, pCurrChar->m_homebindY, pCurrChar->m_homebindZ, pCurrChar->GetOrientation());
+            pCurrChar->TeleportToHomebind();
     }
 
-    ObjectAccessor::Instance().AddObject(pCurrChar);
+    sObjectAccessor.AddObject(pCurrChar);
     //sLog.outDebug("Player %s added to Map.",pCurrChar->GetName());
 
     pCurrChar->SendInitialPacketsAfterAddToMap();
 
     CharacterDatabase.PExecute("UPDATE characters SET online = 1 WHERE guid = '%u'", pCurrChar->GetGUIDLow());
-    loginDatabase.PExecute("UPDATE account SET online = 1 WHERE id = '%u'", GetAccountId());
+    loginDatabase.PExecute("UPDATE account SET active_realm_id = %d WHERE id = '%u'", realmID, GetAccountId());
     pCurrChar->SetInGameTime( getMSTime() );
 
     // announce group about member online (must be after add to player list to receive announce to self)
@@ -918,7 +920,7 @@ void WorldSession::HandleCharRenameOpcode(WorldPacket& recv_data)
     }
 
     // check name limitations
-    if (GetSecurity() == SEC_PLAYER && objmgr.IsReservedName(newname))
+    if (GetSecurity() == SEC_PLAYER && sObjectMgr.IsReservedName(newname))
     {
         WorldPacket data(SMSG_CHAR_RENAME, 1);
         data << uint8(CHAR_NAME_RESERVED);
@@ -981,7 +983,7 @@ void WorldSession::HandleSetPlayerDeclinedNames(WorldPacket& recv_data)
 
     // not accept declined names for unsupported languages
     std::string name;
-    if(!objmgr.GetPlayerNameByGUID(guid, name))
+    if(!sObjectMgr.GetPlayerNameByGUID(guid, name))
     {
         WorldPacket data(SMSG_SET_PLAYER_DECLINED_NAMES_RESULT, 4+8);
         data << uint32(1);
@@ -1181,7 +1183,7 @@ void WorldSession::HandleCharCustomize(WorldPacket& recv_data)
     }
 
     // check name limitations
-    if (GetSecurity() == SEC_PLAYER && objmgr.IsReservedName(newname))
+    if (GetSecurity() == SEC_PLAYER && sObjectMgr.IsReservedName(newname))
     {
         WorldPacket data(SMSG_CHAR_CUSTOMIZE, 1);
         data << uint8(CHAR_NAME_RESERVED);
@@ -1190,7 +1192,7 @@ void WorldSession::HandleCharCustomize(WorldPacket& recv_data)
     }
 
     // character with this name already exist
-    if (uint64 newguid = objmgr.GetPlayerGUIDByName(newname))
+    if (uint64 newguid = sObjectMgr.GetPlayerGUIDByName(newname))
     {
         if (newguid != guid)
         {

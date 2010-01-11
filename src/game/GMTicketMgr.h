@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -121,5 +121,5 @@ class GMTicketMgr
         GMTicketMap m_GMTicketMap;
 };
 
-#define ticketmgr MaNGOS::Singleton<GMTicketMgr>::Instance()
+#define sTicketMgr MaNGOS::Singleton<GMTicketMgr>::Instance()
 #endif

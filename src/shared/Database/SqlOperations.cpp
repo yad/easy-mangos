@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,22 +36,22 @@ void SqlTransaction::Execute(Database *db)
     db->DirectExecute("START TRANSACTION");
     while(!m_queue.empty())
     {
-        char const *sql = m_queue.front();
+        char *sql = const_cast<char*>(m_queue.front());
         m_queue.pop();
 
         if(!db->DirectExecute(sql))
         {
-            free((void*)const_cast<char*>(sql));
+            delete [] sql;
             db->DirectExecute("ROLLBACK");
             while(!m_queue.empty())
             {
-                free((void*)const_cast<char*>(m_queue.front()));
+                delete [] (const_cast<char*>(m_queue.front()));
                 m_queue.pop();
             }
             return;
         }
 
-        free((void*)const_cast<char*>(sql));
+        delete [] sql;
     }
     db->DirectExecute("COMMIT");
 }
@@ -95,19 +95,19 @@ bool SqlQueryHolder::SetQuery(size_t index, const char *sql)
 {
     if(m_queries.size() <= index)
     {
-        sLog.outError("Query index (%u) out of range (size: %u) for query: %s",index,(uint32)m_queries.size(),sql);
+        sLog.outError("Query index (" SIZEFMTD ") out of range (size: " SIZEFMTD ") for query: %s",index,(uint32)m_queries.size(),sql);
         return false;
     }
 
     if(m_queries[index].first != NULL)
     {
-        sLog.outError("Attempt assign query to holder index (%u) where other query stored (Old: [%s] New: [%s])",
+        sLog.outError("Attempt assign query to holder index (" SIZEFMTD ") where other query stored (Old: [%s] New: [%s])",
             index,m_queries[index].first,sql);
         return false;
     }
 
     /// not executed yet, just stored (it's not called a holder for nothing)
-    m_queries[index] = SqlResultPair(strdup(sql), (QueryResult*)NULL);
+    m_queries[index] = SqlResultPair(mangos_strdup(sql), (QueryResult*)NULL);
     return true;
 }
 
@@ -115,7 +115,7 @@ bool SqlQueryHolder::SetPQuery(size_t index, const char *format, ...)
 {
     if(!format)
     {
-        sLog.outError("Query (index: %u) is empty.",index);
+        sLog.outError("Query (index: " SIZEFMTD ") is empty.",index);
         return false;
     }
 
@@ -141,7 +141,7 @@ QueryResult* SqlQueryHolder::GetResult(size_t index)
         /// the query strings are freed on the first GetResult or in the destructor
         if(m_queries[index].first != NULL)
         {
-            free((void*)(const_cast<char*>(m_queries[index].first)));
+            delete [] (const_cast<char*>(m_queries[index].first));
             m_queries[index].first = NULL;
         }
         /// when you get a result aways remember to delete it!
@@ -166,7 +166,7 @@ SqlQueryHolder::~SqlQueryHolder()
         /// results used already (getresult called) are expected to be deleted
         if(m_queries[i].first != NULL)
         {
-            free((void*)(const_cast<char*>(m_queries[i].first)));
+            delete [] (const_cast<char*>(m_queries[i].first));
             if(m_queries[i].second)
                 delete m_queries[i].second;
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -124,7 +124,7 @@ uint32 GetItemEnchantMod(uint32 entry)
 
 uint32 GenerateEnchSuffixFactor(uint32 item_id)
 {
-    ItemPrototype const *itemProto = objmgr.GetItemPrototype(item_id);
+    ItemPrototype const *itemProto = ObjectMgr::GetItemPrototype(item_id);
 
     if(!itemProto)
         return 0;

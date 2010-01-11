@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,6 +26,7 @@
 #include "Player.h"
 #include "World.h"
 #include "ObjectMgr.h"
+#include "ObjectDefines.h"
 #include "WorldSession.h"
 #include "Auth/BigNumber.h"
 #include "Auth/Sha1.h"
@@ -135,14 +136,14 @@ void WorldSession::HandleWhoOpcode( WorldPacket & recv_data )
     uint32 team = _player->GetTeam();
     uint32 security = GetSecurity();
     bool allowTwoSideWhoList = sWorld.getConfig(CONFIG_ALLOW_TWO_SIDE_WHO_LIST);
-    uint32 gmLevelInWhoList  = sWorld.getConfig(CONFIG_GM_LEVEL_IN_WHO_LIST);
+    AccountTypes gmLevelInWhoList = (AccountTypes)sWorld.getConfig(CONFIG_GM_LEVEL_IN_WHO_LIST);
 
     WorldPacket data( SMSG_WHO, 50 );                       // guess size
     data << clientcount;                                    // clientcount place holder
     data << clientcount;                                    // clientcount place holder
 
     //TODO: Guard Player map
-    HashMapHolder<Player>::MapType& m = ObjectAccessor::Instance().GetPlayers();
+    HashMapHolder<Player>::MapType& m = sObjectAccessor.GetPlayers();
     for(HashMapHolder<Player>::MapType::const_iterator itr = m.begin(); itr != m.end(); ++itr)
     {
         if (security == SEC_PLAYER)
@@ -152,7 +153,7 @@ void WorldSession::HandleWhoOpcode( WorldPacket & recv_data )
                 continue;
 
             // player can see MODERATOR, GAME MASTER, ADMINISTRATOR only if CONFIG_GM_IN_WHO_LIST
-            if ((itr->second->GetSession()->GetSecurity() > gmLevelInWhoList))
+            if (itr->second->GetSession()->GetSecurity() > gmLevelInWhoList)
                 continue;
         }
 
@@ -204,7 +205,7 @@ void WorldSession::HandleWhoOpcode( WorldPacket & recv_data )
         if (!(wplayer_name.empty() || wpname.find(wplayer_name) != std::wstring::npos))
             continue;
 
-        std::string gname = objmgr.GetGuildNameById(itr->second->GetGuildId());
+        std::string gname = sObjectMgr.GetGuildNameById(itr->second->GetGuildId());
         std::wstring wgname;
         if(!Utf8toWStr(gname,wgname))
             continue;
@@ -635,7 +636,7 @@ void WorldSession::HandleReclaimCorpseOpcode(WorldPacket &recv_data)
     if(corpse->GetGhostTime() + GetPlayer()->GetCorpseReclaimDelay(corpse->GetType()==CORPSE_RESURRECTABLE_PVP) > time(NULL))
         return;
 
-    if (!corpse->IsWithinDist(GetPlayer(), CORPSE_RECLAIM_RADIUS, true))
+    if (!corpse->IsWithinDistInMap(GetPlayer(), CORPSE_RECLAIM_RADIUS, true))
         return;
 
     uint64 guid;
@@ -646,8 +647,6 @@ void WorldSession::HandleReclaimCorpseOpcode(WorldPacket &recv_data)
 
     // spawn bones
     GetPlayer()->SpawnCorpseBones();
-
-    GetPlayer()->SaveToDB();
 }
 
 void WorldSession::HandleResurrectResponseOpcode(WorldPacket & recv_data)
@@ -671,8 +670,7 @@ void WorldSession::HandleResurrectResponseOpcode(WorldPacket & recv_data)
     if(!GetPlayer()->isRessurectRequestedBy(guid))
         return;
 
-    GetPlayer()->ResurectUsingRequestData();
-    GetPlayer()->SaveToDB();
+    GetPlayer()->ResurectUsingRequestData();                // will call spawncorpsebones
 }
 
 void WorldSession::HandleAreaTriggerOpcode(WorldPacket & recv_data)
@@ -754,10 +752,10 @@ void WorldSession::HandleAreaTriggerOpcode(WorldPacket & recv_data)
     if(Script->scriptAreaTrigger(GetPlayer(), atEntry))
         return;
 
-    uint32 quest_id = objmgr.GetQuestForAreaTrigger( Trigger_ID );
+    uint32 quest_id = sObjectMgr.GetQuestForAreaTrigger( Trigger_ID );
     if( quest_id && GetPlayer()->isAlive() && GetPlayer()->IsActiveQuest(quest_id) )
     {
-        Quest const* pQuest = objmgr.GetQuestTemplate(quest_id);
+        Quest const* pQuest = sObjectMgr.GetQuestTemplate(quest_id);
         if( pQuest )
         {
             if(GetPlayer()->GetQuestStatus(quest_id) == QUEST_STATUS_INCOMPLETE)
@@ -765,7 +763,7 @@ void WorldSession::HandleAreaTriggerOpcode(WorldPacket & recv_data)
         }
     }
 
-    if(objmgr.IsTavernAreaTrigger(Trigger_ID))
+    if(sObjectMgr.IsTavernAreaTrigger(Trigger_ID))
     {
         // set resting flag we are in the inn
         GetPlayer()->SetFlag(PLAYER_FLAGS, PLAYER_FLAGS_RESTING);
@@ -787,7 +785,7 @@ void WorldSession::HandleAreaTriggerOpcode(WorldPacket & recv_data)
     }
 
     // NULL if all values default (non teleport trigger)
-    AreaTrigger const* at = objmgr.GetAreaTrigger(Trigger_ID);
+    AreaTrigger const* at = sObjectMgr.GetAreaTrigger(Trigger_ID);
     if(!at)
         return;
 
@@ -812,12 +810,10 @@ void WorldSession::HandleAreaTriggerOpcode(WorldPacket & recv_data)
         if(!mapEntry)
             return;
 
-        bool isHeroicTargetMap = mapEntry->IsRaid()
-            ? (GetPlayer()->GetRaidDifficulty()    >= RAID_DIFFICULTY_10MAN_HEROIC)
-            : (GetPlayer()->GetDungeonDifficulty() >= DUNGEON_DIFFICULTY_HEROIC);
+        bool isRegularTargetMap = GetPlayer()->GetDifficulty(mapEntry->IsRaid()) == REGULAR_DIFFICULTY;
 
         uint32 missingKey = 0;
-        if(isHeroicTargetMap)
+        if (!isRegularTargetMap)
         {
             if(at->heroicKey)
             {
@@ -830,7 +826,7 @@ void WorldSession::HandleAreaTriggerOpcode(WorldPacket & recv_data)
         }
 
         uint32 missingQuest = 0;
-        if(isHeroicTargetMap)
+        if (!isRegularTargetMap)
         {
             if (at->requiredQuestHeroic && !GetPlayer()->GetQuestRewardStatus(at->requiredQuestHeroic))
                 missingQuest = at->requiredQuestHeroic;
@@ -845,11 +841,11 @@ void WorldSession::HandleAreaTriggerOpcode(WorldPacket & recv_data)
         {
             // TODO: all this is probably wrong
             if(missingItem)
-                SendAreaTriggerMessage(GetMangosString(LANG_LEVEL_MINREQUIRED_AND_ITEM), at->requiredLevel, objmgr.GetItemPrototype(missingItem)->Name1);
+                SendAreaTriggerMessage(GetMangosString(LANG_LEVEL_MINREQUIRED_AND_ITEM), at->requiredLevel, ObjectMgr::GetItemPrototype(missingItem)->Name1);
             else if(missingKey)
-                GetPlayer()->SendTransferAborted(at->target_mapId, TRANSFER_ABORT_DIFFICULTY, isHeroicTargetMap ? DUNGEON_DIFFICULTY_HEROIC : DUNGEON_DIFFICULTY_NORMAL);
+                GetPlayer()->SendTransferAborted(at->target_mapId, TRANSFER_ABORT_DIFFICULTY, isRegularTargetMap ? DUNGEON_DIFFICULTY_NORMAL : DUNGEON_DIFFICULTY_HEROIC);
             else if(missingQuest)
-                SendAreaTriggerMessage(at->requiredFailedText.c_str());
+                SendAreaTriggerMessage("%s", at->requiredFailedText.c_str());
             else if(missingLevel)
                 SendAreaTriggerMessage(GetMangosString(LANG_LEVEL_MINREQUIRED), missingLevel);
             return;
@@ -1030,9 +1026,12 @@ void WorldSession::HandleMoveTimeSkippedOpcode( WorldPacket & recv_data )
     */
 }
 
-void WorldSession::HandleFeatherFallAck(WorldPacket &/*recv_data*/)
+void WorldSession::HandleFeatherFallAck(WorldPacket &recv_data)
 {
     DEBUG_LOG("WORLD: CMSG_MOVE_FEATHER_FALL_ACK");
+
+    // no used
+    recv_data.rpos(recv_data.wpos());                       // prevent warnings spam
 }
 
 void WorldSession::HandleMoveUnRootAck(WorldPacket& recv_data)
@@ -1129,7 +1128,7 @@ void WorldSession::HandleInspectOpcode(WorldPacket& recv_data)
 
     _player->SetSelection(guid);
 
-    Player *plr = objmgr.GetPlayer(guid);
+    Player *plr = sObjectMgr.GetPlayer(guid);
     if(!plr)                                                // wrong player
         return;
 
@@ -1157,7 +1156,7 @@ void WorldSession::HandleInspectHonorStatsOpcode(WorldPacket& recv_data)
     uint64 guid;
     recv_data >> guid;
 
-    Player *player = objmgr.GetPlayer(guid);
+    Player *player = sObjectMgr.GetPlayer(guid);
 
     if(!player)
     {
@@ -1181,14 +1180,6 @@ void WorldSession::HandleWorldTeleportOpcode(WorldPacket& recv_data)
     // Received opcode CMSG_WORLD_TELEPORT
     // Time is ***, map=469, x=452.000000, y=6454.000000, z=2536.000000, orient=3.141593
 
-    //sLog.outDebug("Received opcode CMSG_WORLD_TELEPORT");
-
-    if(GetPlayer()->isInFlight())
-    {
-        sLog.outDebug("Player '%s' (GUID: %u) in flight, ignore worldport command.",GetPlayer()->GetName(),GetPlayer()->GetGUIDLow());
-        return;
-    }
-
     uint32 time;
     uint32 mapid;
     float PositionX;
@@ -1202,6 +1193,15 @@ void WorldSession::HandleWorldTeleportOpcode(WorldPacket& recv_data)
     recv_data >> PositionY;
     recv_data >> PositionZ;
     recv_data >> Orientation;                               // o (3.141593 = 180 degrees)
+
+    //sLog.outDebug("Received opcode CMSG_WORLD_TELEPORT");
+
+    if(GetPlayer()->isInFlight())
+    {
+        sLog.outDebug("Player '%s' (GUID: %u) in flight, ignore worldport command.",GetPlayer()->GetName(),GetPlayer()->GetGUIDLow());
+        return;
+    }
+
     DEBUG_LOG("Time %u sec, map=%u, x=%f, y=%f, z=%f, orient=%f", time/1000, mapid, PositionX, PositionY, PositionZ, Orientation);
 
     if (GetSecurity() >= SEC_ADMINISTRATOR)
@@ -1229,7 +1229,7 @@ void WorldSession::HandleWhoisOpcode(WorldPacket& recv_data)
         return;
     }
 
-    Player *plr = objmgr.GetPlayer(charname.c_str());
+    Player *plr = sObjectMgr.GetPlayer(charname.c_str());
 
     if(!plr)
     {
@@ -1553,7 +1553,7 @@ void WorldSession::HandleQueryInspectAchievements( WorldPacket & recv_data )
     if(!recv_data.readPackGUID(guid))
         return;
 
-    if(Player *player = objmgr.GetPlayer(guid))
+    if(Player *player = sObjectMgr.GetPlayer(guid))
         player->GetAchievementMgr().SendRespondInspectAchievements(_player);
 }
 

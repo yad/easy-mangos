@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -129,7 +129,7 @@ VisibleNotifier::Notify()
             if(!IS_PLAYER_GUID(*iter))
                 continue;
 
-            if (Player* plr = ObjectAccessor::GetPlayer(i_player,*iter))
+            if (Player* plr = ObjectAccessor::FindPlayer(*iter))
                 plr->UpdateVisibilityOf(plr->GetViewPoint(),&i_player);
         }
     }

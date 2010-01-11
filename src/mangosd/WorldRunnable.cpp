@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,11 +30,7 @@
 
 #include "Database/DatabaseEnv.h"
 
-#ifdef WIN32
 #define WORLD_SLEEP_CONST 50
-#else
-#define WORLD_SLEEP_CONST 100                               //Is this still needed?? [On linux some time ago not working 50ms]
-#endif
 
 #ifdef WIN32
 #include "ServiceWin32.h"

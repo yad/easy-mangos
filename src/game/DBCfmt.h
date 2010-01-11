@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@ const char BankBagSlotPricesEntryfmt[]="ni";
 const char BarberShopStyleEntryfmt[]="nixxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxiii";
 const char BattlemasterListEntryfmt[]="niiiiiiiiiiiixxxssssssssssssssssxxx";
 const char CharStartOutfitEntryfmt[]="diiiiiiiiiiiiiiiiiiiiiiiiixxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
-const char CharTitlesEntryfmt[]="nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxi";
+const char CharTitlesEntryfmt[]="nxssssssssssssssssxxxxxxxxxxxxxxxxxxi";
 const char ChatChannelsEntryfmt[]="iixssssssssssssssssxxxxxxxxxxxxxxxxxx";
                                                             // ChatChannelsEntryfmt, index not used (more compact store)
 const char ChrClassesEntryfmt[]="nxixxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxixii";
@@ -71,7 +71,7 @@ const char ItemRandomPropertiesfmt[]="nxiiiiissssssssssssssssx";
 const char ItemRandomSuffixfmt[]="nssssssssssssssssxxiiiiiiiiii";
 const char ItemSetEntryfmt[]="dssssssssssssssssxxxxxxxxxxxxxxxxxxiiiiiiiiiiiiiiiiii";
 const char LockEntryfmt[]="niiiiiiiiiiiiiiiiiiiiiiiixxxxxxxx";
-const char MailTemplateEntryfmt[]="nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+const char MailTemplateEntryfmt[]="nxxxxxxxxxxxxxxxxxssssssssssssssssx";
 const char MapEntryfmt[]="nxixssssssssssssssssxixxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxixiffxixx";
 const char MapDifficultyEntryfmt[]="diixxxxxxxxxxxxxxxxxiix";
 const char MovieEntryfmt[]="nxx";
@@ -91,9 +91,9 @@ const char SpellItemEnchantmentConditionfmt[]="nbbbbbxxxxxbbbbbbbbbbiiiiiXXXXX";
 const char SpellRadiusfmt[]="nfxf";
 const char SpellRangefmt[]="nffffxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
 const char SpellRuneCostfmt[]="niiii";
-const char SpellShapeshiftfmt[]="nxxxxxxxxxxxxxxxxxxiixixxxxxxxxxxxx";
+const char SpellShapeshiftfmt[]="nxxxxxxxxxxxxxxxxxxiixiiixxiiiiiiii";
 const char StableSlotPricesfmt[] = "ni";
-//const char SummonPropertiesfmt[] = "niiiii";
+const char SummonPropertiesfmt[] = "niiiii";
 const char TalentEntryfmt[]="niiiiiiiixxxxixxixxxxxx";
 const char TalentTabEntryfmt[]="nxxxxxxxxxxxxxxxxxxxiiix";
 const char TaxiNodesEntryfmt[]="nifffssssssssssssssssxii";

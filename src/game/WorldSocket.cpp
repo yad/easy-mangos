@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -42,7 +42,6 @@
 #include "WorldSession.h"
 #include "WorldSocketMgr.h"
 #include "Log.h"
-#include "WorldLog.h"
 
 #if defined( __GNUC__ )
 #pragma pack(1)
@@ -166,25 +165,7 @@ int WorldSocket::SendPacket (const WorldPacket& pct)
         return -1;
 
     // Dump outgoing packet.
-    if (sWorldLog.LogWorld ())
-    {
-        sWorldLog.Log ("SERVER:\nSOCKET: %u\nLENGTH: %u\nOPCODE: %s (0x%.4X)\nDATA:\n",
-                     (uint32) get_handle (),
-                     pct.size (),
-                     LookupOpcodeName (pct.GetOpcode ()),
-                     pct.GetOpcode ());
-
-        uint32 p = 0;
-        while (p < pct.size ())
-        {
-            for (uint32 j = 0; j < 16 && p < pct.size (); j++)
-                sWorldLog.Log ("%.2X ", const_cast<WorldPacket&>(pct)[p++]);
-
-            sWorldLog.Log ("\n");
-        }
-
-        sWorldLog.Log ("\n\n");
-    }
+    sLog.outWorldPacketDump(uint32(get_handle()), pct.GetOpcode(), LookupOpcodeName(pct.GetOpcode()), &pct, false);
 
     ServerPktHeader header(pct.size()+2, pct.GetOpcode());
     m_Crypt.EncryptSend ((uint8*)header.header, header.getHeaderLength());
@@ -494,7 +475,7 @@ int WorldSocket::handle_input_header (void)
 
     if ((header.size < 4) || (header.size > 10240) || (header.cmd  > 10240))
     {
-        sLog.outError ("WorldSocket::handle_input_header: client sent mailformed packet size = %d , cmd = %d",
+        sLog.outError ("WorldSocket::handle_input_header: client sent malformed packet size = %d , cmd = %d",
                        header.size, header.cmd);
 
         errno = EINVAL;
@@ -678,29 +659,20 @@ int WorldSocket::ProcessIncoming (WorldPacket* new_pct)
 
     const ACE_UINT16 opcode = new_pct->GetOpcode ();
 
+    if (opcode >= NUM_MSG_TYPES)
+    {
+        sLog.outError( "SESSION: received non-existed opcode 0x%.4X", opcode);
+        return -1;
+    }
+
     if (closing_)
         return -1;
 
     // Dump received packet.
-    if (sWorldLog.LogWorld ())
+    sLog.outWorldPacketDump(uint32(get_handle()), new_pct->GetOpcode(), LookupOpcodeName(new_pct->GetOpcode()), new_pct, true);
+
+    try
     {
-        sWorldLog.Log ("CLIENT:\nSOCKET: %u\nLENGTH: %u\nOPCODE: %s (0x%.4X)\nDATA:\n",
-                     (uint32) get_handle (),
-                     new_pct->size (),
-                     LookupOpcodeName (new_pct->GetOpcode ()),
-                     new_pct->GetOpcode ());
-
-        uint32 p = 0;
-        while (p < new_pct->size ())
-        {
-            for (uint32 j = 0; j < 16 && p < new_pct->size (); j++)
-                sWorldLog.Log ("%.2X ", (*new_pct)[p++]);
-            sWorldLog.Log ("\n");
-        }
-        sWorldLog.Log ("\n\n");
-    }
-
-    try {
         switch(opcode)
         {
             case CMSG_PING:
@@ -738,13 +710,13 @@ int WorldSocket::ProcessIncoming (WorldPacket* new_pct)
             }
         }
     }
-    catch(ByteBufferException &)
+    catch (ByteBufferException &)
     {
         sLog.outError("WorldSocket::ProcessIncoming ByteBufferException occured while parsing an instant handled packet (opcode: %u) from client %s, accountid=%i. Disconnected client.",
                 opcode, GetRemoteAddress().c_str(), m_Session?m_Session->GetAccountId():-1);
         if(sLog.IsOutDebug())
         {
-            sLog.outDebug("Dumping error causing packet:");
+            sLog.outDebug("Dumping error-causing packet:");
             new_pct->hexlike();
         }
 
@@ -773,7 +745,7 @@ int WorldSocket::HandleAuthSession (WorldPacket& recvPacket)
     BigNumber K;
 
     // Read the content of the packet
-    recvPacket >> BuiltNumberClient;                        // for now no use
+    recvPacket >> BuiltNumberClient;
     recvPacket >> unk2;
     recvPacket >> account;
     recvPacket >> unk3;
@@ -787,6 +759,29 @@ int WorldSocket::HandleAuthSession (WorldPacket& recvPacket)
                 account.c_str (),
                 unk3,
                 clientSeed);
+
+    // Check the version of client trying to connect
+    bool valid_version = false;
+    int accepted_versions[] = EXPECTED_MANGOSD_CLIENT_BUILD;
+    for(int i = 0; accepted_versions[i]; ++i)
+    {
+        if(BuiltNumberClient == accepted_versions[i])
+        {
+            valid_version = true;
+            break;
+        }
+    }
+
+    if(!valid_version)
+    {
+        packet.Initialize (SMSG_AUTH_RESPONSE, 1);
+        packet << uint8 (AUTH_VERSION_MISMATCH);
+
+        SendPacket (packet);
+
+        sLog.outError ("WorldSocket::HandleAuthSession: Sent Auth Response (version mismatch).");
+        return -1;
+    }
 
     // Get the account information from the realmd database
     std::string safe_account = account; // Duplicate, else will screw the SHA hash verification below
@@ -873,9 +868,9 @@ int WorldSocket::HandleAuthSession (WorldPacket& recvPacket)
 
     // Re-check account ban (same check as in realmd)
     QueryResult *banresult =
-          loginDatabase.PQuery ("SELECT 1 FROM account_banned WHERE id = %u AND active = 1 "
+          loginDatabase.PQuery ("SELECT 1 FROM account_banned WHERE id = %u AND active = 1 AND (unbandate > UNIX_TIMESTAMP() OR unbandate = bandate)"
                                 "UNION "
-                                "SELECT 1 FROM ip_banned WHERE ip = '%s'",
+                                "SELECT 1 FROM ip_banned WHERE (unbandate = bandate OR unbandate > UNIX_TIMESTAMP()) AND ip = '%s'",
                                 id, GetRemoteAddress().c_str());
 
     if (banresult) // if account banned

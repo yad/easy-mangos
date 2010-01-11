@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -100,6 +100,19 @@ void TargetedMovementGenerator<Creature>::Initialize(Creature &owner)
         owner.AddMonsterMoveFlag(MONSTER_MOVE_FLY);
 
     _setTargetLocation(owner);
+}
+
+template<>
+void TargetedMovementGenerator<Player>::UpdateFinalDistance(float fDistance)
+{
+    // nothing to do for Player
+}
+
+template<>
+void TargetedMovementGenerator<Creature>::UpdateFinalDistance(float fDistance)
+{
+    i_offset = fDistance;
+    i_recalculateTravel = true;
 }
 
 template<>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -486,6 +486,16 @@ struct GameObjectInfo
         {
             case GAMEOBJECT_TYPE_CHEST:       return chest.lootId;
             case GAMEOBJECT_TYPE_FISHINGHOLE: return fishinghole.lootId;
+            default: return 0;
+        }
+    }
+
+    uint32 GetGossipMenuId() const
+    {
+        switch(type)
+        {
+            case GAMEOBJECT_TYPE_QUESTGIVER:    return questgiver.gossipID;
+            case GAMEOBJECT_TYPE_GOOBER:        return goober.gossipID;
             default: return 0;
         }
     }

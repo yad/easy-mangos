@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -44,13 +44,13 @@ void WorldSession::HandleSplitItemOpcode( WorldPacket & recv_data )
     if (count == 0)
         return;                                             //check count - if zero it's fake packet
 
-    if(!_player->IsValidPos(srcbag, srcslot))
+    if(!_player->IsValidPos(srcbag, srcslot, true))
     {
         _player->SendEquipError( EQUIP_ERR_ITEM_NOT_FOUND, NULL, NULL );
         return;
     }
 
-    if(!_player->IsValidPos(dstbag, dstslot))
+    if(!_player->IsValidPos(dstbag, dstslot, false))        // can be autostore pos
     {
         _player->SendEquipError( EQUIP_ERR_ITEM_DOESNT_GO_TO_SLOT, NULL, NULL );
         return;
@@ -71,13 +71,13 @@ void WorldSession::HandleSwapInvItemOpcode( WorldPacket & recv_data )
     if(srcslot == dstslot)
         return;
 
-    if(!_player->IsValidPos(INVENTORY_SLOT_BAG_0, srcslot))
+    if(!_player->IsValidPos(INVENTORY_SLOT_BAG_0, srcslot, true))
     {
         _player->SendEquipError( EQUIP_ERR_ITEM_NOT_FOUND, NULL, NULL );
         return;
     }
 
-    if(!_player->IsValidPos(INVENTORY_SLOT_BAG_0,dstslot))
+    if(!_player->IsValidPos(INVENTORY_SLOT_BAG_0, dstslot, true))
     {
         _player->SendEquipError( EQUIP_ERR_ITEM_DOESNT_GO_TO_SLOT, NULL, NULL );
         return;
@@ -123,13 +123,13 @@ void WorldSession::HandleSwapItem( WorldPacket & recv_data )
     if(src == dst)
         return;
 
-    if(!_player->IsValidPos(srcbag, srcslot))
+    if(!_player->IsValidPos(srcbag, srcslot, true))
     {
         _player->SendEquipError( EQUIP_ERR_ITEM_NOT_FOUND, NULL, NULL );
         return;
     }
 
-    if(!_player->IsValidPos(dstbag, dstslot))
+    if(!_player->IsValidPos(dstbag, dstslot, true))
     {
         _player->SendEquipError( EQUIP_ERR_ITEM_DOESNT_GO_TO_SLOT, NULL, NULL );
         return;
@@ -285,7 +285,7 @@ void WorldSession::HandleItemQuerySingleOpcode( WorldPacket & recv_data )
 
     sLog.outDetail("STORAGE: Item Query = %u", item);
 
-    ItemPrototype const *pProto = objmgr.GetItemPrototype( item );
+    ItemPrototype const *pProto = ObjectMgr::GetItemPrototype( item );
     if( pProto )
     {
         std::string Name        = pProto->Name1;
@@ -294,7 +294,7 @@ void WorldSession::HandleItemQuerySingleOpcode( WorldPacket & recv_data )
         int loc_idx = GetSessionDbLocaleIndex();
         if ( loc_idx >= 0 )
         {
-            ItemLocale const *il = objmgr.GetItemLocale(pProto->ItemId);
+            ItemLocale const *il = sObjectMgr.GetItemLocale(pProto->ItemId);
             if (il)
             {
                 if (il->Name.size() > size_t(loc_idx) && !il->Name[loc_idx].empty())
@@ -425,7 +425,7 @@ void WorldSession::HandleItemQuerySingleOpcode( WorldPacket & recv_data )
         data << pProto->GemProperties;
         data << pProto->RequiredDisenchantSkill;
         data << pProto->ArmorDamageModifier;
-        data << pProto->Duration;                           // added in 2.4.2.8209, duration (seconds)
+        data << abs(pProto->Duration);                      // added in 2.4.2.8209, duration (seconds)
         data << pProto->ItemLimitCategory;                  // WotLK, ItemLimitCategory
         data << pProto->HolidayId;                          // Holiday.dbc?
         SendPacket( &data );
@@ -700,29 +700,32 @@ void WorldSession::HandleListInventoryOpcode( WorldPacket & recv_data )
     SendListInventory( guid );
 }
 
-void WorldSession::SendListInventory( uint64 vendorguid )
+void WorldSession::SendListInventory(uint64 vendorguid)
 {
-    sLog.outDebug( "WORLD: Sent SMSG_LIST_INVENTORY" );
+    sLog.outDebug("WORLD: Sent SMSG_LIST_INVENTORY");
 
     Creature *pCreature = GetPlayer()->GetNPCIfCanInteractWith(vendorguid, UNIT_NPC_FLAG_VENDOR);
+
     if (!pCreature)
     {
-        sLog.outDebug( "WORLD: SendListInventory - Unit (GUID: %u) not found or you can't interact with him.", uint32(GUID_LOPART(vendorguid)) );
-        _player->SendSellError( SELL_ERR_CANT_FIND_VENDOR, NULL, 0, 0);
+        sLog.outDebug("WORLD: SendListInventory - Unit (GUID: %u) not found or you can't interact with him.", uint32(GUID_LOPART(vendorguid)));
+        _player->SendSellError(SELL_ERR_CANT_FIND_VENDOR, NULL, 0, 0);
         return;
     }
 
     // remove fake death
-    if(GetPlayer()->hasUnitState(UNIT_STAT_DIED))
+    if (GetPlayer()->hasUnitState(UNIT_STAT_DIED))
         GetPlayer()->RemoveSpellsCausingAura(SPELL_AURA_FEIGN_DEATH);
 
     // Stop the npc if moving
-    pCreature->StopMoving();
+    if (!pCreature->IsStopped())
+        pCreature->StopMoving();
 
     VendorItemData const* vItems = pCreature->GetVendorItems();
-    if(!vItems)
+
+    if (!vItems)
     {
-        _player->SendSellError( SELL_ERR_CANT_FIND_VENDOR, NULL, 0, 0);
+        _player->SendSellError(SELL_ERR_CANT_FIND_VENDOR, NULL, 0, 0);
         return;
     }
 
@@ -739,7 +742,7 @@ void WorldSession::SendListInventory( uint64 vendorguid )
     {
         if(VendorItem const* crItem = vItems->GetItem(i))
         {
-            if(ItemPrototype const *pProto = objmgr.GetItemPrototype(crItem->item))
+            if(ItemPrototype const *pProto = ObjectMgr::GetItemPrototype(crItem->item))
             {
                 if((pProto->AllowableClass & _player->getClassMask()) == 0 && pProto->Bonding == BIND_WHEN_PICKED_UP && !_player->isGameMaster())
                     continue;
@@ -780,7 +783,7 @@ void WorldSession::HandleAutoStoreBagItemOpcode( WorldPacket & recv_data )
     if( !pItem )
         return;
 
-    if(!_player->IsValidPos(dstbag, NULL_SLOT))
+    if(!_player->IsValidPos(dstbag, NULL_SLOT, false))      // can be autostore pos
     {
         _player->SendEquipError( EQUIP_ERR_ITEM_DOESNT_GO_TO_SLOT, NULL, NULL );
         return;
@@ -971,7 +974,7 @@ void WorldSession::HandleItemNameQueryOpcode(WorldPacket & recv_data)
     recv_data.read_skip<uint64>();                          // guid
 
     sLog.outDebug("WORLD: CMSG_ITEM_NAME_QUERY %u", itemid);
-    ItemPrototype const *pProto = objmgr.GetItemPrototype( itemid );
+    ItemPrototype const *pProto = ObjectMgr::GetItemPrototype( itemid );
     if( pProto )
     {
         std::string Name;
@@ -980,7 +983,7 @@ void WorldSession::HandleItemNameQueryOpcode(WorldPacket & recv_data)
         int loc_idx = GetSessionDbLocaleIndex();
         if (loc_idx >= 0)
         {
-            ItemLocale const *il = objmgr.GetItemLocale(pProto->ItemId);
+            ItemLocale const *il = sObjectMgr.GetItemLocale(pProto->ItemId);
             if (il)
             {
                 if (il->Name.size() > size_t(loc_idx) && !il->Name[loc_idx].empty())

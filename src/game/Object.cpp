@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,6 +27,7 @@
 #include "Player.h"
 #include "Vehicle.h"
 #include "ObjectMgr.h"
+#include "ObjectDefines.h"
 #include "UpdateData.h"
 #include "UpdateMask.h"
 #include "Util.h"
@@ -79,14 +80,21 @@ Object::Object( ) : m_PackGUID(sizeof(uint64)+1)
 
 Object::~Object( )
 {
+    if(IsInWorld())
+    {
+        ///- Do NOT call RemoveFromWorld here, if the object is a player it will crash
+        sLog.outError("Object::~Object (GUID: %u TypeId: %u) deleted but still in world!!", GetGUIDLow(), GetTypeId());
+        ASSERT(false);
+    }
+
+    if(m_objectUpdated)
+    {
+        sLog.outError("Object::~Object (GUID: %u TypeId: %u) deleted but still have updated status!!", GetGUIDLow(), GetTypeId());
+        ASSERT(false);
+    }
+
     if(m_uint32Values)
     {
-        if(IsInWorld())
-        {
-            ///- Do NOT call RemoveFromWorld here, if the object is a player it will crash
-            sLog.outError("Object::~Object (GUID: %u TypeId: %u) deleted but still in world!!", GetGUIDLow(), GetTypeId());
-            //assert(0);
-        }
 
         //DEBUG_LOG("Object desctr 1 check (%p)",(void*)this);
         delete [] m_uint32Values;
@@ -173,8 +181,8 @@ void Object::BuildCreateUpdateBlockForPlayer(UpdateData *data, Player *target) c
 
         if(isType(TYPEMASK_UNIT))
         {
-            if(((Unit*)this)->GetTargetGUID())
-                flags |= UPDATEFLAG_HAS_TARGET;
+            if(((Unit*)this)->getVictim())
+                flags |= UPDATEFLAG_HAS_ATTACKING_TARGET;
         }
     }
 
@@ -253,7 +261,27 @@ void Object::BuildMovementUpdate(ByteBuffer * data, uint16 flags, uint32 flags2)
         {
             case TYPEID_UNIT:
             {
-                flags2 = ((Creature*)this)->canFly() ? (MOVEMENTFLAG_FORWARD | MOVEMENTFLAG_LEVITATING) : MOVEMENTFLAG_NONE;
+                flags2 = MOVEMENTFLAG_NONE;
+
+                if (!((Creature*)this)->IsStopped())
+                    flags2 |= MOVEMENTFLAG_FORWARD;         // not set if not really moving
+
+                if (((Creature*)this)->canFly())
+                {
+                    flags2 |= MOVEMENTFLAG_LEVITATING;      // (ok) most seem to have this
+
+                    if (((Creature*)this)->IsStopped())
+                        flags2 |= MOVEMENTFLAG_FLY_UNK1;    // (ok) possibly some "hover" mode
+                    else
+                    {
+                        if (((Creature*)this)->IsMounted())
+                            flags2 |= MOVEMENTFLAG_FLYING;  // seems to be often when mounted
+                        /* for further research
+                        else
+                            flags2 |= MOVEMENTFLAG_FLYING2; // not seen, but work on some, even if not "correct"
+                        */
+                    }
+                }
             }
             break;
             case TYPEID_PLAYER:
@@ -270,7 +298,7 @@ void Object::BuildMovementUpdate(ByteBuffer * data, uint16 flags, uint32 flags2)
 
                 if(((Player*)this)->isInFlight())
                 {
-                    WPAssert(((Player*)this)->GetMotionMaster()->GetCurrentMovementGeneratorType() == FLIGHT_MOTION_TYPE);
+                    ASSERT(((Player*)this)->GetMotionMaster()->GetCurrentMovementGeneratorType() == FLIGHT_MOTION_TYPE);
                     flags2 = (MOVEMENTFLAG_FORWARD | MOVEMENTFLAG_SPLINE2);
                 }
             }
@@ -377,7 +405,7 @@ void Object::BuildMovementUpdate(ByteBuffer * data, uint16 flags, uint32 flags2)
                 return;
             }
 
-            WPAssert(((Player*)this)->GetMotionMaster()->GetCurrentMovementGeneratorType() == FLIGHT_MOTION_TYPE);
+            ASSERT(((Player*)this)->GetMotionMaster()->GetCurrentMovementGeneratorType() == FLIGHT_MOTION_TYPE);
 
             FlightPathMovementGenerator *fmg = (FlightPathMovementGenerator*)(((Player*)this)->GetMotionMaster()->top());
 
@@ -538,9 +566,12 @@ void Object::BuildMovementUpdate(ByteBuffer * data, uint16 flags, uint32 flags2)
     }
 
     // 0x4
-    if(flags & UPDATEFLAG_HAS_TARGET)                       // packed guid (current target guid)
+    if(flags & UPDATEFLAG_HAS_ATTACKING_TARGET)             // packed guid (current target guid)
     {
-        data->appendPackGUID(((Unit*)this)->GetTargetGUID());
+        if (((Unit*)this)->getVictim())
+            data->append(((Unit*)this)->getVictim()->GetPackGUID());
+        else
+            data->appendPackGUID(0);
     }
 
     // 0x2
@@ -609,7 +640,7 @@ void Object::BuildValuesUpdate(uint8 updatetype, ByteBuffer * data, UpdateMask *
         }
     }
 
-    WPAssert(updateMask && updateMask->GetCount() == m_valuesCount);
+    ASSERT(updateMask && updateMask->GetCount() == m_valuesCount);
 
     *data << (uint8)updateMask->GetBlockCount();
     data->append( updateMask->GetMask(), updateMask->GetLength() );
@@ -626,8 +657,23 @@ void Object::BuildValuesUpdate(uint8 updatetype, ByteBuffer * data, UpdateMask *
                     // remove custom flag before sending
                     uint32 appendValue = m_uint32Values[ index ] & ~UNIT_NPC_FLAG_GUARD;
 
-                    if (GetTypeId() == TYPEID_UNIT && !target->canSeeSpellClickOn((Creature*)this))
-                        appendValue &= ~UNIT_NPC_FLAG_SPELLCLICK;
+                    if (GetTypeId() == TYPEID_UNIT)
+                    {
+                        if (!target->canSeeSpellClickOn((Creature*)this))
+                            appendValue &= ~UNIT_NPC_FLAG_SPELLCLICK;
+
+                        if (appendValue & UNIT_NPC_FLAG_TRAINER)
+                        {
+                            if (!((Creature*)this)->isCanTrainingOf(target, false))
+                                appendValue &= ~(UNIT_NPC_FLAG_TRAINER | UNIT_NPC_FLAG_TRAINER_CLASS | UNIT_NPC_FLAG_TRAINER_PROFESSION);
+                        }
+
+                        if (appendValue & UNIT_NPC_FLAG_STABLEMASTER)
+                        {
+                            if (target->getClass() != CLASS_HUNTER)
+                                appendValue &= ~UNIT_NPC_FLAG_STABLEMASTER;
+                        }
+                    }
 
                     *data << uint32(appendValue);
                 }
@@ -735,10 +781,13 @@ void Object::BuildValuesUpdate(uint8 updatetype, ByteBuffer * data, UpdateMask *
 
 void Object::ClearUpdateMask(bool remove)
 {
-    for( uint16 index = 0; index < m_valuesCount; ++index )
+    if(m_uint32Values)
     {
-        if(m_uint32Values_mirror[index]!= m_uint32Values[index])
-            m_uint32Values_mirror[index] = m_uint32Values[index];
+        for( uint16 index = 0; index < m_valuesCount; ++index )
+        {
+            if(m_uint32Values_mirror[index]!= m_uint32Values[index])
+                m_uint32Values_mirror[index] = m_uint32Values[index];
+        }
     }
 
     if(m_objectUpdated)
@@ -1095,13 +1144,14 @@ void Object::BuildUpdateData( UpdateDataMapType& update_players )
 }
 
 WorldObject::WorldObject()
-    : m_mapId(0), m_InstanceId(0), m_phaseMask(PHASEMASK_NORMAL),
-    m_positionX(0.0f), m_positionY(0.0f), m_positionZ(0.0f), m_orientation(0.0f), m_currMap(NULL)
+    : m_currMap(NULL), m_mapId(0), m_InstanceId(0), m_phaseMask(PHASEMASK_NORMAL),
+    m_positionX(0.0f), m_positionY(0.0f), m_positionZ(0.0f), m_orientation(0.0f)
 {
 }
 
 void WorldObject::CleanupsBeforeDelete()
 {
+    RemoveFromWorld();
 }
 
 void WorldObject::_Create( uint32 guidlow, HighGuid guidhigh, uint32 phaseMask )
@@ -1379,6 +1429,16 @@ bool WorldObject::isInBackInMap(WorldObject const* target, float distance, float
     return IsWithinDistInMap(target, distance) && !HasInArc( 2 * M_PI - arc, target );
 }
 
+bool WorldObject::isInFront(WorldObject const* target, float distance,  float arc) const
+{
+    return IsWithinDist(target, distance) && HasInArc( arc, target );
+}
+
+bool WorldObject::isInBack(WorldObject const* target, float distance, float arc) const
+{
+    return IsWithinDist(target, distance) && !HasInArc( 2 * M_PI - arc, target );
+}
+
 void WorldObject::GetRandomPoint( float x, float y, float z, float distance, float &rand_x, float &rand_y, float &rand_z) const
 {
     if(distance == 0)
@@ -1437,7 +1497,7 @@ void WorldObject::MonsterTextEmote(const char* text, uint64 TargetGuid, bool IsB
 
 void WorldObject::MonsterWhisper(const char* text, uint64 receiver, bool IsBossWhisper)
 {
-    Player *player = objmgr.GetPlayer(receiver);
+    Player *player = sObjectMgr.GetPlayer(receiver);
     if(!player || !player->GetSession())
         return;
 
@@ -1456,7 +1516,7 @@ namespace MaNGOS
                 : i_object(obj), i_msgtype(msgtype), i_textId(textId), i_language(language), i_targetGUID(targetGUID) {}
             void operator()(WorldPacket& data, int32 loc_idx)
             {
-                char const* text = objmgr.GetMangosString(i_textId,loc_idx);
+                char const* text = sObjectMgr.GetMangosString(i_textId,loc_idx);
 
                 // TODO: i_object.GetName() also must be localized?
                 i_object.BuildMonsterChat(&data,i_msgtype,text,i_language,i_object.GetNameForLocaleIdx(loc_idx),i_targetGUID);
@@ -1534,12 +1594,12 @@ void WorldObject::MonsterTextEmote(int32 textId, uint64 TargetGuid, bool IsBossE
 
 void WorldObject::MonsterWhisper(int32 textId, uint64 receiver, bool IsBossWhisper)
 {
-    Player *player = objmgr.GetPlayer(receiver);
+    Player *player = sObjectMgr.GetPlayer(receiver);
     if(!player || !player->GetSession())
         return;
 
     uint32 loc_idx = player->GetSession()->GetSessionDbLocaleIndex();
-    char const* text = objmgr.GetMangosString(textId,loc_idx);
+    char const* text = sObjectMgr.GetMangosString(textId,loc_idx);
 
     WorldPacket data(SMSG_MESSAGECHAT, 200);
     BuildMonsterChat(&data,IsBossWhisper ? CHAT_MSG_RAID_BOSS_WHISPER : CHAT_MSG_MONSTER_WHISPER,text,LANG_UNIVERSAL,GetNameForLocaleIdx(loc_idx),receiver);
@@ -1569,7 +1629,7 @@ void WorldObject::BuildMonsterChat(WorldPacket *data, uint8 msgtype, char const*
 void WorldObject::SendMessageToSet(WorldPacket *data, bool /*bToSelf*/)
 {
     //if object is in world, map for it already created!
-    Map * _map = IsInWorld() ? GetMap() : MapManager::Instance().FindMap(GetMapId(), GetInstanceId());
+    Map * _map = IsInWorld() ? GetMap() : sMapMgr.FindMap(GetMapId(), GetInstanceId());
     if(_map)
         _map->MessageBroadcast(this, data);
 }
@@ -1577,7 +1637,7 @@ void WorldObject::SendMessageToSet(WorldPacket *data, bool /*bToSelf*/)
 void WorldObject::SendMessageToSetInRange(WorldPacket *data, float dist, bool /*bToSelf*/)
 {
     //if object is in world, map for it already created!
-    Map * _map = IsInWorld() ? GetMap() : MapManager::Instance().FindMap(GetMapId(), GetInstanceId());
+    Map * _map = IsInWorld() ? GetMap() : sMapMgr.FindMap(GetMapId(), GetInstanceId());
     if(_map)
         _map->MessageDistBroadcast(this, data, dist);
 }
@@ -1617,7 +1677,7 @@ Creature* WorldObject::SummonCreature(uint32 id, float x, float y, float z, floa
     if (GetTypeId()==TYPEID_PLAYER)
         team = ((Player*)this)->GetTeam();
 
-    if (!pCreature->Create(objmgr.GenerateLowGuid(HIGHGUID_UNIT), GetMap(), GetPhaseMask(), id, team))
+    if (!pCreature->Create(sObjectMgr.GenerateLowGuid(HIGHGUID_UNIT), GetMap(), GetPhaseMask(), id, team))
     {
         delete pCreature;
         return NULL;
@@ -1627,6 +1687,7 @@ Creature* WorldObject::SummonCreature(uint32 id, float x, float y, float z, floa
         GetClosePoint(x, y, z, pCreature->GetObjectSize());
 
     pCreature->Relocate(x, y, z, ang);
+    pCreature->SetSummonPoint(x, y, z, ang);
 
     if(!pCreature->IsPositionValid())
     {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -47,7 +47,10 @@ ObjectAccessor::ObjectAccessor() {}
 ObjectAccessor::~ObjectAccessor()
 {
     for(Player2CorpsesMapType::const_iterator itr = i_player2corpse.begin(); itr != i_player2corpse.end(); ++itr)
+    {
+        itr->second->RemoveFromWorld();
         delete itr->second;
+    }
 }
 
 Unit*
@@ -65,36 +68,15 @@ ObjectAccessor::GetUnit(WorldObject const &u, uint64 guid)
     return u.GetMap()->GetCreatureOrPetOrVehicle(guid);
 }
 
-Corpse*
-ObjectAccessor::GetCorpse(WorldObject const &u, uint64 guid)
+Corpse* ObjectAccessor::GetCorpseInMap( uint64 guid, uint32 mapid )
 {
-    Corpse * ret = GetObjectInWorld(guid, (Corpse*)NULL);
+    Corpse * ret = HashMapHolder<Corpse>::Find(guid);
     if(!ret)
         return NULL;
-    if(ret->GetMapId() != u.GetMapId())
+    if(ret->GetMapId() != mapid)
         return NULL;
-    if(ret->GetInstanceId() != u.GetInstanceId())
-        return NULL;
+
     return ret;
-}
-
-WorldObject* ObjectAccessor::GetWorldObject(WorldObject const &p, uint64 guid)
-{
-    switch(GUID_HIPART(guid))
-    {
-        case HIGHGUID_PLAYER:       return FindPlayer(guid);
-        case HIGHGUID_GAMEOBJECT:   return p.GetMap()->GetGameObject(guid);
-        case HIGHGUID_UNIT:         return p.GetMap()->GetCreature(guid);
-        case HIGHGUID_PET:          return p.GetMap()->GetPet(guid);
-        case HIGHGUID_VEHICLE:      return p.GetMap()->GetVehicle(guid);
-        case HIGHGUID_DYNAMICOBJECT:return p.GetMap()->GetDynamicObject(guid);
-        case HIGHGUID_TRANSPORT:    return NULL;
-        case HIGHGUID_CORPSE:       return GetCorpse(p,guid);
-        case HIGHGUID_MO_TRANSPORT: return NULL;
-        default: break;
-    }
-
-    return NULL;
 }
 
 Object* ObjectAccessor::GetObjectByTypeMask(WorldObject const &p, uint64 guid, uint32 typemask)
@@ -141,7 +123,7 @@ Object* ObjectAccessor::GetObjectByTypeMask(WorldObject const &p, uint64 guid, u
 Player*
 ObjectAccessor::FindPlayer(uint64 guid)
 {
-    Player * plr = GetObjectInWorld(guid, (Player*)NULL);
+    Player * plr = HashMapHolder<Player>::Find(guid);;
     if(!plr || !plr->IsInWorld())
         return NULL;
 
@@ -168,6 +150,16 @@ ObjectAccessor::SaveAllPlayers()
     HashMapHolder<Player>::MapType::iterator itr = m.begin();
     for(; itr != m.end(); ++itr)
         itr->second->SaveToDB();
+}
+
+void ObjectAccessor::KickPlayer(uint64 guid)
+{
+    if (Player* p = HashMapHolder<Player>::Find(guid))
+    {
+        WorldSession* s = p->GetSession();
+        s->KickPlayer();                            // mark session to remove at next session list update
+        s->LogoutPlayer(false);                     // logout player without waiting next session list update
+    }
 }
 
 Corpse*
@@ -197,7 +189,7 @@ ObjectAccessor::RemoveCorpse(Corpse *corpse)
     CellPair cell_pair = MaNGOS::ComputeCellPair(corpse->GetPositionX(), corpse->GetPositionY());
     uint32 cell_id = (cell_pair.y_coord*TOTAL_NUMBER_OF_CELLS_PER_MAP) + cell_pair.x_coord;
 
-    objmgr.DeleteCorpseCellData(corpse->GetMapId(), cell_id, corpse->GetOwnerGUID());
+    sObjectMgr.DeleteCorpseCellData(corpse->GetMapId(), cell_id, corpse->GetOwnerGUID());
     corpse->RemoveFromWorld();
 
     i_player2corpse.erase(iter);
@@ -216,7 +208,7 @@ ObjectAccessor::AddCorpse(Corpse *corpse)
     CellPair cell_pair = MaNGOS::ComputeCellPair(corpse->GetPositionX(), corpse->GetPositionY());
     uint32 cell_id = (cell_pair.y_coord*TOTAL_NUMBER_OF_CELLS_PER_MAP) + cell_pair.x_coord;
 
-    objmgr.AddCorpseCellData(corpse->GetMapId(), cell_id, corpse->GetOwnerGUID(), corpse->GetInstanceId());
+    sObjectMgr.AddCorpseCellData(corpse->GetMapId(), cell_id, corpse->GetOwnerGUID(), corpse->GetInstanceId());
 }
 
 void
@@ -260,7 +252,7 @@ ObjectAccessor::ConvertCorpseForPlayer(uint64 player_guid, bool insignia)
 
     // remove resurrectable corpse from grid object registry (loaded state checked into call)
     // do not load the map if it's not loaded
-    Map *map = MapManager::Instance().FindMap(corpse->GetMapId(), corpse->GetInstanceId());
+    Map *map = sMapMgr.FindMap(corpse->GetMapId(), corpse->GetInstanceId());
     if(map)
         map->Remove(corpse, false);
 

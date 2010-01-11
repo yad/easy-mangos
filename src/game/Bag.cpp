@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -60,7 +60,7 @@ void Bag::RemoveFromWorld()
 
 bool Bag::Create(uint32 guidlow, uint32 itemid, Player const* owner)
 {
-    ItemPrototype const * itemProto = objmgr.GetItemPrototype(itemid);
+    ItemPrototype const * itemProto = ObjectMgr::GetItemPrototype(itemid);
 
     if(!itemProto || itemProto->ContainerSlots > MAX_BAG_SIZE)
         return false;

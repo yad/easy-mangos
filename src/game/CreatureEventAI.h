@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -137,26 +137,18 @@ enum Target
     TARGET_T_END
 };
 
-enum CastFlags
-{
-    CAST_INTURRUPT_PREVIOUS     = 0x01,                     //Interrupt any spell casting
-    CAST_TRIGGERED              = 0x02,                     //Triggered (this makes spell cost zero mana and have no cast time)
-    CAST_FORCE_CAST             = 0x04,                     //Forces cast even if creature is out of mana or out of range
-    CAST_NO_MELEE_IF_OOM        = 0x08,                     //Prevents creature from entering melee if out of mana or out of range
-    CAST_FORCE_TARGET_SELF      = 0x10,                     //Forces the target to cast this spell on itself
-    CAST_AURA_NOT_PRESENT       = 0x20,                     //Only casts the spell if the target does not have an aura from the spell
-};
-
 enum EventFlags
 {
     EFLAG_REPEATABLE            = 0x01,                     //Event repeats
-    EFLAG_NORMAL                = 0x02,                     //Event only occurs in Normal instance difficulty
-    EFLAG_HEROIC                = 0x04,                     //Event only occurs in Heroic instance difficulty
-    EFLAG_RESERVED_3            = 0x08,
-    EFLAG_RESERVED_4            = 0x10,
+    EFLAG_DIFFICULTY_0          = 0x02,                     //Event only occurs in instance difficulty 0
+    EFLAG_DIFFICULTY_1          = 0x04,                     //Event only occurs in instance difficulty 1
+    EFLAG_DIFFICULTY_2          = 0x08,                     //Event only occurs in instance difficulty 2
+    EFLAG_DIFFICULTY_3          = 0x10,                     //Event only occurs in instance difficulty 3
     EFLAG_RESERVED_5            = 0x20,
     EFLAG_RESERVED_6            = 0x40,
     EFLAG_DEBUG_ONLY            = 0x80,                     //Event only occurs in debug build
+
+    EFLAG_DIFFICULTY_ALL        = (EFLAG_DIFFICULTY_0|EFLAG_DIFFICULTY_1|EFLAG_DIFFICULTY_2|EFLAG_DIFFICULTY_3)
 };
 
 enum SpawnedEventMode
@@ -372,7 +364,12 @@ struct CreatureEventAI_Action
         {
             uint32 sheath;
         } set_sheath;
-        // ACTION_T_SET_INVINCIBILITY_HP_LEVEL             = 42
+        // ACTION_T_FORCE_DESPAWN                           = 41
+        struct
+        {
+            uint32 msDelay;
+        } forced_despawn;
+        // ACTION_T_SET_INVINCIBILITY_HP_LEVEL              = 42
         struct
         {
             uint32 hp_level;
@@ -592,7 +589,7 @@ class MANGOS_DLL_SPEC CreatureEventAI : public CreatureAI
         inline uint32 GetRandActionParam(uint32 rnd, uint32 param1, uint32 param2, uint32 param3);
         inline int32 GetRandActionParam(uint32 rnd, int32 param1, int32 param2, int32 param3);
         inline Unit* GetTargetByType(uint32 Target, Unit* pActionInvoker);
-        inline Unit* SelectUnit(AttackingTarget target, uint32 position);
+        inline Unit* SelectUnit(AttackingTarget target, uint32 position) const;
 
         void DoScriptText(int32 textEntry, WorldObject* pSource, Unit* target);
         void DoMeleeAttackIfReady();

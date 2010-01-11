@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,6 +32,7 @@ class ObjectMgr;
 #define MAX_QUEST_LOG_SIZE 25
 
 #define QUEST_OBJECTIVES_COUNT 4
+#define QUEST_ITEM_OBJECTIVES_COUNT 6
 #define QUEST_SOURCE_ITEM_IDS_COUNT 4
 #define QUEST_REWARD_CHOICES_COUNT 6
 #define QUEST_REWARDS_COUNT 4
@@ -180,7 +181,7 @@ class Quest
         int32  GetZoneOrSort() const { return ZoneOrSort; }
         int32  GetSkillOrClass() const { return SkillOrClass; }
         uint32 GetMinLevel() const { return MinLevel; }
-        uint32 GetQuestLevel() const { return QuestLevel; }
+        int32  GetQuestLevel() const { return QuestLevel; }
         uint32 GetType() const { return Type; }
         uint32 GetRequiredRaces() const { return RequiredRaces; }
         uint32 GetRequiredSkillValue() const { return RequiredSkillValue; }
@@ -231,8 +232,8 @@ class Quest
 
         // multiple values
         std::string ObjectiveText[QUEST_OBJECTIVES_COUNT];
-        uint32 ReqItemId[QUEST_OBJECTIVES_COUNT];
-        uint32 ReqItemCount[QUEST_OBJECTIVES_COUNT];
+        uint32 ReqItemId[QUEST_ITEM_OBJECTIVES_COUNT];
+        uint32 ReqItemCount[QUEST_ITEM_OBJECTIVES_COUNT];
         uint32 ReqSourceId[QUEST_SOURCE_ITEM_IDS_COUNT];
         uint32 ReqSourceCount[QUEST_SOURCE_ITEM_IDS_COUNT];
         int32  ReqCreatureOrGOId[QUEST_OBJECTIVES_COUNT];   // >0 Creature <0 Gameobject
@@ -273,7 +274,7 @@ class Quest
         int32  ZoneOrSort;
         int32  SkillOrClass;
         uint32 MinLevel;
-        uint32 QuestLevel;
+        int32  QuestLevel;
         uint32 Type;
         uint32 RequiredRaces;
         uint32 RequiredSkillValue;
@@ -332,7 +333,7 @@ struct QuestStatusData
         : m_status(QUEST_STATUS_NONE),m_rewarded(false),
         m_explored(false), m_timer(0), uState(QUEST_NEW)
     {
-        memset(m_itemcount, 0, QUEST_OBJECTIVES_COUNT * sizeof(uint32));
+        memset(m_itemcount, 0, QUEST_ITEM_OBJECTIVES_COUNT * sizeof(uint32));
         memset(m_creatureOrGOcount, 0, QUEST_OBJECTIVES_COUNT * sizeof(uint32));
     }
 
@@ -342,7 +343,7 @@ struct QuestStatusData
     uint32 m_timer;
     QuestUpdateState uState;
 
-    uint32 m_itemcount[ QUEST_OBJECTIVES_COUNT ];
+    uint32 m_itemcount[ QUEST_ITEM_OBJECTIVES_COUNT ];
     uint32 m_creatureOrGOcount[ QUEST_OBJECTIVES_COUNT ];
 };
 #endif

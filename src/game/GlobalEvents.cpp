@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -51,7 +51,7 @@ static void CorpsesEraseCallBack(QueryResult *result, bool bones)
         /// Resurrectable - convert corpses to bones
         if(!bones)
         {
-            if(!ObjectAccessor::Instance().ConvertCorpseForPlayer(player_guid))
+            if(!sObjectAccessor.ConvertCorpseForPlayer(player_guid))
             {
                 sLog.outDebug("Corpse %u not found in world or bones creating forbidden. Delete from DB.",guidlow);
                 CharacterDatabase.PExecute("DELETE FROM corpse WHERE guid = '%u'",guidlow);
@@ -60,7 +60,7 @@ static void CorpsesEraseCallBack(QueryResult *result, bool bones)
         else
             ///- or delete bones
         {
-            MapManager::Instance().RemoveBonesFromMap(mapid, guid, positionX, positionY);
+            sMapMgr.RemoveBonesFromMap(mapid, guid, positionX, positionY);
 
             ///- remove bones from the database
             CharacterDatabase.PExecute("DELETE FROM corpse WHERE guid = '%u'",guidlow);

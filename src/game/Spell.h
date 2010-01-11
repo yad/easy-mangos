@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -221,7 +221,7 @@ class Spell
         void EffectDistract(uint32 i);
         void EffectPull(uint32 i);
         void EffectSchoolDMG(uint32 i);
-        void EffectEnvirinmentalDMG(uint32 i);
+        void EffectEnvironmentalDMG(uint32 i);
         void EffectInstaKill(uint32 i);
         void EffectDummy(uint32 i);
         void EffectTeleportUnits(uint32 i);
@@ -248,8 +248,8 @@ class Spell
         void EffectDualWield(uint32 i);
         void EffectPickPocket(uint32 i);
         void EffectAddFarsight(uint32 i);
-        void EffectSummonWild(uint32 i);
-        void EffectSummonGuardian(uint32 i);
+        void EffectSummonWild(uint32 i, uint32 forceFaction = 0);
+        void EffectSummonGuardian(uint32 i, uint32 forceFaction = 0);
         void EffectHealMechanical(uint32 i);
         void EffectJump(uint32 i);
         void EffectTeleUnitsFaceCaster(uint32 i);
@@ -277,7 +277,7 @@ class Spell
         void EffectSummonPlayer(uint32 i);
         void EffectActivateObject(uint32 i);
         void EffectApplyGlyph(uint32 i);
-        void EffectSummonTotem(uint32 i);
+        void EffectSummonTotem(uint32 i, uint8 slot = 0);
         void EffectEnchantHeldItem(uint32 i);
         void EffectSummonObject(uint32 i);
         void EffectResurrect(uint32 i);
@@ -299,7 +299,7 @@ class Spell
         void EffectMilling(uint32 i);
         void EffectRenamePet(uint32 i);
         void EffectSendTaxi(uint32 i);
-        void EffectSummonCritter(uint32 i);
+        void EffectSummonCritter(uint32 i, uint32 forceFaction = 0);
         void EffectKnockBack(uint32 i);
         void EffectPlayerPull(uint32 i);
         void EffectDispelMechanic(uint32 i);
@@ -314,7 +314,6 @@ class Spell
         void EffectAddExtraAttacks(uint32 i);
         void EffectSpiritHeal(uint32 i);
         void EffectSkinPlayerCorpse(uint32 i);
-        void EffectSummonDemon(uint32 i);
         void EffectStealBeneficialBuff(uint32 i);
         void EffectUnlearnSpecialization(uint32 i);
         void EffectHealPct(uint32 i);
@@ -373,12 +372,12 @@ class Spell
 
         typedef std::list<Unit*> UnitList;
         void FillTargetMap();
-        void SetTargetMap(uint32 effIndex,uint32 targetMode,UnitList& TagUnitMap);
+        void SetTargetMap(uint32 effIndex, uint32 targetMode, UnitList &targetUnitMap);
 
-        void FillAreaTargets( UnitList& TagUnitMap, float x, float y, float radius, SpellNotifyPushType pushType, SpellTargets spellTargets );
-        void FillRaidOrPartyTargets( UnitList &TagUnitMap, Unit* member, Unit* center, float radius, bool raid, bool withPets, bool withcaster );
-        void FillRaidOrPartyManaPriorityTargets( UnitList &TagUnitMap, Unit* member, Unit* center, float radius, uint32 count, bool raid, bool withPets, bool withcaster );
-        void FillRaidOrPartyHealthPriorityTargets( UnitList &TagUnitMap, Unit* member, Unit* center, float radius, uint32 count, bool raid, bool withPets, bool withcaster );
+        void FillAreaTargets(UnitList &targetUnitMap, float x, float y, float radius, SpellNotifyPushType pushType, SpellTargets spellTargets);
+        void FillRaidOrPartyTargets(UnitList &targetUnitMap, Unit* member, Unit* center, float radius, bool raid, bool withPets, bool withcaster);
+        void FillRaidOrPartyManaPriorityTargets(UnitList &targetUnitMap, Unit* member, Unit* center, float radius, uint32 count, bool raid, bool withPets, bool withcaster);
+        void FillRaidOrPartyHealthPriorityTargets(UnitList &targetUnitMap, Unit* member, Unit* center, float radius, uint32 count, bool raid, bool withPets, bool withcaster);
 
         template<typename T> WorldObject* FindCorpseUsing();
 
@@ -442,7 +441,7 @@ class Spell
 
         void UpdatePointers();                              // must be used at call Spell code after time delay (non triggered spell cast/update spell call/etc)
 
-        bool IsAffectedByAura(Aura *aura);
+        bool IsAffectedByAura(Aura *aura) const;
 
         bool CheckTargetCreatureType(Unit* target) const;
 
@@ -706,26 +705,27 @@ namespace MaNGOS
                     default: continue;
                 }
 
+                // we don't need to check InMap here, it's already done some lines above
                 switch(i_push_type)
                 {
                     case PUSH_IN_FRONT:
-                        if(i_spell.GetCaster()->isInFrontInMap((Unit*)(itr->getSource()), i_radius, 2*M_PI/3 ))
+                        if(i_spell.GetCaster()->isInFront((Unit*)(itr->getSource()), i_radius, 2*M_PI/3 ))
                             i_data->push_back(itr->getSource());
                         break;
                     case PUSH_IN_FRONT_90:
-                        if(i_spell.GetCaster()->isInFrontInMap((Unit*)(itr->getSource()), i_radius, M_PI/2 ))
+                        if(i_spell.GetCaster()->isInFront((Unit*)(itr->getSource()), i_radius, M_PI/2 ))
                             i_data->push_back(itr->getSource());
                         break;
                     case PUSH_IN_FRONT_30:
-                        if(i_spell.GetCaster()->isInFrontInMap((Unit*)(itr->getSource()), i_radius, M_PI/6 ))
+                        if(i_spell.GetCaster()->isInFront((Unit*)(itr->getSource()), i_radius, M_PI/6 ))
                             i_data->push_back(itr->getSource());
                         break;
                     case PUSH_IN_FRONT_15:
-                        if(i_spell.GetCaster()->isInFrontInMap((Unit*)(itr->getSource()), i_radius, M_PI/12 ))
+                        if(i_spell.GetCaster()->isInFront((Unit*)(itr->getSource()), i_radius, M_PI/12 ))
                             i_data->push_back(itr->getSource());
                         break;
                     case PUSH_IN_BACK:
-                        if(i_spell.GetCaster()->isInBackInMap((Unit*)(itr->getSource()), i_radius, 2*M_PI/3 ))
+                        if(i_spell.GetCaster()->isInBack((Unit*)(itr->getSource()), i_radius, 2*M_PI/3 ))
                             i_data->push_back(itr->getSource());
                         break;
                     case PUSH_SELF_CENTER:

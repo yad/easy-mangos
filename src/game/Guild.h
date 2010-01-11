@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,9 @@
 #define WITHDRAW_MONEY_UNLIMITED    0xFFFFFFFF
 #define WITHDRAW_SLOT_UNLIMITED     0xFFFFFFFF
 
+#include "Common.h"
 #include "Item.h"
+#include "ObjectDefines.h"
 
 class Item;
 
@@ -400,7 +402,6 @@ class Guild
         void   SetGuildBankTabText(uint8 TabId, std::string text);
         void   SendGuildBankTabText(WorldSession *session, uint8 TabId);
         void   SetGuildBankTabInfo(uint8 TabId, std::string name, std::string icon);
-        const  GuildBankTab *GetBankTab(uint8 index) { if(index >= m_TabListMap.size()) return NULL; return m_TabListMap[index]; }
         uint8  GetPurchasedTabs() const { return m_PurchasedTabs; }
         uint32 GetBankRights(uint32 rankId, uint8 TabId) const;
         bool   IsMemberHaveRights(uint32 LowGuid, uint8 TabId,uint32 rights) const;
@@ -408,6 +409,7 @@ class Guild
         // Load/unload
         void   LoadGuildBankFromDB();
         void   UnloadGuildBank();
+        bool   IsGuildBankLoaded() const { return m_GuildBankLoaded; }
         void   IncOnlineMemberCount() { ++m_OnlineMembers; }
         // Money deposit/withdraw
         void   SendMoneyInfo(WorldSession *session, uint32 LowGuid);

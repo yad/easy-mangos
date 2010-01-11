@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -220,6 +220,9 @@ bool IsPositiveSpell(uint32 spellId);
 bool IsPositiveEffect(uint32 spellId, uint32 effIndex);
 bool IsPositiveTarget(uint32 targetA, uint32 targetB);
 
+bool IsExplicitPositiveTarget(uint32 targetA);
+bool IsExplicitNegativeTarget(uint32 targetA);
+
 bool IsSingleTargetSpell(SpellEntry const *spellInfo);
 bool IsSingleTargetSpells(SpellEntry const *spellInfo1, SpellEntry const *spellInfo2);
 
@@ -240,7 +243,6 @@ inline bool IsCasterSourceTarget(uint32 target)
         case TARGET_TOTEM_WATER:
         case TARGET_TOTEM_AIR:
         case TARGET_TOTEM_FIRE:
-        case TARGET_SUMMON:
         case TARGET_AREAEFFECT_CUSTOM_2:
         case TARGET_ALL_RAID_AROUND_CASTER:
         case TARGET_SELF2:
@@ -729,8 +731,6 @@ class SpellMgr
     // Accessors (const or static functions)
     public:
 
-        bool IsAffectedByMod(SpellEntry const *spellInfo, SpellModifier *mod) const;
-
         SpellElixirMap const& GetSpellElixirMap() const { return mSpellElixirs; }
 
         uint32 GetSpellElixirMask(uint32 spellid) const
@@ -1035,5 +1035,5 @@ class SpellMgr
         SpellAreaForAreaMap  mSpellAreaForAreaMap;
 };
 
-#define spellmgr SpellMgr::Instance()
+#define sSpellMgr SpellMgr::Instance()
 #endif

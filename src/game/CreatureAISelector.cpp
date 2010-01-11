@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -46,8 +46,8 @@ namespace FactorySelector
         // select by NPC flags _first_ - otherwise EventAI might be choosen for pets/totems
         // excplicit check for isControlled() and owner type to allow guardian, mini-pets and pets controlled by NPCs to be scripted by EventAI
         Unit *owner=NULL;
-        if (creature->isPet() && ((Pet*)creature)->isControlled() &&
-            ((owner=creature->GetOwner()) && owner->GetTypeId()==TYPEID_PLAYER) || creature->isCharmed())
+        if ((creature->isPet() && ((Pet*)creature)->isControlled() &&
+            ((owner=creature->GetOwner()) && owner->GetTypeId()==TYPEID_PLAYER)) || creature->isCharmed())
             ai_factory = ai_registry.GetRegistryItem("PetAI");
         else if (creature->isTotem())
             ai_factory = ai_registry.GetRegistryItem("TotemAI");

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -597,7 +597,7 @@ struct CharTitlesEntry
 {
     uint32  ID;                                             // 0, title ids, for example in Quest::GetCharTitleId()
     //uint32      unk1;                                     // 1 flags?
-    //char*       name[16];                                 // 2-17, unused
+    char*   name[16];                                       // 2-17
                                                             // 18 string flag, unused
     //char*       name2[16];                                // 19-34, unused
                                                             // 35 string flag, unused
@@ -1069,7 +1069,7 @@ struct MailTemplateEntry
     uint32      ID;                                         // 0
     //char*       subject[16];                              // 1-16
                                                             // 17 name flags, unused
-    //char*       content[16];                              // 18-33
+    char*       content[16];                                // 18-33
 };
 
 struct MapEntry
@@ -1426,6 +1426,10 @@ struct SpellEntry
 
     // helpers
     int32 CalculateSimpleValue(uint8 eff) const { return EffectBasePoints[eff]+int32(EffectBaseDice[eff]); }
+    uint32 const* GetEffectSpellClassMask(uint8 effect) const
+    {
+        return EffectSpellClassMaskA + effect * 3;
+    }
 
     private:
         // prevent creating custom entries (copy data from original in fact)
@@ -1488,18 +1492,11 @@ struct SpellShapeshiftEntry
     int32  creatureType;                                    // 20 <=0 humanoid, other normal creature types
     //uint32 unk1;                                          // 21 unused
     uint32 attackSpeed;                                     // 22
-    //uint32 modelID;                                       // 23 unused, alliance modelid (where horde case?)
-    //uint32 unk2;                                          // 24 unused
-    //uint32 unk3;                                          // 25 unused
-    //uint32 unk4;                                          // 26 unused
-    //uint32 unk5;                                          // 27 unused
-    //uint32 unk6;                                          // 28 unused
-    //uint32 unk7;                                          // 29 unused
-    //uint32 unk8;                                          // 30 unused
-    //uint32 unk9;                                          // 31 unused
-    //uint32 unk10;                                         // 32 unused
-    //uint32 unk11;                                         // 33 unused
-    //uint32 unk12;                                         // 34 unused
+    uint32 modelID_A;                                       // 23 alliance modelid (0 means no model)
+    uint32 modelID_H;                                       // 24 horde modelid (but only for one form)
+    //uint32 unk3;                                          // 25 unused always 0
+    //uint32 unk4;                                          // 26 unused always 0
+    uint32 spellId[8];                                      // 27-34 spells which appear in the bar after shapeshifting
 };
 
 struct SpellDurationEntry
@@ -1544,17 +1541,15 @@ struct StableSlotPricesEntry
     uint32 Price;
 };
 
-/* unused currently
 struct SummonPropertiesEntry
 {
     uint32  Id;                                             // 0
-    uint32  Group;                                          // 1, enum SummonPropGroup,  0 - can't be controlled?, 1 - something guardian?, 2 - pet?, 3 - something controllable?, 4 - taxi/mount?
+    uint32  Group;                                          // 1, enum SummonPropGroup
     uint32  FactionId;                                      // 2,                        14 rows > 0
     uint32  Type;                                           // 3, enum SummonPropType
-    uint32  Slot;                                           // 4,                        0-6
+    uint32  Slot;                                           // 4,   if type = SUMMON_PROP_TYPE_TOTEM, its actual slot    0-6
     uint32  Flags;                                          // 5, enum SummonPropFlags
 };
-*/
 
 #define MAX_TALENT_RANK 5
 #define MAX_PET_TALENT_RANK 3                               // use in calculations, expected <= MAX_TALENT_RANK
@@ -1773,7 +1768,7 @@ struct MapDifficulty
     MapDifficulty(uint32 _resetTime, uint32 _maxPlayers) : resetTime(_resetTime), maxPlayers(_maxPlayers) {}
 
     uint32 resetTime;
-    uint32 maxPlayers;
+    uint32 maxPlayers;                                      // some heroic dungeons have 0 when expect same value as in normal dificulty case
 };
 
 struct TalentSpellPos

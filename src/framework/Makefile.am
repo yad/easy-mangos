@@ -1,4 +1,4 @@
-# Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+# Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -47,12 +47,10 @@ EXTRA_DIST = \
 	Platform/Define.h \
 	Policies/CreationPolicy.h \
 	Policies/ObjectLifeTime.h \
+	Policies/MemoryManagement.cpp \
 	Policies/Singleton.h \
 	Policies/SingletonImp.h \
 	Policies/ThreadingModel.h \
-	Utilities/CountedReference/Reference.h \
-	Utilities/CountedReference/ReferenceHolder.h \
-	Utilities/CountedReference/ReferenceImpl.h \
 	Utilities/LinkedReference/RefManager.h \
 	Utilities/LinkedReference/Reference.h \
 	Utilities/ByteConverter.h \
