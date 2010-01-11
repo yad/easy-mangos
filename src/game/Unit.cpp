@@ -4050,9 +4050,14 @@ void Unit::RemoveAurasDueToSpellBySteal(uint32 spellId, uint64 casterGUID, Unit 
             // set its duration and maximum duration
             // max duration 2 minutes (in msecs)
             int32 dur = aur->GetAuraDuration();
-            const int32 max_dur = 2*MINUTE*IN_MILISECONDS;
-            new_aur->SetAuraMaxDuration( max_dur > dur ? dur : max_dur );
-            new_aur->SetAuraDuration( max_dur > dur ? dur : max_dur );
+            int32 max_dur = 2*MINUTE*IN_MILISECONDS;
+            int32 new_max_dur = max_dur > dur ? dur : max_dur;
+            new_aur->SetAuraMaxDuration( new_max_dur );
+            new_aur->SetAuraDuration( new_max_dur );
+
+            // set periodic to do at least one tick (for case when original aura has been at last tick preparing)
+            int32 periodic = aur->GetModifier()->periodictime;
+            new_aur->GetModifier()->periodictime = periodic < new_max_dur ? periodic : new_max_dur;
 
             // Unregister _before_ adding to stealer
             aur->UnregisterSingleCastAura();
@@ -5258,6 +5263,10 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                     owner->CastSpell(owner,58227,true,castItem,triggeredByAura);
                     return true;
                 }
+                // Glyph of Life Tap
+                case 63320:
+                    triggered_spell_id = 63321;
+                    break;
             }
             break;
         }
@@ -5581,12 +5590,6 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                     triggered_spell_id = 63106;
                     break;
                 }
-                // Glyph of Life Tap
-                case 63320:
-                {
-                    triggered_spell_id = 63321;
-                    break;
-                }
             }
             break;
         }
@@ -5824,6 +5827,16 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                 {
                     // Deadly Interrupt Effect
                     triggered_spell_id = 32747;
+                    break;
+                }
+                // Glyph of Rejuvenation
+                case 54754:
+                {
+                    // less 50% health
+                    if (pVictim->GetMaxHealth() < 2 * pVictim->GetHealth())
+                        return false;
+                    basepoints0 = triggerAmount * damage / 100;
+                    triggered_spell_id = 54755;
                     break;
                 }
             }
