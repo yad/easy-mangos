@@ -1333,7 +1333,7 @@ void Unit::CalculateMeleeDamage(Unit *pVictim, uint32 damage, CalcDamageInfo *da
         }
         case MELEE_HIT_PARRY:
             damageInfo->TargetState  = VICTIMSTATE_PARRY;
-            damageInfo->procEx|=PROC_EX_PARRY;
+            damageInfo->procEx |= PROC_EX_PARRY;
             damageInfo->cleanDamage += damageInfo->damage;
             damageInfo->damage = 0;
             break;
@@ -1348,12 +1348,13 @@ void Unit::CalculateMeleeDamage(Unit *pVictim, uint32 damage, CalcDamageInfo *da
         {
             damageInfo->TargetState = VICTIMSTATE_NORMAL;
             damageInfo->HitInfo |= HITINFO_BLOCK;
-            damageInfo->procEx|=PROC_EX_BLOCK;
+            damageInfo->procEx |= PROC_EX_BLOCK;
             damageInfo->blocked_amount = damageInfo->target->GetShieldBlockValue();
             if (damageInfo->blocked_amount >= damageInfo->damage)
             {
                 damageInfo->TargetState = VICTIMSTATE_BLOCKS;
                 damageInfo->blocked_amount = damageInfo->damage;
+                damageInfo->procEx |= PROC_EX_FULL_BLOCK;
             }
             damageInfo->damage      -= damageInfo->blocked_amount;
             damageInfo->cleanDamage += damageInfo->blocked_amount;
@@ -1361,9 +1362,9 @@ void Unit::CalculateMeleeDamage(Unit *pVictim, uint32 damage, CalcDamageInfo *da
         }
         case MELEE_HIT_GLANCING:
         {
-            damageInfo->HitInfo     |= HITINFO_GLANCING;
-            damageInfo->TargetState  = VICTIMSTATE_NORMAL;
-            damageInfo->procEx|=PROC_EX_NORMAL_HIT;
+            damageInfo->HitInfo |= HITINFO_GLANCING;
+            damageInfo->TargetState = VICTIMSTATE_NORMAL;
+            damageInfo->procEx |= PROC_EX_NORMAL_HIT;
             float reducePercent = 1.0f;                     //damage factor
             // calculate base values and mods
             float baseLowEnd = 1.3f;
@@ -6190,7 +6191,11 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                    if( ( procFlag & PROC_FLAG_SUCCESSFUL_MELEE_HIT ) || ( procSpell && procSpell->Id == 53595 ) )
                        triggered_spell_id = 31803;
 
-                    // Add 5-stack effect
+                    // At melee attack or Hammer of the Righteous spell damage considered as melee attack
+                    if ((procFlag & PROC_FLAG_SUCCESSFUL_MELEE_HIT) || (procSpell && procSpell->Id == 53595) )
+                        triggered_spell_id = 31803;         // Holy Vengeance
+
+                    // Add 5-stack effect from Holy Vengeance
                     int8 stacks = 0;
                     AuraList const& auras = target->GetAurasByType(SPELL_AURA_PERIODIC_DAMAGE);
                     for(AuraList::const_iterator itr = auras.begin(); itr!=auras.end(); ++itr)
@@ -6288,10 +6293,11 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                     if(effIndex != 0)                       // effect 1,2 used by seal unleashing code
                         return false;
 
-                   if( ( procFlag & PROC_FLAG_SUCCESSFUL_MELEE_HIT ) || ( procSpell && procSpell->Id == 53595 ) )
-                       triggered_spell_id = 53742;
+                    // At melee attack or Hammer of the Righteous spell damage considered as melee attack
+                    if ((procFlag & PROC_FLAG_SUCCESSFUL_MELEE_HIT) || (procSpell && procSpell->Id == 53595))
+                        triggered_spell_id = 53742;         // Blood Corruption
 
-                    // Add 5-stack effect
+                    // Add 5-stack effect from Blood Corruption
                     int8 stacks = 0;
                     AuraList const& auras = target->GetAurasByType(SPELL_AURA_PERIODIC_DAMAGE);
                     for(AuraList::const_iterator itr = auras.begin(); itr!=auras.end(); ++itr)
@@ -8231,7 +8237,12 @@ bool Unit::AttackStop(bool targetSwitch /*=false*/)
     if(!targetSwitch && GetTypeId()==TYPEID_UNIT )
     {
         ((Creature*)this)->SetNoCallAssistance(false);
-        ((Creature*)this)->SetNoSearchAssistance(false);
+
+        if (((Creature*)this)->HasSearchedAssistance())
+        {
+            ((Creature*)this)->SetNoSearchAssistance(false);
+            UpdateSpeed(MOVE_RUN, false);
+        }
     }
 
     SendMeleeAttackStop(victim);
@@ -10628,6 +10639,13 @@ void Unit::UpdateSpeed(UnitMoveType mtype, bool forced)
         }
         default:
             break;
+    }
+
+    // for creature case, we check explicit if mob searched for assistance
+    if (GetTypeId() == TYPEID_UNIT)
+    {
+        if (((Creature*)this)->HasSearchedAssistance())
+            speed *= 0.66f;                                 // best guessed value, so this will be 33% reduction. Based off initial speed, mob can then "run", "walk fast" or "walk".
     }
 
     // Apply strongest slow aura mod to speed
