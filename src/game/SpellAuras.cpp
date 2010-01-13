@@ -6245,6 +6245,27 @@ void Aura::HandleSpellSpecificBoosts(bool apply)
                 else
                     return;
             }
+            //Shadow Embrace
+            else if (m_spellProto->SpellIconID == 2209)
+            {
+                switch (GetId())
+                {
+                    //Ranks 1 - 5
+                    case 32386: spellId1 = 60448; break;
+                    case 32388: spellId1 = 60465; break;
+                    case 32389: spellId1 = 60466; break;
+                    case 32390: spellId1 = 60467; break;
+                    case 32391: spellId1 = 60468; break;
+                    default:
+                        return;
+                }
+                //for correct stack removing
+                if(!apply && spellId1)
+                {
+                    m_target->RemoveSingleSpellAurasFromStack(spellId1,m_removeMode);
+                    return;
+                }
+            }
             else
                 return;
             break;

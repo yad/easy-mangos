@@ -3644,6 +3644,9 @@ bool Unit::AddAura(Aura *Aur)
                     {
                         // can be created with >1 stack by some spell mods
                         aur2->modStackAmount(Aur->GetStackAmount());
+                        // Shadow Embrace needs this for correct stacking
+                        if(aurSpellInfo->SpellIconID == 2209)
+                            Aur->HandleSpellSpecificBoosts(true);
                         delete Aur;
                         return false;
                     }
@@ -4138,8 +4141,14 @@ void Unit::RemoveAurasWithDispelType( DispelType type )
 
 void Unit::RemoveSingleAuraFromStack(AuraMap::iterator &i, AuraRemoveMode mode)
 {
+    SpellEntry const* spell = i->second->GetSpellProto();
     if (i->second->modStackAmount(-1))
+    {
         RemoveAura(i,mode);
+    }
+    // Shadow Embrace needs this for correct stacking
+    else if (spell->SpellIconID == 2209)
+        i->second->HandleSpellSpecificBoosts(false);
 }
 
 
