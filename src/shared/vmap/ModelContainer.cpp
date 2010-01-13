@@ -227,10 +227,15 @@ namespace VMAP
             if(result && fwrite(getTriangles(),sizeof(TriangleBox),getNTriangles(),wf) != getNTriangles()) result = false;
 
             if(result && fwrite("SUBM",4,1,wf) != 1) result = false;
-            size = sizeof(unsigned int)+ sizeof(SubModel)*iNSubModel;
+            size = sizeof(unsigned int) + SubModel::dumpSize*iNSubModel;
             if(result && fwrite(&size,4,1,wf) != 1) result = false;
             if(result && fwrite(&iNSubModel,sizeof(unsigned int),1,wf) != 1) result = false;
-            if(result && fwrite(iSubModel,sizeof(SubModel),iNSubModel,wf) != iNSubModel) result = false;
+            for(int i=0; i<iNSubModel; ++i)
+            {
+                uint8 triBuff[SubModel::dumpSize];
+                iSubModel[i].putToBinBlock(triBuff);
+                if(result && fwrite(triBuff,SubModel::dumpSize,1,wf) != 1) result = false;
+            }
 
             fclose(wf);
         }
@@ -303,7 +308,7 @@ namespace VMAP
             {
                 for(unsigned int i=0;i<iNSubModel && result; ++i)
                 {
-                    unsigned char readBuffer[52];           // this is the size of SubModel on 32 bit systems
+                    unsigned char readBuffer[SubModel::dumpSize];           // this equals the size of SubModel on 32 bit systems
                     if(fread(readBuffer,sizeof(readBuffer),1,rf) != 1) result = false;
                     iSubModel[i].initFromBinBlock(readBuffer);
                     iSubModel[i].setTriangleArray(getTriangles());

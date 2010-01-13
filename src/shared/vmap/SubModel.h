@@ -54,6 +54,7 @@ namespace VMAP
             ~SubModel(void);
             //Gets a 50 byte binary block
             void initFromBinBlock(void *pBinBlock);
+            void putToBinBlock(void *pBinBlock);
 
             void fillRenderArray(G3D::Array<TriangleBox> &pArray, const TreeNode* pTreeNode);
 
@@ -92,6 +93,7 @@ namespace VMAP
             void intersectRay(const G3D::Ray& ray, RayCallback& intersectCallback, float& distance, bool pStopAtFirstHit, bool intersectCallbackIsFast = false);
             bool operator==(const SubModel& pSm2) const;
             unsigned int hashCode() const { return BaseModel::getNTriangles(); }
+            static const unsigned int dumpSize = 52;
     };
 
     unsigned int hashCode(const SubModel& pSm);

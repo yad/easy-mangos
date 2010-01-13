@@ -17,6 +17,7 @@
  */
 
 #include "SubModel.h"
+#include <cstring>
 
 #ifdef _ASSEMBLER_DEBUG
 extern FILE *::g_df;
@@ -52,6 +53,8 @@ namespace VMAP
     //==========================================================
     //==========================================================
     //==========================================================
+    const unsigned int SubModel::dumpSize;
+    
     SubModel::SubModel(unsigned int pNTriangles, TriangleBox *pTriangles, unsigned int pTrianglesPos, unsigned int pNNodes, TreeNode *pTreeNodes, unsigned int pNodesPos) :
     BaseModel(pNNodes, pTreeNodes, pNTriangles, pTriangles)
     {
@@ -110,6 +113,13 @@ namespace VMAP
         iTrianglesPos =  *((unsigned int *) (((char *) pBinBlock) + BP_iTrianglesPos));
         iHasInternalMemAlloc = *((bool *) (((char *) pBinBlock) + BP_iHasInternalMemAlloc));
         iBox =  *((ShortBox *) (((char *) pBinBlock) + BP_iBox));
+    }
+    
+    void SubModel::putToBinBlock(void *pBinBlock)
+    {
+        // pointers of SubModel are redundant, but existing format expects 2*32bit (8 Bytes)
+        memcpy(pBinBlock, "\0\0\0\0\0\0\0\0",8);
+        memcpy((uint8*)pBinBlock+8, &this->iNTriangles,52-8);
     }
 
     //==========================================================
