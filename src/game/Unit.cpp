@@ -2552,10 +2552,12 @@ float Unit::MeleeSpellMissChance(Unit *pVictim, WeaponAttackType attType, int32 
     // Calculate hit chance (more correct for chance mod)
     float hitChance;
 
-    if ( skillDiff < -10 )
-       hitChance = 94.0f + (skillDiff + 10) * 0.4f;
+    if ( pVictim->GetTypeId() == TYPEID_PLAYER )
+        hitChance = 95.0f + skillDiff * (skillDiff > 0 ? 0.02f : 0.04f);
+    else if ( skillDiff < -10 )
+        hitChance = 94.0f + (skillDiff + 10) * 0.4f;
     else
-       hitChance = 95.0f + skillDiff * 0.1f;
+        hitChance = 95.0f + skillDiff * 0.1f;
 
     // Hit chance depends from victim auras
     if(attType == RANGED_ATTACK)
@@ -2913,10 +2915,12 @@ float Unit::MeleeMissChanceCalc(const Unit *pVictim, WeaponAttackType attType) c
 
     int32 skillDiff = int32(GetWeaponSkillValue(attType,pVictim)) - int32(pVictim->GetDefenseSkillValue(this));
 
-     if ( skillDiff < -10 )
-         missChance -= (skillDiff + 10) * 0.4f - 1.0f;
-     else
-         missChance -= skillDiff * 0.1f;
+    if ( pVictim->GetTypeId() == TYPEID_PLAYER )
+        missChance -= skillDiff * (skillDiff > 0 ? 0.02f : 0.04f);
+    else if ( skillDiff < -10 )
+        missChance -= (skillDiff + 10) * 0.4f - 1.0f;
+    else
+        missChance -=  skillDiff * 0.1f;
 
     // Modify miss chance by victim auras
     if(attType == RANGED_ATTACK)
