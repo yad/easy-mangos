@@ -9432,7 +9432,7 @@ uint32 Unit::SpellHealingBonus(Unit *pVictim, SpellEntry const *spellProto, uint
         TakenTotal += int32(TakenAdvertisedBenefit * coeff);
     }
     // Default calculation
-    else if (DoneAdvertisedBenefit || TakenAdvertisedBenefit)
+    else if ( ( DoneAdvertisedBenefit || TakenAdvertisedBenefit ) && spellProto->DmgClass != SPELL_DAMAGE_CLASS_NONE )
     {
         // Damage over Time spells bonus calculation
         float DotFactor = 1.0f;
