@@ -443,10 +443,6 @@ void Spell::EffectSchoolDMG(uint32 effect_idx)
                             sLog.outError("Spell::EffectDummy: Unhandeled Shadowflame spell rank %u",m_spellInfo->Id);
                         break;
                     }
-
-                    //Glyph of Shadowflame
-                    if( m_caster->HasAura(63310) )
-                        m_caster->CastSpell( unitTarget, 63311, true );
                 }
                 // Conflagrate - consumes Immolate or Shadowflame
                 else if (m_spellInfo->TargetAuraState == AURA_STATE_CONFLAGRATE)
