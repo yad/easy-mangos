@@ -3764,7 +3764,7 @@ bool Unit::AddAura(Aura *Aur)
         return false;
 
     if(IsSpellLastAuraEffect(aurSpellInfo,Aur->GetEffIndex()))
-        Aur->HandleSpellSpecificBoosts(true);
+        Aur->HandleSpellSpecificBoosts(true,true);
 
     return true;
 }
@@ -4150,9 +4150,8 @@ void Unit::RemoveSingleAuraFromStack(AuraMap::iterator &i, AuraRemoveMode mode)
     {
         RemoveAura(i,mode);
     }
-    // Shadow Embrace needs this for correct stacking
-    else if (spell->SpellIconID == 2209)
-        i->second->HandleSpellSpecificBoosts(false);
+    else
+        i->second->HandleSpellSpecificBoosts(false,false);
 }
 
 
@@ -4320,7 +4319,7 @@ void Unit::RemoveAura(AuraMap::iterator &i, AuraRemoveMode mode)
     {
         // last aura in stack removed
         if (mode != AURA_REMOVE_BY_DELETE && IsSpellLastAuraEffect(Aur->GetSpellProto(),Aur->GetEffIndex()))
-            Aur->HandleSpellSpecificBoosts(false);
+            Aur->HandleSpellSpecificBoosts(false,true);
     }
 
     // If aura in use (removed from code that plan access to it data after return)

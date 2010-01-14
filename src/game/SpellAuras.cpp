@@ -6113,9 +6113,10 @@ void Aura::HandleShapeshiftBoosts(bool apply)
     }
 }
 
-void Aura::HandleSpellSpecificBoosts(bool apply)
+void Aura::HandleSpellSpecificBoosts(bool apply, bool last_stack)
 {
     bool cast_at_remove = false;                            // if spell must be casted at last aura from stack remove
+    bool cast_on_stack = false;                             // if spell must be casted/removed on every stack
     uint32 spellId1 = 0;
     uint32 spellId2 = 0;
     uint32 spellId3 = 0;
@@ -6259,12 +6260,7 @@ void Aura::HandleSpellSpecificBoosts(bool apply)
                     default:
                         return;
                 }
-                //for correct stack removing
-                if(!apply && spellId1)
-                {
-                    m_target->RemoveSingleSpellAurasFromStack(spellId1,m_removeMode);
-                    return;
-                }
+                cast_on_stack = true;
             }
             else
                 return;
@@ -6441,6 +6437,9 @@ void Aura::HandleSpellSpecificBoosts(bool apply)
         default:
             return;
     }
+    // prevent casting/removing auras on stack if they should not be 
+    if(!last_stack && !cast_on_stack)
+        return;
 
     // prevent aura deletion, specially in multi-boost case
     SetInUse(true);
@@ -6455,6 +6454,17 @@ void Aura::HandleSpellSpecificBoosts(bool apply)
             m_target->CastSpell(m_target, spellId3, true, NULL, this);
         if (spellId4 && !IsDeleted())
             m_target->CastSpell(m_target, spellId4, true, NULL, this);
+    }
+    else if (!apply && !last_stack)
+    {
+        if (spellId1)
+            m_target->RemoveSingleSpellAurasFromStack(spellId1,m_removeMode);
+        if (spellId2)
+            m_target->RemoveSingleSpellAurasFromStack(spellId2,m_removeMode);
+        if (spellId3)
+            m_target->RemoveSingleSpellAurasFromStack(spellId3,m_removeMode);
+        if (spellId4)
+            m_target->RemoveSingleSpellAurasFromStack(spellId4,m_removeMode);
     }
     else
     {
