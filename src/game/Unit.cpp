@@ -3648,9 +3648,7 @@ bool Unit::AddAura(Aura *Aur)
                     {
                         // can be created with >1 stack by some spell mods
                         aur2->modStackAmount(Aur->GetStackAmount());
-                        // Shadow Embrace needs this for correct stacking
-                        if(aurSpellInfo->SpellIconID == 2209)
-                            Aur->HandleSpellSpecificBoosts(true);
+                        Aur->HandleSpellSpecificBoosts(true,false);
                         delete Aur;
                         return false;
                     }
