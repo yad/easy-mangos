@@ -9193,9 +9193,17 @@ bool Unit::isSpellCrit(Unit *pVictim, SpellEntry const *spellProto, SpellSchoolM
         {
             if (pVictim)
             {
-                crit_chance = GetUnitCriticalChance(attackType, pVictim);
-                crit_chance+= GetTotalAuraModifierByMiscMask(SPELL_AURA_MOD_SPELL_CRIT_CHANCE_SCHOOL, schoolMask);
+                switch (spellProto->SpellFamilyName)
+                {
+                    case SPELLFAMILY_PALADIN:
+                        crit_chance = GetUnitCriticalChance(BASE_ATTACK, pVictim);
+                        break;
+                    default:
+                        crit_chance = GetUnitCriticalChance(attackType, pVictim);
+                        break;
+                }
             }
+            crit_chance+= GetTotalAuraModifierByMiscMask(SPELL_AURA_MOD_SPELL_CRIT_CHANCE_SCHOOL, schoolMask);
 
             // Rend and Tear - eff:1
             if(spellProto->SpellFamilyName == SPELLFAMILY_DRUID && spellProto->SpellIconID == 1680 && spellProto->SpellFamilyFlags & UI64LIT(0x00800000))
