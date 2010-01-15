@@ -22,7 +22,6 @@
 // load our modified version first !!
 #include "AABSPTree.h"
 
-#include "ShortVector.h"
 #include "ShortBox.h"
 #include "TreeNode.h"
 #include "VMapTools.h"

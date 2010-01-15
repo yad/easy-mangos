@@ -23,7 +23,12 @@
 extern FILE *::g_df;
 #endif
 
-using namespace G3D;
+using G3D::AABSPTree;
+using G3D::AABox;
+using G3D::Vector3;
+using G3D::Ray;
+using G3D::Triangle;
+using G3D::inf;
 
 namespace VMAP
 {
@@ -54,7 +59,7 @@ namespace VMAP
     //==========================================================
     //==========================================================
     const unsigned int SubModel::dumpSize;
-    
+
     SubModel::SubModel(unsigned int pNTriangles, TriangleBox *pTriangles, unsigned int pTrianglesPos, unsigned int pNNodes, TreeNode *pTreeNodes, unsigned int pNodesPos) :
     BaseModel(pNNodes, pTreeNodes, pNTriangles, pTriangles)
     {
@@ -114,7 +119,7 @@ namespace VMAP
         iHasInternalMemAlloc = *((bool *) (((char *) pBinBlock) + BP_iHasInternalMemAlloc));
         iBox =  *((ShortBox *) (((char *) pBinBlock) + BP_iBox));
     }
-    
+
     void SubModel::putToBinBlock(void *pBinBlock)
     {
         // pointers of SubModel are redundant, but existing format expects 2*32bit (8 Bytes)

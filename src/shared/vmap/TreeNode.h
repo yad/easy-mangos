@@ -19,8 +19,7 @@
 #ifndef _TREENODE_H
 #define _TREENODE_H
 
-#include "ShortVector.h"
-#include "ShortBox.h"
+#include "Platform/Define.h"
 #include "NodeValueAccess.h"
 #include "VMapTools.h"
 
@@ -43,15 +42,15 @@ namespace VMAP
         /** Location along the specified axis */
         float iSplitLocation;
         // Offest or the clients
-        int iChilds[2];
+        int32 iChilds[2];
         //Position within the TriangleBox array
-        unsigned int iStartPosition;
+        uint32 iStartPosition;
         G3D::Vector3::Axis iSplitAxis;
         G3D::AABox iBounds;
-        unsigned short iNumberOfValues;
+        uint16 iNumberOfValues;
     public:
         TreeNode() {}
-        TreeNode(unsigned short pNValues, unsigned int pStartPosition)
+        TreeNode(uint16 pNValues, uint32 pStartPosition)
         {
             iChilds[0] = -1;
             iChilds[1] = -1;
@@ -63,7 +62,7 @@ namespace VMAP
 
         TreeNode const* getChild(TreeNode const* pValueArray, int pNo) const;
         // pChildNo = 0 or 1
-        inline void setChildPos(int pChildNo, int pChildPosInTreeNodeArray) { iChilds[pChildNo] = pChildPosInTreeNodeArray; }
+        inline void setChildPos(int32 pChildNo, int32 pChildPosInTreeNodeArray) { iChilds[pChildNo] = pChildPosInTreeNodeArray; }
 
         inline G3D::Vector3::Axis getSplitAxis() const { return(iSplitAxis); }
 
@@ -80,7 +79,7 @@ namespace VMAP
 
         inline unsigned short getNValues() const { return (iNumberOfValues); }
 
-        inline unsigned int getStartPosition() const { return(iStartPosition); }
+        inline uint32 getStartPosition() const { return(iStartPosition); }
 
         inline bool operator==(const TreeNode& n) const
         {
@@ -132,7 +131,7 @@ namespace VMAP
                 }
 
                 // Test for intersection against every object at this node.
-                for (unsigned int v = iStartPosition; v < (iNumberOfValues+iStartPosition); ++v) {
+                for (uint32 v = iStartPosition; v < (iNumberOfValues+iStartPosition); ++v) {
                     const TValue& nodeValue = pNodeValueAccess.getValue(v);
                     bool canHitThisObject = true;
                     if (! intersectCallbackIsFast) {
