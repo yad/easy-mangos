@@ -657,8 +657,6 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
             SendPacket(&data);
             DEBUG_LOG( "WORLD: Sent guild-motd (SMSG_GUILD_EVENT)" );
 
-            guild->DisplayGuildBankTabsInfo(this);
-
             data.Initialize(SMSG_GUILD_EVENT, (5+10));      // we guess size
             data << uint8(GE_SIGNED_ON);
             data << uint8(1);
@@ -666,6 +664,9 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
             data << pCurrChar->GetGUID();
             guild->BroadcastPacket(&data);
             DEBUG_LOG( "WORLD: Sent guild-signed-on (SMSG_GUILD_EVENT)" );
+
+            // Increment online members of the guild
+            guild->IncOnlineMemberCount();
         }
         else
         {

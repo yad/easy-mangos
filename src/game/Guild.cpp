@@ -45,6 +45,9 @@ Guild::Guild()
     m_CreatedMonth = 0;
     m_CreatedDay = 0;
 
+    m_EventLogLoaded = false;
+    m_GuildBankLoaded = false;
+    m_OnlineMembers = 0;
     m_GuildBankMoney = 0;
     m_PurchasedTabs = 0;
 
@@ -1079,7 +1082,6 @@ Item* Guild::GetItem(uint8 TabId, uint8 SlotId)
 
 void Guild::DisplayGuildBankTabsInfo(WorldSession *session)
 {
-
     // Time to load bank if not already done
     if (!m_GuildBankLoaded)
         LoadGuildBankFromDB();

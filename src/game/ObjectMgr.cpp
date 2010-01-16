@@ -3139,9 +3139,10 @@ void ObjectMgr::LoadGuilds()
             delete newGuild;
             continue;
         }
-        newGuild->LoadGuildEventLogFromDB();
-        newGuild->LoadGuildBankEventLogFromDB();
-        newGuild->LoadGuildBankFromDB();
+        //Tassadar(16.1.2010): I think that better is to load it when some guild member need this, not now
+        //newGuild->LoadGuildEventLogFromDB();
+        //newGuild->LoadGuildBankEventLogFromDB();
+        //newGuild->LoadGuildBankFromDB();
         AddGuild(newGuild);
     } while( result->NextRow() );
 
