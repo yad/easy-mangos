@@ -823,6 +823,14 @@ void Guild::UpdateLogoutTime(uint64 guid)
         return;
 
     itr->second.LogoutTime = time(NULL);
+
+    if (m_OnlineMembers > 0)
+        --m_OnlineMembers;
+    else
+    {
+        UnloadGuildBank();
+        UnloadGuildEventLog();
+    }
 }
 
 // *************************************************
@@ -831,6 +839,10 @@ void Guild::UpdateLogoutTime(uint64 guid)
 // Display guild eventlog
 void Guild::DisplayGuildEventLog(WorldSession *session)
 {
+    // Load guild eventlog, if not already done
+    if (!m_EventLogLoaded)
+        LoadGuildEventLogFromDB();
+
     // Sending result
     WorldPacket data(MSG_GUILD_EVENT_LOG_QUERY, 0);
     // count, max count == 100
@@ -857,6 +869,10 @@ void Guild::DisplayGuildEventLog(WorldSession *session)
 // Load guild eventlog from DB
 void Guild::LoadGuildEventLogFromDB()
 {
+    // Return if already loaded
+    if (m_EventLogLoaded)
+        return;
+
     //                                                     0        1          2            3            4        5
     QueryResult *result = CharacterDatabase.PQuery("SELECT LogGuid, EventType, PlayerGuid1, PlayerGuid2, NewRank, TimeStamp FROM guild_eventlog WHERE guildid=%u ORDER BY TimeStamp DESC,LogGuid DESC LIMIT %u", m_Id, GUILD_EVENTLOG_MAX_RECORDS);
     if (!result)
@@ -889,6 +905,18 @@ void Guild::LoadGuildEventLogFromDB()
 
     } while( result->NextRow() );
     delete result;
+
+    m_EventLogLoaded = true;
+}
+
+// Unload guild eventlog
+void Guild::UnloadGuildEventLog()
+{
+    if (!m_EventLogLoaded)
+        return;
+
+    m_GuildEventLog.clear();
+    m_EventLogLoaded = false;
 }
 
 // Add entry to guild eventlog
@@ -1051,6 +1079,11 @@ Item* Guild::GetItem(uint8 TabId, uint8 SlotId)
 
 void Guild::DisplayGuildBankTabsInfo(WorldSession *session)
 {
+
+    // Time to load bank if not already done
+    if (!m_GuildBankLoaded)
+        LoadGuildBankFromDB();
+
     WorldPacket data(SMSG_GUILD_BANK_LIST, 500);
 
     data << uint64(GetGuildBankMoney());
@@ -1111,11 +1144,17 @@ uint32 Guild::GetBankRights(uint32 rankId, uint8 TabId) const
 }
 
 // *************************************************
-// Guild bank loading related
+// Guild bank loading/unloading related
 
-// This load should be called on startup only
+// This load should be called when the bank is first accessed by a guild member
 void Guild::LoadGuildBankFromDB()
 {
+    if (m_GuildBankLoaded)
+        return;
+
+    m_GuildBankLoaded = true;
+    LoadGuildBankEventLogFromDB();
+
     //                                                     0      1        2        3
     QueryResult *result = CharacterDatabase.PQuery("SELECT TabId, TabName, TabIcon, TabText FROM guild_bank_tab WHERE guildid='%u' ORDER BY TabId", m_Id);
     if (!result)
@@ -1191,7 +1230,28 @@ void Guild::LoadGuildBankFromDB()
 
     delete result;
 }
+// This unload should be called when the last member of the guild gets offline
+void Guild::UnloadGuildBank()
+{
+    if (!m_GuildBankLoaded)
+        return;
+    for (uint8 i = 0 ; i < m_PurchasedTabs ; ++i )
+    {
+        for (uint8 j = 0 ; j < GUILD_BANK_MAX_SLOTS ; ++j)
+        {
+            if (m_TabListMap[i]->Slots[j])
+            {
+                m_TabListMap[i]->Slots[j]->RemoveFromWorld();
+                delete m_TabListMap[i]->Slots[j];
+            }
+        }
+        delete m_TabListMap[i];
+    }
+    m_TabListMap.clear();
 
+    UnloadGuildBankEventLog();
+    m_GuildBankLoaded = false;
+}
 // *************************************************
 // Money deposit/withdraw related
 
@@ -1509,7 +1569,13 @@ void Guild::LoadGuildBankEventLogFromDB()
     } while (result->NextRow());
     delete result;
 }
+void Guild::UnloadGuildBankEventLog()
+{
+    m_GuildBankEventLog_Money.clear();
 
+    for (int i = 0; i < GUILD_BANK_MAX_TABS; ++i)
+        m_GuildBankEventLog_Item[i].clear();
+}
 void Guild::DisplayGuildBankLogs(WorldSession *session, uint8 TabId)
 {
     if (TabId > GUILD_BANK_MAX_TABS)
