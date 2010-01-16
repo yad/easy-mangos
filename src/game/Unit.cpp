@@ -8530,7 +8530,10 @@ Totem* Unit::GetTotem( uint8 slot ) const
         return NULL;
 
     Creature *totem = GetMap()->GetCreature(m_TotemSlot[slot]);
-    return totem->isTotem() ? (Totem*)totem : NULL;
+    if(totem)
+        return totem->isTotem() ? (Totem*)totem : NULL;
+    else
+        return NULL;
 }
 
 void Unit::UnsummonAllTotems()
