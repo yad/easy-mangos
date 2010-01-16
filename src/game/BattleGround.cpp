@@ -1851,9 +1851,10 @@ void BattleGround::CheckForArenaPlayersCount()
     if(!isArena())
         return;
 
-    uint32 m_uiAliTeamCount = GetPlayersCountByTeam(BG_TEAM_ALLIANCE);
-    uint32 m_uiHordeTeamCount = GetPlayersCountByTeam(BG_TEAM_HORDE);
-    if(m_uiAliTeamCount < GetArenaType() || m_uiHordeTeamCount < GetArenaType())
+    //uint32 m_uiAliTeamCount = GetPlayersCountByTeam(BG_TEAM_ALLIANCE);
+    //uint32 m_uiHordeTeamCount = GetPlayersCountByTeam(BG_TEAM_HORDE);
+    //if(m_uiAliTeamCount < GetArenaType() || m_uiHordeTeamCount < GetArenaType())
+    if(GetBgMap()->GetPlayers().getSize() < GetArenaType()*2)
     {
         debug_log("Wrong players count in arena, ending...");
         EndNow();
