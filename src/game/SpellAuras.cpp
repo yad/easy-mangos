@@ -1435,6 +1435,13 @@ void Aura::ReapplyAffectedPassiveAuras( Unit* target, bool owner_mode )
 /*********************************************************/
 /***               BASIC AURA FUNCTION                 ***/
 /*********************************************************/
+struct AuraHandleAddModifierHelper
+{
+    explicit AuraHandleAddModifierHelper(Aura* _aura) : aura(_aura) {}
+    void operator()(Unit* unit) const { aura->ReapplyAffectedPassiveAuras(unit, true); }
+    Aura* aura;
+};
+
 void Aura::HandleAddModifier(bool apply, bool Real)
 {
     if(m_target->GetTypeId() != TYPEID_PLAYER || !Real)
@@ -1478,15 +1485,8 @@ void Aura::HandleAddModifier(bool apply, bool Real)
     // reapply talents to own passive persistent auras
     ReapplyAffectedPassiveAuras(m_target, true);
 
-    // re-apply talents/passives/area auras applied to pet (it affected by player spellmods)
-    if(Pet* pet = m_target->GetPet())
-        ReapplyAffectedPassiveAuras(pet, true);
-
-    // re-apply talents/passives/area auras applied to totems (it affected by player spellmods)
-    for(int i = 0; i < MAX_TOTEM; ++i)
-        if(m_target->m_TotemSlot[i])
-            if(Creature* totem = m_target->GetMap()->GetCreature(m_target->m_TotemSlot[i]))
-                ReapplyAffectedPassiveAuras(totem, true);
+    // re-apply talents/passives/area auras applied to pet/totems (it affected by player spellmods)
+    m_target->CallForAllControlledUnits(AuraHandleAddModifierHelper(this),true,false,false);
 
     // re-apply talents/passives/area auras applied to group members (it affected by player spellmods)
     if (Group* group = ((Player*)m_target)->GetGroup())
