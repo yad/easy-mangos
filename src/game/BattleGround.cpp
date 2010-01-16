@@ -461,6 +461,7 @@ void BattleGround::Update(uint32 diff)
                         plr->RemoveAurasDueToSpell(SPELL_ARENA_PREPARATION);
 
                 CheckArenaWinConditions();
+                CheckForArenaPlayersCount();   // if some player were NOT ported to arena
             }
             else
             {
@@ -1843,4 +1844,18 @@ void BattleGround::SetBracket( PvPDifficultyEntry const* bracketEntry )
 {
     m_BracketId  = bracketEntry->GetBracketId();
     SetLevelRange(bracketEntry->minLevel,bracketEntry->maxLevel);
+}
+
+void BattleGround::CheckForArenaPlayersCount()
+{
+    if(!isArena())
+        return;
+
+    uint32 m_uiAliTeamCount = GetPlayersCountByTeam(BG_TEAM_ALLIANCE);
+    uint32 m_uiHordeTeamCount = GetPlayersCountByTeam(BG_TEAM_HORDE);
+    if(m_uiAliTeamCount < GetArenaType() || m_uiHordeTeamCount < GetArenaType())
+    {
+        debug_log("Wrong players count in arena, ending...");
+        EndNow();
+    }
 }
