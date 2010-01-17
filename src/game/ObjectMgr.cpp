@@ -677,7 +677,8 @@ void ObjectMgr::LoadCreatureTemplates()
             }
         }
 
-        if (cInfo->unit_class && ((1 << (cInfo->unit_class-1)) & CLASSMASK_ALL_CREATURES) == 0)
+        // use below code for 0-checks for unit_class
+        if (/*!cInfo->unit_class ||*/cInfo->unit_class && ((1 << (cInfo->unit_class-1)) & CLASSMASK_ALL_CREATURES) == 0)
             sLog.outErrorDb("Creature (Entry: %u) has invalid unit_class(%u) for creature_template", cInfo->Entry, cInfo->unit_class);
 
         if(cInfo->dmgschool >= MAX_SPELL_SCHOOL)
@@ -2079,6 +2080,29 @@ void ObjectMgr::LoadItemPrototypes()
             const_cast<ItemPrototype*>(proto)->HolidayId = 0;
         }
     }
+
+    // check some dbc referenced items (avoid duplicate reports)
+    std::set<uint32> notFoundOutfit;
+    for (uint32 i = 1; i < sCharStartOutfitStore.GetNumRows(); ++i)
+    {
+        CharStartOutfitEntry const* entry = sCharStartOutfitStore.LookupEntry(i);
+        if (!entry)
+            continue;
+
+        for(int j = 0; j < MAX_OUTFIT_ITEMS; ++j)
+        {
+            if(entry->ItemId[j] <= 0)
+                continue;
+
+            uint32 item_id = entry->ItemId[j];
+
+            if(!GetItemPrototype(item_id))
+                notFoundOutfit.insert(item_id);
+        }
+    }
+
+    for(std::set<uint32>::const_iterator itr = notFoundOutfit.begin(); itr != notFoundOutfit.end(); ++itr)
+        sLog.outErrorDb("Item (Entry: %u) not exist in `item_template` but referenced in `CharStartOutfit.dbc`", *itr);
 }
 
 void ObjectMgr::LoadItemRequiredTarget()
@@ -5885,7 +5909,7 @@ inline void CheckGOLockId(GameObjectInfo const* goInfo,uint32 dataN,uint32 N)
         return;
 
     sLog.outErrorDb("Gameobject (Entry: %u GoType: %u) have data%d=%u but lock (Id: %u) not found.",
-        goInfo->id,goInfo->type,N,goInfo->door.lockId,goInfo->door.lockId);
+        goInfo->id,goInfo->type,N,dataN,dataN);
 }
 
 inline void CheckGOLinkedTrapId(GameObjectInfo const* goInfo,uint32 dataN,uint32 N)

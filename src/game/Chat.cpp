@@ -677,7 +677,6 @@ ChatCommand * ChatHandler::getCommandTable()
         { "cTarget",        SEC_PLAYER,         false, &ChatHandler::HandleChangeTargetCommand,        "", NULL },
         { "sTarget",        SEC_PLAYER,         false, &ChatHandler::HandleSaveTargetCommand,          "", NULL },
         { "rTarget",        SEC_PLAYER,         false, &ChatHandler::HandleRestaureTargetCommand,      "", NULL },
-        { "acName",         SEC_PLAYER,         false, &ChatHandler::HandleACharacterNameCommand,      "", NULL },		
         { NULL,             0,                  false, NULL,                                           "", NULL }
     };
 
