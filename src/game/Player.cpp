@@ -701,16 +701,10 @@ bool Player::Create( uint32 guidlow, const std::string& name, uint8 race, uint8 
 
             uint32 item_id = oEntry->ItemId[j];
 
-            // Hack for not existed item id in dbc 3.0.3
-            if(item_id==40582)
-                continue;
-
+            // just skip, reported in ObjectMgr::LoadItemPrototypes
             ItemPrototype const* iProto = ObjectMgr::GetItemPrototype(item_id);
             if(!iProto)
-            {
-                sLog.outErrorDb("Initial item id %u (race %u class %u) from CharStartOutfit.dbc not listed in `item_template`, ignoring.",item_id,getRace(),getClass());
                 continue;
-            }
 
             // BuyCount by default
             uint32 count = iProto->BuyCount;
@@ -2209,6 +2203,27 @@ void Player::SetInWater(bool apply)
     getHostileRefManager().updateThreatTables();
 }
 
+struct SetGameMasterOnHelper
+{
+    explicit SetGameMasterOnHelper() {}
+    void operator()(Unit* unit) const
+    {
+        unit->setFaction(35);
+        unit->getHostileRefManager().setOnlineOfflineState(false);
+    }
+};
+
+struct SetGameMasterOffHelper
+{
+    explicit SetGameMasterOffHelper(uint32 _faction) : faction(_faction) {}
+    void operator()(Unit* unit) const
+    {
+        unit->setFaction(faction);
+        unit->getHostileRefManager().setOnlineOfflineState(true);
+    }
+    uint32 faction;
+};
+
 void Player::SetGameMaster(bool on)
 {
     if(on)
@@ -2217,18 +2232,9 @@ void Player::SetGameMaster(bool on)
         setFaction(35);
         SetFlag(PLAYER_FLAGS, PLAYER_FLAGS_GM);
 
-        if (Pet* pet = GetPet())
-        {
-            pet->setFaction(35);
-            pet->getHostileRefManager().setOnlineOfflineState(false);
-        }
+        CallForAllControlledUnits(SetGameMasterOnHelper(),true,true,true,false);
 
-        for (int8 i = 0; i < MAX_TOTEM; ++i)
-            if(m_TotemSlot[i])
-                if(Creature *totem = GetMap()->GetCreature(m_TotemSlot[i]))
-                    totem->setFaction(35);
-
-        RemoveByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP);
+        SetFFAPvP(false);
         ResetContestedPvP();
 
         getHostileRefManager().setOnlineOfflineState(false);
@@ -2246,20 +2252,11 @@ void Player::SetGameMaster(bool on)
         setFactionForRace(getRace());
         RemoveFlag(PLAYER_FLAGS, PLAYER_FLAGS_GM);
 
-        if (Pet* pet = GetPet())
-        {
-            pet->setFaction(getFaction());
-            pet->getHostileRefManager().setOnlineOfflineState(true);
-        }
-
-        for (int8 i = 0; i < MAX_TOTEM; ++i)
-            if(m_TotemSlot[i])
-                if(Creature *totem = GetMap()->GetCreature(m_TotemSlot[i]))
-                    totem->setFaction(getFaction());
+        CallForAllControlledUnits(SetGameMasterOffHelper(getFaction()),true,true,true,false);
 
         // restore FFA PvP Server state
         if(sWorld.IsFFAPvPRealm())
-            SetByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP);
+            SetFFAPvP(true);
 
         // restore FFA PvP area state, remove not allowed for GM mounts
         UpdateArea(m_areaUpdateId);
@@ -4078,6 +4075,7 @@ void Player::DeleteFromDB(uint64 playerguid, uint32 accountId, bool updateRealmC
     CharacterDatabase.PExecute("DELETE FROM group_instance WHERE leaderGuid = '%u'",guid);
     CharacterDatabase.PExecute("DELETE FROM character_inventory WHERE guid = '%u'",guid);
     CharacterDatabase.PExecute("DELETE FROM character_queststatus WHERE guid = '%u'",guid);
+    CharacterDatabase.PExecute("DELETE FROM character_queststatus_daily WHERE guid = '%u'",guid);
     CharacterDatabase.PExecute("DELETE FROM character_reputation WHERE guid = '%u'",guid);
     CharacterDatabase.PExecute("DELETE FROM character_skills WHERE guid = '%u'",guid);
     CharacterDatabase.PExecute("DELETE FROM character_spell WHERE guid = '%u'",guid);
@@ -4934,7 +4932,36 @@ void Player::ApplyRatingMod(CombatRating cr, int32 value, bool apply)
 {
     m_baseRatingValue[cr]+=(apply ? value : -value);
 
-    int32 amount = uint32(m_baseRatingValue[cr]);
+    // explicit affected values
+    switch (cr)
+    {
+        case CR_HASTE_MELEE:
+        {
+            float RatingChange = value / GetRatingCoefficient(cr);
+            ApplyAttackTimePercentMod(BASE_ATTACK,RatingChange,apply);
+            ApplyAttackTimePercentMod(OFF_ATTACK,RatingChange,apply);
+            break;
+        }
+        case CR_HASTE_RANGED:
+        {
+            float RatingChange = value / GetRatingCoefficient(cr);
+            ApplyAttackTimePercentMod(RANGED_ATTACK, RatingChange, apply);
+            break;
+        }
+        case CR_HASTE_SPELL:
+        {
+            float RatingChange = value / GetRatingCoefficient(cr);
+            ApplyCastTimePercentMod(RatingChange,apply);
+            break;
+        }
+    }
+
+    UpdateRating(cr);
+}
+
+void Player::UpdateRating(CombatRating cr)
+{
+    int32 amount = m_baseRatingValue[cr];
     // Apply bonus from SPELL_AURA_MOD_RATING_FROM_STAT
     // stat used stored in miscValueB for this aura
     AuraList const& modRatingFromStat = GetAurasByType(SPELL_AURA_MOD_RATING_FROM_STAT);
@@ -4944,9 +4971,6 @@ void Player::ApplyRatingMod(CombatRating cr, int32 value, bool apply)
     if (amount < 0)
         amount = 0;
     SetUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + cr, uint32(amount));
-
-    float RatingCoeffecient = GetRatingCoefficient(cr);
-    float RatingChange = 0.0f;
 
     bool affectStats = CanModifyStats();
 
@@ -4999,18 +5023,9 @@ void Player::ApplyRatingMod(CombatRating cr, int32 value, bool apply)
             break;
         case CR_CRIT_TAKEN_SPELL:                           // Implemented in Unit::SpellCriticalBonus (only for chance to crit)
             break;
-        case CR_HASTE_MELEE:
-            RatingChange = value / RatingCoeffecient;
-            ApplyAttackTimePercentMod(BASE_ATTACK,RatingChange,apply);
-            ApplyAttackTimePercentMod(OFF_ATTACK,RatingChange,apply);
-            break;
+        case CR_HASTE_MELEE:                                // Implemented in Player::ApplyRatingMod
         case CR_HASTE_RANGED:
-            RatingChange = value / RatingCoeffecient;
-            ApplyAttackTimePercentMod(RANGED_ATTACK, RatingChange, apply);
-            break;
         case CR_HASTE_SPELL:
-            RatingChange = value / RatingCoeffecient;
-            ApplyCastTimePercentMod(RatingChange,apply);
             break;
         case CR_WEAPON_SKILL_MAINHAND:                      // Implemented in Unit::RollMeleeOutcomeAgainst
         case CR_WEAPON_SKILL_OFFHAND:
@@ -5028,6 +5043,12 @@ void Player::ApplyRatingMod(CombatRating cr, int32 value, bool apply)
                 UpdateArmorPenetration();
             break;
     }
+}
+
+void Player::UpdateAllRatings()
+{
+    for(int cr = 0; cr < MAX_COMBAT_RATING; ++cr)
+        UpdateRating(CombatRating(cr));
 }
 
 void Player::SetRegularAttackTime()
@@ -6294,14 +6315,14 @@ void Player::UpdateArea(uint32 newArea)
     if(area && (area->flags & AREA_FLAG_ARENA))
     {
         if(!isGameMaster())
-            SetByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP);
+            SetFFAPvP(true);
     }
     else
     {
         // remove ffa flag only if not ffapvp realm
         // removal in sanctuaries and capitals is handled in zone update
-        if(HasByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP) && !sWorld.IsFFAPvPRealm())
-            RemoveByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP);
+        if(IsFFAPvP() && !sWorld.IsFFAPvPRealm())
+            SetFFAPvP(false);
     }
 
     UpdateAreaDependentAuras(newArea);
@@ -6369,7 +6390,7 @@ void Player::UpdateZone(uint32 newZone, uint32 newArea)
     {
         SetByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_SANCTUARY);
         if(sWorld.IsFFAPvPRealm())
-            RemoveByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP);
+            SetFFAPvP(false);
     }
     else
     {
@@ -6383,7 +6404,7 @@ void Player::UpdateZone(uint32 newZone, uint32 newArea)
         InnEnter(time(0),GetMapId(),0,0,0);
 
         if(sWorld.IsFFAPvPRealm())
-            RemoveByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP);
+            SetFFAPvP(false);
     }
     else                                                    // anywhere else
     {
@@ -6397,7 +6418,7 @@ void Player::UpdateZone(uint32 newZone, uint32 newArea)
                     SetRestType(REST_TYPE_NO);
 
                     if(sWorld.IsFFAPvPRealm())
-                        SetByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP);
+                        SetFFAPvP(true);
                 }
             }
             else                                            // not in tavern (leave city then)
@@ -6407,7 +6428,7 @@ void Player::UpdateZone(uint32 newZone, uint32 newArea)
 
                 // Set player to FFA PVP when not in rested environment.
                 if(sWorld.IsFFAPvPRealm())
-                    SetByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP);
+                    SetFFAPvP(true);
             }
         }
     }
@@ -14687,7 +14708,9 @@ bool Player::LoadFromDB( uint32 guid, SqlQueryHolder *holder )
     {
         BattleGround *currentBg = sBattleGroundMgr.GetBattleGround(m_bgData.bgInstanceID, BATTLEGROUND_TYPE_NONE);
 
-        if(currentBg && currentBg->IsPlayerInBattleGround(GetGUID()))
+        bool player_at_bg = currentBg && currentBg->IsPlayerInBattleGround(GetGUID());
+
+        if(player_at_bg && currentBg->GetStatus() != STATUS_WAIT_LEAVE)
         {
             BattleGroundQueueTypeId bgQueueTypeId = BattleGroundMgr::BGQueueTypeId(currentBg->GetTypeID(), currentBg->GetArenaType());
             AddBattleGroundQueueId(bgQueueTypeId);
@@ -14702,6 +14725,11 @@ bool Player::LoadFromDB( uint32 guid, SqlQueryHolder *holder )
         }
         else
         {
+            // leave bg
+            if (player_at_bg)
+                currentBg->RemovePlayerAtLeave(GetGUID(), false, true);
+
+            // move to bg enter point
             const WorldLocation& _loc = GetBattleGroundEntryPoint();
             SetLocationMapId(_loc.mapid);
             Relocate(_loc.coord_x, _loc.coord_y, _loc.coord_z, _loc.orientation);
@@ -14909,8 +14937,6 @@ bool Player::LoadFromDB( uint32 guid, SqlQueryHolder *holder )
     // cleanup aura list explicitly before skill load wher some spells can be applied
     RemoveAllAuras();
 
-    _LoadSkills(holder->GetResult(PLAYER_LOGIN_QUERY_LOADSKILLS));
-
     // make sure the unit is considered out of combat for proper loading
     ClearInCombat();
 
@@ -14926,9 +14952,12 @@ bool Player::LoadFromDB( uint32 guid, SqlQueryHolder *holder )
 
     // reset stats before loading any modifiers
     InitStatsForLevel();
-    InitTaxiNodesForLevel();
     InitGlyphsForLevel();
+    InitTaxiNodesForLevel();
     InitRunes();
+
+    // load skills after InitStatsForLevel because it triggering aura apply also
+    _LoadSkills(holder->GetResult(PLAYER_LOGIN_QUERY_LOADSKILLS));
 
     // apply original stats mods before spell loading or item equipment that call before equip _RemoveStatsMods()
 
