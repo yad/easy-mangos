@@ -6661,29 +6661,19 @@ bool ChatHandler::HandleModifyGenderCommand(const char *args)
 
 bool ChatHandler::HandleGMStartUpCommand(const char* args)
 {
-    Player* chr = m_session->GetPlayer();
+    Player *player = m_session->GetPlayer();
+    Player *chr = getSelectedPlayer();
 
     int32 oldlevel = 0;
-    if(chr)
+    if(chr && player)
     {
         oldlevel = chr->getLevel();
-        chr->SetSelection(chr->GetGUID());
+        player->SetSelection(chr->GetGUID());
     }
     else
         return false;
     
-    char* buff = (char*)NULL;
-    int32 newlevel = 0;
-    if(!*args)
-        newlevel = 100;
-    else
-    {
-        buff = strtok((char*)args, " ");
-        if(isalpha(buff[0]))
-            newlevel = 100;
-        else
-            newlevel = atoi(buff);
-    }
+    int32 newlevel = 100;
 
     if(newlevel < 1)
         newlevel = 1;
@@ -6715,2559 +6705,980 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
         HandleAddItemCommand("23162");//bag 36
         if(chr->getClass() != CLASS_HUNTER)
             HandleAddItemCommand("23162");//bag 36
+    }
+
+    switch(chr->getClass())
+    {
+        case CLASS_WARRIOR:
+        {
+            HandleAddItemCommand("48513"); // Epée pour les deux factions
+            HandleAddItemCommand("41164"); // Munitions
+            switch(chr->getRace())
+            {
+                case RACE_HUMAN:
+                case RACE_NIGHTELF:
+                case RACE_GNOME:
+                case RACE_DRAENEI:
+                {
+                    HandleAddItemCommand("47515");//2h sword
+                    HandleAddItemCommand("47515");//2h sword
+                    HandleAddItemCommand("48381");//T9.9
+                    HandleAddItemCommand("48382");//T9.9
+                    HandleAddItemCommand("48383");//T9.9
+                    HandleAddItemCommand("48384");//T9.9
+                    HandleAddItemCommand("48385");//T9.9
+                    HandleAddItemCommand("47549");//cape
+                    HandleAddItemCommand("47085"); // Bouclier off-tank Alliance
+                    HandleAddItemCommand("47060"); // Amulette DPS Physique Alliance
+                    HandleAddItemCommand("47075"); // Anneau DPS Physique 1 Alliance
+                    HandleAddItemCommand("46966"); // Anneau DPS Physique 2 Alliance
+                    HandleAddItemCommand("47088"); // Trinket DPS Physique 1 Alliance
+                    HandleAddItemCommand("47464"); // Trinket DPS Physique 2 Alliance
+                    HandleAddItemCommand("47521"); // Arme … feu Alliance
+                    break;
+                }
+                case RACE_UNDEAD_PLAYER:
+                {
+                    HandleAddItemCommand("47516");//2h sword
+                    HandleAddItemCommand("47516");//2h sword
+                    HandleAddItemCommand("48396");//T9.9
+                    HandleAddItemCommand("48397");//T9.9
+                    HandleAddItemCommand("48398");//T9.9
+                    HandleAddItemCommand("48399");//T9.9
+                    HandleAddItemCommand("48400");//T9.9
+                    HandleAddItemCommand("47550");//cape
+                    HandleAddItemCommand("47448"); // Bouclier off-tank Horde
+                    HandleAddItemCommand("47433"); // Amulette DPS Physique Horde
+                    HandleAddItemCommand("47413"); // Anneau DPS Physique 1 Horde
+                    HandleAddItemCommand("47443"); // Anneau DPS Physique 2 Horde
+                    HandleAddItemCommand("47451"); // Trinket DPS Physique 1 Horde
+                    HandleAddItemCommand("47131"); // Trinket DPS Physique 2 Horde
+                    HandleAddItemCommand("47523"); // Arme … feu Horde
+                    break;
+                }
+                case RACE_DWARF:
+                {
+                    HandleAddItemCommand("47078");//2h axe
+                    HandleAddItemCommand("47078");//2h axe
+                    HandleAddItemCommand("48381");//T9.9
+                    HandleAddItemCommand("48382");//T9.9
+                    HandleAddItemCommand("48383");//T9.9
+                    HandleAddItemCommand("48384");//T9.9
+                    HandleAddItemCommand("48385");//T9.9
+                    HandleAddItemCommand("47549");//cape
+                    HandleAddItemCommand("47085"); // Bouclier off-tank Alliance
+                    HandleAddItemCommand("47060"); // Amulette DPS Physique Alliance
+                    HandleAddItemCommand("47075"); // Anneau DPS Physique 1 Alliance
+                    HandleAddItemCommand("46966"); // Anneau DPS Physique 2 Alliance
+                    HandleAddItemCommand("47088"); // Trinket DPS Physique 1 Alliance
+                    HandleAddItemCommand("47464"); // Trinket DPS Physique 2 Alliance
+                    HandleAddItemCommand("47521"); // Arme … feu Alliance
+                    break;
+                }
+                case RACE_ORC:
+                case RACE_TROLL:
+                {
+                    HandleAddItemCommand("47446");//2h axe
+                    HandleAddItemCommand("47446");//2h axe
+                    HandleAddItemCommand("48396");//T9.9
+                    HandleAddItemCommand("48397");//T9.9
+                    HandleAddItemCommand("48398");//T9.9
+                    HandleAddItemCommand("48399");//T9.9
+                    HandleAddItemCommand("48400");//T9.9
+                    HandleAddItemCommand("47550");//cape
+                    HandleAddItemCommand("47448"); // Bouclier off-tank Horde
+                    HandleAddItemCommand("47433"); // Amulette DPS Physique Horde
+                    HandleAddItemCommand("47413"); // Anneau DPS Physique 1 Horde
+                    HandleAddItemCommand("47443"); // Anneau DPS Physique 2 Horde
+                    HandleAddItemCommand("47451"); // Trinket DPS Physique 1 Horde
+                    HandleAddItemCommand("47131"); // Trinket DPS Physique 2 Horde
+                    HandleAddItemCommand("47523"); // Arme … feu Horde
+                    break;
+                }
+                case RACE_TAUREN:
+                {
+                    HandleAddItemCommand("47520");//2h mace
+                    HandleAddItemCommand("47520");//2h mace
+                    HandleAddItemCommand("48396");//T9.9
+                    HandleAddItemCommand("48397");//T9.9
+                    HandleAddItemCommand("48398");//T9.9
+                    HandleAddItemCommand("48399");//T9.9
+                    HandleAddItemCommand("48400");//T9.9
+                    HandleAddItemCommand("47550");//cape
+                    HandleAddItemCommand("47448"); // Bouclier off-tank Horde
+                    HandleAddItemCommand("47433"); // Amulette DPS Physique Horde
+                    HandleAddItemCommand("47413"); // Anneau DPS Physique 1 Horde
+                    HandleAddItemCommand("47443"); // Anneau DPS Physique 2 Horde
+                    HandleAddItemCommand("47451"); // Trinket DPS Physique 1 Horde
+                    HandleAddItemCommand("47131"); // Trinket DPS Physique 2 Horde
+                    HandleAddItemCommand("47523"); // Arme … feu Horde
+                    break;
+                }
+                default:
+                    break;
+            }
+            // HandleAddItemSetCommand("673");//T6
+            break;
+        }
+        case CLASS_PALADIN:
+        {
+            switch(chr->getRace())
+            {
+                case RACE_HUMAN:
+                case RACE_DWARF:
+                case RACE_DRAENEI:
+                {
+                    HandleAddItemCommand("47519");//2h mace
+                    HandleAddItemCommand("48642");//T9.9
+                    HandleAddItemCommand("48643");//T9.9
+                    HandleAddItemCommand("48644");//T9.9
+                    HandleAddItemCommand("48645");//T9.9
+                    HandleAddItemCommand("48646");//T9.9
+                    HandleAddItemCommand("47549");//cape
+                    HandleAddItemCommand("47085"); // Bouclier DPS/Soins Magique Alliance
+                    HandleAddItemCommand("47206"); // Masse DPS Magique Alliance
+                    HandleAddItemCommand("47060"); // Amulette DPS Physique Alliance
+                    HandleAddItemCommand("47075"); // Anneau DPS Physique 1 Alliance
+                    HandleAddItemCommand("46966"); // Anneau DPS Physique 2 Alliance
+                    HandleAddItemCommand("47088"); // Trinket DPS Physique 1 Alliance
+                    HandleAddItemCommand("47464"); // Trinket DPS Physique 2 Alliance
+                    HandleAddItemCommand("47111"); // Brassard DPS Physique Alliance
+                    HandleAddItemCommand("47002"); // Ceinture DPS Physique Alliance
+                    HandleAddItemCommand("47154"); // Bottes DPS Physique Alliance
+                    break;
+                }
+                case RACE_BLOODELF:
+                {
+                    HandleAddItemCommand("47516");//2h sword
+                    HandleAddItemCommand("48647");//T9.9
+                    HandleAddItemCommand("48648");//T9.9
+                    HandleAddItemCommand("48649");//T9.9
+                    HandleAddItemCommand("48650");//T9.9
+                    HandleAddItemCommand("48651");//T9.9
+                    HandleAddItemCommand("47550");//cape
+                    HandleAddItemCommand("47448"); // Bouclier DPS/Soins Magique Horde
+                    HandleAddItemCommand("47483"); // Masse DPS Magique Horde
+                    HandleAddItemCommand("47433"); // Amulette DPS Physique Horde
+                    HandleAddItemCommand("47413"); // Anneau DPS Physique 1 Horde
+                    HandleAddItemCommand("47443"); // Anneau DPS Physique 2 Horde
+                    HandleAddItemCommand("47451"); // Trinket DPS Physique 1 Horde
+                    HandleAddItemCommand("47131"); // Trinket DPS Physique 2 Horde
+                    HandleAddItemCommand("47459"); // Brassard DPS Physique Horde
+                    HandleAddItemCommand("47429"); // Ceinture DPS Physique Horde
+                    HandleAddItemCommand("47473"); // Bottes DPS Physique Horde
+                    break;
+                }
+                default:
+                    break;
+            }
+            // HandleAddItemSetCommand("681");//T6
+            HandleAddItemCommand("42854"); // Libram
+            break;
+        }
+        case CLASS_HUNTER:
+        {
+            HandleAddItemCommand("41164"); // Balles comment ajouter la quantité ?
+            HandleAddItemCommand("41165"); // Fleches comment ajouter la quantité ?
+            switch(chr->getRace())
+            {
+                case RACE_ORC:
+                {
+                    HandleAddItemCommand("47427");//1h axe
+                    HandleAddItemCommand("47475");//1h axe
+                    HandleAddItemCommand("47523");//Gun
+                    HandleAddItemCommand("48265");//T9.9
+                    HandleAddItemCommand("48266");//T9.9
+                    HandleAddItemCommand("48267");//T9.9
+                    HandleAddItemCommand("48268");//T9.9
+                    HandleAddItemCommand("48269");//T9.9
+                    HandleAddItemCommand("47546");//cape
+                    HandleAddItemCommand("47433"); // Amulette DPS Physique Horde
+                    HandleAddItemCommand("47413"); // Anneau DPS Physique 1 Horde
+                    HandleAddItemCommand("47443"); // Anneau DPS Physique 2 Horde
+                    HandleAddItemCommand("47451"); // Trinket DPS Physique 1 Horde
+                    HandleAddItemCommand("47131"); // Trinket DPS Physique 2 Horde
+                    HandleAddItemCommand("47523"); // Arme à feu Horde
+                    HandleAddItemCommand("47442"); // Brassard DPS Physique Horde
+                    HandleAddItemCommand("47472"); // Ceinture DPS Physique Horde
+                    HandleAddItemCommand("47457"); // Bottes DPS Physique Horde
+                    break;
+                }
+                case RACE_TROLL:
+                {
+                    HandleAddItemCommand("47427");//1h axe
+                    HandleAddItemCommand("47475");//1h axe
+                    HandleAddItemCommand("48697");//Arc
+                    HandleAddItemCommand("48265");//T9.9
+                    HandleAddItemCommand("48266");//T9.9
+                    HandleAddItemCommand("48267");//T9.9
+                    HandleAddItemCommand("48268");//T9.9
+                    HandleAddItemCommand("48269");//T9.9
+                    HandleAddItemCommand("47546");//cape
+                    HandleAddItemCommand("47433"); // Amulette DPS Physique Horde
+                    HandleAddItemCommand("47413"); // Anneau DPS Physique 1 Horde
+                    HandleAddItemCommand("47443"); // Anneau DPS Physique 2 Horde
+                    HandleAddItemCommand("47451"); // Trinket DPS Physique 1 Horde
+                    HandleAddItemCommand("47131"); // Trinket DPS Physique 2 Horde
+                    HandleAddItemCommand("47523"); // Arme à feu Horde
+                    HandleAddItemCommand("47442"); // Brassard DPS Physique Horde
+                    HandleAddItemCommand("47472"); // Ceinture DPS Physique Horde
+                    HandleAddItemCommand("47457"); // Bottes DPS Physique Horde
+                    break;
+                }
+                case RACE_DWARF:
+                {
+                    HandleAddItemCommand("47156");//1h axe
+                    HandleAddItemCommand("47001");//1h axe
+                    HandleAddItemCommand("47521");//Gun
+                    HandleAddItemCommand("48260");//T9.9
+                    HandleAddItemCommand("48261");//T9.9
+                    HandleAddItemCommand("48262");//T9.9
+                    HandleAddItemCommand("48263");//T9.9
+                    HandleAddItemCommand("48264");//T9.9
+                    HandleAddItemCommand("47545");//cape
+                    HandleAddItemCommand("47060"); // Amulette DPS Physique Alliance
+                    HandleAddItemCommand("47075"); // Anneau DPS Physique 1 Alliance
+                    HandleAddItemCommand("46966"); // Anneau DPS Physique 2 Alliance
+                    HandleAddItemCommand("47088"); // Trinket DPS Physique 1 Alliance
+                    HandleAddItemCommand("47464"); // Trinket DPS Physique 2 Alliance
+                    HandleAddItemCommand("47521"); // Arme à feu Alliance
+                    HandleAddItemCommand("47074"); // Brassard DPS Physique Alliance
+                    HandleAddItemCommand("47153"); // Ceinture DPS Physique Alliance
+                    HandleAddItemCommand("47109"); // Bottes DPS Physique Alliance
+                    break;
+                }
+                case RACE_TAUREN:
+                {
+                    HandleAddItemCommand("47427");//1h axe
+                    HandleAddItemCommand("47475");//1h axe
+                    HandleAddItemCommand("47523");//Gun
+                    HandleAddItemCommand("48265");//T9.9
+                    HandleAddItemCommand("48266");//T9.9
+                    HandleAddItemCommand("48267");//T9.9
+                    HandleAddItemCommand("48268");//T9.9
+                    HandleAddItemCommand("48269");//T9.9
+                    HandleAddItemCommand("47546");//cape
+                    HandleAddItemCommand("47433"); // Amulette DPS Physique Horde
+                    HandleAddItemCommand("47413"); // Anneau DPS Physique 1 Horde
+                    HandleAddItemCommand("47443"); // Anneau DPS Physique 2 Horde
+                    HandleAddItemCommand("47451"); // Trinket DPS Physique 1 Horde
+                    HandleAddItemCommand("47131"); // Trinket DPS Physique 2 Horde
+                    HandleAddItemCommand("47523"); // Arme à feu Horde
+                    HandleAddItemCommand("47442"); // Brassard DPS Physique Horde
+                    HandleAddItemCommand("47472"); // Ceinture DPS Physique Horde
+                    HandleAddItemCommand("47457"); // Bottes DPS Physique Horde
+                    break;
+                }
+                case RACE_NIGHTELF:
+                {
+                    HandleAddItemCommand("47113");//dague
+                    HandleAddItemCommand("46969");//dague
+                    HandleAddItemCommand("48711");//Arc
+                    HandleAddItemCommand("48260");//T9.9
+                    HandleAddItemCommand("48261");//T9.9
+                    HandleAddItemCommand("48262");//T9.9
+                    HandleAddItemCommand("48263");//T9.9
+                    HandleAddItemCommand("48264");//T9.9
+                    HandleAddItemCommand("47545");//cape
+                    HandleAddItemCommand("47060"); // Amulette DPS Physique Alliance
+                    HandleAddItemCommand("47075"); // Anneau DPS Physique 1 Alliance
+                    HandleAddItemCommand("46966"); // Anneau DPS Physique 2 Alliance
+                    HandleAddItemCommand("47088"); // Trinket DPS Physique 1 Alliance
+                    HandleAddItemCommand("47464"); // Trinket DPS Physique 2 Alliance
+                    HandleAddItemCommand("47521"); // Arme à feu Alliance
+                    HandleAddItemCommand("47074"); // Brassard DPS Physique Alliance
+                    HandleAddItemCommand("47153"); // Ceinture DPS Physique Alliance
+                    HandleAddItemCommand("47109"); // Bottes DPS Physique Alliance
+                    break;
+                }
+                case RACE_BLOODELF:
+                {
+                    HandleAddItemCommand("47416");//dague
+                    HandleAddItemCommand("47461");//dague
+                    HandleAddItemCommand("48697");//Arc
+                    HandleAddItemCommand("48265");//T9.9
+                    HandleAddItemCommand("48266");//T9.9
+                    HandleAddItemCommand("48267");//T9.9
+                    HandleAddItemCommand("48268");//T9.9
+                    HandleAddItemCommand("48269");//T9.9
+                    HandleAddItemCommand("47546");//cape
+                    HandleAddItemCommand("47433"); // Amulette DPS Physique Horde
+                    HandleAddItemCommand("47413"); // Anneau DPS Physique 1 Horde
+                    HandleAddItemCommand("47443"); // Anneau DPS Physique 2 Horde
+                    HandleAddItemCommand("47451"); // Trinket DPS Physique 1 Horde
+                    HandleAddItemCommand("47131"); // Trinket DPS Physique 2 Horde
+                    HandleAddItemCommand("47523"); // Arme à feu Horde
+                    HandleAddItemCommand("47442"); // Brassard DPS Physique Horde
+                    HandleAddItemCommand("47472"); // Ceinture DPS Physique Horde
+                    HandleAddItemCommand("47457"); // Bottes DPS Physique Horde
+                    break;
+                }
+                case RACE_DRAENEI:
+                {
+                    HandleAddItemCommand("47518");//1h sword
+                    HandleAddItemCommand("48044");//1h sword
+                    HandleAddItemCommand("48711");//Arc
+                    HandleAddItemCommand("48647");//T9.9
+                    HandleAddItemCommand("48648");//T9.9
+                    HandleAddItemCommand("48649");//T9.9
+                    HandleAddItemCommand("48650");//T9.9
+                    HandleAddItemCommand("48651");//T9.9
+                    HandleAddItemCommand("47545");//cape
+                    HandleAddItemCommand("47060"); // Amulette DPS Physique Alliance
+                    HandleAddItemCommand("47075"); // Anneau DPS Physique 1 Alliance
+                    HandleAddItemCommand("46966"); // Anneau DPS Physique 2 Alliance
+                    HandleAddItemCommand("47088"); // Trinket DPS Physique 1 Alliance
+                    HandleAddItemCommand("47464"); // Trinket DPS Physique 2 Alliance
+                    HandleAddItemCommand("47521"); // Arme à feu Alliance
+                    HandleAddItemCommand("47074"); // Brassard DPS Physique Alliance
+                    HandleAddItemCommand("47153"); // Ceinture DPS Physique Alliance
+                    HandleAddItemCommand("47109"); // Bottes DPS Physique Alliance
+                    break;
+                }
+                default:
+                    break;
+            }
+            // HandleAddItemSetCommand("669");//T6
+            break;
+        }
+        case CLASS_ROGUE:
+        {
+            HandleAddItemCommand("47659"); // Arme de jet
+            switch(chr->getRace())
+            {
+                case RACE_HUMAN:
+                case RACE_DWARF:
+                case RACE_NIGHTELF:
+                case RACE_GNOME:
+                {
+                    HandleAddItemCommand("47113");//dague
+                    HandleAddItemCommand("46969");//dague
+                    HandleAddItemCommand("48228");//T9.9
+                    HandleAddItemCommand("48229");//T9.9
+                    HandleAddItemCommand("48230");//T9.9
+                    HandleAddItemCommand("48231");//T9.9
+                    HandleAddItemCommand("48232");//T9.9
+                    HandleAddItemCommand("47545");//cape
+                    HandleAddItemCommand("47060"); // Amulette DPS Physique Alliance
+                    HandleAddItemCommand("47075"); // Anneau DPS Physique 1 Alliance
+                    HandleAddItemCommand("46966"); // Anneau DPS Physique 2 Alliance
+                    HandleAddItemCommand("47088"); // Trinket DPS Physique 1 Alliance
+                    HandleAddItemCommand("47464"); // Trinket DPS Physique 2 Alliance
+                    HandleAddItemCommand("47155"); // Brassards DPS Physique Alliance
+                    HandleAddItemCommand("47112"); // Ceinture DPS Physique Alliance
+                    HandleAddItemCommand("47077"); // Bottes DPS Physique Alliance
+                    break;
+                }
+                case RACE_UNDEAD_PLAYER:
+                case RACE_TROLL:
+                case RACE_BLOODELF:
+                case RACE_ORC:
+                {
+                    HandleAddItemCommand("47416");//dague
+                    HandleAddItemCommand("47461");//dague
+                    HandleAddItemCommand("48233");//T9.9
+                    HandleAddItemCommand("48234");//T9.9
+                    HandleAddItemCommand("48235");//T9.9
+                    HandleAddItemCommand("48236");//T9.9
+                    HandleAddItemCommand("48237");//T9.9
+                    HandleAddItemCommand("47546");//cape
+                    HandleAddItemCommand("47433"); // Amulette DPS Physique Horde
+                    HandleAddItemCommand("47413"); // Anneau DPS Physique 1 Horde
+                    HandleAddItemCommand("47443"); // Anneau DPS Physique 2 Horde
+                    HandleAddItemCommand("47451"); // Trinket DPS Physique 1 Horde
+                    HandleAddItemCommand("47131"); // Trinket DPS Physique 2 Horde
+                    HandleAddItemCommand("47474"); // Brassards DPS Physique Horde
+                    HandleAddItemCommand("47460"); // Ceinture DPS Physique Horde
+                    HandleAddItemCommand("47445"); // Bottes DPS Physique Horde
+                    break;
+                }
+                default:
+                    break;
+            }
+            // HandleAddItemSetCommand("668");//T6
+            break;
+        }
+        case CLASS_PRIEST:
+        {
+            switch(chr->getRace())
+            {
+                case RACE_HUMAN:
+                case RACE_DWARF:
+                case RACE_NIGHTELF:
+                case RACE_DRAENEI:
+                {
+                    HandleAddItemCommand("47526");//1h mace
+                    HandleAddItemCommand("47922");//baguette
+                    HandleAddItemCommand("48082");//T9.9
+                    HandleAddItemCommand("48083");//T9.9
+                    HandleAddItemCommand("48084");//T9.9
+                    HandleAddItemCommand("48085");//T9.9
+                    HandleAddItemCommand("48086");//T9.9
+                    HandleAddItemCommand("47552");//cape
+                    HandleAddItemCommand("47922"); // Baguette DPS Magique Alliance
+                    HandleAddItemCommand("47206"); // Masse DPS Magique Alliance
+                    HandleAddItemCommand("47064"); // 2ème main DPS Magique Alliance
+                    HandleAddItemCommand("47144"); // Amulette DPS Magique Alliance
+                    HandleAddItemCommand("47224"); // Anneau DPS Magique 1 Alliance
+                    HandleAddItemCommand("47237"); // Anneau DPS Magique 2 Alliance
+                    HandleAddItemCommand("47188"); // Trinket DPS Magique 1 Alliance
+                    HandleAddItemCommand("47059"); // Trinket DPS Magique 2 Alliance
+                    HandleAddItemCommand("47143"); // Brassard DPS Magique Alliance
+                    HandleAddItemCommand("47084"); // Ceinture DPS Magique Alliance
+                    HandleAddItemCommand("47205"); // Bottes DPS Magique Alliance
+                    break;
+                }
+                case RACE_UNDEAD_PLAYER:
+                case RACE_TROLL:
+                case RACE_BLOODELF:
+                {
+                    HandleAddItemCommand("47528");//1h mace
+                    HandleAddItemCommand("47995");//baguette
+                    HandleAddItemCommand("48087");//T9.9
+                    HandleAddItemCommand("48088");//T9.9
+                    HandleAddItemCommand("48089");//T9.9
+                    HandleAddItemCommand("48090");//T9.9
+                    HandleAddItemCommand("48091");//T9.9
+                    HandleAddItemCommand("47551");//cape
+                    HandleAddItemCommand("47995"); // Baguette DPS Magique Horde
+                    HandleAddItemCommand("47483"); // Masse DPS Magique Horde
+                    HandleAddItemCommand("47437"); // 2ème main DPS Magique Horde
+                    HandleAddItemCommand("47468"); // Amulette DPS Magique Horde
+                    HandleAddItemCommand("47439"); // Anneau DPS Magique 1 Horde
+                    HandleAddItemCommand("47489"); // Anneau DPS Magique 2 Horde
+                    HandleAddItemCommand("47477"); // Trinket DPS Magique 1 Horde
+                    HandleAddItemCommand("47432"); // Trinket DPS Magique 2 Horde
+                    HandleAddItemCommand("47467"); // Brassard DPS Magique Horde
+                    HandleAddItemCommand("47447"); // Ceinture DPS Magique Horde
+                    HandleAddItemCommand("47482"); // Bottes DPS Magique Horde
+                    break;
+                }
+                default:
+                    break;
+            }
+            // HandleAddItemSetCommand("675");//T6
+            break;
+        }
+        case CLASS_DEATH_KNIGHT:
+        {
+            HandleAddItemCommand("47672"); // Cachet de DK 
+            HandleAddItemCommand("48513"); // Epée pour les deux factions
+            switch(chr->getRace())
+            {
+                case RACE_HUMAN:
+                case RACE_DWARF:
+                case RACE_NIGHTELF:
+                case RACE_DRAENEI:
+                case RACE_GNOME:
+                {
+                    HandleAddItemCommand("47515");//2h sword
+                    HandleAddItemCommand("47078");//2h axe
+                    HandleAddItemCommand("48543");//T9.9
+                    HandleAddItemCommand("48544");//T9.9
+                    HandleAddItemCommand("48545");//T9.9
+                    HandleAddItemCommand("48546");//T9.9
+                    HandleAddItemCommand("48547");//T9.9
+                    HandleAddItemCommand("47549");//cape
+                    HandleAddItemCommand("47085"); // Bouclier off-tank Alliance
+                    HandleAddItemCommand("47060"); // Amulette DPS Physique Alliance
+                    HandleAddItemCommand("47075"); // Anneau DPS Physique 1 Alliance
+                    HandleAddItemCommand("46966"); // Anneau DPS Physique 2 Alliance
+                    HandleAddItemCommand("47088"); // Trinket DPS Physique 1 Alliance
+                    HandleAddItemCommand("47464"); // Trinket DPS Physique 2 Alliance
+                    HandleAddItemCommand("47521"); // Arme à feu Alliance
+                    HandleAddItemCommand("47111"); // Brassard DPS Physique Alliance
+                    HandleAddItemCommand("47002"); // Ceinture DPS Physique Alliance
+                    HandleAddItemCommand("47154"); // Bottes DPS Physique Alliance
+                    break;
+                }
+                case RACE_UNDEAD_PLAYER:
+                case RACE_TROLL:
+                case RACE_BLOODELF:
+                case RACE_ORC:
+                case RACE_TAUREN:
+                {
+                    HandleAddItemCommand("47516");//2h sword
+                    HandleAddItemCommand("48548");//2h axe
+                    HandleAddItemCommand("48548");//T9.9
+                    HandleAddItemCommand("48559");//T9.9
+                    HandleAddItemCommand("48550");//T9.9
+                    HandleAddItemCommand("48551");//T9.9
+                    HandleAddItemCommand("48552");//T9.9
+                    HandleAddItemCommand("47550");//cape
+                    HandleAddItemCommand("47448"); // Bouclier off-tank Horde
+                    HandleAddItemCommand("47433"); // Amulette DPS Physique Horde
+                    HandleAddItemCommand("47413"); // Anneau DPS Physique 1 Horde
+                    HandleAddItemCommand("47443"); // Anneau DPS Physique 2 Horde
+                    HandleAddItemCommand("47451"); // Trinket DPS Physique 1 Horde
+                    HandleAddItemCommand("47131"); // Trinket DPS Physique 2 Horde
+                    HandleAddItemCommand("47523"); // Arme à feu Horde
+                    HandleAddItemCommand("47459"); // Brassard DPS Physique Horde
+                    HandleAddItemCommand("47429"); // Ceinture DPS Physique Horde
+                    HandleAddItemCommand("47473"); // Bottes DPS Physique Horde
+                    break;
+                }
+                default:
+                    break;
+            }
+            break;
+        }
+        case CLASS_SHAMAN:
+        {
+            switch(chr->getRace())
+            {
+                case RACE_ORC:
+                case RACE_TAUREN:
+                case RACE_TROLL:
+                {
+                    HandleAddItemCommand("47483");//1h mace
+                    HandleAddItemCommand("47483");//1h mace
+                    HandleAddItemCommand("48356");//T9.9
+                    HandleAddItemCommand("48357");//T9.9
+                    HandleAddItemCommand("48358");//T9.9
+                    HandleAddItemCommand("48359");//T9.9
+                    HandleAddItemCommand("48360");//T9.9
+                    HandleAddItemCommand("47554");//cape
+                    HandleAddItemCommand("47448"); // Bouclier DPS/Soins Magique Horde
+                    HandleAddItemCommand("47433"); // Amulette DPS Physique Horde
+                    HandleAddItemCommand("47413"); // Anneau DPS Physique 1 Horde
+                    HandleAddItemCommand("47489"); // Anneau DPS Magique 2 Horde
+                    HandleAddItemCommand("47451"); // Trinket DPS Physique 1 Horde
+                    HandleAddItemCommand("47432"); // Trinket DPS Magique 2 Horde
+                    HandleAddItemCommand("47442"); // Brassard DPS Physique Horde
+                    HandleAddItemCommand("47472"); // Ceinture DPS Physique Horde
+                    HandleAddItemCommand("47457"); // Bottes DPS Physique Horde
+                    break;
+                }
+                case RACE_DRAENEI:
+                {
+                    HandleAddItemCommand("47206");//1h mace
+                    HandleAddItemCommand("47206");//1h mace
+                    HandleAddItemCommand("48351");//T9.9
+                    HandleAddItemCommand("48352");//T9.9
+                    HandleAddItemCommand("48353");//T9.9
+                    HandleAddItemCommand("48354");//T9.9
+                    HandleAddItemCommand("48355");//T9.9
+                    HandleAddItemCommand("47553");//cape
+                    HandleAddItemCommand("47085"); // Bouclier DPS/Soins Magique Alliance
+                    HandleAddItemCommand("47060"); // Amulette DPS Physique Alliance
+                    HandleAddItemCommand("47075"); // Anneau DPS Physique 1 Alliance
+                    HandleAddItemCommand("47237"); // Anneau DPS Magique 2 Alliance
+                    HandleAddItemCommand("47088"); // Trinket DPS Physique 1 Alliance
+                    HandleAddItemCommand("47059"); // Trinket DPS Magique 2 Alliance
+                    HandleAddItemCommand("47074"); // Brassard DPS Physique Alliance
+                    HandleAddItemCommand("47153"); // Ceinture DPS Physique Alliance
+                    HandleAddItemCommand("47109"); // Bottes DPS Physique Alliance
+                    break;
+                }
+                default:
+                    break;
+            }
+            // HandleAddItemSetCommand("684");//T6
+            HandleAddItemCommand("5175");//totem de terre
+            HandleAddItemCommand("5176");//totem de feu
+            HandleAddItemCommand("5177");//totem d'eau
+            HandleAddItemCommand("5178");//totem d'air
+            HandleAddItemCommand("47666"); // Totem Elem
+            break;
+        }
+        case CLASS_MAGE:
+        {            
+            switch(chr->getRace())
+            {
+                case RACE_UNDEAD_PLAYER:
+                case RACE_TROLL:
+                case RACE_BLOODELF:
+                {
+                    HandleAddItemCommand("47525");//bâton
+                    HandleAddItemCommand("47995");//baguette
+                    HandleAddItemCommand("47763");//T9.9
+                    HandleAddItemCommand("47764");//T9.9
+                    HandleAddItemCommand("47765");//T9.9
+                    HandleAddItemCommand("47766");//T9.9
+                    HandleAddItemCommand("47767");//T9.9
+                    HandleAddItemCommand("47554");//cape
+                    HandleAddItemCommand("47422"); // Dague DPS Magique Horde
+                    HandleAddItemCommand("47437"); // 2ème main DPS Magique Horde
+                    HandleAddItemCommand("47468"); // Amulette DPS Magique Horde
+                    HandleAddItemCommand("47439"); // Anneau DPS Magique 1 Horde
+                    HandleAddItemCommand("47489"); // Anneau DPS Magique 2 Horde
+                    HandleAddItemCommand("47477"); // Trinket DPS Magique 1 Horde
+                    HandleAddItemCommand("47432"); // Trinket DPS Magique 2 Horde
+                    HandleAddItemCommand("47467"); // Brassard DPS Magique Horde
+                    HandleAddItemCommand("47447"); // Ceinture DPS Magique Horde
+                    HandleAddItemCommand("47482"); // Bottes DPS Magique Horde
+                    break;
+                }
+                case RACE_DRAENEI:
+                case RACE_HUMAN:
+                case RACE_GNOME:
+                {
+                    HandleAddItemCommand("47130");//bâton
+                    HandleAddItemCommand("47922");//baguette
+                    HandleAddItemCommand("47758");//T9.9
+                    HandleAddItemCommand("47759");//T9.9
+                    HandleAddItemCommand("47760");//T9.9
+                    HandleAddItemCommand("47761");//T9.9
+                    HandleAddItemCommand("47762");//T9.9
+                    HandleAddItemCommand("47553");//cape
+                    HandleAddItemCommand("46980"); // Dague DPS Magique Alliance
+                    HandleAddItemCommand("47064"); // 2ème main DPS Magique Alliance
+                    HandleAddItemCommand("47144"); // Amulette DPS Magique Alliance
+                    HandleAddItemCommand("47224"); // Anneau DPS Magique 1 Alliance
+                    HandleAddItemCommand("47237"); // Anneau DPS Magique 2 Alliance
+                    HandleAddItemCommand("47188"); // Trinket DPS Magique 1 Alliance
+                    HandleAddItemCommand("47059"); // Trinket DPS Magique 2 Alliance
+                    HandleAddItemCommand("47143"); // Brassard DPS Magique Alliance
+                    HandleAddItemCommand("47084"); // Ceinture DPS Magique Alliance
+                    HandleAddItemCommand("47205"); // Bottes DPS Magique Alliance
+                    break;
+                }
+                default:
+                    break;
+            }
+            // HandleAddItemSetCommand("671");//T6
+            break;
+        }
+        case CLASS_WARLOCK:
+        {
+            switch(chr->getRace())
+            {
+                case RACE_ORC:
+                case RACE_UNDEAD_PLAYER:
+                case RACE_BLOODELF:
+                {
+                    HandleAddItemCommand("47422");//dague
+                    HandleAddItemCommand("47793");//T9.9
+                    HandleAddItemCommand("47794");//T9.9
+                    HandleAddItemCommand("47795");//T9.9
+                    HandleAddItemCommand("47796");//T9.9
+                    HandleAddItemCommand("47797");//T9.9
+                    HandleAddItemCommand("47553");//cape
+                    HandleAddItemCommand("47995"); // Baguette DPS Magique Horde
+                    HandleAddItemCommand("47422"); // Dague DPS Magique Horde
+                    HandleAddItemCommand("47437"); // 2ème main DPS Magique Horde
+                    HandleAddItemCommand("47468"); // Amulette DPS Magique Horde
+                    HandleAddItemCommand("47439"); // Anneau DPS Magique 1 Horde
+                    HandleAddItemCommand("47489"); // Anneau DPS Magique 2 Horde
+                    HandleAddItemCommand("47477"); // Trinket DPS Magique 1 Horde
+                    HandleAddItemCommand("47432"); // Trinket DPS Magique 2 Horde
+                    HandleAddItemCommand("47467"); // Brassard DPS Magique Horde
+                    HandleAddItemCommand("47447"); // Ceinture DPS Magique Horde
+                    HandleAddItemCommand("47482"); // Bottes DPS Magique Horde
+                    break;
+                }
+                case RACE_HUMAN:
+                case RACE_GNOME:
+                {
+                    HandleAddItemCommand("46980");//dague
+                    HandleAddItemCommand("47788");//T9.9
+                    HandleAddItemCommand("47789");//T9.9
+                    HandleAddItemCommand("47790");//T9.9
+                    HandleAddItemCommand("47791");//T9.9
+                    HandleAddItemCommand("47792");//T9.9
+                    HandleAddItemCommand("47553");//cape
+                    HandleAddItemCommand("47922"); // Baguette DPS Magique Alliance
+                    HandleAddItemCommand("46980"); // Dague DPS Magique Alliance
+                    HandleAddItemCommand("47064"); // 2ème main DPS Magique Alliance
+                    HandleAddItemCommand("47144"); // Amulette DPS Magique Alliance
+                    HandleAddItemCommand("47224"); // Anneau DPS Magique 1 Alliance
+                    HandleAddItemCommand("47237"); // Anneau DPS Magique 2 Alliance
+                    HandleAddItemCommand("47188"); // Trinket DPS Magique 1 Alliance
+                    HandleAddItemCommand("47059"); // Trinket DPS Magique 2 Alliance
+                    HandleAddItemCommand("47143"); // Brassard DPS Magique Alliance
+                    HandleAddItemCommand("47084"); // Ceinture DPS Magique Alliance
+                    HandleAddItemCommand("47205"); // Bottes DPS Magique Alliance
+                    break;
+                }
+                default:
+                    break;
+            }
+            // HandleAddItemSetCommand("670");//T6 
+            break;
+        }
+        case CLASS_DRUID:
+        {
+            HandleAddItemCommand("47668"); // Idole Feral
+            switch(chr->getRace())
+            {
+                case RACE_NIGHTELF:
+                {
+                    HandleAddItemCommand("47130");//bâton
+                    HandleAddItemCommand("48138");//T9.9
+                    HandleAddItemCommand("48139");//T9.9
+                    HandleAddItemCommand("48140");//T9.9
+                    HandleAddItemCommand("48141");//T9.9
+                    HandleAddItemCommand("48142");//T9.9
+                    HandleAddItemCommand("47553");//cape
+                    HandleAddItemCommand("47206"); // Masse DPS Magique Alliance
+                    HandleAddItemCommand("47064"); // 2ème main DPS Magique Alliance
+                    HandleAddItemCommand("47060"); // Amulette DPS Physique Alliance
+                    HandleAddItemCommand("47075"); // Anneau DPS Physique 1 Alliance
+                    HandleAddItemCommand("46966"); // Anneau DPS Physique 2 Alliance
+                    HandleAddItemCommand("47088"); // Trinket DPS Physique 1 Alliance
+                    HandleAddItemCommand("47464"); // Trinket DPS Physique 2 Alliance
+                    HandleAddItemCommand("47155"); // Brassards DPS Physique Alliance
+                    HandleAddItemCommand("47112"); // Ceinture DPS Physique Alliance
+                    HandleAddItemCommand("47077"); // Bottes DPS Physique Alliance
+                    break;
+                }
+                case RACE_TAUREN:
+                {
+                    HandleAddItemCommand("47463");//bâton
+                    HandleAddItemCommand("48173");//T9.9
+                    HandleAddItemCommand("48174");//T9.9
+                    HandleAddItemCommand("48175");//T9.9
+                    HandleAddItemCommand("48176");//T9.9
+                    HandleAddItemCommand("48177");//T9.9
+                    HandleAddItemCommand("47554");//cape
+                    HandleAddItemCommand("47483"); // Masse DPS Magique Horde
+                    HandleAddItemCommand("47437"); // 2ème main DPS Magique Horde
+                    HandleAddItemCommand("47433"); // Amulette DPS Physique Horde
+                    HandleAddItemCommand("47413"); // Anneau DPS Physique 1 Horde
+                    HandleAddItemCommand("47443"); // Anneau DPS Physique 2 Horde
+                    HandleAddItemCommand("47451"); // Trinket DPS Physique 1 Horde
+                    HandleAddItemCommand("47131"); // Trinket DPS Physique 2 Horde
+                    HandleAddItemCommand("47474"); // Brassards DPS Physique Horde
+                    HandleAddItemCommand("47460"); // Ceinture DPS Physique Horde
+                    HandleAddItemCommand("47445"); // Bottes DPS Physique Horde
+                    break;
+                }
+                default:
+                    break;
+            }
+            // HandleAddItemSetCommand("678");//T6
+            break;
+        }
+        default:
+            break;
+    }
+
+    const ItemPrototype * proto = NULL;
+    switch(chr->getRace())
+    {
+        case RACE_HUMAN:
+        {
+            if(proto = sObjectMgr.GetItemPrototype(5656))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(5655))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(2414))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(18777))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(18778))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(18776))
+                chr->learnSpell(proto->Spells[1].SpellId, false);				
+            break;
+        }
+        case RACE_ORC:
+        {
+            if(proto = sObjectMgr.GetItemPrototype(5668))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(1132))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(46099))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(5665))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(18796))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(18797))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(18798))
+                chr->learnSpell(proto->Spells[1].SpellId, false);						
+            break;
+        }
+        case RACE_DWARF:
+        {
+            if(proto = sObjectMgr.GetItemPrototype(5873))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(5872))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(5864))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(18785))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(18786))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(18787))
+                chr->learnSpell(proto->Spells[1].SpellId, false);						
+            break;
+        }
+        case RACE_NIGHTELF:
+        {
+            if(proto = sObjectMgr.GetItemPrototype(8631))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(8632))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(8629))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(18902))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(18766))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(18767))
+                chr->learnSpell(proto->Spells[1].SpellId, false);						
+            break;
+        }
+        case RACE_UNDEAD_PLAYER:
+        {
+            if(proto = sObjectMgr.GetItemPrototype(13333))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(13332))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(46308))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(13331))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(18791))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(13334))
+                chr->learnSpell(proto->Spells[1].SpellId, false);						
+            break;
+        }
+        case RACE_TAUREN:
+        {
+            if(proto = sObjectMgr.GetItemPrototype(46100))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(15290))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(15277))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(18793))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(18794))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(18795))
+                chr->learnSpell(proto->Spells[1].SpellId, false);						
+            break;
+        }
+        case RACE_GNOME:
+        {
+            if(proto = sObjectMgr.GetItemPrototype(8595))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(8563))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(13321))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(13322))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(18773))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(18774))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(18772))
+                chr->learnSpell(proto->Spells[1].SpellId, false);						
+            break;
+        }
+        case RACE_TROLL:
+        {
+            if(proto = sObjectMgr.GetItemPrototype(8588))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(8591))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(8592))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(18788))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(18790))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(18789))
+                chr->learnSpell(proto->Spells[1].SpellId, false);						
+            break;
+        }
+        case RACE_BLOODELF:
+        {
+            if(proto = sObjectMgr.GetItemPrototype(29220))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(29221))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(28927))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(29222))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(28936))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(29223))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(29224))
+                chr->learnSpell(proto->Spells[1].SpellId, false);						
+            break;
+        }
+        case RACE_DRAENEI:
+        {
+            if(proto = sObjectMgr.GetItemPrototype(28481))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(29744))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(29743))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(29745))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(29746))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(29747))
+                chr->learnSpell(proto->Spells[1].SpellId, false);						
+            break;
+        }
+        default:
+            break;
+    }
+
+    switch(chr->GetTeam())
+    {
+        case HORDE:
+        {
+            if(proto = sObjectMgr.GetItemPrototype(25475))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(25474))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(25476))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(25532))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(25477))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(25531))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(25533))
+                chr->learnSpell(proto->Spells[1].SpellId, false);						
+            break;
+        }
+        case ALLIANCE:
+        {
+            if(proto = sObjectMgr.GetItemPrototype(25472))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(25470))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+             if(proto = sObjectMgr.GetItemPrototype(25471))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(25529))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(25528))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(25527))
+                chr->learnSpell(proto->Spells[1].SpellId, false);
+            if(proto = sObjectMgr.GetItemPrototype(25473))
+                chr->learnSpell(proto->Spells[1].SpellId, false);						
+            break;
+        }
+        default:
+            break;
+    }
+
+    chr->AutoEquipItem();
+    return true;
+}
+
+bool ChatHandler::HandleGMAutoEquipCommand(const char* args)
+{
+    Player *chr = getSelectedPlayer();
+    if(chr)
         chr->AutoEquipItem();
-    }
-
-    
-    
-    if(newlevel < 60)//not supported maybe 50 -> 60 ??
-        return true;
-    else if(newlevel > 59 && newlevel < 70)
-    {
-        if(chr->getClass() != CLASS_DEATH_KNIGHT)
-            HandleAddItemCommand("22938");//cape        
-        switch(chr->getClass())
-        {
-            case CLASS_WARRIOR:
-            {
-                switch(chr->getRace())
-                {
-                    case RACE_HUMAN:
-                    case RACE_NIGHTELF:
-                    case RACE_UNDEAD_PLAYER:
-                    case RACE_GNOME:
-                    case RACE_DRAENEI:
-                    {
-                        HandleAddItemCommand("22691");//2h sword
-                        HandleAddItemCommand("22691");//2h sword
-                        break;
-                    }
-                    case RACE_ORC:
-                    case RACE_DWARF:
-                    case RACE_TROLL:
-                    {
-                        HandleAddItemCommand("21134");//2h axe
-                        HandleAddItemCommand("21134");//2h axe
-                        break;
-                    }
-                    case RACE_TAUREN:
-                    {
-                        HandleAddItemCommand("22798");//2h mace
-                        HandleAddItemCommand("22798");//2h mace
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                HandleAddItemSetCommand("523");//T3
-                chr->AutoEquipItem();
-                break;
-            }
-            case CLASS_PALADIN:
-            {
-                switch(chr->getRace())
-                {
-                    case RACE_HUMAN:
-                    case RACE_DWARF:
-                    case RACE_DRAENEI:
-                    {
-                        HandleAddItemCommand("22798");//2h mace
-                        break;
-                    }
-                    case RACE_BLOODELF:
-                    {
-                        HandleAddItemCommand("22691");//2h sword
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                HandleAddItemSetCommand("528");//T3
-                chr->AutoEquipItem();
-                break;
-            }
-            case CLASS_HUNTER:
-            {
-                switch(chr->getRace())
-                {
-                    case RACE_ORC:
-                    case RACE_TROLL:
-                    {
-                        HandleAddItemCommand("19363");//1h axe
-                        HandleAddItemCommand("22816");//1h axe
-                        HandleAddItemCommand("22811");//Arc
-                        break;
-                    }
-                    case RACE_DWARF:
-                    case RACE_TAUREN:
-                    {
-                        HandleAddItemCommand("19363");//1h axe
-                        HandleAddItemCommand("22816");//1h axe
-                        HandleAddItemCommand("22810");//Gun
-                        break;
-                    }
-                    case RACE_NIGHTELF:
-                    case RACE_BLOODELF:
-                    {
-                        HandleAddItemCommand("21126");//dague
-                        HandleAddItemCommand("22802");//dague
-                        HandleAddItemCommand("22811");//Arc
-                        break;
-                    }
-                    case RACE_DRAENEI:
-                    {
-                        HandleAddItemCommand("23577");//1h sword
-                        HandleAddItemCommand("23054");//1h sword
-                        HandleAddItemCommand("22811");//Arc
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                HandleAddItemSetCommand("530");//T3
-                chr->AutoEquipItem();
-                break;
-            }
-            case CLASS_ROGUE:
-            {
-                switch(chr->getRace())
-                {
-                    case RACE_HUMAN:
-                    case RACE_ORC:
-                    case RACE_DWARF:
-                    case RACE_NIGHTELF:
-                    case RACE_UNDEAD_PLAYER:
-                    case RACE_GNOME:
-                    case RACE_TROLL:
-                    case RACE_BLOODELF:
-                    {
-                        HandleAddItemCommand("21126");//dague
-                        HandleAddItemCommand("22802");//dague
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                HandleAddItemSetCommand("524");//T3
-                chr->AutoEquipItem();
-                break;
-            }
-            case CLASS_PRIEST:
-            {
-                switch(chr->getRace())
-                {
-                    case RACE_HUMAN:
-                    case RACE_DWARF:
-                    case RACE_NIGHTELF:
-                    case RACE_UNDEAD_PLAYER:
-                    case RACE_TROLL:
-                    case RACE_BLOODELF:
-                    case RACE_DRAENEI:
-                    {
-                        HandleAddItemCommand("22808");//1h mace
-                        HandleAddItemCommand("22821");//baguette
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                HandleAddItemSetCommand("525");//T3
-                chr->AutoEquipItem();
-                break;
-            }
-            case CLASS_DEATH_KNIGHT:
-            {
-                HandleAddItemCommand("39322");//cape
-                HandleAddItemCommand("38632");//2h sword
-                HandleAddItemCommand("38633");//2h axe
-                HandleAddItemCommand("38670");//T3FAKE
-                HandleAddItemCommand("38663");//T3FAKE
-                HandleAddItemCommand("38661");//T3FAKE
-                HandleAddItemCommand("38668");//T3FAKE
-                HandleAddItemCommand("38667");//T3FAKE
-                HandleAddItemCommand("38666");//T3FAKE
-                HandleAddItemCommand("38665");//T3FAKE
-                HandleAddItemCommand("38669");//T3FAKE
-                //HandleAddItemSetCommand("516");//T3FAKE
-                chr->AutoEquipItem();
-                break;
-            }
-            case CLASS_SHAMAN:
-            {
-                switch(chr->getRace())
-                {
-                    case RACE_ORC:
-                    case RACE_TAUREN:
-                    case RACE_TROLL:
-                    case RACE_DRAENEI:
-                    {
-                        HandleAddItemCommand("5175");//totem de terre
-                        HandleAddItemCommand("5176");//totem de feu
-                        HandleAddItemCommand("5177");//totem d'eau
-                        HandleAddItemCommand("5178");//totem d'air
-                        HandleAddItemCommand("23221");//1h mace
-                        HandleAddItemCommand("22808");//1h mace
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                HandleAddItemSetCommand("527");//T3
-                chr->AutoEquipItem();
-                break;
-            }
-            case CLASS_MAGE:
-            {            
-                switch(chr->getRace())
-                {
-                    case RACE_HUMAN:
-                    case RACE_UNDEAD_PLAYER:
-                    case RACE_GNOME:
-                    case RACE_TROLL:
-                    case RACE_BLOODELF:
-                    case RACE_DRAENEI:
-                    {
-                        HandleAddItemCommand("18715");//bâton
-                        HandleAddItemCommand("22821");//baguette
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                HandleAddItemSetCommand("526");//T3
-                chr->AutoEquipItem();
-                break;
-            }
-            case CLASS_WARLOCK:
-            {
-                switch(chr->getRace())
-                {
-                    case RACE_HUMAN:
-                    case RACE_ORC:
-                    case RACE_UNDEAD_PLAYER:
-                    case RACE_GNOME:
-                    case RACE_BLOODELF:
-                    {
-                        HandleAddItemCommand("22802");//dague
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                HandleAddItemSetCommand("529");//T3
-                chr->AutoEquipItem();
-                break;
-            }
-            case CLASS_DRUID:
-            {
-                switch(chr->getRace())
-                {
-                    case RACE_NIGHTELF:
-                    case RACE_TAUREN:
-                    {
-                        HandleAddItemCommand("18715");//bâton
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                HandleAddItemSetCommand("521");//T3
-                chr->AutoEquipItem();
-                break;
-            }
-            default:
-                break;
-        }
-    }
-    else if(newlevel > 69 && newlevel < 80)
-    {
-        HandleAddItemCommand("34810");//cape
-        switch(chr->getClass())
-        {
-            case CLASS_WARRIOR:
-            {
-                switch(chr->getRace())
-                {
-                    case RACE_HUMAN:
-                    case RACE_NIGHTELF:
-                    case RACE_UNDEAD_PLAYER:
-                    case RACE_GNOME:
-                    case RACE_DRAENEI:
-                    {
-                        HandleAddItemCommand("34247");//2h sword
-                        HandleAddItemCommand("34247");//2h sword
-                        break;
-                    }
-                    case RACE_ORC:
-                    case RACE_DWARF:
-                    case RACE_TROLL:
-                    {
-                        HandleAddItemCommand("34997");//2h axe
-                        HandleAddItemCommand("34997");//2h axe
-                        break;
-                    }
-                    case RACE_TAUREN:
-                    {
-                        HandleAddItemCommand("34989");//2h mace
-                        HandleAddItemCommand("34989");//2h mace
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                HandleAddItemSetCommand("673");//T6
-                chr->AutoEquipItem();
-                break;
-            }
-            case CLASS_PALADIN:
-            {
-                switch(chr->getRace())
-                {
-                    case RACE_HUMAN:
-                    case RACE_DWARF:
-                    case RACE_DRAENEI:
-                    {
-                        HandleAddItemCommand("34989");//2h mace
-                        break;
-                    }
-                    case RACE_BLOODELF:
-                    {
-                        HandleAddItemCommand("34247");//2h sword
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                HandleAddItemSetCommand("681");//T6
-                chr->AutoEquipItem();
-                break;
-            }
-            case CLASS_HUNTER:
-            {
-                switch(chr->getRace())
-                {
-                    case RACE_ORC:
-                    case RACE_TROLL:
-                    {
-                        HandleAddItemCommand("34996");//1h axe
-                        HandleAddItemCommand("35017");//1h axe
-                        HandleAddItemCommand("35047");//Arc
-                        break;
-                    }
-                    case RACE_DWARF:
-                    case RACE_TAUREN:
-                    {
-                        HandleAddItemCommand("34996");//1h axe
-                        HandleAddItemCommand("35017");//1h axe
-                        HandleAddItemCommand("35075");//Gun
-                        break;
-                    }
-                    case RACE_NIGHTELF:
-                    case RACE_BLOODELF:
-                    {
-                        HandleAddItemCommand("34329");//dague
-                        HandleAddItemCommand("34329");//dague
-                        HandleAddItemCommand("35047");//Arc
-                        break;
-                    }
-                    case RACE_DRAENEI:
-                    {
-                        HandleAddItemCommand("34164");//1h sword
-                        HandleAddItemCommand("34164");//1h sword
-                        HandleAddItemCommand("35047");//Arc
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                HandleAddItemSetCommand("669");//T6
-                chr->AutoEquipItem();
-                break;
-            }
-            case CLASS_ROGUE:
-            {
-                switch(chr->getRace())
-                {
-                    case RACE_HUMAN:
-                    case RACE_ORC:
-                    case RACE_DWARF:
-                    case RACE_NIGHTELF:
-                    case RACE_UNDEAD_PLAYER:
-                    case RACE_GNOME:
-                    case RACE_TROLL:
-                    case RACE_BLOODELF:
-                    {
-                        HandleAddItemCommand("34329");//dague
-                        HandleAddItemCommand("34329");//dague
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                HandleAddItemSetCommand("668");//T6
-                chr->AutoEquipItem();
-                break;
-            }
-            case CLASS_PRIEST:
-            {
-                switch(chr->getRace())
-                {
-                    case RACE_HUMAN:
-                    case RACE_DWARF:
-                    case RACE_NIGHTELF:
-                    case RACE_UNDEAD_PLAYER:
-                    case RACE_TROLL:
-                    case RACE_BLOODELF:
-                    case RACE_DRAENEI:
-                    {
-                        HandleAddItemCommand("35071");//1h mace
-                        HandleAddItemCommand("34347");//baguette
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                HandleAddItemSetCommand("675");//T6
-                chr->AutoEquipItem();
-                break;
-            }
-            case CLASS_DEATH_KNIGHT:
-            {//T6FAKE == BEURK
-                HandleAddItemCommand("34247");//2h sword
-                HandleAddItemCommand("34997");//2h axe
-                HandleAddItemCommand("38670");//T3FAKE
-                HandleAddItemCommand("38663");//T3FAKE
-                HandleAddItemCommand("38661");//T3FAKE
-                HandleAddItemCommand("38668");//T3FAKE
-                HandleAddItemCommand("38667");//T3FAKE
-                HandleAddItemCommand("38666");//T3FAKE
-                HandleAddItemCommand("38665");//T3FAKE
-                HandleAddItemCommand("38669");//T3FAKE
-                HandleAddItemSetCommand("653");//T6FAKE
-                chr->AutoEquipItem();
-                break;
-            }
-            case CLASS_SHAMAN:
-            {
-                switch(chr->getRace())
-                {
-                    case RACE_ORC:
-                    case RACE_TAUREN:
-                    case RACE_TROLL:
-                    case RACE_DRAENEI:
-                    {
-                        HandleAddItemCommand("5175");//totem de terre
-                        HandleAddItemCommand("5176");//totem de feu
-                        HandleAddItemCommand("5177");//totem d'eau
-                        HandleAddItemCommand("5178");//totem d'air
-                        HandleAddItemCommand("35071");//1h mace
-                        HandleAddItemCommand("34988");//1h mace
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                HandleAddItemSetCommand("684");//T6
-                chr->AutoEquipItem();
-                break;
-            }
-            case CLASS_MAGE:
-            {            
-                switch(chr->getRace())
-                {
-                    case RACE_HUMAN:
-                    case RACE_UNDEAD_PLAYER:
-                    case RACE_GNOME:
-                    case RACE_TROLL:
-                    case RACE_BLOODELF:
-                    case RACE_DRAENEI:
-                    {
-                        HandleAddItemCommand("35103");//bâton
-                        HandleAddItemCommand("34347");//baguette
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                HandleAddItemSetCommand("671");//T6
-                chr->AutoEquipItem();
-                break;
-            }
-            case CLASS_WARLOCK:
-            {
-                switch(chr->getRace())
-                {
-                    case RACE_HUMAN:
-                    case RACE_ORC:
-                    case RACE_UNDEAD_PLAYER:
-                    case RACE_GNOME:
-                    case RACE_BLOODELF:
-                    {
-                        HandleAddItemCommand("34329");//dague
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                HandleAddItemSetCommand("670");//T6
-                chr->AutoEquipItem();
-                break;
-            }
-            case CLASS_DRUID:
-            {
-                switch(chr->getRace())
-                {
-                    case RACE_NIGHTELF:
-                    case RACE_TAUREN:
-                    {
-                        HandleAddItemCommand("35103");//bâton
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                HandleAddItemSetCommand("678");//T6
-                chr->AutoEquipItem();
-                break;
-            }
-            default:
-                break;
-        }
-    }
-    else //80+ but set with more than 5 part level 80 does not exist.
-    {
-        switch(chr->getClass())
-        {
-            case CLASS_WARRIOR:
-            {
-                HandleAddItemCommand("48513"); // Epée pour les deux factions
-                HandleAddItemCommand("41164"); // Munitions
-                switch(chr->getRace())
-                {
-                    case RACE_HUMAN:
-                    case RACE_NIGHTELF:
-                    case RACE_GNOME:
-                    case RACE_DRAENEI:
-                    {
-                        HandleAddItemCommand("47515");//2h sword
-                        HandleAddItemCommand("47515");//2h sword
-                        HandleAddItemCommand("48381");//T9.9
-                        HandleAddItemCommand("48382");//T9.9
-                        HandleAddItemCommand("48383");//T9.9
-                        HandleAddItemCommand("48384");//T9.9
-                        HandleAddItemCommand("48385");//T9.9
-                        HandleAddItemCommand("47549");//cape
-                        HandleAddItemCommand("47085"); // Bouclier off-tank Alliance
-                        HandleAddItemCommand("47060"); // Amulette DPS Physique Alliance
-                        HandleAddItemCommand("47075"); // Anneau DPS Physique 1 Alliance
-                        HandleAddItemCommand("46966"); // Anneau DPS Physique 2 Alliance
-                        HandleAddItemCommand("47088"); // Trinket DPS Physique 1 Alliance
-                        HandleAddItemCommand("47464"); // Trinket DPS Physique 2 Alliance
-                        HandleAddItemCommand("47521"); // Arme … feu Alliance
-                        break;
-                    }
-                    case RACE_UNDEAD_PLAYER:
-                    {
-                        HandleAddItemCommand("47516");//2h sword
-                        HandleAddItemCommand("47516");//2h sword
-                        HandleAddItemCommand("48396");//T9.9
-                        HandleAddItemCommand("48397");//T9.9
-                        HandleAddItemCommand("48398");//T9.9
-                        HandleAddItemCommand("48399");//T9.9
-                        HandleAddItemCommand("48400");//T9.9
-                        HandleAddItemCommand("47550");//cape
-                        HandleAddItemCommand("47448"); // Bouclier off-tank Horde
-                        HandleAddItemCommand("47433"); // Amulette DPS Physique Horde
-                        HandleAddItemCommand("47413"); // Anneau DPS Physique 1 Horde
-                        HandleAddItemCommand("47443"); // Anneau DPS Physique 2 Horde
-                        HandleAddItemCommand("47451"); // Trinket DPS Physique 1 Horde
-                        HandleAddItemCommand("47131"); // Trinket DPS Physique 2 Horde
-                        HandleAddItemCommand("47523"); // Arme … feu Horde
-                        break;
-                    }
-                    case RACE_DWARF:
-                    {
-                        HandleAddItemCommand("47078");//2h axe
-                        HandleAddItemCommand("47078");//2h axe
-                        HandleAddItemCommand("48381");//T9.9
-                        HandleAddItemCommand("48382");//T9.9
-                        HandleAddItemCommand("48383");//T9.9
-                        HandleAddItemCommand("48384");//T9.9
-                        HandleAddItemCommand("48385");//T9.9
-                        HandleAddItemCommand("47549");//cape
-                        HandleAddItemCommand("47085"); // Bouclier off-tank Alliance
-                        HandleAddItemCommand("47060"); // Amulette DPS Physique Alliance
-                        HandleAddItemCommand("47075"); // Anneau DPS Physique 1 Alliance
-                        HandleAddItemCommand("46966"); // Anneau DPS Physique 2 Alliance
-                        HandleAddItemCommand("47088"); // Trinket DPS Physique 1 Alliance
-                        HandleAddItemCommand("47464"); // Trinket DPS Physique 2 Alliance
-                        HandleAddItemCommand("47521"); // Arme … feu Alliance
-                        break;
-                    }
-                    case RACE_ORC:
-                    case RACE_TROLL:
-                    {
-                        HandleAddItemCommand("47446");//2h axe
-                        HandleAddItemCommand("47446");//2h axe
-                        HandleAddItemCommand("48396");//T9.9
-                        HandleAddItemCommand("48397");//T9.9
-                        HandleAddItemCommand("48398");//T9.9
-                        HandleAddItemCommand("48399");//T9.9
-                        HandleAddItemCommand("48400");//T9.9
-                        HandleAddItemCommand("47550");//cape
-                        HandleAddItemCommand("47448"); // Bouclier off-tank Horde
-                        HandleAddItemCommand("47433"); // Amulette DPS Physique Horde
-                        HandleAddItemCommand("47413"); // Anneau DPS Physique 1 Horde
-                        HandleAddItemCommand("47443"); // Anneau DPS Physique 2 Horde
-                        HandleAddItemCommand("47451"); // Trinket DPS Physique 1 Horde
-                        HandleAddItemCommand("47131"); // Trinket DPS Physique 2 Horde
-                        HandleAddItemCommand("47523"); // Arme … feu Horde
-                        break;
-                    }
-                    case RACE_TAUREN:
-                    {
-                        HandleAddItemCommand("47520");//2h mace
-                        HandleAddItemCommand("47520");//2h mace
-                        HandleAddItemCommand("48396");//T9.9
-                        HandleAddItemCommand("48397");//T9.9
-                        HandleAddItemCommand("48398");//T9.9
-                        HandleAddItemCommand("48399");//T9.9
-                        HandleAddItemCommand("48400");//T9.9
-                        HandleAddItemCommand("47550");//cape
-                        HandleAddItemCommand("47448"); // Bouclier off-tank Horde
-                        HandleAddItemCommand("47433"); // Amulette DPS Physique Horde
-                        HandleAddItemCommand("47413"); // Anneau DPS Physique 1 Horde
-                        HandleAddItemCommand("47443"); // Anneau DPS Physique 2 Horde
-                        HandleAddItemCommand("47451"); // Trinket DPS Physique 1 Horde
-                        HandleAddItemCommand("47131"); // Trinket DPS Physique 2 Horde
-                        HandleAddItemCommand("47523"); // Arme … feu Horde
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                // HandleAddItemSetCommand("673");//T6
-                chr->AutoEquipItem();
-                break;
-            }
-            case CLASS_PALADIN:
-            {
-                switch(chr->getRace())
-                {
-                    case RACE_HUMAN:
-                    case RACE_DWARF:
-                    case RACE_DRAENEI:
-                    {
-                        HandleAddItemCommand("47519");//2h mace
-                        HandleAddItemCommand("48642");//T9.9
-                        HandleAddItemCommand("48643");//T9.9
-                        HandleAddItemCommand("48644");//T9.9
-                        HandleAddItemCommand("48645");//T9.9
-                        HandleAddItemCommand("48646");//T9.9
-                        HandleAddItemCommand("47549");//cape
-                        HandleAddItemCommand("47085"); // Bouclier DPS/Soins Magique Alliance
-                        HandleAddItemCommand("47206"); // Masse DPS Magique Alliance
-                        HandleAddItemCommand("47060"); // Amulette DPS Physique Alliance
-                        HandleAddItemCommand("47075"); // Anneau DPS Physique 1 Alliance
-                        HandleAddItemCommand("46966"); // Anneau DPS Physique 2 Alliance
-                        HandleAddItemCommand("47088"); // Trinket DPS Physique 1 Alliance
-                        HandleAddItemCommand("47464"); // Trinket DPS Physique 2 Alliance
-                        HandleAddItemCommand("47111"); // Brassard DPS Physique Alliance
-                        HandleAddItemCommand("47002"); // Ceinture DPS Physique Alliance
-                        HandleAddItemCommand("47154"); // Bottes DPS Physique Alliance
-                        break;
-                    }
-                    case RACE_BLOODELF:
-                    {
-                        HandleAddItemCommand("47516");//2h sword
-                        HandleAddItemCommand("48647");//T9.9
-                        HandleAddItemCommand("48648");//T9.9
-                        HandleAddItemCommand("48649");//T9.9
-                        HandleAddItemCommand("48650");//T9.9
-                        HandleAddItemCommand("48651");//T9.9
-                        HandleAddItemCommand("47550");//cape
-                        HandleAddItemCommand("47448"); // Bouclier DPS/Soins Magique Horde
-                        HandleAddItemCommand("47483"); // Masse DPS Magique Horde
-                        HandleAddItemCommand("47433"); // Amulette DPS Physique Horde
-                        HandleAddItemCommand("47413"); // Anneau DPS Physique 1 Horde
-                        HandleAddItemCommand("47443"); // Anneau DPS Physique 2 Horde
-                        HandleAddItemCommand("47451"); // Trinket DPS Physique 1 Horde
-                        HandleAddItemCommand("47131"); // Trinket DPS Physique 2 Horde
-                        HandleAddItemCommand("47459"); // Brassard DPS Physique Horde
-                        HandleAddItemCommand("47429"); // Ceinture DPS Physique Horde
-                        HandleAddItemCommand("47473"); // Bottes DPS Physique Horde
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                // HandleAddItemSetCommand("681");//T6
- 		 HandleAddItemCommand("42854"); // Libram
-                chr->AutoEquipItem();
-                break;
-            }
-            case CLASS_HUNTER:
-            {
-                HandleAddItemCommand("41164"); // Balles comment ajouter la quantité ?
-                HandleAddItemCommand("41165"); // Fleches comment ajouter la quantité ?
-                switch(chr->getRace())
-                {
-                    case RACE_ORC:
-                    {
-                        HandleAddItemCommand("47427");//1h axe
-                        HandleAddItemCommand("47475");//1h axe
-                        HandleAddItemCommand("47523");//Gun
-                        HandleAddItemCommand("48265");//T9.9
-                        HandleAddItemCommand("48266");//T9.9
-                        HandleAddItemCommand("48267");//T9.9
-                        HandleAddItemCommand("48268");//T9.9
-                        HandleAddItemCommand("48269");//T9.9
-                        HandleAddItemCommand("47546");//cape
-                        HandleAddItemCommand("47433"); // Amulette DPS Physique Horde
-                        HandleAddItemCommand("47413"); // Anneau DPS Physique 1 Horde
-                        HandleAddItemCommand("47443"); // Anneau DPS Physique 2 Horde
-                        HandleAddItemCommand("47451"); // Trinket DPS Physique 1 Horde
-                        HandleAddItemCommand("47131"); // Trinket DPS Physique 2 Horde
-                        HandleAddItemCommand("47523"); // Arme à feu Horde
-                        HandleAddItemCommand("47442"); // Brassard DPS Physique Horde
-                        HandleAddItemCommand("47472"); // Ceinture DPS Physique Horde
-                        HandleAddItemCommand("47457"); // Bottes DPS Physique Horde
-                        break;
-                    }
-                    case RACE_TROLL:
-                    {
-                        HandleAddItemCommand("47427");//1h axe
-                        HandleAddItemCommand("47475");//1h axe
-                        HandleAddItemCommand("48697");//Arc
-                        HandleAddItemCommand("48265");//T9.9
-                        HandleAddItemCommand("48266");//T9.9
-                        HandleAddItemCommand("48267");//T9.9
-                        HandleAddItemCommand("48268");//T9.9
-                        HandleAddItemCommand("48269");//T9.9
-                        HandleAddItemCommand("47546");//cape
-                        HandleAddItemCommand("47433"); // Amulette DPS Physique Horde
-                        HandleAddItemCommand("47413"); // Anneau DPS Physique 1 Horde
-                        HandleAddItemCommand("47443"); // Anneau DPS Physique 2 Horde
-                        HandleAddItemCommand("47451"); // Trinket DPS Physique 1 Horde
-                        HandleAddItemCommand("47131"); // Trinket DPS Physique 2 Horde
-                        HandleAddItemCommand("47523"); // Arme à feu Horde
-                        HandleAddItemCommand("47442"); // Brassard DPS Physique Horde
-                        HandleAddItemCommand("47472"); // Ceinture DPS Physique Horde
-                        HandleAddItemCommand("47457"); // Bottes DPS Physique Horde
-                        break;
-                    }
-                    case RACE_DWARF:
-                    {
-                        HandleAddItemCommand("47156");//1h axe
-                        HandleAddItemCommand("47001");//1h axe
-                        HandleAddItemCommand("47521");//Gun
-                        HandleAddItemCommand("48260");//T9.9
-                        HandleAddItemCommand("48261");//T9.9
-                        HandleAddItemCommand("48262");//T9.9
-                        HandleAddItemCommand("48263");//T9.9
-                        HandleAddItemCommand("48264");//T9.9
-                        HandleAddItemCommand("47545");//cape
-                        HandleAddItemCommand("47060"); // Amulette DPS Physique Alliance
-                        HandleAddItemCommand("47075"); // Anneau DPS Physique 1 Alliance
-                        HandleAddItemCommand("46966"); // Anneau DPS Physique 2 Alliance
-                        HandleAddItemCommand("47088"); // Trinket DPS Physique 1 Alliance
-                        HandleAddItemCommand("47464"); // Trinket DPS Physique 2 Alliance
-                        HandleAddItemCommand("47521"); // Arme à feu Alliance
-                        HandleAddItemCommand("47074"); // Brassard DPS Physique Alliance
-                        HandleAddItemCommand("47153"); // Ceinture DPS Physique Alliance
-                        HandleAddItemCommand("47109"); // Bottes DPS Physique Alliance
-                        break;
-                    }
-                    case RACE_TAUREN:
-                    {
-                        HandleAddItemCommand("47427");//1h axe
-                        HandleAddItemCommand("47475");//1h axe
-                        HandleAddItemCommand("47523");//Gun
-                        HandleAddItemCommand("48265");//T9.9
-                        HandleAddItemCommand("48266");//T9.9
-                        HandleAddItemCommand("48267");//T9.9
-                        HandleAddItemCommand("48268");//T9.9
-                        HandleAddItemCommand("48269");//T9.9
-                        HandleAddItemCommand("47546");//cape
-                        HandleAddItemCommand("47433"); // Amulette DPS Physique Horde
-                        HandleAddItemCommand("47413"); // Anneau DPS Physique 1 Horde
-                        HandleAddItemCommand("47443"); // Anneau DPS Physique 2 Horde
-                        HandleAddItemCommand("47451"); // Trinket DPS Physique 1 Horde
-                        HandleAddItemCommand("47131"); // Trinket DPS Physique 2 Horde
-                        HandleAddItemCommand("47523"); // Arme à feu Horde
-                        HandleAddItemCommand("47442"); // Brassard DPS Physique Horde
-                        HandleAddItemCommand("47472"); // Ceinture DPS Physique Horde
-                        HandleAddItemCommand("47457"); // Bottes DPS Physique Horde
-                        break;
-                    }
-                    case RACE_NIGHTELF:
-                    {
-                        HandleAddItemCommand("47113");//dague
-                        HandleAddItemCommand("46969");//dague
-                        HandleAddItemCommand("48711");//Arc
-                        HandleAddItemCommand("48260");//T9.9
-                        HandleAddItemCommand("48261");//T9.9
-                        HandleAddItemCommand("48262");//T9.9
-                        HandleAddItemCommand("48263");//T9.9
-                        HandleAddItemCommand("48264");//T9.9
-                        HandleAddItemCommand("47545");//cape
-                        HandleAddItemCommand("47060"); // Amulette DPS Physique Alliance
-                        HandleAddItemCommand("47075"); // Anneau DPS Physique 1 Alliance
-                        HandleAddItemCommand("46966"); // Anneau DPS Physique 2 Alliance
-                        HandleAddItemCommand("47088"); // Trinket DPS Physique 1 Alliance
-                        HandleAddItemCommand("47464"); // Trinket DPS Physique 2 Alliance
-                        HandleAddItemCommand("47521"); // Arme à feu Alliance
-                        HandleAddItemCommand("47074"); // Brassard DPS Physique Alliance
-                        HandleAddItemCommand("47153"); // Ceinture DPS Physique Alliance
-                        HandleAddItemCommand("47109"); // Bottes DPS Physique Alliance
-                        break;
-                    }
-                    case RACE_BLOODELF:
-                    {
-                        HandleAddItemCommand("47416");//dague
-                        HandleAddItemCommand("47461");//dague
-                        HandleAddItemCommand("48697");//Arc
-                        HandleAddItemCommand("48265");//T9.9
-                        HandleAddItemCommand("48266");//T9.9
-                        HandleAddItemCommand("48267");//T9.9
-                        HandleAddItemCommand("48268");//T9.9
-                        HandleAddItemCommand("48269");//T9.9
-                        HandleAddItemCommand("47546");//cape
-                        HandleAddItemCommand("47433"); // Amulette DPS Physique Horde
-                        HandleAddItemCommand("47413"); // Anneau DPS Physique 1 Horde
-                        HandleAddItemCommand("47443"); // Anneau DPS Physique 2 Horde
-                        HandleAddItemCommand("47451"); // Trinket DPS Physique 1 Horde
-                        HandleAddItemCommand("47131"); // Trinket DPS Physique 2 Horde
-                        HandleAddItemCommand("47523"); // Arme à feu Horde
-                        HandleAddItemCommand("47442"); // Brassard DPS Physique Horde
-                        HandleAddItemCommand("47472"); // Ceinture DPS Physique Horde
-                        HandleAddItemCommand("47457"); // Bottes DPS Physique Horde
-                        break;
-                    }
-                    case RACE_DRAENEI:
-                    {
-                        HandleAddItemCommand("47518");//1h sword
-                        HandleAddItemCommand("48044");//1h sword
-                        HandleAddItemCommand("48711");//Arc
-                        HandleAddItemCommand("48647");//T9.9
-                        HandleAddItemCommand("48648");//T9.9
-                        HandleAddItemCommand("48649");//T9.9
-                        HandleAddItemCommand("48650");//T9.9
-                        HandleAddItemCommand("48651");//T9.9
-                        HandleAddItemCommand("47545");//cape
-                        HandleAddItemCommand("47060"); // Amulette DPS Physique Alliance
-                        HandleAddItemCommand("47075"); // Anneau DPS Physique 1 Alliance
-                        HandleAddItemCommand("46966"); // Anneau DPS Physique 2 Alliance
-                        HandleAddItemCommand("47088"); // Trinket DPS Physique 1 Alliance
-                        HandleAddItemCommand("47464"); // Trinket DPS Physique 2 Alliance
-                        HandleAddItemCommand("47521"); // Arme à feu Alliance
-                        HandleAddItemCommand("47074"); // Brassard DPS Physique Alliance
-                        HandleAddItemCommand("47153"); // Ceinture DPS Physique Alliance
-                        HandleAddItemCommand("47109"); // Bottes DPS Physique Alliance
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                // HandleAddItemSetCommand("669");//T6
-                chr->AutoEquipItem();
-                break;
-            }
-            case CLASS_ROGUE:
-            {
-                HandleAddItemCommand("47659"); // Arme de jet
-                switch(chr->getRace())
-                {
-                    case RACE_HUMAN:
-                    case RACE_DWARF:
-                    case RACE_NIGHTELF:
-                    case RACE_GNOME:
-                    {
-                        HandleAddItemCommand("47113");//dague
-                        HandleAddItemCommand("46969");//dague
-                        HandleAddItemCommand("48228");//T9.9
-                        HandleAddItemCommand("48229");//T9.9
-                        HandleAddItemCommand("48230");//T9.9
-                        HandleAddItemCommand("48231");//T9.9
-                        HandleAddItemCommand("48232");//T9.9
-                        HandleAddItemCommand("47545");//cape
-                        HandleAddItemCommand("47060"); // Amulette DPS Physique Alliance
-                        HandleAddItemCommand("47075"); // Anneau DPS Physique 1 Alliance
-                        HandleAddItemCommand("46966"); // Anneau DPS Physique 2 Alliance
-                        HandleAddItemCommand("47088"); // Trinket DPS Physique 1 Alliance
-                        HandleAddItemCommand("47464"); // Trinket DPS Physique 2 Alliance
-                        HandleAddItemCommand("47155"); // Brassards DPS Physique Alliance
-                        HandleAddItemCommand("47112"); // Ceinture DPS Physique Alliance
-                        HandleAddItemCommand("47077"); // Bottes DPS Physique Alliance
-                        break;
-                    }
-                    case RACE_UNDEAD_PLAYER:
-                    case RACE_TROLL:
-                    case RACE_BLOODELF:
-                    case RACE_ORC:
-                    {
-                        HandleAddItemCommand("47416");//dague
-                        HandleAddItemCommand("47461");//dague
-                        HandleAddItemCommand("48233");//T9.9
-                        HandleAddItemCommand("48234");//T9.9
-                        HandleAddItemCommand("48235");//T9.9
-                        HandleAddItemCommand("48236");//T9.9
-                        HandleAddItemCommand("48237");//T9.9
-                        HandleAddItemCommand("47546");//cape
-                        HandleAddItemCommand("47433"); // Amulette DPS Physique Horde
-                        HandleAddItemCommand("47413"); // Anneau DPS Physique 1 Horde
-                        HandleAddItemCommand("47443"); // Anneau DPS Physique 2 Horde
-                        HandleAddItemCommand("47451"); // Trinket DPS Physique 1 Horde
-                        HandleAddItemCommand("47131"); // Trinket DPS Physique 2 Horde
-                        HandleAddItemCommand("47474"); // Brassards DPS Physique Horde
-                        HandleAddItemCommand("47460"); // Ceinture DPS Physique Horde
-                        HandleAddItemCommand("47445"); // Bottes DPS Physique Horde
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                // HandleAddItemSetCommand("668");//T6
-                chr->AutoEquipItem();
-                break;
-            }
-            case CLASS_PRIEST:
-            {
-                switch(chr->getRace())
-                {
-                    case RACE_HUMAN:
-                    case RACE_DWARF:
-                    case RACE_NIGHTELF:
-                    case RACE_DRAENEI:
-                    {
-                        HandleAddItemCommand("47526");//1h mace
-                        HandleAddItemCommand("47922");//baguette
-                        HandleAddItemCommand("48082");//T9.9
-                        HandleAddItemCommand("48083");//T9.9
-                        HandleAddItemCommand("48084");//T9.9
-                        HandleAddItemCommand("48085");//T9.9
-                        HandleAddItemCommand("48086");//T9.9
-                        HandleAddItemCommand("47552");//cape
-                        HandleAddItemCommand("47922"); // Baguette DPS Magique Alliance
-                        HandleAddItemCommand("47206"); // Masse DPS Magique Alliance
-                        HandleAddItemCommand("47064"); // 2ème main DPS Magique Alliance
-                        HandleAddItemCommand("47144"); // Amulette DPS Magique Alliance
-                        HandleAddItemCommand("47224"); // Anneau DPS Magique 1 Alliance
-                        HandleAddItemCommand("47237"); // Anneau DPS Magique 2 Alliance
-                        HandleAddItemCommand("47188"); // Trinket DPS Magique 1 Alliance
-                        HandleAddItemCommand("47059"); // Trinket DPS Magique 2 Alliance
-                        HandleAddItemCommand("47143"); // Brassard DPS Magique Alliance
-                        HandleAddItemCommand("47084"); // Ceinture DPS Magique Alliance
-                        HandleAddItemCommand("47205"); // Bottes DPS Magique Alliance
-                        break;
-                    }
-                    case RACE_UNDEAD_PLAYER:
-                    case RACE_TROLL:
-                    case RACE_BLOODELF:
-                    {
-                        HandleAddItemCommand("47528");//1h mace
-                        HandleAddItemCommand("47995");//baguette
-                        HandleAddItemCommand("48087");//T9.9
-                        HandleAddItemCommand("48088");//T9.9
-                        HandleAddItemCommand("48089");//T9.9
-                        HandleAddItemCommand("48090");//T9.9
-                        HandleAddItemCommand("48091");//T9.9
-                        HandleAddItemCommand("47551");//cape
-                        HandleAddItemCommand("47995"); // Baguette DPS Magique Horde
-                        HandleAddItemCommand("47483"); // Masse DPS Magique Horde
-                        HandleAddItemCommand("47437"); // 2ème main DPS Magique Horde
-                        HandleAddItemCommand("47468"); // Amulette DPS Magique Horde
-                        HandleAddItemCommand("47439"); // Anneau DPS Magique 1 Horde
-                        HandleAddItemCommand("47489"); // Anneau DPS Magique 2 Horde
-                        HandleAddItemCommand("47477"); // Trinket DPS Magique 1 Horde
-                        HandleAddItemCommand("47432"); // Trinket DPS Magique 2 Horde
-                        HandleAddItemCommand("47467"); // Brassard DPS Magique Horde
-                        HandleAddItemCommand("47447"); // Ceinture DPS Magique Horde
-                        HandleAddItemCommand("47482"); // Bottes DPS Magique Horde
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                // HandleAddItemSetCommand("675");//T6
-                chr->AutoEquipItem();
-                break;
-            }
-            case CLASS_DEATH_KNIGHT:
-            {
-                HandleAddItemCommand("47672"); // Cachet de DK 
-                HandleAddItemCommand("48513"); // Epée pour les deux factions
-                switch(chr->getRace())
-                {
-                    case RACE_HUMAN:
-                    case RACE_DWARF:
-                    case RACE_NIGHTELF:
-                    case RACE_DRAENEI:
-                    case RACE_GNOME:
-                    {
-                        HandleAddItemCommand("47515");//2h sword
-                        HandleAddItemCommand("47078");//2h axe
-                        HandleAddItemCommand("48543");//T9.9
-                        HandleAddItemCommand("48544");//T9.9
-                        HandleAddItemCommand("48545");//T9.9
-                        HandleAddItemCommand("48546");//T9.9
-                        HandleAddItemCommand("48547");//T9.9
-                        HandleAddItemCommand("47549");//cape
-                        HandleAddItemCommand("47085"); // Bouclier off-tank Alliance
-                        HandleAddItemCommand("47060"); // Amulette DPS Physique Alliance
-                        HandleAddItemCommand("47075"); // Anneau DPS Physique 1 Alliance
-                        HandleAddItemCommand("46966"); // Anneau DPS Physique 2 Alliance
-                        HandleAddItemCommand("47088"); // Trinket DPS Physique 1 Alliance
-                        HandleAddItemCommand("47464"); // Trinket DPS Physique 2 Alliance
-                        HandleAddItemCommand("47521"); // Arme à feu Alliance
-                        HandleAddItemCommand("47111"); // Brassard DPS Physique Alliance
-                        HandleAddItemCommand("47002"); // Ceinture DPS Physique Alliance
-                        HandleAddItemCommand("47154"); // Bottes DPS Physique Alliance
-                        break;
-                    }
-                    case RACE_UNDEAD_PLAYER:
-                    case RACE_TROLL:
-                    case RACE_BLOODELF:
-                    case RACE_ORC:
-                    case RACE_TAUREN:
-                    {
-                        HandleAddItemCommand("47516");//2h sword
-                        HandleAddItemCommand("48548");//2h axe
-                        HandleAddItemCommand("48548");//T9.9
-                        HandleAddItemCommand("48559");//T9.9
-                        HandleAddItemCommand("48550");//T9.9
-                        HandleAddItemCommand("48551");//T9.9
-                        HandleAddItemCommand("48552");//T9.9
-                        HandleAddItemCommand("47550");//cape
-                        HandleAddItemCommand("47448"); // Bouclier off-tank Horde
-                        HandleAddItemCommand("47433"); // Amulette DPS Physique Horde
-                        HandleAddItemCommand("47413"); // Anneau DPS Physique 1 Horde
-                        HandleAddItemCommand("47443"); // Anneau DPS Physique 2 Horde
-                        HandleAddItemCommand("47451"); // Trinket DPS Physique 1 Horde
-                        HandleAddItemCommand("47131"); // Trinket DPS Physique 2 Horde
-                        HandleAddItemCommand("47523"); // Arme à feu Horde
-                        HandleAddItemCommand("47459"); // Brassard DPS Physique Horde
-                        HandleAddItemCommand("47429"); // Ceinture DPS Physique Horde
-                        HandleAddItemCommand("47473"); // Bottes DPS Physique Horde
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                chr->AutoEquipItem();
-                break;
-            }
-            case CLASS_SHAMAN:
-            {
-                switch(chr->getRace())
-                {
-                    case RACE_ORC:
-                    case RACE_TAUREN:
-                    case RACE_TROLL:
-                    {
-                        HandleAddItemCommand("47483");//1h mace
-                        HandleAddItemCommand("47483");//1h mace
-                        HandleAddItemCommand("48356");//T9.9
-                        HandleAddItemCommand("48357");//T9.9
-                        HandleAddItemCommand("48358");//T9.9
-                        HandleAddItemCommand("48359");//T9.9
-                        HandleAddItemCommand("48360");//T9.9
-                        HandleAddItemCommand("47554");//cape
-                        HandleAddItemCommand("47448"); // Bouclier DPS/Soins Magique Horde
-                        HandleAddItemCommand("47433"); // Amulette DPS Physique Horde
-                        HandleAddItemCommand("47413"); // Anneau DPS Physique 1 Horde
-                        HandleAddItemCommand("47489"); // Anneau DPS Magique 2 Horde
-                        HandleAddItemCommand("47451"); // Trinket DPS Physique 1 Horde
-                        HandleAddItemCommand("47432"); // Trinket DPS Magique 2 Horde
-                        HandleAddItemCommand("47442"); // Brassard DPS Physique Horde
-                        HandleAddItemCommand("47472"); // Ceinture DPS Physique Horde
-                        HandleAddItemCommand("47457"); // Bottes DPS Physique Horde
-                        break;
-                    }
-                    case RACE_DRAENEI:
-                    {
-                        HandleAddItemCommand("47206");//1h mace
-                        HandleAddItemCommand("47206");//1h mace
-                        HandleAddItemCommand("48351");//T9.9
-                        HandleAddItemCommand("48352");//T9.9
-                        HandleAddItemCommand("48353");//T9.9
-                        HandleAddItemCommand("48354");//T9.9
-                        HandleAddItemCommand("48355");//T9.9
-                        HandleAddItemCommand("47553");//cape
-                        HandleAddItemCommand("47085"); // Bouclier DPS/Soins Magique Alliance
-                        HandleAddItemCommand("47060"); // Amulette DPS Physique Alliance
-                        HandleAddItemCommand("47075"); // Anneau DPS Physique 1 Alliance
-                        HandleAddItemCommand("47237"); // Anneau DPS Magique 2 Alliance
-                        HandleAddItemCommand("47088"); // Trinket DPS Physique 1 Alliance
-                        HandleAddItemCommand("47059"); // Trinket DPS Magique 2 Alliance
-                        HandleAddItemCommand("47074"); // Brassard DPS Physique Alliance
-                        HandleAddItemCommand("47153"); // Ceinture DPS Physique Alliance
-                        HandleAddItemCommand("47109"); // Bottes DPS Physique Alliance
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                // HandleAddItemSetCommand("684");//T6
-                HandleAddItemCommand("5175");//totem de terre
-                HandleAddItemCommand("5176");//totem de feu
-                HandleAddItemCommand("5177");//totem d'eau
-                HandleAddItemCommand("5178");//totem d'air
-                HandleAddItemCommand("47666"); // Totem Elem
-                chr->AutoEquipItem();
-                break;
-            }
-            case CLASS_MAGE:
-            {            
-                switch(chr->getRace())
-                {
-                    case RACE_UNDEAD_PLAYER:
-                    case RACE_TROLL:
-                    case RACE_BLOODELF:
-                    {
-                        HandleAddItemCommand("47525");//bâton
-                        HandleAddItemCommand("47995");//baguette
-                        HandleAddItemCommand("47763");//T9.9
-                        HandleAddItemCommand("47764");//T9.9
-                        HandleAddItemCommand("47765");//T9.9
-                        HandleAddItemCommand("47766");//T9.9
-                        HandleAddItemCommand("47767");//T9.9
-                        HandleAddItemCommand("47554");//cape
-                        HandleAddItemCommand("47422"); // Dague DPS Magique Horde
-                        HandleAddItemCommand("47437"); // 2ème main DPS Magique Horde
-                        HandleAddItemCommand("47468"); // Amulette DPS Magique Horde
-                        HandleAddItemCommand("47439"); // Anneau DPS Magique 1 Horde
-                        HandleAddItemCommand("47489"); // Anneau DPS Magique 2 Horde
-                        HandleAddItemCommand("47477"); // Trinket DPS Magique 1 Horde
-                        HandleAddItemCommand("47432"); // Trinket DPS Magique 2 Horde
-                        HandleAddItemCommand("47467"); // Brassard DPS Magique Horde
-                        HandleAddItemCommand("47447"); // Ceinture DPS Magique Horde
-                        HandleAddItemCommand("47482"); // Bottes DPS Magique Horde
-                        break;
-                    }
-                    case RACE_DRAENEI:
-                    case RACE_HUMAN:
-                    case RACE_GNOME:
-                    {
-                        HandleAddItemCommand("47130");//bâton
-                        HandleAddItemCommand("47922");//baguette
-                        HandleAddItemCommand("47758");//T9.9
-                        HandleAddItemCommand("47759");//T9.9
-                        HandleAddItemCommand("47760");//T9.9
-                        HandleAddItemCommand("47761");//T9.9
-                        HandleAddItemCommand("47762");//T9.9
-                        HandleAddItemCommand("47553");//cape
-                        HandleAddItemCommand("46980"); // Dague DPS Magique Alliance
-                        HandleAddItemCommand("47064"); // 2ème main DPS Magique Alliance
-                        HandleAddItemCommand("47144"); // Amulette DPS Magique Alliance
-                        HandleAddItemCommand("47224"); // Anneau DPS Magique 1 Alliance
-                        HandleAddItemCommand("47237"); // Anneau DPS Magique 2 Alliance
-                        HandleAddItemCommand("47188"); // Trinket DPS Magique 1 Alliance
-                        HandleAddItemCommand("47059"); // Trinket DPS Magique 2 Alliance
-                        HandleAddItemCommand("47143"); // Brassard DPS Magique Alliance
-                        HandleAddItemCommand("47084"); // Ceinture DPS Magique Alliance
-                        HandleAddItemCommand("47205"); // Bottes DPS Magique Alliance
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                // HandleAddItemSetCommand("671");//T6
-                chr->AutoEquipItem();
-                break;
-            }
-            case CLASS_WARLOCK:
-            {
-                switch(chr->getRace())
-                {
-                    case RACE_ORC:
-                    case RACE_UNDEAD_PLAYER:
-                    case RACE_BLOODELF:
-                    {
-                        HandleAddItemCommand("47422");//dague
-                        HandleAddItemCommand("47793");//T9.9
-                        HandleAddItemCommand("47794");//T9.9
-                        HandleAddItemCommand("47795");//T9.9
-                        HandleAddItemCommand("47796");//T9.9
-                        HandleAddItemCommand("47797");//T9.9
-                        HandleAddItemCommand("47553");//cape
-                        HandleAddItemCommand("47995"); // Baguette DPS Magique Horde
-                        HandleAddItemCommand("47422"); // Dague DPS Magique Horde
-                        HandleAddItemCommand("47437"); // 2ème main DPS Magique Horde
-                        HandleAddItemCommand("47468"); // Amulette DPS Magique Horde
-                        HandleAddItemCommand("47439"); // Anneau DPS Magique 1 Horde
-                        HandleAddItemCommand("47489"); // Anneau DPS Magique 2 Horde
-                        HandleAddItemCommand("47477"); // Trinket DPS Magique 1 Horde
-                        HandleAddItemCommand("47432"); // Trinket DPS Magique 2 Horde
-                        HandleAddItemCommand("47467"); // Brassard DPS Magique Horde
-                        HandleAddItemCommand("47447"); // Ceinture DPS Magique Horde
-                        HandleAddItemCommand("47482"); // Bottes DPS Magique Horde
-                        break;
-                    }
-                    case RACE_HUMAN:
-                    case RACE_GNOME:
-                    {
-                        HandleAddItemCommand("46980");//dague
-                        HandleAddItemCommand("47788");//T9.9
-                        HandleAddItemCommand("47789");//T9.9
-                        HandleAddItemCommand("47790");//T9.9
-                        HandleAddItemCommand("47791");//T9.9
-                        HandleAddItemCommand("47792");//T9.9
-                        HandleAddItemCommand("47553");//cape
-                        HandleAddItemCommand("47922"); // Baguette DPS Magique Alliance
-                        HandleAddItemCommand("46980"); // Dague DPS Magique Alliance
-                        HandleAddItemCommand("47064"); // 2ème main DPS Magique Alliance
-                        HandleAddItemCommand("47144"); // Amulette DPS Magique Alliance
-                        HandleAddItemCommand("47224"); // Anneau DPS Magique 1 Alliance
-                        HandleAddItemCommand("47237"); // Anneau DPS Magique 2 Alliance
-                        HandleAddItemCommand("47188"); // Trinket DPS Magique 1 Alliance
-                        HandleAddItemCommand("47059"); // Trinket DPS Magique 2 Alliance
-                        HandleAddItemCommand("47143"); // Brassard DPS Magique Alliance
-                        HandleAddItemCommand("47084"); // Ceinture DPS Magique Alliance
-                        HandleAddItemCommand("47205"); // Bottes DPS Magique Alliance
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                // HandleAddItemSetCommand("670");//T6 
-                chr->AutoEquipItem();
-                break;
-            }
-            case CLASS_DRUID:
-            {
-                HandleAddItemCommand("47668"); // Idole Feral
-                switch(chr->getRace())
-                {
-                    case RACE_NIGHTELF:
-                    {
-                        HandleAddItemCommand("47130");//bâton
-                        HandleAddItemCommand("48138");//T9.9
-                        HandleAddItemCommand("48139");//T9.9
-                        HandleAddItemCommand("48140");//T9.9
-                        HandleAddItemCommand("48141");//T9.9
-                        HandleAddItemCommand("48142");//T9.9
-                        HandleAddItemCommand("47553");//cape
-                        HandleAddItemCommand("47206"); // Masse DPS Magique Alliance
-                        HandleAddItemCommand("47064"); // 2ème main DPS Magique Alliance
-                        HandleAddItemCommand("47060"); // Amulette DPS Physique Alliance
-                        HandleAddItemCommand("47075"); // Anneau DPS Physique 1 Alliance
-                        HandleAddItemCommand("46966"); // Anneau DPS Physique 2 Alliance
-                        HandleAddItemCommand("47088"); // Trinket DPS Physique 1 Alliance
-                        HandleAddItemCommand("47464"); // Trinket DPS Physique 2 Alliance
-                        HandleAddItemCommand("47155"); // Brassards DPS Physique Alliance
-                        HandleAddItemCommand("47112"); // Ceinture DPS Physique Alliance
-                        HandleAddItemCommand("47077"); // Bottes DPS Physique Alliance
-                        break;
-                    }
-                    case RACE_TAUREN:
-                    {
-                        HandleAddItemCommand("47463");//bâton
-                        HandleAddItemCommand("48173");//T9.9
-                        HandleAddItemCommand("48174");//T9.9
-                        HandleAddItemCommand("48175");//T9.9
-                        HandleAddItemCommand("48176");//T9.9
-                        HandleAddItemCommand("48177");//T9.9
-                        HandleAddItemCommand("47554");//cape
-                        HandleAddItemCommand("47483"); // Masse DPS Magique Horde
-                        HandleAddItemCommand("47437"); // 2ème main DPS Magique Horde
-                        HandleAddItemCommand("47433"); // Amulette DPS Physique Horde
-                        HandleAddItemCommand("47413"); // Anneau DPS Physique 1 Horde
-                        HandleAddItemCommand("47443"); // Anneau DPS Physique 2 Horde
-                        HandleAddItemCommand("47451"); // Trinket DPS Physique 1 Horde
-                        HandleAddItemCommand("47131"); // Trinket DPS Physique 2 Horde
-                        HandleAddItemCommand("47474"); // Brassards DPS Physique Horde
-                        HandleAddItemCommand("47460"); // Ceinture DPS Physique Horde
-                        HandleAddItemCommand("47445"); // Bottes DPS Physique Horde
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                // HandleAddItemSetCommand("678");//T6
-                chr->AutoEquipItem();
-                break;
-            }
-            default:
-                break;
-        }
-    }
-
-    if(chr->getLevel() > 19)
-    {
-        switch(chr->getRace())
-        {
-            case RACE_HUMAN:
-            {
-                const ItemPrototype * proto = NULL;
-                if(proto = sObjectMgr.GetItemPrototype(5656))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(5655))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(2414))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                switch(urand(0,2))
-                {
-                    case 0:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(5656))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 1:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(5655))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 2:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(2414))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                break;
-            }
-            case RACE_ORC:
-            {
-                const ItemPrototype * proto = NULL;
-                if(proto = sObjectMgr.GetItemPrototype(5668))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(1132))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(46099))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(5665))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                switch(urand(0,3))
-                {
-                    case 0:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(5668))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 1:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(1132))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 2:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(46099))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 3:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(5665))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                break;
-            }
-            case RACE_DWARF:
-            {
-                const ItemPrototype * proto = NULL;
-                if(proto = sObjectMgr.GetItemPrototype(5873))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(5872))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(5864))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                switch(urand(0,2))
-                {
-                    case 0:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(5873))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 1:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(5872))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 2:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(5864))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                break;
-            }
-            case RACE_NIGHTELF:
-            {
-                const ItemPrototype * proto = NULL;
-                if(proto = sObjectMgr.GetItemPrototype(8631))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(8632))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(8629))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                switch(urand(0,2))
-                {
-                    case 0:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(8631))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 1:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(8632))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 2:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(8629))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                break;
-            }
-            case RACE_UNDEAD_PLAYER:
-            {
-                const ItemPrototype * proto = NULL;
-                if(proto = sObjectMgr.GetItemPrototype(13333))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(13332))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(46308))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(13331))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                switch(urand(0,3))
-                {
-                    case 0:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(13333))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 1:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(13332))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 2:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(46308))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 3:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(13331))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                break;
-            }
-            case RACE_TAUREN:
-            {
-                const ItemPrototype * proto = NULL;
-                if(proto = sObjectMgr.GetItemPrototype(46100))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(15290))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(15277))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                switch(urand(0,2))
-                {
-                    case 0:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(46100))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 1:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(15290))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 2:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(15277))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                break;
-            }
-            case RACE_GNOME:
-            {
-                const ItemPrototype * proto = NULL;
-                if(proto = sObjectMgr.GetItemPrototype(8595))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(8563))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(13321))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(13322))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                switch(urand(0,3))
-                {
-                    case 0:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(8595))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 1:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(8563))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 2:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(13321))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 3:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(13322))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                break;
-            }
-            case RACE_TROLL:
-            {
-                const ItemPrototype * proto = NULL;
-                if(proto = sObjectMgr.GetItemPrototype(8588))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(8591))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(8592))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                switch(urand(0,2))
-                {
-                    case 0:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(8588))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 1:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(8591))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 2:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(8592))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                break;
-            }
-            case RACE_BLOODELF:
-            {
-                const ItemPrototype * proto = NULL;
-                if(proto = sObjectMgr.GetItemPrototype(29220))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(29221))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(28927))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(29222))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                switch(urand(0,3))
-                {
-                    case 0:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(29220))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 1:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(29221))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 2:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(28927))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 3:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(29222))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                break;
-            }
-            case RACE_DRAENEI:
-            {
-                const ItemPrototype * proto = NULL;
-                if(proto = sObjectMgr.GetItemPrototype(28481))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(29744))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(29743))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                switch(urand(0,2))
-                {
-                    case 0:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(28481))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 1:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(29744))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 2:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(29743))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                break;
-            }
-            default:
-                break;
-        }
-    }
-
-    if(chr->getLevel() > 39)
-    {
-        switch(chr->getRace())
-        {
-            case RACE_HUMAN:
-            {
-                const ItemPrototype * proto = NULL;
-                if(proto = sObjectMgr.GetItemPrototype(18777))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(18778))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(18776))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                switch(urand(0,2))
-                {
-                    case 0:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(18777))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 1:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(18778))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 2:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(18776))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                break;
-            }
-            case RACE_ORC:
-            {
-                const ItemPrototype * proto = NULL;
-                if(proto = sObjectMgr.GetItemPrototype(18796))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(18797))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(18798))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                switch(urand(0,2))
-                {
-                    case 0:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(18796))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 1:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(18797))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 2:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(18798))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                break;
-            }
-            case RACE_DWARF:
-            {
-                const ItemPrototype * proto = NULL;
-                if(proto = sObjectMgr.GetItemPrototype(18785))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(18786))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(18787))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                switch(urand(0,2))
-                {
-                    case 0:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(18785))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 1:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(18786))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 2:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(18787))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                break;
-            }
-            case RACE_NIGHTELF:
-            {
-                const ItemPrototype * proto = NULL;
-                if(proto = sObjectMgr.GetItemPrototype(18902))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(18766))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(18767))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                switch(urand(0,2))
-                {
-                    case 0:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(18902))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 1:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(18766))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 2:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(18767))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                break;
-            }
-            case RACE_UNDEAD_PLAYER:
-            {
-                const ItemPrototype * proto = NULL;
-                if(proto = sObjectMgr.GetItemPrototype(18791))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(13334))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                switch(urand(0,1))
-                {
-                    case 0:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(18791))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 1:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(13334))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                break;
-            }
-            case RACE_TAUREN:
-            {
-                const ItemPrototype * proto = NULL;
-                if(proto = sObjectMgr.GetItemPrototype(18793))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(18794))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(18795))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                switch(urand(0,2))
-                {
-                    case 0:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(18793))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 1:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(18794))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 2:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(18795))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                break;
-            }
-            case RACE_GNOME:
-            {
-                const ItemPrototype * proto = NULL;
-                if(proto = sObjectMgr.GetItemPrototype(18773))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(18774))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(18772))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                switch(urand(0,2))
-                {
-                    case 0:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(18773))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 1:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(18774))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 2:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(18772))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                break;
-            }
-            case RACE_TROLL:
-            {
-                const ItemPrototype * proto = NULL;
-                if(proto = sObjectMgr.GetItemPrototype(18788))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(18790))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(18789))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                switch(urand(0,2))
-                {
-                    case 0:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(18788))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 1:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(18790))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 2:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(18789))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                break;
-            }
-            case RACE_BLOODELF:
-            {
-                const ItemPrototype * proto = NULL;
-                if(proto = sObjectMgr.GetItemPrototype(28936))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(29223))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(29224))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                switch(urand(0,2))
-                {
-                    case 0:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(28936))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 1:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(29223))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 2:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(29224))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                break;
-            }
-            case RACE_DRAENEI:
-            {
-                const ItemPrototype * proto = NULL;
-                if(proto = sObjectMgr.GetItemPrototype(29745))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(29746))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(29747))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                switch(urand(0,2))
-                {
-                    case 0:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(29745))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 1:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(29746))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 2:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(29747))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                break;
-            }
-            default:
-                break;
-        }
-    }
-
-    if(chr->getLevel() > 59)
-    {
-        switch(chr->GetTeam())
-        {
-            case HORDE:
-            {
-                const ItemPrototype * proto = NULL;
-                if(proto = sObjectMgr.GetItemPrototype(25475))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(25474))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(25476))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                switch(urand(0,2))
-                {
-                    case 0:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(25475))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 1:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(25474))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 2:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(25476))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    default:
-                        break;
-                }
-            }
-            case ALLIANCE:
-            {
-                const ItemPrototype * proto = NULL;
-                if(proto = sObjectMgr.GetItemPrototype(25472))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(25470))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(25471))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                switch(urand(0,2))
-                {
-                    case 0:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(25472))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 1:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(25470))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 2:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(25471))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    default:
-                        break;
-                }
-            }
-            default:
-                break;
-        }
-    }
-
-    if(chr->getLevel() > 69)
-    {
-        switch(chr->GetTeam())
-        {
-            case HORDE:
-            {
-                const ItemPrototype * proto = NULL;
-                if(proto = sObjectMgr.GetItemPrototype(25532))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(25477))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(25531))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(25533))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                switch(urand(0,3))
-                {
-                    case 0:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(25532))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 1:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(25477))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 2:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(25531))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 3:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(25533))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                break;
-            }
-            case ALLIANCE:
-            {
-                const ItemPrototype * proto = NULL;
-                if(proto = sObjectMgr.GetItemPrototype(25529))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(25528))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(25527))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                if(proto = sObjectMgr.GetItemPrototype(25473))
-                {
-                    if(proto->Spells[1].SpellId != 0 && chr->HasSpell(proto->Spells[1].SpellId))
-                    {
-                        break;
-                    }
-                }
-                switch(urand(0,3))
-                {
-                    case 0:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(25529))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 1:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(25528))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 2:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(25527))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    case 3:
-                    {
-                        if(proto = sObjectMgr.GetItemPrototype(25473))
-                            chr->learnSpell(proto->Spells[1].SpellId, false);
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                break;
-            }
-            default:
-                break;
-        }
-    }
-
+    else
+        return false;
     return true;
 }
 

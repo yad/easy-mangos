@@ -191,6 +191,7 @@ ChatCommand * ChatHandler::getCommandTable()
         { "list",           SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleGMListFullCommand,          "", NULL },
         { "visible",        SEC_MODERATOR,      false, &ChatHandler::HandleGMVisibleCommand,           "", NULL },
         { "startup",        SEC_ADMINISTRATOR,  false, &ChatHandler::HandleGMStartUpCommand,           "", NULL },
+        { "autoequip",      SEC_ADMINISTRATOR,  false, &ChatHandler::HandleGMAutoEquipCommand,         "", NULL },
         { "killermode",     SEC_ADMINISTRATOR,  false, &ChatHandler::HandleGMKillerMode,               "", NULL },
         { "",               SEC_MODERATOR,      false, &ChatHandler::HandleGMCommand,                  "", NULL },
         { NULL,             0,                  false, NULL,                                           "", NULL }
