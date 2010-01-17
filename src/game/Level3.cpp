@@ -6695,7 +6695,6 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
         HandleAddItemCommand("23162");//bag 36
         if(chr->getClass() != CLASS_HUNTER)
             HandleAddItemCommand("23162");//bag 36
-        chr->AutoEquipItem();
     }
 
     switch(chr->getClass())
@@ -6809,7 +6808,6 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                     break;
             }
             // HandleAddItemSetCommand("673");//T6
-            chr->AutoEquipItem();
             break;
         }
         case CLASS_PALADIN:
@@ -6865,7 +6863,6 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
             }
             // HandleAddItemSetCommand("681");//T6
             HandleAddItemCommand("42854"); // Libram
-            chr->AutoEquipItem();
             break;
         }
         case CLASS_HUNTER:
@@ -7032,7 +7029,6 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                     break;
             }
             // HandleAddItemSetCommand("669");//T6
-            chr->AutoEquipItem();
             break;
         }
         case CLASS_ROGUE:
@@ -7090,7 +7086,6 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                     break;
             }
             // HandleAddItemSetCommand("668");//T6
-            chr->AutoEquipItem();
             break;
         }
         case CLASS_PRIEST:
@@ -7152,7 +7147,6 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                     break;
             }
             // HandleAddItemSetCommand("675");//T6
-            chr->AutoEquipItem();
             break;
         }
         case CLASS_DEATH_KNIGHT:
@@ -7216,7 +7210,6 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                 default:
                     break;
             }
-            chr->AutoEquipItem();
             break;
         }
         case CLASS_SHAMAN:
@@ -7276,7 +7269,6 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
             HandleAddItemCommand("5177");//totem d'eau
             HandleAddItemCommand("5178");//totem d'air
             HandleAddItemCommand("47666"); // Totem Elem
-            chr->AutoEquipItem();
             break;
         }
         case CLASS_MAGE:
@@ -7335,7 +7327,6 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                     break;
             }
             // HandleAddItemSetCommand("671");//T6
-            chr->AutoEquipItem();
             break;
         }
         case CLASS_WARLOCK:
@@ -7393,7 +7384,6 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                     break;
             }
             // HandleAddItemSetCommand("670");//T6 
-            chr->AutoEquipItem();
             break;
         }
         case CLASS_DRUID:
@@ -7447,7 +7437,6 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                     break;
             }
             // HandleAddItemSetCommand("678");//T6
-            chr->AutoEquipItem();
             break;
         }
         default:
@@ -7669,6 +7658,7 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
             break;
     }
 
+    chr->AutoEquipItem();
     return true;
 }
 
