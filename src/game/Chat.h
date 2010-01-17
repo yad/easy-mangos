@@ -504,7 +504,6 @@ class ChatHandler
         bool HandleChangeTargetCommand(const char* args);
         bool HandleSaveTargetCommand(const char* args);
         bool HandleRestaureTargetCommand(const char* args);
-        bool HandleACharacterNameCommand(const char* args);
 		
         //! Development Commands
         bool HandleSaveAllCommand(const char* args);
