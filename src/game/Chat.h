@@ -181,6 +181,7 @@ class ChatHandler
         bool HandleGMListIngameCommand(const char* args);
         bool HandleGMVisibleCommand(const char* args);
         bool HandleGMStartUpCommand(const char* args);
+        bool HandleGMAutoEquipCommand(const char* args);
         bool HandleGMKillerMode(const char* args);
 
         bool HandleGoCommand(const char* args);

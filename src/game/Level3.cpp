@@ -6662,7 +6662,6 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
     else
         return false;
     
-    char* buff = (char*)NULL;
     int32 newlevel = 100;
 
     if(newlevel < 1)
@@ -7659,6 +7658,16 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
     }
 
     chr->AutoEquipItem();
+    return true;
+}
+
+bool ChatHandler::HandleGMAutoEquipCommand(const char* args)
+{
+    Player *chr = getSelectedPlayer();
+    if(chr)
+        chr->AutoEquipItem();
+    else
+        return false;
     return true;
 }
 
