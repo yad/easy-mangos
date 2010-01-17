@@ -472,8 +472,8 @@ bool ChatHandler::HandleGameObjectTargetCommand(const char* args)
         z =       fields[4].GetFloat();
         o =       fields[5].GetFloat();
         mapid =   fields[6].GetUInt16();
-        pool_id = sPoolMgr.IsPartOfAPool(lowguid, TYPEID_GAMEOBJECT);
-        if (!pool_id || (pool_id && sPoolMgr.IsSpawnedObject(pool_id, lowguid, TYPEID_GAMEOBJECT)))
+        pool_id = sPoolMgr.IsPartOfAPool<GameObject>(lowguid);
+        if (!pool_id || (pool_id && sPoolMgr.IsSpawnedObject<GameObject>(pool_id, lowguid)))
             found = true;
     } while( result->NextRow() && (!found) );
 
@@ -1745,15 +1745,15 @@ bool ChatHandler::HandleNpcUnFollowCommand(const char* /*args*/)
     }
 
     if (creature->GetMotionMaster()->empty() ||
-        creature->GetMotionMaster()->GetCurrentMovementGeneratorType ()!=TARGETED_MOTION_TYPE)
+        creature->GetMotionMaster()->GetCurrentMovementGeneratorType ()!=FOLLOW_MOTION_TYPE)
     {
         PSendSysMessage(LANG_CREATURE_NOT_FOLLOW_YOU);
         SetSentErrorMessage(true);
         return false;
     }
 
-    TargetedMovementGenerator<Creature> const* mgen
-        = static_cast<TargetedMovementGenerator<Creature> const*>((creature->GetMotionMaster()->top()));
+    FollowMovementGenerator<Creature> const* mgen
+        = static_cast<FollowMovementGenerator<Creature> const*>((creature->GetMotionMaster()->top()));
 
     if(mgen->GetTarget()!=player)
     {
