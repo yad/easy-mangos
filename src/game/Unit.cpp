@@ -9944,9 +9944,11 @@ uint32 Unit::MeleeDamageBonus(Unit *pVictim, uint32 pdamage,WeaponAttackType att
             else
                 coeff = bonus->direct_damage * LvlPenalty * stack;
 
-            if (bonus->ap_bonus)
-                DoneFlat += bonus->ap_bonus * (GetTotalAttackPowerValue(BASE_ATTACK) + APbonus) * stack;
-
+             // Only true ranged spells want ranged attack power
+             if ( spellProto->DmgClass == SPELL_DAMAGE_CLASS_RANGED && (spellProto->Attributes & SPELL_ATTR_RANGED) )
+                 DoneFlat += bonus->ap_bonus * (GetTotalAttackPowerValue(RANGED_ATTACK) + APbonus) * stack;
+             else 
+                 DoneFlat += bonus->ap_bonus * (GetTotalAttackPowerValue(BASE_ATTACK) + APbonus) * stack;
             DoneFlat  *= coeff;
             TakenFlat *= coeff;
         }
