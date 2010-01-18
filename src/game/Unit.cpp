@@ -2175,7 +2175,7 @@ void Unit::CalcAbsorbResist(Unit *pVictim,SpellSchoolMask schoolMask, DamageEffe
 
 void Unit::AttackerStateUpdate (Unit *pVictim, WeaponAttackType attType, bool extra )
 {
-    if(hasUnitState(UNIT_STAT_CONFUSED | UNIT_STAT_STUNNED | UNIT_STAT_FLEEING | UNIT_STAT_DIED) || HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PACIFIED) )
+    if(hasUnitState(UNIT_STAT_CAN_NOT_REACT) || HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PACIFIED) )
         return;
 
     if (!pVictim->isAlive())
@@ -10567,19 +10567,23 @@ bool Unit::canDetectInvisibilityOf(Unit const* u) const
     return false;
 }
 
-struct UpdateWalkModeForPetsHelper
+struct UpdateWalkModeHelper
 {
-    explicit UpdateWalkModeForPetsHelper(bool _on) : on(_on) {}
-    void operator()(Unit* unit) const { unit->UpdateWalkModeForPets(on); }
-    bool on;
+    explicit UpdateWalkModeHelper(Unit* _source) : source(_source) {}
+    void operator()(Unit* unit) const { unit->UpdateWalkMode(source, true); }
+    Unit* source;
 };
 
-void Unit::UpdateWalkModeForPets(bool on)
+void Unit::UpdateWalkMode(Unit* source, bool self)
 {
     if (GetTypeId() == TYPEID_PLAYER)
-        ((Player*)this)->CallForAllControlledUnits(UpdateWalkModeForPetsHelper(on),false,true,true,true);
-    else
+        ((Player*)this)->CallForAllControlledUnits(UpdateWalkModeHelper(source),false,true,true,true);
+    else if (self)
     {
+        bool on = source->GetTypeId() == TYPEID_PLAYER
+            ? ((Player*)source)->HasMovementFlag(MOVEMENTFLAG_WALK_MODE)
+            : ((Creature*)source)->HasMonsterMoveFlag(MONSTER_MOVE_WALK);
+
         if (on)
         {
             if (((Creature*)this)->isPet() && hasUnitState(UNIT_STAT_FOLLOW))
@@ -10590,9 +10594,9 @@ void Unit::UpdateWalkModeForPets(bool on)
             if (((Creature*)this)->isPet())
                 ((Creature*)this)->RemoveMonsterMoveFlag(MONSTER_MOVE_WALK);
         }
-
-        CallForAllControlledUnits(UpdateWalkModeForPetsHelper(on),false,true,true);
     }
+    else
+        CallForAllControlledUnits(UpdateWalkModeHelper(source),false,true,true);
 }
 
 void Unit::UpdateSpeed(UnitMoveType mtype, bool forced)
