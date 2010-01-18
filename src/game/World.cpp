@@ -781,6 +781,8 @@ void World::LoadConfigSettings(bool reload)
             m_configs[CONFIG_START_ARENA_POINTS],m_configs[CONFIG_MAX_ARENA_POINTS],m_configs[CONFIG_MAX_ARENA_POINTS]);
         m_configs[CONFIG_START_ARENA_POINTS] = m_configs[CONFIG_MAX_ARENA_POINTS];
     }
+    //Custom variable - end arena if 2v1 etc.
+    m_configs[CONFIG_END_ARENA_IF_NOT_ENOUGH_PLAYERS] = sConfig.GetBoolDefault("EndArenaIfNotEnoughtPlayers", false);
 
     m_configs[CONFIG_ALL_TAXI_PATHS] = sConfig.GetBoolDefault("AllFlightPaths", false);
 

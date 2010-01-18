@@ -275,6 +275,8 @@ BattleGround::BattleGround()
     m_StartMessageIds[BG_STARTING_EVENT_SECOND] = LANG_BG_WS_START_ONE_MINUTE;
     m_StartMessageIds[BG_STARTING_EVENT_THIRD]  = LANG_BG_WS_START_HALF_MINUTE;
     m_StartMessageIds[BG_STARTING_EVENT_FOURTH] = LANG_BG_WS_HAS_BEGUN;
+
+    m_uiPlayersJoined  = 0;
 }
 
 BattleGround::~BattleGround()
@@ -461,7 +463,6 @@ void BattleGround::Update(uint32 diff)
                         plr->RemoveAurasDueToSpell(SPELL_ARENA_PREPARATION);
 
                 CheckArenaWinConditions();
-                CheckForArenaPlayersCount();   // if some player were NOT ported to arena
             }
             else
             {
@@ -714,7 +715,7 @@ void BattleGround::EndBattleGround(uint32 winner)
     {
         winner_arena_team = sObjectMgr.GetArenaTeamById(GetArenaTeamIdForTeam(winner));
         loser_arena_team = sObjectMgr.GetArenaTeamById(GetArenaTeamIdForTeam(GetOtherTeam(winner)));
-        if (winner_arena_team && loser_arena_team)
+        if (winner_arena_team && loser_arena_team && ArenaPlayersCount())
         {
             loser_rating = loser_arena_team->GetStats().rating;
             winner_rating = winner_arena_team->GetStats().rating;
@@ -1159,6 +1160,8 @@ void BattleGround::Reset()
     for(BattleGroundScoreMap::const_iterator itr = m_PlayerScores.begin(); itr != m_PlayerScores.end(); ++itr)
         delete itr->second;
     m_PlayerScores.clear();
+
+    m_uiPlayersJoined  = 0;
 }
 
 void BattleGround::StartBattleGround()
@@ -1229,6 +1232,7 @@ void BattleGround::AddPlayer(Player *plr)
             plr->SetHealth(plr->GetMaxHealth());
             plr->SetPower(POWER_MANA, plr->GetMaxPower(POWER_MANA));
         }
+        m_uiPlayersJoined++;
     }
     else
     {
@@ -1846,17 +1850,16 @@ void BattleGround::SetBracket( PvPDifficultyEntry const* bracketEntry )
     SetLevelRange(bracketEntry->minLevel,bracketEntry->maxLevel);
 }
 
-void BattleGround::CheckForArenaPlayersCount()
+bool BattleGround::ArenaPlayersCount()
 {
-    if(!isArena())
-        return;
+    if(!isArena() || !sWorld.getConfig(CONFIG_END_ARENA_IF_NOT_ENOUGH_PLAYERS))
+        return true;
 
     //uint32 m_uiAliTeamCount = GetPlayersCountByTeam(BG_TEAM_ALLIANCE);
     //uint32 m_uiHordeTeamCount = GetPlayersCountByTeam(BG_TEAM_HORDE);
     //if(m_uiAliTeamCount < GetArenaType() || m_uiHordeTeamCount < GetArenaType())
-    if(GetBgMap()->GetPlayers().getSize() < GetArenaType()*2)
-    {
-        debug_log("Wrong players count in arena, ending...");
-        EndNow();
-    }
+    if(GetBgMap()->GetPlayers().getSize() < GetArenaType()*2 && m_uiPlayersJoined < GetArenaType()*2)
+        return false;
+ 
+    return true;
 }

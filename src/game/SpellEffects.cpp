@@ -1619,7 +1619,7 @@ void Spell::EffectDummy(uint32 i)
 
                 //Any effect which causes you to lose control of your character will supress the starfall effect.
                 //and Starfall should not remove stealth 
-                if (m_caster->hasUnitState(UNIT_No_FREE_MOVE) || unitTarget->HasAuraType(SPELL_AURA_MOD_STEALTH))
+                if (m_caster->hasUnitState(UNIT_STAT_NO_FREE_MOVE) || unitTarget->HasAuraType(SPELL_AURA_MOD_STEALTH))
                     return;
 
                 switch(m_spellInfo->Id)

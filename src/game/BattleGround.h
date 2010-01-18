@@ -535,7 +535,7 @@ class BattleGround
         // door-events are automaticly added - but _ALL_ other must be in this vector
         std::map<uint8, uint8> m_ActiveEvents;
 
-        void CheckForArenaPlayersCount(); //End arena if some players were not ported
+        bool ArenaPlayersCount(); //End arena if some players were not ported
 
     protected:
         //this method is called, when BG cannot spawn its own spirit guide, or something is wrong, It correctly ends BattleGround
@@ -618,5 +618,7 @@ class BattleGround
         float m_TeamStartLocY[BG_TEAMS_COUNT];
         float m_TeamStartLocZ[BG_TEAMS_COUNT];
         float m_TeamStartLocO[BG_TEAMS_COUNT];
+
+        m_uiPlayersJoined  = 0;
 };
 #endif
