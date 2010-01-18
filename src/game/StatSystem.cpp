@@ -869,7 +869,19 @@ bool Pet::UpdateStats(Stats stat)
     if ( stat == STAT_STAMINA )
     {
         if(owner)
-            value += float(owner->GetStat(stat)) * 0.3f;
+        {
+            float scale_coeff = 0.3f;
+            switch (owner->getClass())
+            {
+                case CLASS_HUNTER:
+                    scale_coeff = 0.4493f;
+                case CLASS_WARLOCK:
+                    scale_coeff = 0.7f;
+                case CLASS_DEATH_KNIGHT:
+                    scale_coeff = 0.3928f;
+            }
+            value += float(owner->GetStat(stat)) * scale_coeff;
+        }
     }
                                                             //warlock's and mage's pets gain 30% of owner's intellect
     else if ( stat == STAT_INTELLECT && getPetType() == SUMMON_PET )
