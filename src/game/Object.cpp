@@ -263,14 +263,15 @@ void Object::BuildMovementUpdate(ByteBuffer * data, uint16 flags, uint32 flags2)
             {
                 flags2 = MOVEMENTFLAG_NONE;
 
-                if (!((Creature*)this)->IsStopped())
-                    flags2 |= MOVEMENTFLAG_FORWARD;         // not set if not really moving
+                // disabled, makes them run-in-same-place before movement generator updated once.
+                /*if (((Creature*)this)->hasUnitState(UNIT_STAT_MOVING))
+                    flags2 |= MOVEMENTFLAG_FORWARD;*/         // not set if not really moving
 
                 if (((Creature*)this)->canFly())
                 {
                     flags2 |= MOVEMENTFLAG_LEVITATING;      // (ok) most seem to have this
 
-                    if (((Creature*)this)->IsStopped())
+                    if (!((Creature*)this)->hasUnitState(UNIT_STAT_MOVING))
                         flags2 |= MOVEMENTFLAG_FLY_UNK1;    // (ok) possibly some "hover" mode
                     else
                     {
@@ -1732,7 +1733,7 @@ namespace MaNGOS
 
                 float x,y,z;
 
-                if( !c->isAlive() || c->hasUnitState(UNIT_STAT_ROOT | UNIT_STAT_STUNNED | UNIT_STAT_DISTRACTED | UNIT_STAT_DIED) ||
+                if( !c->isAlive() || c->hasUnitState(UNIT_STAT_NOT_MOVE) ||
                     !c->GetMotionMaster()->GetDestination(x,y,z) )
                 {
                     x = c->GetPositionX();
