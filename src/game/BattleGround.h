@@ -619,6 +619,6 @@ class BattleGround
         float m_TeamStartLocZ[BG_TEAMS_COUNT];
         float m_TeamStartLocO[BG_TEAMS_COUNT];
 
-        m_uiPlayersJoined  = 0;
+        uint8 m_uiPlayersJoined  = 0;
 };
 #endif
