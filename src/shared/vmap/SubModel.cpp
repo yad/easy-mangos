@@ -60,13 +60,9 @@ namespace VMAP
     //==========================================================
     const unsigned int SubModel::dumpSize;
 
-    SubModel::SubModel(unsigned int pNTriangles, TriangleBox *pTriangles, unsigned int pTrianglesPos, unsigned int pNNodes, TreeNode *pTreeNodes, unsigned int pNodesPos) :
-    BaseModel(pNNodes, pTreeNodes, pNTriangles, pTriangles)
-    {
-        iTrianglesPos = pTrianglesPos;
-        iNodesPos = pNodesPos;
-        iHasInternalMemAlloc = false;
-    }
+    SubModel::SubModel(uint32 pNTriangles, TriangleBox *pTriangles, uint32 pTrianglesPos, uint32 pNNodes, TreeNode *pTreeNodes, uint32 pNodesPos) :
+    BaseModel(pNNodes, pTreeNodes, pNTriangles, pTriangles), iTrianglesPos(pTrianglesPos), iNodesPos(pNodesPos), iHasInternalMemAlloc(false)
+    { }
 
     //==========================================================
 
@@ -98,33 +94,44 @@ namespace VMAP
 
     enum BIN_POSITIONS
     {
-        BP_iNTriangles=8,
+        BP_iNTriangles=8, // preceded by 2 redundant 32bit pointers (garbage)
         BP_iNNodes=12,
         BP_iBasePosition=16,
         BP_iNodesPos=28,
         BP_iTrianglesPos=32,
         BP_iHasInternalMemAlloc=36,
-        BP_iBox=38,
+        BP_iBox=38, // preceeded by a pad byte (garbage)
     };
     /**
     This is ugly, but due to compatibility and 64 bit support we have to do that ... sorry
     */
-    void SubModel::initFromBinBlock(void *pBinBlock)
+    void SubModel::initFromBinBlock(const uint8 *pBinBlock)
     {
-        iNTriangles =  *((unsigned int *)(((char *) pBinBlock) + BP_iNTriangles));
-        iNNodes =  *((unsigned int *) (((char *) pBinBlock) + BP_iNNodes));
-        iBasePosition =  *((Vector3 *) (((char *) pBinBlock) + BP_iBasePosition));
-        iNodesPos =  *((unsigned int *) (((char *) pBinBlock) + BP_iNodesPos));
-        iTrianglesPos =  *((unsigned int *) (((char *) pBinBlock) + BP_iTrianglesPos));
-        iHasInternalMemAlloc = *((bool *) (((char *) pBinBlock) + BP_iHasInternalMemAlloc));
-        iBox =  *((ShortBox *) (((char *) pBinBlock) + BP_iBox));
+        // BaseModel members
+        memcpy(&this->iNTriangles,     pBinBlock + BP_iNTriangles,      sizeof(iNTriangles));
+        memcpy(&this->iNNodes,         pBinBlock + BP_iNNodes,          sizeof(iNNodes));
+        memcpy(&this->iBasePosition,   pBinBlock + BP_iBasePosition,    sizeof(iBasePosition));
+        // SubModel members
+        memcpy(&this->iNodesPos,       pBinBlock + BP_iNodesPos,        sizeof(iNodesPos));
+        memcpy(&this->iTrianglesPos,   pBinBlock + BP_iTrianglesPos,    sizeof(iTrianglesPos));
+        iHasInternalMemAlloc = (bool) *(pBinBlock + BP_iHasInternalMemAlloc);
+        memcpy(&this->iBox,            pBinBlock + BP_iBox,             sizeof(iBox));
     }
 
-    void SubModel::putToBinBlock(void *pBinBlock)
+    void SubModel::putToBinBlock(uint8 *pBinBlock)
     {
         // pointers of SubModel are redundant, but existing format expects 2*32bit (8 Bytes)
         memcpy(pBinBlock, "\0\0\0\0\0\0\0\0",8);
-        memcpy((uint8*)pBinBlock+8, &this->iNTriangles,52-8);
+        // BaseModel members
+        memcpy(pBinBlock + BP_iNTriangles,      &this->iNTriangles,     sizeof(iNTriangles));
+        memcpy(pBinBlock + BP_iNNodes,          &this->iNNodes,         sizeof(iNNodes));
+        memcpy(pBinBlock + BP_iBasePosition,    &this->iBasePosition,   sizeof(iBasePosition));
+        // SubModel members
+        memcpy(pBinBlock + BP_iNodesPos,        &this->iNodesPos,       sizeof(iNodesPos));
+        memcpy(pBinBlock + BP_iTrianglesPos,    &this->iTrianglesPos,   sizeof(iTrianglesPos));
+        *(pBinBlock + BP_iHasInternalMemAlloc) = (uint8) this->iHasInternalMemAlloc;
+        memcpy(pBinBlock + BP_iBox,             &this->iBox,            sizeof(iBox));
+        //memcpy((uint8*)pBinBlock+8, &this->iNTriangles,52-8);
     }
 
     //==========================================================
