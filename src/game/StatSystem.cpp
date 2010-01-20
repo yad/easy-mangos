@@ -875,10 +875,13 @@ bool Pet::UpdateStats(Stats stat)
             {
                 case CLASS_HUNTER:
                     scale_coeff = 0.4493f;
+                    break;
                 case CLASS_WARLOCK:
                     scale_coeff = 0.7f;
+                    break;
                 case CLASS_DEATH_KNIGHT:
                     scale_coeff = 0.3928f;
+                    break;
             }
             value += float(owner->GetStat(stat)) * scale_coeff;
         }
