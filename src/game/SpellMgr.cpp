@@ -1718,6 +1718,10 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                 if (spellInfo_1->SpellIconID == 2292 && spellInfo_2->SpellIconID == 2292)
                     return false;
 
+                // Divine Sacrifice and Divine Guardian
+                if (spellInfo_1->SpellIconID == 3837 && spellInfo_2->SpellIconID == 3837)
+                    return false;
+
                 // Sacred Shield and Blessing of Sanctuary
                 if ((( spellInfo_1->SpellFamilyFlags & UI64LIT(0x0008000000000000)) &&
                     (spellInfo_2->Id == 25899 || spellInfo_2->Id == 20911)) ||
