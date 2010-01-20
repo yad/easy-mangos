@@ -9739,7 +9739,7 @@ uint32 Unit::MeleeDamageBonus(Unit *pVictim, uint32 pdamage,WeaponAttackType att
     DoneFlat += GetTotalAuraModifierByMiscMask(SPELL_AURA_MOD_DAMAGE_DONE_CREATURE, creatureTypeMask);
 
     // ..done flat (base at attack power for marked target and base at attack power for creature type)
-    if (attType == RANGED_ATTACK)
+    if (attType == RANGED_ATTACK && !( spellProto && spellProto->SpellFamilyName != SPELLFAMILY_HUNTER ) )
     {
         APbonus += pVictim->GetTotalAuraModifier(SPELL_AURA_RANGED_ATTACK_POWER_ATTACKER_BONUS);
         APbonus += GetTotalAuraModifierByMiscMask(SPELL_AURA_MOD_RANGED_ATTACK_POWER_VERSUS, creatureTypeMask);
@@ -9944,11 +9944,12 @@ uint32 Unit::MeleeDamageBonus(Unit *pVictim, uint32 pdamage,WeaponAttackType att
             else
                 coeff = bonus->direct_damage * LvlPenalty * stack;
 
-             // Only true ranged spells want ranged attack power
-             if ( spellProto->DmgClass == SPELL_DAMAGE_CLASS_RANGED && (spellProto->Attributes & SPELL_ATTR_RANGED) )
+             // Only hunter's spells and ranged auto attack want RAP
+             if ( attType == RANGED_ATTACK && !( spellProto && spellProto->SpellFamilyName != SPELLFAMILY_HUNTER ) )
                  DoneFlat += bonus->ap_bonus * (GetTotalAttackPowerValue(RANGED_ATTACK) + APbonus) * stack;
              else 
                  DoneFlat += bonus->ap_bonus * (GetTotalAttackPowerValue(BASE_ATTACK) + APbonus) * stack;
+
             DoneFlat  *= coeff;
             TakenFlat *= coeff;
         }
