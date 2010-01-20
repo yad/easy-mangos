@@ -234,11 +234,13 @@ namespace VMAP
             size = sizeof(uint32) + SubModel::dumpSize*iNSubModel;
             if(result && fwrite(&size,4,1,wf) != 1) result = false;
             if(result && fwrite(&iNSubModel,sizeof(uint32),1,wf) != 1) result = false;
+
+            uint8 subModelBuff[SubModel::dumpSize];
+            memset(subModelBuff,0,SubModel::dumpSize);
             for(int i=0; i<iNSubModel; ++i)
             {
-                uint8 triBuff[SubModel::dumpSize];
-                iSubModel[i].putToBinBlock(triBuff);
-                if(result && fwrite(triBuff,SubModel::dumpSize,1,wf) != 1) result = false;
+                iSubModel[i].putToBinBlock(subModelBuff);
+                if(result && fwrite(subModelBuff,SubModel::dumpSize,1,wf) != 1) result = false;
             }
 
             fclose(wf);

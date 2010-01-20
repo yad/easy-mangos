@@ -100,7 +100,7 @@ namespace VMAP
         BP_iNodesPos=28,
         BP_iTrianglesPos=32,
         BP_iHasInternalMemAlloc=36,
-        BP_iBox=38, // preceeded by a pad byte (garbage)
+        BP_iBox=38, // preceeded by a pad byte (garbage), followed by another 2 pad bytes.
     };
     /**
     This is ugly, but due to compatibility and 64 bit support we have to do that ... sorry
@@ -120,8 +120,6 @@ namespace VMAP
 
     void SubModel::putToBinBlock(uint8 *pBinBlock)
     {
-        // pointers of SubModel are redundant, but existing format expects 2*32bit (8 Bytes)
-        memcpy(pBinBlock, "\0\0\0\0\0\0\0\0",8);
         // BaseModel members
         memcpy(pBinBlock + BP_iNTriangles,      &this->iNTriangles,     sizeof(iNTriangles));
         memcpy(pBinBlock + BP_iNNodes,          &this->iNNodes,         sizeof(iNNodes));
@@ -131,7 +129,6 @@ namespace VMAP
         memcpy(pBinBlock + BP_iTrianglesPos,    &this->iTrianglesPos,   sizeof(iTrianglesPos));
         *(pBinBlock + BP_iHasInternalMemAlloc) = (uint8) this->iHasInternalMemAlloc;
         memcpy(pBinBlock + BP_iBox,             &this->iBox,            sizeof(iBox));
-        //memcpy((uint8*)pBinBlock+8, &this->iNTriangles,52-8);
     }
 
     //==========================================================
