@@ -1275,7 +1275,7 @@ bool ChatHandler::HandleNpcChangeLevelCommand(const char* args)
     {
         if(((Pet*)pCreature)->getPetType()==HUNTER_PET)
         {
-            pCreature->SetUInt32Value(UNIT_FIELD_PETNEXTLEVELEXP, sObjectMgr.GetXPForLevel(lvl)/4);
+            pCreature->SetUInt32Value(UNIT_FIELD_PETNEXTLEVELEXP, sObjectMgr.GetXPForPetLevel(lvl));
             pCreature->SetUInt32Value(UNIT_FIELD_PETEXPERIENCE, 0);
         }
         ((Pet*)pCreature)->GivePetLevel(lvl);
@@ -1745,15 +1745,15 @@ bool ChatHandler::HandleNpcUnFollowCommand(const char* /*args*/)
     }
 
     if (creature->GetMotionMaster()->empty() ||
-        creature->GetMotionMaster()->GetCurrentMovementGeneratorType ()!=TARGETED_MOTION_TYPE)
+        creature->GetMotionMaster()->GetCurrentMovementGeneratorType ()!=FOLLOW_MOTION_TYPE)
     {
         PSendSysMessage(LANG_CREATURE_NOT_FOLLOW_YOU);
         SetSentErrorMessage(true);
         return false;
     }
 
-    TargetedMovementGenerator<Creature> const* mgen
-        = static_cast<TargetedMovementGenerator<Creature> const*>((creature->GetMotionMaster()->top()));
+    FollowMovementGenerator<Creature> const* mgen
+        = static_cast<FollowMovementGenerator<Creature> const*>((creature->GetMotionMaster()->top()));
 
     if(mgen->GetTarget()!=player)
     {

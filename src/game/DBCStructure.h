@@ -613,7 +613,7 @@ struct ChatChannelsEntry
 struct ChrClassesEntry
 {
     uint32  ClassID;                                        // 0
-                                                            // 1, unused
+    //uint32 flags;                                         // 1, unused
     uint32  powerType;                                      // 2
                                                             // 3-4, unused
     //char*       name[16];                                 // 5-20 unused
@@ -622,9 +622,9 @@ struct ChrClassesEntry
                                                             // 37 string flag, unused
     //char*       nameNeutralGender[16];                    // 38-53 unused, if different from base (male) case
                                                             // 54 string flag, unused
-                                                            // 55, unused
+                                                            // 55, unused capitalized name
     uint32  spellfamily;                                    // 56
-                                                            // 57, unused
+    //uint32 flags2;                                        // 57, unused 0x08 HasRelicSlot
     uint32  CinematicSequence;                              // 58 id from CinematicSequences.dbc
     uint32  expansion;                                      // 59 (0 - original race, 1 - tbc addon, ...)
 };
@@ -1007,7 +1007,7 @@ struct ItemExtendedCostEntry
     uint32      ID;                                         // 0 extended-cost entry id
     uint32      reqhonorpoints;                             // 1 required honor points
     uint32      reqarenapoints;                             // 2 required arena points
-    //uint32 unk1;                                          // 4 probably indicates new 2v2 bracket restrictions
+    uint32      reqarenaslot;                               // 4 arena slot restrctions (min slot value)
     uint32      reqitem[5];                                 // 5-8 required item id
     uint32      reqitemcount[5];                            // 9-13 required count of 1st item
     uint32      reqpersonalarenarating;                     // 14 required personal arena rating

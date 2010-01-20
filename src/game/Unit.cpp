@@ -2159,7 +2159,7 @@ void Unit::CalcAbsorbResist(Unit *pVictim,SpellSchoolMask schoolMask, DamageEffe
 
 void Unit::AttackerStateUpdate (Unit *pVictim, WeaponAttackType attType, bool extra )
 {
-    if(hasUnitState(UNIT_STAT_CONFUSED | UNIT_STAT_STUNNED | UNIT_STAT_FLEEING | UNIT_STAT_DIED) || HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PACIFIED) )
+    if(hasUnitState(UNIT_STAT_CAN_NOT_REACT) || HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PACIFIED) )
         return;
 
     if (!pVictim->isAlive())
@@ -3347,10 +3347,10 @@ void Unit::SetInFront(Unit const* target)
     SetOrientation(GetAngle(target));
 }
 
-void Unit::SetFacingToObject(WorldObject* pObject)
+void Unit::SetFacingTo(float ori)
 {
     // update orientation at server
-    SetOrientation(GetAngle(pObject));
+    SetOrientation(ori);
 
     // and client
     WorldPacket data;
@@ -8400,7 +8400,7 @@ void Unit::SetPet(Pet* pet)
     // FIXME: hack, speed must be set only at follow
     if(pet && GetTypeId()==TYPEID_PLAYER)
         for(int i = 0; i < MAX_MOVE_TYPE; ++i)
-            pet->SetSpeed(UnitMoveType(i), m_speed_rate[i], true);
+            pet->SetSpeedRate(UnitMoveType(i), m_speed_rate[i], true);
 }
 
 void Unit::SetCharm(Unit* pet)
@@ -10394,8 +10394,57 @@ bool Unit::canDetectInvisibilityOf(Unit const* u) const
     return false;
 }
 
+struct UpdateWalkModeHelper
+{
+    explicit UpdateWalkModeHelper(Unit* _source) : source(_source) {}
+    void operator()(Unit* unit) const { unit->UpdateWalkMode(source, true); }
+    Unit* source;
+};
+
+void Unit::UpdateWalkMode(Unit* source, bool self)
+{
+    if (GetTypeId() == TYPEID_PLAYER)
+        ((Player*)this)->CallForAllControlledUnits(UpdateWalkModeHelper(source),false,true,true,true);
+    else if (self)
+    {
+        bool on = source->GetTypeId() == TYPEID_PLAYER
+            ? ((Player*)source)->HasMovementFlag(MOVEMENTFLAG_WALK_MODE)
+            : ((Creature*)source)->HasMonsterMoveFlag(MONSTER_MOVE_WALK);
+
+        if (on)
+        {
+            if (((Creature*)this)->isPet() && hasUnitState(UNIT_STAT_FOLLOW))
+                ((Creature*)this)->AddMonsterMoveFlag(MONSTER_MOVE_WALK);
+        }
+        else
+        {
+            if (((Creature*)this)->isPet())
+                ((Creature*)this)->RemoveMonsterMoveFlag(MONSTER_MOVE_WALK);
+        }
+    }
+    else
+        CallForAllControlledUnits(UpdateWalkModeHelper(source),false,true,true);
+}
+
 void Unit::UpdateSpeed(UnitMoveType mtype, bool forced)
 {
+    // not in combat pet have same speed as owner
+    switch(mtype)
+    {
+        case MOVE_RUN:
+        case MOVE_WALK:
+        case MOVE_SWIM:
+            if (GetTypeId()==TYPEID_UNIT && ((Creature*)this)->isPet() && hasUnitState(UNIT_STAT_FOLLOW))
+            {
+                if(Unit* owner = GetOwner())
+                {
+                    SetSpeedRate(mtype,owner->GetSpeedRate(mtype),forced);
+                    return;
+                }
+            }
+            break;
+    }
+
     int32 main_speed_mod  = 0;
     float stack_bonus     = 1.0f;
     float non_stack_bonus = 1.0f;
@@ -10487,7 +10536,7 @@ void Unit::UpdateSpeed(UnitMoveType mtype, bool forced)
         if (speed < min_speed)
             speed = min_speed;
     }
-    SetSpeed(mtype, speed, forced);
+    SetSpeedRate(mtype, speed, forced);
 }
 
 float Unit::GetSpeed( UnitMoveType mtype ) const
@@ -10495,7 +10544,15 @@ float Unit::GetSpeed( UnitMoveType mtype ) const
     return m_speed_rate[mtype]*baseMoveSpeed[mtype];
 }
 
-void Unit::SetSpeed(UnitMoveType mtype, float rate, bool forced)
+struct SetSpeedRateHelper
+{
+    explicit SetSpeedRateHelper(UnitMoveType _mtype, bool _forced) : mtype(_mtype), forced(_forced) {}
+    void operator()(Unit* unit) const { unit->UpdateSpeed(mtype,forced); }
+    UnitMoveType mtype;
+    bool forced;
+};
+
+void Unit::SetSpeedRate(UnitMoveType mtype, float rate, bool forced)
 {
     if (rate < 0)
         rate = 0.0f;
@@ -10541,7 +10598,7 @@ void Unit::SetSpeed(UnitMoveType mtype, float rate, bool forced)
                 data.Initialize(MSG_MOVE_SET_PITCH_RATE, 8+4+2+4+4+4+4+4+4+4);
                 break;
             default:
-                sLog.outError("Unit::SetSpeed: Unsupported move type (%d), data not sent to client.",mtype);
+                sLog.outError("Unit::SetSpeedRate: Unsupported move type (%d), data not sent to client.",mtype);
                 return;
         }
 
@@ -10596,7 +10653,7 @@ void Unit::SetSpeed(UnitMoveType mtype, float rate, bool forced)
                 data.Initialize(SMSG_FORCE_PITCH_RATE_CHANGE, 16);
                 break;
             default:
-                sLog.outError("Unit::SetSpeed: Unsupported move type (%d), data not sent to client.",mtype);
+                sLog.outError("Unit::SetSpeedRate: Unsupported move type (%d), data not sent to client.",mtype);
                 return;
         }
         data.append(GetPackGUID());
@@ -10606,8 +10663,11 @@ void Unit::SetSpeed(UnitMoveType mtype, float rate, bool forced)
         data << float(GetSpeed(mtype));
         SendMessageToSet( &data, true );
     }
-    if(Pet* pet = GetPet())
-        pet->SetSpeed(MOVE_RUN, m_speed_rate[mtype],forced);
+
+    if (GetTypeId() == TYPEID_PLAYER)                       // need include minpet
+        ((Player*)this)->CallForAllControlledUnits(SetSpeedRateHelper(mtype,forced),false,true,true,true);
+    else
+        CallForAllControlledUnits(SetSpeedRateHelper(mtype,forced),false,true,true);
 }
 
 void Unit::SetHover(bool on)
@@ -10845,7 +10905,7 @@ bool Unit::SelectHostileTarget()
     // it in combat but attacker not make any damage and not enter to aggro radius to have record in threat list
     // for example at owner command to pet attack some far away creature
     // Note: creature not have targeted movement generator but have attacker in this case
-    if (GetMotionMaster()->GetCurrentMovementGeneratorType() != TARGETED_MOTION_TYPE || hasUnitState(UNIT_STAT_FOLLOW))
+    if (GetMotionMaster()->GetCurrentMovementGeneratorType() != CHASE_MOTION_TYPE)
     {
         for(AttackerSet::const_iterator itr = m_attackers.begin(); itr != m_attackers.end(); ++itr)
         {
