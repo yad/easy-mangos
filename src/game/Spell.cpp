@@ -1345,7 +1345,9 @@ void Spell::SetTargetMap(uint32 effIndex, uint32 targetMode, UnitList& targetUni
                 case 38794:                                 // Murmur's Touch (h)
                     unMaxTargets = 1;
                     break;
-                case 28542: // Life Drain
+                case 28542:                                 // Life Drain
+                case 66013:                                 // Penetrating Cold (10 man)
+                case 68509:                                 // Penetrating Cold (10 man heroic)
                     unMaxTargets = 2;
                     break;
                 case 29213: // Curse of the Plaguebringer
@@ -1353,9 +1355,11 @@ void Spell::SetTargetMap(uint32 effIndex, uint32 targetMode, UnitList& targetUni
                 case 31298:
                     unMaxTargets = 3;
                     break;
-                case 55665:                                 // Life Drain (H)
                 case 30843:
                 case 42005:                                 // Bloodboil TODO: need to be 5 targets(players) furthest away from caster
+                case 55665:                                 // Life Drain (h)
+                case 67700:                                 // Penetrating Cold (25 man)
+                case 68510:                                 // Penetrating Cold (25 man, heroic)
                     unMaxTargets = 5;
                     break;
                 case 54098:                                 // Poison Bolt Volley (h)
