@@ -2853,6 +2853,9 @@ SpellMissInfo Unit::SpellHitResult(Unit *pVictim, SpellEntry const *spell, bool 
             //Shattering Throw
             if(spell->Id == 64382)
                 pVictim->RemoveAurasAtMechanicImmunity(MECHANIC_IMMUNE_SHIELD-1, 0);
+            //Deep Freeze dmg if immune to stun
+            else if(spell->Id == 44572)
+                CastSpell(pVictim, 71757, true);
             else
                 return SPELL_MISS_IMMUNE;
         }
