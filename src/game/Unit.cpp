@@ -13633,7 +13633,7 @@ bool Unit::isIgnoreUnitState(SpellEntry const *spell)
         if(spell->Id == 11170 || spell->Id == 12982 || spell->Id == 12983)
             return true;
     }
-    Unit::AuraList const& stateAuras = GetAurasByType(SPELL_AURA_SCHOOL_IMMUNITY);
+    Unit::AuraList const& stateAuras = GetAurasByType(SPELL_AURA_IGNORE_UNIT_STATE);
     for(Unit::AuraList::const_iterator j = stateAuras.begin();j != stateAuras.end(); ++j)
     {
         if((*j)->isAffectedOnSpell(spell))
