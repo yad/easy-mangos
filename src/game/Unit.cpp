@@ -2849,7 +2849,13 @@ SpellMissInfo Unit::SpellHitResult(Unit *pVictim, SpellEntry const *spell, bool 
     {
         // Check for immune
         if (pVictim->IsImmunedToSpell(spell))
-            return SPELL_MISS_IMMUNE;
+        {
+            //Shattering Throw
+            if(spell->Id == 64382))
+                pVictim->RemoveAurasDueToMechanic(1<<(MECHANIC_IMMUNE_SHIELD-1));
+            else
+                return SPELL_MISS_IMMUNE;
+        }
 
         // All positive spells can`t miss
         // TODO: client not show miss log for this spells - so need find info for this in dbc and use it!
@@ -13612,14 +13618,10 @@ bool Unit::isIgnoreUnitState(SpellEntry const *spell)
         if(spell->Id == 11170 || spell->Id == 12982 || spell->Id == 12983)
             return true;
     }
-    Unit::AuraList const& stateAuras = GetAurasByType(SPELL_AURA_IGNORE_UNIT_STATE);
+    Unit::AuraList const& stateAuras = GetAurasByType(SPELL_AURA_SCHOOL_IMMUNITY);
     for(Unit::AuraList::const_iterator j = stateAuras.begin();j != stateAuras.end(); ++j)
     {
-        if((*j)->isAffectedOnSpell(spell))
-        {
-            return true;
-            break;
-        }
+        
     }
     return false;
 }
