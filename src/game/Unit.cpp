@@ -2851,8 +2851,8 @@ SpellMissInfo Unit::SpellHitResult(Unit *pVictim, SpellEntry const *spell, bool 
         if (pVictim->IsImmunedToSpell(spell))
         {
             //Shattering Throw
-            if(spell->Id == 64382))
-                pVictim->RemoveAurasDueToMechanic(1<<(MECHANIC_IMMUNE_SHIELD-1));
+            if(spell->Id == 64382)
+                pVictim->RemoveAurasAtMechanicImmunity(MECHANIC_IMMUNE_SHIELD-1, 0);
             else
                 return SPELL_MISS_IMMUNE;
         }
