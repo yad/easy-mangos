@@ -3705,6 +3705,7 @@ void Spell::SendChannelStart(uint32 duration)
             }
         }
     }
+    duration = ApplyHasteToChannelSpell(duration, m_spellInfo, this);
 
     WorldPacket data( MSG_CHANNEL_START, (8+4+4) );
     data.append(m_caster->GetPackGUID());

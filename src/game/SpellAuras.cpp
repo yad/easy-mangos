@@ -440,6 +440,11 @@ m_isRemovedOnShapeLost(true), m_in_use(0), m_deleted(false)
     if(!m_permanent && modOwner)
     {
         modOwner->ApplySpellMod(GetId(), SPELLMOD_DURATION, m_maxduration);
+        if(m_spellProto->AttributesEx & (SPELL_ATTR_EX_CHANNELED_1 | SPELL_ATTR_EX_CHANNELED_2) && GetCaster())
+        {
+            if( !(m_spellProto->Attributes & (SPELL_ATTR_UNK4|SPELL_ATTR_TRADESPELL)) )
+                m_maxduration = int32(m_maxduration * GetCaster()->GetFloatValue(UNIT_MOD_CAST_SPEED));
+        }
         // Get zero duration aura after - need set m_maxduration > 0 for apply/remove aura work
         if (m_maxduration<=0)
             m_maxduration = 1;
@@ -661,7 +666,10 @@ void Aura::Update(uint32 diff)
         if(m_periodicTimer <= 0) // tick also at m_periodicTimer==0 to prevent lost last tick in case max m_duration == (max m_periodicTimer)*N
         {
             // update before applying (aura can be removed in TriggerSpell or PeriodicTick calls)
-            m_periodicTimer += m_modifier.periodictime;
+            if(if(GetSpellProto()->AttributesEx & (SPELL_ATTR_EX_CHANNELED_1 | SPELL_ATTR_EX_CHANNELED_2)))
+                m_periodicTimer += GetChannelPeriodic();
+            else
+                m_periodicTimer += m_modifier.periodictime;
             ++m_periodicTick;                               // for some infinity auras in some cases can overflow and reset
             PeriodicTick();
         }
@@ -4704,8 +4712,8 @@ void Aura::HandlePeriodicTriggerSpell(bool apply, bool /*Real*/)
 {
     m_isPeriodic = apply;
 
-    if (!apply)
-    {
+    if (apply)
+	{
         switch(m_spellProto->Id)
         {
             case 66:                                        // Invisibility
@@ -8223,4 +8231,25 @@ void Aura::HandleAuraCloneCaster(bool Apply, bool Real)
     // Set item visual
     m_target->SetDisplayId(caster->GetDisplayId());
     m_target->SetUInt32Value(UNIT_FIELD_FLAGS_2, 2064);
+}
+
+int32 Aura::GetChannelPeriodic()
+{
+    int32 periodic = m_modifier.periodictime;
+    int32 duration = GetAuraMaxDuration();
+    int32 ticks = int32(duration / periodic);
+
+    if(!GetCaster())
+        return periodic;
+
+    if( !(spellInfo->Attributes & (SPELL_ATTR_UNK4|SPELL_ATTR_TRADESPELL)) )
+        duration = int32(m_maxduration * GetCaster()->GetFloatValue(UNIT_MOD_CAST_SPEED));
+
+    if(duration - GetAuraMaxDuration() != duration)
+    {
+        int32 diff = duration - GetAuraMaxDuration();
+        diff = int32(diff/ticks);
+        return periodic-diff;
+    }else
+        return periodic;
 }
