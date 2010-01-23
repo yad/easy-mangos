@@ -2529,7 +2529,7 @@ void Unit::SendMeleeAttackStop(Unit* victim)
 
 void Unit::SendInitialVisiblePacketsFor(Player *player)
 {
-    SendAurasFor(player);
+    player->SendAurasForTarget(this);
     if(isAlive())
     {
         if(GetTypeId() == TYPEID_UNIT)
@@ -2540,7 +2540,7 @@ void Unit::SendInitialVisiblePacketsFor(Player *player)
     }
 }
 
-void Unit::SendAurasFor(Player *player)
+/*void Unit::SendAurasFor(Player *player)
 {
     if(GetVisibleAuras()->empty())                  // speedup things
         return;
@@ -2591,7 +2591,7 @@ void Unit::SendAurasFor(Player *player)
     }
 
     player->GetSession()->SendPacket(&data);
-}
+} */
 
 bool Unit::isSpellBlocked(Unit *pVictim, SpellEntry const * spellProto, WeaponAttackType attackType)
 {

@@ -2013,6 +2013,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         void SendUpdateWorldState(uint32 Field, uint32 Value);
         void SendDirectMessage(WorldPacket *data);
 
+        void SendAurasForTarget(Unit *target);
+
         PlayerMenu* PlayerTalkClass;
         std::vector<ItemSetEffect *> ItemSetEff;
 
