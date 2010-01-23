@@ -381,9 +381,9 @@ class ObjectMgr
 
         typedef UNORDERED_MAP<uint32, Item*> ItemMap;
 
-        typedef std::set< Group * > GroupSet;
+        typedef UNORDERED_MAP<uint32, Group*> GroupMap;
 
-        typedef UNORDERED_MAP<uint32, Guild *> GuildMap;
+        typedef UNORDERED_MAP<uint32, Guild*> GuildMap;
 
         typedef UNORDERED_MAP<uint32, ArenaTeam*> ArenaTeamMap;
 
@@ -408,9 +408,9 @@ class ObjectMgr
         void LoadGameobjectInfo();
         void AddGameobjectInfo(GameObjectInfo *goinfo);
 
-        Group * GetGroupByLeader(const uint64 &guid) const;
-        void AddGroup(Group* group) { mGroupSet.insert( group ); }
-        void RemoveGroup(Group* group) { mGroupSet.erase( group ); }
+        Group * GetGroupByLeaderLowGUID(uint32 lowguid) const;
+        void AddGroup(Group* group);
+        void RemoveGroup(Group* group);
 
         Guild* GetGuildByLeader(uint64 const&guid) const;
         Guild* GetGuildById(uint32 GuildId) const;
@@ -638,8 +638,9 @@ class ObjectMgr
         void LoadTrainerSpell();
 
         std::string GeneratePetName(uint32 entry);
-        uint32 GetBaseXP(uint32 level);
-        uint32 GetXPForLevel(uint32 level);
+        uint32 GetBaseXP(uint32 level) const;
+        uint32 GetXPForLevel(uint32 level) const;
+        uint32 GetXPForPetLevel(uint32 level) const { return GetXPForLevel(level)/20; }
 
         int32 GetFishingBaseSkillLevel(uint32 entry) const
         {
@@ -919,7 +920,7 @@ class ObjectMgr
         typedef std::set<uint32> GameObjectForQuestSet;
         typedef UNORDERED_MAP<uint32, std::string> SpellNameMap;
 
-        GroupSet            mGroupSet;
+        GroupMap            mGroupMap;
         GuildMap            mGuildMap;
         ArenaTeamMap        mArenaTeamMap;
 
