@@ -124,6 +124,8 @@ class MANGOS_DLL_DECL MapManager : public MaNGOS::Singleton<MapManager, MaNGOS::
         void InitMaxInstanceId();
         void InitializeVisibilityDistanceInfo();
 
+        void InitializeVisibilityNotifyTimers();
+
         /* statistics */
         uint32 GetNumInstances();
         uint32 GetNumPlayersInInstances();
