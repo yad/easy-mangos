@@ -4712,8 +4712,8 @@ void Aura::HandlePeriodicTriggerSpell(bool apply, bool /*Real*/)
 {
     m_isPeriodic = apply;
 
-    if (apply)
-	{
+    if (!apply)
+    {
         switch(m_spellProto->Id)
         {
             case 66:                                        // Invisibility
