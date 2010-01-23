@@ -5135,8 +5135,8 @@ bool ChatHandler::HandleAchievementComplete(const char* args)
             if(!achievementInfo)
                 continue;
 
-	        if(!player->GetAchievementMgr().IsCompletedAchievement(achievementInfo))
-				player->GetAchievementMgr().CompletedAchievement(achievementInfo)
+            if(!player->GetAchievementMgr().IsCompletedAchievement(achievementInfo))
+                player->GetAchievementMgr().CompletedAchievement(achievementInfo);
 
         }
         return true;
