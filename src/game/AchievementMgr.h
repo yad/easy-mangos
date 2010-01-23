@@ -241,6 +241,8 @@ class AchievementMgr
         void CheckAllAchievementCriteria();
         void SendAllAchievementData();
         void SendRespondInspectAchievements(Player* player);
+        void CompletedAchievement(AchievementEntry const* entry);
+        bool IsCompletedAchievement(AchievementEntry const* entry);
         Player* GetPlayer() { return m_player;}
 
     private:
@@ -249,9 +251,7 @@ class AchievementMgr
         void SendCriteriaUpdate(uint32 id, CriteriaProgress const* progress);
         void SetCriteriaProgress(AchievementCriteriaEntry const* entry, uint32 changeValue, ProgressType ptype = PROGRESS_SET);
         void CompletedCriteriaFor(AchievementEntry const* achievement);
-        void CompletedAchievement(AchievementEntry const* entry);
         bool IsCompletedCriteria(AchievementCriteriaEntry const* criteria, AchievementEntry const* achievement);
-        bool IsCompletedAchievement(AchievementEntry const* entry);
         void CompleteAchievementsWithRefs(AchievementEntry const* entry);
         void BuildAllDataPacket(WorldPacket *data);
 

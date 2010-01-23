@@ -5137,6 +5137,36 @@ bool ChatHandler::HandleQuestComplete(const char* args)
     return true;
 }
 
+bool ChatHandler::HandleAchievementComplete(const char* args)
+{
+    Player* player = getSelectedPlayer();
+    if(!player)
+    {
+        SendSysMessage(LANG_NO_CHAR_SELECTED);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    std::string cmd = args;
+    if(cmd == "all")
+    {
+        for(uint32 achievement_id = 1; achievement_id < sAchievementStore.GetNumRows(); ++achievement_id)
+        {
+            AchievementEntry const* achievementInfo = sAchievementStore.LookupEntry(achievement_id);
+            if(!achievementInfo)
+                continue;
+
+            if(!player->GetAchievementMgr().IsCompletedAchievement(achievementInfo))
+                player->GetAchievementMgr().CompletedAchievement(achievementInfo);
+
+        }
+        return true;
+    }
+    SendSysMessage("Type : .achievement complete all");
+    SetSentErrorMessage(true);
+    return false;
+}
+
 bool ChatHandler::HandleBanAccountCommand(const char* args)
 {
     return HandleBanHelper(BAN_ACCOUNT,args);

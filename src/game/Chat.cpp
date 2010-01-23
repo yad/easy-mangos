@@ -387,6 +387,12 @@ ChatCommand * ChatHandler::getCommandTable()
         { NULL,             0,                  false, NULL,                                           "", NULL }
     };
 
+    static ChatCommand achievementCommandTable[] =
+    {
+        { "complete",       SEC_ADMINISTRATOR,  false, &ChatHandler::HandleAchievementComplete,        "", NULL },
+        { NULL,             0,                  false, NULL,                                           "", NULL }
+    };
+
     static ChatCommand reloadCommandTable[] =
     {
         { "all",            SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleReloadAllCommand,           "", NULL },
@@ -604,6 +610,7 @@ ChatCommand * ChatHandler::getCommandTable()
         { "wp",             SEC_GAMEMASTER,     false, NULL,                                           "", wpCommandTable       },
         { "titles",         SEC_GAMEMASTER,     false, NULL,                                           "", titlesCommandTable   },
         { "quest",          SEC_ADMINISTRATOR,  false, NULL,                                           "", questCommandTable    },
+        { "achievement",    SEC_ADMINISTRATOR,  false, NULL,                                           "", achievementCommandTable},
         { "reload",         SEC_ADMINISTRATOR,  true,  NULL,                                           "", reloadCommandTable   },
         { "list",           SEC_ADMINISTRATOR,  true,  NULL,                                           "", listCommandTable     },
         { "lookup",         SEC_ADMINISTRATOR,  true,  NULL,                                           "", lookupCommandTable   },
@@ -617,6 +624,7 @@ ChatCommand * ChatHandler::getCommandTable()
         { "aura",           SEC_ADMINISTRATOR,  false, &ChatHandler::HandleAuraCommand,                "", NULL },
         { "unaura",         SEC_ADMINISTRATOR,  false, &ChatHandler::HandleUnAuraCommand,              "", NULL },
         { "announce",       SEC_MODERATOR,      true,  &ChatHandler::HandleAnnounceCommand,            "", NULL },
+        { "nameannounce",   SEC_MODERATOR,      false, &ChatHandler::HandleNameAnnounceCommand,        "", NULL },
         { "notify",         SEC_MODERATOR,      true,  &ChatHandler::HandleNotifyCommand,              "", NULL },
         { "goname",         SEC_MODERATOR,      false, &ChatHandler::HandleGonameCommand,              "", NULL },
         { "namego",         SEC_MODERATOR,      false, &ChatHandler::HandleNamegoCommand,              "", NULL },
