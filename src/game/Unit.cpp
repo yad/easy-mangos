@@ -2860,9 +2860,6 @@ SpellMissInfo Unit::SpellHitResult(Unit *pVictim, SpellEntry const *spell, bool 
                 pVictim->RemoveAurasDueToSpell(10278); // Hand of Protection rank 3
                 pVictim->RemoveAurasDueToSpell(45438); // Ice Block
             }
-            //Deep Freeze dmg if immune to stun
-            else if(spell->Id == 44572)
-                CastSpell(pVictim, 71757, true);
             else
                 return SPELL_MISS_IMMUNE;
         }

@@ -808,6 +808,10 @@ void Spell::AddUnitTarget(Unit* pVictim, uint32 effIndex)
     // Check for effect immune skip if immuned
     bool immuned = pVictim->IsImmunedToSpellEffect(m_spellInfo, effIndex);
 
+    //Deep Freeze dmg if immune to stun
+    if(m_spellInfo->Id == 44572 && immuned && pVictim->GetTypeId() != TYPEID_PLAYER)
+        m_caster->CastSpell(pVictim, 71757, true);
+
     uint64 targetGUID = pVictim->GetGUID();
 
     // Lookup target in already in list
