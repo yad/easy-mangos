@@ -1572,8 +1572,24 @@ void Aura::TriggerSpell()
 //                    case 24780: break;
 //                    // Cannon Prep
 //                    case 24832: break;
-//                    // Shadow Bolt Whirl
-//                    case 24834: break;
+                    // Shadow Bolt Whirl
+                    case 24834:
+                    {
+                        uint32 spellForTick[8] = { 24820, 24821, 24822, 24823, 24835, 24836, 24837, 24838 };
+                        uint32 tick = GetAuraTicks();
+                        if(tick < 8)
+                        {
+                            trigger_spell_id = spellForTick[tick];
+
+                            // casted in left/right (but triggered spell have wide forward cone)
+                            float forward = m_target->GetOrientation();
+                            float angle = m_target->GetOrientation() + ( tick % 2 == 0 ? M_PI / 2 : - M_PI / 2);
+                            m_target->SetOrientation(angle);
+                            target->CastSpell(target, trigger_spell_id, true, NULL, this, casterGUID);
+                            m_target->SetOrientation(forward);
+                        }
+                        return;
+                    }
 //                    // Stink Trap
 //                    case 24918: break;
 //                    // Mark of Nature
@@ -2387,6 +2403,9 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
 
         switch(GetId())
         {
+            case 12479:                                     // Hex of Jammal'an
+                m_target->CastSpell(m_target, 12480, true, NULL, this);
+                return;
             case 28169:                                     // Mutating Injection
             {
                 // Mutagen Explosion
@@ -6183,18 +6202,14 @@ void Aura::HandleSpellSpecificBoosts(bool apply)
         }
         case SPELLFAMILY_DEATHKNIGHT:
         {
-            if (GetSpellSpecific(m_spellProto->Id) != SPELL_PRESENCE)
-                return;
-
-            // Frost Presence health
-            if (GetId() == 48263)
-                spellId1 = 61261;
-            // Unholy Presence move speed
-            else if (GetId() == 48265)
-                spellId1 = 49772;
-            else
-                return;
-
+            // second part of spell apply
+            switch (GetId())
+            {
+                case 49039: spellId1 = 50397; break;        // Lichborne
+                case 48263: spellId1 = 61261; break;        // Frost Presence
+                case 48265: spellId1 = 49772; break;        // Unholy Presence move speed
+                default: return;
+            }
             break;
         }
         default:
@@ -7664,22 +7679,27 @@ void Aura::HandleAuraConvertRune(bool apply, bool Real)
     if(plr->getClass() != CLASS_DEATH_KNIGHT)
         return;
 
-    // how to determine what rune need to be converted?
-    for(uint32 i = 0; i < MAX_RUNES; ++i)
+    RuneType runeFrom = RuneType(GetSpellProto()->EffectMiscValue[m_effIndex]);
+    RuneType runeTo   = RuneType(GetSpellProto()->EffectMiscValueB[m_effIndex]);
+
+    if (apply)
     {
-        if(apply)
+        for(uint32 i = 0; i < MAX_RUNES; ++i)
         {
-            if(!plr->GetRuneCooldown(i))
+            if (plr->GetCurrentRune(i) == runeFrom && !plr->GetRuneCooldown(i))
             {
-                plr->ConvertRune(i, RuneType(GetSpellProto()->EffectMiscValueB[m_effIndex]));
+                plr->ConvertRune(i, runeTo);
                 break;
             }
         }
-        else
+    }
+    else
+    {
+        for(uint32 i = 0; i < MAX_RUNES; ++i)
         {
-            if(plr->GetCurrentRune(i) == RuneType(GetSpellProto()->EffectMiscValueB[m_effIndex]))
+            if(plr->GetCurrentRune(i) == runeTo && plr->GetBaseRune(i) == runeFrom)
             {
-                plr->ConvertRune(i, plr->GetBaseRune(i));
+                plr->ConvertRune(i, runeFrom);
                 break;
             }
         }

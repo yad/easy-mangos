@@ -1332,6 +1332,8 @@ void Spell::SetTargetMap(uint32 effIndex, uint32 targetMode, UnitList& targetUni
                     unMaxTargets = 1;
                     break;
                 case 28542:                                 // Life Drain
+                case 66013:                                 // Penetrating Cold (10 man)
+                case 68509:                                 // Penetrating Cold (10 man heroic)
                     unMaxTargets = 2;
                     break;
                 case 28796:                                 // Poison Bolt Volley
@@ -1342,6 +1344,8 @@ void Spell::SetTargetMap(uint32 effIndex, uint32 targetMode, UnitList& targetUni
                 case 30843:                                 // Enfeeble TODO: exclude top threat target from target selection
                 case 42005:                                 // Bloodboil TODO: need to be 5 targets(players) furthest away from caster
                 case 55665:                                 // Life Drain (h)
+                case 67700:                                 // Penetrating Cold (25 man)
+                case 68510:                                 // Penetrating Cold (25 man, heroic)
                     unMaxTargets = 5;
                     break;
                 case 54098:                                 // Poison Bolt Volley (h)
@@ -3708,7 +3712,7 @@ void Spell::TakePower()
 
     if(powerType == POWER_RUNE)
     {
-        TakeRunePower();
+        CheckOrTakeRunePower(true);
         return;
     }
 
@@ -3719,7 +3723,7 @@ void Spell::TakePower()
         m_caster->SetLastManaUse();
 }
 
-SpellCastResult Spell::CheckRuneCost(uint32 runeCostID)
+SpellCastResult Spell::CheckOrTakeRunePower(bool take)
 {
     if(m_caster->GetTypeId() != TYPEID_PLAYER)
         return SPELL_CAST_OK;
@@ -3729,75 +3733,52 @@ SpellCastResult Spell::CheckRuneCost(uint32 runeCostID)
     if(plr->getClass() != CLASS_DEATH_KNIGHT)
         return SPELL_CAST_OK;
 
-    SpellRuneCostEntry const *src = sSpellRuneCostStore.LookupEntry(runeCostID);
+    SpellRuneCostEntry const *src = sSpellRuneCostStore.LookupEntry(m_spellInfo->runeCostID);
 
     if(!src)
         return SPELL_CAST_OK;
 
-    if(src->NoRuneCost())
+    if(src->NoRuneCost() && (!take || src->NoRunicPowerGain()))
         return SPELL_CAST_OK;
 
-    int32 runeCost[NUM_RUNE_TYPES];                         // blood, frost, unholy, death
-
-    for(uint32 i = 0; i < RUNE_DEATH; ++i)
-        runeCost[i] = src->RuneCost[i];
-
-    runeCost[RUNE_DEATH] = MAX_RUNES;                       // calculated later
-
-    for(uint32 i = 0; i < MAX_RUNES; ++i)
-    {
-        RuneType rune = plr->GetCurrentRune(i);
-        if((plr->GetRuneCooldown(i) == 0) && (runeCost[rune] > 0))
-            runeCost[rune]--;
-    }
-
-    for(uint32 i = 0; i < RUNE_DEATH; ++i)
-        if(runeCost[i] > 0)
-            runeCost[RUNE_DEATH] += runeCost[i];
-
-    if(runeCost[RUNE_DEATH] > MAX_RUNES)
-        return SPELL_FAILED_NO_POWER;                       // not sure if result code is correct
-
-    return SPELL_CAST_OK;
-}
-
-void Spell::TakeRunePower()
-{
-    if(m_caster->GetTypeId() != TYPEID_PLAYER)
-        return;
-
-    Player *plr = (Player*)m_caster;
-
-    if(plr->getClass() != CLASS_DEATH_KNIGHT)
-        return;
-
-    SpellRuneCostEntry const *src = sSpellRuneCostStore.LookupEntry(m_spellInfo->runeCostID);
-
-    if(!src || (src->NoRuneCost() && src->NoRunicPowerGain()))
-        return;
-
-    m_runesState = plr->GetRunesState();                    // store previous state
+    if (take)
+        m_runesState = plr->GetRunesState();                // store previous state
 
     int32 runeCost[NUM_RUNE_TYPES];                         // blood, frost, unholy, death
 
     for(uint32 i = 0; i < RUNE_DEATH; ++i)
-    {
         runeCost[i] = src->RuneCost[i];
-    }
 
     runeCost[RUNE_DEATH] = 0;                               // calculated later
 
     for(uint32 i = 0; i < MAX_RUNES; ++i)
     {
         RuneType rune = plr->GetCurrentRune(i);
-        if((plr->GetRuneCooldown(i) == 0) && (runeCost[rune] > 0))
+        if (runeCost[rune] <= 0)
+            continue;
+
+        int32 runeCostTemp = runeCost[rune] * 10000;
+        if(Player* modOwner = plr->GetSpellModOwner())
+            modOwner->ApplySpellMod(m_spellInfo->Id, SPELLMOD_COST, runeCostTemp, this);
+
+        if (runeCostTemp <= 0)
         {
-            plr->SetRuneCooldown(i, RUNE_COOLDOWN);         // 5*2=10 sec
-            runeCost[rune]--;
+            --runeCost[rune];
+            continue;
+        }
+
+        if(plr->GetRuneCooldown(i) == 0)
+        {
+            if (take)
+                plr->SetRuneCooldown(i, RUNE_COOLDOWN); // 5*2=10 sec
+
+            --runeCost[rune];
         }
     }
 
-    runeCost[RUNE_DEATH] = runeCost[RUNE_BLOOD] + runeCost[RUNE_UNHOLY] + runeCost[RUNE_FROST];
+    for(uint32 i = 0; i < RUNE_DEATH; ++i)
+        if(runeCost[i] > 0)
+            runeCost[RUNE_DEATH] += runeCost[i];
 
     if(runeCost[RUNE_DEATH] > 0)
     {
@@ -3806,19 +3787,32 @@ void Spell::TakeRunePower()
             RuneType rune = plr->GetCurrentRune(i);
             if((plr->GetRuneCooldown(i) == 0) && (rune == RUNE_DEATH))
             {
-                plr->SetRuneCooldown(i, RUNE_COOLDOWN);     // 5*2=10 sec
-                runeCost[rune]--;
-                plr->ConvertRune(i, plr->GetBaseRune(i));
+                if (take)
+                    plr->SetRuneCooldown(i, RUNE_COOLDOWN); // 5*2=10 sec
+
+                --runeCost[rune];
+
+                if (take)
+                    plr->ConvertRune(i, plr->GetBaseRune(i));
+
                 if(runeCost[RUNE_DEATH] == 0)
                     break;
             }
         }
     }
 
-    // you can gain some runic power when use runes
-    float rp = src->runePowerGain;;
-    rp *= sWorld.getRate(RATE_POWER_RUNICPOWER_INCOME);
-    plr->ModifyPower(POWER_RUNIC_POWER, (int32)rp);
+    if(!take && runeCost[RUNE_DEATH] > 0)
+        return SPELL_FAILED_NO_POWER;                       // not sure if result code is correct
+
+    if(take)
+    {
+        // you can gain some runic power when use runes
+        float rp = src->runePowerGain;;
+        rp *= sWorld.getRate(RATE_POWER_RUNICPOWER_INCOME);
+        plr->ModifyPower(POWER_RUNIC_POWER, (int32)rp);
+    }
+
+    return SPELL_CAST_OK;
 }
 
 void Spell::TakeReagents()
@@ -5381,7 +5375,7 @@ SpellCastResult Spell::CheckPower()
     //check rune cost only if a spell has PowerType == POWER_RUNE
     if(m_spellInfo->powerType == POWER_RUNE)
     {
-        SpellCastResult failReason = CheckRuneCost(m_spellInfo->runeCostID);
+        SpellCastResult failReason = CheckOrTakeRunePower(false);
         if(failReason != SPELL_CAST_OK)
             return failReason;
     }
