@@ -5141,7 +5141,7 @@ bool ChatHandler::HandleAchievementComplete(const char* args)
         }
         return true;
     }
-    SendSysMessage("Type : .achivement complete all");
+    SendSysMessage("Type : .achievement complete all");
     SetSentErrorMessage(true);
     return false;
 }
