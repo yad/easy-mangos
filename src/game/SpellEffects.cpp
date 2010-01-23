@@ -3553,7 +3553,7 @@ void Spell::EffectSummon(uint32 i)
         }
 
         // set timer for unsummon
-        if (duration > 0)
+        if (duration > 0 && m_spellInfo->Id != 70908) // Summon water elemetal /w Glyph of Eternal Water has wrong data in DBC
             spawnCreature->SetDuration(duration);
 
         return;
