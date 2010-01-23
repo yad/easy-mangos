@@ -2593,7 +2593,7 @@ void Unit::SendAurasFor(Player *player)
     player->GetSession()->SendPacket(&data);
 }
 
-bool Unit::isSpellBlocked(Unit *pVictim, SpellEntry const * /*spellProto*/, WeaponAttackType attackType)
+bool Unit::isSpellBlocked(Unit *pVictim, SpellEntry const * spellProto, WeaponAttackType attackType)
 {
     // Some spell can not be blocked
     if (spellProto && spellProto->Attributes & SPELL_ATTR_IMPOSSIBLE_DODGE_PARRY_BLOCK)

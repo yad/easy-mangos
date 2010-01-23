@@ -213,7 +213,7 @@ Map::Map(uint32 id, time_t expiry, uint32 InstanceId, uint8 SpawnMode, Map* _par
   m_activeNonPlayersIter(m_activeNonPlayers.end()),
   i_gridExpiry(expiry), m_parentMap(_parent ? _parent : this),
   m_VisibilityNotifyPeriod(DEFAULT_VISIBILITY_NOTIFY_PERIOD),
-  m_hiDynObjectGuid(1), m_hiPetGuid(1), m_hiVehicleGuid(1)
+  m_hiDynObjectGuid(1), m_hiPetGuid(1)
 {
     for(unsigned int idx=0; idx < MAX_NUMBER_OF_GRIDS; ++idx)
     {

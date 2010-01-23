@@ -17542,7 +17542,7 @@ void Player::HandleStealthedUnitsDetection()
 
                 if((*i)!=this && (*i)->isType(TYPEMASK_UNIT))
                 {
-                    SendAurasForTarget(*i);
+                    SendAurasFor((Player*)(*i));
                     BuildVehicleInfo(*i);
                 }
             }
@@ -18734,7 +18734,7 @@ void Player::UpdateVisibilityOf(WorldObject const* viewPoint, WorldObject* targe
             // send data at target visibility change (adding to client)
             if(target!=this && target->isType(TYPEMASK_UNIT))
             {
-                SendAurasForTarget((Unit*)target);
+                SendAurasFor((Player*)target);
                 BuildVehicleInfo((Unit*)target);
             }
 
@@ -19257,7 +19257,7 @@ void Player::learnSkillRewardedSpells(uint32 skill_id, uint32 skill_value )
     }
 }
 
-void Player::SendAurasForTarget(Unit *target)
+/*void Player::SendAurasForTarget(Unit *target)
 {
     if(target->GetVisibleAuras()->empty())                  // speedup things
         return;
@@ -19308,7 +19308,7 @@ void Player::SendAurasForTarget(Unit *target)
     }
 
     GetSession()->SendPacket(&data);
-}
+} */
 
 void Player::SetDailyQuestStatus( uint32 quest_id )
 {
