@@ -125,7 +125,7 @@ bool ChatHandler::HandleNpcWhisperCommand(const char* args)
 // global announce
 bool ChatHandler::HandleAnnounceCommand(const char* args)
 {
-  int32 strid = 0;
+    int32 strid = 0;
 
     if(!*args)
         return false;

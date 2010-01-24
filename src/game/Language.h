@@ -87,9 +87,6 @@ enum MangosStrings
     LANG_RA_BUSY                        = 60,
     LANG_RA_USER                        = 61,
     LANG_RA_PASS                        = 62,
-    LANG_SYSTEMMESSAGE_MODERATOR        = 63,
-    LANG_SYSTEMMESSAGE_GAMEMASTER       = 64,
-    LANG_SYSTEMMESSAGE_ADMINISTRATOR    = 65,
 
     // level 1 chat
     LANG_GLOBAL_NOTIFY                  = 100,
@@ -832,6 +829,9 @@ enum MangosStrings
     // FREE IDS                           1300-9999
     // Broadcaster
     LANG_AUTO_BROADCAST                 = 1300,
+    LANG_SYSTEMMESSAGE_MODERATOR        = 1301,
+    LANG_SYSTEMMESSAGE_GAMEMASTER       = 1302,
+    LANG_SYSTEMMESSAGE_ADMINISTRATOR    = 1303,
 
     // Use for not-in-offcial-sources patches
     //                                    10000-10999
