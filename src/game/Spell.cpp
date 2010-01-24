@@ -469,13 +469,12 @@ WorldObject* Spell::FindCorpseUsing()
     MaNGOS::WorldObjectSearcher<T> searcher(m_caster, result, u_check);
 
     TypeContainerVisitor<MaNGOS::WorldObjectSearcher<T>, GridTypeMapContainer > grid_searcher(searcher);
-    CellLock<GridReadGuard> cell_lock(cell, p);
-    cell_lock->Visit(cell_lock, grid_searcher, *m_caster->GetMap(), *m_caster, max_range);
+    cell.Visit(p, grid_searcher, *m_caster->GetMap(), *m_caster, max_range);
 
     if (!result)
     {
         TypeContainerVisitor<MaNGOS::WorldObjectSearcher<T>, WorldTypeMapContainer > world_searcher(searcher);
-        cell_lock->Visit(cell_lock, world_searcher, *m_caster->GetMap(), *m_caster, max_range);
+        cell.Visit(p, world_searcher, *m_caster->GetMap(), *m_caster, max_range);
     }
 
     return result;
@@ -1480,9 +1479,8 @@ void Spell::SetTargetMap(uint32 effIndex, uint32 targetMode, UnitList& targetUni
                 TypeContainerVisitor<MaNGOS::UnitListSearcher<MaNGOS::AnyAoETargetUnitInObjectRangeCheck>, WorldTypeMapContainer > world_unit_searcher(searcher);
                 TypeContainerVisitor<MaNGOS::UnitListSearcher<MaNGOS::AnyAoETargetUnitInObjectRangeCheck>, GridTypeMapContainer >  grid_unit_searcher(searcher);
 
-                CellLock<GridReadGuard> cell_lock(cell, p);
-                cell_lock->Visit(cell_lock, world_unit_searcher, *m_caster->GetMap(), *m_caster, max_range);
-                cell_lock->Visit(cell_lock, grid_unit_searcher, *m_caster->GetMap(), *m_caster, max_range);
+                cell.Visit(p, world_unit_searcher, *m_caster->GetMap(), *m_caster, max_range);
+                cell.Visit(p, grid_unit_searcher, *m_caster->GetMap(), *m_caster, max_range);
             }
 
             if(tempTargetUnitMap.empty())
@@ -1550,9 +1548,8 @@ void Spell::SetTargetMap(uint32 effIndex, uint32 targetMode, UnitList& targetUni
                 TypeContainerVisitor<MaNGOS::UnitListSearcher<MaNGOS::AnyFriendlyUnitInObjectRangeCheck>, WorldTypeMapContainer > world_unit_searcher(searcher);
                 TypeContainerVisitor<MaNGOS::UnitListSearcher<MaNGOS::AnyFriendlyUnitInObjectRangeCheck>, GridTypeMapContainer >  grid_unit_searcher(searcher);
 
-                CellLock<GridReadGuard> cell_lock(cell, p);
-                cell_lock->Visit(cell_lock, world_unit_searcher, *m_caster->GetMap(), *m_caster, max_range);
-                cell_lock->Visit(cell_lock, grid_unit_searcher, *m_caster->GetMap(), *m_caster, max_range);
+                cell.Visit(p, world_unit_searcher, *m_caster->GetMap(), *m_caster, max_range);
+                cell.Visit(p, grid_unit_searcher, *m_caster->GetMap(), *m_caster, max_range);
             }
 
             if(tempTargetUnitMap.empty())
@@ -1645,10 +1642,9 @@ void Spell::SetTargetMap(uint32 effIndex, uint32 targetMode, UnitList& targetUni
                     MaNGOS::UnitListSearcher<MaNGOS::AnyAoETargetUnitInObjectRangeCheck> searcher(m_caster, tempTargetUnitMap, u_check);
                     TypeContainerVisitor<MaNGOS::UnitListSearcher<MaNGOS::AnyAoETargetUnitInObjectRangeCheck>, WorldTypeMapContainer> world_unit_searcher(searcher);
                     TypeContainerVisitor<MaNGOS::UnitListSearcher<MaNGOS::AnyAoETargetUnitInObjectRangeCheck>, GridTypeMapContainer>  grid_unit_searcher(searcher);
-                    CellLock<GridReadGuard> cell_lock(cell, p);
 
-                    cell_lock->Visit(cell_lock, world_unit_searcher, *m_caster->GetMap(), *pUnitTarget, max_range);
-                    cell_lock->Visit(cell_lock, grid_unit_searcher, *m_caster->GetMap(), *pUnitTarget, max_range);
+                    cell.Visit(p, world_unit_searcher, *m_caster->GetMap(), *pUnitTarget, max_range);
+                    cell.Visit(p, grid_unit_searcher, *m_caster->GetMap(), *pUnitTarget, max_range);
                 }
                 if (tempTargetUnitMap.empty())
                     break;
@@ -3833,7 +3829,7 @@ void Spell::TakePower()
 
     if(powerType == POWER_RUNE)
     {
-        TakeRunePower();
+        CheckOrTakeRunePower(true);
         return;
     }
 
@@ -3844,7 +3840,7 @@ void Spell::TakePower()
         m_caster->SetLastManaUse();
 }
 
-SpellCastResult Spell::CheckRuneCost(uint32 runeCostID)
+SpellCastResult Spell::CheckOrTakeRunePower(bool take)
 {
     if(m_caster->GetTypeId() != TYPEID_PLAYER)
         return SPELL_CAST_OK;
@@ -3854,75 +3850,52 @@ SpellCastResult Spell::CheckRuneCost(uint32 runeCostID)
     if(plr->getClass() != CLASS_DEATH_KNIGHT)
         return SPELL_CAST_OK;
 
-    SpellRuneCostEntry const *src = sSpellRuneCostStore.LookupEntry(runeCostID);
+    SpellRuneCostEntry const *src = sSpellRuneCostStore.LookupEntry(m_spellInfo->runeCostID);
 
     if(!src)
         return SPELL_CAST_OK;
 
-    if(src->NoRuneCost())
+    if(src->NoRuneCost() && (!take || src->NoRunicPowerGain()))
         return SPELL_CAST_OK;
 
-    int32 runeCost[NUM_RUNE_TYPES];                         // blood, frost, unholy, death
-
-    for(uint32 i = 0; i < RUNE_DEATH; ++i)
-        runeCost[i] = src->RuneCost[i];
-
-    runeCost[RUNE_DEATH] = MAX_RUNES;                       // calculated later
-
-    for(uint32 i = 0; i < MAX_RUNES; ++i)
-    {
-        RuneType rune = plr->GetCurrentRune(i);
-        if((plr->GetRuneCooldown(i) == 0) && (runeCost[rune] > 0))
-            runeCost[rune]--;
-    }
-
-    for(uint32 i = 0; i < RUNE_DEATH; ++i)
-        if(runeCost[i] > 0)
-            runeCost[RUNE_DEATH] += runeCost[i];
-
-    if(runeCost[RUNE_DEATH] > MAX_RUNES)
-        return SPELL_FAILED_NO_POWER;                       // not sure if result code is correct
-
-    return SPELL_CAST_OK;
-}
-
-void Spell::TakeRunePower()
-{
-    if(m_caster->GetTypeId() != TYPEID_PLAYER)
-        return;
-
-    Player *plr = (Player*)m_caster;
-
-    if(plr->getClass() != CLASS_DEATH_KNIGHT)
-        return;
-
-    SpellRuneCostEntry const *src = sSpellRuneCostStore.LookupEntry(m_spellInfo->runeCostID);
-
-    if(!src || (src->NoRuneCost() && src->NoRunicPowerGain()))
-        return;
-
-    m_runesState = plr->GetRunesState();                    // store previous state
+    if (take)
+        m_runesState = plr->GetRunesState();                // store previous state
 
     int32 runeCost[NUM_RUNE_TYPES];                         // blood, frost, unholy, death
 
     for(uint32 i = 0; i < RUNE_DEATH; ++i)
-    {
         runeCost[i] = src->RuneCost[i];
-    }
 
     runeCost[RUNE_DEATH] = 0;                               // calculated later
 
     for(uint32 i = 0; i < MAX_RUNES; ++i)
     {
         RuneType rune = plr->GetCurrentRune(i);
-        if((plr->GetRuneCooldown(i) == 0) && (runeCost[rune] > 0))
+        if (runeCost[rune] <= 0)
+            continue;
+
+        int32 runeCostTemp = runeCost[rune] * 10000;
+        if(Player* modOwner = plr->GetSpellModOwner())
+            modOwner->ApplySpellMod(m_spellInfo->Id, SPELLMOD_COST, runeCostTemp, this);
+
+        if (runeCostTemp <= 0)
         {
-            plr->SetRuneCooldown(i, RUNE_COOLDOWN);         // 5*2=10 sec
-            runeCost[rune]--;
+            --runeCost[rune];
+            continue;
+        }
+
+        if(plr->GetRuneCooldown(i) == 0)
+        {
+            if (take)
+                plr->SetRuneCooldown(i, RUNE_COOLDOWN); // 5*2=10 sec
+
+            --runeCost[rune];
         }
     }
 
-    runeCost[RUNE_DEATH] = runeCost[RUNE_BLOOD] + runeCost[RUNE_UNHOLY] + runeCost[RUNE_FROST];
+    for(uint32 i = 0; i < RUNE_DEATH; ++i)
+        if(runeCost[i] > 0)
+            runeCost[RUNE_DEATH] += runeCost[i];
 
     if(runeCost[RUNE_DEATH] > 0)
     {
@@ -3931,19 +3904,32 @@ void Spell::TakeRunePower()
             RuneType rune = plr->GetCurrentRune(i);
             if((plr->GetRuneCooldown(i) == 0) && (rune == RUNE_DEATH))
             {
-                plr->SetRuneCooldown(i, RUNE_COOLDOWN);     // 5*2=10 sec
-                runeCost[rune]--;
-                plr->ConvertRune(i, plr->GetBaseRune(i));
+                if (take)
+                    plr->SetRuneCooldown(i, RUNE_COOLDOWN); // 5*2=10 sec
+
+                --runeCost[rune];
+
+                if (take)
+                    plr->ConvertRune(i, plr->GetBaseRune(i));
+
                 if(runeCost[RUNE_DEATH] == 0)
                     break;
             }
         }
     }
 
-    // you can gain some runic power when use runes
-    float rp = src->runePowerGain;;
-    rp *= sWorld.getRate(RATE_POWER_RUNICPOWER_INCOME);
-    plr->ModifyPower(POWER_RUNIC_POWER, (int32)rp);
+    if(!take && runeCost[RUNE_DEATH] > 0)
+        return SPELL_FAILED_NO_POWER;                       // not sure if result code is correct
+
+    if(take)
+    {
+        // you can gain some runic power when use runes
+        float rp = src->runePowerGain;;
+        rp *= sWorld.getRate(RATE_POWER_RUNICPOWER_INCOME);
+        plr->ModifyPower(POWER_RUNIC_POWER, (int32)rp);
+    }
+
+    return SPELL_CAST_OK;
 }
 
 void Spell::TakeReagents()
@@ -4458,8 +4444,7 @@ SpellCastResult Spell::CheckCast(bool strict)
                                 MaNGOS::GameObjectLastSearcher<MaNGOS::NearestGameObjectEntryInObjectRangeCheck> checker(m_caster, p_GameObject, go_check);
 
                                 TypeContainerVisitor<MaNGOS::GameObjectLastSearcher<MaNGOS::NearestGameObjectEntryInObjectRangeCheck>, GridTypeMapContainer > object_checker(checker);
-                                CellLock<GridReadGuard> cell_lock(cell, p);
-                                cell_lock->Visit(cell_lock, object_checker, *m_caster->GetMap(), *m_caster, range);
+                                cell.Visit(p, object_checker, *m_caster->GetMap(), *m_caster, range);
 
                                 if (p_GameObject)
                                 {
@@ -4497,8 +4482,7 @@ SpellCastResult Spell::CheckCast(bool strict)
 
                             TypeContainerVisitor<MaNGOS::CreatureLastSearcher<MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck>, GridTypeMapContainer >  grid_creature_searcher(searcher);
 
-                            CellLock<GridReadGuard> cell_lock(cell, p);
-                            cell_lock->Visit(cell_lock, grid_creature_searcher, *m_caster->GetMap(), *m_caster, range);
+                            cell.Visit(p, grid_creature_searcher, *m_caster->GetMap(), *m_caster, range);
 
                             if (p_Creature)
                             {
@@ -5508,7 +5492,7 @@ SpellCastResult Spell::CheckPower()
     //check rune cost only if a spell has PowerType == POWER_RUNE
     if(m_spellInfo->powerType == POWER_RUNE)
     {
-        SpellCastResult failReason = CheckRuneCost(m_spellInfo->runeCostID);
+        SpellCastResult failReason = CheckOrTakeRunePower(false);
         if(failReason != SPELL_CAST_OK)
             return failReason;
     }
@@ -5627,9 +5611,8 @@ SpellCastResult Spell::CheckItems()
         MaNGOS::GameObjectSearcher<MaNGOS::GameObjectFocusCheck> checker(m_caster, ok, go_check);
 
         TypeContainerVisitor<MaNGOS::GameObjectSearcher<MaNGOS::GameObjectFocusCheck>, GridTypeMapContainer > object_checker(checker);
-        CellLock<GridReadGuard> cell_lock(cell, p);
         Map& map = *m_caster->GetMap();
-        cell_lock->Visit(cell_lock, object_checker, map, *m_caster, map.GetVisibilityDistance());
+        cell.Visit(p, object_checker, map, *m_caster, map.GetVisibilityDistance());
 
         if(!ok)
             return SPELL_FAILED_REQUIRES_SPELL_FOCUS;
@@ -6366,9 +6349,8 @@ void Spell::FillAreaTargets(UnitList &targetUnitMap, float x, float y, float rad
     MaNGOS::SpellNotifierCreatureAndPlayer notifier(*this, targetUnitMap, radius, pushType, spellTargets);
     TypeContainerVisitor<MaNGOS::SpellNotifierCreatureAndPlayer, WorldTypeMapContainer > world_notifier(notifier);
     TypeContainerVisitor<MaNGOS::SpellNotifierCreatureAndPlayer, GridTypeMapContainer > grid_notifier(notifier);
-    CellLock<GridReadGuard> cell_lock(cell, p);
-    cell_lock->Visit(cell_lock, world_notifier, *m_caster->GetMap(), *m_caster, radius);
-    cell_lock->Visit(cell_lock, grid_notifier, *m_caster->GetMap(), *m_caster, radius);
+    cell.Visit(p, world_notifier, *m_caster->GetMap(), *m_caster, radius);
+    cell.Visit(p, grid_notifier, *m_caster->GetMap(), *m_caster, radius);
 }
 
 void Spell::FillRaidOrPartyTargets(UnitList &targetUnitMap, Unit* member, Unit* center, float radius, bool raid, bool withPets, bool withcaster)
