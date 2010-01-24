@@ -1944,8 +1944,10 @@ class MANGOS_DLL_SPEC Player : public Unit
         bool RewardHonor(Unit *pVictim, uint32 groupsize, float honor = -1);
         uint32 GetHonorPoints() { return GetUInt32Value(PLAYER_FIELD_HONOR_CURRENCY); }
         uint32 GetArenaPoints() { return GetUInt32Value(PLAYER_FIELD_ARENA_CURRENCY); }
+        uint32 GetHKillPoints() { return GetUInt32Value(PLAYER_FIELD_LIFETIME_HONORBALE_KILLS); }
         void ModifyHonorPoints( int32 value );
         void ModifyArenaPoints( int32 value );
+        void ModifyHKillPoints( int32 value ) { SetUInt32Value(PLAYER_FIELD_LIFETIME_HONORBALE_KILLS, value); }
         uint32 GetMaxPersonalArenaRatingRequirement(uint32 minarenaslot);
 
         //End of PvP System
