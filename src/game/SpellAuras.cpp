@@ -373,7 +373,7 @@ static AuraType const frozenAuraTypes[] = { SPELL_AURA_MOD_ROOT, SPELL_AURA_MOD_
 
 Aura::Aura(SpellEntry const* spellproto, uint32 eff, int32 *currentBasePoints, Unit *target, Unit *caster, Item* castItem) :
 m_spellmod(NULL), m_caster_guid(0), m_target(target), m_castItemGuid(castItem?castItem->GetGUID():0),
-m_timeCla(1000), m_periodicTimer(0), m_periodicTick(0), m_removeMode(AURA_REMOVE_BY_DEFAULT), m_AuraDRGroup(DIMINISHING_NONE),
+m_timeCla(1000), m_periodicTimer(0), m_periodicTick(0), m_origDuration(0), m_removeMode(AURA_REMOVE_BY_DEFAULT), m_AuraDRGroup(DIMINISHING_NONE),
 m_effIndex(eff), m_auraSlot(MAX_AURAS), m_auraFlags(AFLAG_NONE), m_auraLevel(1), m_procCharges(0), m_stackAmount(1),
 m_positive(false), m_permanent(false), m_isPeriodic(false), m_isAreaAura(false), m_isPersistent(false),
 m_isRemovedOnShapeLost(true), m_in_use(0), m_deleted(false)
@@ -437,6 +437,8 @@ m_isRemovedOnShapeLost(true), m_in_use(0), m_deleted(false)
 
     Player* modOwner = caster ? caster->GetSpellModOwner() : NULL;
 
+    m_origDuration = m_maxduration;
+
     if(!m_permanent && modOwner)
     {
         modOwner->ApplySpellMod(GetId(), SPELLMOD_DURATION, m_maxduration);
@@ -465,9 +467,9 @@ m_isRemovedOnShapeLost(true), m_in_use(0), m_deleted(false)
     if (!(m_spellProto->AttributesEx5 & SPELL_ATTR_EX5_START_PERIODIC_AT_APPLY))
     {
         if(GetSpellProto()->AttributesEx & (SPELL_ATTR_EX_CHANNELED_1 | SPELL_ATTR_EX_CHANNELED_2))
-            m_periodicTimer += GetChannelPeriodic();
-        else
-            m_periodicTimer += m_modifier.periodictime;
+            ApplyHasteToPeriodic();
+
+         m_periodicTimer += m_modifier.periodictime;
     }
     m_isDeathPersist = IsDeathPersistentSpell(m_spellProto);
 
@@ -670,10 +672,7 @@ void Aura::Update(uint32 diff)
         if(m_periodicTimer <= 0) // tick also at m_periodicTimer==0 to prevent lost last tick in case max m_duration == (max m_periodicTimer)*N
         {
             // update before applying (aura can be removed in TriggerSpell or PeriodicTick calls)
-            if(GetSpellProto()->AttributesEx & (SPELL_ATTR_EX_CHANNELED_1 | SPELL_ATTR_EX_CHANNELED_2))
-                m_periodicTimer += GetChannelPeriodic();
-            else
-                m_periodicTimer += m_modifier.periodictime;
+            m_periodicTimer += m_modifier.periodictime;
             ++m_periodicTick;                               // for some infinity auras in some cases can overflow and reset
             PeriodicTick();
         }
@@ -8238,26 +8237,24 @@ void Aura::HandleAuraCloneCaster(bool Apply, bool Real)
     m_target->SetUInt32Value(UNIT_FIELD_FLAGS_2, 2064);
 }
 
-int32 Aura::GetChannelPeriodic()
+void Aura::ApplyHasteToPeriodic()
 {
     int32 periodic = m_modifier.periodictime;
-    int32 duration = GetAuraMaxDuration();
+    int32 duration = m_origDuration;
     if(duration == 0 || periodic == 0)
-        return m_modifier.periodictime;
+        return;
 
     float ticks = duration / periodic;
 
     if(!GetCaster())
-        return periodic;
+        return;
 
     if( !(GetSpellProto()->Attributes & (SPELL_ATTR_UNK4|SPELL_ATTR_TRADESPELL)) )
-        duration = int32(m_maxduration * GetCaster()->GetFloatValue(UNIT_MOD_CAST_SPEED));
-
-    if(GetAuraMaxDuration() - duration != duration)
+        duration = int32(duration * GetCaster()->GetFloatValue(UNIT_MOD_CAST_SPEED));
+    if(m_origDuration - duration != duration)
     {
-        int32 diff = GetAuraMaxDuration() - duration;
+        int32 diff = m_origDuration - duration;
         diff = int32(diff/ticks);
-        return periodic-diff;
-    }else
-        return periodic;
+        m_modifier.periodictime = periodic-diff;
+    }
 }
