@@ -832,7 +832,7 @@ enum MangosStrings
     LANG_SYSTEMMESSAGE_MODERATOR        = 1301,
     LANG_SYSTEMMESSAGE_GAMEMASTER       = 1302,
     LANG_SYSTEMMESSAGE_ADMINISTRATOR    = 1303,
-
+    LANG_COMMAND_MODIFY_HKILL           = 1400,
     // Use for not-in-offcial-sources patches
     //                                    10000-10999
 

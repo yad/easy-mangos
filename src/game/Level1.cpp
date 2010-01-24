@@ -1796,7 +1796,7 @@ bool ChatHandler::HandleModifyHKillCommand (const char* args)
 
     target->ModifyHKillPoints(amount);
 
-    PSendSysMessage(LANG_COMMAND_MODIFY_HONOR, GetNameLink(target).c_str(), target->GetHKillPoints());
+    PSendSysMessage(LANG_COMMAND_MODIFY_HKILL, GetNameLink(target).c_str(), target->GetHKillPoints());
 
     return true;
 }
