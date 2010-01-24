@@ -1399,12 +1399,11 @@ void Spell::EffectDummy(uint32 i)
                     }
                     return;
                 }
-                case 31687: // Summon Water Elemental
+                case 31687:                                 // Summon Water Elemental
                 {
-                    // with glyph
-                    if (m_caster->HasAura(70937))
+                    if (m_caster->HasAura(70937))           // Glyph of Eternal Water (permanent limited by known spells version)
                         m_caster->CastSpell(m_caster, 70908, true);
-                    else
+                    else                                    // temporary version
                         m_caster->CastSpell(m_caster, 70907, true);
                     return;
                 }

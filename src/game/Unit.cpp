@@ -2530,6 +2530,7 @@ void Unit::SendMeleeAttackStop(Unit* victim)
 void Unit::SendInitialVisiblePacketsFor(Player *player)
 {
     player->SendAurasForTarget(this);
+	player->BuildVehicleInfo(this);
     if(isAlive())
     {
         if(GetTypeId() == TYPEID_UNIT)
