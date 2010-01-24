@@ -874,13 +874,10 @@ bool Pet::UpdateStats(Stats stat)
             switch (owner->getClass())
             {
                 case CLASS_HUNTER:
-                    scale_coeff = 0.4493f;
+                    scale_coeff = 0.45f;
                     break;
                 case CLASS_WARLOCK:
-                    scale_coeff = 0.7f;
-                    break;
-                case CLASS_DEATH_KNIGHT:
-                    scale_coeff = 0.3928f;
+                    scale_coeff = 0.75f;
                     break;
             }
             value += float(owner->GetStat(stat)) * scale_coeff;
@@ -963,7 +960,9 @@ void Pet::UpdateArmor()
 void Pet::UpdateMaxHealth()
 {
     UnitMods unitMod = UNIT_MOD_HEALTH;
+    UnitMods unitModStam = UNIT_MOD_STAT_STAMINA;
     float stamina = GetStat(STAT_STAMINA) - GetCreateStat(STAT_STAMINA);
+    stamina  *= GetModifierValue(unitModStam, TOTAL_PCT);
 
     float value   = GetModifierValue(unitMod, BASE_VALUE) + GetCreateHealth();
     value  *= GetModifierValue(unitMod, BASE_PCT);
