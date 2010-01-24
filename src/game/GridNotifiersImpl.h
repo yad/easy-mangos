@@ -56,13 +56,16 @@ MaNGOS::DelayedUnitRelocation::Visit(CreatureMapType &m)
         if(!unit->isNeedNotify(NOTIFY_VISIBILITY_CHANGED))
             continue;
 
+        CellPair pair(MaNGOS::ComputeCellPair(unit->GetPositionX(),unit->GetPositionX()));
+        Cell cell(pair);
+
         CreatureRelocationNotifier relocate(*unit);
 
         TypeContainerVisitor<CreatureRelocationNotifier, WorldTypeMapContainer > c2world_relocation(relocate);
         TypeContainerVisitor<CreatureRelocationNotifier, GridTypeMapContainer >  c2grid_relocation(relocate);
 
-        i_lock->Visit(i_lock, c2world_relocation, i_map, *unit, i_radius);
-        i_lock->Visit(i_lock, c2grid_relocation, i_map, *unit, i_radius);
+        cell.Visit(pair, c2world_relocation, i_map, *unit, i_radius);
+        cell.Visit(pair, c2grid_relocation, i_map, *unit, i_radius);
 
         unit->SetNotified(NOTIFY_VISIBILITY_CHANGED);
     }
@@ -85,14 +88,14 @@ MaNGOS::DelayedUnitRelocation::Visit(PlayerMapType &m)
         CellPair pair(MaNGOS::ComputeCellPair(viewPoint->GetPositionX(), viewPoint->GetPositionY()));
         Cell cell(pair);
         //cell.SetNoCreate(); need load cells around viewPoint or player, that's why its commented
-        CellLock<ReadGuard> cell_lock(cell, pair);
+        //CellLock<ReadGuard> cell_lock(cell, pair);
 
         PlayerRelocationNotifier relocate(*unit, *viewPoint, true);
         TypeContainerVisitor<PlayerRelocationNotifier, WorldTypeMapContainer > c2world_relocation(relocate);
         TypeContainerVisitor<PlayerRelocationNotifier, GridTypeMapContainer >  c2grid_relocation(relocate);
 
-        i_lock->Visit(cell_lock, c2world_relocation, i_map, *viewPoint, i_radius);
-        i_lock->Visit(cell_lock, c2grid_relocation, i_map, *viewPoint, i_radius);
+        cell.Visit(pair, c2world_relocation, i_map, *viewPoint, i_radius);
+        cell.Visit(pair, c2grid_relocation, i_map, *viewPoint, i_radius);
 
         relocate.SendToSelf();
         unit->SetNotified(NOTIFY_VISIBILITY_CHANGED);

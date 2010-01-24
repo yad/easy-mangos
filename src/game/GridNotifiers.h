@@ -182,12 +182,12 @@ namespace MaNGOS
 
     struct MANGOS_DLL_DECL DelayedUnitRelocation
     {
-        typedef GridReadGuard ReadGuard;
+        //typedef GridReadGuard ReadGuard;
         Map &i_map;
-        CellLock<ReadGuard> &i_lock;
+        const CellPair &cell_pair;
         const float i_radius;
-        DelayedUnitRelocation(CellLock<ReadGuard> &lock, Map &map, float radius) :
-            i_lock(lock), i_map(map), i_radius(radius) {}
+        DelayedUnitRelocation(const CellPair &cellPair, Map &map, float radius) :
+            cell_pair(cellPair), i_map(map), i_radius(radius) {}
         template<class T> void Visit(GridRefManager<T> &) {}
         void Visit(CreatureMapType &);
         void Visit(PlayerMapType   &);

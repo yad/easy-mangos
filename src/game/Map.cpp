@@ -801,12 +801,11 @@ void Map::ProcessRelocationNotifies(uint32 diff)
                 cell.data.Part.reserved = CENTER_DISTRICT;
                 cell.SetNoCreate();
 
-                CellLock<ReadGuard> cell_lock(cell, pair);
-                MaNGOS::DelayedUnitRelocation cell_relocation(cell_lock, *this, GetVisibilityDistance());
+                MaNGOS::DelayedUnitRelocation cell_relocation(pair, *this, GetVisibilityDistance());
                 TypeContainerVisitor<MaNGOS::DelayedUnitRelocation, GridTypeMapContainer  > grid_object_relocation(cell_relocation);
                 TypeContainerVisitor<MaNGOS::DelayedUnitRelocation, WorldTypeMapContainer > world_object_relocation(cell_relocation);
-                cell_lock->Visit(cell_lock, grid_object_relocation,  *this);
-                cell_lock->Visit(cell_lock, world_object_relocation,  *this);
+                cell.Visit(pair, grid_object_relocation,  *this);
+                cell.Visit(pair, world_object_relocation,  *this);
             }
         }
     }
@@ -842,9 +841,9 @@ void Map::ProcessRelocationNotifies(uint32 diff)
                 Cell cell(pair);
                 cell.data.Part.reserved = CENTER_DISTRICT;
                 cell.SetNoCreate();
-                CellLock<NullGuard> cell_lock(cell, pair);
-                Visit(cell_lock, grid_notifier);
-                Visit(cell_lock, world_notifier);
+
+                Visit(cell, grid_notifier);
+                Visit(cell, world_notifier);
             }
         }
     }
