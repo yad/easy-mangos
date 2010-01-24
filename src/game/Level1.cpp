@@ -1783,6 +1783,32 @@ bool ChatHandler::HandleModifyHonorCommand (const char* args)
     return true;
 }
 
+bool ChatHandler::HandleModifyHKillCommand (const char* args)
+{
+    if (!*args)
+        return false;
+
+    Player *target = getSelectedPlayer();
+    if(!target)
+    {
+        SendSysMessage(LANG_PLAYER_NOT_FOUND);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    // check online security
+    if (HasLowerSecurity(target, 0))
+        return false;
+
+    int32 amount = (uint32)atoi(args);
+
+    target->ModifyHKillPoints(amount);
+
+    PSendSysMessage(LANG_COMMAND_MODIFY_HONOR, GetNameLink(target).c_str(), target->GetHKillPoints());
+
+    return true;
+}
+
 bool ChatHandler::HandleTeleCommand(const char * args)
 {
     if(!*args)
