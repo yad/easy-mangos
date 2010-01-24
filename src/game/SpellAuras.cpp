@@ -463,8 +463,12 @@ m_isRemovedOnShapeLost(true), m_in_use(0), m_deleted(false)
 
     // Start periodic on next tick or at aura apply
     if (!(m_spellProto->AttributesEx5 & SPELL_ATTR_EX5_START_PERIODIC_AT_APPLY))
-        m_periodicTimer += m_modifier.periodictime;
-
+    {
+        if(GetSpellProto()->AttributesEx & (SPELL_ATTR_EX_CHANNELED_1 | SPELL_ATTR_EX_CHANNELED_2))
+            m_periodicTimer += GetChannelPeriodic();
+        else
+            m_periodicTimer += m_modifier.periodictime;
+    }
     m_isDeathPersist = IsDeathPersistentSpell(m_spellProto);
 
     m_procCharges = m_spellProto->procCharges;
@@ -666,7 +670,7 @@ void Aura::Update(uint32 diff)
         if(m_periodicTimer <= 0) // tick also at m_periodicTimer==0 to prevent lost last tick in case max m_duration == (max m_periodicTimer)*N
         {
             // update before applying (aura can be removed in TriggerSpell or PeriodicTick calls)
-            if(if(GetSpellProto()->AttributesEx & (SPELL_ATTR_EX_CHANNELED_1 | SPELL_ATTR_EX_CHANNELED_2)))
+            if(GetSpellProto()->AttributesEx & (SPELL_ATTR_EX_CHANNELED_1 | SPELL_ATTR_EX_CHANNELED_2))
                 m_periodicTimer += GetChannelPeriodic();
             else
                 m_periodicTimer += m_modifier.periodictime;
@@ -8237,17 +8241,20 @@ int32 Aura::GetChannelPeriodic()
 {
     int32 periodic = m_modifier.periodictime;
     int32 duration = GetAuraMaxDuration();
-    int32 ticks = int32(duration / periodic);
+    if(duration == 0 || periodic == 0)
+        return m_modifier.periodictime;
+
+    float ticks = duration / periodic;
 
     if(!GetCaster())
         return periodic;
 
-    if( !(spellInfo->Attributes & (SPELL_ATTR_UNK4|SPELL_ATTR_TRADESPELL)) )
+    if( !(GetSpellProto()->Attributes & (SPELL_ATTR_UNK4|SPELL_ATTR_TRADESPELL)) )
         duration = int32(m_maxduration * GetCaster()->GetFloatValue(UNIT_MOD_CAST_SPEED));
 
-    if(duration - GetAuraMaxDuration() != duration)
+    if(GetAuraMaxDuration() - duration != duration)
     {
-        int32 diff = duration - GetAuraMaxDuration();
+        int32 diff = GetAuraMaxDuration() - duration;
         diff = int32(diff/ticks);
         return periodic-diff;
     }else
