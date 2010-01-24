@@ -125,16 +125,7 @@ bool ChatHandler::HandleNpcWhisperCommand(const char* args)
 // global announce
 bool ChatHandler::HandleAnnounceCommand(const char* args)
 {
-    if(!*args)
-        return false;
-
-    sWorld.SendWorldText(LANG_SYSTEMMESSAGE,args);
-    return true;
-}
-
-bool ChatHandler::HandleNameAnnounceCommand(const char* args)
-{
-  int32 strid = 0;
+    int32 strid = 0;
 
     if(!*args)
         return false;
@@ -157,7 +148,6 @@ bool ChatHandler::HandleNameAnnounceCommand(const char* args)
 
     return true;
 }
-
 
 //notification player at the screen
 bool ChatHandler::HandleNotifyCommand(const char* args)
