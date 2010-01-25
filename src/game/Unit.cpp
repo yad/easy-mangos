@@ -2926,7 +2926,7 @@ SpellMissInfo Unit::SpellHitResult(Unit *pVictim, SpellEntry const *spell, bool 
     if( !( spell->Id == 32375 || spell->Id == 32592 || spell->Id == 39897 ) )
     {
         // Check for immune
-        if (pVictim->IsImmunedToSpell(spell))
+        if (pVictim->IsImmunedToSpell(spell) || pVictim->IsImmunedToDamage(GetSpellSchoolMask(spell)))
         {
             //Shattering Throw
             if(spell->Id == 64382)
@@ -2938,18 +2938,13 @@ SpellMissInfo Unit::SpellHitResult(Unit *pVictim, SpellEntry const *spell, bool 
                 pVictim->RemoveAurasDueToSpell(10278); // Hand of Protection rank 3
                 pVictim->RemoveAurasDueToSpell(45438); // Ice Block
             }
-            else
-                return SPELL_MISS_IMMUNE;
+            return SPELL_MISS_IMMUNE;
         }
 
         // All positive spells can`t miss
         // TODO: client not show miss log for this spells - so need find info for this in dbc and use it!
         if (IsFriendlyTo(pVictim))
             return SPELL_MISS_NONE;
-
-        // Check for immune
-        if (pVictim->IsImmunedToDamage(GetSpellSchoolMask(spell)))
-            return SPELL_MISS_IMMUNE;
     }
     else if (IsPositiveSpell(spell->Id) && IsFriendlyTo(pVictim))
         return SPELL_MISS_NONE;
