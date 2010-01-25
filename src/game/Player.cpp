@@ -13288,10 +13288,6 @@ void Player::RewardQuest( Quest const *pQuest, uint32 reward, Object* questGiver
     if (pQuest->GetRewHonorableKills())
         RewardHonor(NULL, 0, MaNGOS::Honor::hk_honor_at_level(getLevel(), pQuest->GetRewHonorableKills()));
 
-    // arena reward
-    if (pQuest->GetRewArenaPoints())
-       ModifyArenaPoints(+ pQuest->GetRewArenaPoints());
-
     // title reward
     if (pQuest->GetCharTitleId())
     {
