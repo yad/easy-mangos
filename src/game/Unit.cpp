@@ -2946,7 +2946,7 @@ SpellMissInfo Unit::SpellHitResult(Unit *pVictim, SpellEntry const *spell, bool 
         if (IsFriendlyTo(pVictim))
             return SPELL_MISS_NONE;
 
-        if(pVictim->IsImmunedToDamage(GetSpellSchoolMask(spell))
+        if(pVictim->IsImmunedToDamage(GetSpellSchoolMask(spell)))
             return SPELL_MISS_IMMUNE;
 
     }
