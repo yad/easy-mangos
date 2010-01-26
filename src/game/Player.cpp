@@ -3973,10 +3973,13 @@ void Player::DeleteFromDB(uint64 playerguid, uint32 accountId, bool updateRealmC
     QueryResult *resultGroup = CharacterDatabase.PQuery("SELECT leaderGuid FROM group_member WHERE memberGuid='%u'", guid);
     if(resultGroup)
     {
-        uint32 leaderGuidLow = (*resultGroup)[0].GetUInt32();
+        uint64 leaderGuid = MAKE_NEW_GUID((*resultGroup)[0].GetUInt32(), 0, HIGHGUID_PLAYER);
         delete resultGroup;
-        if (Group* group = sObjectMgr.GetGroupByLeaderLowGUID(leaderGuidLow))
+        Group* group = sObjectMgr.GetGroupByLeader(leaderGuid);
+        if(group)
+        {
             RemoveFromGroup(group, playerguid);
+        }
     }
 
     // remove signs from petitions (also remove petitions if owner);
@@ -15885,10 +15888,10 @@ void Player::_LoadGroup(QueryResult *result)
     //QueryResult *result = CharacterDatabase.PQuery("SELECT leaderGuid FROM group_member WHERE memberGuid='%u'", GetGUIDLow());
     if (result)
     {
-        uint32 leaderGuidLow = (*result)[0].GetUInt32();
+        uint64 leaderGuid = MAKE_NEW_GUID((*result)[0].GetUInt32(), 0, HIGHGUID_PLAYER);
         delete result;
 
-        if (Group* group = sObjectMgr.GetGroupByLeaderLowGUID(leaderGuidLow))
+        if (Group* group = sObjectMgr.GetGroupByLeader(leaderGuid))
         {
             uint8 subgroup = group->GetMemberGroup(GetGUID());
             SetGroup(group, subgroup);

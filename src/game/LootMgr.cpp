@@ -1086,7 +1086,7 @@ void LoadLootTemplates_Creature()
         {
             if(uint32 lootid = cInfo->lootid)
             {
-                if (ids_set.find(lootid) == ids_set.end())
+                if(!ids_set.count(lootid))
                     LootTemplates_Creature.ReportNotExistedId(lootid);
                 else
                     ids_setUsed.insert(lootid);
@@ -1116,7 +1116,7 @@ void LoadLootTemplates_Disenchant()
         {
             if(uint32 lootid = proto->DisenchantID)
             {
-                if (ids_set.find(lootid) == ids_set.end())
+                if(!ids_set.count(lootid))
                     LootTemplates_Disenchant.ReportNotExistedId(lootid);
                 else
                     ids_setUsed.insert(lootid);
@@ -1138,7 +1138,7 @@ void LoadLootTemplates_Fishing()
     for(uint32 i = 1; i < sAreaStore.GetNumRows(); ++i )
     {
         if(AreaTableEntry const* areaEntry = sAreaStore.LookupEntry(i))
-            if (ids_set.find(areaEntry->ID) != ids_set.end())
+            if(ids_set.count(areaEntry->ID))
                 ids_set.erase(areaEntry->ID);
     }
 
@@ -1158,7 +1158,7 @@ void LoadLootTemplates_Gameobject()
         {
             if(uint32 lootid = gInfo->GetLootId())
             {
-                if (ids_set.find(lootid) == ids_set.end())
+                if(!ids_set.count(lootid))
                     LootTemplates_Gameobject.ReportNotExistedId(lootid);
                 else
                     ids_setUsed.insert(lootid);
@@ -1180,7 +1180,7 @@ void LoadLootTemplates_Item()
     // remove real entries and check existence loot
     for(uint32 i = 1; i < sItemStorage.MaxEntry; ++i )
         if(ItemPrototype const* proto = sItemStorage.LookupEntry<ItemPrototype>(i))
-            if (ids_set.find(proto->ItemId) != ids_set.end())
+            if(ids_set.count(proto->ItemId))
                 ids_set.erase(proto->ItemId);
 
     // output error for any still listed (not referenced from appropriate table) ids
@@ -1202,7 +1202,7 @@ void LoadLootTemplates_Milling()
         if((proto->BagFamily & BAG_FAMILY_MASK_HERBS)==0)
             continue;
 
-        if (ids_set.find(proto->ItemId) != ids_set.end())
+        if(ids_set.count(proto->ItemId))
             ids_set.erase(proto->ItemId);
     }
 
@@ -1222,7 +1222,7 @@ void LoadLootTemplates_Pickpocketing()
         {
             if(uint32 lootid = cInfo->pickpocketLootId)
             {
-                if (ids_set.find(lootid) == ids_set.end())
+                if(!ids_set.count(lootid))
                     LootTemplates_Pickpocketing.ReportNotExistedId(lootid);
                 else
                     ids_setUsed.insert(lootid);
@@ -1251,7 +1251,7 @@ void LoadLootTemplates_Prospecting()
         if((proto->BagFamily & BAG_FAMILY_MASK_MINING_SUPP)==0)
             continue;
 
-        if (ids_set.find(proto->ItemId) != ids_set.end())
+        if(ids_set.count(proto->ItemId))
             ids_set.erase(proto->ItemId);
     }
 
@@ -1267,7 +1267,7 @@ void LoadLootTemplates_Mail()
     // remove real entries and check existence loot
     for(uint32 i = 1; i < sMailTemplateStore.GetNumRows(); ++i )
         if(sMailTemplateStore.LookupEntry(i))
-            if (ids_set.find(i) != ids_set.end())
+            if(ids_set.count(i))
                 ids_set.erase(i);
 
     // output error for any still listed (not referenced from appropriate table) ids
@@ -1286,7 +1286,7 @@ void LoadLootTemplates_Skinning()
         {
             if(uint32 lootid = cInfo->SkinLootId)
             {
-                if (ids_set.find(lootid) == ids_set.end())
+                if(!ids_set.count(lootid))
                     LootTemplates_Skinning.ReportNotExistedId(lootid);
                 else
                     ids_setUsed.insert(lootid);
@@ -1316,7 +1316,7 @@ void LoadLootTemplates_Spell()
         if( !IsLootCraftingSpell(spellInfo))
             continue;
 
-        if (ids_set.find(spell_id) == ids_set.end())
+        if(!ids_set.count(spell_id))
         {
             // not report about not trainable spells (optionally supported by DB)
             // ignore 61756 (Northrend Inscription Research (FAST QA VERSION) for example

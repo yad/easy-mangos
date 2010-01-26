@@ -405,7 +405,8 @@ void Creature::Update(uint32 diff)
                     }
                     else
                     {
-                        if (Group* group = sObjectMgr.GetGroupByLeaderLowGUID(GUID_LOPART(lootingGroupLeaderGUID)))
+                        Group* group = sObjectMgr.GetGroupByLeader(lootingGroupLeaderGUID);
+                        if (group)
                             group->EndRoll();
                         m_groupLootTimer = 0;
                         lootingGroupLeaderGUID = 0;
