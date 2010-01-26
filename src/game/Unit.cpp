@@ -2926,7 +2926,7 @@ SpellMissInfo Unit::SpellHitResult(Unit *pVictim, SpellEntry const *spell, bool 
     if( !( spell->Id == 32375 || spell->Id == 32592 || spell->Id == 39897 ) )
     {
         // Check for immune
-        if (pVictim->IsImmunedToSpell(spell) || pVictim->IsImmunedToDamage(GetSpellSchoolMask(spell)))
+        if (pVictim->IsImmunedToSpell(spell))
         {
             //Shattering Throw
             if(spell->Id == 64382)
@@ -2945,6 +2945,10 @@ SpellMissInfo Unit::SpellHitResult(Unit *pVictim, SpellEntry const *spell, bool 
         // TODO: client not show miss log for this spells - so need find info for this in dbc and use it!
         if (IsFriendlyTo(pVictim))
             return SPELL_MISS_NONE;
+
+        if(pVictim->IsImmunedToDamage(GetSpellSchoolMask(spell))
+            return SPELL_MISS_IMMUNE;
+
     }
     else if (IsPositiveSpell(spell->Id) && IsFriendlyTo(pVictim))
         return SPELL_MISS_NONE;
