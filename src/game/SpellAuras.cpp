@@ -463,14 +463,14 @@ m_isRemovedOnShapeLost(true), m_in_use(0), m_deleted(false)
     if(modOwner && m_modifier.periodictime)
         modOwner->ApplySpellMod(GetId(), SPELLMOD_ACTIVATION_TIME, m_modifier.periodictime);
 
+    //Apply haste to channeled spells
+    if((m_maxduration < m_origDuration || GetSpellProto()->AttributesEx & (SPELL_ATTR_EX_CHANNELED_1 | SPELL_ATTR_EX_CHANNELED_2)) && m_modifier.periodictime != 0)
+        ApplyHasteToPeriodic();
+
     // Start periodic on next tick or at aura apply
     if (!(m_spellProto->AttributesEx5 & SPELL_ATTR_EX5_START_PERIODIC_AT_APPLY))
-    {
-        if(GetSpellProto()->AttributesEx & (SPELL_ATTR_EX_CHANNELED_1 | SPELL_ATTR_EX_CHANNELED_2))
-            ApplyHasteToPeriodic();
+        m_periodicTimer += m_modifier.periodictime;
 
-         m_periodicTimer += m_modifier.periodictime;
-    }
     m_isDeathPersist = IsDeathPersistentSpell(m_spellProto);
 
     m_procCharges = m_spellProto->procCharges;
@@ -8265,6 +8265,7 @@ void Aura::ApplyHasteToPeriodic()
 
     if( !(GetSpellProto()->Attributes & (SPELL_ATTR_UNK4|SPELL_ATTR_TRADESPELL)) )
         duration = int32(duration * GetCaster()->GetFloatValue(UNIT_MOD_CAST_SPEED));
+
     if(m_origDuration - duration != duration)
     {
         int32 diff = m_origDuration - duration;
