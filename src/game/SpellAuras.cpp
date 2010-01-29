@@ -1433,6 +1433,10 @@ void Aura::HandleAddModifier(bool apply, bool Real)
 
     if (apply)
     {
+        uint64 modMask0 = 0;
+        uint64 modMask1 = 0;
+        uint64 modMask2 = 0;
+
         // Add custom charges for some mod aura
         switch (m_spellProto->Id)
         {
@@ -1449,6 +1453,32 @@ void Aura::HandleAddModifier(bool apply, bool Real)
             case 64823:                                     // Elune's Wrath (Balance druid t8 set
                 SetAuraCharges(1);
                 break;
+            // Everlasting Affliction rank 1 - 5
+            case 47201:
+            case 47202:
+            case 47203:
+            case 47204:
+            case 47205:
+            {
+                modMask0 = UI64LIT(0x2);        //Corruption
+                modMask1 = UI64LIT(0x100);      //Unstable Affliction
+                break;
+            }
+            case 20224:    // Seals of the Pure (Rank 1)
+            case 20225:    // Seals of the Pure (Rank 2)
+            case 20330:    // Seals of the Pure (Rank 3)
+            case 20331:    // Seals of the Pure (Rank 4)
+            case 20332:    // Seals of the Pure (Rank 5)
+            {
+                if( m_effIndex == 0 )
+                {
+                    uint32 const* ptr = getAuraSpellClassMask();
+                    modMask0 = uint64(ptr[0]);
+                    modMask1 = uint64(ptr[1])| UI64LIT(0x20000000); // Seal of Righteoussness proc
+                    modMask2 = ptr[2];
+                }
+                break;
+            }
         }
 
         m_spellmod = new SpellModifier(
@@ -1459,6 +1489,12 @@ void Aura::HandleAddModifier(bool apply, bool Real)
             // prevent expire spell mods with (charges > 0 && m_stackAmount > 1)
             // all this spell expected expire not at use but at spell proc event check
             m_spellProto->StackAmount > 1 ? 0 : m_procCharges);
+
+        if( modMask0 | modMask1 | modMask2 )
+        {
+            m_spellmod->mask = modMask0 | modMask1<<32;
+            m_spellmod->mask2= modMask2;
+        }
     }
 
     ((Player*)m_target)->AddSpellMod(m_spellmod, apply);
