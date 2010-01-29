@@ -8253,7 +8253,7 @@ void Aura::ApplyHasteToPeriodic()
     if(duration == 0 || periodic == 0)
         return;
 
-    float ticks = duration / periodic;
+    int32 ticks = int32(duration / periodic);
 
     if(!GetCaster())
         return;
@@ -8261,11 +8261,10 @@ void Aura::ApplyHasteToPeriodic()
     if( !(GetSpellProto()->Attributes & (SPELL_ATTR_UNK4|SPELL_ATTR_TRADESPELL)) )
         duration = int32(duration * GetCaster()->GetFloatValue(UNIT_MOD_CAST_SPEED));
 
-    if(m_origDuration - duration != duration)
+    if(m_origDuration != duration)
     {
-        int32 diff = m_origDuration - duration;
-        diff = int32(diff / ticks);
-        m_modifier.periodictime = periodic-diff;
-        m_maxduration = (periodic-diff)*int32(ticks);
+        periodic = int32(periodic * GetCaster()->GetFloatValue(UNIT_MOD_CAST_SPEED));
+        m_modifier.periodictime = periodic;
+        m_maxduration = periodic * ticks;
     }
 }
