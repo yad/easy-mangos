@@ -1584,10 +1584,10 @@ bool AchievementMgr::IsCompletedAchievement(AchievementEntry const* entry)
         return false;
 
     // for achievement with referenced achievement criterias get from referenced and counter from self
-    uint32 achievmentForTestId = entry->refAchievement ? entry->refAchievement : entry->ID;
-    uint32 achievmentForTestCount = entry->count;
+    uint32 achievementForTestId = entry->refAchievement ? entry->refAchievement : entry->ID;
+    uint32 achievementForTestCount = entry->count;
 
-    AchievementCriteriaEntryList const* cList = sAchievementMgr.GetAchievementCriteriaByAchievement(achievmentForTestId);
+    AchievementCriteriaEntryList const* cList = sAchievementMgr.GetAchievementCriteriaByAchievement(achievementForTestId);
     if(!cList)
         return false;
     uint32 count = 0;
@@ -1629,12 +1629,12 @@ bool AchievementMgr::IsCompletedAchievement(AchievementEntry const* entry)
             completed_all = false;
 
         // completed as have req. count of completed criterias
-        if(achievmentForTestCount > 0 && achievmentForTestCount <= count)
+        if(achievementForTestCount > 0 && achievementForTestCount <= count)
            return true;
     }
 
     // all criterias completed requirement
-    if(completed_all && achievmentForTestCount==0)
+    if(completed_all && achievementForTestCount==0)
         return true;
 
     return false;
@@ -1911,7 +1911,7 @@ void AchievementGlobalMgr::LoadAchievementCriteriaRequirements()
 
         if (!criteria)
         {
-            sLog.outErrorDb( "Table `achievement_criteria_requirement` have data for not existed criteria (Entry: %u), ignore.", criteria_id);
+            sLog.outErrorDb( "Table `achievement_criteria_requirement`.`criteria_id` %u does not exist, ignoring.", criteria_id);
             continue;
         }
 
@@ -2001,8 +2001,8 @@ void AchievementGlobalMgr::LoadAchievementCriteriaRequirements()
                 continue;
         }
 
-        if(!GetCriteriaRequirementSet(criteria))
-            sLog.outErrorDb( "Table `achievement_criteria_requirement` not have expected data for criteria (Entry: %u Type: %u) for achievement %u.", criteria->ID, criteria->requiredType, criteria->referredAchievement);
+        if (!GetCriteriaRequirementSet(criteria))
+            sLog.outErrorDb("Table `achievement_criteria_requirement` is missing expected data for `criteria_id` %u (type: %u) for achievement %u.", criteria->ID, criteria->requiredType, criteria->referredAchievement);
     }
 
     sLog.outString();
