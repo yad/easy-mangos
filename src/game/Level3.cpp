@@ -180,6 +180,7 @@ bool ChatHandler::HandleReloadAllLocalesCommand(const char* /*args*/)
     HandleReloadLocalesAchievementRewardCommand("a");
     HandleReloadLocalesCreatureCommand("a");
     HandleReloadLocalesGameobjectCommand("a");
+    HandleReloadLocalesGossipMenuOptionCommand("a");
     HandleReloadLocalesItemCommand("a");
     HandleReloadLocalesNpcTextCommand("a");
     HandleReloadLocalesPageTextCommand("a");
@@ -808,6 +809,14 @@ bool ChatHandler::HandleReloadLocalesGameobjectCommand(const char* /*arg*/)
     sLog.outString( "Re-Loading Locales Gameobject ... ");
     sObjectMgr.LoadGameObjectLocales();
     SendGlobalSysMessage("DB table `locales_gameobject` reloaded.");
+    return true;
+}
+
+bool ChatHandler::HandleReloadLocalesGossipMenuOptionCommand(const char* /*arg*/)
+{
+    sLog.outString( "Re-Loading Locales Gossip Menu Option ... ");
+    sObjectMgr.LoadGossipMenuItemsLocales();
+    SendGlobalSysMessage("DB table `locales_gossip_menu_option` reloaded.");
     return true;
 }
 
@@ -4591,7 +4600,7 @@ static bool HandleResetStatsOrLevelHelper(Player* player)
     player->SetUInt32Value(UNIT_FIELD_FLAGS, UNIT_FLAG_PVP_ATTACKABLE);
 
     //-1 is default value
-    player->SetUInt32Value(PLAYER_FIELD_WATCHED_FACTION_INDEX, uint32(-1));
+    player->SetInt32Value(PLAYER_FIELD_WATCHED_FACTION_INDEX, -1);
 
     //player->SetUInt32Value(PLAYER_FIELD_BYTES, 0xEEE00000 );
     return true;
