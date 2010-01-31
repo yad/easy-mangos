@@ -6476,10 +6476,34 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                 // Sacred Shield (buff)
                 case 58597:
                 {
+                    Unit *caster = triggeredByAura->GetCaster();
                     triggered_spell_id = 66922;
                     SpellEntry const* triggeredEntry = sSpellStore.LookupEntry(triggered_spell_id);
                     if (!triggeredEntry)
                         return false;
+                    if (!caster)
+                        return false;
+                    if (caster->GetGUID() != target->GetGUID())
+                        return false;
+
+                    Unit::AuraList const& auras = caster->GetAurasByType(SPELL_AURA_PROC_TRIGGER_SPELL);
+                    for (Unit::AuraList::const_iterator i = auras.begin(); i != auras.end(); ++i)
+                    {
+                        switch((*i)->GetId())
+                        {
+                            case 53569:
+                            case 53576:
+                                basepoints0 = (*i)->GetSpellProto()->CalculateSimpleValue(2);
+                                break;
+                            default: continue;
+                        }
+                        break;
+                    }
+
+                    if (!basepoints0)
+                        return false;
+
+                    damage = int32(damage * basepoints0 / 100);
 
                     basepoints0 = int32(damage / (GetSpellDuration(triggeredEntry) / triggeredEntry->EffectAmplitude[0]));
                     target = this;
