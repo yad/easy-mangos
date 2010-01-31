@@ -11110,6 +11110,13 @@ float Unit::ApplyTotalThreatModifier(float threat, SpellSchoolMask schoolMask)
 
 void Unit::AddThreat(Unit* pVictim, float threat /*= 0.0f*/, bool crit /*= false*/, SpellSchoolMask schoolMask /*= SPELL_SCHOOL_MASK_NONE*/, SpellEntry const *threatSpell /*= NULL*/)
 {
+    //Prevent crash, but that should be checked before call this void. Damn SD2
+    if(!pVictim)
+        return;
+
+    if(!pVictim->isAlive())
+        return;
+
     //Misdirection hack
     if (pVictim->GetTypeId() == TYPEID_PLAYER && pVictim->HasAura(34477, 1))
         if (Group *pGroup = ((Player*)pVictim)->GetGroup())
