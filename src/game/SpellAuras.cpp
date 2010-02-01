@@ -4309,7 +4309,7 @@ void Aura::HandleAuraModRoot(bool apply, bool Real)
                 data.append(m_target->GetPackGUID());
                 data << (uint32)2;
                 m_target->SendMessageToSet(&data,true);
-
+            }
             //Clear unit movement flags
             ((Player*)m_target)->m_movementInfo.SetMovementFlags(MOVEFLAG_NONE);
         }

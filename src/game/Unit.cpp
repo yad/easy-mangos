@@ -13595,7 +13595,7 @@ void Unit::EnterVehicle(Vehicle *vehicle, int8 seat_id, bool force)
         pet->Remove(PET_SAVE_AS_CURRENT);
 
     if(GetTypeId() == TYPEID_PLAYER)
-        ((Player*)this)->SendEnterVehicle(v);
+        ((Player*)this)->SendEnterVehicle(v, veSeat);
 
     WorldPacket data(SMSG_MONSTER_MOVE_TRANSPORT, 60);
     data.append(GetPackGUID());
@@ -13645,8 +13645,8 @@ void Unit::ExitVehicle()
         if(GetTypeId() == TYPEID_PLAYER)
         {
             ((Player*)this)->ResummonPetTemporaryUnSummonedIfAny();
-            ((Player*)this)->m_movementInfo.RemoveMovementFlag(MOVEMENTFLAG_ONTRANSPORT);
-            ((Player*)this)->m_movementInfo.RemoveMovementFlag(MOVEMENTFLAG_FLY_UNK1);
+            ((Player*)this)->m_movementInfo.RemoveMovementFlag(MOVEFLAG_ONTRANSPORT);
+            ((Player*)this)->m_movementInfo.RemoveMovementFlag(MOVEFLAG_FLY_UNK1);
         }
 
         float x = GetPositionX();
@@ -13668,7 +13668,7 @@ void Unit::BuildVehicleInfo(Unit *target)
     uint32 veh_time = getMSTimeDiff(target->m_SeatData.c_time,getMSTime());
     WorldPacket data(MSG_MOVE_HEARTBEAT, 100);
     data.append(target->GetPackGUID());
-    data << uint32(MOVEMENTFLAG_ONTRANSPORT | MOVEMENTFLAG_FLY_UNK1);
+    data << uint32(MOVEFLAG_ONTRANSPORT | MOVEFLAG_FLY_UNK1);
     data << uint16(0);
     data << uint32(getMSTime());
     data << float(target->GetPositionX());

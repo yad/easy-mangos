@@ -20310,10 +20310,10 @@ void Player::InitGlyphsForLevel()
     SetUInt32Value(PLAYER_GLYPHS_ENABLED, value);
 }
 
-void Player::SendEnterVehicle(Vehicle *vehicle)
+void Player::SendEnterVehicle(Vehicle *vehicle, VehicleSeatEntry const *veSeat)
 {
-    m_movementInfo.AddMovementFlag(MOVEMENTFLAG_ONTRANSPORT);
-    m_movementInfo.AddMovementFlag(MOVEMENTFLAG_FLY_UNK1);
+    m_movementInfo.AddMovementFlag(MOVEFLAG_ONTRANSPORT);
+    m_movementInfo.AddMovementFlag(MOVEFLAG_FLY_UNK1);
 
     if(m_transport)                                         // if we were on a transport, leave
     {
@@ -20364,7 +20364,7 @@ void Player::SendEnterVehicle(Vehicle *vehicle)
     GetSession()->SendPacket(&data);
 }
 
-void Player::ExitVehicle(Vehicle *vehicle)
+/*void Player::ExitVehicle(Vehicle *vehicle)
 {
     vehicle->SetCharmerGUID(0);
     vehicle->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_SPELLCLICK);
@@ -20394,7 +20394,7 @@ void Player::ExitVehicle(Vehicle *vehicle)
 
     // maybe called at dummy aura remove?
     // CastSpell(this, 45472, true);                        // Parachute
-}
+} */
 
 bool Player::isTotalImmune()
 {

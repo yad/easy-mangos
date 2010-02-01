@@ -249,7 +249,7 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
     }
 
     /* handle special cases */
-    if (movementInfo.HasMovementFlag(MOVEMENTFLAG_ONTRANSPORT) && !mover->GetVehicleGUID())
+    if (movementInfo.HasMovementFlag(MOVEFLAG_ONTRANSPORT) && !mover->GetVehicleGUID())
     {
         // transports size limited
         // (also received at zeppelin/lift leave by some reason with t_* as absolute in continent coordinates, can be safely skipped)
@@ -297,7 +297,7 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
         // now client not include swimming flag in case jumping under water
         plMover->SetInWater( !plMover->IsInWater() || plMover->GetBaseMap()->IsUnderWater(movementInfo.GetPos()->x, movementInfo.GetPos()->y, movementInfo.GetPos()->z) );
     }
-    if (movementInfo.HasMovementFlag(MOVEMENTFLAG_SWIMMING))
+    if (movementInfo.HasMovementFlag(MOVEFLAG_SWIMMING))
     {
         if(mover->GetTypeId() == TYPEID_UNIT)
         {
@@ -367,7 +367,7 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
     {
         if(mover->IsInWorld())
         {
-            mover->GetMap()->CreatureRelocation((Creature*)mover, movementInfo.x, movementInfo.y, movementInfo.z, movementInfo.o);
+            mover->GetMap()->CreatureRelocation((Creature*)mover, movementInfo.GetPos()->x, movementInfo.GetPos()->y, movementInfo.GetPos()->z, movementInfo.GetPos()->o);
             if(((Creature*)mover)->isVehicle())
                 ((Vehicle*)mover)->RellocatePassengers(mover->GetMap());
         }
@@ -639,8 +639,7 @@ void WorldSession::HandleChangeSeatsOnControlledVehicle(WorldPacket &recv_data)
 
     if(Vehicle *vehicle = ObjectAccessor::GetVehicle(vehicleGUID))
     {
-        MovementInfo mi;
-        ReadMovementInfo(recv_data, &mi);
+        MovementInfo mi(recv_data);
         //_player->m_movementInfo = mi;
 
         uint64 guid = 0;

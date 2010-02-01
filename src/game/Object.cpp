@@ -288,7 +288,7 @@ void Object::BuildMovementUpdate(ByteBuffer * data, uint16 updateFlags) const
                     }
                 }
                 if(((Unit*)this)->GetVehicleGUID())
-                    flags2 |= (MOVEMENTFLAG_ONTRANSPORT | MOVEMENTFLAG_FLY_UNK1);
+                    moveFlags2 |= (MOVEFLAG_ONTRANSPORT | MOVEFLAG_FLY_UNK1);
 
             }
             break;
@@ -305,7 +305,7 @@ void Object::BuildMovementUpdate(ByteBuffer * data, uint16 updateFlags) const
                 player->m_movementInfo.RemoveMovementFlag(MOVEFLAG_SPLINE2);
 
                 if(((Unit*)this)->GetVehicleGUID())
-                    flags2 |= (MOVEMENTFLAG_ONTRANSPORT | MOVEMENTFLAG_FLY_UNK1);
+                    moveFlags2 |= (MOVEFLAG_ONTRANSPORT | MOVEFLAG_FLY_UNK1);
 
                 if(((Player*)this)->isInFlight())
                 {
@@ -332,92 +332,6 @@ void Object::BuildMovementUpdate(ByteBuffer * data, uint16 updateFlags) const
         *data << float(unit->GetSpeed(MOVE_FLIGHT_BACK));
         *data << float(unit->GetSpeed(MOVE_TURN_RATE));
         *data << float(unit->GetSpeed(MOVE_PITCH_RATE));
-
-        // 0x00000200
-        if(flags2 & MOVEMENTFLAG_ONTRANSPORT)
-        {
-            if((GetTypeId() == TYPEID_PLAYER || GetTypeId() == TYPEID_UNIT) && ((Unit*)this)->GetVehicleGUID())
-            {
-                uint32 veh_time = getMSTimeDiff(((Unit*)this)->m_SeatData.c_time,getMSTime());
-                data->appendPackGUID(((Unit*)this)->GetVehicleGUID());          // transport guid
-                *data << (float)((Unit*)this)->m_SeatData.OffsetX;              // transport offsetX
-                *data << (float)((Unit*)this)->m_SeatData.OffsetY;              // transport offsetY
-                *data << (float)((Unit*)this)->m_SeatData.OffsetZ;              // transport offsetZ
-                *data << (float)((Unit*)this)->m_SeatData.Orientation;          // transport orientation
-                *data << (uint32)veh_time;                                      // transport time
-                *data << (int8)((Unit*)this)->m_SeatData.seat;                  // seat
-            }
-            else if(GetTypeId() == TYPEID_PLAYER)
-            {
-                data->append(((Player*)this)->GetTransport()->GetPackGUID());
-                *data << (float)((Player*)this)->GetTransOffsetX();
-                *data << (float)((Player*)this)->GetTransOffsetY();
-                *data << (float)((Player*)this)->GetTransOffsetZ();
-                *data << (float)((Player*)this)->GetTransOffsetO();
-                *data << (uint32)((Player*)this)->GetTransTime();
-                *data << (int8)((Player*)this)->GetTransSeat();
-            }
-            else
-            {
-                //MaNGOS currently not have support for other than player on transport
-                *data << uint8(0);
-                *data << float(0) << float(0) << float(0) << float(0);
-                *data << uint32(0);
-                *data << uint8(-1);
-            }
-        }
-
-        // 0x02200000
-        if((flags2 & (MOVEMENTFLAG_SWIMMING | MOVEMENTFLAG_FLYING)) || (unk_flags & 0x20))
-        {
-            if(GetTypeId() == TYPEID_PLAYER)
-                *data << (float)((Player*)this)->m_movementInfo.s_pitch;
-            else
-                *data << (float)0;                          // is't part of movement packet, we must store and send it...
-        }
-
-        if(GetTypeId() == TYPEID_PLAYER)
-            *data << (uint32)((Player*)this)->m_movementInfo.fallTime;
-        else
-            *data << (uint32)0;                             // last fall time
-
-        // 0x00001000
-        if(flags2 & MOVEMENTFLAG_JUMPING)
-        {
-            if(GetTypeId() == TYPEID_PLAYER)
-            {
-                *data << (float)((Player*)this)->m_movementInfo.j_unk;
-                *data << (float)((Player*)this)->m_movementInfo.j_sinAngle;
-                *data << (float)((Player*)this)->m_movementInfo.j_cosAngle;
-                *data << (float)((Player*)this)->m_movementInfo.j_xyspeed;
-            }
-            else
-            {
-                *data << (float)0;
-                *data << (float)0;
-                *data << (float)0;
-                *data << (float)0;
-            }
-        }
-
-        // 0x04000000
-        if(flags2 & MOVEMENTFLAG_SPLINE)
-        {
-            if(GetTypeId() == TYPEID_PLAYER)
-                *data << (float)((Player*)this)->m_movementInfo.u_unk1;
-            else
-                *data << (float)0;
-        }
-
-        *data << ((Unit*)this)->GetSpeed( MOVE_WALK );
-        *data << ((Unit*)this)->GetSpeed( MOVE_RUN );
-        *data << ((Unit*)this)->GetSpeed( MOVE_SWIM_BACK );
-        *data << ((Unit*)this)->GetSpeed( MOVE_SWIM );
-        *data << ((Unit*)this)->GetSpeed( MOVE_RUN_BACK );
-        *data << ((Unit*)this)->GetSpeed( MOVE_FLIGHT );
-        *data << ((Unit*)this)->GetSpeed( MOVE_FLIGHT_BACK );
-        *data << ((Unit*)this)->GetSpeed( MOVE_TURN_RATE );
-        *data << ((Unit*)this)->GetSpeed( MOVE_PITCH_RATE );
 
         // 0x08000000
         if(unit->m_movementInfo.GetMovementFlags() & MOVEFLAG_SPLINE2)

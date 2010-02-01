@@ -2103,7 +2103,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         void SetMover(Unit* target) { m_mover = target ? target : this; }
 
         // vehicle system
-        void SendEnterVehicle(Vehicle *vehicle);
+        void SendEnterVehicle(Vehicle *vehicle, VehicleSeatEntry const *veSeat);
 
         uint64 GetFarSight() const { return GetUInt64Value(PLAYER_FARSIGHT); }
         void SetFarSightGUID(uint64 guid);
