@@ -1088,6 +1088,13 @@ void Spell::DoSpellHitOnUnit(Unit *unit, const uint32 effectMask)
         return;
     }
 
+    // recheck deflect for delayed spells on target with Deterrence
+    if (m_spellInfo->speed && unit->HasAura(19263))
+    {
+        realCaster->SendSpellMiss(unit, m_spellInfo->Id, SPELL_MISS_DODGE);
+        return;
+    }
+
     if (unit->GetTypeId() == TYPEID_PLAYER)
     {
         ((Player*)unit)->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_BE_SPELL_TARGET, m_spellInfo->Id);
@@ -2679,6 +2686,13 @@ void Spell::cast(bool skipCheck)
                 AddTriggeredSpell(52874);                   // Fan of Knives (offhand)
             }
             break;
+        case SPELLFAMILY_HUNTER:
+        {
+            // Deterrence
+            if (m_spellInfo->Id == 19263)
+                AddTriggeredSpell(67801);                   // Deterrence
+            break;
+        }
         case SPELLFAMILY_PALADIN:
         {
             // Hand of Reckoning
@@ -4205,7 +4219,7 @@ SpellCastResult Spell::CheckCast(bool strict)
             else if (target->HasAura(m_spellInfo->excludeTargetAuraSpell))
                 return SPELL_FAILED_CASTER_AURASTATE;
         }
-        else if((m_spellInfo->SpellFamilyFlags & UI64LIT(0x000000008000)) && target->HasAura(25771))
+        else if(m_spellInfo->SpellFamilyName == SPELLFAMILY_PALADIN && (m_spellInfo->SpellFamilyFlags & UI64LIT(0x000000008000)) && target->HasAura(25771))
             return SPELL_FAILED_CASTER_AURASTATE;
 
         bool non_caster_target = target != m_caster && !IsSpellWithCasterSourceTargetsOnly(m_spellInfo);
