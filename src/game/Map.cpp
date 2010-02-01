@@ -1027,10 +1027,10 @@ Map::CreatureRelocation(Creature *creature, float x, float y, float z, float ang
     if( old_cell.DiffCell(new_cell) || old_cell.DiffGrid(new_cell) )
     {
         #ifdef MANGOS_DEBUG
-        if((sLog.getLogFilter() & LOG_FILTER_CREATURE_MOVES)==0)
+        if((sLog.getLogFilter() & LOG_FILTER_CREATURE_MOVES) == 0)
             sLog.outDebug("Creature (GUID: %u Entry: %u) added to moving list from grid[%u,%u]cell[%u,%u] to grid[%u,%u]cell[%u,%u].", creature->GetGUIDLow(), creature->GetEntry(), old_cell.GridX(), old_cell.GridY(), old_cell.CellX(), old_cell.CellY(), new_cell.GridX(), new_cell.GridY(), new_cell.CellX(), new_cell.CellY());
         #endif
-        AddCreatureToMoveList(creature,x,y,z,ang);
+        AddCreatureToMoveList(creature, x, y, z, ang);
         // in diffcell/diffgrid case notifiers called at finishing move creature in Map::MoveAllCreaturesInMoveList
     }
     else
@@ -1046,7 +1046,7 @@ void Map::AddCreatureToMoveList(Creature *c, float x, float y, float z, float an
     if(!c)
         return;
 
-    i_creaturesToMove[c] = CreatureMover(x,y,z,ang);
+    i_creaturesToMove[c] = CreatureMover(x, y, z, ang);
 }
 
 void Map::MoveAllCreaturesInMoveList()
