@@ -12227,6 +12227,10 @@ void Player::ApplyEnchantment(Item *item, EnchantmentSlot slot, bool apply, bool
                         case ITEM_MOD_FERAL_ATTACK_POWER:
                         case ITEM_MOD_SPELL_HEALING_DONE:   // deprecated
                         case ITEM_MOD_SPELL_DAMAGE_DONE:    // deprecated
+                            break;
+                        case ITEM_MOD_BLOCK_VALUE:
+                           ((Player*)this)->HandleBaseModValue(SHIELD_BLOCK_VALUE, FLAT_MOD, enchant_amount, apply);
+                            break;
                         default:
                             break;
                     }
