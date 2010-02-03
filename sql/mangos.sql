@@ -24,7 +24,7 @@ CREATE TABLE `db_version` (
   `version` varchar(120) default NULL,
   `creature_ai_version` varchar(120) default NULL,
   `cache_id` int(10) default '0',
-  `required_9262_01_mangos_quest_template` bit(1) default NULL
+  `required_9291_02_mangos_locales_quest` bit(1) default NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 ROW_FORMAT=FIXED COMMENT='Used DB version notes';
 
 --
@@ -2782,6 +2782,14 @@ CREATE TABLE `locales_quest` (
   `EndText_loc6` text,
   `EndText_loc7` text,
   `EndText_loc8` text,
+  `CompletedText_loc1` text,
+  `CompletedText_loc2` text,
+  `CompletedText_loc3` text,
+  `CompletedText_loc4` text,
+  `CompletedText_loc5` text,
+  `CompletedText_loc6` text,
+  `CompletedText_loc7` text,
+  `CompletedText_loc8` text,
   `ObjectiveText1_loc1` text,
   `ObjectiveText1_loc2` text,
   `ObjectiveText1_loc3` text,
@@ -13805,6 +13813,7 @@ CREATE TABLE `quest_template` (
   `OfferRewardText` text,
   `RequestItemsText` text,
   `EndText` text,
+  `CompletedText` text,
   `ObjectiveText1` text,
   `ObjectiveText2` text,
   `ObjectiveText3` text,
@@ -14117,7 +14126,7 @@ INSERT INTO `spell_bonus_data` VALUES
 /* Druid */
 (5185,  1.6104, 0,       0,     'Druid - Healing Touch'),
 (339,   0,      0.1,     0,     'Druid - Entangling Roots'),
-(60089, 0,      0,       0.05,  'Druid - Faerie Fire (Feral) Triggered'),
+(60089, 0,      0,       0.15,  'Druid - Faerie Fire (Feral) Triggered'),
 (42231, 0.12898,0,       0,     'Druid - Hurricane Triggered'),
 (5570,  0,      0.2,     0,     'Druid - Insect Swarm'),
 (33763, 0,      0.09518, 0,     'Druid - Lifebloom'),
@@ -14243,6 +14252,10 @@ INSERT INTO `spell_bonus_data` VALUES
 (31117, 1.8,    0,       0,     'Warlock - Unstable Affliction Dispell'),
 /* Item */
 (56160, 0,      0,       0,     'Item - Glyph of Power Word: Shield'),
+(31024, 0,      0,       0,     'Item - Living Ruby Pedant'),
+(17712, 0,      0,       0,     'Item - Lifestone Healing'),
+(5707,  0,      0,       0,     'Item - Lifestone Regeneration'),
+(38395, 0,      0,       0,     'Item - Siphon Essence'),
 (40293, 0,      0,       0,     'Item - Siphon Essence');
 /*!40000 ALTER TABLE `spell_bonus_data` ENABLE KEYS */;
 UNLOCK TABLES;
@@ -18521,6 +18534,7 @@ INSERT INTO `spell_proc_event` VALUES
 (57470, 0x00000000,  6, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (57472, 0x00000000,  6, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (57499, 0x00000000,  4, 0x40000001, 0x00010000, 0x00000000, 0x00014000, 0x00000000, 0.000000, 0.000000,  0),
+(57870, 0x00000000,  9, 0x00800000, 0x00000000, 0x00000000, 0x00040000, 0x00000000, 0.000000, 0.000000,  0),
 (57878, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000010, 0.000000, 0.000000,  0),
 (57880, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000010, 0.000000, 0.000000,  0),
 (57881, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000010, 0.000000, 0.000000,  0),
