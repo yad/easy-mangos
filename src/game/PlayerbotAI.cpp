@@ -2365,6 +2365,54 @@ bool PlayerbotAI::CastSpell(uint32 spellId)
     return true;
 }
 
+Item* PlayerbotAI::FindItem(uint32 ItemId)
+{
+     // list out items in main backpack
+     //INVENTORY_SLOT_ITEM_START = 23
+     //INVENTORY_SLOT_ITEM_END = 39
+     
+     for (uint8 slot = INVENTORY_SLOT_ITEM_START; slot < INVENTORY_SLOT_ITEM_END; slot++)
+     {
+         // sLog.outDebug("[%s's]backpack slot = %u",m_bot->GetName(),slot); // 23 to 38 = 16
+         Item* const pItem = m_bot->GetItemByPos(INVENTORY_SLOT_BAG_0, slot); // 255, 23 to 38
+         if (pItem)
+         {
+              const ItemPrototype* const pItemProto = pItem->GetProto();
+              if (!pItemProto )
+                   continue;
+
+              if( pItemProto->ItemId == ItemId) // have required item
+                   return pItem;
+         }
+     }
+     // list out items in other removable backpacks
+     //INVENTORY_SLOT_BAG_START = 19
+     //INVENTORY_SLOT_BAG_END = 23
+     
+     for (uint8 bag = INVENTORY_SLOT_BAG_START; bag < INVENTORY_SLOT_BAG_END; ++bag) // 20 to 23 = 4
+     {
+          const Bag* const pBag = (Bag*) m_bot->GetItemByPos(INVENTORY_SLOT_BAG_0, bag); // 255, 20 to 23
+          if (pBag)
+          {
+               for (uint8 slot = 0; slot < pBag->GetBagSize(); ++slot)
+               {
+                    sLog.outDebug("[%s's]bag[%u] slot = %u",m_bot->GetName(),bag,slot); // 1 to bagsize = ?
+            Item* const pItem = m_bot->GetItemByPos(bag, slot); // 20 to 23, 1 to bagsize
+                    if (pItem)
+                    {
+                          const ItemPrototype* const pItemProto = pItem->GetProto();
+                          if (!pItemProto )
+                                continue;
+
+                          if( pItemProto->ItemId == ItemId ) // have required item 
+                                return pItem;
+                    }
+               }
+          }
+     }
+     return NULL;
+}
+
 // extracts all item ids in format below
 // I decided to roll my own extractor rather then use the one in ChatHandler
 // because this one works on a const string, and it handles multiple links
@@ -2948,8 +2996,36 @@ void PlayerbotAI::HandleCommand(const std::string& text, Player& fromPlayer)
         SendWhisper("et voici mes sorts offensifs:", fromPlayer);
         ch.SendSysMessage(negOut.str().c_str());
     }
-    
-    
+    else if (text == "free")
+    {
+         std::ostringstream out;
+
+         uint32 totalused = 0;
+         // list out items in main backpack
+         for (uint8 slot = INVENTORY_SLOT_ITEM_START; slot < INVENTORY_SLOT_ITEM_END; slot++)
+         {
+          const Item* const pItem = m_bot->GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
+              if (pItem)
+                  totalused++;
+     }
+     uint32 totalfree = 16 - totalused;
+         // list out items in other removable backpacks
+         for (uint8 bag = INVENTORY_SLOT_BAG_START; bag < INVENTORY_SLOT_BAG_END; ++bag)
+         {
+          const Bag* const pBag = (Bag*) m_bot->GetItemByPos(INVENTORY_SLOT_BAG_0, bag);
+              if (pBag)
+              {    
+             ItemPrototype const* pBagProto = pBag->GetProto();
+                     if (pBagProto->Class == ITEM_CLASS_CONTAINER && pBagProto->SubClass == ITEM_SUBCLASS_CONTAINER)
+                      totalfree =  totalfree + pBag->GetFreeSlots();
+              }
+
+      }
+     out << totalfree << " Empty Slots (Total)"; 
+     ChatHandler ch(&fromPlayer);
+         SendWhisper("I have this much space ", fromPlayer);
+         ch.SendSysMessage(out.str().c_str());
+    }
     else
     {
         // if this looks like an item link, reward item it completed quest and talking to NPC
@@ -2998,7 +3074,6 @@ void PlayerbotAI::HandleCommand(const std::string& text, Player& fromPlayer)
                     }
                 }
             }
-
         }
         else {
             std::string msg = "Comment ? follow, stay, (c)ast <nom du sort>, spells, (e)quip <itemlink>, (u)se <itemlink>, drop <questlink>, report, quests (Pour obtenir un <itemlink> ou <questlink> faites MAJ+Clic sur l'objet ou sur la quete pour le linker dans le canal de tchat)";
