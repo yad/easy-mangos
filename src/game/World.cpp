@@ -1395,6 +1395,9 @@ void World::SetInitialWorldSettings()
     sLog.outString( "Loading Spell Names..." );
     sObjectMgr.LoadSpellNames();
 
+    // Loads the jail conf out of the database
+    sObjectMgr.LoadJailConf();
+
     ///- Load and initialize scripts
     sLog.outString( "Loading Scripts..." );
     sLog.outString();
