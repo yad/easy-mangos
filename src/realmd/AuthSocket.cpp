@@ -37,7 +37,6 @@ extern DatabaseType loginDatabase;
 
 enum eAuthCmd
 {
-    //AUTH_NO_CMD                 = 0xFF,
     AUTH_LOGON_CHALLENGE        = 0x00,
     AUTH_LOGON_PROOF            = 0x01,
     AUTH_RECONNECT_CHALLENGE    = 0x02,

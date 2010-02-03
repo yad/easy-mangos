@@ -163,6 +163,7 @@ class MANGOS_DLL_SPEC PlayerbotAI
         Item* FindBandage() const;
         Item* FindPoison() const;
         Item* FindMount(uint32 matchingRidingSkill) const;
+        Item* FindItem(uint32 ItemId);
         void CheckMount();
 
         // ******* Actions ****************************************
