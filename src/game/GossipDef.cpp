@@ -436,7 +436,6 @@ void PlayerMenu::SendQuestGiverQuestDetails( Quest const *pQuest, uint64 npcGUID
     std::string Title      = pQuest->GetTitle();
     std::string Details    = pQuest->GetDetails();
     std::string Objectives = pQuest->GetObjectives();
-    std::string EndText    = pQuest->GetEndText();
 
     int loc_idx = pSession->GetSessionDbLocaleIndex();
     if (loc_idx >= 0)
@@ -450,8 +449,6 @@ void PlayerMenu::SendQuestGiverQuestDetails( Quest const *pQuest, uint64 npcGUID
                 Details=ql->Details[loc_idx];
             if (ql->Objectives.size() > (size_t)loc_idx && !ql->Objectives[loc_idx].empty())
                 Objectives=ql->Objectives[loc_idx];
-            if (ql->EndText.size() > (size_t)loc_idx && !ql->EndText[loc_idx].empty())
-                EndText=ql->EndText[loc_idx];
         }
     }
 
@@ -479,26 +476,36 @@ void PlayerMenu::SendQuestGiverQuestDetails( Quest const *pQuest, uint64 npcGUID
         ItemPrototype const* IProto;
 
         data << uint32(pQuest->GetRewChoiceItemsCount());
+
         for (uint32 i=0; i < QUEST_REWARD_CHOICES_COUNT; ++i)
         {
-            if ( !pQuest->RewChoiceItemId[i] ) continue;
+            if (!pQuest->RewChoiceItemId[i])
+                continue;
+
             data << uint32(pQuest->RewChoiceItemId[i]);
             data << uint32(pQuest->RewChoiceItemCount[i]);
+
             IProto = ObjectMgr::GetItemPrototype(pQuest->RewChoiceItemId[i]);
-            if ( IProto )
+
+            if (IProto)
                 data << uint32(IProto->DisplayInfoID);
             else
-                data << uint32( 0x00 );
+                data << uint32(0x00);
         }
 
         data << uint32(pQuest->GetRewItemsCount());
+
         for (uint32 i=0; i < QUEST_REWARDS_COUNT; ++i)
         {
-            if ( !pQuest->RewItemId[i] ) continue;
+            if (!pQuest->RewItemId[i])
+                continue;
+
             data << uint32(pQuest->RewItemId[i]);
             data << uint32(pQuest->RewItemCount[i]);
+
             IProto = ObjectMgr::GetItemPrototype(pQuest->RewItemId[i]);
-            if ( IProto )
+
+            if (IProto)
                 data << uint32(IProto->DisplayInfoID);
             else
                 data << uint32(0);
@@ -528,11 +535,13 @@ void PlayerMenu::SendQuestGiverQuestDetails( Quest const *pQuest, uint64 npcGUID
         data << uint32(0);
 
     data << uint32(QUEST_EMOTE_COUNT);
+
     for (uint32 i=0; i < QUEST_EMOTE_COUNT; ++i)
     {
         data << uint32(pQuest->DetailsEmote[i]);
         data << uint32(pQuest->DetailsEmoteDelay[i]);       // DetailsEmoteDelay (in ms)
     }
+
     pSession->SendPacket( &data );
 
     sLog.outDebug("WORLD: Sent SMSG_QUESTGIVER_QUEST_DETAILS NPCGuid=%u, questid=%u", GUID_LOPART(npcGUID), pQuest->GetQuestId());
@@ -540,12 +549,14 @@ void PlayerMenu::SendQuestGiverQuestDetails( Quest const *pQuest, uint64 npcGUID
 
 void PlayerMenu::SendQuestQueryResponse( Quest const *pQuest )
 {
-    std::string Title,Details,Objectives,EndText;
+    std::string Title, Details, Objectives, EndText, CompletedText;
     std::string ObjectiveText[QUEST_OBJECTIVES_COUNT];
     Title = pQuest->GetTitle();
     Details = pQuest->GetDetails();
     Objectives = pQuest->GetObjectives();
     EndText = pQuest->GetEndText();
+    CompletedText = pQuest->GetCompletedText();
+
     for (int i = 0; i < QUEST_OBJECTIVES_COUNT; ++i)
         ObjectiveText[i] = pQuest->ObjectiveText[i];
 
@@ -563,6 +574,8 @@ void PlayerMenu::SendQuestQueryResponse( Quest const *pQuest )
                 Objectives=ql->Objectives[loc_idx];
             if (ql->EndText.size() > (size_t)loc_idx && !ql->EndText[loc_idx].empty())
                 EndText=ql->EndText[loc_idx];
+            if (ql->CompletedText.size() > (size_t)loc_idx && !ql->CompletedText[loc_idx].empty())
+                CompletedText=ql->CompletedText[loc_idx];
 
             for (int i = 0;i < QUEST_OBJECTIVES_COUNT; ++i)
                 if (ql->ObjectiveText[i].size() > (size_t)loc_idx && !ql->ObjectiveText[i][loc_idx].empty())
@@ -651,7 +664,7 @@ void PlayerMenu::SendQuestQueryResponse( Quest const *pQuest )
     data << Objectives;
     data << Details;
     data << EndText;
-    data << uint8(0);                                       // Return to <??> text
+    data << CompletedText;                                  // display in quest objectives window once all objectives are completed
 
     for (iI = 0; iI < QUEST_OBJECTIVES_COUNT; ++iI)
     {
