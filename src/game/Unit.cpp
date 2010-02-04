@@ -1457,6 +1457,11 @@ void Unit::CalculateMeleeDamage(Unit *pVictim, uint32 damage, CalcDamageInfo *da
             damageInfo->HitInfo |= HITINFO_BLOCK;
             damageInfo->procEx |= PROC_EX_BLOCK;
             damageInfo->blocked_amount = damageInfo->target->GetShieldBlockValue();
+
+            // Target has a chance to double the blocked amount if it has SPELL_AURA_MOD_BLOCK_CRIT_CHANCE
+            if (roll_chance_i(pVictim->GetTotalAuraModifier(SPELL_AURA_MOD_BLOCK_CRIT_CHANCE)))
+                damageInfo->blocked_amount *= 2;
+
             if (damageInfo->blocked_amount >= damageInfo->damage)
             {
                 damageInfo->TargetState = VICTIMSTATE_BLOCKS;
@@ -6140,6 +6145,12 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                 }
                 break;
             }
+            // Glyph of Mend Pet
+            if(dummySpell->Id == 57870)
+            {
+                pVictim->CastSpell(pVictim, 57894, true, NULL, NULL, GetGUID());
+                return true;
+            }
             break;
         }
         case SPELLFAMILY_PALADIN:
@@ -8478,6 +8489,14 @@ Unit *Unit::GetCharmer() const
     if(uint64 charmerid = GetCharmerGUID())
         return ObjectAccessor::GetUnit(*this, charmerid);
     return NULL;
+}
+
+bool Unit::IsCharmerOrOwnerPlayerOrPlayerItself() const
+{
+    if (GetTypeId()==TYPEID_PLAYER)
+        return true;
+
+    return IS_PLAYER_GUID(GetCharmerOrOwnerGUID());
 }
 
 Player* Unit::GetCharmerOrOwnerPlayerOrPlayerItself()

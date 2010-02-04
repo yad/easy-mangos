@@ -1918,7 +1918,22 @@ void Spell::EffectDummy(uint32 i)
             if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000000000002000))
             {
                 if (unitTarget)
-                    m_caster->CastCustomSpell(unitTarget, 52042, &damage, 0, 0, true, 0, 0, m_originalCasterGUID);
+                {
+                    if (Unit *owner = m_caster->GetOwner())
+                    {
+                        // Restorative Totems
+                        Unit::AuraList const& mDummyAuras = owner->GetAurasByType(SPELL_AURA_DUMMY);
+                        for(Unit::AuraList::const_iterator i = mDummyAuras.begin(); i != mDummyAuras.end(); ++i)
+                            // only its have dummy with specific icon
+                            if ((*i)->GetSpellProto()->SpellFamilyName == SPELLFAMILY_SHAMAN && (*i)->GetSpellProto()->SpellIconID == 338)
+                                damage += (*i)->GetModifier()->m_amount * damage / 100;
+
+                        // Glyph of Healing Stream Totem
+                        if (Aura *dummy = owner->GetDummyAura(55456))
+                            damage += dummy->GetModifier()->m_amount * damage / 100;
+                    }
+                    m_caster->CastCustomSpell(unitTarget, 52042, &damage, NULL, NULL, true, 0, 0, m_originalCasterGUID);
+                }
                 return;
             }
             // Mana Spring Totem
@@ -4832,7 +4847,7 @@ void Spell::EffectInterruptCast(uint32 /*i*/)
             // check if we can interrupt spell
             if ((curSpellInfo->InterruptFlags & SPELL_INTERRUPT_FLAG_INTERRUPT) && curSpellInfo->PreventionType == SPELL_PREVENTION_TYPE_SILENCE )
             {
-                unitTarget->ProhibitSpellScholl(GetSpellSchoolMask(curSpellInfo), GetSpellDuration(m_spellInfo));
+                unitTarget->ProhibitSpellSchool(GetSpellSchoolMask(curSpellInfo), GetSpellDuration(m_spellInfo));
                 unitTarget->InterruptSpell(CurrentSpellTypes(i),false);
             }
         }
@@ -5255,6 +5270,14 @@ void Spell::EffectScriptEffect(uint32 effIndex)
                     // learn random explicit discovery recipe (if any)
                     if(uint32 discoveredSpell = GetExplicitDiscoverySpell(m_spellInfo->Id, (Player*)m_caster))
                         ((Player*)m_caster)->learnSpell(discoveredSpell, false);
+                    return;
+                }
+                case 69377: //Fortitude
+                {
+                    if(!unitTarget)
+                        return;
+
+                    m_caster->CastSpell(unitTarget, 72590, true);
                     return;
                 }
             }
