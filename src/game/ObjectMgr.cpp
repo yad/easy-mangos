@@ -569,11 +569,11 @@ void ObjectMgr::LoadCreatureTemplates()
 
         FactionTemplateEntry const* factionTemplate = sFactionTemplateStore.LookupEntry(cInfo->faction_A);
         if (!factionTemplate)
-            sLog.outErrorDb("Creature (Entry: %u) has non-existing faction_A template (%u)", cInfo->Entry, cInfo->faction_A);
+            sLog.outErrorDb("Creature (Entry: %u) has nonexistent faction_A template (%u)", cInfo->Entry, cInfo->faction_A);
 
         factionTemplate = sFactionTemplateStore.LookupEntry(cInfo->faction_H);
         if (!factionTemplate)
-            sLog.outErrorDb("Creature (Entry: %u) has non-existing faction_H template (%u)", cInfo->Entry, cInfo->faction_H);
+            sLog.outErrorDb("Creature (Entry: %u) has nonexistent faction_H template (%u)", cInfo->Entry, cInfo->faction_H);
 
         // used later for scale
         CreatureDisplayInfoEntry const* displayScaleEntry = NULL;
@@ -583,7 +583,7 @@ void ObjectMgr::LoadCreatureTemplates()
             CreatureDisplayInfoEntry const* displayEntry = sCreatureDisplayInfoStore.LookupEntry(cInfo->DisplayID_A[0]);
             if(!displayEntry)
             {
-                sLog.outErrorDb("Creature (Entry: %u) has non-existing DisplayID_A id (%u), can crash client", cInfo->Entry, cInfo->DisplayID_A[0]);
+                sLog.outErrorDb("Creature (Entry: %u) has nonexistent modelid_A (%u), can crash client", cInfo->Entry, cInfo->DisplayID_A[0]);
                 const_cast<CreatureInfo*>(cInfo)->DisplayID_A[0] = 0;
             }
             else if(!displayScaleEntry)
@@ -591,7 +591,7 @@ void ObjectMgr::LoadCreatureTemplates()
 
             CreatureModelInfo const* minfo = sCreatureModelStorage.LookupEntry<CreatureModelInfo>(cInfo->DisplayID_A[0]);
             if (!minfo)
-                sLog.outErrorDb("Creature (Entry: %u) not has model data for DisplayID_A (%u)", cInfo->Entry, cInfo->DisplayID_A[0]);
+                sLog.outErrorDb("Creature (Entry: %u) are using modelid_A (%u), but creature_model_info are missing for this model.", cInfo->Entry, cInfo->DisplayID_A[0]);
         }
 
         if (cInfo->DisplayID_A[1])
@@ -599,7 +599,7 @@ void ObjectMgr::LoadCreatureTemplates()
             CreatureDisplayInfoEntry const* displayEntry = sCreatureDisplayInfoStore.LookupEntry(cInfo->DisplayID_A[1]);
             if(!displayEntry)
             {
-                sLog.outErrorDb("Creature (Entry: %u) has non-existing DisplayID_A2 id (%u), can crash client", cInfo->Entry, cInfo->DisplayID_A[1]);
+                sLog.outErrorDb("Creature (Entry: %u) has nonexistent modelid_A2 (%u), can crash client", cInfo->Entry, cInfo->DisplayID_A[1]);
                 const_cast<CreatureInfo*>(cInfo)->DisplayID_A[1] = 0;
             }
             else if(!displayScaleEntry)
@@ -607,7 +607,7 @@ void ObjectMgr::LoadCreatureTemplates()
 
             CreatureModelInfo const* minfo = sCreatureModelStorage.LookupEntry<CreatureModelInfo>(cInfo->DisplayID_A[1]);
             if (!minfo)
-                sLog.outErrorDb("Creature (Entry: %u) not has model data for DisplayID_A2 (%u)", cInfo->Entry, cInfo->DisplayID_A[1]);
+                sLog.outErrorDb("Creature (Entry: %u) are using modelid_A2 (%u), but creature_model_info are missing for this model.", cInfo->Entry, cInfo->DisplayID_A[1]);
         }
 
         if (cInfo->DisplayID_H[0])
@@ -615,7 +615,7 @@ void ObjectMgr::LoadCreatureTemplates()
             CreatureDisplayInfoEntry const* displayEntry = sCreatureDisplayInfoStore.LookupEntry(cInfo->DisplayID_H[0]);
             if(!displayEntry)
             {
-                sLog.outErrorDb("Creature (Entry: %u) has non-existing DisplayID_H id (%u), can crash client", cInfo->Entry, cInfo->DisplayID_H[0]);
+                sLog.outErrorDb("Creature (Entry: %u) has nonexistent modelid_H (%u), can crash client", cInfo->Entry, cInfo->DisplayID_H[0]);
                 const_cast<CreatureInfo*>(cInfo)->DisplayID_H[0] = 0;
             }
             else if(!displayScaleEntry)
@@ -623,7 +623,7 @@ void ObjectMgr::LoadCreatureTemplates()
 
             CreatureModelInfo const* minfo = sCreatureModelStorage.LookupEntry<CreatureModelInfo>(cInfo->DisplayID_H[0]);
             if (!minfo)
-                sLog.outErrorDb("Creature (Entry: %u) not has model data for DisplayID_H (%u)", cInfo->Entry, cInfo->DisplayID_H[0]);
+                sLog.outErrorDb("Creature (Entry: %u) are using modelid_H (%u), but creature_model_info are missing for this model.", cInfo->Entry, cInfo->DisplayID_H[0]);
         }
 
         if (cInfo->DisplayID_H[1])
@@ -631,7 +631,7 @@ void ObjectMgr::LoadCreatureTemplates()
             CreatureDisplayInfoEntry const* displayEntry = sCreatureDisplayInfoStore.LookupEntry(cInfo->DisplayID_H[1]);
             if(!displayEntry)
             {
-                sLog.outErrorDb("Creature (Entry: %u) has non-existing DisplayID_H2 id (%u), can crash client", cInfo->Entry, cInfo->DisplayID_H[1]);
+                sLog.outErrorDb("Creature (Entry: %u) has nonexistent modelid_H2 (%u), can crash client", cInfo->Entry, cInfo->DisplayID_H[1]);
                 const_cast<CreatureInfo*>(cInfo)->DisplayID_H[1] = 0;
             }
             else if(!displayScaleEntry)
@@ -639,11 +639,11 @@ void ObjectMgr::LoadCreatureTemplates()
 
             CreatureModelInfo const* minfo = sCreatureModelStorage.LookupEntry<CreatureModelInfo>(cInfo->DisplayID_H[1]);
             if (!minfo)
-                sLog.outErrorDb("Creature (Entry: %u) not has model data for DisplayID_H2 (%u)", cInfo->Entry, cInfo->DisplayID_H[1]);
+                sLog.outErrorDb("Creature (Entry: %u) are using modelid_H2 (%u), but creature_model_info are missing for this model.", cInfo->Entry, cInfo->DisplayID_H[1]);
         }
 
         if (!displayScaleEntry)
-            sLog.outErrorDb("Creature (Entry: %u) not has any existed display id in DisplayID_A/DisplayID_A2/DisplayID_H/DisplayID_H2", cInfo->Entry);
+            sLog.outErrorDb("Creature (Entry: %u) has nonexistent modelid in modelid_A/modelid_A2/modelid_H/modelid_A2", cInfo->Entry);
 
         for(int k = 0; k < MAX_KILL_CREDIT; ++k)
         {
@@ -651,7 +651,7 @@ void ObjectMgr::LoadCreatureTemplates()
             {
                 if(!GetCreatureTemplate(cInfo->KillCredit[k]))
                 {
-                    sLog.outErrorDb("Creature (Entry: %u) has not existed creature entry in `KillCredit%d` (%u)",cInfo->Entry,k+1,cInfo->KillCredit[k]);
+                    sLog.outErrorDb("Creature (Entry: %u) has nonexistent creature entry in `KillCredit%d` (%u)",cInfo->Entry,k+1,cInfo->KillCredit[k]);
                     const_cast<CreatureInfo*>(cInfo)->KillCredit[k] = 0;
                 }
             }
@@ -2071,13 +2071,14 @@ void ObjectMgr::LoadItemPrototypes()
 
         for(int j = 0; j < MAX_OUTFIT_ITEMS; ++j)
         {
-            if(entry->ItemId[j] <= 0)
+            if (entry->ItemId[j] <= 0)
                 continue;
 
             uint32 item_id = entry->ItemId[j];
 
-            if(!GetItemPrototype(item_id))
-                notFoundOutfit.insert(item_id);
+            if (!GetItemPrototype(item_id))
+                if (item_id != 40582)                       // nonexistent item by default but referenced in DBC, skip it from errors
+                    notFoundOutfit.insert(item_id);
         }
     }
 
@@ -3283,35 +3284,37 @@ void ObjectMgr::LoadQuests()
     QueryResult *result = WorldDatabase.Query("SELECT entry, Method, ZoneOrSort, SkillOrClass, MinLevel, QuestLevel, Type, RequiredRaces, RequiredSkillValue,"
     //   9                    10                 11                     12                   13                     14                   15                16
         "RepObjectiveFaction, RepObjectiveValue, RequiredMinRepFaction, RequiredMinRepValue, RequiredMaxRepFaction, RequiredMaxRepValue, SuggestedPlayers, LimitTime,"
-    //   17          18            19           20            21            22           23           24              25                26         27            28
-        "QuestFlags, SpecialFlags, CharTitleId, PlayersSlain, BonusTalents, PrevQuestId, NextQuestId, ExclusiveGroup, NextQuestInChain, SrcItemId, SrcItemCount, SrcSpell,"
-    //   29     30       31          32               33                34       35             36              37              38              39
+    //   17          18            19           20            21            22           23           24              25
+        "QuestFlags, SpecialFlags, CharTitleId, PlayersSlain, BonusTalents, PrevQuestId, NextQuestId, ExclusiveGroup, NextQuestInChain,"
+    //   26        27         28            29
+        "RewXPId, SrcItemId, SrcItemCount, SrcSpell,"
+    //   30     31       32          33               34                35       36             37              38              39              40
         "Title, Details, Objectives, OfferRewardText, RequestItemsText, EndText, CompletedText, ObjectiveText1, ObjectiveText2, ObjectiveText3, ObjectiveText4,"
-    //   40          41          42          43          44          45          46             47             48             49             50             51
+    //   41          42          43          44          45          46          47             48             49             50             51             52
         "ReqItemId1, ReqItemId2, ReqItemId3, ReqItemId4, ReqItemId5, ReqItemId6, ReqItemCount1, ReqItemCount2, ReqItemCount3, ReqItemCount4, ReqItemCount5, ReqItemCount6,"
-    //   52            53            54            55            56               57               58               59
+    //   53            54            55            56            57               58               59               60
         "ReqSourceId1, ReqSourceId2, ReqSourceId3, ReqSourceId4, ReqSourceCount1, ReqSourceCount2, ReqSourceCount3, ReqSourceCount4,"
-    //   60                  61                  62                  63                  64                     65                     66                     67
+    //   61                  62                  63                  64                  65                     66                     67                     68
         "ReqCreatureOrGOId1, ReqCreatureOrGOId2, ReqCreatureOrGOId3, ReqCreatureOrGOId4, ReqCreatureOrGOCount1, ReqCreatureOrGOCount2, ReqCreatureOrGOCount3, ReqCreatureOrGOCount4,"
-    //   68             69             70             71
+    //   69             70             71             72
         "ReqSpellCast1, ReqSpellCast2, ReqSpellCast3, ReqSpellCast4,"
-    //   72                73                74                75                76                77
+    //   73                74                75                76                77                78
         "RewChoiceItemId1, RewChoiceItemId2, RewChoiceItemId3, RewChoiceItemId4, RewChoiceItemId5, RewChoiceItemId6,"
-    //   78                   79                   80                   81                   82                   83
+    //   79                   80                   81                   82                   83                   84
         "RewChoiceItemCount1, RewChoiceItemCount2, RewChoiceItemCount3, RewChoiceItemCount4, RewChoiceItemCount5, RewChoiceItemCount6,"
-    //   84          85          86          87          88             89             90             91
+    //   85          86          87          88          89             90             91             92
         "RewItemId1, RewItemId2, RewItemId3, RewItemId4, RewItemCount1, RewItemCount2, RewItemCount3, RewItemCount4,"
-    //   92              93              94              95              96              97            98            99            100           101
+    //   93              94              95              96              97              98            99            100           101           102
         "RewRepFaction1, RewRepFaction2, RewRepFaction3, RewRepFaction4, RewRepFaction5, RewRepValue1, RewRepValue2, RewRepValue3, RewRepValue4, RewRepValue5,"
-    //   102                103            104               105       106           107                108               109         110     111     112
+    //   103                104            105               106       107           108                109               110         111     112     113
         "RewHonorableKills, RewOrReqMoney, RewMoneyMaxLevel, RewSpell, RewSpellCast, RewMailTemplateId, RewMailDelaySecs, PointMapId, PointX, PointY, PointOpt,"
-    //   113            114            115            116            117                 118                 119                 120
+    //   114            115            116            117            118                 119                 120                 121
         "DetailsEmote1, DetailsEmote2, DetailsEmote3, DetailsEmote4, DetailsEmoteDelay1, DetailsEmoteDelay2, DetailsEmoteDelay3, DetailsEmoteDelay4,"
-    //   121              122            123                124                125                126
+    //   122              123            124                125                126                127
         "IncompleteEmote, CompleteEmote, OfferRewardEmote1, OfferRewardEmote2, OfferRewardEmote3, OfferRewardEmote4,"
-    //   127                     128                     129                     130
+    //   128                     129                     130                     131
         "OfferRewardEmoteDelay1, OfferRewardEmoteDelay2, OfferRewardEmoteDelay3, OfferRewardEmoteDelay4,"
-    //   131          132
+    //   132          133
         "StartScript, CompleteScript"
         " FROM quest_template");
     if(result == NULL)
@@ -3973,7 +3976,7 @@ void ObjectMgr::LoadQuestLocales()
 
         for(int i = 1; i < MAX_LOCALE; ++i)
         {
-            std::string str = fields[1+10*(i-1)].GetCppString();
+            std::string str = fields[1+11*(i-1)].GetCppString();
             if(!str.empty())
             {
                 int idx = GetOrNewIndexForLocale(LocaleConstant(i));
@@ -3985,7 +3988,7 @@ void ObjectMgr::LoadQuestLocales()
                     data.Title[idx] = str;
                 }
             }
-            str = fields[1+10*(i-1)+1].GetCppString();
+            str = fields[1+11*(i-1)+1].GetCppString();
             if(!str.empty())
             {
                 int idx = GetOrNewIndexForLocale(LocaleConstant(i));
@@ -3997,7 +4000,7 @@ void ObjectMgr::LoadQuestLocales()
                     data.Details[idx] = str;
                 }
             }
-            str = fields[1+10*(i-1)+2].GetCppString();
+            str = fields[1+11*(i-1)+2].GetCppString();
             if(!str.empty())
             {
                 int idx = GetOrNewIndexForLocale(LocaleConstant(i));
@@ -4009,7 +4012,7 @@ void ObjectMgr::LoadQuestLocales()
                     data.Objectives[idx] = str;
                 }
             }
-            str = fields[1+10*(i-1)+3].GetCppString();
+            str = fields[1+11*(i-1)+3].GetCppString();
             if(!str.empty())
             {
                 int idx = GetOrNewIndexForLocale(LocaleConstant(i));
@@ -4021,7 +4024,7 @@ void ObjectMgr::LoadQuestLocales()
                     data.OfferRewardText[idx] = str;
                 }
             }
-            str = fields[1+10*(i-1)+4].GetCppString();
+            str = fields[1+11*(i-1)+4].GetCppString();
             if(!str.empty())
             {
                 int idx = GetOrNewIndexForLocale(LocaleConstant(i));
@@ -4033,7 +4036,7 @@ void ObjectMgr::LoadQuestLocales()
                     data.RequestItemsText[idx] = str;
                 }
             }
-            str = fields[1+10*(i-1)+5].GetCppString();
+            str = fields[1+11*(i-1)+5].GetCppString();
             if(!str.empty())
             {
                 int idx = GetOrNewIndexForLocale(LocaleConstant(i));
@@ -4045,7 +4048,7 @@ void ObjectMgr::LoadQuestLocales()
                     data.EndText[idx] = str;
                 }
             }
-            str = fields[1+10*(i-1)+6].GetCppString();
+            str = fields[1+11*(i-1)+6].GetCppString();
             if(!str.empty())
             {
                 int idx = GetOrNewIndexForLocale(LocaleConstant(i));
@@ -4059,7 +4062,7 @@ void ObjectMgr::LoadQuestLocales()
             }
             for(int k = 0; k < 4; ++k)
             {
-                str = fields[1+10*(i-1)+6+k].GetCppString();
+                str = fields[1+11*(i-1)+7+k].GetCppString();
                 if(!str.empty())
                 {
                     int idx = GetOrNewIndexForLocale(LocaleConstant(i));
@@ -7864,7 +7867,7 @@ void ObjectMgr::LoadTrainerSpell()
         {
             if (skip_trainers.find(entry) == skip_trainers.end())
             {
-                sLog.outErrorDb("Table `npc_trainer` have data for not creature template (Entry: %u) without trainer flag, ignore", entry);
+                sLog.outErrorDb("Table `npc_trainer` have data for creature (Entry: %u) without trainer flag, ignore", entry);
                 skip_trainers.insert(entry);
             }
             continue;
@@ -8271,7 +8274,7 @@ bool ObjectMgr::IsVendorItemValid( uint32 vendor_entry, uint32 item_id, uint32 m
         if(pl)
             ChatHandler(pl).SendSysMessage(LANG_COMMAND_VENDORSELECTION);
         else
-            sLog.outErrorDb("Table `npc_vendor` have data for not existed creature template (Entry: %u), ignore", vendor_entry);
+            sLog.outErrorDb("Table `npc_vendor` has data for nonexistent creature (Entry: %u), ignoring", vendor_entry);
         return false;
     }
 
@@ -8282,7 +8285,7 @@ bool ObjectMgr::IsVendorItemValid( uint32 vendor_entry, uint32 item_id, uint32 m
             if(pl)
                 ChatHandler(pl).SendSysMessage(LANG_COMMAND_VENDORSELECTION);
             else
-                sLog.outErrorDb("Table `npc_vendor` have data for not creature template (Entry: %u) without vendor flag, ignore", vendor_entry);
+                sLog.outErrorDb("Table `npc_vendor` has data for creature (Entry: %u) without vendor flag, ignoring", vendor_entry);
 
             if(skip_vendors)
                 skip_vendors->insert(vendor_entry);
@@ -8295,7 +8298,7 @@ bool ObjectMgr::IsVendorItemValid( uint32 vendor_entry, uint32 item_id, uint32 m
         if(pl)
             ChatHandler(pl).PSendSysMessage(LANG_ITEM_NOT_FOUND, item_id);
         else
-            sLog.outErrorDb("Table `npc_vendor` for Vendor (Entry: %u) have in item list non-existed item (%u), ignore",vendor_entry,item_id);
+            sLog.outErrorDb("Table `npc_vendor` for vendor (Entry: %u) contain nonexistent item (%u), ignoring",vendor_entry,item_id);
         return false;
     }
 
@@ -8304,7 +8307,7 @@ bool ObjectMgr::IsVendorItemValid( uint32 vendor_entry, uint32 item_id, uint32 m
         if(pl)
             ChatHandler(pl).PSendSysMessage(LANG_EXTENDED_COST_NOT_EXIST,ExtendedCost);
         else
-            sLog.outErrorDb("Table `npc_vendor` have Item (Entry: %u) with wrong ExtendedCost (%u) for vendor (%u), ignore",item_id,ExtendedCost,vendor_entry);
+            sLog.outErrorDb("Table `npc_vendor` contain item (Entry: %u) with wrong ExtendedCost (%u) for vendor (%u), ignoring",item_id,ExtendedCost,vendor_entry);
         return false;
     }
 
@@ -8313,7 +8316,7 @@ bool ObjectMgr::IsVendorItemValid( uint32 vendor_entry, uint32 item_id, uint32 m
         if(pl)
             ChatHandler(pl).PSendSysMessage("MaxCount!=0 (%u) but IncrTime==0", maxcount);
         else
-            sLog.outErrorDb( "Table `npc_vendor` has `maxcount` (%u) for item %u of vendor (Entry: %u) but `incrtime`=0, ignore", maxcount, item_id, vendor_entry);
+            sLog.outErrorDb( "Table `npc_vendor` has `maxcount` (%u) for item %u of vendor (Entry: %u) but `incrtime`=0, ignoring", maxcount, item_id, vendor_entry);
         return false;
     }
     else if(maxcount==0 && incrtime > 0)
@@ -8321,7 +8324,7 @@ bool ObjectMgr::IsVendorItemValid( uint32 vendor_entry, uint32 item_id, uint32 m
         if(pl)
             ChatHandler(pl).PSendSysMessage("MaxCount==0 but IncrTime<>=0");
         else
-            sLog.outErrorDb( "Table `npc_vendor` has `maxcount`=0 for item %u of vendor (Entry: %u) but `incrtime`<>0, ignore", item_id, vendor_entry);
+            sLog.outErrorDb( "Table `npc_vendor` has `maxcount`=0 for item %u of vendor (Entry: %u) but `incrtime`<>0, ignoring", item_id, vendor_entry);
         return false;
     }
 
@@ -8334,7 +8337,7 @@ bool ObjectMgr::IsVendorItemValid( uint32 vendor_entry, uint32 item_id, uint32 m
         if(pl)
             ChatHandler(pl).PSendSysMessage(LANG_ITEM_ALREADY_IN_LIST,item_id);
         else
-            sLog.outErrorDb( "Table `npc_vendor` has duplicate items %u for vendor (Entry: %u), ignore", item_id, vendor_entry);
+            sLog.outErrorDb( "Table `npc_vendor` has duplicate items %u for vendor (Entry: %u), ignoring", item_id, vendor_entry);
         return false;
     }
 
@@ -8343,7 +8346,7 @@ bool ObjectMgr::IsVendorItemValid( uint32 vendor_entry, uint32 item_id, uint32 m
         if(pl)
             ChatHandler(pl).SendSysMessage(LANG_COMMAND_ADDVENDORITEMITEMS);
         else
-            sLog.outErrorDb( "Table `npc_vendor` has too many items (%u >= %i) for vendor (Entry: %u), ignore", vItems->GetItemCount(), MAX_VENDOR_ITEMS, vendor_entry);
+            sLog.outErrorDb( "Table `npc_vendor` has too many items (%u >= %i) for vendor (Entry: %u), ignoring", vItems->GetItemCount(), MAX_VENDOR_ITEMS, vendor_entry);
         return false;
     }
 
