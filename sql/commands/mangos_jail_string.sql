@@ -27,7 +27,7 @@ VALUES
 INSERT INTO mangos_string
    (`entry`, `content_default`, `content_loc1`, `content_loc2`, `content_loc3`, `content_loc4`, `content_loc5`, `content_loc6`, `content_loc7`, `content_loc8`)
 VALUES
-   (955, 'No reason given or reason is < %u chars!', NULL, 'Aucune raison d\\\'emprisonnement donnée ou la raison est < %u personnages.', 'Du hast keinen Grund angegeben, oder der Grund ist < %u Zeichen!', NULL, NULL, NULL, NULL, NULL);
+   (955, 'No reason given or reason is < %u chars!', NULL, 'Aucune raison d\'emprisonnement donnée ou la raison est < %u personnages.', 'Du hast keinen Grund angegeben, oder der Grund ist < %u Zeichen!', NULL, NULL, NULL, NULL, NULL);
 
 INSERT INTO mangos_string
    (`entry`, `content_default`, `content_loc1`, `content_loc2`, `content_loc3`, `content_loc4`, `content_loc5`, `content_loc6`, `content_loc7`, `content_loc8`)
@@ -42,12 +42,12 @@ VALUES
 INSERT INTO mangos_string
    (`entry`, `content_default`, `content_loc1`, `content_loc2`, `content_loc3`, `content_loc4`, `content_loc5`, `content_loc6`, `content_loc7`, `content_loc8`)
 VALUES
-   (958, 'The jailtime must be between 1 and %u hours!', NULL, 'Le temps d\\\'emprisonnement est estimé entre 1 et %u heures!', 'Die Jail-Zeit muss zwischen 1 und %u Std. liegen!', NULL, NULL, NULL, NULL, NULL);
+   (958, 'The jailtime must be between 1 and %u hours!', NULL, 'Le temps d\'emprisonnement est estimé entre 1 et %u heures!', 'Die Jail-Zeit muss zwischen 1 und %u Std. liegen!', NULL, NULL, NULL, NULL, NULL);
 
 INSERT INTO mangos_string
    (`entry`, `content_default`, `content_loc1`, `content_loc2`, `content_loc3`, `content_loc4`, `content_loc5`, `content_loc6`, `content_loc7`, `content_loc8`)
 VALUES
-   (959, 'The character (%s) is not jailed!', NULL, '%s n\\\'est pas emprisonn!', 'Der Charakter \'%s\' ist ?berhaupt nicht im Knast!', NULL, NULL, NULL, NULL, NULL);
+   (959, 'The character (%s) is not jailed!', NULL, '%s n\'est pas emprisonn!', 'Der Charakter \'%s\' ist ?berhaupt nicht im Knast!', NULL, NULL, NULL, NULL, NULL);
 
 INSERT INTO mangos_string
    (`entry`, `content_default`, `content_loc1`, `content_loc2`, `content_loc3`, `content_loc4`, `content_loc5`, `content_loc6`, `content_loc7`, `content_loc8`)
@@ -77,7 +77,7 @@ VALUES
 INSERT INTO mangos_string
    (`entry`, `content_default`, `content_loc1`, `content_loc2`, `content_loc3`, `content_loc4`, `content_loc5`, `content_loc6`, `content_loc7`, `content_loc8`)
 VALUES
-   (965, '%s was never jailed.', NULL, '%s n\\\'a jamais été emprisonné.', '\'%s\' hat eine wei?e Weste.', NULL, NULL, NULL, NULL, NULL);
+   (965, '%s was never jailed.', NULL, '%s n\'a jamais été emprisonné.', '\'%s\' hat eine wei?e Weste.', NULL, NULL, NULL, NULL, NULL);
 
 INSERT INTO mangos_string
    (`entry`, `content_default`, `content_loc1`, `content_loc2`, `content_loc3`, `content_loc4`, `content_loc5`, `content_loc6`, `content_loc7`, `content_loc8`)
