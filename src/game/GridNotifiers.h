@@ -132,7 +132,6 @@ namespace MaNGOS
         void Visit(CorpseMapType &) {}
         void Visit(CreatureMapType &);
     };
-
     template<class T>
         struct MANGOS_DLL_DECL ObjectAccessorNotifier
     {
