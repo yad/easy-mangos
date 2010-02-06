@@ -9634,13 +9634,13 @@ uint32 Unit::SpellHealingBonus(Unit *pVictim, SpellEntry const *spellProto, uint
     float  TakenTotalMod = 1.0f;
 
     // Healing taken percent
-    float minval = pVictim->GetMaxNegativeAuraModifier(SPELL_AURA_MOD_HEALING_PCT);
-    if(minval)
-        TakenTotalMod *= (100.0f + minval) / 100.0f;
+    float minval_taken = pVictim->GetMaxNegativeAuraModifier(SPELL_AURA_MOD_HEALING_PCT);
+    if(minval_taken)
+        TakenTotalMod *= (100.0f + minval_taken) / 100.0f;
 
-    float maxval = pVictim->GetMaxPositiveAuraModifier(SPELL_AURA_MOD_HEALING_PCT);
-    if(maxval)
-        TakenTotalMod *= (100.0f + maxval) / 100.0f;
+    float maxval_taken = pVictim->GetMaxPositiveAuraModifier(SPELL_AURA_MOD_HEALING_PCT);
+    if(maxval_taken)
+        TakenTotalMod *= (100.0f + maxval_taken) / 100.0f;
 
     // No heal amount for this class spells
     if (spellProto->DmgClass == SPELL_DAMAGE_CLASS_NONE)
@@ -11564,7 +11564,7 @@ int32 Unit::CalculateSpellDuration(SpellEntry const* spellProto, uint8 effect_in
         bool triggered = false;
 
         if (Spell * spell = FindCurrentSpellBySpellId(spellProto->Id) )
-            triggered = spell->IsTriggered();
+			triggered = spell->IsTriggeredSpellWithRedundentData();
         if (targetOwner->GetTypeId() == TYPEID_PLAYER && casterOwner->GetTypeId() == TYPEID_PLAYER 
             && GetDiminishingReturnsGroupForSpell(spellProto, triggered) != DIMINISHING_NONE)
             duration = maxPvpDuration;
