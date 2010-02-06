@@ -366,7 +366,7 @@ struct GameObjectInfo
             uint32 empty4;                                  //7
             uint32 empty5;                                  //8
             uint32 damagedEvent;                            //9
-            uint32 empty6;                                  //10
+            uint32 destroyedDisplayId;                      //10
             uint32 empty7;                                  //11
             uint32 empty8;                                  //12
             uint32 empty9;                                  //13

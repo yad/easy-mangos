@@ -1390,12 +1390,37 @@ void GameObject::UpdateRotationFields(float rotation2 /*=0.0f*/, float rotation3
 }
 void GameObject::DealSiegeDamage(uint32 damage)
 {
-    m_actualHealth -= damage;
+    if (!GetGOInfo()->destructibleBuilding.intactNumHits)
+        return;
 
-    // TODO : there are a lot of thinghts to do here
-    if(m_actualHealth < 0)
+    if (m_actualHealth > damage)
+        m_actualHealth -= damage;
+    else
+        m_actualHealth = 0;
+
+    if (HasFlag(GAMEOBJECT_FLAGS, GO_FLAG_DAMAGED)) // from damaged to destroyed
     {
-        m_actualHealth = GetGOInfo()->destructibleBuilding.intactNumHits;
-        SetLootState(GO_JUST_DEACTIVATED);
+        if(!GetGOInfo()->destructibleBuilding.intactNumHits)
+        {
+            RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_DAMAGED);
+
+            SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_DESTROYED);
+            SetUInt32Value(GAMEOBJECT_DISPLAYID, GetGOInfo()->destructibleBuilding.destroyedDisplayId);
+            EventInform(GetGOInfo()->destructibleBuilding.destroyedEvent);
+        }
+    }
+    else // from intact to damaged
+    {
+        if (m_actualHealth <= GetGOInfo()->destructibleBuilding.damagedNumHits)
+        {
+            if (!GetGOInfo()->destructibleBuilding.destroyedDisplayId)
+                m_actualHealth = 0;
+            else if (!m_actualHealth)
+               m_actualHealth = 1;
+
+            SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_DAMAGED);
+            SetUInt32Value(GAMEOBJECT_DISPLAYID, GetGOInfo()->destructibleBuilding.damagedDisplayId);
+            EventInform(GetGOInfo()->destructibleBuilding.damagedEvent);
+        }
     }
 }
