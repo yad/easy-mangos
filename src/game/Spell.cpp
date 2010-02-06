@@ -4685,9 +4685,7 @@ SpellCastResult Spell::CheckCast(bool strict)
                 // Spell can be triggered, we need to check original caster prior to caster
                 Unit* caster = m_originalCaster ? m_originalCaster : m_caster;
 
-                if (caster->GetTypeId() != TYPEID_PLAYER ||
-                    !m_targets.getUnitTarget() ||
-                    m_targets.getUnitTarget()->GetTypeId() == TYPEID_PLAYER)
+                if (caster->GetTypeId() != TYPEID_PLAYER)
                     return SPELL_FAILED_BAD_TARGETS;
 
                 Player* plrCaster = (Player*)caster;
