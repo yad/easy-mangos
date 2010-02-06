@@ -502,7 +502,7 @@ bool Map::Add(Player *player)
     SendInitSelf(player);
     SendInitTransports(player);
 
-    AddNotifier(player, true);
+    AddNotifier(player, false);
     return true;
 }
 
@@ -538,7 +538,7 @@ Map::Add(T *obj)
 
     DEBUG_LOG("Object %u enters grid[%u,%u]", GUID_LOPART(obj->GetGUID()), cell.GridX(), cell.GridY());
 
-    AddNotifier(obj, true);
+    AddNotifier(obj, false);
 }
 
 void Map::MessageBroadcast(Player *player, WorldPacket *msg, bool to_self)
