@@ -3396,18 +3396,18 @@ void ObjectMgr::LoadQuests()
         "RewItemId1, RewItemId2, RewItemId3, RewItemId4, RewItemCount1, RewItemCount2, RewItemCount3, RewItemCount4,"
     //   93              94              95              96              97              98            99            100           101           102
         "RewRepFaction1, RewRepFaction2, RewRepFaction3, RewRepFaction4, RewRepFaction5, RewRepValue1, RewRepValue2, RewRepValue3, RewRepValue4, RewRepValue5,"
-    //   103               104                 105            106               107       108
-        "RewHonorAddition, RewHonorMultiplier, RewOrReqMoney, RewMoneyMaxLevel, RewSpell, RewSpellCast,"
-    //   109                110               111         112     113     114
-        "RewMailTemplateId, RewMailDelaySecs, PointMapId, PointX, PointY, PointOpt,"
-    //   115            116            117            118            119                 120                 121                 122
-        "DetailsEmote1, DetailsEmote2, DetailsEmote3, DetailsEmote4, DetailsEmoteDelay1, DetailsEmoteDelay2, DetailsEmoteDelay3, DetailsEmoteDelay4,"
-    //   123              124            125                126                127                128
-        "IncompleteEmote, CompleteEmote, OfferRewardEmote1, OfferRewardEmote2, OfferRewardEmote3, OfferRewardEmote4,"
-    //   129                     130                     131                     132
-        "OfferRewardEmoteDelay1, OfferRewardEmoteDelay2, OfferRewardEmoteDelay3, OfferRewardEmoteDelay4,"
-    //   133          134
-        "StartScript, CompleteScript"
+    //   103               104                 105             106            107               108
+        "RewHonorAddition, RewHonorMultiplier, RewArenaPoints, RewOrReqMoney, RewMoneyMaxLevel, RewSpell,"
+    //   109           110                111               112         113     114
+        "RewSpellCast, RewMailTemplateId, RewMailDelaySecs, PointMapId, PointX, PointY,"
+    //   115       116            117            118            119            120                 121                 122
+        "PointOpt, DetailsEmote1, DetailsEmote2, DetailsEmote3, DetailsEmote4, DetailsEmoteDelay1, DetailsEmoteDelay2, DetailsEmoteDelay3,"
+    //   123                 124              125            126                127                128
+        "DetailsEmoteDelay4, IncompleteEmote, CompleteEmote, OfferRewardEmote1, OfferRewardEmote2, OfferRewardEmote3,"
+    //   129                130                     131                     132
+        "OfferRewardEmote4, OfferRewardEmoteDelay1, OfferRewardEmoteDelay2, OfferRewardEmoteDelay3,"
+    //   133                     134          135
+        "OfferRewardEmoteDelay4, StartScript, CompleteScript"
         " FROM quest_template");
     if(result == NULL)
     {

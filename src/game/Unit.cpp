@@ -13665,7 +13665,7 @@ void Unit::EnterVehicle(Vehicle *vehicle, int8 seat_id, bool force)
     data << uint8(4);                                       // unknown
     data << float(0);                                       // facing angle
 
-    data << uint32(MONSTER_MOVE_UNK6);
+    data << uint32(0x00800000);
 
     data << uint32(0);                                      // Time in between points
     data << uint32(1);                                      // 1 single waypoint
@@ -13703,14 +13703,14 @@ void Unit::ExitVehicle()
         {
             ((Player*)this)->ResummonPetTemporaryUnSummonedIfAny();
             ((Player*)this)->m_movementInfo.RemoveMovementFlag(MOVEFLAG_ONTRANSPORT);
-            ((Player*)this)->m_movementInfo.RemoveMovementFlag(MOVEFLAG_FLY_UNK1);
+            ((Player*)this)->m_movementInfo.RemoveMovementFlag(MOVEFLAG_ROOT);
         }
 
         float x = GetPositionX();
         float y = GetPositionY();
         float z = GetPositionZ() + 2.0f;
         GetClosePoint(x, y, z, 2.0f + v_size);
-        SendMonsterMove(x, y, z, 0, MONSTER_MOVE_WALK, 0);
+        SendMonsterMove(x, y, z, 0, SPLINEFLAG_FORWARD, 0);
     }
 }
 
@@ -13725,7 +13725,7 @@ void Unit::BuildVehicleInfo(Unit *target)
     uint32 veh_time = getMSTimeDiff(target->m_SeatData.c_time,getMSTime());
     WorldPacket data(MSG_MOVE_HEARTBEAT, 100);
     data.append(target->GetPackGUID());
-    data << uint32(MOVEFLAG_ONTRANSPORT | MOVEFLAG_FLY_UNK1);
+    data << uint32(MOVEFLAG_ONTRANSPORT | 0x00000800);
     data << uint16(0);
     data << uint32(getMSTime());
     data << float(target->GetPositionX());

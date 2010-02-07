@@ -1443,10 +1443,8 @@ void GameObject::DealSiegeDamage(uint32 damage)
         if(!GetGOInfo()->destructibleBuilding.intactNumHits)
         {
             RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_DAMAGED);
-
             SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_DESTROYED);
             SetUInt32Value(GAMEOBJECT_DISPLAYID, GetGOInfo()->destructibleBuilding.destroyedDisplayId);
-            EventInform(GetGOInfo()->destructibleBuilding.destroyedEvent);
         }
     }
     else // from intact to damaged
@@ -1460,7 +1458,6 @@ void GameObject::DealSiegeDamage(uint32 damage)
 
             SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_DAMAGED);
             SetUInt32Value(GAMEOBJECT_DISPLAYID, GetGOInfo()->destructibleBuilding.damagedDisplayId);
-            EventInform(GetGOInfo()->destructibleBuilding.damagedEvent);
         }
     }
 }

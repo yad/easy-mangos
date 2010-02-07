@@ -104,34 +104,35 @@ Quest::Quest(Field * questRecord)
 
     RewHonorAddition = questRecord[103].GetUInt32();
     RewHonorMultiplier = questRecord[104].GetFloat();
-    RewOrReqMoney = questRecord[105].GetInt32();
-    RewMoneyMaxLevel = questRecord[106].GetUInt32();
-    RewSpell = questRecord[107].GetUInt32();
-    RewSpellCast = questRecord[108].GetUInt32();
-    RewMailTemplateId = questRecord[109].GetUInt32();
-    RewMailDelaySecs = questRecord[110].GetUInt32();
-    PointMapId = questRecord[111].GetUInt32();
-    PointX = questRecord[112].GetFloat();
-    PointY = questRecord[113].GetFloat();
-    PointOpt = questRecord[114].GetUInt32();
+    RewArenaPoints = questRecord[105].GetInt32();
+    RewOrReqMoney = questRecord[106].GetInt32();
+    RewMoneyMaxLevel = questRecord[107].GetUInt32();
+    RewSpell = questRecord[108].GetUInt32();
+    RewSpellCast = questRecord[109].GetUInt32();
+    RewMailTemplateId = questRecord[110].GetUInt32();
+    RewMailDelaySecs = questRecord[111].GetUInt32();
+    PointMapId = questRecord[112].GetUInt32();
+    PointX = questRecord[113].GetFloat();
+    PointY = questRecord[114].GetFloat();
+    PointOpt = questRecord[115].GetUInt32();
 
     for (int i = 0; i < QUEST_EMOTE_COUNT; ++i)
-        DetailsEmote[i] = questRecord[115+i].GetUInt32();
+        DetailsEmote[i] = questRecord[116+i].GetUInt32();
 
     for (int i = 0; i < QUEST_EMOTE_COUNT; ++i)
-        DetailsEmoteDelay[i] = questRecord[119+i].GetUInt32();
+        DetailsEmoteDelay[i] = questRecord[120+i].GetUInt32();
 
-    IncompleteEmote = questRecord[123].GetUInt32();
-    CompleteEmote = questRecord[124].GetUInt32();
-
-    for (int i = 0; i < QUEST_EMOTE_COUNT; ++i)
-        OfferRewardEmote[i] = questRecord[125+i].GetInt32();
+    IncompleteEmote = questRecord[124].GetUInt32();
+    CompleteEmote = questRecord[125].GetUInt32();
 
     for (int i = 0; i < QUEST_EMOTE_COUNT; ++i)
-        OfferRewardEmoteDelay[i] = questRecord[129+i].GetInt32();
+        OfferRewardEmote[i] = questRecord[126+i].GetInt32();
 
-    QuestStartScript = questRecord[133].GetUInt32();
-    QuestCompleteScript = questRecord[134].GetUInt32();
+    for (int i = 0; i < QUEST_EMOTE_COUNT; ++i)
+        OfferRewardEmoteDelay[i] = questRecord[130+i].GetInt32();
+
+    QuestStartScript = questRecord[134].GetUInt32();
+    QuestCompleteScript = questRecord[135].GetUInt32();
 
     QuestFlags |= SpecialFlags << 24;
 

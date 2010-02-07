@@ -360,7 +360,7 @@ struct GameObjectInfo
             uint32 creditProxyCreature;                     //1
             uint32 empty1;                                  //2
             uint32 intactEvent;                             //3
-            uint32 empty2;                                  //4
+            uint32 damagedDisplayId;                        //4
             uint32 damagedNumHits;                          //5
             uint32 empty3;                                  //6
             uint32 empty4;                                  //7
