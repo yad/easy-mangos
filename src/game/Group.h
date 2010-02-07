@@ -287,7 +287,7 @@ class MANGOS_DLL_SPEC Group
                 SendUpdate();
         }
 
-        void SetTargetIcon(uint8 id, uint64 guid);
+        void SetTargetIcon(uint8 id, uint64 whoGuid, uint64 targetGuid);
 
         Difficulty GetDifficulty(bool isRaid) const { return isRaid ? m_raidDifficulty : m_dungeonDifficulty; }
         Difficulty GetDungeonDifficulty() const { return m_dungeonDifficulty; }

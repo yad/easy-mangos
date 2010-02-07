@@ -3827,7 +3827,7 @@ void Aura::HandleModPossessPet(bool apply, bool Real)
     {
         pet->AttackStop();
         pet->GetMotionMaster()->MoveFollow(caster, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE);
-        pet->AddMonsterMoveFlag(MONSTER_MOVE_WALK);
+        pet->AddSplineFlag(SPLINEFLAG_WALKMODE);
     }
 }
 
@@ -7884,16 +7884,15 @@ void Aura::PeriodicDummyTick()
                 // Harpooner's Mark
                 // case 40084:
                 //    return;
-                // Feeding Frenzy Rank 1
+                // Feeding Frenzy Rank 1 & 2
                 case 53511:
-                    if ( m_target->GetHealth() * 100 < m_target->GetMaxHealth() * 35 )
-                        m_target->CastSpell(m_target, 60096, true, NULL, this);
-                    return;
-                // Feeding Frenzy Rank 2
                 case 53512:
-                    if ( m_target->GetHealth() * 100 < m_target->GetMaxHealth() * 35 )
-                        m_target->CastSpell(m_target, 60097, true, NULL, this);
+                {
+                    Unit* victim = m_target->getVictim();
+                    if( victim && victim->GetHealth() * 100 < victim->GetMaxHealth() * 35 )
+                        m_target->CastSpell(m_target, spell->Id == 53511 ? 60096 : 60097, true, NULL, this);
                     return;
+                }
                 default:
                     break;
             }

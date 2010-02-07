@@ -932,10 +932,10 @@ void ObjectMgr::LoadCreatureAddons(SQLStorage& creatureaddons, char const* entry
         if (!sEmotesStore.LookupEntry(addon->emote))
             sLog.outErrorDb("Creature (%s %u) have invalid emote (%u) defined in `%s`.", entryName, addon->guidOrEntry, addon->emote, creatureaddons.GetTableName());
 
-        if (addon->move_flags & (MONSTER_MOVE_UNK1|MONSTER_MOVE_UNK4))
+        if (addon->move_flags & (SPLINEFLAG_TRAJECTORY|SPLINEFLAG_UNKNOWN3))
         {
-            sLog.outErrorDb("Creature (%s %u) movement flags mask defined in `%s` include forbidden  flags (" I32FMT ") that can crash client, cleanup at load.", entryName, addon->guidOrEntry, creatureaddons.GetTableName(), (MONSTER_MOVE_UNK1|MONSTER_MOVE_UNK4));
-            const_cast<CreatureDataAddon*>(addon)->move_flags &= ~(MONSTER_MOVE_UNK1|MONSTER_MOVE_UNK4);
+            sLog.outErrorDb("Creature (%s %u) movement flags mask defined in `%s` include forbidden  flags (" I32FMT ") that can crash client, cleanup at load.", entryName, addon->guidOrEntry, creatureaddons.GetTableName(), (SPLINEFLAG_TRAJECTORY|SPLINEFLAG_UNKNOWN3));
+            const_cast<CreatureDataAddon*>(addon)->move_flags &= ~(SPLINEFLAG_TRAJECTORY|SPLINEFLAG_UNKNOWN3);
         }
 
         ConvertCreatureAddonAuras(const_cast<CreatureDataAddon*>(addon), creatureaddons.GetTableName(), entryName);
@@ -3396,15 +3396,17 @@ void ObjectMgr::LoadQuests()
         "RewItemId1, RewItemId2, RewItemId3, RewItemId4, RewItemCount1, RewItemCount2, RewItemCount3, RewItemCount4,"
     //   93              94              95              96              97              98            99            100           101           102
         "RewRepFaction1, RewRepFaction2, RewRepFaction3, RewRepFaction4, RewRepFaction5, RewRepValue1, RewRepValue2, RewRepValue3, RewRepValue4, RewRepValue5,"
-    //   103                104            105               106       107           108                109               110         111     112     113
-        "RewHonorableKills, RewOrReqMoney, RewMoneyMaxLevel, RewSpell, RewSpellCast, RewMailTemplateId, RewMailDelaySecs, PointMapId, PointX, PointY, PointOpt,"
-    //   114            115            116            117            118                 119                 120                 121
+    //   103               104                 105            106               107       108
+        "RewHonorAddition, RewHonorMultiplier, RewOrReqMoney, RewMoneyMaxLevel, RewSpell, RewSpellCast,"
+    //   109                110               111         112     113     114
+        "RewMailTemplateId, RewMailDelaySecs, PointMapId, PointX, PointY, PointOpt,"
+    //   115            116            117            118            119                 120                 121                 122
         "DetailsEmote1, DetailsEmote2, DetailsEmote3, DetailsEmote4, DetailsEmoteDelay1, DetailsEmoteDelay2, DetailsEmoteDelay3, DetailsEmoteDelay4,"
-    //   122              123            124                125                126                127
+    //   123              124            125                126                127                128
         "IncompleteEmote, CompleteEmote, OfferRewardEmote1, OfferRewardEmote2, OfferRewardEmote3, OfferRewardEmote4,"
-    //   128                     129                     130                     131
+    //   129                     130                     131                     132
         "OfferRewardEmoteDelay1, OfferRewardEmoteDelay2, OfferRewardEmoteDelay3, OfferRewardEmoteDelay4,"
-    //   132          133
+    //   133          134
         "StartScript, CompleteScript"
         " FROM quest_template");
     if(result == NULL)
@@ -6054,6 +6056,8 @@ void ObjectMgr::LoadGameobjectInfo()
             {
                 if (goInfo->button.lockId)
                     CheckGOLockId(goInfo,goInfo->button.lockId,1);
+                if (goInfo->button.linkedTrapId)              // linked trap
+                    CheckGOLinkedTrapId(goInfo,goInfo->button.linkedTrapId,3);
                 CheckGONoDamageImmuneId(goInfo,goInfo->button.noDamageImmune,4);
                 break;
             }

@@ -102,35 +102,36 @@ Quest::Quest(Field * questRecord)
     for (int i = 0; i < QUEST_REPUTATIONS_COUNT; ++i)
         RewRepValue[i] = questRecord[98+i].GetInt32();
 
-    RewHonorableKills = questRecord[103].GetUInt32();
-    RewOrReqMoney = questRecord[104].GetInt32();
-    RewMoneyMaxLevel = questRecord[105].GetUInt32();
-    RewSpell = questRecord[106].GetUInt32();
-    RewSpellCast = questRecord[107].GetUInt32();
-    RewMailTemplateId = questRecord[108].GetUInt32();
-    RewMailDelaySecs = questRecord[109].GetUInt32();
-    PointMapId = questRecord[110].GetUInt32();
-    PointX = questRecord[111].GetFloat();
-    PointY = questRecord[112].GetFloat();
-    PointOpt = questRecord[113].GetUInt32();
+    RewHonorAddition = questRecord[103].GetUInt32();
+    RewHonorMultiplier = questRecord[104].GetFloat();
+    RewOrReqMoney = questRecord[105].GetInt32();
+    RewMoneyMaxLevel = questRecord[106].GetUInt32();
+    RewSpell = questRecord[107].GetUInt32();
+    RewSpellCast = questRecord[108].GetUInt32();
+    RewMailTemplateId = questRecord[109].GetUInt32();
+    RewMailDelaySecs = questRecord[110].GetUInt32();
+    PointMapId = questRecord[111].GetUInt32();
+    PointX = questRecord[112].GetFloat();
+    PointY = questRecord[113].GetFloat();
+    PointOpt = questRecord[114].GetUInt32();
 
     for (int i = 0; i < QUEST_EMOTE_COUNT; ++i)
-        DetailsEmote[i] = questRecord[114+i].GetUInt32();
+        DetailsEmote[i] = questRecord[115+i].GetUInt32();
 
     for (int i = 0; i < QUEST_EMOTE_COUNT; ++i)
-        DetailsEmoteDelay[i] = questRecord[118+i].GetUInt32();
+        DetailsEmoteDelay[i] = questRecord[119+i].GetUInt32();
 
-    IncompleteEmote = questRecord[122].GetUInt32();
-    CompleteEmote = questRecord[123].GetUInt32();
-
-    for (int i = 0; i < QUEST_EMOTE_COUNT; ++i)
-        OfferRewardEmote[i] = questRecord[124+i].GetInt32();
+    IncompleteEmote = questRecord[123].GetUInt32();
+    CompleteEmote = questRecord[124].GetUInt32();
 
     for (int i = 0; i < QUEST_EMOTE_COUNT; ++i)
-        OfferRewardEmoteDelay[i] = questRecord[128+i].GetInt32();
+        OfferRewardEmote[i] = questRecord[125+i].GetInt32();
 
-    QuestStartScript = questRecord[132].GetUInt32();
-    QuestCompleteScript = questRecord[133].GetUInt32();
+    for (int i = 0; i < QUEST_EMOTE_COUNT; ++i)
+        OfferRewardEmoteDelay[i] = questRecord[129+i].GetInt32();
+
+    QuestStartScript = questRecord[133].GetUInt32();
+    QuestCompleteScript = questRecord[134].GetUInt32();
 
     QuestFlags |= SpecialFlags << 24;
 
@@ -164,44 +165,88 @@ Quest::Quest(Field * questRecord)
     }
 }
 
-uint32 Quest::XPValue( Player *pPlayer ) const
+uint32 Quest::XPValue(Player *pPlayer) const
 {
-    if( pPlayer )
+    if (pPlayer)
     {
-        if( RewMoneyMaxLevel > 0 )
-        {
-            uint32 pLevel = pPlayer->getLevel();
-            uint32 qLevel = QuestLevel > 0 ? (uint32)QuestLevel : 0;
-            float fullxp = 0;
-            if (qLevel >= 15)
-                fullxp = RewMoneyMaxLevel / 6.0f;
-            else if (qLevel == 14)
-                fullxp = RewMoneyMaxLevel / 4.8f;
-            else if (qLevel == 13)
-                fullxp = RewMoneyMaxLevel / 3.666f;
-            else if (qLevel == 12)
-                fullxp = RewMoneyMaxLevel / 2.4f;
-            else if (qLevel == 11)
-                fullxp = RewMoneyMaxLevel / 1.2f;
-            else if (qLevel >= 1 && qLevel <= 10)
-                fullxp = RewMoneyMaxLevel / 0.6f;
-            else if (qLevel == 0)
-                fullxp = RewMoneyMaxLevel;
+        uint32 realXP = 0;
+        uint32 xpMultiplier = 0;
+        int32 baseLevel = 0;
+        int32 playerLevel = pPlayer->getLevel();
 
-            if( pLevel <= qLevel +  5 )
-                return (uint32)fullxp;
-            else if( pLevel == qLevel +  6 )
-                return (uint32)(fullxp * 0.8f);
-            else if( pLevel == qLevel +  7 )
-                return (uint32)(fullxp * 0.6f);
-            else if( pLevel == qLevel +  8 )
-                return (uint32)(fullxp * 0.4f);
-            else if( pLevel == qLevel +  9 )
-                return (uint32)(fullxp * 0.2f);
+        // formula can possibly be organized better, using less if's and simplify some.
+
+        if (QuestLevel != -1)
+            baseLevel = QuestLevel;
+
+        if (((baseLevel - playerLevel) + 10)*2 > 10)
+        {
+            baseLevel = playerLevel;
+
+            if (QuestLevel != -1)
+                baseLevel = QuestLevel;
+
+            if (((baseLevel - playerLevel) + 10)*2 <= 10)
+            {
+                if (QuestLevel == -1)
+                    baseLevel = playerLevel;
+
+                xpMultiplier = 2 * (baseLevel - playerLevel) + 20;
+            }
             else
-                return (uint32)(fullxp * 0.1f);
+            {
+                xpMultiplier = 10;
+            }
         }
+        else
+        {
+            baseLevel = playerLevel;
+
+            if (QuestLevel != -1)
+                baseLevel = QuestLevel;
+
+            if (((baseLevel - playerLevel) + 10)*2 >= 1)
+            {
+                baseLevel = playerLevel;
+
+                if (QuestLevel != -1)
+                    baseLevel = QuestLevel;
+
+                if (((baseLevel - playerLevel) + 10)*2 <= 10)
+                {
+                    if (QuestLevel == -1)
+                        baseLevel = playerLevel;
+
+                    xpMultiplier = 2 * (baseLevel - playerLevel) + 20;
+                }
+                else
+                {
+                    xpMultiplier = 10;
+                }
+            }
+            else
+            {
+                xpMultiplier = 1;
+            }
+        }
+
+        const QuestXPLevel* pXPData = sQuestXPLevelStore.LookupEntry(baseLevel);
+
+        uint32 rawXP = xpMultiplier * pXPData->xpIndex[RewXPId] / 10;
+
+        // round values
+        if (rawXP > 1000)
+            realXP = ((rawXP + 25) / 50 * 50);
+        else if (rawXP > 500)
+            realXP = ((rawXP + 12) / 25 * 25);
+        else if (rawXP > 100)
+            realXP = ((rawXP + 5) / 10 * 10);
+        else
+            realXP = ((rawXP + 2) / 5 * 5);
+
+        return realXP;
     }
+
     return 0;
 }
 
