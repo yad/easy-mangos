@@ -6143,6 +6143,39 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                     triggered_spell_id = 32747;
                     break;
                 }
+                // King of the Jungle
+                case 48492:
+                case 48494:
+                case 48495:
+                {
+                    switch(m_form)
+                    {
+                        case FORM_BEAR:
+                        case FORM_DIREBEAR:
+                        {
+                            // Damage increase in Enrage
+                            if (effIndex == 0)
+                                triggered_spell_id = 51185;
+                            break;
+                        }
+                        case FORM_CAT:
+                        {
+                            // Energy restoration in Tiger's Fury
+                            if(effIndex == 1)
+                                triggered_spell_id = 51178;
+                            break;
+                        }
+                        default:
+                            break;
+                    }
+
+                    if (!triggered_spell_id)
+                        return false;
+
+                    basepoints0 = triggerAmount;
+                    target = this;
+                    break;
+                }
                 // Glyph of Rejuvenation
                 case 54754:
                 {
