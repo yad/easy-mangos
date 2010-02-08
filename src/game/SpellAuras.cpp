@@ -4989,6 +4989,48 @@ void Aura::HandlePeriodicDamage(bool apply, bool Real)
                 }
                 break;
             }
+            case SPELLFAMILY_WARLOCK:
+            {
+                //Conflagrate DOT
+                if (m_spellProto->TargetAuraState == AURA_STATE_CONFLAGRATE)
+                {
+                    Aura const* aura = NULL;                // found req. aura for damage calculation
+
+                    Unit::AuraList const &mPeriodic = m_target->GetAurasByType(SPELL_AURA_PERIODIC_DAMAGE);
+                    for(Unit::AuraList::const_iterator i = mPeriodic.begin(); i != mPeriodic.end(); ++i)
+                    {
+                        // for caster applied auras only
+                        if ((*i)->GetSpellProto()->SpellFamilyName != SPELLFAMILY_WARLOCK ||
+                            (*i)->GetCasterGUID()!=caster->GetGUID())
+                            continue;
+
+                        // Immolate
+                        if ((*i)->GetSpellProto()->SpellFamilyFlags & UI64LIT(0x0000000000000004))
+                        {
+                            aura = *i;                      // it selected always if exist
+                            break;
+                        }
+
+                        // Shadowflame
+                        if ((*i)->GetSpellProto()->SpellFamilyFlags2 & 0x00000002)
+                            aura = *i;                      // remember but wait possible Immolate as primary priority
+                    }
+
+                    // found Immolate or Shadowflame
+                    if (aura)
+                    {
+                        int32 damagetick = caster->SpellDamageBonus(m_target, aura->GetSpellProto(), aura->GetModifier()->m_amount, DOT);
+                        m_modifier.m_amount += damagetick * 0.3f;
+
+                        // Glyph of Conflagrate
+                        if (!caster->HasAura(56235))
+                            m_target->RemoveAurasByCasterSpell(aura->GetId(), caster->GetGUID());
+
+                        return;
+                    }
+                }
+                break;
+            }
             case SPELLFAMILY_DRUID:
             {
                 // Rake
