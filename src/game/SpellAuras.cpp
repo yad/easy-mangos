@@ -1339,7 +1339,7 @@ bool Aura::modStackAmount(int32 num)
 
     // Modify stack but limit it
     int32 stackAmount = m_stackAmount + num;
-    if (stackAmount > m_spellProto->StackAmount)
+    if (stackAmount > (int32)m_spellProto->StackAmount)
         stackAmount = m_spellProto->StackAmount;
     else if (stackAmount <=0) // Last aura from stack removed
     {
@@ -2497,7 +2497,7 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                     SpellEntry const* buffEntry = sSpellStore.LookupEntry(55166);
                     if (!buffEntry)
                         return;
-                    for(int k = 0; k < buffEntry->StackAmount; ++k)
+                    for(uint32 k = 0; k < buffEntry->StackAmount; ++k)
                         m_target->CastSpell(m_target, buffEntry, true, NULL, this);
                 }
                 // Earth Shield
@@ -2664,7 +2664,7 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                         if (!spell || !caster)
                             return;
 
-                        for (int i=0; i < spell->StackAmount; ++i)
+                        for (uint32 i = 0; i < spell->StackAmount; ++i)
                             caster->CastSpell(m_target, spellId, true, NULL, NULL, GetCasterGUID());
                         return;
                     }
@@ -2681,7 +2681,7 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                         Unit* caster = GetCaster();
                         if (!spell || !caster)
                             return;
-                        for (int i=0; i < spell->StackAmount; ++i)
+                        for (uint32 i=0; i < spell->StackAmount; ++i)
                             caster->CastSpell(m_target, spell->Id, true, NULL, NULL, GetCasterGUID());
                         return;
                     }
@@ -3296,7 +3296,7 @@ void Aura::HandleAuraModShapeshift(bool apply, bool Real)
                     {
                         // Furor chance is now amount allowed to save energy for cat form
                         // without talent it reset to 0
-                        if (m_target->GetPower(POWER_ENERGY) > furorChance)
+                        if ((int32)m_target->GetPower(POWER_ENERGY) > furorChance)
                         {
                             m_target->SetPower(POWER_ENERGY, 0);
                             m_target->CastCustomSpell(m_target, 17099, &furorChance, NULL, NULL, this);
@@ -3305,7 +3305,7 @@ void Aura::HandleAuraModShapeshift(bool apply, bool Real)
                     else if(furorChance)                    // only if talent known
                     {
                         m_target->SetPower(POWER_RAGE, 0);
-                        if(urand(1,100) <= furorChance)
+                        if(irand(1,100) <= furorChance)
                             m_target->CastSpell(m_target, 17057, true, NULL, this);
                     }
                     break;
@@ -4981,6 +4981,10 @@ void Aura::HandlePeriodicDamage(bool apply, bool Real)
                     float mwb_min = caster->GetWeaponDamageRange(BASE_ATTACK,MINDAMAGE);
                     float mwb_max = caster->GetWeaponDamageRange(BASE_ATTACK,MAXDAMAGE);
                     m_modifier.m_amount+=int32(((mwb_min+mwb_max)/2+ap*mws/14000)*0.2f);
+                    // If used while target is above 75% health, Rend does 35% more damage
+                    if( m_spellProto->CalculateSimpleValue(1) !=0 &&
+                        m_target->GetHealth() > m_target->GetMaxHealth() * m_spellProto->CalculateSimpleValue(1) / 100)
+                        m_modifier.m_amount += m_modifier.m_amount * m_spellProto->CalculateSimpleValue(2) / 100;
                     return;
                 }
                 break;

@@ -567,7 +567,7 @@ void Spell::EffectSchoolDMG(uint32 effect_idx)
                             uint32 doses = poison->GetStackAmount();
                             if (doses > combo)
                                 doses = combo;
-                            for (int i=0; i< doses; i++)
+                            for (uint32 i = 0; i < doses; ++i)
                                 unitTarget->RemoveSingleSpellAurasFromStack(spellId);
                             damage *= doses;
                             damage += int32(((Player*)m_caster)->GetTotalAttackPowerValue(BASE_ATTACK) * 0.09f * doses);
@@ -837,14 +837,16 @@ void Spell::EffectDummy(uint32 i)
                 }
                 case 17251:                                 // Spirit Healer Res
                 {
-                    if (!unitTarget || !m_originalCaster)
+                    if (!unitTarget)
                         return;
 
-                    if (m_originalCaster->GetTypeId() == TYPEID_PLAYER)
+                    Unit* caster = GetAffectiveCaster();
+
+                    if (caster && caster->GetTypeId() == TYPEID_PLAYER)
                     {
                         WorldPacket data(SMSG_SPIRIT_HEALER_CONFIRM, 8);
                         data << uint64(unitTarget->GetGUID());
-                        ((Player*)m_originalCaster)->GetSession()->SendPacket( &data );
+                        ((Player*)caster)->GetSession()->SendPacket( &data );
                     }
                     return;
                 }
@@ -1883,7 +1885,7 @@ void Spell::EffectDummy(uint32 i)
                     Unit::AttackerSet attackers = friendTarget->getAttackers();
 
                     // selected from list 3
-                    for(int i = 0; i < std::min(size_t(3),attackers.size()); ++i)
+                    for(uint32 i = 0; i < std::min(size_t(3),attackers.size()); ++i)
                     {
                         Unit::AttackerSet::iterator aItr = attackers.begin();
                         std::advance(aItr, rand() % attackers.size());
@@ -2237,7 +2239,7 @@ void Spell::EffectTriggerSpell(uint32 effIndex)
             if (!spell)
                 return;
 
-            for (int j=0; j < spell->StackAmount; ++j)
+            for (uint32 j=0; j < spell->StackAmount; ++j)
                 m_caster->CastSpell(unitTarget, spell->Id, true, m_CastItem, NULL, m_originalCasterGUID);
             return;
         }
@@ -2249,7 +2251,7 @@ void Spell::EffectTriggerSpell(uint32 effIndex)
             if (!spell)
                 return;
 
-            for (int j=0; j < spell->StackAmount; ++j)
+            for (uint32 j=0; j < spell->StackAmount; ++j)
                 m_caster->CastSpell(unitTarget, spell->Id, true, m_CastItem, NULL, m_originalCasterGUID);
             return;
         }
@@ -2593,7 +2595,7 @@ void Spell::EffectApplyAura(uint32 i)
         (unitTarget->GetTypeId() != TYPEID_PLAYER || !((Player*)unitTarget)->GetSession()->PlayerLoading()) )
         return;
 
-    Unit* caster = m_originalCaster ? m_originalCaster : m_caster;
+    Unit* caster = GetAffectiveCaster();
     if(!caster)
         return;
 
@@ -2714,15 +2716,16 @@ void Spell::EffectPowerBurn(uint32 i)
     // burn x% of target's mana, up to maximum of 2x% of caster's mana (Mana Burn)
     if (m_spellInfo->ManaCostPercentage)
     {
-        uint32 maxdamage = m_caster->GetMaxPower(powertype) * damage * 2 / 100;
+        int32 maxdamage = m_caster->GetMaxPower(powertype) * damage * 2 / 100;
         damage = unitTarget->GetMaxPower(powertype) * damage / 100;
-        if(damage > maxdamage) damage = maxdamage;
+        if(damage > maxdamage)
+            damage = maxdamage;
     }
 
     int32 curPower = int32(unitTarget->GetPower(powertype));
 
     // resilience reduce mana draining effect at spell crit damage reduction (added in 2.4)
-    uint32 power = damage;
+    int32 power = damage;
     if (powertype == POWER_MANA)
         power -= unitTarget->GetSpellCritDamageReduction(power);
 
@@ -2743,9 +2746,7 @@ void Spell::EffectHeal( uint32 /*i*/ )
     if (unitTarget && unitTarget->isAlive() && damage >= 0)
     {
         // Try to get original caster
-        Unit *caster = m_originalCasterGUID ? m_originalCaster : m_caster;
-
-        // Skip if m_originalCaster not available
+        Unit *caster = GetAffectiveCaster();
         if (!caster)
             return;
 
@@ -2827,9 +2828,7 @@ void Spell::EffectHealPct( uint32 /*i*/ )
     if (unitTarget && unitTarget->isAlive() && damage >= 0)
     {
         // Try to get original caster
-        Unit *caster = m_originalCasterGUID ? m_originalCaster : m_caster;
-
-        // Skip if m_originalCaster not available
+        Unit *caster = GetAffectiveCaster();
         if (!caster)
             return;
 
@@ -2848,9 +2847,7 @@ void Spell::EffectHealMechanical( uint32 /*i*/ )
     if (unitTarget && unitTarget->isAlive() && damage >= 0)
     {
         // Try to get original caster
-        Unit *caster = m_originalCasterGUID ? m_originalCaster : m_caster;
-
-        // Skip if m_originalCaster not available
+        Unit *caster = GetAffectiveCaster();
         if (!caster)
             return;
 
@@ -2873,7 +2870,7 @@ void Spell::EffectHealthLeech(uint32 i)
 
     uint32 curHealth = unitTarget->GetHealth();
     damage = m_caster->SpellNonMeleeDamageLog(unitTarget, m_spellInfo->Id, damage );
-    if (curHealth < damage)
+    if ((int32)curHealth < damage)
         damage = curHealth;
 
     float multiplier = m_spellInfo->EffectMultipleValue[i];
@@ -4341,7 +4338,7 @@ void Spell::EffectTameCreature(uint32 /*i*/)
 {
     // Caster must be player, checked in Spell::CheckCast
     // Spell can be triggered, we need to check original caster prior to caster
-    Player* plr = (Player*)(m_originalCaster ? m_originalCaster : m_caster);
+    Player* plr = (Player*)GetAffectiveCaster();
 
     Creature* creatureTarget = (Creature*)unitTarget;
 
@@ -4611,7 +4608,7 @@ void Spell::EffectWeaponDmg(uint32 i)
     // multiple weapon dmg effect workaround
     // execute only the last weapon damage
     // and handle all effects at once
-    for (int j = 0; j < 3; ++j)
+    for (uint32 j = 0; j < 3; ++j)
     {
         switch(m_spellInfo->Effect[j])
         {
@@ -5263,10 +5260,11 @@ void Spell::EffectScriptEffect(uint32 effIndex)
                 // Emblazon Runeblade
                 case 51770:
                 {
-                    if(!m_originalCaster)
+                    Unit* caster = GetAffectiveCaster();
+                    if(!caster)
                         return;
 
-                    m_originalCaster->CastSpell(m_originalCaster, damage, false);
+                    caster->CastSpell(caster, damage, false);
                     break;
                 }
                 // Death Gate
@@ -5383,12 +5381,28 @@ void Spell::EffectScriptEffect(uint32 effIndex)
                         ((Player*)m_caster)->learnSpell(discoveredSpell, false);
                     return;
                 }
-                case 69377: //Fortitude
+                case 69377:                                 //Fortitude
                 {
                     if(!unitTarget)
                         return;
 
                     m_caster->CastSpell(unitTarget, 72590, true);
+                    return;
+                }
+                case 69378:                                 //Blessing of Forgotten Kings
+                {
+                    if(!unitTarget)
+                        return;
+
+                    m_caster->CastSpell(unitTarget, 72586, true);
+                    return;
+                }
+                case 69381:                                 //Gift of the Wild
+                {
+                    if(!unitTarget)
+                        return;
+
+                    m_caster->CastSpell(unitTarget, 72588, true);
                     return;
                 }
             }
