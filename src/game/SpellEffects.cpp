@@ -834,16 +834,14 @@ void Spell::EffectDummy(uint32 i)
                 }
                 case 17251:                                 // Spirit Healer Res
                 {
-                    if (!unitTarget)
+                    if (!unitTarget || !m_originalCaster)
                         return;
 
-                    Unit* caster = GetAffectiveCaster();
-
-                    if (caster && caster->GetTypeId() == TYPEID_PLAYER)
+                    if (m_originalCaster->GetTypeId() == TYPEID_PLAYER)
                     {
                         WorldPacket data(SMSG_SPIRIT_HEALER_CONFIRM, 8);
                         data << uint64(unitTarget->GetGUID());
-                        ((Player*)caster)->GetSession()->SendPacket( &data );
+                        ((Player*)m_originalCaster)->GetSession()->SendPacket( &data );
                     }
                     return;
                 }
@@ -2635,7 +2633,7 @@ void Spell::EffectApplyAura(uint32 i)
         (unitTarget->GetTypeId() != TYPEID_PLAYER || !((Player*)unitTarget)->GetSession()->PlayerLoading()) )
         return;
 
-    Unit* caster = GetAffectiveCaster();
+    Unit* caster = m_originalCaster ? m_originalCaster : m_caster;
     if(!caster)
         return;
 
@@ -2786,7 +2784,9 @@ void Spell::EffectHeal( uint32 /*i*/ )
     if (unitTarget && unitTarget->isAlive() && damage >= 0)
     {
         // Try to get original caster
-        Unit *caster = GetAffectiveCaster();
+        Unit *caster = m_originalCasterGUID ? m_originalCaster : m_caster;
+
+        // Skip if m_originalCaster not available
         if (!caster)
             return;
 
@@ -2868,7 +2868,9 @@ void Spell::EffectHealPct( uint32 /*i*/ )
     if (unitTarget && unitTarget->isAlive() && damage >= 0)
     {
         // Try to get original caster
-        Unit *caster = GetAffectiveCaster();
+        Unit *caster = m_originalCasterGUID ? m_originalCaster : m_caster;
+
+        // Skip if m_originalCaster not available
         if (!caster)
             return;
 
@@ -2887,7 +2889,9 @@ void Spell::EffectHealMechanical( uint32 /*i*/ )
     if (unitTarget && unitTarget->isAlive() && damage >= 0)
     {
         // Try to get original caster
-        Unit *caster = GetAffectiveCaster();
+        Unit *caster = m_originalCasterGUID ? m_originalCaster : m_caster;
+
+        // Skip if m_originalCaster not available
         if (!caster)
             return;
 
@@ -4378,7 +4382,7 @@ void Spell::EffectTameCreature(uint32 /*i*/)
 {
     // Caster must be player, checked in Spell::CheckCast
     // Spell can be triggered, we need to check original caster prior to caster
-    Player* plr = (Player*)GetAffectiveCaster();
+    Player* plr = (Player*)(m_originalCaster ? m_originalCaster : m_caster);
 
     Creature* creatureTarget = (Creature*)unitTarget;
 
@@ -5300,11 +5304,10 @@ void Spell::EffectScriptEffect(uint32 effIndex)
                 // Emblazon Runeblade
                 case 51770:
                 {
-                    Unit* caster = GetAffectiveCaster();
-                    if(!caster)
+                    if(!m_originalCaster)
                         return;
 
-                    caster->CastSpell(caster, damage, false);
+                    m_originalCaster->CastSpell(m_originalCaster, damage, false);
                     break;
                 }
                 // Death Gate

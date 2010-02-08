@@ -9643,11 +9643,6 @@ uint32 Unit::SpellCriticalHealingBonus(SpellEntry const *spellProto, uint32 dama
 
 uint32 Unit::SpellHealingBonus(Unit *pVictim, SpellEntry const *spellProto, uint32 healamount, DamageEffectType damagetype, uint32 stack)
 {
-    //Maybe this is obsolete?
-    // No heal amount for this class spells
-    //if (spellProto->DmgClass == SPELL_DAMAGE_CLASS_NONE)
-    //    return healamount;
-
     // For totems get healing bonus from owner (statue isn't totem in fact)
     if( GetTypeId()==TYPEID_UNIT && ((Creature*)this)->isTotem() && ((Totem*)this)->GetTotemType()!=TOTEM_STATUE)
         if(Unit* owner = GetOwner())
@@ -9656,13 +9651,13 @@ uint32 Unit::SpellHealingBonus(Unit *pVictim, SpellEntry const *spellProto, uint
     float  TakenTotalMod = 1.0f;
 
     // Healing taken percent
-    float minval_taken = pVictim->GetMaxNegativeAuraModifier(SPELL_AURA_MOD_HEALING_PCT);
-    if(minval_taken)
-        TakenTotalMod *= (100.0f + minval_taken) / 100.0f;
+    float minval = pVictim->GetMaxNegativeAuraModifier(SPELL_AURA_MOD_HEALING_PCT);
+    if(minval)
+        TakenTotalMod *= (100.0f + minval) / 100.0f;
 
-    float maxval_taken = pVictim->GetMaxPositiveAuraModifier(SPELL_AURA_MOD_HEALING_PCT);
-    if(maxval_taken)
-        TakenTotalMod *= (100.0f + maxval_taken) / 100.0f;
+    float maxval = pVictim->GetMaxPositiveAuraModifier(SPELL_AURA_MOD_HEALING_PCT);
+    if(maxval)
+        TakenTotalMod *= (100.0f + maxval) / 100.0f;
 
     // No heal amount for this class spells
     if (spellProto->DmgClass == SPELL_DAMAGE_CLASS_NONE)
@@ -9748,8 +9743,11 @@ uint32 Unit::SpellHealingBonus(Unit *pVictim, SpellEntry const *spellProto, uint
     int32 TakenAdvertisedBenefit = SpellBaseHealingBonusForVictim(GetSpellSchoolMask(spellProto), pVictim);
 
     float LvlPenalty = CalculateLevelPenalty(spellProto);
-
-    Player* modOwner = GetSpellModOwner();
+    // Spellmod SpellDamage
+    float SpellModSpellDamage = 100.0f;
+    if(Player* modOwner = GetSpellModOwner())
+        modOwner->ApplySpellMod(spellProto->Id, SPELLMOD_SPELL_BONUS_DAMAGE, SpellModSpellDamage);
+    SpellModSpellDamage /= 100.0f;
 
     // Check for table values
     SpellBonusEntry const* bonus = sSpellMgr.GetSpellBonusData(spellProto->Id);
@@ -9764,19 +9762,11 @@ uint32 Unit::SpellHealingBonus(Unit *pVictim, SpellEntry const *spellProto, uint
         if (bonus->ap_bonus)
             DoneTotal += int32(bonus->ap_bonus * GetTotalAttackPowerValue(BASE_ATTACK) * stack);
 
-        // Spellmod SpellBonusDamage
-        if (modOwner)
-        {
-            coeff *= 100.0f;
-            modOwner->ApplySpellMod(spellProto->Id,SPELLMOD_SPELL_BONUS_DAMAGE,coeff);
-            coeff /= 100.0f;
-        }
-
-        DoneTotal  += int32(DoneAdvertisedBenefit * coeff);
+        DoneTotal  += int32(DoneAdvertisedBenefit * coeff * SpellModSpellDamage);
         TakenTotal += int32(TakenAdvertisedBenefit * coeff);
     }
     // Default calculation
-    else if ( ( DoneAdvertisedBenefit || TakenAdvertisedBenefit ) && spellProto->DmgClass != SPELL_DAMAGE_CLASS_NONE )
+    else if (DoneAdvertisedBenefit || TakenAdvertisedBenefit)
     {
         // Damage over Time spells bonus calculation
         float DotFactor = 1.0f;
@@ -9804,19 +9794,8 @@ uint32 Unit::SpellHealingBonus(Unit *pVictim, SpellEntry const *spellProto, uint
                 break;
             }
         }
-
-        float coeff = (CastingTime / 3500.0f) * DotFactor * 1.88f;
-
-        // Spellmod SpellBonusDamage
-        if (modOwner)
-        {
-            coeff *= 100.0f;
-            modOwner->ApplySpellMod(spellProto->Id,SPELLMOD_SPELL_BONUS_DAMAGE,coeff);
-            coeff /= 100.0f;
-        }
-
-        DoneTotal  += int32(DoneAdvertisedBenefit * coeff * LvlPenalty);
-        TakenTotal += int32(TakenAdvertisedBenefit * coeff * LvlPenalty);
+        DoneTotal  += int32(DoneAdvertisedBenefit * (CastingTime / 3500.0f) * DotFactor * LvlPenalty * SpellModSpellDamage * 1.88f);
+        TakenTotal += int32(TakenAdvertisedBenefit * (CastingTime / 3500.0f) * DotFactor * LvlPenalty * 1.88f);
     }
 
     // use float as more appropriate for negative values and percent applying
@@ -9836,21 +9815,6 @@ uint32 Unit::SpellHealingBonus(Unit *pVictim, SpellEntry const *spellProto, uint
                 TakenTotalMod *= ((*itr)->GetModifier()->m_amount+100.0f) / 100.0f;
     }
 
-    // Healing taken percent
-    float minval = pVictim->GetMaxNegativeAuraModifier(SPELL_AURA_MOD_HEALING_PCT);
-    if (damagetype == DOT)
-    {
-        float minDotVal = pVictim->GetMaxNegativeAuraModifier(SPELL_AURA_MOD_PERIODIC_HEAL);
-        minval = (minDotVal < minval) ? minDotVal : minval;
-    }
-    if(minval)
-        TakenTotalMod *= (100.0f + minval) / 100.0f;
-
-    float maxval = pVictim->GetMaxPositiveAuraModifier(SPELL_AURA_MOD_HEALING_PCT);
-    // can SPELL_AURA_MOD_PERIODIC_HEAL be positive?
-    if(maxval)
-        TakenTotalMod *= (100.0f + maxval) / 100.0f;
-
     AuraList const& mHealingGet= pVictim->GetAurasByType(SPELL_AURA_MOD_HEALING_RECEIVED);
     for(AuraList::const_iterator i = mHealingGet.begin(); i != mHealingGet.end(); ++i)
         if ((*i)->isAffectedOnSpell(spellProto))
@@ -9860,7 +9824,6 @@ uint32 Unit::SpellHealingBonus(Unit *pVictim, SpellEntry const *spellProto, uint
 
     return heal < 0 ? 0 : uint32(heal);
 }
-
 int32 Unit::SpellBaseHealingBonus(SpellSchoolMask schoolMask)
 {
     int32 AdvertisedBenefit = 0;
