@@ -1675,10 +1675,6 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
 
         Aura* GetDummyAura(uint32 spell_id) const;
 
-        Aura* GetLinkedDummyAura(uint32 spell_id) const;
-        void AddDummyAuraLink(Aura* m_Aura) { m_dummyAuraLink.push_back(m_Aura); }
-        void RemoveDummyAuraLink(Aura* m_Aura);
-
         uint32 m_AuraFlags;
 
         uint32 GetDisplayId() { return GetUInt32Value(UNIT_FIELD_DISPLAYID); }
@@ -1835,7 +1831,6 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         AuraList m_deletedAuras;                            // auras removed while in ApplyModifier and waiting deleted
 
         AuraList m_scAuras;                                 // casted by unit single per-caster auras
-		AuraList m_dummyAuraLink;							// custom linked dummy auras
 
         typedef std::list<uint64> DynObjectGUIDs;
         DynObjectGUIDs m_dynObjGUIDs;

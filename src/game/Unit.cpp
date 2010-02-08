@@ -4657,21 +4657,6 @@ bool Unit::HasAura(uint32 spellId) const
     return false;
 }
 
-Aura* Unit::GetLinkedDummyAura(uint32 spell_id) const
-{
-    for(AuraList::const_iterator itr = m_dummyAuraLink.begin(); itr != m_dummyAuraLink.end(); ++itr)
-    {
-        if((*itr)->GetId() == spell_id)
-            return (*itr);
-    }
-    return NULL;
-}
-
-void Unit::RemoveDummyAuraLink(Aura* m_Aura)
-{
-    m_dummyAuraLink.remove(m_Aura);
-}
-
 void Unit::AddDynObject(DynamicObject* dynObj)
 {
     m_dynObjGUIDs.push_back(dynObj->GetGUID());
