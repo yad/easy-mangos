@@ -2080,11 +2080,54 @@ void Spell::EffectDummy(uint32 i)
                 if(unitTarget->GetTypeId() != TYPEID_PLAYER)
                 {
                    unitTarget->GetMap()->CreatureRelocation((Creature*)unitTarget,x,y,z,orientation);
-				   ((Creature*)unitTarget)->SendMonsterMove(x, y, z, orientation, ((Creature*)unitTarget)->GetSplineFlags(), 1);
+                   ((Creature*)unitTarget)->SendMonsterMove(x, y, z, orientation, ((Creature*)unitTarget)->GetSplineFlags(), 1);
                 }
                 else unitTarget->NearTeleportTo(x,y,z,orientation,false);
 
                 return;
+            }
+            // Raise Dead
+            else if (m_spellInfo->Id == 46584)
+            {   
+                if( unitTarget->isDead() && unitTarget->GetCreatureType()==CREATURE_TYPE_HUMANOID && unitTarget->getLevel() >= m_caster->getLevel()-3 )
+                {
+                    if( m_caster->GetTypeId()==TYPEID_PLAYER && ((Player*)m_caster)->HasSpell(52143) )
+                    {
+                        m_caster->CastSpell(m_caster, 52150, true, NULL);
+                        ((Player*)m_caster)->SendCooldownEvent(m_spellInfo,52150, this); 
+                        ((Player*)m_caster)->RemoveSpellCooldown(52150, true);
+                    }
+                    else
+                    {
+                        m_caster->CastSpell(m_caster, 46585, true, NULL);
+                        ((Player*)m_caster)->SendCooldownEvent(m_spellInfo,46585, this); 
+                        ((Player*)m_caster)->RemoveSpellCooldown(46585, true);
+                    }
+                }
+                else
+                {
+                    if(((Player*)m_caster)->HasItemCount(37201,1))
+                    {
+                           if( m_caster->GetTypeId()==TYPEID_PLAYER && ((Player*)m_caster)->HasSpell(52143) )
+                        {
+                            m_caster->CastSpell(m_caster, 52150, true, NULL);
+                            ((Player*)m_caster)->SendCooldownEvent(m_spellInfo,52150, this); 
+                            ((Player*)m_caster)->RemoveSpellCooldown(52150, true);
+                               
+                        }
+                        else
+                        {
+                            m_caster->CastSpell(m_caster, 46585, true, NULL);
+                            ((Player*)m_caster)->SendCooldownEvent(m_spellInfo,46585, this); 
+                            ((Player*)m_caster)->RemoveSpellCooldown(46585, true);
+                           
+                        }
+                        ((Player*)m_caster)->DestroyItemCount(37201,1,true);
+                    }
+                    else 
+                        m_caster->CastStop();
+                    return;
+                }
             }
             break;
     }
