@@ -24,7 +24,7 @@ CREATE TABLE `db_version` (
   `version` varchar(120) default NULL,
   `creature_ai_version` varchar(120) default NULL,
   `cache_id` int(10) default '0',
-  `required_9297_01_mangos_item_template` bit(1) default NULL
+  `required_9331_01_mangos_quest_template` bit(1) default NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 ROW_FORMAT=FIXED COMMENT='Used DB version notes';
 
 --
@@ -13804,6 +13804,7 @@ CREATE TABLE `quest_template` (
   `NextQuestId` mediumint(9) NOT NULL default '0',
   `ExclusiveGroup` mediumint(9) NOT NULL default '0',
   `NextQuestInChain` mediumint(8) unsigned NOT NULL default '0',
+  `RewXPId` tinyint(3) unsigned NOT NULL default '0',
   `SrcItemId` mediumint(8) unsigned NOT NULL default '0',
   `SrcItemCount` tinyint(3) unsigned NOT NULL default '0',
   `SrcSpell` mediumint(8) unsigned NOT NULL default '0',
@@ -13875,12 +13876,18 @@ CREATE TABLE `quest_template` (
   `RewRepFaction3` smallint(5) unsigned NOT NULL default '0' COMMENT 'faction id from Faction.dbc in this case',
   `RewRepFaction4` smallint(5) unsigned NOT NULL default '0' COMMENT 'faction id from Faction.dbc in this case',
   `RewRepFaction5` smallint(5) unsigned NOT NULL default '0' COMMENT 'faction id from Faction.dbc in this case',
+  `RewRepValueId1` tinyint(3) NOT NULL default '0',
+  `RewRepValueId2` tinyint(3) NOT NULL default '0',
+  `RewRepValueId3` tinyint(3) NOT NULL default '0',
+  `RewRepValueId4` tinyint(3) NOT NULL default '0',
+  `RewRepValueId5` tinyint(3) NOT NULL default '0',
   `RewRepValue1` mediumint(9) NOT NULL default '0',
   `RewRepValue2` mediumint(9) NOT NULL default '0',
   `RewRepValue3` mediumint(9) NOT NULL default '0',
   `RewRepValue4` mediumint(9) NOT NULL default '0',
   `RewRepValue5` mediumint(9) NOT NULL default '0',
-  `RewHonorableKills` int unsigned NOT NULL default '0',
+  `RewHonorAddition` int unsigned NOT NULL default '0',
+  `RewHonorMultiplier` float NOT NULL default '0',
   `RewOrReqMoney` int(11) NOT NULL default '0',
   `RewMoneyMaxLevel` int(10) unsigned NOT NULL default '0',
   `RewSpell` mediumint(8) unsigned NOT NULL default '0',
@@ -15600,6 +15607,16 @@ INSERT INTO spell_chain VALUES
 (27051,24579,24423,5,0),
 (55487,27051,24423,6,0),
 /*------------------
+--(214)Pet - Crab
+------------------*/
+/* Sonic Blast */
+(50245,0,50245,1,0),
+(53544,50245,50245,2,0),
+(53545,53544,50245,3,0),
+(53546,53545,50245,4,0),
+(53547,53546,50245,5,0),
+(53548,53547,50245,6,0),
+/*------------------
 --(215)Pet-Gorilla
 --(786)Pet-ExoticRhino
 --(775)Pet-Moth
@@ -17143,6 +17160,16 @@ INSERT INTO spell_chain VALUES
 (9485,9484,9484,2,0),
 (10955,9485,9484,3,0),
 /*------------------
+--(654)Pet - Bat
+------------------*/
+/* Pin */
+(50519,0,50519,1,0),
+(53564,50519,50519,2,0),
+(53565,53564,50519,3,0),
+(53566,53565,50519,4,0),
+(53567,53566,50519,5,0),
+(53568,53567,50519,6,0),
+/*------------------
 --(654)Pet-Hyena
 ------------------*/
 /*TendonRip*/
@@ -17569,7 +17596,6 @@ INSERT INTO `spell_elixir` VALUES
 (17537,0x1),
 (17538,0x1),
 (17539,0x1),
-(17624,0x3),
 (17626,0x3),
 (17627,0x3),
 (17629,0x3),
