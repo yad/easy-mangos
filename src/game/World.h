@@ -542,6 +542,7 @@ class World
 
         void InitDailyQuestResetTime();
         void ResetDailyQuests();
+        void RandomBG();
     private:
         static volatile bool m_stopEvent;
         static uint8 m_ExitCode;

@@ -81,6 +81,8 @@ int32 World::m_visibility_notify_periodOnContinents = DEFAULT_VISIBILITY_NOTIFY_
 int32 World::m_visibility_notify_periodInInstances  = DEFAULT_VISIBILITY_NOTIFY_PERIOD;
 int32 World::m_visibility_notify_periodInBGArenas   = DEFAULT_VISIBILITY_NOTIFY_PERIOD;
 
+const float BGEvent[2] = {41, 42, 43};
+
 /// World constructor
 World::World()
 {
@@ -1607,6 +1609,7 @@ void World::Update(uint32 diff)
     if(m_gameTime > m_NextDailyQuestReset)
     {
         ResetDailyQuests();
+        RandomBG();
         m_NextDailyQuestReset += DAY;
     }
 
@@ -2174,7 +2177,20 @@ void World::InitDailyQuestResetTime()
         m_NextDailyQuestReset = (curTime >= curDayResetTime) ? curDayResetTime + DAY : curDayResetTime;
     }
 }
+void World::RandomBG()
+{
+    //stop event
+    for(int i = 0; i < 3; i++)
+    {
+        sGameEventMgr.StopEvent(BGEvent[i]);
+        WorldDatabase.PExecute("UPDATE game_event SET occurence = 5184000 WHERE entry = %f", BGEvent[i]);
+    }
+    //add event     
+    uint8 random = urand(0,2);
+    sGameEventMgr.StartEvent(BGEvent[random]);
+    WorldDatabase.PExecute("UPDATE game_event SET occurence = 1400 WHERE entry = %f", BGEvent[random]);
 
+}
 void World::ResetDailyQuests()
 {
     sLog.outDetail("Daily quests reset for all characters.");

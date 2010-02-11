@@ -60,6 +60,7 @@
 #include "Spell.h"
 #include "SocialMgr.h"
 #include "AchievementMgr.h"
+#include "GameEventMgr.h"
 
 #include <cmath>
 
@@ -6210,6 +6211,21 @@ bool Player::RewardHonor(Unit *uVictim, uint32 groupsize, float honor)
 
             honor = ((f * diff_level * (190 + v_rank*10))/6);
             honor *= ((float)k_level) / 70.0f;              //factor of dependence on levels of the killer
+
+            //check for event
+            uint32 reqmap = 0;
+            //arathi basin
+            if(sGameEventMgr.IsActiveEvent(41))
+                reqmap = 529;
+            // eye of storm
+            if(sGameEventMgr.IsActiveEvent(42))
+                reqmap = 566;
+            // warsong gulch
+            if(sGameEventMgr.IsActiveEvent(43))
+                reqmap = 489;
+
+            if (GetMapId() == reqmap)
+                honor *= 1.5;
 
             // count the number of playerkills in one day
             ApplyModUInt32Value(PLAYER_FIELD_KILLS, 1, true);

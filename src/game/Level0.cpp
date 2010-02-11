@@ -29,6 +29,7 @@
 #include "revision.h"
 #include "revision_nr.h"
 #include "Util.h"
+#include "GameEventMgr.h"
 
 bool ChatHandler::HandleHelpCommand(const char* args)
 {
@@ -103,9 +104,16 @@ bool ChatHandler::HandleServerInfoCommand(const char* /*args*/)
     PSendSysMessage(LANG_USING_EVENT_AI,sWorld.GetCreatureEventAIVersion());
     PSendSysMessage(LANG_CONNECTED_USERS, activeClientsNum, maxActiveClientsNum, queuedClientsNum, maxQueuedClientsNum);
     PSendSysMessage(LANG_UPTIME, str.c_str());
-    SendSysMessage("Revision [10.2.2010][pr211] - MaNGOS modified for Valhalla Server");
+    SendSysMessage("Revision [11.2.2010][pr212] - MaNGOS modified for Valhalla Server");
     SendSysMessage("GIT: http://github.com/Tasssadar/Valhalla-Project/commits");
     SendSysMessage("Changelog: http://valhalla-team.com/web/changelog.php");
+
+    if(sGameEventMgr.IsActiveEvent(41))
+        SendSysMessage("Today Battleground: Arathi Basin!");
+    if(sGameEventMgr.IsActiveEvent(42))
+        SendSysMessage("Today Battleground: Eye Of Storm!");
+    if(sGameEventMgr.IsActiveEvent(43))
+        SendSysMessage("Today Battleground: Warsong Gulch!");
 
     return true;
 }
