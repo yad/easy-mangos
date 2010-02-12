@@ -21361,47 +21361,47 @@ void Player::_LoadAccountInfos()
         {
             case 0:
             {
-                aInfo.Angle = 0.0f * M_PI / 1.0f;
+                aInfo.Angle = 0.0f * M_PI_F / 1.0f;
                 break;
             }
             case 1:
             {
-                aInfo.Angle = 1.0f * M_PI / 1.0f;
+                aInfo.Angle = 1.0f * M_PI_F / 1.0f;
                 break;
             }
             case 2:
             {
-                aInfo.Angle = -1.0f * M_PI / 2.0f;
+                aInfo.Angle = -1.0f * M_PI_F / 2.0f;
                 break;
             }
             case 3:
             {
-                aInfo.Angle = 1.0f * M_PI / 2.0f;
+                aInfo.Angle = 1.0f * M_PI_F / 2.0f;
                 break;
             }
             case 4:
             {
-                aInfo.Angle = 1.0f * M_PI / 4.0f;
+                aInfo.Angle = 1.0f * M_PI_F / 4.0f;
                 break;
             }
             case 5:
             {
-                aInfo.Angle = 3.0f * M_PI / 4.0f;
+                aInfo.Angle = 3.0f * M_PI_F / 4.0f;
                 break;
             }
             case 6:
             {
-                aInfo.Angle = -3.0f * M_PI / 4.0f;
+                aInfo.Angle = -3.0f * M_PI_F / 4.0f;
                 break;
             }
             case 7:
             {
-                aInfo.Angle = -1.0f * M_PI / 4.0f;
+                aInfo.Angle = -1.0f * M_PI_F / 4.0f;
                 break;
             }
             default:
             {
-                aInfo.Angle = 1.0f * M_PI / 6.0f;
+                aInfo.Angle = 1.0f * M_PI_F / 6.0f;
                 break;
             }
         }

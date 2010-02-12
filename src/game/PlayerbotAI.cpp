@@ -478,7 +478,7 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
                 m_bot->GetSession()->QueuePacket(packet); // queue the packet to get around race condition
 
                 // follow target in casting range
-                float angle = rand_float(0, M_PI);
+                float angle = rand_float(0, M_PI_F);
                 float dist = rand_float(4, 10);
 
                 m_bot->GetMotionMaster()->Clear(true);
@@ -1419,7 +1419,7 @@ void PlayerbotAI::DoCombatMovement() {
 
     if( m_combatStyle==COMBAT_MELEE && m_movementOrder!=MOVEMENT_STAY ) 
     {
-        float angle = rand_float(0, M_PI);
+        float angle = rand_float(0, M_PI_F);
         float dist = rand_float( 1.0f, 3.0f );
 
         AccountInfos m_AccountInfos = m_bot->GetAccountInfos();
@@ -1440,7 +1440,7 @@ void PlayerbotAI::DoCombatMovement() {
         // TODO: just follow in spell range! how to determine bots spell range?
         if( targetDist>50.0f )
         {
-            float angle = rand_float(0, M_PI);
+            float angle = rand_float(0, M_PI_F);
             float dist = rand_float( 10.0f, 20.0f );
 
             AccountInfos m_AccountInfos = m_bot->GetAccountInfos();
@@ -1985,7 +1985,7 @@ void PlayerbotAI::MovementReset() {
 
         if( m_bot->isAlive() )
         {
-            float angle = rand_float(0, M_PI);
+            float angle = rand_float(0, M_PI_F);
             float dist = rand_float( 5.0f, 10.0f );
 
             AccountInfos m_AccountInfos = m_bot->GetAccountInfos();
@@ -2033,7 +2033,7 @@ bool PlayerbotAI::IsMoving()
 void PlayerbotAI::SetInFront( const Unit* obj )
 {
     // removed SendUpdateToPlayer (is not updating movement/orientation)
-    if( !m_bot->HasInArc( M_PI, obj ) )
+    if( !m_bot->HasInArc( M_PI_F, obj ) )
         m_bot->SetInFront( obj );
 }
 
