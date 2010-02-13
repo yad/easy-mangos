@@ -457,11 +457,9 @@ m_isRemovedOnShapeLost(true), m_in_use(0), m_deleted(false)
     //Apply haste to channeled spells
     if(GetSpellProto()->AttributesEx & (SPELL_ATTR_EX_CHANNELED_1 | SPELL_ATTR_EX_CHANNELED_2) && m_modifier.periodictime)
         ApplyHasteToPeriodic();
-
-    // Apply periodic time mod
-    if(modOwner && m_modifier.periodictime)
+    // Apply periodic time mod, for channeled spells its in Aura::ApplyHasteToPeriodic()
+    else if(modOwner && m_modifier.periodictime)
         modOwner->ApplySpellMod(GetId(), SPELLMOD_ACTIVATION_TIME, m_modifier.periodictime);
-
     // Start periodic on next tick or at aura apply
     if (!(m_spellProto->AttributesEx5 & SPELL_ATTR_EX5_START_PERIODIC_AT_APPLY))
         m_periodicTimer += m_modifier.periodictime;
@@ -8426,10 +8424,15 @@ void Aura::ApplyHasteToPeriodic()
     if(duration == 0 || periodic == 0)
         return;
 
-    int32 ticks = int32(duration / periodic);
+    int32 ticks = duration / periodic;
 
     if(!GetCaster())
         return;
+
+    Player* modOwner = GetCaster()->GetSpellModOwner();
+
+    if(modOwner)
+        modOwner->ApplySpellMod(GetId(), SPELLMOD_ACTIVATION_TIME, periodic);
 
     if( !(GetSpellProto()->Attributes & (SPELL_ATTR_UNK4|SPELL_ATTR_TRADESPELL)) )
         duration = int32(duration * GetCaster()->GetFloatValue(UNIT_MOD_CAST_SPEED));
@@ -8437,7 +8440,7 @@ void Aura::ApplyHasteToPeriodic()
     if(m_origDuration != duration)
     {
         periodic = int32(periodic * GetCaster()->GetFloatValue(UNIT_MOD_CAST_SPEED));
-        m_modifier.periodictime = periodic;
         m_maxduration = periodic * ticks;
     }
+    m_modifier.periodictime = periodic;
 }
