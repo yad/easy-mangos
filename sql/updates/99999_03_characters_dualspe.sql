@@ -1,0 +1,2 @@
+ALTER TABLE `characters` CHANGE `speccount` `specCount` TINYINT(3) UNSIGNED NOT NULL DEFAULT 1;
+ALTER TABLE `characters` CHANGE `activeSpec` `activeSpec` TINYINT(3) UNSIGNED NOT NULL DEFAULT 0;
