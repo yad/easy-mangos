@@ -27,7 +27,7 @@ VALUES
 INSERT INTO mangos_string
    (`entry`, `content_default`, `content_loc1`, `content_loc2`, `content_loc3`, `content_loc4`, `content_loc5`, `content_loc6`, `content_loc7`, `content_loc8`)
 VALUES
-   (955, 'No reason given or reason is < %u chars!', NULL, 'Aucune raison d\'emprisonnement donnée ou la raison est < %u personnages.', 'Du hast keinen Grund angegeben, oder der Grund ist < %u Zeichen!', NULL, NULL, NULL, NULL, NULL);
+   (955, 'No reason given or reason is < %u chars!', NULL, 'Aucune raison d\'emprisonnement donnée ou la raison est < %u caractères.', 'Du hast keinen Grund angegeben, oder der Grund ist < %u Zeichen!', NULL, NULL, NULL, NULL, NULL);
 
 INSERT INTO mangos_string
    (`entry`, `content_default`, `content_loc1`, `content_loc2`, `content_loc3`, `content_loc4`, `content_loc5`, `content_loc6`, `content_loc7`, `content_loc8`)
