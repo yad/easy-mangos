@@ -3763,6 +3763,32 @@ bool ChatHandler::HandleDamageCommand(const char * args)
     return true;
 }
 
+bool ChatHandler::HandleAggroCommand(const char * args)
+{
+    Creature* caster = getSelectedCreature();
+
+    if(!caster)
+    {
+        SendSysMessage(LANG_SELECT_CREATURE);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+	
+    Player* pl = m_session->GetPlayer();
+
+	if (pl->IsFriendlyTo(caster))
+        return false;
+
+    if (!pl->IsWithinDistInMap(caster, 35))
+        return false;
+
+    //caster->SetSplineFlags(SPLINEFLAG_FORWARD);
+
+	caster->GetMotionMaster()->MoveChase(pl);
+    return true;
+}
+
 bool ChatHandler::HandleModifyArenaCommand(const char * args)
 {
     if (!*args)
