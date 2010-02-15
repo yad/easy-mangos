@@ -732,7 +732,7 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
     data << uint32(0);
     SendPacket(&data);
 
-    if (sWorld.getConfig(CONFIG_ALLOW_FLYING_MOUNTS_EVERYWHERE) == 1)
+    if (sWorld.getConfig(CONFIG_BOOL_ALLOW_FLYING_MOUNTS_EVERYWHERE))
         pCurrChar->FlyingMountsSpellsToItems();
 
     pCurrChar->SendInitialPacketsBeforeAddToMap();

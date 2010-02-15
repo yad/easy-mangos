@@ -2523,7 +2523,7 @@ void Spell::prepare(SpellCastTargets const* targets, Aura* triggeredByAura)
     // without adding to cast type slot
     // will not show cast bar but will show effects at casting time etc
 	
-    if(sWorld.getConfig(CONFIG_NO_COOLDOWN) == 1)
+    if(sWorld.getConfig(CONFIG_BOOL_NO_COOLDOWN))
         if(m_caster->GetTypeId() == TYPEID_PLAYER)
             ((Player*)m_caster)->RemoveSpellCooldown(m_spellInfo->Id, true);
 }
@@ -4440,7 +4440,7 @@ SpellCastResult Spell::CheckCast(bool strict)
             if(!(m_caster->m_SeatData.s_flags & SF_CAN_CAST))
                 return SPELL_FAILED_NOT_MOUNTED;
         }
-        else if ((sWorld.getConfig(CONFIG_ALLOW_FLYING_MOUNTS_EVERYWHERE) == 1) && (m_spellInfo->Id==55884))
+        else if ((sWorld.getConfig(CONFIG_BOOL_ALLOW_FLYING_MOUNTS_EVERYWHERE)) && (m_spellInfo->Id==55884))
         {
             Player* player = (Player*)m_caster;
             uint32 spellToLearn = ((m_spellInfo->Id==SPELL_ID_GENERIC_LEARN) || (m_spellInfo->Id==SPELL_ID_GENERIC_LEARN_PET)) ? damage : m_spellInfo->EffectTriggerSpell[0];
@@ -5593,7 +5593,7 @@ SpellCastResult Spell::CheckItems()
         
     Player* p_caster = (Player*)m_caster;
 
-    if ((sWorld.getConfig(CONFIG_ALLOW_FLYING_MOUNTS_EVERYWHERE) == 1) && (m_spellInfo->Id==55884))
+    if ((sWorld.getConfig(CONFIG_BOOL_ALLOW_FLYING_MOUNTS_EVERYWHERE)) && (m_spellInfo->Id==55884))
     {
         uint32 spellToLearn = ((m_spellInfo->Id==SPELL_ID_GENERIC_LEARN) || (m_spellInfo->Id==SPELL_ID_GENERIC_LEARN_PET)) ? damage : m_spellInfo->EffectTriggerSpell[0];
         SpellEntry const *sEntry = sSpellStore.LookupEntry(spellToLearn);

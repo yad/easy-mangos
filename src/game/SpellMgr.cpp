@@ -91,7 +91,7 @@ uint32 GetSpellCastTime(SpellEntry const* spellInfo, Spell const* spell)
     if (spellInfo->Attributes & SPELL_ATTR_RANGED && (!spell || !spell->IsAutoRepeat()))
         castTime += 500;
 
-    if(sWorld.getConfig(CONFIG_NO_CAST_TIME) != 1)
+    if(!sWorld.getConfig(CONFIG_BOOL_NO_CAST_TIME))
         return (castTime > 0) ? uint32(castTime) : 0;
     else
         return 0;
@@ -3005,7 +3005,7 @@ void SpellMgr::LoadSpellAreas()
 
 SpellCastResult SpellMgr::GetSpellAllowedInLocationError(SpellEntry const *spellInfo, uint32 map_id, uint32 zone_id, uint32 area_id, Player const* player)
 {
-    if (sWorld.getConfig(CONFIG_ALLOW_FLYING_MOUNTS_EVERYWHERE) == 1)
+    if (sWorld.getConfig(CONFIG_BOOL_ALLOW_FLYING_MOUNTS_EVERYWHERE))
     {
         if(player && (player->isFlyingSpell(spellInfo) || player->isFlyingFormSpell(spellInfo)))
         {
@@ -3452,10 +3452,10 @@ DiminishingGroup GetDiminishingReturnsGroupForSpell(SpellEntry const* spellproto
         case SPELLFAMILY_ROGUE:
         {
             // Blind
-            /*if (spellproto->SpellFamilyFlags & UI64LIT(0x00001000000))
-                return DIMINISHING_FEAR_CHARM_BLIND;
+            if (spellproto->SpellFamilyFlags & UI64LIT(0x00001000000))
+                return DIMINISHING_FEAR_BLIND;
             // Cheap Shot
-            else */if (spellproto->SpellFamilyFlags & UI64LIT(0x00000000400))
+            else if (spellproto->SpellFamilyFlags & UI64LIT(0x00000000400))
                 return DIMINISHING_CHEAPSHOT_POUNCE;
             // Crippling poison - Limit to 10 seconds in PvP (No SpellFamilyFlags)
             else if (spellproto->SpellIconID == 163)
@@ -3551,8 +3551,8 @@ DiminishingGroup GetDiminishingReturnsGroupForSpell(SpellEntry const* spellproto
         return DIMINISHING_DISORIENT;
     if (mechanic & (1<<(MECHANIC_ROOT-1)))
         return triggered ? DIMINISHING_TRIGGER_ROOT : DIMINISHING_CONTROL_ROOT;
-    /*if (mechanic & ((1<<(MECHANIC_FEAR-1))|(1<<(MECHANIC_CHARM-1))))
-        return DIMINISHING_FEAR_CHARM_BLIND;*/
+    if (mechanic & ((1<<(MECHANIC_FEAR-1))|(1<<(MECHANIC_CHARM-1))))
+        return DIMINISHING_FEAR_BLIND;
     if (mechanic & ((1<<(MECHANIC_SILENCE-1))|(1<<(MECHANIC_INTERRUPT-1))))
         return DIMINISHING_SILENCE;
     if (mechanic & (1<<(MECHANIC_DISARM-1)))
@@ -3657,7 +3657,6 @@ DiminishingReturnsType GetDiminishingReturnsGroupType(DiminishingGroup group)
         case DIMINISHING_SILENCE:
         case DIMINISHING_DISARM:
         case DIMINISHING_HORROR:
-        //case DIMINISHING_FREEZE_SLEEP:
         case DIMINISHING_BANISH:
         case DIMINISHING_CHEAPSHOT_POUNCE:
         case DIMINISHING_HIBERNATE:

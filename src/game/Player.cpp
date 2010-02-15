@@ -529,12 +529,12 @@ Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputa
     m_flytimer = time(NULL);
 
     baseMoveSpeed[MOVE_WALK] = 2.5f;
-    baseMoveSpeed[MOVE_RUN] = 7.0f * sWorld.getConfig(RATE_CHARRUNSPEED);
+    baseMoveSpeed[MOVE_RUN] = 7.0f * sWorld.getConfig(CONFIG_FLOAT_RATE_CHARRUNSPEED);
     baseMoveSpeed[MOVE_RUN_BACK] = 1.25f;
-    baseMoveSpeed[MOVE_SWIM] = 4.722222f * sWorld.getConfig(RATE_CHARSWIMSPEED);
+    baseMoveSpeed[MOVE_SWIM] = 4.722222f * sWorld.getConfig(CONFIG_FLOAT_RATE_CHARSWIMSPEED);
     baseMoveSpeed[MOVE_SWIM_BACK] = 4.5f;
     baseMoveSpeed[MOVE_TURN_RATE] = 3.141594f;
-    baseMoveSpeed[MOVE_FLIGHT] = 7.0f * sWorld.getConfig(RATE_CHARFLIGHTSPEED);
+    baseMoveSpeed[MOVE_FLIGHT] = 7.0f * sWorld.getConfig(CONFIG_FLOAT_RATE_CHARFLIGHTSPEED);
     baseMoveSpeed[MOVE_FLIGHT_BACK] = 4.5f;
     baseMoveSpeed[MOVE_PITCH_RATE] = 3.14f;
 }
@@ -2098,7 +2098,7 @@ void Player::Update( uint32 p_time )
         if (!m_regenTimer)
             RegenerateAll();
 
-        if (sWorld.getConfig(CONFIG_NO_COOLDOWN) == 1)
+        if (sWorld.getConfig(CONFIG_BOOL_NO_COOLDOWN))
             RemoveAllSpellCooldown();
     }
     if (!isAlive() && !HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_GHOST))
@@ -11171,7 +11171,7 @@ uint8 Player::CanUseItem( Item *pItem, bool not_loading ) const
 {
     if (pItem)
     {
-        if (sWorld.getConfig(CONFIG_ALLOW_FLYING_MOUNTS_EVERYWHERE) == 1)
+        if (sWorld.getConfig(CONFIG_BOOL_ALLOW_FLYING_MOUNTS_EVERYWHERE))
         {
             ItemPrototype const *iProto = pItem->GetProto();
             if (iProto)
@@ -12134,7 +12134,7 @@ void Player::DestroyItemCount( Item* pItem, uint32 &count, bool update )
     if(!pItem)
         return;
 
-    if (sWorld.getConfig(CONFIG_ALLOW_FLYING_MOUNTS_EVERYWHERE) == 1)
+    if (sWorld.getConfig(CONFIG_BOOL_ALLOW_FLYING_MOUNTS_EVERYWHERE))
     {
         ItemPrototype const *pProto = sObjectMgr.GetItemPrototype(pItem->GetEntry());
         if(pProto)
@@ -20132,7 +20132,7 @@ void Player::SendInitialPacketsBeforeAddToMap()
 
     m_achievementMgr.SendAllAchievementData();
 
-    float speedrate = sWorld.getConfig(CONFIG_SPEED_GAME);
+    float speedrate = sWorld.getConfig(CONFIG_FLOAT_SPEED_GAME);
     uint32 speedtime = secsToTimeBitFields( (sWorld.GetGameTime() - sWorld.GetUptime()) + (sWorld.GetUptime() * speedrate) );
 
     data.Initialize(SMSG_LOGIN_SETTIMESPEED, 4 + 4 + 4);
@@ -21730,7 +21730,7 @@ uint32 Player::CalculateTalentsPoints() const
 
 bool Player::IsKnowHowFlyIn(uint32 mapid, uint32 zone) const
 {
-    if(sWorld.getConfig(CONFIG_ALLOW_FLYING_MOUNTS_EVERYWHERE) == 1) return true;
+    if(sWorld.getConfig(CONFIG_BOOL_ALLOW_FLYING_MOUNTS_EVERYWHERE)) return true;
     // continent checked in SpellMgr::GetSpellAllowedInLocationError at cast and area update
     uint32 v_map = GetVirtualMapForMapAndZone(mapid, zone);
     return v_map != 571 || HasSpell(54197);                 // Cold Weather Flying

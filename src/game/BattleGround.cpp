@@ -1869,7 +1869,7 @@ void BattleGround::SetBracket( PvPDifficultyEntry const* bracketEntry )
 
 bool BattleGround::ArenaPlayersCount()
 {
-    if(!isArena() || !sWorld.getConfig(CONFIG_END_ARENA_IF_NOT_ENOUGH_PLAYERS))
+    if(!isArena() || !sWorld.getConfig(CONFIG_BOOL_END_ARENA_IF_NOT_ENOUGH_PLAYERS))
         return true;
 
     //uint32 m_uiAliTeamCount = GetPlayersCountByTeam(BG_TEAM_ALLIANCE);

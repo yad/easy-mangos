@@ -3733,7 +3733,7 @@ void Spell::EffectLearnSpell(uint32 i)
 
     uint32 spellToLearn = ((m_spellInfo->Id==SPELL_ID_GENERIC_LEARN) || (m_spellInfo->Id==SPELL_ID_GENERIC_LEARN_PET)) ? damage : m_spellInfo->EffectTriggerSpell[i];
 
-    if ((sWorld.getConfig(CONFIG_ALLOW_FLYING_MOUNTS_EVERYWHERE) == 1) && (m_spellInfo->Id==55884))
+    if ((sWorld.getConfig(CONFIG_BOOL_ALLOW_FLYING_MOUNTS_EVERYWHERE)) && (m_spellInfo->Id==55884))
     {
         SpellEntry const *sEntry = sSpellStore.LookupEntry(spellToLearn);
         if(sEntry)
@@ -4802,21 +4802,6 @@ void Spell::EffectWeaponDmg(uint32 i)
                     spell_bonus += m_spellInfo->EffectBasePoints[0];
             }
             break;
-        }
-        case SPELLFAMILY_HUNTER:
-        {
-            switch(m_spellInfo->Id)
-            {
-                case 53351:    // Kill Shot Rank 1
-                case 61005:    // Kill Shot Rank 2
-                case 61006:    // Kill Shot Rank 3
-                {
-                    spellBonusNeedWeaponDamagePercentMod = true;
-                    spell_bonus += m_spellInfo->EffectBasePoints[0];
-                    spell_bonus += int32( 0.2f * m_caster->GetTotalAttackPowerValue(RANGED_ATTACK) );
-                    break;
-                }
-            }
         }
         case SPELLFAMILY_PALADIN:
         {
@@ -7346,20 +7331,17 @@ void Spell::EffectActivateSpec(uint32 /*eff_idx*/)
     ((Player*)unitTarget)->ActivateSpec(spec);
 }
 
-/*void Spell::EffectCastButtons(uint32 i)
+void Spell::EffectCastButtons(uint32 i)
 {
-    if (!unitTarget || m_caster->GetTypeId() != TYPEID_PLAYER)
+    if(m_caster->GetTypeId() != TYPEID_PLAYER)
         return;
 
-    Player *p_caster = (Player*)m_caster;
-    uint32 button_id = m_spellInfo->EffectMiscValue[i] + 132;
-    uint32 n_buttons = m_spellInfo->EffectMiscValueB[i];
+    int32 start_button = ACTION_BUTTON_SHAMAN_TOTEMS_BAR + m_spellInfo->EffectMiscValue[i];
+    int32 amount_buttons = m_spellInfo->EffectMiscValueB[i];
 
-    for (; n_buttons; n_buttons--, button_id++)
-    {
-        uint32 spell_id = p_caster->GetActionButtonSpell(button_id);
-        if (!spell_id)
-            continue;
-        p_caster->CastSpell(unitTarget, spell_id, true);
-    }
-}*/
+    for(int32 slot = 0; slot < amount_buttons; ++slot)
+        if (ActionButton const* actionButton = ((Player*)m_caster)->GetActionButton(start_button+slot))
+            if (actionButton->GetType()==ACTION_BUTTON_SPELL)
+                if (uint32 spell_id = actionButton->GetAction())
+                    m_caster->CastSpell(unitTarget,spell_id,true);
+}

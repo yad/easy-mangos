@@ -370,7 +370,7 @@ void Unit::Update( uint32 p_time )
 
     if (uint32 base_att = getAttackTimer(BASE_ATTACK))
     {
-        if(sWorld.getConfig(CONFIG_HURT_IN_REAL_TIME) != 1) // Normal MaNGOS mod
+        if(!sWorld.getConfig(CONFIG_BOOL_HURT_IN_REAL_TIME)) // Normal MaNGOS mod
             setAttackTimer(BASE_ATTACK, (p_time >= base_att ? 0 : base_att - p_time) );
         else
         {
@@ -3066,7 +3066,7 @@ SpellMissInfo Unit::MagicSpellHitResult(Unit *pVictim, SpellEntry const *spell)
         return SPELL_MISS_MISS;
 
     // cast by caster in front of victim
-    if (pVictim->HasInArc(M_PI,this) || pVictim->HasAura(19263))
+    if (pVictim->HasInArc(M_PI_F,this) || pVictim->HasAura(19263))
     {
         int32 deflect_chance = pVictim->GetTotalAuraModifier(SPELL_AURA_DEFLECT_SPELLS)*100;
         tmp+=deflect_chance;
@@ -13472,7 +13472,7 @@ Aura* Unit::GetDummyAura( uint32 spell_id ) const
 
 bool Unit::IsUnderLastManaUseEffect() const
 {
-    if( (sWorld.getConfig(CONFIG_NO_WAIT_AFTER_CAST) == 1) && (GetTypeId() == TYPEID_PLAYER) )
+    if( (sWorld.getConfig(CONFIG_BOOL_NO_WAIT_AFTER_CAST)) && (GetTypeId() == TYPEID_PLAYER) )
         return false;
     else
         return m_lastManaUseTimer;
