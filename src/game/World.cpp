@@ -1020,6 +1020,13 @@ void World::LoadConfigSettings(bool reload)
     if (m_configUint32Values[CONFIG_UINT32_GUILD_BANK_EVENT_LOG_COUNT] < GUILD_BANK_MAX_LOGS)
         m_configUint32Values[CONFIG_UINT32_GUILD_BANK_EVENT_LOG_COUNT] = GUILD_BANK_MAX_LOGS;
 
+    m_configUint32Values[CONFIG_UINT32_TIMERBAR_FATIGUE_GMLEVEL] = sConfig.GetIntDefault("TimerBar.Fatigue.GMLevel", SEC_CONSOLE);
+    m_configUint32Values[CONFIG_UINT32_TIMERBAR_FATIGUE_MAX]     = sConfig.GetIntDefault("TimerBar.Fatigue.Max", 60);
+    m_configUint32Values[CONFIG_UINT32_TIMERBAR_BREATH_GMLEVEL]  = sConfig.GetIntDefault("TimerBar.Breath.GMLevel", SEC_CONSOLE);
+    m_configUint32Values[CONFIG_UINT32_TIMERBAR_BREATH_MAX]      = sConfig.GetIntDefault("TimerBar.Breath.Max", 180);
+    m_configUint32Values[CONFIG_UINT32_TIMERBAR_FIRE_GMLEVEL]    = sConfig.GetIntDefault("TimerBar.Fire.GMLevel", SEC_CONSOLE);
+    m_configUint32Values[CONFIG_UINT32_TIMERBAR_FIRE_MAX]        = sConfig.GetIntDefault("TimerBar.Fire.Max", 1);
+
     m_configs[CONFIG_SPEED_GAME] = sConfig.GetFloatDefault("Custom.SpeedGame", 1);
     if(m_configs[CONFIG_SPEED_GAME] < 1.0f)
         m_configs[CONFIG_SPEED_GAME] = 1.0f;    
@@ -1028,13 +1035,6 @@ void World::LoadConfigSettings(bool reload)
     m_configs[CONFIG_HURT_IN_REAL_TIME] = sConfig.GetIntDefault("Custom.HurtInRealTime", 0);
     m_configs[CONFIG_NO_WAIT_AFTER_CAST] = sConfig.GetIntDefault("Custom.NoWaitAfterCast", 0);
     m_configs[CONFIG_ALLOW_FLYING_MOUNTS_EVERYWHERE] = sConfig.GetIntDefault("Custom.AllowFlyingMountsEverywhere", 0);
-
-    m_configUint32Values[CONFIG_UINT32_TIMERBAR_FATIGUE_GMLEVEL] = sConfig.GetIntDefault("TimerBar.Fatigue.GMLevel", SEC_CONSOLE);
-    m_configUint32Values[CONFIG_UINT32_TIMERBAR_FATIGUE_MAX]     = sConfig.GetIntDefault("TimerBar.Fatigue.Max", 60);
-    m_configUint32Values[CONFIG_UINT32_TIMERBAR_BREATH_GMLEVEL]  = sConfig.GetIntDefault("TimerBar.Breath.GMLevel", SEC_CONSOLE);
-    m_configUint32Values[CONFIG_UINT32_TIMERBAR_BREATH_MAX]      = sConfig.GetIntDefault("TimerBar.Breath.Max", 180);
-    m_configUint32Values[CONFIG_UINT32_TIMERBAR_FIRE_GMLEVEL]    = sConfig.GetIntDefault("TimerBar.Fire.GMLevel", SEC_CONSOLE);
-    m_configUint32Values[CONFIG_UINT32_TIMERBAR_FIRE_MAX]        = sConfig.GetIntDefault("TimerBar.Fire.Max", 1);
 
     ///- Read the "Data" directory from the config file
     std::string dataPath = sConfig.GetStringDefault("DataDir","./");
