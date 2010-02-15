@@ -771,7 +771,7 @@ class MovementInfo
             t_pos.x = x;
             t_pos.y = y;
             t_pos.z = z;
-            t_pos.o = z;
+            t_pos.o = o;
             t_time = time;
             t_seat = seat;
         }
@@ -1520,6 +1520,9 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         Spell* GetCurrentSpell(CurrentSpellTypes spellType) const { return m_currentSpells[spellType]; }
         Spell* FindCurrentSpellBySpellId(uint32 spell_id) const;
 
+        bool CheckAndIncreaseCastCounter();
+        void DecreaseCastCounter() { if (m_castCounter) --m_castCounter; }
+
         uint32 m_addDmgOnce;
         uint64 m_TotemSlot[MAX_TOTEM];
         uint64 m_ObjectSlot[4];
@@ -1680,7 +1683,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         int32 SpellBaseDamageBonusForVictim(SpellSchoolMask schoolMask, Unit *pVictim);
         int32 SpellBaseHealingBonusForVictim(SpellSchoolMask schoolMask, Unit *pVictim);
         uint32 SpellDamageBonus(Unit *pVictim, SpellEntry const *spellProto, uint32 damage, DamageEffectType damagetype, uint32 stack = 1);
-        uint32 SpellHealingBonus(Unit *pVictim, SpellEntry const *spellProto, uint32 healamount, DamageEffectType damagetype, uint32 stack = 1);
+        int32 SpellHealingBonus(Unit *pVictim, SpellEntry const *spellProto, int32 healamount, DamageEffectType damagetype, uint32 stack = 1);
         bool   isSpellBlocked(Unit *pVictim, SpellEntry const *spellProto, WeaponAttackType attackType = BASE_ATTACK);
         bool   isSpellCrit(Unit *pVictim, SpellEntry const *spellProto, SpellSchoolMask schoolMask, WeaponAttackType attackType = BASE_ATTACK);
         uint32 SpellCriticalDamageBonus(SpellEntry const *spellProto, uint32 damage, Unit *pVictim);
@@ -1848,6 +1851,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         uint32 m_CombatTimer;
 
         Spell* m_currentSpells[CURRENT_MAX_SPELL];
+        uint32 m_castCounter;                               // count casts chain of triggered spells for prevent infinity cast crashes
 
         UnitVisibility m_Visibility;
 
