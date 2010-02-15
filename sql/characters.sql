@@ -21,7 +21,7 @@
 
 DROP TABLE IF EXISTS `character_db_version`;
 CREATE TABLE `character_db_version` (
-  `required_9354_01_characters_character_action` bit(1) default NULL
+  `required_9375_01_characters_character_glyphs` bit(1) default NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 ROW_FORMAT=FIXED COMMENT='Last applied sql update to DB';
 
 --
@@ -250,6 +250,8 @@ CREATE TABLE `characters` (
   `power5` int(10) UNSIGNED NOT NULL default '0',
   `power6` int(10) UNSIGNED NOT NULL default '0',
   `power7` int(10) UNSIGNED NOT NULL default '0',
+  `specCount` tinyint(3) UNSIGNED NOT NULL default '1',
+  `activeSpec` tinyint(3) UNSIGNED NOT NULL default '0',
   PRIMARY KEY  (`guid`),
   KEY `idx_account` (`account`),
   KEY `idx_online` (`online`),
@@ -497,6 +499,28 @@ CREATE TABLE `character_gifts` (
 LOCK TABLES `character_gifts` WRITE;
 /*!40000 ALTER TABLE `character_gifts` DISABLE KEYS */;
 /*!40000 ALTER TABLE `character_gifts` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `character_glyphs`
+--
+
+DROP TABLE IF EXISTS `character_glyphs`;
+CREATE TABLE `character_glyphs` (
+  `guid` int(11) unsigned NOT NULL,
+  `spec` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `slot` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `glyph` int(11) unsigned NOT NULL DEFAULT '0',
+  PRIMARY KEY (`guid`,`spec`,`slot`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Dumping data for table `character_glyphs`
+--
+
+LOCK TABLES `character_glyphs` WRITE;
+/*!40000 ALTER TABLE `character_glyphs` DISABLE KEYS */;
+/*!40000 ALTER TABLE `character_glyphs` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --

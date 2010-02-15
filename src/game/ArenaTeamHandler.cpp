@@ -97,7 +97,7 @@ void WorldSession::HandleArenaTeamInviteOpcode(WorldPacket & recv_data)
         return;
     }
 
-    if(player->getLevel() < sWorld.getConfig(CONFIG_MAX_PLAYER_LEVEL))
+    if(player->getLevel() < sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL))
     {
         SendArenaTeamCommandResult(ERR_ARENA_TEAM_CREATE_S, "", player->GetName(), ERR_ARENA_TEAM_TARGET_TOO_LOW_S);
         return;
@@ -114,7 +114,7 @@ void WorldSession::HandleArenaTeamInviteOpcode(WorldPacket & recv_data)
     if(player->GetSocial()->HasIgnore(GetPlayer()->GetGUIDLow()))
         return;
 
-    if (!sWorld.getConfig(CONFIG_ALLOW_TWO_SIDE_INTERACTION_GUILD) && player->GetTeam() != GetPlayer()->GetTeam())
+    if (!sWorld.getConfig(CONFIG_BOOL_ALLOW_TWO_SIDE_INTERACTION_GUILD) && player->GetTeam() != GetPlayer()->GetTeam())
     {
         SendArenaTeamCommandResult(ERR_ARENA_TEAM_INVITE_SS, "", "", ERR_ARENA_TEAM_NOT_ALLIED);
         return;
@@ -165,7 +165,7 @@ void WorldSession::HandleArenaTeamAcceptOpcode(WorldPacket & /*recv_data*/)
         return;
     }
 
-    if (!sWorld.getConfig(CONFIG_ALLOW_TWO_SIDE_INTERACTION_GUILD) && _player->GetTeam() != sObjectMgr.GetPlayerTeamByGUID(at->GetCaptain()))
+    if (!sWorld.getConfig(CONFIG_BOOL_ALLOW_TWO_SIDE_INTERACTION_GUILD) && _player->GetTeam() != sObjectMgr.GetPlayerTeamByGUID(at->GetCaptain()))
     {
         // not let enemies sign petition
         SendArenaTeamCommandResult(ERR_ARENA_TEAM_CREATE_S, "", "", ERR_ARENA_TEAM_NOT_ALLIED);
@@ -329,10 +329,10 @@ void WorldSession::HandleArenaTeamLeaderOpcode(WorldPacket & recv_data)
 void WorldSession::SendArenaTeamCommandResult(uint32 team_action, const std::string& team, const std::string& player, uint32 error_id)
 {
     WorldPacket data(SMSG_ARENA_TEAM_COMMAND_RESULT, 4+team.length()+1+player.length()+1+4);
-    data << team_action;
+    data << uint32(team_action);
     data << team;
     data << player;
-    data << error_id;
+    data << uint32(error_id);
     SendPacket(&data);
 }
 
