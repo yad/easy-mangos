@@ -1427,6 +1427,9 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                     if( (spellInfo_2->SpellFamilyFlags & UI64LIT(0x2)) && spellInfo_1->Id == 23694 )
                         return false;
 
+                    // Death Wish and Heart of a Dragon
+                    if (spellInfo_1->Id == 169 && spellInfo_2->SpellIconID == 169)
+                        return false;
                     break;
                 }
                 case SPELLFAMILY_DRUID:
@@ -1472,6 +1475,10 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
 
                     // Blessing of Sanctuary (multi-family check, some from 16 spell icon spells)
                     if (spellInfo_1->Id == 67480 && spellInfo_2->Id == 20911)
+                        return false;
+
+                   // Devotion Aura and Essence if Gossamer
+                   if (spellInfo_1->SpellIconID == 291 && spellInfo_2->SpellIconID == 291)
                         return false;
 
                     break;
@@ -1590,6 +1597,10 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
             if( spellInfo_2->Id == 2825 && spellInfo_1->SpellIconID == 38 && spellInfo_1->SpellVisual[0] == 0 )
                 return false;
 
+            // Death Wish and Heart of a Dragon
+            if (spellInfo_1->Id == 169 && spellInfo_2->SpellIconID == 169 && spellInfo_2->SpellFamilyName == SPELLFAMILY_GENERIC)
+                return false;
+
             break;
         case SPELLFAMILY_PRIEST:
             if( spellInfo_2->SpellFamilyName == SPELLFAMILY_PRIEST )
@@ -1610,6 +1621,10 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                 // Power Word: Shield and Divine Aegis
                 if ((spellInfo_1->SpellIconID == 566 && spellInfo_2->SpellIconID == 2820) ||
                     (spellInfo_2->SpellIconID == 566 && spellInfo_1->SpellIconID == 2820))
+                    return false;
+
+                // Inner Fire and Consecration
+                if (spellInfo_1->SpellIconID == 51 && spellInfo_2->SpellIconID == 51 && spellInfo_2->SpellFamilyName == SPELLFAMILY_PALADIN)
                     return false;
             }
             break;
@@ -1712,6 +1727,9 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                 if( spellInfo_1->SpellIconID == 1680 && spellInfo_2->SpellIconID == 1680 )
                     return false;
             }
+            // Repentance and Track Humanoids
+            if (spellInfo_2->SpellFamilyName == SPELLFAMILY_PALADIN && spellInfo_1->SpellIconID == 316 && spellInfo_2->SpellIconID == 316)
+                    return false;
 
             // Wing Clip -> Improved Wing Clip (multi-family check)
             if( (spellInfo_1->SpellFamilyFlags & UI64LIT(0x40)) && spellInfo_2->Id == 19229 )
@@ -1755,6 +1773,11 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                     (( spellInfo_2->SpellFamilyFlags & UI64LIT(0x0008000000000000))
                     && (spellInfo_1->Id == 25899 || spellInfo_1->Id == 20911)))
                     return false;
+
+                 // Seal of Corruption/Vengeance DoT and Righteouss Fury
+                 if ((spellInfo_1->SpellIconID == 3025 && spellInfo_2->SpellIconID == 2292) ||
+                     (spellInfo_1->SpellIconID == 2292 && spellInfo_2->SpellIconID == 3025))
+                     return false;
             }
 
             // Blessing of Sanctuary (multi-family check, some from 16 spell icon spells)
@@ -1771,6 +1794,18 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
 
             // *Seal of Command and Band of Eternal Champion (multi-family check)
             if( spellInfo_1->SpellIconID==561 && spellInfo_1->SpellVisual[0]==7992 && spellId_2 == 35081)
+                return false;
+
+            // Devotion Aura and Essence of Gossamer
+            if (spellInfo_1->SpellIconID == 291 && spellInfo_2->SpellIconID == 291 && spellInfo_2->SpellFamilyName == SPELLFAMILY_GENERIC)
+                return false;
+                       
+            // Inner Fire and Consecration
+            if (spellInfo_1->SpellIconID == 51 && spellInfo_2->SpellIconID == 51 && spellInfo_2->SpellFamilyName == SPELLFAMILY_PRIEST)
+                return false;
+
+            // Repentance and Track Humanoids
+            if (spellInfo_2->SpellFamilyName == SPELLFAMILY_HUNTER && spellInfo_1->SpellIconID == 316 && spellInfo_2->SpellIconID == 316)
                 return false;
             break;
         case SPELLFAMILY_SHAMAN:
