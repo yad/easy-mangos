@@ -1330,6 +1330,14 @@ void Spell::EffectDummy(uint32 i)
                         m_caster->CastSpell(m_caster, 54861, true, m_CastItem);
                     else                                    // Knocked Up   - backfire 5%
                         m_caster->CastSpell(m_caster, 46014, true, m_CastItem);
+                    if (m_caster->GetTypeId() == TYPEID_PLAYER)
+                    {
+                        Player* pPlayer = ((Player*)m_caster);
+                        // Nitro Boosts - drop BG flag
+                        if(pPlayer->InBattleGround() && (pPlayer->HasAura(23335) || pPlayer->HasAura(23333) || pPlayer->HasAura(34976)))
+                            if(BattleGround *bg = pPlayer->GetBattleGround())
+                                bg->EventPlayerDroppedFlag(pPlayer);
+                    }
                     return;
                 case 58418:                                 // Portal to Orgrimmar
                 case 58420:                                 // Portal to Stormwind
