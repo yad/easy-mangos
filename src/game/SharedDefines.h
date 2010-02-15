@@ -910,7 +910,7 @@ enum AuraState
     AURA_STATE_SWIFTMEND                    = 15,           //   T |
     AURA_STATE_DEADLY_POISON                = 16,           //   T |
     AURA_STATE_ENRAGE                       = 17,           // C   |
-    //AURA_STATE_UNKNOWN18                  = 18,           // C  t|
+    AURA_STATE_MECHANIC_BLEED               = 18,           // C  t|
     //AURA_STATE_UNKNOWN19                  = 19,           //     | not used
     //AURA_STATE_UNKNOWN20                  = 20,           //  c  | only (45317 Suicide)
     //AURA_STATE_UNKNOWN21                  = 21,           //     | not used
@@ -1099,7 +1099,7 @@ enum Targets
     TARGET_SELF2                       = 87,
     TARGET_DIRECTLY_FORWARD            = 89,
     TARGET_NONCOMBAT_PET               = 90,
-    TARGET_IN_FRONT_OF_CASTER_30       = 104,
+    TARGET_IN_FRONT_OF_CASTER_2        = 104,
 };
 
 enum SpellMissInfo
@@ -1198,8 +1198,8 @@ enum GameObjectFlags
     GO_FLAG_TRIGGERED       = 0x00000040,                   //typically, summoned objects. Triggered by spell or other events
     GO_FLAG_UNK_8           = 0x00000080,
     GO_FLAG_UNK_9           = 0x00000100,                   //? Seen on type 33, possible meaning "destruct in progress"
-    GO_FLAG_UNK_10          = 0x00000200,                   //? Seen on type 33
-    GO_FLAG_UNK_11          = 0x00000400                    //? Seen on type 33, possibly meaning "destructed"
+    GO_FLAG_DAMAGED         = 0x00000200,                   //? Seen on type 33
+    GO_FLAG_DESTROYED       = 0x00000400                    //? Seen on type 33, possibly meaning "destructed"
 };
 
 enum TextEmotes
@@ -2429,22 +2429,49 @@ enum DiminishingGroup
     DIMINISHING_TRIGGER_STUN,                               // By aura proced stuns, usualy chance on hit talents
     DIMINISHING_CONTROL_ROOT,                               // Immobilizing effects from casted spells
     DIMINISHING_TRIGGER_ROOT,                               // Immobilizing effects from triggered spells like Frostbite
-    // Shared Class Specific
-    DIMINISHING_FEAR_CHARM_BLIND,                           // Fears & charm and Blind
-    DIMINISHING_DISORIENT,
-    DIMINISHING_HORROR,
+    DIMINISHING_FEAR_BLIND,                                 // Fears & blind
+    DIMINISHING_DISORIENT,                                  // Various disorients like Sap, Polymorph, Repentance od Wyvern Sting
+    // Warlock and Priest Specific
+    DIMINISHING_HORROR,                                     // Death Coil and Psychic Horror
     // Druid Specific
-    DIMINISHING_CYCLONE,
+    DIMINISHING_CYCLONE,                                    // From 2.3.0
     DIMINISHING_CHEAPSHOT_POUNCE,
     DIMINISHING_DISARM,                                     // From 2.3.0
     DIMINISHING_SILENCE,                                    // From 2.3.0
-    DIMINISHING_FREEZE_SLEEP,                               // Hunter's Freezing Trap
     DIMINISHING_BANISH,
+    DIMINISHING_HIBERNATE,
+    DIMINISHING_ENTRAPMENT,
+    DIMINISHING_SCATTER_SHOT,
+    DIMINISHING_MIND_CONTROL,
     // Other
     // Don't Diminish, but limit duration to 10s
     DIMINISHING_LIMITONLY
 };
 
+
+/* NOTE : vehicles and seats has their own flags in DBC,
+but for now, they are too unknown for us, to use them */
+enum CustomVehicleFLags
+{
+    VF_CANT_MOVE                    = 0x0001,                   // vehicle cant move, only turn, maybe handle by some auras?
+    VF_FACTION                      = 0x0002,                   // vehicle retain its own faction
+    VF_DESPAWN_NPC                  = 0x0004,                   // vehicle will delete npc on spellclick
+    VF_DESPAWN_AT_LEAVE             = 0x0008,                   // vehicle will be deleted when rider leaves
+    VF_CAN_BE_HEALED                = 0x0010,                   // vehicle can be healed
+    VF_GIVE_EXP                     = 0x0020,                   // vehicle will give exp for killing enemies
+    VF_MOVEMENT                     = 0x0040,                   // vehicle will move on its own, not depending on rider, however rider can cast spells
+    VF_NON_SELECTABLE               = 0x0080,                   // vehicle will be not selectable after rider enter
+    VF_FLYING                       = 0x0100,                   // Hack for now (256 in DB)
+    VF_CAST_AURA                    = 0x0200                    // Cast spell1 on player on vehicle enter and remove when he leaves.
+};
+
+enum CustomVehicleSeatFLags
+{
+    SF_MAIN_RIDER                   = 0x0001,                   // the one who controlls vehicle, can also cast spells
+    SF_UNATTACKABLE                 = 0x0002,                   // hided inside, and unatackable until vehicle is destroyed
+    SF_CAN_CAST                     = 0x0004,                   // player/npc can rotate, and cast OWN spells
+    SF_UNACCESSIBLE                 = 0x0008                    // player cant enter this seat by normal way (only by script)
+};
 enum ResponseCodes
 {
     RESPONSE_SUCCESS                                       = 0x00,

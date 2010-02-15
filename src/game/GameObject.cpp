@@ -439,13 +439,7 @@ void GameObject::Update(uint32 /*p_time*/)
             if(!m_respawnDelayTime)
                 return;
 
-            if(!m_spawnedByDefault)
-            {
-                m_respawnTime = 0;
-                return;
-            }
-
-            m_respawnTime = time(NULL) + m_respawnDelayTime;
+            m_respawnTime = m_spawnedByDefault ? time(NULL) + m_respawnDelayTime : 0;
 
             // if option not set then object will be saved at grid unload
             if(sWorld.getConfig(CONFIG_BOOL_SAVE_RESPAWN_TIME_IMMEDIATLY))
@@ -1434,4 +1428,37 @@ void GameObject::UpdateRotationFields(float rotation2 /*=0.0f*/, float rotation3
 
     SetFloatValue(GAMEOBJECT_PARENTROTATION+2, rotation2);
     SetFloatValue(GAMEOBJECT_PARENTROTATION+3, rotation3);
+}
+void GameObject::DealSiegeDamage(uint32 damage)
+{
+    if (!GetGOInfo()->destructibleBuilding.intactNumHits)
+        return;
+
+    if (m_actualHealth > damage)
+        m_actualHealth -= damage;
+    else
+        m_actualHealth = 0;
+
+    if (HasFlag(GAMEOBJECT_FLAGS, GO_FLAG_DAMAGED)) // from damaged to destroyed
+    {
+        if(!GetGOInfo()->destructibleBuilding.intactNumHits)
+        {
+            RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_DAMAGED);
+            SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_DESTROYED);
+            SetUInt32Value(GAMEOBJECT_DISPLAYID, GetGOInfo()->destructibleBuilding.destroyedDisplayId);
+        }
+    }
+    else // from intact to damaged
+    {
+        if (m_actualHealth <= GetGOInfo()->destructibleBuilding.damagedNumHits)
+        {
+            if (!GetGOInfo()->destructibleBuilding.destroyedDisplayId)
+                m_actualHealth = 0;
+            else if (!m_actualHealth)
+               m_actualHealth = 1;
+
+            SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_DAMAGED);
+            SetUInt32Value(GAMEOBJECT_DISPLAYID, GetGOInfo()->destructibleBuilding.damagedDisplayId);
+        }
+    }
 }

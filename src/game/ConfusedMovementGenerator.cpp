@@ -109,7 +109,7 @@ bool ConfusedMovementGenerator<T>::Update(T &unit, const uint32 &diff)
         return true;
 
     // ignore in case other no reaction state
-    if (unit.hasUnitState(UNIT_STAT_CAN_NOT_REACT & ~UNIT_STAT_CONFUSED))
+    if (unit.hasUnitState(UNIT_STAT_CAN_NOT_REACT & ~UNIT_STAT_CONFUSED | UNIT_STAT_ON_VEHICLE))
         return true;
 
     if (i_nextMoveTime.Passed())

@@ -869,7 +869,19 @@ bool Pet::UpdateStats(Stats stat)
     if ( stat == STAT_STAMINA )
     {
         if(owner)
-            value += float(owner->GetStat(stat)) * 0.3f;
+        {
+            float scale_coeff = 0.3f;
+            switch (owner->getClass())
+            {
+                case CLASS_HUNTER:
+                    scale_coeff = 0.45f;
+                    break;
+                case CLASS_WARLOCK:
+                    scale_coeff = 0.75f;
+                    break;
+            }
+            value += float(owner->GetStat(stat)) * scale_coeff;
+        }
     }
                                                             //warlock's and mage's pets gain 30% of owner's intellect
     else if ( stat == STAT_INTELLECT && getPetType() == SUMMON_PET )
@@ -948,7 +960,9 @@ void Pet::UpdateArmor()
 void Pet::UpdateMaxHealth()
 {
     UnitMods unitMod = UNIT_MOD_HEALTH;
+    UnitMods unitModStam = UNIT_MOD_STAT_STAMINA;
     float stamina = GetStat(STAT_STAMINA) - GetCreateStat(STAT_STAMINA);
+    stamina  *= GetModifierValue(unitModStam, TOTAL_PCT);
 
     float value   = GetModifierValue(unitMod, BASE_VALUE) + GetCreateHealth();
     value  *= GetModifierValue(unitMod, BASE_PCT);

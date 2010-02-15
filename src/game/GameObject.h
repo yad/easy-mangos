@@ -360,13 +360,13 @@ struct GameObjectInfo
             uint32 creditProxyCreature;                     //1
             uint32 empty1;                                  //2
             uint32 intactEvent;                             //3
-            uint32 empty2;                                  //4
+            uint32 damagedDisplayId;                        //4
             uint32 damagedNumHits;                          //5
             uint32 empty3;                                  //6
             uint32 empty4;                                  //7
             uint32 empty5;                                  //8
             uint32 damagedEvent;                            //9
-            uint32 empty6;                                  //10
+            uint32 destroyedDisplayId;                      //10
             uint32 empty7;                                  //11
             uint32 empty8;                                  //12
             uint32 empty9;                                  //13
@@ -689,12 +689,14 @@ class MANGOS_DLL_SPEC GameObject : public WorldObject
 
         bool isActiveObject() const { return false; }
         uint64 GetRotation() const { return m_rotation; }
+        void DealSiegeDamage(uint32 damage);
     protected:
         uint32      m_spellId;
         time_t      m_respawnTime;                          // (secs) time of next respawn (or despawn if GO have owner()),
         uint32      m_respawnDelayTime;                     // (secs) if 0 then current GO state no dependent from timer
         LootState   m_lootState;
         bool        m_spawnedByDefault;
+        int32       m_actualHealth;                         // current health state
         time_t      m_cooldownTime;                         // used as internal reaction delay time store (not state change reaction).
                                                             // For traps this: spell casting cooldown, for doors/buttons: reset time.
         std::list<uint32> m_SkillupList;

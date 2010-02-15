@@ -287,6 +287,9 @@ void Object::BuildMovementUpdate(ByteBuffer * data, uint16 updateFlags) const
                         }
                     }
                 }
+                if(((Unit*)this)->GetVehicleGUID())
+                    moveFlags2 |= (MOVEFLAG_ONTRANSPORT | MOVEFLAG_FLYING);
+
             }
             break;
             case TYPEID_PLAYER:
@@ -301,7 +304,10 @@ void Object::BuildMovementUpdate(ByteBuffer * data, uint16 updateFlags) const
                 // remove unknown, unused etc flags for now
                 player->m_movementInfo.RemoveMovementFlag(MOVEFLAG_SPLINE_ENABLED);
 
-                if(player->isInFlight())
+                if(((Unit*)this)->GetVehicleGUID())
+                    moveFlags2 |= (MOVEFLAG_ONTRANSPORT | MOVEFLAG_FLYING);
+
+                if(((Player*)this)->isInFlight())
                 {
                     ASSERT(player->GetMotionMaster()->GetCurrentMovementGeneratorType() == FLIGHT_MOTION_TYPE);
                     player->m_movementInfo.AddMovementFlag(MOVEFLAG_FORWARD);
@@ -1090,6 +1096,8 @@ WorldObject::WorldObject()
     : m_currMap(NULL), m_mapId(0), m_InstanceId(0), m_phaseMask(PHASEMASK_NORMAL),
     m_positionX(0.0f), m_positionY(0.0f), m_positionZ(0.0f), m_orientation(0.0f)
 {
+    m_notifyflags = 0;
+    m_executed_notifies = 0;
 }
 
 void WorldObject::CleanupsBeforeDelete()
@@ -1678,6 +1686,42 @@ Creature* WorldObject::SummonCreature(uint32 id, float x, float y, float z, floa
     return pCreature;
 }
 
+Vehicle* WorldObject::SummonVehicle(uint32 id, float x, float y, float z, float ang, uint32 vehicleId)
+{
+    Vehicle *v = new Vehicle;
+
+    Map *map = GetMap();
+    uint32 team = 0;
+    if (GetTypeId()==TYPEID_PLAYER)
+        team = ((Player*)this)->GetTeam();
+
+    if(!v->Create(sObjectMgr.GenerateLowGuid(HIGHGUID_VEHICLE), map, GetPhaseMask(), id, vehicleId, team))
+    {
+        delete v;
+        return NULL;
+    }
+
+    if (x == 0.0f && y == 0.0f && z == 0.0f)
+        GetClosePoint(x, y, z, v->GetObjectSize());
+
+    v->Relocate(x, y, z, ang);
+
+    if(!v->IsPositionValid())
+    {
+        sLog.outError("ERROR: Vehicle (guidlow %d, entry %d) not created. Suggested coordinates isn't valid (X: %f Y: %f)",
+            v->GetGUIDLow(), v->GetEntry(), v->GetPositionX(), v->GetPositionY());
+        delete v;
+        return NULL;
+    }
+    map->Add((Creature*)v);
+    v->AIM_Initialize();
+
+    if(GetTypeId()==TYPEID_UNIT && ((Creature*)this)->AI())
+        ((Creature*)this)->AI()->JustSummoned((Creature*)v);
+
+    return v;
+}
+
 namespace MaNGOS
 {
     class NearUsedPosDo
@@ -1697,7 +1741,7 @@ namespace MaNGOS
 
                 float x,y,z;
 
-                if( !c->isAlive() || c->hasUnitState(UNIT_STAT_NOT_MOVE) ||
+                if( !c->isAlive() || c->hasUnitState(UNIT_STAT_NOT_MOVE | UNIT_STAT_ON_VEHICLE) ||
                     !c->GetMotionMaster()->GetDestination(x,y,z) )
                 {
                     x = c->GetPositionX();
@@ -1913,10 +1957,7 @@ void WorldObject::PlayDirectSound( uint32 sound_id, Player* target /*= NULL*/ )
 
 void WorldObject::UpdateObjectVisibility()
 {
-    CellPair p = MaNGOS::ComputeCellPair(GetPositionX(), GetPositionY());
-    Cell cell(p);
-
-    GetMap()->UpdateObjectVisibility(this, cell, p);
+    GetMap()->AddNotifier(this, false);
 }
 
 void WorldObject::AddToClientUpdateList()

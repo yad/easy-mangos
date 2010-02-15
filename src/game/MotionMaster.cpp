@@ -76,7 +76,7 @@ MotionMaster::~MotionMaster()
 void
 MotionMaster::UpdateMotion(uint32 diff)
 {
-    if( i_owner->hasUnitState(UNIT_STAT_CAN_NOT_MOVE) )
+    if( i_owner->hasUnitState(UNIT_STAT_CAN_NOT_MOVE | UNIT_STAT_ON_VEHICLE) )
         return;
     assert( !empty() );
     m_cleanFlag |= MMCF_UPDATE;

@@ -451,6 +451,14 @@ void LoadDBCStores(const std::string& dataPath)
         #endif
     }
 
+    //Shaman totem bar hack-fix
+    SpellEntry *sfix1 = const_cast<SpellEntry*>(sSpellStore.LookupEntry(66842));
+    sfix1->EffectImplicitTargetA[0] = TARGET_SELF;
+    SpellEntry *sfix2 = const_cast<SpellEntry*>(sSpellStore.LookupEntry(66843));
+    sfix2->EffectImplicitTargetA[0] = TARGET_SELF;
+    SpellEntry *sfix3 = const_cast<SpellEntry*>(sSpellStore.LookupEntry(66844));
+    sfix3->EffectImplicitTargetA[0] = TARGET_SELF;
+
     for (uint32 j = 0; j < sSkillLineAbilityStore.GetNumRows(); ++j)
     {
         SkillLineAbilityEntry const *skillLine = sSkillLineAbilityStore.LookupEntry(j);
@@ -842,3 +850,4 @@ MANGOS_DLL_SPEC DBCStorage <ItemEntry>          const* GetItemDisplayStore()    
 MANGOS_DLL_SPEC DBCStorage <CreatureDisplayInfoEntry> const* GetCreatureDisplayStore() { return &sCreatureDisplayInfoStore; }
 MANGOS_DLL_SPEC DBCStorage <EmotesEntry>        const* GetEmotesStore()         { return &sEmotesStore;         }
 MANGOS_DLL_SPEC DBCStorage <EmotesTextEntry>    const* GetEmotesTextStore()     { return &sEmotesTextStore;     }
+MANGOS_DLL_SPEC DBCStorage <AchievementEntry>   const* GetAchievementStore()    { return &sAchievementStore;    }

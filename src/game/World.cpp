@@ -77,6 +77,12 @@ float World::m_MaxVisibleDistanceInFlight     = DEFAULT_VISIBILITY_DISTANCE;
 float World::m_VisibleUnitGreyDistance        = 0;
 float World::m_VisibleObjectGreyDistance      = 0;
 
+int32 World::m_visibility_notify_periodOnContinents = DEFAULT_VISIBILITY_NOTIFY_PERIOD;
+int32 World::m_visibility_notify_periodInInstances  = DEFAULT_VISIBILITY_NOTIFY_PERIOD;
+int32 World::m_visibility_notify_periodInBGArenas   = DEFAULT_VISIBILITY_NOTIFY_PERIOD;
+
+const float BGEvent[2] = {41, 42, 43};
+
 /// World constructor
 World::World()
 {
@@ -789,6 +795,8 @@ void World::LoadConfigSettings(bool reload)
             m_configUint32Values[CONFIG_UINT32_START_ARENA_POINTS],m_configUint32Values[CONFIG_UINT32_MAX_ARENA_POINTS],m_configUint32Values[CONFIG_UINT32_MAX_ARENA_POINTS]);
         m_configUint32Values[CONFIG_UINT32_START_ARENA_POINTS] = m_configUint32Values[CONFIG_UINT32_MAX_ARENA_POINTS];
     }
+    //Custom variable - end arena if 2v1 etc.
+    m_configs[CONFIG_END_ARENA_IF_NOT_ENOUGH_PLAYERS] = sConfig.GetBoolDefault("EndArenaIfNotEnoughtPlayers", false);
 
     m_configBoolValues[CONFIG_BOOL_ALL_TAXI_PATHS] = sConfig.GetBoolDefault("AllFlightPaths", false);
 
@@ -1078,7 +1086,11 @@ void World::LoadConfigSettings(bool reload)
         m_MaxVisibleDistanceInFlight = MAX_VISIBILITY_DISTANCE - m_VisibleObjectGreyDistance;
     }
 
-    ///- Read the "Data" directory from the config file
+    m_visibility_notify_periodOnContinents = sConfig.GetIntDefault("Visibility.Notify.Period.OnContinents", DEFAULT_VISIBILITY_NOTIFY_PERIOD);
+    m_visibility_notify_periodInInstances = sConfig.GetIntDefault("Visibility.Notify.Period.InInstances",   DEFAULT_VISIBILITY_NOTIFY_PERIOD);
+    m_visibility_notify_periodInBGArenas = sConfig.GetIntDefault("Visibility.Notify.Period.InBGArenas",    DEFAULT_VISIBILITY_NOTIFY_PERIOD);  
+
+    //- Read the "Data" directory from the config file
     std::string dataPath = sConfig.GetStringDefault("DataDir","./");
     if( dataPath.at(dataPath.length()-1)!='/' && dataPath.at(dataPath.length()-1)!='\\' )
         dataPath.append("/");
@@ -1455,6 +1467,11 @@ void World::SetInitialWorldSettings()
     sLog.outString( "Loading Scripts text locales..." );    // must be after Load*Scripts calls
     sObjectMgr.LoadDbScriptStrings();
 
+    sLog.outString( "Loading VehicleData..." );
+    sObjectMgr.LoadVehicleData();
+    sLog.outString( "Loading VehicleSeatData..." );
+    sObjectMgr.LoadVehicleSeatData();
+
     sLog.outString( "Loading CreatureEventAI Texts...");
     sEventAIMgr.LoadCreatureEventAI_Texts(false);       // false, will checked in LoadCreatureEventAI_Scripts
 
@@ -1597,6 +1614,7 @@ void World::Update(uint32 diff)
     if(m_gameTime > m_NextDailyQuestReset)
     {
         ResetDailyQuests();
+        RandomBG();
         m_NextDailyQuestReset += DAY;
     }
 
@@ -2164,7 +2182,20 @@ void World::InitDailyQuestResetTime()
         m_NextDailyQuestReset = (curTime >= curDayResetTime) ? curDayResetTime + DAY : curDayResetTime;
     }
 }
+void World::RandomBG()
+{
+    //stop event
+    for(int i = 0; i < 3; i++)
+    {
+        sGameEventMgr.StopEvent(BGEvent[i]);
+        WorldDatabase.PExecute("UPDATE game_event SET occurence = 5184000 WHERE entry = %f", BGEvent[i]);
+    }
+    //add event     
+    uint8 random = urand(0,2);
+    sGameEventMgr.StartEvent(BGEvent[random]);
+    WorldDatabase.PExecute("UPDATE game_event SET occurence = 1400 WHERE entry = %f", BGEvent[random]);
 
+}
 void World::ResetDailyQuests()
 {
     sLog.outDetail("Daily quests reset for all characters.");

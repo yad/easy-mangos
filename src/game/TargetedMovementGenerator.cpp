@@ -34,7 +34,7 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner)
     if (!i_target.isValid() || !i_target->IsInWorld())
         return;
 
-    if (owner.hasUnitState(UNIT_STAT_NOT_MOVE))
+    if (owner.hasUnitState(UNIT_STAT_NOT_MOVE | UNIT_STAT_ON_VEHICLE))
         return;
 
     // prevent redundant micro-movement for pets, other followers.
@@ -112,7 +112,7 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
     if (!owner.isAlive())
         return true;
 
-    if (owner.hasUnitState(UNIT_STAT_NOT_MOVE))
+    if (owner.hasUnitState(UNIT_STAT_NOT_MOVE | UNIT_STAT_ON_VEHICLE))
     {
         D::_clearUnitStateMove(owner);
         return true;

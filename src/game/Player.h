@@ -1060,7 +1060,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         std::string afkMsg;
         std::string dndMsg;
 
-        uint32 GetBarberShopCost(uint8 newhairstyle, uint8 newhaircolor, uint8 newfacialhair);
+        uint32 GetBarberShopCost(uint8 newhairstyle, uint8 newhaircolor, uint8 newfacialhair, BarberShopStyleEntry const* newSkin=NULL);
 
         PlayerSocial *GetSocial() { return m_social; }
 
@@ -1258,6 +1258,12 @@ class MANGOS_DLL_SPEC Player : public Unit
         {
             Item* mainItem = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND);
             return mainItem && mainItem->GetProto()->InventoryType == INVTYPE_2HWEAPON && !CanTitanGrip();
+        }
+        bool IsTwoHandUsedInDualWield() const
+        {
+            Item* offItem = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
+            Item* mainItem = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND);
+            return mainItem && mainItem->GetProto()->InventoryType == INVTYPE_2HWEAPON || offItem && offItem->GetProto()->InventoryType == INVTYPE_2HWEAPON;
         }
         void SendNewItem( Item *item, uint32 count, bool received, bool created, bool broadcast = false );
         bool BuyItemFromVendor(uint64 vendorguid, uint32 item, uint8 count, uint8 bag, uint8 slot);
@@ -1814,6 +1820,7 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         bool SetPosition(float x, float y, float z, float orientation, bool teleport = false);
         void UpdateUnderwaterState( Map * m, float x, float y, float z );
+        void CheckTradeDistance();
 
         void SendMessageToSet(WorldPacket *data, bool self);// overwrite Object::SendMessageToSet
         void SendMessageToSetInRange(WorldPacket *data, float fist, bool self);
@@ -2119,6 +2126,10 @@ class MANGOS_DLL_SPEC Player : public Unit
         bool HasMovementFlag(MovementFlags f) const;        // for script access to m_movementInfo.HasMovementFlag
         void UpdateFallInformationIfNeed(MovementInfo const& minfo,uint16 opcode);
         Unit *m_mover;
+        Unit *m_mover_in_queve;
+
+        void SetMoverInQueve(Unit* pet) {m_mover_in_queve = pet ? pet : this; }
+
         void SetFallInformation(uint32 time, float z)
         {
             m_lastFallTime = time;
@@ -2138,8 +2149,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         void SetClientControl(Unit* target, uint8 allowMove);
         void SetMover(Unit* target) { m_mover = target ? target : this; }
 
-        void EnterVehicle(Vehicle *vehicle);
-        void ExitVehicle(Vehicle *vehicle);
+        // vehicle system
+        void SendEnterVehicle(Vehicle *vehicle, VehicleSeatEntry const *veSeat);
 
         uint64 GetFarSight() const { return GetUInt64Value(PLAYER_FARSIGHT); }
         void SetFarSightGUID(uint64 guid);
@@ -2183,7 +2194,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         void UpdateVisibilityOf(WorldObject const* viewPoint, WorldObject* target);
 
         template<class T>
-            void UpdateVisibilityOf(WorldObject const* viewPoint,T* target, UpdateData& data, UpdateDataMapType& data_updates, std::set<WorldObject*>& visibleNow);
+            void UpdateVisibilityOf(WorldObject const* viewPoint,T* target, UpdateData& data, std::set<Unit*>& visibleNow);
 
         // Stealth detection system
         void HandleStealthedUnitsDetection();
@@ -2240,8 +2251,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         uint8 GetSubGroup() const { return m_group.getSubGroup(); }
         uint32 GetGroupUpdateFlag() const { return m_groupUpdateMask; }
         void SetGroupUpdateFlag(uint32 flag) { m_groupUpdateMask |= flag; }
-        const uint64& GetAuraUpdateMask() const { return m_auraUpdateMask; }
-        void SetAuraUpdateMask(uint8 slot) { m_auraUpdateMask |= (uint64(1) << slot); }
         Player* GetNextRandomRaidMember(float radius);
         PartyResult CanUninviteFromGroup() const;
         // BattleGround Group System
@@ -2281,6 +2290,11 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         bool isActiveObject() const { return true; }
         bool canSeeSpellClickOn(Creature const* creature) const;
+        uint32 GetActionButtonSpell(uint8 button) const
+        {
+            ActionButtonList::const_iterator ab = m_actionButtons.find(button);
+            return ab != m_actionButtons.end() && ab->second.uState != ACTIONBUTTON_DELETED && ab->second.GetType() == ACTION_BUTTON_SPELL ? ab->second.GetAction() : 0;
+        }
     protected:
 
         uint32 m_contestedPvPTimer;
@@ -2490,7 +2504,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         GroupReference m_originalGroup;
         Group *m_groupInvite;
         uint32 m_groupUpdateMask;
-        uint64 m_auraUpdateMask;
 
         uint64 m_miniPet;
 

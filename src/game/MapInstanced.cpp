@@ -43,6 +43,16 @@ void MapInstanced::InitVisibilityDistance()
     }
 }
 
+void MapInstanced::InitializeNotifyTimers()
+{
+    if(m_InstancedMaps.empty())
+        return;
+    for (InstancedMaps::iterator i = m_InstancedMaps.begin(); i != m_InstancedMaps.end(); ++i)
+    {
+        (*i).second->InitializeNotifyTimers();
+    }
+}
+
 void MapInstanced::Update(const uint32& t)
 {
     // take care of loaded GridMaps (when unused, unload it!)

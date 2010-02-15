@@ -42,7 +42,7 @@ HomeMovementGenerator<Creature>::_setTargetLocation(Creature & owner)
     if( !&owner )
         return;
 
-    if( owner.hasUnitState(UNIT_STAT_NOT_MOVE) )
+    if( owner.hasUnitState(UNIT_STAT_NOT_MOVE | UNIT_STAT_ON_VEHICLE) )
         return;
 
     float x, y, z;

@@ -103,6 +103,7 @@ enum SpellSpecific
     SPELL_FOOD              = 20,
     SPELL_DRINK             = 21,
     SPELL_FOOD_AND_DRINK    = 22,
+    SPELL_MAGE_BOMB         = 23,
 };
 
 SpellSpecific GetSpellSpecific(uint32 spellId);
@@ -249,7 +250,7 @@ inline bool IsCasterSourceTarget(uint32 target)
         case TARGET_SELF2:
         case TARGET_DIRECTLY_FORWARD:
         case TARGET_NONCOMBAT_PET:
-        case TARGET_IN_FRONT_OF_CASTER_30:
+        case TARGET_IN_FRONT_OF_CASTER_2:
             return true;
         default:
             break;
@@ -320,7 +321,7 @@ inline bool IsAreaEffectTarget( Targets target )
         case TARGET_AREAEFFECT_CUSTOM_2:
         case TARGET_ALL_RAID_AROUND_CASTER:
         case TARGET_AREAEFFECT_PARTY_AND_CLASS:
-        case TARGET_IN_FRONT_OF_CASTER_30:
+        case TARGET_IN_FRONT_OF_CASTER_2:
             return true;
         default:
             break;
@@ -424,7 +425,7 @@ inline uint32 GetDispellMask(DispelType dispel)
     else
         return (1 << dispel);
 }
-
+int32 ApplyHasteToChannelSpell(int32 orginalDuration, SpellEntry const* spellInfo, Spell const* spell);
 // Diminishing Returns interaction with spells
 DiminishingGroup GetDiminishingReturnsGroupForSpell(SpellEntry const* spellproto, bool triggered);
 bool IsDiminishingReturnsGroupDurationLimited(DiminishingGroup group);

@@ -86,6 +86,33 @@ void BattleGroundWS::Update(uint32 diff)
                 RespawnFlagAfterDrop(HORDE);
             }
         }
+        if (m_EndTimer > 0)
+        {
+            m_EndTimer -= diff;
+
+            if(GetEndTimeMinutes() != m_LastEndTimeMinutes)
+            {
+                m_LastEndTimeMinutes = GetEndTimeMinutes();
+                UpdateWorldState(BG_WS_TIME_REMAINING, m_LastEndTimeMinutes);
+            }
+        }
+        else
+        {
+            uint32 h = GetTeamScore(HORDE);
+            uint32 a = GetTeamScore(ALLIANCE);
+            if(h || a)
+            {
+                if(h > a)
+                    EndBattleGround(HORDE);
+                else if(a > h)
+                    EndBattleGround(ALLIANCE);
+                else
+                    EndBattleGround(m_LastCapturedFlagTeam);
+            }
+            else
+                // tie
+                EndBattleGround(0);
+        }
     }
 }
 
@@ -164,6 +191,8 @@ void BattleGroundWS::EventPlayerCapturedFlag(Player *Source)
 {
     if (GetStatus() != STATUS_IN_PROGRESS)
         return;
+
+    m_LastCapturedFlagTeam = Source->GetTeam();
 
     uint32 winner = 0;
 
@@ -525,7 +554,9 @@ void BattleGroundWS::Reset()
     m_ReputationCapture = (isBGWeekend) ? 45 : 35;
     m_HonorWinKills = (isBGWeekend) ? 3 : 1;
     m_HonorEndKills = (isBGWeekend) ? 4 : 2;
-
+    m_EndTimer = BG_WS_TIME_LIMIT;
+    m_LastCapturedFlagTeam = 0;
+    m_LastEndTimeMinutes = BG_WS_TIME_LIMIT / MINUTE / IN_MILISECONDS;
 }
 
 void BattleGroundWS::EndBattleGround(uint32 winner)
@@ -627,4 +658,5 @@ void BattleGroundWS::FillInitialWorldStates(WorldPacket& data)
     else
         data << uint32(BG_WS_FLAG_STATE_ALLIANCE) << uint32(1);
 
+     data << uint32(BG_WS_TIME_REMAINING) << uint32(GetEndTimeMinutes());
 }

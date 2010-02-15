@@ -33,6 +33,7 @@
 #include "Util.h"
 #include "Formulas.h"
 #include "GridNotifiersImpl.h"
+#include "GameEventMgr.h"
 
 namespace MaNGOS
 {
@@ -275,6 +276,8 @@ BattleGround::BattleGround()
     m_StartMessageIds[BG_STARTING_EVENT_SECOND] = LANG_BG_WS_START_ONE_MINUTE;
     m_StartMessageIds[BG_STARTING_EVENT_THIRD]  = LANG_BG_WS_START_HALF_MINUTE;
     m_StartMessageIds[BG_STARTING_EVENT_FOURTH] = LANG_BG_WS_HAS_BEGUN;
+
+    m_uiPlayersJoined  = 0;
 }
 
 BattleGround::~BattleGround()
@@ -713,7 +716,7 @@ void BattleGround::EndBattleGround(uint32 winner)
     {
         winner_arena_team = sObjectMgr.GetArenaTeamById(GetArenaTeamIdForTeam(winner));
         loser_arena_team = sObjectMgr.GetArenaTeamById(GetArenaTeamIdForTeam(GetOtherTeam(winner)));
-        if (winner_arena_team && loser_arena_team)
+        if (winner_arena_team && loser_arena_team && ArenaPlayersCount())
         {
             loser_rating = loser_arena_team->GetStats().rating;
             winner_rating = winner_arena_team->GetStats().rating;
@@ -834,8 +837,21 @@ void BattleGround::EndBattleGround(uint32 winner)
 
 uint32 BattleGround::GetBonusHonorFromKill(uint32 kills) const
 {
+    uint32 reqmap = 0;
+    uint32 BGEventMultifier = 1;
+    //arathi basin
+    if(sGameEventMgr.IsActiveEvent(41))
+        reqmap = 529;
+    // eye of storm
+    if(sGameEventMgr.IsActiveEvent(42))
+        reqmap = 566;
+    // warsong gulch
+    if(sGameEventMgr.IsActiveEvent(43))
+       reqmap = 489;
+    if (GetMapId() == reqmap)
+      BGEventMultifier *= 1.5;
     //variable kills means how many honorable kills you scored (so we need kills * honor_for_one_kill)
-    return (uint32)MaNGOS::Honor::hk_honor_at_level(GetMaxLevel(), kills);
+    return ((uint32)MaNGOS::Honor::hk_honor_at_level(GetMaxLevel(), kills)*BGEventMultifier);
 }
 
 uint32 BattleGround::GetBattlemasterEntry() const
@@ -1158,6 +1174,8 @@ void BattleGround::Reset()
     for(BattleGroundScoreMap::const_iterator itr = m_PlayerScores.begin(); itr != m_PlayerScores.end(); ++itr)
         delete itr->second;
     m_PlayerScores.clear();
+
+    m_uiPlayersJoined  = 0;
 }
 
 void BattleGround::StartBattleGround()
@@ -1228,13 +1246,17 @@ void BattleGround::AddPlayer(Player *plr)
             plr->SetHealth(plr->GetMaxHealth());
             plr->SetPower(POWER_MANA, plr->GetMaxPower(POWER_MANA));
         }
+        m_uiPlayersJoined++;
     }
     else
     {
         if(GetStatus() == STATUS_WAIT_JOIN)                 // not started yet
-            plr->CastSpell(plr, SPELL_PREPARATION, true);   // reduces all mana cost of spells.
-    }
-
+		{
+			plr->CastSpell(plr, SPELL_PREPARATION, true);   // reduces all mana cost of spells.
+			if (plr->IsMounted())
+                plr->RemoveSpellsCausingAura(SPELL_AURA_MOUNTED); // dismount on bg start
+		}
+	}
     plr->GetAchievementMgr().ResetAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HEALING_DONE, ACHIEVEMENT_CRITERIA_CONDITION_MAP, GetMapId());
     plr->GetAchievementMgr().ResetAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_DAMAGE_DONE, ACHIEVEMENT_CRITERIA_CONDITION_MAP, GetMapId());
 
@@ -1814,7 +1836,11 @@ void BattleGround::CheckArenaWinConditions()
     else if (GetPlayersCountByTeam(ALLIANCE) && !GetAlivePlayersCountByTeam(HORDE))
         EndBattleGround(ALLIANCE);
 }
-
+void BattleGround::UpdateArenaWorldState()
+{
+    UpdateWorldState(0xe10, GetAlivePlayersCountByTeam(HORDE));
+    UpdateWorldState(0xe11, GetAlivePlayersCountByTeam(ALLIANCE));
+}
 void BattleGround::SetBgRaid( uint32 TeamID, Group *bg_raid )
 {
     Group* &old_raid = TeamID == ALLIANCE ? m_BgRaids[BG_TEAM_ALLIANCE] : m_BgRaids[BG_TEAM_HORDE];
@@ -1839,4 +1865,18 @@ void BattleGround::SetBracket( PvPDifficultyEntry const* bracketEntry )
 {
     m_BracketId  = bracketEntry->GetBracketId();
     SetLevelRange(bracketEntry->minLevel,bracketEntry->maxLevel);
+}
+
+bool BattleGround::ArenaPlayersCount()
+{
+    if(!isArena() || !sWorld.getConfig(CONFIG_END_ARENA_IF_NOT_ENOUGH_PLAYERS))
+        return true;
+
+    //uint32 m_uiAliTeamCount = GetPlayersCountByTeam(BG_TEAM_ALLIANCE);
+    //uint32 m_uiHordeTeamCount = GetPlayersCountByTeam(BG_TEAM_HORDE);
+    //if(m_uiAliTeamCount < GetArenaType() || m_uiHordeTeamCount < GetArenaType())
+    if(GetBgMap()->GetPlayers().getSize() < GetArenaType()*2 && m_uiPlayersJoined < GetArenaType()*2)
+        return false;
+ 
+    return true;
 }

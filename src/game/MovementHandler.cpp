@@ -249,7 +249,7 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
     }
 
     /* handle special cases */
-    if (movementInfo.HasMovementFlag(MOVEFLAG_ONTRANSPORT))
+    if (movementInfo.HasMovementFlag(MOVEFLAG_ONTRANSPORT) && !mover->GetVehicleGUID())
     {
         // transports size limited
         // (also received at zeppelin/lift leave by some reason with t_* as absolute in continent coordinates, can be safely skipped)
@@ -296,6 +296,17 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
     {
         // now client not include swimming flag in case jumping under water
         plMover->SetInWater( !plMover->IsInWater() || plMover->GetBaseMap()->IsUnderWater(movementInfo.GetPos()->x, movementInfo.GetPos()->y, movementInfo.GetPos()->z) );
+    }
+    if (movementInfo.HasMovementFlag(MOVEFLAG_SWIMMING))
+    {
+        if(mover->GetTypeId() == TYPEID_UNIT)
+        {
+            if(((Creature*)mover)->isVehicle() && !((Creature*)mover)->canSwim())
+            {
+                // NOTE : we should enter evade mode here, but...
+                ((Vehicle*)mover)->SetSpawnDuration(1);
+            }
+        }
     }
 
     /*----------------------*/
@@ -355,7 +366,11 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
     else                                                    // creature charmed
     {
         if(mover->IsInWorld())
+        {
             mover->GetMap()->CreatureRelocation((Creature*)mover, movementInfo.GetPos()->x, movementInfo.GetPos()->y, movementInfo.GetPos()->z, movementInfo.GetPos()->o);
+            if(((Creature*)mover)->isVehicle())
+                ((Vehicle*)mover)->RellocatePassengers(mover->GetMap());
+        }
     }
 }
 
@@ -443,6 +458,12 @@ void WorldSession::HandleSetActiveMoverOpcode(WorldPacket &recv_data)
     uint64 guid;
     recv_data >> guid;
 
+    if(_player->m_mover_in_queve && _player->m_mover_in_queve->GetGUID() == guid)
+    {
+        _player->m_mover = _player->m_mover_in_queve;
+        _player->m_mover_in_queve = NULL;
+    }
+
     if(_player->m_mover->GetGUID() != guid)
     {
         sLog.outError("HandleSetActiveMoverOpcode: incorrect mover guid: mover is " I64FMT " and should be " I64FMT, _player->m_mover->GetGUID(), guid);
@@ -477,7 +498,7 @@ void WorldSession::HandleDismissControlledVehicle(WorldPacket &recv_data)
     sLog.outDebug("WORLD: Recvd CMSG_DISMISS_CONTROLLED_VEHICLE");
     recv_data.hexlike();
 
-    uint64 vehicleGUID = _player->GetCharmGUID();
+    uint64 vehicleGUID = _player->GetVehicleGUID();
 
     if(!vehicleGUID)                                        // something wrong here...
     {
@@ -494,11 +515,163 @@ void WorldSession::HandleDismissControlledVehicle(WorldPacket &recv_data)
 
     _player->m_movementInfo = mi;
 
-    // using charm guid, because we don't have vehicle guid...
-    if(Vehicle *vehicle = _player->GetMap()->GetVehicle(vehicleGUID))
+    if(Vehicle *vehicle = ObjectAccessor::GetVehicle(vehicleGUID))
     {
-        // Aura::HandleAuraControlVehicle will call Player::ExitVehicle
-        vehicle->RemoveSpellsCausingAura(SPELL_AURA_CONTROL_VEHICLE);
+        if(vehicle->GetVehicleFlags() & VF_DESPAWN_AT_LEAVE)
+            vehicle->Dismiss();
+        else
+            _player->ExitVehicle();
+    }
+}
+
+void WorldSession::HandleRequestVehicleExit(WorldPacket &recv_data)
+{
+    sLog.outDebug("WORLD: Recvd CMSG_REQUEST_VEHICLE_EXIT");
+    recv_data.hexlike();
+
+    uint64 vehicleGUID = _player->GetVehicleGUID();
+
+    if(!vehicleGUID)                                        // something wrong here...
+        return;
+
+    if(Vehicle *vehicle = ObjectAccessor::GetVehicle(vehicleGUID))
+    {
+        _player->ExitVehicle();
+    }
+}
+
+void WorldSession::HandleRequestVehiclePrevSeat(WorldPacket &recv_data)
+{
+    sLog.outDebug("WORLD: Recvd CMSG_REQUEST_VEHICLE_PREV_SEAT");
+    recv_data.hexlike();
+
+    uint64 vehicleGUID = _player->GetVehicleGUID();
+
+    if(!vehicleGUID)                                        // something wrong here...
+        return;
+
+    if(Vehicle *vehicle = ObjectAccessor::GetVehicle(vehicleGUID))
+    {
+        int8 prv_seat = _player->m_SeatData.seat;
+        if(Vehicle *v = vehicle->GetNextEmptySeat(&prv_seat, false, false))
+        {
+            vehicle->RemovePassenger(_player);
+            _player->EnterVehicle(v, prv_seat, false);
+        }
+    }
+}
+
+void WorldSession::HandleRequestVehicleNextSeat(WorldPacket &recv_data)
+{
+    sLog.outDebug("WORLD: Recvd CMSG_REQUEST_VEHICLE_NEXT_SEAT");
+    recv_data.hexlike();
+
+    uint64 vehicleGUID = _player->GetVehicleGUID();
+
+    if(!vehicleGUID)                                        // something wrong here...
+        return;
+
+    if(Vehicle *vehicle = ObjectAccessor::GetVehicle(vehicleGUID))
+    {
+        int8 nxt_seat = _player->m_SeatData.seat;
+        if(Vehicle *v = vehicle->GetNextEmptySeat(&nxt_seat, true, false))
+        {
+            vehicle->RemovePassenger(_player);
+            _player->EnterVehicle(v, nxt_seat, false);
+        }
+    }
+}
+
+void WorldSession::HandleRequestVehicleSwitchSeat(WorldPacket &recv_data)
+{
+    sLog.outDebug("WORLD: Recvd CMSG_REQUEST_VEHICLE_SWITCH_SEAT");
+    recv_data.hexlike();
+
+    uint64 vehicleGUID = _player->GetVehicleGUID();
+
+    if(!vehicleGUID)                                        // something wrong here...
+        return;
+
+    if(Vehicle *vehicle = ObjectAccessor::GetVehicle(vehicleGUID))
+    {
+        uint64 guid = 0;
+        if(!recv_data.readPackGUID(guid))
+            return;
+
+        int8 seatId = 0;
+        recv_data >> seatId;
+
+        if(guid)
+        {
+            if(vehicleGUID != guid)
+            {
+                if(Vehicle *veh = ObjectAccessor::GetVehicle(guid))
+                {
+                    if(!_player->IsWithinDistInMap(veh, 10))
+                        return;
+
+                    if(Vehicle *v = veh->FindFreeSeat(&seatId, false))
+                    {
+                        vehicle->RemovePassenger(_player);
+                        _player->EnterVehicle(v, seatId, false);
+                    }
+                }
+                return;
+            }
+        }
+        if(Vehicle *v = vehicle->FindFreeSeat(&seatId, false))
+        {
+            vehicle->RemovePassenger(_player);
+            _player->EnterVehicle(v, seatId, false);
+        }
+    }
+}
+
+void WorldSession::HandleChangeSeatsOnControlledVehicle(WorldPacket &recv_data)
+{
+    sLog.outDebug("WORLD: Recvd CMSG_CHANGE_SEATS_ON_CONTROLLED_VEHICLE");
+    recv_data.hexlike();
+
+    uint64 vehicleGUID = _player->GetVehicleGUID();
+
+    if(!vehicleGUID)                                        // something wrong here...
+        return;
+
+    if(Vehicle *vehicle = ObjectAccessor::GetVehicle(vehicleGUID))
+    {
+        MovementInfo mi(recv_data);
+        //_player->m_movementInfo = mi;
+
+        uint64 guid = 0;
+        if(!recv_data.readPackGUID(guid))
+            return;
+
+        int8 seatId = 0;
+        recv_data >> seatId;
+
+        if(guid)
+        {
+            if(vehicleGUID != guid)
+            {
+                if(Vehicle *veh = ObjectAccessor::GetVehicle(guid))
+                {
+                    if(!_player->IsWithinDistInMap(veh, 10))
+                        return;
+
+                    if(Vehicle *v = veh->FindFreeSeat(&seatId, false))
+                    {
+                        vehicle->RemovePassenger(_player);
+                        _player->EnterVehicle(v, seatId, false);
+                    }
+                }
+                return;
+            }
+        }
+        if(Vehicle *v = vehicle->FindFreeSeat(&seatId, false))
+        {
+            vehicle->RemovePassenger(_player);
+            _player->EnterVehicle(v, seatId, false);
+        }
     }
 }
 
