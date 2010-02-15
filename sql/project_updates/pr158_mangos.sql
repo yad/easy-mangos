@@ -1,48 +1,72 @@
 /* Fixes commited by m33ts4k0z */
 /* Priests 3.3.0 -- Staves Spell clean-up */
 DELETE FROM playercreateinfo_spell WHERE spell=227 AND class=5;
-
 /* Priests Creation - 3.3.0 -- Staves */
-INSERT INTO playercreateinfo_spell VALUES (1,5,227,'Staves'),(8,5,227,'Staves'),(10,5,227,'Staves'),(11,5,227,'Staves'),(5,5,227,'Staves'),(4,5,227,'Staves'),(3,5,227,'Staves');
-
-/* Insert new item "Worn Greatsword" for Warrior creation - 3.3.0 */
-INSERT INTO item_template VALUES (49778,2,8,-1,'Worn Greatsword',2380,1,0,0,1,45,9,17,-1,-1,2,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,5,0,0,0,0,0,0,0,0,0,0,0,2900,0,0,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,'',0,0,0,0,0,1,1,0,0,0,0,25,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'',0,0,0,0);
+INSERT INTO playercreateinfo_spell VALUES (1,5,227,'Staves');
+INSERT INTO playercreateinfo_spell VALUES (8,5,227,'Staves');
+INSERT INTO playercreateinfo_spell VALUES (10,5,227,'Staves');
+INSERT INTO playercreateinfo_spell VALUES (11,5,227,'Staves');
+INSERT INTO playercreateinfo_spell VALUES (5,5,227,'Staves');
+INSERT INTO playercreateinfo_spell VALUES (4,5,227,'Staves');
+INSERT INTO playercreateinfo_spell VALUES (3,5,227,'Staves');
 
 
 /* Warriors 3.3.0 -- Two-Handed Swords Spell clean-up */
 DELETE FROM playercreateinfo_spell WHERE spell=202 AND class=1;
-
-
 /* Warriors Creation - 3.3.0 -- Two-Handed Swords */
-INSERT INTO playercreateinfo_spell VALUES (1,1,202,'Two-Handed Swords'),(2,1,202,'Two-Handed Swords'),(3,1,202,'Two-Handed Swords'),(5,1,202,'Two-Handed Swords'),(11,1,202,'Two-Handed Swords'),(6,1,202,'Two-Handed Swords'),(7,1,202,'Two-Handed Swords'),(8,1,202,'Two-Handed Swords'),(4,1,202,'Two-Handed Swords');
+INSERT INTO playercreateinfo_spell VALUES (1,1,202,'Two-Handed Swords');
+INSERT INTO playercreateinfo_spell VALUES (2,1,202,'Two-Handed Swords');
+INSERT INTO playercreateinfo_spell VALUES (3,1,202,'Two-Handed Swords');
+INSERT INTO playercreateinfo_spell VALUES (5,1,202,'Two-Handed Swords');
+INSERT INTO playercreateinfo_spell VALUES (11,1,202,'Two-Handed Swords');
+INSERT INTO playercreateinfo_spell VALUES (6,1,202,'Two-Handed Swords');
+INSERT INTO playercreateinfo_spell VALUES (7,1,202,'Two-Handed Swords');
+INSERT INTO playercreateinfo_spell VALUES (8,1,202,'Two-Handed Swords');
+INSERT INTO playercreateinfo_spell VALUES (4,1,202,'Two-Handed Swords');
+
 
 /* Hunter 3.3.0 -- Two-Handed Axes Spell clean-up */
 DELETE FROM playercreateinfo_spell WHERE spell=197 AND class=3;
-
 /* Hunters Creation - 3.3.0 -- Two-Handed Axes */
-INSERT INTO playercreateinfo_spell VALUES (10,3,197,'Two-Handed Axes'),(2,3,197,'Two-Handed Axes'),(11,3,197,'Two-Handed Axes'),(8,3,197,'Two-Handed Axes'),(4,3,197,'Two-Handed Axes'),(6,3,197,'Two-Handed Axes'),(3,3,197,'Two-Handed Axes');
+INSERT INTO playercreateinfo_spell VALUES (10,3,197,'Two-Handed Axes');
+INSERT INTO playercreateinfo_spell VALUES (2,3,197,'Two-Handed Axes');
+INSERT INTO playercreateinfo_spell VALUES (11,3,197,'Two-Handed Axes');
+INSERT INTO playercreateinfo_spell VALUES (8,3,197,'Two-Handed Axes');
+INSERT INTO playercreateinfo_spell VALUES (4,3,197,'Two-Handed Axes');
+INSERT INTO playercreateinfo_spell VALUES (6,3,197,'Two-Handed Axes');
+INSERT INTO playercreateinfo_spell VALUES (3,3,197,'Two-Handed Axes');
 
 
 /* Warlocks 3.3.0 -- Staves Spell clean-up */
 DELETE FROM playercreateinfo_spell WHERE spell=227 AND class=9;
-
 /* Warlocks Creation - 3.3.0 -- Staves */
-INSERT INTO playercreateinfo_spell VALUES (1,9,227,'Staves'),(5,9,227,'Staves'),(10,9,227,'Staves'),(7,9,227,'Staves'),(2,9,227,'Staves');
-
-
-/* Insert new item "Worn Dirk" for Rogue creation - 3.3.0 */
-INSERT INTO item_template VALUES (50055,2,15,-1,'Worn Dirk',6442,1,0,0,1,36,7,13,-1,-1,2,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,2,0,0,0,0,0,0,0,0,0,0,0,1600,0,0,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,'',0,0,0,0,0,1,3,0,0,0,0,16,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'',0,0,0,0);
+INSERT INTO playercreateinfo_spell VALUES (1,9,227,'Staves');
+INSERT INTO playercreateinfo_spell VALUES (5,9,227,'Staves');
+INSERT INTO playercreateinfo_spell VALUES (10,9,227,'Staves');
+INSERT INTO playercreateinfo_spell VALUES (7,9,227,'Staves');
+INSERT INTO playercreateinfo_spell VALUES (2,9,227,'Staves');
 
 
 /* Rogues 3.3.0 -- Dual Wield Spell clean-up */
 DELETE FROM playercreateinfo_spell WHERE spell=674 AND class=4;
-
 /* Rogues Creation - 3.3.0 -- Dual Wield */
-INSERT INTO playercreateinfo_spell VALUES (8,4,674,'Dual Wield'),(5,4,674,'Dual Wield'),(10,4,674,'Dual Wield'),(7,4,674,'Dual Wield'),(2,4,674,'Dual Wield'),(1,4,674,'Dual Wield'),(4,4,674,'Dual Wield'),(3,4,674,'Dual Wield');
+INSERT INTO playercreateinfo_spell VALUES (8,4,674,'Dual Wield');
+INSERT INTO playercreateinfo_spell VALUES (5,4,674,'Dual Wield');
+INSERT INTO playercreateinfo_spell VALUES (10,4,674,'Dual Wield');
+INSERT INTO playercreateinfo_spell VALUES (7,4,674,'Dual Wield');
+INSERT INTO playercreateinfo_spell VALUES (2,4,674,'Dual Wield');
+INSERT INTO playercreateinfo_spell VALUES (1,4,674,'Dual Wield');
+INSERT INTO playercreateinfo_spell VALUES (4,4,674,'Dual Wield');
+INSERT INTO playercreateinfo_spell VALUES (3,4,674,'Dual Wield');
+
+/* Insert new item "Worn Greatsword" for Warrior creation - 3.3.0 */
+DELETE FROM item_template WHERE entry IN(49778, 50055);
+INSERT INTO item_template VALUES (49778,2,8,-1,'Worn Greatsword',2380,1,0,0,1,45,9,17,-1,-1,2,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,5,0,0,0,0,0,0,0,0,0,0,0,2900,0,0,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,'',0,0,0,0,0,1,1,0,0,0,0,25,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'',0,0,0,0);
+/* Insert new item "Worn Dirk" for Rogue creation - 3.3.0 */
+INSERT INTO item_template VALUES (50055,2,15,-1,'Worn Dirk',6442,1,0,0,1,36,7,13,-1,-1,2,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,2,0,0,0,0,0,0,0,0,0,0,0,1600,0,0,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,0,0,0,-1,0,-1,0,'',0,0,0,0,0,1,3,0,0,0,0,16,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,'',0,0,0,0);
 
 /* Fixes commited by m33ts4k0z */
 /* Several item prototypes startup error fixes -- 3.3.0 */ 
-
 UPDATE item_template SET displayid=63370 WHERE Entry=1604;
 UPDATE item_template SET displayid=7414 WHERE Entry=17020;
 UPDATE item_template SET displayid=29165 WHERE Entry=17021;
