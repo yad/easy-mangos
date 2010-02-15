@@ -3428,7 +3428,7 @@ DiminishingGroup GetDiminishingReturnsGroupForSpell(SpellEntry const* spellproto
         {
             // Blind
             if (spellproto->SpellFamilyFlags & UI64LIT(0x00001000000))
-                return DIMINISHING_FEAR_CHARM_BLIND;
+                return DIMINISHING_FEAR_BLIND;
             // Cheap Shot
             else if (spellproto->SpellFamilyFlags & UI64LIT(0x00000000400))
                 return DIMINISHING_CHEAPSHOT_POUNCE;
@@ -3527,7 +3527,7 @@ DiminishingGroup GetDiminishingReturnsGroupForSpell(SpellEntry const* spellproto
     if (mechanic & (1<<(MECHANIC_ROOT-1)))
         return triggered ? DIMINISHING_TRIGGER_ROOT : DIMINISHING_CONTROL_ROOT;
     if (mechanic & ((1<<(MECHANIC_FEAR-1))|(1<<(MECHANIC_CHARM-1))))
-        return DIMINISHING_FEAR_CHARM_BLIND;
+        return DIMINISHING_FEAR_BLIND;
     if (mechanic & ((1<<(MECHANIC_SILENCE-1))|(1<<(MECHANIC_INTERRUPT-1))))
         return DIMINISHING_SILENCE;
     if (mechanic & (1<<(MECHANIC_DISARM-1)))
@@ -3632,7 +3632,6 @@ DiminishingReturnsType GetDiminishingReturnsGroupType(DiminishingGroup group)
         case DIMINISHING_SILENCE:
         case DIMINISHING_DISARM:
         case DIMINISHING_HORROR:
-        case DIMINISHING_FREEZE_SLEEP:
         case DIMINISHING_BANISH:
         case DIMINISHING_CHEAPSHOT_POUNCE:
         case DIMINISHING_HIBERNATE:

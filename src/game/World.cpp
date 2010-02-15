@@ -81,7 +81,7 @@ int32 World::m_visibility_notify_periodOnContinents = DEFAULT_VISIBILITY_NOTIFY_
 int32 World::m_visibility_notify_periodInInstances  = DEFAULT_VISIBILITY_NOTIFY_PERIOD;
 int32 World::m_visibility_notify_periodInBGArenas   = DEFAULT_VISIBILITY_NOTIFY_PERIOD;
 
-const float BGEvent[2] = {41, 42, 43};
+const int8 BGEvent[3] = {41, 42, 43};
 
 /// World constructor
 World::World()
@@ -585,7 +585,7 @@ void World::LoadConfigSettings(bool reload)
     if(reload)
         sMapMgr.SetGridCleanUpDelay(m_configUint32Values[CONFIG_UINT32_INTERVAL_GRIDCLEAN]);
 
-    m_configs[CONFIG_NUMTHREADS] = sConfig.GetIntDefault("MapUpdate.Threads", 1);
+    m_configUint32Values[CONFIG_NUMTHREADS] = sConfig.GetIntDefault("MapUpdate.Threads", 1);
     m_configUint32Values[CONFIG_UINT32_INTERVAL_MAPUPDATE] = sConfig.GetIntDefault("MapUpdateInterval", 100);
     if(m_configUint32Values[CONFIG_UINT32_INTERVAL_MAPUPDATE] < MIN_MAP_UPDATE_DELAY)
     {
@@ -797,7 +797,7 @@ void World::LoadConfigSettings(bool reload)
         m_configUint32Values[CONFIG_UINT32_START_ARENA_POINTS] = m_configUint32Values[CONFIG_UINT32_MAX_ARENA_POINTS];
     }
     //Custom variable - end arena if 2v1 etc.
-    m_configs[CONFIG_END_ARENA_IF_NOT_ENOUGH_PLAYERS] = sConfig.GetBoolDefault("EndArenaIfNotEnoughtPlayers", false);
+    m_configBoolValues[CONFIG_BOOL_END_ARENA_IF_NOT_ENOUGH_PLAYERS] = sConfig.GetBoolDefault("EndArenaIfNotEnoughtPlayers", false);
 
     m_configBoolValues[CONFIG_BOOL_ALL_TAXI_PATHS] = sConfig.GetBoolDefault("AllFlightPaths", false);
 

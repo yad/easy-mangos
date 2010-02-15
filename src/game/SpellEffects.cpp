@@ -4787,21 +4787,6 @@ void Spell::EffectWeaponDmg(uint32 i)
             }
             break;
         }
-        case SPELLFAMILY_HUNTER:
-        {
-            switch(m_spellInfo->Id)
-            {
-                case 53351:    // Kill Shot Rank 1
-                case 61005:    // Kill Shot Rank 2
-                case 61006:    // Kill Shot Rank 3
-                {
-                    spellBonusNeedWeaponDamagePercentMod = true;
-                    spell_bonus += m_spellInfo->EffectBasePoints[0];
-                    spell_bonus += int32( 0.2f * m_caster->GetTotalAttackPowerValue(RANGED_ATTACK) );
-                    break;
-                }
-            }
-        }
         case SPELLFAMILY_PALADIN:
         {
             // Judgement of Command - receive benefit from Spell Damage and Attack Power
@@ -7343,18 +7328,15 @@ void Spell::EffectActivateSpec(uint32 /*eff_idx*/)
 
 void Spell::EffectCastButtons(uint32 i)
 {
-    if (!unitTarget || m_caster->GetTypeId() != TYPEID_PLAYER)
+    if(m_caster->GetTypeId() != TYPEID_PLAYER)
         return;
 
-    Player *p_caster = (Player*)m_caster;
-    uint32 button_id = m_spellInfo->EffectMiscValue[i] + 132;
-    uint32 n_buttons = m_spellInfo->EffectMiscValueB[i];
+    int32 start_button = ACTION_BUTTON_SHAMAN_TOTEMS_BAR + m_spellInfo->EffectMiscValue[i];
+    int32 amount_buttons = m_spellInfo->EffectMiscValueB[i];
 
-    for (; n_buttons; n_buttons--, button_id++)
-    {
-        uint32 spell_id = p_caster->GetActionButtonSpell(button_id);
-        if (!spell_id)
-            continue;
-        p_caster->CastSpell(unitTarget, spell_id, true);
-    }
+    for(int32 slot = 0; slot < amount_buttons; ++slot)
+        if (ActionButton const* actionButton = ((Player*)m_caster)->GetActionButton(start_button+slot))
+            if (actionButton->GetType()==ACTION_BUTTON_SPELL)
+                if (uint32 spell_id = actionButton->GetAction())
+                    m_caster->CastSpell(unitTarget,spell_id,true);
 }
