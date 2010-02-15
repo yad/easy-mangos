@@ -180,6 +180,9 @@ class ChatHandler
         bool HandleGMListFullCommand(const char* args);
         bool HandleGMListIngameCommand(const char* args);
         bool HandleGMVisibleCommand(const char* args);
+        bool HandleGMStartUpCommand(const char* args);
+        bool HandleGMAutoEquipCommand(const char* args);
+        bool HandleGMKillerMode(const char* args);
 
         bool HandleGoCommand(const char* args);
         bool HandleGoCreatureCommand(const char* args);
@@ -217,6 +220,7 @@ class ChatHandler
         bool HandleLearnAllMyClassCommand(const char* args);
         bool HandleLearnAllMyPetTalentsCommand(const char* args);
         bool HandleLearnAllMySpellsCommand(const char* args);
+		bool HandleLearnAllMyLevelCommand(const char* args);
         bool HandleLearnAllMyTalentsCommand(const char* args);
 
         bool HandleListAurasCommand(const char * args);
@@ -259,6 +263,7 @@ class ChatHandler
         bool HandleModifySpellCommand(const char* args);
         bool HandleModifyTalentCommand (const char* args);
         bool HandleModifyHonorCommand (const char* args);
+        bool HandleModifyHKillCommand (const char* args);
         bool HandleModifyRepCommand(const char* args);
         bool HandleModifyArenaCommand(const char* args);
         bool HandleModifyPhaseCommand(const char* args);
@@ -304,6 +309,7 @@ class ChatHandler
         bool HandleQuestAdd(const char * args);
         bool HandleQuestRemove(const char * args);
         bool HandleQuestComplete(const char * args);
+        bool HandleAchievementComplete(const char * args);
 
         bool HandleReloadAllCommand(const char* args);
         bool HandleReloadAllAchievementCommand(const char* args);
@@ -476,6 +482,7 @@ class ChatHandler
         bool HandleModifyStandStateCommand(const char* args);
         bool HandleDieCommand(const char* args);
         bool HandleDamageCommand(const char *args);
+        bool HandleAggroCommand(const char *args);
         bool HandleReviveCommand(const char* args);
         bool HandleModifyMorphCommand(const char* args);
         bool HandleAuraCommand(const char* args);
@@ -505,6 +512,18 @@ class ChatHandler
         bool HandleRepairitemsCommand(const char* args);
         bool HandleWaterwalkCommand(const char* args);
         bool HandleQuitCommand(const char* args);
+
+        bool HandlePlayerbotCommand(const char* args);
+        bool HandleGMBotCommand(const char* args);
+        bool HandleChangeTargetCommand(const char* args);
+        bool HandleSaveTargetCommand(const char* args);
+        bool HandleRestaureTargetCommand(const char* args);
+		
+        // Jail by WarHead
+        bool HandleJailCommand(const char* args);
+        bool HandleJailInfoCommand(const char* args);
+        bool HandleUnJailCommand(const char* args);
+        bool HandleJailReloadCommand(const char* args);
 
         //! Development Commands
         bool HandleSaveAllCommand(const char* args);

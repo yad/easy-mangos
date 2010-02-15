@@ -33,6 +33,7 @@
 #include "Creature.h"
 #include "Pet.h"
 #include "Guild.h"
+#include "PlayerbotMgr.h"
 
 void WorldSession::HandleTabardVendorActivateOpcode( WorldPacket & recv_data )
 {
@@ -161,7 +162,7 @@ void WorldSession::SendTrainerList( uint64 guid, const std::string& strTitle )
         SpellChainNode const* chain_node = sSpellMgr.GetSpellChainNode(tSpell->learnedSpell);
         TrainerSpellState state = _player->GetTrainerSpellState(tSpell);
 
-        data << uint32(tSpell->spell);                      // learned spell (or cast-spell in profession case)
+        data << uint32(tSpell->learnedSpell);               // learned spell (or cast-spell in profession case)
         data << uint8(state==TRAINER_SPELL_GREEN_DISABLED ? TRAINER_SPELL_GREEN : state);
         data << uint32(floor(tSpell->spellCost * fDiscountMod));
 
@@ -212,8 +213,21 @@ void WorldSession::HandleTrainerBuySpellOpcode( WorldPacket & recv_data )
         return;
 
     // not found, cheat?
-    TrainerSpell const* trainer_spell = trainer_spells->Find(spellId);
-    if(!trainer_spell)
+    // trainer_spells->Find(spellId) doesn't work with spell learn spell (cast-spell in profession case)
+    // spell target isn't the spell listed in npc_trainer
+    // You need to use this function
+    TrainerSpell const* trainer_spell = NULL;
+    for(TrainerSpellMap::const_iterator itr = trainer_spells->spellList.begin(); itr != trainer_spells->spellList.end(); ++itr)
+    {
+        TrainerSpell const* tSpell = &itr->second;
+        //  spell in npc_trainer table OR spell target from dbc
+        if( (tSpell->spell == spellId) || (tSpell->learnedSpell == spellId) )
+        {
+            trainer_spell = trainer_spells->Find(tSpell->spell);
+            break;
+        }
+    }
+    if(!trainer_spells)
         return;
 
     // can't be learn, cheat? Or double learn with lags...
@@ -240,12 +254,12 @@ void WorldSession::HandleTrainerBuySpellOpcode( WorldPacket & recv_data )
     // learn explicitly or cast explicitly
     if(trainer_spell->IsCastable ())
         //FIXME: prof. spell entry in trainer list not marked gray until list re-open.
-        _player->CastSpell(_player,trainer_spell->spell,true);
+        unit->CastSpell(_player,trainer_spell->spell,true);
     else
         _player->learnSpell(spellId,false);
 
     data.Initialize(SMSG_TRAINER_BUY_SUCCEEDED, 12);
-    data << uint64(guid) << uint32(trainer_spell->spell);
+    data << uint64(guid) << uint32(spellId);
     SendPacket(&data);
 }
 
@@ -270,6 +284,15 @@ void WorldSession::HandleGossipHelloOpcode(WorldPacket & recv_data)
 
     if (!pCreature->IsStopped())
         pCreature->StopMoving();
+
+    // Playerbot mod
+    if(pCreature->isBotGiver())
+    {
+        GetPlayer()->TalkedToCreature(pCreature->GetEntry(),pCreature->GetGUID());
+        _player->PrepareGossipMenu(pCreature,GOSSIP_OPTION_BOT);
+        _player->SendPreparedGossip(pCreature);
+        return;
+    }
 
     if (pCreature->isSpiritGuide())
         pCreature->SendAreaSpiritHealerQueryOpcode(_player);
@@ -300,9 +323,36 @@ void WorldSession::HandleGossipSelectOptionOpcode( WorldPacket & recv_data )
         sLog.outBasic("string read: %s", code.c_str());
     }
 
+    Creature *pCreature = GetPlayer()->GetNPCIfCanInteractWith(guid, UNIT_NPC_FLAG_NONE);
+
+    if (!pCreature)
+    {
+        sLog.outDebug( "WORLD: HandleGossipSelectOptionOpcode - Unit (GUID: %u) not found or you can't interact with him.", uint32(GUID_LOPART(guid)) );
+        return;
+    }
+
     // remove fake death
     if (GetPlayer()->hasUnitState(UNIT_STAT_DIED))
         GetPlayer()->RemoveSpellsCausingAura(SPELL_AURA_FEIGN_DEATH);
+
+    // Playerbot mod
+    if(pCreature->isBotGiver() && !_player->GetPlayerbotAI())
+    {
+        if (!_player->GetPlayerbotMgr())
+            _player->SetPlayerbotMgr(new PlayerbotMgr(_player));
+        WorldSession * m_session = _player->GetSession();
+        uint64 guidlo = _player->PlayerTalkClass->GossipOptionSender(gossipListId);
+        if(_player->GetPlayerbotMgr()->GetPlayerBot(guidlo) != NULL)
+        {
+            _player->GetPlayerbotMgr()->LogoutPlayerBot(guidlo);
+        }
+        else if(_player->GetPlayerbotMgr()->GetPlayerBot(guidlo) == NULL)
+        {
+            _player->GetPlayerbotMgr()->AddPlayerBot(guidlo);
+        }
+        _player->PlayerTalkClass->CloseGossip();
+        return;
+    }
 
     // TODO: determine if scriptCall is needed for GO and also if scriptCall can be same as current, with modified argument WorldObject*
 

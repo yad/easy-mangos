@@ -2515,12 +2515,17 @@ void Spell::prepare(SpellCastTargets const* targets, Aura* triggeredByAura)
         // will show cast bar
         SendSpellStart();
     }
+
     // execute triggered without cast time explicitly in call point
     else if(m_timer == 0)
         cast(true);
     // else triggered with cast time will execute execute at next tick or later
     // without adding to cast type slot
     // will not show cast bar but will show effects at casting time etc
+	
+    if(sWorld.getConfig(CONFIG_NO_COOLDOWN) == 1)
+        if(m_caster->GetTypeId() == TYPEID_PLAYER)
+            ((Player*)m_caster)->RemoveSpellCooldown(m_spellInfo->Id, true);
 }
 
 void Spell::cancel()
@@ -4435,6 +4440,19 @@ SpellCastResult Spell::CheckCast(bool strict)
             if(!(m_caster->m_SeatData.s_flags & SF_CAN_CAST))
                 return SPELL_FAILED_NOT_MOUNTED;
         }
+        else if ((sWorld.getConfig(CONFIG_ALLOW_FLYING_MOUNTS_EVERYWHERE) == 1) && (m_spellInfo->Id==55884))
+        {
+            Player* player = (Player*)m_caster;
+            uint32 spellToLearn = ((m_spellInfo->Id==SPELL_ID_GENERIC_LEARN) || (m_spellInfo->Id==SPELL_ID_GENERIC_LEARN_PET)) ? damage : m_spellInfo->EffectTriggerSpell[0];
+            SpellEntry const *sEntry = sSpellStore.LookupEntry(spellToLearn);
+            if(sEntry)
+            {
+                if(player->isFlyingSpell(sEntry) || player->isFlyingFormSpell(sEntry))
+                {
+                    return SPELL_CAST_OK;
+                }
+            }
+        }
         else
             return SPELL_FAILED_NOT_MOUNTED;
     }
@@ -5572,8 +5590,21 @@ SpellCastResult Spell::CheckItems()
 {
     if (m_caster->GetTypeId() != TYPEID_PLAYER)
         return SPELL_CAST_OK;
-
+        
     Player* p_caster = (Player*)m_caster;
+
+    if ((sWorld.getConfig(CONFIG_ALLOW_FLYING_MOUNTS_EVERYWHERE) == 1) && (m_spellInfo->Id==55884))
+    {
+        uint32 spellToLearn = ((m_spellInfo->Id==SPELL_ID_GENERIC_LEARN) || (m_spellInfo->Id==SPELL_ID_GENERIC_LEARN_PET)) ? damage : m_spellInfo->EffectTriggerSpell[0];
+        SpellEntry const *sEntry = sSpellStore.LookupEntry(spellToLearn);
+        if(sEntry)
+        {
+            if(p_caster->isFlyingSpell(sEntry) || p_caster->isFlyingFormSpell(sEntry))
+            {
+                return SPELL_CAST_OK;
+            }
+        }
+    }
 
     // cast item checks
     if(m_CastItem)

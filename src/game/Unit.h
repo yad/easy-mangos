@@ -1719,8 +1719,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         uint32 SpellCriticalHealingBonus(SpellEntry const *spellProto, uint32 damage, Unit *pVictim);
 
         void SetLastManaUse() { m_lastManaUseTimer = 5000; }
-        bool IsUnderLastManaUseEffect() const { return m_lastManaUseTimer; }
-
+        bool IsUnderLastManaUseEffect() const;
         uint32 GetRegenTimer() const { return m_regenTimer; }
 
         void SetContestedPvP(Player *attackedPlayer = NULL);
@@ -1859,6 +1858,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         MotionMaster i_motionMaster;
 
         uint32 m_reactiveTimer[MAX_REACTIVE];
+        float baseMoveSpeed[MAX_MOVE_TYPE];
         uint32 m_regenTimer;
         uint32 m_lastManaUseTimer;
         float m_lastAuraProcRoll;

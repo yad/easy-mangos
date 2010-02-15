@@ -23,6 +23,7 @@
 #include "ObjectMgr.h"
 #include "SpellMgr.h"
 #include "Log.h"
+#include "World.h"
 #include "Opcodes.h"
 #include "Spell.h"
 #include "ScriptCalls.h"
@@ -309,6 +310,19 @@ void WorldSession::HandleCastSpellOpcode(WorldPacket& recvPacket)
         return;
     }
 
+    if (sWorld.getConfig(CONFIG_ALLOW_FLYING_MOUNTS_EVERYWHERE) == 1)
+    {
+        if (_player->isRunningSpell(spellInfo))
+        {
+            _player->Unmount();
+            _player->RemoveSpellsCausingAura(SPELL_AURA_MOUNTED);
+        }
+        else if (_player->isRunningFormSpell(spellInfo))
+        {
+            _player->RemoveFlyingSpells();
+        }
+    }
+
     if(mover->GetTypeId()==TYPEID_PLAYER)
     {
         // not have spell in spellbook or spell passive and not casted by client
@@ -440,6 +454,8 @@ void WorldSession::HandleCancelAuraOpcode( WorldPacket& recvPacket)
 
     // non channeled case
     _player->RemoveAurasDueToSpellByCancel(spellId);
+    if(_player->isFlyingSpell(spellInfo) || _player->isFlyingFormSpell(spellInfo))
+        _player->SetFlyingMountTimer();
 }
 
 void WorldSession::HandlePetCancelAuraOpcode( WorldPacket& recvPacket)

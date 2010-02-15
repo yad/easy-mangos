@@ -55,6 +55,10 @@ class InstanceSave;
 class Spell;
 class Item;
 
+// Playerbot mod
+class PlayerbotAI;
+class PlayerbotMgr;
+
 typedef std::deque<Mail*> PlayerMails;
 
 #define PLAYER_MAX_SKILLS       127
@@ -757,9 +761,21 @@ struct EquipmentSet
     EquipmentSetUpdateState state;
 };
 
+struct AccountInfo
+{
+    AccountInfo() : Guid(0), Name("")
+    {
+    }
+
+    uint64 Guid;
+    std::string Name;
+    float Angle;
+};
+
 #define MAX_EQUIPMENT_SET_INDEX 10                          // client limit
 
 typedef std::map<uint32, EquipmentSet> EquipmentSets;
+typedef std::map<uint32, AccountInfo> AccountInfos;
 
 struct ItemPosCount
 {
@@ -1076,6 +1092,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         void SetAcceptWhispers(bool on) { if(on) m_ExtraFlags |= PLAYER_EXTRA_ACCEPT_WHISPERS; else m_ExtraFlags &= ~PLAYER_EXTRA_ACCEPT_WHISPERS; }
         bool isGameMaster() const { return m_ExtraFlags & PLAYER_EXTRA_GM_ON; }
         void SetGameMaster(bool on);
+        bool isInKillerMode() const { return m_killerMode; }
+        void SetInKillerMode(bool enable) { m_killerMode = enable; }
         bool isGMChat() const { return GetSession()->GetSecurity() >= SEC_MODERATOR && (m_ExtraFlags & PLAYER_EXTRA_GM_CHAT); }
         void SetGMChat(bool on) { if(on) m_ExtraFlags |= PLAYER_EXTRA_GM_CHAT; else m_ExtraFlags &= ~PLAYER_EXTRA_GM_CHAT; }
         bool isTaxiCheater() const { return m_ExtraFlags & PLAYER_EXTRA_TAXICHEAT; }
@@ -1205,9 +1223,101 @@ class MANGOS_DLL_SPEC Player : public Unit
         void AutoUnequipOffhandIfNeed();
         bool StoreNewItemInBestSlots(uint32 item_id, uint32 item_count);
         Item* StoreNewItemInInventorySlot(uint32 itemEntry, uint32 amount);
+        void AutoEquipItem();
 
         void AutoStoreLoot(uint8 bag, uint8 slot, uint32 loot_id, LootStore const& store, bool broadcast = false);
         void AutoStoreLoot(uint32 loot_id, LootStore const& store, bool broadcast = false) { AutoStoreLoot(NULL_BAG,NULL_SLOT,loot_id,store,broadcast); }
+
+        /// Flying mounts everywhere mode
+        void FlyingMountsSpellsToItems();
+        bool CanUseFlyingMounts(SpellEntry const* spellInfo);
+        //helpers
+        bool isFlyingSpell(SpellEntry const* spellInfo) const
+        {
+            return spellInfo->EffectApplyAuraName[0]==SPELL_AURA_MOUNTED && 
+            spellInfo->EffectApplyAuraName[1]==SPELL_AURA_MOD_INCREASE_FLIGHT_SPEED && 
+            spellInfo->EffectApplyAuraName[2]==SPELL_AURA_MOD_INCREASE_MOUNTED_SPEED;
+        }
+
+        bool isRunningSpell(SpellEntry const* spellInfo) const
+        {
+            return spellInfo->EffectApplyAuraName[0]==SPELL_AURA_MOUNTED &&
+            spellInfo->EffectApplyAuraName[1]==SPELL_AURA_MOD_INCREASE_MOUNTED_SPEED; 
+        }
+
+        bool isFlyingFormSpell(SpellEntry const* spellInfo) const
+        { 
+            return spellInfo->EffectApplyAuraName[0]==SPELL_AURA_MOD_SHAPESHIFT && 
+            spellInfo->EffectApplyAuraName[1]==SPELL_AURA_MECHANIC_IMMUNITY &&
+            spellInfo->EffectApplyAuraName[2]==SPELL_AURA_FLY;
+        }
+
+        bool isRunningFormSpell(SpellEntry const* spellInfo) const
+        { 
+            return spellInfo->EffectApplyAuraName[0]==SPELL_AURA_MOD_SHAPESHIFT &&
+            spellInfo->EffectApplyAuraName[1]==SPELL_AURA_MECHANIC_IMMUNITY &&
+            spellInfo->EffectApplyAuraName[2]!=SPELL_AURA_FLY;
+        }
+
+        void RemoveFlyingSpells()
+        { 
+            Unmount(); 
+            RemoveSpellsCausingAura(SPELL_AURA_MOUNTED); 
+            RemoveSpellsCausingAura(SPELL_AURA_MOD_INCREASE_FLIGHT_SPEED);
+            RemoveSpellsCausingAura(SPELL_AURA_MOD_INCREASE_MOUNTED_SPEED);
+        }
+
+        void RemoveFlyingFormSpells()
+        { 
+            RemoveSpellsCausingAura(SPELL_AURA_MOD_SHAPESHIFT);
+            RemoveSpellsCausingAura(SPELL_AURA_MECHANIC_IMMUNITY);
+            RemoveSpellsCausingAura(SPELL_AURA_FLY);
+        }
+
+        void RemoveRunningFormSpells()
+        { 
+            RemoveSpellsCausingAura(SPELL_AURA_MOD_SHAPESHIFT);
+            RemoveSpellsCausingAura(SPELL_AURA_MECHANIC_IMMUNITY);
+        }
+
+        void RemoveAllFlyingSpells()
+        {
+            RemoveFlyingSpells();
+            RemoveFlyingFormSpells();
+        }
+
+        bool HasAuraTypeFlyingSpell()
+        {
+            return HasAuraType(SPELL_AURA_MOUNTED) &&
+            HasAuraType(SPELL_AURA_MOD_INCREASE_FLIGHT_SPEED) &&
+            HasAuraType(SPELL_AURA_MOD_INCREASE_MOUNTED_SPEED);
+        }
+
+        bool HasAuraTypeFlyingFormSpell()
+        {
+            return HasAuraType(SPELL_AURA_MOD_SHAPESHIFT) &&
+            HasAuraType(SPELL_AURA_MECHANIC_IMMUNITY) &&
+            HasAuraType(SPELL_AURA_FLY);
+        }
+
+        bool HasAuraTypeRunningFormSpell()
+        {
+            return HasAuraType(SPELL_AURA_MOD_SHAPESHIFT) &&
+            HasAuraType(SPELL_AURA_MECHANIC_IMMUNITY) &&
+            !HasAuraType(SPELL_AURA_FLY);
+        }
+
+        bool GetFlyingMountTimer()
+        {
+            return m_flytimer < time(NULL);
+        }
+
+        void SetFlyingMountTimer()
+        {
+            m_flytimer = time(NULL) + 0.5;
+        }
+        //end of helpers.
+        ///end of Flying mounts everywhere mode
 
         uint8 _CanTakeMoreSimilarItems(uint32 entry, uint32 count, Item* pItem, uint32* no_space_count = NULL) const;
         uint8 _CanStoreItem( uint8 bag, uint8 slot, ItemPosCountVec& dest, uint32 entry, uint32 count, Item *pItem = NULL, bool swap = false, uint32* no_space_count = NULL ) const;
@@ -1917,8 +2027,10 @@ class MANGOS_DLL_SPEC Player : public Unit
         bool RewardHonor(Unit *pVictim, uint32 groupsize, float honor = -1);
         uint32 GetHonorPoints() { return GetUInt32Value(PLAYER_FIELD_HONOR_CURRENCY); }
         uint32 GetArenaPoints() { return GetUInt32Value(PLAYER_FIELD_ARENA_CURRENCY); }
+        uint32 GetHKillPoints() { return GetUInt32Value(PLAYER_FIELD_LIFETIME_HONORBALE_KILLS); }
         void ModifyHonorPoints( int32 value );
         void ModifyArenaPoints( int32 value );
+        void ModifyHKillPoints( int32 value ) { SetUInt32Value(PLAYER_FIELD_LIFETIME_HONORBALE_KILLS, value); }
         uint32 GetMaxPersonalArenaRatingRequirement(uint32 minarenaslot);
 
         //End of PvP System
@@ -2112,6 +2224,26 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         uint32 EnvironmentalDamage(EnviromentalDamage type, uint32 damage);
 
+        // Jail by WarHead
+        // ---------------
+        // Char datas...
+        bool m_jail_warning;
+        bool m_jail_amnestie;
+        bool m_jail_isjailed;           // Is this player jailed?
+        std::string m_jail_char;        // Name of jailed char
+        uint32 m_jail_guid;             // guid of the jailed char
+        uint32 m_jail_release;          // When is the player a free man/woman?
+        std::string m_jail_reason;      // Why was the char jailed?
+        uint32 m_jail_times;			// How often was the player jailed?
+        uint32 m_jail_amnestietime;
+        uint32 m_jail_gmacc;            // Used GM acc
+        std::string m_jail_gmchar;      // Used GM char
+        std::string m_jail_lasttime;    // Last jail time
+        uint32 m_jail_duration;         // Duration of the jail
+        // Load / save functions...
+        void _LoadJail(void);           // Loads the jail datas
+        void _SaveJail(void);           // Saves the jail datas
+
         /*********************************************************/
         /***               FLOOD FILTER SYSTEM                 ***/
         /*********************************************************/
@@ -2295,6 +2427,19 @@ class MANGOS_DLL_SPEC Player : public Unit
             ActionButtonList::const_iterator ab = m_actionButtons.find(button);
             return ab != m_actionButtons.end() && ab->second.uState != ACTIONBUTTON_DELETED && ab->second.GetType() == ACTION_BUTTON_SPELL ? ab->second.GetAction() : 0;
         }
+
+        // Playerbot mod:
+        // A Player can either have a playerbotMgr (to manage its bots), or have playerbotAI (if it is a bot), or
+        // neither. Code that enables bots must create the playerbotMgr and set it using SetPlayerbotMgr.
+        void SetPlayerbotAI(PlayerbotAI* ai) { assert(!m_playerbotAI && !m_playerbotMgr); m_playerbotAI=ai; }
+        PlayerbotAI* GetPlayerbotAI() { return m_playerbotAI; }
+        void SetPlayerbotMgr(PlayerbotMgr* mgr) { assert(!m_playerbotAI && !m_playerbotMgr); m_playerbotMgr=mgr; }
+        PlayerbotMgr* GetPlayerbotMgr() { return m_playerbotMgr; }
+        void SetBotDeathTimer() { m_deathTimer = 0; }
+        AccountInfos GetAccountInfos() {return m_AccountInfos; }
+        void SetAddonTarget(uint64 guid) { m_AddonTarget = guid; };
+        uint64 GetAddonTarget() { return m_AddonTarget; };		
+
     protected:
 
         uint32 m_contestedPvPTimer;
@@ -2345,6 +2490,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         void _LoadDeclinedNames(QueryResult *result);
         void _LoadArenaTeamInfo(QueryResult *result);
         void _LoadEquipmentSets(QueryResult *result);
+        void _LoadAccountInfos();
         void _LoadBGData(QueryResult* result);
         void _LoadGlyphs(QueryResult *result);
 
@@ -2400,6 +2546,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         bool m_itemUpdateQueueBlocked;
 
         uint32 m_ExtraFlags;
+        bool m_killerMode;
         uint64 m_curSelection;
 
         uint64 m_comboTarget;
@@ -2466,6 +2613,7 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         uint32 m_deathTimer;
         time_t m_deathExpireTime;
+        time_t m_flytimer;
 
         uint32 m_restTime;
 
@@ -2542,6 +2690,12 @@ class MANGOS_DLL_SPEC Player : public Unit
         GridReference<Player> m_gridRef;
         MapReference m_mapRef;
 
+        // Playerbot mod:
+        PlayerbotAI* m_playerbotAI;
+        PlayerbotMgr* m_playerbotMgr;
+        AccountInfos m_AccountInfos;
+        uint64 m_AddonTarget;
+ 
         // Homebind coordinates
         uint32 m_homebindMapId;
         uint16 m_homebindZoneId;

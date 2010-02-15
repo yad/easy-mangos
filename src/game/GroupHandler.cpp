@@ -29,6 +29,7 @@
 #include "SocialMgr.h"
 #include "Util.h"
 #include "Vehicle.h"
+#include "PlayerbotMgr.h"
 
 /* differeces from off:
     -you can uninvite yourself - is is useful
@@ -161,7 +162,7 @@ void WorldSession::HandleGroupInviteOpcode( WorldPacket & recv_data )
 
 void WorldSession::HandleGroupAcceptOpcode( WorldPacket & recv_data )
 {
-    recv_data.read_skip<uint32>();                          // value received in WorldSession::HandleGroupInviteOpcode and also skipeed currently?
+    //recv_data.read_skip<uint32>();                          // value received in WorldSession::HandleGroupInviteOpcode and also skipeed currently?
 
     Group *group = GetPlayer()->GetGroupInvite();
     if (!group) return;
@@ -342,6 +343,8 @@ void WorldSession::HandleGroupDisbandOpcode( WorldPacket & /*recv_data*/ )
     // everything's fine, do it
     SendPartyResult(PARTY_OP_LEAVE, GetPlayer()->GetName(), PARTY_RESULT_OK);
 
+    if (GetPlayer()->GetPlayerbotMgr())
+        GetPlayer()->GetPlayerbotMgr()->RemoveAllBotsFromGroup();
     GetPlayer()->RemoveFromGroup();
 }
 

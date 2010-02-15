@@ -62,6 +62,10 @@
 #include "AchievementMgr.h"
 #include "GameEventMgr.h"
 
+// Playerbot mod:
+#include "PlayerbotAI.h"
+#include "PlayerbotMgr.h"
+
 #include <cmath>
 
 #define ZONE_UPDATE_INTERVAL (1*IN_MILISECONDS)
@@ -308,7 +312,28 @@ UpdateMask Player::updateVisualBits;
 
 Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputationMgr(this)
 {
+    // Jail by WarHead
+    m_jail_guid     = 0;
+    m_jail_char     = "";
+    m_jail_amnestie = false;
+    m_jail_warning  = false;
+    m_jail_isjailed = false;
+    m_jail_amnestietime =0;
+    m_jail_release  = 0;
+    m_jail_times    = 0;
+    m_jail_reason   = "";
+    m_jail_gmacc    = 0;
+    m_jail_gmchar   = "";
+    m_jail_lasttime = "";
+    m_jail_duration = 0;
+    // Jail end
+
     m_transport = 0;
+
+    // Playerbot mod:
+    m_playerbotAI = 0;
+    m_playerbotMgr = 0;
+    m_AddonTarget = 0;
 
     m_speakTime = 0;
     m_speakCount = 0;
@@ -499,6 +524,19 @@ Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputa
 
     m_lastFallTime = 0;
     m_lastFallZ = 0;
+
+    m_killerMode = false;
+    m_flytimer = time(NULL);
+
+    baseMoveSpeed[MOVE_WALK] = 2.5f;
+    baseMoveSpeed[MOVE_RUN] = 7.0f * sWorld.getRate(RATE_CHARRUNSPEED);
+    baseMoveSpeed[MOVE_RUN_BACK] = 1.25f;
+    baseMoveSpeed[MOVE_SWIM] = 4.722222f * sWorld.getRate(RATE_CHARSWIMSPEED);
+    baseMoveSpeed[MOVE_SWIM_BACK] = 4.5f;
+    baseMoveSpeed[MOVE_TURN_RATE] = 3.141594f;
+    baseMoveSpeed[MOVE_FLIGHT] = 7.0f * sWorld.getRate(RATE_CHARFLIGHTSPEED);
+    baseMoveSpeed[MOVE_FLIGHT_BACK] = 4.5f;
+    baseMoveSpeed[MOVE_PITCH_RATE] = 3.14f;
 }
 
 Player::~Player ()
@@ -544,6 +582,16 @@ Player::~Player ()
 
     delete m_declinedname;
     delete m_runes;
+
+    // Playerbot mod
+    if (m_playerbotAI) {
+        delete m_playerbotAI;
+        m_playerbotAI = 0;
+    }
+    if (m_playerbotMgr) {
+        delete m_playerbotMgr;
+        m_playerbotMgr = 0;
+    }
 }
 
 void Player::CleanupsBeforeDelete()
@@ -809,6 +857,686 @@ bool Player::StoreNewItemInBestSlots(uint32 titem_id, uint32 titem_amount)
     // item can't be added
     sLog.outError("STORAGE: Can't equip or store initial item %u for race %u class %u , error msg = %u",titem_id,getRace(),getClass(),msg);
     return false;
+}
+
+void Player::AutoEquipItem()
+{
+    for(int i = INVENTORY_SLOT_ITEM_START; i < INVENTORY_SLOT_ITEM_END; i++)
+    {
+        if(Item* pItem = GetItemByPos( INVENTORY_SLOT_BAG_0, i ))
+        {
+            uint16 eDest;
+            // equip offhand weapon/shield if it attempt equipped before main-hand weapon
+            uint8 msg = CanEquipItem( NULL_SLOT, eDest, pItem, false );
+            if( msg == EQUIP_ERR_OK )
+            {
+                RemoveItem(INVENTORY_SLOT_BAG_0, i,true);
+                EquipItem( eDest, pItem, true);
+            }
+            // move other items to more appropriate slots (ammo not equipped in special bag)
+            else
+            {
+                ItemPosCountVec sDest;
+                msg = CanStoreItem( NULL_BAG, NULL_SLOT, sDest, pItem, false );
+                if( msg == EQUIP_ERR_OK )
+                {
+                    RemoveItem(INVENTORY_SLOT_BAG_0, i,true);
+                    pItem = StoreItem( sDest, pItem, true);
+                }
+
+                // if  this is ammo then use it
+                uint8 msg = CanUseAmmo( pItem->GetEntry() );
+                if( msg == EQUIP_ERR_OK )
+                    SetAmmo( pItem->GetEntry() );
+            }
+        }
+    }
+
+    // look for items in main bag 
+    for (int slot=INVENTORY_SLOT_ITEM_START; slot < INVENTORY_SLOT_ITEM_END; ++slot)
+    {
+        const ItemPrototype *new_item = NULL;
+        Item* const pItem = GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
+        if (!pItem) // si il n'y a pas d'objet dans l'emplacement sac
+            continue;
+        new_item = pItem->GetProto();
+        if (new_item->InventoryType == INVTYPE_NON_EQUIP) // si l'objet n'est pas equipable
+            continue;
+        if (new_item->RequiredLevel > getLevel() ) // si je n'ai pas le niveau
+            continue;
+        for (int i = EQUIPMENT_SLOT_START; i < EQUIPMENT_SLOT_END; i++)
+        {
+            const ItemPrototype *mon_item = NULL;
+            Item *item = GetItemByPos(INVENTORY_SLOT_BAG_0, i);
+            if(item) //Si il y a un item alors si
+            {
+                mon_item = item->GetProto();
+                if(mon_item->ItemId == new_item->ItemId) //C'est le même donc osef...
+                    continue;
+                if(mon_item->ItemLevel > new_item->ItemLevel) //Il est moins bien (couleur) donc osef...
+                    continue;
+            }
+            switch( new_item->InventoryType )
+            {
+                case INVTYPE_HEAD:
+                {
+                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                        break;
+                    else if(i == EQUIPMENT_SLOT_HEAD)
+                    {
+                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
+                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                        SwapItem(src, dst);
+                    }
+                    break;
+                }
+                case INVTYPE_NECK:
+                    /*if(i == EQUIPMENT_SLOT_NECK)*/
+                    break;
+                case INVTYPE_SHOULDERS:
+                {
+                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                        break;
+                    else if(i == EQUIPMENT_SLOT_SHOULDERS)
+                    {
+                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
+                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                        SwapItem(src, dst);
+                    }
+                    break;
+                }
+                case INVTYPE_BODY:
+                {
+                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                        break;
+                    else if(i == EQUIPMENT_SLOT_BODY)
+                    {
+                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
+                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                        SwapItem(src, dst);
+                    }
+                    break;
+                }
+                case INVTYPE_CHEST:
+                {
+                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                        break;
+                    else if(i == EQUIPMENT_SLOT_CHEST)
+                    {
+                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
+                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                        SwapItem(src, dst);
+                    }
+                    break;
+                }
+                case INVTYPE_ROBE:
+                {
+                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                        break;
+                    else if(i == EQUIPMENT_SLOT_CHEST)
+                    {
+                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
+                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                        SwapItem(src, dst);
+                    }
+                    break;
+                }
+                case INVTYPE_WAIST:
+                {
+                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                        break;
+                    else if(i == EQUIPMENT_SLOT_WAIST)
+                    {
+                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
+                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                        SwapItem(src, dst);
+                    }
+                    break;
+                }
+                case INVTYPE_LEGS:
+                {
+                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                        break;
+                    else if(i == EQUIPMENT_SLOT_LEGS)
+                    {
+                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
+                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                        SwapItem(src, dst);
+                    }
+                    break;
+                }
+                case INVTYPE_FEET:
+                {
+                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                        break;
+                    else if(i == EQUIPMENT_SLOT_FEET)
+                    {
+                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
+                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                        SwapItem(src, dst);
+                    }
+                    break;
+                }
+                case INVTYPE_WRISTS:
+                {
+                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                        break;
+                    else if(i == EQUIPMENT_SLOT_WRISTS)
+                    {
+                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
+                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                        SwapItem(src, dst);
+                    }
+                    break;
+                }
+                case INVTYPE_HANDS:
+                {
+                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                        break;
+                    else if(i == EQUIPMENT_SLOT_HANDS)
+                    {
+                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
+                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                        SwapItem(src, dst);
+                    }
+                    break;
+                }
+                case INVTYPE_FINGER:
+                    //if(i == EQUIPMENT_SLOT_FINGER1 || i = EQUIPMENT_SLOT_FINGER2)
+                    break;
+                case INVTYPE_TRINKET:
+                    //if(i == EQUIPMENT_SLOT_TRINKET1 || i == EQUIPMENT_SLOT_TRINKET2)
+                    break;
+                case INVTYPE_CLOAK:
+                {
+                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                        break;
+                    else if(i ==  EQUIPMENT_SLOT_BACK)
+                    {
+                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
+                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                        SwapItem(src, dst);
+                    }
+                    break;
+                }
+                case INVTYPE_WEAPON:
+                {
+                    if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
+                        break;
+                    else if(i == EQUIPMENT_SLOT_MAINHAND)
+                    {
+                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
+                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                        SwapItem(src, dst);
+                    }
+                    break;
+                        /*if(CanDualWield())    slots[1] = EQUIPMENT_SLOT_OFFHAND;*/
+                }
+                case INVTYPE_SHIELD:
+                {
+                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                        break;
+                    else if(i == EQUIPMENT_SLOT_OFFHAND)
+                    {
+                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
+                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                        SwapItem(src, dst);
+                    }
+                    break;
+                }
+                case INVTYPE_RANGED:
+                {
+                    if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
+                        break;
+                    else if(i == EQUIPMENT_SLOT_RANGED)
+                    {
+                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
+                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                        SwapItem(src, dst);
+                    }
+                    break;
+                }
+                case INVTYPE_2HWEAPON:
+                {
+                    if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
+                        break;
+                    else if(i == EQUIPMENT_SLOT_MAINHAND)
+                    {
+                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
+                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                        SwapItem(src, dst);
+                    }
+                    /*if (CanDualWield() && CanTitanGrip())    slots[1] = EQUIPMENT_SLOT_OFFHAND;*/
+                break;
+                }
+                case INVTYPE_TABARD:
+                    //if(i == EQUIPMENT_SLOT_TABARD)
+                    break;
+                case INVTYPE_WEAPONMAINHAND:
+                {
+                    if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
+                        break;
+                    else if(i == EQUIPMENT_SLOT_MAINHAND)
+                    {
+                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
+                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                        SwapItem(src, dst);
+                    }
+                    break;
+                }
+                case INVTYPE_WEAPONOFFHAND:
+                {
+                    if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
+                        break;
+                    else if(i == EQUIPMENT_SLOT_OFFHAND)
+                    {
+                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
+                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                        SwapItem(src, dst);
+                    }
+                    break;
+                }
+                case INVTYPE_HOLDABLE:
+                    //if(i == EQUIPMENT_SLOT_OFFHAND)
+                    break;
+                case INVTYPE_THROWN:
+                {
+                    if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
+                        break;
+                    else if(i == EQUIPMENT_SLOT_RANGED)
+                    {
+                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
+                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                        SwapItem(src, dst);
+                    }
+                    break;
+                }
+                case INVTYPE_RANGEDRIGHT:
+                {
+                    if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
+                        break;
+                    else if(i == EQUIPMENT_SLOT_RANGED)
+                    {
+                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
+                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                        SwapItem(src, dst);
+                    }
+                    break;
+                }
+                case INVTYPE_BAG:
+                    /*if(i == INVENTORY_SLOT_BAG_START + 0 || i == INVENTORY_SLOT_BAG_START + 1 ||
+                        i == INVENTORY_SLOT_BAG_START + 2 || i == INVENTORY_SLOT_BAG_START + 3)
+                    {
+                        if(mon_item && new_item && mon_item->ContainerSlots >= new_item->ContainerSlots)
+                            break;
+                        else
+                        {
+                            uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
+                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                            SwapItem(src, dst);
+                        }
+                    }*/                    
+                    break;
+                case INVTYPE_RELIC:
+                {
+                    /*switch(proto->SubClass)
+                    {
+                        case ITEM_SUBCLASS_ARMOR_LIBRAM:
+                            if (pClass == CLASS_PALADIN)
+                                if(i == EQUIPMENT_SLOT_RANGED;
+                            break;
+                        case ITEM_SUBCLASS_ARMOR_IDOL:
+                            if (pClass == CLASS_DRUID)
+                                if(i == EQUIPMENT_SLOT_RANGED;
+                            break;
+                        case ITEM_SUBCLASS_ARMOR_TOTEM:
+                            if (pClass == CLASS_SHAMAN)
+                                if(i == EQUIPMENT_SLOT_RANGED;
+                            break;
+                        case ITEM_SUBCLASS_ARMOR_MISC:
+                            if (pClass == CLASS_WARLOCK)
+                                if(i == EQUIPMENT_SLOT_RANGED;
+                            break;
+                        case ITEM_SUBCLASS_ARMOR_SIGIL:
+                            if (pClass == CLASS_DEATH_KNIGHT)
+                                if(i == EQUIPMENT_SLOT_RANGED;
+                            break;
+                    }*/
+                    break;
+                }
+                default :
+                    break;
+            }
+        }
+    }
+
+    // for all for items in other bags
+    for (int bag = INVENTORY_SLOT_BAG_START; bag < INVENTORY_SLOT_BAG_END; ++bag)
+    {
+        Bag* const pBag = (Bag*)GetItemByPos(INVENTORY_SLOT_BAG_0, bag);
+        if (!pBag)
+            continue;
+        for (int slot = 0; slot < pBag->GetBagSize(); ++slot)
+        {
+            const ItemPrototype *new_item = NULL;
+            Item* const pItem = GetItemByPos(bag, slot);
+            if (!pItem) // si il n'y a pas d'objet dans l'emplacement sac
+                continue;
+            new_item = pItem->GetProto();
+            if (new_item->InventoryType == INVTYPE_NON_EQUIP) // si l'objet n'est pas equipable
+                continue;
+            if (new_item->RequiredLevel > getLevel() ) // si je n'ai pas le niveau
+                continue;
+            for (int i = EQUIPMENT_SLOT_START; i < EQUIPMENT_SLOT_END; i++)
+            {
+                const ItemPrototype *mon_item = NULL;
+                Item *item = GetItemByPos(INVENTORY_SLOT_BAG_0, i);
+                if(item) //Si il y a un item alors si
+                {
+                    mon_item = item->GetProto();
+                    if(mon_item->ItemId == new_item->ItemId) //C'est le même donc osef...
+                        continue;
+                    if(mon_item->ItemLevel > new_item->ItemLevel) //Il est moins bien (couleur) donc osef...
+                        continue;
+                }
+                switch( new_item->InventoryType )
+                {
+                    case INVTYPE_HEAD:
+                    {
+                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                            break;
+                        else if(i == EQUIPMENT_SLOT_HEAD)
+                        {
+                            uint16 src = ((bag << 8) | slot);
+                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                            SwapItem(src, dst);
+                        }
+                        break;
+                    }
+                    case INVTYPE_NECK:
+                    {
+                        //if(i == EQUIPMENT_SLOT_NECK)
+                        break;
+                    }
+                    case INVTYPE_SHOULDERS:
+                    {
+                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                            break;
+                        else if(i == EQUIPMENT_SLOT_SHOULDERS)
+                        {
+                            uint16 src = ((bag << 8) | slot);
+                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                            SwapItem(src, dst);
+                        }
+                        break;
+                    }
+                    case INVTYPE_BODY:
+                    {
+                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                            break;
+                        else if(i == EQUIPMENT_SLOT_BODY)
+                        {
+                            uint16 src = ((bag << 8) | slot);
+                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                            SwapItem(src, dst);
+                        }
+                        break;
+                    }
+                    case INVTYPE_CHEST:
+                    {
+                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                            break;
+                        else if(i == EQUIPMENT_SLOT_CHEST)
+                        {
+                            uint16 src = ((bag << 8) | slot);
+                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                            SwapItem(src, dst);
+                        }
+                        break;
+                    }
+                    case INVTYPE_ROBE:
+                    {
+                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                            break;
+                        else if(i == EQUIPMENT_SLOT_CHEST)
+                        {
+                            uint16 src = ((bag << 8) | slot);
+                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                            SwapItem(src, dst);
+                        }
+                        break;
+                    }
+                    case INVTYPE_WAIST:
+                    {
+                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                            break;
+                        else if(i == EQUIPMENT_SLOT_WAIST)
+                        {
+                            uint16 src = ((bag << 8) | slot);
+                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                            SwapItem(src, dst);
+                        }
+                        break;
+                    }
+                    case INVTYPE_LEGS:
+                    {
+                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                            break;
+                        else if(i == EQUIPMENT_SLOT_LEGS)
+                        {
+                            uint16 src = ((bag << 8) | slot);
+                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                            SwapItem(src, dst);
+                        }
+                        break;
+                    }
+                    case INVTYPE_FEET:
+                    {
+                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                            break;
+                        else if(i == EQUIPMENT_SLOT_FEET)
+                        {
+                            uint16 src = ((bag << 8) | slot);
+                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                            SwapItem(src, dst);
+                        }
+                        break;
+                    }
+                    case INVTYPE_WRISTS:
+                    {
+                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                            break;
+                        else if(i == EQUIPMENT_SLOT_WRISTS)
+                        {
+                            uint16 src = ((bag << 8) | slot);
+                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                            SwapItem(src, dst);
+                        }
+                        break;
+                    }
+                    case INVTYPE_HANDS:
+                    {
+                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                            break;
+                        else if(i == EQUIPMENT_SLOT_HANDS)
+                        {
+                            uint16 src = ((bag << 8) | slot);
+                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                            SwapItem(src, dst);
+                        }
+                        break;
+                    }
+                    case INVTYPE_FINGER:
+                        //if(i == EQUIPMENT_SLOT_FINGER1 || i = EQUIPMENT_SLOT_FINGER2)
+                        break;
+                    case INVTYPE_TRINKET:
+                        //if(i == EQUIPMENT_SLOT_TRINKET1 || i == EQUIPMENT_SLOT_TRINKET2)
+                        break;
+                    case INVTYPE_CLOAK:
+                    {
+                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                            break;
+                        else if(i ==  EQUIPMENT_SLOT_BACK)
+                        {
+                            uint16 src = ((bag << 8) | slot);
+                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                            SwapItem(src, dst);
+                        }
+                        break;
+                    }
+                    case INVTYPE_WEAPON:
+                    {
+                        if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
+                            break;
+                        else if(i == EQUIPMENT_SLOT_MAINHAND)
+                        {
+                            uint16 src = ((bag << 8) | slot);
+                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                            SwapItem(src, dst);
+                        }                        
+                        /*if(CanDualWield()) slots[1] = EQUIPMENT_SLOT_OFFHAND;*/
+                        break;
+                    }
+                    case INVTYPE_SHIELD:
+                    {
+                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
+                            break;
+                        else if(i == EQUIPMENT_SLOT_OFFHAND)
+                        {
+                            uint16 src = ((bag << 8) | slot);
+                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                            SwapItem(src, dst);
+                        }                        
+                        break;
+                    }
+                    case INVTYPE_RANGED:
+                    {
+                        if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
+                            break;
+                        else if(i == EQUIPMENT_SLOT_RANGED)
+                        {
+                            uint16 src = ((bag << 8) | slot);
+                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                            SwapItem(src, dst);
+                        }                        
+                        break;
+                    }
+                    case INVTYPE_2HWEAPON:
+                    {
+                        if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
+                            break;
+                        else if(i == EQUIPMENT_SLOT_MAINHAND)
+                        {
+                            uint16 src = ((bag << 8) | slot);
+                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                            SwapItem(src, dst);
+                        }                        
+                        /*if (CanDualWield() && CanTitanGrip()) slots[1] = EQUIPMENT_SLOT_OFFHAND;*/
+                        break;
+                    }
+                    case INVTYPE_TABARD:
+                        //if(i == EQUIPMENT_SLOT_TABARD)
+                        break;
+                    case INVTYPE_WEAPONMAINHAND:
+                    {
+                        if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
+                            break;
+                        else if(i == EQUIPMENT_SLOT_MAINHAND)
+                        {
+                            uint16 src = ((bag << 8) | slot);
+                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                            SwapItem(src, dst);
+                        }                        
+                        break;
+                    }
+                    case INVTYPE_WEAPONOFFHAND:
+                    {
+                        if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
+                            break;
+                        else if(i == EQUIPMENT_SLOT_OFFHAND)
+                        {
+                            uint16 src = ((bag << 8) | slot);
+                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                            SwapItem(src, dst);
+                        }                        
+                        break;
+                    }
+                    case INVTYPE_HOLDABLE:
+                        //if(i == EQUIPMENT_SLOT_OFFHAND)
+                        break;
+                    case INVTYPE_THROWN:
+                    {
+                        if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
+                            break;
+                        else if(i == EQUIPMENT_SLOT_RANGED)
+                        {
+                            uint16 src = ((bag << 8) | slot);
+                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                            SwapItem(src, dst);
+                        }                        
+                        break;
+                    }
+                    case INVTYPE_RANGEDRIGHT:
+                    {
+                        if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
+                            break;
+                        else if(i == EQUIPMENT_SLOT_RANGED)
+                        {
+                            uint16 src = ((bag << 8) | slot);
+                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                            SwapItem(src, dst);
+                        }                        
+                        break;
+                    }
+                    case INVTYPE_BAG:
+                    {
+                        /*if(i == INVENTORY_SLOT_BAG_START + 0 || i == INVENTORY_SLOT_BAG_START + 1 ||
+                            i == INVENTORY_SLOT_BAG_START + 2 || i == INVENTORY_SLOT_BAG_START + 3)
+                        {
+                            if(mon_item && new_item && mon_item->ContainerSlots >= new_item->ContainerSlots)
+                                break;
+                            else
+                            {
+                                uint16 src = ((bag << 8) | slot);
+                                uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                                SwapItem(src, dst);
+                            }
+                        }*/
+                        break;
+                    }
+                    case INVTYPE_RELIC:
+                    {
+                        /*switch(proto->SubClass)
+                        {
+                            case ITEM_SUBCLASS_ARMOR_LIBRAM:
+                                if (pClass == CLASS_PALADIN)
+                                    if(i == EQUIPMENT_SLOT_RANGED;
+                                break;
+                            case ITEM_SUBCLASS_ARMOR_IDOL:
+                                if (pClass == CLASS_DRUID)
+                                    if(i == EQUIPMENT_SLOT_RANGED;
+                                break;
+                            case ITEM_SUBCLASS_ARMOR_TOTEM:
+                                if (pClass == CLASS_SHAMAN)
+                                    if(i == EQUIPMENT_SLOT_RANGED;
+                                break;
+                            case ITEM_SUBCLASS_ARMOR_MISC:
+                                if (pClass == CLASS_WARLOCK)
+                                    if(i == EQUIPMENT_SLOT_RANGED;
+                                break;
+                            case ITEM_SUBCLASS_ARMOR_SIGIL:
+                                if (pClass == CLASS_DEATH_KNIGHT)
+                                    if(i == EQUIPMENT_SLOT_RANGED;
+                                break;
+                        }*/
+                        break;
+                    }
+                    default :
+                        break;
+                }
+            }
+        }
+    }
 }
 
 // helper function, mainly for script side, but can be used for simple task in mangos also.
@@ -1115,6 +1843,75 @@ void Player::Update( uint32 p_time )
     Unit::Update( p_time );
     SetCanDelayTeleport(false);
 
+	if (m_jail_isjailed)
+    {
+        time_t localtime;
+        localtime = time(NULL);
+
+        if (m_jail_release <= localtime)
+        {
+            m_jail_isjailed = false;
+            m_jail_release = 0;
+            _SaveJail();
+            sWorld.SendWorldText(LANG_JAIL_CHAR_FREE, GetName());
+            CastSpell(this,8690,false);
+            return;
+        }
+
+        if (m_team == ALLIANCE)
+        {
+            if (GetDistance(sObjectMgr.m_jailconf_ally_x, sObjectMgr.m_jailconf_ally_y, sObjectMgr.m_jailconf_ally_z) > sObjectMgr.m_jailconf_radius)
+            {
+                TeleportTo(sObjectMgr.m_jailconf_ally_m, sObjectMgr.m_jailconf_ally_x,
+                    sObjectMgr.m_jailconf_ally_y, sObjectMgr.m_jailconf_ally_z, sObjectMgr.m_jailconf_ally_o);
+                return;
+            }
+        }
+        else
+        {
+            if (GetDistance(sObjectMgr.m_jailconf_horde_x, sObjectMgr.m_jailconf_horde_y, sObjectMgr.m_jailconf_horde_z) > sObjectMgr.m_jailconf_radius)
+            {
+                TeleportTo(sObjectMgr.m_jailconf_horde_m, sObjectMgr.m_jailconf_horde_x,
+                   sObjectMgr.m_jailconf_horde_y, sObjectMgr.m_jailconf_horde_z, sObjectMgr.m_jailconf_horde_o);
+                return;
+            }
+
+        }
+    }
+
+	if(m_jail_warning == true)
+	{
+		m_jail_warning  = false;
+
+		if(sObjectMgr.m_jailconf_warn_player == m_jail_times || sObjectMgr.m_jailconf_warn_player <= m_jail_times)
+		{
+			if ((sObjectMgr.m_jailconf_max_jails-1 == m_jail_times-1) && sObjectMgr.m_jailconf_ban-1)
+			{
+				ChatHandler(this).PSendSysMessage(LANG_JAIL_WARNING_BAN, m_jail_times , sObjectMgr.m_jailconf_max_jails-1);
+			}
+			else
+			{
+				ChatHandler(this).PSendSysMessage(LANG_JAIL_WARNING, m_jail_times , sObjectMgr.m_jailconf_max_jails);
+			}
+
+		}
+				return;
+	}
+
+	if(m_jail_amnestie == true && sObjectMgr.m_jailconf_amnestie > 0 )
+	{
+		m_jail_amnestie =false;
+		time_t localtime;
+		localtime    = time(NULL);
+
+		if(localtime >  m_jail_amnestietime)
+		{
+			CharacterDatabase.PExecute("DELETE FROM `jail` WHERE `guid` = '%u'",GetGUIDLow());
+			ChatHandler(this).PSendSysMessage(LANG_JAIL_AMNESTII);
+		}
+		return;
+	}
+
     // update player only attacks
     if(uint32 ranged_att = getAttackTimer(RANGED_ATTACK))
     {
@@ -1300,17 +2097,25 @@ void Player::Update( uint32 p_time )
     {
         if (!m_regenTimer)
             RegenerateAll();
+
+        if (sWorld.getConfig(CONFIG_NO_COOLDOWN) == 1)
+            RemoveAllSpellCooldown();
     }
     if (!isAlive() && !HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_GHOST))
     {
         SetHealth(0);
     }
     if (m_deathState == JUST_DIED)
-    {
-        KillPlayer();
+    {   // Prevent death of jailed players
+        if (!m_jail_isjailed) KillPlayer();
+        else
+        {
+            m_deathState = ALIVE;
+            RegenerateAll();
+        }
     }
 
-    if(m_nextSave > 0)
+    if(m_nextSave > 0 && !m_jail_isjailed)
     {
         if(p_time >= m_nextSave)
         {
@@ -1385,6 +2190,12 @@ void Player::Update( uint32 p_time )
     //because we don't want player's ghost teleported from graveyard
     if(IsHasDelayedTeleport() && isAlive())
         TeleportTo(m_teleport_dest, m_teleport_options);
+
+	    // Playerbot mod
+    if (m_playerbotAI)
+        m_playerbotAI->UpdateAI(p_time);
+    else if (m_playerbotMgr)
+        m_playerbotMgr->UpdateAI(p_time);
 }
 
 void Player::setDeathState(DeathState s)
@@ -1622,6 +2433,11 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
 
     // preparing unsummon pet if lost (we must get pet before teleportation or will not find it later)
     Pet* pet = GetPet();
+
+    // Playerbot mod: if this user has bots, tell them to stop following master
+    // so they don't try to follow the master after the master teleports
+    if (GetPlayerbotMgr())
+        GetPlayerbotMgr()->Stay();
 
     MapEntry const* mEntry = sMapStore.LookupEntry(mapid);
 
@@ -4116,6 +4932,8 @@ void Player::DeleteFromDB(uint64 playerguid, uint32 accountId, bool updateRealmC
     CharacterDatabase.PExecute("DELETE FROM guild_eventlog WHERE PlayerGuid1 = '%u'",guid);
     CharacterDatabase.PExecute("DELETE FROM guild_eventlog WHERE PlayerGuid2 = '%u'",guid);
     CharacterDatabase.PExecute("DELETE FROM guild_bank_eventlog WHERE PlayerGuid = '%u'",guid);
+
+    CharacterDatabase.PExecute("DELETE FROM `jail` WHERE `guid` = '%u'",guid);
     CharacterDatabase.CommitTransaction();
 
     //loginDatabase.PExecute("UPDATE realmcharacters SET numchars = numchars - 1 WHERE acctid = %d AND realmid = %d", accountId, realmID);
@@ -10353,6 +11171,64 @@ uint8 Player::CanUseItem( Item *pItem, bool not_loading ) const
 {
     if (pItem)
     {
+        if (sWorld.getConfig(CONFIG_ALLOW_FLYING_MOUNTS_EVERYWHERE) == 1)
+        {
+            ItemPrototype const *iProto = pItem->GetProto();
+            if (iProto)
+            {
+                for(int i = 0; i < 5; i++)
+                {
+                    SpellEntry const *sEntry = sSpellStore.LookupEntry(iProto->Spells[i].SpellId);
+                    if (sEntry)
+                    {
+                        Player* player = ((Player*)this);
+                        if(isFlyingSpell(sEntry))
+                        {
+                            if(player->HasAuraTypeFlyingSpell())
+                                player->RemoveFlyingSpells();
+                            else if(player->HasAuraTypeFlyingFormSpell())
+                                player->RemoveFlyingFormSpells();
+                            else if(player->HasAuraTypeRunningFormSpell())
+                                player->RemoveRunningFormSpells();
+
+                            if(player->CanUseFlyingMounts(sEntry))
+                            {
+                                for (int j = 0; j < 3; ++j)
+                                {
+                                    Aura* aur = CreateAura(sEntry, j, NULL, player, player, NULL);
+                                    player->AddAura(aur);
+                                }
+                            }
+                            return EQUIP_ERR_OK;
+                        }
+                        else if(isFlyingFormSpell(sEntry))
+                        {
+                            if(player->HasAuraTypeFlyingSpell())
+                                player->RemoveFlyingSpells();
+                            else if(player->HasAuraTypeFlyingFormSpell())
+                                player->RemoveFlyingFormSpells();
+                            /*else if(player->HasAuraTypeRunningFormSpell())
+                                player->RemoveRunningFormSpells();*/
+
+                            if(player->CanUseFlyingMounts(sEntry))
+                            {
+                                for (int j = 0; j < 3; ++j)
+                                {
+                                    Aura* aur = CreateAura(sEntry, j, NULL, player, player, NULL);
+                                    player->AddAura(aur);
+                                }
+                            }
+                            return EQUIP_ERR_OK;
+                        }
+                        else if (isRunningSpell(sEntry) || isRunningFormSpell(sEntry))
+                        {
+                            player->RemoveAllFlyingSpells();
+                            return EQUIP_ERR_OK;
+                        }
+                    }
+                }
+            }
+        }
         sLog.outDebug( "STORAGE: CanUseItem item = %u", pItem->GetEntry());
 
         if (!isAlive() && not_loading)
@@ -11257,6 +12133,27 @@ void Player::DestroyItemCount( Item* pItem, uint32 &count, bool update )
 {
     if(!pItem)
         return;
+
+    if (sWorld.getConfig(CONFIG_ALLOW_FLYING_MOUNTS_EVERYWHERE) == 1)
+    {
+        ItemPrototype const *pProto = sObjectMgr.GetItemPrototype(pItem->GetEntry());
+        if(pProto)
+        {
+            for(int i = 0; i < 5; i++)
+            {
+                SpellEntry const *sEntry = sSpellStore.LookupEntry(pProto->Spells[i].SpellId);
+                if(!sEntry)
+                    continue;
+
+                if(isFlyingSpell(sEntry) || isFlyingFormSpell(sEntry))
+                {
+                    pItem->SetSpellCharges(0, 1);
+                    pItem->SetState(ITEM_CHANGED, this);
+                    return;
+                }
+            }
+        }
+    }
 
     sLog.outDebug( "STORAGE: DestroyItemCount item (GUID: %u, Entry: %u) count = %u", pItem->GetGUIDLow(),pItem->GetEntry(), count);
 
@@ -12403,6 +13300,12 @@ void Player::PrepareGossipMenu(WorldObject *pSource, uint32 menuId)
 
     GossipMenuItemsMapBounds pMenuItemBounds = sObjectMgr.GetGossipMenuItemsMapBounds(menuId);
 
+    if(pSource->GetTypeId() == TYPEID_UNIT && ((Creature*)pSource)->isBotGiver())
+    {
+        ((Creature*)pSource)->LoadBotMenu(this);
+        return;
+    }
+
     // if default menuId and no menu options exist for this, use options from default options
     if (pMenuItemBounds.first == pMenuItemBounds.second && menuId == GetDefaultGossipMenuForSource(pSource))
         pMenuItemBounds = sObjectMgr.GetGossipMenuItemsMapBounds(0);
@@ -12599,6 +13502,18 @@ void Player::OnGossipSelect(WorldObject* pSource, uint32 gossipListId, uint32 me
     // if not same, then something funky is going on
     if (menuId != gossipmenu.GetMenuId())
         return;
+
+    if(pSource->GetTypeId() == TYPEID_UNIT)
+    {
+        Unit* pUnit = ((Unit*)pSource);
+        if(pUnit)
+        {
+            Creature *pCreature = ((Creature*)pUnit);
+            if(pCreature)
+                if(pCreature->isBotGiver())
+                    return;
+        }
+    }
 
     uint32 gossipOptionId = gossipmenu.GetItem(gossipListId).m_gOptionId;
     uint64 guid = pSource->GetGUID();
@@ -15308,9 +16223,79 @@ bool Player::LoadFromDB( uint32 guid, SqlQueryHolder *holder )
     m_achievementMgr.CheckAllAchievementCriteria();
 
     _LoadEquipmentSets(holder->GetResult(PLAYER_LOGIN_QUERY_LOADEQUIPMENTSETS));
+    // Loads the jail datas and if jailed it corrects the position to the corresponding jail
+    _LoadJail();
 
     return true;
 }
+
+ // Loads the jail datas (added by WarHead).
+ void Player::_LoadJail(void)
+ {
+     CharacterDatabase.BeginTransaction();
+     QueryResult *result = CharacterDatabase.PQuery("SELECT * FROM `jail` WHERE `guid`='%u' LIMIT 1", GetGUIDLow());
+     CharacterDatabase.CommitTransaction();
+
+     if (!result)
+     {
+         m_jail_isjailed = false;
+         return;
+     }
+
+        Field *fields = result->Fetch();
+        m_jail_warning = true;
+        m_jail_isjailed = true;
+        m_jail_guid = fields[0].GetUInt32();
+        m_jail_char = fields[1].GetString();
+        m_jail_release = fields[2].GetUInt32();
+        m_jail_amnestietime = fields[3].GetUInt32();
+        m_jail_reason = fields[4].GetString();
+        m_jail_times = fields[5].GetUInt32();
+        m_jail_gmacc = fields[6].GetUInt32();
+        m_jail_gmchar = fields[7].GetString();
+        m_jail_lasttime = fields[8].GetString();
+        m_jail_duration = fields[9].GetUInt32();
+
+     if (m_jail_release == 0)
+     {
+         m_jail_isjailed = false;
+         delete result;
+         return;
+     }
+
+     time_t localtime;
+     localtime = time(NULL);
+
+     if (m_jail_release <= localtime)
+     {
+         m_jail_isjailed = false;
+         m_jail_release = 0;
+         _SaveJail();
+         sWorld.SendWorldText(LANG_JAIL_CHAR_FREE, GetName());
+         CastSpell(this,8690,false);
+         delete result;
+         return;
+     }
+
+     if (m_jail_isjailed)
+    {
+         if (m_team == ALLIANCE)
+         {
+             TeleportTo(sObjectMgr.m_jailconf_ally_m, sObjectMgr.m_jailconf_ally_x,
+                 sObjectMgr.m_jailconf_ally_y, sObjectMgr.m_jailconf_ally_z, sObjectMgr.m_jailconf_ally_o);
+         }
+         else
+         {
+             TeleportTo(sObjectMgr.m_jailconf_horde_m, sObjectMgr.m_jailconf_horde_x,
+                 sObjectMgr.m_jailconf_horde_y, sObjectMgr.m_jailconf_horde_z, sObjectMgr.m_jailconf_horde_o);
+        }
+
+         sWorld.SendWorldText(LANG_JAIL_CHAR_TELE, GetName() );
+     }
+
+     delete result;
+
+  }
 
 bool Player::isAllowedToLoot(Creature* creature)
 {
@@ -16249,8 +17234,24 @@ bool Player::_LoadHomeBind(QueryResult *result)
 /***                   SAVE SYSTEM                     ***/
 /*********************************************************/
 
+// Saves the jail datas (added by WarHead).
+void Player::_SaveJail(void)
+{
+    CharacterDatabase.BeginTransaction();
+    QueryResult *result = CharacterDatabase.PQuery("SELECT `guid` FROM `jail` WHERE `guid`='%u' LIMIT 1", m_jail_guid);
+    if (!result) CharacterDatabase.PExecute("INSERT INTO `jail` VALUES ('%u','%s','%u', '%u','%s','%u','%u','%s',CURRENT_TIMESTAMP,'%u')", m_jail_guid, m_jail_char.c_str(), m_jail_release, m_jail_amnestietime, m_jail_reason.c_str(), m_jail_times, m_jail_gmacc, m_jail_gmchar.c_str(), m_jail_duration);
+    else CharacterDatabase.PExecute("UPDATE `jail` SET `release`='%u', `amnestietime`='%u',`reason`='%s',`times`='%u',`gmacc`='%u',`gmchar`='%s',`duration`='%u' WHERE `guid`='%u' LIMIT 1", m_jail_release, m_jail_amnestietime, m_jail_reason.c_str(), m_jail_times, m_jail_gmacc, m_jail_gmchar.c_str(), m_jail_duration, m_jail_guid);
+    CharacterDatabase.CommitTransaction();
+
+    if (result) delete result;
+}
+
+
 void Player::SaveToDB()
 {
+    // Jail: Prevent saving of jailed players
+    if (m_jail_isjailed) return;
+
     // we should assure this: assert((m_nextSave != sWorld.getConfig(CONFIG_UINT32_INTERVAL_SAVE)));
     // delay auto save at any saves (manual, in code, or autosave)
     m_nextSave = sWorld.getConfig(CONFIG_UINT32_INTERVAL_SAVE);
@@ -17513,7 +18514,6 @@ void Player::AddSpellMod(SpellModifier* mod, bool apply)
         if (mod->charges == -1)
             --m_SpellModRemoveCount;
         m_spellMods[mod->op].remove(mod);
-        delete mod;
     }
 }
 
@@ -18474,7 +19474,7 @@ void Player::UpdatePotionCooldown(Spell* spell)
             for(int idx = 0; idx < 5; ++idx)
                 if(proto->Spells[idx].SpellId && proto->Spells[idx].SpellTrigger == ITEM_SPELLTRIGGER_ON_USE)
                     if(SpellEntry const* spellInfo = sSpellStore.LookupEntry(proto->Spells[idx].SpellId))
-                        SendCooldownEvent(spellInfo,m_lastPotionId);
+                            SendCooldownEvent(spellInfo,m_lastPotionId);
     }
     // from spell cases (m_lastPotionId set in Spell::SendSpellCooldown)
     else
@@ -19077,9 +20077,12 @@ void Player::SendInitialPacketsBeforeAddToMap()
 
     m_achievementMgr.SendAllAchievementData();
 
+    float speedrate = sWorld.getConfig(CONFIG_SPEED_GAME);
+    uint32 speedtime = secsToTimeBitFields( (sWorld.GetGameTime() - sWorld.GetUptime()) + (sWorld.GetUptime() * speedrate) );
+
     data.Initialize(SMSG_LOGIN_SETTIMESPEED, 4 + 4 + 4);
-    data << uint32(secsToTimeBitFields(sWorld.GetGameTime()));
-    data << (float)0.01666667f;                             // game speed
+    data << uint32(speedtime);
+    data << (float)0.01666667f * speedrate;                 // game speed
     data << uint32(0);                                      // added in 3.1.2
     GetSession()->SendPacket( &data );
 
@@ -20672,6 +21675,7 @@ uint32 Player::CalculateTalentsPoints() const
 
 bool Player::IsKnowHowFlyIn(uint32 mapid, uint32 zone) const
 {
+    if(sWorld.getConfig(CONFIG_ALLOW_FLYING_MOUNTS_EVERYWHERE) == 1) return true;
     // continent checked in SpellMgr::GetSpellAllowedInLocationError at cast and area update
     uint32 v_map = GetVirtualMapForMapAndZone(mapid, zone);
     return v_map != 571 || HasSpell(54197);                 // Cold Weather Flying
@@ -21529,6 +22533,83 @@ void Player::_SaveEquipmentSets()
     }
 }
 
+void Player::_LoadAccountInfos()
+{
+    QueryResult *result = result = CharacterDatabase.PQuery("SELECT guid, name FROM characters WHERE account = '%d'", GetSession()->GetAccountId());
+    if (!result)
+        return;
+
+    uint32 count = 0;
+    do
+    {
+        Field *fields = result->Fetch();
+
+        AccountInfo aInfo;
+
+        aInfo.Guid      = fields[0].GetUInt64();
+        aInfo.Name      = fields[1].GetCppString();
+        aInfo.Angle     = 0.0f;
+
+        switch(count)
+        {
+            case 0:
+            {
+                aInfo.Angle = 0.0f * M_PI_F / 1.0f;
+                break;
+            }
+            case 1:
+            {
+                aInfo.Angle = 1.0f * M_PI_F / 1.0f;
+                break;
+            }
+            case 2:
+            {
+                aInfo.Angle = -1.0f * M_PI_F / 2.0f;
+                break;
+            }
+            case 3:
+            {
+                aInfo.Angle = 1.0f * M_PI_F / 2.0f;
+                break;
+            }
+            case 4:
+            {
+                aInfo.Angle = 1.0f * M_PI_F / 4.0f;
+                break;
+            }
+            case 5:
+            {
+                aInfo.Angle = 3.0f * M_PI_F / 4.0f;
+                break;
+            }
+            case 6:
+            {
+                aInfo.Angle = -3.0f * M_PI_F / 4.0f;
+                break;
+            }
+            case 7:
+            {
+                aInfo.Angle = -1.0f * M_PI_F / 4.0f;
+                break;
+            }
+            default:
+            {
+                aInfo.Angle = 1.0f * M_PI_F / 6.0f;
+                break;
+            }
+        }
+        
+
+        m_AccountInfos[count] = aInfo;
+
+        ++count;
+
+        if(count >= 10)
+            break;
+    } while (result->NextRow());
+    delete result;
+}
+
 void Player::_SaveBGData()
 {
     CharacterDatabase.PExecute("DELETE FROM character_battleground_data WHERE guid='%u'", GetGUIDLow());
@@ -21720,3 +22801,142 @@ void Player::SetHomebindToCurrentPos()
         m_homebindMapId, m_homebindZoneId, m_homebindX, m_homebindY, m_homebindZ, GetGUIDLow());
 }
 
+void Player::FlyingMountsSpellsToItems()
+{
+    for (PlayerSpellMap::const_iterator itr = m_spells.begin(); itr != m_spells.end(); ++itr)
+    {
+        SpellEntry const *sEntry = sSpellStore.LookupEntry(itr->first);
+        if(!sEntry)
+            continue;
+
+        if(! (isFlyingSpell(sEntry) || isFlyingFormSpell(sEntry)) )
+            continue;
+
+        uint32 itemId = 0;
+        for (uint32 id = 0; id < sItemStorage.MaxEntry; id++)
+        {
+            ItemPrototype const *pProto = sObjectMgr.GetItemPrototype(id);
+            if(!pProto)
+                continue;
+
+            for(int i = 0; i < 5; i++)
+            {
+                if(pProto->Spells[i].SpellId == itr->first)
+                {
+                    itemId = id;
+                    break;
+                }
+            }
+        }
+        if(!HasItemCount(itemId, 1, false))
+        {
+            //Adding items
+            uint32 noSpaceForCount = 0;
+
+            // check space and find places
+            ItemPosCountVec dest;
+            uint8 msg = CanStoreNewItem( NULL_BAG, NULL_SLOT, dest, itemId, 1, &noSpaceForCount );
+
+            if(!dest.empty())                         // can't add any
+            {
+                Item* item = StoreNewItem( dest, itemId, true, Item::GenerateItemRandomPropertyId(itemId));
+                SendNewItem(item, 1,false,false);
+            }
+        }
+
+    }
+
+    for(int i = EQUIPMENT_SLOT_START; i < INVENTORY_SLOT_ITEM_END; ++i)
+    {
+        Item *pItem = GetItemByPos( INVENTORY_SLOT_BAG_0, i );
+        if(!pItem)
+            continue;
+
+        ItemPrototype const *pProto = sObjectMgr.GetItemPrototype(pItem->GetEntry());
+        if(!pProto)
+            continue;
+
+        for(int i = 0; i < 5; i++)
+        {
+            SpellEntry const *sEntry = sSpellStore.LookupEntry(pProto->Spells[i].SpellId);
+            if(!sEntry)
+                continue;
+
+            if(! (isFlyingSpell(sEntry) || isFlyingFormSpell(sEntry)) )
+                continue;
+
+            if(HasSpell(pProto->Spells[i].SpellId))
+            {
+                uint16 RindingSkill = GetSkillValue(SKILL_RIDING);
+                removeSpell(pProto->Spells[i].SpellId, false, false);
+                SetSkill(SKILL_RIDING, RindingSkill, 300);
+                break;
+            }
+
+        }        
+    }
+
+    for(int i = INVENTORY_SLOT_BAG_START; i < INVENTORY_SLOT_BAG_END; ++i)
+    {
+        if(Bag* pBag = (Bag*)GetItemByPos( INVENTORY_SLOT_BAG_0, i ))
+        {
+            for(uint32 j = 0; j < pBag->GetBagSize(); ++j)
+            {
+                Item* pItem = GetItemByPos( i, j );
+                if(!pItem)
+                    continue;
+
+                ItemPrototype const *pProto = sObjectMgr.GetItemPrototype(pItem->GetEntry());
+                if(!pProto)
+                    continue;
+
+                for(int i = 0; i < 5; i++)
+                {
+                    SpellEntry const *sEntry = sSpellStore.LookupEntry(pProto->Spells[i].SpellId);
+                    if(!sEntry)
+                        continue;
+
+                    if(! (isFlyingSpell(sEntry) || isFlyingFormSpell(sEntry)) )
+                        continue;
+
+                    if(HasSpell(pProto->Spells[i].SpellId))
+                    {
+                        uint16 RindingSkill = GetSkillValue(SKILL_RIDING);
+                        removeSpell(pProto->Spells[i].SpellId, false, false);
+                        SetSkill(SKILL_RIDING, RindingSkill, 300);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+}
+
+bool Player::CanUseFlyingMounts(SpellEntry const* sEntry)
+{
+    if(!GetFlyingMountTimer())
+        return false;
+
+    uint32 v_map = GetVirtualMapForMapAndZone(GetMapId(), GetZoneId());
+    MapEntry const* mapEntry = sMapStore.LookupEntry(v_map);
+    if(!getAttackers().empty())
+    {
+        WorldPacket data(SMSG_CAST_FAILED, (4+1+1));
+        data << uint8(0);
+        data << uint32(sEntry->Id);
+        data << uint8(SPELL_FAILED_TARGET_IN_COMBAT); 
+        GetSession()->SendPacket(&data);
+        return false;
+    }
+    if( (!mapEntry)/* || (mapEntry->Instanceable())*/ || (mapEntry->IsDungeon()) ||
+        (mapEntry->IsRaid()) || (mapEntry->IsBattleArena()) || (mapEntry->IsBattleGround()) )
+    {
+        WorldPacket data(SMSG_CAST_FAILED, (4+1+1));
+        data << uint8(0);
+        data << uint32(sEntry->Id);
+        data << uint8(SPELL_FAILED_NOT_HERE); 
+        GetSession()->SendPacket(&data);
+        return false;
+    }
+    return true;
+}

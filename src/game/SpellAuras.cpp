@@ -485,6 +485,7 @@ m_isRemovedOnShapeLost(true), m_in_use(0), m_deleted(false)
 
 Aura::~Aura()
 {
+    delete m_spellmod;
 }
 
 AreaAura::AreaAura(SpellEntry const* spellproto, uint32 eff, int32 *currentBasePoints, Unit *target,

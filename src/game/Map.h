@@ -393,6 +393,7 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
 
         bool HavePlayers() const { return !m_mapRefManager.isEmpty(); }
         uint32 GetPlayersCountExceptGMs() const;
+        uint32 GetPlayersCountExceptGMsAndBots() const;
         bool ActiveObjectsNearGrid(uint32 x,uint32 y) const;
 
         void SendToPlayers(WorldPacket const* data) const;

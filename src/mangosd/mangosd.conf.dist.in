@@ -312,7 +312,7 @@ GmLogFile = ""
 GmLogTimestamp = 0
 GmLogPerAccount = 0
 RaLogFile = ""
-LogColors = ""
+LogColors = "13 7 11 9"
 
 ###################################################################################################################
 # SERVER SETTINGS
@@ -635,9 +635,9 @@ LogColors = ""
 ###################################################################################################################
 
 GameType = 1
-RealmZone = 1
+RealmZone = 10
 Expansion = 2
-DBC.Locale = 255
+DBC.Locale = 2
 DeclinedNames = 0
 StrictPlayerNames = 0
 StrictCharterNames = 0
@@ -688,7 +688,7 @@ SkillChance.Milling = 0
 OffhandCheckAtTalentsReset = 0
 ClientCacheVersion = 0
 Event.Announce = 0
-BeepAtStart = 1
+BeepAtStart = 0
 Motd = "Welcome to the Massive Network Game Object Server."
 
 ###################################################################################################################
@@ -738,6 +738,29 @@ AllowTwoSide.Interaction.Mail = 0
 AllowTwoSide.WhoList = 0
 AllowTwoSide.AddFriend = 0
 TalentsInspecting = 1
+
+###################################################################################################################
+# AUTO BROADCAST
+#
+#    AutoBroadcast.On
+#        Enable auto broadcast
+#        Default: 0 - off
+#                 1 - on
+#
+#    AutoBroadcast.Center
+#        Display method
+#        Default: 0 - announce
+#                 1 - notify
+#                 2 - both
+#
+#    AutoBroadcast.Timer
+#        Timer for auto broadcast
+#
+###################################################################################################################
+
+AutoBroadcast.On = 1
+AutoBroadcast.Center = 2
+AutoBroadcast.Timer = 30000
 
 ###################################################################################################################
 # CREATURE SETTINGS
@@ -995,52 +1018,6 @@ GM.LowerSecurity         = 0
 GM.AllowAchievementGain  = 1
 
 ###################################################################################################################
-# VISIBILITY AND RADIUSES
-#
-#    Visibility.GroupMode
-#        Group visibility modes
-#        Default: 0 (standard setting: only members from same group can 100% auto detect invisible player)
-#                 1 (raid members 100% auto detect invisible player from same raid)
-#                 2 (players from same team can 100% auto detect invisible player)
-#
-#    Visibility.Distance.Continents
-#    Visibility.Distance.Instances
-#    Visibility.Distance.BGArenas
-#        Visibility distance for different ingame object in different maps.
-#        Visibility on continents on offy ~90 yards. In BG/Arenas ~180. For instances default ~120.
-#        Max limited by active player zone: ~ 333
-#        Min limit is max aggro radius (45) * Rate.Creature.Aggro
-#
-#    Visibility.Distance.Object
-#        Visible distance for gameobject, dynobject, bodies, corpses, bones
-#        Min limit is iteraction distance (5)
-#
-#    Visibility.Distance.InFlight
-#        Visible distance for player in flight
-#        Min limit is 0 (not show any objects)
-#
-#    Visibility.Distance.Grey.Unit
-#        Visibility grey distance for creatures/players (fast changing objects)
-#        addition to appropriate object type Visibility.Distance.* use in case visibility removing to
-#        object (except corpse around distences) If � is distance and G is grey distance then object
-#        make visible if distance to it <= D but make non visible if distance > D+G
-#        Default: 1 (yard)
-#
-#    Visibility.Distance.Grey.Object
-#        Visibility grey distance for dynobjects/gameobjects/corpses/creature bodies
-#        Default: 10 (yards)
-#
-#
-###################################################################################################################
-
-Visibility.GroupMode = 0
-Visibility.Distance.Continents    = 90
-Visibility.Distance.Instances     = 120
-Visibility.Distance.BGArenas      = 180
-Visibility.Distance.Object        = 100
-Visibility.Distance.InFlight      = 100
-Visibility.Distance.Grey.Unit   = 1
-Visibility.Distance.Grey.Object = 10
 
 Visibility.Notify.Period.OnContinents = 1000
 Visibility.Notify.Period.InInstances  = 1000
@@ -1105,6 +1082,15 @@ Visibility.Notify.Period.InBGArenas   = 1000
 #    Rate.Talent
 #        Talent Point rates
 #        Default: 1
+#
+#      Rate.CharRunSpeed
+#          Multiply the Default Player Speed (1 - Default, 1.4 - 40% faster, 0.5 - Half Movement Speed)
+#
+#      Rate.CharSwimSpeed
+#          Multiply the Default Player Speed (1 - Default, 1.4 - 40% faster, 0.5 - Half Movement Speed)
+#
+#      Rate.CharFlightSpeed
+#          Multiply the Default Player Speed (1 - Default, 1.4 - 40% faster, 0.5 - Half Movement Speed)
 #
 #    Rate.Reputation.Gain
 #         Reputation Gain rate
@@ -1209,6 +1195,9 @@ Rate.Honor = 1
 Rate.Mining.Amount = 1
 Rate.Mining.Next   = 1
 Rate.Talent = 1
+Rate.CharRunSpeed = 1
+Rate.CharSwimSpeed = 1
+Rate.CharFlightSpeed = 1
 Rate.Reputation.Gain = 1
 Rate.Reputation.LowLevel.Kill    = 1
 Rate.Reputation.LowLevel.Quest   = 1
@@ -1384,3 +1373,64 @@ Ra.IP = 0.0.0.0
 Ra.Port = 3443
 Ra.MinLevel = 3
 Ra.Secure = 1
+
+###################################################################################################################
+# PLAYERBOTAI CONFIGURATION
+#
+#    PlayerbotAI.DisableBots
+#        Disable the bot command and bot menu
+#        Default: 0 - off
+#                 1 - on
+#
+#    PlayerbotAI.DebugWhisper
+#        Enable debug output by whispering master
+#        Default: 0 - off
+#                 1 - on
+#
+#    PlayerbotAI.FollowDistanceMin
+#    PlayerbotAI.FollowDistanceMax
+#        Min. and Max. follow distance for bots
+#        Default: 0.5 / 1.0
+###################################################################################################################
+
+PlayerbotAI.DisableBots = 0
+PlayerbotAI.DebugWhisper = 0
+PlayerbotAI.FollowDistanceMin = 0.5
+PlayerbotAI.FollowDistanceMax = 1.0
+
+###################################################################################################################
+#
+#     Custom.SpeedGame
+#         Set it to a number upper than 1 to speed up realm timer
+#     Default : 1 (Real Time)
+#     Example : 60 to force 1scde (real time) = 1 minute (realm timer)
+#
+#     Custom.NoCastTime
+#         Set it to 1 to disable cast time
+#     Default : 0 (Cast Time Enable)
+#
+#     Custom.NoCooldown
+#         Set it to 1 to disable cooldown
+#     Default : 0 (Cooldown Enable)
+#
+#     Custom.HurtInRealTime
+#         Set it to 1 to disable autohurt with weapon
+#     Default : 0 (Autohurt Enable)
+#
+#     Custom.NoWaitAfterCast
+#         Set it to 1 to disable 5 scdes before regenerate mana again
+#     Default : 0 (5 scdes)
+#
+#     Custom.AllowFlyingMountsEverywhere
+#         Set it to 1 to enable flying mounts everywhere
+#         If you do it, mounts are now used as item...
+#     Default : 0
+#
+###################################################################################################################
+ 
+Custom.SpeedGame = 1
+Custom.NoCastTime = 0
+Custom.NoCooldown = 0
+Custom.HurtInRealTime = 0
+Custom.NoWaitAfterCast = 0
+Custom.AllowFlyingMountsEverywhere = 0

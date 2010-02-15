@@ -2369,6 +2369,15 @@ uint32 Map::GetPlayersCountExceptGMs() const
     return count;
 }
 
+uint32 Map::GetPlayersCountExceptGMsAndBots() const
+{
+    uint32 count = 0;
+    for(MapRefManager::const_iterator itr = m_mapRefManager.begin(); itr != m_mapRefManager.end(); ++itr)
+		if(!itr->getSource()->GetPlayerbotAI() && !itr->getSource()->isGameMaster())
+            ++count;
+    return count;
+}
+
 void Map::SendToPlayers(WorldPacket const* data) const
 {
     for(MapRefManager::const_iterator itr = m_mapRefManager.begin(); itr != m_mapRefManager.end(); ++itr)
@@ -2517,7 +2526,7 @@ bool InstanceMap::CanEnter(Player *player)
 
     // cannot enter if the instance is full (player cap), GMs don't count
     uint32 maxPlayers = GetMaxPlayers();
-    if (!player->isGameMaster() && GetPlayersCountExceptGMs() >= maxPlayers)
+    if (!player->isGameMaster() && GetPlayersCountExceptGMsAndBots() >= maxPlayers)
     {
         sLog.outDetail("MAP: Instance '%u' of map '%s' cannot have more than '%u' players. Player '%s' rejected", GetInstanceId(), GetMapName(), maxPlayers, player->GetName());
         player->SendTransferAborted(GetId(), TRANSFER_ABORT_MAX_PLAYERS);

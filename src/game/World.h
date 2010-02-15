@@ -77,7 +77,8 @@ enum WorldTimers
     WUPDATE_UPTIME      = 4,
     WUPDATE_CORPSES     = 5,
     WUPDATE_EVENTS      = 6,
-    WUPDATE_COUNT       = 7
+    WUPDATE_AUTOBROADCAST = 7,
+    WUPDATE_COUNT         = 8
 };
 
 /// Configuration elements
@@ -281,6 +282,13 @@ enum eConfigUint32Values
     CONFIG_UINT32_CREATURE_FAMILY_FLEE_ASSISTANCE_RADIUS,
     CONFIG_UINT32_CREATURE_FAMILY_ASSISTANCE_RADIUS,
     CONFIG_UINT32_GROUP_XP_DISTANCE,
+    CONFIG_SPEED_GAME,
+    CONFIG_CUSTOM_MOD,
+    CONFIG_NO_CAST_TIME,
+    CONFIG_NO_COOLDOWN,
+    CONFIG_HURT_IN_REAL_TIME,
+    CONFIG_NO_WAIT_AFTER_CAST,
+    CONFIG_ALLOW_FLYING_MOUNTS_EVERYWHERE,
     CONFIG_END_ARENA_IF_NOT_ENOUGH_PLAYERS,
     CONFIG_UINT32_VALUE_COUNT
 };
@@ -894,6 +902,9 @@ enum eConfigBoolValues
     CONFIG_BOOL_CREATURE_FAMILY_FLEE_ASSISTANCE_RADIUS,
     CONFIG_BOOL_CREATURE_FAMILY_ASSISTANCE_RADIUS,
     CONFIG_BOOL_GROUP_XP_DISTANCE,
+    RATE_CHARRUNSPEED,
+    RATE_CHARSWIMSPEED,
+    RATE_CHARFLIGHTSPEED,
     CONFIG_BOOL_VALUE_COUNT
 };
 
@@ -992,6 +1003,7 @@ class World
 
         WorldSession* FindSession(uint32 id) const;
         void AddSession(WorldSession *s);
+        void SendBroadcast();
         bool RemoveSession(uint32 id);
         /// Get the number of current active sessions
         void UpdateMaxSessionCounters();

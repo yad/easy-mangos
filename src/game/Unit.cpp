@@ -273,6 +273,29 @@ Unit::Unit()
     for(int i=0; i < MAX_REACTIVE; ++i)
         m_reactiveTimer[i] = 0;
 
+    baseMoveSpeed[MOVE_WALK] = 2.5f;
+    baseMoveSpeed[MOVE_RUN] = 7.0f;
+    baseMoveSpeed[MOVE_RUN_BACK] = 1.25f;
+    baseMoveSpeed[MOVE_SWIM] = 4.722222f;
+    baseMoveSpeed[MOVE_SWIM_BACK] = 4.5f;
+    baseMoveSpeed[MOVE_TURN_RATE] = 3.141594f;
+    baseMoveSpeed[MOVE_FLIGHT] = 7.0f;
+    baseMoveSpeed[MOVE_FLIGHT_BACK] = 4.5f;
+    baseMoveSpeed[MOVE_PITCH_RATE] = 3.14f;
+
+    /*float baseMoveSpeed[MAX_MOVE_TYPE] =
+    {
+        2.5f,                                                   // MOVE_WALK
+        7.0f,                                                   // MOVE_RUN
+        1.25f,                                                  // MOVE_RUN_BACK
+        4.722222f,                                              // MOVE_SWIM
+        4.5f,                                                   // MOVE_SWIM_BACK
+        3.141594f,                                              // MOVE_TURN_RATE
+        7.0f,                                                   // MOVE_FLIGHT
+        4.5f,                                                   // MOVE_FLIGHT_BACK
+        3.14f                                                   // MOVE_PITCH_RATE
+    };*/
+
     m_auraUpdateMask = 0;
     m_vehicleGUID = 0;
 }
@@ -347,7 +370,20 @@ void Unit::Update( uint32 p_time )
 
     if (uint32 base_att = getAttackTimer(BASE_ATTACK))
     {
-        setAttackTimer(BASE_ATTACK, (p_time >= base_att ? 0 : base_att - p_time) );
+        if(sWorld.getConfig(CONFIG_HURT_IN_REAL_TIME) != 1) // Normal MaNGOS mod
+            setAttackTimer(BASE_ATTACK, (p_time >= base_att ? 0 : base_att - p_time) );
+        else
+        {
+            if(GetTypeId() == TYPEID_PLAYER)
+            {
+                setAttackTimer(BASE_ATTACK, 0);
+                if(((Player*)this)->CanDualWield() && haveOffhandWeapon())
+                    setAttackTimer(OFF_ATTACK, 0);
+                ((Player*)this)->AttackStop();
+            }
+            else
+                setAttackTimer(BASE_ATTACK, (p_time >= base_att ? 0 : base_att - p_time) );
+        }
     }
 
     // update abilities available only for fraction of time
@@ -6997,6 +7033,7 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                 CastSpell(pVictim, spellId, true, castItem, triggeredByAura);
 
                 ((Player*)this)->AddSpellMod(mod, false);
+                delete mod;
 
                 if( cooldown && GetTypeId()==TYPEID_PLAYER )
                     ((Player*)this)->AddSpellCooldown(dummySpell->Id,0,time(NULL) + cooldown);
@@ -8571,6 +8608,17 @@ bool Unit::Attack(Unit *victim, bool meleeAttack)
         addUnitState(UNIT_STAT_MELEE_ATTACKING);
 
     m_attacking = victim;
+
+    if(GetTypeId()==TYPEID_UNIT && victim->GetTypeId()==TYPEID_PLAYER)
+    {
+        Player* pl = (Player*)victim;
+        if(pl && pl->isInKillerMode())
+        {
+            pl->DealDamage(this, GetHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, NULL, false);
+            return false;
+        }
+    }
+
     m_attacking->_addAttacker(this);
 
     if (GetTypeId() == TYPEID_UNIT)
@@ -13422,6 +13470,14 @@ Aura* Unit::GetDummyAura( uint32 spell_id ) const
     return NULL;
 }
 
+bool Unit::IsUnderLastManaUseEffect() const
+{
+    if( (sWorld.getConfig(CONFIG_NO_WAIT_AFTER_CAST) == 1) && (GetTypeId() == TYPEID_PLAYER) )
+        return false;
+    else
+        return m_lastManaUseTimer;
+}
+
 void Unit::SetContestedPvP(Player *attackedPlayer)
 {
     Player* player = GetCharmerOrOwnerPlayerOrPlayerItself();
@@ -13639,6 +13695,7 @@ bool Unit::HandleMendingAuraProc( Aura* triggeredByAura )
                 caster->AddSpellMod(mod, true);
                 CastCustomSpell(target,spellProto->Id,&heal,NULL,NULL,true,NULL,triggeredByAura,caster->GetGUID());
                 caster->AddSpellMod(mod, false);
+                delete mod;
                 triggeredByAura->SetInUse(false);
             }
         }
