@@ -2435,7 +2435,6 @@ enum DiminishingGroup
     DIMINISHING_HORROR,                                     // Death Coil and Psychic Horror
     // Druid Specific
     DIMINISHING_CYCLONE,                                    // From 2.3.0
-    // Shared Class Specific
     DIMINISHING_CHEAPSHOT_POUNCE,
     DIMINISHING_DISARM,                                     // From 2.3.0
     DIMINISHING_SILENCE,                                    // From 2.3.0

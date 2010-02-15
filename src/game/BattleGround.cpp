@@ -474,7 +474,7 @@ void BattleGround::Update(uint32 diff)
                     if (Player* plr = sObjectMgr.GetPlayer(itr->first))
                         plr->RemoveAurasDueToSpell(SPELL_PREPARATION);
                 //Announce BG starting
-                if (sWorld.getConfig(CONFIG_BATTLEGROUND_QUEUE_ANNOUNCER_ENABLE))
+                if (sWorld.getConfig(CONFIG_BOOL_BATTLEGROUND_QUEUE_ANNOUNCER_ENABLE))
                 {
                     sWorld.SendWorldText(LANG_BG_STARTED_ANNOUNCE_WORLD, GetName(), GetMinLevel(), GetMaxLevel());
                 }
@@ -851,7 +851,7 @@ uint32 BattleGround::GetBonusHonorFromKill(uint32 kills) const
     if (GetMapId() == reqmap)
       BGEventMultifier *= 1.5;
     //variable kills means how many honorable kills you scored (so we need kills * honor_for_one_kill)
-    return (MaNGOS::Honor::hk_honor_at_level(GetMaxLevel(), kills)*BGEventMultifier);
+    return ((uint32)MaNGOS::Honor::hk_honor_at_level(GetMaxLevel(), kills)*BGEventMultifier);
 }
 
 uint32 BattleGround::GetBattlemasterEntry() const
@@ -1398,7 +1398,7 @@ void BattleGround::UpdatePlayerScore(Player *Source, uint32 type, uint32 value)
             if (isBattleGround())
             {
                 // reward honor instantly
-                if (Source->RewardHonor(NULL, 1, value))
+                if (Source->RewardHonor(NULL, 1, (float)value))
                     itr->second->BonusHonor += value;
             }
             break;
@@ -1415,7 +1415,7 @@ void BattleGround::UpdatePlayerScore(Player *Source, uint32 type, uint32 value)
     }
 }
 
-bool BattleGround::AddObject(uint32 type, uint32 entry, float x, float y, float z, float o, float rotation0, float rotation1, float rotation2, float rotation3, uint32 respawnTime)
+bool BattleGround::AddObject(uint32 type, uint32 entry, float x, float y, float z, float o, float rotation0, float rotation1, float rotation2, float rotation3, uint32 /*respawnTime*/)
 {
     // must be created this way, adding to godatamap would add it to the base map of the instance
     // and when loading it (in go::LoadFromDB()), a new guid would be assigned to the object, and a new object would be created

@@ -277,22 +277,23 @@ void GameObject::Update(uint32 /*p_time*/)
 
                     // traps
                     Unit* owner = GetOwner();
-                    Unit* ok = NULL;                            // pointer to appropriate target if found any
+                    Unit* ok = NULL;                        // pointer to appropriate target if found any
 
                     bool IsBattleGroundTrap = false;
                     //FIXME: this is activation radius (in different casting radius that must be selected from spell data)
                     //TODO: move activated state code (cast itself) to GO_ACTIVATED, in this place only check activating and set state
-                    float radius = goInfo->trap.radius;
+                    float radius = float(goInfo->trap.radius);
                     if(!radius)
                     {
-                        if(goInfo->trap.cooldown != 3)            // cast in other case (at some triggering/linked go/etc explicit call)
+                        if(goInfo->trap.cooldown != 3)      // cast in other case (at some triggering/linked go/etc explicit call)
                             return;
                         else
                         {
                             if(m_respawnTime > 0)
                                 break;
 
-                            radius = goInfo->trap.cooldown;       // battlegrounds gameobjects has data2 == 0 && data5 == 3
+                            // battlegrounds gameobjects has data2 == 0 && data5 == 3
+                            radius = float(goInfo->trap.cooldown);
                             IsBattleGroundTrap = true;
                         }
                     }
@@ -441,7 +442,7 @@ void GameObject::Update(uint32 /*p_time*/)
             m_respawnTime = m_spawnedByDefault ? time(NULL) + m_respawnDelayTime : 0;
 
             // if option not set then object will be saved at grid unload
-            if(sWorld.getConfig(CONFIG_SAVE_RESPAWN_TIME_IMMEDIATLY))
+            if(sWorld.getConfig(CONFIG_BOOL_SAVE_RESPAWN_TIME_IMMEDIATLY))
                 SaveRespawnTime();
 
             UpdateObjectVisibility();
@@ -532,7 +533,7 @@ void GameObject::SaveToDB(uint32 mapid, uint8 spawnMask, uint32 phaseMask)
     data.rotation1 = GetFloatValue(GAMEOBJECT_PARENTROTATION+1);
     data.rotation2 = GetFloatValue(GAMEOBJECT_PARENTROTATION+2);
     data.rotation3 = GetFloatValue(GAMEOBJECT_PARENTROTATION+3);
-    data.spawntimesecs = m_spawnedByDefault ? m_respawnDelayTime : -(int32)m_respawnDelayTime;
+    data.spawntimesecs = m_spawnedByDefault ? (int32)m_respawnDelayTime : -(int32)m_respawnDelayTime;
     data.animprogress = GetGoAnimProgress();
     data.go_state = GetGoState();
     data.spawnMask = spawnMask;
@@ -964,7 +965,7 @@ void GameObject::Use(Unit* user)
 
                 // the object orientation + 1/2 pi
                 // every slot will be on that straight line
-                float orthogonalOrientation = GetOrientation()+M_PI*0.5f;
+                float orthogonalOrientation = GetOrientation()+M_PI_F*0.5f;
                 // find nearest slot
                 for(uint32 i=0; i<info->chair.slots; ++i)
                 {
@@ -1421,8 +1422,8 @@ void GameObject::UpdateRotationFields(float rotation2 /*=0.0f*/, float rotation3
 
     if(rotation2==0.0f && rotation3==0.0f)
     {
-        rotation2 = f_rot1;
-        rotation3 = f_rot2;
+        rotation2 = (float)f_rot1;
+        rotation3 = (float)f_rot2;
     }
 
     SetFloatValue(GAMEOBJECT_PARENTROTATION+2, rotation2);
