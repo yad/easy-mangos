@@ -197,7 +197,7 @@ void SpellCastTargets::Update(Unit* caster)
         {
             Player* pTrader = ((Player*)caster)->GetTrader();
             if(pTrader && m_itemTargetGUID < TRADE_SLOT_COUNT)
-                m_itemTarget = pTrader->GetItemByPos(pTrader->GetItemPosByTradeSlot(m_itemTargetGUID));
+                m_itemTarget = pTrader->GetItemByPos(pTrader->GetItemPosByTradeSlot(uint32(m_itemTargetGUID)));
         }
         if(m_itemTarget)
             m_itemTargetEntry = m_itemTarget->GetEntry();
@@ -1389,11 +1389,11 @@ void Spell::SetTargetMap(uint32 effIndex, uint32 targetMode, UnitList& targetUni
     switch(targetMode)
     {
         case TARGET_RANDOM_NEARBY_LOC:
-            radius *= sqrt(rand_norm()); // Get a random point in circle. Use sqrt(rand) to correct distribution when converting polar to Cartesian coordinates.
+            radius *= sqrtf(rand_norm_f()); // Get a random point in circle. Use sqrt(rand) to correct distribution when converting polar to Cartesian coordinates.
                                          // no 'break' expected since we use code in case TARGET_RANDOM_CIRCUMFERENCE_POINT!!!
         case TARGET_RANDOM_CIRCUMFERENCE_POINT:
         {
-            float angle = 2.0 * M_PI * rand_norm();
+            float angle = 2.0f * M_PI_F * rand_norm_f();
             float dest_x, dest_y, dest_z;
             m_caster->GetClosePoint(dest_x, dest_y, dest_z, 0.0f, radius, angle);
             m_targets.setDestination(dest_x, dest_y, dest_z);
@@ -1403,8 +1403,8 @@ void Spell::SetTargetMap(uint32 effIndex, uint32 targetMode, UnitList& targetUni
         }
         case TARGET_RANDOM_NEARBY_DEST:
         {
-            radius *= sqrt(rand_norm()); // Get a random point in circle. Use sqrt(rand) to correct distribution when converting polar to Cartesian coordinates.
-            float angle = 2.0 * M_PI * rand_norm();
+            radius *= sqrtf(rand_norm_f()); // Get a random point in circle. Use sqrt(rand) to correct distribution when converting polar to Cartesian coordinates.
+            float angle = 2.0f * M_PI_F * rand_norm_f();
             float dest_x = m_targets.m_destX + cos(angle) * radius;
             float dest_y = m_targets.m_destY + sin(angle) * radius;
             float dest_z = m_caster->GetPositionZ();
@@ -2202,7 +2202,7 @@ void Spell::SetTargetMap(uint32 effIndex, uint32 targetMode, UnitList& targetUni
                 SpellRangeEntry const* rEntry = sSpellRangeStore.LookupEntry(m_spellInfo->rangeIndex);
                 float minRange = GetSpellMinRange(rEntry);
                 float maxRange = GetSpellMaxRange(rEntry);
-                float dist = minRange+ rand_norm()*(maxRange-minRange);
+                float dist = minRange+ rand_norm_f()*(maxRange-minRange);
 
                 float _target_x, _target_y, _target_z;
                 m_caster->GetClosePoint(_target_x, _target_y, _target_z, m_caster->GetObjectSize(), dist);
@@ -2527,6 +2527,19 @@ void Spell::cast(bool skipCheck)
 {
     SetExecutedCurrently(true);
 
+    if (!m_caster->CheckAndIncreaseCastCounter())
+    {
+        if (m_triggeredByAuraSpell)
+            sLog.outError("Spell %u triggered by aura spell %u too deep in cast chain for cast. Cast not allowed for prevent overflow stack crash.");
+        else
+            sLog.outError("Spell %u too deep in cast chain for cast. Cast not allowed for prevent overflow stack crash.");
+
+        SendCastResult(SPELL_FAILED_ERROR);
+        finish(false);
+        SetExecutedCurrently(false);
+        return;
+    }
+
     // update pointers base at GUIDs to prevent access to non-existed already object
     UpdatePointers();
 
@@ -2534,6 +2547,7 @@ void Spell::cast(bool skipCheck)
     if(!m_targets.getUnitTarget() && m_targets.getUnitTargetGUID() && m_targets.getUnitTargetGUID() != m_caster->GetGUID())
     {
         cancel();
+        m_caster->DecreaseCastCounter();
         SetExecutedCurrently(false);
         return;
     }
@@ -2546,6 +2560,7 @@ void Spell::cast(bool skipCheck)
     {
         SendCastResult(castResult);
         finish(false);
+        m_caster->DecreaseCastCounter();
         SetExecutedCurrently(false);
         return;
     }
@@ -2558,6 +2573,7 @@ void Spell::cast(bool skipCheck)
         {
             SendCastResult(castResult);
             finish(false);
+            m_caster->DecreaseCastCounter();
             SetExecutedCurrently(false);
             return;
         }
@@ -2672,6 +2688,7 @@ void Spell::cast(bool skipCheck)
 
     if(m_spellState == SPELL_STATE_FINISHED)                // stop cast if spell marked as finish somewhere in FillTargetMap
     {
+        m_caster->DecreaseCastCounter();
         SetExecutedCurrently(false);
         return;
     }
@@ -2704,6 +2721,7 @@ void Spell::cast(bool skipCheck)
         handle_immediate();
     }
 
+    m_caster->DecreaseCastCounter();
     SetExecutedCurrently(false);
 }
 
@@ -3740,49 +3758,56 @@ SpellCastResult Spell::CheckOrTakeRunePower(bool take)
     if (take)
         m_runesState = plr->GetRunesState();                // store previous state
 
-    int32 runeCost[NUM_RUNE_TYPES];                         // blood, frost, unholy, death
+    // at this moment for rune cost exist only no cost mods, and no percent mods
+    int32 runeCostMod = 10000;
+    if(Player* modOwner = plr->GetSpellModOwner())
+        modOwner->ApplySpellMod(m_spellInfo->Id, SPELLMOD_COST, runeCostMod, this);
 
-    for(uint32 i = 0; i < RUNE_DEATH; ++i)
-        runeCost[i] = src->RuneCost[i];
-
-    runeCost[RUNE_DEATH] = 0;                               // calculated later
-
-    for(uint32 i = 0; i < MAX_RUNES; ++i)
+    if (runeCostMod > 0)
     {
-        RuneType rune = plr->GetCurrentRune(i);
-        if (runeCost[rune] <= 0)
-            continue;
+        int32 runeCost[NUM_RUNE_TYPES];                         // blood, frost, unholy, death
 
-        int32 runeCostTemp = runeCost[rune] * 10000;
-        if(Player* modOwner = plr->GetSpellModOwner())
-            modOwner->ApplySpellMod(m_spellInfo->Id, SPELLMOD_COST, runeCostTemp, this);
+        // init cost data and apply mods
+        for(uint32 i = 0; i < RUNE_DEATH; ++i)
+            runeCost[i] = runeCostMod > 0 ? src->RuneCost[i] : 0;
 
-        if (runeCostTemp <= 0)
-        {
-            --runeCost[rune];
-            continue;
-        }
+        runeCost[RUNE_DEATH] = 0;                               // calculated later
 
-        if(plr->GetRuneCooldown(i) == 0)
-        {
-            if (take)
-                plr->SetRuneCooldown(i, RUNE_COOLDOWN);     // 5*2=10 sec
-
-            --runeCost[rune];
-        }
-    }
-
-    for(uint32 i = 0; i < RUNE_DEATH; ++i)
-        if(runeCost[i] > 0)
-            runeCost[RUNE_DEATH] += runeCost[i];
-
-    if(runeCost[RUNE_DEATH] > 0)
-    {
+        // scan non-death runes (death rune not used explicitly in rune costs)
         for(uint32 i = 0; i < MAX_RUNES; ++i)
         {
             RuneType rune = plr->GetCurrentRune(i);
-            if((plr->GetRuneCooldown(i) == 0) && (rune == RUNE_DEATH))
+            if (runeCost[rune] <= 0)
+                continue;
+
+            // already used
+            if(plr->GetRuneCooldown(i) != 0)
+                continue;
+
+            if (take)
+                plr->SetRuneCooldown(i, RUNE_COOLDOWN);         // 5*2=10 sec
+
+            --runeCost[rune];
+        }
+
+        // collect all not counted rune costs to death runes cost
+        for(uint32 i = 0; i < RUNE_DEATH; ++i)
+            if(runeCost[i] > 0)
+                runeCost[RUNE_DEATH] += runeCost[i];
+
+        // scan death runes
+        if(runeCost[RUNE_DEATH] > 0)
+        {
+            for(uint32 i = 0; i < MAX_RUNES && runeCost[RUNE_DEATH]; ++i)
             {
+                RuneType rune = plr->GetCurrentRune(i);
+                if (rune != RUNE_DEATH)
+                    continue;
+
+                // already used
+                if(plr->GetRuneCooldown(i) != 0)
+                    continue;
+
                 if (take)
                     plr->SetRuneCooldown(i, RUNE_COOLDOWN); // 5*2=10 sec
 
@@ -3790,21 +3815,18 @@ SpellCastResult Spell::CheckOrTakeRunePower(bool take)
 
                 if (take)
                     plr->ConvertRune(i, plr->GetBaseRune(i));
-
-                if(runeCost[RUNE_DEATH] == 0)
-                    break;
             }
         }
-    }
 
-    if(!take && runeCost[RUNE_DEATH] > 0)
-        return SPELL_FAILED_NO_POWER;                       // not sure if result code is correct
+        if(!take && runeCost[RUNE_DEATH] > 0)
+            return SPELL_FAILED_NO_POWER;                       // not sure if result code is correct
+    }
 
     if(take)
     {
         // you can gain some runic power when use runes
-        float rp = src->runePowerGain;;
-        rp *= sWorld.getRate(RATE_POWER_RUNICPOWER_INCOME);
+        float rp = float(src->runePowerGain);
+        rp *= sWorld.getConfig(CONFIG_FLOAT_RATE_POWER_RUNICPOWER_INCOME);
         plr->ModifyPower(POWER_RUNIC_POWER, (int32)rp);
     }
 
