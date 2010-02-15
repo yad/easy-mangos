@@ -83,7 +83,7 @@ int32 World::m_visibility_notify_periodOnContinents = DEFAULT_VISIBILITY_NOTIFY_
 int32 World::m_visibility_notify_periodInInstances  = DEFAULT_VISIBILITY_NOTIFY_PERIOD;
 int32 World::m_visibility_notify_periodInBGArenas   = DEFAULT_VISIBILITY_NOTIFY_PERIOD;
 
-const float BGEvent[2] = {41, 42, 43};
+const float BGEvent[3] = {41, 42, 43};
 
 /// World constructor
 World::World()
@@ -514,23 +514,23 @@ void World::LoadConfigSettings(bool reload)
         sLog.outError("Rate.Talent (%f) mustbe > 0. Using 1 instead.",m_configFloatValues[CONFIG_FLOAT_RATE_TALENT]);
         m_configFloatValues[CONFIG_FLOAT_RATE_TALENT] = 1.0f;
     }
-    rate_values[RATE_CHARRUNSPEED] = sConfig.GetFloatDefault("Rate.CharRunSpeed",1);
-    if(rate_values[RATE_CHARRUNSPEED] <= 0)
+    m_configFloatValues[RATE_CHARRUNSPEED] = sConfig.GetFloatDefault("Rate.CharRunSpeed",1);
+    if(m_configFloatValues[RATE_CHARRUNSPEED] <= 0)
     {
-        sLog.outError("Rate.CharRunSpeed (%f) mustbe > 0. Using 1 instead.",rate_values[RATE_CHARRUNSPEED]);
-        rate_values[RATE_CHARRUNSPEED] = 1;
+        sLog.outError("Rate.CharRunSpeed (%f) mustbe > 0. Using 1 instead.",m_configFloatValues[RATE_CHARRUNSPEED]);
+        m_configFloatValues[RATE_CHARRUNSPEED] = 1;
     }
-    rate_values[RATE_CHARSWIMSPEED] = sConfig.GetFloatDefault("Rate.CharSwimSpeed",1);
-    if(rate_values[RATE_CHARSWIMSPEED] <= 0)
+    m_configFloatValues[RATE_CHARSWIMSPEED] = sConfig.GetFloatDefault("Rate.CharSwimSpeed",1);
+    if(m_configFloatValues[RATE_CHARSWIMSPEED] <= 0)
     {
-        sLog.outError("Rate.CharSwimSpeed (%f) mustbe > 0. Using 1 instead.",rate_values[RATE_CHARSWIMSPEED]);
-        rate_values[RATE_CHARSWIMSPEED] = 1;
+        sLog.outError("Rate.CharSwimSpeed (%f) mustbe > 0. Using 1 instead.",m_configFloatValues[RATE_CHARSWIMSPEED]);
+        m_configFloatValues[RATE_CHARSWIMSPEED] = 1;
     }
-    rate_values[RATE_CHARFLIGHTSPEED] = sConfig.GetFloatDefault("Rate.CharFlightSpeed",1);
-    if(rate_values[RATE_CHARFLIGHTSPEED] <= 0)
+    m_configFloatValues[RATE_CHARFLIGHTSPEED] = sConfig.GetFloatDefault("Rate.CharFlightSpeed",1);
+    if(m_configFloatValues[RATE_CHARFLIGHTSPEED] <= 0)
     {
-        sLog.outError("Rate.CharFlightSpeed (%f) mustbe > 0. Using 1 instead.",rate_values[RATE_CHARFLIGHTSPEED]);
-        rate_values[RATE_CHARFLIGHTSPEED] = 1;
+        sLog.outError("Rate.CharFlightSpeed (%f) mustbe > 0. Using 1 instead.",m_configFloatValues[RATE_CHARFLIGHTSPEED]);
+        m_configFloatValues[RATE_CHARFLIGHTSPEED] = 1;
     }
     m_configFloatValues[CONFIG_FLOAT_RATE_CORPSE_DECAY_LOOTED] = sConfig.GetFloatDefault("Rate.Corpse.Decay.Looted",0.1f);
 
@@ -816,7 +816,7 @@ void World::LoadConfigSettings(bool reload)
         m_configUint32Values[CONFIG_UINT32_START_ARENA_POINTS] = m_configUint32Values[CONFIG_UINT32_MAX_ARENA_POINTS];
     }
     //Custom variable - end arena if 2v1 etc.
-    m_configs[CONFIG_END_ARENA_IF_NOT_ENOUGH_PLAYERS] = sConfig.GetBoolDefault("EndArenaIfNotEnoughtPlayers", false);
+    m_configBoolValues[CONFIG_END_ARENA_IF_NOT_ENOUGH_PLAYERS] = sConfig.GetBoolDefault("EndArenaIfNotEnoughtPlayers", false);
 
     m_configBoolValues[CONFIG_BOOL_ALL_TAXI_PATHS] = sConfig.GetBoolDefault("AllFlightPaths", false);
 
@@ -1036,14 +1036,14 @@ void World::LoadConfigSettings(bool reload)
     m_configUint32Values[CONFIG_UINT32_TIMERBAR_FIRE_GMLEVEL]    = sConfig.GetIntDefault("TimerBar.Fire.GMLevel", SEC_CONSOLE);
     m_configUint32Values[CONFIG_UINT32_TIMERBAR_FIRE_MAX]        = sConfig.GetIntDefault("TimerBar.Fire.Max", 1);
 
-    m_configs[CONFIG_SPEED_GAME] = sConfig.GetFloatDefault("Custom.SpeedGame", 1);
-    if(m_configs[CONFIG_SPEED_GAME] < 1.0f)
-        m_configs[CONFIG_SPEED_GAME] = 1.0f;    
-    m_configs[CONFIG_NO_CAST_TIME]      = sConfig.GetIntDefault("Custom.NoCastTime", 0);
-    m_configs[CONFIG_NO_COOLDOWN]       = sConfig.GetIntDefault("Custom.NoCooldown", 0);
-    m_configs[CONFIG_HURT_IN_REAL_TIME] = sConfig.GetIntDefault("Custom.HurtInRealTime", 0);
-    m_configs[CONFIG_NO_WAIT_AFTER_CAST] = sConfig.GetIntDefault("Custom.NoWaitAfterCast", 0);
-    m_configs[CONFIG_ALLOW_FLYING_MOUNTS_EVERYWHERE] = sConfig.GetIntDefault("Custom.AllowFlyingMountsEverywhere", 0);
+    m_configUint32Values[CONFIG_SPEED_GAME] = sConfig.GetFloatDefault("Custom.SpeedGame", 1);
+    if(m_configUint32Values[CONFIG_SPEED_GAME] < 1.0f)
+        m_configUint32Values[CONFIG_SPEED_GAME] = 1.0f;    
+    m_configUint32Values[CONFIG_NO_CAST_TIME]      = sConfig.GetIntDefault("Custom.NoCastTime", 0);
+    m_configUint32Values[CONFIG_NO_COOLDOWN]       = sConfig.GetIntDefault("Custom.NoCooldown", 0);
+    m_configUint32Values[CONFIG_HURT_IN_REAL_TIME] = sConfig.GetIntDefault("Custom.HurtInRealTime", 0);
+    m_configUint32Values[CONFIG_NO_WAIT_AFTER_CAST] = sConfig.GetIntDefault("Custom.NoWaitAfterCast", 0);
+    m_configUint32Values[CONFIG_ALLOW_FLYING_MOUNTS_EVERYWHERE] = sConfig.GetIntDefault("Custom.AllowFlyingMountsEverywhere", 0);
 
     m_visibility_notify_periodOnContinents = sConfig.GetIntDefault("Visibility.Notify.Period.OnContinents", DEFAULT_VISIBILITY_NOTIFY_PERIOD);
     m_visibility_notify_periodInInstances = sConfig.GetIntDefault("Visibility.Notify.Period.InInstances",   DEFAULT_VISIBILITY_NOTIFY_PERIOD);

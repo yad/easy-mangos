@@ -1251,12 +1251,12 @@ void BattleGround::AddPlayer(Player *plr)
     else
     {
         if(GetStatus() == STATUS_WAIT_JOIN)                 // not started yet
-		{
-			plr->CastSpell(plr, SPELL_PREPARATION, true);   // reduces all mana cost of spells.
-			if (plr->IsMounted())
+        {
+            plr->CastSpell(plr, SPELL_PREPARATION, true);   // reduces all mana cost of spells.
+            if (plr->IsMounted())
                 plr->RemoveSpellsCausingAura(SPELL_AURA_MOUNTED); // dismount on bg start
-		}
-	}
+        }
+    }
     plr->GetAchievementMgr().ResetAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HEALING_DONE, ACHIEVEMENT_CRITERIA_CONDITION_MAP, GetMapId());
     plr->GetAchievementMgr().ResetAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_DAMAGE_DONE, ACHIEVEMENT_CRITERIA_CONDITION_MAP, GetMapId());
 

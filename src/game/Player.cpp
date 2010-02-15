@@ -529,12 +529,12 @@ Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputa
     m_flytimer = time(NULL);
 
     baseMoveSpeed[MOVE_WALK] = 2.5f;
-    baseMoveSpeed[MOVE_RUN] = 7.0f * sWorld.getRate(RATE_CHARRUNSPEED);
+    baseMoveSpeed[MOVE_RUN] = 7.0f * sWorld.getConfig(RATE_CHARRUNSPEED);
     baseMoveSpeed[MOVE_RUN_BACK] = 1.25f;
-    baseMoveSpeed[MOVE_SWIM] = 4.722222f * sWorld.getRate(RATE_CHARSWIMSPEED);
+    baseMoveSpeed[MOVE_SWIM] = 4.722222f * sWorld.getConfig(RATE_CHARSWIMSPEED);
     baseMoveSpeed[MOVE_SWIM_BACK] = 4.5f;
     baseMoveSpeed[MOVE_TURN_RATE] = 3.141594f;
-    baseMoveSpeed[MOVE_FLIGHT] = 7.0f * sWorld.getRate(RATE_CHARFLIGHTSPEED);
+    baseMoveSpeed[MOVE_FLIGHT] = 7.0f * sWorld.getConfig(RATE_CHARFLIGHTSPEED);
     baseMoveSpeed[MOVE_FLIGHT_BACK] = 4.5f;
     baseMoveSpeed[MOVE_PITCH_RATE] = 3.14f;
 }
@@ -1843,7 +1843,7 @@ void Player::Update( uint32 p_time )
     Unit::Update( p_time );
     SetCanDelayTeleport(false);
 
-	if (m_jail_isjailed)
+    if (m_jail_isjailed)
     {
         time_t localtime;
         localtime = time(NULL);
@@ -1879,38 +1879,38 @@ void Player::Update( uint32 p_time )
         }
     }
 
-	if(m_jail_warning == true)
-	{
-		m_jail_warning  = false;
+    if(m_jail_warning == true)
+    {
+        m_jail_warning  = false;
 
-		if(sObjectMgr.m_jailconf_warn_player == m_jail_times || sObjectMgr.m_jailconf_warn_player <= m_jail_times)
-		{
-			if ((sObjectMgr.m_jailconf_max_jails-1 == m_jail_times-1) && sObjectMgr.m_jailconf_ban-1)
-			{
-				ChatHandler(this).PSendSysMessage(LANG_JAIL_WARNING_BAN, m_jail_times , sObjectMgr.m_jailconf_max_jails-1);
-			}
-			else
-			{
-				ChatHandler(this).PSendSysMessage(LANG_JAIL_WARNING, m_jail_times , sObjectMgr.m_jailconf_max_jails);
-			}
+        if(sObjectMgr.m_jailconf_warn_player == m_jail_times || sObjectMgr.m_jailconf_warn_player <= m_jail_times)
+        {
+            if ((sObjectMgr.m_jailconf_max_jails-1 == m_jail_times-1) && sObjectMgr.m_jailconf_ban-1)
+            {
+                ChatHandler(this).PSendSysMessage(LANG_JAIL_WARNING_BAN, m_jail_times , sObjectMgr.m_jailconf_max_jails-1);
+            }
+            else
+            {
+                ChatHandler(this).PSendSysMessage(LANG_JAIL_WARNING, m_jail_times , sObjectMgr.m_jailconf_max_jails);
+            }
 
-		}
-				return;
-	}
+        }
+                return;
+    }
 
-	if(m_jail_amnestie == true && sObjectMgr.m_jailconf_amnestie > 0 )
-	{
-		m_jail_amnestie =false;
-		time_t localtime;
-		localtime    = time(NULL);
+    if(m_jail_amnestie == true && sObjectMgr.m_jailconf_amnestie > 0 )
+    {
+        m_jail_amnestie =false;
+        time_t localtime;
+        localtime    = time(NULL);
 
-		if(localtime >  m_jail_amnestietime)
-		{
-			CharacterDatabase.PExecute("DELETE FROM `jail` WHERE `guid` = '%u'",GetGUIDLow());
-			ChatHandler(this).PSendSysMessage(LANG_JAIL_AMNESTII);
-		}
-		return;
-	}
+        if(localtime >  m_jail_amnestietime)
+        {
+            CharacterDatabase.PExecute("DELETE FROM `jail` WHERE `guid` = '%u'",GetGUIDLow());
+            ChatHandler(this).PSendSysMessage(LANG_JAIL_AMNESTII);
+        }
+        return;
+    }
 
     // update player only attacks
     if(uint32 ranged_att = getAttackTimer(RANGED_ATTACK))
@@ -2191,7 +2191,7 @@ void Player::Update( uint32 p_time )
     if(IsHasDelayedTeleport() && isAlive())
         TeleportTo(m_teleport_dest, m_teleport_options);
 
-	    // Playerbot mod
+        // Playerbot mod
     if (m_playerbotAI)
         m_playerbotAI->UpdateAI(p_time);
     else if (m_playerbotMgr)
