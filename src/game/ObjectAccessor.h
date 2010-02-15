@@ -51,7 +51,11 @@ class HashMapHolder
         typedef ACE_Thread_Mutex LockType;
         typedef MaNGOS::GeneralLock<LockType > Guard;
 
-        static void Insert(T* o) { m_objectMap[o->GetGUID()] = o; }
+        static void Insert(T* o)
+        {
+            Guard guard(i_lock);
+            m_objectMap[o->GetGUID()] = o;
+        }
 
         static void Remove(T* o)
         {
@@ -61,6 +65,7 @@ class HashMapHolder
 
         static T* Find(uint64 guid)
         {
+			Guard guard(i_lock);
             typename MapType::iterator itr = m_objectMap.find(guid);
             return (itr != m_objectMap.end()) ? itr->second : NULL;
         }
@@ -135,14 +140,16 @@ class MANGOS_DLL_DECL ObjectAccessor : public MaNGOS::Singleton<ObjectAccessor, 
         void RemoveObject(Player *object) { HashMapHolder<Player>::Remove(object); }
 
         // TODO: This methods will need lock in MT environment
-        static void LinkMap(Map* map)   { i_mapList.push_back(map); }
-        static void DelinkMap(Map* map) { i_mapList.remove(map); }
+        static void LinkMap(Map* map)   { ACE_Guard<ACE_Thread_Mutex> guard(m_Lock); i_mapList.push_back(map); }
+        static void DelinkMap(Map* map) { ACE_Guard<ACE_Thread_Mutex> guard(m_Lock); i_mapList.remove(map); }
     private:
+		static ACE_Thread_Mutex  m_Lock;
         // TODO: This methods will need lock in MT environment
         // Theoreticaly multiple threads can enter and search in this method but
         // in that case linking/delinking other map should be guarded
         template <class OBJECT> static OBJECT* FindHelper(uint64 guid)
         {
+			ACE_Guard<ACE_Thread_Mutex> guard(m_Lock);
             for (std::list<Map*>::const_iterator i = i_mapList.begin() ; i != i_mapList.end(); ++i)
             {
                 if (OBJECT* ret = (*i)->GetObjectsStore().find(guid, (OBJECT*)NULL))
