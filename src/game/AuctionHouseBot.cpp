@@ -752,7 +752,7 @@ void AuctionHouseBot::Update()
     ObjectAccessor::Instance().AddObject(&_AHBplayer);
 
     // Add New Bids
-    if (!sWorld.getConfig(CONFIG_ALLOW_TWO_SIDE_INTERACTION_AUCTION))
+    if (!sWorld.getConfig(CONFIG_BOOL_ALLOW_TWO_SIDE_INTERACTION_AUCTION))
     {
         addNewAuctions(&_AHBplayer, &AllianceConfig);
         if (((_newrun - _lastrun_a) > (AllianceConfig.GetBiddingInterval() * 60)) && (AllianceConfig.GetBidsPerInterval() > 0))
@@ -794,7 +794,7 @@ void AuctionHouseBot::Initialize()
     SellMethod = sConfig.GetIntDefault("AuctionHouseBot.UseBuyPriceForSeller", 1);
     BuyMethod = sConfig.GetIntDefault("AuctionHouseBot.UseBuyPriceForBuyer", 0);
 
-    if (!sWorld.getConfig(CONFIG_ALLOW_TWO_SIDE_INTERACTION_AUCTION))
+    if (!sWorld.getConfig(CONFIG_BOOL_ALLOW_TWO_SIDE_INTERACTION_AUCTION))
     {
         LoadValues(&AllianceConfig);
         LoadValues(&HordeConfig);
@@ -1039,7 +1039,7 @@ void AuctionHouseBot::Initialize()
         sLog.outString("loaded %d orange items", orangeItemsBin.size());
         sLog.outString("loaded %d yellow items", yellowItemsBin.size());
     }
-    sLog.outString("AuctionHouseBot [AHBot-004-HotFix-06] is now loaded");
+    sLog.outString("AuctionHouseBot [AHBot-004-HotFix-07] is now loaded");
     sLog.outString("AuctionHouseBot updated by Naicisum (original by ChrisK and Paradox)");
     sLog.outString("AuctionHouseBot now includes AHBuyer by Kerbe and Paradox");
 }
