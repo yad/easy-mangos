@@ -1722,6 +1722,24 @@ Vehicle* WorldObject::SummonVehicle(uint32 id, float x, float y, float z, float 
     return v;
 }
 
+GameObject* WorldObject::SummonGameobject(uint32 id, float x, float y, float z, float ang, uint32 despwTime)
+{
+    GameObject* GameObj = new GameObject;
+
+    Map *map = GetMap();
+    if(!GameObj->Create(sObjectMgr.GenerateLowGuid(HIGHGUID_GAMEOBJECT), id, map,
+        GetPhaseMask(), x, y, z, ang, 0.0f, 0.0f, 0.0f, 0.0f, 100, GO_STATE_READY))
+    {
+        delete GameObj;
+        return;
+    }
+    GameObj->SetRespawnTime(despwTime);
+
+    map->Add(GameObj);
+
+    GameObj->SummonLinkedTrapIfAny();
+}
+
 namespace MaNGOS
 {
     class NearUsedPosDo
