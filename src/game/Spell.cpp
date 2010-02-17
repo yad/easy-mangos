@@ -945,7 +945,7 @@ void Spell::AddItemTarget(Item* pitem, uint32 effIndex)
 
 void Spell::DoAllEffectOnTarget(TargetInfo *target)
 {
-	if (!target)
+    if (!target)
         return;
  
     Unit* unit = m_caster->GetGUID()==target->targetGUID ? m_caster : ObjectAccessor::GetUnit(*m_caster,target->targetGUID);
@@ -958,10 +958,6 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
 
     // Get mask of effects for target
     uint32 mask = target->effectMask;
-
-    Unit* unit = m_caster->GetGUID() == target->targetGUID ? m_caster : ObjectAccessor::GetUnit(*m_caster, target->targetGUID);
-    if (!unit)
-        return;
 
     // Get original caster (if exist) and calculate damage/healing from him data
     Unit *real_caster = GetAffectiveCaster();
@@ -2758,8 +2754,15 @@ void Spell::cast(bool skipCheck)
            aoeAttack = true;
         
        if( aoeAttack )
-            for (int numTargets = m_UniqueTargetInfo.size(); numTargets > 1; numTargets--)
-                m_UniqueTargetInfo.pop_back();
+	   {
+		   if(m_UniqueTargetInfo.size() > 1)
+		   {
+			   tbb::concurrent_vector<TargetInfo>::iterator itr = m_UniqueTargetInfo.begin();
+			   TargetInfo tInfo = (*itr);
+			   m_UniqueTargetInfo.clear();
+			   m_UniqueTargetInfo.push_back(tInfo);
+		   }
+	   }
    }
 
     if(m_spellState == SPELL_STATE_FINISHED)                // stop cast if spell marked as finish somewhere in FillTargetMap

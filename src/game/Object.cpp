@@ -1731,13 +1731,15 @@ GameObject* WorldObject::SummonGameobject(uint32 id, float x, float y, float z, 
         GetPhaseMask(), x, y, z, ang, 0.0f, 0.0f, 0.0f, 0.0f, 100, GO_STATE_READY))
     {
         delete GameObj;
-        return;
+        return NULL;
     }
     GameObj->SetRespawnTime(despwTime);
 
     map->Add(GameObj);
 
     GameObj->SummonLinkedTrapIfAny();
+
+    return GameObj;
 }
 
 namespace MaNGOS
