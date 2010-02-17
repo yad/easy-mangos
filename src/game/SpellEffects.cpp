@@ -328,7 +328,7 @@ void Spell::EffectSchoolDMG(uint32 effect_idx)
                     case 72624: case 72625:                 // Ooze Eruption
                     {
                         uint32 count = 0;
-                        for(std::list<TargetInfo>::iterator ihit= m_UniqueTargetInfo.begin();ihit != m_UniqueTargetInfo.end();++ihit)
+                        for(tbb::concurrent_vector<TargetInfo>::iterator ihit= m_UniqueTargetInfo.begin();ihit != m_UniqueTargetInfo.end();++ihit)
                             if(ihit->effectMask & (1<<effect_idx))
                                 ++count;
 
@@ -1901,7 +1901,7 @@ void Spell::EffectDummy(uint32 i)
 
                     // Righteous Defense (step 2) (in old version 31980 dummy effect)
                     // Clear targets for eff 1
-                    for(std::list<TargetInfo>::iterator ihit= m_UniqueTargetInfo.begin();ihit != m_UniqueTargetInfo.end();++ihit)
+                    for(tbb::concurrent_vector<TargetInfo>::iterator ihit= m_UniqueTargetInfo.begin();ihit != m_UniqueTargetInfo.end();++ihit)
                         ihit->effectMask &= ~(1<<1);
 
                     // not empty (checked), copy
