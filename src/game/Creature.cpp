@@ -376,11 +376,7 @@ void Creature::Update(uint32 diff)
                 //Call AI respawn virtual function
                 i_AI->JustRespawned();
 
-                uint16 poolid = GetDBTableGUIDLow() ? sPoolMgr.IsPartOfAPool<Creature>(GetDBTableGUIDLow()) : 0;
-                if (poolid)
-                    sPoolMgr.UpdatePool<Creature>(poolid, GetDBTableGUIDLow());
-                else
-                    GetMap()->Add(this);
+                GetMap()->Add(this);
             }
             break;
         }
@@ -391,8 +387,16 @@ void Creature::Update(uint32 diff)
 
             if( m_deathTimer <= diff )
             {
-                RemoveCorpse();
-                DEBUG_LOG("Removing corpse... %u ", GetEntry());
+                // since pool system can fail to roll unspawned object, this one can remain spawned, so must set respawn nevertheless
+                uint16 poolid = GetDBTableGUIDLow() ? sPoolMgr.IsPartOfAPool<Creature>(GetDBTableGUIDLow()) : 0;
+                if (poolid)
+                    sPoolMgr.UpdatePool<Creature>(poolid, GetDBTableGUIDLow());
+
+                if (IsInWorld())                            // can be despawned by update pool
+                {
+                    RemoveCorpse();
+                    DEBUG_LOG("Removing corpse... %u ", GetEntry());
+                }
             }
             else
             {
@@ -421,8 +425,19 @@ void Creature::Update(uint32 diff)
             {
                 if( m_deathTimer <= diff )
                 {
-                    RemoveCorpse();
-                    DEBUG_LOG("Removing alive corpse... %u ", GetEntry());
+                    // since pool system can fail to roll unspawned object, this one can remain spawned, so must set respawn nevertheless
+                    uint16 poolid = GetDBTableGUIDLow() ? sPoolMgr.IsPartOfAPool<Creature>(GetDBTableGUIDLow()) : 0;
+
+                    if (poolid)
+                        sPoolMgr.UpdatePool<Creature>(poolid, GetDBTableGUIDLow());
+
+                    if (IsInWorld())                        // can be despawned by update pool
+                    {
+                        RemoveCorpse();
+                        DEBUG_LOG("Removing alive corpse... %u ", GetEntry());
+                    }
+                    else
+                        return;
                 }
                 else
                 {
@@ -751,7 +766,7 @@ bool Creature::isCanTrainingAndResetTalentsOf(Player* pPlayer) const
         && pPlayer->getClass() == GetCreatureInfo()->trainer_class;
 }
 
-void Creature::AI_SendMoveToPacket(float x, float y, float z, uint32 time, SplineFlags flags, uint8 type)
+void Creature::AI_SendMoveToPacket(float x, float y, float z, uint32 time, SplineFlags flags, SplineType type)
 {
     /*    uint32 timeElap = getMSTime();
         if ((timeElap - m_startMove) < m_moveTime)
@@ -1660,7 +1675,7 @@ bool Creature::IsOutOfThreatArea(Unit* pVictim) const
         return false;
 
     float AttackDist = GetAttackDistance(pVictim);
-    uint32 ThreatRadius = sWorld.getConfig(CONFIG_UINT32_THREAT_RADIUS);
+    float ThreatRadius = sWorld.getConfig(CONFIG_FLOAT_THREAT_RADIUS);
 
     //Use AttackDistance in distance check if threat radius is lower. This prevents creature bounce in and out of combat every update tick.
     return !pVictim->IsWithinDist3d(CombatStartX, CombatStartY, CombatStartZ,
@@ -2093,25 +2108,6 @@ void Creature::SendMonsterMoveWithSpeedToCurrentDestination(Player* player)
     float x, y, z;
     if(GetMotionMaster()->GetDestination(x, y, z))
         SendMonsterMoveWithSpeed(x, y, z, 0, player);
-}
-
-void Creature::SendMonsterMoveWithSpeed(float x, float y, float z, uint32 transitTime, Player* player)
-{
-    if (!transitTime)
-    {
-        if(GetTypeId()==TYPEID_PLAYER)
-        {
-            Traveller<Player> traveller(*(Player*)this);
-            transitTime = traveller.GetTotalTrevelTimeTo(x, y, z);
-        }
-        else
-        {
-            Traveller<Creature> traveller(*(Creature*)this);
-            transitTime = traveller.GetTotalTrevelTimeTo(x, y, z);
-        }
-    }
-    //float orientation = (float)atan2((double)dy, (double)dx);
-    SendMonsterMove(x, y, z, 0, GetSplineFlags(), transitTime, player);
 }
 
 void Creature::SendAreaSpiritHealerQueryOpcode(Player *pl)
