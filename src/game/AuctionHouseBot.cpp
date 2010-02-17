@@ -1039,7 +1039,7 @@ void AuctionHouseBot::Initialize()
         sLog.outString("loaded %d orange items", orangeItemsBin.size());
         sLog.outString("loaded %d yellow items", yellowItemsBin.size());
     }
-    sLog.outString("AuctionHouseBot [AHBot-004-HotFix-06] is now loaded");
+    sLog.outString("AuctionHouseBot [AHBot-004-HotFix-07] is now loaded");
     sLog.outString("AuctionHouseBot updated by Naicisum (original by ChrisK and Paradox)");
     sLog.outString("AuctionHouseBot now includes AHBuyer by Kerbe and Paradox");
 }
