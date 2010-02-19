@@ -366,7 +366,7 @@ pAuraHandler AuraHandler[TOTAL_AURAS]=
     &Aura::HandleNULL,                                      //313 0 spells in 3.3
     &Aura::HandleNULL,                                      //314 1 test spell (reduce duration of silince/magic)
     &Aura::HandleNULL,                                      //315 underwater walking
-    &Aura::HandleNULL                                       //316 makes haste affect HOT/DOT ticks
+    &Aura::HandleNoImmediateEffect,                         //316 SPELL_AURA_APPLY_HASTE_TO_AURA makes haste affect HOT/DOT ticks
 };
 
 static AuraType const frozenAuraTypes[] = { SPELL_AURA_MOD_ROOT, SPELL_AURA_MOD_STUN, SPELL_AURA_NONE };
@@ -454,12 +454,28 @@ m_isRemovedOnShapeLost(true), m_in_use(0), m_deleted(false)
     m_effIndex = eff;
     SetModifier(AuraType(m_spellProto->EffectApplyAuraName[eff]), damage, m_spellProto->EffectAmplitude[eff], m_spellProto->EffectMiscValue[eff]);
 
-    //Apply haste to channeled spells
-    if(GetSpellProto()->AttributesEx & (SPELL_ATTR_EX_CHANNELED_1 | SPELL_ATTR_EX_CHANNELED_2) && m_modifier.periodictime)
+    bool applyHaste = GetSpellProto()->AttributesEx & (SPELL_ATTR_EX_CHANNELED_1 | SPELL_ATTR_EX_CHANNELED_2);
+    //SPELL_AURA_APPLY_HASTE_TO_AURA implentation
+    if(caster)
+    {
+        Unit::AuraList const& stateAuras = caster->GetAurasByType(SPELL_AURA_APPLY_HASTE_TO_AURA);
+        for(Unit::AuraList::const_iterator j = stateAuras.begin();j != stateAuras.end(); ++j)
+        {
+            if((*j)->isAffectedOnSpell(spell))
+            {
+                applyHaste = true;
+                break;
+            }
+        }
+    }
+
+    //Apply haste
+    if(applyHaste && m_modifier.periodictime)
         ApplyHasteToPeriodic();
     // Apply periodic time mod, for channeled spells its in Aura::ApplyHasteToPeriodic()
     else if(modOwner && m_modifier.periodictime)
         modOwner->ApplySpellMod(GetId(), SPELLMOD_ACTIVATION_TIME, m_modifier.periodictime);
+
     // Start periodic on next tick or at aura apply
     if (!(m_spellProto->AttributesEx5 & SPELL_ATTR_EX5_START_PERIODIC_AT_APPLY))
         m_periodicTimer += m_modifier.periodictime;
