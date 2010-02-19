@@ -19,6 +19,7 @@
 #ifndef MANGOSSERVER_DYNAMICOBJECT_H
 #define MANGOSSERVER_DYNAMICOBJECT_H
 
+#include "DBCEnums.h"
 #include "Object.h"
 
 class Unit;

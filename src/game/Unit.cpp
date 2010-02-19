@@ -1726,7 +1726,7 @@ void Unit::DealMeleeDamage(CalcDamageInfo *damageInfo, bool durabilityLoss)
                {
                    if (const SpellBonusEntry *bonus = sSpellMgr.GetSpellBonusData(i_spellProto->Id))
                    {
-                       int8 effIndex = (*i)->GetEffIndex();
+                       SpellEffectIndex effIndex = (*i)->GetEffIndex();
                        int32 spellPower = caster->SpellBaseDamageBonus(GetSpellSchoolMask(i_spellProto)) + 
                                           caster->SpellBaseDamageBonusForVictim(GetSpellSchoolMask(i_spellProto), this);
                        damage = i_spellProto->CalculateSimpleValue(effIndex) + bonus->direct_damage * spellPower;    
@@ -5982,7 +5982,7 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                         return false;
 
                     // find Divine Aegis on the target and get absorb amount
-                    Aura* DivineAegis = pVictim->GetAura(47753,0);
+                    Aura* DivineAegis = pVictim->GetAura(47753,EFFECT_INDEX_0);
                     if (DivineAegis)
                         basepoints0 = DivineAegis->GetModifier()->m_amount;
                     basepoints0 += damage * triggerAmount/100;
@@ -6699,7 +6699,7 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                         {
                             case 53569:
                             case 53576:
-                                basepoints0 = (*i)->GetSpellProto()->CalculateSimpleValue(2);
+                                basepoints0 = (*i)->GetSpellProto()->CalculateSimpleValue(EFFECT_INDEX_2);
                                 break;
                             default: continue;
                         }
@@ -11373,7 +11373,7 @@ void Unit::AddThreat(Unit* pVictim, float threat /*= 0.0f*/, bool crit /*= false
         return;
 
     //Misdirection hack
-    if (pVictim->GetTypeId() == TYPEID_PLAYER && pVictim->HasAura(34477, 1))
+    if (pVictim->GetTypeId() == TYPEID_PLAYER && pVictim->HasAura(34477, EFFECT_INDEX_1))
         if (Group *pGroup = ((Player*)pVictim)->GetGroup())
             for (GroupReference *itr = pGroup->GetFirstMember(); itr != NULL; itr = itr->next())
                 if (Unit* realVictim = itr->getSource())

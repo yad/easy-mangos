@@ -444,7 +444,7 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
         void SendInitTransports( Player * player );
         void SendRemoveTransports( Player * player );
 
-        void PlayerRelocationNotify(Player* player, Cell cell, CellPair cellpair);
+       // void PlayerRelocationNotify(Player* player, Cell cell, CellPair cellpair);
 
         bool CreatureCellRelocation(Creature *creature, Cell new_cell);
 

@@ -1029,21 +1029,15 @@ Map::CreatureRelocation(Creature *creature, float x, float y, float z, float ang
         if ((sLog.getLogFilter() & LOG_FILTER_CREATURE_MOVES) == 0)
             sLog.outDebug("Creature (GUID: %u Entry: %u) added to moving list from grid[%u,%u]cell[%u,%u] to grid[%u,%u]cell[%u,%u].", creature->GetGUIDLow(), creature->GetEntry(), old_cell.GridX(), old_cell.GridY(), old_cell.CellX(), old_cell.CellY(), new_cell.GridX(), new_cell.GridY(), new_cell.CellX(), new_cell.CellY());
         #endif
-        AddCreatureToMoveList(creature, x, y, z, ang);
+        //AddCreatureToMoveList(creature, x, y, z, ang);
         // in diffcell/diffgrid case notifiers called at finishing move creature in Map::MoveAllCreaturesInMoveList
-    }
-    else
-    {
-        creature->Relocate(x, y, z, ang);
-        AddNotifier(creature, true);
-    }
 
         // do move or do move to respawn or remove creature if previous all fail
         if(CreatureCellRelocation(creature,new_cell))
         {
             // update pos
-            c->Relocate(cm.x, cm.y, cm.z, cm.ang);
-            AddNotifier(c, true);
+            creature->Relocate(x, y, z, ang);
+            AddNotifier(creature, true);
         }
         else
         {
@@ -1056,14 +1050,14 @@ Map::CreatureRelocation(Creature *creature, float x, float y, float z, float ang
                 if((sLog.getLogFilter() & LOG_FILTER_CREATURE_MOVES)==0)
                     sLog.outDebug("Creature (GUID: %u Entry: %u ) can't be move to unloaded respawn grid.",creature->GetGUIDLow(),creature->GetEntry());
                 #endif
-                creature->SetNeedNotify();
+                AddNotifier(creature, true);
             }
         }
     }
     else
     {
         creature->Relocate(x, y, z, ang);
-        creature->SetNeedNotify();
+        AddNotifier(creature, true);
     }
 
     assert(CheckGridIntegrity(creature,true));
@@ -2174,10 +2168,9 @@ void Map::PlayerRelocationNotify( Player* player, Cell cell, CellPair cellpair )
     //TypeContainerVisitor<MaNGOS::PlayerRelocationNotifier, WorldTypeMapContainer > p2world_relocation(relocationNotifier);
 
     float radius = MAX_CREATURE_ATTACK_RADIUS * sWorld.getConfig(CONFIG_FLOAT_RATE_CREATURE_AGGRO);
-}
 
-    cell.Visit(cellpair, p2grid_relocation, *this, *player, radius);
-    cell.Visit(cellpair, p2world_relocation, *this, *player, radius);
+//    cell.Visit(cellpair, p2grid_relocation, *this, *player, radius);
+ //   cell.Visit(cellpair, p2world_relocation, *this, *player, radius);
 }
 
 void Map::SendInitSelf( Player * player )

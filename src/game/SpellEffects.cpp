@@ -1460,7 +1460,7 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                 m_caster->CastCustomSpell(m_caster, 34846, &chargeBasePoints0, NULL, NULL, true);
 
                 //Juggernaut crit bonus
-                if(m_caster->HasAura(64976, 0))
+                if(m_caster->HasAura(64976, EFFECT_INDEX_0))
                     m_caster->CastSpell(m_caster, 65156, true);                                        
                 return;
             }
@@ -3567,7 +3567,7 @@ void Spell::EffectSummonType(SpellEffectIndex eff_idx)
                 case SUMMON_PROP_TYPE_SIEGE_VEH:
                 case SUMMON_PROP_TYPE_DRAKE_VEH:
                     // TODO
-                    EffectSummonVehicle(i);
+                    EffectSummonVehicle(eff_idx);
                     break;
                 default:
                     sLog.outError("EffectSummonType: Unhandled summon type %u", summon_prop->Type);
@@ -3596,7 +3596,7 @@ void Spell::EffectSummonType(SpellEffectIndex eff_idx)
         case SUMMON_PROP_GROUP_VEHICLE:
         {
             // TODO
-            EffectSummonVehicle(i);
+            EffectSummonVehicle(eff_idx);
             break;
         }
         default:
@@ -5409,7 +5409,7 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                            m_caster->CastCustomSpell( totem, 55277, &damage, NULL, NULL, true );
                    }
                    // Glyph of Stoneclaw Totem
-                   if( Aura* auraGlyph = unitTarget->GetAura( 63298,0 ) )
+                   if( Aura* auraGlyph = unitTarget->GetAura( 63298, EFFECT_INDEX_0 ) )
                    {
                        int32 playerAbsorb = damage * auraGlyph->GetModifier()->m_amount;
                        m_caster->CastCustomSpell( unitTarget, 55277, &playerAbsorb, NULL, NULL, true );
@@ -6422,7 +6422,7 @@ void Spell::EffectLeapForward(SpellEffectIndex eff_idx)
     if( m_spellInfo->rangeIndex== 1)                        //self range
     {
         uint32 mapid = m_caster->GetMapId();
-        float dis = GetSpellRadius(sSpellRadiusStore.LookupEntry(m_spellInfo->EffectRadiusIndex[i]));
+        float dis = GetSpellRadius(sSpellRadiusStore.LookupEntry(m_spellInfo->EffectRadiusIndex[eff_idx]));
 
         // Start Info //
         float cx,cy,cz;
@@ -7228,9 +7228,9 @@ void Spell::EffectRenamePet(SpellEffectIndex /*eff_idx*/)
     unitTarget->RemoveByteFlag(UNIT_FIELD_BYTES_2, 2, UNIT_CAN_BE_RENAMED);
 }
 
-void Spell::EffectSummonVehicle(uint32 i)
+void Spell::EffectSummonVehicle(SpellEffectIndex eff_idx)
 {
-    uint32 creature_entry = m_spellInfo->EffectMiscValue[i];
+    uint32 creature_entry = m_spellInfo->EffectMiscValue[eff_idx];
     if(!creature_entry)
         return;
 
@@ -7264,7 +7264,7 @@ void Spell::EffectSummonVehicle(uint32 i)
         v->SetSpawnDuration(duration);
 }
 
-void Spell::EffectDamageBuilding(uint32 i)
+void Spell::EffectDamageBuilding(SpellEffectIndex eff_idx)
 {
     if(!gameObjTarget)
         return;
@@ -7310,13 +7310,13 @@ void Spell::EffectActivateSpec(SpellEffectIndex /*eff_idx*/)
     ((Player*)unitTarget)->ActivateSpec(spec);
 }
 
-void Spell::EffectCastButtons(uint32 i)
+void Spell::EffectCastButtons(SpellEffectIndex eff_idx)
 {
     if(m_caster->GetTypeId() != TYPEID_PLAYER)
         return;
 
-    int32 start_button = ACTION_BUTTON_SHAMAN_TOTEMS_BAR + m_spellInfo->EffectMiscValue[i];
-    int32 amount_buttons = m_spellInfo->EffectMiscValueB[i];
+    int32 start_button = ACTION_BUTTON_SHAMAN_TOTEMS_BAR + m_spellInfo->EffectMiscValue[eff_idx];
+    int32 amount_buttons = m_spellInfo->EffectMiscValueB[eff_idx];
 
     for(int32 slot = 0; slot < amount_buttons; ++slot)
         if (ActionButton const* actionButton = ((Player*)m_caster)->GetActionButton(start_button+slot))
