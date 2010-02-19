@@ -461,7 +461,7 @@ m_isRemovedOnShapeLost(true), m_in_use(0), m_deleted(false)
         Unit::AuraList const& stateAuras = caster->GetAurasByType(SPELL_AURA_APPLY_HASTE_TO_AURA);
         for(Unit::AuraList::const_iterator j = stateAuras.begin();j != stateAuras.end(); ++j)
         {
-            if((*j)->isAffectedOnSpell(spell))
+            if((*j)->isAffectedOnSpell(GetSpellProto()))
             {
                 applyHaste = true;
                 break;
