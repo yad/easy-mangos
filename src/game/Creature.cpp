@@ -119,7 +119,8 @@ m_lootMoney(0), m_lootRecipient(0),
 m_deathTimer(0), m_respawnTime(0), m_respawnDelay(25), m_corpseDelay(60), m_respawnradius(0.0f),
 m_subtype(subtype), m_defaultMovementType(IDLE_MOTION_TYPE), m_DBTableGuid(0), m_equipmentId(0),
 m_AlreadyCallAssistance(false), m_AlreadySearchedAssistance(false),
-m_regenHealth(true), m_AI_locked(false), m_isDeadByDefault(false), m_meleeDamageSchoolMask(SPELL_SCHOOL_MASK_NORMAL),
+m_regenHealth(true), m_AI_locked(false), m_isDeadByDefault(false), m_needNotify(false),
+m_meleeDamageSchoolMask(SPELL_SCHOOL_MASK_NORMAL),
 m_creatureInfo(NULL), m_isActiveObject(false), m_splineFlags(SPLINEFLAG_WALKMODE)
 {
     m_regenTimer = 200;
@@ -335,6 +336,15 @@ void Creature::Update(uint32 diff)
         m_GlobalCooldown = 0;
     else
         m_GlobalCooldown -= diff;
+
+    if (m_needNotify)
+    {
+        m_needNotify = false;
+        RelocationNotify();
+
+        if (!IsInWorld())
+            return;
+    }
 
     switch( m_deathState )
     {
@@ -1352,7 +1362,7 @@ bool Creature::IsImmunedToSpell(SpellEntry const* spellInfo)
     return Unit::IsImmunedToSpell(spellInfo);
 }
 
-bool Creature::IsImmunedToSpellEffect(SpellEntry const* spellInfo, uint32 index) const
+bool Creature::IsImmunedToSpellEffect(SpellEntry const* spellInfo, SpellEffectIndex index) const
 {
     if (GetCreatureInfo()->MechanicImmuneMask & (1 << (spellInfo->EffectMechanic[index] - 1)))
         return true;
@@ -1417,7 +1427,7 @@ SpellEntry const *Creature::reachWithSpellAttack(Unit *pVictim)
         }
 
         bool bcontinue = true;
-        for(uint32 j = 0; j < 3; ++j)
+        for(int j = 0; j < MAX_EFFECT_INDEX; ++j)
         {
             if( (spellInfo->Effect[j] == SPELL_EFFECT_SCHOOL_DAMAGE )       ||
                 (spellInfo->Effect[j] == SPELL_EFFECT_INSTAKILL)            ||
@@ -1469,7 +1479,7 @@ SpellEntry const *Creature::reachWithSpellCure(Unit *pVictim)
         }
 
         bool bcontinue = true;
-        for(uint32 j = 0; j < 3; ++j)
+        for(int j = 0; j < MAX_EFFECT_INDEX; ++j)
         {
             if( (spellInfo->Effect[j] == SPELL_EFFECT_HEAL ) )
             {
@@ -1761,7 +1771,7 @@ bool Creature::LoadCreaturesAddon(bool reload)
 
             Aura* AdditionalAura = CreateAura(AdditionalSpellInfo, cAura->effect_idx, NULL, this, this, 0);
             AddAura(AdditionalAura);
-            sLog.outDebug("Spell: %u with Aura %u added to creature (GUIDLow: %u Entry: %u )", cAura->spell_id, AdditionalSpellInfo->EffectApplyAuraName[0],GetGUIDLow(),GetEntry());
+            sLog.outDebug("Spell: %u with Aura %u added to creature (GUIDLow: %u Entry: %u )", cAura->spell_id, AdditionalSpellInfo->EffectApplyAuraName[EFFECT_INDEX_0],GetGUIDLow(),GetEntry());
         }
     }
     return true;
@@ -2118,4 +2128,23 @@ void Creature::SendAreaSpiritHealerQueryOpcode(Player *pl)
     WorldPacket data(SMSG_AREA_SPIRIT_HEALER_TIME, 8 + 4);
     data << GetGUID() << next_resurrect;
     pl->SendDirectMessage(&data);
+}
+
+void Creature::RelocationNotify()
+{
+    CellPair new_val = MaNGOS::ComputeCellPair(GetPositionX(), GetPositionY());
+    Cell cell(new_val);
+    CellPair cellpair = cell.cellPair();
+
+    MaNGOS::CreatureRelocationNotifier relocationNotifier(*this);
+    cell.data.Part.reserved = ALL_DISTRICT;
+    cell.SetNoCreate();                                     // not trigger load unloaded grids at notifier call
+
+    TypeContainerVisitor<MaNGOS::CreatureRelocationNotifier, WorldTypeMapContainer > c2world_relocation(relocationNotifier);
+    TypeContainerVisitor<MaNGOS::CreatureRelocationNotifier, GridTypeMapContainer >  c2grid_relocation(relocationNotifier);
+
+    float radius = MAX_CREATURE_ATTACK_RADIUS * sWorld.getConfig(CONFIG_FLOAT_RATE_CREATURE_AGGRO);
+
+    cell.Visit(cellpair, c2world_relocation, *GetMap(), *this, radius);
+    cell.Visit(cellpair, c2grid_relocation, *GetMap(), *this, radius);
 }
