@@ -23,6 +23,7 @@
 #include "SharedDefines.h"
 #include "../../dep/tbb/include/tbb/concurrent_vector.h"
 #include <memory>
+#include "DBCEnums.h"
 
 class WorldSession;
 class Unit;

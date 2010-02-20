@@ -1195,6 +1195,22 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                             m_caster->CastSpell(m_caster, 49378, true);
                     }
                     return;
+                case 45980:
+                {
+                    if (m_caster->GetTypeId() == TYPEID_PLAYER && unitTarget)
+                    {
+                        if (const SpellEntry *pSpell = sSpellStore.LookupEntry(46022))
+                        {
+                            m_caster->CastSpell(unitTarget, pSpell, true);
+                            ((Player*)m_caster)->KilledMonsterCredit(pSpell->EffectMiscValue[EFFECT_INDEX_0], 0);
+                        }
+
+                        if (unitTarget->GetTypeId() == TYPEID_UNIT)
+                            ((Creature*)unitTarget)->ForcedDespawn();
+                    }
+
+                    return;
+                }
                 case 50243:                                 // Teach Language
                 {
                     if (m_caster->GetTypeId() != TYPEID_PLAYER)
@@ -1245,6 +1261,16 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                         if (const SpellCastTimesEntry *pCastTime = sSpellCastTimesStore.LookupEntry(pSpell->CastingTimeIndex))
                             creatureTarget->ForcedDespawn(pCastTime->CastTime + 1);
                     }
+                    return;
+                }
+                case 46606:                                 // Plague Canister Dummy
+                {
+                    if (!unitTarget || unitTarget->GetTypeId() != TYPEID_UNIT)
+                        return;
+
+                    unitTarget->CastSpell(m_caster, 43160, true);
+                    unitTarget->setDeathState(JUST_DIED);
+                    unitTarget->SetHealth(0);
                     return;
                 }
                 case 46797:                                 // Quest - Borean Tundra - Set Explosives Cart
@@ -1678,7 +1704,14 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
 
                     // all poison enchantments is temporary
                     uint32 enchant_id = item->GetEnchantmentId(TEMP_ENCHANTMENT_SLOT);
-                    if (enchant_id)
+                    if (!enchant_id)
+                        return;
+
+                    SpellItemEnchantmentEntry const *pEnchant = sSpellItemEnchantmentStore.LookupEntry(enchant_id);
+                    if (!pEnchant)
+                        return;
+
+                    for (int s = 0; s < 3; ++s)
                     {
                         SpellItemEnchantmentEntry const *pEnchant = sSpellItemEnchantmentStore.LookupEntry(enchant_id);
                         if (pEnchant)
@@ -2168,7 +2201,7 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
     }
 
     // Script based implementation. Must be used only for not good for implementation in core spell effects
-    // So called only for not proccessed cases
+    // So called only for not processed cases
     if (gameObjTarget)
         Script->EffectDummyGameObj(m_caster, m_spellInfo->Id, eff_idx, gameObjTarget);
     else if (unitTarget && unitTarget->GetTypeId()==TYPEID_UNIT)
