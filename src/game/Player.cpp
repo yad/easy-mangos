@@ -1216,7 +1216,7 @@ void Player::AutoEquipItem()
         Bag* const pBag = (Bag*)GetItemByPos(INVENTORY_SLOT_BAG_0, bag);
         if (!pBag)
             continue;
-        for (int slot = 0; slot < pBag->GetBagSize(); ++slot)
+        for (uint32 slot = 0; slot < pBag->GetBagSize(); ++slot)
         {
             const ItemPrototype *new_item = NULL;
             Item* const pItem = GetItemByPos(bag, slot);
@@ -11193,9 +11193,9 @@ uint8 Player::CanUseItem( Item *pItem, bool not_loading ) const
 
                             if(player->CanUseFlyingMounts(sEntry))
                             {
-                                for (int j = 0; j < 3; ++j)
+                                for(int j = 0; j < MAX_EFFECT_INDEX; ++j)
                                 {
-                                    Aura* aur = CreateAura(sEntry, j, NULL, player, player, NULL);
+                                    Aura* aur = CreateAura(sEntry, SpellEffectIndex(j), NULL, player, player, NULL);
                                     player->AddAura(aur);
                                 }
                             }
@@ -11212,9 +11212,9 @@ uint8 Player::CanUseItem( Item *pItem, bool not_loading ) const
 
                             if(player->CanUseFlyingMounts(sEntry))
                             {
-                                for (int j = 0; j < 3; ++j)
+                                for(int j = 0; j < MAX_EFFECT_INDEX; ++j)
                                 {
-                                    Aura* aur = CreateAura(sEntry, j, NULL, player, player, NULL);
+                                    Aura* aur = CreateAura(sEntry, SpellEffectIndex(j), NULL, player, player, NULL);
                                     player->AddAura(aur);
                                 }
                             }
