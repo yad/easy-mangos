@@ -21,6 +21,7 @@
 
 #include "DBCEnums.h"
 #include "Object.h"
+#include "DBCEnums.h"
 
 class Unit;
 struct SpellEntry;

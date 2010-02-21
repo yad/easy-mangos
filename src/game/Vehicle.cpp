@@ -18,6 +18,7 @@
 
 #include "Common.h"
 #include "Log.h"
+co #include "ObjectMgr.h"
 #include "Vehicle.h"
 #include "Unit.h"
 #include "Util.h"

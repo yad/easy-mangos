@@ -1183,8 +1183,10 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
 
         uint32 GetHealth()    const { return GetUInt32Value(UNIT_FIELD_HEALTH); }
         uint32 GetMaxHealth() const { return GetUInt32Value(UNIT_FIELD_MAXHEALTH); }
+        float GetHealthPercent() const { return (GetHealth()*100.0f) / GetMaxHealth(); }
         void SetHealth(   uint32 val);
         void SetMaxHealth(uint32 val);
+        void SetHealthPercent(float percent);
         int32 ModifyHealth(int32 val);
 
         Powers getPowerType() const { return Powers(GetByteValue(UNIT_FIELD_BYTES_0, 3)); }
@@ -1754,7 +1756,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         void SetHover(bool on);
         bool isHover() const { return HasAuraType(SPELL_AURA_HOVER); }
 
-        void KnockBackFrom(Unit* target, float horizintalSpeed, float verticalSpeed);
+        void KnockBackFrom(Unit* target, float horizontalSpeed, float verticalSpeed);
 
         void _RemoveAllAuraMods();
         void _ApplyAllAuraMods();

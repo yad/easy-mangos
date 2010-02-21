@@ -21,6 +21,7 @@
 
 #include "GridDefines.h"
 #include "SharedDefines.h"
+#include "DBCEnums.h"
 #include "../../dep/tbb/include/tbb/concurrent_vector.h"
 #include <memory>
 
