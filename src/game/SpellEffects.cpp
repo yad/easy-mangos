@@ -1433,7 +1433,6 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                         m_caster->CastSpell(m_caster, 54861, true, m_CastItem);
                     else                                    // Knocked Up   - backfire 5%
                         m_caster->CastSpell(m_caster, 46014, true, m_CastItem);
-
                     if (m_caster->GetTypeId() == TYPEID_PLAYER)
                     {
                         Player* pPlayer = ((Player*)m_caster);
@@ -1442,7 +1441,6 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                             if(BattleGround *bg = pPlayer->GetBattleGround())
                                 bg->EventPlayerDroppedFlag(pPlayer);
                     }
-
                     return;
                 }
                 case 58418:                                 // Portal to Orgrimmar
@@ -1748,9 +1746,11 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                 }
 
                 if (m_caster->IsFriendlyTo(unitTarget))
-                    m_caster->CastSpell(unitTarget, heal, true);
+                    m_caster->CastSpell(unitTarget, heal, false);
                 else
-                    m_caster->CastSpell(unitTarget, hurt, true);
+                    m_caster->CastSpell(unitTarget, hurt, false);
+                //To avoid Interrupt message
+                finish(true);
 
                 return;
             }
@@ -1804,14 +1804,7 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
 
                     // all poison enchantments is temporary
                     uint32 enchant_id = item->GetEnchantmentId(TEMP_ENCHANTMENT_SLOT);
-                    if (!enchant_id)
-                        return;
-
-                    SpellItemEnchantmentEntry const *pEnchant = sSpellItemEnchantmentStore.LookupEntry(enchant_id);
-                    if (!pEnchant)
-                        return;
-
-                    for (int s = 0; s < 3; ++s)
+                    if (enchant_id)
                     {
                         SpellItemEnchantmentEntry const *pEnchant = sSpellItemEnchantmentStore.LookupEntry(enchant_id);
                         if (pEnchant)

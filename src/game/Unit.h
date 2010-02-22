@@ -1183,8 +1183,10 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
 
         uint32 GetHealth()    const { return GetUInt32Value(UNIT_FIELD_HEALTH); }
         uint32 GetMaxHealth() const { return GetUInt32Value(UNIT_FIELD_MAXHEALTH); }
+        float GetHealthPercent() const { return (GetHealth()*100.0f) / GetMaxHealth(); }
         void SetHealth(   uint32 val);
         void SetMaxHealth(uint32 val);
+        void SetHealthPercent(float percent);
         int32 ModifyHealth(int32 val);
 
         Powers getPowerType() const { return Powers(GetByteValue(UNIT_FIELD_BYTES_0, 3)); }
@@ -1540,7 +1542,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
 
         void SetCurrentCastedSpell(Spell * pSpell);
         virtual void ProhibitSpellSchool(SpellSchoolMask /*idSchoolMask*/, uint32 /*unTimeMs*/ ) { }
-        void InterruptSpell(CurrentSpellTypes spellType, bool withDelayed = true);
+        void InterruptSpell(CurrentSpellTypes spellType, bool withDelayed = true, bool sendAutoRepeatCancelToClient = true);
         void FinishSpell(CurrentSpellTypes spellType, bool ok = true);
 
         // set withDelayed to true to account delayed spells as casted
@@ -1823,7 +1825,6 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         void _UpdateSpells(uint32 time);
 
         void _UpdateAutoRepeatSpell();
-        bool m_AutoRepeatFirstCast;
 
         uint32 m_attackTimer[MAX_ATTACK];
 

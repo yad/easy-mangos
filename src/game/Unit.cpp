@@ -363,7 +363,12 @@ void Unit::Update( uint32 p_time )
         {
             // m_CombatTimer set at aura start and it will be freeze until aura removing
             if (m_CombatTimer <= p_time)
-                CombatStop();
+            {
+                if(GetTypeId() == TYPEID_PLAYER || (getVictim() && getVictim()->HasAuraType(SPELL_AURA_MOD_STEALTH)))
+                    CombatStop();
+                else
+                    ClearInCombat();
+            }
             else
                 m_CombatTimer -= p_time;
         }
@@ -3472,20 +3477,31 @@ void Unit::_UpdateSpells( uint32 time )
 
 void Unit::_UpdateAutoRepeatSpell()
 {
-    //check "realtime" interrupts
-    if ( (GetTypeId() == TYPEID_PLAYER && ((Player*)this)->isMoving()) || IsNonMeleeSpellCasted(false,false,true) )
+    bool isAutoShot = m_currentSpells[CURRENT_AUTOREPEAT_SPELL]->m_spellInfo->Id == SPELL_ID_AUTOSHOT;
+
+    //check movement
+    if (GetTypeId() == TYPEID_PLAYER && ((Player*)this)->isMoving())
     {
         // cancel wand shoot
-        if(m_currentSpells[CURRENT_AUTOREPEAT_SPELL]->m_spellInfo->Id != SPELL_ID_AUTOSHOT)
+        if(!isAutoShot)
             InterruptSpell(CURRENT_AUTOREPEAT_SPELL);
-        m_AutoRepeatFirstCast = true;
+        // auto shot just waits
         return;
     }
 
-    //apply delay
-    if ( m_AutoRepeatFirstCast && getAttackTimer(RANGED_ATTACK) < 500 )
-        setAttackTimer(RANGED_ATTACK,500);
-    m_AutoRepeatFirstCast = false;
+    // check spell casts
+    if (IsNonMeleeSpellCasted(false, false, true))
+    {
+        // cancel wand shoot
+        if(!isAutoShot)
+        {
+            InterruptSpell(CURRENT_AUTOREPEAT_SPELL);
+            return;
+        }
+        // auto shot is delayed by everythihng, except ranged(!) CURRENT_GENERIC_SPELL's -> recheck that
+        else if (!(m_currentSpells[CURRENT_GENERIC_SPELL] && m_currentSpells[CURRENT_GENERIC_SPELL]->IsRangedSpell()))
+            return;
+    }
 
     //castroutine
     if (isAttackReady(RANGED_ATTACK))
@@ -3531,7 +3547,6 @@ void Unit::SetCurrentCastedSpell( Spell * pSpell )
                 // break autorepeat if not Auto Shot
                 if (m_currentSpells[CURRENT_AUTOREPEAT_SPELL]->m_spellInfo->Id != SPELL_ID_AUTOSHOT)
                     InterruptSpell(CURRENT_AUTOREPEAT_SPELL);
-                m_AutoRepeatFirstCast = true;
             }
         } break;
 
@@ -3555,9 +3570,10 @@ void Unit::SetCurrentCastedSpell( Spell * pSpell )
                 // generic autorepeats break generic non-delayed and channeled non-delayed spells
                 InterruptSpell(CURRENT_GENERIC_SPELL,false);
                 InterruptSpell(CURRENT_CHANNELED_SPELL,false);
+                // special action: first cast delay
+                if ( getAttackTimer(RANGED_ATTACK) < 500 )
+                    setAttackTimer(RANGED_ATTACK,500);
             }
-            // special action: set first cast flag
-            m_AutoRepeatFirstCast = true;
         } break;
 
         default:
@@ -3577,14 +3593,14 @@ void Unit::SetCurrentCastedSpell( Spell * pSpell )
     pSpell->m_selfContainer = &(m_currentSpells[pSpell->GetCurrentContainer()]);
 }
 
-void Unit::InterruptSpell(CurrentSpellTypes spellType, bool withDelayed)
+void Unit::InterruptSpell(CurrentSpellTypes spellType, bool withDelayed, bool sendAutoRepeatCancelToClient)
 {
     assert(spellType < CURRENT_MAX_SPELL);
 
     if (m_currentSpells[spellType] && (withDelayed || m_currentSpells[spellType]->getState() != SPELL_STATE_DELAYED) )
     {
         // send autorepeat cancel message for autorepeat spells
-        if (spellType == CURRENT_AUTOREPEAT_SPELL)
+        if (spellType == CURRENT_AUTOREPEAT_SPELL && sendAutoRepeatCancelToClient)
         {
             if(GetTypeId() == TYPEID_PLAYER)
                 ((Player*)this)->SendAutoRepeatCancel(this);
@@ -7297,6 +7313,31 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                 triggered_spell_id = dummySpell->EffectTriggerSpell[effIndex];
                 break;
             }
+            // Unholy Blight
+            if (dummySpell->Id == 49194)
+            {
+                triggered_spell_id = 50536;
+                basepoints0 = triggerAmount * damage / 100;
+                break;
+            }
+            // Sudden Doom
+            if (dummySpell->SpellIconID == 1939)
+            {
+                int32 casterLevel = getLevel();
+
+                // cast correct rank            
+                if (casterLevel > 79)
+                    triggered_spell_id = 49895;
+                else if (casterLevel > 75)
+                    triggered_spell_id = 49894;
+                else if (casterLevel > 67)
+                    triggered_spell_id = 49893;
+                else if (casterLevel > 61)
+                    triggered_spell_id = 49892;
+                else 
+                    triggered_spell_id = 47541;
+                 break;
+            }
             break;
         }
         default:
@@ -9026,8 +9067,8 @@ Unit* Unit::SelectMagnetTarget(Unit *victim, SpellEntry const *spellInfo)
     if(!victim)
         return NULL;
 
-    // SPELL_AURA_SPELL_MAGNET must NOT take any physical spells except for hamstring, wing clip and death grip
-    if(spellInfo && (spellInfo->SchoolMask != SPELL_SCHOOL_MASK_NORMAL || (spellInfo->Id == 1715 || spellInfo->Id == 2974 || spellInfo->Id == 49576)))
+    // SPELL_AURA_SPELL_MAGNET must NOT take any physical spells except for Hamstring, Wing Clip and Death Grip
+    if(spellInfo && ((spellInfo->SchoolMask != SPELL_SCHOOL_MASK_NORMAL && spellInfo->DmgClass == SPELL_DAMAGE_CLASS_MAGIC) || (spellInfo->Id == 1715 || spellInfo->Id == 2974 || spellInfo->Id == 49576)))
     {
         Unit::AuraList const& magnetAuras = victim->GetAurasByType(SPELL_AURA_SPELL_MAGNET);
         for(Unit::AuraList::const_iterator itr = magnetAuras.begin(); itr != magnetAuras.end(); ++itr)
@@ -11714,8 +11755,9 @@ int32 Unit::CalculateSpellDuration(SpellEntry const* spellProto, SpellEffectInde
         int32 mechanic = GetEffectMechanic(spellProto, effect_index);
         // Find total mod value (negative bonus)
         int32 durationMod_always = target->GetTotalAuraModifierByMiscValue(SPELL_AURA_MECHANIC_DURATION_MOD, mechanic);
-        // Modify from SPELL_AURA_MOD_DURATION_OF_EFFECTS_BY_DISPEL aura (stack always ?)
-        durationMod_always+=target->GetTotalAuraModifierByMiscValue(SPELL_AURA_MOD_DURATION_OF_EFFECTS_BY_DISPEL, spellProto->Dispel);
+        // Modify from SPELL_AURA_MOD_DURATION_OF_EFFECTS_BY_DISPEL aura for negatve effects (stack always ?)
+        if (!IsPositiveEffect(spellProto->Id, effect_index))
+            durationMod_always+=target->GetTotalAuraModifierByMiscValue(SPELL_AURA_MOD_DURATION_OF_EFFECTS_BY_DISPEL, spellProto->Dispel);
         // Find max mod (negative bonus)
         int32 durationMod_not_stack = target->GetMaxNegativeAuraModifierByMiscValue(SPELL_AURA_MECHANIC_DURATION_MOD_NOT_STACK, mechanic);
 
@@ -12130,6 +12172,12 @@ void Unit::SetMaxHealth(uint32 val)
 
     if(val < health)
         SetHealth(val);
+}
+
+void Unit::SetHealthPercent(float percent)
+{
+    uint32 newHealth = GetMaxHealth() * percent/100.0f;
+    SetHealth(newHealth);
 }
 
 void Unit::SetPower(Powers power, uint32 val)
