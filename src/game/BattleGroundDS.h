@@ -45,6 +45,14 @@ class BattleGroundDS : public BattleGround
         void RemovePlayer(Player *plr, uint64 guid);
         void HandleAreaTrigger(Player *Source, uint32 Trigger);
         bool SetupBattleGround();
+    private:
+        virtual void Reset();
+        virtual void FillInitialWorldStates(WorldPacket &d);
         void HandleKillPlayer(Player* player, Player *killer);
+        bool HandlePlayerUnderMap(Player * plr);
+        bool TeleportCheck;
+        bool KnockbackCheck;
+        uint32 m_uiTeleport;
+        uint32 m_uiKnockback;
 };
 #endif
