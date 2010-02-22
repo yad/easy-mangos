@@ -6253,6 +6253,28 @@ void Aura::HandleShapeshiftBoosts(bool apply)
                     }
                 }
             }
+            // Survival of the Fittest (Armor part)
+            if (form == FORM_BEAR || form == FORM_DIREBEAR)
+            {
+                Unit::AuraList const& modAuras = m_target->GetAurasByType(SPELL_AURA_MOD_TOTAL_STAT_PERCENTAGE);
+                for (Unit::AuraList::const_iterator i = modAuras.begin(); i != modAuras.end(); ++i)
+                {
+                    switch (GetId())
+                    {
+                        case 33853:
+                        case 33855:
+                        case 33856:
+                        {
+                            int32 bp = (*i)->GetSpellProto()->CalculateSimpleValue(2);
+                            m_target->CastCustomSpell(m_target, 62069, &bp, NULL, NULL, true, NULL, this);
+                            break;
+                        }
+                        default:
+                            continue;
+                    }
+                    break;
+                }
+            }
 
             // Heart of the Wild
             if (HotWSpellId)
