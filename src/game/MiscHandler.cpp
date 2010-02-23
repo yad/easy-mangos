@@ -1507,7 +1507,7 @@ void WorldSession::HandleCancelMountAuraOpcode( WorldPacket & /*recv_data*/ )
         return;
     }
 
-    if ((sWorld.getConfig(CONFIG_ALLOW_FLYING_MOUNTS_EVERYWHERE) == 1)
+    if ((sWorld.getConfig(CONFIG_BOOL_ALLOW_FLYING_MOUNTS_EVERYWHERE))
         && _player->HasAuraTypeFlyingSpell())
         _player->SetFlyingMountTimer();
     else

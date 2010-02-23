@@ -681,7 +681,7 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
     data << uint32(0);
     SendPacket(&data);
 
-    if (sWorld.getConfig(CONFIG_ALLOW_FLYING_MOUNTS_EVERYWHERE) == 1)
+    if (sWorld.getConfig(CONFIG_BOOL_ALLOW_FLYING_MOUNTS_EVERYWHERE))
         pCurrChar->FlyingMountsSpellsToItems();
 
     pCurrChar->SendInitialPacketsBeforeAddToMap();
@@ -1132,14 +1132,11 @@ void WorldSession::HandleRemoveGlyph( WorldPacket & recv_data )
         return;
     }
 
-    if(uint32 glyph = _player->GetGlyph(slot))
+    if(_player->GetGlyph(slot))
     {
-        if(GlyphPropertiesEntry const *gp = sGlyphPropertiesStore.LookupEntry(glyph))
-        {
-            _player->RemoveAurasDueToSpell(gp->SpellId);
-            _player->SetGlyph(slot, 0);
-            _player->SendTalentsInfoData(false);
-        }
+        _player->ApplyGlyph(slot, false);
+        _player->SetGlyph(slot, 0);
+        _player->SendTalentsInfoData(false);
     }
 }
 
