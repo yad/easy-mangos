@@ -54,12 +54,12 @@ m_declinedname(NULL), m_petModeFlags(PET_MODE_DEFAULT)
         charmInfo->SetReactState(REACT_AGGRESSIVE);
 
     baseMoveSpeed[MOVE_WALK] = 2.5f;
-    baseMoveSpeed[MOVE_RUN] = 7.0f * sWorld.getRate(RATE_CHARRUNSPEED);
+    baseMoveSpeed[MOVE_RUN] = 7.0f * sWorld.getConfig(CONFIG_FLOAT_RATE_CHARRUNSPEED);
     baseMoveSpeed[MOVE_RUN_BACK] = 1.25f;
-    baseMoveSpeed[MOVE_SWIM] = 4.722222f * sWorld.getRate(RATE_CHARSWIMSPEED);
+    baseMoveSpeed[MOVE_SWIM] = 4.722222f * sWorld.getConfig(CONFIG_FLOAT_RATE_CHARSWIMSPEED);
     baseMoveSpeed[MOVE_SWIM_BACK] = 4.5f;
     baseMoveSpeed[MOVE_TURN_RATE] = 3.141594f;
-    baseMoveSpeed[MOVE_FLIGHT] = 7.0f * sWorld.getRate(RATE_CHARFLIGHTSPEED);
+    baseMoveSpeed[MOVE_FLIGHT] = 7.0f * sWorld.getConfig(CONFIG_FLOAT_RATE_CHARFLIGHTSPEED);
     baseMoveSpeed[MOVE_FLIGHT_BACK] = 4.5f;
     baseMoveSpeed[MOVE_PITCH_RATE] = 3.14f;
 }

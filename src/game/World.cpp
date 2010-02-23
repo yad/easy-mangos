@@ -496,6 +496,10 @@ void World::LoadConfigSettings(bool reload)
     setConfigPos(CONFIG_FLOAT_RATE_TALENT, "Rate.Talent", 1.0f);
     setConfigPos(CONFIG_FLOAT_RATE_CORPSE_DECAY_LOOTED, "Rate.Corpse.Decay.Looted", 0.1f);
 
+    setConfigPos(CONFIG_FLOAT_RATE_CHARRUNSPEED,    "Rate.CharRunSpeed",    1.0f);
+    setConfigPos(CONFIG_FLOAT_RATE_CHARSWIMSPEED,   "Rate.CharSwimSpeed",   1.0f);
+    setConfigPos(CONFIG_FLOAT_RATE_CHARFLIGHTSPEED, "Rate.CharFlightSpeed", 1.0f);
+
     setConfigMinMax(CONFIG_FLOAT_RATE_TARGET_POS_RECALCULATION_RANGE, "TargetPosRecalculateRange", 1.5f, CONTACT_DISTANCE, ATTACK_DISTANCE);
 
     setConfigPos(CONFIG_FLOAT_RATE_DURABILITY_LOSS_DAMAGE, "DurabilityLossChance.Damage", 0.5f);
