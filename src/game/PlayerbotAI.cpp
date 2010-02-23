@@ -76,8 +76,8 @@ public:
     bool teleport(const Player& botPlayer) { return HandleNamegoCommand(botPlayer.GetName()); }
     void sysmessage(const char *str) { SendSysMessage(str); }
     bool dropQuest(const char *str) { return HandleQuestRemove(str); }
-    bool gmstartup(const char *str) { return true /*HandleGMStartUpCommand(str)*/; }
-    //bool gmstartup(const char *str) { return HandleGMStartUpCommand(str); }
+    //bool gmstartup(const char *str) { return true /*HandleGMStartUpCommand(str)*/; }
+    bool gmstartup(const char *str) { return HandleGMStartUpCommand(str); }
 };
 
 PlayerbotAI::PlayerbotAI(PlayerbotMgr* const mgr, Player* const bot) :
@@ -865,7 +865,7 @@ bool PlayerbotAI::HasAura(uint32 spellId, const Unit& player) const
     if(!m_bot->IsWithinDistInMap( &player, 50, true ))
         return true;
 
-    for (AuraMap::const_iterator iter = player.GetAuras().begin(); iter != player.GetAuras().end(); ++iter)
+    for (Unit::AuraMap::const_iterator iter = player.GetAuras().begin(); iter != player.GetAuras().end(); ++iter)
     {
         if (iter->second->GetId() == spellId)
             return true;
