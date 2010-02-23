@@ -91,7 +91,7 @@ uint32 GetSpellCastTime(SpellEntry const* spellInfo, Spell const* spell)
     if (spellInfo->Attributes & SPELL_ATTR_RANGED && (!spell || !spell->IsAutoRepeat()))
         castTime += 500;
 
-    if(sWorld.getConfig(CONFIG_NO_CAST_TIME) != 1)
+    if(!sWorld.getConfig(CONFIG_BOOL_NO_CAST_TIME))
         return (castTime > 0) ? uint32(castTime) : 0;
     else
         return 0;

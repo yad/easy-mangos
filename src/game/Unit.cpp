@@ -367,7 +367,7 @@ void Unit::Update( uint32 p_time )
 
     if (uint32 base_att = getAttackTimer(BASE_ATTACK))
     {
-        if(sWorld.getConfig(CONFIG_HURT_IN_REAL_TIME) != 1) // Normal MaNGOS mod
+        if(!sWorld.getConfig(CONFIG_BOOL_HURT_IN_REAL_TIME)) // Normal MaNGOS mod
             setAttackTimer(BASE_ATTACK, (p_time >= base_att ? 0 : base_att - p_time) );
         else
         {
@@ -13046,7 +13046,7 @@ Aura* Unit::GetDummyAura( uint32 spell_id ) const
 
 bool Unit::IsUnderLastManaUseEffect() const
 {
-    if( (sWorld.getConfig(CONFIG_NO_WAIT_AFTER_CAST) == 1) && (GetTypeId() == TYPEID_PLAYER) )
+    if( (sWorld.getConfig(CONFIG_BOOL_NO_WAIT_AFTER_CAST)) && (GetTypeId() == TYPEID_PLAYER) )
         return false;
     else
         return m_lastManaUseTimer;

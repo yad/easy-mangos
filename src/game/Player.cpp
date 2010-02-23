@@ -2101,7 +2101,7 @@ void Player::Update( uint32 p_time )
         if (!m_regenTimer)
             RegenerateAll();
 
-        if (sWorld.getConfig(CONFIG_NO_COOLDOWN) == 1)
+        if (sWorld.getConfig(CONFIG_BOOL_NO_COOLDOWN))
             RemoveAllSpellCooldown();
     }
 
@@ -19943,7 +19943,7 @@ void Player::SendInitialPacketsBeforeAddToMap()
 
     m_achievementMgr.SendAllAchievementData();
 
-    float speedrate = sWorld.getConfig(CONFIG_SPEED_GAME);
+    float speedrate = sWorld.getConfig(CONFIG_FLOAT_SPEED_GAME);
     uint32 speedtime = secsToTimeBitFields( (sWorld.GetGameTime() - sWorld.GetUptime()) + (sWorld.GetUptime() * speedrate) );
 
     data.Initialize(SMSG_LOGIN_SETTIMESPEED, 4 + 4 + 4);
