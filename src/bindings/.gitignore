@@ -10,5 +10,11 @@
 
 #
 # Scripting projects
+# This excludes all 3rd party script libraries
 #
-ScriptDev2
+*
+!universal/*
+!universal/*/*
+!Makefile.am
+!.gitignore
+
