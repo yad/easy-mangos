@@ -750,14 +750,7 @@ void World::LoadConfigSettings(bool reload)
     setConfig(CONFIG_UINT32_TIMERBAR_FIRE_GMLEVEL,    "TimerBar.Fire.GMLevel", SEC_CONSOLE);
     setConfig(CONFIG_UINT32_TIMERBAR_FIRE_MAX,        "TimerBar.Fire.Max", 1);
 
-    m_configs[CONFIG_SPEED_GAME] = sConfig.GetFloatDefault("Custom.SpeedGame", 1);
-    if(m_configs[CONFIG_SPEED_GAME] < 1.0f)
-        m_configs[CONFIG_SPEED_GAME] = 1.0f;    
-    m_configs[CONFIG_NO_CAST_TIME]      = sConfig.GetIntDefault("Custom.NoCastTime", 0);
-    m_configs[CONFIG_NO_COOLDOWN]       = sConfig.GetIntDefault("Custom.NoCooldown", 0);
-    m_configs[CONFIG_HURT_IN_REAL_TIME] = sConfig.GetIntDefault("Custom.HurtInRealTime", 0);
-    m_configs[CONFIG_NO_WAIT_AFTER_CAST] = sConfig.GetIntDefault("Custom.NoWaitAfterCast", 0);
-    m_configs[CONFIG_ALLOW_FLYING_MOUNTS_EVERYWHERE] = sConfig.GetIntDefault("Custom.AllowFlyingMountsEverywhere", 0);
+    setConfig(CONFIG_BOOL_ALLOW_FLYING_MOUNTS_EVERYWHERE, "Custom.AllowFlyingMountsEverywhere", false);
 
     ///- Read the "Data" directory from the config file
     std::string dataPath = sConfig.GetStringDefault("DataDir","./");

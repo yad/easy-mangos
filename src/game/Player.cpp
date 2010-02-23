@@ -11103,7 +11103,7 @@ uint8 Player::CanUseItem( Item *pItem, bool not_loading ) const
 {
     if (pItem)
     {
-        if (sWorld.getConfig(CONFIG_ALLOW_FLYING_MOUNTS_EVERYWHERE) == 1)
+        if (sWorld.getConfig(CONFIG_BOOL_ALLOW_FLYING_MOUNTS_EVERYWHERE))
         {
             ItemPrototype const *iProto = pItem->GetProto();
             if (iProto)
@@ -11125,9 +11125,9 @@ uint8 Player::CanUseItem( Item *pItem, bool not_loading ) const
 
                             if(player->CanUseFlyingMounts(sEntry))
                             {
-                                for (int j = 0; j < 3; ++j)
+                                for(int j = 0; j < MAX_EFFECT_INDEX; ++j)
                                 {
-                                    Aura* aur = CreateAura(sEntry, j, NULL, player, player, NULL);
+                                    Aura* aur = CreateAura(sEntry, SpellEffectIndex(j), NULL, player, player, NULL);
                                     player->AddAura(aur);
                                 }
                             }
@@ -11144,9 +11144,9 @@ uint8 Player::CanUseItem( Item *pItem, bool not_loading ) const
 
                             if(player->CanUseFlyingMounts(sEntry))
                             {
-                                for (int j = 0; j < 3; ++j)
+                                for(int j = 0; j < MAX_EFFECT_INDEX; ++j)
                                 {
-                                    Aura* aur = CreateAura(sEntry, j, NULL, player, player, NULL);
+                                    Aura* aur = CreateAura(sEntry, SpellEffectIndex(j), NULL, player, player, NULL);
                                     player->AddAura(aur);
                                 }
                             }
@@ -12048,7 +12048,7 @@ void Player::DestroyItemCount( Item* pItem, uint32 &count, bool update )
     if(!pItem)
         return;
 
-    if (sWorld.getConfig(CONFIG_ALLOW_FLYING_MOUNTS_EVERYWHERE) == 1)
+    if (sWorld.getConfig(CONFIG_BOOL_ALLOW_FLYING_MOUNTS_EVERYWHERE))
     {
         ItemPrototype const *pProto = sObjectMgr.GetItemPrototype(pItem->GetEntry());
         if(pProto)
@@ -21512,7 +21512,7 @@ uint32 Player::CalculateTalentsPoints() const
 
 bool Player::IsKnowHowFlyIn(uint32 mapid, uint32 zone) const
 {
-    if(sWorld.getConfig(CONFIG_ALLOW_FLYING_MOUNTS_EVERYWHERE) == 1) return true;
+    if(sWorld.getConfig(CONFIG_BOOL_ALLOW_FLYING_MOUNTS_EVERYWHERE)) return true;
     // continent checked in SpellMgr::GetSpellAllowedInLocationError at cast and area update
     uint32 v_map = GetVirtualMapForMapAndZone(mapid, zone);
     return v_map != 571 || HasSpell(54197);                 // Cold Weather Flying
