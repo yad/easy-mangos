@@ -1415,7 +1415,7 @@ void World::Update(uint32 diff)
 
     /// </ul>
     ///- Move all creatures with "delayed move" and remove and delete all objects with "delayed remove"
-    sMapMgr.RemoveAllObjectsInRemoveList();
+    sMapMgr.DoDelayedMovesAndRemoves();
 
     // update the instance reset times
     sInstanceSaveMgr.Update();
