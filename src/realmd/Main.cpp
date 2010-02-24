@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -167,7 +167,7 @@ extern int main(int argc, char **argv)
     sLog.outDetail("%s (Library: %s)", OPENSSL_VERSION_TEXT, SSLeay_version(SSLEAY_VERSION));
     if (SSLeay() < 0x009080bfL )
     {
-        sLog.outDetail("WARNING: Outdated version of OpenSSL lib. Logins to server impossible!");
+        sLog.outDetail("WARNING: Outdated version of OpenSSL lib. Logins to server may not work!");
         sLog.outDetail("WARNING: Minimal required version [OpenSSL 0.9.8k]");
     }
 

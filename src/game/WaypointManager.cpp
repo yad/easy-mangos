@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -66,7 +66,7 @@ void WaypointManager::Load()
         sLog.outString( ">> Loaded 0 paths. DB table `creature_movement` is empty." );
         return;
     } else {
-        total_paths = result->GetRowCount();
+        total_paths = (uint32)result->GetRowCount();
         barGoLink bar( total_paths );
         do
         {
@@ -88,7 +88,7 @@ void WaypointManager::Load()
     //   6         7      8      9        10       11       12       13       14  15
         "waittime, emote, spell, textid1, textid2, textid3, textid4, textid5, id, point FROM creature_movement");
 
-    barGoLink bar( result->GetRowCount() );
+    barGoLink bar( (int)result->GetRowCount() );
     do
     {
         bar.step();

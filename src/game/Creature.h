@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,6 +24,7 @@
 #include "UpdateMask.h"
 #include "ItemPrototype.h"
 #include "LootMgr.h"
+#include "DBCEnums.h"
 #include "Database/DatabaseEnv.h"
 #include "Cell.h"
 
@@ -35,102 +36,6 @@ class CreatureAI;
 class Quest;
 class Player;
 class WorldSession;
-
-enum Gossip_Option
-{
-    GOSSIP_OPTION_NONE              = 0,                    //UNIT_NPC_FLAG_NONE              = 0,
-    GOSSIP_OPTION_GOSSIP            = 1,                    //UNIT_NPC_FLAG_GOSSIP            = 1,
-    GOSSIP_OPTION_QUESTGIVER        = 2,                    //UNIT_NPC_FLAG_QUESTGIVER        = 2,
-    GOSSIP_OPTION_VENDOR            = 3,                    //UNIT_NPC_FLAG_VENDOR            = 4,
-    GOSSIP_OPTION_TAXIVENDOR        = 4,                    //UNIT_NPC_FLAG_TAXIVENDOR        = 8,
-    GOSSIP_OPTION_TRAINER           = 5,                    //UNIT_NPC_FLAG_TRAINER           = 16,
-    GOSSIP_OPTION_SPIRITHEALER      = 6,                    //UNIT_NPC_FLAG_SPIRITHEALER      = 32,
-    GOSSIP_OPTION_SPIRITGUIDE       = 7,                    //UNIT_NPC_FLAG_SPIRITGUIDE       = 64,
-    GOSSIP_OPTION_INNKEEPER         = 8,                    //UNIT_NPC_FLAG_INNKEEPER         = 128,
-    GOSSIP_OPTION_BANKER            = 9,                    //UNIT_NPC_FLAG_BANKER            = 256,
-    GOSSIP_OPTION_PETITIONER        = 10,                   //UNIT_NPC_FLAG_PETITIONER        = 512,
-    GOSSIP_OPTION_TABARDDESIGNER    = 11,                   //UNIT_NPC_FLAG_TABARDDESIGNER    = 1024,
-    GOSSIP_OPTION_BATTLEFIELD       = 12,                   //UNIT_NPC_FLAG_BATTLEFIELDPERSON = 2048,
-    GOSSIP_OPTION_AUCTIONEER        = 13,                   //UNIT_NPC_FLAG_AUCTIONEER        = 4096,
-    GOSSIP_OPTION_STABLEPET         = 14,                   //UNIT_NPC_FLAG_STABLE            = 8192,
-    GOSSIP_OPTION_ARMORER           = 15,                   //UNIT_NPC_FLAG_ARMORER           = 16384,
-    GOSSIP_OPTION_UNLEARNTALENTS    = 16,                   //UNIT_NPC_FLAG_TRAINER (bonus option for GOSSIP_OPTION_TRAINER)
-    GOSSIP_OPTION_UNLEARNPETSKILLS  = 17                    //UNIT_NPC_FLAG_TRAINER (bonus option for GOSSIP_OPTION_TRAINER)
-};
-
-enum Gossip_Guard
-{
-    GOSSIP_GUARD_BANK               = 32,
-    GOSSIP_GUARD_RIDE               = 33,
-    GOSSIP_GUARD_GUILD              = 34,
-    GOSSIP_GUARD_INN                = 35,
-    GOSSIP_GUARD_MAIL               = 36,
-    GOSSIP_GUARD_AUCTION            = 37,
-    GOSSIP_GUARD_WEAPON             = 38,
-    GOSSIP_GUARD_STABLE             = 39,
-    GOSSIP_GUARD_BATTLE             = 40,
-    GOSSIP_GUARD_SPELLTRAINER       = 41,
-    GOSSIP_GUARD_SKILLTRAINER       = 42
-};
-
-enum Gossip_Guard_Spell
-{
-    GOSSIP_GUARD_SPELL_WARRIOR      = 64,
-    GOSSIP_GUARD_SPELL_PALADIN      = 65,
-    GOSSIP_GUARD_SPELL_HUNTER       = 66,
-    GOSSIP_GUARD_SPELL_ROGUE        = 67,
-    GOSSIP_GUARD_SPELL_PRIEST       = 68,
-    GOSSIP_GUARD_SPELL_UNKNOWN1     = 69,
-    GOSSIP_GUARD_SPELL_SHAMAN       = 70,
-    GOSSIP_GUARD_SPELL_MAGE         = 71,
-    GOSSIP_GUARD_SPELL_WARLOCK      = 72,
-    GOSSIP_GUARD_SPELL_UNKNOWN2     = 73,
-    GOSSIP_GUARD_SPELL_DRUID        = 74
-};
-
-enum Gossip_Guard_Skill
-{
-    GOSSIP_GUARD_SKILL_ALCHEMY      = 80,
-    GOSSIP_GUARD_SKILL_BLACKSMITH   = 81,
-    GOSSIP_GUARD_SKILL_COOKING      = 82,
-    GOSSIP_GUARD_SKILL_ENCHANT      = 83,
-    GOSSIP_GUARD_SKILL_FIRSTAID     = 84,
-    GOSSIP_GUARD_SKILL_FISHING      = 85,
-    GOSSIP_GUARD_SKILL_HERBALISM    = 86,
-    GOSSIP_GUARD_SKILL_LEATHER      = 87,
-    GOSSIP_GUARD_SKILL_MINING       = 88,
-    GOSSIP_GUARD_SKILL_SKINNING     = 89,
-    GOSSIP_GUARD_SKILL_TAILORING    = 90,
-    GOSSIP_GUARD_SKILL_ENGINERING   = 91
-};
-
-enum GossipOptionIcon
-{
-    GOSSIP_ICON_CHAT                = 0,                    //white chat bubble
-    GOSSIP_ICON_VENDOR              = 1,                    //brown bag
-    GOSSIP_ICON_TAXI                = 2,                    //flight
-    GOSSIP_ICON_TRAINER             = 3,                    //book
-    GOSSIP_ICON_INTERACT_1          = 4,                    //interaction wheel
-    GOSSIP_ICON_INTERACT_2          = 5,                    //interaction wheel
-    GOSSIP_ICON_MONEY_BAG           = 6,                    //brown bag with yellow dot
-    GOSSIP_ICON_TALK                = 7,                    //white chat bubble with black dots
-    GOSSIP_ICON_TABARD              = 8,                    //tabard
-    GOSSIP_ICON_BATTLE              = 9,                    //two swords
-    GOSSIP_ICON_DOT                 = 10                    //yellow dot
-};
-
-struct GossipOption
-{
-    uint32 Id;
-    uint32 GossipId;
-    uint32 NpcFlag;
-    uint32 Icon;
-    uint32 Action;
-    uint32 BoxMoney;
-    bool Coded;
-    std::string OptionText;
-    std::string BoxText;
-};
 
 enum CreatureFlagsExtra
 {
@@ -165,6 +70,7 @@ struct CreatureInfo
     char*   Name;
     char*   SubName;
     char*   IconName;
+    uint32  GossipMenuId;
     uint32  minlevel;
     uint32  maxlevel;
     uint32  minhealth;
@@ -259,7 +165,7 @@ struct CreatureLocale
     std::vector<std::string> SubName;
 };
 
-struct NpcOptionLocale
+struct GossipMenuItemsLocale
 {
     std::vector<std::string> OptionText;
     std::vector<std::string> BoxText;
@@ -301,7 +207,7 @@ struct CreatureData
 struct CreatureDataAddonAura
 {
     uint32 spell_id;
-    uint8 effect_idx;
+    SpellEffectIndex effect_idx;
 };
 
 // from `creature_addon` table
@@ -312,7 +218,7 @@ struct CreatureDataAddon
     uint32 bytes1;
     uint32 bytes2;
     uint32 emote;
-    uint32 move_flags;
+    uint32 splineFlags;
     CreatureDataAddonAura const* auras;                     // loaded as char* "spell1 eff1 spell2 eff2 ... "
 };
 
@@ -449,8 +355,6 @@ struct TrainerSpellData
     void Clear() { spellList.clear(); }
 };
 
-typedef std::list<GossipOption> GossipOptionList;
-
 typedef std::map<uint32,time_t> CreatureSpellCooldowns;
 
 // max different by z coordinate for creature aggro reaction
@@ -458,13 +362,22 @@ typedef std::map<uint32,time_t> CreatureSpellCooldowns;
 
 #define MAX_VENDOR_ITEMS 150                                // Limitation in 3.x.x item count in SMSG_LIST_INVENTORY
 
+enum CreatureSubtype
+{
+    CREATURE_SUBTYPE_GENERIC,                               // new Creature
+    CREATURE_SUBTYPE_PET,                                   // new Pet
+    CREATURE_SUBTYPE_TOTEM,                                 // new Totem
+    CREATURE_SUBTYPE_VEHICLE,                               // new Vehicle
+    CREATURE_SUBTYPE_TEMPORARY_SUMMON,                      // new TemporarySummon
+};
+
 class MANGOS_DLL_SPEC Creature : public Unit
 {
     CreatureAI *i_AI;
 
     public:
 
-        explicit Creature();
+        explicit Creature(CreatureSubtype subtype = CREATURE_SUBTYPE_GENERIC);
         virtual ~Creature();
 
         void AddToWorld();
@@ -472,7 +385,7 @@ class MANGOS_DLL_SPEC Creature : public Unit
 
         bool Create(uint32 guidlow, Map *map, uint32 phaseMask, uint32 Entry, uint32 team, const CreatureData *data = NULL);
         bool LoadCreaturesAddon(bool reload = false);
-        void SelectLevel(const CreatureInfo *cinfo);
+        void SelectLevel(const CreatureInfo *cinfo, float percentHealth = 100.0f, float percentMana = 100.0f);
         void LoadEquipment(uint32 equip_entry, bool force=false);
 
         uint32 GetDBTableGUIDLow() const { return m_DBTableGuid; }
@@ -482,10 +395,13 @@ class MANGOS_DLL_SPEC Creature : public Unit
         void GetRespawnCoord(float &x, float &y, float &z, float* ori = NULL, float* dist =NULL) const;
         uint32 GetEquipmentId() const { return m_equipmentId; }
 
-        bool isPet() const { return m_isPet; }
-        bool isVehicle() const { return m_isVehicle; }
+        CreatureSubtype GetSubtype() const { return m_subtype; }
+        bool isPet() const { return m_subtype == CREATURE_SUBTYPE_PET; }
+        bool isVehicle() const { return m_subtype == CREATURE_SUBTYPE_VEHICLE; }
+        bool isTotem() const { return m_subtype == CREATURE_SUBTYPE_TOTEM; }
+        bool isTemporarySummon() const { return m_subtype == CREATURE_SUBTYPE_TEMPORARY_SUMMON; }
+
         void SetCorpseDelay(uint32 delay) { m_corpseDelay = delay; }
-        bool isTotem() const { return m_isTotem; }
         bool isRacialLeader() const { return GetCreatureInfo()->RacialLeader; }
         bool isCivilian() const { return GetCreatureInfo()->flags_extra & CREATURE_FLAG_EXTRA_CIVILIAN; }
         bool canWalk() const { return GetCreatureInfo()->InhabitType & INHABIT_GROUND; }
@@ -498,7 +414,7 @@ class MANGOS_DLL_SPEC Creature : public Unit
         bool IsOutOfThreatArea(Unit* pVictim) const;
         bool IsImmunedToSpell(SpellEntry const* spellInfo);
                                                             // redefine Unit::IsImmunedToSpell
-        bool IsImmunedToSpellEffect(SpellEntry const* spellInfo, uint32 index) const;
+        bool IsImmunedToSpellEffect(SpellEntry const* spellInfo, SpellEffectIndex index) const;
                                                             // redefine Unit::IsImmunedToSpellEffect
         bool isElite() const
         {
@@ -523,21 +439,38 @@ class MANGOS_DLL_SPEC Creature : public Unit
 
         bool AIM_Initialize();
 
-        void AI_SendMoveToPacket(float x, float y, float z, uint32 time, MonsterMovementFlags MovementFlags, uint8 type);
+        void AI_SendMoveToPacket(float x, float y, float z, uint32 time, SplineFlags MovementFlags, SplineType type);
         CreatureAI* AI() { return i_AI; }
 
-        void AddMonsterMoveFlag(MonsterMovementFlags f) { m_monsterMoveFlags = MonsterMovementFlags(m_monsterMoveFlags | f); }
-        void RemoveMonsterMoveFlag(MonsterMovementFlags f) { m_monsterMoveFlags = MonsterMovementFlags(m_monsterMoveFlags & ~f); }
-        bool HasMonsterMoveFlag(MonsterMovementFlags f) const { return m_monsterMoveFlags & f; }
-        MonsterMovementFlags GetMonsterMoveFlags() const { return m_monsterMoveFlags; }
-        void SetMonsterMoveFlags(MonsterMovementFlags f) { m_monsterMoveFlags = f; }
+        void AddSplineFlag(SplineFlags f)
+        {
+            bool need_walk_sync = (f & SPLINEFLAG_WALKMODE) != (m_splineFlags & SPLINEFLAG_WALKMODE);
+            m_splineFlags = SplineFlags(m_splineFlags | f);
+            if (need_walk_sync)
+                UpdateWalkMode(this, false);
+        }
+        void RemoveSplineFlag(SplineFlags f)
+        {
+            bool need_walk_sync = (f & SPLINEFLAG_WALKMODE) != (m_splineFlags & SPLINEFLAG_WALKMODE);
+            m_splineFlags = SplineFlags(m_splineFlags & ~f);
+            if (need_walk_sync)
+                UpdateWalkMode(this, false);
+        }
+        bool HasSplineFlag(SplineFlags f) const { return m_splineFlags & f; }
+        SplineFlags GetSplineFlags() const { return m_splineFlags; }
+        void SetSplineFlags(SplineFlags f)
+        {
+            bool need_walk_sync = (f & SPLINEFLAG_WALKMODE) != (m_splineFlags & SPLINEFLAG_WALKMODE);
+            m_splineFlags = f;                              // need set before
+            if (need_walk_sync)
+                UpdateWalkMode(this, false);
+        }
 
-        void SendMonsterMoveWithSpeed(float x, float y, float z, uint32 transitTime = 0, Player* player = NULL);
         void SendMonsterMoveWithSpeedToCurrentDestination(Player* player = NULL);
 
         uint32 GetShieldBlockValue() const                  //dunno mob block value
         {
-            return (getLevel()/2 + uint32(GetStat(STAT_STRENGTH)/20));
+            return (getLevel() / 2 + uint32(GetStat(STAT_STRENGTH) / 20));
         }
 
         SpellSchoolMask GetMeleeDamageSchoolMask() const { return m_meleeDamageSchoolMask; }
@@ -551,7 +484,7 @@ class MANGOS_DLL_SPEC Creature : public Unit
 
         bool HasSpell(uint32 spellID) const;
 
-        bool UpdateEntry(uint32 entry, uint32 team=ALLIANCE, const CreatureData* data=NULL);
+        bool UpdateEntry(uint32 entry, uint32 team = ALLIANCE, const CreatureData* data = NULL, bool preserveHPAndPower = true);
         bool UpdateStats(Stats stat);
         bool UpdateAllStats();
         void UpdateResistances(uint32 school);
@@ -575,17 +508,6 @@ class MANGOS_DLL_SPEC Creature : public Unit
         std::string GetAIName() const;
         std::string GetScriptName() const;
         uint32 GetScriptId() const;
-
-        void prepareGossipMenu( Player *pPlayer, uint32 gossipid = 0 );
-        void sendPreparedGossip( Player* player );
-        void OnGossipSelect(Player* player, uint32 option);
-        void OnPoiSelect(Player* player, GossipOption const *gossip);
-
-        uint32 GetGossipTextId(uint32 action, uint32 zoneid);
-        uint32 GetNpcTextId();
-        void LoadGossipOptions();
-        GossipOption const* GetGossipOption( uint32 id ) const;
-        void addGossipOption(GossipOption const& gso) { m_goptions.push_back(gso); }
 
         void Say(int32 textId, uint32 language, uint64 TargetGuid) { MonsterSay(textId,language,TargetGuid); }
         void Yell(int32 textId, uint32 language, uint64 TargetGuid) { MonsterYell(textId,language,TargetGuid); }
@@ -646,7 +568,7 @@ class MANGOS_DLL_SPEC Creature : public Unit
         void RemoveCorpse();
         bool isDeadByDefault() const { return m_isDeadByDefault; };
 
-        void ForcedDespawn();
+        void ForcedDespawn(uint32 timeMSToDespawn = 0);
 
         time_t const& GetRespawnTime() const { return m_respawnTime; }
         time_t GetRespawnTimeEx() const;
@@ -661,7 +583,7 @@ class MANGOS_DLL_SPEC Creature : public Unit
         void SetRespawnRadius(float dist) { m_respawnradius = dist; }
 
         uint32 m_groupLootTimer;                            // (msecs)timer used for group loot
-        uint64 lootingGroupLeaderGUID;                      // used to find group which is looting corpse
+        uint32 m_groupLootId;                               // used to find group which is looting corpse
 
         void SendZoneUnderAttackMessage(Player* attacker);
 
@@ -684,6 +606,9 @@ class MANGOS_DLL_SPEC Creature : public Unit
         void SetCombatStartPosition(float x, float y, float z) { CombatStartX = x; CombatStartY = y; CombatStartZ = z; }
         void GetCombatStartPosition(float &x, float &y, float &z) { x = CombatStartX; y = CombatStartY; z = CombatStartZ; }
 
+        void SetSummonPoint(float fX, float fY, float fZ, float fOrient) { m_summonXpoint = fX; m_summonYpoint = fY; m_summonZpoint = fZ; m_summonOrientation = fOrient; }
+        void GetSummonPoint(float &fX, float &fY, float &fZ, float &fOrient) const { fX = m_summonXpoint; fY = m_summonYpoint; fZ = m_summonZpoint; fOrient = m_summonOrientation; }
+
         uint32 GetGlobalCooldown() const { return m_GlobalCooldown; }
 
         void SetDeadByDefault (bool death_state) { m_isDeadByDefault = death_state; }
@@ -691,11 +616,14 @@ class MANGOS_DLL_SPEC Creature : public Unit
         bool isActiveObject() const { return m_isActiveObject || HasAuraType(SPELL_AURA_BIND_SIGHT) || HasAuraType(SPELL_AURA_FAR_SIGHT); }
         void SetActiveObjectState(bool on);
 
+        void SetNeedNotify() { m_needNotify = true; }
+
         void SendAreaSpiritHealerQueryOpcode(Player *pl);
 
     protected:
         bool CreateFromProto(uint32 guidlow,uint32 Entry,uint32 team, const CreatureData *data = NULL);
         bool InitEntry(uint32 entry, uint32 team=ALLIANCE, const CreatureData* data=NULL);
+        void RelocationNotify();
 
         // vendor items
         VendorItemCounts m_vendorItemCounts;
@@ -715,12 +643,7 @@ class MANGOS_DLL_SPEC Creature : public Unit
         uint32 m_corpseDelay;                               // (secs) delay between death and corpse disappearance
         float m_respawnradius;
 
-        bool m_gossipOptionLoaded;
-        GossipOptionList m_goptions;
-
-        bool m_isPet;                                       // set only in Pet::Pet
-        bool m_isVehicle;                                   // set only in Vehicle::Vehicle
-        bool m_isTotem;                                     // set only in Totem::Totem
+        CreatureSubtype m_subtype;                          // set in Creatures subclasses for fast it detect without dynamic_cast use
         void RegenerateMana();
         void RegenerateHealth();
         MovementGeneratorType m_defaultMovementType;
@@ -733,6 +656,7 @@ class MANGOS_DLL_SPEC Creature : public Unit
         bool m_regenHealth;
         bool m_AI_locked;
         bool m_isDeadByDefault;
+        bool m_needNotify;
 
         SpellSchoolMask m_meleeDamageSchoolMask;
         uint32 m_originalEntry;
@@ -740,11 +664,17 @@ class MANGOS_DLL_SPEC Creature : public Unit
         float CombatStartX;
         float CombatStartY;
         float CombatStartZ;
+
+        float m_summonXpoint;
+        float m_summonYpoint;
+        float m_summonZpoint;
+        float m_summonOrientation;
+
     private:
         GridReference<Creature> m_gridRef;
         CreatureInfo const* m_creatureInfo;                 // in difficulty mode > 0 can different from ObjMgr::GetCreatureTemplate(GetEntry())
         bool m_isActiveObject;
-        MonsterMovementFlags m_monsterMoveFlags;
+        SplineFlags m_splineFlags;
 };
 
 class AssistDelayEvent : public BasicEvent
@@ -760,6 +690,16 @@ class AssistDelayEvent : public BasicEvent
         uint64            m_victim;
         std::list<uint64> m_assistants;
         Unit&             m_owner;
+};
+
+class ForcedDespawnDelayEvent : public BasicEvent
+{
+    public:
+        ForcedDespawnDelayEvent(Creature& owner) : BasicEvent(), m_owner(owner) { }
+        bool Execute(uint64 e_time, uint32 p_time);
+
+    private:
+        Creature& m_owner;
 };
 
 #endif

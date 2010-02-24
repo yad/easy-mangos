@@ -1,4 +1,4 @@
-# Copyright (C) 2005-2009 MaNGOS project <http://getmangos.com/>
+# Copyright (C) 2005-2010 MaNGOS project <http://getmangos.com/>
 #
 # This file is free software; as a special exception the author gives
 # unlimited permission to copy and/or distribute it, with or without
@@ -14,10 +14,11 @@
 
 ## Prelude, basic settings for Autoconf
 #  PACKAGE:            mangos
-#  VERSION:            0.15.0 (trunk)
+#  VERSION:            0.16.0 (trunk)
 #  BUG-REPORT-ADDRESS: mangos-devs@lists.sourceforge.net
-AC_INIT( [mangos], [0.15.0], [mangos-devs@lists.sourceforge.net])
+AC_INIT( [mangos], [0.16.0], [mangos-devs@lists.sourceforge.net])
 AC_CONFIG_SRCDIR([src/shared/Common.h])
+AC_CONFIG_MACRO_DIR([m4])
 
 ## Prelude, basic settings for Automake
 #  Turn on all warnings and error messages, and enforce GNU
@@ -97,7 +98,7 @@ AC_CHECK_LIB( pthread, pthread_create, [],
     ])
 AC_CHECK_LIB( z, compress, [ZLIB=-lz],[AC_MSG_ERROR([Missing zlib])] )
 AC_CHECK_LIB( compat, ftime, [COMPATLIB=-lcompat] )
-PKG_CHECK_MODULES(OPENSSL, [openssl], [], [AC_MSG_ERROR([Missing openssl])])
+AX_CHECK_OPENSSL([], [AC_MSG_ERROR([Missing OpenSSL])])
 
 AC_ARG_WITH(postgresql,
 [  --with-postgresql       Use PostgreSQL as a backend (default: no)],

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -83,7 +83,10 @@ enum MangosStrings
     LANG_USING_WORLD_DB                 = 57,
     LANG_USING_SCRIPT_LIB               = 58,
     LANG_USING_EVENT_AI                 = 59,
-    // Room for more level 0              60-99 not used
+    LANG_RA_BUSY                        = 60,
+    LANG_RA_USER                        = 61,
+    LANG_RA_PASS                        = 62,
+    // Room for more level 0              63-99 not used
 
     // level 1 chat
     LANG_GLOBAL_NOTIFY                  = 100,
@@ -274,7 +277,7 @@ enum MangosStrings
     LANG_COMMAND_TICKETVIEW             = 290,
     LANG_COMMAND_TICKETON               = 291,
     LANG_COMMAND_TICKETOFF              = 292,
-    LANG_COMMAND_TICKENOTEXIST          = 293,
+    LANG_COMMAND_TICKETNOTEXIST         = 293,
     LANG_COMMAND_ALLTICKETDELETED       = 294,
     LANG_COMMAND_TICKETPLAYERDEL        = 295,
     LANG_COMMAND_TICKETDEL              = 296,
@@ -332,7 +335,15 @@ enum MangosStrings
     LANG_CUSTOMIZE_PLAYER_GUID          = 346,
     LANG_COMMAND_GOTAXINODENOTFOUND     = 347,
     LANG_GAMEOBJECT_HAVE_INVALID_DATA   = 348,
-    // Room for more level 2              349-399 not used
+    LANG_TITLE_LIST_CHAT                = 349,
+    LANG_TITLE_LIST_CONSOLE             = 350,
+    LANG_COMMAND_NOTITLEFOUND           = 351,
+    LANG_INVALID_TITLE_ID               = 352,
+    LANG_TITLE_ADD_RES                  = 353,
+    LANG_TITLE_REMOVE_RES               = 354,
+    LANG_TITLE_CURRENT_RES              = 355,
+    LANG_CURRENT_TITLE_RESET            = 356,
+    // Room for more level 2              357-399 not used
 
     // level 3 chat
     LANG_SCRIPTS_RELOADED               = 400,
@@ -487,9 +498,9 @@ enum MangosStrings
     LANG_MOVEGENS_WAYPOINT              = 529,
     LANG_MOVEGENS_ANIMAL_RANDOM         = 530,
     LANG_MOVEGENS_CONFUSED              = 531,
-    LANG_MOVEGENS_TARGETED_PLAYER       = 532,
-    LANG_MOVEGENS_TARGETED_CREATURE     = 533,
-    LANG_MOVEGENS_TARGETED_NULL         = 534,
+    LANG_MOVEGENS_CHASE_PLAYER          = 532,
+    LANG_MOVEGENS_CHASE_CREATURE        = 533,
+    LANG_MOVEGENS_CHASE_NULL            = 534,
     LANG_MOVEGENS_HOME_CREATURE         = 535,
     LANG_MOVEGENS_HOME_PLAYER           = 536,
     LANG_MOVEGENS_FLIGHT                = 537,
@@ -769,7 +780,8 @@ enum MangosStrings
     LANG_ACCOUNT_LIST_BAR               = 1012,
     LANG_ACCOUNT_LIST_LINE              = 1013,
     LANG_ACCOUNT_LIST_EMPTY             = 1014,
-    // Room for more level 4              1015-1099 not used
+    LANG_QUIT_WRONG_USE_ERROR           = 1015,
+    // Room for more level 4              1016-1099 not used
 
     // Level 3 (continue)
     LANG_ACCOUNT_SETADDON               = 1100,
@@ -804,7 +816,10 @@ enum MangosStrings
     LANG_TAXINODE_ENTRY_LIST_CONSOLE    = 1129,
     LANG_EVENT_STARTED                  = 1130,
     LANG_EVENT_STOPPED                  = 1131,
-    // Room for more level 3              1132-1199 not used
+    LANG_MOVEGENS_FOLLOW_PLAYER         = 1132,
+    LANG_MOVEGENS_FOLLOW_CREATURE       = 1133,
+    LANG_MOVEGENS_FOLLOW_NULL           = 1134,
+    // Room for more level 3              1135-1199 not used
 
     // Debug commands
     LANG_CINEMATIC_NOT_EXIST            = 1200,

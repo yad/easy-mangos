@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -60,9 +60,11 @@ enum AchievementCriteriaRequirementType
     ACHIEVEMENT_CRITERIA_REQUIRE_S_DRUNK             = 15,  // drunken_state  0             (enum DrunkenState) of player
     ACHIEVEMENT_CRITERIA_REQUIRE_HOLIDAY             = 16,  // holiday_id     0             event in holiday time
     ACHIEVEMENT_CRITERIA_REQUIRE_BG_LOSS_TEAM_SCORE  = 17,  // min_score      max_score     player's team win bg and opposition team have team score in range
+    ACHIEVEMENT_CRITERIA_REQUIRE_INSTANCE_SCRIPT     = 18,  // 0              0             maker instance script call for check current criteria requirements fit
+    ACHIEVEMENT_CRITERIA_REQUIRE_S_EQUIPED_ITEM_LVL  = 19,  // item_level     item_quality  fir equipped item in slot `misc1` to item level and quality
 };
 
-#define MAX_ACHIEVEMENT_CRITERIA_REQUIREMENT_TYPE      18 // maximum value in AchievementCriteriaRequirementType enum
+#define MAX_ACHIEVEMENT_CRITERIA_REQUIREMENT_TYPE      20   // maximum value in AchievementCriteriaRequirementType enum
 
 class Player;
 class Unit;
@@ -153,6 +155,13 @@ struct AchievementCriteriaRequirement
             uint32 min_score;
             uint32 max_score;
         } bg_loss_team_score;
+        // ACHIEVEMENT_CRITERIA_REQUIRE_INSTANCE_SCRIPT   = 18 (no data)
+        // ACHIEVEMENT_CRITERIA_REQUIRE_S_EQUIPED_ITEM    = 19
+        struct
+        {
+            uint32 item_level;
+            uint32 item_quality;
+        } equipped_item;
         // ...
         struct
         {
@@ -175,15 +184,18 @@ struct AchievementCriteriaRequirement
     }
 
     bool IsValid(AchievementCriteriaEntry const* criteria);
-    bool Meets(Player const* source, Unit const* target, uint32 miscvalue1 = 0) const;
+    bool Meets(uint32 criteria_id, Player const* source, Unit const* target, uint32 miscvalue1 = 0) const;
 };
 
 struct AchievementCriteriaRequirementSet
 {
+        AchievementCriteriaRequirementSet() : criteria_id(0) {}
         typedef std::vector<AchievementCriteriaRequirement> Storage;
         void Add(AchievementCriteriaRequirement const& data) { storage.push_back(data); }
         bool Meets(Player const* source, Unit const* target, uint32 miscvalue = 0) const;
+        void SetCriteriaId(uint32 id) {criteria_id = id;}
     private:
+        uint32 criteria_id;
         Storage storage;
 };
 

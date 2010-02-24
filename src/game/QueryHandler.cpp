@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,6 +26,7 @@
 #include "Log.h"
 #include "World.h"
 #include "ObjectMgr.h"
+#include "ObjectDefines.h"
 #include "Player.h"
 #include "UpdateMask.h"
 #include "NPCHandler.h"
@@ -60,7 +61,7 @@ void WorldSession::SendNameQueryOpcode(Player *p)
 void WorldSession::SendNameQueryOpcodeFromDB(uint64 guid)
 {
     CharacterDatabase.AsyncPQuery(&WorldSession::SendNameQueryOpcodeFromDBCallBack, GetAccountId(),
-        !sWorld.getConfig(CONFIG_DECLINED_NAMES_USED) ?
+        !sWorld.getConfig(CONFIG_BOOL_DECLINED_NAMES_USED) ?
     //   ------- Query Without Declined Names --------
     //          0     1     2     3       4
         "SELECT guid, name, race, gender, class "
@@ -110,7 +111,7 @@ void WorldSession::SendNameQueryOpcodeFromDBCallBack(QueryResult *result, uint32
     data << uint8(pClass);                                  // class
 
     // if the first declined name field (5) is empty, the rest must be too
-    if(sWorld.getConfig(CONFIG_DECLINED_NAMES_USED) && fields[5].GetCppString() != "")
+    if(sWorld.getConfig(CONFIG_BOOL_DECLINED_NAMES_USED) && fields[5].GetCppString() != "")
     {
         data << uint8(1);                                   // is declined
         for(int i = 5; i < MAX_DECLINED_NAME_CASES+5; ++i)
@@ -139,10 +140,7 @@ void WorldSession::HandleNameQueryOpcode( WorldPacket & recv_data )
 
 void WorldSession::HandleQueryTimeOpcode( WorldPacket & /*recv_data*/ )
 {
-    WorldPacket data( SMSG_QUERY_TIME_RESPONSE, 4+4 );
-    data << (uint32)time(NULL);
-    data << (uint32)0;
-    SendPacket( &data );
+    SendQueryTimeResponse();
 }
 
 /// Only _static_ data send in this packet !!!
@@ -156,7 +154,6 @@ void WorldSession::HandleCreatureQueryOpcode( WorldPacket & recv_data )
     CreatureInfo const *ci = ObjectMgr::GetCreatureTemplate(entry);
     if (ci)
     {
-
         std::string Name, SubName;
         Name = ci->Name;
         SubName = ci->SubName;
@@ -466,5 +463,104 @@ void WorldSession::HandleCorpseMapPositionQuery( WorldPacket & recv_data )
     data << float(0);
     data << float(0);
     data << float(0);
+    SendPacket(&data);
+}
+
+void WorldSession::HandleQueryQuestsCompleted( WorldPacket & /*recv_data */)
+{
+    uint32 count = 0;
+
+    WorldPacket data(SMSG_QUERY_QUESTS_COMPLETED_RESPONSE, 4+4*count);
+    data << uint32(count);
+
+    for(QuestStatusMap::const_iterator itr = _player->getQuestStatusMap().begin(); itr != _player->getQuestStatusMap().end(); ++itr)
+    {
+        if(itr->second.m_rewarded)
+        {
+            data << uint32(itr->first);
+            count++;
+        }
+    }
+    data.put<uint32>(0, count);
+    SendPacket(&data);
+}
+
+void WorldSession::HandleQuestPOIQuery(WorldPacket& recv_data)
+{
+    uint32 count;
+    recv_data >> count;                                     // quest count, max=25
+
+    if(count > MAX_QUEST_LOG_SIZE)
+    {
+        recv_data.rpos(recv_data.wpos());                   // set to end to avoid warnings spam
+        return;
+    }
+
+    WorldPacket data(SMSG_QUEST_POI_QUERY_RESPONSE, 4+(4+4)*count);
+    data << uint32(count);                                  // count
+
+    for(uint32 i = 0; i < count; ++i)
+    {
+        uint32 questId;
+        recv_data >> questId;                               // quest id
+
+        bool questOk = false;
+
+        uint16 questSlot = _player->FindQuestSlot(questId);
+
+        if(questSlot != MAX_QUEST_LOG_SIZE)
+            questOk =_player->GetQuestSlotQuestId(questSlot) == questId;
+
+        if(questOk)
+        {
+            QuestPOIVector const *POI = sObjectMgr.GetQuestPOIVector(questId);
+
+            if(POI)
+            {
+                data << uint32(questId);                    // quest ID
+                data << uint32(POI->size());                // POI count
+
+                int index = 0;
+                for(QuestPOIVector::const_iterator itr = POI->begin(); itr != POI->end(); ++itr)
+                {
+                    data << uint32(index);                  // POI index
+                    data << int32(itr->ObjectiveIndex);     // objective index
+                    data << uint32(itr->MapId);             // mapid
+                    data << uint32(itr->Unk1);              // unknown
+                    data << uint32(itr->Unk2);              // unknown
+                    data << uint32(itr->Unk3);              // unknown
+                    data << uint32(itr->Unk4);              // unknown
+                    data << uint32(itr->points.size());     // POI points count
+
+                    for(std::vector<QuestPOIPoint>::const_iterator itr2 = itr->points.begin(); itr2 != itr->points.end(); ++itr2)
+                    {
+                        data << int32(itr2->x);             // POI point x
+                        data << int32(itr2->y);             // POI point y
+                    }
+                    ++index;
+                }
+            }
+            else
+            {
+                data << uint32(questId);                    // quest ID
+                data << uint32(0);                          // POI count
+            }
+        }
+        else
+        {
+            data << uint32(questId);                        // quest ID
+            data << uint32(0);                              // POI count
+        }
+    }
+
+    data.hexlike();
+    SendPacket(&data);
+}
+
+void WorldSession::SendQueryTimeResponse()
+{
+    WorldPacket data(SMSG_QUERY_TIME_RESPONSE, 4+4);
+    data << uint32(time(NULL));
+    data << uint32(sWorld.GetNextDailyQuestsResetTime() - time(NULL));
     SendPacket(&data);
 }

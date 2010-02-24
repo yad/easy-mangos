@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -294,7 +294,11 @@ bool ChatHandler::HandleGPSCommand(const char* args)
     float zone_x = obj->GetPositionX();
     float zone_y = obj->GetPositionY();
 
-    Map2ZoneCoordinates(zone_x,zone_y,zone_id);
+    if (!Map2ZoneCoordinates(zone_x, zone_y, zone_id))
+    {
+        zone_x = 0;
+        zone_y = 0;
+    }
 
     Map const *map = obj->GetMap();
     float ground_z = map->GetHeight(obj->GetPositionX(), obj->GetPositionY(), MAX_HEIGHT);
@@ -393,7 +397,8 @@ bool ChatHandler::HandleNamegoCommand(const char* args)
             // when porting out from the bg, it will be reset to 0
             target->SetBattleGroundId(m_session->GetPlayer()->GetBattleGroundId(), m_session->GetPlayer()->GetBattleGroundTypeId());
             // remember current position as entry point for return at bg end teleportation
-            target->SetBattleGroundEntryPoint();
+            if (!target->GetMap()->IsBattleGroundOrArena())
+                target->SetBattleGroundEntryPoint();
         }
         else if (pMap->IsDungeon())
         {
@@ -507,7 +512,8 @@ bool ChatHandler::HandleGonameCommand(const char* args)
             // when porting out from the bg, it will be reset to 0
             _player->SetBattleGroundId(target->GetBattleGroundId(), target->GetBattleGroundTypeId());
             // remember current position as entry point for return at bg end teleportation
-            _player->SetBattleGroundEntryPoint();
+            if (!_player->GetMap()->IsBattleGroundOrArena())
+                _player->SetBattleGroundEntryPoint();
         }
         else if(cMap->IsDungeon())
         {
@@ -634,42 +640,6 @@ bool ChatHandler::HandleRecallCommand(const char* args)
     }
 
     target->TeleportTo(target->m_recallMap, target->m_recallX, target->m_recallY, target->m_recallZ, target->m_recallO);
-    return true;
-}
-
-//Edit Player KnownTitles
-bool ChatHandler::HandleModifyKnownTitlesCommand(const char* args)
-{
-    if(!*args)
-        return false;
-
-    uint64 titles = 0;
-
-    sscanf((char*)args, UI64FMTD, &titles);
-
-    Player *chr = getSelectedPlayer();
-    if (!chr)
-    {
-        SendSysMessage(LANG_NO_CHAR_SELECTED);
-        SetSentErrorMessage(true);
-        return false;
-    }
-
-    // check online security
-    if (HasLowerSecurity(chr, 0))
-        return false;
-
-    uint64 titles2 = titles;
-
-    for(uint32 i = 1; i < sCharTitlesStore.GetNumRows(); ++i)
-        if(CharTitlesEntry const* tEntry = sCharTitlesStore.LookupEntry(i))
-            titles2 &= ~(uint64(1) << tEntry->bit_index);
-
-    titles &= ~titles2;                                     // remove not existed titles
-
-    chr->SetUInt64Value(PLAYER__FIELD_KNOWN_TITLES, titles);
-    SendSysMessage(LANG_DONE);
-
     return true;
 }
 
@@ -1170,11 +1140,11 @@ bool ChatHandler::HandleModifyASpeedCommand(const char* args)
     if (needReportToTarget(chr))
         ChatHandler(chr).PSendSysMessage(LANG_YOURS_ASPEED_CHANGED, GetNameLink().c_str(), ASpeed);
 
-    chr->SetSpeed(MOVE_WALK,    ASpeed,true);
-    chr->SetSpeed(MOVE_RUN,     ASpeed,true);
-    chr->SetSpeed(MOVE_SWIM,    ASpeed,true);
-    //chr->SetSpeed(MOVE_TURN,    ASpeed,true);
-    chr->SetSpeed(MOVE_FLIGHT,     ASpeed,true);
+    chr->SetSpeedRate(MOVE_WALK,   ASpeed,true);
+    chr->SetSpeedRate(MOVE_RUN,    ASpeed,true);
+    chr->SetSpeedRate(MOVE_SWIM,   ASpeed,true);
+    //chr->SetSpeed(MOVE_TURN,     ASpeed,true);
+    chr->SetSpeedRate(MOVE_FLIGHT, ASpeed,true);
     return true;
 }
 
@@ -1218,7 +1188,7 @@ bool ChatHandler::HandleModifySpeedCommand(const char* args)
     if (needReportToTarget(chr))
         ChatHandler(chr).PSendSysMessage(LANG_YOURS_SPEED_CHANGED, GetNameLink().c_str(), Speed);
 
-    chr->SetSpeed(MOVE_RUN,Speed,true);
+    chr->SetSpeedRate(MOVE_RUN,Speed,true);
 
     return true;
 }
@@ -1263,7 +1233,7 @@ bool ChatHandler::HandleModifySwimCommand(const char* args)
     if (needReportToTarget(chr))
         ChatHandler(chr).PSendSysMessage(LANG_YOURS_SWIM_SPEED_CHANGED, GetNameLink().c_str(), Swim);
 
-    chr->SetSpeed(MOVE_SWIM,Swim,true);
+    chr->SetSpeedRate(MOVE_SWIM,Swim,true);
 
     return true;
 }
@@ -1308,7 +1278,7 @@ bool ChatHandler::HandleModifyBWalkCommand(const char* args)
     if (needReportToTarget(chr))
         ChatHandler(chr).PSendSysMessage(LANG_YOURS_BACK_SPEED_CHANGED, GetNameLink().c_str(), BSpeed);
 
-    chr->SetSpeed(MOVE_RUN_BACK,BSpeed,true);
+    chr->SetSpeedRate(MOVE_RUN_BACK,BSpeed,true);
 
     return true;
 }
@@ -1344,7 +1314,7 @@ bool ChatHandler::HandleModifyFlyCommand(const char* args)
     if (needReportToTarget(chr))
         ChatHandler(chr).PSendSysMessage(LANG_YOURS_FLY_SPEED_CHANGED, GetNameLink().c_str(), FSpeed);
 
-    chr->SetSpeed(MOVE_FLIGHT,FSpeed,true);
+    chr->SetSpeedRate(MOVE_FLIGHT,FSpeed,true);
 
     return true;
 }
@@ -1356,30 +1326,33 @@ bool ChatHandler::HandleModifyScaleCommand(const char* args)
         return false;
 
     float Scale = (float)atof((char*)args);
-    if (Scale > 3.0f || Scale <= 0.0f)
+    if (Scale > 10.0f || Scale <= 0.0f)
     {
         SendSysMessage(LANG_BAD_VALUE);
         SetSentErrorMessage(true);
         return false;
     }
 
-    Player *chr = getSelectedPlayer();
-    if (chr == NULL)
+    Unit *target = getSelectedUnit();
+    if (target == NULL)
     {
-        SendSysMessage(LANG_NO_CHAR_SELECTED);
+        SendSysMessage(LANG_SELECT_CHAR_OR_CREATURE);
         SetSentErrorMessage(true);
         return false;
     }
 
-    // check online security
-    if (HasLowerSecurity(chr, 0))
-        return false;
+    if (target->GetTypeId()==TYPEID_PLAYER)
+    {
+        // check online security
+        if (HasLowerSecurity((Player*)target, 0))
+            return false;
 
-    PSendSysMessage(LANG_YOU_CHANGE_SIZE, Scale, GetNameLink(chr).c_str());
-    if (needReportToTarget(chr))
-        ChatHandler(chr).PSendSysMessage(LANG_YOURS_SIZE_CHANGED, GetNameLink().c_str(), Scale);
+        PSendSysMessage(LANG_YOU_CHANGE_SIZE, Scale, GetNameLink((Player*)target).c_str());
+        if (needReportToTarget((Player*)target))
+            ChatHandler((Player*)target).PSendSysMessage(LANG_YOURS_SIZE_CHANGED, GetNameLink().c_str(), Scale);
+    }
 
-    chr->SetFloatValue(OBJECT_FIELD_SCALE_X, Scale);
+    target->SetFloatValue(OBJECT_FIELD_SCALE_X, Scale);
 
     return true;
 }
@@ -2440,7 +2413,12 @@ bool ChatHandler::HandleGoZoneXYCommand(const char* args)
         return false;
     }
 
-    Zone2MapCoordinates(x,y,zoneEntry->ID);
+    if (!Zone2MapCoordinates(x,y,zoneEntry->ID))
+    {
+        PSendSysMessage(LANG_INVALID_ZONE_MAP,areaEntry->ID,areaEntry->area_name[GetSessionDbcLocale()],map->GetId(),map->GetMapName());
+        SetSentErrorMessage(true);
+        return false;
+    }
 
     if(!MapManager::IsValidMapCoord(zoneEntry->mapid,x,y))
     {

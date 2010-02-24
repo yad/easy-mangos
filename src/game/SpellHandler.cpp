@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -132,8 +132,8 @@ void WorldSession::HandleUseItemOpcode(WorldPacket& recvPacket)
         if (SpellEntry const* spellInfo = sSpellStore.LookupEntry(spellid))
         {
             // for implicit area/coord target spells
-            if (IsPointEffectTarget(Targets(spellInfo->EffectImplicitTargetA[0])) ||
-                IsAreaEffectTarget(Targets(spellInfo->EffectImplicitTargetA[0])))
+            if (IsPointEffectTarget(Targets(spellInfo->EffectImplicitTargetA[EFFECT_INDEX_0])) ||
+                IsAreaEffectTarget(Targets(spellInfo->EffectImplicitTargetA[EFFECT_INDEX_0])))
                 Spell::SendCastResult(_player,spellInfo,cast_count,SPELL_FAILED_NO_VALID_TARGETS);
             // for explicit target spells
             else
@@ -251,9 +251,6 @@ void WorldSession::HandleGameObjectUseOpcode( WorldPacket & recv_data )
     if(!obj)
         return;
 
-    if (Script->GOHello(_player, obj))
-        return;
-
     obj->Use(_player);
 }
 
@@ -311,6 +308,7 @@ void WorldSession::HandleCastSpellOpcode(WorldPacket& recvPacket)
         // not have spell in spellbook or spell passive and not casted by client
         if (!((Player*)mover)->HasActiveSpell (spellId) || IsPassiveSpell(spellId) )
         {
+            sLog.outError("World: Player %u casts spell %u which he shouldn't have", mover->GetGUIDLow(), spellId);
             //cheater? kick? ban?
             recvPacket.rpos(recvPacket.wpos());                 // prevent spam at ignore packet
             return;
@@ -349,8 +347,7 @@ void WorldSession::HandleCastSpellOpcode(WorldPacket& recvPacket)
             if(!recvPacket.readPackGUID(guid))
                 return;
 
-            MovementInfo movementInfo;
-            ReadMovementInfo(recvPacket, &movementInfo);
+            MovementInfo movementInfo(recvPacket);
         }
     }
 
@@ -408,7 +405,7 @@ void WorldSession::HandleCancelAuraOpcode( WorldPacket& recvPacket)
         {
             // except own aura spells
             bool allow = false;
-            for(int k = 0; k < 3; ++k)
+            for(int k = 0; k < MAX_EFFECT_INDEX; ++k)
             {
                 if (spellInfo->EffectApplyAuraName[k] == SPELL_AURA_MOD_POSSESS ||
                     spellInfo->EffectApplyAuraName[k] == SPELL_AURA_MOD_POSSESS_PET)
@@ -536,7 +533,7 @@ void WorldSession::HandleSelfResOpcode( WorldPacket & /*recv_data*/ )
     {
         SpellEntry const *spellInfo = sSpellStore.LookupEntry(_player->GetUInt32Value(PLAYER_SELF_RES_SPELL));
         if(spellInfo)
-            _player->CastSpell(_player,spellInfo,false,0);
+            _player->CastSpell(_player, spellInfo, false);
 
         _player->SetUInt32Value(PLAYER_SELF_RES_SPELL, 0);
     }

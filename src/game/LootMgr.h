@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,8 +31,11 @@ enum RollType
     ROLL_PASS         = 0,
     ROLL_NEED         = 1,
     ROLL_GREED        = 2,
-    MAX_ROLL_TYPE     = 3
+    ROLL_DISENCHANT   = 3,
+    MAX_ROLL_TYPE     = 4
 };
+
+#define ALL_ROLL_TYPE_MASK 0x0F
 
 #define MAX_NR_LOOT_ITEMS 16
 // note: the client cannot show more than 16 items total
@@ -86,7 +89,7 @@ struct LootStoreItem
 
     // Constructor, converting ChanceOrQuestChance -> (chance, needs_quest)
     // displayid is filled in IsValid() which must be called after
-    LootStoreItem(uint32 _itemid, float _chanceOrQuestChance, int8 _group, uint8 _conditionId, int32 _mincountOrRef, uint8 _maxcount)
+    LootStoreItem(uint32 _itemid, float _chanceOrQuestChance, int8 _group, uint16 _conditionId, int32 _mincountOrRef, uint8 _maxcount)
         : itemid(_itemid), chance(fabs(_chanceOrQuestChance)), mincountOrRef(_mincountOrRef),
         group(_group), needs_quest(_chanceOrQuestChance < 0), maxcount(_maxcount), conditionId(_conditionId)
          {}

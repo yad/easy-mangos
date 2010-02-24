@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -182,14 +182,23 @@ void WorldSession::HandleActivateTaxiExpressOpcode ( WorldPacket & recv_data )
     GetPlayer()->ActivateTaxiPathTo(nodes, npc);
 }
 
-void WorldSession::HandleMoveSplineDoneOpcode(WorldPacket& /*recv_data*/)
+void WorldSession::HandleMoveSplineDoneOpcode(WorldPacket& recv_data)
 {
     sLog.outDebug( "WORLD: Received CMSG_MOVE_SPLINE_DONE" );
 
+    uint64 guid;                                            // used only for proper packet read
+    if(!recv_data.readPackGUID(guid))
+        return;
+
+    MovementInfo movementInfo(recv_data);                   // used only for proper packet read
+
+    recv_data.read_skip<uint32>();                          // unk
+
+
     // in taxi flight packet received in 2 case:
     // 1) end taxi path in far (multi-node) flight
-    // 2) switch from one map to other in case multim-map taxi path
-    // we need proccess only (1)
+    // 2) switch from one map to other in case multi-map taxi path
+    // we need process only (1)
     uint32 curDest = GetPlayer()->m_taxi.GetTaxiDestination();
     if(!curDest)
         return;

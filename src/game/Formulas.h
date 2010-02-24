@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,9 +25,9 @@ namespace MaNGOS
 {
     namespace Honor
     {
-        inline uint32 hk_honor_at_level(uint32 level, uint32 count=1)
+        inline float hk_honor_at_level(uint32 level, uint32 count=1)
         {
-            return (uint32)ceil(count*(-0.53177f + 0.59357f * exp((level +23.54042f) / 26.07859f )));
+            return (float)ceil(count*(-0.53177f + 0.59357f * exp((level +23.54042f) / 26.07859f )));
         }
     }
     namespace XP
@@ -122,7 +122,7 @@ namespace MaNGOS
             if(u->GetTypeId()==TYPEID_UNIT && ((Creature*)u)->isElite())
                 xp_gain *= 2;
 
-            return (uint32)(xp_gain*sWorld.getRate(RATE_XP_KILL));
+            return (uint32)(xp_gain*sWorld.getConfig(CONFIG_FLOAT_RATE_XP_KILL));
         }
 
         inline float xp_in_group_rate(uint32 count, bool isRaid)

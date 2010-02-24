@@ -24,7 +24,7 @@ CREATE TABLE `db_version` (
   `version` varchar(120) default NULL,
   `creature_ai_version` varchar(120) default NULL,
   `cache_id` int(10) default '0',
-  `required_8818_01_mangos_mangos_string` bit(1) default NULL
+  `required_9385_01_mangos_command` bit(1) default NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 ROW_FORMAT=FIXED COMMENT='Used DB version notes';
 
 --
@@ -541,6 +541,7 @@ INSERT INTO `command` VALUES
 ('character level',3,'Syntax: .character level [$playername] [#level]\r\n\r\nSet the level of character with $playername (or the selected if not name provided) by #numberoflevels Or +1 if no #numberoflevels provided). If #numberoflevels is omitted, the level will be increase by 1. If #numberoflevels is 0, the same level will be restarted. If no character is selected and name not provided, increase your level. Command can be used for offline character. All stats and dependent values recalculated. At level decrease talents can be reset if need. Also at level decrease equipped items with greater level requirement can be lost.'),
 ('character rename',2,'Syntax: .character rename [$name]\r\n\r\nMark selected in game or by $name in command character for rename at next login.'),
 ('character reputation',2,'Syntax: .character reputation [$player_name]\r\n\r\nShow reputation information for selected player or player find by $player_name.'),
+('character titles',2,'Syntax: .character titles [$player_name]\r\n\r\nShow known titles list for selected player or player find by $player_name.'),
 ('combatstop',2,'Syntax: .combatstop [$playername]\r\nStop combat for selected character. If selected non-player then command applied to self. If $playername provided then attempt applied to online player $playername.'),
 ('commands',0,'Syntax: .commands\r\n\r\nDisplay a list of available commands for your account level.'),
 ('cooldown',3,'Syntax: .cooldown [#spell_id]\r\n\r\nRemove all (if spell_id not provided) or #spel_id spell cooldown from selected character or you (if no selection).'),
@@ -641,6 +642,7 @@ INSERT INTO `command` VALUES
 ('lookup spell',3,'Syntax: .lookup spell $namepart\r\n\r\nLooks up a spell by $namepart, and returns all matches with their spell ID\'s.'),
 ('lookup taxinode',3,'Syntax: .lookup taxinode $substring\r\n\r\nSearch and output all taxinodes with provide $substring in name.'),
 ('lookup tele',1,'Syntax: .lookup tele $substring\r\n\r\nSearch and output all .tele command locations with provide $substring in name.'),
+('lookup title',2,'Syntax: .lookup title $$namepart\r\n\r\nLooks up a title by $namepart, and returns all matches with their title ID\'s and index\'s.'),
 ('maxskill',3,'Syntax: .maxskill\r\nSets all skills of the targeted player to their maximum VALUESfor its current level.'),
 ('modify arena',1,'Syntax: .modify arena #value\r\nAdd $amount arena points to the selected player.'),
 ('modify aspeed',1,'Syntax: .modify aspeed #rate\r\n\r\nModify all speeds -run,swim,run back,swim back- of the selected player to \"normalbase speed for this move type\"*rate. If no player is selected, modify your speed.\r\n\r\n #rate may range from 0.1 to 10.'),
@@ -649,6 +651,7 @@ INSERT INTO `command` VALUES
 ('modify drunk',1,'Syntax: .modify drunk #value\r\n Set drunk level to #value (0..100). Value 0 remove drunk state, 100 is max drunked state.'),
 ('modify energy',1,'Syntax: .modify energy #energy\r\n\r\nModify the energy of the selected player. If no player is selected, modify your energy.'),
 ('modify faction',1,'Syntax: .modify faction #factionid #flagid #npcflagid #dynamicflagid\r\n\r\nModify the faction and flags of the selected creature. Without arguments, display the faction and flags of the selected creature.'),
+('modify fly', 1, 'Syntax: .modify fly #rate\r\n.fly #rate\r\n\r\nModify the flying speed of the selected player to \"normal base fly speed\"*rate. If no player is selected, modify your fly.\r\n\r\n #rate may range from 0.1 to 10.'),
 ('modify gender',2,'Syntax: .modify gender male/female\r\n\r\nChange gender of selected player.'),
 ('modify honor',1,'Syntax: .modify honor $amount\r\n\r\nAdd $amount honor points to the selected player.'),
 ('modify hp',1,'Syntax: .modify hp #newhp\r\n\r\nModify the hp of the selected player. If no player is selected, modify your hp.'),
@@ -660,12 +663,11 @@ INSERT INTO `command` VALUES
 ('modify rage',1,'Syntax: .modify rage #newrage\r\n\r\nModify the rage of the selected player. If no player is selected, modify your rage.'),
 ('modify rep',2,'Syntax: .modify rep #repId (#repvalue | $rankname [#delta])\r\nSets the selected players reputation with faction #repId to #repvalue or to $reprank.\r\nIf the reputation rank name is provided, the resulting reputation will be the lowest reputation for that rank plus the delta amount, if specified.\r\nYou can use \'.pinfo rep\' to list all known reputation ids, or use \'.lookup faction $name\' to locate a specific faction id.'),
 ('modify runicpower',1,'Syntax: .modify runicpower #newrunicpower\r\n\r\nModify the runic power of the selected player. If no player is selected, modify your runic power.'),
-('modify scale',1,''),
+('modify scale',1,'Syntax: .modify scale #scale\r\n\r\nChange model scale for targeted player (util relogin) or creature (until respawn).'),
 ('modify speed',1,'Syntax: .modify speed #rate\r\n.speed #rate\r\n\r\nModify the running speed of the selected player to \"normal base run speed\"*rate. If no player is selected, modify your speed.\r\n\r\n #rate may range from 0.1 to 10.'),
 ('modify spell',1,''),
 ('modify standstate',2,'Syntax: .modify standstate #emoteid\r\n\r\nChange the emote of your character while standing to #emoteid.'),
 ('modify swim',1,'Syntax: .modify swim #rate\r\n\r\nModify the swim speed of the selected player to \"normal swim speed\"*rate. If no player is selected, modify your speed.\r\n\r\n #rate may range from 0.1 to 10.'),
-('modify titles',1,'Syntax: .modify titles #mask\r\n\r\nAllows user to use all titles from #mask.\r\n\r\n #mask=0 disables the title-choose-field'),
 ('modify tp',1,'Syntax: .modify tp #amount\r\n\r\nSet free talent pointes for selected character or character\'s pet. It will be reset to default expected at next levelup/login/quest reward.'),
 ('movegens',3,'Syntax: .movegens\r\n  Show movement generators stack for selected creature or player.'),
 ('mute',1,'Syntax: .mute [$playerName] $timeInMinutes\r\n\r\nDisible chat messaging for any character from account of character $playerName (or currently selected) at $timeInMinutes minutes. Player can be offline.'),
@@ -687,6 +689,7 @@ INSERT INTO `command` VALUES
 ('npc move',2,'Syntax: .npc move [#creature_guid]\r\n\r\nMove the targeted creature spawn point to your coordinates.'),
 ('npc name',2,'Syntax: .npc name $name\r\n\r\nChange the name of the selected creature or character to $name.\r\n\r\nCommand disabled.'),
 ('npc playemote',3,'Syntax: .npc playemote #emoteid\r\n\r\nMake the selected creature emote with an emote of id #emoteid.'),
+('npc say', 1, 'Syntax: .npc say #text\r\nMake the selected npc says #text.'),
 ('npc setdeathstate',2,'Syntax: .npc setdeathstate on/off\r\n\r\nSet default death state (dead/alive) for npc at spawn.'),
 ('npc setmodel',2,'Syntax: .npc setmodel #displayid\r\n\r\nChange the model id of the selected creature to #displayid.'),
 ('npc setmovetype',2,'Syntax: .npc setmovetype [#creature_guid] stay/random/way [NODEL]\r\n\r\nSet for creature pointed by #creature_guid (or selected if #creature_guid not provided) movement type and move it to respawn position (if creature alive). Any existing waypoints for creature will be removed from the database if you do not use NODEL. If the creature is dead then movement type will applied at creature respawn.\r\nMake sure you use NODEL, if you want to keep the waypoints.'),
@@ -698,19 +701,26 @@ INSERT INTO `command` VALUES
 ('npc textemote',1,'Syntax: .npc textemote #emoteid\r\n\r\nMake the selected creature to do textemote with an emote of id #emoteid.'),
 ('npc whisper',1,'Syntax: .npc whisper #playerguid #text\r\nMake the selected npc whisper #text to  #playerguid.'),
 ('npc unfollow',2,'Syntax: .npc unfollow\r\n\r\nSelected creature (non pet) stop follow you.'),
+('npc yell', 1, 'Syntax: .npc yell #text\r\nMake the selected npc yells #text.'),
 ('pdump write',3,'Syntax: .pdump write $filename $playerNameOrGUID\r\nWrite character dump with name/guid $playerNameOrGUID to file $filename.'),
 ('pdump load',3,'Syntax: .pdump load $filename $account [$newname] [$newguid]\r\nLoad character dump from dump file into character list of $account with saved or $newname, with saved (or first free) or $newguid guid.'),
 ('pinfo',2,'Syntax: .pinfo [$player_name]\r\n\r\nOutput account information for selected player or player find by $player_name.'),
 ('quest add',3,'Syntax: .quest add #quest_id\r\n\r\nAdd to character quest log quest #quest_id. Quest started from item can\'t be added by this command but correct .additem call provided in command output.'),
 ('quest complete',3,'Syntax: .quest complete #questid\r\nMark all quest objectives as completed for target character active quest. After this target character can go and get quest reward.'),
 ('quest remove',3,'Syntax: .quest remove #quest_id\r\n\r\nSet quest #quest_id state to not completed and not active (and remove from active quest list) for selected player.'),
+('quit',4,'Syntax: quit\r\n\r\nClose RA connection. Command must be typed fully (quit).'),
 ('recall',1,'Syntax: .recall [$playername]\r\n\r\nTeleport $playername or selected player to the place where he has been before last use of a teleportation command. If no $playername is entered and no player is selected, it will teleport you.'),
 ('reload all',3,'Syntax: .reload all\r\n\r\nReload all tables with reload support added and that can be _safe_ reloaded.'),
+('reload all_achievement',3,'Syntax: .reload all_achievement\r\n\r\nReload all `achievement_*` tables if reload support added for this table and this table can be _safe_ reloaded.'),
 ('reload all_area',3,'Syntax: .reload all_area\r\n\r\nReload all `areatrigger_*` tables if reload support added for this table and this table can be _safe_ reloaded.'),
+('reload all_eventai',3,'Syntax: .reload all_eventai\r\n\r\nReload `creature_ai_*` tables if reload support added for these tables and these tables can be _safe_ reloaded.'),
+('reload all_item',3,'Syntax: .reload all_item\r\n\r\nReload `item_required_target`, `page_texts` and `item_enchantment_template` tables.'),
+('reload all_locales',3,'Syntax: .reload all_locales\r\n\r\nReload all `locales_*` tables with reload support added and that can be _safe_ reloaded.'),
 ('reload all_loot',3,'Syntax: .reload all_loot\r\n\r\nReload all `*_loot_template` tables. This can be slow operation with lags for server run.'),
+('reload all_npc',3,'Syntax: .reload all_npc\r\n\r\nReload `points_of_interest` and `npc_*` tables if reload support added for these tables and these tables can be _safe_ reloaded.'),
 ('reload all_quest',3,'Syntax: .reload all_quest\r\n\r\nReload all quest related tables if reload support added for this table and this table can be _safe_ reloaded.'),
 ('reload all_spell',3,'Syntax: .reload all_spell\r\n\r\nReload all `spell_*` tables with reload support added and that can be _safe_ reloaded.'),
-('reload all_locales',3,'Syntax: .reload all_locales\r\n\r\nReload all `locales_*` tables with reload support added and that can be _safe_ reloaded.'),
+('reload all_scripts',3,'Syntax: .reload all_scripts\r\n\r\nReload `*_scripts` tables.'),
 ('reload config',3,'Syntax: .reload config\r\n\r\nReload config settings (by default stored in mangosd.conf). Not all settings can be change at reload: some new setting values will be ignored until restart, some values will applied with delay or only to new objects/maps, some values will explicitly rejected to change at reload.'),
 ('repairitems',2,'Syntax: .repairitems\r\n\r\nRepair all selected player''s items.'),
 ('reset achievements',3,'Syntax: .reset achievements [$playername]\r\n\r\nReset achievements data for selected or named (online or offline) character. Achievements for persistance progress data like completed quests/etc re-filled at reset. Achievements for events like kills/casts/etc will lost.'),
@@ -741,7 +751,7 @@ INSERT INTO `command` VALUES
 ('server restart cancel',3,'Syntax: .server restart cancel\r\n\r\nCancel the restart/shutdown timer if any.'),
 ('server set loglevel',4,'Syntax: .server set loglevel #level\r\n\r\nSet server log level (0 - errors only, 1 - basic, 2 - detail, 3 - debug).'),
 ('server set motd',3,'Syntax: .server set motd $MOTD\r\n\r\nSet server Message of the day.'),
-('server shutdown',3,'Syntax: .server shutdown #delay [#exist_code]\r\n\r\nShut the server down after #delay seconds. Use #exist_code or 0 as program exist code.'),
+('server shutdown',3,'Syntax: .server shutdown #delay [#exit_code]\r\n\r\nShut the server down after #delay seconds. Use #exit_code or 0 as program exit code.'),
 ('server shutdown cancel',3,'Syntax: .server shutdown cancel\r\n\r\nCancel the restart/shutdown timer if any.'),
 ('setskill',3,'Syntax: .setskill #skill #level [#max]\r\n\r\nSet a skill of id #skill with a current skill value of #level and a maximum value of #max (or equal current maximum if not provide) for the selected character. If no character is selected, you learn the skill.'),
 ('showarea',3,'Syntax: .showarea #areaid\r\n\r\nReveal the area of #areaid to the selected character. If no character is selected, reveal this area to you.'),
@@ -753,6 +763,10 @@ INSERT INTO `command` VALUES
 ('tele group',1,'Syntax: .tele group#location\r\n\r\nTeleport a selected player and his group members to a given location.'),
 ('tele name',1,'Syntax: .tele name [#playername] #location\r\n\r\nTeleport the given character to a given location. Character can be offline.'),
 ('ticket',2,'Syntax: .ticket on\r\n        .ticket off\r\n        .ticket #num\r\n        .ticket $character_name\r\n\r\non/off for GMs to show or not a new ticket directly, $character_name to show ticket of this character, #num to show ticket #num.'),
+('titles add',2,'Syntax: .titles add #title\r\nAdd title #title (id or shift-link) to known titles list for selected player.'),
+('titles current',2,'Syntax: .titles current #title\r\nSet title #title (id or shift-link) as current selected titl for selected player. If title not in known title list for player then it will be added to list.'),
+('titles remove',2,'Syntax: .titles remove #title\r\nRemove title #title (id or shift-link) from known titles list for selected player.'),
+('titles setmask',2,'Syntax: .titles setmask #mask\r\n\r\nAllows user to use all titles from #mask.\r\n\r\n #mask=0 disables the title-choose-field'),
 ('unaura',3,'Syntax: .unaura #spellid\r\n\r\nRemove aura due to spell #spellid from the selected Unit.'),
 ('unban account',3,'Syntax: .unban account $Name\r\nUnban accounts for account name pattern.'),
 ('unban character',3,'Syntax: .unban character $Name\r\nUnban accounts for character name pattern.'),
@@ -1073,6 +1087,7 @@ CREATE TABLE `creature_template` (
   `name` char(100) NOT NULL default '0',
   `subname` char(100) default NULL,
   `IconName` char(100) default NULL,
+  `gossip_menu_id` mediumint(8) unsigned NOT NULL default '0',
   `minlevel` tinyint(3) unsigned NOT NULL default '1',
   `maxlevel` tinyint(3) unsigned NOT NULL default '1',
   `minhealth` int(10) unsigned NOT NULL default '0',
@@ -1150,7 +1165,7 @@ CREATE TABLE `creature_template` (
 LOCK TABLES `creature_template` WRITE;
 /*!40000 ALTER TABLE `creature_template` DISABLE KEYS */;
 INSERT INTO `creature_template` VALUES
-(1,0,0,0,0,0,10045,0,10045,0,'Waypoint(Only GM can see it)','Visual',NULL,1,1,64,64,0,0,0,35,35,0,0.91,1,0,14,15,0,100,1,2000,2200,8,4096,0,0,0,0,0,0,1.76,2.42,100,8,5242886,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,3,1.0,1.0,0,0,0,0,0,0,0,0,1,0,0,0x82,'');
+(1,0,0,0,0,0,10045,0,10045,0,'Waypoint(Only GM can see it)','Visual',NULL,0,1,1,64,64,0,0,0,35,35,0,0.91,1,0,14,15,0,100,1,2000,2200,8,4096,0,0,0,0,0,0,1.76,2.42,100,8,5242886,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,3,1.0,1.0,0,0,0,0,0,0,0,0,1,0,0,0x82,'');
 /*!40000 ALTER TABLE `creature_template` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1895,6 +1910,115 @@ LOCK TABLES `gameobject_template` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `gossip_menu`
+--
+
+DROP TABLE IF EXISTS gossip_menu;
+CREATE TABLE gossip_menu (
+  entry smallint(6) unsigned NOT NULL default '0',
+  text_id mediumint(8) unsigned NOT NULL default '0',
+  cond_1 tinyint(3) unsigned NOT NULL default '0',
+  cond_1_val_1 mediumint(8) unsigned NOT NULL default '0',
+  cond_1_val_2 mediumint(8) unsigned NOT NULL default '0',
+  cond_2 tinyint(3) unsigned NOT NULL default '0',
+  cond_2_val_1 mediumint(8) unsigned NOT NULL default '0',
+  cond_2_val_2 mediumint(8) unsigned NOT NULL default '0',
+  PRIMARY KEY (entry, text_id)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+--
+-- Dumping data for table `gossip_menu`
+--
+
+LOCK TABLES `gossip_menu` WRITE;
+/*!40000 ALTER TABLE `gossip_menu` DISABLE KEYS */;
+/*!40000 ALTER TABLE `gossip_menu` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `gossip_menu_option`
+--
+
+DROP TABLE IF EXISTS gossip_menu_option;
+CREATE TABLE gossip_menu_option (
+  menu_id smallint(6) unsigned NOT NULL default '0',
+  id smallint(6) unsigned NOT NULL default '0',
+  option_icon mediumint(8) unsigned NOT NULL default '0',
+  option_text text,
+  option_id tinyint(3) unsigned NOT NULL default '0',
+  npc_option_npcflag int(10) unsigned NOT NULL default '0',
+  action_menu_id mediumint(8) unsigned NOT NULL default '0',
+  action_poi_id mediumint(8) unsigned NOT NULL default '0',
+  action_script_id mediumint(8) unsigned NOT NULL default '0',
+  box_coded tinyint(3) unsigned NOT NULL default '0',
+  box_money int(11) unsigned NOT NULL default '0',
+  box_text text,
+  cond_1 tinyint(3) unsigned NOT NULL default '0',
+  cond_1_val_1 mediumint(8) unsigned NOT NULL default '0',
+  cond_1_val_2 mediumint(8) unsigned NOT NULL default '0',
+  cond_2 tinyint(3) unsigned NOT NULL default '0',
+  cond_2_val_1 mediumint(8) unsigned NOT NULL default '0',
+  cond_2_val_2 mediumint(8) unsigned NOT NULL default '0',
+  cond_3 tinyint(3) unsigned NOT NULL default '0',
+  cond_3_val_1 mediumint(8) unsigned NOT NULL default '0',
+  cond_3_val_2 mediumint(8) unsigned NOT NULL default '0',
+  PRIMARY KEY (menu_id, id)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+--
+-- Dumping data for table `gossip_menu_option`
+--
+
+LOCK TABLES `gossip_menu_option` WRITE;
+/*!40000 ALTER TABLE `gossip_menu_option` DISABLE KEYS */;
+INSERT INTO gossip_menu_option VALUES
+(0,0,0,'GOSSIP_OPTION_QUESTGIVER',2,2,0,0,0,0,0,NULL,0,0,0,0,0,0,0,0,0),
+(0,1,1,'GOSSIP_OPTION_VENDOR',3,128,0,0,0,0,0,NULL,0,0,0,0,0,0,0,0,0),
+(0,2,2,'GOSSIP_OPTION_TAXIVENDOR',4,8192,0,0,0,0,0,NULL,0,0,0,0,0,0,0,0,0),
+(0,3,3,'GOSSIP_OPTION_TRAINER',5,16,0,0,0,0,0,NULL,0,0,0,0,0,0,0,0,0),
+(0,4,4,'GOSSIP_OPTION_SPIRITHEALER',6,16384,0,0,0,0,0,NULL,0,0,0,0,0,0,0,0,0),
+(0,5,4,'GOSSIP_OPTION_SPIRITGUIDE',7,32768,0,0,0,0,0,NULL,0,0,0,0,0,0,0,0,0),
+(0,6,5,'GOSSIP_OPTION_INNKEEPER',8,65536,0,0,0,0,0,NULL,0,0,0,0,0,0,0,0,0),
+(0,7,6,'GOSSIP_OPTION_BANKER',9,131072,0,0,0,0,0,NULL,0,0,0,0,0,0,0,0,0),
+(0,8,7,'GOSSIP_OPTION_PETITIONER',10,262144,0,0,0,0,0,NULL,0,0,0,0,0,0,0,0,0),
+(0,9,8,'GOSSIP_OPTION_TABARDDESIGNER',11,524288,0,0,0,0,0,NULL,0,0,0,0,0,0,0,0,0),
+(0,10,9,'GOSSIP_OPTION_BATTLEFIELD',12,1048576,0,0,0,0,0,NULL,0,0,0,0,0,0,0,0,0),
+(0,11,6,'GOSSIP_OPTION_AUCTIONEER',13,2097152,0,0,0,0,0,NULL,0,0,0,0,0,0,0,0,0),
+(0,12,0,'GOSSIP_OPTION_STABLEPET',14,4194304,0,0,0,0,0,NULL,0,0,0,0,0,0,0,0,0),
+(0,13,1,'GOSSIP_OPTION_ARMORER',15,4096,0,0,0,0,0,NULL,0,0,0,0,0,0,0,0,0),
+(0,14,2,'GOSSIP_OPTION_UNLEARNTALENTS',16,16,0,0,0,0,0,NULL,0,0,0,0,0,0,0,0,0),
+(0,15,2,'GOSSIP_OPTION_UNLEARNPETSKILLS',17,16,0,0,0,0,0,NULL,0,0,0,0,0,0,0,0,0);
+/*!40000 ALTER TABLE `gossip_menu_option` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `gossip_scripts`
+--
+
+DROP TABLE IF EXISTS `gossip_scripts`;
+CREATE TABLE `gossip_scripts` (
+  `id` mediumint(8) unsigned NOT NULL default '0',
+  `delay` int(10) unsigned NOT NULL default '0',
+  `command` mediumint(8) unsigned NOT NULL default '0',
+  `datalong` mediumint(8) unsigned NOT NULL default '0',
+  `datalong2` int(10) unsigned NOT NULL default '0',
+  `dataint` int(11) NOT NULL default '0',
+  `x` float NOT NULL default '0',
+  `y` float NOT NULL default '0',
+  `z` float NOT NULL default '0',
+  `o` float NOT NULL default '0'
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+--
+-- Dumping data for table `gossip_scripts`
+--
+
+LOCK TABLES `gossip_scripts` WRITE;
+/*!40000 ALTER TABLE `gossip_scripts` DISABLE KEYS */;
+/*!40000 ALTER TABLE `gossip_scripts` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `instance_template`
 --
 
@@ -1904,9 +2028,6 @@ CREATE TABLE `instance_template` (
   `parent` int(10) unsigned NOT NULL,
   `levelMin` tinyint(3) unsigned NOT NULL default '0',
   `levelMax` tinyint(3) unsigned NOT NULL default '0',
-  `maxPlayers` tinyint(3) unsigned NOT NULL default '0',
-  `maxPlayersHeroic` tinyint(3) unsigned NOT NULL default '0',
-  `reset_delay` int(10) unsigned NOT NULL default '0',
   `startLocX` float default NULL,
   `startLocY` float default NULL,
   `startLocZ` float default NULL,
@@ -2067,35 +2188,35 @@ CREATE TABLE `item_template` (
   `RangedModRange` float NOT NULL default '0',
   `spellid_1` mediumint(8) unsigned NOT NULL default '0',
   `spelltrigger_1` tinyint(3) unsigned NOT NULL default '0',
-  `spellcharges_1` tinyint(4) NOT NULL default '0',
+  `spellcharges_1` smallint(5) NOT NULL default '0',
   `spellppmRate_1` float NOT NULL default '0',
   `spellcooldown_1` int(11) NOT NULL default '-1',
   `spellcategory_1` smallint(5) unsigned NOT NULL default '0',
   `spellcategorycooldown_1` int(11) NOT NULL default '-1',
   `spellid_2` mediumint(8) unsigned NOT NULL default '0',
   `spelltrigger_2` tinyint(3) unsigned NOT NULL default '0',
-  `spellcharges_2` tinyint(4) NOT NULL default '0',
+  `spellcharges_2` smallint(5) NOT NULL default '0',
   `spellppmRate_2` float NOT NULL default '0',
   `spellcooldown_2` int(11) NOT NULL default '-1',
   `spellcategory_2` smallint(5) unsigned NOT NULL default '0',
   `spellcategorycooldown_2` int(11) NOT NULL default '-1',
   `spellid_3` mediumint(8) unsigned NOT NULL default '0',
   `spelltrigger_3` tinyint(3) unsigned NOT NULL default '0',
-  `spellcharges_3` tinyint(4) NOT NULL default '0',
+  `spellcharges_3` smallint(5) NOT NULL default '0',
   `spellppmRate_3` float NOT NULL default '0',
   `spellcooldown_3` int(11) NOT NULL default '-1',
   `spellcategory_3` smallint(5) unsigned NOT NULL default '0',
   `spellcategorycooldown_3` int(11) NOT NULL default '-1',
   `spellid_4` mediumint(8) unsigned NOT NULL default '0',
   `spelltrigger_4` tinyint(3) unsigned NOT NULL default '0',
-  `spellcharges_4` tinyint(4) NOT NULL default '0',
+  `spellcharges_4` smallint(5) NOT NULL default '0',
   `spellppmRate_4` float NOT NULL default '0',
   `spellcooldown_4` int(11) NOT NULL default '-1',
   `spellcategory_4` smallint(5) unsigned NOT NULL default '0',
   `spellcategorycooldown_4` int(11) NOT NULL default '-1',
   `spellid_5` mediumint(8) unsigned NOT NULL default '0',
   `spelltrigger_5` tinyint(3) unsigned NOT NULL default '0',
-  `spellcharges_5` tinyint(4) NOT NULL default '0',
+  `spellcharges_5` smallint(5) NOT NULL default '0',
   `spellppmRate_5` float NOT NULL default '0',
   `spellcooldown_5` int(11) NOT NULL default '-1',
   `spellcategory_5` smallint(5) unsigned NOT NULL default '0',
@@ -2343,6 +2464,42 @@ LOCK TABLES `locales_gameobject` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `locales_gossip_menu_option`
+--
+
+DROP TABLE IF EXISTS `locales_gossip_menu_option`;
+CREATE TABLE `locales_gossip_menu_option` (
+  `menu_id` smallint(6) unsigned NOT NULL default '0',
+  `id` smallint(6) unsigned NOT NULL default '0',
+  `option_text_loc1` text,
+  `option_text_loc2` text,
+  `option_text_loc3` text,
+  `option_text_loc4` text,
+  `option_text_loc5` text,
+  `option_text_loc6` text,
+  `option_text_loc7` text,
+  `option_text_loc8` text,
+  `box_text_loc1` text,
+  `box_text_loc2` text,
+  `box_text_loc3` text,
+  `box_text_loc4` text,
+  `box_text_loc5` text,
+  `box_text_loc6` text,
+  `box_text_loc7` text,
+  `box_text_loc8` text,
+  PRIMARY KEY  (`menu_id`, `id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+--
+-- Dumping data for table `locales_gossip_menu_option`
+--
+
+LOCK TABLES `locales_gossip_menu_option` WRITE;
+/*!40000 ALTER TABLE `locales_gossip_menu_option` DISABLE KEYS */;
+/*!40000 ALTER TABLE `locales_gossip_menu_option` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `locales_item`
 --
 
@@ -2375,42 +2532,6 @@ CREATE TABLE `locales_item` (
 LOCK TABLES `locales_item` WRITE;
 /*!40000 ALTER TABLE `locales_item` DISABLE KEYS */;
 /*!40000 ALTER TABLE `locales_item` ENABLE KEYS */;
-UNLOCK TABLES;
-
-
---
--- Table structure for table `locales_npc_option`
---
-
-DROP TABLE IF EXISTS `locales_npc_option`;
-CREATE TABLE `locales_npc_option` (
-  `entry` mediumint(8) unsigned NOT NULL default '0',
-  `option_text_loc1` text,
-  `option_text_loc2` text,
-  `option_text_loc3` text,
-  `option_text_loc4` text,
-  `option_text_loc5` text,
-  `option_text_loc6` text,
-  `option_text_loc7` text,
-  `option_text_loc8` text,
-  `box_text_loc1` text,
-  `box_text_loc2` text,
-  `box_text_loc3` text,
-  `box_text_loc4` text,
-  `box_text_loc5` text,
-  `box_text_loc6` text,
-  `box_text_loc7` text,
-  `box_text_loc8` text,
-  PRIMARY KEY  (`entry`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
---
--- Dumping data for table `locales_npc_option`
---
-
-LOCK TABLES `locales_npc_option` WRITE;
-/*!40000 ALTER TABLE `locales_npc_option` DISABLE KEYS */;
-/*!40000 ALTER TABLE `locales_npc_option` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -2669,6 +2790,14 @@ CREATE TABLE `locales_quest` (
   `EndText_loc6` text,
   `EndText_loc7` text,
   `EndText_loc8` text,
+  `CompletedText_loc1` text,
+  `CompletedText_loc2` text,
+  `CompletedText_loc3` text,
+  `CompletedText_loc4` text,
+  `CompletedText_loc5` text,
+  `CompletedText_loc6` text,
+  `CompletedText_loc7` text,
+  `CompletedText_loc8` text,
   `ObjectiveText1_loc1` text,
   `ObjectiveText1_loc2` text,
   `ObjectiveText1_loc3` text,
@@ -2847,6 +2976,9 @@ INSERT INTO `mangos_string` VALUES
 (57,'Using World DB: %s',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (58,'Using script library: %s',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (59,'Using creature EventAI: %s',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+(60,'I\'m busy right now, come back later.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+(61,'Username: ',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+(62,'Password: ',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (100,'Global notify: ',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (101,'Map: %u (%s) Zone: %u (%s) Area: %u (%s) Phase: %u\nX: %f Y: %f Z: %f Orientation: %f\ngrid[%u,%u]cell[%u,%u] InstanceID: %u\n ZoneX: %f ZoneY: %f\nGroundZ: %f FloorZ: %f Have height data (Map: %u VMap: %u)',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (102,'%s is already being teleported.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
@@ -3070,6 +3202,14 @@ INSERT INTO `mangos_string` VALUES
 (346,'Forced customize for player %s (GUID #%u) will be requested at next login.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (347,'TaxiNode ID %u not found!',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (348,'Game Object (Entry: %u) have invalid data and can\'t be spawned',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+(349,'%d (idx:%d) - |cffffffff|Htitle:%d|h[%s %s]|h|r %s %s ',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+(350,'%d (idx:%d) - [%s %s] %s %s ',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+(351,'No titles found!',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+(352,'Invalid title id: %u',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+(353,'Title %u (%s) added to known titles list for player %s.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+(354,'Title %u (%s) removed from known titles list for player %s.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+(355,'Title %u (%s) set as current selected title for player %s.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+(356,'Current selected title for player %s reset as not known now.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (400,'|cffff0000[System Message]:|rScripts reloaded',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (401,'You change security level of account %s to %i.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (402,'%s changed your security level to %i.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
@@ -3433,6 +3573,7 @@ INSERT INTO `mangos_string` VALUES
 (1012,'===========================================================================',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (1013,'|%15s| %20s | %15s |%4d| %9d |',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (1014,'No online players.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+(1015,'Used not fully typed quit command, need type it fully (quit), or command used not in RA command line.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (1100,'Account %s (Id: %u) have up to %u expansion allowed now.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (1101,'Message of the day changed to:\r\n%s',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (1102,'Message sent to %s: %s',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
@@ -3465,6 +3606,9 @@ INSERT INTO `mangos_string` VALUES
 (1129,'%d - %s %s (Map:%u X:%f Y:%f Z:%f)',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (1130,'event started %u "%s"',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (1131,'event stopped %u "%s"',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+(1132,'   Follow player %s (lowguid %u)',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+(1133,'   Follow creature %s (lowguid %u)',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+(1134,'   Follow <NULL>',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (1200,'You try to view cinemitic %u but it doesn\'t exist.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (1201,'You try to view movie %u but it doesn\'t exist.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
 /*!40000 ALTER TABLE `mangos_string` ENABLE KEYS */;
@@ -3515,54 +3659,6 @@ CREATE TABLE `npc_gossip` (
 LOCK TABLES `npc_gossip` WRITE;
 /*!40000 ALTER TABLE `npc_gossip` DISABLE KEYS */;
 /*!40000 ALTER TABLE `npc_gossip` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `npc_gossip_textid`
---
-
-DROP TABLE IF EXISTS `npc_gossip_textid`;
-CREATE TABLE `npc_gossip_textid` (
-  `zoneid` smallint(5) unsigned NOT NULL default '0',
-  `action` smallint(5) unsigned NOT NULL default '0',
-  `textid` mediumint(8) unsigned NOT NULL default '0',
-  KEY `zoneid` (`zoneid`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
---
--- Dumping data for table `npc_gossip_textid`
---
-
-LOCK TABLES `npc_gossip_textid` WRITE;
-/*!40000 ALTER TABLE `npc_gossip_textid` DISABLE KEYS */;
-/*!40000 ALTER TABLE `npc_gossip_textid` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `npc_option`
---
-
-DROP TABLE IF EXISTS `npc_option`;
-CREATE TABLE `npc_option` (
-  `id` mediumint(8) unsigned NOT NULL default '0',
-  `gossip_id` mediumint(8) unsigned NOT NULL default '0',
-  `npcflag` int(10) unsigned NOT NULL default '0',
-  `icon` tinyint(3) unsigned NOT NULL default '0',
-  `action` mediumint(8) unsigned NOT NULL default '0',
-  `box_money` int(10) unsigned NOT NULL default '0',
-  `coded` tinyint(3) unsigned NOT NULL default '0',
-  `option_text` text,
-  `box_text` text,
-  PRIMARY KEY  (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
---
--- Dumping data for table `npc_option`
---
-
-LOCK TABLES `npc_option` WRITE;
-/*!40000 ALTER TABLE `npc_option` DISABLE KEYS */;
-/*!40000 ALTER TABLE `npc_option` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -10604,6 +10700,7 @@ INSERT INTO `playercreateinfo_spell` VALUES
 (1,1,196,'One-Handed Axes'),
 (1,1,198,'One-Handed Maces'),
 (1,1,201,'One-Handed Swords'),
+(1,1,202,'Two-Handed Swords'),
 (1,1,203,'Unarmed'),
 (1,1,204,'Defense'),
 (1,1,522,'SPELLDEFENSE (DND)'),
@@ -10691,6 +10788,7 @@ INSERT INTO `playercreateinfo_spell` VALUES
 (1,4,204,'Defense'),
 (1,4,522,'SPELLDEFENSE (DND)'),
 (1,4,668,'Language Common'),
+(1,4,674,'Dual Wield'),
 (1,4,1180,'Daggers'),
 (1,4,1752,'Sinister Strike'),
 (1,4,1843,'Disarm'),
@@ -10732,6 +10830,7 @@ INSERT INTO `playercreateinfo_spell` VALUES
 (1,5,198,'One-Handed Maces'),
 (1,5,203,'Unarmed'),
 (1,5,204,'Defense'),
+(1,5,227,'Staves'),
 (1,5,522,'SPELLDEFENSE (DND)'),
 (1,5,585,'Smite'),
 (1,5,668,'Language Common'),
@@ -10878,6 +10977,7 @@ INSERT INTO `playercreateinfo_spell` VALUES
 (1,9,81,'Dodge'),
 (1,9,203,'Unarmed'),
 (1,9,204,'Defense'),
+(1,9,227,'Staves'),
 (1,9,522,'SPELLDEFENSE (DND)'),
 (1,9,668,'Language Common'),
 (1,9,686,'Shadow Bolt'),
@@ -10961,6 +11061,7 @@ INSERT INTO `playercreateinfo_spell` VALUES
 (2,3,75,'Auto Shot'),
 (2,3,81,'Dodge'),
 (2,3,196,'One-Handed Axes'),
+(2,3,197,'Two-Handed Axes'),
 (2,3,203,'Unarmed'),
 (2,3,204,'Defense'),
 (2,3,264,'Bows'),
@@ -11003,6 +11104,7 @@ INSERT INTO `playercreateinfo_spell` VALUES
 (2,4,204,'Defense'),
 (2,4,522,'SPELLDEFENSE (DND)'),
 (2,4,669,'Language Orcish'),
+(2,4,674,'Dual Wield'),
 (2,4,1180,'Daggers'),
 (2,4,1752,'Sinister Strike'),
 (2,4,1843,'Disarm'),
@@ -11148,6 +11250,7 @@ INSERT INTO `playercreateinfo_spell` VALUES
 (2,9,81,'Dodge'),
 (2,9,203,'Unarmed'),
 (2,9,204,'Defense'),
+(2,9,227,'Staves'),
 (2,9,522,'SPELLDEFENSE (DND)'),
 (2,9,669,'Language Orcish'),
 (2,9,686,'Shadow Bolt'),
@@ -11274,6 +11377,7 @@ INSERT INTO `playercreateinfo_spell` VALUES
 (3,3,75,'Auto Shot'),
 (3,3,81,'Dodge'),
 (3,3,196,'One-Handed Axes'),
+(3,3,197,'Two-Handed Axes'),
 (3,3,203,'Unarmed'),
 (3,3,204,'Defense'),
 (3,3,266,'Guns'),
@@ -11319,6 +11423,7 @@ INSERT INTO `playercreateinfo_spell` VALUES
 (3,4,522,'SPELLDEFENSE (DND)'),
 (3,4,668,'Language Common'),
 (3,4,672,'Language Dwarven'),
+(3,4,674,'Dual Wield'),
 (3,4,1180,'Daggers'),
 (3,4,1752,'Sinister Strike'),
 (3,4,1843,'Disarm'),
@@ -11359,6 +11464,7 @@ INSERT INTO `playercreateinfo_spell` VALUES
 (3,5,198,'One-Handed Maces'),
 (3,5,203,'Unarmed'),
 (3,5,204,'Defense'),
+(3,5,227,'Staves'),
 (3,5,522,'SPELLDEFENSE (DND)'),
 (3,5,585,'Smite'),
 (3,5,668,'Language Common'),
@@ -11468,6 +11574,7 @@ INSERT INTO `playercreateinfo_spell` VALUES
 (4,1,107,'Block'),
 (4,1,198,'One-Handed Maces'),
 (4,1,201,'One-Handed Swords'),
+(4,1,202,'Two-Handed Swords'),
 (4,1,203,'Unarmed'),
 (4,1,204,'Defense'),
 (4,1,522,'SPELLDEFENSE (DND)'),
@@ -11509,6 +11616,7 @@ INSERT INTO `playercreateinfo_spell` VALUES
 (4,1,61437,'Opening'),
 (4,3,75,'Auto Shot'),
 (4,3,81,'Dodge'),
+(4,3,197,'Two-Handed Axes'),
 (4,3,203,'Unarmed'),
 (4,3,204,'Defense'),
 (4,3,264,'Bows'),
@@ -11554,6 +11662,7 @@ INSERT INTO `playercreateinfo_spell` VALUES
 (4,4,522,'SPELLDEFENSE (DND)'),
 (4,4,668,'Language Common'),
 (4,4,671,'Language Darnassian'),
+(4,4,674,'Dual Wield'),
 (4,4,1180,'Daggers'),
 (4,4,1752,'Sinister Strike'),
 (4,4,1843,'Disarm'),
@@ -11593,6 +11702,7 @@ INSERT INTO `playercreateinfo_spell` VALUES
 (4,5,198,'One-Handed Maces'),
 (4,5,203,'Unarmed'),
 (4,5,204,'Defense'),
+(4,5,227,'Staves'),
 (4,5,522,'SPELLDEFENSE (DND)'),
 (4,5,585,'Smite'),
 (4,5,668,'Language Common'),
@@ -11783,6 +11893,7 @@ INSERT INTO `playercreateinfo_spell` VALUES
 (5,4,204,'Defense'),
 (5,4,522,'SPELLDEFENSE (DND)'),
 (5,4,669,'Language Orcish'),
+(5,4,674,'Dual Wield'),
 (5,4,1180,'Daggers'),
 (5,4,1752,'Sinister Strike'),
 (5,4,1843,'Disarm'),
@@ -11823,6 +11934,7 @@ INSERT INTO `playercreateinfo_spell` VALUES
 (5,5,198,'One-Handed Maces'),
 (5,5,203,'Unarmed'),
 (5,5,204,'Defense'),
+(5,5,227,'Staves'),
 (5,5,522,'SPELLDEFENSE (DND)'),
 (5,5,585,'Smite'),
 (5,5,669,'Language Orcish'),
@@ -11966,6 +12078,7 @@ INSERT INTO `playercreateinfo_spell` VALUES
 (5,9,81,'Dodge'),
 (5,9,203,'Unarmed'),
 (5,9,204,'Defense'),
+(5,9,227,'Staves'),
 (5,9,522,'SPELLDEFENSE (DND)'),
 (5,9,669,'Language Orcish'),
 (5,9,686,'Shadow Bolt'),
@@ -12049,6 +12162,7 @@ INSERT INTO `playercreateinfo_spell` VALUES
 (6,3,75,'Auto Shot'),
 (6,3,81,'Dodge'),
 (6,3,196,'One-Handed Axes'),
+(6,3,197,'Two-Handed Axes'),
 (6,3,203,'Unarmed'),
 (6,3,204,'Defense'),
 (6,3,266,'Guns'),
@@ -12240,6 +12354,7 @@ INSERT INTO `playercreateinfo_spell` VALUES
 (7,1,107,'Block'),
 (7,1,198,'One-Handed Maces'),
 (7,1,201,'One-Handed Swords'),
+(7,1,202,'Two-Handed Swords'),
 (7,1,203,'Unarmed'),
 (7,1,204,'Defense'),
 (7,1,522,'SPELLDEFENSE (DND)'),
@@ -12283,6 +12398,7 @@ INSERT INTO `playercreateinfo_spell` VALUES
 (7,4,203,'Unarmed'),
 (7,4,204,'Defense'),
 (7,4,522,'SPELLDEFENSE (DND)'),
+(7,4,674,'Dual Wield'),
 (7,4,668,'Language Common'),
 (7,4,1180,'Daggers'),
 (7,4,1752,'Sinister Strike'),
@@ -12429,6 +12545,7 @@ INSERT INTO `playercreateinfo_spell` VALUES
 (7,9,81,'Dodge'),
 (7,9,203,'Unarmed'),
 (7,9,204,'Defense'),
+(7,9,227,'Staves'),
 (7,9,522,'SPELLDEFENSE (DND)'),
 (7,9,668,'Language Common'),
 (7,9,686,'Shadow Bolt'),
@@ -12469,6 +12586,7 @@ INSERT INTO `playercreateinfo_spell` VALUES
 (8,1,81,'Dodge'),
 (8,1,107,'Block'),
 (8,1,196,'One-Handed Axes'),
+(8,1,202,'Two-Handed Swords'),
 (8,1,203,'Unarmed'),
 (8,1,204,'Defense'),
 (8,1,522,'SPELLDEFENSE (DND)'),
@@ -12515,6 +12633,7 @@ INSERT INTO `playercreateinfo_spell` VALUES
 (8,3,75,'Auto Shot'),
 (8,3,81,'Dodge'),
 (8,3,196,'One-Handed Axes'),
+(8,3,197,'Two-Handed Axes'),
 (8,3,203,'Unarmed'),
 (8,3,204,'Defense'),
 (8,3,264,'Bows'),
@@ -12560,6 +12679,7 @@ INSERT INTO `playercreateinfo_spell` VALUES
 (8,4,204,'Defense'),
 (8,4,522,'SPELLDEFENSE (DND)'),
 (8,4,669,'Language Orcish'),
+(8,4,674,'Dual Wield'),
 (8,4,1180,'Daggers'),
 (8,4,1752,'Sinister Strike'),
 (8,4,1843,'Disarm'),
@@ -12602,6 +12722,7 @@ INSERT INTO `playercreateinfo_spell` VALUES
 (8,5,198,'One-Handed Maces'),
 (8,5,203,'Unarmed'),
 (8,5,204,'Defense'),
+(8,5,227,'Staves'),
 (8,5,522,'SPELLDEFENSE (DND)'),
 (8,5,585,'Smite'),
 (8,5,669,'Language Orcish'),
@@ -12831,6 +12952,7 @@ INSERT INTO `playercreateinfo_spell` VALUES
 (10,2,28877,'Arcane Affinity'),
 (10,3,75,'Auto Shot'),
 (10,3,81,'Dodge'),
+(10,3,197,'Two-Handed Axes'),
 (10,3,203,'Unarmed'),
 (10,3,204,'Defense'),
 (10,3,264,'Bows'),
@@ -12871,6 +12993,7 @@ INSERT INTO `playercreateinfo_spell` VALUES
 (10,4,204,'Defense'),
 (10,4,522,'SPELLDEFENSE (DND)'),
 (10,4,669,'Language Orcish'),
+(10,4,674,'Dual Wield'),
 (10,4,813,'Language Thalassian'),
 (10,4,822,'Magic Resistance'),
 (10,4,1180,'Daggers'),
@@ -12907,6 +13030,7 @@ INSERT INTO `playercreateinfo_spell` VALUES
 (10,5,198,'One-Handed Maces'),
 (10,5,203,'Unarmed'),
 (10,5,204,'Defense'),
+(10,5,227,'Staves'),
 (10,5,522,'SPELLDEFENSE (DND)'),
 (10,5,585,'Smite'),
 (10,5,669,'Language Orcish'),
@@ -13041,6 +13165,7 @@ INSERT INTO `playercreateinfo_spell` VALUES
 (10,9,81,'Dodge'),
 (10,9,203,'Unarmed'),
 (10,9,204,'Defense'),
+(10,9,227,'Staves'),
 (10,9,522,'SPELLDEFENSE (DND)'),
 (10,9,669,'Language Orcish'),
 (10,9,686,'Shadow Bolt'),
@@ -13161,6 +13286,7 @@ INSERT INTO `playercreateinfo_spell` VALUES
 (11,2,61437,'Opening'),
 (11,3,75,'Auto Shot'),
 (11,3,81,'Dodge'),
+(11,3,197,'Two-Handed Axes'),
 (11,3,201,'One-Handed Swords'),
 (11,3,203,'Unarmed'),
 (11,3,204,'Defense'),
@@ -13204,6 +13330,7 @@ INSERT INTO `playercreateinfo_spell` VALUES
 (11,5,198,'One-Handed Maces'),
 (11,5,203,'Unarmed'),
 (11,5,204,'Defense'),
+(11,5,227,'Staves'),
 (11,5,522,'SPELLDEFENSE (DND)'),
 (11,5,585,'Smite'),
 (11,5,668,'Language Common'),
@@ -13580,6 +13707,53 @@ LOCK TABLES `quest_end_scripts` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `quest_poi`
+--
+
+DROP TABLE IF EXISTS `quest_poi`;
+CREATE TABLE `quest_poi` (
+  `questid` int(11) unsigned NOT NULL DEFAULT '0',
+  `objIndex` int(11) NOT NULL DEFAULT '0',
+  `mapId` int(11) unsigned NOT NULL DEFAULT '0',
+  `unk1` int(11) unsigned NOT NULL DEFAULT '0',
+  `unk2` int(11) unsigned NOT NULL DEFAULT '0',
+  `unk3` int(11) unsigned NOT NULL DEFAULT '0',
+  `unk4` int(11) unsigned NOT NULL DEFAULT '0',
+  PRIMARY KEY (`questid`,`objIndex`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+--
+-- Dumping data for table `quest_poi`
+--
+
+LOCK TABLES `quest_poi` WRITE;
+/*!40000 ALTER TABLE `quest_poi` DISABLE KEYS */;
+/*!40000 ALTER TABLE `quest_poi` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `quest_poi_points`
+--
+
+DROP TABLE IF EXISTS `quest_poi_points`;
+CREATE TABLE `quest_poi_points` (
+  `questId` int(11) unsigned NOT NULL DEFAULT '0',
+  `objIndex` int(11) NOT NULL DEFAULT '0',
+  `x` int(11) NOT NULL DEFAULT '0',
+  `y` int(11) NOT NULL DEFAULT '0',
+  KEY `idx` (`questId`,`objIndex`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+--
+-- Dumping data for table `quest_poi_points`
+--
+
+LOCK TABLES `quest_poi_points` WRITE;
+/*!40000 ALTER TABLE `quest_poi_points` DISABLE KEYS */;
+/*!40000 ALTER TABLE `quest_poi_points` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `quest_start_scripts`
 --
 
@@ -13629,7 +13803,7 @@ CREATE TABLE `quest_template` (
   `RequiredMaxRepValue` mediumint(9) NOT NULL default '0',
   `SuggestedPlayers` tinyint(3) unsigned NOT NULL default '0',
   `LimitTime` int(10) unsigned NOT NULL default '0',
-  `QuestFlags` smallint(5) unsigned NOT NULL default '0',
+  `QuestFlags` mediumint(8) unsigned NOT NULL default '0',
   `SpecialFlags` tinyint(3) unsigned NOT NULL default '0',
   `CharTitleId` tinyint(3) unsigned NOT NULL default '0',
   `PlayersSlain` tinyint(3) unsigned NOT NULL default '0',
@@ -13638,6 +13812,7 @@ CREATE TABLE `quest_template` (
   `NextQuestId` mediumint(9) NOT NULL default '0',
   `ExclusiveGroup` mediumint(9) NOT NULL default '0',
   `NextQuestInChain` mediumint(8) unsigned NOT NULL default '0',
+  `RewXPId` tinyint(3) unsigned NOT NULL default '0',
   `SrcItemId` mediumint(8) unsigned NOT NULL default '0',
   `SrcItemCount` tinyint(3) unsigned NOT NULL default '0',
   `SrcSpell` mediumint(8) unsigned NOT NULL default '0',
@@ -13647,6 +13822,7 @@ CREATE TABLE `quest_template` (
   `OfferRewardText` text,
   `RequestItemsText` text,
   `EndText` text,
+  `CompletedText` text,
   `ObjectiveText1` text,
   `ObjectiveText2` text,
   `ObjectiveText3` text,
@@ -13655,10 +13831,14 @@ CREATE TABLE `quest_template` (
   `ReqItemId2` mediumint(8) unsigned NOT NULL default '0',
   `ReqItemId3` mediumint(8) unsigned NOT NULL default '0',
   `ReqItemId4` mediumint(8) unsigned NOT NULL default '0',
+  `ReqItemId5` mediumint(8) unsigned NOT NULL default '0',
+  `ReqItemId6` mediumint(8) unsigned NOT NULL default '0',
   `ReqItemCount1` smallint(5) unsigned NOT NULL default '0',
   `ReqItemCount2` smallint(5) unsigned NOT NULL default '0',
   `ReqItemCount3` smallint(5) unsigned NOT NULL default '0',
   `ReqItemCount4` smallint(5) unsigned NOT NULL default '0',
+  `ReqItemCount5` smallint(5) unsigned NOT NULL default '0',
+  `ReqItemCount6` smallint(5) unsigned NOT NULL default '0',
   `ReqSourceId1` mediumint(8) unsigned NOT NULL default '0',
   `ReqSourceId2` mediumint(8) unsigned NOT NULL default '0',
   `ReqSourceId3` mediumint(8) unsigned NOT NULL default '0',
@@ -13695,25 +13875,27 @@ CREATE TABLE `quest_template` (
   `RewItemId2` mediumint(8) unsigned NOT NULL default '0',
   `RewItemId3` mediumint(8) unsigned NOT NULL default '0',
   `RewItemId4` mediumint(8) unsigned NOT NULL default '0',
-  `ReqItemId5` mediumint(8) unsigned NOT NULL default '0',
-  `ReqItemId6` mediumint(8) unsigned NOT NULL default '0',
   `RewItemCount1` smallint(5) unsigned NOT NULL default '0',
   `RewItemCount2` smallint(5) unsigned NOT NULL default '0',
   `RewItemCount3` smallint(5) unsigned NOT NULL default '0',
   `RewItemCount4` smallint(5) unsigned NOT NULL default '0',
-  `ReqItemCount5` smallint(5) unsigned NOT NULL default '0',
-  `ReqItemCount6` smallint(5) unsigned NOT NULL default '0',
   `RewRepFaction1` smallint(5) unsigned NOT NULL default '0' COMMENT 'faction id from Faction.dbc in this case',
   `RewRepFaction2` smallint(5) unsigned NOT NULL default '0' COMMENT 'faction id from Faction.dbc in this case',
   `RewRepFaction3` smallint(5) unsigned NOT NULL default '0' COMMENT 'faction id from Faction.dbc in this case',
   `RewRepFaction4` smallint(5) unsigned NOT NULL default '0' COMMENT 'faction id from Faction.dbc in this case',
   `RewRepFaction5` smallint(5) unsigned NOT NULL default '0' COMMENT 'faction id from Faction.dbc in this case',
+  `RewRepValueId1` tinyint(3) NOT NULL default '0',
+  `RewRepValueId2` tinyint(3) NOT NULL default '0',
+  `RewRepValueId3` tinyint(3) NOT NULL default '0',
+  `RewRepValueId4` tinyint(3) NOT NULL default '0',
+  `RewRepValueId5` tinyint(3) NOT NULL default '0',
   `RewRepValue1` mediumint(9) NOT NULL default '0',
   `RewRepValue2` mediumint(9) NOT NULL default '0',
   `RewRepValue3` mediumint(9) NOT NULL default '0',
   `RewRepValue4` mediumint(9) NOT NULL default '0',
   `RewRepValue5` mediumint(9) NOT NULL default '0',
-  `RewHonorableKills` int unsigned NOT NULL default '0',
+  `RewHonorAddition` int unsigned NOT NULL default '0',
+  `RewHonorMultiplier` float NOT NULL default '0',
   `RewOrReqMoney` int(11) NOT NULL default '0',
   `RewMoneyMaxLevel` int(10) unsigned NOT NULL default '0',
   `RewSpell` mediumint(8) unsigned NOT NULL default '0',
@@ -13926,7 +14108,7 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `spell_bonus_data`;
 CREATE TABLE `spell_bonus_data` (
-  `entry` smallint(5) unsigned NOT NULL,
+  `entry` mediumint(8) unsigned NOT NULL,
   `direct_bonus` float NOT NULL default '0',
   `dot_bonus` float NOT NULL default '0',
   `ap_bonus` float NOT NULL default '0',
@@ -13959,6 +14141,7 @@ INSERT INTO `spell_bonus_data` VALUES
 /* Druid */
 (5185,  1.6104, 0,       0,     'Druid - Healing Touch'),
 (339,   0,      0.1,     0,     'Druid - Entangling Roots'),
+(60089, 0,      0,       0.15,  'Druid - Faerie Fire (Feral) Triggered'),
 (42231, 0.12898,0,       0,     'Druid - Hurricane Triggered'),
 (5570,  0,      0.2,     0,     'Druid - Insect Swarm'),
 (33763, 0,      0.09518, 0,     'Druid - Lifebloom'),
@@ -13994,37 +14177,23 @@ INSERT INTO `spell_bonus_data` VALUES
 (11366, 1.15,   0.05,    0,     'Mage - Pyroblast'),
 (2948,  0.4286, 0,       0,     'Mage - Scorch'),
 /* Paladin */
-(31935, 0.07,   0,       0.07,  'Paladin - Avengers Shiled'),
-(53742, 0,      0.0156,  0.03,  'Paladin - Blood Corruption'),
 (26573, 0,      0.04,    0.04,  'Paladin - Consecration'),
 (879,   0.15,   0,       0.15,  'Paladin - Exorcism'),
 (25997, 0,      0,       0,     'Paladin - Eye for an Eye'),
 (19750, 1,      0,       0,     'Paladin - Flash of Light'),
 (53595, 0,      0,       0,     'Paladin - Hammer of the Righteous'),
-(24275, 0.15,   0,       0.15,  'Paladin - Hammer of Wrath'),
 (635,   1.66,   0,       0,     'Paladin - Holy Light'),
 (25912, 0.4286, 0,       0,     'Paladin - Holy Shock Triggered Hurt'),
 (20925, 0.09,   0,       0.056, 'Paladin - Holy Shield'),
-(31803, 0,      0.0156,  0.03,  'Paladin - Holy Vengeance'),
 (2812,  0.07,   0,       0.07,  'Paladin - Holy Wrath'),
 (54158, 0.25,   0,       0,     'Paladin - Judgement'),
-(31898, 0.18,   0,       0.11,  'Paladin - Judgement of Blood Enemy'), 
-(32220, 0.0594, 0,       0.0363,'Paladin - Judgement of Blood Self'),
 (20467, 0.25,   0,       0.16,  'Paladin - Judgement of Command'),
 (53733, 0,      0,       0,     'Paladin - Judgement of Corruption'),
 (20267, 0.1,    0,       0.1,   'Paladin - Judgement of Light Proc'),
-(20187, 0.32,   0,       0,     'Paladin - Judgement of Righteousness'),
-(53726, 0.18,   0,       0.11,  'Paladin - Judgement of the Martyr Enemy'),
-(53725, 0.0594, 0,       0.0363,'Paladin - Judgement of the Martyr Self'),
 (31804, 0,      0,       0,     'Paladin - Judgement of Vengeance'),
-(31893, 0,      0,       0,     'Paladin - Seal of Blood Proc Enemy'),
-(32221, 0,      0,       0,     'Paladin - Seal of Blood Proc Self'),
 (20424, 0,      0,       0,     'Paladin - Seal of Command Proc'),
 (53739, 0,      0.00156, 0.003, 'Paladin - Seal of Corruption (full stack proc)'),
-(20167, 0.15,   0,       0.15,  'Paladin - Seal of Light Proc'),
 (25742, 0.07,   0,       0.039, 'Paladin - Seal of Righteousness Dummy Proc'),
-(53719, 0,      0,       0,     'Paladin - Seal of the Martyr Proc Enemy'),
-(53718, 0,      0,       0,     'Paladin - Seal of the Martyr Proc Self'),
 (42463, 0,      0.00156, 0.003, 'Paladin - Seal of Vengeance (full stack proc)'),
 (53600, 0,      0,       0,     'Paladin - Shield of Righteousness'),
 /* Priest */
@@ -14033,11 +14202,13 @@ INSERT INTO `spell_bonus_data` VALUES
 (34861, 0.402,  0,       0,     'Priest - Circle of Healing'),
 (19236, 0.8068, 0,       0,     'Priest - Desperate Prayer'),
 (2944,  0,      0.1849,  0,     'Priest - Devouring Plague'),
+(63544, 0,      0,       0,     'Priest - Empowered Renew Triggered'),
 (14914, 0.5711, 0.024,   0,     'Priest - Holy Fire'),
 (15237, 0.1606, 0,       0,     'Priest - Holy Nova Damage'),
 (2061,  0.8068, 0,       0,     'Priest - Flash Heal'),
 (2060,  1.6135, 0,       0,     'Priest - Greater Heal'),
 (23455, 0.3035, 0,       0,     'Priest - Holy Nova Heal'),
+(63675, 0,      0,       0,     'Priest - Improved Devouring Plague Triggered'),
 (8129,  0,      0,       0,     'Priest - Mana Burn'),
 (58381, 0.257143,0,      0,     'Priest - Mind Flay Triggered'),
 (49821, 0.14286,0,       0,     'Priest - Mind Sear Trigger'),
@@ -14050,13 +14221,13 @@ INSERT INTO `spell_bonus_data` VALUES
 (34433, 0.65,   0,       0,     'Priest - Shadowfiend'),
 (585,   0.714,  0,       0,     'Priest - Smite'),
 (34914, 0,      0.4,     0,     'Priest - Vampiric Touch'),
+(64085, 0,      0,       0,     'Priest - Vampiric Touch Dispel'),
 /* Shaman */
 (974,   0.4762, 0,       0,     'Shaman - Earth Shield'),
 (379,   0,      0,       0,     'Shaman - Earth Shield Triggered'),
 (1064,  1.34,   0,       0,     'Shaman - Chain Heal'),
 (421,   0.57,   0,       0,     'Shaman - Chain Lightning'),
 (8042,  0.3858, 0,       0,     'Shaman - Earth Shock'),
-(8443,  0.2142, 0,       0,     'Shaman - Fire Nova Totem Casted by Totem'),
 (8050,  0.2142, 0.1,     0,     'Shaman - Flame Shock'),
 (8026,  0.1,    0,       0,     'Shaman - Flametongue Weapon Proc'),
 (8056,  0.3858, 0,       0,     'Shaman - Frost Shock'),
@@ -14072,7 +14243,7 @@ INSERT INTO `spell_bonus_data` VALUES
 (3606,  0.1667, 0,       0,     'Shaman - Searing Totem Attack'),
 /* Warlock */
 (17962, 0,      0,       0,     'Warlock - Conflagrate'),
-(172,   0,      0.3,     0,     'Warlock - Corruption'),
+(172,   0,      0.2,     0,     'Warlock - Corruption'),
 (980,   0,      0.1,     0,     'Warlock - Curse of Agony'),
 (603,   0,      2,       0,     'Warlock - Curse of Doom'),
 (18220, 0.96,   0,       0,     'Warlock - Dark Pact'),
@@ -14095,7 +14266,13 @@ INSERT INTO `spell_bonus_data` VALUES
 (30294, 0,      0,       0,     'Warlock - Soul Leech'),
 (31117, 1.8,    0,       0,     'Warlock - Unstable Affliction Dispell'),
 /* Item */
-(40293, 0,      0,       0,     'Item - Siphon Essence');
+(56160, 0,      0,       0,     'Item - Glyph of Power Word: Shield'),
+(31024, 0,      0,       0,     'Item - Living Ruby Pedant'),
+(17712, 0,      0,       0,     'Item - Lifestone Healing'),
+(5707,  0,      0,       0,     'Item - Lifestone Regeneration'),
+(38395, 0,      0,       0,     'Item - Siphon Essence'),
+(40293, 0,      0,       0,     'Item - Siphon Essence'),
+(71824, 0,      0,       0,     'Item - Shaman T9 Elemental 4P Bonus');
 /*!40000 ALTER TABLE `spell_bonus_data` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -14123,16 +14300,6 @@ INSERT INTO spell_chain VALUES
 /*------------------
 --(0) Not associated with skills
 ------------------*/
-/* Fire Nova Totem Casted by Totem */
-(8443,0,8443,1,0),
-(8504,8443,8443,2,0),
-(8505,8504,8443,3,0),
-(11310,8505,8443,4,0),
-(11311,11310,8443,5,0),
-(25538,11311,8443,6,0),
-(25539,25538,8443,7,0),
-(61651,25539,8443,8,0),
-(61660,61651,8443,9,0),
 /* Flametongue Weapon Proc */
 (8026,0,8026,1,0),
 (8028,8026,8026,2,0),
@@ -14430,7 +14597,11 @@ INSERT INTO spell_chain VALUES
 (25208,11574,772,8,0),
 (46845,25208,772,9,0),
 (47465,46845,772,10,0),
-/*ThunderClap*/
+/*Taste for Blood*/
+(56636,0,56636,1,0),
+(56637,56636,56636,2,0),
+(56638,56637,56636,3,0),
+/*Thunder Clap*/
 (6343,0,6343,1,0),
 (8198,6343,6343,2,0),
 (8204,8198,6343,3,0),
@@ -14511,6 +14682,9 @@ INSERT INTO spell_chain VALUES
 /*------------------
 -- (50) Beast Mastery
 ------------------*/
+/*Aspect of the Dragonhawk*/
+(61846,0,61846,1,0),
+(61847,61846,61846,2,0),
 /*Aspect of the Hawk*/
 (13165,0,13165,1,0),
 (14318,13165,13165,2,0),
@@ -14536,13 +14710,20 @@ INSERT INTO spell_chain VALUES
 (27046,13544,136,8,0),
 (48989,27046,136,9,0),
 (48990,48989,136,10,0),
-/*ScareBeast*/
+/*Scare Beast*/
 (1513,0,1513,1,0),
 (14326,1513,1513,2,0),
 (14327,14326,1513,3,0),
 /*------------------
 --(51)Survival
 ------------------*/
+/*Black Arrow*/
+(3674,0,3674,1,0),
+(63668,3674,3674,2,0),
+(63669,63668,3674,3,0),
+(63670,63669,3674,4,0),
+(63671,63670,3674,5,0),
+(63672,63671,3674,6,0),
 /*Counterattack*/
 (19306,0,19306,1,0),
 (20909,19306,19306,2,0),
@@ -14550,23 +14731,31 @@ INSERT INTO spell_chain VALUES
 (27067,20910,19306,4,0),
 (48998,27067,19306,5,0),
 (48999,48998,19306,6,0),
-/*ExplosiveShot*/
+/*Entrapment*/
+(19184,0,19184,1,0),
+(19387,19184,19184,2,0),
+(19388,19387,19184,3,0),
+/*Explosive Shot*/
 (53301,0,53301,1,0),
 (60051,53301,53301,2,0),
 (60052,60051,53301,3,0),
 (60053,60052,53301,4,0),
-/*ExplosiveTrap*/
+/*Explosive Trap*/
 (13813,0,13813,1,0),
 (14316,13813,13813,2,0),
 (14317,14316,13813,3,0),
 (27025,14317,13813,4,0),
 (49066,27025,13813,5,0),
 (49067,49066,13813,6,0),
-/*FreezingTrap*/
+/*Freezing Trap*/
 (1499,0,1499,1,0),
 (14310,1499,1499,2,0),
 (14311,14310,1499,3,0),
-/*ImmolationTrap*/
+/*Hunting Party*/
+(53290,0,53290,1,0),
+(53291,53290,53290,2,0),
+(53292,53291,53290,3,0),
+/*Immolation Trap*/
 (13795,0,13795,1,0),
 (14302,13795,13795,2,0),
 (14303,14302,13795,3,0),
@@ -14575,14 +14764,20 @@ INSERT INTO spell_chain VALUES
 (27023,14305,13795,6,0),
 (49055,27023,13795,7,0),
 (49056,49055,13795,8,0),
-/*MongooseBite*/
+/**Master Tactician*/
+(34506,0,34506,1,0),
+(34507,34506,34506,2,0),
+(34508,34507,34506,3,0),
+(34838,34508,34506,4,0),
+(34839,34838,34506,5,0),
+/*Mongoose Bite*/
 (1495,0,1495,1,0),
 (14269,1495,1495,2,0),
 (14270,14269,1495,3,0),
 (14271,14270,1495,4,0),
 (36916,14271,1495,5,0),
 (53339,36916,1495,6,0),
-/*RaptorStrike*/
+/*Raptor Strike*/
 (2973,0,2973,1,0),
 (14260,2973,2973,2,0),
 (14261,14260,2973,3,0),
@@ -15005,7 +15200,7 @@ INSERT INTO spell_chain VALUES
 /*------------------
 --(163)Marksmanship
 ------------------*/
-/*AimedShot*/
+/*Aimed Shot*/
 (19434,0,19434,1,0),
 (20900,19434,19434,2,0),
 (20901,20900,19434,3,0),
@@ -15015,7 +15210,7 @@ INSERT INTO spell_chain VALUES
 (27065,20904,19434,7,0),
 (49049,27065,19434,8,0),
 (49050,49049,19434,9,0),
-/*ArcaneShot*/
+/*Arcane Shot*/
 (3044,0,3044,1,0),
 (14281,3044,3044,2,0),
 (14282,14281,3044,3,0),
@@ -15027,13 +15222,16 @@ INSERT INTO spell_chain VALUES
 (27019,14287,3044,9,0),
 (49044,27019,3044,10,0),
 (49045,49044,3044,11,0),
-/*Hunter'sMark*/
+/*Concussive Barrage*/
+(35100,0,35100,1,0),
+(35102,35100,35100,2,0),
+/*Hunter's Mark*/
 (1130,0,1130,1,0),
 (14323,1130,1130,2,0),
 (14324,14323,1130,3,0),
 (14325,14324,1130,4,0),
 (53338,14325,1130,5,0),
-/*KillShot*/
+/*Kill Shot*/
 (53351,0,53351,1,0),
 (61005,53351,53351,2,0),
 (61006,61005,53351,3,0),
@@ -15156,6 +15354,10 @@ INSERT INTO spell_chain VALUES
 (27180,24239,24275,4,0),
 (48805,27180,24275,5,0),
 (48806,48805,24275,6,0),
+/*Heart of the Crusader*/
+(20335, 0, 20335, 1, 0),
+(20336, 20335, 20335, 2, 0),
+(20337, 20336, 20335, 3, 0),
 /*Retribution Aura*/
 (7294,0,7294,1,0),
 (10298,7294,7294,2,0),
@@ -15164,6 +15366,13 @@ INSERT INTO spell_chain VALUES
 (10301,10300,7294,5,0),
 (27150,10301,7294,6,0),
 (54043,27150,7294,7,0),
+/*Righteous Vengeance*/
+(53380,0,53380,1,0),
+(53381,53380,53380,2,0),
+(53382,53381,53380,3,0),
+/*The Art of War*/
+(53486,0,53486,1,0),
+(53488,53486,53486,2,0),
 /*------------------
 -- (185) Cooking
 ------------------*/
@@ -15260,6 +15469,18 @@ INSERT INTO spell_chain VALUES
 (26801,12180,3908,5,0),
 (51309,26790,3908,6,0),
 /*------------------
+-- (202) Engineering
+------------------*/
+/*Engineering*/
+(4036,0,4036,1,0),
+(4037,4036,4036,2,0),
+(4038,4037,4036,3,0),
+(12656,4038,4036,4,0),
+(20219,12656,4036,5,0),
+(20222,12656,4036,5,0),
+(30350,12656,4036,5,0),
+(51306,30350,4036,6,0),
+/*------------------
 --(203)Pet-Spider
 --(208)Pet-Wolf
 --(212)Pet-Crocolisk
@@ -15280,18 +15501,6 @@ INSERT INTO spell_chain VALUES
 (27050,17261,17253,9,0),
 (52473,27050,17253,10,0),
 (52474,52473,17253,11,0),
-/*------------------
--- (202) Engineering
-------------------*/
-/*Engineering*/
-(4036,0,4036,1,0),
-(4037,4036,4036,2,0),
-(4038,4037,4036,3,0),
-(12656,4038,4036,4,0),
-(20219,12656,4036,5,0),
-(20222,12656,4036,5,0),
-(30350,12656,4036,5,0),
-(51306,30350,4036,6,0),
 /*------------------
 -- (204) Pet - Voidwalker
 ------------------*/
@@ -15353,6 +15562,16 @@ INSERT INTO spell_chain VALUES
 (11785,11784,6360,4,0),
 (27275,11785,6360,5,0),
 /*------------------
+-- (208) Pet - Wolf
+------------------*/
+/* Furious Howl */
+(24604,0,24604,1,0),
+(64491,24604,24604,2,0),
+(64492,64491,24604,3,0),
+(64493,64492,24604,4,0),
+(64494,64493,24604,5,0),
+(64495,64494,24604,6,0),
+/*------------------
 -- (209) Pet - Cat
 ------------------*/
 /*Prowl*/
@@ -15396,6 +15615,16 @@ INSERT INTO spell_chain VALUES
 (24579,24578,24423,4,0),
 (27051,24579,24423,5,0),
 (55487,27051,24423,6,0),
+/*------------------
+--(214)Pet - Crab
+------------------*/
+/* Sonic Blast */
+(50245,0,50245,1,0),
+(53544,50245,50245,2,0),
+(53545,53544,50245,3,0),
+(53546,53545,50245,4,0),
+(53547,53546,50245,5,0),
+(53548,53547,50245,6,0),
 /*------------------
 --(215)Pet-Gorilla
 --(786)Pet-ExoticRhino
@@ -15648,6 +15877,9 @@ INSERT INTO spell_chain VALUES
 (34413,34412,1329,4,0),
 (48663,34413,1329,5,0),
 (48666,48663,1329,6,0),
+/*Quick Recovery*/
+(31244,0,31244,1,0),
+(31245,31244,31244,2,0),
 /*Rupture*/
 (1943,0,1943,1,0),
 (8639,1943,1943,2,0),
@@ -15674,6 +15906,10 @@ INSERT INTO spell_chain VALUES
 (25289,11551,6673,7,0),
 (2048,25289,6673,8,0),
 (47436,2048,6673,9,0),
+/*Bloodsurge*/
+(46913,0,46913,1,0),
+(46914,46913,46913,2,0),
+(46915,46914,46913,3,0),
 /*Cleave*/
 (845,0,845,1,0),
 (7369,845,845,2,0),
@@ -15752,6 +15988,15 @@ INSERT INTO spell_chain VALUES
 (32700,32699,31935,3,0),
 (48826,32700,31935,4,0),
 (48827,48826,31935,5,0),
+/*Divine Guardian*/
+(53527,0,53527,1,0),
+(53530,53527,53527,2, 0),
+/*Divinity*/
+(63646,0,63646,1,0),
+(63647,63646,63646,2,0),
+(63648,63647,63646,3,0),
+(63649,63648,63646,4,0),
+(63650,63649,63646,5,0),
 /*Devotion Aura*/
 (465,0,465,1,0),
 (10290,465,465,2,0),
@@ -15763,12 +16008,6 @@ INSERT INTO spell_chain VALUES
 (27149,10293,465,8,0),
 (48941,27149,465,9,0),
 (48942,48941,465,10,0),
-/*Divinity*/
-(63646,0,63646,1,0),
-(63647,63646,63646,2,0),
-(63648,63647,63646,3,0),
-(63649,63648,63646,4,0),
-(63650,63649,63646,5,0),
 /*Fire Resistance Aura*/
 (19891,0,19891,1,0),
 (19899,19891,19891,2,0),
@@ -16111,6 +16350,9 @@ INSERT INTO spell_chain VALUES
 /*Frozen Power*/
 (63373,0,63373,1,0),
 (63374,63373,63373,2,0),
+/*Improved Stormstrike*/
+(51521,0,51521,1,0),
+(51522,51521,51521,2,0),
 /*Life Tap*/
 (1454,0,1454,1,0),
 (1455,1454,1454,2,0),
@@ -16308,7 +16550,7 @@ INSERT INTO spell_chain VALUES
 (25454,10414,8042,8,0),
 (49230,25454,8042,9,0),
 (49231,49230,8042,10,0),
-/*Fire Nova Totem*/
+/*Fire Nova*/
 (1535,0,1535,1,0),
 (8498,1535,1535,2,0),
 (8499,8498,1535,3,0),
@@ -16494,6 +16736,10 @@ INSERT INTO spell_chain VALUES
 (26982,26981,774,13,0),
 (48440,26982,774,14,0),
 (48441,48440,774,15,0),
+/*Revitalize*/
+(48539,0,48539,1,0),
+(48544,48539,48539,2,0),
+(48545,48544,48539,3,0),
 /*Revive*/
 (50769,0,50769,1,0),
 (50768,50769,50769,2,0),
@@ -16911,9 +17157,9 @@ INSERT INTO spell_chain VALUES
 (25392,21564,21562,3,0),
 (48162,25392,21562,4,0),
 /*Prayer of Spirit*/
-(27681,0,27681,1,14752),
-(32999,27681,27681,2,0),
-(48074,32999,27681,3,0),
+(27681,14752,14752,2,0),
+(32999,27681,14752,3,0),
+(48074,32999,14752,4,0),
 /*Rapture*/
 (47535,0,47535,1,0),
 (47536,47535,47535,2,0),
@@ -16922,6 +17168,16 @@ INSERT INTO spell_chain VALUES
 (9484,0,9484,1,0),
 (9485,9484,9484,2,0),
 (10955,9485,9484,3,0),
+/*------------------
+--(654)Pet - Bat
+------------------*/
+/* Pin */
+(50519,0,50519,1,0),
+(53564,50519,50519,2,0),
+(53565,53564,50519,3,0),
+(53566,53565,50519,4,0),
+(53567,53566,50519,5,0),
+(53568,53567,50519,6,0),
 /*------------------
 --(654)Pet-Hyena
 ------------------*/
@@ -17009,6 +17265,16 @@ INSERT INTO spell_chain VALUES
 (53596,53594,50274,4,0),
 (53597,53596,50274,5,0),
 (53598,53597,50274,6,0),
+/*------------------
+--(767)Pet - Ravager
+------------------*/
+/*Ravage*/
+(50518,0,50518,1,0),
+(53558,50518,50518,2,0),
+(53559,53558,50518,3,0),
+(53560,53559,50518,4,0),
+(53561,53560,50518,5,0),
+(53562,53561,50518,6,0),
 /*------------------
 --(768)Pet-Serpent
 ------------------*/
@@ -17115,6 +17381,14 @@ INSERT INTO spell_chain VALUES
 (51423,49020,49020,2,0),
 (51424,51423,49020,3,0),
 (51425,51424,49020,4,0),
+/*Rime*/
+(49188,0,49188,1,0),
+(56822,49188,49188,2,0),
+(59057,56822,49188,3,0),
+/*Threat of Thassarian*/
+(65661,0,65661,1,0),
+(66191,65661,65661,2,0),
+(66192,66191,65661,3,0),
 /*------------------
 --(772)Unholy
 ------------------*/
@@ -17141,6 +17415,9 @@ INSERT INTO spell_chain VALUES
 (45463,49999,49998,3,0),
 (49923,45463,49998,4,0),
 (49924,49923,49998,5,0),
+/* Desecration */
+(55666,0,55666,1,0),
+(55667,55666,55666,2,0),
 /*Improved Unholy Presence*/
 (50391,0,50391,1,0),
 (50392,50391,50391,2,0),
@@ -17328,7 +17605,6 @@ INSERT INTO `spell_elixir` VALUES
 (17537,0x1),
 (17538,0x1),
 (17539,0x1),
-(17624,0x3),
 (17626,0x3),
 (17627,0x3),
 (17629,0x3),
@@ -17452,6 +17728,7 @@ INSERT INTO `spell_learn_spell` VALUES
 (34769,33388,1),
 (53428,53341,1),
 (53428,53343,1),
+(56815,56816,0),
 (58984,21009,1);
 /*!40000 ALTER TABLE `spell_learn_spell` ENABLE KEYS */;
 UNLOCK TABLES;
@@ -17546,7 +17823,8 @@ INSERT INTO `spell_pet_auras` VALUES
 (23822, 0, 17252, 35703),
 (23823, 0, 17252, 35704),
 (23824, 0, 17252, 35705),
-(23825, 0, 17252, 35706);
+(23825, 0, 17252, 35706),
+(58228, 0, 19668, 57989);
 
 /*!40000 ALTER TABLE `spell_pet_auras` ENABLE KEYS */;
 UNLOCK TABLES;
@@ -17557,7 +17835,7 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `spell_proc_event`;
 CREATE TABLE `spell_proc_event` (
-  `entry` smallint(5) unsigned NOT NULL default '0',
+  `entry` mediumint(8) unsigned NOT NULL default '0',
   `SchoolMask` tinyint(4) NOT NULL default '0',
   `SpellFamilyName` smallint(5) unsigned NOT NULL default '0',
   `SpellFamilyMask0` int(10) unsigned NOT NULL default '0',
@@ -17594,7 +17872,7 @@ INSERT INTO `spell_proc_event` VALUES
 (11095, 0x00000000,  3, 0x00000010, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (11119, 0x00000004,  3, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (11120, 0x00000004,  3, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
-(11129, 0x00000000,  3, 0x00C00017, 0x00000040, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
+(11129, 0x00000004,  3, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (11180, 0x00000010,  3, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (11185, 0x00000000,  3, 0x00000080, 0x00000000, 0x00000000, 0x00050000, 0x00000000, 0.000000, 0.000000,  0),
 (11255, 0x00000000,  3, 0x00004000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
@@ -17723,9 +18001,7 @@ INSERT INTO `spell_proc_event` VALUES
 (18119, 0x00000000,  5, 0x00000000, 0x00800000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (18120, 0x00000000,  5, 0x00000000, 0x00800000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (18820, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00010000, 0.000000, 0.000000,  0),
-(19184, 0x00000000,  9, 0x00000014, 0x00002000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(19387, 0x00000000,  9, 0x00000014, 0x00002000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(19388, 0x00000000,  9, 0x00000014, 0x00002000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
+(19184, 0x00000000,  9, 0x00000010, 0x00002000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (19572, 0x00000000,  9, 0x00800000, 0x00000000, 0x00000000, 0x00004000, 0x00000000, 0.000000, 0.000000,  0),
 (19573, 0x00000000,  9, 0x00800000, 0x00000000, 0x00000000, 0x00004000, 0x00000000, 0.000000, 0.000000,  0),
 (20049, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
@@ -17745,12 +18021,15 @@ INSERT INTO `spell_proc_event` VALUES
 (20215, 0x00000000, 10, 0xC0000000, 0x00010000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (20234, 0x00000000, 10, 0x00008000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (20235, 0x00000000, 10, 0x00008000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(20375, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 7.000000, 0.000000,  0),
+(20335, 0x00000000, 10, 0x00800000, 0x00000000, 0x00000008, 0x00000100, 0x00000000, 0.000000, 100.000000,0),
+(20375, 0x00000001,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  1),
 (20500, 0x00000000,  4, 0x10000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (20501, 0x00000000,  4, 0x10000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (20705, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
+(20784, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (20911, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000070, 0.000000, 0.000000,  0),
 (20925, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000040, 0.000000, 0.000000,  0),
+(21084, 0x00000001,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (21185, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 10),
 (21882, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (21890, 0x00000000,  4, 0x2A764EEF, 0x0000036C, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
@@ -17854,7 +18133,7 @@ INSERT INTO `spell_proc_event` VALUES
 (30805, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (30808, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (30809, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
-(30823, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 10.500000, 0.000000,  0),
+(30823, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 10.500000, 0.000000, 0),
 (30881, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  5),
 (30883, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  5),
 (30884, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  5),
@@ -17863,13 +18142,13 @@ INSERT INTO `spell_proc_event` VALUES
 (30937, 0x00000020,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (31124, 0x00000000,  8, 0x2000000E, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (31126, 0x00000000,  8, 0x2000000E, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(31244, 0x00000000,  8, 0x003E0000, 0x00000009, 0x00000000, 0x00000000, 0x00000004, 0.000000, 0.000000,  0),
-(31245, 0x00000000,  8, 0x003E0000, 0x00000009, 0x00000000, 0x00000000, 0x00000004, 0.000000, 0.000000,  0),
+(31244, 0x00000000,  8, 0x003E0000, 0x00000009, 0x00000000, 0x00000000, 0x00002034, 0.000000, 0.000000,  0),
 (31394, 0x00000020,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (31569, 0x00000000,  3, 0x00010000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (31570, 0x00000000,  3, 0x00010000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (31785, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00008800, 0x00000000, 0.000000, 0.000000,  0),
 (31794, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00010000, 0.000000, 0.000000,  0),
+(31801, 0x00000001,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (31833, 0x00000000, 10, 0x80000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (31835, 0x00000000, 10, 0x80000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (31836, 0x00000000, 10, 0x80000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
@@ -17902,6 +18181,7 @@ INSERT INTO `spell_proc_event` VALUES
 (33191, 0x00000000,  6, 0x00808000, 0x00000400, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (33192, 0x00000000,  6, 0x00808000, 0x00000400, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (33193, 0x00000000,  6, 0x00808000, 0x00000400, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
+(33297, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 45),
 (33299, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00010000, 0.000000, 0.000000,  0),
 (33510, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 5.000000, 0.000000,  0),
 (33648, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
@@ -17919,14 +18199,16 @@ INSERT INTO `spell_proc_event` VALUES
 (34139, 0x00000000, 10, 0x40000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (34258, 0x00000000, 10, 0x00000400, 0x00000008, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (34262, 0x00000000, 10, 0x00800000, 0x00000000, 0x00000000, 0x00000000, 0x00010000, 0.000000, 0.000000,  0),
-(34320, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
+(34320, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000, 45),
 (34355, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  3),
+(34457, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (34497, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (34498, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (34499, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (34500, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (34502, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (34503, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
+(34506, 0x00000000,  9, 0x0007FA01, 0x00801081, 0x08000201, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (34584, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 30),
 (34586, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 1.500000, 0.000000,  0),
 (34598, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 45),
@@ -17947,8 +18229,7 @@ INSERT INTO `spell_proc_event` VALUES
 (35080, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 1.000000, 0.000000, 60),
 (35083, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 60),
 (35086, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 60),
-(35100, 0x00000000,  9, 0x00003001, 0x00000000, 0x00000000, 0x00010140, 0x00000000, 0.000000, 0.000000,  0),
-(35102, 0x00000000,  9, 0x00003001, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
+(35100, 0x00000000,  9, 0x00001000, 0x00000000, 0x00000001, 0x00000100, 0x00000000, 0.000000, 0.000000,  0),
 (35121, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (36096, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000800, 0.000000, 0.000000,  0),
 (36111, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
@@ -17986,10 +18267,11 @@ INSERT INTO `spell_proc_event` VALUES
 (38026, 0x00000001,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000100, 0.000000, 0.000000,  0),
 (38031, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000040, 0.000000, 0.000000,  0),
 (38290, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 1.600000, 0.000000,  0),
+(38299, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 12),
 (38326, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (38327, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (38334, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 60),
-(38347, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
+(38347, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000, 45),
 (38350, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (38394, 0x00000000,  5, 0x00000006, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (38857, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00010000, 0.000000, 0.000000,  0),
@@ -18062,6 +18344,7 @@ INSERT INTO `spell_proc_event` VALUES
 (45243, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (45244, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (45354, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 45),
+(45355, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 45),
 (45481, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 45),
 (45482, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 45),
 (45483, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 45),
@@ -18075,9 +18358,7 @@ INSERT INTO `spell_proc_event` VALUES
 (46854, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (46855, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (46867, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
-(46913, 0x00000000,  4, 0x00000000, 0x00000400, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
-(46914, 0x00000000,  4, 0x00000000, 0x00000400, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
-(46915, 0x00000000,  4, 0x00000000, 0x00000400, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
+(46913, 0x00000000,  4, 0x00000040, 0x00000404, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (46916, 0x00000000,  4, 0x00000000, 0x00000400, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (46951, 0x00000000,  4, 0x00000400, 0x00000040, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (46952, 0x00000000,  0, 0x00000400, 0x00000040, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
@@ -18122,13 +18403,14 @@ INSERT INTO `spell_proc_event` VALUES
 (48516, 0x00000000,  7, 0x00000005, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000, 30),
 (48521, 0x00000000,  7, 0x00000005, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000, 30),
 (48525, 0x00000000,  7, 0x00000005, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000, 30),
+(48539, 0x00000000,  7, 0x00000010, 0x04000000, 0x00000000, 0x00040000, 0x00000000, 0.000000, 0.000000,  0),
 (48833, 0x00000000,  7, 0x00000000, 0x00000440, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (48835, 0x00000000, 10, 0x00000000, 0x00000008, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (48837, 0x00000000, 11, 0x90100000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (48988, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (49018, 0x00000000, 15, 0x01400000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (49137, 0x00000000, 15, 0x00000000, 0x00004000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(49188, 0x00000000, 15, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
+(49188, 0x00000000, 15, 0x00000000, 0x00020000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (49208, 0x00000000, 15, 0x00440000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (49222, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  3),
 (49503, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
@@ -18137,7 +18419,8 @@ INSERT INTO `spell_proc_event` VALUES
 (49530, 0x00000000, 15, 0x01400000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (49622, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 60),
 (49657, 0x00000000, 15, 0x00000000, 0x00004000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(50781, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
+(50781, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  6),
+(50880, 0x00000010, 15, 0x00000000, 0x00000800, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (51123, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (51127, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (51128, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
@@ -18147,6 +18430,7 @@ INSERT INTO `spell_proc_event` VALUES
 (51349, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 10),
 (51352, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 10),
 (51359, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 10),
+(51414, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 45),
 (51466, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (51470, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (51474, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00010000, 0.000000, 0.000000,  0),
@@ -18155,6 +18439,7 @@ INSERT INTO `spell_proc_event` VALUES
 (51483, 0x00000001, 11, 0x20000000, 0x00000000, 0x00000000, 0x00004000, 0x00000000, 0.000000, 0.000000,  0),
 (51485, 0x00000001, 11, 0x20000000, 0x00000000, 0x00000000, 0x00004000, 0x00000000, 0.000000, 0.000000,  0),
 (51486, 0x00000001, 11, 0x20000000, 0x00000000, 0x00000000, 0x00004000, 0x00000000, 0.000000, 0.000000,  0),
+(51521, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  1),
 (51528, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,12.500000, 0.000000,  0),
 (51556, 0x00000000, 11, 0x000000C0, 0x00000000, 0x00000010, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (51557, 0x00000000, 11, 0x000000C0, 0x00000000, 0x00000010, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
@@ -18195,6 +18480,7 @@ INSERT INTO `spell_proc_event` VALUES
 (52127, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  3),
 (52420, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 30),
 (52423, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000020, 0.000000, 0.000000,  0),
+(53527, 0x00000000, 10, 0x00000000, 0x00000000, 0x00000004, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (52795, 0x00000000,  6, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (52797, 0x00000000,  6, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (52798, 0x00000000,  6, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
@@ -18217,15 +18503,10 @@ INSERT INTO `spell_proc_event` VALUES
 (53256, 0x00000000,  9, 0x00000800, 0x00800001, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (53259, 0x00000000,  9, 0x00000800, 0x00800001, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (53260, 0x00000000,  9, 0x00000800, 0x00800001, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
-(53290, 0x00000000,  9, 0x00000800, 0x7FFFFFFF, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
-(53291, 0x00000000,  9, 0x00000800, 0x7FFFFFFF, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
-(53292, 0x00000000,  9, 0x00000800, 0x7FFFFFFF, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
-(53380, 0x00000000, 10, 0x00800000, 0x00020000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
-(53381, 0x00000000, 10, 0x00800000, 0x00020000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
-(53382, 0x00000000, 10, 0x00800000, 0x00020000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
+(53290, 0x00000000,  9, 0x00000800, 0x00000001, 0x00000200, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
+(53380, 0x00000000, 10, 0x00800000, 0x00028000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (53397, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
-(53486, 0x00000000, 10, 0x00800000, 0x00028000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
-(53488, 0x00000000, 10, 0x00800000, 0x00028000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
+(53486, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (53501, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (53502, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (53503, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
@@ -18234,10 +18515,11 @@ INSERT INTO `spell_proc_event` VALUES
 (53553, 0x00000000, 10, 0x00001000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (53569, 0x00000000, 10, 0x00200000, 0x00010000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (53576, 0x00000000, 10, 0x00200000, 0x00010000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
-(53601, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  6),
+(53601, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x000A02A8, 0x00000000, 0.000000, 0.000000,  6),
 (53646, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (53671, 0x00000000, 10, 0x00800000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (53673, 0x00000000, 10, 0x00800000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
+(53817, 0x00000000, 11, 0x000001C3, 0x00008000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (54149, 0x00000000, 10, 0x00200000, 0x00010000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (54151, 0x00000000, 10, 0x00800000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (54154, 0x00000000, 10, 0x00800000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
@@ -18248,22 +18530,23 @@ INSERT INTO `spell_proc_event` VALUES
 (54489, 0x00000000,  0, 0x20000021, 0x00009000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (54490, 0x00000000,  0, 0x20000021, 0x00009000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (54646, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00015400, 0x00000002, 0.000000, 0.000000,  0),
-(54738, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
+(54695, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 45),
+(54707, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 60),
+(54738, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000, 45),
 (54747, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00010000, 0.000000, 0.000000,  0),
 (54749, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00010000, 0.000000, 0.000000,  0),
 (54754, 0x00000000,  7, 0x00000010, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(54841, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
+(54808, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 60),
+(54838, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 45),
+(54841, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  3),
 (54936, 0x00000000, 10, 0x40000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (54937, 0x00000000, 10, 0x80000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (54939, 0x00000000, 10, 0x00008000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
+(55166, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (55380, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 45),
 (55440, 0x00000000, 11, 0x00000040, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (55640, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 45),
 (55666, 0x00000000, 15, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(55667, 0x00000000, 15, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(55668, 0x00000000, 15, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(55669, 0x00000000, 15, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(55670, 0x00000000, 15, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (55677, 0x00000000,  6, 0x00000000, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (55680, 0x00000000,  6, 0x00000200, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (55689, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
@@ -18283,45 +18566,63 @@ INSERT INTO `spell_proc_event` VALUES
 (56612, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (56613, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (56614, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
-(56636, 0x00000000,  4, 0x00000020, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(56637, 0x00000000,  4, 0x00000020, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(56638, 0x00000000,  4, 0x00000020, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
+(56636, 0x00000000,  4, 0x00000020, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  6),
+(56816, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000030, 0.000000, 0.000000,  0),
 (56821, 0x00000000,  8, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
-(56822, 0x00000000, 15, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (56834, 0x00000000, 15, 0x00440000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (56835, 0x00000000, 15, 0x00440000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(57352, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00010154, 0x00000003, 0.000000, 0.000000, 45),
+(57345, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 45),
+(57352, 0x00000000,  0, 0x00000001, 0x00000040, 0x00000000, 0x00010154, 0x00000003, 0.000000, 0.000000, 45),
 (57470, 0x00000000,  6, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (57472, 0x00000000,  6, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
+(57499, 0x00000000,  4, 0x40000001, 0x00010000, 0x00000000, 0x00014000, 0x00000000, 0.000000, 0.000000,  0),
+(57870, 0x00000000,  9, 0x00800000, 0x00000000, 0x00000000, 0x00040000, 0x00000000, 0.000000, 0.000000,  0),
 (57878, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000010, 0.000000, 0.000000,  0),
 (57880, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000010, 0.000000, 0.000000,  0),
 (57881, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000010, 0.000000, 0.000000,  0),
+(57989, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000000, 0.000000, 0.000000,  0),
 (58357, 0x00000000,  4, 0x00000040, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (58364, 0x00000000,  4, 0x00000400, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (58372, 0x00000000,  4, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (58386, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000020, 0.000000, 0.000000,  0),
-(58616, 0x00000000, 15, 0x00040000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
+(58442, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 15),
+(58444, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  5),
+(58597, 0x00000000, 10, 0x40000000, 0x00000000, 0x00000000, 0x00008000, 0x00000000, 0.000000, 100.000000,6),
+(58616, 0x00000000, 15, 0x01000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (58620, 0x00000000, 15, 0x00000000, 0x00004000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (58626, 0x00000000, 15, 0x02000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(58631, 0x00000000, 15, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (58644, 0x00000000, 15, 0x00000000, 0x00000004, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (58647, 0x00000000, 15, 0x00000000, 0x00000004, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(58677, 0x00000000, 15, 0x00002000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
+(58677, 0x00000000, 15, 0x00002000, 0x00000000, 0x00000000, 0x00004000, 0x00000000, 0.000000, 0.000000,  0),
 (58872, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000040, 0.000000, 0.000000,  0),
 (58874, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000040, 0.000000, 0.000000,  0),
-(58901, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
-(59057, 0x00000000, 15, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
+(58901, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000, 45),
 (59176, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (59327, 0x00000000, 15, 0x08000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
+(59345, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 45),
+(59630, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 45),
 (59725, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000800, 0.000000, 0.000000,  0),
+(60061, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 45),
+(60063, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 45),
+(60066, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 45),
 (60132, 0x00000000, 15, 0x00000000, 0x08020000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (60170, 0x00000000,  5, 0x00000006, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (60172, 0x00000000,  5, 0x00040000, 0x00000000, 0x00000000, 0x00000000, 0x00010000, 0.000000, 0.000000,  0),
+(60221, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 45),
+(60301, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 45),
+(60306, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 45),
+(60317, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 45),
 (60436, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 45),
 (60442, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 45),
+(60473, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 45),
+(60482, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 45),
+(60487, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 15),
+(60490, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 45),
 (60493, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 45),
 (60503, 0x00000000,  4, 0x00000004, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(60537, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
+(60519, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 45),
+(60529, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 45),
+(60537, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000, 45),
 (60564, 0x00000000, 11, 0x90100000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (60571, 0x00000000, 11, 0x90100000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (60572, 0x00000000, 11, 0x90100000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
@@ -18338,21 +18639,35 @@ INSERT INTO `spell_proc_event` VALUES
 (60770, 0x00000000, 11, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (60818, 0x00000000, 10, 0x00000000, 0x00000200, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (60826, 0x00000000, 15, 0x01400000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
+(61062, 0x00000000,  3, 0x00000000, 0x00000100, 0x00000000, 0x00004000, 0x00010000, 0.000000, 0.000000,  0),
 (61188, 0x00000000,  5, 0x00000004, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (61257, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x000202A8, 0x00010000, 0.000000, 0.000000,  0),
 (61324, 0x00000000, 10, 0x00000000, 0x00020000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (61345, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (61346, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
-(61356, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
-(61846, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000010, 0.000000, 0.000000,  0),
-(61847, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000010, 0.000000, 0.000000,  0),
+(61356, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x000002A8, 0x00000002, 0.000000, 0.000000, 45),
+(61618, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 45),
+(61846, 0x00000000,  9, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (62600, 0x00000000,  7, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
 (63108, 0x00000000,  5, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (63156, 0x00000000,  0, 0x00000001, 0x00000040, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (63245, 0x00000000,  5, 0x00000100, 0x00800000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
-(63320, 0x00000000,  5, 0x00040000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
+(63320, 0x00000000,  5, 0x00040000, 0x00000000, 0x00008000, 0x00004000, 0x00000001, 0.000000, 0.000000,  0),
+(63373, 0x00000000, 11, 0x80000000, 0x00000000, 0x00000000, 0x00010000, 0x00000000, 0.000000, 0.000000,  0),
+(63534, 0x00000000,  6, 0x00000040, 0x00000000, 0x00000000, 0x00004000, 0x00000000, 0.000000, 0.000000,  0),
+(63625, 0x00000000,  6, 0x02000000, 0x00000000, 0x00000000, 0x00010000, 0x00000000, 0.000000, 0.000000,  0),
 (63730, 0x00000000,  6, 0x00000800, 0x00000004, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
-(64928, 0x00000000, 11, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0);
+(64928, 0x00000000, 11, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0.000000, 0.000000,  0),
+(64976, 0x00000000,  4, 0x00000001, 0x00000000, 0x00000000, 0x00010000, 0x00000000, 0.000000, 0.000000,  0),
+(65661, 0x00000000, 15, 0x00400011 ,0x20020004 ,0x00000000, 0x00000010, 0x00000000, 0.000000, 100.000000,0),
+(64127, 0x00000000,  6, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
+(67228, 0x00000004, 11, 0x00000000, 0x00001000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
+(67353, 0x00000000,  7, 0x00008000, 0x00100500, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
+(67667, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 45),
+(67672, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 50),
+(67702, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 45),
+(67771, 0x00000000,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 45);
+
 /*!40000 ALTER TABLE `spell_proc_event` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -18470,18 +18785,33 @@ CREATE TABLE `spell_threat` (
 LOCK TABLES `spell_threat` WRITE;
 /*!40000 ALTER TABLE `spell_threat` DISABLE KEYS */;
 INSERT INTO `spell_threat` VALUES
+(72,293),
 (78,20),
+(99,42),
 (284,39),
 (285,59),
+(469,40),
+(676,104),
 (770,108),
+(845,10),
+(1160,16),
 (1608,78),
 (1672,180),
 (1715,61),
+(1735,42),
+(2048,70),
 (2139,300),
+(5242,26),
+(6190,26),
+(6192,32),
 (6343,17),
 (6572,155),
+(6673,18),
 (6574,195),
-(6809,89),
+(6807,322),
+(6808,322),
+(6809,322),
+(7369,40),
 (7372,101),
 (7373,141),
 (7379,235),
@@ -18489,10 +18819,18 @@ INSERT INTO `spell_threat` VALUES
 (8198,40),
 (8204,64),
 (8205,96),
-(8972,118),
-(9745,148),
-(9880,178),
-(9881,207),
+(8972,322),
+(9490,42),
+(9745,322),
+(9747,42),
+(9880,322),
+(9881,322),
+(9898,42),
+(11549,40),
+(11550,48),
+(11551,56),
+(11554,30),
+(11555,37),
 (11556,43),
 (11564,98),
 (11565,118),
@@ -18502,6 +18840,8 @@ INSERT INTO `spell_threat` VALUES
 (11581,180),
 (11600,275),
 (11601,315),
+(11608,60),
+(11609,70),
 (11775,395),
 (14921,415),
 (16857,108),
@@ -18520,14 +18860,17 @@ INSERT INTO `spell_threat` VALUES
 (23925,250),
 (24394,580),
 (24583,5),
+(25202,50),
+(25203,55),
 (25231,130),
 (25258,286),
 (25264,215),
 (25269,400),
 (25286,175),
 (25288,355),
-(25289,60),
-(26996,176),
+(25289,62),
+(26996,322),
+(26998,42),
 (27179,54),
 (29704,230),
 (29707,196),
@@ -18537,7 +18880,28 @@ INSERT INTO `spell_threat` VALUES
 (33745,285),
 (33878,129),
 (33986,180),
-(33987,232);
+(33987,232),
+(47436,78),
+(47437,63),
+(47439,60),
+(47440,80),
+(47449,236),
+(47450,259),
+(47487,520),
+(47488,770),
+(47497,101),
+(47498,101),
+(47501,235),
+(47502,260),
+(47519,180),
+(47520,225),
+(48479,322),
+(48480,322),
+(48559,42),
+(48560,42),
+(48567,285),
+(48568,285),
+(57823,500);
 /*!40000 ALTER TABLE `spell_threat` ENABLE KEYS */;
 UNLOCK TABLES;
 

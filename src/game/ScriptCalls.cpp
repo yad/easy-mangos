@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,7 +43,7 @@ bool LoadScriptingModule(char const* libName)
     ScriptsSet testScript=new _ScriptSet;
 
     std::string name = strlen(libName) ? libName : MANGOS_SCRIPT_NAME;
-    name += MANGOS_SCRIPT_EXT;
+    name = MANGOS_SCRIPT_PREFIX + name + MANGOS_SCRIPT_SUFFIX;
 
     testScript->hScriptsLib=MANGOS_LOAD_LIBRARY(name.c_str());
 

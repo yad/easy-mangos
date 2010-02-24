@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -139,33 +139,6 @@ namespace MaNGOS
         void Visit(PlayerMapType &) {}
         void Visit(CorpseMapType &) {}
         void Visit(CreatureMapType &);
-    };
-
-    template<class T>
-        struct MANGOS_DLL_DECL ObjectAccessorNotifier
-    {
-        T *& i_object;
-
-        uint64 i_id;
-        ObjectAccessorNotifier(T * &obj, uint64 id) : i_object(obj), i_id(id)
-        {
-            i_object = NULL;
-        }
-
-        void Visit(GridRefManager<T> &m )
-        {
-            if( i_object == NULL )
-            {
-                GridRefManager<T> *iter = m.find(i_id);
-                if( iter != m.end() )
-                {
-                    assert( iter->second != NULL );
-                    i_object = iter->second;
-                }
-            }
-        }
-
-        template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) {}
     };
 
     struct MANGOS_DLL_DECL PlayerRelocationNotifier
@@ -622,7 +595,7 @@ namespace MaNGOS
                 if(go->GetGOInfo()->spellFocus.focusId != i_focusId)
                     return false;
 
-                float dist = go->GetGOInfo()->spellFocus.dist;
+                float dist = (float)go->GetGOInfo()->spellFocus.dist;
 
                 return go->IsWithinDistInMap(i_unit, dist);
             }
@@ -638,7 +611,7 @@ namespace MaNGOS
             NearestGameObjectFishingHole(WorldObject const& obj, float range) : i_obj(obj), i_range(range) {}
             bool operator()(GameObject* go)
             {
-                if(go->GetGOInfo()->type == GAMEOBJECT_TYPE_FISHINGHOLE && go->isSpawned() && i_obj.IsWithinDistInMap(go, i_range) && i_obj.IsWithinDistInMap(go, go->GetGOInfo()->fishinghole.radius))
+                if(go->GetGOInfo()->type == GAMEOBJECT_TYPE_FISHINGHOLE && go->isSpawned() && i_obj.IsWithinDistInMap(go, i_range) && i_obj.IsWithinDistInMap(go, (float)go->GetGOInfo()->fishinghole.radius))
                 {
                     i_range = i_obj.GetDistance(go);
                     return true;
@@ -719,7 +692,7 @@ namespace MaNGOS
             bool operator()(Unit* u)
             {
                 if(u->isAlive() && u->isInCombat() && !i_obj->IsHostileTo(u) && i_obj->IsWithinDistInMap(u, i_range) &&
-                    (u->isFeared() || u->isCharmed() || u->isFrozen() || u->hasUnitState(UNIT_STAT_STUNNED | UNIT_STAT_CONFUSED | UNIT_STAT_DIED)))
+                    (u->isCharmed() || u->isFrozen() || u->hasUnitState(UNIT_STAT_CAN_NOT_REACT)))
                 {
                     return true;
                 }
@@ -737,7 +710,7 @@ namespace MaNGOS
             bool operator()(Unit* u)
             {
                 if(u->isAlive() && u->isInCombat() && !i_obj->IsHostileTo(u) && i_obj->IsWithinDistInMap(u, i_range) &&
-                    !(u->HasAura(i_spell, 0) || u->HasAura(i_spell, 1) || u->HasAura(i_spell, 2)))
+                    !(u->HasAura(i_spell, EFFECT_INDEX_0) || u->HasAura(i_spell, EFFECT_INDEX_1) || u->HasAura(i_spell, EFFECT_INDEX_2)))
                 {
                     return true;
                 }

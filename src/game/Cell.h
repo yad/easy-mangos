@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -40,8 +40,6 @@ enum District
     LOWER_RIGHT_DISTRICT = (LOWER_DISTRICT | RIGHT_DISTRICT),
     ALL_DISTRICT = (UPPER_DISTRICT | LOWER_DISTRICT | LEFT_DISTRICT | RIGHT_DISTRICT | CENTER_DISTRICT)
 };
-
-template<class T> struct CellLock;
 
 struct MANGOS_DLL_DECL CellArea
 {
@@ -160,30 +158,13 @@ struct MANGOS_DLL_DECL Cell
         uint32 All;
     } data;
 
-    template<class LOCK_TYPE, class T, class CONTAINER> void Visit(const CellLock<LOCK_TYPE> &, TypeContainerVisitor<T, CONTAINER> &visitor, Map &) const;
-    template<class LOCK_TYPE, class T, class CONTAINER> void Visit(const CellLock<LOCK_TYPE> &, TypeContainerVisitor<T, CONTAINER> &visitor, Map &m, const WorldObject &obj, float radius) const;
+    template<class T, class CONTAINER> void Visit(const CellPair &cellPair, TypeContainerVisitor<T, CONTAINER> &visitor, Map &) const;
+    template<class T, class CONTAINER> void Visit(const CellPair &cellPair, TypeContainerVisitor<T, CONTAINER> &visitor, Map &m, const WorldObject &obj, float radius) const;
 
     static CellArea CalculateCellArea(const WorldObject &obj, float radius);
 
 private:
-    template<class LOCK_TYPE, class T, class CONTAINER> void VisitCircle(const CellLock<LOCK_TYPE> &, TypeContainerVisitor<T, CONTAINER> &, Map &, const CellPair& , const CellPair& ) const;
+    template<class T, class CONTAINER> void VisitCircle(TypeContainerVisitor<T, CONTAINER> &, Map &, const CellPair& , const CellPair& ) const;
 };
 
-template<class T>
-struct MANGOS_DLL_DECL CellLock
-{
-    const Cell& i_cell;
-    const CellPair &i_cellPair;
-    CellLock(const Cell &c, const CellPair &p) : i_cell(c), i_cellPair(p) {}
-    CellLock(const CellLock<T> &cell) : i_cell(cell.i_cell), i_cellPair(cell.i_cellPair) {}
-    const Cell* operator->(void) const { return &i_cell; }
-    const Cell* operator->(void) { return &i_cell; }
-    operator const Cell &(void) const { return i_cell; }
-    CellLock<T>& operator=(const CellLock<T> &cell)
-    {
-        ~CellLock();
-        new (this) CellLock<T>(cell);
-        return *this;
-    }
-};
 #endif

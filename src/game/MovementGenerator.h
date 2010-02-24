@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,9 +33,14 @@ class MANGOS_DLL_SPEC MovementGenerator
     public:
         virtual ~MovementGenerator();
 
+        // called before adding movement generator to motion stack
         virtual void Initialize(Unit &) = 0;
+        // called aftre remove movement generator from motion stack
         virtual void Finalize(Unit &) = 0;
 
+        // called before lost top position (before push new movement generator above)
+        virtual void Interrupt(Unit &) = 0;
+        // called after return movement generator to top position (after remove above movement generator)
         virtual void Reset(Unit &) = 0;
 
         virtual bool Update(Unit &, const uint32 &time_diff) = 0;
@@ -44,7 +49,12 @@ class MANGOS_DLL_SPEC MovementGenerator
 
         virtual void unitSpeedChanged() { }
 
+        virtual void UpdateFinalDistance(float /*fDistance*/) { }
+
         virtual bool GetDestination(float& /*x*/, float& /*y*/, float& /*z*/) const { return false; }
+
+        // used by Evade code for select point to evade with expected restart default movement
+        virtual bool GetResetPosition(Unit &, float& /*x*/, float& /*y*/, float& /*z*/) { return false; }
 };
 
 template<class T, class D>
@@ -61,6 +71,11 @@ class MANGOS_DLL_SPEC MovementGeneratorMedium : public MovementGenerator
             //u->AssertIsType<T>();
             (static_cast<D*>(this))->Finalize(*((T*)&u));
         }
+        void Interrupt(Unit &u)
+        {
+            //u->AssertIsType<T>();
+            (static_cast<D*>(this))->Interrupt(*((T*)&u));
+        }
         void Reset(Unit &u)
         {
             //u->AssertIsType<T>();
@@ -71,12 +86,21 @@ class MANGOS_DLL_SPEC MovementGeneratorMedium : public MovementGenerator
             //u->AssertIsType<T>();
             return (static_cast<D*>(this))->Update(*((T*)&u), time_diff);
         }
+        bool GetResetPosition(Unit& u, float& x, float& y, float& z)
+        {
+            //u->AssertIsType<T>();
+            return (static_cast<D*>(this))->GetResetPosition(*((T*)&u), x, y, z);
+        }
     public:
         // will not link if not overridden in the generators
         void Initialize(T &u);
         void Finalize(T &u);
+        void Interrupt(T &u);
         void Reset(T &u);
         bool Update(T &u, const uint32 &time_diff);
+
+        // not need always overwrites
+        bool GetResetPosition(T& /*u*/, float& /*x*/, float& /*y*/, float& /*z*/) { return false; }
 };
 
 struct SelectableMovement : public FactoryHolder<MovementGenerator,MovementGeneratorType>

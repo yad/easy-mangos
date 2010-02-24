@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -222,11 +222,11 @@ const uint32 ItemQualityColors[MAX_ITEM_QUALITY] = {
 #define SPELL_ATTR_RANGED                         0x00000002            // 1 All ranged abilites have this flag
 #define SPELL_ATTR_ON_NEXT_SWING_1                0x00000004            // 2 on next swing
 #define SPELL_ATTR_UNK3                           0x00000008            // 3 not set in 3.0.3
-#define SPELL_ATTR_UNK4                           0x00000010            // 4
+#define SPELL_ATTR_UNK4                           0x00000010            // 4 isAbility
 #define SPELL_ATTR_TRADESPELL                     0x00000020            // 5 trade spells, will be added by client to a sublist of profession spell
 #define SPELL_ATTR_PASSIVE                        0x00000040            // 6 Passive spell
-#define SPELL_ATTR_UNK7                           0x00000080            // 7 visible?
-#define SPELL_ATTR_UNK8                           0x00000100            // 8
+#define SPELL_ATTR_UNK7                           0x00000080            // 7 can't be linked in chat?
+#define SPELL_ATTR_UNK8                           0x00000100            // 8 hide created item in tooltip (for effect=24)
 #define SPELL_ATTR_UNK9                           0x00000200            // 9
 #define SPELL_ATTR_ON_NEXT_SWING_2                0x00000400            // 10 on next swing 2
 #define SPELL_ATTR_UNK11                          0x00000800            // 11
@@ -358,7 +358,7 @@ const uint32 ItemQualityColors[MAX_ITEM_QUALITY] = {
 #define SPELL_ATTR_EX4_UNK5                       0x00000020            // 5
 #define SPELL_ATTR_EX4_NOT_STEALABLE              0x00000040            // 6 although such auras might be dispellable, they cannot be stolen
 #define SPELL_ATTR_EX4_UNK7                       0x00000080            // 7
-#define SPELL_ATTR_EX4_UNK8                       0x00000100            // 8
+#define SPELL_ATTR_EX4_STACK_DOT_MODIFIER         0x00000100            // 8 no effect on non DoTs?
 #define SPELL_ATTR_EX4_UNK9                       0x00000200            // 9
 #define SPELL_ATTR_EX4_SPELL_VS_EXTEND_COST       0x00000400            // 10 Rogue Shiv have this flag
 #define SPELL_ATTR_EX4_UNK11                      0x00000800            // 11
@@ -445,10 +445,11 @@ const uint32 ItemQualityColors[MAX_ITEM_QUALITY] = {
 #define SPELL_ATTR_EX6_UNK26                      0x04000000            // 26 not set in 3.0.3
 #define SPELL_ATTR_EX6_UNK27                      0x08000000            // 27 not set in 3.0.3
 #define SPELL_ATTR_EX6_UNK28                      0x10000000            // 28 not set in 3.0.3
-#define SPELL_ATTR_EX6_UNK29                      0x20000000            // 29 not set in 3.0.3
+#define SPELL_ATTR_EX6_NO_DMG_PERCENT_MODS        0x20000000            // 29 do not apply damage percent mods (usually in cases where it has already been applied)
 #define SPELL_ATTR_EX6_UNK30                      0x40000000            // 30 not set in 3.0.3
 #define SPELL_ATTR_EX6_UNK31                      0x80000000            // 31 not set in 3.0.3
 
+#define MAX_TALENT_SPEC_COUNT   2
 #define MAX_GLYPH_SLOT_INDEX    6
 
 enum SheathTypes
@@ -624,7 +625,7 @@ enum SpellEffects
     SPELL_EFFECT_SELF_RESURRECT            = 94,
     SPELL_EFFECT_SKINNING                  = 95,
     SPELL_EFFECT_CHARGE                    = 96,
-    SPELL_EFFECT_97                        = 97,
+    SPELL_EFFECT_SUMMON_ALL_TOTEMS         = 97,
     SPELL_EFFECT_KNOCK_BACK                = 98,
     SPELL_EFFECT_DISENCHANT                = 99,
     SPELL_EFFECT_INEBRIATE                 = 100,
@@ -1067,7 +1068,7 @@ enum Targets
     TARGET_CHAIN_HEAL                  = 45,
     TARGET_SCRIPT_COORDINATES          = 46,
     TARGET_DYNAMIC_OBJECT_FRONT        = 47,
-    TARGET_SUMMON                      = 48,
+    TARGET_DYNAMIC_OBJECT_BEHIND       = 48,
     TARGET_DYNAMIC_OBJECT_LEFT_SIDE    = 49,
     TARGET_DYNAMIC_OBJECT_RIGHT_SIDE   = 50,
     TARGET_AREAEFFECT_CUSTOM_2         = 52,
@@ -2270,13 +2271,15 @@ enum TotemCategory
 
 enum UnitDynFlags
 {
-    UNIT_DYNFLAG_LOOTABLE          = 0x0001,
-    UNIT_DYNFLAG_TRACK_UNIT        = 0x0002,
-    UNIT_DYNFLAG_OTHER_TAGGER      = 0x0004,
-    UNIT_DYNFLAG_ROOTED            = 0x0008,
-    UNIT_DYNFLAG_SPECIALINFO       = 0x0010,
-    UNIT_DYNFLAG_DEAD              = 0x0020,
-    UNIT_DYNFLAG_REFER_A_FRIEND    = 0x0040
+    UNIT_DYNFLAG_NONE                       = 0x0000,
+    UNIT_DYNFLAG_LOOTABLE                   = 0x0001,
+    UNIT_DYNFLAG_TRACK_UNIT                 = 0x0002,
+    UNIT_DYNFLAG_TAPPED                     = 0x0004,       // Lua_UnitIsTapped
+    UNIT_DYNFLAG_TAPPED_BY_PLAYER           = 0x0008,       // Lua_UnitIsTappedByPlayer
+    UNIT_DYNFLAG_SPECIALINFO                = 0x0010,
+    UNIT_DYNFLAG_DEAD                       = 0x0020,
+    UNIT_DYNFLAG_REFER_A_FRIEND             = 0x0040,
+    UNIT_DYNFLAG_TAPPED_BY_ALL_THREAT_LIST  = 0x0080        // Lua_UnitIsTappedByAllThreatList
 };
 
 enum CorpseDynFlags
@@ -2317,8 +2320,8 @@ enum ChatMsg
     CHAT_MSG_OFFICER                = 0x05,
     CHAT_MSG_YELL                   = 0x06,
     CHAT_MSG_WHISPER                = 0x07,
-    CHAT_MSG_WHISPER_INFORM         = 0x08, // WHISPER_FOREIGN?
-    CHAT_MSG_REPLY                  = 0x09, // WHISPER_INFORM?
+    CHAT_MSG_WHISPER_FOREIGN        = 0x08,
+    CHAT_MSG_WHISPER_INFORM         = 0x09,
     CHAT_MSG_EMOTE                  = 0x0A,
     CHAT_MSG_TEXT_EMOTE             = 0x0B,
     CHAT_MSG_MONSTER_SAY            = 0x0C,
@@ -2350,18 +2353,20 @@ enum ChatMsg
     CHAT_MSG_BG_SYSTEM_HORDE        = 0x26,
     CHAT_MSG_RAID_LEADER            = 0x27,
     CHAT_MSG_RAID_WARNING           = 0x28,
-    CHAT_MSG_RAID_BOSS_WHISPER      = 0x29,
-    CHAT_MSG_RAID_BOSS_EMOTE        = 0x2A,
+    CHAT_MSG_RAID_BOSS_EMOTE        = 0x29,
+    CHAT_MSG_RAID_BOSS_WHISPER      = 0x2A,
     CHAT_MSG_FILTERED               = 0x2B,
     CHAT_MSG_BATTLEGROUND           = 0x2C,
     CHAT_MSG_BATTLEGROUND_LEADER    = 0x2D,
     CHAT_MSG_RESTRICTED             = 0x2E,
-    CHAT_MSG_BN                     = 0x2F,
+    CHAT_MSG_BATTLENET              = 0x2F,
     CHAT_MSG_ACHIEVEMENT            = 0x30,
-    CHAT_MSG_GUILD_ACHIEVEMENT      = 0x31
+    CHAT_MSG_GUILD_ACHIEVEMENT      = 0x31,
+    CHAT_MSG_ARENA_POINTS           = 0x32,
+    CHAT_MSG_PARTY_LEADER           = 0x33
 };
 
-#define MAX_CHAT_MSG_TYPE 0x32
+#define MAX_CHAT_MSG_TYPE 0x34
 
 enum ChatLinkColors
 {
@@ -2424,14 +2429,12 @@ enum DiminishingGroup
     DIMINISHING_TRIGGER_STUN,                               // By aura proced stuns, usualy chance on hit talents
     DIMINISHING_CONTROL_ROOT,                               // Immobilizing effects from casted spells
     DIMINISHING_TRIGGER_ROOT,                               // Immobilizing effects from triggered spells like Frostbite
-    DIMINISHING_FEAR_BLIND,                                 // Fears & blind
-    DIMINISHING_CHARM,
-    DIMINISHING_POLYMORPH_GOUGE_SAP,
-    // Warlock Specific
-    DIMINISHING_DEATHCOIL,                                  // Death Coil Diminish only with another Death Coil
-    // Druid Specific
-    DIMINISHING_CYCLONE,                                    // From 2.3.0
     // Shared Class Specific
+    DIMINISHING_FEAR_CHARM_BLIND,                           // Fears & charm and Blind
+    DIMINISHING_DISORIENT,
+    DIMINISHING_HORROR,
+    // Druid Specific
+    DIMINISHING_CYCLONE,
     DIMINISHING_CHEAPSHOT_POUNCE,
     DIMINISHING_DISARM,                                     // From 2.3.0
     DIMINISHING_SILENCE,                                    // From 2.3.0
@@ -2440,37 +2443,6 @@ enum DiminishingGroup
     // Other
     // Don't Diminish, but limit duration to 10s
     DIMINISHING_LIMITONLY
-};
-
-enum SummonType
-{
-    SUMMON_TYPE_CRITTER     = 41,
-    SUMMON_TYPE_GUARDIAN    = 61,
-    SUMMON_TYPE_TOTEM_SLOT1 = 63,
-    SUMMON_TYPE_WILD        = 64,
-    SUMMON_TYPE_POSESSED    = 65,
-    SUMMON_TYPE_DEMON       = 66,
-    SUMMON_TYPE_SUMMON      = 67,
-    SUMMON_TYPE_TOTEM_SLOT2 = 81,
-    SUMMON_TYPE_TOTEM_SLOT3 = 82,
-    SUMMON_TYPE_TOTEM_SLOT4 = 83,
-    SUMMON_TYPE_TOTEM       = 121,
-    SUMMON_TYPE_UNKNOWN3    = 181,
-    SUMMON_TYPE_UNKNOWN4    = 187,
-    SUMMON_TYPE_UNKNOWN1    = 247,
-    SUMMON_TYPE_CRITTER2    = 407,
-    SUMMON_TYPE_CRITTER3    = 307,
-    SUMMON_TYPE_UNKNOWN5    = 409,
-    SUMMON_TYPE_UNKNOWN2    = 427,
-    SUMMON_TYPE_POSESSED2   = 428,
-    SUMMON_TYPE_QUEST_CRITTER = 487,
-    SUMMON_TYPE_QUEST_WILD  = 587,
-    SUMMON_TYPE_INFERNO     = 711,
-    SUMMON_TYPE_GUARDIAN2   = 713,
-    SUMMON_TYPE_GUARDIAN3   = 1161,
-    SUMMON_TYPE_CREATURE    = 1302,
-    SUMMON_TYPE_ELEMENTAL   = 1561,
-    SUMMON_TYPE_FORCE_OF_NATURE = 1562
 };
 
 enum ResponseCodes
@@ -2550,42 +2522,43 @@ enum ResponseCodes
     CHAR_CREATE_CHARACTER_SWAP_FACTION                     = 0x42,
     CHAR_CREATE_CHARACTER_RACE_ONLY                        = 0x43,
     CHAR_CREATE_CHARACTER_GOLD_LIMIT                       = 0x44,
+    CHAR_CREATE_FORCE_LOGIN                                = 0x45,
 
-    CHAR_DELETE_IN_PROGRESS                                = 0x45,
-    CHAR_DELETE_SUCCESS                                    = 0x46,
-    CHAR_DELETE_FAILED                                     = 0x47,
-    CHAR_DELETE_FAILED_LOCKED_FOR_TRANSFER                 = 0x48,
-    CHAR_DELETE_FAILED_GUILD_LEADER                        = 0x49,
-    CHAR_DELETE_FAILED_ARENA_CAPTAIN                       = 0x4A,
+    CHAR_DELETE_IN_PROGRESS                                = 0x46,
+    CHAR_DELETE_SUCCESS                                    = 0x47,
+    CHAR_DELETE_FAILED                                     = 0x48,
+    CHAR_DELETE_FAILED_LOCKED_FOR_TRANSFER                 = 0x49,
+    CHAR_DELETE_FAILED_GUILD_LEADER                        = 0x4A,
+    CHAR_DELETE_FAILED_ARENA_CAPTAIN                       = 0x4B,
 
-    CHAR_LOGIN_IN_PROGRESS                                 = 0x4B,
-    CHAR_LOGIN_SUCCESS                                     = 0x4C,
-    CHAR_LOGIN_NO_WORLD                                    = 0x4D,
-    CHAR_LOGIN_DUPLICATE_CHARACTER                         = 0x4E,
-    CHAR_LOGIN_NO_INSTANCES                                = 0x4F,
-    CHAR_LOGIN_FAILED                                      = 0x50,
-    CHAR_LOGIN_DISABLED                                    = 0x51,
-    CHAR_LOGIN_NO_CHARACTER                                = 0x52,
-    CHAR_LOGIN_LOCKED_FOR_TRANSFER                         = 0x53,
-    CHAR_LOGIN_LOCKED_BY_BILLING                           = 0x54,
+    CHAR_LOGIN_IN_PROGRESS                                 = 0x4C,
+    CHAR_LOGIN_SUCCESS                                     = 0x4D,
+    CHAR_LOGIN_NO_WORLD                                    = 0x4E,
+    CHAR_LOGIN_DUPLICATE_CHARACTER                         = 0x4F,
+    CHAR_LOGIN_NO_INSTANCES                                = 0x50,
+    CHAR_LOGIN_FAILED                                      = 0x51,
+    CHAR_LOGIN_DISABLED                                    = 0x52,
+    CHAR_LOGIN_NO_CHARACTER                                = 0x53,
+    CHAR_LOGIN_LOCKED_FOR_TRANSFER                         = 0x54,
+    CHAR_LOGIN_LOCKED_BY_BILLING                           = 0x55,
 
-    CHAR_NAME_SUCCESS                                      = 0x55,
-    CHAR_NAME_FAILURE                                      = 0x56,
-    CHAR_NAME_NO_NAME                                      = 0x57,
-    CHAR_NAME_TOO_SHORT                                    = 0x58,
-    CHAR_NAME_TOO_LONG                                     = 0x59,
-    CHAR_NAME_INVALID_CHARACTER                            = 0x5A,
-    CHAR_NAME_MIXED_LANGUAGES                              = 0x5B,
-    CHAR_NAME_PROFANE                                      = 0x5C,
-    CHAR_NAME_RESERVED                                     = 0x5D,
-    CHAR_NAME_INVALID_APOSTROPHE                           = 0x5E,
-    CHAR_NAME_MULTIPLE_APOSTROPHES                         = 0x5F,
-    CHAR_NAME_THREE_CONSECUTIVE                            = 0x60,
-    CHAR_NAME_INVALID_SPACE                                = 0x61,
-    CHAR_NAME_CONSECUTIVE_SPACES                           = 0x62,
-    CHAR_NAME_RUSSIAN_CONSECUTIVE_SILENT_CHARACTERS        = 0x63,
-    CHAR_NAME_RUSSIAN_SILENT_CHARACTER_AT_BEGINNING_OR_END = 0x64,
-    CHAR_NAME_DECLENSION_DOESNT_MATCH_BASE_NAME            = 0x65
+    CHAR_NAME_SUCCESS                                      = 0x56,
+    CHAR_NAME_FAILURE                                      = 0x57,
+    CHAR_NAME_NO_NAME                                      = 0x58,
+    CHAR_NAME_TOO_SHORT                                    = 0x59,
+    CHAR_NAME_TOO_LONG                                     = 0x5A,
+    CHAR_NAME_INVALID_CHARACTER                            = 0x5B,
+    CHAR_NAME_MIXED_LANGUAGES                              = 0x5C,
+    CHAR_NAME_PROFANE                                      = 0x5D,
+    CHAR_NAME_RESERVED                                     = 0x5E,
+    CHAR_NAME_INVALID_APOSTROPHE                           = 0x5F,
+    CHAR_NAME_MULTIPLE_APOSTROPHES                         = 0x60,
+    CHAR_NAME_THREE_CONSECUTIVE                            = 0x61,
+    CHAR_NAME_INVALID_SPACE                                = 0x62,
+    CHAR_NAME_CONSECUTIVE_SPACES                           = 0x63,
+    CHAR_NAME_RUSSIAN_CONSECUTIVE_SILENT_CHARACTERS        = 0x64,
+    CHAR_NAME_RUSSIAN_SILENT_CHARACTER_AT_BEGINNING_OR_END = 0x65,
+    CHAR_NAME_DECLENSION_DOESNT_MATCH_BASE_NAME            = 0x66
 };
 
 /// Ban function modes
@@ -2656,19 +2629,32 @@ enum MailResponseResult
 // in fact, these are also used elsewhere
 enum PetTameFailureReason
 {
-    PETTAME_INVALIDCREATURE         = 0,
-    PETTAME_TOOMANY                 = 1,
-    PETTAME_CREATUREALREADYOWNED    = 2,
-    PETTAME_NOTTAMEABLE             = 3,
-    PETTAME_ANOTHERSUMMONACTIVE     = 4,
-    PETTAME_UNITSCANTTAME           = 5,
-    PETTAME_NOPETAVAILABLE          = 6,  // not used in taming
-    PETTAME_INTERNALERROR           = 7,
-    PETTAME_TOOHIGHLEVEL            = 8,
-    PETTAME_DEAD                    = 9,  // not used in taming
-    PETTAME_NOTDEAD                 = 10, // not used in taming
-    PETTAME_CANTCONTROLEXOTIC       = 11, // 3.x
-    PETTAME_UNKNOWNERROR            = 12
+    PETTAME_INVALIDCREATURE         = 1,
+    PETTAME_TOOMANY                 = 2,
+    PETTAME_CREATUREALREADYOWNED    = 3,
+    PETTAME_NOTTAMEABLE             = 4,
+    PETTAME_ANOTHERSUMMONACTIVE     = 5,
+    PETTAME_UNITSCANTTAME           = 6,
+    PETTAME_NOPETAVAILABLE          = 7,                    // not used in taming
+    PETTAME_INTERNALERROR           = 8,
+    PETTAME_TOOHIGHLEVEL            = 9,
+    PETTAME_DEAD                    = 10,                   // not used in taming
+    PETTAME_NOTDEAD                 = 11,                   // not used in taming
+    PETTAME_CANTCONTROLEXOTIC       = 12,                   // 3.x
+    PETTAME_UNKNOWNERROR            = 13
 };
+
+// we need to stick to 1 version or half of the stuff will work for someone
+// others will not and opposite
+// will only support WoW, WoW:TBC and WoW:WotLK 3.3.2 client build 11403...
+
+#define EXPECTED_MANGOSD_CLIENT_BUILD        {11403, 0}
+
+// max supported expansion level in mangosd
+// NOTE: not set it more that supported by targeted client version with all expansions installed
+// account with expansion > client supported will rejected at connection by client
+// because if client receive unsupported expansion level it think
+// that it not have expansion installed and reject
+#define MAX_EXPANSION 2
 
 #endif

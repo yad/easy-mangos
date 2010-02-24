@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,7 +33,8 @@ FleeingMovementGenerator<T>::_setTargetLocation(T &owner)
     if( !&owner )
         return;
 
-    if( owner.hasUnitState(UNIT_STAT_ROOT | UNIT_STAT_STUNNED | UNIT_STAT_DIED) )
+    // ignore in case other no reaction state
+    if (owner.hasUnitState(UNIT_STAT_CAN_NOT_REACT & ~UNIT_STAT_FLEEING))
         return;
 
     if(!_setMoveData(owner))
@@ -43,7 +44,7 @@ FleeingMovementGenerator<T>::_setTargetLocation(T &owner)
     if(!_getPoint(owner, x, y, z))
         return;
 
-    owner.addUnitState(UNIT_STAT_FLEEING);
+    owner.addUnitState(UNIT_STAT_FLEEING_MOVE);
     Traveller<T> traveller(owner);
     i_destinationHolder.SetDestination(traveller, x, y, z);
 }
@@ -83,59 +84,59 @@ FleeingMovementGenerator<T>::_getPoint(T &owner, float &x, float &y, float &z)
                 distance /= 4;
                 break;
             case 3:
-                angle = i_cur_angle + M_PI/4.0f;
+                angle = i_cur_angle + M_PI_F/4.0f;
                 break;
             case 4:
-                angle = i_cur_angle - M_PI/4.0f;
+                angle = i_cur_angle - M_PI_F/4.0f;
                 break;
             case 5:
-                angle = i_cur_angle + M_PI/4.0f;
+                angle = i_cur_angle + M_PI_F/4.0f;
                 distance /= 2;
                 break;
             case 6:
-                angle = i_cur_angle - M_PI/4.0f;
+                angle = i_cur_angle - M_PI_F/4.0f;
                 distance /= 2;
                 break;
             case 7:
-                angle = i_cur_angle + M_PI/2.0f;
+                angle = i_cur_angle + M_PI_F/2.0f;
                 break;
             case 8:
-                angle = i_cur_angle - M_PI/2.0f;
+                angle = i_cur_angle - M_PI_F/2.0f;
                 break;
             case 9:
-                angle = i_cur_angle + M_PI/2.0f;
+                angle = i_cur_angle + M_PI_F/2.0f;
                 distance /= 2;
                 break;
             case 10:
-                angle = i_cur_angle - M_PI/2.0f;
+                angle = i_cur_angle - M_PI_F/2.0f;
                 distance /= 2;
                 break;
             case 11:
-                angle = i_cur_angle + M_PI/4.0f;
+                angle = i_cur_angle + M_PI_F/4.0f;
                 distance /= 4;
                 break;
             case 12:
-                angle = i_cur_angle - M_PI/4.0f;
+                angle = i_cur_angle - M_PI_F/4.0f;
                 distance /= 4;
                 break;
             case 13:
-                angle = i_cur_angle + M_PI/2.0f;
+                angle = i_cur_angle + M_PI_F/2.0f;
                 distance /= 4;
                 break;
             case 14:
-                angle = i_cur_angle - M_PI/2.0f;
+                angle = i_cur_angle - M_PI_F/2.0f;
                 distance /= 4;
                 break;
             case 15:
-                angle = i_cur_angle + M_PI*3/4.0f;
+                angle = i_cur_angle + M_PI_F*3/4.0f;
                 distance /= 2;
                 break;
             case 16:
-                angle = i_cur_angle - M_PI*3/4.0f;
+                angle = i_cur_angle - M_PI_F*3/4.0f;
                 distance /= 2;
                 break;
             case 17:
-                angle = i_cur_angle + M_PI;
+                angle = i_cur_angle + M_PI_F;
                 distance /= 2;
                 break;
         }
@@ -165,8 +166,8 @@ FleeingMovementGenerator<T>::_getPoint(T &owner, float &x, float &y, float &z)
 
             if( !(new_z - z) || distance / fabs(new_z - z) > 1.0f)
             {
-                float new_z_left = _map->GetHeight(temp_x + 1.0f*cos(angle+M_PI/2),temp_y + 1.0f*sin(angle+M_PI/2),z,true);
-                float new_z_right = _map->GetHeight(temp_x + 1.0f*cos(angle-M_PI/2),temp_y + 1.0f*sin(angle-M_PI/2),z,true);
+                float new_z_left = _map->GetHeight(temp_x + 1.0f*cos(angle+M_PI_F/2),temp_y + 1.0f*sin(angle+M_PI_F/2),z,true);
+                float new_z_right = _map->GetHeight(temp_x + 1.0f*cos(angle-M_PI_F/2),temp_y + 1.0f*sin(angle-M_PI_F/2),z,true);
                 if(fabs(new_z_left - new_z) < 1.2f && fabs(new_z_right - new_z) < 1.2f)
                 {
                     x = temp_x;
@@ -231,13 +232,13 @@ FleeingMovementGenerator<T>::_setMoveData(T &owner)
         else
         {
             cur_dist = cur_dist_xyz;
-            angle_to_caster = owner.GetAngle(i_caster_x, i_caster_y) + M_PI;
+            angle_to_caster = owner.GetAngle(i_caster_x, i_caster_y) + M_PI_F;
         }
     }
     else
     {
         cur_dist = cur_dist_xyz;
-        angle_to_caster = owner.GetAngle(i_caster_x, i_caster_y) + M_PI;
+        angle_to_caster = owner.GetAngle(i_caster_x, i_caster_y) + M_PI_F;
     }
 
     // if we too close may use 'path-finding' else just stop
@@ -248,27 +249,27 @@ FleeingMovementGenerator<T>::_setMoveData(T &owner)
 
     if(i_cur_angle == 0.0f && i_last_distance_from_caster == 0.0f) //just started, first time
     {
-        angle = rand_norm()*(1.0f - cur_dist/MIN_QUIET_DISTANCE) * M_PI/3 + rand_norm()*M_PI*2/3;
+        angle = rand_norm_f()*(1.0f - cur_dist/MIN_QUIET_DISTANCE) * M_PI_F/3 + rand_norm_f()*M_PI_F*2/3;
         i_to_distance_from_caster = MIN_QUIET_DISTANCE;
         i_only_forward = true;
     }
     else if(cur_dist < MIN_QUIET_DISTANCE)
     {
-        angle = M_PI/6 + rand_norm()*M_PI*2/3;
-        i_to_distance_from_caster = cur_dist*2/3 + rand_norm()*(MIN_QUIET_DISTANCE - cur_dist*2/3);
+        angle = M_PI_F/6 + rand_norm_f()*M_PI_F*2/3;
+        i_to_distance_from_caster = cur_dist*2/3 + rand_norm_f()*(MIN_QUIET_DISTANCE - cur_dist*2/3);
     }
     else if(cur_dist > MAX_QUIET_DISTANCE)
     {
-        angle = rand_norm()*M_PI/3 + M_PI*2/3;
-        i_to_distance_from_caster = MIN_QUIET_DISTANCE + 2.5f + rand_norm()*(MAX_QUIET_DISTANCE - MIN_QUIET_DISTANCE - 2.5f);
+        angle = rand_norm_f()*M_PI_F/3 + M_PI_F*2/3;
+        i_to_distance_from_caster = MIN_QUIET_DISTANCE + 2.5f + rand_norm_f()*(MAX_QUIET_DISTANCE - MIN_QUIET_DISTANCE - 2.5f);
     }
     else
     {
-        angle = rand_norm()*M_PI;
-        i_to_distance_from_caster = MIN_QUIET_DISTANCE + 2.5f + rand_norm()*(MAX_QUIET_DISTANCE - MIN_QUIET_DISTANCE - 2.5f);
+        angle = rand_norm_f()*M_PI_F;
+        i_to_distance_from_caster = MIN_QUIET_DISTANCE + 2.5f + rand_norm_f()*(MAX_QUIET_DISTANCE - MIN_QUIET_DISTANCE - 2.5f);
     }
 
-    int8 sign = rand_norm() > 0.5f ? 1 : -1;
+    int8 sign = rand_norm_f() > 0.5f ? 1 : -1;
     i_cur_angle = sign*angle + angle_to_caster;
 
     // current distance
@@ -281,8 +282,7 @@ template<class T>
 void
 FleeingMovementGenerator<T>::Initialize(T &owner)
 {
-    if(!&owner)
-        return;
+    owner.addUnitState(UNIT_STAT_FLEEING|UNIT_STAT_FLEEING_MOVE);
 
     _Init(owner);
 
@@ -310,10 +310,7 @@ template<>
 void
 FleeingMovementGenerator<Creature>::_Init(Creature &owner)
 {
-    if(!&owner)
-        return;
-
-    owner.RemoveMonsterMoveFlag(MONSTER_MOVE_WALK);
+    owner.RemoveSplineFlag(SPLINEFLAG_WALKMODE);
     owner.SetTargetGUID(0);
     is_water_ok = owner.canSwim();
     is_land_ok  = owner.canWalk();
@@ -330,31 +327,41 @@ FleeingMovementGenerator<Player>::_Init(Player &)
 template<>
 void FleeingMovementGenerator<Player>::Finalize(Player &owner)
 {
-    owner.clearUnitState(UNIT_STAT_FLEEING);
+    owner.clearUnitState(UNIT_STAT_FLEEING|UNIT_STAT_FLEEING_MOVE);
 }
 
 template<>
 void FleeingMovementGenerator<Creature>::Finalize(Creature &owner)
 {
-    owner.AddMonsterMoveFlag(MONSTER_MOVE_WALK);
-    owner.clearUnitState(UNIT_STAT_FLEEING);
+    owner.AddSplineFlag(SPLINEFLAG_WALKMODE);
+    owner.clearUnitState(UNIT_STAT_FLEEING|UNIT_STAT_FLEEING_MOVE);
 }
 
 template<class T>
-void
-FleeingMovementGenerator<T>::Reset(T &owner)
+void FleeingMovementGenerator<T>::Interrupt(T &owner)
+{
+    // flee state still applied while movegen disabled
+    owner.clearUnitState(UNIT_STAT_FLEEING_MOVE);
+}
+
+template<class T>
+void FleeingMovementGenerator<T>::Reset(T &owner)
 {
     Initialize(owner);
 }
 
 template<class T>
-bool
-FleeingMovementGenerator<T>::Update(T &owner, const uint32 & time_diff)
+bool FleeingMovementGenerator<T>::Update(T &owner, const uint32 & time_diff)
 {
     if( !&owner || !owner.isAlive() )
         return false;
-    if( owner.hasUnitState(UNIT_STAT_ROOT | UNIT_STAT_STUNNED | UNIT_STAT_DIED) )
+
+    // ignore in case other no reaction state
+    if (owner.hasUnitState(UNIT_STAT_CAN_NOT_REACT & ~UNIT_STAT_FLEEING))
+    {
+        owner.clearUnitState(UNIT_STAT_FLEEING_MOVE);
         return true;
+    }
 
     Traveller<T> traveller(owner);
 
@@ -386,6 +393,8 @@ template bool FleeingMovementGenerator<Player>::_getPoint(Player &, float &, flo
 template bool FleeingMovementGenerator<Creature>::_getPoint(Creature &, float &, float &, float &);
 template void FleeingMovementGenerator<Player>::_setTargetLocation(Player &);
 template void FleeingMovementGenerator<Creature>::_setTargetLocation(Creature &);
+template void FleeingMovementGenerator<Player>::Interrupt(Player &);
+template void FleeingMovementGenerator<Creature>::Interrupt(Creature &);
 template void FleeingMovementGenerator<Player>::Reset(Player &);
 template void FleeingMovementGenerator<Creature>::Reset(Creature &);
 template bool FleeingMovementGenerator<Player>::Update(Player &, const uint32 &);
@@ -393,7 +402,7 @@ template bool FleeingMovementGenerator<Creature>::Update(Creature &, const uint3
 
 void TimedFleeingMovementGenerator::Finalize(Unit &owner)
 {
-    owner.clearUnitState(UNIT_STAT_FLEEING);
+    owner.clearUnitState(UNIT_STAT_FLEEING|UNIT_STAT_FLEEING_MOVE);
     if (Unit* victim = owner.getVictim())
     {
         if (owner.isAlive())
@@ -409,8 +418,12 @@ bool TimedFleeingMovementGenerator::Update(Unit & owner, const uint32 & time_dif
     if( !owner.isAlive() )
         return false;
 
-    if( owner.hasUnitState(UNIT_STAT_ROOT | UNIT_STAT_STUNNED | UNIT_STAT_DIED) )
+    // ignore in case other no reaction state
+    if (owner.hasUnitState(UNIT_STAT_CAN_NOT_REACT & ~UNIT_STAT_FLEEING))
+    {
+        owner.clearUnitState(UNIT_STAT_FLEEING_MOVE);
         return true;
+    }
 
     i_totalFleeTime.Update(time_diff);
     if (i_totalFleeTime.Passed())

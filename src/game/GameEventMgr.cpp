@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@
 #include "GameEventMgr.h"
 #include "World.h"
 #include "ObjectMgr.h"
+#include "ObjectDefines.h"
 #include "PoolManager.h"
 #include "ProgressBar.h"
 #include "Language.h"
@@ -49,7 +50,7 @@ uint32 GameEventMgr::NextCheck(uint16 entry) const
 
     // never started event, we return delay before start
     if (mGameEvent[entry].start > currenttime)
-        return (mGameEvent[entry].start - currenttime);
+        return uint32(mGameEvent[entry].start - currenttime);
 
     uint32 delay;
     // in event, we return the end of it
@@ -60,7 +61,7 @@ uint32 GameEventMgr::NextCheck(uint16 entry) const
         delay = (mGameEvent[entry].occurence * MINUTE) - ((currenttime - mGameEvent[entry].start) % (mGameEvent[entry].occurence * MINUTE));
     // In case the end is before next check
     if (mGameEvent[entry].end  < time_t(currenttime + delay))
-        return (mGameEvent[entry].end - currenttime);
+        return uint32(mGameEvent[entry].end - currenttime);
     else
         return delay;
 }
@@ -120,7 +121,7 @@ void GameEventMgr::LoadFromDB()
     uint32 count = 0;
 
     {
-        barGoLink bar( result->GetRowCount() );
+        barGoLink bar( (int)result->GetRowCount() );
         do
         {
             ++count;
@@ -186,7 +187,7 @@ void GameEventMgr::LoadFromDB()
     else
     {
 
-        barGoLink bar( result->GetRowCount() );
+        barGoLink bar( (int)result->GetRowCount() );
         do
         {
             Field *fields = result->Fetch();
@@ -198,7 +199,7 @@ void GameEventMgr::LoadFromDB()
 
             int32 internal_event_id = mGameEvent.size() + event_id - 1;
 
-            if(internal_event_id < 0 || internal_event_id >= mGameEventCreatureGuids.size())
+            if(internal_event_id < 0 || (size_t)internal_event_id >= mGameEventCreatureGuids.size())
             {
                 sLog.outErrorDb("`game_event_creature` game event id (%i) is out of range compared to max event id in `game_event`",event_id);
                 continue;
@@ -232,7 +233,7 @@ void GameEventMgr::LoadFromDB()
     else
     {
 
-        barGoLink bar( result->GetRowCount() );
+        barGoLink bar( (int)result->GetRowCount() );
         do
         {
             Field *fields = result->Fetch();
@@ -244,7 +245,7 @@ void GameEventMgr::LoadFromDB()
 
             int32 internal_event_id = mGameEvent.size() + event_id - 1;
 
-            if(internal_event_id < 0 || internal_event_id >= mGameEventGameobjectGuids.size())
+            if(internal_event_id < 0 || (size_t)internal_event_id >= mGameEventGameobjectGuids.size())
             {
                 sLog.outErrorDb("`game_event_gameobject` game event id (%i) is out of range compared to max event id in `game_event`",event_id);
                 continue;
@@ -280,7 +281,7 @@ void GameEventMgr::LoadFromDB()
     else
     {
 
-        barGoLink bar( result->GetRowCount() );
+        barGoLink bar( (int)result->GetRowCount() );
         do
         {
             Field *fields = result->Fetch();
@@ -337,7 +338,7 @@ void GameEventMgr::LoadFromDB()
     else
     {
 
-        barGoLink bar( result->GetRowCount() );
+        barGoLink bar( (int)result->GetRowCount() );
         do
         {
             Field *fields = result->Fetch();
@@ -381,7 +382,7 @@ void GameEventMgr::LoadFromDB()
     else
     {
 
-        barGoLink bar2( result->GetRowCount() );
+        barGoLink bar2( (int)result->GetRowCount() );
         do
         {
             Field *fields = result->Fetch();
@@ -393,7 +394,7 @@ void GameEventMgr::LoadFromDB()
 
             int32 internal_event_id = mGameEvent.size() + event_id - 1;
 
-            if(internal_event_id < 0 || internal_event_id >= mGameEventPoolIds.size())
+            if (internal_event_id < 0 || (size_t)internal_event_id >= mGameEventPoolIds.size())
             {
                 sLog.outErrorDb("`game_event_pool` game event id (%i) is out of range compared to max event id in `game_event`",event_id);
                 continue;
@@ -480,14 +481,8 @@ void GameEventMgr::UnApplyEvent(uint16 event_id)
 
 void GameEventMgr::ApplyNewEvent(uint16 event_id)
 {
-    switch(sWorld.getConfig(CONFIG_EVENT_ANNOUNCE))
-    {
-        case 0:                                             // disable
-            break;
-        case 1:                                             // announce events
-            sWorld.SendWorldText(LANG_EVENTMESSAGE, mGameEvent[event_id].description.c_str());
-            break;
-    }
+    if (sWorld.getConfig(CONFIG_BOOL_EVENT_ANNOUNCE))
+        sWorld.SendWorldText(LANG_EVENTMESSAGE, mGameEvent[event_id].description.c_str());
 
     sLog.outString("GameEvent %u \"%s\" started.", event_id, mGameEvent[event_id].description.c_str());
     // spawn positive event tagget objects
@@ -505,7 +500,7 @@ void GameEventMgr::GameEventSpawn(int16 event_id)
 {
     int32 internal_event_id = mGameEvent.size() + event_id - 1;
 
-    if(internal_event_id < 0 || internal_event_id >= mGameEventCreatureGuids.size())
+    if (internal_event_id < 0 || (size_t)internal_event_id >= mGameEventCreatureGuids.size())
     {
         sLog.outError("GameEventMgr::GameEventSpawn attempt access to out of range mGameEventCreatureGuids element %i (size: " SIZEFMTD ")",internal_event_id,mGameEventCreatureGuids.size());
         return;
@@ -538,7 +533,7 @@ void GameEventMgr::GameEventSpawn(int16 event_id)
         }
     }
 
-    if(internal_event_id < 0 || internal_event_id >= mGameEventGameobjectGuids.size())
+    if (internal_event_id < 0 || (size_t)internal_event_id >= mGameEventGameobjectGuids.size())
     {
         sLog.outError("GameEventMgr::GameEventSpawn attempt access to out of range mGameEventGameobjectGuids element %i (size: " SIZEFMTD ")",internal_event_id,mGameEventGameobjectGuids.size());
         return;
@@ -572,25 +567,21 @@ void GameEventMgr::GameEventSpawn(int16 event_id)
         }
     }
 
-    if(internal_event_id < 0 || internal_event_id >= mGameEventPoolIds.size())
+    if (internal_event_id < 0 || (size_t)internal_event_id >= mGameEventPoolIds.size())
     {
         sLog.outError("GameEventMgr::GameEventSpawn attempt access to out of range mGameEventPoolIds element %i (size: " SIZEFMTD ")",internal_event_id,mGameEventPoolIds.size());
         return;
     }
 
     for (IdList::iterator itr = mGameEventPoolIds[internal_event_id].begin();itr != mGameEventPoolIds[internal_event_id].end();++itr)
-    {
-        sPoolMgr.SpawnPool(*itr, 0, 0);
-        sPoolMgr.SpawnPool(*itr, 0, TYPEID_GAMEOBJECT);
-        sPoolMgr.SpawnPool(*itr, 0, TYPEID_UNIT);
-    }
+        sPoolMgr.SpawnPool(*itr, true);
 }
 
 void GameEventMgr::GameEventUnspawn(int16 event_id)
 {
     int32 internal_event_id = mGameEvent.size() + event_id - 1;
 
-    if(internal_event_id < 0 || internal_event_id >= mGameEventCreatureGuids.size())
+    if (internal_event_id < 0 || (size_t)internal_event_id >= mGameEventCreatureGuids.size())
     {
         sLog.outError("GameEventMgr::GameEventUnspawn attempt access to out of range mGameEventCreatureGuids element %i (size: " SIZEFMTD ")",internal_event_id,mGameEventCreatureGuids.size());
         return;
@@ -608,7 +599,7 @@ void GameEventMgr::GameEventUnspawn(int16 event_id)
         }
     }
 
-    if(internal_event_id < 0 || internal_event_id >= mGameEventGameobjectGuids.size())
+    if (internal_event_id < 0 || (size_t)internal_event_id >= mGameEventGameobjectGuids.size())
     {
         sLog.outError("GameEventMgr::GameEventUnspawn attempt access to out of range mGameEventGameobjectGuids element %i (size: " SIZEFMTD ")",internal_event_id,mGameEventGameobjectGuids.size());
         return;
@@ -625,7 +616,7 @@ void GameEventMgr::GameEventUnspawn(int16 event_id)
                 pGameobject->AddObjectToRemoveList();
         }
     }
-    if(internal_event_id < 0 || internal_event_id >= mGameEventPoolIds.size())
+    if (internal_event_id < 0 || (size_t)internal_event_id >= mGameEventPoolIds.size())
     {
         sLog.outError("GameEventMgr::GameEventUnspawn attempt access to out of range mGameEventPoolIds element %i (size: " SIZEFMTD ")",internal_event_id,mGameEventPoolIds.size());
         return;
@@ -754,7 +745,7 @@ MANGOS_DLL_SPEC bool IsHolidayActive( HolidayIds id )
     GameEventMgr::ActiveEvents const& ae = sGameEventMgr.GetActiveEventList();
 
     for(GameEventMgr::ActiveEvents::const_iterator itr = ae.begin(); itr != ae.end(); ++itr)
-        if(events[*itr].holiday_id==id)
+        if (events[*itr].holiday_id == id)
             return true;
 
     return false;

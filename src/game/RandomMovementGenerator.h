@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,7 +32,8 @@ class MANGOS_DLL_SPEC RandomMovementGenerator
 
         void _setRandomLocation(T &);
         void Initialize(T &);
-        void Finalize(T &) {}
+        void Finalize(T &);
+        void Interrupt(T &);
         void Reset(T &);
         bool Update(T &, const uint32 &);
         void UpdateMapPosition(uint32 mapid, float &x ,float &y, float &z)
@@ -40,6 +41,8 @@ class MANGOS_DLL_SPEC RandomMovementGenerator
             i_destinationHolder.GetLocationNow(mapid, x,y,z);
         }
         MovementGeneratorType GetMovementGeneratorType() { return RANDOM_MOTION_TYPE; }
+
+        bool GetResetPosition(T&, float& x, float& y, float& z);
     private:
         TimeTrackerSmall i_nextMoveTime;
 

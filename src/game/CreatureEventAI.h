@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -58,6 +58,8 @@ enum EventAI_Type
     EVENT_T_RECEIVE_EMOTE           = 22,                   // EmoteId, Condition, CondValue1, CondValue2
     EVENT_T_BUFFED                  = 23,                   // Param1 = SpellID, Param2 = Number of Time STacked, Param3/4 Repeat Min/Max
     EVENT_T_TARGET_BUFFED           = 24,                   // Param1 = SpellID, Param2 = Number of Time STacked, Param3/4 Repeat Min/Max
+    EVENT_T_SUMMONED_JUST_DIED      = 25,                   // CreatureId, RepeatMin, RepeatMax
+    EVENT_T_SUMMONED_JUST_DESPAWN   = 26,                   // CreatureId, RepeatMin, RepeatMax
 
     EVENT_T_END,
 };
@@ -135,16 +137,6 @@ enum Target
     TARGET_T_ACTION_INVOKER_WPET,
 
     TARGET_T_END
-};
-
-enum CastFlags
-{
-    CAST_INTURRUPT_PREVIOUS     = 0x01,                     //Interrupt any spell casting
-    CAST_TRIGGERED              = 0x02,                     //Triggered (this makes spell cost zero mana and have no cast time)
-    CAST_FORCE_CAST             = 0x04,                     //Forces cast even if creature is out of mana or out of range
-    CAST_NO_MELEE_IF_OOM        = 0x08,                     //Prevents creature from entering melee if out of mana or out of range
-    CAST_FORCE_TARGET_SELF      = 0x10,                     //Forces the target to cast this spell on itself
-    CAST_AURA_NOT_PRESENT       = 0x20,                     //Only casts the spell if the target does not have an aura from the spell
 };
 
 enum EventFlags
@@ -374,7 +366,12 @@ struct CreatureEventAI_Action
         {
             uint32 sheath;
         } set_sheath;
-        // ACTION_T_SET_INVINCIBILITY_HP_LEVEL             = 42
+        // ACTION_T_FORCE_DESPAWN                           = 41
+        struct
+        {
+            uint32 msDelay;
+        } forced_despawn;
+        // ACTION_T_SET_INVINCIBILITY_HP_LEVEL              = 42
         struct
         {
             uint32 hp_level;
@@ -491,12 +488,14 @@ struct CreatureEventAI_Event
             uint32 repeatMax;
         } friendly_buff;
         // EVENT_T_SUMMONED_UNIT                            = 17
+        //EVENT_T_SUMMONED_JUST_DIED                        = 25
+        //EVENT_T_SUMMONED_JUST_DESPAWN                     = 26
         struct
         {
             uint32 creatureId;
             uint32 repeatMin;
             uint32 repeatMax;
-        } summon_unit;
+        } summoned;
         // EVENT_T_QUEST_ACCEPT                             = 19
         // EVENT_T_QUEST_COMPLETE                           = 20
         struct
@@ -587,6 +586,9 @@ class MANGOS_DLL_SPEC CreatureEventAI : public CreatureAI
         void UpdateAI(const uint32 diff);
         bool IsVisible(Unit *) const;
         void ReceiveEmote(Player* pPlayer, uint32 text_emote);
+        void SummonedCreatureJustDied(Creature* unit);
+        void SummonedCreatureDespawn(Creature* unit);
+
         static int Permissible(const Creature *);
 
         bool ProcessEvent(CreatureEventAIHolder& pHolder, Unit* pActionInvoker = NULL);
@@ -594,7 +596,7 @@ class MANGOS_DLL_SPEC CreatureEventAI : public CreatureAI
         inline uint32 GetRandActionParam(uint32 rnd, uint32 param1, uint32 param2, uint32 param3);
         inline int32 GetRandActionParam(uint32 rnd, int32 param1, int32 param2, int32 param3);
         inline Unit* GetTargetByType(uint32 Target, Unit* pActionInvoker);
-        inline Unit* SelectUnit(AttackingTarget target, uint32 position);
+        inline Unit* SelectUnit(AttackingTarget target, uint32 position) const;
 
         void DoScriptText(int32 textEntry, WorldObject* pSource, Unit* target);
         void DoMeleeAttackIfReady();

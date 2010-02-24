@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -54,6 +54,7 @@ class MANGOS_DLL_SPEC PathMovementBase
         uint32 GetCurrentNode() const { return i_currentNode; }
 
         bool GetDestination(float& x, float& y, float& z) const { i_destinationHolder.GetDestination(x,y,z); return true; }
+        bool GetPosition(float& x, float& y, float& z) const { i_destinationHolder.GetLocationNowNoMicroMovement(x,y,z); return true; }
     protected:
         uint32 i_currentNode;
         DestinationHolder< Traveller<T> > i_destinationHolder;
@@ -71,24 +72,15 @@ class MANGOS_DLL_SPEC WaypointMovementGenerator;
 template<>
 class MANGOS_DLL_SPEC WaypointMovementGenerator<Creature>
 : public MovementGeneratorMedium< Creature, WaypointMovementGenerator<Creature> >,
-public PathMovementBase<Creature, WaypointPath*>
+public PathMovementBase<Creature, WaypointPath const*>
 {
     public:
         WaypointMovementGenerator(Creature &) : i_nextMoveTime(0), b_StoppedByPlayer(false) {}
         ~WaypointMovementGenerator() { ClearWaypoints(); }
-        void Initialize(Creature &u)
-        {
-            i_nextMoveTime.Reset(0);                        // TODO: check the lower bound (0 is probably too small)
-            u.StopMoving();
-            LoadPath(u);
-        }
-        void Finalize(Creature &) {}
-        void Reset(Creature &u)
-        {
-            ReloadPath(u);
-            b_StoppedByPlayer = false;
-            i_nextMoveTime.Reset(0);
-        }
+        void Initialize(Creature &u);
+        void Interrupt(Creature &);
+        void Finalize(Creature &);
+        void Reset(Creature &u);
         bool Update(Creature &u, const uint32 &diff);
 
         void MovementInform(Creature &);
@@ -103,11 +95,10 @@ public PathMovementBase<Creature, WaypointPath*>
         bool IsStoppedByPlayer() { return b_StoppedByPlayer; }
         void SetStoppedByPlayer(bool val) { b_StoppedByPlayer = val; }
 
-        // statics
-        static void Initialize(void);
-
         // allow use for overwrite empty implementation
-        bool GetDestination(float& x, float& y, float& z) const { return PathMovementBase<Creature, WaypointPath*>::GetDestination(x,y,z); }
+        bool GetDestination(float& x, float& y, float& z) const { return PathMovementBase<Creature, WaypointPath const*>::GetDestination(x,y,z); }
+
+        bool GetResetPosition(Creature&, float& x, float& y, float& z);
 
     private:
         void ClearWaypoints();
@@ -130,6 +121,7 @@ public PathMovementBase<Player>
         explicit FlightPathMovementGenerator(uint32 id, uint32 startNode = 0) : i_pathId(id) { i_currentNode = startNode; }
         void Initialize(Player &);
         void Finalize(Player &);
+        void Interrupt(Player &) {}
         void Reset(Player &) {}
         bool Update(Player &, const uint32 &);
         MovementGeneratorType GetMovementGeneratorType() { return FLIGHT_MOTION_TYPE; }

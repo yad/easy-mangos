@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -60,7 +60,7 @@ class Weather
         void SetWeather(WeatherType type, float grade);
         /// For which zone is this weather?
         uint32 GetZone() { return m_zone; };
-        bool Update(uint32 diff);
+        bool Update(time_t diff);
     private:
         WeatherState GetWeatherState() const;
         uint32 m_zone;

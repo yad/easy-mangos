@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -55,11 +55,6 @@ class DatabasePostgre : public Database
 
         unsigned long escape_string(char *to, const char *from, unsigned long length);
         using Database::escape_string;
-
-        // must be call before first query in thread
-        void ThreadStart();
-        // must be call before finish thread run
-        void ThreadEnd();
     private:
         ACE_Thread_Mutex mMutex;
         ACE_Based::Thread * tranThread;

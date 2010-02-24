@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@
 #include "Transports.h"
 #include "MapManager.h"
 #include "ObjectMgr.h"
+#include "ObjectDefines.h"
 #include "Path.h"
 
 #include "WorldPacket.h"
@@ -43,7 +44,7 @@ void MapManager::LoadTransports()
         return;
     }
 
-    barGoLink bar( result->GetRowCount() );
+    barGoLink bar( (int)result->GetRowCount() );
 
     do
     {
@@ -486,7 +487,7 @@ bool Transport::RemovePassenger(Player* passenger)
     return true;
 }
 
-void Transport::Update(uint32 /*p_time*/)
+void Transport::Update(time_t /*p_time*/)
 {
     if (m_WayPoints.size() <= 1)
         return;

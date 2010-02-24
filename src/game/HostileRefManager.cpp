@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -103,6 +103,24 @@ void HostileRefManager::deleteReferences()
         HostileReference* nextRef = ref->next();
         ref->removeReference();
         delete ref;
+        ref = nextRef;
+    }
+}
+
+//=================================================
+// delete one reference, defined by faction
+
+void HostileRefManager::deleteReferencesForFaction(uint32 faction)
+{
+    HostileReference* ref = getFirst();
+    while(ref)
+    {
+        HostileReference* nextRef = ref->next();
+        if(ref->getSource()->getOwner()->getFactionTemplateEntry()->faction == faction)
+        {
+            ref->removeReference();
+            delete ref;
+        }
         ref = nextRef;
     }
 }

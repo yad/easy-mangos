@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,6 +34,28 @@ struct SpellEntry;
 #define TIME_INTERVAL_LOOK   5000
 #define VISIBILITY_RANGE    10000
 
+enum CanCastResult
+{
+    CAST_OK                     = 0,
+    CAST_FAIL_IS_CASTING        = 1,
+    CAST_FAIL_OTHER             = 2,
+    CAST_FAIL_TOO_FAR           = 3,
+    CAST_FAIL_TOO_CLOSE         = 4,
+    CAST_FAIL_POWER             = 5,
+    CAST_FAIL_STATE             = 6,
+    CAST_FAIL_TARGET_AURA       = 7
+};
+
+enum CastFlags
+{
+    CAST_INTERRUPT_PREVIOUS     = 0x01,                     //Interrupt any spell casting
+    CAST_TRIGGERED              = 0x02,                     //Triggered (this makes spell cost zero mana and have no cast time)
+    CAST_FORCE_CAST             = 0x04,                     //Forces cast even if creature is out of mana or out of range
+    CAST_NO_MELEE_IF_OOM        = 0x08,                     //Prevents creature from entering melee if out of mana or out of range
+    CAST_FORCE_TARGET_SELF      = 0x10,                     //Forces the target to cast this spell on itself
+    CAST_AURA_NOT_PRESENT       = 0x20,                     //Only casts the spell if the target does not have an aura from the spell
+};
+
 class MANGOS_DLL_SPEC CreatureAI
 {
     public:
@@ -58,6 +80,10 @@ class MANGOS_DLL_SPEC CreatureAI
         // Called at any heal cast/item used (call non implemented)
         virtual void HealBy(Unit * /*healer*/, uint32 /*amount_healed*/) {}
 
+        // Helper functions for cast spell
+        CanCastResult DoCastSpellIfCan(Unit* pTarget, uint32 uiSpell, uint32 uiCastFlags = 0, uint64 uiOriginalCasterGUID = 0);
+        virtual CanCastResult CanCastSpell(Unit* pTarget, const SpellEntry *pSpell, bool isTriggered);
+
         // Called at any Damage to any victim (before damage apply)
         virtual void DamageDeal(Unit * /*done_to*/, uint32 & /*damage*/) {}
 
@@ -69,12 +95,16 @@ class MANGOS_DLL_SPEC CreatureAI
         // Called when the creature is killed
         virtual void JustDied(Unit *) {}
 
+        // Called when the creature summon is killed
+        virtual void SummonedCreatureJustDied(Creature* /*unit*/) {}
+
         // Called when the creature kills a unit
         virtual void KilledUnit(Unit *) {}
 
         // Called when the creature summon successfully other creature
         virtual void JustSummoned(Creature* ) {}
 
+        // Called when the creature summon despawn
         virtual void SummonedCreatureDespawn(Creature* /*unit*/) {}
 
         // Called when hit by a spell
@@ -91,6 +121,9 @@ class MANGOS_DLL_SPEC CreatureAI
 
         // Called at waypoint reached or point movement finished
         virtual void MovementInform(uint32 /*MovementType*/, uint32 /*Data*/) {}
+
+        // Called if a temporary summoned of m_creature reach a move point
+        virtual void SummonedMovementInform(Creature* /*summoned*/, uint32 /*motion_type*/, uint32 /*point_id*/) {}
 
         // Called at text emote receive from player
         virtual void ReceiveEmote(Player* /*pPlayer*/, uint32 /*text_emote*/) {}

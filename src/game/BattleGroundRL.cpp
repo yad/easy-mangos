@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -105,7 +105,7 @@ void BattleGroundRL::HandleKillPlayer(Player *player, Player *killer)
 
 bool BattleGroundRL::HandlePlayerUnderMap(Player *player)
 {
-    player->TeleportTo(GetMapId(),1285.810547,1667.896851,39.957642,player->GetOrientation(),false);
+    player->TeleportTo(GetMapId(),1285.810547f,1667.896851f,39.957642f,player->GetOrientation(),false);
     return true;
 }
 

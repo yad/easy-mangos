@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,6 +31,8 @@
 #include "sockets/Utility.h"
 #include "sockets/Parse.h"
 #include "sockets/Socket.h"
+#include "Auth/Sha1.h"
+#include "ByteBuffer.h"
 
 /// Handle login commands
 class AuthSocket: public TcpSocket
@@ -43,6 +45,8 @@ class AuthSocket: public TcpSocket
 
         void OnAccept();
         void OnRead();
+        void SendProof(Sha1Hash sha);
+        void LoadRealmlist(ByteBuffer &pkt, uint32 acctid);
 
         bool _HandleLogonChallenge();
         bool _HandleLogonProof();

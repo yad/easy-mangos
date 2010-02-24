@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,13 +21,13 @@
 #ifndef _DATABASEMYSQL_H
 #define _DATABASEMYSQL_H
 
+#include "Common.h"
 #include "Database.h"
 #include "Policies/Singleton.h"
 #include "ace/Thread_Mutex.h"
 #include "ace/Guard_T.h"
 
 #ifdef WIN32
-#define FD_SETSIZE 1024
 #include <winsock2.h>
 #include <mysql/mysql.h>
 #else

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,9 +23,8 @@
 #include "Unit.h"
 #include "Util.h"
 
-Vehicle::Vehicle() : Creature(), m_vehicleId(0)
+Vehicle::Vehicle() : Creature(CREATURE_SUBTYPE_VEHICLE), m_vehicleId(0)
 {
-    m_isVehicle = true;
     m_updateFlag = (UPDATEFLAG_LIVING | UPDATEFLAG_HAS_POSITION | UPDATEFLAG_VEHICLE);
 }
 
@@ -82,9 +81,8 @@ bool Vehicle::Create(uint32 guidlow, Map *map, uint32 Entry, uint32 vehicleId, u
 
     CreatureInfo const *ci = GetCreatureInfo();
     setFaction(team == ALLIANCE ? ci->faction_A : ci->faction_H);
-    SetMaxHealth(ci->maxhealth);
+
     SelectLevel(ci);
-    SetHealth(GetMaxHealth());
 
     return true;
 }

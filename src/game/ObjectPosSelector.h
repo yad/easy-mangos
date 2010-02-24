@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -61,7 +61,7 @@ struct ObjectPosSelector
 
         float next_angle = nextUsedPos.first;
         if(nextUsedPos.second.sign * sign < 0)              // last node from diff. list (-pi+alpha)
-            next_angle = 2*M_PI-next_angle;                 // move to positive
+            next_angle = 2.0f*M_PI_F-next_angle;                 // move to positive
 
         return fabs(angle)+angle_step2 <= next_angle;
     }

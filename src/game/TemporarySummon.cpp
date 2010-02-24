@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 #include "CreatureAI.h"
 
 TemporarySummon::TemporarySummon( uint64 summoner ) :
-Creature(), m_type(TEMPSUMMON_TIMED_OR_CORPSE_DESPAWN), m_timer(0), m_lifetime(0), m_summoner(summoner)
+Creature(CREATURE_SUBTYPE_TEMPORARY_SUMMON), m_type(TEMPSUMMON_TIMED_OR_CORPSE_DESPAWN), m_timer(0), m_lifetime(0), m_summoner(summoner)
 {
 }
 
@@ -165,11 +165,10 @@ void TemporarySummon::UnSummon()
 {
     CombatStop();
 
-    Unit* sum = m_summoner ? ObjectAccessor::GetUnit(*this, m_summoner) : NULL;
-    if (sum  && sum->GetTypeId() == TYPEID_UNIT && ((Creature*)sum)->AI())
-    {
-        ((Creature*)sum)->AI()->SummonedCreatureDespawn(this);
-    }
+    if (IS_CREATURE_GUID(GetSummonerGUID()))
+        if(Creature* sum = GetMap()->GetCreature(GetSummonerGUID()))
+            if (sum->AI())
+                sum->AI()->SummonedCreatureDespawn(this);
 
     AddObjectToRemoveList();
 }

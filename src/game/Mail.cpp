@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,6 +16,15 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/**
+ * @addtogroup mailing
+ * @{
+ *
+ * @file Mail.cpp
+ * This file contains the the code needed for MaNGOS to handle mails.
+ *
+ */
+
 #include "Mail.h"
 #include "WorldPacket.h"
 #include "WorldSession.h"
@@ -23,6 +32,7 @@
 #include "Log.h"
 #include "World.h"
 #include "ObjectMgr.h"
+#include "ObjectDefines.h"
 #include "Player.h"
 #include "UpdateMask.h"
 #include "Unit.h"
@@ -31,16 +41,34 @@
 #include "BattleGroundMgr.h"
 #include "Item.h"
 #include "AuctionHouseMgr.h"
-
+/**
+ * Flags that specify special action to be take by the client when displaying this mail.
+ */
 enum MailShowFlags
 {
     MAIL_SHOW_UNK0    = 0x0001,
-    MAIL_SHOW_DELETE  = 0x0002,                             // forced show delete button instead return button
-    MAIL_SHOW_AUCTION = 0x0004,                             // from old comment
-    MAIL_SHOW_UNK2    = 0x0008,                             // unknown, COD will be shown even without that flag
+    MAIL_SHOW_DELETE  = 0x0002,                             ///< forced show of the delete button instead of the return button
+    MAIL_SHOW_AUCTION = 0x0004,                             ///< from old comment
+    MAIL_SHOW_UNK2    = 0x0008,                             ///< unknown, COD will be shown even without that flag
     MAIL_SHOW_RETURN  = 0x0010,
 };
-
+/**
+ * Handles the Packet sent by the client when sending a mail.
+ *
+ * This methods takes the packet sent by the client and performs the following actions:
+ * - Checks whether the mail is valid: i.e. can he send the selected items,
+ *   does he have enough money, etc.
+ * - Creates a MailDraft and adds the needed items, money, cost data.
+ * - Sends the mail.
+ *
+ * Depending on the outcome of the checks performed the player will recieve a different
+ * MailResponseResult.
+ *
+ * @see MailResponseResult
+ * @see SendMailResult()
+ *
+ * @param recv_data the WorldPacket containing the data sent by the client.
+ */
 void WorldSession::HandleSendMail(WorldPacket & recv_data )
 {
     uint64 mailbox, unk3;
@@ -148,7 +176,7 @@ void WorldSession::HandleSendMail(WorldPacket & recv_data )
     }
 
     // check the receiver's Faction...
-    if (!sWorld.getConfig(CONFIG_ALLOW_TWO_SIDE_INTERACTION_MAIL) && pl->GetTeam() != rc_team && GetSecurity() == SEC_PLAYER)
+    if (!sWorld.getConfig(CONFIG_BOOL_ALLOW_TWO_SIDE_INTERACTION_MAIL) && pl->GetTeam() != rc_team && GetSecurity() == SEC_PLAYER)
     {
         pl->SendMailResult(0, MAIL_SEND, MAIL_ERR_NOT_YOUR_TEAM);
         return;
@@ -222,7 +250,7 @@ void WorldSession::HandleSendMail(WorldPacket & recv_data )
             for(uint8 i = 0; i < items_count; ++i)
             {
                 Item* item = items[i];
-                if (GetSecurity() > SEC_PLAYER && sWorld.getConfig(CONFIG_GM_LOG_TRADE))
+                if (GetSecurity() > SEC_PLAYER && sWorld.getConfig(CONFIG_BOOL_GM_LOG_TRADE))
                 {
                     sLog.outCommand(GetAccountId(), "GM %s (Account: %u) mail item: %s (Entry: %u Count: %u) to player: %s (Account: %u)",
                         GetPlayerName(), GetAccountId(), item->GetProto()->Name1, item->GetEntry(), item->GetCount(), receiver.c_str(), rc_account);
@@ -243,7 +271,7 @@ void WorldSession::HandleSendMail(WorldPacket & recv_data )
             needItemDelay = pl->GetSession()->GetAccountId() != rc_account;
         }
 
-        if (money > 0 &&  GetSecurity() > SEC_PLAYER && sWorld.getConfig(CONFIG_GM_LOG_TRADE))
+        if (money > 0 &&  GetSecurity() > SEC_PLAYER && sWorld.getConfig(CONFIG_BOOL_GM_LOG_TRADE))
         {
             sLog.outCommand(GetAccountId(),"GM %s (Account: %u) mail money: %u to player: %s (Account: %u)",
                 GetPlayerName(), GetAccountId(), money, receiver.c_str(), rc_account);
@@ -251,7 +279,7 @@ void WorldSession::HandleSendMail(WorldPacket & recv_data )
     }
 
     // If theres is an item, there is a one hour delivery delay if sent to another account's character.
-    uint32 deliver_delay = needItemDelay ? sWorld.getConfig(CONFIG_MAIL_DELIVERY_DELAY) : 0;
+    uint32 deliver_delay = needItemDelay ? sWorld.getConfig(CONFIG_UINT32_MAIL_DELIVERY_DELAY) : 0;
 
     // will delete item or place to receiver mail list
     draft
@@ -264,7 +292,17 @@ void WorldSession::HandleSendMail(WorldPacket & recv_data )
     CharacterDatabase.CommitTransaction();
 }
 
-//called when mail is read
+/**
+ * Handles the Packet sent by the client when reading a mail.
+ *
+ * This method is called when a client reads a mail that was previously unread.
+ * It will add the MAIL_CHECK_MASK_READ flag to the mail being read.
+ *
+ * @see MailCheckMask
+ *
+ * @param recv_data the packet containing information about the mail the player read.
+ *
+ */
 void WorldSession::HandleMailMarkAsRead(WorldPacket & recv_data )
 {
     uint64 mailbox;
@@ -288,7 +326,14 @@ void WorldSession::HandleMailMarkAsRead(WorldPacket & recv_data )
     }
 }
 
-//called when client deletes mail
+/**
+ * Handles the Packet sent by the client when deleting a mail.
+ *
+ * This method is called when a client deletes a mail in his mailbox.
+ *
+ * @param recv_data The packet containing information about the mail being deleted.
+ *
+ */
 void WorldSession::HandleMailDelete(WorldPacket & recv_data )
 {
     uint64 mailbox;
@@ -316,7 +361,15 @@ void WorldSession::HandleMailDelete(WorldPacket & recv_data )
     }
     pl->SendMailResult(mailId, MAIL_DELETED, MAIL_OK);
 }
-
+/**
+ * Handles the Packet sent by the client when returning a mail to sender.
+ * This method is called when a player chooses to return a mail to its sender.
+ * It will create a new MailDraft and add the items, money, etc. associated with the mail
+ * and then send the mail to the original sender.
+ *
+ * @param recv_data The packet containing information about the mail being returned.
+ *
+ */
 void WorldSession::HandleMailReturnToSender(WorldPacket & recv_data )
 {
     uint64 mailbox;
@@ -374,7 +427,9 @@ void WorldSession::HandleMailReturnToSender(WorldPacket & recv_data )
     pl->SendMailResult(mailId, MAIL_RETURNED_TO_SENDER, MAIL_OK);
 }
 
-//called when player takes item attached in mail
+/**
+ * Handles the packet sent by the client when taking an item from the mail.
+ */
 void WorldSession::HandleMailTakeItem(WorldPacket & recv_data )
 {
     uint64 mailbox;
@@ -419,7 +474,7 @@ void WorldSession::HandleMailTakeItem(WorldPacket & recv_data )
 
             uint32 sender_accId = 0;
 
-            if( GetSecurity() > SEC_PLAYER && sWorld.getConfig(CONFIG_GM_LOG_TRADE) )
+            if( GetSecurity() > SEC_PLAYER && sWorld.getConfig(CONFIG_BOOL_GM_LOG_TRADE) )
             {
                 std::string sender_name;
                 if(receive)
@@ -469,7 +524,9 @@ void WorldSession::HandleMailTakeItem(WorldPacket & recv_data )
     else
         pl->SendMailResult(mailId, MAIL_ITEM_TAKEN, MAIL_ERR_EQUIP_ERROR, msg);
 }
-
+/**
+ * Handles the packet sent by the client when taking money from the mail.
+ */
 void WorldSession::HandleMailTakeMoney(WorldPacket & recv_data )
 {
     uint64 mailbox;
@@ -503,7 +560,10 @@ void WorldSession::HandleMailTakeMoney(WorldPacket & recv_data )
     CharacterDatabase.CommitTransaction();
 }
 
-//called when player lists his received mails
+/**
+ * Handles the packet sent by the client when requesting the current mail list.
+ * It will send a list of all avaible mails in the players mailbox to the client.
+ */
 void WorldSession::HandleGetMailList(WorldPacket & recv_data )
 {
     uint64 mailbox;
@@ -511,10 +571,6 @@ void WorldSession::HandleGetMailList(WorldPacket & recv_data )
 
     if (!GetPlayer()->GetGameObjectIfCanInteractWith(mailbox, GAMEOBJECT_TYPE_MAILBOX))
         return;
-
-    // load players mails, and mailed items
-    if(!_player->m_mailsLoaded)
-        _player->_LoadMail();
 
     // client can't work with packets > max int16 value
     const uint32 maxPacketSize = 32767;
@@ -542,7 +598,7 @@ void WorldSession::HandleGetMailList(WorldPacket & recv_data )
 
         uint8 item_count = (*itr)->items.size();            // max count is MAX_MAIL_ITEMS (12)
 
-        size_t next_mail_size = 2+4+1+8+4*8+((*itr)->subject.size()+1)+1+item_count*(1+4+4+6*3*4+4+4+1+4+4+4);
+        size_t next_mail_size = 2+4+1+((*itr)->messageType == MAIL_NORMAL ? 8 : 4)+4*8+((*itr)->subject.size()+1)+1+item_count*(1+4+4+7*3*4+4+4+4+4+4+4+1);
 
         if(data.wpos()+next_mail_size > maxPacketSize)
         {
@@ -635,7 +691,12 @@ void WorldSession::HandleGetMailList(WorldPacket & recv_data )
     _player->UpdateNextMailTimeAndUnreads();
 }
 
-///this function is called when client needs mail message body, or when player clicks on item which has ITEM_FIELD_ITEM_TEXT_ID > 0
+/**
+ * Handles the packet sent by the client when requesting information about the body of a mail.
+ *
+ * This function is called when client needs mail message body,
+ * or when player clicks on item which has ITEM_FIELD_ITEM_TEXT_ID > 0
+ */
 void WorldSession::HandleItemTextQuery(WorldPacket & recv_data )
 {
     uint32 itemTextId;
@@ -644,7 +705,7 @@ void WorldSession::HandleItemTextQuery(WorldPacket & recv_data )
 
     recv_data >> itemTextId >> mailId >> unk;
 
-    //some check needed, if player has item with guid mailId, or has mail with id mailId
+    ///TODO: some check needed, if player has item with guid mailId, or has mail with id mailId
 
     sLog.outDebug("CMSG_ITEM_TEXT_QUERY itemguid: %u, mailId: %u, unk: %u", itemTextId, mailId, unk);
 
@@ -654,7 +715,13 @@ void WorldSession::HandleItemTextQuery(WorldPacket & recv_data )
     SendPacket(&data);
 }
 
-//used when player copies mail body to his inventory
+/**
+ * Handles the packet sent by the client when he copies the body a mail to his inventory.
+ *
+ * When a player copies the body of a mail to his inventory this method is called. It will create
+ * a new item with the text of the mail and store it in the players inventory (if possible).
+ *
+ */
 void WorldSession::HandleMailCreateTextItem(WorldPacket & recv_data )
 {
     uint64 mailbox;
@@ -670,7 +737,7 @@ void WorldSession::HandleMailCreateTextItem(WorldPacket & recv_data )
     Player *pl = _player;
 
     Mail* m = pl->GetMail(mailId);
-    if(!m || !m->itemTextId && !m->mailTemplateId || m->state == MAIL_STATE_DELETED || m->deliver_time > time(NULL))
+    if (!m || (!m->itemTextId && !m->mailTemplateId) || m->state == MAIL_STATE_DELETED || m->deliver_time > time(NULL))
     {
         pl->SendMailResult(mailId, MAIL_MADE_PERMANENT, MAIL_ERR_INTERNAL_ERROR);
         return;
@@ -722,13 +789,13 @@ void WorldSession::HandleMailCreateTextItem(WorldPacket & recv_data )
     }
 }
 
-//TODO Fix me! ... this void has probably bad condition, but good data are sent
-void WorldSession::HandleQueryNextMailTime(WorldPacket & /*recv_data*/ )
+/**
+ * No idea when this is called.
+ */
+void WorldSession::HandleQueryNextMailTime(WorldPacket & /**recv_data*/ )
 {
+    //TODO Fix me! ... this void has probably bad condition, but good data are sent
     WorldPacket data(MSG_QUERY_NEXT_MAIL_TIME, 8);
-
-    if(!_player->m_mailsLoaded)
-        _player->_LoadMail();
 
     if( _player->unReadMails > 0 )
     {
@@ -753,17 +820,16 @@ void WorldSession::HandleQueryNextMailTime(WorldPacket & /*recv_data*/ )
             switch(m->messageType)
             {
                 case MAIL_AUCTION:
-                    data << uint32(2);
-                    data << uint32(2);
-                    data << uint32(m->stationery);
+                    data << uint32(m->sender);              // auction house id
+                    data << uint32(MAIL_AUCTION);           // message type
                     break;
                 default:
                     data << uint32(0);
                     data << uint32(0);
-                    data << uint32(m->stationery);
                     break;
             }
 
+            data << uint32(m->stationery);
             data << uint32(0xC6000000);                     // float unk, time or something
 
             ++count;
@@ -780,6 +846,12 @@ void WorldSession::HandleQueryNextMailTime(WorldPacket & /*recv_data*/ )
     SendPacket(&data);
 }
 
+/**
+ * Creates a new MailSender object.
+ *
+ * @param sender The object/player sending this mail.
+ * @param stationery The stationary associated with this sender.
+ */
 MailSender::MailSender( Object* sender, MailStationery stationery ) : m_stationery(stationery)
 {
     switch(sender->GetTypeId())
@@ -807,27 +879,47 @@ MailSender::MailSender( Object* sender, MailStationery stationery ) : m_statione
             break;
     }
 }
-
+/**
+ * Creates a new MailSender object from an AuctionEntry.
+ *
+ * @param sender the AuctionEntry from which this mail is generated.
+ */
 MailSender::MailSender( AuctionEntry* sender )
     : m_messageType(MAIL_AUCTION), m_senderId(sender->GetHouseId()), m_stationery(MAIL_STATIONERY_AUCTION)
 {
 }
 
-
+/**
+ * Creates a new MailReceiver object.
+ *
+ * @param receiver The player receiving the mail.
+ */
 MailReceiver::MailReceiver( Player* receiver ) : m_receiver(receiver), m_receiver_lowguid(receiver->GetGUIDLow())
 {
 }
-
+/**
+ * Creates a new MailReceiver object with a specified GUID.
+ *
+ * @param receiver The player receiving the mail.
+ * @param receiver_lowguid The GUID to use instead of the receivers.
+ */
 MailReceiver::MailReceiver( Player* receiver,uint32 receiver_lowguid ) : m_receiver(receiver), m_receiver_lowguid(receiver_lowguid)
 {
     ASSERT(!receiver || receiver->GetGUIDLow() == receiver_lowguid);
 }
-
+/**
+ * Adds an item to the MailDraft.
+ *
+ * @param item The item to be added to the MailDraft.
+ * @returns the MailDraft the item was added to.
+ */
 MailDraft& MailDraft::AddItem( Item* item )
 {
     m_items[item->GetGUIDLow()] = item; return *this;
 }
-
+/**
+ * Prepares the items in a MailDraft.
+ */
 void MailDraft::prepareItems(Player* receiver)
 {
     if (!m_mailTemplateId || !m_mailTemplateItemsNeed)
@@ -853,8 +945,12 @@ void MailDraft::prepareItems(Player* receiver)
         }
     }
 }
-
-void MailDraft::deleteIncludedItems( bool inDB /*= false*/ )
+/**
+ * Deletes the items included in a MailDraft.
+ *
+ * @param inDB A boolean specifying whether the change should be saved to the database or not.
+ */
+void MailDraft::deleteIncludedItems( bool inDB /**= false*/ )
 {
     for(MailItemMap::iterator mailItemIter = m_items.begin(); mailItemIter != m_items.end(); ++mailItemIter)
     {
@@ -868,7 +964,12 @@ void MailDraft::deleteIncludedItems( bool inDB /*= false*/ )
 
     m_items.clear();
 }
-
+/*
+ * Returns a mail to its sender.
+ * @param sender_acc           The id of the account of the sender.
+ * @param sender_guid          The low part of the GUID of the sender.
+ * @param receiver_guid        The low part of the GUID of the reciever.
+ */
 void MailDraft::SendReturnToSender(uint32 sender_acc, uint32 sender_guid, uint32 receiver_guid )
 {
     Player *receiver = sObjectMgr.GetPlayer(MAKE_NEW_GUID(receiver_guid, 0, HIGHGUID_PLAYER));
@@ -904,16 +1005,23 @@ void MailDraft::SendReturnToSender(uint32 sender_acc, uint32 sender_guid, uint32
     }
 
     // If theres is an item, there is a one hour delivery delay.
-    uint32 deliver_delay = needItemDelay ? sWorld.getConfig(CONFIG_MAIL_DELIVERY_DELAY) : 0;
+    uint32 deliver_delay = needItemDelay ? sWorld.getConfig(CONFIG_UINT32_MAIL_DELIVERY_DELAY) : 0;
 
     // will delete item or place to receiver mail list
     SendMailTo(MailReceiver(receiver,receiver_guid), MailSender(MAIL_NORMAL, sender_guid), MAIL_CHECK_MASK_RETURNED, deliver_delay);
 }
-
+/**
+ * Sends a mail.
+ *
+ * @param receiver             The MailReceiver to which this mail is sent.
+ * @param sender               The MailSender from which this mail is originated.
+ * @param checked              The mask used to specify the mail.
+ * @param deliver_delay        The delay after which the mail is delivered in seconds
+ */
 void MailDraft::SendMailTo(MailReceiver const& receiver, MailSender const& sender, MailCheckMask checked, uint32 deliver_delay)
 {
     Player* pReceiver = receiver.GetPlayer();               // can be NULL
-    
+
     if (pReceiver)
         prepareItems(pReceiver);                            // generate mail template items
 
@@ -956,42 +1064,38 @@ void MailDraft::SendMailTo(MailReceiver const& receiver, MailSender const& sende
     {
         pReceiver->AddNewMailDeliverTime(deliver_time);
 
-        if (pReceiver->IsMailsLoaded())
+        Mail *m = new Mail;
+        m->messageID = mailId;
+        m->mailTemplateId = GetMailTemplateId();
+        m->subject = GetSubject();
+        m->itemTextId = GetBodyId();
+        m->money = GetMoney();
+        m->COD = GetCOD();
+
+        for(MailItemMap::const_iterator mailItemIter = m_items.begin(); mailItemIter != m_items.end(); ++mailItemIter)
         {
-            Mail *m = new Mail;
-            m->messageID = mailId;
-            m->mailTemplateId = GetMailTemplateId();
-            m->subject = GetSubject();
-            m->itemTextId = GetBodyId();
-            m->money = GetMoney();
-            m->COD = GetCOD();
-
-            for(MailItemMap::const_iterator mailItemIter = m_items.begin(); mailItemIter != m_items.end(); ++mailItemIter)
-            {
-                Item* item = mailItemIter->second;
-                m->AddItem(item->GetGUIDLow(), item->GetEntry());
-            }
-
-            m->messageType = sender.GetMailMessageType();
-            m->stationery = sender.GetStationery();
-            m->sender = sender.GetSenderId();
-            m->receiver = receiver.GetPlayerGUIDLow();
-            m->expire_time = expire_time;
-            m->deliver_time = deliver_time;
-            m->checked = checked;
-            m->state = MAIL_STATE_UNCHANGED;
-
-            pReceiver->AddMail(m);                           // to insert new mail to beginning of maillist
-
-            if (!m_items.empty())
-            {
-                for(MailItemMap::iterator mailItemIter = m_items.begin(); mailItemIter != m_items.end(); ++mailItemIter)
-                    pReceiver->AddMItem(mailItemIter->second);
-            }
+            Item* item = mailItemIter->second;
+            m->AddItem(item->GetGUIDLow(), item->GetEntry());
         }
-        else if (!m_items.empty())
-            deleteIncludedItems();
+
+        m->messageType = sender.GetMailMessageType();
+        m->stationery = sender.GetStationery();
+        m->sender = sender.GetSenderId();
+        m->receiver = receiver.GetPlayerGUIDLow();
+        m->expire_time = expire_time;
+        m->deliver_time = deliver_time;
+        m->checked = checked;
+        m->state = MAIL_STATE_UNCHANGED;
+
+        pReceiver->AddMail(m);                           // to insert new mail to beginning of maillist
+
+        if (!m_items.empty())
+        {
+            for(MailItemMap::iterator mailItemIter = m_items.begin(); mailItemIter != m_items.end(); ++mailItemIter)
+                pReceiver->AddMItem(mailItemIter->second);
+        }
     }
     else if (!m_items.empty())
         deleteIncludedItems();
 }
+/*! @} */

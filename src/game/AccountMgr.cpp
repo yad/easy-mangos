@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@
 #include "AccountMgr.h"
 #include "Database/DatabaseEnv.h"
 #include "ObjectAccessor.h"
+#include "ObjectDefines.h"
 #include "Player.h"
 #include "Policies/SingletonImp.h"
 #include "Util.h"
@@ -155,17 +156,17 @@ uint32 AccountMgr::GetId(std::string username)
     }
 }
 
-uint32 AccountMgr::GetSecurity(uint32 acc_id)
+AccountTypes AccountMgr::GetSecurity(uint32 acc_id)
 {
     QueryResult *result = loginDatabase.PQuery("SELECT gmlevel FROM account WHERE id = '%u'", acc_id);
     if(result)
     {
-        uint32 sec = (*result)[0].GetUInt32();
+        AccountTypes sec = AccountTypes((*result)[0].GetInt32());
         delete result;
         return sec;
     }
 
-    return 0;
+    return SEC_PLAYER;
 }
 
 bool AccountMgr::GetName(uint32 acc_id, std::string &name)

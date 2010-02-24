@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://www.mangosproject.org/>
+ * Copyright (C) 2005-2010 MaNGOS <http://www.mangosproject.org/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@
 #include "Opcodes.h"
 #include "InstanceSaveMgr.h"
 
-void WorldSession::HandleCalendarGetCalendar(WorldPacket &recv_data)
+void WorldSession::HandleCalendarGetCalendar(WorldPacket &/*recv_data*/)
 {
     sLog.outDebug("WORLD: CMSG_CALENDAR_GET_CALENDAR");     // empty
 

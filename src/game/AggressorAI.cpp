@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -70,7 +70,7 @@ AggressorAI::MoveInLineOfSight(Unit *u)
 
 void AggressorAI::EnterEvadeMode()
 {
-    if( !m_creature->isAlive() )
+    if (!m_creature->isAlive())
     {
         DEBUG_LOG("Creature stopped attacking, he is dead [guid=%u]", m_creature->GetGUIDLow());
         i_victimGuid = 0;
@@ -81,19 +81,19 @@ void AggressorAI::EnterEvadeMode()
 
     Unit* victim = ObjectAccessor::GetUnit(*m_creature, i_victimGuid );
 
-    if( !victim  )
+    if (!victim)
     {
         DEBUG_LOG("Creature stopped attacking, no victim [guid=%u]", m_creature->GetGUIDLow());
     }
-    else if( !victim->isAlive() )
+    else if (!victim->isAlive())
     {
         DEBUG_LOG("Creature stopped attacking, victim is dead [guid=%u]", m_creature->GetGUIDLow());
     }
-    else if( victim->HasStealthAura() )
+    else if (victim->HasStealthAura())
     {
         DEBUG_LOG("Creature stopped attacking, victim is in stealth [guid=%u]", m_creature->GetGUIDLow());
     }
-    else if( victim->isInFlight() )
+    else if (victim->isInFlight())
     {
         DEBUG_LOG("Creature stopped attacking, victim is in flight [guid=%u]", m_creature->GetGUIDLow());
     }
@@ -104,12 +104,12 @@ void AggressorAI::EnterEvadeMode()
         //i_tracker.Reset(TIME_INTERVAL_LOOK);
     }
 
-    if(!m_creature->isCharmed())
+    if (!m_creature->isCharmed())
     {
         m_creature->RemoveAllAuras();
 
-        // Remove TargetedMovementGenerator from MotionMaster stack list, and add HomeMovementGenerator instead
-        if( m_creature->GetMotionMaster()->GetCurrentMovementGeneratorType() == TARGETED_MOTION_TYPE )
+        // Remove ChaseMovementGenerator from MotionMaster stack list, and add HomeMovementGenerator instead
+        if (m_creature->GetMotionMaster()->GetCurrentMovementGeneratorType() == CHASE_MOTION_TYPE)
             m_creature->GetMotionMaster()->MoveTargetedHome();
     }
 
@@ -141,7 +141,7 @@ AggressorAI::UpdateAI(const uint32 /*diff*/)
 bool
 AggressorAI::IsVisible(Unit *pl) const
 {
-    return m_creature->IsWithinDist(pl,sWorld.getConfig(CONFIG_SIGHT_MONSTER))
+    return m_creature->IsWithinDist(pl,sWorld.getConfig(CONFIG_FLOAT_SIGHT_MONSTER))
         && pl->isVisibleForOrDetect(m_creature,m_creature,true);
 }
 

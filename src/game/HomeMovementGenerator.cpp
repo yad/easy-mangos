@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@
 void
 HomeMovementGenerator<Creature>::Initialize(Creature & owner)
 {
-    owner.RemoveMonsterMoveFlag(MONSTER_MOVE_WALK);
+    owner.RemoveSplineFlag(SPLINEFLAG_WALKMODE);
     _setTargetLocation(owner);
 }
 
@@ -39,14 +39,14 @@ HomeMovementGenerator<Creature>::Reset(Creature &)
 void
 HomeMovementGenerator<Creature>::_setTargetLocation(Creature & owner)
 {
-    if( !&owner )
-        return;
-
-    if( owner.hasUnitState(UNIT_STAT_ROOT | UNIT_STAT_STUNNED | UNIT_STAT_DISTRACTED | UNIT_STAT_DIED) )
+    if (owner.hasUnitState(UNIT_STAT_NOT_MOVE))
         return;
 
     float x, y, z;
-    owner.GetRespawnCoord(x, y, z);
+
+    // at apply we can select more nice return points base at current movegen
+    if (owner.GetMotionMaster()->empty() || !owner.GetMotionMaster()->top()->GetResetPosition(owner,x,y,z))
+        owner.GetRespawnCoord(x, y, z);
 
     CreatureTraveller traveller(owner);
 
@@ -63,7 +63,7 @@ HomeMovementGenerator<Creature>::Update(Creature &owner, const uint32& time_diff
 
     if (time_diff > i_travel_timer)
     {
-        owner.AddMonsterMoveFlag(MONSTER_MOVE_WALK);
+        owner.AddSplineFlag(SPLINEFLAG_WALKMODE);
 
         // restore orientation of not moving creature at returning to home
         if(owner.GetDefaultMovementType()==IDLE_MOTION_TYPE)
