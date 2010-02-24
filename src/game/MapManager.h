@@ -109,7 +109,7 @@ class MANGOS_DLL_DECL MapManager : public MaNGOS::Singleton<MapManager, MaNGOS::
             return IsValidMapCoord(loc.mapid,loc.coord_x,loc.coord_y,loc.coord_z,loc.orientation);
         }
 
-        void RemoveAllObjectsInRemoveList();
+        void DoDelayedMovesAndRemoves();
 
         void LoadTransports();
 
