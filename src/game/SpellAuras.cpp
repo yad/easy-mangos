@@ -6265,7 +6265,7 @@ void Aura::HandleShapeshiftBoosts(bool apply)
                         case 33855:
                         case 33856:
                         {
-                            int32 bp = (*i)->GetSpellProto()->CalculateSimpleValue(2);
+                            int32 bp = (*i)->GetSpellProto()->CalculateSimpleValue(EFFECT_INDEX_2);
                             m_target->CastCustomSpell(m_target, 62069, &bp, NULL, NULL, true, NULL, this);
                             break;
                         }

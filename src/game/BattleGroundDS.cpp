@@ -144,7 +144,7 @@ void BattleGroundDS::HandleAreaTrigger(Player *Source, uint32 Trigger)
             Source->GetSession()->SendAreaTriggerMessage("Warning: Unhandled AreaTrigger in Battleground: %u", Trigger);
             break;
     }
-
+}
 bool BattleGroundDS::HandlePlayerUnderMap(Player *player)
 {
     player->TeleportTo(GetMapId(), 1299.046, 784.825, 9.338, 2.422, false);
