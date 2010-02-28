@@ -419,7 +419,7 @@ enum UnitState
     UNIT_STAT_ISOLATED        = 0x00000020,                     // area auras do not affect other players, Aura::HandleAuraModSchoolImmunity
 
     // persistent movement generator state (all time while movement generator applied to unit (independent from top state of movegen)
-    UNIT_STAT_IN_FLIGHT       = 0x00000040,                     // player is in flight mode
+    UNIT_STAT_IN_FLIGHT       = 0x00000040,                     // player is in flight mode (in fact interrupted at far teleport until next map telport landing)
     UNIT_STAT_DISTRACTED      = 0x00000080,                     // DistractedMovementGenerator active
 
     // persistent movement generator state with non-persistent mirror states for stop support
@@ -1052,7 +1052,6 @@ enum ReactiveType
 };
 
 #define MAX_REACTIVE 3
-#define MAX_TOTEM 4
 
 typedef std::set<uint64> GuardianPetList;
 
@@ -1149,7 +1148,8 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         void CombatStop(bool includingCast = false);
         void CombatStopWithPets(bool includingCast = false);
         void StopAttackFaction(uint32 faction_id);
-        Unit* SelectNearbyTarget(Unit* except = NULL) const;
+        Unit* SelectRandomUnfriendlyTarget(Unit* except = NULL, float radius = ATTACK_DISTANCE) const;
+        Unit* SelectRandomFriendlyTarget(Unit* except = NULL, float radius = ATTACK_DISTANCE) const;
         bool hasNegativeAuraWithInterruptFlag(uint32 flag);
         void SendMeleeAttackStop(Unit* victim);
         void SendMeleeAttackStart(Unit* pVictim);
@@ -1469,7 +1469,12 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
 
         Pet* CreateTamedPetFrom(Creature* creatureTarget,uint32 spell_id = 0);
 
-        Totem* GetTotem(uint8 slot) const;
+        uint64 const& GetTotemGUID(TotemSlot slot) const { return m_TotemSlot[slot]; }
+        Totem* GetTotem(TotemSlot slot) const;
+        bool IsAllTotemSlotsUsed() const;
+
+        void _AddTotem(TotemSlot slot, Totem* totem);       // only for call from Totem summon code
+        void _RemoveTotem(Totem* totem);                    // only for call from Totem class
 
         template<typename Func>
         void CallForAllControlledUnits(Func const& func, bool withTotems, bool withGuardians, bool withCharms);
@@ -1561,7 +1566,6 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         void DecreaseCastCounter() { if (m_castCounter) --m_castCounter; }
 
         uint32 m_addDmgOnce;
-        uint64 m_TotemSlot[MAX_TOTEM];
         uint64 m_ObjectSlot[4];
         uint32 m_detectInvisibilityMask;
         uint32 m_invisibilityMask;
@@ -1888,7 +1892,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         float GetCombatRatingReduction(CombatRating cr) const;
         uint32 GetCombatRatingDamageReduction(CombatRating cr, float rate, float cap, uint32 damage) const;
 
-        Unit* _GetTotem(uint8 slot) const;                  // for templated function without include need
+        Unit* _GetTotem(TotemSlot slot) const;              // for templated function without include need
 
         uint32 m_state;                                     // Even derived shouldn't modify
         uint32 m_CombatTimer;
@@ -1909,6 +1913,8 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         ComboPointHolderSet m_ComboPointHolders;
 
         GuardianPetList m_guardianPets;
+
+        uint64 m_TotemSlot[MAX_TOTEM_SLOT];
 };
 
 template<typename Func>
@@ -1926,8 +1932,8 @@ void Unit::CallForAllControlledUnits(Func const& func, bool withTotems, bool wit
 
     if (withTotems)
     {
-        for (int8 i = 0; i < MAX_TOTEM; ++i)
-            if (Unit *totem = _GetTotem(i))
+        for (int i = 0; i < MAX_TOTEM_SLOT; ++i)
+            if (Unit *totem = _GetTotem(TotemSlot(i)))
                 func(totem);
     }
 
@@ -1955,8 +1961,8 @@ bool Unit::CheckAllControlledUnits(Func const& func, bool withTotems, bool withG
 
     if (withTotems)
     {
-        for (int8 i = 0; i < MAX_TOTEM; ++i)
-            if (Unit *totem = _GetTotem(i))
+        for (int i = 0; i < MAX_TOTEM_SLOT; ++i)
+            if (Unit *totem = _GetTotem(TotemSlot(i)))
                 if (func(totem))
                     return true;
     }
