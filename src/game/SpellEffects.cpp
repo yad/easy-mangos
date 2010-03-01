@@ -5706,9 +5706,9 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                    if ( !unitTarget )  // Stoneclaw Totem owner
                        return;
                    // Absorb shield for totems
-                   for(int itr = 0; itr < MAX_TOTEM; ++itr)
+                   for(int itr = 0; itr < 4; ++itr)
                    {
-                       Unit* totem = ObjectAccessor::GetUnit( *unitTarget,  unitTarget->m_TotemSlot[itr]);
+                       Unit* totem = unitTarget->GetTotem(TotemSlot(itr));
                        if( totem )
                            m_caster->CastCustomSpell( totem, 55277, &damage, NULL, NULL, true );
                    }

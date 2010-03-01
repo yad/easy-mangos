@@ -2398,7 +2398,7 @@ void Unit::CalcAbsorbResist(Unit *pVictim,SpellSchoolMask schoolMask, DamageEffe
                         // Trigger cooldown aura
                         pVictim->CastSpell(pVictim, 66233, true);
                         // Calculate heal amount
-                        int32 healAmount = preventDeathSpell->CalculateSimpleValue(1);
+                        int32 healAmount = preventDeathSpell->CalculateSimpleValue(EFFECT_INDEX_1);
                         healAmount = defenseAmount * pVictim->GetMaxHealth() * healAmount / 14000 - pVictim->GetHealth();
                         // Heal if positive value
                         if (healAmount > 0)
@@ -6307,7 +6307,7 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                     if (!triggered_spell_id)
                         return false;
 
-                    basepoints0 = triggerAmount;
+                    basepoints[0] = triggerAmount;
                     target = this;
                     break;
                 }
@@ -6817,7 +6817,7 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                         break;
                     }
 
-                    if (!basepoints0)
+                    if (!basepoints[0])
                         return false;
 
                     damage = int32(damage * basepoints[0] / 100);
@@ -7221,7 +7221,7 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
             if (dummySpell->SpellFamilyFlags & UI64LIT(0x200000))
             {
                 triggered_spell_id = 10444;
-                basepoints0 = int32(triggerAmount * GetAttackTime(BASE_ATTACK) / (100 * IN_MILISECONDS));
+                basepoints[0] = int32(triggerAmount * GetAttackTime(BASE_ATTACK) / (100 * IN_MILISECONDS));
                 break;
             }
             break;
@@ -7388,7 +7388,7 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
             if (dummySpell->Id == 49194)
             {
                 triggered_spell_id = 50536;
-                basepoints0 = triggerAmount * damage / 100;
+                basepoints[0] = triggerAmount * damage / 100;
                 break;
             }
             // Sudden Doom
