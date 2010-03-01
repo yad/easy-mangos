@@ -219,6 +219,7 @@ class Spell
     friend void Unit::SetCurrentCastedSpell( Spell * pSpell );
     public:
 
+        void EffectEmpty(SpellEffectIndex eff_id);
         void EffectNULL(SpellEffectIndex eff_id);
         void EffectUnused(SpellEffectIndex eff_id);
         void EffectDistract(SpellEffectIndex eff_id);
@@ -336,6 +337,7 @@ class Spell
         void EffectSpecCount(SpellEffectIndex eff_id);
         void EffectActivateSpec(SpellEffectIndex eff_id);
         void EffectCastButtons(SpellEffectIndex eff_id);
+        void EffectBind(SpellEffectIndex eff_idx);
 
         Spell( Unit* Caster, SpellEntry const *info, bool triggered, uint64 originalCasterGUID = 0, Spell** triggeringContainer = NULL );
         ~Spell();
