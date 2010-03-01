@@ -327,10 +327,9 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
             GetZoneAndAreaIdByAreaFlag(zoneid,areaid,GetAreaFlag(x,y,z),i_id);
         }
 
-        virtual void MoveAllCreaturesInMoveList();
         virtual void RemoveAllObjectsInRemoveList();
 
-        bool CreatureRespawnRelocation(Creature *c);        // used only in MoveAllCreaturesInMoveList and ObjectGridUnloader
+        bool CreatureRespawnRelocation(Creature *c);        // used only in CreatureRelocation and ObjectGridUnloader
 
         // assert print helper
         bool CheckGridIntegrity(Creature* c, bool moved) const;
@@ -383,9 +382,6 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
         void UpdateObjectVisibility(WorldObject* obj, Cell cell, CellPair cellpair);
         void UpdatePlayerVisibility(Player* player, WorldObject const* viewPoint, Cell cell, CellPair cellpair);
         void UpdateObjectsVisibilityFor(Player* player, WorldObject const* viewPointCell, Cell cell, CellPair cellpair);
-
-        void PlayerRelocationNotify(Player* player, Cell cell, CellPair cellpair);
-        void CreatureRelocationNotify(Creature *creature, Cell newcell, CellPair newval);
 
         void resetMarkedCells() { marked_cells.reset(); }
         bool isCellMarked(uint32 pCellId) { return marked_cells.test(pCellId); }

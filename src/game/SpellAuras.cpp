@@ -966,26 +966,24 @@ bool Aura::IsNeedVisibleSlot(Unit const* caster) const
 {
     bool totemAura = caster && caster->GetTypeId() == TYPEID_UNIT && ((Creature*)caster)->isTotem();
 
-    // passive auras (except totem auras) do not get placed in the slots
-    if (m_isPassive && !totemAura)
-        return false;
-
-    // generic not caster case
-    if (m_target != caster)
-        return true;
-
-    // special area auras case at caster
+    // special area auras cases
     switch(m_spellProto->Effect[GetEffIndex()])
     {
         case SPELL_EFFECT_APPLY_AREA_AURA_ENEMY:
-            return false;
+            return m_target != caster;
+        case SPELL_EFFECT_APPLY_AREA_AURA_PET:
+        case SPELL_EFFECT_APPLY_AREA_AURA_OWNER:
+        case SPELL_EFFECT_APPLY_AREA_AURA_FRIEND:
+        case SPELL_EFFECT_APPLY_AREA_AURA_PARTY:
         case SPELL_EFFECT_APPLY_AREA_AURA_RAID:
-            // not sure is totemAura  need, just preserve old code results
-            return totemAura || m_modifier.m_auraname != SPELL_AURA_NONE;
-        default: break;
+            // passive auras (except totem auras) do not get placed in caster slot
+            return (m_target != caster || totemAura || !m_isPassive) && m_modifier.m_auraname != SPELL_AURA_NONE;
+        default:
+            break;
     }
 
-    return true;
+    // passive auras (except totem auras) do not get placed in the slots
+    return !m_isPassive || totemAura;
 }
 
 void Aura::_AddAura()
@@ -2235,17 +2233,7 @@ void Aura::TriggerSpell()
                     // Totemic Mastery (Skyshatter Regalia (Shaman Tier 6) - bonus)
                     case 38443:
                     {
-                        bool all = true;
-                        for(int i = 0; i < MAX_TOTEM; ++i)
-                        {
-                            if(!target->m_TotemSlot[i])
-                            {
-                                all = false;
-                                break;
-                            }
-                        }
-
-                        if(all)
+                        if(target->IsAllTotemSlotsUsed())
                             target->CastSpell(target, 38437, true, NULL, this);
                         else
                             target->RemoveAurasDueToSpell(38437);
@@ -2413,6 +2401,11 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                         // root to self part of (root_target->charge->root_self sequence
                         if (Unit* caster = GetCaster())
                             caster->CastSpell(caster, 13138, true, NULL, this);
+                        return;
+                    case 29266:                             // Permanent Feign Death
+                        if (m_target->GetTypeId() == TYPEID_UNIT)
+                            m_target->SetFeignDeath(true);
+
                         return;
                     case 35357:                             // Spawn Feign Death
                         if (m_target->GetTypeId() == TYPEID_UNIT)
@@ -2670,14 +2663,6 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
             // Stop caster Arcane Missle chanelling on death
             if (m_spellProto->SpellFamilyName == SPELLFAMILY_MAGE &&
                 (m_spellProto->SpellFamilyFlags & UI64LIT(0x0000000000000800)))
-            {
-                if (Unit* caster = GetCaster())
-                    caster->InterruptSpell(CURRENT_CHANNELED_SPELL);
-                return;
-            }
-            // Stop caster Penance chanelling on death
-            if (m_spellProto->SpellFamilyName == SPELLFAMILY_PRIEST &&
-                (m_spellProto->SpellFamilyFlags2 & UI64LIT(0x00000080)))
             {
                 if (Unit* caster = GetCaster())
                     caster->InterruptSpell(CURRENT_CHANNELED_SPELL);
@@ -4845,6 +4830,14 @@ void Aura::HandlePeriodicTriggerSpell(bool apply, bool /*Real*/)
                 if (m_removeMode == AURA_REMOVE_BY_DEFAULT && GetEffIndex() + 1 < MAX_EFFECT_INDEX)
                     m_target->CastSpell(m_target, m_spellProto->CalculateSimpleValue(SpellEffectIndex(GetEffIndex()+1)), true);
                 return;
+            case 51912:                                     // Ultra-Advanced Proto-Typical Shortening Blaster
+                if (m_removeMode == AURA_REMOVE_BY_DEFAULT && m_duration <= 0)
+                {
+                    if (Unit* pCaster = GetCaster())
+                        pCaster->CastSpell(m_target, m_spellProto->EffectTriggerSpell[GetEffIndex()], true, NULL, this);
+                }
+
+                return;
             default:
                 break;
         }
@@ -4962,26 +4955,28 @@ void Aura::HandlePeriodicHeal(bool apply, bool /*Real*/)
 {
     m_isPeriodic = apply;
 
-    Unit *caster = GetCaster();
-    if (!caster)
-        return;
+    // For prevent double apply bonuses
+    bool loading = (m_target->GetTypeId() == TYPEID_PLAYER && ((Player*)m_target)->GetSession()->PlayerLoading());
 
-    // Gift of the Naaru
-    switch( m_spellProto->Id )
+    // Custom damage calculation after
+    if (apply)
     {
-        case 28880:
-        case 59542:
-        case 59543:
-        case 59544:
-        case 59545:
-        case 59547:
-        case 59548:
-            {
-                int32 levelHeal = caster->getLevel() * 3 + 7;
-                int32 ap = 0.22f * caster->GetTotalAttackPowerValue(BASE_ATTACK);
-                int32 holy = 0.377f * caster->SpellBaseDamageBonus( GetSpellSchoolMask( m_spellProto ));        
-                m_modifier.m_amount = levelHeal + ( ap > holy ? ap : holy );
-            }
+        if(loading)
+            return;
+
+        Unit *caster = GetCaster();
+        if (!caster)
+            return;
+
+        // Gift of the Naaru (have diff spellfamilies)
+        if (m_spellProto->SpellIconID == 329 && m_spellProto->SpellVisual[0] == 7625)
+        {
+            int32 ap = int32 (0.22f * caster->GetTotalAttackPowerValue(BASE_ATTACK));
+            int32 holy = caster->SpellBaseDamageBonus(GetSpellSchoolMask(m_spellProto))
+                + caster->SpellBaseDamageBonusForVictim(GetSpellSchoolMask(m_spellProto), m_target);
+            holy = int32(holy * 377 / 1000);
+            m_modifier.m_amount += ap > holy ? ap : holy;
+        }
     }
 }
 
@@ -6370,24 +6365,47 @@ void Aura::HandleSpellSpecificBoosts(bool apply, bool last_stack)
                 else
                     return;
             }
-            // Combustion (remove triggered aura stack)
-            else if (m_spellProto->Id == 11129)
+
+            switch(GetId())
             {
-                if(!apply)
-                    spellId1 = 28682;
-                else
+                case 11129:                                 // Combustion (remove triggered aura stack)
+                {
+                    if(!apply)
+                        spellId1 = 28682;
+                    else
+                        return;
+                    break;
+                }
+                case 28682:                                 // Combustion (remove main aura)
+                {
+                    if(!apply)
+                        spellId1 = 11129;
+                    else
+                        return;
+                    break;
+                }
+                case 44401:                                 // Missile Barrage (triggered)
+                case 48108:                                 // Hot Streak (triggered)
+                case 57761:                                 // Fireball! (Brain Freeze triggered)
+                {
+                    // consumed aura
+                    if (!apply && m_removeMode == AURA_REMOVE_BY_DEFAULT && m_duration != 0)
+                    {
+                        Unit* caster = GetCaster();
+                        // Item - Mage T10 2P Bonus
+                        if (!caster || !caster->HasAura(70752))
+                            return;
+
+                        cast_at_remove = true;
+                        spellId1 = 70753;                   // Pushing the Limit
+                    }
+                    else
+                        return;
+                    break;
+                }
+                default:
                     return;
             }
-            // Combustion (remove main aura)
-            else if (m_spellProto->Id == 28682)
-            {
-                if(!apply)
-                    spellId1 = 11129;
-                else
-                    return;
-            }
-            else
-                return;
             break;
         }
         case SPELLFAMILY_WARRIOR:
@@ -6634,9 +6652,148 @@ void Aura::HandleSpellSpecificBoosts(bool apply, bool last_stack)
             switch (GetId())
             {
                 case 49039: spellId1 = 50397; break;        // Lichborne
-                case 48263: spellId1 = 61261; break;        // Frost Presence
-                case 48265: spellId1 = 49772; break;        // Unholy Presence move speed
-                default: return;
+
+                case 48263:                                 // Frost Presence
+                case 48265:                                 // Unholy Presence
+                case 48266:                                 // Blood Presence
+                {
+                    // else part one per 3 pair
+                    if (GetId()==48263 || GetId()==48265)   // Frost Presence or Unholy Presence
+                    {
+                        // Improved Blood Presence
+                        int32 heal_pct = 0;
+                        if (apply)
+                        {
+                            Unit::AuraList const& bloodAuras = m_target->GetAurasByType(SPELL_AURA_DUMMY);
+                            for(Unit::AuraList::const_iterator itr = bloodAuras.begin(); itr != bloodAuras.end(); ++itr)
+                            {
+                                // skip same icon
+                                if ((*itr)->GetSpellProto()->SpellFamilyName == SPELLFAMILY_DEATHKNIGHT &&
+                                    (*itr)->GetSpellProto()->SpellIconID == 2636)
+                                {
+                                    heal_pct = (*itr)->GetModifier()->m_amount;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (heal_pct)
+                            m_target->CastCustomSpell(m_target, 63611, &heal_pct, NULL, NULL, true, NULL, this);
+                        else
+                            m_target->RemoveAurasDueToSpell(63611);
+                    }
+                    else
+                        spellId1 = 63611;                   // Improved Blood Presence, trigger for heal
+
+                    if (GetId()==48263 || GetId()==48266)   // Frost Presence or Blood Presence
+                    {
+                        // Improved Unholy Presence
+                        int32 power_pct = 0;
+                        if (apply)
+                        {
+                            Unit::AuraList const& unholyAuras = m_target->GetAurasByType(SPELL_AURA_DUMMY);
+                            for(Unit::AuraList::const_iterator itr = unholyAuras.begin(); itr != unholyAuras.end(); ++itr)
+                            {
+                                // skip same icon
+                                if ((*itr)->GetSpellProto()->SpellFamilyName == SPELLFAMILY_DEATHKNIGHT &&
+                                    (*itr)->GetSpellProto()->SpellIconID == 2633)
+                                {
+                                    power_pct = (*itr)->GetModifier()->m_amount;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (power_pct)
+                            m_target->CastCustomSpell(m_target, 65095, &power_pct, NULL, NULL, true, NULL, this);
+                        else
+                            m_target->RemoveAurasDueToSpell(65095);
+
+                        if (power_pct || !apply)
+                            spellId2 = 49772;                   // Unholy Presence, speed part
+                    }
+                    else
+                        spellId1 = 49772;                       // Unholy Presence move speed
+
+                    if (GetId()==48265 || GetId()==48266)       // Unholy Presence or Blood Presence
+                    {
+                        // Improved Frost Presence
+                        int32 stamina_pct = 0;
+                        if (apply)
+                        {
+                            Unit::AuraList const& frostAuras = m_target->GetAurasByType(SPELL_AURA_DUMMY);
+                            for(Unit::AuraList::const_iterator itr = frostAuras.begin(); itr != frostAuras.end(); ++itr)
+                            {
+                                // skip same icon
+                                if ((*itr)->GetSpellProto()->SpellFamilyName == SPELLFAMILY_DEATHKNIGHT &&
+                                    (*itr)->GetSpellProto()->SpellIconID == 2632)
+                                {
+                                    stamina_pct = (*itr)->GetModifier()->m_amount;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (stamina_pct)
+                            m_target->CastCustomSpell(m_target, 61261, &stamina_pct, NULL, NULL, true, NULL, this);
+                        else
+                            m_target->RemoveAurasDueToSpell(61261);
+                    }
+                    else
+                        spellId1 = 61261;                   // Frost Presence, stamina
+                    break;
+                }
+            }
+
+            // Improved Blood Presence
+            if (GetSpellProto()->SpellIconID == 2632 && GetModifier()->m_auraname==SPELL_AURA_DUMMY)
+            {
+                // if presence active: Frost Presence or Unholy Presence
+                if (apply && (m_target->HasAura(48263) || m_target->HasAura(48265)))
+                {
+                    int32 bp = GetModifier()->m_amount;
+                    m_target->CastCustomSpell(m_target, 63611, &bp, NULL, NULL, true, NULL, this);
+                }
+                else
+                    m_target->RemoveAurasDueToSpell(63611);
+                return;
+            }
+
+            // Improved Frost Presence
+            if (GetSpellProto()->SpellIconID == 2636 && GetModifier()->m_auraname==SPELL_AURA_DUMMY)
+            {
+                // if presence active: Unholy Presence or Blood Presence
+                if (apply && (m_target->HasAura(48265) || m_target->HasAura(48266)))
+                {
+                    int32 bp = GetModifier()->m_amount;
+                    m_target->CastCustomSpell(m_target, 61261, &bp, NULL, NULL, true, NULL, this);
+                }
+                else
+                    m_target->RemoveAurasDueToSpell(61261);
+                return;
+            }
+
+            // Improved Unholy Presence
+            if (GetSpellProto()->SpellIconID == 2633 && GetModifier()->m_auraname==SPELL_AURA_DUMMY)
+            {
+                // if presence active: Frost Presence or Blood Presence
+                if (apply && (m_target->HasAura(48263) || m_target->HasAura(48266)))
+                {
+                    int32 bp = GetModifier()->m_amount;
+                    m_target->CastCustomSpell(m_target, 61261, &bp, NULL, NULL, true, NULL, this);
+
+                    spellId1 = 49772;
+                }
+                else
+                {
+                    m_target->RemoveAurasDueToSpell(61261);
+
+                    if (!apply)
+                        spellId1 = 49772;
+                    else
+                        return;
+                }
+                break;
             }
             break;
         }
@@ -7295,7 +7452,14 @@ void Aura::PeriodicTick()
                 {
                     int32 ticks = GetAuraMaxTicks();
                     int32 remainingTicks = ticks - GetAuraTicks();
-                    pdamage = int32(pdamage) + int32(amount)*ticks*(-6+2*remainingTicks)/100;
+                    int32 addition = int32(amount)*ticks*(-6+2*remainingTicks)/100;
+
+                    if (GetAuraTicks() != 1)
+                        // Item - Druid T10 Restoration 2P Bonus
+                        if (Aura *aura = pCaster->GetAura(70658, EFFECT_INDEX_0))
+                            addition += abs(int32((addition * aura->GetModifier()->m_amount) / ((ticks-1)* 100)));
+
+                    pdamage = int32(pdamage) + addition;
                 }
             }
 

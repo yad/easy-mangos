@@ -1138,6 +1138,30 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     DoCreateItem(eff_idx, newitemid);
                     return;
                 }
+                case 42287:                                 // Salvage Wreckage
+                {
+                    if (m_caster->GetTypeId() != TYPEID_PLAYER)
+                        return;
+
+                    if (roll_chance_i(66))
+                        m_caster->CastSpell(m_caster, 42289, true, m_CastItem);
+                    else
+                        m_caster->CastSpell(m_caster, 42288, true);
+
+                    return;
+                }
+                case 43036:                                 // Dismembering Corpse
+                {
+                    if (!unitTarget || m_caster->GetTypeId() != TYPEID_PLAYER)
+                        return;
+
+                    if (unitTarget->HasAura(43059, EFFECT_INDEX_0))
+                        return;
+
+                    unitTarget->CastSpell(m_caster, 43037, true);
+                    unitTarget->CastSpell(unitTarget, 43059, true);
+                    return;
+                }
                 // Demon Broiled Surprise
                 /* FIX ME: Required for correct work implementing implicit target 7 (in pair (22,7))
                 case 43723:
@@ -1205,6 +1229,15 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                             ((Creature*)unitTarget)->ForcedDespawn();
                     }
 
+                    return;
+                }
+                case 45685:                                 // Magnataur On Death 2
+                {
+                    m_caster->RemoveAurasDueToSpell(45673);
+                    m_caster->RemoveAurasDueToSpell(45672);
+                    m_caster->RemoveAurasDueToSpell(45677);
+                    m_caster->RemoveAurasDueToSpell(45681);
+                    m_caster->RemoveAurasDueToSpell(45683);
                     return;
                 }
                 case 45990:                                 // Collect Oil
@@ -1353,6 +1386,42 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                         // 01001000 - goblin binary
                         m_caster->CastSpell(m_caster, 50246, true);
                     }
+
+                    return;
+                }
+                case 51276:                                 // Incinerate Corpse
+                {
+                    if (!unitTarget || unitTarget->GetTypeId() != TYPEID_UNIT)
+                        return;
+
+                    unitTarget->CastSpell(unitTarget, 51278, true);
+                    unitTarget->CastSpell(m_caster, 51279, true);
+
+                    unitTarget->setDeathState(JUST_DIED);
+                    return;
+                }
+                case 51330:                                 // Shoot RJR
+                {
+                    if (!unitTarget)
+                        return;
+
+                    // guessed chances
+                    if (roll_chance_i(75))
+                        m_caster->CastSpell(unitTarget, roll_chance_i(50) ? 51332 : 51366, true, m_CastItem);
+                    else
+                        m_caster->CastSpell(unitTarget, 51331, true, m_CastItem);
+
+                    return;
+                }
+                case 51333:                                 // Dig For Treasure
+                {
+                    if (!unitTarget)
+                        return;
+
+                    if (roll_chance_i(75))
+                        m_caster->CastSpell(unitTarget, 51370, true, m_CastItem);
+                    else
+                        m_caster->CastSpell(m_caster, 51345, true);
 
                     return;
                 }
@@ -1762,12 +1831,14 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                         return;
                 }
 
+                // prevent interrupted message for main spell
+                finish(true);
+
+                // replace cast by selected spell, this also make it interruptible including target death case
                 if (m_caster->IsFriendlyTo(unitTarget))
                     m_caster->CastSpell(unitTarget, heal, false);
                 else
                     m_caster->CastSpell(unitTarget, hurt, false);
-                //To avoid Interrupt message
-                finish(true);
 
                 return;
             }
@@ -2166,10 +2237,7 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
             if (m_spellInfo->SpellIconID == 33)
             {
                 // fire totems slot
-                if (!m_caster->m_TotemSlot[0])
-                    return;
-
-                Creature* totem = m_caster->GetMap()->GetCreature(m_caster->m_TotemSlot[0]);
+                Totem* totem = m_caster->GetTotem(TOTEM_SLOT_FIRE);
                 if (!totem)
                     return;
 
@@ -2240,7 +2308,20 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     }
                 }
 
-                int32 bp = int32(count * m_caster->GetMaxHealth() * m_spellInfo->DmgMultiplier[0] / 100);
+                int32 bp = int32(count * m_caster->GetMaxHealth() * m_spellInfo->DmgMultiplier[EFFECT_INDEX_0] / 100);
+
+                // Improved Death Strike (percent stored in not existed EFFECT_INDEX_2 effect base points)
+                Unit::AuraList const& auraMod = m_caster->GetAurasByType(SPELL_AURA_ADD_FLAT_MODIFIER);
+                for(Unit::AuraList::const_iterator iter = auraMod.begin(); iter != auraMod.end(); ++iter)
+                {
+                    // only required spell have spellicon for SPELL_AURA_ADD_FLAT_MODIFIER
+                    if ((*iter)->GetSpellProto()->SpellIconID == 2751 && (*iter)->GetSpellProto()->SpellFamilyName == SPELLFAMILY_DEATHKNIGHT)
+                    {
+                        bp += (*iter)->GetSpellProto()->CalculateSimpleValue(EFFECT_INDEX_2) * bp / 100;
+                        break;
+                    }
+                }
+
                 m_caster->CastCustomSpell(m_caster, 45470, &bp, NULL, NULL, true);
                 return;
             }
@@ -5475,39 +5556,55 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     unitTarget->CastSpell(unitTarget, 44870, true);
                     break;
                 }
-                /* Spell 51912 that trigger this need correction before this can work.
-                   Some additional research also seem to be needed + adjustment, this is mostly place holder for spells used.
                 case 45668:                                 // Ultra-Advanced Proto-Typical Shortening Blaster
                 {
                     if (!unitTarget || unitTarget->GetTypeId() != TYPEID_UNIT)
                         return;
 
-                    if (roll_chance_i(50))                  // chance unknown, using 50
+                    if (roll_chance_i(25))                  // chance unknown, using 25
                         return;
 
                     static uint32 const spellPlayer[5] =
                     {
-                        {45674},                            // Bigger!
-                        {45675},                            // Shrunk
-                        {45678},                            // Yellow
-                        {45682},                            // Ghost
-                        {45684}                             // Polymorph
+                        45674,                              // Bigger!
+                        45675,                              // Shrunk
+                        45678,                              // Yellow
+                        45682,                              // Ghost
+                        45684                               // Polymorph
                     };
 
                     static uint32 const spellTarget[5] =
                     {
-                        {45673},                            // Bigger!
-                        {45672},                            // Shrunk
-                        {45677},                            // Yellow
-                        {45681},                            // Ghost
-                        {45683}                             // Polymorph
+                        45673,                              // Bigger!
+                        45672,                              // Shrunk
+                        45677,                              // Yellow
+                        45681,                              // Ghost
+                        45683                               // Polymorph
                     };
 
                     m_caster->CastSpell(m_caster, spellPlayer[urand(0,4)], true);
                     unitTarget->CastSpell(unitTarget, spellTarget[urand(0,4)], true);
 
                     return;
-                }*/
+                }
+                case 45691:                                 // Magnataur On Death 1
+                {
+                    // assuming caster is creature, if not, then return
+                    if (m_caster->GetTypeId() != TYPEID_UNIT)
+                        return;
+
+                    Player* pPlayer = ((Creature*)m_caster)->GetLootRecipient();
+
+                    if (!pPlayer)
+                        return;
+
+                    if (pPlayer->HasAura(45674) || pPlayer->HasAura(45675) || pPlayer->HasAura(45678) || pPlayer->HasAura(45682) || pPlayer->HasAura(45684))
+                        pPlayer->CastSpell(pPlayer, 45686, true);
+
+                    m_caster->CastSpell(m_caster, 45685, true);
+
+                    return;
+                }
                 case 46203:                                 // Goblin Weather Machine
                 {
                     if (!unitTarget)
@@ -5609,9 +5706,9 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                    if ( !unitTarget )  // Stoneclaw Totem owner
                        return;
                    // Absorb shield for totems
-                   for(int itr = 0; itr < MAX_TOTEM; ++itr)
+                   for(int itr = 0; itr < MAX_TOTEM_SLOT; ++itr)
                    {
-                       Unit* totem = ObjectAccessor::GetUnit( *unitTarget,  unitTarget->m_TotemSlot[itr]);
+                       Unit* totem = ObjectAccessor::GetUnit( *unitTarget,  unitTarget->GetTotemGUID(TotemSlot(itr)));
                        if( totem )
                            m_caster->CastCustomSpell( totem, 55277, &damage, NULL, NULL, true );
                    }
@@ -6316,20 +6413,15 @@ void Spell::EffectApplyGlyph(SpellEffectIndex eff_idx)
     }
 }
 
-void Spell::DoSummonTotem(SpellEffectIndex eff_idx, uint8 slot)
+void Spell::DoSummonTotem(SpellEffectIndex eff_idx, uint8 slot_dbc)
 {
-    slot = slot ? (slot - 1): 255;
+    // DBC store slots starting from 1, with no slot 0 value)
+    int slot = slot_dbc ? slot_dbc - 1 : TOTEM_SLOT_NONE;
 
-    if(slot < MAX_TOTEM)
-    {
-        uint64 guid = m_caster->m_TotemSlot[slot];
-        if(guid != 0)
-        {
-            Creature *OldTotem = m_caster->GetMap()->GetCreature(guid);
-            if(OldTotem && OldTotem->isTotem())
-                ((Totem*)OldTotem)->UnSummon();
-        }
-    }
+    // unsummon old totem
+    if(slot < MAX_TOTEM_SLOT)
+        if (Totem *OldTotem = m_caster->GetTotem(TotemSlot(slot)))
+            OldTotem->UnSummon();
 
     uint32 team = 0;
     if (m_caster->GetTypeId()==TYPEID_PLAYER)
@@ -6344,7 +6436,7 @@ void Spell::DoSummonTotem(SpellEffectIndex eff_idx, uint8 slot)
         return;
     }
 
-    float angle = slot < MAX_TOTEM ? M_PI_F/MAX_TOTEM - (slot*2*M_PI_F/MAX_TOTEM) : 0;
+    float angle = slot < MAX_TOTEM_SLOT ? M_PI_F/MAX_TOTEM_SLOT - (slot*2*M_PI_F/MAX_TOTEM_SLOT) : 0;
 
     float x, y, z;
     m_caster->GetClosePoint(x, y, z, pTotem->GetObjectSize(), 2.0f, angle);
@@ -6355,14 +6447,14 @@ void Spell::DoSummonTotem(SpellEffectIndex eff_idx, uint8 slot)
 
     pTotem->Relocate(x, y, z, m_caster->GetOrientation());
 
-    if(slot < MAX_TOTEM)
-        m_caster->m_TotemSlot[slot] = pTotem->GetGUID();
+    if (slot < MAX_TOTEM_SLOT)
+        m_caster->_AddTotem(TotemSlot(slot),pTotem);
 
     pTotem->SetOwner(m_caster->GetGUID());
     pTotem->SetTypeBySummonSpell(m_spellInfo);              // must be after Create call where m_spells initilized
 
     int32 duration=GetSpellDuration(m_spellInfo);
-    if(Player* modOwner = m_caster->GetSpellModOwner())
+    if (Player* modOwner = m_caster->GetSpellModOwner())
         modOwner->ApplySpellMod(m_spellInfo->Id, SPELLMOD_DURATION, duration);
     pTotem->SetDuration(duration);
 
@@ -6385,7 +6477,7 @@ void Spell::DoSummonTotem(SpellEffectIndex eff_idx, uint8 slot)
 
     pTotem->Summon(m_caster);
 
-    if(slot < MAX_TOTEM && m_caster->GetTypeId() == TYPEID_PLAYER)
+    if (slot < MAX_TOTEM_SLOT && m_caster->GetTypeId() == TYPEID_PLAYER)
     {
         WorldPacket data(SMSG_TOTEM_CREATED, 1 + 8 + 4 + 4);
         data << uint8(slot);
@@ -7048,22 +7140,17 @@ void Spell::EffectSummonAllTotems(SpellEffectIndex eff_idx)
 void Spell::EffectDestroyAllTotems(SpellEffectIndex /*eff_idx*/)
 {
     int32 mana = 0;
-    for(int slot = 0;  slot < MAX_TOTEM; ++slot)
+    for(int slot = 0;  slot < MAX_TOTEM_SLOT; ++slot)
     {
-        if(!m_caster->m_TotemSlot[slot])
-            continue;
-
-        Creature* totem = m_caster->GetMap()->GetCreature(m_caster->m_TotemSlot[slot]);
-        if(totem && totem->isTotem())
+        if (Totem* totem = m_caster->GetTotem(TotemSlot(slot)))
         {
             uint32 spell_id = totem->GetUInt32Value(UNIT_CREATED_BY_SPELL);
-            SpellEntry const* spellInfo = sSpellStore.LookupEntry(spell_id);
-            if(spellInfo)
+            if (SpellEntry const* spellInfo = sSpellStore.LookupEntry(spell_id))
             {
                 uint32 manacost = m_caster->GetCreateMana() * spellInfo->ManaCostPercentage / 100;
                 mana += manacost * damage / 100;
             }
-            ((Totem*)totem)->UnSummon();
+            totem->UnSummon();
         }
     }
 

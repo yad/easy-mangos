@@ -230,7 +230,7 @@ uint32 PlayerbotAI::getSpellId(const char* args, bool master) const
     {
         uint32 spellId = itr->first;
 
-        if (itr->second->state == PLAYERSPELL_REMOVED || itr->second->disabled || IsPassiveSpell(spellId))
+        if (itr->second.state == PLAYERSPELL_REMOVED || itr->second.disabled || IsPassiveSpell(spellId))
             continue;
 
         const std::string name = sObjectMgr.GetSpellName(spellId);
@@ -973,7 +973,7 @@ void PlayerbotAI::CheckMount()
             for(PlayerSpellMap::iterator itr = m_bot->GetSpellMap().begin(); itr != m_bot->GetSpellMap().end(); ++itr)
             {
                 uint32 spellId = itr->first;
-                if(itr->second->state == PLAYERSPELL_REMOVED || itr->second->disabled || IsPassiveSpell(spellId))
+                if(itr->second.state == PLAYERSPELL_REMOVED || itr->second.disabled || IsPassiveSpell(spellId))
                     continue;
                 const SpellEntry* pSpellInfo = sSpellStore.LookupEntry(spellId);
                 if (!pSpellInfo)
@@ -2963,7 +2963,7 @@ void PlayerbotAI::HandleCommand(const std::string& text, Player& fromPlayer)
         for (PlayerSpellMap::iterator itr = m_bot->GetSpellMap().begin(); itr != m_bot->GetSpellMap().end(); ++itr) {
             const uint32 spellId = itr->first;
 
-            if (itr->second->state == PLAYERSPELL_REMOVED || itr->second->disabled || IsPassiveSpell(spellId))
+            if (itr->second.state == PLAYERSPELL_REMOVED || itr->second.disabled || IsPassiveSpell(spellId))
                 continue;
 
             const SpellEntry* const pSpellInfo = sSpellStore.LookupEntry(spellId);
