@@ -1058,6 +1058,7 @@ typedef std::set<uint64> GuardianPetList;
 // delay time next attack to prevent client attack animation problems
 #define ATTACK_DISPLAY_DELAY 200
 #define MAX_PLAYER_STEALTH_DETECT_RANGE 45.0f               // max distance for detection targets by player
+#define MAX_CREATURE_ATTACK_RADIUS 45.0f                    // max distance for creature aggro (use with CONFIG_FLOAT_RATE_CREATURE_AGGRO)
 
 // Regeneration defines
 #define REGEN_TIME_FULL     2000                            // For this time difference is computed regen value
@@ -1387,8 +1388,13 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
 
         void NearTeleportTo(float x, float y, float z, float orientation, bool casting = false);
 
-        void SendMonsterMove(float NewPosX, float NewPosY, float NewPosZ, uint8 type, SplineFlags flags, uint32 Time, Player* player = NULL);
+        void MonsterMove(float x, float y, float z, uint32 transitTime);
+        void MonsterMoveWithSpeed(float x, float y, float z, uint32 transitTime = 0);
+
+        // recommend use MonsterMove/MonsterMoveWithSpeed for most case that correctly work with movegens
+        void SendMonsterMove(float x, float y, float z, SplineType type, SplineFlags flags, uint32 Time, Player* player = NULL);
         void SendMonsterMoveByPath(Path const& path, uint32 start, uint32 end, SplineFlags flags);
+        void SendMonsterMoveWithSpeed(float x, float y, float z, uint32 transitTime = 0, Player* player = NULL);
 
         void SendHighestThreatUpdate(HostileReference* pHostileReference);
         void SendThreatClear();

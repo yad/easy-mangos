@@ -40,8 +40,6 @@
 #include "InstanceSaveMgr.h"
 #include "VMapFactory.h"
 
-#define MAX_CREATURE_ATTACK_RADIUS  (45.0f * sWorld.getConfig(CONFIG_FLOAT_RATE_CREATURE_AGGRO))
-
 GridState* si_GridStates[MAX_GRID_STATE];
 
 static char const* MAP_MAGIC         = "MAPS";
@@ -1065,14 +1063,6 @@ Map::CreatureRelocation(Creature *creature, float x, float y, float z, float ang
     assert(CheckGridIntegrity(creature,true));
 }
 
-void Map::AddCreatureToMoveList(Creature *c, float x, float y, float z, float ang)
-{
-    if(!c)
-        return;
-
-    i_creaturesToMove[c] = CreatureMover(x, y, z, ang);
-}
-
 bool Map::CreatureCellRelocation(Creature *c, Cell new_cell)
 {
     Cell const& old_cell = c->GetCurrentCell();
@@ -1185,14 +1175,14 @@ bool Map::UnloadGrid(const uint32 &x, const uint32 &y, bool pForce)
         DEBUG_LOG("Unloading grid[%u,%u] for map %u", x,y, i_id);
         ObjectGridUnloader unloader(*grid);
 
-        // Finish creature moves, remove and delete all creatures with delayed remove before moving to respawn grids
+        // Finish remove and delete all creatures with delayed remove before moving to respawn grids
         // Must know real mob position before move
         RemoveAllObjectsInRemoveList();
 
         // move creatures to respawn grids if this is diff.grid or to remove list
         unloader.MoveToRespawnN();
 
-        // Finish creature moves, remove and delete all creatures with delayed remove before unload
+        // Finish remove and delete all creatures with delayed remove before unload
         RemoveAllObjectsInRemoveList();
 
         unloader.UnloadN();
@@ -1226,9 +1216,6 @@ bool Map::UnloadGrid(const uint32 &x, const uint32 &y, bool pForce)
 
 void Map::UnloadAll(bool pForce)
 {
-    // clear all delayed moves, useless anyway do this moves before map unload.
-    i_creaturesToMove.clear();
-
     for (GridRefManager<NGridType>::iterator i = GridRefManager<NGridType>::begin(); i != GridRefManager<NGridType>::end(); )
     {
         NGridType &grid(*i->getSource());
@@ -3154,8 +3141,7 @@ void Map::ScriptsProcess()
                     sLog.outError("SCRIPT_COMMAND_MOVE_TO call for non-creature (TypeId: %u), skipping.",source->GetTypeId());
                     break;
                 }
-                ((Creature*)source)->SendMonsterMoveWithSpeed(step.script->x, step.script->y, step.script->z, step.script->datalong2 );
-                ((Creature*)source)->GetMap()->CreatureRelocation(((Creature*)source), step.script->x, step.script->y, step.script->z, 0);
+                ((Unit*)source)->MonsterMoveWithSpeed(step.script->x, step.script->y, step.script->z, step.script->datalong2 );
                 break;
             case SCRIPT_COMMAND_FLAG_SET:
                 if(!source)

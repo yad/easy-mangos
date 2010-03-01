@@ -409,13 +409,13 @@ bool Unit::haveOffhandWeapon() const
         return false;
 }
 
-void Unit::SendMonsterMove(float NewPosX, float NewPosY, float NewPosZ, uint8 type, SplineFlags flags, uint32 Time, Player* player)
+void Unit::SendMonsterMove(float NewPosX, float NewPosY, float NewPosZ, SplineType type, SplineFlags flags, uint32 Time, Player* player)
 {
     float moveTime = (float)Time;
 
     WorldPacket data( SMSG_MONSTER_MOVE, (41 + GetPackGUID().size()) );
     data.append(GetPackGUID());
-    data << uint8(0);                                       // new in 3.1 bool, used to toggle MOVEFLAG2_UNK4 = 0x0040 on client side
+    data << uint8(0);                                       // new in 3.1
     data << GetPositionX() << GetPositionY() << GetPositionZ();
     data << uint32(getMSTime());
 
@@ -474,6 +474,26 @@ void Unit::SendMonsterMoveByPath(Path const& path, uint32 start, uint32 end, Spl
     data << uint32(pathSize);
     data.append((char*)path.GetNodes(start), pathSize * 4 * 3);
     SendMessageToSet(&data, true);
+}
+
+void Unit::SendMonsterMoveWithSpeed(float x, float y, float z, uint32 transitTime, Player* player)
+{
+    if (!transitTime)
+    {
+        if(GetTypeId()==TYPEID_PLAYER)
+        {
+            Traveller<Player> traveller(*(Player*)this);
+            transitTime = traveller.GetTotalTrevelTimeTo(x, y, z);
+        }
+        else
+        {
+            Traveller<Creature> traveller(*(Creature*)this);
+            transitTime = traveller.GetTotalTrevelTimeTo(x, y, z);
+        }
+    }
+    //float orientation = (float)atan2((double)dy, (double)dx);
+    SplineFlags flags = GetTypeId() == TYPEID_PLAYER ? SPLINEFLAG_WALKMODE : ((Creature*)this)->GetSplineFlags();
+    SendMonsterMove(x, y, z, SPLINETYPE_NORMAL, flags, transitTime, player);
 }
 
 void Unit::BuildHeartBeatMsg(WorldPacket *data) const
@@ -13149,7 +13169,7 @@ void Unit::StopMoving()
 
     // send explicit stop packet
     // player expected for correct work SPLINEFLAG_WALKMODE
-    SendMonsterMove(GetPositionX(), GetPositionY(), GetPositionZ(), 0, GetTypeId() == TYPEID_PLAYER ? SPLINEFLAG_WALKMODE : SPLINEFLAG_NONE, 0);
+    SendMonsterMove(GetPositionX(), GetPositionY(), GetPositionZ(), SPLINETYPE_NORMAL, GetTypeId() == TYPEID_PLAYER ? SPLINEFLAG_WALKMODE : SPLINEFLAG_NONE, 0);
 
     // update position and orientation for near players
     WorldPacket data;

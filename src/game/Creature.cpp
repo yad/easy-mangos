@@ -119,7 +119,8 @@ m_lootMoney(0), m_lootRecipient(0),
 m_deathTimer(0), m_respawnTime(0), m_respawnDelay(25), m_corpseDelay(60), m_respawnradius(0.0f),
 m_subtype(subtype), m_defaultMovementType(IDLE_MOTION_TYPE), m_DBTableGuid(0), m_equipmentId(0),
 m_AlreadyCallAssistance(false), m_AlreadySearchedAssistance(false),
-m_regenHealth(true), m_AI_locked(false), m_isDeadByDefault(false), m_meleeDamageSchoolMask(SPELL_SCHOOL_MASK_NORMAL),
+m_regenHealth(true), m_AI_locked(false), m_isDeadByDefault(false), m_needNotify(false),
+m_meleeDamageSchoolMask(SPELL_SCHOOL_MASK_NORMAL),
 m_creatureInfo(NULL), m_isActiveObject(false), m_splineFlags(SPLINEFLAG_WALKMODE)
 {
     m_regenTimer = 200;
@@ -343,6 +344,15 @@ void Creature::Update(uint32 diff)
         m_GlobalCooldown = 0;
     else
         m_GlobalCooldown -= diff;
+
+    if (m_needNotify)
+    {
+        m_needNotify = false;
+        RelocationNotify();
+
+        if (!IsInWorld())
+            return;
+    }
 
     switch( m_deathState )
     {
@@ -774,7 +784,7 @@ bool Creature::isCanTrainingAndResetTalentsOf(Player* pPlayer) const
         && pPlayer->getClass() == GetCreatureInfo()->trainer_class;
 }
 
-void Creature::AI_SendMoveToPacket(float x, float y, float z, uint32 time, SplineFlags flags, uint8 type)
+void Creature::AI_SendMoveToPacket(float x, float y, float z, uint32 time, SplineFlags flags, SplineType type)
 {
     /*    uint32 timeElap = getMSTime();
         if ((timeElap - m_startMove) < m_moveTime)
@@ -2122,25 +2132,6 @@ void Creature::SendMonsterMoveWithSpeedToCurrentDestination(Player* player)
         SendMonsterMoveWithSpeed(x, y, z, 0, player);
 }
 
-void Creature::SendMonsterMoveWithSpeed(float x, float y, float z, uint32 transitTime, Player* player)
-{
-    if (!transitTime)
-    {
-        if(GetTypeId()==TYPEID_PLAYER)
-        {
-            Traveller<Player> traveller(*(Player*)this);
-            transitTime = traveller.GetTotalTrevelTimeTo(x, y, z);
-        }
-        else
-        {
-            Traveller<Creature> traveller(*(Creature*)this);
-            transitTime = traveller.GetTotalTrevelTimeTo(x, y, z);
-        }
-    }
-    //float orientation = (float)atan2((double)dy, (double)dx);
-    SendMonsterMove(x, y, z, 0, GetSplineFlags(), transitTime, player);
-}
-
 void Creature::SendAreaSpiritHealerQueryOpcode(Player *pl)
 {
     uint32 next_resurrect = 0;
@@ -2149,4 +2140,23 @@ void Creature::SendAreaSpiritHealerQueryOpcode(Player *pl)
     WorldPacket data(SMSG_AREA_SPIRIT_HEALER_TIME, 8 + 4);
     data << GetGUID() << next_resurrect;
     pl->SendDirectMessage(&data);
+}
+
+void Creature::RelocationNotify()
+{
+    CellPair new_val = MaNGOS::ComputeCellPair(GetPositionX(), GetPositionY());
+    Cell cell(new_val);
+    CellPair cellpair = cell.cellPair();
+
+    MaNGOS::CreatureRelocationNotifier relocationNotifier(*this);
+    cell.data.Part.reserved = ALL_DISTRICT;
+    cell.SetNoCreate();                                     // not trigger load unloaded grids at notifier call
+
+    TypeContainerVisitor<MaNGOS::CreatureRelocationNotifier, WorldTypeMapContainer > c2world_relocation(relocationNotifier);
+    TypeContainerVisitor<MaNGOS::CreatureRelocationNotifier, GridTypeMapContainer >  c2grid_relocation(relocationNotifier);
+
+    float radius = MAX_CREATURE_ATTACK_RADIUS * sWorld.getConfig(CONFIG_FLOAT_RATE_CREATURE_AGGRO);
+
+    cell.Visit(cellpair, c2world_relocation, *GetMap(), *this, radius);
+    cell.Visit(cellpair, c2grid_relocation, *GetMap(), *this, radius);
 }
