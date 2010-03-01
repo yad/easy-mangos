@@ -372,7 +372,6 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
         }
 
         void AddObjectToRemoveList(WorldObject *obj);
-        void DoDelayedMovesAndRemoves();
 
         virtual bool RemoveBones(uint64 guid, float x, float y);
 

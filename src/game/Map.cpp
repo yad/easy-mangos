@@ -1187,13 +1187,13 @@ bool Map::UnloadGrid(const uint32 &x, const uint32 &y, bool pForce)
 
         // Finish creature moves, remove and delete all creatures with delayed remove before moving to respawn grids
         // Must know real mob position before move
-        DoDelayedMovesAndRemoves();
+        RemoveAllObjectsInRemoveList();
 
         // move creatures to respawn grids if this is diff.grid or to remove list
         unloader.MoveToRespawnN();
 
         // Finish creature moves, remove and delete all creatures with delayed remove before unload
-        DoDelayedMovesAndRemoves();
+        RemoveAllObjectsInRemoveList();
 
         unloader.UnloadN();
         delete getNGrid(x, y);
