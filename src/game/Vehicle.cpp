@@ -748,6 +748,6 @@ void Vehicle::Die()
     for (SeatMap::iterator itr = m_Seats.begin(); itr != m_Seats.end(); ++itr)
         if(Unit *passenger = itr->second.passenger)
             if(((Creature*)passenger)->isVehicle())
-                passenger->setDeathState(JUST_DIED);
+                ((Creature*)passenger)->ForcedDespawn();
     RemoveAllPassengers();
 }

@@ -750,6 +750,10 @@ void CreatureEventAIMgr::LoadCreatureEventAI_Scripts()
                             }
                         }
                         break;
+                    case ACTION_T_SUMMON_GAMEOBJECT:
+                        if (m_CreatureEventAI_Summon_Map.find(action.summon_gameobject.spawnId) == m_CreatureEventAI_Summon_Map.end())
+                            sLog.outErrorDb("CreatureEventAI:  Event %u Action %u summons missing CreatureEventAI_Summon %u", i, j+1, action.summon_gameobject.spawnId);
+                        break;
                     case ACTION_T_EVADE:                    //No Params
                     case ACTION_T_FLEE_FOR_ASSIST:          //No Params
                     case ACTION_T_DIE:                      //No Params

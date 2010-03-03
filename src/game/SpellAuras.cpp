@@ -2840,6 +2840,42 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                     else
                         m_target->m_AuraFlags |= ~UNIT_AURAFLAG_ALIVE_INVISIBLE;
                     return;
+                case 71342: //Big Love Rocket - there is no spell for mount speeds
+                    if(m_target->GetTypeId() != TYPEID_PLAYER || !Real)
+                        return;
+
+                    uint32 skill = ((Player*)m_target)->GetSkillValue(762);
+
+                    //Flight     
+                    if(skill >= 225 && (m_target->GetMapId() == 530 || (m_target->GetMapId() == 571 && m_target->HasSpell(54197))))
+                    {
+                        WorldPacket data;
+                        if(apply)
+                            data.Initialize(SMSG_MOVE_SET_CAN_FLY, 12);
+                        else
+                            data.Initialize(SMSG_MOVE_UNSET_CAN_FLY, 12);
+                        data.append(m_target->GetPackGUID());
+                        data << uint32(0);                                      // unknown
+                        m_target->SendMessageToSet(&data, true);
+
+                        //Players on flying mounts must be immune to polymorph
+                        if (m_target->GetTypeId()==TYPEID_PLAYER)
+                            m_target->ApplySpellImmune(GetId(),IMMUNITY_MECHANIC,MECHANIC_POLYMORPH,apply);
+                        if(skill == 225 && apply)
+                            m_target->SetSpeedRate(MOVE_FLIGHT, 1.5f, true);
+                        else if(skill == 300 && apply)
+                            m_target->SetSpeedRate(MOVE_FLIGHT, 2.8f, true);
+                        else if(!apply)
+                            m_target->SetSpeedRate(MOVE_FLIGHT, 1.0f, true);
+                    }
+                    //Ground speed
+                    if(skill == 75 && apply)
+                        m_target->SetSpeedRate(MOVE_RUN, 1.6f, true);
+                    else if(skill >= 150 && apply)
+                        m_target->SetSpeedRate(MOVE_RUN, 2.0f, true);
+                    else if(!apply)
+                        m_target->SetSpeedRate(MOVE_RUN, 1.0f, true);
+                    return;
             }
             break;
         }
@@ -3720,7 +3756,7 @@ void Aura::HandleChannelDeathItem(bool apply, bool Real)
         if( msg != EQUIP_ERR_OK )
         {
             count-=noSpaceForCount;
-            ((Player*)caster)->SendEquipError( msg, NULL, NULL );
+            ((Player*)caster)->SendEquipError( msg, NULL, NULL, spellInfo->EffectItemType[m_effIndex] );
             if (count==0)
                 return;
         }
