@@ -3365,6 +3365,8 @@ void Spell::SendSpellStart()
     }
 
     m_caster->SendMessageToSet(&data, true);
+    if(m_caster->getClass() == CLASS_DEATH_KNIGHT)
+        ((Player*)m_caster)->ResyncRunes(MAX_RUNES);
 }
 
 void Spell::SendSpellGo()
@@ -3426,8 +3428,8 @@ void Spell::SendSpellGo()
 
     if ( castFlags & CAST_FLAG_UNKNOWN7 )                   // rune cooldowns list
     {
-        uint8 v1 = m_runesState;
-        uint8 v2 =  m_caster->getClass() == CLASS_DEATH_KNIGHT ? ((Player*)m_caster)->GetRunesState() : 0;
+        uint8 v1 = 0; //m_runesState;
+        uint8 v2 = 0; //m_caster->getClass() == CLASS_DEATH_KNIGHT ? ((Player*)m_caster)->GetRunesState() : 0;
         data << uint8(v1);                                  // runes state before
         data << uint8(v2);                                  // runes state after
         for(uint8 i = 0; i < MAX_RUNES; ++i)
@@ -3460,6 +3462,8 @@ void Spell::SendSpellGo()
     }
 
     m_caster->SendMessageToSet(&data, true);
+    if(m_caster->getClass() == CLASS_DEATH_KNIGHT)
+        ((Player*)m_caster)->ResyncRunes(MAX_RUNES);
 }
 
 void Spell::WriteAmmoToPacket( WorldPacket * data )
