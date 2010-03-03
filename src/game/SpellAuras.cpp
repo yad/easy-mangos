@@ -2840,13 +2840,13 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                         m_target->m_AuraFlags |= ~UNIT_AURAFLAG_ALIVE_INVISIBLE;
                     return;
                 case 71342: //Big Love Rocket - there is no spell for mount speeds
-                    if(m_target->GetTypeId() != TYPEID_PLAYER || !real)
+                    if(m_target->GetTypeId() != TYPEID_PLAYER || !Real)
                         return;
 
                     uint32 skill = ((Player*)m_target)->GetSkillValue(762);
 
                     //Flight     
-                    if(((Player*)m_target)->IsKnowHowFlyIn(m_target->GetMapId(), m_target->GetZoneId()))
+                    if(skill >= 225 && (m_target->GetMapId() == 530 || (m_target->GetMapId() == 571 && m_target->HasSpell(54197))))
                     {
                         WorldPacket data;
                         if(apply)
@@ -2864,7 +2864,7 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                             m_target->SetSpeedRate(MOVE_FLIGHT, 1.5f, true);
                         else if(skill == 300 && apply)
                             m_target->SetSpeedRate(MOVE_FLIGHT, 2.8f, true);
-                        if(!apply)
+                        else if(!apply)
                             m_target->SetSpeedRate(MOVE_FLIGHT, 1.0f, true);
                     }
                     //Ground speed
