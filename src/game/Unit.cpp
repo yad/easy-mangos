@@ -399,8 +399,8 @@ void Unit::SendMonsterMove(float NewPosX, float NewPosY, float NewPosZ, SplineTy
             data << float(0);
             data << float(0);
             break;
-        case SPLINETYPE_FACINGTARGET:                       // not used currently
-            data << uint64(0);                              // probably target guid (facing target?)
+        case SPLINETYPE_FACINGTARGET:
+            data << uint64(m_InteractionObject);            // set in SetFacingToObject()
             break;
         case SPLINETYPE_FACINGANGLE:                        // not used currently
             data << float(0);                               // facing angle
@@ -714,6 +714,10 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
 
         // find player: owner of controlled `this` or `this` itself maybe
         Player *player = GetCharmerOrOwnerPlayerOrPlayerItself();
+
+        // find owner of pVictim, used for creature cases, AI calls
+        Unit* pOwner = pVictim->GetCharmerOrOwner();
+
         if(pVictim->GetTypeId() == TYPEID_UNIT && ((Creature*)pVictim)->GetLootRecipient())
             player = ((Creature*)pVictim)->GetLootRecipient();
 
@@ -847,7 +851,11 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
                         if (pSummoner->AI())
                             pSummoner->AI()->SummonedCreatureJustDied(cVictim);
             }
-
+            else if (pOwner && pOwner->GetTypeId() == TYPEID_UNIT)
+            {
+                if (((Creature*)pOwner)->AI())
+                    ((Creature*)pOwner)->AI()->SummonedCreatureJustDied(cVictim);
+            }
 
             // Dungeon specific stuff, only applies to players killing creatures
             if(cVictim->GetInstanceId())
@@ -3724,6 +3732,24 @@ void Unit::SetFacingTo(float ori)
     WorldPacket data;
     BuildHeartBeatMsg(&data);
     SendMessageToSet(&data, false);
+}
+
+// Consider move this to Creature:: since only creature appear to be able to use this
+void Unit::SetFacingToObject(WorldObject* pObject)
+{
+    if (GetTypeId() != TYPEID_UNIT)
+        return;
+
+    // never face when already moving
+    if (!IsStopped())
+        return;
+
+    m_InteractionObject = pObject->GetGUID();
+
+    // TODO: figure out under what conditions creature will move towards object instead of facing it where it currently is.
+
+    SetOrientation(GetAngle(pObject));
+    SendMonsterMove(GetPositionX(), GetPositionY(), GetPositionZ(), SPLINETYPE_FACINGTARGET, ((Creature*)this)->GetSplineFlags(), 0);
 }
 
 bool Unit::isInAccessablePlaceFor(Creature const* c) const
@@ -7674,38 +7700,8 @@ bool Unit::HandleProcTriggerSpell(Unit *pVictim, uint32 damage, Aura* triggeredB
             break;
         case SPELLFAMILY_WARLOCK:
         {
-            // Pyroclasm
-            if (auraSpellInfo->SpellIconID == 1137)
-            {
-                if(!pVictim || !pVictim->isAlive() || pVictim == this || procSpell == NULL)
-                    return false;
-                // Calculate spell tick count for spells
-                uint32 tick = 1; // Default tick = 1
-
-                // Hellfire have 15 tick
-                if (procSpell->SpellFamilyFlags & UI64LIT(0x0000000000000040))
-                    tick = 15;
-                // Rain of Fire have 4 tick
-                else if (procSpell->SpellFamilyFlags & UI64LIT(0x0000000000000020))
-                    tick = 4;
-                else
-                    return false;
-
-                // Calculate chance = baseChance / tick
-                float chance = 0;
-                switch (auraSpellInfo->Id)
-                {
-                    case 18096: chance = 13.0f / tick; break;
-                    case 18073: chance = 26.0f / tick; break;
-                }
-                // Roll chance
-                if (!roll_chance_f(chance))
-                    return false;
-
-                trigger_spell_id = 18093;
-            }
             // Drain Soul
-            else if (auraSpellInfo->SpellFamilyFlags & UI64LIT(0x0000000000004000))
+            if (auraSpellInfo->SpellFamilyFlags & UI64LIT(0x0000000000004000))
             {
                 Unit::AuraList const& mAddFlatModifier = GetAurasByType(SPELL_AURA_ADD_FLAT_MODIFIER);
                 for(Unit::AuraList::const_iterator i = mAddFlatModifier.begin(); i != mAddFlatModifier.end(); ++i)
