@@ -184,7 +184,7 @@ bool Vehicle::Create(uint32 guidlow, Map *map, uint32 phaseMask, uint32 Entry, u
             }
         }
     }
-
+    SetHealth(GetMaxHealth());
     InstallAllAccessories();
 
     return true;
