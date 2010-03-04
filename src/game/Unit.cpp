@@ -7400,6 +7400,9 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
             // Wandering Plague
             if (dummySpell->SpellIconID == 1614)
             {
+                // prevent proc from other types than disease 
+                if (procSpell && procSpell->Dispel != DISPEL_DISEASE) 
+                    return false; 
                 if (!roll_chance_f(GetUnitCriticalChance(BASE_ATTACK, pVictim)))
                     return false;
                 basepoints[0] = triggerAmount * damage / 100;
@@ -7416,7 +7419,11 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
             if (dummySpell->Id == 49194)
             {
                 triggered_spell_id = 50536;
+                SpellEntry const* triggeredEntry = sSpellStore.LookupEntry(triggered_spell_id); 
+                if (!triggeredEntry) 
+                    return false; 
                 basepoints[0] = triggerAmount * damage / 100;
+                basepoints[0] /= (GetSpellDuration(triggeredEntry) / triggeredEntry->EffectAmplitude[EFFECT_INDEX_0]); 
                 break;
             }
             // Sudden Doom
@@ -8344,6 +8351,34 @@ bool Unit::HandleOverrideClassScriptAuraProc(Unit *pVictim, uint32 /*damage*/, A
             }
             break;
         }
+        // Crypt Fever and Ebon Plaguebringer 
+        case 7282: 
+        { 
+            switch (triggeredByAura->GetId()) 
+            { 
+                // Crypt Fever 
+                case 49032: triggered_spell_id = 50508; break; 
+                case 49631: triggered_spell_id = 50509; break; 
+                case 49632: triggered_spell_id = 50510; break; 
+                // Ebon Plaguebringer 
+                case 51099: triggered_spell_id = 51726; break; 
+                case 51160: triggered_spell_id = 51734; break; 
+                case 51161: triggered_spell_id = 51735; break; 
+                default: return false; 
+            } 
+ 
+            // Do not proc Crypt Fever if present Ebon Plaguebringer 
+            if(triggeredByAura->GetSpellProto()->SpellIconID == 264) 
+            { 
+                Unit::AuraList const& mScriptAuras = GetAurasByType(SPELL_AURA_OVERRIDE_CLASS_SCRIPTS); 
+                for(Unit::AuraList::const_iterator i = mScriptAuras.begin(); i != mScriptAuras.end(); ++i) 
+                { 
+                    if ((*i)->GetSpellProto()->SpellFamilyName == SPELLFAMILY_DEATHKNIGHT && (*i)->GetSpellProto()->SpellIconID == 1766) 
+                        return false; 
+                } 
+            } 
+            break; 
+        } 
     }
 
     // not processed
@@ -9225,6 +9260,7 @@ uint32 Unit::SpellDamageBonus(Unit *pVictim, SpellEntry const *spellProto, uint3
     float TakenTotalMod = 1.0f;
     int32 DoneTotal = 0;
     int32 TakenTotal = 0;
+    float bonusApCoeff = 1.0f; 
 
     // ..done
     // Creature damage
@@ -9346,7 +9382,8 @@ uint32 Unit::SpellDamageBonus(Unit *pVictim, SpellEntry const *spellProto, uint3
             case 7293: // Rage of Rivendare
             {
                 if (pVictim->GetAura(SPELL_AURA_PERIODIC_DAMAGE, SPELLFAMILY_DEATHKNIGHT, UI64LIT(0x0200000000000000)))
-                    DoneTotalMod *= ((*i)->GetModifier()->m_amount+100.0f)/100.0f;
+                    // Using double of other effect due to missing DBC entry (coincidence match) 
+                    DoneTotalMod *= ((*i)->GetSpellProto()->CalculateSimpleValue(EFFECT_INDEX_1)*2+100.0f)/100.0f; 
                 break;
             }
             // Twisted Faith
@@ -9420,6 +9457,13 @@ uint32 Unit::SpellDamageBonus(Unit *pVictim, SpellEntry const *spellProto, uint3
         }
         case SPELLFAMILY_DEATHKNIGHT:
         {
+            // Glyph of Unholy Blight 
+            if (spellProto->Id == 50536) 
+            { 
+                if (Aura *glyphAura = GetDummyAura(63332)) 
+                    DoneTotalMod *= (glyphAura->GetModifier()->m_amount + 100.0f)/ 100.0f; 
+                break; 
+            } 
             // Icy Touch, Howling Blast and Frost Strike
             if (spellProto->SpellFamilyFlags & UI64LIT(0x0000000600000002))
             {
@@ -9454,6 +9498,24 @@ uint32 Unit::SpellDamageBonus(Unit *pVictim, SpellEntry const *spellProto, uint3
             break;
     }
 
+    // ..done custom 
+    if (GetTypeId() == TYPEID_PLAYER) 
+    { 
+        // Impurity 
+        uint32 impurityId = 0; 
+        if (HasSpell(49638)) 
+            impurityId = 49638; 
+        else if (HasSpell(49636)) 
+            impurityId = 49636; 
+        else if (HasSpell(49635)) 
+            impurityId = 49635; 
+        else if (HasSpell(49633)) 
+            impurityId = 49633; 
+        else if (HasSpell(49220)) 
+            impurityId = 49220; 
+        if (const SpellEntry *i_spellProto = sSpellStore.LookupEntry(impurityId)) 
+             bonusApCoeff += float(i_spellProto->CalculateSimpleValue(EFFECT_INDEX_0)) / 100.0f; 
+    } 
 
     // ..taken
     AuraList const& mModDamagePercentTaken = pVictim->GetAurasByType(SPELL_AURA_MOD_DAMAGE_PERCENT_TAKEN);
@@ -9487,9 +9549,30 @@ uint32 Unit::SpellDamageBonus(Unit *pVictim, SpellEntry const *spellProto, uint3
             case 1804:              // Greater Blessing of Sanctuary 
                 if ((*i)->GetSpellProto()->SpellFamilyName == SPELLFAMILY_PALADIN) 
                     TakenTotalMod *= ((*i)->GetModifier()->m_amount + 100.0f) / 100.0f; 
+                break;
+            // Ebon Plague 
+            case 1933: 
+            { 
+                if((*i)->GetSpellProto()->SpellFamilyName == SPELLFAMILY_DEATHKNIGHT) 
+                { 
+                    if((*i)->GetModifier()->m_miscvalue & spellProto->SchoolMask) 
+                        TakenTotalMod *= ((*i)->GetModifier()->m_amount + 100.0f) / 100.0f; 
+                } 
                 break; 
+            } 
         } 
     }
+    // .. taken pct: SPELL_AURA_284 
+    AuraList const& mAuraListAura284 = pVictim->GetAurasByType(SPELL_AURA_284); 
+    for(AuraList::const_iterator i = mAuraListAura284.begin(); i != mAuraListAura284.end(); ++i) 
+    { 
+        // Crypt Fever and Ebon Plague 
+        if((*i)->GetSpellProto()->SpellFamilyName == SPELLFAMILY_DEATHKNIGHT) 
+        { 
+            if(spellProto->Dispel ==  DISPEL_DISEASE) 
+                TakenTotalMod *= ((*i)->GetModifier()->m_amount + 100.0f) / 100.0f; 
+        } 
+    } 
 
     // From caster spells
     AuraList const& mOwnerTaken = pVictim->GetAurasByType(SPELL_AURA_MOD_DAMAGE_FROM_CASTER);
@@ -9533,7 +9616,7 @@ uint32 Unit::SpellDamageBonus(Unit *pVictim, SpellEntry const *spellProto, uint3
             coeff = bonus->direct_damage * LvlPenalty * stack;
 
         if (bonus->ap_bonus)
-            DoneTotal += int32(bonus->ap_bonus * GetTotalAttackPowerValue(BASE_ATTACK) * stack);
+            DoneTotal += int32(bonus->ap_bonus * bonusApCoeff * GetTotalAttackPowerValue(BASE_ATTACK) * stack); 
 
         // Spellmod SpellBonusDamage
         if (modOwner)
@@ -10349,6 +10432,7 @@ uint32 Unit::MeleeDamageBonus(Unit *pVictim, uint32 pdamage,WeaponAttackType att
     // ====================
     float DonePercent   = 1.0f;
     float TakenPercent  = 1.0f;
+    float bonusApCoeff  = 1.0f; 
 
     // ..done pct, already included in weapon damage based spells
     if(!isWeaponDamageBasedSpell)
@@ -10450,7 +10534,8 @@ uint32 Unit::MeleeDamageBonus(Unit *pVictim, uint32 pdamage,WeaponAttackType att
                 case 7293: // Rage of Rivendare
                 {
                     if (pVictim->GetAura(SPELL_AURA_PERIODIC_DAMAGE, SPELLFAMILY_DEATHKNIGHT, UI64LIT(0x0200000000000000)))
-                        DonePercent *= ((*i)->GetModifier()->m_amount+100.0f)/100.0f;
+                        // Using double of other effect due to missing DBC entry (coincidence match) 
+                        DonePercent *= ((*i)->GetSpellProto()->CalculateSimpleValue(EFFECT_INDEX_1)*2+100.0f)/100.0f; 
                     break;
                 }
                 // Marked for Death
@@ -10467,7 +10552,39 @@ uint32 Unit::MeleeDamageBonus(Unit *pVictim, uint32 pdamage,WeaponAttackType att
             }
         }
     }
-
+    // ..done custom 
+    if (GetTypeId() == TYPEID_PLAYER) 
+    { 
+        // Impurity 
+        uint32 impurityId = 0; 
+        if (HasSpell(49638)) 
+           impurityId = 49638; 
+        else if (HasSpell(49636)) 
+           impurityId = 49636; 
+        else if (HasSpell(49635)) 
+           impurityId = 49635; 
+        else if (HasSpell(49633)) 
+           impurityId = 49633; 
+        else if (HasSpell(49220)) 
+           impurityId = 49220; 
+ 
+        if (const SpellEntry *i_spellProto = sSpellStore.LookupEntry(impurityId)) 
+           bonusApCoeff += float(i_spellProto->CalculateSimpleValue(EFFECT_INDEX_0)) / 100.0f; 
+    } 
+ 
+    // .. taken pct: SPELL_AURA_284 
+    AuraList const& mAuraListAura284 = pVictim->GetAurasByType(SPELL_AURA_284); 
+    for(AuraList::const_iterator i = mAuraListAura284.begin(); i != mAuraListAura284.end(); ++i) 
+    { 
+        // Crypt Fever and Ebon Plague 
+        if((*i)->GetSpellProto()->SpellFamilyName == SPELLFAMILY_DEATHKNIGHT) 
+        { 
+            if (!spellProto) 
+                continue; 
+            if (spellProto->Dispel ==  DISPEL_DISEASE) 
+                TakenPercent *= ((*i)->GetModifier()->m_amount + 100.0f) / 100.0f; 
+        } 
+    } 
     // .. taken (dummy auras)
     AuraList const& mDummyAuras = pVictim->GetAurasByType(SPELL_AURA_DUMMY);
     for(AuraList::const_iterator i = mDummyAuras.begin(); i != mDummyAuras.end(); ++i)
@@ -10493,6 +10610,16 @@ uint32 Unit::MeleeDamageBonus(Unit *pVictim, uint32 pdamage,WeaponAttackType att
                 if ((*i)->GetSpellProto()->SpellFamilyName == SPELLFAMILY_PALADIN) 
                     TakenPercent *= ((*i)->GetModifier()->m_amount + 100.0f) / 100.0f; 
                 break;
+            // Ebon Plague 
+            case 1933: 
+            { 
+                if((*i)->GetSpellProto()->SpellFamilyName == SPELLFAMILY_DEATHKNIGHT) 
+                { 
+                    if((*i)->GetModifier()->m_miscvalue & schoolMask) 
+                        TakenPercent *= ((*i)->GetModifier()->m_amount + 100.0f) / 100.0f; 
+                } 
+                break; 
+            }
         }
     }
 
@@ -10543,7 +10670,7 @@ uint32 Unit::MeleeDamageBonus(Unit *pVictim, uint32 pdamage,WeaponAttackType att
              if ( attType == RANGED_ATTACK && !( spellProto && spellProto->SpellFamilyName != SPELLFAMILY_HUNTER ) )
                  DoneFlat += bonus->ap_bonus * (GetTotalAttackPowerValue(RANGED_ATTACK) + APbonus) * stack;
              else 
-                 DoneFlat += bonus->ap_bonus * (GetTotalAttackPowerValue(BASE_ATTACK) + APbonus) * stack;
+                 DoneFlat += bonus->ap_bonus * bonusApCoeff * (GetTotalAttackPowerValue(BASE_ATTACK) + APbonus) * stack;
 
             DoneFlat  *= coeff;
             TakenFlat *= coeff;
