@@ -9463,17 +9463,32 @@ uint32 Unit::SpellDamageBonus(Unit *pVictim, SpellEntry const *spellProto, uint3
             TakenTotalMod *= ((*i)->GetModifier()->m_amount + 100.0f) / 100.0f;
     }
 
-    // .. taken pct: dummy auras
-    if (pVictim->GetTypeId() == TYPEID_PLAYER)
-    {
-        //Cheat Death
-        if (Aura *dummy = pVictim->GetDummyAura(45182))
-        {
-            float mod = -((Player*)pVictim)->GetRatingBonusValue(CR_CRIT_TAKEN_SPELL)*2*4;
-            if (mod < float(dummy->GetModifier()->m_amount))
-                mod = float(dummy->GetModifier()->m_amount);
-            TakenTotalMod *= (mod+100.0f)/100.0f;
-        }
+    // .. taken (dummy auras) 
+    AuraList const& mDummyAuras = pVictim->GetAurasByType(SPELL_AURA_DUMMY); 
+    for(AuraList::const_iterator i = mDummyAuras.begin(); i != mDummyAuras.end(); ++i) 
+    { 
+        switch((*i)->GetSpellProto()->SpellIconID) 
+        { 
+            //Cheat Death 
+            case 2109: 
+                if((*i)->GetModifier()->m_miscvalue & SPELL_SCHOOL_MASK_NORMAL) 
+                { 
+                    if(pVictim->GetTypeId() != TYPEID_PLAYER) 
+                        continue; 
+ 
+                    float mod = ((Player*)pVictim)->GetRatingBonusValue(CR_CRIT_TAKEN_MELEE)*(-8.0f); 
+                    if (mod < float((*i)->GetModifier()->m_amount)) 
+                        mod = float((*i)->GetModifier()->m_amount); 
+ 
+                    TakenTotalMod *= (mod + 100.0f) / 100.0f; 
+                } 
+                break; 
+            case 19:                // Blessing of Sanctuary 
+            case 1804:              // Greater Blessing of Sanctuary 
+                if ((*i)->GetSpellProto()->SpellFamilyName == SPELLFAMILY_PALADIN) 
+                    TakenTotalMod *= ((*i)->GetModifier()->m_amount + 100.0f) / 100.0f; 
+                break; 
+        } 
     }
 
     // From caster spells
@@ -10472,6 +10487,11 @@ uint32 Unit::MeleeDamageBonus(Unit *pVictim, uint32 pdamage,WeaponAttackType att
 
                     TakenPercent *= (mod + 100.0f) / 100.0f;
                 }
+                break;
+            case 19:                // Blessing of Sanctuary 
+            case 1804:              // Greater Blessing of Sanctuary 
+                if ((*i)->GetSpellProto()->SpellFamilyName == SPELLFAMILY_PALADIN) 
+                    TakenPercent *= ((*i)->GetModifier()->m_amount + 100.0f) / 100.0f; 
                 break;
         }
     }
