@@ -1043,6 +1043,25 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
             if(Aura* dummy = unitTarget->GetDummyAura(m_spellInfo->Id))
                 dummy->GetModifier()->m_amount = damageInfo.damage;
 
+        // Scourge Strike (Shadow Damage part) 
+        if (m_spellInfo->SpellFamilyName == SPELLFAMILY_DEATHKNIGHT && m_spellInfo->SpellIconID == 3143) 
+        { 
+            int32 diseaseCount = 0; 
+            Unit::AuraMap const& auras = unitTarget->GetAuras(); 
+            for(Unit::AuraMap::const_iterator itr = auras.begin(); itr!=auras.end(); ++itr) 
+            { 
+                if(itr->second->GetSpellProto()->Dispel == DISPEL_DISEASE && 
+                   itr->second->GetCasterGUID() == caster->GetGUID() && 
+                   IsSpellLastAuraEffect(itr->second->GetSpellProto(), itr->second->GetEffIndex())) 
+                    ++diseaseCount; 
+            } 
+            if (diseaseCount) 
+            { 
+                int32 bp0 = int32(damageInfo.damage * diseaseCount * m_spellInfo->CalculateSimpleValue(EFFECT_INDEX_2) / 100); 
+                caster->CastCustomSpell(unitTarget, 70890, &bp0, NULL, NULL, true); 
+            } 
+        } 
+
         caster->DealSpellDamage(&damageInfo, true);
     }
     // Passive spell hits/misses or active spells only misses (only triggers)

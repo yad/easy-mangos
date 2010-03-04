@@ -112,7 +112,7 @@ bool ChatHandler::HandleServerInfoCommand(const char* /*args*/)
     PSendSysMessage(LANG_USING_EVENT_AI,sWorld.GetCreatureEventAIVersion());
     PSendSysMessage(LANG_CONNECTED_USERS, activeClientsNum, maxActiveClientsNum, queuedClientsNum, maxQueuedClientsNum);
     PSendSysMessage(LANG_UPTIME, str.c_str());
-    SendSysMessage("Revision [3.3.2010][pr243] - MaNGOS modified for Valhalla Server");
+    SendSysMessage("Revision [4.3.2010][pr245] - MaNGOS modified for Valhalla Server");
     SendSysMessage("GIT: http://github.com/Tasssadar/Valhalla-Project/commits");
     SendSysMessage("Changelog: http://valhalla-team.com/web/changelog.php");
 
