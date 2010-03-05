@@ -1388,6 +1388,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 case 29213: // Curse of the Plaguebringer
                 case 28796: // Poison Bolt Volley
                 case 31298:
+                case 60936: // Surge of power 25 man version
                     unMaxTargets = 3;
                     break;
                 case 30843:
