@@ -8727,7 +8727,14 @@ bool Unit::Attack(Unit *victim, bool meleeAttack)
 
     // player (also npc?) cannot attack on vehicle
     if(GetTypeId()==TYPEID_PLAYER && GetVehicleGUID())
-        return false;
+    {
+        Vehicle *pVehicle = GetMap()->GetVehicle(GetVehicleGUID()))
+        if(!pVehicle)
+            return false;
+
+        if(!(pVehicle->GetVehicleFlags() & VF_ALLOW_MELEE))
+            return false;
+    }
 
     // player (also npc?) cannot attack on vehicle
     if(GetTypeId()==TYPEID_UNIT && ((Creature*)this)->isVehicle() && GetCharmerGUID())
