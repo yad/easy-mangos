@@ -100,6 +100,7 @@ class UpdateData;
 class WorldSession;
 class Creature;
 class Player;
+class Unit;
 class Map;
 class UpdateMask;
 class InstanceData;
@@ -482,6 +483,10 @@ class MANGOS_DLL_SPEC WorldObject : public Object
 
         void SendObjectDeSpawnAnim(uint64 guid);
         void SendGameObjectCustomAnim(uint64 guid);
+
+        virtual bool IsHostileTo(Unit const* unit) const =0;
+        virtual bool IsFriendlyTo(Unit const* unit) const =0;
+        bool IsControlledByPlayer() const;
 
         virtual void SaveRespawnTime() {}
         void AddObjectToRemoveList();
