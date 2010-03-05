@@ -8733,7 +8733,7 @@ bool Unit::Attack(Unit *victim, bool meleeAttack)
     // player (also npc?) cannot attack on vehicle
     if(GetTypeId()==TYPEID_PLAYER && GetVehicleGUID())
     {
-        Vehicle *pVehicle = GetMap()->GetVehicle(GetVehicleGUID()))
+        Vehicle *pVehicle = GetMap()->GetVehicle(GetVehicleGUID());
         if(!pVehicle)
             return false;
 

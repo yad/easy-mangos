@@ -1182,7 +1182,7 @@ void Player::Update( uint32 p_time )
                     }
                 }
                 //120 degrees of radiant range
-                else if( !HasInArc( 2*M_PI_F/3, pVictim ))
+                else if( !HasInArc( 2*M_PI_F/3, pVictim ) && !GetVehicleGUID()) // - on vehicles is wrong facing set?
                 {
                     setAttackTimer(BASE_ATTACK,100);
                     if(m_swingErrorMsg != 2)                // send single time (client auto repeat)
