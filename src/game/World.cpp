@@ -738,7 +738,7 @@ void World::LoadConfigSettings(bool reload)
     setConfig(CONFIG_UINT32_ARENA_SEASON_ID,                           "Arena.ArenaSeason.ID", 1);
     setConfig(CONFIG_BOOL_ARENA_SEASON_IN_PROGRESS,                    "Arena.ArenaSeason.InProgress", true);
 
-    setConfig(CONFIG_BOOL_OFFHAND_CHECK_AT_TALENTS_RESET, "OffhandCheckAtTalentsReset", false);
+	setConfig(CONFIG_OFFHAND_CHECK_AT_SPELL_UNLEARN, "OffhandCheckAtSpellUnlearn", false);
 
     if(int clientCacheId = sConfig.GetIntDefault("ClientCacheVersion", 0))
     {
@@ -751,6 +751,10 @@ void World::LoadConfigSettings(bool reload)
         else
             sLog.outError("ClientCacheVersion can't be negative %d, ignored.", clientCacheId);
     }
+	
+	setConfig(CONFIG_UINT32_DUALSPEC_LEVEL, "MinDualSpecLevel", 40);
+	setConfig(CONFIG_UINT32_DUALSPEC_PRICE, "DualSpecPrice", 10000000);
+
 
     setConfig(CONFIG_UINT32_INSTANT_LOGOUT, "InstantLogout", SEC_MODERATOR);
 
