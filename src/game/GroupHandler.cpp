@@ -154,7 +154,7 @@ void WorldSession::HandleGroupInviteOpcode( WorldPacket & recv_data )
     // ok, we do it
     WorldPacket data(SMSG_GROUP_INVITE, 10);                // guess size
     data << uint8(1);                                       // ok
-    data << GetPlayer()->GetName();
+    data << membername;
     player->GetSession()->SendPacket(&data);
 
     SendPartyResult(PARTY_OP_INVITE, membername, PARTY_RESULT_OK);
