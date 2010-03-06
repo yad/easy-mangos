@@ -334,7 +334,8 @@ void GameObject::Update(uint32 /*p_time*/)
                         Unit *caster =  owner ? owner : ok;
 
                         caster->CastSpell(ok, goInfo->trap.spellId, true, NULL, NULL, GetGUID());
-                        m_cooldownTime = time(NULL) + 4;        // 4 seconds
+                        // use template cooldown if provided
+                        m_cooldownTime = time(NULL) + (goInfo->trap.cooldown ? goInfo->trap.cooldown : uint32(4));
 
                         // count charges
                         if(goInfo->trap.charges > 0)
@@ -1445,40 +1446,6 @@ void GameObject::UpdateRotationFields(float rotation2 /*=0.0f*/, float rotation3
     SetFloatValue(GAMEOBJECT_PARENTROTATION+3, rotation3);
 }
 
-void GameObject::DealSiegeDamage(uint32 damage)
-{
-    if (!GetGOInfo()->destructibleBuilding.intactNumHits)
-        return;
-
-    if (m_actualHealth > damage)
-        m_actualHealth -= damage;
-    else
-        m_actualHealth = 0;
-
-    if (HasFlag(GAMEOBJECT_FLAGS, GO_FLAG_DAMAGED)) // from damaged to destroyed
-    {
-        if(!GetGOInfo()->destructibleBuilding.intactNumHits)
-        {
-            RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_DAMAGED);
-            SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_DESTROYED);
-            SetUInt32Value(GAMEOBJECT_DISPLAYID, GetGOInfo()->destructibleBuilding.destroyedDisplayId);
-        }
-    }
-    else // from intact to damaged
-    {
-        if (m_actualHealth <= GetGOInfo()->destructibleBuilding.damagedNumHits)
-        {
-            if (!GetGOInfo()->destructibleBuilding.destroyedDisplayId)
-                m_actualHealth = 0;
-            else if (!m_actualHealth)
-               m_actualHealth = 1;
-
-            SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_DAMAGED);
-            SetUInt32Value(GAMEOBJECT_DISPLAYID, GetGOInfo()->destructibleBuilding.damagedDisplayId);
-        }
-    }
-}
-
 bool GameObject::IsHostileTo(Unit const* unit) const
 {
     // always non-hostile to GM in GM mode
@@ -1563,4 +1530,38 @@ bool GameObject::IsFriendlyTo(Unit const* unit) const
 
     // common faction based case (GvC,GvP)
     return tester_faction->IsFriendlyTo(*target_faction);
+}
+
+void GameObject::DealSiegeDamage(uint32 damage)
+{
+    if (!GetGOInfo()->destructibleBuilding.intactNumHits)
+        return;
+
+    if (m_actualHealth > damage)
+        m_actualHealth -= damage;
+    else
+        m_actualHealth = 0;
+
+    if (HasFlag(GAMEOBJECT_FLAGS, GO_FLAG_DAMAGED)) // from damaged to destroyed
+    {
+        if(!GetGOInfo()->destructibleBuilding.intactNumHits)
+        {
+            RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_DAMAGED);
+            SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_DESTROYED);
+            SetUInt32Value(GAMEOBJECT_DISPLAYID, GetGOInfo()->destructibleBuilding.destroyedDisplayId);
+        }
+    }
+    else // from intact to damaged
+    {
+        if (m_actualHealth <= GetGOInfo()->destructibleBuilding.damagedNumHits)
+        {
+            if (!GetGOInfo()->destructibleBuilding.destroyedDisplayId)
+                m_actualHealth = 0;
+            else if (!m_actualHealth)
+               m_actualHealth = 1;
+
+            SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_DAMAGED);
+            SetUInt32Value(GAMEOBJECT_DISPLAYID, GetGOInfo()->destructibleBuilding.damagedDisplayId);
+        }
+    }
 }

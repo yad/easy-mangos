@@ -57,7 +57,7 @@ bool ChatHandler::HandleCommandsCommand(const char* /*args*/)
 
 bool ChatHandler::HandleAccountCommand(const char* /*args*/)
 {
-    AccountTypes gmlevel = m_session->GetSecurity();
+    AccountTypes gmlevel = GetAccessLevel();
     PSendSysMessage(LANG_ACCOUNT_LEVEL, uint32(gmlevel));
     return true;
 }
@@ -112,7 +112,7 @@ bool ChatHandler::HandleServerInfoCommand(const char* /*args*/)
     PSendSysMessage(LANG_USING_EVENT_AI,sWorld.GetCreatureEventAIVersion());
     PSendSysMessage(LANG_CONNECTED_USERS, activeClientsNum, maxActiveClientsNum, queuedClientsNum, maxQueuedClientsNum);
     PSendSysMessage(LANG_UPTIME, str.c_str());
-    SendSysMessage("Revision [4.3.2010][pr245] - MaNGOS modified for Valhalla Server");
+    SendSysMessage("Revision [5.3.2010][pr249] - MaNGOS modified for Valhalla Server");
     SendSysMessage("GIT: http://github.com/Tasssadar/Valhalla-Project/commits");
     SendSysMessage("Changelog: http://valhalla-team.com/web/changelog.php");
 
@@ -160,7 +160,7 @@ bool ChatHandler::HandleSaveCommand(const char* /*args*/)
     }
 
     // save GM account without delay and output message (testing, etc)
-    if(m_session->GetSecurity() > SEC_PLAYER)
+    if(GetAccessLevel() > SEC_PLAYER)
     {
         player->SaveToDB();
         SendSysMessage(LANG_PLAYER_SAVED);
@@ -205,6 +205,10 @@ bool ChatHandler::HandleGMListIngameCommand(const char* /*args*/)
 
 bool ChatHandler::HandleAccountPasswordCommand(const char* args)
 {
+    // allow use from RA, but not from console (not have associated account id)
+    if (!GetAccountId())
+        return false;
+
     if(!*args)
         return false;
 
@@ -226,14 +230,14 @@ bool ChatHandler::HandleAccountPasswordCommand(const char* args)
         return false;
     }
 
-    if (!sAccountMgr.CheckPassword (m_session->GetAccountId(), password_old))
+    if (!sAccountMgr.CheckPassword (GetAccountId(), password_old))
     {
         SendSysMessage (LANG_COMMAND_WRONGOLDPASSWORD);
         SetSentErrorMessage (true);
         return false;
     }
 
-    AccountOpResult result = sAccountMgr.ChangePassword(m_session->GetAccountId(), password_new);
+    AccountOpResult result = sAccountMgr.ChangePassword(GetAccountId(), password_new);
 
     switch(result)
     {
@@ -290,6 +294,10 @@ bool ChatHandler::HandleJailInfoCommand(const char* args)
 
 bool ChatHandler::HandleAccountLockCommand(const char* args)
 {
+    // allow use from RA, but not from console (not have associated account id)
+    if (!GetAccountId())
+        return false;
+
     if (!*args)
     {
         SendSysMessage(LANG_USE_BOL);
@@ -299,14 +307,14 @@ bool ChatHandler::HandleAccountLockCommand(const char* args)
     std::string argstr = (char*)args;
     if (argstr == "on")
     {
-        loginDatabase.PExecute( "UPDATE account SET locked = '1' WHERE id = '%d'",m_session->GetAccountId());
+        loginDatabase.PExecute( "UPDATE account SET locked = '1' WHERE id = '%d'",GetAccountId());
         PSendSysMessage(LANG_COMMAND_ACCLOCKLOCKED);
         return true;
     }
 
     if (argstr == "off")
     {
-        loginDatabase.PExecute( "UPDATE account SET locked = '0' WHERE id = '%d'",m_session->GetAccountId());
+        loginDatabase.PExecute( "UPDATE account SET locked = '0' WHERE id = '%d'",GetAccountId());
         PSendSysMessage(LANG_COMMAND_ACCLOCKUNLOCKED);
         return true;
     }

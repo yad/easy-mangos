@@ -4050,8 +4050,13 @@ bool Unit::AddAura(Aura *Aur)
                         delete Aur;
                         return false;
                     }
+
+                    // Check for coexisting Weapon-proced Auras
+                    if (Aur->isWeaponBuffCoexistableWith(aur2))
+                        continue;
+
                     // Carry over removed Aura's remaining damage if Aura still has ticks remaining
-                    else if (aur2->GetSpellProto()->AttributesEx4 & SPELL_ATTR_EX4_STACK_DOT_MODIFIER && aurName == SPELL_AURA_PERIODIC_DAMAGE && aur2->GetAuraDuration() > 0)
+                    if (aur2->GetSpellProto()->AttributesEx4 & SPELL_ATTR_EX4_STACK_DOT_MODIFIER && aurName == SPELL_AURA_PERIODIC_DAMAGE && aur2->GetAuraDuration() > 0)
                     {
                         int32 remainingTicks = 1 + (aur2->GetAuraDuration() / aur2->GetModifier()->periodictime);
                         int32 remainingDamage = aur2->GetModifier()->m_amount * remainingTicks;
@@ -8764,7 +8769,14 @@ bool Unit::Attack(Unit *victim, bool meleeAttack)
 
     // player (also npc?) cannot attack on vehicle
     if(GetTypeId()==TYPEID_PLAYER && GetVehicleGUID())
-        return false;
+    {
+        Vehicle *pVehicle = GetMap()->GetVehicle(GetVehicleGUID());
+        if(!pVehicle)
+            return false;
+
+        if(!(pVehicle->GetVehicleFlags() & VF_ALLOW_MELEE))
+            return false;
+    }
 
     // player (also npc?) cannot attack on vehicle
     if(GetTypeId()==TYPEID_UNIT && ((Creature*)this)->isVehicle() && GetCharmerGUID())

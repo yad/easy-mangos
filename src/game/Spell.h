@@ -339,6 +339,8 @@ class Spell
         void EffectCastButtons(SpellEffectIndex eff_id);
         void EffectBind(SpellEffectIndex eff_idx);
         void EffectRestoreItemCharges(SpellEffectIndex eff_idx);
+		void EffectTeachTaxiNode(SpellEffectIndex eff_idx);
+
 
         Spell( Unit* Caster, SpellEntry const *info, bool triggered, uint64 originalCasterGUID = 0, Spell** triggeringContainer = NULL );
         ~Spell();

@@ -682,7 +682,7 @@ enum SpellEffects
     SPELL_EFFECT_TRIGGER_SPELL_2           = 151,
     SPELL_EFFECT_152                       = 152,
     SPELL_EFFECT_153                       = 153,
-    SPELL_EFFECT_154                       = 154,
+    SPELL_EFFECT_TEACH_TAXI_NODE           = 154,
     SPELL_EFFECT_TITAN_GRIP                = 155,
     SPELL_EFFECT_ENCHANT_ITEM_PRISMATIC    = 156,
     SPELL_EFFECT_CREATE_ITEM_2             = 157,
@@ -2463,7 +2463,8 @@ enum CustomVehicleFLags
     VF_MOVEMENT                     = 0x0040,                   // vehicle will move on its own, not depending on rider, however rider can cast spells
     VF_NON_SELECTABLE               = 0x0080,                   // vehicle will be not selectable after rider enter
     VF_FLYING                       = 0x0100,                   // Hack for now (256 in DB)
-    VF_CAST_AURA                    = 0x0200                    // Cast spell1 on player on vehicle enter and remove when he leaves.
+    VF_CAST_AURA                    = 0x0200,                   // Cast spell1 on player on vehicle enter and remove when he leaves.
+    VF_ALLOW_MELEE                  = 0x0400                    // Allow melee for players on vehicle   
 };
 
 enum CustomVehicleSeatFLags
