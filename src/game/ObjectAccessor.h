@@ -181,7 +181,11 @@ inline Unit* ObjectAccessor::GetUnitInWorld(WorldObject const& obj, uint64 guid)
     if (IS_PET_GUID(guid))
         return obj.IsInWorld() ? obj.GetMap()->GetPet(guid) : NULL;
 
+    if (IS_VEHICLE_GUID(guid))
+        return obj.IsInWorld() ? ((Unit*)obj.GetMap()->GetVehicle(guid)) : NULL;
+
     return GetCreatureInWorld(guid);
+
 }
 
 #define sObjectAccessor ObjectAccessor::Instance()
