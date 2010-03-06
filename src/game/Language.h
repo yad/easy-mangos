@@ -83,8 +83,7 @@ enum MangosStrings
     LANG_USING_WORLD_DB                 = 57,
     LANG_USING_SCRIPT_LIB               = 58,
     LANG_USING_EVENT_AI                 = 59,
-    // Room for more level 0              60-99 not used
-    LANG_RA_BUSY                        = 60,
+    //LANG_RA_BUSY                      = 60, not used
     LANG_RA_USER                        = 61,
     LANG_RA_PASS                        = 62,
 
