@@ -105,14 +105,11 @@ void Vehicle::RegeneratePower(Powers power)
     addvalue = 10.0f;
 
     ModifyPower(power, (int32)addvalue);
-    for(int i =0; i != MAX_SEAT; i++)
-    {
-        if(Unit *pPassanger = GetPassenger(i))
-        {
-            if(pPassanger->GetTypeId() == TYPEID_PLAYER)
-                SendCreateUpdateToPlayer((Player*)pPassanger);
-        }
-    }
+    WorldPacket data(SMSG_POWER_UPDATE);
+    data.append(GetPackGUID());
+    data << uint8(power);
+    data << uint32(addvalue+curValue);
+    SendMessageToSet(&data, true);
 }
 
 bool Vehicle::Create(uint32 guidlow, Map *map, uint32 phaseMask, uint32 Entry, uint32 vehicleId, uint32 team, const CreatureData *data)
