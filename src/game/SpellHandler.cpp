@@ -408,7 +408,7 @@ void WorldSession::HandleCancelAuraOpcode( WorldPacket& recvPacket)
     if (!spellInfo)
         return;
 
-    if (spellInfo->Attributes & SPELL_ATTR_CANT_CANCEL)
+    if (spellInfo->Attributes & SPELL_ATTR_CANT_CANCEL || spellId == 56266)
         return;
 
     if(!IsPositiveSpell(spellId))
