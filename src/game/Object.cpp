@@ -525,7 +525,7 @@ void Object::BuildMovementUpdate(ByteBuffer * data, uint16 updateFlags) const
     if(updateFlags & UPDATEFLAG_VEHICLE)                    // unused for now
     {
         *data << uint32(((Vehicle*)this)->GetVehicleId());  // vehicle id
-        *data << float(0);                                  // facing adjustment
+        *data << float(((WorldObject*)this)->GetOrientation());
     }
 
     // 0x200
@@ -1428,9 +1428,16 @@ void WorldObject::GetRandomPoint( float x, float y, float z, float distance, flo
 
 void WorldObject::UpdateGroundPositionZ(float x, float y, float &z) const
 {
-    float new_z = GetBaseMap()->GetHeight(x,y,z,true);
-    if(new_z > INVALID_HEIGHT)
-        z = new_z+ 0.05f;                                   // just to be sure that we are not a few pixel under the surface
+    float map_z = GetBaseMap()->GetHeight(x,y,z,false);
+    float vmap_z = GetBaseMap()->GetHeight(x,y,z,true);
+ 
+    if(vmap_z > INVALID_HEIGHT)
+	  z = vmap_z - 0.03f;  // adjust offset to suit
+
+    if((map_z > vmap_z) && (map_z > z))
+          z = map_z;
+
+    MaNGOS::NormalizeMapCoord(z);
 }
 
 bool WorldObject::IsPositionValid() const
@@ -1957,4 +1964,22 @@ void WorldObject::BuildUpdateData( UpdateDataMapType & update_players)
     cell.Visit(p, player_notifier, *aMap, *this, aMap->GetVisibilityDistance());
 
     ClearUpdateMask(false);
+}
+
+bool WorldObject::IsControlledByPlayer() const
+{
+    switch (GetTypeId())
+    {
+        case TYPEID_GAMEOBJECT:
+            return IS_PLAYER_GUID(((GameObject*)this)->GetOwnerGUID());
+        case TYPEID_UNIT:
+        case TYPEID_PLAYER:
+            return ((Unit*)this)->IsCharmerOrOwnerPlayerOrPlayerItself();
+        case TYPEID_DYNAMICOBJECT:
+            return IS_PLAYER_GUID(((DynamicObject*)this)->GetCasterGUID());
+        case TYPEID_CORPSE:
+            return true;
+        default:
+            return false;
+    }
 }
