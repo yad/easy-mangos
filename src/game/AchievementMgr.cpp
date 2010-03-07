@@ -786,7 +786,7 @@ void AchievementMgr::UpdateAchievementCriteria(AchievementCriteriaTypes type, ui
                 if (achievementCriteria->win_bg.bgMapID != GetPlayer()->GetMapId())
                     continue;
 
-                if (achievementCriteria->win_bg.additionalRequirement1_type)
+                if (achievementCriteria->win_bg.additionalRequirement1_type || achievementCriteria->win_bg.additionalRequirement2_type)
                 {
                     // those requirements couldn't be found in the dbc
                     AchievementCriteriaRequirementSet const* data = sAchievementMgr.GetCriteriaRequirementSet(achievementCriteria);
@@ -2023,7 +2023,7 @@ void AchievementGlobalMgr::LoadAchievementCriteriaRequirements()
         switch(criteria->requiredType)
         {
             case ACHIEVEMENT_CRITERIA_TYPE_WIN_BG:
-                if(!criteria->win_bg.additionalRequirement1_type)
+                if(!criteria->win_bg.additionalRequirement1_type && !criteria->win_bg.additionalRequirement2_type)
                     continue;
                 break;
             case ACHIEVEMENT_CRITERIA_TYPE_KILL_CREATURE:
