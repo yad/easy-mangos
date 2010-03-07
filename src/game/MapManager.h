@@ -25,7 +25,6 @@
 #include "Common.h"
 #include "Map.h"
 #include "GridStates.h"
-#include "MapUpdater.h"
 
 class Transport;
 
@@ -156,7 +155,6 @@ class MANGOS_DLL_DECL MapManager : public MaNGOS::Singleton<MapManager, MaNGOS::
         IntervalTimer i_timer;
 
         uint32 i_MaxInstanceId;
-        MapUpdater m_updater;
 };
 
 #define sMapMgr MapManager::Instance()
