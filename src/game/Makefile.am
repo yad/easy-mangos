@@ -178,6 +178,8 @@ libmangosgame_a_SOURCES = \
 	MapInstanced.h \
 	MapManager.cpp \
 	MapManager.h \
+	MapUpdater.cpp \
+	MapUpdater.h \
 	MapReference.h \
 	MapRefManager.h \
 	MiscHandler.cpp \
