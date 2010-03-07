@@ -65,7 +65,7 @@ class HashMapHolder
 
         static T* Find(uint64 guid)
         {
-			Guard guard(i_lock);
+            Guard guard(i_lock);
             typename MapType::iterator itr = m_objectMap.find(guid);
             return (itr != m_objectMap.end()) ? itr->second : NULL;
         }
@@ -143,13 +143,13 @@ class MANGOS_DLL_DECL ObjectAccessor : public MaNGOS::Singleton<ObjectAccessor, 
         static void LinkMap(Map* map)   { ACE_Guard<ACE_Thread_Mutex> guard(m_Lock); i_mapList.push_back(map); }
         static void DelinkMap(Map* map) { ACE_Guard<ACE_Thread_Mutex> guard(m_Lock); i_mapList.remove(map); }
     private:
-		static ACE_Thread_Mutex  m_Lock;
+        static ACE_Thread_Mutex  m_Lock;
         // TODO: This methods will need lock in MT environment
         // Theoreticaly multiple threads can enter and search in this method but
         // in that case linking/delinking other map should be guarded
         template <class OBJECT> static OBJECT* FindHelper(uint64 guid)
         {
-			ACE_Guard<ACE_Thread_Mutex> guard(m_Lock);
+            ACE_Guard<ACE_Thread_Mutex> guard(m_Lock);
             for (std::list<Map*>::const_iterator i = i_mapList.begin() ; i != i_mapList.end(); ++i)
             {
                 if (OBJECT* ret = (*i)->GetObjectsStore().find(guid, (OBJECT*)NULL))
@@ -181,7 +181,11 @@ inline Unit* ObjectAccessor::GetUnitInWorld(WorldObject const& obj, uint64 guid)
     if (IS_PET_GUID(guid))
         return obj.IsInWorld() ? obj.GetMap()->GetPet(guid) : NULL;
 
+    if (IS_VEHICLE_GUID(guid))
+        return obj.IsInWorld() ? ((Unit*)obj.GetMap()->GetVehicle(guid)) : NULL;
+
     return GetCreatureInWorld(guid);
+
 }
 
 #define sObjectAccessor ObjectAccessor::Instance()

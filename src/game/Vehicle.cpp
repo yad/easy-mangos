@@ -81,7 +81,7 @@ void Vehicle::Update(uint32 diff)
     if(m_regenTimer <= diff)
     {
         RegeneratePower(getPowerType());
-        m_regenTimer = 500;
+        m_regenTimer = 1000;
     }
     else
         m_regenTimer -= diff;
@@ -102,9 +102,14 @@ void Vehicle::RegeneratePower(Powers power)
     if(m_vehicleInfo->m_powerType == POWER_TYPE_PYRITE)
         return;
 
-    addvalue = 5.0f;
+    addvalue = 10.0f;
 
     ModifyPower(power, (int32)addvalue);
+    WorldPacket data(SMSG_POWER_UPDATE);
+    data.append(GetPackGUID());
+    data << uint8(power);
+    data << uint32(addvalue+curValue);
+    SendMessageToSet(&data, true);
 }
 
 bool Vehicle::Create(uint32 guidlow, Map *map, uint32 phaseMask, uint32 Entry, uint32 vehicleId, uint32 team, const CreatureData *data)

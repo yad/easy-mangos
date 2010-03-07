@@ -4039,11 +4039,7 @@ bool Unit::AddAura(Aura *Aur)
             for(AuraMap::iterator i2 = m_Auras.lower_bound(spair); i2 != m_Auras.upper_bound(spair); ++i2)
             {
                 Aura* aur2 = i2->second;
-                bool vehicle = false;
-                if(Unit *caster = Aur->GetCaster())
-                    if(caster->GetVehicleGUID())
-                        vehicle = true;
-                if(aur2->GetCasterGUID()==Aur->GetCasterGUID() || vehicle)
+                if(aur2->GetCasterGUID()==Aur->GetCasterGUID())
                 {
                     // Aura can stack on self -> Stack it;
                     if(aurSpellInfo->StackAmount)
@@ -5921,6 +5917,17 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                     pVictim->RemoveSpellsCausingAura(SPELL_AURA_PERIODIC_DAMAGE_PERCENT);
                     return true;
                 }
+                // Blessing of Ancient Kings
+                case 64411:
+                {
+                    // for DOT procs
+                    if (!IsPositiveSpell(procSpell->Id))
+                        return false;
+
+                    triggered_spell_id = 64413;
+                    basepoints[0] = damage * 15 / 100;
+                    break;
+                }
             }
             break;
         }
@@ -7678,6 +7685,13 @@ bool Unit::HandleProcTriggerSpell(Unit *pVictim, uint32 damage, Aura* triggeredB
                 //case 59288: break;                        // Infra-Green Shield
                 //case 59532: break;                        // Abandon Passengers on Poly
                 //case 59735: break:                        // Woe Strike
+                case 64415:                                 // // Val'anyr Hammer of Ancient Kings - Equip Effect
+                {
+                    // for DOT procs
+                    if (!IsPositiveSpell(procSpell->Id))
+                        return false;
+                    break;
+                }
                 case 67702:                                 // Death's Choice, Item - Coliseum 25 Normal Melee Trinket
                 {
                     float stat = 0.0f;

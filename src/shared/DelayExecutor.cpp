@@ -30,7 +30,7 @@ DelayExecutor::~DelayExecutor ()
 }
 
 int
-DelayExecutor::deactivate ()
++DelayExecutor::deactivate ()
 {
   if (!this->activated ())
     return -1;
