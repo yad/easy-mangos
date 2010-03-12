@@ -303,7 +303,7 @@ namespace VMAP
             {
                 for(unsigned int i=0;i<iNSubModel && result; ++i)
                 {
-                    unsigned char readBuffer[52];           // this is the size of SubModel on 32 bit systems
+                    unsigned char readBuffer[sizeof(SubModel)];
                     if(fread(readBuffer,sizeof(readBuffer),1,rf) != 1) result = false;
                     iSubModel[i].initFromBinBlock(readBuffer);
                     iSubModel[i].setTriangleArray(getTriangles());

@@ -81,7 +81,7 @@ public:
     ~WMOGroup();
 
     bool open();
-    int ConvertToVMAPGroupWmo(FILE *output, bool pPreciseVectorData);
+    int ConvertToVMAPGroupWmo(FILE *output, uint32 areaID, bool pPreciseVectorData);
 
 private:
     std::string filename;

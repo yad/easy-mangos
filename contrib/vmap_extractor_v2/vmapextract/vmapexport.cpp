@@ -202,7 +202,24 @@ int ExtractWmo()
                                     bResult = SFileFindNextFile(hFind, &wf);
                                     break;
                                 }
-                                Wmo_nVertices += fgroup->ConvertToVMAPGroupWmo(output, preciseVectorData);
+                                // try to search specific area
+                                uint64 key = uint64(froot->RootWMOID)<<32 | fgroup->groupWMOID;
+                                std::map<uint64, uint32>::iterator itr = wmoAreaTable.find(key);
+
+                                uint32 areaID;
+                                if(itr == wmoAreaTable.end())
+                                {
+                                    // fallback, use root area
+                                    key = uint64(froot->RootWMOID)<<32;
+                                    itr = wmoAreaTable.find(key);
+                                    areaID = itr == wmoAreaTable.end()?0:itr->second;
+                                }
+                                else
+                                {
+                                    areaID = itr->second;
+                                }
+
+                                Wmo_nVertices += fgroup->ConvertToVMAPGroupWmo(output, areaID, preciseVectorData);
                             }
                         }
                         fseek(output, 8, SEEK_SET); // store the correct no of vertices

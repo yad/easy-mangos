@@ -39,13 +39,13 @@ namespace VMAP
     class SubModel : public BaseModel
     {
         private:
-            uint32 iFlags;// 0x8 outdor; 0x2000 indoor
-            uint32 iAreaId;
-
             unsigned int iNodesPos;
             unsigned int iTrianglesPos;
             bool iHasInternalMemAlloc;
             ShortBox iBox;
+            G3D::uint32 iMogpFlags;// 0x8 outdor; 0x2000 indoor
+            G3D::uint32 iAreaId;
+
         #ifdef _DEBUG_VIEW
             G3D::Array<TriangleBox *> iDrawBox;
         #endif
@@ -53,7 +53,7 @@ namespace VMAP
             SubModel() : BaseModel(){ };
 
             SubModel(unsigned int pNTriangles, TriangleBox *pTriangles, unsigned int pTrianglesPos, unsigned int pNNodes, TreeNode *pTreeNodes, unsigned int pNodesPos);
-            SubModel(G3D::AABSPTree<G3D::Triangle> *pTree);
+            SubModel(G3D::AABSPTree<G3D::Triangle> *pTree, G3D::uint32 mogpFlags, G3D::uint32 areaID);
             ~SubModel(void);
             //Gets a 50 byte binary block
             void initFromBinBlock(void *pBinBlock);
