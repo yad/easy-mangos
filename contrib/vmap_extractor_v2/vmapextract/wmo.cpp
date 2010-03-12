@@ -143,6 +143,9 @@ bool WMOGroup::open()
         LiquEx_size = 0;
         liquflags = 0;
 
+        // TODO: indoor outdoor flags are there
+        // TODO: areaid is in that chunk
+        // TODO: this is different from http://www.madx.dk/wowdev/wiki/index.php?title=WMO#MOGP_chunk
         if (!strcmp(fourcc,"MOGP"))//header
         {
             f.seekRelative(-4);
