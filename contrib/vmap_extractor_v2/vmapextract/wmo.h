@@ -30,7 +30,7 @@ typedef unsigned int uint32;
 class WMORoot
 {
 public:
-    int nTextures, nGroups, nP, nLights, nModels, nDoodads, nDoodadSets, RootID;
+    int nTextures, nGroups, nP, nLights, nModels, nDoodads, nDoodadSets, RootWMOID;
     unsigned int col;
     int bbcorn1[3];
     int bbcorn2[3];
@@ -48,13 +48,19 @@ private:
 class WMOGroup
 {
 public:
-    int offsize,flag,flag1,Xid,Xid2,Xid3,zero1,Xflag,nTexture,GroupID;
+    // MOGP
+    int groupName, descGroupName, flags;
+    float bbcorn1[3];
+    float bbcorn2[3];
+    short moprIdx;
+    short nBatchA;
+    short nBatchB;
+    int nBatchC, fogIdx, liquidType, groupWMOID;
+
     int mopy_size,moba_size,hlq_xverts,hlq_yverts;
     int MopyEx_size,IndexExTr_size,LiquEx_size;
     unsigned int nVertices; // number when loaded
     int nTriangles; // number when loaded
-    int bbcorn1[3];
-    int bbcorn2[3];
     int * IndexExTr;
     char* MOPY;
     char* MopyEx;
