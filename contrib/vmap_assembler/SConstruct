@@ -1,0 +1,9 @@
+import os
+
+env = Environment(ENV=os.environ, CPPPATH = ['.', '../../src/shared/vmap', '../../dep/include/g3dlite'])
+
+env.Program(target = 'vmap_assembler',
+		source = ['vmap_assembler.cpp'],
+		LIBS = ['mangosvmaps','g3dlite'],
+		LIBPATH = ['../../objdir/src/shared/vmap','../../objdir/dep/src/g3dlite'])
+
