@@ -546,6 +546,9 @@ namespace VMAP
             if(gtree->size() >0)
             {
                 gtree->balance();
+                // gtree contains only triangles - is it possible to define "inside" and "outside" at all?
+                // one submodel = one wmo group file
+                // TODO: add indoor/outdoor flags and areaid to submodel
                 SubModel *sm = new SubModel(gtree);
                 #ifdef _ASSEMBLER_DEBUG
                 if(::g_df) fprintf(::g_df,"group trianglies: %d, Tris: %d, Nodes: %d, gtree.triangles: %d\n", g, sm->getNTriangles(), sm->getNNodes(), gtree->memberTable.size());
