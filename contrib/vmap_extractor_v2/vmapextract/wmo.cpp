@@ -1,7 +1,9 @@
 #define __STORMLIB_SELF__
 
 #include "wmo.h"
-#include "Stormlib.h"
+#include "StormLib.h"
+#undef min
+#undef max
 #include "mpq.h"
 
 using namespace std;
@@ -501,12 +503,15 @@ WMOInstance::WMOInstance(MPQFile &f,const char* WmoInstName,const char*MapName, 
     char tempname[512];
     //    const char dirname[] = "buildings\\dir";
 
-    sprintf(tempname, "buildings\\%s", WmoInstName);
+    sprintf(tempname, "Buildings/%s", WmoInstName);
     FILE *input;
     input = fopen(tempname, "r+b");
 
     if(!input)
+	{
+		printf("WMOInstance::WMOInstance: couldn't open %s\n", tempname);
         return;
+	}
 
     fseek(input, 8, SEEK_SET); // get the correct no of vertices
     int nVertices;

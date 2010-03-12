@@ -28,12 +28,12 @@ bool WDTFile::init(char *map_id)
     char fourcc[5];
     size_t size;
 
-    const char dirname[] = "buildings\\dir";
+    const char dirname[] = "Buildings/dir";
     FILE *dirfile;
     dirfile = fopen(dirname, "ab");
     if(!dirfile)
     {
-        printf("Can't open dirfile!'%s'\n");
+        printf("Can't open dirfile!'%s'\n", dirfile);
         return false;
     }
 

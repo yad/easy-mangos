@@ -4,7 +4,7 @@
 #define TILESIZE (533.33333f)
 #define CHUNKSIZE ((TILESIZE) / 16.0f)
 
-#include "Stormlib.h"
+#include "StormLib.h"
 #include <string>
 #include "vec3d.h"
 #include <set>
