@@ -23,6 +23,9 @@ void fixnamen(char *name, size_t len)
             name[i] &= ~0x20;
         }
     }
+	//extension in lowercase
+	for(size_t i=len-3; i<len; i++)
+		name[i] |= 0x20;
 }
 
 void fixname2(char *name, size_t len)
@@ -61,12 +64,12 @@ bool ADTFile::init(char *map_id)
     //printf("xMap = %s\n", xMap.c_str());
     //printf("yMap = %s\n", yMap.c_str());
 
-    const char dirname[] = "buildings\\dir";
+    const char dirname[] = "Buildings/dir";
     FILE *dirfile;
     dirfile = fopen(dirname, "ab");
     if(!dirfile)
     {
-        printf("Can't open dirfile!'%s'\n");
+        printf("Can't open dirfile!'%s'\n", dirname);
         return false;
     }
 
@@ -117,7 +120,7 @@ bool ADTFile::init(char *map_id)
                     // nothing do
 
                     char szLocalFile[MAX_PATH];
-                    sprintf(szLocalFile, ".\\buildings\\%s", s);
+                    sprintf(szLocalFile, "./Buildings/%s", s);
                     FILE * output = fopen(szLocalFile,"rb");
                     if(!output)
                     {

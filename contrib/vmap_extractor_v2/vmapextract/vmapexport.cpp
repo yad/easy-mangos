@@ -12,17 +12,16 @@
 /*****************************************************************************/
 
 #define _CRT_SECURE_NO_DEPRECATE
-#include <io.h>
-#include <conio.h>
 #include <stdio.h>
-#include <windows.h>
-#include <mmsystem.h>
 #include <vector>
 #include <list>
 
 
 #define __STORMLIB_SELF__               // Don't use StormLib.lib
 #include "StormLib.h"
+
+#undef min
+#undef max
 
 #pragma warning(disable : 4505)
 #pragma comment(lib, "Winmm.lib")
@@ -67,7 +66,7 @@ bool preciseVectorData = false;
 // Constants
 
 //static const char * szWorkDirMaps = ".\\Maps";
-static const char * szWorkDirWmo = ".\\buildings";
+static const char * szWorkDirWmo = "./Buildings";
 
 //static LPBYTE pbBuffer1 = NULL;
 //static LPBYTE pbBuffer2 = NULL;
@@ -77,6 +76,15 @@ static const char * szWorkDirWmo = ".\\buildings";
 static void clreol()
 {
     printf("\r                                                                              \r");
+}
+
+void strToLower(char* str)
+{
+    while(*str)
+    {   
+        *str=tolower(*str);
+        ++str;
+    }   
 }
 
 static const char * GetPlainName(const char * szFileName)
@@ -128,9 +136,9 @@ int ExtractWmo()
 
             while(hFind != NULL && bResult == TRUE)
             {
-                ShowProcessedFile(wf.cFileName);
+                printf("found *.wmo file %s\n", wf.cFileName);
                 SFileSetLocale(wf.lcLocale);
-                sprintf(szLocalFile, "%s\\%s", szWorkDirWmo, GetPlainName(wf.cFileName));
+                sprintf(szLocalFile, "%s/%s", szWorkDirWmo, GetPlainName(wf.cFileName));
                 fixnamen(szLocalFile,strlen(szLocalFile));
                 FILE * n;
                 if ((n = fopen(szLocalFile, "rb"))== NULL)
@@ -151,7 +159,7 @@ int ExtractWmo()
                     }
                     if(p != 3)
                     {
-                        //printf("RootWmo!\n");
+                        printf("RootWmo!\n");
                         string s = wf.cFileName;
                         WMORoot * froot = new WMORoot(s);
                         if(!froot->open())
@@ -161,8 +169,14 @@ int ExtractWmo()
                             continue;
                         }
                         FILE *output=fopen(szLocalFile,"wb");
+						if(!output)
+						{
+							printf("couldn't open %s for writing!\n", szLocalFile);
+							exit(1);
+						}
                         froot->ConvertToVMAPRootWmo(output);
                         int Wmo_nVertices = 0;
+						printf("root has %d groups\n", froot->nGroups);
                         if(froot->nGroups !=0)
                         {
                             for (int i=0; i<froot->nGroups; ++i)
@@ -172,7 +186,7 @@ int ExtractWmo()
                                 temp[strlen(wf.cFileName)-4] = 0;
                                 char groupFileName[MAX_PATH];
                                 sprintf(groupFileName,"%s_%03d.wmo",temp, i);
-                                printf("%s\n",groupFileName);
+                                printf("Trying to open groupfile %s\n",groupFileName);
                                 //printf("GroupWmo!\n");
                                 string s = groupFileName;
                                 WMOGroup * fgroup = new WMOGroup(s);
@@ -299,26 +313,25 @@ bool scan_patches(char* scanmatch, std::vector<std::string>& pArchiveNames)
     char path[512];
     std::list<std::string> matches;
 
-    WIN32_FIND_DATA ffData;
-    HANDLE hFind;
-
     for (i = 1; i <= 99; i++)
     {
         if (i != 1)
         {
-            sprintf(path, "%s-%d.mpq", scanmatch, i);
+            sprintf(path, "%s-%d.MPQ", scanmatch, i);
         }
         else
         {
-            sprintf(path, "%s.mpq", scanmatch);
+            sprintf(path, "%s.MPQ", scanmatch);
         }
-
-        hFind = INVALID_HANDLE_VALUE;
-        hFind = FindFirstFile(path, &ffData);
-        if (hFind == INVALID_HANDLE_VALUE) break;
-        FindClose(hFind);
-
-        matches.push_back(path);
+#ifdef __linux__
+		if(FILE* h = fopen64(path, "rb"))
+#else
+		if(FILE* h = fopen(path, "rb"))
+#endif
+		{
+			fclose(h);
+			matches.push_back(path);
+		}
     }
 
     matches.reverse();
@@ -342,49 +355,15 @@ bool fillArchiveNameVector(std::vector<std::string>& pArchiveNames)
     char path[512];
     std::vector<std::string> locales;
 
-    // scan game directories
-    WIN32_FIND_DATA ffData;
-    HANDLE hFind;
-    DWORD dwError;
+	locales.push_back("enGB");
+	locales.push_back("enUS");
+	locales.push_back("deDE");
+	locales.push_back("esES");
+	locales.push_back("frFR");
+	locales.push_back("koKR");
+	locales.push_back("ruRU");
 
-    // first, scan for locales (4-letter directories)
-    printf("Scanning for locales.\n");
-    sprintf(path, "%s*.*", input_path);
-    hFind = INVALID_HANDLE_VALUE;
-    hFind = FindFirstFile(path, &ffData);
-    if (hFind == INVALID_HANDLE_VALUE)
-    {
-        printf("\nCould not open data directory for reading. Aborting.\n");
-        return(false);
-    }
-    do
-    {
-        if (ffData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-        {
-            if (ffData.cFileName[0] != '.')
-            {
-                if (strlen(ffData.cFileName) == 4)
-                {
-                    printf("Found locale: %s\n", ffData.cFileName);
-                    locales.push_back(ffData.cFileName);
-                }
-            }
-        }
-    } while (FindNextFile(hFind, &ffData) != 0);
-    dwError = GetLastError();
-    FindClose(hFind);
-    if (dwError != ERROR_NO_MORE_FILES)
-    {
-        printf("\nError reading data directory while scanning locales. Aborting.\n");
-        return(false);
-    }
     printf("\n");
-
-    if (locales.size() == 0)
-    {
-        printf("Sorry, no locales found. Aborting.\n");
-        return(false);
-    }
 
     // now, scan for the patch levels in the core dir
     printf("Loading patch levels from data directory.\n");
@@ -394,22 +373,29 @@ bool fillArchiveNameVector(std::vector<std::string>& pArchiveNames)
 
     // now, scan for the patch levels in locale dirs
     printf("Loading patch levels from locale directories.\n");
+	bool foundOne = false;
     for (std::vector<std::string>::iterator i = locales.begin(); i != locales.end(); ++i)
     {
         printf("Locale: %s\n", i->c_str());
-        sprintf(path, "%s%s\\patch-%s", input_path, i->c_str(), i->c_str());
-        if (!scan_patches(path, pArchiveNames)) return(false);
+        sprintf(path, "%s%s/patch-%s", input_path, i->c_str(), i->c_str());
+        if(scan_patches(path, pArchiveNames))
+			foundOne = true;
     }
+	if(!foundOne)
+	{
+		printf("no locale found\n");
+		return false;
+	}
 
     // open expansion and common files
     printf("Opening data files from data directory.\n");
-    sprintf(path, "%slichking.mpq", input_path);
+    sprintf(path, "%slichking.MPQ", input_path);
     pArchiveNames.push_back(path);
-    sprintf(path, "%scommon-2.mpq", input_path);
+    sprintf(path, "%scommon-2.MPQ", input_path);
     pArchiveNames.push_back(path);
-    sprintf(path, "%sexpansion.mpq", input_path);
+    sprintf(path, "%sexpansion.MPQ", input_path);
     pArchiveNames.push_back(path);
-    sprintf(path, "%scommon.mpq", input_path);
+    sprintf(path, "%scommon.MPQ", input_path);
     pArchiveNames.push_back(path);
     printf("\n");
 
@@ -418,11 +404,11 @@ bool fillArchiveNameVector(std::vector<std::string>& pArchiveNames)
     for (std::vector<std::string>::iterator i = locales.begin(); i != locales.end(); ++i)
     {
         printf("Locale: %s\n", i->c_str());
-        sprintf(path, "%s%s\\lichking-locale-%s.mpq", input_path, i->c_str(), i->c_str());
+        sprintf(path, "%s%s/lichking-locale-%s.MPQ", input_path, i->c_str(), i->c_str());
         pArchiveNames.push_back(path);
-        sprintf(path, "%s%s\\expansion-locale-%s.mpq", input_path, i->c_str(), i->c_str());
+        sprintf(path, "%s%s/expansion-locale-%s.MPQ", input_path, i->c_str(), i->c_str());
         pArchiveNames.push_back(path);
-        sprintf(path, "%s%s\\locale-%s.mpq", input_path, i->c_str(), i->c_str());
+        sprintf(path, "%s%s/locale-%s.MPQ", input_path, i->c_str(), i->c_str());
         pArchiveNames.push_back(path);
         printf("\n");
     }
@@ -448,7 +434,7 @@ bool processArgv(int argc, char ** argv, char*versionString)
                 hasInputPathParam = true;
                 strcpy(input_path, argv[i+1]);
                 if (input_path[strlen(input_path) - 1] != '\\' || input_path[strlen(input_path) - 1] != '/')
-                    strcat(input_path, "\\");
+                    strcat(input_path, "/");
                 ++i;
             }
             else
@@ -510,15 +496,17 @@ int main(int argc, char ** argv)
         return 1;
 
     printf("Extract %s. Beginning work ....\n",versionString);
-    // Set the lowest priority to allow running in the background
-    SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_BELOW_NORMAL);
     //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
     // Create the working directory
     if(nError == ERROR_SUCCESS)
     {
         //if(!CreateDirectory(szWorkDirMaps, NULL))
         // nError = GetLastError();
-        if(!CreateDirectory(szWorkDirWmo, NULL))
+        if(!mkdir(szWorkDirWmo
+#ifdef __linux__
+					, 0711
+#endif
+					))
             nError = GetLastError();
         if(nError == ERROR_ALREADY_EXISTS)
             nError = ERROR_SUCCESS;
@@ -566,7 +554,7 @@ int main(int argc, char ** argv)
     if(nError != ERROR_SUCCESS)
     {
         printf("ERROR: Extract %s. Work NOT complete.\n   Precise vector data=%d.\nPress any key.\n",versionString, preciseVectorData);
-        _getch();
+        getchar();
     }
 
     printf("Extract %s. Work complete. No errors.",versionString);

@@ -128,12 +128,15 @@ ModelInstance::ModelInstance(MPQFile &f,const char* ModelInstName,const char*Map
     sc = scale / 1024.0f;
 
     char tempname[512];
-    sprintf(tempname, ".\\buildings\\%s", ModelInstName);
+    sprintf(tempname, "./Buildings/%s", ModelInstName);
     FILE *input;
     input = fopen(tempname, "r+b");
 
     if(!input)
+	{
+		//printf("ModelInstance::ModelInstance couldn't open %s\n", tempname);
         return;
+	}
 
     fseek(input, 8, SEEK_SET); // get the correct no of vertices
     int nVertices;

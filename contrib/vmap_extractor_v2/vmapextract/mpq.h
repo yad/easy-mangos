@@ -9,8 +9,9 @@
 #include <ctype.h>
 #include <vector>
 #include <iostream>
-#include "Stormlib.h"
-
+#include "StormLib.h"
+#undef min
+#undef max
 using namespace std;
 
 typedef unsigned int uint32;

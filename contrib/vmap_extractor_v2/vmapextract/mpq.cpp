@@ -1,6 +1,8 @@
 #include "mpq.h"
 //#include <vector>
-#include "Stormlib.h"
+#include "StormLib.h"
+#undef min
+#undef max
 #define __STORMLIB_SELF__
 
 MPQArchiveSet gOpenArchives;
@@ -47,7 +49,7 @@ MPQFile::MPQFile(const char* filename):
 {
     for(ArchiveSet::const_iterator i=gOpenArchives.archives.begin(); i!=gOpenArchives.archives.end();++i)
     {
-        HANDLE hFile = "";
+        HANDLE hFile;
         hMPQ = i->hMPQ;
         BOOL succ = SFileOpenFileEx(hMPQ,filename,0, &hFile);
         if (succ)
