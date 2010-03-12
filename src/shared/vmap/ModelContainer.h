@@ -48,7 +48,7 @@ namespace VMAP
     class ModelContainer : public BaseModel
     {
         private:
-            unsigned int iNSubModel;
+            uint32 iNSubModel;
             SubModel *iSubModel;
             G3D::AABox iBox;
 
@@ -60,7 +60,7 @@ namespace VMAP
             ModelContainer() : BaseModel() { iNSubModel =0; iSubModel = 0; };
 
             // for the mainnode
-            ModelContainer(unsigned int pNTriangles, unsigned int pNNodes, unsigned int pNSubModel);
+            ModelContainer(uint32 pNTriangles, uint32 pNNodes, uint32 pNSubModel);
 
             ModelContainer(G3D::AABSPTree<SubModel *> *pTree);
 
@@ -70,7 +70,7 @@ namespace VMAP
 
             inline const SubModel& getSubModel(int pPos) const { return iSubModel[pPos]; }
 
-            inline unsigned int getNSubModel() const { return(iNSubModel); }
+            inline uint32 getNSubModel() const { return(iNSubModel); }
 
             void countSubModelsAndNodesAndTriangles(G3D::AABSPTree<SubModel *>::Node& pNode, int& nSubModels, int& nNodes, int& nTriangles);
 

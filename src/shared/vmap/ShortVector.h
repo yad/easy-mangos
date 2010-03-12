@@ -20,6 +20,7 @@
 #define _SHORTVECTOR_H
 
 #include <G3D/Vector3.h>
+#include "Platform/Define.h"
 
 namespace VMAP
 {
@@ -30,29 +31,29 @@ namespace VMAP
     class ShortVector
     {
         private:
-            short iX;
-            short iY;
-            short iZ;
+            int16 iX;
+            int16 iY;
+            int16 iZ;
 
-            const static short maxvalue = 0x7fff;
-            const static short minvalue = -0x7fff;
+            const static int16 maxvalue = 0x7fff;
+            const static int16 minvalue = -0x7fff;
             const static int fixpointdiv = 16;
-            const static short fixpoint_maxvalue = maxvalue / fixpointdiv;
-            const static short fixpoint_minvalue = minvalue / fixpointdiv;
+            const static int16 fixpoint_maxvalue = maxvalue / fixpointdiv;
+            const static int16 fixpoint_minvalue = minvalue / fixpointdiv;
 
-            inline short float2Short(float fv) const
+            inline int16 float2Short(float fv) const
             {
-                short sv;
+                int16 sv;
                 debugAssert((fv <= fixpoint_maxvalue || fv >= 1000000) && (fv >= fixpoint_minvalue || fv <= -1000000));
                 if(fv >= fixpoint_maxvalue)
                     sv=maxvalue;
                 else if(fv <= fixpoint_minvalue)
                     sv=minvalue;
                 else
-                    sv = (short) (fv * fixpointdiv + 0.5);
+                    sv = (int16) (fv * fixpointdiv + 0.5);
                 return(sv);
             }
-            inline float short2Float(short sv) const
+            inline float short2Float(int16 sv) const
             {
                 float fv;
                 if(sv >= maxvalue)
@@ -82,7 +83,7 @@ namespace VMAP
                 iY = float2Short(pY);
                 iZ = float2Short(pZ);
             }
-            inline ShortVector(short pX, short pY, short pZ)
+            inline ShortVector(int16 pX, int16 pY, int16 pZ)
             {
                 iX = pX;
                 iY = pY;
