@@ -24,7 +24,11 @@
 #include "ModelContainer.h"
 #include "VMapDefinitions.h"
 
-using namespace G3D;
+using G3D::AABSPTree;
+using G3D::AABox;
+using G3D::Vector3;
+using G3D::Ray;
+using G3D::inf;
 
 namespace VMAP
 {
@@ -38,7 +42,7 @@ namespace VMAP
     }
     //==========================================================
 
-    ModelContainer::ModelContainer(unsigned int pNTriangles, unsigned int pNNodes, unsigned int pNSubModel) :
+    ModelContainer::ModelContainer(uint32 pNTriangles, uint32 pNNodes, uint32 pNSubModel) :
     BaseModel(pNNodes, pNTriangles)
     {
 
@@ -187,8 +191,8 @@ namespace VMAP
     bool ModelContainer::writeFile(const char *filename)
     {
         bool result = false;
-        unsigned int flags=0;
-        unsigned int size;
+        uint32 flags=0;
+        uint32 size;
 
         FILE *wf =fopen(filename,"wb");
         if(wf)
@@ -196,7 +200,7 @@ namespace VMAP
             fwrite(VMAP_MAGIC,1,8,wf);
             result = true;
             if(result && fwrite("CTREE01",8,1,wf) != 1) result = false;
-            if(result && fwrite(&flags,sizeof(unsigned int),1,wf) != 1) result = false;
+            if(result && fwrite(&flags,sizeof(uint32),1,wf) != 1) result = false;
 
             if(result && fwrite("POS ",4,1,wf) != 1) result = false;
             size = sizeof(float)*3;
@@ -213,24 +217,31 @@ namespace VMAP
             if(result && fwrite(&high,sizeof(float),3,wf) != 3) result = false;
 
             if(result && fwrite("NODE",4,1,wf) != 1) result = false;
-            size = sizeof(unsigned int)+ sizeof(TreeNode)*getNNodes();
+            size = sizeof(uint32)+ sizeof(TreeNode)*getNNodes();
             if(result && fwrite(&size,4,1,wf) != 1) result = false;
-            unsigned int val = getNNodes();
-            if(result && fwrite(&val,sizeof(unsigned int),1,wf) != 1) result = false;
+            uint32 val = getNNodes();
+            if(result && fwrite(&val,sizeof(uint32),1,wf) != 1) result = false;
             if(result && fwrite(getTreeNodes(),sizeof(TreeNode),getNNodes(),wf) != getNNodes()) result = false;
 
             if(result && fwrite("TRIB",4,1,wf) != 1) result = false;
-            size = sizeof(unsigned int)+ sizeof(TriangleBox)*getNTriangles();
+            size = sizeof(uint32)+ sizeof(TriangleBox)*getNTriangles();
             if(result && fwrite(&size,4,1,wf) != 1) result = false;
             val = getNTriangles();
-            if(result && fwrite(&val,sizeof(unsigned int),1,wf) != 1) result = false;
+            if(result && fwrite(&val,sizeof(uint32),1,wf) != 1) result = false;
             if(result && fwrite(getTriangles(),sizeof(TriangleBox),getNTriangles(),wf) != getNTriangles()) result = false;
 
             if(result && fwrite("SUBM",4,1,wf) != 1) result = false;
-            size = sizeof(unsigned int)+ sizeof(SubModel)*iNSubModel;
+            size = sizeof(uint32) + SubModel::dumpSize*iNSubModel;
             if(result && fwrite(&size,4,1,wf) != 1) result = false;
-            if(result && fwrite(&iNSubModel,sizeof(unsigned int),1,wf) != 1) result = false;
-            if(result && fwrite(iSubModel,sizeof(SubModel),iNSubModel,wf) != iNSubModel) result = false;
+            if(result && fwrite(&iNSubModel,sizeof(uint32),1,wf) != 1) result = false;
+
+            uint8 subModelBuff[SubModel::dumpSize];
+            memset(subModelBuff,0,SubModel::dumpSize);
+            for(int i=0; i<iNSubModel; ++i)
+            {
+                iSubModel[i].putToBinBlock(subModelBuff);
+                if(result && fwrite(subModelBuff,SubModel::dumpSize,1,wf) != 1) result = false;
+            }
 
             fclose(wf);
         }
@@ -243,8 +254,8 @@ namespace VMAP
     bool ModelContainer::readFile(const char *filename)
     {
         bool result = false;
-        unsigned int flags;
-        unsigned int size;
+        uint32 flags;
+        uint32 size;
         char ident[8];
         char chunk[4];
         unsigned int ival;
@@ -258,7 +269,7 @@ namespace VMAP
             fread(magic,1,8,rf);
             if(strncmp(VMAP_MAGIC,magic,8)) result = false;
             if(result && fread(ident,8,1,rf) != 1) result = false;
-            if(result && fread(&flags,sizeof(unsigned int),1,rf) != 1) result = false;
+            if(result && fread(&flags,sizeof(uint32),1,rf) != 1) result = false;
             //POS
             if(result && fread(chunk,4,1,rf) != 1) result = false;
             if(result && fread(&size,4,1,rf) != 1) result = false;
@@ -278,7 +289,7 @@ namespace VMAP
             if(result && fread(chunk,4,1,rf) != 1) result = false;
             if(result && fread(&size,4,1,rf) != 1) result = false;
 
-            if(result && fread(&ival,sizeof(unsigned int),1,rf) != 1) result = false;
+            if(result && fread(&ival,sizeof(uint32),1,rf) != 1) result = false;
             if(result) setNNodes(ival);
             if(result) setTreeNodeArray(new TreeNode[getNNodes()]);
             if(result && fread(getTreeNodes(),sizeof(TreeNode),getNNodes(),rf) != getNNodes()) result = false;
@@ -287,7 +298,7 @@ namespace VMAP
             if(result && fread(chunk,4,1,rf) != 1) result = false;
             if(result && fread(&size,4,1,rf) != 1) result = false;
 
-            if(result && fread(&ival,sizeof(unsigned int),1,rf) != 1) result = false;
+            if(result && fread(&ival,sizeof(uint32),1,rf) != 1) result = false;
             setNTriangles(ival);
             if(result) setTriangleArray(new TriangleBox[getNTriangles()]);
             if(result && fread(getTriangles(),sizeof(TriangleBox),getNTriangles(),rf) != getNTriangles()) result = false;
@@ -296,14 +307,14 @@ namespace VMAP
             if(result && fread(chunk,4,1,rf) != 1) result = false;
             if(result && fread(&size,4,1,rf) != 1) result = false;
 
-            if(result && fread(&iNSubModel,sizeof(unsigned int),1,rf) != 1) result = false;
+            if(result && fread(&iNSubModel,sizeof(uint32),1,rf) != 1) result = false;
             if(result) iSubModel = new SubModel[iNSubModel];
 
             if(result)
             {
                 for(unsigned int i=0;i<iNSubModel && result; ++i)
                 {
-                    unsigned char readBuffer[sizeof(SubModel)];
+                    unsigned char readBuffer[SubModel::dumpSize];           // this equals the size of SubModel on 32 bit systems
                     if(fread(readBuffer,sizeof(readBuffer),1,rf) != 1) result = false;
                     iSubModel[i].initFromBinBlock(readBuffer);
                     iSubModel[i].setTriangleArray(getTriangles());
@@ -356,7 +367,7 @@ namespace VMAP
         if(intersect(pRay, pMaxDist))
         {
             NodeValueAccess<TreeNode, SubModel> vna = NodeValueAccess<TreeNode, SubModel>(getTreeNodes(), iSubModel);
-            iTreeNodes[0].intersectRay(pRay, intersectCallback, distance, vna, pStopAtFirstHit, true);
+            iTreeNodes[0].intersectRay(pRay, intersectCallback, G3D::distance, vna, pStopAtFirstHit, true);
         }
     }
     //=================================================================

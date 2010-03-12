@@ -22,7 +22,6 @@
 // load our modified version first !!
 #include "AABSPTree.h"
 
-#include "ShortVector.h"
 #include "ShortBox.h"
 #include "TreeNode.h"
 #include "VMapTools.h"
@@ -39,8 +38,8 @@ namespace VMAP
     class SubModel : public BaseModel
     {
         private:
-            unsigned int iNodesPos;
-            unsigned int iTrianglesPos;
+            uint32 iNodesPos;
+            uint32 iTrianglesPos;
             bool iHasInternalMemAlloc;
             ShortBox iBox;
             G3D::uint32 iMogpFlags;// 0x8 outdor; 0x2000 indoor
@@ -52,11 +51,12 @@ namespace VMAP
         public:
             SubModel() : BaseModel(){ };
 
-            SubModel(unsigned int pNTriangles, TriangleBox *pTriangles, unsigned int pTrianglesPos, unsigned int pNNodes, TreeNode *pTreeNodes, unsigned int pNodesPos);
+            SubModel(uint32 pNTriangles, TriangleBox *pTriangles, uint32 pTrianglesPos, uint32 pNNodes, TreeNode *pTreeNodes, uint32 pNodesPos);
             SubModel(G3D::AABSPTree<G3D::Triangle> *pTree, G3D::uint32 mogpFlags, G3D::uint32 areaID);
             ~SubModel(void);
             //Gets a 50 byte binary block
-            void initFromBinBlock(void *pBinBlock);
+            void initFromBinBlock(const uint8 *pBinBlock);
+            void putToBinBlock(uint8 *pBinBlock);
 
             void fillRenderArray(G3D::Array<TriangleBox> &pArray, const TreeNode* pTreeNode);
 
@@ -84,8 +84,8 @@ namespace VMAP
             // internal method usign internal offset
             inline const TriangleBox& getTriangle(int pPos) const { return(SubModel::getTriangles()[pPos]); }
 
-            inline unsigned int getNodesPos() const { return(iNodesPos); }
-            inline unsigned int getTrianglesPos() const { return(iTrianglesPos); }
+            inline uint32 getNodesPos() const { return(iNodesPos); }
+            inline uint32 getTrianglesPos() const { return(iTrianglesPos); }
 
             //unsigned int hashCode() { return (getBasePosition() * getNTriangles()).hashCode(); }
 
@@ -94,7 +94,8 @@ namespace VMAP
             template<typename RayCallback>
             void intersectRay(const G3D::Ray& ray, RayCallback& intersectCallback, float& distance, bool pStopAtFirstHit, bool intersectCallbackIsFast = false);
             bool operator==(const SubModel& pSm2) const;
-            unsigned int hashCode() const { return BaseModel::getNTriangles(); }
+            uint32 hashCode() const { return BaseModel::getNTriangles(); }
+            static const unsigned int dumpSize = 52;
     };
 
     unsigned int hashCode(const SubModel& pSm);

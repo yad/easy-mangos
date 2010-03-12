@@ -43,16 +43,16 @@ namespace VMAP
         protected:
             TriangleBox *iTriangles;
             TreeNode *iTreeNodes;
-            unsigned int iNTriangles;
-            unsigned int iNNodes;
+            uint32 iNTriangles;
+            uint32 iNNodes;
             G3D::Vector3 iBasePosition;
         public:
             BaseModel() { iNTriangles = 0; iNNodes = 0; iTriangles = 0; iTreeNodes = 0;};
-            BaseModel(unsigned int pNNodes  , TreeNode* pTreeNode, unsigned int  pNTriangles, TriangleBox* pTriangleBox)
+            BaseModel(uint32 pNNodes, TreeNode* pTreeNode, uint32  pNTriangles, TriangleBox* pTriangleBox)
             {
                 iNNodes = pNNodes; iNTriangles = pNTriangles; iTriangles = pTriangleBox; iTreeNodes = pTreeNode;
             };
-            BaseModel(unsigned int pNNodes, unsigned int  pNTriangles);
+            BaseModel(uint32 pNNodes, uint32 pNTriangles);
 
             // destructor does nothing ! The subclass controles the array memory and knows when to free it
             ~BaseModel() {}
@@ -76,8 +76,8 @@ namespace VMAP
 
             inline const G3D::Vector3& getBasePosition() const { return(iBasePosition); }
 
-            inline unsigned int getNNodes() const { return(iNNodes); }
-            inline unsigned int getNTriangles() const { return(iNTriangles); }
+            inline uint32 getNNodes() const { return(iNNodes); }
+            inline uint32 getNTriangles() const { return(iNTriangles); }
 
             inline void setNNodes(unsigned int pNNodes)  { iNNodes = pNNodes; }
             inline void setNTriangles(unsigned int  pNTriangles)  { iNTriangles = pNTriangles; }
