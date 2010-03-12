@@ -179,8 +179,10 @@ namespace VMAP
 
     //==========================================================
 
-    SubModel::SubModel(AABSPTree<Triangle> *pTree)
+    SubModel::SubModel(AABSPTree<Triangle> *pTree, G3D::uint32 mogpflags, G3D::uint32 areaid)
     {
+        this->iMogpFlags = mogpflags;
+        this->iAreaId = areaid;
         int nNodes, nTriangles;
         nNodes = nTriangles = 0;
         countNodesAndTriangles(*pTree->root, nNodes, nTriangles);

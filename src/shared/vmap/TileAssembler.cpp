@@ -437,8 +437,15 @@ namespace VMAP
             #define CMP_OR_RETURN(V,S)  if(strcmp((V),(S)) != 0)        { \
                                             fclose(rf); delete gtree; return(false); }
 
-            G3D::uint32 flags;
-            READ_OR_RETURN(&flags, sizeof(G3D::uint32));
+
+            G3D::uint32 mogpflags;
+            READ_OR_RETURN(&mogpflags, sizeof(G3D::uint32));
+
+            G3D::uint32 areaID;
+            READ_OR_RETURN(&areaID, sizeof(G3D::uint32));
+
+            G3D::uint32 liquidflags;
+            READ_OR_RETURN(&liquidflags, sizeof(G3D::uint32));
 
             G3D::uint32 branches;
             READ_OR_RETURN(&blockId, 4);
@@ -493,7 +500,7 @@ namespace VMAP
                 READ_OR_RETURN(vectorarray, nvectors*sizeof(float)*3);
             }
             // ----- liquit
-            if(flags & 1)
+            if(liquidflags& 1)
             {
                 // we have liquit -> not handled yet ... skip
                 READ_OR_RETURN(&blockId, 4);
@@ -549,7 +556,7 @@ namespace VMAP
                 // gtree contains only triangles - is it possible to define "inside" and "outside" at all?
                 // one submodel = one wmo group file
                 // TODO: add indoor/outdoor flags and areaid to submodel
-                SubModel *sm = new SubModel(gtree);
+                SubModel *sm = new SubModel(gtree, mogpflags, areaID);
                 #ifdef _ASSEMBLER_DEBUG
                 if(::g_df) fprintf(::g_df,"group trianglies: %d, Tris: %d, Nodes: %d, gtree.triangles: %d\n", g, sm->getNTriangles(), sm->getNNodes(), gtree->memberTable.size());
                 if(sm->getNTriangles() !=  gtree->memberTable.size())

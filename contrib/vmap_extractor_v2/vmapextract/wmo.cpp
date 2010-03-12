@@ -222,10 +222,12 @@ bool WMOGroup::open()
     return true;
 }
 
-int WMOGroup::ConvertToVMAPGroupWmo(FILE *output, bool pPreciseVectorData)
+int WMOGroup::ConvertToVMAPGroupWmo(FILE *output, uint32 areaID, bool pPreciseVectorData)
 {
     if(pPreciseVectorData)
     {
+        fwrite(&flags,sizeof(uint32),1,output);
+        fwrite(&areaID,sizeof(uint32),1,output);
         fwrite(&liquflags,sizeof(uint32),1,output);
         char GRP[] = "GRP ";
         fwrite(GRP,1,4,output);
@@ -310,6 +312,8 @@ int WMOGroup::ConvertToVMAPGroupWmo(FILE *output, bool pPreciseVectorData)
     {
         //printf("Convert GroupWmo...\n");
         //-------GRP -------------------------------------
+        fwrite(&flags,sizeof(uint32),1,output);
+        fwrite(&areaID,sizeof(uint32),1,output);
         fwrite(&liquflags,sizeof(uint32),1,output);
         char GRP[] = "GRP ";
         fwrite(GRP,1,4,output);
