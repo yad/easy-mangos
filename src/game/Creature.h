@@ -24,6 +24,7 @@
 #include "UpdateMask.h"
 #include "ItemPrototype.h"
 #include "LootMgr.h"
+#include "DBCEnums.h"
 #include "Database/DatabaseEnv.h"
 #include "Cell.h"
 
@@ -206,7 +207,7 @@ struct CreatureData
 struct CreatureDataAddonAura
 {
     uint32 spell_id;
-    uint8 effect_idx;
+    SpellEffectIndex effect_idx;
 };
 
 // from `creature_addon` table
@@ -217,7 +218,7 @@ struct CreatureDataAddon
     uint32 bytes1;
     uint32 bytes2;
     uint32 emote;
-    uint32 move_flags;
+    uint32 splineFlags;
     CreatureDataAddonAura const* auras;                     // loaded as char* "spell1 eff1 spell2 eff2 ... "
 };
 
@@ -361,13 +362,22 @@ typedef std::map<uint32,time_t> CreatureSpellCooldowns;
 
 #define MAX_VENDOR_ITEMS 150                                // Limitation in 3.x.x item count in SMSG_LIST_INVENTORY
 
+enum CreatureSubtype
+{
+    CREATURE_SUBTYPE_GENERIC,                               // new Creature
+    CREATURE_SUBTYPE_PET,                                   // new Pet
+    CREATURE_SUBTYPE_TOTEM,                                 // new Totem
+    CREATURE_SUBTYPE_VEHICLE,                               // new Vehicle
+    CREATURE_SUBTYPE_TEMPORARY_SUMMON,                      // new TemporarySummon
+};
+
 class MANGOS_DLL_SPEC Creature : public Unit
 {
     CreatureAI *i_AI;
 
     public:
 
-        explicit Creature();
+        explicit Creature(CreatureSubtype subtype = CREATURE_SUBTYPE_GENERIC);
         virtual ~Creature();
 
         void AddToWorld();
@@ -375,7 +385,7 @@ class MANGOS_DLL_SPEC Creature : public Unit
 
         bool Create(uint32 guidlow, Map *map, uint32 phaseMask, uint32 Entry, uint32 team, const CreatureData *data = NULL);
         bool LoadCreaturesAddon(bool reload = false);
-        void SelectLevel(const CreatureInfo *cinfo);
+        void SelectLevel(const CreatureInfo *cinfo, float percentHealth = 100.0f, float percentMana = 100.0f);
         void LoadEquipment(uint32 equip_entry, bool force=false);
 
         uint32 GetDBTableGUIDLow() const { return m_DBTableGuid; }
@@ -385,10 +395,13 @@ class MANGOS_DLL_SPEC Creature : public Unit
         void GetRespawnCoord(float &x, float &y, float &z, float* ori = NULL, float* dist =NULL) const;
         uint32 GetEquipmentId() const { return m_equipmentId; }
 
-        bool isPet() const { return m_isPet; }
-        bool isVehicle() const { return m_isVehicle; }
+        CreatureSubtype GetSubtype() const { return m_subtype; }
+        bool isPet() const { return m_subtype == CREATURE_SUBTYPE_PET; }
+        bool isVehicle() const { return m_subtype == CREATURE_SUBTYPE_VEHICLE; }
+        bool isTotem() const { return m_subtype == CREATURE_SUBTYPE_TOTEM; }
+        bool isTemporarySummon() const { return m_subtype == CREATURE_SUBTYPE_TEMPORARY_SUMMON; }
+
         void SetCorpseDelay(uint32 delay) { m_corpseDelay = delay; }
-        bool isTotem() const { return m_isTotem; }
         bool isRacialLeader() const { return GetCreatureInfo()->RacialLeader; }
         bool isCivilian() const { return GetCreatureInfo()->flags_extra & CREATURE_FLAG_EXTRA_CIVILIAN; }
         bool canWalk() const { return GetCreatureInfo()->InhabitType & INHABIT_GROUND; }
@@ -401,7 +414,7 @@ class MANGOS_DLL_SPEC Creature : public Unit
         bool IsOutOfThreatArea(Unit* pVictim) const;
         bool IsImmunedToSpell(SpellEntry const* spellInfo);
                                                             // redefine Unit::IsImmunedToSpell
-        bool IsImmunedToSpellEffect(SpellEntry const* spellInfo, uint32 index) const;
+        bool IsImmunedToSpellEffect(SpellEntry const* spellInfo, SpellEffectIndex index) const;
                                                             // redefine Unit::IsImmunedToSpellEffect
         bool isElite() const
         {
@@ -426,39 +439,38 @@ class MANGOS_DLL_SPEC Creature : public Unit
 
         bool AIM_Initialize();
 
-        void AI_SendMoveToPacket(float x, float y, float z, uint32 time, MonsterMovementFlags MovementFlags, uint8 type);
+        void AI_SendMoveToPacket(float x, float y, float z, uint32 time, SplineFlags MovementFlags, SplineType type);
         CreatureAI* AI() { return i_AI; }
 
-        void AddMonsterMoveFlag(MonsterMovementFlags f)
+        void AddSplineFlag(SplineFlags f)
         {
-            bool need_walk_sync = (f & MONSTER_MOVE_WALK) != (m_monsterMoveFlags & MONSTER_MOVE_WALK);
-            m_monsterMoveFlags = MonsterMovementFlags(m_monsterMoveFlags | f);
+            bool need_walk_sync = (f & SPLINEFLAG_WALKMODE) != (m_splineFlags & SPLINEFLAG_WALKMODE);
+            m_splineFlags = SplineFlags(m_splineFlags | f);
             if (need_walk_sync)
-                UpdateWalkMode(this,false);
+                UpdateWalkMode(this, false);
         }
-        void RemoveMonsterMoveFlag(MonsterMovementFlags f)
+        void RemoveSplineFlag(SplineFlags f)
         {
-            bool need_walk_sync = (f & MONSTER_MOVE_WALK) != (m_monsterMoveFlags & MONSTER_MOVE_WALK);
-            m_monsterMoveFlags = MonsterMovementFlags(m_monsterMoveFlags & ~f);
+            bool need_walk_sync = (f & SPLINEFLAG_WALKMODE) != (m_splineFlags & SPLINEFLAG_WALKMODE);
+            m_splineFlags = SplineFlags(m_splineFlags & ~f);
             if (need_walk_sync)
-                UpdateWalkMode(this,false);
+                UpdateWalkMode(this, false);
         }
-        bool HasMonsterMoveFlag(MonsterMovementFlags f) const { return m_monsterMoveFlags & f; }
-        MonsterMovementFlags GetMonsterMoveFlags() const { return m_monsterMoveFlags; }
-        void SetMonsterMoveFlags(MonsterMovementFlags f)
+        bool HasSplineFlag(SplineFlags f) const { return m_splineFlags & f; }
+        SplineFlags GetSplineFlags() const { return m_splineFlags; }
+        void SetSplineFlags(SplineFlags f)
         {
-            bool need_walk_sync = (f & MONSTER_MOVE_WALK) != (m_monsterMoveFlags & MONSTER_MOVE_WALK);
-            m_monsterMoveFlags = f;                     // need set before
+            bool need_walk_sync = (f & SPLINEFLAG_WALKMODE) != (m_splineFlags & SPLINEFLAG_WALKMODE);
+            m_splineFlags = f;                              // need set before
             if (need_walk_sync)
-                UpdateWalkMode(this,false);
+                UpdateWalkMode(this, false);
         }
 
-        void SendMonsterMoveWithSpeed(float x, float y, float z, uint32 transitTime = 0, Player* player = NULL);
         void SendMonsterMoveWithSpeedToCurrentDestination(Player* player = NULL);
 
         uint32 GetShieldBlockValue() const                  //dunno mob block value
         {
-            return (getLevel()/2 + uint32(GetStat(STAT_STRENGTH)/20));
+            return (getLevel() / 2 + uint32(GetStat(STAT_STRENGTH) / 20));
         }
 
         SpellSchoolMask GetMeleeDamageSchoolMask() const { return m_meleeDamageSchoolMask; }
@@ -472,7 +484,7 @@ class MANGOS_DLL_SPEC Creature : public Unit
 
         bool HasSpell(uint32 spellID) const;
 
-        bool UpdateEntry(uint32 entry, uint32 team=ALLIANCE, const CreatureData* data=NULL);
+        bool UpdateEntry(uint32 entry, uint32 team = ALLIANCE, const CreatureData* data = NULL, bool preserveHPAndPower = true);
         bool UpdateStats(Stats stat);
         bool UpdateAllStats();
         void UpdateResistances(uint32 school);
@@ -571,7 +583,7 @@ class MANGOS_DLL_SPEC Creature : public Unit
         void SetRespawnRadius(float dist) { m_respawnradius = dist; }
 
         uint32 m_groupLootTimer;                            // (msecs)timer used for group loot
-        uint64 lootingGroupLeaderGUID;                      // used to find group which is looting corpse
+        uint32 m_groupLootId;                               // used to find group which is looting corpse
 
         void SendZoneUnderAttackMessage(Player* attacker);
 
@@ -604,11 +616,14 @@ class MANGOS_DLL_SPEC Creature : public Unit
         bool isActiveObject() const { return m_isActiveObject || HasAuraType(SPELL_AURA_BIND_SIGHT) || HasAuraType(SPELL_AURA_FAR_SIGHT); }
         void SetActiveObjectState(bool on);
 
+        void SetNeedNotify() { m_needNotify = true; }
+
         void SendAreaSpiritHealerQueryOpcode(Player *pl);
 
     protected:
         bool CreateFromProto(uint32 guidlow,uint32 Entry,uint32 team, const CreatureData *data = NULL);
         bool InitEntry(uint32 entry, uint32 team=ALLIANCE, const CreatureData* data=NULL);
+        void RelocationNotify();
 
         // vendor items
         VendorItemCounts m_vendorItemCounts;
@@ -628,9 +643,7 @@ class MANGOS_DLL_SPEC Creature : public Unit
         uint32 m_corpseDelay;                               // (secs) delay between death and corpse disappearance
         float m_respawnradius;
 
-        bool m_isPet;                                       // set only in Pet::Pet
-        bool m_isVehicle;                                   // set only in Vehicle::Vehicle
-        bool m_isTotem;                                     // set only in Totem::Totem
+        CreatureSubtype m_subtype;                          // set in Creatures subclasses for fast it detect without dynamic_cast use
         void RegenerateMana();
         void RegenerateHealth();
         MovementGeneratorType m_defaultMovementType;
@@ -643,6 +656,7 @@ class MANGOS_DLL_SPEC Creature : public Unit
         bool m_regenHealth;
         bool m_AI_locked;
         bool m_isDeadByDefault;
+        bool m_needNotify;
 
         SpellSchoolMask m_meleeDamageSchoolMask;
         uint32 m_originalEntry;
@@ -660,7 +674,7 @@ class MANGOS_DLL_SPEC Creature : public Unit
         GridReference<Creature> m_gridRef;
         CreatureInfo const* m_creatureInfo;                 // in difficulty mode > 0 can different from ObjMgr::GetCreatureTemplate(GetEntry())
         bool m_isActiveObject;
-        MonsterMovementFlags m_monsterMoveFlags;
+        SplineFlags m_splineFlags;
 };
 
 class AssistDelayEvent : public BasicEvent

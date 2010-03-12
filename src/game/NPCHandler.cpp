@@ -304,8 +304,6 @@ void WorldSession::HandleGossipSelectOptionOpcode( WorldPacket & recv_data )
     if (GetPlayer()->hasUnitState(UNIT_STAT_DIED))
         GetPlayer()->RemoveSpellsCausingAura(SPELL_AURA_FEIGN_DEATH);
 
-    // TODO: determine if scriptCall is needed for GO and also if scriptCall can be same as current, with modified argument WorldObject*
-
     // can vehicle have gossip? If so, need check for this also.
     if (IS_CREATURE_OR_PET_GUID(guid))
     {
@@ -338,7 +336,16 @@ void WorldSession::HandleGossipSelectOptionOpcode( WorldPacket & recv_data )
             return;
         }
 
-        _player->OnGossipSelect(pGo, gossipListId, menuId);
+        if (!code.empty())
+        {
+            if (!Script->GOGossipSelectWithCode(_player, pGo, _player->PlayerTalkClass->GossipOptionSender(gossipListId), _player->PlayerTalkClass->GossipOptionAction(gossipListId), code.c_str()))
+                _player->OnGossipSelect(pGo, gossipListId, menuId);
+        }
+        else
+        {
+            if (!Script->GOGossipSelect(_player, pGo, _player->PlayerTalkClass->GossipOptionSender(gossipListId), _player->PlayerTalkClass->GossipOptionAction(gossipListId)))
+                _player->OnGossipSelect(pGo, gossipListId, menuId);
+        }
     }
 }
 
@@ -425,38 +432,12 @@ void WorldSession::SendBindPoint(Creature *npc)
     if(GetPlayer()->GetMap()->Instanceable())
         return;
 
-    uint32 bindspell = 3286;
-    uint32 zone_id = _player->GetZoneId();
-
-    _player->SetHomebindToCurrentPos();
-
     // send spell for bind 3286 bind magic
-    npc->CastSpell(_player, bindspell, true);
+    npc->CastSpell(_player, 3286, true);                    // Bind
 
     WorldPacket data( SMSG_TRAINER_BUY_SUCCEEDED, (8+4));
-    data << npc->GetGUID();
-    data << bindspell;
-    SendPacket( &data );
-
-    // binding
-    data.Initialize( SMSG_BINDPOINTUPDATE, (4+4+4+4+4) );
-    data << float(_player->GetPositionX());
-    data << float(_player->GetPositionY());
-    data << float(_player->GetPositionZ());
-    data << uint32(_player->GetMapId());
-    data << uint32(zone_id);
-    SendPacket( &data );
-
-    DEBUG_LOG("New Home Position X is %f",_player->GetPositionX());
-    DEBUG_LOG("New Home Position Y is %f",_player->GetPositionY());
-    DEBUG_LOG("New Home Position Z is %f",_player->GetPositionZ());
-    DEBUG_LOG("New Home MapId is %u",_player->GetMapId());
-    DEBUG_LOG("New Home ZoneId is %u",zone_id);
-
-    // zone update
-    data.Initialize( SMSG_PLAYERBOUND, 8+4 );
-    data << uint64(_player->GetGUID());
-    data << uint32(zone_id);
+    data << uint64(npc->GetGUID());
+    data << uint32(3286);                                   // Bind
     SendPacket( &data );
 
     _player->PlayerTalkClass->CloseGossip();
@@ -743,7 +724,6 @@ void WorldSession::HandleStableSwapPet( WorldPacket & recv_data )
     if(GetPlayer()->hasUnitState(UNIT_STAT_DIED))
         GetPlayer()->RemoveSpellsCausingAura(SPELL_AURA_FEIGN_DEATH);
 
-    WorldPacket data(SMSG_STABLE_RESULT, 200);              // guess size
 
     Pet* pet = _player->GetPet();
 
@@ -781,6 +761,8 @@ void WorldSession::HandleStableSwapPet( WorldPacket & recv_data )
 
     // move alive pet to slot or delete dead pet
     _player->RemovePet(pet,pet->isAlive() ? PetSaveMode(slot) : PET_SAVE_AS_DELETED);
+
+    WorldPacket data(SMSG_STABLE_RESULT, 1);                // guess size
 
     // summon unstabled pet
     Pet *newpet = new Pet;

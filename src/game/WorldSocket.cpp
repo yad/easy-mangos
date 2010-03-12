@@ -343,7 +343,7 @@ int WorldSocket::handle_output (ACE_HANDLE)
 
         return -1;
     }
-    else if (n < send_len) //now n > 0
+    else if (n < (ssize_t)send_len) //now n > 0
     {
         m_OutBuffer->rd_ptr (static_cast<size_t> (n));
 
@@ -400,7 +400,7 @@ int WorldSocket::handle_output_queue (GuardType& g)
         mblk->release();
         return -1;
     }
-    else if (n < send_len) //now n > 0
+    else if (n < (ssize_t)send_len) //now n > 0
     {
         mblk->rd_ptr (static_cast<size_t> (n));
 
@@ -545,7 +545,7 @@ int WorldSocket::handle_input_missing_data (void)
                                           recv_size);
 
     if (n <= 0)
-        return n;
+        return (int)n;
 
     message_block.wr_ptr (n);
 
@@ -713,7 +713,7 @@ int WorldSocket::ProcessIncoming (WorldPacket* new_pct)
     }
     catch (ByteBufferException &)
     {
-        sLog.outError("WorldSocket::ProcessIncoming ByteBufferException occured while parsing an instant handled packet (opcode: %u) from client %s, accountid=%i. Disconnected client.",
+        sLog.outError("WorldSocket::ProcessIncoming ByteBufferException occured while parsing an instant handled packet (opcode: %u) from client %s, accountid=%i.",
                 opcode, GetRemoteAddress().c_str(), m_Session?m_Session->GetAccountId():-1);
         if(sLog.IsOutDebug())
         {
@@ -721,7 +721,15 @@ int WorldSocket::ProcessIncoming (WorldPacket* new_pct)
             new_pct->hexlike();
         }
 
-        return -1;
+        if (sWorld.getConfig(CONFIG_BOOL_KICK_PLAYER_ON_BAD_PACKET))
+        {
+            sLog.outDetail("Disconnecting session [account id %i / address %s] for badly formatted packet.",
+                m_Session?m_Session->GetAccountId():-1, GetRemoteAddress().c_str());
+
+            return -1;
+        }
+        else
+            return 0;
     }
 
     ACE_NOTREACHED (return 0);
@@ -808,7 +816,7 @@ int WorldSocket::HandleAuthSession (WorldPacket& recvPacket)
 
     Field* fields = result->Fetch ();
 
-    expansion = ((sWorld.getConfig(CONFIG_EXPANSION) > fields[7].GetUInt8()) ? fields[7].GetUInt8() : sWorld.getConfig(CONFIG_EXPANSION));
+    expansion = ((sWorld.getConfig(CONFIG_UINT32_EXPANSION) > fields[7].GetUInt8()) ? fields[7].GetUInt8() : sWorld.getConfig(CONFIG_UINT32_EXPANSION));
 
     N.SetHexStr ("894B645E89E1535BBDAD5B8B290650530801B18EBFBF5E8FAB3C82872A3E9BB7");
     g.SetDword (7);
@@ -968,7 +976,7 @@ int WorldSocket::HandlePing (WorldPacket& recvPacket)
         {
             ++m_OverSpeedPings;
 
-            uint32 max_count = sWorld.getConfig (CONFIG_MAX_OVERSPEED_PINGS);
+            uint32 max_count = sWorld.getConfig (CONFIG_UINT32_MAX_OVERSPEED_PINGS);
 
             if (max_count && m_OverSpeedPings > max_count)
             {

@@ -21,7 +21,7 @@
 #include "Transports.h"
 #include "MapManager.h"
 #include "ObjectMgr.h"
-#include "ObjectDefines.h"
+#include "ObjectGuid.h"
 #include "Path.h"
 
 #include "WorldPacket.h"
@@ -44,7 +44,7 @@ void MapManager::LoadTransports()
         return;
     }
 
-    barGoLink bar( result->GetRowCount() );
+    barGoLink bar( (int)result->GetRowCount() );
 
     do
     {
@@ -487,7 +487,7 @@ bool Transport::RemovePassenger(Player* passenger)
     return true;
 }
 
-void Transport::Update(uint32 /*p_time*/)
+void Transport::Update(time_t /*p_time*/)
 {
     if (m_WayPoints.size() <= 1)
         return;

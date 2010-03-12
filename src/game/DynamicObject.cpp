@@ -55,7 +55,7 @@ void DynamicObject::RemoveFromWorld()
     Object::RemoveFromWorld();
 }
 
-bool DynamicObject::Create( uint32 guidlow, Unit *caster, uint32 spellId, uint32 effIndex, float x, float y, float z, int32 duration, float radius )
+bool DynamicObject::Create( uint32 guidlow, Unit *caster, uint32 spellId, SpellEffectIndex effIndex, float x, float y, float z, int32 duration, float radius )
 {
     WorldObject::_Create(guidlow, HIGHGUID_DYNAMICOBJECT, caster->GetPhaseMask());
     SetMap(caster->GetMap());
@@ -124,9 +124,8 @@ void DynamicObject::Update(uint32 p_time)
         TypeContainerVisitor<MaNGOS::DynamicObjectUpdater, WorldTypeMapContainer > world_object_notifier(notifier);
         TypeContainerVisitor<MaNGOS::DynamicObjectUpdater, GridTypeMapContainer > grid_object_notifier(notifier);
 
-        CellLock<GridReadGuard> cell_lock(cell, p);
-        cell_lock->Visit(cell_lock, world_object_notifier, *GetMap(), *this, m_radius);
-        cell_lock->Visit(cell_lock, grid_object_notifier,  *GetMap(), *this, m_radius);
+        cell.Visit(p, world_object_notifier, *GetMap(), *this, m_radius);
+        cell.Visit(p, grid_object_notifier,  *GetMap(), *this, m_radius);
     }
 
     if(deleteThis)
@@ -161,4 +160,20 @@ bool DynamicObject::isVisibleForInState(Player const* u, WorldObject const* view
 
     // normal case
     return IsWithinDistInMap(viewPoint, World::GetMaxVisibleDistanceForObject() + (inVisibleList ? World::GetVisibleObjectGreyDistance() : 0.0f), false);
+}
+
+bool DynamicObject::IsHostileTo( Unit const* unit ) const
+{
+    if (Unit* owner = GetCaster())
+        return owner->IsHostileTo(unit);
+    else
+        return false;
+}
+
+bool DynamicObject::IsFriendlyTo( Unit const* unit ) const
+{
+    if (Unit* owner = GetCaster())
+        return owner->IsFriendlyTo(unit);
+    else
+        return true;
 }

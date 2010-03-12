@@ -184,7 +184,7 @@ void WorldSession::HandlePetAction( WorldPacket & recv_data )
                 return;
             }
 
-            for(uint32 i = 0; i < 3;++i)
+            for(int i = 0; i < MAX_EFFECT_INDEX;++i)
             {
                 if(spellInfo->EffectImplicitTargetA[i] == TARGET_ALL_ENEMY_IN_AREA || spellInfo->EffectImplicitTargetA[i] == TARGET_ALL_ENEMY_IN_AREA_INSTANT || spellInfo->EffectImplicitTargetA[i] == TARGET_ALL_ENEMY_IN_AREA_CHANNELED)
                     return;
@@ -493,7 +493,7 @@ void WorldSession::HandlePetRename( WorldPacket & recv_data )
     CharacterDatabase.PExecute("UPDATE character_pet SET name = '%s', renamed = '1' WHERE owner = '%u' AND id = '%u'", name.c_str(), _player->GetGUIDLow(), pet->GetCharmInfo()->GetPetNumber());
     CharacterDatabase.CommitTransaction();
 
-    pet->SetUInt32Value(UNIT_FIELD_PET_NAME_TIMESTAMP, time(NULL));
+    pet->SetUInt32Value(UNIT_FIELD_PET_NAME_TIMESTAMP, uint32(time(NULL)));
 }
 
 void WorldSession::HandlePetAbandon( WorldPacket & recv_data )
@@ -630,8 +630,8 @@ void WorldSession::HandlePetCastSpellOpcode( WorldPacket& recvPacket )
         return;
 
     SpellCastTargets targets;
-    if (!targets.read(&recvPacket,pet))
-        return;
+
+    recvPacket >> targets.ReadForCaster(pet);
 
     pet->clearUnitState(UNIT_STAT_MOVING);
 

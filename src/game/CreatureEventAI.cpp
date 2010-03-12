@@ -211,7 +211,7 @@ bool CreatureEventAI::ProcessEvent(CreatureEventAIHolder& pHolder, Unit* pAction
             if (!m_creature->isInCombat())
                 return false;
 
-            Unit* pUnit = DoSelectLowestHpFriendly(event.friendly_hp.radius, event.friendly_hp.hpDeficit);
+            Unit* pUnit = DoSelectLowestHpFriendly((float)event.friendly_hp.radius, event.friendly_hp.hpDeficit);
             if (!pUnit)
                 return false;
 
@@ -227,7 +227,7 @@ bool CreatureEventAI::ProcessEvent(CreatureEventAIHolder& pHolder, Unit* pAction
                 return false;
 
             std::list<Creature*> pList;
-            DoFindFriendlyCC(pList, event.friendly_is_cc.radius);
+            DoFindFriendlyCC(pList, (float)event.friendly_is_cc.radius);
 
             //List is empty
             if (pList.empty())
@@ -243,7 +243,7 @@ bool CreatureEventAI::ProcessEvent(CreatureEventAIHolder& pHolder, Unit* pAction
         case EVENT_T_FRIENDLY_MISSING_BUFF:
         {
             std::list<Creature*> pList;
-            DoFindFriendlyMissingBuff(pList, event.friendly_buff.radius, event.friendly_buff.spellId);
+            DoFindFriendlyMissingBuff(pList, (float)event.friendly_buff.radius, event.friendly_buff.spellId);
 
             //List is empty
             if (pList.empty())
@@ -257,17 +257,19 @@ bool CreatureEventAI::ProcessEvent(CreatureEventAIHolder& pHolder, Unit* pAction
             break;
         }
         case EVENT_T_SUMMONED_UNIT:
+        case EVENT_T_SUMMONED_JUST_DIED:
+        case EVENT_T_SUMMONED_JUST_DESPAWN:
         {
             //Prevent event from occuring on no unit or non creatures
             if (!pActionInvoker || pActionInvoker->GetTypeId()!=TYPEID_UNIT)
                 return false;
 
             //Creature id doesn't match up
-            if (((Creature*)pActionInvoker)->GetEntry() != event.summon_unit.creatureId)
+            if (((Creature*)pActionInvoker)->GetEntry() != event.summoned.creatureId)
                 return false;
 
             //Repeat Timers
-            pHolder.UpdateRepeatTimer(m_creature,event.summon_unit.repeatMin,event.summon_unit.repeatMax);
+            pHolder.UpdateRepeatTimer(m_creature,event.summoned.repeatMin,event.summoned.repeatMax);
             break;
         }
         case EVENT_T_TARGET_MANA:
@@ -291,7 +293,7 @@ bool CreatureEventAI::ProcessEvent(CreatureEventAIHolder& pHolder, Unit* pAction
         {
             //Note: checked only aura for effect 0, if need check aura for effect 1/2 then
             // possible way: pack in event.buffed.amount 2 uint16 (ammount+effectIdx)
-            Aura* aura = m_creature->GetAura(event.buffed.spellId,0);
+            Aura* aura = m_creature->GetAura(event.buffed.spellId, EFFECT_INDEX_0);
             if (!aura || aura->GetStackAmount() < event.buffed.amount)
                 return false;
 
@@ -307,7 +309,7 @@ bool CreatureEventAI::ProcessEvent(CreatureEventAIHolder& pHolder, Unit* pAction
 
             //Note: checked only aura for effect 0, if need check aura for effect 1/2 then
             // possible way: pack in event.buffed.amount 2 uint16 (ammount+effectIdx)
-            Aura* aura = pActionInvoker->GetAura(event.buffed.spellId,0);
+            Aura* aura = pActionInvoker->GetAura(event.buffed.spellId, EFFECT_INDEX_0);
             if(!aura || aura->GetStackAmount() < event.buffed.amount)
                 return false;
 
@@ -450,13 +452,13 @@ void CreatureEventAI::ProcessAction(CreatureEventAI_Action const& action, uint32
                 caster = target;
 
             //Allowed to cast only if not casting (unless we interrupt ourself) or if spell is triggered
-            bool canCast = !caster->IsNonMeleeSpellCasted(false) || (action.cast.castFlags & (CAST_TRIGGERED | CAST_INTURRUPT_PREVIOUS));
+            bool canCast = !caster->IsNonMeleeSpellCasted(false) || (action.cast.castFlags & (CAST_TRIGGERED | CAST_INTERRUPT_PREVIOUS));
 
             // If cast flag CAST_AURA_NOT_PRESENT is active, check if target already has aura on them
             if(action.cast.castFlags & CAST_AURA_NOT_PRESENT)
             {
-                for(uint8 i = 0; i < 3; ++i)
-                    if(target->HasAura(action.cast.spellId, i))
+                for(int i = 0; i < MAX_EFFECT_INDEX; ++i)
+                    if(target->HasAura(action.cast.spellId, SpellEffectIndex(i)))
                         return;
             }
 
@@ -491,7 +493,7 @@ void CreatureEventAI::ProcessAction(CreatureEventAI_Action const& action, uint32
                     else
                     {
                         //Interrupt any previous spell
-                        if (caster->IsNonMeleeSpellCasted(false) && action.cast.castFlags & CAST_INTURRUPT_PREVIOUS)
+                        if (caster->IsNonMeleeSpellCasted(false) && action.cast.castFlags & CAST_INTERRUPT_PREVIOUS)
                             caster->InterruptNonMeleeSpells(false);
 
                         caster->CastSpell(target, action.cast.spellId, (action.cast.castFlags & CAST_TRIGGERED));
@@ -650,7 +652,7 @@ void CreatureEventAI::ProcessAction(CreatureEventAI_Action const& action, uint32
             break;
         case ACTION_T_RANGED_MOVEMENT:
             AttackDistance = (float)action.ranged_movement.distance;
-            AttackAngle = action.ranged_movement.angle/180.0f*M_PI;
+            AttackAngle = action.ranged_movement.angle/180.0f*M_PI_F;
 
             if (CombatMovementEnabled)
             {
@@ -764,7 +766,7 @@ void CreatureEventAI::ProcessAction(CreatureEventAI_Action const& action, uint32
         }
         case ACTION_T_CALL_FOR_HELP:
         {
-            m_creature->CallForHelp(action.call_for_help.radius);
+            m_creature->CallForHelp((float)action.call_for_help.radius);
             break;
         }
         case ACTION_T_SET_SHEATH:
@@ -911,6 +913,30 @@ void CreatureEventAI::JustSummoned(Creature* pUnit)
     }
 }
 
+void CreatureEventAI::SummonedCreatureJustDied(Creature* pUnit)
+{
+    if (bEmptyList || !pUnit)
+        return;
+
+    for (std::list<CreatureEventAIHolder>::iterator i = CreatureEventAIList.begin(); i != CreatureEventAIList.end(); ++i)
+    {
+        if ((*i).Event.event_type == EVENT_T_SUMMONED_JUST_DIED)
+            ProcessEvent(*i, pUnit);
+    }
+}
+
+void CreatureEventAI::SummonedCreatureDespawn(Creature* pUnit)
+{
+    if (bEmptyList || !pUnit)
+        return;
+
+    for (std::list<CreatureEventAIHolder>::iterator i = CreatureEventAIList.begin(); i != CreatureEventAIList.end(); ++i)
+    {
+        if ((*i).Event.event_type == EVENT_T_SUMMONED_JUST_DESPAWN)
+            ProcessEvent(*i, pUnit);
+    }
+}
+
 void CreatureEventAI::EnterCombat(Unit *enemy)
 {
     //Check for on combat start events
@@ -979,7 +1005,7 @@ void CreatureEventAI::MoveInLineOfSight(Unit *who)
             if ((*itr).Event.event_type == EVENT_T_OOC_LOS)
             {
                 //can trigger if closer than fMaxAllowedRange
-                float fMaxAllowedRange = (*itr).Event.ooc_los.maxRange;
+                float fMaxAllowedRange = (float)(*itr).Event.ooc_los.maxRange;
 
                 //if range is ok and we are actually in LOS
                 if (m_creature->IsWithinDistInMap(who, fMaxAllowedRange) && m_creature->IsWithinLOSInMap(who))
@@ -1110,7 +1136,7 @@ void CreatureEventAI::UpdateAI(const uint32 diff)
 
 bool CreatureEventAI::IsVisible(Unit *pl) const
 {
-    return m_creature->IsWithinDist(pl,sWorld.getConfig(CONFIG_SIGHT_MONSTER))
+    return m_creature->IsWithinDist(pl,sWorld.getConfig(CONFIG_FLOAT_SIGHT_MONSTER))
         && pl->isVisibleForOrDetect(m_creature,m_creature,true);
 }
 
@@ -1208,8 +1234,7 @@ Unit* CreatureEventAI::DoSelectLowestHpFriendly(float range, uint32 MinHPDiff)
     */
     TypeContainerVisitor<MaNGOS::UnitLastSearcher<MaNGOS::MostHPMissingInRange>, GridTypeMapContainer >  grid_unit_searcher(searcher);
 
-    CellLock<GridReadGuard> cell_lock(cell, p);
-    cell_lock->Visit(cell_lock, grid_unit_searcher, *m_creature->GetMap(), *m_creature, range);
+    cell.Visit(p, grid_unit_searcher, *m_creature->GetMap(), *m_creature, range);
     return pUnit;
 }
 
@@ -1225,8 +1250,7 @@ void CreatureEventAI::DoFindFriendlyCC(std::list<Creature*>& _list, float range)
 
     TypeContainerVisitor<MaNGOS::CreatureListSearcher<MaNGOS::FriendlyCCedInRange>, GridTypeMapContainer >  grid_creature_searcher(searcher);
 
-    CellLock<GridReadGuard> cell_lock(cell, p);
-    cell_lock->Visit(cell_lock, grid_creature_searcher, *m_creature->GetMap(), *m_creature, range);
+    cell.Visit(p, grid_creature_searcher, *m_creature->GetMap(), *m_creature, range);
 }
 
 void CreatureEventAI::DoFindFriendlyMissingBuff(std::list<Creature*>& _list, float range, uint32 spellid)
@@ -1241,8 +1265,7 @@ void CreatureEventAI::DoFindFriendlyMissingBuff(std::list<Creature*>& _list, flo
 
     TypeContainerVisitor<MaNGOS::CreatureListSearcher<MaNGOS::FriendlyMissingBuffInRange>, GridTypeMapContainer >  grid_creature_searcher(searcher);
 
-    CellLock<GridReadGuard> cell_lock(cell, p);
-    cell_lock->Visit(cell_lock, grid_creature_searcher, *m_creature->GetMap(), *m_creature, range);
+    cell.Visit(p, grid_creature_searcher, *m_creature->GetMap(), *m_creature, range);
 }
 
 //*********************************
@@ -1388,7 +1411,7 @@ void CreatureEventAI::ReceiveEmote(Player* pPlayer, uint32 text_emote)
     }
 }
 
-void CreatureEventAI::DamageTaken( Unit* done_by, uint32& damage )
+void CreatureEventAI::DamageTaken( Unit* /*done_by*/, uint32& damage )
 {
     if(InvinceabilityHpLevel > 0 && m_creature->GetHealth() < InvinceabilityHpLevel+damage)
     {

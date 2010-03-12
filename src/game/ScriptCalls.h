@@ -21,6 +21,7 @@
 
 #include "Common.h"
 #include "ObjectMgr.h"
+#include "DBCEnums.h"
 
 class Creature;
 class CreatureAI;
@@ -40,9 +41,12 @@ typedef void(MANGOS_IMPORT * scriptCallScriptsFree) ();
 typedef char const* (MANGOS_IMPORT * scriptCallScriptsVersion) ();
 
 typedef bool(MANGOS_IMPORT * scriptCallGossipHello) (Player *player, Creature *_Creature );
+typedef bool(MANGOS_IMPORT * scriptCallGOGossipHello) (Player *player, GameObject *_GO);
 typedef bool(MANGOS_IMPORT * scriptCallQuestAccept) (Player *player, Creature *_Creature, Quest const *);
 typedef bool(MANGOS_IMPORT * scriptCallGossipSelect)(Player *player, Creature *_Creature, uint32 sender, uint32 action);
+typedef bool(MANGOS_IMPORT * scriptCallGOGossipSelect)(Player *player, GameObject *_GO, uint32 sender, uint32 action);
 typedef bool(MANGOS_IMPORT * scriptCallGossipSelectWithCode)( Player *player, Creature *_Creature, uint32 sender, uint32 action, const char* sCode );
+typedef bool(MANGOS_IMPORT * scriptCallGOGossipSelectWithCode)( Player *player, GameObject *_GO, uint32 sender, uint32 action, const char* sCode );
 typedef bool(MANGOS_IMPORT * scriptCallQuestSelect)( Player *player, Creature *_Creature, Quest const* );
 typedef bool(MANGOS_IMPORT * scriptCallQuestComplete)(Player *player, Creature *_Creature, Quest const*);
 typedef uint32(MANGOS_IMPORT * scriptCallNPCDialogStatus)( Player *player, Creature *_Creature);
@@ -55,9 +59,10 @@ typedef bool(MANGOS_IMPORT * scriptCallItemQuestAccept)(Player *player, Item *, 
 typedef bool(MANGOS_IMPORT * scriptCallGOQuestAccept)(Player *player, GameObject *, Quest const*);
 typedef bool(MANGOS_IMPORT * scriptCallGOChooseReward)(Player *player, GameObject *, Quest const*, uint32 opt );
 typedef bool(MANGOS_IMPORT * scriptCallItemUse) (Player *player, Item *_Item, SpellCastTargets const& targets);
-typedef bool(MANGOS_IMPORT * scriptCallEffectDummyGameObj) (Unit *caster, uint32 spellId, uint32 effIndex, GameObject *gameObjTarget);
-typedef bool(MANGOS_IMPORT * scriptCallEffectDummyCreature) (Unit *caster, uint32 spellId, uint32 effIndex, Creature *crTarget);
-typedef bool(MANGOS_IMPORT * scriptCallEffectDummyItem) (Unit *caster, uint32 spellId, uint32 effIndex, Item *itemTarget);
+typedef bool(MANGOS_IMPORT * scriptCallEffectDummyGameObj) (Unit *caster, uint32 spellId, SpellEffectIndex effIndex, GameObject *gameObjTarget);
+typedef bool(MANGOS_IMPORT * scriptCallEffectDummyCreature) (Unit *caster, uint32 spellId, SpellEffectIndex effIndex, Creature *crTarget);
+typedef bool(MANGOS_IMPORT * scriptCallEffectDummyItem) (Unit *caster, uint32 spellId, SpellEffectIndex effIndex, Item *itemTarget);
+typedef bool(MANGOS_IMPORT * scriptCallEffectAuraDummy) (const Aura* pAura, bool apply);
 typedef CreatureAI* (MANGOS_IMPORT * scriptCallGetAI) ( Creature *_Creature );
 typedef InstanceData* (MANGOS_IMPORT * scriptCallCreateInstanceData) (Map *map);
 
@@ -68,10 +73,13 @@ typedef struct
     scriptCallScriptsVersion ScriptsVersion;
 
     scriptCallGossipHello GossipHello;
+    scriptCallGOGossipHello GOGossipHello;
     scriptCallGOChooseReward GOChooseReward;
     scriptCallQuestAccept QuestAccept;
     scriptCallGossipSelect GossipSelect;
+    scriptCallGOGossipSelect GOGossipSelect;
     scriptCallGossipSelectWithCode GossipSelectWithCode;
+    scriptCallGOGossipSelectWithCode GOGossipSelectWithCode;
     scriptCallQuestSelect QuestSelect;
     scriptCallQuestComplete QuestComplete;
     scriptCallNPCDialogStatus NPCDialogStatus;
@@ -86,6 +94,7 @@ typedef struct
     scriptCallEffectDummyGameObj  EffectDummyGameObj;
     scriptCallEffectDummyCreature EffectDummyCreature;
     scriptCallEffectDummyItem     EffectDummyItem;
+    scriptCallEffectAuraDummy     EffectAuraDummy;
     scriptCallGetAI GetAI;
     scriptCallCreateInstanceData CreateInstanceData;
 

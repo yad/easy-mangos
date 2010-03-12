@@ -57,14 +57,8 @@
 #if COMPILER == COMPILER_MICROSOFT
 #  pragma warning(disable:4996)                             // 'function': was declared deprecated
 #ifndef __SHOW_STUPID_WARNINGS__
-#  pragma warning(disable:4005)                             // 'identifier' : macro redefinition
-#  pragma warning(disable:4018)                             // 'expression' : signed/unsigned mismatch
 #  pragma warning(disable:4244)                             // 'argument' : conversion from 'type1' to 'type2', possible loss of data
-#  pragma warning(disable:4267)                             // 'var' : conversion from 'size_t' to 'type', possible loss of data
-#  pragma warning(disable:4305)                             // 'identifier' : truncation from 'type1' to 'type2'
-#  pragma warning(disable:4311)                             // 'variable' : pointer truncation from 'type' to 'type'
 #  pragma warning(disable:4355)                             // 'this' : used in base member initializer list
-#  pragma warning(disable:4800)                             // 'type' : forcing value to bool 'true' or 'false' (performance warning)
 #endif                                                      // __SHOW_STUPID_WARNINGS__
 #endif                                                      // __GNUC__
 
@@ -80,6 +74,10 @@
 #include <errno.h>
 #include <signal.h>
 #include <assert.h>
+
+#if defined(__sun__)
+#include <ieeefp.h> // finite() on Solaris
+#endif
 
 #include <set>
 #include <list>
@@ -152,6 +150,15 @@ inline float finiteAlways(float f) { return finite(f) ? f : 0.0f; }
 
 #define STRINGIZE(a) #a
 
+// used for creating values for respawn for example
+#define MAKE_PAIR64(l, h)  uint64( uint32(l) | ( uint64(h) << 32 ) )
+#define PAIR64_HIPART(x)   (uint32)((uint64(x) >> 32) & UI64LIT(0x00000000FFFFFFFF))
+#define PAIR64_LOPART(x)   (uint32)(uint64(x)         & UI64LIT(0x00000000FFFFFFFF))
+
+#define MAKE_PAIR32(l, h)  uint32( uint16(l) | ( uint32(h) << 16 ) )
+#define PAIR32_HIPART(x)   (uint16)((uint32(x) >> 16) & 0x0000FFFF)
+#define PAIR32_LOPART(x)   (uint16)(uint32(x)         & 0x0000FFFF)
+
 enum TimeConstants
 {
     MINUTE = 60,
@@ -218,6 +225,10 @@ inline char * mangos_strdup(const char * source)
 
 #ifndef M_PI
 #  define M_PI          3.14159265358979323846
+#endif
+
+#ifndef M_PI_F
+#  define M_PI_F        float(M_PI)
 #endif
 
 #endif

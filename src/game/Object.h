@@ -24,7 +24,7 @@
 #include "UpdateFields.h"
 #include "UpdateData.h"
 #include "GameSystem/GridReference.h"
-#include "ObjectDefines.h"
+#include "ObjectGuid.h"
 
 #include <set>
 #include <string>
@@ -39,32 +39,6 @@
 
 #define DEFAULT_WORLD_OBJECT_SIZE   0.388999998569489f      // player size, also currently used (correctly?) for any non Unit world objects
 #define MAX_STEALTH_DETECT_RANGE    45.0f
-
-enum TypeMask
-{
-    TYPEMASK_OBJECT         = 0x0001,
-    TYPEMASK_ITEM           = 0x0002,
-    TYPEMASK_CONTAINER      = 0x0006,                       // TYPEMASK_ITEM | 0x0004
-    TYPEMASK_UNIT           = 0x0008,
-    TYPEMASK_PLAYER         = 0x0010,
-    TYPEMASK_GAMEOBJECT     = 0x0020,
-    TYPEMASK_DYNAMICOBJECT  = 0x0040,
-    TYPEMASK_CORPSE         = 0x0080
-};
-
-enum TypeID
-{
-    TYPEID_OBJECT        = 0,
-    TYPEID_ITEM          = 1,
-    TYPEID_CONTAINER     = 2,
-    TYPEID_UNIT          = 3,
-    TYPEID_PLAYER        = 4,
-    TYPEID_GAMEOBJECT    = 5,
-    TYPEID_DYNAMICOBJECT = 6,
-    TYPEID_CORPSE        = 7
-};
-
-#define NUM_CLIENT_OBJECT_TYPES             8
 
 uint32 GuidHigh2TypeId(uint32 guid_hi);
 
@@ -91,6 +65,7 @@ class UpdateData;
 class WorldSession;
 class Creature;
 class Player;
+class Unit;
 class Map;
 class UpdateMask;
 class InstanceData;
@@ -137,7 +112,7 @@ class MANGOS_DLL_SPEC Object
         uint32 GetGUIDLow() const { return GUID_LOPART(GetUInt64Value(0)); }
         uint32 GetGUIDMid() const { return GUID_ENPART(GetUInt64Value(0)); }
         uint32 GetGUIDHigh() const { return GUID_HIPART(GetUInt64Value(0)); }
-        const ByteBuffer& GetPackGUID() const { return m_PackGUID; }
+        PackedGuid const& GetPackGUID() const { return m_PackGUID; }
         uint32 GetEntry() const { return GetUInt32Value(OBJECT_FIELD_ENTRY); }
         void SetEntry(uint32 entry) { SetUInt32Value(OBJECT_FIELD_ENTRY, entry); }
 
@@ -154,7 +129,7 @@ class MANGOS_DLL_SPEC Object
 
         void BuildValuesUpdateBlockForPlayer( UpdateData *data, Player *target ) const;
         void BuildOutOfRangeUpdateBlock( UpdateData *data ) const;
-        void BuildMovementUpdateBlock( UpdateData * data, uint32 flags = 0 ) const;
+        void BuildMovementUpdateBlock( UpdateData * data, uint16 flags = 0 ) const;
 
         virtual void DestroyForPlayer( Player *target, bool anim = false ) const;
 
@@ -288,7 +263,7 @@ class MANGOS_DLL_SPEC Object
 
         void ApplyModFlag64( uint16 index, uint64 flag, bool apply)
         {
-            if(apply) SetFlag64(index,flag); else RemoveFlag64(index,flag);
+            if(apply) SetFlag64(index,flag); else RemoveFlag64(index, flag);
         }
 
         void ClearUpdateMask(bool remove);
@@ -312,7 +287,7 @@ class MANGOS_DLL_SPEC Object
 
         virtual void _SetCreateBits(UpdateMask *updateMask, Player *target) const;
 
-        void BuildMovementUpdate(ByteBuffer * data, uint16 flags, uint32 flags2 ) const;
+        void BuildMovementUpdate(ByteBuffer * data, uint16 updateFlags) const;
         void BuildValuesUpdate(uint8 updatetype, ByteBuffer *data, UpdateMask *updateMask, Player *target ) const;
         void BuildUpdateDataForPlayer(Player* pl, UpdateDataMapType& update_players);
 
@@ -337,7 +312,7 @@ class MANGOS_DLL_SPEC Object
     private:
         bool m_inWorld;
 
-        ByteBuffer m_PackGUID;
+        PackedGuid m_PackGUID;
 
         // for output helpfull error messages from asserts
         bool PrintIndexError(uint32 index, bool set) const;
@@ -358,20 +333,8 @@ class MANGOS_DLL_SPEC WorldObject : public Object
 
         void _Create( uint32 guidlow, HighGuid guidhigh, uint32 phaseMask);
 
-        void Relocate(float x, float y, float z, float orientation)
-        {
-            m_positionX = x;
-            m_positionY = y;
-            m_positionZ = z;
-            m_orientation = orientation;
-        }
-
-        void Relocate(float x, float y, float z)
-        {
-            m_positionX = x;
-            m_positionY = y;
-            m_positionZ = z;
-        }
+        void Relocate(float x, float y, float z, float orientation);
+        void Relocate(float x, float y, float z);
 
         void SetOrientation(float orientation) { m_orientation = orientation; }
 
@@ -483,6 +446,10 @@ class MANGOS_DLL_SPEC WorldObject : public Object
 
         void SendObjectDeSpawnAnim(uint64 guid);
         void SendGameObjectCustomAnim(uint64 guid);
+
+        virtual bool IsHostileTo(Unit const* unit) const =0;
+        virtual bool IsFriendlyTo(Unit const* unit) const =0;
+        bool IsControlledByPlayer() const;
 
         virtual void SaveRespawnTime() {}
         void AddObjectToRemoveList();

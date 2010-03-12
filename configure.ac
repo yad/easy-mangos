@@ -18,6 +18,7 @@
 #  BUG-REPORT-ADDRESS: mangos-devs@lists.sourceforge.net
 AC_INIT( [mangos], [0.16.0], [mangos-devs@lists.sourceforge.net])
 AC_CONFIG_SRCDIR([src/shared/Common.h])
+AC_CONFIG_MACRO_DIR([m4])
 
 ## Prelude, basic settings for Automake
 #  Turn on all warnings and error messages, and enforce GNU
@@ -97,7 +98,7 @@ AC_CHECK_LIB( pthread, pthread_create, [],
     ])
 AC_CHECK_LIB( z, compress, [ZLIB=-lz],[AC_MSG_ERROR([Missing zlib])] )
 AC_CHECK_LIB( compat, ftime, [COMPATLIB=-lcompat] )
-PKG_CHECK_MODULES(OPENSSL, [openssl], [], [AC_MSG_ERROR([Missing openssl])])
+AX_CHECK_OPENSSL([], [AC_MSG_ERROR([Missing OpenSSL])])
 
 AC_ARG_WITH(postgresql,
 [  --with-postgresql       Use PostgreSQL as a backend (default: no)],
@@ -265,6 +266,16 @@ AC_SUBST(MANGOS_LIBS)
 
 ## Set output files.
 AC_CONFIG_HEADERS([config.h])
+
+AC_SEARCH_LIBS(poll, [poll], [AC_DEFINE(HAVE_POLL, 1, [Define to 1 if the OS is usabl... err, has poll().])])
+
+AH_TOP([
+#ifndef AC_CONFIG_H
+#define AC_CONFIG_H
+])
+
+AH_BOTTOM([#endif /* !AC_CONFIG_H */])
+
 AC_CONFIG_FILES([
    dep/include/Makefile
    dep/lib/Makefile
@@ -272,6 +283,7 @@ AC_CONFIG_FILES([
    dep/src/g3dlite/Makefile
    dep/src/sockets/Makefile
    dep/src/zlib/Makefile
+   dep/src/gsoap/Makefile
    dep/Makefile
    dep/tbb/Makefile
    doc/Doxyfile

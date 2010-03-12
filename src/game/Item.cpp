@@ -19,7 +19,7 @@
 #include "Common.h"
 #include "Item.h"
 #include "ObjectMgr.h"
-#include "ObjectDefines.h"
+#include "ObjectGuid.h"
 #include "WorldPacket.h"
 #include "Database/DatabaseEnv.h"
 #include "ItemEnchantmentMgr.h"
@@ -709,6 +709,9 @@ bool Item::IsEquipped() const
 
 bool Item::CanBeTraded(bool mail) const
 {
+    if (m_lootGenerated)
+        return false;
+
     if ((!mail || !IsBoundAccountWide()) && IsSoulBound())
         return false;
 
@@ -1017,6 +1020,23 @@ void Item::BuildUpdateData(UpdateDataMapType& update_players)
     ClearUpdateMask(false);
 }
 
+uint8 Item::CanBeMergedPartlyWith( ItemPrototype const* proto ) const
+{
+    // check item type
+    if (GetEntry() != proto->ItemId)
+        return EQUIP_ERR_ITEM_CANT_STACK;
+
+    // check free space (full stacks can't be target of merge
+    if (GetCount() >= proto->GetMaxStackSize())
+        return EQUIP_ERR_ITEM_CANT_STACK;
+
+    // not allow merge looting currently items
+    if (m_lootGenerated)
+        return EQUIP_ERR_ALREADY_LOOTED;
+
+    return EQUIP_ERR_OK;
+}
+
 bool ItemRequiredTarget::IsFitToRequirements( Unit* pUnitTarget ) const
 {
     if(pUnitTarget->GetTypeId() != TYPEID_UNIT)
@@ -1033,5 +1053,30 @@ bool ItemRequiredTarget::IsFitToRequirements( Unit* pUnitTarget ) const
             return !pUnitTarget->isAlive();
         default:
             return false;
+    }
+}
+
+bool Item::HasMaxCharges() const
+{
+    ItemPrototype const* itemProto = GetProto();
+
+    for(int i = 0; i < MAX_ITEM_PROTO_SPELLS; ++i)
+        if (GetSpellCharges(i) != itemProto->Spells[i].SpellCharges)
+            return false;
+
+    return true;
+}
+
+void Item::RestoreCharges()
+{
+    ItemPrototype const* itemProto = GetProto();
+
+    for(int i = 0; i < MAX_ITEM_PROTO_SPELLS; ++i)
+    {
+        if (GetSpellCharges(i) != itemProto->Spells[i].SpellCharges)
+        {
+            SetSpellCharges(i, itemProto->Spells[i].SpellCharges);
+            SetState(ITEM_CHANGED);
+        }
     }
 }

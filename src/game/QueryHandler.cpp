@@ -26,7 +26,7 @@
 #include "Log.h"
 #include "World.h"
 #include "ObjectMgr.h"
-#include "ObjectDefines.h"
+#include "ObjectGuid.h"
 #include "Player.h"
 #include "UpdateMask.h"
 #include "NPCHandler.h"
@@ -39,7 +39,7 @@ void WorldSession::SendNameQueryOpcode(Player *p)
         return;
                                                             // guess size
     WorldPacket data( SMSG_NAME_QUERY_RESPONSE, (8+1+1+1+1+1+10) );
-    data.append(p->GetPackGUID());                          // player guid
+    data << p->GetPackGUID();                               // player guid
     data << uint8(0);                                       // added in 3.1; if > 1, then end of packet
     data << p->GetName();                                   // played name
     data << uint8(0);                                       // realm name for cross realm BG usage
@@ -61,7 +61,7 @@ void WorldSession::SendNameQueryOpcode(Player *p)
 void WorldSession::SendNameQueryOpcodeFromDB(uint64 guid)
 {
     CharacterDatabase.AsyncPQuery(&WorldSession::SendNameQueryOpcodeFromDBCallBack, GetAccountId(),
-        !sWorld.getConfig(CONFIG_DECLINED_NAMES_USED) ?
+        !sWorld.getConfig(CONFIG_BOOL_DECLINED_NAMES_USED) ?
     //   ------- Query Without Declined Names --------
     //          0     1     2     3       4
         "SELECT guid, name, race, gender, class "
@@ -111,7 +111,7 @@ void WorldSession::SendNameQueryOpcodeFromDBCallBack(QueryResult *result, uint32
     data << uint8(pClass);                                  // class
 
     // if the first declined name field (5) is empty, the rest must be too
-    if(sWorld.getConfig(CONFIG_DECLINED_NAMES_USED) && fields[5].GetCppString() != "")
+    if(sWorld.getConfig(CONFIG_BOOL_DECLINED_NAMES_USED) && fields[5].GetCppString() != "")
     {
         data << uint8(1);                                   // is declined
         for(int i = 5; i < MAX_DECLINED_NAME_CASES+5; ++i)
@@ -458,7 +458,7 @@ void WorldSession::HandleCorpseMapPositionQuery( WorldPacket & recv_data )
     uint32 unk;
     recv_data >> unk;
 
-    WorldPacket data(CMSG_CORPSE_MAP_POSITION_QUERY_RESPONSE, 4+4+4+4);
+    WorldPacket data(SMSG_CORPSE_MAP_POSITION_QUERY_RESPONSE, 4+4+4+4);
     data << float(0);
     data << float(0);
     data << float(0);
@@ -466,7 +466,7 @@ void WorldSession::HandleCorpseMapPositionQuery( WorldPacket & recv_data )
     SendPacket(&data);
 }
 
-void WorldSession::HandleQueryQuestsCompleted( WorldPacket & recv_data )
+void WorldSession::HandleQueryQuestsCompleted( WorldPacket & /*recv_data */)
 {
     uint32 count = 0;
 
@@ -490,13 +490,16 @@ void WorldSession::HandleQuestPOIQuery(WorldPacket& recv_data)
     uint32 count;
     recv_data >> count;                                     // quest count, max=25
 
-    if(count >= MAX_QUEST_LOG_SIZE)
+    if(count > MAX_QUEST_LOG_SIZE)
+    {
+        recv_data.rpos(recv_data.wpos());                   // set to end to avoid warnings spam
         return;
+    }
 
     WorldPacket data(SMSG_QUEST_POI_QUERY_RESPONSE, 4+(4+4)*count);
     data << uint32(count);                                  // count
 
-    for(int i = 0; i < count; ++i)
+    for(uint32 i = 0; i < count; ++i)
     {
         uint32 questId;
         recv_data >> questId;                               // quest id

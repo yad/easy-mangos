@@ -23,9 +23,8 @@
 #include "Unit.h"
 #include "Util.h"
 
-Vehicle::Vehicle() : Creature(), m_vehicleId(0)
+Vehicle::Vehicle() : Creature(CREATURE_SUBTYPE_VEHICLE), m_vehicleId(0)
 {
-    m_isVehicle = true;
     m_updateFlag = (UPDATEFLAG_LIVING | UPDATEFLAG_HAS_POSITION | UPDATEFLAG_VEHICLE);
 }
 
@@ -82,9 +81,8 @@ bool Vehicle::Create(uint32 guidlow, Map *map, uint32 Entry, uint32 vehicleId, u
 
     CreatureInfo const *ci = GetCreatureInfo();
     setFaction(team == ALLIANCE ? ci->faction_A : ci->faction_H);
-    SetMaxHealth(ci->maxhealth);
+
     SelectLevel(ci);
-    SetHealth(GetMaxHealth());
 
     return true;
 }

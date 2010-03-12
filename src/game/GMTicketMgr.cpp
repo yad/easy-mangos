@@ -21,11 +21,11 @@
 #include "Database/SQLStorage.h"
 #include "GMTicketMgr.h"
 #include "ObjectMgr.h"
-#include "ObjectDefines.h"
+#include "ObjectGuid.h"
 #include "ProgressBar.h"
 #include "Policies/SingletonImp.h"
 #include "Player.h"
-#include "ObjectDefines.h"
+#include "ObjectGuid.h"
 
 INSTANTIATE_SINGLETON_1(GMTicketMgr);
 
@@ -48,7 +48,7 @@ void GMTicketMgr::LoadGMTickets()
         return;
     }
 
-    barGoLink bar( result->GetRowCount() );
+    barGoLink bar( (int)result->GetRowCount() );
 
     uint32 count = 0;
 

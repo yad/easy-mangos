@@ -21,7 +21,7 @@
 #include "Log.h"
 #include "ProgressBar.h"
 #include "SharedDefines.h"
-#include "ObjectDefines.h"
+#include "ObjectGuid.h"
 
 #include "DBCfmt.h"
 
@@ -104,7 +104,10 @@ MapDifficultyMap sMapDifficultyMap;
 
 DBCStorage <MovieEntry> sMovieStore(MovieEntryfmt);
 
+DBCStorage <QuestFactionRewardEntry> sQuestFactionRewardStore(QuestFactionRewardfmt);
 DBCStorage <QuestSortEntry> sQuestSortStore(QuestSortEntryfmt);
+DBCStorage <QuestXPLevel> sQuestXPLevelStore(QuestXPLevelfmt);
+
 DBCStorage <PvPDifficultyEntry> sPvPDifficultyStore(PvPDifficultyfmt);
 
 DBCStorage <RandomPropertiesPointsEntry> sRandomPropertiesPointsStore(RandomPropertiesPointsfmt);
@@ -320,9 +323,9 @@ void LoadDBCStores(const std::string& dataPath)
         exit(1);
     }
 
-    const uint32 DBCFilesCount = 82;
+    const uint32 DBCFilesCount = 84;
 
-    barGoLink bar( DBCFilesCount );
+    barGoLink bar( (int)DBCFilesCount );
 
     StoreProblemList bad_dbc_files;
 
@@ -419,8 +422,10 @@ void LoadDBCStores(const std::string& dataPath)
     sMapDifficultyStore.Clear();
 
     LoadDBC(availableDbcLocales,bar,bad_dbc_files,sMovieStore,               dbcPath,"Movie.dbc");
+    LoadDBC(availableDbcLocales,bar,bad_dbc_files,sQuestFactionRewardStore,  dbcPath,"QuestFactionReward.dbc");
     LoadDBC(availableDbcLocales,bar,bad_dbc_files,sQuestSortStore,           dbcPath,"QuestSort.dbc");
-    LoadDBC(availableDbcLocales,bar,bad_dbc_files,sPvPDifficultyStore,       dbcPath,"PvpDifficulty.dbc");   
+    LoadDBC(availableDbcLocales,bar,bad_dbc_files,sQuestXPLevelStore,        dbcPath,"QuestXP.dbc");
+    LoadDBC(availableDbcLocales,bar,bad_dbc_files,sPvPDifficultyStore,       dbcPath,"PvpDifficulty.dbc");
     for(uint32 i = 0; i < sPvPDifficultyStore.GetNumRows(); ++i)
         if (PvPDifficultyEntry const* entry = sPvPDifficultyStore.LookupEntry(i))
             if (entry->bracketId > MAX_BATTLEGROUND_BRACKETS)
@@ -552,7 +557,7 @@ void LoadDBCStores(const std::string& dataPath)
         std::set<uint32> spellPaths;
         for(uint32 i = 1; i < sSpellStore.GetNumRows (); ++i)
             if(SpellEntry const* sInfo = sSpellStore.LookupEntry (i))
-                for(int j=0; j < 3; ++j)
+                for(int j=0; j < MAX_EFFECT_INDEX; ++j)
                     if(sInfo->Effect[j]==123 /*SPELL_EFFECT_SEND_TAXI*/)
                         spellPaths.insert(sInfo->EffectMiscValue[j]);
 
@@ -617,13 +622,13 @@ void LoadDBCStores(const std::string& dataPath)
     }
 
     // Check loaded DBC files proper version
-    if( !sSpellStore.LookupEntry(73190)            ||       // last added spell in 3.3.0a
-        !sMapStore.LookupEntry(718)                ||       // last map added in 3.3.0a
-        !sGemPropertiesStore.LookupEntry(1629)     ||       // last gem property added in 3.3.0a
-        !sItemExtendedCostStore.LookupEntry(2935)  ||       // last item extended cost added in 3.3.0a
-        !sCharTitlesStore.LookupEntry(177)         ||       // last char title added in 3.3.0a
-        !sAreaStore.LookupEntry(3460)              ||       // last area (areaflag) added in 3.3.0a
-        !sItemStore.LookupEntry(52062)             )        // last client known item added in 3.3.0a
+    if( !sSpellStore.LookupEntry(74445)            ||       // last added spell in 3.3.2
+        !sMapStore.LookupEntry(718)                ||       // last map added in 3.3.2
+        !sGemPropertiesStore.LookupEntry(1629)     ||       // last gem property added in 3.3.2
+        !sItemExtendedCostStore.LookupEntry(2982)  ||       // last item extended cost added in 3.3.2
+        !sCharTitlesStore.LookupEntry(177)         ||       // last char title added in 3.3.2
+        !sAreaStore.LookupEntry(3461)              ||       // last area (areaflag) added in 3.3.2
+        !sItemStore.LookupEntry(52686)             )        // last client known item added in 3.3.2
     {
         sLog.outError("\nYou have mixed version DBC files. Please re-extract DBC files for one from client build: %s",AcceptableClientBuildsListStr().c_str());
         exit(1);
@@ -767,30 +772,34 @@ bool IsTotemCategoryCompatiableWith(uint32 itemTotemCategoryId, uint32 requiredT
     return (itemEntry->categoryMask & reqEntry->categoryMask)==reqEntry->categoryMask;
 }
 
-void Zone2MapCoordinates(float& x,float& y,uint32 zone)
+bool Zone2MapCoordinates(float& x,float& y,uint32 zone)
 {
     WorldMapAreaEntry const* maEntry = sWorldMapAreaStore.LookupEntry(zone);
 
     // if not listed then map coordinates (instance)
-    if(!maEntry)
-        return;
+    if (!maEntry || maEntry->x2 == maEntry->x1 || maEntry->y2 == maEntry->y1)
+        return false;
 
     std::swap(x,y);                                         // at client map coords swapped
     x = x*((maEntry->x2-maEntry->x1)/100)+maEntry->x1;
     y = y*((maEntry->y2-maEntry->y1)/100)+maEntry->y1;      // client y coord from top to down
+
+    return true;
 }
 
-void Map2ZoneCoordinates(float& x,float& y,uint32 zone)
+bool Map2ZoneCoordinates(float& x,float& y,uint32 zone)
 {
     WorldMapAreaEntry const* maEntry = sWorldMapAreaStore.LookupEntry(zone);
 
     // if not listed then map coordinates (instance)
-    if(!maEntry)
-        return;
+    if (!maEntry || maEntry->x2 == maEntry->x1 || maEntry->y2 == maEntry->y1)
+        return false;
 
     x = (x-maEntry->x1)/((maEntry->x2-maEntry->x1)/100);
     y = (y-maEntry->y1)/((maEntry->y2-maEntry->y1)/100);    // client y coord from top to down
     std::swap(x,y);                                         // client have map coords swapped
+
+    return true;
 }
 
 MapDifficulty const* GetMapDifficultyData(uint32 mapId, Difficulty difficulty)

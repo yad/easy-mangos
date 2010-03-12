@@ -55,8 +55,8 @@ ChatChannelsEntry const* GetChannelEntryFor(uint32 channel_id);
 
 bool IsTotemCategoryCompatiableWith(uint32 itemTotemCategoryId, uint32 requiredTotemCategoryId);
 
-void Zone2MapCoordinates(float& x,float& y,uint32 zone);
-void Map2ZoneCoordinates(float& x,float& y,uint32 zone);
+bool Zone2MapCoordinates(float& x,float& y,uint32 zone);
+bool Map2ZoneCoordinates(float& x,float& y,uint32 zone);
 
 typedef std::map<uint32/*pair32(map,diff)*/,MapDifficulty> MapDifficultyMap;
 MapDifficulty const* GetMapDifficultyData(uint32 mapId, Difficulty difficulty);
@@ -122,7 +122,9 @@ extern DBCStorage <MapEntry>                     sMapStore;
 //extern DBCStorage <MapDifficultyEntry>           sMapDifficultyStore; -- use GetMapDifficultyData insteed
 extern MapDifficultyMap                          sMapDifficultyMap;
 extern DBCStorage <MovieEntry>                   sMovieStore;
+extern DBCStorage <QuestFactionRewardEntry>      sQuestFactionRewardStore;
 extern DBCStorage <QuestSortEntry>               sQuestSortStore;
+extern DBCStorage <QuestXPLevel>                 sQuestXPLevelStore;
 //extern DBCStorage <PvPDifficultyEntry>           sPvPDifficultyStore; -- use GetBattlegroundSlotByLevel for access
 extern DBCStorage <RandomPropertiesPointsEntry>  sRandomPropertiesPointsStore;
 extern DBCStorage <ScalingStatDistributionEntry> sScalingStatDistributionStore;

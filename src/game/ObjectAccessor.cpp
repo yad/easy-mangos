@@ -33,7 +33,7 @@
 #include "CellImpl.h"
 #include "GridNotifiersImpl.h"
 #include "Opcodes.h"
-#include "ObjectDefines.h"
+#include "ObjectGuid.h"
 #include "MapInstanced.h"
 #include "World.h"
 
@@ -54,12 +54,12 @@ ObjectAccessor::~ObjectAccessor()
 }
 
 Unit*
-ObjectAccessor::GetUnit(WorldObject const &u, uint64 guid)
+ObjectAccessor::GetUnit(WorldObject const &u, ObjectGuid guid)
 {
-    if(!guid)
+    if(guid.IsEmpty())
         return NULL;
 
-    if(IS_PLAYER_GUID(guid))
+    if(guid.IsPlayer())
         return FindPlayer(guid);
 
     if (!u.IsInWorld())
@@ -68,7 +68,7 @@ ObjectAccessor::GetUnit(WorldObject const &u, uint64 guid)
     return u.GetMap()->GetCreatureOrPetOrVehicle(guid);
 }
 
-Corpse* ObjectAccessor::GetCorpseInMap( uint64 guid, uint32 mapid )
+Corpse* ObjectAccessor::GetCorpseInMap(ObjectGuid guid, uint32 mapid)
 {
     Corpse * ret = HashMapHolder<Corpse>::Find(guid);
     if(!ret)
@@ -79,49 +79,8 @@ Corpse* ObjectAccessor::GetCorpseInMap( uint64 guid, uint32 mapid )
     return ret;
 }
 
-Object* ObjectAccessor::GetObjectByTypeMask(WorldObject const &p, uint64 guid, uint32 typemask)
-{
-    switch(GUID_HIPART(guid))
-    {
-        case HIGHGUID_ITEM:
-            if(typemask & TYPEMASK_ITEM && p.GetTypeId() == TYPEID_PLAYER)
-                return ((Player const &)p).GetItemByGuid( guid );
-            break;
-        case HIGHGUID_PLAYER:
-            if(typemask & TYPEMASK_PLAYER)
-                return FindPlayer(guid);
-            break;
-        case HIGHGUID_GAMEOBJECT:
-            if(typemask & TYPEMASK_GAMEOBJECT)
-                return p.GetMap()->GetGameObject(guid);
-            break;
-        case HIGHGUID_UNIT:
-            if(typemask & TYPEMASK_UNIT)
-                return p.GetMap()->GetCreature(guid);
-            break;
-        case HIGHGUID_PET:
-            if(typemask & TYPEMASK_UNIT)
-                return p.GetMap()->GetPet(guid);
-            break;
-        case HIGHGUID_VEHICLE:
-            if(typemask & TYPEMASK_UNIT)
-                return p.GetMap()->GetVehicle(guid);
-            break;
-        case HIGHGUID_DYNAMICOBJECT:
-            if(typemask & TYPEMASK_DYNAMICOBJECT)
-                return p.GetMap()->GetDynamicObject(guid);
-            break;
-        case HIGHGUID_TRANSPORT:
-        case HIGHGUID_CORPSE:
-        case HIGHGUID_MO_TRANSPORT:
-            break;
-    }
-
-    return NULL;
-}
-
 Player*
-ObjectAccessor::FindPlayer(uint64 guid)
+ObjectAccessor::FindPlayer(ObjectGuid guid)
 {
     Player * plr = HashMapHolder<Player>::Find(guid);;
     if(!plr || !plr->IsInWorld())
@@ -163,11 +122,11 @@ void ObjectAccessor::KickPlayer(uint64 guid)
 }
 
 Corpse*
-ObjectAccessor::GetCorpseForPlayerGUID(uint64 guid)
+ObjectAccessor::GetCorpseForPlayerGUID(ObjectGuid guid)
 {
     Guard guard(i_corpseGuard);
 
-    Player2CorpsesMapType::iterator iter = i_player2corpse.find(guid);
+    Player2CorpsesMapType::iterator iter = i_player2corpse.find(guid.GetRawValue());
     if( iter == i_player2corpse.end() ) return NULL;
 
     assert(iter->second->GetType() != CORPSE_BONES);
@@ -189,7 +148,7 @@ ObjectAccessor::RemoveCorpse(Corpse *corpse)
     CellPair cell_pair = MaNGOS::ComputeCellPair(corpse->GetPositionX(), corpse->GetPositionY());
     uint32 cell_id = (cell_pair.y_coord*TOTAL_NUMBER_OF_CELLS_PER_MAP) + cell_pair.x_coord;
 
-    sObjectMgr.DeleteCorpseCellData(corpse->GetMapId(), cell_id, corpse->GetOwnerGUID());
+    sObjectMgr.DeleteCorpseCellData(corpse->GetMapId(), cell_id, GUID_LOPART(corpse->GetOwnerGUID()));
     corpse->RemoveFromWorld();
 
     i_player2corpse.erase(iter);
@@ -208,7 +167,7 @@ ObjectAccessor::AddCorpse(Corpse *corpse)
     CellPair cell_pair = MaNGOS::ComputeCellPair(corpse->GetPositionX(), corpse->GetPositionY());
     uint32 cell_id = (cell_pair.y_coord*TOTAL_NUMBER_OF_CELLS_PER_MAP) + cell_pair.x_coord;
 
-    sObjectMgr.AddCorpseCellData(corpse->GetMapId(), cell_id, corpse->GetOwnerGUID(), corpse->GetInstanceId());
+    sObjectMgr.AddCorpseCellData(corpse->GetMapId(), cell_id, GUID_LOPART(corpse->GetOwnerGUID()), corpse->GetInstanceId());
 }
 
 void
@@ -223,18 +182,18 @@ ObjectAccessor::AddCorpsesToGrid(GridPair const& gridpair,GridType& grid,Map* ma
         {
             if (iter->second->GetInstanceId() == map->GetInstanceId())
             {
-                grid.AddWorldObject(iter->second, iter->second->GetGUID());
+                grid.AddWorldObject(iter->second);
             }
         }
         else
         {
-            grid.AddWorldObject(iter->second, iter->second->GetGUID());
+            grid.AddWorldObject(iter->second);
         }
     }
 }
 
 Corpse*
-ObjectAccessor::ConvertCorpseForPlayer(uint64 player_guid, bool insignia)
+ObjectAccessor::ConvertCorpseForPlayer(ObjectGuid player_guid, bool insignia)
 {
     Corpse *corpse = GetCorpseForPlayerGUID(player_guid);
     if(!corpse)
@@ -263,7 +222,7 @@ ObjectAccessor::ConvertCorpseForPlayer(uint64 player_guid, bool insignia)
     // create the bones only if the map and the grid is loaded at the corpse's location
     // ignore bones creating option in case insignia
     if (map && (insignia ||
-        (map->IsBattleGroundOrArena() ? sWorld.getConfig(CONFIG_DEATH_BONES_BG_OR_ARENA) : sWorld.getConfig(CONFIG_DEATH_BONES_WORLD))) &&
+        (map->IsBattleGroundOrArena() ? sWorld.getConfig(CONFIG_BOOL_DEATH_BONES_BG_OR_ARENA) : sWorld.getConfig(CONFIG_BOOL_DEATH_BONES_WORLD))) &&
         !map->IsRemovalGrid(corpse->GetPositionX(), corpse->GetPositionY()))
     {
         // Create bones, don't change Corpse

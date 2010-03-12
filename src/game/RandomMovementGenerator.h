@@ -28,7 +28,7 @@ class MANGOS_DLL_SPEC RandomMovementGenerator
 : public MovementGeneratorMedium< T, RandomMovementGenerator<T> >
 {
     public:
-        RandomMovementGenerator(const Unit &) : i_nextMoveTime(0) {}
+        explicit RandomMovementGenerator(const Unit &) : i_nextMoveTime(0) {}
 
         void _setRandomLocation(T &);
         void Initialize(T &);
@@ -40,11 +40,14 @@ class MANGOS_DLL_SPEC RandomMovementGenerator
         {
             i_destinationHolder.GetLocationNow(mapid, x,y,z);
         }
-        MovementGeneratorType GetMovementGeneratorType() { return RANDOM_MOTION_TYPE; }
+        MovementGeneratorType GetMovementGeneratorType() const { return RANDOM_MOTION_TYPE; }
+
+        bool GetResetPosition(T&, float& x, float& y, float& z);
     private:
         TimeTrackerSmall i_nextMoveTime;
 
         DestinationHolder< Traveller<T> > i_destinationHolder;
         uint32 i_nextMove;
 };
+
 #endif

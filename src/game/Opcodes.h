@@ -367,7 +367,7 @@ enum Opcodes
     SMSG_ATTACKERSTATEUPDATE                        = 0x14A,
     SMSG_BATTLEFIELD_PORT_DENIED                    = 0x14B,
     SMSG_DAMAGE_DONE_OBSOLETE                       = 0x14C,
-    SMSG_DAMAGE_TAKEN_OBSOLETE                      = 0x14D,
+    SMSG_UNIT_SPELLCAST_START                       = 0x14D,
     SMSG_CANCEL_COMBAT                              = 0x14E,
     SMSG_SPELLBREAKLOG                              = 0x14F,
     SMSG_SPELLHEALLOG                               = 0x150,
@@ -576,7 +576,7 @@ enum Opcodes
     SMSG_GMTICKET_SYSTEMSTATUS                      = 0x21B,
     CMSG_SPIRIT_HEALER_ACTIVATE                     = 0x21C,
     CMSG_SET_STAT_CHEAT                             = 0x21D,
-    SMSG_SET_REST_START_OBSOLETE                    = 0x21E,
+    SMSG_QUEST_FORCE_REMOVE                         = 0x21E, // uint32 questid
     CMSG_SKILL_BUY_STEP                             = 0x21F,
     CMSG_SKILL_BUY_RANK                             = 0x220,
     CMSG_XP_CHEAT                                   = 0x221,
@@ -1241,7 +1241,7 @@ enum Opcodes
     CMSG_ITEM_REFUND                                = 0x4B4, // lua: ContainerRefundItemPurchase
     SMSG_ITEM_REFUND_RESULT                         = 0x4B5, // refund item result
     CMSG_CORPSE_MAP_POSITION_QUERY                  = 0x4B6, // CMSG, uint32
-    CMSG_CORPSE_MAP_POSITION_QUERY_RESPONSE         = 0x4B7, // SMSG, 3*float+float
+    SMSG_CORPSE_MAP_POSITION_QUERY_RESPONSE         = 0x4B7, // SMSG, 3*float+float
     UMSG_UNKNOWN_1208                               = 0x4B8, // not found
     UMSG_UNKNOWN_1209                               = 0x4B9, // not found
     CMSG_CALENDAR_CONTEXT_EVENT_SIGNUP              = 0x4BA, // CMSG, uint64, lua: CalendarContextEventSignUp
