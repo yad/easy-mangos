@@ -46,7 +46,7 @@ bool WMORoot::open()
             f.read(&nDoodads, 4);
             f.read(&nDoodadSets, 4);
             f.read(&col, 4);
-            f.read(&RootID, 4);
+            f.read(&RootWMOID, 4);
             f.read(bbcorn1,12);
             f.read(bbcorn2,12);
             break;
@@ -148,19 +148,19 @@ bool WMOGroup::open()
         // TODO: this is different from http://www.madx.dk/wowdev/wiki/index.php?title=WMO#MOGP_chunk
         if (!strcmp(fourcc,"MOGP"))//header
         {
-            f.seekRelative(-4);
-            f.read(&offsize, 4);
-            f.read(&flag, 4);
-            f.read(&flag1, 4);
-            f.read(&Xid, 4);
+            f.read(&groupName, 4);
+            f.read(&descGroupName, 4);
+            f.read(&flags, 4);
             f.read(bbcorn1, 12);
             f.read(bbcorn2, 12);
-            f.read(&Xid2, 4);
-            f.read(&Xid3, 4);
-            f.read(&zero1, 4);
-            f.read(&Xflag, 4);
-            f.read(&nTexture,4);
-            f.read(&GroupID,4);
+            f.read(&moprIdx, 2);
+            f.read(&nBatchA, 2);
+            f.read(&nBatchB, 2);
+            f.read(&nBatchC, 4);
+            f.read(&fogIdx, 4);
+            f.read(&liquidType, 4);
+            f.read(&groupWMOID,4);
+
         }
         else if (!strcmp(fourcc,"MOPY"))
         {
