@@ -39,6 +39,9 @@ namespace VMAP
     class SubModel : public BaseModel
     {
         private:
+            uint32 iFlags;// 0x8 outdor; 0x2000 indoor
+            uint32 iAreaId;
+
             unsigned int iNodesPos;
             unsigned int iTrianglesPos;
             bool iHasInternalMemAlloc;
