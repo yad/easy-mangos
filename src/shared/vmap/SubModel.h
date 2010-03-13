@@ -37,6 +37,19 @@ namespace VMAP
     */
     class SubModel : public BaseModel
     {
+        enum BIN_POSITIONS
+        {
+            BP_iNTriangles=0,
+            BP_iNNodes=sizeof(uint32),
+            BP_iBasePosition=BP_iNNodes+sizeof(uint32),
+            BP_iNodesPos=BP_iBasePosition+sizeof(G3D::Vector3),
+            BP_iTrianglesPos=BP_iNodesPos +sizeof(uint32),
+            BP_iHasInternalMemAlloc=BP_iTrianglesPos+sizeof(uint32),
+            BP_iBox=BP_iHasInternalMemAlloc+sizeof(bool),
+            BP_iMogpFlags=BP_iBox+sizeof(ShortBox),
+            BP_iAreaId=BP_iMogpFlags+sizeof(uint32)
+        };
+
         private:
             uint32 iNodesPos;
             uint32 iTrianglesPos;
@@ -95,7 +108,7 @@ namespace VMAP
             void intersectRay(const G3D::Ray& ray, RayCallback& intersectCallback, float& distance, bool pStopAtFirstHit, bool intersectCallbackIsFast = false);
             bool operator==(const SubModel& pSm2) const;
             uint32 hashCode() const { return BaseModel::getNTriangles(); }
-            static const unsigned int dumpSize = 60;
+            static const unsigned int dumpSize = BP_iAreaId+sizeof(uint32);
     };
 
     unsigned int hashCode(const SubModel& pSm);
