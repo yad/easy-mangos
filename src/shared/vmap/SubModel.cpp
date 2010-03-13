@@ -101,7 +101,10 @@ namespace VMAP
         BP_iTrianglesPos=32,
         BP_iHasInternalMemAlloc=36,
         BP_iBox=38, // preceeded by a pad byte (garbage), followed by another 2 pad bytes.
+        BP_iMogpFlags=52,
+        BP_iAreaId=56
     };
+    // TODO: since we are putting every type by hand, can't we just drop those padding bytes?
     /**
     This is ugly, but due to compatibility and 64 bit support we have to do that ... sorry
     */
@@ -116,6 +119,8 @@ namespace VMAP
         memcpy(&this->iTrianglesPos,   pBinBlock + BP_iTrianglesPos,    sizeof(iTrianglesPos));
         iHasInternalMemAlloc = (bool) *(pBinBlock + BP_iHasInternalMemAlloc);
         memcpy(&this->iBox,            pBinBlock + BP_iBox,             sizeof(iBox));
+        memcpy(&this->iMogpFlags,      pBinBlock + BP_iMogpFlags,       sizeof(iMogpFlags));
+        memcpy(&this->iAreaId,         pBinBlock + BP_iAreaId,          sizeof(iAreaId));
     }
 
     void SubModel::putToBinBlock(uint8 *pBinBlock)
@@ -129,6 +134,8 @@ namespace VMAP
         memcpy(pBinBlock + BP_iTrianglesPos,    &this->iTrianglesPos,   sizeof(iTrianglesPos));
         *(pBinBlock + BP_iHasInternalMemAlloc) = (uint8) this->iHasInternalMemAlloc;
         memcpy(pBinBlock + BP_iBox,             &this->iBox,            sizeof(iBox));
+        memcpy(pBinBlock + BP_iMogpFlags,       &this->iMogpFlags,      sizeof(iMogpFlags));
+        memcpy(pBinBlock + BP_iAreaId,          &this->iAreaId,         sizeof(iAreaId));
     }
 
     //==========================================================

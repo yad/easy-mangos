@@ -95,7 +95,7 @@ namespace VMAP
             void intersectRay(const G3D::Ray& ray, RayCallback& intersectCallback, float& distance, bool pStopAtFirstHit, bool intersectCallbackIsFast = false);
             bool operator==(const SubModel& pSm2) const;
             uint32 hashCode() const { return BaseModel::getNTriangles(); }
-            static const unsigned int dumpSize = 52;
+            static const unsigned int dumpSize = 60;
     };
 
     unsigned int hashCode(const SubModel& pSm);
