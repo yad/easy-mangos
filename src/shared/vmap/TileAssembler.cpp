@@ -258,6 +258,7 @@ namespace VMAP
                 if(modelContainer)
                     pMC.append(modelContainer);
                 else
+                    // TODO: fix this error
                     printf("warning: (if) problems in processing data for %s\n",destnamebuffer);
             }
         }

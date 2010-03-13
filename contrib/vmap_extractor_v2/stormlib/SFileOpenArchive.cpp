@@ -463,6 +463,7 @@ BOOL SFileOpenArchiveEx(
             pFirstOpen = ha;
     }
     *phMPQ = ha;
+    printf("nError= %u\n", nError);
     return (nError == ERROR_SUCCESS);
 }
 

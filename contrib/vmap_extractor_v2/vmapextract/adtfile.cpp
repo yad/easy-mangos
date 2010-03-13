@@ -124,10 +124,9 @@ bool ADTFile::init(char *map_id)
                     FILE * output = fopen(szLocalFile,"rb");
                     if(!output)
                     {
-                        Model * m2 = new Model(path);
-                        if(m2->open())
-                            m2->ConvertToVMAPModel(szLocalFile);
-                        delete m2;
+                        Model m2(path);
+                        if(m2.open())
+                            m2.ConvertToVMAPModel(szLocalFile);
                     }
                     else
                         fclose(output);
