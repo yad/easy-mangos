@@ -92,19 +92,6 @@ namespace VMAP
     }
     //==========================================================
 
-    enum BIN_POSITIONS
-    {
-        BP_iNTriangles=8, // preceded by 2 redundant 32bit pointers (garbage)
-        BP_iNNodes=12,
-        BP_iBasePosition=16,
-        BP_iNodesPos=28,
-        BP_iTrianglesPos=32,
-        BP_iHasInternalMemAlloc=36,
-        BP_iBox=38, // preceeded by a pad byte (garbage), followed by another 2 pad bytes.
-        BP_iMogpFlags=52,
-        BP_iAreaId=56
-    };
-    // TODO: since we are putting every type by hand, can't we just drop those padding bytes?
     /**
     This is ugly, but due to compatibility and 64 bit support we have to do that ... sorry
     */
