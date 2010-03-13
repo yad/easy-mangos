@@ -24,7 +24,7 @@ namespace VMAP
 {
     //=====================================
     #define MAX_CAN_FALL_DISTANCE 10.0f
-    const char VMAP_MAGIC[] = "VMAP_2.0";
+    const char VMAP_MAGIC[] = "VMAP_2.1";
 
     class VMapDefinitions
     {
