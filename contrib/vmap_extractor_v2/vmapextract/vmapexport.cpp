@@ -477,6 +477,30 @@ bool processArgv(int argc, char ** argv, const char *versionString)
     return result;
 }
 
+void loadWMOAreaTable()
+{
+    DBCFile * dbc = new DBCFile("DBFilesClient\\WMOAreaTable.dbc");
+    if(!dbc->open())
+    {
+        delete dbc;
+        printf("FATAL ERROR: WMOAreaTable.dbc not found in data file.\n");
+        exit(1);
+    }
+    uint32 wmo_area_count = dbc->getRecordCount();
+    for(uint32 x=0; x<wmo_area_count; ++x)
+    {
+        int32 rootId = dbc->getRecord(x).getInt(1);
+        int32 groupId = dbc->getRecord(x).getInt(3);
+        if(groupId == -1)
+            groupId = 0;
+        uint32 areaId = dbc->getRecord(x).getUInt(10);
+        if(!areaId)
+            continue;
+        uint64 key = uint64(rootId)<<32 | groupId;
+        wmoAreaTable.insert(std::pair<uint64, uint32>(key, areaId));
+    }
+    delete dbc;
+}
 //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 // Main
 // 
@@ -540,6 +564,7 @@ int main(int argc, char ** argv)
         return 1;
     }
 
+    loadWMOAreaTable();
     // extract data
     if(success)
         success = ExtractWmo();
@@ -564,26 +589,8 @@ int main(int argc, char ** argv)
             printf("Map - %s\n",map_ids[x].name);
         }
 
-        DBCFile * dbc2 = new DBCFile("DBFilesClient\\WMOAreaTable.dbc");
-        if(!dbc2->open())
-        {
-            delete dbc2;
-            printf("FATAL ERROR: WMOAreaTable.dbc not found in data file.\n");
-            return 1;
-        }
-        uint32 wmo_area_count = dbc2->getRecordCount();
-        for(uint32 x=0; x<wmo_area_count; ++x)
-        {
-            int32 rootId = dbc2->getRecord(x).getInt(1);
-            int32 groupId = dbc2->getRecord(x).getInt(3);
-            if(groupId == -1)
-                groupId = 0;
-            uint32 areaId = dbc2->getRecord(x).getUInt(10);
-            wmoAreaTable.insert(std::pair<uint64, uint32>(uint64(rootId)<<32 | groupId, areaId));
-        }
 
         delete dbc;
-        delete dbc2;
         ParsMapFiles();
         delete [] map_ids;
         //nError = ERROR_SUCCESS;
