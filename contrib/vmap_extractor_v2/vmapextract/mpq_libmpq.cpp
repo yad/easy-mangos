@@ -10,11 +10,14 @@ MPQArchive::MPQArchive(const char* filename)
     printf("Opening %s\n", filename);
     if(result) {
         switch(result) {
+            case LIBMPQ_ERROR_OPEN :
+                printf("Error opening archive '%s': Does file really exist?\n", filename);
+                break;
             case LIBMPQ_ERROR_FORMAT :            /* bad file format */
                 printf("Error opening archive '%s': Bad file format\n", filename);
                 break;
-            case LIBMPQ_ERROR_EXIST :         /* file in archive not found */
-                printf("Error opening archive '%s': File in archive not found\n", filename);
+            case LIBMPQ_ERROR_SEEK :         /* seeking in file failed */
+                printf("Error opening archive '%s': Seeking in file failed\n", filename);
                 break;
             case LIBMPQ_ERROR_READ :              /* Read error in archive */
                 printf("Error opening archive '%s': Read error in archive\n", filename);
