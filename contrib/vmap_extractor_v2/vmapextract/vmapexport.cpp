@@ -17,7 +17,9 @@
 #include <vector>
 #include <list>
 
-#ifndef WIN32
+#ifdef WIN32
+    #include <Windows.h>
+#else
     #include <sys/stat.h>
 #endif
 
@@ -125,13 +127,14 @@ int ExtractWmo()
 
     //const char* ParsArchiveNames[] = {"patch-2.MPQ", "patch.MPQ", "common.MPQ", "expansion.MPQ"};
 
-    for (ArchiveSet::const_iterator ar_itr = gOpenArchives.begin(); ar_itr != gOpenArchives.end(); ++ar_itr)
+    for (ArchiveSet::const_iterator ar_itr = gOpenArchives.begin(); ar_itr != gOpenArchives.end() && success; ++ar_itr)
     {
         vector<string> filelist;
         
         (*ar_itr)->GetFileListTo(filelist);
         for (vector<string>::iterator fname=filelist.begin(); fname != filelist.end() && success; ++fname)
         {
+            bool file_ok=true;
             if (fname->find(".wmo") != string::npos)
             {
                 // Copy files from archive
@@ -168,7 +171,7 @@ int ExtractWmo()
                         if(!output)
                         {
                             printf("couldn't open %s for writing!\n", szLocalFile);
-                            exit(1);
+                            success=false;
                         }
                         froot->ConvertToVMAPRootWmo(output);
                         int Wmo_nVertices = 0;
@@ -189,7 +192,7 @@ int ExtractWmo()
                                 if(!fgroup->open())
                                 {
                                     printf("Could not open all Group file for: %s\n",GetPlainName(fname->c_str()));
-                                    success=false;
+                                    file_ok=false;
                                     break;
                                 }
                                 // try to search specific area
@@ -222,14 +225,14 @@ int ExtractWmo()
                     fclose(n);
                 }
             }
-            // TODO: Delete the extracted file in the case of an error
-            //if(!success)
-                //DeleteFile(szLocalFile);
+            // Delete the extracted file in the case of an error
+            if(!file_ok)
+                remove(szLocalFile);
         }
     }
 
     if(success)
-        printf("\nExtract wmo complete (No errors)\n");
+        printf("\nExtract wmo complete (No (fatal) errors)\n");
 
     return success;
 }
