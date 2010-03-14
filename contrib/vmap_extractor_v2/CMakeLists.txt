@@ -18,7 +18,8 @@ ADD_DEFINITIONS("-DIOMAP_DEBUG")
 ADD_DEFINITIONS("-Wall")
 ADD_DEFINITIONS("-ggdb")
 
-include_directories(stormlib)
-add_subdirectory(stormlib)
+include_directories(../libmpq stormlib)
+LINK_DIRECTORIES( ${LINK_DIRECTORIES} /home/lynx/coding/mangos/contrib/libmpq/libmpq/.libs )
+#add_subdirectory(stormlib)
 
 add_subdirectory(vmapextract)
