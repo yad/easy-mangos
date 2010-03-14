@@ -398,23 +398,16 @@ namespace VMAP
                                         fclose(rf); return(false); }
 
         READ_OR_RETURN(&ident, 8);
-        if(strcmp(ident, "VMAP001") == 0)
-        {
-            // OK, do nothing
-        }
-        else if(strcmp(ident, "VMAP002") == 0)
-        {
-            // we have to read one int. This is needed during the export and we have to skip it here
-            int tempNVectors;
-            READ_OR_RETURN(&tempNVectors, sizeof(int));
-
-        }
-        else
+        if(strcmp(ident, "VMAP003") == 0)
         {
             // wrong version
             fclose(rf);
             return(false);
         }
+        // we have to read one int. This is needed during the export and we have to skip it here
+        G3D::uint32 tempNVectors;
+        READ_OR_RETURN(&tempNVectors, sizeof(tempNVectors));
+
         G3D::uint32 groups;
         char blockId[5];
         blockId[4] = 0;
@@ -585,7 +578,12 @@ namespace VMAP
 
         modelPosition.init();
 
-        return readRawFile(pModelFilename,  modelPosition, pMainTree);
+        if(readRawFile(pModelFilename,  modelPosition, pMainTree))
+        {
+            return true;
+        }
+        printf("Error while reading rawfile %s\n", pModelFilename.c_str());
+        return false;
     }
 
     //=================================================================
