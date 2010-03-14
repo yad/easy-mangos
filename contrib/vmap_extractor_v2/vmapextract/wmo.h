@@ -1,14 +1,11 @@
 #ifndef WMO_H
 #define WMO_H
-#define __STORMLIB_SELF__
 #define TILESIZE (533.33333f)
 #define CHUNKSIZE ((TILESIZE) / 16.0f)
 
-#include "StormLib.h"
 #include <string>
 #include "vec3d.h"
 #include <set>
-#include "mpq.h"
 
 // MOPY flags
 #define WMO_MATERIAL_NOCAMCOLLIDE    0x01
@@ -21,6 +18,7 @@
 
 class WMOInstance;
 class WMOManager;
+class MPQFile;
 
 typedef unsigned char uint8;
 typedef unsigned short uint16;
@@ -101,7 +99,7 @@ class WMOInstance
 {
     static std::set<int> ids;
 public:
-    string MapName;
+    std::string MapName;
     int currx;
     int curry;
     WMOGroup *wmo;

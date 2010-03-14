@@ -1,13 +1,12 @@
 #ifndef WDTFILE_H
 #define WDTFILE_H
 
-#define __STORMLIB_SELF__
-
-#include "mpq.h"
-#include "adtfile.h"
+#include "mpq_libmpq.h"
 #include "wmo.h"
 #include <string>
 #include "stdlib.h"
+
+class ADTFile;
 
 class WDTFile
 {

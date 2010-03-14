@@ -1,6 +1,8 @@
 #include "model.h"
+#include "mpq_libmpq.h"
 #include <cassert>
 #include <algorithm>
+#include <cstdio>
 
 Model::Model(std::string &filename) : filename(filename)
 {

@@ -2,6 +2,7 @@
 
 #include "wdtfile.h"
 #include "adtfile.h"
+#include <cstdio>
 
 char * wdtGetPlainName(char * FileName)
 {

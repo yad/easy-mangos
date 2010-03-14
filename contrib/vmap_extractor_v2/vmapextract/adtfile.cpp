@@ -1,6 +1,7 @@
 #include "adtfile.h"
 
 #include <algorithm>
+#include <cstdio>
 
 char * GetPlainName(char * FileName)
 {
@@ -23,9 +24,9 @@ void fixnamen(char *name, size_t len)
             name[i] &= ~0x20;
         }
     }
-	//extension in lowercase
-	for(size_t i=len-3; i<len; i++)
-		name[i] |= 0x20;
+    //extension in lowercase
+    for(size_t i=len-3; i<len; i++)
+        name[i] |= 0x20;
 }
 
 void fixname2(char *name, size_t len)
@@ -119,8 +120,8 @@ bool ADTFile::init(char *map_id)
                     // >= 3.1.0 ADT MMDX section store filename.m2 filenames for corresponded .m2 file
                     // nothing do
 
-                    char szLocalFile[MAX_PATH];
-                    sprintf(szLocalFile, "./Buildings/%s", s);
+                    char szLocalFile[1024];
+                    snprintf(szLocalFile, 1024, "./Buildings/%s", s);
                     FILE * output = fopen(szLocalFile,"rb");
                     if(!output)
                     {
