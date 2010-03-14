@@ -54,7 +54,7 @@ bool Model::ConvertToVMAPModel(char * outfilename)
         printf("Can't create the output file '%s'\n",outfilename);
         return false;
     }
-    fwrite("VMAP002",8,1,output);
+    fwrite("VMAP003",8,1,output);
     uint32 nVertices = 0;
     nVertices = header.nBoundingVertices;
     fwrite(&nVertices, sizeof(int), 1, output);
