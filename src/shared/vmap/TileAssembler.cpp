@@ -391,19 +391,17 @@ namespace VMAP
         int endgroup = INT_MAX;
         #endif
 
+        int readOperation = 1;
+
         // temporary use defines to simplify read/check code (close file and return at fail)
         #define READ_OR_RETURN(V,S) if(fread((V), (S), 1, rf) != 1) { \
-                                        fclose(rf); return(false); }
+                                        fclose(rf); printf("readfail, op = %i\n", readOperation); return(false); }readOperation++;
         #define CMP_OR_RETURN(V,S)  if(strcmp((V),(S)) != 0)        { \
-                                        fclose(rf); return(false); }
+                                        fclose(rf); printf("cmpfail, %s!=%s\n", V, S);return(false); }
 
         READ_OR_RETURN(&ident, 8);
-        if(strcmp(ident, "VMAP003") == 0)
-        {
-            // wrong version
-            fclose(rf);
-            return(false);
-        }
+        CMP_OR_RETURN(ident, "VMAP003");
+
         // we have to read one int. This is needed during the export and we have to skip it here
         G3D::uint32 tempNVectors;
         READ_OR_RETURN(&tempNVectors, sizeof(tempNVectors));
@@ -427,9 +425,9 @@ namespace VMAP
             #undef READ_OR_RETURN
             #undef CMP_OR_RETURN
             #define READ_OR_RETURN(V,S) if(fread((V), (S), 1, rf) != 1) { \
-                                            fclose(rf); delete gtree; return(false); }
+                                            fclose(rf);printf("readfail, op = %i\n", readOperation); delete gtree; return(false); }readOperation++;
             #define CMP_OR_RETURN(V,S)  if(strcmp((V),(S)) != 0)        { \
-                                            fclose(rf); delete gtree; return(false); }
+                                            fclose(rf);printf("cmpfail, %s!=%s\n", V, S); delete gtree; return(false); }
 
 
             G3D::uint32 mogpflags;
