@@ -51,13 +51,11 @@ namespace VMAP
     Vector3 VMapManager::convertPositionToInternalRep(float x, float y, float z) const
     {
         float pos[3];
-        pos[0] = y;
-        pos[1] = z;
-        pos[2] = x;
         double full = 64.0*533.33333333;
         double mid = full/2.0;
-        pos[0] = full- (pos[0] + mid);
-        pos[2] = full- (pos[2] + mid);
+        pos[0] = full - (x + mid);
+        pos[1] = full - (y + mid);
+        pos[2] = z;
 
         return(Vector3(pos));
     }
@@ -67,13 +65,11 @@ namespace VMAP
     Vector3 VMapManager::convertPositionToMangosRep(float x, float y, float z) const
     {
         float pos[3];
-        pos[0] = z;
-        pos[1] = x;
-        pos[2] = y;
         double full = 64.0*533.33333333;
         double mid = full/2.0;
-        pos[0] = -((mid+pos[0])-full);
-        pos[1] = -((mid+pos[1])-full);
+        pos[0] = -((mid + x)-full);
+        pos[1] = -((mid + y)-full);
+        pos[2] = z;
 
         return(Vector3(pos));
     }
