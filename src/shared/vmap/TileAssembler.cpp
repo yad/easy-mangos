@@ -38,13 +38,9 @@ namespace VMAP
 
     Vector3 ModelPosition::transform(const Vector3& pIn) const
     {
-        //return(pIn);
         Vector3 out = pIn * iScale;
-        out = izMatrix * out;
-        out = ixMatrix * out;
-        out = iyMatrix * out;
+        out = iRotation * out;
         return(out);
-
     }
     //=================================================================
 
@@ -504,13 +500,9 @@ namespace VMAP
 
             for(unsigned int i=0, indexNo=0; indexNo<nvectors; indexNo++)
             {
-                Vector3 v = Vector3(vectorarray[i+2], vectorarray[i+1], vectorarray[i+0]);
+                Vector3 v = Vector3(vectorarray[i+0], vectorarray[i+1], vectorarray[i+2]);
                 i+=3;
                 v = pModelPosition.transform(v);
-
-                float swapy = v.y;
-                v.y = v.x;
-                v.x = swapy;
 
                 tempVertexArray.append(v);
             }
@@ -599,7 +591,8 @@ namespace VMAP
             &vdirarray[0],&vdirarray[1],&vdirarray[2],
             &scale);
 
-        pModelPosition.iPos = Vector3(vposarray[0], vposarray[1], vposarray[2]);
+        // internal map coordinate system is y-up apparently, shuffle pos to mangos internal representation:
+        pModelPosition.iPos = Vector3(vposarray[2], vposarray[0], vposarray[1]);
         pModelPosition.iDir = Vector3(vdirarray[0], vdirarray[1], vdirarray[2]);
         pModelPosition.iScale = scale;
 
