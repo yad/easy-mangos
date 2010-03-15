@@ -370,11 +370,11 @@ void WorldSession::HandleLootMethodOpcode( WorldPacket & recv_data )
 
 void WorldSession::HandleLootRoll( WorldPacket &recv_data )
 {
-    uint64 Guid;
-    uint32 NumberOfPlayers;
+    ObjectGuid lootedTarget;
+    uint32 itemSlot;
     uint8  rollType;
-    recv_data >> Guid;                                      //guid of the item rolled
-    recv_data >> NumberOfPlayers;
+    recv_data >> lootedTarget;                                  //guid of the item rolled
+    recv_data >> itemSlot;
     recv_data >> rollType;
 
     //sLog.outDebug("WORLD RECIEVE CMSG_LOOT_ROLL, From:%u, Numberofplayers:%u, rollType:%u", (uint32)Guid, NumberOfPlayers, rollType);
@@ -384,7 +384,7 @@ void WorldSession::HandleLootRoll( WorldPacket &recv_data )
         return;
 
     // everything's fine, do it
-    group->CountRollVote(GetPlayer()->GetGUID(), Guid, NumberOfPlayers, rollType);
+    group->CountRollVote(GetPlayer()->GetObjectGuid(), lootedTarget, itemSlot, rollType);
 
     switch (rollType)
     {
@@ -636,7 +636,7 @@ void WorldSession::BuildPartyMemberStatsChangedPacket(Player *player, WorldPacke
             byteCount += GroupUpdateLength[i];
 
     data->Initialize(SMSG_PARTY_MEMBER_STATS, 8 + 4 + byteCount);
-    data->append(player->GetPackGUID());
+    *data << player->GetPackGUID();
     *data << (uint32) mask;
 
     if (mask & GROUP_UPDATE_FLAG_STATUS)
@@ -804,7 +804,7 @@ void WorldSession::HandleRequestPartyMemberStatsOpcode( WorldPacket &recv_data )
 
     WorldPacket data(SMSG_PARTY_MEMBER_STATS_FULL, 4+2+2+2+1+2*6+8+1+8);
     data << uint8(0);                                       // only for SMSG_PARTY_MEMBER_STATS_FULL, probably arena/bg related
-    data.append(player->GetPackGUID());
+    data << player->GetPackGUID();
 
     uint32 mask1 = 0x00040BFF;                              // common mask, real flags used 0x000040BFF
     if(pet)

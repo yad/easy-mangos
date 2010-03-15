@@ -1305,7 +1305,7 @@ void Aura::SendFakeAuraUpdate(uint32 auraId, bool remove)
 void Aura::SendAuraUpdate(bool remove)
 {
     WorldPacket data(SMSG_AURA_UPDATE);
-    data.append(m_target->GetPackGUID());
+    data << m_target->GetPackGUID();
     data << uint8(GetAuraSlot());
     data << uint32(remove ? 0 : GetId());
 
@@ -1545,7 +1545,7 @@ void Aura::HandleAddModifier(bool apply, bool Real)
             case 31834:                                     // Light's Grace
             case 34754:                                     // Clearcasting
             case 34936:                                     // Backlash
-            case 44401:                                     // Missile Barrage 
+            case 44401:                                     // Missile Barrage
             case 48108:                                     // Hot Streak
             case 51124:                                     // Killing Machine
             case 54741:                                     // Firestarter
@@ -3189,7 +3189,7 @@ void Aura::HandleAuraWaterWalk(bool apply, bool Real)
         data.Initialize(SMSG_MOVE_WATER_WALK, 8+4);
     else
         data.Initialize(SMSG_MOVE_LAND_WALK, 8+4);
-    data.append(m_target->GetPackGUID());
+    data << m_target->GetPackGUID();
     data << uint32(0);
     m_target->SendMessageToSet(&data, true);
 }
@@ -3205,7 +3205,7 @@ void Aura::HandleAuraFeatherFall(bool apply, bool Real)
         data.Initialize(SMSG_MOVE_FEATHER_FALL, 8+4);
     else
         data.Initialize(SMSG_MOVE_NORMAL_FALL, 8+4);
-    data.append(m_target->GetPackGUID());
+    data << m_target->GetPackGUID();
     data << uint32(0);
     m_target->SendMessageToSet(&data, true);
 
@@ -3225,7 +3225,7 @@ void Aura::HandleAuraHover(bool apply, bool Real)
         data.Initialize(SMSG_MOVE_SET_HOVER, 8+4);
     else
         data.Initialize(SMSG_MOVE_UNSET_HOVER, 8+4);
-    data.append(m_target->GetPackGUID());
+    data << m_target->GetPackGUID();
     data << uint32(0);
     m_target->SendMessageToSet(&data, true);
 }
@@ -4186,7 +4186,7 @@ void Aura::HandleAuraModStun(bool apply, bool Real)
         if(!m_target->hasUnitState(UNIT_STAT_ON_VEHICLE))
         {
             WorldPacket data(SMSG_FORCE_MOVE_ROOT, 8);
-            data.append(m_target->GetPackGUID());
+            data << m_target->GetPackGUID();
             data << uint32(0);
             m_target->SendMessageToSet(&data,true);
         }
@@ -4245,7 +4245,7 @@ void Aura::HandleAuraModStun(bool apply, bool Real)
                 m_target->SetTargetGUID(m_target->getVictim()->GetGUID());
 
             WorldPacket data(SMSG_FORCE_MOVE_UNROOT, 8+4);
-            data.append(m_target->GetPackGUID());
+            data << m_target->GetPackGUID();
             data << uint32(0);
             m_target->SendMessageToSet(&data, true);
         }
@@ -4457,7 +4457,7 @@ void Aura::HandleAuraModRoot(bool apply, bool Real)
             if(!m_target->hasUnitState(UNIT_STAT_ON_VEHICLE))
             {
                 WorldPacket data(SMSG_FORCE_MOVE_ROOT, 10);
-                data.append(m_target->GetPackGUID());
+                data << m_target->GetPackGUID();
                 data << (uint32)2;
                 m_target->SendMessageToSet(&data,true);
             }
@@ -4506,7 +4506,7 @@ void Aura::HandleAuraModRoot(bool apply, bool Real)
             if(m_target->GetTypeId() == TYPEID_PLAYER)
             {
                 WorldPacket data(SMSG_FORCE_MOVE_UNROOT, 10);
-                data.append(m_target->GetPackGUID());
+                data << m_target->GetPackGUID();
                 data << (uint32)2;
                 m_target->SendMessageToSet(&data, true);
             }
@@ -4661,7 +4661,7 @@ void Aura::HandleAuraModIncreaseFlightSpeed(bool apply, bool Real)
             data.Initialize(SMSG_MOVE_SET_CAN_FLY, 12);
         else
             data.Initialize(SMSG_MOVE_UNSET_CAN_FLY, 12);
-        data.append(m_target->GetPackGUID());
+        data << m_target->GetPackGUID();
         data << uint32(0);                                      // unknown
         m_target->SendMessageToSet(&data, true);
 
@@ -6640,6 +6640,21 @@ void Aura::HandleSpellSpecificBoosts(bool apply, bool last_stack)
                 else
                     return;
             }
+            // Power Word: Shield
+            else if (apply && m_spellProto->SpellFamilyFlags & UI64LIT(0x0000000000000001) && m_spellProto->Mechanic == MECHANIC_SHIELD)
+            {
+                Unit* caster = GetCaster();
+                if(!caster)
+                    return;
+
+                // Glyph of Power Word: Shield
+                if (Aura* glyph = caster->GetAura(55672, EFFECT_INDEX_0))
+                {
+                    int32 heal = (glyph->GetModifier()->m_amount * m_modifier.m_amount)/100;
+                    caster->CastCustomSpell(m_target, 56160, &heal, NULL, NULL, true, 0, this);
+                }
+                return;
+            }
 
             switch(GetId())
             {
@@ -7052,7 +7067,7 @@ void Aura::HandleAuraAllowFlight(bool apply, bool Real)
         data.Initialize(SMSG_MOVE_SET_CAN_FLY, 12);
     else
         data.Initialize(SMSG_MOVE_UNSET_CAN_FLY, 12);
-    data.append(m_target->GetPackGUID());
+    data << m_target->GetPackGUID();
     data << uint32(0);                                      // unk
     m_target->SendMessageToSet(&data, true);
 }
@@ -7580,7 +7595,7 @@ void Aura::PeriodicTick()
             Unit *pCaster = GetCaster();
             if(!pCaster)
                 return;
-            
+
             // heal for caster damage (must be alive)
             if(m_target != pCaster && GetSpellProto()->SpellVisual[0] == 163 && !pCaster->isAlive())
                 return;

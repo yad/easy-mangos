@@ -1674,7 +1674,7 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                 if (m_caster->GetTypeId()!=TYPEID_PLAYER)
                     return;
 
-                // checked in create item check, avoid unexpected 
+                // checked in create item check, avoid unexpected
                 if (Item* item = ((Player*)m_caster)->GetItemByLimitedCategory(ITEM_LIMIT_CATEGORY_MANA_GEM))
                     if (item->HasMaxCharges())
                         return;
@@ -3982,7 +3982,7 @@ void Spell::DoSummon(SpellEffectIndex eff_idx)
     spawnCreature->InitStatsForLevel(level, m_caster);
 
     spawnCreature->GetCharmInfo()->SetPetNumber(pet_number, false);
-    
+
     spawnCreature->UpdateWalkMode(m_caster);
 
     spawnCreature->AIM_Initialize();
@@ -4109,8 +4109,8 @@ void Spell::EffectDispel(SpellEffectIndex eff_idx)
         {
             int32 count = success_list.size();
             WorldPacket data(SMSG_SPELLDISPELLOG, 8+8+4+1+4+count*5);
-            data.append(unitTarget->GetPackGUID());         // Victim GUID
-            data.append(m_caster->GetPackGUID());           // Caster GUID
+            data << unitTarget->GetPackGUID();              // Victim GUID
+            data << m_caster->GetPackGUID();                // Caster GUID
             data << uint32(m_spellInfo->Id);                // Dispel spell id
             data << uint8(0);                               // not used
             data << uint32(count);                          // count
@@ -7511,8 +7511,8 @@ void Spell::EffectStealBeneficialBuff(SpellEffectIndex eff_idx)
         {
             int32 count = success_list.size();
             WorldPacket data(SMSG_SPELLSTEALLOG, 8+8+4+1+4+count*5);
-            data.append(unitTarget->GetPackGUID());  // Victim GUID
-            data.append(m_caster->GetPackGUID());    // Caster GUID
+            data << unitTarget->GetPackGUID();       // Victim GUID
+            data << m_caster->GetPackGUID();         // Caster GUID
             data << uint32(m_spellInfo->Id);         // Dispell spell id
             data << uint8(0);                        // not used
             data << uint32(count);                   // count

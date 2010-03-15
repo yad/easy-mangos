@@ -748,15 +748,13 @@ struct Position
 class MovementInfo
 {
     public:
-        MovementInfo() : moveFlags(MOVEFLAG_NONE), moveFlags2(MOVEFLAG2_NONE), time(0), t_guid(0),
+        MovementInfo() : moveFlags(MOVEFLAG_NONE), moveFlags2(MOVEFLAG2_NONE), time(0),
             t_time(0), t_seat(-1), t_time2(0), s_pitch(0.0f), fallTime(0), j_velocity(0.0f), j_sinAngle(0.0f),
             j_cosAngle(0.0f), j_xyspeed(0.0f), u_unk1(0.0f) {}
 
-        MovementInfo(WorldPacket &data);
-
         // Read/Write methods
         void Read(ByteBuffer &data);
-        void Write(ByteBuffer &data);
+        void Write(ByteBuffer &data) const;
 
         // Movement flags manipulations
         void AddMovementFlag(MovementFlags f) { moveFlags |= f; }
@@ -778,7 +776,7 @@ class MovementInfo
             t_time = time;
             t_seat = seat;
         }
-        uint64 GetTransportGuid() const { return t_guid; }
+        uint64 GetTransportGuid() const { return t_guid.GetRawValue(); }
         Position const *GetTransportPos() const { return &t_pos; }
         int8 GetTransportSeat() const { return t_seat; }
         uint32 GetTransportTime() const { return t_time; }
@@ -793,7 +791,7 @@ class MovementInfo
         uint32   time;
         Position pos;
         // transport
-        uint64   t_guid;
+        ObjectGuid t_guid;
         Position t_pos;
         uint32   t_time;
         int8     t_seat;
@@ -807,6 +805,18 @@ class MovementInfo
         // spline
         float    u_unk1;
 };
+
+inline ByteBuffer& operator<< (ByteBuffer& buf, MovementInfo const& mi)
+{
+    mi.Write(buf);
+    return buf;
+}
+
+inline ByteBuffer& operator>> (ByteBuffer& buf, MovementInfo& mi)
+{
+    mi.Read(buf);
+    return buf;
+}
 
 enum DiminishingLevels
 {
@@ -1750,7 +1760,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         void CalcAbsorbResist(Unit *pVictim, SpellSchoolMask schoolMask, DamageEffectType damagetype, const uint32 damage, uint32 *absorb, uint32 *resist, bool canReflect = false);
 
         void  UpdateWalkMode(Unit* source, bool self = true);
-        void  UpdateSpeed(UnitMoveType mtype, bool forced);
+        void  UpdateSpeed(UnitMoveType mtype, bool forced, float ratio = 1.0f);
         float GetSpeed( UnitMoveType mtype ) const;
         float GetSpeedRate( UnitMoveType mtype ) const { return m_speed_rate[mtype]; }
         void SetSpeedRate(UnitMoveType mtype, float rate, bool forced = false);

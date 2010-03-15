@@ -642,8 +642,9 @@ void WorldSession::HandlePetCastSpellOpcode( WorldPacket& recvPacket )
         return;
 
     SpellCastTargets targets;
-    if (!targets.read(&recvPacket,pet,spellInfo))
-        return;
+
+
+    recvPacket >> targets.ReadForCaster(pet);
 
     pet->clearUnitState(UNIT_STAT_MOVING);
 
