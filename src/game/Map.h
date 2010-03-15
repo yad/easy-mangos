@@ -245,7 +245,6 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
         float GetVisibilityDistance() const { return m_VisibleDistance; }
         //function for setting up visibility distance for maps on per-type/per-Id basis
         virtual void InitVisibilityDistance();
-        virtual void InitializeNotifyTimers();
 
         void PlayerRelocation(Player *, float x, float y, float z, float angl);
         void CreatureRelocation(Creature *creature, float x, float y, float z, float orientation);
@@ -365,15 +364,9 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
 
         virtual bool RemoveBones(uint64 guid, float x, float y);
 
-        template<class T>
-            void AddNotifier(T*, bool /*optimized*/);
-
         void UpdateObjectVisibility(WorldObject* obj, Cell cell, CellPair cellpair);
-        void UpdatePlayerVisibility(Player* player, WorldObject const* viewPoint, Cell cell, CellPair cellpair);
-        void UpdateObjectsVisibilityFor(Player* player, WorldObject const* viewPointCell, Cell cell, CellPair cellpair);
-
-        void PlayerRelocationNotify(Player* player, Cell cell, CellPair cellpair);
-        void CreatureRelocationNotify(Creature *creature, Cell newcell, CellPair newval);
+        void UpdatePlayerVisibility(Player* player, Cell cell, CellPair cellpair);
+        void UpdateObjectsVisibilityFor(Player* player, Cell cell, CellPair cellpair);
 
         void resetMarkedCells() { marked_cells.reset(); }
         bool isCellMarked(uint32 pCellId) { return marked_cells.test(pCellId); }
@@ -433,10 +426,6 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
         void LoadMap(int gx,int gy, bool reload = false);
         GridMap *GetGrid(float x, float y);
 
-        //these functions used to process player/mob aggro reactions and
-        //visibility calculations. Highly optimized for massive calculations
-        void ProcessRelocationNotifies(uint32 diff);
-
         void SetTimer(uint32 t) { i_gridExpiry = t < MIN_GRID_DELAY ? MIN_GRID_DELAY : t; }
 
         void SendInitSelf( Player * player );
@@ -444,7 +433,7 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
         void SendInitTransports( Player * player );
         void SendRemoveTransports( Player * player );
 
-       // void PlayerRelocationNotify(Player* player, Cell cell, CellPair cellpair);
+        void PlayerRelocationNotify(Player* player, Cell cell, CellPair cellpair);
 
         bool CreatureCellRelocation(Creature *creature, Cell new_cell);
 
@@ -485,8 +474,6 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
         uint32 m_unloadTimer;
         float m_VisibleDistance;
 
-        int32 m_VisibilityNotifyPeriod;
-
         MapRefManager m_mapRefManager;
         MapRefManager::iterator m_mapRefIter;
 
@@ -515,6 +502,9 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
         // Type specific code for add/remove to/from grid
         template<class T>
             void AddToGrid(T*, NGridType *, Cell const&);
+
+        template<class T>
+            void AddNotifier(T*, Cell const&, CellPair const&);
 
         template<class T>
             void RemoveFromGrid(T*, NGridType *, Cell const&);
@@ -573,7 +563,6 @@ class MANGOS_DLL_SPEC InstanceMap : public Map
         void SetResetSchedule(bool on);
 
         virtual void InitVisibilityDistance();
-        virtual void InitializeNotifyTimers();
     private:
         bool m_resetAfterUnload;
         bool m_unloadWhenEmpty;
@@ -594,7 +583,6 @@ class MANGOS_DLL_SPEC BattleGroundMap : public Map
         void UnloadAll(bool pForce);
 
         virtual void InitVisibilityDistance();
-        virtual void InitializeNotifyTimers();
         BattleGround* GetBG() { return m_bg; }
         void SetBG(BattleGround* bg) { m_bg = bg; }
     private:

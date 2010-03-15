@@ -32,12 +32,12 @@ template<class T>
 inline void
 MaNGOS::VisibleNotifier::Visit(GridRefManager<T> &m)
 {
+    WorldObject const* viewPoint = i_player.GetViewPoint();
+
     for(typename GridRefManager<T>::iterator iter = m.begin(); iter != m.end(); ++iter)
     {
-        vis_guids.erase(iter->getSource()->GetGUID());
-
-       // if(player_relocated) == true evry time
-            i_player.UpdateVisibilityOf(&i_viewPoint,iter->getSource(),i_data,i_visibleNow);
+        i_player.UpdateVisibilityOf(viewPoint,iter->getSource(),i_data,i_data_updates,i_visibleNow);
+        i_clientGUIDs.erase(iter->getSource()->GetGUID());
     }
 }
 
@@ -49,66 +49,90 @@ MaNGOS::ObjectUpdater::Visit(CreatureMapType &m)
 }
 
 inline void
-MaNGOS::DelayedUnitRelocation::Visit(CreatureMapType &m)
+MaNGOS::PlayerRelocationNotifier::Visit(PlayerMapType &m)
 {
-    for(CreatureMapType::iterator iter = m.begin(); iter != m.end(); ++iter)
+    for(PlayerMapType::iterator iter=m.begin(); iter != m.end(); ++iter)
     {
-        Creature * unit = iter->getSource();
-        if(!unit->isNeedNotify(NOTIFY_VISIBILITY_CHANGED))
+        if(&i_player==iter->getSource())
             continue;
 
-        CellPair pair(MaNGOS::ComputeCellPair(unit->GetPositionX(),unit->GetPositionX()));
-        Cell cell(pair);
+        // visibility for players updated by ObjectAccessor::UpdateVisibilityFor calls in appropriate places
 
-        CreatureRelocationNotifier relocate(*unit);
+        // Cancel Trade
+        if(i_player.GetTrader()==iter->getSource())
+                                                            // iteraction distance
+            if(!i_player.IsWithinDistInMap(iter->getSource(), 5))
+                i_player.GetSession()->SendCancelTrade();   // will clode both side trade windows
+    }
+}
 
-        TypeContainerVisitor<CreatureRelocationNotifier, WorldTypeMapContainer > c2world_relocation(relocate);
-        TypeContainerVisitor<CreatureRelocationNotifier, GridTypeMapContainer >  c2grid_relocation(relocate);
+inline void PlayerCreatureRelocationWorker(Player* pl, WorldObject const* viewPoint, Creature* c)
+{
+    // update creature visibility at player/creature move
+    pl->UpdateVisibilityOf(viewPoint,c);
 
-        cell.Visit(pair, c2world_relocation, i_map, *unit, i_radius);
-        cell.Visit(pair, c2grid_relocation, i_map, *unit, i_radius);
+    // Creature AI reaction
+    if(!c->hasUnitState(UNIT_STAT_FLEEING))
+    {
+        if( c->AI() && c->AI()->IsVisible(pl) && !c->IsInEvadeMode() )
+            c->AI()->MoveInLineOfSight(pl);
+    }
+}
 
-        unit->SetNotified(NOTIFY_VISIBILITY_CHANGED);
+inline void CreatureCreatureRelocationWorker(Creature* c1, Creature* c2)
+{
+    if(!c1->hasUnitState(UNIT_STAT_FLEEING))
+    {
+        if( c1->AI() && c1->AI()->IsVisible(c2) && !c1->IsInEvadeMode() )
+            c1->AI()->MoveInLineOfSight(c2);
+    }
+
+    if(!c2->hasUnitState(UNIT_STAT_FLEEING))
+    {
+        if( c2->AI() && c2->AI()->IsVisible(c1) && !c2->IsInEvadeMode() )
+            c2->AI()->MoveInLineOfSight(c1);
     }
 }
 
 inline void
-MaNGOS::DelayedUnitRelocation::Visit(PlayerMapType &m)
+MaNGOS::PlayerRelocationNotifier::Visit(CreatureMapType &m)
 {
-    for(PlayerMapType::iterator iter = m.begin(); iter != m.end(); ++iter)
-    {
-        Player * unit = iter->getSource();
-        if(!unit->isNeedNotify(NOTIFY_VISIBILITY_CHANGED))
-            continue;
+    if(!i_player.isAlive() || i_player.isInFlight())
+        return;
 
-        WorldObject const *viewPoint = unit->GetViewPoint();
+    WorldObject const* viewPoint = i_player.GetViewPoint();
 
-        if(unit != viewPoint && !viewPoint->IsPositionValid())
-            continue;
-
-        CellPair pair(MaNGOS::ComputeCellPair(viewPoint->GetPositionX(), viewPoint->GetPositionY()));
-        Cell cell(pair);
-        //cell.SetNoCreate(); need load cells around viewPoint or player, that's why its commented
-        //CellLock<ReadGuard> cell_lock(cell, pair);
-
-        PlayerRelocationNotifier relocate(*unit, *viewPoint, true);
-        TypeContainerVisitor<PlayerRelocationNotifier, WorldTypeMapContainer > c2world_relocation(relocate);
-        TypeContainerVisitor<PlayerRelocationNotifier, GridTypeMapContainer >  c2grid_relocation(relocate);
-
-        cell.Visit(pair, c2world_relocation, i_map, *viewPoint, i_radius);
-        cell.Visit(pair, c2grid_relocation, i_map, *viewPoint, i_radius);
-
-        relocate.SendToSelf();
-        unit->SetNotified(NOTIFY_VISIBILITY_CHANGED);
-    }
+    for(CreatureMapType::iterator iter=m.begin(); iter != m.end(); ++iter)
+        if (iter->getSource()->isAlive())
+            PlayerCreatureRelocationWorker(&i_player,viewPoint,iter->getSource());
 }
 
-template<class T>
+template<>
 inline void
-MaNGOS::ResetNotifier::resetNotify(GridRefManager<T> &m)
+MaNGOS::CreatureRelocationNotifier::Visit(PlayerMapType &m)
 {
-    for(typename GridRefManager<T>::iterator iter=m.begin(); iter != m.end(); ++iter)
-        iter->getSource()->ResetAllNotifiesbyMask(reset_mask);
+    if(!i_creature.isAlive())
+        return;
+
+    for(PlayerMapType::iterator iter=m.begin(); iter != m.end(); ++iter)
+        if (Player* player = iter->getSource())
+            if (player->isAlive() && !player->isInFlight())
+                PlayerCreatureRelocationWorker(player, player->GetViewPoint(), &i_creature);
+}
+
+template<>
+inline void
+MaNGOS::CreatureRelocationNotifier::Visit(CreatureMapType &m)
+{
+    if(!i_creature.isAlive())
+        return;
+
+    for(CreatureMapType::iterator iter=m.begin(); iter != m.end(); ++iter)
+    {
+        Creature* c = iter->getSource();
+        if( c != &i_creature && c->isAlive())
+            CreatureCreatureRelocationWorker(c, &i_creature);
+    }
 }
 
 inline void MaNGOS::DynamicObjectUpdater::VisitHelper(Unit* target)
