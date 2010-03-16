@@ -94,13 +94,13 @@ VisibleNotifier::Notify()
 
     // generate outOfRange for not iterate objects
     i_data.AddOutOfRangeGUID(i_clientGUIDs);
-    for(Player::ClientGUIDs::iterator itr = i_clientGUIDs.begin();itr!=i_clientGUIDs.end();++itr)
+    for(ObjectGuidSet::iterator itr = i_clientGUIDs.begin();itr!=i_clientGUIDs.end();++itr)
     {
         i_player.m_clientGUIDs.erase(*itr);
 
         #ifdef MANGOS_DEBUG
         if((sLog.getLogFilter() & LOG_FILTER_VISIBILITY_CHANGES)==0)
-            sLog.outDebug("Object %u (Type: %u) is out of range (no in active cells set) now for player %u",GUID_LOPART(*itr),GuidHigh2TypeId(GUID_HIPART(*itr)),i_player.GetGUIDLow());
+            sLog.outDebug("%s is out of range (no in active cells set) now for player %u",itr->GetString().c_str(),i_player.GetGUIDLow());
         #endif
     }
 
@@ -123,10 +123,10 @@ VisibleNotifier::Notify()
         i_player.GetSession()->SendPacket(&packet);
 
         // send out of range to other players if need
-        std::set<uint64> const& oor = i_data.GetOutOfRangeGUIDs();
-        for(std::set<uint64>::const_iterator iter = oor.begin(); iter != oor.end(); ++iter)
+        ObjectGuidSet const& oor = i_data.GetOutOfRangeGUIDs();
+        for(ObjectGuidSet::const_iterator iter = oor.begin(); iter != oor.end(); ++iter)
         {
-            if(!IS_PLAYER_GUID(*iter))
+            if(!iter->IsPlayer())
                 continue;
 
             if (Player* plr = ObjectAccessor::FindPlayer(*iter))

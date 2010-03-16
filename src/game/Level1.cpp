@@ -278,7 +278,7 @@ bool ChatHandler::HandleGPSCommand(const char* args)
     {
         uint64 guid = extractGuidFromLink((char*)args);
         if(guid)
-            obj = (WorldObject*)ObjectAccessor::GetObjectByTypeMask(*m_session->GetPlayer(),guid,TYPEMASK_UNIT|TYPEMASK_GAMEOBJECT);
+            obj = (WorldObject*)m_session->GetPlayer()->GetObjectByTypeMask(guid, TYPEMASK_CREATURE_OR_GAMEOBJECT);
 
         if(!obj)
         {
@@ -1131,9 +1131,9 @@ bool ChatHandler::HandleModifyASpeedCommand(const char* args)
     if (!*args)
         return false;
 
-    float ASpeed = (float)atof((char*)args);
+    float modSpeed = (float)atof((char*)args);
 
-    if (ASpeed > 30 || ASpeed < 0.1)
+    if (modSpeed > 30 || modSpeed < 0.1)
     {
         SendSysMessage(LANG_BAD_VALUE);
         SetSentErrorMessage(true);
@@ -1161,15 +1161,15 @@ bool ChatHandler::HandleModifyASpeedCommand(const char* args)
         return false;
     }
 
-    PSendSysMessage(LANG_YOU_CHANGE_ASPEED, ASpeed, chrNameLink.c_str());
+    PSendSysMessage(LANG_YOU_CHANGE_ASPEED, modSpeed, chrNameLink.c_str());
     if (needReportToTarget(chr))
-        ChatHandler(chr).PSendSysMessage(LANG_YOURS_ASPEED_CHANGED, GetNameLink().c_str(), ASpeed);
+        ChatHandler(chr).PSendSysMessage(LANG_YOURS_ASPEED_CHANGED, GetNameLink().c_str(), modSpeed);
 
-    chr->SetSpeedRate(MOVE_WALK,   ASpeed,true);
-    chr->SetSpeedRate(MOVE_RUN,    ASpeed,true);
-    chr->SetSpeedRate(MOVE_SWIM,   ASpeed,true);
-    //chr->SetSpeed(MOVE_TURN,     ASpeed,true);
-    chr->SetSpeedRate(MOVE_FLIGHT, ASpeed,true);
+    chr->UpdateSpeed(MOVE_WALK,   true, modSpeed);
+    chr->UpdateSpeed(MOVE_RUN,    true, modSpeed);
+    chr->UpdateSpeed(MOVE_SWIM,   true, modSpeed);
+    //chr->UpdateSpeed(MOVE_TURN,   true, modSpeed);
+    chr->UpdateSpeed(MOVE_FLIGHT, true, modSpeed);
     return true;
 }
 
@@ -1179,9 +1179,9 @@ bool ChatHandler::HandleModifySpeedCommand(const char* args)
     if (!*args)
         return false;
 
-    float Speed = (float)atof((char*)args);
+    float modSpeed = (float)atof((char*)args);
 
-    if (Speed > 10 || Speed < 0.1)
+    if (modSpeed > 10 || modSpeed < 0.1)
     {
         SendSysMessage(LANG_BAD_VALUE);
         SetSentErrorMessage(true);
@@ -1209,11 +1209,11 @@ bool ChatHandler::HandleModifySpeedCommand(const char* args)
         return false;
     }
 
-    PSendSysMessage(LANG_YOU_CHANGE_SPEED, Speed, chrNameLink.c_str());
+    PSendSysMessage(LANG_YOU_CHANGE_SPEED, modSpeed, chrNameLink.c_str());
     if (needReportToTarget(chr))
-        ChatHandler(chr).PSendSysMessage(LANG_YOURS_SPEED_CHANGED, GetNameLink().c_str(), Speed);
+        ChatHandler(chr).PSendSysMessage(LANG_YOURS_SPEED_CHANGED, GetNameLink().c_str(), modSpeed);
 
-    chr->SetSpeedRate(MOVE_RUN,Speed,true);
+    chr->UpdateSpeed(MOVE_RUN, true, modSpeed);
 
     return true;
 }
@@ -1224,9 +1224,9 @@ bool ChatHandler::HandleModifySwimCommand(const char* args)
     if (!*args)
         return false;
 
-    float Swim = (float)atof((char*)args);
+    float modSpeed = (float)atof((char*)args);
 
-    if (Swim > 10.0f || Swim < 0.01f)
+    if (modSpeed > 10.0f || modSpeed < 0.01f)
     {
         SendSysMessage(LANG_BAD_VALUE);
         SetSentErrorMessage(true);
@@ -1254,11 +1254,11 @@ bool ChatHandler::HandleModifySwimCommand(const char* args)
         return false;
     }
 
-    PSendSysMessage(LANG_YOU_CHANGE_SWIM_SPEED, Swim, chrNameLink.c_str());
+    PSendSysMessage(LANG_YOU_CHANGE_SWIM_SPEED, modSpeed, chrNameLink.c_str());
     if (needReportToTarget(chr))
-        ChatHandler(chr).PSendSysMessage(LANG_YOURS_SWIM_SPEED_CHANGED, GetNameLink().c_str(), Swim);
+        ChatHandler(chr).PSendSysMessage(LANG_YOURS_SWIM_SPEED_CHANGED, GetNameLink().c_str(), modSpeed);
 
-    chr->SetSpeedRate(MOVE_SWIM,Swim,true);
+    chr->UpdateSpeed(MOVE_SWIM, true, modSpeed);
 
     return true;
 }
@@ -1269,9 +1269,9 @@ bool ChatHandler::HandleModifyBWalkCommand(const char* args)
     if (!*args)
         return false;
 
-    float BSpeed = (float)atof((char*)args);
+    float modSpeed = (float)atof((char*)args);
 
-    if (BSpeed > 10.0f || BSpeed < 0.1f)
+    if (modSpeed > 10.0f || modSpeed < 0.1f)
     {
         SendSysMessage(LANG_BAD_VALUE);
         SetSentErrorMessage(true);
@@ -1299,11 +1299,11 @@ bool ChatHandler::HandleModifyBWalkCommand(const char* args)
         return false;
     }
 
-    PSendSysMessage(LANG_YOU_CHANGE_BACK_SPEED, BSpeed, chrNameLink.c_str());
+    PSendSysMessage(LANG_YOU_CHANGE_BACK_SPEED, modSpeed, chrNameLink.c_str());
     if (needReportToTarget(chr))
-        ChatHandler(chr).PSendSysMessage(LANG_YOURS_BACK_SPEED_CHANGED, GetNameLink().c_str(), BSpeed);
+        ChatHandler(chr).PSendSysMessage(LANG_YOURS_BACK_SPEED_CHANGED, GetNameLink().c_str(), modSpeed);
 
-    chr->SetSpeedRate(MOVE_RUN_BACK,BSpeed,true);
+    chr->UpdateSpeed(MOVE_RUN_BACK, true, modSpeed);
 
     return true;
 }
@@ -1314,9 +1314,9 @@ bool ChatHandler::HandleModifyFlyCommand(const char* args)
     if (!*args)
         return false;
 
-    float FSpeed = (float)atof((char*)args);
+    float modSpeed = (float)atof((char*)args);
 
-    if (FSpeed > 10.0f || FSpeed < 0.1f)
+    if (modSpeed > 10.0f || modSpeed < 0.1f)
     {
         SendSysMessage(LANG_BAD_VALUE);
         SetSentErrorMessage(true);
@@ -1335,11 +1335,11 @@ bool ChatHandler::HandleModifyFlyCommand(const char* args)
     if (HasLowerSecurity(chr, 0))
         return false;
 
-    PSendSysMessage(LANG_YOU_CHANGE_FLY_SPEED, FSpeed, GetNameLink(chr).c_str());
+    PSendSysMessage(LANG_YOU_CHANGE_FLY_SPEED, modSpeed, GetNameLink(chr).c_str());
     if (needReportToTarget(chr))
-        ChatHandler(chr).PSendSysMessage(LANG_YOURS_FLY_SPEED_CHANGED, GetNameLink().c_str(), FSpeed);
+        ChatHandler(chr).PSendSysMessage(LANG_YOURS_FLY_SPEED_CHANGED, GetNameLink().c_str(), modSpeed);
 
-    chr->SetSpeedRate(MOVE_FLIGHT,FSpeed,true);
+    chr->UpdateSpeed(MOVE_FLIGHT, true, modSpeed);
 
     return true;
 }
@@ -1628,14 +1628,14 @@ bool ChatHandler::HandleModifyMountCommand(const char* args)
     chr->Mount(mId);
 
     WorldPacket data( SMSG_FORCE_RUN_SPEED_CHANGE, (8+4+1+4) );
-    data.append(chr->GetPackGUID());
+    data << chr->GetPackGUID();
     data << (uint32)0;
     data << (uint8)0;                                       //new 2.1.0
     data << float(speed);
     chr->SendMessageToSet( &data, true );
 
     data.Initialize( SMSG_FORCE_SWIM_SPEED_CHANGE, (8+4+4) );
-    data.append(chr->GetPackGUID());
+    data << chr->GetPackGUID();
     data << (uint32)0;
     data << float(speed);
     chr->SendMessageToSet( &data, true );
