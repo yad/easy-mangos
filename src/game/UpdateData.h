@@ -20,9 +20,9 @@
 #define __UPDATEDATA_H
 
 #include "ByteBuffer.h"
+#include "ObjectGuid.h"
 
 class WorldPacket;
-
 
 enum OBJECT_UPDATE_TYPE
 {
@@ -54,18 +54,18 @@ class UpdateData
     public:
         UpdateData();
 
-        void AddOutOfRangeGUID(std::set<uint64>& guids);
-        void AddOutOfRangeGUID(const uint64 &guid);
+        void AddOutOfRangeGUID(ObjectGuidSet& guids);
+        void AddOutOfRangeGUID(ObjectGuid const &guid);
         void AddUpdateBlock(const ByteBuffer &block);
         bool BuildPacket(WorldPacket *packet);
         bool HasData() { return m_blockCount > 0 || !m_outOfRangeGUIDs.empty(); }
         void Clear();
 
-        std::set<uint64> const& GetOutOfRangeGUIDs() const { return m_outOfRangeGUIDs; }
+        ObjectGuidSet const& GetOutOfRangeGUIDs() const { return m_outOfRangeGUIDs; }
 
     protected:
         uint32 m_blockCount;
-        std::set<uint64> m_outOfRangeGUIDs;
+        ObjectGuidSet m_outOfRangeGUIDs;
         ByteBuffer m_data;
 
         void Compress(void* dst, uint32 *dst_size, void* src, int src_size);
