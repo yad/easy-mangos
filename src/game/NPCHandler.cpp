@@ -323,36 +323,9 @@ void WorldSession::HandleGossipSelectOptionOpcode( WorldPacket & recv_data )
         sLog.outBasic("string read: %s", code.c_str());
     }
 
-    Creature *pCreature = GetPlayer()->GetNPCIfCanInteractWith(guid, UNIT_NPC_FLAG_NONE);
-
-    if (!pCreature)
-    {
-        sLog.outDebug( "WORLD: HandleGossipSelectOptionOpcode - Unit (GUID: %u) not found or you can't interact with him.", uint32(GUID_LOPART(guid)) );
-        return;
-    }
-
     // remove fake death
     if (GetPlayer()->hasUnitState(UNIT_STAT_DIED))
         GetPlayer()->RemoveSpellsCausingAura(SPELL_AURA_FEIGN_DEATH);
-
-    // Playerbot mod
-    if(pCreature->isBotGiver() && !_player->GetPlayerbotAI())
-    {
-        if (!_player->GetPlayerbotMgr())
-            _player->SetPlayerbotMgr(new PlayerbotMgr(_player));
-        WorldSession * m_session = _player->GetSession();
-        uint64 guidlo = _player->PlayerTalkClass->GossipOptionSender(gossipListId);
-        if(_player->GetPlayerbotMgr()->GetPlayerBot(guidlo) != NULL)
-        {
-            _player->GetPlayerbotMgr()->LogoutPlayerBot(guidlo);
-        }
-        else if(_player->GetPlayerbotMgr()->GetPlayerBot(guidlo) == NULL)
-        {
-            _player->GetPlayerbotMgr()->AddPlayerBot(guidlo);
-        }
-        _player->PlayerTalkClass->CloseGossip();
-        return;
-    }
 
     // can vehicle have gossip? If so, need check for this also.
     if (guid.IsCreatureOrPet())
@@ -362,6 +335,25 @@ void WorldSession::HandleGossipSelectOptionOpcode( WorldPacket & recv_data )
         if (!pCreature)
         {
             sLog.outDebug("WORLD: HandleGossipSelectOptionOpcode - %s not found or you can't interact with it.", guid.GetString().c_str());
+            return;
+        }
+
+        // Playerbot mod
+        if(pCreature->isBotGiver() && !_player->GetPlayerbotAI())
+        {
+            if (!_player->GetPlayerbotMgr())
+                _player->SetPlayerbotMgr(new PlayerbotMgr(_player));
+            WorldSession * m_session = _player->GetSession();
+            uint64 guidlo = _player->PlayerTalkClass->GossipOptionSender(gossipListId);
+            if(_player->GetPlayerbotMgr()->GetPlayerBot(guidlo) != NULL)
+            {
+                _player->GetPlayerbotMgr()->LogoutPlayerBot(guidlo);
+            }
+            else if(_player->GetPlayerbotMgr()->GetPlayerBot(guidlo) == NULL)
+            {
+                _player->GetPlayerbotMgr()->AddPlayerBot(guidlo);
+            }
+            _player->PlayerTalkClass->CloseGossip();
             return;
         }
 
