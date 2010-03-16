@@ -2968,10 +2968,10 @@ void Player::RegenerateHealth(uint32 diff)
     ModifyHealth(int32(addvalue));
 }
 
-Creature* Player::GetNPCIfCanInteractWith(uint64 guid, uint32 npcflagmask)
+Creature* Player::GetNPCIfCanInteractWith(ObjectGuid guid, uint32 npcflagmask)
 {
-    // unit checks
-    if (!guid || !IsInWorld() || isInFlight())
+    // some basic checks
+    if (guid.IsEmpty() || !IsInWorld() || isInFlight())
         return NULL;
 
     // exist (we need look pets also for some interaction (quest/etc)
@@ -3018,8 +3018,12 @@ Creature* Player::GetNPCIfCanInteractWith(uint64 guid, uint32 npcflagmask)
     return unit;
 }
 
-GameObject* Player::GetGameObjectIfCanInteractWith(uint64 guid, uint32 gameobject_type) const
+GameObject* Player::GetGameObjectIfCanInteractWith(ObjectGuid guid, uint32 gameobject_type) const
 {
+    // some basic checks
+    if (guid.IsEmpty() || !IsInWorld() || isInFlight())
+        return NULL;
+
     if (GameObject *go = GetMap()->GetGameObject(guid))
     {
         if (uint32(go->GetGoType()) == gameobject_type || gameobject_type == MAX_GAMEOBJECT_TYPE)
@@ -5049,7 +5053,7 @@ void Player::SetMovement(PlayerMovementType pType)
             sLog.outError("Player::SetMovement: Unsupported move type (%d), data not sent to client.",pType);
             return;
     }
-    data.append(GetPackGUID());
+    data << GetPackGUID();
     data << uint32(0);
     GetSession()->SendPacket( &data );
 }
@@ -5061,7 +5065,7 @@ void Player::SetMovement(PlayerMovementType pType)
 void Player::BuildPlayerRepop()
 {
     WorldPacket data(SMSG_PRE_RESURRECT, GetPackGUID().size());
-    data.append(GetPackGUID());
+    data << GetPackGUID();
     GetSession()->SendPacket(&data);
 
     if(getRace() == RACE_NIGHTELF)
@@ -6721,16 +6725,9 @@ bool Player::SetPosition(float x, float y, float z, float orientation, bool tele
 
     // code block for underwater state update
     UpdateUnderwaterState(m, x, y, z);
-    CheckTradeDistance();
     CheckExploreSystem();
 
     return true;
-}
-
-void Player::CheckTradeDistance()
-{
-    if(GetTrader() && !IsWithinDistInMap(GetTrader(), INTERACTION_DISTANCE))
-        TradeCancel(true);
 }
 
 void Player::SaveRecallPosition()
@@ -8481,14 +8478,15 @@ void Player::RemovedInsignia(Player* looterPlr)
     looterPlr->SendLoot(bones->GetGUID(), LOOT_INSIGNIA);
 }
 
-void Player::SendLootRelease( uint64 guid )
+void Player::SendLootRelease(ObjectGuid guid)
 {
     WorldPacket data( SMSG_LOOT_RELEASE_RESPONSE, (8+1) );
-    data << uint64(guid) << uint8(1);
+    data << guid;
+    data << uint8(1);
     SendDirectMessage( &data );
 }
 
-void Player::SendLoot(uint64 guid, LootType loot_type)
+void Player::SendLoot(ObjectGuid guid, LootType loot_type)
 {
     if (uint64 lguid = GetLootGUID())
         m_session->DoLootRelease(lguid);
@@ -8497,224 +8495,236 @@ void Player::SendLoot(uint64 guid, LootType loot_type)
     PermissionTypes permission = ALL_PERMISSION;
 
     sLog.outDebug("Player::SendLoot");
-    if (IS_GAMEOBJECT_GUID(guid))
+    switch(guid.GetHigh())
     {
-        sLog.outDebug("       IS_GAMEOBJECT_GUID(guid)");
-        GameObject *go = GetMap()->GetGameObject(guid);
-
-        // not check distance for GO in case owned GO (fishing bobber case, for example)
-        // And permit out of range GO with no owner in case fishing hole
-        if (!go || (loot_type != LOOT_FISHINGHOLE && (loot_type != LOOT_FISHING || go->GetOwnerGUID() != GetGUID()) && !go->IsWithinDistInMap(this,INTERACTION_DISTANCE)))
+        case HIGHGUID_GAMEOBJECT:
         {
-            SendLootRelease(guid);
-            return;
-        }
+            sLog.outDebug("       IS_GAMEOBJECT_GUID(guid)");
+            GameObject *go = GetMap()->GetGameObject(guid);
 
-        loot = &go->loot;
-
-        if (go->getLootState() == GO_READY)
-        {
-            uint32 lootid =  go->GetGOInfo()->GetLootId();
-            if ((go->GetEntry() == BG_AV_OBJECTID_MINE_N || go->GetEntry() == BG_AV_OBJECTID_MINE_S))
-                if (BattleGround *bg = GetBattleGround())
-                    if (bg->GetTypeID() == BATTLEGROUND_AV)
-                        if (!(((BattleGroundAV*)bg)->PlayerCanDoMineQuest(go->GetEntry(), GetTeam())))
-                        {
-                            SendLootRelease(guid);
-                            return;
-                        }
-
-            if (lootid)
+            // not check distance for GO in case owned GO (fishing bobber case, for example)
+            // And permit out of range GO with no owner in case fishing hole
+            if (!go || (loot_type != LOOT_FISHINGHOLE && (loot_type != LOOT_FISHING || go->GetOwnerGUID() != GetGUID()) && !go->IsWithinDistInMap(this,INTERACTION_DISTANCE)))
             {
-                sLog.outDebug("       if(lootid)");
-                loot->clear();
-                loot->FillLoot(lootid, LootTemplates_Gameobject, this, false);
+                SendLootRelease(guid);
+                return;
             }
 
-            if (loot_type == LOOT_FISHING)
-                go->getFishLoot(loot,this);
+            loot = &go->loot;
 
-            go->SetLootState(GO_ACTIVATED);
-        }
-    }
-    else if (IS_ITEM_GUID(guid))
-    {
-        Item *item = GetItemByGuid( guid );
-
-        if (!item)
-        {
-            SendLootRelease(guid);
-            return;
-        }
-
-        loot = &item->loot;
-
-        if (!item->m_lootGenerated)
-        {
-            item->m_lootGenerated = true;
-            loot->clear();
-
-            switch(loot_type)
+            if (go->getLootState() == GO_READY)
             {
-                case LOOT_DISENCHANTING:
-                    loot->FillLoot(item->GetProto()->DisenchantID, LootTemplates_Disenchant, this,true);
-                    break;
-                case LOOT_PROSPECTING:
-                    loot->FillLoot(item->GetEntry(), LootTemplates_Prospecting, this,true);
-                    break;
-                case LOOT_MILLING:
-                    loot->FillLoot(item->GetEntry(), LootTemplates_Milling, this,true);
-                    break;
-                default:
-                    loot->FillLoot(item->GetEntry(), LootTemplates_Item, this,true);
-                    loot->generateMoneyLoot(item->GetProto()->MinMoneyLoot,item->GetProto()->MaxMoneyLoot);
-                    break;
-            }
-        }
-    }
-    else if (IS_CORPSE_GUID(guid))                          // remove insignia
-    {
-        Corpse *bones = GetMap()->GetCorpse(guid);
+                uint32 lootid =  go->GetGOInfo()->GetLootId();
+                if ((go->GetEntry() == BG_AV_OBJECTID_MINE_N || go->GetEntry() == BG_AV_OBJECTID_MINE_S))
+                    if (BattleGround *bg = GetBattleGround())
+                        if (bg->GetTypeID() == BATTLEGROUND_AV)
+                            if (!(((BattleGroundAV*)bg)->PlayerCanDoMineQuest(go->GetEntry(), GetTeam())))
+                            {
+                                SendLootRelease(guid);
+                                return;
+                            }
 
-        if (!bones || !((loot_type == LOOT_CORPSE) || (loot_type == LOOT_INSIGNIA)) || (bones->GetType() != CORPSE_BONES) )
-        {
-            SendLootRelease(guid);
-            return;
-        }
-
-        loot = &bones->loot;
-
-        if (!bones->lootForBody)
-        {
-            bones->lootForBody = true;
-            uint32 pLevel = bones->loot.gold;
-            bones->loot.clear();
-            if (GetBattleGround()->GetTypeID() == BATTLEGROUND_AV)
-                loot->FillLoot(0, LootTemplates_Creature, this, false);
-            // It may need a better formula
-            // Now it works like this: lvl10: ~6copper, lvl70: ~9silver
-            bones->loot.gold = (uint32)( urand(50, 150) * 0.016f * pow( ((float)pLevel)/5.76f, 2.5f) * sWorld.getConfig(CONFIG_FLOAT_RATE_DROP_MONEY) );
-        }
-
-        if (bones->lootRecipient != this)
-            permission = NONE_PERMISSION;
-    }
-    else
-    {
-        Creature *creature = GetMap()->GetCreature(guid);
-
-        // must be in range and creature must be alive for pickpocket and must be dead for another loot
-        if (!creature || creature->isAlive()!=(loot_type == LOOT_PICKPOCKETING) || !creature->IsWithinDistInMap(this,INTERACTION_DISTANCE))
-        {
-            SendLootRelease(guid);
-            return;
-        }
-
-        if (loot_type == LOOT_PICKPOCKETING && IsFriendlyTo(creature))
-        {
-            SendLootRelease(guid);
-            return;
-        }
-
-        loot   = &creature->loot;
-
-        if (loot_type == LOOT_PICKPOCKETING)
-        {
-            if (!creature->lootForPickPocketed)
-            {
-                creature->lootForPickPocketed = true;
-                loot->clear();
-
-                if (uint32 lootid = creature->GetCreatureInfo()->pickpocketLootId)
-                    loot->FillLoot(lootid, LootTemplates_Pickpocketing, this, false);
-
-                // Generate extra money for pick pocket loot
-                const uint32 a = urand(0, creature->getLevel()/2);
-                const uint32 b = urand(0, getLevel()/2);
-                loot->gold = uint32(10 * (a + b) * sWorld.getConfig(CONFIG_FLOAT_RATE_DROP_MONEY));
-            }
-        }
-        else
-        {
-            // the player whose group may loot the corpse
-            Player *recipient = creature->GetLootRecipient();
-            if (!recipient)
-            {
-                creature->SetLootRecipient(this);
-                recipient = this;
-            }
-
-            if (creature->lootForPickPocketed)
-            {
-                creature->lootForPickPocketed = false;
-                loot->clear();
-            }
-
-            if (!creature->lootForBody)
-            {
-                creature->lootForBody = true;
-                loot->clear();
-
-                if (uint32 lootid = creature->GetCreatureInfo()->lootid)
-                    loot->FillLoot(lootid, LootTemplates_Creature, recipient, false);
-
-                loot->generateMoneyLoot(creature->GetCreatureInfo()->mingold,creature->GetCreatureInfo()->maxgold);
-
-                if (Group* group = recipient->GetGroup())
+                if (lootid)
                 {
-                    group->UpdateLooterGuid(creature,true);
+                    sLog.outDebug("       if(lootid)");
+                    loot->clear();
+                    loot->FillLoot(lootid, LootTemplates_Gameobject, this, false);
+                }
 
-                    switch (group->GetLootMethod())
-                    {
-                        case GROUP_LOOT:
-                            // GroupLoot delete items over threshold (threshold even not implemented), and roll them. Items with quality<threshold, round robin
-                            group->GroupLoot(recipient->GetGUID(), loot, creature);
-                            break;
-                        case NEED_BEFORE_GREED:
-                            group->NeedBeforeGreed(recipient->GetGUID(), loot, creature);
-                            break;
-                        case MASTER_LOOT:
-                            group->MasterLoot(recipient->GetGUID(), loot, creature);
-                            break;
-                        default:
-                            break;
-                    }
+                if (loot_type == LOOT_FISHING)
+                    go->getFishLoot(loot,this);
+
+                go->SetLootState(GO_ACTIVATED);
+            }
+            break;
+        }
+        case HIGHGUID_ITEM:
+        {
+            Item *item = GetItemByGuid( guid );
+
+            if (!item)
+            {
+                SendLootRelease(guid);
+                return;
+            }
+
+            loot = &item->loot;
+
+            if (!item->m_lootGenerated)
+            {
+                item->m_lootGenerated = true;
+                loot->clear();
+
+                switch(loot_type)
+                {
+                    case LOOT_DISENCHANTING:
+                        loot->FillLoot(item->GetProto()->DisenchantID, LootTemplates_Disenchant, this,true);
+                        break;
+                    case LOOT_PROSPECTING:
+                        loot->FillLoot(item->GetEntry(), LootTemplates_Prospecting, this,true);
+                        break;
+                    case LOOT_MILLING:
+                        loot->FillLoot(item->GetEntry(), LootTemplates_Milling, this,true);
+                        break;
+                    default:
+                        loot->FillLoot(item->GetEntry(), LootTemplates_Item, this,true);
+                        loot->generateMoneyLoot(item->GetProto()->MinMoneyLoot,item->GetProto()->MaxMoneyLoot);
+                        break;
                 }
             }
+            break;
+        }
+        case HIGHGUID_CORPSE:                               // remove insignia
+        {
+            Corpse *bones = GetMap()->GetCorpse(guid);
 
-            // possible only if creature->lootForBody && loot->empty() at spell cast check
-            if (loot_type == LOOT_SKINNING)
+            if (!bones || !((loot_type == LOOT_CORPSE) || (loot_type == LOOT_INSIGNIA)) || (bones->GetType() != CORPSE_BONES) )
             {
-                loot->clear();
-                loot->FillLoot(creature->GetCreatureInfo()->SkinLootId, LootTemplates_Skinning, this, false);
+                SendLootRelease(guid);
+                return;
             }
-            // set group rights only for loot_type != LOOT_SKINNING
+
+            loot = &bones->loot;
+
+            if (!bones->lootForBody)
+            {
+                bones->lootForBody = true;
+                uint32 pLevel = bones->loot.gold;
+                bones->loot.clear();
+                if (GetBattleGround()->GetTypeID() == BATTLEGROUND_AV)
+                    loot->FillLoot(0, LootTemplates_Creature, this, false);
+                // It may need a better formula
+                // Now it works like this: lvl10: ~6copper, lvl70: ~9silver
+                bones->loot.gold = (uint32)( urand(50, 150) * 0.016f * pow( ((float)pLevel)/5.76f, 2.5f) * sWorld.getConfig(CONFIG_FLOAT_RATE_DROP_MONEY) );
+            }
+
+            if (bones->lootRecipient != this)
+                permission = NONE_PERMISSION;
+            break;
+        }
+        case HIGHGUID_UNIT:
+        {
+            Creature *creature = GetMap()->GetCreature(guid);
+
+            // must be in range and creature must be alive for pickpocket and must be dead for another loot
+            if (!creature || creature->isAlive()!=(loot_type == LOOT_PICKPOCKETING) || !creature->IsWithinDistInMap(this,INTERACTION_DISTANCE))
+            {
+                SendLootRelease(guid);
+                return;
+            }
+
+            if (loot_type == LOOT_PICKPOCKETING && IsFriendlyTo(creature))
+            {
+                SendLootRelease(guid);
+                return;
+            }
+
+            loot   = &creature->loot;
+
+            if (loot_type == LOOT_PICKPOCKETING)
+            {
+                if (!creature->lootForPickPocketed)
+                {
+                    creature->lootForPickPocketed = true;
+                    loot->clear();
+
+                    if (uint32 lootid = creature->GetCreatureInfo()->pickpocketLootId)
+                        loot->FillLoot(lootid, LootTemplates_Pickpocketing, this, false);
+
+                    // Generate extra money for pick pocket loot
+                    const uint32 a = urand(0, creature->getLevel()/2);
+                    const uint32 b = urand(0, getLevel()/2);
+                    loot->gold = uint32(10 * (a + b) * sWorld.getConfig(CONFIG_FLOAT_RATE_DROP_MONEY));
+                }
+            }
             else
             {
-                if(Group* group = GetGroup())
+                // the player whose group may loot the corpse
+                Player *recipient = creature->GetLootRecipient();
+                if (!recipient)
                 {
-                    if (group == recipient->GetGroup())
+                    creature->SetLootRecipient(this);
+                    recipient = this;
+                }
+
+                if (creature->lootForPickPocketed)
+                {
+                    creature->lootForPickPocketed = false;
+                    loot->clear();
+                }
+
+                if (!creature->lootForBody)
+                {
+                    creature->lootForBody = true;
+                    loot->clear();
+
+                    if (uint32 lootid = creature->GetCreatureInfo()->lootid)
+                        loot->FillLoot(lootid, LootTemplates_Creature, recipient, false);
+
+                    loot->generateMoneyLoot(creature->GetCreatureInfo()->mingold,creature->GetCreatureInfo()->maxgold);
+
+                    if (Group* group = recipient->GetGroup())
                     {
-                        if (group->GetLootMethod() == FREE_FOR_ALL)
-                            permission = ALL_PERMISSION;
-                        else if (group->GetLooterGuid() == GetGUID())
+                        group->UpdateLooterGuid(creature,true);
+
+                        switch (group->GetLootMethod())
                         {
-                            if (group->GetLootMethod() == MASTER_LOOT)
-                                permission = MASTER_PERMISSION;
-                            else
+                            case GROUP_LOOT:
+                                // GroupLoot delete items over threshold (threshold even not implemented), and roll them. Items with quality<threshold, round robin
+                                group->GroupLoot(recipient->GetObjectGuid(), loot, creature);
+                                break;
+                            case NEED_BEFORE_GREED:
+                                group->NeedBeforeGreed(recipient->GetObjectGuid(), loot, creature);
+                                break;
+                            case MASTER_LOOT:
+                                group->MasterLoot(recipient->GetObjectGuid(), loot, creature);
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                }
+
+                // possible only if creature->lootForBody && loot->empty() at spell cast check
+                if (loot_type == LOOT_SKINNING)
+                {
+                    loot->clear();
+                    loot->FillLoot(creature->GetCreatureInfo()->SkinLootId, LootTemplates_Skinning, this, false);
+                }
+                // set group rights only for loot_type != LOOT_SKINNING
+                else
+                {
+                    if(Group* group = GetGroup())
+                    {
+                        if (group == recipient->GetGroup())
+                        {
+                            if (group->GetLootMethod() == FREE_FOR_ALL)
                                 permission = ALL_PERMISSION;
+                            else if (group->GetLooterGuid() == GetGUID())
+                            {
+                                if (group->GetLootMethod() == MASTER_LOOT)
+                                    permission = MASTER_PERMISSION;
+                                else
+                                    permission = ALL_PERMISSION;
+                            }
+                            else
+                                permission = GROUP_PERMISSION;
                         }
                         else
-                            permission = GROUP_PERMISSION;
+                            permission = NONE_PERMISSION;
                     }
+                    else if (recipient == this)
+                        permission = ALL_PERMISSION;
                     else
                         permission = NONE_PERMISSION;
                 }
-                else if (recipient == this)
-                    permission = ALL_PERMISSION;
-                else
-                    permission = NONE_PERMISSION;
             }
+            break;
+        }
+        default:
+        {
+            sLog.outError("%s is unsupported for looting.", guid.GetString().c_str());
+            return;
         }
     }
 
@@ -8733,7 +8743,7 @@ void Player::SendLoot(uint64 guid, LootType loot_type)
 
     WorldPacket data(SMSG_LOOT_RESPONSE, (9+50));           // we guess size
 
-    data << uint64(guid);
+    data << guid;
     data << uint8(loot_type);
     data << LootView(*loot, this, permission);
 
@@ -8743,7 +8753,7 @@ void Player::SendLoot(uint64 guid, LootType loot_type)
     if (permission != NONE_PERMISSION)
         loot->AddLooter(GetGUID());
 
-    if (loot_type == LOOT_CORPSE && !IS_ITEM_GUID(guid))
+    if (loot_type == LOOT_CORPSE && !guid.IsItem())
         SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_LOOTING);
 }
 
@@ -9657,47 +9667,31 @@ Item* Player::GetItemByLimitedCategory(uint32 limitedCategory) const
     return NULL;
 }
 
-Item* Player::GetItemByGuid( uint64 guid ) const
+Item* Player::GetItemByGuid(ObjectGuid guid) const
 {
     for(int i = EQUIPMENT_SLOT_START; i < INVENTORY_SLOT_ITEM_END; ++i)
-    {
-        Item *pItem = GetItemByPos( INVENTORY_SLOT_BAG_0, i );
-        if( pItem && pItem->GetGUID() == guid )
-            return pItem;
-    }
+        if (Item *pItem = GetItemByPos(INVENTORY_SLOT_BAG_0, i))
+            if (pItem->GetObjectGuid() == guid)
+                return pItem;
+
     for(int i = KEYRING_SLOT_START; i < CURRENCYTOKEN_SLOT_END; ++i)
-    {
-        Item *pItem = GetItemByPos( INVENTORY_SLOT_BAG_0, i );
-        if( pItem && pItem->GetGUID() == guid )
-            return pItem;
-    }
+        if (Item *pItem = GetItemByPos(INVENTORY_SLOT_BAG_0, i))
+            if (pItem->GetObjectGuid() == guid)
+                return pItem;
 
     for(int i = INVENTORY_SLOT_BAG_START; i < INVENTORY_SLOT_BAG_END; ++i)
-    {
-        Bag *pBag = (Bag*)GetItemByPos( INVENTORY_SLOT_BAG_0, i );
-        if( pBag )
-        {
+        if (Bag *pBag = (Bag*)GetItemByPos(INVENTORY_SLOT_BAG_0, i))
             for(uint32 j = 0; j < pBag->GetBagSize(); ++j)
-            {
-                Item* pItem = pBag->GetItemByPos( j );
-                if( pItem && pItem->GetGUID() == guid )
-                    return pItem;
-            }
-        }
-    }
+                if (Item* pItem = pBag->GetItemByPos(j))
+                    if (pItem->GetObjectGuid() == guid)
+                        return pItem;
+
     for(int i = BANK_SLOT_BAG_START; i < BANK_SLOT_BAG_END; ++i)
-    {
-        Bag *pBag = (Bag*)GetItemByPos( INVENTORY_SLOT_BAG_0, i );
-        if( pBag )
-        {
+        if (Bag *pBag = (Bag*)GetItemByPos(INVENTORY_SLOT_BAG_0, i))
             for(uint32 j = 0; j < pBag->GetBagSize(); ++j)
-            {
-                Item* pItem = pBag->GetItemByPos( j );
-                if( pItem && pItem->GetGUID() == guid )
-                    return pItem;
-            }
-        }
-    }
+                if (Item* pItem = pBag->GetItemByPos(j))
+                    if (pItem->GetObjectGuid() == guid)
+                        return pItem;
 
     return NULL;
 }
@@ -12944,12 +12938,12 @@ void Player::TradeCancel(bool sendback)
     if (pTrader)
     {
         // send yellow "Trade canceled" message to both traders
-        WorldSession* ws = GetSession();
-        if (ws && sendback)
+        WorldSession* ws;
+        ws = GetSession();
+        if (sendback)
             ws->SendCancelTrade();
-
         ws = pTrader->GetSession();
-        if (ws && !ws->PlayerLogout())
+        if (!ws->PlayerLogout())
             ws->SendCancelTrade();
 
         // cleanup
@@ -18261,7 +18255,7 @@ void Player::SendAttackSwingBadFacingAttack()
 void Player::SendAutoRepeatCancel(Unit *target)
 {
     WorldPacket data(SMSG_CANCEL_AUTO_REPEAT, target->GetPackGUID().size());
-    data.append(target->GetPackGUID());                     // may be it's target guid
+    data << target->GetPackGUID();                          // may be it's target guid
     GetSession()->SendPacket( &data );
 }
 
@@ -18963,17 +18957,17 @@ void Player::HandleStealthedUnitsDetection()
         {
             if(!hasAtClient)
             {
+                ObjectGuid i_guid = (*i)->GetGUID();
                 (*i)->SendCreateUpdateToPlayer(this);
-                m_clientGUIDs.insert((*i)->GetGUID());
+                m_clientGUIDs.insert(i_guid);
 
                 #ifdef MANGOS_DEBUG
                 if((sLog.getLogFilter() & LOG_FILTER_VISIBILITY_CHANGES)==0)
-                    sLog.outDebug("Object %u (Type: %u) is detected in stealth by player %u. Distance = %f",(*i)->GetGUIDLow(),(*i)->GetTypeId(),GetGUIDLow(),GetDistance(*i));
+                    sLog.outDebug("%s is detected in stealth by player %u. Distance = %f",i_guid.GetString().c_str(),GetGUIDLow(),GetDistance(*i));
                 #endif
 
                 // target aura duration for caster show only if target exist at caster client
                 // send data at target visibility change (adding to client)
-                (*i)->SendInitialVisiblePacketsFor(this);
 
                 if((*i)!=this && (*i)->isType(TYPEMASK_UNIT))
                 {
@@ -20144,12 +20138,14 @@ void Player::UpdateVisibilityOf(WorldObject const* viewPoint, WorldObject* targe
             if (target->GetTypeId()==TYPEID_UNIT)
                 BeforeVisibilityDestroy<Creature>((Creature*)target,this);
 
+            ObjectGuid t_guid = target->GetGUID();
+
             target->DestroyForPlayer(this);
-            m_clientGUIDs.erase(target->GetGUID());
+            m_clientGUIDs.erase(t_guid);
 
             #ifdef MANGOS_DEBUG
             if((sLog.getLogFilter() & LOG_FILTER_VISIBILITY_CHANGES)==0)
-                sLog.outDebug("Object %u (Type: %u) out of range for player %u. Distance = %f",target->GetGUIDLow(),target->GetTypeId(),GetGUIDLow(),GetDistance(target));
+                sLog.outDebug("%s out of range for player %u. Distance = %f",t_guid.GetString().c_str(),GetGUIDLow(),GetDistance(target));
             #endif
         }
     }
@@ -20158,7 +20154,8 @@ void Player::UpdateVisibilityOf(WorldObject const* viewPoint, WorldObject* targe
         if(target->isVisibleForInState(this, viewPoint, false))
         {
             target->SendCreateUpdateToPlayer(this);
-            m_clientGUIDs.insert(target->GetGUID());
+            if(target->GetTypeId()!=TYPEID_GAMEOBJECT||!((GameObject*)target)->IsTransport())
+                m_clientGUIDs.insert(target->GetGUID());
 
             #ifdef MANGOS_DEBUG
             if((sLog.getLogFilter() & LOG_FILTER_VISIBILITY_CHANGES)==0)
@@ -20173,37 +20170,27 @@ void Player::UpdateVisibilityOf(WorldObject const* viewPoint, WorldObject* targe
                 BuildVehicleInfo((Unit*)target);
             }
 
-             if (target->isType(TYPEMASK_UNIT) && target != this)
-                 ((Unit*)target)->SendInitialVisiblePacketsFor(this);
-
-             if(target->GetTypeId()==TYPEID_UNIT && ((Creature*)target)->isAlive())
+            if(target->GetTypeId()==TYPEID_UNIT && ((Creature*)target)->isAlive())
                 ((Creature*)target)->SendMonsterMoveWithSpeedToCurrentDestination(this);
          }
      }
  }
  
 template<class T>
-inline void UpdateVisibilityOf_helper(std::set<uint64>& s64, std::set<Unit*>& visibleNow, T* target)
+inline void UpdateVisibilityOf_helper(ObjectGuidSet& s64, T* target)
 {
     s64.insert(target->GetGUID());
 }
 
 template<>
-inline void UpdateVisibilityOf_helper(std::set<uint64>& s64, std::set<Unit*>& visibleNow, Player* target)
+inline void UpdateVisibilityOf_helper(ObjectGuidSet& s64, GameObject* target)
 {
-    s64.insert(target->GetGUID());
-    visibleNow.insert(target);
-}
-
-template<>
-inline void UpdateVisibilityOf_helper(std::set<uint64>& s64, std::set<Unit*>& visibleNow, Creature* target)
-{
-    s64.insert(target->GetGUID());
-    visibleNow.insert(target);
+    if(!target->IsTransport())
+        s64.insert(target->GetGUID());
 }
 
 template<class T>
-void Player::UpdateVisibilityOf(WorldObject const* viewPoint, T* target, UpdateData& data, std::set<Unit*>& visibleNow)
+void Player::UpdateVisibilityOf(WorldObject const* viewPoint, T* target, UpdateData& data, UpdateDataMapType& /*data_updates*/, std::set<WorldObject*>& visibleNow)
 {
     if(HaveAtClient(target))
     {
@@ -20211,12 +20198,14 @@ void Player::UpdateVisibilityOf(WorldObject const* viewPoint, T* target, UpdateD
         {
             BeforeVisibilityDestroy<T>(target,this);
 
+            ObjectGuid t_guid = target->GetGUID();
+
             target->BuildOutOfRangeUpdateBlock(&data);
-            m_clientGUIDs.erase(target->GetGUID());
+            m_clientGUIDs.erase(t_guid);
 
             #ifdef MANGOS_DEBUG
             if((sLog.getLogFilter() & LOG_FILTER_VISIBILITY_CHANGES)==0)
-                sLog.outDebug("Object %u (Type: %u, Entry: %u) is out of range for player %u. Distance = %f",target->GetGUIDLow(),target->GetTypeId(),target->GetEntry(),GetGUIDLow(),GetDistance(target));
+                sLog.outDebug("%s is out of range for player %u. Distance = %f",t_guid.GetString().c_str(),GetGUIDLow(),GetDistance(target));
             #endif
         }
     }
@@ -20224,8 +20213,9 @@ void Player::UpdateVisibilityOf(WorldObject const* viewPoint, T* target, UpdateD
     {
         if(target->isVisibleForInState(this,viewPoint,false))
         {
+            visibleNow.insert(target);
             target->BuildCreateUpdateBlockForPlayer(&data, this);
-            UpdateVisibilityOf_helper(m_clientGUIDs,visibleNow,target);
+            UpdateVisibilityOf_helper(m_clientGUIDs,target);
 
             #ifdef MANGOS_DEBUG
             if((sLog.getLogFilter() & LOG_FILTER_VISIBILITY_CHANGES)==0)
@@ -20235,11 +20225,11 @@ void Player::UpdateVisibilityOf(WorldObject const* viewPoint, T* target, UpdateD
     }
 }
 
-template void Player::UpdateVisibilityOf(WorldObject const* viewPoint, Player*        target, UpdateData& data, std::set<Unit*>& visibleNow);
-template void Player::UpdateVisibilityOf(WorldObject const* viewPoint, Creature*      target, UpdateData& data, std::set<Unit*>& visibleNow);
-template void Player::UpdateVisibilityOf(WorldObject const* viewPoint, Corpse*        target, UpdateData& data, std::set<Unit*>& visibleNow);
-template void Player::UpdateVisibilityOf(WorldObject const* viewPoint, GameObject*    target, UpdateData& data, std::set<Unit*>& visibleNow);
-template void Player::UpdateVisibilityOf(WorldObject const* viewPoint, DynamicObject* target, UpdateData& data, std::set<Unit*>& visibleNow);
+template void Player::UpdateVisibilityOf(WorldObject const* viewPoint, Player*        target, UpdateData& data, UpdateDataMapType& data_updates, std::set<WorldObject*>& visibleNow);
+template void Player::UpdateVisibilityOf(WorldObject const* viewPoint, Creature*      target, UpdateData& data, UpdateDataMapType& data_updates, std::set<WorldObject*>& visibleNow);
+template void Player::UpdateVisibilityOf(WorldObject const* viewPoint, Corpse*        target, UpdateData& data, UpdateDataMapType& data_updates, std::set<WorldObject*>& visibleNow);
+template void Player::UpdateVisibilityOf(WorldObject const* viewPoint, GameObject*    target, UpdateData& data, UpdateDataMapType& data_updates, std::set<WorldObject*>& visibleNow);
+template void Player::UpdateVisibilityOf(WorldObject const* viewPoint, DynamicObject* target, UpdateData& data, UpdateDataMapType& data_updates, std::set<WorldObject*>& visibleNow);
 
 void Player::InitPrimaryProfessions()
 {
@@ -20258,10 +20248,10 @@ void Player::SendComboPoints()
             if(Unit *vehicle = ObjectAccessor::GetUnit(*this, GetVehicleGUID()))
             {
                 data.Initialize(SMSG_PET_UPDATE_COMBO_POINTS, vehicle->GetPackGUID().size()+combotarget->GetPackGUID().size()+1);
-                data.append(vehicle->GetPackGUID());
+                data << vehicle->GetPackGUID();
             }else return;
         }
-        data.append(combotarget->GetPackGUID());
+        data << combotarget->GetPackGUID();
         data << uint8(m_comboPoints);
         GetSession()->SendPacket(&data);
     }
@@ -20432,7 +20422,7 @@ void Player::SendInitialPacketsAfterAddToMap()
     if(HasAuraType(SPELL_AURA_MOD_ROOT))
     {
         WorldPacket data2(SMSG_FORCE_MOVE_ROOT, 10);
-        data2.append(GetPackGUID());
+        data2 << GetPackGUID();
         data2 << (uint32)2;
         SendMessageToSet(&data2,true);
     }
@@ -20445,7 +20435,8 @@ void Player::SendInitialPacketsAfterAddToMap()
         SendMessageToSet(&data3,true);
     }
     SendAurasForTarget(this);
-    SendEnchantmentDurations();                             // must be after add to map    SendItemDurations();                                    // must be after add to map
+    SendEnchantmentDurations();                             // must be after add to map
+    SendItemDurations();                                    // must be after add to map                                    // must be after add to map
 
     // Juggernaut & Warbringer both need special packet
     // for alowing charge in combat and Warbringer
@@ -20701,7 +20692,7 @@ void Player::SendAurasForTarget(Unit *target)
         return;
 
     WorldPacket data(SMSG_AURA_UPDATE_ALL);
-    data.append(target->GetPackGUID());
+    data << target->GetPackGUID();
 
     Unit::VisibleAuraMap const *visibleAuras = target->GetVisibleAuras();
     for(Unit::VisibleAuraMap::const_iterator itr = visibleAuras->begin(); itr != visibleAuras->end(); ++itr)
@@ -20888,15 +20879,14 @@ void Player::UpdateForQuestWorldObjects()
 
     UpdateData udata;
     WorldPacket packet;
-    for(ClientGUIDs::const_iterator itr=m_clientGUIDs.begin(); itr!=m_clientGUIDs.end(); ++itr)
+    for(ObjectGuidSet::const_iterator itr=m_clientGUIDs.begin(); itr!=m_clientGUIDs.end(); ++itr)
     {
-        if(IS_GAMEOBJECT_GUID(*itr))
+        if (itr->IsGameobject())
         {
-            GameObject *obj = GetMap()->GetGameObject(*itr);
-            if(obj)
+            if (GameObject *obj = GetMap()->GetGameObject(*itr))
                 obj->BuildValuesUpdateBlockForPlayer(&udata,this);
         }
-        else if(IS_CREATURE_GUID(*itr) || IS_VEHICLE_GUID(*itr))
+        else if (itr->IsCreatureOrVehicle())
         {
             Creature *obj = ObjectAccessor::GetCreatureOrPetOrVehicle(*this, *itr);
             if(!obj)
@@ -21351,7 +21341,7 @@ void Player::ResurectUsingRequestData()
 void Player::SetClientControl(Unit* target, uint8 allowMove)
 {
     WorldPacket data(SMSG_CLIENT_CONTROL_UPDATE, target->GetPackGUID().size()+1);
-    data.append(target->GetPackGUID());
+    data << target->GetPackGUID();
     data << uint8(allowMove);
     GetSession()->SendPacket(&data);
 }
@@ -21744,7 +21734,7 @@ void Player::SendEnterVehicle(Vehicle *vehicle, VehicleSeatEntry const *veSeat)
     GetSession()->SendPacket(&data);
 
     data.Initialize(MSG_MOVE_TELEPORT_ACK, 30);
-    data.append(GetPackGUID());
+    data << GetPackGUID();
     data << uint32(0);                                      // counter?
     data << uint32(MOVEFLAG_ONTRANSPORT);                   // transport
     data << uint16(0);                                      // special flags
@@ -21793,7 +21783,7 @@ void Player::SendEnterVehicle(Vehicle *vehicle, VehicleSeatEntry const *veSeat)
     SetMover(NULL);
 
     WorldPacket data(MSG_MOVE_TELEPORT_ACK, 30);
-    data.append(GetPackGUID());
+    data << GetPackGUID();
     data << uint32(0);                                      // counter?
     data << uint32(MOVEFLAG_ROOT);                          // fly unk
     data << uint16(MOVEFLAG2_UNK4);                         // special flags
@@ -23032,7 +23022,7 @@ void Player::SendClearCooldown( uint32 spell_id, Unit* target )
 void Player::BuildTeleportAckMsg( WorldPacket *data, float x, float y, float z, float ang ) const
 {
     data->Initialize(MSG_MOVE_TELEPORT_ACK, 41);
-    data->append(GetPackGUID());
+    *data << GetPackGUID();
     *data << uint32(0);                                     // this value increments every time
     *data << uint32(m_movementInfo.GetMovementFlags());     // movement flags
     *data << uint16(0);                                     // 2.3.0
@@ -23062,8 +23052,23 @@ void Player::SetFarSightGUID( uint64 guid )
 
 void Player::UpdateVisibilityForPlayer()
 {
-    if (IsInWorld())
-        GetMap()->AddNotifier(this, false);
+    WorldObject const* viewPoint = GetViewPoint();
+    Map* m = GetMap();
+
+    CellPair p(MaNGOS::ComputeCellPair(GetPositionX(), GetPositionY()));
+    Cell cell(p);
+
+    m->UpdatePlayerVisibility(this, cell, p);
+
+    if (this != viewPoint)
+    {
+        CellPair pView(MaNGOS::ComputeCellPair(viewPoint->GetPositionX(), viewPoint->GetPositionY()));
+        Cell cellView(pView);
+
+        m->UpdateObjectsVisibilityFor(this, cellView, pView);
+    }
+    else
+        m->UpdateObjectsVisibilityFor(this, cell, p);
 }
 
 void Player::SendDuelCountdown(uint32 counter)
@@ -23319,6 +23324,49 @@ void Player::SetHomebindToLocation(WorldLocation const& loc, uint32 area_id)
     // update sql homebind
     CharacterDatabase.PExecute("UPDATE character_homebind SET map = '%u', zone = '%u', position_x = '%f', position_y = '%f', position_z = '%f' WHERE guid = '%u'",
         m_homebindMapId, m_homebindAreaId, m_homebindX, m_homebindY, m_homebindZ, GetGUIDLow());
+}
+
+Object* Player::GetObjectByTypeMask(ObjectGuid guid, TypeMask typemask)
+{
+    switch(guid.GetHigh())
+    {
+        case HIGHGUID_ITEM:
+            if (typemask & TYPEMASK_ITEM)
+                return GetItemByGuid(guid);
+            break;
+        case HIGHGUID_PLAYER:
+            if (GetObjectGuid()==guid)
+                return this;
+            if ((typemask & TYPEMASK_PLAYER) && IsInWorld())
+                return ObjectAccessor::FindPlayer(guid);
+            break;
+        case HIGHGUID_GAMEOBJECT:
+            if ((typemask & TYPEMASK_GAMEOBJECT) && IsInWorld())
+                return GetMap()->GetGameObject(guid);
+            break;
+        case HIGHGUID_UNIT:
+            if ((typemask & TYPEMASK_UNIT) && IsInWorld())
+                return GetMap()->GetCreature(guid);
+            break;
+        case HIGHGUID_PET:
+            if ((typemask & TYPEMASK_UNIT) && IsInWorld())
+                return GetMap()->GetPet(guid);
+            break;
+        case HIGHGUID_VEHICLE:
+            if ((typemask & TYPEMASK_UNIT) && IsInWorld())
+                return GetMap()->GetVehicle(guid);
+            break;
+        case HIGHGUID_DYNAMICOBJECT:
+            if ((typemask & TYPEMASK_DYNAMICOBJECT) && IsInWorld())
+                return GetMap()->GetDynamicObject(guid);
+            break;
+        case HIGHGUID_TRANSPORT:
+        case HIGHGUID_CORPSE:
+        case HIGHGUID_MO_TRANSPORT:
+            break;
+    }
+
+    return NULL;
 }
 
 void Player::FlyingMountsSpellsToItems()

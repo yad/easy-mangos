@@ -311,7 +311,7 @@ void WorldSession::HandleGossipSelectOptionOpcode( WorldPacket & recv_data )
 
     uint32 gossipListId;
     uint32 menuId;
-    uint64 guid;
+    ObjectGuid guid;
     std::string code = "";
 
     recv_data >> guid >> menuId >> gossipListId;
@@ -323,47 +323,37 @@ void WorldSession::HandleGossipSelectOptionOpcode( WorldPacket & recv_data )
         sLog.outBasic("string read: %s", code.c_str());
     }
 
-    Creature *pCreature = GetPlayer()->GetNPCIfCanInteractWith(guid, UNIT_NPC_FLAG_NONE);
-
-    if (!pCreature)
-    {
-        sLog.outDebug( "WORLD: HandleGossipSelectOptionOpcode - Unit (GUID: %u) not found or you can't interact with him.", uint32(GUID_LOPART(guid)) );
-        return;
-    }
-
     // remove fake death
     if (GetPlayer()->hasUnitState(UNIT_STAT_DIED))
         GetPlayer()->RemoveSpellsCausingAura(SPELL_AURA_FEIGN_DEATH);
 
-    // Playerbot mod
-    if(pCreature->isBotGiver() && !_player->GetPlayerbotAI())
-    {
-        if (!_player->GetPlayerbotMgr())
-            _player->SetPlayerbotMgr(new PlayerbotMgr(_player));
-        WorldSession * m_session = _player->GetSession();
-        uint64 guidlo = _player->PlayerTalkClass->GossipOptionSender(gossipListId);
-        if(_player->GetPlayerbotMgr()->GetPlayerBot(guidlo) != NULL)
-        {
-            _player->GetPlayerbotMgr()->LogoutPlayerBot(guidlo);
-        }
-        else if(_player->GetPlayerbotMgr()->GetPlayerBot(guidlo) == NULL)
-        {
-            _player->GetPlayerbotMgr()->AddPlayerBot(guidlo);
-        }
-        _player->PlayerTalkClass->CloseGossip();
-        return;
-    }
-
-    // TODO: determine if scriptCall is needed for GO and also if scriptCall can be same as current, with modified argument WorldObject*
-
     // can vehicle have gossip? If so, need check for this also.
-    if (IS_CREATURE_OR_PET_GUID(guid))
+    if (guid.IsCreatureOrPet())
     {
         Creature *pCreature = GetPlayer()->GetNPCIfCanInteractWith(guid, UNIT_NPC_FLAG_NONE);
 
         if (!pCreature)
         {
-            sLog.outDebug("WORLD: HandleGossipSelectOptionOpcode - Creature (GUID: %u) not found or you can't interact with it.", uint32(GUID_LOPART(guid)));
+            sLog.outDebug("WORLD: HandleGossipSelectOptionOpcode - %s not found or you can't interact with it.", guid.GetString().c_str());
+            return;
+        }
+
+        // Playerbot mod
+        if(pCreature->isBotGiver() && !_player->GetPlayerbotAI())
+        {
+            if (!_player->GetPlayerbotMgr())
+                _player->SetPlayerbotMgr(new PlayerbotMgr(_player));
+            WorldSession * m_session = _player->GetSession();
+            uint64 guidlo = _player->PlayerTalkClass->GossipOptionSender(gossipListId);
+            if(_player->GetPlayerbotMgr()->GetPlayerBot(guidlo) != NULL)
+            {
+                _player->GetPlayerbotMgr()->LogoutPlayerBot(guidlo);
+            }
+            else if(_player->GetPlayerbotMgr()->GetPlayerBot(guidlo) == NULL)
+            {
+                _player->GetPlayerbotMgr()->AddPlayerBot(guidlo);
+            }
+            _player->PlayerTalkClass->CloseGossip();
             return;
         }
 
@@ -378,17 +368,26 @@ void WorldSession::HandleGossipSelectOptionOpcode( WorldPacket & recv_data )
                 _player->OnGossipSelect(pCreature, gossipListId, menuId);
         }
     }
-    else if (IS_GAMEOBJECT_GUID(guid))
+    else if (guid.IsGameobject())
     {
         GameObject *pGo = GetPlayer()->GetGameObjectIfCanInteractWith(guid);
 
         if (!pGo)
         {
-            sLog.outDebug("WORLD: HandleGossipSelectOptionOpcode - GameObject (GUID: %u) not found or you can't interact with it.", uint32(GUID_LOPART(guid)));
+            sLog.outDebug("WORLD: HandleGossipSelectOptionOpcode - %s not found or you can't interact with it.", guid.GetString().c_str());
             return;
         }
 
-        _player->OnGossipSelect(pGo, gossipListId, menuId);
+        if (!code.empty())
+        {
+            if (!Script->GOGossipSelectWithCode(_player, pGo, _player->PlayerTalkClass->GossipOptionSender(gossipListId), _player->PlayerTalkClass->GossipOptionAction(gossipListId), code.c_str()))
+                _player->OnGossipSelect(pGo, gossipListId, menuId);
+        }
+        else
+        {
+            if (!Script->GOGossipSelect(_player, pGo, _player->PlayerTalkClass->GossipOptionSender(gossipListId), _player->PlayerTalkClass->GossipOptionAction(gossipListId)))
+                _player->OnGossipSelect(pGo, gossipListId, menuId);
+        }
     }
 }
 
