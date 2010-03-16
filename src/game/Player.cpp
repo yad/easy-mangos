@@ -7420,11 +7420,11 @@ void Player::UpdateZone(uint32 newZone, uint32 newArea)
     }
     else                                                    // anywhere else
     {
-        if(HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_RESTING))     // but resting (walk from city or maybe in tavern or leave tavern recently)
+        if (HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_RESTING))    // but resting (walk from city or maybe in tavern or leave tavern recently)
         {
-            if(GetRestType()==REST_TYPE_IN_TAVERN)          // has been in tavern. Is still in?
+            if (GetRestType()==REST_TYPE_IN_TAVERN)         // has been in tavern. Is still in?
             {
-                if(GetMapId()!=GetInnPosMapId() || sqrt((GetPositionX()-GetInnPosX())*(GetPositionX()-GetInnPosX())+(GetPositionY()-GetInnPosY())*(GetPositionY()-GetInnPosY())+(GetPositionZ()-GetInnPosZ())*(GetPositionZ()-GetInnPosZ()))>40)
+                if (GetMapId()!=GetInnPosMapId() || ((GetPositionX()-GetInnPosX())*(GetPositionX()-GetInnPosX())+(GetPositionY()-GetInnPosY())*(GetPositionY()-GetInnPosY())+(GetPositionZ()-GetInnPosZ())*(GetPositionZ()-GetInnPosZ())) > 30*30)
                 {
                     RemoveFlag(PLAYER_FLAGS, PLAYER_FLAGS_RESTING);
                     SetRestType(REST_TYPE_NO);
@@ -22524,6 +22524,37 @@ void Player::ResummonPetTemporaryUnSummonedIfAny()
         delete NewPet;
 
     m_temporaryUnsummonedPetNumber = 0;
+}
+
+void Player::ReceiveToken()
+{
+	if(!sWorld.getConfig(CONFIG_BOOL_PVP_TOKEN_ENABLE))
+		return;
+
+	uint8 mapRestriction = sWorld.getConfig(CONFIG_UINT32_PVP_TOKEN_RESTRICTION);
+
+	if(mapRestriction == 1 && !InBattleGround() && !HasByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP) ||
+		mapRestriction == 2 && !HasByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP) ||
+		mapRestriction == 3 && !InBattleGround())
+		return;
+
+	uint32 itemID = sWorld.getConfig(CONFIG_UINT32_PVP_TOKEN_ITEMID);
+	uint32 itemCount = sWorld.getConfig(CONFIG_UINT32_PVP_TOKEN_ITEMCOUNT);
+
+	ItemPosCountVec dest;
+	uint8 msg = CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, itemID, itemCount);
+	if(msg != EQUIP_ERR_OK)
+	{
+		SendEquipError(msg, NULL, NULL);
+		return;
+	}
+
+	Item *item = StoreNewItem(dest, itemID, true, Item::GenerateItemRandomPropertyId(itemID));
+	SendNewItem(item, itemCount, true, false);
+
+	ChatHandler(this).PSendSysMessage(LANG_YOU_RECEIVE_TOKEN);
+
+	// Note : L'objet est envoyé dans la boîte aux lettres si il n'y as pas de place dans le sac
 }
 
 bool Player::canSeeSpellClickOn(Creature const *c) const

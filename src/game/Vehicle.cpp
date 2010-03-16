@@ -106,7 +106,7 @@ void Vehicle::RegeneratePower(Powers power)
 
     ModifyPower(power, (int32)addvalue);
     WorldPacket data(SMSG_POWER_UPDATE);
-    data.append(GetPackGUID());
+    data << GetPackGUID();
     data << uint8(power);
     data << uint32(addvalue+curValue);
     SendMessageToSet(&data, true);
@@ -450,7 +450,7 @@ void Vehicle::AddPassenger(Unit *unit, int8 seatId, bool force)
     if(unit->GetTypeId() == TYPEID_PLAYER)
     {
         WorldPacket data0(SMSG_FORCE_MOVE_ROOT, 10);
-        data0.append(unit->GetPackGUID());
+        data0 << unit->GetPackGUID();
         data0 << (uint32)((seat->second.vs_flags & SF_CAN_CAST) ? 2 : 0);
         unit->SendMessageToSet(&data0,true);
     }
@@ -471,7 +471,7 @@ void Vehicle::AddPassenger(Unit *unit, int8 seatId, bool force)
             if(canFly() || HasAuraType(SPELL_AURA_FLY) || HasAuraType(SPELL_AURA_MOD_INCREASE_FLIGHT_SPEED))
             {
                 WorldPacket data3(SMSG_MOVE_SET_CAN_FLY, 12);
-                data3.append(GetPackGUID());
+                data3 << GetPackGUID();
                 data3 << (uint32)(0);
                 SendMessageToSet(&data3,false);
             }
@@ -508,7 +508,7 @@ void Vehicle::AddPassenger(Unit *unit, int8 seatId, bool force)
         if(GetVehicleFlags() & VF_CANT_MOVE)
         {
             WorldPacket data2(SMSG_FORCE_MOVE_ROOT, 10);
-            data2.append(GetPackGUID());
+            data2 << GetPackGUID();
             data2 << (uint32)(2);
             SendMessageToSet(&data2,false);
         }
@@ -565,14 +565,14 @@ void Vehicle::RemovePassenger(Unit *unit)
                 if(seat->second.vs_flags & SF_CAN_CAST)
                 {
                     WorldPacket data0(SMSG_FORCE_MOVE_UNROOT, 10);
-                    data0.append(unit->GetPackGUID());
+                    data0 << unit->GetPackGUID();
                     data0 << (uint32)(2);                        // can rotate
                     unit->SendMessageToSet(&data0,true);
                 }
                 else
                 {
                     WorldPacket data1(SMSG_FORCE_MOVE_UNROOT, 10);
-                    data1.append(unit->GetPackGUID());
+                    data1 << unit->GetPackGUID();
                     data1 << (uint32)(0);                        // cannot rotate
                     unit->SendMessageToSet(&data1,true);
                 }

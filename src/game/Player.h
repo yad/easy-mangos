@@ -2050,6 +2050,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         void ModifyHKillPoints( int32 value ) { SetUInt32Value(PLAYER_FIELD_LIFETIME_HONORBALE_KILLS, value); }
         uint32 GetMaxPersonalArenaRatingRequirement(uint32 minarenaslot);
 
+		void ReceiveToken();
+
         //End of PvP System
 
         void SetDrunkValue(uint16 newDrunkValue, uint32 itemid=0);

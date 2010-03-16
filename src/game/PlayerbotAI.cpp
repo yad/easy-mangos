@@ -857,8 +857,8 @@ uint8 PlayerbotAI::GetRunicPower() const
     return GetRunicPower(*m_bot);
 }
 
-typedef std::pair<uint32, uint8> spellEffectPair;
-typedef std::multimap<spellEffectPair, Aura*> AuraMap;
+//typedef std::pair<uint32, uint8> spellEffectPair;
+//typedef std::multimap<spellEffectPair, Aura*> AuraMap;
 
 bool PlayerbotAI::HasAura(uint32 spellId, const Unit& player) const
 {
@@ -3035,7 +3035,7 @@ void PlayerbotAI::HandleCommand(const std::string& text, Player& fromPlayer)
             uint32 itemId = itemIds.front();
             bool wasRewarded = false;
             uint64 questRewarderGUID = m_bot->GetSelection();
-            Object* const pNpc = ObjectAccessor::GetObjectByTypeMask(*m_bot, questRewarderGUID, TYPEMASK_UNIT|TYPEMASK_GAMEOBJECT);
+            Object* const pNpc = (WorldObject*) m_bot->GetObjectByTypeMask(questRewarderGUID, TYPEMASK_CREATURE_OR_GAMEOBJECT);
             if (!pNpc)
                 return;
             
