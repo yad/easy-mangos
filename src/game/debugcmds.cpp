@@ -30,7 +30,7 @@
 #include "BattleGroundMgr.h"
 #include <fstream>
 #include "ObjectMgr.h"
-#include "ObjectDefines.h"
+#include "ObjectGuid.h"
 #include "SpellMgr.h"
 
 bool ChatHandler::HandleDebugSendSpellFailCommand(const char* args)
@@ -183,7 +183,7 @@ bool ChatHandler::HandleDebugSendOpcodeCommand(const char* /*args*/)
         }
         else if(type == "pguid")
         {
-            data.append(unit->GetPackGUID());
+            data << unit->GetPackGUID();
         }
         else
         {
@@ -692,7 +692,7 @@ bool ChatHandler::HandleDebugGetItemValueCommand(const char* args)
     uint32 guid = (uint32)atoi(e);
     uint32 index = (uint32)atoi(f);
 
-    Item *i = m_session->GetPlayer()->GetItemByGuid(MAKE_NEW_GUID(guid, 0, HIGHGUID_ITEM));
+    Item *i = m_session->GetPlayer()->GetItemByGuid(ObjectGuid(HIGHGUID_ITEM, guid));
 
     if (!i)
         return false;
@@ -723,7 +723,7 @@ bool ChatHandler::HandleDebugSetItemValueCommand(const char* args)
     uint32 index = (uint32)atoi(f);
     uint32 value = (uint32)atoi(g);
 
-    Item *i = m_session->GetPlayer()->GetItemByGuid(MAKE_NEW_GUID(guid, 0, HIGHGUID_ITEM));
+    Item *i = m_session->GetPlayer()->GetItemByGuid(ObjectGuid(HIGHGUID_ITEM, guid));
 
     if (!i)
         return false;
