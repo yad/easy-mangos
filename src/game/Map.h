@@ -48,6 +48,16 @@ struct ScriptInfo;
 struct ScriptAction;
 class BattleGround;
 
+// the highest value is reserved as invalid event
+#define MAP_EVENT_NONE 65535
+// the highest 100 values are reserved as door-events
+#define MAP_EVENT_DOOR 65435
+struct MapEventIdx
+{
+    uint16 event1;
+    uint16 event2;
+};
+
 //******************************************
 // Map file format defines
 //******************************************
@@ -424,6 +434,53 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
 
         // DynObjects currently
         uint32 GenerateLocalLowGuid(HighGuid guidhigh);
+
+        /* event related */
+        // called when a creature gets added to map (NOTE: only triggered if
+        // a player activates the cell of the creature)
+        void OnObjectDBLoad(Creature* /*creature*/);
+        void OnObjectDBLoad(GameObject* /*obj*/);
+        // (de-)spawns creatures and gameobjects from an event
+        void SpawnEvent(uint16 event1, uint16 event2, bool spawn);
+        bool IsActiveEvent(uint16 event1, uint16 event2)
+        {
+            if (m_ActiveEvents.find(event1) == m_ActiveEvents.end())
+                return false;
+            return m_ActiveEvents[event1] == event2;
+        }
+        void SetActiveEvent(uint16 event1, uint16 event2 = MAP_EVENT_NONE) { m_ActiveEvents[event1] = event2; }
+
+        uint64 GetSingleCreatureGuid(uint16 event1, uint16 event2);
+
+        typedef std::vector<uint64> ObjectList;
+        typedef std::vector<uint64> CreatureList;
+        struct EventObjects
+        {
+            ObjectList gameobjects;
+            CreatureList creatures;
+        };
+
+        void SpawnMapCreature(uint64 const& guid, uint32 respawntime);
+        void SpawnMapObject(uint64 const& guid, uint32 respawntime);
+        void OpenDoorEvent(uint16 event1, uint16 event2=0);
+        bool IsDoorEvent(uint16 event1, uint16 event2);
+        void DoorOpen(uint64 const& guid);
+        void DoorClose(uint64 const& guid);
+        const uint16 GetCreatureEvent1(uint32 guidLow) const;
+        const uint16 GetGameObjectEvent1(uint32 guidLow) const;
+        const uint16 GetGameObjectEvent2(uint32 guidLow) const;
+
+
+        // cause we create it dynamicly i use a map - to avoid resizing when
+        // using vector - also it contains 2*events concatenated with PAIR32
+        // this is needed to avoid overhead of a 2dimensional std::map
+        std::map<uint32, EventObjects> m_EventObjects;
+        // this must be filled first in BattleGroundXY::Reset().. else
+        // creatures will get added wrong
+        // door-events are automaticly added - but _ALL_ other must be in this vector
+        std::map<uint16, uint16> m_ActiveEvents;
+
+
     private:
         void LoadMapAndVMap(int gx, int gy);
         void LoadVMap(int gx, int gy);

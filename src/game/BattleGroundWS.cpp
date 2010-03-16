@@ -320,7 +320,7 @@ void BattleGroundWS::EventPlayerClickedOnFlag(Player *Source, GameObject* target
     int32 message_id = 0;
     ChatMsg type;
 
-    uint8 event = (sBattleGroundMgr.GetGameObjectEventIndex(target_obj->GetDBTableGUIDLow())).event1;
+    uint8 event = GetBgMap()->GetGameObjectEvent1(target_obj->GetDBTableGUIDLow());
 
     //alliance flag picked up from base
     if(Source->GetTeam() == HORDE && GetFlagState(ALLIANCE) == BG_WS_FLAG_STATE_ON_BASE
@@ -510,9 +510,9 @@ void BattleGroundWS::Reset()
     BattleGround::Reset();
 
     // spiritguides and flags not spawned at beginning
-    m_ActiveEvents[WS_EVENT_SPIRITGUIDES_SPAWN] = BG_EVENT_NONE;
-    m_ActiveEvents[WS_EVENT_FLAG_A] = BG_EVENT_NONE;
-    m_ActiveEvents[WS_EVENT_FLAG_H] = BG_EVENT_NONE;
+    SetActiveEvent(WS_EVENT_SPIRITGUIDES_SPAWN);
+    SetActiveEvent(WS_EVENT_FLAG_A);
+    SetActiveEvent(WS_EVENT_FLAG_H);
 
     for(uint32 i = 0; i < BG_TEAMS_COUNT; ++i)
     {

@@ -1150,8 +1150,8 @@ void World::SetInitialWorldSettings()
     sLog.outString( "Loading BattleMasters..." );
     sBattleGroundMgr.LoadBattleMastersEntry();
 
-    sLog.outString( "Loading BattleGround event indexes..." );
-    sBattleGroundMgr.LoadBattleEventIndexes();
+    sLog.outString( "Loading Map event indexes..." );
+    sMapMgr.LoadMapEventIndexes();
 
     sLog.outString( "Loading GameTeleports..." );
     sObjectMgr.LoadGameTele();

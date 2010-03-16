@@ -51,9 +51,7 @@ void BattleGroundAV::HandleKillUnit(Creature *creature, Player *killer)
     sLog.outDebug("BattleGroundAV: HandleKillUnit %i", creature->GetEntry());
     if (GetStatus() != STATUS_IN_PROGRESS)
         return;
-    uint8 event1 = (sBattleGroundMgr.GetCreatureEventIndex(creature->GetDBTableGUIDLow())).event1;
-    if (event1 == BG_EVENT_NONE)
-        return;
+    uint8 event1 = GetBgMap()->GetCreatureEvent1(creature->GetDBTableGUIDLow());
     switch(event1)
     {
         case BG_AV_BOSS_A:
@@ -514,11 +512,11 @@ void BattleGroundAV::EventPlayerClickedOnFlag(Player *source, GameObject* target
     if (GetStatus() != STATUS_IN_PROGRESS)
         return;
     sLog.outDebug("BattleGroundAV: using gameobject %i", target_obj->GetEntry());
-    uint8 event = (sBattleGroundMgr.GetGameObjectEventIndex(target_obj->GetDBTableGUIDLow())).event1;
+    uint8 event = GetBgMap()->GetGameObjectEvent1(target_obj->GetDBTableGUIDLow());
     if (event >= BG_AV_NODES_MAX)                           // not a node
         return;
     BG_AV_Nodes node = BG_AV_Nodes(event);
-    switch ((sBattleGroundMgr.GetGameObjectEventIndex(target_obj->GetDBTableGUIDLow())).event2 % BG_AV_MAX_STATES)
+    switch (GetBgMap()->GetGameObjectEvent2(target_obj->GetDBTableGUIDLow()) % BG_AV_MAX_STATES)
     {
         case POINT_CONTROLLED:
             EventPlayerAssaultsPoint(source, node);
@@ -752,9 +750,9 @@ void BattleGroundAV::InitNode(BG_AV_Nodes node, uint32 team, bool tower)
     m_Nodes[node].State      = POINT_CONTROLLED;
     m_Nodes[node].Timer      = 0;
     m_Nodes[node].Tower      = tower;
-    m_ActiveEvents[node] = team * BG_AV_MAX_STATES + m_Nodes[node].State;
+    SetActiveEvent(node, (team * BG_AV_MAX_STATES + m_Nodes[node].State));
     if (IsGrave(node))                                      // grave-creatures are special cause of a quest
-        m_ActiveEvents[node + BG_AV_NODES_MAX]  = team * BG_AV_MAX_GRAVETYPES;
+        SetActiveEvent(node + BG_AV_NODES_MAX, (team * BG_AV_MAX_GRAVETYPES));
 }
 
 void BattleGroundAV::DefendNode(BG_AV_Nodes node, uint32 team)
@@ -791,25 +789,25 @@ void BattleGroundAV::Reset()
             m_Team_QuestStatus[i][j] = 0;
         m_TeamScores[i]         = BG_AV_SCORE_INITIAL_POINTS;
         m_IsInformedNearLose[i] = false;
-        m_ActiveEvents[BG_AV_NodeEventCaptainDead_A + i] = BG_EVENT_NONE;
+        SetActiveEvent(BG_AV_NodeEventCaptainDead_A + i);
     }
 
     for(uint8 i = 0; i < BG_AV_MAX_MINES; i++)
     {
         m_Mine_Owner[i] = BG_AV_NEUTRAL_TEAM;
         m_Mine_PrevOwner[i] = m_Mine_Owner[i];
-        m_ActiveEvents[BG_AV_MINE_BOSSES+ i] = BG_AV_NEUTRAL_TEAM;
-        m_ActiveEvents[BG_AV_MINE_EVENT + i] = BG_AV_NEUTRAL_TEAM;
+        SetActiveEvent(BG_AV_MINE_BOSSES+ i, BG_AV_NEUTRAL_TEAM);
+        SetActiveEvent(BG_AV_MINE_EVENT + i, BG_AV_NEUTRAL_TEAM);
         m_Mine_Timer[i] = BG_AV_MINE_TICK_TIMER;
     }
 
-    m_ActiveEvents[BG_AV_CAPTAIN_A] = 0;
-    m_ActiveEvents[BG_AV_CAPTAIN_H] = 0;
-    m_ActiveEvents[BG_AV_HERALD] = 0;
-    m_ActiveEvents[BG_AV_BOSS_A] = 0;
-    m_ActiveEvents[BG_AV_BOSS_H] = 0;
+    SetActiveEvent(BG_AV_CAPTAIN_A, 0);
+    SetActiveEvent(BG_AV_CAPTAIN_H, 0);
+    SetActiveEvent(BG_AV_HERALD, 0);
+    SetActiveEvent(BG_AV_BOSS_A, 0);
+    SetActiveEvent(BG_AV_BOSS_H, 0);
     for(BG_AV_Nodes i = BG_AV_NODES_DUNBALDAR_SOUTH; i <= BG_AV_NODES_FROSTWOLF_WTOWER; ++i)   // towers
-        m_ActiveEvents[BG_AV_MARSHAL_A_SOUTH + i - BG_AV_NODES_DUNBALDAR_SOUTH] = 0;
+        SetActiveEvent(BG_AV_MARSHAL_A_SOUTH + i - BG_AV_NODES_DUNBALDAR_SOUTH, 0);
 
     for(BG_AV_Nodes i = BG_AV_NODES_FIRSTAID_STATION; i <= BG_AV_NODES_STONEHEART_GRAVE; ++i)   // alliance graves
         InitNode(i, BG_TEAM_ALLIANCE, false);

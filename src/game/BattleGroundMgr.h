@@ -32,8 +32,6 @@ typedef std::map<uint32, BattleGround*> BattleGroundSet;
 typedef std::list<BattleGround*> BGFreeSlotQueueType;
 
 typedef UNORDERED_MAP<uint32, BattleGroundTypeId> BattleMastersMap;
-typedef UNORDERED_MAP<uint32, BattleGroundEventIdx> CreatureBattleEventIndexesMap;
-typedef UNORDERED_MAP<uint32, BattleGroundEventIdx> GameObjectBattleEventIndexesMap;
 
 #define BATTLEGROUND_ARENA_POINT_DISTRIBUTION_DAY 86400     // seconds in a day
 #define COUNT_OF_PLAYERS_TO_AVERAGE_WAIT_TIME 10
@@ -247,22 +245,6 @@ class BattleGroundMgr
             return BATTLEGROUND_TYPE_NONE;
         }
 
-        void LoadBattleEventIndexes();
-        const BattleGroundEventIdx GetCreatureEventIndex(uint32 dbTableGuidLow) const
-        {
-            CreatureBattleEventIndexesMap::const_iterator itr = m_CreatureBattleEventIndexMap.find(dbTableGuidLow);
-            if(itr != m_CreatureBattleEventIndexMap.end())
-                return itr->second;
-            return m_CreatureBattleEventIndexMap.find(-1)->second;
-        }
-        const BattleGroundEventIdx GetGameObjectEventIndex(uint32 dbTableGuidLow) const
-        {
-            GameObjectBattleEventIndexesMap::const_iterator itr = m_GameObjectBattleEventIndexMap.find(dbTableGuidLow);
-            if(itr != m_GameObjectBattleEventIndexMap.end())
-                return itr->second;
-            return m_GameObjectBattleEventIndexMap.find(-1)->second;
-        }
-
         bool isArenaTesting() const { return m_ArenaTesting; }
         bool isTesting() const { return m_Testing; }
 
@@ -276,8 +258,6 @@ class BattleGroundMgr
     private:
         ACE_Thread_Mutex    SchedulerLock;
         BattleMastersMap    mBattleMastersMap;
-        CreatureBattleEventIndexesMap m_CreatureBattleEventIndexMap;
-        GameObjectBattleEventIndexesMap m_GameObjectBattleEventIndexMap;
 
         /* Battlegrounds */
         BattleGroundSet m_BattleGrounds[MAX_BATTLEGROUND_TYPE_ID];

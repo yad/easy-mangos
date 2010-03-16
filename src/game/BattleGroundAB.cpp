@@ -335,7 +335,7 @@ void BattleGroundAB::EventPlayerClickedOnFlag(Player *source, GameObject* target
     if (GetStatus() != STATUS_IN_PROGRESS)
         return;
 
-    uint8 event = (sBattleGroundMgr.GetGameObjectEventIndex(target_obj->GetDBTableGUIDLow())).event1;
+    uint8 event = GetBgMap()->GetGameObjectEvent1(target_obj->GetDBTableGUIDLow());
     if (event >= BG_AB_NODES_MAX)                           // not a node
         return;
     BG_AB_Nodes node = BG_AB_Nodes(event);
@@ -479,7 +479,7 @@ void BattleGroundAB::Reset()
         m_BannerTimers[i].timer = 0;
 
         // all nodes owned by neutral team at beginning
-        m_ActiveEvents[i] = BG_AB_NODE_TYPE_NEUTRAL;
+        SetActiveEvent(i, BG_AB_NODE_TYPE_NEUTRAL);
     }
 
 }

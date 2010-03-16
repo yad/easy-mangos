@@ -29,6 +29,9 @@
 class Transport;
 class BattleGround;
 
+typedef UNORDERED_MAP<uint32, MapEventIdx> CreatureMapEventIndexMap;
+typedef UNORDERED_MAP<uint32, MapEventIdx> GameObjectMapEventIndexMap;
+
 class MANGOS_DLL_DECL MapManager : public MaNGOS::Singleton<MapManager, MaNGOS::ClassLevelLockable<MapManager, ACE_Thread_Mutex> >
 {
 
@@ -130,7 +133,26 @@ class MANGOS_DLL_DECL MapManager : public MaNGOS::Singleton<MapManager, MaNGOS::
         uint32 GetNumInstances();
         uint32 GetNumPlayersInInstances();
 
+        void LoadMapEventIndexes();
+        const MapEventIdx GetCreatureEventIndex(uint32 dbTableGuidLow) const
+        {
+            CreatureMapEventIndexMap::const_iterator itr = m_CreatureMapEventIndexMap.find(dbTableGuidLow);
+            if(itr != m_CreatureMapEventIndexMap.end())
+                return itr->second;
+            return m_CreatureMapEventIndexMap.find(65535)->second;
+        }
+        const MapEventIdx GetGameObjectEventIndex(uint32 dbTableGuidLow) const
+        {
+            GameObjectMapEventIndexMap::const_iterator itr = m_GameObjectMapEventIndexMap.find(dbTableGuidLow);
+            if(itr != m_GameObjectMapEventIndexMap.end())
+                return itr->second;
+            return m_GameObjectMapEventIndexMap.find(65535)->second;
+        }
+
     private:
+
+        CreatureMapEventIndexMap m_CreatureMapEventIndexMap;
+        GameObjectMapEventIndexMap m_GameObjectMapEventIndexMap;
         // debugging code, should be deleted some day
         void checkAndCorrectGridStatesArray();              // just for debugging to find some memory overwrites
         GridState* i_GridStates[MAX_GRID_STATE];            // shadow entries to the global array in Map.cpp

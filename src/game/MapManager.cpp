@@ -29,6 +29,7 @@
 #include "CellImpl.h"
 #include "Corpse.h"
 #include "ObjectMgr.h"
+#include "ProgressBar.h"
 
 #define CLASS_LOCK MaNGOS::ClassLevelLockable<MapManager, ACE_Thread_Mutex>
 INSTANTIATE_SINGLETON_2(MapManager, CLASS_LOCK);
@@ -352,4 +353,118 @@ uint32 MapManager::GetNumPlayersInInstances()
                 ret += ((InstanceMap*)mitr->second)->GetPlayers().getSize();
     }
     return ret;
+}
+
+void MapManager::LoadMapEventIndexes()
+{
+    MapEventIdx events;
+    events.event1 = MAP_EVENT_NONE;
+    events.event2 = MAP_EVENT_NONE;
+    m_GameObjectMapEventIndexMap.clear();             // need for reload case
+    m_GameObjectMapEventIndexMap[65535] = events;
+    m_CreatureMapEventIndexMap.clear();               // need for reload case
+    m_CreatureMapEventIndexMap[65535] = events;
+
+    uint32 count = 0;
+
+    QueryResult *result =
+        //                              0            1           2             3                     4           5           6
+        WorldDatabase.PQuery( "SELECT data.typ, data.guid1, data.ev1 AS ev1, data.ev2 AS ev2, data.map AS m, data.guid2, description.map, "
+        //                              7                  8                   9
+                                      "description.event1, description.event2, description.description "
+                                 "FROM "
+                                    "(SELECT '1' AS typ, a.guid AS guid1, a.event1 AS ev1, a.event2 AS ev2, b.map AS map, b.guid AS guid2 "
+                                        "FROM gameobject_mapevent AS a "
+                                        "LEFT OUTER JOIN gameobject AS b ON a.guid = b.guid "
+                                     "UNION "
+                                     "SELECT '2' AS typ, a.guid AS guid1, a.event1 AS ev1, a.event2 AS ev2, b.map AS map, b.guid AS guid2 "
+                                        "FROM creature_mapevent AS a "
+                                        "LEFT OUTER JOIN creature AS b ON a.guid = b.guid "
+                                    ") data "
+                                    "RIGHT OUTER JOIN map_events AS description ON data.map = description.map "
+                                        "AND data.ev1 = description.event1 AND data.ev2 = description.event2 "
+        // full outer join doesn't work in mysql :-/ so just UNION-select the same again and add a left outer join
+                              "UNION "
+                              "SELECT data.typ, data.guid1, data.ev1, data.ev2, data.map, data.guid2, description.map, "
+                                      "description.event1, description.event2, description.description "
+                                 "FROM "
+                                    "(SELECT '1' AS typ, a.guid AS guid1, a.event1 AS ev1, a.event2 AS ev2, b.map AS map, b.guid AS guid2 "
+                                        "FROM gameobject_mapevent AS a "
+                                        "LEFT OUTER JOIN gameobject AS b ON a.guid = b.guid "
+                                     "UNION "
+                                     "SELECT '2' AS typ, a.guid AS guid1, a.event1 AS ev1, a.event2 AS ev2, b.map AS map, b.guid AS guid2 "
+                                        "FROM creature_mapevent AS a "
+                                        "LEFT OUTER JOIN creature AS b ON a.guid = b.guid "
+                                    ") data "
+                                    "LEFT OUTER JOIN map_events AS description ON data.map = description.map "
+                                        "AND data.ev1 = description.event1 AND data.ev2 = description.event2 "
+                              "ORDER BY m, ev1, ev2" );
+    if(!result)
+    {
+        barGoLink bar(1);
+        bar.step();
+
+        sLog.outString();
+        sLog.outErrorDb(">> Loaded 0 Map eventindexes.");
+        return;
+    }
+
+    barGoLink bar(result->GetRowCount());
+
+    do
+    {
+        bar.step();
+        Field *fields = result->Fetch();
+        if (fields[2].GetUInt8() == MAP_EVENT_NONE || fields[3].GetUInt8() == MAP_EVENT_NONE)
+            continue;                                       // we don't need to add those to the eventmap
+
+        bool gameobject         = (fields[0].GetUInt8() == 1);
+        uint32 dbTableGuidLow   = fields[1].GetUInt32();
+        events.event1           = fields[2].GetUInt8();
+        events.event2           = fields[3].GetUInt8();
+        uint32 map              = fields[4].GetUInt32();
+
+        uint32 desc_map = fields[6].GetUInt32();
+        uint8 desc_event1 = fields[7].GetUInt8();
+        uint8 desc_event2 = fields[8].GetUInt8();
+        const char *description = fields[9].GetString();
+
+        // checking for NULL - through right outer join this will mean following:
+        if (fields[5].GetUInt32() != dbTableGuidLow)
+        {
+            sLog.outErrorDb("MapEvent: %s with nonexistant guid %u for event: map:%u, event1:%u, event2:%u (\"%s\")",
+                (gameobject) ? "gameobject" : "creature", dbTableGuidLow, map, events.event1, events.event2, description);
+            continue;
+        }
+
+        // checking for NULL - through full outer join this can mean 2 things:
+        if (desc_map != map)
+        {
+            // there is an event missing
+            if (dbTableGuidLow == 0)
+            {
+                sLog.outErrorDb("MapEvent: missing db-data for map:%u, event1:%u, event2:%u (\"%s\")", desc_map, desc_event1, desc_event2, description);
+                continue;
+            }
+            // we have an event which shouldn't exist
+            else
+            {
+                sLog.outErrorDb("MapEvent: %s with guid %u is registered, for a nonexistant event: map:%u, event1:%u, event2:%u",
+                    (gameobject) ? "gameobject" : "creature", dbTableGuidLow, map, events.event1, events.event2);
+                continue;
+            }
+        }
+
+        if (gameobject)
+            m_GameObjectMapEventIndexMap[dbTableGuidLow] = events;
+        else
+            m_CreatureMapEventIndexMap[dbTableGuidLow] = events;
+
+        ++count;
+
+    } while(result->NextRow());
+
+    sLog.outString();
+    sLog.outString( ">> Loaded %u Map eventindexes", count);
+    delete result;
 }
