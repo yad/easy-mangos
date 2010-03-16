@@ -27,7 +27,7 @@
 #include "ArenaTeam.h"
 #include "World.h"
 #include "Group.h"
-#include "ObjectDefines.h"
+#include "ObjectGuid.h"
 #include "ObjectMgr.h"
 #include "WorldPacket.h"
 #include "Util.h"
@@ -201,7 +201,7 @@ template<class Do>
 void BattleGround::BroadcastWorker(Do& _do)
 {
     for(BattleGroundPlayerMap::const_iterator itr = m_Players.begin(); itr != m_Players.end(); ++itr)
-        if (Player *plr = ObjectAccessor::FindPlayer(MAKE_NEW_GUID(itr->first, 0, HIGHGUID_PLAYER)))
+        if (Player *plr = ObjectAccessor::FindPlayer(ObjectGuid(HIGHGUID_PLAYER, itr->first)))
             _do(plr);
 }
 
@@ -797,6 +797,7 @@ void BattleGround::EndBattleGround(uint32 winner)
         {
             RewardMark(plr,ITEM_WINNER_COUNT);
             RewardQuestComplete(plr);
+            plr->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_WIN_BG, 1);
         }
         else
             RewardMark(plr,ITEM_LOSER_COUNT);
