@@ -707,6 +707,14 @@ void World::LoadConfigSettings(bool reload)
 
     setConfig(CONFIG_FLOAT_THREAT_RADIUS, "ThreatRadius", 100.0f);
 
+	// Système "PvP Token"
+	setConfig(CONFIG_BOOL_PVP_TOKEN_ENABLE, 		"PvPToken.Active", true);
+	setConfig(CONFIG_UINT32_PVP_TOKEN_ITEMID, 		"PvPToken.ObjetID", 29434);
+	setConfig(CONFIG_UINT32_PVP_TOKEN_ITEMCOUNT, 	"PvPToken.QuantiteObjet", 1);
+	setConfig(CONFIG_UINT32_PVP_TOKEN_RESTRICTION,	"PvPToken.RestrictionMap", 4);
+	if(getConfig(CONFIG_UINT32_PVP_TOKEN_ITEMCOUNT) <= 0)
+		setConfig(CONFIG_BOOL_PVP_TOKEN_ENABLE, false);
+
     // always use declined names in the russian client
     if (getConfig(CONFIG_UINT32_REALM_ZONE) == REALM_ZONE_RUSSIAN)
         setConfig(CONFIG_BOOL_DECLINED_NAMES_USED, true);
