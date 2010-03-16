@@ -857,8 +857,8 @@ uint8 PlayerbotAI::GetRunicPower() const
     return GetRunicPower(*m_bot);
 }
 
-typedef std::pair<uint32, uint8> spellEffectPair;
-typedef std::multimap<spellEffectPair, Aura*> AuraMap;
+//typedef std::pair<uint32, uint8> spellEffectPair;
+//typedef std::multimap<spellEffectPair, Aura*> AuraMap;
 
 bool PlayerbotAI::HasAura(uint32 spellId, const Unit& player) const
 {
