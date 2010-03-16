@@ -1362,6 +1362,39 @@ Network.TcpNodelay = 1
 Network.KickOnBadPacket = 0
 
 ###################################################################################################################
+# Systeme "PvP Token"  (Patch personnalise)
+#
+# 	Auteur : dythzer
+# 	Readaptation et traduction : Nico¸
+#
+#    PvPToken.Active
+#         Active/Desactive le systeme "PvP Token".
+#         Par defaut : 1 (active)
+#                  	   0 (desactive)
+#
+#    PvPToken.ObjetID
+#         L'ID de l'objet que le joueur va recevoir apres avoir tue un ennemi.
+#         Par defaut : 29434 (Insigne de justice)
+#
+#    PvPToken.QuantiteObjet
+#         Le nombre d'exemplaires de l'objet que le joueur va recevoir.
+#         Par defaut : 1
+#
+#    PvPToken.RestrictionMap
+#         Le type de maps ou le joueur peut recevoir l'objet
+#         Par defaut : 4 - Toutes les maps
+#                      3 - Seulement les champs de bataille
+#                      2 - FFA PvP seulement (Arenes de tournoi)
+#                      1 - Champs de bataille et FFA PvP seulement
+#
+###################################################################################################################
+
+PvPToken.Active = 1
+PvPToken.ObjetID = 29434
+PvPToken.QuantiteObjet = 1
+PvPToken.RestrictionMap = 4
+
+###################################################################################################################
 # CONSOLE, REMOTE ACCESS AND SOAP
 #
 #    Console.Enable

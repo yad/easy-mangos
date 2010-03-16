@@ -1919,6 +1919,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         void ModifyArenaPoints( int32 value );
         uint32 GetMaxPersonalArenaRatingRequirement(uint32 minarenaslot);
 
+		void ReceiveToken();
+
         //End of PvP System
 
         void SetDrunkValue(uint16 newDrunkValue, uint32 itemid=0);

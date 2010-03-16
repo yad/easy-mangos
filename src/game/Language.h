@@ -832,6 +832,7 @@ enum MangosStrings
     //                                    10000-10999
 
     // Use for custom patches             11000-11999
+	LANG_YOU_RECEIVE_TOKEN              = 11050,
 
     // NOT RESERVED IDS                   12000-1999999999
     // `db_script_string` table index     2000000000-2000009999 (MIN_DB_SCRIPT_STRING_ID-MAX_DB_SCRIPT_STRING_ID)
