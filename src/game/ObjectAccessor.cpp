@@ -56,15 +56,15 @@ ObjectAccessor::~ObjectAccessor()
 }
 
 Creature*
-ObjectAccessor::GetCreatureOrPetOrVehicle(WorldObject const &u, uint64 guid)
+ObjectAccessor::GetCreatureOrPetOrVehicle(WorldObject const &u, ObjectGuid guid)
 {
-    if(IS_PLAYER_GUID(guid) || !u.IsInWorld())
+    if(guid.IsPlayer() || !u.IsInWorld())
         return NULL;
 
-    if(IS_PET_GUID(guid))
+    if(guid.IsPet())
         return u.GetMap()->GetPet(guid);
 
-    if(IS_VEHICLE_GUID(guid))
+    if(guid.IsVehicle())
         return u.GetMap()->GetVehicle(guid);
 
     return u.GetMap()->GetCreature(guid);

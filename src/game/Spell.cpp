@@ -213,20 +213,8 @@ void SpellCastTargets::read( ByteBuffer& data, Unit *caster )
         m_destX = caster->GetPositionX();
         m_destY = caster->GetPositionY();
         m_destZ = caster->GetPositionZ();
-        bool skiptarget = false;
-        if(spell)
-        {
-            for(int j=0;j<3;j++)
-            {
-                // this is requiered, otherwise it will return SPELL_FAILED_BAD_TARGETS
-                skiptarget |= (spell->EffectImplicitTargetA[j] == TARGET_IN_FRONT_OF_CASTER || spell->EffectImplicitTargetA[j] == TARGET_SCRIPT || spell->EffectImplicitTargetA[j] == TARGET_EFFECT_SELECT);
-            }
-        }
-        if(!skiptarget)
-        {
-            m_unitTarget = caster;
-            m_unitTargetGUID = caster->GetGUID();
-        }
+        m_unitTarget = caster;
+        m_unitTargetGUID = caster->GetGUID();
         return;
     }
 

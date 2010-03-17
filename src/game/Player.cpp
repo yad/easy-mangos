@@ -20408,7 +20408,7 @@ void Player::SendInitialPacketsAfterAddToMap()
     if(GetVehicleGUID())
     {
         WorldPacket data3(SMSG_FORCE_MOVE_ROOT, 10);
-        data3.append(GetPackGUID());
+        data3 << GetPackGUID();
         data3 << (uint32)((m_SeatData.s_flags & SF_CAN_CAST) ? 2 : 0);
         SendMessageToSet(&data3,true);
     }
@@ -20422,7 +20422,7 @@ void Player::SendInitialPacketsAfterAddToMap()
     if(HasAura(64976) || HasAura(57499))
     {
         WorldPacket aura_update(SMSG_AURA_UPDATE);
-        aura_update.append(GetPackGUID());
+        aura_update << GetPackGUID();
         aura_update << uint8(255);
         if(HasAura(64976))
             aura_update << uint32(64976);
@@ -20698,7 +20698,7 @@ void Player::SendAurasForTarget(Unit *target)
                     if(!(auraFlags & AFLAG_NOT_CASTER))
                     {
                         if(aura->GetCaster())
-                            data.append(aura->GetCaster()->GetPackGUID());
+                            data << aura->GetCaster()->GetPackGUID();
                         else
                             data << uint8(0);
                     }
@@ -21708,7 +21708,7 @@ void Player::SendEnterVehicle(Vehicle *vehicle, VehicleSeatEntry const *veSeat)
     // player ----> vehicle ----> zeppelin
 
     WorldPacket data(SMSG_BREAK_TARGET, 8);
-    data.append(vehicle->GetPackGUID());
+    data << vehicle->GetPackGUID();
     GetSession()->SendPacket(&data);
 
     data.Initialize(MSG_MOVE_TELEPORT_ACK, 30);

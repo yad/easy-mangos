@@ -583,18 +583,17 @@ void WorldSession::HandleRequestVehicleSwitchSeat(WorldPacket &recv_data)
 
     if(Vehicle *vehicle = ObjectAccessor::GetVehicle(vehicleGUID))
     {
-        uint64 guid = 0;
-        if(!recv_data.readPackGUID(guid))
-            return;
+        ObjectGuid guid;
+        recv_data >> guid.ReadAsPacked();
 
         int8 seatId = 0;
         recv_data >> seatId;
 
-        if(guid)
+        if(!guid.IsEmpty())
         {
-            if(vehicleGUID != guid)
+            if(vehicleGUID != guid.GetRawValue())
             {
-                if(Vehicle *veh = ObjectAccessor::GetVehicle(guid))
+                if(Vehicle *veh = ObjectAccessor::GetVehicle(guid.GetRawValue()))
                 {
                     if(!_player->IsWithinDistInMap(veh, 10))
                         return;
@@ -628,21 +627,21 @@ void WorldSession::HandleChangeSeatsOnControlledVehicle(WorldPacket &recv_data)
 
     if(Vehicle *vehicle = ObjectAccessor::GetVehicle(vehicleGUID))
     {
-        MovementInfo mi(recv_data);
+        MovementInfo mi;
+        recv_data >> mi;
         //_player->m_movementInfo = mi;
 
-        uint64 guid = 0;
-        if(!recv_data.readPackGUID(guid))
-            return;
+        ObjectGuid guid;
+        recv_data >> guid.ReadAsPacked();
 
         int8 seatId = 0;
         recv_data >> seatId;
 
-        if(guid)
+        if(!guid.IsEmpty())
         {
-            if(vehicleGUID != guid)
+            if(vehicleGUID != guid.GetRawValue())
             {
-                if(Vehicle *veh = ObjectAccessor::GetVehicle(guid))
+                if(Vehicle *veh = ObjectAccessor::GetVehicle(guid.GetRawValue()))
                 {
                     if(!_player->IsWithinDistInMap(veh, 10))
                         return;

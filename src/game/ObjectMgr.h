@@ -988,6 +988,7 @@ class ObjectMgr
         ObjectGuidGenerator<HIGHGUID_ITEM>       m_ItemGuids;
         ObjectGuidGenerator<HIGHGUID_GAMEOBJECT> m_GameobjectGuids;
         ObjectGuidGenerator<HIGHGUID_CORPSE>     m_CorpseGuids;
+        ObjectGuidGenerator<HIGHGUID_VEHICLE>    m_VehicleGuids;
 
         QuestMap            mQuestTemplates;
 
