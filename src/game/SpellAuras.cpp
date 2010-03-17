@@ -1273,7 +1273,7 @@ bool Aura::_RemoveAura()
 void Aura::SendFakeAuraUpdate(uint32 auraId, bool remove)
 {
     WorldPacket data(SMSG_AURA_UPDATE);
-    data.append(m_target->GetPackGUID());
+    data << m_target->GetPackGUID();
     data << uint8(64);
     data << uint32(remove ? 0 : auraId);
 
@@ -1323,7 +1323,7 @@ void Aura::SendAuraUpdate(bool remove)
     if(!(auraFlags & AFLAG_NOT_CASTER))
     {
         if(GetCaster())
-            data.append(GetCaster()->GetPackGUID());
+            data << GetCaster()->GetPackGUID();
         else
             data << uint8(0);
     }
@@ -2893,7 +2893,7 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                             data.Initialize(SMSG_MOVE_SET_CAN_FLY, 12);
                         else
                             data.Initialize(SMSG_MOVE_UNSET_CAN_FLY, 12);
-                        data.append(m_target->GetPackGUID());
+                        data << m_target->GetPackGUID();
                         data << uint32(0);                                      // unknown
                         m_target->SendMessageToSet(&data, true);
 

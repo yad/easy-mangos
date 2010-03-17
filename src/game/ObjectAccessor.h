@@ -108,6 +108,7 @@ class MANGOS_DLL_DECL ObjectAccessor : public MaNGOS::Singleton<ObjectAccessor, 
         //static Player* GetPlayer(Unit const &, uint64 guid) { return FindPlayer(guid); }
         //static Corpse* GetCorpse(WorldObject const &u, uint64 guid);
         //static Pet* GetPet(uint64 guid) { return GetObjectInWorld(guid, (Pet*)NULL); }
+        static Creature* GetCreatureOrPetOrVehicle(WorldObject const &, ObjectGuid guid);
         static Vehicle* GetVehicle(uint64 guid) { return GetGameObjectInWorld(guid, (Vehicle*)NULL); }
         //static Player* FindPlayer(uint64);
 
@@ -179,7 +180,7 @@ inline Unit* ObjectAccessor::GetUnitInWorld(WorldObject const& obj, ObjectGuid g
     if (guid.IsPet())
         return obj.IsInWorld() ? obj.GetMap()->GetPet(guid) : NULL;
 
-    if (IS_VEHICLE_GUID(guid))
+    if (guid.IsVehicle())
         return obj.IsInWorld() ? ((Unit*)obj.GetMap()->GetVehicle(guid)) : NULL;
 
     return GetCreatureInWorld(guid);
