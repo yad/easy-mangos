@@ -320,7 +320,6 @@ bool scan_patches(char* scanmatch, std::vector<std::string>& pArchiveNames)
 {
     int i;
     char path[512];
-    std::list<std::string> matches;
 
     for (i = 1; i <= 99; i++)
     {
@@ -339,14 +338,9 @@ bool scan_patches(char* scanmatch, std::vector<std::string>& pArchiveNames)
 #endif
         {
             fclose(h);
-            matches.push_back(path);
+            //matches.push_back(path);
+            pArchiveNames.push_back(path);
         }
-    }
-
-    matches.reverse();
-    for (std::list<std::string>::iterator i = matches.begin(); i != matches.end(); ++i)
-    {
-        pArchiveNames.push_back(i->c_str());
     }
 
     printf("\n");
@@ -362,6 +356,7 @@ bool fillArchiveNameVector(std::vector<std::string>& pArchiveNames)
     printf("\nGame path: %s\n", input_path);
 
     char path[512];
+    string in_path(input_path);
     std::vector<std::string> locales;
 
     locales.push_back("enGB");
@@ -374,11 +369,29 @@ bool fillArchiveNameVector(std::vector<std::string>& pArchiveNames)
 
     printf("\n");
 
+    // open locale expansion and common files
+    printf("Opening data files from locale directories.\n");
+    for (std::vector<std::string>::iterator i = locales.begin(); i != locales.end(); ++i)
+    {
+        pArchiveNames.push_back(in_path + *i + "/locale-" + *i + ".MPQ");
+        pArchiveNames.push_back(in_path + *i + "/expansion-locale-" + *i + ".MPQ");
+        pArchiveNames.push_back(in_path + *i + "/lichking-locale-" + *i + ".MPQ");
+        printf("\n");
+    }
+
+    // open expansion and common files
+    pArchiveNames.push_back(input_path + string("common.MPQ"));
+    pArchiveNames.push_back(input_path + string("common-2.MPQ"));
+    pArchiveNames.push_back(input_path + string("expansion.MPQ"));
+    pArchiveNames.push_back(input_path + string("lichking.MPQ"));
+
     // now, scan for the patch levels in the core dir
     printf("Loading patch levels from data directory.\n");
     sprintf(path, "%spatch", input_path);
     if (!scan_patches(path, pArchiveNames))
         return(false);
+
+    printf("\n");
 
     // now, scan for the patch levels in locale dirs
     printf("Loading patch levels from locale directories.\n");
@@ -396,31 +409,6 @@ bool fillArchiveNameVector(std::vector<std::string>& pArchiveNames)
         return false;
     }
 
-    // open expansion and common files
-    printf("Opening data files from data directory.\n");
-    sprintf(path, "%slichking.MPQ", input_path);
-    pArchiveNames.push_back(path);
-    sprintf(path, "%scommon-2.MPQ", input_path);
-    pArchiveNames.push_back(path);
-    sprintf(path, "%sexpansion.MPQ", input_path);
-    pArchiveNames.push_back(path);
-    sprintf(path, "%scommon.MPQ", input_path);
-    pArchiveNames.push_back(path);
-    printf("\n");
-
-    // open locale expansion and common files
-    printf("Opening data files from locale directories.\n");
-    for (std::vector<std::string>::iterator i = locales.begin(); i != locales.end(); ++i)
-    {
-        printf("Locale: %s\n", i->c_str());
-        sprintf(path, "%s%s/lichking-locale-%s.MPQ", input_path, i->c_str(), i->c_str());
-        pArchiveNames.push_back(path);
-        sprintf(path, "%s%s/expansion-locale-%s.MPQ", input_path, i->c_str(), i->c_str());
-        pArchiveNames.push_back(path);
-        sprintf(path, "%s%s/locale-%s.MPQ", input_path, i->c_str(), i->c_str());
-        pArchiveNames.push_back(path);
-        printf("\n");
-    }
     return true;
 }
 
@@ -487,6 +475,7 @@ void loadWMOAreaTable()
         exit(1);
     }
     uint32 wmo_area_count = dbc->getRecordCount();
+    std::cout << "WMOAreaTable.dbc has " << wmo_area_count << " entries\n";
     for(uint32 x=0; x<wmo_area_count; ++x)
     {
         int32 rootId = dbc->getRecord(x).getInt(1);
@@ -494,6 +483,7 @@ void loadWMOAreaTable()
         if(groupId == -1)
             groupId = 0;
         uint32 areaId = dbc->getRecord(x).getUInt(10);
+        if(rootId== 5164) std::cout << "5164|" << groupId << " => " << areaId << endl;
         if(!areaId)
             continue;
         uint64 key = uint64(rootId)<<32 | groupId;
