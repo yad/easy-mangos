@@ -2718,11 +2718,18 @@ void Spell::cast(bool skipCheck)
                 if (m_targets.getUnitTarget() && m_targets.getUnitTarget()->getVictim() != m_caster)
                     AddPrecastSpell(67485);                 // Hand of Rekoning (no typos in name ;) )
             }
-            // Divine Shield, Divine Protection or Hand of Protection
-            else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000000000400080))
+            // Divine Shield, Divine Protection 
+            else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000000000400000))
             {
                 AddPrecastSpell(25771);                     // Forbearance
                 AddPrecastSpell(61987);                     // Avenging Wrath Marker
+            }
+            // Hand of Protection 
+            else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000000000000080)) 
+            { 
+                AddPrecastSpell(25771);                     // Forbearance 
+                if (m_targets.getUnitTarget() && m_targets.getUnitTarget() == m_caster) 
+                    AddPrecastSpell(61987);                 // Avenging Wrath Marker 
             }
             else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x200000000000))
                 AddPrecastSpell(61987);                     // Avenging Wrath Marker
@@ -2730,7 +2737,10 @@ void Spell::cast(bool skipCheck)
             else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x000000008000))
             {
                 if (m_targets.getUnitTarget() && m_targets.getUnitTarget() == m_caster)
+                {
                     AddPrecastSpell(25771);                 // Forbearance
+                    AddPrecastSpell(61987);                 // Avenging Wrath Marker
+                }
             }
             break;
         }
@@ -2775,15 +2785,15 @@ void Spell::cast(bool skipCheck)
            aoeAttack = true;
         
        if( aoeAttack )
-	   {
-		   if(m_UniqueTargetInfo.size() > 1)
-		   {
-			   tbb::concurrent_vector<TargetInfo>::iterator itr = m_UniqueTargetInfo.begin();
-			   TargetInfo tInfo = (*itr);
-			   m_UniqueTargetInfo.clear();
-			   m_UniqueTargetInfo.push_back(tInfo);
-		   }
-	   }
+       {
+           if(m_UniqueTargetInfo.size() > 1)
+           {
+               tbb::concurrent_vector<TargetInfo>::iterator itr = m_UniqueTargetInfo.begin();
+               TargetInfo tInfo = (*itr);
+               m_UniqueTargetInfo.clear();
+               m_UniqueTargetInfo.push_back(tInfo);
+           }
+       }
    }
 
     if(m_spellState == SPELL_STATE_FINISHED)                // stop cast if spell marked as finish somewhere in FillTargetMap
@@ -3206,7 +3216,7 @@ void Spell::finish(bool ok)
         m_caster->resetAttackTimer(RANGED_ATTACK);*/
 
     // Clear combo at finish state
-	if((m_caster->GetTypeId() == TYPEID_PLAYER || ((Creature*)m_caster)->isVehicle())&& NeedsComboPoints(m_spellInfo))
+    if((m_caster->GetTypeId() == TYPEID_PLAYER || ((Creature*)m_caster)->isVehicle())&& NeedsComboPoints(m_spellInfo))
     {
         // Not drop combopoints if negative spell and if any miss on enemy exist
         bool needDrop = true;
@@ -4253,6 +4263,15 @@ SpellCastResult Spell::CheckCast(bool strict)
         else if(m_caster->HasAura(m_spellInfo->excludeCasterAuraSpell))
             return SPELL_FAILED_CASTER_AURASTATE;
     }
+    else 
+    { 
+        // Heroism and Exhausted 
+        if (m_spellInfo->Id == 2825 && m_caster->HasAura(57724)) 
+            return SPELL_FAILED_CASTER_AURASTATE; 
+        // Bloodlust and Sated 
+        if (m_spellInfo->Id == 32182 && m_caster->HasAura(57723)) 
+            return SPELL_FAILED_CASTER_AURASTATE; 
+    }
      //check caster for combat
     if(m_caster->isInCombat() && IsNonCombatSpell(m_spellInfo) && !m_caster->isIgnoreUnitState(m_spellInfo) 
        && !m_spellInfo->SpellFamilyFlags & SPELLFAMILYFLAG_ROGUE_STEALTH && m_spellInfo->SpellFamilyFlags & SPELLFAMILYFLAG_ROGUE_VANISH)  // Vanish hack
@@ -4293,8 +4312,22 @@ SpellCastResult Spell::CheckCast(bool strict)
             else if (target->HasAura(m_spellInfo->excludeTargetAuraSpell))
                 return SPELL_FAILED_CASTER_AURASTATE;
         }
-        else if(m_spellInfo->SpellFamilyName == SPELLFAMILY_PALADIN && (m_spellInfo->SpellFamilyFlags & UI64LIT(0x000000008000)) && target->HasAura(25771))
-            return SPELL_FAILED_CASTER_AURASTATE;
+        else 
+        { 
+            //Lay on Hands 
+            if(m_spellInfo->SpellFamilyName == SPELLFAMILY_PALADIN && (m_spellInfo->SpellFamilyFlags & UI64LIT(0x000000008000))) 
+            { 
+                // Forbearance and Awenging Wrath Marker 
+                if(target->HasAura(25771) || target->HasAura(61987)) 
+                    return SPELL_FAILED_CASTER_AURASTATE; 
+            } 
+            // Heroism and Exhausted 
+            if (m_spellInfo->Id == 2825 && target->HasAura(57724)) 
+                return SPELL_FAILED_CASTER_AURASTATE; 
+            // Bloodlust and Sated 
+            if (m_spellInfo->Id == 32182 && target->HasAura(57723)) 
+                return SPELL_FAILED_CASTER_AURASTATE; 
+        }
 
         bool non_caster_target = target != m_caster && !IsSpellWithCasterSourceTargetsOnly(m_spellInfo);
 
