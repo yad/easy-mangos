@@ -28,10 +28,10 @@ typedef unsigned int uint32;
 class WMORoot
 {
 public:
-    int nTextures, nGroups, nP, nLights, nModels, nDoodads, nDoodadSets, RootWMOID;
+    uint32 nTextures, nGroups, nP, nLights, nModels, nDoodads, nDoodadSets, RootWMOID;
     unsigned int col;
-    int bbcorn1[3];
-    int bbcorn2[3];
+    float bbcorn1[3];
+    float bbcorn2[3];
 
     WMORoot(std::string &filename);
     ~WMORoot();
@@ -50,10 +50,11 @@ public:
     int groupName, descGroupName, flags;
     float bbcorn1[3];
     float bbcorn2[3];
-    short moprIdx;
-    short nBatchA;
-    short nBatchB;
-    int nBatchC, fogIdx, liquidType, groupWMOID;
+    uint16 moprIdx;
+    uint16 moprNItems;
+    uint16 nBatchA;
+    uint16 nBatchB;
+    uint32 nBatchC, fogIdx, liquidType, groupWMOID;
 
     int mopy_size,moba_size,hlq_xverts,hlq_yverts;
     int MopyEx_size,IndexExTr_size,LiquEx_size;

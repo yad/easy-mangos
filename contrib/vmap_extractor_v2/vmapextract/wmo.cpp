@@ -154,6 +154,7 @@ bool WMOGroup::open()
             f.read(bbcorn1, 12);
             f.read(bbcorn2, 12);
             f.read(&moprIdx, 2);
+            f.read(&moprNItems, 2);
             f.read(&nBatchA, 2);
             f.read(&nBatchB, 2);
             f.read(&nBatchC, 4);
@@ -227,6 +228,9 @@ int WMOGroup::ConvertToVMAPGroupWmo(FILE *output, uint32 areaID, bool pPreciseVe
     if(pPreciseVectorData)
     {
         fwrite(&flags,sizeof(uint32),1,output);
+        // group bound
+        fwrite(bbcorn1, sizeof(float), 3, output);
+        fwrite(bbcorn2, sizeof(float), 3, output);
         fwrite(&areaID,sizeof(uint32),1,output);
         fwrite(&liquflags,sizeof(uint32),1,output);
         char GRP[] = "GRP ";
@@ -313,6 +317,9 @@ int WMOGroup::ConvertToVMAPGroupWmo(FILE *output, uint32 areaID, bool pPreciseVe
         //printf("Convert GroupWmo...\n");
         //-------GRP -------------------------------------
         fwrite(&flags,sizeof(uint32),1,output);
+        // group bound
+        fwrite(bbcorn1, sizeof(float), 3, output);
+        fwrite(bbcorn2, sizeof(float), 3, output);
         fwrite(&areaID,sizeof(uint32),1,output);
         fwrite(&liquflags,sizeof(uint32),1,output);
         char GRP[] = "GRP ";

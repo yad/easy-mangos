@@ -49,7 +49,7 @@ bool Model::open()
 
 bool Model::ConvertToVMAPModel(char * outfilename)
 {
-    int N[] = {0x00000000};
+    int N[12] = {0,0,0,0,0,0,0,0,0,0,0,0};
     FILE * output=fopen(outfilename,"wb");
     if(!output)
     {
@@ -63,6 +63,7 @@ bool Model::ConvertToVMAPModel(char * outfilename)
     uint32 nofgroups = 1;
     fwrite(&nofgroups,sizeof(uint32), 1, output);
     fwrite(N,4,1,output);// mogp flags
+    fwrite(N,sizeof(float),3*2,output);//bbox, only needed for WMO currently
     fwrite(N,4,1,output);// areaid
     fwrite(N,4,1,output);// liquidflags
     fwrite("GRP ",4,1,output);
@@ -137,10 +138,10 @@ ModelInstance::ModelInstance(MPQFile &f,const char* ModelInstName,const char*Map
     input = fopen(tempname, "r+b");
 
     if(!input)
-	{
-		//printf("ModelInstance::ModelInstance couldn't open %s\n", tempname);
+    {
+        //printf("ModelInstance::ModelInstance couldn't open %s\n", tempname);
         return;
-	}
+    }
 
     fseek(input, 8, SEEK_SET); // get the correct no of vertices
     int nVertices;
