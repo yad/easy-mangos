@@ -1,0 +1,1 @@
+INSERT INTO `mangos_string` VALUES ('11050', 'Vous avez reçu une insigne pour avoir tué un autre joueur.', null, null, null, null, null, null, null, null);

@@ -327,8 +327,10 @@ UPDATE creature_template SET maxhealth = 50000, minhealth = 50000 WHERE entry IN
 
 UPDATE creature_template SET minlevel = 80, maxlevel = 80 WHERE entry IN (28312,32627,28319,32629,28094,28670);
 
-UPDATE creature_template SET speed = 2, InhabitType = 1 WHERE entry IN (28312,32627,28319,32629,28094,29929,28782);
-UPDATE creature_template SET speed = 2.4, InhabitType = 4 WHERE entry IN (28670);
+UPDATE creature_template SET speed_walk = 2, InhabitType = 1 WHERE entry IN (28312,32627,28319,32629,28094,29929,28782);
+UPDATE creature_template SET speed_run = 2, InhabitType = 1 WHERE entry IN (28312,32627,28319,32629,28094,29929,28782);
+UPDATE creature_template SET speed_walk = 2.4, InhabitType = 4 WHERE entry IN (28670);
+UPDATE creature_template SET speed_run = 2.4, InhabitType = 4 WHERE entry IN (28670);
 UPDATE creature_template SET mechanic_immune_mask = 652951551 WHERE entry IN (28670,28312,32627,28319,32629,28094,29929,28782);
 
 DELETE FROM npc_spellclick_spells WHERE npc_entry in (28670, 28312, 32629, 28319, 32627, 28094, 29929, 28782);
@@ -379,7 +381,8 @@ INSERT INTO vehicle_seat_data VALUES
 
 /* Some quests
 Argent tournament*/
-UPDATE creature_template SET speed = '1.5', unit_flags = 8 WHERE entry IN (33844,33845);
+UPDATE creature_template SET speed_walk = '1.5', unit_flags = 8 WHERE entry IN (33844,33845);
+UPDATE creature_template SET speed_run = '1.5', unit_flags = 8 WHERE entry IN (33844,33845);
 DELETE FROM creature_addon WHERE guid IN (SELECT guid FROM creature WHERE id IN (33844,33845));
 DELETE FROM creature WHERE id IN (33844,33845);
 DELETE FROM vehicle_data WHERE entry in (349);
