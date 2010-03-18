@@ -188,7 +188,7 @@ namespace VMAP
     }
     //==========================================================
 
-    bool ModelContainer::writeFile(const char *filename)
+    bool ModelContainer::writeFile(const char *filename, const std::vector<WmoModelExt*> &wmoModels)
     {
         bool result = false;
         uint32 flags=0;
@@ -241,6 +241,14 @@ namespace VMAP
             {
                 iSubModel[i].putToBinBlock(subModelBuff);
                 if(result && fwrite(subModelBuff,SubModel::dumpSize,1,wf) != 1) result = false;
+            }
+
+            if(result && fwrite("WMOE",4,1,wf) != 1) result = false;
+            uint32 nModels = wmoModels.size();
+            if(result && fwrite(&nModels, sizeof(uint32), 1, wf) != 1) result = false;
+            for(int i=0; i<nModels && result; ++i)
+            {
+                if (!wmoModels[i]->writeToFile(wf)) result=false;
             }
 
             fclose(wf);
@@ -321,6 +329,15 @@ namespace VMAP
                     iSubModel[i].setTreeNodeArray(getTreeNodes());
                 }
             }
+            //--- WMO additional data
+            if(result && fread(chunk, 4, 1, rf) != 1) result = false;
+            if(strncmp(chunk, "WMOE", 4) != 0){ printf("ERROR on reading ModelContainer!\n"); result=false; }
+			if(result && fread(&iNWmoModelExt, sizeof(uint32), 1, rf) != 1) result = false;
+            if(result && iNWmoModelExt>0) iWmoModelExt = new WmoModelExt[iNWmoModelExt];
+			for(int i=0; i<iNWmoModelExt && result; ++i)
+			{
+				if (!iWmoModelExt[i].readFromFile(rf)) result=false;
+			}
             fclose(rf);
         }
         return result;
@@ -370,6 +387,15 @@ namespace VMAP
             iTreeNodes[0].intersectRay(pRay, intersectCallback, G3D::distance, vna, pStopAtFirstHit, true);
         }
     }
+
+    // brute force for test :P
+    void ModelContainer::getIntersectingMembers(const G3D::Vector3 &point, G3D::Array<GroupModelBound*> &members) const
+    {
+		printf("ModelContainer: Checking %d WmoModelExt objects for area info\n", iNWmoModelExt);
+        for(int i=0; i<iNWmoModelExt; ++i)
+            iWmoModelExt[i].getIntersectingMembers(point, members);
+    }
+    
     //=================================================================
     void getBounds(const ModelContainer& pMc, G3D::AABox& pAABox)
     {

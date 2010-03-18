@@ -93,6 +93,7 @@ namespace VMAP
             e.g.: "0,1,530"
             */
             virtual void preventMapsFromBeingUsed(const char* pMapIdString) =0;
+            virtual bool getAreaInfo(unsigned int pMapId, float x, float y, float z, unsigned int &areaID, unsigned int &flags) =0;
     };
 
 }

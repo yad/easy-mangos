@@ -504,9 +504,54 @@ namespace VMAP
         return result;
     }
 
+    bool VMapManager::getAreaInfo(unsigned int pMapId, float x, float y, float z, unsigned int &areaID, unsigned int &flags)
+    {
+        bool result=false;
+        if(isLineOfSightCalcEnabled() && iInstanceMapTrees.containsKey(pMapId))
+        {
+            Vector3 pos = convertPositionToInternalRep(x, y, z);
+            printf("VMapManager::getAreaInfo(): x:%f y:%f z:%f => x:%f y:%f z:%f\n", x,y,z,pos.x,pos.y,pos.z);
+            MapTree* mapTree = iInstanceMapTrees.get(pMapId);
+            result = mapTree->getAreaInfo(pos, areaID, flags);
+        }
+        return(result);
+    }
     //=========================================================
     //=========================================================
     //=========================================================
+
+    bool MapTree::getAreaInfo(Vector3 pos, unsigned int &areaID, unsigned int &flags)
+    {
+        AABox pbox(pos, pos);
+        Array<ModelContainer *> mcArray;
+        Array<GroupModelBound*> bounds;
+        iTree->getIntersectingMembers(pbox, mcArray);
+        printf("MapTree::getAreaInfo(): Found %d ModelContainers for position!\n", mcArray.size());
+        for(unsigned int i=0; i<mcArray.size(); ++i)
+        {
+            mcArray[i]->getIntersectingMembers(pos, bounds);
+        }
+        if(bounds.size()>0)
+        {
+            unsigned int pick=0;
+            float minVolume;
+            printf("MapTree::getAreaInfo(): Found %d Bounds for position!\n", bounds.size());
+            for(unsigned int i=0; i<bounds.size(); ++i)
+            {
+                GroupModelBound b=*bounds[i];
+                if(!i) minVolume = b.iBound.volume();
+                else if (minVolume > b.iBound.volume()){ minVolume=b.iBound.volume(); pick=i; }
+                printf("%10u %8X %7.3f,%7.3f,%7.3f | %7.3f,%7.3f,%7.3f | v=%f\n", b.iAreaId, b.iMogpFlags,
+                        b.iBound.low().x, b.iBound.low().y, b.iBound.low().z, 
+                        b.iBound.high().x, b.iBound.high().y, b.iBound.high().z, b.iBound.volume());
+            }
+            areaID = bounds[pick]->iAreaId;
+            flags = bounds[pick]->iMogpFlags;
+            return true;
+        }
+        printf("MapTree::getAreaInfo(): Found no Bounds for position!\n", bounds.size());
+        return false;
+    }
 
     MapTree::MapTree(const char* pBaseDir)
     {

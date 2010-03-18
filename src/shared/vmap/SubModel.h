@@ -115,5 +115,39 @@ namespace VMAP
     void getBounds(const SubModel& pSm, G3D::AABox& pAABox);
     void getBounds(const SubModel* pSm, G3D::AABox& pAABox);
     //====================================
+    
+    class GroupModelBound
+    {
+        public:
+            GroupModelBound() {};
+            GroupModelBound(const G3D::Vector3 &low, const G3D::Vector3 &high, uint32 flags, uint32 areaId):
+                iMogpFlags(flags), iAreaId(areaId), iBound(low, high) {}
+            bool Contains(const G3D::Vector3 &point) const { return iBound.contains(point); }
+
+            uint32 iMogpFlags;// 0x8 outdor; 0x2000 indoor
+            uint32 iAreaId;
+            G3D::AABox iBound;
+    };
+
+    class WmoModelExt
+    {
+        public:
+            WmoModelExt(): iNModelBounds(0), iModelBounds(0), iRoot(0) {}
+            WmoModelExt(const std::vector<GroupModelBound> &bounds, const G3D::Vector3 &pos, const G3D::Vector3 &rot);
+            WmoModelExt(const WmoModelExt &c);
+            ~WmoModelExt();
+            WmoModelExt& operator=(const WmoModelExt&);
+            void getIntersectingMembers(const G3D::Vector3 &point, G3D::Array<GroupModelBound*> &members) const;
+            bool readFromFile(FILE *rf);
+            bool writeToFile(FILE *wf);
+
+        protected:
+            G3D::Vector3 iPos;
+            G3D::Vector3 iRot;
+            G3D::Matrix3 iInvRot;
+            uint32 iNModelBounds;
+            GroupModelBound *iModelBounds;
+            TreeNode *iRoot;
+    };
 }                                                           // VMAP
 #endif

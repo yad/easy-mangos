@@ -51,6 +51,8 @@ namespace VMAP
             uint32 iNSubModel;
             SubModel *iSubModel;
             G3D::AABox iBox;
+            uint32 iNWmoModelExt;
+            WmoModelExt *iWmoModelExt;
 
             // not allowed copy
             explicit ModelContainer (const ModelContainer&);
@@ -76,13 +78,13 @@ namespace VMAP
 
             void fillContainer(const G3D::AABSPTree<SubModel *>::Node& pNode, int &pSubModelPos, int &pTreeNodePos, int &pTrianglePos, G3D::Vector3& pLo, G3D::Vector3& pHi, G3D::Vector3& pFinalLo, G3D::Vector3& pFinalHi);
 
-            bool readRawFile(const char *name);
+            // bool readRawFile(const char *name); // not actually defined or used anywhere...??
 
             inline const G3D::AABox& getAABoxBounds() const { return(iBox); }
 
             inline void setBounds(const G3D::Vector3& lo, const G3D::Vector3& hi) { iBox.set(lo,hi); }
 
-            bool writeFile(const char *filename);
+            bool writeFile(const char *filename, const std::vector<WmoModelExt*> &wmoModels);
 
             bool readFile(const char *filename);
 
@@ -94,6 +96,7 @@ namespace VMAP
 
             template<typename RayCallback>
             void intersectRay(const G3D::Ray& ray, RayCallback& intersectCallback, float& distance, bool pStopAtFirstHit, bool intersectCallbackIsFast = false);
+            void getIntersectingMembers(const G3D::Vector3 &point, G3D::Array<GroupModelBound*> &members) const;
 
             bool operator==(const ModelContainer& pMc2) const;
     };

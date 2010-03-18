@@ -337,9 +337,12 @@ namespace VMAP
         {
             mainTree->balance();
             modelContainer = new ModelContainer(mainTree);
-            modelContainer->writeFile(pDestFileName);
+            modelContainer->writeFile(pDestFileName, tempModelExt);
         }
         removeEntriesFromTree(mainTree);
+        for(size_t i=0; i<tempModelExt.size(); ++i)
+            delete tempModelExt[i];
+        tempModelExt.clear();
 
         delete mainTree;
 
@@ -403,6 +406,7 @@ namespace VMAP
         READ_OR_RETURN(&tempNVectors, sizeof(tempNVectors));
 
         G3D::uint32 groups;
+        std::vector<GroupModelBound> boundsArray;
         char blockId[5];
         blockId[4] = 0;
         int blocksize;
@@ -428,9 +432,19 @@ namespace VMAP
 
             G3D::uint32 mogpflags;
             READ_OR_RETURN(&mogpflags, sizeof(G3D::uint32));
+            
+            float bbox1[3], bbox2[3];
+            READ_OR_RETURN(bbox1, sizeof(float)*3);
+            READ_OR_RETURN(bbox2, sizeof(float)*3);
 
             G3D::uint32 areaID;
             READ_OR_RETURN(&areaID, sizeof(G3D::uint32));
+
+            if(areaID != 0 || mogpflags != 0)
+            {
+                boundsArray.push_back(GroupModelBound(Vector3(bbox1), Vector3(bbox2), mogpflags, areaID));
+                printf("Bbox: %f, %f, %f | %f, %f, %f  areaID=%d flags=%X\n", bbox1[0], bbox1[1], bbox1[2], bbox2[0], bbox2[1], bbox2[2], areaID, mogpflags);
+            }
 
             G3D::uint32 liquidflags;
             READ_OR_RETURN(&liquidflags, sizeof(G3D::uint32));
@@ -554,6 +568,10 @@ namespace VMAP
             delete gtree;
         }
         fclose(rf);
+        if(!boundsArray.empty())
+        {
+            tempModelExt.push_back(new WmoModelExt(boundsArray, pModelPosition.iPos, pModelPosition.iDir));
+        }
         return true;
     }
 
