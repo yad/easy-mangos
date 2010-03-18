@@ -113,6 +113,7 @@ namespace VMAP
             void getModelContainer(G3D::Array<ModelContainer *>& pArray ) { iTree->getMembers(pArray); }
             void addDirFile(const std::string& pDirName, const FilesInDir& pFilesInDir) { iLoadedDirFiles.set(pDirName, pFilesInDir); }
             size_t size() { return(iTree->size()); }
+            bool getAreaInfo(G3D::Vector3 pos, uint32 &areaID, uint32 &flags);
     };
 
     //===========================================================
@@ -168,6 +169,7 @@ namespace VMAP
             bool processCommand(char *pCommand);            // for debug and extensions
 
             void preventMapsFromBeingUsed(const char* pMapIdString);
+            bool getAreaInfo(unsigned int pMapId, float x, float y, float z, unsigned int &areaID, unsigned int &flags);
     };
 }
 #endif

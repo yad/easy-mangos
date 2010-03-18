@@ -1645,6 +1645,13 @@ float Map::GetHeight(float x, float y, float z, bool pUseVmaps) const
     }
 }
 
+bool Map::GetAreaInfo(float x, float y, float z, uint32 &areaID, uint32 &flags) const
+{
+    VMAP::IVMapManager* vmgr = VMAP::VMapFactory::createOrGetVMapManager();
+    return vmgr->getAreaInfo(GetId(), x, y, z, areaID, flags);
+}
+
+
 uint16 Map::GetAreaFlag(float x, float y, float z) const
 {
     uint16 areaflag;

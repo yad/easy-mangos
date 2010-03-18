@@ -62,6 +62,7 @@ namespace VMAP
             bool (*iFilterMethod)(char *pName);
             G3D::Table<std::string, unsigned int > iUniqueNameIds;
             unsigned int iCurrentUniqueNameId;
+            std::vector<WmoModelExt*> tempModelExt;
 
         public:
             TileAssembler(const std::string& pSrcDirName, const std::string& pDestDirName);

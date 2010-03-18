@@ -551,27 +551,27 @@ public:
             face a second test against the sphere. */
         void getIntersectingMembers(
             const AABox&        box,
-            const Sphere&       sphere,
-            Array<T>&           members,
-            bool                useSphere) const {
+            /* const Sphere&       sphere, */
+            Array<T>&           members/* ,
+            bool                useSphere */) const {
 
             // Test all values at this node
             for (int v = 0; v < boundsArray.size(); ++v) {
                 const AABox& bounds = boundsArray[v];
-                if (bounds.intersects(box) &&
-                    (! useSphere || bounds.intersects(sphere))) {
+                if (bounds.intersects(box) /* &&
+                    (! useSphere || bounds.intersects(sphere)) */) {
                     members.append(valueArray[v]->value);
                 }
             }
 
             // If the left child overlaps the box, recurse into it
             if ((child[0] != NULL) && (box.low()[splitAxis] < splitLocation)) {
-                child[0]->getIntersectingMembers(box, sphere, members, useSphere);
+                child[0]->getIntersectingMembers(box, /* sphere, */ members/* , useSphere */);
             }
 
             // If the right child overlaps the box, recurse into it
             if ((child[1] != NULL) && (box.high()[splitAxis] > splitLocation)) {
-                child[1]->getIntersectingMembers(box, sphere, members, useSphere);
+                child[1]->getIntersectingMembers(box, /* sphere, */ members/* , useSphere */);
             }
         }
 
@@ -1429,7 +1429,7 @@ public:
         if (root == NULL) {
             return;
         }
-        root->getIntersectingMembers(box, Sphere(Vector3::zero(), 0), members, false);
+        root->getIntersectingMembers(box, /* Sphere(Vector3::zero(), 0), */ members/* , false */);
     }
 
 
@@ -1502,7 +1502,7 @@ public:
     /**
       @param members The results are appended to this array.
      */
-    void getIntersectingMembers(const Sphere& sphere, Array<T>& members) const {
+    /* void getIntersectingMembers(const Sphere& sphere, Array<T>& members) const {
         if (root == NULL) {
             return;
         }
@@ -1511,7 +1511,7 @@ public:
         sphere.getBounds(box);
         root->getIntersectingMembers(box, sphere, members, true);
 
-    }
+    } */
 #if 0
     /**
       Stores the locations of the splitting planes (the structure but not the content)

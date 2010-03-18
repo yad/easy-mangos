@@ -260,4 +260,69 @@ namespace VMAP
     }
     //==========================================================
 
+    WmoModelExt::WmoModelExt(const std::vector<GroupModelBound> &bounds, const G3D::Vector3 &pos, const G3D::Vector3 &rot):
+        iPos(pos), iRot(rot), iNModelBounds(0), iModelBounds(0), iRoot(0)
+    {
+        iNModelBounds = bounds.size();
+        iModelBounds = new GroupModelBound[iNModelBounds];
+        memcpy(iModelBounds, &bounds.front(), iNModelBounds * sizeof(GroupModelBound));
+    }
+
+    WmoModelExt::WmoModelExt(const WmoModelExt &c): iPos(c.iPos), iRot(c.iRot), iInvRot(c.iInvRot), iNModelBounds(c.iNModelBounds)
+    {
+        iModelBounds = new GroupModelBound[iNModelBounds];
+        memcpy(iModelBounds, c.iModelBounds, iNModelBounds*sizeof(GroupModelBound));
+        //TODO copy tree, when available
+    }
+
+    WmoModelExt::~WmoModelExt()
+    {
+        if(iModelBounds)
+            delete[] iModelBounds;
+        //TODO delete tree, when available
+    }
+
+    WmoModelExt& WmoModelExt::operator=(const WmoModelExt &c)
+    {
+        iPos = c.iPos, iRot = c.iRot, iInvRot = c.iInvRot, iNModelBounds = c.iNModelBounds;
+        if(iModelBounds) delete[] iModelBounds;
+        iModelBounds = new GroupModelBound[iNModelBounds];
+        memcpy(iModelBounds, c.iModelBounds, iNModelBounds*sizeof(GroupModelBound));
+        //TODO copy tree, when available
+    }
+
+    // brute force for test :P
+    void WmoModelExt::getIntersectingMembers(const G3D::Vector3 &point, G3D::Array<GroupModelBound*> &members) const
+    {
+        // child bounds are defined in object space:
+        G3D::Vector3 p = point - iPos;
+        p = iInvRot * p;
+        for(uint32 i=0; i<iNModelBounds; ++i)
+        {
+            if(iModelBounds[i].Contains(p))
+                members.push_back(iModelBounds+i);
+        }
+    }
+
+    bool WmoModelExt::readFromFile(FILE *rf)
+    {
+        if(iModelBounds) delete[] iModelBounds;
+        iModelBounds = 0;
+
+        if (fread(&iPos, sizeof(float), 3, rf) != 3) return false;
+        if (fread(&iRot, sizeof(float), 3, rf) != 3) return false;
+        if (fread(&iNModelBounds, sizeof(uint32), 1, rf) != 1) return false;
+        iModelBounds = new GroupModelBound[iNModelBounds];
+        if (fread(iModelBounds, sizeof(GroupModelBound), iNModelBounds, rf) != iNModelBounds) return false;
+        iInvRot = (G3D::Matrix3::fromEulerAnglesZYX(G3D::pi()*iRot.y/180.f, G3D::pi()*iRot.x/180.f, G3D::pi()*iRot.z/180.f)).inverse();
+        return true;
+    }
+    bool WmoModelExt::writeToFile(FILE *wf)
+    {
+        if (fwrite(&iPos, sizeof(float), 3, wf) != 3) return false;
+        if (fwrite(&iRot, sizeof(float), 3, wf) != 3) return false;
+        if (fwrite(&iNModelBounds, sizeof(uint32), 1, wf) != 1) return false;
+        if (fwrite(iModelBounds, sizeof(GroupModelBound), iNModelBounds, wf) != iNModelBounds) return false;
+        return true;
+    }
 }
