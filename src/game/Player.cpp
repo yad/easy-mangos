@@ -60,6 +60,7 @@
 #include "Spell.h"
 #include "SocialMgr.h"
 #include "AchievementMgr.h"
+#include "Mail.h"
 #include "GameEventMgr.h"
 
 #include <cmath>
@@ -19515,12 +19516,9 @@ void Player::SendAurasForTarget(Unit *target)
                     else
                         data << uint8(aura->GetStackAmount());
 
-                    if(!(auraFlags & AFLAG_NOT_CASTER))
+                    if(!(auraFlags & AFLAG_NOT_CASTER))     // packed GUID of caster
                     {
-                        if(aura->GetCaster())
-                            data << aura->GetCaster()->GetPackGUID();
-                        else
-                            data << uint8(0);
+                        data.appendPackGUID(aura->GetCasterGUID());
                     }
 
                     if(auraFlags & AFLAG_DURATION)          // include aura duration

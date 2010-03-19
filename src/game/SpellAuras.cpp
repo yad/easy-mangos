@@ -1323,10 +1323,7 @@ void Aura::SendAuraUpdate(bool remove)
 
     if(!(auraFlags & AFLAG_NOT_CASTER))
     {
-        if(GetCaster())
-            data << GetCaster()->GetPackGUID();
-        else
-            data << uint8(0);
+        data.appendPackGUID(GetCasterGUID());
     }
 
     if(auraFlags & AFLAG_DURATION)
