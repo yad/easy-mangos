@@ -839,20 +839,29 @@ void BattleGround::EndBattleGround(uint32 winner)
 uint32 BattleGround::GetBonusHonorFromKill(uint32 kills) const
 {
     uint32 reqmap = 0;
-    uint32 BGEventMultifier = 1;
-    //arathi basin
+    float BGEventMultifier = 1;
+    // Arathi Basin
     if(sGameEventMgr.IsActiveEvent(41))
         reqmap = 529;
-    // eye of storm
+    // Eye of Storm
     if(sGameEventMgr.IsActiveEvent(42))
         reqmap = 566;
-    // warsong gulch
+    // Warsong Gulch
     if(sGameEventMgr.IsActiveEvent(43))
        reqmap = 489;
+    // Alterac Valley
+    if(sGameEventMgr.IsActiveEvent(44))
+        reqmap = 30;
+    // Isle of Conquest
+    if(sGameEventMgr.IsActiveEvent(45))
+        reqmap = 628;
+    // Strand of the Ancients
+    if(sGameEventMgr.IsActiveEvent(46))
+        reqmap = 607;
     if (GetMapId() == reqmap)
-      BGEventMultifier *= 1.5;
+      BGEventMultifier = 1.5;
     //variable kills means how many honorable kills you scored (so we need kills * honor_for_one_kill)
-    return ((uint32)MaNGOS::Honor::hk_honor_at_level(GetMaxLevel(), kills)*BGEventMultifier);
+    return ((uint32)(MaNGOS::Honor::hk_honor_at_level(GetMaxLevel(), kills)*BGEventMultifier));
 }
 
 uint32 BattleGround::GetBattlemasterEntry() const
@@ -1252,12 +1261,12 @@ void BattleGround::AddPlayer(Player *plr)
     else
     {
         if(GetStatus() == STATUS_WAIT_JOIN)                 // not started yet
-		{
-			plr->CastSpell(plr, SPELL_PREPARATION, true);   // reduces all mana cost of spells.
-			if (plr->IsMounted())
+        {
+            plr->CastSpell(plr, SPELL_PREPARATION, true);   // reduces all mana cost of spells.
+            if (plr->IsMounted())
                 plr->RemoveSpellsCausingAura(SPELL_AURA_MOUNTED); // dismount on bg start
-		}
-	}
+        }
+    }
     plr->GetAchievementMgr().ResetAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HEALING_DONE, ACHIEVEMENT_CRITERIA_CONDITION_MAP, GetMapId());
     plr->GetAchievementMgr().ResetAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_DAMAGE_DONE, ACHIEVEMENT_CRITERIA_CONDITION_MAP, GetMapId());
 
