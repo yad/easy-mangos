@@ -27,6 +27,7 @@
 #include "WorldPacket.h"
 #include "Language.h"
 #include "MapManager.h"
+#include "GameEventMgr.h"
 
 BattleGroundWS::BattleGroundWS()
 {
@@ -227,6 +228,9 @@ void BattleGroundWS::EventPlayerCapturedFlag(Player *Source)
     }
     //for flag capture is reward 2 honorable kills
     RewardHonorToTeam(GetBonusHonorFromKill(2), Source->GetTeam());
+
+    //flag carrier gets another 2 honorable kills
+    Source->RewardHonor(NULL, 0, GetBonusHonorFromKill(2));
 
     // despawn flags
     SpawnEvent(WS_EVENT_FLAG_A, 0, false);
