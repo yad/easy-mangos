@@ -4285,8 +4285,10 @@ void Aura::HandleModStealth(bool apply, bool Real)
 {
     if (apply)
     {
+        // stop being attacked and interrupt casts
+        m_target->CombatStop();
         // drop flag at stealth in bg
-         m_target->RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_IMMUNE_OR_LOST_SELECTION);
+        m_target->RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_IMMUNE_OR_LOST_SELECTION);
 
         // only at real aura add
         if (Real)
