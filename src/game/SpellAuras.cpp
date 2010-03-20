@@ -1181,7 +1181,7 @@ bool Aura::_RemoveAura()
         if(m_spellProto->Dispel == DISPEL_ENRAGE)
             m_target->ModifyAuraState(AURA_STATE_ENRAGE, false);
 
-		// Mechanic bleed aura state
+        // Mechanic bleed aura state
         if(GetAllSpellMechanicMask(m_spellProto) & (1 << (MECHANIC_BLEED-1)))
         {
             bool found = false;
@@ -1196,7 +1196,7 @@ bool Aura::_RemoveAura()
             }
             if(!found)
                 m_target->ModifyAuraState(AURA_STATE_MECHANIC_BLEED, false);
-		}
+        }
 
         uint32 removeState = 0;
         uint64 removeFamilyFlag = m_spellProto->SpellFamilyFlags;
@@ -2688,15 +2688,18 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
 
             return;
         }
-
-        if (m_removeMode == AURA_REMOVE_BY_DEATH)
+        // Arcane Missiles
+        if (m_spellProto->SpellFamilyName == SPELLFAMILY_MAGE && (m_spellProto->SpellFamilyFlags & UI64LIT(0x0000000000000800)))
         {
-            // Stop caster Arcane Missle chanelling on death
-            if (m_spellProto->SpellFamilyName == SPELLFAMILY_MAGE && (m_spellProto->SpellFamilyFlags & UI64LIT(0x0000000000000800)))
+            //Remove arcane blast
+            if (Unit* caster = GetCaster())
+                caster->RemoveAurasDueToSpell(36032);
+
+            //Stop channeling at death
+            if (m_removeMode == AURA_REMOVE_BY_DEATH)
             {
                 if (Unit* caster = GetCaster())
                     caster->InterruptSpell(CURRENT_CHANNELED_SPELL);
-
                 return;
             }
         }
@@ -7248,7 +7251,7 @@ void Aura::HandleSchoolAbsorb(bool apply, bool Real)
                         //Borrowed Time
                         Unit::AuraList const& borrowedTime = caster->GetAurasByType(SPELL_AURA_DUMMY);
                         for(Unit::AuraList::const_iterator itr = borrowedTime.begin(); itr != borrowedTime.end(); ++itr)
-					    {
+                        {
                             SpellEntry const* i_spell = (*itr)->GetSpellProto();
                             if(i_spell->SpellFamilyName==SPELLFAMILY_PRIEST && i_spell->SpellIconID == 2899 && i_spell->EffectMiscValue[(*itr)->GetEffIndex()] == 24)
                             {

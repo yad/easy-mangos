@@ -1053,6 +1053,14 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
         if (m_canTrigger && missInfo != SPELL_MISS_REFLECT)
             caster->ProcDamageAndSpell(unit, real_caster ? procAttacker : PROC_FLAG_NONE, procVictim, procEx, 0, m_attackType, m_spellInfo);
     }
+    // remove Arcane Blast buffs at any non-Arcane Blast arcane damage spell.
+    // NOTE: it removed at hit instead cast because currently spell done-damage calculated at hit instead cast
+    // For arcane missiles its removed in Aura::HandleAuraDummy();
+    if ((m_spellInfo->SchoolMask & SPELL_SCHOOL_MASK_ARCANE) && !(m_spellInfo->SpellFamilyFlags & UI64LIT(0x20000000))
+        && !m_IsTriggeredSpell && !IsChanneledSpell(m_spellInfo))
+    {
+        m_caster->RemoveAurasDueToSpell(36032); // Arcane Blast buff
+    }
 
     // Call scripted function for AI if this spell is casted upon a creature
     if (unit->GetTypeId() == TYPEID_UNIT)
@@ -1418,7 +1426,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
         }
         default:
             break;
-	}
+    }
 
     Unit::AuraList const& mod = m_caster->GetAurasByType(SPELL_AURA_MOD_MAX_AFFECTED_TARGETS);
     for(Unit::AuraList::const_iterator m = mod.begin(); m != mod.end(); ++m)
