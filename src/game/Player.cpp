@@ -2130,7 +2130,7 @@ Creature* Player::GetNPCIfCanInteractWith(ObjectGuid guid, uint32 npcflagmask)
         return NULL;
 
     //needed for call stabled pet
-    if (GetGUID() == guid)
+    if (GetGUID() == guid.GetRawValue())
         return ((Creature*)this);
 
     // exist (we need look pets also for some interaction (quest/etc)
