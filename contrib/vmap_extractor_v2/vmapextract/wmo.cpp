@@ -1,7 +1,10 @@
 
+#include "vmapexport.h"
 #include "wmo.h"
+#include "vec3d.h"
 #include <cstdio>
 #include <cstdlib>
+#include <map>
 #undef min
 #undef max
 #include "mpq_libmpq.h"
@@ -21,10 +24,8 @@ bool WMORoot::open()
         return false;
     }
 
-    size_t size;
+    uint32 size;
     char fourcc[5];
-    bbcorn1[3] = 0;
-    bbcorn2[3]= 0;
 
     while (!f.isEof())
     {
@@ -125,10 +126,8 @@ bool WMOGroup::open()
         printf("No such file.\n");
         return false;
     }
-    size_t size;
+    uint32 size;
     char fourcc[5];
-    bbcorn1[3] = 0;
-    bbcorn2[3] = 0;
     while (!f.isEof())
     {
         f.read(fourcc,4);
@@ -479,7 +478,7 @@ WMOGroup::~WMOGroup()
 {
 }
 
-WMOInstance::WMOInstance(MPQFile &f,const char* WmoInstName,const char*MapName, FILE *pDirfile)
+WMOInstance::WMOInstance(MPQFile &f,const char* WmoInstName, uint32 mapID, uint32 tileX, uint32 tileY, FILE *pDirfile)
 {
     pos = Vec3D(0,0,0);
 
@@ -498,25 +497,9 @@ WMOInstance::WMOInstance(MPQFile &f,const char* WmoInstName,const char*MapName, 
 
     doodadset = (d2 & 0xFFFF0000) >> 16;
 
-    int realx1 = (int) ((float) pos2.x / 533.333333f);
-    int realy1 = (int) ((float) pos2.z / 533.333333f);
-    int realx2 = (int) ((float) pos3.x / 533.333333f);
-    int realy2 = (int) ((float) pos3.z / 533.333333f);
-
-    if(realx1 < 0)
-    {
-        realx1 +=20; realx2+=20;
-    }
-    if(realy1 < 0)
-    {
-        realy1 +=20; realy2+=20;
-    } // hack to prevent neg. values
-
     //-----------add_in _dir_file----------------
 
     char tempname[512];
-    //    const char dirname[] = "buildings\\dir";
-
     sprintf(tempname, "Buildings/%s", WmoInstName);
     FILE *input;
     input = fopen(tempname, "r+b");
@@ -535,24 +518,34 @@ WMOInstance::WMOInstance(MPQFile &f,const char* WmoInstName,const char*MapName, 
     if(nVertices == 0)
         return;
 
-    /*    FILE *dirfile;
-    dirfile = fopen(dirname, "ab");
-    if(!dirfile)
-    {
-    printf("Can't open dirfile!'%s'\n");
-    return;
-    }
-    */
     float x,z;
     x = pos.x;
     z = pos.z;
     if(x==0 && z == 0)
     {
-        x = 533.33333f*32;
-        z = 533.33333f*32;
+        pos.x = 533.33333f*32;
+        pos.z = 533.33333f*32;
     }
 
-    fprintf(pDirfile,"%s/%s %f,%f,%f_%f,%f,%f 1.0 %d %d %d,%d %d\n",
+    float scale = 1.0f;
+    uint32 flags = 0;
+    if(tileX == 65 && tileY == 65) flags |= MOD_WORLDSPAWN;
+    //write mapID, tileX, tileY, Flags, ID, Pos, Rot, Scale, Bound_lo, Bound_hi, name
+    fwrite(&mapID, sizeof(uint32), 1, pDirfile);
+    fwrite(&tileX, sizeof(uint32), 1, pDirfile);
+    fwrite(&tileY, sizeof(uint32), 1, pDirfile);
+    fwrite(&flags, sizeof(uint32), 1, pDirfile);
+    fwrite(&id, sizeof(uint32), 1, pDirfile);
+    fwrite(&pos, sizeof(float), 3, pDirfile);
+    fwrite(&rot, sizeof(float), 3, pDirfile);
+    fwrite(&scale, sizeof(float), 1, pDirfile);
+    fwrite(&pos2, sizeof(float), 3, pDirfile);
+    fwrite(&pos3, sizeof(float), 3, pDirfile);
+    uint32 nlen=strlen(WmoInstName);
+    fwrite(&nlen, sizeof(uint32), 1, pDirfile);
+    fwrite(WmoInstName, sizeof(char), nlen, pDirfile);
+    
+    /* fprintf(pDirfile,"%s/%s %f,%f,%f_%f,%f,%f 1.0 %d %d %d,%d %d\n",
         MapName,
         WmoInstName,
         (float) x, (float) pos.y, (float) z,
@@ -560,7 +553,7 @@ WMOInstance::WMOInstance(MPQFile &f,const char* WmoInstName,const char*MapName, 
         nVertices,
         realx1, realy1,
         realx2, realy2
-        );
+        ); */
 
     // fclose(dirfile);
 }

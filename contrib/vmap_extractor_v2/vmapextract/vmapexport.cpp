@@ -16,6 +16,7 @@
 #include <iostream>
 #include <vector>
 #include <list>
+#include <errno.h>
 
 #ifdef WIN32
     #include <Windows.h>
@@ -251,7 +252,7 @@ void ParsMapFiles()
         sprintf(id,"%03u",map_ids[i].id);
         sprintf(fn,"World\\Maps\\%s\\%s.wdt", map_ids[i].name, map_ids[i].name);
         WDTFile WDT(fn,map_ids[i].name);
-        if(WDT.init(id))
+        if(WDT.init(id, map_ids[i].id))
         {
             for (int x=0; x<64; ++x)
             {
@@ -259,8 +260,8 @@ void ParsMapFiles()
                 {
                     if (ADTFile*ADT = WDT.GetMap(x,y))
                     {
-                        sprintf(id_filename,"%02u %02u %03u",x,y,map_ids[i].id);//!!!!!!!!!
-                        ADT->init(id_filename);
+                        //sprintf(id_filename,"%02u %02u %03u",x,y,map_ids[i].id);//!!!!!!!!!
+                        ADT->init(map_ids[i].id, x, y);
                         delete ADT;
                     }
                 }
@@ -268,31 +269,6 @@ void ParsMapFiles()
         }
     }
 }
-#if 0
-void ParsMapFiles()
-{
-    char fn[512];
-    for (unsigned int i=0; i<map_count; ++i)
-    {
-        sprintf(fn,"World\\Maps\\%s\\%s.wdt", map_ids[i].name, map_ids[i].name);
-        WDTFile WDT(fn,map_ids[i].name);
-        if(WDT.init())
-        {
-            for (int x=0; x<64; ++x)
-            {
-                for (int y=0; y<64; ++y)
-                {
-                    if (ADTFile*ADT = WDT.GetMap(x,y))
-                    {
-                        ADT->init();
-                        delete ADT;
-                    }
-                }
-            }
-        }
-    }
-}
-#endif
 
 void getGamePath()
 {
@@ -532,7 +508,7 @@ int main(int argc, char ** argv)
 #endif
                     ))
 // TODO: replace GetLastError() call to catch already existing dir case
-            success=false;
+            success = (errno == EEXIST);
 //            nError = GetLastError();
 //        if(nError == ERROR_ALREADY_EXISTS)
 //            nError = ERROR_SUCCESS;

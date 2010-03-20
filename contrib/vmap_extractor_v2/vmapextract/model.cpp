@@ -1,4 +1,6 @@
+#include "vmapexport.h"
 #include "model.h"
+#include "wmo.h"
 #include "mpq_libmpq.h"
 #include <cassert>
 #include <algorithm>
@@ -120,10 +122,10 @@ Vec3D fixCoordSystem2(Vec3D v)
     return Vec3D(v.x, v.z, v.y);
 }
 
-ModelInstance::ModelInstance(MPQFile &f,const char* ModelInstName,const char*MapName,  FILE *pDirfile)
+ModelInstance::ModelInstance(MPQFile &f,const char* ModelInstName, uint32 mapID, uint32 tileX, uint32 tileY, FILE *pDirfile)
 {
     float ff[3];
-    f.read(&d1, 4);
+    f.read(&id, 4);
     f.read(ff,12);
     pos = Vec3D(ff[0],ff[1],ff[2]);
     f.read(ff,12);
@@ -151,22 +153,34 @@ ModelInstance::ModelInstance(MPQFile &f,const char* ModelInstName,const char*Map
     if(nVertices == 0)
         return;
 
-    if(pDirfile)
-    {
-        int realx1 = (int) ((float) pos.x / 533.333333f);
-        int realy1 = (int) ((float) pos.z / 533.333333f);
-        int realx2 = (int) ((float) pos.x / 533.333333f);
-        int realy2 = (int) ((float) pos.z / 533.333333f);
+    uint32 flags = MOD_M2;
+	if(tileX == 65 && tileY == 65) flags |= MOD_WORLDSPAWN;
+    //write mapID, tileX, tileY, Flags, ID, Pos, Rot, Scale, name
+    fwrite(&mapID, sizeof(uint32), 1, pDirfile);
+    fwrite(&tileX, sizeof(uint32), 1, pDirfile);
+    fwrite(&tileY, sizeof(uint32), 1, pDirfile);
+    fwrite(&flags, sizeof(uint32), 1, pDirfile);
+    fwrite(&id, sizeof(uint32), 1, pDirfile);
+    fwrite(&pos, sizeof(float), 3, pDirfile);
+    fwrite(&rot, sizeof(float), 3, pDirfile);
+    fwrite(&sc, sizeof(float), 1, pDirfile);
+    uint32 nlen=strlen(ModelInstName);
+    fwrite(&nlen, sizeof(uint32), 1, pDirfile);
+    fwrite(ModelInstName, sizeof(char), nlen, pDirfile);
 
-        fprintf(pDirfile,"%s/%s %f,%f,%f_%f,%f,%f %f %d %d %d,%d %d\n",
-            MapName,
-            ModelInstName,
-            (float) pos.x, (float) pos.y, (float) pos.z,
-            (float) rot.x, (float) rot.y, (float) rot.z,
-            sc,
-            nVertices,
-            realx1, realy1,
-            realx2, realy2
-            );
-    }
+    /* int realx1 = (int) ((float) pos.x / 533.333333f);
+    int realy1 = (int) ((float) pos.z / 533.333333f);
+    int realx2 = (int) ((float) pos.x / 533.333333f);
+    int realy2 = (int) ((float) pos.z / 533.333333f);
+
+    fprintf(pDirfile,"%s/%s %f,%f,%f_%f,%f,%f %f %d %d %d,%d %d\n",
+        MapName,
+        ModelInstName,
+        (float) pos.x, (float) pos.y, (float) pos.z,
+        (float) rot.x, (float) rot.y, (float) rot.z,
+        sc,
+        nVertices,
+        realx1, realy1,
+        realx2, realy2
+        ); */
 }

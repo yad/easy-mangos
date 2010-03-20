@@ -98,7 +98,7 @@ public:
     int nMDX;
     string* WmoInstansName;
     string* ModelInstansName;
-    bool init(char *map_id);
+    bool init(uint32 map_num, uint32 tileX, uint32 tileY);
     //void LoadMapChunks();
 
     //uint32 wmo_count;
