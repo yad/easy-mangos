@@ -24,7 +24,6 @@ typedef unsigned char uint8;
 typedef unsigned short uint16;
 typedef unsigned int uint32;
 
-
 class WMORoot
 {
 public:
@@ -106,10 +105,10 @@ public:
     WMOGroup *wmo;
     Vec3D pos;
     Vec3D pos2, pos3, rot;
-    int indx,id, d2, d3;
+    uint32 indx,id, d2, d3;
     int doodadset;
 
-    WMOInstance(MPQFile &f,const char* WmoInstName,const char*MapName, FILE *pDirfile);
+    WMOInstance(MPQFile &f,const char* WmoInstName, uint32 mapID, uint32 tileX, uint32 tileY, FILE *pDirfile);
 
     static void reset();
 };
