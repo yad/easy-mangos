@@ -14076,6 +14076,27 @@ struct SetPvPHelper
     void operator()(Unit* unit) const { unit->SetPvP(state); }
     bool state;
 };
+
+void Unit::ChangeSeat(int8 seatId, bool next)
+{
+    Vehicle *m_vehicle = ObjectAccessor::GetVehicle(GetVehicleGUID());
+
+    if (!m_vehicle)
+        return;
+
+    if (seatId < 0)
+    {
+        seatId = m_vehicle->GetNextEmptySeatNum(m_movementInfo.GetTransportSeat(), next);
+        if (seatId < 0)
+            return;
+    }
+    else if (seatId == m_movementInfo.GetTransportSeat() || !m_vehicle->HasEmptySeat(seatId))
+        return;
+
+    m_vehicle->RemovePassenger(this);
+    EnterVehicle(m_vehicle, seatId);
+}
+
 void Unit::EnterVehicle(Vehicle *vehicle, int8 seat_id, bool force)
 {
     // dont allow multiple vehicles
@@ -14187,7 +14208,7 @@ void Unit::BuildVehicleInfo(Unit *target)
     WorldPacket data(MSG_MOVE_HEARTBEAT, 100);
     data << target->GetPackGUID();
     data << uint32(MOVEFLAG_ONTRANSPORT | 0x00000800);
-    data << uint16(0);
+    data << uint16(m_movementInfo.GetMovementFlags2());
     data << uint32(getMSTime());
     data << float(target->GetPositionX());
     data << float(target->GetPositionY());
@@ -14200,9 +14221,11 @@ void Unit::BuildVehicleInfo(Unit *target)
     data << float(target->m_SeatData.Orientation);
     data << uint32(veh_time);
     data << uint8 (target->m_SeatData.seat);
-    data << uint32(0);
-    if(GetTypeId() == TYPEID_PLAYER)
-        ((Player*)this)->GetSession()->SendPacket(&data);
+    data << uint32(m_movementInfo.GetFallTime());
+    //data << uint32(0);
+    SendMessageToSet(&data, GetTypeId() == TYPEID_PLAYER ? true : false);
+  //  if(GetTypeId() == TYPEID_PLAYER)
+    //    ((Player*)this)->GetSession()->SendPacket(&data);
 }
 
 void Unit::SetPvP( bool state )

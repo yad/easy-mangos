@@ -20517,7 +20517,8 @@ void Player::ApplyGlyphs(bool apply)
 }
 
 void Player::SendEnterVehicle(Vehicle *vehicle, VehicleSeatEntry const *veSeat)
-{    m_movementInfo.AddMovementFlag(MOVEFLAG_ONTRANSPORT);
+{
+    m_movementInfo.AddMovementFlag(MOVEFLAG_ONTRANSPORT);
     m_movementInfo.AddMovementFlag(MOVEFLAG_ROOT);
 
     if(m_transport)                                         // if we were on a transport, leave
