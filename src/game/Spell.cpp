@@ -1053,6 +1053,14 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
         if (m_canTrigger && missInfo != SPELL_MISS_REFLECT)
             caster->ProcDamageAndSpell(unit, real_caster ? procAttacker : PROC_FLAG_NONE, procVictim, procEx, 0, m_attackType, m_spellInfo);
     }
+    // remove Arcane Blast buffs at any non-Arcane Blast arcane damage spell.
+    // NOTE: it removed at hit instead cast because currently spell done-damage calculated at hit instead cast
+    // For arcane missiles its removed in Aura::HandleAuraDummy();
+    if ((m_spellInfo->SchoolMask & SPELL_SCHOOL_MASK_ARCANE) && !(m_spellInfo->SpellFamilyFlags & UI64LIT(0x20000000))
+        && !m_IsTriggeredSpell && !IsChanneledSpell(m_spellInfo))
+    {
+        m_caster->RemoveAurasDueToSpell(36032); // Arcane Blast buff
+    }
 
     // Call scripted function for AI if this spell is casted upon a creature
     if (unit->GetTypeId() == TYPEID_UNIT)
@@ -1418,7 +1426,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
         }
         default:
             break;
-	}
+    }
 
     Unit::AuraList const& mod = m_caster->GetAurasByType(SPELL_AURA_MOD_MAX_AFFECTED_TARGETS);
     for(Unit::AuraList::const_iterator m = mod.begin(); m != mod.end(); ++m)
@@ -2723,11 +2731,18 @@ void Spell::cast(bool skipCheck)
                 if (m_targets.getUnitTarget() && m_targets.getUnitTarget()->getVictim() != m_caster)
                     AddPrecastSpell(67485);                 // Hand of Rekoning (no typos in name ;) )
             }
-            // Divine Shield, Divine Protection or Hand of Protection
-            else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000000000400080))
+            // Divine Shield, Divine Protection 
+            else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000000000400000))
             {
                 AddPrecastSpell(25771);                     // Forbearance
                 AddPrecastSpell(61987);                     // Avenging Wrath Marker
+            }
+            // Hand of Protection 
+            else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000000000000080)) 
+            { 
+                AddPrecastSpell(25771);                     // Forbearance 
+                if (m_targets.getUnitTarget() && m_targets.getUnitTarget() == m_caster) 
+                    AddPrecastSpell(61987);                 // Avenging Wrath Marker 
             }
             else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x200000000000))
                 AddPrecastSpell(61987);                     // Avenging Wrath Marker
@@ -2735,7 +2750,10 @@ void Spell::cast(bool skipCheck)
             else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x000000008000))
             {
                 if (m_targets.getUnitTarget() && m_targets.getUnitTarget() == m_caster)
+                {
                     AddPrecastSpell(25771);                 // Forbearance
+                    AddPrecastSpell(61987);                 // Avenging Wrath Marker
+                }
             }
             break;
         }
@@ -2780,15 +2798,15 @@ void Spell::cast(bool skipCheck)
            aoeAttack = true;
         
        if( aoeAttack )
-	   {
-		   if(m_UniqueTargetInfo.size() > 1)
-		   {
-			   tbb::concurrent_vector<TargetInfo>::iterator itr = m_UniqueTargetInfo.begin();
-			   TargetInfo tInfo = (*itr);
-			   m_UniqueTargetInfo.clear();
-			   m_UniqueTargetInfo.push_back(tInfo);
-		   }
-	   }
+       {
+           if(m_UniqueTargetInfo.size() > 1)
+           {
+               tbb::concurrent_vector<TargetInfo>::iterator itr = m_UniqueTargetInfo.begin();
+               TargetInfo tInfo = (*itr);
+               m_UniqueTargetInfo.clear();
+               m_UniqueTargetInfo.push_back(tInfo);
+           }
+       }
    }
 
     if(m_spellState == SPELL_STATE_FINISHED)                // stop cast if spell marked as finish somewhere in FillTargetMap
@@ -3211,7 +3229,7 @@ void Spell::finish(bool ok)
         m_caster->resetAttackTimer(RANGED_ATTACK);*/
 
     // Clear combo at finish state
-	if((m_caster->GetTypeId() == TYPEID_PLAYER || ((Creature*)m_caster)->isVehicle())&& NeedsComboPoints(m_spellInfo))
+    if((m_caster->GetTypeId() == TYPEID_PLAYER || ((Creature*)m_caster)->isVehicle())&& NeedsComboPoints(m_spellInfo))
     {
         // Not drop combopoints if negative spell and if any miss on enemy exist
         bool needDrop = true;
@@ -3391,8 +3409,8 @@ void Spell::SendSpellStart()
 
     if ( castFlags & CAST_FLAG_UNKNOWN7 )                   // rune cooldowns list
     {
-        uint8 v1 = 0;//m_runesState;
-        uint8 v2 = 0;//((Player*)m_caster)->GetRunesState();
+        uint8 v1 = m_runesState;
+        uint8 v2 = ((Player*)m_caster)->GetRunesState();
         data << uint8(v1);                                  // runes state before
         data << uint8(v2);                                  // runes state after
         for(uint8 i = 0; i < MAX_RUNES; ++i)
@@ -3414,8 +3432,6 @@ void Spell::SendSpellStart()
     }
 
     m_caster->SendMessageToSet(&data, true);
-    if(m_caster->getClass() == CLASS_DEATH_KNIGHT)
-        ((Player*)m_caster)->ResyncRunes(MAX_RUNES);
 }
 
 void Spell::SendSpellGo()
@@ -3477,8 +3493,8 @@ void Spell::SendSpellGo()
 
     if ( castFlags & CAST_FLAG_UNKNOWN7 )                   // rune cooldowns list
     {
-        uint8 v1 = 0; //m_runesState;
-        uint8 v2 = 0; //m_caster->getClass() == CLASS_DEATH_KNIGHT ? ((Player*)m_caster)->GetRunesState() : 0;
+        uint8 v1 = m_runesState;
+        uint8 v2 = m_caster->getClass() == CLASS_DEATH_KNIGHT ? ((Player*)m_caster)->GetRunesState() : 0;
         data << uint8(v1);                                  // runes state before
         data << uint8(v2);                                  // runes state after
         for(uint8 i = 0; i < MAX_RUNES; ++i)
@@ -3511,8 +3527,6 @@ void Spell::SendSpellGo()
     }
 
     m_caster->SendMessageToSet(&data, true);
-    if(m_caster->getClass() == CLASS_DEATH_KNIGHT)
-        ((Player*)m_caster)->ResyncRunes(MAX_RUNES);
 }
 
 void Spell::WriteAmmoToPacket( WorldPacket * data )
@@ -4258,6 +4272,15 @@ SpellCastResult Spell::CheckCast(bool strict)
         else if(m_caster->HasAura(m_spellInfo->excludeCasterAuraSpell))
             return SPELL_FAILED_CASTER_AURASTATE;
     }
+    else 
+    { 
+        // Heroism and Exhausted 
+        if (m_spellInfo->Id == 2825 && m_caster->HasAura(57724)) 
+            return SPELL_FAILED_CASTER_AURASTATE; 
+        // Bloodlust and Sated 
+        if (m_spellInfo->Id == 32182 && m_caster->HasAura(57723)) 
+            return SPELL_FAILED_CASTER_AURASTATE; 
+    }
      //check caster for combat
     if(m_caster->isInCombat() && IsNonCombatSpell(m_spellInfo) && !m_caster->isIgnoreUnitState(m_spellInfo) 
        && !m_spellInfo->SpellFamilyFlags & SPELLFAMILYFLAG_ROGUE_STEALTH && m_spellInfo->SpellFamilyFlags & SPELLFAMILYFLAG_ROGUE_VANISH)  // Vanish hack
@@ -4298,8 +4321,22 @@ SpellCastResult Spell::CheckCast(bool strict)
             else if (target->HasAura(m_spellInfo->excludeTargetAuraSpell))
                 return SPELL_FAILED_CASTER_AURASTATE;
         }
-        else if(m_spellInfo->SpellFamilyName == SPELLFAMILY_PALADIN && (m_spellInfo->SpellFamilyFlags & UI64LIT(0x000000008000)) && target->HasAura(25771))
-            return SPELL_FAILED_CASTER_AURASTATE;
+        else 
+        { 
+            //Lay on Hands 
+            if(m_spellInfo->SpellFamilyName == SPELLFAMILY_PALADIN && (m_spellInfo->SpellFamilyFlags & UI64LIT(0x000000008000))) 
+            { 
+                // Forbearance and Awenging Wrath Marker 
+                if(target->HasAura(25771) || target->HasAura(61987)) 
+                    return SPELL_FAILED_CASTER_AURASTATE; 
+            } 
+            // Heroism and Exhausted 
+            if (m_spellInfo->Id == 2825 && target->HasAura(57724)) 
+                return SPELL_FAILED_CASTER_AURASTATE; 
+            // Bloodlust and Sated 
+            if (m_spellInfo->Id == 32182 && target->HasAura(57723)) 
+                return SPELL_FAILED_CASTER_AURASTATE; 
+        }
 
         bool non_caster_target = target != m_caster && !IsSpellWithCasterSourceTargetsOnly(m_spellInfo);
 

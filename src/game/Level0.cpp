@@ -112,7 +112,7 @@ bool ChatHandler::HandleServerInfoCommand(const char* /*args*/)
     PSendSysMessage(LANG_USING_EVENT_AI,sWorld.GetCreatureEventAIVersion());
     PSendSysMessage(LANG_CONNECTED_USERS, activeClientsNum, maxActiveClientsNum, queuedClientsNum, maxQueuedClientsNum);
     PSendSysMessage(LANG_UPTIME, str.c_str());
-    SendSysMessage("Revision [15.3.2010][pr258] - MaNGOS modified for Valhalla Server");
+    SendSysMessage("Revision [19.3.2010][pr271] - MaNGOS modified for Valhalla Server");
     SendSysMessage("GIT: http://github.com/Tasssadar/Valhalla-Project/commits");
     SendSysMessage("Changelog: http://valhalla-team.com/web/changelog.php");
 
@@ -122,6 +122,12 @@ bool ChatHandler::HandleServerInfoCommand(const char* /*args*/)
         SendSysMessage("Today Battleground: Eye Of Storm!");
     if(sGameEventMgr.IsActiveEvent(43))
         SendSysMessage("Today Battleground: Warsong Gulch!");
+    if(sGameEventMgr.IsActiveEvent(44))
+        SendSysMessage("Today Battleground: Alterac Valley!");
+    if(sGameEventMgr.IsActiveEvent(45))
+        SendSysMessage("Today Battleground: Isle of Conquest!");
+    if(sGameEventMgr.IsActiveEvent(46))
+        SendSysMessage("Today Battleground: Strand of the Ancients!");
 
     return true;
 }

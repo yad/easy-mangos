@@ -29,6 +29,7 @@
 #include "Group.h"
 #include "ObjectGuid.h"
 #include "ObjectMgr.h"
+#include "Mail.h"
 #include "WorldPacket.h"
 #include "Util.h"
 #include "Formulas.h"
@@ -839,20 +840,29 @@ void BattleGround::EndBattleGround(uint32 winner)
 uint32 BattleGround::GetBonusHonorFromKill(uint32 kills) const
 {
     uint32 reqmap = 0;
-    uint32 BGEventMultifier = 1;
-    //arathi basin
+    float BGEventMultifier = 1;
+    // Arathi Basin
     if(sGameEventMgr.IsActiveEvent(41))
         reqmap = 529;
-    // eye of storm
+    // Eye of Storm
     if(sGameEventMgr.IsActiveEvent(42))
         reqmap = 566;
-    // warsong gulch
+    // Warsong Gulch
     if(sGameEventMgr.IsActiveEvent(43))
        reqmap = 489;
+    // Alterac Valley
+    if(sGameEventMgr.IsActiveEvent(44))
+        reqmap = 30;
+    // Isle of Conquest
+    if(sGameEventMgr.IsActiveEvent(45))
+        reqmap = 628;
+    // Strand of the Ancients
+    if(sGameEventMgr.IsActiveEvent(46))
+        reqmap = 607;
     if (GetMapId() == reqmap)
-      BGEventMultifier *= 1.5;
+      BGEventMultifier = 1.5;
     //variable kills means how many honorable kills you scored (so we need kills * honor_for_one_kill)
-    return ((uint32)MaNGOS::Honor::hk_honor_at_level(GetMaxLevel(), kills)*BGEventMultifier);
+    return ((uint32)(MaNGOS::Honor::hk_honor_at_level(GetMaxLevel(), kills)*BGEventMultifier));
 }
 
 uint32 BattleGround::GetBattlemasterEntry() const
@@ -981,7 +991,7 @@ void BattleGround::SendRewardMarkByMail(Player *plr,uint32 mark, uint32 count)
         snprintf(textBuf,300,textFormat.c_str(),GetName(),GetName());
         uint32 itemTextId = sObjectMgr.CreateItemText( textBuf );
 
-        MailDraft(subject, itemTextId)
+        MailDraft(subject, textBuf)
             .AddItem(markItem)
             .SendMailTo(plr, MailSender(MAIL_CREATURE, bmEntry));
     }

@@ -344,7 +344,7 @@ void Unit::Update( uint32 p_time )
             // m_CombatTimer set at aura start and it will be freeze until aura removing
             if (m_CombatTimer <= p_time)
             {
-                if(GetTypeId() == TYPEID_PLAYER || (getVictim() && getVictim()->HasAuraType(SPELL_AURA_MOD_STEALTH)))
+                if(HasAuraType(SPELL_AURA_MOD_STEALTH) || (getVictim() && getVictim()->HasAuraType(SPELL_AURA_MOD_STEALTH)))
                     CombatStop();
                 else
                     ClearInCombat();
@@ -11820,11 +11820,13 @@ bool Unit::SelectHostileTarget()
         // No taunt aura or taunt aura caster is dead standart target selection
         target = m_ThreatManager.getHostileTarget();
 
-    if(target)
+    if (target)
     {
-        if(!hasUnitState(UNIT_STAT_STUNNED | UNIT_STAT_DIED))
+        if (!hasUnitState(UNIT_STAT_STUNNED | UNIT_STAT_DIED))
+        {
             SetInFront(target);
-        ((Creature*)this)->AI()->AttackStart(target);
+            ((Creature*)this)->AI()->AttackStart(target);
+        }
         return true;
     }
 

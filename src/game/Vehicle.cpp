@@ -81,7 +81,7 @@ void Vehicle::Update(uint32 diff)
     if(m_regenTimer <= diff)
     {
         RegeneratePower(getPowerType());
-        m_regenTimer = 1000;
+        m_regenTimer = 500;
     }
     else
         m_regenTimer -= diff;
@@ -105,11 +105,16 @@ void Vehicle::RegeneratePower(Powers power)
     addvalue = 10.0f;
 
     ModifyPower(power, (int32)addvalue);
-    WorldPacket data(SMSG_POWER_UPDATE);
-    data << GetPackGUID();
-    data << uint8(power);
-    data << uint32(addvalue+curValue);
-    SendMessageToSet(&data, true);
+
+    for(int i =0; i != MAX_SEAT; i++)
+    {
+        if(Unit *pPassanger = GetPassenger(i))
+        {
+            if(pPassanger->GetTypeId() == TYPEID_PLAYER)
+                SendCreateUpdateToPlayer((Player*)pPassanger);
+        }
+    }
+
 }
 
 bool Vehicle::Create(uint32 guidlow, Map *map, uint32 phaseMask, uint32 Entry, uint32 vehicleId, uint32 team, const CreatureData *data)

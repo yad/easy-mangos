@@ -60,6 +60,7 @@
 #include "Spell.h"
 #include "SocialMgr.h"
 #include "AchievementMgr.h"
+#include "Mail.h"
 #include "GameEventMgr.h"
 
 // Playerbot mod:
@@ -2970,6 +2971,10 @@ Creature* Player::GetNPCIfCanInteractWith(ObjectGuid guid, uint32 npcflagmask)
     // some basic checks
     if (guid.IsEmpty() || !IsInWorld() || isInFlight())
         return NULL;
+
+    //needed for call stabled pet
+    if (GetGUID() == guid.GetRawValue())
+        return ((Creature*)this);
 
     // exist (we need look pets also for some interaction (quest/etc)
     Creature *unit = ObjectAccessor::GetCreatureOrPetOrVehicle(*this,guid);
@@ -7144,15 +7149,24 @@ bool Player::RewardHonor(Unit *uVictim, uint32 groupsize, float honor)
 
             //check for event
             uint32 reqmap = 0;
-            //arathi basin
+            // Arathi Basin
             if(sGameEventMgr.IsActiveEvent(41))
                 reqmap = 529;
-            // eye of storm
+            // Eye of Storm
             if(sGameEventMgr.IsActiveEvent(42))
                 reqmap = 566;
-            // warsong gulch
+            // Warsong Gulch
             if(sGameEventMgr.IsActiveEvent(43))
-                reqmap = 489;
+               reqmap = 489;
+            // Alterac Valley
+            if(sGameEventMgr.IsActiveEvent(44))
+                reqmap = 30;
+            // Isle of Conquest
+            if(sGameEventMgr.IsActiveEvent(45))
+                reqmap = 628;
+            // Strand of the Ancients
+            if(sGameEventMgr.IsActiveEvent(46))
+                reqmap = 607;
 
             if (GetMapId() == reqmap)
                 honor *= 1.5;
@@ -20695,12 +20709,9 @@ void Player::SendAurasForTarget(Unit *target)
                     else
                         data << uint8(aura->GetStackAmount());
 
-                    if(!(auraFlags & AFLAG_NOT_CASTER))
+                    if(!(auraFlags & AFLAG_NOT_CASTER))     // packed GUID of caster
                     {
-                        if(aura->GetCaster())
-                            data << aura->GetCaster()->GetPackGUID();
-                        else
-                            data << uint8(0);
+                        data.appendPackGUID(aura->GetCasterGUID());
                     }
 
                     if(auraFlags & AFLAG_DURATION)          // include aura duration
