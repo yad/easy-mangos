@@ -1507,6 +1507,13 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     m_caster->CastSpell(m_caster, 54586, true);
                     return;
                 }
+                case 54171:                                 // Divine Storm 
+                { 
+                    // split between targets 
+                    int32 bp = damage / m_UniqueTargetInfo.size(); 
+                    m_caster->CastCustomSpell(unitTarget, 54172, &bp, NULL, NULL, true); 
+                    return; 
+                }
                 case 55004:                                 // Nitro Boosts
                 {
                     if (!m_CastItem)

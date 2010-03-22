@@ -1022,6 +1022,10 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
             if(Aura* dummy = unitTarget->GetDummyAura(m_spellInfo->Id))
                 dummy->GetModifier()->m_amount = damageInfo.damage;
 
+        // Divine Storm (Healing part) 
+        if (m_spellInfo->Id == 53385) 
+            m_healthLeech += damageInfo.damage;
+
         // Scourge Strike (Shadow Damage part) 
         if (m_spellInfo->SpellFamilyName == SPELLFAMILY_DEATHKNIGHT && m_spellInfo->SpellIconID == 3143) 
         { 
@@ -1755,6 +1759,8 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 FillRaidOrPartyManaPriorityTargets(targetUnitMap, m_caster, m_caster, radius, 10, true, false, true);
             else if (m_spellInfo->Id==52759)                // Ancestral Awakening (special target selection)
                 FillRaidOrPartyHealthPriorityTargets(targetUnitMap, m_caster, m_caster, radius, 1, true, false, true);
+            else if (m_spellInfo->Id == 54171)              // Divine Storm (healing part) 
+                FillRaidOrPartyHealthPriorityTargets(targetUnitMap, m_caster, m_caster, radius, 3, true, false, true);
             else
                 FillRaidOrPartyTargets(targetUnitMap, m_caster, m_caster, radius, true, true, true);
             break;
@@ -3211,7 +3217,18 @@ void Spell::finish(bool ok)
 
     // Heal caster for all health leech from all targets
     if (m_healthLeech)
-        m_caster->DealHeal(m_caster, uint32(m_healthLeech), m_spellInfo);
+    { 
+        // Divine Storm heal calculation 
+        if (m_spellInfo->Id == 53385) 
+        { 
+            SpellEffectIndex healEffIndex = EFFECT_INDEX_1; 
+            int32 healAmount = m_caster->CalculateSpellDamage(m_spellInfo, healEffIndex, m_currentBasePoints[healEffIndex], m_caster); 
+            healAmount = int32(m_healthLeech * healAmount / 100); 
+            m_caster->CastCustomSpell(m_caster, 54171, &healAmount, NULL, NULL, true); 
+        } 
+        else 
+            m_caster->DealHeal(m_caster, uint32(m_healthLeech), m_spellInfo); 
+    }
 
     if (IsMeleeAttackResetSpell())
     {
