@@ -6660,13 +6660,19 @@ void Player::_ApplyItemMods(Item *item, uint8 slot,bool apply)
     if(slot >= INVENTORY_SLOT_BAG_END || !item)
         return;
 
-    // not apply/remove mods for broken item
-    if(item->IsBroken())
+    ItemPrototype const *proto = item->GetProto();
+ 
+    if(!proto)
         return;
 
-    ItemPrototype const *proto = item->GetProto();
+    if(item->IsBroken() && proto->Socket[0].Color)  //This need to remove bonuses from meta if item broken
+    {
+        CorrectMetaGemEnchants(slot, apply);
+        return;
+    }
 
-    if(!proto)
+    // not apply/remove mods for broken item
+    if(item->IsBroken())
         return;
 
     sLog.outDetail("applying mods for item %u ",item->GetGUIDLow());
