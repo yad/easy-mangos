@@ -1507,6 +1507,13 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     m_caster->CastSpell(m_caster, 54586, true);
                     return;
                 }
+                case 54171:                                 // Divine Storm 
+                { 
+                    // split between targets 
+                    int32 bp = damage / m_UniqueTargetInfo.size(); 
+                    m_caster->CastCustomSpell(unitTarget, 54172, &bp, NULL, NULL, true); 
+                    return; 
+                }
                 case 55004:                                 // Nitro Boosts
                 {
                     if (!m_CastItem)
@@ -6029,8 +6036,9 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                         // Serpent Sting - Instantly deals 40% of the damage done by your Serpent Sting.
                         if ((familyFlag & UI64LIT(0x0000000000004000)) && aura->GetEffIndex() == EFFECT_INDEX_0)
                         {
-                            // m_amount already include RAP bonus
-                            basePoint = aura->GetModifier()->m_amount * 5 * 40 / 100;
+                            // m_amount does not include RAP bonus - must be calculated 
+                            basePoint = m_caster->MeleeDamageBonus(target, aura->GetModifier()->m_amount, RANGED_ATTACK, aura->GetSpellProto(), DOT, aura->GetStackAmount());
+                            basePoint = basePoint * (aura->GetAuraMaxDuration() / aura->GetModifier()->periodictime) * 40 / 100;
                             spellId = 53353;                // Chimera Shot - Serpent
                         }
 

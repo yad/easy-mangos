@@ -529,48 +529,6 @@ void WorldSession::HandleRequestVehicleExit(WorldPacket &recv_data)
     }
 }
 
-void WorldSession::HandleRequestVehiclePrevSeat(WorldPacket &recv_data)
-{
-    sLog.outDebug("WORLD: Recvd CMSG_REQUEST_VEHICLE_PREV_SEAT");
-    recv_data.hexlike();
-
-    uint64 vehicleGUID = _player->GetVehicleGUID();
-
-    if(!vehicleGUID)                                        // something wrong here...
-        return;
-
-    if(Vehicle *vehicle = ObjectAccessor::GetVehicle(vehicleGUID))
-    {
-        int8 prv_seat = _player->m_SeatData.seat;
-        if(Vehicle *v = vehicle->GetNextEmptySeat(&prv_seat, false, false))
-        {
-            vehicle->RemovePassenger(_player);
-            _player->EnterVehicle(v, prv_seat, false);
-        }
-    }
-}
-
-void WorldSession::HandleRequestVehicleNextSeat(WorldPacket &recv_data)
-{
-    sLog.outDebug("WORLD: Recvd CMSG_REQUEST_VEHICLE_NEXT_SEAT");
-    recv_data.hexlike();
-
-    uint64 vehicleGUID = _player->GetVehicleGUID();
-
-    if(!vehicleGUID)                                        // something wrong here...
-        return;
-
-    if(Vehicle *vehicle = ObjectAccessor::GetVehicle(vehicleGUID))
-    {
-        int8 nxt_seat = _player->m_SeatData.seat;
-        if(Vehicle *v = vehicle->GetNextEmptySeat(&nxt_seat, true, false))
-        {
-            vehicle->RemovePassenger(_player);
-            _player->EnterVehicle(v, nxt_seat, false);
-        }
-    }
-}
-
 void WorldSession::HandleRequestVehicleSwitchSeat(WorldPacket &recv_data)
 {
     sLog.outDebug("WORLD: Recvd CMSG_REQUEST_VEHICLE_SWITCH_SEAT");
@@ -625,40 +583,37 @@ void WorldSession::HandleChangeSeatsOnControlledVehicle(WorldPacket &recv_data)
     if(!vehicleGUID)                                        // something wrong here...
         return;
 
-    if(Vehicle *vehicle = ObjectAccessor::GetVehicle(vehicleGUID))
+    if(recv_data.GetOpcode() == CMSG_REQUEST_VEHICLE_PREV_SEAT)
     {
-        MovementInfo mi;
-        recv_data >> mi;
-        //_player->m_movementInfo = mi;
+        GetPlayer()->ChangeSeat(-1, false);
+        return;
+    }
+    else if(recv_data.GetOpcode() == CMSG_REQUEST_VEHICLE_NEXT_SEAT)
+    {
+        GetPlayer()->ChangeSeat(-1, true);
+        return;
+    }
 
-        ObjectGuid guid;
-        recv_data >> guid.ReadAsPacked();
+    ObjectGuid guid, guid2;
+    recv_data >> guid.ReadAsPacked();
 
-        int8 seatId = 0;
-        recv_data >> seatId;
+    MovementInfo mi;
+    recv_data >> mi;
+    _player->m_movementInfo = mi;
 
-        if(!guid.IsEmpty())
+    recv_data >> guid2.ReadAsPacked(); //guid of vehicle or of vehicle in target seat
+
+    int8 seatId;
+    recv_data >> seatId;
+
+    if(guid.GetRawValue() == guid2.GetRawValue())
+        _player->ChangeSeat(seatId, false);
+    else if(Vehicle *vehicle = ObjectAccessor::GetVehicle(guid2.GetRawValue()))
+    {
+        if(vehicle->HasEmptySeat(seatId))
         {
-            if(vehicleGUID != guid.GetRawValue())
-            {
-                if(Vehicle *veh = ObjectAccessor::GetVehicle(guid.GetRawValue()))
-                {
-                    if(!_player->IsWithinDistInMap(veh, 10))
-                        return;
-
-                    if(Vehicle *v = veh->FindFreeSeat(&seatId, false))
-                    {
-                        vehicle->RemovePassenger(_player);
-                        _player->EnterVehicle(v, seatId, false);
-                    }
-                }
-                return;
-            }
-        }
-        if(Vehicle *v = vehicle->FindFreeSeat(&seatId, false))
-        {
-            vehicle->RemovePassenger(_player);
-            _player->EnterVehicle(v, seatId, false);
+            _player->ExitVehicle();
+            _player->EnterVehicle(vehicle, seatId);
         }
     }
 }

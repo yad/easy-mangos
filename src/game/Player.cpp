@@ -5031,8 +5031,7 @@ void Player::DeleteFromDB(uint64 playerguid, uint32 accountId, bool updateRealmC
     CharacterDatabase.PExecute("DELETE FROM character_achievement WHERE guid = '%u'",guid);
     CharacterDatabase.PExecute("DELETE FROM character_achievement_progress WHERE guid = '%u'",guid);
     CharacterDatabase.PExecute("DELETE FROM character_equipmentsets WHERE guid = '%u'",guid);
-    CharacterDatabase.PExecute("DELETE FROM guild_eventlog WHERE PlayerGuid1 = '%u'",guid);
-    CharacterDatabase.PExecute("DELETE FROM guild_eventlog WHERE PlayerGuid2 = '%u'",guid);
+    CharacterDatabase.PExecute("DELETE FROM guild_eventlog WHERE PlayerGuid1 = '%u' OR PlayerGuid2 = '%u'",guid, guid);
     CharacterDatabase.PExecute("DELETE FROM guild_bank_eventlog WHERE PlayerGuid = '%u'",guid);
 
     CharacterDatabase.PExecute("DELETE FROM `jail` WHERE `guid` = '%u'",guid);
@@ -7580,13 +7579,19 @@ void Player::_ApplyItemMods(Item *item, uint8 slot,bool apply)
     if(slot >= INVENTORY_SLOT_BAG_END || !item)
         return;
 
-    // not apply/remove mods for broken item
-    if(item->IsBroken())
+    ItemPrototype const *proto = item->GetProto();
+ 
+    if(!proto)
         return;
 
-    ItemPrototype const *proto = item->GetProto();
+    if(item->IsBroken() && proto->Socket[0].Color)  //This need to remove bonuses from meta if item broken
+    {
+        CorrectMetaGemEnchants(slot, apply);
+        return;
+    }
 
-    if(!proto)
+    // not apply/remove mods for broken item
+    if(item->IsBroken())
         return;
 
     sLog.outDetail("applying mods for item %u ",item->GetGUIDLow());
@@ -21706,7 +21711,8 @@ void Player::ApplyGlyphs(bool apply)
 }
 
 void Player::SendEnterVehicle(Vehicle *vehicle, VehicleSeatEntry const *veSeat)
-{    m_movementInfo.AddMovementFlag(MOVEFLAG_ONTRANSPORT);
+{
+    m_movementInfo.AddMovementFlag(MOVEFLAG_ONTRANSPORT);
     m_movementInfo.AddMovementFlag(MOVEFLAG_ROOT);
 
     if(m_transport)                                         // if we were on a transport, leave

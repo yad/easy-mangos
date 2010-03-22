@@ -2860,7 +2860,7 @@ SpellMissInfo Unit::MeleeSpellHitResult(Unit *pVictim, SpellEntry const *spell)
     // bonus from skills is 0.04% per skill Diff
     int32 attackerWeaponSkill = int32(GetWeaponSkillValue(attType,pVictim));
 
-	if ( spell->SpellFamilyName == SPELLFAMILY_PALADIN )
+    if ( spell->SpellFamilyName == SPELLFAMILY_PALADIN )
     {
         // Hammer of Wrath
         if ( spell->SpellFamilyFlags & UI64LIT(0x0000008000000000) )
@@ -4425,7 +4425,7 @@ void Unit::RemoveAurasDueToSpellByCancel(uint32 spellId)
             RemoveAura(iter, AURA_REMOVE_BY_CANCEL);
         else
             ++iter;
-    }
+    }	
 }
 
 void Unit::RemoveAurasWithDispelType( DispelType type )
@@ -11128,6 +11128,18 @@ bool Unit::isVisibleForOrDetect(Unit const* u, WorldObject const* viewPoint, boo
         invisible = false;
     }
 
+    // With Arena Preparation players shouldn't see opposite team in arenas
+    if(HasAura(32727) && u->HasAura(32727))
+    {
+        if(GetTypeId() == TYPEID_PLAYER || u->GetTypeId() == TYPEID_PLAYER)
+        {
+            if(((Player*)this)->GetTeam() == ((Player*)u)->GetTeam())
+                invisible = false;
+            else
+                invisible = true;
+        }
+    }
+
     // special cases for always overwrite invisibility/stealth
     if(invisible || m_Visibility == VISIBILITY_GROUP_STEALTH)
     {
@@ -11965,7 +11977,7 @@ int32 Unit::CalculateSpellDuration(SpellEntry const* spellProto, SpellEffectInde
         bool triggered = false;
 
         if (Spell * spell = FindCurrentSpellBySpellId(spellProto->Id) )
-			triggered = spell->IsTriggeredSpellWithRedundentData();
+            triggered = spell->IsTriggeredSpellWithRedundentData();
         if (targetOwner->GetTypeId() == TYPEID_PLAYER && casterOwner->GetTypeId() == TYPEID_PLAYER 
             && GetDiminishingReturnsGroupForSpell(spellProto, triggered) != DIMINISHING_NONE)
             duration = maxPvpDuration;
@@ -14122,6 +14134,27 @@ struct SetPvPHelper
     void operator()(Unit* unit) const { unit->SetPvP(state); }
     bool state;
 };
+
+void Unit::ChangeSeat(int8 seatId, bool next)
+{
+    Vehicle *m_vehicle = ObjectAccessor::GetVehicle(GetVehicleGUID());
+
+    if (!m_vehicle)
+        return;
+
+    if (seatId < 0)
+    {
+        seatId = m_vehicle->GetNextEmptySeatNum(m_movementInfo.GetTransportSeat(), next);
+        if (seatId < 0)
+            return;
+    }
+    else if (seatId == m_movementInfo.GetTransportSeat() || !m_vehicle->HasEmptySeat(seatId))
+        return;
+
+    m_vehicle->RemovePassenger(this);
+    EnterVehicle(m_vehicle, seatId);
+}
+
 void Unit::EnterVehicle(Vehicle *vehicle, int8 seat_id, bool force)
 {
     // dont allow multiple vehicles
@@ -14233,7 +14266,7 @@ void Unit::BuildVehicleInfo(Unit *target)
     WorldPacket data(MSG_MOVE_HEARTBEAT, 100);
     data << target->GetPackGUID();
     data << uint32(MOVEFLAG_ONTRANSPORT | 0x00000800);
-    data << uint16(0);
+    data << uint16(m_movementInfo.GetMovementFlags2());
     data << uint32(getMSTime());
     data << float(target->GetPositionX());
     data << float(target->GetPositionY());
@@ -14246,9 +14279,11 @@ void Unit::BuildVehicleInfo(Unit *target)
     data << float(target->m_SeatData.Orientation);
     data << uint32(veh_time);
     data << uint8 (target->m_SeatData.seat);
-    data << uint32(0);
-    if(GetTypeId() == TYPEID_PLAYER)
-        ((Player*)this)->GetSession()->SendPacket(&data);
+    data << uint32(m_movementInfo.GetFallTime());
+    //data << uint32(0);
+    SendMessageToSet(&data, GetTypeId() == TYPEID_PLAYER ? true : false);
+  //  if(GetTypeId() == TYPEID_PLAYER)
+    //    ((Player*)this)->GetSession()->SendPacket(&data);
 }
 
 void Unit::SetPvP( bool state )

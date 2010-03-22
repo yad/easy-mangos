@@ -36,7 +36,6 @@ Vehicle::~Vehicle()
 
 void Vehicle::AddToWorld()
 {
-    ///- Register the vehicle for guid lookup
     if(!IsInWorld())
         GetMap()->GetObjectsStore().insert<Vehicle>(GetGUID(), (Vehicle*)this);
 
@@ -196,7 +195,6 @@ bool Vehicle::Create(uint32 guidlow, Map *map, uint32 phaseMask, uint32 Entry, u
     }
     SetHealth(GetMaxHealth());
     InstallAllAccessories();
-
     return true;
 }
 
@@ -231,7 +229,7 @@ void Vehicle::InitSeats()
             if(VehicleSeatEntry const *veSeat = sVehicleSeatStore.LookupEntry(seatId))
             {
                 VehicleSeat newseat;
-                //newseat.seatInfo = veSeat;
+                newseat.seatInfo = veSeat;
                 newseat.passenger = NULL;
                 newseat.flags = SEAT_FREE;
                 newseat.vs_flags = sObjectMgr.GetSeatFlags(seatId);
@@ -342,6 +340,37 @@ int8 Vehicle::GetEmptySeatsCount(bool force)
     }
 
     return count;
+}
+
+int8 Vehicle::GetNextEmptySeatNum(int8 seatId, bool next) const
+{
+    SeatMap::const_iterator seat = m_Seats.find(seatId);
+    if(seat == m_Seats.end()) return -1;
+    while(seat->second.passenger || !seat->second.seatInfo->IsUsable())
+    {
+        if(next)
+        {
+            ++seat;
+            if(seat == m_Seats.end())
+                seat = m_Seats.begin();
+        }
+        else
+        {
+            if(seat == m_Seats.begin())
+                seat = m_Seats.end();
+            --seat;
+        }
+        if(seat->first == seatId)
+            return -1; // no available seat
+    }
+    return seat->first;
+}
+
+bool Vehicle::HasEmptySeat(int8 seatId) const
+{
+    SeatMap::const_iterator seat = m_Seats.find(seatId);
+    if(seat == m_Seats.end()) return false;
+    return !seat->second.passenger;
 }
 
 void Vehicle::EmptySeatsCountChanged()
@@ -730,11 +759,9 @@ void Vehicle::InstallAccessory(uint32 entry, int8 seatId, bool isVehicle, bool m
     {
         if(Vehicle *accessory = SummonVehicle(entry, 0, 0, 0, 0))
         {
-            accessory->EnterVehicle(this, seatId);
+            accessory->EnterVehicle(this, seatId, true);
             // This is not good, we have to send update twice
-            WorldPacket data;
-            accessory->BuildHeartBeatMsg(&data);
-            accessory->SendMessageToSet(&data, false);
+            accessory->BuildVehicleInfo(accessory);
         }
     }else{
         if(Creature *accessory = SummonCreature(entry, 0, 0, 0, 0, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 30000))

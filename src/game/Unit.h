@@ -1833,6 +1833,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
          // using extra variables to avoid problems with transports
          SeatData m_SeatData;
          void BuildVehicleInfo(Unit *target = NULL);
+         void ChangeSeat(int8 seatId, bool next);
 
     protected:
         explicit Unit ();
