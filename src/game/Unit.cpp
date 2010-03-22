@@ -2824,7 +2824,7 @@ SpellMissInfo Unit::MeleeSpellHitResult(Unit *pVictim, SpellEntry const *spell)
     // bonus from skills is 0.04% per skill Diff
     int32 attackerWeaponSkill = int32(GetWeaponSkillValue(attType,pVictim));
 
-	if ( spell->SpellFamilyName == SPELLFAMILY_PALADIN )
+    if ( spell->SpellFamilyName == SPELLFAMILY_PALADIN )
     {
         // Hammer of Wrath
         if ( spell->SpellFamilyFlags & UI64LIT(0x0000008000000000) )
@@ -3041,7 +3041,7 @@ SpellMissInfo Unit::MagicSpellHitResult(Unit *pVictim, SpellEntry const *spell)
         return SPELL_MISS_MISS;
 
     // cast by caster in front of victim
-    if (pVictim->HasInArc(M_PI,this) || pVictim->HasAura(19263))
+    if (pVictim->HasInArc(M_PI_F,this) || pVictim->HasAura(19263))
     {
         int32 deflect_chance = pVictim->GetTotalAuraModifier(SPELL_AURA_DEFLECT_SPELLS)*100;
         tmp+=deflect_chance;
@@ -4389,7 +4389,7 @@ void Unit::RemoveAurasDueToSpellByCancel(uint32 spellId)
             RemoveAura(iter, AURA_REMOVE_BY_CANCEL);
         else
             ++iter;
-    }
+    }	
 }
 
 void Unit::RemoveAurasWithDispelType( DispelType type )
@@ -11080,6 +11080,18 @@ bool Unit::isVisibleForOrDetect(Unit const* u, WorldObject const* viewPoint, boo
         invisible = false;
     }
 
+    // With Arena Preparation players shouldn't see opposite team in arenas
+    if(HasAura(32727) && u->HasAura(32727))
+    {
+        if(GetTypeId() == TYPEID_PLAYER || u->GetTypeId() == TYPEID_PLAYER)
+        {
+            if(((Player*)this)->GetTeam() == ((Player*)u)->GetTeam())
+                invisible = false;
+            else
+                invisible = true;
+        }
+    }
+
     // special cases for always overwrite invisibility/stealth
     if(invisible || m_Visibility == VISIBILITY_GROUP_STEALTH)
     {
@@ -11917,7 +11929,7 @@ int32 Unit::CalculateSpellDuration(SpellEntry const* spellProto, SpellEffectInde
         bool triggered = false;
 
         if (Spell * spell = FindCurrentSpellBySpellId(spellProto->Id) )
-			triggered = spell->IsTriggeredSpellWithRedundentData();
+            triggered = spell->IsTriggeredSpellWithRedundentData();
         if (targetOwner->GetTypeId() == TYPEID_PLAYER && casterOwner->GetTypeId() == TYPEID_PLAYER 
             && GetDiminishingReturnsGroupForSpell(spellProto, triggered) != DIMINISHING_NONE)
             duration = maxPvpDuration;
