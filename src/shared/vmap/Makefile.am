@@ -37,6 +37,8 @@ libmangosvmaps_a_SOURCES = \
 	IVMapManager.h \
 	ManagedModelContainer.cpp \
 	ManagedModelContainer.h \
+	MapTree.cpp \
+	MapTree.h \
 	ModelContainer.cpp \
 	ModelContainer.h \
 	NodeValueAccess.h \
@@ -53,4 +55,6 @@ libmangosvmaps_a_SOURCES = \
 	VMapFactory.h \
 	VMapManager.cpp \
 	VMapManager.h \
+	VMapManager2.cpp \
+	VMapManager2.h \
 	VMapTools.h
