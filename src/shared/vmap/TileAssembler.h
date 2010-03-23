@@ -23,6 +23,7 @@
 #include "AABSPTree.h"
 
 #include <G3D/Vector3.h>
+#include <map>
 
 #include "CoordModelMapping.h"
 #include "SubModel.h"
@@ -30,6 +31,13 @@
 
 namespace VMAP
 {
+    enum ModelFlags
+    {
+        MOD_M2 = 1,
+        MOD_WORLDSPAWN = 1<<1,
+        MOD_HAS_BOUND = 1<<2
+    };
+    
     /**
     This Class is used to convert raw vector data into balanced BSP-Trees.
     To start the conversion call convertWorld().
@@ -51,6 +59,35 @@ namespace VMAP
             G3D::Vector3 transform(const G3D::Vector3& pIn) const;
             void moveToBasePos(const G3D::Vector3& pBasePos) { iPos -= pBasePos; }
     };
+
+    class ModelSpawn
+    {
+        public:
+            //mapID, tileX, tileY, Flags, ID, Pos, Rot, Scale, Bound_lo, Bound_hi, name
+            uint32 flags;
+            uint32 ID;
+            G3D::Vector3 iPos;
+            G3D::Vector3 iRot;
+            float iScale;
+            G3D::AABox iBound;
+            std::string name;
+            bool operator==(const ModelSpawn &other) { return ID == other.ID; }
+            uint32 hashCode() const { return ID; }
+            
+            static bool readFromFile(FILE *rf, ModelSpawn &spawn);
+            static bool writeToFile(FILE *rw, const ModelSpawn &spawn);
+    };
+
+    typedef std::map<uint32, ModelSpawn> UniqueEntryMap;
+    typedef std::multimap<uint64, uint32> TileMap;
+
+    struct MapSpawns
+    {
+        UniqueEntryMap UniqueEntries;
+        TileMap TileEntries;
+    };
+
+    typedef std::map<uint32, MapSpawns*> MapData;
     //===============================================
 
     class TileAssembler
@@ -63,6 +100,7 @@ namespace VMAP
             G3D::Table<std::string, unsigned int > iUniqueNameIds;
             unsigned int iCurrentUniqueNameId;
             std::vector<WmoModelExt*> tempModelExt;
+            MapData mapData;
 
         public:
             TileAssembler(const std::string& pSrcDirName, const std::string& pDestDirName);
@@ -73,6 +111,9 @@ namespace VMAP
 
             void init();
             bool convertWorld();
+            bool convertWorld2();
+            bool readMapSpawns();
+            bool calculateTransformedBound(ModelSpawn &spawn);
 
             bool fillModelIntoTree(G3D::AABSPTree<SubModel *> *pMainTree, const G3D::Vector3& pBasePos, std::string& pPosFilename, std::string& pModelFilename);
             void getModelPosition(std::string& pPosString, ModelPosition& pModelPosition);
@@ -81,6 +122,8 @@ namespace VMAP
             void setModelNameFilterMethod(bool (*pFilterMethod)(char *pName)) { iFilterMethod = pFilterMethod; }
             std::string getDirEntryNameFromModName(unsigned int pMapId, const std::string& pModPosName);
             unsigned int getUniqueNameId(const std::string pName);
+            uint64 makeKey(uint32 tileX, uint32 tileY) { return uint64(tileX)<<32|tileY; }
+            void unpackKey(uint64 key, uint32 &tileX, uint32 &tileY) { tileX = key>>32; tileY = key&0xFFFF; }
     };
     //===============================================
 }                                                           // VMAP

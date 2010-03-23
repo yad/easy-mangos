@@ -19,6 +19,7 @@
 #include <sys/types.h>
 #include "VMapFactory.h"
 #include "VMapManager.h"
+#include "VMapManager2.h"
 
 using namespace G3D;
 
@@ -26,7 +27,7 @@ namespace VMAP
 {
     extern void chompAndTrim(std::string& str);
 
-    VMapManager *gVMapManager = 0;
+    IVMapManager *gVMapManager = 0;
     Table<unsigned int , bool>* iIgnoreSpellIds=0;
 
     //===============================================
@@ -88,7 +89,7 @@ namespace VMAP
     IVMapManager* VMapFactory::createOrGetVMapManager()
     {
         if(gVMapManager == 0)
-            gVMapManager= new VMapManager();                // should be taken from config ... Please change if you like :-)
+            gVMapManager= new VMapManager2();                // should be taken from config ... Please change if you like :-)
         return gVMapManager;
     }
 
