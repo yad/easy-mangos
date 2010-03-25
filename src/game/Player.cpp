@@ -18307,6 +18307,13 @@ bool Player::BuyItemFromVendor(uint64 vendorguid, uint32 item, uint8 count, uint
             GetSession()->SendPacket(&data);
 
             SendNewItem(it, pProto->BuyCount*count, true, false, false);
+
+            // Item Refund system, only works for non stackable items with extendedcost
+            if(count == 1 && crItem->ExtendedCost )
+            {
+                it->SetUInt64Value(ITEM_FIELD_CREATOR, pCreature->GetGUID());
+                it->SetUInt32Value(ITEM_FIELD_CREATE_PLAYED_TIME, m_Played_time[0]);
+            }
         }
     }
     else if (IsEquipmentPos(bag, slot))
