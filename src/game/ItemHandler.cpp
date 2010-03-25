@@ -1338,11 +1338,12 @@ void WorldSession::HandleCancelTempEnchantmentOpcode(WorldPacket& recv_data)
 void WorldSession::HandleItemRefundInfoRequest(WorldPacket& recv_data)
 {
     sLog.outDebug("WORLD: CMSG_ITEM_REFUND_INFO_REQUEST");
+    recv_data.hexlike();
 
-    uint64 guid;
+    ObjectGuid guid;
     recv_data >> guid;                                      // item guid
 
-    Item *item = _player->GetItemByGuid(guid);
+    Item *item = _player->GetItemByGuid(guid.GetRawValue());
 
     if(!item)
     {
@@ -1350,11 +1351,165 @@ void WorldSession::HandleItemRefundInfoRequest(WorldPacket& recv_data)
         return;
     }
 
-    if(!item->HasFlag(ITEM_FIELD_FLAGS, ITEM_FLAGS_REFUNDABLE))
+    if(!item->HasFlag(ITEM_FIELD_FLAGS, ITEM_FLAGS_REFUNDABLE) || !item->GetUInt64Value(ITEM_FIELD_CREATOR))
     {
         sLog.outDebug("Item refund: item not refundable!");
         return;
     }
+    uint32 honor_points = 0;
+    uint32 arena_points = 0;
+    uint32 ExtendedCostId[5] = {0,0,0,0,0};
+    uint32 ExtendedCostCount[5]= {0,0,0,0,0};
+    uint32 playedTime = _player->m_Played_time[0] > (item->GetUInt32Value(ITEM_FIELD_CREATE_PLAYED_TIME) + 2*60*60) ? 0 : item->GetUInt32Value(ITEM_FIELD_CREATE_PLAYED_TIME);
 
-    // item refund system not implemented yet
+    if(Unit *pVendor = ObjectAccessor::GetUnitInWorld(*_player, item->GetUInt64Value(ITEM_FIELD_CREATOR)))
+    {
+        if(pVendor->GetTypeId() != TYPEID_UNIT)
+            return;
+
+        VendorItemData const* vItems = ((Creature*)pVendor)->GetVendorItems();
+        if(!vItems || vItems->Empty())
+            return;
+
+        size_t vendor_slot = vItems->FindItemSlot(item->GetEntry());
+        if (vendor_slot >= vItems->GetItemCount())
+            return;
+
+        VendorItem const* crItem = vItems->m_items[vendor_slot];
+        if(crItem->ExtendedCost)
+        {
+            ItemExtendedCostEntry const* iece = sItemExtendedCostStore.LookupEntry(crItem->ExtendedCost);
+            if (!iece)
+                return;
+        
+            honor_points = iece->reqhonorpoints;
+            arena_points = iece->reqarenapoints;
+            for (uint8 i = 0; i < 5; ++i)
+            {
+                ExtendedCostId[i] = iece->reqitem[i];
+                ExtendedCostCount[i] = iece->reqitemcount[i];
+            }
+        }
+    }	
+
+    WorldPacket data(SMSG_ITEM_REFUND_INFO_RESPONSE, 68); // guess size
+    data << guid;                                         // item guid
+    data << uint32(item->GetProto()->BuyPrice);           // price
+    data << uint32(honor_points);                         // honor point cost
+    data << uint32(arena_points);                         // arena point cost
+    for(uint32 i = 0; i < 5; ++i)                         // extended cost data
+    {
+        data << uint32(ExtendedCostId[i]);
+        data << uint32(ExtendedCostCount[i]);
+    }
+    data << uint32(0);
+    data << uint32(playedTime);                           // buy time in played time
+    SendPacket(&data);
+}
+
+void WorldSession::HandleItemRefund(WorldPacket& recv_data)
+{
+    sLog.outDebug("WORLD: CMSG_ITEM_REFUND");
+    recv_data.hexlike();
+
+    ObjectGuid guid;
+    recv_data >> guid;                                   // item guid
+
+    Item *item = _player->GetItemByGuid(guid.GetRawValue());
+
+    if(!item)
+    {
+        sLog.outDebug("Item refund: item not found!");
+        return;
+    }
+
+    if(!item->HasFlag(ITEM_FIELD_FLAGS, ITEM_FLAGS_REFUNDABLE) || !item->GetUInt64Value(ITEM_FIELD_CREATOR) || !item->GetUInt32Value(ITEM_FIELD_CREATE_PLAYED_TIME)
+        || _player->m_Played_time[0] > (item->GetUInt32Value(ITEM_FIELD_CREATE_PLAYED_TIME) + 2*60*60))  // can be refunded only two hours after buy
+    {
+        sLog.outDebug("Item refund: item not refundable!");
+        return;
+    }
+    uint32 honor_points = 0;
+    uint32 arena_points = 0;
+    uint32 ExtendedCostId[5] = {0,0,0,0,0};
+    uint32 ExtendedCostCount[5]= {0,0,0,0,0};
+    uint32 playedTime = _player->m_Played_time[0] > (item->GetUInt32Value(ITEM_FIELD_CREATE_PLAYED_TIME) + 2*60*60) ? 0 : item->GetUInt32Value(ITEM_FIELD_CREATE_PLAYED_TIME);
+
+    if(Unit *pVendor = ObjectAccessor::GetUnitInWorld(*_player, item->GetUInt64Value(ITEM_FIELD_CREATOR)))
+    {
+        if(pVendor->GetTypeId() != TYPEID_UNIT)
+            return;
+
+        VendorItemData const* vItems = ((Creature*)pVendor)->GetVendorItems();
+        if(!vItems || vItems->Empty())
+            return;
+
+        size_t vendor_slot = vItems->FindItemSlot(item->GetEntry());
+        if (vendor_slot >= vItems->GetItemCount())
+            return;
+
+        VendorItem const* crItem = vItems->m_items[vendor_slot];
+        if(crItem->ExtendedCost)
+        {
+            ItemExtendedCostEntry const* iece = sItemExtendedCostStore.LookupEntry(crItem->ExtendedCost);
+            if (!iece)
+                return;
+        
+            honor_points = iece->reqhonorpoints;
+            arena_points = iece->reqarenapoints;
+            for (uint8 i = 0; i < 5; ++i)
+            {
+                
+                ExtendedCostId[i] = iece->reqitem[i];
+                ExtendedCostCount[i] = iece->reqitemcount[i];
+                //need to check for free slot
+                ItemPosCountVec dest;
+                uint8 msg = _player->CanStoreNewItem( NULL_BAG, NULL_SLOT, dest, iece->reqitem[i], iece->reqitemcount[i]);
+                if (msg != EQUIP_ERR_OK && iece->reqitem[i] != 0 && msg != EQUIP_ERR_ITEM_NOT_FOUND)
+                {
+                    //Cant make refund
+                    _player->SendEquipError(msg, NULL, NULL, iece->reqitem[i]);
+                    WorldPacket packet( SMSG_ITEM_REFUND_RESULT, 60 );
+                    packet << guid;
+                    packet << uint32(1);
+                    SendPacket(&packet);
+                    return;
+                }
+            }
+        }
+    }
+    
+    //Refund money, honor and arena points and items
+    _player->ModifyMoney(item->GetProto()->BuyPrice);
+    _player->ModifyHonorPoints(honor_points);
+    _player->ModifyArenaPoints(arena_points);
+    for (uint8 i = 0; i < 5; ++i)
+    {
+        if(ExtendedCostId[i] == 0)
+            continue;
+
+        ItemPosCountVec dest;
+        if(_player->CanStoreNewItem( NULL_BAG, NULL_SLOT, dest, ExtendedCostId[i], ExtendedCostCount[i] ) == EQUIP_ERR_OK)
+        {
+            Item *refundItem = _player->StoreNewItem(dest, ExtendedCostId[i], true, Item::GenerateItemRandomPropertyId(ExtendedCostId[i]));
+            _player->SendNewItem(refundItem, ExtendedCostCount[i], true, false);
+        }else sLog.outError("Cant store refunded item! Player guid: %u, refund item entry: %u, want to refund item : %u", _player->GetGUID(), ExtendedCostId[i], item->GetEntry());
+    }
+
+    //send refund packet
+    WorldPacket data(SMSG_ITEM_REFUND_RESULT, 60);        // guess size
+    data << guid;                                         // item guid
+    data << uint32(0);                                    // Error msg
+    data << uint32(item->GetProto()->BuyPrice);           // price
+    data << uint32(honor_points);                         // honor point cost
+    data << uint32(arena_points);                         // arena point cost
+    for(uint32 i = 0; i < 5; ++i)                         // extended cost data
+    {
+        data << uint32(ExtendedCostId[i]);
+        data << uint32(ExtendedCostCount[i]);
+    }
+    SendPacket(&data);	
+
+    //Remove item
+    _player->DestroyItem(item->GetBagSlot(), item->GetSlot(), true);
 }

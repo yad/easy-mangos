@@ -5091,16 +5091,6 @@ void Spell::EffectWeaponDmg(SpellEffectIndex eff_idx)
             }
             break;
         }
-        case SPELLFAMILY_DRUID:
-        {
-            // Shred
-            if( m_spellInfo->SpellFamilyFlags2 & 0x40000 )
-            {
-                    spellBonusNeedWeaponDamagePercentMod = true;
-                    spell_bonus += m_spellInfo->EffectBasePoints[0];
-            }
-            break;
-        }
         case SPELLFAMILY_PALADIN:
         {
             // Judgement of Command - receive benefit from Spell Damage and Attack Power
