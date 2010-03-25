@@ -73,13 +73,16 @@ namespace VMAP
             std::string name;
             bool operator==(const ModelSpawn &other) { return ID == other.ID; }
             uint32 hashCode() const { return ID; }
+            // temp?
+            const G3D::AABox& getAABoxBounds() const { return iBound; }
+
             
             static bool readFromFile(FILE *rf, ModelSpawn &spawn);
             static bool writeToFile(FILE *rw, const ModelSpawn &spawn);
     };
 
     typedef std::map<uint32, ModelSpawn> UniqueEntryMap;
-    typedef std::multimap<uint64, uint32> TileMap;
+    typedef std::multimap<uint32, uint32> TileMap;
 
     struct MapSpawns
     {
@@ -122,8 +125,8 @@ namespace VMAP
             void setModelNameFilterMethod(bool (*pFilterMethod)(char *pName)) { iFilterMethod = pFilterMethod; }
             std::string getDirEntryNameFromModName(unsigned int pMapId, const std::string& pModPosName);
             unsigned int getUniqueNameId(const std::string pName);
-            uint64 makeKey(uint32 tileX, uint32 tileY) { return uint64(tileX)<<32|tileY; }
-            void unpackKey(uint64 key, uint32 &tileX, uint32 &tileY) { tileX = key>>32; tileY = key&0xFFFF; }
+            /* uint64 makeKey(uint32 tileX, uint32 tileY) { return uint64(tileX)<<32|tileY; }
+            void unpackKey(uint64 key, uint32 &tileX, uint32 &tileY) { tileX = key>>32; tileY = key&0xFFFF; } */
     };
     //===============================================
 }                                                           // VMAP

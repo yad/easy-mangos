@@ -34,7 +34,7 @@
 
 //===========================================================
 
-#define MAP_FILENAME_EXTENSION ".vmap"
+#define MAP_FILENAME_EXTENSION2 ".vmtree"
 
 #define FILENAMEBUFFER_SIZE 500
 

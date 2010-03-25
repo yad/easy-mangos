@@ -22,6 +22,7 @@
 #include "TileAssembler.h"
 #include "CoordModelMapping.h"
 #include "ModelContainer.h"
+#include "MapTree.h"
 
 #include <limits.h>
 #include <string.h>
@@ -48,19 +49,32 @@ namespace VMAP
         pAABox = pSm->iBound;//AABox(pSm->iBound.low()+pSm->iPos, pSm->iBound.high()+pSm->iPos);
     }
 
+    std::vector<int> treeStat;
+    int __depth=0;
     template<class T>
     void countNodesAndElements(typename G3D::AABSPTree<T>::Node& pNode, int &pNNodes, int &pNElements)
     {
         ++pNNodes;
+        // __debug__
+        if(__depth >= treeStat.size())
+        {
+            treeStat.push_back(0);
+        }
+        treeStat[__depth] += pNode.valueArray.size();
+        // __debug__ end
         pNElements += pNode.valueArray.size();
 
         if(pNode.child[0] != 0)
         {
+            ++__depth;
             countNodesAndElements<T>(*pNode.child[0], pNNodes, pNElements);
+            --__depth;
         }
         if(pNode.child[1] != 0)
         {
+            ++__depth;
             countNodesAndElements<T>(*pNode.child[1], pNNodes, pNElements);
+            --__depth;
         }
     }
 
@@ -69,11 +83,10 @@ namespace VMAP
     void serializeTree(const typename AABSPTree<T>::Node& pNode, int &NodePos, int &ElementPos, Vector3& pLo, Vector3& pHi,
                        TreeNode *treeNodes, T *elements)
     {
-        TreeNode treeNode = TreeNode(pNode.valueArray.size(), ElementPos);
+        TreeNode& treeNode = treeNodes[NodePos++];
+        treeNode = TreeNode(pNode.valueArray.size(), ElementPos); // not so nice...
         treeNode.setSplitAxis(pNode.splitAxis);
         treeNode.setSplitLocation(pNode.splitLocation);
-
-        treeNodes[NodePos++] = treeNode;
 
         Vector3 lo = Vector3(inf(),inf(),inf());
         Vector3 hi = Vector3(-inf(),-inf(),-inf());
@@ -260,7 +273,7 @@ namespace VMAP
             }
             else current = (*map_iter).second;
             current->UniqueEntries.insert(pair<uint32, ModelSpawn>(spawn.ID, spawn));
-            current->TileEntries.insert(pair<uint64, uint32>(makeKey(tileX, tileY), spawn.ID));
+            current->TileEntries.insert(pair<uint32, uint32>(StaticMapTree::packTileID(tileX, tileY), spawn.ID));
         }
         bool success = (ferror(dirf) == 0);
         fclose(dirf);
@@ -396,6 +409,8 @@ namespace VMAP
                 // /__debug__
                 pTree.insert(&(entry->second));
             }
+            __depth=0;
+            treeStat.clear();
             // /__debug__
             ModelSpawn &__wmo = map_iter->second->UniqueEntries[__max_z_wmo];
             ModelSpawn &__m2 = map_iter->second->UniqueEntries[__max_z_m2];
@@ -410,7 +425,11 @@ namespace VMAP
             // ===> possibly move this code to StaticMapTree class
             int nNodes=0, nElements=0;
             countNodesAndElements<ModelSpawn*>(*pTree.root, nNodes, nElements);
+            // __debug__
             printf("BSPTree: Nodes: %d, Elements: %d (%d)\n", nNodes, nElements, map_iter->second->UniqueEntries.size());
+            for(int d=0; d<treeStat.size(); ++d)
+                std::cout << "Depth:" << d << " Values:" << treeStat[d] << std::endl;
+            // __debug__ end
             // write .vmdir files to dynamically load/unload referenced geometry
             TreeNode *mapTree = new TreeNode[nNodes];
             ModelSpawn **treeElements = new ModelSpawn*[nElements];
@@ -422,7 +441,7 @@ namespace VMAP
             printf("Overall tree bounds: %f, %f, %f | %f, %f, %f\n", lo.x, lo.y, lo.z, hi.x, hi.y, hi.z);
             // create (multi)map model ID => TreeNode indices
             std::multimap<uint32, uint32> modelNodeIdx;
-            for(int i=0; i<nNodes; ++i)
+            for(int i=0; i<nElements; ++i)
                 modelNodeIdx.insert(std::pair<uint32, uint32>(treeElements[i]->ID, i));
             printf("min GUID: %u, max GUID: %u\n", modelNodeIdx.begin()->first, modelNodeIdx.rbegin()->first);
 
@@ -435,7 +454,6 @@ namespace VMAP
             //general info
             char isTiled=1; // TODO use actual info!
             if (fwrite(&isTiled, sizeof(char), 1, mapfile) != 1) success = false;
-            // TODO: write world spawns
             // Nodes
             if (success && fwrite("NODE", 4, 1, mapfile) != 1) success = false;
             uint32 size = sizeof(uint32) + sizeof(TreeNode)*nNodes;
@@ -444,6 +462,14 @@ namespace VMAP
             if (success && fwrite(mapTree, sizeof(TreeNode), nNodes, mapfile) != nNodes) success = false;
             // amount of tree elements
             if (success && fwrite(&nElements, sizeof(uint32), 1, mapfile) != 1) success = false;
+            // global map spawns (WDT), if any (most instances)
+            if (success && fwrite("GOBJ", 4, 1, mapfile) != 1) success = false;
+            uint32 globalTileID = StaticMapTree::packTileID(65, 65);
+            std::pair<TileMap::iterator, TileMap::iterator> globalRange = map_iter->second->TileEntries.equal_range(globalTileID);
+            for(TileMap::iterator glob=globalRange.first; glob != globalRange.second && success; ++glob)
+            {
+                success = ModelSpawn::writeToFile(mapfile, map_iter->second->UniqueEntries[glob->second]);
+            }
             
             fclose(mapfile);
 
@@ -453,14 +479,27 @@ namespace VMAP
             TileMap::iterator tile;
             for (tile = map_iter->second->TileEntries.begin(); tile != map_iter->second->TileEntries.end(); ++tile)
             {
+                const ModelSpawn &spawn = map_iter->second->UniqueEntries[tile->second];
+                if(spawn.flags & MOD_WORLDSPAWN) // WDT spawn, saved as tile 65/65 currently...
+                    continue;
                 std::stringstream tilefilename;
                 tilefilename.fill('0');
                 tilefilename << iDestDir << "/" << std::setw(3) << map_iter->first << "_";
                 uint32 x, y;
-                unpackKey(tile->first, x, y);
+                StaticMapTree::unpackTileID(tile->first, x, y);
                 tilefilename << std::setw(2) << x << "_" << std::setw(2) << y << ".vmtile";
                 FILE *tilefile = fopen(tilefilename.str().c_str(), "ab");
-                success = ModelSpawn::writeToFile(tilefile, map_iter->second->UniqueEntries[tile->second]);
+                success = ModelSpawn::writeToFile(tilefile, spawn);
+                // MapTree nodes to update when loading tile:
+                // current tree structure should only ever have entry per tree element, but not sure if i should keep G3D at all...
+                // so i do the full multimap program...
+                std::pair<std::multimap<uint32, uint32>::iterator, std::multimap<uint32, uint32>::iterator> nIdx = modelNodeIdx.equal_range(spawn.ID);
+                x = modelNodeIdx.count(spawn.ID);
+                if(x != 1) std::cout << "unexpected number of node entries! (" << x << ")\n";
+                if(success && fwrite(&x, sizeof(uint32), 1, tilefile) != 1) success = false;
+                for(std::multimap<uint32, uint32>::iterator i = nIdx.first; i != nIdx.second; ++i)
+                    if(success && fwrite(&i->second, sizeof(uint32), 1, tilefile) != 1) success = false;
+
                 fclose(tilefile);
             }
             

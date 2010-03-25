@@ -32,6 +32,7 @@ namespace VMAP
     class StaticMapTree
     {
         typedef UNORDERED_MAP<uint32, bool> loadedTileMap;
+        typedef UNORDERED_MAP<uint32, uint32> loadedSpawnMap;
         private:
             uint32 iMapID;
             TreeNode *iTree; // the KD-tree
@@ -54,6 +55,8 @@ namespace VMAP
             // some maps are not splitted into tiles and we have to make sure, not removing the map before all tiles are removed
             // empty tiles have no tile file, hence map with bool instead of just a set (consistency check)
             loadedTileMap iLoadedTiles;
+            // not strictly needed, stores model-ID reference count to invalidate tree nodes and be able to report errors
+            loadedSpawnMap iLoadedSpawns;
             std::string iBasePath;
 
         private:

@@ -88,7 +88,7 @@ namespace VMAP
     {
         std::stringstream fname;
         fname.width(3);
-        fname << std::setfill('0') << pMapId << std::string(MAP_FILENAME_EXTENSION);
+        fname << std::setfill('0') << pMapId << std::string(MAP_FILENAME_EXTENSION2);
         return fname.str();
     }
 
@@ -112,7 +112,10 @@ namespace VMAP
                 int map_num = -1;
                 ss2 >> map_num;
                 if(map_num >= 0)
+                {
+                    std::cout << "ingoring Map " << map_num << " for VMaps\n";
                     iIgnoreMapIds[map_num] = true;
+                }
             }
         }
     }
