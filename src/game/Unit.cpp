@@ -9956,13 +9956,6 @@ int32 Unit::SpellHealingBonus(Unit *pVictim, SpellEntry const *spellProto, int32
     if(maxval)
         TakenTotalMod *= (100.0f + maxval) / 100.0f;
 
-    // No heal amount for this class spells
-    if (spellProto->DmgClass == SPELL_DAMAGE_CLASS_NONE)
-    {
-        healamount = int32(healamount * TakenTotalMod);
-        return healamount < 0 ? 0 : healamount;
-    }
-
     // Healing Done
     // Taken/Done total percent damage auras
     float  DoneTotalMod = 1.0f;
@@ -10046,6 +10039,18 @@ int32 Unit::SpellHealingBonus(Unit *pVictim, SpellEntry const *spellProto, int32
 
     // Check for table values
     SpellBonusEntry const* bonus = sSpellMgr.GetSpellBonusData(spellProto->Id);
+
+    // There is no benefit for such spells
+    if (spellProto->DmgClass == SPELL_DAMAGE_CLASS_NONE ||
+        spellProto->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_HEAL_PCT ||
+        spellProto->Effect[EFFECT_INDEX_1] == SPELL_EFFECT_HEAL_PCT ||
+        spellProto->Effect[EFFECT_INDEX_2] == SPELL_EFFECT_HEAL_PCT)
+    {
+        DoneAdvertisedBenefit = 0;
+        TakenAdvertisedBenefit = 0;
+        bonus = NULL;
+    }
+
     if (bonus)
     {
         float coeff;
