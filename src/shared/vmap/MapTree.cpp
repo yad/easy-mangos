@@ -28,6 +28,16 @@ using G3D::Vector3;
 
 namespace VMAP
 {
+    // TEST
+    class PseudoCallBack {
+        public:
+            G3D::Vector3 hitLocation;
+            G3D::Vector3 hitNormal;
+        void operator()(const G3D::Ray& ray, const ModelSpawn *entity, bool pStopAtFirstHit, float& distance) {
+            std::cout << "trying to intersect '" << entity->name << "'\n";
+        }
+    };
+
     //=========================================================
 
     std::string StaticMapTree::getTileFileName(uint32 mapID, uint32 tileX, uint32 tileY)
@@ -72,7 +82,8 @@ namespace VMAP
         return false;
     }
 
-    StaticMapTree::StaticMapTree(uint32 mapID, const std::string &basePath): iMapID(mapID), iBasePath(basePath)
+    StaticMapTree::StaticMapTree(uint32 mapID, const std::string &basePath):
+        iMapID(mapID), iTree(0), iTreeValues(0), iBasePath(basePath)
     {
         if(iBasePath.length() > 0 && (iBasePath[iBasePath.length()-1] != '/' || iBasePath[iBasePath.length()-1] != '\\'))
         {
@@ -113,7 +124,11 @@ namespace VMAP
 
     float StaticMapTree::getIntersectionTime(const G3D::Ray& pRay, float pMaxDist, bool pStopAtFirstHit)
     {
+        std::cout << "StaticMapTree::getIntersectionTime()\n";
         float firstDistance = G3D::inf();
+        PseudoCallBack intersectionCallBack;
+        NodeValueAccess<TreeNode, ModelSpawn> vna(iTree, iTreeValues);
+        iTree->intersectRay(pRay, intersectionCallBack, pMaxDist, vna, pStopAtFirstHit, true);
         /* IntersectionCallBack<ModelContainer> intersectionCallBack;
         float t = pMaxDist;
         iTree->intersectRay(pRay, intersectionCallBack, t, pStopAtFirstHit, false);
@@ -137,14 +152,14 @@ namespace VMAP
     bool StaticMapTree::isInLineOfSight(const Vector3& pos1, const Vector3& pos2)
     {
         bool result = true;
-        /* float maxDist = abs((pos2 - pos1).magnitude());
-                                                            // direction with length of 1
-        Ray ray = Ray::fromOriginAndDirection(pos1, (pos2 - pos1)/maxDist);
+        float maxDist = (pos2 - pos1).magnitude();
+        // direction with length of 1
+        G3D::Ray ray = G3D::Ray::fromOriginAndDirection(pos1, (pos2 - pos1)/maxDist);
         float resultDist = getIntersectionTime(ray, maxDist, true);
         if(resultDist < maxDist)
         {
             result = false;
-        } */
+        }
         return result;
     }
     //=========================================================
@@ -208,27 +223,36 @@ namespace VMAP
 
     bool StaticMapTree::init(const std::string &fname)
     {
+        std::cout << "Initializing StaticMapTree '" << fname << "'\n";
         bool success=true;
         std::string fullname = iBasePath + fname;
         FILE *rf = fopen(fullname.c_str(), "rb");
-        if(rf)
+        if(!rf)
+            return false;
+        else
         {
             char chunk[8];
             //general info
             char isTiled; // TODO use actual info!
             if (fread(&isTiled, sizeof(char), 1, rf) != 1) success = false;
-            // TODO: write world spawns
             // Nodes
             if (success && fread(chunk, 4, 1, rf) != 1) success = false;
-            uint32 size, nNodes, nElements;
+            uint32 size;
             if (success && fread(&size, 4, 1, rf) != 1) success = false;
-            if (success && fread(&nNodes, sizeof(uint32), 1, rf) != 1) success = false;
-            if (success) iTree = new TreeNode[nNodes];
-            if (success && fread(iTree, sizeof(TreeNode), nNodes, rf) != nNodes) success = false;
+            if (success && fread(&iNNodes, sizeof(uint32), 1, rf) != 1) success = false;
+            if (success) iTree = new TreeNode[iNNodes];
+            if (success && fread(iTree, sizeof(TreeNode), iNNodes, rf) != iNNodes) success = false;
             // amount of tree elements
-            if (success && fread(&nElements, sizeof(uint32), 1, rf) != 1) success = false;
-            if (success) iTreeValues = new ModelSpawn[nElements];
+            if (success && fread(&iNTreeValues, sizeof(uint32), 1, rf) != 1) success = false;
+            if (success) iTreeValues = new ModelSpawn[iNTreeValues];
+            // __debug__
+            if (success) std::cout<< "Allocated " << iNTreeValues << " node values.\n";
+            else std::cout << "error reading node value count!\n";
             
+            if (success && fread(chunk, 4, 1, rf) != 1) success = false;
+            chunk[4] = 0;
+            std::cout << "Chunk: " << &chunk[0] << std::endl;
+
             fclose(rf);
         }
         return success;
@@ -243,6 +267,8 @@ namespace VMAP
 
     bool StaticMapTree::loadMap(uint32 tileX, uint32 tileY)
     {
+        // __debug__
+        if(!iTree || !iTreeValues) std::cout << "Tree has not been initialized!\n";
         bool result = true;
         // if (isTiled)...
         std::string tilefile = iBasePath + getTileFileName(iMapID, tileX, tileY);
@@ -258,9 +284,32 @@ namespace VMAP
                 {
                     std::cout << "loading '" << spawn.name << "'\n";
 
-                // acquire model instance
+                    // acquire model instance
 
-                // update tree
+                    // update tree
+                    uint32 nNodeVal=0, referencedVal;
+                    fread(&nNodeVal, sizeof(uint32), 1, tf);
+                    // __debug__
+                    if(nNodeVal != 1)
+                        std::cout << "unexpected amount of affected NodeVals! (" << nNodeVal << ")\n";
+                    // __debug__ end
+                    for(uint32 i=0; i<nNodeVal; ++i)
+                    {
+                        fread(&referencedVal, sizeof(uint32), 1, tf);
+                        if(!iLoadedSpawns.count(spawn.ID))
+                        {
+                            // __debug__
+                            if(referencedVal > iNTreeValues)
+                            {
+                                std::cout << "invalid tree element! (" << referencedVal << "/" << iNTreeValues << ")\n";
+                                continue;
+                            }
+                            // __debug__ end
+                            iTreeValues[referencedVal] = spawn;
+                            iLoadedSpawns[spawn.ID] = 1;
+                        }
+                        else ++iLoadedSpawns[spawn.ID];
+                    }
                 }
             }
             iLoadedTiles[packTileID(tileX, tileY)] = true;
@@ -285,19 +334,38 @@ namespace VMAP
         if(tile->second) // file associated with tile
         {
             std::string tilefile = iBasePath + getTileFileName(iMapID, tileX, tileY);
-            FILE* df = fopen(tilefile.c_str(), "rb");
-            if(df)
+            FILE* tf = fopen(tilefile.c_str(), "rb");
+            if(tf)
             {
                 bool result=true;
                 while(result)
                 {
-                
-                
                     // read model spawns
+                    ModelSpawn spawn;
+                    result = ModelSpawn::readFromFile(tf, spawn);
+                    if(result)
+                    {
+                        std::cout << "unloading '" << spawn.name << "'\n";
                     // release model instance
-                    // update tree
-                    break;
+                        // update tree
+                        uint32 nNodes=0, referencedNode;
+                        fread(&nNodes, sizeof(uint32), 1, tf);
+                        for(uint32 i=0; i<nNodes; ++i)
+                        {
+                            fread(&referencedNode, sizeof(uint32), 1, tf);
+                            if(!iLoadedSpawns.count(spawn.ID))
+                            {
+                                std::cout << "error! trying to unload non-referenced model '" << spawn.name << "' (ID:" << spawn.ID << ")\n";
+                            }
+                            else
+                            {
+                                if(--iLoadedSpawns[spawn.ID] == 0);
+                                    iLoadedSpawns.erase(spawn.ID);
+                            }
+                        }
+                    }
                 }
+                fclose(tf);
             }
         }
         iLoadedTiles.erase(tile);
