@@ -2936,7 +2936,7 @@ void Spell::EffectApplyAura(SpellEffectIndex eff_idx)
     {
         // FIXME: currently we can't have auras applied explIcitly by gameobjects
         // so for auras from wild gameobjects (no owner) target used
-        if (IS_GAMEOBJECT_GUID(m_originalCasterGUID))
+        if (m_originalCasterGUID.IsGameobject())
             caster = unitTarget;
         else
             return;
@@ -5585,7 +5585,7 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                             TemporarySummon* pSummon = (TemporarySummon*)pTarget;
 
                             // can only affect "own" summoned
-                            if (pSummon->GetSummonerGUID() == m_caster->GetGUID())
+                            if (pSummon->GetSummonerGuid() == m_caster->GetObjectGuid())
                             {
                                 if (pTarget->hasUnitState(UNIT_STAT_ROAMING | UNIT_STAT_ROAMING_MOVE))
                                     pTarget->GetMotionMaster()->MovementExpired();
