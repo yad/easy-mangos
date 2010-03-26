@@ -1,0 +1,80 @@
+--  one lordaeron commander, 4 soldiers
+--  should be spawned at EWT and follow a path, but trans-grid pathing isn't safe, so summon them directly at NPT
+-- creature_type EP_EWT_Summons_A[EP_EWT_NUM_CREATURES] = {
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(17635, 469,  3167.61, -4352.09, 138.20, 4.5811);
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(17647, 469,  3172.74, -4352.99, 139.14, 4.9873);
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(17647, 469,  3165.89, -4354.46, 138.67, 3.7244);
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(17647, 469,  3164.65, -4350.26, 138.22, 2.4794);
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(17647, 469,  3169.91, -4349.68, 138.37, 0.7444);
+
+-- creature_type EP_EWT_Summons_H[EP_EWT_NUM_CREATURES] = {
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(17995, 67,  3167.61, -4352.09, 138.20, 4.5811);
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(17996, 67,  3172.74, -4352.99, 139.14, 4.9873);
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(17996, 67,  3165.89, -4354.46, 138.67, 3.7244);
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(17996, 67,  3164.65, -4350.26, 138.22, 2.4794);
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(17996, 67,  3169.91, -4349.68, 138.37, 0.7444);
+
+--  when spawning, pay attention at setting the faction manually!
+-- creature_type EP_PWT_FlightMaster = 
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(17209, 0,  2987.5, -3049.11, 120.126, 5.75959);
+
+------------------------------
+
+
+-- creature_type HordeControlNPCs[NA_CONTROL_NPC_NUM] = {
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(18816, 67, -1523.92, 7951.76, -17.6942, 3.51172);
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(18821, 67, -1527.75, 7952.46, -17.6948, 3.99317);
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(21474, 67, -1520.14, 7927.11, -20.2527, 3.39389);
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(21484, 67, -1524.84, 7930.34, -20.182, 3.6405);
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(21483, 67, -1570.01, 7993.8, -22.4505, 5.02655);
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(18192, 67, -1654.06, 8000.46, -26.59, 3.37);
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(18192, 67, -1487.18, 7899.1, -19.53, 0.954);
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(18192, 67, -1480.88, 7908.79, -19.19, 4.485);
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(18192, 67, -1540.56, 7995.44, -20.45, 0.947);
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(18192, 67, -1546.95, 8000.85, -20.72, 6.035);
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(18192, 67, -1595.31, 7860.53, -21.51, 3.747);
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(18192, 67, -1642.31, 7995.59, -25.8, 3.317);
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(18192, 67, -1545.46, 7995.35, -20.63, 1.094);
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(18192, 67, -1487.58, 7907.99, -19.27, 5.567);
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(18192, 67, -1651.54, 7988.56, -26.5289, 2.98451);
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(18192, 67, -1602.46, 7866.43, -22.1177, 4.74729);
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(18192, 67, -1591.22, 7875.29, -22.3536, 4.34587);
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(18192, 67, -1550.6, 7944.45, -21.63, 3.559);
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(18192, 67, -1545.57, 7935.83, -21.13, 3.448);
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(18192, 67, -1550.86, 7937.56, -21.7, 3.801);
+
+-- creature_type AllianceControlNPCs[NA_CONTROL_NPC_NUM] = {
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(18817, 469, -1591.18, 8020.39, -22.2042, 4.59022);
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(18822, 469, -1588.0, 8019.0, -22.2042, 4.06662);
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(21485, 469, -1521.93, 7927.37, -20.2299, 3.24631);
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(21487, 469, -1540.33, 7971.95, -20.7186, 3.07178);
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(21488, 469, -1570.01, 7993.8, -22.4505, 5.02655);
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(18256, 469, -1654.06, 8000.46, -26.59, 3.37);
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(18256, 469, -1487.18, 7899.1, -19.53, 0.954);
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(18256, 469, -1480.88, 7908.79, -19.19, 4.485);
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(18256, 469, -1540.56, 7995.44, -20.45, 0.947);
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(18256, 469, -1546.95, 8000.85, -20.72, 6.035);
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(18256, 469, -1595.31, 7860.53, -21.51, 3.747);
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(18256, 469, -1642.31, 7995.59, -25.8, 3.317);
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(18256, 469, -1545.46, 7995.35, -20.63, 1.094);
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(18256, 469, -1487.58, 7907.99, -19.27, 5.567);
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(18256, 469, -1651.54, 7988.56, -26.5289, 2.98451);
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(18256, 469, -1602.46, 7866.43, -22.1177, 4.74729);
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(18256, 469, -1591.22, 7875.29, -22.3536, 4.34587);
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(18256, 469, -1603.75, 8000.36, -24.18, 4.516);
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(18256, 469, -1585.73, 7994.68, -23.29, 4.439);
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(18256, 469, -1595.5, 7991.27, -23.53, 4.738);
+
+
+----------------------------
+
+
+
+--  horde field scout spawn data
+-- creature_type ZM_HordeFieldScout =
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(18564, 67, 296.625, 7818.4, 42.6294, 5.18363);
+--  alliance field scout spawn data
+-- creature_type ZM_AllianceFieldScout = 
+INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(18581, 469, 374.395, 6230.08, 22.8351, 0.593412);
+
+
