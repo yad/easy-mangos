@@ -1062,7 +1062,7 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
     // NOTE: it removed at hit instead cast because currently spell done-damage calculated at hit instead cast
     // For arcane missiles its removed in Aura::HandleAuraDummy();
     if ((m_spellInfo->SchoolMask & SPELL_SCHOOL_MASK_ARCANE) && !(m_spellInfo->SpellFamilyFlags & UI64LIT(0x20000000))
-        && !m_IsTriggeredSpell && !IsChanneledSpell(m_spellInfo))
+        && !m_IsTriggeredSpell && !IsChanneledSpell(m_spellInfo) && m_spellInfo->DmgClass != SPELL_DAMAGE_CLASS_NONE)
     {
         m_caster->RemoveAurasDueToSpell(36032); // Arcane Blast buff
     }
