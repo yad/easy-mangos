@@ -7608,6 +7608,31 @@ void Player::SendLoot(ObjectGuid guid, LootType loot_type)
                     sLog.outDebug("       if(lootid)");
                     loot->clear();
                     loot->FillLoot(lootid, LootTemplates_Gameobject, this, false);
+                    if(go->GetGoType() == GAMEOBJECT_TYPE_CHEST && go->GetGOInfo()->chest.groupLootRules)
+                    {
+                        if(Group* group = GetGroup())
+                        {
+                            group->UpdateLooterGuid(object,true);
+
+                            switch (group->GetLootMethod())
+                            {
+                                case GROUP_LOOT:
+                                    // GroupLoot delete items over threshold (threshold even not implemented), and roll them. Items with quality<threshold, round robin
+                                    group->GroupLoot(recipient->GetObjectGuid(), loot, object);
+                                    break;
+                                case NEED_BEFORE_GREED:
+                                    group->NeedBeforeGreed(recipient->GetObjectGuid(), loot, object);
+                                    break;
+                                default:
+                                    break;
+                            }
+                            //Master loot does not work for chests (blizzlike, client also refuse to use SMSG_LOOT_MASTER_LIST)
+                            if (group->GetLootMethod() == FREE_FOR_ALL || group->GetLooterGuid() == GetGUID())
+                                permission = ALL_PERMISSION;
+                            else
+                                permission = GROUP_PERMISSION;
+                        }
+                    }
                 }
 
                 if (loot_type == LOOT_FISHING)

@@ -669,6 +669,8 @@ class MANGOS_DLL_SPEC GameObject : public WorldObject
         void SaveRespawnTime();
 
         Loot        loot;
+        uint32 m_groupLootTimer;                            // (msecs)timer used for group loot
+        uint32 m_groupLootId;                               // used to find group which is looting corpse
 
         bool hasQuest(uint32 quest_id) const;
         bool hasInvolvedQuest(uint32 quest_id) const;

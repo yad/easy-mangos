@@ -57,6 +57,9 @@ GameObject::GameObject() : WorldObject()
 
     m_DBTableGuid = 0;
     m_rotation = 0;
+
+    m_groupLootTimer = 0;
+    m_groupLootId = 0;
 }
 
 GameObject::~GameObject()
@@ -157,7 +160,7 @@ bool GameObject::Create(uint32 guidlow, uint32 name_id, Map *map, uint32 phaseMa
     return true;
 }
 
-void GameObject::Update(uint32 /*p_time*/)
+void GameObject::Update(uint32 p_time)
 {
     if (GetObjectGuid().IsMOTransport())
     {
@@ -376,6 +379,22 @@ void GameObject::Update(uint32 /*p_time*/)
                         m_cooldownTime = 0;
                     }
                     break;
+                case GAMEOBJECT_TYPE_CHEST:
+                    if (m_groupLootTimer && m_groupLootId)
+                    {
+                        if(p_time <= m_groupLootTimer)
+                        {
+                            m_groupLootTimer -= p_time;
+                        }
+                        else
+                        {
+                            if (Group* group = sObjectMgr.GetGroupById(m_groupLootId))
+                                group->EndRoll();
+                            m_groupLootTimer = 0;
+                            m_groupLootId = 0;
+                        }
+                    }
+                    break;
                 default:
                     break;
             }
@@ -456,6 +475,9 @@ void GameObject::Refresh()
     // not refresh despawned not casted GO (despawned casted GO destroyed in all cases anyway)
     if(m_respawnTime > 0 && m_spawnedByDefault)
         return;
+
+    m_groupLootTimer = 0;
+    m_groupLootId = 0;
 
     if(isSpawned())
         GetMap()->Add(this);
