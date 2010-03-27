@@ -4,8 +4,9 @@
 #define CHUNKSIZE ((TILESIZE) / 16.0f)
 
 #include <string>
-#include "vec3d.h"
 #include <set>
+#include "vec3d.h"
+#include "loadlib/loadlib.h"
 
 // MOPY flags
 #define WMO_MATERIAL_NOCAMCOLLIDE    0x01
@@ -20,9 +21,8 @@ class WMOInstance;
 class WMOManager;
 class MPQFile;
 
-typedef unsigned char uint8;
-typedef unsigned short uint16;
-typedef unsigned int uint32;
+/* for whatever reason a certain company just can't stick to one coordinate system... */
+static inline Vec3D fixCoords(const Vec3D &v){ return Vec3D(v.z, v.x, v.y); }
 
 class WMORoot
 {
@@ -86,7 +86,7 @@ private:
     char outfilename;
 };
 
-struct WMOLiquidHeader 
+struct WMOLiquidHeader
 {
     int xverts, yverts, xtiles, ytiles;
     float pos_x;
@@ -95,7 +95,7 @@ struct WMOLiquidHeader
     short type;
 };
 
-class WMOInstance 
+class WMOInstance
 {
     static std::set<int> ids;
 public:

@@ -107,7 +107,7 @@ int main(int argc, char* argv[])
         }
     }
 
-    if(!ta->convertWorld())
+    if(!ta->convertWorld2())
     {
         printf("exit with errors\n");
         delete ta;

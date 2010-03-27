@@ -39,8 +39,8 @@ bool Model::open()
         indices = new uint16[header.nBoundingTriangles];
         f.read(indices,header.nBoundingTriangles*2);
         f.close();
-    } 
-    else 
+    }
+    else
     {
         //printf("not included %s\n", filename.c_str());
         f.close();
@@ -127,7 +127,7 @@ ModelInstance::ModelInstance(MPQFile &f,const char* ModelInstName, uint32 mapID,
     float ff[3];
     f.read(&id, 4);
     f.read(ff,12);
-    pos = Vec3D(ff[0],ff[1],ff[2]);
+    pos = fixCoords(Vec3D(ff[0],ff[1],ff[2]));
     f.read(ff,12);
     rot = Vec3D(ff[0],ff[1],ff[2]);
     f.read(&scale,4);

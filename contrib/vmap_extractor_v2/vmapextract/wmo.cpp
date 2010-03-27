@@ -526,9 +526,12 @@ WMOInstance::WMOInstance(MPQFile &f,const char* WmoInstName, uint32 mapID, uint3
         pos.x = 533.33333f*32;
         pos.z = 533.33333f*32;
     }
+    pos = fixCoords(pos);
+    pos2 = fixCoords(pos2);
+    pos3 = fixCoords(pos3);
 
     float scale = 1.0f;
-    uint32 flags = 0;
+    uint32 flags = MOD_HAS_BOUND;
     if(tileX == 65 && tileY == 65) flags |= MOD_WORLDSPAWN;
     //write mapID, tileX, tileY, Flags, ID, Pos, Rot, Scale, Bound_lo, Bound_hi, name
     fwrite(&mapID, sizeof(uint32), 1, pDirfile);
@@ -544,7 +547,7 @@ WMOInstance::WMOInstance(MPQFile &f,const char* WmoInstName, uint32 mapID, uint3
     uint32 nlen=strlen(WmoInstName);
     fwrite(&nlen, sizeof(uint32), 1, pDirfile);
     fwrite(WmoInstName, sizeof(char), nlen, pDirfile);
-    
+
     /* fprintf(pDirfile,"%s/%s %f,%f,%f_%f,%f,%f 1.0 %d %d %d,%d %d\n",
         MapName,
         WmoInstName,
