@@ -41,12 +41,15 @@ libmangosvmaps_a_SOURCES = \
 	MapTree.h \
 	ModelContainer.cpp \
 	ModelContainer.h \
+	ModelInstance.cpp \
+	ModelInstance.h \
 	NodeValueAccess.h \
 	ShortBox.h \
 	ShortVector.h \
 	SubModel.cpp \
 	SubModel.h \
 	TileAssembler.cpp \
+	TileAssembler2.cpp \
 	TileAssembler.h \
 	TreeNode.cpp \
 	TreeNode.h \
@@ -57,4 +60,6 @@ libmangosvmaps_a_SOURCES = \
 	VMapManager.h \
 	VMapManager2.cpp \
 	VMapManager2.h \
-	VMapTools.h
+	VMapTools.h \
+	WorldModel.cpp \
+	WorldModel.h

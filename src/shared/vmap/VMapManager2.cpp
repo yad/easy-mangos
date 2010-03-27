@@ -22,6 +22,7 @@
 #include <sstream>
 #include "VMapManager2.h"
 #include "MapTree.h"
+#include "WorldModel.h"
 #include "VMapDefinitions.h"
 
 //using namespace G3D;
@@ -50,7 +51,7 @@ namespace VMAP
         }
         for (ModelFileMap::iterator i = iLoadedModelFiles.begin(); i != iLoadedModelFiles.end(); ++i)
         {
-            i->second.destroy();
+            delete i->second.getModel();
         }
     }
 
@@ -154,7 +155,7 @@ namespace VMAP
                 return false;
             instanceTree = iInstanceMapTrees.insert(InstanceTreeMap::value_type(pMapId, newTree)).first;
         }
-        return instanceTree->second->loadMap(tileX, tileY);
+        return instanceTree->second->loadMap(tileX, tileY, this);
     }
 
     //=========================================================
@@ -200,7 +201,7 @@ namespace VMAP
         InstanceTreeMap::iterator instanceTree = iInstanceMapTrees.find(pMapId);
         if (instanceTree != iInstanceMapTrees.end())
         {
-            instanceTree->second->unloadMap(x,y);
+            instanceTree->second->unloadMap(x, y, this);
             if (instanceTree->second->numLoadedTiles() == 0)
             {
                 delete instanceTree->second;
@@ -365,6 +366,42 @@ namespace VMAP
         return(result);
     }
     //=========================================================
+    
+    WorldModel* VMapManager2::aquireModelInstance(const std::string &basepath, const std::string &filename)
+    {
+        ModelFileMap::iterator model = iLoadedModelFiles.find(filename);
+        if (model == iLoadedModelFiles.end())
+        {
+            WorldModel *worldmodel = new WorldModel();
+            if (!worldmodel->readFile(basepath + filename + ".vmo"))
+            {
+                std::cout << "VMapManager2: could not load '" << basepath << filename << ".vmo'!\n";
+                delete worldmodel;
+                return NULL;
+            }
+            std::cout << "VMapManager2: loading file '" << basepath << filename << "'.\n";
+            model = iLoadedModelFiles.insert(std::pair<std::string, ManagedModel>(filename, ManagedModel())).first;
+            model->second.setModel(worldmodel);
+        }
+        model->second.incRefCount();
+        return model->second.getModel();
+    }
+    
+    void VMapManager2::releaseModelInstance(const std::string &filename)
+    {
+        ModelFileMap::iterator model = iLoadedModelFiles.find(filename);
+        if (model == iLoadedModelFiles.end())
+        {
+            std::cout << "VMapManager2: trying to unload non-loaded file '" << filename << "'!\n";
+            return;
+        }
+        if( model->second.decRefCount() == 0)
+        {
+            std::cout << "VMapManager2: unloading file '" << filename << "'.\n";
+            delete model->second.getModel();
+            iLoadedModelFiles.erase(model);
+        }
+    }
     //=========================================================
 
 }

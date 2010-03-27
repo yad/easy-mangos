@@ -27,7 +27,8 @@
 namespace VMAP
 {
     class TreeNode;
-    class ModelSpawn;
+    class ModelInstance;
+    class VMapManager2;
 
     class StaticMapTree
     {
@@ -37,7 +38,7 @@ namespace VMAP
             uint32 iMapID;
             TreeNode *iTree; // the KD-tree
             uint32 iNNodes;
-            ModelSpawn *iTreeValues; // the KD-tree entries
+            ModelInstance *iTreeValues; // the KD-tree entries
             uint32 iNTreeValues;
             // add UniqueEntryMap define?
             //std::map<uint32, ModelSpawn> mapSpawns;
@@ -83,8 +84,8 @@ namespace VMAP
 
             //bool PrepareTree();
             bool init(const std::string &fname);
-            bool loadMap(uint32 tileX, uint32 tileY);
-            void unloadMap(uint32 tileX, uint32 tileY);
+            bool loadMap(uint32 tileX, uint32 tileY, VMapManager2 *vm);
+            void unloadMap(uint32 tileX, uint32 tileY, VMapManager2 *vm);
             uint32 numLoadedTiles() { return iLoadedTiles.size(); }
             // void addModelContainer(const std::string& pName, ManagedModelContainer *pMc);
     };
