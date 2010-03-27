@@ -37,7 +37,7 @@ namespace VMAP
         if (time == G3D::inf())
         {
             std::cout << "Ray does not hit '" << name << "'\n";
-            
+
             return;
         }
         std::cout << "Ray crosses bound of '" << name << "'\n";
@@ -61,10 +61,7 @@ namespace VMAP
         uint32 check=0, nameLen;
         check += fread(&spawn.flags, sizeof(uint32), 1, rf);
         check += fread(&spawn.ID, sizeof(uint32), 1, rf);
-        // client internal map coordinate system is y-up apparently, shuffle pos to match our representation:
-        float vposarray[3];
-        check += fread(vposarray, sizeof(float), 3, rf);
-        spawn.iPos = Vector3(vposarray[2], vposarray[0], vposarray[1]);
+        check += fread(&spawn.iPos, sizeof(float), 3, rf);
         check += fread(&spawn.iRot, sizeof(float), 3, rf);
         check += fread(&spawn.iScale, sizeof(float), 1, rf);
         bool has_bound = (spawn.flags & MOD_HAS_BOUND);
@@ -76,11 +73,11 @@ namespace VMAP
             spawn.iBound = G3D::AABox(bLow, bHigh);
         }
         check += fread(&nameLen, sizeof(uint32), 1, rf);
-        if(check != (has_bound ? 16 : 10)) { printf("Error reading dir_bin! (%d != 19)!\n", check); return false; }
+        if(check != (has_bound ? 16 : 10)) { printf("Error reading ModelSpawn!\n"); return false; }
         char nameBuff[500];
-        if(nameLen>500) { printf("Error, too large file name!\n"); return false; }
+        if(nameLen>500) { printf("Error, file name too long!\n"); return false; }
         check = fread(nameBuff, sizeof(char), nameLen, rf);
-        if(check != nameLen) { printf("Error reading dir_bin (%d != %d)!\n", check, nameLen); return false; }
+        if(check != nameLen) { printf("Error reading ModelSpawn!\n"); return false; }
         spawn.name = std::string(nameBuff, nameLen);
         return true;
     }
@@ -90,9 +87,7 @@ namespace VMAP
         uint32 check=0;
         check += fwrite(&spawn.flags, sizeof(uint32), 1, wf);
         check += fwrite(&spawn.ID, sizeof(uint32), 1, wf);
-        // client internal map coordinate system is y-up apparently, shuffle pos to match our representation:
-        Vector3 vposarray(spawn.iPos.y, spawn.iPos.z, spawn.iPos.x);
-        check += fwrite(&vposarray, sizeof(float), 3, wf);
+        check += fwrite(&spawn.iPos, sizeof(float), 3, wf);
         check += fwrite(&spawn.iRot, sizeof(float), 3, wf);
         check += fwrite(&spawn.iScale, sizeof(float), 1, wf);
         bool has_bound = (spawn.flags & MOD_HAS_BOUND);

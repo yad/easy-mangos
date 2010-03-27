@@ -44,7 +44,7 @@ namespace VMAP
             filename.append("/");
         filename.append(pModelFilename);
         FILE *rf = fopen(filename.c_str(), "rb");
-        
+
         if(!rf)
         {
             printf("ERROR: Can't open model file in form: %s",pModelFilename.c_str());
@@ -53,10 +53,6 @@ namespace VMAP
         }
 
         char ident[8];
-
-        int trianglecount =0;
-        int startgroup = 0;
-        int endgroup = INT_MAX;
 
         int readOperation = 1;
 
@@ -82,19 +78,19 @@ namespace VMAP
         READ_OR_RETURN(&groups, sizeof(G3D::uint32));
 
         uint32 idxOffset=0;
-        G3D:Array<SoloTriangle> triangles;
+        G3D::Array<SoloTriangle> triangles;
         G3D::Array<Vector3> vertexArray;
 
         for(int g=0;g<(int)groups;g++)
         {
             // group MUST NOT have more then 65536 indexes !! Array will have a problem with that !! (strange ...)
             Array<int> tempIndexArray;
-            
+
             //AABSPTree<MeshTriangle> *gtree = new AABSPTree<MeshTriangle>();
 
             G3D::uint32 mogpflags;
             READ_OR_RETURN(&mogpflags, sizeof(G3D::uint32));
-            
+
             float bbox1[3], bbox2[3];
             READ_OR_RETURN(bbox1, sizeof(float)*3);
             READ_OR_RETURN(bbox2, sizeof(float)*3);
@@ -182,7 +178,7 @@ namespace VMAP
             triangles[i].setVertexData(vertexArray.getCArray());
         G3D::VmapKDTree<SoloTriangle> gtree;
         gtree.insert(triangles);
-        
+
         gtree.balance();
         int nNodes, nElements;
         gtree.countNodesAndElements(nNodes, nElements);
@@ -190,18 +186,13 @@ namespace VMAP
         SoloTriangle *sTris = new SoloTriangle[nElements];
         Vector3 lo, hi;
         gtree.serializeTree(lo, hi, sTree, sTris);
-        // gtree contains only triangles - is it possible to define "inside" and "outside" at all?
-        // one submodel = one wmo group file
         // TODO: add indoor/outdoor flags and areaid to submodel
 
-        /* SubModel *sm = new SubModel(gtree, mogpflags, areaID);
-        sm->setBasePosition(pModelPosition.iPos);
-        pMainTree->insert(sm); */
         // write WorldModel
         WorldModel model(vertexArray.getCArray(), vertexArray.size(), sTris, nElements, sTree, nNodes);
         bool success = model.writeFile(iDestDir + "/" + pModelFilename + ".vmo");
 
-        std::cout << "readRawFile2: '" << pModelFilename << "' tris: " << nElements << " nodes: " << nNodes << std::endl;
-        return true;
+        //std::cout << "readRawFile2: '" << pModelFilename << "' tris: " << nElements << " nodes: " << nNodes << std::endl;
+        return success;
     }
 }

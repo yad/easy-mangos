@@ -241,10 +241,13 @@ namespace VMAP
             check = 0;
             // read mapID, tileX, tileY, Flags, ID, Pos, Rot, Scale, Bound_lo, Bound_hi, name
             check += fread(&mapID, sizeof(uint32), 1, dirf);
-            if (check == 0) break;
+            if (check == 0) // EoF...
+                break;
             check += fread(&tileX, sizeof(uint32), 1, dirf);
             check += fread(&tileY, sizeof(uint32), 1, dirf);
-            check += fread(&spawn.flags, sizeof(uint32), 1, dirf);
+            if (!ModelSpawn::readFromFile(dirf, spawn))
+                break;
+            /* check += fread(&spawn.flags, sizeof(uint32), 1, dirf);
             check += fread(&spawn.ID, sizeof(uint32), 1, dirf);
             // client internal map coordinate system is y-up apparently, shuffle pos to match our representation:
             check += fread(&v1, sizeof(float), 3, dirf);
@@ -264,8 +267,8 @@ namespace VMAP
             if(nameLen>500) { printf("Error, too large file name!\n"); return false; }
             check = fread(nameBuff, sizeof(char), nameLen, dirf);
             if(check != nameLen) { printf("Error reading dir_bin (%d != %d)!\n", check, nameLen); break; }
-            spawn.name = std::string(nameBuff, nameLen);
-            
+            spawn.name = std::string(nameBuff, nameLen); */
+
             MapSpawns *current;
             std::map<uint32, MapSpawns*>::iterator map_iter = mapData.find(mapID); // hooray for "compact" STL syntax...
             if(map_iter == mapData.end())
@@ -289,7 +292,7 @@ namespace VMAP
         modelPosition.iDir = spawn.iRot;
         modelPosition.iScale = spawn.iScale;
         modelPosition.init();
-        
+
         FILE *rf = fopen(modelFilename.c_str(), "rb");
         if(!rf)
         {
@@ -377,7 +380,7 @@ namespace VMAP
     {
         std::set<std::string> spawnedModelFiles;
         bool success = readMapSpawns();
-        
+
         // export Map data
         for (MapData::iterator map_iter = mapData.begin(); map_iter != mapData.end(); ++map_iter)
         {
@@ -423,7 +426,7 @@ namespace VMAP
             ModelSpawn &__bm2 = map_iter->second->UniqueEntries[__max_bz_m2];
             std::cout << "Highest WMO: " << __bwmo.name << " z:" << __bwmo.iPos.z << " bz:" << __bwmo.iBound.high().z << std::endl;
             std::cout << "Highest M2:  " << __bm2.name << " z:" << __bm2.iPos.z << " bz:" << __bm2.iBound.high().z << std::endl;
-            
+
             pTree.balance(3);
             // ===> possibly move this code to StaticMapTree class
             int nNodes=0, nElements=0;
@@ -473,11 +476,11 @@ namespace VMAP
             {
                 success = ModelSpawn::writeToFile(mapfile, map_iter->second->UniqueEntries[glob->second]);
             }
-            
+
             fclose(mapfile);
 
             // <====
-            
+
             // write map tile files, similar to ADT files, only with extra BSP tree node info
             TileMap::iterator tile;
             for (tile = map_iter->second->TileEntries.begin(); tile != map_iter->second->TileEntries.end(); ++tile)
@@ -505,11 +508,8 @@ namespace VMAP
 
                 fclose(tilefile);
             }
-            
-            
-            break; // test...
         }
-        
+
         // export objects
         //ModelSpawn &someSpawn = mapData.begin()->second->UniqueEntries.begin()->second;
         ModelPosition dummy;
@@ -822,7 +822,7 @@ namespace VMAP
 
             G3D::uint32 mogpflags;
             READ_OR_RETURN(&mogpflags, sizeof(G3D::uint32));
-            
+
             float bbox1[3], bbox2[3];
             READ_OR_RETURN(bbox1, sizeof(float)*3);
             READ_OR_RETURN(bbox2, sizeof(float)*3);
