@@ -85,7 +85,7 @@ inline void getBounds(const G3D::Triangle* t, G3D::AABox& out) {
     t->getBounds(out);
 }
 namespace G3D {
-    namespace _internal {
+    namespace __internal {
 
     /**
      Wraps a pointer value so that it can be treated as the instance itself;
@@ -122,8 +122,8 @@ struct GHashCode< G3D::_internal::Indirector<Handle> >
 {
     size_t operator()(const G3D::_internal::Indirector<Handle>& key) const { return key.hashCode(); }
 }; */
-template <class Handle> struct HashTrait<typename G3D::_internal::Indirector<Handle> > {
-    static size_t hashCode(const G3D::_internal::Indirector<Handle>& key) { return key.hashCode(); }
+template <class Handle> struct HashTrait<typename G3D::__internal::Indirector<Handle> > {
+    static size_t hashCode(const G3D::__internal::Indirector<Handle>& key) { return key.hashCode(); }
 };
 
 namespace G3D {
@@ -897,7 +897,7 @@ public:
     Wrapper for a Handle; used to create a memberTable that acts like Table<Handle, Node*> but
     stores only Handle* internally to avoid memory copies.
     */
-    typedef _internal::Indirector<_AABSPTree::Handle<T> > Member;
+    typedef __internal::Indirector<_AABSPTree::Handle<T> > Member;
 
     typedef Table<Member, Node*> MemberTable;
 
@@ -935,7 +935,7 @@ public:
      */
     void clear()
     {
-        typedef typename Table<_internal::Indirector<_AABSPTree::Handle<T> >, Node* >::Iterator It;
+        typedef typename Table<__internal::Indirector<_AABSPTree::Handle<T> >, Node* >::Iterator It;
 
         // Delete all handles stored in the member table
         It tab_cur = memberTable.begin();

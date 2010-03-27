@@ -26,18 +26,12 @@
 #include <map>
 
 #include "CoordModelMapping.h"
-#include "SubModel.h"
+// #include "SubModel.h"
 #include "ModelContainer.h"
+#include "ModelInstance.h"
 
 namespace VMAP
 {
-    enum ModelFlags
-    {
-        MOD_M2 = 1,
-        MOD_WORLDSPAWN = 1<<1,
-        MOD_HAS_BOUND = 1<<2
-    };
-    
     /**
     This Class is used to convert raw vector data into balanced BSP-Trees.
     To start the conversion call convertWorld().
@@ -58,27 +52,6 @@ namespace VMAP
             }
             G3D::Vector3 transform(const G3D::Vector3& pIn) const;
             void moveToBasePos(const G3D::Vector3& pBasePos) { iPos -= pBasePos; }
-    };
-
-    class ModelSpawn
-    {
-        public:
-            //mapID, tileX, tileY, Flags, ID, Pos, Rot, Scale, Bound_lo, Bound_hi, name
-            uint32 flags;
-            uint32 ID;
-            G3D::Vector3 iPos;
-            G3D::Vector3 iRot;
-            float iScale;
-            G3D::AABox iBound;
-            std::string name;
-            bool operator==(const ModelSpawn &other) { return ID == other.ID; }
-            uint32 hashCode() const { return ID; }
-            // temp?
-            const G3D::AABox& getAABoxBounds() const { return iBound; }
-
-            
-            static bool readFromFile(FILE *rf, ModelSpawn &spawn);
-            static bool writeToFile(FILE *rw, const ModelSpawn &spawn);
     };
 
     typedef std::map<uint32, ModelSpawn> UniqueEntryMap;
@@ -121,6 +94,7 @@ namespace VMAP
             bool fillModelIntoTree(G3D::AABSPTree<SubModel *> *pMainTree, const G3D::Vector3& pBasePos, std::string& pPosFilename, std::string& pModelFilename);
             void getModelPosition(std::string& pPosString, ModelPosition& pModelPosition);
             bool readRawFile(std::string& pModelFilename,  ModelPosition& pModelPosition, G3D::AABSPTree<SubModel *> *pMainTree);
+            bool readRawFile2(const std::string& pModelFilename,  ModelPosition& pModelPosition);
             void addWorldAreaMapId(unsigned int pMapId) { iCoordModelMapping->addWorldAreaMap(pMapId); }
             void setModelNameFilterMethod(bool (*pFilterMethod)(char *pName)) { iFilterMethod = pFilterMethod; }
             std::string getDirEntryNameFromModName(unsigned int pMapId, const std::string& pModPosName);

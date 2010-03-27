@@ -28,6 +28,7 @@
 #include <string.h>
 #include <sstream>
 #include <iomanip>
+#include <set>
 
 #ifdef _ASSEMBLER_DEBUG
 FILE *g_df = NULL;
@@ -256,6 +257,7 @@ namespace VMAP
                 check += fread(&v1, sizeof(float), 3, dirf);
                 check += fread(&v2, sizeof(float), 3, dirf);
                 spawn.iBound = AABox(fixCoords(v1), fixCoords(v2));
+                spawn.flags |= MOD_HAS_BOUND;
             }
             check += fread(&nameLen, sizeof(uint32), 1, dirf);
             if(check != (isWMO ? 19 : 13)) { printf("Error reading dir_bin! (%d != 19)!\n", check); break; }
@@ -347,7 +349,7 @@ namespace VMAP
 
             if(nvectors >0)
             {
-                vectorarray = new float[nvectors*sizeof(float)*3];
+                vectorarray = new float[nvectors*3];
                 READ_OR_RETURN(vectorarray, nvectors*sizeof(float)*3);
             }
 
@@ -359,13 +361,13 @@ namespace VMAP
                 if(boundEmpty)
                     modelBound = AABox(v, v), boundEmpty=false;
                 else
-                    modelBound = AABox( modelBound.low().min(v), modelBound.high().max(v) ); // modelBound.merge(v); in newer G3D
+                    modelBound.merge(v);
             }
             // drop of temporary use defines
             #undef READ_OR_RETURN
             #undef CMP_OR_RETURN
         }
-        spawn.iBound = AABox(modelBound.low() + spawn.iPos, modelBound.high() + spawn.iPos); // = modelBound + spawn.iPos; in newer G3D
+        spawn.iBound = modelBound + spawn.iPos;
         spawn.flags |= MOD_HAS_BOUND;
         fclose(rf);
         return true;
@@ -373,8 +375,8 @@ namespace VMAP
 
     bool TileAssembler::convertWorld2()
     {
+        std::set<std::string> spawnedModelFiles;
         bool success = readMapSpawns();
-        // export objects
         
         // export Map data
         for (MapData::iterator map_iter = mapData.begin(); map_iter != mapData.end(); ++map_iter)
@@ -408,6 +410,7 @@ namespace VMAP
                 }
                 // /__debug__
                 pTree.insert(&(entry->second));
+                spawnedModelFiles.insert(entry->second.name);
             }
             __depth=0;
             treeStat.clear();
@@ -506,61 +509,15 @@ namespace VMAP
             
             break; // test...
         }
+        
+        // export objects
+        //ModelSpawn &someSpawn = mapData.begin()->second->UniqueEntries.begin()->second;
+        ModelPosition dummy;
+        for (std::set<std::string>::iterator mfile = spawnedModelFiles.begin(); mfile != spawnedModelFiles.end(); ++mfile)
+        {
+            readRawFile2(*mfile, dummy);
+        }
         return success;
-    }
-
-    // move to new file... (WorldModel.cpp?)
-    bool ModelSpawn::readFromFile(FILE *rf, ModelSpawn &spawn)
-    {
-        uint32 check=0, nameLen;
-        check += fread(&spawn.flags, sizeof(uint32), 1, rf);
-        check += fread(&spawn.ID, sizeof(uint32), 1, rf);
-        // client internal map coordinate system is y-up apparently, shuffle pos to match our representation:
-        float vposarray[3];
-        check += fread(vposarray, sizeof(float), 3, rf);
-        spawn.iPos = Vector3(vposarray[2], vposarray[0], vposarray[1]);
-        check += fread(&spawn.iRot, sizeof(float), 3, rf);
-        check += fread(&spawn.iScale, sizeof(float), 1, rf);
-        bool has_bound = (spawn.flags & MOD_HAS_BOUND);
-        if(has_bound) // only WMOs have bound in MPQ, only available after computation
-        {
-            Vector3 bLow, bHigh;
-            check += fread(&bLow, sizeof(float), 3, rf);
-            check += fread(&bHigh, sizeof(float), 3, rf);
-            spawn.iBound = AABox(bLow, bHigh);
-        }
-        check += fread(&nameLen, sizeof(uint32), 1, rf);
-        if(check != (has_bound ? 16 : 10)) { printf("Error reading dir_bin! (%d != 19)!\n", check); return false; }
-        char nameBuff[500];
-        if(nameLen>500) { printf("Error, too large file name!\n"); return false; }
-        check = fread(nameBuff, sizeof(char), nameLen, rf);
-        if(check != nameLen) { printf("Error reading dir_bin (%d != %d)!\n", check, nameLen); return false; }
-        spawn.name = std::string(nameBuff, nameLen);
-        return true;
-    }
-
-    bool ModelSpawn::writeToFile(FILE *wf, const ModelSpawn &spawn)
-    {
-        uint32 check=0;
-        check += fwrite(&spawn.flags, sizeof(uint32), 1, wf);
-        check += fwrite(&spawn.ID, sizeof(uint32), 1, wf);
-        // client internal map coordinate system is y-up apparently, shuffle pos to match our representation:
-        Vector3 vposarray(spawn.iPos.y, spawn.iPos.z, spawn.iPos.x);
-        check += fwrite(&vposarray, sizeof(float), 3, wf);
-        check += fwrite(&spawn.iRot, sizeof(float), 3, wf);
-        check += fwrite(&spawn.iScale, sizeof(float), 1, wf);
-        bool has_bound = (spawn.flags & MOD_HAS_BOUND);
-        if(has_bound) // only WMOs have bound in MPQ, only available after computation
-        {
-            check += fwrite(&spawn.iBound.low(), sizeof(float), 3, wf);
-            check += fwrite(&spawn.iBound.high(), sizeof(float), 3, wf);
-        }
-        uint32 nameLen = spawn.name.length();
-        check += fwrite(&nameLen, sizeof(uint32), 1, wf);
-        if(check != (has_bound ? 16 : 10)) return false;
-        check = fwrite(spawn.name.c_str(), sizeof(char), nameLen, wf);
-        if(check != nameLen) return false;
-        return true;
     }
 
     /* ========================================== /

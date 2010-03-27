@@ -19,9 +19,6 @@
 #ifndef _VMAPMANAGER2_H
 #define _VMAPMANAGER2_H
 
-// load our modified version first !!
-#include "AABSPTree.h"
-//#include "ManagedModelContainer.h"
 #include "IVMapManager.h"
 #include "Utilities/UnorderedMap.h"
 #include "Platform/Define.h"
@@ -53,15 +50,18 @@ Additionally a table to match map ids and map names is used.
 namespace VMAP
 {
     class StaticMapTree;
-    
+    class WorldModel;
+
     class ManagedModel
     {
         public:
+            ManagedModel(): iModel(0), iRefCount(0) {}
+            void setModel(WorldModel *model) { iModel = model; }
+            WorldModel *getModel() { return iModel; }
             void incRefCount() { ++iRefCount; }
             int decRefCount() { return --iRefCount; }
-            void destroy() { delete model; }
         protected:
-            SubModel *model;
+            WorldModel *iModel;
             int iRefCount;
     };
 
@@ -91,8 +91,6 @@ namespace VMAP
 
             int loadMap(const char* pBasePath, unsigned int pMapId, int x, int y);
 
-            //bool existsMap(const char* pBasePath, unsigned int pMapId, int x, int y);
-
             void unloadMap(unsigned int pMapId, int x, int y);
             void unloadMap(unsigned int pMapId);
 
@@ -107,10 +105,13 @@ namespace VMAP
 
             void preventMapsFromBeingUsed(const char* pMapIdString);
             bool getAreaInfo(unsigned int pMapId, float x, float y, float z, unsigned int &areaID, unsigned int &flags);
-            
+
+            WorldModel* aquireModelInstance(const std::string &basepath, const std::string &filename);
+            void releaseModelInstance(const std::string &filename);
+
             // what's the use of this? o.O
             virtual std::string getDirFileName(unsigned int pMapId, int x, int y) const
-            { return "(...no implemented...)"; }
+            { return "(...not implemented...)"; }
             virtual bool existsMap(const char* pBasePath, unsigned int pMapId, int x, int y)
             { return true; }
     };
