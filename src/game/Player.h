@@ -1543,10 +1543,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         bool LoadFromDB(uint32 guid, SqlQueryHolder *holder);
 
         bool MinimalLoadFromDB(QueryResult *result, uint32 guid);
-        static bool   LoadValuesArrayFromDB(Tokens& data,uint64 guid);
 
-        static uint32 GetUInt32ValueFromArray(Tokens const& data, uint16 index);
-        static float  GetFloatValueFromArray(Tokens const& data, uint16 index);
         static uint32 GetZoneIdFromDB(uint64 guid);
         static uint32 GetLevelFromDB(uint64 guid);
         static bool   LoadPositionFromDB(uint32& mapid, float& x,float& y,float& z,float& o, bool& in_flight, uint64 guid);
