@@ -1156,9 +1156,9 @@ void Spell::DoSpellHitOnUnit(Unit *unit, const uint32 effectMask)
 
         if (!realCaster->IsFriendlyTo(unit))
         {
-            // for delayed spells ignore not visible explicit target
-            if (m_spellInfo->speed > 0.0f && unit == m_targets.getUnitTarget() &&
-                !unit->isVisibleForOrDetect(m_caster, m_caster, false))
+            // for delayed spells ignore not visible explicit target and for spells with 
+            if ((m_spellInfo->speed > 0.0f || m_spellInfo->EffectImplicitTargetA[0] == TARGET_CHAIN_DAMAGE) && 
+                unit == m_targets.getUnitTarget() && !unit->isVisibleForOrDetect(m_caster, m_caster, false))
             {
                 realCaster->SendSpellMiss(unit, m_spellInfo->Id, SPELL_MISS_EVADE);
                 return;
