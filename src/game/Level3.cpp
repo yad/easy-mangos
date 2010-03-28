@@ -1616,7 +1616,7 @@ bool ChatHandler::HandleSetSkillCommand(const char* args)
     if( level <= 0 || level > max || max <= 0 )
         return false;
 
-    target->SetSkill(skill, level, max);
+    target->SetSkill(skill, target->GetSkillStep(skill), level, max);
     PSendSysMessage(LANG_SET_SKILL, skill, sl->name[GetSessionDbcLocale()], tNameLink.c_str(), level, max);
 
     return true;
@@ -2315,7 +2315,7 @@ bool ChatHandler::HandleLearnAllCommand(const char* /*args*/)
             continue;
         }
 
-        m_session->GetPlayer()->learnSpell(spell,false);
+        m_session->GetPlayer()->learnSpell(spell, false);
     }
 
     SendSysMessage(LANG_COMMAND_LEARN_MANY_SPELLS);
@@ -2355,7 +2355,7 @@ bool ChatHandler::HandleLearnAllGMCommand(const char* /*args*/)
             continue;
         }
 
-        m_session->GetPlayer()->learnSpell(spell,false);
+        m_session->GetPlayer()->learnSpell(spell, false);
     }
 
     SendSysMessage(LANG_LEARNING_GM_SKILLS);
@@ -2753,7 +2753,7 @@ bool ChatHandler::HandleLearnAllLangCommand(const char* /*args*/)
 {
     // skipping UNIVERSAL language (0)
     for(int i = 1; i < LANGUAGES_COUNT; ++i)
-        m_session->GetPlayer()->learnSpell(lang_description[i].spell_id,false);
+        m_session->GetPlayer()->learnSpell(lang_description[i].spell_id, false);
 
     SendSysMessage(LANG_COMMAND_LEARN_ALL_LANG);
     return true;
@@ -2812,7 +2812,7 @@ bool ChatHandler::HandleLearnCommand(const char* args)
     if(allRanks)
         targetPlayer->learnSpellHighRank(spell);
     else
-        targetPlayer->learnSpell(spell,false);
+        targetPlayer->learnSpell(spell, false);
 
     uint32 first_spell = sSpellMgr.GetFirstSpellInChain(spell);
     if(GetTalentSpellCost(first_spell))

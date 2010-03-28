@@ -3170,8 +3170,8 @@ void ObjectMgr::LoadGuilds()
 
     //delete unused LogGuid records in guild_eventlog and guild_bank_eventlog table
     //you can comment these lines if you don't plan to change CONFIG_UINT32_GUILD_EVENT_LOG_COUNT and CONFIG_UINT32_GUILD_BANK_EVENT_LOG_COUNT
-    CharacterDatabase.PQuery("DELETE FROM guild_eventlog WHERE LogGuid > '%u'", sWorld.getConfig(CONFIG_UINT32_GUILD_EVENT_LOG_COUNT));
-    CharacterDatabase.PQuery("DELETE FROM guild_bank_eventlog WHERE LogGuid > '%u'", sWorld.getConfig(CONFIG_UINT32_GUILD_BANK_EVENT_LOG_COUNT));
+    CharacterDatabase.PExecute("DELETE FROM guild_eventlog WHERE LogGuid > '%u'", sWorld.getConfig(CONFIG_UINT32_GUILD_EVENT_LOG_COUNT));
+    CharacterDatabase.PExecute("DELETE FROM guild_bank_eventlog WHERE LogGuid > '%u'", sWorld.getConfig(CONFIG_UINT32_GUILD_BANK_EVENT_LOG_COUNT));
 
     sLog.outString();
     sLog.outString( ">> Loaded %u guild definitions", count );
@@ -4985,8 +4985,8 @@ void ObjectMgr::ReturnOrDeleteOldMails(bool serverUp)
     //delete all old mails without item and without body immediately, if starting server
     if (!serverUp)
         CharacterDatabase.PExecute("DELETE FROM mail WHERE expire_time < '" UI64FMTD "' AND has_items = '0' AND itemTextId = 0", (uint64)basetime);
-    //                                                     0  1           2      3        4          5         6           7   8       9
-    QueryResult* result = CharacterDatabase.PQuery("SELECT id,messageType,sender,receiver,itemTextId,has_items,expire_time,cod,checked,mailTemplateId FROM mail WHERE expire_time < '" UI64FMTD "'", (uint64)basetime);
+    //                                                     0  1           2      3        4         5           6   7       8
+    QueryResult* result = CharacterDatabase.PQuery("SELECT id,messageType,sender,receiver,has_items,expire_time,cod,checked,mailTemplateId FROM mail WHERE expire_time < '" UI64FMTD "'", (uint64)basetime);
     if ( !result )
     {
         barGoLink bar(1);
@@ -5015,13 +5015,12 @@ void ObjectMgr::ReturnOrDeleteOldMails(bool serverUp)
         m->messageType = fields[1].GetUInt8();
         m->sender = fields[2].GetUInt32();
         m->receiver = fields[3].GetUInt32();
-        m->itemTextId = fields[4].GetUInt32();
-        bool has_items = fields[5].GetBool();
-        m->expire_time = (time_t)fields[6].GetUInt64();
+        bool has_items = fields[4].GetBool();
+        m->expire_time = (time_t)fields[5].GetUInt64();
         m->deliver_time = 0;
-        m->COD = fields[7].GetUInt32();
-        m->checked = fields[8].GetUInt32();
-        m->mailTemplateId = fields[9].GetInt16();
+        m->COD = fields[6].GetUInt32();
+        m->checked = fields[7].GetUInt32();
+        m->mailTemplateId = fields[8].GetInt16();
 
         Player *pl = 0;
         if (serverUp)
@@ -5052,7 +5051,7 @@ void ObjectMgr::ReturnOrDeleteOldMails(bool serverUp)
                 delete resultItems;
             }
             //if it is mail from AH, it shouldn't be returned, but deleted
-            if (m->messageType != MAIL_NORMAL || (m->checked & (MAIL_CHECK_MASK_AUCTION | MAIL_CHECK_MASK_COD_PAYMENT | MAIL_CHECK_MASK_RETURNED)))
+            if (m->messageType != MAIL_NORMAL || m->messageType == MAIL_AUCTION || (m->checked & (MAIL_CHECK_MASK_COD_PAYMENT | MAIL_CHECK_MASK_RETURNED)))
             {
                 // mail open and then not returned
                 for(std::vector<MailItemInfo>::iterator itr2 = m->items.begin(); itr2 != m->items.end(); ++itr2)
@@ -5066,9 +5065,6 @@ void ObjectMgr::ReturnOrDeleteOldMails(bool serverUp)
                 continue;
             }
         }
-
-        if (m->itemTextId)
-            CharacterDatabase.PExecute("DELETE FROM item_text WHERE id = '%u'", m->itemTextId);
 
         //deletemail = true;
         //delmails << m->messageID << ", ";
@@ -5915,18 +5911,17 @@ void ObjectMgr::SetHighestGuids()
     }
 }
 
-uint32 ObjectMgr::CreateItemText(std::string text)
+void ObjectMgr::CreateItemText(uint32 guid, std::string text)
 {
-    uint32 newItemTextId = GenerateItemTextID();
-    //insert new itempage to container
-    mItemTexts[ newItemTextId ] = text;
-    //save new itempage
+    // insert new item text to container
+    mItemTexts[ guid ] = text;
+
+    // save new item text
     CharacterDatabase.escape_string(text);
-    //any Delete query needed, itemTextId is maximum of all ids
+
     std::ostringstream query;
-    query << "INSERT INTO item_text (id,text) VALUES ( '" << newItemTextId << "', '" << text << "')";
-    CharacterDatabase.Execute(query.str().c_str());         //needs to be run this way, because mail body may be more than 1024 characters
-    return newItemTextId;
+    query << "INSERT INTO item_text (id,text) VALUES ( '" << guid << "', '" << text << "')";
+    CharacterDatabase.Execute(query.str().c_str());         // needs to be run this way, because mail body may be more than 1024 characters
 }
 
 uint32 ObjectMgr::GenerateLowGuid(HighGuid guidhigh)

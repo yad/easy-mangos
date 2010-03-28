@@ -913,8 +913,10 @@ enum PlayerLoginQueryIndex
     PLAYER_LOGIN_QUERY_LOADACCOUNTDATA          = 20,
     PLAYER_LOGIN_QUERY_LOADSKILLS               = 21,
     PLAYER_LOGIN_QUERY_LOADGLYPHS               = 22,
-	PLAYER_LOGIN_QUERY_LOADTALENTS              = 23,
-    MAX_PLAYER_LOGIN_QUERY                      = 24
+    PLAYER_LOGIN_QUERY_LOADMAILS                = 23,
+    PLAYER_LOGIN_QUERY_LOADMAILEDITEMS          = 24,
+    PLAYER_LOGIN_QUERY_LOADTALENTS              = 25,
+    MAX_PLAYER_LOGIN_QUERY                      = 26
 };
 
 enum PlayerDelayedOperations
@@ -1120,9 +1122,13 @@ class MANGOS_DLL_SPEC Player : public Unit
         // Played Time Stuff
         time_t m_logintime;
         time_t m_Last_tick;
+
         uint32 m_Played_time[MAX_PLAYED_TIME_INDEX];
         uint32 GetTotalPlayedTime() { return m_Played_time[PLAYED_TIME_TOTAL]; }
         uint32 GetLevelPlayedTime() { return m_Played_time[PLAYED_TIME_LEVEL]; }
+
+        void ResetTimeSync();
+        void SendTimeSync();
 
         void setDeathState(DeathState s);                   // overwrite Unit::setDeathState
 
@@ -1536,10 +1542,9 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         bool MinimalLoadFromDB(QueryResult *result, uint32 guid);
         static bool   LoadValuesArrayFromDB(Tokens& data,uint64 guid);
+
         static uint32 GetUInt32ValueFromArray(Tokens const& data, uint16 index);
         static float  GetFloatValueFromArray(Tokens const& data, uint16 index);
-        static uint32 GetUInt32ValueFromDB(uint16 index, uint64 guid);
-        static float  GetFloatValueFromDB(uint16 index, uint64 guid);
         static uint32 GetZoneIdFromDB(uint64 guid);
         static uint32 GetLevelFromDB(uint64 guid);
         static bool   LoadPositionFromDB(uint32& mapid, float& x,float& y,float& z,float& o, bool& in_flight, uint64 guid);
@@ -1551,12 +1556,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         void SaveToDB();
         void SaveInventoryAndGoldToDB();                    // fast save function for item/money cheating preventing
         void SaveGoldToDB();
-        void SaveDataFieldToDB();
-        static bool SaveValuesArrayInDB(Tokens const& data,uint64 guid);
         static void SetUInt32ValueInArray(Tokens& data,uint16 index, uint32 value);
         static void SetFloatValueInArray(Tokens& data,uint16 index, float value);
-        static void SetUInt32ValueInDB(uint16 index, uint32 value, uint64 guid);
-        static void SetFloatValueInDB(uint16 index, float value, uint64 guid);
         static void Customize(uint64 guid, uint8 gender, uint8 skin, uint8 face, uint8 hairStyle, uint8 hairColor, uint8 facialHair);
         static void SavePositionInDB(uint32 mapid, float x,float y,float z,float o,uint32 zone,uint64 guid);
 
@@ -1979,7 +1980,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         void UpdateWeaponSkill (WeaponAttackType attType);
         void UpdateCombatSkills(Unit *pVictim, WeaponAttackType attType, bool defence);
 
-        void SetSkill(uint32 id, uint16 currVal, uint16 maxVal);
+        void SetSkill(uint16 id, uint16 step, uint16 currVal, uint16 maxVal);
         uint16 GetMaxSkillValue(uint32 skill) const;        // max + perm. bonus + temp bonus
         uint16 GetPureMaxSkillValue(uint32 skill) const;    // max
         uint16 GetSkillValue(uint32 skill) const;           // skill value + perm. bonus + temp bonus
@@ -1987,6 +1988,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         uint16 GetPureSkillValue(uint32 skill) const;       // skill value
         int16 GetSkillPermBonusValue(uint32 skill) const;
         int16 GetSkillTempBonusValue(uint32 skill) const;
+        uint16 GetSkillStep(uint16 skill) const;            // 0...6
         bool HasSkill(uint32 skill) const;
         void learnSkillRewardedSpells(uint32 id, uint32 value);
 
@@ -2479,8 +2481,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         void _LoadAuras(QueryResult *result, uint32 timediff);
         void _LoadBoundInstances(QueryResult *result);
         void _LoadInventory(QueryResult *result, uint32 timediff);
-        void _LoadMail();
-        void _LoadMailedItems(Mail *mail);
+        void _LoadMails(QueryResult *result);
+        void _LoadMailedItems(QueryResult *result);
         void _LoadQuestStatus(QueryResult *result);
         void _LoadDailyQuestStatus(QueryResult *result);
         void _LoadGroup(QueryResult *result);
@@ -2495,6 +2497,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         void _LoadBGData(QueryResult* result);
         void _LoadGlyphs(QueryResult *result);
 		void _LoadTalents(QueryResult *result);
+        void _LoadExploredZones(const char* data);
+        void _LoadKnownTitles(const char* data);
 
         /*********************************************************/
         /***                   SAVE SYSTEM                     ***/
@@ -2730,6 +2734,11 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         AchievementMgr m_achievementMgr;
         ReputationMgr  m_reputationMgr;
+
+        uint32 m_timeSyncCounter;
+        uint32 m_timeSyncTimer;
+        uint32 m_timeSyncClient;
+        uint32 m_timeSyncServer;
 };
 
 void AddItemsSetItem(Player*player,Item *item);

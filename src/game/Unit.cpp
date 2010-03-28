@@ -95,7 +95,7 @@ void MovementInfo::Read(ByteBuffer &data)
         data >> t_time;
         data >> t_seat;
 
-        if(moveFlags2 & MOVEFLAG2_UNK1)
+        if(moveFlags2 & MOVEFLAG2_INTERP_MOVEMENT)
             data >> t_time2;
     }
 
@@ -140,7 +140,7 @@ void MovementInfo::Write(ByteBuffer &data) const
         data << t_time;
         data << t_seat;
 
-        if(moveFlags2 & MOVEFLAG2_UNK1)
+        if(moveFlags2 & MOVEFLAG2_INTERP_MOVEMENT)
             data << t_time2;
     }
 
@@ -401,7 +401,7 @@ void Unit::SendMonsterMove(float NewPosX, float NewPosY, float NewPosZ, SplineTy
 
     WorldPacket data( SMSG_MONSTER_MOVE, (41 + GetPackGUID().size()) );
     data << GetPackGUID();
-    data << uint8(0);                                       // new in 3.1
+    data << uint8(0);                                       // new in 3.1 bool, used to toggle MOVEFLAG2_UNK4 = 0x0040 on client side
     data << GetPositionX() << GetPositionY() << GetPositionZ();
     data << uint32(getMSTime());
 
@@ -1192,13 +1192,13 @@ void Unit::CastCustomSpell(Unit* Victim, SpellEntry const *spellInfo, int32 cons
     Spell *spell = new Spell(this, spellInfo, triggered, originalCaster);
 
     if(bp0)
-        spell->m_currentBasePoints[EFFECT_INDEX_0] = *bp0-int32(1);
+        spell->m_currentBasePoints[EFFECT_INDEX_0] = *bp0;
 
     if(bp1)
-        spell->m_currentBasePoints[EFFECT_INDEX_1] = *bp1-int32(1);
+        spell->m_currentBasePoints[EFFECT_INDEX_1] = *bp1;
 
     if(bp2)
-        spell->m_currentBasePoints[EFFECT_INDEX_2] = *bp2-int32(1);
+        spell->m_currentBasePoints[EFFECT_INDEX_2] = *bp2;
 
     SpellCastTargets targets;
     targets.setUnitTarget( Victim );
@@ -11904,34 +11904,39 @@ int32 Unit::CalculateSpellDamage(SpellEntry const* spellProto, SpellEffectIndex 
     level-= (int32)spellProto->spellLevel;
 
     float basePointsPerLevel = spellProto->EffectRealPointsPerLevel[effect_index];
-    float randomPointsPerLevel = 1;
     int32 basePoints = int32(effBasePoints + level * basePointsPerLevel);
-    int32 randomPoints = int32(spellProto->EffectDieSides[effect_index] + level * randomPointsPerLevel);
+    int32 randomPoints = int32(spellProto->EffectDieSides[effect_index]);
     float comboDamage = spellProto->EffectPointsPerComboPoint[effect_index];
 
-    // range can have possitive and negative values, so order its for irand
-    int32 randvalue = int32(1) >= randomPoints
-        ? irand(randomPoints, int32(1))
-        : irand(int32(1), randomPoints);
+    int32 value = basePoints;
 
-    int32 value = basePoints + randvalue;
-    //random damage
+    if(randomPoints != 0)
+    {
+        // range can have positive and negative values, so order its for irand
+        int32 randvalue = (0 > randomPoints)
+            ? irand(randomPoints, 0)
+            : irand(0, randomPoints);
+
+        basePoints += randvalue;
+    }
+
+    // random damage
     if(comboDamage != 0 && unitPlayer && target && (target->GetGUID() == unitPlayer->GetComboTarget()))
         value += (int32)(comboDamage * comboPoints);
 
     if(Player* modOwner = GetSpellModOwner())
     {
-        modOwner->ApplySpellMod(spellProto->Id,SPELLMOD_ALL_EFFECTS, value);
+        modOwner->ApplySpellMod(spellProto->Id, SPELLMOD_ALL_EFFECTS, value);
         switch(effect_index)
         {
             case 0:
-                modOwner->ApplySpellMod(spellProto->Id,SPELLMOD_EFFECT1, value);
+                modOwner->ApplySpellMod(spellProto->Id, SPELLMOD_EFFECT1, value);
                 break;
             case 1:
-                modOwner->ApplySpellMod(spellProto->Id,SPELLMOD_EFFECT2, value);
+                modOwner->ApplySpellMod(spellProto->Id, SPELLMOD_EFFECT2, value);
                 break;
             case 2:
-                modOwner->ApplySpellMod(spellProto->Id,SPELLMOD_EFFECT3, value);
+                modOwner->ApplySpellMod(spellProto->Id, SPELLMOD_EFFECT3, value);
                 break;
         }
     }
