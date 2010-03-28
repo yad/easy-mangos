@@ -213,21 +213,8 @@ void WorldSession::HandleTrainerBuySpellOpcode( WorldPacket & recv_data )
         return;
 
     // not found, cheat?
-    // trainer_spells->Find(spellId) doesn't work with spell learn spell (cast-spell in profession case)
-    // spell target isn't the spell listed in npc_trainer
-    // You need to use this function
-    TrainerSpell const* trainer_spell = NULL;
-    for(TrainerSpellMap::const_iterator itr = trainer_spells->spellList.begin(); itr != trainer_spells->spellList.end(); ++itr)
-    {
-        TrainerSpell const* tSpell = &itr->second;
-        //  spell in npc_trainer table OR spell target from dbc
-        if( (tSpell->spell == spellId) || (tSpell->learnedSpell == spellId) )
-        {
-            trainer_spell = trainer_spells->Find(tSpell->spell);
-            break;
-        }
-    }
-    if(!trainer_spells)
+    TrainerSpell const* trainer_spell = trainer_spells->Find(spellId);
+    if(!trainer_spell)
         return;
 
     // can't be learn, cheat? Or double learn with lags...
