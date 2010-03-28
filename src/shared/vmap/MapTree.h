@@ -36,6 +36,7 @@ namespace VMAP
         typedef UNORDERED_MAP<uint32, uint32> loadedSpawnMap;
         private:
             uint32 iMapID;
+            bool iIsTiled;
             TreeNode *iTree; // the KD-tree
             uint32 iNNodes;
             ModelInstance *iTreeValues; // the KD-tree entries
@@ -43,14 +44,6 @@ namespace VMAP
             // add UniqueEntryMap define?
             //std::map<uint32, ModelSpawn> mapSpawns;
             //uint32 iNLoadedTiles;
-
-            // Key: filename, value ModelContainer
-            // => VMapManager
-            // G3D::Table<std::string, ManagedModelContainer *> iLoadedModelContainer;
-
-            // Key: dir file name, value FilesInDir
-            // => VMapManager
-            // G3D::Table<std::string, FilesInDir> iLoadedDirFiles;
 
             // Store all the map tile idents that are loaded for that map
             // some maps are not splitted into tiles and we have to make sure, not removing the map before all tiles are removed
@@ -83,9 +76,10 @@ namespace VMAP
             bool getAreaInfo(G3D::Vector3 pos, uint32 &areaID, uint32 &flags);
 
             //bool PrepareTree();
-            bool init(const std::string &fname);
+            bool init(const std::string &fname, VMapManager2 *vm);
             bool loadMap(uint32 tileX, uint32 tileY, VMapManager2 *vm);
             void unloadMap(uint32 tileX, uint32 tileY, VMapManager2 *vm);
+            bool isTiled() { return iIsTiled; }
             uint32 numLoadedTiles() { return iLoadedTiles.size(); }
             // void addModelContainer(const std::string& pName, ManagedModelContainer *pMc);
     };

@@ -403,9 +403,15 @@ namespace VMAP
                     if(!__max_bz_m2 || entry->second.iBound.high().z > map_iter->second->UniqueEntries[__max_bz_m2].iBound.high().z)
                         __max_bz_m2 = entry->first;
                 }
-                // __debug__
                 else
                 {
+                    if (entry->second.flags & MOD_WORLDSPAWN) // WMO maps and terrain maps use different origin, so we need to adapt :/
+                    {
+                        // TODO: remove extractor hack and uncomment below line:
+                        //entry->second.iPos += Vector3(533.33333f*32, 533.33333f*32, 0.f);
+                        entry->second.iBound = entry->second.iBound + Vector3(533.33333f*32, 533.33333f*32, 0.f);
+                    }
+                    // __debug__
                     if(!__max_z_wmo || entry->second.iPos.z > map_iter->second->UniqueEntries[__max_z_wmo].iPos.z)
                         __max_z_wmo = entry->first;
                     if(!__max_bz_wmo || entry->second.iBound.high().z > map_iter->second->UniqueEntries[__max_bz_wmo].iBound.high().z)
@@ -458,7 +464,9 @@ namespace VMAP
             if(!mapfile) success = false;
 
             //general info
-            char isTiled=1; // TODO use actual info!
+            uint32 globalTileID = StaticMapTree::packTileID(65, 65);
+            std::pair<TileMap::iterator, TileMap::iterator> globalRange = map_iter->second->TileEntries.equal_range(globalTileID);
+            char isTiled = globalRange.first == globalRange.second; // only maps without terrain (tiles) have global WMO
             if (fwrite(&isTiled, sizeof(char), 1, mapfile) != 1) success = false;
             // Nodes
             if (success && fwrite("NODE", 4, 1, mapfile) != 1) success = false;
@@ -470,8 +478,7 @@ namespace VMAP
             if (success && fwrite(&nElements, sizeof(uint32), 1, mapfile) != 1) success = false;
             // global map spawns (WDT), if any (most instances)
             if (success && fwrite("GOBJ", 4, 1, mapfile) != 1) success = false;
-            uint32 globalTileID = StaticMapTree::packTileID(65, 65);
-            std::pair<TileMap::iterator, TileMap::iterator> globalRange = map_iter->second->TileEntries.equal_range(globalTileID);
+
             for(TileMap::iterator glob=globalRange.first; glob != globalRange.second && success; ++glob)
             {
                 success = ModelSpawn::writeToFile(mapfile, map_iter->second->UniqueEntries[glob->second]);

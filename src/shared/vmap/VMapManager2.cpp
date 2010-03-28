@@ -151,7 +151,7 @@ namespace VMAP
         {
             std::string mapFileName = getMapFileName(pMapId);
             StaticMapTree *newTree = new StaticMapTree(pMapId, basePath);
-            if(!newTree->init(mapFileName))
+            if(!newTree->init(mapFileName, this))
                 return false;
             instanceTree = iInstanceMapTrees.insert(InstanceTreeMap::value_type(pMapId, newTree)).first;
         }
@@ -366,7 +366,7 @@ namespace VMAP
         return(result);
     }
     //=========================================================
-    
+
     WorldModel* VMapManager2::aquireModelInstance(const std::string &basepath, const std::string &filename)
     {
         ModelFileMap::iterator model = iLoadedModelFiles.find(filename);
@@ -386,7 +386,7 @@ namespace VMAP
         model->second.incRefCount();
         return model->second.getModel();
     }
-    
+
     void VMapManager2::releaseModelInstance(const std::string &filename)
     {
         ModelFileMap::iterator model = iLoadedModelFiles.find(filename);

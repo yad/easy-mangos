@@ -79,10 +79,6 @@ namespace VMAP
 
     bool WorldModel::Intersect(const G3D::Ray &ray, float &distance, bool stopAtFirstHit) const
     {
-        std::cout << "## WorldModel::Intersect ##\n";
-        std::cout << "ray from:" << ray.origin().x << ", " << ray.origin().y << ", " << ray.origin().z
-                  << " dir:" << ray.direction().x << ", " << ray.direction().y << ", " << ray.direction().z
-                  << " tmax:" << distance;
         IntersectionCallBack isc(this);
         NodeValueAccess<TreeNode, MeshTriangle> vna(treeNodes, triangles);
         treeNodes[0].intersectRay(ray, isc, distance, vna, stopAtFirstHit, true);

@@ -18,7 +18,7 @@
 
 #include "MapTree.h"
 #include "VMapManager2.h"
-#include "TileAssembler.h" // TODO: needed classes should be moved...
+#include "VMapDefinitions.h"
 
 #include <string>
 #include <sstream>
@@ -28,8 +28,7 @@ using G3D::Vector3;
 
 namespace VMAP
 {
-    // TEST
-    class PseudoCallBack {
+    class MapRayCallback {
         public:
             G3D::Vector3 hitLocation;
             G3D::Vector3 hitNormal;
@@ -74,7 +73,7 @@ namespace VMAP
                 if(!i) minVolume = b.iBound.volume();
                 else if (minVolume > b.iBound.volume()){ minVolume=b.iBound.volume(); pick=i; }
                 printf("%10u %8X %7.3f,%7.3f,%7.3f | %7.3f,%7.3f,%7.3f | v=%f\n", b.iAreaId, b.iMogpFlags,
-                        b.iBound.low().x, b.iBound.low().y, b.iBound.low().z, 
+                        b.iBound.low().x, b.iBound.low().y, b.iBound.low().z,
                         b.iBound.high().x, b.iBound.high().y, b.iBound.high().z, b.iBound.volume());
             }
             areaID = bounds[pick]->iAreaId;
@@ -127,12 +126,10 @@ namespace VMAP
 
     float StaticMapTree::getIntersectionTime(const G3D::Ray& pRay, float pMaxDist, bool pStopAtFirstHit)
     {
-        std::cout << "StaticMapTree::getIntersectionTime()\n";
         float distance = pMaxDist;
-        PseudoCallBack intersectionCallBack;
+        MapRayCallback intersectionCallBack;
         NodeValueAccess<TreeNode, ModelInstance> vna(iTree, iTreeValues);
         iTree->intersectRay(pRay, intersectionCallBack, distance, vna, pStopAtFirstHit, true);
-        std::cout << "StaticMapTree::getIntersectionTime() = " << pMaxDist << "\n";
         /* IntersectionCallBack<ModelContainer> intersectionCallBack;
         float t = pMaxDist;
         iTree->intersectRay(pRay, intersectionCallBack, t, pStopAtFirstHit, false);
@@ -175,16 +172,16 @@ namespace VMAP
     bool StaticMapTree::getObjectHitPos(const Vector3& pPos1, const Vector3& pPos2, Vector3& pResultHitPos, float pModifyDist)
     {
         bool result=false;
-        /* float maxDist = abs((pPos2 - pPos1).magnitude());
+        float maxDist = (pPos2 - pPos1).magnitude();
         Vector3 dir = (pPos2 - pPos1)/maxDist;              // direction with length of 1
-        Ray ray = Ray::fromOriginAndDirection(pPos1, dir);
+        G3D::Ray ray(pPos1, dir);
         float dist = getIntersectionTime(ray, maxDist, false);
         if(dist < maxDist)
         {
             pResultHitPos = pPos1 + dir * dist;
             if(pModifyDist < 0)
             {
-                if(abs((pResultHitPos - pPos1).magnitude()) > -pModifyDist)
+                if ((pResultHitPos - pPos1).magnitude() > -pModifyDist)
                 {
                     pResultHitPos = pResultHitPos + dir*pModifyDist;
                 }
@@ -203,7 +200,7 @@ namespace VMAP
         {
             pResultHitPos = pPos2;
             result = false;
-        } */
+        }
         return result;
     }
 
@@ -212,20 +209,20 @@ namespace VMAP
     float StaticMapTree::getHeight(const Vector3& pPos)
     {
         float height = G3D::inf();
-        /* Vector3 dir = Vector3(0,-1,0);
-        Ray ray = Ray::fromOriginAndDirection(pPos, dir);   // direction with length of 1
+        Vector3 dir = Vector3(0,0,-1);
+        G3D::Ray ray(pPos, dir);   // direction with length of 1
         float maxDist = VMapDefinitions::getMaxCanFallDistance();
         float dist = getIntersectionTime(ray, maxDist, false);
-        if(dist < inf())
+        if(dist < maxDist)
         {
-            height = (pPos + dir * dist).y;
-        } */
+            height = pPos.z - dist;
+        }
         return(height);
     }
 
     //=========================================================
 
-    bool StaticMapTree::init(const std::string &fname)
+    bool StaticMapTree::init(const std::string &fname, VMapManager2 *vm)
     {
         std::cout << "Initializing StaticMapTree '" << fname << "'\n";
         bool success=true;
@@ -239,6 +236,7 @@ namespace VMAP
             //general info
             char isTiled; // TODO use actual info!
             if (fread(&isTiled, sizeof(char), 1, rf) != 1) success = false;
+            iIsTiled(bool(isTiled));
             // Nodes
             if (success && fread(chunk, 4, 1, rf) != 1) success = false;
             uint32 size;
@@ -252,10 +250,30 @@ namespace VMAP
             // __debug__
             if (success) std::cout<< "Allocated " << iNTreeValues << " node values.\n";
             else std::cout << "error reading node value count!\n";
-            
+
             if (success && fread(chunk, 4, 1, rf) != 1) success = false;
             chunk[4] = 0;
             std::cout << "Chunk: " << &chunk[0] << std::endl;
+            // global model spawns
+            // only non-tiled maps have them, and if so exactly one (so far at least...)
+            ModelSpawn spawn;
+            std::cout << "Map isTiled:" << bool(isTiled) << std::endl;
+            if (!isTiled && ModelSpawn::readFromFile(rf, spawn))
+            {
+                WorldModel *model = vm->aquireModelInstance(iBasePath, spawn.name);
+                std::cout << "StaticMapTree::init(): loading " << spawn.name << std::endl;
+                if (model)
+                {
+                    // assume that global model always is the first and only tree value (could be improved...)
+                    iTreeValues[0] = ModelInstance(spawn, model);
+                    iLoadedSpawns[spawn.ID] = 1;
+                }
+                else
+                {
+                    success = false;
+                    std::cout << "error: could not acquire WorldModel pointer!\n";
+                }
+            }
 
             fclose(rf);
         }
@@ -271,6 +289,8 @@ namespace VMAP
 
     bool StaticMapTree::loadMap(uint32 tileX, uint32 tileY, VMapManager2 *vm)
     {
+        if (!iIsTiled)
+            return true;
         // __debug__
         if(!iTree || !iTreeValues) std::cout << "Tree has not been initialized!\n";
         bool result = true;
@@ -337,6 +357,8 @@ namespace VMAP
 
     void StaticMapTree::unloadMap(uint32 tileX, uint32 tileY, VMapManager2 *vm)
     {
+        if (!iIsTiled)
+            return;
         uint32 tileID = packTileID(tileX, tileY);
         loadedTileMap::iterator tile = iLoadedTiles.find(tileID);
         if(tile == iLoadedTiles.end())

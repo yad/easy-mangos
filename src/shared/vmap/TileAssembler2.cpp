@@ -101,7 +101,7 @@ namespace VMAP
             if(areaID != 0 || mogpflags != 0)
             {
                 boundsArray.push_back(GroupModelBound(Vector3(bbox1), Vector3(bbox2), mogpflags, areaID));
-                printf("Bbox: %f, %f, %f | %f, %f, %f  areaID=%d flags=%X\n", bbox1[0], bbox1[1], bbox1[2], bbox2[0], bbox2[1], bbox2[2], areaID, mogpflags);
+                //printf("Bbox: %f, %f, %f | %f, %f, %f  areaID=%d flags=%X\n", bbox1[0], bbox1[1], bbox1[2], bbox2[0], bbox2[1], bbox2[2], areaID, mogpflags);
             }
 
             uint32 liquidflags;
