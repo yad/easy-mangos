@@ -579,7 +579,7 @@ void Group::GroupLoot(ObjectGuid const& playerGUID, Loot *loot, WorldObject* obj
         //roll for over-threshold item if it's one-player loot
         if (item->Quality >= uint32(m_lootThreshold) && !i->freeforall)
         {
-            Roll* r = new Roll(creature->GetGUID(), *i);
+            Roll* r = new Roll(object->GetGUID(), *i);
 
             //a vector is filled with only near party members
             for(GroupReference *itr = GetFirstMember(); itr != NULL; itr = itr->next())
@@ -606,7 +606,7 @@ void Group::GroupLoot(ObjectGuid const& playerGUID, Loot *loot, WorldObject* obj
                     r->playerVote.begin()->second = NEED;
                 else
                 {
-                    group->SendLootStartRoll(60000, creature->GetMapId(), *r);
+                    group->SendLootStartRoll(60000, object->GetMapId(), *r);
 
                     loot->items[itemSlot].is_blocked = true;
 
@@ -646,7 +646,7 @@ void Group::NeedBeforeGreed(ObjectGuid const& playerGUID, Loot *loot, WorldObjec
         //only roll for one-player items, not for ones everyone can get
         if (item->Quality >= uint32(m_lootThreshold) && !i->freeforall)
         {
-            Roll* r = new Roll(creature->GetGUID(), *i);
+            Roll* r = new Roll(object->GetGUID(), *i);
 
             for(GroupReference *itr = GetFirstMember(); itr != NULL; itr = itr->next())
             {
@@ -673,7 +673,7 @@ void Group::NeedBeforeGreed(ObjectGuid const& playerGUID, Loot *loot, WorldObjec
                     r->playerVote.begin()->second = NEED;
                 else
                 {
-                    group->SendLootStartRoll(60000, creature->GetMapId(), *r);
+                    group->SendLootStartRoll(60000, object->GetMapId(), *r);
                     loot->items[itemSlot].is_blocked = true;
                 }
 
