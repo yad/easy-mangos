@@ -234,9 +234,9 @@ namespace VMAP
         {
             char chunk[8];
             //general info
-            char isTiled; // TODO use actual info!
-            if (fread(&isTiled, sizeof(char), 1, rf) != 1) success = false;
-            iIsTiled(bool(isTiled));
+            char tiled; // TODO use actual info!
+            if (fread(&tiled, sizeof(char), 1, rf) != 1) success = false;
+            iIsTiled = (bool(tiled));
             // Nodes
             if (success && fread(chunk, 4, 1, rf) != 1) success = false;
             uint32 size;
@@ -257,8 +257,8 @@ namespace VMAP
             // global model spawns
             // only non-tiled maps have them, and if so exactly one (so far at least...)
             ModelSpawn spawn;
-            std::cout << "Map isTiled:" << bool(isTiled) << std::endl;
-            if (!isTiled && ModelSpawn::readFromFile(rf, spawn))
+            std::cout << "Map isTiled:" << bool(iIsTiled) << std::endl;
+            if (!iIsTiled && ModelSpawn::readFromFile(rf, spawn))
             {
                 WorldModel *model = vm->aquireModelInstance(iBasePath, spawn.name);
                 std::cout << "StaticMapTree::init(): loading " << spawn.name << std::endl;
