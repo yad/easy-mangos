@@ -120,7 +120,8 @@ SpellCastTargets::SpellCastTargets()
     m_itemTargetGUID   = 0;
     m_itemTargetEntry  = 0;
 
-    m_srcX = m_srcY = m_srcZ = m_destX = m_destY = m_destZ = 0.0f;
+    m_srcX = m_srcY = m_srcZ = m_srcO = m_destX = m_destY = m_destZ = 0.0f;
+    m_elevation = m_speed = 0.0f;
     m_strTarget = "";
     m_targetMask = 0;
 }
@@ -245,6 +246,18 @@ void SpellCastTargets::read( ByteBuffer& data, Unit *caster )
         data >> m_destX >> m_destY >> m_destZ;
         if(!MaNGOS::IsValidMapCoord(m_destX, m_destY, m_destZ))
             throw ByteBufferException(false, data.rpos(), 0, data.size());
+
+        if( m_targetMask & TARGET_FLAG_SOURCE_LOCATION )
+        {
+            if(data->rpos() + 4 + 4 <= data->size())
+            {
+                *data >> m_elevation >> m_speed;
+                // TODO: should also read
+                m_srcO = caster->GetOrientation();
+                //*data >> uint16 >> uint8 >> uint32 >> uint32;
+                //*data >> float >> float >> float >> float...
+            }
+        }
     }
 
     if( m_targetMask & TARGET_FLAG_STRING )
@@ -647,6 +660,18 @@ void Spell::FillTargetMap()
         for(std::list<Unit*>::const_iterator iunit = tmpUnitMap.begin(); iunit != tmpUnitMap.end(); ++iunit)
             AddUnitTarget((*iunit), SpellEffectIndex(i));
     }
+/*
+    for(tbb::concurrent_vector<TargetInfo>::iterator ihit = m_UniqueTargetInfo.begin(); ihit != m_UniqueTargetInfo.end(); ++ihit)
+    {
+        error_log("GUID: %u", ihit->targetGUID.GetRawValue());
+        if(ihit->targetGUID.IsPlayer())
+            error_log("    PLAYER!");
+        else if(ihit->targetGUID.IsCreature())
+            error_log("    CREATURE!");
+        else if(ihit->targetGUID.IsVehicle())
+            error_log("    VEHICLE!");
+    }
+*/
 }
 
 void Spell::prepareDataForTriggerSystem()
@@ -1481,9 +1506,6 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
         case TARGET_TOTEM_AIR:
         case TARGET_TOTEM_FIRE:
         case TARGET_SELF:
-        case TARGET_SELF2:
-        case TARGET_AREAEFFECT_CUSTOM:
-        case TARGET_AREAEFFECT_CUSTOM_2:
             targetUnitMap.push_back(m_caster);
             break;
         case TARGET_RANDOM_ENEMY_CHAIN_IN_AREA:
@@ -1709,6 +1731,8 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
             FillAreaTargets(targetUnitMap, m_targets.m_destX, m_targets.m_destY, radius, PUSH_DEST_CENTER, SPELL_TARGETS_AOE_DAMAGE);
             break;
         case TARGET_AREAEFFECT_INSTANT:
+        case TARGET_AREAEFFECT_CUSTOM:
+        case TARGET_AREAEFFECT_CUSTOM_2:
         {
             SpellTargets targetB = SPELL_TARGETS_AOE_DAMAGE;
             // Select friendly targets for positive effect
@@ -2217,7 +2241,13 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
         case TARGET_DYNAMIC_OBJECT_LEFT_SIDE:
         case TARGET_DYNAMIC_OBJECT_RIGHT_SIDE:
         {
-            if (!(m_targets.m_targetMask & TARGET_FLAG_DEST_LOCATION))
+            //This should be targeting of destructible objects by vehicles (ram spells...)
+            if(m_spellInfo->EffectImplicitTargetB[effIndex] == TARGET_AREAEFFECT_CUSTOM_2)
+            {
+                //FIXME
+                break;
+            }
+            else if (!(m_targets.m_targetMask & TARGET_FLAG_DEST_LOCATION))
             {
                 float angle = m_caster->GetOrientation();
                 switch(targetMode)
@@ -2512,6 +2542,7 @@ void Spell::prepare(SpellCastTargets const* targets, Aura* triggeredByAura)
     SpellCastResult result = CheckCast(true);
     if(result != SPELL_CAST_OK && !IsAutoRepeat())          //always cast autorepeat dummy for triggering
     {
+        //error_log("Spatne 1, spell %s", m_spellInfo->SpellName[0]);
         if(triggeredByAura)
         {
             SendChannelUpdate(0);
