@@ -7612,25 +7612,26 @@ void Player::SendLoot(ObjectGuid guid, LootType loot_type)
                     {
                         if(Group* group = GetGroup())
                         {
-                            group->UpdateLooterGuid(object,true);
+                            group->UpdateLooterGuid(go,true);
 
                             switch (group->GetLootMethod())
                             {
                                 case GROUP_LOOT:
                                     // GroupLoot delete items over threshold (threshold even not implemented), and roll them. Items with quality<threshold, round robin
-                                    group->GroupLoot(recipient->GetObjectGuid(), loot, object);
+                                    group->GroupLoot(GetObjectGuid(), loot, go);
+                                    permission = GROUP_PERMISSION;
                                     break;
                                 case NEED_BEFORE_GREED:
-                                    group->NeedBeforeGreed(recipient->GetObjectGuid(), loot, object);
+                                    group->NeedBeforeGreed(GetObjectGuid(), loot, go);
+                                    permission = GROUP_PERMISSION;
+                                    break;
+                                case MASTER_LOOT:
+                                    group->MasterLoot(GetObjectGuid(), loot, go);
+                                    permission = MASTER_PERMISSION;
                                     break;
                                 default:
                                     break;
                             }
-                            //Master loot does not work for chests (blizzlike, client also refuse to use SMSG_LOOT_MASTER_LIST)
-                            if (group->GetLootMethod() == FREE_FOR_ALL || group->GetLooterGuid() == GetGUID())
-                                permission = ALL_PERMISSION;
-                            else
-                                permission = GROUP_PERMISSION;
                         }
                     }
                 }
@@ -7639,6 +7640,31 @@ void Player::SendLoot(ObjectGuid guid, LootType loot_type)
                     go->getFishLoot(loot,this);
 
                 go->SetLootState(GO_ACTIVATED);
+            }
+            if ((go->getLootState() == GO_ACTIVATED) && (go->GetGoType() == GAMEOBJECT_TYPE_CHEST))
+            {
+                if (go->GetGOInfo()->chest.groupLootRules == 1)
+                {
+                    if(Group* group = GetGroup())
+                    {
+                        if (group == this->GetGroup())
+                        {
+                            if (group->GetLootMethod() == FREE_FOR_ALL)
+                                permission = ALL_PERMISSION;
+                            else if (group->GetLooterGuid() == GetGUID())
+                            {
+                                if (group->GetLootMethod() == MASTER_LOOT)
+                                    permission = MASTER_PERMISSION;
+                                else
+                                    permission = ALL_PERMISSION;
+                            }
+                            else
+                                permission = GROUP_PERMISSION;
+                        }
+                        else
+                            permission = NONE_PERMISSION;
+                    }
+                }
             }
             break;
         }
