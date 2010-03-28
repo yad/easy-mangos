@@ -1051,7 +1051,7 @@ void Aura::_AddAura()
         if(slot < MAX_AURAS)                        // slot found send data to client
         {
             SetAura(false);
-            SetAuraFlags((1 << GetEffIndex()) | ((caster && caster != m_target) ? AFLAG_NONE : AFLAG_NOT_CASTER) | ((GetAuraMaxDuration() > 0) ? AFLAG_DURATION : AFLAG_NONE) | (IsPositive() ? AFLAG_POSITIVE : AFLAG_NEGATIVE));
+            SetAuraFlags((1 << GetEffIndex()) | ((GetCasterGUID() == GetTarget()->GetGUID()) ? AFLAG_NOT_CASTER : AFLAG_NONE) | ((GetAuraMaxDuration() > 0) ? AFLAG_DURATION : AFLAG_NONE) | (IsPositive() ? AFLAG_POSITIVE : AFLAG_NEGATIVE));
             SetAuraLevel(caster ? caster->getLevel() : sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL));
             SendAuraUpdate(false);
         }
@@ -6425,6 +6425,14 @@ void Aura::HandleShapeshiftBoosts(bool apply)
             m_target->RemoveAurasDueToSpell(spellId2);
         if(MasterShaperSpellId)
             m_target->RemoveAurasDueToSpell(MasterShaperSpellId);
+
+        if(m_target->GetTypeId() == TYPEID_PLAYER)
+        {
+            if(spellId1)
+                ((Player*)m_target)->RemoveSpellCooldown(spellId1, true);
+            if(spellId2)
+                ((Player*)m_target)->RemoveSpellCooldown(spellId2, true);
+        }
 
         Unit::AuraMap& tAuras = m_target->GetAuras();
         for (Unit::AuraMap::iterator itr = tAuras.begin(); itr != tAuras.end();)

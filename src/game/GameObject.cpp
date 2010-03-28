@@ -57,6 +57,9 @@ GameObject::GameObject() : WorldObject()
 
     m_DBTableGuid = 0;
     m_rotation = 0;
+
+    m_groupLootTimer = 0;
+    m_groupLootId = 0;
 }
 
 GameObject::~GameObject()
@@ -78,20 +81,15 @@ void GameObject::RemoveFromWorld()
     if(IsInWorld())
     {
         // Remove GO from owner
-        if(uint64 owner_guid = GetOwnerGUID())
+        ObjectGuid owner_guid = GetOwnerGUID();
+        if (!owner_guid.IsEmpty())
         {
             if (Unit* owner = ObjectAccessor::GetUnit(*this,owner_guid))
                 owner->RemoveGameObject(this,false);
             else
             {
-                const char * ownerType = "creature";
-                if(IS_PLAYER_GUID(owner_guid))
-                    ownerType = "player";
-                else if(IS_PET_GUID(owner_guid))
-                    ownerType = "pet";
-
-                sLog.outError("Delete GameObject (GUID: %u Entry: %u SpellId %u LinkedGO %u) that lost references to owner (GUID %u Type '%s') GO list. Crash possible later.",
-                    GetGUIDLow(), GetGOInfo()->id, m_spellId, GetGOInfo()->GetLinkedGameObjectEntry(), GUID_LOPART(owner_guid), ownerType);
+                sLog.outError("Delete %s with SpellId %u LinkedGO %u that lost references to owner %s GO list. Crash possible later.",
+                    GetObjectGuid().GetString().c_str(), m_spellId, GetGOInfo()->GetLinkedGameObjectEntry(), owner_guid.GetString().c_str());
             }
         }
 
@@ -162,9 +160,9 @@ bool GameObject::Create(uint32 guidlow, uint32 name_id, Map *map, uint32 phaseMa
     return true;
 }
 
-void GameObject::Update(uint32 /*p_time*/)
+void GameObject::Update(uint32 p_time)
 {
-    if (IS_MO_TRANSPORT(GetGUID()))
+    if (GetObjectGuid().IsMOTransport())
     {
         //((Transport*)this)->Update(p_time);
         return;
@@ -381,6 +379,22 @@ void GameObject::Update(uint32 /*p_time*/)
                         m_cooldownTime = 0;
                     }
                     break;
+                case GAMEOBJECT_TYPE_CHEST:
+                    if (m_groupLootTimer && m_groupLootId)
+                    {
+                        if(p_time <= m_groupLootTimer)
+                        {
+                            m_groupLootTimer -= p_time;
+                        }
+                        else
+                        {
+                            if (Group* group = sObjectMgr.GetGroupById(m_groupLootId))
+                                group->EndRoll();
+                            m_groupLootTimer = 0;
+                            m_groupLootId = 0;
+                        }
+                    }
+                    break;
                 default:
                     break;
             }
@@ -461,6 +475,9 @@ void GameObject::Refresh()
     // not refresh despawned not casted GO (despawned casted GO destroyed in all cases anyway)
     if(m_respawnTime > 0 && m_spawnedByDefault)
         return;
+
+    m_groupLootTimer = 0;
+    m_groupLootId = 0;
 
     if(isSpawned())
         GetMap()->Add(this);
@@ -1056,7 +1073,7 @@ void GameObject::Use(Unit* user)
                         break;
                 }
 
-                player->CastedCreatureOrGO(info->id, GetGUID(), 0);
+                player->CastedCreatureOrGO(info->id, GetObjectGuid(), 0);
             }
 
             if (uint32 trapEntry = info->goober.linkedTrapId)
