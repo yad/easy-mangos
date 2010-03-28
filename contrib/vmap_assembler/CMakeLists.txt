@@ -82,7 +82,7 @@ add_library(vmap
 	../../src/shared/vmap/ModelInstance.cpp
 	)
 
-target_link_libraries(vmap g3dlite X11 z)
+target_link_libraries(vmap g3dlite z)
 
 add_executable(vmap_assembler vmap_assembler.cpp)
 target_link_libraries(vmap_assembler vmap)
