@@ -685,7 +685,7 @@ void Group::NeedBeforeGreed(ObjectGuid const& playerGUID, Loot *loot, WorldObjec
     }
 }
 
-void Group::MasterLoot(ObjectGuid const& playerGUID, Loot* /*loot*/, Creature *creature)
+void Group::MasterLoot(ObjectGuid const& playerGUID, Loot* /*loot*/, WorldObject *object)
 {
     Player *player = sObjectMgr.GetPlayer(playerGUID);
     if(!player)
@@ -704,7 +704,7 @@ void Group::MasterLoot(ObjectGuid const& playerGUID, Loot* /*loot*/, Creature *c
         if (!looter->IsInWorld())
             continue;
 
-        if (looter->IsWithinDist(creature, sWorld.getConfig(CONFIG_FLOAT_GROUP_XP_DISTANCE), false))
+        if (looter->IsWithinDist(object, sWorld.getConfig(CONFIG_FLOAT_GROUP_XP_DISTANCE), false))
         {
             data << looter->GetGUID();
             ++real_count;
@@ -716,7 +716,7 @@ void Group::MasterLoot(ObjectGuid const& playerGUID, Loot* /*loot*/, Creature *c
     for(GroupReference *itr = GetFirstMember(); itr != NULL; itr = itr->next())
     {
         Player *looter = itr->getSource();
-        if (looter->IsWithinDist(creature, sWorld.getConfig(CONFIG_FLOAT_GROUP_XP_DISTANCE), false))
+        if (looter->IsWithinDist(object, sWorld.getConfig(CONFIG_FLOAT_GROUP_XP_DISTANCE), false))
             looter->GetSession()->SendPacket(&data);
     }
 }
