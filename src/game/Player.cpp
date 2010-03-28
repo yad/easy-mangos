@@ -8549,7 +8549,7 @@ void Player::SendLoot(ObjectGuid guid, LootType loot_type)
                     sLog.outDebug("       if(lootid)");
                     loot->clear();
                     loot->FillLoot(lootid, LootTemplates_Gameobject, this, false);
-                    if(go->GetGoType() == GAMEOBJECT_TYPE_CHEST && go->GetGOInfo()->chest.groupLootRules)
+                    /*if(go->GetGoType() == GAMEOBJECT_TYPE_CHEST && go->GetGOInfo()->chest.groupLootRules)
                     {
                         if(Group* group = GetGroup())
                         {
@@ -8573,7 +8573,7 @@ void Player::SendLoot(ObjectGuid guid, LootType loot_type)
                             else
                                 permission = GROUP_PERMISSION;
                         }
-                    }
+                    }*/
                 }
 
                 if (loot_type == LOOT_FISHING)
@@ -23524,7 +23524,7 @@ void Player::FlyingMountsSpellsToItems()
             {
                 uint16 RindingSkill = GetSkillValue(SKILL_RIDING);
                 removeSpell(pProto->Spells[i].SpellId, false, false);
-                SetSkill(SKILL_RIDING, RindingSkill, 300);
+                SetSkill(SKILL_RIDING, RindingSkill, 300, 300);
                 break;
             }
 
@@ -23558,7 +23558,7 @@ void Player::FlyingMountsSpellsToItems()
                     {
                         uint16 RindingSkill = GetSkillValue(SKILL_RIDING);
                         removeSpell(pProto->Spells[i].SpellId, false, false);
-                        SetSkill(SKILL_RIDING, RindingSkill, 300);
+                        SetSkill(SKILL_RIDING, RindingSkill, 300, 300);
                         break;
                     }
                 }
