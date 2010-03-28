@@ -236,7 +236,7 @@ uint32 Group::RemoveInvite(Player *player)
 
 void Group::RemoveAllInvites()
 {
-    for(InvitesList::iterator itr=m_invitees.begin(); itr!=m_invitees.end(); ++itr)
+    for(InvitesList::iterator itr = m_invitees.begin(); itr!=m_invitees.end(); ++itr)
         (*itr)->SetGroupInvite(NULL);
 
     m_invitees.clear();
@@ -266,6 +266,7 @@ bool Group::AddMember(const uint64 &guid, const char* name)
 {
     if(!_addMember(guid, name))
         return false;
+
     SendUpdate();
 
     Player *player = sObjectMgr.GetPlayer(guid);
@@ -467,10 +468,11 @@ void Group::Disband(bool hideDestroy)
 /***                   LOOT SYSTEM                     ***/
 /*********************************************************/
 
-void Group::SendLootStartRoll(uint32 CountDown, const Roll &r)
+void Group::SendLootStartRoll(uint32 CountDown, uint32 mapid, const Roll &r)
 {
     WorldPacket data(SMSG_LOOT_START_ROLL, (8+4+4+4+4+4+4+1));
     data << r.lootedTargetGUID;                             // creature guid what we're looting
+    data << uint32(mapid);                                  // 3.3.3 mapid
     data << uint32(r.itemSlot);                             // item slot in loot
     data << uint32(r.itemid);                               // the itemEntryId for the item that shall be rolled for
     data << uint32(r.itemRandomSuffix);                     // randomSuffix
@@ -501,7 +503,7 @@ void Group::SendLootRoll(ObjectGuid const& targetGuid, uint8 rollNumber, uint8 r
     data << uint32(r.itemRandomPropId);                     // Item random property ID
     data << uint8(rollNumber);                              // 0: "Need for: [item name]" > 127: "you passed on: [item name]"      Roll number
     data << uint8(rollType);                                // 0: "Need for: [item name]" 0: "You have selected need for [item name] 1: need roll 2: greed roll
-    data << uint8(0);                                       // 2.4.0
+    data << uint8(0);                                       // auto pass on loot
 
     for( Roll::PlayerVote::const_iterator itr = r.playerVote.begin(); itr != r.playerVote.end(); ++itr)
     {
@@ -523,7 +525,7 @@ void Group::SendLootRollWon(ObjectGuid const& targetGuid, uint8 rollNumber, uint
     data << uint32(r.itemRandomSuffix);                     // randomSuffix
     data << uint32(r.itemRandomPropId);                     // Item random property
     data << targetGuid;                                     // guid of the player who won.
-    data << uint8(rollNumber);                              // rollnumber realted to SMSG_LOOT_ROLL
+    data << uint8(rollNumber);                              // rollnumber related to SMSG_LOOT_ROLL
     data << uint8(rollType);                                // Rolltype related to SMSG_LOOT_ROLL
 
     for( Roll::PlayerVote::const_iterator itr = r.playerVote.begin(); itr != r.playerVote.end(); ++itr)
@@ -577,7 +579,7 @@ void Group::GroupLoot(ObjectGuid const& playerGUID, Loot *loot, WorldObject* obj
         //roll for over-threshold item if it's one-player loot
         if (item->Quality >= uint32(m_lootThreshold) && !i->freeforall)
         {
-            Roll* r=new Roll(object->GetGUID(),*i);
+            Roll* r = new Roll(creature->GetGUID(), *i);
 
             //a vector is filled with only near party members
             for(GroupReference *itr = GetFirstMember(); itr != NULL; itr = itr->next())
@@ -604,7 +606,7 @@ void Group::GroupLoot(ObjectGuid const& playerGUID, Loot *loot, WorldObject* obj
                     r->playerVote.begin()->second = NEED;
                 else
                 {
-                    group->SendLootStartRoll(60000, *r);
+                    group->SendLootStartRoll(60000, creature->GetMapId(), *r);
 
                     loot->items[itemSlot].is_blocked = true;
 
@@ -637,14 +639,14 @@ void Group::NeedBeforeGreed(ObjectGuid const& playerGUID, Loot *loot, WorldObjec
     Group *group = player->GetGroup();
 
     uint8 itemSlot = 0;
-    for(std::vector<LootItem>::iterator i=loot->items.begin(); i != loot->items.end(); ++i, ++itemSlot)
+    for(std::vector<LootItem>::iterator i = loot->items.begin(); i != loot->items.end(); ++i, ++itemSlot)
     {
         item = ObjectMgr::GetItemPrototype(i->itemid);
 
         //only roll for one-player items, not for ones everyone can get
         if (item->Quality >= uint32(m_lootThreshold) && !i->freeforall)
         {
-            Roll* r=new Roll(object->GetGUID(),*i);
+            Roll* r = new Roll(creature->GetGUID(), *i);
 
             for(GroupReference *itr = GetFirstMember(); itr != NULL; itr = itr->next())
             {
@@ -671,7 +673,7 @@ void Group::NeedBeforeGreed(ObjectGuid const& playerGUID, Loot *loot, WorldObjec
                     r->playerVote.begin()->second = NEED;
                 else
                 {
-                    group->SendLootStartRoll(60000, *r);
+                    group->SendLootStartRoll(60000, creature->GetMapId(), *r);
                     loot->items[itemSlot].is_blocked = true;
                 }
 
@@ -696,7 +698,7 @@ void Group::MasterLoot(ObjectGuid const& playerGUID, Loot* /*loot*/, WorldObject
     uint32 real_count = 0;
 
     WorldPacket data(SMSG_LOOT_MASTER_LIST, 330);
-    data << (uint8)GetMembersCount();
+    data << uint8(GetMembersCount());
 
     for(GroupReference *itr = GetFirstMember(); itr != NULL; itr = itr->next())
     {
@@ -706,7 +708,7 @@ void Group::MasterLoot(ObjectGuid const& playerGUID, Loot* /*loot*/, WorldObject
 
         if (looter->IsWithinDist(object, sWorld.getConfig(CONFIG_FLOAT_GROUP_XP_DISTANCE), false))
         {
-            data << looter->GetGUID();
+            data << uint64(looter->GetGUID());
             ++real_count;
         }
     }
@@ -787,7 +789,7 @@ bool Group::CountRollVote(ObjectGuid const& playerGUID, Rolls::iterator& rollI, 
     return false;
 }
 
-//called when roll timer expires
+// called when roll timer expires
 void Group::EndRoll()
 {
     while(!RollId.empty())
@@ -1094,8 +1096,8 @@ void Group::OfflineReadyCheck()
         if (!pl || !pl->GetSession())
         {
             WorldPacket data(MSG_RAID_READY_CHECK_CONFIRM, 9);
-            data << citr->guid;
-            data << (uint8)0;
+            data << uint64(citr->guid);
+            data << uint8(0);
             BroadcastReadyCheck(&data);
         }
     }
@@ -1220,7 +1222,7 @@ bool Group::_removeMember(const uint64 &guid)
 void Group::_setLeader(const uint64 &guid)
 {
     member_citerator slot = _getMemberCSlot(guid);
-    if(slot==m_memberSlots.end())
+    if(slot == m_memberSlots.end())
         return;
 
     if(!isBGGroup())
