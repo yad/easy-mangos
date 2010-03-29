@@ -782,9 +782,15 @@ void BattleGroundQueue::Update(BattleGroundTypeId bgTypeId, BattleGroundBracketI
 
             // now everything is set, invite players
             for(GroupsQueueType::const_iterator citr = m_SelectionPools[BG_TEAM_ALLIANCE].SelectedGroups.begin(); citr != m_SelectionPools[BG_TEAM_ALLIANCE].SelectedGroups.end(); ++citr)
-                InviteGroupToBG((*citr), bg, (*citr)->Team);
+			{
+				(*citr)->Team = ALLIANCE;
+                InviteGroupToBG((*citr), bg, BG_TEAM_ALLIANCE);//(*citr)->Team);
+			}
             for(GroupsQueueType::const_iterator citr = m_SelectionPools[BG_TEAM_HORDE].SelectedGroups.begin(); citr != m_SelectionPools[BG_TEAM_HORDE].SelectedGroups.end(); ++citr)
-                InviteGroupToBG((*citr), bg, (*citr)->Team);
+			{
+				(*citr)->Team = ALLIANCE;
+				InviteGroupToBG((*citr), bg, (*citr)->Team);
+			}
 
             if (!bg->HasFreeSlots())
             {
@@ -863,7 +869,10 @@ void BattleGroundQueue::Update(BattleGroundTypeId bgTypeId, BattleGroundBracketI
             //invite those selection pools
             for(uint32 i = 0; i < BG_TEAMS_COUNT; i++)
                 for(GroupsQueueType::const_iterator citr = m_SelectionPools[BG_TEAM_ALLIANCE + i].SelectedGroups.begin(); citr != m_SelectionPools[BG_TEAM_ALLIANCE + i].SelectedGroups.end(); ++citr)
+				{
+				(*citr)->Team = ALLIANCE;
                     InviteGroupToBG((*citr), bg2, (*citr)->Team);
+				}
             //start bg
             bg2->StartBattleGround();
             //clear structures
@@ -890,7 +899,10 @@ void BattleGroundQueue::Update(BattleGroundTypeId bgTypeId, BattleGroundBracketI
             // invite those selection pools
             for(uint32 i = 0; i < BG_TEAMS_COUNT; i++)
                 for(GroupsQueueType::const_iterator citr = m_SelectionPools[BG_TEAM_ALLIANCE + i].SelectedGroups.begin(); citr != m_SelectionPools[BG_TEAM_ALLIANCE + i].SelectedGroups.end(); ++citr)
+					{
+				(*citr)->Team = ALLIANCE;
                     InviteGroupToBG((*citr), bg2, (*citr)->Team);
+				}
             // start bg
             bg2->StartBattleGround();
         }

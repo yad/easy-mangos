@@ -1423,3 +1423,21 @@ SOAP.Enabled = 0
 SOAP.IP = 127.0.0.1
 SOAP.Port = 7878
 
+###################################################################################################################
+# TEAMBG CONFIG
+#
+#    TeamBG.AllowAB
+#    TeamBG.AllowAV
+#    TeamBG.AllowEOS
+#    TeamBG.AllowWSG
+#        Allow TeamBG in that bg
+#        Default: 0 (disable)
+#                 1 (enable)
+#
+#
+###################################################################################################################
+
+TeamBG.AllowAB = 0
+TeamBG.AllowAV = 0
+TeamBG.AllowEOS = 0
+TeamBG.AllowWSG = 0
