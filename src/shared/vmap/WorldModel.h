@@ -112,7 +112,7 @@ template<> struct HashTrait<VMAP::SoloTriangle>
 };
 template<> struct BoundsTrait<VMAP::SoloTriangle>
 {
-    static void getBounds(const VMAP::SoloTriangle& obj, G3D::AABox& out) { return obj.getBounds(out); }
+    static void getBounds(const VMAP::SoloTriangle& obj, G3D::AABox& out) { obj.getBounds(out); }
 };
 
 #endif // _WORLDMODEL_H
