@@ -249,9 +249,9 @@ void SpellCastTargets::read( ByteBuffer& data, Unit *caster )
 
         if( m_targetMask & TARGET_FLAG_SOURCE_LOCATION )
         {
-            if(data->rpos() + 4 + 4 <= data->size())
+            if(data.rpos() + 4 + 4 <= data.size())
             {
-                *data >> m_elevation >> m_speed;
+                data >> m_elevation >> m_speed;
                 // TODO: should also read
                 m_srcO = caster->GetOrientation();
                 //*data >> uint16 >> uint8 >> uint32 >> uint32;
