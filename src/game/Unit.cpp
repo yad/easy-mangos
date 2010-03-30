@@ -937,10 +937,6 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
             }
         }
 
-        //hex
-        if(pVictim->HasAura(51514) && roll_chance_f(75))
-            pVictim->RemoveAurasDueToSpell(51514);
-
         //Shiver
         if(pVictim->HasAura(57949))
            CastSpell(pVictim, 57952, true);
