@@ -6490,7 +6490,7 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                 float ap = GetTotalAttackPowerValue(BASE_ATTACK);
                 int32 holy = SpellBaseDamageBonus(SPELL_SCHOOL_MASK_HOLY) +
                              SpellBaseDamageBonusForVictim(SPELL_SCHOOL_MASK_HOLY, pVictim);
-                basepoints[0] = GetAttackTime(BASE_ATTACK) * int32(ap*0.022f + 0.044f * holy) / 1000;
+                basepoints[0] = int32(GetAttackTime(BASE_ATTACK)) * int32(ap*0.022f + 0.044f * holy) / 1000;
                 break;
             }
             // Righteous Vengeance
