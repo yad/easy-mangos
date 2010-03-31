@@ -581,6 +581,8 @@ enum UnitFlags2
     UNIT_FLAG2_UNK1             = 0x00000002,               // Hide unit model (show only player equip)
     UNIT_FLAG2_COMPREHEND_LANG  = 0x00000008,
     UNIT_FLAG2_FORCE_MOVE       = 0x00000040,
+    UNIT_FLAG2_DISARMED_OFFHAND = 0x00000080,
+    UNIT_FLAG2_DISARMED_RANGED  = 0x00000400,
     UNIT_FLAG2_REGENERATE_POWER = 0x00000800
 };
 
@@ -1125,6 +1127,18 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         uint32 getAttackTimer(WeaponAttackType type) const { return m_attackTimer[type]; }
         bool isAttackReady(WeaponAttackType type = BASE_ATTACK) const { return m_attackTimer[type] == 0; }
         bool haveOffhandWeapon() const;
+        bool IsUseEquipedWeapon( WeaponAttackType attackType ) const
+        {
+            bool haveweapon = true;
+            switch(attackType)
+            {
+                case BASE_ATTACK:   haveweapon = !HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_DISARMED); break;
+                case OFF_ATTACK:    haveweapon = !HasFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_DISARMED_OFFHAND); break;
+                case RANGED_ATTACK: haveweapon = !HasFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_DISARMED_RANGED); break;
+            }
+
+            return !IsInFeralForm() && haveweapon;
+        }
         bool canReachWithAttack(Unit *pVictim) const;
         uint32 m_extraAttacks;
 

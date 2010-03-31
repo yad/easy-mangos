@@ -304,7 +304,7 @@ pAuraHandler AuraHandler[TOTAL_AURAS]=
     &Aura::HandleNULL,                                      //251 SPELL_AURA_MOD_ENEMY_DODGE
     &Aura::HandleNULL,                                      //252 haste all?
     &Aura::HandleNoImmediateEffect,                         //253 SPELL_AURA_MOD_BLOCK_CRIT_CHANCE             implemented in Unit::CalculateMeleeDamage
-    &Aura::HandleNULL,                                      //254 SPELL_AURA_MOD_DISARM_SHIELD disarm Shield
+    &Aura::HandleAuraModDisarmOffhand,                      //254 SPELL_AURA_MOD_DISARM_OFFHAND disarm Offhand
     &Aura::HandleNoImmediateEffect,                         //255 SPELL_AURA_MOD_MECHANIC_DAMAGE_TAKEN_PERCENT    implemented in Unit::SpellDamageBonus
     &Aura::HandleNoReagentUseAura,                          //256 SPELL_AURA_NO_REAGENT_USE Use SpellClassMask for spell select
     &Aura::HandleNULL,                                      //257 SPELL_AURA_MOD_TARGET_RESIST_BY_SPELL_CLASS Use SpellClassMask for spell select
@@ -328,7 +328,7 @@ pAuraHandler AuraHandler[TOTAL_AURAS]=
     &Aura::HandleNoImmediateEffect,                         //275 SPELL_AURA_MOD_IGNORE_SHAPESHIFT Use SpellClassMask for spell select
     &Aura::HandleNULL,                                      //276 mod damage % mechanic?
     &Aura::HandleNoImmediateEffect,                         //277 SPELL_AURA_MOD_MAX_AFFECTED_TARGETS Use SpellClassMask for spell select
-    &Aura::HandleNULL,                                      //278 SPELL_AURA_MOD_DISARM_RANGED disarm ranged weapon
+    &Aura::HandleAuraModDisarmRanged,                       //278 SPELL_AURA_MOD_DISARM_RANGED disarm ranged weapon
     &Aura::HandleAuraInitializeImages,                      //279 SPELL_AURA_INITIALIZE_IMAGES
     &Aura::HandleModTargetArmorPct,                         //280 SPELL_AURA_MOD_TARGET_ARMOR_PCT
     &Aura::HandleNoImmediateEffect,                         //281 SPELL_AURA_MOD_HONOR_GAIN             implemented in Player::RewardHonor
@@ -4134,7 +4134,7 @@ void Aura::HandleAuraModDisarm(bool apply, bool Real)
         return;
 
     if(!apply && m_target->HasAuraType(SPELL_AURA_MOD_DISARM))
-        return;
+		return;
 
     // not sure for it's correctness
     if(apply)
@@ -4155,7 +4155,76 @@ void Aura::HandleAuraModDisarm(bool apply, bool Real)
     else
         ((Player *)m_target)->SetRegularAttackTime();
 
+    if(Item *_item = ((Player*)m_target)->GetItemByPos( INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND ))
+        ((Player*)m_target)->_ApplyItemMods(_item, EQUIPMENT_SLOT_MAINHAND, !apply);
+
     m_target->UpdateDamagePhysical(BASE_ATTACK);
+}
+
+void Aura::HandleAuraModDisarmOffhand(bool apply, bool Real)
+{
+    if(!Real)
+        return;
+
+	if(!apply && m_target->HasAuraType(SPELL_AURA_MOD_DISARM_OFFHAND))
+		return;
+
+    // not sure for it's correctness
+    if(apply)
+        m_target->SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_DISARMED_OFFHAND);
+    else
+        m_target->RemoveFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_DISARMED_OFFHAND);
+
+    // only at real add/remove aura
+    if (m_target->GetTypeId() != TYPEID_PLAYER)
+        return;
+
+    // main-hand attack speed already set to special value for feral form already and don't must change and reset at remove.
+    if (m_target->IsInFeralForm())
+        return;
+
+    if (apply)
+        m_target->SetAttackTime(OFF_ATTACK, BASE_ATTACK_TIME);
+    else
+        ((Player *)m_target)->SetRegularAttackTime();
+
+    if(Item *_item = ((Player*)m_target)->GetItemByPos( INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND ))
+        ((Player*)m_target)->_ApplyItemMods(_item, EQUIPMENT_SLOT_OFFHAND, !apply);
+
+    m_target->UpdateDamagePhysical(OFF_ATTACK);
+}
+
+void Aura::HandleAuraModDisarmRanged(bool apply, bool Real)
+{
+    if(!Real)
+        return;
+
+	if(!apply && m_target->HasAuraType(SPELL_AURA_MOD_DISARM_RANGED))
+		return;
+
+    // not sure for it's correctness
+    if(apply)
+        m_target->SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_DISARMED_RANGED);
+    else
+        m_target->RemoveFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_DISARMED_RANGED);
+
+    // only at real add/remove aura
+    if (m_target->GetTypeId() != TYPEID_PLAYER)
+        return;
+
+    // main-hand attack speed already set to special value for feral form already and don't must change and reset at remove.
+    if (m_target->IsInFeralForm())
+        return;
+
+    if (apply)
+        m_target->SetAttackTime(RANGED_ATTACK, BASE_ATTACK_TIME);
+    else
+        ((Player *)m_target)->SetRegularAttackTime();
+
+    if(Item *_item = ((Player*)m_target)->GetItemByPos( INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_RANGED ))
+        ((Player*)m_target)->_ApplyItemMods(_item, EQUIPMENT_SLOT_RANGED, !apply);
+
+    m_target->UpdateDamagePhysical(RANGED_ATTACK);
 }
 
 void Aura::HandleAuraModStun(bool apply, bool Real)
