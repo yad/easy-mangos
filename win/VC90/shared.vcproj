@@ -101,6 +101,166 @@
 			/>
 		</Configuration>
 		<Configuration
+			Name="Debug|Win32"
+			OutputDirectory=".\shared__$(PlatformName)_$(ConfigurationName)"
+			IntermediateDirectory=".\shared__$(PlatformName)_$(ConfigurationName)"
+			ConfigurationType="4"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+				CommandLine=""
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				AdditionalOptions="/MP"
+				Optimization="0"
+				AdditionalIncludeDirectories="..\..\dep\include;..\..\dep\include\g3dlite;..\..\src\framework;..\..\src\shared;..\..\dep\ACE_wrappers"
+				PreprocessorDefinitions="WIN32;_DEBUG;MANGOS_DEBUG;_LIB;_CRT_SECURE_NO_DEPRECATE"
+				BasicRuntimeChecks="3"
+				RuntimeLibrary="3"
+				EnableFunctionLevelLinking="true"
+				RuntimeTypeInfo="true"
+				UsePrecompiledHeader="0"
+				PrecompiledHeaderFile=".\shared__$(PlatformName)_$(ConfigurationName)\shared.pch"
+				AssemblerListingLocation=".\shared__$(PlatformName)_$(ConfigurationName)\"
+				ObjectFile=".\shared__$(PlatformName)_$(ConfigurationName)\"
+				ProgramDataBaseFileName=".\shared__$(PlatformName)_$(ConfigurationName)\"
+				WarningLevel="3"
+				SuppressStartupBanner="true"
+				Detect64BitPortabilityProblems="false"
+				DebugInformationFormat="3"
+				CallingConvention="0"
+				CompileAs="0"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="_DEBUG"
+				Culture="1033"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLibrarianTool"
+				OutputFile=".\shared__$(PlatformName)_$(ConfigurationName)\shared.lib"
+				AdditionalLibraryDirectories="dep\lib\$(PlatformName)_$(ConfigurationName)"
+				SuppressStartupBanner="true"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug_NoPCH|Win32"
+			OutputDirectory=".\shared__$(PlatformName)_$(ConfigurationName)"
+			IntermediateDirectory=".\shared__$(PlatformName)_$(ConfigurationName)"
+			ConfigurationType="4"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+				CommandLine=""
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				AdditionalOptions="/MP"
+				Optimization="0"
+				AdditionalIncludeDirectories="..\..\dep\include;..\..\dep\include\g3dlite;..\..\src\framework;..\..\src\shared;..\..\dep\ACE_wrappers"
+				PreprocessorDefinitions="WIN32;_DEBUG;MANGOS_DEBUG;_LIB;_CRT_SECURE_NO_DEPRECATE"
+				BasicRuntimeChecks="3"
+				RuntimeLibrary="3"
+				EnableFunctionLevelLinking="true"
+				RuntimeTypeInfo="true"
+				UsePrecompiledHeader="0"
+				PrecompiledHeaderFile=".\shared__$(PlatformName)_$(ConfigurationName)\shared.pch"
+				AssemblerListingLocation=".\shared__$(PlatformName)_$(ConfigurationName)\"
+				ObjectFile=".\shared__$(PlatformName)_$(ConfigurationName)\"
+				ProgramDataBaseFileName=".\shared__$(PlatformName)_$(ConfigurationName)\"
+				WarningLevel="3"
+				SuppressStartupBanner="true"
+				Detect64BitPortabilityProblems="false"
+				DebugInformationFormat="3"
+				CallingConvention="0"
+				CompileAs="0"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="_DEBUG"
+				Culture="1033"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLibrarianTool"
+				OutputFile=".\shared__$(PlatformName)_$(ConfigurationName)\shared.lib"
+				AdditionalLibraryDirectories="dep\lib\$(PlatformName)_debug"
+				SuppressStartupBanner="true"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
+		<Configuration
 			Name="Release|x64"
 			OutputDirectory=".\shared__$(PlatformName)_$(ConfigurationName)"
 			IntermediateDirectory=".\shared__$(PlatformName)_$(ConfigurationName)"
@@ -163,86 +323,6 @@
 			<Tool
 				Name="VCLibrarianTool"
 				AdditionalDependencies=".\g3dlite__$(PlatformName)_$(ConfigurationName)\g3dlite.lib"
-				OutputFile=".\shared__$(PlatformName)_$(ConfigurationName)\shared.lib"
-				AdditionalLibraryDirectories="dep\lib\$(PlatformName)_$(ConfigurationName)"
-				SuppressStartupBanner="true"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-			/>
-		</Configuration>
-		<Configuration
-			Name="Debug|Win32"
-			OutputDirectory=".\shared__$(PlatformName)_$(ConfigurationName)"
-			IntermediateDirectory=".\shared__$(PlatformName)_$(ConfigurationName)"
-			ConfigurationType="4"
-			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="false"
-			CharacterSet="2"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-				CommandLine=""
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				AdditionalOptions="/MP"
-				Optimization="0"
-				AdditionalIncludeDirectories="..\..\dep\include;..\..\dep\include\g3dlite;..\..\src\framework;..\..\src\shared;..\..\dep\ACE_wrappers"
-				PreprocessorDefinitions="WIN32;_DEBUG;MANGOS_DEBUG;_LIB;_CRT_SECURE_NO_DEPRECATE"
-				BasicRuntimeChecks="3"
-				RuntimeLibrary="3"
-				EnableFunctionLevelLinking="true"
-				RuntimeTypeInfo="true"
-				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile=".\shared__$(PlatformName)_$(ConfigurationName)\shared.pch"
-				AssemblerListingLocation=".\shared__$(PlatformName)_$(ConfigurationName)\"
-				ObjectFile=".\shared__$(PlatformName)_$(ConfigurationName)\"
-				ProgramDataBaseFileName=".\shared__$(PlatformName)_$(ConfigurationName)\"
-				WarningLevel="3"
-				SuppressStartupBanner="true"
-				Detect64BitPortabilityProblems="false"
-				DebugInformationFormat="3"
-				CallingConvention="0"
-				CompileAs="0"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_DEBUG"
-				Culture="1033"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLibrarianTool"
 				OutputFile=".\shared__$(PlatformName)_$(ConfigurationName)\shared.lib"
 				AdditionalLibraryDirectories="dep\lib\$(PlatformName)_$(ConfigurationName)"
 				SuppressStartupBanner="true"
@@ -327,86 +407,6 @@
 				AdditionalDependencies=".\g3dlite__$(PlatformName)_$(ConfigurationName)\g3dlite.lib"
 				OutputFile=".\shared__$(PlatformName)_$(ConfigurationName)\shared.lib"
 				AdditionalLibraryDirectories="dep\lib\$(PlatformName)_$(ConfigurationName)"
-				SuppressStartupBanner="true"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-			/>
-		</Configuration>
-		<Configuration
-			Name="Debug_NoPCH|Win32"
-			OutputDirectory=".\shared__$(PlatformName)_$(ConfigurationName)"
-			IntermediateDirectory=".\shared__$(PlatformName)_$(ConfigurationName)"
-			ConfigurationType="4"
-			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="false"
-			CharacterSet="2"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-				CommandLine=""
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				AdditionalOptions="/MP"
-				Optimization="0"
-				AdditionalIncludeDirectories="..\..\dep\include;..\..\dep\include\g3dlite;..\..\src\framework;..\..\src\shared;..\..\dep\ACE_wrappers"
-				PreprocessorDefinitions="WIN32;_DEBUG;MANGOS_DEBUG;_LIB;_CRT_SECURE_NO_DEPRECATE"
-				BasicRuntimeChecks="3"
-				RuntimeLibrary="3"
-				EnableFunctionLevelLinking="true"
-				RuntimeTypeInfo="true"
-				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile=".\shared__$(PlatformName)_$(ConfigurationName)\shared.pch"
-				AssemblerListingLocation=".\shared__$(PlatformName)_$(ConfigurationName)\"
-				ObjectFile=".\shared__$(PlatformName)_$(ConfigurationName)\"
-				ProgramDataBaseFileName=".\shared__$(PlatformName)_$(ConfigurationName)\"
-				WarningLevel="3"
-				SuppressStartupBanner="true"
-				Detect64BitPortabilityProblems="false"
-				DebugInformationFormat="3"
-				CallingConvention="0"
-				CompileAs="0"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_DEBUG"
-				Culture="1033"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLibrarianTool"
-				OutputFile=".\shared__$(PlatformName)_$(ConfigurationName)\shared.lib"
-				AdditionalLibraryDirectories="dep\lib\$(PlatformName)_debug"
 				SuppressStartupBanner="true"
 			/>
 			<Tool
@@ -859,6 +859,126 @@
 				>
 			</File>
 		</Filter>
+		<Filter
+			Name="pathfinding"
+			>
+			<File
+				RelativePath="..\..\src\shared\pathfinding\ChunkyTriMesh.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\shared\pathfinding\ChunkyTriMesh.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\shared\pathfinding\InputGeom.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\shared\pathfinding\InputGeom.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\shared\pathfinding\MeshLoaderObj.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\shared\pathfinding\MeshLoaderObj.h"
+				>
+			</File>
+			<Filter
+				Name="Detour"
+				>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\Detour\DetourCommon.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\Detour\DetourCommon.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\Detour\DetourNavMesh.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\Detour\DetourNavMesh.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\Detour\DetourNavMeshBuilder.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\Detour\DetourNavMeshBuilder.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\Detour\DetourNode.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\Detour\DetourNode.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="Recast"
+				>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\Recast\Recast.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\Recast\Recast.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\Recast\RecastArea.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\Recast\RecastContour.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\Recast\RecastFilter.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\Recast\RecastLog.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\Recast\RecastLog.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\Recast\RecastMesh.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\Recast\RecastMeshDetail.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\Recast\RecastRasterization.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\Recast\RecastRegion.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\Recast\RecastTimer.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\Recast\RecastTimer.h"
+					>
+				</File>
+			</Filter>
+		</Filter>
 		<File
 			RelativePath="..\..\src\shared\Common.cpp"
 			>
@@ -886,17 +1006,6 @@
 				/>
 			</FileConfiguration>
 			<FileConfiguration
-				Name="Release|x64"
-				>
-				<Tool
-					Name="VCCustomBuildTool"
-					Description="Extract revision"
-					CommandLine="cd &quot;$(SolutionDir)..\src\shared&quot;&#x0D;&#x0A;&quot;$(TargetDir)\..\genrevision__Win32_$(ConfigurationName)\genrevision.exe&quot; &quot;..\..&quot;&#x0D;&#x0A;"
-					AdditionalDependencies="$(SolutionDir)../.svn/entries;$(SolutionDir)../_svn/entries;$(SolutionDir)../.git/FETCH_HEAD"
-					Outputs="revision.h"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
 				Name="Debug|Win32"
 				>
 				<Tool
@@ -908,7 +1017,18 @@
 				/>
 			</FileConfiguration>
 			<FileConfiguration
-				Name="Debug|x64"
+				Name="Debug_NoPCH|Win32"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					Description="Extract revision"
+					CommandLine="cd &quot;$(SolutionDir)..\src\shared&quot;&#x0D;&#x0A;&quot;$(TargetDir)\..\genrevision__$(PlatformName)_$(ConfigurationName)\genrevision.exe&quot; &quot;..\..&quot;&#x0D;&#x0A;"
+					AdditionalDependencies="$(SolutionDir)../.svn/entries;$(SolutionDir)../_svn/entries;$(SolutionDir)../.git/FETCH_HEAD"
+					Outputs="revision.h"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Release|x64"
 				>
 				<Tool
 					Name="VCCustomBuildTool"
@@ -919,12 +1039,12 @@
 				/>
 			</FileConfiguration>
 			<FileConfiguration
-				Name="Debug_NoPCH|Win32"
+				Name="Debug|x64"
 				>
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Extract revision"
-					CommandLine="cd &quot;$(SolutionDir)..\src\shared&quot;&#x0D;&#x0A;&quot;$(TargetDir)\..\genrevision__$(PlatformName)_$(ConfigurationName)\genrevision.exe&quot; &quot;..\..&quot;&#x0D;&#x0A;"
+					CommandLine="cd &quot;$(SolutionDir)..\src\shared&quot;&#x0D;&#x0A;&quot;$(TargetDir)\..\genrevision__Win32_$(ConfigurationName)\genrevision.exe&quot; &quot;..\..&quot;&#x0D;&#x0A;"
 					AdditionalDependencies="$(SolutionDir)../.svn/entries;$(SolutionDir)../_svn/entries;$(SolutionDir)../.git/FETCH_HEAD"
 					Outputs="revision.h"
 				/>
@@ -971,16 +1091,6 @@
 				/>
 			</FileConfiguration>
 			<FileConfiguration
-				Name="Release|x64"
-				>
-				<Tool
-					Name="VCCustomBuildTool"
-					Description="Performing Build SystemConfig.h"
-					CommandLine="copy ..\..\src\shared\SystemConfig.h.in ..\..\src\shared\SystemConfig.h&#x0D;&#x0A;"
-					Outputs="..\..\src\shared\SystemConfig.h"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
 				Name="Debug|Win32"
 				>
 				<Tool
@@ -991,7 +1101,7 @@
 				/>
 			</FileConfiguration>
 			<FileConfiguration
-				Name="Debug|x64"
+				Name="Debug_NoPCH|Win32"
 				>
 				<Tool
 					Name="VCCustomBuildTool"
@@ -1001,7 +1111,17 @@
 				/>
 			</FileConfiguration>
 			<FileConfiguration
-				Name="Debug_NoPCH|Win32"
+				Name="Release|x64"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					Description="Performing Build SystemConfig.h"
+					CommandLine="copy ..\..\src\shared\SystemConfig.h.in ..\..\src\shared\SystemConfig.h&#x0D;&#x0A;"
+					Outputs="..\..\src\shared\SystemConfig.h"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Debug|x64"
 				>
 				<Tool
 					Name="VCCustomBuildTool"
