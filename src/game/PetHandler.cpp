@@ -663,7 +663,7 @@ void WorldSession::HandlePetCastSpellOpcode( WorldPacket& recvPacket )
 
     float elevation, speed;
     uint8 pos1, pos2;
-    //recvPacket >> targets.ReadForCaster(pet);
+    recvPacket >> targets.ReadForCaster(pet);
     //recvPacket >> elevation >> speed;
     //recvPacket >> pos1 >> pos2;
 
