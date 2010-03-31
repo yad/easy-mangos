@@ -304,7 +304,7 @@ pAuraHandler AuraHandler[TOTAL_AURAS]=
     &Aura::HandleNULL,                                      //251 SPELL_AURA_MOD_ENEMY_DODGE
     &Aura::HandleNULL,                                      //252 haste all?
     &Aura::HandleNoImmediateEffect,                         //253 SPELL_AURA_MOD_BLOCK_CRIT_CHANCE             implemented in Unit::CalculateMeleeDamage
-    &Aura::HandleNULL,                                      //254 SPELL_AURA_MOD_DISARM_SHIELD disarm Shield
+    &Aura::HandleAuraModDisarmOffhand,                      //254 SPELL_AURA_MOD_DISARM_OFFHAND disarm Offhand
     &Aura::HandleNoImmediateEffect,                         //255 SPELL_AURA_MOD_MECHANIC_DAMAGE_TAKEN_PERCENT    implemented in Unit::SpellDamageBonus
     &Aura::HandleNoReagentUseAura,                          //256 SPELL_AURA_NO_REAGENT_USE Use SpellClassMask for spell select
     &Aura::HandleNULL,                                      //257 SPELL_AURA_MOD_TARGET_RESIST_BY_SPELL_CLASS Use SpellClassMask for spell select
@@ -328,7 +328,7 @@ pAuraHandler AuraHandler[TOTAL_AURAS]=
     &Aura::HandleNoImmediateEffect,                         //275 SPELL_AURA_MOD_IGNORE_SHAPESHIFT Use SpellClassMask for spell select
     &Aura::HandleNULL,                                      //276 mod damage % mechanic?
     &Aura::HandleNoImmediateEffect,                         //277 SPELL_AURA_MOD_MAX_AFFECTED_TARGETS Use SpellClassMask for spell select
-    &Aura::HandleNULL,                                      //278 SPELL_AURA_MOD_DISARM_RANGED disarm ranged weapon
+    &Aura::HandleAuraModDisarmRanged,                       //278 SPELL_AURA_MOD_DISARM_RANGED disarm ranged weapon
     &Aura::HandleAuraInitializeImages,                      //279 SPELL_AURA_INITIALIZE_IMAGES
     &Aura::HandleModTargetArmorPct,                         //280 SPELL_AURA_MOD_TARGET_ARMOR_PCT
     &Aura::HandleNoImmediateEffect,                         //281 SPELL_AURA_MOD_HONOR_GAIN             implemented in Player::RewardHonor
@@ -568,35 +568,11 @@ PersistentAreaAura::~PersistentAreaAura()
 {
 }
 
-SingleEnemyTargetAura::SingleEnemyTargetAura(SpellEntry const* spellproto, SpellEffectIndex eff, int32 *currentBasePoints, Unit *target,
-Unit *caster, Item* castItem) : Aura(spellproto, eff, currentBasePoints, target, caster, castItem)
-{
-    if (caster)
-        m_casters_target_guid = caster->GetTypeId()==TYPEID_PLAYER ? ((Player*)caster)->GetSelection() : caster->GetTargetGUID();
-    else
-        m_casters_target_guid = 0;
-}
-
-SingleEnemyTargetAura::~SingleEnemyTargetAura()
-{
-}
-
-Unit* SingleEnemyTargetAura::GetTriggerTarget() const
-{
-    return ObjectAccessor::GetUnit(*m_target, m_casters_target_guid);
-}
 
 Aura* CreateAura(SpellEntry const* spellproto, SpellEffectIndex eff, int32 *currentBasePoints, Unit *target, Unit *caster, Item* castItem)
 {
     if (IsAreaAuraEffect(spellproto->Effect[eff]))
         return new AreaAura(spellproto, eff, currentBasePoints, target, caster, castItem);
-
-    uint32 triggeredSpellId = spellproto->EffectTriggerSpell[eff];
-
-    if(SpellEntry const* triggeredSpellInfo = sSpellStore.LookupEntry(triggeredSpellId))
-        for (int i = 0; i < MAX_EFFECT_INDEX; ++i)
-            if (triggeredSpellInfo->EffectImplicitTargetA[i] == TARGET_SINGLE_ENEMY)
-                return new SingleEnemyTargetAura(spellproto, eff, currentBasePoints, target, caster, castItem);
 
     return new Aura(spellproto, eff, currentBasePoints, target, caster, castItem);
 }
@@ -1627,7 +1603,7 @@ void Aura::HandleAddTargetTrigger(bool apply, bool /*Real*/)
 void Aura::TriggerSpell()
 {
     const uint64& casterGUID = GetCasterGUID();
-    Unit* target = GetTriggerTarget();
+    Unit* target = GetTarget();                     // correct target will be set in Spell::SetTargetMap
 
     if(!casterGUID || !target)
         return;
@@ -2385,7 +2361,7 @@ void Aura::TriggerSpell()
 void Aura::TriggerSpellWithValue()
 {
     const uint64& casterGUID = GetCasterGUID();
-    Unit* target = GetTriggerTarget();
+    Unit* target = GetTarget();                 // correct target will be set in Spell::SetTargetMap
 
     if(!casterGUID || !target)
         return;
@@ -2406,6 +2382,31 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
     // spells required only Real aura add/remove
     if (!Real)
         return;
+    
+    // link dummyauras to caster for target selection from periodic triggered spells
+    if(!m_permanent)
+        if(Unit* caster = GetCaster())
+        {
+            SpellEntry const* m_spell = GetSpellProto();
+            for(uint8 i =0; i<3; i++)
+            {
+                if( m_spell->Effect[i] == SPELL_EFFECT_APPLY_AURA &&
+                    (m_spell->EffectApplyAuraName[i] == SPELL_AURA_PERIODIC_TRIGGER_SPELL
+                    || m_spell->EffectApplyAuraName[i] == SPELL_AURA_PERIODIC_TRIGGER_SPELL_WITH_VALUE) )
+                {
+                    if(apply)
+                    {
+                        caster->AddDummyAuraLink(this);
+                        if( IsAreaAura() )
+                            sLog.outDebug("Spell %i applying a periodic spell trigger aura has aoe target link dummy aura. Not supported!",GetId());
+                    }
+                    else
+                        caster->RemoveDummyAuraLink(this);
+                }
+                else if(m_spell->Effect[i] == SPELL_EFFECT_APPLY_AURA && m_spell->EffectApplyAuraName[i] == SPELL_AURA_DUMMY && GetEffIndex() != i)
+                    sLog.outDebug("Spell %i applying a periodic spell trigger aura has 2 dummy auras. May cause problems with target selection!");
+            }
+        }
 
     // AT APPLY
     if (apply)
@@ -4156,7 +4157,76 @@ void Aura::HandleAuraModDisarm(bool apply, bool Real)
     else
         ((Player *)m_target)->SetRegularAttackTime();
 
+    if(Item *_item = ((Player*)m_target)->GetItemByPos( INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND ))
+        ((Player*)m_target)->_ApplyItemMods(_item, EQUIPMENT_SLOT_MAINHAND, !apply);
+
     m_target->UpdateDamagePhysical(BASE_ATTACK);
+}
+
+void Aura::HandleAuraModDisarmOffhand(bool apply, bool Real)
+{
+    if(!Real)
+        return;
+
+    if(!apply && m_target->HasAuraType(SPELL_AURA_MOD_DISARM_OFFHAND))
+        return;
+
+    // not sure for it's correctness
+    if(apply)
+        m_target->SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_DISARMED_OFFHAND);
+    else
+        m_target->RemoveFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_DISARMED_OFFHAND);
+
+    // only at real add/remove aura
+    if (m_target->GetTypeId() != TYPEID_PLAYER)
+        return;
+
+    // main-hand attack speed already set to special value for feral form already and don't must change and reset at remove.
+    if (m_target->IsInFeralForm())
+        return;
+
+    if (apply)
+        m_target->SetAttackTime(OFF_ATTACK, BASE_ATTACK_TIME);
+    else
+        ((Player *)m_target)->SetRegularAttackTime();
+
+    if(Item *_item = ((Player*)m_target)->GetItemByPos( INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND ))
+        ((Player*)m_target)->_ApplyItemMods(_item, EQUIPMENT_SLOT_OFFHAND, !apply);
+
+    m_target->UpdateDamagePhysical(OFF_ATTACK);
+}
+
+void Aura::HandleAuraModDisarmRanged(bool apply, bool Real)
+{
+    if(!Real)
+        return;
+
+    if(!apply && m_target->HasAuraType(SPELL_AURA_MOD_DISARM_RANGED))
+        return;
+
+    // not sure for it's correctness
+    if(apply)
+        m_target->SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_DISARMED_RANGED);
+    else
+        m_target->RemoveFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_DISARMED_RANGED);
+
+    // only at real add/remove aura
+    if (m_target->GetTypeId() != TYPEID_PLAYER)
+        return;
+
+    // main-hand attack speed already set to special value for feral form already and don't must change and reset at remove.
+    if (m_target->IsInFeralForm())
+        return;
+
+    if (apply)
+        m_target->SetAttackTime(RANGED_ATTACK, BASE_ATTACK_TIME);
+    else
+        ((Player *)m_target)->SetRegularAttackTime();
+
+    if(Item *_item = ((Player*)m_target)->GetItemByPos( INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_RANGED ))
+        ((Player*)m_target)->_ApplyItemMods(_item, EQUIPMENT_SLOT_RANGED, !apply);
+
+    m_target->UpdateDamagePhysical(RANGED_ATTACK);
 }
 
 void Aura::HandleAuraModStun(bool apply, bool Real)
@@ -4711,6 +4781,7 @@ void Aura::HandleAuraModDecreaseSpeed(bool apply, bool Real)
         }
     }
 
+    m_target->UpdateSpeed(MOVE_WALK, true);
     m_target->UpdateSpeed(MOVE_RUN, true);
     m_target->UpdateSpeed(MOVE_SWIM, true);
     m_target->UpdateSpeed(MOVE_FLIGHT, true);
@@ -4722,6 +4793,7 @@ void Aura::HandleAuraModUseNormalSpeed(bool /*apply*/, bool Real)
     if(!Real)
         return;
 
+    m_target->UpdateSpeed(MOVE_WALK, true);
     m_target->UpdateSpeed(MOVE_RUN, true);
     m_target->UpdateSpeed(MOVE_SWIM, true);
     m_target->UpdateSpeed(MOVE_FLIGHT, true);
@@ -6621,6 +6693,22 @@ void Aura::HandleSpellSpecificBoosts(bool apply, bool last_stack)
                 }
                 cast_on_stack = true;
             }
+            // Health Funnel
+            else if (m_spellProto->SpellFamilyFlags & 0x01000000)
+            {
+                Unit* caster = GetCaster();
+                if(!caster)
+                    return;
+                // Improved Health Funnel
+                // rank 1
+                if(caster->HasAura(18703))
+                    spellId1 = 60955;
+                // rank 2
+                else if(caster->HasAura(18704))
+                    spellId1 = 60956;
+                else
+                    return;
+            }
             else
                 return;
             break;
@@ -7512,7 +7600,7 @@ void Aura::PeriodicTick()
                 procVictim|=PROC_FLAG_TAKEN_ANY_DAMAGE;
             pCaster->ProcDamageAndSpell(m_target, procAttacker, procVictim, isCrit ? PROC_EX_CRITICAL_HIT : PROC_EX_NORMAL_HIT, pdamage, BASE_ATTACK, GetSpellProto());
 
-            pCaster->DealDamage(m_target, pdamage, &cleanDamage, DOT, GetSpellSchoolMask(GetSpellProto()), GetSpellProto(), true);
+            pCaster->DealDamage(m_target, pdamage, &cleanDamage, DOT, GetSpellSchoolMask(GetSpellProto()), GetSpellProto(), true, absorb);
             break;
         }
         case SPELL_AURA_PERIODIC_LEECH:
@@ -7581,7 +7669,7 @@ void Aura::PeriodicTick()
             if (pdamage)
                 procVictim|=PROC_FLAG_TAKEN_ANY_DAMAGE;
             pCaster->ProcDamageAndSpell(m_target, procAttacker, procVictim, PROC_EX_NORMAL_HIT, pdamage, BASE_ATTACK, GetSpellProto());
-            int32 new_damage = pCaster->DealDamage(m_target, pdamage, &cleanDamage, DOT, GetSpellSchoolMask(GetSpellProto()), GetSpellProto(), false);
+            int32 new_damage = pCaster->DealDamage(m_target, pdamage, &cleanDamage, DOT, GetSpellSchoolMask(GetSpellProto()), GetSpellProto(), false, absorb);
 
             if (!m_target->isAlive() && pCaster->IsNonMeleeSpellCasted(false))
                 for (uint32 i = CURRENT_FIRST_NON_MELEE_SPELL; i < CURRENT_MAX_SPELL; ++i)

@@ -581,6 +581,8 @@ enum UnitFlags2
     UNIT_FLAG2_UNK1             = 0x00000002,               // Hide unit model (show only player equip)
     UNIT_FLAG2_COMPREHEND_LANG  = 0x00000008,
     UNIT_FLAG2_FORCE_MOVE       = 0x00000040,
+    UNIT_FLAG2_DISARMED_OFFHAND = 0x00000080,
+    UNIT_FLAG2_DISARMED_RANGED  = 0x00000400,
     UNIT_FLAG2_REGENERATE_POWER = 0x00000800
 };
 
@@ -1125,6 +1127,18 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         uint32 getAttackTimer(WeaponAttackType type) const { return m_attackTimer[type]; }
         bool isAttackReady(WeaponAttackType type = BASE_ATTACK) const { return m_attackTimer[type] == 0; }
         bool haveOffhandWeapon() const;
+        bool IsUseEquipedWeapon( WeaponAttackType attackType ) const
+        {
+            bool haveweapon = true;
+            switch(attackType)
+            {
+                case BASE_ATTACK:   haveweapon = !HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_DISARMED); break;
+                case OFF_ATTACK:    haveweapon = !HasFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_DISARMED_OFFHAND); break;
+                case RANGED_ATTACK: haveweapon = !HasFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_DISARMED_RANGED); break;
+            }
+
+            return !IsInFeralForm() && haveweapon;
+        }
         bool canReachWithAttack(Unit *pVictim) const;
         uint32 m_extraAttacks;
 
@@ -1256,7 +1270,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
 
         uint16 GetMaxSkillValueForLevel(Unit const* target = NULL) const { return (target ? getLevelForTarget(target) : getLevel()) * 5; }
         void DealDamageMods(Unit *pVictim, uint32 &damage, uint32* absorb);
-        uint32 DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDamage, DamageEffectType damagetype, SpellSchoolMask damageSchoolMask, SpellEntry const *spellProto, bool durabilityLoss);
+        uint32 DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDamage, DamageEffectType damagetype, SpellSchoolMask damageSchoolMask, SpellEntry const *spellProto, bool durabilityLoss, uint32 absorb = 0);
         int32 DealHeal(Unit *pVictim, uint32 addhealth, SpellEntry const *spellProto, bool critical = false);
 
         void ProcDamageAndSpell(Unit *pVictim, uint32 procAttacker, uint32 procVictim, uint32 procEx, uint32 amount, WeaponAttackType attType = BASE_ATTACK, SpellEntry const *procSpell = NULL);
@@ -1701,6 +1715,11 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
 
         Aura* GetDummyAura(uint32 spell_id) const;
 
+        // those dummy aura links are used to provide unit target for spells with TARGET_PERIODIC_TRIGGER_AURA
+        Aura* GetLinkedDummyAura(uint32 spell_id) const;
+        void AddDummyAuraLink(Aura* m_Aura) { m_dummyAuraLink.push_back(m_Aura); }
+        void RemoveDummyAuraLink(Aura* m_Aura);
+
         uint32 m_AuraFlags;
 
         uint32 GetDisplayId() { return GetUInt32Value(UNIT_FIELD_DISPLAYID); }
@@ -1856,6 +1875,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         AuraList m_deletedAuras;                            // auras removed while in ApplyModifier and waiting deleted
 
         AuraList m_scAuras;                                 // casted by unit single per-caster auras
+        AuraList m_dummyAuraLink;                           // custom linked dummy auras
 
         typedef std::list<uint64> DynObjectGUIDs;
         DynObjectGUIDs m_dynObjGUIDs;

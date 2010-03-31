@@ -89,6 +89,8 @@ class MANGOS_DLL_SPEC Aura
         void HandleModTaunt(bool Apply, bool Real);
         void HandleFeignDeath(bool Apply, bool Real);
         void HandleAuraModDisarm(bool Apply, bool Real);
+        void HandleAuraModDisarmOffhand(bool Apply, bool Real);
+        void HandleAuraModDisarmRanged(bool Apply, bool Real);
         void HandleAuraModStalked(bool Apply, bool Real);
         void HandleAuraWaterWalk(bool Apply, bool Real);
         void HandleAuraFeatherFall(bool Apply, bool Real);
@@ -342,8 +344,6 @@ class MANGOS_DLL_SPEC Aura
 
         void SetRemoveMode(AuraRemoveMode mode) { m_removeMode = mode; }
 
-        virtual Unit* GetTriggerTarget() const { return m_target; }
-
         // add/remove SPELL_AURA_MOD_SHAPESHIFT (36) linked auras
         void HandleShapeshiftBoosts(bool apply);
         void HandleSpellSpecificBoosts(bool apply, bool last_stack);
@@ -387,7 +387,7 @@ class MANGOS_DLL_SPEC Aura
         int32 m_timeCla;                                    // Timer for power per sec calcultion
         int32 m_periodicTimer;                              // Timer for periodic auras
         uint32 m_periodicTick;                              // Tick count pass (including current if use in tick code) from aura apply, used for some tick count dependent aura effects
-		uint32 m_origDuration;                              // Duration before applying haste, etc...
+        uint32 m_origDuration;                              // Duration before applying haste, etc...
 
         AuraRemoveMode m_removeMode:8;                      // Store info for know remove aura reason
         DiminishingGroup m_AuraDRGroup:8;                   // Diminishing
@@ -438,18 +438,6 @@ class MANGOS_DLL_SPEC PersistentAreaAura : public Aura
         void Update(uint32 diff);
 };
 
-class MANGOS_DLL_SPEC SingleEnemyTargetAura : public Aura
-{
-    friend Aura* CreateAura(SpellEntry const* spellproto, SpellEffectIndex eff, int32 *currentBasePoints, Unit *target, Unit *caster, Item* castItem);
-
-    public:
-        ~SingleEnemyTargetAura();
-        Unit* GetTriggerTarget() const;
-
-    protected:
-        SingleEnemyTargetAura(SpellEntry const* spellproto, SpellEffectIndex eff, int32 *currentBasePoints, Unit *target, Unit *caster  = NULL, Item* castItem = NULL);
-        uint64 m_casters_target_guid;
-};
 
 Aura* CreateAura(SpellEntry const* spellproto, SpellEffectIndex eff, int32 *currentBasePoints, Unit *target, Unit *caster = NULL, Item* castItem = NULL);
 #endif

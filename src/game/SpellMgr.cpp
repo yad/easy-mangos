@@ -444,7 +444,7 @@ bool IsPositiveTarget(uint32 targetA, uint32 targetB)
         case TARGET_IN_FRONT_OF_CASTER:
         case TARGET_ALL_ENEMY_IN_AREA_CHANNELED:
         case TARGET_CURRENT_ENEMY_COORDINATES:
-        case TARGET_SINGLE_ENEMY:
+        case TARGET_PERIODIC_TRIGGER_AURA:
         case TARGET_IN_FRONT_OF_CASTER_2:
             return false;
         case TARGET_CASTER_COORDINATES:
@@ -481,7 +481,7 @@ bool IsExplicitNegativeTarget(uint32 targetA)
     {
         case TARGET_CHAIN_DAMAGE:
         case TARGET_CURRENT_ENEMY_COORDINATES:
-        case TARGET_SINGLE_ENEMY:
+        case TARGET_PERIODIC_TRIGGER_AURA:
             return true;
         default:
             break;
@@ -689,11 +689,11 @@ bool IsPositiveEffect(uint32 spellId, SpellEffectIndex effIndex)
                     if(spellproto->Id==42792)               // Recently Dropped Flag (prevent cancel)
                         return false;
                     break;
-				case SPELL_AURA_CONTROL_VEHICLE:
-					//Vortex
+                case SPELL_AURA_CONTROL_VEHICLE:
+                    //Vortex
                     if(spellproto->Id == 56266)
                         return false;
-					break;
+                    break;
                 default:
                     break;
             }
@@ -1515,6 +1515,14 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
 
                     break;
                 }
+                case SPELLFAMILY_WARLOCK:
+                {
+                    // Health Funnel and Improved Health Funnel (Ranks 1,2)
+                    if( spellInfo_2->SpellFamilyFlags & 0x01000000 && (spellInfo_1->Id == 60955 || spellInfo_1->Id == 60956))
+                        return false;
+
+                    break;
+                }
             }
             // Dragonmaw Illusion, Blood Elf Illusion, Human Illusion, Illidari Agent Illusion, Scarlet Crusade Disguise
             if(spellInfo_1->SpellIconID == 1691 && spellInfo_2->SpellIconID == 1691)
@@ -1612,6 +1620,12 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
             // Detect Invisibility and Mana Shield (multi-family check)
             if( spellInfo_1->Id == 132 && spellInfo_2->SpellIconID == 209 && spellInfo_2->SpellVisual[0] == 968 )
                 return false;
+            // Health Funnel and Improved Health Funnel (Ranks 1,2)
+            if (spellInfo_2->SpellFamilyName == SPELLFAMILY_GENERIC)
+            {
+                if (spellInfo_1->SpellFamilyFlags & 0x01000000 && (spellInfo_2->Id == 60955 || spellInfo_2->Id == 60956))
+                    return false;
+            }
             break;
         case SPELLFAMILY_WARRIOR:
             if( spellInfo_2->SpellFamilyName == SPELLFAMILY_WARRIOR )

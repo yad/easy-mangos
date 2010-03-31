@@ -603,6 +603,24 @@ void WorldSession::HandlePetSpellAutocastOpcode( WorldPacket& recvPacket )
 void WorldSession::HandlePetCastSpellOpcode( WorldPacket& recvPacket )
 {
     sLog.outDetail("WORLD: CMSG_PET_CAST_SPELL");
+    recvPacket.hexlike();
+    recvPacket.print_storage();
+
+    //2 - 0 - 0 - 43 - 129 - 0 - 80 - 241 | - 42 - 211 - 253 - 0 | - 0 | - 2 |- 96 - 0 - 0 - 0 | - 0 - 26
+    //- 164 - 59 - 196 - 174 - 98 - 131 | - 194 - 182 - 171 - 218| - 67 - 0 - 48 - 93| - 0 - 196 - 32
+    //- 177| - 242 - 193 - 22 - 110 - 224 - 67 - 203 - 166 | - 68 - 61 - 133 - 1| - 240 - 66 - 1 - 183 |
+    //- 0 - 0 - 0 - 217| - 2 - 43 - 129 - 80 - 241 - 0 - 10 - 0 - 0 - 0 - 0 - 76 - 109 - 175 - 0
+    //- 238 - 115 - 58 - 196 - 20 - 110 - 121 - 194 - 187 - 107 - 217 - 67 - 32 - 44 - 27 - 62 - 217
+    //- 1 - 36 - 129 - 80 - 241 - 0 - 0 - 160 - 64 - 0 - 0 - 160 - 64 - 0 - 0 - 160 - 64 - 192 - 233
+    //- 172 - 62 - 4 - 0 - 0 - 0 - 7 - 230 - 0 - 0 - 0 -
+
+    //5 - 0 - 0 - 43 - 129 - 0 - 80 - 241 | - 85 - 211 - 253 - 0 | - 0 | - 2 | - 96 - 0 - 0 - 0 | - 0 - 69 - 60 - 61
+    //- 196 - 171 - 248 - 107| - 194 - 8 - 236 - 218 | - 67 - 0 - 177 - 11 | - 46 - 196 - 89 - 16 | - 14 - 195
+    //- 5 - 38 - 231 - 67 - 23 - 221 | - 110 - 62 - 15 - 3 | - 240 - 66 -| 1 - 183 | - 0 - 0 - 0 - 217 | - 5 - 43
+    //- 129 - 80 - 241 - 0 - 10 - 0 - 0 - 0 - 0 - 233 - 41 - 203 - 0 - 106 - 207 - 59 - 196 - 179 - 173 - 83
+    //- 194 - 8 - 108 - 217 - 67 - 127 - 153 - 170 - 64 - 217 - 4 - 36 - 129 - 80 - 241 - 0 - 0 - 160 - 64
+    //- 0 - 0 - 160 - 64 - 0 - 0 - 160 - 64 - 7 - 77 - 175 - 64 - 4 - 0 - 0 - 0 - 7 - 195 - 0 - 0 - 0 -
+
 
     uint64 guid;
     uint32 spellid;
@@ -643,10 +661,20 @@ void WorldSession::HandlePetCastSpellOpcode( WorldPacket& recvPacket )
 
     SpellCastTargets targets;
 
-
-    recvPacket >> targets.ReadForCaster(pet);
+    float elevation, speed;
+    uint8 pos1, pos2;
+    //recvPacket >> targets.ReadForCaster(pet);
+    //recvPacket >> elevation >> speed;
+    //recvPacket >> pos1 >> pos2;
 
     pet->clearUnitState(UNIT_STAT_MOVING);
+
+    //mask: 96, elevation: 0.167906, speed: 120.002441, pos1: 1, pos: 183
+
+    sLog.outDebug("mask: %u, elevation: %f, speed: %f, pos1: %u, pos: %u", targets.m_targetMask, elevation, speed, pos1, pos2);
+
+    sLog.outDebug("guid: %u, sX: %f, sY:%f, sZ: %f", targets.getUnitTargetGUID(),targets.m_srcX,targets.m_srcY,targets.m_srcZ);
+    sLog.outDebug("guid: %u, sX: %f, sY:%f, sZ: %f", targets.getUnitTargetGUID(),targets.m_destX,targets.m_destY,targets.m_destZ);
 
     Spell *spell = new Spell(pet, spellInfo, false);
     spell->m_cast_count = cast_count;                       // probably pending spell cast

@@ -120,7 +120,8 @@ SpellCastTargets::SpellCastTargets()
     m_itemTargetGUID   = 0;
     m_itemTargetEntry  = 0;
 
-    m_srcX = m_srcY = m_srcZ = m_destX = m_destY = m_destZ = 0.0f;
+    m_srcX = m_srcY = m_srcZ = m_srcO = m_destX = m_destY = m_destZ = 0.0f;
+    m_elevation = m_speed = 0.0f;
     m_strTarget = "";
     m_targetMask = 0;
 }
@@ -245,6 +246,18 @@ void SpellCastTargets::read( ByteBuffer& data, Unit *caster )
         data >> m_destX >> m_destY >> m_destZ;
         if(!MaNGOS::IsValidMapCoord(m_destX, m_destY, m_destZ))
             throw ByteBufferException(false, data.rpos(), 0, data.size());
+
+        if( m_targetMask & TARGET_FLAG_SOURCE_LOCATION )
+        {
+            if(data.rpos() + 4 + 4 <= data.size())
+            {
+                data >> m_elevation >> m_speed;
+                // TODO: should also read
+                m_srcO = caster->GetOrientation();
+                //*data >> uint16 >> uint8 >> uint32 >> uint32;
+                //*data >> float >> float >> float >> float...
+            }
+        }
     }
 
     if( m_targetMask & TARGET_FLAG_STRING )
@@ -647,6 +660,18 @@ void Spell::FillTargetMap()
         for(std::list<Unit*>::const_iterator iunit = tmpUnitMap.begin(); iunit != tmpUnitMap.end(); ++iunit)
             AddUnitTarget((*iunit), SpellEffectIndex(i));
     }
+/*
+    for(tbb::concurrent_vector<TargetInfo>::iterator ihit = m_UniqueTargetInfo.begin(); ihit != m_UniqueTargetInfo.end(); ++ihit)
+    {
+        error_log("GUID: %u", ihit->targetGUID.GetRawValue());
+        if(ihit->targetGUID.IsPlayer())
+            error_log("    PLAYER!");
+        else if(ihit->targetGUID.IsCreature())
+            error_log("    CREATURE!");
+        else if(ihit->targetGUID.IsVehicle())
+            error_log("    VEHICLE!");
+    }
+*/
 }
 
 void Spell::prepareDataForTriggerSystem()
@@ -1131,9 +1156,9 @@ void Spell::DoSpellHitOnUnit(Unit *unit, const uint32 effectMask)
 
         if (!realCaster->IsFriendlyTo(unit))
         {
-            // for delayed spells ignore not visible explicit target
-            if (m_spellInfo->speed > 0.0f && unit == m_targets.getUnitTarget() &&
-                !unit->isVisibleForOrDetect(m_caster, m_caster, false))
+            // for delayed spells ignore not visible explicit target and for spells with 
+            if ((m_spellInfo->speed > 0.0f || m_spellInfo->EffectImplicitTargetA[0] == TARGET_CHAIN_DAMAGE) && 
+                unit == m_targets.getUnitTarget() && !unit->isVisibleForOrDetect(m_caster, m_caster, false))
             {
                 realCaster->SendSpellMiss(unit, m_spellInfo->Id, SPELL_MISS_EVADE);
                 return;
@@ -1481,9 +1506,6 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
         case TARGET_TOTEM_AIR:
         case TARGET_TOTEM_FIRE:
         case TARGET_SELF:
-        case TARGET_SELF2:
-        case TARGET_AREAEFFECT_CUSTOM:
-        case TARGET_AREAEFFECT_CUSTOM_2:
             targetUnitMap.push_back(m_caster);
             break;
         case TARGET_RANDOM_ENEMY_CHAIN_IN_AREA:
@@ -1709,6 +1731,8 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
             FillAreaTargets(targetUnitMap, m_targets.m_destX, m_targets.m_destY, radius, PUSH_DEST_CENTER, SPELL_TARGETS_AOE_DAMAGE);
             break;
         case TARGET_AREAEFFECT_INSTANT:
+        case TARGET_AREAEFFECT_CUSTOM:
+        case TARGET_AREAEFFECT_CUSTOM_2:
         {
             SpellTargets targetB = SPELL_TARGETS_AOE_DAMAGE;
             // Select friendly targets for positive effect
@@ -1762,7 +1786,13 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
         case TARGET_ALL_RAID_AROUND_CASTER:
         {
             if(m_spellInfo->Id == 57669)                    // Replenishment (special target selection)
-                FillRaidOrPartyManaPriorityTargets(targetUnitMap, m_caster, m_caster, radius, 10, true, false, true);
+            {
+                // in arena, target should be only caster
+                if(m_caster->GetMap()->IsBattleArena())
+                    targetUnitMap.push_back(m_caster);
+                else
+                    FillRaidOrPartyManaPriorityTargets(targetUnitMap, m_caster, m_caster, radius, 10, true, false, true);
+            }
             else if (m_spellInfo->Id==52759)                // Ancestral Awakening (special target selection)
                 FillRaidOrPartyHealthPriorityTargets(targetUnitMap, m_caster, m_caster, radius, 1, true, false, true);
             else if (m_spellInfo->Id == 54171)              // Divine Storm (healing part) 
@@ -1966,9 +1996,15 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
             if(m_spellInfo->Effect[effIndex] != SPELL_EFFECT_DUEL)
                 targetUnitMap.push_back(m_caster);
             break;
-        case TARGET_SINGLE_ENEMY:
+        case TARGET_PERIODIC_TRIGGER_AURA:
         {
-            if(Unit* pUnitTarget = m_caster->SelectMagnetTarget(m_targets.getUnitTarget(), m_spellInfo))
+            Unit* pTarget;
+            // search for dummy aura link, that contains the target
+            Aura* pAura = NULL;
+            if(m_triggeredByAuraSpell)
+                pAura = m_caster->GetLinkedDummyAura(m_triggeredByAuraSpell->Id);
+            pTarget = pAura ? pAura->GetTarget() : m_targets.getUnitTarget();
+            if(Unit* pUnitTarget = m_caster->SelectMagnetTarget(pTarget, m_spellInfo))
             {
                 m_targets.setUnitTarget(pUnitTarget);
                 targetUnitMap.push_back(pUnitTarget);
@@ -2217,7 +2253,13 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
         case TARGET_DYNAMIC_OBJECT_LEFT_SIDE:
         case TARGET_DYNAMIC_OBJECT_RIGHT_SIDE:
         {
-            if (!(m_targets.m_targetMask & TARGET_FLAG_DEST_LOCATION))
+            //This should be targeting of destructible objects by vehicles (ram spells...)
+            if(m_spellInfo->EffectImplicitTargetB[effIndex] == TARGET_AREAEFFECT_CUSTOM_2)
+            {
+                //FIXME
+                break;
+            }
+            else if (!(m_targets.m_targetMask & TARGET_FLAG_DEST_LOCATION))
             {
                 float angle = m_caster->GetOrientation();
                 switch(targetMode)
@@ -2512,6 +2554,7 @@ void Spell::prepare(SpellCastTargets const* targets, Aura* triggeredByAura)
     SpellCastResult result = CheckCast(true);
     if(result != SPELL_CAST_OK && !IsAutoRepeat())          //always cast autorepeat dummy for triggering
     {
+        //error_log("Spatne 1, spell %s", m_spellInfo->SpellName[0]);
         if(triggeredByAura)
         {
             SendChannelUpdate(0);
@@ -3924,7 +3967,7 @@ void Spell::TakeCastItem()
             // item has limited charges
             if (proto->Spells[i].SpellCharges)
             {
-                if (proto->Spells[i].SpellCharges < 0 && !proto->NonConsumable)
+                if (proto->Spells[i].SpellCharges < 0 && !(proto->ExtraFlags & ITEM_EXTRA_NON_CONSUMABLE))
                     expendable = true;
 
                 int32 charges = m_CastItem->GetSpellCharges(i);
@@ -4867,9 +4910,13 @@ SpellCastResult Spell::CheckCast(bool strict)
             {
                 // Spell can be triggered, we need to check original caster prior to caster
                 Unit* caster = GetAffectiveCaster();
-                if (!caster || caster->GetTypeId() != TYPEID_PLAYER ||
-                    !m_targets.getUnitTarget() ||
-                    m_targets.getUnitTarget()->GetTypeId() == TYPEID_PLAYER)
+                if (!caster)
+                    return SPELL_FAILED_BAD_TARGETS;
+                // target provided by dummy aura
+                Aura* dummyLink = caster->GetLinkedDummyAura(m_triggeredByAuraSpell->Id);
+                if (caster->GetTypeId() != TYPEID_PLAYER ||
+                    !dummyLink || !dummyLink->GetTarget() ||
+                    dummyLink->GetTarget()->GetTypeId() == TYPEID_PLAYER)
                     return SPELL_FAILED_BAD_TARGETS;
 
                 Player* plrCaster = (Player*)caster;
@@ -4880,7 +4927,7 @@ SpellCastResult Spell::CheckCast(bool strict)
                     return SPELL_FAILED_DONT_REPORT;
                 }
 
-                Creature* target = (Creature*)m_targets.getUnitTarget();
+                Creature* target = (Creature*)dummyLink->GetTarget();
 
                 if(target->isPet() || target->isCharmed())
                 {
@@ -5894,7 +5941,7 @@ SpellCastResult Spell::CheckItems()
                     {
                         // CastItem will be used up and does not count as reagent
                         int32 charges = m_CastItem->GetSpellCharges(s);
-                        if (proto->Spells[s].SpellCharges < 0 && !proto->NonConsumable && abs(charges) < 2)
+                        if (proto->Spells[s].SpellCharges < 0 && !(proto->ExtraFlags & ITEM_EXTRA_NON_CONSUMABLE) && abs(charges) < 2)
                         {
                             ++itemcount;
                             break;
