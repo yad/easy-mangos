@@ -3541,7 +3541,7 @@ bool ChatHandler::HandleDamageCommand(const char * args)
         damage -= absorb + resist;
 
         m_session->GetPlayer()->DealDamageMods(target,damage,&absorb);
-        m_session->GetPlayer()->DealDamage(target, damage, NULL, DIRECT_DAMAGE, schoolmask, NULL, false);
+        m_session->GetPlayer()->DealDamage(target, damage, NULL, DIRECT_DAMAGE, schoolmask, NULL, false, absorb);
         m_session->GetPlayer()->SendAttackStateUpdate (HITINFO_NORMALSWING2, target, 1, schoolmask, damage, absorb, resist, VICTIMSTATE_NORMAL, 0);
         return true;
     }
