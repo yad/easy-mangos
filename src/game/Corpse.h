@@ -74,8 +74,8 @@ class Corpse : public WorldObject
         bool IsHostileTo(Unit const* unit) const;
         bool IsFriendlyTo(Unit const* unit) const;
 
-        GridPair const& GetGrid() const { return m_grid; }
-        void SetGrid(GridPair const& grid) { m_grid = grid; }
+        GridPair const& GetGridPair() const { return m_grid_pair; }
+        void SetGridPair(GridPair const& grid) { m_grid_pair = grid; }
 
         bool isVisibleForInState(Player const* u, WorldObject const* viewPoint, bool inVisibleList) const;
 
@@ -97,6 +97,6 @@ class Corpse : public WorldObject
 
         CorpseType m_type;
         time_t m_time;
-        GridPair m_grid;                                    // gride for corpse position for fast search
+        GridPair m_grid_pair;                                    // gride for corpse position for fast search
 };
 #endif
