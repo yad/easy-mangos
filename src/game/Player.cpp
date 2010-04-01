@@ -5822,8 +5822,7 @@ void Player::SendMessageToSet(WorldPacket *data, bool self)
     Map * _map = IsInWorld() ? GetMap() : sMapMgr.FindMap(GetMapId(), GetInstanceId());
     if(_map)
     {
-        _map->MessageBroadcast(this, data, self);
-        return;
+        _map->MessageBroadcast(this, data, false);
     }
 
     //if player is not in world and map in not created/already destroyed
@@ -5837,8 +5836,7 @@ void Player::SendMessageToSetInRange(WorldPacket *data, float dist, bool self)
     Map * _map = IsInWorld() ? GetMap() : sMapMgr.FindMap(GetMapId(), GetInstanceId());
     if(_map)
     {
-        _map->MessageDistBroadcast(this, data, dist, self);
-        return;
+        _map->MessageDistBroadcast(this, data, dist, false);
     }
 
     if(self)
@@ -5850,8 +5848,7 @@ void Player::SendMessageToSetInRange(WorldPacket *data, float dist, bool self, b
     Map * _map = IsInWorld() ? GetMap() : sMapMgr.FindMap(GetMapId(), GetInstanceId());
     if(_map)
     {
-        _map->MessageDistBroadcast(this, data, dist, self, own_team_only);
-        return;
+        _map->MessageDistBroadcast(this, data, dist, false, own_team_only);
     }
 
     if(self)

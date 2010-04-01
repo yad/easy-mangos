@@ -1903,12 +1903,22 @@ struct WorldObjectChangeAccumulator
 {
     UpdateDataMapType &i_updateDatas;
     WorldObject &i_object;
-    WorldObjectChangeAccumulator(WorldObject &obj, UpdateDataMapType &d) : i_updateDatas(d), i_object(obj) {}
+    WorldObjectChangeAccumulator(WorldObject &obj, UpdateDataMapType &d) : i_updateDatas(d), i_object(obj)
+    {
+        // send self fields changes in another way, otherwise
+        // with new camera system when player's camera too far from player, camera wouldn't receive packets and changes from player
+        if(i_object.isType(TYPEMASK_PLAYER))
+            i_object.BuildUpdateDataForPlayer((Player*)&i_object, i_updateDatas);
+    }
+
     void Visit(CameraMapType &m)
     {
         for(CameraMapType::iterator iter = m.begin(); iter != m.end(); ++iter)
-            if(iter->getSource()->getOwner()->HaveAtClient(&i_object))
-                i_object.BuildUpdateDataForPlayer(iter->getSource()->getOwner(), i_updateDatas);
+        {
+            Player* owner = iter->getSource()->getOwner();
+            if(owner != &i_object && owner->HaveAtClient(&i_object))
+                i_object.BuildUpdateDataForPlayer(owner, i_updateDatas);
+        }
     }
 
     template<class SKIP> void Visit(GridRefManager<SKIP> &) {}
