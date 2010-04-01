@@ -75,7 +75,7 @@ enum PlayerUnderwaterState
     UNDERWATER_INWATER                  = 0x01,             // terrain type is water and player is afflicted by it
     UNDERWATER_INLAVA                   = 0x02,             // terrain type is lava and player is afflicted by it
     UNDERWATER_INSLIME                  = 0x04,             // terrain type is lava and player is afflicted by it
-    UNDERWARER_INDARKWATER              = 0x08,             // terrain type is dark water and player is afflicted by it
+    UNDERWATER_INDARKWATER              = 0x08,             // terrain type is dark water and player is afflicted by it
 
     UNDERWATER_EXIST_TIMERS             = 0x10
 };
@@ -333,7 +333,7 @@ struct Areas
 };
 
 #define MAX_RUNES       6
-#define RUNE_COOLDOWN   (2*5*IN_MILISECONDS)                // msec
+#define RUNE_COOLDOWN   (2*5*IN_MILLISECONDS)                // msec
 
 enum RuneType
 {
@@ -368,7 +368,7 @@ struct Runes
 struct EnchantDuration
 {
     EnchantDuration() : item(NULL), slot(MAX_ENCHANTMENT_SLOT), leftduration(0) {};
-    EnchantDuration(Item * _item, EnchantmentSlot _slot, uint32 _leftduration) : item(_item), slot(_slot), leftduration(_leftduration) { assert(item); };
+    EnchantDuration(Item * _item, EnchantmentSlot _slot, uint32 _leftduration) : item(_item), slot(_slot), leftduration(_leftduration) { ASSERT(item); };
 
     Item * item;
     EnchantmentSlot slot;
@@ -1511,7 +1511,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         void AddMItem(Item* it)
         {
             ASSERT( it );
-            //assert deleted, because items can be added before loading
+            //ASSERT deleted, because items can be added before loading
             mMitems[it->GetGUIDLow()] = it;
         }
 
@@ -1812,7 +1812,7 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         Corpse *GetCorpse() const;
         void SpawnCorpseBones();
-        void CreateCorpse();
+        Corpse* CreateCorpse();
         void KillPlayer();
         uint32 GetResurrectionSpellId();
         void ResurrectPlayer(float restore_percent, bool applySickness = false);
@@ -2082,7 +2082,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         /***                    REST SYSTEM                    ***/
         /*********************************************************/
 
-        bool isRested() const { return GetRestTime() >= 10*IN_MILISECONDS; }
+        bool isRested() const { return GetRestTime() >= 10*IN_MILLISECONDS; }
         uint32 GetXPRestBonus(uint32 xp);
         uint32 GetRestTime() const { return m_restTime; }
         void SetRestTime(uint32 v) { m_restTime = v; }
@@ -2577,7 +2577,7 @@ template <class T> T Player::ApplySpellMod(uint32 spellId, SpellModOp op, T &bas
                 continue;
 
             // special case (skip >10sec spell casts for instant cast setting)
-            if( mod->op==SPELLMOD_CASTING_TIME  && basevalue >= T(10*IN_MILISECONDS) && mod->value <= -100)
+            if( mod->op==SPELLMOD_CASTING_TIME  && basevalue >= T(10*IN_MILLISECONDS) && mod->value <= -100)
                 continue;
 
             totalpct += mod->value;

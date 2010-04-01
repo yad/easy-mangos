@@ -101,7 +101,7 @@ bool Corpse::Create( uint32 guidlow, Player *owner)
 void Corpse::SaveToDB()
 {
     // bones should not be saved to DB (would be deleted on startup anyway)
-    assert(GetType() != CORPSE_BONES);
+    ASSERT(GetType() != CORPSE_BONES);
 
     // prevent DB data inconsistence problems and duplicates
     CharacterDatabase.BeginTransaction();
@@ -126,7 +126,7 @@ void Corpse::SaveToDB()
 
 void Corpse::DeleteBonesFromWorld()
 {
-    assert(GetType() == CORPSE_BONES);
+    ASSERT(GetType() == CORPSE_BONES);
     Corpse* corpse = GetMap()->GetCorpse(GetGUID());
 
     if (!corpse)
@@ -141,7 +141,7 @@ void Corpse::DeleteBonesFromWorld()
 void Corpse::DeleteFromDB()
 {
     // bones should not be saved to DB (would be deleted on startup anyway)
-    assert(GetType() != CORPSE_BONES);
+    ASSERT(GetType() != CORPSE_BONES);
 
     // all corpses (not bones)
     CharacterDatabase.PExecute("DELETE FROM corpse WHERE player = '%d' AND corpse_type <> '0'",  GUID_LOPART(GetOwnerGUID()));
@@ -267,4 +267,12 @@ bool Corpse::IsFriendlyTo( Unit const* unit ) const
         return owner->IsFriendlyTo(unit);
     else
         return true;
+}
+
+bool Corpse::IsExpired(time_t t) const
+{
+    if(m_type == CORPSE_BONES)
+        return m_time < t - 60*MINUTE;
+    else
+        return m_time < t - 3*DAY;
 }

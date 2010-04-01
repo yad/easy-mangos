@@ -3876,7 +3876,7 @@ bool ChatHandler::HandleNpcPlayEmoteCommand(const char* args)
         return false;
     }
 
-    target->SetUInt32Value(UNIT_NPC_EMOTESTATE,emote);
+    target->HandleEmote(emote);
 
     return true;
 }
