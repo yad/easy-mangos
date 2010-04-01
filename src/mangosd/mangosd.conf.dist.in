@@ -1362,6 +1362,77 @@ Network.TcpNodelay = 1
 Network.KickOnBadPacket = 0
 
 ###################################################################################################################
+# AUCTION HOUSE BOT SETTINGS
+#
+#    AuctionHouseBot.Seller.Enabled
+#        Enable/Disable the part of AHBot that puts items up for auction
+#    Default 0 (disabled)
+#
+#    AuctionHouseBot.Buyer.Enabled
+#        Enable/Disable the part of AHBot that buys items from players
+#    Default 0 (disabled)
+#
+#    AuctionHouseBot.Account
+#        Is the account number (in realmd->account table) of the player you want to run as the auction bot.
+#    Default: 0 (Auction House Bot disabled)
+#
+#    AuctionHouseBot.Character
+#        Is the GUID (in characters->characters table) of the player you want to run as the auction bot.
+#    Default: 0 (Auction House Bot disabled)
+#
+#    AuctionHouseBot.Items.Vendor
+#        Include items that can be bought from vendors.
+#    Default 0
+#
+#    AuctionHouseBot.Items.Loot
+#        Include items that can be looted or fished for.
+#    Default 1
+#
+#    AuctionHouseBot.Items.Misc
+#        Include misc. items.
+#    Default 0
+#
+#    AuctionHouseBot.Bind.*
+#        Indicates which bonding types to allow the bot to put up for auction
+#            No     - Items that don't bind            Default 1 (Allowed)
+#            Pickup - Items that bind on pickup        Default 0 (Not Allowed)
+#            Equip  - Items that bind on equip         Default 1 (Allowed)
+#            Use    - Items that bind on use           Default 1 (Allowed)
+#            Quest  - Quest Items                      Default 0 (Not Allowed)
+#
+#    AuctionHouseBot.ItemsPerCycle
+#        Number of Items to Add/Remove from the AH during mass operations
+#    Default 200
+#
+#    AuctionHouseBot.BuyPrice.Seller
+#        Should the Seller use BuyPrice or SellPrice to determine Bid Prices
+#    Default 0 (use SellPrice)
+#
+#    AuctionHouseBot.BuyPrice.Buyer
+#        Should the Buyer use BuyPrice or SellPrice to determine Bid Prices
+#    Default 0 (use SellPrice)
+#
+#    All other settings have been moved to sql
+#
+###################################################################################################################
+
+AuctionHouseBot.Seller.Enabled = 0
+AuctionHouseBot.Buyer.Enabled = 0
+AuctionHouseBot.Account = 0
+AuctionHouseBot.Character = 0
+AuctionHouseBot.Items.Vendor = 0
+AuctionHouseBot.Items.Loot = 1
+AuctionHouseBot.Items.Misc = 0
+AuctionHouseBot.Bind.No = 1
+AuctionHouseBot.Bind.Pickup = 0
+AuctionHouseBot.Bind.Equip = 1
+AuctionHouseBot.Bind.Use = 1
+AuctionHouseBot.Bind.Quest = 0
+AuctionHouseBot.ItemsPerCycle = 200
+AuctionHouseBot.BuyPrice.Seller = 0
+AuctionHouseBot.BuyPrice.Buyer = 0
+
+###################################################################################################################
 # CONSOLE, REMOTE ACCESS AND SOAP
 #
 #    Console.Enable
