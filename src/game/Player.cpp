@@ -305,7 +305,7 @@ bool SpellModifier::isAffectedOnSpell( SpellEntry const *spell ) const
 
 UpdateMask Player::updateVisualBits;
 
-Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputationMgr(this), GridPlayer(this)
+Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputationMgr(this), GridPlayer(this), m_camera(this)
 {
     m_transport = 0;
 
@@ -2294,7 +2294,7 @@ void Player::SetGameMaster(bool on)
         getHostileRefManager().setOnlineOfflineState(true);
     }
 
-    UpdateVisibilityForPlayer();
+    m_camera.UpdateVisibilityForOwner();
 }
 
 void Player::SetGMVisible(bool on)
@@ -4238,7 +4238,7 @@ void Player::ResurrectPlayer(float restore_percent, bool applySickness)
     UpdateZone(newzone,newarea);
 
     // update visibility
-    UpdateVisibilityForPlayer();
+    m_camera.UpdateVisibilityForOwner();
 
     if(!applySickness)
         return;
@@ -21603,28 +21603,7 @@ void Player::SetFarSightGUID( uint64 guid )
     SetUInt64Value(PLAYER_FARSIGHT, guid);
 
     // need triggering load grids around new view point
-    UpdateVisibilityForPlayer();
-}
-
-void Player::UpdateVisibilityForPlayer()
-{
-    WorldObject const* viewPoint = GetViewPoint();
-    Map* m = GetMap();
-
-    CellPair p(MaNGOS::ComputeCellPair(GetPositionX(), GetPositionY()));
-    Cell cell(p);
-
-    m->UpdatePlayerVisibility(this, cell, p);
-
-    if (this != viewPoint)
-    {
-        CellPair pView(MaNGOS::ComputeCellPair(viewPoint->GetPositionX(), viewPoint->GetPositionY()));
-        Cell cellView(pView);
-
-        m->UpdateObjectsVisibilityFor(this, cellView, pView);
-    }
-    else
-        m->UpdateObjectsVisibilityFor(this, cell, p);
+    m_camera.UpdateVisibilityForOwner();
 }
 
 void Player::SendDuelCountdown(uint32 counter)

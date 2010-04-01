@@ -480,6 +480,7 @@ class MANGOS_DLL_SPEC WorldObject : public Object, public GridObject
         void BuildUpdateData(UpdateDataMapType &);
 
         Creature* SummonCreature(uint32 id, float x, float y, float z, float ang,TempSummonType spwtype,uint32 despwtime);
+        ViewPoint& getViewPoint() { return m_viewPoint; }
     protected:
         explicit WorldObject();
 
@@ -502,6 +503,8 @@ class MANGOS_DLL_SPEC WorldObject : public Object, public GridObject
         float m_positionY;
         float m_positionZ;
         float m_orientation;
+
+        ViewPoint m_viewPoint;
 };
 
 template<class T>

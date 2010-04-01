@@ -10653,6 +10653,8 @@ void Unit::SetVisibility(UnitVisibility x)
             m->PlayerRelocation((Player*)this,GetPositionX(),GetPositionY(),GetPositionZ(),GetOrientation());
         else
             m->CreatureRelocation((Creature*)this,GetPositionX(),GetPositionY(),GetPositionZ(),GetOrientation());
+
+        getViewPoint().CameraEvent_ViewPointVisibilityChanged();
     }
 }
 
@@ -11874,6 +11876,7 @@ uint32 Unit::GetCreatePowers( Powers power ) const
 void Unit::AddToWorld()
 {
     Object::AddToWorld();
+    getViewPoint().CameraEvent_AddedToWorld();
 }
 
 void Unit::RemoveFromWorld()
@@ -11887,6 +11890,8 @@ void Unit::RemoveFromWorld()
         RemoveAllGameObjects();
         RemoveAllDynObjects();
         CleanupDeletedAuras();
+
+        getViewPoint().CameraEvent_RemovedFromWorld();
     }
 
     Object::RemoveFromWorld();

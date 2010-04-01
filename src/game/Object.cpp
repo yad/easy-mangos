@@ -1855,7 +1855,10 @@ void WorldObject::SetPhaseMask(uint32 newPhaseMask, bool update)
     m_phaseMask = newPhaseMask;
 
     if(update && IsInWorld())
+    {
         UpdateObjectVisibility();
+        getViewPoint().CameraEvent_ViewPointVisibilityChanged();
+    }
 }
 
 void WorldObject::PlayDistanceSound( uint32 sound_id, Player* target /*= NULL*/ )

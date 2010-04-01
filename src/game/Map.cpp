@@ -767,8 +767,12 @@ Map::PlayerRelocation(Player *player, float x, float y, float z, float orientati
             AddToGrid(player, oldGrid,new_cell);
         else
             EnsureGridLoadedAtEnter(new_cell, player);
+
+        player->getViewPoint().CameraEvent_Moved();
     }
 
+    // update visibility of nearby objects for cameras which attached to player
+    player->getViewPoint().CameraCall(&Camera::UpdateVisibilityForOwner);
     // if move then update what player see and who seen
     UpdateObjectVisibility(player, new_cell, new_val);
     PlayerRelocationNotify(player,new_cell,new_val);
@@ -807,6 +811,7 @@ Map::CreatureRelocation(Creature *creature, float x, float y, float z, float ang
 
             // in diffcell/diffgrid case notifiers called in Creature::Update
             creature->SetNeedNotify();
+            creature->getViewPoint().CameraEvent_Moved();
         }
         else
         {
@@ -829,6 +834,7 @@ Map::CreatureRelocation(Creature *creature, float x, float y, float z, float ang
         creature->SetNeedNotify();
     }
 
+    creature->getViewPoint().CameraCall(&Camera::UpdateVisibilityForOwner);
     assert(CheckGridIntegrity(creature,true));
 }
 

@@ -1051,8 +1051,6 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
         Creature* GetNPCIfCanInteractWith(uint64 guid, uint32 npcflagmask);
         GameObject* GetGameObjectIfCanInteractWith(uint64 guid, uint32 gameobject_type = MAX_GAMEOBJECT_TYPE) const;
 
-        void UpdateVisibilityForPlayer();
-
         bool ToggleAFK();
         bool ToggleDND();
         bool isAFK() const { return HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_AFK); }
@@ -2194,6 +2192,9 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
 
         // Stealth detection system
         void HandleStealthedUnitsDetection();
+
+        Camera* GetCamera() { return &m_camera; }
+        Camera m_camera;
 
         uint8 m_forced_speed_changes[MAX_MOVE_TYPE];
 

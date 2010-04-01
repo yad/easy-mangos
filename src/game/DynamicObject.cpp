@@ -44,13 +44,17 @@ void DynamicObject::AddToWorld()
         GetMap()->GetObjectsStore().insert<DynamicObject>(GetGUID(), (DynamicObject*)this);
 
     Object::AddToWorld();
+    getViewPoint().CameraEvent_AddedToWorld();
 }
 
 void DynamicObject::RemoveFromWorld()
 {
     ///- Remove the dynamicObject from the accessor
     if(IsInWorld())
+    {
         GetMap()->GetObjectsStore().erase<DynamicObject>(GetGUID(), (DynamicObject*)NULL);
+        getViewPoint().CameraEvent_RemovedFromWorld();
+    }
 
     Object::RemoveFromWorld();
 }
