@@ -21,6 +21,7 @@
 
 #include "Common.h"
 #include "GameSystem/NGrid.h"
+#include "GameSystem/GridObject.h"
 #include <cmath>
 
 // Forward class definitions
@@ -71,6 +72,14 @@ typedef NGrid<MAX_NUMBER_OF_CELLS, Player, AllWorldObjectTypes, AllGridObjectTyp
 
 typedef TypeMapContainer<AllGridObjectTypes> GridTypeMapContainer;
 typedef TypeMapContainer<AllWorldObjectTypes> WorldTypeMapContainer;
+
+typedef GridObjBase<GridType>             GridObject;
+
+typedef GridObject::Type<Corpse>          GridCorpse;
+typedef GridObject::Type<Creature>        GridCreature;
+typedef GridObject::Type<DynamicObject>   GridDynamicObject;
+typedef GridObject::Type<GameObject>      GridGameObject;
+typedef GridObject::Type<Player>          GridPlayer;
 
 template<const unsigned int LIMIT>
 struct MANGOS_DLL_DECL CoordPair

@@ -52,6 +52,7 @@ m_declinedname(NULL), m_petModeFlags(PET_MODE_DEFAULT)
         charmInfo->SetReactState(REACT_PASSIVE);
     else if(type == GUARDIAN_PET)                           // always aggressive
         charmInfo->SetReactState(REACT_AGGRESSIVE);
+    container_type = true;
 }
 
 Pet::~Pet()

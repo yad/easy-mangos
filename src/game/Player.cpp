@@ -305,7 +305,7 @@ bool SpellModifier::isAffectedOnSpell( SpellEntry const *spell ) const
 
 UpdateMask Player::updateVisualBits;
 
-Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputationMgr(this)
+Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputationMgr(this), GridPlayer(this)
 {
     m_transport = 0;
 
@@ -498,6 +498,8 @@ Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputa
 
     m_lastFallTime = 0;
     m_lastFallZ = 0;
+
+    container_type = true;
 }
 
 Player::~Player ()

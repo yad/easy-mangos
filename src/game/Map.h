@@ -417,6 +417,13 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
             i_objectsToClientUpdate.erase( obj );
         }
 
+        NGridType* getNGrid(uint32 x, uint32 y) const
+        {
+            ASSERT(x < MAX_NUMBER_OF_GRIDS);
+            ASSERT(y < MAX_NUMBER_OF_GRIDS);
+            return i_grids[x][y];
+        }
+
         // DynObjects currently
         uint32 GenerateLocalLowGuid(HighGuid guidhigh);
     private:
@@ -445,13 +452,6 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
 
         template<class T> void AddType(T *obj);
         template<class T> void RemoveType(T *obj, bool);
-
-        NGridType* getNGrid(uint32 x, uint32 y) const
-        {
-            ASSERT(x < MAX_NUMBER_OF_GRIDS);
-            ASSERT(y < MAX_NUMBER_OF_GRIDS);
-            return i_grids[x][y];
-        }
 
         bool isGridObjectDataLoaded(uint32 x, uint32 y) const { return getNGrid(x,y)->isGridObjectDataLoaded(); }
         void setGridObjectDataLoaded(bool pLoaded, uint32 x, uint32 y) { getNGrid(x,y)->setGridObjectDataLoaded(pLoaded); }

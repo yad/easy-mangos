@@ -25,7 +25,7 @@
 class Unit;
 struct SpellEntry;
 
-class DynamicObject : public WorldObject
+class DynamicObject : public WorldObject, public GridDynamicObject
 {
     public:
         typedef std::set<Unit*> AffectedSet;
@@ -59,17 +59,11 @@ class DynamicObject : public WorldObject
         void Whisper(int32 textId,uint64 receiver) { MonsterWhisper(textId,receiver); }
         void YellToZone(int32 textId, uint32 language, uint64 TargetGuid) { MonsterYellToZone(textId,language,TargetGuid); }
 
-        GridReference<DynamicObject> &GetGridRef() { return m_gridRef; }
-
-        bool isActiveObject() const { return m_isActiveObject; }
     protected:
         uint32 m_spellId;
         SpellEffectIndex m_effIndex;
         int32 m_aliveDuration;
         float m_radius;                                     // radius apply persistent effect, 0 = no persistent effect
         AffectedSet m_affected;
-    private:
-        GridReference<DynamicObject> m_gridRef;
-        bool m_isActiveObject;
 };
 #endif

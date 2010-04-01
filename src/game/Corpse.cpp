@@ -28,7 +28,7 @@
 #include "World.h"
 #include "ObjectMgr.h"
 
-Corpse::Corpse(CorpseType type) : WorldObject()
+Corpse::Corpse(CorpseType type) : WorldObject(), GridCorpse(this)
 {
     m_objectType |= TYPEMASK_CORPSE;
     m_objectTypeId = TYPEID_CORPSE;
@@ -42,6 +42,9 @@ Corpse::Corpse(CorpseType type) : WorldObject()
     m_time = time(NULL);
 
     lootForBody = false;
+
+    if (type != CORPSE_BONES)
+        container_type = true;
 }
 
 Corpse::~Corpse()
@@ -204,6 +207,9 @@ bool Corpse::LoadFromDB(uint32 guid, Field *fields)
         sLog.outError("Corpse (guidlow %d, owner %d) have wrong corpse type, not load.",GetGUIDLow(),GUID_LOPART(GetOwnerGUID()));
         return false;
     }
+
+    if(m_type != CORPSE_BONES)
+        container_type = true;
 
     uint32 instanceid  = fields[8].GetUInt32();
     uint32 phaseMask   = fields[9].GetUInt32();

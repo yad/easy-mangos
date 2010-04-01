@@ -232,87 +232,51 @@ void Map::InitVisibilityDistance()
 template<class T>
 void Map::AddToGrid(T* obj, NGridType *grid, Cell const& cell)
 {
-    (*grid)(cell.CellX(), cell.CellY()).template AddGridObject<T>(obj);
+    obj->SetGrid(&(*grid)(cell.CellX(), cell.CellY()));// SetGrid should call AddGridObject/RemoveGridObject functions
 }
 
 template<>
 void Map::AddToGrid(Player* obj, NGridType *grid, Cell const& cell)
 {
-    (*grid)(cell.CellX(), cell.CellY()).AddWorldObject(obj);
+    obj->SetGrid(&(*grid)(cell.CellX(), cell.CellY()));
 }
 
 template<>
 void Map::AddToGrid(Corpse *obj, NGridType *grid, Cell const& cell)
 {
-    // add to world object registry in grid
-    if(obj->GetType()!=CORPSE_BONES)
-    {
-        (*grid)(cell.CellX(), cell.CellY()).AddWorldObject(obj);
-    }
-    // add to grid object store
-    else
-    {
-        (*grid)(cell.CellX(), cell.CellY()).AddGridObject(obj);
-    }
+    obj->SetGrid(&(*grid)(cell.CellX(), cell.CellY()));
 }
 
 template<>
 void Map::AddToGrid(Creature* obj, NGridType *grid, Cell const& cell)
 {
-    // add to world object registry in grid
-    if(obj->isPet() || obj->isVehicle())
-    {
-        (*grid)(cell.CellX(), cell.CellY()).AddWorldObject<Creature>(obj);
-        obj->SetCurrentCell(cell);
-    }
-    // add to grid object store
-    else
-    {
-        (*grid)(cell.CellX(), cell.CellY()).AddGridObject<Creature>(obj);
-        obj->SetCurrentCell(cell);
-    }
+    obj->SetGrid(&(*grid)(cell.CellX(), cell.CellY()));
+
+    obj->SetCurrentCell(cell);
 }
 
 template<class T>
 void Map::RemoveFromGrid(T* obj, NGridType *grid, Cell const& cell)
 {
-    (*grid)(cell.CellX(), cell.CellY()).template RemoveGridObject<T>(obj);
+    obj->SetGrid(NULL);
 }
 
 template<>
 void Map::RemoveFromGrid(Player* obj, NGridType *grid, Cell const& cell)
 {
-    (*grid)(cell.CellX(), cell.CellY()).RemoveWorldObject(obj);
+    obj->SetGrid(NULL);
 }
 
 template<>
 void Map::RemoveFromGrid(Corpse *obj, NGridType *grid, Cell const& cell)
 {
-    // remove from world object registry in grid
-    if(obj->GetType()!=CORPSE_BONES)
-    {
-        (*grid)(cell.CellX(), cell.CellY()).RemoveWorldObject(obj);
-    }
-    // remove from grid object store
-    else
-    {
-        (*grid)(cell.CellX(), cell.CellY()).RemoveGridObject(obj);
-    }
+    obj->SetGrid(NULL);
 }
 
 template<>
 void Map::RemoveFromGrid(Creature* obj, NGridType *grid, Cell const& cell)
 {
-    // remove from world object registry in grid
-    if(obj->isPet() || obj->isVehicle())
-    {
-        (*grid)(cell.CellX(), cell.CellY()).RemoveWorldObject<Creature>(obj);
-    }
-    // remove from grid object store
-    else
-    {
-        (*grid)(cell.CellX(), cell.CellY()).RemoveGridObject<Creature>(obj);
-    }
+    obj->SetGrid(NULL);
 }
 
 template<class T>

@@ -27,7 +27,7 @@
 #include "GridNotifiersImpl.h"
 #include "SpellMgr.h"
 
-DynamicObject::DynamicObject() : WorldObject(), m_isActiveObject(false)
+DynamicObject::DynamicObject() : WorldObject(), GridDynamicObject(this)
 {
     m_objectType |= TYPEMASK_DYNAMICOBJECT;
     m_objectTypeId = TYPEID_DYNAMICOBJECT;

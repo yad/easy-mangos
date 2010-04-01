@@ -322,7 +322,7 @@ class MANGOS_DLL_SPEC Object
 
 struct WorldObjectChangeAccumulator;
 
-class MANGOS_DLL_SPEC WorldObject : public Object
+class MANGOS_DLL_SPEC WorldObject : public Object, public GridObject
 {
     friend struct WorldObjectChangeAccumulator;
 

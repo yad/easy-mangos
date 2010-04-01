@@ -38,7 +38,7 @@
 #include "Util.h"
 #include "ScriptCalls.h"
 
-GameObject::GameObject() : WorldObject()
+GameObject::GameObject() : WorldObject(), GridGameObject(this)
 {
     m_objectType |= TYPEMASK_GAMEOBJECT;
     m_objectTypeId = TYPEID_GAMEOBJECT;
