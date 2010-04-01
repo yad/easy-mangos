@@ -3050,6 +3050,10 @@ SpellMissInfo Unit::MagicSpellHitResult(Unit *pVictim, SpellEntry const *spell)
     // Increase hit chance from attacker SPELL_AURA_MOD_SPELL_HIT_CHANCE and attacker ratings
     HitChance += int32(m_modSpellHitChance*100.0f);
 
+    // Increase pet spell hit chance by additional master spell hit chance
+    if(GetOwner() && GetOwner()->GetTypeId() == TYPEID_PLAYER)
+        HitChance += int32(GetOwner()->m_modSpellHitChance*100.0f);
+
     // Decrease hit chance from victim rating bonus
     if (pVictim->GetTypeId()==TYPEID_PLAYER)
         HitChance -= int32(((Player*)pVictim)->GetRatingBonusValue(CR_HIT_TAKEN_SPELL)*100.0f);
@@ -3191,9 +3195,19 @@ float Unit::MeleeMissChanceCalc(const Unit *pVictim, WeaponAttackType attType) c
 
     // Bonuses from attacker aura and ratings
     if (attType == RANGED_ATTACK)
+    {
         missChance -= m_modRangedHitChance;
+        // Increase pet ranged hit chance by additional master ranged hit chance
+        if(GetOwner() && GetOwner()->GetTypeId() == TYPEID_PLAYER)
+            missChance -= GetOwner()->m_modRangedHitChance;
+    }
     else
+    {
         missChance -= m_modMeleeHitChance;
+        // Increase pet melee hit chance by additional master melee hit chance
+        if(GetOwner() && GetOwner()->GetTypeId() == TYPEID_PLAYER)
+            missChance -= GetOwner()->m_modMeleeHitChance;
+    }
 
     // Limit miss chance from 0 to 60%
     if ( missChance < 0.0f )
