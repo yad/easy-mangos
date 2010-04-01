@@ -22,9 +22,9 @@
 #include "BattleGround.h"
 
 #define BG_WS_MAX_TEAM_SCORE      3
-#define BG_WS_FLAG_RESPAWN_TIME   (23*IN_MILISECONDS)
-#define BG_WS_FLAG_DROP_TIME      (10*IN_MILISECONDS)
-#define BG_WS_TIME_LIMIT          (25*MINUTE*IN_MILISECONDS)
+#define BG_WS_FLAG_RESPAWN_TIME   (23*IN_MILLISECONDS)
+#define BG_WS_FLAG_DROP_TIME      (10*IN_MILLISECONDS)
+#define BG_WS_TIME_LIMIT          (25*MINUTE*IN_MILLISECONDS)
 
 enum BG_WS_Sound
 {
@@ -144,7 +144,7 @@ class BattleGroundWS : public BattleGround
         void SetTeamPoint(uint32 TeamID, uint32 Points = 0) { m_TeamScores[GetTeamIndexByTeamId(TeamID)] = Points; }
         void RemovePoint(uint32 TeamID, uint32 Points = 1)  { m_TeamScores[GetTeamIndexByTeamId(TeamID)] -= Points; }
 
-        uint32 GetEndTimeMinutes() { return ceil(float(m_EndTimer / MINUTE / IN_MILISECONDS)); }
+        uint32 GetEndTimeMinutes() { return ceil(float(m_EndTimer / MINUTE / IN_MILLISECONDS)); }
     private:
         uint64 m_FlagKeepers[BG_TEAMS_COUNT];
 
