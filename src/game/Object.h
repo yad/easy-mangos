@@ -25,6 +25,7 @@
 #include "UpdateData.h"
 #include "GameSystem/GridReference.h"
 #include "ObjectGuid.h"
+#include "Camera.h"
 
 #include <set>
 #include <string>
