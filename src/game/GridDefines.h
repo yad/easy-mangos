@@ -81,6 +81,13 @@ typedef GridObject::Type<DynamicObject>   GridDynamicObject;
 typedef GridObject::Type<GameObject>      GridGameObject;
 typedef GridObject::Type<Player>          GridPlayer;
 
+template<typename VISITOR>
+struct GridTypeVisitor
+{
+    typedef TypeContainerVisitor<VISITOR,WorldTypeMapContainer,GenericMapVisitorType > World;
+    typedef TypeContainerVisitor<VISITOR,GridTypeMapContainer,GenericMapVisitorType > Grid;
+};
+
 template<const unsigned int LIMIT>
 struct MANGOS_DLL_DECL CoordPair
 {

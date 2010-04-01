@@ -496,10 +496,8 @@ void Map::Update(const uint32 &t_diff)
     resetMarkedCells();
 
     MaNGOS::ObjectUpdater updater(t_diff);
-    // for creature
-    TypeContainerVisitor<MaNGOS::ObjectUpdater, GridTypeMapContainer  > grid_object_update(updater);
-    // for pets
-    TypeContainerVisitor<MaNGOS::ObjectUpdater, WorldTypeMapContainer > world_object_update(updater);
+    GridTypeVisitor<MaNGOS::ObjectUpdater>::Grid grid_object_update(updater);
+    GridTypeVisitor<MaNGOS::ObjectUpdater>::World world_object_update(updater);
 
     // the player iterator is stored in the map object
     // to make sure calls to Map::Remove don't invalidate it
@@ -1954,7 +1952,7 @@ void Map::UpdateObjectVisibility( WorldObject* obj, Cell cell, CellPair cellpair
     cell.data.Part.reserved = ALL_DISTRICT;
     cell.SetNoCreate();
     MaNGOS::VisibleChangesNotifier notifier(*obj);
-    TypeContainerVisitor<MaNGOS::VisibleChangesNotifier, WorldTypeMapContainer > player_notifier(notifier);
+    GridTypeVisitor<MaNGOS::VisibleChangesNotifier>::World player_notifier(notifier);
     cell.Visit(cellpair, player_notifier, *this, *obj, GetVisibilityDistance());
 }
 
@@ -1963,7 +1961,7 @@ void Map::UpdatePlayerVisibility( Player* player, Cell cell, CellPair cellpair )
     cell.data.Part.reserved = ALL_DISTRICT;
 
     MaNGOS::PlayerNotifier pl_notifier(*player);
-    TypeContainerVisitor<MaNGOS::PlayerNotifier, WorldTypeMapContainer > player_notifier(pl_notifier);
+    GridTypeVisitor<MaNGOS::PlayerNotifier>::World player_notifier(pl_notifier);
 
     cell.Visit(cellpair, player_notifier, *this, *player, GetVisibilityDistance());
 }
@@ -1974,8 +1972,8 @@ void Map::UpdateObjectsVisibilityFor( Player* player, Cell cell, CellPair cellpa
 
     cell.data.Part.reserved = ALL_DISTRICT;
     cell.SetNoCreate();
-    TypeContainerVisitor<MaNGOS::VisibleNotifier, WorldTypeMapContainer > world_notifier(notifier);
-    TypeContainerVisitor<MaNGOS::VisibleNotifier, GridTypeMapContainer  > grid_notifier(notifier);
+    GridTypeVisitor<MaNGOS::VisibleNotifier>::World world_notifier(notifier);
+    GridTypeVisitor<MaNGOS::VisibleNotifier>::Grid grid_notifier(notifier);
     cell.Visit(cellpair, world_notifier, *this, *player, GetVisibilityDistance());
     cell.Visit(cellpair, grid_notifier,  *this, *player, GetVisibilityDistance());
 
@@ -1988,8 +1986,8 @@ void Map::PlayerRelocationNotify( Player* player, Cell cell, CellPair cellpair )
     MaNGOS::PlayerRelocationNotifier relocationNotifier(*player);
     cell.data.Part.reserved = ALL_DISTRICT;
 
-    TypeContainerVisitor<MaNGOS::PlayerRelocationNotifier, GridTypeMapContainer >  p2grid_relocation(relocationNotifier);
-    TypeContainerVisitor<MaNGOS::PlayerRelocationNotifier, WorldTypeMapContainer > p2world_relocation(relocationNotifier);
+    GridTypeVisitor<MaNGOS::PlayerRelocationNotifier >::Grid  p2grid_relocation(relocationNotifier);
+    GridTypeVisitor<MaNGOS::PlayerRelocationNotifier >::World p2world_relocation(relocationNotifier);
 
     float radius = MAX_CREATURE_ATTACK_RADIUS * sWorld.getConfig(CONFIG_FLOAT_RATE_CREATURE_AGGRO);
 

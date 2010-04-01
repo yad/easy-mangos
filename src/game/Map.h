@@ -250,7 +250,7 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
         void PlayerRelocation(Player *, float x, float y, float z, float angl);
         void CreatureRelocation(Creature *creature, float x, float y, float z, float orientation);
 
-        template<class T, class CONTAINER> void Visit(const Cell& cell, TypeContainerVisitor<T, CONTAINER> &visitor);
+        template<class T, class CONTAINER, class V> void Visit(const Cell& cell, TypeContainerVisitor<T, CONTAINER, V> &visitor);
 
         bool IsRemovalGrid(float x, float y) const
         {
@@ -599,9 +599,9 @@ Map::CalculateGridMask(const uint32 &y) const
 }
 */
 
-template<class T, class CONTAINER>
+template<class T, class CONTAINER, class V>
 inline void
-Map::Visit(const Cell& cell, TypeContainerVisitor<T, CONTAINER> &visitor)
+Map::Visit(const Cell& cell, TypeContainerVisitor<T, CONTAINER, V> &visitor)
 {
     const uint32 x = cell.GridX();
     const uint32 y = cell.GridY();

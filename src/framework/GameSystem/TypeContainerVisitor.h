@@ -29,7 +29,11 @@
 #include "TypeContainer.h"
 
 // forward declaration
-template<class T, class Y> class TypeContainerVisitor;
+template<class T, class Y, class O> class TypeContainerVisitor;
+
+class GenericMapVisitorType;
+
+template<class T, class V> class VisitorType;
 
 // visitor helper
 template<class VISITOR, class TYPE_CONTAINER> void VisitorHelper(VISITOR &v, TYPE_CONTAINER &c)
@@ -38,17 +42,17 @@ template<class VISITOR, class TYPE_CONTAINER> void VisitorHelper(VISITOR &v, TYP
 };
 
 // terminate condition container map list
-template<class VISITOR> void VisitorHelper(VISITOR &/*v*/, ContainerMapList<TypeNull> &/*c*/)
+template<class TYPE, class VISITOR> void VisitorHelper(VisitorType<TYPE,VISITOR> &/*v*/, ContainerMapList<TypeNull> &/*c*/)
 {
 }
 
-template<class VISITOR, class T> void VisitorHelper(VISITOR &v, ContainerMapList<T> &c)
+template<class TYPE, class VISITOR, class T> void VisitorHelper(VisitorType<TYPE,VISITOR> &v, ContainerMapList<T> &c)
 {
-    v.Visit(c._element);
+    v.GetReal().Visit(c._element);
 }
 
 // recursion container map list
-template<class VISITOR, class H, class T> void VisitorHelper(VISITOR &v, ContainerMapList<TypeList<H, T> > &c)
+template<class TYPE, class VISITOR, class H, class T> void VisitorHelper(VisitorType<TYPE,VISITOR> &v, ContainerMapList<TypeList<H, T> > &c)
 {
     VisitorHelper(v, c._elements);
     VisitorHelper(v, c._TailElements);
@@ -60,23 +64,37 @@ template<class VISITOR, class OBJECT_TYPES> void VisitorHelper(VISITOR &v, TypeM
     VisitorHelper(v, c.GetElements());
 }
 
-template<class VISITOR, class TYPE_CONTAINER>
-class MANGOS_DLL_DECL TypeContainerVisitor
+template<typename TYPE, typename VISITOR> class VisitorType
 {
     public:
-        TypeContainerVisitor(VISITOR &v) : i_visitor(v) {}
+        VisitorType(VISITOR& v) : i_visitor(v) {}
 
-        void Visit(TYPE_CONTAINER &c)
-        {
-            VisitorHelper(i_visitor, c);
-        }
-
-        void Visit(const TYPE_CONTAINER &c) const
-        {
-            VisitorHelper(i_visitor, c);
-        }
+        VISITOR& GetReal()  { return i_visitor; }
+        const VISITOR& GetReal() const { return i_visitor; }
 
     private:
         VISITOR &i_visitor;
 };
+
+template<typename VISITOR, typename TYPE_CONTAINER, typename VISITOR_TYPE >
+class MANGOS_DLL_DECL TypeContainerVisitor
+{
+    public:
+        TypeContainerVisitor(VISITOR &v) : type_visitor(v) {}
+
+        void Visit(TYPE_CONTAINER &c)
+        {
+            VisitorHelper(type_visitor, c);
+        }
+
+        void Visit(const TYPE_CONTAINER &c) const
+        {
+            VisitorHelper(type_visitor, c);
+        }
+
+    private:
+        VisitorType<VISITOR_TYPE, VISITOR> type_visitor;
+};
+
+
 #endif

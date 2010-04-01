@@ -40,7 +40,7 @@ class MANGOS_DLL_DECL ObjectGridRespawnMover
 void
 ObjectGridRespawnMover::Move(GridType &grid)
 {
-    TypeContainerVisitor<ObjectGridRespawnMover, GridTypeMapContainer > mover(*this);
+    GridTypeVisitor<ObjectGridRespawnMover>::Grid mover(*this);
     grid.Visit(mover);
 }
 
@@ -216,13 +216,13 @@ void
 ObjectGridLoader::Load(GridType &grid)
 {
     {
-        TypeContainerVisitor<ObjectGridLoader, GridTypeMapContainer > loader(*this);
+        GridTypeVisitor<ObjectGridLoader>::Grid loader(*this);
         grid.Visit(loader);
     }
 
     {
         ObjectWorldLoader wloader(*this);
-        TypeContainerVisitor<ObjectWorldLoader, WorldTypeMapContainer > loader(wloader);
+        GridTypeVisitor<ObjectWorldLoader>::World loader(wloader);
         grid.Visit(loader);
         i_corpses = wloader.i_corpses;
     }
@@ -260,7 +260,7 @@ void ObjectGridUnloader::MoveToRespawnN()
 void
 ObjectGridUnloader::Unload(GridType &grid)
 {
-    TypeContainerVisitor<ObjectGridUnloader, GridTypeMapContainer > unloader(*this);
+    GridTypeVisitor<ObjectGridUnloader>::Grid unloader(*this);
     grid.Visit(unloader);
 }
 
@@ -288,7 +288,7 @@ ObjectGridUnloader::Visit(GridRefManager<T> &m)
 void
 ObjectGridStoper::Stop(GridType &grid)
 {
-    TypeContainerVisitor<ObjectGridStoper, GridTypeMapContainer > stoper(*this);
+    GridTypeVisitor<ObjectGridStoper>::Grid stoper(*this);
     grid.Visit(stoper);
 }
 

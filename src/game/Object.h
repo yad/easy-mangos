@@ -511,7 +511,7 @@ inline void WorldObject::VisitGrid(T &vistor, float range, bool dont_load)
     Cell cell(p);
     if (dont_load)
         cell.SetNoCreate();
-    TypeContainerVisitor<T, GridTypeMapContainer > gnotifier(vistor);
+    GridTypeVisitor<T>::Grid gnotifier(vistor);
     cell.Visit(p, gnotifier, *GetMap(), *this, range);
 }
 
@@ -522,7 +522,7 @@ inline void WorldObject::VisitWorld(T &vistor, float range, bool dont_load)
     Cell cell(p);
     if (dont_load)
         cell.SetNoCreate();
-    TypeContainerVisitor<T, WorldTypeMapContainer > wnotifier(vistor);
+    GridTypeVisitor<T>::World wnotifier(vistor);
     cell.Visit(p, wnotifier, *GetMap(), *this, range);
 }
 
@@ -533,8 +533,8 @@ inline void WorldObject::VisitAll(T &vistor, float range, bool dont_load)
     Cell cell(p);
     if (dont_load)
         cell.SetNoCreate();
-    TypeContainerVisitor<T, GridTypeMapContainer > gnotifier(vistor);
-    TypeContainerVisitor<T, WorldTypeMapContainer > wnotifier(vistor);
+    GridTypeVisitor<T>::Grid gnotifier(vistor);
+    GridTypeVisitor<T>::World wnotifier(vistor);
     cell.Visit(p, gnotifier, *GetMap(), *this, range);
     cell.Visit(p, wnotifier, *GetMap(), *this, range);
 }
