@@ -22,12 +22,13 @@
 #include <map>
 #include "Platform/Define.h"
 #include "Utilities/UnorderedMap.h"
-#include "AABSPTree.h"
+#include "BIH.h"
 
 namespace VMAP
 {
     class TreeNode;
     class ModelInstance;
+    class ModelSpawn;
     class VMapManager2;
 
     class StaticMapTree
@@ -37,9 +38,10 @@ namespace VMAP
         private:
             uint32 iMapID;
             bool iIsTiled;
-            TreeNode *iTree; // the KD-tree
-            uint32 iNNodes;
-            ModelInstance *iTreeValues; // the KD-tree entries
+            //TreeNode *iTree; // the KD-tree
+            //uint32 iNNodes;
+            BIH iTree;
+            ModelInstance *iTreeValues; // the tree entries
             uint32 iNTreeValues;
             // add UniqueEntryMap define?
             //std::map<uint32, ModelSpawn> mapSpawns;

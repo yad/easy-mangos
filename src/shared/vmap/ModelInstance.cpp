@@ -32,7 +32,11 @@ namespace VMAP
 
     void ModelInstance::intersect(const G3D::Ray& pRay, float& pMaxDist, bool pStopAtFirstHit) const
     {
-        if (!iModel) return;
+        if (!iModel)
+        {
+            std::cout << "<object not loaded>\n";
+            return;
+        }
         float time = pRay.intersectionTime(iBound);
         if (time == G3D::inf())
         {
@@ -40,8 +44,8 @@ namespace VMAP
 
             return;
         }
-/*         std::cout << "Ray crosses bound of '" << name << "'\n";
-        std::cout << "ray from:" << pRay.origin().x << ", " << pRay.origin().y << ", " << pRay.origin().z
+//        std::cout << "Ray crosses bound of '" << name << "'\n";
+/*        std::cout << "ray from:" << pRay.origin().x << ", " << pRay.origin().y << ", " << pRay.origin().z
                   << " dir:" << pRay.direction().x << ", " << pRay.direction().y << ", " << pRay.direction().z
                   << " t/tmax:" << time << "/" << pMaxDist;
         std::cout << "\nBound lo:" << iBound.low().x << ", " << iBound.low().y << ", " << iBound.low().z << " hi: "

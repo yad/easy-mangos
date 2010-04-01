@@ -28,7 +28,7 @@ using G3D::Vector3;
 
 namespace VMAP
 {
-    class MapRayCallback {
+    /* class MapRayCallback {
         public:
             G3D::Vector3 hitLocation;
             G3D::Vector3 hitNormal;
@@ -37,6 +37,28 @@ namespace VMAP
             entity->intersect(ray, distance, pStopAtFirstHit);
             //std::cout << "trying to intersect '" << entity->name << "'\n";
         }
+    }; */
+    class MapRayCallback
+    {
+        public:
+            MapRayCallback(ModelInstance *val): prims(val) {}
+            ModelInstance *prims;
+            void operator()(const G3D::Ray& ray, uint32 entry, float& distance, bool pStopAtFirstHit=true)
+            {
+                prims[entry].intersect(ray, distance, pStopAtFirstHit);
+                //std::cout << "trying to intersect '" << entity->name << "'\n";
+            }
+    };
+
+    class MapPointCallback {
+        public:
+            MapPointCallback(ModelInstance *val): prims(val) {}
+            ModelInstance *prims;
+            void operator()(const Vector3& point, uint32 entry)
+            {
+                //prims[entry].intersect(point, distance, pStopAtFirstHit);
+                std::cout << "trying to intersect '" << prims[entry].name << "'\n";
+            }
     };
 
     //=========================================================
@@ -53,6 +75,10 @@ namespace VMAP
 
     bool StaticMapTree::getAreaInfo(Vector3 pos, unsigned int &areaID, unsigned int &flags)
     {
+        std::cout << "StaticMapTree::getAreaInfo()\n";
+        MapPointCallback intersectionCallBack(iTreeValues);
+        iTree.intersectPoint(pos, intersectionCallBack);
+
         /* AABox pbox(pos, pos);
         Array<ModelContainer *> mcArray;
         Array<GroupModelBound*> bounds;
@@ -85,7 +111,7 @@ namespace VMAP
     }
 
     StaticMapTree::StaticMapTree(uint32 mapID, const std::string &basePath):
-        iMapID(mapID), iTree(0), iTreeValues(0), iBasePath(basePath)
+        iMapID(mapID), /* iTree(0), */ iTreeValues(0), iBasePath(basePath)
     {
         if(iBasePath.length() > 0 && (iBasePath[iBasePath.length()-1] != '/' || iBasePath[iBasePath.length()-1] != '\\'))
         {
@@ -127,25 +153,9 @@ namespace VMAP
     float StaticMapTree::getIntersectionTime(const G3D::Ray& pRay, float pMaxDist, bool pStopAtFirstHit)
     {
         float distance = pMaxDist;
-        MapRayCallback intersectionCallBack;
-        NodeValueAccess<TreeNode, ModelInstance> vna(iTree, iTreeValues);
-        iTree->intersectRay(pRay, intersectionCallBack, distance, vna, pStopAtFirstHit, true);
-        /* IntersectionCallBack<ModelContainer> intersectionCallBack;
-        float t = pMaxDist;
-        iTree->intersectRay(pRay, intersectionCallBack, t, pStopAtFirstHit, false);
-#ifdef _DEBUG_VMAPS
-        {
-            if(t < pMaxDist)
-            {
-                myfound = true;
-                p4 = pRay.origin + pRay.direction*t;
-            }
-        }
-#endif
-        if(t > 0 && t < inf() && pMaxDist > t)
-        {
-            firstDistance = t;
-        } */
+        MapRayCallback intersectionCallBack(iTreeValues);
+        //NodeValueAccess<TreeNode, ModelInstance> vna(iTree, iTreeValues);
+        iTree.intersect(pRay, intersectionCallBack, distance/* , pStopAtFirstHit */);
         return distance;
     }
     //=========================================================
@@ -239,7 +249,7 @@ namespace VMAP
             iIsTiled = (bool(tiled));
             // Nodes
             if (success && fread(chunk, 4, 1, rf) != 1) success = false;
-            uint32 size;
+            /* uint32 size;
             if (success && fread(&size, 4, 1, rf) != 1) success = false;
             if (success && fread(&iNNodes, sizeof(uint32), 1, rf) != 1) success = false;
             if (success) iTree = new TreeNode[iNNodes];
@@ -249,7 +259,13 @@ namespace VMAP
             if (success) iTreeValues = new ModelInstance[iNTreeValues];
             // __debug__
             if (success) std::cout<< "Allocated " << iNTreeValues << " node values.\n";
-            else std::cout << "error reading node value count!\n";
+            else std::cout << "error reading node value count!\n"; */
+            if (success) success = iTree.readFromFile(rf);
+            if (success)
+            {
+                iNTreeValues = iTree.primCount();
+                iTreeValues = new ModelInstance[iNTreeValues];
+            }
 
             if (success && fread(chunk, 4, 1, rf) != 1) success = false;
             chunk[4] = 0;
@@ -292,7 +308,7 @@ namespace VMAP
         if (!iIsTiled)
             return true;
         // __debug__
-        if(!iTree || !iTreeValues) std::cout << "Tree has not been initialized!\n";
+        if(/* !iTree || */ !iTreeValues) std::cout << "Tree has not been initialized!\n";
         bool result = true;
         // if (isTiled)...
         std::string tilefile = iBasePath + getTileFileName(iMapID, tileX, tileY);

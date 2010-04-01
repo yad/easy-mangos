@@ -51,13 +51,13 @@ namespace VMAP
             bool operator==(const ModelSpawn &other) { return ID == other.ID; }
             uint32 hashCode() const { return ID; }
             // temp?
-            const G3D::AABox& getAABoxBounds() const { return iBound; }
+            const G3D::AABox& getBounds() const { return iBound; }
 
-            
+
             static bool readFromFile(FILE *rf, ModelSpawn &spawn);
             static bool writeToFile(FILE *rw, const ModelSpawn &spawn);
     };
-    
+
     class ModelInstance: public ModelSpawn
     {
         public:
