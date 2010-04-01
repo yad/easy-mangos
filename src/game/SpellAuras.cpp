@@ -3534,7 +3534,11 @@ void Aura::HandleFarSight(bool apply, bool /*Real*/)
     if(!caster || caster->GetTypeId() != TYPEID_PLAYER)
         return;
 
-    ((Player*)caster)->SetFarSightGUID(apply ? m_target->GetGUID() : 0);
+    Camera* camera = ((Player*)caster)->GetCamera();
+    if (apply)
+        camera->SetView(m_target);
+    else
+        camera->ResetView();
 }
 
 void Aura::HandleAuraTrackCreatures(bool apply, bool /*Real*/)
@@ -3587,7 +3591,7 @@ void Aura::HandleModPossess(bool apply, bool Real)
         return;
 
     Player* p_caster = (Player*)caster;
-
+    Camera* camera = p_caster->GetCamera();
 
     if( apply )
     {
@@ -3598,7 +3602,7 @@ void Aura::HandleModPossess(bool apply, bool Real)
 
         p_caster->SetCharm(m_target);
 
-        p_caster->SetFarSightGUID(m_target->GetGUID());
+        camera->SetView(m_target);
         p_caster->SetClientControl(m_target, 1);
         p_caster->SetMover(m_target);
 
@@ -3641,7 +3645,7 @@ void Aura::HandleModPossess(bool apply, bool Real)
 
         p_caster->SetCharm(NULL);
 
-        p_caster->SetFarSightGUID(0);
+        camera->ResetView();
         p_caster->SetClientControl(m_target, 0);
         p_caster->SetMover(NULL);
 
@@ -3671,13 +3675,13 @@ void Aura::HandleModPossessPet(bool apply, bool Real)
         return;
 
     Player* p_caster = (Player*)caster;
+    Camera* camera = p_caster->GetCamera();
 
     if(apply)
         pet->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PLAYER_CONTROLLED);
     else
         pet->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PLAYER_CONTROLLED);
 
-    p_caster->SetFarSightGUID(apply ? pet->GetGUID() : 0);
     p_caster->SetCharm(apply ? pet : NULL);
     p_caster->SetClientControl(pet, apply ? 1 : 0);
     ((Player*)caster)->SetMover(apply ? pet : NULL);
@@ -3687,12 +3691,14 @@ void Aura::HandleModPossessPet(bool apply, bool Real)
         pet->StopMoving();
         pet->GetMotionMaster()->Clear();
         pet->GetMotionMaster()->MoveIdle();
+        camera->SetView(pet);
     }
     else
     {
         pet->AttackStop();
         pet->GetMotionMaster()->MoveFollow(caster, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE);
         pet->AddSplineFlag(SPLINEFLAG_WALKMODE);
+        camera->ResetView();
     }
 }
 
