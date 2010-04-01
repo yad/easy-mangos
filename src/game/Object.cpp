@@ -1575,6 +1575,40 @@ void WorldObject::SendMessageToSet(WorldPacket *data, bool /*bToSelf*/)
         _map->MessageBroadcast(this, data);
 }
 
+struct ObjectMessageDeliverer2
+{
+    uint32 i_phaseMask;
+    WorldPacket *i_message;
+    Player const* skipped_receiver;
+    explicit ObjectMessageDeliverer2(WorldObject const* obj, WorldPacket *msg, Player const* skipped)
+        : i_phaseMask(obj->GetPhaseMask()), i_message(msg), skipped_receiver(skipped) {}
+
+    void Visit(CameraMapType &m)
+    {
+        for(CameraMapType::iterator it = m.begin(); it!= m.end(); ++it)
+        {
+            Camera* c = it->getSource();
+            if(!c->getBody()->InSamePhase(i_phaseMask) || c->getOwner() == skipped_receiver)
+                continue;
+
+            if (WorldSession* session = c->getOwner()->GetSession())
+                session->SendPacket(i_message);
+        }
+    }
+    template<class SKIP> void Visit(GridRefManager<SKIP> &) {}
+};
+
+void WorldObject::SendMessageToSet(WorldPacket *data, Player const* skipped_receiver)
+{
+    //if object is in world, map for it already created!
+    Map * _map = IsInWorld() ? GetMap() : sMapMgr.FindMap(GetMapId(), GetInstanceId());
+    if(_map)
+    {
+        ObjectMessageDeliverer2 notifier(this, data, skipped_receiver);
+        VisitCameras(notifier, _map->GetVisibilityDistance());
+    }
+}
+
 void WorldObject::SendMessageToSetInRange(WorldPacket *data, float dist, bool /*bToSelf*/)
 {
     //if object is in world, map for it already created!

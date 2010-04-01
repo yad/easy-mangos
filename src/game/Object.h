@@ -427,6 +427,7 @@ class MANGOS_DLL_SPEC WorldObject : public Object, public GridObject
 
         virtual void CleanupsBeforeDelete();                // used in destructor or explicitly before mass creature delete to remove cross-references to already deleted units
 
+        void SendMessageToSet(WorldPacket *data, Player const* skipped_receiver);
         virtual void SendMessageToSet(WorldPacket *data, bool self);
         virtual void SendMessageToSetInRange(WorldPacket *data, float dist, bool self);
 
