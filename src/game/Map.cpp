@@ -453,7 +453,7 @@ Map::Add(T *obj)
 void Map::MessageBroadcast(Player *player, WorldPacket *msg, bool to_self)
 {
     MaNGOS::MessageDeliverer post_man(*player, msg, to_self);
-    player->VisitWorld(post_man, GetVisibilityDistance());
+    player->VisitCameras(post_man, GetVisibilityDistance());
 }
 
 void Map::MessageBroadcast(WorldObject *obj, WorldPacket *msg)
@@ -461,19 +461,19 @@ void Map::MessageBroadcast(WorldObject *obj, WorldPacket *msg)
     //TODO: currently on continents when Visibility.Distance.InFlight > Visibility.Distance.Continents
     //we have alot of blinking mobs because monster move packet send is broken...
     MaNGOS::ObjectMessageDeliverer post_man(*obj,msg);
-    obj->VisitWorld(post_man, GetVisibilityDistance());
+    obj->VisitCameras(post_man, GetVisibilityDistance());
 }
 
 void Map::MessageDistBroadcast(Player *player, WorldPacket *msg, float dist, bool to_self, bool own_team_only)
 {
     MaNGOS::MessageDistDeliverer post_man(*player, msg, dist, to_self, own_team_only);
-    player->VisitWorld(post_man, GetVisibilityDistance());
+    player->VisitCameras(post_man, GetVisibilityDistance());
 }
 
 void Map::MessageDistBroadcast(WorldObject *obj, WorldPacket *msg, float dist)
 {
     MaNGOS::ObjectMessageDistDeliverer post_man(*obj, msg, dist);
-    obj->VisitGrid(post_man, GetVisibilityDistance());
+    obj->VisitCameras(post_man, GetVisibilityDistance());
 }
 
 bool Map::loaded(const GridPair &p) const
@@ -1957,7 +1957,7 @@ void Map::UpdateObjectVisibility( WorldObject* obj, Cell cell, CellPair cellpair
     cell.data.Part.reserved = ALL_DISTRICT;
     cell.SetNoCreate();
     MaNGOS::VisibleChangesNotifier notifier(*obj);
-    GridTypeVisitor<MaNGOS::VisibleChangesNotifier>::World player_notifier(notifier);
+    GridTypeVisitor<MaNGOS::VisibleChangesNotifier>::Camera player_notifier(notifier);
     cell.Visit(cellpair, player_notifier, *this, *obj, GetVisibilityDistance());
 }
 

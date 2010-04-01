@@ -32,11 +32,9 @@ template<class T>
 inline void
 MaNGOS::VisibleNotifier::Visit(GridRefManager<T> &m)
 {
-    WorldObject const* viewPoint = i_player.GetViewPoint();
-
     for(typename GridRefManager<T>::iterator iter = m.begin(); iter != m.end(); ++iter)
     {
-        i_player.UpdateVisibilityOf(viewPoint,iter->getSource(),i_data,i_data_updates,i_visibleNow);
+        camera.UpdateVisibilityOf(iter->getSource(),i_data,i_visibleNow);
         i_clientGUIDs.erase(iter->getSource()->GetGUID());
     }
 }

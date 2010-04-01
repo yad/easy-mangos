@@ -1496,19 +1496,18 @@ void WorldObject::MonsterSay(int32 textId, uint32 language, uint64 TargetGuid)
 {
     MaNGOS::MonsterChatBuilder say_build(*this, CHAT_MSG_MONSTER_SAY, textId,language,TargetGuid);
     MaNGOS::LocalizedPacketDo<MaNGOS::MonsterChatBuilder> say_do(say_build);
-    MaNGOS::PlayerDistWorker<MaNGOS::LocalizedPacketDo<MaNGOS::MonsterChatBuilder> > say_worker(this,sWorld.getConfig(CONFIG_FLOAT_LISTEN_RANGE_SAY),say_do);
-    VisitWorld(say_worker, sWorld.getConfig(CONFIG_FLOAT_LISTEN_RANGE_SAY));
+    MaNGOS::CameraDistWorker<MaNGOS::LocalizedPacketDo<MaNGOS::MonsterChatBuilder> > say_worker(this,sWorld.getConfig(CONFIG_FLOAT_LISTEN_RANGE_SAY),say_do);
+    VisitCameras(say_worker, sWorld.getConfig(CONFIG_FLOAT_LISTEN_RANGE_SAY));
 }
 
 void WorldObject::MonsterYell(int32 textId, uint32 language, uint64 TargetGuid)
 {
-
     float range = sWorld.getConfig(CONFIG_FLOAT_LISTEN_RANGE_YELL);
 
     MaNGOS::MonsterChatBuilder say_build(*this, CHAT_MSG_MONSTER_YELL, textId,language,TargetGuid);
     MaNGOS::LocalizedPacketDo<MaNGOS::MonsterChatBuilder> say_do(say_build);
-    MaNGOS::PlayerDistWorker<MaNGOS::LocalizedPacketDo<MaNGOS::MonsterChatBuilder> > say_worker(this,range,say_do);
-    VisitWorld(say_worker, sWorld.getConfig(CONFIG_FLOAT_LISTEN_RANGE_YELL));
+    MaNGOS::CameraDistWorker<MaNGOS::LocalizedPacketDo<MaNGOS::MonsterChatBuilder> > say_worker(this,range,say_do);
+    VisitCameras(say_worker, sWorld.getConfig(CONFIG_FLOAT_LISTEN_RANGE_YELL));
 }
 
 void WorldObject::MonsterYellToZone(int32 textId, uint32 language, uint64 TargetGuid)
@@ -1530,8 +1529,8 @@ void WorldObject::MonsterTextEmote(int32 textId, uint64 TargetGuid, bool IsBossE
 
     MaNGOS::MonsterChatBuilder say_build(*this, IsBossEmote ? CHAT_MSG_RAID_BOSS_EMOTE : CHAT_MSG_MONSTER_EMOTE, textId,LANG_UNIVERSAL,TargetGuid);
     MaNGOS::LocalizedPacketDo<MaNGOS::MonsterChatBuilder> say_do(say_build);
-    MaNGOS::PlayerDistWorker<MaNGOS::LocalizedPacketDo<MaNGOS::MonsterChatBuilder> > say_worker(this,range,say_do);
-    VisitWorld(say_worker,  sWorld.getConfig(IsBossEmote ? CONFIG_FLOAT_LISTEN_RANGE_YELL : CONFIG_FLOAT_LISTEN_RANGE_TEXTEMOTE));
+    MaNGOS::CameraDistWorker<MaNGOS::LocalizedPacketDo<MaNGOS::MonsterChatBuilder> > say_worker(this,range,say_do);
+    VisitCameras(say_worker,  sWorld.getConfig(IsBossEmote ? CONFIG_FLOAT_LISTEN_RANGE_YELL : CONFIG_FLOAT_LISTEN_RANGE_TEXTEMOTE));
 }
 
 void WorldObject::MonsterWhisper(int32 textId, uint64 receiver, bool IsBossWhisper)
@@ -1905,11 +1904,11 @@ struct WorldObjectChangeAccumulator
     UpdateDataMapType &i_updateDatas;
     WorldObject &i_object;
     WorldObjectChangeAccumulator(WorldObject &obj, UpdateDataMapType &d) : i_updateDatas(d), i_object(obj) {}
-    void Visit(PlayerMapType &m)
+    void Visit(CameraMapType &m)
     {
-        for(PlayerMapType::iterator iter = m.begin(); iter != m.end(); ++iter)
-            if(iter->getSource()->HaveAtClient(&i_object))
-                i_object.BuildUpdateDataForPlayer(iter->getSource(), i_updateDatas);
+        for(CameraMapType::iterator iter = m.begin(); iter != m.end(); ++iter)
+            if(iter->getSource()->getOwner()->HaveAtClient(&i_object))
+                i_object.BuildUpdateDataForPlayer(iter->getSource()->getOwner(), i_updateDatas);
     }
 
     template<class SKIP> void Visit(GridRefManager<SKIP> &) {}
@@ -1918,7 +1917,7 @@ struct WorldObjectChangeAccumulator
 void WorldObject::BuildUpdateData( UpdateDataMapType & update_players)
 {
     WorldObjectChangeAccumulator notifier(*this, update_players);
-    VisitWorld(notifier, GetMap()->GetVisibilityDistance());
+    VisitCameras(notifier, GetMap()->GetVisibilityDistance());
 
     ClearUpdateMask(false);
 }
