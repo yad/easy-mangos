@@ -32,6 +32,7 @@
 template<class T, class Y, class O> class TypeContainerVisitor;
 
 class GenericMapVisitorType;
+class CameraMapVisitorType;
 
 template<class T, class V> class VisitorType;
 
@@ -40,6 +41,18 @@ template<class VISITOR, class TYPE_CONTAINER> void VisitorHelper(VISITOR &v, TYP
 {
     v.Visit(c);
 };
+
+// skip non-specialized visits
+class Camera;
+template<class TYPE, class VISITOR>inline void VisitorHelper(VisitorType<TYPE,VISITOR> &/*v*/, ContainerMapList<Camera> &/*c*/)
+{
+}
+
+//allow visit only for CameraMapVisitorType visitors
+template<class VISITOR>inline void VisitorHelper(VisitorType<CameraMapVisitorType,VISITOR> &v, ContainerMapList<Camera> &c)
+{
+    v.GetReal().Visit(c._element);
+}
 
 // terminate condition container map list
 template<class TYPE, class VISITOR> void VisitorHelper(VisitorType<TYPE,VISITOR> &/*v*/, ContainerMapList<TypeNull> &/*c*/)

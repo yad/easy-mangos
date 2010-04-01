@@ -471,6 +471,7 @@ class MANGOS_DLL_SPEC WorldObject : public Object, public GridObject
         template<class T> void VisitGrid(T &vistor, float range, bool dont_load = true);
         template<class T> void VisitWorld(T &vistor, float range, bool dont_load = true);
         template<class T> void VisitAll(T &vistor, float range, bool dont_load = true);
+        template<class T> void VisitCameras(T &vistor, float range, bool dont_load = true);
 
         //this function should be removed in nearest time...
         Map const* GetBaseMap() const;
@@ -541,5 +542,17 @@ inline void WorldObject::VisitAll(T &vistor, float range, bool dont_load)
     cell.Visit(p, gnotifier, *GetMap(), *this, range);
     cell.Visit(p, wnotifier, *GetMap(), *this, range);
 }
+
+template<class T>
+inline void WorldObject::VisitCameras(T &vistor, float range, bool dont_load)
+{
+    CellPair p(MaNGOS::ComputeCellPair(GetPositionX(), GetPositionY()));
+    Cell cell(p);
+    if (dont_load)
+        cell.SetNoCreate();
+    GridTypeVisitor<T>::Camera cnotifier(vistor);
+    cell.Visit(p, cnotifier, *GetMap(), *this, range);
+}
+
 
 #endif
