@@ -147,7 +147,7 @@ ObjectAccessor::GetCorpseForPlayerGUID(ObjectGuid guid)
     Player2CorpsesMapType::iterator iter = i_player2corpse.find(guid.GetRawValue());
     if( iter == i_player2corpse.end() ) return NULL;
 
-    assert(iter->second->GetType() != CORPSE_BONES);
+    ASSERT(iter->second->GetType() != CORPSE_BONES);
 
     return iter->second;
 }
@@ -155,7 +155,7 @@ ObjectAccessor::GetCorpseForPlayerGUID(ObjectGuid guid)
 void
 ObjectAccessor::RemoveCorpse(Corpse *corpse)
 {
-    assert(corpse && corpse->GetType() != CORPSE_BONES);
+    ASSERT(corpse && corpse->GetType() != CORPSE_BONES);
 
     Guard guard(i_corpseGuard);
     Player2CorpsesMapType::iterator iter = i_player2corpse.find(corpse->GetOwnerGUID());
@@ -175,10 +175,10 @@ ObjectAccessor::RemoveCorpse(Corpse *corpse)
 void
 ObjectAccessor::AddCorpse(Corpse *corpse)
 {
-    assert(corpse && corpse->GetType() != CORPSE_BONES);
+    ASSERT(corpse && corpse->GetType() != CORPSE_BONES);
 
     Guard guard(i_corpseGuard);
-    assert(i_player2corpse.find(corpse->GetOwnerGUID()) == i_player2corpse.end());
+    ASSERT(i_player2corpse.find(corpse->GetOwnerGUID()) == i_player2corpse.end());
     i_player2corpse[corpse->GetOwnerGUID()] = corpse;
 
     // build mapid*cellid -> guid_set map
@@ -274,6 +274,22 @@ ObjectAccessor::ConvertCorpseForPlayer(ObjectGuid player_guid, bool insignia)
     delete corpse;
 
     return bones;
+}
+
+void ObjectAccessor::RemoveOldCorpses()
+{
+    time_t now = time(NULL);
+    Player2CorpsesMapType::iterator next;
+    for(Player2CorpsesMapType::iterator itr = i_player2corpse.begin(); itr != i_player2corpse.end(); itr = next)
+    {
+        next = itr;
+        ++next;
+
+        if(!itr->second->IsExpired(now))
+            continue;
+
+        ConvertCorpseForPlayer(itr->first);
+    }
 }
 
 /// Define the static member of HashMapHolder

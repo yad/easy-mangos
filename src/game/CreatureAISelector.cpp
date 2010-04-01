@@ -47,7 +47,7 @@ namespace FactorySelector
         // excplicit check for isControlled() and owner type to allow guardian, mini-pets and pets controlled by NPCs to be scripted by EventAI
         Unit *owner=NULL;
         if ((creature->isPet() && ((Pet*)creature)->isControlled() &&
-            ((owner=creature->GetOwner()) && owner->GetTypeId()==TYPEID_PLAYER)) || creature->isCharmed())
+            ((owner=creature->GetOwner()) && owner->GetTypeId()==TYPEID_PLAYER)) || (creature->isCharmed() && !creature->isVehicle()))
             ai_factory = ai_registry.GetRegistryItem("PetAI");
         else if (creature->isTotem())
             ai_factory = ai_registry.GetRegistryItem("TotemAI");
@@ -69,7 +69,7 @@ namespace FactorySelector
             {
                 const CreatureAICreator *factory = iter->second;
                 const SelectableAI *p = dynamic_cast<const SelectableAI *>(factory);
-                assert( p != NULL );
+                ASSERT( p != NULL );
                 int val = p->Permit(creature);
                 if( val > best_val )
                 {
@@ -89,7 +89,7 @@ namespace FactorySelector
     MovementGenerator* selectMovementGenerator(Creature *creature)
     {
         MovementGeneratorRegistry &mv_registry(MovementGeneratorRepository::Instance());
-        assert( creature->GetCreatureInfo() != NULL );
+        ASSERT( creature->GetCreatureInfo() != NULL );
         const MovementGeneratorCreator *mv_factory = mv_registry.GetRegistryItem( creature->GetDefaultMovementType());
 
         /* if( mv_factory == NULL  )
@@ -101,7 +101,7 @@ namespace FactorySelector
             {
             const MovementGeneratorCreator *factory = mv_registry.GetRegistryItem((*iter).c_str());
             const SelectableMovement *p = dynamic_cast<const SelectableMovement *>(factory);
-            assert( p != NULL );
+            ASSERT( p != NULL );
             int val = p->Permit(creature);
             if( val > best_val )
             {
