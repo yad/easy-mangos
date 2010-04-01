@@ -33,6 +33,9 @@
 #include "GameSystem/GridRefManager.h"
 #include "MapRefManager.h"
 #include "Utilities/TypeList.h"
+ 
+#include "pathfinding/Detour/DetourNavMesh.h"
+#include "Unit.h"
 
 #include <bitset>
 #include <list>
@@ -204,6 +207,19 @@ enum LevelRequirementVsMode
 {
     LEVELREQUIREMENT_HEROIC = 70
 };
+ 
+struct PathInfo
+{
+    PathInfo() : Length(0), CurrentIndex(-1), Start(), End(), NextDestination() {}
+
+    dtPolyRef pathPolyRefs[50];
+    int Length;                 // Length 0 == unreachable location
+    int CurrentIndex;           // probably don't need this
+    Position Start;
+    Position End;
+    Position NextDestination;   // this can end up being (0,0,0), which means no path
+    dtNavMesh* navMesh;
+};
 
 #if defined( __GNUC__ )
 #pragma pack()
@@ -290,6 +306,10 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
         // can return INVALID_HEIGHT if under z+2 z coord not found height
         float GetHeight(float x, float y, float z, bool pCheckVMap=true) const;
         bool IsInWater(float x, float y, float z) const;    // does not use z pos. This is for future use
+ 
+        void getNextPositionOnPathToLocation(PathInfo* path);
+        PathInfo GetPath(const float startx, const float starty, const float startz, const float endx, const float endy, const float endz);
+        void UpdatePath(PathInfo* oldPath);
 
         ZLiquidStatus getLiquidStatus(float x, float y, float z, uint8 ReqLiquidType, LiquidData *data = 0) const;
 
@@ -420,6 +440,7 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
     private:
         void LoadMapAndVMap(int gx, int gy);
         void LoadVMap(int gx, int gy);
+        void LoadNavMesh(int gx, int gy);
         void LoadMap(int gx,int gy, bool reload = false);
         GridMap *GetGrid(float x, float y);
 
@@ -484,6 +505,8 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
         //used for fast base_map (e.g. MapInstanced class object) search for
         //InstanceMaps and BattleGroundMaps...
         Map* m_parentMap;
+        
+        dtNavMesh *m_navMesh[MAX_NUMBER_OF_GRIDS][MAX_NUMBER_OF_GRIDS];
 
         NGridType* i_grids[MAX_NUMBER_OF_GRIDS][MAX_NUMBER_OF_GRIDS];
         GridMap *GridMaps[MAX_NUMBER_OF_GRIDS][MAX_NUMBER_OF_GRIDS];

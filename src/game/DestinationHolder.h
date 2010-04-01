@@ -55,6 +55,7 @@ class MANGOS_DLL_DECL DestinationHolder
         void GetLocationNow(const Map * map, float &x, float &y, float &z, bool is3D = false) const;
         void GetLocationNowNoMicroMovement(float &x, float &y, float &z) const; // For use without micro movement
         float GetDistance3dFromDestSq(const WorldObject &obj) const;
+        float GetDistance3dFromDestSq(float x, float y, float z) const;
 
     private:
         void _findOffSetPoint(float x1, float y1, float x2, float y2, float offset, float &x, float &y);
