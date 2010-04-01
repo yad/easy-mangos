@@ -21,6 +21,7 @@
 #include "WorldModel.h"
 #include "TileAssembler.h"
 #include "MapTree.h"
+#include "BIH.h"
 
 #include <set>
 #include <iomanip>
@@ -43,7 +44,7 @@ template<> struct HashTrait<VMAP::ModelSpawn*>
 };
 template<> struct BoundsTrait<VMAP::ModelSpawn*>
 {
-    static void getBounds(const VMAP::ModelSpawn* const &obj, G3D::AABox& out) { out = obj->getAABoxBounds(); }
+    static void getBounds(const VMAP::ModelSpawn* const &obj, G3D::AABox& out) { out = obj->getBounds(); }
 };
 
 namespace VMAP
@@ -65,7 +66,8 @@ namespace VMAP
             uint32 __max_z_wmo=0,__max_z_m2=0;
             uint32 __max_bz_wmo=0,__max_bz_m2=0;
             // build global map tree
-            G3D::VmapKDTree<ModelSpawn*> pTree;
+            //G3D::VmapKDTree<ModelSpawn*> pTree;
+            std::vector<ModelSpawn*> mapSpawns;
             UniqueEntryMap::iterator entry;
             for (entry = map_iter->second->UniqueEntries.begin(); entry != map_iter->second->UniqueEntries.end(); ++entry)
             {
@@ -96,7 +98,8 @@ namespace VMAP
                         __max_bz_wmo = entry->first;
                 }
                 // /__debug__
-                pTree.insert(&(entry->second));
+                //pTree.insert(&(entry->second));
+                mapSpawns.push_back(&(entry->second));
                 spawnedModelFiles.insert(entry->second.name);
             }
             // /__debug__
@@ -109,9 +112,12 @@ namespace VMAP
             std::cout << "Highest WMO: " << __bwmo.name << " z:" << __bwmo.iPos.z << " bz:" << __bwmo.iBound.high().z << std::endl;
             std::cout << "Highest M2:  " << __bm2.name << " z:" << __bm2.iPos.z << " bz:" << __bm2.iBound.high().z << std::endl;
 
-            pTree.balance(3);
+            //pTree.balance(3);
+            BIH pTree;
+            pTree.build<ModelSpawn*, BoundsTrait<ModelSpawn*> >(mapSpawns);
+
             // ===> possibly move this code to StaticMapTree class
-            int nNodes=0, nElements=0;
+        /*  int nNodes=0, nElements=0;
             pTree.countNodesAndElements(nNodes, nElements);
             // __debug__
             printf("BSPTree: Nodes: %d, Elements: %d (%d)\n", nNodes, nElements, map_iter->second->UniqueEntries.size());
@@ -126,6 +132,10 @@ namespace VMAP
             std::multimap<uint32, uint32> modelNodeIdx;
             for(int i=0; i<nElements; ++i)
                 modelNodeIdx.insert(std::pair<uint32, uint32>(treeElements[i]->ID, i));
+            printf("min GUID: %u, max GUID: %u\n", modelNodeIdx.begin()->first, modelNodeIdx.rbegin()->first); */
+            std::multimap<uint32, uint32> modelNodeIdx;
+            for(uint32 i=0; i<mapSpawns.size(); ++i)
+                modelNodeIdx.insert(std::pair<uint32, uint32>(mapSpawns[i]->ID, i));
             printf("min GUID: %u, max GUID: %u\n", modelNodeIdx.begin()->first, modelNodeIdx.rbegin()->first);
 
             // write map tree file
@@ -141,12 +151,13 @@ namespace VMAP
             if (fwrite(&isTiled, sizeof(char), 1, mapfile) != 1) success = false;
             // Nodes
             if (success && fwrite("NODE", 4, 1, mapfile) != 1) success = false;
-            uint32 size = sizeof(uint32) + sizeof(TreeNode)*nNodes;
+        /*     uint32 size = sizeof(uint32) + sizeof(TreeNode)*nNodes;
             if (success && fwrite(&size, 4, 1, mapfile) != 1) success = false;
             if (success && fwrite(&nNodes, sizeof(uint32), 1, mapfile) != 1) success = false;
             if (success && fwrite(mapTree, sizeof(TreeNode), nNodes, mapfile) != nNodes) success = false;
             // amount of tree elements
-            if (success && fwrite(&nElements, sizeof(uint32), 1, mapfile) != 1) success = false;
+            if (success && fwrite(&nElements, sizeof(uint32), 1, mapfile) != 1) success = false; */
+            if (success) success = pTree.writeToFile(mapfile);
             // global map spawns (WDT), if any (most instances)
             if (success && fwrite("GOBJ", 4, 1, mapfile) != 1) success = false;
 
@@ -186,6 +197,7 @@ namespace VMAP
 
                 fclose(tilefile);
             }
+            break; //test
         }
 
         // export objects
