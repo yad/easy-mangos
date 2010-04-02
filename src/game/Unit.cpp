@@ -11154,11 +11154,14 @@ bool Unit::isVisibleForOrDetect(Unit const* u, WorldObject const* viewPoint, boo
     }
 
     // With Arena Preparation players shouldn't see opposite team in arenas
-    if(HasAura(32727) && u->HasAura(32727))
+    if(HasAura(32727))
     {
-        if(GetTypeId() == TYPEID_PLAYER || u->GetTypeId() == TYPEID_PLAYER)
+        if(GetTypeId() == TYPEID_PLAYER && u->GetTypeId() == TYPEID_PLAYER)
         {
-            if(((Player*)this)->GetTeam() == ((Player*)u)->GetTeam())
+            if( (HasAura(SPELL_HORDE_GOLD_FLAG) && u->HasAura(SPELL_HORDE_GOLD_FLAG)) ||
+                (HasAura(SPELL_ALLIANCE_GOLD_FLAG) && u->HasAura(SPELL_ALLIANCE_GOLD_FLAG)) ||
+                (HasAura(SPELL_HORDE_GREEN_FLAG) && u->HasAura(SPELL_HORDE_GREEN_FLAG)) ||
+                (HasAura(SPELL_ALLIANCE_GREEN_FLAG) && u->HasAura(SPELL_ALLIANCE_GREEN_FLAG)))
                 invisible = false;
             else
                 invisible = true;
