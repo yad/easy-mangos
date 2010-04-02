@@ -46,7 +46,7 @@ class WMOGroup
 {
 public:
     // MOGP
-    int groupName, descGroupName, flags;
+    int groupName, descGroupName, mogpFlags;
     float bbcorn1[3];
     float bbcorn2[3];
     uint16 moprIdx;
@@ -79,7 +79,7 @@ public:
     ~WMOGroup();
 
     bool open();
-    int ConvertToVMAPGroupWmo(FILE *output, uint32 areaID, bool pPreciseVectorData);
+    int ConvertToVMAPGroupWmo(FILE *output, bool pPreciseVectorData);
 
 private:
     std::string filename;

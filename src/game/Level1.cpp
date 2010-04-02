@@ -312,16 +312,13 @@ bool ChatHandler::HandleGPSCommand(const char* args)
 
     uint32 have_map = Map::ExistMap(obj->GetMapId(),gx,gy) ? 1 : 0;
     uint32 have_vmap = Map::ExistVMap(obj->GetMapId(),gx,gy) ? 1 : 0;
-    
+
     if(have_vmap)
     {
-        uint32 areaID, flags;
-        if(map->GetAreaInfo(obj->GetPositionX(), obj->GetPositionY(), obj->GetPositionZ(), areaID, flags))
-        {
-            AreaTableEntry const* areaEntry2 = GetAreaEntryByAreaID(areaID);
-            PSendSysMessage("your VMAP area is '%s', flags:%8X", areaEntry2 ? areaEntry2->area_name[GetSessionDbcLocale()] : "<unknown>", flags);
-        }
-        else PSendSysMessage("no VMAP area info available");
+        if(map->IsOutdoors(obj->GetPositionX(), obj->GetPositionY(), obj->GetPositionZ()))
+            PSendSysMessage("You are OUTdoor");
+        else
+            PSendSysMessage("You are INdoor");
     }
     else PSendSysMessage("no VMAP available for area info");
 

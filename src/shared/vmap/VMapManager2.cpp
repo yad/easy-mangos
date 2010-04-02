@@ -353,15 +353,16 @@ namespace VMAP
         return result;
     }
 
-    bool VMapManager2::getAreaInfo(unsigned int pMapId, float x, float y, float z, unsigned int &areaID, unsigned int &flags)
+    bool VMapManager2::getAreaInfo(unsigned int pMapId, float x, float y, float z, G3D::uint32 &flags, G3D::int32 &adtId, G3D::int32 &rootId, G3D::int32 &groupId)
     {
+        //TODO: implement it
         bool result=false;
         InstanceTreeMap::iterator instanceTree = iInstanceMapTrees.find(pMapId);
         if (instanceTree != iInstanceMapTrees.end())
         {
             Vector3 pos = convertPositionToInternalRep(x, y, z);
             printf("VMapManager::getAreaInfo(): x:%f y:%f z:%f => x:%f y:%f z:%f\n", x,y,z,pos.x,pos.y,pos.z);
-            result = instanceTree->second->getAreaInfo(pos, areaID, flags);
+            //result = instanceTree->second->getAreaInfo(pos, areaID, flags);
         }
         return(result);
     }

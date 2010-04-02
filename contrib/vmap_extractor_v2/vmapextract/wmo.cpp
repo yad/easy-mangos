@@ -107,6 +107,7 @@ bool WMORoot::ConvertToVMAPRootWmo(FILE *pOutfile)
     unsigned int nVectors = 0;
     fwrite(&nVectors,sizeof(nVectors),1,pOutfile); // will be filled later
     fwrite(&nGroups,4,1,pOutfile);
+    fwrite(&RootWMOID,4,1,pOutfile);
     return true;
 }
 
@@ -142,14 +143,11 @@ bool WMOGroup::open()
         LiquEx_size = 0;
         liquflags = 0;
 
-        // TODO: indoor outdoor flags are there
-        // TODO: areaid is in that chunk
-        // TODO: this is different from http://www.madx.dk/wowdev/wiki/index.php?title=WMO#MOGP_chunk
         if (!strcmp(fourcc,"MOGP"))//header
         {
             f.read(&groupName, 4);
             f.read(&descGroupName, 4);
-            f.read(&flags, 4);
+            f.read(&mogpFlags, 4);
             f.read(bbcorn1, 12);
             f.read(bbcorn2, 12);
             f.read(&moprIdx, 2);
@@ -222,16 +220,16 @@ bool WMOGroup::open()
     return true;
 }
 
-int WMOGroup::ConvertToVMAPGroupWmo(FILE *output, uint32 areaID, bool pPreciseVectorData)
+int WMOGroup::ConvertToVMAPGroupWmo(FILE *output, bool pPreciseVectorData)
 {
+    fwrite(&mogpFlags,sizeof(uint32),1,output);
+    fwrite(&groupWMOID,sizeof(uint32),1,output);
+    // group bound
+    fwrite(bbcorn1, sizeof(float), 3, output);
+    fwrite(bbcorn2, sizeof(float), 3, output);
+    fwrite(&liquflags,sizeof(uint32),1,output);
     if(pPreciseVectorData)
     {
-        fwrite(&flags,sizeof(uint32),1,output);
-        // group bound
-        fwrite(bbcorn1, sizeof(float), 3, output);
-        fwrite(bbcorn2, sizeof(float), 3, output);
-        fwrite(&areaID,sizeof(uint32),1,output);
-        fwrite(&liquflags,sizeof(uint32),1,output);
         char GRP[] = "GRP ";
         fwrite(GRP,1,4,output);
 
@@ -313,14 +311,6 @@ int WMOGroup::ConvertToVMAPGroupWmo(FILE *output, uint32 areaID, bool pPreciseVe
     }
     else
     {
-        //printf("Convert GroupWmo...\n");
-        //-------GRP -------------------------------------
-        fwrite(&flags,sizeof(uint32),1,output);
-        // group bound
-        fwrite(bbcorn1, sizeof(float), 3, output);
-        fwrite(bbcorn2, sizeof(float), 3, output);
-        fwrite(&areaID,sizeof(uint32),1,output);
-        fwrite(&liquflags,sizeof(uint32),1,output);
         char GRP[] = "GRP ";
         fwrite(GRP,1,4,output);
         int k = 0;
@@ -493,9 +483,10 @@ WMOInstance::WMOInstance(MPQFile &f,const char* WmoInstName, uint32 mapID, uint3
     f.read(ff,12);
     pos3 = Vec3D(ff[0],ff[1],ff[2]);
     f.read(&d2,4);
-    f.read(&d3,4);
 
-    doodadset = (d2 & 0xFFFF0000) >> 16;
+    uint16 trash,adtId;
+    f.read(&adtId,2);
+    f.read(&trash,2);
 
     //-----------add_in _dir_file----------------
 
@@ -538,6 +529,7 @@ WMOInstance::WMOInstance(MPQFile &f,const char* WmoInstName, uint32 mapID, uint3
     fwrite(&tileX, sizeof(uint32), 1, pDirfile);
     fwrite(&tileY, sizeof(uint32), 1, pDirfile);
     fwrite(&flags, sizeof(uint32), 1, pDirfile);
+    fwrite(&adtId, sizeof(uint16), 1, pDirfile);
     fwrite(&id, sizeof(uint32), 1, pDirfile);
     fwrite(&pos, sizeof(float), 3, pDirfile);
     fwrite(&rot, sizeof(float), 3, pDirfile);

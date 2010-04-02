@@ -142,6 +142,11 @@ BindIP = "0.0.0.0"
 #        These spells are ignored for LoS calculation
 #        List of ids with delimiter ','
 #
+#    vmap.indoorCheckInterval
+#        Interval in milliseconds between indoor checks; players will be dismounted inside buildings.
+#        Default: 0 (disabled)
+#
+#
 #    DetectPosCollision
 #        Check final move position, summon position, etc for visible collision with other objects or
 #        wall (wall only if vmaps are enabled)
@@ -194,6 +199,7 @@ vmap.enableLOS = 0
 vmap.enableHeight = 0
 vmap.ignoreMapIds = "369"
 vmap.ignoreSpellIds = "7720"
+vmap.indoorCheckInterval = 0
 DetectPosCollision = 1
 TargetPosRecalculateRange = 1.5
 UpdateUptimeInterval = 10
