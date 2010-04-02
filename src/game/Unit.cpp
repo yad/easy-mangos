@@ -11970,7 +11970,6 @@ int32 Unit::CalculateSpellDamage(SpellEntry const* spellProto, SpellEffectIndex 
 
 int32 Unit::CalculateSpellDuration(SpellEntry const* spellProto, SpellEffectIndex effect_index, Unit const* target)
 {
-    int32 maxPvpDuration = 10 * IN_MILISECONDS;
     Player* unitPlayer;
 
     if(GetTypeId() == TYPEID_PLAYER)
@@ -11992,20 +11991,22 @@ int32 Unit::CalculateSpellDuration(SpellEntry const* spellProto, SpellEffectInde
     else
         duration = minduration;
 
-    // Duration in PvP is limited to 10s 
-    if (duration > maxPvpDuration && !IsFriendlyTo(target) )
+    // Duration in PvP is limited
+    if (!IsFriendlyTo(target))
     {
         Unit const* casterOwner = GetCharmerOrOwner();
         Unit const* targetOwner = target->GetCharmerOrOwner();
         casterOwner = casterOwner ? casterOwner : this;
         targetOwner = targetOwner ? targetOwner : target;
-        bool triggered = false;
+        if (targetOwner->GetTypeId() == TYPEID_PLAYER && casterOwner->GetTypeId() == TYPEID_PLAYER)
+        {
+            DiminishingGroup diminishingGroup = GetDiminishingReturnsGroupForSpell(spellProto, false/*doesn't matter for this purpose*/);
+            int32 limitPvpDuration = GetDiminishingReturnsLimitDuration(diminishingGroup, spellProto);
+            limitPvpDuration = limitPvpDuration ? limitPvpDuration: 10000;
+            if (diminishingGroup != DIMINISHING_NONE)
+                duration = duration > limitPvpDuration ? limitPvpDuration : duration;
+        }
 
-        if (Spell * spell = FindCurrentSpellBySpellId(spellProto->Id) )
-            triggered = spell->IsTriggeredSpellWithRedundentData();
-        if (targetOwner->GetTypeId() == TYPEID_PLAYER && casterOwner->GetTypeId() == TYPEID_PLAYER 
-            && GetDiminishingReturnsGroupForSpell(spellProto, triggered) != DIMINISHING_NONE)
-            duration = maxPvpDuration;
     }
 
     if (duration > 0)
