@@ -1032,7 +1032,7 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
                 }
             }
 
-            if(Spell* spell = pVictim->m_currentSpells[CURRENT_CHANNELED_SPELL])
+            if(Spell* spell = pVictim->m_currentSpells[CURRENT_CHANNELED_SPELL]  && damagetype != DOT)
             {
                 if (spell->getState() == SPELL_STATE_CASTING)
                 {
