@@ -854,49 +854,8 @@ bool Pet::InitStatsForLevel(uint32 petlevel, Unit* owner)
     {
         case SUMMON_PET:
         {
-            if(owner->GetTypeId() == TYPEID_PLAYER)
-            {
-                switch(owner->getClass())
-                {
-                    case CLASS_WARLOCK:
-                    {
-
-                        //the damage bonus used for pets is either fire or shadow damage, whatever is higher
-                        uint32 fire  = owner->GetUInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_POS + SPELL_SCHOOL_FIRE);
-                        uint32 shadow = owner->GetUInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_POS + SPELL_SCHOOL_SHADOW);
-                        uint32 val  = (fire > shadow) ? fire : shadow;
-
-                        SetBonusDamage(int32 (val * 0.15f));
-                        //bonusAP += val * 0.57;
-                        break;
-                    }
-                    case CLASS_MAGE:
-                    {
-                                                            //40% damage bonus of mage's frost damage
-                        float val = owner->GetUInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_POS + SPELL_SCHOOL_FROST) * 0.4f;
-                        if(val < 0)
-                            val = 0;
-                        SetBonusDamage( int32(val));
-                        break;
-                    }
-                    default:
-                        break;
-                }
-            }
-
-            SetBaseWeaponDamage(BASE_ATTACK, MINDAMAGE, float(petlevel - (petlevel / 4)) );
-            SetBaseWeaponDamage(BASE_ATTACK, MAXDAMAGE, float(petlevel + (petlevel / 4)) );
-
-            //SetModifierValue(UNIT_MOD_ATTACK_POWER, BASE_VALUE, float(cinfo->attackpower));
-
-            if(owner->GetTypeId() == TYPEID_PLAYER && owner->getClass() == CLASS_PRIEST)
-            {
-                int32 spellpower = int32(owner->GetUInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_POS + SPELL_SCHOOL_SHADOW));
-                int32 bonusmelee = int32(spellpower * 0.3f);
-                SetBaseWeaponDamage(BASE_ATTACK, MINDAMAGE, (cinfo->mindmg)+bonusmelee);
-                SetBaseWeaponDamage(BASE_ATTACK, MAXDAMAGE, (cinfo->maxdmg)+bonusmelee);
-                SetAttackTime(BASE_ATTACK, 1500);
-            }
+            float mindmg = float(petlevel - (petlevel / 4));
+            float maxdmg = float(petlevel + (petlevel / 4));
 
             PetLevelInfo const* pInfo = sObjectMgr.GetPetLevelInfo(creature_ID, petlevel);
             if(pInfo)                                       // exist in DB
@@ -910,6 +869,57 @@ bool Pet::InitStatsForLevel(uint32 petlevel, Unit* owner)
                 for(int stat = 0; stat < MAX_STATS; ++stat)
                 {
                     SetCreateStat(Stats(stat), float(pInfo->stats[stat]));
+                }
+
+                if(owner->GetTypeId() == TYPEID_PLAYER)
+                {
+                    switch(owner->getClass())
+                    {
+                        case CLASS_WARLOCK:
+                        {
+                            //the damage bonus used for pets is either fire or shadow damage, whatever is higher
+                            uint32 fire  = owner->GetUInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_POS + SPELL_SCHOOL_FIRE);
+                            uint32 shadow = owner->GetUInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_POS + SPELL_SCHOOL_SHADOW);
+                            uint32 val  = (fire > shadow) ? fire : shadow;
+
+                            SetBonusDamage(int32 (val * 0.15f));
+                            //bonusAP += val * 0.57;
+                            break;
+                        }
+                        case CLASS_MAGE:
+                        {
+                                                                //40% damage bonus of mage's frost damage
+                            float val = owner->GetUInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_POS + SPELL_SCHOOL_FROST) * 0.4f;
+                            if(val < 0)
+                                val = 0;
+                            SetBonusDamage( int32(val));
+                            break;
+                        }
+                        case CLASS_PRIEST:
+                        {
+                            int32 spellpower = int32(owner->GetUInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_POS + SPELL_SCHOOL_SHADOW));
+                            int32 bonusmelee = int32(spellpower * 0.3f);
+                            mindmg += int32(spellpower * 0.3f);
+                            maxdmg += int32(spellpower * 0.3f);
+                            SetAttackTime(BASE_ATTACK, 1500);
+                            break;
+                        }
+                        case CLASS_SHAMAN:
+                        {
+                            float armor = float(owner->GetArmor()) * 0.35;
+                            float attackpower = float(owner->GetTotalAttackPowerValue(BASE_ATTACK)) * 0.3;
+                            float stamina = float(owner->GetInt32Value(UNIT_FIELD_STAT2)) * 0.3;
+                            SetAttackTime(BASE_ATTACK, 1000);
+                            SetModifierValue(UNIT_MOD_ARMOR, BASE_VALUE, float(pInfo->armor) + armor);
+                            SetCreateStat(STAT_STAMINA, float(pInfo->stats[STAT_STAMINA]) + stamina);
+                            // pets do not have melee damage scaled with attack power, so damage must be add directly
+                            mindmg += attackpower / 3;
+                            maxdmg += attackpower / 3;
+                            break;
+                        }
+                        default:
+                            break;
+                    }
                 }
             }
             else                                            // not exist in DB, use some default fake data
@@ -926,6 +936,13 @@ bool Pet::InitStatsForLevel(uint32 petlevel, Unit* owner)
                 SetCreateStat(STAT_INTELLECT, 28);
                 SetCreateStat(STAT_SPIRIT, 27);
             }
+
+            SetBaseWeaponDamage(BASE_ATTACK, MINDAMAGE, mindmg );
+            SetBaseWeaponDamage(BASE_ATTACK, MAXDAMAGE, maxdmg );
+
+            //SetModifierValue(UNIT_MOD_ATTACK_POWER, BASE_VALUE, float(cinfo->attackpower));
+                        
+
             break;
         }
         case HUNTER_PET:
