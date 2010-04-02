@@ -504,15 +504,16 @@ namespace VMAP
         return result;
     }
 
-    bool VMapManager::getAreaInfo(unsigned int pMapId, float x, float y, float z, unsigned int &areaID, unsigned int &flags)
+    bool VMapManager::getAreaInfo(unsigned int pMapId, float x, float y, float z, G3D::uint32 &flags, G3D::int32 &adtId, G3D::int32 &rootId, G3D::int32 &groupId)
     {
+        // TODO: implement it properly
         bool result=false;
         if(isLineOfSightCalcEnabled() && iInstanceMapTrees.containsKey(pMapId))
         {
             Vector3 pos = convertPositionToInternalRep(x, y, z);
             printf("VMapManager::getAreaInfo(): x:%f y:%f z:%f => x:%f y:%f z:%f\n", x,y,z,pos.x,pos.y,pos.z);
             MapTree* mapTree = iInstanceMapTrees.get(pMapId);
-            result = mapTree->getAreaInfo(pos, areaID, flags);
+//            result = mapTree->getAreaInfo(pos, areaID, flags);
         }
         return(result);
     }

@@ -1703,250 +1703,75 @@ float Map::GetHeight(float x, float y, float z, bool pUseVmaps) const
     }
 }
 
-bool Map::GetAreaInfo(float x, float y, float z, uint32 &areaID, uint32 &flags) const
+bool Map::IsOutdoors(float x, float y, float z) const
 {
-    VMAP::IVMapManager* vmgr = VMAP::VMapFactory::createOrGetVMapManager();
-    return vmgr->getAreaInfo(GetId(), x, y, z, areaID, flags);
+    uint32 mogpFlags;
+    int32 adtId, rootId, groupId;
+
+    // no wmo found? -> outside by default
+    if(!GetAreaInfo(x, y, z, mogpFlags, adtId, rootId, groupId))
+        return true;
+
+    printf("Got AreaInfo: flag %u, adt %i, root %i, group %i\n", mogpFlags, adtId, rootId, groupId);
+    bool outdoor = true;
+
+    WMOAreaTableEntry const* wmoEntry= GetWMOAreaTableEntryByTripple(rootId, adtId, groupId);
+    if(wmoEntry)
+    {
+        printf("Got WMOAreaTableEntry! flag %u, areaid %u\n", wmoEntry->Flags, wmoEntry->areaId);
+
+        AreaTableEntry const* atEntry = GetAreaEntryByAreaID(wmoEntry->areaId);
+        if(atEntry)
+        {
+            printf("Got AreaTableEntry\n");
+            if(atEntry->flags & AREA_FLAG_OUTSIDE)
+                return true;
+            if(atEntry->flags & AREA_FLAG_INSIDE)
+                return false;
+        }
+    }
+
+    outdoor = mogpFlags&0x8;
+
+    if(wmoEntry)
+    {
+        if(wmoEntry->Flags & 4)
+            return true;
+
+        if((wmoEntry->Flags & 2)!=0)
+            outdoor = false;
+    }
+    return outdoor;
 }
 
+bool Map::GetAreaInfo(float x, float y, float z, uint32 &flags, int32 &adtId, int32 &rootId, int32 &groupId) const
+{
+    VMAP::IVMapManager* vmgr = VMAP::VMapFactory::createOrGetVMapManager();
+    return vmgr->getAreaInfo(GetId(), x, y, z, flags, adtId, rootId, groupId);
+}
 
 uint16 Map::GetAreaFlag(float x, float y, float z) const
 {
+    uint32 mogpFlags;
+    int32 adtId, rootId, groupId;
+
+    if(GetAreaInfo(x, y, z, mogpFlags, adtId, rootId, groupId))
+    {    
+        if(WMOAreaTableEntry const* wmoEntry= GetWMOAreaTableEntryByTripple(rootId, adtId, groupId))
+        {    
+            if(AreaTableEntry const* atEntry = GetAreaEntryByAreaID(wmoEntry->areaId))
+            {    
+                return atEntry->exploreFlag;
+            }    
+        }    
+    }    
+
     uint16 areaflag;
     if(GridMap *gmap = const_cast<Map*>(this)->GetGrid(x, y))
         areaflag = gmap->getArea(x, y);
     // this used while not all *.map files generated (instances)
-    else
+    else 
         areaflag = GetAreaFlagByMapId(i_id);
-
-    //FIXME: some hacks for areas above or underground for ground area
-    //       required for area specific spells/etc, until map/vmap data
-    //       not provided correct areaflag with this hacks
-    switch(areaflag)
-    {
-        // Acherus: The Ebon Hold (Plaguelands: The Scarlet Enclave)
-        case 1984:                                          // Plaguelands: The Scarlet Enclave
-        case 2076:                                          // Death's Breach (Plaguelands: The Scarlet Enclave)
-        case 2745:                                          // The Noxious Pass (Plaguelands: The Scarlet Enclave)
-            if(z > 350.0f) areaflag = 2048; break;
-        // Acherus: The Ebon Hold (Eastern Plaguelands)
-        case 856:                                           // The Noxious Glade (Eastern Plaguelands)
-        case 2456:                                          // Death's Breach (Eastern Plaguelands)
-            if(z > 350.0f) areaflag = 1950; break;
-        // Winterfin Caverns
-        case 1652:                                          // Coldarra
-        case 1653:                                          // The Westrift
-        case 1661:                                          // Winterfin Village
-            if (x > 3823.0f && x < 4141.5f && y > 6247.0f && y < 64890.0f && z < 42.5f)
-                areaflag = 1723;
-            break;
-        // Moonrest Gardens
-        case 1787:
-            if (x > 3315.3f && x < 3361.6f && y > 2469.4f && y < 2565.8f && z > 197.0f)
-                areaflag = 1786;                            // Surge Needle (cords not entirely correct, will need round circle if this is really needed(see spell 47097 eff 77))
-            break;
-        // Dalaran
-        case 2492:                                          // Forlorn Woods (Crystalsong Forest)
-        case 2371:                                          // Valley of Echoes (Icecrown Glacier)
-            if (x > 5568.0f && x < 6116.0f && y > 282.0f && y < 982.0f && z > 563.0f)
-            {
-                // Krasus' Landing (Dalaran), fast check
-                if (x > 5758.77f && x < 5869.03f && y < 510.46f)
-                {
-                    // Krasus' Landing (Dalaran), with open east side
-                    if (y < 449.33f || (x-5813.9f)*(x-5813.9f)+(y-449.33f)*(y-449.33f) < 1864.0f)
-                    {
-                        areaflag = 2531;                    // Note: also 2633, possible one flight allowed and other not allowed case
-                        break;
-                    }
-                }
-
-                // Sunreaver's Sanctuary (Dalaran) (Enter,Left,Right-border lines)
-                if ((y-548.11f)/(568.80f-548.11f) <= (x-5849.30f)/(5866.57f-5849.30f) &&
-                    (y-582.76f)/(622.97f-582.76f) <= (x-5961.64f)/(5886.09f-5961.64f) &&
-                    (y-446.79f)/(508.22f-446.79f) >= (x-5867.66f)/(5846.12f-5867.66f))
-                {
-                    // need exclude 2 shop rooms
-                    if (((x-5862.26f)*(x-5862.26f)+(y-554.76f)*(y-554.76f) > 335.85f/*310.64f*/ || z > 671.12f) &&
-                        ((y-580.51f)/(608.37f-580.51f) <= (x-5896.23f)/(5859.79f-5896.23f) ||
-                         (y-580.51f)/(610.49f-580.51f) <= (x-5896.23f)/(5919.15f-5896.23f) || z > 669.10f))
-                    {
-                        areaflag = 2687;
-                        break;
-                    }
-                }
-
-                // The Silver Enclave (Dalaran) (Enter,Left,Right-border lines)
-                if ((y-693.19f)/(737.41f-693.19f) >= (x-5732.80f)/(5769.38f-5732.80f) &&
-                    (y-693.19f)/(787.00f-693.19f) >= (x-5732.80f)/(5624.17f-5732.80f) &&
-                    (y-737.41f)/(831.30f-737.41f) <= (x-5769.38f)/(5671.15f-5769.38f))
-                {
-                    // need exclude ground floor shop room
-                    if ((x-5758.07f)*(x-5758.07f)+(y-738.18f)*(y-738.18f) > 83.30f || z > 650.00f)
-                    {
-                        areaflag = 3007;
-                        break;
-                    }
-                }
-
-                // Dalaran
-                areaflag = 2153;
-            }
-            break;
-        // The Violet Citadel (Dalaran) or Dalaran
-        case 2484:                                          // The Twilight Rivulet (Crystalsong Forest)
-        case 1593:                                          // Crystalsong Forest
-            // Dalaran
-            if (x > 5568.0f && x < 6116.0f && y > 282.0f && y < 982.0f && z > 563.0f)
-            {
-                // The Violet Citadel (Dalaran), fast check
-                if (x > 5721.1f && x < 5884.66f && y > 764.4f && y < 948.0f)
-                {
-                    // The Violet Citadel (Dalaran)
-                    if ((x-5803.0f)*(x-5803.0f)+(y-846.18f)*(y-846.18f) < 6690.0f)
-                    {
-                        areaflag = 2696;
-                        break;
-                    }
-                }
-
-                // Sunreaver's Sanctuary (Dalaran) (Enter,Left,Right-border lines)
-                if ((y-581.27f)/(596.73f-581.27f) <= (x-5858.57f)/(5871.87f-5858.57f) &&
-                    (y-582.76f)/(622.97f-582.76f) <= (x-5961.64f)/(5886.09f-5961.64f) &&
-                    (y-446.79f)/(508.22f-446.79f) >= (x-5867.66f)/(5846.12f-5867.66f))
-                {
-                    areaflag = 2687;
-                    break;
-                }
-
-                // The Silver Enclave (Dalaran) (Enter,Left,Right-border lines)
-                if ((y-693.19f)/(737.41f-693.19f) >= (x-5732.80f)/(5769.38f-5732.80f) &&
-                    (y-693.19f)/(787.00f-693.19f) >= (x-5732.80f)/(5624.17f-5732.80f) &&
-                    (y-737.41f)/(831.30f-737.41f) <= (x-5769.38f)/(5671.15f-5769.38f))
-                {
-                    // need exclude ground floor shop room
-                    if ((x-5758.07f)*(x-5758.07f)+(y-738.18f)*(y-738.18f) > 64.30f || z > 650.00f)
-                    {
-                        areaflag = 3007;
-                        break;
-                    }
-                }
-
-                // Dalaran
-                areaflag = 2153;
-            }
-            break;
-        // Vargoth's Retreat (Dalaran) or The Violet Citadel (Dalaran) or Dalaran
-        case 2504:                                          // Violet Stand (Crystalsong Forest)
-            // Dalaran
-            if (x > 5568.0f && x < 6116.0f && y > 282.0f && y < 982.0f && z > 563.0f)
-            {
-                // The Violet Citadel (Dalaran), fast check
-                if (x > 5721.1f && x < 5884.66f && y > 764.4f && y < 948.0f)
-                {
-                    // Vargoth's Retreat (Dalaran), nice slow circle with upper limit
-                    if (z < 898.0f && (x-5765.0f)*(x-5765.0f)+(y-862.4f)*(y-862.4f) < 262.0f)
-                    {
-                        areaflag = 2748;
-                        break;
-                    }
-
-                    // The Violet Citadel (Dalaran)
-                    if ((x-5803.0f)*(x-5803.0f)+(y-846.18f)*(y-846.18f) < 6690.0f)
-                    {
-                        areaflag = 2696;
-                        break;
-                    }
-                }
-
-                // Dalaran
-                areaflag = 2153;
-            }
-            break;
-        // Maw of Neltharion (cave)
-        case 164:                                           // Dragonblight
-        case 1797:                                          // Obsidian Dragonshrine (Dragonblight)
-        case 1827:                                          // Wintergrasp
-        case 2591:                                          // The Cauldron of Flames (Wintergrasp)
-            if (x > 4364.0f && x < 4632.0f && y > 1545.0f && y < 1886.0f && z < 200.0f) areaflag = 1853; break;
-        // Undercity (sewers enter and path)
-        case 179:                                           // Tirisfal Glades
-            if (x > 1595.0f && x < 1699.0f && y > 535.0f && y < 643.5f && z < 30.5f) areaflag = 685; break;
-        // Undercity (Royal Quarter)
-        case 210:                                           // Silverpine Forest
-        case 316:                                           // The Shining Strand (Silverpine Forest)
-        case 438:                                           // Lordamere Lake (Silverpine Forest)
-            if (x > 1237.0f && x < 1401.0f && y > 284.0f && y < 440.0f && z < -40.0f) areaflag = 685; break;
-        // Undercity (cave and ground zone, part of royal quarter)
-        case 607:                                           // Ruins of Lordaeron (Tirisfal Glades)
-            // ground and near to ground (by city walls)
-            if(z > 0.0f)
-            {
-                if (x > 1510.0f && x < 1839.0f && y > 29.77f && y < 433.0f) areaflag = 685;
-            }
-            // more wide underground, part of royal quarter
-            else
-            {
-                if (x > 1299.0f && x < 1839.0f && y > 10.0f && y < 440.0f) areaflag = 685;
-            }
-            break;
-        // The Makers' Perch (ground) and Makers' Overlook (ground and cave)
-        case 1335:                                          // Sholazar Basin
-            // The Makers' Perch ground (fast box)
-            if (x > 6100.0f && x < 6250.0f && y > 5650.0f && y < 5800.0f)
-            {
-                // nice slow circle
-                if ((x-6183.0f)*(x-6183.0f)+(y-5717.0f)*(y-5717.0f) < 2500.0f)
-                    areaflag = 2189;
-            }
-            // Makers' Overlook (ground and cave)
-            else if (x > 5634.48f && x < 5774.53f  && y < 3475.0f && z > 300.0f)
-            {
-                if (y > 3380.26f || (y > 3265.0f && z < 360.0f))
-                    areaflag = 2187;
-            }
-            break;
-        // The Makers' Perch (underground)
-        case 2147:                                          // The Stormwright's Shelf (Sholazar Basin)
-            if (x > 6199.0f && x < 6283.0f && y > 5705.0f && y < 5817.0f && z < 38.0f) areaflag = 2189; break;
-        // Makers' Overlook (deep cave)
-        case 267:                                           // Icecrown
-            if (x > 5684.0f && x < 5798.0f && y > 3035.0f && y < 3367.0f && z < 358.0f) areaflag = 2187; break;
-        // Wyrmrest Temple (Dragonblight)
-        case 1814:                                          // Path of the Titans (Dragonblight)
-        case 1897:                                          // The Dragon Wastes (Dragonblight)
-            // fast box
-            if (x > 3400.0f && x < 3700.0f && y > 130.0f && y < 420.0f)
-            {
-                // nice slow circle
-                if ((x-3546.87f)*(x-3546.87f)+(y-272.71f)*(y-272.71f) < 19600.0f) areaflag = 1791;
-            }
-            break;
-        // The Forlorn Mine (The Storm Peaks)
-        case 166:                                           // The Storm Peaks
-        case 2207:                                          // Brunnhildar Village (The Storm Peaks)
-        case 2209:                                          // Sifreldar Village (The Storm Peaks)
-        case 2227:                                          // The Foot Steppes (The Storm Peaks)
-            // fast big box
-            if (x > 6812.0f && x < 7049.5f && y > -1474.5f && y < -1162.5f && z < 866.15f)
-            {
-                // east, avoid ground east-south corner wrong detection
-                if (x > 6925.0f && y > -1474.5f && y < -1290.0f)
-                    areaflag = 2213;
-                // east middle, wide part
-                else if (x > 6812.0f && y > -1400.0f && y < -1290.0f)
-                    areaflag = 2213;
-                // west middle, avoid ground west-south corner wrong detection
-                else if (x > 6833.0f && y > -1474.5f && y < -1233.0f)
-                    areaflag = 2213;
-                // west, avoid ground west-south corner wrong detection
-                else if (x > 6885.0f && y > -1474.5f && y < -1162.5f)
-                    areaflag = 2213;
-            }
-            break;
-        default:
-            break;
-    }
 
     return areaflag;
 }

@@ -42,6 +42,7 @@ namespace VMAP
         public:
             //mapID, tileX, tileY, Flags, ID, Pos, Rot, Scale, Bound_lo, Bound_hi, name
             uint32 flags;
+            uint16 adtId;
             uint32 ID;
             G3D::Vector3 iPos;
             G3D::Vector3 iRot;

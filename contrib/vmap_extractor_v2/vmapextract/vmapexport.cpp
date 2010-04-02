@@ -56,8 +56,6 @@ typedef struct
 
 map_id * map_ids;
 
-std::map<uint64, uint32> wmoAreaTable;
-
 uint16 * areas;
 uint16 *areamax;
 uint32 map_count;
@@ -196,24 +194,8 @@ int ExtractWmo()
                                     file_ok=false;
                                     break;
                                 }
-                                // try to search specific area
-                                uint64 key = uint64(froot->RootWMOID)<<32 | fgroup->groupWMOID;
-                                std::map<uint64, uint32>::iterator itr = wmoAreaTable.find(key);
 
-                                uint32 areaID;
-                                if(itr == wmoAreaTable.end())
-                                {
-                                    // fallback, use root area
-                                    key = uint64(froot->RootWMOID)<<32;
-                                    itr = wmoAreaTable.find(key);
-                                    areaID = itr == wmoAreaTable.end()?0:itr->second;
-                                }
-                                else
-                                {
-                                    areaID = itr->second;
-                                }
-
-                                Wmo_nVertices += fgroup->ConvertToVMAPGroupWmo(output, areaID, preciseVectorData);
+                                Wmo_nVertices += fgroup->ConvertToVMAPGroupWmo(output, preciseVectorData);
                             }
                         }
                         fseek(output, 8, SEEK_SET); // store the correct no of vertices
@@ -441,32 +423,6 @@ bool processArgv(int argc, char ** argv, const char *versionString)
     return result;
 }
 
-void loadWMOAreaTable()
-{
-    DBCFile * dbc = new DBCFile("DBFilesClient\\WMOAreaTable.dbc");
-    if(!dbc->open())
-    {
-        delete dbc;
-        printf("FATAL ERROR: WMOAreaTable.dbc not found in data file.\n");
-        exit(1);
-    }
-    uint32 wmo_area_count = dbc->getRecordCount();
-    std::cout << "WMOAreaTable.dbc has " << wmo_area_count << " entries\n";
-    for(uint32 x=0; x<wmo_area_count; ++x)
-    {
-        int32 rootId = dbc->getRecord(x).getInt(1);
-        int32 groupId = dbc->getRecord(x).getInt(3);
-        if(groupId == -1)
-            groupId = 0;
-        uint32 areaId = dbc->getRecord(x).getUInt(10);
-        if(rootId== 5164) std::cout << "5164|" << groupId << " => " << areaId << endl;
-        if(!areaId)
-            continue;
-        uint64 key = uint64(rootId)<<32 | groupId;
-        wmoAreaTable.insert(std::pair<uint64, uint32>(key, areaId));
-    }
-    delete dbc;
-}
 //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 // Main
 // 
@@ -530,7 +486,6 @@ int main(int argc, char ** argv)
         return 1;
     }
 
-    loadWMOAreaTable();
     // extract data
     if(success)
         success = ExtractWmo();

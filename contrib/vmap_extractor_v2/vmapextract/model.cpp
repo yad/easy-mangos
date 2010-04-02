@@ -64,9 +64,8 @@ bool Model::ConvertToVMAPModel(char * outfilename)
     fwrite(&nVertices, sizeof(int), 1, output);
     uint32 nofgroups = 1;
     fwrite(&nofgroups,sizeof(uint32), 1, output);
-    fwrite(N,4,1,output);// mogp flags
+    fwrite(N,4*3,1,output);// rootwmoid, flags, groupid
     fwrite(N,sizeof(float),3*2,output);//bbox, only needed for WMO currently
-    fwrite(N,4,1,output);// areaid
     fwrite(N,4,1,output);// liquidflags
     fwrite("GRP ",4,1,output);
     uint32 branches = 1;

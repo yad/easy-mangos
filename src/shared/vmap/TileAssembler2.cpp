@@ -227,7 +227,7 @@ namespace VMAP
         while (!feof(dirf))
         {
             check = 0;
-            // read mapID, tileX, tileY, Flags, ID, Pos, Rot, Scale, Bound_lo, Bound_hi, name
+            // read mapID, tileX, tileY, Flags, adtID, ID, Pos, Rot, Scale, Bound_lo, Bound_hi, name
             check += fread(&mapID, sizeof(uint32), 1, dirf);
             if (check == 0) // EoF...
                 break;
@@ -377,12 +377,13 @@ namespace VMAP
         READ_OR_RETURN(&tempNVectors, sizeof(tempNVectors));
 
         uint32 groups;
-        std::vector<GroupModelBound> boundsArray;
+        uint32 RootWMOID;
         char blockId[5];
         blockId[4] = 0;
         int blocksize;
 
         READ_OR_RETURN(&groups, sizeof(G3D::uint32));
+        READ_OR_RETURN(&RootWMOID, sizeof(G3D::uint32));
 
         uint32 idxOffset=0;
         G3D::Array<SoloTriangle> triangles;
@@ -397,19 +398,12 @@ namespace VMAP
 
             G3D::uint32 mogpflags;
             READ_OR_RETURN(&mogpflags, sizeof(G3D::uint32));
+            G3D::uint32 GroupWMOID;
+            READ_OR_RETURN(&GroupWMOID, sizeof(G3D::uint32));
 
             float bbox1[3], bbox2[3];
             READ_OR_RETURN(bbox1, sizeof(float)*3);
             READ_OR_RETURN(bbox2, sizeof(float)*3);
-
-            G3D::uint32 areaID;
-            READ_OR_RETURN(&areaID, sizeof(G3D::uint32));
-
-            if(areaID != 0 || mogpflags != 0)
-            {
-                boundsArray.push_back(GroupModelBound(Vector3(bbox1), Vector3(bbox2), mogpflags, areaID));
-                //printf("Bbox: %f, %f, %f | %f, %f, %f  areaID=%d flags=%X\n", bbox1[0], bbox1[1], bbox1[2], bbox2[0], bbox2[1], bbox2[2], areaID, mogpflags);
-            }
 
             uint32 liquidflags;
             READ_OR_RETURN(&liquidflags, sizeof(G3D::uint32));
@@ -470,6 +464,9 @@ namespace VMAP
                 READ_OR_RETURN(&blocksize, sizeof(int));
                 fseek(rf, blocksize, SEEK_CUR);
             }
+            // TODO: add mogpflags, rootwmoid and groupwmoid to each group
+            // TODO: handle liquids
+
 
             // drop of temporary use defines
             #undef READ_OR_RETURN
@@ -477,10 +474,6 @@ namespace VMAP
 
         }
         fclose(rf);
-        /* if(!boundsArray.empty())
-        {
-            tempModelExt.push_back(new WmoModelExt(boundsArray, pModelPosition.iPos, pModelPosition.iDir));
-        } */
         for(int i=0; i<triangles.size(); ++i)
             triangles[i].setVertexData(vertexArray.getCArray());
         G3D::VmapKDTree<SoloTriangle> gtree;
@@ -493,7 +486,6 @@ namespace VMAP
         SoloTriangle *sTris = new SoloTriangle[nElements];
         Vector3 lo, hi;
         gtree.serializeTree(lo, hi, sTree, sTris);
-        // TODO: add indoor/outdoor flags and areaid to submodel
 
         // write WorldModel
         WorldModel model(vertexArray.getCArray(), vertexArray.size(), sTris, nElements, sTree, nNodes);

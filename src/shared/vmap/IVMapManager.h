@@ -20,6 +20,7 @@
 #define _IVMAPMANAGER_H
 
 #include<string>
+ #include <G3D/g3dmath.h>
 
 //===========================================================
 
@@ -93,7 +94,7 @@ namespace VMAP
             e.g.: "0,1,530"
             */
             virtual void preventMapsFromBeingUsed(const char* pMapIdString) =0;
-            virtual bool getAreaInfo(unsigned int pMapId, float x, float y, float z, unsigned int &areaID, unsigned int &flags) =0;
+            virtual bool getAreaInfo(unsigned int pMapId, float x, float y, float z, G3D::uint32 &flags, G3D::int32 &adtId, G3D::int32 &rootId, G3D::int32 &groupId)=0;
     };
 
 }

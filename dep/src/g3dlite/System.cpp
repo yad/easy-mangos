@@ -80,8 +80,9 @@
 #endif
 
 // SIMM include
+#ifdef __SSE__
 #include <xmmintrin.h>
-
+#endif
 
 namespace G3D {
 
