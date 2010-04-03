@@ -161,7 +161,7 @@ void WorldSession::SendTrainerList( uint64 guid, const std::string& strTitle )
         SpellChainNode const* chain_node = sSpellMgr.GetSpellChainNode(tSpell->learnedSpell);
         TrainerSpellState state = _player->GetTrainerSpellState(tSpell);
 
-        data << uint32(tSpell->learnedSpell);               // learned spell (or cast-spell in profession case)
+        data << uint32(tSpell->spell);                      // learned spell (or cast-spell in profession case)
         data << uint8(state==TRAINER_SPELL_GREEN_DISABLED ? TRAINER_SPELL_GREEN : state);
         data << uint32(floor(tSpell->spellCost * fDiscountMod));
 
@@ -212,21 +212,8 @@ void WorldSession::HandleTrainerBuySpellOpcode( WorldPacket & recv_data )
         return;
 
     // not found, cheat?
-    // trainer_spells->Find(spellId) doesn't work with spell learn spell (cast-spell in profession case)
-    // spell target isn't the spell listed in npc_trainer
-    // You need to use this function
-    TrainerSpell const* trainer_spell = NULL;
-    for(TrainerSpellMap::const_iterator itr = trainer_spells->spellList.begin(); itr != trainer_spells->spellList.end(); ++itr)
-    {
-        TrainerSpell const* tSpell = &itr->second;
-        //  spell in npc_trainer table OR spell target from dbc
-        if( (tSpell->spell == spellId) || (tSpell->learnedSpell == spellId) )
-        {
-            trainer_spell = trainer_spells->Find(tSpell->spell);
-            break;
-        }
-    }
-    if(!trainer_spells)
+    TrainerSpell const* trainer_spell = trainer_spells->Find(spellId);
+    if(!trainer_spell)
         return;
 
     // can't be learn, cheat? Or double learn with lags...
@@ -253,12 +240,12 @@ void WorldSession::HandleTrainerBuySpellOpcode( WorldPacket & recv_data )
     // learn explicitly or cast explicitly
     if(trainer_spell->IsCastable ())
         //FIXME: prof. spell entry in trainer list not marked gray until list re-open.
-        unit->CastSpell(_player,trainer_spell->spell,true);
+        _player->CastSpell(_player,trainer_spell->spell,true);
     else
         _player->learnSpell(spellId,false);
 
     data.Initialize(SMSG_TRAINER_BUY_SUCCEEDED, 12);
-    data << uint64(guid) << uint32(spellId);
+    data << uint64(guid) << uint32(trainer_spell->spell);
     SendPacket(&data);
 }
 
