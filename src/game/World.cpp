@@ -743,8 +743,6 @@ void World::LoadConfigSettings(bool reload)
     setConfig(CONFIG_UINT32_ARENA_SEASON_ID,                           "Arena.ArenaSeason.ID", 1);
     setConfig(CONFIG_BOOL_ARENA_SEASON_IN_PROGRESS,                    "Arena.ArenaSeason.InProgress", true);
 
-	setConfig(CONFIG_OFFHAND_CHECK_AT_SPELL_UNLEARN, "OffhandCheckAtSpellUnlearn", false);
-
     setConfig(CONFIG_BOOL_KICK_PLAYER_ON_BAD_PACKET, "Network.KickOnBadPacket", false);
 
     if(int clientCacheId = sConfig.GetIntDefault("ClientCacheVersion", 0))
