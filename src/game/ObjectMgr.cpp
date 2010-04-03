@@ -854,7 +854,10 @@ void ObjectMgr::LoadCreatureAddons(SQLStorage& creatureaddons, char const* entry
         }
 
         if (!sEmotesStore.LookupEntry(addon->emote))
+        {
             sLog.outErrorDb("Creature (%s %u) have invalid emote (%u) defined in `%s`.", entryName, addon->guidOrEntry, addon->emote, creatureaddons.GetTableName());
+            const_cast<CreatureDataAddon*>(addon)->emote = 0;
+        }
 
         if (addon->splineFlags & (SPLINEFLAG_TRAJECTORY|SPLINEFLAG_UNKNOWN3))
         {
@@ -2072,28 +2075,37 @@ void ObjectMgr::LoadItemPrototypes()
             const_cast<ItemPrototype*>(proto)->HolidayId = 0;
         }
 
-        if(proto->NonConsumable)
+        if(proto->ExtraFlags)
         {
-            if (proto->NonConsumable > 1)
-            {
-                sLog.outErrorDb("Item (Entry: %u) has wrong NonConsumable (%u), must be 0..1",i,proto->NonConsumable);
-                const_cast<ItemPrototype*>(proto)->NonConsumable = 1;
-            }
+            if (proto->ExtraFlags & ~ITEM_EXTRA_ALL)
+                sLog.outErrorDb("Item (Entry: %u) has wrong ExtraFlags (%u) with unused bits set",i,proto->ExtraFlags);
 
-            bool can_be_need = false;
-            for (int j = 0; j < MAX_ITEM_PROTO_SPELLS; ++j)
+            if (proto->ExtraFlags & ITEM_EXTRA_NON_CONSUMABLE)
             {
-                if(proto->Spells[j].SpellCharges < 0)
+                bool can_be_need = false;
+                for (int j = 0; j < MAX_ITEM_PROTO_SPELLS; ++j)
                 {
-                    can_be_need = true;
-                    break;
+                    if(proto->Spells[j].SpellCharges < 0)
+                    {
+                        can_be_need = true;
+                        break;
+                    }
+                }
+
+                if (!can_be_need)
+                {
+                    sLog.outErrorDb("Item (Entry: %u) has redundant non-consumable flag in ExtraFlags, item not have negative charges", i);
+                    const_cast<ItemPrototype*>(proto)->ExtraFlags &= ~ITEM_EXTRA_NON_CONSUMABLE;
                 }
             }
 
-            if (!can_be_need)
+            if (proto->ExtraFlags & ITEM_EXTRA_REAL_TIME_DURATION)
             {
-                sLog.outErrorDb("Item (Entry: %u) has redundant NonConsumable (%u), item not have negative charges",i,proto->NonConsumable);
-                const_cast<ItemPrototype*>(proto)->NonConsumable = 0;
+                if (proto->Duration == 0)
+                {
+                    sLog.outErrorDb("Item (Entry: %u) has redundant real-time duration flag in ExtraFlags, item not have duration", i);
+                    const_cast<ItemPrototype*>(proto)->ExtraFlags &= ~ITEM_EXTRA_REAL_TIME_DURATION;
+                }
             }
         }
     }
@@ -6259,8 +6271,12 @@ std::string ObjectMgr::GeneratePetName(uint32 entry)
 void ObjectMgr::LoadCorpses()
 {
     uint32 count = 0;
-    //                                                     0           1           2           3            4    5     6     7            8         10
-    QueryResult *result = CharacterDatabase.Query("SELECT position_x, position_y, position_z, orientation, map, data, time, corpse_type, instance, guid FROM corpse WHERE corpse_type <> 0");
+    //                                                    0            1       2                  3                  4                  5                   6
+    QueryResult *result = CharacterDatabase.Query("SELECT corpse.guid, player, corpse.position_x, corpse.position_y, corpse.position_z, corpse.orientation, corpse.map, "
+    //   7     8            9         10         11      12    13     14           15            16              17       18
+        "time, corpse_type, instance, phaseMask, gender, race, class, playerBytes, playerBytes2, equipmentCache, guildId, playerFlags FROM corpse "
+        "JOIN characters ON player = characters.guid "
+        "LEFT JOIN guild_member ON player=guild_member.guid WHERE corpse_type <> 0");
 
     if( !result )
     {
@@ -6281,7 +6297,7 @@ void ObjectMgr::LoadCorpses()
 
         Field *fields = result->Fetch();
 
-        uint32 guid = fields[result->GetFieldCount()-1].GetUInt32();
+        uint32 guid = fields[0].GetUInt32();
 
         Corpse *corpse = new Corpse;
         if(!corpse->LoadFromDB(guid,fields))
@@ -6439,8 +6455,8 @@ void ObjectMgr::LoadQuestPOI()
 
     uint32 count = 0;
 
-    //                                                0        1         2      3     4     5     6
-    QueryResult *result = WorldDatabase.Query("SELECT questId, objIndex, mapId, unk1, unk2, unk3, unk4 FROM quest_poi");
+    //                                                0        1      2         3      4          5        6     7
+    QueryResult *result = WorldDatabase.Query("SELECT questId, poiId, objIndex, mapId, mapAreaId, floorId, unk3, unk4 FROM quest_poi");
 
     if(!result)
     {
@@ -6460,31 +6476,16 @@ void ObjectMgr::LoadQuestPOI()
         Field *fields = result->Fetch();
         bar.step();
 
-        uint32 questId  = fields[0].GetUInt32();
-        int32 objIndex  = fields[1].GetInt32();
-        uint32 mapId    = fields[2].GetUInt32();
-        uint32 unk1     = fields[3].GetUInt32();
-        uint32 unk2     = fields[4].GetUInt32();
-        uint32 unk3     = fields[5].GetUInt32();
-        uint32 unk4     = fields[6].GetUInt32();
+        uint32 questId          = fields[0].GetUInt32();
+        uint32 poiId            = fields[1].GetUInt32();
+        int32  objIndex         = fields[2].GetInt32();
+        uint32 mapId            = fields[3].GetUInt32();
+        uint32 mapAreaId        = fields[4].GetUInt32();
+        uint32 floorId          = fields[5].GetUInt32();
+        uint32 unk3             = fields[6].GetUInt32();
+        uint32 unk4             = fields[7].GetUInt32();
 
-        QuestPOI POI(objIndex, mapId, unk1, unk2, unk3, unk4);
-
-        QueryResult *points = WorldDatabase.PQuery("SELECT x, y FROM quest_poi_points WHERE questId='%u' AND objIndex='%i'", questId, objIndex);
-
-        if(points)
-        {
-            do
-            {
-                Field *pointFields = points->Fetch();
-                int32 x = pointFields[0].GetInt32();
-                int32 y = pointFields[1].GetInt32();
-                QuestPOIPoint point(x, y);
-                POI.points.push_back(point);
-            } while (points->NextRow());
-
-            delete points;
-        }
+        QuestPOI POI(poiId, objIndex, mapId, mapAreaId, floorId, unk3, unk4);
 
         mQuestPOIMap[questId].push_back(POI);
 
@@ -6492,6 +6493,35 @@ void ObjectMgr::LoadQuestPOI()
     } while (result->NextRow());
 
     delete result;
+
+    QueryResult *points = WorldDatabase.Query("SELECT questId, poiId, x, y FROM quest_poi_points");
+
+    if (points)
+    {
+        do
+        {
+            Field *pointFields  = points->Fetch();
+
+            uint32 questId      = pointFields[0].GetUInt32();
+            uint32 poiId        = pointFields[1].GetUInt32();
+            int32  x            = pointFields[2].GetInt32();
+            int32  y            = pointFields[3].GetInt32();
+
+            QuestPOIVector& vect = mQuestPOIMap[questId];
+
+            for(QuestPOIVector::iterator itr = vect.begin(); itr != vect.end(); ++itr)
+            {
+                if (itr->PoiId != poiId)
+                    continue;
+
+                QuestPOIPoint point(x, y);
+                itr->points.push_back(point);
+                break;
+            }
+        } while (points->NextRow());
+
+        delete points;
+    }
 
     sLog.outString();
     sLog.outString(">> Loaded %u quest POI definitions", count);
