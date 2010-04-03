@@ -162,7 +162,7 @@ void WorldSession::SendTrainerList( uint64 guid, const std::string& strTitle )
         SpellChainNode const* chain_node = sSpellMgr.GetSpellChainNode(tSpell->learnedSpell);
         TrainerSpellState state = _player->GetTrainerSpellState(tSpell);
 
-        data << uint32(tSpell->learnedSpell);               // learned spell (or cast-spell in profession case)
+        data << uint32(tSpell->spell);                      // learned spell (or cast-spell in profession case)
         data << uint8(state==TRAINER_SPELL_GREEN_DISABLED ? TRAINER_SPELL_GREEN : state);
         data << uint32(floor(tSpell->spellCost * fDiscountMod));
 
