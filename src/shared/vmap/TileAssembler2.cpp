@@ -59,6 +59,8 @@ namespace VMAP
     {
         std::set<std::string> spawnedModelFiles;
         bool success = readMapSpawns();
+        if(!success)
+            return false;
 
         // export Map data
         for (MapData::iterator map_iter = mapData.begin(); map_iter != mapData.end(); ++map_iter)
@@ -136,19 +138,24 @@ namespace VMAP
             std::multimap<uint32, uint32> modelNodeIdx;
             for(uint32 i=0; i<mapSpawns.size(); ++i)
                 modelNodeIdx.insert(std::pair<uint32, uint32>(mapSpawns[i]->ID, i));
-            printf("min GUID: %u, max GUID: %u\n", modelNodeIdx.begin()->first, modelNodeIdx.rbegin()->first);
+            if(!modelNodeIdx.empty())
+                printf("min GUID: %u, max GUID: %u\n", modelNodeIdx.begin()->first, modelNodeIdx.rbegin()->first);
 
             // write map tree file
             std::stringstream mapfilename;
             mapfilename << iDestDir << "/" << std::setfill('0') << std::setw(3) << map_iter->first << ".vmtree";
             FILE *mapfile = fopen(mapfilename.str().c_str(), "wb");
-            if(!mapfile) success = false;
+            if(!mapfile)
+            {
+                success = false;
+                printf("Cannot open %s\n", mapfilename.str().c_str());
+            }
 
             //general info
             uint32 globalTileID = StaticMapTree::packTileID(65, 65);
             std::pair<TileMap::iterator, TileMap::iterator> globalRange = map_iter->second->TileEntries.equal_range(globalTileID);
             char isTiled = globalRange.first == globalRange.second; // only maps without terrain (tiles) have global WMO
-            if (fwrite(&isTiled, sizeof(char), 1, mapfile) != 1) success = false;
+            if (success && fwrite(&isTiled, sizeof(char), 1, mapfile) != 1) success = false;
             // Nodes
             if (success && fwrite("NODE", 4, 1, mapfile) != 1) success = false;
         /*     uint32 size = sizeof(uint32) + sizeof(TreeNode)*nNodes;
@@ -197,7 +204,7 @@ namespace VMAP
 
                 fclose(tilefile);
             }
-            break; //test
+            break; //test, extract only first map; TODO: remvoe this line
         }
 
         // export objects
@@ -286,13 +293,14 @@ namespace VMAP
         G3D::uint32 tempNVectors;
         READ_OR_RETURN(&tempNVectors, sizeof(tempNVectors));
 
-        G3D::uint32 groups;
+        G3D::uint32 groups, wmoRootId;
         char blockId[5];
         blockId[4] = 0;
         int blocksize;
         float *vectorarray = 0;
 
         READ_OR_RETURN(&groups, sizeof(G3D::uint32));
+        READ_OR_RETURN(&wmoRootId, sizeof(G3D::uint32));
         if(groups != 1) printf("Warning: '%s' does not seem to be a M2 model!\n", modelFilename.c_str());
 
         for(int g=0;g<(int)groups;g++) // should be only one for M2 files...

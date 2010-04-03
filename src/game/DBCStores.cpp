@@ -35,27 +35,19 @@ struct WMOAreaTableTripple
     WMOAreaTableTripple(int32 r, int32 a, int32 g) : rootId(r), adtId(a), groupId(g)
     {
     }
+
+    bool operator <(const WMOAreaTableTripple& b) const
+    {
+        return memcmp(this, &b, sizeof(WMOAreaTableTripple))<0;
+    }
+
+    // ordered by entropy; that way memcmp will have a minimal medium runtime
+    int32 groupId;
     int32 rootId;
     int32 adtId;
-    int32 groupId;
 };
 
-struct WMOAreaTableTrippleCmp
-{
-    bool operator()(WMOAreaTableTripple a, WMOAreaTableTripple b)
-    {
-        return hash(a)<hash(b);
-    }
-
-    uint64 hash(WMOAreaTableTripple &t)
-    {
-        uint64 ret = uint64(t.rootId)<<32;
-        ret += t.adtId<<16;
-        ret += t.groupId;
-        return ret;
-    }
-};
-typedef std::map<WMOAreaTableTripple, WMOAreaTableEntry const *, WMOAreaTableTrippleCmp> WMOAreaInfoByTripple;
+typedef std::map<WMOAreaTableTripple, WMOAreaTableEntry const *> WMOAreaInfoByTripple;
 
 DBCStorage <AreaTableEntry> sAreaStore(AreaTableEntryfmt);
 DBCStorage <AreaGroupEntry> sAreaGroupStore(AreaGroupEntryfmt);

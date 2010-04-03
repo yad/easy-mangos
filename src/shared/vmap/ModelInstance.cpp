@@ -78,7 +78,7 @@ namespace VMAP
             spawn.iBound = G3D::AABox(bLow, bHigh);
         }
         check += fread(&nameLen, sizeof(uint32), 1, rf);
-        if(check != (has_bound ? 16 : 10)) { printf("Error reading ModelSpawn!\n"); return false; }
+        if(check != (has_bound ? 17 : 11)) { printf("Error reading ModelSpawn!\n"); return false; }
         char nameBuff[500];
         if(nameLen>500) { printf("Error, file name too long!\n"); return false; }
         check = fread(nameBuff, sizeof(char), nameLen, rf);
@@ -104,9 +104,10 @@ namespace VMAP
         }
         uint32 nameLen = spawn.name.length();
         check += fwrite(&nameLen, sizeof(uint32), 1, wf);
-        if(check != (has_bound ? 16 : 10)) return false;
+        if(check != (has_bound ? 17 : 11)) return false;
         check = fwrite(spawn.name.c_str(), sizeof(char), nameLen, wf);
         if(check != nameLen) return false;
         return true;
     }
+
 }

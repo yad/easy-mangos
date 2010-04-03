@@ -17,6 +17,7 @@ ADD_DEFINITIONS("-DIOMAP_DEBUG")
 
 ADD_DEFINITIONS("-Wall")
 ADD_DEFINITIONS("-ggdb")
+ADD_DEFINITIONS("-O3")
 
 include_directories(../libmpq stormlib)
 #add_subdirectory(stormlib)
