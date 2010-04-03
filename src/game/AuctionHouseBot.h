@@ -2,6 +2,7 @@
 #define AUCTION_HOUSE_BOT_H
 
 #include "World.h"
+#include "Player.h"
 #include "Config/ConfigEnv.h"
 #include "ace/Vector_T.h"
 
@@ -931,26 +932,7 @@ private:
     ACE_Vector<uint32> orangeItemsBin;
     ACE_Vector<uint32> yellowItemsBin;
 
-    bool AHBSeller;
-    bool AHBBuyer;
-    bool BuyMethod;
-    bool SellMethod;
-
-    uint32 AHBplayerAccount;
-    uint32 AHBplayerGUID;
-    uint32 ItemsPerCycle;
-
     bool debug_Out;
-
-    bool Vendor_Items;
-    bool Loot_Items;
-    bool Other_Items;
-
-    bool No_Bind;
-    bool Bind_When_Picked_Up;
-    bool Bind_When_Equipped;
-    bool Bind_When_Use;
-    bool Bind_Quest_Item;
 
     AHBConfig AllianceConfig;
     AHBConfig HordeConfig;
@@ -959,6 +941,8 @@ private:
     time_t _lastrun_a;
     time_t _lastrun_h;
     time_t _lastrun_n;
+
+    uint32 ItemsPerCycle;
 
     inline uint32 minValue(uint32 a, uint32 b) { return a <= b ? a : b; };
     void addNewAuctions(Player *AHBplayer, AHBConfig *config);
@@ -971,7 +955,7 @@ public:
     void Initialize();
     void LoadValues(AHBConfig*);
     void Commands(uint32, uint32, uint32, char*);
-    uint32 GetAHBplayerGUID() { return AHBplayerGUID; };
+    uint32 GetAHBplayerGUID() { return sWorld.getConfig(CONFIG_UINT32_AHBOT_CHARACTER_ID); };
 };
 
 #define auctionbot MaNGOS::Singleton<AuctionHouseBot>::Instance()

@@ -18,39 +18,6 @@ Step 4.) Log in at least once with this character.
 Step 5.) Tune the configuration options in the configuration file and the
          Database.
 
-#These are the settings in the configuration file:
-AuctionHouseBot.EnableSeller = 0
-AuctionHouseBot.EnableBuyer = 0
-AuctionHouseBot.Account = 0
-AuctionHouseBot.GUID = 0
-AuctionHouseBot.VendorItems = 0
-AuctionHouseBot.LootItems = 1
-AuctionHouseBot.OtherItems = 0
-AuctionHouseBot.No_Bind = 1
-AuctionHouseBot.Bind_When_Picked_Up = 0
-AuctionHouseBot.Bind_When_Equipped = 1
-AuctionHouseBot.Bind_When_Use = 1
-AuctionHouseBot.Bind_Quest_Item = 0
-AuctionHouseBot.ItemsPerCycle = 200
-AuctionHouseBot.UseBuyPriceForSeller = 0
-AuctionHouseBot.UseBuyPriceForBuyer = 0
-
-AuctionHouseBot.EnableSeller enables (1) or disables (0) the Seller
-AuctionHouseBot.EnableBuyer enables (1) or disables (0) the Buyer
-AuctionHouseBot.Account is the account number (in realmd->account table) of the player you want to run as the auction bot. Note: a value of 0 will disable the bot.
-AuctionHouseBot.GUID is the GUID (in characters->characters table) of the player you want to run as the auction bot. Note: a value of 0 will disable the bot.
-AuctionHouseBot.VendorItems is a boolean value (0 or 1) that indicates whether to include Vendor only items
-AuctionHouseBot.LootItems  is a boolean value (0 or 1) that indicates whether to include Loot/Fish/Skin/etc. only items
-AuctionHouseBot.OtherItems  is a boolean value (0 or 1) that indicates whether to include Other items not covered by the first 2
-AuctionHouseBot.No_Bind is a boolean value (0 or 1) that indicates whether to include items with a bonding of 0
-AuctionHouseBot.Bind_When_Picked_Up = is a boolean value (0 or 1) that indicates whether to include items with a bonding of 1
-AuctionHouseBot.Bind_When_Equipped = is a boolean value (0 or 1) that indicates whether to include items with a bonding of 2
-AuctionHouseBot.Bind_When_Use = is a boolean value (0 or 1) that indicates whether to include items with a bonding of 3
-AuctionHouseBot.Bind_Quest_Item = is a boolean value (0 or 1) that indicates whether to include items with a bonding of 4
-AuctionHouseBot.ItemsPerCycle determines how many items are added each time AHBot is run (once per minute, by default)
-AuctionHouseBot.UseBuyPriceForSeller Use SellPrice (0) or BuyPrice (1) for determining prices
-AuctionHouseBot.UseBuyPriceForBuyer Use SellPrice (0) or BuyPrice (1) for determining prices
-
 #These are the settings in the Database:
 #Each Auctionhouse has it's own set of these
 
@@ -148,8 +115,6 @@ BuyerPriceYellow = 22
 BuyerBiddingInterval = 1
 BuyerBidsPerInterval = 1
 
-
-
 How to use ahcommands from the console (CLI) or in game with GM level 3 players:
 ahbotoptions - will display usage instructions
 ahbotoptions help - will display the list of commands
@@ -174,6 +139,7 @@ The auction house IDs are:
 6 - Horde
 7 - Neutral
 
+Modified and maintained by Xeross
 AHBot Originally made by Chris K.
 Much thanks to Chris K, grether and Dolomit6!
 AHBot Now includes AHBuyer created by Kerbe as a derivative of AHBot, and later modified by Paradox
