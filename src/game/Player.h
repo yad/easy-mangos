@@ -75,7 +75,7 @@ enum PlayerUnderwaterState
     UNDERWATER_INWATER                  = 0x01,             // terrain type is water and player is afflicted by it
     UNDERWATER_INLAVA                   = 0x02,             // terrain type is lava and player is afflicted by it
     UNDERWATER_INSLIME                  = 0x04,             // terrain type is lava and player is afflicted by it
-    UNDERWARER_INDARKWATER              = 0x08,             // terrain type is dark water and player is afflicted by it
+    UNDERWATER_INDARKWATER              = 0x08,             // terrain type is dark water and player is afflicted by it
 
     UNDERWATER_EXIST_TIMERS             = 0x10
 };
@@ -96,7 +96,15 @@ struct PlayerSpell
     bool disabled          : 1;                             // first rank has been learned in result talent learn but currently talent unlearned, save max learned ranks
 };
 
+struct PlayerTalent
+{
+    PlayerSpellState state;
+    TalentEntry const *m_talentEntry;
+    uint32 currentRank;
+};
+
 typedef UNORDERED_MAP<uint32, PlayerSpell> PlayerSpellMap;
+typedef UNORDERED_MAP<uint32, PlayerTalent> PlayerTalentMap;
 
 // Spell modifier (used for modify other spells)
 struct SpellModifier
@@ -333,7 +341,7 @@ struct Areas
 };
 
 #define MAX_RUNES       6
-#define RUNE_COOLDOWN   (2*5*IN_MILISECONDS)                // msec
+#define RUNE_COOLDOWN   (2*5*IN_MILLISECONDS)                // msec
 
 enum RuneType
 {
@@ -368,7 +376,7 @@ struct Runes
 struct EnchantDuration
 {
     EnchantDuration() : item(NULL), slot(MAX_ENCHANTMENT_SLOT), leftduration(0) {};
-    EnchantDuration(Item * _item, EnchantmentSlot _slot, uint32 _leftduration) : item(_item), slot(_slot), leftduration(_leftduration) { assert(item); };
+    EnchantDuration(Item * _item, EnchantmentSlot _slot, uint32 _leftduration) : item(_item), slot(_slot), leftduration(_leftduration) { ASSERT(item); };
 
     Item * item;
     EnchantmentSlot slot;
@@ -893,7 +901,8 @@ enum PlayerLoginQueryIndex
     PLAYER_LOGIN_QUERY_LOADGLYPHS               = 22,
     PLAYER_LOGIN_QUERY_LOADMAILS                = 23,
     PLAYER_LOGIN_QUERY_LOADMAILEDITEMS          = 24,
-    MAX_PLAYER_LOGIN_QUERY                      = 25
+    PLAYER_LOGIN_QUERY_LOADTALENTS              = 25,
+    MAX_PLAYER_LOGIN_QUERY                      = 26
 };
 
 enum PlayerDelayedOperations
@@ -1413,8 +1422,6 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         bool LoadFromDB(uint32 guid, SqlQueryHolder *holder);
 
-        static uint32 GetUInt32ValueFromArray(Tokens const& data, uint16 index);
-        static float  GetFloatValueFromArray(Tokens const& data, uint16 index);
         static uint32 GetZoneIdFromDB(uint64 guid);
         static uint32 GetLevelFromDB(uint64 guid);
         static bool   LoadPositionFromDB(uint32& mapid, float& x,float& y,float& z,float& o, bool& in_flight, uint64 guid);
@@ -1511,7 +1518,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         void AddMItem(Item* it)
         {
             ASSERT( it );
-            //assert deleted, because items can be added before loading
+            //ASSERT deleted, because items can be added before loading
             mMitems[it->GetGUIDLow()] = it;
         }
 
@@ -1546,6 +1553,7 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         uint32 GetFreeTalentPoints() const { return GetUInt32Value(PLAYER_CHARACTER_POINTS1); }
         void SetFreeTalentPoints(uint32 points) { SetUInt32Value(PLAYER_CHARACTER_POINTS1,points); }
+        void UpdateFreeTalentPoints(bool resetIfNeed = true);
         bool resetTalents(bool no_cost = false);
         uint32 resetTalentsCost() const;
         void InitTalentForLevel();
@@ -1812,7 +1820,7 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         Corpse *GetCorpse() const;
         void SpawnCorpseBones();
-        void CreateCorpse();
+        Corpse* CreateCorpse();
         void KillPlayer();
         uint32 GetResurrectionSpellId();
         void ResurrectPlayer(float restore_percent, bool applySickness = false);
@@ -2082,7 +2090,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         /***                    REST SYSTEM                    ***/
         /*********************************************************/
 
-        bool isRested() const { return GetRestTime() >= 10*IN_MILISECONDS; }
+        bool isRested() const { return GetRestTime() >= 10*IN_MILLISECONDS; }
         uint32 GetXPRestBonus(uint32 xp);
         uint32 GetRestTime() const { return m_restTime; }
         void SetRestTime(uint32 v) { m_restTime = v; }
@@ -2315,6 +2323,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         void _LoadGroup(QueryResult *result);
         void _LoadSkills(QueryResult *result);
         void _LoadSpells(QueryResult *result);
+        void _LoadTalents(QueryResult *result);
         void _LoadFriendList(QueryResult *result);
         bool _LoadHomeBind(QueryResult *result);
         void _LoadDeclinedNames(QueryResult *result);
@@ -2339,6 +2348,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         void _SaveEquipmentSets();
         void _SaveBGData();
         void _SaveGlyphs();
+        void _SaveTalents();
 
         void _SetCreateBits(UpdateMask *updateMask, Player *target) const;
         void _SetUpdateBits(UpdateMask *updateMask, Player *target) const;
@@ -2390,6 +2400,7 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         PlayerMails m_mail;
         PlayerSpellMap m_spells;
+        PlayerTalentMap m_talents[MAX_TALENT_SPEC_COUNT];
         SpellCooldowns m_spellCooldowns;
         uint32 m_lastPotionId;                              // last used health/mana potion in combat, that block next potion use
 
@@ -2576,7 +2587,7 @@ template <class T> T Player::ApplySpellMod(uint32 spellId, SpellModOp op, T &bas
                 continue;
 
             // special case (skip >10sec spell casts for instant cast setting)
-            if( mod->op==SPELLMOD_CASTING_TIME  && basevalue >= T(10*IN_MILISECONDS) && mod->value <= -100)
+            if( mod->op==SPELLMOD_CASTING_TIME  && basevalue >= T(10*IN_MILLISECONDS) && mod->value <= -100)
                 continue;
 
             totalpct += mod->value;
