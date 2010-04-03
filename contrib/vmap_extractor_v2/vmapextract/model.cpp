@@ -152,6 +152,7 @@ ModelInstance::ModelInstance(MPQFile &f,const char* ModelInstName, uint32 mapID,
     if(nVertices == 0)
         return;
 
+    uint16 adtId = 0;// not used for models
     uint32 flags = MOD_M2;
 	if(tileX == 65 && tileY == 65) flags |= MOD_WORLDSPAWN;
     //write mapID, tileX, tileY, Flags, ID, Pos, Rot, Scale, name
@@ -159,6 +160,7 @@ ModelInstance::ModelInstance(MPQFile &f,const char* ModelInstName, uint32 mapID,
     fwrite(&tileX, sizeof(uint32), 1, pDirfile);
     fwrite(&tileY, sizeof(uint32), 1, pDirfile);
     fwrite(&flags, sizeof(uint32), 1, pDirfile);
+    fwrite(&adtId, sizeof(uint16), 1, pDirfile);
     fwrite(&id, sizeof(uint32), 1, pDirfile);
     fwrite(&pos, sizeof(float), 3, pDirfile);
     fwrite(&rot, sizeof(float), 3, pDirfile);
