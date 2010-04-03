@@ -862,6 +862,9 @@ typedef std::multimap<spellEffectPair, Aura*> AuraMap;
 
 bool PlayerbotAI::HasAura(uint32 spellId, const Unit& player) const
 {
+    if(spellId <= 0)
+        return false;
+
     if(!m_bot->IsWithinDistInMap( &player, 50, true ))
         return true;
 
@@ -1584,16 +1587,16 @@ void PlayerbotAI::DoLoot()
                 }
             }
             // release loot
-            if( uint64 lguid = m_bot->GetLootGUID() && m_bot->GetSession() )
-                m_bot->GetSession()->DoLootRelease( lguid );
+            //if( uint64 lguid = m_bot->GetLootGUID() && m_bot->GetSession() )
+                m_bot->GetSession()->DoLootRelease( m_lootCurrent );
             //else if( !m_bot->GetSession() )
             //    sLog.outDebug( "[PlayerbotAI]: %s has no session. Cannot release loot!", m_bot->GetName() );
 
             // clear movement target, take next target on next update
             m_bot->GetMotionMaster()->Clear();
             m_bot->GetMotionMaster()->MoveIdle();
+            SetQuestNeedItems();
             //sLog.outDebug( "[PlayerbotAI]: %s looted target 0x%08X", m_bot->GetName(), m_lootCurrent );
-            m_lootCurrent = 0;
         }
     }
 }
@@ -2733,7 +2736,7 @@ void PlayerbotAI::HandleTeleportAck()
 // Localization support
 void PlayerbotAI::ItemLocalization(std::string& itemName, const uint32 itemID) const
 {
-    int loc = GetMaster()->GetSession()->GetSessionDbLocaleIndex();
+    uint32 loc = GetMaster()->GetSession()->GetSessionDbLocaleIndex();
     std::wstring wnamepart;
 
     ItemLocale const *pItemInfo = sObjectMgr.GetItemLocale(itemID);
@@ -2750,7 +2753,7 @@ void PlayerbotAI::ItemLocalization(std::string& itemName, const uint32 itemID) c
 
 void PlayerbotAI::QuestLocalization(std::string& questTitle, const uint32 questID) const
 {
-    int loc = GetMaster()->GetSession()->GetSessionDbLocaleIndex();
+    uint32 loc = GetMaster()->GetSession()->GetSessionDbLocaleIndex();
     std::wstring wnamepart;
 
     QuestLocale const *pQuestInfo = sObjectMgr.GetQuestLocale(questID);
@@ -2913,16 +2916,22 @@ void PlayerbotAI::HandleCommand(const std::string& text, Player& fromPlayer)
         {
             if(uint32 questId = m_bot->GetQuestSlotQuestId(slot))
             {
-                Quest const* pQuest = sObjectMgr.GetQuestTemplate(questId);
-                if (m_bot->GetQuestStatus(questId) == QUEST_STATUS_COMPLETE) {
-                    hasCompleteQuests = true;
-                    comout << " |cFFFFFF00|Hquest:" << questId << ':' << pQuest->GetQuestLevel() << "|h[" << pQuest->GetTitle() << "]|h|r";
-                }
-                else {
-                    hasIncompleteQuests = true;
-                    incomout << " |cFFFFFF00|Hquest:" << questId << ':' << pQuest->GetQuestLevel() << "|h[" << pQuest->GetTitle() << "]|h|r";
-                }
-            }
+                  Quest const* pQuest = sObjectMgr.GetQuestTemplate(questId);
+ 
+                  std::string questTitle  = pQuest->GetTitle();
+                  m_bot->GetPlayerbotAI()->QuestLocalization(questTitle, questId);
+
+                  if (m_bot->GetQuestStatus(questId) == QUEST_STATUS_COMPLETE)
+                  {
+                      hasCompleteQuests = true;
+                      comout << " |cFFFFFF00|Hquest:" << questId << ':' << pQuest->GetQuestLevel() << "|h[" << questTitle << "]|h|r";
+                  }
+                  else
+                  {
+                      hasIncompleteQuests = true;
+                      incomout << " |cFFFFFF00|Hquest:" << questId << ':' << pQuest->GetQuestLevel() << "|h[" <<  questTitle << "]|h|r";
+                  }
+             }
         }
         if (hasCompleteQuests)
             SendWhisper(comout.str(), fromPlayer);
