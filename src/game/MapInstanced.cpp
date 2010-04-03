@@ -76,18 +76,6 @@ void MapInstanced::RemoveAllObjectsInRemoveList()
     Map::RemoveAllObjectsInRemoveList();
 }
 
-bool MapInstanced::RemoveBones(uint64 guid, float x, float y)
-{
-    bool remove_result = false;
-
-    for (InstancedMaps::iterator i = m_InstancedMaps.begin(); i != m_InstancedMaps.end(); ++i)
-    {
-        remove_result = remove_result || i->second->RemoveBones(guid, x, y);
-    }
-
-    return remove_result || Map::RemoveBones(guid,x,y);
-}
-
 void MapInstanced::UnloadAll(bool pForce)
 {
     // Unload instanced maps
@@ -170,12 +158,12 @@ InstanceMap* MapInstanced::CreateInstance(uint32 InstanceId, InstanceSave *save,
     if (!sMapStore.LookupEntry(GetId()))
     {
         sLog.outError("CreateInstance: no entry for map %d", GetId());
-        assert(false);
+        ASSERT(false);
     }
     if (!ObjectMgr::GetInstanceTemplate(GetId()))
     {
         sLog.outError("CreateInstance: no instance template for map %d", GetId());
-        assert(false);
+        ASSERT(false);
     }
 
     // some instances only have one difficulty
