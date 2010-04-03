@@ -2769,6 +2769,9 @@ void Spell::cast(bool skipCheck)
             // Deterrence
             if (m_spellInfo->Id == 19263)
                 AddTriggeredSpell(67801);                   // Deterrence
+            // Lock and Load 
+            else if (m_spellInfo->Id == 56453) 
+                AddPrecastSpell(67544);                     // Lock and Load Marker
             break;
         }
         case SPELLFAMILY_PALADIN:
@@ -4274,6 +4277,10 @@ SpellCastResult Spell::CheckCast(bool strict)
         else
             return SPELL_FAILED_NOT_READY;
     }
+
+    // Lock and Load Marker - sets Lock and Load cooldown
+    if (m_caster->HasAura(67544) && m_spellInfo->Id == 56453)
+        return SPELL_FAILED_DONT_REPORT;
 
     // only allow triggered spells if at an ended battleground
     if( !m_IsTriggeredSpell && m_caster->GetTypeId() == TYPEID_PLAYER)
