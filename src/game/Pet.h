@@ -230,6 +230,7 @@ class Pet : public Creature
         uint8 GetMaxTalentPointsForLevel(uint32 level);
         uint8 GetFreeTalentPoints() { return GetByteValue(UNIT_FIELD_BYTES_1, 1); }
         void SetFreeTalentPoints(uint8 points) { SetByteValue(UNIT_FIELD_BYTES_1, 1, points); }
+        void UpdateFreeTalentPoints(bool resetIfNeed = true);
 
         uint32  m_resetTalentsCost;
         time_t  m_resetTalentsTime;
@@ -260,11 +261,11 @@ class Pet : public Creature
 
         void SaveToDB(uint32, uint8)                        // overwrited of Creature::SaveToDB     - don't must be called
         {
-            assert(false);
+            ASSERT(false);
         }
         void DeleteFromDB()                                 // overwrited of Creature::DeleteFromDB - don't must be called
         {
-            assert(false);
+            ASSERT(false);
         }
 };
 #endif

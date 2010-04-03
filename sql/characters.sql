@@ -21,7 +21,7 @@
 
 DROP TABLE IF EXISTS `character_db_version`;
 CREATE TABLE `character_db_version` (
-  `required_9632_01_characters_characters` bit(1) default NULL
+  `required_9661_01_characters_character_talent` bit(1) default NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 ROW_FORMAT=FIXED COMMENT='Last applied sql update to DB';
 
 --
@@ -255,6 +255,7 @@ CREATE TABLE `characters` (
   `equipmentCache` longtext,
   `ammoId` int(10) UNSIGNED NOT NULL default '0',
   `knownTitles` longtext,
+  `actionBars` tinyint(3) UNSIGNED NOT NULL default '0',
   PRIMARY KEY  (`guid`),
   KEY `idx_account` (`account`),
   KEY `idx_online` (`online`),
@@ -830,6 +831,31 @@ LOCK TABLES `character_spell_cooldown` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `character_talent`
+--
+
+DROP TABLE IF EXISTS `character_talent`;
+CREATE TABLE `character_talent` (
+  `guid` int(11) unsigned NOT NULL,
+  `talent_id` int(11) unsigned NOT NULL,
+  `current_rank` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `spec` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  PRIMARY KEY (`guid`,`talent_id`,`spec`),
+  KEY guid_key (`guid`),
+  KEY talent_key (`talent_id`),
+  KEY spec_key (`spec`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Dumping data for table `character_talent`
+--
+
+LOCK TABLES `character_talent` WRITE;
+/*!40000 ALTER TABLE `character_talent` DISABLE KEYS */;
+/*!40000 ALTER TABLE `character_talent` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `character_ticket`
 --
 
@@ -893,10 +919,8 @@ CREATE TABLE `corpse` (
   `position_y` float NOT NULL default '0',
   `position_z` float NOT NULL default '0',
   `orientation` float NOT NULL default '0',
-  `zone` int(11) unsigned NOT NULL default '38' COMMENT 'Zone Identifier',
   `map` int(11) unsigned NOT NULL default '0' COMMENT 'Map Identifier',
   `phaseMask` smallint(5) unsigned NOT NULL default '1',
-  `data` longtext,
   `time` bigint(20) unsigned NOT NULL default '0',
   `corpse_type` tinyint(3) unsigned NOT NULL default '0',
   `instance` int(11) unsigned NOT NULL default '0',
