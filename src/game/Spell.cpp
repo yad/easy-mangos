@@ -988,10 +988,26 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
 
     if (missInfo==SPELL_MISS_NONE)                          // In case spell hit target, do all effect on that target
         DoSpellHitOnUnit(unit, mask);
-    else if (missInfo == SPELL_MISS_REFLECT)                // In case spell reflect from target, do all effect on caster (if hit)
+    else
     {
-        if (target->reflectResult == SPELL_MISS_NONE)       // If reflected spell hit caster -> do all effect on him
+        if (missInfo == SPELL_MISS_REFLECT && target->reflectResult == SPELL_MISS_NONE)       // In case spell reflect from target, do all effect on caster (if hit)
             DoSpellHitOnUnit(m_caster, mask);
+
+        else if (missInfo != SPELL_MISS_EVADE && target->reflectResult != SPELL_MISS_EVADE)   // We still need to start combat (not for evade...)
+        {
+            if (!unit->IsStandState() && !unit->hasUnitState(UNIT_STAT_STUNNED))
+                unit->SetStandState(UNIT_STAND_STATE_STAND);
+
+            if (!unit->isInCombat() && unit->GetTypeId() != TYPEID_PLAYER && ((Creature*)unit)->AI())
+                ((Creature*)unit)->AI()->AttackedBy(real_caster);
+
+            unit->AddThreat(real_caster);
+            unit->SetInCombatWith(real_caster);
+            real_caster->SetInCombatWith(unit);
+
+            if (Player *attackedPlayer = unit->GetCharmerOrOwnerPlayerOrPlayerItself())
+                real_caster->SetContestedPvP(attackedPlayer);
+        }
     }
 
     // All calculated do it!
