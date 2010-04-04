@@ -6461,6 +6461,18 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
 
                 // mana cost save
                 int32 mana = procSpell->manaCost + procSpell->ManaCostPercentage * GetCreateMana() / 100;
+
+                // Explosive Shot returns only 1/3 of 40% per critical
+                if (procSpell->Id == 53352)
+                {
+                    // All ranks have same cost
+                    SpellEntry const* explosiveShot = sSpellStore.LookupEntry(53301);
+                    if (!explosiveShot)
+                        return false;
+                    mana = explosiveShot->manaCost + explosiveShot->ManaCostPercentage * GetCreateMana() / 100;
+                    mana /= 3;
+                }
+
                 basepoints[0] = mana * 40/100;
                 if (basepoints[0] <= 0)
                     return false;
