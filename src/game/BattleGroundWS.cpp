@@ -87,6 +87,45 @@ void BattleGroundWS::Update(uint32 diff)
                 RespawnFlagAfterDrop(HORDE);
             }
         }
+        if (m_FlagState[BG_TEAM_ALLIANCE] >= BG_WS_FLAG_STATE_ON_PLAYER && m_FlagState[BG_TEAM_HORDE] >= BG_WS_FLAG_STATE_ON_PLAYER)
+        {
+            if (m_FocusedAssault < BG_WS_FIVE_MINUTES)
+            {
+                Player* CarrierA = sObjectMgr.GetPlayer(m_FlagKeepers[BG_TEAM_ALLIANCE]);
+                Player* CarrierH = sObjectMgr.GetPlayer(m_FlagKeepers[BG_TEAM_HORDE]);
+
+                if(!CarrierA || !CarrierH)
+                    return;
+
+                //after 15 minutes spell should have double effect
+                SpellEntry const *spellInfo = sSpellStore.LookupEntry(BG_WS_FOCUSED_ASSAULT);
+                if (!spellInfo)
+                    return;
+
+                int32 SpellValue0 = spellInfo->CalculateSimpleValue(EFFECT_INDEX_0);
+                int32 SpellValue1 = spellInfo->EffectBasePoints[0];
+
+                int32 dmgtaken = ((m_FocusedAssault < diff) ? 2*SpellValue0 : SpellValue0) - spellInfo->EffectBaseDice[0];
+
+                if(!CarrierA->HasAura(BG_WS_FOCUSED_ASSAULT))
+                    CarrierA->CastCustomSpell(CarrierA, BG_WS_FOCUSED_ASSAULT, &dmgtaken, &SpellValue1, 0, true);
+                if(!CarrierH->HasAura(BG_WS_FOCUSED_ASSAULT))
+                    CarrierH->CastCustomSpell(CarrierH, BG_WS_FOCUSED_ASSAULT, &dmgtaken, &SpellValue1, 0, true);
+                
+                // after 15 minutes buff must be reapplied with double value
+                if(m_FocusedAssaultExtra && m_FocusedAssault < diff)
+                {
+                    CarrierA->CastCustomSpell(CarrierA, BG_WS_FOCUSED_ASSAULT, &dmgtaken, &SpellValue1, 0, true);
+                    CarrierH->CastCustomSpell(CarrierH, BG_WS_FOCUSED_ASSAULT, &dmgtaken, &SpellValue1, 0, true);
+                    m_FocusedAssaultExtra = false;
+                }
+            }else m_FocusedAssault -= diff;
+        }else
+        {
+            m_FocusedAssault = BG_WS_CARRIER_DEBUFF;
+            m_FocusedAssaultExtra = true;
+        }
+
         if (m_EndTimer > 0)
         {
             m_EndTimer -= diff;
@@ -198,6 +237,8 @@ void BattleGroundWS::EventPlayerCapturedFlag(Player *Source)
     uint32 winner = 0;
 
     Source->RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_ENTER_PVP_COMBAT);
+    if(Source->HasAura(BG_WS_FOCUSED_ASSAULT))
+        Source->RemoveAurasDueToSpell(BG_WS_FOCUSED_ASSAULT);
     if (Source->GetTeam() == ALLIANCE)
     {
         if (!IsHordeFlagPickedup())
@@ -328,6 +369,8 @@ void BattleGroundWS::EventPlayerDroppedFlag(Player *Source)
     if (set)
     {
         Source->CastSpell(Source, SPELL_RECENTLY_DROPPED_FLAG, true);
+        if(Source->HasAura(BG_WS_FOCUSED_ASSAULT))
+            Source->RemoveAurasDueToSpell(BG_WS_FOCUSED_ASSAULT);
         UpdateFlagState(Source->GetTeam(), 1);
 
         if (Source->GetTeam() == ALLIANCE)
@@ -561,6 +604,8 @@ void BattleGroundWS::Reset()
     m_EndTimer = BG_WS_TIME_LIMIT;
     m_LastCapturedFlagTeam = 0;
     m_LastEndTimeMinutes = BG_WS_TIME_LIMIT / MINUTE / IN_MILISECONDS;
+    m_FocusedAssault = BG_WS_CARRIER_DEBUFF;
+    m_FocusedAssault = true;
 }
 
 void BattleGroundWS::EndBattleGround(uint32 winner)
