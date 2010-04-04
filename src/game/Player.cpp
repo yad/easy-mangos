@@ -6224,8 +6224,8 @@ bool Player::RewardHonor(Unit *uVictim, uint32 groupsize, float honor)
 
             int32 v_rank =1;                                //need more info
 
-            honor = ((f * diff_level * (190 + v_rank*10))/6);
-            honor *= ((float)k_level) / 70.0f;              //factor of dependence on levels of the killer
+            honor = ((f * diff_level * (190 + v_rank*10))/4);
+            honor *= ((float)k_level) / 64.5f;              //factor of dependence on levels of the killer
 
             //check for event
             uint32 reqmap = 0;
@@ -6279,7 +6279,8 @@ bool Player::RewardHonor(Unit *uVictim, uint32 groupsize, float honor)
         if(groupsize > 1)
             honor /= groupsize;
 
-        honor *= (((float)urand(8,12))/10);                 // approx honor: 80% - 120% of real honor
+        //now should be honor recieved constant
+        //honor *= (((float)urand(8,12))/10);                 // approx honor: 80% - 120% of real honor
     }
 
     // honor - for show honor points in log
