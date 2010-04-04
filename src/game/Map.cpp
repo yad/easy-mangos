@@ -35,6 +35,7 @@
 #include "Group.h"
 #include "MapRefManager.h"
 #include "DBCEnums.h"
+#include "OutdoorPvPMgr.h"
 
 #include "MapInstanced.h"
 #include "InstanceSaveMgr.h"
@@ -64,6 +65,12 @@ Map::~Map()
 
     if(!m_scriptSchedule.empty())
         sWorld.DecreaseScheduledScriptCount(m_scriptSchedule.size());
+
+    // removes the mappointer from an outdoorpvp-class
+    std::map<uint32, OutdoorPvP*>::iterator itr = m_OutdoorPvP.begin();
+    for(; itr != m_OutdoorPvP.end(); ++itr)
+        itr->second->SetMap(NULL);
+
 }
 
 bool Map::ExistMap(uint32 mapid,int gx,int gy)
@@ -692,6 +699,14 @@ void Map::Update(const uint32 &t_diff)
                 }
             }
         }
+    }
+
+    // Update OutdoorPvP.
+    if (t_diff < OUTDOORPVP_OBJECTIVE_UPDATE_INTERVAL)
+    {
+        std::map<uint32, OutdoorPvP*>::iterator itr = m_OutdoorPvP.begin();
+        for(; itr != m_OutdoorPvP.end(); ++itr)
+            itr->second->Update(t_diff);
     }
 
     // Send world objects and item update field changes
@@ -3622,4 +3637,188 @@ uint32 Map::GenerateLocalLowGuid(HighGuid guidhigh)
 
     ASSERT(0);
     return 0;
+}
+
+/* following some functions for mapevents
+ * mapevents handle easy spawning/despawning of creatures
+ * based on groups
+ * ... explain groups here ...
+ */
+void Map::OnObjectDBLoad(Creature* creature)
+{
+    const MapEventIdx eventId = sMapMgr.GetCreatureEventIndex(creature->GetDBTableGUIDLow());
+    if (eventId.event1 == MAP_EVENT_NONE)
+        return;
+    m_EventObjects[MAKE_PAIR32(eventId.event1, eventId.event2)].creatures.push_back(creature->GetGUID());
+    if (!IsActiveEvent(eventId.event1, eventId.event2))
+        SpawnMapCreature(creature->GetGUID(), RESPAWN_ONE_DAY);
+}
+
+uint64 Map::GetSingleCreatureGuid(uint16 event1, uint16 event2)
+{
+    CreatureList::const_iterator itr = m_EventObjects[MAKE_PAIR32(event1, event2)].creatures.begin();
+    if (itr != m_EventObjects[MAKE_PAIR32(event1, event2)].creatures.end())
+        return *itr;
+    return 0;
+}
+
+const uint16 Map::GetGameObjectEvent1(uint32 guidLow) const
+{
+    return (sMapMgr.GetGameObjectEventIndex(guidLow)).event1;
+}
+
+const uint16 Map::GetGameObjectEvent2(uint32 guidLow) const
+{
+    return (sMapMgr.GetGameObjectEventIndex(guidLow)).event2;
+}
+
+const uint16 Map::GetCreatureEvent1(uint32 guidLow) const
+{
+    return (sMapMgr.GetCreatureEventIndex(guidLow)).event1;
+}
+
+void Map::OnObjectDBLoad(GameObject* obj)
+{
+    const MapEventIdx eventId = sMapMgr.GetGameObjectEventIndex(obj->GetDBTableGUIDLow());
+    if (eventId.event1 == MAP_EVENT_NONE)
+        return;
+    m_EventObjects[MAKE_PAIR32(eventId.event1, eventId.event2)].gameobjects.push_back(obj->GetGUID());
+    if (!IsActiveEvent(eventId.event1, eventId.event2))
+    {
+        SpawnMapObject(obj->GetGUID(), RESPAWN_ONE_DAY);
+        if (IsDoorEvent(eventId.event1, eventId.event2))
+            DoorOpen(obj->GetGUID());
+    }
+}
+
+// TODO doors shouldn't be that special.. maybe make a function which accepts a function
+// and iterates over all objects to apply that function
+// other idea is to implement a getmethod to return this std::map
+void Map::DoorOpen(uint64 const& guid)
+{
+    if (GameObject *obj = GetGameObject(guid))
+    {
+        //change state to be sure they will be opened
+        obj->SetLootState(GO_READY);
+        obj->UseDoorOrButton(RESPAWN_ONE_DAY);
+    }
+    else
+    {
+        sLog.outError("Map: Door object not found! - doors will be closed.");
+    }
+}
+
+void Map::DoorClose(uint64 const& guid)
+{
+    if (GameObject *obj = GetGameObject(guid))
+    {
+        // if doors are open, close it
+        if (obj->getLootState() == GO_ACTIVATED && obj->GetGoState() != GO_STATE_READY)
+        {
+            // change state to allow door to be closed
+            obj->SetLootState(GO_READY);
+            obj->UseDoorOrButton(RESPAWN_ONE_DAY);
+        }
+    }
+    else
+    {
+        sLog.outError("Map: Door object not found (cannot close doors)");
+    }
+}
+
+bool Map::IsDoorEvent(uint16 event1, uint16 event2)
+{
+    if (event1 >= MAP_EVENT_DOOR)
+    {
+        if (event2 > 0)
+        {
+            sLog.outError("Map too high event2 for event1:%i", event1);
+            return false;
+        }
+        return true;
+    }
+    return false;
+}
+
+void Map::OpenDoorEvent(uint16 event1, uint16 event2 /*=0*/)
+{
+    if (!IsDoorEvent(event1, event2))
+    {
+        sLog.outError("Map:OpenDoorEvent this is no door event1:%u event2:%u", event1, event2);
+        return;
+    }
+    if (!IsActiveEvent(event1, event2))                 // maybe already despawned (eye)
+    {
+        sLog.outError("Map:OpenDoorEvent this event isn't active event1:%u event2:%u", event1, event2);
+        return;
+    }
+    ObjectList::const_iterator itr = m_EventObjects[MAKE_PAIR32(event1, event2)].gameobjects.begin();
+    for(; itr != m_EventObjects[MAKE_PAIR32(event1, event2)].gameobjects.end(); ++itr)
+        DoorOpen(*itr);
+    m_ActiveEvents[event1] = MAP_EVENT_NONE;            // set this event to inactive
+}
+
+void Map::SpawnEvent(uint16 event1, uint16 event2, bool spawn)
+{
+    // stop if we want to spawn something which was already spawned
+    // or despawn something which was already despawned
+    if (event2 == MAP_EVENT_NONE || (spawn && m_ActiveEvents[event1] == event2)
+        || (!spawn && m_ActiveEvents[event1] != event2))
+        return;
+
+    if (spawn)
+    {
+        // if event gets spawned, the current active event mus get despawned
+        SpawnEvent(event1, m_ActiveEvents[event1], false);
+        m_ActiveEvents[event1] = event2;                    // set this event to active
+    }
+    else
+        m_ActiveEvents[event1] = MAP_EVENT_NONE;             // no event active if event2 gets despawned
+
+    CreatureList::const_iterator itr = m_EventObjects[MAKE_PAIR32(event1, event2)].creatures.begin();
+    for(; itr != m_EventObjects[MAKE_PAIR32(event1, event2)].creatures.end(); ++itr)
+        SpawnMapCreature(*itr, (spawn) ? RESPAWN_IMMEDIATELY : RESPAWN_ONE_DAY);
+    ObjectList::const_iterator itr2 = m_EventObjects[MAKE_PAIR32(event1, event2)].gameobjects.begin();
+    for(; itr2 != m_EventObjects[MAKE_PAIR32(event1, event2)].gameobjects.end(); ++itr2)
+        SpawnMapObject(*itr2, (spawn) ? RESPAWN_IMMEDIATELY : RESPAWN_ONE_DAY);
+}
+
+void Map::SpawnMapObject(uint64 const& guid, uint32 respawntime)
+{
+    GameObject *obj = GetGameObject(guid);
+    if(!obj)
+        return;
+    if (respawntime == 0)
+    {
+        //we need to change state from GO_JUST_DEACTIVATED to GO_READY in case Map is starting again
+        if (obj->getLootState() == GO_JUST_DEACTIVATED)
+            obj->SetLootState(GO_READY);
+        obj->SetRespawnTime(0);
+        Add(obj);
+    }
+    else
+    {
+        Add(obj);
+        obj->SetRespawnTime(respawntime);
+        obj->SetLootState(GO_JUST_DEACTIVATED);
+    }
+}
+
+void Map::SpawnMapCreature(uint64 const& guid, uint32 respawntime)
+{
+    Creature* obj = GetCreature(guid);
+    if (!obj)
+        return;
+    if (respawntime == 0)
+    {
+        obj->Respawn();
+        Add(obj);
+    }
+    else
+    {
+        Add(obj);
+        obj->setDeathState(JUST_DIED);
+        obj->SetRespawnDelay(respawntime);
+        obj->RemoveCorpse();
+    }
 }
