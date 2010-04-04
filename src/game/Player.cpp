@@ -6298,6 +6298,11 @@ bool Player::RewardHonor(Unit *uVictim, uint32 groupsize, float honor)
     // add honor points
     ModifyHonorPoints(int32(honor));
 
+    // battleground update players honor in bg statistics
+    if(InBattleGround())
+        if(BattleGround *bg = GetBattleGround())
+            bg->UpdatePlayerScore(this, SCORE_BONUS_HONOR, honor);
+
     ApplyModUInt32Value(PLAYER_FIELD_TODAY_CONTRIBUTION, uint32(honor), true);
     return true;
 }
