@@ -131,7 +131,7 @@ class OutdoorPvPObjective
         virtual bool CanTalkTo(Player * /*plr*/, Creature * /*c*/, GossipOption & /*gso*/) { return false; }
 
         void DeleteSpawns();
-        void IsSpawned() { return m_spawned; }
+        bool IsSpawned() { return m_spawned; }
     protected:
 
         bool AddCapturePoint(uint32 entry, float x, float y, float z, float o, float rotation0, float rotation1, float rotation2, float rotation3);
