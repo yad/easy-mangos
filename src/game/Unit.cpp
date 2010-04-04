@@ -10907,6 +10907,34 @@ void Unit::SetInCombatState(bool PvP, Unit* enemy)
     if (isCharmed() || (GetTypeId()!=TYPEID_PLAYER && ((Creature*)this)->isPet()))
         SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PET_IN_COMBAT);
 
+    if (GetTypeId() == TYPEID_PLAYER)
+    {
+        for (uint32 i = CURRENT_FIRST_NON_MELEE_SPELL; i < CURRENT_MAX_SPELL; ++i)
+        {
+            // skip channeled spell (processed differently below)
+            if (i == CURRENT_CHANNELED_SPELL)
+                continue;
+
+            if(Spell* spell = GetCurrentSpell(CurrentSpellTypes(i)))
+            {
+                if(spell->getState() == SPELL_STATE_PREPARING)
+                {
+                    if(spell->m_spellInfo->Attributes & SPELL_ATTR_CANT_USED_IN_COMBAT)
+                        InterruptSpell(CurrentSpellTypes(i));
+                }
+            }
+        }
+
+        if(Spell* spell = m_currentSpells[CURRENT_CHANNELED_SPELL])
+        {
+            if (spell->getState() == SPELL_STATE_CASTING)
+            {
+                if(spell->m_spellInfo->Attributes & SPELL_ATTR_CANT_USED_IN_COMBAT)
+                    InterruptSpell(CURRENT_CHANNELED_SPELL);
+            }
+        }
+    }
+
     if (creatureNotInCombat)
     {
         // should probably be removed for the attacked (+ it's party/group) only, not global
