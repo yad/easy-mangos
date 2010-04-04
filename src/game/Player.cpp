@@ -2875,7 +2875,7 @@ void Player::Regenerate(Powers power, uint32 diff)
                     AuraList const& ModPowerRegenPCTAuras = GetAurasByType(SPELL_AURA_MOD_POWER_REGEN_PERCENT);
                     for(AuraList::const_iterator i = ModPowerRegenPCTAuras.begin(); i != ModPowerRegenPCTAuras.end(); ++i)
                         if ((*i)->GetModifier()->m_miscvalue == power && (*i)->GetMiscBValue()==GetCurrentRune(rune))
-                            cd_diff = cd_diff * ((*i)->GetModifier()->m_amount + 100) / 100.0f;
+                            cd_diff = cd_diff * ((*i)->GetModifier()->m_amount + 100) / 100;
 
                     SetRuneCooldown(rune, (cd < cd_diff) ? 0 : cd - cd_diff);
                 }
@@ -4537,7 +4537,7 @@ bool Player::resetTalents(bool no_cost)
         TalentEntry const *talentInfo = (*iter).second.m_talentEntry;
         if (!talentInfo)
         {
-            iter = m_talents[m_activeSpec].erase(iter);
+            m_talents[m_activeSpec].erase(iter++);
             continue;
         }
 
@@ -4545,7 +4545,7 @@ bool Player::resetTalents(bool no_cost)
 
         if (!talentTabInfo)
         {
-            iter = m_talents[m_activeSpec].erase(iter);
+            m_talents[m_activeSpec].erase(iter++);
             continue;
         }
 
@@ -13507,7 +13507,7 @@ void Player::SendNewItem(Item *item, uint32 count, bool received, bool created, 
     data << uint64(GetGUID());                              // player GUID
     data << uint32(received);                               // 0=looted, 1=from npc
     data << uint32(created);                                // 0=received, 1=created
-    data << uint32(1);                                      // always 0x01 (probably meant to be count of listed items)
+    data << uint32(1);                                      // IsShowChatMessage
     data << uint8(item->GetBagSlot());                      // bagslot
                                                             // item slot, but when added to stack: 0xFFFFFFFF
     data << uint32((item->GetCount() == count) ? item->GetSlot() : -1);
@@ -21528,15 +21528,15 @@ PartyResult Player::CanUninviteFromGroup() const
 {
     const Group* grp = GetGroup();
     if(!grp)
-        return PARTY_RESULT_YOU_NOT_IN_GROUP;
+        return ERR_NOT_IN_GROUP;
 
     if(!grp->IsLeader(GetGUID()) && !grp->IsAssistant(GetGUID()))
-        return PARTY_RESULT_YOU_NOT_LEADER;
+        return ERR_NOT_LEADER;
 
     if(InBattleGround())
-        return PARTY_RESULT_INVITE_RESTRICTED;
+        return ERR_INVITE_RESTRICTED;
 
-    return PARTY_RESULT_OK;
+    return ERR_PARTY_RESULT_OK;
 }
 
 void Player::SetBattleGroundRaid(Group* group, int8 subgroup)
