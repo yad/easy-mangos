@@ -115,19 +115,19 @@ enum EP_Summons
 enum EP_GoSummons
 {
     EP_NPT_BUFF = 0,
-    EP_NPT_FLAGS,
-    EP_EWT_FLAGS,
-    EP_CGT_FLAGS,
-    EP_PWT_FLAGS
+    EP_NPT_FLAGS= 1,
+    EP_EWT_FLAGS= 2,
+    EP_CGT_FLAGS= 3,
+    EP_PWT_FLAGS= 4,
 };
 
 enum EP_Towers
 {
     EP_EWT = 0, // plaguelands 03
-    EP_NPT,// plaguelands 01
-    EP_PWT,// plaguelands 04
-    EP_CGT,// plaguelands 02
-    EP_TOWER_NUM
+    EP_NPT = 1,// plaguelands 01
+    EP_PWT = 2,// plaguelands 04
+    EP_CGT = 3,// plaguelands 02
+    EP_TOWER_NUM = 4,
 };
 
 const go_type EPCapturePoints[EP_TOWER_NUM] = {
