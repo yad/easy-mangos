@@ -1,3 +1,7 @@
+DELETE FROM create WHERE map IN (1, 530);
+
+-- EP and SI are map 1
+SET @MAP=1;
 --  one lordaeron commander, 4 soldiers
 --  should be spawned at EWT and follow a path, but trans-grid pathing isn't safe, so summon them directly at NPT
 -- creature_type EP_EWT_Summons_A[EP_EWT_NUM_CREATURES] = {
@@ -20,6 +24,12 @@ INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) 
 
 ------------------------------
 
+
+
+
+
+-- all other beside LA are map 530
+SET @MAP=530;
 
 -- creature_type HordeControlNPCs[NA_CONTROL_NPC_NUM] = {
 INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('18816', @MAP, '-1523.92', '7951.76', '-17.6942', '3.51172'); -- team:67
