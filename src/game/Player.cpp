@@ -15084,7 +15084,8 @@ bool Player::LoadFromDB( uint32 guid, SqlQueryHolder *holder )
     SetCreatorGUID(0);
 
     // reset some aura modifiers before aura apply
-    SetFarSightGUID(0);
+
+    SetUInt64Value(PLAYER_FARSIGHT, 0);
     SetUInt32Value(PLAYER_TRACK_CREATURES, 0 );
     SetUInt32Value(PLAYER_TRACK_RESOURCES, 0 );
 
@@ -17639,7 +17640,7 @@ void Player::HandleStealthedUnitsDetection()
     MaNGOS::UnitListSearcher<MaNGOS::AnyStealthedCheck > searcher(this,stealthedUnits, u_check);
     VisitAll(searcher, MAX_PLAYER_STEALTH_DETECT_RANGE);
 
-    WorldObject const* viewPoint = GetViewPoint();
+    WorldObject const* viewPoint = GetCamera().getBody();
 
     for (std::list<Unit*>::const_iterator i = stealthedUnits.begin(); i != stealthedUnits.end(); ++i)
     {
@@ -18729,17 +18730,6 @@ void Player::ReportedAfkBy(Player* reporter)
             m_bgData.bgAfkReporter.clear();
         }
     }
-}
-
-WorldObject const* Player::GetViewPoint() const
-{
-    if(uint64 far_sight = GetFarSight())
-    {
-        WorldObject const* viewPoint = GetMap()->GetWorldObject(far_sight);
-        return viewPoint ? viewPoint : this;                // always expected not NULL
-    }
-    else
-        return this;
 }
 
 bool Player::IsVisibleInGridForPlayer( Player* pl ) const
@@ -20359,7 +20349,7 @@ void Player::EnterVehicle(Vehicle *vehicle)
     vehicle->setFaction(getFaction());
 
     SetCharm(vehicle);                                      // charm
-    SetFarSightGUID(vehicle->GetGUID());                    // set view
+    m_camera.SetView(vehicle);                    // set view
 
     SetClientControl(vehicle, 1);                           // redirect controls to vehicle
     SetMover(vehicle);
@@ -20411,7 +20401,7 @@ void Player::ExitVehicle(Vehicle *vehicle)
     vehicle->setFaction((GetTeam() == ALLIANCE) ? vehicle->GetCreatureInfo()->faction_A : vehicle->GetCreatureInfo()->faction_H);
 
     SetCharm(NULL);
-    SetFarSightGUID(0);
+    m_camera.ResetView();
 
     SetClientControl(vehicle, 0);
     SetMover(NULL);
@@ -21590,17 +21580,6 @@ void Player::BuildTeleportAckMsg( WorldPacket *data, float x, float y, float z, 
 bool Player::HasMovementFlag( MovementFlags f ) const
 {
     return m_movementInfo.HasMovementFlag(f);
-}
-
-void Player::SetFarSightGUID( uint64 guid )
-{
-    if(GetFarSight() == guid)
-        return;
-
-    SetUInt64Value(PLAYER_FARSIGHT, guid);
-
-    // need triggering load grids around new view point
-    m_camera.UpdateVisibilityForOwner();
 }
 
 void Player::SendDuelCountdown(uint32 counter)

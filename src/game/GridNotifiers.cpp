@@ -83,7 +83,7 @@ VisibleNotifier::Notify()
                 continue;
 
             if (Player* plr = ObjectAccessor::FindPlayer(*iter))
-                plr->UpdateVisibilityOf(plr->GetViewPoint(),&i_player);
+                plr->UpdateVisibilityOf(plr->GetCamera().getBody(),&i_player);
         }
     }
 

@@ -2181,7 +2181,6 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
 
         bool HaveAtClient(WorldObject const* u) { return u==this || m_clientGUIDs.find(u->GetGUID())!=m_clientGUIDs.end(); }
 
-        WorldObject const* GetViewPoint() const;
         bool IsVisibleInGridForPlayer(Player* pl) const;
         bool IsVisibleGloballyFor(Player* pl) const;
 

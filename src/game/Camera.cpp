@@ -2,6 +2,7 @@
 #include "Camera.h"
 #include "GridNotifiersImpl.h"
 #include "CellImpl.h"
+#include "Log.h"
 
 //////////////
 #define CAMERA_DEBUGGING

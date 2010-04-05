@@ -2402,7 +2402,7 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
             (GetSpellProto()->EffectApplyAuraName[EFFECT_INDEX_0] == 1 || GetSpellProto()->EffectApplyAuraName[EFFECT_INDEX_0] == 128)))
         {
             // spells with SpellEffect=72 and aura=4: 6196, 6197, 21171, 21425
-            ((Player*)m_target)->SetFarSightGUID(0);
+            ((Player*)m_target)->GetCamera().ResetView();
             WorldPacket data(SMSG_CLEAR_FAR_SIGHT_IMMEDIATE, 0);
             ((Player*)m_target)->GetSession()->SendPacket(&data);
             return;
@@ -3525,7 +3525,11 @@ void Aura::HandleBindSight(bool apply, bool /*Real*/)
     if(!caster || caster->GetTypeId() != TYPEID_PLAYER)
         return;
 
-    ((Player*)caster)->SetFarSightGUID(apply ? m_target->GetGUID() : 0);
+    Camera& camera = ((Player*)caster)->GetCamera();
+    if (apply)
+        camera.SetView(m_target);
+    else
+        camera.ResetView();
 }
 
 void Aura::HandleFarSight(bool apply, bool /*Real*/)
