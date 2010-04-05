@@ -1088,28 +1088,30 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
                 }
             }
 
-            Spell* spell = pVictim->m_currentSpells[CURRENT_CHANNELED_SPELL];
-            if(spell && (damagetype != DOT))
+            if(Spell* spell = pVictim->m_currentSpells[CURRENT_CHANNELED_SPELL])
             {
-                if (spell->getState() == SPELL_STATE_CASTING)
+                if(damagetype != DOT)
                 {
-                    uint32 channelInterruptFlags = spell->m_spellInfo->ChannelInterruptFlags;
-                    if( channelInterruptFlags & CHANNEL_FLAG_DELAY )
+                    if (spell->getState() == SPELL_STATE_CASTING)
                     {
-                        if(pVictim!=this)                   //don't shorten the duration of channeling if you damage yourself
-                            spell->DelayedChannel();
+                        uint32 channelInterruptFlags = spell->m_spellInfo->ChannelInterruptFlags;
+                        if( channelInterruptFlags & CHANNEL_FLAG_DELAY )
+                        {
+                            if(pVictim!=this)                   //don't shorten the duration of channeling if you damage yourself
+                                spell->DelayedChannel();
+                        }
+                        else if( (channelInterruptFlags & (CHANNEL_FLAG_DAMAGE | CHANNEL_FLAG_DAMAGE2)) )
+                        {
+                            sLog.outDetail("Spell %u canceled at damage!",spell->m_spellInfo->Id);
+                            pVictim->InterruptSpell(CURRENT_CHANNELED_SPELL);
+                        }
                     }
-                    else if( (channelInterruptFlags & (CHANNEL_FLAG_DAMAGE | CHANNEL_FLAG_DAMAGE2)) )
+                    else if (spell->getState() == SPELL_STATE_DELAYED)
+                        // break channeled spell in delayed state on damage
                     {
                         sLog.outDetail("Spell %u canceled at damage!",spell->m_spellInfo->Id);
                         pVictim->InterruptSpell(CURRENT_CHANNELED_SPELL);
                     }
-                }
-                else if (spell->getState() == SPELL_STATE_DELAYED)
-                    // break channeled spell in delayed state on damage
-                {
-                    sLog.outDetail("Spell %u canceled at damage!",spell->m_spellInfo->Id);
-                    pVictim->InterruptSpell(CURRENT_CHANNELED_SPELL);
                 }
             }
         }
@@ -4230,6 +4232,52 @@ bool Unit::RemoveNoStackAurasDueToAura(Aura *Aur)
         // single allowed spell specific from same caster or from any caster at target
         bool is_spellSpecPerTargetPerCaster = IsSingleFromSpellSpecificPerTargetPerCaster(spellId_spec,i_spellId_spec);
         bool is_spellSpecPerTarget = IsSingleFromSpellSpecificPerTarget(spellId_spec,i_spellId_spec);
+        // DEVELOPER CODE START 
+        const StackType stackInfo_i = sSpellMgr.GetStackConditionsForSpells(i_spellId,spellId); 
+ 
+        if (stackInfo_i != SPELLSTACKING_UNDEFINED) 
+        { 
+            bool toBeRemoved = false; 
+            bool toBeDeactivated = false; 
+            if (stackInfo_i & SPELLSTACKING_FULL) 
+               continue; 
+            if (stackInfo_i & SPELLSTACKING_PERTARGET) 
+            { 
+               toBeRemoved = true; 
+            } 
+            if (stackInfo_i & SPELLSTACKING_PERCASTER) 
+            { 
+               if(Aur->GetCasterGUID() == (*i).second->GetCasterGUID()) 
+                   toBeRemoved = true; 
+            } 
+            if (stackInfo_i & SPELLSTACKING_NONE) 
+                toBeRemoved = true; 
+ 
+            if (stackInfo_i & SPELLSTACKING_INTERNAL) 
+                toBeDeactivated = toBeRemoved; 
+ 
+            if (toBeDeactivated) 
+            { 
+                DeactivateAurasDueToSpell(i_spellId); 
+            } 
+            else if (toBeRemoved) 
+            { 
+                // Its a parent aura (create this aura in ApplyModifier) 
+                if ((*i).second->IsInUse()) 
+                { 
+                     sLog.outError("Aura (Spell %u Effect %u) is in process but attempt removed at aura (Spell %u Effect %u) adding, need add stack rule for Unit::RemoveNoStackAurasDueToAura", i->second->GetId(), i->second->GetEffIndex(),Aur->GetId(), Aur->GetEffIndex()); 
+                     continue; 
+                } 
+                RemoveAurasDueToSpell(i_spellId); 
+                               
+                if( m_Auras.empty() ) 
+                     break; 
+                else 
+                    next =  m_Auras.begin(); 
+            } 
+            continue; 
+        }
+        // DEVELOPER CODE END 
         if( is_spellSpecPerTarget || is_spellSpecPerTargetPerCaster && Aur->GetCasterGUID() == (*i).second->GetCasterGUID() )
         {
             // cannot remove higher rank
@@ -4553,7 +4601,17 @@ void Unit::RemoveSingleAuraByCasterSpell(uint32 spellId, SpellEffectIndex effind
     }
 }
 
-
+// DEVELOPER CODE START 
+void Unit::DeactivateAurasDueToSpell(uint32 spellId) 
+{
+       //IMPLEMENT LATER :) 
+} 
+ 
+void Unit::ActivateAurasDueToSpell(uint32 spellId) 
+{ 
+       //IMPLEMENT LATER :) 
+}  
+// DEVELOPER CODE END 
 void Unit::RemoveAurasDueToSpell(uint32 spellId, Aura* except)
 {
     for (int i = 0; i < MAX_EFFECT_INDEX; ++i)

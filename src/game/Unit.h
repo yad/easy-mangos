@@ -1516,6 +1516,12 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         void RemoveAura(AuraMap::iterator &i, AuraRemoveMode mode = AURA_REMOVE_BY_DEFAULT);
         void RemoveAura(uint32 spellId, SpellEffectIndex effindex, Aura* except = NULL);
 
+        // DEVELOPER CODE START 
+        // deactivating auras effect 
+        void DeactivateAurasDueToSpell(uint32 spellId); 
+        void ActivateAurasDueToSpell(uint32 spellId); 
+        // DEVELOPER CODE END 
+
         // removing specific aura stacks by diff reasons and selections
         void RemoveAurasDueToSpell(uint32 spellId, Aura* except = NULL);
         void RemoveAurasDueToItemSpell(Item* castItem,uint32 spellId);

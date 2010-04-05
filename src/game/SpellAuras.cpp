@@ -8547,6 +8547,13 @@ void Aura::PeriodicDummyTick()
             // Blood of the North
 //            if (spell->SpellIconID == 30412)
 //                return;
+            // Hysteria
+            if (spell->SpellFamilyFlags & UI64LIT(0x0000000020000000))
+            {
+                uint32 deal = m_modifier.m_amount * m_target->GetMaxHealth() / 100;
+                m_target->DealDamage(m_target, deal, NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, NULL, false);
+                return;
+            }
             break;
         }
         default:

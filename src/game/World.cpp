@@ -941,6 +941,14 @@ void World::SetInitialWorldSettings()
     sLog.outString( "Loading Spell Bonus Data..." );
     sSpellMgr.LoadSpellBonusess();
 
+    // DEVELOPER CODE START 
+    sLog.outString( "Loading Spell Stack Data..." ); 
+    sSpellMgr.LoadSpellStack(); 
+ 
+    sLog.outString( "Loading Spell Stack Class Data..." ); 
+    sSpellMgr.LoadSpellStackClass(); 
+    // DEVELOPER CODE END 
+
     sLog.outString( "Loading Spell Proc Item Enchant..." );
     sSpellMgr.LoadSpellProcItemEnchant();                    // must be after LoadSpellChains
 
