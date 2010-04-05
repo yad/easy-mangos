@@ -34,7 +34,7 @@ class MANGOS_DLL_SPEC HomeMovementGenerator<Creature>
 {
     public:
 
-        HomeMovementGenerator() : i_path() {}
+        HomeMovementGenerator() {}
         ~HomeMovementGenerator() {}
 
         void Initialize(Creature &);
@@ -51,6 +51,6 @@ class MANGOS_DLL_SPEC HomeMovementGenerator<Creature>
         DestinationHolder< Traveller<Creature> > i_destinationHolder;
 
         uint32 i_travel_timer;
-        PathInfo i_path;
+        //PathInfo i_path;
 };
 #endif
