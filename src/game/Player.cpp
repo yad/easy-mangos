@@ -12652,6 +12652,10 @@ void Player::PrepareGossipMenu(WorldObject *pSource, uint32 menuId)
                     if (!pCreature->isCanTrainingOf(this, false))
                         bCanTalk = false;
                     break;
+                case GOSSIP_OPTION_LEARNDUALSPEC:
+                    if(!(GetSpecsCount() == 1 && pCreature->isCanTrainingAndResetTalentsOf(this) && !(getLevel() < 40))) //Level added manually, in original patch it was in config !
+                        bCanTalk = false;
+                    break;
                 case GOSSIP_OPTION_UNLEARNTALENTS:
                     if (!pCreature->isCanTrainingAndResetTalentsOf(this))
                         bCanTalk = false;
@@ -12850,6 +12854,29 @@ void Player::OnGossipSelect(WorldObject* pSource, uint32 gossipListId, uint32 me
             break;
         case GOSSIP_OPTION_TRAINER:
             GetSession()->SendTrainerList(guid);
+            break;
+        case GOSSIP_OPTION_LEARNDUALSPEC:
+            if(GetSpecsCount() == 1 && !(getLevel() < 40)) //Level added manually, in original patch it was in config !
+            {
+                if (GetMoney() < 10000000) //same: it was in config, 1000g default, change it if you want
+                {
+                    SendBuyError( BUY_ERR_NOT_ENOUGHT_MONEY, 0, 0, 0);
+                    PlayerTalkClass->CloseGossip();
+                    break;
+                }
+                else
+                {
+                    ModifyMoney(-10000000); //same: here too
+
+                    // Cast spells that teach dual spec
+                    // Both are also ImplicitTarget self and must be cast by player
+                    CastSpell(this,63680,true,NULL,NULL,GetGUID());
+                    CastSpell(this,63624,true,NULL,NULL,GetGUID());
+
+                    // Should show another Gossip text with "Congratulations..."
+                    PlayerTalkClass->CloseGossip();
+                }
+            }
             break;
         case GOSSIP_OPTION_UNLEARNTALENTS:
             PlayerTalkClass->CloseGossip();
