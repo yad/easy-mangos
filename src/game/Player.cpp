@@ -13800,7 +13800,7 @@ void Player::PrepareGossipMenu(WorldObject *pSource, uint32 menuId)
                         bCanTalk = false;
                     break;
                 case GOSSIP_OPTION_LEARNDUALSPEC:
-                    if(!(GetSpecsCount() == 1 && pCreature->isCanTrainingAndResetTalentsOf(this) && !(getLevel() < sWorld.getConfig(CONFIG_UINT32_DUALSPEC_LEVEL))))
+                    if(!(GetSpecsCount() == 1 && pCreature->isCanTrainingAndResetTalentsOf(this) && !(getLevel() < 40))) //Level added manually, in original patch it was in config !
                         bCanTalk = false;
                     break;
                 case GOSSIP_OPTION_UNLEARNTALENTS:
@@ -14015,23 +14015,22 @@ void Player::OnGossipSelect(WorldObject* pSource, uint32 gossipListId, uint32 me
             GetSession()->SendTrainerList(guid);
             break;
         case GOSSIP_OPTION_LEARNDUALSPEC:
-            if(GetSpecsCount() == 1 && !(getLevel() < sWorld.getConfig(CONFIG_UINT32_DUALSPEC_LEVEL)))
+            if(GetSpecsCount() == 1 && !(getLevel() < 40)) //Level added manually, in original patch it was in config !
             {
-                if (GetMoney() < sWorld.getConfig(CONFIG_UINT32_DUALSPEC_PRICE))
+                if (GetMoney() < 10000000) //same: it was in config, 1000g default, change it if you want
                 {
-
                     SendBuyError( BUY_ERR_NOT_ENOUGHT_MONEY, 0, 0, 0);
                     PlayerTalkClass->CloseGossip();
                     break;
                 }
                 else
                 {
-                    ModifyMoney(-sWorld.getConfig(CONFIG_UINT32_DUALSPEC_PRICE));
+                    ModifyMoney(-10000000); //same: here too
 
                     // Cast spells that teach dual spec
                     // Both are also ImplicitTarget self and must be cast by player
-                    this->CastSpell(this,63680,true,NULL,NULL,this->GetGUID());
-                    this->CastSpell(this,63624,true,NULL,NULL,this->GetGUID());
+                    CastSpell(this,63680,true,NULL,NULL,GetGUID());
+                    CastSpell(this,63624,true,NULL,NULL,GetGUID());
 
                     // Should show another Gossip text with "Congratulations..."
                     PlayerTalkClass->CloseGossip();
