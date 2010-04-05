@@ -16479,8 +16479,6 @@ bool Player::LoadFromDB( uint32 guid, SqlQueryHolder *holder )
     m_specsCount = fields[58].GetUInt8();
     m_activeSpec = fields[59].GetUInt8();
 
-	_LoadTalents(holder->GetResult(PLAYER_LOGIN_QUERY_LOADTALENTS));
-
     _LoadGlyphs(holder->GetResult(PLAYER_LOGIN_QUERY_LOADGLYPHS));
 
     _LoadAuras(holder->GetResult(PLAYER_LOGIN_QUERY_LOADAURAS), time_diff);
