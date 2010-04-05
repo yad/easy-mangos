@@ -605,6 +605,16 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
     if(pVictim != this)
         pVictim->RemoveSpellsCausingAura(SPELL_AURA_MOD_STEALTH);
 
+    //Get in CombatState
+    if(pVictim != this && damagetype != DOT)
+    {
+        SetInCombatWith(pVictim);
+        pVictim->SetInCombatWith(this);
+
+        if(Player* attackedPlayer = pVictim->GetCharmerOrOwnerPlayerOrPlayerItself())
+            SetContestedPvP(attackedPlayer);
+    }
+
     // remove affects from attacker at any non-DoT damage (including 0 damage)
     if( damagetype != DOT)
     {
@@ -665,15 +675,6 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
             damage = health-1;
 
         duel_hasEnded = true;
-    }
-    //Get in CombatState
-    if(pVictim != this && damagetype != DOT)
-    {
-        SetInCombatWith(pVictim);
-        pVictim->SetInCombatWith(this);
-
-        if(Player* attackedPlayer = pVictim->GetCharmerOrOwnerPlayerOrPlayerItself())
-            SetContestedPvP(attackedPlayer);
     }
 
     // Rage from Damage made (only from direct weapon damage)
@@ -6516,6 +6517,18 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
 
                 // mana cost save
                 int32 mana = procSpell->manaCost + procSpell->ManaCostPercentage * GetCreateMana() / 100;
+
+                // Explosive Shot returns only 1/3 of 40% per critical
+                if (procSpell->Id == 53352)
+                {
+                    // All ranks have same cost
+                    SpellEntry const* explosiveShot = sSpellStore.LookupEntry(53301);
+                    if (!explosiveShot)
+                        return false;
+                    mana = explosiveShot->manaCost + explosiveShot->ManaCostPercentage * GetCreateMana() / 100;
+                    mana /= 3;
+                }
+
                 basepoints[0] = mana * 40/100;
                 if (basepoints[0] <= 0)
                     return false;
@@ -11013,6 +11026,34 @@ void Unit::SetInCombatState(bool PvP, Unit* enemy)
 
     if (isCharmed() || (GetTypeId()!=TYPEID_PLAYER && ((Creature*)this)->isPet()))
         SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PET_IN_COMBAT);
+
+    if (GetTypeId() == TYPEID_PLAYER)
+    {
+        for (uint32 i = CURRENT_FIRST_NON_MELEE_SPELL; i < CURRENT_MAX_SPELL; ++i)
+        {
+            // skip channeled spell (processed differently below)
+            if (i == CURRENT_CHANNELED_SPELL)
+                continue;
+
+            if(Spell* spell = GetCurrentSpell(CurrentSpellTypes(i)))
+            {
+                if(spell->getState() == SPELL_STATE_PREPARING)
+                {
+                    if(spell->m_spellInfo->Attributes & SPELL_ATTR_CANT_USED_IN_COMBAT)
+                        InterruptSpell(CurrentSpellTypes(i));
+                }
+            }
+        }
+
+        if(Spell* spell = m_currentSpells[CURRENT_CHANNELED_SPELL])
+        {
+            if (spell->getState() == SPELL_STATE_CASTING)
+            {
+                if(spell->m_spellInfo->Attributes & SPELL_ATTR_CANT_USED_IN_COMBAT)
+                    InterruptSpell(CURRENT_CHANNELED_SPELL);
+            }
+        }
+    }
 
     if (creatureNotInCombat)
     {
