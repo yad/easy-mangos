@@ -11310,8 +11310,8 @@ bool Unit::isVisibleForOrDetect(Unit const* u, WorldObject const* viewPoint, boo
         }
     }
     
-    // Buff in DK starting location provides invisibility for each faction players
-    if(u->HasAura(51913))
+    // In DK starting map should be enemy players invisible
+    if(GetMapId() == 609)
     {
         if(GetTypeId() == TYPEID_PLAYER && u->GetTypeId() == TYPEID_PLAYER)
         {
