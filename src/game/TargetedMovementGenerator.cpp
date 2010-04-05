@@ -70,42 +70,42 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner)
         if( i_destinationHolder.HasDestination() && i_destinationHolder.GetDestinationDiff(x,y,z) < bothObjectSize )
             return;
     */
-    if (!i_destinationHolder.HasArrived())
-        return;
-    float myx,myy,myz;
-    //the Creature after us is actually in owner variable..
-    owner.GetPosition(myx,myy,myz);
+    //if (!i_destinationHolder.HasArrived())
+    //    return;
+    //float myx,myy,myz;
+    ////the Creature after us is actually in owner variable..
+    //owner.GetPosition(myx,myy,myz);
 
-    if(i_path.Length)
-    {
-        // path exists, just need to update it
-        i_path.Start.x = myx;
-        i_path.Start.y = myy;
-        i_path.Start.z = myz;
-        i_path.End.x = x;
-        i_path.End.y = y;
-        i_path.End.z = z;
-        sLog.outError("Targeted: Need to update path.");
-        i_target->GetMap()->UpdatePath(&i_path);
-    }
-    else
-    {
-        sLog.outError("Targeted: Need to get path.");
-        // path doesn't exist, create one
-        i_path = i_target->GetMap()->GetPath(myx,myy,myz,x,y,z);
-    }
+    //if(i_path.Length)
+    //{
+    //    // path exists, just need to update it
+    //    i_path.Start.x = myx;
+    //    i_path.Start.y = myy;
+    //    i_path.Start.z = myz;
+    //    i_path.End.x = x;
+    //    i_path.End.y = y;
+    //    i_path.End.z = z;
+    //    sLog.outError("Targeted: Need to update path.");
+    //    i_target->GetMap()->UpdatePath(&i_path);
+    //}
+    //else
+    //{
+    //    sLog.outError("Targeted: Need to get path.");
+    //    // path doesn't exist, create one
+    //    i_path = i_target->GetMap()->GetPath(myx,myy,myz,x,y,z);
+    //}
 
     Traveller<T> traveller(owner);
-    if(i_path.Length)
-    {
-        sLog.outError("Targeted: got path!\n");
-        i_destinationHolder.SetDestination(traveller, i_path.NextDestination.x,i_path.NextDestination.y,i_path.NextDestination.z);
-    }
-    else
-    {
-        sLog.outError("Targeted: Didn't get path.\n");
+    //if(i_path.Length)
+    //{
+    //    sLog.outError("Targeted: got path!\n");
+    //    i_destinationHolder.SetDestination(traveller, i_path.NextDestination.x,i_path.NextDestination.y,i_path.NextDestination.z);
+    //}
+    //else
+    //{
+    //    sLog.outError("Targeted: Didn't get path.\n");
         i_destinationHolder.SetDestination(traveller, x, y, z);
-    }
+    //} TODO:
 
     //sLog.outString("Moving to x[%.2f] y[%.2f] z[%.2f]", i_path.NextDestination.x, i_path.NextDestination.y, i_path.NextDestination.z);
 
@@ -198,31 +198,31 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
         //More distance let have better performance, less distance let have more sensitive reaction at target move.
 
         // try to counter precision differences
-        if ((i_path.Length && i_destinationHolder.GetDistance3dFromDestSq(i_path.End.x, i_path.End.y, i_path.End.z) >= dist * dist)
-            || (i_destinationHolder.GetDistance3dFromDestSq(*i_target.getTarget()) >= dist * dist))
+        if (/*(i_path.Length && i_destinationHolder.GetDistance3dFromDestSq(i_path.End.x, i_path.End.y, i_path.End.z) >= dist * dist) TODO:
+            ||*/ (i_destinationHolder.GetDistance3dFromDestSq(*i_target.getTarget()) >= dist * dist))
         {
             // Set new Angle For Map::
-            if(i_path.Length)
+            /*if(i_path.Length)
                 owner.SetOrientation(owner.GetAngle(i_path.NextDestination.x, i_path.NextDestination.y));
-            else
+            else TODO:*/
                 owner.SetInFront(i_target.getTarget());
 
             _setTargetLocation(owner);                      //Calculate New Dest and Send data To Player
         }
         // Update the Angle of the target only for Map::, no need to send packet for player
         else if (!i_angle && !owner.HasInArc(0.01f, i_target.getTarget()))
-            if(i_path.Length)
+            /*if(i_path.Length)
                 owner.SetOrientation(owner.GetAngle(i_path.NextDestination.x, i_path.NextDestination.y));
-            else
+            else TODO:*/
                 owner.SetInFront(i_target.getTarget());
 
         if ((owner.IsStopped() && !i_destinationHolder.HasArrived()) || i_recalculateTravel)
         {
             i_recalculateTravel = false;
             //Angle update will take place into owner.StopMoving()
-            if(i_path.Length)
+            /*if(i_path.Length)
                 owner.SetOrientation(owner.GetAngle(i_path.NextDestination.x, i_path.NextDestination.y));
-            else
+            else TODO:*/
                 owner.SetInFront(i_target.getTarget());
 
             owner.StopMoving();

@@ -221,10 +221,25 @@ bool ChatHandler::HandleDebugMoveMapCommand(const char* args)
 {
     float range;
     char* w = strtok((char*)args, " ");
-    if (!w) {
-        SendSysMessage("Syntax is .debug movemap range");
-        return false;
+    if (!w)
+    {
+        Player* player = m_session->GetPlayer();
+        Unit* target = getSelectedUnit();
+
+        PathInfo* path = target->GetPathTo(player);
+        PSendSysMessage("%s's path to you:", target->GetName());
+        PSendSysMessage("length %i", path->Length);
+        PSendSysMessage("next   (%f,%f,%f)", path->nextPosition[0],path->nextPosition[1],path->nextPosition[2]);
+        PSendSysMessage("end    (%f,%f,%f)", path->endPosition[0],path->endPosition[1],path->endPosition[2]);
+        PSendSysMessage("path");
+        for(int i = 0; i < path->Length; ++i)
+            PSendSysMessage("       %i", path->pathPolyRefs[i]);
+
+        delete path;
+
+        return true;
     }
+
     range = atof(w);
     PSendSysMessage("Generating MoveMap Path for all creatures around player In range:%.2f", range);
     // Iterate for all slave masters
@@ -249,14 +264,13 @@ bool ChatHandler::HandleDebugMoveMapCommand(const char* args)
         std::list<Creature*>::iterator aCreature = creatureList.begin();
         uint32 pathes = 0;
         uint32 uStartTime = getMSTime();
- 
-        float x,y,z;
+
         float gx,gy,gz;
+        WorldObject* player = m_session->GetPlayer();
         m_session->GetPlayer()->GetPosition(gx,gy,gz);
         Map *theMap = m_session->GetPlayer()->GetMap();
         while (aCreature != creatureList.end()) {
-            (*aCreature)->GetPosition(x,y,z);
-            theMap->GetPath(x,y,z,gx,gy,gz);
+            (*aCreature)->GetPathTo(player);
             ++pathes;
             aCreature++;
         }

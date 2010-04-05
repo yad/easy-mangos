@@ -205,18 +205,18 @@ enum LevelRequirementVsMode
     LEVELREQUIREMENT_HEROIC = 70
 };
  
-struct PathInfo
-{
-    PathInfo() : Length(0), CurrentIndex(-1), Start(), End(), NextDestination() {}
-
-    dtPolyRef pathPolyRefs[50];
-    int Length;                 // Length 0 == unreachable location
-    int CurrentIndex;           // probably don't need this
-    Position Start;
-    Position End;
-    Position NextDestination;   // this can end up being (0,0,0), which means no path
-    dtNavMesh* navMesh;
-};
+//struct PathInfo
+//{
+//    PathInfo() : Length(0), CurrentIndex(-1), Start(), End(), NextDestination() {}
+//
+//    dtPolyRef pathPolyRefs[50];
+//    int Length;                 // Length 0 == unreachable location
+//    int CurrentIndex;           // probably don't need this
+//    Position Start;
+//    Position End;
+//    Position NextDestination;   // this can end up being (0,0,0), which means no path
+//    dtNavMesh* navMesh;
+//};
 
 #if defined( __GNUC__ )
 #pragma pack()
@@ -234,6 +234,8 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
     public:
         Map(uint32 id, time_t, uint32 InstanceId, uint8 SpawnMode, Map* _parent = NULL);
         virtual ~Map();
+
+        dtNavMesh* GetNavMesh(float x, float y);
 
         // currently unused for normal maps
         bool CanUnload(uint32 diff)
@@ -304,9 +306,9 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
         float GetHeight(float x, float y, float z, bool pCheckVMap=true) const;
         bool IsInWater(float x, float y, float z) const;    // does not use z pos. This is for future use
  
-        void getNextPositionOnPathToLocation(PathInfo* path);
-        PathInfo GetPath(const float startx, const float starty, const float startz, const float endx, const float endy, const float endz);
-        void UpdatePath(PathInfo* oldPath);
+        //void getNextPositionOnPathToLocation(PathInfo* path);
+        //PathInfo GetPath(const float startx, const float starty, const float startz, const float endx, const float endy, const float endz);
+        //void UpdatePath(PathInfo* oldPath);
 
         ZLiquidStatus getLiquidStatus(float x, float y, float z, uint8 ReqLiquidType, LiquidData *data = 0) const;
 
