@@ -3662,6 +3662,14 @@ uint64 Map::GetSingleCreatureGuid(uint16 event1, uint16 event2)
     return 0;
 }
 
+Creature* Map::GetSingleCreature(uint16 event1, uint16 event2)
+{
+    CreatureList::const_iterator itr = m_EventObjects[MAKE_PAIR32(event1, event2)].creatures.begin();
+    if (itr != m_EventObjects[MAKE_PAIR32(event1, event2)].creatures.end())
+        return GetCreature(*itr);
+    return NULL;
+}
+
 const uint16 Map::GetGameObjectEvent1(uint32 guidLow) const
 {
     return (sMapMgr.GetGameObjectEventIndex(guidLow)).event1;

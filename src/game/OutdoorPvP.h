@@ -131,6 +131,7 @@ class OutdoorPvPObjective
         virtual bool CanTalkTo(Player * /*plr*/, Creature * /*c*/, GossipOption & /*gso*/) { return false; }
 
         void DeleteSpawns();
+        bool IsSpawned() { return m_spawned; }
     protected:
 
         bool AddCapturePoint(uint32 entry, float x, float y, float z, float o, float rotation0, float rotation1, float rotation2, float rotation3);
@@ -161,6 +162,8 @@ class OutdoorPvPObjective
         uint32 m_State;
         // neutral value on capture bar
         uint32 m_NeutralValue;
+        // if no gameobject is loaded it will be false
+        bool m_spawned;
 
         // pointer to the OutdoorPvP this objective belongs to
         OutdoorPvP* m_PvP;
