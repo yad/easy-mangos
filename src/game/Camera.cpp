@@ -8,8 +8,11 @@
 #define CAMERA_DEBUGGING
 
 #ifdef CAMERA_DEBUGGING
-#define CAMERA_OUT(s)  sLog.outError(s)
-#define C_ASSERT(s) assert(s)
+    #define CAMERA_OUT(s)  /*sLog.outBasic(s)*/
+    #define C_ASSERT(s) assert(s)
+#else
+    #define CAMERA_OUT(s)
+    #define C_ASSERT(s)
 #endif
 
 Camera::Camera(Player* pl) : GridCamera(this), m_owner(*pl), m_source(pl)
