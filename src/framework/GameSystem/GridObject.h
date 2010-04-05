@@ -5,11 +5,11 @@
 
 template<typename _Type > class GridReference;
 
-template<typename _TypeGrid >
+template<typename _GridType >
 class MANGOS_DLL_SPEC GridObjBase
 {
     template<typename _Type > friend class Type;
-    _TypeGrid * m_grid;
+    _GridType * m_grid;
 
 protected:
     GridObjBase( ) : m_grid(0), m_isActiveObject(false), container_type(false) {}
@@ -17,7 +17,7 @@ protected:
     bool container_type;    // grid container type - false, world type container - true
 
 public:
-    _TypeGrid* GetGrid() const { return m_grid; }
+    _GridType* GetGrid() const { return m_grid; }
     bool isActiveObject() const { return m_isActiveObject; }
     /*void SetActive()
     {
@@ -44,7 +44,7 @@ public:
 
         GridReference<_Type>& GetGridRef() { return m_ref; }
         void RemoveFromGrid() { SetGrid(NULL);}
-        void SetGrid(_TypeGrid *type)
+        void SetGrid(_GridType *type)
         {
             if(m_base.container_type)
             {
@@ -70,7 +70,7 @@ public:
     private:
         GridReference<_Type> m_ref;
         _Type & m_base;
-        _TypeGrid *& m_grid_link;// for fast access to m_base members or nice view at least
+        _GridType *& m_grid_link;// for fast access to m_base members or nice view at least
     };
 };
 
