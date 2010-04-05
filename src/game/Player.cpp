@@ -4591,6 +4591,15 @@ bool Player::resetTalents(bool no_cost)
             RemovePet(NULL,PET_SAVE_NOT_IN_SLOT, true);
     }
     */
+
+    if(CanTitanGrip())
+    {
+        SetCanTitanGrip(false);
+        if(sWorld.getConfig(CONFIG_BOOL_OFFHAND_CHECK_AT_TALENTS_RESET))
+            AutoUnequipOffhandIfNeed();
+        RemoveAurasDueToSpellByCancel(49152);
+    }
+
     return true;
 }
 
