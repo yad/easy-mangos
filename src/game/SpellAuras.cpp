@@ -8875,8 +8875,8 @@ void Aura::HandleAllowOnlyAbility(bool apply, bool Real)
     {
        m_target->resetAttackTimer(BASE_ATTACK);
        m_target->resetAttackTimer(RANGED_ATTACK);
-       m_target->resetAttackTimer(OFF_ATTACK);*/
-    }
+       m_target->resetAttackTimer(OFF_ATTACK);
+    }*/
 
     m_target->UpdateDamagePhysical(BASE_ATTACK);
     m_target->UpdateDamagePhysical(RANGED_ATTACK);
