@@ -17,12 +17,11 @@ class MANGOS_DLL_SPEC Camera : public GridObject, public GridCamera
     friend class ViewPoint;
     public:
 
-        //Camera(Player* pl, WorldObject* v_p);
         Camera(Player* pl);
         virtual ~Camera();
 
-        inline WorldObject* getBody() const { return m_source;}
-        inline Player* getOwner() { return m_owner;}
+        WorldObject* getBody() { return m_source;}
+        Player* getOwner() { return &m_owner;}
 
         // set view to camera's owner
         void SetView(WorldObject *obj);
@@ -38,13 +37,14 @@ class MANGOS_DLL_SPEC Camera : public GridObject, public GridCamera
     private:
         // called when viewpoint changes visibility state
         // returns true when need erase camera from viepoint's camera list
+        // you can accesss to them only via viewpoint's CameraEvent_* functions
         bool Event_AddedToWorld();
         bool Event_RemovedFromWorld();
         bool Event_Moved();
         bool Event_ResetView();
         bool Event_ViewPointVisibilityChanged();
 
-        Player *const m_owner;
+        Player & m_owner;
         WorldObject *m_source;
 };
 
@@ -68,7 +68,20 @@ public:
     void CameraEvent_ResetView() { CameraCall(&Camera::Event_ResetView); }
     void CameraEvent_ViewPointVisibilityChanged() { CameraCall(&Camera::Event_ViewPointVisibilityChanged); }
 
-    void CameraCall(bool (Camera::*m_func)(void));
+    void CameraCall(bool (Camera::*m_func)(void))
+    {
+        if (m_cameras.empty())
+            return;
+
+        struct caller 
+        {
+            bool (Camera::*m_func)(void);
+            caller(bool (Camera::*m_f)(void)) : m_func(m_f) {}
+            //returns true if need remove camera from viewpoint's camera list
+            bool operator () (Camera* c) const { return (c->*m_func)(); }
+        };
+        m_cameras.remove_if( caller(m_func) );
+    }
 };
 
 

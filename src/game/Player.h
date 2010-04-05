@@ -2193,7 +2193,7 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
         // Stealth detection system
         void HandleStealthedUnitsDetection();
 
-        Camera* GetCamera() { return &m_camera; }
+        Camera& GetCamera() { return m_camera; }
         Camera m_camera;
 
         uint8 m_forced_speed_changes[MAX_MOVE_TYPE];

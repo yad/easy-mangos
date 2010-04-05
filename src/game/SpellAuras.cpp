@@ -3534,11 +3534,11 @@ void Aura::HandleFarSight(bool apply, bool /*Real*/)
     if(!caster || caster->GetTypeId() != TYPEID_PLAYER)
         return;
 
-    Camera* camera = ((Player*)caster)->GetCamera();
+    Camera& camera = ((Player*)caster)->GetCamera();
     if (apply)
-        camera->SetView(m_target);
+        camera.SetView(m_target);
     else
-        camera->ResetView();
+        camera.ResetView();
 }
 
 void Aura::HandleAuraTrackCreatures(bool apply, bool /*Real*/)
@@ -3591,7 +3591,7 @@ void Aura::HandleModPossess(bool apply, bool Real)
         return;
 
     Player* p_caster = (Player*)caster;
-    Camera* camera = p_caster->GetCamera();
+    Camera& camera = p_caster->GetCamera();
 
     if( apply )
     {
@@ -3602,7 +3602,7 @@ void Aura::HandleModPossess(bool apply, bool Real)
 
         p_caster->SetCharm(m_target);
 
-        camera->SetView(m_target);
+        camera.SetView(m_target);
         p_caster->SetClientControl(m_target, 1);
         p_caster->SetMover(m_target);
 
@@ -3645,7 +3645,7 @@ void Aura::HandleModPossess(bool apply, bool Real)
 
         p_caster->SetCharm(NULL);
 
-        camera->ResetView();
+        camera.ResetView();
         p_caster->SetClientControl(m_target, 0);
         p_caster->SetMover(NULL);
 
@@ -3675,7 +3675,7 @@ void Aura::HandleModPossessPet(bool apply, bool Real)
         return;
 
     Player* p_caster = (Player*)caster;
-    Camera* camera = p_caster->GetCamera();
+    Camera& camera = p_caster->GetCamera();
 
     if(apply)
         pet->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PLAYER_CONTROLLED);
@@ -3691,14 +3691,14 @@ void Aura::HandleModPossessPet(bool apply, bool Real)
         pet->StopMoving();
         pet->GetMotionMaster()->Clear();
         pet->GetMotionMaster()->MoveIdle();
-        camera->SetView(pet);
+        camera.SetView(pet);
     }
     else
     {
         pet->AttackStop();
         pet->GetMotionMaster()->MoveFollow(caster, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE);
         pet->AddSplineFlag(SPLINEFLAG_WALKMODE);
-        camera->ResetView();
+        camera.ResetView();
     }
 }
 
@@ -4147,7 +4147,7 @@ void Aura::HandleInvisibilityDetect(bool apply, bool Real)
             m_target->m_detectInvisibilityMask |= (1 << m_modifier.m_miscvalue);
     }
     if(Real && m_target->GetTypeId()==TYPEID_PLAYER)
-        ((Player*)m_target)->GetCamera()->UpdateVisibilityForOwner();
+        ((Player*)m_target)->GetCamera().UpdateVisibilityForOwner();
 }
 
 void Aura::HandleAuraModRoot(bool apply, bool Real)

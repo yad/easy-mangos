@@ -397,11 +397,11 @@ void WorldSession::SendSpiritResurrect()
             _player->TeleportTo(corpseGrave->map_id, corpseGrave->x, corpseGrave->y, corpseGrave->z, _player->GetOrientation());
         // or update at original position
         else
-            _player->GetCamera()->UpdateVisibilityForOwner();
+            _player->GetCamera().UpdateVisibilityForOwner();
     }
     // or update at original position
     else
-        _player->GetCamera()->UpdateVisibilityForOwner();
+        _player->GetCamera().UpdateVisibilityForOwner();
 }
 
 void WorldSession::HandleBinderActivateOpcode( WorldPacket & recv_data )
