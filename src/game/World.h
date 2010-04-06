@@ -173,6 +173,7 @@ enum eConfigUInt32Values
     CONFIG_UINT32_TIMERBAR_BREATH_MAX,
     CONFIG_UINT32_TIMERBAR_FIRE_GMLEVEL,
     CONFIG_UINT32_TIMERBAR_FIRE_MAX,
+    CONFIG_UINT32_MIN_LEVEL_STAT_SAVE,
     CONFIG_UINT32_VALUE_COUNT
 };
 
@@ -302,6 +303,7 @@ enum eConfigBoolValues
     CONFIG_BOOL_ARENA_QUEUE_ANNOUNCER_JOIN,
     CONFIG_BOOL_ARENA_QUEUE_ANNOUNCER_EXIT,
     CONFIG_BOOL_KICK_PLAYER_ON_BAD_PACKET,
+    CONFIG_BOOL_STATS_SAVE_ONLY_ON_LOGOUT,
     CONFIG_BOOL_VALUE_COUNT
 };
 
@@ -319,7 +321,7 @@ enum BillingPlanFlags
     SESSION_ENABLE_CAIS     = 0x80,
 };
 
-/// Type of server, this is values from second column of Cfg_Configs.dbc
+/// Type of server, this is values from second column of Cfg_Configs.dbc (1.12.1 have another numeration)
 enum RealmType
 {
     REALM_TYPE_NORMAL   = 0,
@@ -331,7 +333,7 @@ enum RealmType
                                                             // replaced by REALM_PVP in realm list
 };
 
-/// This is values from first column of Cfg_Categories.dbc
+/// This is values from first column of Cfg_Categories.dbc (1.12.1 have another numeration)
 enum RealmZone
 {
     REALM_ZONE_UNKNOWN       = 0,                           // any language
@@ -365,6 +367,7 @@ enum RealmZone
     REALM_ZONE_QA_SERVER     = 28,                          // any language
     REALM_ZONE_CN9           = 29,                          // basic-Latin at create, any at login
     REALM_ZONE_TEST_SERVER_2 = 30,                          // any language
+    // in 3.x
     REALM_ZONE_CN10          = 31,                          // basic-Latin at create, any at login
     REALM_ZONE_CTC           = 32,
     REALM_ZONE_CNC           = 33,
