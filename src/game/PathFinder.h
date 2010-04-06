@@ -5,29 +5,55 @@
 
 #define MAX_PATH_LENGTH 50
 
+enum PathType
+{
+    PATHFIND_BLANK      = 0,    // path not built yet
+    PATHFIND_NORMAL     = 1,    // normal path
+    PATHFIND_SHORTCUT   = 2     // insufficient info to build path, ignore terrain/obstacles
+};
+
 class WorldObject;
 
 class PathInfo
 {
     public:
-        PathInfo() : Length(0), pathPolyRefs(0) { }
+        PathInfo()
+            : Length(0), pathPolyRefs(0), sourceObject(0), targetObject(0), m_type(PATHFIND_BLANK)
+        { Build(); }
+
+        PathInfo(WorldObject* from, WorldObject* to)
+            : Length(0), pathPolyRefs(0), sourceObject(from), targetObject(to), m_type(PATHFIND_BLANK)
+        { Build(); }
+
+        PathInfo(WorldObject* from, const float x, const float y, const float z)
+            : Length(0), pathPolyRefs(0), sourceObject(from), m_type(PATHFIND_BLANK)
+        { setEndPosition(x, y, z); Build(); }
+
         ~PathInfo() { delete [] pathPolyRefs; }
 
+        inline void getNextPosition(float &x, float &y, float &z) { x = nextPosition[0]; y = nextPosition[1]; z = nextPosition[2]; }
         inline void setNextPosition(float x, float y, float z) { nextPosition[0] = x; nextPosition[1] = y; nextPosition[2] = z; }
+        
+        inline void getEndPosition(float &x, float &y, float &z) { x = endPosition[0]; y = endPosition[1]; z = endPosition[2]; }
         inline void setEndPosition(float x, float y, float z) { endPosition[0] = x; endPosition[1] = y; endPosition[2] = z; }
         
         dtPolyRef getPathPolyByPosition(float x, float y, float z);
         bool isPointInPolyBounds(float x, float y, float z, dtPolyRef polyRef);
 
-        dtPolyRef   *pathPolyRefs;      // stores detour polygon references
-        int         Length;             // Length 0 == unreachable location - updated automatically by WorldObject::UpdatePath(Path*)
-        float       nextPosition[3];    // {x, y, z} of next location on the path - updated automatically by WorldObject::UpdatePath(Path*)
-        float       endPosition[3];     // {x, y, z} of the target destination - updated automatically by WorldObject::UpdatePath(Path*)
+        void Update();
+
+        dtPolyRef   *pathPolyRefs;      // array of detour polygon references
+        int         Length;             // Length 0 == unreachable location
+        float       nextPosition[3];    // {x, y, z} of next location on the path
+        float       endPosition[3];     // {x, y, z} of the target destination
+        WorldObject *sourceObject;      // the object that is moving
         WorldObject *targetObject;      // the object we're moving toward, if any
         dtNavMesh   *navMesh;           // the nav mesh used to find the path
+        PathType    m_type;
 
     private:
         void updateNextPosition();
+        void Build();
 };
 
 inline bool areSamePositions(const float* position1, const float* position2)

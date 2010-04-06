@@ -478,13 +478,6 @@ class MANGOS_DLL_SPEC WorldObject : public Object
 
         Creature* SummonCreature(uint32 id, float x, float y, float z, float ang,TempSummonType spwtype,uint32 despwtime);
 
-    public:
-        PathInfo* GetPathTo(WorldObject* targetObject);
-        PathInfo* GetPathTo(float x, float y, float z);
-        void UpdatePath(PathInfo* path);
-    private:
-        void GetNextPositionOnPath(PathInfo* path);
-
     protected:
         explicit WorldObject();
 
