@@ -226,7 +226,7 @@ bool ChatHandler::HandleDebugMoveMapCommand(const char* args)
         Player* player = m_session->GetPlayer();
         Unit* target = getSelectedUnit();
 
-        PathInfo* path = target->GetPathTo(player);
+        PathInfo* path = new PathInfo(player, target);
         PSendSysMessage("%s's path to you:", target->GetName());
         PSendSysMessage("length %i", path->Length);
         PSendSysMessage("next   (%f,%f,%f)", path->nextPosition[0],path->nextPosition[1],path->nextPosition[2]);
@@ -234,6 +234,12 @@ bool ChatHandler::HandleDebugMoveMapCommand(const char* args)
         PSendSysMessage("path");
         for(int i = 0; i < path->Length; ++i)
             PSendSysMessage("       %i", path->pathPolyRefs[i]);
+
+        float x, y, z;
+        player->GetPosition(x, y, z);
+        PSendSysMessage("You are on poly %i", path->getPathPolyByPosition(x, y, z));
+        target->GetPosition(x, y, z);
+        PSendSysMessage("Target is on poly %i", path->getPathPolyByPosition(x, y, z));
 
         delete path;
 
@@ -270,7 +276,7 @@ bool ChatHandler::HandleDebugMoveMapCommand(const char* args)
         m_session->GetPlayer()->GetPosition(gx,gy,gz);
         Map *theMap = m_session->GetPlayer()->GetMap();
         while (aCreature != creatureList.end()) {
-            (*aCreature)->GetPathTo(player);
+            PathInfo(player, (*aCreature));
             ++pathes;
             aCreature++;
         }
