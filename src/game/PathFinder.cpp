@@ -28,12 +28,22 @@ bool PathInfo::isPointInPolyBounds(float x, float y, float z, dtPolyRef polyRef)
 {
     float point[3] = {y, z, x};
 
+    const dtMeshTile* tile = this->navMesh->getTileByRef(polyRef, 0);
     const dtPoly* poly = this->navMesh->getPolyByRef(polyRef);
-    const float* vertices = this->navMesh->getPolyVertsByRef(polyRef);
+
+    float vertices[DT_VERTS_PER_POLYGON*3];
     float ed[DT_VERTS_PER_POLYGON];             // distance^2 from edge to point?
     float et[DT_VERTS_PER_POLYGON];             // ?
 
-    return distancePtPolyEdgesSqr(point, vertices, poly->vertCount, ed, et);
+	// Collect vertices.
+	int nv = 0;
+	for (int i = 0; i < (int)poly->vertCount; ++i)
+	{
+		vcopy(&vertices[nv*3], &tile->verts[poly->verts[i]*3]);
+		nv++;
+	}
+
+    return distancePtPolyEdgesSqr(point, vertices, nv, ed, et);
 }
 
 void PathInfo::Build()
@@ -50,10 +60,12 @@ void PathInfo::Build()
         setEndPosition(x, y, z);
     }
 
-
-    // set a default next position
+    // set start and a default next position
     sourceObject->GetPosition(x, y, z);
+    setStartPosition(x, y, z);
     setNextPosition(x, y, z);
+
+    // get nav mesh
     navMesh = sourceObject->GetMap()->GetNavMesh(x, y);
 
     if(!navMesh)
