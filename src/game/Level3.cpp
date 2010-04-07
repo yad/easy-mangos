@@ -5275,11 +5275,11 @@ bool ChatHandler::HandleResetSpellsCommand(const char * args)
         if(!m_session || m_session->GetPlayer()!=target)
             PSendSysMessage(LANG_RESET_SPELLS_ONLINE,GetNameLink(target).c_str());
     }
-    else
+    /*else
     {
         CharacterDatabase.PExecute("UPDATE characters SET at_login = at_login | '%u' WHERE guid = '%u'",uint32(AT_LOGIN_RESET_SPELLS), GUID_LOPART(target_guid));
         PSendSysMessage(LANG_RESET_SPELLS_OFFLINE,target_name.c_str());
-    }
+    } */
 
     return true;
 }
