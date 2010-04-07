@@ -31,6 +31,9 @@ class PathInfo
 
         ~PathInfo() { delete [] pathPolyRefs; }
 
+        inline void getStartPosition(float &x, float &y, float &z) { x = startPosition[0]; y = startPosition[1]; z = startPosition[2]; }
+        inline void setStartPosition(float x, float y, float z) { startPosition[0] = x; startPosition[1] = y; startPosition[2] = z; }
+
         inline void getNextPosition(float &x, float &y, float &z) { x = nextPosition[0]; y = nextPosition[1]; z = nextPosition[2]; }
         inline void setNextPosition(float x, float y, float z) { nextPosition[0] = x; nextPosition[1] = y; nextPosition[2] = z; }
         
@@ -44,8 +47,9 @@ class PathInfo
 
         dtPolyRef   *pathPolyRefs;      // array of detour polygon references
         int         Length;             // Length 0 == unreachable location
+        float       startPosition[3];   // {x, y, z} of current location
         float       nextPosition[3];    // {x, y, z} of next location on the path
-        float       endPosition[3];     // {x, y, z} of the target destination
+        float       endPosition[3];     // {x, y, z} of the destination
         WorldObject *sourceObject;      // the object that is moving
         WorldObject *targetObject;      // the object we're moving toward, if any
         dtNavMesh   *navMesh;           // the nav mesh used to find the path
