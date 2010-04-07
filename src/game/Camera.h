@@ -52,11 +52,11 @@ class MANGOS_DLL_SPEC Camera : public GridObject, public GridCamera
 class MANGOS_DLL_SPEC ViewPoint
 {
     friend class Camera;
-    typedef std::list<Camera*> CameraList;
+    typedef std::vector<Camera*> CameraList;
     CameraList m_cameras;
     
     void AddCamera(Camera* c) { m_cameras.push_back(c); }
-    void RemoveCamera(Camera* c) { m_cameras.remove(c); }
+    void RemoveCamera(Camera* c) { m_cameras.erase(remove(m_cameras.begin(),m_cameras.end(), c), m_cameras.end() ); }
 
     void CameraCall(bool (Camera::*m_func)(void));
 

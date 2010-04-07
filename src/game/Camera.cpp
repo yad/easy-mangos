@@ -156,7 +156,7 @@ ViewPoint::~ViewPoint()
 {
     if(!m_cameras.empty())
     {
-        CAMERA_OUT("ViewPoint destroyer called, but list of cameras is not empty");
+        CAMERA_OUT("ViewPoint deconstructor called, but list of cameras is not empty");
         V_ASSERT(false);
     }
 }
@@ -177,6 +177,6 @@ void ViewPoint::CameraCall(bool (Camera::*m_func)(void))
             m_cameras.clear();
     }
     else
-        m_cameras.remove_if( caller(m_func) );
+        m_cameras.erase( remove_if(m_cameras.begin(),m_cameras.end(),caller(m_func)), m_cameras.end() );
 }
 
