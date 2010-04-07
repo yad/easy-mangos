@@ -8,12 +8,15 @@
 #define CAMERA_DEBUGGING
 
 #ifdef CAMERA_DEBUGGING
-    #define CAMERA_OUT(s)  /*sLog.outBasic(s)*/
-    #define C_ASSERT(s) assert(s)
+    #define CAMERA_OUT(s)       sLog.outBasic(s)
+    #define V_ASSERT(s)         assert(s)
+    #define R_ASSERT(s,ret)     assert(s)
 #else
     #define CAMERA_OUT(s)
-    #define C_ASSERT(s)
+    #define V_ASSERT(s)         if(!(s)) return
+    #define R_ASSERT(s,ret)     if(!(s)) return ret
 #endif
+
 
 Camera::Camera(Player* pl) : GridCamera(this), m_owner(*pl), m_source(pl)
 {
@@ -43,9 +46,9 @@ inline void UpdateForCurrentViewPoint(Camera& c, Player & m_owner, WorldObject &
 
 void Camera::SetView(WorldObject *obj)
 {
-    C_ASSERT(obj && obj != m_source);
-    C_ASSERT(obj->isType(TYPEMASK_DYNAMICOBJECT|TYPEMASK_UNIT) && "Camera::SetView, viewpoint type is not available for client");
-    C_ASSERT(m_source->IsInMap(obj));// IsInMap check phases too
+    V_ASSERT(obj && obj != m_source);
+    V_ASSERT(obj->isType(TYPEMASK_DYNAMICOBJECT|TYPEMASK_UNIT) && "Camera::SetView, viewpoint type is not available for client");
+    V_ASSERT(m_source->IsInMap(obj));// IsInMap check phases too
 
     m_source->getViewPoint().RemoveCamera(this);
     m_source = obj;
@@ -57,8 +60,8 @@ void Camera::SetView(WorldObject *obj)
 bool Camera::Event_ResetView()
 {
     CAMERA_OUT("Camera: Reset view");
-    C_ASSERT(&m_owner != m_source);
-    //C_ASSERT(m_source->IsInMap(m_owner));   // can be called when m_source not in map?
+    R_ASSERT(&m_owner != m_source, false);
+    //R_ASSERT(m_source->IsInMap(m_owner), false);   // can be called when m_source not in map?
 
     m_source = &m_owner;
     m_source->getViewPoint().AddCamera(this);
@@ -81,8 +84,8 @@ void Camera::ResetView()
 {
     CAMERA_OUT("Camera: Reset view");
 
-    C_ASSERT(&m_owner != m_source);
-    //C_ASSERT(m_source->IsInMap(m_owner));   // can be called when m_source not in map?
+    V_ASSERT(&m_owner != m_source);
+    //V_ASSERT(m_source->IsInMap(m_owner));   // can be called when m_source not in map?
 
     m_source->getViewPoint().RemoveCamera(this);
     m_source = &m_owner;
@@ -154,7 +157,7 @@ ViewPoint::~ViewPoint()
     if(!m_cameras.empty())
     {
         CAMERA_OUT("ViewPoint destroyer called, but list of cameras is not empty");
-        C_ASSERT(false);
+        V_ASSERT(false);
     }
 }
 
