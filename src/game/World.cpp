@@ -244,10 +244,12 @@ World::AddSession_ (WorldSession* s)
         return;
     }
 
+    BillingPlanFlags BillingFlags = s->IsTrial() ? SESSION_FREE_TRIAL : SESSION_NONE;
+
     WorldPacket packet(SMSG_AUTH_RESPONSE, 1 + 4 + 1 + 4 + 1);
     packet << uint8 (AUTH_OK);
     packet << uint32 (0);                                   // BillingTimeRemaining
-    packet << uint8 (0);                                    // BillingPlanFlags
+    packet << uint8 (BillingFlags);                         // BillingPlanFlags
     packet << uint32 (0);                                   // BillingTimeRested
     packet << uint8 (s->Expansion());                       // 0 - normal, 1 - TBC, must be set in database manually for each account
     s->SendPacket (&packet);
@@ -289,11 +291,13 @@ void World::AddQueuedPlayer(WorldSession* sess)
     sess->SetInQueue(true);
     m_QueuedPlayer.push_back (sess);
 
+    BillingPlanFlags BillingFlags = sess->IsTrial() ? SESSION_FREE_TRIAL : SESSION_NONE;
+
     // The 1st SMSG_AUTH_RESPONSE needs to contain other info too.
     WorldPacket packet (SMSG_AUTH_RESPONSE, 1 + 4 + 1 + 4 + 1 + 4 + 1);
     packet << uint8 (AUTH_WAIT_QUEUE);
     packet << uint32 (0);                                   // BillingTimeRemaining
-    packet << uint8 (0);                                    // BillingPlanFlags
+    packet << uint8 (BillingFlags);                         // BillingPlanFlags
     packet << uint32 (0);                                   // BillingTimeRested
     packet << uint8 (sess->Expansion());                    // 0 - normal, 1 - TBC, must be set in database manually for each account
     packet << uint32(GetQueuePos (sess));                   // position in queue

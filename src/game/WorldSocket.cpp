@@ -745,6 +745,7 @@ int WorldSocket::HandleAuthSession (WorldPacket& recvPacket)
     uint32 ClientBuild;
     uint32 id, security;
     uint8 expansion = 0;
+    bool trial = false;
     LocaleConstant locale;
     std::string account;
     Sha1Hash sha1;
@@ -769,18 +770,6 @@ int WorldSocket::HandleAuthSession (WorldPacket& recvPacket)
                 unk3,
                 clientSeed);
 
-    // Check the version of client trying to connect
-    if(!IsAcceptableClientBuild(ClientBuild))
-    {
-        packet.Initialize (SMSG_AUTH_RESPONSE, 1);
-        packet << uint8 (AUTH_VERSION_MISMATCH);
-
-        SendPacket (packet);
-
-        sLog.outError ("WorldSocket::HandleAuthSession: Sent Auth Response (version mismatch).");
-        return -1;
-    }
-
     // Get the account information from the realmd database
     std::string safe_account = account; // Duplicate, else will screw the SHA hash verification below
     loginDatabase.escape_string (safe_account);
@@ -797,7 +786,8 @@ int WorldSocket::HandleAuthSession (WorldPacket& recvPacket)
                                 "s, "                       //6
                                 "expansion, "               //7
                                 "mutetime, "                //8
-                                "locale "                   //9
+                                "locale, "                   //9
+                                "trial_client "             //10
                                 "FROM account "
                                 "WHERE username = '%s'",
                                 safe_account.c_str ());
@@ -815,6 +805,20 @@ int WorldSocket::HandleAuthSession (WorldPacket& recvPacket)
     }
 
     Field* fields = result->Fetch ();
+
+    trial = (fields[10].GetUInt8() == 1) ? true : false;
+
+    // Check the version of client trying to connect
+    if(!IsAcceptableClientBuild(ClientBuild) && !trial)
+    {
+        packet.Initialize (SMSG_AUTH_RESPONSE, 1);
+        packet << uint8 (AUTH_VERSION_MISMATCH);
+
+        SendPacket (packet);
+
+        sLog.outError ("WorldSocket::HandleAuthSession: Sent Auth Response (version mismatch).");
+        return -1;
+    }
 
     expansion = ((sWorld.getConfig(CONFIG_UINT32_EXPANSION) > fields[7].GetUInt8()) ? fields[7].GetUInt8() : sWorld.getConfig(CONFIG_UINT32_EXPANSION));
 
@@ -938,7 +942,7 @@ int WorldSocket::HandleAuthSession (WorldPacket& recvPacket)
                             safe_account.c_str ());
 
     // NOTE ATM the socket is single-threaded, have this in mind ...
-    ACE_NEW_RETURN (m_Session, WorldSession (id, this, AccountTypes(security), expansion, mutetime, locale), -1);
+    ACE_NEW_RETURN (m_Session, WorldSession (id, this, AccountTypes(security), expansion, mutetime, locale, trial), -1);
 
     m_Crypt.Init(&K);
 
