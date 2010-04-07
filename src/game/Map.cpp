@@ -772,7 +772,7 @@ Map::PlayerRelocation(Player *player, float x, float y, float z, float orientati
     }
 
     // update visibility of nearby objects for cameras which attached to player
-    player->getViewPoint().CameraCall(&Camera::UpdateVisibilityForOwner);
+    player->getViewPoint().CameraCall_UpdateVisibilityForOwner();
     // if move then update what player see and who seen
     UpdateObjectVisibility(player, new_cell, new_val);
     PlayerRelocationNotify(player,new_cell,new_val);
@@ -834,7 +834,7 @@ Map::CreatureRelocation(Creature *creature, float x, float y, float z, float ang
         creature->SetNeedNotify();
     }
 
-    creature->getViewPoint().CameraCall(&Camera::UpdateVisibilityForOwner);
+    creature->getViewPoint().CameraCall_UpdateVisibilityForOwner()
     assert(CheckGridIntegrity(creature,true));
 }
 

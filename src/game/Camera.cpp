@@ -161,3 +161,22 @@ ViewPoint::~ViewPoint()
     }
 }
 
+void ViewPoint::CameraCall(bool (Camera::*m_func)(void))
+{
+    struct caller 
+    {
+        bool (Camera::*m_func)(void);
+        caller(bool (Camera::*m_f)(void)) : m_func(m_f) {}
+        //returns true if need remove camera from viewpoint's camera list
+        bool operator () (Camera* c) const { return (c->*m_func)(); }
+    };
+
+    if(m_cameras.size() == 1)   // the most common case
+    {
+        if( (m_cameras.front()->*m_func)() == true)
+            m_cameras.clear();
+    }
+    else
+        m_cameras.remove_if( caller(m_func) );
+}
+

@@ -58,30 +58,21 @@ class MANGOS_DLL_SPEC ViewPoint
     void AddCamera(Camera* c) { m_cameras.push_back(c); }
     void RemoveCamera(Camera* c) { m_cameras.remove(c); }
 
+    void CameraCall(bool (Camera::*m_func)(void));
+
 public:
 
     virtual ~ViewPoint();
 
-    void CameraEvent_AddedToWorld() { CameraCall(&Camera::Event_AddedToWorld); }
-    void CameraEvent_RemovedFromWorld() { CameraCall(&Camera::Event_RemovedFromWorld); }
-    void CameraEvent_Moved() { CameraCall(&Camera::Event_Moved); }
-    void CameraEvent_ResetView() { CameraCall(&Camera::Event_ResetView); }
-    void CameraEvent_ViewPointVisibilityChanged() { CameraCall(&Camera::Event_ViewPointVisibilityChanged); }
+    // why 'if (m_cameras.empty() == false)' placed here? not inside CameraCall function?
+    // just because CameraEvent_*\CameraCall_* functions will be inlined and check 'if(!m_cameras.empty())' will be inlined too
+    void CameraEvent_AddedToWorld() { if(!m_cameras.empty()) CameraCall(&Camera::Event_AddedToWorld); }
+    void CameraEvent_RemovedFromWorld() { if(!m_cameras.empty()) CameraCall(&Camera::Event_RemovedFromWorld); }
+    void CameraEvent_Moved() { if(!m_cameras.empty()) CameraCall(&Camera::Event_Moved); }
+    void CameraEvent_ResetView() { if(!m_cameras.empty()) CameraCall(&Camera::Event_ResetView); }
+    void CameraEvent_ViewPointVisibilityChanged() { if(!m_cameras.empty()) CameraCall(&Camera::Event_ViewPointVisibilityChanged); }
 
-    void CameraCall(bool (Camera::*m_func)(void))
-    {
-        if (m_cameras.empty())
-            return;
-
-        struct caller 
-        {
-            bool (Camera::*m_func)(void);
-            caller(bool (Camera::*m_f)(void)) : m_func(m_f) {}
-            //returns true if need remove camera from viewpoint's camera list
-            bool operator () (Camera* c) const { return (c->*m_func)(); }
-        };
-        m_cameras.remove_if( caller(m_func) );
-    }
+    void CameraCall_UpdateVisibilityForOwner() { if(!m_cameras.empty()) CameraCall(&Camera::UpdateVisibilityForOwner); }
 };
 
 
