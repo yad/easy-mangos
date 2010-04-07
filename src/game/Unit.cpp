@@ -3987,9 +3987,6 @@ bool Unit::AddAura(Aura *Aur)
                 {
                     // DoT/HoT/etc
                     case SPELL_AURA_DUMMY:                  // allow stack
-                    case SPELL_AURA_PERIODIC_DUMMY:
-                    case SPELL_AURA_PERIODIC_TRIGGER_SPELL:
-                    case SPELL_AURA_PERIODIC_TRIGGER_SPELL_WITH_VALUE:
                     case SPELL_AURA_PERIODIC_DAMAGE:
                     case SPELL_AURA_PERIODIC_DAMAGE_PERCENT:
                     case SPELL_AURA_PERIODIC_LEECH:
@@ -4815,19 +4812,6 @@ bool Unit::HasAura(uint32 spellId) const
     return false;
 }
 
-Aura* Unit::GetLinkedDummyAura(uint32 spell_id) const
-{
-    for(AuraList::const_iterator itr = m_dummyAuraLink.begin(); itr != m_dummyAuraLink.end(); ++itr)
-    {
-        if((*itr)->GetId() == spell_id)
-            return (*itr);
-    }
-    return NULL;
-}
-void Unit::RemoveDummyAuraLink(Aura* m_Aura)
-{
-    m_dummyAuraLink.remove(m_Aura);
-}
 void Unit::AddDynObject(DynamicObject* dynObj)
 {
     m_dynObjGUIDs.push_back(dynObj->GetGUID());
