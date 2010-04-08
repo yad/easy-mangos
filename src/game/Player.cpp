@@ -6265,7 +6265,7 @@ bool Player::RewardHonor(Unit *uVictim, uint32 groupsize, float honor)
                 return false;
 
             float f = 1;                                    //need for total kills (?? need more info)
-            uint32 k_grey = 0;
+            uint32 k_grey_diff = 0;
             uint32 k_level = getLevel();
             uint32 v_level = pVictim->getLevel();
 
@@ -6292,17 +6292,13 @@ bool Player::RewardHonor(Unit *uVictim, uint32 groupsize, float honor)
                     victim_guid = 0;                        // Don't show HK: <rank> message, only log.
             }
 
-            k_grey = MaNGOS::XP::GetGrayLevel(k_level);
-
-            if(v_level<=k_grey)
+            k_grey_diff = k_level - MaNGOS::XP::GetGrayLevel(k_level);
+            if(v_level <= k_level - k_grey_diff || v_level >= k_level + k_grey_diff)
                 return false;
 
-            float diff_level = (k_level == k_grey) ? 1 : ((float(v_level) - float(k_grey)) / (float(k_level) - float(k_grey)));
+            honor = MaNGOS::Honor::hk_honor_at_level(v_level);
 
             int32 v_rank =1;                                //need more info
-
-            honor = ((f * diff_level * (190 + v_rank*10))/4);
-            honor *= ((float)k_level) / 64.5f;              //factor of dependence on levels of the killer
 
             //check for event
             uint32 reqmap = 0;

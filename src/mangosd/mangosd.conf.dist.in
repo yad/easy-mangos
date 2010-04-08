@@ -1455,3 +1455,47 @@ SOAP.Enabled = 0
 SOAP.IP = 127.0.0.1
 SOAP.Port = 7878
 
+###################################################################################################################
+# HONOR SETTINGS
+#
+#    HonorableKill
+#         Number of honors for one kill at max level
+#         Default: 124
+#
+#   BG.BonusHonor.AB.Win
+#   BG.BonusHonor.AV.Win <-- not implemented
+#   BG.BonusHonor.WSG.Win
+#   BG.BonusHonor.EOS.Win
+#         Number of honorable kills bonus for winning this BG
+#         Default: 1 or 5
+#
+#   BG.BonusHonor.AB.End  
+#   BG.BonusHonor.AV.End  <-- not implemented
+#   BG.BonusHonor.WSG.End
+#   BG.BonusHonor.EOS.End
+#         Number of honorable kills bonus for this BG
+#         Default: 1 or 5
+#
+#   BG.BonusHonor.AB.Flag <-- for tick
+#   BG.BonusHonor.AV.Flag <-- not implemented
+#   BG.BonusHonor.WSG.Flag
+#   BG.BonusHonor.EOS.Flag <-- for tick
+#         Bonus Honor for capturing flag in this bg
+#         Default: 2
+#
+###################################################################################################################
+
+HonorableKill = 60
+BG.BonusHonor.AB.Win = 1
+BG.BonusHonor.AV.Win = 1
+BG.BonusHonor.WSG.Win = 5
+BG.BonusHonor.EOS.Win = 1
+BG.BonusHonor.AB.End = 1
+BG.BonusHonor.AV.End = 1
+BG.BonusHonor.WSG.End = 5
+BG.BonusHonor.EOS.End = 1
+BG.BonusHonor.AB.Flag = 1
+BG.BonusHonor.AV.Flag = 2
+BG.BonusHonor.WSG.Flag = 2
+BG.BonusHonor.EOS.Flag = 1
+
