@@ -148,6 +148,9 @@ enum eConfigUInt32Values
     CONFIG_UINT32_WORLD_BOSS_LEVEL_DIFF,
     CONFIG_UINT32_QUEST_LOW_LEVEL_HIDE_DIFF,
     CONFIG_UINT32_QUEST_HIGH_LEVEL_HIDE_DIFF,
+    CONFIG_UINT32_QUEST_DAILY_RESET_HOUR,
+    CONFIG_UINT32_QUEST_WEEKLY_RESET_WEEK_DAY,
+    CONFIG_UINT32_QUEST_WEEKLY_RESET_HOUR,
     CONFIG_UINT32_CHAT_STRICT_LINK_CHECKING_SEVERITY,
     CONFIG_UINT32_CHAT_STRICT_LINK_CHECKING_KICK,
     CONFIG_UINT32_CORPSE_DECAY_NORMAL,
@@ -486,6 +489,7 @@ class World
         uint32 GetUptime() const { return uint32(m_gameTime - m_startTime); }
         /// Next daily quests reset time
         time_t GetNextDailyQuestsResetTime() const { return m_NextDailyQuestReset; }
+        time_t GetNextWeeklyQuestsResetTime() const { return m_NextWeeklyQuestReset; }
 
         /// Get the maximum skill level a player can reach
         uint16 GetConfigMaxSkillValue() const
@@ -586,7 +590,9 @@ class World
         void _UpdateRealmCharCount(QueryResult *resultCharCount, uint32 accountId);
 
         void InitDailyQuestResetTime();
+        void InitWeeklyQuestResetTime();
         void ResetDailyQuests();
+        void ResetWeeklyQuests();
     private:
         void setConfig(eConfigUInt32Values index, char const* fieldname, uint32 defvalue);
         void setConfig(eConfigInt32Values index, char const* fieldname, int32 defvalue);
@@ -656,6 +662,7 @@ class World
 
         // next daily quests reset time
         time_t m_NextDailyQuestReset;
+        time_t m_NextWeeklyQuestReset;
 
         //Player Queue
         Queue m_QueuedPlayer;
