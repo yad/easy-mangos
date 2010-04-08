@@ -120,6 +120,8 @@ namespace VMAP
 
     bool WorldModel::IntersectPoint(const G3D::Vector3 &p, AreaInfo &info) const
     {
+        if(!groupModels.size())
+            return false;
         GModelAreaCallback callback(groupModels);
         groupTree.intersectPoint(p, callback);
         if (callback.hit != groupModels.end())

@@ -204,7 +204,7 @@ namespace VMAP
 
                 fclose(tilefile);
             }
-            break; //test, extract only first map; TODO: remvoe this line
+            // break; //test, extract only first map; TODO: remvoe this line
         }
 
         // export objects
