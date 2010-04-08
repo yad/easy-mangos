@@ -21,6 +21,7 @@
 
 #include "Common.h"
 #include "SharedDefines.h"
+#include "Map.h"
 
 // magic event-numbers
 #define BG_EVENT_NONE 255
@@ -67,13 +68,15 @@ enum BattleGroundQuests
 
 enum BattleGroundMarks
 {
-    SPELL_WS_MARK_LOSER             = 24950,
-    SPELL_WS_MARK_WINNER            = 24951,
-    SPELL_AB_MARK_LOSER             = 24952,
-    SPELL_AB_MARK_WINNER            = 24953,
-    SPELL_AV_MARK_LOSER             = 24954,
-    SPELL_AV_MARK_WINNER            = 24955,
-    ITEM_EY_MARK_OF_HONOR           = 29024
+    SPELL_WS_MARK_LOSER             = 24950,                // not create marks now
+    SPELL_WS_MARK_WINNER            = 24951,                // not create marks now
+    SPELL_AB_MARK_LOSER             = 24952,                // not create marks now
+    SPELL_AB_MARK_WINNER            = 24953,                // not create marks now
+    SPELL_AV_MARK_LOSER             = 24954,                // not create marks now
+    SPELL_AV_MARK_WINNER            = 24955,                // not create marks now
+
+    SPELL_WG_MARK_VICTORY           = 24955,                // honor + mark
+    SPELL_WG_MARK_DEFEAT            = 58494,                // honor + mark
 };
 
 enum BattleGroundMarksCount
@@ -234,18 +237,25 @@ enum BattleGroundStartingEventsIds
 };
 #define BG_STARTING_EVENT_COUNT 4
 
-enum BattleGroundJoinError
+enum GroupJoinBattlegroundResult
 {
-    BG_JOIN_ERR_OK = 0,
-    BG_JOIN_ERR_OFFLINE_MEMBER = 1,
-    BG_JOIN_ERR_GROUP_TOO_MANY = 2,
-    BG_JOIN_ERR_MIXED_FACTION = 3,
-    BG_JOIN_ERR_MIXED_LEVELS = 4,
-    BG_JOIN_ERR_MIXED_ARENATEAM = 5,
-    BG_JOIN_ERR_GROUP_MEMBER_ALREADY_IN_QUEUE = 6,
-    BG_JOIN_ERR_GROUP_DESERTER = 7,
-    BG_JOIN_ERR_ALL_QUEUES_USED = 8,
-    BG_JOIN_ERR_GROUP_NOT_ENOUGH = 9
+    // positive values are indexes in BattlemasterList.dbc
+    ERR_GROUP_JOIN_BATTLEGROUND_FAIL        = 0,            // Your group has joined a battleground queue, but you are not eligible (showed for non existing BattlemasterList.dbc indexes)
+    ERR_BATTLEGROUND_NONE                   = -1,           // not show anything
+    ERR_GROUP_JOIN_BATTLEGROUND_DESERTERS   = -2,           // You cannot join the battleground yet because you or one of your party members is flagged as a Deserter.
+    ERR_ARENA_TEAM_PARTY_SIZE               = -3,           // Incorrect party size for this arena.
+    ERR_BATTLEGROUND_TOO_MANY_QUEUES        = -4,           // You can only be queued for 2 battles at once
+    ERR_BATTLEGROUND_CANNOT_QUEUE_FOR_RATED = -5,           // You cannot queue for a rated match while queued for other battles
+    ERR_BATTLEDGROUND_QUEUED_FOR_RATED      = -6,           // You cannot queue for another battle while queued for a rated arena match
+    ERR_BATTLEGROUND_TEAM_LEFT_QUEUE        = -7,           // Your team has left the arena queue
+    ERR_BATTLEGROUND_NOT_IN_BATTLEGROUND    = -8,           // You can't do that in a battleground.
+    ERR_BATTLEGROUND_JOIN_XP_GAIN           = -9,           // wtf, doesn't exist in client...
+    ERR_BATTLEGROUND_JOIN_RANGE_INDEX       = -10,          // Cannot join the queue unless all members of your party are in the same battleground level range.
+    ERR_BATTLEGROUND_JOIN_TIMED_OUT         = -11,          // %s was unavailable to join the queue. (uint64 guid exist in client cache)
+    ERR_BATTLEGROUND_JOIN_FAILED            = -12,          // Join as a group failed (uint64 guid doesn't exist in client cache)
+    ERR_LFG_CANT_USE_BATTLEGROUND           = -13,          // You cannot queue for a battleground or arena while using the dungeon system.
+    ERR_IN_RANDOM_BG                        = -14,          // Can't do that while in a Random Battleground queue.
+    ERR_IN_NON_RANDOM_BG                    = -15,          // Can't queue for Random Battleground while in another Battleground queue.
 };
 
 class BattleGroundScore
@@ -298,7 +308,9 @@ class BattleGround
         char const* GetName() const         { return m_Name; }
         BattleGroundTypeId GetTypeID() const { return m_TypeID; }
         BattleGroundBracketId GetBracketId() const { return m_BracketId; }
-        uint32 GetInstanceID() const        { return m_InstanceID; }
+        // the instanceId check is also used to determine a bg-template
+        // that's why the m_map hack is here..
+        uint32 GetInstanceID()              { return m_Map?GetBgMap()->GetInstanceId():0; }
         BattleGroundStatus GetStatus() const { return m_Status; }
         uint32 GetClientInstanceID() const  { return m_ClientInstanceID; }
         uint32 GetStartTime() const         { return m_StartTime; }
@@ -323,7 +335,6 @@ class BattleGround
         void SetTypeID(BattleGroundTypeId TypeID) { m_TypeID = TypeID; }
         //here we can count minlevel and maxlevel for players
         void SetBracket(PvPDifficultyEntry const* bracketEntry);
-        void SetInstanceID(uint32 InstanceID) { m_InstanceID = InstanceID; }
         void SetStatus(BattleGroundStatus Status) { m_Status = Status; }
         void SetClientInstanceID(uint32 InstanceID) { m_ClientInstanceID = InstanceID; }
         void SetStartTime(uint32 Time)      { m_StartTime = Time; }
@@ -514,8 +525,6 @@ class BattleGround
         uint32 GetOtherTeam(uint32 teamId){ return (teamId) ? ((teamId == ALLIANCE) ? HORDE : ALLIANCE) : 0; }
         bool IsPlayerInBattleGround(uint64 guid);
 
-        void SetDeleteThis() {m_SetDeleteThis = true;}
-
         /* virtual score-array - get's used in bg-subclasses */
         int32 m_TeamScores[BG_TEAMS_COUNT];
 
@@ -562,7 +571,6 @@ class BattleGround
     private:
         /* Battleground */
         BattleGroundTypeId m_TypeID;
-        uint32 m_InstanceID;                                //BattleGround Instance's GUID!
         BattleGroundStatus m_Status;
         uint32 m_ClientInstanceID;                          //the instance-id which is sent to the client and without any other internal use
         uint32 m_StartTime;
@@ -571,7 +579,6 @@ class BattleGround
         BattleGroundBracketId m_BracketId;
         uint8  m_ArenaType;                                 // 2=2v2, 3=3v3, 5=5v5
         bool   m_InBGFreeSlotQueue;                         // used to make sure that BG is only once inserted into the BattleGroundMgr.BGFreeSlotQueue[bgTypeId] deque
-        bool   m_SetDeleteThis;                             // used for safe deletion of the bg after end / all players leave
         bool   m_IsArena;
         uint8  m_Winner;                                    // 0=alliance, 1=horde, 2=none
         int32  m_StartDelayTime;

@@ -81,7 +81,7 @@ enum WorldTimers
 };
 
 /// Configuration elements
-enum eConfigUint32Values
+enum eConfigUInt32Values
 {
     CONFIG_UINT32_COMPRESSION = 0,
     CONFIG_UINT32_INTERVAL_SAVE,
@@ -148,6 +148,9 @@ enum eConfigUint32Values
     CONFIG_UINT32_WORLD_BOSS_LEVEL_DIFF,
     CONFIG_UINT32_QUEST_LOW_LEVEL_HIDE_DIFF,
     CONFIG_UINT32_QUEST_HIGH_LEVEL_HIDE_DIFF,
+    CONFIG_UINT32_QUEST_DAILY_RESET_HOUR,
+    CONFIG_UINT32_QUEST_WEEKLY_RESET_WEEK_DAY,
+    CONFIG_UINT32_QUEST_WEEKLY_RESET_HOUR,
     CONFIG_UINT32_CHAT_STRICT_LINK_CHECKING_SEVERITY,
     CONFIG_UINT32_CHAT_STRICT_LINK_CHECKING_KICK,
     CONFIG_UINT32_CORPSE_DECAY_NORMAL,
@@ -173,6 +176,7 @@ enum eConfigUint32Values
     CONFIG_UINT32_TIMERBAR_BREATH_MAX,
     CONFIG_UINT32_TIMERBAR_FIRE_GMLEVEL,
     CONFIG_UINT32_TIMERBAR_FIRE_MAX,
+    CONFIG_UINT32_MIN_LEVEL_STAT_SAVE,
     CONFIG_UINT32_VMAP_INDOOR_INTERVAL,
     CONFIG_UINT32_VALUE_COUNT
 };
@@ -185,7 +189,7 @@ enum eConfigInt32Values
 };
 
 /// Server config
-enum eConfigFLoatValues
+enum eConfigFloatValues
 {
     CONFIG_FLOAT_RATE_HEALTH = 0,
     CONFIG_FLOAT_RATE_POWER_MANA,
@@ -302,21 +306,38 @@ enum eConfigBoolValues
     CONFIG_BOOL_ARENA_AUTO_DISTRIBUTE_POINTS,
     CONFIG_BOOL_ARENA_QUEUE_ANNOUNCER_JOIN,
     CONFIG_BOOL_ARENA_QUEUE_ANNOUNCER_EXIT,
+    CONFIG_BOOL_KICK_PLAYER_ON_BAD_PACKET,
+    CONFIG_BOOL_STATS_SAVE_ONLY_ON_LOGOUT,
     CONFIG_BOOL_VALUE_COUNT
 };
 
-/// Type of server
+/// Can be used in SMSG_AUTH_RESPONSE packet
+enum BillingPlanFlags
+{
+    SESSION_NONE            = 0x00,
+    SESSION_UNUSED          = 0x01,
+    SESSION_RECURRING_BILL  = 0x02,
+    SESSION_FREE_TRIAL      = 0x04,
+    SESSION_IGR             = 0x08,
+    SESSION_USAGE           = 0x10,
+    SESSION_TIME_MIXTURE    = 0x20,
+    SESSION_RESTRICTED      = 0x40,
+    SESSION_ENABLE_CAIS     = 0x80,
+};
+
+/// Type of server, this is values from second column of Cfg_Configs.dbc (1.12.1 have another numeration)
 enum RealmType
 {
-    REALM_TYPE_NORMAL = 0,
-    REALM_TYPE_PVP = 1,
-    REALM_TYPE_NORMAL2 = 4,
-    REALM_TYPE_RP = 6,
-    REALM_TYPE_RPPVP = 8,
-    REALM_TYPE_FFA_PVP = 16                                 // custom, free for all pvp mode like arena PvP in all zones except rest activated places and sanctuaries
+    REALM_TYPE_NORMAL   = 0,
+    REALM_TYPE_PVP      = 1,
+    REALM_TYPE_NORMAL2  = 4,
+    REALM_TYPE_RP       = 6,
+    REALM_TYPE_RPPVP    = 8,
+    REALM_TYPE_FFA_PVP  = 16                                // custom, free for all pvp mode like arena PvP in all zones except rest activated places and sanctuaries
                                                             // replaced by REALM_PVP in realm list
 };
 
+/// This is values from first column of Cfg_Categories.dbc (1.12.1 have another numeration)
 enum RealmZone
 {
     REALM_ZONE_UNKNOWN       = 0,                           // any language
@@ -348,7 +369,16 @@ enum RealmZone
     REALM_ZONE_TEST_SERVER   = 26,                          // any language
     REALM_ZONE_TOURNAMENT_27 = 27,                          // basic-Latin at create, any at login
     REALM_ZONE_QA_SERVER     = 28,                          // any language
-    REALM_ZONE_CN9           = 29                           // basic-Latin at create, any at login
+    REALM_ZONE_CN9           = 29,                          // basic-Latin at create, any at login
+    REALM_ZONE_TEST_SERVER_2 = 30,                          // any language
+    // in 3.x
+    REALM_ZONE_CN10          = 31,                          // basic-Latin at create, any at login
+    REALM_ZONE_CTC           = 32,
+    REALM_ZONE_CNC           = 33,
+    REALM_ZONE_CN1_4         = 34,                          // basic-Latin at create, any at login
+    REALM_ZONE_CN2_6_9       = 35,                          // basic-Latin at create, any at login
+    REALM_ZONE_CN3_7         = 36,                          // basic-Latin at create, any at login
+    REALM_ZONE_CN5_8         = 37                           // basic-Latin at create, any at login
 };
 
 // DB scripting commands
@@ -369,6 +399,8 @@ enum RealmZone
 #define SCRIPT_COMMAND_REMOVE_AURA          14              // source (datalong2!=0) or target (datalong==0) unit, datalong = spell_id
 #define SCRIPT_COMMAND_CAST_SPELL           15              // source/target cast spell at target/source (script->datalong2: 0: s->t 1: s->s 2: t->t 3: t->s
 #define SCRIPT_COMMAND_PLAY_SOUND           16              // source = any object, target=any/player, datalong (sound_id), datalong2 (bitmask: 0/1=anyone/target, 0/2=with distance dependent, so 1|2 = 3 is target with distance dependent)
+#define SCRIPT_COMMAND_CREATE_ITEM          17              // source or target must be player, datalong = item entry, datalong2 = amount
+#define SCRIPT_COMMAND_DESPAWN_SELF         18              // source or target must be creature, datalong = despawn delay
 
 /// Storage class for commands issued for delayed execution
 struct CliCommandHolder
@@ -458,6 +490,7 @@ class World
         uint32 GetUptime() const { return uint32(m_gameTime - m_startTime); }
         /// Next daily quests reset time
         time_t GetNextDailyQuestsResetTime() const { return m_NextDailyQuestReset; }
+        time_t GetNextWeeklyQuestsResetTime() const { return m_NextWeeklyQuestReset; }
 
         /// Get the maximum skill level a player can reach
         uint16 GetConfigMaxSkillValue() const
@@ -489,15 +522,15 @@ class World
 
         void UpdateSessions( uint32 diff );
 
-        /// et a server configuration element (see #eConfigFLoatValues)
-        void setConfig(eConfigFLoatValues index,float value) { m_configFloatValues[index]=value; }
-        /// Get a server configuration element (see #eConfigFLoatValues)
-        float getConfig(eConfigFLoatValues rate) const { return m_configFloatValues[rate]; }
+        /// et a server configuration element (see #eConfigFloatValues)
+        void setConfig(eConfigFloatValues index,float value) { m_configFloatValues[index]=value; }
+        /// Get a server configuration element (see #eConfigFloatValues)
+        float getConfig(eConfigFloatValues rate) const { return m_configFloatValues[rate]; }
 
-        /// Set a server configuration element (see #eConfigUint32Values)
-        void setConfig(eConfigUint32Values index, uint32 value) { m_configUint32Values[index]=value; }
-        /// Get a server configuration element (see #eConfigUint32Values)
-        uint32 getConfig(eConfigUint32Values index) const { return m_configUint32Values[index]; }
+        /// Set a server configuration element (see #eConfigUInt32Values)
+        void setConfig(eConfigUInt32Values index, uint32 value) { m_configUint32Values[index]=value; }
+        /// Get a server configuration element (see #eConfigUInt32Values)
+        uint32 getConfig(eConfigUInt32Values index) const { return m_configUint32Values[index]; }
 
         /// Set a server configuration element (see #eConfigInt32Values)
         void setConfig(eConfigInt32Values index, int32 value) { m_configInt32Values[index]=value; }
@@ -558,23 +591,25 @@ class World
         void _UpdateRealmCharCount(QueryResult *resultCharCount, uint32 accountId);
 
         void InitDailyQuestResetTime();
+        void InitWeeklyQuestResetTime();
         void ResetDailyQuests();
+        void ResetWeeklyQuests();
     private:
-        void setConfig(eConfigUint32Values index, char const* fieldname, uint32 defvalue);
+        void setConfig(eConfigUInt32Values index, char const* fieldname, uint32 defvalue);
         void setConfig(eConfigInt32Values index, char const* fieldname, int32 defvalue);
-        void setConfig(eConfigFLoatValues index, char const* fieldname, float defvalue);
+        void setConfig(eConfigFloatValues index, char const* fieldname, float defvalue);
         void setConfig(eConfigBoolValues index, char const* fieldname, bool defvalue);
-        void setConfigPos(eConfigUint32Values index, char const* fieldname, uint32 defvalue);
-        void setConfigPos(eConfigFLoatValues index, char const* fieldname, float defvalue);
-        void setConfigMin(eConfigUint32Values index, char const* fieldname, uint32 defvalue, uint32 minvalue);
+        void setConfigPos(eConfigUInt32Values index, char const* fieldname, uint32 defvalue);
+        void setConfigPos(eConfigFloatValues index, char const* fieldname, float defvalue);
+        void setConfigMin(eConfigUInt32Values index, char const* fieldname, uint32 defvalue, uint32 minvalue);
         void setConfigMin(eConfigInt32Values index, char const* fieldname, int32 defvalue, int32 minvalue);
-        void setConfigMin(eConfigFLoatValues index, char const* fieldname, float defvalue, float minvalue);
-        void setConfigMinMax(eConfigUint32Values index, char const* fieldname, uint32 defvalue, uint32 minvalue, uint32 maxvalue);
+        void setConfigMin(eConfigFloatValues index, char const* fieldname, float defvalue, float minvalue);
+        void setConfigMinMax(eConfigUInt32Values index, char const* fieldname, uint32 defvalue, uint32 minvalue, uint32 maxvalue);
         void setConfigMinMax(eConfigInt32Values index, char const* fieldname, int32 defvalue, int32 minvalue, int32 maxvalue);
-        void setConfigMinMax(eConfigFLoatValues index, char const* fieldname, float defvalue, float minvalue, float maxvalue);
-        bool configNoReload(bool reload, eConfigUint32Values index, char const* fieldname, uint32 defvalue);
+        void setConfigMinMax(eConfigFloatValues index, char const* fieldname, float defvalue, float minvalue, float maxvalue);
+        bool configNoReload(bool reload, eConfigUInt32Values index, char const* fieldname, uint32 defvalue);
         bool configNoReload(bool reload, eConfigInt32Values index, char const* fieldname, int32 defvalue);
-        bool configNoReload(bool reload, eConfigFLoatValues index, char const* fieldname, float defvalue);
+        bool configNoReload(bool reload, eConfigFloatValues index, char const* fieldname, float defvalue);
         bool configNoReload(bool reload, eConfigBoolValues index, char const* fieldname, bool defvalue);
 
         static volatile bool m_stopEvent;
@@ -628,6 +663,7 @@ class World
 
         // next daily quests reset time
         time_t m_NextDailyQuestReset;
+        time_t m_NextWeeklyQuestReset;
 
         //Player Queue
         Queue m_QueuedPlayer;

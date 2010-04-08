@@ -27,6 +27,7 @@
 #include "GridStates.h"
 
 class Transport;
+class BattleGround;
 
 class MANGOS_DLL_DECL MapManager : public MaNGOS::Singleton<MapManager, MaNGOS::ClassLevelLockable<MapManager, ACE_Thread_Mutex> >
 {
@@ -38,6 +39,7 @@ class MANGOS_DLL_DECL MapManager : public MaNGOS::Singleton<MapManager, MaNGOS::
     public:
 
         Map* CreateMap(uint32, const WorldObject* obj);
+        Map* CreateBgMap(uint32 mapid, BattleGround* bg);
         Map const* CreateBaseMap(uint32 id) const { return const_cast<MapManager*>(this)->_createBaseMap(id); }
         Map* FindMap(uint32 mapid, uint32 instanceId = 0) const;
 
@@ -119,7 +121,6 @@ class MANGOS_DLL_DECL MapManager : public MaNGOS::Singleton<MapManager, MaNGOS::
         TransportMap m_TransportsByMap;
 
         bool CanPlayerEnter(uint32 mapid, Player* player);
-        void RemoveBonesFromMap(uint32 mapid, uint64 guid, float x, float y);
         uint32 GenerateInstanceId() { return ++i_MaxInstanceId; }
         void InitMaxInstanceId();
         void InitializeVisibilityDistanceInfo();

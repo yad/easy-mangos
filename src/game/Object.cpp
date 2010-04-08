@@ -486,7 +486,7 @@ void Object::BuildMovementUpdate(ByteBuffer * data, uint16 updateFlags) const
             case TYPEID_GAMEOBJECT:
             case TYPEID_DYNAMICOBJECT:
             case TYPEID_CORPSE:
-                *data << uint32(GetGUIDHigh());             // GetGUIDHigh()
+                *data << uint32(GetObjectGuid().GetHigh()); // GetGUIDHigh()
                 break;
             case TYPEID_UNIT:
                 *data << uint32(0x0000000B);                // unk, can be 0xB or 0xC
@@ -1047,7 +1047,7 @@ bool Object::PrintIndexError(uint32 index, bool set) const
 {
     sLog.outError("Attempt %s non-existed value field: %u (count: %u) for object typeid: %u type mask: %u",(set ? "set value to" : "get value from"),index,m_valuesCount,GetTypeId(),m_objectType);
 
-    // assert must fail after function call
+    // ASSERT must fail after function call
     return false;
 }
 
@@ -1058,7 +1058,7 @@ void Object::BuildUpdateDataForPlayer(Player* pl, UpdateDataMapType& update_play
     if (iter == update_players.end())
     {
         std::pair<UpdateDataMapType::iterator, bool> p = update_players.insert( UpdateDataMapType::value_type(pl, UpdateData()) );
-        assert(p.second);
+        ASSERT(p.second);
         iter = p.first;
     }
 
@@ -1641,7 +1641,7 @@ void WorldObject::AddObjectToRemoveList()
 
 Creature* WorldObject::SummonCreature(uint32 id, float x, float y, float z, float ang,TempSummonType spwtype,uint32 despwtime)
 {
-    TemporarySummon* pCreature = new TemporarySummon(GetGUID());
+    TemporarySummon* pCreature = new TemporarySummon(GetObjectGuid());
 
     uint32 team = 0;
     if (GetTypeId()==TYPEID_PLAYER)

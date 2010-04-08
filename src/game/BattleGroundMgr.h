@@ -193,7 +193,7 @@ class BattleGroundMgr
         void BuildPlayerJoinedBattleGroundPacket(WorldPacket *data, Player *plr);
         void BuildPlayerLeftBattleGroundPacket(WorldPacket *data, const uint64& guid);
         void BuildBattleGroundListPacket(WorldPacket *data, const uint64& guid, Player *plr, BattleGroundTypeId bgTypeId, uint8 fromWhere);
-        void BuildGroupJoinedBattlegroundPacket(WorldPacket *data, BattleGroundTypeId bgTypeId);
+        void BuildGroupJoinedBattlegroundPacket(WorldPacket *data, GroupJoinBattlegroundResult result);
         void BuildUpdateWorldStatePacket(WorldPacket *data, uint32 field, uint32 value);
         void BuildPvpLogDataPacket(WorldPacket *data, BattleGround *bg);
         void BuildBattleGroundStatusPacket(WorldPacket *data, BattleGround *bg, uint8 QueueSlot, uint8 StatusID, uint32 Time1, uint32 Time2, uint8 arenatype);
@@ -211,6 +211,11 @@ class BattleGroundMgr
         void AddBattleGround(uint32 InstanceID, BattleGroundTypeId bgTypeId, BattleGround* BG) { m_BattleGrounds[bgTypeId][InstanceID] = BG; };
         void RemoveBattleGround(uint32 instanceID, BattleGroundTypeId bgTypeId) { m_BattleGrounds[bgTypeId].erase(instanceID); }
         uint32 CreateClientVisibleInstanceId(BattleGroundTypeId bgTypeId, BattleGroundBracketId bracket_id);
+        void DeleteClientVisibleInstanceId(BattleGroundTypeId bgTypeId, BattleGroundBracketId bracket_id, uint32 clientInstanceID)
+        {
+            if (!m_ClientBattleGroundIds[bgTypeId][bracket_id].empty())
+                m_ClientBattleGroundIds[bgTypeId][bracket_id].erase(clientInstanceID);
+        }
 
         void CreateInitialBattleGrounds();
         void DeleteAllBattleGrounds();

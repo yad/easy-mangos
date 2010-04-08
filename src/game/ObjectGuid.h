@@ -41,11 +41,16 @@ enum TypeMask
     TYPEMASK_OBJECT         = 0x0001,
     TYPEMASK_ITEM           = 0x0002,
     TYPEMASK_CONTAINER      = 0x0006,                       // TYPEMASK_ITEM | 0x0004
-    TYPEMASK_UNIT           = 0x0008,
+    TYPEMASK_UNIT           = 0x0008,                       // players also have it
     TYPEMASK_PLAYER         = 0x0010,
     TYPEMASK_GAMEOBJECT     = 0x0020,
     TYPEMASK_DYNAMICOBJECT  = 0x0040,
-    TYPEMASK_CORPSE         = 0x0080
+    TYPEMASK_CORPSE         = 0x0080,
+
+    // used combinations in Player::GetObjectByTypeMask (TYPEMASK_UNIT case ignore players in call)
+    TYPEMASK_CREATURE_OR_GAMEOBJECT = TYPEMASK_UNIT | TYPEMASK_GAMEOBJECT,
+    TYPEMASK_CREATURE_GAMEOBJECT_OR_ITEM = TYPEMASK_UNIT | TYPEMASK_GAMEOBJECT | TYPEMASK_ITEM,
+    TYPEMASK_CREATURE_GAMEOBJECT_PLAYER_OR_ITEM = TYPEMASK_UNIT | TYPEMASK_GAMEOBJECT | TYPEMASK_ITEM | TYPEMASK_PLAYER,
 };
 
 enum HighGuid
@@ -64,18 +69,8 @@ enum HighGuid
 };
 
 //*** Must be replaced by ObjectGuid use ***
-#define IS_CREATURE_GUID(Guid)       ( GUID_HIPART(Guid) == HIGHGUID_UNIT )
-#define IS_PET_GUID(Guid)            ( GUID_HIPART(Guid) == HIGHGUID_PET )
-#define IS_VEHICLE_GUID(Guid)        ( GUID_HIPART(Guid) == HIGHGUID_VEHICLE )
-#define IS_CREATURE_OR_PET_GUID(Guid)( IS_CREATURE_GUID(Guid) || IS_PET_GUID(Guid) )
 #define IS_PLAYER_GUID(Guid)         ( GUID_HIPART(Guid) == HIGHGUID_PLAYER && Guid!=0 )
-#define IS_UNIT_GUID(Guid)           ( IS_CREATURE_OR_PET_GUID(Guid) || IS_PLAYER_GUID(Guid) )
                                                             // special case for empty guid need check
-#define IS_ITEM_GUID(Guid)           ( GUID_HIPART(Guid) == HIGHGUID_ITEM )
-#define IS_GAMEOBJECT_GUID(Guid)     ( GUID_HIPART(Guid) == HIGHGUID_GAMEOBJECT )
-#define IS_CORPSE_GUID(Guid)         ( GUID_HIPART(Guid) == HIGHGUID_CORPSE )
-#define IS_MO_TRANSPORT(Guid)        ( GUID_HIPART(Guid) == HIGHGUID_MO_TRANSPORT )
-
 // l - OBJECT_FIELD_GUID
 // e - OBJECT_FIELD_ENTRY for GO (except GAMEOBJECT_TYPE_MO_TRANSPORT) and creatures or UNIT_FIELD_PETNUMBER for pets
 // h - OBJECT_FIELD_GUID + 1
@@ -84,8 +79,6 @@ enum HighGuid
 #define GUID_HIPART(x)   (uint32)((uint64(x) >> 48) & 0x0000FFFF)
 
 // We have different low and middle part size for different guid types
-#define _GUID_ENPART_2(x) 0
-#define _GUID_ENPART_3(x) (uint32)((uint64(x) >> 24) & UI64LIT(0x0000000000FFFFFF))
 #define _GUID_LOPART_2(x) (uint32)(uint64(x)         & UI64LIT(0x00000000FFFFFFFF))
 #define _GUID_LOPART_3(x) (uint32)(uint64(x)         & UI64LIT(0x0000000000FFFFFF))
 
@@ -97,19 +90,18 @@ inline bool IsGuidHaveEnPart(uint64 const& guid)
         case HIGHGUID_PLAYER:
         case HIGHGUID_DYNAMICOBJECT:
         case HIGHGUID_CORPSE:
+        case HIGHGUID_MO_TRANSPORT:
             return false;
         case HIGHGUID_GAMEOBJECT:
         case HIGHGUID_TRANSPORT:
         case HIGHGUID_UNIT:
         case HIGHGUID_PET:
         case HIGHGUID_VEHICLE:
-        case HIGHGUID_MO_TRANSPORT:
         default:
             return true;
     }
 }
 
-#define GUID_ENPART(x) (IsGuidHaveEnPart(x) ? _GUID_ENPART_3(x) : _GUID_ENPART_2(x))
 #define GUID_LOPART(x) (IsGuidHaveEnPart(x) ? _GUID_LOPART_3(x) : _GUID_LOPART_2(x))
 
 //*** Must be replaced by ObjectGuid use END ***
@@ -122,12 +114,13 @@ struct PackedGuidReader
     ObjectGuid* m_guidPtr;
 };
 
-class ObjectGuid
+class MANGOS_DLL_SPEC ObjectGuid
 {
     public:                                                 // constructors
         ObjectGuid() : m_guid(0) {}
         ObjectGuid(uint64 const& guid) : m_guid(guid) {}    // NOTE: must be explicit in future for more strict control type conversions
         ObjectGuid(HighGuid hi, uint32 entry, uint32 counter) : m_guid(uint64(counter) | (uint64(entry) << 24) | (uint64(hi) << 48)) {}
+        ObjectGuid(HighGuid hi, uint32 counter) : m_guid(uint64(counter) | (uint64(hi) << 48)) {}
 
     public:                                                 // modifiers
         PackedGuidReader ReadAsPacked() { return PackedGuidReader(*this); }
@@ -136,6 +129,8 @@ class ObjectGuid
 
         // Possible removed in future for more strict control type conversions
         void operator= (uint64 const& guid) { m_guid = guid; }
+
+        PackedGuid WriteAsPacked() const;
     public:                                                 // accessors
         uint64 const& GetRawValue() const { return m_guid; }
         HighGuid GetHigh() const { return HighGuid((m_guid >> 48) & 0x0000FFFF); }
@@ -147,11 +142,21 @@ class ObjectGuid
                 : uint32(m_guid & UI64LIT(0x00000000FFFFFFFF));
         }
 
+        static uint32 GetMaxCounter(HighGuid high)
+        {
+            return HasEntry(high)
+                ? uint32(0x00FFFFFF)
+                : uint32(0xFFFFFFFF);
+        }
+
+        uint32 GetMaxCounter() const { return GetMaxCounter(GetHigh()); }
+
         bool IsEmpty()         const { return m_guid == 0; }
         bool IsCreature()      const { return GetHigh() == HIGHGUID_UNIT; }
         bool IsPet()           const { return GetHigh() == HIGHGUID_PET; }
         bool IsVehicle()       const { return GetHigh() == HIGHGUID_VEHICLE; }
         bool IsCreatureOrPet() const { return IsCreature() || IsPet(); }
+        bool IsCreatureOrVehicle() const { return IsCreature() || IsVehicle(); }
         bool IsPlayer()        const { return !IsEmpty() && GetHigh() == HIGHGUID_PLAYER; }
         bool IsUnit()          const { return IsCreatureOrPet() || IsPlayer(); }
         bool IsItem()          const { return GetHigh() == HIGHGUID_ITEM; }
@@ -161,9 +166,9 @@ class ObjectGuid
         bool IsTransport()     const { return GetHigh() == HIGHGUID_TRANSPORT; }
         bool IsMOTransport()   const { return GetHigh() == HIGHGUID_MO_TRANSPORT; }
 
-        TypeID GetTypeId()
+        static TypeID GetTypeId(HighGuid high)
         {
-            switch(GetHigh())
+            switch(high)
             {
                 case HIGHGUID_ITEM:         return TYPEID_ITEM;
                 //case HIGHGUID_CONTAINER:    return TYPEID_CONTAINER; HIGHGUID_CONTAINER==HIGHGUID_ITEM currently
@@ -180,34 +185,45 @@ class ObjectGuid
             }
         }
 
-        PackedGuid WriteAsPacked() const;
+        TypeID GetTypeId() const { return GetTypeId(GetHigh()); }
+
+        bool operator== (ObjectGuid const& guid) const { return GetRawValue() == guid.GetRawValue(); }
+        bool operator!= (ObjectGuid const& guid) const { return GetRawValue() != guid.GetRawValue(); }
+        bool operator< (ObjectGuid const& guid) const { return GetRawValue() < guid.GetRawValue(); }
+
     public:                                                 // accessors - for debug
-        char const* GetTypeName() const;
+        static char const* GetTypeName(HighGuid high);
+        char const* GetTypeName() const { return !IsEmpty() ? GetTypeName(GetHigh()) : "None"; }
         std::string GetString() const;
+
     private:                                                // internal functions
-        bool HasEntry() const
+        static bool HasEntry(HighGuid high)
         {
-            switch(GetHigh())
+            switch(high)
             {
                 case HIGHGUID_ITEM:
                 case HIGHGUID_PLAYER:
                 case HIGHGUID_DYNAMICOBJECT:
                 case HIGHGUID_CORPSE:
+                case HIGHGUID_MO_TRANSPORT:
                     return false;
                 case HIGHGUID_GAMEOBJECT:
                 case HIGHGUID_TRANSPORT:
                 case HIGHGUID_UNIT:
                 case HIGHGUID_PET:
                 case HIGHGUID_VEHICLE:
-                case HIGHGUID_MO_TRANSPORT:
                 default:
                     return true;
             }
         }
 
+        bool HasEntry() const { return HasEntry(GetHigh()); }
+
     private:                                                // fields
         uint64 m_guid;
 };
+
+typedef std::set<ObjectGuid> ObjectGuidSet;
 
 class PackedGuid
 {
@@ -227,6 +243,23 @@ class PackedGuid
 
     private:                                                // fields
         ByteBuffer m_packedGuid;
+};
+
+template<HighGuid high>
+class ObjectGuidGenerator
+{
+    public:                                                 // constructors
+        explicit ObjectGuidGenerator(uint32 start = 1) : m_nextGuid(start) {}
+
+    public:                                                 // modifiers
+        void Set(uint32 val) { m_nextGuid = val; }
+        uint32 Generate();
+
+    public:                                                 // accessors
+        uint32 GetNextAfterMaxUsed() const { return m_nextGuid; }
+
+    private:                                                // fields
+        uint32 m_nextGuid;
 };
 
 ByteBuffer& operator<< (ByteBuffer& buf, ObjectGuid const& guid);
