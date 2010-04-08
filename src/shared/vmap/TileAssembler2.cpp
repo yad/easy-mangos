@@ -396,18 +396,20 @@ namespace VMAP
         uint32 idxOffset=0;
         G3D::Array<SoloTriangle> triangles;
         G3D::Array<Vector3> vertexArray;
+        std::vector<GroupModel> boundsArray;
 
         for(int g=0;g<(int)groups;g++)
         {
             // group MUST NOT have more then 65536 indexes !! Array will have a problem with that !! (strange ...)
             Array<int> tempIndexArray;
+            GroupModel gm;
 
             //AABSPTree<MeshTriangle> *gtree = new AABSPTree<MeshTriangle>();
 
-            G3D::uint32 mogpflags;
-            READ_OR_RETURN(&mogpflags, sizeof(G3D::uint32));
-            G3D::uint32 GroupWMOID;
-            READ_OR_RETURN(&GroupWMOID, sizeof(G3D::uint32));
+            //G3D::uint32 mogpflags;
+            READ_OR_RETURN(&gm.iMogpFlags, sizeof(G3D::uint32));
+            //G3D::uint32 GroupWMOID;
+            READ_OR_RETURN(&gm.iGroupWMOID, sizeof(G3D::uint32));
 
             float bbox1[3], bbox2[3];
             READ_OR_RETURN(bbox1, sizeof(float)*3);
@@ -473,6 +475,11 @@ namespace VMAP
                 fseek(rf, blocksize, SEEK_CUR);
             }
             // TODO: add mogpflags, rootwmoid and groupwmoid to each group
+            if(gm.iGroupWMOID != 0 || gm.iMogpFlags != 0)
+            {
+                gm.iBound = AABox(Vector3(bbox1), Vector3(bbox2));
+                boundsArray.push_back(gm);
+            }
             // TODO: handle liquids
 
 
@@ -497,6 +504,8 @@ namespace VMAP
 
         // write WorldModel
         WorldModel model(vertexArray.getCArray(), vertexArray.size(), sTris, nElements, sTree, nNodes);
+        if (boundsArray.size())
+            model.addGroupModels(boundsArray);
         bool success = model.writeFile(iDestDir + "/" + pModelFilename + ".vmo");
 
         //std::cout << "readRawFile2: '" << pModelFilename << "' tris: " << nElements << " nodes: " << nNodes << std::endl;

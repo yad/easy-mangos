@@ -45,21 +45,25 @@ namespace VMAP
             ModelInstance *prims;
             void operator()(const G3D::Ray& ray, uint32 entry, float& distance, bool pStopAtFirstHit=true)
             {
-                prims[entry].intersect(ray, distance, pStopAtFirstHit);
+                prims[entry].intersectRay(ray, distance, pStopAtFirstHit);
                 //std::cout << "trying to intersect '" << entity->name << "'\n";
             }
     };
 
-    class MapPointCallback {
+    class AreaInfoCallback
+    {
         public:
-            MapPointCallback(ModelInstance *val): prims(val) {}
-            ModelInstance *prims;
+            AreaInfoCallback(ModelInstance *val): prims(val) {}
             void operator()(const Vector3& point, uint32 entry)
             {
-                //prims[entry].intersect(point, distance, pStopAtFirstHit);
                 std::cout << "trying to intersect '" << prims[entry].name << "'\n";
+                prims[entry].intersectPoint(point, aInfo);
             }
+
+            ModelInstance *prims;
+            AreaInfo aInfo;
     };
+
 
     //=========================================================
 
@@ -73,11 +77,19 @@ namespace VMAP
         return tilefilename.str();
     }
 
-    bool StaticMapTree::getAreaInfo(Vector3 pos, unsigned int &areaID, unsigned int &flags)
+    bool StaticMapTree::getAreaInfo(Vector3 pos, uint32 &flags, int32 &adtId, int32 &rootId, int32 &groupId)
     {
         std::cout << "StaticMapTree::getAreaInfo()\n";
-        MapPointCallback intersectionCallBack(iTreeValues);
+        AreaInfoCallback intersectionCallBack(iTreeValues);
         iTree.intersectPoint(pos, intersectionCallBack);
+        if (intersectionCallBack.aInfo.result)
+        {
+            flags = intersectionCallBack.aInfo.flags;
+            adtId = intersectionCallBack.aInfo.adtId;
+            rootId = intersectionCallBack.aInfo.rootId;
+            groupId = intersectionCallBack.aInfo.groupId;
+            return true;
+        }
 
         /* AABox pbox(pos, pos);
         Array<ModelContainer *> mcArray;

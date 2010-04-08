@@ -79,7 +79,7 @@ class BIH
     public:
         BIH(): objects(0), nObjects(0) {};
         template< class T, class BoundsFunc >
-        void build(std::vector<T> primitives, uint32 leafSize=3)
+        void build(const std::vector<T> &primitives, uint32 leafSize=3)
         {
             if(primitives.size() == 0)
                 return;
@@ -408,7 +408,7 @@ class BIH
 
     public:
         template<typename RayCallback>
-        void intersect(const Ray &r, RayCallback& intersectCallback, float &maxDist)
+        void intersect(const Ray &r, RayCallback& intersectCallback, float &maxDist) const
         {
             float intervalMin = 0.f;
             float intervalMax = maxDist;
@@ -542,7 +542,7 @@ class BIH
         }
 
         template<typename IsectCallback>
-        void intersectPoint(const Vector3 &p, IsectCallback& intersectCallback)
+        void intersectPoint(const Vector3 &p, IsectCallback& intersectCallback) const
         {
             if (!bounds.contains(p))
                 return;

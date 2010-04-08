@@ -19,13 +19,41 @@
 #include "WorldModel.h"
 #include "VMapDefinitions.h"
 #include "TreeNode.h"
+#include "MapTree.h"
 
 using G3D::Vector3;
 using G3D::Ray;
 
+template<> struct BoundsTrait<VMAP::GroupModel>
+{
+    static void getBounds(const VMAP::GroupModel& obj, G3D::AABox& out) { out = obj.iBound; }
+};
+
+
 namespace VMAP
 {
     bool readChunk(FILE *rf, char *dest, const char *compare, uint32 len);
+
+    class GModelAreaCallback {
+        public:
+            GModelAreaCallback(std::vector<GroupModel> vals): prims(vals.begin()), hit(vals.end()), minVol(G3D::inf()) {}
+            std::vector<GroupModel>::const_iterator prims;
+            std::vector<GroupModel>::const_iterator hit;
+            float minVol;
+            void operator()(const Vector3& point, uint32 entry)
+            {
+                if (prims[entry].iBound.contains(point))
+                {
+                    float pVol = prims[entry].iBound.volume();
+                    if(pVol < minVol)
+                    {
+                        minVol = pVol;
+                        hit = prims + entry;
+                    }
+                }
+                //std::cout << "trying to intersect '" << prims[entry].name << "'\n";
+            }
+    };
 
     bool WorldModel::IntersectTriangle(const MeshTriangle &tri, const G3D::Ray &ray, float &distance) const
     {
@@ -77,12 +105,34 @@ namespace VMAP
         return false;
     }
 
+    void WorldModel::addGroupModels(std::vector<GroupModel> &models)
+    {
+        groupModels.swap(models);
+        groupTree.build<GroupModel, BoundsTrait<GroupModel> >(groupModels, 1);
+    }
+
     bool WorldModel::Intersect(const G3D::Ray &ray, float &distance, bool stopAtFirstHit) const
     {
         IntersectionCallBack isc(this);
         NodeValueAccess<TreeNode, MeshTriangle> vna(treeNodes, triangles);
         treeNodes[0].intersectRay(ray, isc, distance, vna, stopAtFirstHit, true);
     }
+
+    bool WorldModel::IntersectPoint(const G3D::Vector3 &p, AreaInfo &info) const
+    {
+        GModelAreaCallback callback(groupModels);
+        groupTree.intersectPoint(p, callback);
+        if (callback.hit != groupModels.end())
+        {
+            info.rootId = RootWMOID;
+            info.groupId = callback.hit->iGroupWMOID;
+            info.flags = callback.hit->iMogpFlags;
+            info.result = true;
+            return true;
+        }
+        return false;
+    }
+
 
     bool WorldModel::writeFile(const std::string &filename)
     {
@@ -91,7 +141,7 @@ namespace VMAP
             return false;
 
         bool result = true;
-        uint32 chunkSize;
+        uint32 chunkSize, count;
         result = fwrite(VMAP_MAGIC,1,8,wf) == 8;
         if (result && fwrite("WMOD", 1, 4, wf) != 4) result = false;
 
@@ -116,6 +166,21 @@ namespace VMAP
         if (result && fwrite(&nNodes, sizeof(uint32), 1, wf) != 1) result = false;
         if (result && fwrite(treeNodes, sizeof(TreeNode), nNodes, wf) != nNodes) result = false;
 
+        // write group models
+        count=groupModels.size();
+        if (count)
+        {
+            if (result && fwrite("GMOD", 1, 4, wf) != 4) result = false;
+            chunkSize = sizeof(uint32)+ sizeof(GroupModel)*count;
+            if (result && fwrite(&chunkSize, sizeof(uint32), 1, wf) != 1) result = false;
+            if (result && fwrite(&count, sizeof(uint32), 1, wf) != 1) result = false;
+            if (result && fwrite(&groupModels[0], sizeof(GroupModel), count, wf) != count) result = false;
+
+            // write group BIH
+            if (result && fwrite("GBIH", 1, 4, wf) != 4) result = false;
+            if (result) result = groupTree.writeToFile(wf);
+        }
+
         fclose(wf);
         return result;
     }
@@ -127,7 +192,7 @@ namespace VMAP
             return false;
 
         bool result = true;
-        uint32 chunkSize;
+        uint32 chunkSize, count;
         char chunk[8];                          // Ignore the added magic header
         if (!readChunk(rf, chunk, VMAP_MAGIC, 8)) result = false;
 
@@ -152,6 +217,21 @@ namespace VMAP
         if (result && fread(&nNodes, sizeof(uint32), 1, rf) != 1) result = false;
         if (result) treeNodes = new TreeNode[nNodes];
         if (result && fread(treeNodes, sizeof(TreeNode), nNodes, rf) != nNodes) result = false;
+
+        // write group models
+        if (result && readChunk(rf, chunk, "GMOD", 4));
+        if (count)
+        {
+            if (fread(&chunkSize, sizeof(uint32), 1, rf) != 1) result = false;
+
+            if (result && fread(&count, sizeof(uint32), 1, rf) != 1) result = false;
+            groupModels.resize(count);
+            if (result && fread(&groupModels[0], sizeof(GroupModel), count, rf) != count) result = false;
+
+            // write group BIH
+            if (result && !readChunk(rf, chunk, "GBIH", 4)) result = false;
+            if (result) result = groupTree.readFromFile(rf);
+        }
 
         fclose(rf);
         return result;

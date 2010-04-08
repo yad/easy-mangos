@@ -18,6 +18,7 @@
 
 #include "ModelInstance.h"
 #include "WorldModel.h"
+#include "MapTree.h"
 
 using G3D::Vector3;
 using G3D::Ray;
@@ -30,7 +31,7 @@ namespace VMAP
         iInvScale = 1.f/iScale;
     }
 
-    void ModelInstance::intersect(const G3D::Ray& pRay, float& pMaxDist, bool pStopAtFirstHit) const
+    void ModelInstance::intersectRay(const G3D::Ray& pRay, float& pMaxDist, bool pStopAtFirstHit) const
     {
         if (!iModel)
         {
@@ -57,6 +58,25 @@ namespace VMAP
         iModel->Intersect(modRay, distance, pStopAtFirstHit);
         distance *= iScale;
         pMaxDist = distance;
+    }
+
+    void ModelInstance::intersectPoint(const G3D::Vector3& p, AreaInfo &info) const
+    {
+        if (!iModel)
+        {
+            std::cout << "<object not loaded>\n";
+            return;
+        }
+
+        if (!iBound.contains(p))
+            return;
+        // child bounds are defined in object space:
+        Vector3 pModel = iInvRot * (p - iPos) * iInvScale;
+        if (iModel->IntersectPoint(pModel, info))
+        {
+            info.flags = flags;
+            info.adtId = adtId;
+        }
     }
 
     // move to new file... (WorldModel.cpp?)

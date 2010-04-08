@@ -23,12 +23,15 @@
 #include <G3D/Vector3.h>
 #include <G3D/AABox.h>
 #include <G3D/Ray.h>
+#include <BIH.h>
 
 #include "Platform/Define.h"
 
 namespace VMAP
 {
     class TreeNode;
+    class AreaInfo;
+
     class MeshTriangle
     {
         public:
@@ -65,13 +68,21 @@ namespace VMAP
             const G3D::Vector3 *vertices;
     };
 
+    /*! holding additional info for WMO group files */
+    class GroupModel
+    {
+        public:
+            G3D::AABox iBound;
+            uint32 iMogpFlags;// 0x8 outdor; 0x2000 indoor
+            uint32 iGroupWMOID;
+    };
     /*! Holds a model (converted M2 or WMO) in its original coordinate space */
     class WorldModel
     {
         public:
             WorldModel(): points(0), triangles(0), treeNodes(0) {}
-            WorldModel(G3D::Vector3 *pts, uint32 nPts, MeshTriangle *tri, uint32 nTri, TreeNode *tree, uint32 nNode):
-                points(pts), triangles(tri), treeNodes(tree), nPoints(nPts), nTriangles(nTri), nNodes(nNode) {}
+            /* WorldModel(G3D::Vector3 *pts, uint32 nPts, MeshTriangle *tri, uint32 nTri, TreeNode *tree, uint32 nNode):
+                points(pts), triangles(tri), treeNodes(tree), nPoints(nPts), nTriangles(nTri), nNodes(nNode) {} */
             WorldModel(G3D::Vector3 *pts, uint32 nPts, SoloTriangle *tri, uint32 nTri, TreeNode *tree, uint32 nNode):
                 points(pts), treeNodes(tree), nPoints(nPts), nTriangles(nTri), nNodes(nNode)
             {
@@ -79,7 +90,9 @@ namespace VMAP
                 for(uint32 i=0; i<nTri; ++i)
                     triangles[i] = MeshTriangle(tri[i].idx0, tri[i].idx1, tri[i].idx2);
             }
+            void addGroupModels(std::vector<GroupModel> &models);
             bool Intersect(const G3D::Ray &ray, float &distance, bool stopAtFirstHit) const;
+            bool IntersectPoint(const G3D::Vector3 &p, AreaInfo &info) const;
             bool writeFile(const std::string &filename);
             bool readFile(const std::string &filename);
         protected:
@@ -100,6 +113,9 @@ namespace VMAP
             uint32 nPoints;
             uint32 nTriangles;
             uint32 nNodes;
+            uint32 RootWMOID;
+            std::vector<GroupModel> groupModels;
+            BIH groupTree;
     };
 } // namespace VMAP
 
