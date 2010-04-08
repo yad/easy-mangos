@@ -834,7 +834,7 @@ Map::CreatureRelocation(Creature *creature, float x, float y, float z, float ang
         creature->SetNeedNotify();
     }
 
-    creature->getViewPoint().CameraCall_UpdateVisibilityForOwner()
+    creature->getViewPoint().CameraCall_UpdateVisibilityForOwner();
     assert(CheckGridIntegrity(creature,true));
 }
 
