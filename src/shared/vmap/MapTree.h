@@ -75,7 +75,7 @@ namespace VMAP
             bool isInLineOfSight(const G3D::Vector3& pos1, const G3D::Vector3& pos2);
             bool getObjectHitPos(const G3D::Vector3& pos1, const G3D::Vector3& pos2, G3D::Vector3& pResultHitPos, float pModifyDist);
             float getHeight(const G3D::Vector3& pPos);
-            bool getAreaInfo(G3D::Vector3 pos, uint32 &areaID, uint32 &flags);
+            bool getAreaInfo(G3D::Vector3 pos, uint32 &flags, int32 &adtId, int32 &rootId, int32 &groupId);
 
             //bool PrepareTree();
             bool init(const std::string &fname, VMapManager2 *vm);
@@ -84,6 +84,16 @@ namespace VMAP
             bool isTiled() { return iIsTiled; }
             uint32 numLoadedTiles() { return iLoadedTiles.size(); }
             // void addModelContainer(const std::string& pName, ManagedModelContainer *pMc);
+    };
+
+    struct AreaInfo
+    {
+        AreaInfo(): result(false) {};
+        bool result;
+        uint32 flags;
+        int32 adtId;
+        int32 rootId;
+        int32 groupId;
     };
 
 }                                                           // VMAP
