@@ -510,6 +510,8 @@ class MANGOS_DLL_SPEC WorldObject : public Object, public GridObject
         ViewPoint m_viewPoint;
 };
 
+#include "CellImpl.h"
+
 template<class T>
 inline void WorldObject::VisitGrid(T &vistor, float range, bool dont_load)
 {
@@ -517,7 +519,7 @@ inline void WorldObject::VisitGrid(T &vistor, float range, bool dont_load)
     Cell cell(p);
     if (dont_load)
         cell.SetNoCreate();
-    GridTypeVisitor<T>::Grid gnotifier(vistor);
+    typename GridTypeVisitor<T>::Grid gnotifier(vistor);
     cell.Visit(p, gnotifier, *GetMap(), *this, range);
 }
 
@@ -528,7 +530,7 @@ inline void WorldObject::VisitWorld(T &vistor, float range, bool dont_load)
     Cell cell(p);
     if (dont_load)
         cell.SetNoCreate();
-    GridTypeVisitor<T>::World wnotifier(vistor);
+    typename GridTypeVisitor<T>::World wnotifier(vistor);
     cell.Visit(p, wnotifier, *GetMap(), *this, range);
 }
 
@@ -539,8 +541,8 @@ inline void WorldObject::VisitAll(T &vistor, float range, bool dont_load)
     Cell cell(p);
     if (dont_load)
         cell.SetNoCreate();
-    GridTypeVisitor<T>::Grid gnotifier(vistor);
-    GridTypeVisitor<T>::World wnotifier(vistor);
+    typename GridTypeVisitor<T>::Grid gnotifier(vistor);
+    typename GridTypeVisitor<T>::World wnotifier(vistor);
     cell.Visit(p, gnotifier, *GetMap(), *this, range);
     cell.Visit(p, wnotifier, *GetMap(), *this, range);
 }
@@ -552,7 +554,7 @@ inline void WorldObject::VisitCameras(T &vistor, float range, bool dont_load)
     Cell cell(p);
     if (dont_load)
         cell.SetNoCreate();
-    GridTypeVisitor<T>::Camera cnotifier(vistor);
+    typename GridTypeVisitor<T>::Camera cnotifier(vistor);
     cell.Visit(p, cnotifier, *GetMap(), *this, range);
 }
 

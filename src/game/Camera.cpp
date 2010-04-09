@@ -57,25 +57,25 @@ void Camera::SetView(WorldObject *obj)
     UpdateForCurrentViewPoint(*this, m_owner, *m_source);
 }
 
-bool Camera::Event_ResetView()
+bool Camera::_Event_ResetView(Camera * c)
 {
     CAMERA_OUT("Camera: Reset view");
-    R_ASSERT(&m_owner != m_source, false);
+    R_ASSERT(&c->m_owner != c->m_source, false);
     //R_ASSERT(m_source->IsInMap(m_owner), false);   // can be called when m_source not in map?
 
-    m_source = &m_owner;
-    m_source->getViewPoint().AddCamera(this);
+    c->m_source = &c->m_owner;
+    c->m_source->getViewPoint().AddCamera(c);
 
-    UpdateForCurrentViewPoint(*this, m_owner, *m_source);
+    UpdateForCurrentViewPoint(*c, c->m_owner, *c->m_source);
     return true;
 }
 
-bool Camera::Event_ViewPointVisibilityChanged()
+bool Camera::_Event_ViewPointVisibilityChanged(Camera * c)
 {
     CAMERA_OUT("Camera: Event_ViewPointVisibilityChanged");
 
-    if (&m_owner != m_source && !m_owner.HaveAtClient(m_source))
-        return Event_ResetView();
+    if (&c->m_owner != c->m_source && !c->m_owner.HaveAtClient(c->m_source))
+        return _Event_ResetView(c);
 
     return false;
 }
@@ -94,34 +94,34 @@ void Camera::ResetView()
     UpdateForCurrentViewPoint(*this, m_owner, *m_source);
 }
 
-bool Camera::Event_AddedToWorld()
+bool Camera::_Event_AddedToWorld(Camera * c)
 {
     CAMERA_OUT("Camera: Added to world");
-    UpdateForCurrentViewPoint(*this, m_owner, *m_source);
+    UpdateForCurrentViewPoint(*c, c->m_owner, *c->m_source);
     return false;
 }
 
-bool Camera::Event_RemovedFromWorld()
+bool Camera::_Event_RemovedFromWorld(Camera * c)
 {
     CAMERA_OUT("Camera: removed from world ");
 
     bool erase = false;
-    if(m_source == &m_owner)
+    if(c->m_source == &c->m_owner)
     {
-        SetGrid(NULL);
+        c->SetGrid(NULL);
     }
     else
     {   
         // set self view
-        erase = Event_ResetView();
+        erase = _Event_ResetView(c);
     }
     return erase;
 }
 
-bool Camera::Event_Moved()
+bool Camera::_Event_Moved(Camera * c)
 {
     CAMERA_OUT("Camera: moved to another grid");
-    SetGrid(m_source->GetGrid());
+    c->SetGrid(c->m_source->GetGrid());
     return false;
 }
 
@@ -161,22 +161,13 @@ ViewPoint::~ViewPoint()
     }
 }
 
-void ViewPoint::CameraCall(bool (Camera::*m_func)(void))
+void ViewPoint::CameraCall( bool (*m_func)(Camera*) )
 {
-    struct caller 
-    {
-        bool (Camera::*m_func)(void);
-        caller(bool (Camera::*m_f)(void)) : m_func(m_f) {}
-        //returns true if need remove camera from viewpoint's camera list
-        bool operator () (Camera* c) const { return (c->*m_func)(); }
-    };
-
     if(m_cameras.size() == 1)   // the most common case
     {
-        if( (m_cameras.front()->*m_func)() == true)
+        if( (*m_func)(m_cameras.front()) == true)
             m_cameras.clear();
     }
     else
-        m_cameras.erase( remove_if(m_cameras.begin(),m_cameras.end(),caller(m_func)), m_cameras.end() );
+        m_cameras.erase( remove_if(m_cameras.begin(),m_cameras.end(),*m_func), m_cameras.end() );
 }
-

@@ -3,7 +3,6 @@
 #define _CAMERA_H
 
 #include "GridDefines.h"
-#include "Object.h"
 
 
 class ViewPoint;
@@ -38,11 +37,12 @@ class MANGOS_DLL_SPEC Camera : public GridObject, public GridCamera
         // called when viewpoint changes visibility state
         // returns true when need erase camera from viepoint's camera list
         // you can accesss to them only via viewpoint's CameraEvent_* functions
-        bool Event_AddedToWorld();
-        bool Event_RemovedFromWorld();
-        bool Event_Moved();
-        bool Event_ResetView();
-        bool Event_ViewPointVisibilityChanged();
+        static bool _Event_AddedToWorld(Camera *);
+        static bool _Event_RemovedFromWorld(Camera *);
+        static bool _Event_Moved(Camera *);
+        static bool _Event_ResetView(Camera *);
+        static bool _Event_ViewPointVisibilityChanged(Camera *);
+        static bool _UpdateVisibilityForOwner(Camera *c) { return c->UpdateVisibilityForOwner(); }
 
         Player & m_owner;
         WorldObject *m_source;
@@ -58,7 +58,7 @@ class MANGOS_DLL_SPEC ViewPoint
     void AddCamera(Camera* c) { m_cameras.push_back(c); }
     void RemoveCamera(Camera* c) { m_cameras.erase(remove(m_cameras.begin(),m_cameras.end(), c), m_cameras.end() ); }
 
-    void CameraCall(bool (Camera::*m_func)(void));
+    void CameraCall( bool (*m_func)(Camera*) );
 
 public:
 
@@ -66,13 +66,13 @@ public:
 
     // why 'if (m_cameras.empty() == false)' placed here? not inside CameraCall function?
     // just because CameraEvent_*\CameraCall_* functions will be inlined and check 'if(!m_cameras.empty())' will be inlined too
-    void CameraEvent_AddedToWorld() { if(!m_cameras.empty()) CameraCall(&Camera::Event_AddedToWorld); }
-    void CameraEvent_RemovedFromWorld() { if(!m_cameras.empty()) CameraCall(&Camera::Event_RemovedFromWorld); }
-    void CameraEvent_Moved() { if(!m_cameras.empty()) CameraCall(&Camera::Event_Moved); }
-    void CameraEvent_ResetView() { if(!m_cameras.empty()) CameraCall(&Camera::Event_ResetView); }
-    void CameraEvent_ViewPointVisibilityChanged() { if(!m_cameras.empty()) CameraCall(&Camera::Event_ViewPointVisibilityChanged); }
+    void CameraEvent_AddedToWorld() { if(!m_cameras.empty()) CameraCall(&Camera::_Event_AddedToWorld); }
+    void CameraEvent_RemovedFromWorld() { if(!m_cameras.empty()) CameraCall(&Camera::_Event_RemovedFromWorld); }
+    void CameraEvent_Moved() { if(!m_cameras.empty()) CameraCall(&Camera::_Event_Moved); }
+    void CameraEvent_ResetView() { if(!m_cameras.empty()) CameraCall(&Camera::_Event_ResetView); }
+    void CameraEvent_ViewPointVisibilityChanged() { if(!m_cameras.empty()) CameraCall(&Camera::_Event_ViewPointVisibilityChanged); }
 
-    void CameraCall_UpdateVisibilityForOwner() { if(!m_cameras.empty()) CameraCall(&Camera::UpdateVisibilityForOwner); }
+    void CameraCall_UpdateVisibilityForOwner() { if(!m_cameras.empty()) CameraCall(&Camera::_UpdateVisibilityForOwner); }
 };
 
 
