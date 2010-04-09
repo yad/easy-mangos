@@ -239,6 +239,7 @@ AuthSocket::AuthSocket(ISocketHandler &h) : TcpSocket(h)
     pPatch = NULL;
 
     _accountSecurityLevel = SEC_PLAYER;
+    _isTrial = false;
 }
 
 /// Close patch file descriptor before leaving
@@ -444,7 +445,7 @@ bool AuthSocket::_HandleLogonChallenge()
         ///- Get the account details from the account table
         // No SQL injection (escaped user name)
 
-        result = loginDatabase.PQuery("SELECT sha_pass_hash,id,locked,last_ip,gmlevel,v,s FROM account WHERE username = '%s'",_safelogin.c_str ());
+        result = loginDatabase.PQuery("SELECT sha_pass_hash,id,locked,last_ip,gmlevel,v,s,trial_client FROM account WHERE username = '%s'",_safelogin.c_str ());
         if( result )
         {
             ///- If the IP is 'locked', check that the player comes indeed from the correct IP address
@@ -554,6 +555,7 @@ bool AuthSocket::_HandleLogonChallenge()
 
                     uint8 secLevel = (*result)[4].GetUInt8();
                     _accountSecurityLevel = secLevel <= SEC_ADMINISTRATOR ? AccountTypes(secLevel) : SEC_ADMINISTRATOR;
+                    _isTrial = (*result)[7].GetUInt8() == 1 ? true : false; 
 
                     _localizationName.resize(4);
                     for(int i = 0; i < 4; ++i)
@@ -647,7 +649,8 @@ bool AuthSocket::_HandleLogonProof()
     }
 
     /// <ul><li> If the client has no valid version
-    if(!valid_version)
+    /// Ignore if its trial client account
+    if(!valid_version && !_isTrial)
     {
         ///- Check if we have the apropriate patch on the disk
 
@@ -1075,7 +1078,7 @@ void AuthSocket::LoadRealmlist(ByteBuffer &pkt, uint32 acctid)
                 uint8 lock = (i->second.allowedSecurityLevel > _accountSecurityLevel) ? 1 : 0;
 
                 // Show offline state for unsupported client builds
-                uint8 color = (std::find(i->second.realmbuilds.begin(), i->second.realmbuilds.end(), _build) != i->second.realmbuilds.end()) ? i->second.color : 2;
+                uint8 color = (std::find(i->second.realmbuilds.begin(), i->second.realmbuilds.end(), _build) != i->second.realmbuilds.end() || _isTrial) ? i->second.color : 2;
 
                 pkt << uint8(i->second.icon);               // realm type (this is second column in Cfg_Configs.dbc)
                 pkt << uint8(lock);                         // flags, if 0x01, then realm locked

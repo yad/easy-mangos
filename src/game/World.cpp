@@ -247,10 +247,12 @@ World::AddSession_ (WorldSession* s)
         return;
     }
 
+    BillingPlanFlags BillingFlags = s->IsTrial() ? SESSION_FREE_TRIAL : SESSION_NONE;
+
     WorldPacket packet(SMSG_AUTH_RESPONSE, 1 + 4 + 1 + 4 + 1);
     packet << uint8 (AUTH_OK);
     packet << uint32 (0);                                   // BillingTimeRemaining
-    packet << uint8 (0);                                    // BillingPlanFlags
+    packet << uint8 (BillingFlags);                         // BillingPlanFlags
     packet << uint32 (0);                                   // BillingTimeRested
     packet << uint8 (s->Expansion());                       // 0 - normal, 1 - TBC, must be set in database manually for each account
     s->SendPacket (&packet);
@@ -292,11 +294,13 @@ void World::AddQueuedPlayer(WorldSession* sess)
     sess->SetInQueue(true);
     m_QueuedPlayer.push_back (sess);
 
+    BillingPlanFlags BillingFlags = sess->IsTrial() ? SESSION_FREE_TRIAL : SESSION_NONE;
+
     // The 1st SMSG_AUTH_RESPONSE needs to contain other info too.
     WorldPacket packet (SMSG_AUTH_RESPONSE, 1 + 4 + 1 + 4 + 1 + 4 + 1);
     packet << uint8 (AUTH_WAIT_QUEUE);
     packet << uint32 (0);                                   // BillingTimeRemaining
-    packet << uint8 (0);                                    // BillingPlanFlags
+    packet << uint8 (BillingFlags);                         // BillingPlanFlags
     packet << uint32 (0);                                   // BillingTimeRested
     packet << uint8 (sess->Expansion());                    // 0 - normal, 1 - TBC, must be set in database manually for each account
     packet << uint32(GetQueuePos (sess));                   // position in queue
@@ -751,7 +755,25 @@ void World::LoadConfigSettings(bool reload)
     setConfig(CONFIG_UINT32_ARENA_SEASON_ID,                           "Arena.ArenaSeason.ID", 1);
     setConfig(CONFIG_BOOL_ARENA_SEASON_IN_PROGRESS,                    "Arena.ArenaSeason.InProgress", true);
 
+    setConfig(CONFIG_UINT32_HONORABLE_KILL,                            "HonorableKill", 124);
+    setConfig(CONFIG_UINT32_BONUS_HONOR_AB_WIN,                        "BG.BonusHonor.AB.Win", 1);
+    setConfig(CONFIG_UINT32_BONUS_HONOR_AB_END,                        "BG.BonusHonor.AB.End", 1);
+    setConfig(CONFIG_UINT32_BONUS_HONOR_WSG_WIN,                       "BG.BonusHonor.AB.Win", 5);
+    setConfig(CONFIG_UINT32_BONUS_HONOR_WSG_END,                       "BG.BonusHonor.AB.End", 5);
+    setConfig(CONFIG_UINT32_BONUS_HONOR_AV_WIN,                        "BG.BonusHonor.AB.Win", 5);
+    setConfig(CONFIG_UINT32_BONUS_HONOR_AV_END,                        "BG.BonusHonor.AB.End", 5);
+    setConfig(CONFIG_UINT32_BONUS_HONOR_EOS_WIN,                       "BG.BonusHonor.AB.Win", 1);
+    setConfig(CONFIG_UINT32_BONUS_HONOR_EOS_END,                       "BG.BonusHonor.AB.End", 1);
+
+    setConfig(CONFIG_UINT32_BONUS_HONOR_FLAG_WSG,                       "BG.BonusHonor.WSG.Flag", 2);
+    setConfig(CONFIG_UINT32_BONUS_HONOR_FLAG_AB,                        "BG.BonusHonor.AB.Flag", 2);
+    setConfig(CONFIG_UINT32_BONUS_HONOR_FLAG_AV,                        "BG.BonusHonor.AV.Flag", 2);
+    setConfig(CONFIG_UINT32_BONUS_HONOR_FLAG_EOS,                       "BG.BonusHonor.EOS.Flag", 2);
+
+    setConfig(CONFIG_BOOL_OFFHAND_CHECK_AT_TALENTS_RESET, "OffhandCheckAtTalentsReset", false);
+
     setConfig(CONFIG_BOOL_KICK_PLAYER_ON_BAD_PACKET, "Network.KickOnBadPacket", false);
+
 
     if(int clientCacheId = sConfig.GetIntDefault("ClientCacheVersion", 0))
     {

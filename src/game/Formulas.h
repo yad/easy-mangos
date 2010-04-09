@@ -27,7 +27,13 @@ namespace MaNGOS
     {
         inline float hk_honor_at_level(uint32 level, uint32 count=1)
         {
-            return (float)ceil(count*(-0.53177f + 0.59357f * exp((level +23.54042f) / 26.07859f )));
+            // this one is hardly outdated
+            //return (float)ceil(count*(-0.53177f + 0.59357f * exp((level +23.54042f) / 26.07859f )));
+            //Not correct for lower levels....
+            float honor_points = sWorld.getConfig(CONFIG_UINT32_HONORABLE_KILL);  // For one kill at max level (from 3.3.3, lvl 80)
+            honor_points *= level / sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL);
+            honor_points *= count;
+            return honor_points;
         }
     }
     namespace XP

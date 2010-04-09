@@ -992,8 +992,7 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
     {
         if (missInfo == SPELL_MISS_REFLECT && target->reflectResult == SPELL_MISS_NONE)       // In case spell reflect from target, do all effect on caster (if hit)
             DoSpellHitOnUnit(m_caster, mask);
-
-        else if (missInfo != SPELL_MISS_EVADE && target->reflectResult != SPELL_MISS_EVADE)   // We still need to start combat (not for evade...)
+        else if (missInfo != SPELL_MISS_EVADE && target->reflectResult != SPELL_MISS_EVADE && real_caster)   // We still need to start combat (not for evade...)
         {
             if (!unit->IsStandState() && !unit->hasUnitState(UNIT_STAT_STUNNED))
                 unit->SetStandState(UNIT_STAND_STATE_STAND);
@@ -2012,15 +2011,9 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
             if(m_spellInfo->Effect[effIndex] != SPELL_EFFECT_DUEL)
                 targetUnitMap.push_back(m_caster);
             break;
-        case TARGET_PERIODIC_TRIGGER_AURA:
+        case TARGET_SINGLE_ENEMY:
         {
-            Unit* pTarget;
-            // search for dummy aura link, that contains the target
-            Aura* pAura = NULL;
-            if(m_triggeredByAuraSpell)
-                pAura = m_caster->GetLinkedDummyAura(m_triggeredByAuraSpell->Id);
-            pTarget = pAura ? pAura->GetTarget() : m_targets.getUnitTarget();
-            if(Unit* pUnitTarget = m_caster->SelectMagnetTarget(pTarget, m_spellInfo))
+            if(Unit* pUnitTarget = m_caster->SelectMagnetTarget(m_targets.getUnitTarget(), m_spellInfo))
             {
                 m_targets.setUnitTarget(pUnitTarget);
                 targetUnitMap.push_back(pUnitTarget);
@@ -3279,7 +3272,8 @@ void Spell::finish(bool ok)
                     SpellEntry const *auraSpellInfo = (*i)->GetSpellProto();
                     SpellEffectIndex auraSpellIdx = (*i)->GetEffIndex();
                     // Calculate chance at that moment (can be depend for example from combo points)
-                    int32 chance = m_caster->CalculateSpellDamage(auraSpellInfo, auraSpellIdx, (*i)->GetBasePoints(),unit);
+                    int32 auraBasePoints = (*i)->GetBasePoints();
+                    int32 chance = m_caster->CalculateSpellDamage(unit, auraSpellInfo, auraSpellIdx, &auraBasePoints);
                     if(roll_chance_i(chance))
                         m_caster->CastSpell(unit, auraSpellInfo->EffectTriggerSpell[auraSpellIdx], true, NULL, (*i));
                 }
@@ -4922,13 +4916,9 @@ SpellCastResult Spell::CheckCast(bool strict)
             {
                 // Spell can be triggered, we need to check original caster prior to caster
                 Unit* caster = GetAffectiveCaster();
-                if (!caster)
-                    return SPELL_FAILED_BAD_TARGETS;
-                // target provided by dummy aura
-                Aura* dummyLink = caster->GetLinkedDummyAura(m_triggeredByAuraSpell->Id);
-                if (caster->GetTypeId() != TYPEID_PLAYER ||
-                    !dummyLink || !dummyLink->GetTarget() ||
-                    dummyLink->GetTarget()->GetTypeId() == TYPEID_PLAYER)
+                if (!caster || caster->GetTypeId() != TYPEID_PLAYER ||
+                    !m_targets.getUnitTarget() ||
+                    m_targets.getUnitTarget()->GetTypeId() == TYPEID_PLAYER)
                     return SPELL_FAILED_BAD_TARGETS;
 
                 Player* plrCaster = (Player*)caster;
@@ -4939,7 +4929,7 @@ SpellCastResult Spell::CheckCast(bool strict)
                     return SPELL_FAILED_DONT_REPORT;
                 }
 
-                Creature* target = (Creature*)dummyLink->GetTarget();
+                Creature* target = (Creature*)m_targets.getUnitTarget();
 
                 if(target->isPet() || target->isCharmed())
                 {

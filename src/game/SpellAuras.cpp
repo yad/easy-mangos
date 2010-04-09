@@ -406,7 +406,7 @@ m_isRemovedOnShapeLost(true), m_in_use(0), m_deleted(false)
     {
         m_caster_guid = caster->GetGUID();
 
-        damage        = caster->CalculateSpellDamage(m_spellProto,m_effIndex,m_currentBasePoints,target);
+        damage        = caster->CalculateSpellDamage(target, m_spellProto, m_effIndex, &m_currentBasePoints);
         m_maxduration = caster->CalculateSpellDuration(m_spellProto, m_effIndex, target);
 
         if (!damage && castItem && castItem->GetItemSuffixFactor())
@@ -570,11 +570,35 @@ PersistentAreaAura::~PersistentAreaAura()
 {
 }
 
+SingleEnemyTargetAura::SingleEnemyTargetAura(SpellEntry const* spellproto, SpellEffectIndex eff, int32 *currentBasePoints, Unit *target,
+Unit *caster, Item* castItem) : Aura(spellproto, eff, currentBasePoints, target, caster, castItem)
+{
+    if (caster)
+        m_casters_target_guid = caster->GetTypeId()==TYPEID_PLAYER ? ((Player*)caster)->GetSelection() : caster->GetTargetGUID();
+    else
+        m_casters_target_guid = 0;
+}
+
+SingleEnemyTargetAura::~SingleEnemyTargetAura()
+{
+}
+
+Unit* SingleEnemyTargetAura::GetTriggerTarget() const
+{
+    return ObjectAccessor::GetUnit(*m_target, m_casters_target_guid);
+}
 
 Aura* CreateAura(SpellEntry const* spellproto, SpellEffectIndex eff, int32 *currentBasePoints, Unit *target, Unit *caster, Item* castItem)
 {
     if (IsAreaAuraEffect(spellproto->Effect[eff]))
         return new AreaAura(spellproto, eff, currentBasePoints, target, caster, castItem);
+
+    uint32 triggeredSpellId = spellproto->EffectTriggerSpell[eff];
+
+    if(SpellEntry const* triggeredSpellInfo = sSpellStore.LookupEntry(triggeredSpellId))
+        for (int i = 0; i < MAX_EFFECT_INDEX; ++i)
+            if (triggeredSpellInfo->EffectImplicitTargetA[i] == TARGET_SINGLE_ENEMY)
+                return new SingleEnemyTargetAura(spellproto, eff, currentBasePoints, target, caster, castItem);
 
     return new Aura(spellproto, eff, currentBasePoints, target, caster, castItem);
 }
@@ -1325,7 +1349,7 @@ void Aura::SetStackAmount(uint8 stackAmount)
     if (stackAmount != m_stackAmount)
     {
         m_stackAmount = stackAmount;
-        int32 amount = m_stackAmount * caster->CalculateSpellDamage(m_spellProto, m_effIndex, m_currentBasePoints, target);
+        int32 amount = m_stackAmount * caster->CalculateSpellDamage(target, m_spellProto, m_effIndex, &m_currentBasePoints);
         // Reapply if amount change
         if (amount!=m_modifier.m_amount)
         {
@@ -1605,7 +1629,7 @@ void Aura::HandleAddTargetTrigger(bool apply, bool /*Real*/)
 void Aura::TriggerSpell()
 {
     const uint64& casterGUID = GetCasterGUID();
-    Unit* target = GetTarget();                     // correct target will be set in Spell::SetTargetMap
+    Unit* target = GetTriggerTarget();
 
     if(!casterGUID || !target)
         return;
@@ -2363,7 +2387,7 @@ void Aura::TriggerSpell()
 void Aura::TriggerSpellWithValue()
 {
     const uint64& casterGUID = GetCasterGUID();
-    Unit* target = GetTarget();                 // correct target will be set in Spell::SetTargetMap
+    Unit* target = GetTriggerTarget();
 
     if(!casterGUID || !target)
         return;
@@ -2384,31 +2408,6 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
     // spells required only Real aura add/remove
     if (!Real)
         return;
-    
-    // link dummyauras to caster for target selection from periodic triggered spells
-    if(!m_permanent)
-        if(Unit* caster = GetCaster())
-        {
-            SpellEntry const* m_spell = GetSpellProto();
-            for(uint8 i =0; i<3; i++)
-            {
-                if( m_spell->Effect[i] == SPELL_EFFECT_APPLY_AURA &&
-                    (m_spell->EffectApplyAuraName[i] == SPELL_AURA_PERIODIC_TRIGGER_SPELL
-                    || m_spell->EffectApplyAuraName[i] == SPELL_AURA_PERIODIC_TRIGGER_SPELL_WITH_VALUE) )
-                {
-                    if(apply)
-                    {
-                        caster->AddDummyAuraLink(this);
-                        if( IsAreaAura() )
-                            sLog.outDebug("Spell %i applying a periodic spell trigger aura has aoe target link dummy aura. Not supported!",GetId());
-                    }
-                    else
-                        caster->RemoveDummyAuraLink(this);
-                }
-                else if(m_spell->Effect[i] == SPELL_EFFECT_APPLY_AURA && m_spell->EffectApplyAuraName[i] == SPELL_AURA_DUMMY && GetEffIndex() != i)
-                    sLog.outDebug("Spell %i applying a periodic spell trigger aura has 2 dummy auras. May cause problems with target selection!");
-            }
-        }
 
     // AT APPLY
     if (apply)
@@ -3480,7 +3479,7 @@ void Aura::HandleAuraModShapeshift(bool apply, bool Real)
                             if(itr->second.state == PLAYERSPELL_REMOVED) continue;
                             SpellEntry const *spellInfo = sSpellStore.LookupEntry(itr->first);
                             if (spellInfo && spellInfo->SpellFamilyName == SPELLFAMILY_WARRIOR && spellInfo->SpellIconID == 139)
-                                Rage_val += m_target->CalculateSpellDamage(spellInfo, EFFECT_INDEX_0, spellInfo->EffectBasePoints[EFFECT_INDEX_0], m_target) * 10;
+                                Rage_val += m_target->CalculateSpellDamage(m_target, spellInfo, EFFECT_INDEX_0) * 10;
                         }
                     }
 
@@ -4138,7 +4137,7 @@ void Aura::HandleAuraModDisarm(bool apply, bool Real)
         return;
 
     if(!apply && m_target->HasAuraType(SPELL_AURA_MOD_DISARM))
-        return;
+		return;
 
     // not sure for it's correctness
     if(apply)
@@ -4170,8 +4169,8 @@ void Aura::HandleAuraModDisarmOffhand(bool apply, bool Real)
     if(!Real)
         return;
 
-    if(!apply && m_target->HasAuraType(SPELL_AURA_MOD_DISARM_OFFHAND))
-        return;
+	if(!apply && m_target->HasAuraType(SPELL_AURA_MOD_DISARM_OFFHAND))
+		return;
 
     // not sure for it's correctness
     if(apply)
@@ -4203,8 +4202,8 @@ void Aura::HandleAuraModDisarmRanged(bool apply, bool Real)
     if(!Real)
         return;
 
-    if(!apply && m_target->HasAuraType(SPELL_AURA_MOD_DISARM_RANGED))
-        return;
+	if(!apply && m_target->HasAuraType(SPELL_AURA_MOD_DISARM_RANGED))
+		return;
 
     // not sure for it's correctness
     if(apply)
@@ -7535,7 +7534,7 @@ void Aura::PeriodicTick()
                     {
                         uint32 percent =
                             GetEffIndex() < EFFECT_INDEX_2 && GetSpellProto()->Effect[GetEffIndex()] == SPELL_EFFECT_DUMMY ?
-                            pCaster->CalculateSpellDamage(GetSpellProto(), SpellEffectIndex(GetEffIndex() + 1), GetSpellProto()->EffectBasePoints[GetEffIndex() + 1], m_target) :
+                            pCaster->CalculateSpellDamage(m_target, GetSpellProto(), SpellEffectIndex(GetEffIndex() + 1)) :
                             100;
                         if(m_target->GetHealth() * 100 >= m_target->GetMaxHealth() * percent )
                         {
@@ -8381,7 +8380,7 @@ void Aura::PeriodicDummyTick()
                     if (rage == 0)
                         return;
                     int32 mod = (rage < 100) ? rage : 100;
-                    int32 points = m_target->CalculateSpellDamage(spell, EFFECT_INDEX_1, spell->EffectBasePoints[EFFECT_INDEX_1], m_target);
+                    int32 points = m_target->CalculateSpellDamage(m_target, spell, EFFECT_INDEX_1);
                     int32 regen = m_target->GetMaxHealth() * (mod * points / 10) / 1000;
                     m_target->CastCustomSpell(m_target, 22845, &regen, NULL, NULL, true, NULL, this);
                     m_target->SetPower(POWER_RAGE, rage-mod);
@@ -8537,7 +8536,7 @@ void Aura::PeriodicDummyTick()
             {
                 // Increases your attack power by $s1 for every $s2 armor value you have.
                 // Calculate AP bonus (from 1 efect of this spell)
-                int32 apBonus = m_modifier.m_amount * m_target->GetArmor() / m_target->CalculateSpellDamage(spell, EFFECT_INDEX_1, spell->EffectBasePoints[EFFECT_INDEX_1], m_target);
+                int32 apBonus = m_modifier.m_amount * m_target->GetArmor() / m_target->CalculateSpellDamage(m_target, spell, EFFECT_INDEX_1);
                 m_target->CastCustomSpell(m_target, 61217, &apBonus, &apBonus, NULL, true, NULL, this);
                 return;
             }

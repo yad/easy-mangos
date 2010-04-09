@@ -7107,7 +7107,7 @@ bool Player::RewardHonor(Unit *uVictim, uint32 groupsize, float honor)
                 return false;
 
             float f = 1;                                    //need for total kills (?? need more info)
-            uint32 k_grey = 0;
+            uint32 k_grey_diff = 0;
             uint32 k_level = getLevel();
             uint32 v_level = pVictim->getLevel();
 
@@ -7134,17 +7134,13 @@ bool Player::RewardHonor(Unit *uVictim, uint32 groupsize, float honor)
                     victim_guid = 0;                        // Don't show HK: <rank> message, only log.
             }
 
-            k_grey = MaNGOS::XP::GetGrayLevel(k_level);
-
-            if(v_level<=k_grey)
+            k_grey_diff = k_level - MaNGOS::XP::GetGrayLevel(k_level);
+            if(v_level <= k_level - k_grey_diff || v_level >= k_level + k_grey_diff)
                 return false;
 
-            float diff_level = (k_level == k_grey) ? 1 : ((float(v_level) - float(k_grey)) / (float(k_level) - float(k_grey)));
+            honor = MaNGOS::Honor::hk_honor_at_level(v_level);
 
             int32 v_rank =1;                                //need more info
-
-            honor = ((f * diff_level * (190 + v_rank*10))/4);
-            honor *= ((float)k_level) / 64.5f;              //factor of dependence on levels of the killer
 
             //check for event
             uint32 reqmap = 0;
@@ -23337,20 +23333,35 @@ void Player::DeleteEquipmentSet(uint64 setGuid)
             continue;
         }
 
+        uint32 talentSpellId = talent.m_talentEntry->RankID[talent.currentRank];
+
         // learn talent spells if they not in new spec (old spec copy)
         // and if they have different rank
         PlayerTalentMap::iterator specIter = m_talents[m_activeSpec].find(tempIter->first);
         if (specIter != m_talents[m_activeSpec].end() && specIter->second.state != PLAYERSPELL_REMOVED)
         {
             if ((*specIter).second.currentRank != talent.currentRank)
-                learnSpell(talent.m_talentEntry->RankID[talent.currentRank], false);
+                learnSpell(talentSpellId, false);
         }
         else
-            learnSpell(talent.m_talentEntry->RankID[talent.currentRank], false);
+            learnSpell(talentSpellId, false);
 
         // sync states - original state is changed in addSpell that learnSpell calls
         specIter = m_talents[m_activeSpec].find(tempIter->first);
-        (*specIter).second.state = talent.state;
+        if (specIter != m_talents[m_activeSpec].end())
+            (*specIter).second.state = talent.state;
+        else
+        {
+            sLog.outError("ActivateSpec: Talent spell %u expected to learned at spec switch but not listed in talents at final check!", talentSpellId);
+
+            // attempt resync DB state (deleted lost spell from DB)
+            if (talent.state != PLAYERSPELL_NEW)
+            {
+                PlayerTalent& talentNew = m_talents[m_activeSpec][tempIter->first];
+                talentNew = talent;
+                talentNew.state = PLAYERSPELL_REMOVED;
+            }
+        }
     }
 
     InitTalentForLevel();
