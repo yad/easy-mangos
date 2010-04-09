@@ -631,8 +631,7 @@ void BattleGround::RewardHonorToTeam(uint32 Honor, uint32 TeamID)
         if(!team) team = plr->GetTeam();
 
         if (team == TeamID)
-            if (plr->RewardHonor(NULL, 1, (float)Honor))
-                UpdatePlayerScore(plr, SCORE_BONUS_HONOR, Honor);
+            plr->RewardHonor(NULL, 1, (float)Honor)
     }
 }
 
