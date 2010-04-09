@@ -296,7 +296,7 @@ class MANGOS_DLL_SPEC Group
         void SetDungeonDifficulty(Difficulty difficulty);
         void SetRaidDifficulty(Difficulty difficulty);
         uint16 InInstance();
-        bool InCombatToInstance(uint32 instanceId);
+        bool InCombatToInstance(uint32 instanceId, bool bossOnly = false);
         void ResetInstances(uint8 method, bool isRaid, Player* SendMsgTo);
 
         // -no description-
