@@ -6299,31 +6299,7 @@ bool Player::RewardHonor(Unit *uVictim, uint32 groupsize, float honor)
             honor = MaNGOS::Honor::hk_honor_at_level(v_level);
 
             int32 v_rank =1;                                //need more info
-
-            //check for event
-            uint32 reqmap = 0;
-            // Arathi Basin
-            if(sGameEventMgr.IsActiveEvent(41))
-                reqmap = 529;
-            // Eye of Storm
-            if(sGameEventMgr.IsActiveEvent(42))
-                reqmap = 566;
-            // Warsong Gulch
-            if(sGameEventMgr.IsActiveEvent(43))
-               reqmap = 489;
-            // Alterac Valley
-            if(sGameEventMgr.IsActiveEvent(44))
-                reqmap = 30;
-            // Isle of Conquest
-            if(sGameEventMgr.IsActiveEvent(45))
-                reqmap = 628;
-            // Strand of the Ancients
-            if(sGameEventMgr.IsActiveEvent(46))
-                reqmap = 607;
-
-            if (GetMapId() == reqmap)
-                honor *= 1.5;
-
+            
             // count the number of playerkills in one day
             ApplyModUInt32Value(PLAYER_FIELD_KILLS, 1, true);
             // and those in a lifetime

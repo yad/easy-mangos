@@ -76,8 +76,6 @@ float World::m_MaxVisibleDistanceInFlight     = DEFAULT_VISIBILITY_DISTANCE;
 float World::m_VisibleUnitGreyDistance        = 0;
 float World::m_VisibleObjectGreyDistance      = 0;
 
-const uint16 BGEvent[6] = {41, 42, 43, 44, 45, 46};
-
 /// World constructor
 World::World()
 {
@@ -1390,7 +1388,6 @@ void World::Update(uint32 diff)
     if (m_gameTime > m_NextDailyQuestReset)
     {
         ResetDailyQuests();
-        RandomBG();
         m_NextDailyQuestReset += DAY;
     }
 
@@ -1992,20 +1989,7 @@ void World::InitDailyQuestResetTime()
     else
         delete result;
 }
-void World::RandomBG()
-{
-    //stop event
-    for(int i = 0; i < 6; i++)
-    {
-        sGameEventMgr.StopEvent(BGEvent[i]);
-        WorldDatabase.PExecute("UPDATE game_event SET occurence = 5184000 WHERE entry = %u", BGEvent[i]);
-    }
-    //add event     
-    uint8 random = urand(0,3);
-    sGameEventMgr.StartEvent(BGEvent[random]);
-    WorldDatabase.PExecute("UPDATE game_event SET occurence = 1400 WHERE entry = %u", BGEvent[random]);
 
-}
 void World::ResetDailyQuests()
 {
     sLog.outDetail("Daily quests reset for all characters.");
