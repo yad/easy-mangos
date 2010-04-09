@@ -94,11 +94,10 @@ void Camera::ResetView()
     UpdateForCurrentViewPoint(*this, m_owner, *m_source);
 }
 
-bool Camera::_Event_AddedToWorld(Camera * c)
+void Camera::_Event_AddedToWorld(Camera * c)
 {
     CAMERA_OUT("Camera: Added to world");
     UpdateForCurrentViewPoint(*c, c->m_owner, *c->m_source);
-    return false;
 }
 
 bool Camera::_Event_RemovedFromWorld(Camera * c)
@@ -118,11 +117,10 @@ bool Camera::_Event_RemovedFromWorld(Camera * c)
     return erase;
 }
 
-bool Camera::_Event_Moved(Camera * c)
+void Camera::_Event_Moved(Camera * c)
 {
     CAMERA_OUT("Camera: moved to another grid");
     c->SetGrid(c->m_source->GetGrid());
-    return false;
 }
 
 void Camera::UpdateVisibilityOf(WorldObject* target)
@@ -142,12 +140,11 @@ template void Camera::UpdateVisibilityOf(Corpse*        , UpdateData& , std::set
 template void Camera::UpdateVisibilityOf(GameObject*    , UpdateData& , std::set<WorldObject*>& );
 template void Camera::UpdateVisibilityOf(DynamicObject* , UpdateData& , std::set<WorldObject*>& );
 
-bool Camera::UpdateVisibilityForOwner()
+void Camera::UpdateVisibilityForOwner()
 {
     MaNGOS::VisibleNotifier notifier(*this);
     m_source->VisitAll(notifier, m_source->GetMap()->GetVisibilityDistance(), false);
     notifier.Notify();
-    return false;
 }
 
 //////////////////
@@ -170,4 +167,14 @@ void ViewPoint::CameraCall( bool (*m_func)(Camera*) )
     }
     else
         m_cameras.erase( remove_if(m_cameras.begin(),m_cameras.end(),*m_func), m_cameras.end() );
+}
+
+void ViewPoint::CameraCall( void (*m_func)(Camera*) ) const
+{
+    if(m_cameras.size() == 1)   // the most common case
+    {
+        (*m_func)(m_cameras.front());
+    }
+    else
+        std::for_each( m_cameras.begin(),m_cameras.end(),*m_func );
 }
