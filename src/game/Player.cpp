@@ -6407,13 +6407,15 @@ void Player::RewardHonorEndBattlegroud(bool win)
         hk = 5;
     else
     {
-        if(CharacterDatabase.PQuery("SELECT daily_bg FROM character_battleground_status WHERE guid = %u", guid))
+        QueryResult *result = CharacterDatabase.PQuery("SELECT daily_bg FROM character_battleground_status WHERE guid = '%u'", guid)
+        if(result)
             hk = 15;
         else
         {
             hk = 30;
-            ap = true;
-            CharacterDatabase.PExecute("INSERT INTO character_battleground_status VALUES (%u, %u)", guid, uint64(time(NULL)));
+            if(getLevel() >= sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL))
+                ap = true;
+            CharacterDatabase.PExecute("INSERT INTO character_battleground_status VALUES ('%u', '" UI64FMTD "')", guid, uint64(time(NULL)));
         }
     }
 
