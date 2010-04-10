@@ -6298,6 +6298,21 @@ bool Player::RewardHonor(Unit *uVictim, uint32 groupsize, float honor)
 
             honor = MaNGOS::Honor::hk_honor_at_level(v_level);
 
+            if(InBattleGround())
+            {
+                // Call To Arms events
+                uint16 m_event = 0;
+                switch(GetMapId())
+                {
+                    case 30:  m_event = 18; break;
+                    case 489: m_event = 19; break;
+                    case 529: m_event = 20; break;
+                    case 566: m_event = 21; break;
+                }
+                if(sGameEventMgr.IsActiveEvent(m_event))
+                    honor *= 1.5;
+            }
+
             int32 v_rank =1;                                //need more info
             
             // count the number of playerkills in one day
@@ -6327,10 +6342,8 @@ bool Player::RewardHonor(Unit *uVictim, uint32 groupsize, float honor)
 
         if(groupsize > 1)
             honor /= groupsize;
-
-        //now should be honor recieved constant
-        //honor *= (((float)urand(8,12))/10);                 // approx honor: 80% - 120% of real honor
     }
+
 
     // honor - for show honor points in log
     // victim_guid - for show victim name in log
