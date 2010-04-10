@@ -6397,12 +6397,31 @@ bool Player::RewardHonor(Unit *uVictim, uint32 groupsize, float honor)
     return true;
 }
 
+
 void Player::RewardHonorEndBattlegroud(bool win)
 {
-    float honor = MaNGOS::Honor::hk_honor_at_level(getLevel(), sWorld.getConfig(CONFIG_UINT32_BONUS_HONOR_HOLIDAY));
-    if(win)
-        honor *= 2;
-    RewardHonor(NULL, 0, honor);
+    uint32 hk = 0;
+    uint32 guid = GetGUIDLow();
+    bool ap = false;
+    if(!win)
+        hk = 5;
+    else
+    {
+        if(CharacterDatabase.PQuery("SELECT daily_bg FROM character_battleground_status WHERE guid = %u", guid))
+            hk = 15;
+        else
+        {
+            hk = 30;
+            ap = true;
+            CharacterDatabase.PExecute("INSERT INTO character_battleground_status VALUES (%u, %u)", guid, uint64(time(NULL)));
+        }
+    }
+
+    if(hk)
+        RewardHonor(NULL, 1, MaNGOS::Honor::hk_honor_at_level(getLevel(),hk));
+    if(ap)
+        ModifyArenaPoints(25);
+
 }
 
 void Player::ModifyHonorPoints( int32 value )
