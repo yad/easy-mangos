@@ -608,6 +608,7 @@ class World
         void InitDailyQuestResetTime();
         void InitWeeklyQuestResetTime();
         void ResetDailyQuests();
+        void ResetBGDaily();
         void ResetWeeklyQuests();
     private:
         void setConfig(eConfigUInt32Values index, char const* fieldname, uint32 defvalue);

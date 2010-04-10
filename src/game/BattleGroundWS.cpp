@@ -603,18 +603,18 @@ void BattleGroundWS::Reset()
     m_HonorEndKills = (isBGWeekend) ? 4 : 2;
     m_EndTimer = BG_WS_TIME_LIMIT;
     m_LastCapturedFlagTeam = 0;
-    m_LastEndTimeMinutes = BG_WS_TIME_LIMIT / MINUTE / IN_MILLISECONDS;
+    m_LastEndTimeMinutes = BG_WS_TIME_LIMIT / MINUTE / IN_MILISECONDS;
     m_FocusedAssault = BG_WS_CARRIER_DEBUFF;
-    m_FocusedAssault = true;
 }
 
 void BattleGroundWS::EndBattleGround(uint32 winner)
 {
     //win reward
-    if (winner == ALLIANCE)
-        RewardHonorToTeam(GetBonusHonorFromKill(sWorld.getConfig(CONFIG_UINT32_BONUS_HONOR_WSG_WIN)), ALLIANCE);
-    if (winner == HORDE)
-        RewardHonorToTeam(GetBonusHonorFromKill(sWorld.getConfig(CONFIG_UINT32_BONUS_HONOR_WSG_WIN)), HORDE);
+    if (winner)
+    {
+        RewardHonorToTeam(GetBonusHonorFromKill(sWorld.getConfig(CONFIG_UINT32_BONUS_HONOR_WSG_WIN)), winner);
+        RewardHonorTeamDaily(winner);
+    }
     //complete map_end rewards (even if no team wins)
     RewardHonorToTeam(GetBonusHonorFromKill(sWorld.getConfig(CONFIG_UINT32_BONUS_HONOR_WSG_END)), ALLIANCE);
     RewardHonorToTeam(GetBonusHonorFromKill(sWorld.getConfig(CONFIG_UINT32_BONUS_HONOR_WSG_END)), HORDE);
