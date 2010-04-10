@@ -28,6 +28,7 @@
 #include "Language.h"
 #include "MapManager.h"
 #include "GameEventMgr.h"
+#include "World.h"
 
 BattleGroundWS::BattleGroundWS()
 {
@@ -105,7 +106,7 @@ void BattleGroundWS::Update(uint32 diff)
                 int32 SpellValue0 = spellInfo->CalculateSimpleValue(EFFECT_INDEX_0);
                 int32 SpellValue1 = spellInfo->EffectBasePoints[0];
 
-                int32 dmgtaken = ((m_FocusedAssault < diff) ? 2*SpellValue0 : SpellValue0) - spellInfo->EffectBaseDice[0];
+                int32 dmgtaken = ((m_FocusedAssault < diff) ? 2*SpellValue0 : SpellValue0) - 1;
 
                 if(!CarrierA->HasAura(BG_WS_FOCUSED_ASSAULT))
                     CarrierA->CastCustomSpell(CarrierA, BG_WS_FOCUSED_ASSAULT, &dmgtaken, &SpellValue1, 0, true);

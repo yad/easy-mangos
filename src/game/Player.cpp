@@ -6397,6 +6397,14 @@ bool Player::RewardHonor(Unit *uVictim, uint32 groupsize, float honor)
     return true;
 }
 
+void Player::RewardHonorEndBattlegroud(bool win)
+{
+    float honor = MaNGOS::Honor::hk_honor_at_level(getLevel(), sWorld.getConfig(CONFIG_UINT32_BONUS_HONOR_HOLIDAY));
+    if(win)
+        honor *= 2;
+    RewardHonor(NULL, 0, honor);
+}
+
 void Player::ModifyHonorPoints( int32 value )
 {
     if(value < 0)
@@ -12529,9 +12537,6 @@ void Player::ApplyEnchantment(Item *item, EnchantmentSlot slot, bool apply, bool
                         case ITEM_MOD_FERAL_ATTACK_POWER:
                         case ITEM_MOD_SPELL_HEALING_DONE:   // deprecated
                         case ITEM_MOD_SPELL_DAMAGE_DONE:    // deprecated
-                            break;
-                        case ITEM_MOD_BLOCK_VALUE:
-                           ((Player*)this)->HandleBaseModValue(SHIELD_BLOCK_VALUE, FLAT_MOD, enchant_amount, apply);
                             break;
                         default:
                             break;

@@ -584,7 +584,7 @@ void Group::GroupLoot(ObjectGuid const& playerGUID, Loot *loot, WorldObject* obj
                     r->playerVote.begin()->second = NEED;
                 else
                 {
-                    group->SendLootStartRoll(60000, creature->GetMapId(), *r);
+                    group->SendLootStartRoll(60000, object->GetMapId(), *r);
 
                     loot->items[itemSlot].is_blocked = true;
 
@@ -651,7 +651,7 @@ void Group::NeedBeforeGreed(ObjectGuid const& playerGUID, Loot *loot, WorldObjec
                     r->playerVote.begin()->second = NEED;
                 else
                 {
-                    group->SendLootStartRoll(60000, creature->GetMapId(), *r);
+                    group->SendLootStartRoll(60000, object->GetMapId(), *r);
                     loot->items[itemSlot].is_blocked = true;
                 }
 
@@ -1576,7 +1576,7 @@ bool Group::InCombatToInstance(uint32 instanceId, bool bossOnly)
             if(!bossOnly)
                 return true;
 
-            for(AttackerSet::const_iterator itr = pPlayer->getAttackers().begin(); itr != pPlayer->getAttackers().end(); itr++)
+            for(std::set<Unit*>::const_iterator itr = pPlayer->getAttackers().begin(); itr != pPlayer->getAttackers().end(); itr++)
             {
                 if((*itr)->GetTypeId() != TYPEID_PLAYER && ((Creature*)(*itr))->isWorldBoss())
                     return true;

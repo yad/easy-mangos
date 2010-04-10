@@ -1483,6 +1483,9 @@ SOAP.Port = 7878
 #         Bonus Honor for capturing flag in this bg
 #         Default: 2
 #
+#   BG.BonusHonor.Holiday
+#         Bonus honor for Call to Arms Q
+#         Default: 5
 ###################################################################################################################
 
 HonorableKill = 60
@@ -1498,4 +1501,5 @@ BG.BonusHonor.AB.Flag = 1
 BG.BonusHonor.AV.Flag = 2
 BG.BonusHonor.WSG.Flag = 2
 BG.BonusHonor.EOS.Flag = 1
+BG.BonusHonor.Holiday = 5
 

@@ -27,6 +27,7 @@
 #include "WorldPacket.h"
 #include "Util.h"
 #include "MapManager.h"
+#include "World.h"
 
 BattleGroundEY::BattleGroundEY()
 {

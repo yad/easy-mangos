@@ -747,11 +747,12 @@ void World::LoadConfigSettings(bool reload)
     setConfig(CONFIG_UINT32_BONUS_HONOR_AV_END,                        "BG.BonusHonor.AB.End", 5);
     setConfig(CONFIG_UINT32_BONUS_HONOR_EOS_WIN,                       "BG.BonusHonor.AB.Win", 1);
     setConfig(CONFIG_UINT32_BONUS_HONOR_EOS_END,                       "BG.BonusHonor.AB.End", 1);
+    setConfig(CONFIG_UINT32_BONUS_HONOR_HOLIDAY,                       "BG.BonusHonor.Holiday",5);
 
-    setConfig(CONFIG_UINT32_BONUS_HONOR_FLAG_WSG,                       "BG.BonusHonor.WSG.Flag", 2);
-    setConfig(CONFIG_UINT32_BONUS_HONOR_FLAG_AB,                        "BG.BonusHonor.AB.Flag", 2);
-    setConfig(CONFIG_UINT32_BONUS_HONOR_FLAG_AV,                        "BG.BonusHonor.AV.Flag", 2);
-    setConfig(CONFIG_UINT32_BONUS_HONOR_FLAG_EOS,                       "BG.BonusHonor.EOS.Flag", 2);
+    setConfig(CONFIG_UINT32_BONUS_HONOR_FLAG_WSG,                      "BG.BonusHonor.WSG.Flag",2);
+    setConfig(CONFIG_UINT32_BONUS_HONOR_FLAG_AB,                       "BG.BonusHonor.AB.Flag", 2);
+    setConfig(CONFIG_UINT32_BONUS_HONOR_FLAG_AV,                       "BG.BonusHonor.AV.Flag", 2);
+    setConfig(CONFIG_UINT32_BONUS_HONOR_FLAG_EOS,                      "BG.BonusHonor.EOS.Flag",2);
 
     setConfig(CONFIG_BOOL_OFFHAND_CHECK_AT_TALENTS_RESET, "OffhandCheckAtTalentsReset", false);
 

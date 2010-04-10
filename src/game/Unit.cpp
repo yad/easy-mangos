@@ -1743,8 +1743,9 @@ void Unit::DealMeleeDamage(CalcDamageInfo *damageInfo, bool durabilityLoss)
                        SpellEffectIndex effIndex = (*i)->GetEffIndex();
                        int32 spellPower = caster->SpellBaseDamageBonus(GetSpellSchoolMask(i_spellProto)) + 
                                           caster->SpellBaseDamageBonusForVictim(GetSpellSchoolMask(i_spellProto), this);
-                       damage = i_spellProto->CalculateSimpleValue(effIndex) + bonus->direct_damage * spellPower;    
-                       damage = caster->CalculateSpellDamage(i_spellProto, effIndex, damage, this);
+                       damage = i_spellProto->CalculateSimpleValue(effIndex) + bonus->direct_damage * spellPower;
+                       int32 bpoints = (*i)->GetBasePoints();
+                       damage = caster->CalculateSpellDamage(pVictim, i_spellProto,effIndex, &bpoints);
                     }
                }
                //Calculate absorb resist ??? no data in opcode for this possibly unable to absorb or resist?
