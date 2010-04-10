@@ -4,6 +4,7 @@
 #include "vec3d.h"
 #include <cstdio>
 #include <cstdlib>
+#include <cassert>
 #include <map>
 #undef min
 #undef max
@@ -329,123 +330,64 @@ int WMOGroup::ConvertToVMAPGroupWmo(FILE *output, bool pPreciseVectorData)
 
         //-------INDX------------------------------------
         //-------MOPY--------
-        int n = 0;
-        int j = 0;
-        MopyEx = new char[mopy_size];
-        IndexExTr = new int[mopy_size];
-        for (int i=0; i<mopy_size; i+=2)
+        MoviEx = new uint16[nTriangles*3]; // "worst case" size...
+        int *IndexRenum = new int[nVertices];
+        int nColTriangles = 0;
+        memset(IndexRenum, 0xFF, nVertices*sizeof(int));
+        for (int i=0; i<nTriangles; ++i)
         {
             // Skip no collision triangles
-            if ((int)MOPY[i]&WMO_MATERIAL_NO_COLLISION)
+            if (MOPY[2*i]&WMO_MATERIAL_NO_COLLISION ||
+              !(MOPY[2*i]&(WMO_MATERIAL_HINT|WMO_MATERIAL_COLLIDE_HIT)) )
                 continue;
-            // Use only this triangles
-            if ((int)MOPY[i]&(WMO_MATERIAL_HINT|WMO_MATERIAL_COLLIDE_HIT))
+            // Use this triangle
+            for (int j=0; j<3; ++j)
             {
-                MopyEx[n] = MOPY[i];
-                MopyEx[(n+1)] = MOPY[(i+1)];
-                IndexExTr[j] = i/2;
-                j+=1;
-                n+=2;
+                IndexRenum[MOVI[3*i + j]] = 1;
+                MoviEx[3*nColTriangles + j] = MOVI[3*i + j];
             }
-        }
-        MopyEx_size = n;
-        IndexExTr_size = j;
-        delete [] MOPY;
-        delete [] MopyEx;
-
-        //---------MOVI-----------
-        MoviEx = new uint16[IndexExTr_size*3];
-        int m = 0;
-        for (int i=0; i<IndexExTr_size; ++i)
-        {
-            int n = 0;
-            n = IndexExTr[i]*3;
-            for (int x=0; x<3; ++x)
-            {
-                MoviEx[m] = MOVI[n];
-                n++;
-                m++;
-            }
-        }
-        delete [] MOVI;
-
-        MoviExSort = new uint16[IndexExTr_size*3];
-        for(int y=0; y<IndexExTr_size*3; ++y)
-        {
-            MoviExSort[y]=MoviEx[y];
+            ++nColTriangles;
         }
 
-        uint16 hold;
-        for (int pass = 1; pass < IndexExTr_size*3; ++pass)
+        // assign new vertex index numbers
+        int nColVertices = 0;
+        for (int i=0; i<nVertices; ++i)
         {
-            for (int i=0; i < IndexExTr_size*3-1; ++i)
+            if (IndexRenum[i] == 1)
             {
-                if (MoviExSort[i] > MoviExSort[i+1])
-                {
-                    hold = MoviExSort[i];
-                    MoviExSort[i] = MoviExSort[i+1];
-                    MoviExSort[i+1] = hold;
-                }
-                //double = 65535
-                else
-                    if (MoviExSort[i] == MoviExSort[i+1])
-                        MoviExSort[i+1] = 65535;
+                IndexRenum[i] = nColVertices;
+                ++nColVertices;
             }
-        }
-        // double delet
-        uint16 s = 0;
-        for (int i=0; i < IndexExTr_size*3; ++i)
-        {
-            if (MoviExSort[i]!=65535)
-            {
-                MoviExSort[s] = MoviExSort[i];
-                s++;
-            }
-        }
-        MovtExSort = new uint16[s];
-        for (int i=0; i < s; ++i)
-        {
-            MovtExSort[i] = MoviExSort[i];
         }
 
-        for (int i=0; i < IndexExTr_size*3; ++i)
+        // translate triangle indices to new numbers
+        for (int i=0; i<3*nColTriangles; ++i)
         {
-            uint16 b = MoviEx[i];
-            for (uint16 x = 0; x < s; ++x)
-            {
-                if(MoviExSort[x] == b)
-                {
-                    MoviEx[i] = x;
-                    break;
-                }
-            }
+            assert(MoviEx[i] < nVertices);
+            MoviEx[i] = IndexRenum[MoviEx[i]];
         }
-        int INDX[] = {0x58444E49,IndexExTr_size*6+4,IndexExTr_size*3};
+
+        // write triangle indices
+        int INDX[] = {0x58444E49, nColTriangles*6+4, nColTriangles*3};
         fwrite(INDX,4,3,output);
-        fwrite(MoviEx,2,IndexExTr_size*3,output);
+        fwrite(MoviEx,2,nColTriangles*3,output);
 
-        delete [] MoviEx;
-        delete [] MoviExSort;
-        delete [] IndexExTr;
-
-        //----------VERT---------
-        //-----MOVT----------
-        int d = 0;
-        MovtEx = new float[s*3];
-        for (uint16 i=0; i<s; ++i)
-        {
-            int c=0;//!!!!data in MovtExSort[i] more uint16 in great group wmo files!!!!
-            c = MovtExSort[i]*3;
-            for (int y=0; y<3; ++y)
-            {
-                MovtEx[d] = MOVT[c];
-                c++;
-                d++;
-            }
-        }
-        int VERT[] = {0x54524556,d*4+4,d*4/12};// "VERT"
+        // write vertices
+        int VERT[] = {0x54524556, nColVertices*3*sizeof(float)+4, nColVertices};// "VERT"
+        int check = 3*nColVertices;
         fwrite(VERT,4,3,output);
-        fwrite(MovtEx,4,d,output);
+        for (int i=0; i<nVertices; ++i)
+            if(IndexRenum[i] >= 0)
+                check -= fwrite(MOVT+3*i, sizeof(float), 3, output);
+
+        assert(check==0);
+
+        delete [] MOPY;
+        delete [] MOVI;
+        delete [] MoviEx;
+        delete [] IndexRenum;
+        delete [] MOVT;
+
         //------LIQU------------------------
         if(LiquEx_size != 0)
         {
@@ -454,10 +396,6 @@ int WMOGroup::ConvertToVMAPGroupWmo(FILE *output, bool pPreciseVectorData)
             fwrite(LiquEx,4,LiquEx_size/4,output);
             delete [] LiquEx;
         }
-
-        delete [] MOVT;
-        delete [] MovtEx;
-        delete [] MovtExSort;
 
         //---------------------------------------------
         return IndexExTr_size;
