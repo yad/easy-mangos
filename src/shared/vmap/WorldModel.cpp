@@ -151,6 +151,9 @@ namespace VMAP
         uint32 chunkSize, count;
         result = fwrite(VMAP_MAGIC,1,8,wf) == 8;
         if (result && fwrite("WMOD", 1, 4, wf) != 4) result = false;
+        chunkSize = sizeof(uint32) + sizeof(uint32);
+        if (result && fwrite(&chunkSize, sizeof(uint32), 1, wf) != 1) result = false;
+        if (result && fwrite(&RootWMOID, sizeof(uint32), 1, wf) != 1) result = false;
 
         // write vertices
         if (result && fwrite("VERT", 1, 4, wf) != 4) result = false;
@@ -204,6 +207,9 @@ namespace VMAP
         if (!readChunk(rf, chunk, VMAP_MAGIC, 8)) result = false;
 
         if (result && !readChunk(rf, chunk, "WMOD", 4)) result = false;
+        if (result && fread(&chunkSize, sizeof(uint32), 1, rf) != 1) result = false;
+        if (result && fread(&RootWMOID, sizeof(uint32), 1, rf) != 1) result = false;
+
         // read vertices
         if (result && !readChunk(rf, chunk, "VERT", 4)) result = false;
         if (result && fread(&chunkSize, sizeof(uint32), 1, rf) != 1) result = false;

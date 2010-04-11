@@ -75,7 +75,6 @@ namespace VMAP
         Vector3 pModel = iInvRot * (p - iPos) * iInvScale;
         if (iModel->IntersectPoint(pModel, info))
         {
-            info.flags = flags;
             info.adtId = adtId;
         }
     }

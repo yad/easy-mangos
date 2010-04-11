@@ -91,6 +91,7 @@ namespace VMAP
                     triangles[i] = MeshTriangle(tri[i].idx0, tri[i].idx1, tri[i].idx2);
             }
             void addGroupModels(std::vector<GroupModel> &models);
+            void setRootWmoID(uint32 id) { RootWMOID = id; }
             bool Intersect(const G3D::Ray &ray, float &distance, bool stopAtFirstHit) const;
             bool IntersectPoint(const G3D::Vector3 &p, AreaInfo &info) const;
             bool writeFile(const std::string &filename);
