@@ -1399,6 +1399,10 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                         (spellInfo_2->Id == 8326 && spellInfo_1->Id == 20584) )
                          return false;
 
+                    // Kindred Spirits
+                    if( spellInfo_1->SpellIconID == 3559 && spellInfo_2->SpellIconID == 3559 )
+                        return false;
+
                     break;
                 }
                 case SPELLFAMILY_MAGE:
@@ -2113,15 +2117,16 @@ void SpellMgr::LoadSpellLearnSkills()
 
         for(int i = 0; i < MAX_EFFECT_INDEX; ++i)
         {
-            if(entry->Effect[i]==SPELL_EFFECT_SKILL)
+            if(entry->Effect[i] == SPELL_EFFECT_SKILL)
             {
                 SpellLearnSkillNode dbc_node;
                 dbc_node.skill    = entry->EffectMiscValue[i];
+                dbc_node.step     = entry->CalculateSimpleValue(SpellEffectIndex(i));
                 if ( dbc_node.skill != SKILL_RIDING )
                     dbc_node.value = 1;
                 else
-                    dbc_node.value = entry->CalculateSimpleValue(SpellEffectIndex(i))*75;
-                dbc_node.maxvalue = entry->CalculateSimpleValue(SpellEffectIndex(i))*75;
+                    dbc_node.value = dbc_node.step * 75;
+                dbc_node.maxvalue = dbc_node.step * 75;
 
                 mSpellLearnSkills[spell] = dbc_node;
                 ++dbc_count;
@@ -2553,7 +2558,7 @@ bool LoadPetDefaultSpells_helper(CreatureInfo const* cInfo, PetDefaultSpellsEntr
 
 void SpellMgr::LoadPetDefaultSpells()
 {
-    assert(MAX_CREATURE_SPELL_DATA_SLOT==CREATURE_MAX_SPELLS);
+    ASSERT(MAX_CREATURE_SPELL_DATA_SLOT==CREATURE_MAX_SPELLS);
 
     mPetDefaultSpellsMap.clear();
 
@@ -2994,7 +2999,7 @@ SpellCastResult SpellMgr::GetSpellAllowedInLocationError(SpellEntry const *spell
     // - with SPELL_ATTR_EX4_NOT_USABLE_IN_ARENA flag
     // - with greater than 15 min CD
     if ((spellInfo->AttributesEx4 & SPELL_ATTR_EX4_NOT_USABLE_IN_ARENA) ||
-         (GetSpellRecoveryTime(spellInfo) > 15 * MINUTE * IN_MILISECONDS && !(spellInfo->AttributesEx4 & SPELL_ATTR_EX4_USABLE_IN_ARENA)))
+         (GetSpellRecoveryTime(spellInfo) > 15 * MINUTE * IN_MILLISECONDS && !(spellInfo->AttributesEx4 & SPELL_ATTR_EX4_USABLE_IN_ARENA)))
         if (player && player->InArena())
             return SPELL_FAILED_NOT_IN_ARENA;
 

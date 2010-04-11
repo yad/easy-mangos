@@ -40,7 +40,7 @@ namespace MaNGOS
     {
         Camera& camera;
         UpdateData i_data;
-        Player::ClientGUIDs i_clientGUIDs;
+        ObjectGuidSet i_clientGUIDs;
         std::set<WorldObject*> i_visibleNow;
 
         explicit VisibleNotifier(Camera &c) : camera(c), i_clientGUIDs(c.getOwner()->m_clientGUIDs) {}

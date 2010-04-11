@@ -610,13 +610,13 @@ uint32 WorldSession::getDialogStatus(Player *pPlayer, Object* questgiver, uint32
                         result2 = DIALOG_STATUS_REWARD_REP;
                     else if (pPlayer->getLevel() <= pPlayer->GetQuestLevelForPlayer(pQuest) + sWorld.getConfig(CONFIG_UINT32_QUEST_LOW_LEVEL_HIDE_DIFF) )
                     {
-                        if (pQuest->HasFlag(QUEST_FLAGS_DAILY))
+                        if (pQuest->HasFlag(QUEST_FLAGS_DAILY) || pQuest->HasFlag(QUEST_FLAGS_WEEKLY))
                             result2 = DIALOG_STATUS_AVAILABLE_REP;
                         else
                             result2 = DIALOG_STATUS_AVAILABLE;
                     }
                     else
-                        result2 = DIALOG_STATUS_CHAT;
+                        result2 = DIALOG_STATUS_LOW_LEVEL_AVAILABLE;
                 }
                 else
                     result2 = DIALOG_STATUS_UNAVAILABLE;
@@ -639,12 +639,12 @@ void WorldSession::HandleQuestgiverStatusMultipleQuery(WorldPacket& /*recvPacket
     WorldPacket data(SMSG_QUESTGIVER_STATUS_MULTIPLE, 4);
     data << uint32(count);                                  // placeholder
 
-    for(Player::ClientGUIDs::const_iterator itr = _player->m_clientGUIDs.begin(); itr != _player->m_clientGUIDs.end(); ++itr)
+    for(ObjectGuidSet::const_iterator itr = _player->m_clientGUIDs.begin(); itr != _player->m_clientGUIDs.end(); ++itr)
     {
         uint8 questStatus = DIALOG_STATUS_NONE;
         uint8 defstatus = DIALOG_STATUS_NONE;
 
-        if (IS_CREATURE_OR_PET_GUID(*itr))
+        if (itr->IsCreatureOrPet())
         {
             // need also pet quests case support
             Creature *questgiver = GetPlayer()->GetMap()->GetCreatureOrPetOrVehicle(*itr);
@@ -660,7 +660,7 @@ void WorldSession::HandleQuestgiverStatusMultipleQuery(WorldPacket& /*recvPacket
             data << uint8(questStatus);
             ++count;
         }
-        else if(IS_GAMEOBJECT_GUID(*itr))
+        else if (itr->IsGameobject())
         {
             GameObject *questgiver = GetPlayer()->GetMap()->GetGameObject(*itr);
             if(!questgiver)

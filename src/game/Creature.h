@@ -81,7 +81,8 @@ struct CreatureInfo
     uint32  faction_A;
     uint32  faction_H;
     uint32  npcflag;
-    float   speed;
+    float   speed_walk;
+    float   speed_run;
     float   scale;
     uint32  rank;
     float   mindmg;
@@ -300,8 +301,7 @@ struct VendorItemData
         m_items.push_back(new VendorItem(item, maxcount, ptime, ExtendedCost));
     }
     bool RemoveItem( uint32 item_id );
-    VendorItem const* FindItem(uint32 item_id) const;
-    size_t FindItemSlot(uint32 item_id) const;
+    VendorItem const* FindItemCostPair(uint32 item_id, uint32 extendedCost) const;
 
     void Clear()
     {
@@ -555,6 +555,7 @@ class MANGOS_DLL_SPEC Creature : public Unit, public GridCreature
         void SetNoSearchAssistance(bool val) { m_AlreadySearchedAssistance = val; }
         bool HasSearchedAssistance() { return m_AlreadySearchedAssistance; }
         bool CanAssistTo(const Unit* u, const Unit* enemy, bool checkfaction = true) const;
+        bool CanInitiateAttack();
 
         MovementGeneratorType GetDefaultMovementType() const { return m_defaultMovementType; }
         void SetDefaultMovementType(MovementGeneratorType mgt) { m_defaultMovementType = mgt; }

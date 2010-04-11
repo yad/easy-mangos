@@ -45,7 +45,7 @@
 #include "BattleGround.h"
 #include "Util.h"
 
-#define SPELL_CHANNEL_UPDATE_INTERVAL (1 * IN_MILISECONDS)
+#define SPELL_CHANNEL_UPDATE_INTERVAL (1 * IN_MILLISECONDS)
 
 extern pEffect SpellEffects[TOTAL_SPELL_EFFECTS];
 
@@ -183,16 +183,16 @@ void SpellCastTargets::setCorpseTarget(Corpse* corpse)
 
 void SpellCastTargets::Update(Unit* caster)
 {
-    m_GOTarget   = !m_GOTargetGUID.IsEmpty() ? caster->GetMap()->GetGameObject(m_GOTargetGUID.GetRawValue()) : NULL;
+    m_GOTarget   = !m_GOTargetGUID.IsEmpty() ? caster->GetMap()->GetGameObject(m_GOTargetGUID) : NULL;
     m_unitTarget = !m_unitTargetGUID.IsEmpty() ?
-        ( m_unitTargetGUID.GetRawValue() == caster->GetGUID() ? caster : ObjectAccessor::GetUnit(*caster, m_unitTargetGUID.GetRawValue()) ) :
+        ( m_unitTargetGUID == caster->GetObjectGuid() ? caster : ObjectAccessor::GetUnit(*caster, m_unitTargetGUID) ) :
     NULL;
 
     m_itemTarget = NULL;
     if(caster->GetTypeId() == TYPEID_PLAYER)
     {
         if(m_targetMask & TARGET_FLAG_ITEM)
-            m_itemTarget = ((Player*)caster)->GetItemByGuid(m_itemTargetGUID.GetRawValue());
+            m_itemTarget = ((Player*)caster)->GetItemByGuid(m_itemTargetGUID);
         else if(m_targetMask & TARGET_FLAG_TRADE_ITEM)
         {
             Player* pTrader = ((Player*)caster)->GetTrader();
@@ -312,7 +312,7 @@ void SpellCastTargets::write( ByteBuffer& data ) const
         data << m_strTarget;
 }
 
-Spell::Spell( Unit* Caster, SpellEntry const *info, bool triggered, uint64 originalCasterGUID, Spell** triggeringContainer )
+Spell::Spell( Unit* Caster, SpellEntry const *info, bool triggered, ObjectGuid originalCasterGUID, Spell** triggeringContainer )
 {
     ASSERT( Caster != NULL && info != NULL );
     ASSERT( info == sSpellStore.LookupEntry( info->Id ) && "`info` must be pointer to sSpellStore element");
@@ -345,15 +345,15 @@ Spell::Spell( Unit* Caster, SpellEntry const *info, bool triggered, uint64 origi
     // Set health leech amount to zero
     m_healthLeech = 0;
 
-    if(originalCasterGUID)
+    if(!originalCasterGUID.IsEmpty())
         m_originalCasterGUID = originalCasterGUID;
     else
-        m_originalCasterGUID = m_caster->GetGUID();
+        m_originalCasterGUID = m_caster->GetObjectGuid();
 
     UpdateOriginalCasterPointer();
 
     for(int i = 0; i < MAX_EFFECT_INDEX; ++i)
-        m_currentBasePoints[i] = m_spellInfo->EffectBasePoints[i];
+        m_currentBasePoints[i] = m_spellInfo->CalculateSimpleValue(SpellEffectIndex(i));
 
     m_spellState = SPELL_STATE_NULL;
 
@@ -758,7 +758,7 @@ void Spell::AddUnitTarget(Unit* pVictim, SpellEffectIndex effIndex)
     // Check for effect immune skip if immuned
     bool immuned = pVictim->IsImmunedToSpellEffect(m_spellInfo, effIndex);
 
-    uint64 targetGUID = pVictim->GetGUID();
+    ObjectGuid targetGUID = pVictim->GetObjectGuid();
 
     // Lookup target in already in list
     for(std::list<TargetInfo>::iterator ihit = m_UniqueTargetInfo.begin(); ihit != m_UniqueTargetInfo.end(); ++ihit)
@@ -828,7 +828,7 @@ void Spell::AddGOTarget(GameObject* pVictim, SpellEffectIndex effIndex)
     if( m_spellInfo->Effect[effIndex] == 0 )
         return;
 
-    uint64 targetGUID = pVictim->GetGUID();
+    ObjectGuid targetGUID = pVictim->GetObjectGuid();
 
     // Lookup target in already in list
     for(std::list<GOTargetInfo>::iterator ihit = m_UniqueGOTargetInfo.begin(); ihit != m_UniqueGOTargetInfo.end(); ++ihit)
@@ -904,7 +904,7 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
     // Get mask of effects for target
     uint32 mask = target->effectMask;
 
-    Unit* unit = m_caster->GetGUID() == target->targetGUID ? m_caster : ObjectAccessor::GetUnit(*m_caster, target->targetGUID);
+    Unit* unit = m_caster->GetObjectGuid() == target->targetGUID ? m_caster : ObjectAccessor::GetUnit(*m_caster, target->targetGUID);
     if (!unit)
         return;
 
@@ -1008,7 +1008,7 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
         // ignore pets or autorepeat/melee casts for speed (not exist quest for spells (hm... )
         if (real_caster && !((Creature*)unit)->isPet() && !IsAutoRepeat() && !IsNextMeleeSwingSpell() && !IsChannelActive())
             if (Player* p = real_caster->GetCharmerOrOwnerPlayerOrPlayerItself())
-                p->CastedCreatureOrGO(unit->GetEntry(), unit->GetGUID(), m_spellInfo->Id);
+                p->CastedCreatureOrGO(unit->GetEntry(), unit->GetObjectGuid(), m_spellInfo->Id);
 
         if(((Creature*)unit)->AI())
             ((Creature*)unit)->AI()->SpellHit(m_caster, m_spellInfo);
@@ -1169,7 +1169,7 @@ void Spell::DoAllEffectOnTarget(GOTargetInfo *target)
     if( !IsAutoRepeat() && !IsNextMeleeSwingSpell() && !IsChannelActive() )
     {
         if ( Player* p = m_caster->GetCharmerOrOwnerPlayerOrPlayerItself() )
-            p->CastedCreatureOrGO(go->GetEntry(), go->GetGUID(), m_spellInfo->Id);
+            p->CastedCreatureOrGO(go->GetEntry(), go->GetObjectGuid(), m_spellInfo->Id);
     }
 }
 
@@ -1196,7 +1196,7 @@ bool Spell::IsAliveUnitPresentInTargetList()
     {
         if( ihit->missCondition == SPELL_MISS_NONE && (needAliveTargetMask & ihit->effectMask) )
         {
-            Unit *unit = m_caster->GetGUID() == ihit->targetGUID ? m_caster : ObjectAccessor::GetUnit(*m_caster, ihit->targetGUID);
+            Unit *unit = m_caster->GetObjectGuid() == ihit->targetGUID ? m_caster : ObjectAccessor::GetUnit(*m_caster, ihit->targetGUID);
 
             // either unit is alive and normal spell, or unit dead and deathonly-spell
             if (unit && (unit->isAlive() != IsDeathOnlySpell(m_spellInfo)))
@@ -2442,7 +2442,7 @@ void Spell::cancel()
             {
                 if( ihit->missCondition == SPELL_MISS_NONE )
                 {
-                    Unit* unit = m_caster->GetGUID() == (*ihit).targetGUID ? m_caster : ObjectAccessor::GetUnit(*m_caster, ihit->targetGUID);
+                    Unit* unit = m_caster->GetObjectGuid() == (*ihit).targetGUID ? m_caster : ObjectAccessor::GetUnit(*m_caster, ihit->targetGUID);
                     if( unit && unit->isAlive() )
                         unit->RemoveAurasByCasterSpell(m_spellInfo->Id, m_caster->GetGUID());
                 }
@@ -2919,14 +2919,14 @@ void Spell::update(uint32 difftime)
                         for(std::list<TargetInfo>::iterator ihit = m_UniqueTargetInfo.begin(); ihit != m_UniqueTargetInfo.end(); ++ihit)
                         {
                             TargetInfo* target = &*ihit;
-                            if(!IS_CREATURE_GUID(target->targetGUID))
+                            if(!target->targetGUID.IsCreature())
                                 continue;
 
-                            Unit* unit = m_caster->GetGUID() == target->targetGUID ? m_caster : ObjectAccessor::GetUnit(*m_caster, target->targetGUID);
+                            Unit* unit = m_caster->GetObjectGuid() == target->targetGUID ? m_caster : ObjectAccessor::GetUnit(*m_caster, target->targetGUID);
                             if (unit == NULL)
                                 continue;
 
-                            p->CastedCreatureOrGO(unit->GetEntry(), unit->GetGUID(), m_spellInfo->Id);
+                            p->CastedCreatureOrGO(unit->GetEntry(), unit->GetObjectGuid(), m_spellInfo->Id);
                         }
 
                         for(std::list<GOTargetInfo>::iterator ihit = m_UniqueGOTargetInfo.begin(); ihit != m_UniqueGOTargetInfo.end(); ++ihit)
@@ -2937,7 +2937,7 @@ void Spell::update(uint32 difftime)
                             if(!go)
                                 continue;
 
-                            p->CastedCreatureOrGO(go->GetEntry(), go->GetGUID(), m_spellInfo->Id);
+                            p->CastedCreatureOrGO(go->GetEntry(), go->GetObjectGuid(), m_spellInfo->Id);
                         }
                     }
                 }
@@ -2980,13 +2980,14 @@ void Spell::finish(bool ok)
             if( ihit->missCondition == SPELL_MISS_NONE )
             {
                 // check m_caster->GetGUID() let load auras at login and speedup most often case
-                Unit *unit = m_caster->GetGUID()== ihit->targetGUID ? m_caster : ObjectAccessor::GetUnit(*m_caster, ihit->targetGUID);
+                Unit *unit = m_caster->GetObjectGuid() == ihit->targetGUID ? m_caster : ObjectAccessor::GetUnit(*m_caster, ihit->targetGUID);
                 if (unit && unit->isAlive())
                 {
                     SpellEntry const *auraSpellInfo = (*i)->GetSpellProto();
                     SpellEffectIndex auraSpellIdx = (*i)->GetEffIndex();
                     // Calculate chance at that moment (can be depend for example from combo points)
-                    int32 chance = m_caster->CalculateSpellDamage(auraSpellInfo, auraSpellIdx, (*i)->GetBasePoints(),unit);
+                    int32 auraBasePoints = (*i)->GetBasePoints();
+                    int32 chance = m_caster->CalculateSpellDamage(unit, auraSpellInfo, auraSpellIdx, &auraBasePoints);
                     if(roll_chance_i(chance))
                         m_caster->CastSpell(unit, auraSpellInfo->EffectTriggerSpell[auraSpellIdx], true, NULL, (*i));
                 }
@@ -3017,7 +3018,7 @@ void Spell::finish(bool ok)
         {
             for(std::list<TargetInfo>::const_iterator ihit = m_UniqueTargetInfo.begin(); ihit != m_UniqueTargetInfo.end(); ++ihit)
             {
-                if (ihit->missCondition != SPELL_MISS_NONE && ihit->targetGUID != m_caster->GetGUID())
+                if (ihit->missCondition != SPELL_MISS_NONE && ihit->targetGUID != m_caster->GetObjectGuid())
                 {
                     needDrop = false;
                     break;
@@ -3343,20 +3344,20 @@ void Spell::WriteSpellGoTargets( WorldPacket * data )
     {
         if ((*ihit).missCondition == SPELL_MISS_NONE)       // Add only hits
         {
-            *data << uint64(ihit->targetGUID);
+            *data << ihit->targetGUID;
             m_needAliveTargetMask |=ihit->effectMask;
         }
     }
 
     for(std::list<GOTargetInfo>::const_iterator ighit = m_UniqueGOTargetInfo.begin(); ighit != m_UniqueGOTargetInfo.end(); ++ighit)
-        *data << uint64(ighit->targetGUID);                 // Always hits
+        *data << ighit->targetGUID;                         // Always hits
 
     *data << (uint8)miss;
     for(std::list<TargetInfo>::const_iterator ihit = m_UniqueTargetInfo.begin(); ihit != m_UniqueTargetInfo.end(); ++ihit)
     {
         if( ihit->missCondition != SPELL_MISS_NONE )        // Add only miss
         {
-            *data << uint64(ihit->targetGUID);
+            *data << ihit->targetGUID;
             *data << uint8(ihit->missCondition);
             if( ihit->missCondition == SPELL_MISS_REFLECT )
                 *data << uint8(ihit->reflectResult);
@@ -3498,10 +3499,10 @@ void Spell::SendChannelUpdate(uint32 time)
     {
         m_caster->RemoveAurasByCasterSpell(m_spellInfo->Id, m_caster->GetGUID());
 
-        if(uint64 target_guid = m_caster->GetChannelObjectGUID())
-            if(target_guid != m_caster->GetGUID() && IS_UNIT_GUID(target_guid))
-                if(Unit* target = ObjectAccessor::GetUnit(*m_caster, target_guid))
-                    target->RemoveAurasByCasterSpell(m_spellInfo->Id, m_caster->GetGUID());
+        ObjectGuid target_guid = m_caster->GetChannelObjectGUID();
+        if (target_guid != m_caster->GetObjectGuid() && target_guid.IsUnit())
+            if (Unit* target = ObjectAccessor::GetUnit(*m_caster, target_guid))
+                target->RemoveAurasByCasterSpell(m_spellInfo->Id, m_caster->GetGUID());
 
         m_caster->SetChannelObjectGUID(0);
         m_caster->SetUInt32Value(UNIT_CHANNEL_SPELL, 0);
@@ -3522,7 +3523,7 @@ void Spell::SendChannelStart(uint32 duration)
     {
         for(std::list<TargetInfo>::const_iterator itr = m_UniqueTargetInfo.begin(); itr != m_UniqueTargetInfo.end(); ++itr)
         {
-            if( (itr->effectMask & (1 << 0)) && itr->reflectResult == SPELL_MISS_NONE && itr->targetGUID != m_caster->GetGUID())
+            if( (itr->effectMask & (1 << 0)) && itr->reflectResult == SPELL_MISS_NONE && itr->targetGUID != m_caster->GetObjectGuid())
             {
                 target = ObjectAccessor::GetUnit(*m_caster, itr->targetGUID);
                 break;
@@ -3599,7 +3600,7 @@ void Spell::TakeCastItem()
     {
         // This code is to avoid a crash
         // I'm not sure, if this is really an error, but I guess every item needs a prototype
-        sLog.outError("Cast item has no item prototype highId=%d, lowId=%d",m_CastItem->GetGUIDHigh(), m_CastItem->GetGUIDLow());
+        sLog.outError("Cast item (%s) has no item prototype", m_CastItem->GetObjectGuid().GetString().c_str());
         return;
     }
 
@@ -3613,7 +3614,7 @@ void Spell::TakeCastItem()
             // item has limited charges
             if (proto->Spells[i].SpellCharges)
             {
-                if (proto->Spells[i].SpellCharges < 0 && !proto->NonConsumable)
+                if (proto->Spells[i].SpellCharges < 0 && !(proto->ExtraFlags & ITEM_EXTRA_NON_CONSUMABLE))
                     expendable = true;
 
                 int32 charges = m_CastItem->GetSpellCharges(i);
@@ -3639,7 +3640,7 @@ void Spell::TakeCastItem()
         ((Player*)m_caster)->DestroyItemCount(m_CastItem, count, true);
 
         // prevent crash at access to deleted m_targets.getItemTarget
-        if(m_CastItem==m_targets.getItemTarget())
+        if(m_CastItem == m_targets.getItemTarget())
             m_targets.setItemTarget(NULL);
 
         m_CastItem = NULL;
@@ -3852,28 +3853,18 @@ void Spell::HandleEffects(Unit *pUnitTarget,Item *pItemTarget,GameObject *pGOTar
 
     damage = int32(CalculateDamage(i, unitTarget) * DamageMultiplier);
 
-    sLog.outDebug( "Spell %u Effect%d : %u", m_spellInfo->Id, i, eff);
+    sLog.outDebug("Spell %u Effect%d : %u", m_spellInfo->Id, i, eff);
 
-    if(eff<TOTAL_SPELL_EFFECTS)
+    if(eff < TOTAL_SPELL_EFFECTS)
     {
         //sLog.outDebug( "WORLD: Spell FX %d < TOTAL_SPELL_EFFECTS ", eff);
         (*this.*SpellEffects[eff])(i);
     }
-    /*
     else
     {
-        sLog.outDebug( "WORLD: Spell FX %d > TOTAL_SPELL_EFFECTS ", eff);
-        if (m_CastItem)
-            EffectEnchantItemTmp(i);
-        else
-        {
-            sLog.outError("SPELL: unknown effect %u spell id %u",
-                eff, m_spellInfo->Id);
-        }
+        sLog.outError("WORLD: Spell FX %d > TOTAL_SPELL_EFFECTS ", eff);
     }
-    */
 }
-
 
 void Spell::AddTriggeredSpell( uint32 spellId )
 {
@@ -5159,7 +5150,7 @@ SpellCastResult Spell::CheckCasterAuras() const
 
 bool Spell::CanAutoCast(Unit* target)
 {
-    uint64 targetguid = target->GetGUID();
+    ObjectGuid targetguid = target->GetObjectGuid();
 
     for(int j = 0; j < MAX_EFFECT_INDEX; ++j)
     {
@@ -5500,7 +5491,7 @@ SpellCastResult Spell::CheckItems()
                     {
                         // CastItem will be used up and does not count as reagent
                         int32 charges = m_CastItem->GetSpellCharges(s);
-                        if (proto->Spells[s].SpellCharges < 0 && !proto->NonConsumable && abs(charges) < 2)
+                        if (proto->Spells[s].SpellCharges < 0 && !(proto->ExtraFlags & ITEM_EXTRA_NON_CONSUMABLE) && abs(charges) < 2)
                         {
                             ++itemcount;
                             break;
@@ -5859,7 +5850,7 @@ void Spell::DelayedChannel()
     {
         if ((*ihit).missCondition == SPELL_MISS_NONE)
         {
-            if (Unit* unit = m_caster->GetGUID() == ihit->targetGUID ? m_caster : ObjectAccessor::GetUnit(*m_caster, ihit->targetGUID))
+            if (Unit* unit = m_caster->GetObjectGuid() == ihit->targetGUID ? m_caster : ObjectAccessor::GetUnit(*m_caster, ihit->targetGUID))
                 for (int j = 0; j < MAX_EFFECT_INDEX; ++j)
                     if (ihit->effectMask & (1 << j))
                         unit->DelayAura(m_spellInfo->Id, SpellEffectIndex(j), delaytime);
@@ -5879,9 +5870,9 @@ void Spell::DelayedChannel()
 
 void Spell::UpdateOriginalCasterPointer()
 {
-    if(m_originalCasterGUID == m_caster->GetGUID())
+    if(m_originalCasterGUID == m_caster->GetObjectGuid())
         m_originalCaster = m_caster;
-    else if (IS_GAMEOBJECT_GUID(m_originalCasterGUID))
+    else if (m_originalCasterGUID.IsGameobject())
     {
         GameObject* go = m_caster->IsInWorld() ? m_caster->GetMap()->GetGameObject(m_originalCasterGUID) : NULL;
         m_originalCaster = go ? go->GetOwner() : NULL;
@@ -6208,7 +6199,7 @@ SpellCastResult Spell::CanOpenLock(SpellEffectIndex effIndex, uint32 lockId, Ski
                 {
                     // skill bonus provided by casting spell (mostly item spells)
                     // add the damage modifier from the spell casted (cheat lock / skeleton key etc.) (use m_currentBasePoints, CalculateDamage returns wrong value)
-                    uint32 spellSkillBonus = uint32(m_currentBasePoints[effIndex]+1);
+                    uint32 spellSkillBonus = uint32(m_currentBasePoints[effIndex]);
                     reqSkillValue = lockInfo->Skill[j];
 
                     // castitem check: rogue using skeleton keys. the skill values should not be added in this case.
@@ -6325,7 +6316,7 @@ void Spell::FillRaidOrPartyHealthPriorityTargets(UnitList &targetUnitMap, Unit* 
 
 WorldObject* Spell::GetCastingObject() const
 {
-    if (IS_GAMEOBJECT_GUID(m_originalCasterGUID))
+    if (m_originalCasterGUID.IsGameobject())
         return m_caster->IsInWorld() ? m_caster->GetMap()->GetGameObject(m_originalCasterGUID) : NULL;
     else
         return m_caster;

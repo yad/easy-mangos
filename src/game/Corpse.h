@@ -59,7 +59,6 @@ class Corpse : public WorldObject, public GridCorpse
         bool Create( uint32 guidlow, Player *owner );
 
         void SaveToDB();
-        bool LoadFromDB(uint32 guid, QueryResult *result);
         bool LoadFromDB(uint32 guid, Field *fields);
 
         void DeleteBonesFromWorld();
@@ -89,6 +88,8 @@ class Corpse : public WorldObject, public GridCorpse
         void Whisper(int32 textId,uint64 receiver) { MonsterWhisper(textId,receiver); }
         void YellToZone(int32 textId, uint32 language, uint64 TargetGuid) { MonsterYellToZone(textId,language,TargetGuid); }
 
+
+        bool IsExpired(time_t t) const;
     private:
 
         CorpseType m_type;

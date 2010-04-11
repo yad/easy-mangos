@@ -243,7 +243,7 @@ pAuraHandler AuraHandler[TOTAL_AURAS]=
     &Aura::HandleNoImmediateEffect,                         //190 SPELL_AURA_MOD_FACTION_REPUTATION_GAIN     implemented in Player::CalculateReputationGain
     &Aura::HandleAuraModUseNormalSpeed,                     //191 SPELL_AURA_USE_NORMAL_MOVEMENT_SPEED
     &Aura::HandleModMeleeRangedSpeedPct,                    //192 SPELL_AURA_HASTE_MELEE
-    &Aura::HandleModCombatSpeedPct,                         //193 SPELL_AURA_MELEE_SLOW (in fact combat (any type attack) speed pct)
+    &Aura::HandleModCombatSpeedPct,                         //193 SPELL_AURA_HASTE_ALL (in fact combat (any type attack) speed pct)
     &Aura::HandleNoImmediateEffect,                         //194 SPELL_AURA_MOD_IGNORE_ABSORB_SCHOOL       implement in Unit::CalcNotIgnoreAbsorbDamage
     &Aura::HandleNoImmediateEffect,                         //195 SPELL_AURA_MOD_IGNORE_ABSORB_FOR_SPELL    implement in Unit::CalcNotIgnoreAbsorbDamage
     &Aura::HandleNULL,                                      //196 SPELL_AURA_MOD_COOLDOWN (single spell 24818 in 3.2.2a)
@@ -302,7 +302,7 @@ pAuraHandler AuraHandler[TOTAL_AURAS]=
     &Aura::HandleAuraConvertRune,                           //249 SPELL_AURA_CONVERT_RUNE
     &Aura::HandleAuraModIncreaseHealth,                     //250 SPELL_AURA_MOD_INCREASE_HEALTH_2
     &Aura::HandleNULL,                                      //251 SPELL_AURA_MOD_ENEMY_DODGE
-    &Aura::HandleNULL,                                      //252 haste all?
+    &Aura::HandleModCombatSpeedPct,                         //252 SPELL_AURA_SLOW_ALL
     &Aura::HandleNoImmediateEffect,                         //253 SPELL_AURA_MOD_BLOCK_CRIT_CHANCE             implemented in Unit::CalculateMeleeDamage
     &Aura::HandleNULL,                                      //254 SPELL_AURA_MOD_DISARM_SHIELD disarm Shield
     &Aura::HandleNoImmediateEffect,                         //255 SPELL_AURA_MOD_MECHANIC_DAMAGE_TAKEN_PERCENT    implemented in Unit::SpellDamageBonus
@@ -378,13 +378,13 @@ m_effIndex(eff), m_auraSlot(MAX_AURAS), m_auraFlags(AFLAG_NONE), m_auraLevel(1),
 m_positive(false), m_permanent(false), m_isPeriodic(false), m_isAreaAura(false), m_isPersistent(false),
 m_isRemovedOnShapeLost(true), m_in_use(0), m_deleted(false)
 {
-    assert(target);
+    ASSERT(target);
 
-    assert(spellproto && spellproto == sSpellStore.LookupEntry( spellproto->Id ) && "`info` must be pointer to sSpellStore element");
+    ASSERT(spellproto && spellproto == sSpellStore.LookupEntry( spellproto->Id ) && "`info` must be pointer to sSpellStore element");
 
     m_spellProto = spellproto;
 
-    m_currentBasePoints = currentBasePoints ? *currentBasePoints : m_spellProto->EffectBasePoints[eff];
+    m_currentBasePoints = currentBasePoints ? *currentBasePoints : m_spellProto->EffectBasePoints[eff] + 1;
 
     m_isPassive = IsPassiveSpell(GetId());
     m_positive = IsPositiveEffect(GetId(), m_effIndex);
@@ -397,14 +397,14 @@ m_isRemovedOnShapeLost(true), m_in_use(0), m_deleted(false)
     if(!caster)
     {
         m_caster_guid = target->GetGUID();
-        damage = m_currentBasePoints+1;                     // stored value-1
+        damage = m_currentBasePoints;                       // stored value-1
         m_maxduration = target->CalculateSpellDuration(m_spellProto, m_effIndex, target);
     }
     else
     {
         m_caster_guid = caster->GetGUID();
 
-        damage        = caster->CalculateSpellDamage(m_spellProto,m_effIndex,m_currentBasePoints,target);
+        damage        = caster->CalculateSpellDamage(target, m_spellProto, m_effIndex, &m_currentBasePoints);
         m_maxduration = caster->CalculateSpellDuration(m_spellProto, m_effIndex, target);
 
         if (!damage && castItem && castItem->GetItemSuffixFactor())
@@ -615,7 +615,7 @@ void Aura::Update(uint32 diff)
             {
                 Powers powertype = Powers(m_spellProto->powerType);
                 int32 manaPerSecond = m_spellProto->manaPerSecond + m_spellProto->manaPerSecondPerLevel * caster->getLevel();
-                m_timeCla = 1*IN_MILISECONDS;
+                m_timeCla = 1*IN_MILLISECONDS;
                 if (manaPerSecond)
                 {
                     if(powertype==POWER_HEALTH)
@@ -1013,7 +1013,7 @@ void Aura::_AddAura()
         if(slot < MAX_AURAS)                        // slot found send data to client
         {
             SetAura(false);
-            SetAuraFlags((1 << GetEffIndex()) | AFLAG_NOT_CASTER | ((GetAuraMaxDuration() > 0) ? AFLAG_DURATION : AFLAG_NONE) | (IsPositive() ? AFLAG_POSITIVE : AFLAG_NEGATIVE));
+            SetAuraFlags((1 << GetEffIndex()) | ((GetCasterGUID() == GetTarget()->GetGUID()) ? AFLAG_NOT_CASTER : AFLAG_NONE) | ((GetAuraMaxDuration() > 0) ? AFLAG_DURATION : AFLAG_NONE) | (IsPositive() ? AFLAG_POSITIVE : AFLAG_NEGATIVE));
             SetAuraLevel(caster ? caster->getLevel() : sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL));
             SendAuraUpdate(false);
         }
@@ -1233,7 +1233,7 @@ void Aura::SendAuraUpdate(bool remove)
 
     if(!(auraFlags & AFLAG_NOT_CASTER))
     {
-        data << uint8(0);                                   // pguid
+        data.appendPackGUID(GetCasterGUID());
     }
 
     if(auraFlags & AFLAG_DURATION)
@@ -1256,7 +1256,7 @@ void Aura::SetStackAmount(uint8 stackAmount)
     if (stackAmount != m_stackAmount)
     {
         m_stackAmount = stackAmount;
-        int32 amount = m_stackAmount * caster->CalculateSpellDamage(m_spellProto, m_effIndex, m_currentBasePoints, target);
+        int32 amount = m_stackAmount * caster->CalculateSpellDamage(target, m_spellProto, m_effIndex, &m_currentBasePoints);
         // Reapply if amount change
         if (amount!=m_modifier.m_amount)
         {
@@ -2277,7 +2277,7 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                     case 7057:                              // Haunting Spirits
                         // expected to tick with 30 sec period (tick part see in Aura::PeriodicTick)
                         m_isPeriodic = true;
-                        m_modifier.periodictime = 30*IN_MILISECONDS;
+                        m_modifier.periodictime = 30*IN_MILLISECONDS;
                         m_periodicTimer = m_modifier.periodictime;
                         return;
                     case 13139:                             // net-o-matic
@@ -3199,7 +3199,7 @@ void Aura::HandleAuraModShapeshift(bool apply, bool Real)
                             if(itr->second.state == PLAYERSPELL_REMOVED) continue;
                             SpellEntry const *spellInfo = sSpellStore.LookupEntry(itr->first);
                             if (spellInfo && spellInfo->SpellFamilyName == SPELLFAMILY_WARRIOR && spellInfo->SpellIconID == 139)
-                                Rage_val += m_target->CalculateSpellDamage(spellInfo, EFFECT_INDEX_0, spellInfo->EffectBasePoints[EFFECT_INDEX_0], m_target) * 10;
+                                Rage_val += m_target->CalculateSpellDamage(m_target, spellInfo, EFFECT_INDEX_0) * 10;
                         }
                     }
 
@@ -3387,7 +3387,7 @@ void Aura::HandleAuraTransform(bool apply, bool Real)
             // for players, start regeneration after 1s (in polymorph fast regeneration case)
             // only if caster is Player (after patch 2.4.2)
             if (IS_PLAYER_GUID(GetCasterGUID()) )
-                ((Player*)m_target)->setRegenTimer(1*IN_MILISECONDS);
+                ((Player*)m_target)->setRegenTimer(1*IN_MILLISECONDS);
 
             //dismount polymorphed target (after patch 2.4.2)
             if (m_target->IsMounted())
@@ -3919,7 +3919,7 @@ void Aura::HandleAuraModStun(bool apply, bool Real)
             if(pObj->Create(sObjectMgr.GenerateLowGuid(HIGHGUID_GAMEOBJECT), 185584, m_target->GetMap(), m_target->GetPhaseMask(),
                 m_target->GetPositionX(), m_target->GetPositionY(), m_target->GetPositionZ(), m_target->GetOrientation(), 0.0f, 0.0f, 0.0f, 0.0f, 100, GO_STATE_READY))
             {
-                pObj->SetRespawnTime(GetAuraDuration()/IN_MILISECONDS);
+                pObj->SetRespawnTime(GetAuraDuration()/IN_MILLISECONDS);
                 pObj->SetSpellId(GetId());
                 m_target->AddGameObject(pObj);
                 m_target->GetMap()->Add(pObj);
@@ -6993,7 +6993,7 @@ void Aura::PeriodicTick()
                     {
                         uint32 percent =
                             GetEffIndex() < EFFECT_INDEX_2 && GetSpellProto()->Effect[GetEffIndex()] == SPELL_EFFECT_DUMMY ?
-                            pCaster->CalculateSpellDamage(GetSpellProto(), SpellEffectIndex(GetEffIndex() + 1), GetSpellProto()->EffectBasePoints[GetEffIndex() + 1], m_target) :
+                            pCaster->CalculateSpellDamage(m_target, GetSpellProto(), SpellEffectIndex(GetEffIndex() + 1)) :
                             100;
                         if(m_target->GetHealth() * 100 >= m_target->GetMaxHealth() * percent )
                         {
@@ -7138,6 +7138,11 @@ void Aura::PeriodicTick()
                 // Resilience - reduce crit damage
                 pdamage -= m_target->GetSpellCritDamageReduction(pdamage);
             }
+
+            // only from players
+            // FIXME: need use SpellDamageBonus instead?
+            if (IS_PLAYER_GUID(m_caster_guid))
+                pdamage -= m_target->GetSpellDamageReduction(pdamage);
 
             pCaster->CalcAbsorbResist(m_target, GetSpellSchoolMask(GetSpellProto()), DOT, pdamage, &absorb, &resist, !(GetSpellProto()->AttributesEx2 & SPELL_ATTR_EX2_CANT_REFLECTED));
 
@@ -7830,7 +7835,7 @@ void Aura::PeriodicDummyTick()
                     if (rage == 0)
                         return;
                     int32 mod = (rage < 100) ? rage : 100;
-                    int32 points = m_target->CalculateSpellDamage(spell, EFFECT_INDEX_1, spell->EffectBasePoints[EFFECT_INDEX_1], m_target);
+                    int32 points = m_target->CalculateSpellDamage(m_target, spell, EFFECT_INDEX_1);
                     int32 regen = m_target->GetMaxHealth() * (mod * points / 10) / 1000;
                     m_target->CastCustomSpell(m_target, 22845, &regen, NULL, NULL, true, NULL, this);
                     m_target->SetPower(POWER_RAGE, rage-mod);
@@ -7957,7 +7962,7 @@ void Aura::PeriodicDummyTick()
             {
                 // Increases your attack power by $s1 for every $s2 armor value you have.
                 // Calculate AP bonus (from 1 efect of this spell)
-                int32 apBonus = m_modifier.m_amount * m_target->GetArmor() / m_target->CalculateSpellDamage(spell, EFFECT_INDEX_1, spell->EffectBasePoints[EFFECT_INDEX_1], m_target);
+                int32 apBonus = m_modifier.m_amount * m_target->GetArmor() / m_target->CalculateSpellDamage(m_target, spell, EFFECT_INDEX_1);
                 m_target->CastCustomSpell(m_target, 61217, &apBonus, &apBonus, NULL, true, NULL, this);
                 return;
             }
@@ -8175,7 +8180,7 @@ void Aura::UnregisterSingleCastAura()
         else
         {
             sLog.outError("Couldn't find the caster of the single target aura (SpellId %u), may crash later!", GetId());
-            assert(false);
+            ASSERT(false);
         }
         m_isSingleTargetAura = false;
     }

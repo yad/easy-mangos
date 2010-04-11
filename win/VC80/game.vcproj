@@ -566,11 +566,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\game\BattleGroundABG.cpp"
+				RelativePath="..\..\src\game\BattleGroundRB.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\game\BattleGroundABG.h"
+				RelativePath="..\..\src\game\BattleGroundRB.h"
 				>
 			</File>
 			<File
@@ -1467,14 +1467,6 @@
 			</File>
 			<File
 				RelativePath="..\..\src\game\DBCStructure.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\game\GlobalEvents.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\game\GlobalEvents.h"
 				>
 			</File>
 			<File

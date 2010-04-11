@@ -41,9 +41,7 @@ Guild::Guild()
     m_BorderColor = 0;
     m_BackgroundColor = 0;
 
-    m_CreatedYear = 0;
-    m_CreatedMonth = 0;
-    m_CreatedDay = 0;
+    m_CreatedDate = time(0);
 
     m_GuildBankMoney = 0;
     m_PurchasedTabs = 0;
@@ -224,20 +222,12 @@ bool Guild::LoadGuildFromDB(QueryResult *guildDataResult)
     m_BackgroundColor = fields[7].GetUInt32();
     GINFO             = fields[8].GetCppString();
     MOTD              = fields[9].GetCppString();
-    time_t time       = fields[10].GetUInt64();
+    m_CreatedDate     = fields[10].GetUInt64();
     m_GuildBankMoney  = fields[11].GetUInt64();
     m_PurchasedTabs   = fields[12].GetUInt32();
 
     if (m_PurchasedTabs > GUILD_BANK_MAX_TABS)
         m_PurchasedTabs = GUILD_BANK_MAX_TABS;
-
-    if (time > 0)
-    {
-        tm local       = *(localtime(&time));               // dereference and assign
-        m_CreatedDay   = local.tm_mday;
-        m_CreatedMonth = local.tm_mon + 1;
-        m_CreatedYear  = local.tm_year + 1900;
-    }
 
     return true;
 }
@@ -746,7 +736,7 @@ void Guild::Roster(WorldSession *session /*= NULL*/)
         }
         else
         {
-            data << uint64(ObjectGuid(HIGHGUID_PLAYER, itr->first).GetRawValue());
+            data << ObjectGuid(HIGHGUID_PLAYER, itr->first);
             data << uint8(0);
             data << itr->second.Name;
             data << uint32(itr->second.RankId);
@@ -1130,18 +1120,18 @@ void Guild::LoadGuildBankFromDB()
     delete result;
 
     // data needs to be at first place for Item::LoadFromDB
-    //                                        0     1      2       3          4
-    result = CharacterDatabase.PQuery("SELECT data, TabId, SlotId, item_guid, item_entry FROM guild_bank_item JOIN item_instance ON item_guid = guid WHERE guildid='%u' ORDER BY TabId", m_Id);
+    //                                        0     1     2      3       4          5
+    result = CharacterDatabase.PQuery("SELECT data, text, TabId, SlotId, item_guid, item_entry FROM guild_bank_item JOIN item_instance ON item_guid = guid WHERE guildid='%u' ORDER BY TabId", m_Id);
     if (!result)
         return;
 
     do
     {
         Field *fields = result->Fetch();
-        uint8 TabId = fields[1].GetUInt8();
-        uint8 SlotId = fields[2].GetUInt8();
-        uint32 ItemGuid = fields[3].GetUInt32();
-        uint32 ItemEntry = fields[4].GetUInt32();
+        uint8 TabId = fields[2].GetUInt8();
+        uint8 SlotId = fields[3].GetUInt8();
+        uint32 ItemGuid = fields[4].GetUInt32();
+        uint32 ItemEntry = fields[5].GetUInt32();
 
         if (TabId >= m_PurchasedTabs || TabId >= GUILD_BANK_MAX_TABS)
         {

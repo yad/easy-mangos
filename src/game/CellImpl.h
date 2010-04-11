@@ -108,7 +108,7 @@ Cell::Visit(const CellPair &standing_cell, V &visitor, Map &m) const
         }
         default:
         {
-            assert( false );
+            ASSERT( false );
             break;
         }
     }

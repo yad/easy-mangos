@@ -57,8 +57,9 @@ class Item;
 
 typedef std::deque<Mail*> PlayerMails;
 
-#define PLAYER_MAX_SKILLS       127
-#define PLAYER_MAX_DAILY_QUESTS 25
+#define PLAYER_MAX_SKILLS           127
+#define PLAYER_MAX_DAILY_QUESTS     25
+#define PLAYER_EXPLORED_ZONES_SIZE  128
 
 // Note: SPELLMOD_* values is aura types in fact
 enum SpellModType
@@ -74,9 +75,17 @@ enum PlayerUnderwaterState
     UNDERWATER_INWATER                  = 0x01,             // terrain type is water and player is afflicted by it
     UNDERWATER_INLAVA                   = 0x02,             // terrain type is lava and player is afflicted by it
     UNDERWATER_INSLIME                  = 0x04,             // terrain type is lava and player is afflicted by it
-    UNDERWARER_INDARKWATER              = 0x08,             // terrain type is dark water and player is afflicted by it
+    UNDERWATER_INDARKWATER              = 0x08,             // terrain type is dark water and player is afflicted by it
 
     UNDERWATER_EXIST_TIMERS             = 0x10
+};
+
+enum BuyBankSlotResult
+{
+    ERR_BANKSLOT_FAILED_TOO_MANY    = 0,
+    ERR_BANKSLOT_INSUFFICIENT_FUNDS = 1,
+    ERR_BANKSLOT_NOTBANKER          = 2,
+    ERR_BANKSLOT_OK                 = 3
 };
 
 enum PlayerSpellState
@@ -95,7 +104,15 @@ struct PlayerSpell
     bool disabled          : 1;                             // first rank has been learned in result talent learn but currently talent unlearned, save max learned ranks
 };
 
+struct PlayerTalent
+{
+    PlayerSpellState state;
+    TalentEntry const *m_talentEntry;
+    uint32 currentRank;
+};
+
 typedef UNORDERED_MAP<uint32, PlayerSpell> PlayerSpellMap;
+typedef UNORDERED_MAP<uint32, PlayerTalent> PlayerTalentMap;
 
 // Spell modifier (used for modify other spells)
 struct SpellModifier
@@ -332,7 +349,7 @@ struct Areas
 };
 
 #define MAX_RUNES       6
-#define RUNE_COOLDOWN   (2*5*IN_MILISECONDS)                // msec
+#define RUNE_COOLDOWN   (2*5*IN_MILLISECONDS)                // msec
 
 enum RuneType
 {
@@ -367,7 +384,7 @@ struct Runes
 struct EnchantDuration
 {
     EnchantDuration() : item(NULL), slot(MAX_ENCHANTMENT_SLOT), leftduration(0) {};
-    EnchantDuration(Item * _item, EnchantmentSlot _slot, uint32 _leftduration) : item(_item), slot(_slot), leftduration(_leftduration) { assert(item); };
+    EnchantDuration(Item * _item, EnchantmentSlot _slot, uint32 _leftduration) : item(_item), slot(_slot), leftduration(_leftduration) { ASSERT(item); };
 
     Item * item;
     EnchantmentSlot slot;
@@ -548,7 +565,8 @@ enum PlayerFlags
 #define PLAYER_TITLE_HAND_OF_ADAL          UI64LIT(0x0000008000000000) // 39
 #define PLAYER_TITLE_VENGEFUL_GLADIATOR    UI64LIT(0x0000010000000000) // 40
 
-#define MAX_TITLE_INDEX     (3*64)                          // 3 uint64 fields
+#define KNOWN_TITLES_SIZE   3
+#define MAX_TITLE_INDEX     (KNOWN_TITLES_SIZE*64)          // 3 uint64 fields
 
 // used in PLAYER_FIELD_BYTES values
 enum PlayerFieldByteFlags
@@ -889,7 +907,11 @@ enum PlayerLoginQueryIndex
     PLAYER_LOGIN_QUERY_LOADACCOUNTDATA          = 20,
     PLAYER_LOGIN_QUERY_LOADSKILLS               = 21,
     PLAYER_LOGIN_QUERY_LOADGLYPHS               = 22,
-    MAX_PLAYER_LOGIN_QUERY                      = 23
+    PLAYER_LOGIN_QUERY_LOADMAILS                = 23,
+    PLAYER_LOGIN_QUERY_LOADMAILEDITEMS          = 24,
+    PLAYER_LOGIN_QUERY_LOADTALENTS              = 25,
+    PLAYER_LOGIN_QUERY_LOADWEKLYQUESTSTATUS     = 26,
+    MAX_PLAYER_LOGIN_QUERY                      = 27
 };
 
 enum PlayerDelayedOperations
@@ -1048,8 +1070,8 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
         void SendTransferAborted(uint32 mapid, uint8 reason, uint8 arg = 0);
         void SendInstanceResetWarning(uint32 mapid, Difficulty difficulty, uint32 time);
 
-        Creature* GetNPCIfCanInteractWith(uint64 guid, uint32 npcflagmask);
-        GameObject* GetGameObjectIfCanInteractWith(uint64 guid, uint32 gameobject_type = MAX_GAMEOBJECT_TYPE) const;
+        Creature* GetNPCIfCanInteractWith(ObjectGuid guid, uint32 npcflagmask);
+        GameObject* GetGameObjectIfCanInteractWith(ObjectGuid guid, uint32 gameobject_type = MAX_GAMEOBJECT_TYPE) const;
 
         bool ToggleAFK();
         bool ToggleDND();
@@ -1091,31 +1113,21 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
         // Played Time Stuff
         time_t m_logintime;
         time_t m_Last_tick;
+
         uint32 m_Played_time[MAX_PLAYED_TIME_INDEX];
         uint32 GetTotalPlayedTime() { return m_Played_time[PLAYED_TIME_TOTAL]; }
         uint32 GetLevelPlayedTime() { return m_Played_time[PLAYED_TIME_LEVEL]; }
 
-        void setDeathState(DeathState s);                   // overwrite Unit::setDeathState
+        void ResetTimeSync();
+        void SendTimeSync();
 
-        void InnEnter (time_t time, uint32 mapid, float x, float y, float z)
-        {
-            inn_pos_mapid = mapid;
-            inn_pos_x = x;
-            inn_pos_y = y;
-            inn_pos_z = z;
-            time_inn_enter = time;
-        }
+        void setDeathState(DeathState s);                   // overwrite Unit::setDeathState
 
         float GetRestBonus() const { return m_rest_bonus; }
         void SetRestBonus(float rest_bonus_new);
 
         RestType GetRestType() const { return rest_type; }
-        void SetRestType(RestType n_r_type) { rest_type = n_r_type; }
-
-        uint32 GetInnPosMapId() const { return inn_pos_mapid; }
-        float GetInnPosX() const { return inn_pos_x; }
-        float GetInnPosY() const { return inn_pos_y; }
-        float GetInnPosZ() const { return inn_pos_z; }
+        void SetRestType(RestType n_r_type, uint32 areaTriggerId = 0);
 
         time_t GetTimeInnEnter() const { return time_inn_enter; }
         void UpdateInnerTime (time_t time) { time_inn_enter = time; }
@@ -1147,7 +1159,7 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
         uint8 FindEquipSlot( ItemPrototype const* proto, uint32 slot, bool swap ) const;
         uint32 GetItemCount( uint32 item, bool inBankAlso = false, Item* skipItem = NULL ) const;
         uint32 GetItemCountWithLimitCategory(uint32 limitCategory) const;
-        Item* GetItemByGuid( uint64 guid ) const;
+        Item* GetItemByGuid(ObjectGuid uint64) const;
         Item* GetItemByEntry(uint32 item) const;            // only for special cases
         Item* GetItemByLimitedCategory(uint32 limitedCategory) const;
         Item* GetItemByPos( uint16 pos ) const;
@@ -1262,7 +1274,7 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
             return mainItem && mainItem->GetProto()->InventoryType == INVTYPE_2HWEAPON && !CanTitanGrip();
         }
         void SendNewItem( Item *item, uint32 count, bool received, bool created, bool broadcast = false );
-        bool BuyItemFromVendor(uint64 vendorguid, uint32 item, uint8 count, uint8 bag, uint8 slot);
+        bool BuyItemFromVendorSlot(uint64 vendorguid, uint32 vendorslot, uint32 item, uint8 count, uint8 bag, uint8 slot);
 
         float GetReputationPriceDiscount( Creature const* pCreature ) const;
         Player* GetTrader() const { return pTrader; }
@@ -1336,6 +1348,7 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
         bool SatisfyQuestNextChain( Quest const* qInfo, bool msg );
         bool SatisfyQuestPrevChain( Quest const* qInfo, bool msg );
         bool SatisfyQuestDay( Quest const* qInfo, bool msg );
+        bool SatisfyQuestWeek( Quest const* qInfo, bool msg );
         bool GiveQuestSourceItem( Quest const *pQuest );
         bool TakeQuestSourceItem( uint32 quest_id, bool msg );
         bool GetQuestRewardStatus( uint32 quest_id ) const;
@@ -1343,7 +1356,9 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
         void SetQuestStatus( uint32 quest_id, QuestStatus status );
 
         void SetDailyQuestStatus( uint32 quest_id );
+        void SetWeeklyQuestStatus( uint32 quest_id );
         void ResetDailyQuestStatus();
+        void ResetWeeklyQuestStatus();
 
         uint16 FindQuestSlot( uint32 quest_id ) const;
         uint32 GetQuestSlotQuestId(uint16 slot) const { return GetUInt32Value(PLAYER_QUEST_LOG_1_1 + slot * MAX_QUEST_OFFSET + QUEST_ID_OFFSET); }
@@ -1384,10 +1399,10 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
         void GroupEventHappens( uint32 questId, WorldObject const* pEventObject );
         void ItemAddedQuestCheck( uint32 entry, uint32 count );
         void ItemRemovedQuestCheck( uint32 entry, uint32 count );
-        void KilledMonster( CreatureInfo const* cInfo, uint64 guid );
-        void KilledMonsterCredit( uint32 entry, uint64 guid );
-        void CastedCreatureOrGO( uint32 entry, uint64 guid, uint32 spell_id );
-        void TalkedToCreature( uint32 entry, uint64 guid );
+        void KilledMonster( CreatureInfo const* cInfo, ObjectGuid guid );
+        void KilledMonsterCredit( uint32 entry, ObjectGuid guid );
+        void CastedCreatureOrGO( uint32 entry, ObjectGuid guid, uint32 spell_id );
+        void TalkedToCreature( uint32 entry, ObjectGuid guid );
         void MoneyChanged( uint32 value );
         void ReputationChanged(FactionEntry const* factionEntry );
         bool HasQuestForItem( uint32 itemid ) const;
@@ -1403,7 +1418,7 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
         void SendQuestConfirmAccept(Quest const* pQuest, Player* pReceiver);
         void SendPushToPartyResponse( Player *pPlayer, uint32 msg );
         void SendQuestUpdateAddItem( Quest const* pQuest, uint32 item_idx, uint32 count );
-        void SendQuestUpdateAddCreatureOrGo( Quest const* pQuest, uint64 guid, uint32 creatureOrGO_idx, uint32 old_count, uint32 add_count );
+        void SendQuestUpdateAddCreatureOrGo( Quest const* pQuest, ObjectGuid guid, uint32 creatureOrGO_idx, uint32 old_count, uint32 add_count );
 
         uint64 GetDivider() { return m_divider; }
         void SetDivider( uint64 guid ) { m_divider = guid; }
@@ -1421,11 +1436,6 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
 
         bool LoadFromDB(uint32 guid, SqlQueryHolder *holder);
 
-        static bool   LoadValuesArrayFromDB(Tokens& data,uint64 guid);
-        static uint32 GetUInt32ValueFromArray(Tokens const& data, uint16 index);
-        static float  GetFloatValueFromArray(Tokens const& data, uint16 index);
-        static uint32 GetUInt32ValueFromDB(uint16 index, uint64 guid);
-        static float  GetFloatValueFromDB(uint16 index, uint64 guid);
         static uint32 GetZoneIdFromDB(uint64 guid);
         static uint32 GetLevelFromDB(uint64 guid);
         static bool   LoadPositionFromDB(uint32& mapid, float& x,float& y,float& z,float& o, bool& in_flight, uint64 guid);
@@ -1437,12 +1447,8 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
         void SaveToDB();
         void SaveInventoryAndGoldToDB();                    // fast save function for item/money cheating preventing
         void SaveGoldToDB();
-        void SaveDataFieldToDB();
-        static bool SaveValuesArrayInDB(Tokens const& data,uint64 guid);
         static void SetUInt32ValueInArray(Tokens& data,uint16 index, uint32 value);
         static void SetFloatValueInArray(Tokens& data,uint16 index, float value);
-        static void SetUInt32ValueInDB(uint16 index, uint32 value, uint64 guid);
-        static void SetFloatValueInDB(uint16 index, float value, uint64 guid);
         static void Customize(uint64 guid, uint8 gender, uint8 skin, uint8 face, uint8 hairStyle, uint8 hairColor, uint8 facialHair);
         static void SavePositionInDB(uint32 mapid, float x,float y,float z,float o,uint32 zone,uint64 guid);
 
@@ -1526,7 +1532,7 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
         void AddMItem(Item* it)
         {
             ASSERT( it );
-            //assert deleted, because items can be added before loading
+            //ASSERT deleted, because items can be added before loading
             mMitems[it->GetGUIDLow()] = it;
         }
 
@@ -1561,7 +1567,8 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
 
         uint32 GetFreeTalentPoints() const { return GetUInt32Value(PLAYER_CHARACTER_POINTS1); }
         void SetFreeTalentPoints(uint32 points) { SetUInt32Value(PLAYER_CHARACTER_POINTS1,points); }
-        bool resetTalents(bool no_cost = false);
+        void UpdateFreeTalentPoints(bool resetIfNeed = true);
+        bool resetTalents(bool no_cost = false, bool all_specs = false);
         uint32 resetTalentsCost() const;
         void InitTalentForLevel();
         void BuildPlayerTalentsInfoData(WorldPacket *data);
@@ -1787,8 +1794,8 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
         void ApplyManaRegenBonus(int32 amount, bool apply);
         void UpdateManaRegen();
 
-        const uint64& GetLootGUID() const { return m_lootGuid; }
-        void SetLootGUID(const uint64 &guid) { m_lootGuid = guid; }
+        const uint64& GetLootGUID() const { return m_lootGuid.GetRawValue(); }
+        void SetLootGUID(ObjectGuid const& guid) { m_lootGuid = guid; }
 
         void RemovedInsignia(Player* looterPlr);
 
@@ -1827,7 +1834,7 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
 
         Corpse *GetCorpse() const;
         void SpawnCorpseBones();
-        void CreateCorpse();
+        Corpse* CreateCorpse();
         void KillPlayer();
         uint32 GetResurrectionSpellId();
         void ResurrectPlayer(float restore_percent, bool applySickness = false);
@@ -1862,7 +1869,7 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
         void UpdateWeaponSkill (WeaponAttackType attType);
         void UpdateCombatSkills(Unit *pVictim, WeaponAttackType attType, bool defence);
 
-        void SetSkill(uint32 id, uint16 currVal, uint16 maxVal);
+        void SetSkill(uint16 id, uint16 step, uint16 currVal, uint16 maxVal);
         uint16 GetMaxSkillValue(uint32 skill) const;        // max + perm. bonus + temp bonus
         uint16 GetPureMaxSkillValue(uint32 skill) const;    // max
         uint16 GetSkillValue(uint32 skill) const;           // skill value + perm. bonus + temp bonus
@@ -1870,6 +1877,7 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
         uint16 GetPureSkillValue(uint32 skill) const;       // skill value
         int16 GetSkillPermBonusValue(uint32 skill) const;
         int16 GetSkillTempBonusValue(uint32 skill) const;
+        uint16 GetSkillStep(uint16 skill) const;            // 0...6
         bool HasSkill(uint32 skill) const;
         void learnSkillRewardedSpells(uint32 id, uint32 value);
 
@@ -1983,8 +1991,8 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
         PlayerMenu* PlayerTalkClass;
         std::vector<ItemSetEffect *> ItemSetEff;
 
-        void SendLoot(uint64 guid, LootType loot_type);
-        void SendLootRelease( uint64 guid );
+        void SendLoot(ObjectGuid guid, LootType loot_type);
+        void SendLootRelease(ObjectGuid guid );
         void SendNotifyLootItemRemoved(uint8 lootSlot);
         void SendNotifyLootMoneyRemoved();
 
@@ -2097,7 +2105,7 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
         /***                    REST SYSTEM                    ***/
         /*********************************************************/
 
-        bool isRested() const { return GetRestTime() >= 10*IN_MILISECONDS; }
+        bool isRested() const { return GetRestTime() >= 10*IN_MILLISECONDS; }
         uint32 GetXPRestBonus(uint32 xp);
         uint32 GetRestTime() const { return m_restTime; }
         void SetRestTime(uint32 v) { m_restTime = v; }
@@ -2176,8 +2184,7 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
         Object* GetObjectByTypeMask(ObjectGuid guid, TypeMask typemask);
 
         // currently visible objects at player client
-        typedef std::set<uint64> ClientGUIDs;
-        ClientGUIDs m_clientGUIDs;
+        ObjectGuidSet m_clientGUIDs;
 
         bool HaveAtClient(WorldObject const* u) { return u==this || m_clientGUIDs.find(u->GetGUID())!=m_clientGUIDs.end(); }
 
@@ -2312,7 +2319,9 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
         /*********************************************************/
 
         //We allow only one timed quest active at the same time. Below can then be simple value instead of set.
-        std::set<uint32> m_timedquests;
+        typedef std::set<uint32> QuestSet;
+        QuestSet m_timedquests;
+        QuestSet m_weeklyquests;
 
         uint64 m_divider;
         uint32 m_ingametime;
@@ -2325,13 +2334,15 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
         void _LoadAuras(QueryResult *result, uint32 timediff);
         void _LoadBoundInstances(QueryResult *result);
         void _LoadInventory(QueryResult *result, uint32 timediff);
-        void _LoadMail();
-        void _LoadMailedItems(Mail *mail);
+        void _LoadMails(QueryResult *result);
+        void _LoadMailedItems(QueryResult *result);
         void _LoadQuestStatus(QueryResult *result);
         void _LoadDailyQuestStatus(QueryResult *result);
+        void _LoadWeeklyQuestStatus(QueryResult *result);
         void _LoadGroup(QueryResult *result);
         void _LoadSkills(QueryResult *result);
         void _LoadSpells(QueryResult *result);
+        void _LoadTalents(QueryResult *result);
         void _LoadFriendList(QueryResult *result);
         bool _LoadHomeBind(QueryResult *result);
         void _LoadDeclinedNames(QueryResult *result);
@@ -2339,6 +2350,7 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
         void _LoadEquipmentSets(QueryResult *result);
         void _LoadBGData(QueryResult* result);
         void _LoadGlyphs(QueryResult *result);
+        void _LoadIntoDataField(const char* data, uint32 startOffset, uint32 count);
 
         /*********************************************************/
         /***                   SAVE SYSTEM                     ***/
@@ -2350,11 +2362,14 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
         void _SaveMail();
         void _SaveQuestStatus();
         void _SaveDailyQuestStatus();
+        void _SaveWeeklyQuestStatus();
         void _SaveSkills();
         void _SaveSpells();
         void _SaveEquipmentSets();
         void _SaveBGData();
         void _SaveGlyphs();
+        void _SaveTalents();
+        void _SaveStats();
 
         void _SetCreateBits(UpdateMask *updateMask, Player *target) const;
         void _SetUpdateBits(UpdateMask *updateMask, Player *target) const;
@@ -2374,7 +2389,7 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
         time_t m_lastHonorUpdateTime;
 
         void outDebugValues() const;
-        uint64 m_lootGuid;
+        ObjectGuid m_lootGuid;
 
         uint32 m_team;
         uint32 m_nextSave;
@@ -2406,6 +2421,7 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
 
         PlayerMails m_mail;
         PlayerSpellMap m_spells;
+        PlayerTalentMap m_talents[MAX_TALENT_SPEC_COUNT];
         SpellCooldowns m_spellCooldowns;
         uint32 m_lastPotionId;                              // last used health/mana potion in combat, that block next potion use
 
@@ -2446,7 +2462,7 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
         uint32 tradeGold;
 
         bool   m_DailyQuestChanged;
-        time_t m_lastDailyQuestTime;
+        bool   m_WeeklyQuestChanged;
 
         uint32 m_drunkTimer;
         uint16 m_drunk;
@@ -2472,10 +2488,7 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
 
         ////////////////////Rest System/////////////////////
         time_t time_inn_enter;
-        uint32 inn_pos_mapid;
-        float  inn_pos_x;
-        float  inn_pos_y;
-        float  inn_pos_z;
+        uint32 inn_trigger_id;
         float m_rest_bonus;
         RestType rest_type;
         ////////////////////Rest System/////////////////////
@@ -2567,6 +2580,11 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
 
         AchievementMgr m_achievementMgr;
         ReputationMgr  m_reputationMgr;
+
+        uint32 m_timeSyncCounter;
+        uint32 m_timeSyncTimer;
+        uint32 m_timeSyncClient;
+        uint32 m_timeSyncServer;
 };
 
 void AddItemsSetItem(Player*player,Item *item);
@@ -2594,7 +2612,7 @@ template <class T> T Player::ApplySpellMod(uint32 spellId, SpellModOp op, T &bas
                 continue;
 
             // special case (skip >10sec spell casts for instant cast setting)
-            if( mod->op==SPELLMOD_CASTING_TIME  && basevalue >= T(10*IN_MILISECONDS) && mod->value <= -100)
+            if( mod->op==SPELLMOD_CASTING_TIME  && basevalue >= T(10*IN_MILLISECONDS) && mod->value <= -100)
                 continue;
 
             totalpct += mod->value;

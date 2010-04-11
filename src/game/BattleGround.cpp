@@ -29,6 +29,7 @@
 #include "Group.h"
 #include "ObjectGuid.h"
 #include "ObjectMgr.h"
+#include "Mail.h"
 #include "WorldPacket.h"
 #include "Util.h"
 #include "Formulas.h"
@@ -208,7 +209,6 @@ void BattleGround::BroadcastWorker(Do& _do)
 BattleGround::BattleGround()
 {
     m_TypeID            = BattleGroundTypeId(0);
-    m_InstanceID        = 0;
     m_Status            = STATUS_NONE;
     m_ClientInstanceID  = 0;
     m_EndTime           = 0;
@@ -226,7 +226,6 @@ BattleGround::BattleGround()
     m_LevelMin          = 0;
     m_LevelMax          = 0;
     m_InBGFreeSlotQueue = false;
-    m_SetDeleteThis     = false;
 
     m_MaxPlayersPerTeam = 0;
     m_MaxPlayers        = 0;
@@ -297,6 +296,7 @@ BattleGround::~BattleGround()
     }
 
     sBattleGroundMgr.RemoveBattleGround(GetInstanceID(), GetTypeID());
+    sBattleGroundMgr.DeleteClientVisibleInstanceId(GetTypeID(), GetBracketId(), GetClientInstanceID());
 
     // unload map
     // map can be null at bg destruction
@@ -325,7 +325,8 @@ void BattleGround::Update(uint32 diff)
         // ]]
         // BattleGround Template instance cannot be updated, because it would be deleted
         if (!GetInvitedCount(HORDE) && !GetInvitedCount(ALLIANCE))
-            m_SetDeleteThis = true;
+            delete this;
+
         return;
     }
 
@@ -372,16 +373,16 @@ void BattleGround::Update(uint32 diff)
         {
             uint32 newtime = m_PrematureCountDownTimer - diff;
             // announce every minute
-            if (newtime > (MINUTE * IN_MILISECONDS))
+            if (newtime > (MINUTE * IN_MILLISECONDS))
             {
-                if (newtime / (MINUTE * IN_MILISECONDS) != m_PrematureCountDownTimer / (MINUTE * IN_MILISECONDS))
-                    PSendMessageToAll(LANG_BATTLEGROUND_PREMATURE_FINISH_WARNING, CHAT_MSG_SYSTEM, NULL, (uint32)(m_PrematureCountDownTimer / (MINUTE * IN_MILISECONDS)));
+                if (newtime / (MINUTE * IN_MILLISECONDS) != m_PrematureCountDownTimer / (MINUTE * IN_MILLISECONDS))
+                    PSendMessageToAll(LANG_BATTLEGROUND_PREMATURE_FINISH_WARNING, CHAT_MSG_SYSTEM, NULL, (uint32)(m_PrematureCountDownTimer / (MINUTE * IN_MILLISECONDS)));
             }
             else
             {
                 //announce every 15 seconds
-                if (newtime / (15 * IN_MILISECONDS) != m_PrematureCountDownTimer / (15 * IN_MILISECONDS))
-                    PSendMessageToAll(LANG_BATTLEGROUND_PREMATURE_FINISH_WARNING_SECS, CHAT_MSG_SYSTEM, NULL, (uint32)(m_PrematureCountDownTimer / IN_MILISECONDS));
+                if (newtime / (15 * IN_MILLISECONDS) != m_PrematureCountDownTimer / (15 * IN_MILLISECONDS))
+                    PSendMessageToAll(LANG_BATTLEGROUND_PREMATURE_FINISH_WARNING_SECS, CHAT_MSG_SYSTEM, NULL, (uint32)(m_PrematureCountDownTimer / IN_MILLISECONDS));
             }
             m_PrematureCountDownTimer = newtime;
         }
@@ -881,7 +882,6 @@ void BattleGround::RewardMark(Player *plr,uint32 count)
             break;
         case BATTLEGROUND_EY:
             IsSpell = false;
-            mark = ITEM_EY_MARK_OF_HONOR;
             break;
         default:
             return;
@@ -962,10 +962,9 @@ void BattleGround::SendRewardMarkByMail(Player *plr,uint32 mark, uint32 count)
         // text
         std::string textFormat = plr->GetSession()->GetMangosString(LANG_BG_MARK_BY_MAIL);
         char textBuf[300];
-        snprintf(textBuf,300,textFormat.c_str(),GetName(),GetName());
-        uint32 itemTextId = sObjectMgr.CreateItemText( textBuf );
+        snprintf(textBuf, 300, textFormat.c_str(), GetName(), GetName());
 
-        MailDraft(subject, itemTextId)
+        MailDraft(subject, textBuf)
             .AddItem(markItem)
             .SendMailTo(plr, MailSender(MAIL_CREATURE, bmEntry));
     }
@@ -1326,10 +1325,9 @@ void BattleGround::RemoveFromBGFreeSlotQueue()
 {
     // set to be able to re-add if needed
     m_InBGFreeSlotQueue = false;
-    // uncomment this code when battlegrounds will work like instances
     for (BGFreeSlotQueueType::iterator itr = sBattleGroundMgr.BGFreeSlotQueue[m_TypeID].begin(); itr != sBattleGroundMgr.BGFreeSlotQueue[m_TypeID].end(); ++itr)
     {
-        if ((*itr)->GetInstanceID() == m_InstanceID)
+        if ((*itr)->GetInstanceID() == GetInstanceID())
         {
             sBattleGroundMgr.BGFreeSlotQueue[m_TypeID].erase(itr);
             return;

@@ -266,10 +266,11 @@ ChatCommand * ChatHandler::getCommandTable()
 
     static ChatCommand listCommandTable[] =
     {
+        { "auras",          SEC_ADMINISTRATOR,  false, &ChatHandler::HandleListAurasCommand,           "", NULL },
         { "creature",       SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleListCreatureCommand,        "", NULL },
         { "item",           SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleListItemCommand,            "", NULL },
         { "object",         SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleListObjectCommand,          "", NULL },
-        { "auras",          SEC_ADMINISTRATOR,  false, &ChatHandler::HandleListAurasCommand,           "", NULL },
+        { "talents",        SEC_ADMINISTRATOR,  false, &ChatHandler::HandleListTalentsCommand,         "", NULL },
         { NULL,             0,                  false, NULL,                                           "", NULL }
     };
 
@@ -483,6 +484,7 @@ ChatCommand * ChatHandler::getCommandTable()
         { "achievements",   SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleResetAchievementsCommand,   "", NULL },
         { "honor",          SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleResetHonorCommand,          "", NULL },
         { "level",          SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleResetLevelCommand,          "", NULL },
+        { "specs",          SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleResetSpecsCommand,          "", NULL },
         { "spells",         SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleResetSpellsCommand,         "", NULL },
         { "stats",          SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleResetStatsCommand,          "", NULL },
         { "talents",        SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleResetTalentsCommand,        "", NULL },
@@ -1748,9 +1750,9 @@ void ChatHandler::FillMessageData( WorldPacket *data, WorldSession* session, uin
             *data << uint32(0);                             // 2.1.0
             *data << uint32(strlen(speaker->GetName()) + 1);
             *data << speaker->GetName();
-            uint64 listener_guid = 0;
-            *data << uint64(listener_guid);
-            if(listener_guid && !IS_PLAYER_GUID(listener_guid))
+            ObjectGuid listener_guid;
+            *data << listener_guid;
+            if (!listener_guid.IsEmpty() && !listener_guid.IsPlayer())
             {
                 *data << uint32(1);                         // string listener_name_length
                 *data << uint8(0);                          // string listener_name

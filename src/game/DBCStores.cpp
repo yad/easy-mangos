@@ -233,7 +233,7 @@ static bool LoadDBC_assert_print(uint32 fsize,uint32 rsize, const std::string& f
 {
     sLog.outError("ERROR: Size of '%s' setted by format string (%u) not equal size of C++ structure (%u).",filename.c_str(),fsize,rsize);
 
-    // assert must fail after function call
+    // ASSERT must fail after function call
     return false;
 }
 
@@ -251,7 +251,7 @@ template<class T>
 inline void LoadDBC(LocalData& localeData,barGoLink& bar, StoreProblemList& errlist, DBCStorage<T>& storage, const std::string& dbc_path, const std::string& filename)
 {
     // compatibility format and C++ structure sizes
-    assert(DBCFileLoader::GetFormatRecordSize(storage.GetFormat()) == sizeof(T) || LoadDBC_assert_print(DBCFileLoader::GetFormatRecordSize(storage.GetFormat()),sizeof(T),filename));
+    ASSERT(DBCFileLoader::GetFormatRecordSize(storage.GetFormat()) == sizeof(T) || LoadDBC_assert_print(DBCFileLoader::GetFormatRecordSize(storage.GetFormat()),sizeof(T),filename));
 
     std::string dbc_filename = dbc_path + filename;
     if(storage.Load(dbc_filename.c_str()))
@@ -429,7 +429,7 @@ void LoadDBCStores(const std::string& dataPath)
     for(uint32 i = 0; i < sPvPDifficultyStore.GetNumRows(); ++i)
         if (PvPDifficultyEntry const* entry = sPvPDifficultyStore.LookupEntry(i))
             if (entry->bracketId > MAX_BATTLEGROUND_BRACKETS)
-                assert(false && "Need update MAX_BATTLEGROUND_BRACKETS by DBC data");
+                ASSERT(false && "Need update MAX_BATTLEGROUND_BRACKETS by DBC data");
 
     LoadDBC(availableDbcLocales,bar,bad_dbc_files,sRandomPropertiesPointsStore, dbcPath,"RandPropPoints.dbc");
     LoadDBC(availableDbcLocales,bar,bad_dbc_files,sScalingStatDistributionStore, dbcPath,"ScalingStatDistribution.dbc");
@@ -622,13 +622,13 @@ void LoadDBCStores(const std::string& dataPath)
     }
 
     // Check loaded DBC files proper version
-    if( !sSpellStore.LookupEntry(74445)            ||       // last added spell in 3.3.2
-        !sMapStore.LookupEntry(718)                ||       // last map added in 3.3.2
-        !sGemPropertiesStore.LookupEntry(1629)     ||       // last gem property added in 3.3.2
-        !sItemExtendedCostStore.LookupEntry(2982)  ||       // last item extended cost added in 3.3.2
-        !sCharTitlesStore.LookupEntry(177)         ||       // last char title added in 3.3.2
-        !sAreaStore.LookupEntry(3461)              ||       // last area (areaflag) added in 3.3.2
-        !sItemStore.LookupEntry(52686)             )        // last client known item added in 3.3.2
+    if( !sAreaStore.LookupEntry(3617)              ||       // last area (areaflag) added in 3.3.3a
+        !sCharTitlesStore.LookupEntry(177)         ||       // last char title added in 3.3.3a
+        !sGemPropertiesStore.LookupEntry(1629)     ||       // last gem property added in 3.3.3a
+        !sItemStore.LookupEntry(54860)             ||       // last client known item added in 3.3.3a
+        !sItemExtendedCostStore.LookupEntry(2997)  ||       // last item extended cost added in 3.3.3a
+        !sMapStore.LookupEntry(724)                ||       // last map added in 3.3.3a
+        !sSpellStore.LookupEntry(76567)            )        // last added spell in 3.3.3a
     {
         sLog.outError("\nYou have mixed version DBC files. Please re-extract DBC files for one from client build: %s",AcceptableClientBuildsListStr().c_str());
         exit(1);
@@ -665,12 +665,17 @@ TalentSpellPos const* GetTalentSpellPos(uint32 spellId)
     return &itr->second;
 }
 
-uint32 GetTalentSpellCost(uint32 spellId)
+uint32 GetTalentSpellCost(TalentSpellPos const* pos)
 {
-    if(TalentSpellPos const* pos = GetTalentSpellPos(spellId))
+    if (pos)
         return pos->rank+1;
 
     return 0;
+}
+
+uint32 GetTalentSpellCost(uint32 spellId)
+{
+    return GetTalentSpellCost(GetTalentSpellPos(spellId));
 }
 
 int32 GetAreaFlagByAreaID(uint32 area_id)
@@ -835,6 +840,51 @@ PvPDifficultyEntry const* GetBattlegroundBracketById(uint32 mapid, BattleGroundB
 uint32 const* GetTalentTabPages(uint32 cls)
 {
     return sTalentTabPages[cls];
+}
+
+bool IsPointInAreaTriggerZone(AreaTriggerEntry const* atEntry, uint32 mapid, float x, float y, float z, float delta)
+{
+    if (mapid != atEntry->mapid)
+        return false;
+
+    if (atEntry->radius > 0)
+    {
+        // if we have radius check it
+        float dist2 = (x-atEntry->x)*(x-atEntry->x) + (y-atEntry->y)*(y-atEntry->y) + (z-atEntry->z)*(z-atEntry->z);
+        if(dist2 > (atEntry->radius + delta)*(atEntry->radius + delta))
+            return false;
+    }
+    else
+    {
+        // we have only extent
+
+        // rotate the players position instead of rotating the whole cube, that way we can make a simplified
+        // is-in-cube check and we have to calculate only one point instead of 4
+
+        // 2PI = 360°, keep in mind that ingame orientation is counter-clockwise
+        double rotation = 2*M_PI-atEntry->box_orientation;
+        double sinVal = sin(rotation);
+        double cosVal = cos(rotation);
+
+        float playerBoxDistX = x - atEntry->x;
+        float playerBoxDistY = y - atEntry->y;
+
+        float rotPlayerX = float(atEntry->x + playerBoxDistX * cosVal - playerBoxDistY*sinVal);
+        float rotPlayerY = float(atEntry->y + playerBoxDistY * cosVal + playerBoxDistX*sinVal);
+
+        // box edges are parallel to coordiante axis, so we can treat every dimension independently :D
+        float dz = z - atEntry->z;
+        float dx = rotPlayerX - atEntry->x;
+        float dy = rotPlayerY - atEntry->y;
+        if( (fabs(dx) > atEntry->box_x/2 + delta) ||
+            (fabs(dy) > atEntry->box_y/2 + delta) ||
+            (fabs(dz) > atEntry->box_z/2 + delta) )
+        {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 // script support functions

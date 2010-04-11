@@ -139,7 +139,7 @@ void WorldSession::SendTrainerList( uint64 guid, const std::string& strTitle )
     }
 
     WorldPacket data( SMSG_TRAINER_LIST, 8+4+4+trainer_spells->spellList.size()*38 + strTitle.size()+1);
-    data << guid;
+    data << uint64(guid);
     data << uint32(trainer_spells->trainerType);
 
     size_t count_pos = data.wpos();
@@ -230,22 +230,24 @@ void WorldSession::HandleTrainerBuySpellOpcode( WorldPacket & recv_data )
     _player->ModifyMoney( -int32(nSpellCost) );
 
     WorldPacket data(SMSG_PLAY_SPELL_VISUAL, 12);           // visual effect on trainer
-    data << uint64(guid) << uint32(0xB3);
+    data << uint64(guid);
+    data << uint32(0xB3);                                   // index from SpellVisualKit.dbc
     SendPacket(&data);
 
     data.Initialize(SMSG_PLAY_SPELL_IMPACT, 12);            // visual effect on player
-    data << uint64(_player->GetGUID()) << uint32(0x016A);
+    data << uint64(_player->GetGUID());
+    data << uint32(0x016A);                                 // index from SpellVisualKit.dbc
     SendPacket(&data);
 
     // learn explicitly or cast explicitly
-    if(trainer_spell->IsCastable ())
-        //FIXME: prof. spell entry in trainer list not marked gray until list re-open.
-        _player->CastSpell(_player,trainer_spell->spell,true);
+    if(trainer_spell->IsCastable())
+        _player->CastSpell(_player, trainer_spell->spell, true);
     else
-        _player->learnSpell(spellId,false);
+        _player->learnSpell(spellId, false);
 
     data.Initialize(SMSG_TRAINER_BUY_SUCCEEDED, 12);
-    data << uint64(guid) << uint32(trainer_spell->spell);
+    data << uint64(guid);
+    data << uint32(spellId);                                // should be same as in packet from client
     SendPacket(&data);
 }
 
@@ -288,7 +290,7 @@ void WorldSession::HandleGossipSelectOptionOpcode( WorldPacket & recv_data )
 
     uint32 gossipListId;
     uint32 menuId;
-    uint64 guid;
+    ObjectGuid guid;
     std::string code = "";
 
     recv_data >> guid >> menuId >> gossipListId;
@@ -305,13 +307,13 @@ void WorldSession::HandleGossipSelectOptionOpcode( WorldPacket & recv_data )
         GetPlayer()->RemoveSpellsCausingAura(SPELL_AURA_FEIGN_DEATH);
 
     // can vehicle have gossip? If so, need check for this also.
-    if (IS_CREATURE_OR_PET_GUID(guid))
+    if (guid.IsCreatureOrPet())
     {
         Creature *pCreature = GetPlayer()->GetNPCIfCanInteractWith(guid, UNIT_NPC_FLAG_NONE);
 
         if (!pCreature)
         {
-            sLog.outDebug("WORLD: HandleGossipSelectOptionOpcode - Creature (GUID: %u) not found or you can't interact with it.", uint32(GUID_LOPART(guid)));
+            sLog.outDebug("WORLD: HandleGossipSelectOptionOpcode - %s not found or you can't interact with it.", guid.GetString().c_str());
             return;
         }
 
@@ -326,13 +328,13 @@ void WorldSession::HandleGossipSelectOptionOpcode( WorldPacket & recv_data )
                 _player->OnGossipSelect(pCreature, gossipListId, menuId);
         }
     }
-    else if (IS_GAMEOBJECT_GUID(guid))
+    else if (guid.IsGameobject())
     {
         GameObject *pGo = GetPlayer()->GetGameObjectIfCanInteractWith(guid);
 
         if (!pGo)
         {
-            sLog.outDebug("WORLD: HandleGossipSelectOptionOpcode - GameObject (GUID: %u) not found or you can't interact with it.", uint32(GUID_LOPART(guid)));
+            sLog.outDebug("WORLD: HandleGossipSelectOptionOpcode - %s not found or you can't interact with it.", guid.GetString().c_str());
             return;
         }
 
