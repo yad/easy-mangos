@@ -116,7 +116,7 @@ namespace VMAP
 
             //pTree.balance(3);
             BIH pTree;
-            pTree.build<ModelSpawn*, BoundsTrait<ModelSpawn*> >(mapSpawns);
+            pTree.build(mapSpawns, BoundsTrait<ModelSpawn*>::getBounds);
 
             // ===> possibly move this code to StaticMapTree class
         /*  int nNodes=0, nElements=0;
@@ -400,7 +400,6 @@ namespace VMAP
 
         for(int g=0;g<(int)groups;g++)
         {
-            // group MUST NOT have more then 65536 indexes !! Array will have a problem with that !! (strange ...)
             Array<int> tempIndexArray;
             GroupModel gm;
 

@@ -98,12 +98,15 @@ namespace VMAP
         protected:
             struct IntersectionCallBack
             {
-                IntersectionCallBack(const WorldModel *m): model(m) {}
-                void operator()(const G3D::Ray& ray, const MeshTriangle* entity, bool pStopAtFirstHit, float& distance)
+                IntersectionCallBack(const WorldModel *m): model(m), hit(false) {}
+                bool operator()(const G3D::Ray& ray, const MeshTriangle* entity, bool pStopAtFirstHit, float& distance)
                 {
-                    model->IntersectTriangle(*entity, ray, distance);
+                    bool result = model->IntersectTriangle(*entity, ray, distance);
+                    if(result)  hit=true;
+                    return hit;
                 }
                 const WorldModel *model;
+                bool hit;
             };
 
             bool IntersectTriangle(const MeshTriangle &t, const G3D::Ray &ray, float &distance) const;

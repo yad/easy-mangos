@@ -104,9 +104,9 @@ namespace VMAP
             bool processCommand(char *pCommand);            // for debug and extensions
 
             void preventMapsFromBeingUsed(const char* pMapIdString);
-            bool getAreaInfo(unsigned int pMapId, float x, float y, float z, G3D::uint32 &flags, G3D::int32 &adtId, G3D::int32 &rootId, G3D::int32 &groupId);
+            bool getAreaInfo(unsigned int pMapId, float x, float y, float z, uint32 &flags, int32 &adtId, int32 &rootId, int32 &groupId);
 
-            WorldModel* aquireModelInstance(const std::string &basepath, const std::string &filename);
+            WorldModel* acquireModelInstance(const std::string &basepath, const std::string &filename);
             void releaseModelInstance(const std::string &filename);
 
             // what's the use of this? o.O

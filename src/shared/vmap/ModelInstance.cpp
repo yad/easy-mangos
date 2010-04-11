@@ -31,19 +31,19 @@ namespace VMAP
         iInvScale = 1.f/iScale;
     }
 
-    void ModelInstance::intersectRay(const G3D::Ray& pRay, float& pMaxDist, bool pStopAtFirstHit) const
+    bool ModelInstance::intersectRay(const G3D::Ray& pRay, float& pMaxDist, bool pStopAtFirstHit) const
     {
         if (!iModel)
         {
-            std::cout << "<object not loaded>\n";
-            return;
+            //std::cout << "<object not loaded>\n";
+            return false;
         }
         float time = pRay.intersectionTime(iBound);
         if (time == G3D::inf())
         {
 //            std::cout << "Ray does not hit '" << name << "'\n";
 
-            return;
+            return false;
         }
 //        std::cout << "Ray crosses bound of '" << name << "'\n";
 /*        std::cout << "ray from:" << pRay.origin().x << ", " << pRay.origin().y << ", " << pRay.origin().z
@@ -55,9 +55,10 @@ namespace VMAP
         Vector3 p = iInvRot * (pRay.origin() - iPos) * iInvScale;
         Ray modRay(p, iInvRot * pRay.direction());
         float distance = pMaxDist * iInvScale;
-        iModel->Intersect(modRay, distance, pStopAtFirstHit);
+        bool hit = iModel->Intersect(modRay, distance, pStopAtFirstHit);
         distance *= iScale;
         pMaxDist = distance;
+        return hit;
     }
 
     void ModelInstance::intersectPoint(const G3D::Vector3& p, AreaInfo &info) const

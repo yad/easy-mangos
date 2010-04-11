@@ -353,7 +353,7 @@ namespace VMAP
         return result;
     }
 
-    bool VMapManager2::getAreaInfo(unsigned int pMapId, float x, float y, float z, G3D::uint32 &flags, G3D::int32 &adtId, G3D::int32 &rootId, G3D::int32 &groupId)
+    bool VMapManager2::getAreaInfo(unsigned int pMapId, float x, float y, float z, uint32 &flags, int32 &adtId, int32 &rootId, int32 &groupId)
     {
         //TODO: implement it
         bool result=false;
@@ -362,13 +362,13 @@ namespace VMAP
         {
             Vector3 pos = convertPositionToInternalRep(x, y, z);
             printf("VMapManager::getAreaInfo(): x:%f y:%f z:%f => x:%f y:%f z:%f\n", x,y,z,pos.x,pos.y,pos.z);
-            //result = instanceTree->second->getAreaInfo(pos, areaID, flags);
+            result = instanceTree->second->getAreaInfo(pos, flags, adtId, rootId, groupId);
         }
         return(result);
     }
     //=========================================================
 
-    WorldModel* VMapManager2::aquireModelInstance(const std::string &basepath, const std::string &filename)
+    WorldModel* VMapManager2::acquireModelInstance(const std::string &basepath, const std::string &filename)
     {
         ModelFileMap::iterator model = iLoadedModelFiles.find(filename);
         if (model == iLoadedModelFiles.end())

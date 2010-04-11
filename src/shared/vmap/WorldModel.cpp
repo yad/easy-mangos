@@ -36,7 +36,7 @@ namespace VMAP
 
     class GModelAreaCallback {
         public:
-            GModelAreaCallback(std::vector<GroupModel> vals): prims(vals.begin()), hit(vals.end()), minVol(G3D::inf()) {}
+            GModelAreaCallback(const std::vector<GroupModel> &vals): prims(vals.begin()), hit(vals.end()), minVol(G3D::inf()) {}
             std::vector<GroupModel>::const_iterator prims;
             std::vector<GroupModel>::const_iterator hit;
             float minVol;
@@ -50,6 +50,10 @@ namespace VMAP
                         minVol = pVol;
                         hit = prims + entry;
                     }
+                    const GroupModel &gm = prims[entry];
+                    printf("%10u %8X %7.3f,%7.3f,%7.3f | %7.3f,%7.3f,%7.3f | v=%f\n", gm.iGroupWMOID, gm.iMogpFlags,
+                        gm.iBound.low().x, gm.iBound.low().y, gm.iBound.low().z,
+                        gm.iBound.high().x, gm.iBound.high().y, gm.iBound.high().z, gm.iBound.volume());
                 }
                 //std::cout << "trying to intersect '" << prims[entry].name << "'\n";
             }
@@ -108,7 +112,7 @@ namespace VMAP
     void WorldModel::addGroupModels(std::vector<GroupModel> &models)
     {
         groupModels.swap(models);
-        groupTree.build<GroupModel, BoundsTrait<GroupModel> >(groupModels, 1);
+        groupTree.build(groupModels, BoundsTrait<GroupModel>::getBounds, 1);
     }
 
     bool WorldModel::Intersect(const G3D::Ray &ray, float &distance, bool stopAtFirstHit) const
@@ -116,6 +120,7 @@ namespace VMAP
         IntersectionCallBack isc(this);
         NodeValueAccess<TreeNode, MeshTriangle> vna(treeNodes, triangles);
         treeNodes[0].intersectRay(ray, isc, distance, vna, stopAtFirstHit, true);
+        return isc.hit;
     }
 
     bool WorldModel::IntersectPoint(const G3D::Vector3 &p, AreaInfo &info) const
@@ -221,13 +226,12 @@ namespace VMAP
         if (result && fread(treeNodes, sizeof(TreeNode), nNodes, rf) != nNodes) result = false;
 
         // write group models
-        if (result && readChunk(rf, chunk, "GMOD", 4));
-        if (count)
+        if (result && readChunk(rf, chunk, "GMOD", 4))
         {
             if (fread(&chunkSize, sizeof(uint32), 1, rf) != 1) result = false;
 
             if (result && fread(&count, sizeof(uint32), 1, rf) != 1) result = false;
-            groupModels.resize(count);
+            if (result) groupModels.resize(count);
             if (result && fread(&groupModels[0], sizeof(GroupModel), count, rf) != count) result = false;
 
             // write group BIH

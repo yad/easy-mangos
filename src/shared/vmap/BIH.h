@@ -79,7 +79,7 @@ class BIH
     public:
         BIH(): objects(0), nObjects(0) {};
         template< class T, class BoundsFunc >
-        void build(const std::vector<T> &primitives, uint32 leafSize=3)
+        void build(const std::vector<T> &primitives, BoundsFunc &getBounds, uint32 leafSize = 3)
         {
             if(primitives.size() == 0)
                 return;
@@ -88,12 +88,12 @@ class BIH
             dat.numPrims = primitives.size();
             dat.indices = new uint32[dat.numPrims];
             dat.primBound = new AABox[dat.numPrims];
-            BoundsFunc::getBounds(primitives[0], bounds);
+            getBounds(primitives[0], bounds);
             for (uint32 i=0; i<dat.numPrims; ++i)
             {
                 dat.indices[i] = i;
                 AABox tb;
-                BoundsFunc::getBounds(primitives[i], dat.primBound[i]);
+                getBounds(primitives[i], dat.primBound[i]);
                 bounds.merge(dat.primBound[i]);
             }
             std::vector<uint32> tempTree;
@@ -408,7 +408,7 @@ class BIH
 
     public:
         template<typename RayCallback>
-        void intersect(const Ray &r, RayCallback& intersectCallback, float &maxDist) const
+        void intersectRay(const Ray &r, RayCallback& intersectCallback, float &maxDist, bool stopAtFirst=false) const
         {
             float intervalMin = 0.f;
             float intervalMax = maxDist;
@@ -503,7 +503,8 @@ class BIH
                             // leaf - test some objects
                             int n = tree[node + 1];
                             while (n > 0) {
-                                intersectCallback(r, objects[offset], maxDist); // !!!
+                                bool hit = intersectCallback(r, objects[offset], maxDist, stopAtFirst);
+                                if(stopAtFirst && hit) return;
                                 --n;
                                 ++offset;
                             }
@@ -546,7 +547,6 @@ class BIH
         {
             if (!bounds.contains(p))
                 return;
-            printf("inside Bound\n");
 
             StackNode stack[MAX_STACK_SIZE];
             int stackPos = 0;
