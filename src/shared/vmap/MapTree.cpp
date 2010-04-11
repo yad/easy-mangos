@@ -361,7 +361,7 @@ namespace VMAP
                             }
                             else if(--iLoadedSpawns[spawn.ID] == 0)
                             {
-                                std::cout << "MapTree: removing '" << spawn.name << "' from tree\n";
+                                //std::cout << "MapTree: removing '" << spawn.name << "' from tree\n";
                                 iTreeValues[referencedNode].setUnloaded();
                                 iLoadedSpawns.erase(spawn.ID);
                             }

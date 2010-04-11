@@ -503,6 +503,7 @@ namespace VMAP
 
         // write WorldModel
         WorldModel model(vertexArray.getCArray(), vertexArray.size(), sTris, nElements, sTree, nNodes);
+        model.setRootWmoID(RootWMOID);
         if (boundsArray.size())
             model.addGroupModels(boundsArray);
         bool success = model.writeFile(iDestDir + "/" + pModelFilename + ".vmo");
