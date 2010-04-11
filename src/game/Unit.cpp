@@ -8628,7 +8628,37 @@ bool Unit::IsHostileTo(Unit const* unit) const
     // common faction based case (CvC,PvC,CvP)
     return tester_faction->IsHostileTo(*target_faction);
 }
+bool Unit::IsInPartyWith(Unit const *unit) const
+{
+    if(this == unit)
+      return true;
 
+   const Unit *u1 = GetCharmerOrOwnerOrSelf();
+    const Unit *u2 = unit->GetCharmerOrOwnerOrSelf();
+    if(u1 == u2)
+        return true;
+
+    if(u1->GetTypeId() == TYPEID_PLAYER && u2->GetTypeId() == TYPEID_PLAYER)
+        return ((Player*)u1)->IsInSameGroupWith((Player*)u2);
+    else
+       return false;
+}
+
+bool Unit::IsInRaidWith(Unit const *unit) const
+{
+    if(this == unit)
+        return true;
+
+    const Unit *u1 = GetCharmerOrOwnerOrSelf();
+    const Unit *u2 = unit->GetCharmerOrOwnerOrSelf();
+    if(u1 == u2)
+        return true;
+
+    if(u1->GetTypeId() == TYPEID_PLAYER && u2->GetTypeId() == TYPEID_PLAYER)
+        return ((Player*)u1)->IsInSameRaidWith((Player*)u2);
+    else
+        return false;
+}
 bool Unit::IsFriendlyTo(Unit const* unit) const
 {
     // always friendly to self
@@ -14395,7 +14425,7 @@ void Unit::EnterVehicle(Vehicle *vehicle, int8 seat_id, bool force)
     data << uint8(4);                                       // unknown
     data << float(0);                                       // facing angle
 
-    data << uint32(0x00800000);
+    data << uint32(SPLINEFLAG_UNKNOWN5);
 
     data << uint32(0);                                      // Time in between points
     data << uint32(1);                                      // 1 single waypoint
