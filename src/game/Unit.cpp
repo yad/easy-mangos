@@ -1798,8 +1798,9 @@ void Unit::DealMeleeDamage(CalcDamageInfo *damageInfo, bool durabilityLoss)
                        SpellEffectIndex effIndex = (*i)->GetEffIndex();
                        int32 spellPower = caster->SpellBaseDamageBonus(GetSpellSchoolMask(i_spellProto)) + 
                                           caster->SpellBaseDamageBonusForVictim(GetSpellSchoolMask(i_spellProto), this);
-                       damage = i_spellProto->CalculateSimpleValue(effIndex) + bonus->direct_damage * spellPower;    
-                       damage = caster->CalculateSpellDamage(i_spellProto, effIndex, damage, this);
+                       damage = i_spellProto->CalculateSimpleValue(effIndex) + bonus->direct_damage * spellPower;
+                       int32 bpoints = (*i)->GetBasePoints();
+                       damage = caster->CalculateSpellDamage(pVictim, i_spellProto,effIndex, &bpoints);
                     }
                }
                //Calculate absorb resist ??? no data in opcode for this possibly unable to absorb or resist?
@@ -6136,6 +6137,12 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                 // Siphon Life
                 case 63108:
                 {
+                    if (triggeredByAura->GetEffIndex() != EFFECT_INDEX_0)
+                        return false;
+
+                    if (Aura *aur = GetAura(56216, EFFECT_INDEX_0))
+                        triggerAmount += triggerAmount * aur->GetModifier()->m_amount / 100;
+
                     basepoints[0] = int32(damage * triggerAmount / 100);
                     triggered_spell_id = 63106;
                     break;
@@ -12134,7 +12141,7 @@ int32 Unit::CalculateSpellDamage(Unit const* target, SpellEntry const* spellProt
 
     switch(randomPoints)
     {
-        case 0: break;                                      // not used
+        case 0:                                             // not used
         case 1: basePoints += 1; break;                     // range 1..1
         default:
             // range can have positive (1..rand) and negative (rand..1) values, so order its for irand

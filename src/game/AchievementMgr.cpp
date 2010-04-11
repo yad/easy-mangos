@@ -16,7 +16,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "AchievementMgr.h"
 #include "Common.h"
 #include "Player.h"
 #include "WorldPacket.h"
@@ -38,6 +37,7 @@
 #include "BattleGroundAB.h"
 #include "Map.h"
 #include "InstanceData.h"
+#include "AchievementMgr.h"
 
 #include "Policies/SingletonImp.h"
 
@@ -2171,6 +2171,23 @@ void AchievementGlobalMgr::LoadRewards()
         if (reward.gender >= MAX_GENDER)
             sLog.outErrorDb( "Table `achievement_reward` (Entry: %u) has wrong gender %u.", entry, reward.gender);
 
+        // GENDER_NONE must be single (so or already in and none must be attempt added new data or just adding and none in)
+        // other duplicate cases prevented by DB primary key
+        bool dup = false;
+        AchievementRewards::const_iterator iter_low = m_achievementRewards.lower_bound(entry);
+        AchievementRewards::const_iterator iter_up  = m_achievementRewards.upper_bound(entry);
+        for (AchievementRewards::const_iterator iter = iter_low; iter != iter_up; ++iter)
+        {
+            if (iter->second.gender == GENDER_NONE || reward.gender == GENDER_NONE)
+            {
+                dup = true;
+                sLog.outErrorDb( "Table `achievement_reward` must have single GENDER_NONE (%u) case (Entry: %u), ignore duplicate case", GENDER_NONE, entry);
+                break;
+            }
+        }
+        if (dup)
+            continue;
+
         if ((reward.titleId[0]==0)!=(reward.titleId[1]==0))
             sLog.outErrorDb( "Table `achievement_reward` (Entry: %u) has title (A: %u H: %u) only for one from teams.", entry, reward.titleId[0], reward.titleId[1]);
 
@@ -2280,6 +2297,23 @@ void AchievementGlobalMgr::LoadRewardLocales()
 
         if (data.gender >= MAX_GENDER)
             sLog.outErrorDb( "Table `locales_achievement_reward` (Entry: %u) has wrong gender %u.", entry, data.gender);
+
+        // GENDER_NONE must be single (so or already in and none must be attempt added new data or just adding and none in)
+        // other duplicate cases prevented by DB primary key
+        bool dup = false;
+        AchievementRewardLocales::const_iterator iter_low = m_achievementRewardLocales.lower_bound(entry);
+        AchievementRewardLocales::const_iterator iter_up  = m_achievementRewardLocales.upper_bound(entry);
+        for (AchievementRewardLocales::const_iterator iter = iter_low; iter != iter_up; ++iter)
+        {
+            if (iter->second.gender == GENDER_NONE || data.gender == GENDER_NONE)
+            {
+                dup = true;
+                sLog.outErrorDb( "Table `locales_achievement_reward` must have single GENDER_NONE (%u) case (Entry: %u), ignore duplicate case", GENDER_NONE, entry);
+                break;
+            }
+        }
+        if (dup)
+            continue;
 
         for(int i = 1; i < MAX_LOCALE; ++i)
         {

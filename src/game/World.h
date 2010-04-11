@@ -197,6 +197,7 @@ enum eConfigUInt32Values
     CONFIG_UINT32_BONUS_HONOR_FLAG_AB,
     CONFIG_UINT32_BONUS_HONOR_FLAG_EOS,
     CONFIG_UINT32_BONUS_HONOR_FLAG_AV,
+    CONFIG_UINT32_BONUS_HONOR_HOLIDAY,
     CONFIG_UINT32_AHBOT_ACCOUNT_ID,
     CONFIG_UINT32_AHBOT_CHARACTER_ID,
     CONFIG_UINT32_AHBOT_ITEMS_CYCLE,
@@ -647,8 +648,8 @@ class World
         void InitDailyQuestResetTime();
         void InitWeeklyQuestResetTime();
         void ResetDailyQuests();
+        void ResetBGDaily();
         void ResetWeeklyQuests();
-        void RandomBG();
     private:
         void setConfig(eConfigUInt32Values index, char const* fieldname, uint32 defvalue);
         void setConfig(eConfigInt32Values index, char const* fieldname, int32 defvalue);

@@ -79,8 +79,6 @@ float World::m_MaxVisibleDistanceInFlight     = DEFAULT_VISIBILITY_DISTANCE;
 float World::m_VisibleUnitGreyDistance        = 0;
 float World::m_VisibleObjectGreyDistance      = 0;
 
-const uint16 BGEvent[6] = {41, 42, 43, 44, 45, 46};
-
 /// World constructor
 World::World()
 {
@@ -764,11 +762,12 @@ void World::LoadConfigSettings(bool reload)
     setConfig(CONFIG_UINT32_BONUS_HONOR_AV_END,                        "BG.BonusHonor.AB.End", 5);
     setConfig(CONFIG_UINT32_BONUS_HONOR_EOS_WIN,                       "BG.BonusHonor.AB.Win", 1);
     setConfig(CONFIG_UINT32_BONUS_HONOR_EOS_END,                       "BG.BonusHonor.AB.End", 1);
+    setConfig(CONFIG_UINT32_BONUS_HONOR_HOLIDAY,                       "BG.BonusHonor.Holiday",5);
 
-    setConfig(CONFIG_UINT32_BONUS_HONOR_FLAG_WSG,                       "BG.BonusHonor.WSG.Flag", 2);
-    setConfig(CONFIG_UINT32_BONUS_HONOR_FLAG_AB,                        "BG.BonusHonor.AB.Flag", 2);
-    setConfig(CONFIG_UINT32_BONUS_HONOR_FLAG_AV,                        "BG.BonusHonor.AV.Flag", 2);
-    setConfig(CONFIG_UINT32_BONUS_HONOR_FLAG_EOS,                       "BG.BonusHonor.EOS.Flag", 2);
+    setConfig(CONFIG_UINT32_BONUS_HONOR_FLAG_WSG,                      "BG.BonusHonor.WSG.Flag",2);
+    setConfig(CONFIG_UINT32_BONUS_HONOR_FLAG_AB,                       "BG.BonusHonor.AB.Flag", 2);
+    setConfig(CONFIG_UINT32_BONUS_HONOR_FLAG_AV,                       "BG.BonusHonor.AV.Flag", 2);
+    setConfig(CONFIG_UINT32_BONUS_HONOR_FLAG_EOS,                      "BG.BonusHonor.EOS.Flag",2);
 
     setConfig(CONFIG_BOOL_OFFHAND_CHECK_AT_TALENTS_RESET, "OffhandCheckAtTalentsReset", false);
 
@@ -1383,7 +1382,7 @@ void World::Update(uint32 diff)
     if (m_gameTime > m_NextDailyQuestReset)
     {
         ResetDailyQuests();
-        RandomBG();
+        ResetBGDaily();
         m_NextDailyQuestReset += DAY;
     }
 
@@ -2047,20 +2046,12 @@ void World::InitDailyQuestResetTime()
     else
         delete result;
 }
-void World::RandomBG()
-{
-    //stop event
-    for(int i = 0; i < 6; i++)
-    {
-        sGameEventMgr.StopEvent(BGEvent[i]);
-        WorldDatabase.PExecute("UPDATE game_event SET occurence = 5184000 WHERE entry = %u", BGEvent[i]);
-    }
-    //add event     
-    uint8 random = urand(0,3);
-    sGameEventMgr.StartEvent(BGEvent[random]);
-    WorldDatabase.PExecute("UPDATE game_event SET occurence = 1400 WHERE entry = %u", BGEvent[random]);
 
+void World::ResetBGDaily()
+{
+    WorldDatabase.Execute("DELETE FROM character_battleground_status");
 }
+
 void World::ResetDailyQuests()
 {
     sLog.outDetail("Daily quests reset for all characters.");
@@ -2068,6 +2059,9 @@ void World::ResetDailyQuests()
     for(SessionMap::const_iterator itr = m_sessions.begin(); itr != m_sessions.end(); ++itr)
         if (itr->second->GetPlayer())
             itr->second->GetPlayer()->ResetDailyQuestStatus();
+
+    m_NextDailyQuestReset = time_t(m_NextDailyQuestReset + DAY);
+    CharacterDatabase.PExecute("UPDATE saved_variables SET NextDailyQuestResetTime = '"UI64FMTD"'", uint64(m_NextDailyQuestReset));
 }
 
 void World::ResetWeeklyQuests()

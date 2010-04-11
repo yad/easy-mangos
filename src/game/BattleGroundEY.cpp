@@ -27,6 +27,7 @@
 #include "WorldPacket.h"
 #include "Util.h"
 #include "MapManager.h"
+#include "World.h"
 
 BattleGroundEY::BattleGroundEY()
 {
@@ -261,10 +262,11 @@ void BattleGroundEY::UpdateTeamScore(uint32 Team)
 void BattleGroundEY::EndBattleGround(uint32 winner)
 {
     //win reward
-    if (winner == ALLIANCE)
-        RewardHonorToTeam(GetBonusHonorFromKill(sWorld.getConfig(CONFIG_UINT32_BONUS_HONOR_EOS_WIN)), ALLIANCE);
-    if (winner == HORDE)
-        RewardHonorToTeam(GetBonusHonorFromKill(sWorld.getConfig(CONFIG_UINT32_BONUS_HONOR_EOS_WIN)), HORDE);
+    if (winner)
+    {
+        RewardHonorToTeam(GetBonusHonorFromKill(sWorld.getConfig(CONFIG_UINT32_BONUS_HONOR_EOS_WIN)), winner);
+        RewardHonorTeamDaily(winner);
+    }
     //complete map reward
     RewardHonorToTeam(GetBonusHonorFromKill(sWorld.getConfig(CONFIG_UINT32_BONUS_HONOR_EOS_END)), ALLIANCE);
     RewardHonorToTeam(GetBonusHonorFromKill(sWorld.getConfig(CONFIG_UINT32_BONUS_HONOR_EOS_END)), HORDE);

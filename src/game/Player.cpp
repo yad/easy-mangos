@@ -4506,13 +4506,13 @@ uint32 Player::resetTalentsCost() const
     }
 }
 
-bool Player::resetTalents(bool no_cost)
+bool Player::resetTalents(bool no_cost, bool all_specs)
 {
     // not need after this call
-    if(HasAtLoginFlag(AT_LOGIN_RESET_TALENTS))
+    if(HasAtLoginFlag(AT_LOGIN_RESET_TALENTS) && all_specs)
         RemoveAtLoginFlag(AT_LOGIN_RESET_TALENTS,true);
 
-    if (m_usedTalentCount == 0)
+    if (m_usedTalentCount == 0 && !all_specs)
     {
         UpdateFreeTalentPoints(false);                      // for fix if need counter
         return false;
@@ -4568,6 +4568,33 @@ bool Player::resetTalents(bool no_cost)
                 removeSpell(talentInfo->RankID[j],!IsPassiveSpell(talentInfo->RankID[j]),false);
 
         iter = m_talents[m_activeSpec].begin();
+    }
+
+    // for not current spec just mark removed all saved to DB case and drop not saved
+    if (all_specs)
+    {
+        for (uint8 spec = 0; spec < MAX_TALENT_SPEC_COUNT; ++spec)
+        {
+            if (spec == m_activeSpec)
+                continue;
+
+            for (PlayerTalentMap::iterator iter = m_talents[spec].begin(); iter != m_talents[spec].end();)
+            {
+                switch (iter->second.state)
+                {
+                case PLAYERSPELL_REMOVED:
+                    ++iter;
+                    break;
+                case PLAYERSPELL_NEW:
+                    m_talents[spec].erase(iter++);
+                    break;
+                default:
+                    iter->second.state = PLAYERSPELL_REMOVED;
+                    ++iter;
+                    break;
+                }
+            }
+        }
     }
 
     UpdateFreeTalentPoints(false);
@@ -7141,32 +7168,23 @@ bool Player::RewardHonor(Unit *uVictim, uint32 groupsize, float honor)
 
             honor = MaNGOS::Honor::hk_honor_at_level(v_level);
 
+            if(InBattleGround())
+            {
+                // Call To Arms events
+                uint16 m_event = 0;
+                switch(GetMapId())
+                {
+                    case 30:  m_event = 18; break;
+                    case 489: m_event = 19; break;
+                    case 529: m_event = 20; break;
+                    case 566: m_event = 21; break;
+                }
+                if(sGameEventMgr.IsActiveEvent(m_event))
+                    honor *= 1.5;
+            }
+
             int32 v_rank =1;                                //need more info
-
-            //check for event
-            uint32 reqmap = 0;
-            // Arathi Basin
-            if(sGameEventMgr.IsActiveEvent(41))
-                reqmap = 529;
-            // Eye of Storm
-            if(sGameEventMgr.IsActiveEvent(42))
-                reqmap = 566;
-            // Warsong Gulch
-            if(sGameEventMgr.IsActiveEvent(43))
-               reqmap = 489;
-            // Alterac Valley
-            if(sGameEventMgr.IsActiveEvent(44))
-                reqmap = 30;
-            // Isle of Conquest
-            if(sGameEventMgr.IsActiveEvent(45))
-                reqmap = 628;
-            // Strand of the Ancients
-            if(sGameEventMgr.IsActiveEvent(46))
-                reqmap = 607;
-
-            if (GetMapId() == reqmap)
-                honor *= 1.5;
-
+            
             // count the number of playerkills in one day
             ApplyModUInt32Value(PLAYER_FIELD_KILLS, 1, true);
             // and those in a lifetime
@@ -7194,10 +7212,8 @@ bool Player::RewardHonor(Unit *uVictim, uint32 groupsize, float honor)
 
         if(groupsize > 1)
             honor /= groupsize;
-
-        //now should be honor recieved constant
-        //honor *= (((float)urand(8,12))/10);                 // approx honor: 80% - 120% of real honor
     }
+
 
     // honor - for show honor points in log
     // victim_guid - for show victim name in log
@@ -7221,6 +7237,35 @@ bool Player::RewardHonor(Unit *uVictim, uint32 groupsize, float honor)
 
     ApplyModUInt32Value(PLAYER_FIELD_TODAY_CONTRIBUTION, uint32(honor), true);
     return true;
+}
+
+
+void Player::RewardHonorEndBattlegroud(bool win)
+{
+    uint32 hk = 0;
+    uint32 guid = GetGUIDLow();
+    bool ap = false;
+    if(!win)
+        hk = 5;
+    else
+    {
+        QueryResult *result = CharacterDatabase.PQuery("SELECT daily_bg FROM character_battleground_status WHERE guid = '%u'", guid)
+        if(result)
+            hk = 15;
+        else
+        {
+            hk = 30;
+            if(getLevel() >= sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL))
+                ap = true;
+            CharacterDatabase.PExecute("INSERT INTO character_battleground_status VALUES ('%u', '" UI64FMTD "')", guid, uint64(time(NULL)));
+        }
+    }
+
+    if(hk)
+        RewardHonor(NULL, 1, MaNGOS::Honor::hk_honor_at_level(getLevel(),hk));
+    if(ap)
+        ModifyArenaPoints(25);
+
 }
 
 void Player::ModifyHonorPoints( int32 value )
@@ -8263,7 +8308,7 @@ void Player::CastItemUseSpell(Item *item,SpellCastTargets const& targets,uint8 c
         Spell *spell = new Spell(this, spellInfo, false);
         spell->m_CastItem = item;
         spell->m_cast_count = cast_count;                   //set count of casts
-        spell->m_currentBasePoints[0] = learning_spell_id;
+        spell->m_currentBasePoints[EFFECT_INDEX_0] = learning_spell_id;
         spell->prepare(&targets);
         return;
     }
@@ -13960,8 +14005,20 @@ void Player::OnGossipSelect(WorldObject* pSource, uint32 gossipListId, uint32 me
         }
     }
 
-    uint32 gossipOptionId = gossipmenu.GetItem(gossipListId).m_gOptionId;
+    GossipMenuItem const&  menu_item = gossipmenu.GetItem(gossipListId);
+
+    uint32 gossipOptionId = menu_item.m_gOptionId;
     uint64 guid = pSource->GetGUID();
+    uint32 moneyTake = menu_item.m_gBoxMoney;
+
+    // if this function called and player have money for pay MoneyTake or cheating, proccess both cases
+    if (moneyTake > 0)
+    {
+        if (GetMoney() >= moneyTake)
+            ModifyMoney(-int32(moneyTake));
+        else
+            return;                                         // cheating
+    }
 
     if (pSource->GetTypeId() == TYPEID_GAMEOBJECT)
     {
@@ -14923,7 +14980,7 @@ bool Player::SatisfyQuestLog( bool msg )
         GetSession()->SendPacket( &data );
         sLog.outDebug( "WORLD: Sent SMSG_QUESTLOG_FULL" );
     }
-    return true;
+    return false;
 }
 
 bool Player::SatisfyQuestPreviousQuest( Quest const* qInfo, bool msg )
@@ -19689,7 +19746,7 @@ void Player::InitDisplayIds()
 }
 
 // Return true is the bought item has a max count to force refresh of window by caller
-bool Player::BuyItemFromVendor(uint64 vendorguid, uint32 item, uint8 count, uint8 bag, uint8 slot)
+bool Player::BuyItemFromVendorSlot(uint64 vendorguid, uint32 vendorslot, uint32 item, uint8 count, uint8 bag, uint8 slot)
 {
     // cheating attempt
     if (count < 1) count = 1;
@@ -19719,14 +19776,19 @@ bool Player::BuyItemFromVendor(uint64 vendorguid, uint32 item, uint8 count, uint
         return false;
     }
 
-    size_t vendor_slot = vItems->FindItemSlot(item);
-    if (vendor_slot >= vItems->GetItemCount())
+    if (vendorslot >= vItems->GetItemCount())
     {
         SendBuyError( BUY_ERR_CANT_FIND_ITEM, pCreature, item, 0);
         return false;
     }
 
-    VendorItem const* crItem = vItems->m_items[vendor_slot];
+    VendorItem const* crItem = vItems->m_items[vendorslot];
+    if(!crItem || crItem->item != item)                     // store diff item (cheating)
+    {
+        SendBuyError( BUY_ERR_CANT_FIND_ITEM, pCreature, item, 0);
+        return false;
+    }
+
 
     // check current item amount if it limited
     if (crItem->maxcount != 0)
@@ -19828,7 +19890,7 @@ bool Player::BuyItemFromVendor(uint64 vendorguid, uint32 item, uint8 count, uint
 
             WorldPacket data(SMSG_BUY_ITEM, (8+4+4+4));
             data << uint64(pCreature->GetGUID());
-            data << uint32(vendor_slot+1);                  // numbered from 1 at client
+            data << uint32(vendorslot+1);                   // numbered from 1 at client
             data << uint32(crItem->maxcount > 0 ? new_count : 0xFFFFFFFF);
             data << uint32(count);
             GetSession()->SendPacket(&data);
@@ -19880,7 +19942,7 @@ bool Player::BuyItemFromVendor(uint64 vendorguid, uint32 item, uint8 count, uint
 
             WorldPacket data(SMSG_BUY_ITEM, (8+4+4+4));
             data << uint64(pCreature->GetGUID());
-            data << uint32(vendor_slot + 1);                // numbered from 1 at client
+            data << uint32(vendorslot + 1);                 // numbered from 1 at client
             data << uint32(crItem->maxcount > 0 ? new_count : 0xFFFFFFFF);
             data << uint32(count);
             GetSession()->SendPacket(&data);
