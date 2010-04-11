@@ -125,8 +125,7 @@ void LoadHelper(CellGuidSet const& guid_set, CellPair &cellpair, GridRefManager<
             continue;
         }
 
-        type->AddGridObject(obj);
-        //obj->SetGrid(obj); this function must be used, instead of AddGridObject methtod
+        obj->SetGrid(type);
 
         addUnitState(obj,cellpair);
         obj->SetMap(map);
