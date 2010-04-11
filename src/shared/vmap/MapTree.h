@@ -43,15 +43,12 @@ namespace VMAP
             BIH iTree;
             ModelInstance *iTreeValues; // the tree entries
             uint32 iNTreeValues;
-            // add UniqueEntryMap define?
-            //std::map<uint32, ModelSpawn> mapSpawns;
-            //uint32 iNLoadedTiles;
 
             // Store all the map tile idents that are loaded for that map
             // some maps are not splitted into tiles and we have to make sure, not removing the map before all tiles are removed
             // empty tiles have no tile file, hence map with bool instead of just a set (consistency check)
             loadedTileMap iLoadedTiles;
-            // not strictly needed, stores model-ID reference count to invalidate tree nodes and be able to report errors
+            // stores <model-ID, reference count> to invalidate tree values and to be able to report errors
             loadedSpawnMap iLoadedSpawns;
             std::string iBasePath;
 
@@ -67,8 +64,7 @@ namespace VMAP
             static std::string getTileFileName(uint32 mapID, uint32 tileX, uint32 tileY);
             static uint32 packTileID(uint32 tileX, uint32 tileY) { return tileX<<16 | tileY; }
             static void unpackTileID(uint32 ID, uint32 &tileX, uint32 &tileY) { tileX = ID>>16; tileY = ID&0xFF; }
-            // => VMapManager
-            // ManagedModelContainer *getModelContainer(const std::string& pName) { return(iLoadedModelContainer.get(pName)); }
+
             StaticMapTree(uint32 mapID, const std::string &basePath);
             ~StaticMapTree();
 
@@ -83,7 +79,6 @@ namespace VMAP
             void unloadMap(uint32 tileX, uint32 tileY, VMapManager2 *vm);
             bool isTiled() { return iIsTiled; }
             uint32 numLoadedTiles() { return iLoadedTiles.size(); }
-            // void addModelContainer(const std::string& pName, ManagedModelContainer *pMc);
     };
 
     struct AreaInfo

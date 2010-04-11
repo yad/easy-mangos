@@ -28,24 +28,15 @@ using G3D::Vector3;
 
 namespace VMAP
 {
-    /* class MapRayCallback {
-        public:
-            G3D::Vector3 hitLocation;
-            G3D::Vector3 hitNormal;
-        void operator()(const G3D::Ray& ray, const ModelInstance *entity, bool pStopAtFirstHit, float& distance)
-        {
-            entity->intersect(ray, distance, pStopAtFirstHit);
-            //std::cout << "trying to intersect '" << entity->name << "'\n";
-        }
-    }; */
+
     class MapRayCallback
     {
         public:
             MapRayCallback(ModelInstance *val): prims(val) {}
             ModelInstance *prims;
-            void operator()(const G3D::Ray& ray, uint32 entry, float& distance, bool pStopAtFirstHit=true)
+            bool operator()(const G3D::Ray& ray, uint32 entry, float& distance, bool pStopAtFirstHit=true)
             {
-                prims[entry].intersectRay(ray, distance, pStopAtFirstHit);
+                return prims[entry].intersectRay(ray, distance, pStopAtFirstHit);
                 //std::cout << "trying to intersect '" << entity->name << "'\n";
             }
     };
@@ -79,7 +70,6 @@ namespace VMAP
 
     bool StaticMapTree::getAreaInfo(Vector3 pos, uint32 &flags, int32 &adtId, int32 &rootId, int32 &groupId)
     {
-        std::cout << "StaticMapTree::getAreaInfo()\n";
         AreaInfoCallback intersectionCallBack(iTreeValues);
         iTree.intersectPoint(pos, intersectionCallBack);
         if (intersectionCallBack.aInfo.result)
@@ -90,35 +80,6 @@ namespace VMAP
             groupId = intersectionCallBack.aInfo.groupId;
             return true;
         }
-
-        /* AABox pbox(pos, pos);
-        Array<ModelContainer *> mcArray;
-        Array<GroupModelBound*> bounds;
-        iTree->getIntersectingMembers(pbox, mcArray);
-        printf("MapTree::getAreaInfo(): Found %d ModelContainers for position!\n", mcArray.size());
-        for(unsigned int i=0; i<mcArray.size(); ++i)
-        {
-            mcArray[i]->getIntersectingMembers(pos, bounds);
-        }
-        if(bounds.size()>0)
-        {
-            unsigned int pick=0;
-            float minVolume;
-            printf("MapTree::getAreaInfo(): Found %d Bounds for position!\n", bounds.size());
-            for(unsigned int i=0; i<bounds.size(); ++i)
-            {
-                GroupModelBound b=*bounds[i];
-                if(!i) minVolume = b.iBound.volume();
-                else if (minVolume > b.iBound.volume()){ minVolume=b.iBound.volume(); pick=i; }
-                printf("%10u %8X %7.3f,%7.3f,%7.3f | %7.3f,%7.3f,%7.3f | v=%f\n", b.iAreaId, b.iMogpFlags,
-                        b.iBound.low().x, b.iBound.low().y, b.iBound.low().z,
-                        b.iBound.high().x, b.iBound.high().y, b.iBound.high().z, b.iBound.volume());
-            }
-            areaID = bounds[pick]->iAreaId;
-            flags = bounds[pick]->iMogpFlags;
-            return true;
-        }
-        printf("MapTree::getAreaInfo(): Found no Bounds for position!\n", bounds.size()); */
         return false;
     }
 
@@ -134,28 +95,10 @@ namespace VMAP
     //=========================================================
     StaticMapTree::~StaticMapTree()
     {
-        // TODO
-        /* Array<ModelContainer *> mcArray;
-        iTree->getMembers(mcArray);
-        int no = mcArray.size();
-        while(no >0)
-        {
-            --no;
-            delete mcArray[no];
-        }
-        delete iTree; */
-    }
-    //=========================================================
+        // TODO: release all acquired model references
 
-    // just for visual debugging with an external debug class
-    #ifdef _DEBUG_VMAPS
-    #ifndef gBoxArray
-    extern Vector3 p1,p2,p3,p4,p5,p6,p7;
-    extern Array<AABox>gBoxArray;
-    extern int gCount1, gCount2, gCount3, gCount4;
-    extern bool myfound;
-    #endif
-    #endif
+        delete[] iTreeValues;
+    }
 
     //=========================================================
     /**
@@ -166,8 +109,7 @@ namespace VMAP
     {
         float distance = pMaxDist;
         MapRayCallback intersectionCallBack(iTreeValues);
-        //NodeValueAccess<TreeNode, ModelInstance> vna(iTree, iTreeValues);
-        iTree.intersect(pRay, intersectionCallBack, distance/* , pStopAtFirstHit */);
+        iTree.intersectRay(pRay, intersectionCallBack, distance, pStopAtFirstHit);
         return distance;
     }
     //=========================================================
@@ -288,7 +230,7 @@ namespace VMAP
             std::cout << "Map isTiled:" << bool(iIsTiled) << std::endl;
             if (!iIsTiled && ModelSpawn::readFromFile(rf, spawn))
             {
-                WorldModel *model = vm->aquireModelInstance(iBasePath, spawn.name);
+                WorldModel *model = vm->acquireModelInstance(iBasePath, spawn.name);
                 std::cout << "StaticMapTree::init(): loading " << spawn.name << std::endl;
                 if (model)
                 {
@@ -308,12 +250,6 @@ namespace VMAP
         return success;
     }
     //=========================================================
-
-    /* bool StaticMapTree::PrepareTree()
-    {
-        iTree->balance();
-        return true;
-    } */
 
     bool StaticMapTree::loadMap(uint32 tileX, uint32 tileY, VMapManager2 *vm)
     {
@@ -337,7 +273,7 @@ namespace VMAP
 //                    std::cout << "loading '" << spawn.name << "'\n";
 
                     // acquire model instance
-                    WorldModel *model = vm->aquireModelInstance(iBasePath, spawn.name);
+                    WorldModel *model = vm->acquireModelInstance(iBasePath, spawn.name);
                     if(!model) std::cout << "error: could not acquire WorldModel pointer!\n";
 
                     // update tree
@@ -438,15 +374,4 @@ namespace VMAP
         iLoadedTiles.erase(tile);
     }
 
-    //=========================================================
-    //=========================================================
-
-    /* void StaticMapTree::addModelContainer(const std::string& pName, ManagedModelContainer *pMc)
-    {
-        iLoadedModelContainer.set(pName, pMc);
-        iTree->insert(pMc);
-    } */
-    //=========================================================
-    //=========================================================
-    //=========================================================
 }
