@@ -63,10 +63,8 @@ namespace VMAP
             return false;
 
         // export Map data
-        for (MapData::iterator map_iter = mapData.begin(); map_iter != mapData.end(); ++map_iter)
+        for (MapData::iterator map_iter = mapData.begin(); map_iter != mapData.end() && success; ++map_iter)
         {
-            uint32 __max_z_wmo=0,__max_z_m2=0;
-            uint32 __max_bz_wmo=0,__max_bz_m2=0;
             // build global map tree
             //G3D::VmapKDTree<ModelSpawn*> pTree;
             std::vector<ModelSpawn*> mapSpawns;
@@ -78,41 +76,17 @@ namespace VMAP
                 {
                     if (!calculateTransformedBound(entry->second))
                         break;
-                    Vector3 lo=entry->second.iBound.low(), hi=entry->second.iBound.high();
-                    // __debug__
-                    if(!__max_z_m2 || entry->second.iPos.z > map_iter->second->UniqueEntries[__max_z_m2].iPos.z)
-                        __max_z_m2 = entry->first;
-                    if(!__max_bz_m2 || entry->second.iBound.high().z > map_iter->second->UniqueEntries[__max_bz_m2].iBound.high().z)
-                        __max_bz_m2 = entry->first;
                 }
-                else
+                else if (entry->second.flags & MOD_WORLDSPAWN) // WMO maps and terrain maps use different origin, so we need to adapt :/
                 {
-                    if (entry->second.flags & MOD_WORLDSPAWN) // WMO maps and terrain maps use different origin, so we need to adapt :/
-                    {
-                        // TODO: remove extractor hack and uncomment below line:
-                        //entry->second.iPos += Vector3(533.33333f*32, 533.33333f*32, 0.f);
-                        entry->second.iBound = entry->second.iBound + Vector3(533.33333f*32, 533.33333f*32, 0.f);
-                    }
-                    // __debug__
-                    if(!__max_z_wmo || entry->second.iPos.z > map_iter->second->UniqueEntries[__max_z_wmo].iPos.z)
-                        __max_z_wmo = entry->first;
-                    if(!__max_bz_wmo || entry->second.iBound.high().z > map_iter->second->UniqueEntries[__max_bz_wmo].iBound.high().z)
-                        __max_bz_wmo = entry->first;
+                    // TODO: remove extractor hack and uncomment below line:
+                    //entry->second.iPos += Vector3(533.33333f*32, 533.33333f*32, 0.f);
+                    entry->second.iBound = entry->second.iBound + Vector3(533.33333f*32, 533.33333f*32, 0.f);
                 }
-                // /__debug__
                 //pTree.insert(&(entry->second));
                 mapSpawns.push_back(&(entry->second));
                 spawnedModelFiles.insert(entry->second.name);
             }
-            // /__debug__
-            ModelSpawn &__wmo = map_iter->second->UniqueEntries[__max_z_wmo];
-            ModelSpawn &__m2 = map_iter->second->UniqueEntries[__max_z_m2];
-            std::cout << "Highest WMO: " << __wmo.name << " z:" << __wmo.iPos.z <<std::endl;
-            std::cout << "Highest M2:  " << __m2.name << " z:" << __m2.iPos.z <<std::endl;
-            ModelSpawn &__bwmo = map_iter->second->UniqueEntries[__max_bz_wmo];
-            ModelSpawn &__bm2 = map_iter->second->UniqueEntries[__max_bz_m2];
-            std::cout << "Highest WMO: " << __bwmo.name << " z:" << __bwmo.iPos.z << " bz:" << __bwmo.iBound.high().z << std::endl;
-            std::cout << "Highest M2:  " << __bm2.name << " z:" << __bm2.iPos.z << " bz:" << __bm2.iBound.high().z << std::endl;
 
             //pTree.balance(3);
             BIH pTree;
@@ -121,9 +95,6 @@ namespace VMAP
             // ===> possibly move this code to StaticMapTree class
         /*  int nNodes=0, nElements=0;
             pTree.countNodesAndElements(nNodes, nElements);
-            // __debug__
-            printf("BSPTree: Nodes: %d, Elements: %d (%d)\n", nNodes, nElements, map_iter->second->UniqueEntries.size());
-            // __debug__ end
             // write .vmdir files to dynamically load/unload referenced geometry
             TreeNode *mapTree = new TreeNode[nNodes];
             ModelSpawn **treeElements = new ModelSpawn*[nElements];
@@ -149,6 +120,7 @@ namespace VMAP
             {
                 success = false;
                 printf("Cannot open %s\n", mapfilename.str().c_str());
+                break;
             }
 
             //general info
