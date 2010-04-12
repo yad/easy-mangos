@@ -7236,7 +7236,7 @@ void Player::RewardHonorEndBattlegroud(bool win)
         hk = 5;
     else
     {
-        QueryResult *result = CharacterDatabase.PQuery("SELECT daily_bg FROM character_battleground_status WHERE guid = '%u'", guid)
+        QueryResult *result = CharacterDatabase.PQuery("SELECT daily_bg FROM character_battleground_status WHERE guid = '%u'", guid);
         if(result)
             hk = 15;
         else
