@@ -1,6 +1,7 @@
 #include "Object.h"
 #include "PathFinder.h"
 #include "ObjectGuid.h"
+//#include "Map.h"
 #include "pathfinding/Detour/DetourNavMesh.h"
 #include "pathfinding/Detour/DetourCommon.h"
 
