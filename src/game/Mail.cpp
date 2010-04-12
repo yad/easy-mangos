@@ -277,7 +277,7 @@ void WorldSession::HandleSendMail(WorldPacket & recv_data )
     draft
         .AddMoney(money)
         .AddCOD(COD)
-        .SendMailTo(MailReceiver(receive, GUID_LOPART(rc)), MailSender(pl), body.empty() ? MailCheckMask(MAIL_CHECK_MASK_NONE | MAIL_CHECK_MASK_COPIED) : MAIL_CHECK_MASK_HAS_BODY, deliver_delay);
+        .SendMailTo(MailReceiver(receive, GUID_LOPART(rc)), pl, body.empty() ? MAIL_CHECK_MASK_COPIED : MAIL_CHECK_MASK_HAS_BODY, deliver_delay);
 
     CharacterDatabase.BeginTransaction();
     pl->SaveInventoryAndGoldToDB();
@@ -720,7 +720,7 @@ void WorldSession::HandleMailCreateTextItem(WorldPacket & recv_data )
         bodyItem->SetText(m->body);
 
     bodyItem->SetUInt32Value(ITEM_FIELD_CREATOR, m->sender);
-    bodyItem->SetFlag(ITEM_FIELD_FLAGS, ITEM_FLAGS_WRAPPER | ITEM_FLAGS_REFUNDABLE_2 | ITEM_FLAGS_UNK1);
+    bodyItem->SetFlag(ITEM_FIELD_FLAGS, ITEM_FLAGS_WRAPPER | ITEM_FLAGS_UNK4 | ITEM_FLAGS_UNK1);
 
 
     sLog.outDetail("HandleMailCreateTextItem mailid=%u", mailId);
