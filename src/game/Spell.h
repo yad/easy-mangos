@@ -387,6 +387,8 @@ class Spell
 
         SpellCastResult CheckCast(bool strict);
         SpellCastResult CheckPetCast(Unit* target);
+        bool IsValidSingleTargetEffect(Unit const* target, Targets type) const;
+        bool IsValidSingleTargetSpell(Unit const* target) const;
 
         // handlers
         void handle_immediate();

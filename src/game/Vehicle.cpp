@@ -499,6 +499,7 @@ void Vehicle::AddPassenger(Unit *unit, int8 seatId, bool force)
             unit->SetUInt64Value(UNIT_FIELD_CHARM, GetGUID());
             if(unit->GetTypeId() == TYPEID_PLAYER)
             {
+                ((Player*)unit)->SetMover(this);
                 ((Player*)unit)->SetMoverInQueve(this);
                 ((Player*)unit)->SetClientControl(this, 1);
             }

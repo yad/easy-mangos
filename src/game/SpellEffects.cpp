@@ -4449,7 +4449,7 @@ void Spell::EffectLearnSkill(SpellEffectIndex eff_idx)
 
     uint32 skillid =  m_spellInfo->EffectMiscValue[eff_idx];
     uint16 skillval = ((Player*)unitTarget)->GetPureSkillValue(skillid);
-    ((Player*)unitTarget)->SetSkill(skillid, m_spellInfo->CalculateSimpleValue(eff_idx), skillval ? skillval : 1, damage * 75);
+    ((Player*)unitTarget)->SetSkill(skillid, skillval ? skillval : 1, damage * 75, damage);
 }
 
 void Spell::EffectAddHonor(SpellEffectIndex /*eff_idx*/)
@@ -6986,8 +6986,8 @@ void Spell::EffectCharge(SpellEffectIndex /*eff_idx*/)
     if (unitTarget != m_caster && !IsPositiveSpell(m_spellInfo->Id))
         m_caster->Attack(unitTarget,true);
 
-    //Warbringer - remove movement imparing effects
-    if(m_caster->HasAura(57499))
+    //Warbringer - remove movement imparing effects for Intervene
+    if(m_caster->HasAura(57499) && m_spellInfo->Id == 3411)
         m_caster->RemoveAurasAtMechanicImmunity(IMMUNE_TO_ROOT_AND_SNARE_MASK,57499,true);
 }
 
