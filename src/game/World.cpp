@@ -2045,7 +2045,7 @@ void World::InitDailyQuestResetTime()
 
 void World::ResetBGDaily()
 {
-    WorldDatabase.Execute("DELETE FROM character_battleground_status");
+    CharacterDatabase.Execute("DELETE FROM character_battleground_status");
 }
 
 void World::ResetDailyQuests()
