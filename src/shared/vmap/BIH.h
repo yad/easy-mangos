@@ -28,6 +28,8 @@
 #include <stdexcept>
 #include <vector>
 #include <algorithm>
+#include <limits>
+#include <cmath>
 
 #define MAX_STACK_SIZE 64
 
@@ -73,13 +75,14 @@ class BIH
 {
     protected:
         std::vector<uint32> tree;
-        uint32 *objects;
-        uint32 nObjects;
+        std::vector<uint32> objects;
+        //uint32 *objects;
+        //uint32 nObjects;
         AABox bounds;
     public:
-        BIH(): objects(0), nObjects(0) {};
+        BIH() /*:  objects(0), nObjects(0) */ {};
         template< class T, class BoundsFunc >
-        void build(const std::vector<T> &primitives, BoundsFunc &getBounds, uint32 leafSize = 3)
+        void build(const std::vector<T> &primitives, BoundsFunc &getBounds, uint32 leafSize = 3, bool printStats=false)
         {
             if(primitives.size() == 0)
                 return;
@@ -99,14 +102,18 @@ class BIH
             std::vector<uint32> tempTree;
             BuildStats stats;
             buildHierarchy(tempTree, dat, stats);
-            stats.printStats();
+            if (printStats)
+                stats.printStats();
 
-            delete[] dat.primBound;
-            objects = dat.indices;
-            nObjects = dat.numPrims;
+            objects.resize(dat.numPrims);
+            for (uint32 i=0; i<dat.numPrims; ++i)
+                objects[i] = dat.indices[i];
+            //nObjects = dat.numPrims;
             tree = tempTree;
+            delete[] dat.primBound;
+            delete[] dat.indices;
         }
-        uint32 primCount() { return nObjects; }
+        uint32 primCount() { return objects.size(); }
 
     protected:
         struct buildData
@@ -211,8 +218,8 @@ class BIH
             }
             // calculate extents
             int axis = -1, prevAxis, rightOrig;
-            float clipL = G3D::nan(), clipR = G3D::nan(), prevClip = G3D::nan();
-            float split = G3D::nan(), prevSplit;
+            float clipL = G3D::fnan(), clipR = G3D::fnan(), prevClip = G3D::fnan();
+            float split = G3D::fnan(), prevSplit;
             bool wasLeft = true;
             while (true)
             {
@@ -295,6 +302,12 @@ class BIH
                 if (right == rightOrig)
                 {
                     // all left
+                    if (prevAxis == axis && prevSplit == split) {
+                        // we are stuck here - create a leaf
+                        stats.updateLeaf(depth, right - left + 1);
+                        createNode(tempTree, nodeIndex, left, right);
+                        return;
+                    }
                     if (clipL <= split) {
                         // keep looping on left half
                         gridBox.hi[axis] = split;
@@ -302,18 +315,18 @@ class BIH
                         wasLeft = true;
                         continue;
                     }
+                    gridBox.hi[axis] = split;
+                    prevClip = G3D::fnan();
+                }
+                else if (left > right)
+                {
+                    // all right
                     if (prevAxis == axis && prevSplit == split) {
                         // we are stuck here - create a leaf
                         stats.updateLeaf(depth, right - left + 1);
                         createNode(tempTree, nodeIndex, left, right);
                         return;
                     }
-                    gridBox.hi[axis] = split;
-                    prevClip = G3D::nan();
-                }
-                else if (left > right)
-                {
-                    // all right
                     right = rightOrig;
                     if (clipR >= split) {
                         // keep looping on right half
@@ -322,19 +335,13 @@ class BIH
                         wasLeft = false;
                         continue;
                     }
-                    if (prevAxis == axis && prevSplit == split) {
-                        // we are stuck here - create a leaf
-                        stats.updateLeaf(depth, right - left + 1);
-                        createNode(tempTree, nodeIndex, left, right);
-                        return;
-                    }
                     gridBox.lo[axis] = split;
-                    prevClip = G3D::nan();
+                    prevClip = G3D::fnan();
                 }
                 else
                 {
                     // we are actually splitting stuff
-                    if (prevAxis != -1 && !G3D::isNaN(prevClip))
+                    if (prevAxis != -1 && !isnan(prevClip))
                     {
                         // second time through - lets create the previous split
                         // since it produced empty space
@@ -620,33 +627,34 @@ class BIH
             }
         }
 
-        bool writeToFile(FILE *wf)
+        bool writeToFile(FILE *wf) const
         {
             uint32 treeSize = tree.size();
-            uint32 check=0;
+            uint32 check=0, count=0;
             check += fwrite(&bounds.low(), sizeof(float), 3, wf);
             check += fwrite(&bounds.high(), sizeof(float), 3, wf);
             check += fwrite(&treeSize, sizeof(uint32), 1, wf);
             check += fwrite(&tree[0], sizeof(uint32), treeSize, wf);
-            check += fwrite(&nObjects, sizeof(uint32), 1, wf);
-            check += fwrite(objects, sizeof(uint32), nObjects, wf);
-            return check == (3 + 3 + 2 + treeSize + nObjects);
+            count = objects.size();
+            check += fwrite(&count, sizeof(uint32), 1, wf);
+            check += fwrite(&objects[0], sizeof(uint32), count, wf);
+            return check == (3 + 3 + 2 + treeSize + count);
         }
         bool readFromFile(FILE *rf)
         {
             uint32 treeSize;
             Vector3 lo, hi;
-            uint32 check=0;
+            uint32 check=0, count=0;
             check += fread(&lo, sizeof(float), 3, rf);
             check += fread(&hi, sizeof(float), 3, rf);
             bounds = AABox(lo, hi);
             check += fread(&treeSize, sizeof(uint32), 1, rf);
             tree.resize(treeSize);
             check += fread(&tree[0], sizeof(uint32), treeSize, rf);
-            check += fread(&nObjects, sizeof(uint32), 1, rf);
-            objects = new uint32[nObjects];
-            check += fread(objects, sizeof(uint32), nObjects, rf);
-            return check == (3 + 3 + 2 + treeSize + nObjects);
+            check += fread(&count, sizeof(uint32), 1, rf);
+            objects.resize(count); // = new uint32[nObjects];
+            check += fread(&objects[0], sizeof(uint32), count, rf);
+            return check == (3 + 3 + 2 + treeSize + count);
         }
 };
 

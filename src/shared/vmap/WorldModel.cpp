@@ -26,7 +26,7 @@ using G3D::Ray;
 
 template<> struct BoundsTrait<VMAP::GroupModel>
 {
-    static void getBounds(const VMAP::GroupModel& obj, G3D::AABox& out) { out = obj.iBound; }
+    static void getBounds(const VMAP::GroupModel& obj, G3D::AABox& out) { out = obj.GetBound(); }
 };
 
 
@@ -34,32 +34,7 @@ namespace VMAP
 {
     bool readChunk(FILE *rf, char *dest, const char *compare, uint32 len);
 
-    class GModelAreaCallback {
-        public:
-            GModelAreaCallback(const std::vector<GroupModel> &vals): prims(vals.begin()), hit(vals.end()), minVol(G3D::inf()) {}
-            std::vector<GroupModel>::const_iterator prims;
-            std::vector<GroupModel>::const_iterator hit;
-            float minVol;
-            void operator()(const Vector3& point, uint32 entry)
-            {
-                if (prims[entry].iBound.contains(point))
-                {
-                    float pVol = prims[entry].iBound.volume();
-                    if(pVol < minVol)
-                    {
-                        minVol = pVol;
-                        hit = prims + entry;
-                    }
-                    const GroupModel &gm = prims[entry];
-                    printf("%10u %8X %7.3f,%7.3f,%7.3f | %7.3f,%7.3f,%7.3f | v=%f\n", gm.iGroupWMOID, gm.iMogpFlags,
-                        gm.iBound.low().x, gm.iBound.low().y, gm.iBound.low().z,
-                        gm.iBound.high().x, gm.iBound.high().y, gm.iBound.high().z, gm.iBound.volume());
-                }
-                //std::cout << "trying to intersect '" << prims[entry].name << "'\n";
-            }
-    };
-
-    bool WorldModel::IntersectTriangle(const MeshTriangle &tri, const G3D::Ray &ray, float &distance) const
+    bool IntersectTriangle(const MeshTriangle &tri, std::vector<Vector3>::const_iterator points, const G3D::Ray &ray, float &distance)
     {
         static const float EPS = 1e-5f;
 
@@ -109,31 +84,204 @@ namespace VMAP
         return false;
     }
 
-    void WorldModel::addGroupModels(std::vector<GroupModel> &models)
+    // ===================== GroupModel ==================================
+
+    class TriBoundFunc
+    {
+        public:
+            TriBoundFunc(std::vector<Vector3> &vert): vertices(vert.begin()) {}
+            void operator()(const MeshTriangle &tri, G3D::AABox &out) const
+            {
+                G3D::Vector3 lo = vertices[tri.idx0];
+                G3D::Vector3 hi = lo;
+
+                lo = (lo.min(vertices[tri.idx1])).min(vertices[tri.idx2]);
+                hi = (hi.max(vertices[tri.idx1])).max(vertices[tri.idx2]);
+
+                out = G3D::AABox(lo, hi);
+            }
+        protected:
+            const std::vector<Vector3>::const_iterator vertices;
+    };
+
+    void GroupModel::setMeshData(std::vector<Vector3> &vert, std::vector<MeshTriangle> &tri)
+    {
+        vertices.swap(vert);
+        triangles.swap(tri);
+        TriBoundFunc bFunc(vertices);
+        meshTree.build(triangles, bFunc);
+    }
+
+    bool GroupModel::writeToFile(FILE *wf)
+    {
+        bool result = true;
+        uint32 chunkSize, count;
+
+        if (result && fwrite(&iBound, sizeof(G3D::AABox), 1, wf) != 1) result = false;
+        if (result && fwrite(&iMogpFlags, sizeof(uint32), 1, wf) != 1) result = false;
+        if (result && fwrite(&iGroupWMOID, sizeof(uint32), 1, wf) != 1) result = false;
+
+        // write vertices
+        if (result && fwrite("VERT", 1, 4, wf) != 4) result = false;
+        count = vertices.size();
+        chunkSize = sizeof(uint32)+ sizeof(Vector3)*count;
+        if (result && fwrite(&chunkSize, sizeof(uint32), 1, wf) != 1) result = false;
+        if (result && fwrite(&count, sizeof(uint32), 1, wf) != 1) result = false;
+        if (result && fwrite(&vertices[0], sizeof(Vector3), count, wf) != count) result = false;
+
+        // write triangle mesh
+        if (result && fwrite("TRIM", 1, 4, wf) != 4) result = false;
+        count = triangles.size();
+        chunkSize = sizeof(uint32)+ sizeof(MeshTriangle)*count;
+        if (result && fwrite(&chunkSize, sizeof(uint32), 1, wf) != 1) result = false;
+        if (result && fwrite(&count, sizeof(uint32), 1, wf) != 1) result = false;
+        if (result && fwrite(&triangles[0], sizeof(MeshTriangle), count, wf) != count) result = false;
+
+        // write mesh BIH
+        if (result && fwrite("MBIH", 1, 4, wf) != 4) result = false;
+        if (result) result = meshTree.writeToFile(wf);
+        return result;
+    }
+
+    bool GroupModel::readFromFile(FILE *rf)
+    {
+        char chunk[8];
+        bool result = true;
+        uint32 chunkSize, count;
+
+        if (result && fread(&iBound, sizeof(G3D::AABox), 1, rf) != 1) result = false;
+        if (result && fread(&iMogpFlags, sizeof(uint32), 1, rf) != 1) result = false;
+        if (result && fread(&iGroupWMOID, sizeof(uint32), 1, rf) != 1) result = false;
+
+        // read vertices
+        if (result && !readChunk(rf, chunk, "VERT", 4)) result = false;
+        if (result && fread(&chunkSize, sizeof(uint32), 1, rf) != 1) result = false;
+        if (result && fread(&count, sizeof(uint32), 1, rf) != 1) result = false;
+        if (result) vertices.resize(count);
+        if (result && fread(&vertices[0], sizeof(Vector3), count, rf) != count) result = false;
+
+        // read triangle mesh
+        if (result && !readChunk(rf, chunk, "TRIM", 4)) result = false;
+        if (result && fread(&chunkSize, sizeof(uint32), 1, rf) != 1) result = false;
+        if (result && fread(&count, sizeof(uint32), 1, rf) != 1) result = false;
+        if (result) triangles.resize(count);
+        if (result && fread(&triangles[0], sizeof(MeshTriangle), count, rf) != count) result = false;
+
+        // read mesh BIH
+        if (result && !readChunk(rf, chunk, "MBIH", 4)) result = false;
+        if (result) result = meshTree.readFromFile(rf);
+        return result;
+    }
+
+    struct GModelRayCallback
+    {
+        GModelRayCallback(const std::vector<MeshTriangle> &tris, const std::vector<Vector3> &vert):
+            vertices(vert.begin()), triangles(tris.begin()), hit(false) {}
+        bool operator()(const G3D::Ray& ray, uint32 entry, float& distance, bool pStopAtFirstHit)
+        {
+            bool result = IntersectTriangle(triangles[entry], vertices, ray, distance);
+            if(result)  hit=true;
+            return hit;
+        }
+        std::vector<Vector3>::const_iterator vertices;
+        std::vector<MeshTriangle>::const_iterator triangles;
+        bool hit;
+    };
+
+    bool GroupModel::IntersectRay(const G3D::Ray &ray, float &distance, bool stopAtFirstHit) const
+    {
+        GModelRayCallback callback(triangles, vertices);
+        meshTree.intersectRay(ray, callback, distance, stopAtFirstHit);
+        return callback.hit;
+    }
+
+    bool GroupModel::IsInsideObject(const Vector3 &pos /*, &ground_z */) const
+    {
+        if (!iBound.contains(pos))
+            return false;
+        GModelRayCallback callback(triangles, vertices);
+        Vector3 rPos = pos;
+        rPos.z += 0.1;
+        float dist = G3D::inf();
+        G3D::Ray ray(rPos, Vector3(0.f, 0.f, -1.f));
+        return IntersectRay(ray, dist, true);
+    }
+
+    // ===================== WorldModel ==================================
+
+
+
+    void WorldModel::setGroupModels(std::vector<GroupModel> &models)
     {
         groupModels.swap(models);
         groupTree.build(groupModels, BoundsTrait<GroupModel>::getBounds, 1);
     }
 
-    bool WorldModel::Intersect(const G3D::Ray &ray, float &distance, bool stopAtFirstHit) const
+    struct WModelRayCallBack
+    {
+        WModelRayCallBack(const std::vector<GroupModel> &mod): models(mod.begin()), hit(false) {}
+        bool operator()(const G3D::Ray& ray, uint32 entry, float& distance, bool pStopAtFirstHit)
+        {
+            bool result = models[entry].IntersectRay(ray, distance, pStopAtFirstHit);
+            if(result)  hit=true;
+            return hit;
+        }
+        std::vector<GroupModel>::const_iterator models;
+        bool hit;
+    };
+
+    bool WorldModel::IntersectRay(const G3D::Ray &ray, float &distance, bool stopAtFirstHit) const
+    {
+        WModelRayCallBack isc(groupModels);
+        groupTree.intersectRay(ray, isc, distance, stopAtFirstHit);
+        return isc.hit;
+    }
+    /* bool WorldModel::Intersect(const G3D::Ray &ray, float &distance, bool stopAtFirstHit) const
     {
         IntersectionCallBack isc(this);
         NodeValueAccess<TreeNode, MeshTriangle> vna(treeNodes, triangles);
         treeNodes[0].intersectRay(ray, isc, distance, vna, stopAtFirstHit, true);
         return isc.hit;
-    }
+    } */
+
+    class WModelAreaCallback {
+        public:
+            WModelAreaCallback(const std::vector<GroupModel> &vals): prims(vals.begin()), hit(vals.end()), minVol(G3D::inf()) {}
+            std::vector<GroupModel>::const_iterator prims;
+            std::vector<GroupModel>::const_iterator hit;
+            float minVol;
+            void operator()(const Vector3& point, uint32 entry)
+            {
+                float pVol = prims[entry].GetBound().volume();
+                if(pVol < minVol)
+                {
+                    /* if (prims[entry].iBound.contains(point)) */
+                    if (prims[entry].IsInsideObject(point))
+                    {
+                        minVol = pVol;
+                        hit = prims + entry;
+
+                        const GroupModel &gm = prims[entry];
+                        printf("%10u %8X %7.3f,%7.3f,%7.3f | %7.3f,%7.3f,%7.3f | v=%f\n", gm.GetWmoID(), gm.GetMogpFlags(),
+                        gm.GetBound().low().x, gm.GetBound().low().y, gm.GetBound().low().z,
+                        gm.GetBound().high().x, gm.GetBound().high().y, gm.GetBound().high().z, gm.GetBound().volume());
+                    }
+                }
+                //std::cout << "trying to intersect '" << prims[entry].name << "'\n";
+            }
+    };
 
     bool WorldModel::IntersectPoint(const G3D::Vector3 &p, AreaInfo &info) const
     {
         if(!groupModels.size())
             return false;
-        GModelAreaCallback callback(groupModels);
+        WModelAreaCallback callback(groupModels);
         groupTree.intersectPoint(p, callback);
         if (callback.hit != groupModels.end())
         {
             info.rootId = RootWMOID;
-            info.groupId = callback.hit->iGroupWMOID;
-            info.flags = callback.hit->iMogpFlags;
+            info.groupId = callback.hit->GetWmoID();
+            info.flags = callback.hit->GetMogpFlags();
             info.result = true;
             return true;
         }
@@ -155,7 +303,7 @@ namespace VMAP
         if (result && fwrite(&chunkSize, sizeof(uint32), 1, wf) != 1) result = false;
         if (result && fwrite(&RootWMOID, sizeof(uint32), 1, wf) != 1) result = false;
 
-        // write vertices
+        /* // write vertices
         if (result && fwrite("VERT", 1, 4, wf) != 4) result = false;
         chunkSize = sizeof(uint32)+ sizeof(Vector3)*nPoints;
         if (result && fwrite(&chunkSize, sizeof(uint32), 1, wf) != 1) result = false;
@@ -174,17 +322,18 @@ namespace VMAP
         chunkSize = sizeof(uint32)+ sizeof(TreeNode)*nNodes;
         if (result && fwrite(&chunkSize, sizeof(uint32), 1, wf) != 1) result = false;
         if (result && fwrite(&nNodes, sizeof(uint32), 1, wf) != 1) result = false;
-        if (result && fwrite(treeNodes, sizeof(TreeNode), nNodes, wf) != nNodes) result = false;
+        if (result && fwrite(treeNodes, sizeof(TreeNode), nNodes, wf) != nNodes) result = false; */
 
         // write group models
         count=groupModels.size();
         if (count)
         {
             if (result && fwrite("GMOD", 1, 4, wf) != 4) result = false;
-            chunkSize = sizeof(uint32)+ sizeof(GroupModel)*count;
-            if (result && fwrite(&chunkSize, sizeof(uint32), 1, wf) != 1) result = false;
+            //chunkSize = sizeof(uint32)+ sizeof(GroupModel)*count;
+            //if (result && fwrite(&chunkSize, sizeof(uint32), 1, wf) != 1) result = false;
             if (result && fwrite(&count, sizeof(uint32), 1, wf) != 1) result = false;
-            if (result && fwrite(&groupModels[0], sizeof(GroupModel), count, wf) != count) result = false;
+            for(uint32 i=0; i<groupModels.size() && result; ++i)
+                result = groupModels[i].writeToFile(wf);
 
             // write group BIH
             if (result && fwrite("GBIH", 1, 4, wf) != 4) result = false;
@@ -210,7 +359,7 @@ namespace VMAP
         if (result && fread(&chunkSize, sizeof(uint32), 1, rf) != 1) result = false;
         if (result && fread(&RootWMOID, sizeof(uint32), 1, rf) != 1) result = false;
 
-        // read vertices
+        /* // read vertices
         if (result && !readChunk(rf, chunk, "VERT", 4)) result = false;
         if (result && fread(&chunkSize, sizeof(uint32), 1, rf) != 1) result = false;
         if (result && fread(&nPoints, sizeof(uint32), 1, rf) != 1) result = false;
@@ -229,18 +378,20 @@ namespace VMAP
         if (result && fread(&chunkSize, sizeof(uint32), 1, rf) != 1) result = false;
         if (result && fread(&nNodes, sizeof(uint32), 1, rf) != 1) result = false;
         if (result) treeNodes = new TreeNode[nNodes];
-        if (result && fread(treeNodes, sizeof(TreeNode), nNodes, rf) != nNodes) result = false;
+        if (result && fread(treeNodes, sizeof(TreeNode), nNodes, rf) != nNodes) result = false; */
 
-        // write group models
+        // read group models
         if (result && readChunk(rf, chunk, "GMOD", 4))
         {
-            if (fread(&chunkSize, sizeof(uint32), 1, rf) != 1) result = false;
+            //if (fread(&chunkSize, sizeof(uint32), 1, rf) != 1) result = false;
 
             if (result && fread(&count, sizeof(uint32), 1, rf) != 1) result = false;
             if (result) groupModels.resize(count);
-            if (result && fread(&groupModels[0], sizeof(GroupModel), count, rf) != count) result = false;
+            //if (result && fread(&groupModels[0], sizeof(GroupModel), count, rf) != count) result = false;
+            for(uint32 i=0; i<count && result; ++i)
+                result = groupModels[i].readFromFile(rf);
 
-            // write group BIH
+            // read group BIH
             if (result && !readChunk(rf, chunk, "GBIH", 4)) result = false;
             if (result) result = groupTree.readFromFile(rf);
         }

@@ -180,10 +180,12 @@ namespace VMAP
         }
 
         // export objects
+        std::cout << "\nConverting Model Files" << std::endl;
         //ModelSpawn &someSpawn = mapData.begin()->second->UniqueEntries.begin()->second;
         ModelPosition dummy;
         for (std::set<std::string>::iterator mfile = spawnedModelFiles.begin(); mfile != spawnedModelFiles.end(); ++mfile)
         {
+            std::cout << "Converting " << *mfile << std::endl;
             readRawFile2(*mfile, dummy);
         }
         return success;
@@ -326,6 +328,7 @@ namespace VMAP
     //=================================================================
     bool TileAssembler::readRawFile2(const std::string& pModelFilename,  ModelPosition& pModelPosition)
     {
+        bool success = true;
         std::string filename = iSrcDir;
         if(filename.length() >0)
             filename.append("/");
@@ -365,22 +368,20 @@ namespace VMAP
         READ_OR_RETURN(&groups, sizeof(G3D::uint32));
         READ_OR_RETURN(&RootWMOID, sizeof(G3D::uint32));
 
-        uint32 idxOffset=0;
-        G3D::Array<SoloTriangle> triangles;
-        G3D::Array<Vector3> vertexArray;
-        std::vector<GroupModel> boundsArray;
+        //uint32 idxOffset=0;
+        //G3D::Array<SoloTriangle> triangles;
+        //G3D::Array<Vector3> vertexArray;
+        std::vector<GroupModel> groupsArray;
 
         for(int g=0;g<(int)groups;g++)
         {
-            Array<int> tempIndexArray;
-            GroupModel gm;
+            std::vector<MeshTriangle> triangles;
+            std::vector<Vector3> vertexArray;
+            //GroupModel gm;
 
-            //AABSPTree<MeshTriangle> *gtree = new AABSPTree<MeshTriangle>();
-
-            //G3D::uint32 mogpflags;
-            READ_OR_RETURN(&gm.iMogpFlags, sizeof(G3D::uint32));
-            //G3D::uint32 GroupWMOID;
-            READ_OR_RETURN(&gm.iGroupWMOID, sizeof(G3D::uint32));
+            uint32 mogpflags, GroupWMOID;
+            READ_OR_RETURN(&mogpflags, sizeof(G3D::uint32));
+            READ_OR_RETURN(&GroupWMOID, sizeof(G3D::uint32));
 
             float bbox1[3], bbox2[3];
             READ_OR_RETURN(bbox1, sizeof(float)*3);
@@ -413,7 +414,7 @@ namespace VMAP
                 READ_OR_RETURN(indexarray, nindexes*sizeof(uint16));
                 for(uint32 i=0; i<nindexes; i+=3)
                 {
-                    triangles.append(SoloTriangle(indexarray[i]+idxOffset, indexarray[i+1]+idxOffset, indexarray[i+2]+idxOffset));
+                    triangles.push_back(MeshTriangle(indexarray[i], indexarray[i+1], indexarray[i+2]));
                 }
                 delete[] indexarray;
             }
@@ -431,12 +432,11 @@ namespace VMAP
                 READ_OR_RETURN(vectorarray, nvectors*sizeof(float)*3);
                 for(uint32 i=0; i<nvectors; ++i)
                 {
-                    vertexArray.append( Vector3(vectorarray + 3*i) );
+                    vertexArray.push_back( Vector3(vectorarray + 3*i) );
                 }
-                idxOffset += nvectors;
                 delete vectorarray;
             }
-            // ----- liquit
+            // ----- liquid
             if(liquidflags& 1)
             {
                 // we have liquit -> not handled yet ... skip
@@ -445,12 +445,12 @@ namespace VMAP
                 READ_OR_RETURN(&blocksize, sizeof(int));
                 fseek(rf, blocksize, SEEK_CUR);
             }
+            //__DEBUG__
+            if (pModelFilename == "Azjol_Uppercity.wmo")
+                std::cout << "group:" << g << " vert:" << vertexArray.size() << " tri:" << triangles.size() << std::endl;
             // TODO: add mogpflags, rootwmoid and groupwmoid to each group
-            if(gm.iGroupWMOID != 0 || gm.iMogpFlags != 0)
-            {
-                gm.iBound = AABox(Vector3(bbox1), Vector3(bbox2));
-                boundsArray.push_back(gm);
-            }
+            groupsArray.push_back(GroupModel(mogpflags, GroupWMOID, AABox(Vector3(bbox1), Vector3(bbox2))));
+            groupsArray.back().setMeshData(vertexArray, triangles);
             // TODO: handle liquids
 
 
@@ -460,7 +460,7 @@ namespace VMAP
 
         }
         fclose(rf);
-        for(int i=0; i<triangles.size(); ++i)
+        /* for(int i=0; i<triangles.size(); ++i)
             triangles[i].setVertexData(vertexArray.getCArray());
         G3D::VmapKDTree<SoloTriangle> gtree;
         gtree.insert(triangles);
@@ -471,14 +471,21 @@ namespace VMAP
         TreeNode *sTree = new TreeNode[nNodes];
         SoloTriangle *sTris = new SoloTriangle[nElements];
         Vector3 lo, hi;
-        gtree.serializeTree(lo, hi, sTree, sTris);
+        gtree.serializeTree(lo, hi, sTree, sTris); */
 
         // write WorldModel
-        WorldModel model(vertexArray.getCArray(), vertexArray.size(), sTris, nElements, sTree, nNodes);
+        //WorldModel model(vertexArray.getCArray(), vertexArray.size(), sTris, nElements, sTree, nNodes);
+        if (pModelFilename == "Azjol_Uppercity.wmo")
+            std::cout << "creating WorldModel" << std::endl;
+        WorldModel model;
         model.setRootWmoID(RootWMOID);
-        if (boundsArray.size())
-            model.addGroupModels(boundsArray);
-        bool success = model.writeFile(iDestDir + "/" + pModelFilename + ".vmo");
+        if (groupsArray.size())
+        {
+            model.setGroupModels(groupsArray);
+            if (pModelFilename == "Azjol_Uppercity.wmo")
+                std::cout << "wrtiting WorldModel" << std::endl;
+            success = model.writeFile(iDestDir + "/" + pModelFilename + ".vmo");
+        }
 
         //std::cout << "readRawFile2: '" << pModelFilename << "' tris: " << nElements << " nodes: " << nNodes << std::endl;
         return success;
