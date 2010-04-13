@@ -195,7 +195,7 @@ namespace VMAP
         return callback.hit;
     }
 
-    bool GroupModel::IsInsideObject(const Vector3 &pos /*, &ground_z */) const
+    bool GroupModel::IsInsideObject(const Vector3 &pos, float &ground_z) const
     {
         if (!iBound.contains(pos))
             return false;
@@ -204,7 +204,10 @@ namespace VMAP
         rPos.z += 0.1;
         float dist = G3D::inf();
         G3D::Ray ray(rPos, Vector3(0.f, 0.f, -1.f));
-        return IntersectRay(ray, dist, true);
+        bool hit = IntersectRay(ray, dist, false);
+        if (hit)
+            ground_z = rPos.z - dist;
+        return hit;
     }
 
     // ===================== WorldModel ==================================
@@ -246,27 +249,34 @@ namespace VMAP
 
     class WModelAreaCallback {
         public:
-            WModelAreaCallback(const std::vector<GroupModel> &vals): prims(vals.begin()), hit(vals.end()), minVol(G3D::inf()) {}
+            WModelAreaCallback(const std::vector<GroupModel> &vals): prims(vals.begin()), hit(vals.end()), minVol(G3D::inf()), ground_Z(-G3D::inf()) {}
             std::vector<GroupModel>::const_iterator prims;
             std::vector<GroupModel>::const_iterator hit;
             float minVol;
+            float ground_Z;
             void operator()(const Vector3& point, uint32 entry)
             {
-                float pVol = prims[entry].GetBound().volume();
-                if(pVol < minVol)
-                {
+                 float group_Z;
+                //float pVol = prims[entry].GetBound().volume();
+                //if(pVol < minVol)
+                //{
                     /* if (prims[entry].iBound.contains(point)) */
-                    if (prims[entry].IsInsideObject(point))
+                    if (prims[entry].IsInsideObject(point, group_Z))
                     {
-                        minVol = pVol;
-                        hit = prims + entry;
+                        //minVol = pVol;
+                        //hit = prims + entry;
+                        if(group_Z > ground_Z)
+                        {
+                            ground_Z = group_Z;
+                            hit = prims + entry;
+                        }
 
                         const GroupModel &gm = prims[entry];
-                        printf("%10u %8X %7.3f,%7.3f,%7.3f | %7.3f,%7.3f,%7.3f | v=%f\n", gm.GetWmoID(), gm.GetMogpFlags(),
+                        printf("%10u %8X %7.3f,%7.3f,%7.3f | %7.3f,%7.3f,%7.3f | z=%f, p_z=%f\n", gm.GetWmoID(), gm.GetMogpFlags(),
                         gm.GetBound().low().x, gm.GetBound().low().y, gm.GetBound().low().z,
-                        gm.GetBound().high().x, gm.GetBound().high().y, gm.GetBound().high().z, gm.GetBound().volume());
+                        gm.GetBound().high().x, gm.GetBound().high().y, gm.GetBound().high().z, group_Z, point.z);
                     }
-                }
+                //}
                 //std::cout << "trying to intersect '" << prims[entry].name << "'\n";
             }
     };
