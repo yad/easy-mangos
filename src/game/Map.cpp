@@ -454,7 +454,7 @@ Map::Add(T *obj)
 void Map::MessageBroadcast(Player *player, WorldPacket *msg, bool to_self)
 {
     MaNGOS::MessageDeliverer post_man(*player, msg, to_self);
-    player->VisitCameras(post_man, GetVisibilityDistance());
+    Cell::VisitCameras(player, post_man, GetVisibilityDistance());
 }
 
 void Map::MessageBroadcast(WorldObject *obj, WorldPacket *msg)
@@ -462,19 +462,19 @@ void Map::MessageBroadcast(WorldObject *obj, WorldPacket *msg)
     //TODO: currently on continents when Visibility.Distance.InFlight > Visibility.Distance.Continents
     //we have alot of blinking mobs because monster move packet send is broken...
     MaNGOS::ObjectMessageDeliverer post_man(*obj,msg);
-    obj->VisitCameras(post_man, GetVisibilityDistance());
+    Cell::VisitCameras(obj, post_man, GetVisibilityDistance());
 }
 
 void Map::MessageDistBroadcast(Player *player, WorldPacket *msg, float dist, bool to_self, bool own_team_only)
 {
     MaNGOS::MessageDistDeliverer post_man(*player, msg, dist, to_self, own_team_only);
-    player->VisitCameras(post_man, GetVisibilityDistance());
+    Cell::VisitCameras(player, post_man, GetVisibilityDistance());
 }
 
 void Map::MessageDistBroadcast(WorldObject *obj, WorldPacket *msg, float dist)
 {
     MaNGOS::ObjectMessageDistDeliverer post_man(*obj, msg, dist);
-    obj->VisitCameras(post_man, GetVisibilityDistance());
+    Cell::VisitCameras(obj, post_man, GetVisibilityDistance());
 }
 
 bool Map::loaded(const GridPair &p) const
@@ -2993,7 +2993,7 @@ void Map::ScriptsProcess()
 
                 MaNGOS::GameObjectWithDbGUIDCheck go_check(*summoner,step.script->datalong);
                 MaNGOS::GameObjectSearcher<MaNGOS::GameObjectWithDbGUIDCheck> checker(summoner, go,go_check);
-                summoner->VisitGrid(checker, GetVisibilityDistance());
+                Cell::VisitGridObjects(summoner, checker, GetVisibilityDistance());
 
                 if ( !go )
                 {
@@ -3046,7 +3046,7 @@ void Map::ScriptsProcess()
 
                 MaNGOS::GameObjectWithDbGUIDCheck go_check(*caster,step.script->datalong);
                 MaNGOS::GameObjectSearcher<MaNGOS::GameObjectWithDbGUIDCheck> checker(caster,door,go_check);
-                caster->VisitGrid(checker, GetVisibilityDistance());
+                Cell::VisitGridObjects(caster, checker, GetVisibilityDistance());
 
                 if (!door)
                 {
@@ -3095,7 +3095,7 @@ void Map::ScriptsProcess()
 
                 MaNGOS::GameObjectWithDbGUIDCheck go_check(*caster,step.script->datalong);
                 MaNGOS::GameObjectSearcher<MaNGOS::GameObjectWithDbGUIDCheck> checker(caster,door,go_check);
-                caster->VisitGrid(checker, GetVisibilityDistance());
+                Cell::VisitGridObjects(caster, checker, GetVisibilityDistance());
 
                 if ( !door )
                 {

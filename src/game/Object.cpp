@@ -1497,7 +1497,7 @@ void WorldObject::MonsterSay(int32 textId, uint32 language, uint64 TargetGuid)
     MaNGOS::MonsterChatBuilder say_build(*this, CHAT_MSG_MONSTER_SAY, textId,language,TargetGuid);
     MaNGOS::LocalizedPacketDo<MaNGOS::MonsterChatBuilder> say_do(say_build);
     MaNGOS::CameraDistWorker<MaNGOS::LocalizedPacketDo<MaNGOS::MonsterChatBuilder> > say_worker(this,sWorld.getConfig(CONFIG_FLOAT_LISTEN_RANGE_SAY),say_do);
-    VisitCameras(say_worker, sWorld.getConfig(CONFIG_FLOAT_LISTEN_RANGE_SAY));
+    Cell::VisitCameras(this, say_worker, sWorld.getConfig(CONFIG_FLOAT_LISTEN_RANGE_SAY));
 }
 
 void WorldObject::MonsterYell(int32 textId, uint32 language, uint64 TargetGuid)
@@ -1507,7 +1507,7 @@ void WorldObject::MonsterYell(int32 textId, uint32 language, uint64 TargetGuid)
     MaNGOS::MonsterChatBuilder say_build(*this, CHAT_MSG_MONSTER_YELL, textId,language,TargetGuid);
     MaNGOS::LocalizedPacketDo<MaNGOS::MonsterChatBuilder> say_do(say_build);
     MaNGOS::CameraDistWorker<MaNGOS::LocalizedPacketDo<MaNGOS::MonsterChatBuilder> > say_worker(this,range,say_do);
-    VisitCameras(say_worker, sWorld.getConfig(CONFIG_FLOAT_LISTEN_RANGE_YELL));
+    Cell::VisitCameras(this, say_worker, sWorld.getConfig(CONFIG_FLOAT_LISTEN_RANGE_YELL));
 }
 
 void WorldObject::MonsterYellToZone(int32 textId, uint32 language, uint64 TargetGuid)
@@ -1530,7 +1530,7 @@ void WorldObject::MonsterTextEmote(int32 textId, uint64 TargetGuid, bool IsBossE
     MaNGOS::MonsterChatBuilder say_build(*this, IsBossEmote ? CHAT_MSG_RAID_BOSS_EMOTE : CHAT_MSG_MONSTER_EMOTE, textId,LANG_UNIVERSAL,TargetGuid);
     MaNGOS::LocalizedPacketDo<MaNGOS::MonsterChatBuilder> say_do(say_build);
     MaNGOS::CameraDistWorker<MaNGOS::LocalizedPacketDo<MaNGOS::MonsterChatBuilder> > say_worker(this,range,say_do);
-    VisitCameras(say_worker,  sWorld.getConfig(IsBossEmote ? CONFIG_FLOAT_LISTEN_RANGE_YELL : CONFIG_FLOAT_LISTEN_RANGE_TEXTEMOTE));
+    Cell::VisitCameras(this, say_worker, range);
 }
 
 void WorldObject::MonsterWhisper(int32 textId, uint64 receiver, bool IsBossWhisper)
@@ -1605,7 +1605,7 @@ void WorldObject::SendMessageToSet(WorldPacket *data, Player const* skipped_rece
     if(_map)
     {
         ObjectMessageDeliverer2 notifier(this, data, skipped_receiver);
-        VisitCameras(notifier, _map->GetVisibilityDistance());
+        Cell::VisitCameras(this, notifier, _map->GetVisibilityDistance());
     }
 }
 
@@ -1795,7 +1795,7 @@ void WorldObject::GetNearPoint(WorldObject const* searcher, float &x, float &y, 
         MaNGOS::NearUsedPosDo u_do(*this,searcher,absAngle,selector);
         MaNGOS::WorldObjectWorker<MaNGOS::NearUsedPosDo> worker(this,u_do);
         
-        const_cast<WorldObject*>(this)->VisitAll(worker, distance2d);
+        Cell::VisitAllObjects(this, worker, distance2d);
     }
 
     // maybe can just place in primary position
@@ -1961,7 +1961,7 @@ struct WorldObjectChangeAccumulator
 void WorldObject::BuildUpdateData( UpdateDataMapType & update_players)
 {
     WorldObjectChangeAccumulator notifier(*this, update_players);
-    VisitCameras(notifier, GetMap()->GetVisibilityDistance());
+    Cell::VisitCameras(this, notifier, GetMap()->GetVisibilityDistance());
 
     ClearUpdateMask(false);
 }

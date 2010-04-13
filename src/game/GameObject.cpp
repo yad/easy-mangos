@@ -295,7 +295,9 @@ void GameObject::Update(uint32 /*p_time*/)
                     {
                         MaNGOS::AnyUnfriendlyUnitInObjectRangeCheck u_check(this, owner, radius);
                         MaNGOS::UnitSearcher<MaNGOS::AnyUnfriendlyUnitInObjectRangeCheck> checker(this,ok, u_check);
-                        VisitAll(checker, radius);
+                        Cell::VisitGridObjects(this,checker, radius);
+                        if(!ok)
+                            Cell::VisitWorldObjects(this,checker, radius);
                     }
                     else                                        // environmental trap
                     {
@@ -305,7 +307,7 @@ void GameObject::Update(uint32 /*p_time*/)
                         Player* p_ok = NULL;
                         MaNGOS::AnyPlayerInObjectRangeCheck p_check(this, radius);
                         MaNGOS::PlayerSearcher<MaNGOS::AnyPlayerInObjectRangeCheck>  checker(this,p_ok, p_check);
-                        VisitWorld(checker, radius);
+                        Cell::VisitWorldObjects(this,checker, radius);
                         ok = p_ok;
                     }
 
@@ -801,7 +803,7 @@ void GameObject::TriggeringLinkedGameObject( uint32 trapEntry, Unit* target)
         MaNGOS::NearestGameObjectEntryInObjectRangeCheck go_check(*target,trapEntry,range);
         MaNGOS::GameObjectLastSearcher<MaNGOS::NearestGameObjectEntryInObjectRangeCheck> checker(this, trapGO,go_check);
 
-        VisitGrid(checker, range);
+        Cell::VisitGridObjects(this, checker, range);
     }
 
     // found correct GO
@@ -816,7 +818,7 @@ GameObject* GameObject::LookupFishingHoleAround(float range)
 
     MaNGOS::NearestGameObjectFishingHole u_check(*this, range);
     MaNGOS::GameObjectSearcher<MaNGOS::NearestGameObjectFishingHole> checker(this, ok, u_check);
-    VisitGrid(checker, range);
+    Cell::VisitGridObjects(this,checker, range);
 
     return ok;
 }

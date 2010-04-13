@@ -1977,7 +1977,7 @@ GameObject* ChatHandler::GetObjectGlobalyWithGuidOrNearWithDbGuid(uint32 lowguid
     {
         MaNGOS::GameObjectWithDbGUIDCheck go_check(*pl,lowguid);
         MaNGOS::GameObjectSearcher<MaNGOS::GameObjectWithDbGUIDCheck> checker(pl,obj,go_check);
-        pl->VisitGrid(checker, pl->GetMap()->GetVisibilityDistance());
+        Cell::VisitGridObjects(pl,checker, pl->GetMap()->GetVisibilityDistance());
     }
 
     return obj;

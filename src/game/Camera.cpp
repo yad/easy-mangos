@@ -143,7 +143,7 @@ template void Camera::UpdateVisibilityOf(DynamicObject* , UpdateData& , std::set
 void Camera::UpdateVisibilityForOwner()
 {
     MaNGOS::VisibleNotifier notifier(*this);
-    m_source->VisitAll(notifier, m_source->GetMap()->GetVisibilityDistance(), false);
+    Cell::VisitAllObjects(m_source, notifier, m_source->GetMap()->GetVisibilityDistance(), false);
     notifier.Notify();
 }
 

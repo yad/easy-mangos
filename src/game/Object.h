@@ -469,12 +469,6 @@ class MANGOS_DLL_SPEC WorldObject : public Object, public GridObject
         //used to check all object's GetMap() calls when object is not in world!
         void ResetMap() { m_currMap = NULL; }
 
-        // bool dont_load - don't load grids around in case grid not loaded
-        template<class T> void VisitGrid(T &vistor, float range, bool dont_load = true);
-        template<class T> void VisitWorld(T &vistor, float range, bool dont_load = true);
-        template<class T> void VisitAll(T &vistor, float range, bool dont_load = true);
-        template<class T> void VisitCameras(T &vistor, float range, bool dont_load = true);
-
         //this function should be removed in nearest time...
         Map const* GetBaseMap() const;
 
@@ -509,54 +503,5 @@ class MANGOS_DLL_SPEC WorldObject : public Object, public GridObject
 
         ViewPoint m_viewPoint;
 };
-
-#include "CellImpl.h"
-
-template<class T>
-inline void WorldObject::VisitGrid(T &vistor, float range, bool dont_load)
-{
-    CellPair p(MaNGOS::ComputeCellPair(GetPositionX(), GetPositionY()));
-    Cell cell(p);
-    if (dont_load)
-        cell.SetNoCreate();
-    typename GridTypeVisitor<T>::Grid gnotifier(vistor);
-    cell.Visit(p, gnotifier, *GetMap(), *this, range);
-}
-
-template<class T>
-inline void WorldObject::VisitWorld(T &vistor, float range, bool dont_load)
-{
-    CellPair p(MaNGOS::ComputeCellPair(GetPositionX(), GetPositionY()));
-    Cell cell(p);
-    if (dont_load)
-        cell.SetNoCreate();
-    typename GridTypeVisitor<T>::World wnotifier(vistor);
-    cell.Visit(p, wnotifier, *GetMap(), *this, range);
-}
-
-template<class T>
-inline void WorldObject::VisitAll(T &vistor, float range, bool dont_load)
-{
-    CellPair p(MaNGOS::ComputeCellPair(GetPositionX(), GetPositionY()));
-    Cell cell(p);
-    if (dont_load)
-        cell.SetNoCreate();
-    typename GridTypeVisitor<T>::Grid gnotifier(vistor);
-    typename GridTypeVisitor<T>::World wnotifier(vistor);
-    cell.Visit(p, gnotifier, *GetMap(), *this, range);
-    cell.Visit(p, wnotifier, *GetMap(), *this, range);
-}
-
-template<class T>
-inline void WorldObject::VisitCameras(T &vistor, float range, bool dont_load)
-{
-    CellPair p(MaNGOS::ComputeCellPair(GetPositionX(), GetPositionY()));
-    Cell cell(p);
-    if (dont_load)
-        cell.SetNoCreate();
-    typename GridTypeVisitor<T>::Camera cnotifier(vistor);
-    cell.Visit(p, cnotifier, *GetMap(), *this, range);
-}
-
 
 #endif

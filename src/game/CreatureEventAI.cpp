@@ -1234,7 +1234,7 @@ Unit* CreatureEventAI::DoSelectLowestHpFriendly(float range, uint32 MinHPDiff)
     typedef TYPELIST_4(GameObject, Creature*except pets*, DynamicObject, Corpse*Bones*) AllGridObjectTypes;
     This means that if we only search grid then we cannot possibly return pets or players so this is safe
     */
-    m_creature->VisitGrid(searcher, range);
+    Cell::VisitGridObjects(m_creature, searcher, range);
     return pUnit;
 }
 
@@ -1242,14 +1242,14 @@ void CreatureEventAI::DoFindFriendlyCC(std::list<Creature*>& _list, float range)
 {
     MaNGOS::FriendlyCCedInRange u_check(m_creature, range);
     MaNGOS::CreatureListSearcher<MaNGOS::FriendlyCCedInRange> searcher(m_creature, _list, u_check);
-    m_creature->VisitGrid(searcher, range);
+    Cell::VisitGridObjects(m_creature, searcher, range);
 }
 
 void CreatureEventAI::DoFindFriendlyMissingBuff(std::list<Creature*>& _list, float range, uint32 spellid)
 {
     MaNGOS::FriendlyMissingBuffInRange u_check(m_creature, range, spellid);
     MaNGOS::CreatureListSearcher<MaNGOS::FriendlyMissingBuffInRange> searcher(m_creature, _list, u_check);
-    m_creature->VisitGrid(searcher, range);
+    Cell::VisitGridObjects(m_creature,searcher, range);
 }
 
 //*********************************

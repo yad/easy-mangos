@@ -279,4 +279,50 @@ Cell::VisitCircle(V &visitor, Map &m, const CellPair& begin_cell, const CellPair
     }
 }
 
+template<class T>
+inline void Cell::VisitGridObjects(const WorldObject *center_obj, T &visitor, float radius, bool dont_load)
+{
+    CellPair p(MaNGOS::ComputeCellPair(center_obj->GetPositionX(), center_obj->GetPositionY()));
+    Cell cell(p);
+    if (dont_load)
+        cell.SetNoCreate();
+    typename GridTypeVisitor<T>::Grid gnotifier(visitor);
+    cell.Visit(p, gnotifier, *center_obj->GetMap(), *center_obj, radius);
+}
+
+template<class T>
+inline void Cell::VisitWorldObjects(const WorldObject *center_obj, T &visitor, float radius, bool dont_load)
+{
+    CellPair p(MaNGOS::ComputeCellPair(center_obj->GetPositionX(), center_obj->GetPositionY()));
+    Cell cell(p);
+    if (dont_load)
+        cell.SetNoCreate();
+    typename GridTypeVisitor<T>::World wnotifier(visitor);
+    cell.Visit(p, wnotifier, *center_obj->GetMap(), *center_obj, radius);
+}
+
+template<class T>
+inline void Cell::VisitAllObjects(const WorldObject *center_obj, T &visitor, float radius, bool dont_load)
+{
+    CellPair p(MaNGOS::ComputeCellPair(center_obj->GetPositionX(), center_obj->GetPositionY()));
+    Cell cell(p);
+    if (dont_load)
+        cell.SetNoCreate();
+    typename GridTypeVisitor<T>::Grid gnotifier(visitor);
+    typename GridTypeVisitor<T>::World wnotifier(visitor);
+    cell.Visit(p, gnotifier, *center_obj->GetMap(), *center_obj, radius);
+    cell.Visit(p, wnotifier, *center_obj->GetMap(), *center_obj, radius);
+}
+
+template<class T>
+inline void Cell::VisitCameras(const WorldObject *center_obj, T &visitor, float radius, bool dont_load)
+{
+    CellPair p(MaNGOS::ComputeCellPair(center_obj->GetPositionX(), center_obj->GetPositionY()));
+    Cell cell(p);
+    if (dont_load)
+        cell.SetNoCreate();
+    typename GridTypeVisitor<T>::Camera cnotifier(visitor);
+    cell.Visit(p, cnotifier, *center_obj->GetMap(), *center_obj, radius);
+}
+
 #endif

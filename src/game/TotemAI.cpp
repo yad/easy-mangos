@@ -82,7 +82,7 @@ TotemAI::UpdateAI(const uint32 /*diff*/)
 
         MaNGOS::NearestAttackableUnitInObjectRangeCheck u_check(m_creature, m_creature, max_range);
         MaNGOS::UnitLastSearcher<MaNGOS::NearestAttackableUnitInObjectRangeCheck> checker(m_creature,victim, u_check);
-        m_creature->VisitAll(checker, max_range);
+        Cell::VisitAllObjects(m_creature, checker, max_range);
     }
 
     // If have target

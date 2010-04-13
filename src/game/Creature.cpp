@@ -571,7 +571,7 @@ void Creature::DoFleeToGetAssistance()
 
         MaNGOS::NearestAssistCreatureInCreatureRangeCheck u_check(this, getVictim(), radius);
         MaNGOS::CreatureLastSearcher<MaNGOS::NearestAssistCreatureInCreatureRangeCheck> searcher(this, pCreature, u_check);
-        VisitGrid(searcher, radius);
+        Cell::VisitGridObjects(this, searcher, radius);
 
         SetNoSearchAssistance(true);
         UpdateSpeed(MOVE_RUN, false);
@@ -1541,7 +1541,7 @@ void Creature::CallAssistance()
             {
                 MaNGOS::AnyAssistCreatureInRangeCheck u_check(this, getVictim(), radius);
                 MaNGOS::CreatureListSearcher<MaNGOS::AnyAssistCreatureInRangeCheck> searcher(this, assistList, u_check);
-                VisitGrid(searcher, radius);
+                Cell::VisitGridObjects(this,searcher, radius);
             }
 
             if (!assistList.empty())
@@ -1566,7 +1566,7 @@ void Creature::CallForHelp(float fRadius)
 
     MaNGOS::CallOfHelpCreatureInRangeDo u_do(this, getVictim(), fRadius);
     MaNGOS::CreatureWorker<MaNGOS::CallOfHelpCreatureInRangeDo> worker(this, u_do);
-    VisitGrid(worker, fRadius);
+    Cell::VisitGridObjects(this,worker, fRadius);
 }
 
 bool Creature::CanAssistTo(const Unit* u, const Unit* enemy, bool checkfaction /*= true*/) const
@@ -2078,5 +2078,5 @@ void Creature::RelocationNotify()
 {
     MaNGOS::CreatureRelocationNotifier relocationNotifier(*this);
     float radius = MAX_CREATURE_ATTACK_RADIUS * sWorld.getConfig(CONFIG_FLOAT_RATE_CREATURE_AGGRO);
-    VisitAll(relocationNotifier, radius);
+    Cell::VisitAllObjects(this, relocationNotifier, radius);
 }

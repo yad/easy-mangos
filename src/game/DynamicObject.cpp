@@ -119,7 +119,7 @@ void DynamicObject::Update(uint32 p_time)
     {
         // TODO: make a timer and update this in larger intervals
         MaNGOS::DynamicObjectUpdater notifier(*this, caster);
-        VisitAll(notifier, m_radius);
+        Cell::VisitAllObjects(this, notifier, m_radius);
     }
 
     if(deleteThis)
