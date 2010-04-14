@@ -18,14 +18,39 @@
 
 #include <sys/types.h>
 #include "VMapFactory.h"
-#include "VMapManager.h"
 #include "VMapManager2.h"
 
 using namespace G3D;
 
 namespace VMAP
 {
-    extern void chompAndTrim(std::string& str);
+    void chompAndTrim(std::string& str)
+    {
+        while(str.length() >0)
+        {
+            char lc = str[str.length()-1];
+            if(lc == '\r' || lc == '\n' || lc == ' ' || lc == '"' || lc == '\'')
+            {
+                str = str.substr(0,str.length()-1);
+            }
+            else
+            {
+                break;
+            }
+        }
+        while(str.length() >0)
+        {
+            char lc = str[0];
+            if(lc == ' ' || lc == '"' || lc == '\'')
+            {
+                str = str.substr(1,str.length()-1);
+            }
+            else
+            {
+                break;
+            }
+        }
+    }
 
     IVMapManager *gVMapManager = 0;
     Table<unsigned int , bool>* iIgnoreSpellIds=0;

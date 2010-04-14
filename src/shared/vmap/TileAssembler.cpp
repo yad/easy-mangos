@@ -16,34 +16,44 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <G3D/Vector3.h>
-#include <G3D/Triangle.h>
-
+//#include <G3D/KDTree.h>
+//#include "VmapKDTree.h"
+#include "WorldModel.h"
 #include "TileAssembler.h"
-#include "CoordModelMapping.h"
-#include "ModelContainer.h"
+#include "MapTree.h"
+#include "BIH.h"
 
-#include <limits.h>
-#include <string.h>
-
-#ifdef _ASSEMBLER_DEBUG
-FILE *g_df = NULL;
-#endif
+#include <set>
+#include <iomanip>
+#include <sstream>
+#include <iomanip>
 
 using G3D::Vector3;
 using G3D::AABox;
 using G3D::Array;
-using G3D::AABSPTree;
 using G3D::Triangle;
 using G3D::inf;
 using std::pair;
 
+/* template<> struct HashTrait<VMAP::ModelSpawn*>
+{
+    static size_t hashCode(const VMAP::ModelSpawn* const &key)
+    {
+        return key->ID;
+    }
+}; */
+template<> struct BoundsTrait<VMAP::ModelSpawn*>
+{
+    static void getBounds(const VMAP::ModelSpawn* const &obj, G3D::AABox& out) { out = obj->getBounds(); }
+};
+
 namespace VMAP
 {
-
-    G3D::Vector3 fixCoords(const G3D::Vector3 &v){ return G3D::Vector3(v.z, v.x, v.y); }
-
-    //=================================================================
+    bool readChunk(FILE *rf, char *dest, const char *compare, uint32 len)
+    {
+        if (fread(dest, sizeof(char), len, rf) != len) return false;
+        return memcmp(dest, compare, len) == 0;
+    }
 
     Vector3 ModelPosition::transform(const Vector3& pIn) const
     {
@@ -51,6 +61,7 @@ namespace VMAP
         out = iRotation * out;
         return(out);
     }
+
     //=================================================================
 
     TileAssembler::TileAssembler(const std::string& pSrcDirName, const std::string& pDestDirName)
@@ -60,345 +71,210 @@ namespace VMAP
         iSrcDir = pSrcDirName;
         iDestDir = pDestDirName;
         //mkdir(iDestDir);
-        init();
+        //init();
     }
-
-    //=================================================================
 
     TileAssembler::~TileAssembler()
     {
-        delete iCoordModelMapping;
+        //delete iCoordModelMapping;
     }
 
-    //=================================================================
-
-    void TileAssembler::init()
+    bool TileAssembler::convertWorld2()
     {
-        iCoordModelMapping = new CoordModelMapping();
-        addWorldAreaMapId(0);                               //Azeroth
-        addWorldAreaMapId(1);                               //Kalimdor
-        addWorldAreaMapId(530);                             //Expansion01
-        addWorldAreaMapId(571);                             //Expansion02
-    }
-    //=================================================================
-
-    std::string getModNameFromModPosName(const std::string& pModPosName)
-    {
-        size_t spos = pModPosName.find_first_of('#');
-        std::string modelFileName = pModPosName.substr(0,spos);
-        return(modelFileName);
-    }
-
-    //=================================================================
-
-    unsigned int TileAssembler::getUniqueNameId(const std::string pName)
-    {
-        unsigned int result;
-
-        if(!iUniqueNameIds.containsKey(pName))
-        {
-            ++iCurrentUniqueNameId;
-            iUniqueNameIds.set(pName, iCurrentUniqueNameId);
-        }
-        result = iUniqueNameIds.get(pName);
-        return result;
-    }
-
-    //=================================================================
-
-    std::string TileAssembler::getDirEntryNameFromModName(unsigned int pMapId, const std::string& pModPosName)
-    {
-        size_t spos;
-        char buffer[20];
-
-        std::string modelFileName = getModNameFromModPosName(pModPosName);
-        //std::string fext = pModPosName.substr(modelFileName.length(),pModPosName.length());
-        unsigned int fextId = getUniqueNameId(pModPosName);
-        sprintf(buffer, "_%07d",fextId);
-        std::string fext(buffer);
-        spos = modelFileName.find_last_of('/');
-        std::string fname = modelFileName.substr(spos+1, modelFileName.length());
-        spos = fname.find_last_of('.');
-        fname = fname.substr(0,spos);
-        sprintf(buffer, "%03u", pMapId);
-        std::string dirEntry(buffer);
-        dirEntry.append("_");
-        dirEntry.append(fname);
-        dirEntry.append(fext);
-        dirEntry.append(".vmap");
-        return(dirEntry);
-    }
-
-    //=================================================================
-
-    void emptyArray(Array<ModelContainer*>& mc)
-    {
-        int no=mc.size();
-        while(no > 0)
-        {
-            --no;
-            delete mc[no];
-            mc.remove(no);
-        }
-    }
-
-    //=================================================================
-
-    bool TileAssembler::convertWorld()
-    {
-        #ifdef _ASSEMBLER_DEBUG
-        #   ifdef _DEBUG
-        ::g_df = fopen("../TileAssembler_debug.txt", "wb");
-        #   else
-        ::g_df = fopen("../TileAssembler_release.txt", "wb");
-        #   endif
-        #endif
-
-        std::string fname = iSrcDir;
-        fname.append("/");
-        fname.append("dir");
-        iCoordModelMapping->setModelNameFilterMethod(iFilterMethod);
-
-        printf("Read coordinate mapping...\n");
-        if(!iCoordModelMapping->readCoordinateMapping(fname))
+        std::set<std::string> spawnedModelFiles;
+        bool success = readMapSpawns();
+        if(!success)
             return false;
 
-        Array<unsigned int> mapIds = iCoordModelMapping->getMaps();
-        if(mapIds.size() == 0)
+        // export Map data
+        for (MapData::iterator map_iter = mapData.begin(); map_iter != mapData.end() && success; ++map_iter)
         {
-            printf("Fatal error: empty map list!\n");
-            return false;
-        }
-
-        for(int i=0; i<mapIds.size(); ++i)
-        {
-            unsigned int mapId = mapIds[i];
-
-            #ifdef _ASSEMBLER_DEBUG
-            if(mapId == 0)                                  // "Azeroth" just for debug
+            // build global map tree
+            //G3D::VmapKDTree<ModelSpawn*> pTree;
+            std::vector<ModelSpawn*> mapSpawns;
+            UniqueEntryMap::iterator entry;
+            for (entry = map_iter->second->UniqueEntries.begin(); entry != map_iter->second->UniqueEntries.end(); ++entry)
             {
-                for(int x=28; x<29; ++x)                    //debug
+                // M2 models don't have a bound set in WDT/ADT placement data, i still think they're not used for LoS at all on retail
+                if(entry->second.flags & MOD_M2)
                 {
-                    for(int y=28; y<29; ++y)
-                    {
-            #else
-            // ignore DeeprunTram (369) it is too large for short vector and not important
-            // ignore test (13), Test (29) , development (451)
-            if(mapId != 369 && mapId != 13 && mapId != 29 && mapId != 451)
-            {
-                for(int x=0; x<66; ++x)
-                {
-                    for(int y=0; y<66; ++y)
-                    {
-            #endif
-                        Array<ModelContainer*> mc;
-                        std::string dirname;
-                        char buffer[100];
-                        if(iCoordModelMapping->isWorldAreaMap(mapId) && x<65 && y<65)
-                        {
-                            sprintf(buffer, "%03u_%d_%d",mapId,y,x); // Let's flip x and y here
-                            dirname = std::string(buffer);
-                            printf("%s...\n",dirname.c_str());
-                        }
-                        else
-                        {
-                            sprintf(buffer, "%03u",mapId);
-                            dirname = std::string(buffer);
-
-                            // prevent spam for small maps
-                            if(x==0 && y==0)
-                                printf("%s...\n",dirname.c_str());
-                        }
-
-                        bool result = fillModelContainerArray(dirname, mapId, x, y, mc);
-                        emptyArray(mc);
-
-                        if(!result)
-                            return false;
-                    }
+                    if (!calculateTransformedBound(entry->second))
+                        break;
                 }
-            }
-        }
-        #ifdef _ASSEMBLER_DEBUG
-        if(::g_df) fclose(::g_df);
-        #endif
-
-        return true;
-    }
-
-    //=================================================================
-
-    bool TileAssembler::fillModelContainerArray(const std::string& pDirFileName, unsigned int pMapId, int pXPos, int pYPos, Array<ModelContainer*>& pMC)
-    {
-        ModelContainer* modelContainer;
-
-        NameCollection nameCollection = iCoordModelMapping->getFilenamesForCoordinate(pMapId, pXPos, pYPos);
-        if(nameCollection.size() ==  0)
-            return true;                                    // no data...
-
-        char dirfilename[500];
-        sprintf(dirfilename,"%s/%s.vmdir",iDestDir.c_str(),pDirFileName.c_str());
-        FILE *dirfile = fopen(dirfilename, "ab");
-        if(!dirfile)
-        {
-            printf("ERROR: Can't create file %s",dirfilename);
-            return false;
-        }
-
-        char destnamebuffer[500];
-        char fullnamedestnamebuffer[500];
-
-        if(nameCollection.iMainFiles.size() >0)
-        {
-            sprintf(destnamebuffer,"%03u_%i_%i.vmap",pMapId, pYPos, pXPos); // flip it here too
-            std::string checkDoubleStr = std::string(dirfilename);
-            checkDoubleStr.append("##");
-            checkDoubleStr.append(std::string(destnamebuffer));
-            // Check, if same file already is in the same dir file
-            if(!iCoordModelMapping->isAlreadyProcessedSingleFile(checkDoubleStr))
-            {
-                iCoordModelMapping->addAlreadyProcessedSingleFile(checkDoubleStr);
-                fprintf(dirfile, "%s\n",destnamebuffer);
-                sprintf(fullnamedestnamebuffer,"%s/%s",iDestDir.c_str(),destnamebuffer);
-                modelContainer = processNames(nameCollection.iMainFiles, fullnamedestnamebuffer);
-                if(modelContainer)
-                    pMC.append(modelContainer);
-                else
-                    // TODO: fix this error
-                    printf("warning: (if) problems in processing data for %s\n",destnamebuffer);
-            }
-        }
-        // process the large singe files
-        int pos = 0;
-        while(pos < nameCollection.iSingeFiles.size())
-        {
-            std::string destFileName = iDestDir;
-            destFileName.append("/");
-            std::string dirEntryName = getDirEntryNameFromModName(pMapId,nameCollection.iSingeFiles[pos]);
-            std::string checkDoubleStr = std::string(dirfilename);
-            checkDoubleStr.append("##");
-            checkDoubleStr.append(nameCollection.iSingeFiles[pos]);
-            // Check, if same file already is in the same dir file
-            if(!iCoordModelMapping->isAlreadyProcessedSingleFile(checkDoubleStr))
-            {
-                iCoordModelMapping->addAlreadyProcessedSingleFile(checkDoubleStr);
-                fprintf(dirfile, "%s\n",dirEntryName.c_str());
-                destFileName.append(dirEntryName);
-
-                Array<std::string> positionarray;
-                positionarray.append(nameCollection.iSingeFiles[pos]);
-
-                if(!iCoordModelMapping->isAlreadyProcessedSingleFile(nameCollection.iSingeFiles[pos]))
+                else if (entry->second.flags & MOD_WORLDSPAWN) // WMO maps and terrain maps use different origin, so we need to adapt :/
                 {
-                    modelContainer = processNames(positionarray, destFileName.c_str());
-                    iCoordModelMapping->addAlreadyProcessedSingleFile(nameCollection.iSingeFiles[pos]);
-                    if(modelContainer)
-                        pMC.append(modelContainer);
-                    else
-                        printf("warning: (while) problems in processing data for %s\n",destFileName.c_str());
+                    // TODO: remove extractor hack and uncomment below line:
+                    //entry->second.iPos += Vector3(533.33333f*32, 533.33333f*32, 0.f);
+                    entry->second.iBound = entry->second.iBound + Vector3(533.33333f*32, 533.33333f*32, 0.f);
                 }
+                //pTree.insert(&(entry->second));
+                mapSpawns.push_back(&(entry->second));
+                spawnedModelFiles.insert(entry->second.name);
             }
-            ++pos;
-        }
 
-        fclose(dirfile);
-        return true;
-    }
+            //pTree.balance(3);
+            BIH pTree;
+            pTree.build(mapSpawns, BoundsTrait<ModelSpawn*>::getBounds);
 
-    //=================================================================
+            // ===> possibly move this code to StaticMapTree class
+        /*  int nNodes=0, nElements=0;
+            pTree.countNodesAndElements(nNodes, nElements);
+            // write .vmdir files to dynamically load/unload referenced geometry
+            TreeNode *mapTree = new TreeNode[nNodes];
+            ModelSpawn **treeElements = new ModelSpawn*[nElements];
+            Vector3 lo, hi;
+            pTree.serializeTree(lo, hi, mapTree, treeElements);
+            printf("Overall tree bounds: %f, %f, %f | %f, %f, %f\n", lo.x, lo.y, lo.z, hi.x, hi.y, hi.z);
+            // create (multi)map model ID => TreeNode indices
+            std::multimap<uint32, uint32> modelNodeIdx;
+            for(int i=0; i<nElements; ++i)
+                modelNodeIdx.insert(std::pair<uint32, uint32>(treeElements[i]->ID, i));
+            printf("min GUID: %u, max GUID: %u\n", modelNodeIdx.begin()->first, modelNodeIdx.rbegin()->first); */
+            std::multimap<uint32, uint32> modelNodeIdx;
+            for(uint32 i=0; i<mapSpawns.size(); ++i)
+                modelNodeIdx.insert(std::pair<uint32, uint32>(mapSpawns[i]->ID, i));
+            if(!modelNodeIdx.empty())
+                printf("min GUID: %u, max GUID: %u\n", modelNodeIdx.begin()->first, modelNodeIdx.rbegin()->first);
 
-    void removeEntriesFromTree(AABSPTree<SubModel *>* pTree)
-    {
-        Array<SubModel *> submodelArray;
-        pTree->getMembers(submodelArray);
-        int no = submodelArray.size();
-        while(no > 0)
-        {
-            --no;
-            delete submodelArray[no];
-        }
-    }
-
-    //=================================================================
-
-    ModelContainer* TileAssembler::processNames(const Array<std::string>& pPositions, const char* pDestFileName)
-    {
-        ModelContainer *modelContainer = 0;
-
-        Vector3 basepos = Vector3(0,0,0);
-        AABSPTree<SubModel *>* mainTree = new AABSPTree<SubModel *>();
-
-        int pos = 0;
-
-        bool result = true;
-        while(result && (pos < pPositions.size()))
-        {
-            std::string modelPosString = pPositions[pos];
-            std::string modelFileName = getModNameFromModPosName(modelPosString);
-
-            if(!fillModelIntoTree(mainTree, basepos, modelPosString, modelFileName))
+            // write map tree file
+            std::stringstream mapfilename;
+            mapfilename << iDestDir << "/" << std::setfill('0') << std::setw(3) << map_iter->first << ".vmtree";
+            FILE *mapfile = fopen(mapfilename.str().c_str(), "wb");
+            if(!mapfile)
             {
-                result = false;
+                success = false;
+                printf("Cannot open %s\n", mapfilename.str().c_str());
                 break;
             }
-            ++pos;
+
+            //general info
+            uint32 globalTileID = StaticMapTree::packTileID(65, 65);
+            std::pair<TileMap::iterator, TileMap::iterator> globalRange = map_iter->second->TileEntries.equal_range(globalTileID);
+            char isTiled = globalRange.first == globalRange.second; // only maps without terrain (tiles) have global WMO
+            if (success && fwrite(&isTiled, sizeof(char), 1, mapfile) != 1) success = false;
+            // Nodes
+            if (success && fwrite("NODE", 4, 1, mapfile) != 1) success = false;
+        /*     uint32 size = sizeof(uint32) + sizeof(TreeNode)*nNodes;
+            if (success && fwrite(&size, 4, 1, mapfile) != 1) success = false;
+            if (success && fwrite(&nNodes, sizeof(uint32), 1, mapfile) != 1) success = false;
+            if (success && fwrite(mapTree, sizeof(TreeNode), nNodes, mapfile) != nNodes) success = false;
+            // amount of tree elements
+            if (success && fwrite(&nElements, sizeof(uint32), 1, mapfile) != 1) success = false; */
+            if (success) success = pTree.writeToFile(mapfile);
+            // global map spawns (WDT), if any (most instances)
+            if (success && fwrite("GOBJ", 4, 1, mapfile) != 1) success = false;
+
+            for(TileMap::iterator glob=globalRange.first; glob != globalRange.second && success; ++glob)
+            {
+                success = ModelSpawn::writeToFile(mapfile, map_iter->second->UniqueEntries[glob->second]);
+            }
+
+            fclose(mapfile);
+
+            // <====
+
+            // write map tile files, similar to ADT files, only with extra BSP tree node info
+            TileMap::iterator tile;
+            for (tile = map_iter->second->TileEntries.begin(); tile != map_iter->second->TileEntries.end(); ++tile)
+            {
+                const ModelSpawn &spawn = map_iter->second->UniqueEntries[tile->second];
+                if(spawn.flags & MOD_WORLDSPAWN) // WDT spawn, saved as tile 65/65 currently...
+                    continue;
+                std::stringstream tilefilename;
+                tilefilename.fill('0');
+                tilefilename << iDestDir << "/" << std::setw(3) << map_iter->first << "_";
+                uint32 x, y;
+                StaticMapTree::unpackTileID(tile->first, x, y);
+                tilefilename << std::setw(2) << x << "_" << std::setw(2) << y << ".vmtile";
+                FILE *tilefile = fopen(tilefilename.str().c_str(), "ab");
+                success = ModelSpawn::writeToFile(tilefile, spawn);
+                // MapTree nodes to update when loading tile:
+                // current tree structure should only ever have entry per tree element, but not sure if i should keep G3D at all...
+                // so i do the full multimap program...
+                std::pair<std::multimap<uint32, uint32>::iterator, std::multimap<uint32, uint32>::iterator> nIdx = modelNodeIdx.equal_range(spawn.ID);
+                x = modelNodeIdx.count(spawn.ID);
+                if(x != 1) std::cout << "unexpected number of node entries! (" << x << ")\n";
+                if(success && fwrite(&x, sizeof(uint32), 1, tilefile) != 1) success = false;
+                for(std::multimap<uint32, uint32>::iterator i = nIdx.first; i != nIdx.second; ++i)
+                    if(success && fwrite(&i->second, sizeof(uint32), 1, tilefile) != 1) success = false;
+
+                fclose(tilefile);
+            }
+            // break; //test, extract only first map; TODO: remvoe this line
         }
-        if(result && mainTree->size() > 0)
+
+        // export objects
+        std::cout << "\nConverting Model Files" << std::endl;
+        //ModelSpawn &someSpawn = mapData.begin()->second->UniqueEntries.begin()->second;
+        ModelPosition dummy;
+        for (std::set<std::string>::iterator mfile = spawnedModelFiles.begin(); mfile != spawnedModelFiles.end(); ++mfile)
         {
-            mainTree->balance();
-            modelContainer = new ModelContainer(mainTree);
-            modelContainer->writeFile(pDestFileName, tempModelExt);
+            std::cout << "Converting " << *mfile << std::endl;
+            readRawFile2(*mfile, dummy);
         }
-        removeEntriesFromTree(mainTree);
-        for(size_t i=0; i<tempModelExt.size(); ++i)
-            delete tempModelExt[i];
-        tempModelExt.clear();
-
-        delete mainTree;
-
-        return(modelContainer);
+        return success;
     }
 
-    //=================================================================
-    bool TileAssembler::readRawFile(std::string& pModelFilename,  ModelPosition& pModelPosition, AABSPTree<SubModel *> *pMainTree)
+    bool TileAssembler::readMapSpawns()
     {
-        std::string filename = iSrcDir;
-        if(filename.length() >0)
-            filename.append("/");
-        filename.append(pModelFilename);
-        FILE *rf = fopen(filename.c_str(), "rb");
-        if(!rf)
+        std::string fname = iSrcDir + "/dir_bin";
+        FILE *dirf = fopen(fname.c_str(), "rb");
+        if (!dirf)
         {
-            // depending on the extractor version, the data could be located in the root dir
-            std::string baseModelFilename = pModelFilename.substr((pModelFilename.find_first_of("/")+1),pModelFilename.length());
-            filename = iSrcDir;
-            if(filename.length() >0)
-                filename.append("/");
-            filename.append(baseModelFilename);
-            rf = fopen(filename.c_str(), "rb");
+            printf("Could not read dir_bin file!\n");
+            return false;
         }
+        printf("Read coordinate mapping...\n");
+        uint32 mapID, tileX, tileY, nameLen, check=0;
+        char nameBuff[500];
+        G3D::Vector3 v1, v2;
+        ModelSpawn spawn;
+        while (!feof(dirf))
+        {
+            check = 0;
+            // read mapID, tileX, tileY, Flags, adtID, ID, Pos, Rot, Scale, Bound_lo, Bound_hi, name
+            check += fread(&mapID, sizeof(uint32), 1, dirf);
+            if (check == 0) // EoF...
+                break;
+            check += fread(&tileX, sizeof(uint32), 1, dirf);
+            check += fread(&tileY, sizeof(uint32), 1, dirf);
+            if (!ModelSpawn::readFromFile(dirf, spawn))
+                break;
 
+            MapSpawns *current;
+            std::map<uint32, MapSpawns*>::iterator map_iter = mapData.find(mapID); // hooray for "compact" STL syntax...
+            if(map_iter == mapData.end())
+            {
+                printf("spawning Map %d\n", mapID);
+                mapData[mapID] = current = new MapSpawns();
+            }
+            else current = (*map_iter).second;
+            current->UniqueEntries.insert(pair<uint32, ModelSpawn>(spawn.ID, spawn));
+            current->TileEntries.insert(pair<uint32, uint32>(StaticMapTree::packTileID(tileX, tileY), spawn.ID));
+        }
+        bool success = (ferror(dirf) == 0);
+        fclose(dirf);
+        return success;
+    }
+
+    bool TileAssembler::calculateTransformedBound(ModelSpawn &spawn)
+    {
+        std::string modelFilename = iSrcDir + "/" + spawn.name;
+        ModelPosition modelPosition;
+        modelPosition.iDir = spawn.iRot;
+        modelPosition.iScale = spawn.iScale;
+        modelPosition.init();
+
+        FILE *rf = fopen(modelFilename.c_str(), "rb");
         if(!rf)
         {
-            printf("ERROR: Can't open model file in form: %s",pModelFilename.c_str());
-            printf("...                          or form: %s",filename.c_str() );
+            printf("ERROR: Can't open model file: %s\n", modelFilename.c_str());
             return false;
         }
 
+        AABox modelBound;
+        bool boundEmpty=true;
         char ident[8];
-
-        int trianglecount =0;
-
-        #ifdef _ASSEMBLER_DEBUG
-        int startgroup = 0;                     //2;
-        int endgroup = INT_MAX;                 //2;
-        fprintf(::g_df,"-------------------------------------------------\n");
-        fprintf(::g_df,"%s\n", pModelFilename.c_str());
-        fprintf(::g_df,"-------------------------------------------------\n");
-        #else
-        int startgroup = 0;
-        int endgroup = INT_MAX;
-        #endif
 
         int readOperation = 1;
 
@@ -415,51 +291,130 @@ namespace VMAP
         G3D::uint32 tempNVectors;
         READ_OR_RETURN(&tempNVectors, sizeof(tempNVectors));
 
-        G3D::uint32 groups;
-        std::vector<GroupModelBound> boundsArray;
+        G3D::uint32 groups, wmoRootId;
+        char blockId[5];
+        blockId[4] = 0;
+        int blocksize;
+        float *vectorarray = 0;
+
+        READ_OR_RETURN(&groups, sizeof(G3D::uint32));
+        READ_OR_RETURN(&wmoRootId, sizeof(G3D::uint32));
+        if(groups != 1) printf("Warning: '%s' does not seem to be a M2 model!\n", modelFilename.c_str());
+
+        for(int g=0;g<(int)groups;g++) // should be only one for M2 files...
+        {
+            fseek(rf, 3*sizeof(uint32) + 6*sizeof(float), SEEK_CUR);
+
+            READ_OR_RETURN(&blockId, 4);
+            CMP_OR_RETURN(blockId, "GRP ");
+            READ_OR_RETURN(&blocksize, sizeof(int));
+            fseek(rf, blocksize, SEEK_CUR);
+
+            // ---- indexes
+            READ_OR_RETURN(&blockId, 4);
+            CMP_OR_RETURN(blockId, "INDX");
+            READ_OR_RETURN(&blocksize, sizeof(int));
+            fseek(rf, blocksize, SEEK_CUR);
+
+            // ---- vectors
+            READ_OR_RETURN(&blockId, 4);
+            CMP_OR_RETURN(blockId, "VERT");
+            READ_OR_RETURN(&blocksize, sizeof(int));
+            unsigned int nvectors;
+            READ_OR_RETURN(&nvectors, sizeof(int));
+
+            if(nvectors >0)
+            {
+                vectorarray = new float[nvectors*3];
+                READ_OR_RETURN(vectorarray, nvectors*sizeof(float)*3);
+            }
+
+            for(unsigned int i=0, indexNo=0; indexNo<nvectors; indexNo++, i+=3)
+            {
+                Vector3 v = Vector3(vectorarray[i+0], vectorarray[i+1], vectorarray[i+2]);
+                v = modelPosition.transform(v);
+
+                if(boundEmpty)
+                    modelBound = AABox(v, v), boundEmpty=false;
+                else
+                    modelBound.merge(v);
+            }
+            // drop of temporary use defines
+            #undef READ_OR_RETURN
+            #undef CMP_OR_RETURN
+        }
+        spawn.iBound = modelBound + spawn.iPos;
+        spawn.flags |= MOD_HAS_BOUND;
+        fclose(rf);
+        return true;
+    }
+
+    //=================================================================
+    bool TileAssembler::readRawFile2(const std::string& pModelFilename,  ModelPosition& pModelPosition)
+    {
+        bool success = true;
+        std::string filename = iSrcDir;
+        if(filename.length() >0)
+            filename.append("/");
+        filename.append(pModelFilename);
+        FILE *rf = fopen(filename.c_str(), "rb");
+
+        if(!rf)
+        {
+            printf("ERROR: Can't open model file in form: %s",pModelFilename.c_str());
+            printf("...                          or form: %s",filename.c_str() );
+            return false;
+        }
+
+        char ident[8];
+
+        int readOperation = 1;
+
+        // temporary use defines to simplify read/check code (close file and return at fail)
+        #define READ_OR_RETURN(V,S) if(fread((V), (S), 1, rf) != 1) { \
+                                        fclose(rf); printf("readfail, op = %i\n", readOperation); return(false); }readOperation++;
+        #define CMP_OR_RETURN(V,S)  if(strcmp((V),(S)) != 0)        { \
+                                        fclose(rf); printf("cmpfail, %s!=%s\n", V, S);return(false); }
+
+        READ_OR_RETURN(&ident, 8);
+        CMP_OR_RETURN(ident, "VMAP003");
+
+        // we have to read one int. This is needed during the export and we have to skip it here
+        uint32 tempNVectors;
+        READ_OR_RETURN(&tempNVectors, sizeof(tempNVectors));
+
+        uint32 groups;
+        uint32 RootWMOID;
         char blockId[5];
         blockId[4] = 0;
         int blocksize;
 
         READ_OR_RETURN(&groups, sizeof(G3D::uint32));
+        READ_OR_RETURN(&RootWMOID, sizeof(G3D::uint32));
+
+        //uint32 idxOffset=0;
+        //G3D::Array<SoloTriangle> triangles;
+        //G3D::Array<Vector3> vertexArray;
+        std::vector<GroupModel> groupsArray;
 
         for(int g=0;g<(int)groups;g++)
         {
-            // group MUST NOT have more then 65536 indexes !! Array will have a problem with that !! (strange ...)
-            Array<int> tempIndexArray;
-            Array<Vector3> tempVertexArray;
+            std::vector<MeshTriangle> triangles;
+            std::vector<Vector3> vertexArray;
+            //GroupModel gm;
 
-            AABSPTree<Triangle> *gtree = new AABSPTree<Triangle>();
-
-            // add free gtree at fail
-            #undef READ_OR_RETURN
-            #undef CMP_OR_RETURN
-            #define READ_OR_RETURN(V,S) if(fread((V), (S), 1, rf) != 1) { \
-                                            fclose(rf);printf("readfail, op = %i\n", readOperation); delete gtree; return(false); }readOperation++;
-            #define CMP_OR_RETURN(V,S)  if(strcmp((V),(S)) != 0)        { \
-                                            fclose(rf);printf("cmpfail, %s!=%s\n", V, S); delete gtree; return(false); }
-
-
-            G3D::uint32 mogpflags;
+            uint32 mogpflags, GroupWMOID;
             READ_OR_RETURN(&mogpflags, sizeof(G3D::uint32));
+            READ_OR_RETURN(&GroupWMOID, sizeof(G3D::uint32));
 
             float bbox1[3], bbox2[3];
             READ_OR_RETURN(bbox1, sizeof(float)*3);
             READ_OR_RETURN(bbox2, sizeof(float)*3);
 
-            G3D::uint32 areaID;
-            READ_OR_RETURN(&areaID, sizeof(G3D::uint32));
-
-            if(areaID != 0 || mogpflags != 0)
-            {
-                boundsArray.push_back(GroupModelBound(Vector3(bbox1), Vector3(bbox2), mogpflags, areaID));
-                printf("Bbox: %f, %f, %f | %f, %f, %f  areaID=%d flags=%X\n", bbox1[0], bbox1[1], bbox1[2], bbox2[0], bbox2[1], bbox2[2], areaID, mogpflags);
-            }
-
-            G3D::uint32 liquidflags;
+            uint32 liquidflags;
             READ_OR_RETURN(&liquidflags, sizeof(G3D::uint32));
 
-            G3D::uint32 branches;
+            uint32 branches;
             READ_OR_RETURN(&blockId, 4);
             CMP_OR_RETURN(blockId, "GRP ");
             READ_OR_RETURN(&blocksize, sizeof(int));
@@ -475,16 +430,15 @@ namespace VMAP
             READ_OR_RETURN(&blockId, 4);
             CMP_OR_RETURN(blockId, "INDX");
             READ_OR_RETURN(&blocksize, sizeof(int));
-            unsigned int nindexes;
-            READ_OR_RETURN(&nindexes, sizeof(G3D::uint32));
+            uint32 nindexes;
+            READ_OR_RETURN(&nindexes, sizeof(uint32));
             if(nindexes >0)
             {
-                unsigned short *indexarray = new unsigned short[nindexes*sizeof(unsigned short)];
-                READ_OR_RETURN(indexarray, nindexes*sizeof(unsigned short));
-                for(int i=0;i<(int)nindexes; i++)
+                uint16 *indexarray = new uint16[nindexes];
+                READ_OR_RETURN(indexarray, nindexes*sizeof(uint16));
+                for(uint32 i=0; i<nindexes; i+=3)
                 {
-                    unsigned short val = indexarray[i];
-                    tempIndexArray.append(val);
+                    triangles.push_back(MeshTriangle(indexarray[i], indexarray[i+1], indexarray[i+2]));
                 }
                 delete[] indexarray;
             }
@@ -496,22 +450,17 @@ namespace VMAP
             unsigned int nvectors;
             READ_OR_RETURN(&nvectors, sizeof(int));
 
-            float *vectorarray = 0;
-
-            // add vectorarray free
-            #undef READ_OR_RETURN
-            #undef CMP_OR_RETURN
-            #define READ_OR_RETURN(V,S) if(fread((V), (S), 1, rf) != 1) { \
-                                            fclose(rf); delete gtree; delete[] vectorarray; return(false); }
-            #define CMP_OR_RETURN(V,S)  if(strcmp((V),(S)) != 0)        { \
-                                            fclose(rf); delete gtree; delete[] vectorarray; return(false); }
-
             if(nvectors >0)
             {
-                vectorarray = new float[nvectors*sizeof(float)*3];
+                float *vectorarray = new float[nvectors*3];
                 READ_OR_RETURN(vectorarray, nvectors*sizeof(float)*3);
+                for(uint32 i=0; i<nvectors; ++i)
+                {
+                    vertexArray.push_back( Vector3(vectorarray + 3*i) );
+                }
+                delete vectorarray;
             }
-            // ----- liquit
+            // ----- liquid
             if(liquidflags& 1)
             {
                 // we have liquit -> not handled yet ... skip
@@ -520,110 +469,49 @@ namespace VMAP
                 READ_OR_RETURN(&blocksize, sizeof(int));
                 fseek(rf, blocksize, SEEK_CUR);
             }
+            //__DEBUG__
+            if (pModelFilename == "Azjol_Uppercity.wmo")
+                std::cout << "group:" << g << " vert:" << vertexArray.size() << " tri:" << triangles.size() << std::endl;
+            // TODO: add mogpflags, rootwmoid and groupwmoid to each group
+            groupsArray.push_back(GroupModel(mogpflags, GroupWMOID, AABox(Vector3(bbox1), Vector3(bbox2))));
+            groupsArray.back().setMeshData(vertexArray, triangles);
+            // TODO: handle liquids
 
-
-            for(unsigned int i=0, indexNo=0; indexNo<nvectors; indexNo++)
-            {
-                Vector3 v = Vector3(vectorarray[i+0], vectorarray[i+1], vectorarray[i+2]);
-                i+=3;
-                v = pModelPosition.transform(v);
-
-                tempVertexArray.append(v);
-            }
-
-            // ---- calculate triangles
-            int rest = nindexes%3;
-            if(rest != 0)
-            {
-                nindexes -= rest;
-            }
-
-            for(unsigned int i=0;i<(nindexes);)
-            {
-                Triangle t = Triangle(tempVertexArray[tempIndexArray[i+2]], tempVertexArray[tempIndexArray[i+1]], tempVertexArray[tempIndexArray[i+0]] );
-                i+=3;
-                ++trianglecount;
-                if(g>= startgroup && g <= endgroup)
-                {
-                    gtree->insert(t);
-                }
-            }
 
             // drop of temporary use defines
             #undef READ_OR_RETURN
             #undef CMP_OR_RETURN
 
-            if(vectorarray != 0)
-            {
-                delete vectorarray;
-            }
-
-            if(gtree->size() >0)
-            {
-                gtree->balance();
-                // gtree contains only triangles - is it possible to define "inside" and "outside" at all?
-                // one submodel = one wmo group file
-                // TODO: add indoor/outdoor flags and areaid to submodel
-                SubModel *sm = new SubModel(gtree, mogpflags, areaID);
-                #ifdef _ASSEMBLER_DEBUG
-                if(::g_df) fprintf(::g_df,"group trianglies: %d, Tris: %d, Nodes: %d, gtree.triangles: %d\n", g, sm->getNTriangles(), sm->getNNodes(), gtree->memberTable.size());
-                if(sm->getNTriangles() !=  gtree->memberTable.size())
-                {
-                    if(::g_df) fprintf(::g_df,"ERROR !!!! group trianglies: %d, Tris: %d, Nodes: %d, gtree.triangles: %d\n", g, sm->getNTriangles(), sm->getNNodes(), gtree->memberTable.size());
-                }
-                #endif
-                sm->setBasePosition(pModelPosition.iPos);
-                pMainTree->insert(sm);
-            }
-            delete gtree;
         }
         fclose(rf);
-        if(!boundsArray.empty())
+        /* for(int i=0; i<triangles.size(); ++i)
+            triangles[i].setVertexData(vertexArray.getCArray());
+        G3D::VmapKDTree<SoloTriangle> gtree;
+        gtree.insert(triangles);
+
+        gtree.balance();
+        int nNodes, nElements;
+        gtree.countNodesAndElements(nNodes, nElements);
+        TreeNode *sTree = new TreeNode[nNodes];
+        SoloTriangle *sTris = new SoloTriangle[nElements];
+        Vector3 lo, hi;
+        gtree.serializeTree(lo, hi, sTree, sTris); */
+
+        // write WorldModel
+        //WorldModel model(vertexArray.getCArray(), vertexArray.size(), sTris, nElements, sTree, nNodes);
+        if (pModelFilename == "Azjol_Uppercity.wmo")
+            std::cout << "creating WorldModel" << std::endl;
+        WorldModel model;
+        model.setRootWmoID(RootWMOID);
+        if (groupsArray.size())
         {
-            tempModelExt.push_back(new WmoModelExt(boundsArray, pModelPosition.iPos, pModelPosition.iDir));
+            model.setGroupModels(groupsArray);
+            if (pModelFilename == "Azjol_Uppercity.wmo")
+                std::cout << "wrtiting WorldModel" << std::endl;
+            success = model.writeFile(iDestDir + "/" + pModelFilename + ".vmo");
         }
-        return true;
+
+        //std::cout << "readRawFile2: '" << pModelFilename << "' tris: " << nElements << " nodes: " << nNodes << std::endl;
+        return success;
     }
-
-    //=================================================================
-
-    bool TileAssembler::fillModelIntoTree(AABSPTree<SubModel *> *pMainTree, const Vector3& pBasePos, std::string& pPos, std::string& pModelFilename)
-    {
-        ModelPosition modelPosition;
-        getModelPosition(pPos, modelPosition);
-        // all should be relative to object base position
-        modelPosition.moveToBasePos(pBasePos);
-
-        modelPosition.init();
-
-        if(readRawFile(pModelFilename,  modelPosition, pMainTree))
-        {
-            return true;
-        }
-        printf("Error while reading rawfile %s\n", pModelFilename.c_str());
-        return false;
-    }
-
-    //=================================================================
-    void TileAssembler::getModelPosition(std::string& pPosString, ModelPosition& pModelPosition)
-    {
-        float vposarray[3];
-        float vdirarray[3];
-        float scale;
-
-        size_t spos = pPosString.find_first_of('#');
-        std::string stripedPosString = pPosString.substr(spos+1,pPosString.length());
-
-        sscanf(stripedPosString.c_str(), "%f,%f,%f_%f,%f,%f_%f",
-            &vposarray[0],&vposarray[1],&vposarray[2],
-            &vdirarray[0],&vdirarray[1],&vdirarray[2],
-            &scale);
-
-        // internal map coordinate system is y-up apparently, shuffle pos to mangos internal representation:
-        pModelPosition.iPos = Vector3(vposarray[2], vposarray[0], vposarray[1]);
-        pModelPosition.iDir = Vector3(vdirarray[0], vdirarray[1], vdirarray[2]);
-        pModelPosition.iScale = scale;
-
-    }
-    //==========================================
-}                                                           // VMAP
+}
