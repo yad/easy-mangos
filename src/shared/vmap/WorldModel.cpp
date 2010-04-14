@@ -18,7 +18,6 @@
 
 #include "WorldModel.h"
 #include "VMapDefinitions.h"
-#include "TreeNode.h"
 #include "MapTree.h"
 
 using G3D::Vector3;

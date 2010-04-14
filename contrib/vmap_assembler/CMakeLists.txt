@@ -67,18 +67,9 @@ add_library(g3dlite ../../dep/src/g3dlite/AABox.cpp
 	)
 
 add_library(vmap
-	../../src/shared/vmap/BaseModel.cpp
-	../../src/shared/vmap/CoordModelMapping.cpp
-#	../../src/shared/vmap/DebugCmdLogger.cpp
-#	../../src/shared/vmap/ManagedModelContainer.cpp
-	../../src/shared/vmap/ModelContainer.cpp
-	../../src/shared/vmap/SubModel.cpp
-	../../src/shared/vmap/TileAssembler.cpp
-	../../src/shared/vmap/TreeNode.cpp
-#	../../src/shared/vmap/VMapFactory.cpp
 	../../src/shared/vmap/VMapManager2.cpp
 	../../src/shared/vmap/MapTree.cpp
-	../../src/shared/vmap/TileAssembler2.cpp
+	../../src/shared/vmap/TileAssembler.cpp
 	../../src/shared/vmap/WorldModel.cpp
 	../../src/shared/vmap/ModelInstance.cpp
 	)
@@ -90,3 +81,4 @@ target_link_libraries(vmap_assembler vmap)
 
 # add_executable(vmap_test coordinate_test.cpp)
 # target_link_libraries(vmap_test vmap)
+
