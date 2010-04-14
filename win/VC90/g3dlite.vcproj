@@ -490,10 +490,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\dep\include\g3dlite\G3D\g3dmath.inl"
-				>
-			</File>
-			<File
 				RelativePath="..\..\dep\include\g3dlite\G3D\GCamera.h"
 				>
 			</File>
@@ -515,10 +511,6 @@
 			</File>
 			<File
 				RelativePath="..\..\dep\include\g3dlite\G3D\Quat.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\dep\include\g3dlite\G3D\Quat.inl"
 				>
 			</File>
 			<File
@@ -554,10 +546,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\dep\include\g3dlite\G3D\Vector2.inl"
-				>
-			</File>
-			<File
 				RelativePath="..\..\dep\include\g3dlite\G3D\Vector2int16.h"
 				>
 			</File>
@@ -566,19 +554,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\dep\include\g3dlite\G3D\Vector3.inl"
-				>
-			</File>
-			<File
 				RelativePath="..\..\dep\include\g3dlite\G3D\Vector3int16.h"
 				>
 			</File>
 			<File
 				RelativePath="..\..\dep\include\g3dlite\G3D\Vector4.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\dep\include\g3dlite\G3D\Vector4.inl"
 				>
 			</File>
 		</Filter>
@@ -623,6 +603,118 @@
 			</File>
 			<File
 				RelativePath="..\..\dep\src\g3dlite\Vector4.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\dep\src\g3dlite\debugAssert.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\dep\src\g3dlite\fileutils.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\dep\src\g3dlite\g3dmath.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\dep\src\g3dlite\g3dfnmatch.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\dep\src\g3dlite\prompt.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\dep\src\g3dlite\stringutils.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\dep\src\g3dlite\Any.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\dep\src\g3dlite\BinaryFormat.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\dep\src\g3dlite\BinaryInput.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\dep\src\g3dlite\BinaryOutput.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\dep\src\g3dlite\Capsule.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\dep\src\g3dlite\CollisionDetection.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\dep\src\g3dlite\CoordinateFrame.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\dep\src\g3dlite\Cylinder.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\dep\src\g3dlite\Line.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\dep\src\g3dlite\LineSegment.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\dep\src\g3dlite\Log.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\dep\src\g3dlite\Matrix4.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\dep\src\g3dlite\MemoryManager.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\dep\src\g3dlite\Quat.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\dep\src\g3dlite\Random.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\dep\src\g3dlite\Ray.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\dep\src\g3dlite\ReferenceCount.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\dep\src\g3dlite\Sphere.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\dep\src\g3dlite\TextInput.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\dep\src\g3dlite\TextOutput.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\dep\src\g3dlite\UprightFrame.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\dep\src\g3dlite\Vector2.cpp"
 				>
 			</File>
 		</Filter>

@@ -287,6 +287,34 @@
     <ClCompile Include="..\..\dep\src\g3dlite\Triangle.cpp" />
     <ClCompile Include="..\..\dep\src\g3dlite\Vector3.cpp" />
     <ClCompile Include="..\..\dep\src\g3dlite\Vector4.cpp" />
+    <ClCompile Include="..\..\dep\src\g3dlite\debugAssert.cpp" />
+    <ClCompile Include="..\..\dep\src\g3dlite\fileutils.cpp" />
+    <ClCompile Include="..\..\dep\src\g3dlite\g3dmath.cpp" />
+    <ClCompile Include="..\..\dep\src\g3dlite\g3dfnmatch.cpp" />
+    <ClCompile Include="..\..\dep\src\g3dlite\prompt.cpp" />
+    <ClCompile Include="..\..\dep\src\g3dlite\stringutils.cpp" />
+    <ClCompile Include="..\..\dep\src\g3dlite\Any.cpp" />
+    <ClCompile Include="..\..\dep\src\g3dlite\BinaryFormat.cpp" />
+    <ClCompile Include="..\..\dep\src\g3dlite\BinaryInput.cpp" />
+    <ClCompile Include="..\..\dep\src\g3dlite\BinaryOutput.cpp" />
+    <ClCompile Include="..\..\dep\src\g3dlite\Capsule.cpp" />
+    <ClCompile Include="..\..\dep\src\g3dlite\CollisionDetection.cpp" />
+    <ClCompile Include="..\..\dep\src\g3dlite\CoordinateFrame.cpp" />
+    <ClCompile Include="..\..\dep\src\g3dlite\Cylinder.cpp" />
+    <ClCompile Include="..\..\dep\src\g3dlite\Line.cpp" />
+    <ClCompile Include="..\..\dep\src\g3dlite\LineSegment.cpp" />
+    <ClCompile Include="..\..\dep\src\g3dlite\Log.cpp" />
+    <ClCompile Include="..\..\dep\src\g3dlite\Matrix4.cpp" />
+    <ClCompile Include="..\..\dep\src\g3dlite\MemoryManager.cpp" />
+    <ClCompile Include="..\..\dep\src\g3dlite\Quat.cpp" />
+    <ClCompile Include="..\..\dep\src\g3dlite\Random.cpp" />
+    <ClCompile Include="..\..\dep\src\g3dlite\Ray.cpp" />
+    <ClCompile Include="..\..\dep\src\g3dlite\ReferenceCount.cpp" />
+    <ClCompile Include="..\..\dep\src\g3dlite\Sphere.cpp" />
+    <ClCompile Include="..\..\dep\src\g3dlite\TextInput.cpp" />
+    <ClCompile Include="..\..\dep\src\g3dlite\TextOutput.cpp" />
+    <ClCompile Include="..\..\dep\src\g3dlite\UprightFrame.cpp" />
+    <ClCompile Include="..\..\dep\src\g3dlite\Vector2.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\dep\include\g3dlite\G3D\AABox.h" />
@@ -316,13 +344,6 @@
     <ClInclude Include="..\..\dep\include\g3dlite\G3D\Vector3.h" />
     <ClInclude Include="..\..\dep\include\g3dlite\G3D\Vector3int16.h" />
     <ClInclude Include="..\..\dep\include\g3dlite\G3D\Vector4.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\..\dep\include\g3dlite\G3D\g3dmath.inl" />
-    <None Include="..\..\dep\include\g3dlite\G3D\Quat.inl" />
-    <None Include="..\..\dep\include\g3dlite\G3D\Vector2.inl" />
-    <None Include="..\..\dep\include\g3dlite\G3D\Vector3.inl" />
-    <None Include="..\..\dep\include\g3dlite\G3D\Vector4.inl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
