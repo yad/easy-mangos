@@ -211,8 +211,6 @@ namespace VMAP
 
     // ===================== WorldModel ==================================
 
-
-
     void WorldModel::setGroupModels(std::vector<GroupModel> &models)
     {
         groupModels.swap(models);
@@ -234,17 +232,15 @@ namespace VMAP
 
     bool WorldModel::IntersectRay(const G3D::Ray &ray, float &distance, bool stopAtFirstHit) const
     {
+        // small M2 workaround, maybe better make separate class with virtual intersection funcs
+        // in any case, there's no need to use a bound tree if we only have one submodel
+        if (groupModels.size() == 1)
+            return groupModels[0].IntersectRay(ray, distance, stopAtFirstHit);
+
         WModelRayCallBack isc(groupModels);
         groupTree.intersectRay(ray, isc, distance, stopAtFirstHit);
         return isc.hit;
     }
-    /* bool WorldModel::Intersect(const G3D::Ray &ray, float &distance, bool stopAtFirstHit) const
-    {
-        IntersectionCallBack isc(this);
-        NodeValueAccess<TreeNode, MeshTriangle> vna(treeNodes, triangles);
-        treeNodes[0].intersectRay(ray, isc, distance, vna, stopAtFirstHit, true);
-        return isc.hit;
-    } */
 
     class WModelAreaCallback {
         public:
@@ -312,27 +308,6 @@ namespace VMAP
         if (result && fwrite(&chunkSize, sizeof(uint32), 1, wf) != 1) result = false;
         if (result && fwrite(&RootWMOID, sizeof(uint32), 1, wf) != 1) result = false;
 
-        /* // write vertices
-        if (result && fwrite("VERT", 1, 4, wf) != 4) result = false;
-        chunkSize = sizeof(uint32)+ sizeof(Vector3)*nPoints;
-        if (result && fwrite(&chunkSize, sizeof(uint32), 1, wf) != 1) result = false;
-        if (result && fwrite(&nPoints, sizeof(uint32), 1, wf) != 1) result = false;
-        if (result && fwrite(points, sizeof(Vector3), nPoints, wf) != nPoints) result = false;
-
-        // write triangle mesh
-        if (result && fwrite("TRIM", 1, 4, wf) != 4) result = false;
-        chunkSize = sizeof(uint32)+ sizeof(MeshTriangle)*nTriangles;
-        if (result && fwrite(&chunkSize, sizeof(uint32), 1, wf) != 1) result = false;
-        if (result && fwrite(&nTriangles, sizeof(uint32), 1, wf) != 1) result = false;
-        if (result && fwrite(triangles, sizeof(MeshTriangle), nTriangles, wf) != nTriangles) result = false;
-
-        // write mesh tree
-        if (result && fwrite("NODE", 1, 4, wf) != 4) result = false;
-        chunkSize = sizeof(uint32)+ sizeof(TreeNode)*nNodes;
-        if (result && fwrite(&chunkSize, sizeof(uint32), 1, wf) != 1) result = false;
-        if (result && fwrite(&nNodes, sizeof(uint32), 1, wf) != 1) result = false;
-        if (result && fwrite(treeNodes, sizeof(TreeNode), nNodes, wf) != nNodes) result = false; */
-
         // write group models
         count=groupModels.size();
         if (count)
@@ -367,27 +342,6 @@ namespace VMAP
         if (result && !readChunk(rf, chunk, "WMOD", 4)) result = false;
         if (result && fread(&chunkSize, sizeof(uint32), 1, rf) != 1) result = false;
         if (result && fread(&RootWMOID, sizeof(uint32), 1, rf) != 1) result = false;
-
-        /* // read vertices
-        if (result && !readChunk(rf, chunk, "VERT", 4)) result = false;
-        if (result && fread(&chunkSize, sizeof(uint32), 1, rf) != 1) result = false;
-        if (result && fread(&nPoints, sizeof(uint32), 1, rf) != 1) result = false;
-        if (result) points = new Vector3[nPoints];
-        if (result && fread(points, sizeof(Vector3), nPoints, rf) != nPoints) result = false;
-
-        // read triangle mesh
-        if (result && !readChunk(rf, chunk, "TRIM", 4)) result = false;
-        if (result && fread(&chunkSize, sizeof(uint32), 1, rf) != 1) result = false;
-        if (result && fread(&nTriangles, sizeof(uint32), 1, rf) != 1) result = false;
-        if (result) triangles = new MeshTriangle[nTriangles];
-        if (result && fread(triangles, sizeof(MeshTriangle), nTriangles, rf) != nTriangles) result = false;
-
-        // read mesh tree
-        if (result && !readChunk(rf, chunk, "NODE", 4)) result = false;
-        if (result && fread(&chunkSize, sizeof(uint32), 1, rf) != 1) result = false;
-        if (result && fread(&nNodes, sizeof(uint32), 1, rf) != 1) result = false;
-        if (result) treeNodes = new TreeNode[nNodes];
-        if (result && fread(treeNodes, sizeof(TreeNode), nNodes, rf) != nNodes) result = false; */
 
         // read group models
         if (result && readChunk(rf, chunk, "GMOD", 4))

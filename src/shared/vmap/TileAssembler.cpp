@@ -35,13 +35,6 @@ using G3D::Triangle;
 using G3D::inf;
 using std::pair;
 
-/* template<> struct HashTrait<VMAP::ModelSpawn*>
-{
-    static size_t hashCode(const VMAP::ModelSpawn* const &key)
-    {
-        return key->ID;
-    }
-}; */
 template<> struct BoundsTrait<VMAP::ModelSpawn*>
 {
     static void getBounds(const VMAP::ModelSpawn* const &obj, G3D::AABox& out) { out = obj->getBounds(); }
@@ -90,7 +83,6 @@ namespace VMAP
         for (MapData::iterator map_iter = mapData.begin(); map_iter != mapData.end() && success; ++map_iter)
         {
             // build global map tree
-            //G3D::VmapKDTree<ModelSpawn*> pTree;
             std::vector<ModelSpawn*> mapSpawns;
             UniqueEntryMap::iterator entry;
             for (entry = map_iter->second->UniqueEntries.begin(); entry != map_iter->second->UniqueEntries.end(); ++entry)
@@ -107,29 +99,14 @@ namespace VMAP
                     //entry->second.iPos += Vector3(533.33333f*32, 533.33333f*32, 0.f);
                     entry->second.iBound = entry->second.iBound + Vector3(533.33333f*32, 533.33333f*32, 0.f);
                 }
-                //pTree.insert(&(entry->second));
                 mapSpawns.push_back(&(entry->second));
                 spawnedModelFiles.insert(entry->second.name);
             }
 
-            //pTree.balance(3);
             BIH pTree;
             pTree.build(mapSpawns, BoundsTrait<ModelSpawn*>::getBounds);
 
             // ===> possibly move this code to StaticMapTree class
-        /*  int nNodes=0, nElements=0;
-            pTree.countNodesAndElements(nNodes, nElements);
-            // write .vmdir files to dynamically load/unload referenced geometry
-            TreeNode *mapTree = new TreeNode[nNodes];
-            ModelSpawn **treeElements = new ModelSpawn*[nElements];
-            Vector3 lo, hi;
-            pTree.serializeTree(lo, hi, mapTree, treeElements);
-            printf("Overall tree bounds: %f, %f, %f | %f, %f, %f\n", lo.x, lo.y, lo.z, hi.x, hi.y, hi.z);
-            // create (multi)map model ID => TreeNode indices
-            std::multimap<uint32, uint32> modelNodeIdx;
-            for(int i=0; i<nElements; ++i)
-                modelNodeIdx.insert(std::pair<uint32, uint32>(treeElements[i]->ID, i));
-            printf("min GUID: %u, max GUID: %u\n", modelNodeIdx.begin()->first, modelNodeIdx.rbegin()->first); */
             std::multimap<uint32, uint32> modelNodeIdx;
             for(uint32 i=0; i<mapSpawns.size(); ++i)
                 modelNodeIdx.insert(std::pair<uint32, uint32>(mapSpawns[i]->ID, i));
@@ -154,12 +131,6 @@ namespace VMAP
             if (success && fwrite(&isTiled, sizeof(char), 1, mapfile) != 1) success = false;
             // Nodes
             if (success && fwrite("NODE", 4, 1, mapfile) != 1) success = false;
-        /*     uint32 size = sizeof(uint32) + sizeof(TreeNode)*nNodes;
-            if (success && fwrite(&size, 4, 1, mapfile) != 1) success = false;
-            if (success && fwrite(&nNodes, sizeof(uint32), 1, mapfile) != 1) success = false;
-            if (success && fwrite(mapTree, sizeof(TreeNode), nNodes, mapfile) != nNodes) success = false;
-            // amount of tree elements
-            if (success && fwrite(&nElements, sizeof(uint32), 1, mapfile) != 1) success = false; */
             if (success) success = pTree.writeToFile(mapfile);
             // global map spawns (WDT), if any (most instances)
             if (success && fwrite("GOBJ", 4, 1, mapfile) != 1) success = false;
@@ -242,7 +213,7 @@ namespace VMAP
                 break;
 
             MapSpawns *current;
-            std::map<uint32, MapSpawns*>::iterator map_iter = mapData.find(mapID); // hooray for "compact" STL syntax...
+            MapData::iterator map_iter = mapData.find(mapID);
             if(map_iter == mapData.end())
             {
                 printf("spawning Map %d\n", mapID);
@@ -392,16 +363,12 @@ namespace VMAP
         READ_OR_RETURN(&groups, sizeof(G3D::uint32));
         READ_OR_RETURN(&RootWMOID, sizeof(G3D::uint32));
 
-        //uint32 idxOffset=0;
-        //G3D::Array<SoloTriangle> triangles;
-        //G3D::Array<Vector3> vertexArray;
         std::vector<GroupModel> groupsArray;
 
         for(int g=0;g<(int)groups;g++)
         {
             std::vector<MeshTriangle> triangles;
             std::vector<Vector3> vertexArray;
-            //GroupModel gm;
 
             uint32 mogpflags, GroupWMOID;
             READ_OR_RETURN(&mogpflags, sizeof(G3D::uint32));
@@ -414,6 +381,7 @@ namespace VMAP
             uint32 liquidflags;
             READ_OR_RETURN(&liquidflags, sizeof(G3D::uint32));
 
+            // will this ever be used? what is it good for anyway??
             uint32 branches;
             READ_OR_RETURN(&blockId, 4);
             CMP_OR_RETURN(blockId, "GRP ");
@@ -469,14 +437,10 @@ namespace VMAP
                 READ_OR_RETURN(&blocksize, sizeof(int));
                 fseek(rf, blocksize, SEEK_CUR);
             }
-            //__DEBUG__
-            if (pModelFilename == "Azjol_Uppercity.wmo")
-                std::cout << "group:" << g << " vert:" << vertexArray.size() << " tri:" << triangles.size() << std::endl;
-            // TODO: add mogpflags, rootwmoid and groupwmoid to each group
+
             groupsArray.push_back(GroupModel(mogpflags, GroupWMOID, AABox(Vector3(bbox1), Vector3(bbox2))));
             groupsArray.back().setMeshData(vertexArray, triangles);
             // TODO: handle liquids
-
 
             // drop of temporary use defines
             #undef READ_OR_RETURN
@@ -484,30 +448,13 @@ namespace VMAP
 
         }
         fclose(rf);
-        /* for(int i=0; i<triangles.size(); ++i)
-            triangles[i].setVertexData(vertexArray.getCArray());
-        G3D::VmapKDTree<SoloTriangle> gtree;
-        gtree.insert(triangles);
-
-        gtree.balance();
-        int nNodes, nElements;
-        gtree.countNodesAndElements(nNodes, nElements);
-        TreeNode *sTree = new TreeNode[nNodes];
-        SoloTriangle *sTris = new SoloTriangle[nElements];
-        Vector3 lo, hi;
-        gtree.serializeTree(lo, hi, sTree, sTris); */
 
         // write WorldModel
-        //WorldModel model(vertexArray.getCArray(), vertexArray.size(), sTris, nElements, sTree, nNodes);
-        if (pModelFilename == "Azjol_Uppercity.wmo")
-            std::cout << "creating WorldModel" << std::endl;
         WorldModel model;
         model.setRootWmoID(RootWMOID);
         if (groupsArray.size())
         {
             model.setGroupModels(groupsArray);
-            if (pModelFilename == "Azjol_Uppercity.wmo")
-                std::cout << "wrtiting WorldModel" << std::endl;
             success = model.writeFile(iDestDir + "/" + pModelFilename + ".vmo");
         }
 
