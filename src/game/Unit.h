@@ -904,6 +904,8 @@ struct SpellNonMeleeDamage{
     bool   unused;
     uint32 blocked;
     uint32 HitInfo;
+    // Used for help
+    uint32 cleanDamage;
 };
 
 struct SpellPeriodicAuraLogInfo
@@ -1390,6 +1392,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         // recommend use MonsterMove/MonsterMoveWithSpeed for most case that correctly work with movegens
         // if used additional args in ... part then floats must explicitly casted to double
         void SendMonsterMove(float x, float y, float z, SplineType type, SplineFlags flags, uint32 Time, Player* player = NULL, ...);
+        void SendMonsterMoveByPath(const PathInfo* path, SplineFlags flags);
         void SendMonsterMoveWithSpeed(float x, float y, float z, uint32 transitTime = 0, Player* player = NULL);
 
         template<typename PathElem, typename PathNode>

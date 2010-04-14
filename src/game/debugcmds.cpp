@@ -235,36 +235,36 @@ bool ChatHandler::HandleDebugMoveMapCommand(const char* args)
 
         // unit locations
         float x, y, z;
-        player->GetPosition(x, y, z);
-        float end[3] = {y, z, x};
         target->GetPosition(x, y, z);
         float start[3] = {y, z, x};
+        player->GetPosition(x, y, z);
+        float end[3] = {y, z, x};
         float pathPos[MAX_PATH_LENGTH];
 
         // path
-        PathInfo* path = new PathInfo(target, player);
+        PathInfo* path = new PathInfo(target, x, y, z);
         PSendSysMessage("%s's path to %s:", target->GetName(), player->GetName());
-        PSendSysMessage("length %i", path->Length);
-        PSendSysMessage("start  (%f,%f,%f)", path->startPosition[0],path->startPosition[1],path->startPosition[2]);
-        PSendSysMessage("next   (%f,%f,%f)", path->nextPosition[0],path->nextPosition[1],path->nextPosition[2]);
-        PSendSysMessage("end    (%f,%f,%f)", path->endPosition[0],path->endPosition[1],path->endPosition[2]);
+        PSendSysMessage("length %i", path->m_length);
+        PSendSysMessage("start  (%f,%f,%f)", path->m_startPosition[0],path->m_startPosition[1],path->m_startPosition[2]);
+        PSendSysMessage("next   (%f,%f,%f)", path->m_nextPosition[0],path->m_nextPosition[1],path->m_nextPosition[2]);
+        PSendSysMessage("end    (%f,%f,%f)", path->m_endPosition[0],path->m_endPosition[1],path->m_endPosition[2]);
         PSendSysMessage("path");
-        for(int i = 0; i < path->Length; ++i)
-            PSendSysMessage("       %i", path->pathPolyRefs[i]);
+        for(int i = 0; i < path->m_length; ++i)
+            PSendSysMessage("       %i", path->m_pathPolyRefs[i]);
 
         // unit polyrefs
-        dtPolyRef startPoly = path->navMesh->findNearestPoly(start, extents, &filter, 0);
-        dtPolyRef endPoly = path->navMesh->findNearestPoly(end, extents, &filter, 0);
+        dtPolyRef startPoly = path->m_navMesh->findNearestPoly(start, extents, &filter, 0);
+        dtPolyRef endPoly = path->m_navMesh->findNearestPoly(end, extents, &filter, 0);
 
         // straithPath
-        int length = path->navMesh->findStraightPath(start, end, path->pathPolyRefs, path->Length, pathPos, 0, 0, MAX_PATH_LENGTH);
+        int length = path->m_navMesh->findStraightPath(start, end, path->m_pathPolyRefs, path->m_length, pathPos, 0, 0, MAX_PATH_LENGTH);
         PSendSysMessage("Path positions:");
         for(int i = 0; i < length; ++i)
             PSendSysMessage("(%.2f,%.2f,%.2f)", pathPos[i*3], pathPos[i*3+1], pathPos[i*3+2]);
 
         // vertices stuff
-        const dtMeshTile* tile = path->navMesh->getTileByRef(startPoly, 0);
-        const dtPoly* poly = path->navMesh->getPolyByRef(startPoly);
+        const dtMeshTile* tile = path->m_navMesh->getTileByRef(startPoly, 0);
+        const dtPoly* poly = path->m_navMesh->getPolyByRef(startPoly);
         float vertices[DT_VERTS_PER_POLYGON*3];
 
         // startpoly vertices
@@ -280,8 +280,8 @@ bool ChatHandler::HandleDebugMoveMapCommand(const char* args)
             PSendSysMessage("(%.2f,%.2f,%.2f)", vertices[i*3], vertices[i*3+1], vertices[i*3+2]);
 
         // endpoly vertices
-        tile = path->navMesh->getTileByRef(endPoly, 0);
-        poly = path->navMesh->getPolyByRef(endPoly);
+        tile = path->m_navMesh->getTileByRef(endPoly, 0);
+        poly = path->m_navMesh->getPolyByRef(endPoly);
         nv = 0;
 	    for (int i = 0; i < (int)poly->vertCount; ++i)
         {
@@ -324,11 +324,9 @@ bool ChatHandler::HandleDebugMoveMapCommand(const char* args)
         uint32 uStartTime = getMSTime();
 
         float gx,gy,gz;
-        WorldObject* player = m_session->GetPlayer();
         m_session->GetPlayer()->GetPosition(gx,gy,gz);
-        Map *theMap = m_session->GetPlayer()->GetMap();
         while (aCreature != creatureList.end()) {
-            PathInfo(player, (*aCreature));
+            PathInfo((*aCreature), gx, gy, gz);
             ++pathes;
             aCreature++;
         }
