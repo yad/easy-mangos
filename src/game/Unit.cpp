@@ -421,6 +421,11 @@ void Unit::SendMonsterMoveByPath(Path const& path, uint32 start, uint32 end, Spl
     SendMessageToSet(&data, true);
 }
 
+void Unit::SendMonsterMoveByPath(const PathInfo* path, SplineFlags flags)
+{
+    // PATHFIND TODO: implement
+}
+
 void Unit::SendMonsterMoveWithSpeed(float x, float y, float z, uint32 transitTime, Player* player)
 {
     if (!transitTime)
