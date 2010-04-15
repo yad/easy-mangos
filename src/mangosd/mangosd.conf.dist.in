@@ -1434,6 +1434,11 @@ SOAP.Port = 7878
 #        Default: 0 (disable)
 #                 1 (enable)
 #
+#    TeamBG.TeamBG.Faction.Blue
+#    TeamBG.TeamBG.Faction.Red
+#        Which faction is set to player when enter bg
+#        Default: 1 (for blue, player human)
+#                 2 (for red, player orc)
 #
 ###################################################################################################################
 
@@ -1441,3 +1446,5 @@ TeamBG.AllowAB = 0
 TeamBG.AllowAV = 0
 TeamBG.AllowEOS = 0
 TeamBG.AllowWSG = 0
+TeamBG.TeamBG.Faction.Blue = 1
+TeamBG.TeamBG.Faction.Red = 2

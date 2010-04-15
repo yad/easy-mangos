@@ -1024,6 +1024,10 @@ void BattleGround::RemovePlayerAtLeave(uint64 guid, bool Transport, bool SendPac
 
     Player *plr = sObjectMgr.GetPlayer(guid);
 
+    // TEAMBG
+    if(plr)
+        plr->setFaction(plr->getFactionForRace(plr->getRace()));
+
     // should remove spirit of redemption
     if (plr && plr->HasAuraType(SPELL_AURA_SPIRIT_OF_REDEMPTION))
         plr->RemoveSpellsCausingAura(SPELL_AURA_MOD_SHAPESHIFT);
@@ -1185,6 +1189,37 @@ void BattleGround::AddPlayer(Player *plr)
 
     uint64 guid = plr->GetGUID();
     uint32 team = plr->GetBGTeam();
+    // --- TEAM BG ---
+    if(!isArena())
+    {
+        bool isAllowed = false;
+        switch(m_TypeID)
+        {
+            case BATTLEGROUND_AB:
+                if(sWorld.getConfig(CONFIG_BOOL_TEAM_BG_ALLOW_AB))
+                    isAllowed = true;
+                break;
+            case BATTLEGROUND_AV:
+                if(sWorld.getConfig(CONFIG_BOOL_TEAM_BG_ALLOW_AV))
+                    isAllowed = true;
+                break;
+            case BATTLEGROUND_EY:
+                if(sWorld.getConfig(CONFIG_BOOL_TEAM_BG_ALLOW_EOS))
+                    isAllowed = true;
+                break;
+            case BATTLEGROUND_WS:
+                if(sWorld.getConfig(CONFIG_BOOL_TEAM_BG_ALLOW_WSG))
+                    isAllowed = true;
+                break;
+        }
+        if(isAllowed)
+        {
+            if(team == HORDE)
+                plr->setFaction(sWorld.getConfig(CONFIG_UINT32_TEAM_BG_FACTION_RED));
+            else
+                plr->setFaction(sWorld.getConfig(CONFIG_UINT32_TEAM_BG_FACTION_BLUE));
+        }
+    }
 
     BattleGroundPlayer bp;
     bp.OfflineRemoveTime = 0;
