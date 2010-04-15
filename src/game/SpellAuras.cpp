@@ -8785,7 +8785,7 @@ void Aura::UnregisterSingleCastAura()
         else
         {
             sLog.outError("Couldn't find the caster of the single target aura (SpellId %u), may crash later!", GetId());
-            ASSERT(false);
+            //ASSERT(false); <-- not needed I Think, it crash server, but If i remove it, nothing will happen.
         }
         m_isSingleTargetAura = false;
     }

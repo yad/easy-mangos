@@ -741,12 +741,12 @@ void World::LoadConfigSettings(bool reload)
     setConfig(CONFIG_UINT32_HONORABLE_KILL,                            "HonorableKill", 124);
     setConfig(CONFIG_UINT32_BONUS_HONOR_AB_WIN,                        "BG.BonusHonor.AB.Win", 1);
     setConfig(CONFIG_UINT32_BONUS_HONOR_AB_END,                        "BG.BonusHonor.AB.End", 1);
-    setConfig(CONFIG_UINT32_BONUS_HONOR_WSG_WIN,                       "BG.BonusHonor.AB.Win", 5);
-    setConfig(CONFIG_UINT32_BONUS_HONOR_WSG_END,                       "BG.BonusHonor.AB.End", 5);
-    setConfig(CONFIG_UINT32_BONUS_HONOR_AV_WIN,                        "BG.BonusHonor.AB.Win", 5);
-    setConfig(CONFIG_UINT32_BONUS_HONOR_AV_END,                        "BG.BonusHonor.AB.End", 5);
-    setConfig(CONFIG_UINT32_BONUS_HONOR_EOS_WIN,                       "BG.BonusHonor.AB.Win", 1);
-    setConfig(CONFIG_UINT32_BONUS_HONOR_EOS_END,                       "BG.BonusHonor.AB.End", 1);
+    setConfig(CONFIG_UINT32_BONUS_HONOR_WSG_WIN,                       "BG.BonusHonor.WSG.Win", 5);
+    setConfig(CONFIG_UINT32_BONUS_HONOR_WSG_END,                       "BG.BonusHonor.WSG.End", 5);
+    setConfig(CONFIG_UINT32_BONUS_HONOR_AV_WIN,                        "BG.BonusHonor.AV.Win", 5);
+    setConfig(CONFIG_UINT32_BONUS_HONOR_AV_END,                        "BG.BonusHonor.AV.End", 5);
+    setConfig(CONFIG_UINT32_BONUS_HONOR_EOS_WIN,                       "BG.BonusHonor.EOS.Win", 1);
+    setConfig(CONFIG_UINT32_BONUS_HONOR_EOS_END,                       "BG.BonusHonor.EOS.End", 1);
     setConfig(CONFIG_UINT32_BONUS_HONOR_HOLIDAY,                       "BG.BonusHonor.Holiday",5);
 
     setConfig(CONFIG_UINT32_BONUS_HONOR_FLAG_WSG,                      "BG.BonusHonor.WSG.Flag",2);
