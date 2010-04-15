@@ -14062,24 +14062,13 @@ void Player::OnGossipSelect(WorldObject* pSource, uint32 gossipListId, uint32 me
         case GOSSIP_OPTION_LEARNDUALSPEC:
             if(GetSpecsCount() == 1 && !(getLevel() < 40)) //Level added manually, in original patch it was in config !
             {
-                if (GetMoney() < 10000000) //same: it was in config, 1000g default, change it if you want
-                {
-                    SendBuyError( BUY_ERR_NOT_ENOUGHT_MONEY, 0, 0, 0);
-                    PlayerTalkClass->CloseGossip();
-                    break;
-                }
-                else
-                {
-                    ModifyMoney(-10000000); //same: here too
+                // Cast spells that teach dual spec
+                // Both are also ImplicitTarget self and must be cast by player
+                CastSpell(this,63680,true,NULL,NULL,GetGUID());
+                CastSpell(this,63624,true,NULL,NULL,GetGUID());
 
-                    // Cast spells that teach dual spec
-                    // Both are also ImplicitTarget self and must be cast by player
-                    CastSpell(this,63680,true,NULL,NULL,GetGUID());
-                    CastSpell(this,63624,true,NULL,NULL,GetGUID());
-
-                    // Should show another Gossip text with "Congratulations..."
-                    PlayerTalkClass->CloseGossip();
-                }
+                // Should show another Gossip text with "Congratulations..."
+                PlayerTalkClass->CloseGossip();
             }
             break;
         case GOSSIP_OPTION_UNLEARNTALENTS:
@@ -17895,15 +17884,13 @@ void Player::SaveToDB()
 
     CharacterDatabase.BeginTransaction();
 
-    //Tassadar, 7.4.2010 - Use REPLACE query instead of DELETE&INSERT here because
-    //                     if server crash when character is saved, player is lost
-    //CharacterDatabase.PExecute("DELETE FROM characters WHERE guid = '%u'",GetGUIDLow());
+    CharacterDatabase.PExecute("DELETE FROM characters WHERE guid = '%u'",GetGUIDLow());
 
     std::string sql_name = m_name;
     CharacterDatabase.escape_string(sql_name);
 
     std::ostringstream ss;
-    ss << "REPLACE INTO characters (guid,account,name,race,class,gender,level,xp,money,playerBytes,playerBytes2,playerFlags,"
+    ss << "INSERT INTO characters (guid,account,name,race,class,gender,level,xp,money,playerBytes,playerBytes2,playerFlags,"
         "map, dungeon_difficulty, position_x, position_y, position_z, orientation, "
         "taximask, online, cinematic, "
         "totaltime, leveltime, rest_bonus, logout_time, is_logout_resting, resettalents_cost, resettalents_time, "

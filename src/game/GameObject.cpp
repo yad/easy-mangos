@@ -726,7 +726,7 @@ bool GameObject::isVisibleForInState(Player const* u, WorldObject const* viewPoi
 
         // special invisibility cases
         // TODO: implement trap stealth, take look at spell 2836
-        if(GetGOInfo()->type == GAMEOBJECT_TYPE_TRAP && GetGOInfo()->trap.stealthed && u->IsHostileTo(GetOwner()))
+        if(GetOwner() && GetOwner()->IsInWorld() GetGOInfo()->type == GAMEOBJECT_TYPE_TRAP && GetGOInfo()->trap.stealthed && u->IsHostileTo(GetOwner()))
         {
             if(u->GetGUID() == GetOwner()->GetGUID() || u->HasAura(2836))
                 return true;

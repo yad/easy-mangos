@@ -3184,7 +3184,8 @@ void Spell::EffectHeal(SpellEffectIndex /*eff_idx*/)
             }
 
             int32 tickheal = caster->SpellHealingBonus(unitTarget, targetAura->GetSpellProto(), targetAura->GetModifier()->m_amount, DOT);
-            int32 tickcount = GetSpellDuration(targetAura->GetSpellProto()) / targetAura->GetSpellProto()->EffectAmplitude[idx];
+            // ...equal to 12 sec of Rejuvenation or 18 sec of Regrowth - tickcount = (number of original ticks - 1)
+            int32 tickcount = (GetSpellDuration(targetAura->GetSpellProto()) / targetAura->GetSpellProto()->EffectAmplitude[idx]) - 1;
 
             // Glyph of Swiftmend
             if (!caster->HasAura(54824))
@@ -6051,8 +6052,9 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                         // Serpent Sting - Instantly deals 40% of the damage done by your Serpent Sting.
                         if ((familyFlag & UI64LIT(0x0000000000004000)) && aura->GetEffIndex() == EFFECT_INDEX_0)
                         {
-                            // m_amount already include RAP bonus
-                            basePoint = aura->GetModifier()->m_amount * aura->GetAuraMaxTicks() * 40 / 100;
+                            // m_amount does not include RAP bonus - must be calculated 
+                            basePoint = m_caster->MeleeDamageBonus(target, aura->GetModifier()->m_amount, RANGED_ATTACK, aura->GetSpellProto(), DOT, aura->GetStackAmount());
+                            basePoint = basePoint * (aura->GetAuraMaxDuration() / aura->GetModifier()->periodictime) * 40 / 100;
                             spellId = 53353;                // Chimera Shot - Serpent
                         }
 
