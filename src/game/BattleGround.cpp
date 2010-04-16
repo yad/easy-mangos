@@ -1025,8 +1025,12 @@ void BattleGround::RemovePlayerAtLeave(uint64 guid, bool Transport, bool SendPac
     // TEAMBG
     if(plr && plr->isInTeamBG())
     {
+        //restore faction
         plr->SetTeamBG(false, 0);
-        plr->setFaction(plr->getFactionForRace(plr->getRace()));
+        plr->setFactionForRace(plr->getRace());
+        //Remove mark buffs
+        plr->RemoveAurasDueToSpell(sWorld.getConfig(CONFIG_UINT32_TEAM_BG_BUFF_RED));
+        plr->RemoveAurasDueToSpell(sWorld.getConfig(CONFIG_UINT32_TEAM_BG_BUFF_BLUE));
     }
 
     // should remove spirit of redemption
@@ -1213,15 +1217,20 @@ void BattleGround::AddPlayer(Player *plr)
                     isAllowed = true;
                 break;
         }
+        //Set faction and apply mark buffs
         if(isAllowed)
         {
             if(team == HORDE)
             {
                 plr->setFaction(sWorld.getConfig(CONFIG_UINT32_TEAM_BG_FACTION_RED));
                 plr->SetTeamBG(true, 2);
+                if(sWorld.getConfig(CONFIG_UINT32_TEAM_BG_BUFF_RED) != 0)
+                    plr->CastSpell(plr, sWorld.getConfig(CONFIG_UINT32_TEAM_BG_BUFF_RED), true);
             }else{
                 plr->setFaction(sWorld.getConfig(CONFIG_UINT32_TEAM_BG_FACTION_BLUE));
                 plr->SetTeamBG(true, 1);
+                if(sWorld.getConfig(CONFIG_UINT32_TEAM_BG_BUFF_BLUE) != 0)
+                    plr->CastSpell(plr, sWorld.getConfig(CONFIG_UINT32_TEAM_BG_BUFF_RED), true);
             }
         }
     }

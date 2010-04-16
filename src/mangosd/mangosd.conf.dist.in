@@ -1468,6 +1468,12 @@ SOAP.Port = 7878
 #        Default: 1 (for blue, player human)
 #                 2 (for red, player orc)
 #
+#    TeamBG.Buff.Blue
+#    TeamBG.Buff.Red
+#        Spell id, its casted on player on bg enter and removed on leave,
+#        could be some red/blue coloration
+#        Default: 0 (disable)
+#
 ###################################################################################################################
 
 TeamBG.AllowAB = 0
@@ -1476,3 +1482,5 @@ TeamBG.AllowEOS = 0
 TeamBG.AllowWSG = 0
 TeamBG.TeamBG.Faction.Blue = 1
 TeamBG.TeamBG.Faction.Red = 2
+TeamBG.Buff.Blue = 0
+TeamBG.Buff.Red = 0
