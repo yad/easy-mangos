@@ -233,7 +233,7 @@ enum SpellTargets
     SPELL_TARGETS_AOE_DAMAGE
 };
 
-#define SPELL_SPELL_CHANNEL_UPDATE_INTERVAL (1*IN_MILISECONDS)
+#define SPELL_SPELL_CHANNEL_UPDATE_INTERVAL (1*IN_MILLISECONDS)
 
 typedef std::multimap<uint64, uint64> SpellTargetTimeMap;
 
@@ -386,7 +386,7 @@ class Spell
         SpellCastResult CheckOrTakeRunePower(bool take);
         SpellCastResult CheckCasterAuras() const;
 
-        int32 CalculateDamage(SpellEffectIndex i, Unit* target) { return m_caster->CalculateSpellDamage(m_spellInfo,i,m_currentBasePoints[i],target); }
+        int32 CalculateDamage(SpellEffectIndex i, Unit* target) { return m_caster->CalculateSpellDamage(target, m_spellInfo, i, &m_currentBasePoints[i]); }
         int32 CalculatePowerCost();
 
         bool HaveTargetsForEffect(SpellEffectIndex effect) const;
@@ -695,7 +695,7 @@ namespace MaNGOS
 
         template<class T> inline void Visit(GridRefManager<T>  &m)
         {
-            assert(i_data);
+            ASSERT(i_data);
 
             if(!i_originalCaster)
                 return;

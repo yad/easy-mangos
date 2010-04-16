@@ -99,7 +99,7 @@ void MapManager::checkAndCorrectGridStatesArray()
     if(!ok)
         ++i_GridStateErrorCount;
     if(i_GridStateErrorCount > 2)
-        assert(false);                                      // force a crash. Too many errors
+        ASSERT(false);                                      // force a crash. Too many errors
 }
 
 Map*
@@ -123,7 +123,7 @@ MapManager::_createBaseMap(uint32 id)
         i_maps[id] = m;
     }
 
-    assert(m != NULL);
+    ASSERT(m != NULL);
     return m;
 }
 
@@ -247,16 +247,6 @@ void MapManager::DeleteInstance(uint32 mapid, uint32 instanceId)
     Map *m = _createBaseMap(mapid);
     if (m && m->Instanceable())
         ((MapInstanced*)m)->DestroyInstance(instanceId);
-}
-
-void MapManager::RemoveBonesFromMap(uint32 mapid, uint64 guid, float x, float y)
-{
-    bool remove_result = _createBaseMap(mapid)->RemoveBones(guid, x, y);
-
-    if (!remove_result)
-    {
-        sLog.outDebug("Bones %u not found in world. Delete from DB also.", GUID_LOPART(guid));
-    }
 }
 
 void

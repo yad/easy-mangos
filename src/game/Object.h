@@ -314,7 +314,7 @@ class MANGOS_DLL_SPEC Object
 
         PackedGuid m_PackGUID;
 
-        // for output helpfull error messages from asserts
+        // for output helpfull error messages from ASSERTs
         bool PrintIndexError(uint32 index, bool set) const;
         Object(const Object&);                              // prevent generation copy constructor
         Object& operator=(Object const&);                   // prevent generation assigment operator
@@ -498,4 +498,5 @@ class MANGOS_DLL_SPEC WorldObject : public Object
         float m_positionZ;
         float m_orientation;
 };
+
 #endif

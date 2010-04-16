@@ -13,5 +13,7 @@
 *.ncb
 *.suo
 *.sdf
+*.opensdf
 *.sln.cache
+*.vsp
 ipch

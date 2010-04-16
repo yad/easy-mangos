@@ -107,18 +107,20 @@ enum ITEM_FLAGS
     ITEM_FLAGS_BINDED                         = 0x00000001, // set in game at binding, not set in template
     ITEM_FLAGS_CONJURED                       = 0x00000002,
     ITEM_FLAGS_OPENABLE                       = 0x00000004,
-    ITEM_FLAGS_WRAPPED                        = 0x00000008,
+    ITEM_FLAGS_WRAPPED                        = 0x00000008, // conflicts with heroic flag
     ITEM_FLAGS_HEROIC                         = 0x00000008, // weird...
     ITEM_FLAGS_BROKEN                         = 0x00000010, // appears red icon (like when item durability==0)
-    ITEM_FLAGS_TOTEM                          = 0x00000020, // ?
+    ITEM_FLAGS_UNK2                           = 0x00000020, // saw this on item 43012, 43013, 46377, 52021...
     ITEM_FLAGS_USABLE                         = 0x00000040, // ?
     ITEM_FLAGS_NO_EQUIP_COOLDOWN              = 0x00000080, // ?
+    ITEM_FLAGS_UNK3                           = 0x00000100, // saw this on item 47115, 49295...
     ITEM_FLAGS_WRAPPER                        = 0x00000200, // used or not used wrapper
     ITEM_FLAGS_IGNORE_BAG_SPACE               = 0x00000400, // ignore bag space at new item creation?
     ITEM_FLAGS_PARTY_LOOT                     = 0x00000800, // determines if item is party loot or not
     ITEM_FLAGS_REFUNDABLE                     = 0x00001000, // item cost can be refunded within 2 hours after purchase
     ITEM_FLAGS_CHARTER                        = 0x00002000, // arena/guild charter
-    ITEM_FLAGS_REFUNDABLE_2                   = 0x00008000, // ?
+    ITEM_FLAGS_UNK4                           = 0x00008000, // a lot of items have this
+    ITEM_FLAGS_UNK1                           = 0x00010000, // a lot of items have this
     ITEM_FLAGS_PROSPECTABLE                   = 0x00040000,
     ITEM_FLAGS_UNIQUE_EQUIPPED                = 0x00080000,
     ITEM_FLAGS_USEABLE_IN_ARENA               = 0x00200000,
@@ -469,6 +471,14 @@ inline uint8 ItemSubClassToDurabilityMultiplierId(uint32 ItemClass, uint32 ItemS
     return 0;
 }
 
+enum ItemExtraFlags
+{
+    ITEM_EXTRA_NON_CONSUMABLE     = 0x01,                   // use as additional flag to spellcharges_N negative values, item not expire at no chanrges
+    ITEM_EXTRA_REAL_TIME_DURATION = 0x02,                   // if set and have Duration time, then offline time included in counting, if not set then counted only in game time
+
+    ITEM_EXTRA_ALL                                          // all used flags, used for check DB data
+};
+
 // GCC have alternative #pragma pack(N) syntax and old gcc version not support pack(push,N), also any gcc version not support it at some platform
 #if defined( __GNUC__ )
 #pragma pack(1)
@@ -578,7 +588,7 @@ struct ItemPrototype
     uint32 GemProperties;                                   // id from GemProperties.dbc
     uint32 RequiredDisenchantSkill;
     float  ArmorDamageModifier;
-    int32  Duration;                                        // negative = realtime, positive = ingame time
+    uint32 Duration;                                        // negative = realtime, positive = ingame time
     uint32 ItemLimitCategory;                               // id from ItemLimitCategory.dbc
     uint32 HolidayId;                                       // id from Holidays.dbc
     uint32 ScriptId;
@@ -586,7 +596,7 @@ struct ItemPrototype
     uint32 FoodType;
     uint32 MinMoneyLoot;
     uint32 MaxMoneyLoot;
-    uint32 NonConsumable;
+    uint32 ExtraFlags;                                      // see ItemExtraFlags
 
     // helpers
     bool CanChangeEquipStateInCombat() const

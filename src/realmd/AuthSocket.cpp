@@ -234,6 +234,8 @@ AuthSocket::AuthSocket(ISocketHandler &h) : TcpSocket(h)
     pPatch = NULL;
 
     _accountSecurityLevel = SEC_PLAYER;
+
+    _build = 0;
 }
 
 /// Close patch file descriptor before leaving
@@ -276,11 +278,11 @@ void AuthSocket::OnRead()
                 (table[i].status == STATUS_CONNECTED ||
                 (_authed && table[i].status == STATUS_AUTHED)))
             {
-                DEBUG_LOG("[Auth] got data for cmd %u ibuf length %u", (uint32)_cmd, ibuf.GetLength());
+                DEBUG_LOG("[Auth] got data for cmd %u ibuf length "SIZEFMTD" ", (uint32)_cmd, ibuf.GetLength());
 
                 if (!(*this.*table[i].handler)())
                 {
-                    DEBUG_LOG("Command handler failed for cmd %u ibuf length %u", (uint32)_cmd, ibuf.GetLength());
+                    DEBUG_LOG("Command handler failed for cmd %u ibuf length "SIZEFMTD" ", (uint32)_cmd, ibuf.GetLength());
                     return;
                 }
                 break;
@@ -348,6 +350,7 @@ void AuthSocket::SendProof(Sha1Hash sha)
         case 10505:                                         // 3.2.2a
         case 11159:                                         // 3.3.0a
         case 11403:                                         // 3.3.2
+        case 11723:                                         // 3.3.3a
         default:                                            // or later
         {
             sAuthLogonProof_S proof;
@@ -429,7 +432,7 @@ bool AuthSocket::_HandleLogonChallenge()
         "(unbandate = bandate OR unbandate > UNIX_TIMESTAMP()) AND ip = '%s'", address.c_str());
     if (result)
     {
-        pkt << (uint8)REALM_AUTH_ACCOUNT_BANNED;
+        pkt << (uint8)WOW_FAIL_BANNED;
         sLog.outBasic("[AuthChallenge] Banned ip %s tries to login!", GetRemoteAddress().c_str());
         delete result;
     }
@@ -450,7 +453,7 @@ bool AuthSocket::_HandleLogonChallenge()
                 if ( strcmp((*result)[3].GetString(),GetRemoteAddress().c_str()) )
                 {
                     DEBUG_LOG("[AuthChallenge] Account IP differs");
-                    pkt << (uint8) REALM_AUTH_ACCOUNT_FREEZED;
+                    pkt << (uint8) WOW_FAIL_SUSPENDED;
                     locked=true;
                 }
                 else
@@ -472,12 +475,12 @@ bool AuthSocket::_HandleLogonChallenge()
                 {
                     if((*banresult)[0].GetUInt64() != (*banresult)[1].GetUInt64())
                     {
-                        pkt << (uint8) REALM_AUTH_ACCOUNT_BANNED;
+                        pkt << (uint8) WOW_FAIL_BANNED;
                         sLog.outBasic("[AuthChallenge] Banned account %s tries to login!",_login.c_str ());
                     }
                     else
                     {
-                        pkt << (uint8) REALM_AUTH_ACCOUNT_FREEZED;
+                        pkt << (uint8) WOW_FAIL_SUSPENDED;
                         sLog.outBasic("[AuthChallenge] Temporarily banned account %s tries to login!",_login.c_str ());
                     }
 
@@ -513,7 +516,7 @@ bool AuthSocket::_HandleLogonChallenge()
                     unk3.SetRand(16 * 8);
 
                     ///- Fill the response packet with the result
-                    pkt << uint8(REALM_AUTH_SUCCESS);
+                    pkt << uint8(WOW_SUCCESS);
 
                     // B may be calculated < 32B so we force minimal length to 32B
                     pkt.append(B.AsByteArray(32), 32);      // 32 bytes
@@ -560,7 +563,7 @@ bool AuthSocket::_HandleLogonChallenge()
         }
         else                                                // no account
         {
-            pkt<< (uint8) REALM_AUTH_NO_MATCH;
+            pkt<< (uint8) WOW_FAIL_UNKNOWN_ACCOUNT;
         }
     }
     SendBuf((char const*)pkt.contents(), pkt.size());
@@ -578,22 +581,7 @@ bool AuthSocket::_HandleLogonProof()
     ibuf.Read((char *)&lp, sizeof(sAuthLogonProof_C));
 
     ///- Check if the client has one of the expected version numbers
-    bool valid_version = false;
-    int accepted_versions[] = EXPECTED_REALMD_CLIENT_BUILD;
-    if (_build >= accepted_versions[0])                     // first build is low bound of always accepted range
-        valid_version = true;
-    else
-    {
-        // continue from 1 with explict equal check
-        for(int i = 1; accepted_versions[i]; ++i)
-        {
-            if(_build == accepted_versions[i])
-            {
-                valid_version = true;
-                break;
-            }
-        }
-    }
+    bool valid_version = FindBuildInfo(_build) != NULL;
 
     /// <ul><li> If the client has no valid version
     if(!valid_version)
@@ -612,7 +600,7 @@ bool AuthSocket::_HandleLogonProof()
             ByteBuffer pkt;
             pkt << (uint8) AUTH_LOGON_CHALLENGE;
             pkt << (uint8) 0x00;
-            pkt << (uint8) REALM_AUTH_WRONG_BUILD_NUMBER;
+            pkt << (uint8) WOW_FAIL_VERSION_INVALID;
             DEBUG_LOG("[AuthChallenge] %u is not a valid client version!", _build);
             DEBUG_LOG("[AuthChallenge] Patch %s not found", tmp);
             SendBuf((char const*)pkt.contents(), pkt.size());
@@ -636,7 +624,7 @@ bool AuthSocket::_HandleLogonProof()
             }
 
             ///- Send a packet to the client with the file length and MD5 hash
-            uint8 data[2] = { AUTH_LOGON_PROOF, REALM_AUTH_UPDATE_CLIENT };
+            uint8 data[2] = { AUTH_LOGON_PROOF, WOW_FAIL_VERSION_UPDATE };
             SendBuf((const char*)data, sizeof(data));
 
             memcpy(&xferh, "0\x05Patch", 7);
@@ -747,7 +735,7 @@ bool AuthSocket::_HandleLogonProof()
     }
     else
     {
-        char data[4]= { AUTH_LOGON_PROOF, REALM_AUTH_NO_MATCH, 3, 0};
+        char data[4]= { AUTH_LOGON_PROOF, WOW_FAIL_UNKNOWN_ACCOUNT, 3, 0};
         SendBuf(data, sizeof(data));
         sLog.outBasic("[AuthChallenge] account %s tried to login with wrong password!",_login.c_str ());
 
@@ -960,18 +948,35 @@ void AuthSocket::LoadRealmlist(ByteBuffer &pkt, uint32 acctid)
                 else
                     AmountOfCharacters = 0;
 
-                // Show offline state for unsupported client builds
-                uint8 color = (std::find(i->second.realmbuilds.begin(), i->second.realmbuilds.end(), _build) != i->second.realmbuilds.end()) ? i->second.color : 2;
-                color = (i->second.allowedSecurityLevel > _accountSecurityLevel) ? 2 : color;
+                bool ok_build = std::find(i->second.realmbuilds.begin(), i->second.realmbuilds.end(), _build) != i->second.realmbuilds.end();
 
-                pkt << uint32(i->second.icon);                      // realm type
-                pkt << uint8(color);                                // if 2, then realm is offline
-                pkt << i->first;                                    // name
-                pkt << i->second.address;                           // address
+                RealmBuildInfo const* buildInfo = ok_build ? FindBuildInfo(_build) : NULL;
+                if (!buildInfo)
+                    buildInfo = &i->second.realmBuildInfo;
+
+                RealmFlags realmflags = i->second.realmflags;
+
+                // 1.x clients not support explicitly REALM_FLAG_SPECIFYBUILD, so manually form similar name as show in more recent clients
+                std::string name = i->first;
+                if (realmflags & REALM_FLAG_SPECIFYBUILD)
+                {
+                    char buf[20];
+                    snprintf(buf, 20," (%u,%u,%u)", buildInfo->major_version, buildInfo->minor_version, buildInfo->bugfix_version);
+                    name += buf;
+                }
+
+                // Show offline state for unsupported client builds and locked realms (1.x clients not support locked state show)
+                if (!ok_build || (i->second.allowedSecurityLevel >= _accountSecurityLevel))
+                    realmflags = RealmFlags(realmflags | REALM_FLAG_OFFLINE);
+
+                pkt << uint32(i->second.icon);              // realm type
+                pkt << uint8(realmflags);                   // realmflags
+                pkt << name;                                // name
+                pkt << i->second.address;                   // address
                 pkt << float(i->second.populationLevel);
                 pkt << uint8(AmountOfCharacters);
-                pkt << uint8(i->second.timezone);                   // realm category
-                pkt << uint8(0x00);                                 // unk, may be realm number/id?
+                pkt << uint8(i->second.timezone);           // realm category
+                pkt << uint8(0x00);                         // unk, may be realm number/id?
             }
 
             pkt << uint8(0x00);
@@ -983,6 +988,7 @@ void AuthSocket::LoadRealmlist(ByteBuffer &pkt, uint32 acctid)
         case 10505:                                         // 3.2.2a
         case 11159:                                         // 3.3.0a
         case 11403:                                         // 3.3.2
+        case 11723:                                         // 3.3.3a
         default:                                            // and later
         {
             pkt << uint32(0);
@@ -1003,24 +1009,43 @@ void AuthSocket::LoadRealmlist(ByteBuffer &pkt, uint32 acctid)
                 else
                     AmountOfCharacters = 0;
 
+                bool ok_build = std::find(i->second.realmbuilds.begin(), i->second.realmbuilds.end(), _build) != i->second.realmbuilds.end();
+
+                RealmBuildInfo const* buildInfo = ok_build ? FindBuildInfo(_build) : NULL;
+                if (!buildInfo)
+                    buildInfo = &i->second.realmBuildInfo;
+
                 uint8 lock = (i->second.allowedSecurityLevel > _accountSecurityLevel) ? 1 : 0;
 
-                // Show offline state for unsupported client builds
-                uint8 color = (std::find(i->second.realmbuilds.begin(), i->second.realmbuilds.end(), _build) != i->second.realmbuilds.end()) ? i->second.color : 2;
+                RealmFlags realmFlags = i->second.realmflags;
 
-                pkt << uint8(i->second.icon);                       // realm type
-                pkt << uint8(lock);                                 // if 1, then realm locked
-                pkt << uint8(color);                                // if 2, then realm is offline
-                pkt << i->first;                                    // name
-                pkt << i->second.address;                           // address
+                // Show offline state for unsupported client builds
+                if (!ok_build)
+                    realmFlags = RealmFlags(realmFlags | REALM_FLAG_OFFLINE);
+
+                if (!buildInfo)
+                    realmFlags = RealmFlags(realmFlags & ~REALM_FLAG_SPECIFYBUILD);
+
+                pkt << uint8(i->second.icon);               // realm type (this is second column in Cfg_Configs.dbc)
+                pkt << uint8(lock);                         // flags, if 0x01, then realm locked
+                pkt << uint8(realmFlags);                   // see enum RealmFlags
+                pkt << i->first;                            // name
+                pkt << i->second.address;                   // address
                 pkt << float(i->second.populationLevel);
                 pkt << uint8(AmountOfCharacters);
-                pkt << uint8(i->second.timezone);                   // realm category
-                pkt << uint8(0x2C);                                 // unk, may be realm number/id?
+                pkt << uint8(i->second.timezone);           // realm category (Cfg_Categories.dbc)
+                pkt << uint8(0x2C);                         // unk, may be realm number/id?
+
+                if (realmFlags & REALM_FLAG_SPECIFYBUILD)
+                {
+                    pkt << uint8(buildInfo->major_version);
+                    pkt << uint8(buildInfo->minor_version);
+                    pkt << uint8(buildInfo->bugfix_version);
+                    pkt << uint16(_build);
+                }
             }
 
-            pkt << uint8(0x10);
-            pkt << uint8(0x00);
+            pkt << uint16(0x0010);
             break;
         }
     }

@@ -226,6 +226,7 @@ class ChatHandler
         bool HandleListCreatureCommand(const char* args);
         bool HandleListItemCommand(const char* args);
         bool HandleListObjectCommand(const char* args);
+        bool HandleListTalentsCommand(const char * args);
 
         bool HandleLookupAreaCommand(const char* args);
         bool HandleLookupCreatureCommand(const char* args);
@@ -401,6 +402,7 @@ class ChatHandler
         bool HandleResetAllCommand(const char * args);
         bool HandleResetHonorCommand(const char * args);
         bool HandleResetLevelCommand(const char * args);
+        bool HandleResetSpecsCommand(const char * args);
         bool HandleResetSpellsCommand(const char * args);
         bool HandleResetStatsCommand(const char * args);
         bool HandleResetTalentsCommand(const char * args);
@@ -542,6 +544,7 @@ class ChatHandler
         bool HandleUnBanHelper(BanMode mode,char const* args);
         void HandleCharacterLevel(Player* player, uint64 player_guid, uint32 oldlevel, uint32 newlevel);
         void HandleLearnSkillRecipesHelper(Player* player,uint32 skill_id);
+        void ShowSpellListHelper(Player* target, SpellEntry const* spellInfo, LocaleConstant loc);
 
         void SetSentErrorMessage(bool val){ sentErrorMessage = val;};
     private:
