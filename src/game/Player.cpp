@@ -3492,6 +3492,7 @@ void Player::removeSpell(uint32 spell_id, bool disabled, bool learn_low_rank, bo
         if (IsSpellHaveEffect(spellInfo, SPELL_EFFECT_TITAN_GRIP))
         {
             m_canTitanGrip = false;
+            RemoveAurasDueToSpellByCancel(49152);
             if(sWorld.getConfig(CONFIG_BOOL_OFFHAND_CHECK_AT_TALENTS_RESET))
                 AutoUnequipOffhandIfNeed();
         }
@@ -3783,16 +3784,6 @@ bool Player::resetTalents(bool no_cost, bool all_specs)
             RemovePet(NULL,PET_SAVE_NOT_IN_SLOT, true);
     }
     */
-
-
-    if(CanTitanGrip())
-    {
-        SetCanTitanGrip(false);
-        if(sWorld.getConfig(CONFIG_BOOL_OFFHAND_CHECK_AT_TALENTS_RESET))
-            AutoUnequipOffhandIfNeed();
-        RemoveAurasDueToSpellByCancel(49152);
-    }
-
     return true;
 }
 
