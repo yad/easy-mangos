@@ -1430,6 +1430,14 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 case 25991:                                 // Poison Bolt Volley (Pincess Huhuran)
                     unMaxTargets = 15;
                     break;
+                case 62240:                                 // Solar Flare
+                case 62920:                                 // Solar Flare (h)
+                {
+                    if(Aura *pAura = m_caster->GetAura(62251, EFFECT_INDEX_0))
+                        unMaxTargets = pAura->GetStackAmount();
+                    else unMaxTargets = 1;
+                    break;
+                }
             }
             break;
         case SPELLFAMILY_PRIEST:
@@ -1477,6 +1485,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
         case TARGET_RANDOM_NEARBY_LOC:
             radius *= sqrtf(rand_norm_f()); // Get a random point in circle. Use sqrt(rand) to correct distribution when converting polar to Cartesian coordinates.
                                          // no 'break' expected since we use code in case TARGET_RANDOM_CIRCUMFERENCE_POINT!!!
+        case TARGET_RANDOM_POINT_AROUND_CASTER:
         case TARGET_RANDOM_CIRCUMFERENCE_POINT:
         {
             float angle = 2.0f * M_PI_F * rand_norm_f();
