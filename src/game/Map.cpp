@@ -493,7 +493,7 @@ void Map::MessageBroadcast(WorldObject *obj, WorldPacket *msg)
     //TODO: currently on continents when Visibility.Distance.InFlight > Visibility.Distance.Continents
     //we have alot of blinking mobs because monster move packet send is broken...
     MaNGOS::ObjectMessageDeliverer post_man(*obj,msg);
-    GridTypeVisitor<MaNGOS::MessageDeliverer >::Camera message(post_man);
+    GridTypeVisitor<MaNGOS::ObjectMessageDeliverer >::Camera message(post_man);
     cell.Visit(p, message, *this, *obj, GetVisibilityDistance());
 }
 
@@ -515,7 +515,7 @@ void Map::MessageDistBroadcast(Player *player, WorldPacket *msg, float dist, boo
         return;
 
     MaNGOS::MessageDistDeliverer post_man(*player, msg, dist, to_self, own_team_only);
-    GridTypeVisitor<MaNGOS::MessageDeliverer >::Camera message(post_man);
+    GridTypeVisitor<MaNGOS::MessageDistDeliverer >::Camera message(post_man);
     cell.Visit(p, message, *this, *player, dist);
 }
 
@@ -537,7 +537,7 @@ void Map::MessageDistBroadcast(WorldObject *obj, WorldPacket *msg, float dist)
         return;
 
     MaNGOS::ObjectMessageDistDeliverer post_man(*obj, msg, dist);
-    GridTypeVisitor<MaNGOS::MessageDeliverer >::Camera message(post_man);
+    GridTypeVisitor<MaNGOS::ObjectMessageDistDeliverer >::Camera message(post_man);
     cell.Visit(p, message, *this, *obj, dist);
 }
 
