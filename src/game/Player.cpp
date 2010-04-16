@@ -496,6 +496,10 @@ Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputa
 
     m_lastFallTime = 0;
     m_lastFallZ = 0;
+
+    //TeamBG helpers
+    m_isInTeamBG = false;
+    m_TeamBGSide = 0;
 }
 
 Player::~Player ()

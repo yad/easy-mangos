@@ -1025,8 +1025,11 @@ void BattleGround::RemovePlayerAtLeave(uint64 guid, bool Transport, bool SendPac
     Player *plr = sObjectMgr.GetPlayer(guid);
 
     // TEAMBG
-    if(plr)
+    if(plr && plr->isInTeamBG())
+    {
+        plr->SetTeamBG(false, 0);
         plr->setFaction(plr->getFactionForRace(plr->getRace()));
+    }
 
     // should remove spirit of redemption
     if (plr && plr->HasAuraType(SPELL_AURA_SPIRIT_OF_REDEMPTION))
@@ -1215,9 +1218,13 @@ void BattleGround::AddPlayer(Player *plr)
         if(isAllowed)
         {
             if(team == HORDE)
+            {
                 plr->setFaction(sWorld.getConfig(CONFIG_UINT32_TEAM_BG_FACTION_RED));
-            else
+                plr->SetTeamBG(true, 2);
+            }else{
                 plr->setFaction(sWorld.getConfig(CONFIG_UINT32_TEAM_BG_FACTION_BLUE));
+                plr->SetTeamBG(true, 1);
+            }
         }
     }
 

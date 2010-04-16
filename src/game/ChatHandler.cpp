@@ -119,6 +119,11 @@ void WorldSession::HandleMessagechatOpcode( WorldPacket & recv_data )
             // send in universal language in two side iteration allowed mode
             if (sWorld.getConfig(CONFIG_BOOL_ALLOW_TWO_SIDE_INTERACTION_CHAT))
                 lang = LANG_UNIVERSAL;
+            //TEAMBG code
+            else if(_player->isInTeamBG() && getTeamBGSide() == 1) //blue(ali)
+                lang = LANG_COMMON;
+            else if(_player->isInTeamBG() && getTeamBGSide() == 2) //red(horde)
+                lang = LANG_ORCISH;
             else
             {
                 switch(type)
