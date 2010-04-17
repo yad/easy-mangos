@@ -8611,32 +8611,7 @@ void Player::SendLoot(ObjectGuid guid, LootType loot_type)
                     sLog.outDebug("       if(lootid)");
                     loot->clear();
                     loot->FillLoot(lootid, LootTemplates_Gameobject, this, false);
-                    /*if(go->GetGoType() == GAMEOBJECT_TYPE_CHEST && go->GetGOInfo()->chest.groupLootRules)
-                    {
-                        if(Group* group = GetGroup())
-                        {
-                            group->UpdateLooterGuid(go,true);
-
-                            switch (group->GetLootMethod())
-                            {
-                                case GROUP_LOOT:
-                                    // GroupLoot delete items over threshold (threshold even not implemented), and roll them. Items with quality<threshold, round robin
-                                    group->GroupLoot(GetObjectGuid(), loot, go);
-                                    permission = GROUP_PERMISSION;
-                                    break;
-                                case NEED_BEFORE_GREED:
-                                    group->NeedBeforeGreed(GetObjectGuid(), loot, go);
-                                    permission = GROUP_PERMISSION;
-                                    break;
-                                case MASTER_LOOT:
-                                    group->MasterLoot(GetObjectGuid(), loot, go);
-                                    permission = MASTER_PERMISSION;
-                                    break;
-                                default:
-                                    break;
-                            }
-                        }
-                    }*/
+                    loot->generateMoneyLoot(go->GetGOInfo()->MinMoneyLoot, go->GetGOInfo()->MaxMoneyLoot);
                 }
 
                 if (loot_type == LOOT_FISHING)
@@ -20735,7 +20710,7 @@ void Player::SendInitialPacketsBeforeAddToMap()
     // SMSG_POWER_UPDATE
 
     // set fly flag if in fly form or taxi flight to prevent visually drop at ground in showup moment
-    if(HasAuraType(SPELL_AURA_MOD_INCREASE_FLIGHT_SPEED) || HasAuraType(SPELL_AURA_FLY) || isInFlight())
+    if(HasAuraType(SPELL_AURA_MOD_FLIGHT_SPEED_MOUNTED) || HasAuraType(SPELL_AURA_FLY) || isInFlight())
         m_movementInfo.AddMovementFlag(MOVEFLAG_FLYING);
 
     m_mover = this;
@@ -20768,7 +20743,7 @@ void Player::SendInitialPacketsAfterAddToMap()
     {
         SPELL_AURA_MOD_FEAR,     SPELL_AURA_TRANSFORM,                 SPELL_AURA_WATER_WALK,
         SPELL_AURA_FEATHER_FALL, SPELL_AURA_HOVER,                     SPELL_AURA_SAFE_FALL,
-        SPELL_AURA_FLY,          SPELL_AURA_MOD_INCREASE_FLIGHT_SPEED, SPELL_AURA_NONE
+        SPELL_AURA_FLY,          SPELL_AURA_MOD_FLIGHT_SPEED_MOUNTED,  SPELL_AURA_NONE
     };
     for(AuraType const* itr = &auratypes[0]; itr && itr[0] != SPELL_AURA_NONE; ++itr)
     {
