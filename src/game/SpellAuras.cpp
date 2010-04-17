@@ -8766,6 +8766,14 @@ void Aura::HandlePhase(bool apply, bool Real)
     }
 
     // no-phase is also phase state so same code for apply and remove
+    uint32 phase;
+
+    // i think phase mask should be added to current mask, NOT overwrite it
+    // at least for this spell
+    if (m_spellProto->Id == 51852)
+        phase = apply ? (m_target->GetPhaseMask() | GetMiscValue()) : (m_target->GetPhaseMask() & ~GetMiscValue());
+    else
+        phase = apply ? GetMiscValue() : PHASEMASK_NORMAL;
 
     // phase auras normally not expected at BG but anyway better check
     if(m_target->GetTypeId() == TYPEID_PLAYER)
@@ -8777,9 +8785,9 @@ void Aura::HandlePhase(bool apply, bool Real)
 
         // GM-mode have mask 0xFFFFFFFF
         if(!((Player*)m_target)->isGameMaster())
-            m_target->SetPhaseMask(apply ? GetMiscValue() : PHASEMASK_NORMAL, false);
+            m_target->SetPhaseMask(phase, false);
 
-        ((Player*)m_target)->GetSession()->SendSetPhaseShift(apply ? GetMiscValue() : PHASEMASK_NORMAL);
+        ((Player*)m_target)->GetSession()->SendSetPhaseShift(phase);
 
         if (GetEffIndex() == EFFECT_INDEX_0)
         {
@@ -8803,9 +8811,15 @@ void Aura::HandlePhase(bool apply, bool Real)
                 }
             }
         }
+          
+        if(m_target->GetCharm() && !apply)//remove other auras from charm on unapply
+        {
+            Creature * creat=((Creature*)m_target->GetCharm());						
+            creat->RemoveAurasDueToSpellByCancel(GetId());			
+        }
     }
     else
-        m_target->SetPhaseMask(apply ? GetMiscValue() : PHASEMASK_NORMAL, false);
+        m_target->SetPhaseMask(phase, false);
 
     // need triggering visibility update base at phase update of not GM invisible (other GMs anyway see in any phases)
     if(m_target->GetVisibility() != VISIBILITY_OFF)

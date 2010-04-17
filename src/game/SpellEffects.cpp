@@ -1464,6 +1464,14 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     m_caster->CastSpell(m_caster, 30452, true, NULL);
                     return;
                 }
+                case 51858:                                 // Siphon of Acherus - Complete Quest
+                {               
+                    if (!m_caster || !m_caster->isAlive())
+                        return;
+
+                    ((Player*)m_originalCaster->GetCharmer())->KilledMonsterCredit(m_caster->GetEntry(), m_caster->GetGUID());                    					
+                        
+                }
                 case 52308:                                 // Take Sputum Sample
                 {
                     switch(eff_idx)
@@ -3899,9 +3907,17 @@ void Spell::EffectSummonType(SpellEffectIndex eff_idx)
         }
         case SUMMON_PROP_GROUP_CONTROLLABLE:
         {
-            // no type here
-            // maybe wrong - but thats the handler currently used for those
-            DoSummonGuardian(eff_idx, summon_prop->FactionId);
+            switch(prop_id)
+            {
+                //SUMMON_TYPE_POSESSED   = 65
+                //SUMMON_TYPE_POSESSED2   = 428
+                case 65:
+                case 428:
+                    EffectSummonPossessed(eff_idx);
+                    break;
+                default: DoSummonGuardian(eff_idx, summon_prop->FactionId);
+                break;
+            }
             break;
         }
         case SUMMON_PROP_GROUP_VEHICLE:
@@ -3915,6 +3931,38 @@ void Spell::EffectSummonType(SpellEffectIndex eff_idx)
             break;
     }
 }
+
+void Spell::EffectSummonPossessed(SpellEffectIndex eff_idx)
+{
+    uint32 creature_entry = m_spellInfo->EffectMiscValue[eff_idx];
+    if (!creature_entry)
+       return;
+  
+    int32 duration = GetSpellDuration(m_spellInfo);
+  
+    float px, py, pz;
+    // If dest location if present
+    if (m_targets.m_targetMask & TARGET_FLAG_DEST_LOCATION)
+    {
+        // Summon 1 unit in dest location
+        px = m_targets.m_destX;
+        py = m_targets.m_destY;
+        pz = m_targets.m_destZ;
+    }
+    // Summon if dest location not present near caster
+    else
+        m_caster->GetClosePoint(px, py, pz, 1.0f);
+  
+    TempSummonType summonType = (duration == 0) ? TEMPSUMMON_TIMED_OR_CORPSE_DESPAWN : TEMPSUMMON_TIMED_DESPAWN;
+    Creature *spawnCreature = m_caster->SummonCreature(creature_entry, px, py, pz, m_caster->GetOrientation(), summonType, duration);
+ 
+    Unit* caster = GetAffectiveCaster();	 
+    Aura* aur = CreateAura(m_spellInfo, eff_idx, &m_currentBasePoints[eff_idx], spawnCreature, caster, m_CastItem);	 
+    Modifier* modifier=aur->GetModifier();
+    aur->SetModifier(SPELL_AURA_MOD_POSSESS,modifier->m_amount,modifier->periodictime,modifier->m_miscvalue);
+    spawnCreature->AddAura(aur);	 
+} 
+
 void Spell::DoSummon(SpellEffectIndex eff_idx)
 {
     if (m_caster->GetPetGUID())
@@ -5736,6 +5784,30 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
 
                     caster->CastSpell(caster, damage, false);
                     break;
+                }
+                case 51904:                                 // Summon Ghouls Of Scarlet Crusade
+                {
+                    if(!unitTarget)
+                        return;
+                    
+                     unitTarget->CastSpell(unitTarget, 54522, true);
+                     break;
+                } 
+                case 52694:                                 // Recall Eye of Acherus
+                {
+                    if(!m_caster || m_caster->GetTypeId() != TYPEID_UNIT || !(m_caster->isCharmed()))
+                        return;
+ 
+                    Creature *eye = ((Creature*)m_caster);
+                    if(m_caster->GetCharmer()->GetTypeId() != TYPEID_PLAYER)
+                        return;
+
+                    Player *player = ((Player*)m_caster->GetCharmer());					 
+                    if(eye->isInCombat())
+                        return;
+
+                    eye->GetMap()->CreatureRelocation(eye, player->GetPositionX(), player->GetPositionY(), player->GetPositionZ(), player->GetOrientation());
+                    eye->RemoveAurasDueToSpellByCancel(51852);					 
                 }
                 case 52751:                                 // Death Gate
                 {
