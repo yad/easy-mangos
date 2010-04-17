@@ -391,6 +391,7 @@ Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputa
 
     m_DailyQuestChanged = false;
     m_WeeklyQuestChanged = false;
+    m_FirstBattleground = false;
 
     for (int i=0; i<MAX_TIMERS; ++i)
         m_MirrorTimer[i] = DISABLED_MIRROR_TIMER;
@@ -6379,21 +6380,20 @@ bool Player::RewardHonor(Unit *uVictim, uint32 groupsize, float honor)
 void Player::RewardHonorEndBattlegroud(bool win)
 {
     uint32 hk = 0;
-    uint32 guid = GetGUIDLow();
     bool ap = false;
     if(!win)
         hk = 5;
+
     else
     {
-        QueryResult *result = CharacterDatabase.PQuery("SELECT daily_bg FROM character_battleground_status WHERE guid = '%u'", guid);
-        if(result)
+        if(FirstBGDone())
             hk = 15;
         else
         {
             hk = 30;
             if(getLevel() >= sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL))
                 ap = true;
-            CharacterDatabase.PExecute("INSERT INTO character_battleground_status VALUES ('%u', '" UI64FMTD "')", guid, uint64(time(NULL)));
+            SetFirstBGTime();
         }
     }
 
@@ -15148,6 +15148,7 @@ bool Player::LoadFromDB( uint32 guid, SqlQueryHolder *holder )
         m_movementInfo.SetTransportData(0, 0.0f, 0.0f, 0.0f, 0.0f, 0, -1);
     }
 
+    _LoadBGStatus(holder->GetResult(PLAYER_LOGIN_QUERY_LOADBGSTATUS));
     _LoadBGData(holder->GetResult(PLAYER_LOGIN_QUERY_LOADBGDATA));
 
     if(m_bgData.bgInstanceID)                                                //saved in BattleGround
@@ -16635,6 +16636,17 @@ bool Player::_LoadHomeBind(QueryResult *result)
     return true;
 }
 
+void Player::_LoadBGStatus(QueryResult *result)
+{
+    if (result)
+    {
+        m_FirstBGTime = (*result)[0].GetUInt32();
+        delete result;
+    }
+    else
+        m_FirstBGTime = 0;
+}
+
 /*********************************************************/
 /***                   SAVE SYSTEM                     ***/
 /*********************************************************/
@@ -16803,6 +16815,7 @@ void Player::SaveToDB()
         _SaveMail();
 
     _SaveBGData();
+    _SaveBGStatus();
     _SaveInventory();
     _SaveQuestStatus();
     _SaveDailyQuestStatus();
@@ -21942,6 +21955,18 @@ void Player::_SaveBGData()
             GetGUIDLow(), m_bgData.bgInstanceID, m_bgData.bgTeam, m_bgData.joinPos.coord_x, m_bgData.joinPos.coord_y, m_bgData.joinPos.coord_z,
             m_bgData.joinPos.orientation, m_bgData.joinPos.mapid, m_bgData.taxiPath[0], m_bgData.taxiPath[1], m_bgData.mountSpell);
     }
+}
+
+void Player::_SaveBGStatus()
+{
+    if(!m_FirstBattleground)
+        return;
+
+    CharacterDatabase.PExecute("DELETE FROM character_battleground_status WHERE guid='%u'", GetGUIDLow());
+    CharacterDatabase.PExecute("INSERT INTO character_battleground_status VALUES ('%u', '%u')",
+        GetGUIDLow(), m_FirstBGTime);
+
+    m_FirstBattleground = false;
 }
 
 void Player::DeleteEquipmentSet(uint64 setGuid)

@@ -1996,6 +1996,9 @@ void World::InitDailyQuestResetTime()
 void World::ResetBGDaily()
 {
     CharacterDatabase.Execute("DELETE FROM character_battleground_status");
+    for(SessionMap::const_iterator itr = m_sessions.begin(); itr != m_sessions.end(); ++itr)
+        if (itr->second->GetPlayer())
+            itr->second->GetPlayer()->ResetBGStatus();
 }
 
 void World::ResetDailyQuests()

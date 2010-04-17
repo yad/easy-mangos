@@ -911,7 +911,8 @@ enum PlayerLoginQueryIndex
     PLAYER_LOGIN_QUERY_LOADMAILEDITEMS          = 24,
     PLAYER_LOGIN_QUERY_LOADTALENTS              = 25,
     PLAYER_LOGIN_QUERY_LOADWEKLYQUESTSTATUS     = 26,
-    MAX_PLAYER_LOGIN_QUERY                      = 27
+    PLAYER_LOGIN_QUERY_LOADBGSTATUS             = 27,
+    MAX_PLAYER_LOGIN_QUERY                      = 28
 };
 
 enum PlayerDelayedOperations
@@ -2105,6 +2106,14 @@ class MANGOS_DLL_SPEC Player : public Unit
         bool isTotalImmune();
         bool CanCaptureTowerPoint();
 
+        bool FirstBGDone() { return m_FirstBGTime > 0; }
+        void SetFirstBGTime()
+        {
+            m_FirstBGTime = uint64(time(NULL));
+            m_FirstBattleground = true;
+        }
+        void ResetBGStatus() { m_FirstBGTime = 0; }
+
         /*********************************************************/
         /***                    REST SYSTEM                    ***/
         /*********************************************************/
@@ -2354,6 +2363,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         void _LoadArenaTeamInfo(QueryResult *result);
         void _LoadEquipmentSets(QueryResult *result);
         void _LoadBGData(QueryResult* result);
+        void _LoadBGStatus(QueryResult* result);
         void _LoadGlyphs(QueryResult *result);
         void _LoadIntoDataField(const char* data, uint32 startOffset, uint32 count);
 
@@ -2372,6 +2382,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         void _SaveSpells();
         void _SaveEquipmentSets();
         void _SaveBGData();
+        void _SaveBGStatus();
         void _SaveGlyphs();
         void _SaveTalents();
         void _SaveStats();
@@ -2468,6 +2479,7 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         bool   m_DailyQuestChanged;
         bool   m_WeeklyQuestChanged;
+        bool   m_FirstBattleground;
 
         uint32 m_drunkTimer;
         uint16 m_drunk;
@@ -2590,6 +2602,9 @@ class MANGOS_DLL_SPEC Player : public Unit
         uint32 m_timeSyncTimer;
         uint32 m_timeSyncClient;
         uint32 m_timeSyncServer;
+
+        // Battleground reward system
+        uint32 m_FirstBGTime;
 };
 
 void AddItemsSetItem(Player*player,Item *item);
