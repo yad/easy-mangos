@@ -41,6 +41,17 @@
 #include "InstanceSaveMgr.h"
 #include "VMapFactory.h"
 #include "BattleGroundMgr.h"
+//#include "OS_TLI.h"
+#include "pathfinding/InputGeom.h"
+#include "pathfinding/Recast/Recast.h"
+#include "pathfinding/Detour/DetourNavMesh.h"
+#include "pathfinding/Detour/DetourNavMeshBuilder.h"
+// navmesh
+//#include "ModelContainerView.h"
+#include <fstream>
+#include <search.h>
+
+#define MAX_CREATURE_ATTACK_RADIUS  (45.0f * sWorld.getConfig(CONFIG_FLOAT_RATE_CREATURE_AGGRO))
 
 GridState* si_GridStates[MAX_GRID_STATE];
 
@@ -125,6 +136,101 @@ bool Map::ExistVMap(uint32 mapid,int gx,int gy)
     return true;
 }
 
+void Map::LoadNavMesh(int gx, int gy)
+{
+    if (m_navMesh[gx][gy])
+    return;
+    sLog.outError("Loading NavMesh");
+    // map file name
+    char *tmp=NULL;
+    int len = sWorld.GetDataPath().length()+strlen("mmaps/%03u%02u%02u.mmap")+1;
+    tmp = new char[len];
+    snprintf(tmp, len, (char *)(sWorld.GetDataPath()+"mmaps/%03u%02u%02u.mmap").c_str(),i_id,gx,gy);
+    // woot no need for generation here: lets just load navmesh itself!
+    ifstream inf( tmp, ofstream::binary );
+    if( inf )
+    {
+        inf.seekg(0,std::ifstream::end);
+        int navDataSize = inf.tellg();
+        inf.seekg(0);
+        //printf("DataSize is %i\n", navDataSize);
+        unsigned char *navData = new unsigned char[navDataSize];
+        inf.read((char*) (navData),navDataSize);
+        inf.close();
+        m_navMesh[gx][gy] = new dtNavMesh;
+        if (!m_navMesh)
+        {
+            delete [] navData;
+            return;
+        }
+        //            printf("Created navMesh\n");
+        if (!m_navMesh[gx][gy]->init(navData, navDataSize, true, 2048))
+        {
+            delete [] navData;
+            return;
+        }
+        //sLog.outDetail("Loaded %s (%i kbyte)!", tmp, navDataSize);
+        //float startPos[3]               = { -135.65, 60.41, -9514.61 };
+        //float endPos[3]                 = { 114.97, 60.85, -9519.94 };
+        //float mPolyPickingExtents[3]    = { 2.00f, 4.00f, 2.00f };
+        //dtQueryFilter* mPathFilter = new dtQueryFilter();
+        //int gx = 32 - (-9514.61/533.333333f);
+        //int gy = 32 - (-135.65/533.333333f);
+        //dtNavMesh* myNavMesh = m_navMesh[gx][gy];
+        //if (myNavMesh)
+        //{
+        //    sLog.outDetail("NAVMESH Found: [%i][%i]",gx,gy);
+        //    sLog.outDetail("bmax: [%.2f][%.2f][%.2f]", myNavMesh->getTileAt(0,0)->header->bmax[0], myNavMesh->getTileAt(0,0)->header->bmax[1],myNavMesh->getTileAt(0,0)->header->bmax[2]);
+        //    sLog.outDetail("bmin: [%.2f][%.2f][%.2f]", myNavMesh->getTileAt(0,0)->header->bmin[0],myNavMesh->getTileAt(0,0)->header->bmin[1],myNavMesh->getTileAt(0,0)->header->bmin[2]);
+        //    sLog.outDetail("NodeCount: %i",myNavMesh->getTileAt(0,0)->header->bvNodeCount);
+        //    sLog.outDetail("Trying to find Start and end Poligons for:");
+        //    sLog.outDetail("Start: [%.2f][%.2f][%.2f]", startPos[0],startPos[1],startPos[2]);
+        //    sLog.outDetail("end: [%.2f][%.2f][%.2f]", endPos[0],endPos[1],endPos[2]);
+        //    dtPolyRef mStartRef = myNavMesh->findNearestPoly(startPos,mPolyPickingExtents,mPathFilter,0); // this maybe should be saved on mob for later
+        //    dtPolyRef mEndRef   = myNavMesh->findNearestPoly(endPos,mPolyPickingExtents,mPathFilter,0); // saved on player? probably waste since player moves to much
+        //    if (mStartRef != 0 && mEndRef != 0)
+        //    {
+        //        sLog.outDetail("Positions found NavMesh[%03u][%03u]: start [%03u], end [%03u]",gx,gy,mStartRef,mEndRef);
+        //    }
+        //}
+        /*
+        sLog.outDetail("Performance Measurements:");
+        struct timeval first,  second,  lapsed;
+        struct timezone tzp;
+        int pathes = 0;
+        gettimeofday (&first, &tzp);
+        float x,y,z;
+        float gx,gy,gz;
+
+        for (ActiveNonPlayers::iterator it = m_activeNonPlayers.begin(); it != m_activeNonPlayers.end(); ++it)
+        {
+            (*it)->GetPosition(x,y,z);
+            ++it;
+            if (it != m_activeNonPlayers.end())
+            {
+                (*it)->GetPosition(gx,gy,gz);
+                getNextPositionOnPathToLocation(x,y,z,gx,gy,gz);
+                pathes++;
+            }     
+        }
+        gettimeofday (&second, &tzp); 
+        if (first.tv_usec > second.tv_usec)
+        {
+            second.tv_usec += 1000000;
+            second.tv_sec--; 
+        } 
+        lapsed.tv_usec = second.tv_usec - first.tv_usec;
+        lapsed.tv_sec = second.tv_sec - first.tv_sec;
+        sLog.outDetail("Generated %i pathes in %i seconds %i ms", pathes,lapsed.tv_sec,lapsed.tv_usec);
+        */
+    }
+    else
+    {
+        sLog.outError("No MoveMap for [%i][%i][%i]",i_id,gx,gy);
+    }
+    delete[] tmp;
+}
+
 void Map::LoadVMap(int gx,int gy)
 {
                                                             // x and y are swapped !!
@@ -189,7 +295,10 @@ void Map::LoadMapAndVMap(int gx,int gy)
 {
     LoadMap(gx,gy);
     if(i_InstanceId == 0)
+    {
         LoadVMap(gx, gy);                                   // Only load the data for the base map
+        LoadNavMesh(gx, gy);
+    }
 }
 
 void Map::InitStateMachine()
@@ -221,6 +330,7 @@ Map::Map(uint32 id, time_t expiry, uint32 InstanceId, uint8 SpawnMode, Map* _par
         {
             //z code
             GridMaps[idx][j] =NULL;
+            m_navMesh[idx][j] = NULL;
             setNGrid(NULL, idx, j);
         }
     }
@@ -1584,6 +1694,14 @@ inline GridMap *Map::GetGrid(float x, float y)
     EnsureGridCreated(GridPair(63-gx,63-gy));
 
     return GridMaps[gx][gy];
+}
+
+dtNavMesh* Map::GetNavMesh(float x, float y)
+{
+    int gx=(int)(32-x/SIZE_OF_GRIDS);
+    int gy=(int)(32-y/SIZE_OF_GRIDS);
+
+    return m_navMesh[gx][gy];
 }
 
 float Map::GetHeight(float x, float y, float z, bool pUseVmaps) const

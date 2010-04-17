@@ -27,6 +27,8 @@
 #include "ObjectGuid.h"
 #include "Camera.h"
 
+#include "PathFinder.h"
+
 #include <set>
 #include <string>
 
@@ -422,6 +424,7 @@ class MANGOS_DLL_SPEC WorldObject : public Object, public GridObject
 
         float GetAngle( const WorldObject* obj ) const;
         float GetAngle( const float x, const float y ) const;
+        bool HasInArc( const float arcangle, const float x, const float y) const;
         bool HasInArc( const float arcangle, const WorldObject* obj ) const;
         bool isInFrontInMap(WorldObject const* target,float distance, float arc = M_PI) const;
         bool isInBackInMap(WorldObject const* target, float distance, float arc = M_PI) const;
@@ -483,6 +486,7 @@ class MANGOS_DLL_SPEC WorldObject : public Object, public GridObject
         GameObject* SummonGameobject(uint32 id, float x, float y, float z, float ang, uint32 despwTime);
 
         ViewPoint& getViewPoint() { return m_viewPoint; }
+
     protected:
         explicit WorldObject();
 
