@@ -17,9 +17,7 @@ enum PathType
 class PathInfo
 {
     public:
-        PathInfo(WorldObject* from, const float x, const float y, const float z)
-            : m_length(0), m_pathPolyRefs(0), m_pathPoints(0), m_sourceObject(from), m_type(PATHFIND_BLANK)
-        { setEndPosition(x, y, z); Build(); }
+        PathInfo(WorldObject* from, const float x, const float y, const float z);
 
         ~PathInfo() { delete [] m_pathPolyRefs; delete [] m_pathPoints; }
 

@@ -1,13 +1,20 @@
 #include "Object.h"
 #include "PathFinder.h"
 #include "ObjectGuid.h"
-//#include "Map.h"
+#include "Map.h"
 #include "pathfinding/Detour/DetourNavMesh.h"
 #include "pathfinding/Detour/DetourCommon.h"
 
 #include <windows.h>
 
 ////////////////// PathInfo //////////////////
+PathInfo::PathInfo(WorldObject* from, const float x, const float y, const float z)
+    : m_length(0), m_pathPolyRefs(0), m_pathPoints(0), m_sourceObject(from), m_type(PATHFIND_BLANK)
+{
+    setEndPosition(x, y, z);
+    Build();
+}
+
 dtPolyRef PathInfo::getPathPolyByPosition(float x, float y, float z)
 {
     if(!m_navMesh)

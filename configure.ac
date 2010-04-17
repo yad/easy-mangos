@@ -301,6 +301,9 @@ AC_CONFIG_FILES([
    src/shared/Config/Makefile
    src/shared/Database/Makefile
    src/shared/vmap/Makefile
+   src/shared/pathfinding/Makefile
+   src/shared/pathfinding/Detour/Makefile
+   src/shared/pathfinding/Recast/Makefile
    src/shared/SystemConfig.h
    src/game/Makefile
    src/realmd/Makefile
