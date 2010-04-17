@@ -23448,38 +23448,6 @@ bool Player::HasMovementFlag( MovementFlags f ) const
     return m_movementInfo.HasMovementFlag(f);
 }
 
-void Player::SetFarSightGUID( uint64 guid )
-{
-    if(GetFarSight() == guid)
-        return;
-
-    SetUInt64Value(PLAYER_FARSIGHT, guid);
-
-    // need triggering load grids around new view point
-    UpdateVisibilityForPlayer();
-}
-
-void Player::UpdateVisibilityForPlayer()
-{
-    WorldObject const* viewPoint = GetViewPoint();
-    Map* m = GetMap();
-
-    CellPair p(MaNGOS::ComputeCellPair(GetPositionX(), GetPositionY()));
-    Cell cell(p);
-
-    m->UpdateObjectVisibility(this, cell, p);
-
-    if (this != viewPoint)
-    {
-        CellPair pView(MaNGOS::ComputeCellPair(viewPoint->GetPositionX(), viewPoint->GetPositionY()));
-        Cell cellView(pView);
-
-        m->UpdateObjectsVisibilityFor(this, cellView, pView);
-    }
-    else
-        m->UpdateObjectsVisibilityFor(this, cell, p);
-}
-
 void Player::ResetTimeSync()
 {
     m_timeSyncCounter = 0;
