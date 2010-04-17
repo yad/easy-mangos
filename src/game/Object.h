@@ -25,6 +25,7 @@
 #include "UpdateData.h"
 #include "GameSystem/GridReference.h"
 #include "ObjectGuid.h"
+#include "Camera.h"
 
 #include <set>
 #include <string>
@@ -324,7 +325,7 @@ class MANGOS_DLL_SPEC Object
 
 struct WorldObjectChangeAccumulator;
 
-class MANGOS_DLL_SPEC WorldObject : public Object
+class MANGOS_DLL_SPEC WorldObject : public Object, public GridObject
 {
     friend struct WorldObjectChangeAccumulator;
 
@@ -429,6 +430,7 @@ class MANGOS_DLL_SPEC WorldObject : public Object
 
         virtual void CleanupsBeforeDelete();                // used in destructor or explicitly before mass creature delete to remove cross-references to already deleted units
 
+        void SendMessageToSet(WorldPacket *data, Player const* skipped_receiver);
         virtual void SendMessageToSet(WorldPacket *data, bool self);
         virtual void SendMessageToSetInRange(WorldPacket *data, float dist, bool self);
 
@@ -480,6 +482,7 @@ class MANGOS_DLL_SPEC WorldObject : public Object
         Vehicle* SummonVehicle(uint32 id, float x, float y, float z, float ang, uint32 vehicleId = NULL);
         GameObject* SummonGameobject(uint32 id, float x, float y, float z, float ang, uint32 despwTime);
 
+        ViewPoint& getViewPoint() { return m_viewPoint; }
     protected:
         explicit WorldObject();
 
@@ -502,6 +505,8 @@ class MANGOS_DLL_SPEC WorldObject : public Object
         float m_positionY;
         float m_positionZ;
         float m_orientation;
+
+        ViewPoint m_viewPoint;
 };
 
 #endif

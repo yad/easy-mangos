@@ -28,7 +28,7 @@
 #include "World.h"
 #include "ObjectMgr.h"
 
-Corpse::Corpse(CorpseType type) : WorldObject()
+Corpse::Corpse(CorpseType type) : WorldObject(), GridCorpse(this)
 {
     m_objectType |= TYPEMASK_CORPSE;
     m_objectTypeId = TYPEID_CORPSE;
@@ -42,6 +42,9 @@ Corpse::Corpse(CorpseType type) : WorldObject()
     m_time = time(NULL);
 
     lootForBody = false;
+
+    if (type != CORPSE_BONES)
+        container_type = true;
 }
 
 Corpse::~Corpse()
@@ -93,7 +96,7 @@ bool Corpse::Create( uint32 guidlow, Player *owner)
     SetFloatValue( OBJECT_FIELD_SCALE_X, 1 );
     SetUInt64Value( CORPSE_FIELD_OWNER, owner->GetGUID() );
 
-    m_grid = MaNGOS::ComputeGridPair(GetPositionX(), GetPositionY());
+    m_grid_pair = MaNGOS::ComputeGridPair(GetPositionX(), GetPositionY());
 
     return true;
 }
@@ -210,6 +213,8 @@ bool Corpse::LoadFromDB(uint32 guid, Field *fields)
 
         SetUInt32Value(CORPSE_FIELD_ITEM + slot, proto->DisplayInfoID | (proto->InventoryType << 24));
     }
+    if(m_type != CORPSE_BONES)
+        container_type = true;
 
     uint8 skin       = (uint8)(playerBytes);
     uint8 face       = (uint8)(playerBytes >> 8);
@@ -243,7 +248,7 @@ bool Corpse::LoadFromDB(uint32 guid, Field *fields)
         return false;
     }
 
-    m_grid = MaNGOS::ComputeGridPair(GetPositionX(), GetPositionY());
+    m_grid_pair = MaNGOS::ComputeGridPair(GetPositionX(), GetPositionY());
 
     return true;
 }

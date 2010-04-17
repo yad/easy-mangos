@@ -33,9 +33,9 @@ inline Cell::Cell(CellPair const& p)
     data.Part.reserved = 0;
 }
 
-template<class T, class CONTAINER>
+template<class V>
 inline void
-Cell::Visit(const CellPair &standing_cell, TypeContainerVisitor<T, CONTAINER> &visitor, Map &m) const
+Cell::Visit(const CellPair &standing_cell, V &visitor, Map &m) const
 {
     if (standing_cell.x_coord >= TOTAL_NUMBER_OF_CELLS_PER_MAP || standing_cell.y_coord >= TOTAL_NUMBER_OF_CELLS_PER_MAP)
         return;
@@ -163,9 +163,9 @@ inline CellArea Cell::CalculateCellArea(const WorldObject &obj, float radius)
     return CellArea(right, left, upper, lower);
 }
 
-template<class T, class CONTAINER>
+template<class V>
 inline void
-Cell::Visit(const CellPair &standing_cell, TypeContainerVisitor<T, CONTAINER> &visitor, Map &m, const WorldObject &obj, float radius) const
+Cell::Visit(const CellPair &standing_cell, V &visitor, Map &m, const WorldObject &obj, float radius) const
 {
     if (standing_cell.x_coord >= TOTAL_NUMBER_OF_CELLS_PER_MAP || standing_cell.y_coord >= TOTAL_NUMBER_OF_CELLS_PER_MAP)
         return;
@@ -226,9 +226,9 @@ Cell::Visit(const CellPair &standing_cell, TypeContainerVisitor<T, CONTAINER> &v
     }
 }
 
-template<class T, class CONTAINER>
+template<class V>
 inline void
-Cell::VisitCircle(TypeContainerVisitor<T, CONTAINER> &visitor, Map &m, const CellPair& begin_cell, const CellPair& end_cell) const
+Cell::VisitCircle(V &visitor, Map &m, const CellPair& begin_cell, const CellPair& end_cell) const
 {
     //here is an algorithm for 'filling' circum-squared octagon
     uint32 x_shift = (uint32)ceilf((end_cell.x_coord - begin_cell.x_coord) * 0.3f - 0.5f);
@@ -286,7 +286,7 @@ inline void Cell::VisitGridObjects(const WorldObject *center_obj, T &visitor, fl
     Cell cell(p);
     if (dont_load)
         cell.SetNoCreate();
-    TypeContainerVisitor<T, GridTypeMapContainer > gnotifier(visitor);
+    typename GridTypeVisitor<T>::Grid gnotifier(visitor);
     cell.Visit(p, gnotifier, *center_obj->GetMap(), *center_obj, radius);
 }
 
@@ -297,8 +297,8 @@ inline void Cell::VisitWorldObjects(const WorldObject *center_obj, T &visitor, f
     Cell cell(p);
     if (dont_load)
         cell.SetNoCreate();
-    TypeContainerVisitor<T, WorldTypeMapContainer > gnotifier(visitor);
-    cell.Visit(p, gnotifier, *center_obj->GetMap(), *center_obj, radius);
+    typename GridTypeVisitor<T>::World wnotifier(visitor);
+    cell.Visit(p, wnotifier, *center_obj->GetMap(), *center_obj, radius);
 }
 
 template<class T>
@@ -308,10 +308,21 @@ inline void Cell::VisitAllObjects(const WorldObject *center_obj, T &visitor, flo
     Cell cell(p);
     if (dont_load)
         cell.SetNoCreate();
-    TypeContainerVisitor<T, GridTypeMapContainer > gnotifier(visitor);
-    TypeContainerVisitor<T, WorldTypeMapContainer > wnotifier(visitor);
+    typename GridTypeVisitor<T>::Grid gnotifier(visitor);
+    typename GridTypeVisitor<T>::World wnotifier(visitor);
     cell.Visit(p, gnotifier, *center_obj->GetMap(), *center_obj, radius);
     cell.Visit(p, wnotifier, *center_obj->GetMap(), *center_obj, radius);
+}
+
+template<class T>
+inline void Cell::VisitCameras(const WorldObject *center_obj, T &visitor, float radius, bool dont_load)
+{
+    CellPair p(MaNGOS::ComputeCellPair(center_obj->GetPositionX(), center_obj->GetPositionY()));
+    Cell cell(p);
+    if (dont_load)
+        cell.SetNoCreate();
+    typename GridTypeVisitor<T>::Camera cnotifier(visitor);
+    cell.Visit(p, cnotifier, *center_obj->GetMap(), *center_obj, radius);
 }
 
 #endif

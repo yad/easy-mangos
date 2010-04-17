@@ -21,6 +21,7 @@
 
 #include "Common.h"
 #include "GameSystem/NGrid.h"
+#include "GameSystem/GridObject.h"
 #include <cmath>
 
 // Forward class definitions
@@ -31,6 +32,7 @@ class DynamicObject;
 class GameObject;
 class Pet;
 class Player;
+class Camera;
 
 #define MAX_NUMBER_OF_GRIDS      64
 
@@ -56,7 +58,7 @@ class Player;
 #define MAP_HALFSIZE            (MAP_SIZE/2)
 
 // Creature used instead pet to simplify *::Visit templates (not required duplicate code for Creature->Pet case)
-typedef TYPELIST_3(Player, Creature/*pets*/, Corpse/*resurrectable*/)                   AllWorldObjectTypes;
+typedef TYPELIST_4(Player, Creature/*pets*/, Corpse/*resurrectable*/, Camera)           AllWorldObjectTypes;
 typedef TYPELIST_4(GameObject, Creature/*except pets*/, DynamicObject, Corpse/*Bones*/) AllGridObjectTypes;
 typedef TYPELIST_5(Creature, Pet, Vehicle, GameObject, DynamicObject)                   AllMapStoredObjectTypes;
 
@@ -65,12 +67,30 @@ typedef GridRefManager<Creature>        CreatureMapType;
 typedef GridRefManager<DynamicObject>   DynamicObjectMapType;
 typedef GridRefManager<GameObject>      GameObjectMapType;
 typedef GridRefManager<Player>          PlayerMapType;
+typedef GridRefManager<Camera>          CameraMapType;
 
 typedef Grid<Player, AllWorldObjectTypes,AllGridObjectTypes> GridType;
 typedef NGrid<MAX_NUMBER_OF_CELLS, Player, AllWorldObjectTypes, AllGridObjectTypes> NGridType;
 
 typedef TypeMapContainer<AllGridObjectTypes> GridTypeMapContainer;
 typedef TypeMapContainer<AllWorldObjectTypes> WorldTypeMapContainer;
+
+typedef GridObjBase<GridType>             GridObject;
+
+typedef GridObject::Type<Corpse>          GridCorpse;
+typedef GridObject::Type<Creature>        GridCreature;
+typedef GridObject::Type<DynamicObject>   GridDynamicObject;
+typedef GridObject::Type<GameObject>      GridGameObject;
+typedef GridObject::Type<Player>          GridPlayer;
+typedef GridObject::Type<Camera>          GridCamera;
+
+template<typename VISITOR>
+struct GridTypeVisitor
+{
+    typedef TypeContainerVisitor<VISITOR,WorldTypeMapContainer,GenericMapVisitorType > World;
+    typedef TypeContainerVisitor<VISITOR,GridTypeMapContainer,GenericMapVisitorType > Grid;
+    typedef TypeContainerVisitor<VISITOR,WorldTypeMapContainer,CameraMapVisitorType > Camera;
+};
 
 template<const unsigned int LIMIT>
 struct MANGOS_DLL_DECL CoordPair

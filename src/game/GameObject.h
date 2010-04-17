@@ -566,7 +566,7 @@ class Unit;
 // 5 sec for bobber catch
 #define FISHING_BOBBER_READY_TIME 5
 
-class MANGOS_DLL_SPEC GameObject : public WorldObject
+class MANGOS_DLL_SPEC GameObject : public WorldObject, public GridGameObject
 {
     public:
         explicit GameObject();
@@ -693,9 +693,6 @@ class MANGOS_DLL_SPEC GameObject : public WorldObject
 
         GameObject* LookupFishingHoleAround(float range);
 
-        GridReference<GameObject> &GetGridRef() { return m_gridRef; }
-
-        bool isActiveObject() const { return false; }
         uint64 GetRotation() const { return m_rotation; }
         void DealSiegeDamage(uint32 damage);
     protected:
@@ -717,7 +714,5 @@ class MANGOS_DLL_SPEC GameObject : public WorldObject
         uint64 m_rotation;
     private:
         void SwitchDoorOrButton(bool activate, bool alternative = false);
-
-        GridReference<GameObject> m_gridRef;
 };
 #endif

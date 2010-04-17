@@ -40,7 +40,7 @@ class MANGOS_DLL_DECL ObjectGridRespawnMover
 void
 ObjectGridRespawnMover::Move(GridType &grid)
 {
-    TypeContainerVisitor<ObjectGridRespawnMover, GridTypeMapContainer > mover(*this);
+    GridTypeVisitor<ObjectGridRespawnMover>::Grid mover(*this);
     grid.Visit(mover);
 }
 
@@ -105,8 +105,14 @@ template<> void addUnitState(Creature *obj, CellPair const& cell_pair)
 }
 
 template <class T>
-void LoadHelper(CellGuidSet const& guid_set, CellPair &cell, GridRefManager<T> &m, uint32 &count, Map* map)
+void LoadHelper(CellGuidSet const& guid_set, CellPair &cellpair, GridRefManager<T> &m, uint32 &count, Map* map)
 {
+    BattleGround* bg = map->IsBattleGroundOrArena() ? ((BattleGroundMap*)map)->GetBG() : NULL;
+
+    Cell cell(cellpair);
+    NGridType* grid = map->getNGrid(cell.GridX(),cell.GridY());
+    GridType * type = &(*grid)(cell.CellX(), cell.CellY());
+
     for(CellGuidSet::const_iterator i_guid = guid_set.begin(); i_guid != guid_set.end(); ++i_guid)
     {
         uint32 guid = *i_guid;
@@ -119,9 +125,9 @@ void LoadHelper(CellGuidSet const& guid_set, CellPair &cell, GridRefManager<T> &
             continue;
         }
 
-        obj->GetGridRef().link(&m, obj);
+        obj->SetGrid(type);
 
-        addUnitState(obj,cell);
+        addUnitState(obj,cellpair);
         obj->SetMap(map);
         obj->AddToWorld();
         if(obj->isActiveObject())
@@ -132,10 +138,15 @@ void LoadHelper(CellGuidSet const& guid_set, CellPair &cell, GridRefManager<T> &
     }
 }
 
-void LoadHelper(CellCorpseSet const& cell_corpses, CellPair &cell, CorpseMapType &m, uint32 &count, Map* map)
+void LoadHelper(CellCorpseSet const& cell_corpses, CellPair &cellpair, CorpseMapType &m, uint32 &count, Map* map)
 {
     if(cell_corpses.empty())
         return;
+
+    // TODO: make a spec function to access to GridType
+    Cell cell(cellpair);
+    NGridType* grid = map->getNGrid(cell.GridX(),cell.GridY());
+    GridType * type = &(*grid)(cell.CellX(), cell.CellY()); // i won't check if type ptr is null (GridType must be already created)
 
     for(CellCorpseSet::const_iterator itr = cell_corpses.begin(); itr != cell_corpses.end(); ++itr)
     {
@@ -148,9 +159,9 @@ void LoadHelper(CellCorpseSet const& cell_corpses, CellPair &cell, CorpseMapType
         if(!obj)
             continue;
 
-        obj->GetGridRef().link(&m, obj);
+        obj->SetGrid(type);
 
-        addUnitState(obj,cell);
+        addUnitState(obj,cellpair);
         obj->SetMap(map);
         obj->AddToWorld();
         if(obj->isActiveObject())
@@ -203,13 +214,13 @@ void
 ObjectGridLoader::Load(GridType &grid)
 {
     {
-        TypeContainerVisitor<ObjectGridLoader, GridTypeMapContainer > loader(*this);
+        GridTypeVisitor<ObjectGridLoader>::Grid loader(*this);
         grid.Visit(loader);
     }
 
     {
         ObjectWorldLoader wloader(*this);
-        TypeContainerVisitor<ObjectWorldLoader, WorldTypeMapContainer > loader(wloader);
+        GridTypeVisitor<ObjectWorldLoader>::World loader(wloader);
         grid.Visit(loader);
         i_corpses = wloader.i_corpses;
     }
@@ -247,7 +258,7 @@ void ObjectGridUnloader::MoveToRespawnN()
 void
 ObjectGridUnloader::Unload(GridType &grid)
 {
-    TypeContainerVisitor<ObjectGridUnloader, GridTypeMapContainer > unloader(*this);
+    GridTypeVisitor<ObjectGridUnloader>::Grid unloader(*this);
     grid.Visit(unloader);
 }
 
@@ -275,7 +286,7 @@ ObjectGridUnloader::Visit(GridRefManager<T> &m)
 void
 ObjectGridStoper::Stop(GridType &grid)
 {
-    TypeContainerVisitor<ObjectGridStoper, GridTypeMapContainer > stoper(*this);
+    GridTypeVisitor<ObjectGridStoper>::Grid stoper(*this);
     grid.Visit(stoper);
 }
 

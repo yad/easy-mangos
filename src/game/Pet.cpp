@@ -62,6 +62,8 @@ m_declinedname(NULL), m_petModeFlags(PET_MODE_DEFAULT)
     baseMoveSpeed[MOVE_FLIGHT] = 7.0f * sWorld.getConfig(CONFIG_FLOAT_RATE_CHARFLIGHTSPEED);
     baseMoveSpeed[MOVE_FLIGHT_BACK] = 4.5f;
     baseMoveSpeed[MOVE_PITCH_RATE] = 3.14f;
+
+    container_type = true;
 }
 
 Pet::~Pet()

@@ -488,6 +488,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\framework\GameSystem\GridObject.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\framework\GameSystem\GridReference.h"
 				>
 			</File>

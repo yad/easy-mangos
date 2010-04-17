@@ -32,11 +32,9 @@ template<class T>
 inline void
 MaNGOS::VisibleNotifier::Visit(GridRefManager<T> &m)
 {
-    WorldObject const* viewPoint = i_player.GetViewPoint();
-
     for(typename GridRefManager<T>::iterator iter = m.begin(); iter != m.end(); ++iter)
     {
-        i_player.UpdateVisibilityOf(viewPoint,iter->getSource(),i_data,i_data_updates,i_visibleNow);
+        camera.UpdateVisibilityOf(iter->getSource(),i_data,i_visibleNow);
         i_clientGUIDs.erase(iter->getSource()->GetGUID());
     }
 }
@@ -100,7 +98,7 @@ MaNGOS::PlayerRelocationNotifier::Visit(CreatureMapType &m)
     if(!i_player.isAlive() || i_player.isInFlight())
         return;
 
-    WorldObject const* viewPoint = i_player.GetViewPoint();
+    WorldObject const* viewPoint = i_player.GetCamera().getBody();
 
     for(CreatureMapType::iterator iter=m.begin(); iter != m.end(); ++iter)
         if (iter->getSource()->isAlive())
@@ -117,7 +115,7 @@ MaNGOS::CreatureRelocationNotifier::Visit(PlayerMapType &m)
     for(PlayerMapType::iterator iter=m.begin(); iter != m.end(); ++iter)
         if (Player* player = iter->getSource())
             if (player->isAlive() && !player->isInFlight())
-                PlayerCreatureRelocationWorker(player, player->GetViewPoint(), &i_creature);
+                PlayerCreatureRelocationWorker(player, player->GetCamera().getBody(), &i_creature);
 }
 
 template<>

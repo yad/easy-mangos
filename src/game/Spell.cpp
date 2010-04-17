@@ -6694,8 +6694,8 @@ void Spell::FillAreaTargets(UnitList &targetUnitMap, float x, float y, float rad
     cell.data.Part.reserved = ALL_DISTRICT;
     cell.SetNoCreate();
     MaNGOS::SpellNotifierCreatureAndPlayer notifier(*this, targetUnitMap, radius, pushType, spellTargets);
-    TypeContainerVisitor<MaNGOS::SpellNotifierCreatureAndPlayer, WorldTypeMapContainer > world_notifier(notifier);
-    TypeContainerVisitor<MaNGOS::SpellNotifierCreatureAndPlayer, GridTypeMapContainer > grid_notifier(notifier);
+    GridTypeVisitor<MaNGOS::SpellNotifierCreatureAndPlayer>::Grid world_notifier(notifier);
+    GridTypeVisitor<MaNGOS::SpellNotifierCreatureAndPlayer>::World grid_notifier(notifier);
     cell.Visit(p, world_notifier, *m_caster->GetMap(), *m_caster, radius);
     cell.Visit(p, grid_notifier, *m_caster->GetMap(), *m_caster, radius);
 }

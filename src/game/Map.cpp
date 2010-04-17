@@ -240,87 +240,51 @@ void Map::InitVisibilityDistance()
 template<class T>
 void Map::AddToGrid(T* obj, NGridType *grid, Cell const& cell)
 {
-    (*grid)(cell.CellX(), cell.CellY()).template AddGridObject<T>(obj);
+    obj->SetGrid(&(*grid)(cell.CellX(), cell.CellY()));// SetGrid should call AddGridObject/RemoveGridObject functions
 }
 
 template<>
 void Map::AddToGrid(Player* obj, NGridType *grid, Cell const& cell)
 {
-    (*grid)(cell.CellX(), cell.CellY()).AddWorldObject(obj);
+    obj->SetGrid(&(*grid)(cell.CellX(), cell.CellY()));
 }
 
 template<>
 void Map::AddToGrid(Corpse *obj, NGridType *grid, Cell const& cell)
 {
-    // add to world object registry in grid
-    if(obj->GetType()!=CORPSE_BONES)
-    {
-        (*grid)(cell.CellX(), cell.CellY()).AddWorldObject(obj);
-    }
-    // add to grid object store
-    else
-    {
-        (*grid)(cell.CellX(), cell.CellY()).AddGridObject(obj);
-    }
+    obj->SetGrid(&(*grid)(cell.CellX(), cell.CellY()));
 }
 
 template<>
 void Map::AddToGrid(Creature* obj, NGridType *grid, Cell const& cell)
 {
-    // add to world object registry in grid
-    if(obj->isPet() || obj->isVehicle())
-    {
-        (*grid)(cell.CellX(), cell.CellY()).AddWorldObject<Creature>(obj);
-        obj->SetCurrentCell(cell);
-    }
-    // add to grid object store
-    else
-    {
-        (*grid)(cell.CellX(), cell.CellY()).AddGridObject<Creature>(obj);
-        obj->SetCurrentCell(cell);
-    }
+    obj->SetGrid(&(*grid)(cell.CellX(), cell.CellY()));
+
+    obj->SetCurrentCell(cell);
 }
 
 template<class T>
 void Map::RemoveFromGrid(T* obj, NGridType *grid, Cell const& cell)
 {
-    (*grid)(cell.CellX(), cell.CellY()).template RemoveGridObject<T>(obj);
+    obj->SetGrid(NULL);
 }
 
 template<>
 void Map::RemoveFromGrid(Player* obj, NGridType *grid, Cell const& cell)
 {
-    (*grid)(cell.CellX(), cell.CellY()).RemoveWorldObject(obj);
+    obj->SetGrid(NULL);
 }
 
 template<>
 void Map::RemoveFromGrid(Corpse *obj, NGridType *grid, Cell const& cell)
 {
-    // remove from world object registry in grid
-    if(obj->GetType()!=CORPSE_BONES)
-    {
-        (*grid)(cell.CellX(), cell.CellY()).RemoveWorldObject(obj);
-    }
-    // remove from grid object store
-    else
-    {
-        (*grid)(cell.CellX(), cell.CellY()).RemoveGridObject(obj);
-    }
+    obj->SetGrid(NULL);
 }
 
 template<>
 void Map::RemoveFromGrid(Creature* obj, NGridType *grid, Cell const& cell)
 {
-    // remove from world object registry in grid
-    if(obj->isPet() || obj->isVehicle())
-    {
-        (*grid)(cell.CellX(), cell.CellY()).RemoveWorldObject<Creature>(obj);
-    }
-    // remove from grid object store
-    else
-    {
-        (*grid)(cell.CellX(), cell.CellY()).RemoveGridObject<Creature>(obj);
-    }
+    obj->SetGrid(NULL);
 }
 
 template<class T>
@@ -452,7 +416,6 @@ bool Map::Add(Player *player)
     SendInitTransports(player);
 
     UpdateObjectVisibility(player,cell,p);
-    UpdateObjectsVisibilityFor(player,cell,p);
 
     AddNotifier(player,cell,p);
     return true;
@@ -513,7 +476,7 @@ void Map::MessageBroadcast(Player *player, WorldPacket *msg, bool to_self)
         return;
 
     MaNGOS::MessageDeliverer post_man(*player, msg, to_self);
-    TypeContainerVisitor<MaNGOS::MessageDeliverer, WorldTypeMapContainer > message(post_man);
+    GridTypeVisitor<MaNGOS::MessageDeliverer >::Camera message(post_man);
     cell.Visit(p, message, *this, *player, GetVisibilityDistance());
 }
 
@@ -537,7 +500,7 @@ void Map::MessageBroadcast(WorldObject *obj, WorldPacket *msg)
     //TODO: currently on continents when Visibility.Distance.InFlight > Visibility.Distance.Continents
     //we have alot of blinking mobs because monster move packet send is broken...
     MaNGOS::ObjectMessageDeliverer post_man(*obj,msg);
-    TypeContainerVisitor<MaNGOS::ObjectMessageDeliverer, WorldTypeMapContainer > message(post_man);
+    GridTypeVisitor<MaNGOS::ObjectMessageDeliverer >::Camera message(post_man);
     cell.Visit(p, message, *this, *obj, GetVisibilityDistance());
 }
 
@@ -559,7 +522,7 @@ void Map::MessageDistBroadcast(Player *player, WorldPacket *msg, float dist, boo
         return;
 
     MaNGOS::MessageDistDeliverer post_man(*player, msg, dist, to_self, own_team_only);
-    TypeContainerVisitor<MaNGOS::MessageDistDeliverer , WorldTypeMapContainer > message(post_man);
+    GridTypeVisitor<MaNGOS::MessageDistDeliverer >::Camera message(post_man);
     cell.Visit(p, message, *this, *player, dist);
 }
 
@@ -581,7 +544,7 @@ void Map::MessageDistBroadcast(WorldObject *obj, WorldPacket *msg, float dist)
         return;
 
     MaNGOS::ObjectMessageDistDeliverer post_man(*obj, msg, dist);
-    TypeContainerVisitor<MaNGOS::ObjectMessageDistDeliverer, WorldTypeMapContainer > message(post_man);
+    GridTypeVisitor<MaNGOS::ObjectMessageDistDeliverer >::Camera message(post_man);
     cell.Visit(p, message, *this, *obj, dist);
 }
 
@@ -604,10 +567,8 @@ void Map::Update(const uint32 &t_diff)
     resetMarkedCells();
 
     MaNGOS::ObjectUpdater updater(t_diff);
-    // for creature
-    TypeContainerVisitor<MaNGOS::ObjectUpdater, GridTypeMapContainer  > grid_object_update(updater);
-    // for pets
-    TypeContainerVisitor<MaNGOS::ObjectUpdater, WorldTypeMapContainer > world_object_update(updater);
+    GridTypeVisitor<MaNGOS::ObjectUpdater>::Grid grid_object_update(updater);
+    GridTypeVisitor<MaNGOS::ObjectUpdater>::World world_object_update(updater);
 
     // the player iterator is stored in the map object
     // to make sure calls to Map::Remove don't invalidate it
@@ -774,7 +735,6 @@ void Map::Remove(Player *player, bool remove)
 
     SendRemoveTransports(player);
     UpdateObjectVisibility(player,cell,p);
-    UpdateObjectsVisibilityFor(player,cell,p);
 
     player->ResetMap();
     if( remove )
@@ -851,10 +811,13 @@ Map::PlayerRelocation(Player *player, float x, float y, float z, float orientati
             AddToGrid(player, oldGrid,new_cell);
         else
             EnsureGridLoadedAtEnter(new_cell, player);
+
+        player->getViewPoint().CameraEvent_Moved();
     }
 
+    // update visibility of nearby objects for cameras which attached to player
+    player->getViewPoint().CameraCall_UpdateVisibilityForOwner();
     // if move then update what player see and who seen
-    UpdateObjectsVisibilityFor(player,new_cell,new_val);
     UpdateObjectVisibility(player, new_cell, new_val);
     PlayerRelocationNotify(player,new_cell,new_val);
 
@@ -892,6 +855,7 @@ Map::CreatureRelocation(Creature *creature, float x, float y, float z, float ang
 
             // in diffcell/diffgrid case notifiers called in Creature::Update
             creature->SetNeedNotify();
+            creature->getViewPoint().CameraEvent_Moved();
         }
         else
         {
@@ -914,6 +878,7 @@ Map::CreatureRelocation(Creature *creature, float x, float y, float z, float ang
         creature->SetNeedNotify();
     }
 
+    creature->getViewPoint().CameraCall_UpdateVisibilityForOwner();
     ASSERT(CheckGridIntegrity(creature,true));
 }
 
@@ -2036,23 +2001,8 @@ void Map::UpdateObjectVisibility( WorldObject* obj, Cell cell, CellPair cellpair
     cell.data.Part.reserved = ALL_DISTRICT;
     cell.SetNoCreate();
     MaNGOS::VisibleChangesNotifier notifier(*obj);
-    TypeContainerVisitor<MaNGOS::VisibleChangesNotifier, WorldTypeMapContainer > player_notifier(notifier);
+    GridTypeVisitor<MaNGOS::VisibleChangesNotifier>::Camera player_notifier(notifier);
     cell.Visit(cellpair, player_notifier, *this, *obj, GetVisibilityDistance());
-}
-
-void Map::UpdateObjectsVisibilityFor( Player* player, Cell cell, CellPair cellpair )
-{
-    MaNGOS::VisibleNotifier notifier(*player);
-
-    cell.data.Part.reserved = ALL_DISTRICT;
-    //cell.SetNoCreate();   need trigger cell loading around the player
-    TypeContainerVisitor<MaNGOS::VisibleNotifier, WorldTypeMapContainer > world_notifier(notifier);
-    TypeContainerVisitor<MaNGOS::VisibleNotifier, GridTypeMapContainer  > grid_notifier(notifier);
-    cell.Visit(cellpair, world_notifier, *this, *player, GetVisibilityDistance());
-    cell.Visit(cellpair, grid_notifier,  *this, *player, GetVisibilityDistance());
-
-    // send data
-    notifier.Notify();
 }
 
 void Map::PlayerRelocationNotify( Player* player, Cell cell, CellPair cellpair )
@@ -2060,8 +2010,8 @@ void Map::PlayerRelocationNotify( Player* player, Cell cell, CellPair cellpair )
     MaNGOS::PlayerRelocationNotifier relocationNotifier(*player);
     cell.data.Part.reserved = ALL_DISTRICT;
 
-    TypeContainerVisitor<MaNGOS::PlayerRelocationNotifier, GridTypeMapContainer >  p2grid_relocation(relocationNotifier);
-    TypeContainerVisitor<MaNGOS::PlayerRelocationNotifier, WorldTypeMapContainer > p2world_relocation(relocationNotifier);
+    GridTypeVisitor<MaNGOS::PlayerRelocationNotifier >::Grid  p2grid_relocation(relocationNotifier);
+    GridTypeVisitor<MaNGOS::PlayerRelocationNotifier >::World p2world_relocation(relocationNotifier);
 
     float radius = MAX_CREATURE_ATTACK_RADIUS * sWorld.getConfig(CONFIG_FLOAT_RATE_CREATURE_AGGRO);
 
