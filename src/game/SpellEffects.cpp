@@ -1597,6 +1597,22 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     m_caster->CastSpell(unitTarget,60934,true,NULL);
                     return;
                 }
+                case 62653:                                 // Tidal Wave - nonheroic version
+                {
+                    if(!unitTarget)
+                        return;
+
+                    m_caster->CastSpell(unitTarget, 62654, true);
+                    return;
+                }
+                case 62935:                                 // Tidal Wave - heroic version
+                {
+                    if(!unitTarget)
+                        return;
+
+                    m_caster->CastSpell(unitTarget, 62936, true);
+                    return;
+                }
                 case 67019:                                 // Flask of the North
                 {
                     if (m_caster->GetTypeId() != TYPEID_PLAYER)
@@ -1812,22 +1828,6 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
             // Life Tap
             if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000000000040000))
             {
-                // In 303 exist spirit depend
-                uint32 spirit = uint32(m_caster->GetStat(STAT_SPIRIT));
-                switch (m_spellInfo->Id)
-                {
-                    case  1454: damage+=spirit; break;
-                    case  1455: damage+=spirit*15/10; break;
-                    case  1456: damage+=spirit*2; break;
-                    case 11687: damage+=spirit*25/10; break;
-                    case 11688:
-                    case 11689:
-                    case 27222:
-                    case 57946: damage+=spirit*3; break;
-                    default:
-                        sLog.outError("Spell::EffectDummy: %u Life Tap need set spirit multipler", m_spellInfo->Id);
-                        return;
-                }
 //              Think its not need (also need remove Life Tap from SpellDamageBonus or add new value)
 //              damage = m_caster->SpellDamageBonus(m_caster, m_spellInfo,uint32(damage > 0 ? damage : 0), SPELL_DIRECT_DAMAGE);
                 if (unitTarget && (int32(unitTarget->GetHealth()) > damage))
@@ -1835,7 +1835,8 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     // Shouldn't Appear in Combat Log
                     unitTarget->ModifyHealth(-damage);
 
-                    int32 mana = damage;
+                    int32 spell_power = m_caster->SpellBaseDamageBonus(GetSpellSchoolMask(m_spellInfo)) + m_caster->SpellBaseDamageBonusForVictim(GetSpellSchoolMask(m_spellInfo), unitTarget);
+                    int32 mana = damage + (spell_power * 5/10 * m_caster->CalculateLevelPenalty(m_spellInfo));
                     // Improved Life Tap mod
                     Unit::AuraList const& auraDummy = m_caster->GetAurasByType(SPELL_AURA_DUMMY);
                     for(Unit::AuraList::const_iterator itr = auraDummy.begin(); itr != auraDummy.end(); ++itr)
@@ -5875,6 +5876,41 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
 
                     m_caster->CastSpell(unitTarget, 72588, true);
                     return;
+                }
+                case 62678:									// Summon Allies of Nature
+                {
+                    uint32 spellId = 0;
+                    switch(urand(0,2))
+                    {
+                        case 0:     spellId = 62688; break;
+                        case 1:     spellId = 62686; break;
+                        case 2:     spellId = 62685; break;
+                    }
+                    m_caster->CastSpell(m_caster, spellId, true);
+                    return;
+                }
+                case 62688:									// Summon Wave - 10 Mob
+                {
+                    for(int8 i = 0; i < 12; i++)
+                        m_caster->CastSpell(m_caster, 62687, true);
+                    return;
+                }
+                case 62217:
+                case 62922:                                 // Unstable Energy - Unstable Sun Beam remove part
+                {
+                    if(m_caster)
+                        m_caster->RemoveAurasDueToSpell(m_spellInfo->EffectBasePoints[eff_idx] + 1);
+                    return;
+                }
+                case 62262:                                // Brightleaf Flux
+                {
+                    if(!unitTarget)
+                        return;
+                    
+                    uint32 spellId = urand(0,1) ? 62251 : 62252;
+                    m_caster->CastSpell(unitTarget, spellId, true);
+                    if(Aura *pAura = unitTarget->GetAura(spellId, EFFECT_INDEX_0))
+                        pAura->SetStackAmount(urand(1,8));
                 }
             }
             break;

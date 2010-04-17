@@ -1108,6 +1108,7 @@ enum Targets
     TARGET_SELF2                       = 87,
     TARGET_DIRECTLY_FORWARD            = 89,
     TARGET_NONCOMBAT_PET               = 90,
+    TARGET_RANDOM_POINT_AROUND_CASTER  = 91,                // currently used only for Freya spell waves, should work simmilar like 73
     TARGET_IN_FRONT_OF_CASTER_2        = 104,
 };
 
