@@ -1253,7 +1253,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         bool isFlyingSpell(SpellEntry const* spellInfo) const
         {
             return spellInfo->EffectApplyAuraName[0]==SPELL_AURA_MOUNTED && 
-            spellInfo->EffectApplyAuraName[1]==SPELL_AURA_MOD_INCREASE_FLIGHT_SPEED && 
+            spellInfo->EffectApplyAuraName[1]==SPELL_AURA_MOD_FLIGHT_SPEED_MOUNTED && 
             spellInfo->EffectApplyAuraName[2]==SPELL_AURA_MOD_INCREASE_MOUNTED_SPEED;
         }
 
@@ -1281,7 +1281,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         { 
             Unmount(); 
             RemoveSpellsCausingAura(SPELL_AURA_MOUNTED); 
-            RemoveSpellsCausingAura(SPELL_AURA_MOD_INCREASE_FLIGHT_SPEED);
+            RemoveSpellsCausingAura(SPELL_AURA_MOD_FLIGHT_SPEED_MOUNTED);
             RemoveSpellsCausingAura(SPELL_AURA_MOD_INCREASE_MOUNTED_SPEED);
         }
 
@@ -1307,7 +1307,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         bool HasAuraTypeFlyingSpell()
         {
             return HasAuraType(SPELL_AURA_MOUNTED) &&
-            HasAuraType(SPELL_AURA_MOD_INCREASE_FLIGHT_SPEED) &&
+            HasAuraType(SPELL_AURA_MOD_FLIGHT_SPEED_MOUNTED) &&
             HasAuraType(SPELL_AURA_MOD_INCREASE_MOUNTED_SPEED);
         }
 

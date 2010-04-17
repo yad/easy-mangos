@@ -993,7 +993,7 @@ void PlayerbotAI::CheckMount()
                         }
                     }
                     else if((pSpellInfo->EffectApplyAuraName[1] == SPELL_AURA_MOD_INCREASE_MOUNTED_SPEED)
-                        && (pSpellInfo->EffectApplyAuraName[2] == SPELL_AURA_MOD_INCREASE_FLIGHT_SPEED))
+                        && (pSpellInfo->EffectApplyAuraName[2] == SPELL_AURA_MOD_FLIGHT_SPEED_MOUNTED))
                     {
                         if((pSpellInfo->EffectBasePoints[1] == master_speed1)
                             && (pSpellInfo->EffectBasePoints[2] == master_speed2))
@@ -1003,7 +1003,7 @@ void PlayerbotAI::CheckMount()
                         }
                     }
                     else if((pSpellInfo->EffectApplyAuraName[2] == SPELL_AURA_MOD_INCREASE_MOUNTED_SPEED)
-                        && (pSpellInfo->EffectApplyAuraName[1] == SPELL_AURA_MOD_INCREASE_FLIGHT_SPEED))
+                        && (pSpellInfo->EffectApplyAuraName[1] == SPELL_AURA_MOD_FLIGHT_SPEED_MOUNTED))
                     {
                         if((pSpellInfo->EffectBasePoints[2] == master_speed2) 
                             && (pSpellInfo->EffectBasePoints[1] == master_speed1))
@@ -1023,7 +1023,7 @@ void PlayerbotAI::CheckMount()
         m_bot->GetSession()->HandleCancelMountAuraOpcode(emptyPacket);  //updated code
         m_bot->Unmount(); 
         m_bot->RemoveSpellsCausingAura(SPELL_AURA_MOUNTED); 
-        m_bot->RemoveSpellsCausingAura(SPELL_AURA_MOD_INCREASE_FLIGHT_SPEED);
+        m_bot->RemoveSpellsCausingAura(SPELL_AURA_MOD_FLIGHT_SPEED_MOUNTED);
         m_bot->RemoveSpellsCausingAura(SPELL_AURA_MOD_INCREASE_MOUNTED_SPEED);
     }
 }
