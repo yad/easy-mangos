@@ -37,6 +37,8 @@
 #include "Timer.h"
 #include <list>
 
+#include "PathFinder.h"
+
 enum SpellInterruptFlags
 {
     SPELL_INTERRUPT_FLAG_MOVEMENT     = 0x01,

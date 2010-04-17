@@ -26,8 +26,6 @@
 #include "GameSystem/GridReference.h"
 #include "ObjectGuid.h"
 
-#include "PathFinder.h"
-
 #include <set>
 #include <string>
 

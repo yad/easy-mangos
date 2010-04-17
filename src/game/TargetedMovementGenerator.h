@@ -23,6 +23,7 @@
 #include "DestinationHolder.h"
 #include "Traveller.h"
 #include "FollowerReference.h"
+#include "PathFinder.h"
 
 class MANGOS_DLL_SPEC TargetedMovementGeneratorBase
 {
