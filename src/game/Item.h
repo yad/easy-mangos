@@ -328,6 +328,9 @@ class MANGOS_DLL_SPEC Item : public Object
         void AddToClientUpdateList();
         void RemoveFromClientUpdateList();
         void BuildUpdateData(UpdateDataMapType& update_players);
+
+        void SetExtCostId(uint32 id) { m_ExtendedCostId = id; };
+        uint32 GetExtCostId() { return m_ExtendedCostId; };
     private:
         std::string m_text;
         uint8 m_slot;
@@ -335,5 +338,6 @@ class MANGOS_DLL_SPEC Item : public Object
         ItemUpdateState uState;
         int16 uQueuePos;
         bool mb_in_trade;                                   // true if item is currently in trade-window
+        uint32 m_ExtendedCostId;
 };
 #endif

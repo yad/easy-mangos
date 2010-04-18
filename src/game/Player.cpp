@@ -18624,6 +18624,7 @@ bool Player::BuyItemFromVendorSlot(uint64 vendorguid, uint32 vendorslot, uint32 
         }
 
         ModifyMoney( -(int32)price );
+        uint32 extCostId = 0;
         if (crItem->ExtendedCost)                            // case for new honor system
         {
             ItemExtendedCostEntry const* iece = sItemExtendedCostStore.LookupEntry(crItem->ExtendedCost);
@@ -18636,6 +18637,7 @@ bool Player::BuyItemFromVendorSlot(uint64 vendorguid, uint32 vendorslot, uint32 
                 if (iece->reqitem[i])
                     DestroyItemCount(iece->reqitem[i], (iece->reqitemcount[i] * count), true);
             }
+            extCostId = iece->ID;
         }
 
         if (Item *it = StoreNewItem( dest, item, true ))
@@ -18654,8 +18656,9 @@ bool Player::BuyItemFromVendorSlot(uint64 vendorguid, uint32 vendorslot, uint32 
             // Item Refund system, only works for non stackable items with extendedcost
             if(count == 1 && crItem->ExtendedCost )
             {
-                it->SetUInt64Value(ITEM_FIELD_CREATOR, pCreature->GetGUID());
+                //it->SetUInt64Value(ITEM_FIELD_CREATOR, pCreature->GetGUID()); Propably cause items to disappear!
                 it->SetUInt32Value(ITEM_FIELD_CREATE_PLAYED_TIME, m_Played_time[0]);
+                it->SetExtCostId(extCostId);
             }
         }
     }
