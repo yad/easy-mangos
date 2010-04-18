@@ -4126,7 +4126,7 @@ void Aura::HandleAuraModDisarm(bool apply, bool Real)
         return;
 
     if(!apply && m_target->HasAuraType(SPELL_AURA_MOD_DISARM))
-		return;
+        return;
 
     // not sure for it's correctness
     if(apply)
@@ -4158,8 +4158,8 @@ void Aura::HandleAuraModDisarmOffhand(bool apply, bool Real)
     if(!Real)
         return;
 
-	if(!apply && m_target->HasAuraType(SPELL_AURA_MOD_DISARM_OFFHAND))
-		return;
+    if(!apply && m_target->HasAuraType(SPELL_AURA_MOD_DISARM_OFFHAND))
+        return;
 
     // not sure for it's correctness
     if(apply)
@@ -4191,8 +4191,8 @@ void Aura::HandleAuraModDisarmRanged(bool apply, bool Real)
     if(!Real)
         return;
 
-	if(!apply && m_target->HasAuraType(SPELL_AURA_MOD_DISARM_RANGED))
-		return;
+    if(!apply && m_target->HasAuraType(SPELL_AURA_MOD_DISARM_RANGED))
+        return;
 
     // not sure for it's correctness
     if(apply)
