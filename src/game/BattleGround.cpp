@@ -1043,6 +1043,17 @@ void BattleGround::RemovePlayerAtLeave(uint64 guid, bool Transport, bool SendPac
 
     Player *plr = sObjectMgr.GetPlayer(guid);
 
+    // TEAMBG
+    if(plr && plr->isInTeamBG())
+    {
+        //restore faction
+        plr->SetTeamBG(false, 0);
+        plr->setFactionForRace(plr->getRace());
+        //Remove mark buffs
+        plr->RemoveAurasDueToSpell(sWorld.getConfig(CONFIG_UINT32_TEAM_BG_BUFF_RED));
+        plr->RemoveAurasDueToSpell(sWorld.getConfig(CONFIG_UINT32_TEAM_BG_BUFF_BLUE));
+    }
+
     // should remove spirit of redemption
     if (plr && plr->HasAuraType(SPELL_AURA_SPIRIT_OF_REDEMPTION))
         plr->RemoveSpellsCausingAura(SPELL_AURA_MOD_SHAPESHIFT);
@@ -1206,6 +1217,46 @@ void BattleGround::AddPlayer(Player *plr)
 
     uint64 guid = plr->GetGUID();
     uint32 team = plr->GetBGTeam();
+    // --- TEAM BG ---
+    if(!isArena())
+    {
+        bool isAllowed = false;
+        switch(m_TypeID)
+        {
+            case BATTLEGROUND_AB:
+                if(sWorld.getConfig(CONFIG_BOOL_TEAM_BG_ALLOW_AB))
+                    isAllowed = true;
+                break;
+            case BATTLEGROUND_AV:
+                if(sWorld.getConfig(CONFIG_BOOL_TEAM_BG_ALLOW_AV))
+                    isAllowed = true;
+                break;
+            case BATTLEGROUND_EY:
+                if(sWorld.getConfig(CONFIG_BOOL_TEAM_BG_ALLOW_EOS))
+                    isAllowed = true;
+                break;
+            case BATTLEGROUND_WS:
+                if(sWorld.getConfig(CONFIG_BOOL_TEAM_BG_ALLOW_WSG))
+                    isAllowed = true;
+                break;
+        }
+        //Set faction and apply mark buffs
+        if(isAllowed)
+        {
+            if(team == HORDE)
+            {
+                plr->setFaction(sWorld.getConfig(CONFIG_UINT32_TEAM_BG_FACTION_RED));
+                plr->SetTeamBG(true, 2);
+                if(sWorld.getConfig(CONFIG_UINT32_TEAM_BG_BUFF_RED) != 0)
+                    plr->CastSpell(plr, sWorld.getConfig(CONFIG_UINT32_TEAM_BG_BUFF_RED), true);
+            }else{
+                plr->setFaction(sWorld.getConfig(CONFIG_UINT32_TEAM_BG_FACTION_BLUE));
+                plr->SetTeamBG(true, 1);
+                if(sWorld.getConfig(CONFIG_UINT32_TEAM_BG_BUFF_BLUE) != 0)
+                    plr->CastSpell(plr, sWorld.getConfig(CONFIG_UINT32_TEAM_BG_BUFF_RED), true);
+            }
+        }
+    }
 
     BattleGroundPlayer bp;
     bp.OfflineRemoveTime = 0;

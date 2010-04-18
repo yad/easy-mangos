@@ -498,6 +498,10 @@ Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputa
 
     m_lastFallTime = 0;
     m_lastFallZ = 0;
+
+    //TeamBG helpers
+    m_isInTeamBG = false;
+    m_TeamBGSide = 0;
 }
 
 Player::~Player ()
@@ -6054,7 +6058,19 @@ uint32 Player::TeamForRace(uint8 race)
     sLog.outError("Race %u have wrong teamid %u in DBC: wrong DBC files?",uint32(race),rEntry->TeamID);
     return ALLIANCE;
 }
+//TEAMBG code
+uint32 Player::GetTeam() const
+{
+    if(!m_isInTeamBG || (m_isInTeamBG && !GetBattleGroundTypeId()))
+        return m_team;
 
+    switch(m_TeamBGSide)
+    {
+        case 1: return ALLIANCE;
+        case 2: return HORDE;
+        default: return m_team;
+    }
+}
 uint32 Player::getFactionForRace(uint8 race)
 {
     ChrRacesEntry const* rEntry = sChrRacesStore.LookupEntry(race);

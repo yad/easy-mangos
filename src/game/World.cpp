@@ -759,6 +759,17 @@ void World::LoadConfigSettings(bool reload)
 
     setConfig(CONFIG_BOOL_KICK_PLAYER_ON_BAD_PACKET, "Network.KickOnBadPacket", false);
 
+    //TeamBG code
+    setConfig(CONFIG_BOOL_TEAM_BG_ALLOW_AB, "TeamBG.AllowAB", false);
+    setConfig(CONFIG_BOOL_TEAM_BG_ALLOW_AV, "TeamBG.AllowAV", false);
+    setConfig(CONFIG_BOOL_TEAM_BG_ALLOW_EOS, "TeamBG.AllowEOS", false);
+    setConfig(CONFIG_BOOL_TEAM_BG_ALLOW_WSG, "TeamBG.AllowWSG", false);
+
+    setConfig(CONFIG_UINT32_TEAM_BG_FACTION_BLUE, "TeamBG.Faction.Blue", 1);
+    setConfig(CONFIG_UINT32_TEAM_BG_FACTION_RED, "TeamBG.Faction.Red", 2);
+    setConfig(CONFIG_UINT32_TEAM_BG_BUFF_BLUE, "TeamBG.Buff.Blue", 0);
+    setConfig(CONFIG_UINT32_TEAM_BG_BUFF_RED, "TeamBG.Buff.Red", 0);
+
     if(int clientCacheId = sConfig.GetIntDefault("ClientCacheVersion", 0))
     {
         // overwrite DB/old value

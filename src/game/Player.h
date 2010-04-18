@@ -1896,7 +1896,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         void CheckExploreSystem(void);
 
         static uint32 TeamForRace(uint8 race);
-        uint32 GetTeam() const { return m_team; }
+        uint32 GetTeam() const;
         static uint32 getFactionForRace(uint8 race);
         void setFactionForRace(uint8 race);
 
@@ -2308,6 +2308,11 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         bool isActiveObject() const { return true; }
         bool canSeeSpellClickOn(Creature const* creature) const;
+
+        //TEAMBG helpers
+        bool isInTeamBG() { return m_isInTeamBG; };
+        void SetTeamBG(bool isIn, uint8 side) { m_isInTeamBG = isIn; m_TeamBGSide = side; };
+        uint8 getTeamBGSide() { return m_TeamBGSide; };
     protected:
 
         uint32 m_contestedPvPTimer;
@@ -2597,7 +2602,6 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         AchievementMgr m_achievementMgr;
         ReputationMgr  m_reputationMgr;
-
         uint32 m_timeSyncCounter;
         uint32 m_timeSyncTimer;
         uint32 m_timeSyncClient;
@@ -2605,6 +2609,9 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         // Battleground reward system
         uint32 m_FirstBGTime;
+        // TEAMBG helpers
+        bool m_isInTeamBG;
+        uint8 m_TeamBGSide; // 0 nothing, 1 blue(ali), 2 red(horde)
 };
 
 void AddItemsSetItem(Player*player,Item *item);
