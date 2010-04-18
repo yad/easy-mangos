@@ -619,6 +619,54 @@ void Aura::SetModifier(AuraType t, int32 a, uint32 pt, int32 miscValue)
     m_modifier.periodictime = pt;
 }
 
+
+// DEVELOPER CODE START
+void Aura::SetDeactivatedModifier(AuraType t, int32 a, uint32 pt, int32 miscValue)
+{
+    m_deactivatedModifier.m_auraname = t;
+    m_deactivatedModifier.m_amount = a;
+    m_deactivatedModifier.m_miscvalue = miscValue;
+    m_deactivatedModifier.periodictime = pt;
+}
+void Aura::SetDeactivity(bool deactivate)
+{
+    if(deactivate == m_deactivated)
+        return;
+
+    Modifier *tmpMod = deactivate? GetModifier() : GetDeactivatedModifier();
+    if(deactivate)
+    {
+        SetDeactivatedModifier(tmpMod->m_auraname, tmpMod->m_amount, tmpMod->periodictime, tmpMod->m_miscvalue);
+        SetModifier(tmpMod->m_auraname, 0, tmpMod->periodictime, tmpMod->m_miscvalue);
+    }
+    else
+    {
+        SetModifier(tmpMod->m_auraname, tmpMod->m_amount, tmpMod->periodictime, tmpMod->m_miscvalue);
+        SetDeactivatedModifier(tmpMod->m_auraname, 0, tmpMod->periodictime, tmpMod->m_miscvalue);
+    }
+    m_deactivated = deactivate;
+}
+void Aura::DeactivateAura(bool apply)
+{
+    if(apply == m_deactivated)
+        return;
+
+    if(apply)
+    {
+        ApplyModifier(false,true);
+        SetDeactivity(true);
+    }
+    else
+    {
+        SetDeactivity(false);
+        ApplyModifier(true,true);
+    }
+
+}
+// DEVELOPER CODE END
+
+// DEVELOPER CODE END
+
 void Aura::Update(uint32 diff)
 {
     if (m_duration > 0)

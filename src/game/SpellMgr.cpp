@@ -367,7 +367,7 @@ bool IsSingleFromSpellSpecificPerTargetPerCaster(SpellSpecific spellSpec1,SpellS
         case SPELL_POSITIVE_SHOUT:
         case SPELL_JUDGEMENT:
         case SPELL_HAND:
-		case SPELL_MAGE_BOMB:
+        case SPELL_MAGE_BOMB:
             return spellSpec1==spellSpec2;
         default:
             return false;
@@ -384,7 +384,7 @@ bool IsSingleFromSpellSpecificSpellRanksPerTarget(SpellSpecific spellSpec1,Spell
         case SPELL_CURSE:
         case SPELL_ASPECT:
         case SPELL_HAND:
-		case SPELL_MAGE_BOMB:
+        case SPELL_MAGE_BOMB:
             return spellSpec1==spellSpec2;
         default:
             return false;
@@ -686,11 +686,11 @@ bool IsPositiveEffect(uint32 spellId, SpellEffectIndex effIndex)
                     if(spellproto->Id==42792)               // Recently Dropped Flag (prevent cancel)
                         return false;
                     break;
-				case SPELL_AURA_CONTROL_VEHICLE:
-					//Vortex
+                case SPELL_AURA_CONTROL_VEHICLE:
+                    //Vortex
                     if(spellproto->Id == 56266)
                         return false;
-					break;
+                    break;
                 default:
                     break;
             }
@@ -1185,9 +1185,9 @@ void SpellMgr::LoadSpellStack()
  
         SpellStackEntry sse; 
                
-        sse.stackClass[0] = fields[1].GetUInt32(); 
-        sse.stackClass[1] = fields[2].GetUInt32(); 
-        sse.stackClass[2] = fields[3].GetUInt32(); 
+        sse.stackGroup[0] = fields[1].GetUInt32(); 
+        sse.stackGroup[1] = fields[2].GetUInt32(); 
+        sse.stackGroup[2] = fields[3].GetUInt32(); 
 
         mSpellStackMap[entry] = sse; 
                    
@@ -1205,9 +1205,9 @@ void SpellMgr::LoadSpellStack()
        sLog.outString( ">> Loaded %u spell stack data",  count); 
 } 
  
-void SpellMgr::LoadSpellStackClass() 
+void SpellMgr::LoadSpellStackGroup() 
 { 
-    mSpellStackClassMap.clear();                             // need for reload case 
+    mSpellStackGroupMap.clear();                             // need for reload case 
     uint32 count = 0; 
     //                                                0      1                 2           
     QueryResult *result = WorldDatabase.Query("SELECT entry, stack_conditions, value FROM spell_stack_class_data"); 
@@ -1226,11 +1226,11 @@ void SpellMgr::LoadSpellStackClass()
         bar.step(); 
         uint32 entry = fields[0].GetUInt32(); 
 
-        SpellStackClassEntry ssce; 
+        SpellStackGroupEntry ssge; 
  
-               ssce.type  = fields[1].GetUInt32(); 
-               ssce.value = fields[2].GetUInt32(); 
-               mSpellStackClassMap[entry] = ssce; 
+               ssge.type  = fields[1].GetUInt32(); 
+               ssge.value = fields[2].GetUInt32(); 
+               mSpellStackGroupMap[entry] = ssge; 
         ++count; 
  
     } while( result->NextRow() ); 
@@ -1635,7 +1635,7 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
         case SPELLFAMILY_MAGE:
             if( spellInfo_2->SpellFamilyName == SPELLFAMILY_MAGE )
             {
-				// Living Bomb & Ignite
+                // Living Bomb & Ignite
                 if( (spellInfo_1->SpellIconID == 3000) && (spellInfo_2->SpellIconID == 937) ||
                     (spellInfo_2->SpellIconID == 3000) && (spellInfo_1->SpellIconID == 937) )
                     return false;

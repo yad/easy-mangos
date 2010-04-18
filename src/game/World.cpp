@@ -1006,8 +1006,8 @@ void World::SetInitialWorldSettings()
     sLog.outString( "Loading Spell Stack Data..." ); 
     sSpellMgr.LoadSpellStack(); 
  
-    sLog.outString( "Loading Spell Stack Class Data..." ); 
-    sSpellMgr.LoadSpellStackClass(); 
+    sLog.outString( "Loading Spell Stack Group Data..." ); 
+    sSpellMgr.LoadSpellStackGroup(); 
     // DEVELOPER CODE END 
 
     sLog.outString( "Loading Spell Proc Item Enchant..." );
