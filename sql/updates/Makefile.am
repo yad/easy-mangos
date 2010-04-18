@@ -121,6 +121,12 @@ pkgdata_DATA = \
 	9746_01_realmd_realmlist.sql \
 	9747_01_mangos_battleground_template.sql \
 	9748_01_realmd_realmlist.sql \
+	9751_01_characters.sql \
+	9752_01_mangos_gameobject_template.sql \
+	9753_01_mangos_instance_template.sql \
+	9755_01_mangos_instance_template.sql \
+	9761_01_mangos_mangos_string.sql \
+	9763_01_mangos_battleground_template.sql \
 	README
 
 ## Additional files to include when running 'make dist'
@@ -222,4 +228,10 @@ EXTRA_DIST = \
 	9746_01_realmd_realmlist.sql \
 	9747_01_mangos_battleground_template.sql \
 	9748_01_realmd_realmlist.sql \
+	9751_01_characters.sql \
+	9752_01_mangos_gameobject_template.sql \
+	9753_01_mangos_instance_template.sql \
+	9755_01_mangos_instance_template.sql \
+	9761_01_mangos_mangos_string.sql \
+	9763_01_mangos_battleground_template.sql \
 	README
