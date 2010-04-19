@@ -622,6 +622,54 @@ void Aura::SetModifier(AuraType t, int32 a, uint32 pt, int32 miscValue)
     m_modifier.periodictime = pt;
 }
 
+
+// DEVELOPER CODE START
+void Aura::SetDeactivatedModifier(AuraType t, int32 a, uint32 pt, int32 miscValue)
+{
+    m_deactivatedModifier.m_auraname = t;
+    m_deactivatedModifier.m_amount = a;
+    m_deactivatedModifier.m_miscvalue = miscValue;
+    m_deactivatedModifier.periodictime = pt;
+}
+void Aura::SetDeactivity(bool deactivate)
+{
+    if(deactivate == m_deactivated)
+        return;
+
+    Modifier *tmpMod = deactivate? GetModifier() : GetDeactivatedModifier();
+    if(deactivate)
+    {
+        SetDeactivatedModifier(tmpMod->m_auraname, tmpMod->m_amount, tmpMod->periodictime, tmpMod->m_miscvalue);
+        SetModifier(tmpMod->m_auraname, 0, tmpMod->periodictime, tmpMod->m_miscvalue);
+    }
+    else
+    {
+        SetModifier(tmpMod->m_auraname, tmpMod->m_amount, tmpMod->periodictime, tmpMod->m_miscvalue);
+        SetDeactivatedModifier(tmpMod->m_auraname, 0, tmpMod->periodictime, tmpMod->m_miscvalue);
+    }
+    m_deactivated = deactivate;
+}
+void Aura::DeactivateAura(bool apply)
+{
+    if(apply == m_deactivated)
+        return;
+
+    if(apply)
+    {
+        ApplyModifier(false,true);
+        SetDeactivity(true);
+    }
+    else
+    {
+        SetDeactivity(false);
+        ApplyModifier(true,true);
+    }
+
+}
+// DEVELOPER CODE END
+
+// DEVELOPER CODE END
+
 void Aura::Update(uint32 diff)
 {
     if (m_duration > 0)
@@ -3920,7 +3968,13 @@ void Aura::HandleModPossess(bool apply, bool Real)
 
         if(m_target->GetTypeId() == TYPEID_PLAYER && !m_target->GetVehicleGUID())
         {
-            ((Player*)m_target)->setFactionForRace(m_target->getRace());
+            //TEAMBG check
+            if(((Player*)m_target)->isInTeamBG() && ((Player*)m_target)->getTeamBGSide() == 1) //BLUE(ali)
+                ((Player*)m_target)->setFaction(sWorld.getConfig(CONFIG_UINT32_TEAM_BG_FACTION_BLUE));
+            else if(((Player*)m_target)->isInTeamBG() && ((Player*)m_target)->getTeamBGSide() == 2) //RED(horde)
+                ((Player*)m_target)->setFaction(sWorld.getConfig(CONFIG_UINT32_TEAM_BG_FACTION_RED));
+            else
+                ((Player*)m_target)->setFactionForRace(m_target->getRace());
             ((Player*)m_target)->SetClientControl(m_target, 1);
         }
         else if(m_target->GetTypeId() == TYPEID_UNIT)
@@ -4066,7 +4120,15 @@ void Aura::HandleModCharm(bool apply, bool Real)
         m_target->SetCharmerGUID(0);
 
         if(m_target->GetTypeId() == TYPEID_PLAYER)
-            ((Player*)m_target)->setFactionForRace(m_target->getRace());
+        {
+            //TEAMBG check
+            if(((Player*)m_target)->isInTeamBG() && ((Player*)m_target)->getTeamBGSide() == 1) //BLUE(ali)
+                ((Player*)m_target)->setFaction(sWorld.getConfig(CONFIG_UINT32_TEAM_BG_FACTION_BLUE));
+            else if(((Player*)m_target)->isInTeamBG() && ((Player*)m_target)->getTeamBGSide() == 2) //RED(horde)
+                ((Player*)m_target)->setFaction(sWorld.getConfig(CONFIG_UINT32_TEAM_BG_FACTION_RED));
+            else
+                ((Player*)m_target)->setFactionForRace(m_target->getRace());
+        }
         else
         {
             CreatureInfo const *cinfo = ((Creature*)m_target)->GetCreatureInfo();
@@ -4139,7 +4201,7 @@ void Aura::HandleAuraModDisarm(bool apply, bool Real)
         return;
 
     if(!apply && m_target->HasAuraType(SPELL_AURA_MOD_DISARM))
-		return;
+        return;
 
     // not sure for it's correctness
     if(apply)
@@ -4171,8 +4233,8 @@ void Aura::HandleAuraModDisarmOffhand(bool apply, bool Real)
     if(!Real)
         return;
 
-	if(!apply && m_target->HasAuraType(SPELL_AURA_MOD_DISARM_OFFHAND))
-		return;
+    if(!apply && m_target->HasAuraType(SPELL_AURA_MOD_DISARM_OFFHAND))
+        return;
 
     // not sure for it's correctness
     if(apply)
@@ -4204,8 +4266,8 @@ void Aura::HandleAuraModDisarmRanged(bool apply, bool Real)
     if(!Real)
         return;
 
-	if(!apply && m_target->HasAuraType(SPELL_AURA_MOD_DISARM_RANGED))
-		return;
+    if(!apply && m_target->HasAuraType(SPELL_AURA_MOD_DISARM_RANGED))
+        return;
 
     // not sure for it's correctness
     if(apply)
@@ -6361,7 +6423,6 @@ void Aura::HandleShapeshiftBoosts(bool apply)
     {
         case FORM_CAT:
             spellId1 = 3025;
-            HotWSpellId = 24900;
             MasterShaperSpellId = 48420;
             break;
         case FORM_TREE:
@@ -6378,13 +6439,11 @@ void Aura::HandleShapeshiftBoosts(bool apply)
         case FORM_BEAR:
             spellId1 = 1178;
             spellId2 = 21178;
-            HotWSpellId = 24899;
             MasterShaperSpellId = 48418;
             break;
         case FORM_DIREBEAR:
             spellId1 = 9635;
             spellId2 = 21178;
-            HotWSpellId = 24899;
             MasterShaperSpellId = 48418;
             break;
         case FORM_BATTLESTANCE:
@@ -6531,18 +6590,27 @@ void Aura::HandleShapeshiftBoosts(bool apply)
             }
 
             // Heart of the Wild
-            if (HotWSpellId)
+            if (form == FORM_CAT || form == FORM_BEAR || form == FORM_DIREBEAR)
             {
                 Unit::AuraList const& mModTotalStatPct = m_target->GetAurasByType(SPELL_AURA_MOD_TOTAL_STAT_PERCENTAGE);
                 for(Unit::AuraList::const_iterator i = mModTotalStatPct.begin(); i != mModTotalStatPct.end(); ++i)
                 {
                     if ((*i)->GetSpellProto()->SpellIconID == 240 && (*i)->GetModifier()->m_miscvalue == 3)
                     {
-                        int32 HotWMod = (*i)->GetModifier()->m_amount;
-                        if(GetModifier()->m_miscvalue == FORM_CAT)
-                            HotWMod /= 2;
+                        int32 HotWMod = (*i)->GetModifier()->m_amount / 2;
 
-                        m_target->CastCustomSpell(m_target, HotWSpellId, &HotWMod, NULL, NULL, true, NULL, this);
+                        switch(HotWMod)
+                        {
+                            case  2: HotWSpellId = form == FORM_CAT ? 30902 : 19255; break;
+                            case  4: HotWSpellId = form == FORM_CAT ? 30903 : 19256; break;
+                            case  6: HotWSpellId = form == FORM_CAT ? 30904 : 19257; break;
+                            case  8: HotWSpellId = form == FORM_CAT ? 30905 : 19258; break;
+                            case 10: HotWSpellId = form == FORM_CAT ? 30906 : 19259; break;
+                            default: HotWSpellId = 0; break;
+                        }
+
+                        
+                        m_target->CastSpell(m_target, HotWSpellId, true);
                         break;
                     }
                 }
@@ -6551,6 +6619,29 @@ void Aura::HandleShapeshiftBoosts(bool apply)
     }
     else
     {
+        // Heart of the Wild (delete aura)
+        if (form == FORM_CAT || form == FORM_BEAR || form == FORM_DIREBEAR)
+        {
+             Unit::AuraList const& mModTotalStatPct = m_target->GetAurasByType(SPELL_AURA_MOD_TOTAL_STAT_PERCENTAGE);
+             for(Unit::AuraList::const_iterator i = mModTotalStatPct.begin(); i != mModTotalStatPct.end(); ++i)
+             {
+                 if ((*i)->GetSpellProto()->SpellIconID == 240 && (*i)->GetModifier()->m_miscvalue == 3)
+                 {
+                     int32 HotWMod = (*i)->GetModifier()->m_amount / 2;
+                     switch(HotWMod)
+                     {
+                        case  2: HotWSpellId = form == FORM_CAT ? 30902 : 19255; break;
+                        case  4: HotWSpellId = form == FORM_CAT ? 30903 : 19256; break;
+                        case  6: HotWSpellId = form == FORM_CAT ? 30904 : 19257; break;
+                        case  8: HotWSpellId = form == FORM_CAT ? 30905 : 19258; break;
+                        case 10: HotWSpellId = form == FORM_CAT ? 30906 : 19259; break;
+                        default: HotWSpellId = 0; break;
+                     }
+                     
+                     m_target->RemoveAurasDueToSpell(HotWSpellId);
+                 }
+             }
+        }
         if(spellId1)
             m_target->RemoveAurasDueToSpell(spellId1);
         if(spellId2)

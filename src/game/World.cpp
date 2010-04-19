@@ -770,6 +770,16 @@ void World::LoadConfigSettings(bool reload)
 
     setConfig(CONFIG_BOOL_KICK_PLAYER_ON_BAD_PACKET, "Network.KickOnBadPacket", false);
 
+    //TeamBG code
+    setConfig(CONFIG_BOOL_TEAM_BG_ALLOW_AB, "TeamBG.AllowAB", false);
+    setConfig(CONFIG_BOOL_TEAM_BG_ALLOW_AV, "TeamBG.AllowAV", false);
+    setConfig(CONFIG_BOOL_TEAM_BG_ALLOW_EOS, "TeamBG.AllowEOS", false);
+    setConfig(CONFIG_BOOL_TEAM_BG_ALLOW_WSG, "TeamBG.AllowWSG", false);
+
+    setConfig(CONFIG_UINT32_TEAM_BG_FACTION_BLUE, "TeamBG.Faction.Blue", 1);
+    setConfig(CONFIG_UINT32_TEAM_BG_FACTION_RED, "TeamBG.Faction.Red", 2);
+    setConfig(CONFIG_UINT32_TEAM_BG_BUFF_BLUE, "TeamBG.Buff.Blue", 0);
+    setConfig(CONFIG_UINT32_TEAM_BG_BUFF_RED, "TeamBG.Buff.Red", 0);
 
     if(int clientCacheId = sConfig.GetIntDefault("ClientCacheVersion", 0))
     {
@@ -970,8 +980,8 @@ void World::SetInitialWorldSettings()
     sLog.outString( "Loading Spell Stack Data..." ); 
     sSpellMgr.LoadSpellStack(); 
  
-    sLog.outString( "Loading Spell Stack Class Data..." ); 
-    sSpellMgr.LoadSpellStackClass(); 
+    sLog.outString( "Loading Spell Stack Group Data..." ); 
+    sSpellMgr.LoadSpellStackGroup(); 
     // DEVELOPER CODE END 
 
     sLog.outString( "Loading Spell Proc Item Enchant..." );
@@ -2050,6 +2060,9 @@ void World::InitDailyQuestResetTime()
 void World::ResetBGDaily()
 {
     CharacterDatabase.Execute("DELETE FROM character_battleground_status");
+    for(SessionMap::const_iterator itr = m_sessions.begin(); itr != m_sessions.end(); ++itr)
+        if (itr->second->GetPlayer())
+            itr->second->GetPlayer()->ResetBGStatus();
 }
 
 void World::ResetDailyQuests()

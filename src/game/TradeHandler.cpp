@@ -544,6 +544,13 @@ void WorldSession::HandleInitiateTradeOpcode(WorldPacket& recvPacket)
         return;
     }
 
+    //TEAMBG - bg restriction....
+    if (_player->GetBattleGround() && _player->isInTeamBG())
+    {
+        SendTradeStatus(TRADE_STATUS_BUSY);
+        return;
+    }
+
     // OK start trade
     _player->pTrader = pOther;
     pOther->pTrader =_player;

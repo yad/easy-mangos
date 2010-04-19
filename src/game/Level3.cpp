@@ -1062,8 +1062,8 @@ bool ChatHandler::HandleReloadSpellStackCommand(const char*)
 { 
     sLog.outString( "Re-Loading Spell stacking conditions..." ); 
     sSpellMgr.LoadSpellStack(); 
-    sSpellMgr.LoadSpellStackClass(); 
-    SendGlobalSysMessage("DB table `spell_stack_data` and `spell_stack_class_data` reloaded."); 
+    sSpellMgr.LoadSpellStackGroup(); 
+    SendGlobalSysMessage("DB table `spell_stack_data` and `spell_stack_group_data` reloaded."); 
     return true; 
 } 
  

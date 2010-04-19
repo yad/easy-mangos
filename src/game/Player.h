@@ -929,7 +929,8 @@ enum PlayerLoginQueryIndex
     PLAYER_LOGIN_QUERY_LOADMAILEDITEMS          = 24,
     PLAYER_LOGIN_QUERY_LOADTALENTS              = 25,
     PLAYER_LOGIN_QUERY_LOADWEKLYQUESTSTATUS     = 26,
-    MAX_PLAYER_LOGIN_QUERY                      = 27
+    PLAYER_LOGIN_QUERY_LOADBGSTATUS             = 27,
+    MAX_PLAYER_LOGIN_QUERY                      = 28
 };
 
 enum PlayerDelayedOperations
@@ -2011,7 +2012,7 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
         void CheckExploreSystem(void);
 
         static uint32 TeamForRace(uint8 race);
-        uint32 GetTeam() const { return m_team; }
+        uint32 GetTeam() const;
         static uint32 getFactionForRace(uint8 race);
         void setFactionForRace(uint8 race);
 
@@ -2224,6 +2225,14 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
         bool CanUseBattleGroundObject();
         bool isTotalImmune();
         bool CanCaptureTowerPoint();
+
+        bool FirstBGDone() { return m_FirstBGTime > 0; }
+        void SetFirstBGTime()
+        {
+            m_FirstBGTime = uint64(time(NULL));
+            m_FirstBattleground = true;
+        }
+        void ResetBGStatus() { m_FirstBGTime = 0; }
 
         /*********************************************************/
         /***               OUTDOOR PVP SYSTEM                  ***/
@@ -2476,6 +2485,10 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
         void SetAddonTarget(uint64 guid) { m_AddonTarget = guid; };
         uint64 GetAddonTarget() { return m_AddonTarget; };        
 
+        //TEAMBG helpers
+        bool isInTeamBG() { return m_isInTeamBG; };
+        void SetTeamBG(bool isIn, uint8 side) { m_isInTeamBG = isIn; m_TeamBGSide = side; };
+        uint8 getTeamBGSide() { return m_TeamBGSide; };
     protected:
 
         uint32 m_contestedPvPTimer;
@@ -2534,6 +2547,7 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
         void _LoadEquipmentSets(QueryResult *result);
         void _LoadAccountInfos();
         void _LoadBGData(QueryResult* result);
+        void _LoadBGStatus(QueryResult* result);
         void _LoadGlyphs(QueryResult *result);
         void _LoadIntoDataField(const char* data, uint32 startOffset, uint32 count);
 
@@ -2552,6 +2566,7 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
         void _SaveSpells();
         void _SaveEquipmentSets();
         void _SaveBGData();
+        void _SaveBGStatus();
         void _SaveGlyphs();
         void _SaveTalents();
         void _SaveStats();
@@ -2649,6 +2664,7 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
 
         bool   m_DailyQuestChanged;
         bool   m_WeeklyQuestChanged;
+        bool   m_FirstBattleground;
 
         uint32 m_drunkTimer;
         uint16 m_drunk;
@@ -2772,11 +2788,16 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
 
         AchievementMgr m_achievementMgr;
         ReputationMgr  m_reputationMgr;
-
         uint32 m_timeSyncCounter;
         uint32 m_timeSyncTimer;
         uint32 m_timeSyncClient;
         uint32 m_timeSyncServer;
+
+        // Battleground reward system
+        uint32 m_FirstBGTime;
+        // TEAMBG helpers
+        bool m_isInTeamBG;
+        uint8 m_TeamBGSide; // 0 nothing, 1 blue(ali), 2 red(horde)
 };
 
 void AddItemsSetItem(Player*player,Item *item);

@@ -244,6 +244,7 @@ Item::Item( )
     m_container = NULL;
     m_lootGenerated = false;
     mb_in_trade = false;
+    m_ExtendedCostId = 0;
 }
 
 bool Item::Create( uint32 guidlow, uint32 itemid, Player const* owner)
@@ -429,7 +430,16 @@ bool Item::LoadFromDB(uint32 guid, uint64 owner_guid, QueryResult *result)
 
         CharacterDatabase.Execute( ss.str().c_str() );
     }
-
+    //Set extended cost for refundable item
+    if(HasFlag(ITEM_FIELD_FLAGS, ITEM_FLAGS_REFUNDABLE))
+    {
+        QueryResult *result_ext = WorldDatabase.PQuery("SELECT ExtendedCost FROM npc_vendor WHERE item = '%u' LIMIT 1", GetEntry());
+        if(result_ext)
+        {
+            m_ExtendedCostId = result_ext->Fetch()[0].GetUInt32();
+            delete result_ext;
+        }
+    }
     return true;
 }
 

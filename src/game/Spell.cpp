@@ -1173,7 +1173,7 @@ void Spell::DoSpellHitOnUnit(Unit *unit, const uint32 effectMask)
             if (!(m_spellInfo->AttributesEx & SPELL_ATTR_EX_NOT_BREAK_STEALTH) || m_spellInfo->SpellFamilyFlags & SPELLFAMILYFLAG_ROGUE_SAP)
             {
                 if (!(m_spellInfo->Id == 39897 || m_spellInfo->Id == 32592 || m_spellInfo->Id == 32375|| m_spellInfo->Id == 1725
-                    || m_spellInfo->Id == 1038 || (m_spellInfo->SpellFamilyFlags2 & UI64LIT(0x00000100))))
+                    || m_spellInfo->Id == 1038 || (m_spellInfo->SpellFamilyFlags2 & UI64LIT(0x00000100)) || m_spellInfo->Id == 3600))
                     unit->RemoveSpellsCausingAura(SPELL_AURA_MOD_STEALTH);
             }
 
@@ -1521,6 +1521,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
         case TARGET_TOTEM_AIR:
         case TARGET_TOTEM_FIRE:
         case TARGET_SELF:
+        case TARGET_SELF2:
             targetUnitMap.push_back(m_caster);
             break;
         case TARGET_RANDOM_ENEMY_CHAIN_IN_AREA:
@@ -2699,6 +2700,8 @@ void Spell::cast(bool skipCheck)
                 AddPrecastSpell(11196);                     // Recently Bandaged
             else if(m_spellInfo->Id == 20594)               // Stoneskin
                 AddTriggeredSpell(65116);                   // Stoneskin - armor 10% for 8 sec
+            else if(m_spellInfo->Id == 71904)               // Chaos Bane strength buff
+                AddTriggeredSpell(73422);
             break;
         }
         case SPELLFAMILY_MAGE:

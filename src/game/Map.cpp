@@ -513,6 +513,13 @@ void Map::LoadGrid(const Cell& cell, bool no_unload)
 
 bool Map::Add(Player *player)
 {
+    //TEAMBG - this must NOT happen!
+    if(!IsBattleGround() && player->isInTeamBG())
+    {
+        player->SetTeamBG(false, 0);
+        sLog.outError("Something is wrong, player %u is not added to bg map but has TeamBG data!", player->GetGUID());
+    }
+
     player->GetMapRef().link(this, player);
     player->SetMap(this);
 

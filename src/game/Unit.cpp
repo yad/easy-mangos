@@ -3987,6 +3987,11 @@ bool Unit::AddAura(Aura *Aur)
 {
     SpellEntry const* aurSpellInfo = Aur->GetSpellProto();
 
+    // DEVELOPER CODE START
+    const SpellStackGroupEntry const * stackInfo = sSpellMgr.GetStackConditionsForSpells(Aur->GetId(),Aur->GetId());
+    bool toBeDeactivated = false;
+    // DEVELOPER CODE END
+
     // ghost spell check, allow apply any auras at player loading in ghost mode (will be cleanup after load)
     if( !isAlive() && !IsDeathPersistentSpell(aurSpellInfo) &&
         !IsDeathOnlySpell(aurSpellInfo) &&
@@ -4087,8 +4092,13 @@ bool Unit::AddAura(Aura *Aur)
     {
         if (!RemoveNoStackAurasDueToAura(Aur))
         {
-            delete Aur;
-            return false;                                   // couldn't remove conflicting aura with higher rank
+            if (stackInfo && (stackInfo->value & STACKOPTION_INTERNAL))
+                toBeDeactivated = true;
+            else
+            {
+                delete Aur;
+                return false;                                   // couldn't remove conflicting aura with higher rank
+            }
         }
     }
 
@@ -4137,7 +4147,14 @@ bool Unit::AddAura(Aura *Aur)
         m_modAuras[aurName].push_back(Aur);
     }
 
+// DEVELOPER CODE START
+    // Add to deactivated auras
+    if(toBeDeactivated)
+        Aur->SetDeactivity(toBeDeactivated);
+// DEVELOPER CODE END
+
     Aur->ApplyModifier(true,true);
+
     sLog.outDebug("Aura %u now is in use", aurName);
 
     // if aura deleted before boosts apply ignore
@@ -4212,6 +4229,91 @@ bool Unit::RemoveNoStackAurasDueToAura(Aura *Aur)
 
         uint32 i_spellId = i_spellProto->Id;
 
+        SpellEffectIndex i_effIndex = (*i).second->GetEffIndex();
+
+        if(i_spellId == spellId) continue;
+
+// DEVELOPER CODE START 
+
+        const SpellStackGroupEntry const * stackInfo_i = sSpellMgr.GetStackConditionsForSpells(i_spellId,spellId); 
+ 
+        if (stackInfo_i && stackInfo_i->type != SPELLSTACKING_UNDEFINED) 
+        { 
+            // now deterine if any aura will be removed/deactivated
+            if (stackInfo_i->type & SPELLSTACKING_FULL) 
+               continue; 
+ 
+            if (stackInfo_i->type & SPELLSTACKING_PERCASTER) 
+            { 
+               if(Aur->GetCasterGUID() != (*i).second->GetCasterGUID()) 
+                   continue;  
+            } 
+
+            // Don't Continue if different aura types
+            if(Aur->GetModifier()->m_auraname != (*i).second->GetModifier()->m_auraname)
+                continue;
+
+            // passive auras shouldn't be removed
+            bool toBeDeactivated_i = IsPassiveSpell(i_spellId) || IsPassiveSpell(spellId);
+            int32 amountDiff   = Aur->GetModifier()->m_amount - (*i).second->GetModifier()->m_amount;
+            int32 durationDiff = Aur->GetAuraDuration() - (*i).second->GetAuraDuration();
+        
+            // now determine which aura will be removed/deactivated
+            if(amountDiff != 0)
+            {
+                if(stackInfo_i->value & STACKOPTION_WORSEWIN)
+                {
+                    if(amountDiff > 0)
+                        return false;
+                }
+                // By default better aura will remain active
+                else
+                {
+                    if(amountDiff < 0)
+                        return false;
+                }
+            }
+            // toBeDeactivated_i now says if some aura is passive
+            else if(durationDiff != 0 && !toBeDeactivated_i)
+            {
+                if(stackInfo_i->value & STACKOPTION_SHORTERWIN)
+                {
+                    if(durationDiff > 0)
+                        return false;
+                }
+                // By default more durable aura will remain active
+                else
+                {
+                    if(durationDiff < 0)
+                        return false;
+                }
+            }
+
+            if (stackInfo_i->value & STACKOPTION_INTERNAL) 
+                toBeDeactivated_i = true; 
+
+            (*i).second->DeactivateAura(toBeDeactivated_i);
+
+            if(toBeDeactivated_i)
+                continue;
+
+             // Its a parent aura (create this aura in ApplyModifier) 
+             if ((*i).second->IsInUse()) 
+             { 
+                 sLog.outError("Aura (Spell %u Effect %u) is in process but attempt removed at aura (Spell %u Effect %u) adding, need add stack rule for Unit::RemoveNoStackAurasDueToAura", i->second->GetId(), i->second->GetEffIndex(),Aur->GetId(), Aur->GetEffIndex()); 
+                 continue; 
+             } 
+             RemoveAurasDueToSpell(i_spellId); 
+             
+             if( m_Auras.empty() ) 
+                 break; 
+             else
+                 next =  m_Auras.begin(); 
+             continue; 
+        }
+
+// DEVELOPER CODE END 
+
         // early checks that spellId is passive non stackable spell
         if(IsPassiveSpell(i_spellId))
         {
@@ -4223,10 +4325,6 @@ bool Unit::RemoveNoStackAurasDueToAura(Aura *Aur)
             if (!sSpellMgr.IsRankSpellDueToSpell(spellProto, i_spellId))
                 continue;
         }
-
-        SpellEffectIndex i_effIndex = (*i).second->GetEffIndex();
-
-        if(i_spellId == spellId) continue;
 
         bool is_triggered_by_spell = false;
         // prevent triggering aura of removing aura that triggered it
@@ -4247,52 +4345,7 @@ bool Unit::RemoveNoStackAurasDueToAura(Aura *Aur)
         // single allowed spell specific from same caster or from any caster at target
         bool is_spellSpecPerTargetPerCaster = IsSingleFromSpellSpecificPerTargetPerCaster(spellId_spec,i_spellId_spec);
         bool is_spellSpecPerTarget = IsSingleFromSpellSpecificPerTarget(spellId_spec,i_spellId_spec);
-        // DEVELOPER CODE START 
-        const StackType stackInfo_i = sSpellMgr.GetStackConditionsForSpells(i_spellId,spellId); 
- 
-        if (stackInfo_i != SPELLSTACKING_UNDEFINED) 
-        { 
-            bool toBeRemoved = false; 
-            bool toBeDeactivated = false; 
-            if (stackInfo_i & SPELLSTACKING_FULL) 
-               continue; 
-            if (stackInfo_i & SPELLSTACKING_PERTARGET) 
-            { 
-               toBeRemoved = true; 
-            } 
-            if (stackInfo_i & SPELLSTACKING_PERCASTER) 
-            { 
-               if(Aur->GetCasterGUID() == (*i).second->GetCasterGUID()) 
-                   toBeRemoved = true; 
-            } 
-            if (stackInfo_i & SPELLSTACKING_NONE) 
-                toBeRemoved = true; 
- 
-            if (stackInfo_i & SPELLSTACKING_INTERNAL) 
-                toBeDeactivated = toBeRemoved; 
- 
-            if (toBeDeactivated) 
-            { 
-                DeactivateAurasDueToSpell(i_spellId); 
-            } 
-            else if (toBeRemoved) 
-            { 
-                // Its a parent aura (create this aura in ApplyModifier) 
-                if ((*i).second->IsInUse()) 
-                { 
-                     sLog.outError("Aura (Spell %u Effect %u) is in process but attempt removed at aura (Spell %u Effect %u) adding, need add stack rule for Unit::RemoveNoStackAurasDueToAura", i->second->GetId(), i->second->GetEffIndex(),Aur->GetId(), Aur->GetEffIndex()); 
-                     continue; 
-                } 
-                RemoveAurasDueToSpell(i_spellId); 
-                               
-                if( m_Auras.empty() ) 
-                     break; 
-                else 
-                    next =  m_Auras.begin(); 
-            } 
-            continue; 
-        }
-        // DEVELOPER CODE END 
+
         if( is_spellSpecPerTarget || is_spellSpecPerTargetPerCaster && Aur->GetCasterGUID() == (*i).second->GetCasterGUID() )
         {
             // cannot remove higher rank
@@ -4616,17 +4669,6 @@ void Unit::RemoveSingleAuraByCasterSpell(uint32 spellId, SpellEffectIndex effind
     }
 }
 
-// DEVELOPER CODE START 
-void Unit::DeactivateAurasDueToSpell(uint32 spellId) 
-{
-       //IMPLEMENT LATER :) 
-} 
- 
-void Unit::ActivateAurasDueToSpell(uint32 spellId) 
-{ 
-       //IMPLEMENT LATER :) 
-}  
-// DEVELOPER CODE END 
 void Unit::RemoveAurasDueToSpell(uint32 spellId, Aura* except)
 {
     for (int i = 0; i < MAX_EFFECT_INDEX; ++i)
@@ -4739,6 +4781,66 @@ void Unit::RemoveAura(AuraMap::iterator &i, AuraRemoveMode mode)
     // some ShapeshiftBoosts at remove trigger removing other auras including parent Shapeshift aura
     // remove aura from list before to prevent deleting it before
     m_Auras.erase(i);
+
+// DEVELOPER CODE START
+
+    Aura * toBeActivatedAura = NULL; 
+    for (AuraMap::iterator itr = m_Auras.begin(); itr != m_Auras.end() && Aur->IsActive(); itr++)
+    {
+        if(Aur->GetModifier()->m_auraname != (*itr).second->GetModifier()->m_auraname)
+            continue;
+
+        if(const SpellStackGroupEntry const * stackInfo_i = sSpellMgr.GetStackConditionsForSpells((*itr).second->GetId(),Aur->GetId()))
+        {
+            if(stackInfo_i && (stackInfo_i->value & STACKOPTION_INTERNAL))
+            {
+                if(!toBeActivatedAura)
+                {
+                    toBeActivatedAura = (*itr).second;
+                    continue;
+                }
+                
+                bool isPassive     = IsPassiveSpell((*itr).second->GetId()) || IsPassiveSpell(Aur->GetId());
+                int32 amountDiff   = toBeActivatedAura->GetDeactivatedModifier()->m_amount - (*itr).second->GetDeactivatedModifier()->m_amount;
+                int32 durationDiff = toBeActivatedAura->GetAuraDuration() - (*itr).second->GetAuraDuration();
+                // now determine which aura will be activated
+                if(amountDiff != 0)
+                {
+                    if(stackInfo_i->value & STACKOPTION_WORSEWIN)
+                    {
+                        if(amountDiff > 0)
+                            toBeActivatedAura = (*itr).second;
+                    }
+                    // By default better aura will be actived
+                    else
+                    {
+                        if(amountDiff < 0)
+                            toBeActivatedAura = (*itr).second;
+                    }
+                    continue;
+                }
+                
+                if(durationDiff != 0 && !isPassive)
+                {
+                    if(stackInfo_i->value & STACKOPTION_SHORTERWIN)
+                    {
+                        if(durationDiff > 0)
+                            toBeActivatedAura = (*itr).second;
+                    }
+                    // By default more durable aura will remain active
+                    else
+                    {
+                        if(durationDiff < 0)
+                            toBeActivatedAura = (*itr).second;
+                    }
+                    continue;
+                }
+            }
+        }
+    }
+    if (toBeActivatedAura)
+        toBeActivatedAura->DeactivateAura(false);
+// DEVELOPER CODE END
 
     // now aura removed from from list and can't be deleted by indirect call but can be referenced from callers
 

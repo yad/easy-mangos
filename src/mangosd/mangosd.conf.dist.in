@@ -1599,6 +1599,40 @@ BG.BonusHonor.EOS.Flag = 1
 BG.BonusHonor.Holiday = 5
 
 ###################################################################################################################
+# TEAMBG CONFIG
+#
+#    TeamBG.AllowAB
+#    TeamBG.AllowAV
+#    TeamBG.AllowEOS
+#    TeamBG.AllowWSG
+#        Allow TeamBG in that bg
+#        Default: 0 (disable)
+#                 1 (enable)
+#
+#    TeamBG.TeamBG.Faction.Blue
+#    TeamBG.TeamBG.Faction.Red
+#        Which faction is set to player when enter bg
+#        Default: 1 (for blue, player human)
+#                 2 (for red, player orc)
+#
+#    TeamBG.Buff.Blue
+#    TeamBG.Buff.Red
+#        Spell id, its casted on player on bg enter and removed on leave,
+#        could be some red/blue coloration
+#        Default: 0 (disable)
+#
+###################################################################################################################
+
+TeamBG.AllowAB = 0
+TeamBG.AllowAV = 0
+TeamBG.AllowEOS = 0
+TeamBG.AllowWSG = 0
+TeamBG.TeamBG.Faction.Blue = 1
+TeamBG.TeamBG.Faction.Red = 2
+TeamBG.Buff.Blue = 0
+TeamBG.Buff.Red = 0
+
+###################################################################################################################
 # PLAYERBOTAI CONFIGURATION
 #
 #    PlayerbotAI.DisableBots

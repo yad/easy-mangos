@@ -420,6 +420,7 @@ Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputa
 
     m_DailyQuestChanged = false;
     m_WeeklyQuestChanged = false;
+    m_FirstBattleground = false;
 
     for (int i=0; i<MAX_TIMERS; ++i)
         m_MirrorTimer[i] = DISABLED_MIRROR_TIMER;
@@ -543,6 +544,10 @@ Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputa
     m_OutdoorPvP = NULL;
 
     container_type = true;
+
+    //TeamBG helpers
+    m_isInTeamBG = false;
+    m_TeamBGSide = 0;
 }
 
 Player::~Player ()
@@ -6894,7 +6899,19 @@ uint32 Player::TeamForRace(uint8 race)
     sLog.outError("Race %u have wrong teamid %u in DBC: wrong DBC files?",uint32(race),rEntry->TeamID);
     return ALLIANCE;
 }
+//TEAMBG code
+uint32 Player::GetTeam() const
+{
+    if(!m_isInTeamBG || (m_isInTeamBG && !GetBattleGroundTypeId()))
+        return m_team;
 
+    switch(m_TeamBGSide)
+    {
+        case 1: return ALLIANCE;
+        case 2: return HORDE;
+        default: return m_team;
+    }
+}
 uint32 Player::getFactionForRace(uint8 race)
 {
     ChrRacesEntry const* rEntry = sChrRacesStore.LookupEntry(race);
@@ -6953,13 +6970,37 @@ void Player::RewardReputation(Unit *pVictim, float rate)
     if(!Rep)
         return;
 
-  
+    uint32 Repfaction1 = Rep->repfaction1;
+    uint32 Repfaction2 = Rep->repfaction2;
+    uint32 tabardFactionID = 0;
+     
+    // Championning tabard reputation system
+    // aura 57818 is a hidden aura common to northrend tabards allowing championning.
+    if(pVictim->GetMap()->IsDungeon() && HasAura(57818))
+    {
+        InstanceTemplate const* mInstance = sObjectMgr.GetInstanceTemplate(pVictim->GetMapId());
+        MapEntry const* StoredMap = sMapStore.LookupEntry(pVictim->GetMapId());
+
+        // only for expansion 2 map (wotlk), and : min level >= lv75 or dungeon only heroic mod
+        // entering a lv80 designed instance require a min level>=75. note : min level != suggested level
+        if ( StoredMap->Expansion() == 2 && ( mInstance->levelMin >= 75 || pVictim->GetMap()->GetDifficulty() == DUNGEON_DIFFICULTY_HEROIC ) )
+        {             
+            if( Item* pItem = GetItemByPos( INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_TABARD ) )
+            {                 
+                if ( tabardFactionID = pItem->GetProto()->RequiredReputationFaction ) 
+                {
+                     Repfaction1 = tabardFactionID;
+                     Repfaction2 = tabardFactionID;
+                }
+            }
+        }
+    }  
 
     if(Rep->repfaction1 && (!Rep->team_dependent || GetTeam()==ALLIANCE))
     {
-        int32 donerep1 = CalculateReputationGain(pVictim->getLevel(), Rep->repvalue1, Rep->repfaction1, false);
+        int32 donerep1 = CalculateReputationGain(pVictim->getLevel(), Rep->repvalue1, Repfaction1, false);
         donerep1 = int32(donerep1*rate);
-        FactionEntry const *factionEntry1 = sFactionStore.LookupEntry(Rep->repfaction1);
+        FactionEntry const *factionEntry1 = sFactionStore.LookupEntry(Repfaction1);
         uint32 current_reputation_rank1 = GetReputationMgr().GetRank(factionEntry1);
         if (factionEntry1 && current_reputation_rank1 <= Rep->reputation_max_cap1)
             GetReputationMgr().ModifyReputation(factionEntry1, donerep1);
@@ -6975,9 +7016,9 @@ void Player::RewardReputation(Unit *pVictim, float rate)
 
     if(Rep->repfaction2 && (!Rep->team_dependent || GetTeam()==HORDE))
     {
-        int32 donerep2 = CalculateReputationGain(pVictim->getLevel(), Rep->repvalue2, Rep->repfaction2, false);
+        int32 donerep2 = CalculateReputationGain(pVictim->getLevel(), Rep->repvalue2, Repfaction2, false);
         donerep2 = int32(donerep2*rate);
-        FactionEntry const *factionEntry2 = sFactionStore.LookupEntry(Rep->repfaction2);
+        FactionEntry const *factionEntry2 = sFactionStore.LookupEntry(Repfaction2);
         uint32 current_reputation_rank2 = GetReputationMgr().GetRank(factionEntry2);
         if (factionEntry2 && current_reputation_rank2 <= Rep->reputation_max_cap2)
             GetReputationMgr().ModifyReputation(factionEntry2, donerep2);
@@ -7220,21 +7261,20 @@ bool Player::RewardHonor(Unit *uVictim, uint32 groupsize, float honor)
 void Player::RewardHonorEndBattlegroud(bool win)
 {
     uint32 hk = 0;
-    uint32 guid = GetGUIDLow();
     bool ap = false;
     if(!win)
         hk = 5;
+
     else
     {
-        QueryResult *result = CharacterDatabase.PQuery("SELECT daily_bg FROM character_battleground_status WHERE guid = '%u'", guid);
-        if(result)
+        if(FirstBGDone())
             hk = 15;
         else
         {
             hk = 30;
             if(getLevel() >= sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL))
                 ap = true;
-            CharacterDatabase.PExecute("INSERT INTO character_battleground_status VALUES ('%u', '" UI64FMTD "')", guid, uint64(time(NULL)));
+            SetFirstBGTime();
         }
     }
 
@@ -16277,6 +16317,7 @@ bool Player::LoadFromDB( uint32 guid, SqlQueryHolder *holder )
         m_movementInfo.SetTransportData(0, 0.0f, 0.0f, 0.0f, 0.0f, 0, -1);
     }
 
+    _LoadBGStatus(holder->GetResult(PLAYER_LOGIN_QUERY_LOADBGSTATUS));
     _LoadBGData(holder->GetResult(PLAYER_LOGIN_QUERY_LOADBGDATA));
 
     if(m_bgData.bgInstanceID)                                                //saved in BattleGround
@@ -17835,6 +17876,17 @@ bool Player::_LoadHomeBind(QueryResult *result)
     return true;
 }
 
+void Player::_LoadBGStatus(QueryResult *result)
+{
+    if (result)
+    {
+        m_FirstBGTime = (*result)[0].GetUInt32();
+        delete result;
+    }
+    else
+        m_FirstBGTime = 0;
+}
+
 /*********************************************************/
 /***                   SAVE SYSTEM                     ***/
 /*********************************************************/
@@ -18019,6 +18071,7 @@ void Player::SaveToDB()
         _SaveMail();
 
     _SaveBGData();
+    _SaveBGStatus();
     _SaveInventory();
     _SaveQuestStatus();
     _SaveDailyQuestStatus();
@@ -19826,6 +19879,7 @@ bool Player::BuyItemFromVendorSlot(uint64 vendorguid, uint32 vendorslot, uint32 
         }
 
         ModifyMoney( -(int32)price );
+        uint32 extCostId = 0;
         if (crItem->ExtendedCost)                            // case for new honor system
         {
             ItemExtendedCostEntry const* iece = sItemExtendedCostStore.LookupEntry(crItem->ExtendedCost);
@@ -19838,6 +19892,7 @@ bool Player::BuyItemFromVendorSlot(uint64 vendorguid, uint32 vendorslot, uint32 
                 if (iece->reqitem[i])
                     DestroyItemCount(iece->reqitem[i], (iece->reqitemcount[i] * count), true);
             }
+            extCostId = iece->ID;
         }
 
         if (Item *it = StoreNewItem( dest, item, true ))
@@ -19856,8 +19911,9 @@ bool Player::BuyItemFromVendorSlot(uint64 vendorguid, uint32 vendorslot, uint32 
             // Item Refund system, only works for non stackable items with extendedcost
             if(count == 1 && crItem->ExtendedCost )
             {
-                it->SetUInt64Value(ITEM_FIELD_CREATOR, pCreature->GetGUID());
+                //it->SetUInt64Value(ITEM_FIELD_CREATOR, pCreature->GetGUID()); Propably cause items to disappear!
                 it->SetUInt32Value(ITEM_FIELD_CREATE_PLAYED_TIME, m_Played_time[0]);
+                it->SetExtCostId(extCostId);
             }
         }
     }
@@ -23264,6 +23320,18 @@ void Player::_SaveBGData()
             GetGUIDLow(), m_bgData.bgInstanceID, m_bgData.bgTeam, m_bgData.joinPos.coord_x, m_bgData.joinPos.coord_y, m_bgData.joinPos.coord_z,
             m_bgData.joinPos.orientation, m_bgData.joinPos.mapid, m_bgData.taxiPath[0], m_bgData.taxiPath[1], m_bgData.mountSpell);
     }
+}
+
+void Player::_SaveBGStatus()
+{
+    if(!m_FirstBattleground)
+        return;
+
+    CharacterDatabase.PExecute("DELETE FROM character_battleground_status WHERE guid='%u'", GetGUIDLow());
+    CharacterDatabase.PExecute("INSERT INTO character_battleground_status VALUES ('%u', '%u')",
+        GetGUIDLow(), m_FirstBGTime);
+
+    m_FirstBattleground = false;
 }
 
 void Player::DeleteEquipmentSet(uint64 setGuid)

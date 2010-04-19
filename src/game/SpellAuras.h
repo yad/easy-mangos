@@ -231,6 +231,16 @@ class MANGOS_DLL_SPEC Aura
         virtual ~Aura();
 
         void SetModifier(AuraType t, int32 a, uint32 pt, int32 miscValue);
+
+// DEVELOPER CODE START
+        void SetDeactivatedModifier(AuraType t, int32 a, uint32 pt, int32 miscValue);
+        void SetDeactivity(bool deactivate);
+        void DeactivateAura(bool apply);
+        Modifier*       GetDeactivatedModifier()       { return &m_deactivatedModifier; }
+        Modifier const* GetDeactivatedModifier() const { return &m_deactivatedModifier; }
+        bool IsActive() { return !m_deactivated; }
+// DEVELOPER CODE END
+
         Modifier*       GetModifier()       { return &m_modifier; }
         Modifier const* GetModifier() const { return &m_modifier; }
         int32 GetMiscValue() const { return m_spellProto->EffectMiscValue[m_effIndex]; }
@@ -375,6 +385,12 @@ class MANGOS_DLL_SPEC Aura
         void ReapplyAffectedPassiveAuras();
 
         Modifier m_modifier;
+
+// DEVELOPER CODE START
+        Modifier m_deactivatedModifier;
+        bool m_deactivated;
+// DEVELOPER CODE END
+
         SpellModifier *m_spellmod;
 
         SpellEntry const *m_spellProto;
@@ -383,7 +399,7 @@ class MANGOS_DLL_SPEC Aura
         uint64 m_castItemGuid;                              // it is NOT safe to keep a pointer to the item because it may get deleted
         time_t m_applyTime;
 
-        int32 m_currentBasePoints;                          // cache SpellEntry::EffectBasePoints+1 and use for set custom base points
+        int32 m_currentBasePoints;                          // cache SpellEntry::EffectBasePoints and use for set custom base points
         int32 m_maxduration;                                // Max aura duration
         int32 m_duration;                                   // Current time
         int32 m_timeCla;                                    // Timer for power per sec calcultion

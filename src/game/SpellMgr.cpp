@@ -370,7 +370,7 @@ bool IsSingleFromSpellSpecificPerTargetPerCaster(SpellSpecific spellSpec1,SpellS
         case SPELL_POSITIVE_SHOUT:
         case SPELL_JUDGEMENT:
         case SPELL_HAND:
-		case SPELL_MAGE_BOMB:
+        case SPELL_MAGE_BOMB:
             return spellSpec1==spellSpec2;
         default:
             return false;
@@ -387,7 +387,7 @@ bool IsSingleFromSpellSpecificSpellRanksPerTarget(SpellSpecific spellSpec1,Spell
         case SPELL_CURSE:
         case SPELL_ASPECT:
         case SPELL_HAND:
-		case SPELL_MAGE_BOMB:
+        case SPELL_MAGE_BOMB:
             return spellSpec1==spellSpec2;
         default:
             return false;
@@ -689,11 +689,11 @@ bool IsPositiveEffect(uint32 spellId, SpellEffectIndex effIndex)
                     if(spellproto->Id==42792)               // Recently Dropped Flag (prevent cancel)
                         return false;
                     break;
-				case SPELL_AURA_CONTROL_VEHICLE:
-					//Vortex
+                case SPELL_AURA_CONTROL_VEHICLE:
+                    //Vortex
                     if(spellproto->Id == 56266)
                         return false;
-					break;
+                    break;
                 default:
                     break;
             }
@@ -1188,9 +1188,9 @@ void SpellMgr::LoadSpellStack()
  
         SpellStackEntry sse; 
                
-        sse.stackClass[0] = fields[1].GetUInt32(); 
-        sse.stackClass[1] = fields[2].GetUInt32(); 
-        sse.stackClass[2] = fields[3].GetUInt32(); 
+        sse.stackGroup[0] = fields[1].GetUInt32(); 
+        sse.stackGroup[1] = fields[2].GetUInt32(); 
+        sse.stackGroup[2] = fields[3].GetUInt32(); 
 
         mSpellStackMap[entry] = sse; 
                    
@@ -1208,9 +1208,9 @@ void SpellMgr::LoadSpellStack()
        sLog.outString( ">> Loaded %u spell stack data",  count); 
 } 
  
-void SpellMgr::LoadSpellStackClass() 
+void SpellMgr::LoadSpellStackGroup() 
 { 
-    mSpellStackClassMap.clear();                             // need for reload case 
+    mSpellStackGroupMap.clear();                             // need for reload case 
     uint32 count = 0; 
     //                                                0      1                 2           
     QueryResult *result = WorldDatabase.Query("SELECT entry, stack_conditions, value FROM spell_stack_class_data"); 
@@ -1229,11 +1229,11 @@ void SpellMgr::LoadSpellStackClass()
         bar.step(); 
         uint32 entry = fields[0].GetUInt32(); 
 
-        SpellStackClassEntry ssce; 
+        SpellStackGroupEntry ssge; 
  
-               ssce.type  = fields[1].GetUInt32(); 
-               ssce.value = fields[2].GetUInt32(); 
-               mSpellStackClassMap[entry] = ssce; 
+               ssge.type  = fields[1].GetUInt32(); 
+               ssge.value = fields[2].GetUInt32(); 
+               mSpellStackGroupMap[entry] = ssge; 
         ++count; 
  
     } while( result->NextRow() ); 
@@ -1638,7 +1638,7 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
         case SPELLFAMILY_MAGE:
             if( spellInfo_2->SpellFamilyName == SPELLFAMILY_MAGE )
             {
-				// Living Bomb & Ignite
+                // Living Bomb & Ignite
                 if( (spellInfo_1->SpellIconID == 3000) && (spellInfo_2->SpellIconID == 937) ||
                     (spellInfo_2->SpellIconID == 3000) && (spellInfo_1->SpellIconID == 937) )
                     return false;
@@ -1666,6 +1666,16 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                 //Focus magic 30min buff and 10s proc 
                 if( (spellInfo_1->Id == 54648) && (spellInfo_2->Id == 54646) ||
                     (spellInfo_2->Id == 54648) && (spellInfo_1->Id == 54646) )
+                    return false;
+
+                //Focus magic(30 min buff) and Praxis (T8 set bonus)
+                if( (spellInfo_1->Id == 54646) && (spellInfo_2->Id == 64868) ||
+                    (spellInfo_2->Id == 54646) && (spellInfo_1->Id == 64868) )
+                    return false;
+
+                //Focus magic(10s buff) and Praxis (T8 set bonus)
+                if( (spellInfo_1->Id == 54648) && (spellInfo_2->Id == 64868) ||
+                    (spellInfo_2->Id == 54648) && (spellInfo_1->Id == 64868) )
                     return false;
 
                 //Improved scorch and Winter's Chill
@@ -3690,11 +3700,8 @@ DiminishingGroup GetDiminishingReturnsGroupForSpell(SpellEntry const* spellproto
         }
         case SPELLFAMILY_PRIEST:
         {
-            // Vampiric Embrace
-            if ((spellproto->SpellFamilyFlags & UI64LIT(0x00000000004)) && spellproto->SpellIconID == 150)
-                return DIMINISHING_LIMITONLY;
             // Shackle Undead
-            else if (spellproto->SpellIconID == 27)
+            if (spellproto->SpellIconID == 27)
                 return DIMINISHING_DISORIENT;
             // Mind Control
             if ((spellproto->SpellFamilyFlags & UI64LIT(0x00000020000)) && spellproto->SpellIconID == 150)
@@ -3777,13 +3784,6 @@ int32 GetDiminishingReturnsLimitDuration(DiminishingGroup group, SpellEntry cons
             // Faerie Fire - limit to 40 seconds in PvP (3.1)
             if (spellproto->SpellFamilyFlags & UI64LIT(0x00000000400))
                 return 40000;
-            break;
-        }
-        case SPELLFAMILY_PRIEST:
-        {
-            // Vampiric Embrace - limit to 60 seconds in PvP (3.1)
-            if ((spellproto->SpellFamilyFlags & UI64LIT(0x00000000004)) && spellproto->SpellIconID == 150)
-                return 60000;
             break;
         }
         default:
