@@ -201,6 +201,7 @@ GroupQueueInfo * BattleGroundQueue::AddGroup(Player *leader, Group* grp, BattleG
         {
             uint32 qHorde = 0;
             uint32 qAlliance = 0;
+            GroupsQueueType::const_iterator itr;
             for(itr = m_QueuedGroups[bracketId][BG_QUEUE_NORMAL_ALLIANCE].begin(); itr != m_QueuedGroups[bracketId][BG_QUEUE_NORMAL_ALLIANCE].end(); ++itr)
                 if (!(*itr)->IsInvitedToBGInstanceGUID)
                     qAlliance += (*itr)->Players.size();
