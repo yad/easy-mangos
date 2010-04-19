@@ -35,6 +35,8 @@
 #include "BattleGroundMgr.h"
 #include "MapManager.h"
 #include "SocialMgr.h"
+#include "Auth/AuthCrypt.h"
+#include "Auth/HMACSHA1.h"
 #include "zlib/zlib.h"
 
 /// WorldSession constructor
@@ -43,7 +45,7 @@ LookingForGroup_auto_join(false), LookingForGroup_auto_add(false), m_muteTime(mu
 _player(NULL), m_Socket(sock),_security(sec), _accountId(id), m_expansion(expansion),
 m_sessionDbcLocale(sWorld.GetAvailableDbcLocale(locale)), m_sessionDbLocaleIndex(sObjectMgr.GetIndexForLocale(locale)),
 _logoutTime(0), m_inQueue(false), m_playerLoading(false), m_playerLogout(false), m_playerRecentlyLogout(false), m_playerSave(false),
-m_latency(0), m_TutorialsChanged(false)
+m_latency(0), m_tutorialState(TUTORIALDATA_UNCHANGED)
 {
     if (sock)
     {
@@ -672,21 +674,24 @@ void WorldSession::LoadTutorialsData()
 
     QueryResult *result = CharacterDatabase.PQuery("SELECT tut0,tut1,tut2,tut3,tut4,tut5,tut6,tut7 FROM character_tutorial WHERE account = '%u'", GetAccountId());
 
-    if(result)
-    {
-        do
-        {
-            Field *fields = result->Fetch();
-
-            for (int iI = 0; iI < 8; ++iI)
-                m_Tutorials[iI] = fields[iI].GetUInt32();
-        }
-        while( result->NextRow() );
-
-        delete result;
+    if(!result)
+    { 
+        m_tutorialState = TUTORIALDATA_NEW;
+        return;
     }
 
-    m_TutorialsChanged = false;
+    do
+    {
+        Field *fields = result->Fetch();
+
+        for (int iI = 0; iI < 8; ++iI)
+            m_Tutorials[iI] = fields[iI].GetUInt32();
+    }
+    while( result->NextRow() );
+
+    delete result;
+
+    m_tutorialState = TUTORIALDATA_UNCHANGED;
 }
 
 void WorldSession::SendTutorialsData()
@@ -699,29 +704,19 @@ void WorldSession::SendTutorialsData()
 
 void WorldSession::SaveTutorialsData()
 {
-    if(!m_TutorialsChanged)
-        return;
-
-    uint32 Rows=0;
-    // it's better than rebuilding indexes multiple times
-    QueryResult *result = CharacterDatabase.PQuery("SELECT count(*) AS r FROM character_tutorial WHERE account = '%u'", GetAccountId());
-    if(result)
+    switch(m_tutorialState)
     {
-        Rows = result->Fetch()[0].GetUInt32();
-        delete result;
+        case TUTORIALDATA_CHANGED:
+            CharacterDatabase.PExecute("UPDATE character_tutorial SET tut0='%u', tut1='%u', tut2='%u', tut3='%u', tut4='%u', tut5='%u', tut6='%u', tut7='%u' WHERE account = '%u'",
+                m_Tutorials[0], m_Tutorials[1], m_Tutorials[2], m_Tutorials[3], m_Tutorials[4], m_Tutorials[5], m_Tutorials[6], m_Tutorials[7], GetAccountId());
+            break;
+        case TUTORIALDATA_NEW:
+            CharacterDatabase.PExecute("INSERT INTO character_tutorial (account,tut0,tut1,tut2,tut3,tut4,tut5,tut6,tut7) VALUES ('%u', '%u', '%u', '%u', '%u', '%u', '%u', '%u', '%u')",
+                GetAccountId(), m_Tutorials[0], m_Tutorials[1], m_Tutorials[2], m_Tutorials[3], m_Tutorials[4], m_Tutorials[5], m_Tutorials[6], m_Tutorials[7]);
+            break;
     }
 
-    if (Rows)
-    {
-        CharacterDatabase.PExecute("UPDATE character_tutorial SET tut0='%u', tut1='%u', tut2='%u', tut3='%u', tut4='%u', tut5='%u', tut6='%u', tut7='%u' WHERE account = '%u'",
-            m_Tutorials[0], m_Tutorials[1], m_Tutorials[2], m_Tutorials[3], m_Tutorials[4], m_Tutorials[5], m_Tutorials[6], m_Tutorials[7], GetAccountId());
-    }
-    else
-    {
-        CharacterDatabase.PExecute("INSERT INTO character_tutorial (account,tut0,tut1,tut2,tut3,tut4,tut5,tut6,tut7) VALUES ('%u', '%u', '%u', '%u', '%u', '%u', '%u', '%u', '%u')", GetAccountId(), m_Tutorials[0], m_Tutorials[1], m_Tutorials[2], m_Tutorials[3], m_Tutorials[4], m_Tutorials[5], m_Tutorials[6], m_Tutorials[7]);
-    }
-
-    m_TutorialsChanged = false;
+    m_tutorialState = TUTORIALDATA_UNCHANGED;
 }
 
 void WorldSession::ReadAddonsInfo(WorldPacket &data)
@@ -855,4 +850,23 @@ void WorldSession::SetPlayer( Player *plr )
     // set m_GUID that can be used while player loggined and later until m_playerRecentlyLogout not reset
     if(_player)
         m_GUIDLow = _player->GetGUIDLow();
+}
+
+void WorldSession::SendRedirectClient(std::string& ip, uint16 port)
+{
+    uint32 ip2 = ACE_OS::inet_addr(ip.c_str());
+    WorldPacket pkt(SMSG_REDIRECT_CLIENT, 4 + 2 + 4 + 20);
+
+    pkt << uint32(ip2);                                     // inet_addr(ipstr)
+    pkt << uint16(port);                                    // port
+
+    pkt << uint32(GetLatency());                            // latency-related?
+
+    HMACSHA1 sha1(20, m_Socket->GetSessionKey().AsByteArray());
+    sha1.UpdateData((uint8*)&ip2, 4);
+    sha1.UpdateData((uint8*)&port, 2);
+    sha1.Finalize();
+    pkt.append(sha1.GetDigest(), 20);                       // hmacsha1(ip+port) w/ sessionkey as seed
+
+    SendPacket(&pkt);
 }

@@ -131,6 +131,13 @@ enum ChatRestrictionType
     ERR_YELL_RESTRICTED = 3
 };
 
+enum TutorialDataState
+{
+    TUTORIALDATA_UNCHANGED = 0,
+    TUTORIALDATA_CHANGED   = 1,
+    TUTORIALDATA_NEW       = 2
+};
+
 /// Player session in the World
 class MANGOS_DLL_SPEC WorldSession
 {
@@ -158,6 +165,7 @@ class MANGOS_DLL_SPEC WorldSession
         void SendAreaTriggerMessage(const char* Text, ...) ATTR_PRINTF(2,3);
         void SendSetPhaseShift(uint32 phaseShift);
         void SendQueryTimeResponse();
+        void SendRedirectClient(std::string& ip, uint16 port);
 
         AccountTypes GetSecurity() const { return _security; }
         uint32 GetAccountId() const { return _accountId; }
@@ -243,7 +251,8 @@ class MANGOS_DLL_SPEC WorldSession
             if(m_Tutorials[intId] != value)
             {
                 m_Tutorials[intId] = value;
-                m_TutorialsChanged = true;
+                if(m_tutorialState == TUTORIALDATA_UNCHANGED)
+                    m_tutorialState = TUTORIALDATA_CHANGED;
             }
         }
                                                              //used with item_page table
@@ -788,7 +797,7 @@ class MANGOS_DLL_SPEC WorldSession
         uint32 m_latency;
         AccountData m_accountData[NUM_ACCOUNT_DATA_TYPES];
         uint32 m_Tutorials[8];
-        bool   m_TutorialsChanged;
+        TutorialDataState m_tutorialState;
         AddonsList m_addonsList;
         ACE_Based::LockedQueue<WorldPacket*, ACE_Thread_Mutex> _recvQueue;
 };
