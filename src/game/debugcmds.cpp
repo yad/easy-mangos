@@ -39,6 +39,7 @@
 
 #include "pathfinding/Detour/DetourNavMesh.h"
 #include "pathfinding/Detour/DetourCommon.h"
+#include "PathFinder.h"
 
 bool ChatHandler::HandleDebugSendSpellFailCommand(const char* args)
 {

@@ -27,8 +27,6 @@
 #include "ObjectGuid.h"
 #include "Camera.h"
 
-#include "PathFinder.h"
-
 #include <set>
 #include <string>
 
