@@ -953,6 +953,7 @@ public:
     ~AuctionHouseBot();
     void Update();
     void Initialize();
+    void LoadDbConfig();
     void LoadValues(AHBConfig*);
     void Commands(uint32, uint32, uint32, char*);
     uint32 GetAHBplayerGUID() { return sWorld.getConfig(CONFIG_UINT32_AHBOT_CHARACTER_ID); };

@@ -88,6 +88,7 @@ bool ChatHandler::HandleAHBotOptionsCommand(const char* args)
         PSendSysMessage("buyerprice");
         PSendSysMessage("bidinterval");
         PSendSysMessage("bidsperinterval");
+        PSendSysMessage("reloaddbconfig");
         return true;
     }
     else if (strncmp(opt,"ahexpire",l) == 0)
@@ -514,6 +515,11 @@ bool ChatHandler::HandleAHBotOptionsCommand(const char* args)
             return false;
         }
         auctionbot.Commands(13, ahMapID, NULL, param1);
+    }
+    else if (strncmp(opt,"reloaddbconfig",l) == 0)
+    {
+        auctionbot.LoadDbConfig();
+        PSendSysMessage("AHBOT> DB Config reloaded");
     }
     else
     {
