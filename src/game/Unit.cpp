@@ -3988,7 +3988,7 @@ bool Unit::AddAura(Aura *Aur)
     SpellEntry const* aurSpellInfo = Aur->GetSpellProto();
 
     // DEVELOPER CODE START
-    const SpellStackGroupEntry const * stackInfo = sSpellMgr.GetStackConditionsForSpells(Aur->GetId(),Aur->GetId());
+    SpellStackGroupEntry const * stackInfo = sSpellMgr.GetStackConditionsForSpells(Aur->GetId(),Aur->GetId());
     bool toBeDeactivated = false;
     // DEVELOPER CODE END
 
@@ -4235,7 +4235,7 @@ bool Unit::RemoveNoStackAurasDueToAura(Aura *Aur)
 
 // DEVELOPER CODE START 
 
-        const SpellStackGroupEntry const * stackInfo_i = sSpellMgr.GetStackConditionsForSpells(i_spellId,spellId); 
+        SpellStackGroupEntry const * stackInfo_i = sSpellMgr.GetStackConditionsForSpells(i_spellId,spellId); 
  
         if (stackInfo_i && stackInfo_i->type != SPELLSTACKING_UNDEFINED) 
         { 
@@ -4790,7 +4790,7 @@ void Unit::RemoveAura(AuraMap::iterator &i, AuraRemoveMode mode)
         if(Aur->GetModifier()->m_auraname != (*itr).second->GetModifier()->m_auraname)
             continue;
 
-        if(const SpellStackGroupEntry const * stackInfo_i = sSpellMgr.GetStackConditionsForSpells((*itr).second->GetId(),Aur->GetId()))
+        if(SpellStackGroupEntry const * stackInfo_i = sSpellMgr.GetStackConditionsForSpells((*itr).second->GetId(),Aur->GetId()))
         {
             if(stackInfo_i && (stackInfo_i->value & STACKOPTION_INTERNAL))
             {
