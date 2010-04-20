@@ -33,6 +33,10 @@
 
 #define MAX_STACK_SIZE 64
 
+#ifdef _MSC_VER
+	#define isnan(x) _isnan(x)
+#endif
+
 using G3D::Vector3;
 using G3D::AABox;
 using G3D::Ray;
@@ -126,8 +130,8 @@ class BIH
         struct StackNode
         {
             uint32 node;
-            float near;
-            float far;
+            float tnear;
+            float tfar;
         };
 
         class BuildStats {
@@ -498,8 +502,8 @@ class BIH
                             // ray passes through both nodes
                             // push back node
                             stack[stackPos].node = back;
-                            stack[stackPos].near = (tb >= intervalMin) ? tb : intervalMin;
-                            stack[stackPos].far = intervalMax;
+                            stack[stackPos].tnear = (tb >= intervalMin) ? tb : intervalMin;
+                            stack[stackPos].tfar = intervalMax;
                             stackPos++;
                             // update ray interval for front node
                             intervalMax = (tf <= intervalMax) ? tf : intervalMax;
@@ -539,11 +543,11 @@ class BIH
                         return;
                     // move back up the stack
                     stackPos--;
-                    intervalMin = stack[stackPos].near;
+                    intervalMin = stack[stackPos].tnear;
                     if (maxDist < intervalMin)
                         continue;
                     node = stack[stackPos].node;
-                    intervalMax = stack[stackPos].far;
+                    intervalMax = stack[stackPos].tfar;
                     break;
                 } while (true);
             }

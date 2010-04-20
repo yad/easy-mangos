@@ -27,7 +27,7 @@
 #endif
 #include <G3D/Table.h>
 // temp
-#include <TileAssembler.h>
+#include "TileAssembler.h"
 
 //===========================================================
 

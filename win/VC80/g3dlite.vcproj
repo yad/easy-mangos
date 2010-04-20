@@ -44,7 +44,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/MP"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\dep\include\g3dlite"
+				AdditionalIncludeDirectories="..\..\dep\include\g3dlite;..\..\dep\include\zlib"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
 				MinimalRebuild="false"
 				BasicRuntimeChecks="3"
@@ -115,7 +115,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/MP"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\dep\include\g3dlite"
+				AdditionalIncludeDirectories="..\..\dep\include\g3dlite;..\..\dep\include\zlib"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
 				MinimalRebuild="false"
 				BasicRuntimeChecks="3"
@@ -185,7 +185,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/MP"
-				AdditionalIncludeDirectories="..\..\dep\include\g3dlite"
+				AdditionalIncludeDirectories="..\..\dep\include\g3dlite;..\..\dep\include\zlib"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;_SECURE_SCL=0"
 				RuntimeLibrary="2"
 				EnableEnhancedInstructionSet="1"
@@ -255,7 +255,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/MP"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\dep\include\g3dlite"
+				AdditionalIncludeDirectories="..\..\dep\include\g3dlite;..\..\dep\include\zlib"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
 				MinimalRebuild="false"
 				BasicRuntimeChecks="3"
@@ -327,7 +327,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/MP"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\dep\include\g3dlite"
+				AdditionalIncludeDirectories="..\..\dep\include\g3dlite;..\..\dep\include\zlib"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
 				MinimalRebuild="false"
 				BasicRuntimeChecks="3"
@@ -398,7 +398,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/MP"
-				AdditionalIncludeDirectories="..\..\dep\include\g3dlite"
+				AdditionalIncludeDirectories="..\..\dep\include\g3dlite;..\..\dep\include\zlib"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;_SECURE_SCL=0"
 				RuntimeLibrary="2"
 				EnableEnhancedInstructionSet="0"
@@ -689,6 +689,10 @@
 			</File>
 			<File
 				RelativePath="..\..\dep\src\g3dlite\ReferenceCount.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\dep\src\g3dlite\RegistryUtil.cpp"
 				>
 			</File>
 			<File
