@@ -1829,6 +1829,9 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
             // Life Tap
             if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000000000040000))
             {
+                // in 333 there still seems to be spirit dependence although it is stated that there is not
+                uint32 spirit = uint32(m_caster->GetStat(STAT_SPIRIT));
+                damage+=spirit*15/10;
 //              Think its not need (also need remove Life Tap from SpellDamageBonus or add new value)
 //              damage = m_caster->SpellDamageBonus(m_caster, m_spellInfo,uint32(damage > 0 ? damage : 0), SPELL_DIRECT_DAMAGE);
                 if (unitTarget && (int32(unitTarget->GetHealth()) > damage))
