@@ -29,7 +29,7 @@
 namespace VMAP
 {
     class WorldModel;
-    class AreaInfo;
+    struct AreaInfo;
 
     enum ModelFlags
     {
@@ -50,8 +50,8 @@ namespace VMAP
             float iScale;
             G3D::AABox iBound;
             std::string name;
-            bool operator==(const ModelSpawn &other) { return ID == other.ID; }
-            uint32 hashCode() const { return ID; }
+            bool operator==(const ModelSpawn &other) const { return ID == other.ID; }
+            //uint32 hashCode() const { return ID; }
             // temp?
             const G3D::AABox& getBounds() const { return iBound; }
 

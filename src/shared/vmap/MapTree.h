@@ -26,9 +26,7 @@
 
 namespace VMAP
 {
-    class TreeNode;
     class ModelInstance;
-    class ModelSpawn;
     class VMapManager2;
 
     class StaticMapTree
@@ -38,8 +36,6 @@ namespace VMAP
         private:
             uint32 iMapID;
             bool iIsTiled;
-            //TreeNode *iTree; // the KD-tree
-            //uint32 iNNodes;
             BIH iTree;
             ModelInstance *iTreeValues; // the tree entries
             uint32 iNTreeValues;
@@ -53,12 +49,7 @@ namespace VMAP
             std::string iBasePath;
 
         private:
-            float getIntersectionTime(const G3D::Ray& pRay, float pMaxDist, bool pStopAtFirstHit);
-            // => VMapManager
-            //bool isAlreadyLoaded(const std::string& pName) const { return(iLoadedModelContainer.containsKey(pName)); }
-            //void setLoadedMapTile(unsigned int pTileIdent) { iLoadedMapTiles.set(pTileIdent, true); }
-            //void removeLoadedMapTile(unsigned int pTileIdent) { iLoadedMapTiles.remove(pTileIdent); }
-            // bool hasLoadedMapTiles() const { return iLoadedTiles.size() > 0; }
+            float getIntersectionTime(const G3D::Ray& pRay, float pMaxDist, bool pStopAtFirstHit) const;
             //bool containsLoadedMapTile(unsigned int pTileIdent) const { return(iLoadedMapTiles.containsKey(pTileIdent)); }
         public:
             static std::string getTileFileName(uint32 mapID, uint32 tileX, uint32 tileY);
@@ -68,17 +59,16 @@ namespace VMAP
             StaticMapTree(uint32 mapID, const std::string &basePath);
             ~StaticMapTree();
 
-            bool isInLineOfSight(const G3D::Vector3& pos1, const G3D::Vector3& pos2);
-            bool getObjectHitPos(const G3D::Vector3& pos1, const G3D::Vector3& pos2, G3D::Vector3& pResultHitPos, float pModifyDist);
-            float getHeight(const G3D::Vector3& pPos);
-            bool getAreaInfo(G3D::Vector3 pos, uint32 &flags, int32 &adtId, int32 &rootId, int32 &groupId);
+            bool isInLineOfSight(const G3D::Vector3& pos1, const G3D::Vector3& pos2) const;
+            bool getObjectHitPos(const G3D::Vector3& pos1, const G3D::Vector3& pos2, G3D::Vector3& pResultHitPos, float pModifyDist) const;
+            float getHeight(const G3D::Vector3& pPos) const;
+            bool getAreaInfo(G3D::Vector3 pos, uint32 &flags, int32 &adtId, int32 &rootId, int32 &groupId) const;
 
-            //bool PrepareTree();
             bool init(const std::string &fname, VMapManager2 *vm);
             bool loadMap(uint32 tileX, uint32 tileY, VMapManager2 *vm);
             void unloadMap(uint32 tileX, uint32 tileY, VMapManager2 *vm);
-            bool isTiled() { return iIsTiled; }
-            uint32 numLoadedTiles() { return iLoadedTiles.size(); }
+            bool isTiled() const { return iIsTiled; }
+            uint32 numLoadedTiles() const { return iLoadedTiles.size(); }
     };
 
     struct AreaInfo
