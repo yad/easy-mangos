@@ -37,11 +37,6 @@
 #   define G3D_DEBUG
 #endif
 
-#ifndef _MSC_VER
-/// Fast call is a register-based optimized calling convention supported only by Visual C++
-#define __fastcall
-#endif
-
 #ifdef _MSC_VER 
     #define G3D_WIN32
 #elif  defined(__FreeBSD__) || defined(__OpenBSD__)
@@ -125,8 +120,6 @@
 #   pragma warning (disable : 4786)
 // TODO: remove
 #   pragma warning (disable : 4244)
-
-#   define ZLIB_WINAPI
 
 #   define restrict
 
