@@ -1,7 +1,11 @@
 #include "vmapexport.h"
 #include "model.h"
 #include "wmo.h"
+#ifdef USE_LIBMPQ04
+#include "mpq_libmpq04.h"
+#else
 #include "mpq_libmpq.h"
+#endif
 #include <cassert>
 #include <algorithm>
 #include <cstdio>

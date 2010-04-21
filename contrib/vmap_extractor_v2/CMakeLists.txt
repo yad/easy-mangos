@@ -14,12 +14,13 @@ project (MANGOS_VMAP_EXTRACT_IO)
 
 # uncomment next line to disable debug mode
 ADD_DEFINITIONS("-DIOMAP_DEBUG")
-
+# build setup currently only supports libmpq 0.4.x
+ADD_DEFINITIONS("-DUSE_LIBMPQ04")
 ADD_DEFINITIONS("-Wall")
 ADD_DEFINITIONS("-ggdb")
 ADD_DEFINITIONS("-O3")
 
-include_directories(../libmpq stormlib)
+include_directories(../libmpq)
 #add_subdirectory(stormlib)
 
 add_subdirectory(vmapextract)

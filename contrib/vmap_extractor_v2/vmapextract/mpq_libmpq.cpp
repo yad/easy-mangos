@@ -1,4 +1,4 @@
-#include "mpq_libmpq.h"
+#include "mpq_libmpq04.h"
 #include <deque>
 #include <cstdio>
 
@@ -49,7 +49,7 @@ MPQFile::MPQFile(const char* filename):
     for(ArchiveSet::iterator i=gOpenArchives.begin(); i!=gOpenArchives.end();++i)
     {
         mpq_archive *mpq_a = (*i)->mpq_a;
-        
+
         uint32 filenum;
         if(libmpq__file_number(mpq_a, filename, &filenum)) continue;
         libmpq__off_t transferred;
