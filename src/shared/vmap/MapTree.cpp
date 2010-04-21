@@ -68,7 +68,7 @@ namespace VMAP
         return tilefilename.str();
     }
 
-    bool StaticMapTree::getAreaInfo(Vector3 pos, uint32 &flags, int32 &adtId, int32 &rootId, int32 &groupId)
+    bool StaticMapTree::getAreaInfo(Vector3 pos, uint32 &flags, int32 &adtId, int32 &rootId, int32 &groupId) const
     {
         AreaInfoCallback intersectionCallBack(iTreeValues);
         iTree.intersectPoint(pos, intersectionCallBack);
@@ -105,7 +105,7 @@ namespace VMAP
     return dist to hit or inf() if no hit
     */
 
-    float StaticMapTree::getIntersectionTime(const G3D::Ray& pRay, float pMaxDist, bool pStopAtFirstHit)
+    float StaticMapTree::getIntersectionTime(const G3D::Ray& pRay, float pMaxDist, bool pStopAtFirstHit) const
     {
         float distance = pMaxDist;
         MapRayCallback intersectionCallBack(iTreeValues);
@@ -114,7 +114,7 @@ namespace VMAP
     }
     //=========================================================
 
-    bool StaticMapTree::isInLineOfSight(const Vector3& pos1, const Vector3& pos2)
+    bool StaticMapTree::isInLineOfSight(const Vector3& pos1, const Vector3& pos2) const
     {
         bool result = true;
         float maxDist = (pos2 - pos1).magnitude();
@@ -133,7 +133,7 @@ namespace VMAP
     Return the hit pos or the original dest pos
     */
 
-    bool StaticMapTree::getObjectHitPos(const Vector3& pPos1, const Vector3& pPos2, Vector3& pResultHitPos, float pModifyDist)
+    bool StaticMapTree::getObjectHitPos(const Vector3& pPos1, const Vector3& pPos2, Vector3& pResultHitPos, float pModifyDist) const
     {
         bool result=false;
         float maxDist = (pPos2 - pPos1).magnitude();
@@ -170,7 +170,7 @@ namespace VMAP
 
     //=========================================================
 
-    float StaticMapTree::getHeight(const Vector3& pPos)
+    float StaticMapTree::getHeight(const Vector3& pPos) const
     {
         float height = G3D::inf();
         Vector3 dir = Vector3(0,0,-1);
