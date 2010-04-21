@@ -36,8 +36,12 @@
 #include "adtfile.h"
 #include "wdtfile.h"
 #include "dbcfile.h"
-#include "mpq_libmpq.h"
 #include "wmo.h"
+#ifdef USE_LIBMPQ04
+#include "mpq_libmpq04.h"
+#else
+#include "mpq_libmpq.h"
+#endif
 
 //------------------------------------------------------------------------------
 // Defines
@@ -87,10 +91,10 @@ static void clreol()
 void strToLower(char* str)
 {
     while(*str)
-    {   
+    {
         *str=tolower(*str);
         ++str;
-    }   
+    }
 }
 
 static const char * GetPlainName(const char * szFileName)
@@ -129,7 +133,7 @@ int ExtractWmo()
     for (ArchiveSet::const_iterator ar_itr = gOpenArchives.begin(); ar_itr != gOpenArchives.end() && success; ++ar_itr)
     {
         vector<string> filelist;
-        
+
         (*ar_itr)->GetFileListTo(filelist);
         for (vector<string>::iterator fname=filelist.begin(); fname != filelist.end() && success; ++fname)
         {
@@ -425,7 +429,7 @@ bool processArgv(int argc, char ** argv, const char *versionString)
 
 //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 // Main
-// 
+//
 // The program must be run with two command line arguments
 //
 // Arg1 - The source MPQ name (for testing reading and file find)

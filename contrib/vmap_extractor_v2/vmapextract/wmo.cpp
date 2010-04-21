@@ -8,7 +8,11 @@
 #include <map>
 #undef min
 #undef max
+#ifdef USE_LIBMPQ04
+#include "mpq_libmpq04.h"
+#else
 #include "mpq_libmpq.h"
+#endif
 
 using namespace std;
 

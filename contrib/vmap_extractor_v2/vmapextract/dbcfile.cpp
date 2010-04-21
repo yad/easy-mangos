@@ -1,5 +1,9 @@
 #include "dbcfile.h"
+#ifdef USE_LIBMPQ04
+#include "mpq_libmpq04.h"
+#else
 #include "mpq_libmpq.h"
+#endif
 #undef min
 #undef max
 
