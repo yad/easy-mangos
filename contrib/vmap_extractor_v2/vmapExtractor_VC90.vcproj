@@ -45,7 +45,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/wd 4996"
 				Optimization="0"
-				AdditionalIncludeDirectories=".\stormlib"
+				AdditionalIncludeDirectories="..\extractor;..\extractor\libmpq"
 				PreprocessorDefinitions="_DEBUG;_CONSOLE;WIN32"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -74,9 +74,11 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="zlib.lib"
 				OutputFile=".\bin\Win32\DebugAS\vmapextract_v2.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
+				AdditionalLibraryDirectories="..\extractor\debug"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\bin\Win32\DebugAS/StormLib.pdb"
 				SubSystem="1"
@@ -138,7 +140,7 @@
 				AdditionalOptions="/wd 4996"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories=".\stormlib"
+				AdditionalIncludeDirectories="..\extractor;..\extractor\libmpq"
 				PreprocessorDefinitions="NDEBUG;_CONSOLE;WIN32"
 				StringPooling="true"
 				RuntimeLibrary="0"
@@ -166,9 +168,11 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="zlib.lib"
 				OutputFile=".\bin\Win32\ReleaseAS\vmapextract_v2.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
+				AdditionalLibraryDirectories="..\extractor\release"
 				ProgramDatabaseFile=".\bin\Win32\ReleaseAS/StormLib.pdb"
 				SubSystem="1"
 				RandomizedBaseAddress="1"
@@ -206,658 +210,63 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 			>
 			<Filter
-				Name="pklib"
+				Name="libmpq"
 				>
 				<File
-					RelativePath="stormlib\pklib\crc32.c"
-					>
-					<FileConfiguration
-						Name="Debug Ansi Static|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="0"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							BasicRuntimeChecks="3"
-							BrowseInformation="1"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release Ansi Static|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="2"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="stormlib\pklib\explode.c"
-					>
-					<FileConfiguration
-						Name="Debug Ansi Static|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="0"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							BasicRuntimeChecks="3"
-							BrowseInformation="1"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release Ansi Static|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="2"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="stormlib\pklib\implode.c"
-					>
-					<FileConfiguration
-						Name="Debug Ansi Static|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="0"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							BasicRuntimeChecks="3"
-							BrowseInformation="1"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release Ansi Static|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="2"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="stormlib\pklib\pklib.h"
+					RelativePath="..\extractor\libmpq\common.cpp"
 					>
 				</File>
-			</Filter>
-			<Filter
-				Name="zlib"
-				>
-				<Filter
-					Name="Zlib Headers"
-					>
-					<File
-						RelativePath="stormlib\zlib\zconf.h"
-						>
-					</File>
-					<File
-						RelativePath="stormlib\zlib\zlib.h"
-						>
-					</File>
-				</Filter>
-				<Filter
-					Name="Zlib Sources"
-					>
-					<File
-						RelativePath="stormlib\zlib\adler32.c"
-						>
-						<FileConfiguration
-							Name="Debug Ansi Static|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="0"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-								BasicRuntimeChecks="3"
-								BrowseInformation="1"
-								WarningLevel="3"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Release Ansi Static|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="2"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-								WarningLevel="3"
-							/>
-						</FileConfiguration>
-					</File>
-					<File
-						RelativePath="stormlib\zlib\deflate.c"
-						>
-						<FileConfiguration
-							Name="Debug Ansi Static|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="0"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-								BasicRuntimeChecks="3"
-								BrowseInformation="1"
-								WarningLevel="3"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Release Ansi Static|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="2"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-								WarningLevel="3"
-							/>
-						</FileConfiguration>
-					</File>
-					<File
-						RelativePath="stormlib\zlib\infblock.c"
-						>
-						<FileConfiguration
-							Name="Debug Ansi Static|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="0"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-								BasicRuntimeChecks="3"
-								BrowseInformation="1"
-								WarningLevel="3"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Release Ansi Static|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="2"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-								WarningLevel="3"
-							/>
-						</FileConfiguration>
-					</File>
-					<File
-						RelativePath="stormlib\zlib\infcodes.c"
-						>
-						<FileConfiguration
-							Name="Debug Ansi Static|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="0"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-								BasicRuntimeChecks="3"
-								BrowseInformation="1"
-								WarningLevel="3"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Release Ansi Static|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="2"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-								WarningLevel="3"
-							/>
-						</FileConfiguration>
-					</File>
-					<File
-						RelativePath="stormlib\zlib\inffast.c"
-						>
-						<FileConfiguration
-							Name="Debug Ansi Static|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="0"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-								BasicRuntimeChecks="3"
-								BrowseInformation="1"
-								WarningLevel="3"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Release Ansi Static|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="2"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-								WarningLevel="3"
-							/>
-						</FileConfiguration>
-					</File>
-					<File
-						RelativePath="stormlib\zlib\inflate.c"
-						>
-						<FileConfiguration
-							Name="Debug Ansi Static|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="0"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-								BasicRuntimeChecks="3"
-								BrowseInformation="1"
-								WarningLevel="3"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Release Ansi Static|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="2"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-								WarningLevel="3"
-							/>
-						</FileConfiguration>
-					</File>
-					<File
-						RelativePath="stormlib\zlib\inftrees.c"
-						>
-						<FileConfiguration
-							Name="Debug Ansi Static|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="0"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-								BasicRuntimeChecks="3"
-								BrowseInformation="1"
-								WarningLevel="3"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Release Ansi Static|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="2"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-								WarningLevel="3"
-							/>
-						</FileConfiguration>
-					</File>
-					<File
-						RelativePath="stormlib\zlib\infutil.c"
-						>
-						<FileConfiguration
-							Name="Debug Ansi Static|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="0"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-								BasicRuntimeChecks="3"
-								BrowseInformation="1"
-								WarningLevel="3"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Release Ansi Static|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="2"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-								WarningLevel="3"
-							/>
-						</FileConfiguration>
-					</File>
-					<File
-						RelativePath="stormlib\zlib\trees.c"
-						>
-						<FileConfiguration
-							Name="Debug Ansi Static|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="0"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-								BasicRuntimeChecks="3"
-								BrowseInformation="1"
-								WarningLevel="3"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Release Ansi Static|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="2"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-								WarningLevel="3"
-							/>
-						</FileConfiguration>
-					</File>
-					<File
-						RelativePath="stormlib\zlib\zmemory.c"
-						>
-						<FileConfiguration
-							Name="Debug Ansi Static|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="0"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-								BasicRuntimeChecks="3"
-								BrowseInformation="1"
-								WarningLevel="3"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Release Ansi Static|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="2"
-								AdditionalIncludeDirectories=""
-								PreprocessorDefinitions=""
-								WarningLevel="3"
-							/>
-						</FileConfiguration>
-					</File>
-				</Filter>
-			</Filter>
-			<Filter
-				Name="huffman"
-				>
 				<File
-					RelativePath="stormlib\huffman\huff.cpp"
+					RelativePath="..\extractor\libmpq\common.h"
 					>
-					<FileConfiguration
-						Name="Debug Ansi Static|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="0"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							BasicRuntimeChecks="3"
-							BrowseInformation="1"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release Ansi Static|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="2"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="stormlib\huffman\huff.h"
+					RelativePath="..\extractor\libmpq\explode.cpp"
 					>
 				</File>
-			</Filter>
-			<Filter
-				Name="wave"
-				>
 				<File
-					RelativePath="stormlib\wave\wave.cpp"
-					>
-					<FileConfiguration
-						Name="Debug Ansi Static|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="0"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							BasicRuntimeChecks="3"
-							BrowseInformation="1"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release Ansi Static|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="2"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="stormlib\wave\wave.h"
+					RelativePath="..\extractor\libmpq\explode.h"
 					>
 				</File>
-			</Filter>
-			<Filter
-				Name="bzip2"
-				Filter="*.h;*.c"
-				>
 				<File
-					RelativePath="stormlib\bzip2\blocksort.c"
+					RelativePath="..\extractor\libmpq\extract.cpp"
 					>
-					<FileConfiguration
-						Name="Debug Ansi Static|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="0"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							BasicRuntimeChecks="3"
-							BrowseInformation="1"
-							WarningLevel="3"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release Ansi Static|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="2"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							WarningLevel="3"
-						/>
-					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="stormlib\bzip2\bzlib.c"
+					RelativePath="..\extractor\libmpq\huffman.cpp"
 					>
-					<FileConfiguration
-						Name="Debug Ansi Static|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="0"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							BasicRuntimeChecks="3"
-							BrowseInformation="1"
-							WarningLevel="3"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release Ansi Static|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="2"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							WarningLevel="3"
-						/>
-					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="stormlib\bzip2\compress.c"
+					RelativePath="..\extractor\libmpq\huffman.h"
 					>
-					<FileConfiguration
-						Name="Debug Ansi Static|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="0"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							BasicRuntimeChecks="3"
-							BrowseInformation="1"
-							WarningLevel="3"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release Ansi Static|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="2"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							WarningLevel="3"
-						/>
-					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="stormlib\bzip2\crctable.c"
+					RelativePath="..\extractor\libmpq\mpq.cpp"
 					>
-					<FileConfiguration
-						Name="Debug Ansi Static|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="0"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							BasicRuntimeChecks="3"
-							BrowseInformation="1"
-							WarningLevel="3"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release Ansi Static|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="2"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							WarningLevel="3"
-						/>
-					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="stormlib\bzip2\decompress.c"
+					RelativePath="..\extractor\libmpq\mpq.h"
 					>
-					<FileConfiguration
-						Name="Debug Ansi Static|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="0"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							BasicRuntimeChecks="3"
-							BrowseInformation="1"
-							WarningLevel="3"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release Ansi Static|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="2"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							WarningLevel="3"
-						/>
-					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="stormlib\bzip2\huffman.c"
+					RelativePath="..\extractor\libmpq\parser.cpp"
 					>
-					<FileConfiguration
-						Name="Debug Ansi Static|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="0"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							BasicRuntimeChecks="3"
-							BrowseInformation="1"
-							WarningLevel="3"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release Ansi Static|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="2"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							WarningLevel="3"
-						/>
-					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="stormlib\bzip2\randtable.c"
+					RelativePath="..\extractor\libmpq\wave.cpp"
 					>
-					<FileConfiguration
-						Name="Debug Ansi Static|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="0"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							BasicRuntimeChecks="3"
-							BrowseInformation="1"
-							WarningLevel="3"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release Ansi Static|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="2"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							WarningLevel="3"
-						/>
-					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\extractor\libmpq\wave.h"
+					>
+				</File>
+				<File
+					RelativePath="..\extractor\libmpq\zconf.h"
+					>
+				</File>
+				<File
+					RelativePath="..\extractor\libmpq\zlib.h"
+					>
 				</File>
 			</Filter>
 			<Filter
@@ -892,11 +301,11 @@
 					>
 				</File>
 				<File
-					RelativePath=".\vmapextract\mpq.cpp"
+					RelativePath="..\extractor\mpq_libmpq.cpp"
 					>
 				</File>
 				<File
-					RelativePath=".\vmapextract\mpq.h"
+					RelativePath="..\extractor\mpq_libmpq.h"
 					>
 				</File>
 				<File
@@ -921,74 +330,6 @@
 				</File>
 				<File
 					RelativePath=".\vmapextract\wmo.h"
-					>
-				</File>
-			</Filter>
-			<Filter
-				Name="stormlib"
-				>
-				<File
-					RelativePath=".\stormlib\SCommon.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\stormlib\SCommon.h"
-					>
-				</File>
-				<File
-					RelativePath=".\stormlib\SCompression.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\stormlib\SFileCompactArchive.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\stormlib\SFileCreateArchiveEx.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\stormlib\SFileExtractFile.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\stormlib\SFileFindFile.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\stormlib\SFileOpenArchive.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\stormlib\SFileOpenFileEx.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\stormlib\SFileReadFile.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\stormlib\SListFile.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\stormlib\StormDll.h"
-					>
-				</File>
-				<File
-					RelativePath=".\stormlib\StormLib.h"
-					>
-				</File>
-				<File
-					RelativePath=".\stormlib\StormPort.h"
-					>
-				</File>
-				<File
-					RelativePath=".\stormlib\StormPortLinux.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\stormlib\StormPortMac.cpp"
 					>
 				</File>
 			</Filter>

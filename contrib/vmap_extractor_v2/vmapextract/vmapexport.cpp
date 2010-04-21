@@ -458,21 +458,17 @@ int main(int argc, char ** argv)
     printf("Extract %s. Beginning work ....\n",versionString);
     //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
     // Create the working directory
-    //if(nError == ERROR_SUCCESS)
-    //{
-        //if(!CreateDirectory(szWorkDirMaps, NULL))
-        // nError = GetLastError();
-        if(mkdir(szWorkDirWmo
+#ifdef WIN32
+    if(!CreateDirectory(szWorkDirWmo, NULL))
+        success = GetLastError() == ERROR_ALREADY_EXISTS;
+#else
+    if(mkdir(szWorkDirWmo
 #ifdef __linux__
                     , 0711
 #endif
                     ))
-// TODO: replace GetLastError() call to catch already existing dir case
             success = (errno == EEXIST);
-//            nError = GetLastError();
-//        if(nError == ERROR_ALREADY_EXISTS)
-//            nError = ERROR_SUCCESS;
-    //}
+#endif
 
     // prepare archive name list
     std::vector<std::string> archiveNames;
