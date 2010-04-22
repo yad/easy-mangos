@@ -4711,6 +4711,10 @@ void Aura::HandleAuraModTotalThreat(bool apply, bool Real)
     if (!Real)
         return;
 
+    //Why mirror image have this aura?
+    if(GetId() == 55342)
+        return;
+
     if (!m_target->isAlive() || m_target->GetTypeId() != TYPEID_PLAYER)
         return;
 
@@ -8442,7 +8446,7 @@ void Aura::PeriodicDummyTick()
             if (spell->Id == 55342)
             {
                 // Set name of summons to name of caster
-                m_target->CastSpell((Unit *)NULL, m_spellProto->EffectTriggerSpell[m_effIndex], true);
+                m_target->CastSpell(m_target, m_spellProto->EffectTriggerSpell[m_effIndex], true);
                 m_isPeriodic = false;
             }
             break;
@@ -8986,26 +8990,32 @@ void Aura::HandleAllowOnlyAbility(bool apply, bool Real)
 
 void Aura::HandleAuraInitializeImages(bool Apply, bool Real)
 {
-    if (!Real || !Apply)
+    if (!Real || !Apply || !m_target || m_target->GetTypeId() != TYPEID_UNIT)
         return;
-
     Unit* caster = GetCaster();
-    if (!caster)
+    Unit* creator = Unit::GetUnit(*m_target,m_target->GetCreatorGUID());
+    Creature* pImmage = (Creature*)m_target;
+    if (!creator || !caster || creator != caster || pImmage->isPet())
         return;
 
-    // Set item visual
-    if (caster->GetTypeId()== TYPEID_PLAYER)
-    {
-        if (Item const* item = ((Player *)caster)->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND))
-            m_target->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID, item->GetProto()->ItemId);
-        if (Item const* item = ((Player *)caster)->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND))
-            m_target->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 1, item->GetProto()->ItemId);
-    }
+    // set stats and visual
+    pImmage->SetDisplayId(creator->GetDisplayId());
+//    pImmage->SetLevel(creator->getLevel());
+    pImmage->SetMaxHealth(creator->GetMaxHealth()/5);
+    pImmage->SetHealth(creator->GetHealth()/2);
+    pImmage->SetMaxPower(POWER_MANA, creator->GetMaxPower(POWER_MANA));
+    pImmage->SetPower(POWER_MANA, creator->GetPower(POWER_MANA));
+    pImmage->setFaction(creator->getFaction());
+    pImmage->SetUInt32Value(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_UNK2 | UNIT_FLAG2_REGENERATE_POWER);
+    if (creator->IsPvP())
+        pImmage->SetPvP(true);
+
+    if (creator->isInCombat() && pImmage->isAlive())
+        pImmage->CastSpell(pImmage, 58838, true);
     else
     {
-        m_target->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID, caster->GetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID));
-        m_target->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 1, caster->GetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 1));
-        m_target->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 2, caster->GetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 2));
+       pImmage->GetMotionMaster()->Clear();
+       pImmage->GetMotionMaster()->MoveFollow(creator, pImmage->GetDistance(creator), pImmage->GetAngle(creator));
     }
 }
 
@@ -9016,9 +9026,6 @@ void Aura::HandleAuraCloneCaster(bool Apply, bool Real)
 
     Unit * caster = GetCaster();
     if (!caster)
-        return;
-
-    if (m_target->GetTypeId()== TYPEID_PLAYER)
         return;
 
     // Set item visual

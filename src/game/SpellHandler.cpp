@@ -620,7 +620,7 @@ void WorldSession::HandleSpellClick( WorldPacket & recv_data )
         }
     }
 }
-void WorldSession::HandleMirrrorImageDataRequest( WorldPacket & recv_data )
+void WorldSession::HandleMirrorImageDataRequest( WorldPacket & recv_data )
 {
     sLog.outDebug("WORLD: CMSG_GET_MIRRORIMAGE_DATA");
     uint64 guid;
@@ -633,6 +633,9 @@ void WorldSession::HandleMirrrorImageDataRequest( WorldPacket & recv_data )
 
     // Get creator of the unit
     Unit *creator = ObjectAccessor::GetUnit(*_player, unit->GetCreatorGUID());
+    if (!creator)
+        creator = unit;
+
     if (!creator)
         return;
 
@@ -653,7 +656,7 @@ void WorldSession::HandleMirrrorImageDataRequest( WorldPacket & recv_data )
 
         data << (uint32)0;                                          // unknown
 
-        static const EquipmentSlots ItemSlots[] = 
+        static const EquipmentSlots ItemSlots[] =
         {
             EQUIPMENT_SLOT_HEAD,
             EQUIPMENT_SLOT_SHOULDERS,
@@ -675,6 +678,11 @@ void WorldSession::HandleMirrrorImageDataRequest( WorldPacket & recv_data )
                 data << (uint32)item->GetProto()->DisplayInfoID;    // display id
             else
                 data << (uint32)0;                                  // no item found, so no id
+
+        if (Item const* item = pCreator->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND))
+            unit->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID, item->GetProto()->ItemId);
+        if (Item const* item = pCreator->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND))
+            unit->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 1, item->GetProto()->ItemId);
     }
     else
     {
