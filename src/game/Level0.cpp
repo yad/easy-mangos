@@ -112,7 +112,7 @@ bool ChatHandler::HandleServerInfoCommand(const char* /*args*/)
     {
         std::string type = (GetShutdownMask() & SHUTDOWN_MASK_RESTART) ? "Restart" : "Shutdown";
         uint32 shutdownTimer = sWorld.GetShutdownTimer();
-        if(shutdownTimer) //Hours
+        if(shutdownTimer > 60*60) //Hours
         {
             uint8 hours = shutdownTimer / (60*60);
             uint8 mins = (shutdownTimer - hours*60*60) / 60;
