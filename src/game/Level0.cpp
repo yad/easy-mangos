@@ -112,11 +112,30 @@ bool ChatHandler::HandleServerInfoCommand(const char* /*args*/)
     PSendSysMessage(LANG_USING_EVENT_AI,sWorld.GetCreatureEventAIVersion());
     PSendSysMessage(LANG_CONNECTED_USERS, activeClientsNum, maxActiveClientsNum, queuedClientsNum, maxQueuedClientsNum);
     PSendSysMessage(LANG_UPTIME, str.c_str());
-    SendSysMessage("Revision [21.4.2010][pr364] - MaNGOS modified for Valhalla Server");
+    SendSysMessage("Revision [22.4.2010][pr368] - MaNGOS modified for Valhalla Server");
     SendSysMessage("GIT: http://github.com/Tasssadar/Valhalla-Project/commits");
     SendSysMessage("Changelog: http://valhalla-team.com/web/changelog.php");
     PSendSysMessage("World diff time: %u", sWorld.GetDiffTime());
-
+    if(sWorld.IsShutdowning())
+    {
+        const char *type = (sWorld.GetShutdownMask() & SHUTDOWN_MASK_RESTART) ? "Restart" : "Shutdown";
+        uint32 shutdownTimer = sWorld.GetShutdownTimer();
+        if(shutdownTimer > 60*60) //Hours
+        {
+            uint8 hours = shutdownTimer / (60*60);
+            uint8 mins = (shutdownTimer - hours*60*60) / 60;
+            uint8 secs = (shutdownTimer - hours*60*60 - mins*60);
+            PSendSysMessage("[SERVER] %s in %u hours, %u minutes and %u seconds", type, hours, mins, secs);
+        }
+        else if(shutdownTimer > 60) // Minutes
+        {
+            uint8 mins = shutdownTimer / 60;
+            uint8 secs = (shutdownTimer - mins*60);
+            PSendSysMessage("[SERVER] %s in %u minutes and %u seconds", type,  mins, secs);
+        }
+        else //Only seconds
+            PSendSysMessage("[SERVER] %s in %u seconds", type, shutdownTimer);
+    }
     return true;
 }
 
