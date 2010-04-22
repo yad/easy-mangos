@@ -541,6 +541,8 @@ class World
         static uint8 GetExitCode() { return m_ExitCode; }
         static void StopNow(uint8 exitcode) { m_stopEvent = true; m_ExitCode = exitcode; }
         static bool IsStopped() { return m_stopEvent; }
+        uint32 GetShutdownTimer() const { return m_ShutdownTimer; };
+        uint32 GetShutdownMask() const { return m_ShutdownMask; };
 
         void Update(uint32 diff);
 
