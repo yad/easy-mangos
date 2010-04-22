@@ -110,7 +110,7 @@ bool ChatHandler::HandleServerInfoCommand(const char* /*args*/)
     PSendSysMessage("World diff time: %u", sWorld.GetDiffTime());
     if(sWorld.IsShutdowning())
     {
-        std::string type = (GetShutdownMask() & SHUTDOWN_MASK_RESTART) ? "Restart" : "Shutdown";
+        const char *type = (sWorld.GetShutdownMask() & SHUTDOWN_MASK_RESTART) ? "Restart" : "Shutdown";
         uint32 shutdownTimer = sWorld.GetShutdownTimer();
         if(shutdownTimer > 60*60) //Hours
         {

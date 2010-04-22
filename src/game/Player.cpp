@@ -20601,7 +20601,7 @@ void Player::UpdateAreaDependentAuras( uint32 newArea )
         if(itr->second->autocast && itr->second->IsFitToRequirements(this,m_zoneUpdateId,newArea))
             if (!HasAura(itr->second->spellId, EFFECT_INDEX_0))
                 // Rescricted Flight Area should not be casted while not fly-mounted
-                if(itr->second->spellId != 58600 || (HasAuraType(SPELL_AURA_MOD_INCREASE_FLIGHT_SPEED) || HasAuraType(SPELL_AURA_FLY) || isInFlight()))
+                if(itr->second->spellId != 58600 || (HasAuraType(SPELL_AURA_MOD_FLIGHT_SPEED_MOUNTED) || HasAuraType(SPELL_AURA_FLY) || isInFlight()))
                     CastSpell(this,itr->second->spellId,true);
 }
 
