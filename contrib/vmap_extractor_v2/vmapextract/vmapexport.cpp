@@ -20,6 +20,9 @@
 
 #ifdef WIN32
     #include <Windows.h>
+    #include <sys/stat.h>
+    #include <direct.h>
+    #define mkdir _mkdir
 #else
     #include <sys/stat.h>
 #endif
@@ -181,7 +184,7 @@ int ExtractWmo()
                         printf("root has %d groups\n", froot->nGroups);
                         if(froot->nGroups !=0)
                         {
-                            for (int i=0; i<froot->nGroups; ++i)
+                            for (uint32 i=0; i<froot->nGroups; ++i)
                             {
                                 char temp[1024];
                                 strcpy(temp, fname->c_str());
@@ -231,7 +234,7 @@ void ExtractMapsFromMpq()
 void ParsMapFiles()
 {
     char fn[512];
-    char id_filename[64];
+    //char id_filename[64];
     char id[10];
     for (unsigned int i=0; i<map_count; ++i)
     {
@@ -274,7 +277,7 @@ void getGamePath()
     }
     strcat(input_path,"Data\\");
 #else
-    strcpy(input_path,"data/");
+    strcpy(input_path,"Data/");
 #endif
 }
 
@@ -305,8 +308,6 @@ bool scan_patches(char* scanmatch, std::vector<std::string>& pArchiveNames)
         }
     }
 
-    printf("\n");
-
     return(true);
 }
 
@@ -319,26 +320,37 @@ bool fillArchiveNameVector(std::vector<std::string>& pArchiveNames)
 
     char path[512];
     string in_path(input_path);
-    std::vector<std::string> locales;
+    std::vector<std::string> locales, searchLocales;
 
-    locales.push_back("enGB");
-    locales.push_back("enUS");
-    locales.push_back("deDE");
-    locales.push_back("esES");
-    locales.push_back("frFR");
-    locales.push_back("koKR");
-    locales.push_back("ruRU");
+    searchLocales.push_back("enGB");
+    searchLocales.push_back("enUS");
+    searchLocales.push_back("deDE");
+    searchLocales.push_back("esES");
+    searchLocales.push_back("frFR");
+    searchLocales.push_back("koKR");
+    searchLocales.push_back("ruRU");
 
+    for (std::vector<std::string>::iterator i = searchLocales.begin(); i != searchLocales.end(); ++i)
+    {
+        std::string localePath = in_path + *i;
+        // check if locale exists:
+        struct stat status;
+        if (stat(localePath.c_str(), &status))
+            continue;
+        if ((status.st_mode & S_IFDIR) == 0)
+            continue;
+        printf("Found locale '%s'\n", i->c_str());
+        locales.push_back(*i);
+    }
     printf("\n");
 
     // open locale expansion and common files
-    printf("Opening data files from locale directories.\n");
+    printf("Adding data files from locale directories.\n");
     for (std::vector<std::string>::iterator i = locales.begin(); i != locales.end(); ++i)
     {
         pArchiveNames.push_back(in_path + *i + "/locale-" + *i + ".MPQ");
         pArchiveNames.push_back(in_path + *i + "/expansion-locale-" + *i + ".MPQ");
         pArchiveNames.push_back(in_path + *i + "/lichking-locale-" + *i + ".MPQ");
-        printf("\n");
     }
 
     // open expansion and common files
@@ -348,15 +360,13 @@ bool fillArchiveNameVector(std::vector<std::string>& pArchiveNames)
     pArchiveNames.push_back(input_path + string("lichking.MPQ"));
 
     // now, scan for the patch levels in the core dir
-    printf("Loading patch levels from data directory.\n");
+    printf("Scanning patch levels from data directory.\n");
     sprintf(path, "%spatch", input_path);
     if (!scan_patches(path, pArchiveNames))
         return(false);
 
-    printf("\n");
-
     // now, scan for the patch levels in locale dirs
-    printf("Loading patch levels from locale directories.\n");
+    printf("Scanning patch levels from locale directories.\n");
     bool foundOne = false;
     for (std::vector<std::string>::iterator i = locales.begin(); i != locales.end(); ++i)
     {
@@ -365,6 +375,9 @@ bool fillArchiveNameVector(std::vector<std::string>& pArchiveNames)
         if(scan_patches(path, pArchiveNames))
             foundOne = true;
     }
+
+    printf("\n");
+
     if(!foundOne)
     {
         printf("no locale found\n");
@@ -438,16 +451,6 @@ bool processArgv(int argc, char ** argv, const char *versionString)
 
 int main(int argc, char ** argv)
 {
-    //char tmp[512];
-//    FILE* pDatei;
-//    char tmp[512];
-//    char tmp1[512];
-    //char tmp2[512];
-//    char tmp3[512];
-//    char tmp4[512];
-//    char szMpqName[MAX_PATH] = "";
-//    char szListFile[MAX_PATH] = "";
-    //int nError = ERROR_SUCCESS;
     bool success=true;
     const char *versionString = "V2.4 2007_07_12";
 
@@ -458,17 +461,12 @@ int main(int argc, char ** argv)
     printf("Extract %s. Beginning work ....\n",versionString);
     //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
     // Create the working directory
-#ifdef WIN32
-    if(!CreateDirectory(szWorkDirWmo, NULL))
-        success = GetLastError() == ERROR_ALREADY_EXISTS;
-#else
     if(mkdir(szWorkDirWmo
 #ifdef __linux__
                     , 0711
 #endif
                     ))
             success = (errno == EEXIST);
-#endif
 
     // prepare archive name list
     std::vector<std::string> archiveNames;
@@ -476,7 +474,7 @@ int main(int argc, char ** argv)
     for (size_t i=0; i < archiveNames.size(); ++i)
     {
         MPQArchive *archive = new MPQArchive(archiveNames[i].c_str());
-        if(gOpenArchives.front() != archive)
+        if(!gOpenArchives.size() || gOpenArchives.front() != archive)
             delete archive;
     }
 
