@@ -636,6 +636,7 @@ void WorldSession::HandleSpellClick( WorldPacket & recv_data )
         }
     }
 }
+
 void WorldSession::HandleMirrorImageDataRequest( WorldPacket & recv_data )
 {
     sLog.outDebug("WORLD: CMSG_GET_MIRRORIMAGE_DATA");
