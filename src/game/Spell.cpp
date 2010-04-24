@@ -3447,7 +3447,7 @@ void Spell::SendSpellStart()
     if (m_spellInfo->runeCostID)
         castFlags |= CAST_FLAG_UNKNOWN10;
 
-    Unit *caster = m_originalCaster ? m_originalCaster : m_caster;
+    Unit *caster = (m_originalCaster && m_IsTriggeredSpell) ? m_originalCaster : m_caster;
 
     WorldPacket data(SMSG_SPELL_START, (8+8+4+4+2));
     if (m_CastItem)
@@ -3519,7 +3519,7 @@ void Spell::SendSpellGo()
         }
     }
 
-    Unit *caster = m_originalCaster ? m_originalCaster : m_caster;
+    Unit *caster = (m_originalCaster && m_IsTriggeredSpell) ? m_originalCaster : m_caster;
 
     WorldPacket data(SMSG_SPELL_GO, 50);                    // guess size
 
