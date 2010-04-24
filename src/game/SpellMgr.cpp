@@ -1399,6 +1399,10 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                         (spellInfo_2->Id == 8326 && spellInfo_1->Id == 20584) )
                          return false;
 
+                    // Kindred Spirits
+                    if( spellInfo_1->SpellIconID == 3559 && spellInfo_2->SpellIconID == 3559 )
+                        return false;
+
                     break;
                 }
                 case SPELLFAMILY_MAGE:
@@ -2113,15 +2117,16 @@ void SpellMgr::LoadSpellLearnSkills()
 
         for(int i = 0; i < MAX_EFFECT_INDEX; ++i)
         {
-            if(entry->Effect[i]==SPELL_EFFECT_SKILL)
+            if(entry->Effect[i] == SPELL_EFFECT_SKILL)
             {
                 SpellLearnSkillNode dbc_node;
                 dbc_node.skill    = entry->EffectMiscValue[i];
+                dbc_node.step     = entry->CalculateSimpleValue(SpellEffectIndex(i));
                 if ( dbc_node.skill != SKILL_RIDING )
                     dbc_node.value = 1;
                 else
-                    dbc_node.value = entry->CalculateSimpleValue(SpellEffectIndex(i))*75;
-                dbc_node.maxvalue = entry->CalculateSimpleValue(SpellEffectIndex(i))*75;
+                    dbc_node.value = dbc_node.step * 75;
+                dbc_node.maxvalue = dbc_node.step * 75;
 
                 mSpellLearnSkills[spell] = dbc_node;
                 ++dbc_count;
@@ -3407,11 +3412,8 @@ DiminishingGroup GetDiminishingReturnsGroupForSpell(SpellEntry const* spellproto
         }
         case SPELLFAMILY_PRIEST:
         {
-            // Vampiric Embrace
-            if ((spellproto->SpellFamilyFlags & UI64LIT(0x00000000004)) && spellproto->SpellIconID == 150)
-                return DIMINISHING_LIMITONLY;
             // Shackle Undead
-            else if (spellproto->SpellIconID == 27)
+            if (spellproto->SpellIconID == 27)
                 return DIMINISHING_DISORIENT;
             break;
         }
@@ -3480,13 +3482,6 @@ int32 GetDiminishingReturnsLimitDuration(DiminishingGroup group, SpellEntry cons
             // Faerie Fire - limit to 40 seconds in PvP (3.1)
             if (spellproto->SpellFamilyFlags & UI64LIT(0x00000000400))
                 return 40000;
-            break;
-        }
-        case SPELLFAMILY_PRIEST:
-        {
-            // Vampiric Embrace - limit to 60 seconds in PvP (3.1)
-            if ((spellproto->SpellFamilyFlags & UI64LIT(0x00000000004)) && spellproto->SpellIconID == 150)
-                return 60000;
             break;
         }
         default:
@@ -3595,4 +3590,18 @@ bool SpellArea::IsFitToRequirements(Player const* player, uint32 newZone, uint32
     }
 
     return true;
+}
+
+SpellEntry const* GetSpellEntryByDifficulty(uint32 id, Difficulty difficulty)
+{
+    SpellDifficultyEntry const* spellDiff = sSpellDifficultyStore.LookupEntry(id);
+
+    if (!spellDiff)
+        return NULL;
+
+    if (!spellDiff->spellId[difficulty])
+        return NULL;
+
+    SpellEntry const* spellEntry = sSpellStore.LookupEntry(spellDiff->spellId[difficulty]);
+    return spellEntry;
 }

@@ -98,6 +98,40 @@ pkgdata_DATA = \
 	9636_01_mangos_item_template.sql \
 	9646_01_characters_characters.sql \
 	9651_01_mangos_quest_poi.sql \
+	9656_01_mangos_command.sql \
+	9656_02_mangos_mangos_string.sql \
+	9661_01_characters_character_talent.sql \
+	9663_01_mangos_mangos_string.sql \
+	9680_01_characters_character_stats.sql \
+	9686_01_characters_character_queststatus_weekly.sql \
+	9687_01_characters_character_queststatus_daily.sql \
+	9690_01_mangos_spell_proc_event.sql \
+	9692_01_characters_mail.sql \
+	9692_02_characters_mail.sql \
+	9692_03_mangos_spell_proc_event.sql \
+	9702_01_characters_item.sql \
+	9704_01_mangos_achievement_reward.sql \
+	9710_01_mangos_command.sql \
+	9716_01_mangos_npc_vendor.sql \
+	9716_02_mangos_mangos_string.sql \
+	9720_01_mangos_spell_proc_event.sql \
+	9728_01_mangos_gossip_menu_option.sql \
+	9735_01_mangos_spell_proc_event.sql \
+	9735_02_mangos_spell_chain.sql \
+	9746_01_realmd_realmlist.sql \
+	9747_01_mangos_battleground_template.sql \
+	9748_01_realmd_realmlist.sql \
+	9751_01_characters.sql \
+	9752_01_mangos_gameobject_template.sql \
+	9753_01_mangos_instance_template.sql \
+	9755_01_mangos_instance_template.sql \
+	9761_01_mangos_mangos_string.sql \
+	9763_01_mangos_battleground_template.sql \
+	9766_01_mangos_spell_proc_event.sql \
+	9767_01_mangos_mangos_string.sql \
+	9767_02_mangos_command.sql \
+	9767_03_characters_characters.sql \
+	9768_01_mangos_command.sql \
 	README
 
 ## Additional files to include when running 'make dist'
@@ -176,4 +210,38 @@ EXTRA_DIST = \
 	9636_01_mangos_item_template.sql \
 	9646_01_characters_characters.sql \
 	9651_01_mangos_quest_poi.sql \
+	9656_01_mangos_command.sql \
+	9656_02_mangos_mangos_string.sql \
+	9661_01_characters_character_talent.sql \
+	9663_01_mangos_mangos_string.sql \
+	9680_01_characters_character_stats.sql \
+	9686_01_characters_character_queststatus_weekly.sql \
+	9687_01_characters_character_queststatus_daily.sql \
+	9690_01_mangos_spell_proc_event.sql \
+	9692_01_characters_mail.sql \
+	9692_02_characters_mail.sql \
+	9692_03_mangos_spell_proc_event.sql \
+	9702_01_characters_item.sql \
+	9704_01_mangos_achievement_reward.sql \
+	9710_01_mangos_command.sql \
+	9716_01_mangos_npc_vendor.sql \
+	9716_02_mangos_mangos_string.sql \
+	9720_01_mangos_spell_proc_event.sql \
+	9728_01_mangos_gossip_menu_option.sql \
+	9735_01_mangos_spell_proc_event.sql \
+	9735_02_mangos_spell_chain.sql \
+	9746_01_realmd_realmlist.sql \
+	9747_01_mangos_battleground_template.sql \
+	9748_01_realmd_realmlist.sql \
+	9751_01_characters.sql \
+	9752_01_mangos_gameobject_template.sql \
+	9753_01_mangos_instance_template.sql \
+	9755_01_mangos_instance_template.sql \
+	9761_01_mangos_mangos_string.sql \
+	9763_01_mangos_battleground_template.sql \
+	9766_01_mangos_spell_proc_event.sql \
+	9767_01_mangos_mangos_string.sql \
+	9767_02_mangos_command.sql \
+	9767_03_characters_characters.sql \
+	9768_01_mangos_command.sql \
 	README

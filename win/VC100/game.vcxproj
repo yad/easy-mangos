@@ -356,7 +356,7 @@
     <ClCompile Include="..\..\src\game\BattleGround.cpp" />
     <ClCompile Include="..\..\src\game\BattleGroundAA.cpp" />
     <ClCompile Include="..\..\src\game\BattleGroundAB.cpp" />
-    <ClCompile Include="..\..\src\game\BattleGroundABG.cpp" />
+    <ClCompile Include="..\..\src\game\BattleGroundRB.cpp" />
     <ClCompile Include="..\..\src\game\BattleGroundAV.cpp" />
     <ClCompile Include="..\..\src\game\BattleGroundBE.cpp" />
     <ClCompile Include="..\..\src\game\BattleGroundDS.cpp" />
@@ -435,7 +435,7 @@
     <ClCompile Include="..\..\src\game\ObjectAccessor.cpp" />
     <ClCompile Include="..\..\src\game\ObjectGridLoader.cpp" />
     <ClCompile Include="..\..\src\game\ObjectMgr.cpp" />
-    <ClInclude Include="..\..\src\game\ObjectGuid.cpp" />
+    <ClCompile Include="..\..\src\game\ObjectGuid.cpp" />
     <ClCompile Include="..\..\src\game\ObjectPosSelector.cpp" />
     <ClCompile Include="..\..\src\game\Opcodes.cpp" />
     <ClCompile Include="..\..\src\game\pchdef.cpp">
@@ -504,7 +504,7 @@
     <ClInclude Include="..\..\src\game\BattleGround.h" />
     <ClInclude Include="..\..\src\game\BattleGroundAA.h" />
     <ClInclude Include="..\..\src\game\BattleGroundAB.h" />
-    <ClInclude Include="..\..\src\game\BattleGroundABG.h" />
+    <ClInclude Include="..\..\src\game\BattleGroundRB.h" />
     <ClInclude Include="..\..\src\game\BattleGroundAV.h" />
     <ClInclude Include="..\..\src\game\BattleGroundBE.h" />
     <ClInclude Include="..\..\src\game\BattleGroundDS.h" />

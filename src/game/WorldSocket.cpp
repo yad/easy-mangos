@@ -37,7 +37,6 @@
 #include "ByteBuffer.h"
 #include "Opcodes.h"
 #include "Database/DatabaseEnv.h"
-#include "Auth/BigNumber.h"
 #include "Auth/Sha1.h"
 #include "WorldSession.h"
 #include "WorldSocketMgr.h"
@@ -248,10 +247,14 @@ int WorldSocket::open (void *a)
     WorldPacket packet (SMSG_AUTH_CHALLENGE, 24);
     packet << uint32(1);                                    // 1...31
     packet << m_Seed;
-    packet << uint32(0xF3539DA3);                           // random data
-    packet << uint32(0x6E8547B9);                           // random data
-    packet << uint32(0x9A6AA2F8);                           // random data
-    packet << uint32(0xA4F170F4);                           // random data
+
+    BigNumber seed1;
+    seed1.SetRand(16 * 8);
+    packet.append(seed1.AsByteArray(16), 16);               // new encryption seeds
+
+    BigNumber seed2;
+    seed2.SetRand(16 * 8);
+    packet.append(seed2.AsByteArray(16), 16);               // new encryption seeds
 
     if (SendPacket (packet) == -1)
         return -1;
@@ -822,7 +825,8 @@ int WorldSocket::HandleAuthSession (WorldPacket& recvPacket)
     g.SetDword (7);
 
     v.SetHexStr(fields[5].GetString());
-    s.SetHexStr (fields[6].GetString ());
+    s.SetHexStr (fields[6].GetString());
+    m_s = s;
 
     const char* sStr = s.AsHexStr ();                       //Must be freed by OPENSSL_free()
     const char* vStr = v.AsHexStr ();                       //Must be freed by OPENSSL_free()
