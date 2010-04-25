@@ -3412,11 +3412,8 @@ DiminishingGroup GetDiminishingReturnsGroupForSpell(SpellEntry const* spellproto
         }
         case SPELLFAMILY_PRIEST:
         {
-            // Vampiric Embrace
-            if ((spellproto->SpellFamilyFlags & UI64LIT(0x00000000004)) && spellproto->SpellIconID == 150)
-                return DIMINISHING_LIMITONLY;
             // Shackle Undead
-            else if (spellproto->SpellIconID == 27)
+            if (spellproto->SpellIconID == 27)
                 return DIMINISHING_DISORIENT;
             break;
         }
@@ -3485,13 +3482,6 @@ int32 GetDiminishingReturnsLimitDuration(DiminishingGroup group, SpellEntry cons
             // Faerie Fire - limit to 40 seconds in PvP (3.1)
             if (spellproto->SpellFamilyFlags & UI64LIT(0x00000000400))
                 return 40000;
-            break;
-        }
-        case SPELLFAMILY_PRIEST:
-        {
-            // Vampiric Embrace - limit to 60 seconds in PvP (3.1)
-            if ((spellproto->SpellFamilyFlags & UI64LIT(0x00000000004)) && spellproto->SpellIconID == 150)
-                return 60000;
             break;
         }
         default:
@@ -3600,4 +3590,18 @@ bool SpellArea::IsFitToRequirements(Player const* player, uint32 newZone, uint32
     }
 
     return true;
+}
+
+SpellEntry const* GetSpellEntryByDifficulty(uint32 id, Difficulty difficulty)
+{
+    SpellDifficultyEntry const* spellDiff = sSpellDifficultyStore.LookupEntry(id);
+
+    if (!spellDiff)
+        return NULL;
+
+    if (!spellDiff->spellId[difficulty])
+        return NULL;
+
+    SpellEntry const* spellEntry = sSpellStore.LookupEntry(spellDiff->spellId[difficulty]);
+    return spellEntry;
 }
