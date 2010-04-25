@@ -46,7 +46,7 @@ inline void UpdateForCurrentViewPoint(Camera& c, Player & m_owner, WorldObject &
 
 void Camera::SetView(WorldObject *obj)
 {
-    V_ASSERT(obj && obj != m_source);
+    V_ASSERT(obj);
     V_ASSERT(obj->isType(TYPEMASK_DYNAMICOBJECT|TYPEMASK_UNIT) && "Camera::SetView, viewpoint type is not available for client");
     V_ASSERT(m_source->IsInMap(obj));// IsInMap check phases too
 
@@ -57,7 +57,7 @@ void Camera::SetView(WorldObject *obj)
     UpdateForCurrentViewPoint(*this, m_owner, *m_source);
 }
 
-bool Camera::_Event_ResetView(Camera * c)
+bool Camera::Event_ResetView(Camera * c)
 {
     CAMERA_OUT("Camera: Reset view");
     R_ASSERT(&c->m_owner != c->m_source, false);
@@ -70,12 +70,12 @@ bool Camera::_Event_ResetView(Camera * c)
     return true;
 }
 
-bool Camera::_Event_ViewPointVisibilityChanged(Camera * c)
+bool Camera::Event_ViewPointVisibilityChanged(Camera * c)
 {
     CAMERA_OUT("Camera: Event_ViewPointVisibilityChanged");
 
-    if (&c->m_owner != c->m_source && !c->m_owner.HaveAtClient(c->m_source))
-        return _Event_ResetView(c);
+    if (!c->m_owner.HaveAtClient(c->m_source))
+        return Event_ResetView(c);
 
     return false;
 }
@@ -84,7 +84,7 @@ void Camera::ResetView()
 {
     CAMERA_OUT("Camera: Reset view");
 
-    V_ASSERT(&m_owner != m_source);
+    //V_ASSERT(&m_owner != m_source);   seems this can be called many times.. and bring assert
     //V_ASSERT(m_source->IsInMap(m_owner));   // can be called when m_source not in map?
 
     m_source->getViewPoint().RemoveCamera(this);
@@ -94,13 +94,13 @@ void Camera::ResetView()
     UpdateForCurrentViewPoint(*this, m_owner, *m_source);
 }
 
-void Camera::_Event_AddedToWorld(Camera * c)
+void Camera::Event_AddedToWorld(Camera * c)
 {
     CAMERA_OUT("Camera: Added to world");
     UpdateForCurrentViewPoint(*c, c->m_owner, *c->m_source);
 }
 
-bool Camera::_Event_RemovedFromWorld(Camera * c)
+bool Camera::Event_RemovedFromWorld(Camera * c)
 {
     CAMERA_OUT("Camera: removed from world ");
 
@@ -112,12 +112,12 @@ bool Camera::_Event_RemovedFromWorld(Camera * c)
     else
     {   
         // set self view
-        erase = _Event_ResetView(c);
+        erase = Event_ResetView(c);
     }
     return erase;
 }
 
-void Camera::_Event_Moved(Camera * c)
+void Camera::Event_Moved(Camera * c)
 {
     CAMERA_OUT("Camera: moved to another grid");
     c->SetGrid(c->m_source->GetGrid());
@@ -158,23 +158,3 @@ ViewPoint::~ViewPoint()
     }
 }
 
-void ViewPoint::CameraCall( bool (*m_func)(Camera*) )
-{
-    if(m_cameras.size() == 1)   // the most common case
-    {
-        if( (*m_func)(m_cameras.front()) == true)
-            m_cameras.clear();
-    }
-    else
-        m_cameras.erase( remove_if(m_cameras.begin(),m_cameras.end(),*m_func), m_cameras.end() );
-}
-
-void ViewPoint::CameraCall( void (*m_func)(Camera*) ) const
-{
-    if(m_cameras.size() == 1)   // the most common case
-    {
-        (*m_func)(m_cameras.front());
-    }
-    else
-        std::for_each( m_cameras.begin(),m_cameras.end(),*m_func );
-}
