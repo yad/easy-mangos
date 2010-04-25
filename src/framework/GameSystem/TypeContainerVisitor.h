@@ -45,31 +45,33 @@ void VisitorHelper(VISITOR &v, TYPE_CONTAINER &c)
 
 // skip non-specialized visits
 class Camera;
-template<class TYPE, class VISITOR>inline void VisitorHelper(VisitorType<TYPE,VISITOR> &/*v*/, ContainerMapList<Camera> &/*c*/)
+template<class TYPE, class VISITOR>
+void VisitorHelper(VisitorType<TYPE,VISITOR> &/*v*/, ContainerMapList<Camera> &/*c*/)
 {
 }
 
 //allow visit only for CameraMapVisitorType visitors
-template<class VISITOR>inline void VisitorHelper(VisitorType<CameraMapVisitorType,VISITOR> &v, ContainerMapList<Camera> &c)
+template<class VISITOR>
+void VisitorHelper(VisitorType<CameraMapVisitorType,VISITOR> &v, ContainerMapList<Camera> &c)
 {
     v.GetReal().Visit(c._element);
 }
 
 // terminate condition container map list
 template<class TYPE, class VISITOR>
-void VisitorHelper(VISITOR &/*v*/, ContainerMapList<TypeNull> &/*c*/)
+void VisitorHelper(VisitorType<TYPE,VISITOR> &/*v*/, ContainerMapList<TypeNull> &/*c*/)
 {
 }
 
 template<class TYPE, class VISITOR, class T>
-void VisitorHelper(VISITOR &v, ContainerMapList<T> &c)
+void VisitorHelper(VisitorType<TYPE,VISITOR> &v, ContainerMapList<T> &c)
 {
     v.GetReal().Visit(c._element);
 }
 
 // recursion container map list
 template<class TYPE, class VISITOR, class H, class T>
-void VisitorHelper(VISITOR &v, ContainerMapList<TypeList<H, T> > &c)
+void VisitorHelper(VisitorType<TYPE,VISITOR> &v, ContainerMapList<TypeList<H, T> > &c)
 {
     VisitorHelper(v, c._elements);
     VisitorHelper(v, c._TailElements);
@@ -98,7 +100,7 @@ template<typename VISITOR, typename TYPE_CONTAINER, typename VISITOR_TYPE >
 class MANGOS_DLL_DECL TypeContainerVisitor
 {
     public:
-        TypeContainerVisitor(VISITOR &v) : type_visitor(v) {}
+        TypeContainerVisitor(VISITOR &v) : type_visitor(v)
         {
         }
 

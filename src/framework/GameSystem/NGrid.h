@@ -154,7 +154,7 @@ class MANGOS_DLL_DECL NGrid
         }
 
         template<class T, class TT, class V>
-        void Visit(const uint32 &x, const uint32 &y, TypeContainerVisitor<T, TypeMapContainer<TT>, class V > &visitor)
+        void Visit(const uint32 &x, const uint32 &y, TypeContainerVisitor<T, TypeMapContainer<TT>, V > &visitor)
         {
             getGridType(x, y).Visit(visitor);
         }
