@@ -1267,6 +1267,21 @@ class MANGOS_DLL_SPEC Player : public Unit
         uint32 GetWeaponProficiency() const { return m_WeaponProficiency; }
         uint32 GetArmorProficiency() const { return m_ArmorProficiency; }
 
+        bool IsWeaponDisarmed(uint8 slot)
+        {
+            bool IsDisarmed = false;
+            switch(slot)
+            {
+                case EQUIPMENT_SLOT_MAINHAND: IsDisarmed = HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_DISARMED); break;
+                case EQUIPMENT_SLOT_OFFHAND: IsDisarmed = HasFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_DISARMED_OFFHAND); break;
+                case EQUIPMENT_SLOT_RANGED: IsDisarmed = HasFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_DISARMED_RANGED); break;
+                default:
+                    break;
+            }
+
+            return IsDisarmed;
+        }
+
         bool IsTwoHandUsed() const
         {
             Item* mainItem = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND);
