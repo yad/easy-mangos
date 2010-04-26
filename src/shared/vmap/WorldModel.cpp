@@ -126,6 +126,8 @@ namespace VMAP
         chunkSize = sizeof(uint32)+ sizeof(Vector3)*count;
         if (result && fwrite(&chunkSize, sizeof(uint32), 1, wf) != 1) result = false;
         if (result && fwrite(&count, sizeof(uint32), 1, wf) != 1) result = false;
+        if (!count) // models without (collision) geometry end here, unsure if they are useful
+            return result;
         if (result && fwrite(&vertices[0], sizeof(Vector3), count, wf) != count) result = false;
 
         // write triangle mesh
@@ -147,6 +149,8 @@ namespace VMAP
         char chunk[8];
         bool result = true;
         uint32 chunkSize, count;
+        triangles.clear();
+        vertices.clear();
 
         if (result && fread(&iBound, sizeof(G3D::AABox), 1, rf) != 1) result = false;
         if (result && fread(&iMogpFlags, sizeof(uint32), 1, rf) != 1) result = false;
@@ -156,6 +160,8 @@ namespace VMAP
         if (result && !readChunk(rf, chunk, "VERT", 4)) result = false;
         if (result && fread(&chunkSize, sizeof(uint32), 1, rf) != 1) result = false;
         if (result && fread(&count, sizeof(uint32), 1, rf) != 1) result = false;
+        if (!count) // models without (collision) geometry end here, unsure if they are useful
+            return result;
         if (result) vertices.resize(count);
         if (result && fread(&vertices[0], sizeof(Vector3), count, rf) != count) result = false;
 
@@ -189,6 +195,8 @@ namespace VMAP
 
     bool GroupModel::IntersectRay(const G3D::Ray &ray, float &distance, bool stopAtFirstHit) const
     {
+        if (!triangles.size())
+            return false;
         GModelRayCallback callback(triangles, vertices);
         meshTree.intersectRay(ray, callback, distance, stopAtFirstHit);
         return callback.hit;
@@ -196,7 +204,7 @@ namespace VMAP
 
     bool GroupModel::IsInsideObject(const Vector3 &pos, float &ground_z) const
     {
-        if (!iBound.contains(pos))
+        if (!triangles.size() || !iBound.contains(pos))
             return false;
         GModelRayCallback callback(triangles, vertices);
         Vector3 rPos = pos;
