@@ -1136,7 +1136,7 @@ void WorldObject::GetZoneAndAreaId(uint32& zoneid, uint32& areaid) const
     GetBaseMap()->GetZoneAndAreaId(zoneid, areaid, m_positionX, m_positionY, m_positionZ);
 }
 
-InstanceData* WorldObject::GetInstanceData()
+InstanceData* WorldObject::GetInstanceData() const
 {
     Map *map = GetMap();
     return map->IsDungeon() ? ((InstanceMap*)map)->GetInstanceData() : NULL;
@@ -1575,46 +1575,21 @@ void WorldObject::SendMessageToSet(WorldPacket *data, bool /*bToSelf*/)
         _map->MessageBroadcast(this, data);
 }
 
-struct ObjectMessageDeliverer2
-{
-    uint32 i_phaseMask;
-    WorldPacket *i_message;
-    Player const* skipped_receiver;
-    explicit ObjectMessageDeliverer2(WorldObject const* obj, WorldPacket *msg, Player const* skipped)
-        : i_phaseMask(obj->GetPhaseMask()), i_message(msg), skipped_receiver(skipped) {}
-
-    void Visit(CameraMapType &m)
-    {
-        for(CameraMapType::iterator it = m.begin(); it!= m.end(); ++it)
-        {
-            Camera* c = it->getSource();
-            if(!c->getBody()->InSamePhase(i_phaseMask) || c->getOwner() == skipped_receiver)
-                continue;
-
-            if (WorldSession* session = c->getOwner()->GetSession())
-                session->SendPacket(i_message);
-        }
-    }
-    template<class SKIP> void Visit(GridRefManager<SKIP> &) {}
-};
-
-void WorldObject::SendMessageToSet(WorldPacket *data, Player const* skipped_receiver)
-{
-    //if object is in world, map for it already created!
-    Map * _map = IsInWorld() ? GetMap() : sMapMgr.FindMap(GetMapId(), GetInstanceId());
-    if(_map)
-    {
-        ObjectMessageDeliverer2 notifier(this, data, skipped_receiver);
-        Cell::VisitCameras(this, notifier, _map->GetVisibilityDistance());
-    }
-}
-
 void WorldObject::SendMessageToSetInRange(WorldPacket *data, float dist, bool /*bToSelf*/)
 {
     //if object is in world, map for it already created!
-    Map * _map = IsInWorld() ? GetMap() : sMapMgr.FindMap(GetMapId(), GetInstanceId());
-    if(_map)
+    if (Map * _map = IsInWorld() ? GetMap() : sMapMgr.FindMap(GetMapId(), GetInstanceId()))
         _map->MessageDistBroadcast(this, data, dist);
+}
+
+void WorldObject::SendMessageToSetExcept(WorldPacket *data, Player const* skipped_receiver)
+{
+    //if object is in world, map for it already created!
+    if (Map * _map = IsInWorld() ? GetMap() : sMapMgr.FindMap(GetMapId(), GetInstanceId()))
+    {
+        MaNGOS::MessageDelivererExcept notifier(this, data, skipped_receiver);
+        Cell::VisitWorldObjects(this, notifier, _map->GetVisibilityDistance());
+    }
 }
 
 void WorldObject::SendObjectDeSpawnAnim(uint64 guid)
