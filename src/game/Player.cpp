@@ -11061,7 +11061,7 @@ Item* Player::EquipItem( uint16 pos, Item *pItem, bool update )
                 AddItemsSetItem(this, pItem);
 
             if(IsWeaponDisarmed(slot))
-                return;
+                return NULL;
 
             _ApplyItemMods(pItem, slot, true);
 
