@@ -2041,7 +2041,8 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
             break;
         case TARGET_IN_FRONT_OF_CASTER_2:
         {
-            if (m_spellInfo->SpellFamilyName == SPELLFAMILY_GENERIC)
+            //Typhoon spell
+            if (m_spellInfo->SpellFamilyName == SPELLFAMILY_GENERIC || (m_spellInfo->SpellFamilyName == SPELLFAMILY_DRUID && (m_spellInfo->SpellIconID == 2838 || m_spellInfo->SpellIconID == 15)))
                 FillAreaTargets(targetUnitMap,m_caster->GetPositionX(), m_caster->GetPositionY(), radius, PUSH_IN_FRONT_30, SPELL_TARGETS_AOE_DAMAGE);
             else
                 FillAreaTargets(targetUnitMap,m_caster->GetPositionX(), m_caster->GetPositionY(), radius, PUSH_IN_FRONT, SPELL_TARGETS_AOE_DAMAGE);
