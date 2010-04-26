@@ -1952,6 +1952,10 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                  if ((spellInfo_1->SpellIconID == 3025 && spellInfo_2->SpellIconID == 2292) ||
                      (spellInfo_1->SpellIconID == 2292 && spellInfo_2->SpellIconID == 3025))
                      return false;
+
+                // Repentance removes Righteous Vengeance
+                if (spellInfo_1->Id == 20066 && spellInfo_2->Id == 61840)
+                    return true;
             }
 
             // Blessing of Sanctuary (multi-family check, some from 16 spell icon spells)
@@ -3897,4 +3901,18 @@ bool SpellArea::IsFitToRequirements(Player const* player, uint32 newZone, uint32
     }
 
     return true;
+}
+
+SpellEntry const* GetSpellEntryByDifficulty(uint32 id, Difficulty difficulty)
+{
+    SpellDifficultyEntry const* spellDiff = sSpellDifficultyStore.LookupEntry(id);
+
+    if (!spellDiff)
+        return NULL;
+
+    if (!spellDiff->spellId[difficulty])
+        return NULL;
+
+    SpellEntry const* spellEntry = sSpellStore.LookupEntry(spellDiff->spellId[difficulty]);
+    return spellEntry;
 }

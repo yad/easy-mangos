@@ -1164,7 +1164,7 @@ void Unit::CastSpell(Unit* Victim, uint32 spellId, bool triggered, Item *castIte
     CastSpell(Victim, spellInfo, triggered, castItem, triggeredByAura, originalCaster);
 }
 
-void Unit::CastSpell(Unit* Victim,SpellEntry const *spellInfo, bool triggered, Item *castItem, Aura* triggeredByAura, ObjectGuid originalCaster)
+void Unit::CastSpell(Unit* Victim, SpellEntry const *spellInfo, bool triggered, Item *castItem, Aura* triggeredByAura, ObjectGuid originalCaster)
 {
     if(!spellInfo)
     {
@@ -1392,7 +1392,7 @@ void Unit::DealSpellDamage(SpellNonMeleeDamage *damageInfo, bool durabilityLoss)
 
     // Call default DealDamage (send critical in hit info for threat calculation)
     CleanDamage cleanDamage(0, BASE_ATTACK, damageInfo->HitInfo & SPELL_HIT_TYPE_CRIT ? MELEE_HIT_CRIT : MELEE_HIT_NORMAL);
-    DealDamage(pVictim, damageInfo->damage, &cleanDamage, SPELL_DIRECT_DAMAGE, SpellSchoolMask(damageInfo->schoolMask), spellProto, durabilityLoss);
+    DealDamage(pVictim, damageInfo->damage, &cleanDamage, SPELL_DIRECT_DAMAGE, SpellSchoolMask(damageInfo->schoolMask), spellProto, durabilityLoss, damageInfo->absorb);
 }
 
 //TODO for melee need create structure as in
@@ -2178,14 +2178,14 @@ void Unit::CalculateAbsorbAndResist(Unit *pCaster, SpellSchoolMask schoolMask, D
                 if (spellProto->SpellIconID == 2135)
                 {
                     // Apply absorb only on damage below 35% hp 
-                    int32 absorbableDamage = RemainingDamage + 0.35f * pVictim->GetMaxHealth() - pVictim->GetHealth();
+                    int32 absorbableDamage = RemainingDamage + 0.35f * GetMaxHealth() - GetHealth();
                     if (absorbableDamage > RemainingDamage)
                         absorbableDamage = RemainingDamage;
                     if (absorbableDamage > 0)
                         RemainingDamage -= absorbableDamage * currentAbsorb / 100;
 
                     // 66233 is cooldown aura
-                    if (!((Player*)pVictim)->HasAura(66233))
+                    if (!((Player*)this)->HasAura(66233))
                         preventDeathSpell = (*i)->GetSpellProto();
 
                     continue;
@@ -2454,7 +2454,7 @@ void Unit::CalculateAbsorbAndResist(Unit *pCaster, SpellSchoolMask schoolMask, D
                 if (preventDeathSpell->SpellIconID == 2135)
                 {
                     // Calculate defense over level * 5
-                    int32 defenseAmount = pVictim->GetDefenseSkillValue() - pVictim->getLevel() * 5; 
+                    int32 defenseAmount = GetDefenseSkillValue() - getLevel() * 5; 
                     // Proceed if positive value
                     if (defenseAmount > 0)
                     {
@@ -2462,13 +2462,13 @@ void Unit::CalculateAbsorbAndResist(Unit *pCaster, SpellSchoolMask schoolMask, D
                         if (defenseAmount > 140)
                             defenseAmount = 140;
                         // Trigger cooldown aura
-                        pVictim->CastSpell(pVictim, 66233, true);
+                        CastSpell(this, 66233, true);
                         // Calculate heal amount
                         int32 healAmount = preventDeathSpell->CalculateSimpleValue(EFFECT_INDEX_1);
-                        healAmount = defenseAmount * pVictim->GetMaxHealth() * healAmount / 14000 - pVictim->GetHealth();
+                        healAmount = defenseAmount * GetMaxHealth() * healAmount / 14000 - GetHealth();
                         // Heal if positive value
                         if (healAmount > 0)
-                            pVictim->CastCustomSpell(pVictim, 66235, &healAmount, NULL, NULL, true);
+                            CastCustomSpell(this, 66235, &healAmount, NULL, NULL, true);
                         // Absorb Everything
                         RemainingDamage = 0;
                     }
@@ -2852,8 +2852,12 @@ void Unit::SendMeleeAttackStop(Unit* victim)
     ((Creature*)victim)->AI().EnterEvadeMode(this);*/
 }
 
-bool Unit::IsSpellBlocked(Unit *pCaster, SpellEntry const * /*spellProto*/, WeaponAttackType attackType)
+bool Unit::IsSpellBlocked(Unit *pCaster, SpellEntry const * spellProto, WeaponAttackType attackType)
 {
+    // Some spell can not be blocked
+    if (spellProto && spellProto->Attributes & SPELL_ATTR_IMPOSSIBLE_DODGE_PARRY_BLOCK)
+        return false;
+
     if (HasInArc(M_PI_F,pCaster))
     {
         /* Currently not exist spells with ignore block
@@ -6795,6 +6799,14 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                 // Judgement of Light
                 case 20185:
                 {
+                    // PPM per victim
+                    float ppmJoL = 15.0f; // must be hard-coded + 100% proc chance in DB
+                    WeaponAttackType attType = BASE_ATTACK; // TODO: attack type based? 
+                    uint32 WeaponSpeed = pVictim->GetAttackTime(attType);
+                    float chanceForVictim = pVictim->GetPPMProcChance(WeaponSpeed, ppmJoL);
+                    if (!roll_chance_f(chanceForVictim))
+                        return false;
+
                     basepoints[0] = int32( pVictim->GetMaxHealth() * triggeredByAura->GetModifier()->m_amount / 100 );
                     pVictim->CastCustomSpell(pVictim, 20267, &basepoints[0], NULL, NULL, true, NULL, triggeredByAura);
                     return true;

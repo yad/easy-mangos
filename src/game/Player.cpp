@@ -5195,7 +5195,7 @@ void Player::DeleteFromDB(uint64 playerguid, uint32 accountId, bool updateRealmC
         }
         // The character gets unlinked from the account, the name gets freed up and appears as deleted ingame
         case 1:
-            CharacterDatabase.PExecute("UPDATE characters SET deleteInfos_Name=name, deleteInfos_Account=account, deleteDate=%u, name='', account=0 WHERE guid=%u", uint64(time(NULL)), guid);
+            CharacterDatabase.PExecute("UPDATE characters SET deleteInfos_Name=name, deleteInfos_Account=account, deleteDate='" UI64FMTD "', name='', account=0 WHERE guid=%u", uint64(time(NULL)), guid);
             break;
         default:
             sLog.outError("Player::DeleteFromDB: Unsupported delete method: %u.", charDelete_method);
@@ -5230,7 +5230,7 @@ void Player::DeleteOldCharacters(uint32 keepDays)
 {
     sLog.outString("Player::DeleteOldChars: Deleting all characters which have been deleted %u days before...", keepDays);
 
-    QueryResult *resultChars = CharacterDatabase.PQuery("SELECT guid, deleteInfos_Account FROM characters WHERE deleteDate IS NOT NULL AND deleteDate < %u", uint64(time(NULL) - time_t(keepDays * DAY)));
+    QueryResult *resultChars = CharacterDatabase.PQuery("SELECT guid, deleteInfos_Account FROM characters WHERE deleteDate IS NOT NULL AND deleteDate < '" UI64FMTD "'", uint64(time(NULL) - time_t(keepDays * DAY)));
     if (resultChars)
     {
         sLog.outString("Player::DeleteOldChars: Found %u character(s) to delete",resultChars->GetRowCount());
@@ -12272,6 +12272,9 @@ Item* Player::EquipItem( uint16 pos, Item *pItem, bool update )
             if(pProto && pProto->ItemSet)
                 AddItemsSetItem(this, pItem);
 
+            if(IsWeaponDisarmed)
+                return;
+
             _ApplyItemMods(pItem, slot, true);
 
             if(pProto && isInCombat()&& pProto->Class == ITEM_CLASS_WEAPON && m_weaponChangeTimer == 0)
@@ -18129,16 +18132,20 @@ void Player::SaveToDB()
 
     sLog.outDebug("The value of player %s at save: ", m_name.c_str());
     outDebugValues();
+    //Tassadar, 26.4.2010 - With transactions, data are lost sometimes,
+    //                      I dont know why, and that scares me, but its better
+    //                      when nothing is lost...
+    //CharacterDatabase.BeginTransaction();
 
-    CharacterDatabase.BeginTransaction();
-
-    CharacterDatabase.PExecute("DELETE FROM characters WHERE guid = '%u'",GetGUIDLow());
+    //Tassadar, 7.4.2010 - Use REPLACE query instead of DELETE&INSERT here because
+    //                     if server crash when character is saved, player is lost
+    //CharacterDatabase.PExecute("DELETE FROM characters WHERE guid = '%u'",GetGUIDLow());
 
     std::string sql_name = m_name;
     CharacterDatabase.escape_string(sql_name);
 
     std::ostringstream ss;
-    ss << "INSERT INTO characters (guid,account,name,race,class,gender,level,xp,money,playerBytes,playerBytes2,playerFlags,"
+    ss << "REPLACE INTO characters (guid,account,name,race,class,gender,level,xp,money,playerBytes,playerBytes2,playerFlags,"
         "map, dungeon_difficulty, position_x, position_y, position_z, orientation, "
         "taximask, online, cinematic, "
         "totaltime, leveltime, rest_bonus, logout_time, is_logout_resting, resettalents_cost, resettalents_time, "
@@ -18292,7 +18299,8 @@ void Player::SaveToDB()
     _SaveGlyphs();
     _SaveTalents();
 
-    CharacterDatabase.CommitTransaction();
+    //Read comment at begin of transaction
+    //CharacterDatabase.CommitTransaction();
 
     // check if stats should only be saved on logout
     // save stats can be out of transaction
