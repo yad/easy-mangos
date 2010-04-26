@@ -11060,7 +11060,7 @@ Item* Player::EquipItem( uint16 pos, Item *pItem, bool update )
             if(pProto && pProto->ItemSet)
                 AddItemsSetItem(this, pItem);
 
-            if(IsWeaponDisarmed)
+            if(IsWeaponDisarmed(slot))
                 return;
 
             _ApplyItemMods(pItem, slot, true);
