@@ -183,6 +183,12 @@ namespace VMAP
             std::cout << "Converting " << *mfile << std::endl;
             readRawFile2(*mfile, dummy);
         }
+
+        //cleanup:
+        for(MapData::iterator map_iter = mapData.begin(); map_iter != mapData.end(); ++map_iter)
+        {
+            delete map_iter->second;
+        }
         return success;
     }
 
@@ -196,8 +202,7 @@ namespace VMAP
             return false;
         }
         printf("Read coordinate mapping...\n");
-        uint32 mapID, tileX, tileY, nameLen, check=0;
-        char nameBuff[500];
+        uint32 mapID, tileX, tileY, check=0;
         G3D::Vector3 v1, v2;
         ModelSpawn spawn;
         while (!feof(dirf))
@@ -299,6 +304,11 @@ namespace VMAP
                 vectorarray = new float[nvectors*3];
                 READ_OR_RETURN(vectorarray, nvectors*sizeof(float)*3);
             }
+            else
+            {
+                std::cout << "error: model '" << spawn.name << "' has no geometry!" << std::endl;
+                return false;
+            }
 
             for(unsigned int i=0, indexNo=0; indexNo<nvectors; indexNo++, i+=3)
             {
@@ -310,6 +320,7 @@ namespace VMAP
                 else
                     modelBound.merge(v);
             }
+            delete[] vectorarray;
             // drop of temporary use defines
             #undef READ_OR_RETURN
             #undef CMP_OR_RETURN
@@ -426,7 +437,7 @@ namespace VMAP
                 {
                     vertexArray.push_back( Vector3(vectorarray + 3*i) );
                 }
-                delete vectorarray;
+                delete[] vectorarray;
             }
             // ----- liquid
             if(liquidflags& 1)
