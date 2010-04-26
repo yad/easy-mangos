@@ -527,10 +527,10 @@ bool Map::Add(Player *player)
     CellPair p = MaNGOS::ComputeCellPair(player->GetPositionX(), player->GetPositionY());
     Cell cell(p);
     EnsureGridLoadedAtEnter(cell, player);
-    player->AddToWorld();
 
     SendInitSelf(player);
     SendInitTransports(player);
+    player->AddToWorld();
 
     UpdateObjectVisibility(player,cell,p);
 
