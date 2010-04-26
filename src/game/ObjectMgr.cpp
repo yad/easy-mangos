@@ -45,6 +45,7 @@
 #include "WaypointManager.h"
 #include "GossipDef.h"
 #include "Mail.h"
+#include "InstanceData.h"
 
 #include <limits>
 
@@ -4786,18 +4787,20 @@ void ObjectMgr::LoadInstanceTemplate()
 
         if (temp->parent > 0)
         {
-            // check existence 
+            // check existence
             MapEntry const* parentEntry = sMapStore.LookupEntry(temp->parent);
             if (!parentEntry)
             {
-                sLog.outErrorDb("ObjectMgr::LoadInstanceTemplate: bad parent map id for instance template %d template!", parentEntry,temp->map);
+                sLog.outErrorDb("ObjectMgr::LoadInstanceTemplate: bad parent map id %u for instance template %d template!",
+                    parentEntry->MapID, temp->map);
                 const_cast<InstanceTemplate*>(temp)->parent = 0;
                 continue;
             }
 
             if (parentEntry->IsContinent())
             {
-                sLog.outErrorDb("ObjectMgr::LoadInstanceTemplate: parent point to continent map id %u for instance template %d template, ignored, need be set only for non-continent parents!", parentEntry->MapID,temp->map);
+                sLog.outErrorDb("ObjectMgr::LoadInstanceTemplate: parent point to continent map id %u for instance template %d template, ignored, need be set only for non-continent parents!",
+                    parentEntry->MapID,temp->map);
                 const_cast<InstanceTemplate*>(temp)->parent = 0;
                 continue;
             }
@@ -7506,6 +7509,15 @@ bool PlayerCondition::Meets(Player const * player) const
             }
             return false;
         }
+        case CONDITION_INSTANCE_SCRIPT:
+        {
+            // have meaning only for specific map instance script so ignore other maps
+            if (player->GetMapId() != value1)
+                return false;
+            if (InstanceData* data = player->GetInstanceData())
+                return data->CheckConditionCriteriaMeet(player, value1, value2);
+            return false;
+        }
         default:
             return false;
     }
@@ -7714,6 +7726,17 @@ bool PlayerCondition::IsValid(ConditionType condition, uint32 value1, uint32 val
             if (value2 > 1)
             {
                 sLog.outErrorDb("Spell condition has invalid argument %u (must be 0..1), skipped", value2);
+                return false;
+            }
+
+            break;
+        }
+        case CONDITION_INSTANCE_SCRIPT:
+        {
+            MapEntry const* mapEntry = sMapStore.LookupEntry(value1);
+            if (!mapEntry || !mapEntry->IsDungeon())
+            {
+                sLog.outErrorDb("Instance script condition has not existed map id %u as first arg, skipped", value1);
                 return false;
             }
 
