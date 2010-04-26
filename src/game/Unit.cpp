@@ -2118,14 +2118,14 @@ void Unit::CalculateAbsorbAndResist(Unit *pCaster, SpellSchoolMask schoolMask, D
                 if (spellProto->SpellIconID == 2135)
                 {
                     // Apply absorb only on damage below 35% hp 
-                    int32 absorbableDamage = RemainingDamage + 0.35f * pVictim->GetMaxHealth() - pVictim->GetHealth();
+                    int32 absorbableDamage = RemainingDamage + 0.35f * GetMaxHealth() - GetHealth();
                     if (absorbableDamage > RemainingDamage)
                         absorbableDamage = RemainingDamage;
                     if (absorbableDamage > 0)
                         RemainingDamage -= absorbableDamage * currentAbsorb / 100;
 
                     // 66233 is cooldown aura
-                    if (!((Player*)pVictim)->HasAura(66233))
+                    if (!((Player*)this)->HasAura(66233))
                         preventDeathSpell = (*i)->GetSpellProto();
 
                     continue;
@@ -2394,7 +2394,7 @@ void Unit::CalculateAbsorbAndResist(Unit *pCaster, SpellSchoolMask schoolMask, D
                 if (preventDeathSpell->SpellIconID == 2135)
                 {
                     // Calculate defense over level * 5
-                    int32 defenseAmount = pVictim->GetDefenseSkillValue() - pVictim->getLevel() * 5; 
+                    int32 defenseAmount = GetDefenseSkillValue() - getLevel() * 5; 
                     // Proceed if positive value
                     if (defenseAmount > 0)
                     {
@@ -2402,13 +2402,13 @@ void Unit::CalculateAbsorbAndResist(Unit *pCaster, SpellSchoolMask schoolMask, D
                         if (defenseAmount > 140)
                             defenseAmount = 140;
                         // Trigger cooldown aura
-                        pVictim->CastSpell(pVictim, 66233, true);
+                        CastSpell(this, 66233, true);
                         // Calculate heal amount
                         int32 healAmount = preventDeathSpell->CalculateSimpleValue(EFFECT_INDEX_1);
-                        healAmount = defenseAmount * pVictim->GetMaxHealth() * healAmount / 14000 - pVictim->GetHealth();
+                        healAmount = defenseAmount * GetMaxHealth() * healAmount / 14000 - GetHealth();
                         // Heal if positive value
                         if (healAmount > 0)
-                            pVictim->CastCustomSpell(pVictim, 66235, &healAmount, NULL, NULL, true);
+                            CastCustomSpell(this, 66235, &healAmount, NULL, NULL, true);
                         // Absorb Everything
                         RemainingDamage = 0;
                     }
@@ -2792,7 +2792,7 @@ void Unit::SendMeleeAttackStop(Unit* victim)
     ((Creature*)victim)->AI().EnterEvadeMode(this);*/
 }
 
-bool Unit::isSpellBlocked(Unit *pCaster, SpellEntry const * spellProto, WeaponAttackType attackType)
+bool Unit::IsSpellBlocked(Unit *pCaster, SpellEntry const * spellProto, WeaponAttackType attackType)
 {
     // Some spell can not be blocked
     if (spellProto && spellProto->Attributes & SPELL_ATTR_IMPOSSIBLE_DODGE_PARRY_BLOCK)

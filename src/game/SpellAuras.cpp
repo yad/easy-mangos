@@ -453,7 +453,7 @@ m_isRemovedOnShapeLost(true), m_in_use(0), m_deleted(false)
 
     bool applyHaste = false;
     if((GetSpellProto()->AttributesEx & (SPELL_ATTR_EX_CHANNELED_1 | SPELL_ATTR_EX_CHANNELED_2)) // All channeled spells
-        || (GetSpellProto->AttributesEx5 & SPELL_ATTR_EX5_AFFECTED_BY_HASTE))                    // Some auras from 3.3.3
+        || (GetSpellProto()->AttributesEx5 & SPELL_ATTR_EX5_AFFECTED_BY_HASTE))                    // Some auras from 3.3.3
         applyHaste = true;
     //SPELL_AURA_APPLY_HASTE_TO_AURA implentation
     if(caster)
@@ -4216,8 +4216,8 @@ void Aura::HandleAuraModDisarm(bool apply, bool Real)
     else
         ((Player *)m_target)->SetRegularAttackTime();
 
-    if(Item *_item = ((Player*)m_target)->GetItemByPos( INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND ))
-        ((Player*)m_target)->_ApplyItemMods(_item, EQUIPMENT_SLOT_MAINHAND, !apply);
+    //if(Item *_item = ((Player*)m_target)->GetItemByPos( INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND ))
+      //  ((Player*)m_target)->_ApplyItemMods(_item, EQUIPMENT_SLOT_MAINHAND, !apply);
 
     m_target->UpdateDamagePhysical(BASE_ATTACK);
 }
@@ -4249,8 +4249,8 @@ void Aura::HandleAuraModDisarmOffhand(bool apply, bool Real)
     else
         ((Player *)m_target)->SetRegularAttackTime();
 
-    if(Item *_item = ((Player*)m_target)->GetItemByPos( INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND ))
-        ((Player*)m_target)->_ApplyItemMods(_item, EQUIPMENT_SLOT_OFFHAND, !apply);
+   // if(Item *_item = ((Player*)m_target)->GetItemByPos( INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND ))
+     //   ((Player*)m_target)->_ApplyItemMods(_item, EQUIPMENT_SLOT_OFFHAND, !apply);
 
     m_target->UpdateDamagePhysical(OFF_ATTACK);
 }
@@ -4282,8 +4282,8 @@ void Aura::HandleAuraModDisarmRanged(bool apply, bool Real)
     else
         ((Player *)m_target)->SetRegularAttackTime();
 
-    if(Item *_item = ((Player*)m_target)->GetItemByPos( INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_RANGED ))
-        ((Player*)m_target)->_ApplyItemMods(_item, EQUIPMENT_SLOT_RANGED, !apply);
+   // if(Item *_item = ((Player*)m_target)->GetItemByPos( INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_RANGED ))
+     //   ((Player*)m_target)->_ApplyItemMods(_item, EQUIPMENT_SLOT_RANGED, !apply);
 
     m_target->UpdateDamagePhysical(RANGED_ATTACK);
 }

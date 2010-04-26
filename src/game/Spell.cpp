@@ -2972,7 +2972,7 @@ void Spell::cast(bool skipCheck)
         TakeCastItem();
 
         // fill initial spell damage from caster for delayed casted spells
-        for(std::list<TargetInfo>::iterator ihit = m_UniqueTargetInfo.begin(); ihit != m_UniqueTargetInfo.end(); ++ihit)
+        for(tbb::concurrent_vector<TargetInfo>::iterator ihit = m_UniqueTargetInfo.begin(); ihit != m_UniqueTargetInfo.end(); ++ihit)
             HandleDelayedSpellLaunch(&(*ihit));
 
         // Okay, maps created, now prepare flags
