@@ -302,10 +302,10 @@ void Item::SaveToDB()
             CharacterDatabase.escape_string(text);
             CharacterDatabase.PExecute( "DELETE FROM item_instance WHERE guid = '%u'", guid );
             std::ostringstream ss;
-            ss << "INSERT INTO item_instance (guid,owner_guid,data,text) VALUES (" << guid << "," << GUID_LOPART(GetOwnerGUID()) << ",'";
+            ss << "INSERT INTO item_instance (guid,owner_guid,data,text, ExtendedCost) VALUES (" << guid << "," << GUID_LOPART(GetOwnerGUID()) << ",'";
             for(uint16 i = 0; i < m_valuesCount; ++i )
                 ss << GetUInt32Value(i) << " ";
-            ss << "', '" << text << "')";
+            ss << "', '" << text << "', '" << m_ExtendedCostId << "')";
             CharacterDatabase.Execute( ss.str().c_str() );
         } break;
         case ITEM_CHANGED:
@@ -317,7 +317,7 @@ void Item::SaveToDB()
             for(uint16 i = 0; i < m_valuesCount; ++i )
                 ss << GetUInt32Value(i) << " ";
             ss << "', owner_guid = '" << GUID_LOPART(GetOwnerGUID());
-            ss << "', text = '" << text << "' WHERE guid = '" << guid << "'";
+            ss << "', text = '" << text << "', ExtendedCost = '" << m_ExtendedCostId << "' WHERE guid = '" << guid << "'";
 
             CharacterDatabase.Execute( ss.str().c_str() );
 
@@ -433,7 +433,7 @@ bool Item::LoadFromDB(uint32 guid, uint64 owner_guid, QueryResult *result)
     //Set extended cost for refundable item
     if(HasFlag(ITEM_FIELD_FLAGS, ITEM_FLAGS_REFUNDABLE))
     {
-        QueryResult *result_ext = WorldDatabase.PQuery("SELECT ExtendedCost FROM npc_vendor WHERE item = '%u' LIMIT 1", GetEntry());
+        QueryResult *result_ext = CharacterDatabase.PQuery("SELECT ExtendedCost FROM item_instance WHERE guid = '%u'", guid);
         if(result_ext)
         {
             m_ExtendedCostId = result_ext->Fetch()[0].GetUInt32();
