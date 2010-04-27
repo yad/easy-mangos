@@ -1678,18 +1678,18 @@ bool Map::IsOutdoors(float x, float y, float z) const
     if(!GetAreaInfo(x, y, z, mogpFlags, adtId, rootId, groupId))
         return true;
 
-    printf("Got AreaInfo: flag %u, adt %i, root %i, group %i\n", mogpFlags, adtId, rootId, groupId);
+    sLog.outDebug("Got AreaInfo: flag %u, adt %i, root %i, group %i\n", mogpFlags, adtId, rootId, groupId);
     bool outdoor = true;
 
     WMOAreaTableEntry const* wmoEntry= GetWMOAreaTableEntryByTripple(rootId, adtId, groupId);
     if(wmoEntry)
     {
-        printf("Got WMOAreaTableEntry! flag %u, areaid %u\n", wmoEntry->Flags, wmoEntry->areaId);
+        sLog.outDebug("Got WMOAreaTableEntry! flag %u, areaid %u\n", wmoEntry->Flags, wmoEntry->areaId);
 
         AreaTableEntry const* atEntry = GetAreaEntryByAreaID(wmoEntry->areaId);
         if(atEntry)
         {
-            printf("Got AreaTableEntry\n");
+            sLog.outDebug("Got AreaTableEntry\n");
             if(atEntry->flags & AREA_FLAG_OUTSIDE)
                 return true;
             if(atEntry->flags & AREA_FLAG_INSIDE)

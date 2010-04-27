@@ -31,8 +31,6 @@ template<> struct BoundsTrait<VMAP::GroupModel>
 
 namespace VMAP
 {
-    bool readChunk(FILE *rf, char *dest, const char *compare, uint32 len);
-
     bool IntersectTriangle(const MeshTriangle &tri, std::vector<Vector3>::const_iterator points, const G3D::Ray &ray, float &distance)
     {
         static const float EPS = 1e-5f;
@@ -185,7 +183,7 @@ namespace VMAP
         bool operator()(const G3D::Ray& ray, uint32 entry, float& distance, bool pStopAtFirstHit)
         {
             bool result = IntersectTriangle(triangles[entry], vertices, ray, distance);
-            if(result)  hit=true;
+            if (result)  hit=true;
             return hit;
         }
         std::vector<Vector3>::const_iterator vertices;
@@ -231,7 +229,7 @@ namespace VMAP
         bool operator()(const G3D::Ray& ray, uint32 entry, float& distance, bool pStopAtFirstHit)
         {
             bool result = models[entry].IntersectRay(ray, distance, pStopAtFirstHit);
-            if(result)  hit=true;
+            if (result)  hit=true;
             return hit;
         }
         std::vector<GroupModel>::const_iterator models;
@@ -268,16 +266,17 @@ namespace VMAP
                     {
                         //minVol = pVol;
                         //hit = prims + entry;
-                        if(group_Z > ground_Z)
+                        if (group_Z > ground_Z)
                         {
                             ground_Z = group_Z;
                             hit = prims + entry;
                         }
-
+#ifdef VMAP_DEBUG
                         const GroupModel &gm = prims[entry];
                         printf("%10u %8X %7.3f,%7.3f,%7.3f | %7.3f,%7.3f,%7.3f | z=%f, p_z=%f\n", gm.GetWmoID(), gm.GetMogpFlags(),
                         gm.GetBound().low().x, gm.GetBound().low().y, gm.GetBound().low().z,
                         gm.GetBound().high().x, gm.GetBound().high().y, gm.GetBound().high().z, group_Z, point.z);
+#endif
                     }
                 //}
                 //std::cout << "trying to intersect '" << prims[entry].name << "'\n";
@@ -286,7 +285,7 @@ namespace VMAP
 
     bool WorldModel::IntersectPoint(const G3D::Vector3 &p, AreaInfo &info) const
     {
-        if(!groupModels.size())
+        if (!groupModels.size())
             return false;
         WModelAreaCallback callback(groupModels);
         groupTree.intersectPoint(p, callback);
@@ -324,7 +323,7 @@ namespace VMAP
             //chunkSize = sizeof(uint32)+ sizeof(GroupModel)*count;
             //if (result && fwrite(&chunkSize, sizeof(uint32), 1, wf) != 1) result = false;
             if (result && fwrite(&count, sizeof(uint32), 1, wf) != 1) result = false;
-            for(uint32 i=0; i<groupModels.size() && result; ++i)
+            for (uint32 i=0; i<groupModels.size() && result; ++i)
                 result = groupModels[i].writeToFile(wf);
 
             // write group BIH
@@ -359,7 +358,7 @@ namespace VMAP
             if (result && fread(&count, sizeof(uint32), 1, rf) != 1) result = false;
             if (result) groupModels.resize(count);
             //if (result && fread(&groupModels[0], sizeof(GroupModel), count, rf) != count) result = false;
-            for(uint32 i=0; i<count && result; ++i)
+            for (uint32 i=0; i<count && result; ++i)
                 result = groupModels[i].readFromFile(rf);
 
             // read group BIH

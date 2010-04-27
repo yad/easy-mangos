@@ -33,5 +33,8 @@ namespace VMAP
     };
 
     //======================================
+
+    // defined in TileAssembler.cpp currently...
+    bool readChunk(FILE *rf, char *dest, const char *compare, uint32 len);
 }
 #endif
