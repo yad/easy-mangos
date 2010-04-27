@@ -92,7 +92,9 @@ void PathInfo::Build()
         sLog.outError("%u's Path Build failed: navMesh is null", m_sourceObject->GetGUID());
         // ignore obstacles/terrain is better than giving up
         m_length = 1;
-        getEndPosition(x, y, z);
+        x = getEndPositionX();
+        y = getEndPositionY();
+        z = getEndPositionZ();
         setNextPosition(x, y, z);
         m_type = PATHFIND_SHORTCUT;
         return;
@@ -102,9 +104,13 @@ void PathInfo::Build()
     dtQueryFilter filter = dtQueryFilter();     // search filter
 
     // get start and end positions
-    getStartPosition(x, y, z);
+    x = getStartPositionX();
+    y = getStartPositionY();
+    z = getStartPositionZ();
     float startPos[3] = {y, z, x};
-    getEndPosition(x, y, z);
+    x = getEndPositionX();
+    y = getEndPositionY();
+    z = getEndPositionZ();
     float endPos[3] = {y, z, x};
 
     // find start and end poly
@@ -126,15 +132,21 @@ void PathInfo::Build(dtPolyRef startPoly, dtPolyRef endPoly)
         //     (z) is above/below the navmesh
         sLog.outError("%u's Path Build failed: invalid start or end polygon", m_sourceObject->GetGUID());
         m_length = 1;
-        getEndPosition(x, y, z);
+        x = getEndPositionX();
+        y = getEndPositionY();
+        z = getEndPositionZ();
         setNextPosition(x, y, z);
         m_type = PATHFIND_SHORTCUT;
         return;
     }
 
-    getStartPosition(x, y, z);
+    x = getStartPositionX();
+    y = getStartPositionY();
+    z = getStartPositionZ();
     float startPos[3] = {y, z, x};
-    getEndPosition(x, y, z);
+    x = getEndPositionX();
+    y = getEndPositionY();
+    z = getEndPositionZ();
     float endPos[3] = {y, z, x};
 
     bool startOffPoly, endOffPoly;
@@ -168,7 +180,9 @@ void PathInfo::Build(dtPolyRef startPoly, dtPolyRef endPoly)
         // only happens if we passed bad data to findPath(), or navmesh is messed up
         sLog.outError("%u's Path Build failed: 0-length path", m_sourceObject->GetGUID());
         m_length = 1;
-        getEndPosition(x, y, z);
+        x = getEndPositionX();
+        y = getEndPositionY();
+        z = getEndPositionZ();
         setNextPosition(x, y, z);
         m_type = PATHFIND_SHORTCUT;
         return;
@@ -207,7 +221,9 @@ void PathInfo::Update(const float destX, const float destY, const float destZ)
             sLog.outError("%u's UpdatePath failed: navMesh is null", m_sourceObject->GetGUID());
 
             m_length = 1;
-            getEndPosition(x, y, z);
+            x = getEndPositionX();
+            y = getEndPositionY();
+            z = getEndPositionZ();
             setNextPosition(x, y, z);
             m_type = PATHFIND_SHORTCUT;
             return;
@@ -221,9 +237,13 @@ void PathInfo::Update(const float destX, const float destY, const float destZ)
 
     // find start and end poly
     // navMesh.findNearestPoly is expensive, so first we check just the current path
-    getStartPosition(x, y, z);
+    x = getStartPositionX();
+    y = getStartPositionY();
+    z = getStartPositionZ();
     dtPolyRef startPoly = getPathPolyByPosition(x, y, z);
-    getEndPosition(x, y, z);
+    x = getEndPositionX();
+    y = getEndPositionY();
+    z = getEndPositionZ();
     dtPolyRef endPoly = getPathPolyByPosition(x, y, z);
 
     if(startPoly != 0 && endPoly != 0)
@@ -238,7 +258,9 @@ void PathInfo::Update(const float destX, const float destY, const float destZ)
         if(!startPoly)
         {
             sLog.outDebug("New startpoly.");
-            getStartPosition(x, y, z);
+            x = getStartPositionX();
+            y = getStartPositionY();
+            z = getStartPositionZ();
             float startPos[3] = {y, z, x};
             startOffPath = true;
             startPoly = m_navMesh->findNearestPoly(startPos, extents, &filter, 0);
@@ -246,7 +268,9 @@ void PathInfo::Update(const float destX, const float destY, const float destZ)
         if(!endPoly)
         {
             sLog.outDebug("New endpoly.");
-            getEndPosition(x, y, z);
+            x = getEndPositionX();
+            y = getEndPositionY();
+            z = getEndPositionZ();
             float endPos[3] = {y, z, x};
             endOffPath = true;
             endPoly = m_navMesh->findNearestPoly(endPos, extents, &filter, 0);
@@ -262,7 +286,9 @@ void PathInfo::Update(const float destX, const float destY, const float destZ)
             // ignore obstacles/terrain is better than giving up
             // PATHFIND TODO: prevent walking/swimming mobs from flying into the air
             m_length = 1;
-            getEndPosition(x, y, z);
+            x = getEndPositionX();
+            y = getEndPositionY();
+            z = getEndPositionZ();
             setNextPosition(x, y, z);
             m_type = PATHFIND_SHORTCUT;
             return;
@@ -277,7 +303,9 @@ void PathInfo::Update(const float destX, const float destY, const float destZ)
         // PATHFIND TODO: prevent walking/swimming mobs from flying into the air
 
         m_length = 1;
-        getEndPosition(x, y, z);
+        x = getEndPositionX();
+        y = getEndPositionY();
+        z = getEndPositionZ();
         setNextPosition(x, y, z);
         m_type = PATHFIND_NORMAL;
         return;
@@ -365,9 +393,13 @@ void PathInfo::updateNextPosition()
 {
     float x, y, z;
 
-    getStartPosition(x, y, z);
+    x = getStartPositionX();
+    y = getStartPositionY();
+    z = getStartPositionZ();
     float startPos[3] = {y, z, x};
-    getEndPosition(x, y, z);
+    x = getEndPositionX();
+    y = getEndPositionY();
+    z = getEndPositionZ();
     float endPos[3] = {y, z, x};
 
     float* pathPoints = new float[MAX_PATH_LENGTH*3];
@@ -386,7 +418,9 @@ void PathInfo::updateNextPosition()
         // only happens if pass bad data to findStraightPath or navmesh is broken
         sLog.outError("%u's UpdateNextPosition failed: 0 length path", m_sourceObject->GetGUID());
         m_length = 1;
-        getEndPosition(x, y, z);
+        x = getEndPositionX();
+        y = getEndPositionY();
+        z = getEndPositionZ();
         setNextPosition(x, y, z);
         m_type = PATHFIND_SHORTCUT;
         return;

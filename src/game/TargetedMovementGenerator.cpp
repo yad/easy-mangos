@@ -78,7 +78,9 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner)
 
     // can check here to see what i_path->m_type
     // maybe not move if m_type == PATHFIND_SHORTCUT
-    i_path->getNextPosition(x, y, z);
+    x = i_path->getNextPositionX();
+    y = i_path->getNextPositionY();
+    z = i_path->getNextPositionZ();
 
     Traveller<T> traveller(owner);
     i_destinationHolder.SetDestination(traveller, x, y, z);
@@ -172,8 +174,12 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
         //More distance let have better performance, less distance let have more sensitive reaction at target move.
 
         float nextx, nexty, nextz, endx, endy, endz;
-        i_path->getNextPosition(nextx, nexty, nextz);
-        i_path->getEndPosition(endx, endy, endz);
+        nextx = i_path->getNextPositionX();
+        nexty = i_path->getNextPositionY();
+        nextz = i_path->getNextPositionZ();
+        endx = i_path->getEndPositionX();
+        endy = i_path->getEndPositionY();
+        endz = i_path->getEndPositionZ();
 
         bool targetMoved, needNewDest;
         targetMoved = i_target->GetDistance(endx, endy, endz) >= dist;
@@ -184,7 +190,9 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
             // recalculate path
             _setTargetLocation(owner);
 
-            i_path->getNextPosition(nextx, nexty, nextz);
+            nextx = i_path->getNextPositionX();
+            nexty = i_path->getNextPositionY();
+            nextz = i_path->getNextPositionZ();
 
             // Set new Angle For Map::
             owner.SetOrientation(owner.GetAngle(nextx, nexty));
