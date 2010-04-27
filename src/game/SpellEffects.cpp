@@ -1744,14 +1744,12 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     return;
 
                 uint32 original_rage = m_caster->GetPower(POWER_RAGE);
+                uint32 rage = original_rage;
 
                 // This is needed to proper cast of 20647
                 SpellEntry const *executeInfo = sSpellStore.LookupEntry(20647);
                 if(!original_rage)
                     m_caster->SetPower(POWER_RAGE,executeInfo->manaCost);
-
-                uint32 rage = original_rage;
-                uint32 lastrage=0;
 
                 // up to max 30 rage cost
                 if (rage > (300 - GetPowerCost()))
@@ -1768,6 +1766,8 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
 
                 m_caster->CastCustomSpell(unitTarget, 20647, &basePoints0, NULL, NULL, true, 0);
 
+                uint32 rageLeft = original_rage-rage; // for easier sudden death calculation
+                uint32 lastrage=0;
                 // Sudden Death - this must be stored somewhere :/
                 if(m_caster->HasAura(29723))
                     lastrage = 30;
@@ -1776,10 +1776,10 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                 else if(m_caster->HasAura(29724))
                     lastrage = 100;
 
-                if(lastrage <= rage)
-                    rage -= lastrage;
+                if(rageLeft < lastrage)
+                    rageLeft = lastrage;
 
-                m_caster->SetPower(POWER_RAGE,original_rage - rage);
+                m_caster->SetPower(POWER_RAGE,rageLeft);
                 return;
             }
             // Slam
