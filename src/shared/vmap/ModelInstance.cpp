@@ -65,7 +65,9 @@ namespace VMAP
     {
         if (!iModel)
         {
+#ifdef VMAP_DEBUG
             std::cout << "<object not loaded>\n";
+#endif
             return;
         }
 
@@ -87,13 +89,20 @@ namespace VMAP
     {
         uint32 check=0, nameLen;
         check += fread(&spawn.flags, sizeof(uint32), 1, rf);
+        // EoF?
+        if (!check)
+        {
+            if (ferror(rf))
+                std::cout << "Error reading ModelSpawn!\n";
+            return false;
+        }
         check += fread(&spawn.adtId, sizeof(uint16), 1, rf);
         check += fread(&spawn.ID, sizeof(uint32), 1, rf);
         check += fread(&spawn.iPos, sizeof(float), 3, rf);
         check += fread(&spawn.iRot, sizeof(float), 3, rf);
         check += fread(&spawn.iScale, sizeof(float), 1, rf);
         bool has_bound = (spawn.flags & MOD_HAS_BOUND);
-        if(has_bound) // only WMOs have bound in MPQ, only available after computation
+        if (has_bound) // only WMOs have bound in MPQ, only available after computation
         {
             Vector3 bLow, bHigh;
             check += fread(&bLow, sizeof(float), 3, rf);
@@ -101,11 +110,23 @@ namespace VMAP
             spawn.iBound = G3D::AABox(bLow, bHigh);
         }
         check += fread(&nameLen, sizeof(uint32), 1, rf);
-        if(check != (has_bound ? 17 : 11)) { printf("Error reading ModelSpawn!\n"); return false; }
+        if(check != (has_bound ? 17 : 11))
+        {
+            std::cout << "Error reading ModelSpawn!\n";
+            return false;
+        }
         char nameBuff[500];
-        if(nameLen>500) { printf("Error, file name too long!\n"); return false; }
+        if (nameLen>500) // file names should never be that long, must be file error
+        {
+            std::cout << "Error reading ModelSpawn, file name too long!\n";
+            return false;
+        }
         check = fread(nameBuff, sizeof(char), nameLen, rf);
-        if(check != nameLen) { printf("Error reading ModelSpawn!\n"); return false; }
+        if (check != nameLen)
+        {
+            std::cout << "Error reading ModelSpawn!\n";
+            return false;
+        }
         spawn.name = std::string(nameBuff, nameLen);
         return true;
     }

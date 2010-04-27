@@ -355,13 +355,11 @@ namespace VMAP
 
     bool VMapManager2::getAreaInfo(unsigned int pMapId, float x, float y, float z, uint32 &flags, int32 &adtId, int32 &rootId, int32 &groupId)
     {
-        //TODO: implement it
         bool result=false;
         InstanceTreeMap::iterator instanceTree = iInstanceMapTrees.find(pMapId);
         if (instanceTree != iInstanceMapTrees.end())
         {
             Vector3 pos = convertPositionToInternalRep(x, y, z);
-            printf("VMapManager::getAreaInfo(): x:%f y:%f z:%f => x:%f y:%f z:%f\n", x,y,z,pos.x,pos.y,pos.z);
             result = instanceTree->second->getAreaInfo(pos, flags, adtId, rootId, groupId);
         }
         return(result);
