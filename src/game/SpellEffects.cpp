@@ -1752,7 +1752,7 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     m_caster->SetPower(POWER_RAGE,executeInfo->manaCost);
 
                 // up to max 30 rage cost
-                if (rage > (300 - GetPowerCost()))
+                if (int32(rage) > (300 - GetPowerCost()))
                     rage = (300 - GetPowerCost());
 
                 // Glyph of Execution bonus
