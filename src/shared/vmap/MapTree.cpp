@@ -120,6 +120,9 @@ namespace VMAP
     {
         bool result = true;
         float maxDist = (pos2 - pos1).magnitude();
+        // prevent NaN values which can cause BIH intersection to enter infinite loop
+        if (maxDist < 1e-10f)
+            return true;
         // direction with length of 1
         G3D::Ray ray = G3D::Ray::fromOriginAndDirection(pos1, (pos2 - pos1)/maxDist);
         float resultDist = getIntersectionTime(ray, maxDist, true);
@@ -139,6 +142,12 @@ namespace VMAP
     {
         bool result=false;
         float maxDist = (pPos2 - pPos1).magnitude();
+        // prevent NaN values which can cause BIH intersection to enter infinite loop
+        if (maxDist < 1e-10f)
+        {
+            pResultHitPos = pPos2;
+            return false;
+        }
         Vector3 dir = (pPos2 - pPos1)/maxDist;              // direction with length of 1
         G3D::Ray ray(pPos1, dir);
         float dist = getIntersectionTime(ray, maxDist, false);
