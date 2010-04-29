@@ -4555,10 +4555,9 @@ void Unit::RemoveSingleAuraDueToSpellByDispel(uint32 spellId, uint64 casterGUID,
         {
             if(Unit* caster = dot->GetCaster())
             {
-                int32 bp0 = dot->GetModifier()->m_amount;
-                uint32 bonusDamage = caster->SpellDamageBonusDone(this, spellEntry, bp0, DOT);
-                bonusDamage = SpellDamageBonusTaken(caster, spellEntry, bonusDamage, DOT);
-                bp0 = 8 * bonusDamage;
+                // use clean value for initial damage
+                int32 bp0 = dot->GetSpellProto()->CalculateSimpleValue(EFFECT_INDEX_1);
+                bp0 *= 8;
 
                 // Remove spell auras from stack
                 RemoveSingleSpellAurasByCasterSpell(spellId, casterGUID, AURA_REMOVE_BY_DISPEL);
@@ -10001,7 +10000,7 @@ uint32 Unit::SpellDamageBonusTaken(Unit *pCaster, SpellEntry const *spellProto, 
     // Taken fixed damage bonus auras
     int32 TakenAdvertisedBenefit = SpellBaseDamageBonusTaken(GetSpellSchoolMask(spellProto));
 
-    float LvlPenalty = CalculateLevelPenalty(spellProto);
+    float LvlPenalty = pCaster->CalculateLevelPenalty(spellProto);
 
     Player* modOwner = GetSpellModOwner();
 
@@ -10619,7 +10618,7 @@ uint32 Unit::SpellHealingBonusTaken(Unit *pCaster, SpellEntry const *spellProto,
     // Taken fixed damage bonus auras
     int32 TakenAdvertisedBenefit = SpellBaseHealingBonusTaken(GetSpellSchoolMask(spellProto));
 
-    float LvlPenalty = CalculateLevelPenalty(spellProto);
+    float LvlPenalty = pCaster->CalculateLevelPenalty(spellProto);
 
     // Check for table values
     SpellBonusEntry const* bonus = sSpellMgr.GetSpellBonusData(spellProto->Id);
@@ -11271,7 +11270,7 @@ uint32 Unit::MeleeDamageBonusTaken(Unit *pCaster, uint32 pdamage,WeaponAttackTyp
     // scaling of non weapon based spells
     if (!isWeaponDamageBasedSpell)
     {
-        float LvlPenalty = CalculateLevelPenalty(spellProto);
+        float LvlPenalty = pCaster->CalculateLevelPenalty(spellProto);
 
         // Check for table values
         if (SpellBonusEntry const* bonus = sSpellMgr.GetSpellBonusData(spellProto->Id))
