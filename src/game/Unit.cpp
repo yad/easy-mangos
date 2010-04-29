@@ -1730,8 +1730,8 @@ void Unit::DealMeleeDamage(CalcDamageInfo *damageInfo, bool durabilityLoss)
                    if (const SpellBonusEntry *bonus = sSpellMgr.GetSpellBonusData(i_spellProto->Id))
                    {
                        SpellEffectIndex effIndex = (*i)->GetEffIndex();
-                       int32 spellPower = caster->SpellBaseDamageBonus(GetSpellSchoolMask(i_spellProto)) + 
-                                          caster->SpellBaseDamageBonusForVictim(GetSpellSchoolMask(i_spellProto), this);
+                       int32 spellPower = caster->SpellBaseDamageBonusDone(GetSpellSchoolMask(i_spellProto)) + 
+                                          SpellBaseDamageBonusTaken(GetSpellSchoolMask(i_spellProto));
                        damage = i_spellProto->CalculateSimpleValue(effIndex) + bonus->direct_damage * spellPower;
                        int32 bpoints = (*i)->GetBasePoints();
                        damage = caster->CalculateSpellDamage(pVictim, i_spellProto,effIndex, &bpoints);
@@ -9862,7 +9862,7 @@ uint32 Unit::SpellDamageBonusTaken(Unit *pCaster, SpellEntry const *spellProto, 
     }
 
     // .. taken (dummy auras) 
-    AuraList const& mDummyAuras = pVictim->GetAurasByType(SPELL_AURA_DUMMY); 
+    AuraList const& mDummyAuras = GetAurasByType(SPELL_AURA_DUMMY); 
     for(AuraList::const_iterator i = mDummyAuras.begin(); i != mDummyAuras.end(); ++i) 
     { 
         switch((*i)->GetSpellProto()->SpellIconID) 
@@ -9871,10 +9871,10 @@ uint32 Unit::SpellDamageBonusTaken(Unit *pCaster, SpellEntry const *spellProto, 
             case 2109: 
                 if((*i)->GetModifier()->m_miscvalue & SPELL_SCHOOL_MASK_NORMAL) 
                 { 
-                    if(pVictim->GetTypeId() != TYPEID_PLAYER) 
+                    if(GetTypeId() != TYPEID_PLAYER) 
                         continue; 
  
-                    float mod = ((Player*)pVictim)->GetRatingBonusValue(CR_CRIT_TAKEN_MELEE)*(-8.0f); 
+                    float mod = ((Player*)this)->GetRatingBonusValue(CR_CRIT_TAKEN_MELEE)*(-8.0f); 
                     if (mod < float((*i)->GetModifier()->m_amount)) 
                         mod = float((*i)->GetModifier()->m_amount); 
  
@@ -9899,7 +9899,7 @@ uint32 Unit::SpellDamageBonusTaken(Unit *pCaster, SpellEntry const *spellProto, 
         } 
     }
     // .. taken pct: SPELL_AURA_284 
-    AuraList const& mAuraListAura284 = pVictim->GetAurasByType(SPELL_AURA_284); 
+    AuraList const& mAuraListAura284 = GetAurasByType(SPELL_AURA_284); 
     for(AuraList::const_iterator i = mAuraListAura284.begin(); i != mAuraListAura284.end(); ++i) 
     { 
         // Crypt Fever and Ebon Plague 
@@ -9911,7 +9911,7 @@ uint32 Unit::SpellDamageBonusTaken(Unit *pCaster, SpellEntry const *spellProto, 
     } 
 
     // From caster spells
-    AuraList const& mOwnerTaken = GetAurasByType(SPELL_AURA_MOD_DAMAGE_FROM_CASTER);
+    AuraList const& mOwnerTaken = pCaster->GetAurasByType(SPELL_AURA_MOD_DAMAGE_FROM_CASTER);
     for(AuraList::const_iterator i = mOwnerTaken.begin(); i != mOwnerTaken.end(); ++i)
     {
         if ((*i)->GetCasterGUID() == pCaster->GetGUID() && (*i)->isAffectedOnSpell(spellProto))
@@ -9945,9 +9945,6 @@ uint32 Unit::SpellDamageBonusTaken(Unit *pCaster, SpellEntry const *spellProto, 
         else
             coeff = bonus->direct_damage * LvlPenalty;
 
-        if (bonus->ap_bonus)
-            DoneTotal += int32(bonus->ap_bonus * bonusApCoeff * GetTotalAttackPowerValue(BASE_ATTACK) * stack); 
-
         // Spellmod SpellBonusDamage
         if (modOwner)
         {
@@ -9956,7 +9953,6 @@ uint32 Unit::SpellDamageBonusTaken(Unit *pCaster, SpellEntry const *spellProto, 
             coeff /= 100.0f;
         }
 
-        DoneTotal  += int32(DoneAdvertisedBenefit * coeff);
         TakenTotal += int32(TakenAdvertisedBenefit * coeff);
     }
     // Default calculation
@@ -9997,7 +9993,6 @@ uint32 Unit::SpellDamageBonusTaken(Unit *pCaster, SpellEntry const *spellProto, 
             coeff /= 100.0f;
         }
 
-        DoneTotal += int32(DoneAdvertisedBenefit * coeff * LvlPenalty);
         TakenTotal+= int32(TakenAdvertisedBenefit * coeff * LvlPenalty);
     }
 
@@ -10444,7 +10439,6 @@ uint32 Unit::SpellHealingBonusDone(Unit *pVictim, SpellEntry const *spellProto, 
         spellProto->Effect[EFFECT_INDEX_2] == SPELL_EFFECT_HEAL_PCT)
     {
         DoneAdvertisedBenefit = 0;
-        TakenAdvertisedBenefit = 0;
         bonus = NULL;
     }
 
@@ -10507,7 +10501,6 @@ uint32 Unit::SpellHealingBonusDone(Unit *pVictim, SpellEntry const *spellProto, 
         }
 
         DoneTotal  += int32(DoneAdvertisedBenefit * coeff * LvlPenalty);
-        TakenTotal += int32(TakenAdvertisedBenefit * coeff * LvlPenalty);
     }
 
     // use float as more appropriate for negative values and percent applying
@@ -10969,7 +10962,7 @@ uint32 Unit::MeleeDamageBonusDone(Unit *pVictim, uint32 pdamage,WeaponAttackType
             if (!spellProto) 
                 continue; 
             if (spellProto->Dispel ==  DISPEL_DISEASE) 
-                TakenPercent *= ((*i)->GetModifier()->m_amount + 100.0f) / 100.0f; 
+                DonePercent *= ((*i)->GetModifier()->m_amount + 100.0f) / 100.0f; 
         } 
     } 
     // .. taken (dummy auras)
@@ -10989,13 +10982,13 @@ uint32 Unit::MeleeDamageBonusDone(Unit *pVictim, uint32 pdamage,WeaponAttackType
                     if (mod < float((*i)->GetModifier()->m_amount))
                         mod = float((*i)->GetModifier()->m_amount);
 
-                    TakenPercent *= (mod + 100.0f) / 100.0f;
+                    DonePercent *= (mod + 100.0f) / 100.0f;
                 }
                 break;
             case 19:                // Blessing of Sanctuary 
             case 1804:              // Greater Blessing of Sanctuary 
                 if ((*i)->GetSpellProto()->SpellFamilyName == SPELLFAMILY_PALADIN) 
-                    TakenPercent *= ((*i)->GetModifier()->m_amount + 100.0f) / 100.0f; 
+                    DonePercent *= ((*i)->GetModifier()->m_amount + 100.0f) / 100.0f; 
                 break;
             // Ebon Plague 
             case 1933: 
@@ -11003,7 +10996,7 @@ uint32 Unit::MeleeDamageBonusDone(Unit *pVictim, uint32 pdamage,WeaponAttackType
                 if((*i)->GetSpellProto()->SpellFamilyName == SPELLFAMILY_DEATHKNIGHT) 
                 { 
                     if((*i)->GetModifier()->m_miscvalue & schoolMask) 
-                        TakenPercent *= ((*i)->GetModifier()->m_amount + 100.0f) / 100.0f; 
+                        DonePercent *= ((*i)->GetModifier()->m_amount + 100.0f) / 100.0f; 
                 } 
                 break; 
             }

@@ -475,45 +475,6 @@ void Spell::EffectSchoolDMG(SpellEffectIndex effect_idx)
                     if (counter)
                         damage += (counter * owner->CalculateSpellDamage(unitTarget, m_spellInfo, EFFECT_INDEX_2) * damage) / 100.0f;
                 }
-                // Conflagrate - consumes Immolate or Shadowflame
-                else if (m_spellInfo->TargetAuraState == AURA_STATE_CONFLAGRATE)
-                {
-                    Aura const* aura = NULL;                // found req. aura for damage calculation
-
-                    Unit::AuraList const &mPeriodic = unitTarget->GetAurasByType(SPELL_AURA_PERIODIC_DAMAGE);
-                    for(Unit::AuraList::const_iterator i = mPeriodic.begin(); i != mPeriodic.end(); ++i)
-                    {
-                        // for caster applied auras only
-                        if ((*i)->GetSpellProto()->SpellFamilyName != SPELLFAMILY_WARLOCK ||
-                            (*i)->GetCasterGUID()!=m_caster->GetGUID())
-                            continue;
-
-                        // Immolate
-                        if ((*i)->GetSpellProto()->SpellFamilyFlags & UI64LIT(0x0000000000000004))
-                        {
-                            aura = *i;                      // it selected always if exist
-                            break;
-                        }
-
-                        // Shadowflame
-                        if ((*i)->GetSpellProto()->SpellFamilyFlags2 & 0x00000002)
-                            aura = *i;                      // remember but wait possible Immolate as primary priority
-                    }
-
-                    // found Immolate or Shadowflame
-                    if (aura)
-                    {
-                        // DoT not have applied spell bonuses in m_amount
-                        int32 damagetick = m_caster->SpellDamageBonus(unitTarget, aura->GetSpellProto(), aura->GetModifier()->m_amount, DOT);
-                        damage += damagetick * 3;
-                        //Remove auras in DoT part
-
-                        // Glyph of Conflagrate
-                        if (!m_caster->HasAura(56235))
-                            unitTarget->RemoveAurasByCasterSpell(aura->GetId(), m_caster->GetGUID());
-                        break;
-                    }
-                }
                 break;
             }
             case SPELLFAMILY_PRIEST:
@@ -753,8 +714,8 @@ void Spell::EffectSchoolDMG(SpellEffectIndex effect_idx)
                 {
                     // [1 + 0.25 * SPH + 0.16 * AP]
                     float ap = m_caster->GetTotalAttackPowerValue(BASE_ATTACK);
-                    int32 holy = m_caster->SpellBaseDamageBonus(GetSpellSchoolMask(m_spellInfo)) +
-                                 m_caster->SpellBaseDamageBonusForVictim(GetSpellSchoolMask(m_spellInfo), unitTarget);
+                    int32 holy = m_caster->SpellBaseDamageBonusDone(GetSpellSchoolMask(m_spellInfo)) +
+                                 unitTarget->SpellBaseDamageBonusTaken(GetSpellSchoolMask(m_spellInfo));
                     damage += int32(ap * 0.16f) + int32(holy * 25 / 100);
                 }
                 break;
@@ -1844,7 +1805,7 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     // Shouldn't Appear in Combat Log
                     unitTarget->ModifyHealth(-damage);
 
-                    int32 spell_power = m_caster->SpellBaseDamageBonus(GetSpellSchoolMask(m_spellInfo)) + m_caster->SpellBaseDamageBonusForVictim(GetSpellSchoolMask(m_spellInfo), unitTarget);
+                    int32 spell_power = m_caster->SpellBaseDamageBonusDone(GetSpellSchoolMask(m_spellInfo)) + unitTarget->SpellBaseDamageBonusTaken(GetSpellSchoolMask(m_spellInfo));
                     int32 mana = damage + (spell_power * 5/10 * m_caster->CalculateLevelPenalty(m_spellInfo));
                     // Improved Life Tap mod
                     Unit::AuraList const& auraDummy = m_caster->GetAurasByType(SPELL_AURA_DUMMY);
@@ -3140,7 +3101,7 @@ void Spell::EffectHeal(SpellEffectIndex /*eff_idx*/)
             int32 holy = caster->SpellBaseHealingBonusDone(GetSpellSchoolMask(m_spellInfo)) +
                          unitTarget->SpellBaseHealingBonusTaken(GetSpellSchoolMask(m_spellInfo));
             addhealth += int32(ap * 0.15) + int32(holy * 15 / 100);
-            addhealth = caster->SpellHealingBonus(unitTarget, m_spellInfo, addhealth, HEAL);
+            addhealth = caster->SpellHealingBonusDone(unitTarget, m_spellInfo, addhealth, HEAL);
         }
         // Vessel of the Naaru (Vial of the Sunwell trinket)
         else if (m_spellInfo->Id == 45064)
@@ -3155,13 +3116,13 @@ void Spell::EffectHeal(SpellEffectIndex /*eff_idx*/)
                 m_caster->RemoveAurasDueToSpell(45062);
 
             addhealth += damageAmount;
-            addhealth = caster->SpellHealingBonus(unitTarget, m_spellInfo, addhealth, HEAL);
+            addhealth = caster->SpellHealingBonusDone(unitTarget, m_spellInfo, addhealth, HEAL);
         }
         // Death Pact (percent heal)
         else if (m_spellInfo->Id==48743)
         {
             addhealth = addhealth * unitTarget->GetMaxHealth() / 100;
-            addhealth = caster->SpellHealingBonus(unitTarget, m_spellInfo, addhealth, HEAL);
+            addhealth = caster->SpellHealingBonusDone(unitTarget, m_spellInfo, addhealth, HEAL);
         }
         // Swiftmend - consumes Regrowth or Rejuvenation
         else if (m_spellInfo->TargetAuraState == AURA_STATE_SWIFTMEND && unitTarget->HasAuraState(AURA_STATE_SWIFTMEND))
@@ -3238,7 +3199,7 @@ void Spell::EffectHealPct(SpellEffectIndex /*eff_idx*/)
 
         uint32 addhealth = unitTarget->GetMaxHealth() * damage / 100;
 
-        addhealth = caster->SpellHealingBonus(unitTarget, m_spellInfo, addhealth, HEAL);
+        addhealth = caster->SpellHealingBonusDone(unitTarget, m_spellInfo, addhealth, HEAL);
 
         int32 gain = caster->DealHeal(unitTarget, addhealth, m_spellInfo);
         unitTarget->getHostileRefManager().threatAssist(m_caster, float(gain) * 0.5f, m_spellInfo);
@@ -6097,7 +6058,7 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                         if ((familyFlag & UI64LIT(0x0000000000004000)) && aura->GetEffIndex() == EFFECT_INDEX_0)
                         {
                             // m_amount does not include RAP bonus - must be calculated 
-                            basePoint = m_caster->MeleeDamageBonus(target, aura->GetModifier()->m_amount, RANGED_ATTACK, aura->GetSpellProto(), DOT, aura->GetStackAmount());
+                            basePoint = m_caster->MeleeDamageBonusDone(target, aura->GetModifier()->m_amount, RANGED_ATTACK, aura->GetSpellProto(), DOT, aura->GetStackAmount());
                             basePoint = basePoint * (aura->GetAuraMaxDuration() / aura->GetModifier()->periodictime) * 40 / 100;
                             spellId = 53353;                // Chimera Shot - Serpent
                         }
