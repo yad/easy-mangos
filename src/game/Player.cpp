@@ -2970,13 +2970,13 @@ Creature* Player::GetNPCIfCanInteractWith(ObjectGuid guid, uint32 npcflagmask)
     if (guid.IsEmpty() || !IsInWorld() || isInFlight())
         return NULL;
 
-    //needed for call stabled pet
-    if (GetGUID() == guid.GetRawValue())
-        return ((Creature*)this);
-
     // not in interactive state
     if (hasUnitState(UNIT_STAT_CAN_NOT_REACT))
         return NULL;
+
+    //needed for call stabled pet
+    if (GetGUID() == guid.GetRawValue())
+        return ((Creature*)this);
 
     // exist (we need look pets also for some interaction (quest/etc)
     Creature *unit = ObjectAccessor::GetCreatureOrPetOrVehicle(*this,guid);

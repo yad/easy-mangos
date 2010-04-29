@@ -95,10 +95,12 @@ bool ChatHandler::HandleStartCommand(const char* /*args*/)
 bool ChatHandler::HandleServerInfoCommand(const char* /*args*/)
 {
     uint32 activeClientsNum = sWorld.GetActiveSessionCount();
-    uint32 queuedClientsNum = sWorld.GetQueuedSessionCount();
+    //uint32 queuedClientsNum = sWorld.GetQueuedSessionCount();
     uint32 maxActiveClientsNum = sWorld.GetMaxActiveSessionCount();
-    uint32 maxQueuedClientsNum = sWorld.GetMaxQueuedSessionCount();
+    //uint32 maxQueuedClientsNum = sWorld.GetMaxQueuedSessionCount();
     std::string str = secsToTimeString(sWorld.GetUptime());
+    char const* valhalla_rev = REVISION_VP;
+    char const* valhalla_rev_date = REVISION_VP_DATE;
 
     char const* full;
     if(m_session)
@@ -106,15 +108,17 @@ bool ChatHandler::HandleServerInfoCommand(const char* /*args*/)
     else
         full = _FULLVERSION(REVISION_DATE,REVISION_TIME,REVISION_NR,REVISION_ID);
 
-    SendSysMessage(full);
-    PSendSysMessage(LANG_USING_SCRIPT_LIB,sWorld.GetScriptsVersion());
-    PSendSysMessage(LANG_USING_WORLD_DB,sWorld.GetDBVersion());
-    PSendSysMessage(LANG_USING_EVENT_AI,sWorld.GetCreatureEventAIVersion());
-    PSendSysMessage(LANG_CONNECTED_USERS, activeClientsNum, maxActiveClientsNum, queuedClientsNum, maxQueuedClientsNum);
-    PSendSysMessage(LANG_UPTIME, str.c_str());
-    SendSysMessage("Revision [26.4.2010][pr382] - MaNGOS modified for Valhalla Server");
-    SendSysMessage("GIT: http://github.com/Tasssadar/Valhalla-Project/commits");
+    if(GetAccessLevel() > SEC_PLAYER)
+    {
+        SendSysMessage(full);
+        PSendSysMessage(LANG_USING_SCRIPT_LIB,sWorld.GetScriptsVersion());
+        PSendSysMessage(LANG_USING_WORLD_DB,sWorld.GetDBVersion());
+        PSendSysMessage(LANG_USING_EVENT_AI,sWorld.GetCreatureEventAIVersion());
+    }
+    PSendSysMessage("Revision [%s][%s] - MaNGOS modified for Valhalla Server", valhalla_rev_date, valhalla_rev);
     SendSysMessage("Changelog: http://valhalla-team.com/web/changelog.php");
+    PSendSysMessage(LANG_CONNECTED_USERS, activeClientsNum, maxActiveClientsNum);
+    PSendSysMessage(LANG_UPTIME, str.c_str());
     PSendSysMessage("World diff time: %u", sWorld.GetDiffTime());
     if(sWorld.IsShutdowning())
     {
