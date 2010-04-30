@@ -33,7 +33,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <unistd.h>
+#if HAVE_UNISTD_H
+	#include <unistd.h>
+#endif
+
+#ifdef _MSC_VER
+	#define fseeko _fseeki64
+#endif
 
 /* this function returns the library version information. */
 const char *libmpq__version(void) {
