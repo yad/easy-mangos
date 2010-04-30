@@ -144,7 +144,7 @@ int ExtractWmo()
             if (fname->find(".wmo") != string::npos)
             {
                 // Copy files from archive
-                std::cout << "found *.wmo file " << *fname << std::endl;
+                //std::cout << "found *.wmo file " << *fname << std::endl;
                 sprintf(szLocalFile, "%s/%s", szWorkDirWmo, GetPlainName(fname->c_str()));
                 fixnamen(szLocalFile,strlen(szLocalFile));
                 FILE * n;
@@ -166,11 +166,12 @@ int ExtractWmo()
                     }
                     if(p != 3)
                     {
-                        printf("RootWmo!\n");
+                        std::cout << "Extracting " << *fname << std::endl;
                         WMORoot * froot = new WMORoot(*fname);
                         if(!froot->open())
                         {
-                            printf("Not open RootWmo!!!\n");
+                            printf("Couldn't open RootWmo!!!\n");
+                            delete froot;
                             continue;
                         }
                         FILE *output=fopen(szLocalFile,"wb");
@@ -181,7 +182,7 @@ int ExtractWmo()
                         }
                         froot->ConvertToVMAPRootWmo(output);
                         int Wmo_nVertices = 0;
-                        printf("root has %d groups\n", froot->nGroups);
+                        //printf("root has %d groups\n", froot->nGroups);
                         if(froot->nGroups !=0)
                         {
                             for (uint32 i=0; i<froot->nGroups; ++i)
@@ -191,8 +192,7 @@ int ExtractWmo()
                                 temp[fname->length()-4] = 0;
                                 char groupFileName[1024];
                                 sprintf(groupFileName,"%s_%03d.wmo",temp, i);
-                                printf("Trying to open groupfile %s\n",groupFileName);
-                                //printf("GroupWmo!\n");
+                                //printf("Trying to open groupfile %s\n",groupFileName);
                                 string s = groupFileName;
                                 WMOGroup * fgroup = new WMOGroup(s);
                                 if(!fgroup->open())
@@ -203,11 +203,13 @@ int ExtractWmo()
                                 }
 
                                 Wmo_nVertices += fgroup->ConvertToVMAPGroupWmo(output, preciseVectorData);
+                                delete fgroup;
                             }
                         }
                         fseek(output, 8, SEEK_SET); // store the correct no of vertices
                         fwrite(&Wmo_nVertices,sizeof(int),1,output);
                         fclose(output);
+                        delete froot;
                     }
                 }
                 else
