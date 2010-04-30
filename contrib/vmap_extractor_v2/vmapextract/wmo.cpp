@@ -402,7 +402,7 @@ int WMOGroup::ConvertToVMAPGroupWmo(FILE *output, bool pPreciseVectorData)
         }
 
         //---------------------------------------------
-        return IndexExTr_size;
+        return nColTriangles;
     }
 }
 

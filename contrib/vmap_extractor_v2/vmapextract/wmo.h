@@ -56,20 +56,13 @@ public:
     uint32 nBatchC, fogIdx, liquidType, groupWMOID;
 
     int mopy_size,moba_size,hlq_xverts,hlq_yverts;
-    int MopyEx_size,IndexExTr_size,LiquEx_size;
+    int LiquEx_size;
     unsigned int nVertices; // number when loaded
     int nTriangles; // number when loaded
-    int * IndexExTr;
     char* MOPY;
-    char* MopyEx;
     uint16* MOVI;
     uint16* MoviEx;
-    uint16* MoviExSort;
     float* MOVT;
-    float* MovtEx;
-    uint16* MovtExSort;
-    float* MONR;
-    float* MonrEx;
     uint16* MOBA;
     int* MobaEx;
     float* LiquEx;
