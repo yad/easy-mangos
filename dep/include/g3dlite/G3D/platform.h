@@ -63,6 +63,9 @@
 // Detect 64-bit under various compilers
 #if (defined(_M_X64) || defined(_WIN64) || defined(__LP64__) || defined(_LP64))
 #    define G3D_64BIT
+	#if defined(WIN32)
+        #include <intrin.h>
+    #endif
 #else
 #    define G3D_32BIT
 #endif
