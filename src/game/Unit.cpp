@@ -7642,7 +7642,7 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                 if (procSpell && procSpell->Dispel != DISPEL_DISEASE) 
                     return false;
                 float chance = GetUnitCriticalChance(BASE_ATTACK, pVictim) > 0.0f ? GetUnitCriticalChance(BASE_ATTACK, pVictim) : 0.0f;
-                if (!roll_chance_f(chance)
+                if (!roll_chance_f(chance))
                     return false;
                 basepoints[0] = triggerAmount * damage / 100;
                 triggered_spell_id = 50526;
