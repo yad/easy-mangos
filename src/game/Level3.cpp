@@ -7352,6 +7352,10 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                     HandleAddItemCommand("51227");//T10.9 Lvl 277
                     HandleAddItemCommand("51228");//T10.9 Lvl 277
                     HandleAddItemCommand("51229");//T10.9 Lvl 277
+                    HandleAddItemCommand("50639");//Pieds Lvl 277
+                    HandleAddItemCommand("50620");//Taille Lvl 277
+                    HandleAddItemCommand("50659");//Poignets Lvl 277
+                    HandleAddItemCommand("50677");//Cape Lvl 277
                     break;
                 }
                 case 2:
@@ -7361,6 +7365,10 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                     HandleAddItemCommand("51227");//T10.9 Lvl 277
                     HandleAddItemCommand("51228");//T10.9 Lvl 277
                     HandleAddItemCommand("51229");//T10.9 Lvl 277
+                    HandleAddItemCommand("50639");//Pieds Lvl 277
+                    HandleAddItemCommand("50620");//Taille Lvl 277
+                    HandleAddItemCommand("50659");//Poignets Lvl 277
+                    HandleAddItemCommand("50677");//Cape Lvl 277
                     break;
                 }
                 case 3:
@@ -7370,93 +7378,17 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                     HandleAddItemCommand("51222");//T10.9 Lvl 277
                     HandleAddItemCommand("51223");//T10.9 Lvl 277
                     HandleAddItemCommand("51224");//T10.9 Lvl 277
+                    HandleAddItemCommand("50625");//Pieds Lvl 277
+                    HandleAddItemCommand("50691");//Taille Lvl 277
+                    HandleAddItemCommand("50611");//Poignets Lvl 277
+                    HandleAddItemCommand("50729");//Bouclier Lvl 277
+                    HandleAddItemCommand("50718");//Cape Lvl 277
                     break;
                 }
                 default:
                     break;
             }
-            HandleAddItemCommand("48513"); // Epée pour les deux factions
-            HandleAddItemCommand("41164"); // Munitions
             switch(chr->getRace())
-            {
-                case RACE_HUMAN:
-                case RACE_NIGHTELF:
-                case RACE_GNOME:
-                case RACE_DRAENEI:
-                {
-                    HandleAddItemCommand("47515");//2h sword
-                    HandleAddItemCommand("47515");//2h sword
-                    HandleAddItemCommand("47549");//cape
-                    HandleAddItemCommand("47085"); // Bouclier off-tank Alliance
-                    HandleAddItemCommand("47060"); // Amulette DPS Physique Alliance
-                    HandleAddItemCommand("47075"); // Anneau DPS Physique 1 Alliance
-                    HandleAddItemCommand("46966"); // Anneau DPS Physique 2 Alliance
-                    HandleAddItemCommand("47088"); // Trinket DPS Physique 1 Alliance
-                    HandleAddItemCommand("47464"); // Trinket DPS Physique 2 Alliance
-                    HandleAddItemCommand("47521"); // Arme … feu Alliance
-                    break;
-                }
-                case RACE_UNDEAD_PLAYER:
-                {
-                    HandleAddItemCommand("47516");//2h sword
-                    HandleAddItemCommand("47516");//2h sword
-                    HandleAddItemCommand("47550");//cape
-                    HandleAddItemCommand("47448"); // Bouclier off-tank Horde
-                    HandleAddItemCommand("47433"); // Amulette DPS Physique Horde
-                    HandleAddItemCommand("47413"); // Anneau DPS Physique 1 Horde
-                    HandleAddItemCommand("47443"); // Anneau DPS Physique 2 Horde
-                    HandleAddItemCommand("47451"); // Trinket DPS Physique 1 Horde
-                    HandleAddItemCommand("47131"); // Trinket DPS Physique 2 Horde
-                    HandleAddItemCommand("47523"); // Arme … feu Horde
-                    break;
-                }
-                case RACE_DWARF:
-                {
-                    HandleAddItemCommand("47078");//2h axe
-                    HandleAddItemCommand("47078");//2h axe
-                    HandleAddItemCommand("47549");//cape
-                    HandleAddItemCommand("47085"); // Bouclier off-tank Alliance
-                    HandleAddItemCommand("47060"); // Amulette DPS Physique Alliance
-                    HandleAddItemCommand("47075"); // Anneau DPS Physique 1 Alliance
-                    HandleAddItemCommand("46966"); // Anneau DPS Physique 2 Alliance
-                    HandleAddItemCommand("47088"); // Trinket DPS Physique 1 Alliance
-                    HandleAddItemCommand("47464"); // Trinket DPS Physique 2 Alliance
-                    HandleAddItemCommand("47521"); // Arme … feu Alliance
-                    break;
-                }
-                case RACE_ORC:
-                case RACE_TROLL:
-                {
-                    HandleAddItemCommand("47446");//2h axe
-                    HandleAddItemCommand("47446");//2h axe
-                    HandleAddItemCommand("47550");//cape
-                    HandleAddItemCommand("47448"); // Bouclier off-tank Horde
-                    HandleAddItemCommand("47433"); // Amulette DPS Physique Horde
-                    HandleAddItemCommand("47413"); // Anneau DPS Physique 1 Horde
-                    HandleAddItemCommand("47443"); // Anneau DPS Physique 2 Horde
-                    HandleAddItemCommand("47451"); // Trinket DPS Physique 1 Horde
-                    HandleAddItemCommand("47131"); // Trinket DPS Physique 2 Horde
-                    HandleAddItemCommand("47523"); // Arme … feu Horde
-                    break;
-                }
-                case RACE_TAUREN:
-                {
-                    HandleAddItemCommand("47520");//2h mace
-                    HandleAddItemCommand("47520");//2h mace
-                    HandleAddItemCommand("47550");//cape
-                    HandleAddItemCommand("47448"); // Bouclier off-tank Horde
-                    HandleAddItemCommand("47433"); // Amulette DPS Physique Horde
-                    HandleAddItemCommand("47413"); // Anneau DPS Physique 1 Horde
-                    HandleAddItemCommand("47443"); // Anneau DPS Physique 2 Horde
-                    HandleAddItemCommand("47451"); // Trinket DPS Physique 1 Horde
-                    HandleAddItemCommand("47131"); // Trinket DPS Physique 2 Horde
-                    HandleAddItemCommand("47523"); // Arme … feu Horde
-                    break;
-                }
-                default:
-                    break;
-            }
-            break;
         }
         case CLASS_PALADIN:
         {
@@ -7469,6 +7401,11 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                     HandleAddItemCommand("51272");//T10.9 Lvl 277
                     HandleAddItemCommand("51273");//T10.9 Lvl 277
                     HandleAddItemCommand("51274");//T10.9 Lvl 277
+                    HandleAddItemCommand("50632");//Pieds Lvl 277
+                    HandleAddItemCommand("50667");//Taille Lvl 277
+                    HandleAddItemCommand("50721");//Poignets Lvl 277
+                    HandleAddItemCommand("50616");//Bouclier Lvl 277
+                    HandleAddItemCommand("50628");//Cape Lvl 277
                     break;
                 }
                 case 2:
@@ -7478,6 +7415,11 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                     HandleAddItemCommand("51267");//T10.9 Lvl 277
                     HandleAddItemCommand("51268");//T10.9 Lvl 277
                     HandleAddItemCommand("51269");//T10.9 Lvl 277
+                    HandleAddItemCommand("50625");//Pieds Lvl 277
+                    HandleAddItemCommand("50691");//Taille Lvl 277
+                    HandleAddItemCommand("50611");//Poignets Lvl 277
+                    HandleAddItemCommand("50729");//Bouclier Lvl 277
+                    HandleAddItemCommand("50718");//Cape Lvl 277
                     break;
                 }
                 case 3:
@@ -7487,52 +7429,16 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                     HandleAddItemCommand("51277");//T10.9 Lvl 277
                     HandleAddItemCommand("51278");//T10.9 Lvl 277
                     HandleAddItemCommand("51279");//T10.9 Lvl 277
+                    HandleAddItemCommand("50639");//Pieds Lvl 277
+                    HandleAddItemCommand("50620");//Taille Lvl 277
+                    HandleAddItemCommand("50659");//Poignets Lvl 277
+                    HandleAddItemCommand("50677");//Cape Lvl 277
                     break;
                 }
                 default:
                     break;
             }
             switch(chr->getRace())
-            {
-                case RACE_HUMAN:
-                case RACE_DWARF:
-                case RACE_DRAENEI:
-                {
-                    HandleAddItemCommand("47519");//2h mace
-                    HandleAddItemCommand("47549");//cape
-                    HandleAddItemCommand("47085"); // Bouclier DPS/Soins Magique Alliance
-                    HandleAddItemCommand("47206"); // Masse DPS Magique Alliance
-                    HandleAddItemCommand("47060"); // Amulette DPS Physique Alliance
-                    HandleAddItemCommand("47075"); // Anneau DPS Physique 1 Alliance
-                    HandleAddItemCommand("46966"); // Anneau DPS Physique 2 Alliance
-                    HandleAddItemCommand("47088"); // Trinket DPS Physique 1 Alliance
-                    HandleAddItemCommand("47464"); // Trinket DPS Physique 2 Alliance
-                    HandleAddItemCommand("47111"); // Brassard DPS Physique Alliance
-                    HandleAddItemCommand("47002"); // Ceinture DPS Physique Alliance
-                    HandleAddItemCommand("47154"); // Bottes DPS Physique Alliance
-                    break;
-                }
-                case RACE_BLOODELF:
-                {
-                    HandleAddItemCommand("47516");//2h sword
-                    HandleAddItemCommand("47550");//cape
-                    HandleAddItemCommand("47448"); // Bouclier DPS/Soins Magique Horde
-                    HandleAddItemCommand("47483"); // Masse DPS Magique Horde
-                    HandleAddItemCommand("47433"); // Amulette DPS Physique Horde
-                    HandleAddItemCommand("47413"); // Anneau DPS Physique 1 Horde
-                    HandleAddItemCommand("47443"); // Anneau DPS Physique 2 Horde
-                    HandleAddItemCommand("47451"); // Trinket DPS Physique 1 Horde
-                    HandleAddItemCommand("47131"); // Trinket DPS Physique 2 Horde
-                    HandleAddItemCommand("47459"); // Brassard DPS Physique Horde
-                    HandleAddItemCommand("47429"); // Ceinture DPS Physique Horde
-                    HandleAddItemCommand("47473"); // Bottes DPS Physique Horde
-                    break;
-                }
-                default:
-                    break;
-            }
-            HandleAddItemCommand("42854"); // Libram
-            break;
         }
         case CLASS_HUNTER:
         {
@@ -7545,6 +7451,10 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                     HandleAddItemCommand("51287");//T10.9 Lvl 277
                     HandleAddItemCommand("51288");//T10.9 Lvl 277
                     HandleAddItemCommand("51289");//T10.9 Lvl 277
+                    HandleAddItemCommand("50639");//Pieds Lvl 277
+                    HandleAddItemCommand("50620");//Taille Lvl 277
+                    HandleAddItemCommand("50659");//Poignets Lvl 277
+                    HandleAddItemCommand("50653");//Cape Lvl 277
                     break;
                 }
                 case 2:
@@ -7554,6 +7464,10 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                     HandleAddItemCommand("51287");//T10.9 Lvl 277
                     HandleAddItemCommand("51288");//T10.9 Lvl 277
                     HandleAddItemCommand("51289");//T10.9 Lvl 277
+                    HandleAddItemCommand("50639");//Pieds Lvl 277
+                    HandleAddItemCommand("50620");//Taille Lvl 277
+                    HandleAddItemCommand("50659");//Poignets Lvl 277
+                    HandleAddItemCommand("50653");//Cape Lvl 277
                     break;
                 }
                 case 3:
@@ -7563,138 +7477,16 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                     HandleAddItemCommand("51287");//T10.9 Lvl 277
                     HandleAddItemCommand("51288");//T10.9 Lvl 277
                     HandleAddItemCommand("51289");//T10.9 Lvl 277
+                    HandleAddItemCommand("50639");//Pieds Lvl 277
+                    HandleAddItemCommand("50620");//Taille Lvl 277
+                    HandleAddItemCommand("50659");//Poignets Lvl 277
+                    HandleAddItemCommand("50653");//Cape Lvl 277
                     break;
                 }
                 default:
                     break;
             }
-            HandleAddItemCommand("41164"); // Balles comment ajouter la quantité ?
-            HandleAddItemCommand("41165"); // Fleches comment ajouter la quantité ?
             switch(chr->getRace())
-            {
-                case RACE_ORC:
-                {
-                    HandleAddItemCommand("47427");//1h axe
-                    HandleAddItemCommand("47475");//1h axe
-                    HandleAddItemCommand("47523");//Gun
-                    HandleAddItemCommand("47546");//cape
-                    HandleAddItemCommand("47433"); // Amulette DPS Physique Horde
-                    HandleAddItemCommand("47413"); // Anneau DPS Physique 1 Horde
-                    HandleAddItemCommand("47443"); // Anneau DPS Physique 2 Horde
-                    HandleAddItemCommand("47451"); // Trinket DPS Physique 1 Horde
-                    HandleAddItemCommand("47131"); // Trinket DPS Physique 2 Horde
-                    HandleAddItemCommand("47523"); // Arme à feu Horde
-                    HandleAddItemCommand("47442"); // Brassard DPS Physique Horde
-                    HandleAddItemCommand("47472"); // Ceinture DPS Physique Horde
-                    HandleAddItemCommand("47457"); // Bottes DPS Physique Horde
-                    break;
-                }
-                case RACE_TROLL:
-                {
-                    HandleAddItemCommand("47427");//1h axe
-                    HandleAddItemCommand("47475");//1h axe
-                    HandleAddItemCommand("48697");//Arc
-                    HandleAddItemCommand("47546");//cape
-                    HandleAddItemCommand("47433"); // Amulette DPS Physique Horde
-                    HandleAddItemCommand("47413"); // Anneau DPS Physique 1 Horde
-                    HandleAddItemCommand("47443"); // Anneau DPS Physique 2 Horde
-                    HandleAddItemCommand("47451"); // Trinket DPS Physique 1 Horde
-                    HandleAddItemCommand("47131"); // Trinket DPS Physique 2 Horde
-                    HandleAddItemCommand("47523"); // Arme à feu Horde
-                    HandleAddItemCommand("47442"); // Brassard DPS Physique Horde
-                    HandleAddItemCommand("47472"); // Ceinture DPS Physique Horde
-                    HandleAddItemCommand("47457"); // Bottes DPS Physique Horde
-                    break;
-                }
-                case RACE_DWARF:
-                {
-                    HandleAddItemCommand("47156");//1h axe
-                    HandleAddItemCommand("47001");//1h axe
-                    HandleAddItemCommand("47521");//Gun
-                    HandleAddItemCommand("47545");//cape
-                    HandleAddItemCommand("47060"); // Amulette DPS Physique Alliance
-                    HandleAddItemCommand("47075"); // Anneau DPS Physique 1 Alliance
-                    HandleAddItemCommand("46966"); // Anneau DPS Physique 2 Alliance
-                    HandleAddItemCommand("47088"); // Trinket DPS Physique 1 Alliance
-                    HandleAddItemCommand("47464"); // Trinket DPS Physique 2 Alliance
-                    HandleAddItemCommand("47521"); // Arme à feu Alliance
-                    HandleAddItemCommand("47074"); // Brassard DPS Physique Alliance
-                    HandleAddItemCommand("47153"); // Ceinture DPS Physique Alliance
-                    HandleAddItemCommand("47109"); // Bottes DPS Physique Alliance
-                    break;
-                }
-                case RACE_TAUREN:
-                {
-                    HandleAddItemCommand("47427");//1h axe
-                    HandleAddItemCommand("47475");//1h axe
-                    HandleAddItemCommand("47523");//Gun
-                    HandleAddItemCommand("47546");//cape
-                    HandleAddItemCommand("47433"); // Amulette DPS Physique Horde
-                    HandleAddItemCommand("47413"); // Anneau DPS Physique 1 Horde
-                    HandleAddItemCommand("47443"); // Anneau DPS Physique 2 Horde
-                    HandleAddItemCommand("47451"); // Trinket DPS Physique 1 Horde
-                    HandleAddItemCommand("47131"); // Trinket DPS Physique 2 Horde
-                    HandleAddItemCommand("47523"); // Arme à feu Horde
-                    HandleAddItemCommand("47442"); // Brassard DPS Physique Horde
-                    HandleAddItemCommand("47472"); // Ceinture DPS Physique Horde
-                    HandleAddItemCommand("47457"); // Bottes DPS Physique Horde
-                    break;
-                }
-                case RACE_NIGHTELF:
-                {
-                    HandleAddItemCommand("47113");//dague
-                    HandleAddItemCommand("46969");//dague
-                    HandleAddItemCommand("48711");//Arc
-                    HandleAddItemCommand("47545");//cape
-                    HandleAddItemCommand("47060"); // Amulette DPS Physique Alliance
-                    HandleAddItemCommand("47075"); // Anneau DPS Physique 1 Alliance
-                    HandleAddItemCommand("46966"); // Anneau DPS Physique 2 Alliance
-                    HandleAddItemCommand("47088"); // Trinket DPS Physique 1 Alliance
-                    HandleAddItemCommand("47464"); // Trinket DPS Physique 2 Alliance
-                    HandleAddItemCommand("47521"); // Arme à feu Alliance
-                    HandleAddItemCommand("47074"); // Brassard DPS Physique Alliance
-                    HandleAddItemCommand("47153"); // Ceinture DPS Physique Alliance
-                    HandleAddItemCommand("47109"); // Bottes DPS Physique Alliance
-                    break;
-                }
-                case RACE_BLOODELF:
-                {
-                    HandleAddItemCommand("47416");//dague
-                    HandleAddItemCommand("47461");//dague
-                    HandleAddItemCommand("48697");//Arc
-                    HandleAddItemCommand("47546");//cape
-                    HandleAddItemCommand("47433"); // Amulette DPS Physique Horde
-                    HandleAddItemCommand("47413"); // Anneau DPS Physique 1 Horde
-                    HandleAddItemCommand("47443"); // Anneau DPS Physique 2 Horde
-                    HandleAddItemCommand("47451"); // Trinket DPS Physique 1 Horde
-                    HandleAddItemCommand("47131"); // Trinket DPS Physique 2 Horde
-                    HandleAddItemCommand("47523"); // Arme à feu Horde
-                    HandleAddItemCommand("47442"); // Brassard DPS Physique Horde
-                    HandleAddItemCommand("47472"); // Ceinture DPS Physique Horde
-                    HandleAddItemCommand("47457"); // Bottes DPS Physique Horde
-                    break;
-                }
-                case RACE_DRAENEI:
-                {
-                    HandleAddItemCommand("47518");//1h sword
-                    HandleAddItemCommand("48044");//1h sword
-                    HandleAddItemCommand("48711");//Arc
-                    HandleAddItemCommand("47545");//cape
-                    HandleAddItemCommand("47060"); // Amulette DPS Physique Alliance
-                    HandleAddItemCommand("47075"); // Anneau DPS Physique 1 Alliance
-                    HandleAddItemCommand("46966"); // Anneau DPS Physique 2 Alliance
-                    HandleAddItemCommand("47088"); // Trinket DPS Physique 1 Alliance
-                    HandleAddItemCommand("47464"); // Trinket DPS Physique 2 Alliance
-                    HandleAddItemCommand("47521"); // Arme à feu Alliance
-                    HandleAddItemCommand("47074"); // Brassard DPS Physique Alliance
-                    HandleAddItemCommand("47153"); // Ceinture DPS Physique Alliance
-                    HandleAddItemCommand("47109"); // Bottes DPS Physique Alliance
-                    break;
-                }
-                default:
-                    break;
-            }
-            break;
         }
         case CLASS_ROGUE:
         {
@@ -7707,6 +7499,10 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                     HandleAddItemCommand("51252");//T10.9 Lvl 277
                     HandleAddItemCommand("51253");//T10.9 Lvl 277
                     HandleAddItemCommand("51254");//T10.9 Lvl 277
+                    HandleAddItemCommand("50607");//Pieds Lvl 277
+                    HandleAddItemCommand("50707");//Taille Lvl 277
+                    HandleAddItemCommand("50670");//Poignets Lvl 277
+                    HandleAddItemCommand("50653");//Cape Lvl 277
                     break;
                 }
                 case 2:
@@ -7716,6 +7512,10 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                     HandleAddItemCommand("51252");//T10.9 Lvl 277
                     HandleAddItemCommand("51253");//T10.9 Lvl 277
                     HandleAddItemCommand("51254");//T10.9 Lvl 277
+                    HandleAddItemCommand("50607");//Pieds Lvl 277
+                    HandleAddItemCommand("50707");//Taille Lvl 277
+                    HandleAddItemCommand("50670");//Poignets Lvl 277
+                    HandleAddItemCommand("50653");//Cape Lvl 277
                     break;
                 }
                 case 3:
@@ -7725,54 +7525,16 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                     HandleAddItemCommand("51252");//T10.9 Lvl 277
                     HandleAddItemCommand("51253");//T10.9 Lvl 277
                     HandleAddItemCommand("51254");//T10.9 Lvl 277
+                    HandleAddItemCommand("50607");//Pieds Lvl 277
+                    HandleAddItemCommand("50707");//Taille Lvl 277
+                    HandleAddItemCommand("50670");//Poignets Lvl 277
+                    HandleAddItemCommand("50653");//Cape Lvl 277
                     break;
                 }
                 default:
                     break;
             }
-            HandleAddItemCommand("47659"); // Arme de jet
             switch(chr->getRace())
-            {
-                case RACE_HUMAN:
-                case RACE_DWARF:
-                case RACE_NIGHTELF:
-                case RACE_GNOME:
-                {
-                    HandleAddItemCommand("47113");//dague
-                    HandleAddItemCommand("46969");//dague
-                    HandleAddItemCommand("47545");//cape
-                    HandleAddItemCommand("47060"); // Amulette DPS Physique Alliance
-                    HandleAddItemCommand("47075"); // Anneau DPS Physique 1 Alliance
-                    HandleAddItemCommand("46966"); // Anneau DPS Physique 2 Alliance
-                    HandleAddItemCommand("47088"); // Trinket DPS Physique 1 Alliance
-                    HandleAddItemCommand("47464"); // Trinket DPS Physique 2 Alliance
-                    HandleAddItemCommand("47155"); // Brassards DPS Physique Alliance
-                    HandleAddItemCommand("47112"); // Ceinture DPS Physique Alliance
-                    HandleAddItemCommand("47077"); // Bottes DPS Physique Alliance
-                    break;
-                }
-                case RACE_UNDEAD_PLAYER:
-                case RACE_TROLL:
-                case RACE_BLOODELF:
-                case RACE_ORC:
-                {
-                    HandleAddItemCommand("47416");//dague
-                    HandleAddItemCommand("47461");//dague
-                    HandleAddItemCommand("47546");//cape
-                    HandleAddItemCommand("47433"); // Amulette DPS Physique Horde
-                    HandleAddItemCommand("47413"); // Anneau DPS Physique 1 Horde
-                    HandleAddItemCommand("47443"); // Anneau DPS Physique 2 Horde
-                    HandleAddItemCommand("47451"); // Trinket DPS Physique 1 Horde
-                    HandleAddItemCommand("47131"); // Trinket DPS Physique 2 Horde
-                    HandleAddItemCommand("47474"); // Brassards DPS Physique Horde
-                    HandleAddItemCommand("47460"); // Ceinture DPS Physique Horde
-                    HandleAddItemCommand("47445"); // Bottes DPS Physique Horde
-                    break;
-                }
-                default:
-                    break;
-            }
-            break;
         }
         case CLASS_PRIEST:
         {
@@ -7785,6 +7547,10 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                     HandleAddItemCommand("51257");//T10.9 Lvl 277
                     HandleAddItemCommand("51258");//T10.9 Lvl 277
                     HandleAddItemCommand("51259");//T10.9 Lvl 277
+                    HandleAddItemCommand("50699");//Pieds Lvl 277
+                    HandleAddItemCommand("50613");//Taille Lvl 277
+                    HandleAddItemCommand("50651");//Poignets Lvl 277
+                    HandleAddItemCommand("50628");//cape Lvl 277
                     break;
                 }
                 case 2:
@@ -7794,6 +7560,10 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                     HandleAddItemCommand("51262");//T10.9 Lvl 277
                     HandleAddItemCommand("51263");//T10.9 Lvl 277
                     HandleAddItemCommand("51264");//T10.9 Lvl 277
+                    HandleAddItemCommand("50699");//Pieds Lvl 277
+                    HandleAddItemCommand("50702");//Taille Lvl 277
+                    HandleAddItemCommand("50686");//Poignets Lvl 277
+                    HandleAddItemCommand("50668");//cape Lvl 277
                     break;
                 }
                 case 3:
@@ -7803,58 +7573,16 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                     HandleAddItemCommand("51257");//T10.9 Lvl 277
                     HandleAddItemCommand("51258");//T10.9 Lvl 277
                     HandleAddItemCommand("51259");//T10.9 Lvl 277
+                    HandleAddItemCommand("50699");//Pieds Lvl 277
+                    HandleAddItemCommand("50613");//Taille Lvl 277
+                    HandleAddItemCommand("50651");//Poignets Lvl 277
+                    HandleAddItemCommand("50628");//cape Lvl 277
                     break;
                 }
                 default:
                     break;
             }
             switch(chr->getRace())
-            {
-                case RACE_HUMAN:
-                case RACE_DWARF:
-                case RACE_NIGHTELF:
-                case RACE_DRAENEI:
-                {
-                    HandleAddItemCommand("47526");//1h mace
-                    HandleAddItemCommand("47922");//baguette
-                    HandleAddItemCommand("47552");//cape
-                    HandleAddItemCommand("47922"); // Baguette DPS Magique Alliance
-                    HandleAddItemCommand("47206"); // Masse DPS Magique Alliance
-                    HandleAddItemCommand("47064"); // 2ème main DPS Magique Alliance
-                    HandleAddItemCommand("47144"); // Amulette DPS Magique Alliance
-                    HandleAddItemCommand("47224"); // Anneau DPS Magique 1 Alliance
-                    HandleAddItemCommand("47237"); // Anneau DPS Magique 2 Alliance
-                    HandleAddItemCommand("47188"); // Trinket DPS Magique 1 Alliance
-                    HandleAddItemCommand("47059"); // Trinket DPS Magique 2 Alliance
-                    HandleAddItemCommand("47143"); // Brassard DPS Magique Alliance
-                    HandleAddItemCommand("47084"); // Ceinture DPS Magique Alliance
-                    HandleAddItemCommand("47205"); // Bottes DPS Magique Alliance
-                    break;
-                }
-                case RACE_UNDEAD_PLAYER:
-                case RACE_TROLL:
-                case RACE_BLOODELF:
-                {
-                    HandleAddItemCommand("47528");//1h mace
-                    HandleAddItemCommand("47995");//baguette
-                    HandleAddItemCommand("47551");//cape
-                    HandleAddItemCommand("47995"); // Baguette DPS Magique Horde
-                    HandleAddItemCommand("47483"); // Masse DPS Magique Horde
-                    HandleAddItemCommand("47437"); // 2ème main DPS Magique Horde
-                    HandleAddItemCommand("47468"); // Amulette DPS Magique Horde
-                    HandleAddItemCommand("47439"); // Anneau DPS Magique 1 Horde
-                    HandleAddItemCommand("47489"); // Anneau DPS Magique 2 Horde
-                    HandleAddItemCommand("47477"); // Trinket DPS Magique 1 Horde
-                    HandleAddItemCommand("47432"); // Trinket DPS Magique 2 Horde
-                    HandleAddItemCommand("47467"); // Brassard DPS Magique Horde
-                    HandleAddItemCommand("47447"); // Ceinture DPS Magique Horde
-                    HandleAddItemCommand("47482"); // Bottes DPS Magique Horde
-                    break;
-                }
-                default:
-                    break;
-            }
-            break;
         }
         case CLASS_DEATH_KNIGHT:
         {
@@ -7867,6 +7595,10 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                     HandleAddItemCommand("51312");//T10.9 Lvl 277
                     HandleAddItemCommand("51313");//T10.9 Lvl 277
                     HandleAddItemCommand("51314");//T10.9 Lvl 277
+                    HandleAddItemCommand("50639");//Pieds Lvl 277
+                    HandleAddItemCommand("50620");//Taille Lvl 277
+                    HandleAddItemCommand("50659");//Poignets Lvl 277
+                    HandleAddItemCommand("50677");//Cape Lvl 277
                     break;
                 }
                 case 2:
@@ -7876,6 +7608,10 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                     HandleAddItemCommand("51307");//T10.9 Lvl 277
                     HandleAddItemCommand("51308");//T10.9 Lvl 277
                     HandleAddItemCommand("51309");//T10.9 Lvl 277
+                    HandleAddItemCommand("50625");//Pieds Lvl 277
+                    HandleAddItemCommand("50691");//Taille Lvl 277
+                    HandleAddItemCommand("50611");//Poignets Lvl 277
+                    HandleAddItemCommand("50718");//Cape Lvl 277
                     break;
                 }
                 case 3:
@@ -7885,61 +7621,16 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                     HandleAddItemCommand("51312");//T10.9 Lvl 277
                     HandleAddItemCommand("51313");//T10.9 Lvl 277
                     HandleAddItemCommand("51314");//T10.9 Lvl 277
+                    HandleAddItemCommand("50639");//Pieds Lvl 277
+                    HandleAddItemCommand("50620");//Taille Lvl 277
+                    HandleAddItemCommand("50659");//Poignets Lvl 277
+                    HandleAddItemCommand("50677");//Cape Lvl 277
                     break;
                 }
                 default:
                     break;
             }
-            HandleAddItemCommand("47672"); // Cachet de DK 
-            HandleAddItemCommand("48513"); // Epée pour les deux factions
             switch(chr->getRace())
-            {
-                case RACE_HUMAN:
-                case RACE_DWARF:
-                case RACE_NIGHTELF:
-                case RACE_DRAENEI:
-                case RACE_GNOME:
-                {
-                    HandleAddItemCommand("47515");//2h sword
-                    HandleAddItemCommand("47078");//2h axe
-                    HandleAddItemCommand("47549");//cape
-                    HandleAddItemCommand("47085"); // Bouclier off-tank Alliance
-                    HandleAddItemCommand("47060"); // Amulette DPS Physique Alliance
-                    HandleAddItemCommand("47075"); // Anneau DPS Physique 1 Alliance
-                    HandleAddItemCommand("46966"); // Anneau DPS Physique 2 Alliance
-                    HandleAddItemCommand("47088"); // Trinket DPS Physique 1 Alliance
-                    HandleAddItemCommand("47464"); // Trinket DPS Physique 2 Alliance
-                    HandleAddItemCommand("47521"); // Arme à feu Alliance
-                    HandleAddItemCommand("47111"); // Brassard DPS Physique Alliance
-                    HandleAddItemCommand("47002"); // Ceinture DPS Physique Alliance
-                    HandleAddItemCommand("47154"); // Bottes DPS Physique Alliance
-                    break;
-                }
-                case RACE_UNDEAD_PLAYER:
-                case RACE_TROLL:
-                case RACE_BLOODELF:
-                case RACE_ORC:
-                case RACE_TAUREN:
-                {
-                    HandleAddItemCommand("47516");//2h sword
-                    HandleAddItemCommand("48548");//2h axe
-                    HandleAddItemCommand("47550");//cape
-                    HandleAddItemCommand("47448"); // Bouclier off-tank Horde
-                    HandleAddItemCommand("47433"); // Amulette DPS Physique Horde
-                    HandleAddItemCommand("47413"); // Anneau DPS Physique 1 Horde
-                    HandleAddItemCommand("47443"); // Anneau DPS Physique 2 Horde
-                    HandleAddItemCommand("47451"); // Trinket DPS Physique 1 Horde
-                    HandleAddItemCommand("47131"); // Trinket DPS Physique 2 Horde
-                    HandleAddItemCommand("47523"); // Arme à feu Horde
-                    HandleAddItemCommand("47459"); // Brassard DPS Physique Horde
-                    HandleAddItemCommand("47429"); // Ceinture DPS Physique Horde
-                    HandleAddItemCommand("47473"); // Bottes DPS Physique Horde
-                    break;
-                }
-                default:
-                    break;
-            }
-            break;
         }
         case CLASS_SHAMAN:
         {
@@ -7952,6 +7643,10 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                     HandleAddItemCommand("51237");//T10.9 Lvl 277
                     HandleAddItemCommand("51238");//T10.9 Lvl 277
                     HandleAddItemCommand("51239");//T10.9 Lvl 277
+                    HandleAddItemCommand("50652");//Pieds Lvl 277
+                    HandleAddItemCommand("50671");//Taille Lvl 277
+                    HandleAddItemCommand("50687");//Poignets Lvl 277
+                    HandleAddItemCommand("50628");//cape Lvl 277
                     break;
                 }
                 case 2:
@@ -7961,6 +7656,9 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                     HandleAddItemCommand("51242");//T10.9 Lvl 277
                     HandleAddItemCommand("51243");//T10.9 Lvl 277
                     HandleAddItemCommand("51244");//T10.9 Lvl 277
+                    HandleAddItemCommand("50711");//Pieds Lvl 277
+                    HandleAddItemCommand("50688");//Taille Lvl 277
+                    HandleAddItemCommand("50668");//Poignets Lvl 277
                     break;
                 }
                 case 3:
@@ -7970,56 +7668,16 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                     HandleAddItemCommand("51247");//T10.9 Lvl 277
                     HandleAddItemCommand("51248");//T10.9 Lvl 277
                     HandleAddItemCommand("51249");//T10.9 Lvl 277
+                    HandleAddItemCommand("50652");//Pieds Lvl 277
+                    HandleAddItemCommand("50671");//Taille Lvl 277
+                    HandleAddItemCommand("50687");//Poignets Lvl 277
+                    HandleAddItemCommand("50628");//cape Lvl 277
                     break;
                 }
                 default:
                     break;
             }
             switch(chr->getRace())
-            {
-                case RACE_ORC:
-                case RACE_TAUREN:
-                case RACE_TROLL:
-                {
-                    HandleAddItemCommand("47483");//1h mace
-                    HandleAddItemCommand("47483");//1h mace
-                    HandleAddItemCommand("47554");//cape
-                    HandleAddItemCommand("47448"); // Bouclier DPS/Soins Magique Horde
-                    HandleAddItemCommand("47433"); // Amulette DPS Physique Horde
-                    HandleAddItemCommand("47413"); // Anneau DPS Physique 1 Horde
-                    HandleAddItemCommand("47489"); // Anneau DPS Magique 2 Horde
-                    HandleAddItemCommand("47451"); // Trinket DPS Physique 1 Horde
-                    HandleAddItemCommand("47432"); // Trinket DPS Magique 2 Horde
-                    HandleAddItemCommand("47442"); // Brassard DPS Physique Horde
-                    HandleAddItemCommand("47472"); // Ceinture DPS Physique Horde
-                    HandleAddItemCommand("47457"); // Bottes DPS Physique Horde
-                    break;
-                }
-                case RACE_DRAENEI:
-                {
-                    HandleAddItemCommand("47206");//1h mace
-                    HandleAddItemCommand("47206");//1h mace
-                    HandleAddItemCommand("47553");//cape
-                    HandleAddItemCommand("47085"); // Bouclier DPS/Soins Magique Alliance
-                    HandleAddItemCommand("47060"); // Amulette DPS Physique Alliance
-                    HandleAddItemCommand("47075"); // Anneau DPS Physique 1 Alliance
-                    HandleAddItemCommand("47237"); // Anneau DPS Magique 2 Alliance
-                    HandleAddItemCommand("47088"); // Trinket DPS Physique 1 Alliance
-                    HandleAddItemCommand("47059"); // Trinket DPS Magique 2 Alliance
-                    HandleAddItemCommand("47074"); // Brassard DPS Physique Alliance
-                    HandleAddItemCommand("47153"); // Ceinture DPS Physique Alliance
-                    HandleAddItemCommand("47109"); // Bottes DPS Physique Alliance
-                    break;
-                }
-                default:
-                    break;
-            }
-            HandleAddItemCommand("5175");//totem de terre
-            HandleAddItemCommand("5176");//totem de feu
-            HandleAddItemCommand("5177");//totem d'eau
-            HandleAddItemCommand("5178");//totem d'air
-            HandleAddItemCommand("47666"); // Totem Elem
-            break;
         }
         case CLASS_MAGE:
         {
@@ -8032,6 +7690,10 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                     HandleAddItemCommand("51282");//T10.9 Lvl 277
                     HandleAddItemCommand("51283");//T10.9 Lvl 277
                     HandleAddItemCommand("51284");//T10.9 Lvl 277
+                    HandleAddItemCommand("50699");//Pieds Lvl 277
+                    HandleAddItemCommand("50613");//Taille Lvl 277
+                    HandleAddItemCommand("50651");//Poignets Lvl 277
+                    HandleAddItemCommand("50628");//cape Lvl 277
                     break;
                 }
                 case 2:
@@ -8041,6 +7703,10 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                     HandleAddItemCommand("51282");//T10.9 Lvl 277
                     HandleAddItemCommand("51283");//T10.9 Lvl 277
                     HandleAddItemCommand("51284");//T10.9 Lvl 277
+                    HandleAddItemCommand("50699");//Pieds Lvl 277
+                    HandleAddItemCommand("50613");//Taille Lvl 277
+                    HandleAddItemCommand("50651");//Poignets Lvl 277
+                    HandleAddItemCommand("50628");//cape Lvl 277
                     break;
                 }
                 case 3:
@@ -8050,55 +7716,16 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                     HandleAddItemCommand("51282");//T10.9 Lvl 277
                     HandleAddItemCommand("51283");//T10.9 Lvl 277
                     HandleAddItemCommand("51284");//T10.9 Lvl 277
+                    HandleAddItemCommand("50699");//Pieds Lvl 277
+                    HandleAddItemCommand("50613");//Taille Lvl 277
+                    HandleAddItemCommand("50651");//Poignets Lvl 277
+                    HandleAddItemCommand("50628");//cape Lvl 277
                     break;
                 }
                 default:
                     break;
             }
             switch(chr->getRace())
-            {
-                case RACE_UNDEAD_PLAYER:
-                case RACE_TROLL:
-                case RACE_BLOODELF:
-                {
-                    HandleAddItemCommand("47525");//bâton
-                    HandleAddItemCommand("47995");//baguette
-                    HandleAddItemCommand("47554");//cape
-                    HandleAddItemCommand("47422"); // Dague DPS Magique Horde
-                    HandleAddItemCommand("47437"); // 2ème main DPS Magique Horde
-                    HandleAddItemCommand("47468"); // Amulette DPS Magique Horde
-                    HandleAddItemCommand("47439"); // Anneau DPS Magique 1 Horde
-                    HandleAddItemCommand("47489"); // Anneau DPS Magique 2 Horde
-                    HandleAddItemCommand("47477"); // Trinket DPS Magique 1 Horde
-                    HandleAddItemCommand("47432"); // Trinket DPS Magique 2 Horde
-                    HandleAddItemCommand("47467"); // Brassard DPS Magique Horde
-                    HandleAddItemCommand("47447"); // Ceinture DPS Magique Horde
-                    HandleAddItemCommand("47482"); // Bottes DPS Magique Horde
-                    break;
-                }
-                case RACE_DRAENEI:
-                case RACE_HUMAN:
-                case RACE_GNOME:
-                {
-                    HandleAddItemCommand("47130");//bâton
-                    HandleAddItemCommand("47922");//baguette
-                    HandleAddItemCommand("47553");//cape
-                    HandleAddItemCommand("46980"); // Dague DPS Magique Alliance
-                    HandleAddItemCommand("47064"); // 2ème main DPS Magique Alliance
-                    HandleAddItemCommand("47144"); // Amulette DPS Magique Alliance
-                    HandleAddItemCommand("47224"); // Anneau DPS Magique 1 Alliance
-                    HandleAddItemCommand("47237"); // Anneau DPS Magique 2 Alliance
-                    HandleAddItemCommand("47188"); // Trinket DPS Magique 1 Alliance
-                    HandleAddItemCommand("47059"); // Trinket DPS Magique 2 Alliance
-                    HandleAddItemCommand("47143"); // Brassard DPS Magique Alliance
-                    HandleAddItemCommand("47084"); // Ceinture DPS Magique Alliance
-                    HandleAddItemCommand("47205"); // Bottes DPS Magique Alliance
-                    break;
-                }
-                default:
-                    break;
-            }
-            break;
         }
         case CLASS_WARLOCK:
         {
@@ -8111,6 +7738,10 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                     HandleAddItemCommand("51232");//T10.9 Lvl 277
                     HandleAddItemCommand("51233");//T10.9 Lvl 277
                     HandleAddItemCommand("51234");//T10.9 Lvl 277
+                    HandleAddItemCommand("50699");//Pieds Lvl 277
+                    HandleAddItemCommand("50613");//Taille Lvl 277
+                    HandleAddItemCommand("50651");//Poignets Lvl 277
+                    HandleAddItemCommand("50628");//cape Lvl 277
                     break;
                 }
                 case 2:
@@ -8120,6 +7751,10 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                     HandleAddItemCommand("51232");//T10.9 Lvl 277
                     HandleAddItemCommand("51233");//T10.9 Lvl 277
                     HandleAddItemCommand("51234");//T10.9 Lvl 277
+                    HandleAddItemCommand("50699");//Pieds Lvl 277
+                    HandleAddItemCommand("50613");//Taille Lvl 277
+                    HandleAddItemCommand("50651");//Poignets Lvl 277
+                    HandleAddItemCommand("50628");//cape Lvl 277
                     break;
                 }
                 case 3:
@@ -8129,54 +7764,16 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                     HandleAddItemCommand("51232");//T10.9 Lvl 277
                     HandleAddItemCommand("51233");//T10.9 Lvl 277
                     HandleAddItemCommand("51234");//T10.9 Lvl 277
+                    HandleAddItemCommand("50699");//Pieds Lvl 277
+                    HandleAddItemCommand("50613");//Taille Lvl 277
+                    HandleAddItemCommand("50651");//Poignets Lvl 277
+                    HandleAddItemCommand("50628");//cape Lvl 277
                     break;
                 }
                 default:
                     break;
             }
             switch(chr->getRace())
-            {
-                case RACE_ORC:
-                case RACE_UNDEAD_PLAYER:
-                case RACE_BLOODELF:
-                {
-                    HandleAddItemCommand("47422");//dague
-                    HandleAddItemCommand("47553");//cape
-                    HandleAddItemCommand("47995"); // Baguette DPS Magique Horde
-                    HandleAddItemCommand("47422"); // Dague DPS Magique Horde
-                    HandleAddItemCommand("47437"); // 2ème main DPS Magique Horde
-                    HandleAddItemCommand("47468"); // Amulette DPS Magique Horde
-                    HandleAddItemCommand("47439"); // Anneau DPS Magique 1 Horde
-                    HandleAddItemCommand("47489"); // Anneau DPS Magique 2 Horde
-                    HandleAddItemCommand("47477"); // Trinket DPS Magique 1 Horde
-                    HandleAddItemCommand("47432"); // Trinket DPS Magique 2 Horde
-                    HandleAddItemCommand("47467"); // Brassard DPS Magique Horde
-                    HandleAddItemCommand("47447"); // Ceinture DPS Magique Horde
-                    HandleAddItemCommand("47482"); // Bottes DPS Magique Horde
-                    break;
-                }
-                case RACE_HUMAN:
-                case RACE_GNOME:
-                {
-                    HandleAddItemCommand("46980");//dague
-                    HandleAddItemCommand("47553");//cape
-                    HandleAddItemCommand("47922"); // Baguette DPS Magique Alliance
-                    HandleAddItemCommand("46980"); // Dague DPS Magique Alliance
-                    HandleAddItemCommand("47064"); // 2ème main DPS Magique Alliance
-                    HandleAddItemCommand("47144"); // Amulette DPS Magique Alliance
-                    HandleAddItemCommand("47224"); // Anneau DPS Magique 1 Alliance
-                    HandleAddItemCommand("47237"); // Anneau DPS Magique 2 Alliance
-                    HandleAddItemCommand("47188"); // Trinket DPS Magique 1 Alliance
-                    HandleAddItemCommand("47059"); // Trinket DPS Magique 2 Alliance
-                    HandleAddItemCommand("47143"); // Brassard DPS Magique Alliance
-                    HandleAddItemCommand("47084"); // Ceinture DPS Magique Alliance
-                    HandleAddItemCommand("47205"); // Bottes DPS Magique Alliance
-                    break;
-                }
-                default:
-                    break;
-            }
-            break;
         }
         case CLASS_DRUID:
         {
@@ -8189,6 +7786,10 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                     HandleAddItemCommand("51292");//T10.9 Lvl 277
                     HandleAddItemCommand("51293");//T10.9 Lvl 277
                     HandleAddItemCommand("51294");//T10.9 Lvl 277
+                    HandleAddItemCommand("50665");//Pieds Lvl 277
+                    HandleAddItemCommand("50705");//Taille Lvl 277
+                    HandleAddItemCommand("50630");//Poignets Lvl 277
+                    HandleAddItemCommand("50668");//cape Lvl 277
                     break;
                 }
                 case 2:
@@ -8198,6 +7799,10 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                     HandleAddItemCommand("51297");//T10.9 Lvl 277
                     HandleAddItemCommand("51298");//T10.9 Lvl 277
                     HandleAddItemCommand("51299");//T10.9 Lvl 277
+                    HandleAddItemCommand("50607");//Pieds Lvl 277
+                    HandleAddItemCommand("50707");//Taille Lvl 277
+                    HandleAddItemCommand("50670");//Poignets Lvl 277
+                    HandleAddItemCommand("50653");//cape Lvl 277
                     break;
                 }
                 case 3:
@@ -8207,44 +7812,10 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                     HandleAddItemCommand("51302");//T10.9 Lvl 277
                     HandleAddItemCommand("51303");//T10.9 Lvl 277
                     HandleAddItemCommand("51304");//T10.9 Lvl 277
-                    break;
-                }
-                default:
-                    break;
-            }
-            HandleAddItemCommand("47668"); // Idole Feral
-            switch(chr->getRace())
-            {
-                case RACE_NIGHTELF:
-                {
-                    HandleAddItemCommand("47130");//bâton
-                    HandleAddItemCommand("47553");//cape
-                    HandleAddItemCommand("47206"); // Masse DPS Magique Alliance
-                    HandleAddItemCommand("47064"); // 2ème main DPS Magique Alliance
-                    HandleAddItemCommand("47060"); // Amulette DPS Physique Alliance
-                    HandleAddItemCommand("47075"); // Anneau DPS Physique 1 Alliance
-                    HandleAddItemCommand("46966"); // Anneau DPS Physique 2 Alliance
-                    HandleAddItemCommand("47088"); // Trinket DPS Physique 1 Alliance
-                    HandleAddItemCommand("47464"); // Trinket DPS Physique 2 Alliance
-                    HandleAddItemCommand("47155"); // Brassards DPS Physique Alliance
-                    HandleAddItemCommand("47112"); // Ceinture DPS Physique Alliance
-                    HandleAddItemCommand("47077"); // Bottes DPS Physique Alliance
-                    break;
-                }
-                case RACE_TAUREN:
-                {
-                    HandleAddItemCommand("47463");//bâton
-                    HandleAddItemCommand("47554");//cape
-                    HandleAddItemCommand("47483"); // Masse DPS Magique Horde
-                    HandleAddItemCommand("47437"); // 2ème main DPS Magique Horde
-                    HandleAddItemCommand("47433"); // Amulette DPS Physique Horde
-                    HandleAddItemCommand("47413"); // Anneau DPS Physique 1 Horde
-                    HandleAddItemCommand("47443"); // Anneau DPS Physique 2 Horde
-                    HandleAddItemCommand("47451"); // Trinket DPS Physique 1 Horde
-                    HandleAddItemCommand("47131"); // Trinket DPS Physique 2 Horde
-                    HandleAddItemCommand("47474"); // Brassards DPS Physique Horde
-                    HandleAddItemCommand("47460"); // Ceinture DPS Physique Horde
-                    HandleAddItemCommand("47445"); // Bottes DPS Physique Horde
+                    HandleAddItemCommand("50665");//Pieds Lvl 277
+                    HandleAddItemCommand("50705");//Taille Lvl 277
+                    HandleAddItemCommand("50630");//Poignets Lvl 277
+                    HandleAddItemCommand("50668");//cape Lvl 277
                     break;
                 }
                 default:
