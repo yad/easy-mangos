@@ -215,8 +215,8 @@ void WorldSession::HandleMessagechatOpcode( WorldPacket & recv_data )
 
             if (!sWorld.getConfig(CONFIG_BOOL_ALLOW_TWO_SIDE_INTERACTION_CHAT) && tSecurity == SEC_PLAYER && pSecurity == SEC_PLAYER )
             {
-                uint32 sidea = GetPlayer()->GetTeam();
-                uint32 sideb = player->GetTeam();
+                uint32 sidea = GetPlayer()->getOriginalTeam();
+                uint32 sideb = player->getOriginalTeam();
                 if( sidea != sideb )
                 {
                     SendWrongFactionNotice();

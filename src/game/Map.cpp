@@ -455,6 +455,18 @@ bool Map::Add(Player *player)
     UpdateObjectsVisibilityFor(player,cell,p);
 
     AddNotifier(player,cell,p);
+
+    //Factioned maps
+    if(sMapMgr.isFactioned(GetId()) && sWorld.getConfig(CONFIG_BOOL_FACTIONED_MAP_ENABLED))
+    {
+        player->setFaction(sWorld.getConfig(CONFIG_UINT32_FACTIONED_MAP_FACTION));
+        player->SetFakeTeam(sWorld.getConfig(CONFIG_UINT32_FACTIONED_MAP_TEAM));
+    }
+    else if (player->getFakeTeam() != 0 && !sMapMgr.isFactioned(GetId()) && !player->isInTeamBG())
+    {
+        player->SetFakeTeam(0);
+        player->setFactionForRace(player->getRace());
+    }
     return true;
 }
 

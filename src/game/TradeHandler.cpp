@@ -532,7 +532,7 @@ void WorldSession::HandleInitiateTradeOpcode(WorldPacket& recvPacket)
         return;
     }
 
-    if (pOther->GetTeam() !=_player->GetTeam() )
+    if (pOther->getOriginalTeam() !=_player->getOriginalTeam() )
     {
         SendTradeStatus(TRADE_STATUS_WRONG_FACTION);
         return;
@@ -541,13 +541,6 @@ void WorldSession::HandleInitiateTradeOpcode(WorldPacket& recvPacket)
     if (!pOther->IsWithinDistInMap(_player,10.0f,false))
     {
         SendTradeStatus(TRADE_STATUS_TARGET_TO_FAR);
-        return;
-    }
-
-    //TEAMBG - bg restriction....
-    if (_player->GetBattleGround() && _player->isInTeamBG())
-    {
-        SendTradeStatus(TRADE_STATUS_BUSY);
         return;
     }
 

@@ -770,6 +770,13 @@ void World::LoadConfigSettings(bool reload)
     setConfig(CONFIG_UINT32_TEAM_BG_BUFF_BLUE, "TeamBG.Buff.Blue", 0);
     setConfig(CONFIG_UINT32_TEAM_BG_BUFF_RED, "TeamBG.Buff.Red", 0);
 
+    //Make some maps friendly for all
+    std::string factionedMapIds = sConfig.GetStringDefault("FactionedMap.Ids", "");
+    sMapMgr.SetFactionedMaps(factionedMapIds.c_str());
+    setConfig(CONFIG_BOOL_FACTIONED_MAP_ENABLED, "FactionedMap.Enabled", false);
+    setConfig(CONFIG_UINT32_FACTIONED_MAP_FACTION, "FactionedMap.Faction", 1);
+    setConfig(CONFIG_UINT32_FACTIONED_MAP_TEAM, "FactionedMap.Team", 1);
+
     if(int clientCacheId = sConfig.GetIntDefault("ClientCacheVersion", 0))
     {
         // overwrite DB/old value

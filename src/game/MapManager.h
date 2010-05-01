@@ -130,6 +130,8 @@ class MANGOS_DLL_DECL MapManager : public MaNGOS::Singleton<MapManager, MaNGOS::
         uint32 GetNumInstances();
         uint32 GetNumPlayersInInstances();
 
+        void SetFactionedMaps(const char *maps) { factionedMaps = maps; }
+        bool isFactioned(uint32 mapId) { return (strchr(factionedMaps, mapId) == NULL) ? false : true; }
     private:
         // debugging code, should be deleted some day
         void checkAndCorrectGridStatesArray();              // just for debugging to find some memory overwrites
@@ -156,6 +158,7 @@ class MANGOS_DLL_DECL MapManager : public MaNGOS::Singleton<MapManager, MaNGOS::
 
         uint32 i_MaxInstanceId;
         MapUpdater m_updater;
+        const char *factionedMaps;
 };
 
 #define sMapMgr MapManager::Instance()

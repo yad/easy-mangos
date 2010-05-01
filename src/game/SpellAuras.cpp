@@ -3996,9 +3996,9 @@ void Aura::HandleModPossess(bool apply, bool Real)
         if(m_target->GetTypeId() == TYPEID_PLAYER && !m_target->GetVehicleGUID())
         {
             //TEAMBG check
-            if(((Player*)m_target)->isInTeamBG() && ((Player*)m_target)->getTeamBGSide() == 1) //BLUE(ali)
+            if(((Player*)m_target)->isInTeamBG() && ((Player*)m_target)->getFakeTeam() == 1) //BLUE(ali)
                 ((Player*)m_target)->setFaction(sWorld.getConfig(CONFIG_UINT32_TEAM_BG_FACTION_BLUE));
-            else if(((Player*)m_target)->isInTeamBG() && ((Player*)m_target)->getTeamBGSide() == 2) //RED(horde)
+            else if(((Player*)m_target)->isInTeamBG() && ((Player*)m_target)->getFakeTeam() == 2) //RED(horde)
                 ((Player*)m_target)->setFaction(sWorld.getConfig(CONFIG_UINT32_TEAM_BG_FACTION_RED));
             else
                 ((Player*)m_target)->setFactionForRace(m_target->getRace());
@@ -4139,9 +4139,9 @@ void Aura::HandleModCharm(bool apply, bool Real)
         if(m_target->GetTypeId() == TYPEID_PLAYER)
         {
             //TEAMBG check
-            if(((Player*)m_target)->isInTeamBG() && ((Player*)m_target)->getTeamBGSide() == 1) //BLUE(ali)
+            if(((Player*)m_target)->isInTeamBG() && ((Player*)m_target)->getFakeTeam() == 1) //BLUE(ali)
                 ((Player*)m_target)->setFaction(sWorld.getConfig(CONFIG_UINT32_TEAM_BG_FACTION_BLUE));
-            else if(((Player*)m_target)->isInTeamBG() && ((Player*)m_target)->getTeamBGSide() == 2) //RED(horde)
+            else if(((Player*)m_target)->isInTeamBG() && ((Player*)m_target)->getFakeTeam() == 2) //RED(horde)
                 ((Player*)m_target)->setFaction(sWorld.getConfig(CONFIG_UINT32_TEAM_BG_FACTION_RED));
             else
                 ((Player*)m_target)->setFactionForRace(m_target->getRace());
