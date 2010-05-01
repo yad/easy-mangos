@@ -1549,6 +1549,10 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                     // Arcane Intellect and Insight
                     if( spellInfo_2->SpellIconID == 125 && spellInfo_1->Id == 18820 )
                         return false;
+
+                    //Mirror image frostbolt and mage frostbolt
+                    if( spellInfo_2->SpellIconID == 188 && spellInfo_1->Id == 59638 )
+                        return false;
                     break;
                 case SPELLFAMILY_WARRIOR:
                 {

@@ -236,7 +236,7 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
 
         void MessageBroadcast(Player *, WorldPacket *, bool to_self);
         void MessageBroadcast(WorldObject *, WorldPacket *);
-        void MessageDistBroadcast(Player *, WorldPacket *, float dist, bool to_self, bool own_team_only = false);
+        void MessageDistBroadcast(Player *, WorldPacket *, float dist, bool to_self, bool own_team_only = false, enemyTeamOnly = false);
         void MessageDistBroadcast(WorldObject *, WorldPacket *, float dist);
 
         float GetVisibilityDistance() const { return m_VisibleDistance; }

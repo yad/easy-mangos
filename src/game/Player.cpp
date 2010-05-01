@@ -6014,12 +6014,12 @@ void Player::SendMessageToSetInRange(WorldPacket *data, float dist, bool self)
         GetSession()->SendPacket(data);
 }
 
-void Player::SendMessageToSetInRange(WorldPacket *data, float dist, bool self, bool own_team_only)
+void Player::SendMessageToSetInRange(WorldPacket *data, float dist, bool self, bool own_team_only, bool enemy_team_only)
 {
     Map * _map = IsInWorld() ? GetMap() : sMapMgr.FindMap(GetMapId(), GetInstanceId());
     if(_map)
     {
-        _map->MessageDistBroadcast(this, data, dist, self, own_team_only);
+        _map->MessageDistBroadcast(this, data, dist, self, own_team_only, enemy_team_only);
         return;
     }
 
