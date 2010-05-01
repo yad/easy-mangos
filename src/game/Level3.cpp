@@ -7388,7 +7388,6 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                 default:
                     break;
             }
-            switch(chr->getRace())
         }
         case CLASS_PALADIN:
         {
@@ -7438,7 +7437,6 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                 default:
                     break;
             }
-            switch(chr->getRace())
         }
         case CLASS_HUNTER:
         {
@@ -7486,7 +7484,6 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                 default:
                     break;
             }
-            switch(chr->getRace())
         }
         case CLASS_ROGUE:
         {
@@ -7534,7 +7531,6 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                 default:
                     break;
             }
-            switch(chr->getRace())
         }
         case CLASS_PRIEST:
         {
@@ -7582,7 +7578,6 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                 default:
                     break;
             }
-            switch(chr->getRace())
         }
         case CLASS_DEATH_KNIGHT:
         {
@@ -7630,7 +7625,6 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                 default:
                     break;
             }
-            switch(chr->getRace())
         }
         case CLASS_SHAMAN:
         {
@@ -7677,7 +7671,6 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                 default:
                     break;
             }
-            switch(chr->getRace())
         }
         case CLASS_MAGE:
         {
@@ -7725,7 +7718,6 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                 default:
                     break;
             }
-            switch(chr->getRace())
         }
         case CLASS_WARLOCK:
         {
@@ -7773,7 +7765,6 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
                 default:
                     break;
             }
-            switch(chr->getRace())
         }
         case CLASS_DRUID:
         {
