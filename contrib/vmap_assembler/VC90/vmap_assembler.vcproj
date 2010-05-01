@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="vmap_assembler"
 	ProjectGUID="{572FFF74-480C-4472-8ABF-81733BB4049D}"
+	RootNamespace="vmap_assembler"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="131072"
 	>
@@ -17,8 +18,8 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="..\Debug"
-			IntermediateDirectory="..\Debug\obj"
+			OutputDirectory="..\bin\$(PlatformName)_$(ConfigurationName)\"
+			IntermediateDirectory="bin\$(ProjectName)__$(PlatformName)_$(ConfigurationName)\"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			CharacterSet="2"
@@ -64,7 +65,8 @@
 			<Tool
 				Name="VCLinkerTool"
 				OutputFile="$(OutDir)/vmap_assembler.exe"
-				LinkIncremental="2"
+				LinkIncremental="1"
+				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/vmap_assembler.pdb"
 				SubSystem="1"
@@ -96,8 +98,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="..\Release"
-			IntermediateDirectory="..\Release\obj"
+			OutputDirectory="..\bin\$(PlatformName)_$(ConfigurationName)\"
+			IntermediateDirectory="bin\$(ProjectName)__$(PlatformName)_$(ConfigurationName)\"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			CharacterSet="2"
