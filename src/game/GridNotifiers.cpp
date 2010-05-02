@@ -169,7 +169,7 @@ MessageDistDeliverer::Visit(PlayerMapType &m)
     {
         if ((i_toSelf || iter->getSource() != &i_player ) &&
             (!i_ownTeamOnly || iter->getSource()->GetTeam() == i_player.GetTeam() ) &&
-            (!i_enemyTeamOnly || iter->getSource()->GetTeam() != i_player.GetTeam())
+            (!i_enemyTeamOnly || iter->getSource()->GetTeam() != i_player.GetTeam()) &&
             (!i_dist || iter->getSource()->IsWithinDist(&i_player,i_dist)))
         {
             if (!i_player.InSamePhase(iter->getSource()))

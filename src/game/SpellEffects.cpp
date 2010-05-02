@@ -1568,7 +1568,8 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     m_caster->CastCustomSpell(unitTarget, 54172, &bp, NULL, NULL, true); 
                     return; 
                 }
-                case 55004:                                 // Nitro Boosts                {
+                case 55004:                                 // Nitro Boosts
+                {
                     if (!m_CastItem)
                         return;
 
