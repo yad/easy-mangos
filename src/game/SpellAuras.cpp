@@ -3674,9 +3674,15 @@ void Aura::HandleModPossessPet(bool apply, bool Real)
     Camera& camera = p_caster->GetCamera();
 
     if(apply)
+    {
         pet->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PLAYER_CONTROLLED);
+        camera.SetView(pet);
+    }
     else
+    {
         pet->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PLAYER_CONTROLLED);
+        camera.ResetView();
+    }
 
     p_caster->SetCharm(apply ? pet : NULL);
     p_caster->SetClientControl(pet, apply ? 1 : 0);
@@ -3687,14 +3693,12 @@ void Aura::HandleModPossessPet(bool apply, bool Real)
         pet->StopMoving();
         pet->GetMotionMaster()->Clear();
         pet->GetMotionMaster()->MoveIdle();
-        camera.SetView(pet);
     }
     else
     {
         pet->AttackStop();
         pet->GetMotionMaster()->MoveFollow(caster, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE);
         pet->AddSplineFlag(SPLINEFLAG_WALKMODE);
-        camera.ResetView();
     }
 }
 
