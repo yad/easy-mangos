@@ -1033,7 +1033,7 @@ void Aura::_AddAura()
     // Try find slot for aura
     uint8 slot = NULL_AURA_SLOT;
     // Lookup for some spell auras (and get slot from it)
-    for(uint8 i = 0; i < m_effIndex; ++i)
+    for(uint8 i = 0; i < MAX_EFFECT_INDEX; ++i)
     {
         Unit::spellEffectPair spair = Unit::spellEffectPair(GetId(), SpellEffectIndex(i));
         for(Unit::AuraMap::const_iterator itr = m_target->GetAuras().lower_bound(spair); itr != m_target->GetAuras().upper_bound(spair); ++itr)
@@ -1682,36 +1682,6 @@ void Aura::TriggerSpell()
             {
                 switch(auraId)
                 {
-                    // Firestone Passive (1-5 ranks)
-                    case 758:
-                    case 17945:
-                    case 17947:
-                    case 17949:
-                    case 27252:
-                    {
-                        if (target->GetTypeId() != TYPEID_PLAYER)
-                            return;
-                        Item* item = ((Player*)target)->GetWeaponForAttack(BASE_ATTACK);
-                        if (!item)
-                            return;
-                        uint32 enchant_id = 0;
-                        switch (GetId())
-                        {
-                             case   758: enchant_id = 1803; break;   // Rank 1
-                             case 17945: enchant_id = 1823; break;   // Rank 2
-                             case 17947: enchant_id = 1824; break;   // Rank 3
-                             case 17949: enchant_id = 1825; break;   // Rank 4
-                             case 27252: enchant_id = 2645; break;   // Rank 5
-                             default:
-                                 return;
-                        }
-                        // remove old enchanting before applying new
-                        ((Player*)target)->ApplyEnchantment(item,TEMP_ENCHANTMENT_SLOT,false);
-                        item->SetEnchantment(TEMP_ENCHANTMENT_SLOT, enchant_id, m_modifier.periodictime+1000, 0);
-                        // add new enchanting
-                        ((Player*)target)->ApplyEnchantment(item,TEMP_ENCHANTMENT_SLOT,true);
-                        return;
-                    }
 //                    // Periodic Mana Burn
 //                    case 812: break;
 //                    // Polymorphic Ray
