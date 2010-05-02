@@ -489,10 +489,8 @@ void BattleGroundAB::EndBattleGround(uint32 winner)
 {
     //win reward
     if (winner)
-    {
         RewardHonorToTeam(GetBonusHonorFromKill(sWorld.getConfig(CONFIG_UINT32_BONUS_HONOR_AB_WIN)), winner);
-        RewardHonorTeamDaily(winner);
-    }
+    
     //complete map_end rewards (even if no team wins)
     RewardHonorToTeam(GetBonusHonorFromKill(sWorld.getConfig(CONFIG_UINT32_BONUS_HONOR_AB_END)), HORDE);
     RewardHonorToTeam(GetBonusHonorFromKill(sWorld.getConfig(CONFIG_UINT32_BONUS_HONOR_AB_END)), ALLIANCE);
