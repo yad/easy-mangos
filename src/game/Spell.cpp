@@ -247,7 +247,10 @@ void SpellCastTargets::read( ByteBuffer& data, Unit *caster )
         if(!MaNGOS::IsValidMapCoord(m_destX, m_destY, m_destZ))
             throw ByteBufferException(false, data.rpos(), 0, data.size());
 
-        if( m_targetMask & TARGET_FLAG_SOURCE_LOCATION )
+        //somethings wrong here... Typhoon spell has this flag in packet,
+        //but cast fails because packet is too short....strange spell,
+        //dunno about any other like this
+        if( m_targetMask & TARGET_FLAG_SOURCE_LOCATION && caster->getClass() != CLASS_DRUID) // <- cant get to spell proto, but this data are not used for now anyway... :/
         {
             if(data.rpos() + 4 + 4 <= data.size())
             {
