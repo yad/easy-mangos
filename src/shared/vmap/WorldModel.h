@@ -54,7 +54,7 @@ namespace VMAP
             //! pass mesh data to object and create BIH. Passed vectors get get swapped with old geometry!
             void setMeshData(std::vector<Vector3> &vert, std::vector<MeshTriangle> &tri);
             bool IntersectRay(const G3D::Ray &ray, float &distance, bool stopAtFirstHit) const;
-            bool IsInsideObject(const Vector3 &pos, float &ground_z) const;
+            bool IsInsideObject(const Vector3 &pos, const Vector3 &down, float &z_dist) const;
             bool writeToFile(FILE *wf);
             bool readFromFile(FILE *rf);
             const G3D::AABox& GetBound() const { return iBound; }
@@ -78,7 +78,7 @@ namespace VMAP
             void setGroupModels(std::vector<GroupModel> &models);
             void setRootWmoID(uint32 id) { RootWMOID = id; }
             bool IntersectRay(const G3D::Ray &ray, float &distance, bool stopAtFirstHit) const;
-            bool IntersectPoint(const G3D::Vector3 &p, AreaInfo &info) const;
+            bool IntersectPoint(const G3D::Vector3 &p, const G3D::Vector3 &down, float &dist, AreaInfo &info) const;
             bool writeFile(const std::string &filename);
             bool readFile(const std::string &filename);
         protected:

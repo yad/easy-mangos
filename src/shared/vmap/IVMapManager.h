@@ -94,7 +94,11 @@ namespace VMAP
             e.g.: "0,1,530"
             */
             virtual void preventMapsFromBeingUsed(const char* pMapIdString) =0;
-            virtual bool getAreaInfo(unsigned int pMapId, float x, float y, float z, uint32 &flags, int32 &adtId, int32 &rootId, int32 &groupId)=0;
+            /**
+            Query world model area info.
+            \param z gets adjusted to the ground height for which this are info is valid
+            */
+            virtual bool getAreaInfo(unsigned int pMapId, float x, float y, float &z, uint32 &flags, int32 &adtId, int32 &rootId, int32 &groupId)=0;
     };
 
 }

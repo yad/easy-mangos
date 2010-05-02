@@ -200,18 +200,17 @@ namespace VMAP
         return callback.hit;
     }
 
-    bool GroupModel::IsInsideObject(const Vector3 &pos, float &ground_z) const
+    bool GroupModel::IsInsideObject(const Vector3 &pos, const Vector3 &down, float &z_dist) const
     {
         if (!triangles.size() || !iBound.contains(pos))
             return false;
         GModelRayCallback callback(triangles, vertices);
-        Vector3 rPos = pos;
-        rPos.z += 0.1;
+        Vector3 rPos = pos - 0.1f * down;
         float dist = G3D::inf();
-        G3D::Ray ray(rPos, Vector3(0.f, 0.f, -1.f));
+        G3D::Ray ray(rPos, down);
         bool hit = IntersectRay(ray, dist, false);
         if (hit)
-            ground_z = rPos.z - dist;
+            z_dist = dist - 0.1f;
         return hit;
     }
 
@@ -250,11 +249,13 @@ namespace VMAP
 
     class WModelAreaCallback {
         public:
-            WModelAreaCallback(const std::vector<GroupModel> &vals): prims(vals.begin()), hit(vals.end()), minVol(G3D::inf()), ground_Z(-G3D::inf()) {}
+            WModelAreaCallback(const std::vector<GroupModel> &vals, const Vector3 &down):
+                prims(vals.begin()), hit(vals.end()), minVol(G3D::inf()), zDist(G3D::inf()), zVec(down) {}
             std::vector<GroupModel>::const_iterator prims;
             std::vector<GroupModel>::const_iterator hit;
             float minVol;
-            float ground_Z;
+            float zDist;
+            Vector3 zVec;
             void operator()(const Vector3& point, uint32 entry)
             {
                  float group_Z;
@@ -262,13 +263,13 @@ namespace VMAP
                 //if(pVol < minVol)
                 //{
                     /* if (prims[entry].iBound.contains(point)) */
-                    if (prims[entry].IsInsideObject(point, group_Z))
+                    if (prims[entry].IsInsideObject(point, zVec, group_Z))
                     {
                         //minVol = pVol;
                         //hit = prims + entry;
-                        if (group_Z > ground_Z)
+                        if (group_Z < zDist)
                         {
-                            ground_Z = group_Z;
+                            zDist = group_Z;
                             hit = prims + entry;
                         }
 #ifdef VMAP_DEBUG
@@ -283,11 +284,11 @@ namespace VMAP
             }
     };
 
-    bool WorldModel::IntersectPoint(const G3D::Vector3 &p, AreaInfo &info) const
+    bool WorldModel::IntersectPoint(const G3D::Vector3 &p, const G3D::Vector3 &down, float &dist, AreaInfo &info) const
     {
         if (!groupModels.size())
             return false;
-        WModelAreaCallback callback(groupModels);
+        WModelAreaCallback callback(groupModels, down);
         groupTree.intersectPoint(p, callback);
         if (callback.hit != groupModels.end())
         {
@@ -295,6 +296,7 @@ namespace VMAP
             info.groupId = callback.hit->GetWmoID();
             info.flags = callback.hit->GetMogpFlags();
             info.result = true;
+            dist = callback.zDist;
             return true;
         }
         return false;

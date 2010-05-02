@@ -353,7 +353,7 @@ namespace VMAP
         return result;
     }
 
-    bool VMapManager2::getAreaInfo(unsigned int pMapId, float x, float y, float z, uint32 &flags, int32 &adtId, int32 &rootId, int32 &groupId)
+    bool VMapManager2::getAreaInfo(unsigned int pMapId, float x, float y, float &z, uint32 &flags, int32 &adtId, int32 &rootId, int32 &groupId)
     {
         bool result=false;
         InstanceTreeMap::iterator instanceTree = iInstanceMapTrees.find(pMapId);
@@ -361,6 +361,8 @@ namespace VMAP
         {
             Vector3 pos = convertPositionToInternalRep(x, y, z);
             result = instanceTree->second->getAreaInfo(pos, flags, adtId, rootId, groupId);
+            // z is not touched by convertPositionToMangosRep(), so just copy
+            z = pos.z;
         }
         return(result);
     }
