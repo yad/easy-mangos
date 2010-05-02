@@ -62,7 +62,7 @@ namespace VMAP
             bool isInLineOfSight(const G3D::Vector3& pos1, const G3D::Vector3& pos2) const;
             bool getObjectHitPos(const G3D::Vector3& pos1, const G3D::Vector3& pos2, G3D::Vector3& pResultHitPos, float pModifyDist) const;
             float getHeight(const G3D::Vector3& pPos) const;
-            bool getAreaInfo(G3D::Vector3 pos, uint32 &flags, int32 &adtId, int32 &rootId, int32 &groupId) const;
+            bool getAreaInfo(G3D::Vector3 &pos, uint32 &flags, int32 &adtId, int32 &rootId, int32 &groupId) const;
 
             bool init(const std::string &fname, VMapManager2 *vm);
             bool loadMap(uint32 tileX, uint32 tileY, VMapManager2 *vm);
@@ -73,8 +73,9 @@ namespace VMAP
 
     struct AreaInfo
     {
-        AreaInfo(): result(false) {};
+        AreaInfo(): result(false), ground_Z(-G3D::inf()) {};
         bool result;
+        float ground_Z;
         uint32 flags;
         int32 adtId;
         int32 rootId;
