@@ -3149,6 +3149,7 @@ void Player::SetGameMaster(bool on)
     }
 
     m_camera.UpdateVisibilityForOwner();
+    UpdateObjectVisibility();
 }
 
 void Player::SetGMVisible(bool on)
@@ -5243,8 +5244,10 @@ void Player::ResurrectPlayer(float restore_percent, bool applySickness)
     GetZoneAndAreaId(newzone,newarea);
     UpdateZone(newzone,newarea);
 
-    // update visibility
+    // update visibility of world around viewpoint
     m_camera.UpdateVisibilityForOwner();
+    // update visibility of player for nearby cameras
+    UpdateObjectVisibility();
 
     if(!applySickness)
         return;

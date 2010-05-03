@@ -42,13 +42,15 @@ inline void UpdateForCurrentViewPoint(Camera& c, Player & m_owner, WorldObject &
 
     m_owner.SetUInt64Value(PLAYER_FARSIGHT, (&m_source == &m_owner ? 0 : m_source.GetGUID()));
     c.UpdateVisibilityForOwner();
+
+    assert(m_owner.HaveAtClient(&m_source)); // viewpoint should be visible now
 }
 
 void Camera::SetView(WorldObject *obj)
 {
     V_ASSERT(obj);
     V_ASSERT(obj->isType(TYPEMASK_DYNAMICOBJECT|TYPEMASK_UNIT) && "Camera::SetView, viewpoint type is not available for client");
-    V_ASSERT(m_source->IsInMap(obj));// IsInMap check phases too
+    V_ASSERT(m_owner.IsInMap(obj));// IsInMap check phases too
 
     m_source->getViewPoint().RemoveCamera(this);
     m_source = obj;
