@@ -302,6 +302,8 @@ void WorldSession::LogoutPlayer(bool Save)
 
     if (_player)
     {
+        sLog.outChar("Account: %d (IP: %s) Logout Character:[%s] (guid: %u)", GetAccountId(), GetRemoteAddress().c_str(), _player->GetName() ,_player->GetGUIDLow());
+
         if (uint64 lguid = GetPlayer()->GetLootGUID())
             DoLootRelease(lguid);
 
@@ -675,7 +677,7 @@ void WorldSession::LoadTutorialsData()
     QueryResult *result = CharacterDatabase.PQuery("SELECT tut0,tut1,tut2,tut3,tut4,tut5,tut6,tut7 FROM character_tutorial WHERE account = '%u'", GetAccountId());
 
     if(!result)
-    { 
+    {
         m_tutorialState = TUTORIALDATA_NEW;
         return;
     }
