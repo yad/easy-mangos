@@ -1036,7 +1036,7 @@ void Aura::_AddAura()
     // Try find slot for aura
     uint8 slot = NULL_AURA_SLOT;
     // Lookup for some spell auras (and get slot from it)
-    for(uint8 i = 0; i < m_effIndex; ++i)
+    for(uint8 i = 0; i < MAX_EFFECT_INDEX; ++i)
     {
         Unit::spellEffectPair spair = Unit::spellEffectPair(GetId(), SpellEffectIndex(i));
         for(Unit::AuraMap::const_iterator itr = m_target->GetAuras().lower_bound(spair); itr != m_target->GetAuras().upper_bound(spair); ++itr)
@@ -3977,9 +3977,9 @@ void Aura::HandleModPossess(bool apply, bool Real)
         if(m_target->GetTypeId() == TYPEID_PLAYER && !m_target->GetVehicleGUID())
         {
             //TEAMBG check
-            if(((Player*)m_target)->isInTeamBG() && ((Player*)m_target)->getTeamBGSide() == 1) //BLUE(ali)
+            if(((Player*)m_target)->isInTeamBG() && ((Player*)m_target)->getFakeTeam() == 1) //BLUE(ali)
                 ((Player*)m_target)->setFaction(sWorld.getConfig(CONFIG_UINT32_TEAM_BG_FACTION_BLUE));
-            else if(((Player*)m_target)->isInTeamBG() && ((Player*)m_target)->getTeamBGSide() == 2) //RED(horde)
+            else if(((Player*)m_target)->isInTeamBG() && ((Player*)m_target)->getFakeTeam() == 2) //RED(horde)
                 ((Player*)m_target)->setFaction(sWorld.getConfig(CONFIG_UINT32_TEAM_BG_FACTION_RED));
             else
                 ((Player*)m_target)->setFactionForRace(m_target->getRace());
@@ -4122,9 +4122,9 @@ void Aura::HandleModCharm(bool apply, bool Real)
         if(m_target->GetTypeId() == TYPEID_PLAYER)
         {
             //TEAMBG check
-            if(((Player*)m_target)->isInTeamBG() && ((Player*)m_target)->getTeamBGSide() == 1) //BLUE(ali)
+            if(((Player*)m_target)->isInTeamBG() && ((Player*)m_target)->getFakeTeam() == 1) //BLUE(ali)
                 ((Player*)m_target)->setFaction(sWorld.getConfig(CONFIG_UINT32_TEAM_BG_FACTION_BLUE));
-            else if(((Player*)m_target)->isInTeamBG() && ((Player*)m_target)->getTeamBGSide() == 2) //RED(horde)
+            else if(((Player*)m_target)->isInTeamBG() && ((Player*)m_target)->getFakeTeam() == 2) //RED(horde)
                 ((Player*)m_target)->setFaction(sWorld.getConfig(CONFIG_UINT32_TEAM_BG_FACTION_RED));
             else
                 ((Player*)m_target)->setFactionForRace(m_target->getRace());
@@ -8533,7 +8533,15 @@ void Aura::PeriodicDummyTick()
         {
             // Mirror Image
             if (spell->Id == 55342)
+            {
+                if(m_target->GetTypeId() != TYPEID_PLAYER)
+                    break;
+                //Clear target
+                WorldPacket data(SMSG_CLEAR_TARGET, 8);
+                data << m_target->GetGUID();
+                ((Player*)m_target)->SendMessageToSetInRange(&data, 80.0f, false, false, true);
                 m_isPeriodic = false;
+            }
             break;
         }
         case SPELLFAMILY_DRUID:

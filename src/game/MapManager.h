@@ -149,6 +149,8 @@ class MANGOS_DLL_DECL MapManager : public MaNGOS::Singleton<MapManager, MaNGOS::
             return m_GameObjectMapEventIndexMap.find(65535)->second;
         }
 
+        void SetFactionedMaps(const char *maps) { factionedMaps = maps; }
+        bool isFactioned(uint32 mapId) { return (strchr(factionedMaps, mapId) == NULL) ? false : true; }
     private:
 
         CreatureMapEventIndexMap m_CreatureMapEventIndexMap;
@@ -178,6 +180,7 @@ class MANGOS_DLL_DECL MapManager : public MaNGOS::Singleton<MapManager, MaNGOS::
 
         uint32 i_MaxInstanceId;
         MapUpdater m_updater;
+        const char *factionedMaps;
 };
 
 #define sMapMgr MapManager::Instance()

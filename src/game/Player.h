@@ -928,6 +928,7 @@ enum PlayerLoginQueryIndex
     PLAYER_LOGIN_QUERY_LOADMAILS,
     PLAYER_LOGIN_QUERY_LOADMAILEDITEMS,
     PLAYER_LOGIN_QUERY_LOADTALENTS,
+    PLAYER_LOGIN_QUERY_LOADWEKLYQUESTSTATUS,
     PLAYER_LOGIN_QUERY_LOADWEEKLYQUESTSTATUS,
     PLAYER_LOGIN_QUERY_LOADBGSTATUS,
     MAX_PLAYER_LOGIN_QUERY
@@ -1968,7 +1969,7 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
         void SendMessageToSet(WorldPacket *data, bool self);// overwrite Object::SendMessageToSet
         void SendMessageToSetInRange(WorldPacket *data, float fist, bool self);
                                                             // overwrite Object::SendMessageToSetInRange
-        void SendMessageToSetInRange(WorldPacket *data, float dist, bool self, bool own_team_only);
+        void SendMessageToSetInRange(WorldPacket *data, float dist, bool self, bool own_team_only, bool enemy_team_only = false);
 
         Corpse *GetCorpse() const;
         void SpawnCorpseBones();
@@ -2504,8 +2505,11 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
 
         //TEAMBG helpers
         bool isInTeamBG() { return m_isInTeamBG; };
-        void SetTeamBG(bool isIn, uint8 side) { m_isInTeamBG = isIn; m_TeamBGSide = side; };
-        uint8 getTeamBGSide() { return m_TeamBGSide; };
+        void SetTeamBG(bool isIn, uint8 side) { m_isInTeamBG = isIn; m_fakeTeam = side; };
+
+        uint8 getFakeTeam() { return m_fakeTeam; };
+        void SetFakeTeam(uint8 side) { m_fakeTeam = side; };
+        uint32 getOriginalTeam() { return TeamForRace(getRace()); };
     protected:
 
         uint32 m_contestedPvPTimer;
@@ -2814,7 +2818,7 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
         uint32 m_FirstBGTime;
         // TEAMBG helpers
         bool m_isInTeamBG;
-        uint8 m_TeamBGSide; // 0 nothing, 1 blue(ali), 2 red(horde)
+        uint8 m_fakeTeam; // 0 nothing, 1 blue(ali), 2 red(horde)
 };
 
 void AddItemsSetItem(Player*player,Item *item);

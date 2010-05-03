@@ -537,7 +537,7 @@ Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputa
     baseMoveSpeed[MOVE_SWIM] = 4.722222f * sWorld.getConfig(CONFIG_FLOAT_RATE_CHARSWIMSPEED);
     baseMoveSpeed[MOVE_SWIM_BACK] = 4.5f;
     baseMoveSpeed[MOVE_TURN_RATE] = 3.141594f;
-	baseMoveSpeed[MOVE_FLIGHT] = 7.0f * sWorld.getConfig(CONFIG_FLOAT_RATE_CHARFLIGHTSPEED);
+    baseMoveSpeed[MOVE_FLIGHT] = 7.0f * sWorld.getConfig(CONFIG_FLOAT_RATE_CHARFLIGHTSPEED);
     baseMoveSpeed[MOVE_FLIGHT_BACK] = 4.5f;
     baseMoveSpeed[MOVE_PITCH_RATE] = 3.14f;
 
@@ -547,7 +547,7 @@ Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputa
 
     //TeamBG helpers
     m_isInTeamBG = false;
-    m_TeamBGSide = 0;
+    m_fakeTeam = 0;
 }
 
 Player::~Player ()
@@ -3257,6 +3257,9 @@ void Player::GiveXP(uint32 xp, Unit* victim)
 
     // XP to money conversion processed in Player::RewardQuest
     if(level >= sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL))
+        return;
+
+    if(HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_XP_USER_DISABLED))
         return;
 
     if(victim)
@@ -6852,12 +6855,13 @@ void Player::SendMessageToSetInRange(WorldPacket *data, float dist, bool self)
         GetSession()->SendPacket(data);
 }
 
-void Player::SendMessageToSetInRange(WorldPacket *data, float dist, bool self, bool own_team_only)
+void Player::SendMessageToSetInRange(WorldPacket *data, float dist, bool self, bool own_team_only, bool enemy_team_only)
 {
     Map * _map = IsInWorld() ? GetMap() : sMapMgr.FindMap(GetMapId(), GetInstanceId());
     if(_map)
     {
-        _map->MessageDistBroadcast(this, data, dist, false, own_team_only);
+        _map->MessageDistBroadcast(this, data, dist, self, own_team_only, enemy_team_only);
+        return;
     }
 
     if(self)
@@ -6975,10 +6979,10 @@ uint32 Player::TeamForRace(uint8 race)
 //TEAMBG code
 uint32 Player::GetTeam() const
 {
-    if(!m_isInTeamBG || (m_isInTeamBG && !GetBattleGroundTypeId()))
+    if((!m_isInTeamBG || (m_isInTeamBG && !GetBattleGroundTypeId())) && !sMapMgr.isFactioned(GetMapId()))
         return m_team;
 
-    switch(m_TeamBGSide)
+    switch(m_fakeTeam)
     {
         case 1: return ALLIANCE;
         case 2: return HORDE;
@@ -19712,30 +19716,30 @@ void Player::ContinueTaxiFlight()
 
     float distPrev = MAP_SIZE*MAP_SIZE;
     float distNext =
-        (nodeList[0]->x-GetPositionX())*(nodeList[0]->x-GetPositionX())+
-        (nodeList[0]->y-GetPositionY())*(nodeList[0]->y-GetPositionY())+
-        (nodeList[0]->z-GetPositionZ())*(nodeList[0]->z-GetPositionZ());
+        (nodeList[0].x-GetPositionX())*(nodeList[0].x-GetPositionX())+
+        (nodeList[0].y-GetPositionY())*(nodeList[0].y-GetPositionY())+
+        (nodeList[0].z-GetPositionZ())*(nodeList[0].z-GetPositionZ());
 
     for(uint32 i = 1; i < nodeList.size(); ++i)
     {
-        TaxiPathNodeEntry const* node = nodeList[i];
-        TaxiPathNodeEntry const* prevNode = nodeList[i-1];
+        TaxiPathNodeEntry const& node = nodeList[i];
+        TaxiPathNodeEntry const& prevNode = nodeList[i-1];
 
         // skip nodes at another map
-        if (node->mapid != GetMapId())
+        if (node.mapid != GetMapId())
             continue;
 
         distPrev = distNext;
 
         distNext =
-            (node->x-GetPositionX())*(node->x-GetPositionX())+
-            (node->y-GetPositionY())*(node->y-GetPositionY())+
-            (node->z-GetPositionZ())*(node->z-GetPositionZ());
+            (node.x-GetPositionX())*(node.x-GetPositionX())+
+            (node.y-GetPositionY())*(node.y-GetPositionY())+
+            (node.z-GetPositionZ())*(node.z-GetPositionZ());
 
         float distNodes =
-            (node->x-prevNode->x)*(node->x-prevNode->x)+
-            (node->y-prevNode->y)*(node->y-prevNode->y)+
-            (node->z-prevNode->z)*(node->z-prevNode->z);
+            (node.x-prevNode.x)*(node.x-prevNode.x)+
+            (node.y-prevNode.y)*(node.y-prevNode.y)+
+            (node.z-prevNode.z)*(node.z-prevNode.z);
 
         if (distNext + distPrev < distNodes)
         {
@@ -23416,7 +23420,7 @@ void Player::_SaveBGData()
         /* guid, bgInstanceID, bgTeam, x, y, z, o, map, taxi[0], taxi[1], mountSpell */
         CharacterDatabase.PExecute("INSERT INTO character_battleground_data VALUES ('%u', '%u', '%u', '%f', '%f', '%f', '%f', '%u', '%u', '%u', '%u', '%u')",
             GetGUIDLow(), m_bgData.bgInstanceID, m_bgData.bgTeam, m_bgData.joinPos.coord_x, m_bgData.joinPos.coord_y, m_bgData.joinPos.coord_z,
-            m_bgData.joinPos.orientation, m_bgData.joinPos.mapid, m_bgData.taxiPath[0], m_bgData.taxiPath[1], m_bgData.mountSpell, m_TeamBGSide);
+            m_bgData.joinPos.orientation, m_bgData.joinPos.mapid, m_bgData.taxiPath[0], m_bgData.taxiPath[1], m_bgData.mountSpell, m_fakeTeam);
     }
 }
 

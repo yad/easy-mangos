@@ -1660,6 +1660,35 @@ TeamBG.Buff.Blue = 0
 TeamBG.Buff.Red = 0
 
 ###################################################################################################################
+# FACTIONED MAPS CONFIG
+#    Set faction and team to player on map add
+#
+#    FactionedMap.Enabled
+#        Enable or disable this feature
+#        Defaul: 0 (disabled)
+#                1 (enabled)
+#
+#    FactionedMap.Ids
+#        Ids of maps where it is enabled
+#        Example: "0,1,571"
+#
+#    FactionedMap.Faction
+#        Faction to set
+#        Default: 1 (player human)
+#
+#    FactionedMap.Team
+#        Team to set
+#        Default: 1 (alliance)
+#                 2 (horde)  
+#
+###################################################################################################################
+
+FactionedMap.Enabled = 0
+FactionedMap.Ids = ""
+FactionedMap.Faction = 1
+FactionedMap.Team = 1
+
+###################################################################################################################
 # PLAYERBOTAI CONFIGURATION
 #
 #    PlayerbotAI.DisableBots

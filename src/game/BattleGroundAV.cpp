@@ -343,8 +343,6 @@ void BattleGroundAV::EndBattleGround(uint32 winner)
         RewardHonorToTeam(m_HonorMapComplete, ALLIANCE);
         RewardHonorToTeam(m_HonorMapComplete, HORDE);
     }
-    if (winner)
-        RewardHonorTeamDaily(winner);
 
     BattleGround::EndBattleGround(winner);
 }

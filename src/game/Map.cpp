@@ -535,6 +535,18 @@ bool Map::Add(Player *player)
     UpdateObjectVisibility(player,cell,p);
 
     AddNotifier(player,cell,p);
+
+    //Factioned maps
+    if(sMapMgr.isFactioned(GetId()) && sWorld.getConfig(CONFIG_BOOL_FACTIONED_MAP_ENABLED))
+    {
+        player->setFaction(sWorld.getConfig(CONFIG_UINT32_FACTIONED_MAP_FACTION));
+        player->SetFakeTeam(sWorld.getConfig(CONFIG_UINT32_FACTIONED_MAP_TEAM));
+    }
+    else if (player->getFakeTeam() != 0 && !sMapMgr.isFactioned(GetId()) && !player->isInTeamBG())
+    {
+        player->SetFakeTeam(0);
+        player->setFactionForRace(player->getRace());
+    }
     return true;
 }
 
@@ -621,7 +633,7 @@ void Map::MessageBroadcast(WorldObject *obj, WorldPacket *msg)
     cell.Visit(p, message, *this, *obj, GetVisibilityDistance());
 }
 
-void Map::MessageDistBroadcast(Player *player, WorldPacket *msg, float dist, bool to_self, bool own_team_only)
+void Map::MessageDistBroadcast(Player *player, WorldPacket *msg, float dist, bool to_self, bool own_team_only, bool enemyTeamOnly)
 {
     CellPair p = MaNGOS::ComputeCellPair(player->GetPositionX(), player->GetPositionY());
 
@@ -638,7 +650,7 @@ void Map::MessageDistBroadcast(Player *player, WorldPacket *msg, float dist, boo
     if( !loaded(GridPair(cell.data.Part.grid_x, cell.data.Part.grid_y)) )
         return;
 
-    MaNGOS::MessageDistDeliverer post_man(*player, msg, dist, to_self, own_team_only);
+    MaNGOS::MessageDistDeliverer post_man(*player, msg, dist, to_self, own_team_only, enemyTeamOnly);
     GridTypeVisitor<MaNGOS::MessageDistDeliverer >::Camera message(post_man);
     cell.Visit(p, message, *this, *player, dist);
 }
