@@ -895,7 +895,7 @@ uint32 Player::EnvironmentalDamage(EnviromentalDamage type, uint32 damage)
 
     if(!isAlive())
     {
-        if(type==DAMAGE_FALL && DmgSource == this)         // DealDamage not apply item durability loss at self damage
+        if(type==DAMAGE_FALL && DmgSource == this)          // DealDamage not apply item durability loss at self damage
         {
             DEBUG_LOG("We are fall to death, loosing 10 percents durability");
             DurabilityLossAll(0.10f,false);

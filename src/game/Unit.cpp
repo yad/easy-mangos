@@ -11430,7 +11430,10 @@ void Unit::ClearInCombat()
         clearUnitState(UNIT_STAT_ATTACK_PLAYER);
     }
     else
+    {
         ((Player*)this)->UpdatePotionCooldown();
+        ((Player*)this)->LastDmgDealer = NULL;
+    }
 }
 
 bool Unit::isTargetableForAttack(bool inverseAlive /*=false*/) const
