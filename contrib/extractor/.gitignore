@@ -14,8 +14,7 @@
 *.ncb
 *.pdb
 *.suo
-debug
-release
+bin
 *.user
 *.ilk
 ad_debug.exe
