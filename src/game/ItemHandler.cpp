@@ -1335,6 +1335,10 @@ void WorldSession::HandleSocketOpcode(WorldPacket& recv_data)
         //it is not displayed, client has an inbuilt system to determine if the bonus is activated
     }
 
+    //Gems should remove refundable flag
+    if(itemTarget->HasFlag(ITEM_FIELD_FLAGS, ITEM_FLAGS_REFUNDABLE))
+        itemTarget->RemoveFlag(ITEM_FIELD_FLAGS, ITEM_FLAGS_REFUNDABLE)
+
     _player->ToggleMetaGemsActive(slot, true);              // turn on all metagems (except for target item)
 }
 
@@ -1459,7 +1463,7 @@ void WorldSession::HandleItemRefund(WorldPacket& recv_data)
         return;
     }
 
-    if(!item->HasFlag(ITEM_FIELD_FLAGS, ITEM_FLAGS_REFUNDABLE) || !item->GetUInt32Value(ITEM_FIELD_CREATE_PLAYED_TIME) || item->GetExtCostId() == 0
+    if(!item->HasFlag(ITEM_FIELD_FLAGS, ITEM_FLAGS_REFUNDABLE) || !item->GetUInt32Value(ITEM_FIELD_CREATE_PLAYED_TIME)
         || _player->m_Played_time[0] > (item->GetUInt32Value(ITEM_FIELD_CREATE_PLAYED_TIME) + 2*60*60))  // can be refunded only two hours after buy
     {
         sLog.outDebug("Item refund: item not refundable!");
