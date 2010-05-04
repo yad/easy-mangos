@@ -2332,6 +2332,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         bool isInTeamBG() { return m_isInTeamBG; };
         void SetTeamBG(bool isIn, uint8 side) { m_isInTeamBG = isIn; m_fakeTeam = side; };
 
+        Player* LastDmgDealer;
         uint8 getFakeTeam() { return m_fakeTeam; };
         void SetFakeTeam(uint8 side) { m_fakeTeam = side; };
         uint32 getOriginalTeam() { return TeamForRace(getRace()); };
