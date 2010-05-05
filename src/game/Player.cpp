@@ -1610,11 +1610,28 @@ uint32 Player::EnvironmentalDamage(EnviromentalDamage type, uint32 damage)
     data << uint32(resist);
     SendMessageToSet(&data, true);
 
-    uint32 final_damage = DealDamage(this, damage, NULL, SELF_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, NULL, false, absorb);
+    Player* DmgSource = this;
+    if(isInCombat() && GetHealth() <= final_damage )
+    {
+        AttackerSet const& attackers = getAttackers();
+        for(AttackerSet::const_iterator itr = attackers.begin(); itr != attackers.end(); ++itr)
+        {
+            if(!LastDmgDealer)
+                continue;
+
+            if ((*itr)->GetGUID() == LastDmgDealer->GetGUID())
+            {
+                DmgSource = LastDmgDealer;
+                continue;
+            }
+        }
+    }
+
+    uint32 final_damage = DmgSource->DealDamage(this, damage, NULL, SELF_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, NULL, false, absorb);
 
     if(!isAlive())
     {
-        if(type==DAMAGE_FALL)                               // DealDamage not apply item durability loss at self damage
+        if(type==DAMAGE_FALL && DmgSource == this)          // DealDamage not apply item durability loss at self damage
         {
             DEBUG_LOG("We are fall to death, loosing 10 percents durability");
             DurabilityLossAll(0.10f,false);
@@ -20014,9 +20031,9 @@ bool Player::BuyItemFromVendorSlot(uint64 vendorguid, uint32 vendorslot, uint32 
             // Item Refund system, only works for non stackable items with extendedcost
             if(count == 1 && crItem->ExtendedCost )
             {
-                //it->SetUInt64Value(ITEM_FIELD_CREATOR, pCreature->GetGUID()); Propably cause items to disappear!
                 it->SetUInt32Value(ITEM_FIELD_CREATE_PLAYED_TIME, m_Played_time[0]);
-                it->SetExtCostId(extCostId);
+                it->SetPrice(price); // <- cuz of faction discount
+                it->SetExtCostId(extCostId); // <- because we cant get to it afterwards :/
             }
         }
     }

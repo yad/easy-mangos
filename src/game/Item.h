@@ -329,8 +329,11 @@ class MANGOS_DLL_SPEC Item : public Object
         void RemoveFromClientUpdateList();
         void BuildUpdateData(UpdateDataMapType& update_players);
 
+        // Item refund data only
         void SetExtCostId(uint32 id) { m_ExtendedCostId = id; };
         uint32 GetExtCostId() { return m_ExtendedCostId; };
+        void SetPrice(unit32 price) { m_price = price; };
+        uint32 GetPrice() { return m_price; };
     private:
         std::string m_text;
         uint8 m_slot;
@@ -338,6 +341,7 @@ class MANGOS_DLL_SPEC Item : public Object
         ItemUpdateState uState;
         int16 uQueuePos;
         bool mb_in_trade;                                   // true if item is currently in trade-window
+        uint32 m_price;
         uint32 m_ExtendedCostId;
 };
 #endif
