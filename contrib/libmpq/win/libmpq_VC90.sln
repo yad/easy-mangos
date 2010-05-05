@@ -1,14 +1,14 @@
 Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual Studio 2008
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libmpq", "VS90\libmpq.vcproj", "{03AB0F44-628E-4855-99A0-C98A1EB52C50}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libmpq", "VC90\libmpq.vcproj", "{03AB0F44-628E-4855-99A0-C98A1EB52C50}"
 	ProjectSection(ProjectDependencies) = postProject
 		{B96F612A-C91D-43B3-A4C3-D4294817EC6C} = {B96F612A-C91D-43B3-A4C3-D4294817EC6C}
 		{8F1DEA42-6A5B-4B62-839D-C141A7BFACF2} = {8F1DEA42-6A5B-4B62-839D-C141A7BFACF2}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "zlib", "..\..\..\win\VS90\zlib.vcproj", "{8F1DEA42-6A5B-4B62-839D-C141A7BFACF2}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "zlib", "..\..\..\win\VC90\zlib.vcproj", "{8F1DEA42-6A5B-4B62-839D-C141A7BFACF2}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bzip2", "..\..\..\win\VS90\bzip2.vcproj", "{B96F612A-C91D-43B3-A4C3-D4294817EC6C}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bzip2", "..\..\..\win\VC90\bzip2.vcproj", "{B96F612A-C91D-43B3-A4C3-D4294817EC6C}"
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
