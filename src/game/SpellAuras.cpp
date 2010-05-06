@@ -1564,6 +1564,10 @@ void Aura::HandleAddModifier(bool apply, bool Real)
     if(m_modifier.m_miscvalue >= MAX_SPELLMOD)
         return;
 
+    // Aura Mastery - Remove immunity effect 
+    if (!apply && m_spellProto->Id == 31821) 
+        m_target->RemoveAurasDueToSpell(64364); 
+
     if (apply)
     {
         uint64 modMask0 = 0;

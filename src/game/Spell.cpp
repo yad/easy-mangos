@@ -2964,6 +2964,13 @@ void Spell::cast(bool skipCheck)
                     AddPrecastSpell(61987);                 // Avenging Wrath Marker
                 }
             }
+            // Aura Mastery 
+            else if (m_spellInfo->Id == 31821) 
+            { 
+                // get Concentration Aura 
+                if (m_caster->GetAura(SPELL_AURA_REDUCE_PUSHBACK, SPELLFAMILY_PALADIN, UI64LIT(0x00020000), (0x00000020), m_caster->GetGUID())) 
+                    AddTriggeredSpell(64364);               // Aura Mastery - immunity part 
+            }
             break;
         }
         case SPELLFAMILY_SHAMAN:
