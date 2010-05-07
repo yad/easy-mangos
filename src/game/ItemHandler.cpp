@@ -1337,7 +1337,7 @@ void WorldSession::HandleSocketOpcode(WorldPacket& recv_data)
 
     //Gems should remove refundable flag
     if(itemTarget->HasFlag(ITEM_FIELD_FLAGS, ITEM_FLAGS_REFUNDABLE))
-        itemTarget->RemoveFlag(ITEM_FIELD_FLAGS, ITEM_FLAGS_REFUNDABLE)
+        itemTarget->RemoveFlag(ITEM_FIELD_FLAGS, ITEM_FLAGS_REFUNDABLE);
 
     _player->ToggleMetaGemsActive(slot, true);              // turn on all metagems (except for target item)
 }
@@ -1514,7 +1514,7 @@ void WorldSession::HandleItemRefund(WorldPacket& recv_data)
         {
             Item *refundItem = _player->StoreNewItem(dest, ExtendedCostId[i], true, Item::GenerateItemRandomPropertyId(ExtendedCostId[i]));
             _player->SendNewItem(refundItem, ExtendedCostCount[i], true, false);
-        }else ERROR_LOG("Cant store refunded item! Player guid: %u, refund item entry: %u, want to refund item : %u", _player->GetGUID(), ExtendedCostId[i], item->GetEntry());
+        }else sLog.outError("Cant store refunded item! Player guid: %u, refund item entry: %u, want to refund item : %u", _player->GetGUID(), ExtendedCostId[i], item->GetEntry());
     }
 
     //send refund packet

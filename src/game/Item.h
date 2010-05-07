@@ -332,7 +332,7 @@ class MANGOS_DLL_SPEC Item : public Object
         // Item refund data only
         void SetExtCostId(uint32 id) { m_ExtendedCostId = id; };
         uint32 GetExtCostId() { return m_ExtendedCostId; };
-        void SetPrice(unit32 price) { m_price = price; };
+        void SetPrice(uint32 price) { m_price = price; };
         uint32 GetPrice() { return m_price; };
     private:
         std::string m_text;

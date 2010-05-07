@@ -435,7 +435,7 @@ bool Item::LoadFromDB(uint32 guid, uint64 owner_guid, QueryResult *result)
     if(HasFlag(ITEM_FIELD_FLAGS, ITEM_FLAGS_REFUNDABLE))
     {
         //Remove refundable flag for next time if item is no logner refundable
-        if(!GetUInt32Value(ITEM_FIELD_CREATE_PLAYED_TIME) || GetOwner()->m_Played_time[0] > (item->GetUInt32Value(ITEM_FIELD_CREATE_PLAYED_TIME) + 2*60*60))
+        if(!GetUInt32Value(ITEM_FIELD_CREATE_PLAYED_TIME) || GetOwner()->m_Played_time[0] > (GetUInt32Value(ITEM_FIELD_CREATE_PLAYED_TIME) + 2*60*60))
         {
             RemoveFlag(ITEM_FIELD_FLAGS, ITEM_FLAGS_REFUNDABLE);
             return true;
