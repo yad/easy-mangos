@@ -42,6 +42,22 @@ private:
     char outfilename;
 };
 
+struct WMOLiquidHeader
+{
+    int xverts, yverts, xtiles, ytiles;
+    float pos_x;
+    float pos_y;
+    float pos_z;
+    short type;
+};
+
+struct WMOLiquidVert
+{
+    uint16 unk1;
+    uint16 unk2;
+    float height;
+};
+
 class WMOGroup
 {
 public:
@@ -55,17 +71,19 @@ public:
     uint16 nBatchB;
     uint32 nBatchC, fogIdx, liquidType, groupWMOID;
 
-    int mopy_size,moba_size,hlq_xverts,hlq_yverts;
+    int mopy_size,moba_size;
     int LiquEx_size;
     unsigned int nVertices; // number when loaded
     int nTriangles; // number when loaded
-    char* MOPY;
-    uint16* MOVI;
-    uint16* MoviEx;
-    float* MOVT;
-    uint16* MOBA;
-    int* MobaEx;
-    float* LiquEx;
+    char *MOPY;
+    uint16 *MOVI;
+    uint16 *MoviEx;
+    float *MOVT;
+    uint16 *MOBA;
+    int *MobaEx;
+    WMOLiquidHeader *hlq;
+    WMOLiquidVert *LiquEx;
+    char *LiquBytes;
     uint32 liquflags;
 
     WMOGroup(std::string &filename);
@@ -77,15 +95,6 @@ public:
 private:
     std::string filename;
     char outfilename;
-};
-
-struct WMOLiquidHeader
-{
-    int xverts, yverts, xtiles, ytiles;
-    float pos_x;
-    float pos_y;
-    float pos_z;
-    short type;
 };
 
 class WMOInstance

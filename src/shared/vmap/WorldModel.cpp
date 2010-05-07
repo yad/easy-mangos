@@ -81,8 +81,6 @@ namespace VMAP
         return false;
     }
 
-    // ===================== GroupModel ==================================
-
     class TriBoundFunc
     {
         public:
@@ -100,6 +98,120 @@ namespace VMAP
         protected:
             const std::vector<Vector3>::const_iterator vertices;
     };
+
+    // ===================== WmoLiquid ==================================
+
+    WmoLiquid::WmoLiquid(uint32 width, uint32 height, const Vector3 &corner):
+        iTilesX(width), iTilesY(height), iCorner(corner)
+    {
+        iHeight = new float[(width+1)*(height+1)];
+        iFlags = new uint8[width*height];
+    }
+
+    WmoLiquid::WmoLiquid(const WmoLiquid &other): iHeight(0), iFlags(0)
+    {
+        *this = other; // use assignment operator...
+    }
+
+    WmoLiquid::~WmoLiquid()
+    {
+        delete[] iHeight;
+        delete[] iFlags;
+    }
+
+    WmoLiquid& WmoLiquid::operator=(const WmoLiquid &other)
+    {
+        if (this == &other)
+            return *this;
+        iTilesX = other.iTilesX;
+        iTilesY = other.iTilesY;
+        iCorner = other.iCorner;
+        iType = other.iType;
+        delete iHeight;
+        delete iFlags;
+        if (other.iHeight)
+        {
+            iHeight = new float[(iTilesX+1)*(iTilesY+1)];
+            memcpy(iHeight, other.iHeight, (iTilesX+1)*(iTilesY+1)*sizeof(float));
+        }
+        else
+            iHeight = 0;
+        if (other.iFlags)
+        {
+            iFlags = new uint8[iTilesX * iTilesY];
+            memcpy(iFlags, other.iFlags, iTilesX * iTilesY);
+        }
+        else
+            iFlags = 0;
+        return *this;
+    }
+
+    bool WmoLiquid::GetLiquidHeight(const Vector3 &pos, float &height) const
+    {
+        uint32 tx = (pos.x - iCorner.x)/LIQUID_TILE_SIZE;
+        if (tx<0 || tx >= iTilesX) return false;
+        uint32 ty = (pos.y - iCorner.y)/LIQUID_TILE_SIZE;
+        if (ty<0 || ty >= iTilesY) return false;
+std::cout << "inside liquid grid! (flags:" << iFlags[tx + ty*iTilesX] << "\n";
+        if (iFlags[tx + ty*iTilesX] & 0x0f)
+        {
+std::cout << "liquid tile disabled!\n";
+        }
+        //placeholder...use only lower left corner vertex
+        float liqHeight = /* iCorner.z + */ iHeight[tx + ty*(iTilesX+1)];
+std::cout << "liquid level:" << liqHeight << " (pos.z=" << pos.z << ")" << std::endl;
+        return true;
+    }
+
+    uint32 WmoLiquid::GetFileSize()
+    {
+        return 2 * sizeof(uint32) +
+                sizeof(Vector3) +
+                (iTilesX + 1)*(iTilesY + 1) * sizeof(float) +
+                iTilesX * iTilesY;
+    }
+
+    bool WmoLiquid::writeToFile(FILE *wf)
+    {
+        bool result = true;
+        if (result && fwrite(&iTilesX, sizeof(uint32), 1, wf) != 1) result = false;
+        if (result && fwrite(&iTilesY, sizeof(uint32), 1, wf) != 1) result = false;
+        if (result && fwrite(&iCorner, sizeof(Vector3), 1, wf) != 1) result = false;
+        uint32 size = (iTilesX + 1)*(iTilesY + 1);
+        if (result && fwrite(iHeight, sizeof(float), size, wf) != size) result = false;
+        size = iTilesX*iTilesY;
+        if (result && fwrite(iFlags, sizeof(uint8), size, wf) != size) result = false;
+        return result;
+    }
+
+    bool WmoLiquid::readFromFile(FILE *rf, WmoLiquid *&out)
+    {
+        bool result = true;
+        WmoLiquid *liquid = new WmoLiquid();
+        if (result && fread(&liquid->iTilesX, sizeof(uint32), 1, rf) != 1) result = false;
+        if (result && fread(&liquid->iTilesY, sizeof(uint32), 1, rf) != 1) result = false;
+        if (result && fread(&liquid->iCorner, sizeof(Vector3), 1, rf) != 1) result = false;
+        uint32 size = (liquid->iTilesX + 1)*(liquid->iTilesY + 1);
+        liquid->iHeight = new float[size];
+        if (result && fread(liquid->iHeight, sizeof(float), size, rf) != size) result = false;
+        size = liquid->iTilesX * liquid->iTilesY;
+        liquid->iFlags = new uint8[size];
+        if (result && fread(liquid->iFlags, sizeof(uint8), size, rf) != size) result = false;
+        if (!result)
+            delete liquid;
+        out = liquid;
+        return result;
+    }
+
+    // ===================== GroupModel ==================================
+
+    GroupModel::GroupModel(const GroupModel &other):
+        iBound(other.iBound), iMogpFlags(other.iMogpFlags), iGroupWMOID(other.iGroupWMOID),
+        vertices(other.vertices), triangles(other.triangles), meshTree(other.meshTree), iLiquid(0)
+    {
+        if (other.iLiquid)
+            iLiquid = new WmoLiquid(*other.iLiquid);
+    }
 
     void GroupModel::setMeshData(std::vector<Vector3> &vert, std::vector<MeshTriangle> &tri)
     {
@@ -139,6 +251,19 @@ namespace VMAP
         // write mesh BIH
         if (result && fwrite("MBIH", 1, 4, wf) != 4) result = false;
         if (result) result = meshTree.writeToFile(wf);
+
+        // write liquid data
+        if (result && fwrite("LIQU", 1, 4, wf) != 4) result = false;
+        if (!iLiquid)
+        {
+            chunkSize = 0;
+            if (result && fwrite(&chunkSize, sizeof(uint32), 1, wf) != 1) result = false;
+            return result;
+        }
+        chunkSize = iLiquid->GetFileSize();
+        if (result && fwrite(&chunkSize, sizeof(uint32), 1, wf) != 1) result = false;
+        if (result) result = iLiquid->writeToFile(wf);
+
         return result;
     }
 
@@ -149,6 +274,8 @@ namespace VMAP
         uint32 chunkSize, count;
         triangles.clear();
         vertices.clear();
+        delete iLiquid;
+        iLiquid = 0;
 
         if (result && fread(&iBound, sizeof(G3D::AABox), 1, rf) != 1) result = false;
         if (result && fread(&iMogpFlags, sizeof(uint32), 1, rf) != 1) result = false;
@@ -173,6 +300,12 @@ namespace VMAP
         // read mesh BIH
         if (result && !readChunk(rf, chunk, "MBIH", 4)) result = false;
         if (result) result = meshTree.readFromFile(rf);
+
+        // write liquid data
+        if (result && !readChunk(rf, chunk, "LIQU", 4)) result = false;
+        if (result && fread(&chunkSize, sizeof(uint32), 1, rf) != 1) result = false;
+        if (result && chunkSize > 0)
+            result = WmoLiquid::readFromFile(rf, iLiquid);
         return result;
     }
 
