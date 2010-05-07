@@ -242,7 +242,7 @@ World::AddSession_ (WorldSession* s)
     {
         AddQueuedPlayer (s);
         UpdateMaxSessionCounters ();
-        sLog.outDetail ("PlayerQueue: Account id %u is in Queue Position (%u).", s->GetAccountId (), ++QueueSize);
+        DETAIL_LOG("PlayerQueue: Account id %u is in Queue Position (%u).", s->GetAccountId (), ++QueueSize);
         return;
     }
 
@@ -271,7 +271,7 @@ World::AddSession_ (WorldSession* s)
         popu /= pLimit;
         popu *= 2;
         loginDatabase.PExecute ("UPDATE realmlist SET population = '%f' WHERE id = '%d'", popu, realmID);
-        sLog.outDetail ("Server Population (%f).", popu);
+        DETAIL_LOG("Server Population (%f).", popu);
     }
 }
 
@@ -1290,7 +1290,7 @@ void World::SetInitialWorldSettings()
     mail_timer = uint32((((localtime( &m_gameTime )->tm_hour + 20) % 24)* HOUR * IN_MILLISECONDS) / m_timers[WUPDATE_AUCTIONS].GetInterval() );
                                                             //1440
     mail_timer_expires = uint32( (DAY * IN_MILLISECONDS) / (m_timers[WUPDATE_AUCTIONS].GetInterval()));
-    sLog.outDebug("Mail timer set to: %u, mail return is called every %u minutes", mail_timer, mail_timer_expires);
+    DEBUG_LOG("Mail timer set to: %u, mail return is called every %u minutes", mail_timer, mail_timer_expires);
 
     ///- Initialize static helper structures
     AIRegistry::Initialize();
@@ -1919,7 +1919,7 @@ void World::ProcessCliCommands()
     CliCommandHolder* command;
     while (cliCmdQueue.next(command))
     {
-        sLog.outDebug("CLI command under processing...");
+        DEBUG_LOG("CLI command under processing...");
         zprint = command->m_print;
         callbackArg = command->m_callbackArg;
         CliHandler handler(command->m_cliAccountId, command->m_cliAccessLevel, callbackArg, zprint);
@@ -2087,7 +2087,7 @@ void World::ResetBGDaily()
 
 void World::ResetDailyQuests()
 {
-    sLog.outDetail("Daily quests reset for all characters.");
+    DETAIL_LOG("Daily quests reset for all characters.");
     CharacterDatabase.Execute("DELETE FROM character_queststatus_daily");
     for(SessionMap::const_iterator itr = m_sessions.begin(); itr != m_sessions.end(); ++itr)
         if (itr->second->GetPlayer())
@@ -2099,7 +2099,7 @@ void World::ResetDailyQuests()
 
 void World::ResetWeeklyQuests()
 {
-    sLog.outDetail("Weekly quests reset for all characters.");
+    DETAIL_LOG("Weekly quests reset for all characters.");
     CharacterDatabase.Execute("DELETE FROM character_queststatus_weekly");
     for(SessionMap::const_iterator itr = m_sessions.begin(); itr != m_sessions.end(); ++itr)
         if (itr->second->GetPlayer())

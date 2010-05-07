@@ -828,6 +828,83 @@ bool Player::Create( uint32 guidlow, const std::string& name, uint8 race, uint8 
     return true;
 }
 
+bool Player::StoreNewItemInBestSlots(uint32 titem_id, uint32 titem_amount)
+{
+    DEBUG_LOG("STORAGE: Creating initial item, itemId = %u, count = %u",titem_id, titem_amount);
+
+    // attempt equip by one
+    while(titem_amount > 0)
+    {
+        uint16 eDest;
+        uint8 msg = CanEquipNewItem( NULL_SLOT, eDest, titem_id, false );
+        if( msg != EQUIP_ERR_OK )
+            break;
+
+        EquipNewItem( eDest, titem_id, true);
+        AutoUnequipOffhandIfNeed();
+        --titem_amount;
+    }
+
+    if(titem_amount == 0)
+        return true;                                        // equipped
+
+    // attempt store
+    ItemPosCountVec sDest;
+    // store in main bag to simplify second pass (special bags can be not equipped yet at this moment)
+    uint8 msg = CanStoreNewItem( INVENTORY_SLOT_BAG_0, NULL_SLOT, sDest, titem_id, titem_amount );
+    if( msg == EQUIP_ERR_OK )
+    {
+        StoreNewItem( sDest, titem_id, true, Item::GenerateItemRandomPropertyId(titem_id) );
+        return true;                                        // stored
+    }
+
+    // item can't be added
+    sLog.outError("STORAGE: Can't equip or store initial item %u for race %u class %u , error msg = %u",titem_id,getRace(),getClass(),msg);
+    return false;
+}
+
+// helper function, mainly for script side, but can be used for simple task in mangos also.
+Item* Player::StoreNewItemInInventorySlot(uint32 itemEntry, uint32 amount)
+{
+    ItemPosCountVec vDest;
+
+    uint8 msg = CanStoreNewItem(INVENTORY_SLOT_BAG_0, NULL_SLOT, vDest, itemEntry, amount);
+
+    if (msg == EQUIP_ERR_OK)
+    {
+        if (Item* pItem = StoreNewItem(vDest, itemEntry, true, Item::GenerateItemRandomPropertyId(itemEntry)))
+            return pItem;
+    }
+
+    return NULL;
+}
+
+void Player::SendMirrorTimer(MirrorTimerType Type, uint32 MaxValue, uint32 CurrentValue, int32 Regen)
+{
+    if (int(MaxValue) == DISABLED_MIRROR_TIMER)
+    {
+        if (int(CurrentValue) != DISABLED_MIRROR_TIMER)
+            StopMirrorTimer(Type);
+        return;
+    }
+    WorldPacket data(SMSG_START_MIRROR_TIMER, (21));
+    data << (uint32)Type;
+    data << CurrentValue;
+    data << MaxValue;
+    data << Regen;
+    data << (uint8)0;
+    data << (uint32)0;                                      // spell id
+    GetSession()->SendPacket( &data );
+}
+
+void Player::StopMirrorTimer(MirrorTimerType Type)
+{
+    m_MirrorTimer[Type] = DISABLED_MIRROR_TIMER;
+    WorldPacket data(SMSG_STOP_MIRROR_TIMER, 4);
+    data << (uint32)Type;
+    GetSession()->SendPacket( &data );
+}
+
 void Player::AutoEquipItem()
 {
     for(int i = INVENTORY_SLOT_ITEM_START; i < INVENTORY_SLOT_ITEM_END; i++)
@@ -2151,7 +2228,7 @@ void Player::Update( uint32 p_time )
         {
             // m_nextSave reseted in SaveToDB call
             SaveToDB();
-            sLog.outDetail("Player '%s' (GUID: %u) saved", GetName(), GetGUIDLow());
+            DETAIL_LOG("Player '%s' (GUID: %u) saved", GetName(), GetGUIDLow());
         }
         else
             m_nextSave -= p_time;
@@ -2486,7 +2563,7 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
     // client without expansion support
     if(GetSession()->Expansion() < mEntry->Expansion())
     {
-        sLog.outDebug("Player %s using client without required expansion tried teleport to non accessible map %u", GetName(), mapid);
+        DEBUG_LOG("Player %s using client without required expansion tried teleport to non accessible map %u", GetName(), mapid);
 
         if(GetTransport())
             RepopAtGraveyard();                             // teleport to near graveyard if on transport, looks blizz like :)
@@ -2497,7 +2574,7 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
     }
     else
     {
-        sLog.outDebug("Player %s is being teleported to map %u", GetName(), mapid);
+        DEBUG_LOG("Player %s is being teleported to map %u", GetName(), mapid);
     }
 
     // if we were on a transport, leave
@@ -3667,7 +3744,7 @@ void Player::SendInitialSpells()
 
     GetSession()->SendPacket(&data);
 
-    sLog.outDetail( "CHARACTER: Sent Initial Spells" );
+    DETAIL_LOG( "CHARACTER: Sent Initial Spells" );
 }
 
 void Player::RemoveMail(uint32 id)
@@ -4458,7 +4535,7 @@ void Player::_LoadSpellCooldowns(QueryResult *result)
 
             AddSpellCooldown(spell_id, item_id, db_time);
 
-            sLog.outDebug("Player (GUID: %u) spell %u, item %u cooldown loaded (%u secs).", GetGUIDLow(), spell_id, item_id, uint32(db_time-curTime));
+            DEBUG_LOG("Player (GUID: %u) spell %u, item %u cooldown loaded (%u secs).", GetGUIDLow(), spell_id, item_id, uint32(db_time-curTime));
         }
         while( result->NextRow() );
 
@@ -5680,7 +5757,7 @@ void Player::CleanupChannels()
             cMgr->LeftChannel(ch->GetName());               // deleted channel if empty
 
     }
-    sLog.outDebug("Player: channels cleaned up!");
+    DEBUG_LOG("Player: channels cleaned up!");
 }
 
 void Player::UpdateLocalChannels(uint32 newZone )
@@ -5729,7 +5806,7 @@ void Player::UpdateLocalChannels(uint32 newZone )
             cMgr->LeftChannel(name);                        // delete if empty
         }
     }
-    sLog.outDebug("Player: channels cleaned up!");
+    DEBUG_LOG("Player: channels cleaned up!");
 }
 
 void Player::LeaveLFGChannel()
@@ -6163,7 +6240,7 @@ inline int SkillGainChance(uint32 SkillValue, uint32 GrayLevel, uint32 GreenLeve
 
 bool Player::UpdateCraftSkill(uint32 spellid)
 {
-    sLog.outDebug("UpdateCraftSkill spellid %d", spellid);
+    DEBUG_LOG("UpdateCraftSkill spellid %d", spellid);
 
     SkillLineAbilityMapBounds bounds = sSpellMgr.GetSkillLineAbilityMapBounds(spellid);
 
@@ -6195,7 +6272,7 @@ bool Player::UpdateCraftSkill(uint32 spellid)
 
 bool Player::UpdateGatherSkill(uint32 SkillId, uint32 SkillValue, uint32 RedLevel, uint32 Multiplicator )
 {
-    sLog.outDebug("UpdateGatherSkill(SkillId %d SkillLevel %d RedLevel %d)", SkillId, SkillValue, RedLevel);
+    DEBUG_LOG("UpdateGatherSkill(SkillId %d SkillLevel %d RedLevel %d)", SkillId, SkillValue, RedLevel);
 
     uint32 gathering_skill_gain = sWorld.getConfig(CONFIG_UINT32_SKILL_GAIN_GATHERING);
 
@@ -6223,7 +6300,7 @@ bool Player::UpdateGatherSkill(uint32 SkillId, uint32 SkillValue, uint32 RedLeve
 
 bool Player::UpdateFishingSkill()
 {
-    sLog.outDebug("UpdateFishingSkill");
+    DEBUG_LOG("UpdateFishingSkill");
 
     uint32 SkillValue = GetPureSkillValue(SKILL_FISHING);
 
@@ -6241,13 +6318,13 @@ static uint32 bonusSkillLevels[] = {75,150,225,300,375,450};
 
 bool Player::UpdateSkillPro(uint16 SkillId, int32 Chance, uint32 step)
 {
-    sLog.outDebug("UpdateSkillPro(SkillId %d, Chance %3.1f%%)", SkillId, Chance/10.0);
+    DEBUG_LOG("UpdateSkillPro(SkillId %d, Chance %3.1f%%)", SkillId, Chance/10.0);
     if ( !SkillId )
         return false;
 
     if(Chance <= 0)                                         // speedup in 0 chance case
     {
-        sLog.outDebug("Player::UpdateSkillPro Chance=%3.1f%% missed", Chance/10.0);
+        DEBUG_LOG("Player::UpdateSkillPro Chance=%3.1f%% missed", Chance/10.0);
         return false;
     }
 
@@ -6284,11 +6361,11 @@ bool Player::UpdateSkillPro(uint16 SkillId, int32 Chance, uint32 step)
             }
         }
         GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_REACH_SKILL_LEVEL,SkillId);
-        sLog.outDebug("Player::UpdateSkillPro Chance=%3.1f%% taken", Chance/10.0);
+        DEBUG_LOG("Player::UpdateSkillPro Chance=%3.1f%% taken", Chance/10.0);
         return true;
     }
 
-    sLog.outDebug("Player::UpdateSkillPro Chance=%3.1f%% missed", Chance/10.0);
+    DEBUG_LOG("Player::UpdateSkillPro Chance=%3.1f%% missed", Chance/10.0);
     return false;
 }
 
@@ -6662,7 +6739,7 @@ int16 Player::GetSkillTempBonusValue(uint32 skill) const
 
 void Player::SendInitialActionButtons() const
 {
-    sLog.outDetail( "Initializing Action Buttons for '%u' spec '%u'", GetGUIDLow(), m_activeSpec);
+    DETAIL_LOG( "Initializing Action Buttons for '%u' spec '%u'", GetGUIDLow(), m_activeSpec);
 
     WorldPacket data(SMSG_ACTION_BUTTONS, 1+(MAX_ACTION_BUTTONS*4));
     data << uint8(1);                                       // talent spec amount (in packet)
@@ -6677,7 +6754,7 @@ void Player::SendInitialActionButtons() const
     }
 
     GetSession()->SendPacket( &data );
-    sLog.outDetail( "Action Buttons for '%u' spec '%u' Initialized", GetGUIDLow(), m_activeSpec );
+    DETAIL_LOG( "Action Buttons for '%u' spec '%u' Initialized", GetGUIDLow(), m_activeSpec );
 }
 
 bool Player::IsActionButtonDataValid(uint8 button, uint32 action, uint8 type, Player* player, bool msg)
@@ -6761,7 +6838,7 @@ ActionButton* Player::addActionButton(uint8 spec, uint8 button, uint32 action, u
     // set data and update to CHANGED if not NEW
     ab.SetActionAndType(action,ActionButtonType(type));
 
-    sLog.outDetail("Player '%u' Added Action '%u' (type %u) to Button '%u' for spec %u", GetGUIDLow(), action, uint32(type), button, spec);
+    DETAIL_LOG("Player '%u' Added Action '%u' (type %u) to Button '%u' for spec %u", GetGUIDLow(), action, uint32(type), button, spec);
     return &ab;
 }
 
@@ -6783,7 +6860,7 @@ void Player::removeActionButton(uint8 spec, uint8 button)
     else
         buttonItr->second.uState = ACTIONBUTTON_DELETED;    // saved, will deleted at next save
 
-    sLog.outDetail("Action Button '%u' Removed from Player '%u' for spec %u", button, GetGUIDLow(), spec);
+    DETAIL_LOG("Action Button '%u' Removed from Player '%u' for spec %u", button, GetGUIDLow(), spec);
 }
 
 ActionButton const* Player::GetActionButton(uint8 button)
@@ -6801,7 +6878,7 @@ bool Player::SetPosition(float x, float y, float z, float orientation, bool tele
     // prevent crash when a bad coord is sent by the client
     if(!MaNGOS::IsValidMapCoord(x,y,z,orientation))
     {
-        sLog.outDebug("Player::SetPosition(%f, %f, %f, %f, %d) .. bad coordinates for player %d!",x,y,z,orientation,teleport,GetGUIDLow());
+        DEBUG_LOG("Player::SetPosition(%f, %f, %f, %f, %d) .. bad coordinates for player %d!",x,y,z,orientation,teleport,GetGUIDLow());
         return false;
     }
 
@@ -6973,7 +7050,7 @@ void Player::CheckExploreSystem()
                 GiveXP( XP, NULL );
                 SendExplorationExperience(area,XP);
             }
-            sLog.outDetail("PLAYER: Player %u discovered a new area: %u", GetGUIDLow(), area);
+            DETAIL_LOG("PLAYER: Player %u discovered a new area: %u", GetGUIDLow(), area);
         }
     }
 }
@@ -7811,7 +7888,7 @@ void Player::_ApplyItemMods(Item *item, uint8 slot,bool apply)
     if(item->IsBroken())
         return;
 
-    sLog.outDetail("applying mods for item %u ",item->GetGUIDLow());
+    DETAIL_LOG("applying mods for item %u ",item->GetGUIDLow());
 
     uint32 attacktype = Player::GetAttackBySlot(slot);
     if(attacktype < MAX_ATTACK)
@@ -7828,7 +7905,7 @@ void Player::_ApplyItemMods(Item *item, uint8 slot,bool apply)
     if(proto->Socket[0].Color)                              //only (un)equipping of items with sockets can influence metagems, so no need to waste time with normal items
         CorrectMetaGemEnchants(slot, apply);
 
-    sLog.outDebug("_ApplyItemMods complete.");
+    DEBUG_LOG("_ApplyItemMods complete.");
 }
 
 void Player::_ApplyItemBonuses(ItemPrototype const *proto, uint8 slot, bool apply, bool only_level_scale /*= false*/)
@@ -8490,7 +8567,7 @@ void Player::CastItemUseSpell(Item *item,SpellCastTargets const& targets,uint8 c
 
 void Player::_RemoveAllItemMods()
 {
-    sLog.outDebug("_RemoveAllItemMods start.");
+    DEBUG_LOG("_RemoveAllItemMods start.");
 
     for (int i = 0; i < INVENTORY_SLOT_BAG_END; ++i)
     {
@@ -8533,12 +8610,12 @@ void Player::_RemoveAllItemMods()
         }
     }
 
-    sLog.outDebug("_RemoveAllItemMods complete.");
+    DEBUG_LOG("_RemoveAllItemMods complete.");
 }
 
 void Player::_ApplyAllItemMods()
 {
-    sLog.outDebug("_ApplyAllItemMods start.");
+    DEBUG_LOG("_ApplyAllItemMods start.");
 
     for (int i = 0; i < INVENTORY_SLOT_BAG_END; ++i)
     {
@@ -8582,7 +8659,7 @@ void Player::_ApplyAllItemMods()
         }
     }
 
-    sLog.outDebug("_ApplyAllItemMods complete.");
+    DEBUG_LOG("_ApplyAllItemMods complete.");
 }
 
 void Player::_ApplyAllLevelScaleItemMods(bool apply)
@@ -8711,12 +8788,12 @@ void Player::SendLoot(ObjectGuid guid, LootType loot_type)
     Loot    *loot = 0;
     PermissionTypes permission = ALL_PERMISSION;
 
-    sLog.outDebug("Player::SendLoot");
+    DEBUG_LOG("Player::SendLoot");
     switch(guid.GetHigh())
     {
         case HIGHGUID_GAMEOBJECT:
         {
-            sLog.outDebug("       IS_GAMEOBJECT_GUID(guid)");
+            DEBUG_LOG("       IS_GAMEOBJECT_GUID(guid)");
             GameObject *go = GetMap()->GetGameObject(guid);
 
             // not check distance for GO in case owned GO (fishing bobber case, for example)
@@ -8743,7 +8820,7 @@ void Player::SendLoot(ObjectGuid guid, LootType loot_type)
 
                 if (lootid)
                 {
-                    sLog.outDebug("       if(lootid)");
+                    DEBUG_LOG("       if(lootid)");
                     loot->clear();
                     loot->FillLoot(lootid, LootTemplates_Gameobject, this, false);
                     loot->generateMoneyLoot(go->GetGOInfo()->MinMoneyLoot, go->GetGOInfo()->MaxMoneyLoot);
@@ -9054,7 +9131,7 @@ void Player::SendInitWorldStates(uint32 zoneid, uint32 areaid)
     uint16 NumberOfFields = 0;
     uint32 mapid = GetMapId();
 
-    sLog.outDebug("Sending SMSG_INIT_WORLD_STATES to Map:%u, Zone: %u", mapid, zoneid);
+    DEBUG_LOG("Sending SMSG_INIT_WORLD_STATES to Map:%u, Zone: %u", mapid, zoneid);
 
     // may be exist better way to do this...
     switch(zoneid)
@@ -9625,7 +9702,7 @@ uint32 Player::GetXPRestBonus(uint32 xp)
 
     SetRestBonus( GetRestBonus() - rested_bonus);
 
-    sLog.outDetail("Player gain %u xp (+ %u Rested Bonus). Rested points=%f",xp+rested_bonus,rested_bonus,GetRestBonus());
+    DETAIL_LOG("Player gain %u xp (+ %u Rested Bonus). Rested points=%f",xp+rested_bonus,rested_bonus,GetRestBonus());
     return rested_bonus;
 }
 
@@ -10699,7 +10776,7 @@ uint8 Player::_CanStoreItem_InInventorySlots( uint8 slot_begin, uint8 slot_end, 
 
 uint8 Player::_CanStoreItem( uint8 bag, uint8 slot, ItemPosCountVec &dest, uint32 entry, uint32 count, Item *pItem, bool swap, uint32* no_space_count ) const
 {
-    sLog.outDebug( "STORAGE: CanStoreItem bag = %u, slot = %u, item = %u, count = %u", bag, slot, entry, count);
+    DEBUG_LOG( "STORAGE: CanStoreItem bag = %u, slot = %u, item = %u, count = %u", bag, slot, entry, count);
 
     ItemPrototype const *pProto = ObjectMgr::GetItemPrototype(entry);
     if (!pProto)
@@ -11195,7 +11272,7 @@ uint8 Player::CanStoreItems( Item **pItems,int count) const
         // no item
         if (!pItem)  continue;
 
-        sLog.outDebug( "STORAGE: CanStoreItems %i. item = %u, count = %u", k+1, pItem->GetEntry(), pItem->GetCount());
+        DEBUG_LOG( "STORAGE: CanStoreItems %i. item = %u, count = %u", k+1, pItem->GetEntry(), pItem->GetCount());
         ItemPrototype const *pProto = pItem->GetProto();
 
         // strange item
@@ -11405,7 +11482,7 @@ uint8 Player::CanEquipItem( uint8 slot, uint16 &dest, Item *pItem, bool swap, bo
     dest = 0;
     if( pItem )
     {
-        sLog.outDebug( "STORAGE: CanEquipItem slot = %u, item = %u, count = %u", slot, pItem->GetEntry(), pItem->GetCount());
+        DEBUG_LOG( "STORAGE: CanEquipItem slot = %u, item = %u, count = %u", slot, pItem->GetEntry(), pItem->GetCount());
         ItemPrototype const *pProto = pItem->GetProto();
         if( pProto )
         {
@@ -11550,7 +11627,7 @@ uint8 Player::CanUnequipItem( uint16 pos, bool swap ) const
     if( !pItem )
         return EQUIP_ERR_OK;
 
-    sLog.outDebug( "STORAGE: CanUnequipItem slot = %u, item = %u, count = %u", pos, pItem->GetEntry(), pItem->GetCount());
+    DEBUG_LOG( "STORAGE: CanUnequipItem slot = %u, item = %u, count = %u", pos, pItem->GetEntry(), pItem->GetCount());
 
     ItemPrototype const *pProto = pItem->GetProto();
     if( !pProto )
@@ -11586,7 +11663,7 @@ uint8 Player::CanBankItem( uint8 bag, uint8 slot, ItemPosCountVec &dest, Item *p
 
     uint32 count = pItem->GetCount();
 
-    sLog.outDebug( "STORAGE: CanBankItem bag = %u, slot = %u, item = %u, count = %u", bag, slot, pItem->GetEntry(), pItem->GetCount());
+    DEBUG_LOG( "STORAGE: CanBankItem bag = %u, slot = %u, item = %u, count = %u", bag, slot, pItem->GetEntry(), pItem->GetCount());
     ItemPrototype const *pProto = pItem->GetProto();
     if (!pProto)
         return swap ? EQUIP_ERR_ITEMS_CANT_BE_SWAPPED : EQUIP_ERR_ITEM_NOT_FOUND;
@@ -11822,7 +11899,7 @@ uint8 Player::CanUseItem( Item *pItem, bool not_loading ) const
                 }
             }
         }
-        sLog.outDebug( "STORAGE: CanUseItem item = %u", pItem->GetEntry());
+        DEBUG_LOG( "STORAGE: CanUseItem item = %u", pItem->GetEntry());
 
         if (!isAlive() && not_loading)
             return EQUIP_ERR_YOU_ARE_DEAD;
@@ -11927,7 +12004,7 @@ bool Player::CanUseItem( ItemPrototype const *pProto )
 
 uint8 Player::CanUseAmmo( uint32 item ) const
 {
-    sLog.outDebug( "STORAGE: CanUseAmmo item = %u", item);
+    DEBUG_LOG( "STORAGE: CanUseAmmo item = %u", item);
     if( !isAlive() )
         return EQUIP_ERR_YOU_ARE_DEAD;
     //if( isStunned() )
@@ -12052,7 +12129,7 @@ Item* Player::_StoreItem( uint16 pos, Item *pItem, uint32 count, bool clone, boo
     uint8 bag = pos >> 8;
     uint8 slot = pos & 255;
 
-    sLog.outDebug( "STORAGE: StoreItem bag = %u, slot = %u, item = %u, count = %u", bag, slot, pItem->GetEntry(), count);
+    DEBUG_LOG( "STORAGE: StoreItem bag = %u, slot = %u, item = %u, count = %u", bag, slot, pItem->GetEntry(), count);
 
     Item *pItem2 = GetItemByPos( bag, slot );
 
@@ -12317,7 +12394,7 @@ void Player::VisualizeItem( uint8 slot, Item *pItem)
     if( pItem->GetProto()->Bonding == BIND_WHEN_EQUIPED || pItem->GetProto()->Bonding == BIND_WHEN_PICKED_UP || pItem->GetProto()->Bonding == BIND_QUEST_ITEM )
         pItem->SetBinding( true );
 
-    sLog.outDebug( "STORAGE: EquipItem slot = %u, item = %u", slot, pItem->GetEntry());
+    DEBUG_LOG( "STORAGE: EquipItem slot = %u, item = %u", slot, pItem->GetEntry());
 
     m_items[slot] = pItem;
     SetUInt64Value( PLAYER_FIELD_INV_SLOT_HEAD + (slot * 2), pItem->GetGUID() );
@@ -12342,7 +12419,7 @@ void Player::RemoveItem( uint8 bag, uint8 slot, bool update )
     Item *pItem = GetItemByPos( bag, slot );
     if( pItem )
     {
-        sLog.outDebug( "STORAGE: RemoveItem bag = %u, slot = %u, item = %u", bag, slot, pItem->GetEntry());
+        DEBUG_LOG( "STORAGE: RemoveItem bag = %u, slot = %u, item = %u", bag, slot, pItem->GetEntry());
 
         RemoveEnchantmentDurations(pItem);
         RemoveItemDurations(pItem);
@@ -12469,7 +12546,7 @@ void Player::DestroyItem( uint8 bag, uint8 slot, bool update )
     Item *pItem = GetItemByPos( bag, slot );
     if( pItem )
     {
-        sLog.outDebug( "STORAGE: DestroyItem bag = %u, slot = %u, item = %u", bag, slot, pItem->GetEntry());
+        DEBUG_LOG( "STORAGE: DestroyItem bag = %u, slot = %u, item = %u", bag, slot, pItem->GetEntry());
 
         // start from destroy contained items (only equipped bag can have its)
         if (pItem->IsBag() && pItem->IsEquipped())          // this also prevent infinity loop if empty bag stored in bag==slot
@@ -12546,7 +12623,7 @@ void Player::DestroyItem( uint8 bag, uint8 slot, bool update )
 
 void Player::DestroyItemCount( uint32 item, uint32 count, bool update, bool unequip_check)
 {
-    sLog.outDebug( "STORAGE: DestroyItemCount item = %u, count = %u", item, count);
+    DEBUG_LOG( "STORAGE: DestroyItemCount item = %u, count = %u", item, count);
     uint32 remcount = 0;
 
     // in inventory
@@ -12675,7 +12752,7 @@ void Player::DestroyItemCount( uint32 item, uint32 count, bool update, bool uneq
 
 void Player::DestroyZoneLimitedItem( bool update, uint32 new_zone )
 {
-    sLog.outDebug( "STORAGE: DestroyZoneLimitedItem in map %u and area %u", GetMapId(), new_zone );
+    DEBUG_LOG( "STORAGE: DestroyZoneLimitedItem in map %u and area %u", GetMapId(), new_zone );
 
     // in inventory
     for(int i = INVENTORY_SLOT_ITEM_START; i < INVENTORY_SLOT_ITEM_END; ++i)
@@ -12707,7 +12784,7 @@ void Player::DestroyConjuredItems( bool update )
 {
     // used when entering arena
     // destroys all conjured items
-    sLog.outDebug( "STORAGE: DestroyConjuredItems" );
+    DEBUG_LOG( "STORAGE: DestroyConjuredItems" );
 
     // in inventory
     for(int i = INVENTORY_SLOT_ITEM_START; i < INVENTORY_SLOT_ITEM_END; ++i)
@@ -12756,7 +12833,7 @@ void Player::DestroyItemCount( Item* pItem, uint32 &count, bool update )
         }
     }
 
-    sLog.outDebug( "STORAGE: DestroyItemCount item (GUID: %u, Entry: %u) count = %u", pItem->GetGUIDLow(),pItem->GetEntry(), count);
+    DEBUG_LOG( "STORAGE: DestroyItemCount item (GUID: %u, Entry: %u) count = %u", pItem->GetGUIDLow(),pItem->GetEntry(), count);
 
     if( pItem->GetCount() <= count )
     {
@@ -12811,7 +12888,7 @@ void Player::SplitItem( uint16 src, uint16 dst, uint32 count )
         return;
     }
 
-    sLog.outDebug( "STORAGE: SplitItem bag = %u, slot = %u, item = %u, count = %u", dstbag, dstslot, pSrcItem->GetEntry(), count);
+    DEBUG_LOG( "STORAGE: SplitItem bag = %u, slot = %u, item = %u, count = %u", dstbag, dstslot, pSrcItem->GetEntry(), count);
     Item *pNewItem = pSrcItem->CloneItem( count, this );
     if( !pNewItem )
     {
@@ -12896,7 +12973,7 @@ void Player::SwapItem( uint16 src, uint16 dst )
     if (!pSrcItem)
         return;
 
-    sLog.outDebug( "STORAGE: SwapItem bag = %u, slot = %u, item = %u", dstbag, dstslot, pSrcItem->GetEntry());
+    DEBUG_LOG( "STORAGE: SwapItem bag = %u, slot = %u, item = %u", dstbag, dstslot, pSrcItem->GetEntry());
 
     if (!isAlive())
     {
@@ -13212,7 +13289,7 @@ void Player::AddItemToBuyBackSlot( Item *pItem )
         }
 
         RemoveItemFromBuyBackSlot( slot, true );
-        sLog.outDebug( "STORAGE: AddItemToBuyBackSlot item = %u, slot = %u", pItem->GetEntry(), slot);
+        DEBUG_LOG( "STORAGE: AddItemToBuyBackSlot item = %u, slot = %u", pItem->GetEntry(), slot);
 
         m_items[slot] = pItem;
         time_t base = time(NULL);
@@ -13234,7 +13311,7 @@ void Player::AddItemToBuyBackSlot( Item *pItem )
 
 Item* Player::GetItemFromBuyBackSlot( uint32 slot )
 {
-    sLog.outDebug( "STORAGE: GetItemFromBuyBackSlot slot = %u", slot);
+    DEBUG_LOG( "STORAGE: GetItemFromBuyBackSlot slot = %u", slot);
     if (slot >= BUYBACK_SLOT_START && slot < BUYBACK_SLOT_END)
         return m_items[slot];
     return NULL;
@@ -13242,7 +13319,7 @@ Item* Player::GetItemFromBuyBackSlot( uint32 slot )
 
 void Player::RemoveItemFromBuyBackSlot( uint32 slot, bool del )
 {
-    sLog.outDebug( "STORAGE: RemoveItemFromBuyBackSlot slot = %u", slot);
+    DEBUG_LOG( "STORAGE: RemoveItemFromBuyBackSlot slot = %u", slot);
     if (slot >= BUYBACK_SLOT_START && slot < BUYBACK_SLOT_END)
     {
         Item *pItem = m_items[slot];
@@ -13267,7 +13344,7 @@ void Player::RemoveItemFromBuyBackSlot( uint32 slot, bool del )
 
 void Player::SendEquipError( uint8 msg, Item* pItem, Item *pItem2, uint32 itemid /*= 0*/ )
 {
-    sLog.outDebug( "WORLD: Sent SMSG_INVENTORY_CHANGE_FAILURE (%u)", msg);
+    DEBUG_LOG( "WORLD: Sent SMSG_INVENTORY_CHANGE_FAILURE (%u)", msg);
     WorldPacket data(SMSG_INVENTORY_CHANGE_FAILURE, 1+8+8+1);
     data << uint8(msg);
 
@@ -13310,7 +13387,7 @@ void Player::SendEquipError( uint8 msg, Item* pItem, Item *pItem2, uint32 itemid
 
 void Player::SendBuyError( uint8 msg, Creature* pCreature, uint32 item, uint32 param )
 {
-    sLog.outDebug( "WORLD: Sent SMSG_BUY_FAILED" );
+    DEBUG_LOG( "WORLD: Sent SMSG_BUY_FAILED" );
     WorldPacket data( SMSG_BUY_FAILED, (8+4+4+1) );
     data << uint64(pCreature ? pCreature->GetGUID() : 0);
     data << uint32(item);
@@ -13322,7 +13399,7 @@ void Player::SendBuyError( uint8 msg, Creature* pCreature, uint32 item, uint32 p
 
 void Player::SendSellError( uint8 msg, Creature* pCreature, uint64 guid, uint32 param )
 {
-    sLog.outDebug( "WORLD: Sent SMSG_SELL_ITEM" );
+    DEBUG_LOG( "WORLD: Sent SMSG_SELL_ITEM" );
     WorldPacket data( SMSG_SELL_ITEM,(8+8+(param?4:0)+1));  // last check 2.0.10
     data << uint64(pCreature ? pCreature->GetGUID() : 0);
     data << uint64(guid);
@@ -13367,7 +13444,7 @@ void Player::UpdateItemDuration(uint32 time, bool realtimeonly)
     if (m_itemDuration.empty())
         return;
 
-    sLog.outDebug("Player::UpdateItemDuration(%u,%u)", time, realtimeonly);
+    DEBUG_LOG("Player::UpdateItemDuration(%u,%u)", time, realtimeonly);
 
     for(ItemDurationList::const_iterator itr = m_itemDuration.begin(); itr != m_itemDuration.end(); )
     {
@@ -13616,81 +13693,81 @@ void Player::ApplyEnchantment(Item *item, EnchantmentSlot slot, bool apply, bool
                         }
                     }
 
-                    sLog.outDebug("Adding %u to stat nb %u",enchant_amount,enchant_spell_id);
+                    DEBUG_LOG("Adding %u to stat nb %u",enchant_amount,enchant_spell_id);
                     switch (enchant_spell_id)
                     {
                         case ITEM_MOD_MANA:
-                            sLog.outDebug("+ %u MANA",enchant_amount);
+                            DEBUG_LOG("+ %u MANA",enchant_amount);
                             HandleStatModifier(UNIT_MOD_MANA, BASE_VALUE, float(enchant_amount), apply);
                             break;
                         case ITEM_MOD_HEALTH:
-                            sLog.outDebug("+ %u HEALTH",enchant_amount);
+                            DEBUG_LOG("+ %u HEALTH",enchant_amount);
                             HandleStatModifier(UNIT_MOD_HEALTH, BASE_VALUE, float(enchant_amount), apply);
                             break;
                         case ITEM_MOD_AGILITY:
-                            sLog.outDebug("+ %u AGILITY",enchant_amount);
+                            DEBUG_LOG("+ %u AGILITY",enchant_amount);
                             HandleStatModifier(UNIT_MOD_STAT_AGILITY, TOTAL_VALUE, float(enchant_amount), apply);
                             ApplyStatBuffMod(STAT_AGILITY, float(enchant_amount), apply);
                             break;
                         case ITEM_MOD_STRENGTH:
-                            sLog.outDebug("+ %u STRENGTH",enchant_amount);
+                            DEBUG_LOG("+ %u STRENGTH",enchant_amount);
                             HandleStatModifier(UNIT_MOD_STAT_STRENGTH, TOTAL_VALUE, float(enchant_amount), apply);
                             ApplyStatBuffMod(STAT_STRENGTH, float(enchant_amount), apply);
                             break;
                         case ITEM_MOD_INTELLECT:
-                            sLog.outDebug("+ %u INTELLECT",enchant_amount);
+                            DEBUG_LOG("+ %u INTELLECT",enchant_amount);
                             HandleStatModifier(UNIT_MOD_STAT_INTELLECT, TOTAL_VALUE, float(enchant_amount), apply);
                             ApplyStatBuffMod(STAT_INTELLECT, float(enchant_amount), apply);
                             break;
                         case ITEM_MOD_SPIRIT:
-                            sLog.outDebug("+ %u SPIRIT",enchant_amount);
+                            DEBUG_LOG("+ %u SPIRIT",enchant_amount);
                             HandleStatModifier(UNIT_MOD_STAT_SPIRIT, TOTAL_VALUE, float(enchant_amount), apply);
                             ApplyStatBuffMod(STAT_SPIRIT, float(enchant_amount), apply);
                             break;
                         case ITEM_MOD_STAMINA:
-                            sLog.outDebug("+ %u STAMINA",enchant_amount);
+                            DEBUG_LOG("+ %u STAMINA",enchant_amount);
                             HandleStatModifier(UNIT_MOD_STAT_STAMINA, TOTAL_VALUE, float(enchant_amount), apply);
                             ApplyStatBuffMod(STAT_STAMINA, float(enchant_amount), apply);
                             break;
                         case ITEM_MOD_DEFENSE_SKILL_RATING:
                             ((Player*)this)->ApplyRatingMod(CR_DEFENSE_SKILL, enchant_amount, apply);
-                            sLog.outDebug("+ %u DEFENCE", enchant_amount);
+                            DEBUG_LOG("+ %u DEFENCE", enchant_amount);
                             break;
                         case  ITEM_MOD_DODGE_RATING:
                             ((Player*)this)->ApplyRatingMod(CR_DODGE, enchant_amount, apply);
-                            sLog.outDebug("+ %u DODGE", enchant_amount);
+                            DEBUG_LOG("+ %u DODGE", enchant_amount);
                             break;
                         case ITEM_MOD_PARRY_RATING:
                             ((Player*)this)->ApplyRatingMod(CR_PARRY, enchant_amount, apply);
-                            sLog.outDebug("+ %u PARRY", enchant_amount);
+                            DEBUG_LOG("+ %u PARRY", enchant_amount);
                             break;
                         case ITEM_MOD_BLOCK_RATING:
                             ((Player*)this)->ApplyRatingMod(CR_BLOCK, enchant_amount, apply);
-                            sLog.outDebug("+ %u SHIELD_BLOCK", enchant_amount);
+                            DEBUG_LOG("+ %u SHIELD_BLOCK", enchant_amount);
                             break;
                         case ITEM_MOD_HIT_MELEE_RATING:
                             ((Player*)this)->ApplyRatingMod(CR_HIT_MELEE, enchant_amount, apply);
-                            sLog.outDebug("+ %u MELEE_HIT", enchant_amount);
+                            DEBUG_LOG("+ %u MELEE_HIT", enchant_amount);
                             break;
                         case ITEM_MOD_HIT_RANGED_RATING:
                             ((Player*)this)->ApplyRatingMod(CR_HIT_RANGED, enchant_amount, apply);
-                            sLog.outDebug("+ %u RANGED_HIT", enchant_amount);
+                            DEBUG_LOG("+ %u RANGED_HIT", enchant_amount);
                             break;
                         case ITEM_MOD_HIT_SPELL_RATING:
                             ((Player*)this)->ApplyRatingMod(CR_HIT_SPELL, enchant_amount, apply);
-                            sLog.outDebug("+ %u SPELL_HIT", enchant_amount);
+                            DEBUG_LOG("+ %u SPELL_HIT", enchant_amount);
                             break;
                         case ITEM_MOD_CRIT_MELEE_RATING:
                             ((Player*)this)->ApplyRatingMod(CR_CRIT_MELEE, enchant_amount, apply);
-                            sLog.outDebug("+ %u MELEE_CRIT", enchant_amount);
+                            DEBUG_LOG("+ %u MELEE_CRIT", enchant_amount);
                             break;
                         case ITEM_MOD_CRIT_RANGED_RATING:
                             ((Player*)this)->ApplyRatingMod(CR_CRIT_RANGED, enchant_amount, apply);
-                            sLog.outDebug("+ %u RANGED_CRIT", enchant_amount);
+                            DEBUG_LOG("+ %u RANGED_CRIT", enchant_amount);
                             break;
                         case ITEM_MOD_CRIT_SPELL_RATING:
                             ((Player*)this)->ApplyRatingMod(CR_CRIT_SPELL, enchant_amount, apply);
-                            sLog.outDebug("+ %u SPELL_CRIT", enchant_amount);
+                            DEBUG_LOG("+ %u SPELL_CRIT", enchant_amount);
                             break;
 //                        Values from ITEM_STAT_MELEE_HA_RATING to ITEM_MOD_HASTE_RANGED_RATING are never used
 //                        in Enchantments
@@ -13725,13 +13802,13 @@ void Player::ApplyEnchantment(Item *item, EnchantmentSlot slot, bool apply, bool
                             ((Player*)this)->ApplyRatingMod(CR_HIT_MELEE, enchant_amount, apply);
                             ((Player*)this)->ApplyRatingMod(CR_HIT_RANGED, enchant_amount, apply);
                             ((Player*)this)->ApplyRatingMod(CR_HIT_SPELL, enchant_amount, apply);
-                            sLog.outDebug("+ %u HIT", enchant_amount);
+                            DEBUG_LOG("+ %u HIT", enchant_amount);
                             break;
                         case ITEM_MOD_CRIT_RATING:
                             ((Player*)this)->ApplyRatingMod(CR_CRIT_MELEE, enchant_amount, apply);
                             ((Player*)this)->ApplyRatingMod(CR_CRIT_RANGED, enchant_amount, apply);
                             ((Player*)this)->ApplyRatingMod(CR_CRIT_SPELL, enchant_amount, apply);
-                            sLog.outDebug("+ %u CRITICAL", enchant_amount);
+                            DEBUG_LOG("+ %u CRITICAL", enchant_amount);
                             break;
 //                        Values ITEM_MOD_HIT_TAKEN_RATING and ITEM_MOD_CRIT_TAKEN_RATING are never used in Enchantment
 //                        case ITEM_MOD_HIT_TAKEN_RATING:
@@ -13748,38 +13825,38 @@ void Player::ApplyEnchantment(Item *item, EnchantmentSlot slot, bool apply, bool
                             ((Player*)this)->ApplyRatingMod(CR_CRIT_TAKEN_MELEE, enchant_amount, apply);
                             ((Player*)this)->ApplyRatingMod(CR_CRIT_TAKEN_RANGED, enchant_amount, apply);
                             ((Player*)this)->ApplyRatingMod(CR_CRIT_TAKEN_SPELL, enchant_amount, apply);
-                            sLog.outDebug("+ %u RESILIENCE", enchant_amount);
+                            DEBUG_LOG("+ %u RESILIENCE", enchant_amount);
                             break;
                         case ITEM_MOD_HASTE_RATING:
                             ((Player*)this)->ApplyRatingMod(CR_HASTE_MELEE, enchant_amount, apply);
                             ((Player*)this)->ApplyRatingMod(CR_HASTE_RANGED, enchant_amount, apply);
                             ((Player*)this)->ApplyRatingMod(CR_HASTE_SPELL, enchant_amount, apply);
-                            sLog.outDebug("+ %u HASTE", enchant_amount);
+                            DEBUG_LOG("+ %u HASTE", enchant_amount);
                             break;
                         case ITEM_MOD_EXPERTISE_RATING:
                             ((Player*)this)->ApplyRatingMod(CR_EXPERTISE, enchant_amount, apply);
-                            sLog.outDebug("+ %u EXPERTISE", enchant_amount);
+                            DEBUG_LOG("+ %u EXPERTISE", enchant_amount);
                             break;
                         case ITEM_MOD_ATTACK_POWER:
                             HandleStatModifier(UNIT_MOD_ATTACK_POWER, TOTAL_VALUE, float(enchant_amount), apply);
                             HandleStatModifier(UNIT_MOD_ATTACK_POWER_RANGED, TOTAL_VALUE, float(enchant_amount), apply);
-                            sLog.outDebug("+ %u ATTACK_POWER", enchant_amount);
+                            DEBUG_LOG("+ %u ATTACK_POWER", enchant_amount);
                             break;
                         case ITEM_MOD_RANGED_ATTACK_POWER:
                             HandleStatModifier(UNIT_MOD_ATTACK_POWER_RANGED, TOTAL_VALUE, float(enchant_amount), apply);
-                            sLog.outDebug("+ %u RANGED_ATTACK_POWER", enchant_amount);
+                            DEBUG_LOG("+ %u RANGED_ATTACK_POWER", enchant_amount);
                             break;
                         case ITEM_MOD_MANA_REGENERATION:
                             ((Player*)this)->ApplyManaRegenBonus(enchant_amount, apply);
-                            sLog.outDebug("+ %u MANA_REGENERATION", enchant_amount);
+                            DEBUG_LOG("+ %u MANA_REGENERATION", enchant_amount);
                             break;
                         case ITEM_MOD_ARMOR_PENETRATION_RATING:
                             ((Player*)this)->ApplyRatingMod(CR_ARMOR_PENETRATION, enchant_amount, apply);
-                            sLog.outDebug("+ %u ARMOR PENETRATION", enchant_amount);
+                            DEBUG_LOG("+ %u ARMOR PENETRATION", enchant_amount);
                             break;
                         case ITEM_MOD_SPELL_POWER:
                             ((Player*)this)->ApplySpellPowerBonus(enchant_amount, apply);
-                            sLog.outDebug("+ %u SPELL_POWER", enchant_amount);
+                            DEBUG_LOG("+ %u SPELL_POWER", enchant_amount);
                             break;
                         case ITEM_MOD_BLOCK_VALUE:
                             HandleBaseModValue(SHIELD_BLOCK_VALUE, FLAT_MOD, float(enchant_amount), apply);
@@ -15085,7 +15162,7 @@ bool Player::SatisfyQuestLog( bool msg )
     {
         WorldPacket data( SMSG_QUESTLOG_FULL, 0 );
         GetSession()->SendPacket( &data );
-        sLog.outDebug( "WORLD: Sent SMSG_QUESTLOG_FULL" );
+        DEBUG_LOG( "WORLD: Sent SMSG_QUESTLOG_FULL" );
     }
     return false;
 }
@@ -15962,14 +16039,14 @@ void Player::SendQuestComplete( uint32 quest_id )
         WorldPacket data( SMSG_QUESTUPDATE_COMPLETE, 4 );
         data << uint32(quest_id);
         GetSession()->SendPacket( &data );
-        sLog.outDebug( "WORLD: Sent SMSG_QUESTUPDATE_COMPLETE quest = %u", quest_id );
+        DEBUG_LOG( "WORLD: Sent SMSG_QUESTUPDATE_COMPLETE quest = %u", quest_id );
     }
 }
 
 void Player::SendQuestReward( Quest const *pQuest, uint32 XP, Object * questGiver )
 {
     uint32 questid = pQuest->GetQuestId();
-    sLog.outDebug( "WORLD: Sent SMSG_QUESTGIVER_QUEST_COMPLETE quest = %u", questid );
+    DEBUG_LOG( "WORLD: Sent SMSG_QUESTGIVER_QUEST_COMPLETE quest = %u", questid );
     WorldPacket data( SMSG_QUESTGIVER_QUEST_COMPLETE, (4+4+4+4+4) );
     data << uint32(questid);
 
@@ -16001,7 +16078,7 @@ void Player::SendQuestFailed( uint32 quest_id )
         data << uint32(quest_id);
         data << uint32(0);                                  // failed reason (4 for inventory is full)
         GetSession()->SendPacket( &data );
-        sLog.outDebug("WORLD: Sent SMSG_QUESTGIVER_QUEST_FAILED");
+        DEBUG_LOG("WORLD: Sent SMSG_QUESTGIVER_QUEST_FAILED");
     }
 }
 
@@ -16012,7 +16089,7 @@ void Player::SendQuestTimerFailed( uint32 quest_id )
         WorldPacket data( SMSG_QUESTUPDATE_FAILEDTIMER, 4 );
         data << uint32(quest_id);
         GetSession()->SendPacket( &data );
-        sLog.outDebug("WORLD: Sent SMSG_QUESTUPDATE_FAILEDTIMER");
+        DEBUG_LOG("WORLD: Sent SMSG_QUESTUPDATE_FAILEDTIMER");
     }
 }
 
@@ -16021,7 +16098,7 @@ void Player::SendCanTakeQuestResponse( uint32 msg )
     WorldPacket data( SMSG_QUESTGIVER_QUEST_INVALID, 4 );
     data << uint32(msg);
     GetSession()->SendPacket( &data );
-    sLog.outDebug("WORLD: Sent SMSG_QUESTGIVER_QUEST_INVALID");
+    DEBUG_LOG("WORLD: Sent SMSG_QUESTGIVER_QUEST_INVALID");
 }
 
 void Player::SendQuestConfirmAccept(const Quest* pQuest, Player* pReceiver)
@@ -16047,7 +16124,7 @@ void Player::SendQuestConfirmAccept(const Quest* pQuest, Player* pReceiver)
         data << uint64(GetGUID());
         pReceiver->GetSession()->SendPacket(&data);
 
-        sLog.outDebug("WORLD: Sent SMSG_QUEST_CONFIRM_ACCEPT");
+        DEBUG_LOG("WORLD: Sent SMSG_QUEST_CONFIRM_ACCEPT");
     }
 }
 
@@ -16059,14 +16136,14 @@ void Player::SendPushToPartyResponse( Player *pPlayer, uint32 msg )
         data << uint64(pPlayer->GetGUID());
         data << uint8(msg);                                 // valid values: 0-8
         GetSession()->SendPacket( &data );
-        sLog.outDebug("WORLD: Sent MSG_QUEST_PUSH_RESULT");
+        DEBUG_LOG("WORLD: Sent MSG_QUEST_PUSH_RESULT");
     }
 }
 
 void Player::SendQuestUpdateAddItem( Quest const* /*pQuest*/, uint32 /*item_idx*/, uint32 /*count*/ )
 {
     WorldPacket data( SMSG_QUESTUPDATE_ADD_ITEM, 0 );
-    sLog.outDebug( "WORLD: Sent SMSG_QUESTUPDATE_ADD_ITEM" );
+    DEBUG_LOG( "WORLD: Sent SMSG_QUESTUPDATE_ADD_ITEM" );
     //data << pQuest->ReqItemId[item_idx];
     //data << count;
     GetSession()->SendPacket( &data );
@@ -16082,7 +16159,7 @@ void Player::SendQuestUpdateAddCreatureOrGo( Quest const* pQuest, ObjectGuid gui
         entry = (-entry) | 0x80000000;
 
     WorldPacket data( SMSG_QUESTUPDATE_ADD_KILL, (4*4+8) );
-    sLog.outDebug( "WORLD: Sent SMSG_QUESTUPDATE_ADD_KILL" );
+    DEBUG_LOG( "WORLD: Sent SMSG_QUESTUPDATE_ADD_KILL" );
     data << uint32(pQuest->GetQuestId());
     data << uint32(entry);
     data << uint32(old_count + add_count);
@@ -16356,8 +16433,8 @@ bool Player::LoadFromDB( uint32 guid, SqlQueryHolder *holder )
         }
     }
 
-    sLog.outDebug("Load Basic value of player %s is: ", m_name.c_str());
-    outDebugValues();
+    DEBUG_FILTER_LOG(LOG_FILTER_PLAYER_STATS, "Load Basic value of player %s is: ", m_name.c_str());
+    outDebugStatsValues();
 
     //Need to call it to initialize m_team (m_team can be calculated from race)
     //Other way is to saves m_team into characters table.
@@ -16514,7 +16591,7 @@ bool Player::LoadFromDB( uint32 guid, SqlQueryHolder *holder )
                 // client without expansion support
                 if(GetSession()->Expansion() < transMapEntry->Expansion())
                 {
-                    sLog.outDebug("Player %s using client without required expansion tried login at transport at non accessible map %u", GetName(), (*iter)->GetMapId());
+                    DEBUG_LOG("Player %s using client without required expansion tried login at transport at non accessible map %u", GetName(), (*iter)->GetMapId());
                     break;
                 }
 
@@ -16543,7 +16620,7 @@ bool Player::LoadFromDB( uint32 guid, SqlQueryHolder *holder )
         // client without expansion support
         if(GetSession()->Expansion() < mapEntry->Expansion())
         {
-            sLog.outDebug("Player %s using client without required expansion tried login at non accessible map %u", GetName(), GetMapId());
+            DEBUG_LOG("Player %s using client without required expansion tried login at non accessible map %u", GetName(), GetMapId());
             RelocateToHomebind();
         }
     }
@@ -16793,8 +16870,8 @@ bool Player::LoadFromDB( uint32 guid, SqlQueryHolder *holder )
         SetPower(Powers(i),savedpower > GetMaxPower(Powers(i)) ? GetMaxPower(Powers(i)) : savedpower);
     }
 
-    sLog.outDebug("The value of player %s after load item and aura is: ", m_name.c_str());
-    outDebugValues();
+    DEBUG_FILTER_LOG(LOG_FILTER_PLAYER_STATS, "The value of player %s after load item and aura is: ", m_name.c_str());
+    outDebugStatsValues();
 
     // all fields read
     delete result;
@@ -17056,7 +17133,7 @@ void Player::_LoadAuras(QueryResult *result, uint32 timediff)
 
                 aura->SetLoadedState(caster_guid,damage,maxduration,remaintime,remaincharges);
                 AddAura(aura);
-                sLog.outDetail("Added aura spellid %u, effect %u", spellproto->Id, effindex);
+                DETAIL_LOG("Added aura spellid %u, effect %u", spellproto->Id, effindex);
             }
         }
         while( result->NextRow() );
@@ -17495,7 +17572,7 @@ void Player::_LoadQuestStatus(QueryResult *result)
                         m_questRewardTalentCount += pQuest->GetBonusTalents();
                 }
 
-                sLog.outDebug("Quest status is {%u} for quest {%u} for player (GUID: %u)", questStatusData.m_status, quest_id, GetGUIDLow());
+                DEBUG_LOG("Quest status is {%u} for quest {%u} for player (GUID: %u)", questStatusData.m_status, quest_id, GetGUIDLow());
             }
         }
         while( result->NextRow() );
@@ -17538,7 +17615,7 @@ void Player::_LoadDailyQuestStatus(QueryResult *result)
             SetUInt32Value(PLAYER_FIELD_DAILY_QUESTS_1+quest_daily_idx,quest_id);
             ++quest_daily_idx;
 
-            sLog.outDebug("Daily quest {%u} cooldown for player (GUID: %u)", quest_id, GetGUIDLow());
+            DEBUG_LOG("Daily quest {%u} cooldown for player (GUID: %u)", quest_id, GetGUIDLow());
         }
         while( result->NextRow() );
 
@@ -17568,7 +17645,7 @@ void Player::_LoadWeeklyQuestStatus(QueryResult *result)
 
             m_weeklyquests.insert(quest_id);
 
-            sLog.outDebug("Weekly quest {%u} cooldown for player (GUID: %u)", quest_id, GetGUIDLow());
+            DEBUG_LOG("Weekly quest {%u} cooldown for player (GUID: %u)", quest_id, GetGUIDLow());
         }
         while( result->NextRow() );
 
@@ -17818,7 +17895,7 @@ InstancePlayerBind* Player::BindToInstance(InstanceSave *save, bool permanent, b
 
         bind.save = save;
         bind.perm = permanent;
-        if(!load) sLog.outDebug("Player::BindToInstance: %s(%d) is now bound to map %d, instance %d, difficulty %d", GetName(), GetGUIDLow(), save->GetMapId(), save->GetInstanceId(), save->GetDifficulty());
+        if(!load) DEBUG_LOG("Player::BindToInstance: %s(%d) is now bound to map %d, instance %d, difficulty %d", GetName(), GetGUIDLow(), save->GetMapId(), save->GetInstanceId(), save->GetDifficulty());
         return &bind;
     }
     else
@@ -18038,8 +18115,8 @@ void Player::SaveToDB()
     // first save/honor gain after midnight will also update the player's honor fields
     UpdateHonorFields();
 
-    sLog.outDebug("The value of player %s at save: ", m_name.c_str());
-    outDebugValues();
+    DEBUG_FILTER_LOG(LOG_FILTER_PLAYER_STATS, "The value of player %s at save: ", m_name.c_str());
+    outDebugStatsValues();
     //Tassadar, 26.4.2010 - With transactions, data are lost sometimes,
     //                      I dont know why, and that scares me, but its better
     //                      when nothing is lost...
@@ -18653,9 +18730,10 @@ void Player::_SaveStats()
     CharacterDatabase.Execute( ss.str().c_str() );
 }
 
-void Player::outDebugValues() const
+void Player::outDebugStatsValues() const
 {
-    if(!sLog.IsOutDebug())                                  // optimize disabled debug output
+    // optimize disabled debug output
+    if(!sLog.HasLogLevelOrHigher(LOG_LVL_DEBUG) || (sLog.getLogFilter() & LOG_FILTER_PLAYER_STATS)!=0)
         return;
 
     sLog.outDebug("HP is: \t\t\t%u\t\tMP is: \t\t\t%u",GetMaxHealth(), GetMaxPower(POWER_MANA));
@@ -18728,7 +18806,7 @@ void Player::SavePositionInDB(uint32 mapid, float x,float y,float z,float o,uint
         << "',position_z='"<<z<<"',orientation='"<<o<<"',map='"<<mapid
         << "',zone='"<<zone<<"',trans_x='0',trans_y='0',trans_z='0',"
         << "transguid='0',taxi_path='' WHERE guid='"<< GUID_LOPART(guid) <<"'";
-    sLog.outDebug("%s", ss.str().c_str());
+    DEBUG_LOG("%s", ss.str().c_str());
     CharacterDatabase.Execute(ss.str().c_str());
 }
 
@@ -19106,7 +19184,7 @@ void Player::PetSpellInitialize()
     if(!pet)
         return;
 
-    sLog.outDebug("Pet Spells Groups");
+    DEBUG_LOG("Pet Spells Groups");
 
     CharmInfo *charmInfo = pet->GetCharmInfo();
 
@@ -19485,10 +19563,7 @@ void Player::HandleStealthedUnitsDetection()
                 (*i)->SendCreateUpdateToPlayer(this);
                 m_clientGUIDs.insert(i_guid);
 
-                #ifdef MANGOS_DEBUG
-                if((sLog.getLogFilter() & LOG_FILTER_VISIBILITY_CHANGES)==0)
-                    sLog.outDebug("%s is detected in stealth by player %u. Distance = %f",i_guid.GetString().c_str(),GetGUIDLow(),GetDistance(*i));
-                #endif
+                DEBUG_FILTER_LOG(LOG_FILTER_VISIBILITY_CHANGES, "%s is detected in stealth by player %u. Distance = %f",i_guid.GetString().c_str(),GetGUIDLow(),GetDistance(*i));
 
                 // target aura duration for caster show only if target exist at caster client
                 // send data at target visibility change (adding to client)
@@ -19696,7 +19771,7 @@ bool Player::ActivateTaxiPathTo(std::vector<uint32> const& nodes, Creature* npc 
     data << uint32(ERR_TAXIOK);
     GetSession()->SendPacket(&data);
 
-    sLog.outDebug("WORLD: Sent SMSG_ACTIVATETAXIREPLY");
+    DEBUG_LOG("WORLD: Sent SMSG_ACTIVATETAXIREPLY");
 
     GetSession()->SendDoFlight(mount_display_id, sourcepath);
 
@@ -19724,7 +19799,7 @@ void Player::ContinueTaxiFlight()
     if (!sourceNode)
         return;
 
-    sLog.outDebug( "WORLD: Restart character %u taxi flight", GetGUIDLow() );
+    DEBUG_LOG( "WORLD: Restart character %u taxi flight", GetGUIDLow() );
 
     uint32 mountDisplayId = sObjectMgr.GetTaxiMountDisplayId(sourceNode, GetTeam(),true);
     uint32 path = m_taxi.GetCurrentTaxiPath();
@@ -19893,7 +19968,7 @@ bool Player::BuyItemFromVendorSlot(uint64 vendorguid, uint32 vendorslot, uint32 
     Creature *pCreature = GetNPCIfCanInteractWith(vendorguid,UNIT_NPC_FLAG_VENDOR);
     if (!pCreature)
     {
-        sLog.outDebug( "WORLD: BuyItemFromVendor - Unit (GUID: %u) not found or you can't interact with him.", uint32(GUID_LOPART(vendorguid)) );
+        DEBUG_LOG( "WORLD: BuyItemFromVendor - Unit (GUID: %u) not found or you can't interact with him.", uint32(GUID_LOPART(vendorguid)) );
         SendBuyError( BUY_ERR_DISTANCE_TOO_FAR, NULL, item, 0);
         return false;
     }
@@ -20148,7 +20223,7 @@ void Player::UpdateHomebindTime(uint32 time)
         data << uint32(m_HomebindTimer);
         data << uint32(ERR_RAID_GROUP_NONE);                // error used only when timer = 0
         GetSession()->SendPacket(&data);
-        sLog.outDebug("PLAYER: Player '%s' (GUID: %u) will be teleported to homebind in 60 seconds", GetName(),GetGUIDLow());
+        DEBUG_LOG("PLAYER: Player '%s' (GUID: %u) will be teleported to homebind in 60 seconds", GetName(),GetGUIDLow());
     }
 }
 
@@ -20387,7 +20462,7 @@ bool Player::EnchantmentFitsRequirements(uint32 enchantmentcondition, int8 slot)
         }
     }
 
-    sLog.outDebug("Checking Condition %u, there are %u Meta Gems, %u Red Gems, %u Yellow Gems and %u Blue Gems, Activate:%s", enchantmentcondition, curcount[0], curcount[1], curcount[2], curcount[3], activate ? "yes" : "no");
+    DEBUG_LOG("Checking Condition %u, there are %u Meta Gems, %u Red Gems, %u Yellow Gems and %u Blue Gems, Activate:%s", enchantmentcondition, curcount[0], curcount[1], curcount[2], curcount[3], activate ? "yes" : "no");
 
     return activate;
 }
@@ -20671,10 +20746,7 @@ void Player::UpdateVisibilityOf(WorldObject const* viewPoint, WorldObject* targe
             target->DestroyForPlayer(this);
             m_clientGUIDs.erase(t_guid);
 
-            #ifdef MANGOS_DEBUG
-            if((sLog.getLogFilter() & LOG_FILTER_VISIBILITY_CHANGES)==0)
-                sLog.outDebug("%s out of range for player %u. Distance = %f",t_guid.GetString().c_str(),GetGUIDLow(),GetDistance(target));
-            #endif
+            DEBUG_FILTER_LOG(LOG_FILTER_VISIBILITY_CHANGES, "%s out of range for player %u. Distance = %f",t_guid.GetString().c_str(),GetGUIDLow(),GetDistance(target));
         }
     }
     else
@@ -20685,10 +20757,7 @@ void Player::UpdateVisibilityOf(WorldObject const* viewPoint, WorldObject* targe
             if(target->GetTypeId()!=TYPEID_GAMEOBJECT||!((GameObject*)target)->IsTransport())
                 m_clientGUIDs.insert(target->GetObjectGuid());
 
-            #ifdef MANGOS_DEBUG
-            if((sLog.getLogFilter() & LOG_FILTER_VISIBILITY_CHANGES)==0)
-                sLog.outDebug("Object %u (Type: %u) is visible now for player %u. Distance = %f",target->GetGUIDLow(),target->GetTypeId(),GetGUIDLow(),GetDistance(target));
-            #endif
+            DEBUG_FILTER_LOG(LOG_FILTER_VISIBILITY_CHANGES, "Object %u (Type: %u) is visible now for player %u. Distance = %f",target->GetGUIDLow(),target->GetTypeId(),GetGUIDLow(),GetDistance(target));
 
             // target aura duration for caster show only if target exist at caster client
             // send data at target visibility change (adding to client)
@@ -20731,10 +20800,7 @@ void Player::UpdateVisibilityOf(WorldObject const* viewPoint, T* target, UpdateD
             target->BuildOutOfRangeUpdateBlock(&data);
             m_clientGUIDs.erase(t_guid);
 
-            #ifdef MANGOS_DEBUG
-            if((sLog.getLogFilter() & LOG_FILTER_VISIBILITY_CHANGES)==0)
-                sLog.outDebug("%s is out of range for %s. Distance = %f",t_guid.GetString().c_str(),GetObjectGuid().GetString().c_str(),GetDistance(target));
-            #endif
+            DEBUG_FILTER_LOG(LOG_FILTER_VISIBILITY_CHANGES, "%s is out of range for %s. Distance = %f", t_guid.GetString().c_str(), GetObjectGuid().GetString().c_str(), GetDistance(target));
         }
     }
     else
@@ -20745,10 +20811,7 @@ void Player::UpdateVisibilityOf(WorldObject const* viewPoint, T* target, UpdateD
             target->BuildCreateUpdateBlockForPlayer(&data, this);
             UpdateVisibilityOf_helper(m_clientGUIDs,target);
 
-            #ifdef MANGOS_DEBUG
-            if((sLog.getLogFilter() & LOG_FILTER_VISIBILITY_CHANGES)==0)
-                sLog.outDebug("%s is visible now for %s. Distance = %f",target->GetObjectGuid().GetString().c_str(),GetObjectGuid().GetString().c_str(),GetDistance(target));
-            #endif
+            DEBUG_FILTER_LOG(LOG_FILTER_VISIBILITY_CHANGES, "%s is visible now for %s. Distance = %f", target->GetObjectGuid().GetString().c_str(), GetObjectGuid().GetString().c_str(), GetDistance(target));
         }
     }
 }
@@ -21087,7 +21150,7 @@ void Player::learnDefaultSpells()
     for (PlayerCreateInfoSpells::const_iterator itr = info->spell.begin(); itr!=info->spell.end(); ++itr)
     {
         uint32 tspell = *itr;
-        sLog.outDebug("PLAYER (Class: %u Race: %u): Adding initial spell, id = %u",uint32(getClass()),uint32(getRace()), tspell);
+        DEBUG_LOG("PLAYER (Class: %u Race: %u): Adding initial spell, id = %u",uint32(getClass()),uint32(getRace()), tspell);
         if(!IsInWorld())                                    // will send in INITIAL_SPELLS in list anyway at map add
             addSpell(tspell, true, true, true, false);
         else                                                // but send in normal spell in game learn case
@@ -22717,7 +22780,7 @@ void Player::HandleFall(MovementInfo const& movementInfo)
 {
     // calculate total z distance of the fall
     float z_diff = m_lastFallZ - movementInfo.GetPos()->z;
-    sLog.outDebug("zDiff = %f", z_diff);
+    DEBUG_LOG("zDiff = %f", z_diff);
 
     //Players with low fall distance, Feather Fall or physical immunity (charges used) are ignored
     // 14.57 can be calculated by resolving damageperc formula below to 0
@@ -22852,7 +22915,7 @@ void Player::LearnTalent(uint32 talentId, uint32 talentRank)
 
     // learn! (other talent ranks will unlearned at learning)
     learnSpell(spellid, false);
-    sLog.outDetail("TalentID: %u Rank: %u Spell: %u\n", talentId, talentRank, spellid);
+    DETAIL_LOG("TalentID: %u Rank: %u Spell: %u\n", talentId, talentRank, spellid);
 }
 
 void Player::LearnPetTalent(uint64 petGuid, uint32 talentId, uint32 talentRank)
@@ -22984,7 +23047,7 @@ void Player::LearnPetTalent(uint64 petGuid, uint32 talentId, uint32 talentRank)
 
     // learn! (other talent ranks will unlearned at learning)
     pet->learnSpell(spellid);
-    sLog.outDetail("PetTalentID: %u Rank: %u Spell: %u\n", talentId, talentRank, spellid);
+    DETAIL_LOG("PetTalentID: %u Rank: %u Spell: %u\n", talentId, talentRank, spellid);
 }
 
 void Player::UpdateKnownCurrencies(uint32 itemId, bool apply)
