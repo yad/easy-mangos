@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <cassert>
 #include <map>
+#include <fstream>
 #undef min
 #undef max
 #include "mpq_libmpq04.h"
@@ -116,7 +117,8 @@ WMORoot::~WMORoot()
 {
 }
 
-WMOGroup::WMOGroup(std::string &filename) : filename(filename)
+WMOGroup::WMOGroup(std::string &filename) : filename(filename),
+        MOPY(0), MOVI(0), MoviEx(0), MOVT(0), MOBA(0), MobaEx(0), hlq(0), LiquEx(0), LiquBytes(0)
 {
 }
 
@@ -194,26 +196,22 @@ bool WMOGroup::open()
         else if (!strcmp(fourcc,"MLIQ"))
         {
             liquflags |= 1;
-            WMOLiquidHeader hlq;
-            f.read(&hlq, 0x1E);
-            float ydir = -1.0f;
-            hlq_xverts = hlq.xverts;
-            hlq_yverts = hlq.yverts;
-            int noVer = hlq.xverts * hlq.yverts;
+            hlq = new WMOLiquidHeader;
+            f.read(hlq, 0x1E);
             float tilesize  = CHUNKSIZE / 8.0f;
-            LiquEx_size = sizeof(float) * 3 * noVer;
-            LiquEx = new float[sizeof(float) * 3 * noVer];
-            int p = 0;
+            LiquEx_size = sizeof(WMOLiquidVert) * hlq->xverts * hlq->yverts;
+            LiquEx = new WMOLiquidVert[hlq->xverts * hlq->yverts];
+            f.read(LiquEx, LiquEx_size);
+            int nLiquBytes = hlq->xtiles * hlq->ytiles;
+            LiquBytes = new char[nLiquBytes];
+            f.read(LiquBytes, nLiquBytes);
 
-            for (int j=0; j<hlq.yverts; ++j)
-            {
-                for (int i=0; i<hlq.xverts; ++i)
-                {
-                    LiquEx[p++] = hlq.pos_x + tilesize * i;
-                    LiquEx[p++] = hlq.pos_z;
-                    LiquEx[p++] = ydir * (hlq.pos_y + tilesize * j);
-                }
-            }
+            /* std::ofstream llog("Buildings/liquid.log", ios_base::out | ios_base::app);
+            llog << filename;
+            llog << "\nbbox: " << bbcorn1[0] << ", " << bbcorn1[1] << ", " << bbcorn1[2] << " | " << bbcorn2[0] << ", " << bbcorn2[1] << ", " << bbcorn2[2];
+            llog << "\nlpos: " << hlq->pos_x << ", " << hlq->pos_y << ", " << hlq->pos_z;
+            llog << "\nx-/yvert: " << hlq->xverts << "/" << hlq->yverts << " size: " << size << " expected size: " << 30 + hlq->xverts*hlq->yverts*8 + hlq->xtiles*hlq->ytiles << std::endl;
+            llog.close(); */
         }
         f.seek((int)nextpos);
     }
@@ -229,6 +227,7 @@ int WMOGroup::ConvertToVMAPGroupWmo(FILE *output, bool pPreciseVectorData)
     fwrite(bbcorn1, sizeof(float), 3, output);
     fwrite(bbcorn2, sizeof(float), 3, output);
     fwrite(&liquflags,sizeof(uint32),1,output);
+    int nColTriangles = 0;
     if(pPreciseVectorData)
     {
         char GRP[] = "GRP ";
@@ -241,7 +240,6 @@ int WMOGroup::ConvertToVMAPGroupWmo(FILE *output, bool pPreciseVectorData)
         {
             MobaEx[k++] = MOBA[i];
         }
-        delete [] MOBA;
         int moba_size_grp = moba_batch*4+4;
         fwrite(&moba_size_grp,4,1,output);
         fwrite(&moba_batch,4,1,output);
@@ -300,15 +298,7 @@ int WMOGroup::ConvertToVMAPGroupWmo(FILE *output, bool pPreciseVectorData)
             }
         }
 
-        if(LiquEx_size != 0)
-        {
-            int LIQU_h[] = {0x5551494C,LiquEx_size+8,hlq_xverts,hlq_yverts};// "LIQU"
-            fwrite(LIQU_h,4,4,output);
-            fwrite(LiquEx,4,LiquEx_size/4,output);
-            delete [] LiquEx;
-        }
-
-        return nTriangles;
+        nColTriangles = nTriangles;
     }
     else
     {
@@ -321,7 +311,7 @@ int WMOGroup::ConvertToVMAPGroupWmo(FILE *output, bool pPreciseVectorData)
         {
             MobaEx[k++] = MOBA[i];
         }
-        delete [] MOBA;
+
         int moba_size_grp = moba_batch*4+4;
         fwrite(&moba_size_grp,4,1,output);
         fwrite(&moba_batch,4,1,output);
@@ -332,7 +322,6 @@ int WMOGroup::ConvertToVMAPGroupWmo(FILE *output, bool pPreciseVectorData)
         //-------MOPY--------
         MoviEx = new uint16[nTriangles*3]; // "worst case" size...
         int *IndexRenum = new int[nVertices];
-        int nColTriangles = 0;
         memset(IndexRenum, 0xFF, nVertices*sizeof(int));
         for (int i=0; i<nTriangles; ++i)
         {
@@ -382,28 +371,35 @@ int WMOGroup::ConvertToVMAPGroupWmo(FILE *output, bool pPreciseVectorData)
 
         assert(check==0);
 
-        delete [] MOPY;
-        delete [] MOVI;
         delete [] MoviEx;
         delete [] IndexRenum;
-        delete [] MOVT;
-
-        //------LIQU------------------------
-        if(LiquEx_size != 0)
-        {
-            int LIQU_h[] = {0x5551494C,LiquEx_size+8,hlq_xverts,hlq_yverts};// "LIQU"
-            fwrite(LIQU_h,4,4,output);
-            fwrite(LiquEx,4,LiquEx_size/4,output);
-            delete [] LiquEx;
-        }
-
-        //---------------------------------------------
-        return nColTriangles;
     }
+
+    //------LIQU------------------------
+    if(LiquEx_size != 0)
+    {
+        int LIQU_h[] = {0x5551494C, sizeof(WMOLiquidHeader) + LiquEx_size + hlq->xtiles*hlq->ytiles};// "LIQU"
+        fwrite(LIQU_h, 4, 2, output);
+        fwrite(hlq, sizeof(WMOLiquidHeader), 1, output);
+        // only need height values, the other values are unknown anyway
+        for (uint32 i = 0; i<LiquEx_size/sizeof(WMOLiquidVert); ++i)
+            fwrite(&LiquEx[i].height, sizeof(float), 1, output);
+        // todo: compress to bit field
+        fwrite(LiquBytes, 1, hlq->xtiles*hlq->ytiles, output);
+    }
+
+    return nColTriangles;
 }
 
 WMOGroup::~WMOGroup()
 {
+    delete [] MOPY;
+    delete [] MOVI;
+    delete [] MOVT;
+    delete [] MOBA;
+    delete hlq;
+    delete [] LiquEx;
+    delete [] LiquBytes;
 }
 
 WMOInstance::WMOInstance(MPQFile &f,const char* WmoInstName, uint32 mapID, uint32 tileX, uint32 tileY, FILE *pDirfile)

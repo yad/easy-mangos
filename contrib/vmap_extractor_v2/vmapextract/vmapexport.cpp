@@ -450,7 +450,7 @@ bool processArgv(int argc, char ** argv, const char *versionString)
 int main(int argc, char ** argv)
 {
     bool success=true;
-    const char *versionString = "V2.4 2007_07_12";
+    const char *versionString = "V2.90 2010_05";
 
     // Use command line arguments, when some
     if(!processArgv(argc, argv, versionString))
@@ -520,5 +520,5 @@ int main(int argc, char ** argv)
         getchar();
     }
 
-    printf("Extract %s. Work complete. No errors.",versionString);
+    printf("Extract %s. Work complete. No errors.\n",versionString);
 }

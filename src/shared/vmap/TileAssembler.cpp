@@ -181,7 +181,12 @@ namespace VMAP
         for (std::set<std::string>::iterator mfile = spawnedModelFiles.begin(); mfile != spawnedModelFiles.end(); ++mfile)
         {
             std::cout << "Converting " << *mfile << std::endl;
-            readRawFile2(*mfile, dummy);
+            if (!readRawFile2(*mfile, dummy))
+            {
+                std::cout << "error converting " << *mfile << std::endl;
+                success = false;
+                break;
+            }
         }
 
         //cleanup:
@@ -331,6 +336,14 @@ namespace VMAP
         return true;
     }
 
+    struct WMOLiquidHeader
+    {
+        int xverts, yverts, xtiles, ytiles;
+        float pos_x;
+        float pos_y;
+        float pos_z;
+        short type;
+    };
     //=================================================================
     bool TileAssembler::readRawFile2(const std::string& pModelFilename,  ModelPosition& pModelPosition)
     {
@@ -440,18 +453,24 @@ namespace VMAP
                 delete[] vectorarray;
             }
             // ----- liquid
+            WmoLiquid *liquid = 0;
             if(liquidflags& 1)
             {
-                // we have liquit -> not handled yet ... skip
+                WMOLiquidHeader hlq;
                 READ_OR_RETURN(&blockId, 4);
                 CMP_OR_RETURN(blockId, "LIQU");
                 READ_OR_RETURN(&blocksize, sizeof(int));
-                fseek(rf, blocksize, SEEK_CUR);
+                READ_OR_RETURN(&hlq, sizeof(WMOLiquidHeader));
+                liquid = new WmoLiquid(hlq.xtiles, hlq.ytiles, Vector3(hlq.pos_x, hlq.pos_y, hlq.pos_z));
+                uint32 size = hlq.xverts*hlq.yverts;
+                READ_OR_RETURN(liquid->GetHeightStorage(), size*sizeof(float));
+                size = hlq.xtiles*hlq.ytiles;
+                READ_OR_RETURN(liquid->GetFlagsStorage(), size);
             }
 
             groupsArray.push_back(GroupModel(mogpflags, GroupWMOID, AABox(Vector3(bbox1), Vector3(bbox2))));
             groupsArray.back().setMeshData(vertexArray, triangles);
-            // TODO: handle liquids
+            groupsArray.back().setLiquidData(liquid);
 
             // drop of temporary use defines
             #undef READ_OR_RETURN
