@@ -19,7 +19,9 @@
 #ifndef MANGOS_DBCSTRUCTURE_H
 #define MANGOS_DBCSTRUCTURE_H
 
+#include "Common.h"
 #include "DBCEnums.h"
+#include "Path.h"
 #include "Platform/Define.h"
 
 #include <map>
@@ -335,7 +337,7 @@ struct AchievementCriteriaEntry
             uint32  rollValue;                              // 3
             uint32  count;                                  // 4
         } roll_need_on_loot;
-       // ACHIEVEMENT_CRITERIA_TYPE_ROLL_GREED_ON_LOOT      = 51
+        // ACHIEVEMENT_CRITERIA_TYPE_ROLL_GREED_ON_LOOT      = 51
         struct
         {
             uint32  rollValue;                              // 3
@@ -635,9 +637,9 @@ struct ChrClassesEntry
     uint32  ClassID;                                        // 0
     //uint32 flags;                                         // 1, unused
     uint32  powerType;                                      // 2
-                                                            // 3-4, unused
-    //char*       name[16];                                 // 5-20 unused
-                                                            // 21 string flag, unused
+                                                            // 3, unused
+    char const* name[16];                                   // 4-19 unused
+                                                            // 20 string flag, unused
     //char*       nameFemale[16];                           // 21-36 unused, if different from base (male) case
                                                             // 37 string flag, unused
     //char*       nameNeutralGender[16];                    // 38-53 unused, if different from base (male) case
@@ -1668,8 +1670,8 @@ struct TaxiPathNodeEntry
     float     z;                                            // 6        m_LocZ
     uint32    actionFlag;                                   // 7        m_flags
     uint32    delay;                                        // 8        m_delay
-                                                            // 9        m_arrivalEventID
-                                                            // 10       m_departureEventID
+    uint32    arrivalEventID;                               // 9        m_arrivalEventID
+    uint32    departureEventID;                             // 10       m_departureEventID
 };
 
 struct TotemCategoryEntry
@@ -1846,19 +1848,17 @@ struct TaxiPathBySourceAndDestination
 typedef std::map<uint32,TaxiPathBySourceAndDestination> TaxiPathSetForSource;
 typedef std::map<uint32,TaxiPathSetForSource> TaxiPathSetBySource;
 
-struct TaxiPathNode
+struct TaxiPathNodePtr
 {
-    TaxiPathNode() : mapid(0), x(0),y(0),z(0),actionFlag(0),delay(0) {}
-    TaxiPathNode(uint32 _mapid, float _x, float _y, float _z, uint32 _actionFlag, uint32 _delay) : mapid(_mapid), x(_x),y(_y),z(_z),actionFlag(_actionFlag),delay(_delay) {}
+    TaxiPathNodePtr() : i_ptr(NULL) {}
+    TaxiPathNodePtr(TaxiPathNodeEntry const* ptr) : i_ptr(ptr) {}
 
-    uint32    mapid;
-    float     x;
-    float     y;
-    float     z;
-    uint32    actionFlag;
-    uint32    delay;
+    TaxiPathNodeEntry const* i_ptr;
+
+    operator TaxiPathNodeEntry const& () const { return *i_ptr; }
 };
-typedef std::vector<TaxiPathNode> TaxiPathNodeList;
+
+typedef Path<TaxiPathNodePtr,TaxiPathNodeEntry const> TaxiPathNodeList;
 typedef std::vector<TaxiPathNodeList> TaxiPathNodesByPath;
 
 #define TaxiMaskSize 12

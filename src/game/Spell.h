@@ -230,7 +230,8 @@ enum SpellTargets
     SPELL_TARGETS_NOT_FRIENDLY,
     SPELL_TARGETS_NOT_HOSTILE,
     SPELL_TARGETS_FRIENDLY,
-    SPELL_TARGETS_AOE_DAMAGE
+    SPELL_TARGETS_AOE_DAMAGE,
+    SPELL_TARGETS_ALL
 };
 
 #define SPELL_SPELL_CHANNEL_UPDATE_INTERVAL (1*IN_MILLISECONDS)
@@ -474,7 +475,9 @@ class Spell
         // caster types:
         // formal spell caster, in game source of spell affects cast
         Unit* GetCaster() const { return m_caster; }
-        // real source of cast affects, explcit caster, or DoT/HoT applier, or GO owner, etc. Can be NULL
+        // real source of cast affects, explcit caster, or DoT/HoT applier, or GO owner, or wild GO itself. Can be NULL
+        WorldObject* GetAffectiveCasterObject() const;
+        // limited version returning NULL in cases not Unit* caster object, need for Aura (auras currently not support non-Unit caster)
         Unit* GetAffectiveCaster() const { return !m_originalCasterGUID.IsEmpty() ? m_originalCaster : m_caster; }
         // m_originalCasterGUID can store GO guid, and in this case this is visual caster
         WorldObject* GetCastingObject() const;
@@ -606,6 +609,7 @@ class Spell
         void AddItemTarget(Item* target, SpellEffectIndex effIndex);
         void DoAllEffectOnTarget(TargetInfo *target);
         void HandleDelayedSpellLaunch(TargetInfo *target);
+        void InitializeDamageMultipliers();
         void DoSpellHitOnUnit(Unit *unit, uint32 effectMask);
         void DoAllEffectOnTarget(GOTargetInfo *target);
         void DoAllEffectOnTarget(ItemTargetInfo *target);
@@ -654,7 +658,7 @@ namespace MaNGOS
         SpellNotifierPlayer(Spell &spell, std::list<Unit*> &data, const uint32 &i, float radius)
             : i_data(data), i_spell(spell), i_index(i), i_radius(radius)
         {
-            i_originalCaster = i_spell.GetCastingObject();
+            i_originalCaster = i_spell.GetAffectiveCasterObject();
         }
 
         void Visit(PlayerMapType &m)
@@ -692,7 +696,7 @@ namespace MaNGOS
             SpellTargets TargetType = SPELL_TARGETS_NOT_FRIENDLY)
             : i_data(&data), i_spell(spell), i_push_type(type), i_radius(radius), i_TargetType(TargetType)
         {
-            i_originalCaster = spell.GetCastingObject();
+            i_originalCaster = i_spell.GetAffectiveCasterObject();
             i_playerControled = i_originalCaster  ? i_originalCaster->IsControlledByPlayer() : false;
         }
 
@@ -707,7 +711,7 @@ namespace MaNGOS
             {
                 // there are still more spells which can be casted on dead, but
                 // they are no AOE and don't have such a nice SPELL_ATTR flag
-                if ( !itr->getSource()->isTargetableForAttack(i_spell.m_spellInfo->AttributesEx3 & SPELL_ATTR_EX3_CAST_ON_DEAD)
+                if ( (i_TargetType != SPELL_TARGETS_ALL && !itr->getSource()->isTargetableForAttack(i_spell.m_spellInfo->AttributesEx3 & SPELL_ATTR_EX3_CAST_ON_DEAD))
                     // mostly phase check
                     || !itr->getSource()->IsInMap(i_originalCaster))
                     continue;
@@ -747,6 +751,8 @@ namespace MaNGOS
                         }
                     }
                     break;
+                    case SPELL_TARGETS_ALL:
+                        break;
                     default: continue;
                 }
 

@@ -32,7 +32,7 @@ const char CharStartOutfitEntryfmt[]="diiiiiiiiiiiiiiiiiiiiiiiiixxxxxxxxxxxxxxxx
 const char CharTitlesEntryfmt[]="nxssssssssssssssssxxxxxxxxxxxxxxxxxxi";
 const char ChatChannelsEntryfmt[]="iixssssssssssssssssxxxxxxxxxxxxxxxxxx";
                                                             // ChatChannelsEntryfmt, index not used (more compact store)
-const char ChrClassesEntryfmt[]="nxixxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxixii";
+const char ChrClassesEntryfmt[]="nxixssssssssssssssssxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxixii";
 const char ChrRacesEntryfmt[]="nxixiixixxxxixssssssssssssssssxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxi";
 const char CinematicSequencesEntryfmt[]="nxxxxxxxxx";
 const char CreatureDisplayInfofmt[]="nxxxfxxxxxxxxxxx";
@@ -102,7 +102,7 @@ const char TalentEntryfmt[]="niiiiiiiixxxxixxixxxxxx";
 const char TalentTabEntryfmt[]="nxxxxxxxxxxxxxxxxxxxiiix";
 const char TaxiNodesEntryfmt[]="nifffssssssssssssssssxii";
 const char TaxiPathEntryfmt[]="niii";
-const char TaxiPathNodeEntryfmt[]="diiifffiixx";
+const char TaxiPathNodeEntryfmt[]="diiifffiiii";
 const char TotemCategoryEntryfmt[]="nxxxxxxxxxxxxxxxxxii";
 const char VehicleEntryfmt[]="niffffiiiiiiiifffffffffffffffssssfifixxx";
 const char VehicleSeatEntryfmt[]="niiffffffffffiiiiiifffffffiiifffiiiiiiiffiiiiixxxxxxxxxxxx";

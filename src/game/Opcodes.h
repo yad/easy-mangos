@@ -545,8 +545,8 @@ enum Opcodes
     SMSG_ENVIRONMENTALDAMAGELOG                     = 0x1FC,
     CMSG_PLAYER_DIFFICULTY_CHANGE                   = 0x1FD,
     SMSG_RWHOIS                                     = 0x1FE,
-    SMSG_LFG_COMPLETION_REWARD                      = 0x1FF, // uint32, uint8, uint32, uint32, uint32, uint32, uint32, uint8, for(uint8) {uint32,uint32,uint32}
-    SMSG_LFG_ERROR                                  = 0x200, // uint32 (1,2,4,6;0,5,7)
+    SMSG_LFG_PLAYER_REWARD                          = 0x1FF, // uint32, uint8, uint32, uint32, uint32, uint32, uint32, uint8, for(uint8) {uint32,uint32,uint32}
+    SMSG_LFG_TELEPORT_DENIED                        = 0x200, // uint32 (1,2,4,6;0,5,7)
     CMSG_UNLEARN_SPELL                              = 0x201,
     CMSG_UNLEARN_SKILL                              = 0x202,
     SMSG_REMOVED_SPELL                              = 0x203,
@@ -733,7 +733,7 @@ enum Opcodes
     SMSG_AREA_TRIGGER_MESSAGE                       = 0x2B8,
     CMSG_SHOWING_HELM                               = 0x2B9,
     CMSG_SHOWING_CLOAK                              = 0x2BA,
-    SMSG_LFG_ROLE_CHECK_RESULT                      = 0x2BB,
+    SMSG_LFG_ROLE_CHOSEN                            = 0x2BB,
     SMSG_PLAYER_SKINNED                             = 0x2BC,
     SMSG_DURABILITY_DAMAGE_DEATH                    = 0x2BD,
     CMSG_SET_EXPLORATION                            = 0x2BE,
@@ -864,9 +864,9 @@ enum Opcodes
     SMSG_INSTANCE_DIFFICULTY                        = 0x33B,
     MSG_GM_RESETINSTANCELIMIT                       = 0x33C,
     SMSG_MOTD                                       = 0x33D,
-    SMSG_MOVE_SET_FLIGHT_OBSOLETE                   = 0x33E,
-    SMSG_MOVE_UNSET_FLIGHT_OBSOLETE                 = 0x33F,
-    CMSG_MOVE_FLIGHT_ACK_OBSOLETE                   = 0x340,
+    SMSG_MOVE_SET_FLIGHT                            = 0x33E,
+    SMSG_MOVE_UNSET_FLIGHT                          = 0x33F,
+    CMSG_MOVE_FLIGHT_ACK                            = 0x340,
     MSG_MOVE_START_SWIM_CHEAT                       = 0x341,
     MSG_MOVE_STOP_SWIM_CHEAT                        = 0x342,
     SMSG_MOVE_SET_CAN_FLY                           = 0x343,
@@ -899,24 +899,24 @@ enum Opcodes
     CMSG_SEARCH_LFG_JOIN                            = 0x35E,    // CMSG SearchLFGJoin
     CMSG_SEARCH_LFG_LEAVE                           = 0x35F,    // CMSG SearchLFGLeave
     SMSG_UPDATE_LFG_LIST                            = 0x360,    // SMSG uint32, uint32, if(uint8) { uint32 count, for(count) { uint64} }, uint32 count2, uint32, for(count2) { uint64, uint32 flags, if(flags & 0x2) {string}, if(flags & 0x10) {for(3) uint8}, if(flags & 0x80) {uint64, uint32}}, uint32 count3, uint32, for(count3) {uint64, uint32 flags, if(flags & 0x1) {uint8, uint8, uint8, for(3) uint8, uint32, uint32, uint32, uint32, uint32, uint32, float, float, uint32, uint32, uint32, uint32, uint32, float, uint32, uint32, uint32, uint32, uint32, uint32}, if(flags&0x2) string, if(flags&0x4) uint8, if(flags&0x8) uint64, if(flags&0x10) uint8, if(flags&0x20) uint32, if(flags&0x40) uint8, if(flags& 0x80) {uint64, uint32}}
-    SMSG_LFG_PROPOSAL_DECLINED                      = 0x361,    // SMSG uint32, uint8, uint32, uint32, uint8, for(uint8) {uint32,uint8,uint8,uint8,uint8}
+    SMSG_LFG_PROPOSAL_UPDATE                        = 0x361,    // SMSG uint32, uint8, uint32, uint32, uint8, for(uint8) {uint32,uint8,uint8,uint8,uint8}
     CMSG_LFG_PROPOSAL_RESULT                        = 0x362,    // CMSG AcceptProposal, RejectProposal
-    SMSG_LFG_ROLE_CHECK                             = 0x363,    // SMSG uint32, uint8, for(uint8) uint32, uint8, for(uint8) { uint64, uint8, uint32, uint8, }
-    SMSG_LFG_ROLE_CHECK_FAILED_RESULT               = 0x364,    // SMSG uint32 unk, uint32, if(unk==6) { uint8 count, for(count) uint64 }
-    SMSG_LFG_QUEUE_STATUS_UPDATE                    = 0x365,    // SMSG uint32 dungeon, uint32 lfgtype, uint32, uint32, uint32, uint32, uint8, uint8, uint8, uint8
+    SMSG_LFG_ROLE_CHECK_UPDATE                      = 0x363,    // SMSG uint32, uint8, for(uint8) uint32, uint8, for(uint8) { uint64, uint8, uint32, uint8, }
+    SMSG_LFG_JOIN_RESULT                            = 0x364,    // SMSG uint32 unk, uint32, if(unk==6) { uint8 count, for(count) uint64 }
+    SMSG_LFG_QUEUE_STATUS                           = 0x365,    // SMSG uint32 dungeon, uint32 lfgtype, uint32, uint32, uint32, uint32, uint8, uint8, uint8, uint8
     CMSG_SET_LFG_COMMENT                            = 0x366,    // CMSG SetLFGComment
-    SMSG_LFG_LFG_PROPOSAL_INFO                      = 0x367,    // SMSG uint8, if(uint8) { uint8, uint8, uint8, uint8, if(uint8) for(uint8) uint32, string}
-    SMSG_LFG_LFG_PROPOSAL_INFO2                     = 0x368,    // SMSG uint8, if(uint8) { uint8, uint8, uint8, for(3) uint8, uint8, if(uint8) for(uint8) uint32, string}
-    SMSG_LFG_UPDATE_LIST                            = 0x369,    // SMSG uint8
+    SMSG_LFG_UPDATE_PLAYER                          = 0x367,    // SMSG uint8, if(uint8) { uint8, uint8, uint8, uint8, if(uint8) for(uint8) uint32, string}
+    SMSG_LFG_UPDATE_PARTY                           = 0x368,    // SMSG uint8, if(uint8) { uint8, uint8, uint8, for(3) uint8, uint8, if(uint8) for(uint8) uint32, string}
+    SMSG_LFG_UPDATE_SEARCH                          = 0x369,    // SMSG uint8
     CMSG_LFG_SET_ROLES                              = 0x36A,    // CMSG SetLFGRoles
     CMSG_LFG_SET_NEEDS                              = 0x36B,    // CMSG SetLFGNeeds
     CMSG_LFG_SET_BOOT_VOTE                          = 0x36C,    // CMSG SetLFGBootVote
-    SMSG_LFG_BOOT_PROPOSAL_UPDATE                   = 0x36D,    // SMSG uint8, uint8, uint8, uint64, uint32, uint32, uint32, uint32
+    SMSG_LFG_BOOT_PLAYER                            = 0x36D,    // SMSG uint8, uint8, uint8, uint64, uint32, uint32, uint32, uint32
     CMSG_LFD_PLAYER_LOCK_INFO_REQUEST               = 0x36E,    // CMSG RequestLFDPlayerLockInfo
-    SMSG_LFG_PLAYER_LOCK_INFO_RESPONSE              = 0x36F,    // SMSG uint8, for(uint8) { uint32, uint8, uint32, uint32, uint32, uint32, uint8, for(uint8) {uint32,uint32, uint32}}, uint32, for(uint32) {uint32,uint32}
+    SMSG_LFG_PLAYER_INFO                            = 0x36F,    // SMSG uint8, for(uint8) { uint32, uint8, uint32, uint32, uint32, uint32, uint8, for(uint8) {uint32,uint32, uint32}}, uint32, for(uint32) {uint32,uint32}
     CMSG_LFG_TELEPORT                               = 0x370,    // CMSG LFGTeleport
     CMSG_LFD_PARTY_LOCK_INFO_REQUEST                = 0x371,    // CMSG RequestLFDPartyLockInfo
-    SMSG_LFG_PLAYER_LOCK_INFO_UPDATE                = 0x372,    // SMSG uint8, for(uint8) uint64
+    SMSG_LFG_PARTY_INFO                             = 0x372,    // SMSG uint8, for(uint8) uint64
     SMSG_TITLE_EARNED                               = 0x373,
     CMSG_SET_TITLE                                  = 0x374,
     CMSG_CANCEL_MOUNT_AURA                          = 0x375,
@@ -1248,8 +1248,8 @@ enum Opcodes
     SMSG_CALENDAR_ACTION_PENDING                    = 0x4BB, // SMSG, calendar related EVENT_CALENDAR_ACTION_PENDING
     SMSG_EQUIPMENT_SET_LIST                         = 0x4BC, // SMSG, equipment manager list?
     CMSG_EQUIPMENT_SET_SAVE                         = 0x4BD, // CMSG, lua: SaveEquipmentSet
-    CMSG_UNKNOWN_1214                               = 0x4BE, // CMSG, missle?
-    SMSG_UNKNOWN_1215                               = 0x4BF, // SMSG, uint64, uint8, 3 x float
+    CMSG_UPDATE_PROJECTILE_POSITION                 = 0x4BE, // CMSG, uint64 caster, uint32 spellId, uint8 castId, vector3 position
+    SMSG_SET_PROJECTILE_POSITION                    = 0x4BF, // SMSG, uint64 caster, uint8 castId, vector3 position
     SMSG_TALENTS_INFO                               = 0x4C0, // SMSG, talents related
     CMSG_LEARN_PREVIEW_TALENTS                      = 0x4C1, // CMSG, lua: LearnPreviewTalents (for player?)
     CMSG_LEARN_PREVIEW_TALENTS_PET                  = 0x4C2, // CMSG, lua: LearnPreviewTalents (for pet?)
@@ -1263,7 +1263,7 @@ enum Opcodes
     UMSG_UNKNOWN_1226                               = 0x4CA, // not found 3.2
     UMSG_UNKNOWN_1227                               = 0x4CB, // not found 3.2
     UMSG_UNKNOWN_1228                               = 0x4CC, // not found 3.2
-    SMSG_UNKNOWN_1229                               = 0x4CD, // SMSG, handles any opcode
+    SMSG_MULTIPLE_PACKETS                           = 0x4CD, // SMSG, handles any opcode
     SMSG_FORCE_UNK1_SPEED_CHANGE                    = 0x4CE, // SMSG, movement related
     CMSG_FORCE_UNK1_SPEED_CHANGE_ACK                = 0x4CF, // movement related
     SMSG_FORCE_UNK2_SPEED_CHANGE                    = 0x4D0, // SMSG, movement related
@@ -1322,17 +1322,17 @@ enum Opcodes
     UMSG_UNKNOWN_1285                               = 0x505, // not found
     SMSG_UNKNOWN_1286                               = 0x506, // ERR_CORPSE_IS_NOT_IN_INSTANCE = 0x1A8,
     UMSG_UNKNOWN_1287                               = 0x507, // not found
-    CMSG_UNKNOWN_1288                               = 0x508, // lua: SetAllowLowLevelRaid
-    CMSG_UNKNOWN_1289                               = 0x509, // lua: SetAllowLowLevelRaid
+    CMSG_SET_ALLOW_LOW_LEVEL_RAID1                  = 0x508, // lua: SetAllowLowLevelRaid
+    CMSG_SET_ALLOW_LOW_LEVEL_RAID2                  = 0x509, // lua: SetAllowLowLevelRaid
     SMSG_CAMERA_SHAKE                               = 0x50A, // uint32 SpellEffectCameraShakes.dbc index, uint32
-    SMSG_UNKNOWN_1291                               = 0x50B, // some item update packet?
+    SMSG_UPDATE_ITEM_ENCHANTMENTS                   = 0x50B, // some item update packet?
     UMSG_UNKNOWN_1292                               = 0x50C, // not found
-    SMSG_REDIRECT_CLIENT                            = 0x50D, // uint32 ip, uint16 port, uint32 unk, uint8[20] hash
-    CMSG_UNKNOWN_1294                               = 0x50E, // something with networking
+    SMSG_REDIRECT_CLIENT                            = 0x50D, // uint32 ip, uint16 port, uint32 unk, uint8[20] hash (ip + port, seed=sessionkey)
+    CMSG_REDIRECTION_FAILED                         = 0x50E, // something with networking
     SMSG_UNKNOWN_1295                               = 0x50F, //
     CMSG_UNKNOWN_1296                               = 0x510, // something with networking
-    SMSG_UNKNOWN_1297                               = 0x511, //
-    CMSG_UNKNOWN_1298                               = 0x512, // something with networking
+    SMSG_FORCE_SEND_QUEUED_PACKETS                  = 0x511, //
+    CMSG_REDIRECTION_AUTH_PROOF                     = 0x512, // something with networking
     UMSG_UNKNOWN_1299                               = 0x513, // not found
     SMSG_COMBAT_LOG_MULTIPLE                        = 0x514, // SMSG, multi combatlog
     SMSG_LFG_OPEN_FROM_GOSSIP                       = 0x515, // event EVENT_LFG_OPEN_FROM_GOSSIP (opens dungeon finder, probably for outdoor bosses)

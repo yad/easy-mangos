@@ -182,7 +182,7 @@ void Object::BuildCreateUpdateBlockForPlayer(UpdateData *data, Player *target) c
         }
     }
 
-    //sLog.outDebug("BuildCreateUpdate: update-type: %u, object-type: %u got updateFlags: %X", updatetype, m_objectTypeId, updateFlags);
+    //DEBUG_LOG("BuildCreateUpdate: update-type: %u, object-type: %u got updateFlags: %X", updatetype, m_objectTypeId, updateFlags);
 
     ByteBuffer buf(500);
     buf << uint8(updatetype);
@@ -329,7 +329,7 @@ void Object::BuildMovementUpdate(ByteBuffer * data, uint16 updateFlags) const
         {
             if(GetTypeId() != TYPEID_PLAYER)
             {
-                sLog.outDebug("_BuildMovementUpdate: MOVEFLAG_SPLINE_ENABLED for non-player");
+                DEBUG_LOG("_BuildMovementUpdate: MOVEFLAG_SPLINE_ENABLED for non-player");
                 return;
             }
 
@@ -337,7 +337,7 @@ void Object::BuildMovementUpdate(ByteBuffer * data, uint16 updateFlags) const
 
             if(!player->isInFlight())
             {
-                sLog.outDebug("_BuildMovementUpdate: MOVEFLAG_SPLINE_ENABLED but not in flight");
+                DEBUG_LOG("_BuildMovementUpdate: MOVEFLAG_SPLINE_ENABLED but not in flight");
                 return;
             }
 
@@ -370,7 +370,7 @@ void Object::BuildMovementUpdate(ByteBuffer * data, uint16 updateFlags) const
                 }
             }
 
-            Path &path = fmg->GetPath();
+            TaxiPathNodeList const& path = fmg->GetPath();
 
             float x, y, z;
             player->GetPosition(x, y, z);
@@ -388,21 +388,21 @@ void Object::BuildMovementUpdate(ByteBuffer * data, uint16 updateFlags) const
 
             *data << uint32(0);                             // added in 3.1
 
-            uint32 poscount = uint32(path.Size());
+            uint32 poscount = uint32(path.size());
             *data << uint32(poscount);                      // points count
 
             for(uint32 i = 0; i < poscount; ++i)
             {
-                *data << float(path.GetNodes()[i].x);
-                *data << float(path.GetNodes()[i].y);
-                *data << float(path.GetNodes()[i].z);
+                *data << float(path[i].x);
+                *data << float(path[i].y);
+                *data << float(path[i].z);
             }
 
             *data << uint8(0);                              // splineMode
 
-            *data << float(path.GetNodes()[poscount-1].x);
-            *data << float(path.GetNodes()[poscount-1].y);
-            *data << float(path.GetNodes()[poscount-1].z);
+            *data << float(path[poscount-1].x);
+            *data << float(path[poscount-1].y);
+            *data << float(path[poscount-1].z);
         }
     }
     else
@@ -1136,7 +1136,7 @@ void WorldObject::GetZoneAndAreaId(uint32& zoneid, uint32& areaid) const
     GetBaseMap()->GetZoneAndAreaId(zoneid, areaid, m_positionX, m_positionY, m_positionZ);
 }
 
-InstanceData* WorldObject::GetInstanceData()
+InstanceData* WorldObject::GetInstanceData() const
 {
     Map *map = GetMap();
     return map->IsDungeon() ? ((InstanceMap*)map)->GetInstanceData() : NULL;
@@ -1579,9 +1579,18 @@ void WorldObject::SendMessageToSet(WorldPacket *data, bool /*bToSelf*/)
 void WorldObject::SendMessageToSetInRange(WorldPacket *data, float dist, bool /*bToSelf*/)
 {
     //if object is in world, map for it already created!
-    Map * _map = IsInWorld() ? GetMap() : sMapMgr.FindMap(GetMapId(), GetInstanceId());
-    if(_map)
+    if (Map * _map = IsInWorld() ? GetMap() : sMapMgr.FindMap(GetMapId(), GetInstanceId()))
         _map->MessageDistBroadcast(this, data, dist);
+}
+
+void WorldObject::SendMessageToSetExcept(WorldPacket *data, Player const* skipped_receiver)
+{
+    //if object is in world, map for it already created!
+    if (Map * _map = IsInWorld() ? GetMap() : sMapMgr.FindMap(GetMapId(), GetInstanceId()))
+    {
+        MaNGOS::MessageDelivererExcept notifier(this, data, skipped_receiver);
+        Cell::VisitWorldObjects(this, notifier, _map->GetVisibilityDistance());
+    }
 }
 
 void WorldObject::SendObjectDeSpawnAnim(uint64 guid)

@@ -79,7 +79,7 @@ bool LoginQueryHolder::Initialize()
     res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADSPELLS,          "SELECT spell,active,disabled FROM character_spell WHERE guid = '%u'", GUID_LOPART(m_guid));
     res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADQUESTSTATUS,     "SELECT quest,status,rewarded,explored,timer,mobcount1,mobcount2,mobcount3,mobcount4,itemcount1,itemcount2,itemcount3,itemcount4 FROM character_queststatus WHERE guid = '%u'", GUID_LOPART(m_guid));
     res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADDAILYQUESTSTATUS,"SELECT quest FROM character_queststatus_daily WHERE guid = '%u'", GUID_LOPART(m_guid));
-    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADWEKLYQUESTSTATUS,"SELECT quest FROM character_queststatus_weekly WHERE guid = '%u'", GUID_LOPART(m_guid));
+    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADWEEKLYQUESTSTATUS,"SELECT quest FROM character_queststatus_weekly WHERE guid = '%u'", GUID_LOPART(m_guid));
     res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADREPUTATION,      "SELECT faction,standing,flags FROM character_reputation WHERE guid = '%u'", GUID_LOPART(m_guid));
     res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADINVENTORY,       "SELECT data,text,bag,slot,item,item_template FROM character_inventory JOIN item_instance ON character_inventory.item = item_instance.guid WHERE character_inventory.guid = '%u' ORDER BY bag,slot", GUID_LOPART(m_guid));
     res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADACTIONS,         "SELECT spec,button,action,type FROM character_action WHERE guid = '%u' ORDER BY button", GUID_LOPART(m_guid));
@@ -147,7 +147,7 @@ void WorldSession::HandleCharEnum(QueryResult * result)
         do
         {
             uint32 guidlow = (*result)[0].GetUInt32();
-            sLog.outDetail("Build enum data for char guid %u from account %u.", guidlow, GetAccountId());
+            DETAIL_LOG("Build enum data for char guid %u from account %u.", guidlow, GetAccountId());
             if(Player::BuildEnumData(result, &data))
                 ++num;
         }
@@ -474,14 +474,14 @@ void WorldSession::HandleCharCreateOpcode( WorldPacket & recv_data )
     loginDatabase.PExecute("DELETE FROM realmcharacters WHERE acctid= '%d' AND realmid = '%d'", GetAccountId(), realmID);
     loginDatabase.PExecute("INSERT INTO realmcharacters (numchars, acctid, realmid) VALUES (%u, %u, %u)",  charcount, GetAccountId(), realmID);
 
-    delete pNewChar;                                        // created only to call SaveToDB()
-
     data << (uint8)CHAR_CREATE_SUCCESS;
     SendPacket( &data );
 
     std::string IP_str = GetRemoteAddress();
-    sLog.outBasic("Account: %d (IP: %s) Create Character:[%s]", GetAccountId(), IP_str.c_str(), name.c_str());
-    sLog.outChar("Account: %d (IP: %s) Create Character:[%s]", GetAccountId(), IP_str.c_str(), name.c_str());
+    BASIC_LOG("Account: %d (IP: %s) Create Character:[%s] (guid: %u)", GetAccountId(), IP_str.c_str(), name.c_str(), pNewChar->GetGUIDLow());
+    sLog.outChar("Account: %d (IP: %s) Create Character:[%s] (guid: %u)", GetAccountId(), IP_str.c_str(), name.c_str(), pNewChar->GetGUIDLow());
+
+    delete pNewChar;                                        // created only to call SaveToDB()
 }
 
 void WorldSession::HandleCharDeleteOpcode( WorldPacket & recv_data )
@@ -528,7 +528,7 @@ void WorldSession::HandleCharDeleteOpcode( WorldPacket & recv_data )
         return;
 
     std::string IP_str = GetRemoteAddress();
-    sLog.outBasic("Account: %d (IP: %s) Delete Character:[%s] (guid: %u)", GetAccountId(), IP_str.c_str(), name.c_str(), GUID_LOPART(guid));
+    BASIC_LOG("Account: %d (IP: %s) Delete Character:[%s] (guid: %u)", GetAccountId(), IP_str.c_str(), name.c_str(), GUID_LOPART(guid));
     sLog.outChar("Account: %d (IP: %s) Delete Character:[%s] (guid: %u)", GetAccountId(), IP_str.c_str(), name.c_str(), GUID_LOPART(guid));
 
     if(sLog.IsOutCharDump())                                // optimize GetPlayerDump call
@@ -711,7 +711,7 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
     }
 
     sObjectAccessor.AddObject(pCurrChar);
-    //sLog.outDebug("Player %s added to Map.",pCurrChar->GetName());
+    //DEBUG_LOG("Player %s added to Map.",pCurrChar->GetName());
 
     pCurrChar->SendInitialPacketsAfterAddToMap();
 
@@ -787,7 +787,7 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
         SendNotification(LANG_GM_ON);
 
     std::string IP_str = GetRemoteAddress();
-    sLog.outChar("Account: %d (IP: %s) Login Character:[%s] (guid:%u)",
+    sLog.outChar("Account: %d (IP: %s) Login Character:[%s] (guid: %u)",
         GetAccountId(), IP_str.c_str(), pCurrChar->GetName(), pCurrChar->GetGUIDLow());
 
     if(!pCurrChar->IsStandState() && !pCurrChar->hasUnitState(UNIT_STAT_STUNNED))
@@ -860,7 +860,7 @@ void WorldSession::HandleTutorialFlag( WorldPacket & recv_data )
     tutflag |= (1 << rInt);
     SetTutorialInt( wInt, tutflag );
 
-    //sLog.outDebug("Received Tutorial Flag Set {%u}.", iFlag);
+    //DEBUG_LOG("Received Tutorial Flag Set {%u}.", iFlag);
 }
 
 void WorldSession::HandleTutorialClear( WorldPacket & /*recv_data*/ )
@@ -1076,7 +1076,7 @@ void WorldSession::HandleSetPlayerDeclinedNames(WorldPacket& recv_data)
 
 void WorldSession::HandleAlterAppearance( WorldPacket & recv_data )
 {
-    sLog.outDebug("CMSG_ALTER_APPEARANCE");
+    DEBUG_LOG("CMSG_ALTER_APPEARANCE");
 
     uint32 Hair, Color, FacialHair;
     recv_data >> Hair >> Color >> FacialHair;
@@ -1129,7 +1129,7 @@ void WorldSession::HandleRemoveGlyph( WorldPacket & recv_data )
 
     if(slot >= MAX_GLYPH_SLOT_INDEX)
     {
-        sLog.outDebug("Client sent wrong glyph slot number in opcode CMSG_REMOVE_GLYPH %u", slot);
+        DEBUG_LOG("Client sent wrong glyph slot number in opcode CMSG_REMOVE_GLYPH %u", slot);
         return;
     }
 
@@ -1235,7 +1235,7 @@ void WorldSession::HandleCharCustomize(WorldPacket& recv_data)
 
 void WorldSession::HandleEquipmentSetSave(WorldPacket &recv_data)
 {
-    sLog.outDebug("CMSG_EQUIPMENT_SET_SAVE");
+    DEBUG_LOG("CMSG_EQUIPMENT_SET_SAVE");
 
     ObjectGuid setGuid;
     uint32 index;
@@ -1279,7 +1279,7 @@ void WorldSession::HandleEquipmentSetSave(WorldPacket &recv_data)
 
 void WorldSession::HandleEquipmentSetDelete(WorldPacket &recv_data)
 {
-    sLog.outDebug("CMSG_EQUIPMENT_SET_DELETE");
+    DEBUG_LOG("CMSG_EQUIPMENT_SET_DELETE");
 
     ObjectGuid setGuid;
 
@@ -1290,7 +1290,7 @@ void WorldSession::HandleEquipmentSetDelete(WorldPacket &recv_data)
 
 void WorldSession::HandleEquipmentSetUse(WorldPacket &recv_data)
 {
-    sLog.outDebug("CMSG_EQUIPMENT_SET_USE");
+    DEBUG_LOG("CMSG_EQUIPMENT_SET_USE");
     recv_data.hexlike();
 
     for(uint32 i = 0; i < EQUIPMENT_SLOT_END; ++i)
@@ -1301,7 +1301,7 @@ void WorldSession::HandleEquipmentSetUse(WorldPacket &recv_data)
         recv_data >> itemGuid.ReadAsPacked();
         recv_data >> srcbag >> srcslot;
 
-        sLog.outDebug("Item (%s): srcbag %u, srcslot %u", itemGuid.GetString().c_str(), srcbag, srcslot);
+        DEBUG_LOG("Item (%s): srcbag %u, srcslot %u", itemGuid.GetString().c_str(), srcbag, srcslot);
 
         Item *item = _player->GetItemByGuid(itemGuid);
 
