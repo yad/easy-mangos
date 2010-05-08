@@ -3,6 +3,7 @@
 
 #include "Common.h"
 #include "QuestDef.h"
+#include "GameEventMgr.h"
 
 class WorldPacket;
 class WorldObject;
@@ -28,8 +29,8 @@ class MANGOS_DLL_SPEC PlayerbotAI
         };
 
         enum CombatStyle {
-            COMBAT_MELEE        = 0x01,        // class melee attacker
-            COMBAT_RANGED        = 0x02        // class is ranged attacker
+            COMBAT_MELEE         = 0x01,        // class melee attacker
+            COMBAT_RANGED        = 0x02         // class is ranged attacker
         };
 
         // masters orders that should be obeyed by the AI during the updteAI routine
@@ -130,6 +131,9 @@ class MANGOS_DLL_SPEC PlayerbotAI
         // extracts currency from a string as #g#s#c and returns the total in copper
         uint32 extractMoney(const std::string& text) const;
 
+        // extracts gameobject info from link
+        bool extractGOinfo(const std::string& text, uint32 &guid,  uint32 &entry, int &mapid, float &x, float &y, float &z) const;
+
         // finds items in bots equipment and adds them to foundItemList, removes found items from itemIdSearchList
         void findItemsInEquip(std::list<uint32>& itemIdSearchList, std::list<Item*>& foundItemList) const;
         // finds items in bots inventory and adds them to foundItemList, removes found items from itemIdSearchList
@@ -144,6 +148,8 @@ class MANGOS_DLL_SPEC PlayerbotAI
         bool HasAura(uint32 spellId, const Unit& player) const;
         bool HasAura(const char* spellName, const Unit& player) const;
         bool HasAura(const char* spellName) const;
+
+        bool HasPick();
 
         uint8 GetHealthPercent(const Unit& target) const;
         uint8 GetHealthPercent() const;
@@ -203,6 +209,9 @@ class MANGOS_DLL_SPEC PlayerbotAI
         bool FollowCheckTeleport( WorldObject &obj );
         bool GmStartup();
         void DoLoot();
+
+        uint32 EstRepairAll();
+        uint32 EstRepair(uint16 pos);
 
         void AcceptQuest( Quest const *qInfo, Player *pGiver );
         void TurnInQuests( WorldObject *questgiver );

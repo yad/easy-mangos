@@ -9,6 +9,7 @@
 #include "GossipDef.h"
 #include "Chat.h"
 #include "Language.h"
+#include "Guild.h"
 
 class LoginQueryHolder;
 class CharacterHandler;
@@ -295,52 +296,128 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
 
 
             for (PlayerBotMap::const_iterator it = GetPlayerBotsBegin(); it != GetPlayerBotsEnd(); ++it)
-                {
+            {
 
-                    uint32 choice = urand(0,2); //returns 0,1,or 2
+                uint32 choice = urand(0,2); //returns 0,1,or 2
+
+                Player* const bot = it->second;
+                if(!bot)
+                    return;
+
+                Group* group = bot->GetGroup();
+                if(!group)
+                    return;
+
+                switch (group->GetLootMethod())
+                {
+                    case GROUP_LOOT:
+                        // bot random roll
+                        group->CountRollVote(bot->GetGUID(), Guid, NumberOfPlayers, RollVote(choice));
+                        break;
+                    case NEED_BEFORE_GREED:
+                        choice = 1;
+                        // bot need roll
+                        group->CountRollVote(bot->GetGUID(), Guid, NumberOfPlayers, RollVote(choice));
+                        break;
+                    case MASTER_LOOT:
+                        choice = 0;
+                        // bot pass on roll
+                        group->CountRollVote(bot->GetGUID(), Guid, NumberOfPlayers, RollVote(choice));
+                        break;
+                    default:
+                        break;
+                }
+                switch (rollType)
+                {
+                    case ROLL_NEED:
+                        bot->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_ROLL_NEED, 1);
+                        break;
+                    case ROLL_GREED:
+                        bot->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_ROLL_GREED, 1);
+                        break;
+                }
+            }
+            return;
+        }
+        case CMSG_REPAIR_ITEM:
+        {
+
+               WorldPacket p(packet); // WorldPacket packet for CMSG_REPAIR_ITEM, (8+8+1)
+
+               sLog.outDebug("PlayerbotMgr: CMSG_REPAIR_ITEM");
+
+               uint64 npcGUID, itemGUID;
+               uint8 guildBank;
+
+               p.rpos(0); //reset packet pointer
+               p >> npcGUID;
+               p >> itemGUID;  // Not used for bot but necessary opcode data retrieval
+               p >> guildBank; // Flagged if guild repair selected
+
+               for (PlayerBotMap::const_iterator it = GetPlayerBotsBegin(); it != GetPlayerBotsEnd(); ++it)
+               {
 
                     Player* const bot = it->second;
                     if(!bot)
-                        return;
+                         return;
 
-                    Group* group = bot->GetGroup();
+                    Group* group = bot->GetGroup();  // check if bot is a member of group
                     if(!group)
-                        return;
+                         return;
 
-                    switch (group->GetLootMethod())
+                    Creature *unit = bot->GetNPCIfCanInteractWith(npcGUID, UNIT_NPC_FLAG_REPAIR);
+                    if (!unit) // Check if NPC can repair bot or not
                     {
-                        case GROUP_LOOT:
-                            // bot random roll
-                            group->CountRollVote(bot->GetGUID(), Guid, NumberOfPlayers, RollVote(choice));
-                            break;
-                        case NEED_BEFORE_GREED:
-                            choice = 1;
-                            // bot need roll
-                            group->CountRollVote(bot->GetGUID(), Guid, NumberOfPlayers, RollVote(choice));
-                            break;
-                        case MASTER_LOOT:
-                            choice = 0;
-                            // bot pass on roll
-                            group->CountRollVote(bot->GetGUID(), Guid, NumberOfPlayers, RollVote(choice));
-                            break;
-                        default:
-                            break;
+                         sLog.outDebug("PlayerbotMgr: HandleRepairItemOpcode - Unit (GUID: %u) not found or you can't interact with him.", uint32(GUID_LOPART(npcGUID)));
+                         return;
                     }
 
-                    switch (rollType)
+                    // remove fake death
+                    if(bot->hasUnitState(UNIT_STAT_DIED))
+                         bot->RemoveSpellsCausingAura(SPELL_AURA_FEIGN_DEATH);
+
+                    // reputation discount
+                    float discountMod = bot->GetReputationPriceDiscount(unit);
+
+                    uint32 TotalCost = 0;
+                    if (itemGUID) // Handle redundant feature (repair individual item) for bot
                     {
-                        case ROLL_NEED:
-                            bot->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_ROLL_NEED, 1);
-                            break;
-                        case ROLL_GREED:
-                            bot->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_ROLL_GREED, 1);
-                            break;
+                         sLog.outDebug("ITEM: Repair single item is not applicable for %s",bot->GetName());
+                         continue;
+                    }
+                    else  // Handle feature (repair all items) for bot
+                    {
+                         sLog.outDebug("ITEM: Repair all items, npcGUID = %u", GUID_LOPART(npcGUID));
+
+                         TotalCost = bot->DurabilityRepairAll(true,discountMod,guildBank>0?true:false);
+                    }
+                    if (guildBank) // Handle guild repair
+                    {
+                         uint32 GuildId = bot->GetGuildId();
+                         if (!GuildId)
+                              return;
+                         Guild *pGuild = sObjectMgr.GetGuildById(GuildId);
+                         if (!pGuild)
+                              return;
+                         pGuild->LogBankEvent(GUILD_BANK_LOG_REPAIR_MONEY, 0, bot->GetGUIDLow(), TotalCost);
+                         pGuild->SendMoneyInfo(bot->GetSession(), bot->GetGUIDLow());
                     }
 
-                }
-        return;
+               }
+               return;
         }
-
+        case CMSG_SPIRIT_HEALER_ACTIVATE:
+        {
+               // sLog.outDebug("SpiritHealer is resurrecting the Player %s",m_master->GetName());
+               for( PlayerBotMap::iterator itr=m_playerBots.begin(); itr!=m_playerBots.end(); ++itr )
+               {
+                    Player* const bot = itr->second;
+                    Group *grp = bot->GetGroup();
+                    if(grp)
+                       grp->RemoveMember(bot->GetGUID(),1);
+               }
+               return;
+        }
 
         /*
         case CMSG_NAME_QUERY:
