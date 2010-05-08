@@ -16491,7 +16491,7 @@ void Player::LearnAviableSpells()
     RemoveAtLoginFlag(AT_LOGIN_LEARN_CLASS_SPELLS,true);
     DEBUG_LOG("Player::LearnAviableSpells(): Player %u has flag AT_LOGIN_LEARN_CLASS_SPELLS, learning spells...", GetGUID());
 
-    QueryResult *result_char = CharacterDatabase.PQuery("SELECT trainer_entry, spell FROM character_learnspells WHERE class=%u AND team = %u", getClass(), GetTeam());
+    QueryResult *result_char = CharacterDatabase.PQuery("SELECT trainer_entry, spell FROM character_learnspells WHERE class=%u AND team IN (%u, 0)", getClass(), GetTeam());
     if(!result_char)
         return;
     do
@@ -16512,7 +16512,15 @@ void Player::LearnAviableSpells()
             delete result_trainer;
         }
         else if(spell != 0)
+        {
+            const SpellEntry* spell_entry = sSpellStore.LookupEntry(spell);
+            if(!SpellEntry)
+                continue;
+            if(spell_entry->spellLevel > getLevel())
+                continue;
             learnSpell(spell, true);
+            
+        }
     } while (result_char->NextRow());
 
     delete result_char;

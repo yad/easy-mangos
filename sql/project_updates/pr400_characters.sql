@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS `character_loginequip` (
   `slot` tinyint(3) NOT NULL DEFAULT '0',
   `entry` int(11) NOT NULL DEFAULT '0',
   `count` tinyint(3) NOT NULL DEFAULT '1',
-  PRIMARY KEY (`class`),
+  KEY (`class`),
   KEY `level` (`level`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -13,6 +13,6 @@ CREATE TABLE IF NOT EXISTS `character_learnspells` (
 `team` INT( 11 ) NOT NULL DEFAULT '0',
 `trainer_entry` INT( 11 ) NOT NULL DEFAULT '0',
 `spell` INT( 11 ) NOT NULL DEFAULT '0',
-PRIMARY KEY ( `class` ) ,
+KEY ( `class` ) ,
 INDEX ( `team` ) 
 ) ENGINE = InnoDB;
