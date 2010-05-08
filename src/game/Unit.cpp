@@ -6088,12 +6088,12 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                     triggered_spell_id = 58567;
                     break;
                 }
-            }
-            case 12311: // Gag Order rank 1 
-            case 12958: // Gag Order rank 2 
-            { 
-                triggered_spell_id = 18498; 
-                break; 
+                case 12311: // Gag Order rank 1 
+                case 12958: // Gag Order rank 2 
+                { 
+                    triggered_spell_id = 18498; 
+                    break; 
+                }
             }
             break;
         }

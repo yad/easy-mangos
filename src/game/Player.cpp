@@ -875,7 +875,7 @@ uint32 Player::EnvironmentalDamage(EnviromentalDamage type, uint32 damage)
     SendMessageToSet(&data, true);
 
     Player* DmgSource = this;
-    if(isInCombat() && GetHealth() <= final_damage )
+    if(isInCombat() && GetHealth() <= damage )
     {
         AttackerSet const& attackers = getAttackers();
         for(AttackerSet::const_iterator itr = attackers.begin(); itr != attackers.end(); ++itr)
@@ -16146,7 +16146,7 @@ void Player::AddLoginEquip()
         }
         else
         {
-            ERROR_LOG("Player::AddLoginEquip(): item %u cant be placed into bag, sending by mail...", item_id);
+            sLog.outError("Player::AddLoginEquip(): item %u cant be placed into bag, sending by mail...", item_id);
             Item *newItem = Item::CreateItem(item_id, count, this);
             if(newItem)
                 problematicItems.push_back(newItem);
@@ -16514,7 +16514,7 @@ void Player::LearnAviableSpells()
         else if(spell != 0)
         {
             const SpellEntry* spell_entry = sSpellStore.LookupEntry(spell);
-            if(!SpellEntry)
+            if(!spell_entry)
                 continue;
             if(spell_entry->spellLevel > getLevel())
                 continue;
