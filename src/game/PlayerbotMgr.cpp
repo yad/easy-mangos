@@ -308,34 +308,34 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
                         return;
 
                     switch (group->GetLootMethod())
-                        {
+                    {
                         case GROUP_LOOT:
                             // bot random roll
-                            group->CountRollVote(bot->GetGUID(), Guid, NumberOfPlayers, choice);
+                            group->CountRollVote(bot->GetGUID(), Guid, NumberOfPlayers, RollVote(choice));
                             break;
                         case NEED_BEFORE_GREED:
                             choice = 1;
                             // bot need roll
-                            group->CountRollVote(bot->GetGUID(), Guid, NumberOfPlayers, choice);
+                            group->CountRollVote(bot->GetGUID(), Guid, NumberOfPlayers, RollVote(choice));
                             break;
                         case MASTER_LOOT:
                             choice = 0;
                             // bot pass on roll
-                            group->CountRollVote(bot->GetGUID(), Guid, NumberOfPlayers, choice);
+                            group->CountRollVote(bot->GetGUID(), Guid, NumberOfPlayers, RollVote(choice));
                             break;
                         default:
                             break;
-                        }
+                    }
 
                     switch (rollType)
-                        {
+                    {
                         case ROLL_NEED:
                             bot->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_ROLL_NEED, 1);
                             break;
                         case ROLL_GREED:
                             bot->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_ROLL_GREED, 1);
                             break;
-                        }
+                    }
 
                 }
         return;

@@ -87,6 +87,8 @@ libmangosgame_a_SOURCES = \
 	ChannelHandler.cpp \
 	ChannelMgr.cpp \
 	ChannelMgr.h \
+	CharacterDatabaseCleaner.cpp \
+	CharacterDatabaseCleaner.h \
 	CharacterHandler.cpp \
 	Chat.cpp \
 	Chat.h \

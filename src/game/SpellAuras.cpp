@@ -4539,7 +4539,7 @@ void Aura::HandleInvisibility(bool apply, bool Real)
     {
         m_target->m_invisibilityMask |= (1 << m_modifier.m_miscvalue);
 
-         m_target->RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_IMMUNE_OR_LOST_SELECTION);
+        m_target->RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_IMMUNE_OR_LOST_SELECTION);
 
         if(Real && m_target->GetTypeId()==TYPEID_PLAYER)
         {
@@ -5557,7 +5557,7 @@ void Aura::HandlePeriodicDamagePCT(bool apply, bool /*Real*/)
 void Aura::HandlePeriodicLeech(bool apply, bool /*Real*/)
 {
     m_isPeriodic = apply;
-    
+
     // For prevent double apply bonuses
     bool loading = (m_target->GetTypeId() == TYPEID_PLAYER && ((Player*)m_target)->GetSession()->PlayerLoading());
 
@@ -7750,7 +7750,7 @@ void Aura::PeriodicTick()
             else
                 pdamage = uint32(m_target->GetMaxHealth()*amount/100);
 
-            
+
             // SpellDamageBonus for magic spells
             if(GetSpellProto()->DmgClass == SPELL_DAMAGE_CLASS_NONE || GetSpellProto()->DmgClass == SPELL_DAMAGE_CLASS_MAGIC)
                 pdamage = m_target->SpellDamageBonusTaken(pCaster, GetSpellProto(), pdamage, DOT, GetStackAmount());
@@ -9089,20 +9089,20 @@ void Aura::HandleAuraModAllCritChance(bool apply, bool Real)
 void Aura::HandleAllowOnlyAbility(bool apply, bool Real)
 {
     if(!Real)
-       return;
+        return;
 
     // aura should affect only abilities
     /*if(apply)
     {
-       m_target->setAttackTimer(BASE_ATTACK,m_duration);
-       m_target->setAttackTimer(RANGED_ATTACK,m_duration);
-       m_target->setAttackTimer(OFF_ATTACK,m_duration);
+        m_target->setAttackTimer(BASE_ATTACK,m_duration);
+        m_target->setAttackTimer(RANGED_ATTACK,m_duration);
+        m_target->setAttackTimer(OFF_ATTACK,m_duration);
     }
     else
     {
-       m_target->resetAttackTimer(BASE_ATTACK);
-       m_target->resetAttackTimer(RANGED_ATTACK);
-       m_target->resetAttackTimer(OFF_ATTACK);
+        m_target->resetAttackTimer(BASE_ATTACK);
+        m_target->resetAttackTimer(RANGED_ATTACK);
+        m_target->resetAttackTimer(OFF_ATTACK);
     }*/
 
     m_target->UpdateDamagePhysical(BASE_ATTACK);

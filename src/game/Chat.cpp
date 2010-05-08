@@ -2268,7 +2268,7 @@ uint32 ChatHandler::extractAccountId(char* args, std::string* accountName /*= NU
 
         if (accountName)
             sAccountMgr.GetName(account_id, *accountName);
-        
+
         if (targetIfNullArg)
             *targetIfNullArg = targetPlayer;
 
