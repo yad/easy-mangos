@@ -1012,7 +1012,7 @@ bool Aura::IsNeedVisibleSlot(Unit const* caster) const
         case SPELL_EFFECT_APPLY_AREA_AURA_PARTY:
         case SPELL_EFFECT_APPLY_AREA_AURA_RAID:
             // passive auras must be placed in caster slot
-            return (totemAura || m_isPassive) && m_modifier.m_auraname != SPELL_AURA_NONE;
+            return (totemAura || !m_isPassive || m_isPassive) && m_modifier.m_auraname != SPELL_AURA_NONE;
         default:
             break;
     }
