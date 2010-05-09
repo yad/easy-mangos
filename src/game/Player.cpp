@@ -931,8 +931,7 @@ uint32 Player::EnvironmentalDamage(EnviromentalDamage type, uint32 damage)
     SendMessageToSet(&data, true);
 
     Player* DmgSource = this;
-    uint32 final_damage = DmgSource->DealDamage(this, damage, NULL, SELF_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, NULL, false, absorb);
-    if(isInCombat() && GetHealth() <= final_damage )
+    if(isInCombat() && GetHealth() <= damage )
     {
         AttackerSet const& attackers = getAttackers();
         for(AttackerSet::const_iterator itr = attackers.begin(); itr != attackers.end(); ++itr)
@@ -16707,6 +16706,15 @@ bool Player::LoadFromDB( uint32 guid, SqlQueryHolder *holder )
 
     _LoadInventory(holder->GetResult(PLAYER_LOGIN_QUERY_LOADINVENTORY), time_diff);
 
+    if(HasAtLoginFlag(AT_LOGIN_ADD_EQUIP))
+        AddLoginEquip();
+
+    if(HasAtLoginFlag(AT_LOGIN_LEARN_CLASS_SPELLS))
+        LearnAviableSpells();
+
+    if(HasAtLoginFlag(AT_LOGIN_LEARN_SKILL_RECIPES))
+        LearnSkillRecipesFromTrainer();
+
     // update items with duration and realtime
     UpdateItemDuration(time_diff, true);
 
@@ -17296,6 +17304,77 @@ void Player::_LoadInventory(QueryResult *result, uint32 timediff)
     _ApplyAllItemMods();
 }
 
+//Add special equip
+void Player::AddLoginEquip()
+{
+    //Make sure we really want this
+    if(!HasAtLoginFlag(AT_LOGIN_ADD_EQUIP))
+        return;
+
+    RemoveAtLoginFlag(AT_LOGIN_ADD_EQUIP,true);
+
+    QueryResult *result = CharacterDatabase.PQuery("SELECT level, slot, entry, count FROM character_loginequip WHERE class IN (0, %u)  AND level <= %u ORDER BY level DESC", getClass(), getLevel());
+    if(!result)
+        return;
+
+    DEBUG_LOG("Player::AddLoginEquip(): Player %u has flag AT_LOGIN_ADD_EQUIP, adding items...", GetGUID());
+
+    std::list<Item*> problematicItems;
+    uint8 lastLevel = 0;
+    do
+    {
+        Field *fields = result->Fetch();
+        uint8 level      = fields[0].GetUInt8();
+        uint8  slot      = fields[1].GetUInt8();
+        uint32 item_id   = fields[2].GetUInt32();
+        uint8 count      = fields[3].GetUInt8();
+
+        if(lastLevel != 0 && level < lastLevel)
+            break;
+        lastLevel = level;
+
+        //Remove conflict item
+        if(GetItemByPos(NULL_BAG, slot))
+            RemoveItem(NULL_BAG, slot, true);
+
+        ItemPosCountVec dest;
+        if(CanStoreNewItem(NULL_BAG, slot, dest, item_id, count ) == EQUIP_ERR_OK)
+        {
+            Item *newItem = StoreNewItem(dest, item_id, true, Item::GenerateItemRandomPropertyId(item_id));
+            SendNewItem(newItem, count, true, false);
+            newItem->SaveToDB();
+        }
+        else
+        {
+            sLog.outError("Player::AddLoginEquip(): item %u cant be placed into bag, sending by mail...", item_id);
+            Item *newItem = Item::CreateItem(item_id, count, this);
+            if(newItem)
+                problematicItems.push_back(newItem);
+        }
+    } while (result->NextRow());
+
+    delete result;
+
+    while(!problematicItems.empty())
+    {
+        //Send it by mail
+        std::string subject = GetSession()->GetMangosString(LANG_NOT_EQUIPPED_ITEM);
+        // fill mail
+        MailDraft draft(subject, "There's were problems with equipping item(s).");
+ 
+        for(int i = 0; !problematicItems.empty() && i < MAX_MAIL_ITEMS; ++i)
+        {
+            Item* item = problematicItems.front();
+            problematicItems.pop_front();
+
+            draft.AddItem(item);
+        }
+        draft.SendMailTo(this, MailSender(this, MAIL_STATIONERY_GM), MAIL_CHECK_MASK_COPIED);
+    }
+    //save new items
+    _SaveInventory();
+}
+
 // load mailed item which should receive current player
 void Player::_LoadMailedItems(QueryResult *result)
 {
@@ -17603,7 +17682,51 @@ void Player::_LoadSpells(QueryResult *result)
         delete result;
     }
 }
+void Player::LearnAviableSpells()
+{
+    //Make sure we really want this
+    if(!HasAtLoginFlag(AT_LOGIN_LEARN_CLASS_SPELLS))
+        return;
 
+    RemoveAtLoginFlag(AT_LOGIN_LEARN_CLASS_SPELLS,true);
+    DEBUG_LOG("Player::LearnAviableSpells(): Player %u has flag AT_LOGIN_LEARN_CLASS_SPELLS, learning spells...", GetGUID());
+
+    QueryResult *result_char = CharacterDatabase.PQuery("SELECT trainer_entry, spell FROM character_learnspells WHERE class=%u AND team IN (%u, 0)", getClass(), GetTeam());
+    if(!result_char)
+        return;
+    do
+    {
+        Field *fields = result_char->Fetch();
+        uint32 trainer_entry  = fields[0].GetUInt32();
+        uint32 spell          = fields[1].GetUInt32();
+        if(trainer_entry != 0)
+        {
+            QueryResult *result_trainer = WorldDatabase.PQuery("SELECT spell FROM npc_trainer WHERE entry=%u AND level <= %u", trainer_entry, getLevel());
+            if(!result_trainer)
+                continue;
+            do
+            {
+                Field *fields_trainer = result_trainer->Fetch();
+                learnSpell(fields_trainer[0].GetUInt32(), true);
+            } while (result_trainer->NextRow());
+            delete result_trainer;
+        }
+        else if(spell != 0)
+        {
+            const SpellEntry* spell_entry = sSpellStore.LookupEntry(spell);
+            if(!spell_entry)
+                continue;
+            if(spell_entry->spellLevel > getLevel())
+                continue;
+            learnSpell(spell, true);
+            
+        }
+    } while (result_char->NextRow());
+
+    delete result_char;
+    //save new spells
+    _SaveSpells();
+}
 void Player::_LoadTalents(QueryResult *result)
 {
     //QueryResult *result = CharacterDatabase.PQuery("SELECT talent_id, current_rank, spec FROM character_talent WHERE guid = '%u'",GetGUIDLow());
@@ -22614,6 +22737,30 @@ void Player::_LoadSkills(QueryResult *result)
         if(GetPureSkillValue (SKILL_UNARMED) < base_skill)
             SetSkill(SKILL_UNARMED, base_skill, base_skill);
     }
+}
+
+//Learn All aviable recipes from trainers
+void Player::LearnSkillRecipesFromTrainer()
+{
+    //Make sure we really want this
+    if(!HasAtLoginFlag(AT_LOGIN_LEARN_SKILL_RECIPES))
+        return;
+    RemoveAtLoginFlag(AT_LOGIN_LEARN_SKILL_RECIPES,true);
+        
+    DEBUG_LOG("Player::LearnSkillRecipesFromTrainer(): Player %u has flag AT_LOGIN_LEARN_SKILL_RECIPES, learning recipes...", GetGUID());
+
+    for(SkillStatusMap::iterator itr = mSkillStatus.begin(); itr != mSkillStatus.end(); ++itr)
+    {
+        QueryResult *result = WorldDatabase.PQuery("SELECT spell FROM npc_trainer WHERE reqskill=%u AND reqskillvalue <= %u", itr->first, GetSkillValue(itr->first));
+        if(!result)
+            continue;
+        do
+        {
+            Field *fields = result->Fetch();
+            learnSpell(fields[0].GetUInt32(), true);
+        }while (result->NextRow());
+        delete result;
+    } 
 }
 
 uint32 Player::GetPhaseMaskForSpawn() const

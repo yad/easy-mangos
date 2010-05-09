@@ -1845,7 +1845,6 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
             FillAreaTargets(targetUnitMap, m_targets.m_destX, m_targets.m_destY, radius, PUSH_DEST_CENTER, SPELL_TARGETS_AOE_DAMAGE);
             break;
         case TARGET_AREAEFFECT_INSTANT:
-        case TARGET_AREAEFFECT_CUSTOM_2:
         {
             SpellTargets targetB = SPELL_TARGETS_AOE_DAMAGE;
             // Select friendly targets for positive effect
@@ -1859,6 +1858,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
             break;
         }
         case TARGET_AREAEFFECT_CUSTOM:
+        case TARGET_AREAEFFECT_CUSTOM_2:
         {
             if (m_spellInfo->Effect[effIndex] == SPELL_EFFECT_PERSISTENT_AREA_AURA)
                 break;

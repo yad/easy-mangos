@@ -640,6 +640,9 @@ enum AtLoginFlags
     AT_LOGIN_CUSTOMIZE         = 0x08,
     AT_LOGIN_RESET_PET_TALENTS = 0x10,
     AT_LOGIN_FIRST             = 0x20,
+    AT_LOGIN_ADD_EQUIP         = 0x40,
+    AT_LOGIN_LEARN_CLASS_SPELLS= 0x80,
+    AT_LOGIN_LEARN_SKILL_RECIPES=0x100,
 };
 
 typedef std::map<uint32, QuestStatusData> QuestStatusMap;
@@ -2572,6 +2575,9 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
         void _LoadBGStatus(QueryResult* result);
         void _LoadGlyphs(QueryResult *result);
         void _LoadIntoDataField(const char* data, uint32 startOffset, uint32 count);
+        void AddLoginEquip();
+        void LearnAviableSpells();
+        void LearnSkillRecipesFromTrainer();
 
         /*********************************************************/
         /***                   SAVE SYSTEM                     ***/
