@@ -947,6 +947,8 @@ uint32 Player::EnvironmentalDamage(EnviromentalDamage type, uint32 damage)
         }
     }
 
+    uint32 final_damage = DmgSource->DealDamage(this, damage, NULL, SELF_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, NULL, false, absorb);
+
     if(!isAlive())
     {
         if(type==DAMAGE_FALL && DmgSource == this)          // DealDamage not apply item durability loss at self damage
