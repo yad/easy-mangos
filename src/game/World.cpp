@@ -61,8 +61,8 @@
 #include "WaypointManager.h"
 #include "GMTicketMgr.h"
 #include "Util.h"
-#include "CharacterDatabaseCleaner.h"
 #include "AuctionHouseBot.h"
+#include "CharacterDatabaseCleaner.h"
 #include "OutdoorPvPMgr.h"
 
 INSTANTIATE_SINGLETON_1( World );
