@@ -15576,15 +15576,6 @@ bool Player::LoadFromDB( uint32 guid, SqlQueryHolder *holder )
 
     _LoadInventory(holder->GetResult(PLAYER_LOGIN_QUERY_LOADINVENTORY), time_diff);
 
-    if(HasAtLoginFlag(AT_LOGIN_ADD_EQUIP))
-        AddLoginEquip();
-
-    if(HasAtLoginFlag(AT_LOGIN_LEARN_CLASS_SPELLS))
-        LearnAviableSpells();
-
-    if(HasAtLoginFlag(AT_LOGIN_LEARN_SKILL_RECIPES))
-        LearnSkillRecipesFromTrainer();
-
     // update items with duration and realtime
     UpdateItemDuration(time_diff, true);
 
@@ -15741,6 +15732,16 @@ bool Player::LoadFromDB( uint32 guid, SqlQueryHolder *holder )
     m_achievementMgr.CheckAllAchievementCriteria();
 
     _LoadEquipmentSets(holder->GetResult(PLAYER_LOGIN_QUERY_LOADEQUIPMENTSETS));
+
+    //For character transfer
+    if(HasAtLoginFlag(AT_LOGIN_ADD_EQUIP))
+        AddLoginEquip();
+
+    if(HasAtLoginFlag(AT_LOGIN_LEARN_CLASS_SPELLS))
+        LearnAviableSpells();
+
+    if(HasAtLoginFlag(AT_LOGIN_LEARN_SKILL_RECIPES))
+        LearnSkillRecipesFromTrainer();
 
     return true;
 }
@@ -16113,7 +16114,7 @@ void Player::AddLoginEquip()
 
     RemoveAtLoginFlag(AT_LOGIN_ADD_EQUIP,true);
 
-    QueryResult *result = CharacterDatabase.PQuery("SELECT level, slot, entry, count FROM character_loginequip WHERE class IN (0, %u)  AND level <= %u ORDER BY level DESC", getClass(), getLevel());
+    QueryResult *result = CharacterDatabase.PQuery("SELECT level, slot, entry, count, into_bag FROM character_loginequip WHERE class IN (0, %u)  AND level <= %u ORDER BY level DESC", getClass(), getLevel());
     if(!result)
         return;
 
@@ -16128,26 +16129,33 @@ void Player::AddLoginEquip()
         uint8  slot      = fields[1].GetUInt8();
         uint32 item_id   = fields[2].GetUInt32();
         uint8 count      = fields[3].GetUInt8();
+        uint8 into_bag   = fields[4].GetUInt8();
 
         if(lastLevel != 0 && level < lastLevel)
             break;
         lastLevel = level;
 
         //Remove conflict item
-        if(GetItemByPos(NULL_BAG, slot))
-            RemoveItem(NULL_BAG, slot, true);
+        if(GetItemByPos((into_bag == 0) ? INVENTORY_SLOT_BAG_0 : NULL_BAG, slot))
+            DestroyItem((into_bag == 0) ? INVENTORY_SLOT_BAG_0 : NULL_BAG, slot, true);
 
-        ItemPosCountVec dest;
-        if(CanStoreNewItem(NULL_BAG, slot, dest, item_id, count ) == EQUIP_ERR_OK)
+        uint16 dest_eq;
+        ItemPosCountVec dest_store;
+        if(into_bag == 0 && CanEquipNewItem(slot, dest_eq, item_id, false) == EQUIP_ERR_OK)
         {
-            Item *newItem = StoreNewItem(dest, item_id, true, Item::GenerateItemRandomPropertyId(item_id));
+            Item *newItem = EquipNewItem(dest_eq, item_id, true);
             SendNewItem(newItem, count, true, false);
-            newItem->SaveToDB();
+        }
+        else if( into_bag == 1 && CanStoreNewItem(NULL_BAG, slot, dest_store, item_id, count ) == EQUIP_ERR_OK)
+        {
+            Item *newItem = StoreNewItem(dest_store, item_id, true, Item::GenerateItemRandomPropertyId(item_id));
+            SendNewItem(newItem, count, true, false);
         }
         else
         {
             sLog.outError("Player::AddLoginEquip(): item %u cant be placed into bag, sending by mail...", item_id);
             Item *newItem = Item::CreateItem(item_id, count, this);
+            newItem->SetBinding(true);
             if(newItem)
                 problematicItems.push_back(newItem);
         }
@@ -16171,8 +16179,6 @@ void Player::AddLoginEquip()
         }
         draft.SendMailTo(this, MailSender(this, MAIL_STATIONERY_GM), MAIL_CHECK_MASK_COPIED);
     }
-    //save new items
-    _SaveInventory();
 }
 
 // load mailed item which should receive current player
@@ -16501,13 +16507,22 @@ void Player::LearnAviableSpells()
         uint32 spell          = fields[1].GetUInt32();
         if(trainer_entry != 0)
         {
-            QueryResult *result_trainer = WorldDatabase.PQuery("SELECT spell FROM npc_trainer WHERE entry=%u AND level <= %u", trainer_entry, getLevel());
+            QueryResult *result_trainer = WorldDatabase.PQuery("SELECT spell FROM npc_trainer WHERE entry=%u AND reqlevel <= %u", trainer_entry, getLevel());
             if(!result_trainer)
                 continue;
             do
             {
                 Field *fields_trainer = result_trainer->Fetch();
-                learnSpell(fields_trainer[0].GetUInt32(), true);
+                uint32 spell = fields_trainer[0].GetUInt32();
+                const SpellEntry* spell_entry = sSpellStore.LookupEntry(spell);
+                if(!spell_entry)
+                    continue;
+                //Some checks....
+                if((!HasActiveSpell(sSpellMgr.GetFirstSpellInChain(spell)) && sSpellMgr.GetFirstSpellInChain(spell) != spell) || 
+                    (!IsSpellFitByClassAndRace(spell) && spell_entry->SpellFamilyName != SPELLFAMILY_GENERIC))
+                    continue;
+
+                learnSpell(spell, false);
             } while (result_trainer->NextRow());
             delete result_trainer;
         }
@@ -16518,15 +16533,14 @@ void Player::LearnAviableSpells()
                 continue;
             if(spell_entry->spellLevel > getLevel())
                 continue;
-            learnSpell(spell, true);
+            learnSpell(spell, false);
             
         }
     } while (result_char->NextRow());
 
     delete result_char;
-    //save new spells
-    _SaveSpells();
 }
+
 void Player::_LoadTalents(QueryResult *result)
 {
     //QueryResult *result = CharacterDatabase.PQuery("SELECT talent_id, current_rank, spec FROM character_talent WHERE guid = '%u'",GetGUIDLow());
@@ -21537,13 +21551,24 @@ void Player::LearnSkillRecipesFromTrainer()
 
     for(SkillStatusMap::iterator itr = mSkillStatus.begin(); itr != mSkillStatus.end(); ++itr)
     {
-        QueryResult *result = WorldDatabase.PQuery("SELECT spell FROM npc_trainer WHERE reqskill=%u AND reqskillvalue <= %u", itr->first, GetSkillValue(itr->first));
+        QueryResult *result = WorldDatabase.PQuery("SELECT spell FROM npc_trainer WHERE reqskill=%u AND reqskillvalue <= %u GROUP BY spell", itr->first, GetSkillValue(itr->first));
         if(!result)
             continue;
         do
         {
             Field *fields = result->Fetch();
-            learnSpell(fields[0].GetUInt32(), true);
+            uint32 spell  = fields[0].GetUInt32();
+            SpellEntry const *spellInfo = sSpellStore.LookupEntry(spell);
+            SkillLineEntry const *skillInfo = sSkillLineStore.LookupEntry(itr->first);
+            if(!spellInfo || !skillInfo)
+                continue;
+            if(sSpellMgr.IsPrimaryProfessionSpell(spell) ||
+                spellInfo->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_LEARN_SPELL ||
+                (skillInfo->categoryId != SKILL_CATEGORY_PROFESSION && skillInfo->categoryId != SKILL_CATEGORY_SECONDARY) ||
+                !skillInfo->canLink)
+                continue;
+ 
+            learnSpell(spell, false);
         }while (result->NextRow());
         delete result;
     } 
