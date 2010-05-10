@@ -40,12 +40,12 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/MP"
-				Optimization="3"
-				InlineFunctionExpansion="2"
-				FavorSizeOrSpeed="1"
-				OmitFramePointers="true"
-				WholeProgramOptimization="true"
-				AdditionalIncludeDirectories="..\..\dep\include;..\..\src\vmap"
+				Optimization="0"
+				InlineFunctionExpansion="0"
+				FavorSizeOrSpeed="0"
+				OmitFramePointers="false"
+				WholeProgramOptimization="false"
+				AdditionalIncludeDirectories="..\..\..\..\src\shared\vmap;..\..\..\..\dep\include\g3dlite;..\..\dep\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;_CRT_SECURE_NO_DEPRECATE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -70,9 +70,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="shared.lib g3dlite.lib msvcrtd.lib"
 				OutputFile="..\..\bin\$(PlatformName)_$(ConfigurationName)\generator.exe"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\..\dep\lib\$(PlatformName)\g3d70"
+				AdditionalLibraryDirectories="..\..\..\..\win\VC90\g3dlite__$(PlatformName)_$(ConfigurationName)\;..\..\..\..\win\VC90\shared__$(PlatformName)_$(ConfigurationName)\;"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="..\..\bin\$(PlatformName)_$(ConfigurationName)\generator.pdb"
 				GenerateMapFile="true"
@@ -136,7 +137,7 @@
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="true"
-				AdditionalIncludeDirectories="..\..\src\vmap;..\..\dep\include"
+				AdditionalIncludeDirectories="..\..\..\..\src\shared\vmap;..\..\..\..\dep\include\g3dlite;..\..\dep\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;_CRT_SECURE_NO_DEPRECATE"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="false"
@@ -158,9 +159,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="shared.lib g3dlite.lib msvcrt.lib"
 				OutputFile="..\..\bin\$(PlatformName)_$(ConfigurationName)\generator.exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\dep\lib\$(PlatformName)\g3d70"
+				AdditionalLibraryDirectories="..\..\..\..\win\VC90\g3dlite__$(PlatformName)_$(ConfigurationName)\;..\..\..\..\win\VC90\shared__$(PlatformName)_$(ConfigurationName)\;"
 				ManifestFile="$(IntDir)\$(TargetFileName).intermediate.manifest"
 				GenerateDebugInformation="false"
 				SubSystem="1"
@@ -222,230 +224,6 @@
 				RelativePath="..\..\src\generator\ModelContainerView.h"
 				>
 			</File>
-		</Filter>
-		<Filter
-			Name="vmaps"
-			>
-			<File
-				RelativePath="..\..\src\vmap\AABSPTree.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\vmap\BaseModel.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\vmap\BaseModel.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\vmap\CoordModelMapping.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\vmap\CoordModelMapping.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\vmap\IVMapManager.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\vmap\ManagedModelContainer.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\vmap\ManagedModelContainer.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\vmap\ModelContainer.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\vmap\ModelContainer.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\vmap\NodeValueAccess.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\vmap\ShortBox.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\vmap\ShortVector.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\vmap\SubModel.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\vmap\SubModel.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\vmap\TileAssembler.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\vmap\TileAssembler.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\vmap\TreeNode.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\vmap\TreeNode.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\vmap\VMapDefinitions.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\vmap\VMapFactory.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\vmap\VMapFactory.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\vmap\VMapManager.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\vmap\VMapManager.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\vmap\VMapTools.h"
-				>
-			</File>
-		</Filter>
-		<Filter
-			Name="pathfinding"
-			>
-			<File
-				RelativePath="..\..\src\pathfinding\ChunkyTriMesh.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\pathfinding\ChunkyTriMesh.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\pathfinding\InputGeom.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\pathfinding\InputGeom.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\pathfinding\MeshLoaderObj.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\pathfinding\MeshLoaderObj.h"
-				>
-			</File>
-			<Filter
-				Name="Detour"
-				>
-				<File
-					RelativePath="..\..\src\pathfinding\Detour\DetourCommon.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\src\pathfinding\Detour\DetourCommon.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\src\pathfinding\Detour\DetourNavMesh.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\src\pathfinding\Detour\DetourNavMesh.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\src\pathfinding\Detour\DetourNavMeshBuilder.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\src\pathfinding\Detour\DetourNavMeshBuilder.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\src\pathfinding\Detour\DetourNode.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\src\pathfinding\Detour\DetourNode.h"
-					>
-				</File>
-			</Filter>
-			<Filter
-				Name="Recast"
-				>
-				<File
-					RelativePath="..\..\src\pathfinding\Recast\Recast.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\src\pathfinding\Recast\Recast.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\src\pathfinding\Recast\RecastArea.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\src\pathfinding\Recast\RecastContour.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\src\pathfinding\Recast\RecastFilter.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\src\pathfinding\Recast\RecastLog.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\src\pathfinding\Recast\RecastLog.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\src\pathfinding\Recast\RecastMesh.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\src\pathfinding\Recast\RecastMeshDetail.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\src\pathfinding\Recast\RecastRasterization.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\src\pathfinding\Recast\RecastRegion.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\src\pathfinding\Recast\RecastTimer.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\src\pathfinding\Recast\RecastTimer.h"
-					>
-				</File>
-			</Filter>
 		</Filter>
 	</Files>
 	<Globals>
