@@ -1001,6 +1001,26 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
         m_damage += target->damage;
     }
 
+    // Recheck immune (only for delayed spells)
+    if (m_spellInfo->speed && (
+        unit->IsImmunedToDamage(GetSpellSchoolMask(m_spellInfo)) ||
+        unit->IsImmunedToSpell(m_spellInfo)))
+    {
+        if (GetAffectiveCaster())
+            GetAffectiveCaster()->SendSpellMiss(unit, m_spellInfo->Id, SPELL_MISS_IMMUNE);
+        missInfo = SPELL_MISS_IMMUNE;
+        return;
+    }
+
+    // recheck deflect for delayed spells on target with Deterrence
+    if (m_spellInfo->speed && unit->HasAura(19263))
+    {
+        if (GetAffectiveCaster())
+            GetAffectiveCaster()->SendSpellMiss(unit, m_spellInfo->Id, SPELL_MISS_DODGE);
+        missInfo = SPELL_MISS_DODGE;
+        return;
+    }
+
     if (missInfo==SPELL_MISS_NONE)                          // In case spell hit target, do all effect on that target
         DoSpellHitOnUnit(unit, mask);
     else
@@ -1174,23 +1194,6 @@ void Spell::DoSpellHitOnUnit(Unit *unit, const uint32 effectMask)
         return;
 
     Unit* realCaster = GetAffectiveCaster();
-
-    // Recheck immune (only for delayed spells)
-    if (m_spellInfo->speed && (
-        unit->IsImmunedToDamage(GetSpellSchoolMask(m_spellInfo)) ||
-        unit->IsImmunedToSpell(m_spellInfo)))
-    {
-        if (realCaster)
-            realCaster->SendSpellMiss(unit, m_spellInfo->Id, SPELL_MISS_IMMUNE);
-        return;
-    }
-
-    // recheck deflect for delayed spells on target with Deterrence
-    if (m_spellInfo->speed && unit->HasAura(19263))
-    {
-        realCaster->SendSpellMiss(unit, m_spellInfo->Id, SPELL_MISS_DODGE);
-        return;
-    }
 
     if (unit->GetTypeId() == TYPEID_PLAYER)
     {
