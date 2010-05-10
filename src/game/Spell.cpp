@@ -1012,8 +1012,9 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
         return;
     }
 
-    // recheck deflect for delayed spells on target with Deterrence
-    if (m_spellInfo->speed && unit->HasAura(19263))
+    // recheck deflect for delayed spells on target with Deterrence,
+    // spell should not hit when rogue use vanish
+    if (m_spellInfo->speed && (unit->HasAura(19263) || unit->HasStealthAura()))
     {
         if (GetAffectiveCaster())
             GetAffectiveCaster()->SendSpellMiss(unit, m_spellInfo->Id, SPELL_MISS_DODGE);
