@@ -38,10 +38,6 @@ OutdoorPvPEP::OutdoorPvPEP()
     #define EVENT_CP_1 1
     #define EVENT_CP_2 2
     #define EVENT_CP_3 3
-    SetActiveEvent(EVENT_CP_0, 0);
-    SetActiveEvent(EVENT_CP_1, 0);
-    SetActiveEvent(EVENT_CP_2, 0);
-    SetActiveEvent(EVENT_CP_3, 0);
 }
 
 OutdoorPvPObjectiveEP_EWT::OutdoorPvPObjectiveEP_EWT(OutdoorPvP *pvp)
