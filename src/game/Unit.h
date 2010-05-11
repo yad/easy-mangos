@@ -913,6 +913,8 @@ struct SpellNonMeleeDamage{
     bool   unused;
     uint32 blocked;
     uint32 HitInfo;
+    // Used for help
+    uint32 cleanDamage;
 };
 
 struct SpellPeriodicAuraLogInfo

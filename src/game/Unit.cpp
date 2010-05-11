@@ -448,6 +448,11 @@ void Unit::SendMonsterMove(float NewPosX, float NewPosY, float NewPosZ, SplineTy
         SendMessageToSet( &data, true );
 }
 
+void Unit::SendMonsterMoveByPath(const PathInfo* path, SplineFlags flags)
+{
+    // PATHFIND TODO: implement
+}
+
 void Unit::SendMonsterMoveWithSpeed(float x, float y, float z, uint32 transitTime, Player* player)
 {
     if (!transitTime)

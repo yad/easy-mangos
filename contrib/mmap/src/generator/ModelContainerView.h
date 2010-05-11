@@ -2,9 +2,13 @@
 #define _MODELCONTAINERVIEW_H
 
 #include "VMapManager.h"
-#include <G3D/G3DAll.h>
 #include "ModelContainer.h"
 
+#include "G3D/Table.h"
+#include "G3D/Array.h"
+#include "G3D/Vector3.h"
+
+using namespace G3D;
 
 namespace VMAP {
     //==========================================
@@ -12,8 +16,6 @@ namespace VMAP {
 
     class ModelContainerView {
     private:
-
-        VARAreaRef iVARAreaRef;
 
         Table<std::string, Array<Vector3> > iTriVarTable;
         Table<std::string, Array<int> > iTriIndexTable;

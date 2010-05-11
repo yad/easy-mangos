@@ -135,7 +135,7 @@ namespace VMAP
   ModelContainerView::addGrid ( int iMap, int x, int y )
   {
     generateMoveMapForTile (iMap, x, y);
-    consolePrintf("Loaded %d-%d\n",x,y);
+    printf("Loaded %d-%d\n",x,y);
   }
 
   //===================================================
