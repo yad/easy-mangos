@@ -964,7 +964,7 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
     
     target->processed = true;
     
-     Unit* unit = m_caster->GetObjectGuid() == target->targetGUID ? m_caster : ObjectAccessor::GetUnit(*m_caster, target->targetGUID);
+    Unit* unit = m_caster->GetObjectGuid() == target->targetGUID ? m_caster : ObjectAccessor::GetUnit(*m_caster, target->targetGUID);
     if (!unit)
         return;
 
@@ -1006,19 +1006,25 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
         unit->IsImmunedToDamage(GetSpellSchoolMask(m_spellInfo)) ||
         unit->IsImmunedToSpell(m_spellInfo)))
     {
-        if (GetAffectiveCaster())
-            GetAffectiveCaster()->SendSpellMiss(unit, m_spellInfo->Id, SPELL_MISS_IMMUNE);
+        caster->SendSpellMiss(unit, m_spellInfo->Id, SPELL_MISS_IMMUNE);
         missInfo = SPELL_MISS_IMMUNE;
         return;
     }
 
     // recheck deflect for delayed spells on target with Deterrence,
-    // spell should not hit when rogue use vanish
-    if (m_spellInfo->speed && (unit->HasAura(19263) || unit->HasStealthAura()))
+    if (m_spellInfo->speed && unit->HasAura(19263))
     {
-        if (GetAffectiveCaster())
-            GetAffectiveCaster()->SendSpellMiss(unit, m_spellInfo->Id, SPELL_MISS_DODGE);
+        caster->SendSpellMiss(unit, m_spellInfo->Id, SPELL_MISS_DODGE);
         missInfo = SPELL_MISS_DODGE;
+        return;
+    }
+    
+    // recheck for visibility of target
+    if ((m_spellInfo->speed > 0.0f || m_spellInfo->EffectImplicitTargetA[0] == TARGET_CHAIN_DAMAGE) && 
+        !unit->isVisibleForOrDetect(caster, caster, false))
+    {
+        caster->SendSpellMiss(unit, m_spellInfo->Id, SPELL_MISS_EVADE);
+        missInfo = SPELL_MISS_EVADE;
         return;
     }
 
