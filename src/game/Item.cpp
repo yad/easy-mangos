@@ -290,6 +290,11 @@ void Item::UpdateDuration(Player* owner, uint32 diff)
 
     SetUInt32Value(ITEM_FIELD_DURATION, GetUInt32Value(ITEM_FIELD_DURATION) - diff);
     SetState(ITEM_CHANGED, owner);                          // save new time in database
+
+    //Remove refundable flag for next time if item is no logner refundable
+    if(HasFlag(ITEM_FIELD_FLAGS, ITEM_FLAGS_REFUNDABLE))
+        if(!GetUInt32Value(ITEM_FIELD_CREATE_PLAYED_TIME) || (GetOwner() && GetOwner()->m_Played_time[0] > (GetUInt32Value(ITEM_FIELD_CREATE_PLAYED_TIME) + 2*60*60)))
+            RemoveFlag(ITEM_FIELD_FLAGS, ITEM_FLAGS_REFUNDABLE);
 }
 
 void Item::SaveToDB()
@@ -434,12 +439,6 @@ bool Item::LoadFromDB(uint32 guid, uint64 owner_guid, QueryResult *result)
     //Set extended cost for refundable item
     if(HasFlag(ITEM_FIELD_FLAGS, ITEM_FLAGS_REFUNDABLE))
     {
-        //Remove refundable flag for next time if item is no logner refundable
-        if(!GetUInt32Value(ITEM_FIELD_CREATE_PLAYED_TIME) || GetOwner()->m_Played_time[0] > (GetUInt32Value(ITEM_FIELD_CREATE_PLAYED_TIME) + 2*60*60))
-        {
-            RemoveFlag(ITEM_FIELD_FLAGS, ITEM_FLAGS_REFUNDABLE);
-            return true;
-        }
         QueryResult *result_ext = CharacterDatabase.PQuery("SELECT ExtendedCost, price FROM item_instance WHERE guid = '%u'", guid);
         if(result_ext)
         {

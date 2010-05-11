@@ -734,7 +734,7 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
         {
             ((Player*)pVictim)->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_TOTAL_DAMAGE_RECEIVED, health);
             if (player)
-                player->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_SPECIAL_PVP_KILL,1,0,pVictim);
+                player->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_SPECIAL_PVP_KILL,1,0,pVictim);		
         }
 
         // Reward player, his pets, and group/raid members
@@ -930,7 +930,13 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
             Player *killed = ((Player*)pVictim);
             if(BattleGround *bg = killed->GetBattleGround())
                 if(player)
+                {
                     bg->HandleKillPlayer(killed, player);
+                    player->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HONORABLE_KILL,1);
+                    player->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_GET_KILLING_BLOWS,1);
+                    player->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HONORABLE_KILL_AT_AREA,1);
+
+                }
         }
         else if(pVictim->GetTypeId() == TYPEID_UNIT)
         {
@@ -1785,6 +1791,7 @@ void Unit::DealMeleeDamage(CalcDamageInfo *damageInfo, bool durabilityLoss)
                 //uint32 resist;
                 //CalcAbsorbResist(pVictim, SpellSchools(spellProto->School), SPELL_DIRECT_DAMAGE, damage, &absorb, &resist);
                 //damage-=absorb + resist;
+
 
                 pVictim->DealDamageMods(this,damage,NULL);
 
@@ -6342,7 +6349,10 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                     if (!procSpell)
                         return false;
 
-                    Aura* leachAura = pVictim->GetAura(procSpell->Id, EFFECT_INDEX_0);
+                    if (triggeredByAura->GetEffIndex() != EFFECT_INDEX_1)
+                        return false;
+
+                    Aura* leachAura = pVictim->GetAura(SPELL_AURA_PERIODIC_LEECH, SPELLFAMILY_PRIEST, UI64LIT(0x02000000), NULL, GetGUID());
                     if (!leachAura)
                         return false;
 
@@ -6772,8 +6782,9 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
             {
                 triggered_spell_id = 25742;
                 float ap = GetTotalAttackPowerValue(BASE_ATTACK);
-                int32 holy = SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_HOLY) +
-                             pVictim->SpellBaseDamageBonusTaken(SPELL_SCHOOL_MASK_HOLY);
+                int32 holy = SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_HOLY);
+                if (holy < 0)
+                    holy = 0;
                 basepoints[0] = int32(GetAttackTime(BASE_ATTACK)) * int32(ap*0.022f + 0.044f * holy) / 1000;
                 break;
             }
@@ -10055,7 +10066,7 @@ uint32 Unit::SpellDamageBonusTaken(Unit *pCaster, SpellEntry const *spellProto, 
         TakenTotal+= int32(TakenAdvertisedBenefit * coeff * LvlPenalty);
     }
 
-    float tmpDamage = (pdamage + TakenTotal * int32(stack)) * TakenTotalMod;
+    float tmpDamage = (int32(pdamage) + TakenTotal * int32(stack)) * TakenTotalMod;
 
     return tmpDamage > 0 ? uint32(tmpDamage) : 0;
 }
@@ -12671,7 +12682,7 @@ int32 Unit::CalculateSpellDuration(SpellEntry const* spellProto, SpellEffectInde
         int32 durationMod_not_stack = target->GetMaxNegativeAuraModifierByMiscValue(SPELL_AURA_MECHANIC_DURATION_MOD_NOT_STACK, mechanic);
 
         if (!IsPositiveSpell(spellProto->Id))
-            durationMod_always += target->GetTotalAuraModifierByMiscValue(SPELL_AURA_MOD_DURATION_OF_MAGIC_EFFECTS, spellProto->DmgClass);
+            durationMod_always += target->GetTotalAuraModifierByMiscValue(SPELL_AURA_MOD_DURATION_OF_MAGIC_EFFECTS, spellProto->Dispel);
 
         int32 durationMod = 0;
         // Select strongest negative mod

@@ -1015,7 +1015,7 @@ bool Aura::IsNeedVisibleSlot(Unit const* caster) const
         case SPELL_EFFECT_APPLY_AREA_AURA_PARTY:
         case SPELL_EFFECT_APPLY_AREA_AURA_RAID:
             // passive auras must be placed in caster slot
-            return (totemAura || m_isPassive) && m_modifier.m_auraname != SPELL_AURA_NONE;
+            return (totemAura || !m_isPassive || m_isPassive) && m_modifier.m_auraname != SPELL_AURA_NONE;
         default:
             break;
     }
@@ -5306,8 +5306,9 @@ void Aura::HandlePeriodicHeal(bool apply, bool /*Real*/)
         if (m_spellProto->SpellIconID == 329 && m_spellProto->SpellVisual[0] == 7625)
         {
             int32 ap = int32 (0.22f * caster->GetTotalAttackPowerValue(BASE_ATTACK));
-            int32 holy = caster->SpellBaseDamageBonusDone(GetSpellSchoolMask(m_spellProto))
-                + m_target->SpellBaseDamageBonusTaken(GetSpellSchoolMask(m_spellProto));
+            int32 holy = caster->SpellBaseDamageBonusDone(GetSpellSchoolMask(m_spellProto));
+            if  (holy < 0)
+                holy = 0;
             holy = int32(holy * 377 / 1000);
             m_modifier.m_amount += ap > holy ? ap : holy;
         }
