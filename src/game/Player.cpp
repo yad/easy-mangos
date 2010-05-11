@@ -3486,7 +3486,7 @@ void Player::InitStatsForLevel(bool reapplyMods)
         SetUInt32Value(index, 0);
 
     SetUInt32Value(PLAYER_FIELD_MOD_HEALING_DONE_POS,0);
-    for (int i = 0; i < 7; ++i)
+    for (int i = 0; i < MAX_SPELL_SCHOOL; ++i)
     {
         SetUInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_NEG+i, 0);
         SetUInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_POS+i, 0);
@@ -3518,7 +3518,7 @@ void Player::InitStatsForLevel(bool reapplyMods)
     SetFloatValue(PLAYER_RANGED_CRIT_PERCENTAGE,0.0f);
 
     // Init spell schools (will be recalculated in UpdateAllStats() at loading and in _ApplyAllStatBonuses() at reset
-    for (uint8 i = 0; i < 7; ++i)
+    for (uint8 i = 0; i < MAX_SPELL_SCHOOL; ++i)
         SetFloatValue(PLAYER_SPELL_CRIT_PERCENTAGE1+i, 0.0f);
 
     SetFloatValue(PLAYER_PARRY_PERCENTAGE, 0.0f);
@@ -3555,7 +3555,7 @@ void Player::InitStatsForLevel(bool reapplyMods)
 
     // save new stats
     for (int i = POWER_MANA; i < MAX_POWERS; ++i)
-        SetMaxPower(Powers(i),  uint32(GetCreatePowers(Powers(i))));
+        SetMaxPower(Powers(i),  GetCreatePowers(Powers(i)));
 
     SetMaxHealth(classInfo.basehealth);                     // stamina bonus will applied later
 
@@ -16340,7 +16340,6 @@ bool Player::LoadFromDB( uint32 guid, SqlQueryHolder *holder )
     SetUInt32Value(PLAYER_AMMO_ID, fields[62].GetUInt32());
     SetByteValue(PLAYER_FIELD_BYTES, 2, fields[64].GetUInt8());
 
-
     InitDisplayIds();
 
     // cleanup inventory related item value fields (its will be filled correctly in _LoadInventory)
@@ -16636,7 +16635,7 @@ bool Player::LoadFromDB( uint32 guid, SqlQueryHolder *holder )
     SetUInt32Value(PLAYER_TRACK_CREATURES, 0 );
     SetUInt32Value(PLAYER_TRACK_RESOURCES, 0 );
 
-    // cleanup aura list explicitly before skill load wher some spells can be applied
+    // cleanup aura list explicitly before skill load where some spells can be applied
     RemoveAllAuras();
 
     // make sure the unit is considered out of combat for proper loading
@@ -19097,7 +19096,7 @@ void Player::RemovePet(Pet* pet, PetSaveMode mode, bool returnreagent)
 
         if(spellInfo)
         {
-            for(uint32 i = 0; i < 7; ++i)
+            for(uint32 i = 0; i < MAX_SPELL_REAGENTS; ++i)
             {
                 if(spellInfo->Reagent[i] > 0)
                 {
@@ -20422,7 +20421,7 @@ void Player::SendCooldownEvent(SpellEntry const *spellInfo, uint32 itemId, Spell
 
 void Player::UpdatePotionCooldown(Spell* spell)
 {
-    // no potion used i combat or still in combat
+    // no potion used in combat or still in combat
     if(!m_lastPotionId || isInCombat())
         return;
 
@@ -23630,244 +23629,6 @@ void Player::DeleteEquipmentSet(uint64 setGuid)
     }
 }
 
-/*void Player::ActivateSpec(uint8 specNum)
-{
-    if(GetActiveSpec() == specNum)
-        return;
-
-    if(specNum >= GetSpecsCount())
-        return;
-
-    UnsummonPetTemporaryIfAny();
-
-    ApplyGlyphs(false);
-
-    // copy of new talent spec (we will use it as model for converting current tlanet state to new)
-    PlayerTalentMap tempSpec = m_talents[specNum];
-
-    // copy old spec talents to new one, must be before spec switch to have previous spec num(as m_activeSpec)
-    m_talents[specNum] = m_talents[m_activeSpec];
-
-    SetActiveSpec(specNum);
-
-    // remove all talent spells that don't exist in next spec but exist in old
-    for (PlayerTalentMap::iterator specIter = m_talents[m_activeSpec].begin(); specIter != m_talents[m_activeSpec].end();)
-    {
-        PlayerTalent& talent = (*specIter).second;
-
-        if (talent.state == PLAYERSPELL_REMOVED)
-        {
-            ++specIter;
-            continue;
-        }
-
-        PlayerTalentMap::iterator iterTempSpec = tempSpec.find(specIter->first);
-
-        // remove any talent rank if talent not listed in temp spec
-        if (iterTempSpec == tempSpec.end() || iterTempSpec->second.state == PLAYERSPELL_REMOVED)
-        {
-            TalentEntry const *talentInfo = talent.m_talentEntry;
-
-            for(int r = 0; r < MAX_TALENT_RANK; ++r)
-                if (talentInfo->RankID[r])
-                    removeSpell(talentInfo->RankID[r],!IsPassiveSpell(talentInfo->RankID[r]),false);
-
-            specIter = m_talents[m_activeSpec].begin();
-        }
-        else
-            ++specIter;
-    }
-
-    // now new spec data have only talents (maybe different rank) as in temp spec data, sync ranks then.
-    for (PlayerTalentMap::const_iterator tempIter = tempSpec.begin(); tempIter != tempSpec.end(); ++tempIter)
-    {
-        PlayerTalent const& talent = (*tempIter).second;
-
-        // removed state talent already unlearned in prev. loop
-        // but we need restore it if it deleted for finish removed-marked data in DB
-        if (talent.state == PLAYERSPELL_REMOVED)
-        {
-            m_talents[m_activeSpec][tempIter->first] = talent;
-            continue;
-        }
-
-        uint32 talentSpellId = talent.m_talentEntry->RankID[talent.currentRank];
-
-        // learn talent spells if they not in new spec (old spec copy)
-        // and if they have different rank
-        PlayerTalentMap::iterator specIter = m_talents[m_activeSpec].find(tempIter->first);
-        if (specIter != m_talents[m_activeSpec].end() && specIter->second.state != PLAYERSPELL_REMOVED)
-        {
-            if ((*specIter).second.currentRank != talent.currentRank)
-                learnSpell(talentSpellId, false);
-        }
-        else
-            learnSpell(talentSpellId, false);
-
-        // sync states - original state is changed in addSpell that learnSpell calls
-        specIter = m_talents[m_activeSpec].find(tempIter->first);
-        if (specIter != m_talents[m_activeSpec].end())
-            (*specIter).second.state = talent.state;
-        else
-        {
-            sLog.outError("ActivateSpec: Talent spell %u expected to learned at spec switch but not listed in talents at final check!", talentSpellId);
-
-            // attempt resync DB state (deleted lost spell from DB)
-            if (talent.state != PLAYERSPELL_NEW)
-            {
-                PlayerTalent& talentNew = m_talents[m_activeSpec][tempIter->first];
-                talentNew = talent;
-                talentNew.state = PLAYERSPELL_REMOVED;
-            }
-        }
-    }
-
-    InitTalentForLevel();
-
-    // recheck action buttons (not checked at loading/spec copy)
-    ActionButtonList const& currentActionButtonList = m_actionButtons[m_activeSpec];
-    for(ActionButtonList::const_iterator itr = currentActionButtonList.begin(); itr != currentActionButtonList.end(); ++itr)
-        if (itr->second.uState != ACTIONBUTTON_DELETED)
-            // remove broken without any output (it can be not correct because talents not copied at spec creating)
-            if (!IsActionButtonDataValid(itr->first,itr->second.GetAction(),itr->second.GetType(), this, false))
-                removeActionButton(m_activeSpec,itr->first);
-
-    ResummonPetTemporaryUnSummonedIfAny();
-
-    ApplyGlyphs(true);
-
-    SendInitialActionButtons();
-
-    Powers pw = getPowerType();
-    if(pw != POWER_MANA)
-        SetPower(POWER_MANA, 0);
-
-    SetPower(pw, 0);
-}
-
-void Player::UpdateSpecCount(uint8 count)
-{
-    uint8 curCount = GetSpecsCount();
-    if (curCount == count)
-        return;
-
-    // maybe current spec data must be copied to 0 spec?
-    if (m_activeSpec >= count)
-        ActivateSpec(0);
-
-    // copy spec data from new specs
-    if (count > curCount)
-    {
-        // copy action buttons from active spec (more easy in this case iterate first by button)
-        ActionButtonList const& currentActionButtonList = m_actionButtons[m_activeSpec];
-
-        for(ActionButtonList::const_iterator itr = currentActionButtonList.begin(); itr != currentActionButtonList.end(); ++itr)
-        {
-            if (itr->second.uState != ACTIONBUTTON_DELETED)
-            {
-                for(uint8 spec = curCount; spec < count; ++spec)
-                    addActionButton(spec,itr->first,itr->second.GetAction(),itr->second.GetType());
-            }
-        }
-    }
-    // delete spec data for removed specs
-    else if (count < curCount)
-    {
-        // delete action buttons for removed spec
-        for(uint8 spec = count; spec < curCount; ++spec)
-        {
-            // delete action buttons for removed spec
-            for(uint8 button = 0; button < MAX_ACTION_BUTTONS; ++button)
-                removeActionButton(spec,button);
-        }
-    }
-
-    SetSpecsCount(count);
-
-    SendTalentsInfoData(false);
-}*/
-
-void Player::RemoveAtLoginFlag( AtLoginFlags f, bool in_db_also /*= false*/ )
-{
-    m_atLoginFlags &= ~f;
-
-    if(in_db_also)
-        CharacterDatabase.PExecute("UPDATE characters set at_login = at_login & ~ %u WHERE guid ='%u'", uint32(f), GetGUIDLow());
-}
-
-void Player::SendClearCooldown( uint32 spell_id, Unit* target )
-{
-    WorldPacket data(SMSG_CLEAR_COOLDOWN, 4+8);
-    data << uint32(spell_id);
-    data << uint64(target->GetGUID());
-    SendDirectMessage(&data);
-}
-
-void Player::BuildTeleportAckMsg( WorldPacket *data, float x, float y, float z, float ang ) const
-{
-    data->Initialize(MSG_MOVE_TELEPORT_ACK, 41);
-    *data << GetPackGUID();
-    *data << uint32(0);                                     // this value increments every time
-    *data << uint32(m_movementInfo.GetMovementFlags());     // movement flags
-    *data << uint16(0);                                     // 2.3.0
-    *data << uint32(getMSTime());                           // time
-    *data << x;
-    *data << y;
-    *data << z;
-    *data << ang;
-    *data << uint32(0);
-}
-
-bool Player::HasMovementFlag( MovementFlags f ) const
-{
-    return m_movementInfo.HasMovementFlag(f);
-}
-
-void Player::ResetTimeSync()
-{
-    m_timeSyncCounter = 0;
-    m_timeSyncTimer = 0;
-    m_timeSyncClient = 0;
-    m_timeSyncServer = getMSTime();
-}
-
-void Player::SendTimeSync()
-{
-    WorldPacket data(SMSG_TIME_SYNC_REQ, 4);
-    data << uint32(m_timeSyncCounter++);
-    GetSession()->SendPacket(&data);
-
-    // Schedule next sync in 10 sec
-    m_timeSyncTimer = 10000;
-    m_timeSyncServer = getMSTime();
-}
-
-void Player::SendDuelCountdown(uint32 counter)
-{
-    WorldPacket data(SMSG_DUEL_COUNTDOWN, 4);
-    data << uint32(counter);                                // seconds
-    GetSession()->SendPacket(&data);
-}
-
-bool Player::IsImmunedToSpellEffect(SpellEntry const* spellInfo, SpellEffectIndex index) const
-{
-    switch(spellInfo->Effect[index])
-    {
-        case SPELL_EFFECT_ATTACK_ME:
-            return true;
-        default:
-            break;
-    }
-    switch(spellInfo->EffectApplyAuraName[index])
-    {
-        case SPELL_AURA_MOD_TAUNT:
-            return true;
-        default:
-            break;
-    }
-    return Unit::IsImmunedToSpellEffect(spellInfo, index);
-}
-
 void Player::ActivateSpec(uint8 specNum)
 {
     if(GetActiveSpec() == specNum)
@@ -24006,6 +23767,87 @@ void Player::UpdateSpecCount(uint8 count)
     SetSpecsCount(count);
 
     SendTalentsInfoData(false);
+}
+
+void Player::RemoveAtLoginFlag( AtLoginFlags f, bool in_db_also /*= false*/ )
+{
+    m_atLoginFlags &= ~f;
+
+    if(in_db_also)
+        CharacterDatabase.PExecute("UPDATE characters set at_login = at_login & ~ %u WHERE guid ='%u'", uint32(f), GetGUIDLow());
+}
+
+void Player::SendClearCooldown( uint32 spell_id, Unit* target )
+{
+    WorldPacket data(SMSG_CLEAR_COOLDOWN, 4+8);
+    data << uint32(spell_id);
+    data << uint64(target->GetGUID());
+    SendDirectMessage(&data);
+}
+
+void Player::BuildTeleportAckMsg( WorldPacket *data, float x, float y, float z, float ang ) const
+{
+    data->Initialize(MSG_MOVE_TELEPORT_ACK, 41);
+    *data << GetPackGUID();
+    *data << uint32(0);                                     // this value increments every time
+    *data << uint32(m_movementInfo.GetMovementFlags());     // movement flags
+    *data << uint16(0);                                     // 2.3.0
+    *data << uint32(getMSTime());                           // time
+    *data << x;
+    *data << y;
+    *data << z;
+    *data << ang;
+    *data << uint32(0);
+}
+
+bool Player::HasMovementFlag( MovementFlags f ) const
+{
+    return m_movementInfo.HasMovementFlag(f);
+}
+
+void Player::ResetTimeSync()
+{
+    m_timeSyncCounter = 0;
+    m_timeSyncTimer = 0;
+    m_timeSyncClient = 0;
+    m_timeSyncServer = getMSTime();
+}
+
+void Player::SendTimeSync()
+{
+    WorldPacket data(SMSG_TIME_SYNC_REQ, 4);
+    data << uint32(m_timeSyncCounter++);
+    GetSession()->SendPacket(&data);
+
+    // Schedule next sync in 10 sec
+    m_timeSyncTimer = 10000;
+    m_timeSyncServer = getMSTime();
+}
+
+void Player::SendDuelCountdown(uint32 counter)
+{
+    WorldPacket data(SMSG_DUEL_COUNTDOWN, 4);
+    data << uint32(counter);                                // seconds
+    GetSession()->SendPacket(&data);
+}
+
+bool Player::IsImmunedToSpellEffect(SpellEntry const* spellInfo, SpellEffectIndex index) const
+{
+    switch(spellInfo->Effect[index])
+    {
+        case SPELL_EFFECT_ATTACK_ME:
+            return true;
+        default:
+            break;
+    }
+    switch(spellInfo->EffectApplyAuraName[index])
+    {
+        case SPELL_AURA_MOD_TAUNT:
+            return true;
+        default:
+            break;
+    }
+    return Unit::IsImmunedToSpellEffect(spellInfo, index);
 }
 
 void Player::SetHomebindToLocation(WorldLocation const& loc, uint32 area_id)

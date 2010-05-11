@@ -1388,7 +1388,7 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
             {
                 case EQUIPMENT_SLOT_MAINHAND: IsDisarmed = HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_DISARMED); break;
                 case EQUIPMENT_SLOT_OFFHAND: IsDisarmed = HasFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_DISARMED_OFFHAND); break;
-                case EQUIPMENT_SLOT_RANGED: IsDisarmed = HasFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_DISARMED_RANGED); break;
+                case EQUIPMENT_SLOT_RANGED: IsDisarmed = HasFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_DISARM); break;
                 default:
                     break;
             }
@@ -1779,6 +1779,7 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
         void _LoadSpellCooldowns(QueryResult *result);
         void _SaveSpellCooldowns();
         void SetLastPotionId(uint32 item_id) { m_lastPotionId = item_id; }
+        uint32 GetLastPotionId() { return m_lastPotionId; }
         void UpdatePotionCooldown(Spell* spell = NULL);
 
         void setResurrectRequestData(uint64 guid, uint32 mapId, float X, float Y, float Z, uint32 health, uint32 mana)
