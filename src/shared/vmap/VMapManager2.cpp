@@ -367,7 +367,7 @@ namespace VMAP
         return(result);
     }
 
-    bool VMapManager2::GetLiquidLevel(uint32 pMapId, float x, float y, float z, uint8 ReqLiquidType, float &level, float &floor) const
+    bool VMapManager2::GetLiquidLevel(uint32 pMapId, float x, float y, float z, uint8 ReqLiquidType, float &level, float &floor, uint32 &type) const
     {
         InstanceTreeMap::const_iterator instanceTree = iInstanceMapTrees.find(pMapId);
         if (instanceTree != iInstanceMapTrees.end())
@@ -377,6 +377,9 @@ namespace VMAP
             if (instanceTree->second->GetLocationInfo(pos, info))
             {
                 floor = info.ground_Z;
+                type = info.hitModel->GetLiquidType();
+                if (ReqLiquidType && !(type & ReqLiquidType))
+                    return false;
                 if (info.hitInstance->GetLiquidLevel(pos, info, level))
                     return true;
             }

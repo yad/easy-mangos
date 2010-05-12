@@ -101,8 +101,8 @@ namespace VMAP
 
     // ===================== WmoLiquid ==================================
 
-    WmoLiquid::WmoLiquid(uint32 width, uint32 height, const Vector3 &corner):
-        iTilesX(width), iTilesY(height), iCorner(corner)
+    WmoLiquid::WmoLiquid(uint32 width, uint32 height, const Vector3 &corner, uint32 type):
+        iTilesX(width), iTilesY(height), iCorner(corner), iType(type)
     {
         iHeight = new float[(width+1)*(height+1)];
         iFlags = new uint8[width*height];
@@ -174,6 +174,7 @@ namespace VMAP
         if (result && fwrite(&iTilesX, sizeof(uint32), 1, wf) != 1) result = false;
         if (result && fwrite(&iTilesY, sizeof(uint32), 1, wf) != 1) result = false;
         if (result && fwrite(&iCorner, sizeof(Vector3), 1, wf) != 1) result = false;
+        if (result && fwrite(&iType, sizeof(uint32), 1, wf) != 1) result = false;
         uint32 size = (iTilesX + 1)*(iTilesY + 1);
         if (result && fwrite(iHeight, sizeof(float), size, wf) != size) result = false;
         size = iTilesX*iTilesY;
@@ -188,6 +189,7 @@ namespace VMAP
         if (result && fread(&liquid->iTilesX, sizeof(uint32), 1, rf) != 1) result = false;
         if (result && fread(&liquid->iTilesY, sizeof(uint32), 1, rf) != 1) result = false;
         if (result && fread(&liquid->iCorner, sizeof(Vector3), 1, rf) != 1) result = false;
+        if (result && fread(&liquid->iType, sizeof(uint32), 1, rf) != 1) result = false;
         uint32 size = (liquid->iTilesX + 1)*(liquid->iTilesY + 1);
         liquid->iHeight = new float[size];
         if (result && fread(liquid->iHeight, sizeof(float), size, rf) != size) result = false;
@@ -349,6 +351,14 @@ namespace VMAP
         if (iLiquid)
             return iLiquid->GetLiquidHeight(pos, liqHeight);
         return false;
+    }
+
+    uint32 GroupModel::GetLiquidType() const
+    {
+        // convert to type mask, matching MAP_LIQUID_TYPE_* defines in Map.h
+        if (iLiquid)
+            return (1 << iLiquid->GetType());
+        return 0;
     }
 
     // ===================== WorldModel ==================================

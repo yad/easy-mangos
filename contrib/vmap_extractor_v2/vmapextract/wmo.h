@@ -27,7 +27,7 @@ static inline Vec3D fixCoords(const Vec3D &v){ return Vec3D(v.z, v.x, v.y); }
 class WMORoot
 {
 public:
-    uint32 nTextures, nGroups, nP, nLights, nModels, nDoodads, nDoodadSets, RootWMOID;
+    uint32 nTextures, nGroups, nP, nLights, nModels, nDoodads, nDoodadSets, RootWMOID, liquidType;
     unsigned int col;
     float bbcorn1[3];
     float bbcorn2[3];
@@ -90,7 +90,7 @@ public:
     ~WMOGroup();
 
     bool open();
-    int ConvertToVMAPGroupWmo(FILE *output, bool pPreciseVectorData);
+    int ConvertToVMAPGroupWmo(FILE *output, WMORoot *rootWMO, bool pPreciseVectorData);
 
 private:
     std::string filename;

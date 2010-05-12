@@ -12,6 +12,7 @@
 #include "mpq_libmpq04.h"
 
 using namespace std;
+extern uint16 *LiqType;
 
 WMORoot::WMORoot(std::string &filename) : filename(filename)
 {
@@ -52,6 +53,7 @@ bool WMORoot::open()
             f.read(&RootWMOID, 4);
             f.read(bbcorn1,12);
             f.read(bbcorn2,12);
+            f.read(&liquidType, 4);
             break;
         }
         /*
@@ -198,7 +200,6 @@ bool WMOGroup::open()
             liquflags |= 1;
             hlq = new WMOLiquidHeader;
             f.read(hlq, 0x1E);
-            float tilesize  = CHUNKSIZE / 8.0f;
             LiquEx_size = sizeof(WMOLiquidVert) * hlq->xverts * hlq->yverts;
             LiquEx = new WMOLiquidVert[hlq->xverts * hlq->yverts];
             f.read(LiquEx, LiquEx_size);
@@ -219,7 +220,7 @@ bool WMOGroup::open()
     return true;
 }
 
-int WMOGroup::ConvertToVMAPGroupWmo(FILE *output, bool pPreciseVectorData)
+int WMOGroup::ConvertToVMAPGroupWmo(FILE *output, WMORoot *rootWMO, bool pPreciseVectorData)
 {
     fwrite(&mogpFlags,sizeof(uint32),1,output);
     fwrite(&groupWMOID,sizeof(uint32),1,output);
@@ -340,7 +341,7 @@ int WMOGroup::ConvertToVMAPGroupWmo(FILE *output, bool pPreciseVectorData)
 
         // assign new vertex index numbers
         int nColVertices = 0;
-        for (int i=0; i<nVertices; ++i)
+        for (uint32 i=0; i<nVertices; ++i)
         {
             if (IndexRenum[i] == 1)
             {
@@ -365,7 +366,7 @@ int WMOGroup::ConvertToVMAPGroupWmo(FILE *output, bool pPreciseVectorData)
         int VERT[] = {0x54524556, nColVertices*3*sizeof(float)+4, nColVertices};// "VERT"
         int check = 3*nColVertices;
         fwrite(VERT,4,3,output);
-        for (int i=0; i<nVertices; ++i)
+        for (uint32 i=0; i<nVertices; ++i)
             if(IndexRenum[i] >= 0)
                 check -= fwrite(MOVT+3*i, sizeof(float), 3, output);
 
@@ -380,6 +381,23 @@ int WMOGroup::ConvertToVMAPGroupWmo(FILE *output, bool pPreciseVectorData)
     {
         int LIQU_h[] = {0x5551494C, sizeof(WMOLiquidHeader) + LiquEx_size + hlq->xtiles*hlq->ytiles};// "LIQU"
         fwrite(LIQU_h, 4, 2, output);
+
+        // according to WoW.Dev Wiki:
+        uint32 liquidEntry;
+        if (rootWMO->liquidType & 4)
+            liquidEntry = liquidType;
+        else if (liquidType == 15)
+            liquidEntry = 0;
+        else
+            liquidEntry = liquidType + 1;
+        // overwrite material type in header...
+        hlq->type = LiqType[liquidEntry];
+
+        /* std::ofstream llog("Buildings/liquid.log", ios_base::out | ios_base::app);
+        llog << filename;
+        llog << ":\nliquidEntry: " << liquidEntry << " type: " << hlq->type << " (root:" << rootWMO->liquidType << " group:" << liquidType << ")\n";
+        llog.close(); */
+
         fwrite(hlq, sizeof(WMOLiquidHeader), 1, output);
         // only need height values, the other values are unknown anyway
         for (uint32 i = 0; i<LiquEx_size/sizeof(WMOLiquidVert); ++i)

@@ -58,27 +58,17 @@ typedef struct
 }map_id;
 
 map_id * map_ids;
-
-uint16 * areas;
-uint16 *areamax;
+uint16 *LiqType = 0;
 uint32 map_count;
 char output_path[128]=".";
 char input_path[1024]=".";
 bool hasInputPathParam = false;
-char tmp[512];
 bool preciseVectorData = false;
-//char gamepath[1024];
-
-//Convert function
-//bool ConvertADT(char*,char*);
 
 // Constants
 
 //static const char * szWorkDirMaps = ".\\Maps";
 static const char * szWorkDirWmo = "./Buildings";
-
-//static LPBYTE pbBuffer1 = NULL;
-//static LPBYTE pbBuffer2 = NULL;
 
 // Local testing functions
 
@@ -105,21 +95,26 @@ static const char * GetPlainName(const char * szFileName)
     return szFileName;
 }
 
-static void ShowProcessedFile(const char * szFileName)
+// copied from contrib/extractor/System.cpp
+void ReadLiquidTypeTableDBC()
 {
-/* not truncate file names in output
-    char szLine[80];
-    size_t nLength = strlen(szFileName);
+    printf("Read LiquidType.dbc file...");
+    DBCFile dbc("DBFilesClient\\LiquidType.dbc");
+    if(!dbc.open())
+    {
+        printf("Fatal error: Invalid LiquidType.dbc file format!\n");
+        exit(1);
+    }
 
-    memset(szLine, 0x20, sizeof(szLine));
-    szLine[sizeof(szLine)-1] = 0;
+    size_t LiqType_count = dbc.getRecordCount();
+    size_t LiqType_maxid = dbc.getRecord(LiqType_count - 1).getUInt(0);
+    LiqType = new uint16[LiqType_maxid + 1];
+    memset(LiqType, 0xff, (LiqType_maxid + 1) * sizeof(uint16));
 
-    if(nLength > sizeof(szLine)-1)
-        nLength = sizeof(szLine)-1;
-    memcpy(szLine, szFileName, nLength);
-    printf("\r%s\n", szLine);
-*/
-    printf("\r%s\n", szFileName);
+    for(uint32 x = 0; x < LiqType_count; ++x)
+        LiqType[dbc.getRecord(x).getUInt(0)] = dbc.getRecord(x).getUInt(3);
+
+    printf("Done! (%u LiqTypes loaded)\n", LiqType_count);
 }
 
 int ExtractWmo()
@@ -198,7 +193,7 @@ int ExtractWmo()
                                     break;
                                 }
 
-                                Wmo_nVertices += fgroup->ConvertToVMAPGroupWmo(output, preciseVectorData);
+                                Wmo_nVertices += fgroup->ConvertToVMAPGroupWmo(output, froot, preciseVectorData);
                                 delete fgroup;
                             }
                         }
@@ -481,6 +476,7 @@ int main(int argc, char ** argv)
         printf("FATAL ERROR: None MPQ archive found by path '%s'. Use -d option with proper path.\n",input_path);
         return 1;
     }
+    ReadLiquidTypeTableDBC();
 
     // extract data
     if(success)
@@ -521,4 +517,6 @@ int main(int argc, char ** argv)
     }
 
     printf("Extract %s. Work complete. No errors.\n",versionString);
+    delete [] LiqType;
+    return 0;
 }
