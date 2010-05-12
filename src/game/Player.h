@@ -1642,6 +1642,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         void _LoadSpellCooldowns(QueryResult *result);
         void _SaveSpellCooldowns();
         void SetLastPotionId(uint32 item_id) { m_lastPotionId = item_id; }
+        uint32 GetLastPotionId() { return m_lastPotionId; }
         void UpdatePotionCooldown(Spell* spell = NULL);
 
         void setResurrectRequestData(uint64 guid, uint32 mapId, float X, float Y, float Z, uint32 health, uint32 mana)
@@ -1989,6 +1990,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         void SendInitWorldStates(uint32 zone, uint32 area);
         void SendUpdateWorldState(uint32 Field, uint32 Value);
         void SendDirectMessage(WorldPacket *data);
+        void SendBGWeekendWorldStates();
 
         void SendAurasForTarget(Unit *target);
 
@@ -2391,7 +2393,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         /*********************************************************/
         time_t m_lastHonorUpdateTime;
 
-        void outDebugValues() const;
+        void outDebugStatsValues() const;
         ObjectGuid m_lootGuid;
 
         uint32 m_team;
@@ -2664,6 +2666,5 @@ bool Player::CheckAllControlledUnits(Func const& func, bool withTotems, bool wit
 
     return Unit::CheckAllControlledUnits(func,withTotems,withGuardians,withCharms);
 }
-
 
 #endif

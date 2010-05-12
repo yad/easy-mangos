@@ -174,6 +174,10 @@ BindIP = "0.0.0.0"
 #        Default: 1 (permit addon channel)
 #                 0 (do not permit addon channel)
 #
+#    CleanCharacterDB
+#        Perform character db clean ups on start up
+#        Default: 1 (Enable)
+#                 0 (Disabled)
 #
 ###################################################################################################################
 
@@ -201,6 +205,7 @@ TargetPosRecalculateRange = 1.5
 UpdateUptimeInterval = 10
 MaxCoreStuckTime = 0
 AddonChannel = 1
+CleanCharacterDB = 1
 
 ###################################################################################################################
 # SERVER LOGGING
@@ -246,9 +251,19 @@ AddonChannel = 1
 #    LogFilter_CreatureMoves
 #    LogFilter_TransportMoves
 #    LogFilter_VisibilityChanges
-#        Log filters
+#    LogFilter_Weather
+#        Log filters (active by default)
 #        Default: 1 - not include with any log level
 #                 0 - include in log if log level permit
+#
+#    LogFilter_PeriodicAffects
+#    LogFilter_PlayerMoves
+#    LogFilter_SQLText
+#    LogFilter_AIAndMovegens
+#    LogFilter_PlayerStats
+#        Log filters (disabled by default, mostly debug only output affected cases)
+#        Default: 0 - include in log if log level permit
+#                 1 - not include with any log level
 #
 #    WorldLogFile
 #        Packet logging file for the worldserver
