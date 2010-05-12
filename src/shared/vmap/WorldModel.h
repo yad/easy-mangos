@@ -47,13 +47,14 @@ namespace VMAP
     class WmoLiquid
     {
         public:
-            WmoLiquid(uint32 width, uint32 height, const Vector3 &corner);
+            WmoLiquid(uint32 width, uint32 height, const Vector3 &corner, uint32 type);
             WmoLiquid(const WmoLiquid &other);
             ~WmoLiquid();
             WmoLiquid& operator=(const WmoLiquid &other);
             bool GetLiquidHeight(const Vector3 &pos, float &liqHeight) const;
-            float *GetHeightStorage(){ return iHeight; };
-            uint8 *GetFlagsStorage(){ return iFlags; };
+            uint32 GetType() const { return iType; }
+            float *GetHeightStorage() { return iHeight; }
+            uint8 *GetFlagsStorage() { return iFlags; }
             uint32 GetFileSize();
             bool writeToFile(FILE *wf);
             static bool readFromFile(FILE *rf, WmoLiquid *&liquid);
@@ -83,6 +84,7 @@ namespace VMAP
             bool IntersectRay(const G3D::Ray &ray, float &distance, bool stopAtFirstHit) const;
             bool IsInsideObject(const Vector3 &pos, const Vector3 &down, float &z_dist) const;
             bool GetLiquidLevel(const Vector3 &pos, float &liqHeight) const;
+            uint32 GetLiquidType() const;
             bool writeToFile(FILE *wf);
             bool readFromFile(FILE *rf);
             const G3D::AABox& GetBound() const { return iBound; }

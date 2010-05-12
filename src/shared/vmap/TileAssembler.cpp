@@ -461,7 +461,7 @@ namespace VMAP
                 CMP_OR_RETURN(blockId, "LIQU");
                 READ_OR_RETURN(&blocksize, sizeof(int));
                 READ_OR_RETURN(&hlq, sizeof(WMOLiquidHeader));
-                liquid = new WmoLiquid(hlq.xtiles, hlq.ytiles, Vector3(hlq.pos_x, hlq.pos_y, hlq.pos_z));
+                liquid = new WmoLiquid(hlq.xtiles, hlq.ytiles, Vector3(hlq.pos_x, hlq.pos_y, hlq.pos_z), hlq.type);
                 uint32 size = hlq.xverts*hlq.yverts;
                 READ_OR_RETURN(liquid->GetHeightStorage(), size*sizeof(float));
                 size = hlq.xtiles*hlq.ytiles;
