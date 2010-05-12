@@ -281,6 +281,57 @@ void AuctionHouseBot::addNewAuctions(Player *AHBplayer, AHBConfig *config)
             continue;
         }
 
+        // Disable Items with an item level lower than X
+        if ((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_MIN_ITEM_LEVEL)) && (prototype->Class != ITEM_CLASS_TRADE_GOODS) && (prototype->ItemLevel < sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_MIN_ITEM_LEVEL)))
+            continue;
+
+        // Disable Items with an item level higher than X
+        if ((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_MAX_ITEM_LEVEL)) && (prototype->Class != ITEM_CLASS_TRADE_GOODS) && (prototype->ItemLevel > sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_MAX_ITEM_LEVEL)))
+            continue;
+
+        // Disable trade goods with an item level lower than X
+        if ((sWorld.getConfig(CONFIG_UINT32_AHBOT_TG_MIN_ITEM_LEVEL)) && (prototype->Class == ITEM_CLASS_TRADE_GOODS) && (prototype->ItemLevel < sWorld.getConfig(CONFIG_UINT32_AHBOT_TG_MIN_ITEM_LEVEL)))
+            continue;
+
+        // Disable trade goods with an item level higher than X
+        if ((sWorld.getConfig(CONFIG_UINT32_AHBOT_TG_MAX_ITEM_LEVEL)) && (prototype->Class == ITEM_CLASS_TRADE_GOODS) && (prototype->ItemLevel > sWorld.getConfig(CONFIG_UINT32_AHBOT_TG_MAX_ITEM_LEVEL)))
+            continue;
+
+
+        // Disable items for level lower than X
+        if ((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_MIN_REQ_LEVEL)) && (prototype->Class != ITEM_CLASS_TRADE_GOODS) && (prototype->RequiredLevel < sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_MIN_REQ_LEVEL)))
+            continue;
+
+        // Disable items for level higher than X
+        if ((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_MAX_REQ_LEVEL)) && (prototype->Class != ITEM_CLASS_TRADE_GOODS) && (prototype->RequiredLevel > sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_MAX_REQ_LEVEL)))
+            continue;
+
+        // Disable trade goods for level lower than X
+        if ((sWorld.getConfig(CONFIG_UINT32_AHBOT_TG_MIN_REQ_LEVEL)) && (prototype->Class == ITEM_CLASS_TRADE_GOODS) && (prototype->RequiredLevel < sWorld.getConfig(CONFIG_UINT32_AHBOT_TG_MIN_REQ_LEVEL)))
+            continue;
+
+        // Disable trade goods for level higher than X
+        if ((sWorld.getConfig(CONFIG_UINT32_AHBOT_TG_MAX_REQ_LEVEL)) && (prototype->Class == ITEM_CLASS_TRADE_GOODS) && (prototype->RequiredLevel > sWorld.getConfig(CONFIG_UINT32_AHBOT_TG_MAX_REQ_LEVEL)))
+            continue;
+
+
+        // Disable items with skill requirement lower then X
+        if ((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_MIN_SKILL_RANK)) && (prototype->Class != ITEM_CLASS_TRADE_GOODS) && (prototype->RequiredSkillRank < sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_MIN_SKILL_RANK)))
+            continue;
+
+        // Disable items with skill requirement higher then X
+        if ((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_MAX_SKILL_RANK)) && (prototype->Class != ITEM_CLASS_TRADE_GOODS) && (prototype->RequiredSkillRank < sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_MAX_SKILL_RANK)))
+            continue;
+
+        // Disable trade goods with skill requirement lower then X
+        if ((sWorld.getConfig(CONFIG_UINT32_AHBOT_TG_MIN_SKILL_RANK)) && (prototype->Class == ITEM_CLASS_TRADE_GOODS) && (prototype->RequiredSkillRank < sWorld.getConfig(CONFIG_UINT32_AHBOT_TG_MIN_SKILL_RANK)))
+            continue;
+
+        // Disable trade goods with skill requirement higher then X
+        if ((sWorld.getConfig(CONFIG_UINT32_AHBOT_TG_MAX_SKILL_RANK)) && (prototype->Class == ITEM_CLASS_TRADE_GOODS) && (prototype->RequiredSkillRank < sWorld.getConfig(CONFIG_UINT32_AHBOT_TG_MAX_SKILL_RANK)))
+            continue;
+
+
         Item* item = Item::CreateItem(itemID, 1, AHBplayer);
         item->AddToUpdateQueueOf(AHBplayer);
         if (item == NULL)
@@ -987,7 +1038,7 @@ void AuctionHouseBot::Initialize()
         sLog.outString("loaded %d orange items", orangeItemsBin.size());
         sLog.outString("loaded %d yellow items", yellowItemsBin.size());
     }
-    sLog.outString("AuctionHouseBot> [AHBot-x001] is now loaded");
+    sLog.outString("AuctionHouseBot> [AHBot-x002] is now loaded");
     sLog.outString("AuctionHouseBot> updated by Xeross (Original by Naicisum, ChrisK, Paradox)");
     sLog.outString("AuctionHouseBot> Includes AHBuyer by Kerbe and Paradox");
 }
