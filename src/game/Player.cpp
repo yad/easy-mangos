@@ -16793,10 +16793,13 @@ bool Player::LoadFromDB( uint32 guid, SqlQueryHolder *holder )
         AddLoginEquip();
 
     if(HasAtLoginFlag(AT_LOGIN_LEARN_CLASS_SPELLS))
-        LearnAviableSpells();
+        LearnAvailableSpells();
 
     if(HasAtLoginFlag(AT_LOGIN_LEARN_SKILL_RECIPES))
         LearnSkillRecipesFromTrainer();
+
+    if(HasAtLoginFlag(AT_LOGIN_LEARN_TAXI_NODES))
+        LearnAllAvailableTaxiPaths();
 
     return true;
 }
@@ -17611,14 +17614,14 @@ void Player::_LoadSpells(QueryResult *result)
         delete result;
     }
 }
-void Player::LearnAviableSpells()
+void Player::LearnAvailableSpells()
 {
     //Make sure we really want this
     if(!HasAtLoginFlag(AT_LOGIN_LEARN_CLASS_SPELLS))
         return;
 
     RemoveAtLoginFlag(AT_LOGIN_LEARN_CLASS_SPELLS,true);
-    DEBUG_LOG("Player::LearnAviableSpells(): Player %u has flag AT_LOGIN_LEARN_CLASS_SPELLS, learning spells...", GetGUID());
+    DEBUG_LOG("Player::LearnAvailableSpells(): Player %u has flag AT_LOGIN_LEARN_CLASS_SPELLS, learning spells...", GetGUID());
 
     QueryResult *result_char = CharacterDatabase.PQuery("SELECT trainer_entry, spell FROM character_learnspells WHERE class=%u AND team IN (%u, 0)", getClass(), GetTeam());
     if(!result_char)
@@ -23990,4 +23993,30 @@ bool Player::CanUseFlyingMounts(SpellEntry const* sEntry)
         return false;
     }
     return true;
+}
+
+void Player::LearnAllAvailableTaxiPaths()
+{
+    if(HasAtLoginFlag(AT_LOGIN_LEARN_TAXI_NODES))
+        RemoveAtLoginFlag(AT_LOGIN_LEARN_TAXI_NODES,true);
+
+    for(uint32 i = 1; i < sTaxiNodesStore.GetNumRows(); ++i)
+    {
+        TaxiNodesEntry const* node = sTaxiNodesStore.LookupEntry(i);
+        if(!node || !node->MountCreatureID[getTeam() == ALLIANCE ? 1 : 0])
+            continue;
+
+        // skip by level
+        if((getLevel() < 60 && node->map_id == 530) || (getLevel() < 70 && node->map_id == 571))
+            continue;
+
+        uint8  field   = (uint8)((i - 1) / 32);
+        uint32 submask = 1<<((i-1)%32);
+
+        // skip not taxi network nodes
+        if((sTaxiNodesMask[field] & submask)==0)
+            continue;
+
+        m_taxi.SetTaximaskNode(i);
+    }
 }
