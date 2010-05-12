@@ -637,6 +637,7 @@ enum AtLoginFlags
     AT_LOGIN_ADD_EQUIP         = 0x40,
     AT_LOGIN_LEARN_CLASS_SPELLS= 0x80,
     AT_LOGIN_LEARN_SKILL_RECIPES=0x100,
+    AT_LOGIN_LEARN_TAXI_NODES  = 0x200,
 };
 
 typedef std::map<uint32, QuestStatusData> QuestStatusMap;
@@ -2400,6 +2401,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         void AddLoginEquip();
         void LearnAviableSpells();
         void LearnSkillRecipesFromTrainer();
+        void LearnAllAviableTaxiPaths();
 
         /*********************************************************/
         /***                   SAVE SYSTEM                     ***/
