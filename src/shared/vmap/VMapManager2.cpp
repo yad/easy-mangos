@@ -353,10 +353,10 @@ namespace VMAP
         return result;
     }
 
-    bool VMapManager2::getAreaInfo(unsigned int pMapId, float x, float y, float &z, uint32 &flags, int32 &adtId, int32 &rootId, int32 &groupId)
+    bool VMapManager2::getAreaInfo(unsigned int pMapId, float x, float y, float &z, uint32 &flags, int32 &adtId, int32 &rootId, int32 &groupId) const
     {
         bool result=false;
-        InstanceTreeMap::iterator instanceTree = iInstanceMapTrees.find(pMapId);
+        InstanceTreeMap::const_iterator instanceTree = iInstanceMapTrees.find(pMapId);
         if (instanceTree != iInstanceMapTrees.end())
         {
             Vector3 pos = convertPositionToInternalRep(x, y, z);
@@ -366,6 +366,24 @@ namespace VMAP
         }
         return(result);
     }
+
+    bool VMapManager2::GetLiquidLevel(uint32 pMapId, float x, float y, float z, uint8 ReqLiquidType, float &level, float &floor) const
+    {
+        InstanceTreeMap::const_iterator instanceTree = iInstanceMapTrees.find(pMapId);
+        if (instanceTree != iInstanceMapTrees.end())
+        {
+            LocationInfo info;
+            Vector3 pos = convertPositionToInternalRep(x, y, z);
+            if (instanceTree->second->GetLocationInfo(pos, info))
+            {
+                floor = info.ground_Z;
+                if (info.hitInstance->GetLiquidLevel(pos, info, level))
+                    return true;
+            }
+        }
+        return false;
+    }
+
     //=========================================================
 
     WorldModel* VMapManager2::acquireModelInstance(const std::string &basepath, const std::string &filename)

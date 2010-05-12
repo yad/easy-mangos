@@ -146,20 +146,17 @@ namespace VMAP
         return *this;
     }
 
-    bool WmoLiquid::GetLiquidHeight(const Vector3 &pos, float &height) const
+    bool WmoLiquid::GetLiquidHeight(const Vector3 &pos, float &liqHeight) const
     {
         uint32 tx = (pos.x - iCorner.x)/LIQUID_TILE_SIZE;
         if (tx<0 || tx >= iTilesX) return false;
         uint32 ty = (pos.y - iCorner.y)/LIQUID_TILE_SIZE;
         if (ty<0 || ty >= iTilesY) return false;
-std::cout << "inside liquid grid! (flags:" << iFlags[tx + ty*iTilesX] << "\n";
-        if (iFlags[tx + ty*iTilesX] & 0x0f)
-        {
-std::cout << "liquid tile disabled!\n";
-        }
+        // checking for 0x08 *might* be enough, but disabled tiles always are 0x?F:
+        if (iFlags[tx + ty*iTilesX] & 0x0F == 0x0F)
+            return false;
         //placeholder...use only lower left corner vertex
-        float liqHeight = /* iCorner.z + */ iHeight[tx + ty*(iTilesX+1)];
-std::cout << "liquid level:" << liqHeight << " (pos.z=" << pos.z << ")" << std::endl;
+        liqHeight = /* iCorner.z + */ iHeight[tx + ty*(iTilesX+1)];
         return true;
     }
 
@@ -347,6 +344,13 @@ std::cout << "liquid level:" << liqHeight << " (pos.z=" << pos.z << ")" << std::
         return hit;
     }
 
+    bool GroupModel::GetLiquidLevel(const Vector3 &pos, float &liqHeight) const
+    {
+        if (iLiquid)
+            return iLiquid->GetLiquidHeight(pos, liqHeight);
+        return false;
+    }
+
     // ===================== WorldModel ==================================
 
     void WorldModel::setGroupModels(std::vector<GroupModel> &models)
@@ -391,7 +395,7 @@ std::cout << "liquid level:" << liqHeight << " (pos.z=" << pos.z << ")" << std::
             Vector3 zVec;
             void operator()(const Vector3& point, uint32 entry)
             {
-                 float group_Z;
+                float group_Z;
                 //float pVol = prims[entry].GetBound().volume();
                 //if(pVol < minVol)
                 //{
@@ -435,6 +439,20 @@ std::cout << "liquid level:" << liqHeight << " (pos.z=" << pos.z << ")" << std::
         return false;
     }
 
+    bool WorldModel::GetLocationInfo(const G3D::Vector3 &p, const G3D::Vector3 &down, float &dist, LocationInfo &info) const
+    {
+        if (!groupModels.size())
+            return false;
+        WModelAreaCallback callback(groupModels, down);
+        groupTree.intersectPoint(p, callback);
+        if (callback.hit != groupModels.end())
+        {
+            info.hitModel = &(*callback.hit);
+            dist = callback.zDist;
+            return true;
+        }
+        return false;
+    }
 
     bool WorldModel::writeFile(const std::string &filename)
     {

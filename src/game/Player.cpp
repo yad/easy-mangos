@@ -20506,8 +20506,8 @@ void Player::UpdateUnderwaterState( Map* m, float x, float y, float z )
     {
         m_MirrorTimerFlags &= ~(UNDERWATER_INWATER|UNDERWATER_INLAVA|UNDERWATER_INSLIME|UNDERWATER_INDARKWATER);
         // Small hack for enable breath in WMO
-        if (IsInWater())
-            m_MirrorTimerFlags|=UNDERWATER_INWATER;
+        /* if (IsInWater())
+            m_MirrorTimerFlags|=UNDERWATER_INWATER; */
         return;
     }
 

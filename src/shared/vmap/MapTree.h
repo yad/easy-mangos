@@ -27,7 +27,15 @@
 namespace VMAP
 {
     class ModelInstance;
+    class GroupModel;
     class VMapManager2;
+
+    struct LocationInfo
+    {
+        const ModelInstance *hitInstance;
+        const GroupModel *hitModel;
+        float ground_Z;
+    };
 
     class StaticMapTree
     {
@@ -63,6 +71,7 @@ namespace VMAP
             bool getObjectHitPos(const G3D::Vector3& pos1, const G3D::Vector3& pos2, G3D::Vector3& pResultHitPos, float pModifyDist) const;
             float getHeight(const G3D::Vector3& pPos) const;
             bool getAreaInfo(G3D::Vector3 &pos, uint32 &flags, int32 &adtId, int32 &rootId, int32 &groupId) const;
+            bool GetLocationInfo(const Vector3 &pos, LocationInfo &info) const;
 
             bool init(const std::string &fname, VMapManager2 *vm);
             bool loadMap(uint32 tileX, uint32 tileY, VMapManager2 *vm);
@@ -81,7 +90,6 @@ namespace VMAP
         int32 rootId;
         int32 groupId;
     };
-
 }                                                           // VMAP
 
 #endif // _MAPTREE_H
