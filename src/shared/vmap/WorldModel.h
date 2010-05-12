@@ -31,6 +31,7 @@ namespace VMAP
 {
     class TreeNode;
     struct AreaInfo;
+    struct LocationInfo;
 
     class MeshTriangle
     {
@@ -50,7 +51,7 @@ namespace VMAP
             WmoLiquid(const WmoLiquid &other);
             ~WmoLiquid();
             WmoLiquid& operator=(const WmoLiquid &other);
-            bool GetLiquidHeight(const Vector3 &pos, float &height) const;
+            bool GetLiquidHeight(const Vector3 &pos, float &liqHeight) const;
             float *GetHeightStorage(){ return iHeight; };
             uint8 *GetFlagsStorage(){ return iFlags; };
             uint32 GetFileSize();
@@ -81,6 +82,7 @@ namespace VMAP
             void setLiquidData(WmoLiquid *liquid) { iLiquid = liquid; }
             bool IntersectRay(const G3D::Ray &ray, float &distance, bool stopAtFirstHit) const;
             bool IsInsideObject(const Vector3 &pos, const Vector3 &down, float &z_dist) const;
+            bool GetLiquidLevel(const Vector3 &pos, float &liqHeight) const;
             bool writeToFile(FILE *wf);
             bool readFromFile(FILE *rf);
             const G3D::AABox& GetBound() const { return iBound; }
@@ -106,6 +108,7 @@ namespace VMAP
             void setRootWmoID(uint32 id) { RootWMOID = id; }
             bool IntersectRay(const G3D::Ray &ray, float &distance, bool stopAtFirstHit) const;
             bool IntersectPoint(const G3D::Vector3 &p, const G3D::Vector3 &down, float &dist, AreaInfo &info) const;
+            bool GetLocationInfo(const G3D::Vector3 &p, const G3D::Vector3 &down, float &dist, LocationInfo &info) const;
             bool writeFile(const std::string &filename);
             bool readFile(const std::string &filename);
         protected:
