@@ -884,6 +884,20 @@ void World::LoadConfigSettings(bool reload)
     setConfig(CONFIG_BOOL_AHBOT_BUYPRICE_BUYER  , "AuctionHouseBot.BuyPrice.Buyer"  , false);
 
     setConfig(CONFIG_UINT32_AHBOT_ITEMS_CYCLE   , "AuctionHouseBot.ItemsPerCycle"   , 200);
+
+    setConfig(CONFIG_UINT32_AHBOT_ITEM_MIN_ITEM_LEVEL    , "AuctionHouseBot.Items.ItemLevel.Min"         , 0);
+    setConfig(CONFIG_UINT32_AHBOT_ITEM_MAX_ITEM_LEVEL    , "AuctionHouseBot.Items.ItemLevel.Max"         , 0);
+    setConfig(CONFIG_UINT32_AHBOT_ITEM_MIN_REQ_LEVEL     , "AuctionHouseBot.Items.ReqLevel.Min"          , 0);
+    setConfig(CONFIG_UINT32_AHBOT_ITEM_MAX_REQ_LEVEL     , "AuctionHouseBot.Items.ReqLevel.Max"          , 0);
+    setConfig(CONFIG_UINT32_AHBOT_ITEM_MIN_SKILL_RANK    , "AuctionHouseBot.Items.ReqSkill.Min"          , 0);
+    setConfig(CONFIG_UINT32_AHBOT_ITEM_MAX_SKILL_RANK    , "AuctionHouseBot.Items.ReqSkill.Max"          , 0);
+
+    setConfig(CONFIG_UINT32_AHBOT_TG_MIN_ITEM_LEVEL      , "AuctionHouseBot.Tradegoods.ItemLevel.Min"    , 0);
+    setConfig(CONFIG_UINT32_AHBOT_TG_MAX_ITEM_LEVEL      , "AuctionHouseBot.Tradegoods.ItemLevel.Max"    , 0);
+    setConfig(CONFIG_UINT32_AHBOT_TG_MIN_REQ_LEVEL       , "AuctionHouseBot.Tradegoods.ReqLevel.Min"     , 0);
+    setConfig(CONFIG_UINT32_AHBOT_TG_MAX_REQ_LEVEL       , "AuctionHouseBot.Tradegoods.ReqLevel.Max"     , 0);
+    setConfig(CONFIG_UINT32_AHBOT_TG_MIN_SKILL_RANK      , "AuctionHouseBot.Tradegoods.ReqSkill.Min"     , 0);
+    setConfig(CONFIG_UINT32_AHBOT_TG_MAX_SKILL_RANK      , "AuctionHouseBot.Tradegoods.ReqSkill.Max"     , 0);
 }
 
 /// Initialize the World
