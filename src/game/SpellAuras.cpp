@@ -2479,6 +2479,9 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                             // not use ammo and not allow use
                             ((Player*)m_target)->RemoveAmmo();
                         return;
+                    case 48025:                             // Headless Horseman's Mount
+                        Spell::SelectMountByAreaAndSkill(m_target, 51621, 48024, 51617, 48023, NULL);
+                        return;
                     case 62061:                             // Festive Holiday Mount
                         if (m_target->HasAuraType(SPELL_AURA_MOUNTED))
                             // Reindeer Transformation
@@ -2494,35 +2497,14 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                         if (m_target->GetTypeId() == TYPEID_PLAYER)
                             ((Player*)m_target)->removeSpell(63680);
                         return;
-                    case 55328:                                 // Stoneclaw Totem I
-                        m_target->CastSpell( m_target, 5728, true );
+                    case 72286:                             // Invincible
+                        Spell::SelectMountByAreaAndSkill(m_target, 72281, 72282, 72283, 72284, NULL);
                         return;
-                    case 55329:                                 // Stoneclaw Totem II
-                        m_target->CastSpell( m_target, 6397, true );
+                    case 74856:                             // Blazing Hippogryph
+                        Spell::SelectMountByAreaAndSkill(m_target, NULL, NULL, 74854, 74855, NULL);
                         return;
-                    case 55330:                                 // Stoneclaw Totem III
-                        m_target->CastSpell( m_target, 6398, true );
-                        return;
-                    case 55332:                                 // Stoneclaw Totem IV
-                        m_target->CastSpell( m_target, 6399, true );
-                        return;
-                    case 55333:                                 // Stoneclaw Totem V
-                        m_target->CastSpell( m_target, 10425, true );
-                        return;
-                    case 55335:                                 // Stoneclaw Totem VI
-                        m_target->CastSpell( m_target, 10426, true );
-                        return;
-                    case 55278:                                 // Stoneclaw Totem VII
-                        m_target->CastSpell( m_target, 25513, true );
-                        return;
-                    case 58589:                                 // Stoneclaw Totem VIII
-                        m_target->CastSpell( m_target, 58583, true );
-                        return;
-                    case 58590:                                 // Stoneclaw Totem IX
-                        m_target->CastSpell( m_target, 58584, true );
-                        return;
-                    case 58591:                                 // Stoneclaw Totem X
-                        m_target->CastSpell( m_target, 58585, true );
+                    case 75614:                             // Celestial Steed
+                        Spell::SelectMountByAreaAndSkill(m_target, 75619, 75620, 75617, 75618, 76153);
                         return;
                 }
                 break;

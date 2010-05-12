@@ -4,12 +4,12 @@
 
 #include "GridDefines.h"
 
-
 class ViewPoint;
 class WorldObject;
 class UpdateData;
 class WorldPacket;
 
+/// Camera - object-listener. Can receive broadcast packets from nearby worldobjects and send them to client
 class MANGOS_DLL_SPEC Camera : public GridObject, public GridCamera
 {
     friend class ViewPoint;
@@ -21,16 +21,17 @@ class MANGOS_DLL_SPEC Camera : public GridObject, public GridCamera
         WorldObject* getBody() { return m_source;}
         Player* getOwner() { return &m_owner;}
 
-        // set view to camera's owner
-        void SetView(WorldObject *obj);
-        void ResetView();
+        void SetView(WorldObject *obj);     // set camera's view to any worldobject.
+                                            // Note: this worldobject must be in same map, in same phase with camera's owner(player)
+                                            // Note: client supports only unit and dynamic objects as viewpoints
+        void ResetView();                   // set view to camera's owner
 
         template<class T>
         void UpdateVisibilityOf(T * obj, UpdateData &d, std::set<WorldObject*>& vis);
         void UpdateVisibilityOf(WorldObject* obj);
 
         void ReceivePacket(WorldPacket *data);
-        void UpdateVisibilityForOwner();
+        void UpdateVisibilityForOwner();    // updates visibility of worldobjects around viewpoint for camera's owner
 
     private:
         // called when viewpoint changes visibility state
@@ -45,6 +46,7 @@ class MANGOS_DLL_SPEC Camera : public GridObject, public GridCamera
         WorldObject *m_source;
 };
 
+/// Container for cameras. Each worldobject can contain cameras 
 class MANGOS_DLL_SPEC ViewPoint
 {
     friend class Camera;
@@ -73,6 +75,7 @@ public:
 
     virtual ~ViewPoint();
 
+    // these events are called when viewpoint changes visibility state
     void CameraEvent_AddedToWorld() const            { if(!m_cameras.empty()) CameraCall(Camera::Event_AddedToWorld); }
     void CameraEvent_RemovedFromWorld()              { if(!m_cameras.empty()) CameraCall(Camera::Event_RemovedFromWorld); }
     void CameraEvent_Moved() const                   { if(!m_cameras.empty()) CameraCall(Camera::Event_Moved); }

@@ -2023,7 +2023,8 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                     FillRaidOrPartyManaPriorityTargets(targetUnitMap, m_caster, m_caster, radius, 3, true, false, true);
                     break;
                 default:
-                    FillAreaTargets(targetUnitMap, m_targets.m_destX, m_targets.m_destY, radius, PUSH_SELF_CENTER, SPELL_TARGETS_FRIENDLY);
+                    // selected friendly units (for casting objects) around casting object
+                    FillAreaTargets(targetUnitMap, m_targets.m_destX, m_targets.m_destY, radius, PUSH_SELF_CENTER, SPELL_TARGETS_FRIENDLY, GetCastingObject());
                     break;
             }
             break;
@@ -6894,13 +6895,24 @@ SpellCastResult Spell::CanOpenLock(SpellEffectIndex effIndex, uint32 lockId, Ski
     return SPELL_CAST_OK;
 }
 
-void Spell::FillAreaTargets(UnitList &targetUnitMap, float x, float y, float radius, SpellNotifyPushType pushType, SpellTargets spellTargets)
+/*
+ * Fill target list by units around (x,y) points at radius distance
+
+ * @param targetUnitMap        Reference to target list that filled by function
+ * @param x                    X coordinates of center point for target search
+ * @param y                    Y coordinates of center point for target search
+ * @param radius               Radius around (x,y) for target search
+ * @param pushType             Additional rules for target area selection (in front, angle, etc)
+ * @param spellTargets         Additional rules for target selection base at hostile/friendly state to original spell caster
+ * @param originalCaster       If provided set alternative original caster, if =NULL then used Spell::GetAffectiveObject() return
+ */
+void Spell::FillAreaTargets(UnitList &targetUnitMap, float x, float y, float radius, SpellNotifyPushType pushType, SpellTargets spellTargets, WorldObject* originalCaster /*=NULL*/)
 {
     CellPair p(MaNGOS::ComputeCellPair(x, y));
     Cell cell(p);
     cell.data.Part.reserved = ALL_DISTRICT;
     cell.SetNoCreate();
-    MaNGOS::SpellNotifierCreatureAndPlayer notifier(*this, targetUnitMap, radius, pushType, spellTargets);
+    MaNGOS::SpellNotifierCreatureAndPlayer notifier(*this, targetUnitMap, radius, pushType, spellTargets, originalCaster);
     GridTypeVisitor<MaNGOS::SpellNotifierCreatureAndPlayer>::Grid world_notifier(notifier);
     GridTypeVisitor<MaNGOS::SpellNotifierCreatureAndPlayer>::World grid_notifier(notifier);
     cell.Visit(p, world_notifier, *m_caster->GetMap(), *m_caster, radius);
@@ -7007,4 +7019,61 @@ void Spell::ResetEffectDamageAndHeal()
 {
     m_damage = 0;
     m_healing = 0;
+}
+
+void Spell::SelectMountByAreaAndSkill(Unit* target, uint32 spellId75, uint32 spellId150, uint32 spellId225, uint32 spellId300, uint32 spellIdSpecial)
+{
+    if (!target || target->GetTypeId() != TYPEID_PLAYER)
+        return;
+
+    // Prevent stacking of mounts
+    target->RemoveSpellsCausingAura(SPELL_AURA_MOUNTED);
+    uint16 skillval = ((Player*)target)->GetSkillValue(SKILL_RIDING);
+    if (!skillval)
+        return;
+
+    if (skillval >= 225 && (spellId300 > 0 || spellId225 > 0))
+    {
+        uint32 spellid = skillval >= 300 ? spellId300 : spellId225;
+        SpellEntry const *pSpell = sSpellStore.LookupEntry(spellid);
+        // zone check
+        uint32 zone, area;
+        target->GetZoneAndAreaId(zone, area);
+
+        SpellCastResult locRes= sSpellMgr.GetSpellAllowedInLocationError(pSpell, target->GetMapId(), zone, area, target->GetCharmerOrOwnerPlayerOrPlayerItself());
+        if (locRes != SPELL_CAST_OK || !((Player*)target)->IsKnowHowFlyIn(target->GetMapId(),zone))
+            target->CastSpell(target, spellId150, true);
+        else if (spellIdSpecial > 0)
+        {
+            for (PlayerSpellMap::const_iterator iter = ((Player*)target)->GetSpellMap().begin(); iter != ((Player*)target)->GetSpellMap().end(); ++iter)
+            {
+                if (iter->second.state != PLAYERSPELL_REMOVED)
+                {
+                    bool changedSpeed = false;
+                    SpellEntry const *spellInfo = sSpellStore.LookupEntry(iter->first);
+                    for(int i = 0; i < MAX_EFFECT_INDEX; ++i)
+                    {
+                        if(spellInfo->EffectApplyAuraName[i] == SPELL_AURA_MOD_FLIGHT_SPEED_MOUNTED)
+                        {
+                            int32 mountSpeed = spellInfo->CalculateSimpleValue(SpellEffectIndex(i));
+
+                            // speed higher than 300 replace it
+                            if (mountSpeed > 300)
+                                target->CastSpell(target, spellIdSpecial, true);
+                            return;
+                        }
+                    }
+                }
+            }
+            target->CastSpell(target, pSpell, true);
+        }
+        else
+            target->CastSpell(target, pSpell, true);
+    }
+    else if (skillval >= 150 && spellId150 > 0)
+        target->CastSpell(target, spellId150, true);
+    else if (spellId75 > 0)
+        target->CastSpell(target, spellId75, true);
+
+    return;
 }
