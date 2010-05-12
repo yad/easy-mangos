@@ -770,7 +770,7 @@ bool Player::Create( uint32 guidlow, const std::string& name, uint8 race, uint8 
 
 bool Player::StoreNewItemInBestSlots(uint32 titem_id, uint32 titem_amount)
 {
-    sLog.outDebug("STORAGE: Creating initial item, itemId = %u, count = %u",titem_id, titem_amount);
+    DEBUG_LOG("STORAGE: Creating initial item, itemId = %u, count = %u",titem_id, titem_amount);
 
     // attempt equip by one
     while(titem_amount > 0)
@@ -1315,7 +1315,7 @@ void Player::Update( uint32 p_time )
         {
             // m_nextSave reseted in SaveToDB call
             SaveToDB();
-            sLog.outDetail("Player '%s' (GUID: %u) saved", GetName(), GetGUIDLow());
+            DETAIL_LOG("Player '%s' (GUID: %u) saved", GetName(), GetGUIDLow());
         }
         else
             m_nextSave -= p_time;
@@ -1639,7 +1639,7 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
     // client without expansion support
     if(GetSession()->Expansion() < mEntry->Expansion())
     {
-        sLog.outDebug("Player %s using client without required expansion tried teleport to non accessible map %u", GetName(), mapid);
+        DEBUG_LOG("Player %s using client without required expansion tried teleport to non accessible map %u", GetName(), mapid);
 
         if(GetTransport())
             RepopAtGraveyard();                             // teleport to near graveyard if on transport, looks blizz like :)
@@ -1650,7 +1650,7 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
     }
     else
     {
-        sLog.outDebug("Player %s is being teleported to map %u", GetName(), mapid);
+        DEBUG_LOG("Player %s is being teleported to map %u", GetName(), mapid);
     }
 
     // if we were on a transport, leave
@@ -2625,7 +2625,7 @@ void Player::InitStatsForLevel(bool reapplyMods)
         SetUInt32Value(index, 0);
 
     SetUInt32Value(PLAYER_FIELD_MOD_HEALING_DONE_POS,0);
-    for (int i = 0; i < 7; ++i)
+    for (int i = 0; i < MAX_SPELL_SCHOOL; ++i)
     {
         SetUInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_NEG+i, 0);
         SetUInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_POS+i, 0);
@@ -2657,7 +2657,7 @@ void Player::InitStatsForLevel(bool reapplyMods)
     SetFloatValue(PLAYER_RANGED_CRIT_PERCENTAGE,0.0f);
 
     // Init spell schools (will be recalculated in UpdateAllStats() at loading and in _ApplyAllStatBonuses() at reset
-    for (uint8 i = 0; i < 7; ++i)
+    for (uint8 i = 0; i < MAX_SPELL_SCHOOL; ++i)
         SetFloatValue(PLAYER_SPELL_CRIT_PERCENTAGE1+i, 0.0f);
 
     SetFloatValue(PLAYER_PARRY_PERCENTAGE, 0.0f);
@@ -2694,7 +2694,7 @@ void Player::InitStatsForLevel(bool reapplyMods)
 
     // save new stats
     for (int i = POWER_MANA; i < MAX_POWERS; ++i)
-        SetMaxPower(Powers(i),  uint32(GetCreatePowers(Powers(i))));
+        SetMaxPower(Powers(i),  GetCreatePowers(Powers(i)));
 
     SetMaxHealth(classInfo.basehealth);                     // stamina bonus will applied later
 
@@ -2806,7 +2806,7 @@ void Player::SendInitialSpells()
 
     GetSession()->SendPacket(&data);
 
-    sLog.outDetail( "CHARACTER: Sent Initial Spells" );
+    DETAIL_LOG( "CHARACTER: Sent Initial Spells" );
 }
 
 void Player::RemoveMail(uint32 id)
@@ -3593,7 +3593,7 @@ void Player::_LoadSpellCooldowns(QueryResult *result)
 
             AddSpellCooldown(spell_id, item_id, db_time);
 
-            sLog.outDebug("Player (GUID: %u) spell %u, item %u cooldown loaded (%u secs).", GetGUIDLow(), spell_id, item_id, uint32(db_time-curTime));
+            DEBUG_LOG("Player (GUID: %u) spell %u, item %u cooldown loaded (%u secs).", GetGUIDLow(), spell_id, item_id, uint32(db_time-curTime));
         }
         while( result->NextRow() );
 
@@ -4814,7 +4814,7 @@ void Player::CleanupChannels()
             cMgr->LeftChannel(ch->GetName());               // deleted channel if empty
 
     }
-    sLog.outDebug("Player: channels cleaned up!");
+    DEBUG_LOG("Player: channels cleaned up!");
 }
 
 void Player::UpdateLocalChannels(uint32 newZone )
@@ -4863,7 +4863,7 @@ void Player::UpdateLocalChannels(uint32 newZone )
             cMgr->LeftChannel(name);                        // delete if empty
         }
     }
-    sLog.outDebug("Player: channels cleaned up!");
+    DEBUG_LOG("Player: channels cleaned up!");
 }
 
 void Player::LeaveLFGChannel()
@@ -5297,7 +5297,7 @@ inline int SkillGainChance(uint32 SkillValue, uint32 GrayLevel, uint32 GreenLeve
 
 bool Player::UpdateCraftSkill(uint32 spellid)
 {
-    sLog.outDebug("UpdateCraftSkill spellid %d", spellid);
+    DEBUG_LOG("UpdateCraftSkill spellid %d", spellid);
 
     SkillLineAbilityMapBounds bounds = sSpellMgr.GetSkillLineAbilityMapBounds(spellid);
 
@@ -5329,7 +5329,7 @@ bool Player::UpdateCraftSkill(uint32 spellid)
 
 bool Player::UpdateGatherSkill(uint32 SkillId, uint32 SkillValue, uint32 RedLevel, uint32 Multiplicator )
 {
-    sLog.outDebug("UpdateGatherSkill(SkillId %d SkillLevel %d RedLevel %d)", SkillId, SkillValue, RedLevel);
+    DEBUG_LOG("UpdateGatherSkill(SkillId %d SkillLevel %d RedLevel %d)", SkillId, SkillValue, RedLevel);
 
     uint32 gathering_skill_gain = sWorld.getConfig(CONFIG_UINT32_SKILL_GAIN_GATHERING);
 
@@ -5357,7 +5357,7 @@ bool Player::UpdateGatherSkill(uint32 SkillId, uint32 SkillValue, uint32 RedLeve
 
 bool Player::UpdateFishingSkill()
 {
-    sLog.outDebug("UpdateFishingSkill");
+    DEBUG_LOG("UpdateFishingSkill");
 
     uint32 SkillValue = GetPureSkillValue(SKILL_FISHING);
 
@@ -5375,13 +5375,13 @@ static uint32 bonusSkillLevels[] = {75,150,225,300,375,450};
 
 bool Player::UpdateSkillPro(uint16 SkillId, int32 Chance, uint32 step)
 {
-    sLog.outDebug("UpdateSkillPro(SkillId %d, Chance %3.1f%%)", SkillId, Chance/10.0);
+    DEBUG_LOG("UpdateSkillPro(SkillId %d, Chance %3.1f%%)", SkillId, Chance/10.0);
     if ( !SkillId )
         return false;
 
     if(Chance <= 0)                                         // speedup in 0 chance case
     {
-        sLog.outDebug("Player::UpdateSkillPro Chance=%3.1f%% missed", Chance/10.0);
+        DEBUG_LOG("Player::UpdateSkillPro Chance=%3.1f%% missed", Chance/10.0);
         return false;
     }
 
@@ -5418,11 +5418,11 @@ bool Player::UpdateSkillPro(uint16 SkillId, int32 Chance, uint32 step)
             }
         }
         GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_REACH_SKILL_LEVEL,SkillId);
-        sLog.outDebug("Player::UpdateSkillPro Chance=%3.1f%% taken", Chance/10.0);
+        DEBUG_LOG("Player::UpdateSkillPro Chance=%3.1f%% taken", Chance/10.0);
         return true;
     }
 
-    sLog.outDebug("Player::UpdateSkillPro Chance=%3.1f%% missed", Chance/10.0);
+    DEBUG_LOG("Player::UpdateSkillPro Chance=%3.1f%% missed", Chance/10.0);
     return false;
 }
 
@@ -5796,7 +5796,7 @@ int16 Player::GetSkillTempBonusValue(uint32 skill) const
 
 void Player::SendInitialActionButtons() const
 {
-    sLog.outDetail( "Initializing Action Buttons for '%u' spec '%u'", GetGUIDLow(), m_activeSpec);
+    DETAIL_LOG( "Initializing Action Buttons for '%u' spec '%u'", GetGUIDLow(), m_activeSpec);
 
     WorldPacket data(SMSG_ACTION_BUTTONS, 1+(MAX_ACTION_BUTTONS*4));
     data << uint8(1);                                       // talent spec amount (in packet)
@@ -5811,7 +5811,7 @@ void Player::SendInitialActionButtons() const
     }
 
     GetSession()->SendPacket( &data );
-    sLog.outDetail( "Action Buttons for '%u' spec '%u' Initialized", GetGUIDLow(), m_activeSpec );
+    DETAIL_LOG( "Action Buttons for '%u' spec '%u' Initialized", GetGUIDLow(), m_activeSpec );
 }
 
 bool Player::IsActionButtonDataValid(uint8 button, uint32 action, uint8 type, Player* player, bool msg)
@@ -5895,7 +5895,7 @@ ActionButton* Player::addActionButton(uint8 spec, uint8 button, uint32 action, u
     // set data and update to CHANGED if not NEW
     ab.SetActionAndType(action,ActionButtonType(type));
 
-    sLog.outDetail("Player '%u' Added Action '%u' (type %u) to Button '%u' for spec %u", GetGUIDLow(), action, uint32(type), button, spec);
+    DETAIL_LOG("Player '%u' Added Action '%u' (type %u) to Button '%u' for spec %u", GetGUIDLow(), action, uint32(type), button, spec);
     return &ab;
 }
 
@@ -5911,7 +5911,7 @@ void Player::removeActionButton(uint8 spec, uint8 button)
     else
         buttonItr->second.uState = ACTIONBUTTON_DELETED;    // saved, will deleted at next save
 
-    sLog.outDetail("Action Button '%u' Removed from Player '%u' for spec %u", button, GetGUIDLow(), spec);
+    DETAIL_LOG("Action Button '%u' Removed from Player '%u' for spec %u", button, GetGUIDLow(), spec);
 }
 
 ActionButton const* Player::GetActionButton(uint8 button)
@@ -5929,7 +5929,7 @@ bool Player::SetPosition(float x, float y, float z, float orientation, bool tele
     // prevent crash when a bad coord is sent by the client
     if(!MaNGOS::IsValidMapCoord(x,y,z,orientation))
     {
-        sLog.outDebug("Player::SetPosition(%f, %f, %f, %f, %d) .. bad coordinates for player %d!",x,y,z,orientation,teleport,GetGUIDLow());
+        DEBUG_LOG("Player::SetPosition(%f, %f, %f, %f, %d) .. bad coordinates for player %d!",x,y,z,orientation,teleport,GetGUIDLow());
         return false;
     }
 
@@ -6101,7 +6101,7 @@ void Player::CheckExploreSystem()
                 GiveXP( XP, NULL );
                 SendExplorationExperience(area,XP);
             }
-            sLog.outDetail("PLAYER: Player %u discovered a new area: %u", GetGUIDLow(), area);
+            DETAIL_LOG("PLAYER: Player %u discovered a new area: %u", GetGUIDLow(), area);
         }
     }
 }
@@ -6793,7 +6793,7 @@ void Player::_ApplyItemMods(Item *item, uint8 slot,bool apply)
     if(!proto)
         return;
 
-    sLog.outDetail("applying mods for item %u ",item->GetGUIDLow());
+    DETAIL_LOG("applying mods for item %u ",item->GetGUIDLow());
 
     uint32 attacktype = Player::GetAttackBySlot(slot);
     if(attacktype < MAX_ATTACK)
@@ -6810,7 +6810,7 @@ void Player::_ApplyItemMods(Item *item, uint8 slot,bool apply)
     if(proto->Socket[0].Color)                              //only (un)equipping of items with sockets can influence metagems, so no need to waste time with normal items
         CorrectMetaGemEnchants(slot, apply);
 
-    sLog.outDebug("_ApplyItemMods complete.");
+    DEBUG_LOG("_ApplyItemMods complete.");
 }
 
 void Player::_ApplyItemBonuses(ItemPrototype const *proto, uint8 slot, bool apply, bool only_level_scale /*= false*/)
@@ -7472,7 +7472,7 @@ void Player::CastItemUseSpell(Item *item,SpellCastTargets const& targets,uint8 c
 
 void Player::_RemoveAllItemMods()
 {
-    sLog.outDebug("_RemoveAllItemMods start.");
+    DEBUG_LOG("_RemoveAllItemMods start.");
 
     for (int i = 0; i < INVENTORY_SLOT_BAG_END; ++i)
     {
@@ -7515,12 +7515,12 @@ void Player::_RemoveAllItemMods()
         }
     }
 
-    sLog.outDebug("_RemoveAllItemMods complete.");
+    DEBUG_LOG("_RemoveAllItemMods complete.");
 }
 
 void Player::_ApplyAllItemMods()
 {
-    sLog.outDebug("_ApplyAllItemMods start.");
+    DEBUG_LOG("_ApplyAllItemMods start.");
 
     for (int i = 0; i < INVENTORY_SLOT_BAG_END; ++i)
     {
@@ -7564,7 +7564,7 @@ void Player::_ApplyAllItemMods()
         }
     }
 
-    sLog.outDebug("_ApplyAllItemMods complete.");
+    DEBUG_LOG("_ApplyAllItemMods complete.");
 }
 
 void Player::_ApplyAllLevelScaleItemMods(bool apply)
@@ -7693,12 +7693,12 @@ void Player::SendLoot(ObjectGuid guid, LootType loot_type)
     Loot    *loot = 0;
     PermissionTypes permission = ALL_PERMISSION;
 
-    sLog.outDebug("Player::SendLoot");
+    DEBUG_LOG("Player::SendLoot");
     switch(guid.GetHigh())
     {
         case HIGHGUID_GAMEOBJECT:
         {
-            sLog.outDebug("       IS_GAMEOBJECT_GUID(guid)");
+            DEBUG_LOG("       IS_GAMEOBJECT_GUID(guid)");
             GameObject *go = GetMap()->GetGameObject(guid);
 
             // not check distance for GO in case owned GO (fishing bobber case, for example)
@@ -7725,7 +7725,7 @@ void Player::SendLoot(ObjectGuid guid, LootType loot_type)
 
                 if (lootid)
                 {
-                    sLog.outDebug("       if(lootid)");
+                    DEBUG_LOG("       if(lootid)");
                     loot->clear();
                     loot->FillLoot(lootid, LootTemplates_Gameobject, this, false);
                     loot->generateMoneyLoot(go->GetGOInfo()->MinMoneyLoot, go->GetGOInfo()->MaxMoneyLoot);
@@ -7978,98 +7978,289 @@ void Player::SendUpdateWorldState(uint32 Field, uint32 Value)
     GetSession()->SendPacket(&data);
 }
 
+static WorldStatePair AV_world_states[] =
+{
+    { 0x7ae, 0x1 },                                         // 7 snowfall n
+    { 0x532, 0x1 },                                         // 8 frostwolfhut hc
+    { 0x531, 0x0 },                                         // 9 frostwolfhut ac
+    { 0x52e, 0x0 },                                         // 10 stormpike firstaid a_a
+    { 0x571, 0x0 },                                         // 11 east frostwolf tower horde assaulted -unused
+    { 0x570, 0x0 },                                         // 12 west frostwolf tower horde assaulted - unused
+    { 0x567, 0x1 },                                         // 13 frostwolfe c
+    { 0x566, 0x1 },                                         // 14 frostwolfw c
+    { 0x550, 0x1 },                                         // 15 irondeep (N) ally
+    { 0x544, 0x0 },                                         // 16 ice grave a_a
+    { 0x536, 0x0 },                                         // 17 stormpike grave h_c
+    { 0x535, 0x1 },                                         // 18 stormpike grave a_c
+    { 0x518, 0x0 },                                         // 19 stoneheart grave a_a
+    { 0x517, 0x0 },                                         // 20 stoneheart grave h_a
+    { 0x574, 0x0 },                                         // 21 1396 unk
+    { 0x573, 0x0 },                                         // 22 iceblood tower horde assaulted -unused
+    { 0x572, 0x0 },                                         // 23 towerpoint horde assaulted - unused
+    { 0x56f, 0x0 },                                         // 24 1391 unk
+    { 0x56e, 0x0 },                                         // 25 iceblood a
+    { 0x56d, 0x0 },                                         // 26 towerp a
+    { 0x56c, 0x0 },                                         // 27 frostwolfe a
+    { 0x56b, 0x0 },                                         // 28 froswolfw a
+    { 0x56a, 0x1 },                                         // 29 1386 unk
+    { 0x569, 0x1 },                                         // 30 iceblood c
+    { 0x568, 0x1 },                                         // 31 towerp c
+    { 0x565, 0x0 },                                         // 32 stoneh tower a
+    { 0x564, 0x0 },                                         // 33 icewing tower a
+    { 0x563, 0x0 },                                         // 34 dunn a
+    { 0x562, 0x0 },                                         // 35 duns a
+    { 0x561, 0x0 },                                         // 36 stoneheart bunker alliance assaulted - unused
+    { 0x560, 0x0 },                                         // 37 icewing bunker alliance assaulted - unused
+    { 0x55f, 0x0 },                                         // 38 dunbaldar south alliance assaulted - unused
+    { 0x55e, 0x0 },                                         // 39 dunbaldar north alliance assaulted - unused
+    { 0x55d, 0x0 },                                         // 40 stone tower d
+    { 0x3c6, 0x0 },                                         // 41 966 unk
+    { 0x3c4, 0x0 },                                         // 42 964 unk
+    { 0x3c2, 0x0 },                                         // 43 962 unk
+    { 0x516, 0x1 },                                         // 44 stoneheart grave a_c
+    { 0x515, 0x0 },                                         // 45 stonheart grave h_c
+    { 0x3b6, 0x0 },                                         // 46 950 unk
+    { 0x55c, 0x0 },                                         // 47 icewing tower d
+    { 0x55b, 0x0 },                                         // 48 dunn d
+    { 0x55a, 0x0 },                                         // 49 duns d
+    { 0x559, 0x0 },                                         // 50 1369 unk
+    { 0x558, 0x0 },                                         // 51 iceblood d
+    { 0x557, 0x0 },                                         // 52 towerp d
+    { 0x556, 0x0 },                                         // 53 frostwolfe d
+    { 0x555, 0x0 },                                         // 54 frostwolfw d
+    { 0x554, 0x1 },                                         // 55 stoneh tower c
+    { 0x553, 0x1 },                                         // 56 icewing tower c
+    { 0x552, 0x1 },                                         // 57 dunn c
+    { 0x551, 0x1 },                                         // 58 duns c
+    { 0x54f, 0x0 },                                         // 59 irondeep (N) horde
+    { 0x54e, 0x0 },                                         // 60 irondeep (N) ally
+    { 0x54d, 0x1 },                                         // 61 mine (S) neutral
+    { 0x54c, 0x0 },                                         // 62 mine (S) horde
+    { 0x54b, 0x0 },                                         // 63 mine (S) ally
+    { 0x545, 0x0 },                                         // 64 iceblood h_a
+    { 0x543, 0x1 },                                         // 65 iceblod h_c
+    { 0x542, 0x0 },                                         // 66 iceblood a_c
+    { 0x540, 0x0 },                                         // 67 snowfall h_a
+    { 0x53f, 0x0 },                                         // 68 snowfall a_a
+    { 0x53e, 0x0 },                                         // 69 snowfall h_c
+    { 0x53d, 0x0 },                                         // 70 snowfall a_c
+    { 0x53c, 0x0 },                                         // 71 frostwolf g h_a
+    { 0x53b, 0x0 },                                         // 72 frostwolf g a_a
+    { 0x53a, 0x1 },                                         // 73 frostwolf g h_c
+    { 0x539, 0x0 },                                         // 74 frostwolf g a_c
+    { 0x538, 0x0 },                                         // 75 stormpike grave h_a
+    { 0x537, 0x0 },                                         // 76 stormpike grave a_a
+    { 0x534, 0x0 },                                         // 77 frostwolf hut h_a
+    { 0x533, 0x0 },                                         // 78 frostwolf hut a_a
+    { 0x530, 0x0 },                                         // 79 stormpike first aid h_a
+    { 0x52f, 0x0 },                                         // 80 stormpike first aid h_c
+    { 0x52d, 0x1 },                                         // 81 stormpike first aid a_c
+    { 0x0,   0x0 }
+};
+
+static WorldStatePair WS_world_states[] =
+{
+    { 0x62d, 0x0 },                                         // 7 1581 alliance flag captures
+    { 0x62e, 0x0 },                                         // 8 1582 horde flag captures
+    { 0x609, 0x0 },                                         // 9 1545 unk, set to 1 on alliance flag pickup...
+    { 0x60a, 0x0 },                                         // 10 1546 unk, set to 1 on horde flag pickup, after drop it's -1
+    { 0x60b, 0x2 },                                         // 11 1547 unk
+    { 0x641, 0x3 },                                         // 12 1601 unk (max flag captures?)
+    { 0x922, 0x1 },                                         // 13 2338 horde (0 - hide, 1 - flag ok, 2 - flag picked up (flashing), 3 - flag picked up (not flashing)
+    { 0x923, 0x1 },                                         // 14 2339 alliance (0 - hide, 1 - flag ok, 2 - flag picked up (flashing), 3 - flag picked up (not flashing)
+    { 0x0,   0x0 }
+};
+
+static WorldStatePair AB_world_states[] =
+{
+    { 0x6e7, 0x0 },                                         // 7 1767 stables alliance
+    { 0x6e8, 0x0 },                                         // 8 1768 stables horde
+    { 0x6e9, 0x0 },                                         // 9 1769 unk, ST?
+    { 0x6ea, 0x0 },                                         // 10 1770 stables (show/hide)
+    { 0x6ec, 0x0 },                                         // 11 1772 farm (0 - horde controlled, 1 - alliance controlled)
+    { 0x6ed, 0x0 },                                         // 12 1773 farm (show/hide)
+    { 0x6ee, 0x0 },                                         // 13 1774 farm color
+    { 0x6ef, 0x0 },                                         // 14 1775 gold mine color, may be FM?
+    { 0x6f0, 0x0 },                                         // 15 1776 alliance resources
+    { 0x6f1, 0x0 },                                         // 16 1777 horde resources
+    { 0x6f2, 0x0 },                                         // 17 1778 horde bases
+    { 0x6f3, 0x0 },                                         // 18 1779 alliance bases
+    { 0x6f4, 0x7d0 },                                       // 19 1780 max resources (2000)
+    { 0x6f6, 0x0 },                                         // 20 1782 blacksmith color
+    { 0x6f7, 0x0 },                                         // 21 1783 blacksmith (show/hide)
+    { 0x6f8, 0x0 },                                         // 22 1784 unk, bs?
+    { 0x6f9, 0x0 },                                         // 23 1785 unk, bs?
+    { 0x6fb, 0x0 },                                         // 24 1787 gold mine (0 - horde contr, 1 - alliance contr)
+    { 0x6fc, 0x0 },                                         // 25 1788 gold mine (0 - conflict, 1 - horde)
+    { 0x6fd, 0x0 },                                         // 26 1789 gold mine (1 - show/0 - hide)
+    { 0x6fe, 0x0 },                                         // 27 1790 gold mine color
+    { 0x700, 0x0 },                                         // 28 1792 gold mine color, wtf?, may be LM?
+    { 0x701, 0x0 },                                         // 29 1793 lumber mill color (0 - conflict, 1 - horde contr)
+    { 0x702, 0x0 },                                         // 30 1794 lumber mill (show/hide)
+    { 0x703, 0x0 },                                         // 31 1795 lumber mill color color
+    { 0x732, 0x1 },                                         // 32 1842 stables (1 - uncontrolled)
+    { 0x733, 0x1 },                                         // 33 1843 gold mine (1 - uncontrolled)
+    { 0x734, 0x1 },                                         // 34 1844 lumber mill (1 - uncontrolled)
+    { 0x735, 0x1 },                                         // 35 1845 farm (1 - uncontrolled)
+    { 0x736, 0x1 },                                         // 36 1846 blacksmith (1 - uncontrolled)
+    { 0x745, 0x2 },                                         // 37 1861 unk
+    { 0x7a3, 0x708 },                                       // 38 1955 warning limit (1800)
+    { 0x0,   0x0 }
+};
+
+static WorldStatePair EY_world_states[] =
+{
+    { 0xac1, 0x0 },                                         // 7  2753 Horde Bases
+    { 0xac0, 0x0 },                                         // 8  2752 Alliance Bases
+    { 0xab6, 0x0 },                                         // 9  2742 Mage Tower - Horde conflict
+    { 0xab5, 0x0 },                                         // 10 2741 Mage Tower - Alliance conflict
+    { 0xab4, 0x0 },                                         // 11 2740 Fel Reaver - Horde conflict
+    { 0xab3, 0x0 },                                         // 12 2739 Fel Reaver - Alliance conflict
+    { 0xab2, 0x0 },                                         // 13 2738 Draenei - Alliance conflict
+    { 0xab1, 0x0 },                                         // 14 2737 Draenei - Horde conflict
+    { 0xab0, 0x0 },                                         // 15 2736 unk // 0 at start
+    { 0xaaf, 0x0 },                                         // 16 2735 unk // 0 at start
+    { 0xaad, 0x0 },                                         // 17 2733 Draenei - Horde control
+    { 0xaac, 0x0 },                                         // 18 2732 Draenei - Alliance control
+    { 0xaab, 0x1 },                                         // 19 2731 Draenei uncontrolled (1 - yes, 0 - no)
+    { 0xaaa, 0x0 },                                         // 20 2730 Mage Tower - Alliance control
+    { 0xaa9, 0x0 },                                         // 21 2729 Mage Tower - Horde control
+    { 0xaa8, 0x1 },                                         // 22 2728 Mage Tower uncontrolled (1 - yes, 0 - no)
+    { 0xaa7, 0x0 },                                         // 23 2727 Fel Reaver - Horde control
+    { 0xaa6, 0x0 },                                         // 24 2726 Fel Reaver - Alliance control
+    { 0xaa5, 0x1 },                                         // 25 2725 Fel Reaver uncontrolled (1 - yes, 0 - no)
+    { 0xaa4, 0x0 },                                         // 26 2724 Boold Elf - Horde control
+    { 0xaa3, 0x0 },                                         // 27 2723 Boold Elf - Alliance control
+    { 0xaa2, 0x1 },                                         // 28 2722 Boold Elf uncontrolled (1 - yes, 0 - no)
+    { 0xac5, 0x1 },                                         // 29 2757 Flag (1 - show, 0 - hide) - doesn't work exactly this way!
+    { 0xad2, 0x1 },                                         // 30 2770 Horde top-stats (1 - show, 0 - hide) // 02 -> horde picked up the flag
+    { 0xad1, 0x1 },                                         // 31 2769 Alliance top-stats (1 - show, 0 - hide) // 02 -> alliance picked up the flag
+    { 0xabe, 0x0 },                                         // 32 2750 Horde resources
+    { 0xabd, 0x0 },                                         // 33 2749 Alliance resources
+    { 0xa05, 0x8e },                                        // 34 2565 unk, constant?
+    { 0xaa0, 0x0 },                                         // 35 2720 Capturing progress-bar (100 -> empty (only grey), 0 -> blue|red (no grey), default 0)
+    { 0xa9f, 0x0 },                                         // 36 2719 Capturing progress-bar (0 - left, 100 - right)
+    { 0xa9e, 0x0 },                                         // 37 2718 Capturing progress-bar (1 - show, 0 - hide)
+    { 0xc0d, 0x17b },                                       // 38 3085 unk
+    // and some more ... unknown
+    { 0x0,   0x0 }
+};
+
+static WorldStatePair HP_world_states[] =                   // Hellfire Peninsula
+{
+    { 0x9ba, 0x1 },                                         // 10
+    { 0x9b9, 0x1 },                                         // 11
+    { 0x9b5, 0x0 },                                         // 12
+    { 0x9b4, 0x1 },                                         // 13
+    { 0x9b3, 0x0 },                                         // 14
+    { 0x9b2, 0x0 },                                         // 15
+    { 0x9b1, 0x1 },                                         // 16
+    { 0x9b0, 0x0 },                                         // 17
+    { 0x9ae, 0x0 },                                         // 18 horde pvp objectives captured
+    { 0x9ac, 0x0 },                                         // 19
+    { 0x9a8, 0x0 },                                         // 20
+    { 0x9a7, 0x0 },                                         // 21
+    { 0x9a6, 0x1 },                                         // 22
+    { 0x0,   0x0 }
+};
+
+static WorldStatePair TF_world_states[] =                   // Terokkar Forest
+{
+    { 0xa41, 0x0 },                                         // 10
+    { 0xa40, 0x14 },                                        // 11
+    { 0xa3f, 0x0 },                                         // 12
+    { 0xa3e, 0x0 },                                         // 13
+    { 0xa3d, 0x5 },                                         // 14
+    { 0xa3c, 0x0 },                                         // 15
+    { 0xa87, 0x0 },                                         // 16
+    { 0xa86, 0x0 },                                         // 17
+    { 0xa85, 0x0 },                                         // 18
+    { 0xa84, 0x0 },                                         // 19
+    { 0xa83, 0x0 },                                         // 20
+    { 0xa82, 0x0 },                                         // 21
+    { 0xa81, 0x0 },                                         // 22
+    { 0xa80, 0x0 },                                         // 23
+    { 0xa7e, 0x0 },                                         // 24
+    { 0xa7d, 0x0 },                                         // 25
+    { 0xa7c, 0x0 },                                         // 26
+    { 0xa7b, 0x0 },                                         // 27
+    { 0xa7a, 0x0 },                                         // 28
+    { 0xa79, 0x0 },                                         // 29
+    { 0x9d0, 0x5 },                                         // 30
+    { 0x9ce, 0x0 },                                         // 31
+    { 0x9cd, 0x0 },                                         // 32
+    { 0x9cc, 0x0 },                                         // 33
+    { 0xa88, 0x0 },                                         // 34
+    { 0xad0, 0x0 },                                         // 35
+    { 0xacf, 0x1 },                                         // 36
+    { 0x0,   0x0 }
+};
+
+static WorldStatePair ZM_world_states[] =                   // Terokkar Forest
+{
+    { 0x9e1, 0x0 },                                         // 10
+    { 0x9e0, 0x0 },                                         // 11
+    { 0x9df, 0x0 },                                         // 12
+    { 0xa5d, 0x1 },                                         // 13
+    { 0xa5c, 0x0 },                                         // 14
+    { 0xa5b, 0x1 },                                         // 15
+    { 0xa5a, 0x0 },                                         // 16
+    { 0xa59, 0x1 },                                         // 17
+    { 0xa58, 0x0 },                                         // 18
+    { 0xa57, 0x0 },                                         // 19
+    { 0xa56, 0x0 },                                         // 20
+    { 0xa55, 0x1 },                                         // 21
+    { 0xa54, 0x0 },                                         // 22
+    { 0x9e7, 0x0 },                                         // 23
+    { 0x9e6, 0x0 },                                         // 24
+    { 0x9e5, 0x0 },                                         // 25
+    { 0xa00, 0x0 },                                         // 26
+    { 0x9ff, 0x1 },                                         // 27
+    { 0x9fe, 0x0 },                                         // 28
+    { 0x9fd, 0x0 },                                         // 29
+    { 0x9fc, 0x1 },                                         // 30
+    { 0x9fb, 0x0 },                                         // 31
+    { 0xa62, 0x0 },                                         // 32
+    { 0xa61, 0x1 },                                         // 33
+    { 0xa60, 0x1 },                                         // 34
+    { 0xa5f, 0x0 },                                         // 35
+    { 0x0,   0x0 }
+};
+
 void Player::SendInitWorldStates(uint32 zoneid, uint32 areaid)
 {
     // data depends on zoneid/mapid...
     BattleGround* bg = GetBattleGround();
-    uint16 NumberOfFields = 0;
     uint32 mapid = GetMapId();
 
-    sLog.outDebug("Sending SMSG_INIT_WORLD_STATES to Map:%u, Zone: %u", mapid, zoneid);
+    DEBUG_LOG("Sending SMSG_INIT_WORLD_STATES to Map:%u, Zone: %u", mapid, zoneid);
 
-    // may be exist better way to do this...
-    switch(zoneid)
-    {
-        case 0:
-        case 1:
-        case 4:
-        case 8:
-        case 10:
-        case 11:
-        case 12:
-        case 36:
-        case 38:
-        case 40:
-        case 41:
-        case 51:
-        case 267:
-        case 1519:
-        case 1537:
-        case 2257:
-        case 2918:
-            NumberOfFields = 8;
-            break;
-        case 139:
-            NumberOfFields = 41;
-            break;
-        case 1377:
-            NumberOfFields = 15;
-            break;
-        case 2597:
-            NumberOfFields = 83;
-            break;
-        case 3277:
-            NumberOfFields = 16;
-            break;
-        case 3358:
-        case 3820:
-            NumberOfFields = 40;
-            break;
-        case 3483:
-            NumberOfFields = 27;
-            break;
-        case 3518:
-            NumberOfFields = 39;
-            break;
-        case 3519:
-            NumberOfFields = 38;
-            break;
-        case 3521:
-            NumberOfFields = 37;
-            break;
-        case 3698:
-        case 3702:
-        case 3968:
-            NumberOfFields = 11;
-            break;
-        case 3703:
-            NumberOfFields = 11;
-            break;
-        default:
-            NumberOfFields = 12;
-            break;
-    }
+    uint32 count = 0;                                       // count of world states in packet
 
-    WorldPacket data(SMSG_INIT_WORLD_STATES, (4+4+4+2+(NumberOfFields*8)));
+    WorldPacket data(SMSG_INIT_WORLD_STATES, (4+4+4+2+8*8));// guess
     data << uint32(mapid);                                  // mapid
     data << uint32(zoneid);                                 // zone id
     data << uint32(areaid);                                 // area id, new 2.1.0
-    data << uint16(NumberOfFields);                         // count of uint64 blocks
-    data << uint32(0x8d8) << uint32(0x0);                   // 1
-    data << uint32(0x8d7) << uint32(0x0);                   // 2
-    data << uint32(0x8d6) << uint32(0x0);                   // 3
-    data << uint32(0x8d5) << uint32(0x0);                   // 4
-    data << uint32(0x8d4) << uint32(0x0);                   // 5
-    data << uint32(0x8d3) << uint32(0x0);                   // 6
+    size_t count_pos = data.wpos();
+    data << uint16(0);                                      // count of uint64 blocks, placeholder
+
+    // common fields
+    FillInitialWorldState(data, count, 0x8d8, 0x0);         // 1
+    FillInitialWorldState(data, count, 0x8d7, 0x0);         // 2
+    FillInitialWorldState(data, count, 0x8d6, 0x0);         // 3
+    FillInitialWorldState(data, count, 0x8d5, 0x0);         // 4
+    FillInitialWorldState(data, count, 0x8d4, 0x0);         // 5
+    FillInitialWorldState(data, count, 0x8d3, 0x0);         // 6
                                                             // 7 1 - Arena season in progress, 0 - end of season
-    data << uint32(0xC77) << uint32(sWorld.getConfig(CONFIG_BOOL_ARENA_SEASON_IN_PROGRESS));
+    FillInitialWorldState(data, count, 0xC77, sWorld.getConfig(CONFIG_BOOL_ARENA_SEASON_IN_PROGRESS));
                                                             // 8 Arena season id
-    data << uint32(0xF3D) << uint32(sWorld.getConfig(CONFIG_UINT32_ARENA_SEASON_ID));
+    FillInitialWorldState(data, count, 0xF3D, sWorld.getConfig(CONFIG_UINT32_ARENA_SEASON_ID));
+
     if(mapid == 530)                                        // Outland
     {
-        data << uint32(0x9bf) << uint32(0x0);               // 7
-        data << uint32(0x9bd) << uint32(0xF);               // 8
-        data << uint32(0x9bb) << uint32(0xF);               // 9
+        FillInitialWorldState(data, count, 0x9bf, 0x0);
+        FillInitialWorldState(data, count, 0x9bd, 0xF);
+        FillInitialWorldState(data, count, 0x9bb, 0xF);
     }
     switch(zoneid)
     {
@@ -8085,292 +8276,98 @@ void Player::SendInitWorldStates(uint32 zoneid, uint32 areaid)
             break;
         case 2597:                                          // AV
             if (bg && bg->GetTypeID() == BATTLEGROUND_AV)
-                bg->FillInitialWorldStates(data);
+                bg->FillInitialWorldStates(data, count);
             else
-            {
-                data << uint32(0x7ae) << uint32(0x1);           // 7 snowfall n
-                data << uint32(0x532) << uint32(0x1);           // 8 frostwolfhut hc
-                data << uint32(0x531) << uint32(0x0);           // 9 frostwolfhut ac
-                data << uint32(0x52e) << uint32(0x0);           // 10 stormpike firstaid a_a
-                data << uint32(0x571) << uint32(0x0);           // 11 east frostwolf tower horde assaulted -unused
-                data << uint32(0x570) << uint32(0x0);           // 12 west frostwolf tower horde assaulted - unused
-                data << uint32(0x567) << uint32(0x1);           // 13 frostwolfe c
-                data << uint32(0x566) << uint32(0x1);           // 14 frostwolfw c
-                data << uint32(0x550) << uint32(0x1);           // 15 irondeep (N) ally
-                data << uint32(0x544) << uint32(0x0);           // 16 ice grave a_a
-                data << uint32(0x536) << uint32(0x0);           // 17 stormpike grave h_c
-                data << uint32(0x535) << uint32(0x1);           // 18 stormpike grave a_c
-                data << uint32(0x518) << uint32(0x0);           // 19 stoneheart grave a_a
-                data << uint32(0x517) << uint32(0x0);           // 20 stoneheart grave h_a
-                data << uint32(0x574) << uint32(0x0);           // 21 1396 unk
-                data << uint32(0x573) << uint32(0x0);           // 22 iceblood tower horde assaulted -unused
-                data << uint32(0x572) << uint32(0x0);           // 23 towerpoint horde assaulted - unused
-                data << uint32(0x56f) << uint32(0x0);           // 24 1391 unk
-                data << uint32(0x56e) << uint32(0x0);           // 25 iceblood a
-                data << uint32(0x56d) << uint32(0x0);           // 26 towerp a
-                data << uint32(0x56c) << uint32(0x0);           // 27 frostwolfe a
-                data << uint32(0x56b) << uint32(0x0);           // 28 froswolfw a
-                data << uint32(0x56a) << uint32(0x1);           // 29 1386 unk
-                data << uint32(0x569) << uint32(0x1);           // 30 iceblood c
-                data << uint32(0x568) << uint32(0x1);           // 31 towerp c
-                data << uint32(0x565) << uint32(0x0);           // 32 stoneh tower a
-                data << uint32(0x564) << uint32(0x0);           // 33 icewing tower a
-                data << uint32(0x563) << uint32(0x0);           // 34 dunn a
-                data << uint32(0x562) << uint32(0x0);           // 35 duns a
-                data << uint32(0x561) << uint32(0x0);           // 36 stoneheart bunker alliance assaulted - unused
-                data << uint32(0x560) << uint32(0x0);           // 37 icewing bunker alliance assaulted - unused
-                data << uint32(0x55f) << uint32(0x0);           // 38 dunbaldar south alliance assaulted - unused
-                data << uint32(0x55e) << uint32(0x0);           // 39 dunbaldar north alliance assaulted - unused
-                data << uint32(0x55d) << uint32(0x0);           // 40 stone tower d
-                data << uint32(0x3c6) << uint32(0x0);           // 41 966 unk
-                data << uint32(0x3c4) << uint32(0x0);           // 42 964 unk
-                data << uint32(0x3c2) << uint32(0x0);           // 43 962 unk
-                data << uint32(0x516) << uint32(0x1);           // 44 stoneheart grave a_c
-                data << uint32(0x515) << uint32(0x0);           // 45 stonheart grave h_c
-                data << uint32(0x3b6) << uint32(0x0);           // 46 950 unk
-                data << uint32(0x55c) << uint32(0x0);           // 47 icewing tower d
-                data << uint32(0x55b) << uint32(0x0);           // 48 dunn d
-                data << uint32(0x55a) << uint32(0x0);           // 49 duns d
-                data << uint32(0x559) << uint32(0x0);           // 50 1369 unk
-                data << uint32(0x558) << uint32(0x0);           // 51 iceblood d
-                data << uint32(0x557) << uint32(0x0);           // 52 towerp d
-                data << uint32(0x556) << uint32(0x0);           // 53 frostwolfe d
-                data << uint32(0x555) << uint32(0x0);           // 54 frostwolfw d
-                data << uint32(0x554) << uint32(0x1);           // 55 stoneh tower c
-                data << uint32(0x553) << uint32(0x1);           // 56 icewing tower c
-                data << uint32(0x552) << uint32(0x1);           // 57 dunn c
-                data << uint32(0x551) << uint32(0x1);           // 58 duns c
-                data << uint32(0x54f) << uint32(0x0);           // 59 irondeep (N) horde
-                data << uint32(0x54e) << uint32(0x0);           // 60 irondeep (N) ally
-                data << uint32(0x54d) << uint32(0x1);           // 61 mine (S) neutral
-                data << uint32(0x54c) << uint32(0x0);           // 62 mine (S) horde
-                data << uint32(0x54b) << uint32(0x0);           // 63 mine (S) ally
-                data << uint32(0x545) << uint32(0x0);           // 64 iceblood h_a
-                data << uint32(0x543) << uint32(0x1);           // 65 iceblod h_c
-                data << uint32(0x542) << uint32(0x0);           // 66 iceblood a_c
-                data << uint32(0x540) << uint32(0x0);           // 67 snowfall h_a
-                data << uint32(0x53f) << uint32(0x0);           // 68 snowfall a_a
-                data << uint32(0x53e) << uint32(0x0);           // 69 snowfall h_c
-                data << uint32(0x53d) << uint32(0x0);           // 70 snowfall a_c
-                data << uint32(0x53c) << uint32(0x0);           // 71 frostwolf g h_a
-                data << uint32(0x53b) << uint32(0x0);           // 72 frostwolf g a_a
-                data << uint32(0x53a) << uint32(0x1);           // 73 frostwolf g h_c
-                data << uint32(0x539) << uint32(0x0);           // 74 frostwolf g a_c
-                data << uint32(0x538) << uint32(0x0);           // 75 stormpike grave h_a
-                data << uint32(0x537) << uint32(0x0);           // 76 stormpike grave a_a
-                data << uint32(0x534) << uint32(0x0);           // 77 frostwolf hut h_a
-                data << uint32(0x533) << uint32(0x0);           // 78 frostwolf hut a_a
-                data << uint32(0x530) << uint32(0x0);           // 79 stormpike first aid h_a
-                data << uint32(0x52f) << uint32(0x0);           // 80 stormpike first aid h_c
-                data << uint32(0x52d) << uint32(0x1);           // 81 stormpike first aid a_c
-            }
+                FillInitialWorldState(data,count, AV_world_states);
             break;
         case 3277:                                          // WS
             if (bg && bg->GetTypeID() == BATTLEGROUND_WS)
-                bg->FillInitialWorldStates(data);
+                bg->FillInitialWorldStates(data, count);
             else
-            {
-                data << uint32(0x62d) << uint32(0x0);       // 7 1581 alliance flag captures
-                data << uint32(0x62e) << uint32(0x0);       // 8 1582 horde flag captures
-                data << uint32(0x609) << uint32(0x0);       // 9 1545 unk, set to 1 on alliance flag pickup...
-                data << uint32(0x60a) << uint32(0x0);       // 10 1546 unk, set to 1 on horde flag pickup, after drop it's -1
-                data << uint32(0x60b) << uint32(0x2);       // 11 1547 unk
-                data << uint32(0x641) << uint32(0x3);       // 12 1601 unk (max flag captures?)
-                data << uint32(0x922) << uint32(0x1);       // 13 2338 horde (0 - hide, 1 - flag ok, 2 - flag picked up (flashing), 3 - flag picked up (not flashing)
-                data << uint32(0x923) << uint32(0x1);       // 14 2339 alliance (0 - hide, 1 - flag ok, 2 - flag picked up (flashing), 3 - flag picked up (not flashing)
-            }
+                FillInitialWorldState(data,count, WS_world_states);
             break;
         case 3358:                                          // AB
             if (bg && bg->GetTypeID() == BATTLEGROUND_AB)
-                bg->FillInitialWorldStates(data);
+                bg->FillInitialWorldStates(data, count);
             else
-            {
-                data << uint32(0x6e7) << uint32(0x0);       // 7 1767 stables alliance
-                data << uint32(0x6e8) << uint32(0x0);       // 8 1768 stables horde
-                data << uint32(0x6e9) << uint32(0x0);       // 9 1769 unk, ST?
-                data << uint32(0x6ea) << uint32(0x0);       // 10 1770 stables (show/hide)
-                data << uint32(0x6ec) << uint32(0x0);       // 11 1772 farm (0 - horde controlled, 1 - alliance controlled)
-                data << uint32(0x6ed) << uint32(0x0);       // 12 1773 farm (show/hide)
-                data << uint32(0x6ee) << uint32(0x0);       // 13 1774 farm color
-                data << uint32(0x6ef) << uint32(0x0);       // 14 1775 gold mine color, may be FM?
-                data << uint32(0x6f0) << uint32(0x0);       // 15 1776 alliance resources
-                data << uint32(0x6f1) << uint32(0x0);       // 16 1777 horde resources
-                data << uint32(0x6f2) << uint32(0x0);       // 17 1778 horde bases
-                data << uint32(0x6f3) << uint32(0x0);       // 18 1779 alliance bases
-                data << uint32(0x6f4) << uint32(0x7d0);     // 19 1780 max resources (2000)
-                data << uint32(0x6f6) << uint32(0x0);       // 20 1782 blacksmith color
-                data << uint32(0x6f7) << uint32(0x0);       // 21 1783 blacksmith (show/hide)
-                data << uint32(0x6f8) << uint32(0x0);       // 22 1784 unk, bs?
-                data << uint32(0x6f9) << uint32(0x0);       // 23 1785 unk, bs?
-                data << uint32(0x6fb) << uint32(0x0);       // 24 1787 gold mine (0 - horde contr, 1 - alliance contr)
-                data << uint32(0x6fc) << uint32(0x0);       // 25 1788 gold mine (0 - conflict, 1 - horde)
-                data << uint32(0x6fd) << uint32(0x0);       // 26 1789 gold mine (1 - show/0 - hide)
-                data << uint32(0x6fe) << uint32(0x0);       // 27 1790 gold mine color
-                data << uint32(0x700) << uint32(0x0);       // 28 1792 gold mine color, wtf?, may be LM?
-                data << uint32(0x701) << uint32(0x0);       // 29 1793 lumber mill color (0 - conflict, 1 - horde contr)
-                data << uint32(0x702) << uint32(0x0);       // 30 1794 lumber mill (show/hide)
-                data << uint32(0x703) << uint32(0x0);       // 31 1795 lumber mill color color
-                data << uint32(0x732) << uint32(0x1);       // 32 1842 stables (1 - uncontrolled)
-                data << uint32(0x733) << uint32(0x1);       // 33 1843 gold mine (1 - uncontrolled)
-                data << uint32(0x734) << uint32(0x1);       // 34 1844 lumber mill (1 - uncontrolled)
-                data << uint32(0x735) << uint32(0x1);       // 35 1845 farm (1 - uncontrolled)
-                data << uint32(0x736) << uint32(0x1);       // 36 1846 blacksmith (1 - uncontrolled)
-                data << uint32(0x745) << uint32(0x2);       // 37 1861 unk
-                data << uint32(0x7a3) << uint32(0x708);     // 38 1955 warning limit (1800)
-            }
+                FillInitialWorldState(data,count, AB_world_states);
             break;
         case 3820:                                          // EY
             if (bg && bg->GetTypeID() == BATTLEGROUND_EY)
-                bg->FillInitialWorldStates(data);
+                bg->FillInitialWorldStates(data, count);
             else
-            {
-                data << uint32(0xac1) << uint32(0x0);       // 7  2753 Horde Bases
-                data << uint32(0xac0) << uint32(0x0);       // 8  2752 Alliance Bases
-                data << uint32(0xab6) << uint32(0x0);       // 9  2742 Mage Tower - Horde conflict
-                data << uint32(0xab5) << uint32(0x0);       // 10 2741 Mage Tower - Alliance conflict
-                data << uint32(0xab4) << uint32(0x0);       // 11 2740 Fel Reaver - Horde conflict
-                data << uint32(0xab3) << uint32(0x0);       // 12 2739 Fel Reaver - Alliance conflict
-                data << uint32(0xab2) << uint32(0x0);       // 13 2738 Draenei - Alliance conflict
-                data << uint32(0xab1) << uint32(0x0);       // 14 2737 Draenei - Horde conflict
-                data << uint32(0xab0) << uint32(0x0);       // 15 2736 unk // 0 at start
-                data << uint32(0xaaf) << uint32(0x0);       // 16 2735 unk // 0 at start
-                data << uint32(0xaad) << uint32(0x0);       // 17 2733 Draenei - Horde control
-                data << uint32(0xaac) << uint32(0x0);       // 18 2732 Draenei - Alliance control
-                data << uint32(0xaab) << uint32(0x1);       // 19 2731 Draenei uncontrolled (1 - yes, 0 - no)
-                data << uint32(0xaaa) << uint32(0x0);       // 20 2730 Mage Tower - Alliance control
-                data << uint32(0xaa9) << uint32(0x0);       // 21 2729 Mage Tower - Horde control
-                data << uint32(0xaa8) << uint32(0x1);       // 22 2728 Mage Tower uncontrolled (1 - yes, 0 - no)
-                data << uint32(0xaa7) << uint32(0x0);       // 23 2727 Fel Reaver - Horde control
-                data << uint32(0xaa6) << uint32(0x0);       // 24 2726 Fel Reaver - Alliance control
-                data << uint32(0xaa5) << uint32(0x1);       // 25 2725 Fel Reaver uncontrolled (1 - yes, 0 - no)
-                data << uint32(0xaa4) << uint32(0x0);       // 26 2724 Boold Elf - Horde control
-                data << uint32(0xaa3) << uint32(0x0);       // 27 2723 Boold Elf - Alliance control
-                data << uint32(0xaa2) << uint32(0x1);       // 28 2722 Boold Elf uncontrolled (1 - yes, 0 - no)
-                data << uint32(0xac5) << uint32(0x1);       // 29 2757 Flag (1 - show, 0 - hide) - doesn't work exactly this way!
-                data << uint32(0xad2) << uint32(0x1);       // 30 2770 Horde top-stats (1 - show, 0 - hide) // 02 -> horde picked up the flag
-                data << uint32(0xad1) << uint32(0x1);       // 31 2769 Alliance top-stats (1 - show, 0 - hide) // 02 -> alliance picked up the flag
-                data << uint32(0xabe) << uint32(0x0);       // 32 2750 Horde resources
-                data << uint32(0xabd) << uint32(0x0);       // 33 2749 Alliance resources
-                data << uint32(0xa05) << uint32(0x8e);      // 34 2565 unk, constant?
-                data << uint32(0xaa0) << uint32(0x0);       // 35 2720 Capturing progress-bar (100 -> empty (only grey), 0 -> blue|red (no grey), default 0)
-                data << uint32(0xa9f) << uint32(0x0);       // 36 2719 Capturing progress-bar (0 - left, 100 - right)
-                data << uint32(0xa9e) << uint32(0x0);       // 37 2718 Capturing progress-bar (1 - show, 0 - hide)
-                data << uint32(0xc0d) << uint32(0x17b);     // 38 3085 unk
-                // and some more ... unknown
-            }
+                FillInitialWorldState(data,count, EY_world_states);
             break;
         case 3483:                                          // Hellfire Peninsula
-            data << uint32(0x9ba) << uint32(0x1);           // 10
-            data << uint32(0x9b9) << uint32(0x1);           // 11
-            data << uint32(0x9b5) << uint32(0x0);           // 12
-            data << uint32(0x9b4) << uint32(0x1);           // 13
-            data << uint32(0x9b3) << uint32(0x0);           // 14
-            data << uint32(0x9b2) << uint32(0x0);           // 15
-            data << uint32(0x9b1) << uint32(0x1);           // 16
-            data << uint32(0x9b0) << uint32(0x0);           // 17
-            data << uint32(0x9ae) << uint32(0x0);           // 18 horde pvp objectives captured
-            data << uint32(0x9ac) << uint32(0x0);           // 19
-            data << uint32(0x9a8) << uint32(0x0);           // 20
-            data << uint32(0x9a7) << uint32(0x0);           // 21
-            data << uint32(0x9a6) << uint32(0x1);           // 22
+            FillInitialWorldState(data,count, HP_world_states);
             break;
         case 3519:                                          // Terokkar Forest
-            data << uint32(0xa41) << uint32(0x0);           // 10
-            data << uint32(0xa40) << uint32(0x14);          // 11
-            data << uint32(0xa3f) << uint32(0x0);           // 12
-            data << uint32(0xa3e) << uint32(0x0);           // 13
-            data << uint32(0xa3d) << uint32(0x5);           // 14
-            data << uint32(0xa3c) << uint32(0x0);           // 15
-            data << uint32(0xa87) << uint32(0x0);           // 16
-            data << uint32(0xa86) << uint32(0x0);           // 17
-            data << uint32(0xa85) << uint32(0x0);           // 18
-            data << uint32(0xa84) << uint32(0x0);           // 19
-            data << uint32(0xa83) << uint32(0x0);           // 20
-            data << uint32(0xa82) << uint32(0x0);           // 21
-            data << uint32(0xa81) << uint32(0x0);           // 22
-            data << uint32(0xa80) << uint32(0x0);           // 23
-            data << uint32(0xa7e) << uint32(0x0);           // 24
-            data << uint32(0xa7d) << uint32(0x0);           // 25
-            data << uint32(0xa7c) << uint32(0x0);           // 26
-            data << uint32(0xa7b) << uint32(0x0);           // 27
-            data << uint32(0xa7a) << uint32(0x0);           // 28
-            data << uint32(0xa79) << uint32(0x0);           // 29
-            data << uint32(0x9d0) << uint32(0x5);           // 30
-            data << uint32(0x9ce) << uint32(0x0);           // 31
-            data << uint32(0x9cd) << uint32(0x0);           // 32
-            data << uint32(0x9cc) << uint32(0x0);           // 33
-            data << uint32(0xa88) << uint32(0x0);           // 34
-            data << uint32(0xad0) << uint32(0x0);           // 35
-            data << uint32(0xacf) << uint32(0x1);           // 36
+            FillInitialWorldState(data,count, TF_world_states);
             break;
         case 3521:                                          // Zangarmarsh
-            data << uint32(0x9e1) << uint32(0x0);           // 10
-            data << uint32(0x9e0) << uint32(0x0);           // 11
-            data << uint32(0x9df) << uint32(0x0);           // 12
-            data << uint32(0xa5d) << uint32(0x1);           // 13
-            data << uint32(0xa5c) << uint32(0x0);           // 14
-            data << uint32(0xa5b) << uint32(0x1);           // 15
-            data << uint32(0xa5a) << uint32(0x0);           // 16
-            data << uint32(0xa59) << uint32(0x1);           // 17
-            data << uint32(0xa58) << uint32(0x0);           // 18
-            data << uint32(0xa57) << uint32(0x0);           // 19
-            data << uint32(0xa56) << uint32(0x0);           // 20
-            data << uint32(0xa55) << uint32(0x1);           // 21
-            data << uint32(0xa54) << uint32(0x0);           // 22
-            data << uint32(0x9e7) << uint32(0x0);           // 23
-            data << uint32(0x9e6) << uint32(0x0);           // 24
-            data << uint32(0x9e5) << uint32(0x0);           // 25
-            data << uint32(0xa00) << uint32(0x0);           // 26
-            data << uint32(0x9ff) << uint32(0x1);           // 27
-            data << uint32(0x9fe) << uint32(0x0);           // 28
-            data << uint32(0x9fd) << uint32(0x0);           // 29
-            data << uint32(0x9fc) << uint32(0x1);           // 30
-            data << uint32(0x9fb) << uint32(0x0);           // 31
-            data << uint32(0xa62) << uint32(0x0);           // 32
-            data << uint32(0xa61) << uint32(0x1);           // 33
-            data << uint32(0xa60) << uint32(0x1);           // 34
-            data << uint32(0xa5f) << uint32(0x0);           // 35
+            FillInitialWorldState(data,count, ZM_world_states);
             break;
         case 3698:                                          // Nagrand Arena
             if (bg && bg->GetTypeID() == BATTLEGROUND_NA)
-                bg->FillInitialWorldStates(data);
+                bg->FillInitialWorldStates(data, count);
             else
             {
-                data << uint32(0xa0f) << uint32(0x0);           // 7
-                data << uint32(0xa10) << uint32(0x0);           // 8
-                data << uint32(0xa11) << uint32(0x0);           // 9 show
+                FillInitialWorldState(data,count,0xa0f,0x0);// 7
+                FillInitialWorldState(data,count,0xa10,0x0);// 8
+                FillInitialWorldState(data,count,0xa11,0x0);// 9 show
             }
             break;
         case 3702:                                          // Blade's Edge Arena
             if (bg && bg->GetTypeID() == BATTLEGROUND_BE)
-                bg->FillInitialWorldStates(data);
+                bg->FillInitialWorldStates(data, count);
             else
             {
-                data << uint32(0x9f0) << uint32(0x0);           // 7 gold
-                data << uint32(0x9f1) << uint32(0x0);           // 8 green
-                data << uint32(0x9f3) << uint32(0x0);           // 9 show
+                FillInitialWorldState(data,count,0x9f0,0x0);// 7 gold
+                FillInitialWorldState(data,count,0x9f1,0x0);// 8 green
+                FillInitialWorldState(data,count,0x9f3,0x0);// 9 show
             }
             break;
         case 3968:                                          // Ruins of Lordaeron
             if (bg && bg->GetTypeID() == BATTLEGROUND_RL)
-                bg->FillInitialWorldStates(data);
+                bg->FillInitialWorldStates(data, count);
             else
             {
-                data << uint32(0xbb8) << uint32(0x0);           // 7 gold
-                data << uint32(0xbb9) << uint32(0x0);           // 8 green
-                data << uint32(0xbba) << uint32(0x0);           // 9 show
+                FillInitialWorldState(data,count,0xbb8,0x0);// 7 gold
+                FillInitialWorldState(data,count,0xbb9,0x0);// 8 green
+                FillInitialWorldState(data,count,0xbba,0x0);// 9 show
             }
             break;
         case 3703:                                          // Shattrath City
             break;
         default:
-            data << uint32(0x914) << uint32(0x0);           // 7
-            data << uint32(0x913) << uint32(0x0);           // 8
-            data << uint32(0x912) << uint32(0x0);           // 9
-            data << uint32(0x915) << uint32(0x0);           // 10
+            FillInitialWorldState(data,count, 0x914, 0x0);  // 7
+            FillInitialWorldState(data,count, 0x913, 0x0);  // 8
+            FillInitialWorldState(data,count, 0x912, 0x0);  // 9
+            FillInitialWorldState(data,count, 0x915, 0x0);  // 10
             break;
     }
+
+    FillBGWeekendWorldStates(data,count);
+
+    data.put<uint16>(count_pos,count);                     // set actual world state amount
+
     GetSession()->SendPacket(&data);
+
+}
+
+void Player::FillBGWeekendWorldStates(WorldPacket& data, uint32& count)
+{
+    for(uint32 i = 1; i < sBattlemasterListStore.GetNumRows(); ++i)
+    {
+        BattlemasterListEntry const * bl = sBattlemasterListStore.LookupEntry(i);
+        if (bl && bl->HolidayWorldStateId)
+        {
+            if (BattleGroundMgr::IsBGWeekend(BattleGroundTypeId(bl->id)))
+                FillInitialWorldState(data, count, bl->HolidayWorldStateId, 1);
+            else
+                FillInitialWorldState(data, count, bl->HolidayWorldStateId, 0);
+        }
+    }
 }
 
 uint32 Player::GetXPRestBonus(uint32 xp)
@@ -8382,7 +8379,7 @@ uint32 Player::GetXPRestBonus(uint32 xp)
 
     SetRestBonus( GetRestBonus() - rested_bonus);
 
-    sLog.outDetail("Player gain %u xp (+ %u Rested Bonus). Rested points=%f",xp+rested_bonus,rested_bonus,GetRestBonus());
+    DETAIL_LOG("Player gain %u xp (+ %u Rested Bonus). Rested points=%f",xp+rested_bonus,rested_bonus,GetRestBonus());
     return rested_bonus;
 }
 
@@ -9456,7 +9453,7 @@ uint8 Player::_CanStoreItem_InInventorySlots( uint8 slot_begin, uint8 slot_end, 
 
 uint8 Player::_CanStoreItem( uint8 bag, uint8 slot, ItemPosCountVec &dest, uint32 entry, uint32 count, Item *pItem, bool swap, uint32* no_space_count ) const
 {
-    sLog.outDebug( "STORAGE: CanStoreItem bag = %u, slot = %u, item = %u, count = %u", bag, slot, entry, count);
+    DEBUG_LOG( "STORAGE: CanStoreItem bag = %u, slot = %u, item = %u, count = %u", bag, slot, entry, count);
 
     ItemPrototype const *pProto = ObjectMgr::GetItemPrototype(entry);
     if (!pProto)
@@ -9952,7 +9949,7 @@ uint8 Player::CanStoreItems( Item **pItems,int count) const
         // no item
         if (!pItem)  continue;
 
-        sLog.outDebug( "STORAGE: CanStoreItems %i. item = %u, count = %u", k+1, pItem->GetEntry(), pItem->GetCount());
+        DEBUG_LOG( "STORAGE: CanStoreItems %i. item = %u, count = %u", k+1, pItem->GetEntry(), pItem->GetCount());
         ItemPrototype const *pProto = pItem->GetProto();
 
         // strange item
@@ -10162,7 +10159,7 @@ uint8 Player::CanEquipItem( uint8 slot, uint16 &dest, Item *pItem, bool swap, bo
     dest = 0;
     if( pItem )
     {
-        sLog.outDebug( "STORAGE: CanEquipItem slot = %u, item = %u, count = %u", slot, pItem->GetEntry(), pItem->GetCount());
+        DEBUG_LOG( "STORAGE: CanEquipItem slot = %u, item = %u, count = %u", slot, pItem->GetEntry(), pItem->GetCount());
         ItemPrototype const *pProto = pItem->GetProto();
         if( pProto )
         {
@@ -10307,7 +10304,7 @@ uint8 Player::CanUnequipItem( uint16 pos, bool swap ) const
     if( !pItem )
         return EQUIP_ERR_OK;
 
-    sLog.outDebug( "STORAGE: CanUnequipItem slot = %u, item = %u, count = %u", pos, pItem->GetEntry(), pItem->GetCount());
+    DEBUG_LOG( "STORAGE: CanUnequipItem slot = %u, item = %u, count = %u", pos, pItem->GetEntry(), pItem->GetCount());
 
     ItemPrototype const *pProto = pItem->GetProto();
     if( !pProto )
@@ -10343,7 +10340,7 @@ uint8 Player::CanBankItem( uint8 bag, uint8 slot, ItemPosCountVec &dest, Item *p
 
     uint32 count = pItem->GetCount();
 
-    sLog.outDebug( "STORAGE: CanBankItem bag = %u, slot = %u, item = %u, count = %u", bag, slot, pItem->GetEntry(), pItem->GetCount());
+    DEBUG_LOG( "STORAGE: CanBankItem bag = %u, slot = %u, item = %u, count = %u", bag, slot, pItem->GetEntry(), pItem->GetCount());
     ItemPrototype const *pProto = pItem->GetProto();
     if (!pProto)
         return swap ? EQUIP_ERR_ITEMS_CANT_BE_SWAPPED : EQUIP_ERR_ITEM_NOT_FOUND;
@@ -10521,7 +10518,7 @@ uint8 Player::CanUseItem( Item *pItem, bool not_loading ) const
 {
     if (pItem)
     {
-        sLog.outDebug( "STORAGE: CanUseItem item = %u", pItem->GetEntry());
+        DEBUG_LOG( "STORAGE: CanUseItem item = %u", pItem->GetEntry());
 
         if (!isAlive() && not_loading)
             return EQUIP_ERR_YOU_ARE_DEAD;
@@ -10626,7 +10623,7 @@ bool Player::CanUseItem( ItemPrototype const *pProto )
 
 uint8 Player::CanUseAmmo( uint32 item ) const
 {
-    sLog.outDebug( "STORAGE: CanUseAmmo item = %u", item);
+    DEBUG_LOG( "STORAGE: CanUseAmmo item = %u", item);
     if( !isAlive() )
         return EQUIP_ERR_YOU_ARE_DEAD;
     //if( isStunned() )
@@ -10751,7 +10748,7 @@ Item* Player::_StoreItem( uint16 pos, Item *pItem, uint32 count, bool clone, boo
     uint8 bag = pos >> 8;
     uint8 slot = pos & 255;
 
-    sLog.outDebug( "STORAGE: StoreItem bag = %u, slot = %u, item = %u, count = %u", bag, slot, pItem->GetEntry(), count);
+    DEBUG_LOG( "STORAGE: StoreItem bag = %u, slot = %u, item = %u, count = %u", bag, slot, pItem->GetEntry(), count);
 
     Item *pItem2 = GetItemByPos( bag, slot );
 
@@ -11003,7 +11000,7 @@ void Player::VisualizeItem( uint8 slot, Item *pItem)
     if( pItem->GetProto()->Bonding == BIND_WHEN_EQUIPED || pItem->GetProto()->Bonding == BIND_WHEN_PICKED_UP || pItem->GetProto()->Bonding == BIND_QUEST_ITEM )
         pItem->SetBinding( true );
 
-    sLog.outDebug( "STORAGE: EquipItem slot = %u, item = %u", slot, pItem->GetEntry());
+    DEBUG_LOG( "STORAGE: EquipItem slot = %u, item = %u", slot, pItem->GetEntry());
 
     m_items[slot] = pItem;
     SetUInt64Value( PLAYER_FIELD_INV_SLOT_HEAD + (slot * 2), pItem->GetGUID() );
@@ -11028,7 +11025,7 @@ void Player::RemoveItem( uint8 bag, uint8 slot, bool update )
     Item *pItem = GetItemByPos( bag, slot );
     if( pItem )
     {
-        sLog.outDebug( "STORAGE: RemoveItem bag = %u, slot = %u, item = %u", bag, slot, pItem->GetEntry());
+        DEBUG_LOG( "STORAGE: RemoveItem bag = %u, slot = %u, item = %u", bag, slot, pItem->GetEntry());
 
         RemoveEnchantmentDurations(pItem);
         RemoveItemDurations(pItem);
@@ -11142,7 +11139,7 @@ void Player::DestroyItem( uint8 bag, uint8 slot, bool update )
     Item *pItem = GetItemByPos( bag, slot );
     if( pItem )
     {
-        sLog.outDebug( "STORAGE: DestroyItem bag = %u, slot = %u, item = %u", bag, slot, pItem->GetEntry());
+        DEBUG_LOG( "STORAGE: DestroyItem bag = %u, slot = %u, item = %u", bag, slot, pItem->GetEntry());
 
         // start from destroy contained items (only equipped bag can have its)
         if (pItem->IsBag() && pItem->IsEquipped())          // this also prevent infinity loop if empty bag stored in bag==slot
@@ -11219,7 +11216,7 @@ void Player::DestroyItem( uint8 bag, uint8 slot, bool update )
 
 void Player::DestroyItemCount( uint32 item, uint32 count, bool update, bool unequip_check)
 {
-    sLog.outDebug( "STORAGE: DestroyItemCount item = %u, count = %u", item, count);
+    DEBUG_LOG( "STORAGE: DestroyItemCount item = %u, count = %u", item, count);
     uint32 remcount = 0;
 
     // in inventory
@@ -11348,7 +11345,7 @@ void Player::DestroyItemCount( uint32 item, uint32 count, bool update, bool uneq
 
 void Player::DestroyZoneLimitedItem( bool update, uint32 new_zone )
 {
-    sLog.outDebug( "STORAGE: DestroyZoneLimitedItem in map %u and area %u", GetMapId(), new_zone );
+    DEBUG_LOG( "STORAGE: DestroyZoneLimitedItem in map %u and area %u", GetMapId(), new_zone );
 
     // in inventory
     for(int i = INVENTORY_SLOT_ITEM_START; i < INVENTORY_SLOT_ITEM_END; ++i)
@@ -11380,7 +11377,7 @@ void Player::DestroyConjuredItems( bool update )
 {
     // used when entering arena
     // destroys all conjured items
-    sLog.outDebug( "STORAGE: DestroyConjuredItems" );
+    DEBUG_LOG( "STORAGE: DestroyConjuredItems" );
 
     // in inventory
     for(int i = INVENTORY_SLOT_ITEM_START; i < INVENTORY_SLOT_ITEM_END; ++i)
@@ -11408,7 +11405,7 @@ void Player::DestroyItemCount( Item* pItem, uint32 &count, bool update )
     if(!pItem)
         return;
 
-    sLog.outDebug( "STORAGE: DestroyItemCount item (GUID: %u, Entry: %u) count = %u", pItem->GetGUIDLow(),pItem->GetEntry(), count);
+    DEBUG_LOG( "STORAGE: DestroyItemCount item (GUID: %u, Entry: %u) count = %u", pItem->GetGUIDLow(),pItem->GetEntry(), count);
 
     if( pItem->GetCount() <= count )
     {
@@ -11463,7 +11460,7 @@ void Player::SplitItem( uint16 src, uint16 dst, uint32 count )
         return;
     }
 
-    sLog.outDebug( "STORAGE: SplitItem bag = %u, slot = %u, item = %u, count = %u", dstbag, dstslot, pSrcItem->GetEntry(), count);
+    DEBUG_LOG( "STORAGE: SplitItem bag = %u, slot = %u, item = %u, count = %u", dstbag, dstslot, pSrcItem->GetEntry(), count);
     Item *pNewItem = pSrcItem->CloneItem( count, this );
     if( !pNewItem )
     {
@@ -11548,7 +11545,7 @@ void Player::SwapItem( uint16 src, uint16 dst )
     if (!pSrcItem)
         return;
 
-    sLog.outDebug( "STORAGE: SwapItem bag = %u, slot = %u, item = %u", dstbag, dstslot, pSrcItem->GetEntry());
+    DEBUG_LOG( "STORAGE: SwapItem bag = %u, slot = %u, item = %u", dstbag, dstslot, pSrcItem->GetEntry());
 
     if (!isAlive())
     {
@@ -11864,7 +11861,7 @@ void Player::AddItemToBuyBackSlot( Item *pItem )
         }
 
         RemoveItemFromBuyBackSlot( slot, true );
-        sLog.outDebug( "STORAGE: AddItemToBuyBackSlot item = %u, slot = %u", pItem->GetEntry(), slot);
+        DEBUG_LOG( "STORAGE: AddItemToBuyBackSlot item = %u, slot = %u", pItem->GetEntry(), slot);
 
         m_items[slot] = pItem;
         time_t base = time(NULL);
@@ -11886,7 +11883,7 @@ void Player::AddItemToBuyBackSlot( Item *pItem )
 
 Item* Player::GetItemFromBuyBackSlot( uint32 slot )
 {
-    sLog.outDebug( "STORAGE: GetItemFromBuyBackSlot slot = %u", slot);
+    DEBUG_LOG( "STORAGE: GetItemFromBuyBackSlot slot = %u", slot);
     if (slot >= BUYBACK_SLOT_START && slot < BUYBACK_SLOT_END)
         return m_items[slot];
     return NULL;
@@ -11894,7 +11891,7 @@ Item* Player::GetItemFromBuyBackSlot( uint32 slot )
 
 void Player::RemoveItemFromBuyBackSlot( uint32 slot, bool del )
 {
-    sLog.outDebug( "STORAGE: RemoveItemFromBuyBackSlot slot = %u", slot);
+    DEBUG_LOG( "STORAGE: RemoveItemFromBuyBackSlot slot = %u", slot);
     if (slot >= BUYBACK_SLOT_START && slot < BUYBACK_SLOT_END)
     {
         Item *pItem = m_items[slot];
@@ -11919,7 +11916,7 @@ void Player::RemoveItemFromBuyBackSlot( uint32 slot, bool del )
 
 void Player::SendEquipError( uint8 msg, Item* pItem, Item *pItem2, uint32 itemid /*= 0*/ )
 {
-    sLog.outDebug( "WORLD: Sent SMSG_INVENTORY_CHANGE_FAILURE (%u)", msg);
+    DEBUG_LOG( "WORLD: Sent SMSG_INVENTORY_CHANGE_FAILURE (%u)", msg);
     WorldPacket data(SMSG_INVENTORY_CHANGE_FAILURE, 1+8+8+1);
     data << uint8(msg);
 
@@ -11962,7 +11959,7 @@ void Player::SendEquipError( uint8 msg, Item* pItem, Item *pItem2, uint32 itemid
 
 void Player::SendBuyError( uint8 msg, Creature* pCreature, uint32 item, uint32 param )
 {
-    sLog.outDebug( "WORLD: Sent SMSG_BUY_FAILED" );
+    DEBUG_LOG( "WORLD: Sent SMSG_BUY_FAILED" );
     WorldPacket data( SMSG_BUY_FAILED, (8+4+4+1) );
     data << uint64(pCreature ? pCreature->GetGUID() : 0);
     data << uint32(item);
@@ -11974,7 +11971,7 @@ void Player::SendBuyError( uint8 msg, Creature* pCreature, uint32 item, uint32 p
 
 void Player::SendSellError( uint8 msg, Creature* pCreature, uint64 guid, uint32 param )
 {
-    sLog.outDebug( "WORLD: Sent SMSG_SELL_ITEM" );
+    DEBUG_LOG( "WORLD: Sent SMSG_SELL_ITEM" );
     WorldPacket data( SMSG_SELL_ITEM,(8+8+(param?4:0)+1));  // last check 2.0.10
     data << uint64(pCreature ? pCreature->GetGUID() : 0);
     data << uint64(guid);
@@ -12019,7 +12016,7 @@ void Player::UpdateItemDuration(uint32 time, bool realtimeonly)
     if (m_itemDuration.empty())
         return;
 
-    sLog.outDebug("Player::UpdateItemDuration(%u,%u)", time, realtimeonly);
+    DEBUG_LOG("Player::UpdateItemDuration(%u,%u)", time, realtimeonly);
 
     for(ItemDurationList::const_iterator itr = m_itemDuration.begin(); itr != m_itemDuration.end(); )
     {
@@ -12268,81 +12265,81 @@ void Player::ApplyEnchantment(Item *item, EnchantmentSlot slot, bool apply, bool
                         }
                     }
 
-                    sLog.outDebug("Adding %u to stat nb %u",enchant_amount,enchant_spell_id);
+                    DEBUG_LOG("Adding %u to stat nb %u",enchant_amount,enchant_spell_id);
                     switch (enchant_spell_id)
                     {
                         case ITEM_MOD_MANA:
-                            sLog.outDebug("+ %u MANA",enchant_amount);
+                            DEBUG_LOG("+ %u MANA",enchant_amount);
                             HandleStatModifier(UNIT_MOD_MANA, BASE_VALUE, float(enchant_amount), apply);
                             break;
                         case ITEM_MOD_HEALTH:
-                            sLog.outDebug("+ %u HEALTH",enchant_amount);
+                            DEBUG_LOG("+ %u HEALTH",enchant_amount);
                             HandleStatModifier(UNIT_MOD_HEALTH, BASE_VALUE, float(enchant_amount), apply);
                             break;
                         case ITEM_MOD_AGILITY:
-                            sLog.outDebug("+ %u AGILITY",enchant_amount);
+                            DEBUG_LOG("+ %u AGILITY",enchant_amount);
                             HandleStatModifier(UNIT_MOD_STAT_AGILITY, TOTAL_VALUE, float(enchant_amount), apply);
                             ApplyStatBuffMod(STAT_AGILITY, float(enchant_amount), apply);
                             break;
                         case ITEM_MOD_STRENGTH:
-                            sLog.outDebug("+ %u STRENGTH",enchant_amount);
+                            DEBUG_LOG("+ %u STRENGTH",enchant_amount);
                             HandleStatModifier(UNIT_MOD_STAT_STRENGTH, TOTAL_VALUE, float(enchant_amount), apply);
                             ApplyStatBuffMod(STAT_STRENGTH, float(enchant_amount), apply);
                             break;
                         case ITEM_MOD_INTELLECT:
-                            sLog.outDebug("+ %u INTELLECT",enchant_amount);
+                            DEBUG_LOG("+ %u INTELLECT",enchant_amount);
                             HandleStatModifier(UNIT_MOD_STAT_INTELLECT, TOTAL_VALUE, float(enchant_amount), apply);
                             ApplyStatBuffMod(STAT_INTELLECT, float(enchant_amount), apply);
                             break;
                         case ITEM_MOD_SPIRIT:
-                            sLog.outDebug("+ %u SPIRIT",enchant_amount);
+                            DEBUG_LOG("+ %u SPIRIT",enchant_amount);
                             HandleStatModifier(UNIT_MOD_STAT_SPIRIT, TOTAL_VALUE, float(enchant_amount), apply);
                             ApplyStatBuffMod(STAT_SPIRIT, float(enchant_amount), apply);
                             break;
                         case ITEM_MOD_STAMINA:
-                            sLog.outDebug("+ %u STAMINA",enchant_amount);
+                            DEBUG_LOG("+ %u STAMINA",enchant_amount);
                             HandleStatModifier(UNIT_MOD_STAT_STAMINA, TOTAL_VALUE, float(enchant_amount), apply);
                             ApplyStatBuffMod(STAT_STAMINA, float(enchant_amount), apply);
                             break;
                         case ITEM_MOD_DEFENSE_SKILL_RATING:
                             ((Player*)this)->ApplyRatingMod(CR_DEFENSE_SKILL, enchant_amount, apply);
-                            sLog.outDebug("+ %u DEFENCE", enchant_amount);
+                            DEBUG_LOG("+ %u DEFENCE", enchant_amount);
                             break;
                         case  ITEM_MOD_DODGE_RATING:
                             ((Player*)this)->ApplyRatingMod(CR_DODGE, enchant_amount, apply);
-                            sLog.outDebug("+ %u DODGE", enchant_amount);
+                            DEBUG_LOG("+ %u DODGE", enchant_amount);
                             break;
                         case ITEM_MOD_PARRY_RATING:
                             ((Player*)this)->ApplyRatingMod(CR_PARRY, enchant_amount, apply);
-                            sLog.outDebug("+ %u PARRY", enchant_amount);
+                            DEBUG_LOG("+ %u PARRY", enchant_amount);
                             break;
                         case ITEM_MOD_BLOCK_RATING:
                             ((Player*)this)->ApplyRatingMod(CR_BLOCK, enchant_amount, apply);
-                            sLog.outDebug("+ %u SHIELD_BLOCK", enchant_amount);
+                            DEBUG_LOG("+ %u SHIELD_BLOCK", enchant_amount);
                             break;
                         case ITEM_MOD_HIT_MELEE_RATING:
                             ((Player*)this)->ApplyRatingMod(CR_HIT_MELEE, enchant_amount, apply);
-                            sLog.outDebug("+ %u MELEE_HIT", enchant_amount);
+                            DEBUG_LOG("+ %u MELEE_HIT", enchant_amount);
                             break;
                         case ITEM_MOD_HIT_RANGED_RATING:
                             ((Player*)this)->ApplyRatingMod(CR_HIT_RANGED, enchant_amount, apply);
-                            sLog.outDebug("+ %u RANGED_HIT", enchant_amount);
+                            DEBUG_LOG("+ %u RANGED_HIT", enchant_amount);
                             break;
                         case ITEM_MOD_HIT_SPELL_RATING:
                             ((Player*)this)->ApplyRatingMod(CR_HIT_SPELL, enchant_amount, apply);
-                            sLog.outDebug("+ %u SPELL_HIT", enchant_amount);
+                            DEBUG_LOG("+ %u SPELL_HIT", enchant_amount);
                             break;
                         case ITEM_MOD_CRIT_MELEE_RATING:
                             ((Player*)this)->ApplyRatingMod(CR_CRIT_MELEE, enchant_amount, apply);
-                            sLog.outDebug("+ %u MELEE_CRIT", enchant_amount);
+                            DEBUG_LOG("+ %u MELEE_CRIT", enchant_amount);
                             break;
                         case ITEM_MOD_CRIT_RANGED_RATING:
                             ((Player*)this)->ApplyRatingMod(CR_CRIT_RANGED, enchant_amount, apply);
-                            sLog.outDebug("+ %u RANGED_CRIT", enchant_amount);
+                            DEBUG_LOG("+ %u RANGED_CRIT", enchant_amount);
                             break;
                         case ITEM_MOD_CRIT_SPELL_RATING:
                             ((Player*)this)->ApplyRatingMod(CR_CRIT_SPELL, enchant_amount, apply);
-                            sLog.outDebug("+ %u SPELL_CRIT", enchant_amount);
+                            DEBUG_LOG("+ %u SPELL_CRIT", enchant_amount);
                             break;
 //                        Values from ITEM_STAT_MELEE_HA_RATING to ITEM_MOD_HASTE_RANGED_RATING are never used
 //                        in Enchantments
@@ -12377,13 +12374,13 @@ void Player::ApplyEnchantment(Item *item, EnchantmentSlot slot, bool apply, bool
                             ((Player*)this)->ApplyRatingMod(CR_HIT_MELEE, enchant_amount, apply);
                             ((Player*)this)->ApplyRatingMod(CR_HIT_RANGED, enchant_amount, apply);
                             ((Player*)this)->ApplyRatingMod(CR_HIT_SPELL, enchant_amount, apply);
-                            sLog.outDebug("+ %u HIT", enchant_amount);
+                            DEBUG_LOG("+ %u HIT", enchant_amount);
                             break;
                         case ITEM_MOD_CRIT_RATING:
                             ((Player*)this)->ApplyRatingMod(CR_CRIT_MELEE, enchant_amount, apply);
                             ((Player*)this)->ApplyRatingMod(CR_CRIT_RANGED, enchant_amount, apply);
                             ((Player*)this)->ApplyRatingMod(CR_CRIT_SPELL, enchant_amount, apply);
-                            sLog.outDebug("+ %u CRITICAL", enchant_amount);
+                            DEBUG_LOG("+ %u CRITICAL", enchant_amount);
                             break;
 //                        Values ITEM_MOD_HIT_TAKEN_RATING and ITEM_MOD_CRIT_TAKEN_RATING are never used in Enchantment
 //                        case ITEM_MOD_HIT_TAKEN_RATING:
@@ -12400,38 +12397,38 @@ void Player::ApplyEnchantment(Item *item, EnchantmentSlot slot, bool apply, bool
                             ((Player*)this)->ApplyRatingMod(CR_CRIT_TAKEN_MELEE, enchant_amount, apply);
                             ((Player*)this)->ApplyRatingMod(CR_CRIT_TAKEN_RANGED, enchant_amount, apply);
                             ((Player*)this)->ApplyRatingMod(CR_CRIT_TAKEN_SPELL, enchant_amount, apply);
-                            sLog.outDebug("+ %u RESILIENCE", enchant_amount);
+                            DEBUG_LOG("+ %u RESILIENCE", enchant_amount);
                             break;
                         case ITEM_MOD_HASTE_RATING:
                             ((Player*)this)->ApplyRatingMod(CR_HASTE_MELEE, enchant_amount, apply);
                             ((Player*)this)->ApplyRatingMod(CR_HASTE_RANGED, enchant_amount, apply);
                             ((Player*)this)->ApplyRatingMod(CR_HASTE_SPELL, enchant_amount, apply);
-                            sLog.outDebug("+ %u HASTE", enchant_amount);
+                            DEBUG_LOG("+ %u HASTE", enchant_amount);
                             break;
                         case ITEM_MOD_EXPERTISE_RATING:
                             ((Player*)this)->ApplyRatingMod(CR_EXPERTISE, enchant_amount, apply);
-                            sLog.outDebug("+ %u EXPERTISE", enchant_amount);
+                            DEBUG_LOG("+ %u EXPERTISE", enchant_amount);
                             break;
                         case ITEM_MOD_ATTACK_POWER:
                             HandleStatModifier(UNIT_MOD_ATTACK_POWER, TOTAL_VALUE, float(enchant_amount), apply);
                             HandleStatModifier(UNIT_MOD_ATTACK_POWER_RANGED, TOTAL_VALUE, float(enchant_amount), apply);
-                            sLog.outDebug("+ %u ATTACK_POWER", enchant_amount);
+                            DEBUG_LOG("+ %u ATTACK_POWER", enchant_amount);
                             break;
                         case ITEM_MOD_RANGED_ATTACK_POWER:
                             HandleStatModifier(UNIT_MOD_ATTACK_POWER_RANGED, TOTAL_VALUE, float(enchant_amount), apply);
-                            sLog.outDebug("+ %u RANGED_ATTACK_POWER", enchant_amount);
+                            DEBUG_LOG("+ %u RANGED_ATTACK_POWER", enchant_amount);
                             break;
                         case ITEM_MOD_MANA_REGENERATION:
                             ((Player*)this)->ApplyManaRegenBonus(enchant_amount, apply);
-                            sLog.outDebug("+ %u MANA_REGENERATION", enchant_amount);
+                            DEBUG_LOG("+ %u MANA_REGENERATION", enchant_amount);
                             break;
                         case ITEM_MOD_ARMOR_PENETRATION_RATING:
                             ((Player*)this)->ApplyRatingMod(CR_ARMOR_PENETRATION, enchant_amount, apply);
-                            sLog.outDebug("+ %u ARMOR PENETRATION", enchant_amount);
+                            DEBUG_LOG("+ %u ARMOR PENETRATION", enchant_amount);
                             break;
                         case ITEM_MOD_SPELL_POWER:
                             ((Player*)this)->ApplySpellPowerBonus(enchant_amount, apply);
-                            sLog.outDebug("+ %u SPELL_POWER", enchant_amount);
+                            DEBUG_LOG("+ %u SPELL_POWER", enchant_amount);
                             break;
                         case ITEM_MOD_BLOCK_VALUE:
                             HandleBaseModValue(SHIELD_BLOCK_VALUE, FLAT_MOD, float(enchant_amount), apply);
@@ -13684,7 +13681,7 @@ bool Player::SatisfyQuestLog( bool msg )
     {
         WorldPacket data( SMSG_QUESTLOG_FULL, 0 );
         GetSession()->SendPacket( &data );
-        sLog.outDebug( "WORLD: Sent SMSG_QUESTLOG_FULL" );
+        DEBUG_LOG( "WORLD: Sent SMSG_QUESTLOG_FULL" );
     }
     return false;
 }
@@ -14561,14 +14558,14 @@ void Player::SendQuestComplete( uint32 quest_id )
         WorldPacket data( SMSG_QUESTUPDATE_COMPLETE, 4 );
         data << uint32(quest_id);
         GetSession()->SendPacket( &data );
-        sLog.outDebug( "WORLD: Sent SMSG_QUESTUPDATE_COMPLETE quest = %u", quest_id );
+        DEBUG_LOG( "WORLD: Sent SMSG_QUESTUPDATE_COMPLETE quest = %u", quest_id );
     }
 }
 
 void Player::SendQuestReward( Quest const *pQuest, uint32 XP, Object * questGiver )
 {
     uint32 questid = pQuest->GetQuestId();
-    sLog.outDebug( "WORLD: Sent SMSG_QUESTGIVER_QUEST_COMPLETE quest = %u", questid );
+    DEBUG_LOG( "WORLD: Sent SMSG_QUESTGIVER_QUEST_COMPLETE quest = %u", questid );
     WorldPacket data( SMSG_QUESTGIVER_QUEST_COMPLETE, (4+4+4+4+4) );
     data << uint32(questid);
 
@@ -14600,7 +14597,7 @@ void Player::SendQuestFailed( uint32 quest_id )
         data << uint32(quest_id);
         data << uint32(0);                                  // failed reason (4 for inventory is full)
         GetSession()->SendPacket( &data );
-        sLog.outDebug("WORLD: Sent SMSG_QUESTGIVER_QUEST_FAILED");
+        DEBUG_LOG("WORLD: Sent SMSG_QUESTGIVER_QUEST_FAILED");
     }
 }
 
@@ -14611,7 +14608,7 @@ void Player::SendQuestTimerFailed( uint32 quest_id )
         WorldPacket data( SMSG_QUESTUPDATE_FAILEDTIMER, 4 );
         data << uint32(quest_id);
         GetSession()->SendPacket( &data );
-        sLog.outDebug("WORLD: Sent SMSG_QUESTUPDATE_FAILEDTIMER");
+        DEBUG_LOG("WORLD: Sent SMSG_QUESTUPDATE_FAILEDTIMER");
     }
 }
 
@@ -14620,7 +14617,7 @@ void Player::SendCanTakeQuestResponse( uint32 msg )
     WorldPacket data( SMSG_QUESTGIVER_QUEST_INVALID, 4 );
     data << uint32(msg);
     GetSession()->SendPacket( &data );
-    sLog.outDebug("WORLD: Sent SMSG_QUESTGIVER_QUEST_INVALID");
+    DEBUG_LOG("WORLD: Sent SMSG_QUESTGIVER_QUEST_INVALID");
 }
 
 void Player::SendQuestConfirmAccept(const Quest* pQuest, Player* pReceiver)
@@ -14646,7 +14643,7 @@ void Player::SendQuestConfirmAccept(const Quest* pQuest, Player* pReceiver)
         data << uint64(GetGUID());
         pReceiver->GetSession()->SendPacket(&data);
 
-        sLog.outDebug("WORLD: Sent SMSG_QUEST_CONFIRM_ACCEPT");
+        DEBUG_LOG("WORLD: Sent SMSG_QUEST_CONFIRM_ACCEPT");
     }
 }
 
@@ -14658,14 +14655,14 @@ void Player::SendPushToPartyResponse( Player *pPlayer, uint32 msg )
         data << uint64(pPlayer->GetGUID());
         data << uint8(msg);                                 // valid values: 0-8
         GetSession()->SendPacket( &data );
-        sLog.outDebug("WORLD: Sent MSG_QUEST_PUSH_RESULT");
+        DEBUG_LOG("WORLD: Sent MSG_QUEST_PUSH_RESULT");
     }
 }
 
 void Player::SendQuestUpdateAddItem( Quest const* /*pQuest*/, uint32 /*item_idx*/, uint32 /*count*/ )
 {
     WorldPacket data( SMSG_QUESTUPDATE_ADD_ITEM, 0 );
-    sLog.outDebug( "WORLD: Sent SMSG_QUESTUPDATE_ADD_ITEM" );
+    DEBUG_LOG( "WORLD: Sent SMSG_QUESTUPDATE_ADD_ITEM" );
     //data << pQuest->ReqItemId[item_idx];
     //data << count;
     GetSession()->SendPacket( &data );
@@ -14681,7 +14678,7 @@ void Player::SendQuestUpdateAddCreatureOrGo( Quest const* pQuest, ObjectGuid gui
         entry = (-entry) | 0x80000000;
 
     WorldPacket data( SMSG_QUESTUPDATE_ADD_KILL, (4*4+8) );
-    sLog.outDebug( "WORLD: Sent SMSG_QUESTUPDATE_ADD_KILL" );
+    DEBUG_LOG( "WORLD: Sent SMSG_QUESTUPDATE_ADD_KILL" );
     data << uint32(pQuest->GetQuestId());
     data << uint32(entry);
     data << uint32(old_count + add_count);
@@ -14924,7 +14921,6 @@ bool Player::LoadFromDB( uint32 guid, SqlQueryHolder *holder )
     SetUInt32Value(PLAYER_AMMO_ID, fields[62].GetUInt32());
     SetByteValue(PLAYER_FIELD_BYTES, 2, fields[64].GetUInt8());
 
-
     InitDisplayIds();
 
     // cleanup inventory related item value fields (its will be filled correctly in _LoadInventory)
@@ -14940,8 +14936,8 @@ bool Player::LoadFromDB( uint32 guid, SqlQueryHolder *holder )
         }
     }
 
-    sLog.outDebug("Load Basic value of player %s is: ", m_name.c_str());
-    outDebugValues();
+    DEBUG_FILTER_LOG(LOG_FILTER_PLAYER_STATS, "Load Basic value of player %s is: ", m_name.c_str());
+    outDebugStatsValues();
 
     //Need to call it to initialize m_team (m_team can be calculated from race)
     //Other way is to saves m_team into characters table.
@@ -15097,7 +15093,7 @@ bool Player::LoadFromDB( uint32 guid, SqlQueryHolder *holder )
                 // client without expansion support
                 if(GetSession()->Expansion() < transMapEntry->Expansion())
                 {
-                    sLog.outDebug("Player %s using client without required expansion tried login at transport at non accessible map %u", GetName(), (*iter)->GetMapId());
+                    DEBUG_LOG("Player %s using client without required expansion tried login at transport at non accessible map %u", GetName(), (*iter)->GetMapId());
                     break;
                 }
 
@@ -15126,7 +15122,7 @@ bool Player::LoadFromDB( uint32 guid, SqlQueryHolder *holder )
         // client without expansion support
         if(GetSession()->Expansion() < mapEntry->Expansion())
         {
-            sLog.outDebug("Player %s using client without required expansion tried login at non accessible map %u", GetName(), GetMapId());
+            DEBUG_LOG("Player %s using client without required expansion tried login at non accessible map %u", GetName(), GetMapId());
             RelocateToHomebind();
         }
     }
@@ -15219,7 +15215,7 @@ bool Player::LoadFromDB( uint32 guid, SqlQueryHolder *holder )
     SetUInt32Value(PLAYER_TRACK_CREATURES, 0 );
     SetUInt32Value(PLAYER_TRACK_RESOURCES, 0 );
 
-    // cleanup aura list explicitly before skill load wher some spells can be applied
+    // cleanup aura list explicitly before skill load where some spells can be applied
     RemoveAllAuras();
 
     // make sure the unit is considered out of combat for proper loading
@@ -15376,8 +15372,8 @@ bool Player::LoadFromDB( uint32 guid, SqlQueryHolder *holder )
         SetPower(Powers(i),savedpower > GetMaxPower(Powers(i)) ? GetMaxPower(Powers(i)) : savedpower);
     }
 
-    sLog.outDebug("The value of player %s after load item and aura is: ", m_name.c_str());
-    outDebugValues();
+    DEBUG_FILTER_LOG(LOG_FILTER_PLAYER_STATS, "The value of player %s after load item and aura is: ", m_name.c_str());
+    outDebugStatsValues();
 
     // all fields read
     delete result;
@@ -15569,7 +15565,7 @@ void Player::_LoadAuras(QueryResult *result, uint32 timediff)
 
                 aura->SetLoadedState(caster_guid,damage,maxduration,remaintime,remaincharges);
                 AddAura(aura);
-                sLog.outDetail("Added aura spellid %u, effect %u", spellproto->Id, effindex);
+                DETAIL_LOG("Added aura spellid %u, effect %u", spellproto->Id, effindex);
             }
         }
         while( result->NextRow() );
@@ -16008,7 +16004,7 @@ void Player::_LoadQuestStatus(QueryResult *result)
                         m_questRewardTalentCount += pQuest->GetBonusTalents();
                 }
 
-                sLog.outDebug("Quest status is {%u} for quest {%u} for player (GUID: %u)", questStatusData.m_status, quest_id, GetGUIDLow());
+                DEBUG_LOG("Quest status is {%u} for quest {%u} for player (GUID: %u)", questStatusData.m_status, quest_id, GetGUIDLow());
             }
         }
         while( result->NextRow() );
@@ -16051,7 +16047,7 @@ void Player::_LoadDailyQuestStatus(QueryResult *result)
             SetUInt32Value(PLAYER_FIELD_DAILY_QUESTS_1+quest_daily_idx,quest_id);
             ++quest_daily_idx;
 
-            sLog.outDebug("Daily quest {%u} cooldown for player (GUID: %u)", quest_id, GetGUIDLow());
+            DEBUG_LOG("Daily quest {%u} cooldown for player (GUID: %u)", quest_id, GetGUIDLow());
         }
         while( result->NextRow() );
 
@@ -16081,7 +16077,7 @@ void Player::_LoadWeeklyQuestStatus(QueryResult *result)
 
             m_weeklyquests.insert(quest_id);
 
-            sLog.outDebug("Weekly quest {%u} cooldown for player (GUID: %u)", quest_id, GetGUIDLow());
+            DEBUG_LOG("Weekly quest {%u} cooldown for player (GUID: %u)", quest_id, GetGUIDLow());
         }
         while( result->NextRow() );
 
@@ -16331,7 +16327,7 @@ InstancePlayerBind* Player::BindToInstance(InstanceSave *save, bool permanent, b
 
         bind.save = save;
         bind.perm = permanent;
-        if(!load) sLog.outDebug("Player::BindToInstance: %s(%d) is now bound to map %d, instance %d, difficulty %d", GetName(), GetGUIDLow(), save->GetMapId(), save->GetInstanceId(), save->GetDifficulty());
+        if(!load) DEBUG_LOG("Player::BindToInstance: %s(%d) is now bound to map %d, instance %d, difficulty %d", GetName(), GetGUIDLow(), save->GetMapId(), save->GetInstanceId(), save->GetDifficulty());
         return &bind;
     }
     else
@@ -16524,8 +16520,8 @@ void Player::SaveToDB()
     // first save/honor gain after midnight will also update the player's honor fields
     UpdateHonorFields();
 
-    sLog.outDebug("The value of player %s at save: ", m_name.c_str());
-    outDebugValues();
+    DEBUG_FILTER_LOG(LOG_FILTER_PLAYER_STATS, "The value of player %s at save: ", m_name.c_str());
+    outDebugStatsValues();
 
     CharacterDatabase.BeginTransaction();
 
@@ -17133,9 +17129,10 @@ void Player::_SaveStats()
     CharacterDatabase.Execute( ss.str().c_str() );
 }
 
-void Player::outDebugValues() const
+void Player::outDebugStatsValues() const
 {
-    if(!sLog.IsOutDebug())                                  // optimize disabled debug output
+    // optimize disabled debug output
+    if(!sLog.HasLogLevelOrHigher(LOG_LVL_DEBUG) || (sLog.getLogFilter() & LOG_FILTER_PLAYER_STATS)!=0)
         return;
 
     sLog.outDebug("HP is: \t\t\t%u\t\tMP is: \t\t\t%u",GetMaxHealth(), GetMaxPower(POWER_MANA));
@@ -17208,7 +17205,7 @@ void Player::SavePositionInDB(uint32 mapid, float x,float y,float z,float o,uint
         << "',position_z='"<<z<<"',orientation='"<<o<<"',map='"<<mapid
         << "',zone='"<<zone<<"',trans_x='0',trans_y='0',trans_z='0',"
         << "transguid='0',taxi_path='' WHERE guid='"<< GUID_LOPART(guid) <<"'";
-    sLog.outDebug("%s", ss.str().c_str());
+    DEBUG_LOG("%s", ss.str().c_str());
     CharacterDatabase.Execute(ss.str().c_str());
 }
 
@@ -17438,7 +17435,7 @@ void Player::RemovePet(Pet* pet, PetSaveMode mode, bool returnreagent)
 
         if(spellInfo)
         {
-            for(uint32 i = 0; i < 7; ++i)
+            for(uint32 i = 0; i < MAX_SPELL_REAGENTS; ++i)
             {
                 if(spellInfo->Reagent[i] > 0)
                 {
@@ -17586,7 +17583,7 @@ void Player::PetSpellInitialize()
     if(!pet)
         return;
 
-    sLog.outDebug("Pet Spells Groups");
+    DEBUG_LOG("Pet Spells Groups");
 
     CharmInfo *charmInfo = pet->GetCharmInfo();
 
@@ -17966,10 +17963,7 @@ void Player::HandleStealthedUnitsDetection()
                 (*i)->SendCreateUpdateToPlayer(this);
                 m_clientGUIDs.insert(i_guid);
 
-                #ifdef MANGOS_DEBUG
-                if((sLog.getLogFilter() & LOG_FILTER_VISIBILITY_CHANGES)==0)
-                    sLog.outDebug("%s is detected in stealth by player %u. Distance = %f",i_guid.GetString().c_str(),GetGUIDLow(),GetDistance(*i));
-                #endif
+                DEBUG_FILTER_LOG(LOG_FILTER_VISIBILITY_CHANGES, "%s is detected in stealth by player %u. Distance = %f",i_guid.GetString().c_str(),GetGUIDLow(),GetDistance(*i));
 
                 // target aura duration for caster show only if target exist at caster client
                 // send data at target visibility change (adding to client)
@@ -18172,7 +18166,7 @@ bool Player::ActivateTaxiPathTo(std::vector<uint32> const& nodes, Creature* npc 
     data << uint32(ERR_TAXIOK);
     GetSession()->SendPacket(&data);
 
-    sLog.outDebug("WORLD: Sent SMSG_ACTIVATETAXIREPLY");
+    DEBUG_LOG("WORLD: Sent SMSG_ACTIVATETAXIREPLY");
 
     GetSession()->SendDoFlight(mount_display_id, sourcepath);
 
@@ -18200,7 +18194,7 @@ void Player::ContinueTaxiFlight()
     if (!sourceNode)
         return;
 
-    sLog.outDebug( "WORLD: Restart character %u taxi flight", GetGUIDLow() );
+    DEBUG_LOG( "WORLD: Restart character %u taxi flight", GetGUIDLow() );
 
     uint32 mountDisplayId = sObjectMgr.GetTaxiMountDisplayId(sourceNode, GetTeam(),true);
     uint32 path = m_taxi.GetCurrentTaxiPath();
@@ -18369,7 +18363,7 @@ bool Player::BuyItemFromVendorSlot(uint64 vendorguid, uint32 vendorslot, uint32 
     Creature *pCreature = GetNPCIfCanInteractWith(vendorguid,UNIT_NPC_FLAG_VENDOR);
     if (!pCreature)
     {
-        sLog.outDebug( "WORLD: BuyItemFromVendor - Unit (GUID: %u) not found or you can't interact with him.", uint32(GUID_LOPART(vendorguid)) );
+        DEBUG_LOG( "WORLD: BuyItemFromVendor - Unit (GUID: %u) not found or you can't interact with him.", uint32(GUID_LOPART(vendorguid)) );
         SendBuyError( BUY_ERR_DISTANCE_TOO_FAR, NULL, item, 0);
         return false;
     }
@@ -18614,7 +18608,7 @@ void Player::UpdateHomebindTime(uint32 time)
         data << uint32(m_HomebindTimer);
         data << uint32(ERR_RAID_GROUP_NONE);                // error used only when timer = 0
         GetSession()->SendPacket(&data);
-        sLog.outDebug("PLAYER: Player '%s' (GUID: %u) will be teleported to homebind in 60 seconds", GetName(),GetGUIDLow());
+        DEBUG_LOG("PLAYER: Player '%s' (GUID: %u) will be teleported to homebind in 60 seconds", GetName(),GetGUIDLow());
     }
 }
 
@@ -18752,7 +18746,7 @@ void Player::SendCooldownEvent(SpellEntry const *spellInfo, uint32 itemId, Spell
 
 void Player::UpdatePotionCooldown(Spell* spell)
 {
-    // no potion used i combat or still in combat
+    // no potion used in combat or still in combat
     if(!m_lastPotionId || isInCombat())
         return;
 
@@ -18853,7 +18847,7 @@ bool Player::EnchantmentFitsRequirements(uint32 enchantmentcondition, int8 slot)
         }
     }
 
-    sLog.outDebug("Checking Condition %u, there are %u Meta Gems, %u Red Gems, %u Yellow Gems and %u Blue Gems, Activate:%s", enchantmentcondition, curcount[0], curcount[1], curcount[2], curcount[3], activate ? "yes" : "no");
+    DEBUG_LOG("Checking Condition %u, there are %u Meta Gems, %u Red Gems, %u Yellow Gems and %u Blue Gems, Activate:%s", enchantmentcondition, curcount[0], curcount[1], curcount[2], curcount[3], activate ? "yes" : "no");
 
     return activate;
 }
@@ -19137,10 +19131,7 @@ void Player::UpdateVisibilityOf(WorldObject const* viewPoint, WorldObject* targe
             target->DestroyForPlayer(this);
             m_clientGUIDs.erase(t_guid);
 
-            #ifdef MANGOS_DEBUG
-            if((sLog.getLogFilter() & LOG_FILTER_VISIBILITY_CHANGES)==0)
-                sLog.outDebug("%s out of range for player %u. Distance = %f",t_guid.GetString().c_str(),GetGUIDLow(),GetDistance(target));
-            #endif
+            DEBUG_FILTER_LOG(LOG_FILTER_VISIBILITY_CHANGES, "%s out of range for player %u. Distance = %f",t_guid.GetString().c_str(),GetGUIDLow(),GetDistance(target));
         }
     }
     else
@@ -19151,10 +19142,7 @@ void Player::UpdateVisibilityOf(WorldObject const* viewPoint, WorldObject* targe
             if(target->GetTypeId()!=TYPEID_GAMEOBJECT||!((GameObject*)target)->IsTransport())
                 m_clientGUIDs.insert(target->GetObjectGuid());
 
-            #ifdef MANGOS_DEBUG
-            if((sLog.getLogFilter() & LOG_FILTER_VISIBILITY_CHANGES)==0)
-                sLog.outDebug("Object %u (Type: %u) is visible now for player %u. Distance = %f",target->GetGUIDLow(),target->GetTypeId(),GetGUIDLow(),GetDistance(target));
-            #endif
+            DEBUG_FILTER_LOG(LOG_FILTER_VISIBILITY_CHANGES, "Object %u (Type: %u) is visible now for player %u. Distance = %f",target->GetGUIDLow(),target->GetTypeId(),GetGUIDLow(),GetDistance(target));
 
             // target aura duration for caster show only if target exist at caster client
             // send data at target visibility change (adding to client)
@@ -19194,10 +19182,7 @@ void Player::UpdateVisibilityOf(WorldObject const* viewPoint, T* target, UpdateD
             target->BuildOutOfRangeUpdateBlock(&data);
             m_clientGUIDs.erase(t_guid);
 
-            #ifdef MANGOS_DEBUG
-            if((sLog.getLogFilter() & LOG_FILTER_VISIBILITY_CHANGES)==0)
-                sLog.outDebug("%s is out of range for %s. Distance = %f",t_guid.GetString().c_str(),GetObjectGuid().GetString().c_str(),GetDistance(target));
-            #endif
+            DEBUG_FILTER_LOG(LOG_FILTER_VISIBILITY_CHANGES, "%s is out of range for %s. Distance = %f", t_guid.GetString().c_str(), GetObjectGuid().GetString().c_str(), GetDistance(target));
         }
     }
     else
@@ -19208,10 +19193,7 @@ void Player::UpdateVisibilityOf(WorldObject const* viewPoint, T* target, UpdateD
             target->BuildCreateUpdateBlockForPlayer(&data, this);
             UpdateVisibilityOf_helper(m_clientGUIDs,target);
 
-            #ifdef MANGOS_DEBUG
-            if((sLog.getLogFilter() & LOG_FILTER_VISIBILITY_CHANGES)==0)
-                sLog.outDebug("%s is visible now for %s. Distance = %f",target->GetObjectGuid().GetString().c_str(),GetObjectGuid().GetString().c_str(),GetDistance(target));
-            #endif
+            DEBUG_FILTER_LOG(LOG_FILTER_VISIBILITY_CHANGES, "%s is visible now for %s. Distance = %f", target->GetObjectGuid().GetString().c_str(), GetObjectGuid().GetString().c_str(), GetDistance(target));
         }
     }
 }
@@ -19504,7 +19486,7 @@ void Player::learnDefaultSpells()
     for (PlayerCreateInfoSpells::const_iterator itr = info->spell.begin(); itr!=info->spell.end(); ++itr)
     {
         uint32 tspell = *itr;
-        sLog.outDebug("PLAYER (Class: %u Race: %u): Adding initial spell, id = %u",uint32(getClass()),uint32(getRace()), tspell);
+        DEBUG_LOG("PLAYER (Class: %u Race: %u): Adding initial spell, id = %u",uint32(getClass()),uint32(getRace()), tspell);
         if(!IsInWorld())                                    // will send in INITIAL_SPELLS in list anyway at map add
             addSpell(tspell, true, true, true, false);
         else                                                // but send in normal spell in game learn case
@@ -21122,7 +21104,7 @@ void Player::HandleFall(MovementInfo const& movementInfo)
 {
     // calculate total z distance of the fall
     float z_diff = m_lastFallZ - movementInfo.GetPos()->z;
-    sLog.outDebug("zDiff = %f", z_diff);
+    DEBUG_LOG("zDiff = %f", z_diff);
 
     //Players with low fall distance, Feather Fall or physical immunity (charges used) are ignored
     // 14.57 can be calculated by resolving damageperc formula below to 0
@@ -21257,7 +21239,7 @@ void Player::LearnTalent(uint32 talentId, uint32 talentRank)
 
     // learn! (other talent ranks will unlearned at learning)
     learnSpell(spellid, false);
-    sLog.outDetail("TalentID: %u Rank: %u Spell: %u\n", talentId, talentRank, spellid);
+    DETAIL_LOG("TalentID: %u Rank: %u Spell: %u\n", talentId, talentRank, spellid);
 }
 
 void Player::LearnPetTalent(uint64 petGuid, uint32 talentId, uint32 talentRank)
@@ -21389,7 +21371,7 @@ void Player::LearnPetTalent(uint64 petGuid, uint32 talentId, uint32 talentRank)
 
     // learn! (other talent ranks will unlearned at learning)
     pet->learnSpell(spellid);
-    sLog.outDetail("PetTalentID: %u Rank: %u Spell: %u\n", talentId, talentRank, spellid);
+    DETAIL_LOG("PetTalentID: %u Rank: %u Spell: %u\n", talentId, talentRank, spellid);
 }
 
 void Player::UpdateKnownCurrencies(uint32 itemId, bool apply)

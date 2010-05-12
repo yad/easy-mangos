@@ -25,6 +25,7 @@
 #include "Language.h"
 #include "Log.h"
 #include "MapManager.h"
+#include "BattleGroundMgr.h"
 #include "Policies/SingletonImp.h"
 
 INSTANTIATE_SINGLETON_1(GameEventMgr);
@@ -143,7 +144,7 @@ void GameEventMgr::LoadFromDB()
             pGameEvent.end          = time_t(endtime);
             pGameEvent.occurence    = fields[3].GetUInt32();
             pGameEvent.length       = fields[4].GetUInt32();
-            pGameEvent.holiday_id   = fields[5].GetUInt32();
+            pGameEvent.holiday_id   = HolidayIds(fields[5].GetUInt32());
 
 
             if(pGameEvent.length==0)                            // length>0 is validity check
@@ -152,12 +153,12 @@ void GameEventMgr::LoadFromDB()
                 continue;
             }
 
-            if(pGameEvent.holiday_id)
+            if(pGameEvent.holiday_id != HOLIDAY_NONE)
             {
                 if(!sHolidaysStore.LookupEntry(pGameEvent.holiday_id))
                 {
                     sLog.outErrorDb("`game_event` game event id (%i) have not existed holiday id %u.",event_id,pGameEvent.holiday_id);
-                    pGameEvent.holiday_id = 0;
+                    pGameEvent.holiday_id = HOLIDAY_NONE;
                 }
             }
 
@@ -421,7 +422,7 @@ uint32 GameEventMgr::Initialize()                           // return the next e
 {
     m_ActiveEvents.clear();
     uint32 delay = Update();
-    sLog.outBasic("Game Event system initialized." );
+    BASIC_LOG("Game Event system initialized." );
     m_IsGameEventsInit = true;
     return delay;
 }
@@ -435,13 +436,13 @@ uint32 GameEventMgr::Update()                               // return the next e
         //sLog.outErrorDb("Checking event %u",itr);
         if (CheckOneGameEvent(itr))
         {
-            //sLog.outDebug("GameEvent %u is active",itr->first);
+            //DEBUG_LOG("GameEvent %u is active",itr->first);
             if (!IsActiveEvent(itr))
                 StartEvent(itr);
         }
         else
         {
-            //sLog.outDebug("GameEvent %u is not active",itr->first);
+            //DEBUG_LOG("GameEvent %u is not active",itr->first);
             if (IsActiveEvent(itr))
                 StopEvent(itr);
             else
@@ -454,6 +455,7 @@ uint32 GameEventMgr::Update()                               // return the next e
 
                     // disable any event specific quest (for cases where creature is spawned, but event not active).
                     UpdateEventQuests(itr, false);
+                    UpdateWorldStates(itr, false);
                 }
             }
         }
@@ -461,7 +463,7 @@ uint32 GameEventMgr::Update()                               // return the next e
         if (calcDelay < nextEventDelay)
             nextEventDelay = calcDelay;
     }
-    sLog.outBasic("Next game event check in %u seconds.", nextEventDelay + 1);
+    BASIC_LOG("Next game event check in %u seconds.", nextEventDelay + 1);
     return (nextEventDelay + 1) * IN_MILLISECONDS;           // Add 1 second to be sure event has started/stopped at next call
 }
 
@@ -477,6 +479,7 @@ void GameEventMgr::UnApplyEvent(uint16 event_id)
     ChangeEquipOrModel(event_id, false);
     // Remove quests that are events only to non event npc
     UpdateEventQuests(event_id, false);
+    UpdateWorldStates(event_id, false);
 }
 
 void GameEventMgr::ApplyNewEvent(uint16 event_id)
@@ -494,6 +497,7 @@ void GameEventMgr::ApplyNewEvent(uint16 event_id)
     ChangeEquipOrModel(event_id, true);
     // Add quests that are events only to non event npc
     UpdateEventQuests(event_id, true);
+    UpdateWorldStates(event_id, true);
 }
 
 void GameEventMgr::GameEventSpawn(int16 event_id)
@@ -520,7 +524,7 @@ void GameEventMgr::GameEventSpawn(int16 event_id)
             if(!map->Instanceable() && map->IsLoaded(data->posX,data->posY))
             {
                 Creature* pCreature = new Creature;
-                //sLog.outDebug("Spawning creature %u",*itr);
+                //DEBUG_LOG("Spawning creature %u",*itr);
                 if (!pCreature->LoadFromDB(*itr, map))
                 {
                     delete pCreature;
@@ -553,7 +557,7 @@ void GameEventMgr::GameEventSpawn(int16 event_id)
             if(!map->Instanceable() && map->IsLoaded(data->posX, data->posY))
             {
                 GameObject* pGameobject = new GameObject;
-                //sLog.outDebug("Spawning gameobject %u", *itr);
+                //DEBUG_LOG("Spawning gameobject %u", *itr);
                 if (!pGameobject->LoadFromDB(*itr, map))
                 {
                     delete pGameobject;
@@ -733,6 +737,25 @@ void GameEventMgr::UpdateEventQuests(uint16 event_id, bool Activate)
     }
 }
 
+void GameEventMgr::UpdateWorldStates(uint16 event_id, bool Activate)
+{
+    GameEventData const& event = mGameEvent[event_id];
+    if (event.holiday_id != HOLIDAY_NONE)
+    {
+        BattleGroundTypeId bgTypeId = BattleGroundMgr::WeekendHolidayIdToBGType(event.holiday_id);
+        if (bgTypeId != BATTLEGROUND_TYPE_NONE)
+        {
+            BattlemasterListEntry const * bl = sBattlemasterListStore.LookupEntry(bgTypeId);
+            if (bl && bl->HolidayWorldStateId)
+            {
+                WorldPacket data;
+                sBattleGroundMgr.BuildUpdateWorldStatePacket(&data, bl->HolidayWorldStateId, Activate ? 1 : 0);
+                sWorld.SendGlobalMessage(&data);
+            }
+        }
+    }
+}
+
 GameEventMgr::GameEventMgr()
 {
     m_IsGameEventsInit = false;
@@ -740,6 +763,9 @@ GameEventMgr::GameEventMgr()
 
 MANGOS_DLL_SPEC bool IsHolidayActive( HolidayIds id )
 {
+    if (id == HOLIDAY_NONE)
+        return false;
+
     GameEventMgr::GameEventDataMap const& events = sGameEventMgr.GetEventMap();
     GameEventMgr::ActiveEvents const& ae = sGameEventMgr.GetActiveEventList();
 
