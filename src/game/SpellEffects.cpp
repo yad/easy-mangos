@@ -6998,6 +6998,9 @@ void Spell::EffectLeapForward(SpellEffectIndex eff_idx)
     {
         uint32 mapid = m_caster->GetMapId();
         float dis = GetSpellRadius(sSpellRadiusStore.LookupEntry(m_spellInfo->EffectRadiusIndex[eff_idx]));
+        //For glyph of blink
+        if(m_caster->GetTypeId() == TYPEID_PLAYER)
+            ((Player*)m_caster)->ApplySpellMod(m_spellInfo->Id, SPELLMOD_RADIUS, dis, this);
 
         // Start Info //
         float cx,cy,cz;
