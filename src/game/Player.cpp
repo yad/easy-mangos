@@ -22674,7 +22674,7 @@ void Player::LearnAllAviableTaxiPaths()
     for(uint32 i = 1; i < sTaxiNodesStore.GetNumRows(); ++i)
     {
         TaxiNodesEntry const* node = sTaxiNodesStore.LookupEntry(i);
-        if(!node || !node->MountCreatureID[getTeam() == ALLIANCE ? 1 : 0])
+        if(!node || !node->MountCreatureID[GetTeam() == ALLIANCE ? 1 : 0])
             continue;
 
         // skip by level
