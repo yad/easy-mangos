@@ -261,10 +261,13 @@ uint32 PlayerbotAI::getSpellId(const char* args, bool master) const
             foundMatchUsesNoReagents = usesNoReagents;
         }
     }
-    if (foundSpellId == 0)
-        sLog.outDebug( "Spell %s : not found...", args);
-    else
-        sLog.outDebug( "Spell %s : found ID = %d", args, foundSpellId);
+    if( m_mgr->m_confDebugWhisper )
+    {
+        if (foundSpellId == 0)
+            sLog.outDebug( "Spell %s : not found...", args);
+        else
+            sLog.outDebug( "Spell %s : found ID = %d", args, foundSpellId);
+    }
     return foundSpellId;
 }
 
@@ -411,31 +414,6 @@ void PlayerbotAI::SendOrders( Player& player )
         out << "I PROTECT " << (m_targetProtect?m_targetProtect->GetName():"unknown");
     out << ".";
     
-    if( m_mgr->m_confDebugWhisper )
-    {
-        out << " " << (IsInCombat()?"I'm in COMBAT! ":"Not in combat. ");
-        out << "Current state is ";
-        if( m_botState == BOTSTATE_NORMAL )
-            out << "NORMAL";
-        else if( m_botState == BOTSTATE_COMBAT )
-            out << "COMBAT";
-        else if( m_botState == BOTSTATE_DEAD )
-            out << "DEAD";
-        else if( m_botState == BOTSTATE_DEADRELEASED )
-            out << "RELEASED";
-        else if( m_botState == BOTSTATE_LOOTING )
-            out << "LOOTING";
-        out << ". Movement order is ";
-        if( m_movementOrder == MOVEMENT_NONE )
-            out << "NONE";
-        else if( m_movementOrder == MOVEMENT_FOLLOW )
-            out << "FOLLOW " << (m_followTarget?m_followTarget->GetName():"unknown");
-        else if( m_movementOrder == MOVEMENT_STAY )
-            out << "STAY";
-        out << ". Got " << m_attackerInfo.size() << " attacker(s) in list.";
-        out << " Next action in " << (m_ignoreAIUpdatesUntilTime-time(0)) << "sec.";
-    }
-
     TellMaster( out.str().c_str() );
 }
 
@@ -1311,13 +1289,9 @@ void PlayerbotAI::GetCombatTarget( Unit* forcedTarget )
         {
             forcedTarget = newTarget;
             m_targetType = TARGET_THREATEN;
-            if( m_mgr->m_confDebugWhisper )
-                TellMaster( "Changement de la cible de %s pour la protection de %s", forcedTarget->GetName(), m_targetProtect->GetName() );
         }
     } else if( forcedTarget )
     {
-        if( m_mgr->m_confDebugWhisper )
-            TellMaster( "Changement obligatoire de cible de %s !", forcedTarget->GetName() );
         m_targetType = (m_combatOrder==ORDERS_TANK ? TARGET_THREATEN : TARGET_NORMAL);
     }
 
@@ -1335,8 +1309,6 @@ void PlayerbotAI::GetCombatTarget( Unit* forcedTarget )
     if( !m_targetCombat && (m_combatOrder&ORDERS_ASSIST) && m_targetAssist!=0 )
     {
         m_targetCombat = FindAttacker( (ATTACKERINFOTYPE)(AIT_VICTIMNOTSELF|AIT_LOWESTTHREAT), m_targetAssist );
-        if( m_mgr->m_confDebugWhisper && m_targetCombat )
-            TellMaster( "J'attaque %s pour assister %s", m_targetCombat->GetName(), m_targetAssist->GetName() );
         m_targetType = (m_combatOrder==ORDERS_TANK ? TARGET_THREATEN : TARGET_NORMAL);
         m_targetChanged = true;
     }
@@ -2423,9 +2395,12 @@ bool PlayerbotAI::CastSpell(uint32 spellId)
      m_bot->SendMessageToSet(&data,true);
      }
      */
-    std::ostringstream out;
-    out << "Je lance : " << pSpellInfo->SpellName[2];
-    m_bot->GetPlayerbotAI()->TellMaster(out.str().c_str());
+    if( m_mgr->m_confDebugWhisper )
+    {
+        std::ostringstream out;
+        out << "Je lance : " << pSpellInfo->SpellName[2];
+        m_bot->GetPlayerbotAI()->TellMaster(out.str().c_str());
+    }
     return true;
 }
 

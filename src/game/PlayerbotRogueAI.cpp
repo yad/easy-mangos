@@ -72,12 +72,7 @@ bool PlayerbotRogueAI::DoFirstCombatManeuver(Unit *pTarget)
     Player * m_bot = GetPlayerBot();
 
     if( STEALTH>0 && !m_bot->HasAura( STEALTH ) && ai->CastSpell(STEALTH, *m_bot) )
-    {
-        if( ai->GetManager()->m_confDebugWhisper ) 
-        {
-        }
         return false;
-    } 
     
     return false;
 }
@@ -131,12 +126,7 @@ void PlayerbotRogueAI::DoNextCombatManeuver(Unit *pTarget)
 
     // decide what to do:
     if( pVictim==m_bot && CLOAK_OF_SHADOWS>0 && pVictim->HasAura(SPELL_AURA_PERIODIC_DAMAGE) && !m_bot->HasAura(CLOAK_OF_SHADOWS,EFFECT_INDEX_0) && ai->CastSpell(CLOAK_OF_SHADOWS) )
-    {
-        if( ai->GetManager()->m_confDebugWhisper )
-        {
-        }
         return;
-    }
     else if( m_bot->HasAura( STEALTH ) )
         SpellSequence = RogueStealth;
     else if( pTarget->IsNonMeleeSpellCasted(true) )

@@ -90,26 +90,11 @@ bool PlayerbotWarriorAI::DoFirstCombatManeuver(Unit *pTarget)
     float fTargetDist = m_bot->GetDistance( pTarget );
 
     if( (co&PlayerbotAI::ORDERS_TANK) && DEFENSIVE_STANCE>0 && !m_bot->HasAura(DEFENSIVE_STANCE, EFFECT_INDEX_0) && ai->CastSpell(DEFENSIVE_STANCE) )
-    {
-        if( ai->GetManager()->m_confDebugWhisper ) 
-        {
-        }
         return true;
-    }
     else if( (co&PlayerbotAI::ORDERS_TANK) && TAUNT>0 && m_bot->HasAura(DEFENSIVE_STANCE, EFFECT_INDEX_0) && ai->CastSpell(TAUNT,*pTarget) )
-    {
-        if( ai->GetManager()->m_confDebugWhisper ) 
-        {
-        }
         return false;
-    }
     else if( BATTLE_STANCE>0 && !m_bot->HasAura(BATTLE_STANCE, EFFECT_INDEX_0) && ai->CastSpell(BATTLE_STANCE) )
-    {
-        if( ai->GetManager()->m_confDebugWhisper ) 
-        {
-        }
         return true;
-    }
     else if( BATTLE_STANCE>0 && CHARGE>0 && m_bot->HasAura(BATTLE_STANCE, EFFECT_INDEX_0) )
     {
         if( fTargetDist<8.0f )
@@ -121,10 +106,6 @@ bool PlayerbotWarriorAI::DoFirstCombatManeuver(Unit *pTarget)
             float x, y, z;
             pTarget->GetContactPoint( m_bot, x, y, z, 3.666666f );
             m_bot->Relocate( x, y, z );
-
-            if( ai->GetManager()->m_confDebugWhisper ) 
-            {
-            }
             return false;
         }
     }
@@ -159,14 +140,11 @@ void PlayerbotWarriorAI::DoNextCombatManeuver(Unit *pTarget)
 
     // decide what stance to use
     if( (co&PlayerbotAI::ORDERS_TANK) && !m_bot->HasAura(DEFENSIVE_STANCE,EFFECT_INDEX_0) && ai->CastSpell(DEFENSIVE_STANCE) )
-        if( ai->GetManager()->m_confDebugWhisper )
-        {
-        }
+    {
+    }
     else if( !(co&PlayerbotAI::ORDERS_TANK) && !m_bot->HasAura(BATTLE_STANCE,EFFECT_INDEX_0) && ai->CastSpell(BATTLE_STANCE) )
-        if( ai->GetManager()->m_confDebugWhisper )
-        {
-        }
-
+    {
+    }
     // get spell sequence
     if( pTarget->IsNonMeleeSpellCasted(true) )
         SpellSequence = WarriorSpellPreventing;
@@ -179,17 +157,14 @@ void PlayerbotWarriorAI::DoNextCombatManeuver(Unit *pTarget)
 
     // do shouts, berserker rage, etc...
     if( BERSERKER_RAGE>0 && !m_bot->HasAura( BERSERKER_RAGE, EFFECT_INDEX_0 ) && ai->CastSpell( BERSERKER_RAGE ) )
-        if( ai->GetManager()->m_confDebugWhisper )
-        {
-        }
+    {
+    }
     else if( DEMORALIZING_SHOUT>0 && ai->GetRageAmount()>=10 && !pTarget->HasAura( DEMORALIZING_SHOUT, EFFECT_INDEX_0 ) && ai->CastSpell( DEMORALIZING_SHOUT ) )
-        if( ai->GetManager()->m_confDebugWhisper )
-        {
-        }
+    {
+    }
     else if( BATTLE_SHOUT>0 && ai->GetRageAmount()>=10 && !m_bot->HasAura( BATTLE_SHOUT, EFFECT_INDEX_0 ) && ai->CastSpell( BATTLE_SHOUT ) )
-        if( ai->GetManager()->m_confDebugWhisper )
-        {
-        }
+    {
+    }
 
     switch (SpellSequence)
     {
