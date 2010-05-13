@@ -875,13 +875,7 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
             Player *killed = ((Player*)pVictim);
             if(BattleGround *bg = killed->GetBattleGround())
                 if(player)
-                {
                     bg->HandleKillPlayer(killed, player);
-                    player->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HONORABLE_KILL,1);
-                    player->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_GET_KILLING_BLOWS,1);
-                    player->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HONORABLE_KILL_AT_AREA,1);
-
-                }
         }
         else if(pVictim->GetTypeId() == TYPEID_UNIT)
         {
