@@ -7179,6 +7179,19 @@ void Spell::EffectCharge(SpellEffectIndex /*eff_idx*/)
     float x, y, z;
     unitTarget->GetContactPoint(m_caster, x, y, z, 3.6f);
 
+    // Try to normalize Z coord cuz GetContactPoint do nothing with Z axis
+    bool useVmaps = false;
+    if( unitTarget->GetMap()->GetHeight(x, y, z, false) <  unitTarget->GetMap()->GetHeight(x, y, z, true) )
+        useVmaps = true;
+
+    float normalizedZ = unitTarget->GetMap()->GetHeight(x, y, z, useVmaps);
+    // check if its reacheable
+    if( (normalizedZ-z) < 10.0f && (normalizedZ-z) > -10.0f && unitTarget->IsWithinLOS(x, y, normalizedZ))
+    {
+        normalizedZ += 0.5f; // just safety-catch
+        z = normalizedZ;
+    }
+
     if (unitTarget->GetTypeId() != TYPEID_PLAYER)
         ((Creature *)unitTarget)->StopMoving();
 
@@ -7210,6 +7223,19 @@ void Spell::EffectCharge2(SpellEffectIndex /*eff_idx*/)
         unitTarget->GetContactPoint(m_caster, x, y, z, 3.6f);
     else
         return;
+
+    // Try to normalize Z coord cuz GetContactPoint do nothing with Z axis
+    bool useVmaps = false;
+    if( unitTarget->GetMap()->GetHeight(x, y, z, false) <  unitTarget->GetMap()->GetHeight(x, y, z, true) )
+        useVmaps = true;
+
+    float normalizedZ = unitTarget->GetMap()->GetHeight(x, y, z, useVmaps);
+    // check if its reacheable
+    if( (normalizedZ-z) < 10.0f && (normalizedZ-z) > -10.0f && unitTarget->IsWithinLOS(x, y, normalizedZ))
+    {
+        normalizedZ += 0.5f; // just safety-catch
+        z = normalizedZ;
+    }
 
     // Only send MOVEMENTFLAG_WALK_MODE, client has strange issues with other move flags
     m_caster->MonsterMove(x, y, z, 1);
