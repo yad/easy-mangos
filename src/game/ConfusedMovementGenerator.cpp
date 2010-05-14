@@ -53,37 +53,14 @@ ConfusedMovementGenerator<T>::Initialize(T &unit)
 
         bool is_water = map->IsInWater(i_waypoints[idx][0],i_waypoints[idx][1],z);
 
-        // The fastest way to get an accurate result 90% of the time.
-        // Better result can be obtained like 99% accuracy with a ray light, but the cost is too high and the code is too long.
-        float nz = map->GetHeight(nx, ny, z+zDist-2.0f, false);
-        bool badZ = false;
-        float zDist = wanderX*wanderX + wanderY*wanderY;
-        zDist = zDist >= 100.0f ? 10.0f : sqrtf(zDist);
-
-        if (fabs(nz-z) > zDist)                              // Map check
-        {
-            dist = dist >= 100.0f ? 10.0f : sqrtf(dist);
-            nz = map->GetHeight(nx, ny, z-2.0f, true);      // Vmap Horizontal or above
-
-            if (fabs(nz-Z) > zDist)
-            {
-                // Vmap Higher
-                nz = map->GetHeight(nx, ny, Z+zDist-2.0f, true);
-
-                // let's forget this bad coords where a z cannot be find and retry at next tick
-                if (fabs(nz-Z) > zDist)
-                    badZ = true;
-            }
-            z = nz;
-        }
         // if generated wrong path just ignore
-        if ((is_water && !is_water_ok) || (!is_water && !is_land_ok) || badZ)
+        if ((is_water && !is_water_ok) || (!is_water && !is_land_ok) ||
+            !map->IsNextZcoordOK(i_waypoints[idx][0], i_waypoints[idx][1], z))  // check if not under map
         {
             i_waypoints[idx][0] = idx > 0 ? i_waypoints[idx-1][0] : x;
             i_waypoints[idx][1] = idx > 0 ? i_waypoints[idx-1][1] : y;
         }
-
-        //unit.UpdateGroundPositionZ(i_waypoints[idx][0],i_waypoints[idx][1],z);
+        unit.UpdateGroundPositionZ(i_waypoints[idx][0],i_waypoints[idx][1],z);
         i_waypoints[idx][2] =  z;
     }
 
