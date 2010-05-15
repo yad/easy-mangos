@@ -1438,11 +1438,11 @@ void WorldObject::UpdateGroundPositionZ(float x, float y, float &z, float maxDif
 
     float normalizedZ = GetBaseMap()->GetHeight(x, y, z, useVmaps);
     // check if its reacheable
-    if(normalizedZ <= INVALID_HEIGHT || fabs(normalizedZ-z) < maxDiff)
+    if(normalizedZ <= INVALID_HEIGHT || fabs(normalizedZ-z) > maxDiff)
     {
         useVmaps = !useVmaps;                                // try change vmap use
         normalizedZ = GetBaseMap()->GetHeight(x, y, z, useVmaps);
-        if(normalizedZ <= INVALID_HEIGHT || fabs(normalizedZ-z) < maxDiff)
+        if(normalizedZ <= INVALID_HEIGHT || fabs(normalizedZ-z) > maxDiff)
             return;                                        // Do nothing in case of another bad result 
     }
     z = normalizedZ + 0.5f;                                // just to be sure that we are not a few pixel under the surface
