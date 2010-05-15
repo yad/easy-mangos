@@ -1909,14 +1909,18 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
             // Life Tap
             if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000000000040000))
             {
+                // in 333 there still seems to be spirit dependence although it is stated that there is not
+                uint32 spirit = uint32(m_caster->GetStat(STAT_SPIRIT));
+                damage+=spirit*15/10;
+//              Think its not need (also need remove Life Tap from SpellDamageBonus or add new value)
+//              damage = m_caster->SpellDamageBonus(m_caster, m_spellInfo,uint32(damage > 0 ? damage : 0), SPELL_DIRECT_DAMAGE);
                 if (unitTarget && (int32(unitTarget->GetHealth()) > damage))
                 {
                     // Shouldn't Appear in Combat Log
                     unitTarget->ModifyHealth(-damage);
 
-                    int32 spell_power = m_caster->SpellBaseDamageBonusDone(GetSpellSchoolMask(m_spellInfo));
-                    int32 mana = damage + spell_power / 2;
-
+                    int32 spell_power = m_caster->SpellBaseDamageBonusDone(GetSpellSchoolMask(m_spellInfo)) + unitTarget->SpellBaseDamageBonusTaken(GetSpellSchoolMask(m_spellInfo));
+                    int32 mana = damage + (spell_power * 5/10 * m_caster->CalculateLevelPenalty(m_spellInfo));
                     // Improved Life Tap mod
                     Unit::AuraList const& auraDummy = m_caster->GetAurasByType(SPELL_AURA_DUMMY);
                     for(Unit::AuraList::const_iterator itr = auraDummy.begin(); itr != auraDummy.end(); ++itr)
@@ -5128,7 +5132,7 @@ void Spell::EffectWeaponDmg(SpellEffectIndex eff_idx)
                 case 71021:                                 // Saber Lash
                 {
                     uint32 count = 0;
-                    for(tbb::concurrent_vector<TargetInfo>::iterator ihit = m_UniqueTargetInfo.begin(); ihit != m_UniqueTargetInfo.end(); ++ihit) 
+                    for(tbb::concurrent_vector<TargetInfo>::const_iterator ihit = m_UniqueTargetInfo.begin(); ihit != m_UniqueTargetInfo.end(); ++ihit) 
                         if(ihit->effectMask & (1<<eff_idx))
                             ++count;
 
@@ -7072,6 +7076,9 @@ void Spell::EffectLeapForward(SpellEffectIndex eff_idx)
     {
         uint32 mapid = m_caster->GetMapId();
         float dis = GetSpellRadius(sSpellRadiusStore.LookupEntry(m_spellInfo->EffectRadiusIndex[eff_idx]));
+        //For glyph of blink
+        if(m_caster->GetTypeId() == TYPEID_PLAYER)
+            ((Player*)m_caster)->ApplySpellMod(m_spellInfo->Id, SPELLMOD_RADIUS, dis, this);
 
         // Start Info //
         float cx,cy,cz;
@@ -7100,15 +7107,15 @@ void Spell::EffectLeapForward(SpellEffectIndex eff_idx)
             dy += _dy;
             MaNGOS::NormalizeMapCoord(dx);
             MaNGOS::NormalizeMapCoord(dy);
-            dz = unitTarget->GetMap()->GetHeight(dx, dy, cz, useVmap);
+            dz = cz;
              
             //Prevent climbing and go around object maybe 2.0f is to small? use 3.0f?
-            if( (dz-cz) < 2.0f && (dz-cz) > -2.0f && (unitTarget->IsWithinLOS(dx, dy, dz)))
+            if( unitTarget->GetMap()->IsNextZcoordOK(dx, dy, dz, 3.0f) && (unitTarget->IsWithinLOS(dx, dy, dz)))
             {
                 //No climb, the z differenze between this and prev step is ok. Store this destination for future use or check.
                 cx = dx;
                 cy = dy;
-                cz = dz;
+                unitTarget->UpdateGroundPositionZ(cx, cy, cz, 3.0f);
             }
             else
             {
@@ -7250,6 +7257,9 @@ void Spell::EffectCharge(SpellEffectIndex /*eff_idx*/)
     float x, y, z;
     unitTarget->GetContactPoint(m_caster, x, y, z, 3.6f);
 
+    // Try to normalize Z coord cuz GetContactPoint do nothing with Z axis
+    unitTarget->UpdateGroundPositionZ(x, y, z, 5.0f);
+
     if (unitTarget->GetTypeId() != TYPEID_PLAYER)
         ((Creature *)unitTarget)->StopMoving();
 
@@ -7284,6 +7294,9 @@ void Spell::EffectCharge2(SpellEffectIndex /*eff_idx*/)
         unitTarget->GetContactPoint(m_caster, x, y, z, 3.6f);
     else
         return;
+
+    // Try to normalize Z coord cuz GetContactPoint do nothing with Z axis
+    unitTarget->UpdateGroundPositionZ(x, y, z, 5.0f);
 
     // Only send MOVEMENTFLAG_WALK_MODE, client has strange issues with other move flags
     m_caster->SendMonsterMove(x, y, z, SPLINETYPE_NORMAL, m_caster->GetTypeId() == TYPEID_PLAYER ? SPLINEFLAG_WALKMODE : ((Creature*)m_caster)->GetSplineFlags(), 1);

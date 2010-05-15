@@ -456,7 +456,11 @@ enum RealmZone
 };
 
 // DB scripting commands
-#define SCRIPT_COMMAND_TALK                  0              // source = unit, target=any, datalong (see enum ChatType for supported CHAT_TYPE_'s)
+#define SCRIPT_COMMAND_TALK                  0              // source = WorldObject, target = any/none, datalong (see enum ChatType for supported CHAT_TYPE_'s)
+                                                            // datalong2 = creature entry (searching for a buddy, closest to source), datalong3 = creature search radius
+                                                            // data_flags = flag_target_player_as_source    = 0x01
+                                                            //              flag_original_source_as_target  = 0x02
+                                                            //              flag_buddy_as_target            = 0x04
 #define SCRIPT_COMMAND_EMOTE                 1              // source = unit, datalong = anim_id
 #define SCRIPT_COMMAND_FIELD_SET             2              // source = any, datalong = field_id, datalog2 = value
 #define SCRIPT_COMMAND_MOVE_TO               3              // source = Creature, datalog2 = time, x/y/z
@@ -645,6 +649,28 @@ class World
         static float GetVisibleUnitGreyDistance()           { return m_VisibleUnitGreyDistance;       }
         static float GetVisibleObjectGreyDistance()         { return m_VisibleObjectGreyDistance;     }
 
+        //movement anticheat enable flag
+        inline bool GetMvAnticheatEnable()             {return m_MvAnticheatEnable;}
+        inline bool GetMvAnticheatKick()               {return m_MvAnticheatKick;}
+        inline bool GetMvAnticheatAnnounce()           {return m_MvAnticheatAnnounce;}
+        inline uint32 GetMvAnticheatAlarmCount()       {return m_MvAnticheatAlarmCount;}
+        inline uint32 GetMvAnticheatAlarmPeriod()      {return m_MvAnticheatAlarmPeriod;}
+        inline unsigned char GetMvAnticheatBan()       {return m_MvAntiCheatBan;}
+        inline std::string GetMvAnticheatBanTime()     {return m_MvAnticheatBanTime;}
+        inline unsigned char GetMvAnticheatGmLevel()   {return m_MvAnticheatGmLevel;}
+        inline bool GetMvAnticheatKill()               {return m_MvAnticheatKill;}
+        inline float GetMvAnticheatMaxXYT()            {return m_MvAnticheatMaxXYT;}
+        inline uint16 GetMvAnticheatIgnoreAfterTeleport()   {return m_MvAnticheatIgnoreAfterTeleport;}
+
+        inline bool GetMvAnticheatSpeedCheck()         {return m_MvAnticheatSpeedCheck;}
+        inline bool GetMvAnticheatWaterCheck()         {return m_MvAnticheatWaterCheck;}
+        inline bool GetMvAnticheatFlyCheck()           {return m_MvAnticheatFlyCheck;}
+        inline bool GetMvAnticheatMountainCheck()      {return m_MvAnticheatMountainCheck;}
+        inline bool GetMvAnticheatJumpCheck()          {return m_MvAnticheatJumpCheck;}
+        inline bool GetMvAnticheatTeleportCheck()      {return m_MvAnticheatTeleportCheck;}
+        inline bool GetMvAnticheatTeleport2PlaneCheck()  {return m_MvAnticheatTeleport2PlaneCheck;}
+
+
         void ProcessCliCommands();
         void QueueCliCommand(CliCommandHolder* commandHolder) { cliCmdQueue.add(commandHolder); }
 
@@ -738,6 +764,26 @@ class World
         static float m_MaxVisibleDistanceInFlight;
         static float m_VisibleUnitGreyDistance;
         static float m_VisibleObjectGreyDistance;
+
+        //movement anticheat enable flag
+        bool m_MvAnticheatEnable;
+        bool m_MvAnticheatKick;
+        bool m_MvAnticheatAnnounce;
+        uint32 m_MvAnticheatAlarmCount;
+        uint32 m_MvAnticheatAlarmPeriod;
+        unsigned char m_MvAntiCheatBan;
+        std::string m_MvAnticheatBanTime;
+        unsigned char m_MvAnticheatGmLevel;
+        bool m_MvAnticheatKill;
+        float m_MvAnticheatMaxXYT;
+        uint16 m_MvAnticheatIgnoreAfterTeleport;
+        bool m_MvAnticheatSpeedCheck;
+        bool m_MvAnticheatWaterCheck;
+        bool m_MvAnticheatFlyCheck;
+        bool m_MvAnticheatMountainCheck;
+        bool m_MvAnticheatJumpCheck;
+        bool m_MvAnticheatTeleportCheck;
+        bool m_MvAnticheatTeleport2PlaneCheck;
 
         // CLI command holder to be thread safe
         ACE_Based::LockedQueue<CliCommandHolder*,ACE_Thread_Mutex> cliCmdQueue;

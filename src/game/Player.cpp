@@ -467,6 +467,17 @@ Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputa
     rest_type=REST_TYPE_NO;
     ////////////////////Rest System/////////////////////
 
+    //movement anticheat
+    m_anti_lastmovetime = 0;   //last movement time
+    m_anti_NextLenCheck = 0;
+    m_anti_MovedLen = 0.0f;
+    m_anti_BeginFallZ = INVALID_HEIGHT;
+    m_anti_lastalarmtime = 0;    //last time when alarm generated
+    m_anti_alarmcount = 0;       //alarm counter
+    m_anti_TeleTime = 0;
+    m_CanFly=false;
+    /////////////////////////////////
+ 
     m_mailsUpdated = false;
     unReadMails = 0;
     m_nextMailDelivereTime = 0;
@@ -22558,12 +22569,14 @@ uint32 Player::CalculateTalentsPoints() const
     return uint32(talentPointsForLevel * sWorld.getConfig(CONFIG_FLOAT_RATE_TALENT));
 }
 
-bool Player::IsKnowHowFlyIn(uint32 mapid, uint32 zone) const
+bool Player::IsKnowHowFlyIn(uint32 mapid, uint32 zone, uint32 area) const
 {
     if(sWorld.getConfig(CONFIG_BOOL_ALLOW_FLYING_MOUNTS_EVERYWHERE)) return true;
     // continent checked in SpellMgr::GetSpellAllowedInLocationError at cast and area update
     uint32 v_map = GetVirtualMapForMapAndZone(mapid, zone);
-    return v_map != 571 || HasSpell(54197);                 // Cold Weather Flying
+
+    // don't allow flying in Dalaran except Krasus' Landing
+    return (v_map != 571 || HasSpell(54197)) && (zone != 4395 || area == 4564);                 // Cold Weather Flying
 }
 
 struct DoPlayerLearnSpell
@@ -22799,7 +22812,9 @@ uint8 Player::CanEquipUniqueItem( ItemPrototype const* itemProto, uint8 except_s
 void Player::HandleFall(MovementInfo const& movementInfo)
 {
     // calculate total z distance of the fall
-    float z_diff = m_lastFallZ - movementInfo.GetPos()->z;
+    float z_diff = (m_lastFallZ >= m_anti_BeginFallZ ? m_lastFallZ : m_anti_BeginFallZ) - movementInfo.GetPos()->z;
+     
+    m_anti_BeginFallZ=INVALID_HEIGHT;
     DEBUG_LOG("zDiff = %f", z_diff);
 
     //Players with low fall distance, Feather Fall or physical immunity (charges used) are ignored

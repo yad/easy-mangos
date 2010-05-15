@@ -2497,6 +2497,9 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                         if (m_target->GetTypeId() == TYPEID_PLAYER)
                             ((Player*)m_target)->removeSpell(63680);
                         return;
+                    case 71342:                             // Big Love Rocket
+                        Spell::SelectMountByAreaAndSkill(m_target, 71344, 71345, 71346, 71347, 0);
+                        return;                   
                     case 72286:                             // Invincible
                         Spell::SelectMountByAreaAndSkill(m_target, 72281, 72282, 72283, 72284, 0);
                         return;
@@ -2505,6 +2508,36 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                         return;
                     case 75614:                             // Celestial Steed
                         Spell::SelectMountByAreaAndSkill(m_target, 75619, 75620, 75617, 75618, 76153);
+                        return;
+                    case 55328:                                 // Stoneclaw Totem I
+                        m_target->CastSpell( m_target, 5728, true );
+                        return;
+                    case 55329:                                 // Stoneclaw Totem II
+                        m_target->CastSpell( m_target, 6397, true );
+                        return;
+                    case 55330:                                 // Stoneclaw Totem III
+                        m_target->CastSpell( m_target, 6398, true );
+                        return;
+                    case 55332:                                 // Stoneclaw Totem IV
+                        m_target->CastSpell( m_target, 6399, true );
+                        return;
+                    case 55333:                                 // Stoneclaw Totem V
+                        m_target->CastSpell( m_target, 10425, true );
+                        return;
+                    case 55335:                                 // Stoneclaw Totem VI
+                        m_target->CastSpell( m_target, 10426, true );
+                        return;
+                    case 55278:                                 // Stoneclaw Totem VII
+                        m_target->CastSpell( m_target, 25513, true );
+                        return;
+                    case 58589:                                 // Stoneclaw Totem VIII
+                        m_target->CastSpell( m_target, 58583, true );
+                        return;
+                    case 58590:                                 // Stoneclaw Totem IX
+                        m_target->CastSpell( m_target, 58584, true );
+                        return;
+                    case 58591:                                 // Stoneclaw Totem X
+                        m_target->CastSpell( m_target, 58585, true );
                         return;
                 }
                 break;
@@ -2898,42 +2931,6 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                         m_target->m_AuraFlags |= UNIT_AURAFLAG_ALIVE_INVISIBLE;
                     else
                         m_target->m_AuraFlags |= ~UNIT_AURAFLAG_ALIVE_INVISIBLE;
-                    return;
-                case 71342: //Big Love Rocket - there is no spell for mount speeds
-                    if(m_target->GetTypeId() != TYPEID_PLAYER)
-                        return;
-
-                    uint32 skill = ((Player*)m_target)->GetSkillValue(762);
-
-                    //Flight     
-                    if(skill >= 225 && (m_target->GetMapId() == 530 || (m_target->GetMapId() == 571 && m_target->HasSpell(54197))))
-                    {
-                        WorldPacket data;
-                        if(apply)
-                            data.Initialize(SMSG_MOVE_SET_CAN_FLY, 12);
-                        else
-                            data.Initialize(SMSG_MOVE_UNSET_CAN_FLY, 12);
-                        data << m_target->GetPackGUID();
-                        data << uint32(0);                                      // unknown
-                        m_target->SendMessageToSet(&data, true);
-
-                        //Players on flying mounts must be immune to polymorph
-                        if (m_target->GetTypeId()==TYPEID_PLAYER)
-                            m_target->ApplySpellImmune(GetId(),IMMUNITY_MECHANIC,MECHANIC_POLYMORPH,apply);
-                        if(skill == 225 && apply)
-                            m_target->SetSpeedRate(MOVE_FLIGHT, 1.5f, true);
-                        else if(skill == 300 && apply)
-                            m_target->SetSpeedRate(MOVE_FLIGHT, 3.1f, true);
-                        else if(!apply)
-                            m_target->SetSpeedRate(MOVE_FLIGHT, 1.0f, true);
-                    }
-                    //Ground speed
-                    if(skill == 75 && apply)
-                        m_target->SetSpeedRate(MOVE_RUN, 1.6f, true);
-                    else if(skill >= 150 && apply)
-                        m_target->SetSpeedRate(MOVE_RUN, 2.0f, true);
-                    else if(!apply)
-                        m_target->SetSpeedRate(MOVE_RUN, 1.0f, true);
                     return;
             }
             break;
@@ -4268,9 +4265,9 @@ void Aura::HandleAuraModDisarmRanged(bool apply, bool Real)
 
     // not sure for it's correctness
     if(apply)
-        m_target->SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_DISARM);
+        m_target->SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_DISARMED_RANGED);
     else
-        m_target->RemoveFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_DISARM);
+        m_target->RemoveFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_DISARMED_RANGED);
 
     // only at real add/remove aura
     if (m_target->GetTypeId() != TYPEID_PLAYER)
@@ -4819,9 +4816,15 @@ void Aura::HandleAuraModIncreaseFlightSpeed(bool apply, bool Real)
     {
         WorldPacket data;
         if(apply)
+        {
+            ((Player*)m_target)->SetCanFly(true);
             data.Initialize(SMSG_MOVE_SET_CAN_FLY, 12);
+        }
         else
+        {
             data.Initialize(SMSG_MOVE_UNSET_CAN_FLY, 12);
+            ((Player*)m_target)->SetCanFly(false);
+        }
         data << m_target->GetPackGUID();
         data << uint32(0);                                      // unknown
         m_target->SendMessageToSet(&data, true);
@@ -5398,8 +5401,8 @@ void Aura::HandlePeriodicDamage(bool apply, bool Real)
                     m_modifier.m_amount += int32(caster->GetTotalAttackPowerValue(BASE_ATTACK) * 6 / 100);
                 // Lacerate
                 if (m_spellProto->SpellFamilyFlags & UI64LIT(0x000000010000000000))
-                    // $AP*0.05/5 bonus per tick
-                    m_modifier.m_amount += int32(caster->GetTotalAttackPowerValue(BASE_ATTACK) / 100);
+                    // $AP*0.05 bonus per tick
+                    m_modifier.m_amount += int32(caster->GetTotalAttackPowerValue(BASE_ATTACK) * 5 / 100);
                 // Rip
                 if (m_spellProto->SpellFamilyFlags & UI64LIT(0x000000000000800000))
                 {
@@ -7364,9 +7367,15 @@ void Aura::HandleAuraAllowFlight(bool apply, bool Real)
     // allow fly
     WorldPacket data;
     if(apply)
+    {
+        ((Player*)m_target)->SetCanFly(true);
         data.Initialize(SMSG_MOVE_SET_CAN_FLY, 12);
+    }
     else
+    {
         data.Initialize(SMSG_MOVE_UNSET_CAN_FLY, 12);
+        ((Player*)m_target)->SetCanFly(false);
+    }
     data << m_target->GetPackGUID();
     data << uint32(0);                                      // unk
     m_target->SendMessageToSet(&data, true);

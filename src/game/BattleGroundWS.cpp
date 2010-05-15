@@ -708,5 +708,7 @@ void BattleGroundWS::FillInitialWorldStates(WorldPacket& data, uint32& count)
     if (m_FlagState[BG_TEAM_ALLIANCE] == BG_WS_FLAG_STATE_ON_PLAYER)
         FillInitialWorldState(data, count, BG_WS_FLAG_STATE_ALLIANCE, 2);
     else
-        FillInitialWorldState(data, count, BG_WS_FLAG_STATE_ALLIANCE, 1);
+		FillInitialWorldState(data, count, BG_WS_FLAG_STATE_ALLIANCE, 1);
+
+	FillInitialWorldState(data, count, BG_WS_TIME_REMAINING, GetEndTimeMinutes());
 }

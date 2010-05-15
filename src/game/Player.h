@@ -1389,7 +1389,7 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
             {
                 case EQUIPMENT_SLOT_MAINHAND: IsDisarmed = HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_DISARMED); break;
                 case EQUIPMENT_SLOT_OFFHAND: IsDisarmed = HasFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_DISARMED_OFFHAND); break;
-                case EQUIPMENT_SLOT_RANGED: IsDisarmed = HasFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_DISARM); break;
+                case EQUIPMENT_SLOT_RANGED: IsDisarmed = HasFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_DISARMED_RANGED); break;
                 default:
                     break;
             }
@@ -2347,9 +2347,13 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
         bool isMoving() const { return m_movementInfo.HasMovementFlag(movementFlagsMask); }
         bool isMovingOrTurning() const { return m_movementInfo.HasMovementFlag(movementOrTurningFlagsMask); }
 
-        bool CanFly() const { return m_movementInfo.HasMovementFlag(MOVEFLAG_CAN_FLY); }
+        uint32 Anti__GetLastTeleTime() const { return m_anti_TeleTime; }
+        void Anti__SetLastTeleTime(uint32 TeleTime) { m_anti_TeleTime=TeleTime; }
+        //bool CanFly() const { return m_movementInfo.HasMovementFlag(MOVEFLAG_CAN_FLY); }
+        bool CanFly() const { return m_CanFly;  }
+        void SetCanFly(bool CanFly) { m_CanFly=CanFly; }
         bool IsFlying() const { return m_movementInfo.HasMovementFlag(MOVEFLAG_FLYING); }
-        bool IsKnowHowFlyIn(uint32 mapid, uint32 zone) const;
+        bool IsKnowHowFlyIn(uint32 mapid, uint32 zone, uint32 area) const;
 
         void SetClientControl(Unit* target, uint8 allowMove);
         void SetMover(Unit* target) { m_mover = target ? target : this; }
@@ -2727,6 +2731,16 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
         float m_rest_bonus;
         RestType rest_type;
         ////////////////////Rest System/////////////////////
+
+        //movement anticheat
+        uint32 m_anti_lastmovetime;     //last movement time
+        float  m_anti_MovedLen;         //Length of traveled way
+        uint32 m_anti_NextLenCheck;
+        float  m_anti_BeginFallZ;    //alternative falling begin
+        uint32 m_anti_lastalarmtime;    //last time when alarm generated
+        uint32 m_anti_alarmcount;       //alarm counter
+        uint32 m_anti_TeleTime;
+        bool m_CanFly;
 
         // Transports
         Transport * m_transport;

@@ -301,6 +301,8 @@ class Spell
         void EffectTriggerMissileSpell(SpellEffectIndex eff_idx);
         void EffectThreat(SpellEffectIndex eff_idx);
         void EffectRestoreItemCharges(SpellEffectIndex eff_idx);
+        void EffectTeachTaxiNode(SpellEffectIndex eff_idx);
+        void EffectBreakPlayerTargeting(SpellEffectIndex eff_idx);
         void EffectHealMaxHealth(SpellEffectIndex eff_idx);
         void EffectInterruptCast(SpellEffectIndex eff_idx);
         void EffectSummonObjectWild(SpellEffectIndex eff_idx);
@@ -338,7 +340,6 @@ class Spell
         void EffectDispelMechanic(SpellEffectIndex eff_idx);
         void EffectSummonDeadPet(SpellEffectIndex eff_idx);
         void EffectSummonAllTotems(SpellEffectIndex eff_idx);
-        void EffectBreakPlayerTargeting (SpellEffectIndex eff_idx);
         void EffectDestroyAllTotems(SpellEffectIndex eff_idx);
         void EffectDurabilityDamage(SpellEffectIndex eff_idx);
         void EffectSkill(SpellEffectIndex eff_idx);
@@ -359,7 +360,6 @@ class Spell
         void EffectKillCredit(SpellEffectIndex eff_idx);
         void EffectQuestFail(SpellEffectIndex eff_idx);
         void EffectActivateRune(SpellEffectIndex eff_idx);
-        void EffectTeachTaxiNode(SpellEffectIndex eff_idx);
         void EffectSummonPossessed(SpellEffectIndex eff_idx);
         void EffectTitanGrip(SpellEffectIndex eff_idx);
         void EffectEnchantItemPrismatic(SpellEffectIndex eff_idx);
@@ -369,8 +369,6 @@ class Spell
         void EffectSpecCount(SpellEffectIndex eff_idx);
         void EffectActivateSpec(SpellEffectIndex eff_idx);
         void EffectCastButtons(SpellEffectIndex eff_idx);
-
-
 
         Spell( Unit* caster, SpellEntry const *info, bool triggered, ObjectGuid originalCasterGUID = ObjectGuid(), Spell** triggeringContainer = NULL );
         ~Spell();

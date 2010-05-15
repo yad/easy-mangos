@@ -1456,7 +1456,7 @@ uint32 BattleGround::GetPlayerScore(Player *Source, uint32 type)
     BattleGroundScoreMap::const_iterator itr = m_PlayerScores.find(Source->GetGUID());
 
     if(itr == m_PlayerScores.end())                         // player not found...
-        return -1;
+        return 0;
 
     switch(type)
     {
@@ -1466,7 +1466,7 @@ uint32 BattleGround::GetPlayerScore(Player *Source, uint32 type)
             return itr->second->Deaths;
         default:
             sLog.outError("BattleGround: Unknown player score type %u", type);
-            return -1;
+            return 0;
     }
 }
 
@@ -1673,6 +1673,9 @@ void BattleGround::HandleKillPlayer( Player *player, Player *killer )
     {
         UpdatePlayerScore(killer, SCORE_HONORABLE_KILLS, 1);
         UpdatePlayerScore(killer, SCORE_KILLING_BLOWS, 1);
+        killer->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_GET_KILLING_BLOWS,1);
+        killer->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HONORABLE_KILL,1);
+        killer->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HONORABLE_KILL_AT_AREA,1);
 
         for(BattleGroundPlayerMap::const_iterator itr = m_Players.begin(); itr != m_Players.end(); ++itr)
         {
@@ -1682,7 +1685,11 @@ void BattleGround::HandleKillPlayer( Player *player, Player *killer )
                 continue;
 
             if (plr->GetTeam() == killer->GetTeam() && plr->IsAtGroupRewardDistance(player))
+            {
                 UpdatePlayerScore(plr, SCORE_HONORABLE_KILLS, 1);
+                plr->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HONORABLE_KILL,1);
+                plr->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HONORABLE_KILL_AT_AREA,1);
+            }
         }
     }
 

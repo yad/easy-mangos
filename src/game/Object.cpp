@@ -1457,18 +1457,23 @@ void WorldObject::GetRandomPoint( float x, float y, float z, float distance, flo
     UpdateGroundPositionZ(rand_x,rand_y,rand_z);            // update to LOS height if available
 }
 
-void WorldObject::UpdateGroundPositionZ(float x, float y, float &z) const
+void WorldObject::UpdateGroundPositionZ(float x, float y, float &z, float maxDiff) const
 {
-    float map_z = GetBaseMap()->GetHeight(x,y,z,false);
-    float vmap_z = GetBaseMap()->GetHeight(x,y,z,true);
- 
-    if(vmap_z > INVALID_HEIGHT)
-	  z = vmap_z - 0.02f;  // adjust offset to suit
+    maxDiff = maxDiff >= 100.0f ? 10.0f : sqrtf(maxDiff);
+    bool useVmaps = false;
+    if( GetBaseMap()->GetHeight(x, y, z, false) <  GetBaseMap()->GetHeight(x, y, z, true) ) // check use of vmaps
+        useVmaps = true;
 
-    if((map_z > vmap_z) && (map_z > z))
-          z = map_z;
-
-    MaNGOS::NormalizeMapCoord(z);
+    float normalizedZ = GetBaseMap()->GetHeight(x, y, z, useVmaps);
+    // check if its reacheable
+    if(normalizedZ <= INVALID_HEIGHT || fabs(normalizedZ-z) < maxDiff)
+    {
+        useVmaps = !useVmaps;                                // try change vmap use
+        normalizedZ = GetBaseMap()->GetHeight(x, y, z, useVmaps);
+        if(normalizedZ <= INVALID_HEIGHT || fabs(normalizedZ-z) < maxDiff)
+            return;                                        // Do nothing in case of another bad result 
+    }
+    z = normalizedZ + 0.1f;                                // just to be sure that we are not a few pixel under the surface
 }
 
 bool WorldObject::IsPositionValid() const
