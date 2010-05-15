@@ -92,14 +92,15 @@ void BattleGroundWS::Update(uint32 diff)
         {
             if (m_FocusedAssault < BG_WS_FIVE_MINUTES)
             {
-                for(uint i = 0; i < BG_TEAMS_COUNT; i++)
+                for(uint8 i = 0; i < BG_TEAMS_COUNT; i++)
                 {
-                    if(!m_FlagKeepers[i])
+                    Player* carrier = sObjectMgr.GetPlayer(m_FlagKeepers[i]);
+                    if(!carrier)
                         continue;
 
-                    if((!m_FlagKeepers[i]->HasAura(BG_WS_SPELL_FOCUSED_ASSAULT) && !m_FlagKeepers[i]->HasAura(BG_WS_SPELL_BRUTAL_ASSAULT)) || 
+                    if((!carrier->HasAura(BG_WS_SPELL_FOCUSED_ASSAULT) && !carrier->HasAura(BG_WS_SPELL_BRUTAL_ASSAULT)) || 
                         (m_FocusedAssaultExtra && m_FocusedAssault < diff))
-                        m_FlagKeepers[i]->CastSpell(m_FlagKeepers[i], (m_FocusedAssault < diff) ? BG_WS_SPELL_BRUTAL_ASSAULT : BG_WS_SPELL_FOCUSED_ASSAULT, true);
+                        carrier->CastSpell(carrier, (m_FocusedAssault < diff) ? BG_WS_SPELL_BRUTAL_ASSAULT : BG_WS_SPELL_FOCUSED_ASSAULT, true);
                 }
                 if(m_FocusedAssault < BG_WS_FIVE_MINUTES && m_FocusedAssaultExtra)
                     m_FocusedAssaultExtra = false;
@@ -222,8 +223,10 @@ void BattleGroundWS::EventPlayerCapturedFlag(Player *Source)
     uint32 winner = 0;
 
     Source->RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_ENTER_PVP_COMBAT);
-    if(Source->HasAura(BG_WS_FOCUSED_ASSAULT))
-        Source->RemoveAurasDueToSpell(BG_WS_FOCUSED_ASSAULT);
+    if(Source->HasAura(BG_WS_SPELL_FOCUSED_ASSAULT))
+        Source->RemoveAurasDueToSpell(BG_WS_SPELL_FOCUSED_ASSAULT);
+    if(Source->HasAura(BG_WS_SPELL_BRUTAL_ASSAULT))
+        Source->RemoveAurasDueToSpell(BG_WS_SPELL_BRUTAL_ASSAULT);
     if (Source->GetTeam() == ALLIANCE)
     {
         if (!IsHordeFlagPickedup())
@@ -355,8 +358,10 @@ void BattleGroundWS::EventPlayerDroppedFlag(Player *Source)
     if (set)
     {
         Source->CastSpell(Source, SPELL_RECENTLY_DROPPED_FLAG, true);
-        if(Source->HasAura(BG_WS_FOCUSED_ASSAULT))
-            Source->RemoveAurasDueToSpell(BG_WS_FOCUSED_ASSAULT);
+        if(Source->HasAura(BG_WS_SPELL_FOCUSED_ASSAULT))
+            Source->RemoveAurasDueToSpell(BG_WS_SPELL_FOCUSED_ASSAULT);
+        if(Source->HasAura(BG_WS_SPELL_BRUTAL_ASSAULT))
+            Source->RemoveAurasDueToSpell(BG_WS_SPELL_BRUTAL_ASSAULT);
         UpdateFlagState(Source->GetTeam(), 1);
 
         if (Source->GetTeam() == ALLIANCE)
@@ -692,7 +697,7 @@ void BattleGroundWS::FillInitialWorldStates(WorldPacket& data, uint32& count)
     if (m_FlagState[BG_TEAM_ALLIANCE] == BG_WS_FLAG_STATE_ON_PLAYER)
         FillInitialWorldState(data, count, BG_WS_FLAG_STATE_ALLIANCE, 2);
     else
-		FillInitialWorldState(data, count, BG_WS_FLAG_STATE_ALLIANCE, 1);
+        FillInitialWorldState(data, count, BG_WS_FLAG_STATE_ALLIANCE, 1);
 
-	FillInitialWorldState(data, count, BG_WS_TIME_REMAINING, GetEndTimeMinutes());
+    FillInitialWorldState(data, count, BG_WS_TIME_REMAINING, GetEndTimeMinutes());
 }
