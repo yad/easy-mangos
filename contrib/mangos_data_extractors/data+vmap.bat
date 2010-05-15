@@ -6,7 +6,7 @@
 
 @ad.exe
 @echo.
-@del /F /Q Buildings\dir_bin > nul
+@del /F /Q Buildings\* > nul
 @vmapExtractor3.exe
 @echo.
 @md vmaps > nul
