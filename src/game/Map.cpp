@@ -3920,11 +3920,8 @@ void Map::SpawnMapCreature(uint64 const& guid, uint32 respawntime)
     }
 }
 
-bool Map::IsNextZcoordOK(float x, float y, float oldZ, float maxDiff)
+bool Map::IsNextZcoordOK(float x, float y, float oldZ, float maxDiff) const
 {
-    /*if(!map)
-        return false;*/
-
     // The fastest way to get an accurate result 90% of the time.
     // Better result can be obtained like 99% accuracy with a ray light, but the cost is too high and the code is too long.
     maxDiff = maxDiff >= 100.0f ? 10.0f : sqrtf(maxDiff);

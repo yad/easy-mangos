@@ -92,34 +92,18 @@ void BattleGroundWS::Update(uint32 diff)
         {
             if (m_FocusedAssault < BG_WS_FIVE_MINUTES)
             {
-                Player* CarrierA = sObjectMgr.GetPlayer(m_FlagKeepers[BG_TEAM_ALLIANCE]);
-                Player* CarrierH = sObjectMgr.GetPlayer(m_FlagKeepers[BG_TEAM_HORDE]);
-
-                if(!CarrierA || !CarrierH)
-                    return;
-
-                //after 15 minutes spell should have double effect
-                SpellEntry const *spellInfo = sSpellStore.LookupEntry(BG_WS_FOCUSED_ASSAULT);
-                if (!spellInfo)
-                    return;
-
-                int32 SpellValue0 = spellInfo->CalculateSimpleValue(EFFECT_INDEX_0);
-                int32 SpellValue1 = spellInfo->EffectBasePoints[0];
-
-                int32 dmgtaken = ((m_FocusedAssault < diff) ? 2*SpellValue0 : SpellValue0) - 1;
-
-                if(!CarrierA->HasAura(BG_WS_FOCUSED_ASSAULT))
-                    CarrierA->CastCustomSpell(CarrierA, BG_WS_FOCUSED_ASSAULT, &dmgtaken, &SpellValue1, 0, true);
-                if(!CarrierH->HasAura(BG_WS_FOCUSED_ASSAULT))
-                    CarrierH->CastCustomSpell(CarrierH, BG_WS_FOCUSED_ASSAULT, &dmgtaken, &SpellValue1, 0, true);
-                
-                // after 15 minutes buff must be reapplied with double value
-                if(m_FocusedAssaultExtra && m_FocusedAssault < diff)
+                for(uint i = 0; i < BG_TEAMS_COUNT; i++)
                 {
-                    CarrierA->CastCustomSpell(CarrierA, BG_WS_FOCUSED_ASSAULT, &dmgtaken, &SpellValue1, 0, true);
-                    CarrierH->CastCustomSpell(CarrierH, BG_WS_FOCUSED_ASSAULT, &dmgtaken, &SpellValue1, 0, true);
-                    m_FocusedAssaultExtra = false;
+                    if(!m_FlagKeepers[i])
+                        continue;
+
+                    if((!m_FlagKeepers[i]->HasAura(BG_WS_SPELL_FOCUSED_ASSAULT) && !m_FlagKeepers[i]->HasAura(BG_WS_SPELL_BRUTAL_ASSAULT)) || 
+                        (m_FocusedAssaultExtra && m_FocusedAssault < diff))
+                        m_FlagKeepers[i]->CastSpell(m_FlagKeepers[i], (m_FocusedAssault < diff) ? BG_WS_SPELL_BRUTAL_ASSAULT : BG_WS_SPELL_FOCUSED_ASSAULT, true);
                 }
+                if(m_FocusedAssault < BG_WS_FIVE_MINUTES && m_FocusedAssaultExtra)
+                    m_FocusedAssaultExtra = false;
+
             }else m_FocusedAssault -= diff;
         }else
         {
