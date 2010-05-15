@@ -476,6 +476,10 @@ void LoadDBCStores(const std::string& dataPath)
     SpellEntry *sfix5 = const_cast<SpellEntry*>(sSpellStore.LookupEntry(60936));
     sfix5->DurationIndex = 28;
 
+    //Lifebloom final heal
+    SpellEntry *sfix6 = const_cast<SpellEntry*>(sSpellStore.LookupEntry(33778));
+    sfix6->DmgClass = SPELL_DAMAGE_CLASS_MAGIC;
+
     for (uint32 j = 0; j < sSkillLineAbilityStore.GetNumRows(); ++j)
     {
         SkillLineAbilityEntry const *skillLine = sSkillLineAbilityStore.LookupEntry(j);
