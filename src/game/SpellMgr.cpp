@@ -1544,6 +1544,11 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                     if( (spellInfo_1->Id == 57055 && spellInfo_2->Id == 56648) ||
                         (spellInfo_2->Id == 57055 && spellInfo_1->Id == 56648) )
                          return true;
+
+                    // All flame tsunami spells
+                    if(spellInfo_1->SpellIconID == 3087 && spellInfo_2->SpellIconID == 3087)
+                        return false;
+
                     break;
                 }
                 case SPELLFAMILY_MAGE:
