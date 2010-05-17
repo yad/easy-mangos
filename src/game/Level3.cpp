@@ -1076,7 +1076,7 @@ bool ChatHandler::HandleReloadSpellStackCommand(const char*)
 bool ChatHandler::HandleReloadSpellBonusesCommand(const char*)
 {
     sLog.outString( "Re-Loading Spell Bonus Data..." );
-    sSpellMgr.LoadSpellBonusess();
+    sSpellMgr.LoadSpellBonuses();
     SendGlobalSysMessage("DB table `spell_bonus_data` (spell damage/healing coefficients) reloaded.");
     return true;
 }

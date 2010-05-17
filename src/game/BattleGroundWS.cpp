@@ -113,31 +113,30 @@ void BattleGroundWS::Update(uint32 diff)
         }
 
         if (m_EndTimer > 0)
-        {
-            m_EndTimer -= diff;
 
-            if(GetEndTimeMinutes() != m_LastEndTimeMinutes)
+        if (m_EndTimer <= diff)
+        {
+            uint32 allianceScore = GetTeamScore(ALLIANCE);
+            uint32 hordeScore    = GetTeamScore(HORDE);
+
+            if (allianceScore > hordeScore)
+                EndBattleGround(ALLIANCE);
+            else if (allianceScore < hordeScore)
+                EndBattleGround(HORDE);
+            else
             {
-                m_LastEndTimeMinutes = GetEndTimeMinutes();
-                UpdateWorldState(BG_WS_TIME_REMAINING, m_LastEndTimeMinutes);
+                // if 0 => tie
+                EndBattleGround(m_LastCapturedFlagTeam);
             }
         }
         else
         {
-            uint32 h = GetTeamScore(HORDE);
-            uint32 a = GetTeamScore(ALLIANCE);
-            if(h || a)
-            {
-                if(h > a)
-                    EndBattleGround(HORDE);
-                else if(a > h)
-                    EndBattleGround(ALLIANCE);
-                else
-                    EndBattleGround(m_LastCapturedFlagTeam);
-            }
-            else
-                // tie
-                EndBattleGround(0);
+            uint32 minutesLeftPrev = GetRemainingTimeInMinutes();
+            m_EndTimer -= diff;
+            uint32 minutesLeft = GetRemainingTimeInMinutes();
+
+            if (minutesLeft != minutesLeftPrev)
+                UpdateWorldState(BG_WS_TIME_REMAINING, minutesLeft);
         }
     }
 }
@@ -596,9 +595,10 @@ void BattleGroundWS::Reset()
     m_HonorEndKills = (isBGWeekend) ? 4 : 2;
     m_EndTimer = BG_WS_TIME_LIMIT;
     m_LastCapturedFlagTeam = 0;
-    m_LastEndTimeMinutes = BG_WS_TIME_LIMIT / MINUTE / IN_MILLISECONDS;
     m_FocusedAssault = BG_WS_CARRIER_DEBUFF;
     m_FocusedAssaultExtra = true;
+    m_EndTimer = BG_WS_TIME_LIMIT;
+    m_LastCapturedFlagTeam = 0;
 }
 
 void BattleGroundWS::EndBattleGround(uint32 winner)
@@ -699,5 +699,6 @@ void BattleGroundWS::FillInitialWorldStates(WorldPacket& data, uint32& count)
     else
         FillInitialWorldState(data, count, BG_WS_FLAG_STATE_ALLIANCE, 1);
 
-    FillInitialWorldState(data, count, BG_WS_TIME_REMAINING, GetEndTimeMinutes());
+    FillInitialWorldState(data, count, BG_WS_UNK1, 1);
+    FillInitialWorldState(data, count, BG_WS_TIME_REMAINING, GetRemainingTimeInMinutes());
 }
