@@ -338,7 +338,7 @@ class MANGOS_DLL_SPEC Group
         void NeedBeforeGreed(WorldObject* object, Loot *loot);
         void MasterLoot(WorldObject* object, Loot *loot);
         void CountRollVote(ObjectGuid const& playerGUID, ObjectGuid const& lootedTarget, uint32 itemSlot, RollVote choise);
-        void StartLootRool(Creature* lootTarget, Loot* loot, uint8 itemSlot, bool skipIfCanNotUse);
+        void StartLootRool(WorldObject* lootTarget, Loot* loot, uint8 itemSlot, bool skipIfCanNotUse);
         void EndRoll();
 
         void LinkMember(GroupReference *pRef) { m_memberMgr.insertFirst(pRef); }

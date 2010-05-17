@@ -595,7 +595,6 @@ void BattleGroundWS::Reset()
     m_HonorEndKills = (isBGWeekend) ? 4 : 2;
     m_EndTimer = BG_WS_TIME_LIMIT;
     m_LastCapturedFlagTeam = 0;
-    m_LastEndTimeMinutes = BG_WS_TIME_LIMIT / MINUTE / IN_MILLISECONDS;
     m_FocusedAssault = BG_WS_CARRIER_DEBUFF;
     m_FocusedAssaultExtra = true;
     m_EndTimer = BG_WS_TIME_LIMIT;

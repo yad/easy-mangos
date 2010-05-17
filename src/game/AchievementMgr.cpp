@@ -1512,35 +1512,32 @@ void AchievementMgr::UpdateAchievementCriteria(AchievementCriteriaTypes type, ui
                 // some hardcoded requirements
                 switch(achievementCriteria->objective_capture.captureID)
                 {
-                    case 42:							// WS, capture a flag
+                    case 42:                           // WS, capture a flag
                     {
-                        if(bg->GetTypeID() != BATTLEGROUND_WS)
-                            continue;
-
-                        if(miscvalue2 == 1)
+                        if(bg->GetTypeID() != BATTLEGROUND_WS || miscvalue2 == 1)
                             continue;
                         break;
                     }
                     case 44:                           // WS, return a flag
                     {
-                        if(bg->GetTypeID() != BATTLEGROUND_WS)
+                        if(bg->GetTypeID() != BATTLEGROUND_WS || miscvalue1 == 0)
                             continue;
                         break;
                     }
-                    case 183:							// EY, capture a flag
+                    case 183:                          // EY, capture a flag
                     {
                         if(bg->GetTypeID() != BATTLEGROUND_EY)
                             continue;
 
                         switch(achievementCriteria->referredAchievement)
                         {
-                            case 211:					// EY, capture flag while controling all 4 bases
+                            case 211:                   // EY, capture flag while controling all 4 bases
                             {
                                 if(!bg->IsAllNodesConrolledByTeam(GetPlayer()->GetTeam()))
                                     continue;
                                 break;
                             }
-                            case 216:					// EY, capture 3 flags without dying
+                            case 216:                   // EY, capture 3 flags without dying
                             {
                                 if(bg->GetPlayerScore(GetPlayer(),SCORE_DEATHS) != 0)
                                     continue;
@@ -1569,10 +1566,10 @@ void AchievementMgr::UpdateAchievementCriteria(AchievementCriteriaTypes type, ui
 
                         break;
                     }
-                    case 61:							// AV, assault a tower
-                    case 63:	                        // AV, take a graveyard
-                    case 64:	                        // AV, defend a tower
-                    case 65:	                        // AV, defend a graveyard
+                    case 61:                            // AV, assault a tower
+                    case 63:                            // AV, take a graveyard
+                    case 64:                            // AV, defend a tower
+                    case 65:                            // AV, defend a graveyard
                         continue;
 
                 }
