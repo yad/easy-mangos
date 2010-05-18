@@ -113,7 +113,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="..\..\..\libmpq;..\..\..\libmpq\dep\include;..\..\misc"
+				AdditionalIncludeDirectories="..\..\..\libmpq;..\..\..\..\dep\include\zlib;..\..\..\libmpq\win"
 				PreprocessorDefinitions="WIN32;USE_LIBMPQ04"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
