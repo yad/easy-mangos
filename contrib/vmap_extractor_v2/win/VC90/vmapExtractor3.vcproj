@@ -40,7 +40,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\..\libmpq;..\..\..\libmpq\dep\include"
+				AdditionalIncludeDirectories="..\..\..\libmpq;..\..\..\..\dep\include\zlib;..\..\..\libmpq\win"
 				PreprocessorDefinitions="WIN32;USE_LIBMPQ04"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -237,18 +237,6 @@
 			>
 			<File
 				RelativePath="..\..\vmapextract\loadlib\loadlib.h"
-				>
-			</File>
-		</Filter>
-		<Filter
-			Name="misc"
-			>
-			<File
-				RelativePath="..\..\misc\ProgressBar.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\misc\ProgressBar.h"
 				>
 			</File>
 		</Filter>

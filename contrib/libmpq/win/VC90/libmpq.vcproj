@@ -40,7 +40,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\; ..\..\dep\zlib; ..\..\dep\bzip2;"
+				AdditionalIncludeDirectories="..\; ..\..\..\..\dep\include\zlib; ..\..\..\..\dep\include\bzip2;"
 				PreprocessorDefinitions="WIN32"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -106,7 +106,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="..\; ..\..\dep\zlib; ..\..\dep\bzip2;"
+				AdditionalIncludeDirectories="..\; ..\..\..\..\dep\include\zlib; ..\..\..\..\dep\include\bzip2;"
 				PreprocessorDefinitions="WIN32"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
