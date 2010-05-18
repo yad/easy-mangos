@@ -102,6 +102,7 @@ namespace VMAP
 
     void VMapManager2::preventMapsFromBeingUsed(const char* pMapIdString)
     {
+        iIgnoreMapIds.clear();
         if(pMapIdString != NULL)
         {
             std::string map_str;
@@ -116,6 +117,8 @@ namespace VMAP
                 {
                     std::cout << "ingoring Map " << map_num << " for VMaps\n";
                     iIgnoreMapIds[map_num] = true;
+                    // unload map in case it is loaded
+                    unloadMap(map_num);
                 }
             }
         }
@@ -151,11 +154,11 @@ namespace VMAP
         {
             std::string mapFileName = getMapFileName(pMapId);
             StaticMapTree *newTree = new StaticMapTree(pMapId, basePath);
-            if(!newTree->init(mapFileName, this))
+            if(!newTree->InitMap(mapFileName, this))
                 return false;
             instanceTree = iInstanceMapTrees.insert(InstanceTreeMap::value_type(pMapId, newTree)).first;
         }
-        return instanceTree->second->loadMap(tileX, tileY, this);
+        return instanceTree->second->LoadMapTile(tileX, tileY, this);
     }
 
     //=========================================================
@@ -185,7 +188,7 @@ namespace VMAP
         InstanceTreeMap::iterator instanceTree = iInstanceMapTrees.find(pMapId);
         if (instanceTree != iInstanceMapTrees.end())
         {
-            //instanceTree->second->unloadMap(x,y);
+            instanceTree->second->UnloadMap(this);
             if (instanceTree->second->numLoadedTiles() == 0)
             {
                 delete instanceTree->second;
@@ -201,7 +204,7 @@ namespace VMAP
         InstanceTreeMap::iterator instanceTree = iInstanceMapTrees.find(pMapId);
         if (instanceTree != iInstanceMapTrees.end())
         {
-            instanceTree->second->unloadMap(x, y, this);
+            instanceTree->second->UnloadMapTile(x, y, this);
             if (instanceTree->second->numLoadedTiles() == 0)
             {
                 delete instanceTree->second;

@@ -121,10 +121,9 @@ namespace VMAP
     }
 
     //=========================================================
+    //! Make sure to call unloadMap() to unregister acquired model references before destroying
     StaticMapTree::~StaticMapTree()
     {
-        // TODO: release all acquired model references
-
         delete[] iTreeValues;
     }
 
@@ -223,7 +222,7 @@ namespace VMAP
 
     //=========================================================
 
-    bool StaticMapTree::init(const std::string &fname, VMapManager2 *vm)
+    bool StaticMapTree::InitMap(const std::string &fname, VMapManager2 *vm)
     {
         std::cout << "Initializing StaticMapTree '" << fname << "'\n";
         bool success=true;
@@ -262,7 +261,7 @@ namespace VMAP
                 {
                     // assume that global model always is the first and only tree value (could be improved...)
                     iTreeValues[0] = ModelInstance(spawn, model);
-                    iLoadedSpawns[spawn.ID] = 1;
+                    iLoadedSpawns[0] = 1;
                 }
                 else
                 {
@@ -275,9 +274,24 @@ namespace VMAP
         }
         return success;
     }
+
     //=========================================================
 
-    bool StaticMapTree::loadMap(uint32 tileX, uint32 tileY, VMapManager2 *vm)
+    bool StaticMapTree::UnloadMap(VMapManager2 *vm)
+    {
+        for (loadedSpawnMap::iterator i = iLoadedSpawns.begin(); i != iLoadedSpawns.end(); ++i)
+        {
+            iTreeValues[i->first].setUnloaded();
+            for (int refCount = 0; refCount < i->second; ++refCount)
+                vm->releaseModelInstance(iTreeValues[i->first].name);
+        }
+        iLoadedSpawns.clear();
+        iLoadedTiles.clear();
+    }
+
+    //=========================================================
+
+    bool StaticMapTree::LoadMapTile(uint32 tileX, uint32 tileY, VMapManager2 *vm)
     {
         if (!iIsTiled)
             return true;
@@ -313,7 +327,7 @@ namespace VMAP
                     for (uint32 i=0; i<nNodeVal; ++i)
                     {
                         fread(&referencedVal, sizeof(uint32), 1, tf);
-                        if (!iLoadedSpawns.count(spawn.ID))
+                        if (!iLoadedSpawns.count(referencedVal))
                         {
 #ifdef VMAP_DEBUG
                             if (referencedVal > iNTreeValues)
@@ -323,11 +337,11 @@ namespace VMAP
                             }
 #endif
                             iTreeValues[referencedVal] = ModelInstance(spawn, model);
-                            iLoadedSpawns[spawn.ID] = 1;
+                            iLoadedSpawns[referencedVal] = 1;
                         }
                         else
                         {
-                            ++iLoadedSpawns[spawn.ID];
+                            ++iLoadedSpawns[referencedVal];
 #ifdef VMAP_DEBUG
                             if (iTreeValues[referencedVal].ID != spawn.ID) std::cout << "error: trying to load wrong spawn in node!\n";
                             else if (iTreeValues[referencedVal].name != spawn.name) std::cout << "error: name collision on GUID="<< spawn.ID << "\n";
@@ -346,7 +360,7 @@ namespace VMAP
 
     //=========================================================
 
-    void StaticMapTree::unloadMap(uint32 tileX, uint32 tileY, VMapManager2 *vm)
+    void StaticMapTree::UnloadMapTile(uint32 tileX, uint32 tileY, VMapManager2 *vm)
     {
         if (!iIsTiled)
             return;
@@ -382,15 +396,15 @@ namespace VMAP
                         for(uint32 i=0; i<nNodeVal; ++i)
                         {
                             fread(&referencedNode, sizeof(uint32), 1, tf);
-                            if(!iLoadedSpawns.count(spawn.ID))
+                            if(!iLoadedSpawns.count(referencedNode))
                             {
                                 std::cout << "error! trying to unload non-referenced model '" << spawn.name << "' (ID:" << spawn.ID << ")\n";
                             }
-                            else if(--iLoadedSpawns[spawn.ID] == 0)
+                            else if(--iLoadedSpawns[referencedNode] == 0)
                             {
                                 //std::cout << "MapTree: removing '" << spawn.name << "' from tree\n";
                                 iTreeValues[referencedNode].setUnloaded();
-                                iLoadedSpawns.erase(spawn.ID);
+                                iLoadedSpawns.erase(referencedNode);
                             }
                         }
                     }
