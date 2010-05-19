@@ -3249,8 +3249,7 @@ void Spell::EffectHeal(SpellEffectIndex /*eff_idx*/)
             int32 holy = caster->SpellBaseHealingBonusDone(GetSpellSchoolMask(m_spellInfo));
             if (holy < 0)
                 holy = 0;
-            addhealth += int32(ap * 0.15) + int32(holy * 15 / 100);
-            addhealth = caster->SpellHealingBonusDone(unitTarget, m_spellInfo, addhealth, HEAL);
+            addhealth += int32(ap * 15 / 100) + int32(holy * 15 / 100);
         }
         // Vessel of the Naaru (Vial of the Sunwell trinket)
         else if (m_spellInfo->Id == 45064)
@@ -3265,13 +3264,11 @@ void Spell::EffectHeal(SpellEffectIndex /*eff_idx*/)
                 m_caster->RemoveAurasDueToSpell(45062);
 
             addhealth += damageAmount;
-            addhealth = caster->SpellHealingBonusDone(unitTarget, m_spellInfo, addhealth, HEAL);
         }
         // Death Pact (percent heal)
         else if (m_spellInfo->Id==48743)
         {
             addhealth = addhealth * unitTarget->GetMaxHealth() / 100;
-            addhealth = caster->SpellHealingBonusDone(unitTarget, m_spellInfo, addhealth, HEAL);
         }
         // Swiftmend - consumes Regrowth or Rejuvenation
         else if (m_spellInfo->TargetAuraState == AURA_STATE_SWIFTMEND && unitTarget->HasAuraState(AURA_STATE_SWIFTMEND))
