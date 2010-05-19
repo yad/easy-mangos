@@ -1507,6 +1507,64 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     ((Creature*)unitTarget)->ForcedDespawn();
                     return;
                 }
+                case 51866:                                 // Kick Nass
+                {
+                    // It is possible that Nass Heartbeat (spell id 61438) is involved in this
+                    // If so, unclear how it should work and using the below instead (even though it could be a bit hack-ish)
+
+                    if (!unitTarget || unitTarget->GetTypeId() != TYPEID_UNIT)
+                        return;
+
+                    // Only own guardian pet
+                    if (m_caster != unitTarget->GetOwner())
+                        return;
+
+                    // This means we already set state (see below) and need to wait.
+                    if (unitTarget->hasUnitState(UNIT_STAT_ROOT))
+                        return;
+
+                    // Expecting pTargetDummy to be summoned by AI at death of target creatures.
+
+                    Creature* pTargetDummy = NULL;
+                    float fRange = GetSpellMaxRange(sSpellRangeStore.LookupEntry(m_spellInfo->rangeIndex));
+
+                    MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck u_check(*m_caster, 28523, true, fRange*2);
+                    MaNGOS::CreatureLastSearcher<MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck> searcher(m_caster, pTargetDummy, u_check);
+
+                    Cell::VisitGridObjects(m_caster, searcher, fRange*2);
+
+                    if (pTargetDummy)
+                    {
+                        if (unitTarget->hasUnitState(UNIT_STAT_FOLLOW | UNIT_STAT_FOLLOW_MOVE))
+                            unitTarget->GetMotionMaster()->MovementExpired();
+
+                        unitTarget->MonsterMove(pTargetDummy->GetPositionX(), pTargetDummy->GetPositionY(), pTargetDummy->GetPositionZ(), IN_MILLISECONDS);
+
+                        // Add state to temporarily prevent follow
+                        unitTarget->addUnitState(UNIT_STAT_ROOT);
+
+                        // Collect Hair Sample
+                        unitTarget->CastSpell(pTargetDummy, 51870, true);
+                    }
+
+                    return;
+                }
+                case 51872:                                 // Hair Sample Collected
+                {
+                    if (!unitTarget || unitTarget->GetTypeId() != TYPEID_UNIT)
+                        return;
+
+                    // clear state to allow follow again
+                    m_caster->clearUnitState(UNIT_STAT_ROOT);
+
+                    // Nass Kill Credit
+                    m_caster->CastSpell(m_caster, 51871, true);
+
+                    // Despawn dummy creature
+                    ((Creature*)unitTarget)->ForcedDespawn();
+
+                    return;
+                }
                 case 51964:                                 // Tormentor's Incense
                 {
                     if (!unitTarget || unitTarget->GetTypeId() != TYPEID_UNIT)
@@ -2655,7 +2713,7 @@ void Spell::EffectTriggerMissileSpell(SpellEffectIndex effect_idx)
     }
 
     if (m_CastItem)
-        DEBUG_LOG("WORLD: cast Item spellId - %i", spellInfo->Id);
+        DEBUG_FILTER_LOG(LOG_FILTER_SPELL_CAST, "WORLD: cast Item spellId - %i", spellInfo->Id);
 
     m_caster->CastSpell(m_targets.m_destX, m_targets.m_destY, m_targets.m_destZ, spellInfo, true, m_CastItem, 0, m_originalCasterGUID);
 }
@@ -2899,7 +2957,7 @@ void Spell::EffectApplyAura(SpellEffectIndex eff_idx)
             return;
     }
 
-    DEBUG_LOG("Spell: Aura is: %u", m_spellInfo->EffectApplyAuraName[eff_idx]);
+    DEBUG_FILTER_LOG(LOG_FILTER_SPELL_CAST, "Spell: Aura is: %u", m_spellInfo->EffectApplyAuraName[eff_idx]);
 
     Aura* Aur = CreateAura(m_spellInfo, eff_idx, &m_currentBasePoints[eff_idx], unitTarget, caster, m_CastItem);
 
@@ -2994,7 +3052,7 @@ void Spell::EffectSendEvent(SpellEffectIndex effectIndex)
     /*
     we do not handle a flag dropping or clicking on flag in battleground by sendevent system
     */
-    DEBUG_LOG("Spell ScriptStart %u for spellid %u in EffectSendEvent ", m_spellInfo->EffectMiscValue[effectIndex], m_spellInfo->Id);
+    DEBUG_FILTER_LOG(LOG_FILTER_SPELL_CAST, "Spell ScriptStart %u for spellid %u in EffectSendEvent ", m_spellInfo->EffectMiscValue[effectIndex], m_spellInfo->Id);
     m_caster->GetMap()->ScriptsStart(sEventScripts, m_spellInfo->EffectMiscValue[effectIndex], m_caster, focusObject);
 }
 
@@ -3187,7 +3245,7 @@ void Spell::EffectHealthLeech(SpellEffectIndex eff_idx)
     if (damage < 0)
         return;
 
-    DEBUG_LOG("HealthLeech :%i", damage);
+    DEBUG_FILTER_LOG(LOG_FILTER_SPELL_CAST, "HealthLeech :%i", damage);
 
     uint32 curHealth = unitTarget->GetHealth();
     damage = m_caster->SpellNonMeleeDamageLog(unitTarget, m_spellInfo->Id, damage );
@@ -4389,7 +4447,7 @@ void Spell::EffectAddHonor(SpellEffectIndex /*eff_idx*/)
     if (m_CastItem)
     {
         ((Player*)unitTarget)->RewardHonor(NULL, 1, float(damage / 10));
-        DEBUG_LOG("SpellEffect::AddHonor (spell_id %u) rewards %d honor points (item %u) for player: %u", m_spellInfo->Id, damage/10, m_CastItem->GetEntry(),((Player*)unitTarget)->GetGUIDLow());
+        DEBUG_FILTER_LOG(LOG_FILTER_SPELL_CAST, "SpellEffect::AddHonor (spell_id %u) rewards %d honor points (item %u) for player: %u", m_spellInfo->Id, damage/10, m_CastItem->GetEntry(),((Player*)unitTarget)->GetGUIDLow());
         return;
     }
 
@@ -4398,7 +4456,7 @@ void Spell::EffectAddHonor(SpellEffectIndex /*eff_idx*/)
     {
         float honor_reward = MaNGOS::Honor::hk_honor_at_level(unitTarget->getLevel(), damage);
         ((Player*)unitTarget)->RewardHonor(NULL, 1, honor_reward);
-        DEBUG_LOG("SpellEffect::AddHonor (spell_id %u) rewards %f honor points (scale) to player: %u", m_spellInfo->Id, honor_reward, ((Player*)unitTarget)->GetGUIDLow());
+        DEBUG_FILTER_LOG(LOG_FILTER_SPELL_CAST, "SpellEffect::AddHonor (spell_id %u) rewards %f honor points (scale) to player: %u", m_spellInfo->Id, honor_reward, ((Player*)unitTarget)->GetGUIDLow());
     }
     else
     {
@@ -5617,7 +5675,7 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     if (m_caster->GetTypeId() != TYPEID_UNIT)
                         return;
 
-                    Player* pPlayer = ((Creature*)m_caster)->GetLootRecipient();
+                    Player* pPlayer = ((Creature*)m_caster)->GetOriginalLootRecipient();
 
                     if (!pPlayer)
                         return;
@@ -5707,6 +5765,48 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
 
                     caster->CastSpell(caster, damage, false);
                     break;
+                }
+                case 51864:                                 // Player Summon Nass
+                {
+                    if (m_caster->GetTypeId() != TYPEID_PLAYER)
+                        return;
+
+                    // Summon Nass
+                    if (const SpellEntry* pSpell = sSpellStore.LookupEntry(51865))
+                    {
+                        // Only if he is not already there
+                        if (!m_caster->FindGuardianWithEntry(pSpell->EffectMiscValue[EFFECT_INDEX_0]))
+                        {
+                            m_caster->CastSpell(m_caster, pSpell, true);
+
+                            if (Pet* pPet = m_caster->FindGuardianWithEntry(pSpell->EffectMiscValue[EFFECT_INDEX_0]))
+                            {
+                                // Nass Periodic Say aura
+                                pPet->CastSpell(pPet, 51868, true);
+                            }
+                        }
+                    }
+                    return;
+                }
+                case 51889:                                 // Quest Accept Summon Nass
+                {
+                    // This is clearly for quest accept, is spell 51864 then for gossip and does pretty much the same thing?
+                    // Just "jumping" to what may be the "gossip-spell" for now, doing the same thing
+                    m_caster->CastSpell(m_caster, 51864, true);
+                    return;
+                }
+                case 51910:                                 // Kickin' Nass: Quest Completion
+                {
+                    if (m_caster->GetTypeId() != TYPEID_PLAYER)
+                        return;
+
+                    if (const SpellEntry* pSpell = sSpellStore.LookupEntry(51865))
+                    {
+                        // Is this all to be done at completion?
+                        if (Pet* pPet = m_caster->FindGuardianWithEntry(pSpell->EffectMiscValue[EFFECT_INDEX_0]))
+                            ((Player*)m_caster)->RemovePet(pPet, PET_SAVE_NOT_IN_SLOT);
+                    }
+                    return;
                 }
                 case 52751:                                 // Death Gate
                 {
@@ -6246,7 +6346,7 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
     if (!unitTarget)
         return;
 
-    DEBUG_LOG("Spell ScriptStart spellid %u in EffectScriptEffect ", m_spellInfo->Id);
+    DEBUG_FILTER_LOG(LOG_FILTER_SPELL_CAST, "Spell ScriptStart spellid %u in EffectScriptEffect ", m_spellInfo->Id);
     m_caster->GetMap()->ScriptsStart(sSpellScripts, m_spellInfo->Id, m_caster, unitTarget);
 }
 

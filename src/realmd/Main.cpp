@@ -26,7 +26,6 @@
 
 #include "Config/ConfigEnv.h"
 #include "Log.h"
-#include "sockets/ListenSocket.h"
 #include "AuthSocket.h"
 #include "SystemConfig.h"
 #include "revision.h"
@@ -35,6 +34,11 @@
 #include "Util.h"
 #include <openssl/opensslv.h>
 #include <openssl/crypto.h>
+
+#include <ace/Dev_Poll_Reactor.h>
+#include <ace/ACE.h>
+#include <ace/Acceptor.h>
+#include <ace/SOCK_Acceptor.h>
 
 #ifdef WIN32
 #include "ServiceWin32.h"
@@ -87,6 +91,7 @@ extern int main(int argc, char **argv)
             {
                 sLog.outError("Runtime-Error: -c option requires an input argument");
                 usage(argv[0]);
+                Log::WaitBeforeContinueIfNeed();
                 return 1;
             }
             else
@@ -109,6 +114,7 @@ extern int main(int argc, char **argv)
             {
                 sLog.outError("Runtime-Error: -s option requires an input argument");
                 usage(argv[0]);
+                Log::WaitBeforeContinueIfNeed();
                 return 1;
             }
             if( strcmp(argv[c],"install") == 0)
@@ -127,6 +133,7 @@ extern int main(int argc, char **argv)
             {
                 sLog.outError("Runtime-Error: unsupported option %s",argv[c]);
                 usage(argv[0]);
+                Log::WaitBeforeContinueIfNeed();
                 return 1;
             }
         }
@@ -142,6 +149,7 @@ extern int main(int argc, char **argv)
     if (!sConfig.SetSource(cfg_file))
     {
         sLog.outError("Could not find configuration file %s.", cfg_file);
+        Log::WaitBeforeContinueIfNeed();
         return 1;
     }
     sLog.Initialize();
@@ -159,9 +167,7 @@ extern int main(int argc, char **argv)
         sLog.outError("          Please check for updates, as your current default values may cause");
         sLog.outError("          strange behavior.");
         sLog.outError("*****************************************************************************");
-        clock_t pause = 3000 + clock();
-
-        while (pause > clock()) {}
+        Log::WaitBeforeContinueIfNeed();
     }
 
     DETAIL_LOG("%s (Library: %s)", OPENSSL_VERSION_TEXT, SSLeay_version(SSLEAY_VERSION));
@@ -171,6 +177,12 @@ extern int main(int argc, char **argv)
         DETAIL_LOG("WARNING: Minimal required version [OpenSSL 0.9.8k]");
     }
 
+#if defined (ACE_HAS_EVENT_POLL) || defined (ACE_HAS_DEV_POLL)
+    ACE_Reactor::instance(new ACE_Reactor(new ACE_Dev_Poll_Reactor(ACE::max_handles(), 1), 1), true);
+#endif
+
+    sLog.outBasic("Max allowed open files is %d", ACE::max_handles());
+
     /// realmd PID file creation
     std::string pidfile = sConfig.GetStringDefault("PidFile", "");
     if(!pidfile.empty())
@@ -179,6 +191,7 @@ extern int main(int argc, char **argv)
         if( !pid )
         {
             sLog.outError( "Cannot create PID file %s.\n", pidfile.c_str() );
+            Log::WaitBeforeContinueIfNeed();
             return 1;
         }
 
@@ -187,34 +200,39 @@ extern int main(int argc, char **argv)
 
     ///- Initialize the database connection
     if(!StartDB())
+    {
+        Log::WaitBeforeContinueIfNeed();
         return 1;
+    }
 
     ///- Get the list of realms for the server
     sRealmList.Initialize(sConfig.GetIntDefault("RealmsStateUpdateDelay", 20));
     if (sRealmList.size() == 0)
     {
         sLog.outError("No valid realms specified.");
-        return 1;
-    }
-
-    ///- Launch the listening network socket
-    port_t rmport = sConfig.GetIntDefault( "RealmServerPort", DEFAULT_REALMSERVER_PORT );
-    std::string bind_ip = sConfig.GetStringDefault("BindIP", "0.0.0.0");
-
-    SocketHandler h;
-    ListenSocket<AuthSocket> authListenSocket(h);
-    if ( authListenSocket.Bind(bind_ip.c_str(),rmport))
-    {
-        sLog.outError( "MaNGOS realmd can not bind to %s:%d",bind_ip.c_str(), rmport );
+        Log::WaitBeforeContinueIfNeed();
         return 1;
     }
 
     // cleanup query
-    //set expired bans to inactive
+    // set expired bans to inactive
     loginDatabase.Execute("UPDATE account_banned SET active = 0 WHERE unbandate<=UNIX_TIMESTAMP() AND unbandate<>bandate");
     loginDatabase.Execute("DELETE FROM ip_banned WHERE unbandate<=UNIX_TIMESTAMP() AND unbandate<>bandate");
 
-    h.Add(&authListenSocket);
+    ///- Launch the listening network socket
+    ACE_Acceptor<AuthSocket, ACE_SOCK_Acceptor> acceptor;
+
+    uint16 rmport = sConfig.GetIntDefault("RealmServerPort", DEFAULT_REALMSERVER_PORT);
+    std::string bind_ip = sConfig.GetStringDefault("BindIP", "0.0.0.0");
+
+    ACE_INET_Addr bind_addr(rmport, bind_ip.c_str());
+
+    if(acceptor.open(bind_addr, ACE_Reactor::instance(), ACE_NONBLOCK) == -1)
+    {
+        sLog.outError("MaNGOS realmd can not bind to %s:%d", bind_ip.c_str(), rmport);
+        Log::WaitBeforeContinueIfNeed();
+        return 1;
+    }
 
     ///- Catch termination signals
     HookSignals();
@@ -269,8 +287,11 @@ extern int main(int argc, char **argv)
     ///- Wait for termination signal
     while (!stopEvent)
     {
+        // dont move this outside the loop, the reactor will modify it
+        ACE_Time_Value interval(0, 100000);
 
-        h.Select(0, 100000);
+        if (ACE_Reactor::instance()->run_reactor_event_loop(interval) == -1)
+            break;
 
         if( (++loopCounter) == numLoops )
         {

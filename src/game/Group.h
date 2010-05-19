@@ -259,7 +259,7 @@ class MANGOS_DLL_SPEC Group
         MemberSlotList const& GetMemberSlots() const { return m_memberSlots; }
         GroupReference* GetFirstMember() { return m_memberMgr.getFirst(); }
         uint32 GetMembersCount() const { return m_memberSlots.size(); }
-        void GetDataForXPAtKill(Unit const* victim, uint32& count,uint32& sum_level, Player* & member_with_max_level, Player* & not_gray_member_with_max_level);
+        void GetDataForXPAtKill(Unit const* victim, uint32& count,uint32& sum_level, Player* & member_with_max_level, Player* & not_gray_member_with_max_level, Player* additional = NULL);
         uint8  GetMemberGroup(uint64 guid) const
         {
             member_citerator mslot = _getMemberCSlot(guid);
@@ -313,8 +313,6 @@ class MANGOS_DLL_SPEC Group
         bool InCombatToInstance(uint32 instanceId);
         void ResetInstances(uint8 method, bool isRaid, Player* SendMsgTo);
 
-        // -no description-
-        //void SendInit(WorldSession *session);
         void SendTargetIconList(WorldSession *session);
         void SendUpdate();
         void UpdatePlayerOutOfRange(Player* pPlayer);
@@ -322,6 +320,8 @@ class MANGOS_DLL_SPEC Group
         void BroadcastPacket(WorldPacket *packet, bool ignorePlayersInBGRaid, int group=-1, uint64 ignore=0);
         void BroadcastReadyCheck(WorldPacket *packet);
         void OfflineReadyCheck();
+
+        void RewardGroupAtKill(Unit* pVictim, Player* player_tap);
 
         /*********************************************************/
         /***                   LOOT SYSTEM                     ***/
@@ -331,10 +331,11 @@ class MANGOS_DLL_SPEC Group
         void SendLootRoll(ObjectGuid const& targetGuid, uint8 rollNumber, uint8 rollType, const Roll &r);
         void SendLootRollWon(ObjectGuid const& targetGuid, uint8 rollNumber, RollVote rollType, const Roll &r);
         void SendLootAllPassed(const Roll &r);
-        void GroupLoot(ObjectGuid const& playerGUID, Loot *loot, Creature *creature);
-        void NeedBeforeGreed(ObjectGuid const& playerGUID, Loot *loot, Creature *creature);
-        void MasterLoot(ObjectGuid const& playerGUID, Loot *loot, Creature *creature);
+        void GroupLoot(Creature *creature, Loot *loot);
+        void NeedBeforeGreed(Creature *creature, Loot *loot);
+        void MasterLoot(Creature *creature, Loot *loot);
         void CountRollVote(ObjectGuid const& playerGUID, ObjectGuid const& lootedTarget, uint32 itemSlot, RollVote choise);
+        void StartLootRool(Creature* lootTarget, Loot* loot, uint8 itemSlot, bool skipIfCanNotUse);
         void EndRoll();
 
         void LinkMember(GroupReference *pRef) { m_memberMgr.insertFirst(pRef); }

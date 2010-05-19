@@ -3295,7 +3295,7 @@ void Spell::SendSpellStart()
     if (!IsNeedSendToClient())
         return;
 
-    DEBUG_LOG("Sending SMSG_SPELL_START id=%u", m_spellInfo->Id);
+    DEBUG_FILTER_LOG(LOG_FILTER_SPELL_CAST, "Sending SMSG_SPELL_START id=%u", m_spellInfo->Id);
 
     uint32 castFlags = CAST_FLAG_UNKNOWN1;
     if (IsRangedSpell())
@@ -3353,7 +3353,7 @@ void Spell::SendSpellGo()
     if(!IsNeedSendToClient())
         return;
 
-    DEBUG_LOG("Sending SMSG_SPELL_GO id=%u", m_spellInfo->Id);
+    DEBUG_FILTER_LOG(LOG_FILTER_SPELL_CAST, "Sending SMSG_SPELL_GO id=%u", m_spellInfo->Id);
 
     uint32 castFlags = CAST_FLAG_UNKNOWN3;
     if(IsRangedSpell())
@@ -4017,7 +4017,7 @@ void Spell::HandleThreatSpells(uint32 spellId)
 
     m_targets.getUnitTarget()->AddThreat(m_caster, float(threat), false, GetSpellSchoolMask(m_spellInfo), m_spellInfo);
 
-    DEBUG_LOG("Spell %u, rank %u, added an additional %i threat", spellId, sSpellMgr.GetSpellRank(spellId), threat);
+    DEBUG_FILTER_LOG(LOG_FILTER_SPELL_CAST, "Spell %u, rank %u, added an additional %i threat", spellId, sSpellMgr.GetSpellRank(spellId), threat);
 }
 
 void Spell::HandleEffects(Unit *pUnitTarget,Item *pItemTarget,GameObject *pGOTarget,SpellEffectIndex i, float DamageMultiplier)
@@ -4030,11 +4030,10 @@ void Spell::HandleEffects(Unit *pUnitTarget,Item *pItemTarget,GameObject *pGOTar
 
     damage = int32(CalculateDamage(i, unitTarget) * DamageMultiplier);
 
-    DEBUG_LOG("Spell %u Effect%d : %u", m_spellInfo->Id, i, eff);
+    DEBUG_FILTER_LOG(LOG_FILTER_SPELL_CAST, "Spell %u Effect%d : %u", m_spellInfo->Id, i, eff);
 
     if(eff < TOTAL_SPELL_EFFECTS)
     {
-        //DEBUG_LOG( "WORLD: Spell FX %d < TOTAL_SPELL_EFFECTS ", eff);
         (*this.*SpellEffects[eff])(i);
     }
     else
@@ -4501,7 +4500,8 @@ SpellCastResult Spell::CheckCast(bool strict)
                                 MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck u_check(*m_caster, i_spellST->second.targetEntry, i_spellST->second.type != SPELL_TARGET_TYPE_DEAD, range);
                                 MaNGOS::CreatureLastSearcher<MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck> searcher(m_caster, p_Creature, u_check);
 
-                                Cell::VisitGridObjects(m_caster, searcher, range);
+                                // Visit all, need to find also Pet* objects
+                                Cell::VisitAllObjects(m_caster, searcher, range);
 
                                 range = u_check.GetLastRange();
                             }
@@ -4815,7 +4815,7 @@ SpellCastResult Spell::CheckCast(bool strict)
                     return SPELL_FAILED_TARGET_UNSKINNABLE;
 
                 Creature* creature = (Creature*)m_targets.getUnitTarget();
-                if ( creature->GetCreatureType() != CREATURE_TYPE_CRITTER && ( !creature->lootForBody || !creature->loot.empty() ) )
+                if ( creature->GetCreatureType() != CREATURE_TYPE_CRITTER && ( !creature->lootForBody || creature->lootForSkin || !creature->loot.empty() ) )
                 {
                     return SPELL_FAILED_TARGET_NOT_LOOTED;
                 }
@@ -5123,7 +5123,7 @@ SpellCastResult Spell::CheckCast(bool strict)
                 // allow always ghost flight spells
                 if (m_caster->GetTypeId() == TYPEID_PLAYER && m_caster->isAlive())
                 {
-                    if (!((Player*)m_caster)->IsKnowHowFlyIn(m_caster->GetMapId(),zone))
+                    if (!((Player*)m_caster)->IsKnowHowFlyIn(m_caster->GetMapId(), zone, area))
                         return m_IsTriggeredSpell ? SPELL_FAILED_DONT_REPORT : SPELL_FAILED_NOT_HERE;
                 }
                 break;
@@ -5996,7 +5996,7 @@ void Spell::Delayed()
     else
         m_timer += delaytime;
 
-    DETAIL_LOG("Spell %u partially interrupted for (%d) ms at damage", m_spellInfo->Id, delaytime);
+    DETAIL_FILTER_LOG(LOG_FILTER_SPELL_CAST, "Spell %u partially interrupted for (%d) ms at damage", m_spellInfo->Id, delaytime);
 
     WorldPacket data(SMSG_SPELL_DELAYED, 8+4);
     data << m_caster->GetPackGUID();
@@ -6031,7 +6031,7 @@ void Spell::DelayedChannel()
     else
         m_timer -= delaytime;
 
-    DEBUG_LOG("Spell %u partially interrupted for %i ms, new duration: %u ms", m_spellInfo->Id, delaytime, m_timer);
+    DEBUG_FILTER_LOG(LOG_FILTER_SPELL_CAST, "Spell %u partially interrupted for %i ms, new duration: %u ms", m_spellInfo->Id, delaytime, m_timer);
 
     for(std::list<TargetInfo>::const_iterator ihit = m_UniqueTargetInfo.begin(); ihit != m_UniqueTargetInfo.end(); ++ihit)
     {
@@ -6412,7 +6412,7 @@ SpellCastResult Spell::CanOpenLock(SpellEffectIndex effIndex, uint32 lockId, Ski
     return SPELL_CAST_OK;
 }
 
-/*
+/**
  * Fill target list by units around (x,y) points at radius distance
 
  * @param targetUnitMap        Reference to target list that filled by function
@@ -6536,4 +6536,60 @@ void Spell::ResetEffectDamageAndHeal()
 {
     m_damage = 0;
     m_healing = 0;
+}
+
+void Spell::SelectMountByAreaAndSkill(Unit* target, uint32 spellId75, uint32 spellId150, uint32 spellId225, uint32 spellId300, uint32 spellIdSpecial)
+{
+    if (!target || target->GetTypeId() != TYPEID_PLAYER)
+        return;
+
+    // Prevent stacking of mounts
+    target->RemoveSpellsCausingAura(SPELL_AURA_MOUNTED);
+    uint16 skillval = ((Player*)target)->GetSkillValue(SKILL_RIDING);
+    if (!skillval)
+        return;
+
+    if (skillval >= 225 && (spellId300 > 0 || spellId225 > 0))
+    {
+        uint32 spellid = skillval >= 300 ? spellId300 : spellId225;
+        SpellEntry const *pSpell = sSpellStore.LookupEntry(spellid);
+        // zone check
+        uint32 zone, area;
+        target->GetZoneAndAreaId(zone, area);
+
+        SpellCastResult locRes= sSpellMgr.GetSpellAllowedInLocationError(pSpell, target->GetMapId(), zone, area, target->GetCharmerOrOwnerPlayerOrPlayerItself());
+        if (locRes != SPELL_CAST_OK || !((Player*)target)->IsKnowHowFlyIn(target->GetMapId(), zone, area))
+            target->CastSpell(target, spellId150, true);
+        else if (spellIdSpecial > 0)
+        {
+            for (PlayerSpellMap::const_iterator iter = ((Player*)target)->GetSpellMap().begin(); iter != ((Player*)target)->GetSpellMap().end(); ++iter)
+            {
+                if (iter->second.state != PLAYERSPELL_REMOVED)
+                {
+                    SpellEntry const *spellInfo = sSpellStore.LookupEntry(iter->first);
+                    for(int i = 0; i < MAX_EFFECT_INDEX; ++i)
+                    {
+                        if(spellInfo->EffectApplyAuraName[i] == SPELL_AURA_MOD_FLIGHT_SPEED_MOUNTED)
+                        {
+                            int32 mountSpeed = spellInfo->CalculateSimpleValue(SpellEffectIndex(i));
+
+                            // speed higher than 280 replace it
+                            if (mountSpeed > 280)
+                                target->CastSpell(target, spellIdSpecial, true);
+                            return;
+                        }
+                    }
+                }
+            }
+            target->CastSpell(target, pSpell, true);
+        }
+        else
+            target->CastSpell(target, pSpell, true);
+    }
+    else if (skillval >= 150 && spellId150 > 0)
+        target->CastSpell(target, spellId150, true);
+    else if (spellId75 > 0)
+        target->CastSpell(target, spellId75, true);
+
+    return;
 }

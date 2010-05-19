@@ -34,6 +34,8 @@
 #include "Util.h"
 #include "LootMgr.h"
 
+#define LOOT_ROLL_TIMEOUT  (1*MINUTE*IN_MILLISECONDS)
+
 Group::Group() : m_Id(0), m_leaderGuid(0), m_mainTank(0), m_mainAssistant(0),  m_groupType(GROUPTYPE_NORMAL),
     m_dungeonDifficulty(REGULAR_DIFFICULTY), m_raidDifficulty(REGULAR_DIFFICULTY),
     m_bgGroup(NULL), m_lootMethod(FREE_FOR_ALL), m_looterGuid(0), m_lootThreshold(ITEM_QUALITY_UNCOMMON),
@@ -538,134 +540,48 @@ void Group::SendLootAllPassed(Roll const& r)
     }
 }
 
-void Group::GroupLoot(ObjectGuid const& playerGUID, Loot *loot, Creature *creature)
+void Group::GroupLoot(Creature *creature, Loot *loot)
 {
-    std::vector<LootItem>::iterator i;
-    ItemPrototype const *item;
-    uint8 itemSlot = 0;
-    Player *player = sObjectMgr.GetPlayer(playerGUID);
-    Group *group = player->GetGroup();
-
-    for (i = loot->items.begin(); i != loot->items.end(); ++i, ++itemSlot)
+    for(uint8 itemSlot = 0; itemSlot < loot->items.size(); ++itemSlot)
     {
-        item = ObjectMgr::GetItemPrototype(i->itemid);
-        if (!item)
+        LootItem& lootItem = loot->items[itemSlot];
+        ItemPrototype const *itemProto = ObjectMgr::GetItemPrototype(lootItem.itemid);
+        if (!itemProto)
         {
-            //DEBUG_LOG("Group::GroupLoot: missing item prototype for item with id: %d", i->itemid);
+            DEBUG_LOG("Group::GroupLoot: missing item prototype for item with id: %d", lootItem.itemid);
             continue;
         }
 
         //roll for over-threshold item if it's one-player loot
-        if (item->Quality >= uint32(m_lootThreshold) && !i->freeforall)
-        {
-            Roll* r = new Roll(creature->GetGUID(), *i);
-
-            //a vector is filled with only near party members
-            for(GroupReference *itr = GetFirstMember(); itr != NULL; itr = itr->next())
-            {
-                Player *member = itr->getSource();
-                if(!member || !member->GetSession())
-                    continue;
-                if ( i->AllowedForPlayer(member) )
-                {
-                    if (member->IsWithinDist(creature, sWorld.getConfig(CONFIG_FLOAT_GROUP_XP_DISTANCE), false))
-                    {
-                        r->playerVote[member->GetGUID()] = ROLL_NOT_EMITED_YET;
-                        ++r->totalPlayersRolling;
-                    }
-                }
-            }
-
-            if (r->totalPlayersRolling > 0)                 // has looters
-            {
-                r->setLoot(loot);
-                r->itemSlot = itemSlot;
-
-                if (r->totalPlayersRolling == 1)            // single looter
-                    r->playerVote.begin()->second = ROLL_NEED;
-                else
-                {
-                    group->SendLootStartRoll(60000, creature->GetMapId(), *r);
-
-                    loot->items[itemSlot].is_blocked = true;
-
-                    creature->m_groupLootTimer = 60000;
-                    creature->m_groupLootId = GetId();
-                }
-
-                RollId.push_back(r);
-            }
-            else                                            // no looters??
-                delete r;
-        }
+        if (itemProto->Quality >= uint32(m_lootThreshold) && !lootItem.freeforall)
+            StartLootRool(creature,loot,itemSlot,false);
         else
-            i->is_underthreshold = 1;
+            lootItem.is_underthreshold = 1;
     }
 }
 
-void Group::NeedBeforeGreed(ObjectGuid const& playerGUID, Loot *loot, Creature *creature)
+void Group::NeedBeforeGreed(Creature *creature, Loot *loot)
 {
-    ItemPrototype const *item;
-    Player *player = sObjectMgr.GetPlayer(playerGUID);
-    Group *group = player->GetGroup();
-
-    uint8 itemSlot = 0;
-    for(std::vector<LootItem>::iterator i = loot->items.begin(); i != loot->items.end(); ++i, ++itemSlot)
+    for(uint8 itemSlot = 0; itemSlot < loot->items.size(); ++itemSlot)
     {
-        item = ObjectMgr::GetItemPrototype(i->itemid);
+        LootItem& lootItem = loot->items[itemSlot];
+        ItemPrototype const *itemProto = ObjectMgr::GetItemPrototype(lootItem.itemid);
+        if (!itemProto)
+        {
+            DEBUG_LOG("Group::NeedBeforeGreed: missing item prototype for item with id: %d", lootItem.itemid);
+            continue;
+        }
 
         //only roll for one-player items, not for ones everyone can get
-        if (item->Quality >= uint32(m_lootThreshold) && !i->freeforall)
-        {
-            Roll* r = new Roll(creature->GetGUID(), *i);
-
-            for(GroupReference *itr = GetFirstMember(); itr != NULL; itr = itr->next())
-            {
-                Player *playerToRoll = itr->getSource();
-                if(!playerToRoll || !playerToRoll->GetSession())
-                    continue;
-
-                if (playerToRoll->CanUseItem(item) && i->AllowedForPlayer(playerToRoll) )
-                {
-                    if (playerToRoll->IsWithinDist(creature, sWorld.getConfig(CONFIG_FLOAT_GROUP_XP_DISTANCE), false))
-                    {
-                        r->playerVote[playerToRoll->GetGUID()] = ROLL_NOT_EMITED_YET;
-                        ++r->totalPlayersRolling;
-                    }
-                }
-            }
-
-            if (r->totalPlayersRolling > 0)                 // has looters
-            {
-                r->setLoot(loot);
-                r->itemSlot = itemSlot;
-
-                if (r->totalPlayersRolling == 1)            // single looter
-                    r->playerVote.begin()->second = ROLL_NEED;
-                else
-                {
-                    group->SendLootStartRoll(60000, creature->GetMapId(), *r);
-                    loot->items[itemSlot].is_blocked = true;
-                }
-
-                RollId.push_back(r);
-            }
-            else                                            // no looters??
-                delete r;
-        }
+        if (itemProto->Quality >= uint32(m_lootThreshold) && !lootItem.freeforall)
+            StartLootRool(creature, loot, itemSlot, true);
         else
-            i->is_underthreshold = 1;
+            lootItem.is_underthreshold = 1;
     }
 }
 
-void Group::MasterLoot(ObjectGuid const& playerGUID, Loot* /*loot*/, Creature *creature)
+void Group::MasterLoot(Creature *creature, Loot* /*loot*/)
 {
-    Player *player = sObjectMgr.GetPlayer(playerGUID);
-    if(!player)
-        return;
-
-    DEBUG_LOG("Group::MasterLoot (SMSG_LOOT_MASTER_LIST, 330) player = [%s].", player->GetName());
-
     uint32 real_count = 0;
 
     WorldPacket data(SMSG_LOOT_MASTER_LIST, 330);
@@ -761,6 +677,54 @@ bool Group::CountRollVote(ObjectGuid const& playerGUID, Rolls::iterator& rollI, 
     }
 
     return false;
+}
+
+void Group::StartLootRool(Creature* lootTarget, Loot* loot, uint8 itemSlot, bool skipIfCanNotUse)
+{
+    if (itemSlot >= loot->items.size())
+        return;
+
+    LootItem const& lootItem =  loot->items[itemSlot];
+
+    ItemPrototype const* item = ObjectMgr::GetItemPrototype(lootItem.itemid);
+
+    Roll* r = new Roll(lootTarget->GetGUID(), lootItem);
+
+    //a vector is filled with only near party members
+    for(GroupReference *itr = GetFirstMember(); itr != NULL; itr = itr->next())
+    {
+        Player *playerToRoll = itr->getSource();
+        if(!playerToRoll || !playerToRoll->GetSession())
+            continue;
+
+        if ((!skipIfCanNotUse || playerToRoll->CanUseItem(item)) && lootItem.AllowedForPlayer(playerToRoll) )
+        {
+            if (playerToRoll->IsWithinDist(lootTarget, sWorld.getConfig(CONFIG_FLOAT_GROUP_XP_DISTANCE), false))
+            {
+                r->playerVote[playerToRoll->GetGUID()] = ROLL_NOT_EMITED_YET;
+                ++r->totalPlayersRolling;
+            }
+        }
+    }
+
+    if (r->totalPlayersRolling > 0)                 // has looters
+    {
+        r->setLoot(loot);
+        r->itemSlot = itemSlot;
+
+        if (r->totalPlayersRolling == 1)            // single looter
+            r->playerVote.begin()->second = ROLL_NEED;
+        else
+        {
+            SendLootStartRoll(LOOT_ROLL_TIMEOUT, lootTarget->GetMapId(), *r);
+            loot->items[itemSlot].is_blocked = true;
+            lootTarget->StartGroupLoot(this,LOOT_ROLL_TIMEOUT);
+        }
+
+        RollId.push_back(r);
+    }
+    else                                            // no looters??
+        delete r;
 }
 
 // called when roll timer expires
@@ -924,26 +888,44 @@ void Group::SetTargetIcon(uint8 id, uint64 whoGuid, uint64 targetGuid)
     BroadcastPacket(&data, true);
 }
 
-void Group::GetDataForXPAtKill(Unit const* victim, uint32& count,uint32& sum_level, Player* & member_with_max_level, Player* & not_gray_member_with_max_level)
+static void GetDataForXPAtKill_helper(Player* player, Unit const* victim, uint32& sum_level, Player* & member_with_max_level, Player* & not_gray_member_with_max_level)
+{
+    sum_level += player->getLevel();
+    if(!member_with_max_level || member_with_max_level->getLevel() < player->getLevel())
+        member_with_max_level = player;
+
+    uint32 gray_level = MaNGOS::XP::GetGrayLevel(player->getLevel());
+    if( victim->getLevel() > gray_level && (!not_gray_member_with_max_level
+        || not_gray_member_with_max_level->getLevel() < player->getLevel()))
+        not_gray_member_with_max_level = player;
+}
+
+void Group::GetDataForXPAtKill(Unit const* victim, uint32& count,uint32& sum_level, Player* & member_with_max_level, Player* & not_gray_member_with_max_level, Player* additional)
 {
     for(GroupReference *itr = GetFirstMember(); itr != NULL; itr = itr->next())
     {
         Player* member = itr->getSource();
-        if(!member || !member->isAlive())                   // only for alive
+        if (!member || !member->isAlive())                  // only for alive
             continue;
 
-        if(!member->IsAtGroupRewardDistance(victim))        // at req. distance
+        // will proccesed later
+        if (member == additional)
+            continue;
+
+        if (!member->IsAtGroupRewardDistance(victim))       // at req. distance
             continue;
 
         ++count;
-        sum_level += member->getLevel();
-        if(!member_with_max_level || member_with_max_level->getLevel() < member->getLevel())
-            member_with_max_level = member;
+        GetDataForXPAtKill_helper(member,victim,sum_level,member_with_max_level,not_gray_member_with_max_level);
+    }
 
-        uint32 gray_level = MaNGOS::XP::GetGrayLevel(member->getLevel());
-        if( victim->getLevel() > gray_level && (!not_gray_member_with_max_level
-           || not_gray_member_with_max_level->getLevel() < member->getLevel()))
-            not_gray_member_with_max_level = member;
+    if (additional)
+    {
+        if (additional->IsAtGroupRewardDistance(victim))    // at req. distance
+        {
+            ++count;
+            GetDataForXPAtKill_helper(additional,victim,sum_level,member_with_max_level,not_gray_member_with_max_level);
+        }
     }
 }
 
@@ -1725,5 +1707,97 @@ void Group::_homebindIfInstance(Player *player)
         InstancePlayerBind *playerBind = save ? player->GetBoundInstance(save->GetMapId(), save->GetDifficulty()) : NULL;
         if(!playerBind || !playerBind->perm)
             player->m_InstanceValid = false;
+    }
+}
+
+static void RewardGroupAtKill_helper(Player* pGroupGuy, Unit* pVictim, uint32 count, bool PvP, float group_rate, uint32 sum_level, bool is_dungeon, Player* not_gray_member_with_max_level, Player* member_with_max_level, uint32 xp )
+{
+    // honor can be in PvP and !PvP (racial leader) cases (for alive)
+    if (pGroupGuy->isAlive())
+        pGroupGuy->RewardHonor(pVictim,count);
+
+    // xp and reputation only in !PvP case
+    if(!PvP)
+    {
+        float rate = group_rate * float(pGroupGuy->getLevel()) / sum_level;
+
+        // if is in dungeon then all receive full reputation at kill
+        // rewarded any alive/dead/near_corpse group member
+        pGroupGuy->RewardReputation(pVictim,is_dungeon ? 1.0f : rate);
+
+        // XP updated only for alive group member
+        if(pGroupGuy->isAlive() && not_gray_member_with_max_level &&
+            pGroupGuy->getLevel() <= not_gray_member_with_max_level->getLevel())
+        {
+            uint32 itr_xp = (member_with_max_level == not_gray_member_with_max_level) ? uint32(xp*rate) : uint32((xp*rate/2)+1);
+
+            pGroupGuy->GiveXP(itr_xp, pVictim);
+            if(Pet* pet = pGroupGuy->GetPet())
+                pet->GivePetXP(itr_xp/2);
+        }
+
+        // quest objectives updated only for alive group member or dead but with not released body
+        if(pGroupGuy->isAlive()|| !pGroupGuy->HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_GHOST))
+        {
+            // normal creature (not pet/etc) can be only in !PvP case
+            if(pVictim->GetTypeId()==TYPEID_UNIT)
+                pGroupGuy->KilledMonster(((Creature*)pVictim)->GetCreatureInfo(), pVictim->GetObjectGuid());
+        }
+    }
+}
+
+/** Provide rewards to group members at unit kill
+ *
+ * @param pVictim       Killed unit
+ * @param player_tap    Player who tap unit if online, it can be group member or can be not if leaved after tap but before kill target
+ *
+ * Rewards received by group members and player_tap
+ */
+void Group::RewardGroupAtKill(Unit* pVictim, Player* player_tap)
+{
+    bool PvP = pVictim->isCharmedOwnedByPlayerOrPlayer();
+
+    // prepare data for near group iteration (PvP and !PvP cases)
+    uint32 xp = 0;
+
+    uint32 count = 0;
+    uint32 sum_level = 0;
+    Player* member_with_max_level = NULL;
+    Player* not_gray_member_with_max_level = NULL;
+
+    GetDataForXPAtKill(pVictim,count,sum_level,member_with_max_level,not_gray_member_with_max_level,player_tap);
+
+    if(member_with_max_level)
+    {
+        /// not get Xp in PvP or no not gray players in group
+        xp = (PvP || !not_gray_member_with_max_level) ? 0 : MaNGOS::XP::Gain(not_gray_member_with_max_level, pVictim);
+
+        /// skip in check PvP case (for speed, not used)
+        bool is_raid = PvP ? false : sMapStore.LookupEntry(pVictim->GetMapId())->IsRaid() && isRaidGroup();
+        bool is_dungeon = PvP ? false : sMapStore.LookupEntry(pVictim->GetMapId())->IsDungeon();
+        float group_rate = MaNGOS::XP::xp_in_group_rate(count,is_raid);
+
+        for(GroupReference *itr = GetFirstMember(); itr != NULL; itr = itr->next())
+        {
+            Player* pGroupGuy = itr->getSource();
+            if(!pGroupGuy)
+                continue;
+
+            // will proccessed later
+            if(pGroupGuy==player_tap)
+                continue;
+
+            if(!pGroupGuy->IsAtGroupRewardDistance(pVictim))
+                continue;                               // member (alive or dead) or his corpse at req. distance
+
+            RewardGroupAtKill_helper(pGroupGuy, pVictim, count, PvP, group_rate, sum_level, is_dungeon, not_gray_member_with_max_level, member_with_max_level, xp);
+        }
+
+        if(player_tap)
+        {
+            // member (alive or dead) or his corpse at req. distance
+            if(player_tap->IsAtGroupRewardDistance(pVictim))
+                RewardGroupAtKill_helper(player_tap, pVictim, count, PvP, group_rate, sum_level, is_dungeon, not_gray_member_with_max_level, member_with_max_level, xp);
+        }
     }
 }
