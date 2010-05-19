@@ -131,15 +131,10 @@ namespace VMAP
         int result = VMAP_LOAD_RESULT_IGNORED;
         if(isMapLoadingEnabled() && !iIgnoreMapIds.count(pMapId))
         {
-            bool loaded = _loadMap(pMapId, pBasePath, x, y);
-            if(!loaded)
-            {
+            if(_loadMap(pMapId, pBasePath, x, y))
                 result = VMAP_LOAD_RESULT_OK;
-            }
             else
-            {
                 result = VMAP_LOAD_RESULT_ERROR;
-            }
         }
         return result;
     }
