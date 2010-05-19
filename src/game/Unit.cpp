@@ -9895,7 +9895,7 @@ uint32 Unit::SpellDamageBonusTaken(Unit *pCaster, SpellEntry const *spellProto, 
     } 
 
     // From caster spells
-    AuraList const& mOwnerTaken = pCaster->GetAurasByType(SPELL_AURA_MOD_DAMAGE_FROM_CASTER);
+    AuraList const& mOwnerTaken = GetAurasByType(SPELL_AURA_MOD_DAMAGE_FROM_CASTER);
     for(AuraList::const_iterator i = mOwnerTaken.begin(); i != mOwnerTaken.end(); ++i)
     {
         if ((*i)->GetCasterGUID() == pCaster->GetGUID() && (*i)->isAffectedOnSpell(spellProto))
