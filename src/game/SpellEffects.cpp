@@ -3078,6 +3078,11 @@ void Spell::EffectApplyAura(SpellEffectIndex eff_idx)
             return;
     }
 
+    //Molten fury, buff from Flame tsunami, should affect only sartarions adds...
+    if(m_spellInfo->Id == 60430 && (unitTarget->GetTypeID() != TYPEID_UNIT || unitTarget->GetEntry() != 30643))
+        return;
+    
+
     DEBUG_LOG("Spell: Aura is: %u", m_spellInfo->EffectApplyAuraName[eff_idx]);
 
     Aura* Aur = CreateAura(m_spellInfo, eff_idx, &m_currentBasePoints[eff_idx], unitTarget, caster, m_CastItem);
