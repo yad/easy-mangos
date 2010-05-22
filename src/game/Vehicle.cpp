@@ -41,7 +41,11 @@ void Vehicle::AddToWorld()
 
     Unit::AddToWorld();
 }
-
+void Vehicle::Respawn()
+{
+    Creature::Respawn();
+    InstallAllAccessories();
+}
 void Vehicle::RemoveFromWorld()
 {
     ///- Remove the vehicle from the accessor
@@ -67,7 +71,6 @@ void Vehicle::setDeathState(DeathState s)                       // overwrite vir
 void Vehicle::Update(uint32 diff)
 {
     Creature::Update(diff);
-    InstallAllAccessories();
 
     if(despawn)
     {
@@ -113,7 +116,6 @@ void Vehicle::RegeneratePower(Powers power)
                 SendCreateUpdateToPlayer((Player*)pPassanger);
         }
     }
-
 }
 
 bool Vehicle::Create(uint32 guidlow, Map *map, uint32 phaseMask, uint32 Entry, uint32 vehicleId, uint32 team, const CreatureData *data)
@@ -714,65 +716,63 @@ void Vehicle::BuildVehicleActionBar(Player *plr) const
 }
 void Vehicle::InstallAllAccessories()
 {
-    //TODO: Move this into DB!!!
-    switch(GetEntry())
-    {
-        //case 27850:InstallAccessory(27905,1);break;
-        case 28782:InstallAccessory(28768,0,false, false);break; // Acherus Deathcharger
-        case 28312:InstallAccessory(28319,7,true);break;
-        case 32627:InstallAccessory(32629,7,true);break;
-        case 32930:
-            InstallAccessory(32933,0);
-            InstallAccessory(32934,1);
-            break;
-        case 33109:InstallAccessory(33167,1, true);break;
-        case 33060:InstallAccessory(33067,7, true);break;
-        case 33113:
-            InstallAccessory(33114,0, true);
-            InstallAccessory(33114,1, true);
-            InstallAccessory(33114,2, true);
-            InstallAccessory(33114,3, true);
-            InstallAccessory(33139,7);
-            break;
-        case 33114:
-            InstallAccessory(33143,2); // Overload Control Device
-            InstallAccessory(33142,1); // Leviathan Defense Turret
-            break;
-        case 33214:InstallAccessory(33218,1,false,false);break; // Mechanolift 304-A
-    }
-}
+    if(!GetMap())
+        return;
 
-void Vehicle::InstallAccessory(uint32 entry, int8 seatId, bool isVehicle, bool minion)
-{
-    if(Unit *passenger = GetPassenger(seatId))
+    CreatureDataAddon const *cainfo = GetCreatureAddon();
+    if(!cainfo || !cainfo->passengers)
+        return;
+    for (CreatureDataAddonPassengers const* cPassanger = cainfo->passengers; cPassanger->seat_idx != -1; ++cPassanger)
     {
-        // already installed
-        if(passenger->GetEntry() == entry)
-        {
-            assert(passenger->GetTypeId() == TYPEID_UNIT);
-            return;
-        }
-        passenger->ExitVehicle(); // this should not happen
-    }
+        // Continue if seat already taken
+        if(GetPassenger(cPassanger->seat_idx))
+            continue;
 
-    //TODO: accessory should be minion
-    if(isVehicle)
-    {
-        if(Vehicle *accessory = SummonVehicle(entry, 0, 0, 0, 0))
+        uint32 guid = 0;
+        bool isVehicle = false;
+        // Set guid and check whatever it is
+        if(cPassanger->guid != 0)
+            guid = cPassanger->guid;
+        else
         {
-            accessory->EnterVehicle(this, seatId, true);
-            // This is not good, we have to send update twice
-            accessory->BuildVehicleInfo(accessory);
+            CreatureDataAddon const* passAddon;
+            passAddon = ObjectMgr::GetCreatureTemplateAddon(cPassanger->entry);
+            if(passAddon && passAddon->vehicle_id != 0)
+                isVehicle = true;
+            else
+                guid = sObjectMgr.GenerateLowGuid(HIGHGUID_UNIT);
         }
-    }else{
-        if(Creature *accessory = SummonCreature(entry, 0, 0, 0, 0, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 30000))
+        // Create it
+        Creature *pPassenger = new Creature;
+        if(!isVehicle)
         {
-            accessory->EnterVehicle(this, seatId);
-            // This is not good, we have to send update twice
+            uint32 entry = cPassanger->entry;
+            if(entry == 0)
+            {
+                CreatureData const* data = sObjectMgr.GetCreatureData(guid);
+                if(!data)
+                    return;
+                entry = data->id;
+            }     
+            
+            if(!pPassenger->Create(guid, GetMap(), GetPhaseMask(), entry, 0))
+                return;
+            pPassenger->Relocate(GetPositionX(), GetPositionY(), GetPositionZ());
+            GetMap()->Add(pPassenger);
+        }
+        else
+            pPassenger = (Creature*)SummonVehicle(cPassanger->entry, GetPositionX(), GetPositionY(), GetPositionZ(), 0);
+        // Enter vehicle...
+        pPassenger->EnterVehicle(this, cPassanger->seat_idx, true);
+        // ...and send update. Without this, client wont show this new creature/vehicle...
+        if(!isVehicle)
+        {
             WorldPacket data;
-            accessory->BuildHeartBeatMsg(&data);
-            accessory->SendMessageToSet(&data, false);
+            pPassenger->BuildHeartBeatMsg(&data);
+            pPassenger->SendMessageToSet(&data, false);
         }
+        else
+            BuildVehicleInfo((Unit*)pPassenger);
     }
 }
 Unit *Vehicle::GetPassenger(int8 seatId) const
@@ -789,3 +789,4 @@ void Vehicle::Die()
                 ((Vehicle*)passenger)->Dismiss();
     RemoveAllPassengers();
 }
+
