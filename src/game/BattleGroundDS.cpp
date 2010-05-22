@@ -56,9 +56,9 @@ void BattleGroundDS::Update(uint32 diff)
             {
                 Player * plr = sObjectMgr.GetPlayer(itr->first);
                 if (plr->GetTeam() == ALLIANCE && plr->GetDistance2d(1214, 765) <= 50 && plr->GetPositionZ() > 10)
-                    plr->KnockBackPlayerWithAngle(6.05, 55, 7);
+                    plr->KnockBackPlayerWithAngle(6.05f, 55.0f, 7.0f);
                 if (plr->GetTeam() == HORDE && plr->GetDistance2d(1369, 817) <= 50 && plr->GetPositionZ() > 10)
-                    plr->KnockBackPlayerWithAngle(3.03, 55, 7);
+                    plr->KnockBackPlayerWithAngle(3.03f, 55.0f, 7.0f);
             }
             KnockbackCheck = false;
                        
@@ -72,9 +72,9 @@ void BattleGroundDS::Update(uint32 diff)
             {
                 Player * plr = sObjectMgr.GetPlayer(itr->first);
                 if (plr->GetTeam() == ALLIANCE && plr->GetDistance2d(1214, 765) <= 50 && plr->GetPositionZ() > 10)
-                    plr->TeleportTo(617, 1257+urand(0,2), 761+urand(0,2), 3.2, 0.5);
+                    plr->TeleportTo(617, 1257+urand(0,2), 761+urand(0,2), 3.2f, 0.5f);
                 if (plr->GetTeam() == HORDE && plr->GetDistance2d(1369, 817) <= 50 && plr->GetPositionZ() > 10)
-                    plr->TeleportTo(617, 1328+urand(0,2), 815+urand(0,2), 3.2, 3.5);
+                    plr->TeleportTo(617, 1328+urand(0,2), 815+urand(0,2), 3.2f, 3.5f);
             }
             TeleportCheck = false;
             // close the gate
@@ -148,7 +148,7 @@ void BattleGroundDS::HandleAreaTrigger(Player *Source, uint32 Trigger)
 
 bool BattleGroundDS::HandlePlayerUnderMap(Player *player)
 {
-    player->TeleportTo(GetMapId(), 1299.046, 784.825, 9.338, 2.422, false);
+    player->TeleportTo(GetMapId(), 1299.046f, 784.825f, 9.338f, 2.422f, false);
     return true;
 }
 

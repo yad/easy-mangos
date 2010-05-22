@@ -891,9 +891,9 @@ void ChatHandler::PSendSysMessage(int32 entry, ...)
 {
     const char *format = GetMangosString(entry);
     va_list ap;
-    char str [2048];
+    char str [1048576];
     va_start(ap, entry);
-    vsnprintf(str,2048,format, ap );
+    vsnprintf(str,1048576,format, ap );
     va_end(ap);
     SendSysMessage(str);
 }
@@ -901,9 +901,9 @@ void ChatHandler::PSendSysMessage(int32 entry, ...)
 void ChatHandler::PSendSysMessage(const char *format, ...)
 {
     va_list ap;
-    char str [2048];
+    char str [1048576];
     va_start(ap, format);
-    vsnprintf(str,2048,format, ap );
+    vsnprintf(str,1048576,format, ap );
     va_end(ap);
     SendSysMessage(str);
 }

@@ -66,6 +66,19 @@ void OutdoorPvPObjective::HandlePlayerLeave(Player * plr)
 
 void OutdoorPvPObjective::HandlePlayerActivityChanged(Player *plr)
 {
+    Map *map = m_PvP->GetMap();
+    Creature *c = NULL;
+    if (!IsSpawned())
+    {
+        if (c = map->GetSingleCreatureGuid(m_CapturePointCreature, 0))
+            InitSpawn();
+        else
+            return;
+    }
+
+    if (c = map->GetSingleCreature(m_CapturePointCreature, 0))
+        if(c->AI())
+            c->AI()->MoveInLineOfSight(plr);
 }
 
 bool OutdoorPvPObjective::AddObject(uint32 type, uint32 entry, float x, float y, float z, float o, float rotation0, float rotation1, float rotation2, float rotation3)
@@ -386,7 +399,32 @@ bool OutdoorPvPObjective::Update(uint32 diff)
 
 bool OutdoorPvPObjective::HandleCaptureCreaturePlayerMoveInLos(Player* plr, Creature* c)
 {
-    return false;
+    uint64 guid = 0;
+    if (!IsSpawned())
+    {
+        if (guid = map->GetSingleCreatureGuid(m_CaptureEvent, 0))
+            InitSpawn();
+        else
+            return false;
+    }
+    else
+        guid = map->GetSingleCreatureGuid(m_CaptureEvent, 0);
+
+    // check if guid matches
+    if(c->GetGUID() != guid)
+        return false;
+
+    GameObject* cp = map->GetSingleGameObject(m_CaptureEvent);
+    if (!cp)
+        return false;
+
+    // check range and activity
+    if (cp->IsWithinDistInMap(p,cp->GetGOInfo()->capturePoint.radius) && p->IsOutdoorPvPActive())
+        // data[8] will be used for player enter
+        return HandleCapturePointEvent(plr, cp->GetGOInfo()->capturePoint.progressEventID1);
+    else
+        // data[9] will be used for player leave
+        return HandleCapturePointEvent(plr, cp->GetGOInfo()->capturePoint.progressEventID2);
 }
 
 void OutdoorPvP::SendUpdateWorldState(uint32 field, uint32 value)
