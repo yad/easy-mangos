@@ -4,46 +4,33 @@ DELETE FROM gameobjectWHERE map IN (1, 530);
 
 -- EP and SI are map 1
 SET @MAP=1;
-SET @event1=0;
--- CAPTURE POINTS
+--  after spawning, modify the faction so that only the controller will be able to use it with SetUInt32Value(GAMEOBJECT_FACTION, faction_id);
+-- go_type EP_NPT_LordaeronShrine = 
+
+-- go_type EPCapturePoints[EP_TOWER_NUM] = {
 INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(182097, @MAP,  2574.51, -4794.89, 144.704, -1.45003, -0.097056);
 SET @CX=(select position_x from gameobject ORDER BY guid DESC LIMIT 1);
 SET @CY=(select position_y from gameobject ORDER BY guid DESC LIMIT 1);
 SET @CZ=(select position_z from gameobject ORDER BY guid DESC LIMIT 1);
 INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(@OPVP_TRIGGER, @MAP, @CX, @CY, @CZ, 0);
-SET @event1=0;
-INSERT INTO gameobject_map(guid,eventIndex) SELECT guid, @event1+0 FROM gameobject ORDER BY guid DESC LIMIT 1;
-INSERT INTO creature_map(guid,eventIndex) SELECT guid, @event1+0 FROM creature ORDER BY guid DESC LIMIT 1;
-INSERT INTO map_events(map, event1, event2, description) VALUES (@MAP, @event1+0, 0, 'EP_EWT capturepoint');
 
 INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(181899, @MAP,  3181.08, -4379.36, 174.123, -2.03472, -0.065392);
 SET @CX=(select position_x from gameobject ORDER BY guid DESC LIMIT 1);
 SET @CY=(select position_y from gameobject ORDER BY guid DESC LIMIT 1);
 SET @CZ=(select position_z from gameobject ORDER BY guid DESC LIMIT 1);
 INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(@OPVP_TRIGGER, @MAP, @CX, @CY, @CZ, 0);
-INSERT INTO gameobject_map(guid,eventIndex) SELECT guid, @event1+1 FROM gameobject ORDER BY guid DESC LIMIT 1;
-INSERT INTO creature_map(guid,eventIndex) SELECT guid, @event1+1 FROM creature ORDER BY guid DESC LIMIT 1;
-INSERT INTO map_events(map, event1, event2, description) VALUES (@MAP, @event1+1, 0, 'EP_NPT capturepoint');
 
 INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(182098, @MAP,  2962.71, -3042.31, 154.789, 2.08426, -0.074807);
 SET @CX=(select position_x from gameobject ORDER BY guid DESC LIMIT 1);
 SET @CY=(select position_y from gameobject ORDER BY guid DESC LIMIT 1);
 SET @CZ=(select position_z from gameobject ORDER BY guid DESC LIMIT 1);
 INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(@OPVP_TRIGGER, @MAP, @CX, @CY, @CZ, 0);
-INSERT INTO gameobject_map(guid,eventIndex) SELECT guid, @event1+2 FROM gameobject ORDER BY guid DESC LIMIT 1;
-INSERT INTO creature_map(guid,eventIndex) SELECT guid, @event1+2 FROM creature ORDER BY guid DESC LIMIT 1;
-INSERT INTO map_events(map, event1, event2, description) VALUES (@MAP, @event1+2, 0, 'EP_PWT capturepoint');
 
 INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(182096, @MAP,  1860.85, -3731.23, 196.716, -2.53214, 0.033967);
 SET @CX=(select position_x from gameobject ORDER BY guid DESC LIMIT 1);
 SET @CY=(select position_y from gameobject ORDER BY guid DESC LIMIT 1);
 SET @CZ=(select position_z from gameobject ORDER BY guid DESC LIMIT 1);
 INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values(@OPVP_TRIGGER, @MAP, @CX, @CY, @CZ, 0);
-INSERT INTO gameobject_map(guid,eventIndex) SELECT guid, @event1+3 FROM gameobject ORDER BY guid DESC LIMIT 1;
-INSERT INTO creature_map(guid,eventIndex) SELECT guid, @event1+3 FROM creature ORDER BY guid DESC LIMIT 1;
-INSERT INTO map_events(map, event1, event2, description) VALUES (@MAP, @event1+3, 0, 'EP_CGT capturepoint');
-
-
 
 
 -- go_type EPTowerFlags[EP_TOWER_NUM] = {
