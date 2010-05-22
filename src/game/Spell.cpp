@@ -4556,7 +4556,7 @@ SpellCastResult Spell::CheckCast(bool strict)
     }
      //check caster for combat
     if(m_caster->isInCombat() && IsNonCombatSpell(m_spellInfo) && !m_caster->isIgnoreUnitState(m_spellInfo) 
-       && !m_spellInfo->SpellFamilyFlags & SPELLFAMILYFLAG_ROGUE_STEALTH && m_spellInfo->SpellFamilyFlags & SPELLFAMILYFLAG_ROGUE_VANISH)  // Vanish hack
+       && (!(m_spellInfo->SpellFamilyFlags & SPELLFAMILYFLAG_ROGUE_STEALTH)) && (m_spellInfo->SpellFamilyFlags & SPELLFAMILYFLAG_ROGUE_VANISH))  // Vanish hack
         return SPELL_FAILED_AFFECTING_COMBAT;
 
     // cancel autorepeat spells if cast start when moving
@@ -5349,33 +5349,11 @@ SpellCastResult Spell::CheckCast(bool strict)
                 {
                     if(summon_prop->Group == SUMMON_PROP_GROUP_PETS)
                     {
-                        // Outdoor PvP - Trigger FireBomb
+                        if(m_caster->GetPetGUID())
+                            return SPELL_FAILED_ALREADY_HAVE_SUMMON;
 
                         if(m_caster->GetCharmGUID())
                             return SPELL_FAILED_ALREADY_HAVE_CHARM;
-                        // fire bomb trigger, can only be used in halaa opvp when flying on a path from a wyvern roost
-                        // yeah, hacky, I know, but neither item flags, nor spell attributes contained any useable data (or I was unable to find it)
-                        if(m_spellInfo->EffectMiscValue[i] == 18225 && m_caster->GetTypeId() == TYPEID_PLAYER)
-                        {
-                            // if not in halaa or not in flight, cannot be used
-                            if(m_caster->GetAreaId() != 3628 || !m_caster->isInFlight())
-                                return SPELL_FAILED_NOT_HERE;
-
-                            // if not on one of the specific taxi paths, then cannot be used
-                            uint32 src_node = ((Player*)m_caster)->m_taxi.GetTaxiSource();
-                            if( src_node != 103 && src_node != 105 && src_node != 107 && src_node != 109 )
-                                return SPELL_FAILED_NOT_HERE;
-                        }
-                        // Outdoor PvP - Trigger FireBomb end
-                        else
-                        {
-                            if(m_caster->GetPetGUID())
-                                 return SPELL_FAILED_ALREADY_HAVE_SUMMON;
-
-                            if(m_caster->GetCharmGUID())
-                                return SPELL_FAILED_ALREADY_HAVE_CHARM;
-                        }
-                        break;
                     }
                 }
 

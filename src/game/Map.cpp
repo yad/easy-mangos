@@ -35,7 +35,6 @@
 #include "Group.h"
 #include "MapRefManager.h"
 #include "DBCEnums.h"
-#include "OutdoorPvPMgr.h"
 
 #include "MapInstanced.h"
 #include "InstanceSaveMgr.h"
@@ -76,12 +75,6 @@ Map::~Map()
 
     if(!m_scriptSchedule.empty())
         sWorld.DecreaseScheduledScriptCount(m_scriptSchedule.size());
-
-    // removes the mappointer from an outdoorpvp-class
-    std::map<uint32, OutdoorPvP*>::iterator itr = m_OutdoorPvP.begin();
-    for(; itr != m_OutdoorPvP.end(); ++itr)
-        itr->second->SetMap(NULL);
-
 }
 
 bool Map::ExistMap(uint32 mapid,int gx,int gy)
@@ -789,14 +782,6 @@ void Map::Update(const uint32 &t_diff)
                 }
             }
         }
-    }
-
-    // Update OutdoorPvP.
-    if (t_diff < OUTDOORPVP_OBJECTIVE_UPDATE_INTERVAL)
-    {
-        std::map<uint32, OutdoorPvP*>::iterator itr = m_OutdoorPvP.begin();
-        for(; itr != m_OutdoorPvP.end(); ++itr)
-            itr->second->Update(t_diff);
     }
 
     // Send world objects and item update field changes

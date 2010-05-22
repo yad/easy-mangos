@@ -2122,6 +2122,11 @@ BattleGroundTypeId BattleGroundMgr::WeekendHolidayIdToBGType(HolidayIds holiday)
     }
 }
 
+bool BattleGroundMgr::IsBGWeekend(BattleGroundTypeId bgTypeId)
+{
+    return IsHolidayActive(BGTypeToWeekendHolidayId(bgTypeId));
+}
+
 void BattleGroundMgr::LoadBattleEventIndexes()
 {
     BattleGroundEventIdx events;

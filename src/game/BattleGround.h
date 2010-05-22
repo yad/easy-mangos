@@ -533,6 +533,21 @@ class BattleGround
 
         bool ArenaPlayersCount(); //End arena if some players were not ported
 
+        struct EventObjects
+        {
+            BGObjects gameobjects;
+            BGCreatures creatures;
+        };
+
+        // cause we create it dynamicly i use a map - to avoid resizing when
+        // using vector - also it contains 2*events concatenated with PAIR32
+        // this is needed to avoid overhead of a 2dimensional std::map
+        std::map<uint32, EventObjects> m_EventObjects;
+        // this must be filled first in BattleGroundXY::Reset().. else
+        // creatures will get added wrong
+        // door-events are automaticly added - but _ALL_ other must be in this vector
+        std::map<uint8, uint8> m_ActiveEvents;
+
     protected:
         //this method is called, when BG cannot spawn its own spirit guide, or something is wrong, It correctly ends BattleGround
         void EndNow();

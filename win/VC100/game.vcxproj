@@ -438,19 +438,9 @@
     <ClCompile Include="..\..\src\game\Object.cpp" />
     <ClCompile Include="..\..\src\game\ObjectAccessor.cpp" />
     <ClCompile Include="..\..\src\game\ObjectGridLoader.cpp" />
-    <ClCompile Include="..\..\src\game\OutdoorPvP.cpp" />
-    <ClCompile Include="..\..\src\game\OutdoorPvPEP.cpp" />
-    <ClCompile Include="..\..\src\game\OutdoorPvPHP.cpp" />
-    <ClCompile Include="..\..\src\game\OutdoorPvPMgr.cpp" />
-    <ClCompile Include="..\..\src\game\OutdoorPvPNA.cpp" />
-    <ClCompile Include="..\..\src\game\OutdoorPvPSI.cpp" />
-    <ClCompile Include="..\..\src\game\OutdoorPvPTF.cpp" />
-    <ClCompile Include="..\..\src\game\OutdoorPvPZM.cpp" />
-    <ClCompile Include="..\..\src\game\OutdoorPvPLA.cpp" />	
     <ClCompile Include="..\..\src\game\ObjectMgr.cpp" />
     <ClCompile Include="..\..\src\game\ObjectGuid.cpp" />
     <ClCompile Include="..\..\src\game\ObjectPosSelector.cpp" />
-    <ClCompile Include="..\..\src\game\OutdoorPvPObjectiveAI.cpp" />
     <ClCompile Include="..\..\src\game\Opcodes.cpp" />
     <ClCompile Include="..\..\src\game\PathFinder.cpp" />
     <ClCompile Include="..\..\src\game\pchdef.cpp">
@@ -611,7 +601,6 @@
     <ClInclude Include="..\..\src\game\ObjectGridLoader.h" />
     <ClInclude Include="..\..\src\game\ObjectMgr.h" />
     <ClInclude Include="..\..\src\game\ObjectPosSelector.h" />
-    <ClInclude Include="..\..\src\game\OutdoorPvPObjectiveAI.h" />
     <ClInclude Include="..\..\src\game\Opcodes.h" />
     <ClInclude Include="..\..\src\game\Path.h" />
     <ClInclude Include="..\..\src\game\PathFinder.h" />

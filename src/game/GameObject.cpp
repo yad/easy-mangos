@@ -37,7 +37,6 @@
 #include "BattleGroundAV.h"
 #include "Util.h"
 #include "ScriptCalls.h"
-#include "OutdoorPvPMgr.h"
 
 GameObject::GameObject() : WorldObject(), GridGameObject(this)
 {
@@ -100,8 +99,7 @@ void GameObject::RemoveFromWorld()
     Object::RemoveFromWorld();
 }
 
-
-bool GameObject::Create(uint32 guidlow, uint32 name_id, Map *map, uint32 phaseMask, float x, float y, float z, float ang, float rotation0, float rotation1, float rotation2, float rotation3, uint32 animprogress, GOState go_state, uint8 ArtKit)
+bool GameObject::Create(uint32 guidlow, uint32 name_id, Map *map, uint32 phaseMask, float x, float y, float z, float ang, float rotation0, float rotation1, float rotation2, float rotation3, uint32 animprogress, GOState go_state)
 {
     ASSERT(map);
     Relocate(x,y,z,ang);
@@ -150,8 +148,6 @@ bool GameObject::Create(uint32 guidlow, uint32 name_id, Map *map, uint32 phaseMa
     SetGoType(GameobjectTypes(goinfo->type));
     SetGoArtKit(0);                                         // unknown what this is
     SetGoAnimProgress(animprogress);
-
-    SetGoArtKit(ArtKit);
 
     //Notify the map's instance data.
     //Only works if you create the object in it, not if it is moves to that map.
@@ -549,7 +545,6 @@ void GameObject::SaveToDB(uint32 mapid, uint8 spawnMask, uint32 phaseMask)
     data.animprogress = GetGoAnimProgress();
     data.go_state = GetGoState();
     data.spawnMask = spawnMask;
-    data.ArtKit = GetGoArtKit();
 
     // updated in DB
     std::ostringstream ss;
@@ -603,13 +598,10 @@ bool GameObject::LoadFromDB(uint32 guid, Map *map)
     uint32 animprogress = data->animprogress;
     GOState go_state = data->go_state;
 
-	uint8 ArtKit = data->ArtKit;
-
     m_DBTableGuid = guid;
     if (map->GetInstanceId() != 0) guid = sObjectMgr.GenerateLowGuid(HIGHGUID_GAMEOBJECT);
 
-
-    if (!Create(guid,entry, map, phaseMask, x, y, z, ang, rotation0, rotation1, rotation2, rotation3, animprogress, go_state, ArtKit) )
+    if (!Create(guid,entry, map, phaseMask, x, y, z, ang, rotation0, rotation1, rotation2, rotation3, animprogress, go_state) )
         return false;
 
     if (!GetGOInfo()->GetDespawnPossibility() && !GetGOInfo()->IsDespawnAtAction() && data->spawntimesecs >= 0)
@@ -1400,10 +1392,7 @@ void GameObject::Use(Unit* user)
     SpellEntry const *spellInfo = sSpellStore.LookupEntry( spellId );
     if (!spellInfo)
     {
-        if(user->GetTypeId()!=TYPEID_PLAYER || !sOutdoorPvPMgr.HandleCustomSpell((Player*)user,spellId,this))
-            sLog.outError("WORLD: unknown spell id %u at use action for gameobject (Entry: %u GoType: %u )", spellId,GetEntry(),GetGoType());
-        else
-            sLog.outDebug("WORLD: %u non-dbc spell was handled by OutdoorPvP", spellId);
+        sLog.outError("WORLD: unknown spell id %u at use action for gameobject (Entry: %u GoType: %u )", spellId,GetEntry(),GetGoType());
         return;
     }
 

@@ -44,7 +44,6 @@
 #include "GridNotifiersImpl.h"
 #include "CellImpl.h"
 #include "Vehicle.h"
-#include "OutdoorPvPMgr.h"
 
 // apply implementation of the singletons
 #include "Policies/SingletonImp.h"
