@@ -3076,7 +3076,7 @@ void Spell::EffectApplyAura(SpellEffectIndex eff_idx)
     }
 
     //Molten fury, buff from Flame tsunami, should affect only sartarions adds...
-    if(m_spellInfo->Id == 60430 && (unitTarget->GetTypeID() != TYPEID_UNIT || unitTarget->GetEntry() != 30643))
+    if(m_spellInfo->Id == 60430 && (unitTarget->GetTypeId() != TYPEID_UNIT || unitTarget->GetEntry() != 30643))
         return;
 
 
