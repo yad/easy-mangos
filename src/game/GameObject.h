@@ -309,8 +309,8 @@ struct GameObjectInfo
         {
             uint32 radius;                                  //0
             uint32 spell;                                   //1
-            uint32 worldState1;                             //2 PROGRESS_BAR_SHOW
-            uint32 worldstate2;                             //3 SLIDER_POS
+            uint32 worldState1;                             //2
+            uint32 worldstate2;                             //3
             uint32 winEventID1;                             //4
             uint32 winEventID2;                             //5
             uint32 contestedEventID1;                       //6
@@ -320,7 +320,7 @@ struct GameObjectInfo
             uint32 neutralEventID1;                         //10
             uint32 neutralEventID2;                         //11
             uint32 neutralPercent;                          //12
-            uint32 worldstate3;                             //13 PROGRESS_BAR_PERCENT_GREY
+            uint32 worldstate3;                             //13
             uint32 minSuperiority;                          //14
             uint32 maxSuperiority;                          //15
             uint32 minTime;                                 //16
