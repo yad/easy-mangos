@@ -138,6 +138,7 @@ enum BG_AB_Sounds
 #define BG_AB_ABBGWeekendHonorTicks         200
 #define BG_AB_NotABBGWeekendReputationTicks 200
 #define BG_AB_ABBGWeekendReputationTicks    150
+#define BG_AB_ExperiencesTicks              260
 
 // Tick intervals and given points: case 0,1,2,3,4,5 captured nodes
 const uint32 BG_AB_TickIntervals[6] = {0, 12000, 9000, 6000, 3000, 1000};
@@ -226,6 +227,7 @@ class BattleGroundAB : public BattleGround
         uint32              m_lastTick[BG_TEAMS_COUNT];
         uint32              m_HonorScoreTics[BG_TEAMS_COUNT];
         uint32              m_ReputationScoreTics[BG_TEAMS_COUNT];
+        uint32              m_ExperiencesTicks[BG_TEAMS_COUNT];
         bool                m_IsInformedNearVictory;
         uint32              m_HonorTics;
         uint32              m_ReputationTics;
