@@ -25,22 +25,18 @@
 
 #include "Common.h"
 #include "Auth/BigNumber.h"
-#include "sockets/TcpSocket.h"
-#include "sockets/SocketHandler.h"
-#include "sockets/ListenSocket.h"
-#include "sockets/Utility.h"
-#include "sockets/Parse.h"
-#include "sockets/Socket.h"
 #include "Auth/Sha1.h"
 #include "ByteBuffer.h"
 
+#include "BufferedSocket.h"
+
 /// Handle login commands
-class AuthSocket: public TcpSocket
+class AuthSocket: public BufferedSocket
 {
     public:
         const static int s_BYTE_SIZE = 32;
 
-        AuthSocket(ISocketHandler& h);
+        AuthSocket();
         ~AuthSocket();
 
         void OnAccept();
@@ -61,10 +57,6 @@ class AuthSocket: public TcpSocket
 
         void _SetVSFields(const std::string& rI);
 
-        FILE *pPatch;
-        ACE_Thread_Mutex patcherLock;
-        bool IsLag();
-
     private:
 
         BigNumber N, s, g, v;
@@ -83,6 +75,10 @@ class AuthSocket: public TcpSocket
         uint16 _build;
         bool _isTrial;
         AccountTypes _accountSecurityLevel;
+
+        ACE_HANDLE patch_;
+
+        void InitPatch();
 };
 #endif
 /// @}
