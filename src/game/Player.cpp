@@ -7720,7 +7720,7 @@ bool Player::IsOutdoorPvPActive()
 {
     return (isAlive() && !HasInvisibilityAura() && !HasStealthAura() &&
            (HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_IN_PVP) || sWorld.IsPvPRealm()) &&
-           !isInFlight());
+           !m_movementInfo.HasMovementFlag(MOVEMENTFLAG_FLYING2) && !isInFlight());
 }
 
 void Player::DuelComplete(DuelCompleteType type)
