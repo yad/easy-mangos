@@ -531,8 +531,6 @@ class BattleGround
         /* virtual score-array - get's used in bg-subclasses */
         int32 m_TeamScores[BG_TEAMS_COUNT];
 
-        bool ArenaPlayersCount(); //End arena if some players were not ported
-
         struct EventObjects
         {
             BGObjects gameobjects;
@@ -547,6 +545,8 @@ class BattleGround
         // creatures will get added wrong
         // door-events are automaticly added - but _ALL_ other must be in this vector
         std::map<uint8, uint8> m_ActiveEvents;
+
+        bool ArenaPlayersCount(); //End arena if some players were not ported
 
     protected:
         //this method is called, when BG cannot spawn its own spirit guide, or something is wrong, It correctly ends BattleGround
