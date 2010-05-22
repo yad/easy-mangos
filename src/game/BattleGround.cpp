@@ -686,7 +686,7 @@ void BattleGround::RewardXpToTeam(uint32 Xp, float percentOfLevel, uint32 TeamID
                 percentOfLevel = percentOfLevel / 100;
                 gain = uint32(float(plr->GetUInt32Value(PLAYER_NEXT_LEVEL_XP))*percentOfLevel);
             }
-            plr->GiveXp(gain, NULL);
+            plr->GiveXP(gain, NULL);
         }
     }
 }

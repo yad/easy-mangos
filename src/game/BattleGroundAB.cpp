@@ -137,7 +137,7 @@ void BattleGroundAB::Update(uint32 diff)
                 }
                 if (m_ExperiencesTicks[team] >= BG_AB_ExperiencesTicks)
                 {
-                    RewardXpToTeam(0, 0.8, team);
+                    RewardXpToTeam(0, 0.8, (team == BG_TEAM_ALLIANCE) ? ALLIANCE : HORDE);
                     m_ExperiencesTicks[team] -= BG_AB_ExperiencesTicks;
                 }
 
