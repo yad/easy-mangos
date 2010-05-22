@@ -33,15 +33,6 @@ OutdoorPvPEP::OutdoorPvPEP()
     memset(EP_Controls,0,sizeof(EP_Controls));
     m_AllianceTowersControlled = 0;
     m_HordeTowersControlled = 0;
-
-    #define EVENT_CP_0 0
-    #define EVENT_CP_1 1
-    #define EVENT_CP_2 2
-    #define EVENT_CP_3 3
-    SetActiveEvent(EVENT_CP_0, 0);
-    SetActiveEvent(EVENT_CP_1, 0);
-    SetActiveEvent(EVENT_CP_2, 0);
-    SetActiveEvent(EVENT_CP_3, 0);
 }
 
 OutdoorPvPObjectiveEP_EWT::OutdoorPvPObjectiveEP_EWT(OutdoorPvP *pvp)
