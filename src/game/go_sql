@@ -1,13 +1,13 @@
 
 -- go_type HPCapturePoints[HP_TOWER_NUM] = {
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('182175', @MAP, ' -471.462', '3451.09', '34.6432', '0.174533'); -- team: -471.462
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('182174', @MAP, ' -184.889', '3476.93', '38.205', '-0.017453'); -- team: -184.889
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('182173', @MAP, ' -290.016', '3702.42', '56.6729', '0.034907'); -- team: -290.016
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(182175,  -471.462, 3451.09, 34.6432, 0.174533, 0);
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(182174,  -184.889, 3476.93, 38.205, -0.017453, 0);
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(182173,  -290.016, 3702.42, 56.6729, 0.034907, 0);
 
 -- go_type HPTowerFlags[HP_TOWER_NUM] = {
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('183514', @MAP, ' -467.078', '3528.17', '64.7121', '3.14159'); -- team: -467.078
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('182525', @MAP, ' -187.887', '3459.38', '60.0403', '-3.12414'); -- team: -187.887
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('183515', @MAP, ' -289.610', '3696.83', '75.9447', '3.12414'); -- team: -289.610
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(183514,  -467.078, 3528.17, 64.7121, 3.14159, 0);
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(182525,  -187.887, 3459.38, 60.0403, -3.12414, 0);
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(183515,  -289.610, 3696.83, 75.9447, 3.12414, 0);
 
 
 ---------------------------------
@@ -18,16 +18,16 @@ INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) 
 
 
 -- go_type EPCapturePoints[EP_TOWER_NUM] = {
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('182097', @MAP, ' 2574.51', '-4794.89', '144.704', '-1.45003'); -- team: 2574.51
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('181899', @MAP, ' 3181.08', '-4379.36', '174.123', '-2.03472'); -- team: 3181.08
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('182098', @MAP, ' 2962.71', '-3042.31', '154.789', '2.08426'); -- team: 2962.71
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('182096', @MAP, ' 1860.85', '-3731.23', '196.716', '-2.53214'); -- team: 1860.85
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(182097,  2574.51, -4794.89, 144.704, -1.45003, -0.097056);
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(181899,  3181.08, -4379.36, 174.123, -2.03472, -0.065392);
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(182098,  2962.71, -3042.31, 154.789, 2.08426, -0.074807);
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(182096,  1860.85, -3731.23, 196.716, -2.53214, 0.033967);
 
 -- go_type EPTowerFlags[EP_TOWER_NUM] = {
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('182106', @MAP, ' 2569.60', '-4772.93', '115.399', '2.72271'); -- team: 2569.60
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('182106', @MAP, ' 3148.17', '-4365.51', '145.029', '1.53589'); -- team: 3148.17
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('182106', @MAP, ' 2992.63', '-3022.95', '125.593', '3.03687'); -- team: 2992.63
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('182106', @MAP, ' 1838.42', '-3703.56', '167.713', '0.890118'); -- team: 1838.42
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(182106,  2569.60, -4772.93, 115.399, 2.72271, 0);
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(182106,  3148.17, -4365.51, 145.029, 1.53589, 0);
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(182106,  2992.63, -3022.95, 125.593, 3.03687, 0);
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(182106,  1838.42, -3703.56, 167.713, 0.890118, 0);
 
 
 -----------------------
@@ -35,62 +35,62 @@ INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) 
 
 --  spawned when the alliance is attacking, horde is in control
 -- go_type HordeControlGOs[NA_CONTROL_GO_NUM] = {
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('182267', @MAP, '-1815.8', '8036.51', '-26.2354', '-2.89725'); -- team:-1815.8
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('182280', @MAP, '-1507.95', '8132.1', '-19.5585', '-1.3439'); -- team:-1507.95
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('182281', @MAP, '-1384.52', '7779.33', '-11.1663', '-0.575959'); -- team:-1384.52
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('182282', @MAP, '-1650.11', '7732.56', '-15.4505', '-2.80998'); -- team:-1650.11
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(182267, -1815.8, 8036.51, -26.2354, -2.89725, 0);
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(182280, -1507.95, 8132.1, -19.5585, -1.3439, 0);
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(182281, -1384.52, 7779.33, -11.1663, -0.575959, 0);
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(182282, -1650.11, 7732.56, -15.4505, -2.80998, 0);
 
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('182222', @MAP, '-1825.4022', '8039.2602', '-26.08', '-2.89725'); -- team:-1825.4022
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('182272', @MAP, '-1515.37', '8136.91', '-20.42', '-1.3439'); -- team:-1515.37
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('182273', @MAP, '-1377.95', '7773.44', '-10.31', '-0.575959'); -- team:-1377.95
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('182274', @MAP, '-1659.87', '7733.15', '-15.75', '-2.80998'); -- team:-1659.87
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(182222, -1825.4022, 8039.2602, -26.08, -2.89725, 0);
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(182272, -1515.37, 8136.91, -20.42, -1.3439, 0);
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(182273, -1377.95, 7773.44, -10.31, -0.575959, 0);
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(182274, -1659.87, 7733.15, -15.75, -2.80998, 0);
 
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('182266', @MAP, '-1815.8', '8036.51', '-26.2354', '-2.89725'); -- team:-1815.8
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('182275', @MAP, '-1507.95', '8132.1', '-19.5585', '-1.3439'); -- team:-1507.95
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('182276', @MAP, '-1384.52', '7779.33', '-11.1663', '-0.575959'); -- team:-1384.52
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('182277', @MAP, '-1650.11', '7732.56', '-15.4505', '-2.80998'); -- team:-1650.11
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(182266, -1815.8, 8036.51, -26.2354, -2.89725, 0);
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(182275, -1507.95, 8132.1, -19.5585, -1.3439, 0);
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(182276, -1384.52, 7779.33, -11.1663, -0.575959, 0);
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(182277, -1650.11, 7732.56, -15.4505, -2.80998, 0);
 
 --  spawned when the horde is attacking, alliance is in control
 -- go_type AllianceControlGOs[NA_CONTROL_GO_NUM] = {
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('182301', @MAP, '-1815.8', '8036.51', '-26.2354', '-2.89725'); -- team:-1815.8
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('182302', @MAP, '-1507.95', '8132.1', '-19.5585', '-1.3439'); -- team:-1507.95
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('182303', @MAP, '-1384.52', '7779.33', '-11.1663', '-0.575959'); -- team:-1384.52
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('182304', @MAP, '-1650.11', '7732.56', '-15.4505', '-2.80998'); -- team:-1650.11
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(182301, -1815.8, 8036.51, -26.2354, -2.89725, 0);
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(182302, -1507.95, 8132.1, -19.5585, -1.3439, 0);
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(182303, -1384.52, 7779.33, -11.1663, -0.575959, 0);
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(182304, -1650.11, 7732.56, -15.4505, -2.80998, 0);
 
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('182305', @MAP, '-1825.4022', '8039.2602', '-26.08', '-2.89725'); -- team:-1825.4022
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('182306', @MAP, '-1515.37', '8136.91', '-20.42', '-1.3439'); -- team:-1515.37
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('182307', @MAP, '-1377.95', '7773.44', '-10.31', '-0.575959'); -- team:-1377.95
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('182308', @MAP, '-1659.87', '7733.15', '-15.75', '-2.80998'); -- team:-1659.87
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(182305, -1825.4022, 8039.2602, -26.08, -2.89725, 0);
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(182306, -1515.37, 8136.91, -20.42, -1.3439, 0);
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(182307, -1377.95, 7773.44, -10.31, -0.575959, 0);
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(182308, -1659.87, 7733.15, -15.75, -2.80998, 0);
 
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('182297', @MAP, '-1815.8', '8036.51', '-26.2354', '-2.89725'); -- team:-1815.8
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('182298', @MAP, '-1507.95', '8132.1', '-19.5585', '-1.3439'); -- team:-1507.95
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('182299', @MAP, '-1384.52', '7779.33', '-11.1663', '-0.575959'); -- team:-1384.52
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('182300', @MAP, '-1650.11', '7732.56', '-15.4505', '-2.80998'); -- team:-1650.11
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(182297, -1815.8, 8036.51, -26.2354, -2.89725, 0);
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(182298, -1507.95, 8132.1, -19.5585, -1.3439, 0);
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(182299, -1384.52, 7779.33, -11.1663, -0.575959, 0);
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(182300, -1650.11, 7732.56, -15.4505, -2.80998, 0);
 
 
 --------------------
 
 -- go_type TFCapturePoints[TF_TOWER_NUM] = {
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('183104', @MAP, '-3081.65', '5335.03', '17.1853', '-2.14675'); -- team:-3081.65
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('183411', @MAP, '-2939.9', '4788.73', '18.987', '2.77507'); -- team:-2939.9
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('183412', @MAP, '-3174.94', '4440.97', '16.2281', '1.86750'); -- team:-3174.94
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('183413', @MAP, '-3603.31', '4529.15', '20.9077', '0.994838'); -- team:-3603.31
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('183414', @MAP, '-3812.37', '4899.3', '17.7249', '0.087266'); -- team:-3812.37
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(183104, -3081.65, 5335.03, 17.1853, -2.14675, 0);
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(183411, -2939.9, 4788.73, 18.987, 2.77507, 0);
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(183412, -3174.94, 4440.97, 16.2281, 1.86750, 0);
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(183413, -3603.31, 4529.15, 20.9077, 0.994838, 0);
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(183414, -3812.37, 4899.3, 17.7249, 0.087266, 0);
 
 
 -------------
 
 -- go_type ZMCapturePoints[ZM_NUM_BEACONS] = {
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('182523', @MAP, '303.243', '6841.36', '40.1245', '-1.58825'); -- team:303.243
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('182522', @MAP, '336.466', '7340.26', '41.4984', '-1.58825'); -- team:336.466
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(182523, 303.243, 6841.36, 40.1245, -1.58825, 0);
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(182522, 336.466, 7340.26, 41.4984, -1.58825, 0);
 
 
 --  banners 182527, 182528, 182529, gotta check them ingame
 -- go_type ZM_Banner_A =
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('182527', @MAP, '253.54', '7083.81', '36.7728', '-0.017453'); -- team:253.54
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(182527, 253.54, 7083.81, 36.7728, -0.017453, 0);
 -- go_type ZM_Banner_H =
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('182528', @MAP, '253.54', '7083.81', '36.7728', '-0.017453'); -- team:253.54
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(182528, 253.54, 7083.81, 36.7728, -0.017453, 0);
 -- go_type ZM_Banner_N =
-INSERT INTO creature (id, map, position_x, position_y, position_z, orientation) values('182529', @MAP, '253.54', '7083.81', '36.7728', '-0.017453'); -- team:253.54
+INSERT INTO gameobject (id, map, position_x, position_y, position_z, orientation) values(182529, 253.54, 7083.81, 36.7728, -0.017453, 0);
 
 
