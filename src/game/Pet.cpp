@@ -70,12 +70,14 @@ void Pet::AddToWorld()
 
 void Pet::RemoveFromWorld()
 {
+    sWorld.m_objectRemoveLock.acquire();
     ///- Remove the pet from the accessor
     if(IsInWorld())
         GetMap()->GetObjectsStore().erase<Pet>(GetGUID(), (Pet*)NULL);
 
     ///- Don't call the function for Creature, normal mobs + totems go in a different storage
     Unit::RemoveFromWorld();
+    sWorld.m_objectRemoveLock.release();
 }
 
 bool Pet::LoadPetFromDB( Player* owner, uint32 petentry, uint32 petnumber, bool current )
