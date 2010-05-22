@@ -7267,7 +7267,12 @@ void Spell::EffectCharge(SpellEffectIndex /*eff_idx*/)
     unitTarget->GetContactPoint(m_caster, x, y, z, 3.6f);
 
     // Try to normalize Z coord cuz GetContactPoint do nothing with Z axis
-    unitTarget->UpdateGroundPositionZ(x, y, z, 5.0f);
+    if(!m_caster->GetMap()->IsNextZcoordOK(x, y, z, 30.0f))
+    {
+        SendCastResult(SPELL_FAILED_TRY_AGAIN);
+        return;
+    }
+    m_caster->UpdateGroundPositionZ(x, y, z, 30.0f);
 
     if (unitTarget->GetTypeId() != TYPEID_PLAYER)
         ((Creature *)unitTarget)->StopMoving();
@@ -7302,7 +7307,12 @@ void Spell::EffectCharge2(SpellEffectIndex /*eff_idx*/)
         return;
 
     // Try to normalize Z coord cuz GetContactPoint do nothing with Z axis
-    unitTarget->UpdateGroundPositionZ(x, y, z, 5.0f);
+    if(!m_caster->GetMap()->IsNextZcoordOK(x, y, z, 30.0f))
+    {
+        SendCastResult(SPELL_FAILED_TRY_AGAIN);
+        return;
+    }
+    m_caster->UpdateGroundPositionZ(x, y, z, 30.0f);
 
     // Only send MOVEMENTFLAG_WALK_MODE, client has strange issues with other move flags
     m_caster->MonsterMove(x, y, z, 1);
