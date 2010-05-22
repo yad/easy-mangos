@@ -432,10 +432,10 @@ void BattleGroundEY::Reset()
         m_PointBarStatus[i] = BG_EY_PROGRESS_BAR_STATE_MIDDLE;
         m_PlayersNearPoint[i].clear();
         m_PlayersNearPoint[i].reserve(15);                  //tip size
-        SetActiveEvent(i, BG_EYE_NEUTRAL_TEAM);
+        m_ActiveEvents[i] = BG_EYE_NEUTRAL_TEAM;            // neutral team owns every node
     }
     // the flag in the middle is spawned at beginning
-        SetActiveEvent(BG_EY_EVENT_CAPTURE_FLAG, BG_EY_EVENT2_FLAG_CENTER);
+    m_ActiveEvents[BG_EY_EVENT_CAPTURE_FLAG] = BG_EY_EVENT2_FLAG_CENTER;
 
     m_PlayersNearPoint[BG_EY_PLAYERS_OUT_OF_POINTS].clear();
     m_PlayersNearPoint[BG_EY_PLAYERS_OUT_OF_POINTS].reserve(30);

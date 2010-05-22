@@ -132,7 +132,8 @@ void LoadHelper(CellGuidSet const& guid_set, CellPair &cellpair, GridRefManager<
         obj->AddToWorld();
         if(obj->isActiveObject())
             map->AddToActive(obj);
-        map->OnObjectDBLoad(obj);
+        if (bg)
+            bg->OnObjectDBLoad(obj);
 
         ++count;
     }

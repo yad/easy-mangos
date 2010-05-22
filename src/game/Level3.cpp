@@ -1145,11 +1145,11 @@ bool ChatHandler::HandleReloadItemRequiredTragetCommand(const char*)
     return true;
 }
 
-bool ChatHandler::HandleReloadMapEventCommand(const char*)
+bool ChatHandler::HandleReloadBattleEventCommand(const char*)
 {
-    sLog.outString("Re-Loading Map Eventindexes...");
-    sMapMgr.LoadMapEventIndexes();
-    SendGlobalSysMessage("DB table `gameobject_mapevent` and `creature_mapevent` reloaded.");
+    sLog.outString( "Re-Loading BattleGround Eventindexes..." );
+    sBattleGroundMgr.LoadBattleEventIndexes();
+    SendGlobalSysMessage("DB table `gameobject_battleground` and `creature_battleground` reloaded.");
     return true;
 }
 
