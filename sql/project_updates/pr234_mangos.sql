@@ -15,7 +15,7 @@ insert into `gameobject_battleground` values
 ('200062','254','0'),
 ('200063','254','0');
  
-insert into `map_events` values
+insert into `battleground_events` values
 ('617','252','0','buffs'),
 ('617','254','0','doors');
  
