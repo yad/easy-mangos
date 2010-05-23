@@ -5399,6 +5399,12 @@ void Aura::HandlePeriodicDamage(bool apply, bool Real)
                         return;
                     }
                 }
+                // Drain Soul
+                else if (m_spellProto->SpellFamilyFlags & UI64LIT(0x0000000000004000))
+                {
+                    if (m_target->GetHealth() * 100 / m_target->GetMaxHealth() <= 25)
+                        m_modifier.m_amount *= 4;
+                }
                 break;
             }
             case SPELLFAMILY_DRUID:
