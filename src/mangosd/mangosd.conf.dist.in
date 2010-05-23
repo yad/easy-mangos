@@ -324,7 +324,7 @@ CleanCharacterDB = 1
 
 LogSQL = 1
 PidFile = ""
-LogLevel = 3
+LogLevel = 0
 LogTime = 0
 LogFile = "Server.log"
 LogTimestamp = 0
