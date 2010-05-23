@@ -219,7 +219,7 @@ void Map::LoadNavMesh(int gx, int gy)
     }
     else
     {
-        sLog.outError("No MoveMap for [%i][%i][%i]",i_id,gx,gy);
+        //sLog.outError("No MoveMap for [%i][%i][%i]",i_id,gx,gy);
     }
     delete[] tmp;
 }
