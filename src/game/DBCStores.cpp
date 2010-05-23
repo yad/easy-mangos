@@ -480,6 +480,10 @@ void LoadDBCStores(const std::string& dataPath)
     SpellEntry *sfix6 = const_cast<SpellEntry*>(sSpellStore.LookupEntry(33778));
     sfix6->DmgClass = SPELL_DAMAGE_CLASS_MAGIC;
 
+    //Spirit of Redemption has AURA_INTERRUPT_FLAG_CAST, what the...? Maybe blizz changed this flag
+    SpellEntry *sfix7 = const_cast<SpellEntry*>(sSpellStore.LookupEntry(27827));
+    sfix7->AuraInterruptFlags = 0;
+
     for (uint32 j = 0; j < sSkillLineAbilityStore.GetNumRows(); ++j)
     {
         SkillLineAbilityEntry const *skillLine = sSkillLineAbilityStore.LookupEntry(j);

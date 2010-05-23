@@ -3007,10 +3007,7 @@ void Spell::cast(bool skipCheck)
             else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x000000008000))
             {
                 if (m_targets.getUnitTarget() && m_targets.getUnitTarget() == m_caster)
-                {
                     AddPrecastSpell(25771);                 // Forbearance
-                    AddPrecastSpell(61987);                 // Avenging Wrath Marker
-                }
             }
             // Aura Mastery 
             else if (m_spellInfo->Id == 31821) 
@@ -5704,7 +5701,7 @@ SpellCastResult Spell::CheckCasterAuras() const
                 dispel_immune |= GetDispellMask(DispelType(m_spellInfo->EffectMiscValue[i]));
         }
         // immune movement impairment and loss of control
-        if (m_spellInfo->Id == 42292 || m_spellInfo->Id ==  59752)                       // PvP Trinket
+        if (m_spellInfo->Id == 42292 || m_spellInfo->Id ==  59752)
             mechanic_immune = IMMUNE_TO_MOVEMENT_IMPAIRMENT_AND_LOSS_CONTROL_MASK;
     }
 

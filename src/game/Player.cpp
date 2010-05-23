@@ -2783,6 +2783,8 @@ void Player::AddToWorld()
 
 void Player::RemoveFromWorld()
 {
+     sWorld.m_objectRemoveLock.acquire();
+
     // cleanup
     if(IsInWorld())
     {
@@ -2801,6 +2803,8 @@ void Player::RemoveFromWorld()
     ///- It will crash when updating the ObjectAccessor
     ///- The player should only be removed when logging out
     Unit::RemoveFromWorld();
+
+    sWorld.m_objectRemoveLock.release();
 }
 
 void Player::RewardRage( uint32 damage, uint32 weaponSpeedHitFactor, bool attacker )
@@ -11985,8 +11989,9 @@ Item* Player::EquipItem( uint16 pos, Item *pItem, bool update )
             if(pProto && pProto->ItemSet)
                 AddItemsSetItem(this, pItem);
 
-            if(IsWeaponDisarmed(slot))
-                return NULL;
+            //There must be some check also for unequip...
+            // if(IsWeaponDisarmed(slot))
+              //   return NULL;
 
             _ApplyItemMods(pItem, slot, true);
 
@@ -13719,7 +13724,7 @@ void Player::PrepareGossipMenu(WorldObject *pSource, uint32 menuId)
     if (pMenuItemBounds.first == pMenuItemBounds.second && menuId == GetDefaultGossipMenuForSource(pSource))
         pMenuItemBounds = sObjectMgr.GetGossipMenuItemsMapBounds(0);
 
-    bool canTalkToCredit = true;
+    bool canTalkToCredit = pSource->GetTypeId() == TYPEID_UNIT;
 
     for(GossipMenuItemsMap::const_iterator itr = pMenuItemBounds.first; itr != pMenuItemBounds.second; ++itr)
     {
@@ -13815,8 +13820,6 @@ void Player::PrepareGossipMenu(WorldObject *pSource, uint32 menuId)
         {
             GameObject *pGo = (GameObject*)pSource;
 
-            canTalkToCredit = false;
-
             switch(itr->second.option_id)
             {
                 case GOSSIP_OPTION_QUESTGIVER:
@@ -13863,7 +13866,7 @@ void Player::PrepareGossipMenu(WorldObject *pSource, uint32 menuId)
     if (canTalkToCredit)
     {
         if (pSource->HasFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP))
-            TalkedToCreature(((Creature*)pSource)->GetEntry(), ((Creature*)pSource)->GetGUID());
+            TalkedToCreature(pSource->GetEntry(), pSource->GetGUID());
     }
 
     // some gossips aren't handled in normal way ... so we need to do it this way .. TODO: handle it in normal way ;-)

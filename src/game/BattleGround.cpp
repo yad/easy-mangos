@@ -661,6 +661,35 @@ void BattleGround::RewardReputationToTeam(uint32 faction_id, uint32 Reputation, 
             plr->GetReputationMgr().ModifyReputation(factionEntry, Reputation);
     }
 }
+void BattleGround::RewardXpToTeam(uint32 Xp, float percentOfLevel, uint32 TeamID)
+{
+    for(BattleGroundPlayerMap::const_iterator itr = m_Players.begin(); itr != m_Players.end(); ++itr)
+    {
+        if (itr->second.OfflineRemoveTime)
+            continue;
+        Player *plr = sObjectMgr.GetPlayer(itr->first);
+
+        if (!plr)
+        {
+            sLog.outError("BattleGround:RewardXpToTeam: Player (GUID: %u) not found!", GUID_LOPART(itr->first));
+            continue;
+        }
+
+        uint32 team = itr->second.Team;
+        if(!team) team = plr->GetTeam();
+
+        if (team == TeamID)
+        {
+            uint32 gain = Xp;
+            if(gain == 0 && percentOfLevel != 0)
+            {
+                percentOfLevel = percentOfLevel / 100;
+                gain = uint32(float(plr->GetUInt32Value(PLAYER_NEXT_LEVEL_XP))*percentOfLevel);
+            }
+            plr->GiveXP(gain, NULL);
+        }
+    }
+}
 
 void BattleGround::UpdateWorldState(uint32 Field, uint32 Value)
 {

@@ -1461,15 +1461,15 @@ void WorldObject::UpdateGroundPositionZ(float x, float y, float &z, float maxDif
 {
     maxDiff = maxDiff >= 100.0f ? 10.0f : sqrtf(maxDiff);
     bool useVmaps = false;
-    if( GetBaseMap()->GetHeight(x, y, z, false) <  GetBaseMap()->GetHeight(x, y, z, true) ) // check use of vmaps
+    if( GetBaseMap()->GetHeight(x, y, z+2.0f, false) <  GetBaseMap()->GetHeight(x, y, z+2.0f, true) ) // check use of vmaps
         useVmaps = true;
 
-    float normalizedZ = GetBaseMap()->GetHeight(x, y, z, useVmaps);
+    float normalizedZ = GetBaseMap()->GetHeight(x, y, z+2.0f, useVmaps);
     // check if its reacheable
     if(normalizedZ <= INVALID_HEIGHT || fabs(normalizedZ-z) > maxDiff)
     {
         useVmaps = !useVmaps;                                // try change vmap use
-        normalizedZ = GetBaseMap()->GetHeight(x, y, z, useVmaps);
+        normalizedZ = GetBaseMap()->GetHeight(x, y, z+2.0f, useVmaps);
         if(normalizedZ <= INVALID_HEIGHT || fabs(normalizedZ-z) > maxDiff)
             return;                                        // Do nothing in case of another bad result 
     }

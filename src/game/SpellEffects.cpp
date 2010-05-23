@@ -3087,10 +3087,8 @@ void Spell::EffectApplyAura(SpellEffectIndex eff_idx)
     //Molten fury, buff from Flame tsunami, should affect only sartarions adds...
     if(m_spellInfo->Id == 60430 && (unitTarget->GetTypeId() != TYPEID_UNIT || unitTarget->GetEntry() != 30643))
         return;
-    
 
     DEBUG_FILTER_LOG(LOG_FILTER_SPELL_CAST, "Spell: Aura is: %u", m_spellInfo->EffectApplyAuraName[eff_idx]);
-
     Aura* Aur = CreateAura(m_spellInfo, eff_idx, &m_currentBasePoints[eff_idx], unitTarget, caster, m_CastItem);
 
     // Now Reduce spell duration using data received at spell hit
@@ -7339,7 +7337,12 @@ void Spell::EffectCharge(SpellEffectIndex /*eff_idx*/)
     unitTarget->GetContactPoint(m_caster, x, y, z, 3.6f);
 
     // Try to normalize Z coord cuz GetContactPoint do nothing with Z axis
-    unitTarget->UpdateGroundPositionZ(x, y, z, 5.0f);
+    if(!m_caster->GetMap()->IsNextZcoordOK(x, y, z, 30.0f))
+    {
+        SendCastResult(SPELL_FAILED_TRY_AGAIN);
+        return;
+    }
+    m_caster->UpdateGroundPositionZ(x, y, z, 30.0f);
 
     if (unitTarget->GetTypeId() != TYPEID_PLAYER)
         ((Creature *)unitTarget)->StopMoving();
@@ -7377,7 +7380,12 @@ void Spell::EffectCharge2(SpellEffectIndex /*eff_idx*/)
         return;
 
     // Try to normalize Z coord cuz GetContactPoint do nothing with Z axis
-    unitTarget->UpdateGroundPositionZ(x, y, z, 5.0f);
+    if(!m_caster->GetMap()->IsNextZcoordOK(x, y, z, 30.0f))
+    {
+        SendCastResult(SPELL_FAILED_TRY_AGAIN);
+        return;
+    }
+    m_caster->UpdateGroundPositionZ(x, y, z, 30.0f);
 
     // Only send MOVEMENTFLAG_WALK_MODE, client has strange issues with other move flags
     m_caster->SendMonsterMove(x, y, z, SPLINETYPE_NORMAL, m_caster->GetTypeId() == TYPEID_PLAYER ? SPLINEFLAG_WALKMODE : ((Creature*)m_caster)->GetSplineFlags(), 1);
