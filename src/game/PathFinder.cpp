@@ -416,7 +416,7 @@ void PathInfo::updateNextPosition()
     if(pointCount == 0)
     {
         // only happens if pass bad data to findStraightPath or navmesh is broken
-        sLog.outError("%u's UpdateNextPosition failed: 0 length path", m_sourceObject->GetGUID());
+        // sLog.outError("%u's UpdateNextPosition failed: 0 length path", m_sourceObject->GetGUID());
         m_length = 1;
         x = getEndPositionX();
         y = getEndPositionY();

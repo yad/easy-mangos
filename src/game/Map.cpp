@@ -133,7 +133,7 @@ void Map::LoadNavMesh(int gx, int gy)
 {
     if (m_navMesh[gx][gy])
     return;
-    sLog.outError("Loading NavMesh");
+    //sLog.outError("Loading NavMesh");
     // map file name
     char *tmp=NULL;
     int len = sWorld.GetDataPath().length()+strlen("mmaps/%03u%02u%02u.mmap")+1;
