@@ -3417,12 +3417,6 @@ void Player::UpdateFreeTalentPoints(bool resetIfNeed)
     }
     else
     {
-        if (level < sWorld.getConfig(CONFIG_UINT32_DUALSPEC_LEVEL) || m_specsCount == 0)
-        {
-            m_specsCount = 1;
-            m_activeSpec = 0;
-        }
-
         uint32 talentPointsForLevel = CalculateTalentsPoints();
 
         // if used more that have then reset
@@ -4355,9 +4349,6 @@ void Player::removeSpell(uint32 spell_id, bool disabled, bool learn_low_rank, bo
         }
     }
     
-    if(spell_id == 46917 && m_canTitanGrip)
-        SetCanTitanGrip(false);
-
     if (m_canTitanGrip)
     {
         SpellEntry const *spellInfo = sSpellStore.LookupEntry(spell_id);
@@ -6778,12 +6769,6 @@ void Player::removeActionButton(uint8 spec, uint8 button)
     ActionButtonList::iterator buttonItr = currentActionButtonList.find(button);
     if (buttonItr == currentActionButtonList.end() || buttonItr->second.uState == ACTIONBUTTON_DELETED)
         return;
-
-	if (!buttonItr->second.canRemoveByClient)
-    {
-        buttonItr->second.canRemoveByClient = true;    
-        return;
-    } 
 
     if (buttonItr->second.uState == ACTIONBUTTON_NEW)
         currentActionButtonList.erase(buttonItr);           // new and not saved
@@ -23449,15 +23434,17 @@ void Player::ActivateSpec(uint8 specNum)
         // remove any talent rank if talent not listed in temp spec
         if (iterTempSpec == tempSpec.end() || iterTempSpec->second.state == PLAYERSPELL_REMOVED)
         {
+            TalentEntry const *talentInfo = talent.m_talentEntry;
+
             for(int r = 0; r < MAX_TALENT_RANK; ++r)
-                if (talent.m_talentEntry->RankID[r])
-                    removeSpell(talent.m_talentEntry->RankID[r],!IsPassiveSpell(talent.m_talentEntry->RankID[r]),false);
+                if (talentInfo->RankID[r])
+                    removeSpell(talentInfo->RankID[r],!IsPassiveSpell(talentInfo->RankID[r]),false);
 
             specIter = m_talents[m_activeSpec].begin();
         }
         else
             ++specIter;
-    }   
+    }
 
     // now new spec data have only talents (maybe different rank) as in temp spec data, sync ranks then.
     for (PlayerTalentMap::const_iterator tempIter = tempSpec.begin(); tempIter != tempSpec.end(); ++tempIter)
@@ -23472,20 +23459,35 @@ void Player::ActivateSpec(uint8 specNum)
             continue;
         }
 
+        uint32 talentSpellId = talent.m_talentEntry->RankID[talent.currentRank];
+
         // learn talent spells if they not in new spec (old spec copy)
         // and if they have different rank
         PlayerTalentMap::iterator specIter = m_talents[m_activeSpec].find(tempIter->first);
         if (specIter != m_talents[m_activeSpec].end() && specIter->second.state != PLAYERSPELL_REMOVED)
         {
             if ((*specIter).second.currentRank != talent.currentRank)
-                learnSpell(talent.m_talentEntry->RankID[talent.currentRank], false);
+                learnSpell(talentSpellId, false);
         }
         else
-            learnSpell(talent.m_talentEntry->RankID[talent.currentRank], false);
+            learnSpell(talentSpellId, false);
 
         // sync states - original state is changed in addSpell that learnSpell calls
         specIter = m_talents[m_activeSpec].find(tempIter->first);
-        (*specIter).second.state = talent.state;
+        if (specIter != m_talents[m_activeSpec].end())
+            (*specIter).second.state = talent.state;
+        else
+        {
+            sLog.outError("ActivateSpec: Talent spell %u expected to learned at spec switch but not listed in talents at final check!", talentSpellId);
+
+            // attempt resync DB state (deleted lost spell from DB)
+            if (talent.state != PLAYERSPELL_NEW)
+            {
+                PlayerTalent& talentNew = m_talents[m_activeSpec][tempIter->first];
+                talentNew = talent;
+                talentNew.state = PLAYERSPELL_REMOVED;
+            }
+        }
     }
 
     InitTalentForLevel();
@@ -23714,6 +23716,32 @@ void Player::SetRestType( RestType n_r_type, uint32 areaTriggerId /*= 0*/)
     }
 }
 
+void Player::LearnAllAvailableTaxiPaths()
+{
+    if(HasAtLoginFlag(AT_LOGIN_LEARN_TAXI_NODES))
+        RemoveAtLoginFlag(AT_LOGIN_LEARN_TAXI_NODES,true);
+
+    for(uint32 i = 1; i < sTaxiNodesStore.GetNumRows(); ++i)
+    {
+        TaxiNodesEntry const* node = sTaxiNodesStore.LookupEntry(i);
+        if(!node || !node->MountCreatureID[GetTeam() == ALLIANCE ? 1 : 0])
+            continue;
+
+        // skip by level
+        if((getLevel() < 60 && node->map_id == 530) || (getLevel() < 70 && node->map_id == 571))
+            continue;
+
+        uint8  field   = (uint8)((i - 1) / 32);
+        uint32 submask = 1<<((i-1)%32);
+
+        // skip not taxi network nodes
+        if((sTaxiNodesMask[field] & submask)==0)
+            continue;
+
+        m_taxi.SetTaximaskNode(i);
+    }
+}
+
 void Player::FlyingMountsSpellsToItems()
 {
     for (PlayerSpellMap::const_iterator itr = m_spells.begin(); itr != m_spells.end(); ++itr)
@@ -23854,28 +23882,3 @@ bool Player::CanUseFlyingMounts(SpellEntry const* sEntry)
     return true;
 }
 
-void Player::LearnAllAvailableTaxiPaths()
-{
-    if(HasAtLoginFlag(AT_LOGIN_LEARN_TAXI_NODES))
-        RemoveAtLoginFlag(AT_LOGIN_LEARN_TAXI_NODES,true);
-
-    for(uint32 i = 1; i < sTaxiNodesStore.GetNumRows(); ++i)
-    {
-        TaxiNodesEntry const* node = sTaxiNodesStore.LookupEntry(i);
-        if(!node || !node->MountCreatureID[GetTeam() == ALLIANCE ? 1 : 0])
-            continue;
-
-        // skip by level
-        if((getLevel() < 60 && node->map_id == 530) || (getLevel() < 70 && node->map_id == 571))
-            continue;
-
-        uint8  field   = (uint8)((i - 1) / 32);
-        uint32 submask = 1<<((i-1)%32);
-
-        // skip not taxi network nodes
-        if((sTaxiNodesMask[field] & submask)==0)
-            continue;
-
-        m_taxi.SetTaximaskNode(i);
-    }
-}
