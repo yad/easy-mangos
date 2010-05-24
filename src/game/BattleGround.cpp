@@ -228,6 +228,8 @@ BattleGround::BattleGround()
     m_LevelMax          = 0;
     m_InBGFreeSlotQueue = false;
 
+    m_ArenaBuffTimer    = 0;
+
     m_MaxPlayersPerTeam = 0;
     m_MaxPlayers        = 0;
     m_MinPlayersPerTeam = 0;
@@ -400,11 +402,11 @@ void BattleGround::Update(uint32 diff)
     if (isArena() && !m_ArenaBuffSpawned)
     {
         // 60 seconds after start the buffobjects in arena should get spawned
-        if (m_StartTime > uint32(m_StartDelayTimes[BG_STARTING_EVENT_FIRST] + ARENA_SPAWN_BUFF_OBJECTS))
+        if (m_ArenaBuffTimer > uint32(m_StartDelayTimes[BG_STARTING_EVENT_FIRST] + ARENA_SPAWN_BUFF_OBJECTS))
         {
             SpawnEvent(ARENA_BUFF_EVENT, 0, true);
             m_ArenaBuffSpawned = true;
-        }
+        } else m_ArenaBuffTimer += diff;
     }
 
     /*********************************************************/
