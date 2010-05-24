@@ -399,7 +399,7 @@ void BattleGround::Update(uint32 diff)
     /*********************************************************/
     /***           ARENA BUFF OBJECT SPAWNING              ***/
     /*********************************************************/
-    if (isArena() && !m_ArenaBuffSpawned)
+    if (isArena() && !m_ArenaBuffSpawned && GetStatus() == STATUS_IN_PROGRESS)
     {
         // 60 seconds after start the buffobjects in arena should get spawned
         if (m_ArenaBuffTimer > uint32(m_StartDelayTimes[BG_STARTING_EVENT_FIRST] + ARENA_SPAWN_BUFF_OBJECTS))
