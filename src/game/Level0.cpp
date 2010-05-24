@@ -100,9 +100,9 @@ bool ChatHandler::HandleServerInfoCommand(const char* /*args*/)
     else
         full = _FULLVERSION(REVISION_DATE,REVISION_TIME,REVISION_NR,REVISION_ID);
 
+    SendSysMessage(full);
     if(GetAccessLevel() > SEC_PLAYER)
     {
-        SendSysMessage(full);
         PSendSysMessage(LANG_USING_SCRIPT_LIB,sWorld.GetScriptsVersion());
         PSendSysMessage(LANG_USING_WORLD_DB,sWorld.GetDBVersion());
         PSendSysMessage(LANG_USING_EVENT_AI,sWorld.GetCreatureEventAIVersion());
