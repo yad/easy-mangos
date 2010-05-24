@@ -5410,8 +5410,8 @@ void Aura::HandlePeriodicDamage(bool apply, bool Real)
                     m_modifier.m_amount += int32(caster->GetTotalAttackPowerValue(BASE_ATTACK) * 6 / 100);
                 // Lacerate
                 else if (m_spellProto->SpellFamilyFlags & UI64LIT(0x000000010000000000))
-                    // $AP*0.05 bonus per tick
-                    m_modifier.m_amount += int32(caster->GetTotalAttackPowerValue(BASE_ATTACK) * 5 / 100);
+                    // $AP*0.01 bonus per tick
+                    m_modifier.m_amount += int32(caster->GetTotalAttackPowerValue(BASE_ATTACK) * 1 / 100);
                 // Rip
                 else if (m_spellProto->SpellFamilyFlags & UI64LIT(0x000000000000800000))
                 {
