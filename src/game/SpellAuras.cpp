@@ -2487,6 +2487,16 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                             // Reindeer Transformation
                             m_target->CastSpell(m_target, 25860, true, NULL, this);
                         return;
+                    case 63322:
+                    {
+                        int32 multiplier = pow(2.0f,  GetStackAmount());
+                        int32 damage = 50 * multiplier;
+                        int32 energize = 100 * multiplier;
+
+                        m_target->CastCustomSpell(m_target, 63338, &damage, 0, 0 ,true);
+                        m_target->CastCustomSpell(m_target, 63337, &energize, 0, 0, true);
+                        return;
+                    }
                     case 63624:                             // Learn a Second Talent Specialization
                         // Teach Learn Talent Specialization Switches, required for client triggered casts, allow after 30 sec delay
                         if (m_target->GetTypeId() == TYPEID_PLAYER)
@@ -8497,8 +8507,8 @@ void Aura::PeriodicDummyTick()
                     Unit* caster = GetCaster();
                     if(!caster)
                         return;
-                    // probably im blind but damage is not in dbc files ...
-                    int32 bp1 = 5000;
+
+                    int32 bp1 = m_spellProto->CalculateSimpleValue(EFFECT_INDEX_0);
                     caster->CastCustomSpell(m_target, 63278, 0, &bp1, 0, true);
                     return;
                 }
