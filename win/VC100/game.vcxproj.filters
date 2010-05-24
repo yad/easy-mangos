@@ -436,9 +436,11 @@
       <Filter>References</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\game\pchdef.cpp" />
-    <ClCompile Include="..\..\src\game\CharacterDatabaseCleaner.cpp" />
     <ClCompile Include="..\..\src\game\PathFinder.cpp">
       <Filter>Motion generators</Filter>
+    </ClCompile>	  
+    <ClCompile Include="..\..\src\game\CharacterDatabaseCleaner.cpp">
+      <Filter>Tool</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -824,9 +826,11 @@
       <Filter>References</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\game\pchdef.h" />
-    <ClInclude Include="..\..\src\game\CharacterDatabaseCleaner.h" />
     <ClInclude Include="..\..\src\game\PathFinder.h">
       <Filter>Motion generators</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\game\CharacterDatabaseCleaner.h">
+      <Filter>Tool</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
