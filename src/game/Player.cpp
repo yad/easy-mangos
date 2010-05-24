@@ -478,6 +478,7 @@ Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputa
     {
         m_auraBaseMod[i][FLAT_MOD] = 0.0f;
         m_auraBaseMod[i][PCT_MOD] = 1.0f;
+        m_auraBaseMod[i][PCT_ADD_MOD] = 1.0f;
     }
 
     for (int i = 0; i < MAX_COMBAT_RATING; ++i)
@@ -4948,6 +4949,13 @@ void Player::HandleBaseModValue(BaseModGroup modGroup, BaseModType modType, floa
             val = (100.0f + amount) / 100.0f;
             m_auraBaseMod[modGroup][modType] *= apply ? val : (1.0f/val);
             break;
+        case PCT_ADD_MOD:
+            if(amount <= -100.0f)
+                amount = -200.0f;
+
+            val = (100.0f + amount) / 100.0f - 1.0f;
+            m_auraBaseMod[modGroup][modType] += apply ? val : -val;
+            break;
     }
 
     if(!CanModifyStats())
@@ -4974,6 +4982,9 @@ float Player::GetBaseModValue(BaseModGroup modGroup, BaseModType modType) const
     if(modType == PCT_MOD && m_auraBaseMod[modGroup][PCT_MOD] <= 0.0f)
         return 0.0f;
 
+    if(modType == PCT_ADD_MOD && m_auraBaseMod[modGroup][PCT_ADD_MOD] <= 0.0f)
+        return 0.0f;
+
     return m_auraBaseMod[modGroup][modType];
 }
 
@@ -4988,13 +4999,16 @@ float Player::GetTotalBaseModValue(BaseModGroup modGroup) const
     if(m_auraBaseMod[modGroup][PCT_MOD] <= 0.0f)
         return 0.0f;
 
-    return m_auraBaseMod[modGroup][FLAT_MOD] * m_auraBaseMod[modGroup][PCT_MOD];
+    if(m_auraBaseMod[modGroup][PCT_ADD_MOD] <= 0.0f)
+        return 0.0f;
+
+    return m_auraBaseMod[modGroup][FLAT_MOD] * m_auraBaseMod[modGroup][PCT_ADD_MOD] * m_auraBaseMod[modGroup][PCT_MOD];
 }
 
 uint32 Player::GetShieldBlockValue() const
 {
-    float value = (m_auraBaseMod[SHIELD_BLOCK_VALUE][FLAT_MOD] + GetStat(STAT_STRENGTH) * 0.5f - 10)*m_auraBaseMod[SHIELD_BLOCK_VALUE][PCT_MOD];
-
+    float value = (m_auraBaseMod[SHIELD_BLOCK_VALUE][FLAT_MOD] + GetStat(STAT_STRENGTH) * 0.5f - 10) * m_auraBaseMod[SHIELD_BLOCK_VALUE][PCT_ADD_MOD] * m_auraBaseMod[SHIELD_BLOCK_VALUE][PCT_MOD];
+    
     value = (value < 0) ? 0 : value;
 
     return uint32(value);

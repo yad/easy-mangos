@@ -7453,7 +7453,21 @@ void Aura::HandleShieldBlockValue(bool apply, bool /*Real*/)
 {
     BaseModType modType = FLAT_MOD;
     if(m_modifier.m_auraname == SPELL_AURA_MOD_SHIELD_BLOCKVALUE_PCT)
-        modType = PCT_MOD;
+    {
+        switch(GetId())
+        {
+            case 2565:                  // Shield Block
+            case 29598:                 // Shield Mastery
+            case 29599:
+            case 55283:                 // Meta Gem
+            case 58374:                 // Glyph of Blocking
+                modType = PCT_ADD_MOD;
+                break;
+            default:
+                modType = PCT_MOD;
+                break;
+        }
+    }
 
     if(m_target->GetTypeId() == TYPEID_PLAYER)
         ((Player*)m_target)->HandleBaseModValue(SHIELD_BLOCK_VALUE, modType, float(m_modifier.m_amount), apply);
