@@ -753,12 +753,19 @@ void Vehicle::InstallAllAccessories()
             {
                 CreatureData const* data = sObjectMgr.GetCreatureData(guid);
                 if(!data)
-                    return;
+                {
+                    delete pPassenger;
+                    continue;
+                }
                 entry = data->id;
             }     
             
             if(!pPassenger->Create(guid, GetMap(), GetPhaseMask(), entry, 0))
-                return;
+            {
+                delete pPassenger;
+                continue;
+            }
+            pPassenger->AIM_Initialize();
             pPassenger->Relocate(GetPositionX(), GetPositionY(), GetPositionZ());
             GetMap()->Add(pPassenger);
         }
