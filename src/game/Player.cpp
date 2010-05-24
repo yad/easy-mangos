@@ -1960,8 +1960,6 @@ void Player::AddToWorld()
 
 void Player::RemoveFromWorld()
 {
-     sWorld.m_objectRemoveLock.acquire();
-
     // cleanup
     if(IsInWorld())
     {
@@ -1980,8 +1978,6 @@ void Player::RemoveFromWorld()
     ///- It will crash when updating the ObjectAccessor
     ///- The player should only be removed when logging out
     Unit::RemoveFromWorld();
-
-    sWorld.m_objectRemoveLock.release();
 }
 
 void Player::RewardRage( uint32 damage, uint32 weaponSpeedHitFactor, bool attacker )

@@ -154,15 +154,11 @@ void Creature::AddToWorld()
 
 void Creature::RemoveFromWorld()
 {
-    sWorld.m_objectRemoveLock.acquire();
-
     ///- Remove the creature from the accessor
     if(IsInWorld() && GetObjectGuid().GetHigh() == HIGHGUID_UNIT)
         GetMap()->GetObjectsStore().erase<Creature>(GetGUID(), (Creature*)NULL);
 
     Unit::RemoveFromWorld();
-
-    sWorld.m_objectRemoveLock.release();
 }
 
 void Creature::RemoveCorpse()
