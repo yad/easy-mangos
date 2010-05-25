@@ -2452,7 +2452,7 @@ void Player::GiveXP(uint32 xp, Unit* victim)
     if ( xp < 1 )
         return;
 
-    if(!isAlive())
+    if(!isAlive() && !GetBattleGroundId())
         return;
 
     uint32 level = getLevel();
