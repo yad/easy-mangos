@@ -294,7 +294,12 @@ namespace VMAP
     bool StaticMapTree::LoadMapTile(uint32 tileX, uint32 tileY, VMapManager2 *vm)
     {
         if (!iIsTiled)
+        {
+            // currently, core creates grids for all maps, whether it has terrain tiles or not
+            // so we need "fake" tile loads to know when we can unload map geometry
+            iLoadedTiles[packTileID(tileX, tileY)] = false;
             return true;
+        }
         if (!iTreeValues)
         {
             std::cout << "Tree has not been initialized!\n";
@@ -362,8 +367,6 @@ namespace VMAP
 
     void StaticMapTree::UnloadMapTile(uint32 tileX, uint32 tileY, VMapManager2 *vm)
     {
-        if (!iIsTiled)
-            return;
         uint32 tileID = packTileID(tileX, tileY);
         loadedTileMap::iterator tile = iLoadedTiles.find(tileID);
         if(tile == iLoadedTiles.end())
