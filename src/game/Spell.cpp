@@ -593,6 +593,21 @@ void Spell::FillTargetMap()
                         break;
                 }
                 break;
+            case TARGET_DUELVSPLAYER_COORDINATES:
+                switch(m_spellInfo->EffectImplicitTargetB[i])
+                {
+                    case 0:
+                    case TARGET_EFFECT_SELECT:
+                        SetTargetMap(SpellEffectIndex(i), m_spellInfo->EffectImplicitTargetA[i], tmpUnitMap);
+                        if (Unit* currentTarget = m_targets.getUnitTarget())
+                            tmpUnitMap.push_back(currentTarget);
+                        break;
+                    default:
+                        SetTargetMap(SpellEffectIndex(i), m_spellInfo->EffectImplicitTargetA[i], tmpUnitMap);
+                        SetTargetMap(SpellEffectIndex(i), m_spellInfo->EffectImplicitTargetB[i], tmpUnitMap);
+                        break;
+                }
+                break;
             default:
                 switch(m_spellInfo->EffectImplicitTargetB[i])
                 {
@@ -745,6 +760,14 @@ void Spell::prepareDataForTriggerSystem()
             }
             break;
     }
+
+    // some negative spells have positive effects to another or same targets
+    // avoid triggering negative hit for only positive targets
+    m_negativeEffectMask = 0x0;
+    for (int i = 0; i < MAX_EFFECT_INDEX; ++i)
+        if (!IsPositiveEffect(m_spellInfo->Id, SpellEffectIndex(i)))
+            m_negativeEffectMask |= (1<<i);
+
     // Hunter traps spells (for Entrapment trigger)
     // Gives your Immolation Trap, Frost Trap, Explosive Trap, and Snake Trap ....
     if (m_spellInfo->SpellFamilyName == SPELLFAMILY_HUNTER && (m_spellInfo->SpellFamilyFlags & UI64LIT(0x000020000000001C)))
@@ -935,6 +958,14 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
     uint32 procVictim   = m_procVictim;
     uint32 procEx       = PROC_EX_NONE;
 
+    // drop proc flags in case target not affected negative effects in negative spell
+    // for example caster bonus or animation
+    if (((procAttacker | procVictim) & NEGATIVE_TRIGGER_MASK) && !(target->effectMask & m_negativeEffectMask))
+    {
+        procAttacker = PROC_FLAG_NONE;
+        procVictim   = PROC_FLAG_NONE;
+    }
+
     if (m_spellInfo->speed > 0)
     {
         // mark effects that were already handled in Spell::HandleDelayedSpellLaunch on spell launch as processed
@@ -1038,8 +1069,8 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
             }
         }
     }
-    // Passive spell hits/misses or active spells only misses (only triggers)
-    else
+    // Passive spell hits/misses or active spells only misses (only triggers if proc flags set)
+    else if (procAttacker || procVictim)
     {
         // Fill base damage struct (unitTarget - is real spell target)
         SpellNonMeleeDamage damageInfo(caster, unitTarget, m_spellInfo->Id, m_spellSchoolMask);
@@ -1799,10 +1830,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
         case TARGET_DUELVSPLAYER_COORDINATES:
         {
             if(Unit* currentTarget = m_targets.getUnitTarget())
-            {
                 m_targets.setDestination(currentTarget->GetPositionX(), currentTarget->GetPositionY(), currentTarget->GetPositionZ());
-                targetUnitMap.push_back(currentTarget);
-            }
             break;
         }
         case TARGET_ALL_PARTY_AROUND_CASTER:
@@ -2802,6 +2830,13 @@ void Spell::cast(bool skipCheck)
             else if (m_spellInfo->Effect[EFFECT_INDEX_0]==SPELL_EFFECT_APPLY_AREA_AURA_RAID && m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000000004000000))
                 // only for main totem spell cast
                 AddTriggeredSpell(30708);                   // Totem of Wrath
+            break;
+        }
+        case SPELLFAMILY_DEATHKNIGHT:
+        {
+            // Chains of Ice
+            if (m_spellInfo->Id == 45524)
+                AddTriggeredSpell(55095);                   // Frost Fever
             break;
         }
         default:

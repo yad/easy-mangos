@@ -41,7 +41,7 @@ Group::Group() : m_Id(0), m_leaderGuid(0), m_mainTank(0), m_mainAssistant(0),  m
     m_bgGroup(NULL), m_lootMethod(FREE_FOR_ALL), m_looterGuid(0), m_lootThreshold(ITEM_QUALITY_UNCOMMON),
     m_subGroupsCounts(NULL)
 {
-    for (int i = 0; i < TARGETICONCOUNT; ++i)
+    for (int i = 0; i < TARGET_ICON_COUNT; ++i)
         m_targetIcons[i] = 0;
 }
 
@@ -159,7 +159,7 @@ bool Group::LoadGroupFromDB(Field* fields)
     m_looterGuid = MAKE_NEW_GUID(fields[3].GetUInt32(), 0, HIGHGUID_PLAYER);
     m_lootThreshold = (ItemQualities)fields[4].GetUInt16();
 
-    for(int i = 0; i < TARGETICONCOUNT; ++i)
+    for(int i = 0; i < TARGET_ICON_COUNT; ++i)
         m_targetIcons[i] = fields[5+i].GetUInt64();
 
     return true;
@@ -580,8 +580,17 @@ void Group::NeedBeforeGreed(Creature *creature, Loot *loot)
     }
 }
 
-void Group::MasterLoot(Creature *creature, Loot* /*loot*/)
+void Group::MasterLoot(Creature *creature, Loot* loot)
 {
+    for (LootItemList::iterator i=loot->items.begin(); i != loot->items.end(); ++i)
+    {
+        ItemPrototype const *item = ObjectMgr::GetItemPrototype(i->itemid);
+        if (!item)
+            continue;
+        if (item->Quality < uint32(m_lootThreshold))
+            i->is_underthreshold = 1;
+    }
+
     uint32 real_count = 0;
 
     WorldPacket data(SMSG_LOOT_MASTER_LIST, 330);
@@ -869,12 +878,12 @@ void Group::CountTheRoll(Rolls::iterator& rollI)
 
 void Group::SetTargetIcon(uint8 id, uint64 whoGuid, uint64 targetGuid)
 {
-    if(id >= TARGETICONCOUNT)
+    if(id >= TARGET_ICON_COUNT)
         return;
 
     // clean other icons
     if( targetGuid != 0 )
-        for(int i = 0; i < TARGETICONCOUNT; ++i)
+        for(int i = 0; i < TARGET_ICON_COUNT; ++i)
             if( m_targetIcons[i] == targetGuid )
                 SetTargetIcon(i, 0, 0);
 
@@ -934,10 +943,10 @@ void Group::SendTargetIconList(WorldSession *session)
     if(!session)
         return;
 
-    WorldPacket data(MSG_RAID_TARGET_UPDATE, (1+TARGETICONCOUNT*9));
+    WorldPacket data(MSG_RAID_TARGET_UPDATE, (1+TARGET_ICON_COUNT*9));
     data << uint8(1);                                       // list targets
 
-    for(int i = 0; i < TARGETICONCOUNT; ++i)
+    for(int i = 0; i < TARGET_ICON_COUNT; ++i)
     {
         if(m_targetIcons[i] == 0)
             continue;
@@ -1066,9 +1075,9 @@ bool Group::_addMember(const uint64 &guid, const char* name, bool isAssistant)
     if (m_subGroupsCounts)
     {
         bool groupFound = false;
-        for (; groupid < MAXRAIDSIZE / MAXGROUPSIZE; ++groupid)
+        for (; groupid < MAX_RAID_SUBGROUPS; ++groupid)
         {
-            if (m_subGroupsCounts[groupid] < MAXGROUPSIZE)
+            if (m_subGroupsCounts[groupid] < MAX_GROUP_SIZE)
             {
                 groupFound = true;
                 break;
@@ -1121,7 +1130,7 @@ bool Group::_addMember(const uint64 &guid, const char* name, bool isAssistant, u
 
     if(!isRaidGroup())                                      // reset targetIcons for non-raid-groups
     {
-        for(int i = 0; i < TARGETICONCOUNT; ++i)
+        for(int i = 0; i < TARGET_ICON_COUNT; ++i)
             m_targetIcons[i] = 0;
     }
 
@@ -1260,7 +1269,7 @@ void Group::_removeRolls(const uint64 &guid)
     }
 }
 
-bool Group::_setMembersGroup(const uint64 &guid, const uint8 &group)
+bool Group::_setMembersGroup(const uint64 &guid, uint8 group)
 {
     member_witerator slot = _getMemberWSlot(guid);
     if(slot == m_memberSlots.end())
@@ -1327,21 +1336,24 @@ bool Group::SameSubGroup(Player const* member1, Player const* member2) const
 }
 
 // allows setting subgroup for offline members
-void Group::ChangeMembersGroup(const uint64 &guid, const uint8 &group)
+void Group::ChangeMembersGroup(const uint64 &guid, uint8 group)
 {
-    if(!isRaidGroup())
+    if (!isRaidGroup())
         return;
+
     Player *player = sObjectMgr.GetPlayer(guid);
 
     if (!player)
     {
-        uint8 prevSubGroup;
-        prevSubGroup = GetMemberGroup(guid);
-
-        SubGroupCounterDecrease(prevSubGroup);
+        uint8 prevSubGroup = GetMemberGroup(guid);
+        if (prevSubGroup == group)
+            return;
 
         if(_setMembersGroup(guid, group))
+        {
+            SubGroupCounterDecrease(prevSubGroup);
             SendUpdate();
+        }
     }
     else
         // This methods handles itself groupcounter decrease
@@ -1349,14 +1361,18 @@ void Group::ChangeMembersGroup(const uint64 &guid, const uint8 &group)
 }
 
 // only for online members
-void Group::ChangeMembersGroup(Player *player, const uint8 &group)
+void Group::ChangeMembersGroup(Player *player, uint8 group)
 {
-    if(!player || !isRaidGroup())
+    if (!player || !isRaidGroup())
         return;
-    if(_setMembersGroup(player->GetGUID(), group))
+
+    uint8 prevSubGroup = player->GetSubGroup();
+    if (prevSubGroup == group)
+        return;
+
+    if (_setMembersGroup(player->GetGUID(), group))
     {
-        uint8 prevSubGroup = player->GetSubGroup();
-        if( player->GetGroup() == this )
+        if (player->GetGroup() == this)
             player->GetGroupRef().setSubGroup(group);
         //if player is in BG raid, it is possible that he is also in normal raid - and that normal raid is stored in m_originalGroup reference
         else
