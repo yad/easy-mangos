@@ -2050,13 +2050,15 @@ void Unit::CalculateAbsorbAndResist(Unit *pCaster, SpellSchoolMask schoolMask, D
             {
                 // Cheat Death (make less prio with Guardian Spirit case)
                 if (!preventDeathSpell && spellProto->SpellIconID == 2109 &&
-                    GetTypeId()==TYPEID_PLAYER &&           // Only players
-                    !((Player*)this)->HasSpellCooldown(31231) &&
-                                                            // Only if no cooldown
-                    roll_chance_i((*i)->GetModifier()->m_amount))
-                                                            // Only if roll
+                    GetTypeId()==TYPEID_PLAYER)              // Only players
                 {
-                    preventDeathSpell = (*i)->GetSpellProto();
+                    if(!((Player*)this)->HasSpellCooldown(31231) &&
+                                                            // Only if no cooldown
+                        roll_chance_i((*i)->GetModifier()->m_amount)))
+                                                            // Only if roll
+                    {
+                        preventDeathSpell = (*i)->GetSpellProto();
+                    }
                     continue;
                 }
                 break;
