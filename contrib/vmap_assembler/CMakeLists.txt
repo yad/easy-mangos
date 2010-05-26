@@ -67,6 +67,7 @@ add_library(g3dlite ../../dep/src/g3dlite/AABox.cpp
 	)
 
 add_library(vmap
+	../../src/shared/vmap/BIH.cpp
 	../../src/shared/vmap/VMapManager2.cpp
 	../../src/shared/vmap/MapTree.cpp
 	../../src/shared/vmap/TileAssembler.cpp

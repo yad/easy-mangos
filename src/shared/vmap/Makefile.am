@@ -27,6 +27,8 @@ AM_CPPFLAGS = $(MANGOS_INCLUDES) -I$(top_builddir)/src/shared -I$(srcdir) -I$(sr
 noinst_LIBRARIES = libmangosvmaps.a
 
 libmangosvmaps_a_SOURCES = \
+	BIH.h \
+	BIH.cpp \
 	IVMapManager.h \
 	MapTree.cpp \
 	MapTree.h \

@@ -182,6 +182,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\vmap_assembler.cpp" />
+    <ClCompile Include="..\..\..\src\shared\vmap\BIH.cpp" />
     <ClCompile Include="..\..\..\src\shared\vmap\MapTree.cpp" />
     <ClCompile Include="..\..\..\src\shared\vmap\ModelInstance.cpp" />
     <ClCompile Include="..\..\..\src\shared\vmap\TileAssembler.cpp" />
@@ -189,6 +190,7 @@
     <ClCompile Include="..\..\..\src\shared\vmap\WorldModel.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\src\shared\vmap\BIH.h" />
     <ClInclude Include="..\..\..\src\shared\vmap\MapTree.h" />
     <ClInclude Include="..\..\..\src\shared\vmap\ModelInstance.h" />
     <ClInclude Include="..\..\..\src\shared\vmap\TileAssembler.h" />

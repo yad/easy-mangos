@@ -191,6 +191,14 @@
 			Name="vmaplib"
 			>
 			<File
+				RelativePath="..\..\..\src\shared\vmap\BIH.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\shared\vmap\BIH.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\shared\vmap\MapTree.cpp"
 				>
 			</File>

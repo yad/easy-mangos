@@ -453,6 +453,7 @@
     <ClCompile Include="..\..\src\shared\ServiceWin32.cpp" />
     <ClCompile Include="..\..\src\shared\Threading.cpp" />
     <ClCompile Include="..\..\src\shared\Util.cpp" />
+    <ClCompile Include="..\..\src\shared\vmap\BIH.cpp" />
     <ClCompile Include="..\..\src\shared\vmap\MapTree.cpp" />
     <ClCompile Include="..\..\src\shared\vmap\ModelInstance.cpp" />
     <ClCompile Include="..\..\src\shared\vmap\TileAssembler.cpp" />
@@ -499,6 +500,7 @@
     <ClInclude Include="..\..\src\shared\Threading.h" />
     <ClInclude Include="..\..\src\shared\Timer.h" />
     <ClInclude Include="..\..\src\shared\Util.h" />
+    <ClInclude Include="..\..\src\shared\vmap\BIH.h" />
     <ClInclude Include="..\..\src\shared\vmap\IVMapManager.h" />
     <ClInclude Include="..\..\src\shared\vmap\MapTree.h" />
     <ClInclude Include="..\..\src\shared\vmap\ModelInstance.h" />
