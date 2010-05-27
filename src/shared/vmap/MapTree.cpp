@@ -222,13 +222,45 @@ namespace VMAP
 
     //=========================================================
 
+    bool StaticMapTree::CanLoadMap(const std::string &vmapPath, uint32 mapID, uint32 tileX, uint32 tileY)
+    {
+        std::string basePath = vmapPath;
+        if (basePath.length() > 0 && (basePath[basePath.length()-1] != '/' || basePath[basePath.length()-1] != '\\'))
+            basePath.append("/");
+        std::string fullname = basePath + VMapManager2::getMapFileName(mapID);
+        bool success = true;
+        FILE *rf = fopen(fullname.c_str(), "rb");
+        if (!rf)
+            return false;
+        // TODO: check magic number when implemented...
+        char tiled;
+        if (fread(&tiled, sizeof(char), 1, rf) != 1)
+        {
+            fclose(rf);
+            return false;
+        }
+        if (tiled)
+        {
+            std::string tilefile = basePath + getTileFileName(mapID, tileX, tileY);
+            FILE* tf = fopen(tilefile.c_str(), "rb");
+            if (!tf)
+                success = false;
+            else
+                fclose(tf);
+        }
+        fclose(rf);
+        return success;
+    }
+
+    //=========================================================
+
     bool StaticMapTree::InitMap(const std::string &fname, VMapManager2 *vm)
     {
         std::cout << "Initializing StaticMapTree '" << fname << "'\n";
-        bool success=true;
+        bool success = true;
         std::string fullname = iBasePath + fname;
         FILE *rf = fopen(fullname.c_str(), "rb");
-        if(!rf)
+        if (!rf)
             return false;
         else
         {
@@ -236,7 +268,7 @@ namespace VMAP
             //general info
             char tiled;
             if (fread(&tiled, sizeof(char), 1, rf) != 1) success = false;
-            iIsTiled = (bool(tiled));
+            iIsTiled = bool(tiled);
             // Nodes
             if (success && !readChunk(rf, chunk, "NODE", 4)) success = false;
             if (success) success = iTree.readFromFile(rf);
@@ -309,14 +341,14 @@ namespace VMAP
 
         std::string tilefile = iBasePath + getTileFileName(iMapID, tileX, tileY);
         FILE* tf = fopen(tilefile.c_str(), "rb");
-        if(tf)
+        if (tf)
         {
-            while(result)
+            while (result)
             {
                 // read model spawns
                 ModelSpawn spawn;
                 result = ModelSpawn::readFromFile(tf, spawn);
-                if(result)
+                if (result)
                 {
                     // acquire model instance
                     WorldModel *model = vm->acquireModelInstance(iBasePath, spawn.name);
@@ -369,24 +401,24 @@ namespace VMAP
     {
         uint32 tileID = packTileID(tileX, tileY);
         loadedTileMap::iterator tile = iLoadedTiles.find(tileID);
-        if(tile == iLoadedTiles.end())
+        if (tile == iLoadedTiles.end())
         {
             std::cout << "WARNING: trying to unload non-loaded tile. Map:" << iMapID << " X:" << tileX << " Y:" << tileY << std::endl;
             return;
         }
-        if(tile->second) // file associated with tile
+        if (tile->second) // file associated with tile
         {
             std::string tilefile = iBasePath + getTileFileName(iMapID, tileX, tileY);
             FILE* tf = fopen(tilefile.c_str(), "rb");
-            if(tf)
+            if (tf)
             {
                 bool result=true;
-                while(result)
+                while (result)
                 {
                     // read model spawns
                     ModelSpawn spawn;
                     result = ModelSpawn::readFromFile(tf, spawn);
-                    if(result)
+                    if (result)
                     {
 //                        std::cout << "unloading '" << spawn.name << "'\n";
 
@@ -396,10 +428,10 @@ namespace VMAP
                         // update tree
                         uint32 nNodeVal=0, referencedNode;
                         fread(&nNodeVal, sizeof(uint32), 1, tf);
-                        for(uint32 i=0; i<nNodeVal; ++i)
+                        for (uint32 i=0; i<nNodeVal; ++i)
                         {
                             fread(&referencedNode, sizeof(uint32), 1, tf);
-                            if(!iLoadedSpawns.count(referencedNode))
+                            if (!iLoadedSpawns.count(referencedNode))
                             {
                                 std::cout << "error! trying to unload non-referenced model '" << spawn.name << "' (ID:" << spawn.ID << ")\n";
                             }

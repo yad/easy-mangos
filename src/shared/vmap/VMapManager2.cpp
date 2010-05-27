@@ -85,7 +85,7 @@ namespace VMAP
     //=========================================================
 
     // move to MapTree too?
-    std::string VMapManager2::getMapFileName(unsigned int pMapId) const
+    std::string VMapManager2::getMapFileName(unsigned int pMapId)
     {
         std::stringstream fname;
         fname.width(3);
@@ -423,5 +423,10 @@ namespace VMAP
         }
     }
     //=========================================================
+
+    bool VMapManager2::existsMap(const char* pBasePath, unsigned int pMapId, int x, int y)
+    {
+        return StaticMapTree::CanLoadMap(std::string(pBasePath), pMapId, x, y);
+    }
 
 }

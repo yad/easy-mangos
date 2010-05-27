@@ -84,7 +84,7 @@ namespace VMAP
             // public for debug
             G3D::Vector3 convertPositionToInternalRep(float x, float y, float z) const;
             G3D::Vector3 convertPositionToMangosRep(float x, float y, float z) const;
-            std::string getMapFileName(unsigned int pMapId) const;
+            static std::string getMapFileName(unsigned int pMapId);
 
             VMapManager2();
             ~VMapManager2(void);
@@ -112,9 +112,10 @@ namespace VMAP
 
             // what's the use of this? o.O
             virtual std::string getDirFileName(unsigned int pMapId, int x, int y) const
-            { return "(...not implemented...)"; }
-            virtual bool existsMap(const char* pBasePath, unsigned int pMapId, int x, int y)
-            { return true; }
+            {
+                return getMapFileName(pMapId);
+            }
+            virtual bool existsMap(const char* pBasePath, unsigned int pMapId, int x, int y);
     };
 }
 #endif
