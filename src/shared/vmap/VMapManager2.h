@@ -22,10 +22,6 @@
 #include "IVMapManager.h"
 #include "Utilities/UnorderedMap.h"
 #include "Platform/Define.h"
-#ifdef _VMAP_LOG_DEBUG
-    #include "DebugCmdLogger.h"
-#endif
-#include <G3D/Table.h>
 // temp
 #include "TileAssembler.h"
 
@@ -43,8 +39,6 @@ The loaded ModelContainers are included in one of these BSP-Trees.
 Additionally a table to match map ids and map names is used.
 */
 
-// Create a value describing the map tile
-#define MAP_TILE_IDENT(x,y) ((x<<8) + y)
 //===========================================================
 
 namespace VMAP
@@ -101,7 +95,7 @@ namespace VMAP
             bool getObjectHitPos(unsigned int pMapId, float x1, float y1, float z1, float x2, float y2, float z2, float& rx, float &ry, float& rz, float pModifyDist);
             float getHeight(unsigned int pMapId, float x, float y, float z);
 
-            bool processCommand(char *pCommand);            // for debug and extensions
+            bool processCommand(char *pCommand) { return false; }      // for debug and extensions
 
             void preventMapsFromBeingUsed(const char* pMapIdString);
             bool getAreaInfo(unsigned int pMapId, float x, float y, float &z, uint32 &flags, int32 &adtId, int32 &rootId, int32 &groupId) const;
