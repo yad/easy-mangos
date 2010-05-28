@@ -16,14 +16,28 @@ bool checkDirectories()
 
     if(!getDirContents(dirFiles, "maps") || !dirFiles.size())
     {
-        printf("maps directory is empty or does not exist\n");
+        printf("'maps' directory is empty or does not exist\n");
         return false;
     }
 
     dirFiles.clear();
     if(!getDirContents(dirFiles, "vmaps", "*.vmtree") || !dirFiles.size())
     {
-        printf("vmaps directory is empty or does not exist\n");
+        printf("'vmaps' directory is empty or does not exist\n");
+        return false;
+    }
+
+    dirFiles.clear();
+    if(!getDirContents(dirFiles, "mmaps"))
+    {
+        printf("'mmaps' directory does not exist\n");
+        return false;
+    }
+
+    dirFiles.clear();
+    if(!getDirContents(dirFiles, "Meshes"))
+    {
+        printf("'Meshes' directory does not exist\n");
         return false;
     }
 
