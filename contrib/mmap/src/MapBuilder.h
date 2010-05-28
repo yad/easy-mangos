@@ -104,15 +104,22 @@ namespace MMAP
             void clearIntermediateValues(IntermediateValues &iv);
             void generateObjFile(uint32 mapID);
             void cleanup();
+            bool shouldSkipMap(uint32 mapID);
+            bool isTransportMap(uint32 mapID);
 
             IVMapManager* m_vmapManager;
             TileBuilder* m_tileBuilder;
 
             MapList m_maps;
             TileList m_tiles;
+
             bool m_debugOutput;
             bool m_completeLists;
+
             bool m_skipContinents;
+            bool m_skipJunkMaps;
+            bool m_skipBattlegrounds;
+
             float m_maxWalkableAngle;
 
             ModelVerts m_modelVertices;

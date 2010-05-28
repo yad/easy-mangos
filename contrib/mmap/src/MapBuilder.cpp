@@ -16,6 +16,8 @@ namespace MMAP
 {
     MapBuilder::MapBuilder(float maxWalkableAngle, bool skipContinents/* = true*/, bool hiResHeightmaps/* = false*/) :
         m_completeLists     (false),
+        m_skipJunkMaps      (true),
+        m_skipBattlegrounds (true),
         m_debugOutput       (true),
         m_maxWalkableAngle  (maxWalkableAngle),
         m_skipContinents    (skipContinents)
@@ -154,17 +156,8 @@ namespace MMAP
 
     void MapBuilder::build(uint32 mapID)
     {
-        if(m_skipContinents)
-            switch(mapID)
-            {
-                case uint32(0):
-                case uint32(1):
-                case uint32(530):
-                case uint32(571):
-                    return;
-                default:
-                    break;
-            }
+        if(shouldSkipMap(mapID))
+            return;
 
         printf("Building map %03u:\n", mapID);
 
@@ -819,5 +812,116 @@ namespace MMAP
 
         m_vertices.fastClear();
         m_triangles.fastClear();
+    }
+
+    bool MapBuilder::shouldSkipMap(uint32 mapID)
+    {
+        // debug: these maps worked, so skip them
+        //switch(mapID)
+        //{
+        //    case 33:
+        //    case 34:
+        //    case 35:
+        //    case 36:
+        //    case 43:
+        //    case 44:
+        //    case 47:
+        //    case 48:
+        //    case 70:
+        //    case 90:
+        //    case 109:
+        //    case 129:
+        //        return true;
+        //    default:
+        //        break;
+        //}
+
+        if(m_skipContinents)
+            switch(mapID)
+            {
+                case 0:
+                case 1:
+                case 530:
+                case 571:
+                    return true;
+                default:
+                    break;
+            }
+
+        if(m_skipJunkMaps)
+            switch(mapID)
+            {
+                case 13:    // test.wdt
+                case 25:    // ScottTest.wdt
+                case 29:    // Test.wdt
+                case 42:    // Colin.wdt
+                case 169:   // EmeraldDream.wdt (unused, and very large)
+                case 451:   // development.wdt
+                case 573:   // ExteriorTest.wdt
+                case 597:   // CraigTest.wdt
+                case 605:   // development_nonweighted.wdt
+                case 606:   // QA_DVD.wdt
+                    return true;
+                default:
+                    if(isTransportMap(mapID))
+                        return true;
+                    break;
+            }
+
+        if(m_skipBattlegrounds)
+            switch(mapID)
+            {
+                case 30:    // AV
+                case 37:    // ?
+                case 489:   // WSG
+                case 529:   // AB
+                case 566:   // EotS
+                case 607:   // SotA
+                case 628:   // IoC
+                    return true;
+                default:
+                    break;
+            }
+
+        return false;
+    }
+
+    bool MapBuilder::isTransportMap(uint32 mapID)
+    {
+        switch(mapID)
+        {
+            // transport maps
+            case 582:
+            case 584:
+            case 586:
+            case 587:
+            case 588:
+            case 589:
+            case 590:
+            case 591:
+            case 592:
+            case 593:
+            case 594:
+            case 596:
+            case 610:
+            case 612:
+            case 613:
+            case 614:
+            case 620:
+            case 621:
+            case 622:
+            case 623:
+            case 641:
+            case 642:
+            case 647:
+            case 672:
+            case 673:
+            case 712:
+            case 713:
+            case 718:
+                return true;
+            default:
+                return false;
+        }
     }
 }
