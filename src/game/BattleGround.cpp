@@ -754,9 +754,29 @@ void BattleGround::EndBattleGround(uint32 winner)
             winner_rating = winner_arena_team->GetStats().rating;
             int32 winner_change = winner_arena_team->WonAgainst(loser_rating);
             int32 loser_change = loser_arena_team->LostAgainst(winner_rating);
-            DEBUG_LOG("--- Winner rating: %u, Loser rating: %u, Winner change: %u, Losser change: %u ---", winner_rating, loser_rating, winner_change, loser_change);
+            DEBUG_LOG("--- Winner rating: %u, Loser rating: %u, Winner change: %i, Losser change: %i ---", winner_rating, loser_rating, winner_change, loser_change);
             SetArenaTeamRatingChangeForTeam(winner, winner_change);
             SetArenaTeamRatingChangeForTeam(GetOtherTeam(winner), loser_change);
+
+            std::ostringstream winner_string;		
+            std::ostringstream loser_string;
+            winner_string << winner_arena_team->GetName().c_str() << " (";
+            loser_string << loser_arena_team->GetName().c_str() << " (";
+            for(BattleGroundPlayerMap::iterator itr = m_Players.begin(); itr != m_Players.end(); ++itr)
+            {
+                uint32 team = itr->second.Team;
+                if(Player *plr = sObjectMgr.GetPlayer(itr->first))
+                {
+                    if(!team) team = plr->GetTeam();
+                    if(team == winner)
+                        winner_string << plr->GetName() <<", ";
+                    else
+                        loser_string << plr->GetName() <<", ";
+                }
+            }
+            winner_string << ")";
+            loser_string << ")";
+            sLog.outArenaLog("Bracket: %u, Rating difference: %i/%i Winner: %s , Loser: %s", winner_arena_team->GetType(), winner_change, loser_change, winner_string.str().c_str(), loser_string.str().c_str());
         }
         else
         {

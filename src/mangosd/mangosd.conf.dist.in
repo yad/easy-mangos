@@ -313,6 +313,11 @@ CleanCharacterDB = 1
 #        Default: "Ra.log"
 #                 "" - Empty name for disable
 #
+#    ArenaRatedLogFile
+#        Log of arena matches
+#        Default: "Arena.log"
+#                 "" - Empty name for disable
+#
 #    LogColors
 #        Color for messages (format "normal_color details_color debug_color error_color")
 #        Colors: 0 - BLACK, 1 - RED, 2 - GREEN,  3 - BROWN, 4 - BLUE, 5 - MAGENTA, 6 -  CYAN, 7 - GREY,
@@ -343,6 +348,7 @@ GmLogFile = ""
 GmLogTimestamp = 0
 GmLogPerAccount = 0
 RaLogFile = ""
+ArenaRatedLogFile = "Arena.log"
 LogColors = ""
 
 ###################################################################################################################
