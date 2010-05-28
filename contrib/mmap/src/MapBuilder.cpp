@@ -423,8 +423,21 @@ namespace MMAP
         int vertCount = m_vertices.size() / 3;
         int triCount = m_triangles.size() / 3;
 
-        const int tw = (int)ceil(GRID_SIZE);
-        const int th = (int)ceil(GRID_SIZE);
+        rcCalcBounds(verts, vertCount, bmin, bmax);
+        float width = bmax[0] - bmin[0];
+        float depth = bmax[2] - bmin[2];
+
+        // some maps are smaller than GRID_SIZE
+        float gridSize = GRID_SIZE;
+        if(width < GRID_SIZE && depth < GRID_SIZE)
+            gridSize = max(width, depth);
+        else if(width < GRID_SIZE)
+            gridSize = width;
+        else if(depth < GRID_SIZE)
+            gridSize = depth;
+
+        const int tw = (int)ceil(gridSize);
+        const int th = (int)ceil(gridSize);
         int tileBits = rcMin((int)ilog2(nextPow2(tw*th)), 14);
         if (tileBits > 14) tileBits = 14;
         int polyBits = 22 - tileBits;
@@ -433,8 +446,8 @@ namespace MMAP
 
         dtNavMeshParams navMeshParams;
         memset(&navMeshParams, 0, sizeof(dtNavMeshParams));
-        navMeshParams.tileWidth = GRID_SIZE;
-        navMeshParams.tileHeight = GRID_SIZE;
+        navMeshParams.tileWidth = gridSize;
+        navMeshParams.tileHeight = gridSize;
         rcVcopy(navMeshParams.orig, bmin);          // may need to use bounds instead of {0,0,0}
         navMeshParams.maxTiles = maxTiles;
         navMeshParams.maxPolys = maxPolysPerTile;
@@ -476,11 +489,12 @@ namespace MMAP
         config.cs = cellSize;
         config.ch = .3f;
         config.walkableSlopeAngle = m_maxWalkableAngle;
-        rcCalcBounds(verts, vertCount, bmin, bmax);
+        rcVcopy(config.bmin, bmin);
+        rcVcopy(config.bmax, bmax);
 
         // these are VOXEL-based metrics
-        rcCalcGridSize(bmin, bmax, config.cs, &config.width, &config.height);
-        config.tileSize = (int)ceilf(config.width / (config.width * config.cs / GRID_SIZE));
+        rcCalcGridSize(config.bmin, config.bmax, config.cs, &config.width, &config.height);
+        config.tileSize = (int)ceilf(config.width / (config.width * config.cs / gridSize));
         config.walkableRadius = (int)ceilf(agentRadius / config.cs);
         config.borderSize = config.walkableRadius + 3;
         config.maxEdgeLen = (int)(12.f / config.cs);
@@ -495,8 +509,8 @@ namespace MMAP
         config.detailSampleMaxError = config.ch * 1.f;
 
         // loop counter vars
-        const int tilesWide = (bmax[0] - bmin[0]) / GRID_SIZE;
-        const int tilesDeep = (bmax[2] - bmin[2]) / GRID_SIZE;
+        const int tilesWide = ceilf((bmax[0] - bmin[0]) / gridSize);
+        const int tilesDeep = ceilf((bmax[2] - bmin[2]) / gridSize);
 
         float xMin = bmin[0];
         float yMin = bmin[2];
@@ -507,8 +521,8 @@ namespace MMAP
         for(int x = 0; x < tilesWide; ++x)
         {
             // set tile bounds
-            bmin[0] = xMin + GRID_SIZE*x;
-            bmax[0] = bmin[0] + GRID_SIZE;
+            bmin[0] = xMin + gridSize*x;
+            bmax[0] = bmin[0] + gridSize;
 
             for(int y = 0; y < tilesDeep; ++y)
             {
@@ -517,18 +531,23 @@ namespace MMAP
                 clearIntermediateValues(iv);
 
                 // set tile bounds
-                bmin[2] = yMin + GRID_SIZE*y;
-                bmax[2] = bmin[2] + GRID_SIZE;
+                bmin[2] = yMin + gridSize*y;
+                bmax[2] = bmin[2] + gridSize;
                 rcVcopy(config.bmin, bmin);
                 rcVcopy(config.bmax, bmax);
+
+                // pad bounds with a border
                 config.bmin[0] -= config.borderSize*config.cs;
                 config.bmin[2] -= config.borderSize*config.cs;
                 config.bmax[0] += config.borderSize*config.cs;
                 config.bmax[2] += config.borderSize*config.cs;
 
+                // this sets the dimensions of the heightfield - should maybe happen before border padding
+                rcCalcGridSize(config.bmin, config.bmax, config.cs, &config.width, &config.height);
+
                 // set tile string
-                tileX = 32-(bmin[0] + .1f)/GRID_SIZE;
-                tileY = 32-(bmin[2] + .1f)/GRID_SIZE;
+                tileX = 32-(bmin[0] + .1f)/gridSize;
+                tileY = 32-(bmin[2] + .1f)/gridSize;
                 sprintf(tileString, "[%02i,%02i]: ", tileX, tileY);
 
                 // build heightfield
