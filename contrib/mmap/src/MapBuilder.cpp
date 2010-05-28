@@ -405,10 +405,10 @@ namespace MMAP
 
     void MapBuilder::buildMoveMap(uint32 mapID)
     {
-        float cellSize = .35f;      // larger number means less voxels => faster build time
-        float agentHeight = 2.f;
-        float agentRadius = .6f;
-        float agentMaxClimb = .9f;
+        float cellSize = .35f;      // larger number => less voxels => faster build time
+        float agentHeight = 1.8f;
+        float agentRadius = .5f;
+        float agentMaxClimb = 1.5f;
 
         IntermediateValues iv;
         initIntermediateValues(iv);
