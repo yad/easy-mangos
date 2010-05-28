@@ -42,19 +42,20 @@ namespace MMAP
 
             /**
              Builds a mmap for the specifiec map id.
-             First, the entire vmap is loaded. Cannot do it tile-by-tile because vmap tiles only load models
-             whose origin is in that tile.  Large models may span across tiles (stormwind, etc)
+             * First, the entire vmap is loaded. Cannot do it tile-by-tile because vmap tiles only load models
+               whose origin is in that tile.  Large models may span across tiles (stormwind, etc)
 
-             Second, iterates through the tiles and loads their heightmaps.
-             These are processed so that steep inclines are removed.
-             TODO: process heightmap and remove parts that block horizonal entrances
-             TODO: benchmark recast with and without steep inclines
-             TODO: attempt to optimize rcBuildRegions
+             * Second, iterates through the tiles and loads their heightmaps.
+               These are processed so that steep inclines are removed.
+               TODO: process liquid heightmap
+               TODO: process heightmap and remove parts that block horizonal entrances
 
-             Third, the vmap model and heightmap data is aggregated
+             * Third, the vmap model and heightmap data is aggregated
 
-             Fourth, data is sent off to recast for processing.  This optionally includes generating
-             an obj file, for debugging with RecastDemo
+             * Fourth, data is sent off to recast for processing.  This optionally includes generating
+               an obj file, for debugging with RecastDemo
+               TODO: benchmark recast with and without steep inclines
+               TODO: attempt to optimize rcBuildRegions
             */
             void build(uint32 mapID);
 

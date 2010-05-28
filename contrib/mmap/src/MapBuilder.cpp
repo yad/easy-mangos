@@ -288,10 +288,8 @@ namespace MMAP
             Vector3 position = instance.iPos;
             position.x -= 32*533.33333f;
             position.y -= 32*533.33333f;
+
             //float heightOffset = TileBuilder::readHeightOffset(mapID, uint32(ceil(32-position.x/GRID_SIZE)), uint32(ceil(32-position.y/GRID_SIZE)));
-            //if(heightOffset = 0.f)
-            //    heightOffset = TileBuilder::readHeightOffset(mapID, uint32(ceil(32-position.x/GRID_SIZE)), uint32(ceil(32-position.y/GRID_SIZE)));
-            //printf("%f\n", heightOffset);
             //position.z += heightOffset*2.f;
 
             for(vector<GroupModel>::iterator it = groupModels.begin(); it != groupModels.end(); ++it)
