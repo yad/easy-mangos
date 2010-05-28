@@ -5702,6 +5702,12 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                 triggered_spell_id = 22858;
                 break;
             }
+            // Gag Order
+            if (dummySpell->SpellIconID == 280)
+            {
+                triggered_spell_id = 18498;                 // Silenced - Gag Order
+                break;
+            }
             // Second Wind
             if (dummySpell->SpellIconID == 1697)
             {
@@ -7018,6 +7024,10 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
             // Necrosis
             if (dummySpell->SpellIconID == 2709)
             {
+                // only melee auto attack affected
+                if (!(procFlag & PROC_FLAG_SUCCESSFUL_MELEE_HIT))
+                    return false;
+
                 basepoints[0] = triggerAmount * damage / 100;
                 triggered_spell_id = 51460;
                 break;
@@ -12031,7 +12041,10 @@ void Unit::CleanupsBeforeDelete()
         CombatStop();
         ClearComboPointHolders();
         DeleteThreatList();
-        getHostileRefManager().setOnlineOfflineState(false);
+        if (GetTypeId()==TYPEID_PLAYER)
+            getHostileRefManager().setOnlineOfflineState(false);
+        else
+            getHostileRefManager().deleteReferences();
         RemoveAllAuras(AURA_REMOVE_BY_DELETE);
         GetMotionMaster()->Clear(false);                    // remove different non-standard movement generators.
     }
