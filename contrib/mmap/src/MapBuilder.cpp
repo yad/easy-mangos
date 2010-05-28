@@ -51,15 +51,21 @@ namespace MMAP
         uint32 tileX, tileY, tileID;
         char filter[12];
 
+        sprintf(filter, "%03u.vmtree", mapID);
+        getDirContents(files, "vmaps", filter);
+        for(i = 0; i < files.size(); ++i)
+        {
+            m_maps.insert(mapID);
+        }
+
+        files.clear();
         sprintf(filter, "%03u*.vmtile", mapID);
         getDirContents(files, "vmaps", filter);
         for(i = 0; i < files.size(); ++i)
         {
-            mapID = uint32(atoi(files[i].substr(0,3).c_str()));
             tileX = uint32(atoi(files[i].substr(7,2).c_str()));
             tileY = uint32(atoi(files[i].substr(4,2).c_str()));
             tileID = StaticMapTree::packTileID(tileX, tileY);
-            m_maps.insert(mapID);
 
             if(m_tiles.find(mapID) == m_tiles.end())
             {
@@ -102,6 +108,14 @@ namespace MMAP
         vector<string> files;
         uint32 mapID, tileX, tileY, tileID;
 
+        getDirContents(files, "vmaps", "*.vmtree");
+        for(i = 0; i < files.size(); ++i)
+        {
+            mapID = uint32(atoi(files[i].substr(0,3).c_str()));
+            m_maps.insert(mapID);
+        }
+
+        files.clear();
         getDirContents(files, "vmaps", "*.vmtile");
         for(i = 0; i < files.size(); ++i)
         {
@@ -109,7 +123,6 @@ namespace MMAP
             tileX = uint32(atoi(files[i].substr(7,2).c_str()));
             tileY = uint32(atoi(files[i].substr(4,2).c_str()));
             tileID = StaticMapTree::packTileID(tileX, tileY);
-            m_maps.insert(mapID);
 
             if(m_tiles.find(mapID) == m_tiles.end())
             {
@@ -164,7 +177,9 @@ namespace MMAP
         if(!m_completeLists)
             getMapAndTileList(mapID);
 
-        set<uint32> tiles = *m_tiles[mapID];
+        set<uint32> tiles;
+        if(m_tiles.find(mapID) != m_tiles.end())
+            tiles = *m_tiles[mapID];
 
         loadVMap(mapID);
 
@@ -213,7 +228,16 @@ namespace MMAP
     {
         printf("Loading vmap...                         \r");
 
-        set<uint32> tiles = *m_tiles[mapID];
+        // any loadMap call initializes the StaticMapTree, which loads
+        // models stored in the WDT. Necessary for maps that don't have
+        // a heightmap or ADTs
+        cout.setstate(cout.badbit);
+        m_vmapManager->loadMap("vmaps", mapID, 64, 64);
+        cout.clear(cout.goodbit);
+
+        set<uint32> tiles;
+        if(m_tiles.find(mapID) != m_tiles.end())
+            tiles = *m_tiles[mapID];
 
         uint32 tileX, tileY;
         for(set<uint32>::iterator it = tiles.begin(); it != tiles.end(); ++it)
@@ -297,7 +321,9 @@ namespace MMAP
     {
         printf("Unloading vmap...                       \r");
 
-        set<uint32> tiles = *m_tiles[mapID];
+        set<uint32> tiles;
+        if(m_tiles.find(mapID) != m_tiles.end())
+            tiles = *m_tiles[mapID];
 
         uint32 tileX, tileY;
         for(set<uint32>::iterator it = tiles.begin(); it != tiles.end(); ++it)
@@ -308,6 +334,10 @@ namespace MMAP
             m_vmapManager->unloadMap(mapID, tileX, tileY);
             cout.clear(cout.goodbit);
         }
+        
+        cout.setstate(cout.badbit);
+        m_vmapManager->unloadMap(mapID);
+        cout.clear(cout.goodbit);
     }
 
     inline void MapBuilder::transform(vector<Vector3> source, vector<Vector3> &transformedVertices, float scale, G3D::Matrix3 rotation, Vector3 position)
