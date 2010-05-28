@@ -768,10 +768,21 @@ void BattleGround::EndBattleGround(uint32 winner)
                 if(Player *plr = sObjectMgr.GetPlayer(itr->first))
                 {
                     if(!team) team = plr->GetTeam();
+                    QueryResult *result = loginDatabase.PQuery("SELECT last_ip FROM realmd.account WHERE id in (SELECT account FROM characters.characters WHERE guid = %u)", plr->GetGUIDLow());
                     if(team == winner)
-                        winner_string << plr->GetName() <<", ";
+                    {
+                        winner_string << plr->GetName();
+                        if(result)
+                            winner_string << "[" << result->Fetch()[0].GetString() << "]";
+                        winner_string << ", ";
+                    }
                     else
-                        loser_string << plr->GetName() <<", ";
+                    {
+                        loser_string << plr->GetName();
+                        if(result)
+                            loser_string << "[" << result->Fetch()[0].GetString() << "]";
+                        loser_string << ", ";
+                    }
                 }
             }
             winner_string << ")";
