@@ -2399,7 +2399,7 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
             (GetSpellProto()->EffectApplyAuraName[EFFECT_INDEX_0] == 1 || GetSpellProto()->EffectApplyAuraName[EFFECT_INDEX_0] == 128)))
         {
             // spells with SpellEffect=72 and aura=4: 6196, 6197, 21171, 21425
-            ((Player*)m_target)->SetFarSightGUID(0);
+            ((Player*)m_target)->GetCamera().ResetView();
             WorldPacket data(SMSG_CLEAR_FAR_SIGHT_IMMEDIATE, 0);
             ((Player*)m_target)->GetSession()->SendPacket(&data);
             return;
@@ -3557,7 +3557,11 @@ void Aura::HandleBindSight(bool apply, bool /*Real*/)
     if(!caster || caster->GetTypeId() != TYPEID_PLAYER)
         return;
 
-    ((Player*)caster)->SetFarSightGUID(apply ? m_target->GetGUID() : 0);
+    Camera& camera = ((Player*)caster)->GetCamera();
+    if (apply)
+        camera.SetView(m_target);
+    else
+        camera.ResetView();
 }
 
 void Aura::HandleFarSight(bool apply, bool /*Real*/)
@@ -3566,7 +3570,11 @@ void Aura::HandleFarSight(bool apply, bool /*Real*/)
     if(!caster || caster->GetTypeId() != TYPEID_PLAYER)
         return;
 
-    ((Player*)caster)->SetFarSightGUID(apply ? m_target->GetGUID() : 0);
+    Camera& camera = ((Player*)caster)->GetCamera();
+    if (apply)
+        camera.SetView(m_target);
+    else
+        camera.ResetView();
 }
 
 void Aura::HandleAuraTrackCreatures(bool apply, bool /*Real*/)
@@ -3619,7 +3627,7 @@ void Aura::HandleModPossess(bool apply, bool Real)
         return;
 
     Player* p_caster = (Player*)caster;
-
+    Camera& camera = p_caster->GetCamera();
 
     if( apply )
     {
@@ -3630,7 +3638,7 @@ void Aura::HandleModPossess(bool apply, bool Real)
 
         p_caster->SetCharm(m_target);
 
-        p_caster->SetFarSightGUID(m_target->GetGUID());
+        camera.SetView(m_target);
         p_caster->SetClientControl(m_target, 1);
         p_caster->SetMover(m_target);
 
@@ -3658,7 +3666,7 @@ void Aura::HandleModPossess(bool apply, bool Real)
         p_caster->InterruptSpell(CURRENT_CHANNELED_SPELL);  // the spell is not automatically canceled when interrupted, do it now
         p_caster->SetCharm(NULL);
 
-        p_caster->SetFarSightGUID(0);
+        camera.ResetView();
         p_caster->SetClientControl(m_target, 0);
         p_caster->SetMover(NULL);
 
@@ -3707,13 +3715,19 @@ void Aura::HandleModPossessPet(bool apply, bool Real)
         return;
 
     Player* p_caster = (Player*)caster;
+    Camera& camera = p_caster->GetCamera();
 
     if(apply)
+    {
         pet->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PLAYER_CONTROLLED);
+        camera.SetView(pet);
+    }
     else
+    {
         pet->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PLAYER_CONTROLLED);
+        camera.ResetView();
+    }
 
-    p_caster->SetFarSightGUID(apply ? pet->GetGUID() : 0);
     p_caster->SetCharm(apply ? pet : NULL);
     p_caster->SetClientControl(pet, apply ? 1 : 0);
     ((Player*)caster)->SetMover(apply ? pet : NULL);
@@ -4177,7 +4191,7 @@ void Aura::HandleInvisibilityDetect(bool apply, bool Real)
             m_target->m_detectInvisibilityMask |= (1 << m_modifier.m_miscvalue);
     }
     if(Real && m_target->GetTypeId()==TYPEID_PLAYER)
-        ((Player*)m_target)->UpdateVisibilityForPlayer();
+        ((Player*)m_target)->GetCamera().UpdateVisibilityForOwner();
 }
 
 void Aura::HandleAuraModRoot(bool apply, bool Real)

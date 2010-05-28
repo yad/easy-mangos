@@ -10764,6 +10764,8 @@ void Unit::SetVisibility(UnitVisibility x)
             m->PlayerRelocation((Player*)this,GetPositionX(),GetPositionY(),GetPositionZ(),GetOrientation());
         else
             m->CreatureRelocation((Creature*)this,GetPositionX(),GetPositionY(),GetPositionZ(),GetOrientation());
+
+        getViewPoint().Event_ViewPointVisibilityChanged();
     }
 }
 

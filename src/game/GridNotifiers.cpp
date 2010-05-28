@@ -28,21 +28,18 @@
 using namespace MaNGOS;
 
 void
-VisibleChangesNotifier::Visit(PlayerMapType &m)
+VisibleChangesNotifier::Visit(CameraMapType &m)
 {
-    for(PlayerMapType::iterator iter=m.begin(); iter != m.end(); ++iter)
+    for(CameraMapType::iterator iter=m.begin(); iter != m.end(); ++iter)
     {
-        Player* player = iter->getSource();
-        if(player == &i_object)
-            continue;
-
-        player->UpdateVisibilityOf(player->GetViewPoint(),&i_object);
+        iter->getSource()->UpdateVisibilityOf(&i_object);
     }
 }
 
 void
 VisibleNotifier::Notify()
 {
+    Player& i_player = *camera.getOwner();
     // at this moment i_clientGUIDs have guids that not iterate at grid level checks
     // but exist one case when this possible and object not out of range: transports
     if(Transport* transport = i_player.GetTransport())
@@ -83,7 +80,7 @@ VisibleNotifier::Notify()
                 continue;
 
             if (Player* plr = ObjectAccessor::FindPlayer(*iter))
-                plr->UpdateVisibilityOf(plr->GetViewPoint(),&i_player);
+                plr->UpdateVisibilityOf(plr->GetCamera().getBody(),&i_player);
         }
     }
 
@@ -103,16 +100,16 @@ VisibleNotifier::Notify()
 }
 
 void
-MessageDeliverer::Visit(PlayerMapType &m)
+MessageDeliverer::Visit(CameraMapType &m)
 {
-    for(PlayerMapType::iterator iter=m.begin(); iter != m.end(); ++iter)
+    for(CameraMapType::iterator iter=m.begin(); iter != m.end(); ++iter)
     {
-        if (i_toSelf || iter->getSource() != &i_player)
+        if (i_toSelf || iter->getSource()->getOwner() != &i_player)
         {
-            if (!i_player.InSamePhase(iter->getSource()))
+            if (!i_player.InSamePhase(iter->getSource()->getBody()))
                 continue;
 
-            if(WorldSession* session = iter->getSource()->GetSession())
+            if(WorldSession* session = iter->getSource()->getOwner()->GetSession())
                 session->SendPacket(i_message);
         }
     }
@@ -133,47 +130,49 @@ void MessageDelivererExcept::Visit(PlayerMapType &m)
 
 
 void
-ObjectMessageDeliverer::Visit(PlayerMapType &m)
+ObjectMessageDeliverer::Visit(CameraMapType &m)
 {
-    for(PlayerMapType::iterator iter=m.begin(); iter != m.end(); ++iter)
+    for(CameraMapType::iterator iter=m.begin(); iter != m.end(); ++iter)
     {
-        if(!iter->getSource()->InSamePhase(i_phaseMask))
+        if(!iter->getSource()->getBody()->InSamePhase(i_phaseMask))
             continue;
 
-        if(WorldSession* session = iter->getSource()->GetSession())
+        if(WorldSession* session = iter->getSource()->getOwner()->GetSession())
             session->SendPacket(i_message);
     }
 }
 
 void
-MessageDistDeliverer::Visit(PlayerMapType &m)
+MessageDistDeliverer::Visit(CameraMapType &m)
 {
-    for(PlayerMapType::iterator iter=m.begin(); iter != m.end(); ++iter)
+    for(CameraMapType::iterator iter=m.begin(); iter != m.end(); ++iter)
     {
-        if ((i_toSelf || iter->getSource() != &i_player ) &&
-            (!i_ownTeamOnly || iter->getSource()->GetTeam() == i_player.GetTeam() ) &&
-            (!i_dist || iter->getSource()->IsWithinDist(&i_player,i_dist)))
+        WorldObject* body = iter->getSource()->getBody();
+        Player * owner = iter->getSource()->getOwner();
+        if ((i_toSelf || owner != &i_player ) &&
+            (!i_ownTeamOnly || owner->GetTeam() == i_player.GetTeam() ) &&
+            (!i_dist || body->IsWithinDist(&i_player,i_dist)))
         {
-            if (!i_player.InSamePhase(iter->getSource()))
+            if (!i_player.InSamePhase(body))
                 continue;
 
-            if (WorldSession* session = iter->getSource()->GetSession())
+            if (WorldSession* session = owner->GetSession())
                 session->SendPacket(i_message);
         }
     }
 }
 
 void
-ObjectMessageDistDeliverer::Visit(PlayerMapType &m)
+ObjectMessageDistDeliverer::Visit(CameraMapType &m)
 {
-    for(PlayerMapType::iterator iter=m.begin(); iter != m.end(); ++iter)
+    for(CameraMapType::iterator iter=m.begin(); iter != m.end(); ++iter)
     {
-        if (!i_dist || iter->getSource()->IsWithinDist(&i_object,i_dist))
+        if (!i_dist || iter->getSource()->getBody()->IsWithinDist(&i_object,i_dist))
         {
-            if (!i_object.InSamePhase(iter->getSource()))
+            if (!i_object.InSamePhase(iter->getSource()->getBody()))
                 continue;
 
-            if (WorldSession* session = iter->getSource()->GetSession())
+            if (WorldSession* session = iter->getSource()->getOwner()->GetSession())
                 session->SendPacket(i_message);
         }
     }
