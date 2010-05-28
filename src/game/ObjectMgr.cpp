@@ -2224,6 +2224,59 @@ void ObjectMgr::LoadItemPrototypes()
         sLog.outErrorDb("Item (Entry: %u) not exist in `item_template` but referenced in `CharStartOutfit.dbc`", *itr);
 }
 
+void ObjectMgr::LoadItemExtendedCost()
+{
+    uint32 count = 0;
+
+    QueryResult *result = WorldDatabase.Query("SELECT entry, honor, arena_points, bracket, rating FROM item_extended_cost");
+
+    if (!result)
+    {
+        barGoLink bar(1);
+
+        bar.step();
+
+        sLog.outString();
+        sLog.outErrorDb(">> Loaded 0 ItemExtendedCost. No Extended Cost from dbc will be rewritten.");
+        return;
+    }
+
+    barGoLink bar((int)result->GetRowCount());
+
+    do
+    {
+        Field *fields = result->Fetch();
+        bar.step();
+
+        uint32 Entry          = fields[0].GetUInt32();
+        uint32 newHonor       = fields[1].GetUInt32();
+        uint32 newArenaPoints = fields[2].GetUInt32();
+        uint32 newBracket     = fields[3].GetUInt32();
+        uint32 newRating      = fields[4].GetUInt32();
+
+        ItemExtendedCostEntry *pExtCost = const_cast<ItemExtendedCostEntry*>(sItemExtendedCostStore.LookupEntry(Entry));
+
+        if (!pExtCost)
+        {
+            sLog.outErrorDb("Table `item_extended_cos`: Entry %u doesn't exist`.",Entry);
+            continue;
+        }
+
+        pExtCost->reqhonorpoints = newHonor;
+        pExtCost->reqarenapoints = newArenaPoints;
+        pExtCost->reqarenaslot = newBracket;
+        pExtCost->reqpersonalarenarating = newRating;
+ 
+
+        ++count;
+    } while (result->NextRow());
+
+    delete result;
+
+    sLog.outString();
+    sLog.outString(">> %u Extended Cost changed.", count);
+}
+
 void ObjectMgr::LoadItemRequiredTarget()
 {
     m_ItemRequiredTarget.clear();                           // needed for reload case

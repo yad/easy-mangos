@@ -19063,17 +19063,31 @@ uint32 Player::GetMaxPersonalArenaRatingRequirement(uint32 minarenaslot)
     // the personal rating of the arena team must match the required limit as well
     // so return max[in arenateams](min(personalrating[teamtype], teamrating[teamtype]))
     uint32 max_personal_rating = 0;
-    for(int i = minarenaslot; i < MAX_ARENA_SLOT; ++i)
+    if(minarenaslot < MAX_ARENA_SLOT)
     {
-        if(ArenaTeam * at = sObjectMgr.GetArenaTeamById(GetArenaTeamId(i)))
+        for(int i = minarenaslot; i < MAX_ARENA_SLOT; ++i)
         {
-            uint32 p_rating = GetArenaPersonalRating(i);
-            uint32 t_rating = at->GetRating();
-            p_rating = p_rating < t_rating ? p_rating : t_rating;
-            if(max_personal_rating < p_rating)
-                max_personal_rating = p_rating;
+            if(ArenaTeam * at = sObjectMgr.GetArenaTeamById(GetArenaTeamId(i)))
+            {
+                uint32 p_rating = GetArenaPersonalRating(i);
+                uint32 t_rating = at->GetRating();
+                p_rating = p_rating < t_rating ? p_rating : t_rating;
+                if(max_personal_rating < p_rating)
+                    max_personal_rating = p_rating;
+            }
         }
     }
+    // rating is taken from direct personal
+    else if (minarenaslot < 2*MAX_ARENA_SLOT)
+    {
+        if(ArenaTeam * at = sObjectMgr.GetArenaTeamById(GetArenaTeamId(minarenaslot-MAX_ARENA_SLOT)))
+        {
+            uint32 p_rating = GetArenaPersonalRating(minarenaslot-MAX_ARENA_SLOT);
+            uint32 t_rating = at->GetRating();
+            max_personal_rating = p_rating < t_rating ? p_rating : t_rating;
+        }
+    }
+
     return max_personal_rating;
 }
 

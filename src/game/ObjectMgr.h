@@ -624,6 +624,7 @@ class ObjectMgr
         void LoadGameobjects();
         void LoadGameobjectRespawnTimes();
         void LoadItemPrototypes();
+        void LoadItemExtendedCost();
         void LoadItemRequiredTarget();
         void LoadItemLocales();
         void LoadQuestLocales();
