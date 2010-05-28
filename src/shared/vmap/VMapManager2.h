@@ -22,8 +22,7 @@
 #include "IVMapManager.h"
 #include "Utilities/UnorderedMap.h"
 #include "Platform/Define.h"
-// temp
-#include "TileAssembler.h"
+#include <G3D/Vector3.h>
 
 //===========================================================
 

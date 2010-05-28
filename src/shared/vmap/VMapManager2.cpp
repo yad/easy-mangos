@@ -22,6 +22,7 @@
 #include <sstream>
 #include "VMapManager2.h"
 #include "MapTree.h"
+#include "ModelInstance.h"
 #include "WorldModel.h"
 #include "VMapDefinitions.h"
 

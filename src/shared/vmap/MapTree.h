@@ -19,7 +19,6 @@
 #ifndef _MAPTREE_H
 #define _MAPTREE_H
 
-#include <map>
 #include "Platform/Define.h"
 #include "Utilities/UnorderedMap.h"
 #include "BIH.h"
@@ -76,7 +75,7 @@ namespace VMAP
             bool GetLocationInfo(const Vector3 &pos, LocationInfo &info) const;
 
             bool InitMap(const std::string &fname, VMapManager2 *vm);
-            bool UnloadMap(VMapManager2 *vm);
+            void UnloadMap(VMapManager2 *vm);
             bool LoadMapTile(uint32 tileX, uint32 tileY, VMapManager2 *vm);
             void UnloadMapTile(uint32 tileX, uint32 tileY, VMapManager2 *vm);
             bool isTiled() const { return iIsTiled; }

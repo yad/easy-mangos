@@ -120,12 +120,4 @@ namespace VMAP
     };
 } // namespace VMAP
 
-/* template<> struct HashTrait<VMAP::SoloTriangle>
-{
-    static size_t hashCode(const VMAP::SoloTriangle &key)
-    {
-        return HashTrait<G3D::uint32>::hashCode(key.idx0) ^ HashTrait<G3D::uint32>::hashCode(key.idx1) ^ HashTrait<G3D::uint32>::hashCode(key.idx2);
-    }
-}; */
-
 #endif // _WORLDMODEL_H

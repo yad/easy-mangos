@@ -17,6 +17,7 @@
  */
 
 #include "MapTree.h"
+#include "ModelInstance.h"
 #include "VMapManager2.h"
 #include "VMapDefinitions.h"
 
@@ -114,7 +115,7 @@ namespace VMAP
     StaticMapTree::StaticMapTree(uint32 mapID, const std::string &basePath):
         iMapID(mapID), /* iTree(0), */ iTreeValues(0), iBasePath(basePath)
     {
-        if(iBasePath.length() > 0 && (iBasePath[iBasePath.length()-1] != '/' || iBasePath[iBasePath.length()-1] != '\\'))
+        if (iBasePath.length() > 0 && (iBasePath[iBasePath.length()-1] != '/' || iBasePath[iBasePath.length()-1] != '\\'))
         {
             iBasePath.append("/");
         }
@@ -151,7 +152,7 @@ namespace VMAP
         // direction with length of 1
         G3D::Ray ray = G3D::Ray::fromOriginAndDirection(pos1, (pos2 - pos1)/maxDist);
         float resultDist = getIntersectionTime(ray, maxDist, true);
-        if(resultDist < maxDist)
+        if (resultDist < maxDist)
         {
             result = false;
         }
@@ -176,10 +177,10 @@ namespace VMAP
         Vector3 dir = (pPos2 - pPos1)/maxDist;              // direction with length of 1
         G3D::Ray ray(pPos1, dir);
         float dist = getIntersectionTime(ray, maxDist, false);
-        if(dist < maxDist)
+        if (dist < maxDist)
         {
             pResultHitPos = pPos1 + dir * dist;
-            if(pModifyDist < 0)
+            if (pModifyDist < 0)
             {
                 if ((pResultHitPos - pPos1).magnitude() > -pModifyDist)
                 {
@@ -213,7 +214,7 @@ namespace VMAP
         G3D::Ray ray(pPos, dir);   // direction with length of 1
         float maxDist = VMapDefinitions::getMaxCanFallDistance();
         float dist = getIntersectionTime(ray, maxDist, false);
-        if(dist < maxDist)
+        if (dist < maxDist)
         {
             height = pPos.z - dist;
         }
@@ -234,7 +235,8 @@ namespace VMAP
             return false;
         // TODO: check magic number when implemented...
         char tiled;
-        if (fread(&tiled, sizeof(char), 1, rf) != 1)
+        char chunk[8];
+        if (!readChunk(rf, chunk, VMAP_MAGIC, 8) || fread(&tiled, sizeof(char), 1, rf) != 1)
         {
             fclose(rf);
             return false;
@@ -266,8 +268,9 @@ namespace VMAP
         {
             char chunk[8];
             //general info
+            if (!readChunk(rf, chunk, VMAP_MAGIC, 8)) success = false;
             char tiled;
-            if (fread(&tiled, sizeof(char), 1, rf) != 1) success = false;
+            if (success && fread(&tiled, sizeof(char), 1, rf) != 1) success = false;
             iIsTiled = bool(tiled);
             // Nodes
             if (success && !readChunk(rf, chunk, "NODE", 4)) success = false;
@@ -288,7 +291,7 @@ namespace VMAP
             if (!iIsTiled && ModelSpawn::readFromFile(rf, spawn))
             {
                 WorldModel *model = vm->acquireModelInstance(iBasePath, spawn.name);
-                std::cout << "StaticMapTree::init(): loading " << spawn.name << std::endl;
+                std::cout << "StaticMapTree::InitMap(): loading " << spawn.name << std::endl;
                 if (model)
                 {
                     // assume that global model always is the first and only tree value (could be improved...)
@@ -309,7 +312,7 @@ namespace VMAP
 
     //=========================================================
 
-    bool StaticMapTree::UnloadMap(VMapManager2 *vm)
+    void StaticMapTree::UnloadMap(VMapManager2 *vm)
     {
         for (loadedSpawnMap::iterator i = iLoadedSpawns.begin(); i != iLoadedSpawns.end(); ++i)
         {
@@ -343,7 +346,10 @@ namespace VMAP
         FILE* tf = fopen(tilefile.c_str(), "rb");
         if (tf)
         {
-            while (result)
+            uint32 numSpawns;
+            if (fread(&numSpawns, sizeof(uint32), 1, tf) != 1)
+                result = false;
+            for (uint32 i=0; i<numSpawns && result; ++i)
             {
                 // read model spawns
                 ModelSpawn spawn;
@@ -352,38 +358,31 @@ namespace VMAP
                 {
                     // acquire model instance
                     WorldModel *model = vm->acquireModelInstance(iBasePath, spawn.name);
-                    if(!model) std::cout << "error: could not acquire WorldModel pointer!\n";
+                    if (!model) std::cout << "error: could not acquire WorldModel pointer!\n";
 
                     // update tree
-                    uint32 nNodeVal=0, referencedVal;
-                    fread(&nNodeVal, sizeof(uint32), 1, tf);
-#ifdef VMAP_DEBUG
-                    if(nNodeVal != 1)
-                        std::cout << "unexpected amount of affected NodeVals! (" << nNodeVal << ")\n";
-#endif
-                    for (uint32 i=0; i<nNodeVal; ++i)
+                    uint32 referencedVal;
+
+                    fread(&referencedVal, sizeof(uint32), 1, tf);
+                    if (!iLoadedSpawns.count(referencedVal))
                     {
-                        fread(&referencedVal, sizeof(uint32), 1, tf);
-                        if (!iLoadedSpawns.count(referencedVal))
-                        {
 #ifdef VMAP_DEBUG
-                            if (referencedVal > iNTreeValues)
-                            {
-                                std::cout << "invalid tree element! (" << referencedVal << "/" << iNTreeValues << ")\n";
-                                continue;
-                            }
-#endif
-                            iTreeValues[referencedVal] = ModelInstance(spawn, model);
-                            iLoadedSpawns[referencedVal] = 1;
-                        }
-                        else
+                        if (referencedVal > iNTreeValues)
                         {
-                            ++iLoadedSpawns[referencedVal];
-#ifdef VMAP_DEBUG
-                            if (iTreeValues[referencedVal].ID != spawn.ID) std::cout << "error: trying to load wrong spawn in node!\n";
-                            else if (iTreeValues[referencedVal].name != spawn.name) std::cout << "error: name collision on GUID="<< spawn.ID << "\n";
-#endif
+                            std::cout << "invalid tree element! (" << referencedVal << "/" << iNTreeValues << ")\n";
+                            continue;
                         }
+#endif
+                        iTreeValues[referencedVal] = ModelInstance(spawn, model);
+                        iLoadedSpawns[referencedVal] = 1;
+                    }
+                    else
+                    {
+                        ++iLoadedSpawns[referencedVal];
+#ifdef VMAP_DEBUG
+                        if (iTreeValues[referencedVal].ID != spawn.ID) std::cout << "error: trying to load wrong spawn in node!\n";
+                        else if (iTreeValues[referencedVal].name != spawn.name) std::cout << "error: name collision on GUID="<< spawn.ID << "\n";
+#endif
                     }
                 }
             }
@@ -413,34 +412,32 @@ namespace VMAP
             if (tf)
             {
                 bool result=true;
-                while (result)
+                uint32 numSpawns;
+                if (fread(&numSpawns, sizeof(uint32), 1, tf) != 1)
+                    result = false;
+                for (uint32 i=0; i<numSpawns && result; ++i)
                 {
                     // read model spawns
                     ModelSpawn spawn;
                     result = ModelSpawn::readFromFile(tf, spawn);
                     if (result)
                     {
-//                        std::cout << "unloading '" << spawn.name << "'\n";
-
                         // release model instance
                         vm->releaseModelInstance(spawn.name);
 
                         // update tree
-                        uint32 nNodeVal=0, referencedNode;
-                        fread(&nNodeVal, sizeof(uint32), 1, tf);
-                        for (uint32 i=0; i<nNodeVal; ++i)
+                        uint32 referencedNode;
+
+                        fread(&referencedNode, sizeof(uint32), 1, tf);
+                        if (!iLoadedSpawns.count(referencedNode))
                         {
-                            fread(&referencedNode, sizeof(uint32), 1, tf);
-                            if (!iLoadedSpawns.count(referencedNode))
-                            {
-                                std::cout << "error! trying to unload non-referenced model '" << spawn.name << "' (ID:" << spawn.ID << ")\n";
-                            }
-                            else if(--iLoadedSpawns[referencedNode] == 0)
-                            {
-                                //std::cout << "MapTree: removing '" << spawn.name << "' from tree\n";
-                                iTreeValues[referencedNode].setUnloaded();
-                                iLoadedSpawns.erase(referencedNode);
-                            }
+                            std::cout << "error! trying to unload non-referenced model '" << spawn.name << "' (ID:" << spawn.ID << ")\n";
+                        }
+                        else if (--iLoadedSpawns[referencedNode] == 0)
+                        {
+                            //std::cout << "MapTree: removing '" << spawn.name << "' from tree\n";
+                            iTreeValues[referencedNode].setUnloaded();
+                            iLoadedSpawns.erase(referencedNode);
                         }
                     }
                 }
