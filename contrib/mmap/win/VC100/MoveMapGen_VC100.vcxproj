@@ -118,6 +118,7 @@
     <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\RecastRasterization.cpp" />
     <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\RecastRegion.cpp" />
     <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\RecastTimer.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\vmap\BIH.cpp" />
     <ClCompile Include="..\..\..\..\src\shared\vmap\MapTree.cpp" />
     <ClCompile Include="..\..\..\..\src\shared\vmap\ModelInstance.cpp" />
     <ClCompile Include="..\..\..\..\src\shared\vmap\TileAssembler.cpp" />
