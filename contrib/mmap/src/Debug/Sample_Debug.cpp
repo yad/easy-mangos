@@ -58,7 +58,7 @@ Sample_Debug::Sample_Debug() : Sample_SoloMeshTiled()
 {
 	resetCommonSettings();
 
-    duReadNavMesh(30, m_navMesh);
+    setTool(new NavMeshTesterTool);
 
 	// Test
 	//m_chf = new rcCompactHeightfield;
@@ -144,7 +144,6 @@ Sample_Debug::~Sample_Debug()
 
 void Sample_Debug::handleSettings()
 {
-    Sample_SoloMeshTiled::handleSettings();
 }
 
 void Sample_Debug::handleTools()

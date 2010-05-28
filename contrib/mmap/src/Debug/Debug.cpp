@@ -12,6 +12,9 @@ void duReadNavMesh(int mapID, dtNavMesh* &navMesh)
     sprintf(fileName, "mmaps\\%03i.mmap", mapID);
     file = fopen(fileName, "rb");
 
+    if(!file)
+        return;
+
     dtNavMeshParams params;
     fread(&params, sizeof(dtNavMeshParams), 1, file);
     fclose(file);
