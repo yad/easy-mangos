@@ -22,6 +22,7 @@
 #include "TileAssembler.h"
 #include "MapTree.h"
 #include "BIH.h"
+#include "VMapDefinitions.h"
 
 #include <set>
 #include <iomanip>
@@ -107,10 +108,10 @@ namespace VMAP
             pTree.build(mapSpawns, BoundsTrait<ModelSpawn*>::getBounds);
 
             // ===> possibly move this code to StaticMapTree class
-            std::multimap<uint32, uint32> modelNodeIdx;
-            for(uint32 i=0; i<mapSpawns.size(); ++i)
+            std::map<uint32, uint32> modelNodeIdx;
+            for (uint32 i=0; i<mapSpawns.size(); ++i)
                 modelNodeIdx.insert(std::pair<uint32, uint32>(mapSpawns[i]->ID, i));
-            if(!modelNodeIdx.empty())
+            if (!modelNodeIdx.empty())
                 printf("min GUID: %u, max GUID: %u\n", modelNodeIdx.begin()->first, modelNodeIdx.rbegin()->first);
 
             // write map tree file
@@ -125,6 +126,7 @@ namespace VMAP
             }
 
             //general info
+            if (success && fwrite(VMAP_MAGIC, 1, 8, mapfile) != 8) success = false;
             uint32 globalTileID = StaticMapTree::packTileID(65, 65);
             std::pair<TileMap::iterator, TileMap::iterator> globalRange = map_iter->second->TileEntries.equal_range(globalTileID);
             char isTiled = globalRange.first == globalRange.second; // only maps without terrain (tiles) have global WMO
@@ -145,30 +147,34 @@ namespace VMAP
             // <====
 
             // write map tile files, similar to ADT files, only with extra BSP tree node info
+            TileMap &tileEntries = map_iter->second->TileEntries;
             TileMap::iterator tile;
-            for (tile = map_iter->second->TileEntries.begin(); tile != map_iter->second->TileEntries.end(); ++tile)
+            for (tile = tileEntries.begin(); tile != tileEntries.end(); ++tile)
             {
                 const ModelSpawn &spawn = map_iter->second->UniqueEntries[tile->second];
-                if(spawn.flags & MOD_WORLDSPAWN) // WDT spawn, saved as tile 65/65 currently...
+                if (spawn.flags & MOD_WORLDSPAWN) // WDT spawn, saved as tile 65/65 currently...
                     continue;
+                uint32 nSpawns = tileEntries.count(tile->first);
                 std::stringstream tilefilename;
                 tilefilename.fill('0');
                 tilefilename << iDestDir << "/" << std::setw(3) << map_iter->first << "_";
                 uint32 x, y;
                 StaticMapTree::unpackTileID(tile->first, x, y);
                 tilefilename << std::setw(2) << x << "_" << std::setw(2) << y << ".vmtile";
-                FILE *tilefile = fopen(tilefilename.str().c_str(), "ab");
-                success = ModelSpawn::writeToFile(tilefile, spawn);
-                // MapTree nodes to update when loading tile:
-                // current tree structure should only ever have entry per tree element, but not sure if i should keep G3D at all...
-                // so i do the full multimap program...
-                std::pair<std::multimap<uint32, uint32>::iterator, std::multimap<uint32, uint32>::iterator> nIdx = modelNodeIdx.equal_range(spawn.ID);
-                x = modelNodeIdx.count(spawn.ID);
-                if(x != 1) std::cout << "unexpected number of node entries! (" << x << ")\n";
-                if(success && fwrite(&x, sizeof(uint32), 1, tilefile) != 1) success = false;
-                for(std::multimap<uint32, uint32>::iterator i = nIdx.first; i != nIdx.second; ++i)
-                    if(success && fwrite(&i->second, sizeof(uint32), 1, tilefile) != 1) success = false;
-
+                FILE *tilefile = fopen(tilefilename.str().c_str(), "wb");
+                // write number of tile spawns
+                if (success && fwrite(&nSpawns, sizeof(uint32), 1, tilefile) != 1) success = false;
+                // write tile spawns
+                for (uint32 s=0; s<nSpawns; ++s)
+                {
+                    if (s)
+                        ++tile;
+                    const ModelSpawn &spawn2 = map_iter->second->UniqueEntries[tile->second];
+                    success = success && ModelSpawn::writeToFile(tilefile, spawn2);
+                    // MapTree nodes to update when loading tile:
+                    std::map<uint32, uint32>::iterator nIdx = modelNodeIdx.find(spawn2.ID);
+                    if (success && fwrite(&nIdx->second, sizeof(uint32), 1, tilefile) != 1) success = false;
+                }
                 fclose(tilefile);
             }
             // break; //test, extract only first map; TODO: remvoe this line
