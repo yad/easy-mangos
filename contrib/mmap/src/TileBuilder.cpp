@@ -12,18 +12,14 @@ using namespace MaNGOS;
 
 namespace MMAP
 {
-    TileBuilder::TileBuilder(float maxWalkableAngle, bool hiRes, IVMapManager* vmapManager)
+    TileBuilder::TileBuilder(float maxWalkableAngle, bool hiRes, IVMapManager* vmapManager) :
+        m_hiResHeightMaps   (hiRes),
+        m_maxRadians        (maxWalkableAngle*G3D::pi()/180),
+        m_groundNormal      (G3D::Plane(Vector3::unitY(), Vector3(0.f, 0.f, 0.f)).normal()),
+        m_vmapManager       (vmapManager)
     {
-        m_groundNormal = G3D::Plane(Vector3::unitY(), Vector3(0.f, 0.f, 0.f)).normal();
-        m_maxRadians = float(maxWalkableAngle*G3D::pi()/180);
-
-        m_hiResHeightMaps = hiRes;
-
         V9 = new float[V9_SIZE_SQ];
         V8 = new float[V8_SIZE_SQ];
-
-        m_vmapManager = vmapManager;
-
         m_vertices = new G3D::Array<float>;
         m_triangles = new G3D::Array<int>;
     }

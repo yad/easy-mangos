@@ -14,12 +14,12 @@ using namespace std;
 
 namespace MMAP
 {
-    MapBuilder::MapBuilder(float maxWalkableAngle, bool skipContinents/* = true*/, bool hiResHeightmaps/* = false*/)
+    MapBuilder::MapBuilder(float maxWalkableAngle, bool skipContinents/* = true*/, bool hiResHeightmaps/* = false*/) :
+        m_completeLists     (false),
+        m_debugOutput       (true),
+        m_maxWalkableAngle  (maxWalkableAngle),
+        m_skipContinents    (skipContinents)
     {
-        m_debugOutput = true;
-        m_maxWalkableAngle = maxWalkableAngle;
-        m_skipContinents = skipContinents;
-        m_completeLists = false;
         m_vmapManager = new VMapManager2();
         m_tileBuilder = new TileBuilder(m_maxWalkableAngle, hiResHeightmaps, m_vmapManager);
     }
