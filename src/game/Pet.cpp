@@ -62,8 +62,6 @@ m_declinedname(NULL), m_petModeFlags(PET_MODE_DEFAULT)
     baseMoveSpeed[MOVE_FLIGHT] = 7.0f * sWorld.getConfig(CONFIG_FLOAT_RATE_CHARFLIGHTSPEED);
     baseMoveSpeed[MOVE_FLIGHT_BACK] = 4.5f;
     baseMoveSpeed[MOVE_PITCH_RATE] = 3.14f;
-
-    container_type = true;
 }
 
 Pet::~Pet()
@@ -889,6 +887,7 @@ bool Pet::InitStatsForLevel(uint32 petlevel, Unit* owner)
                     {
                         case CLASS_WARLOCK:
                         {
+
                             //the damage bonus used for pets is either fire or shadow damage, whatever is higher
                             uint32 fire  = owner->GetUInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_POS + SPELL_SCHOOL_FIRE);
                             uint32 shadow = owner->GetUInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_POS + SPELL_SCHOOL_SHADOW);

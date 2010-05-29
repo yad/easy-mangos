@@ -46,7 +46,7 @@ enum CorpseFlags
     CORPSE_FLAG_LOOTABLE    = 0x20
 };
 
-class Corpse : public WorldObject, public GridCorpse
+class Corpse : public WorldObject
 {
     public:
         explicit Corpse( CorpseType type = CORPSE_BONES );
@@ -73,8 +73,8 @@ class Corpse : public WorldObject, public GridCorpse
         bool IsHostileTo(Unit const* unit) const;
         bool IsFriendlyTo(Unit const* unit) const;
 
-        GridPair const& GetGridPair() const { return m_grid_pair; }
-        void SetGridPair(GridPair const& grid) { m_grid_pair = grid; }
+        GridPair const& GetGrid() const { return m_grid; }
+        void SetGrid(GridPair const& grid) { m_grid = grid; }
 
         bool isVisibleForInState(Player const* u, WorldObject const* viewPoint, bool inVisibleList) const;
 
@@ -88,12 +88,16 @@ class Corpse : public WorldObject, public GridCorpse
         void Whisper(int32 textId,uint64 receiver) { MonsterWhisper(textId,receiver); }
         void YellToZone(int32 textId, uint32 language, uint64 TargetGuid) { MonsterYellToZone(textId,language,TargetGuid); }
 
+        GridReference<Corpse> &GetGridRef() { return m_gridRef; }
+
+        bool isActiveObject() const { return false; }
 
         bool IsExpired(time_t t) const;
     private:
+        GridReference<Corpse> m_gridRef;
 
         CorpseType m_type;
         time_t m_time;
-        GridPair m_grid_pair;                                    // gride for corpse position for fast search
+        GridPair m_grid;                                    // gride for corpse position for fast search
 };
 #endif

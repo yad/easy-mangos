@@ -1041,7 +1041,7 @@ struct BGData
     bool HasTaxiPath() const { return taxiPath[0] && taxiPath[1]; }
 };
 
-class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
+class MANGOS_DLL_SPEC Player : public Unit
 {
     friend class WorldSession;
     friend void Item::AddToUpdateQueueOf(Player *player);
@@ -2337,6 +2337,7 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
         void SendEnterVehicle(Vehicle *vehicle, VehicleSeatEntry const *veSeat);
 
         uint64 GetFarSight() const { return GetUInt64Value(PLAYER_FARSIGHT); }
+        void SetFarSightGUID(uint64 guid);
 
         // Transports
         Transport * GetTransport() const { return m_transport; }
@@ -2447,6 +2448,7 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
         uint8 GetOriginalSubGroup() const { return m_originalGroup.getSubGroup(); }
         void SetOriginalGroup(Group *group, int8 subgroup = -1);
 
+        GridReference<Player> &GetGridRef() { return m_gridRef; }
         MapReference &GetMapRef() { return m_mapRef; }
 
         bool isAllowedToLoot(Creature* creature);
@@ -2731,6 +2733,7 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
         GroupReference m_originalGroup;
         Group *m_groupInvite;
         uint32 m_groupUpdateMask;
+        uint64 m_auraUpdateMask;
 
         uint64 m_miniPet;
 
@@ -2766,6 +2769,7 @@ class MANGOS_DLL_SPEC Player : public Unit, public GridPlayer
                 m_DelayedOperations |= operation;
         }
 
+        GridReference<Player> m_gridRef;
         MapReference m_mapRef;
 
         // Playerbot mod:

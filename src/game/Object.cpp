@@ -1543,17 +1543,18 @@ void WorldObject::MonsterSay(int32 textId, uint32 language, uint64 TargetGuid)
     MaNGOS::MonsterChatBuilder say_build(*this, CHAT_MSG_MONSTER_SAY, textId,language,TargetGuid);
     MaNGOS::LocalizedPacketDo<MaNGOS::MonsterChatBuilder> say_do(say_build);
     MaNGOS::CameraDistWorker<MaNGOS::LocalizedPacketDo<MaNGOS::MonsterChatBuilder> > say_worker(this,sWorld.getConfig(CONFIG_FLOAT_LISTEN_RANGE_SAY),say_do);
-    Cell::VisitCameras(this, say_worker, sWorld.getConfig(CONFIG_FLOAT_LISTEN_RANGE_SAY));
+    Cell::VisitWorldObjects(this, say_worker, sWorld.getConfig(CONFIG_FLOAT_LISTEN_RANGE_SAY));
 }
 
 void WorldObject::MonsterYell(int32 textId, uint32 language, uint64 TargetGuid)
 {
+
     float range = sWorld.getConfig(CONFIG_FLOAT_LISTEN_RANGE_YELL);
 
     MaNGOS::MonsterChatBuilder say_build(*this, CHAT_MSG_MONSTER_YELL, textId,language,TargetGuid);
     MaNGOS::LocalizedPacketDo<MaNGOS::MonsterChatBuilder> say_do(say_build);
     MaNGOS::CameraDistWorker<MaNGOS::LocalizedPacketDo<MaNGOS::MonsterChatBuilder> > say_worker(this,range,say_do);
-    Cell::VisitCameras(this, say_worker, sWorld.getConfig(CONFIG_FLOAT_LISTEN_RANGE_YELL));
+    Cell::VisitWorldObjects(this, say_worker, sWorld.getConfig(CONFIG_FLOAT_LISTEN_RANGE_YELL));
 }
 
 void WorldObject::MonsterYellToZone(int32 textId, uint32 language, uint64 TargetGuid)
@@ -1576,7 +1577,7 @@ void WorldObject::MonsterTextEmote(int32 textId, uint64 TargetGuid, bool IsBossE
     MaNGOS::MonsterChatBuilder say_build(*this, IsBossEmote ? CHAT_MSG_RAID_BOSS_EMOTE : CHAT_MSG_MONSTER_EMOTE, textId,LANG_UNIVERSAL,TargetGuid);
     MaNGOS::LocalizedPacketDo<MaNGOS::MonsterChatBuilder> say_do(say_build);
     MaNGOS::CameraDistWorker<MaNGOS::LocalizedPacketDo<MaNGOS::MonsterChatBuilder> > say_worker(this,range,say_do);
-    Cell::VisitCameras(this, say_worker, range);
+    Cell::VisitWorldObjects(this, say_worker, range);
 }
 
 void WorldObject::MonsterWhisper(int32 textId, uint64 receiver, bool IsBossWhisper)
@@ -1967,7 +1968,7 @@ void WorldObject::SetPhaseMask(uint32 newPhaseMask, bool update)
     if(update && IsInWorld())
     {
         UpdateObjectVisibility();
-        getViewPoint().CameraEvent_ViewPointVisibilityChanged();
+        getViewPoint().Event_ViewPointVisibilityChanged();
     }
 }
 
@@ -2038,7 +2039,7 @@ struct WorldObjectChangeAccumulator
 void WorldObject::BuildUpdateData( UpdateDataMapType & update_players)
 {
     WorldObjectChangeAccumulator notifier(*this, update_players);
-    Cell::VisitCameras(this, notifier, GetMap()->GetVisibilityDistance());
+    Cell::VisitWorldObjects(this, notifier, GetMap()->GetVisibilityDistance());
 
     ClearUpdateMask(false);
 }

@@ -45,6 +45,7 @@ namespace MaNGOS
 
         explicit VisibleNotifier(Camera &c) : camera(c), i_clientGUIDs(c.getOwner()->m_clientGUIDs) {}
         template<class T> void Visit(GridRefManager<T> &m);
+        void Visit(CameraMapType &m) {}
         void Notify(void);
     };
 
@@ -141,6 +142,7 @@ namespace MaNGOS
         template<class T> void Visit(GridRefManager<T> &m);
         void Visit(PlayerMapType &) {}
         void Visit(CorpseMapType &) {}
+        void Visit(CameraMapType &) {}
         void Visit(CreatureMapType &);
     };
 

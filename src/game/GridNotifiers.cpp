@@ -154,7 +154,6 @@ MessageDistDeliverer::Visit(CameraMapType &m)
         Player * owner = iter->getSource()->getOwner();
         if ((i_toSelf || owner != &i_player ) &&
             (!i_ownTeamOnly || owner->GetTeam() == i_player.GetTeam() ) &&
-            (!i_enemyTeamOnly || owner->GetTeam() != i_player.GetTeam()) &&
             (!i_dist || body->IsWithinDist(&i_player,i_dist)))
         {
             if (!i_player.InSamePhase(body))

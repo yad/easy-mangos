@@ -74,16 +74,16 @@ class MANGOS_DLL_DECL Grid
 
         /** Grid visitor for grid objects
          */
-        template<class T, class V>
-        void Visit(TypeContainerVisitor<T, TypeMapContainer<GRID_OBJECT_TYPES>, V > &visitor)
+        template<class T>
+        void Visit(TypeContainerVisitor<T, TypeMapContainer<GRID_OBJECT_TYPES> > &visitor)
         {
             visitor.Visit(i_container);
         }
 
         /** Grid visitor for world objects
          */
-        template<class T, class V>
-        void Visit(TypeContainerVisitor<T, TypeMapContainer<WORLD_OBJECT_TYPES>, V > &visitor)
+        template<class T>
+        void Visit(TypeContainerVisitor<T, TypeMapContainer<WORLD_OBJECT_TYPES> > &visitor)
         {
             visitor.Visit(i_objects);
         }

@@ -28,8 +28,6 @@ Vehicle::Vehicle() : Creature(CREATURE_SUBTYPE_VEHICLE), m_vehicleId(0), m_vehic
                      despawn(false), m_creation_time(0), m_VehicleData(NULL)
 {
     m_updateFlag = (UPDATEFLAG_LIVING | UPDATEFLAG_HAS_POSITION | UPDATEFLAG_VEHICLE);
-
-    container_type = true;
 }
 
 Vehicle::~Vehicle()

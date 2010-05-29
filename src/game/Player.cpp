@@ -313,7 +313,7 @@ bool SpellModifier::isAffectedOnSpell( SpellEntry const *spell ) const
 
 UpdateMask Player::updateVisualBits;
 
-Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputationMgr(this), GridPlayer(this), m_camera(this)
+Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputationMgr(this), m_camera(this)
 {
     // Jail by WarHead
     m_jail_guid     = 0;
@@ -392,6 +392,7 @@ Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputa
     // group is initialized in the reference constructor
     SetGroupInvite(NULL);
     m_groupUpdateMask = 0;
+    m_auraUpdateMask = 0;
 
     duel = NULL;
 
@@ -550,8 +551,6 @@ Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputa
     baseMoveSpeed[MOVE_FLIGHT] = 7.0f * sWorld.getConfig(CONFIG_FLOAT_RATE_CHARFLIGHTSPEED);
     baseMoveSpeed[MOVE_FLIGHT_BACK] = 4.5f;
     baseMoveSpeed[MOVE_PITCH_RATE] = 3.14f;
-
-    container_type = true;
 
     //TeamBG helpers
     m_isInTeamBG = false;
@@ -2438,7 +2437,7 @@ bool Player::ToggleAFK()
     bool state = HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_AFK);
 
     // afk player not allowed in battleground
-    if(state && InBattleGround())
+    if (state && InBattleGround() && !InArena())
         LeaveBattleground();
 
     return state;
@@ -6841,6 +6840,7 @@ bool Player::SetPosition(float x, float y, float z, float orientation, bool tele
 
     // code block for underwater state update
     UpdateUnderwaterState(m, x, y, z);
+
     CheckExploreSystem();
 
     return true;
@@ -21973,8 +21973,8 @@ void Player::SetOriginalGroup(Group *group, int8 subgroup)
 
 void Player::UpdateUnderwaterState( Map* m, float x, float y, float z )
 {
-    LiquidData liquid_status;
-    ZLiquidStatus res = m->getLiquidStatus(x, y, z, MAP_ALL_LIQUIDS, &liquid_status);
+    GridMapLiquidData liquid_status;
+    GridMapLiquidStatus res = m->getLiquidStatus(x, y, z, MAP_ALL_LIQUIDS, &liquid_status);
     if (!res)
     {
         m_MirrorTimerFlags &= ~(UNDERWATER_INWATER|UNDERWATER_INLAVA|UNDERWATER_INSLIME|UNDERWATER_INDARKWATER);

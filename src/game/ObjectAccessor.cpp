@@ -106,28 +106,23 @@ ObjectAccessor::FindPlayer(ObjectGuid guid)
 Player*
 ObjectAccessor::FindPlayerByName(const char *name)
 {
-    //TODO: Player Guard
-    Guard guard(*HashMapHolder<Player>::GetLock());
-    HashMapHolder<Player>::MapType& m = HashMapHolder<Player>::GetContainer();
-    HashMapHolder<Player>::MapType::iterator iter = m.begin();
-    for(; iter != m.end(); ++iter)
+    HashMapHolder<Player>::ReadGuard g(HashMapHolder<Player>::GetLock());
+    HashMapHolder<Player>::MapType& m = sObjectAccessor.GetPlayers();
+    for(HashMapHolder<Player>::MapType::iterator iter = m.begin(); iter != m.end(); ++iter)
         if(iter->second->IsInWorld() && ( ::strcmp(name, iter->second->GetName()) == 0 ))
             return iter->second;
+
     return NULL;
 }
 
 void
 ObjectAccessor::SaveAllPlayers()
 {
-    Guard guard(*HashMapHolder<Player>::GetLock());
-    HashMapHolder<Player>::MapType& m = HashMapHolder<Player>::GetContainer();
-    HashMapHolder<Player>::MapType::iterator itr = m.begin();
-    for(; itr != m.end(); ++itr)
-    {
-        if (itr->second->m_jail_isjailed) continue; // Prevent jailed players to be saved
+    HashMapHolder<Player>::ReadGuard g(HashMapHolder<Player>::GetLock());
+    HashMapHolder<Player>::MapType& m = sObjectAccessor.GetPlayers();
+    for(HashMapHolder<Player>::MapType::iterator itr = m.begin(); itr != m.end(); ++itr)
         itr->second->SaveToDB();
     }
-}
 
 void ObjectAccessor::KickPlayer(uint64 guid)
 {
@@ -193,7 +188,7 @@ ObjectAccessor::AddCorpsesToGrid(GridPair const& gridpair,GridType& grid,Map* ma
 {
     Guard guard(i_corpseGuard);
     for(Player2CorpsesMapType::iterator iter = i_player2corpse.begin(); iter != i_player2corpse.end(); ++iter)
-        if(iter->second->GetGridPair() == gridpair)
+        if(iter->second->GetGrid() == gridpair)
     {
         // verify, if the corpse in our instance (add only corpses which are)
         if (map->Instanceable())
@@ -250,7 +245,7 @@ ObjectAccessor::ConvertCorpseForPlayer(ObjectGuid player_guid, bool insignia)
         for (int i = 3; i < CORPSE_END; ++i)                    // don't overwrite guid and object type
             bones->SetUInt32Value(i, corpse->GetUInt32Value(i));
 
-        bones->SetGridPair(corpse->GetGridPair());
+        bones->SetGrid(corpse->GetGrid());
         // bones->m_time = m_time;                              // don't overwrite time
         // bones->m_inWorld = m_inWorld;                        // don't overwrite world state
         // bones->m_type = m_type;                              // don't overwrite type
@@ -295,7 +290,7 @@ void ObjectAccessor::RemoveOldCorpses()
 /// Define the static member of HashMapHolder
 
 template <class T> UNORDERED_MAP< uint64, T* > HashMapHolder<T>::m_objectMap;
-template <class T> ACE_Thread_Mutex HashMapHolder<T>::i_lock;
+template <class T> ACE_RW_Thread_Mutex HashMapHolder<T>::i_lock;
 
 /// Global definitions for the hashmap storage
 

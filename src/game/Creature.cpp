@@ -110,7 +110,7 @@ bool ForcedDespawnDelayEvent::Execute(uint64 /*e_time*/, uint32 /*p_time*/)
 }
 
 Creature::Creature(CreatureSubtype subtype) :
-Unit(), i_AI(NULL), GridCreature(this),
+Unit(), i_AI(NULL),
 lootForPickPocketed(false), lootForBody(false), lootForSkin(false), m_groupLootTimer(0), m_groupLootId(0),
 m_lootMoney(0), m_lootGroupRecipientId(0),
 m_deathTimer(0), m_respawnTime(0), m_respawnDelay(25), m_corpseDelay(60), m_respawnradius(5.0f),
@@ -118,7 +118,7 @@ m_subtype(subtype), m_defaultMovementType(IDLE_MOTION_TYPE), m_DBTableGuid(0), m
 m_AlreadyCallAssistance(false), m_AlreadySearchedAssistance(false),
 m_regenHealth(true), m_AI_locked(false), m_isDeadByDefault(false), m_needNotify(false),
 m_meleeDamageSchoolMask(SPELL_SCHOOL_MASK_NORMAL),
-m_creatureInfo(NULL), m_splineFlags(SPLINEFLAG_WALKMODE)
+m_creatureInfo(NULL), m_isActiveObject(false), m_splineFlags(SPLINEFLAG_WALKMODE)
 {
     m_regenTimer = 200;
     m_valuesCount = UNIT_END;
@@ -267,8 +267,8 @@ bool Creature::InitEntry(uint32 Entry, uint32 team, const CreatureData *data )
 
     SetSpeedRate(MOVE_WALK, cinfo->speed_walk );
     SetSpeedRate(MOVE_RUN,  cinfo->speed_run );
-    SetSpeedRate(MOVE_SWIM, 1.0f );
-    SetSpeedRate(MOVE_FLIGHT, 1.0f );
+    SetSpeedRate(MOVE_SWIM, 1.0f);                          // using 1.0 rate
+    SetSpeedRate(MOVE_FLIGHT, 1.0f);                        // using 1.0 rate
 
     SetFloatValue(OBJECT_FIELD_SCALE_X, cinfo->scale);
 

@@ -808,7 +808,7 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
         if(!spiritOfRedemtionTalentReady)
             pVictim->setDeathState(JUST_DIED);
 
-        DEBUG_LOG("DealDamageHealth1");
+        DEBUG_FILTER_LOG(LOG_FILTER_DAMAGE,"DealDamageHealth1");
 
         if(spiritOfRedemtionTalentReady)
         {
@@ -2108,7 +2108,7 @@ void Unit::CalculateAbsorbAndResist(Unit *pCaster, SpellSchoolMask schoolMask, D
                 {
                     if(!((Player*)this)->HasSpellCooldown(31231) &&
                                                             // Only if no cooldown
-                        roll_chance_i((*i)->GetModifier()->m_amount)))
+                        roll_chance_i((*i)->GetModifier()->m_amount))
                                                             // Only if roll
                     {
                         preventDeathSpell = (*i)->GetSpellProto();
@@ -6098,6 +6098,12 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                 triggered_spell_id = 22858;
                 break;
             }
+            // Gag Order
+            if (dummySpell->SpellIconID == 280)
+            {
+                triggered_spell_id = 18498;                 // Silenced - Gag Order
+                break;
+            }
             // Second Wind
             if (dummySpell->SpellIconID == 1697)
             {
@@ -7351,6 +7357,9 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                 // Lesser Healing Wave need aditional 60% roll
                 if ((procSpell->SpellFamilyFlags & UI64LIT(0x0000000000000080)) && !roll_chance_i(60))
                     return false;
+                // Chain Heal needs additional 30% roll
+                if ((procSpell->SpellFamilyFlags & UI64LIT(0x0000000000000100)) && !roll_chance_i(30))
+                    return false;
                 // lookup water shield
                 AuraList const& vs = GetAurasByType(SPELL_AURA_PROC_TRIGGER_SPELL);
                 for(AuraList::const_iterator itr = vs.begin(); itr != vs.end(); ++itr)
@@ -7360,13 +7369,10 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                     {
                         uint32 spell = (*itr)->GetSpellProto()->EffectTriggerSpell[(*itr)->GetEffIndex()];
                         CastSpell(this, spell, true, castItem, triggeredByAura);
-                        if ((*itr)->DropAuraCharge())
-                            RemoveSingleSpellAurasFromStack((*itr)->GetId());
                         return true;
                     }
                 }
                 return false;
-                break;
             }
             // Lightning Overload
             if (dummySpell->SpellIconID == 2018)            // only this spell have SpellFamily Shaman SpellIconID == 2018 and dummy aura
@@ -7540,6 +7546,10 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
             // Necrosis
             if (dummySpell->SpellIconID == 2709)
             {
+                // only melee auto attack affected
+                if (!(procFlag & PROC_FLAG_SUCCESSFUL_MELEE_HIT))
+                    return false;
+
                 basepoints[0] = triggerAmount * damage / 100;
                 triggered_spell_id = 51460;
                 break;
@@ -11690,7 +11700,7 @@ void Unit::SetVisibility(UnitVisibility x)
         else
             m->CreatureRelocation((Creature*)this,GetPositionX(),GetPositionY(),GetPositionZ(),GetOrientation());
 
-        getViewPoint().CameraEvent_ViewPointVisibilityChanged();
+        getViewPoint().Event_ViewPointVisibilityChanged();
     }
 }
 
@@ -12989,7 +12999,6 @@ uint32 Unit::GetCreatePowers( Powers power ) const
 void Unit::AddToWorld()
 {
     Object::AddToWorld();
-    getViewPoint().CameraEvent_AddedToWorld();
 }
 
 void Unit::RemoveFromWorld()
@@ -13003,8 +13012,6 @@ void Unit::RemoveFromWorld()
         RemoveAllGameObjects();
         RemoveAllDynObjects();
         CleanupDeletedAuras();
-
-        getViewPoint().CameraEvent_RemovedFromWorld();
     }
 
     Object::RemoveFromWorld();
@@ -13020,7 +13027,10 @@ void Unit::CleanupsBeforeDelete()
         CombatStop();
         ClearComboPointHolders();
         DeleteThreatList();
-        getHostileRefManager().setOnlineOfflineState(false);
+        if (GetTypeId()==TYPEID_PLAYER)
+            getHostileRefManager().setOnlineOfflineState(false);
+        else
+            getHostileRefManager().deleteReferences();
         RemoveAllAuras(AURA_REMOVE_BY_DELETE);
         GetMotionMaster()->Clear(false);                    // remove different non-standard movement generators.
     }

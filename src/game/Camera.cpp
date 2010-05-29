@@ -3,32 +3,17 @@
 #include "GridNotifiersImpl.h"
 #include "CellImpl.h"
 #include "Log.h"
-
-//////////////
-#define CAMERA_DEBUGGING
-
-#ifdef CAMERA_DEBUGGING
-    #define CAMERA_OUT(s)       sLog.outBasic(s)
-    #define V_ASSERT(s)         assert(s)
-    #define R_ASSERT(s,ret)     assert(s)
-#else
-    #define CAMERA_OUT(s)
-    #define V_ASSERT(s)         if(!(s)) return
-    #define R_ASSERT(s,ret)     if(!(s)) return ret
-#endif
+#include "Errors.h"
 
 
-Camera::Camera(Player* pl) : GridCamera(this), m_owner(*pl), m_source(pl)
+Camera::Camera(Player* pl) : m_owner(*pl), m_source(pl)
 {
-    m_source->getViewPoint().AddCamera(this);
-
-    container_type = true;
+    m_source->getViewPoint().Attach(this);
 }
 
 Camera::~Camera()
 {
-    CAMERA_OUT("Camera: destuctor");
-    m_source->getViewPoint().RemoveCamera(this);
+    m_source->getViewPoint().Detach(this);
 }
 
 void Camera::ReceivePacket(WorldPacket *data)
@@ -36,93 +21,93 @@ void Camera::ReceivePacket(WorldPacket *data)
     m_owner.SendDirectMessage(data);
 }
 
-inline void UpdateForCurrentViewPoint(Camera& c, Player & m_owner, WorldObject & m_source)
+void Camera::UpdateForCurrentViewPoint()
 {
-    c.SetGrid(m_source.GetGrid());
+    m_gridRef.unlink();
 
-    m_owner.SetUInt64Value(PLAYER_FARSIGHT, (&m_source == &m_owner ? 0 : m_source.GetGUID()));
-    c.UpdateVisibilityForOwner();
+    if(GridType* grid = m_source->getViewPoint().m_grid)
+        grid->AddWorldObject(this);
 
-    assert(m_owner.HaveAtClient(&m_source)); // viewpoint should be visible now
+    m_owner.SetUInt64Value(PLAYER_FARSIGHT, (m_source == &m_owner ? 0 : m_source->GetGUID()));
+    UpdateVisibilityForOwner();
 }
 
 void Camera::SetView(WorldObject *obj)
 {
-    V_ASSERT(obj);
-    V_ASSERT(obj->isType(TYPEMASK_DYNAMICOBJECT|TYPEMASK_UNIT) && "Camera::SetView, viewpoint type is not available for client");
-    V_ASSERT(m_owner.IsInMap(obj));// IsInMap check phases too
+    ASSERT(obj);
 
-    m_source->getViewPoint().RemoveCamera(this);
+    if (!m_owner.IsInMap(obj))
+    {
+        sLog.outError("Camera::SetView, viewpoint is not in map with camera's owner");
+        return;
+    }
+
+    if (!obj->isType(TYPEMASK_DYNAMICOBJECT | TYPEMASK_UNIT))
+    {
+        sLog.outError("Camera::SetView, viewpoint type is not available for client");
+        return;
+    }
+
+    m_source->getViewPoint().Detach(this);
     m_source = obj;
-    m_source->getViewPoint().AddCamera(this);
+    m_source->getViewPoint().Attach(this);
 
-    UpdateForCurrentViewPoint(*this, m_owner, *m_source);
+    UpdateForCurrentViewPoint();
 }
 
-bool Camera::Event_ResetView(Camera * c)
+bool Camera::Event_ResetView()
 {
-    CAMERA_OUT("Camera: Reset view");
-    R_ASSERT(&c->m_owner != c->m_source, false);
-    //R_ASSERT(m_source->IsInMap(m_owner), false);   // can be called when m_source not in map?
+    if (&m_owner == m_source)
+        return false;
 
-    c->m_source = &c->m_owner;
-    c->m_source->getViewPoint().AddCamera(c);
+    m_source = &m_owner;
+    m_source->getViewPoint().Attach(this);
 
-    UpdateForCurrentViewPoint(*c, c->m_owner, *c->m_source);
+    UpdateForCurrentViewPoint();
     return true;
 }
 
-bool Camera::Event_ViewPointVisibilityChanged(Camera * c)
+bool Camera::Event_ViewPointVisibilityChanged()
 {
-    CAMERA_OUT("Camera: Event_ViewPointVisibilityChanged");
-
-    if (!c->m_owner.HaveAtClient(c->m_source))
-        return Event_ResetView(c);
+    if (!m_owner.HaveAtClient(m_source))
+        return Event_ResetView();
 
     return false;
 }
 
 void Camera::ResetView()
 {
-    CAMERA_OUT("Camera: Reset view");
-
-    //V_ASSERT(&m_owner != m_source);   seems this can be called many times.. and bring assert
-    //V_ASSERT(m_source->IsInMap(m_owner));   // can be called when m_source not in map?
-
-    m_source->getViewPoint().RemoveCamera(this);
+    m_source->getViewPoint().Detach(this);
     m_source = &m_owner;
-    m_source->getViewPoint().AddCamera(this);
+    m_source->getViewPoint().Attach(this);
 
-    UpdateForCurrentViewPoint(*this, m_owner, *m_source);
+    UpdateForCurrentViewPoint();
 }
 
-void Camera::Event_AddedToWorld(Camera * c)
+void Camera::Event_AddedToWorld()
 {
-    CAMERA_OUT("Camera: Added to world");
-    UpdateForCurrentViewPoint(*c, c->m_owner, *c->m_source);
+    GridType* grid = m_source->getViewPoint().m_grid;
+    ASSERT(grid);
+    grid->AddWorldObject(this);
+
+    UpdateVisibilityForOwner();
 }
 
-bool Camera::Event_RemovedFromWorld(Camera * c)
+bool Camera::Event_RemovedFromWorld()
 {
-    CAMERA_OUT("Camera: removed from world ");
-
-    bool erase = false;
-    if(c->m_source == &c->m_owner)
+    if(m_source == &m_owner)
     {
-        c->SetGrid(NULL);
+        m_gridRef.unlink();
+        return false;
     }
-    else
-    {   
-        // set self view
-        erase = Event_ResetView(c);
-    }
-    return erase;
+
+    return Event_ResetView();
 }
 
-void Camera::Event_Moved(Camera * c)
+void Camera::Event_Moved()
 {
-    CAMERA_OUT("Camera: moved to another grid");
-    c->SetGrid(c->m_source->GetGrid());
+    m_gridRef.unlink();
+    m_source->getViewPoint().m_grid->AddWorldObject(this);
 }
 
 void Camera::UpdateVisibilityOf(WorldObject* target)
@@ -155,8 +140,7 @@ ViewPoint::~ViewPoint()
 {
     if(!m_cameras.empty())
     {
-        CAMERA_OUT("ViewPoint deconstructor called, but list of cameras is not empty");
-        V_ASSERT(false);
+        sLog.outError("ViewPoint deconstructor called, but list of cameras is not empty");
     }
 }
 

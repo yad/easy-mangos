@@ -311,7 +311,7 @@ bool ChatHandler::HandleDebugMoveMapCommand(const char* args)
  
     MaNGOS::AnyUnitInObjectRangeCheck go_check(m_session->GetPlayer(), range); // 25 yards check
     MaNGOS::CreatureListSearcher<MaNGOS::AnyUnitInObjectRangeCheck> go_search(m_session->GetPlayer(), creatureList, go_check);
-    GridTypeVisitor<MaNGOS::CreatureListSearcher<MaNGOS::AnyUnitInObjectRangeCheck>>::Grid go_visit(go_search);
+    TypeContainerVisitor<MaNGOS::CreatureListSearcher<MaNGOS::AnyUnitInObjectRangeCheck>, GridTypeMapContainer> go_visit(go_search);
  
     // Get Creatures
     cell.Visit(pair, go_visit, *(m_session->GetPlayer()->GetMap()), *(m_session->GetPlayer()), range);

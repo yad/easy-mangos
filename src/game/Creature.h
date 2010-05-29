@@ -387,7 +387,7 @@ enum CreatureSubtype
     CREATURE_SUBTYPE_TEMPORARY_SUMMON,                      // new TemporarySummon
 };
 
-class MANGOS_DLL_SPEC Creature : public Unit, public GridCreature
+class MANGOS_DLL_SPEC Creature : public Unit
 {
     CreatureAI *i_AI;
 
@@ -626,6 +626,7 @@ class MANGOS_DLL_SPEC Creature : public Unit, public GridCreature
         bool hasQuest(uint32 quest_id) const;
         bool hasInvolvedQuest(uint32 quest_id)  const;
 
+        GridReference<Creature> &GetGridRef() { return m_gridRef; }
         bool isRegeneratingHealth() { return m_regenHealth; }
         virtual uint8 GetPetAutoSpellSize() const { return CREATURE_MAX_SPELLS; }
         virtual uint32 GetPetAutoSpellOnPos(uint8 pos) const
@@ -709,7 +710,9 @@ class MANGOS_DLL_SPEC Creature : public Unit, public GridCreature
         float m_summonOrientation;
 
     private:
+        GridReference<Creature> m_gridRef;
         CreatureInfo const* m_creatureInfo;                 // in difficulty mode > 0 can different from ObjMgr::GetCreatureTemplate(GetEntry())
+        bool m_isActiveObject;
         SplineFlags m_splineFlags;
 };
 

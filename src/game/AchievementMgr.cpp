@@ -660,7 +660,7 @@ void AchievementMgr::SendAchievementEarned(AchievementEntry const* achievement)
         MaNGOS::LocalizedPacketDo<MaNGOS::AchievementChatBuilder> say_do(say_builder);
         MaNGOS::CameraDistWorker<MaNGOS::LocalizedPacketDo<MaNGOS::AchievementChatBuilder> > say_worker(GetPlayer(),sWorld.getConfig(CONFIG_FLOAT_LISTEN_RANGE_SAY),say_do);
 
-        Cell::VisitCameras(GetPlayer(), say_worker, sWorld.getConfig(CONFIG_FLOAT_LISTEN_RANGE_SAY));
+        Cell::VisitWorldObjects(GetPlayer(), say_worker, sWorld.getConfig(CONFIG_FLOAT_LISTEN_RANGE_SAY));
     }
 
     WorldPacket data(SMSG_ACHIEVEMENT_EARNED, 8+4+8);

@@ -23,7 +23,6 @@
 #include "ByteBuffer.h"
 #include "UpdateFields.h"
 #include "UpdateData.h"
-#include "GameSystem/GridReference.h"
 #include "ObjectGuid.h"
 #include "Camera.h"
 
@@ -325,7 +324,7 @@ class MANGOS_DLL_SPEC Object
 
 struct WorldObjectChangeAccumulator;
 
-class MANGOS_DLL_SPEC WorldObject : public Object, public GridObject
+class MANGOS_DLL_SPEC WorldObject : public Object
 {
     friend struct WorldObjectChangeAccumulator;
 
@@ -484,7 +483,6 @@ class MANGOS_DLL_SPEC WorldObject : public Object, public GridObject
         GameObject* SummonGameobject(uint32 id, float x, float y, float z, float ang, uint32 despwTime);
 
         ViewPoint& getViewPoint() { return m_viewPoint; }
-
     protected:
         explicit WorldObject();
 
