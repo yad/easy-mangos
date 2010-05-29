@@ -2262,10 +2262,14 @@ void ObjectMgr::LoadItemExtendedCost()
             continue;
         }
 
-        pExtCost->reqhonorpoints = newHonor;
-        pExtCost->reqarenapoints = newArenaPoints;
-        pExtCost->reqarenaslot = newBracket;
-        pExtCost->reqpersonalarenarating = newRating;
+        if(newHonor >= 0)
+            pExtCost->reqhonorpoints = newHonor;
+        if(newArenaPoints >= 0)
+            pExtCost->reqarenapoints = newArenaPoints;
+        if(newBracket >= 0)
+            pExtCost->reqarenaslot = newBracket;
+        if(newRating >= 0)
+            pExtCost->reqpersonalarenarating = newRating;
  
 
         ++count;
