@@ -218,7 +218,7 @@ void PathInfo::Update(const float destX, const float destY, const float destZ)
         if(!m_navMesh)
         {
             // can't pathfind if navmesh doesn't exist
-            sLog.outError("%u's UpdatePath failed: navMesh is null", m_sourceObject->GetGUID());
+            // sLog.outError("%u's UpdatePath failed: navMesh is null", m_sourceObject->GetGUID());
 
             m_length = 1;
             x = getEndPositionX();
@@ -281,7 +281,7 @@ void PathInfo::Update(const float destX, const float destY, const float destZ)
             // source or dest not near navmesh polygons:
             // flying, falling, swimming, or navmesh has a hole
 
-            sLog.outError("%u's UpdatePath failed: invalid start or end polygon", m_sourceObject->GetGUID());
+            // sLog.outError("%u's UpdatePath failed: invalid start or end polygon", m_sourceObject->GetGUID());
 
             // ignore obstacles/terrain is better than giving up
             // PATHFIND TODO: prevent walking/swimming mobs from flying into the air
