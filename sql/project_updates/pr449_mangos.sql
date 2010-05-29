@@ -1,7 +1,3 @@
-USE `mangos`;
-
-/*Table structure for table `item_extended_cost` */
-
 DROP TABLE IF EXISTS `item_extended_cost`;
 
 CREATE TABLE `item_extended_cost` (

@@ -1001,6 +1001,7 @@ void Group::SendUpdate()
         data << uint8(citr->group);                         // groupid
         data << uint8(GetFlags(*citr));                     // group flags
         data << uint8(isBGGroup() ? 1 : 0);                 // 2.0.x, isBattleGroundGroup?
+        data << uint8(isBGGroup() ? 1 : 0);                 // 2.0.x, isBattleGroundGroup?
         if(m_groupType & GROUPTYPE_LFD)
         {
             data << uint8(0);

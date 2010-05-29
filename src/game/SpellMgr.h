@@ -1125,7 +1125,9 @@ class SpellMgr
         // DEVELOPMENT CODE START 
         void LoadSpellStack(); 
         void LoadSpellStackGroup(); 
-        // DEVELOPMENT CODE END 
+        // DEVELOPMENT CODE END
+
+        void ApplySpellHacks();
 
     private:
         SpellScriptTarget  mSpellScriptTarget;

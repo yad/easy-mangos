@@ -8501,6 +8501,12 @@ bool Unit::HandleProcTriggerSpell(Unit *pVictim, uint32 damage, Aura* triggeredB
             basepoints[0] = int32(GetTotalAttackPowerValue(BASE_ATTACK) * triggerAmount / 100);
             break;
         }
+        //Twilight Torment
+        case 57988:
+        {
+            pVictim->CastSpell(pVictim, 57988, true, NULL, NULL, GetGUID());
+            return true;
+        }
     }
 
     if( cooldown && GetTypeId()==TYPEID_PLAYER && ((Player*)this)->HasSpellCooldown(trigger_spell_id))
