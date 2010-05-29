@@ -253,15 +253,7 @@ MapManager::Update(uint32 diff)
         return;
 
     for(MapMapType::iterator iter=i_maps.begin(); iter != i_maps.end(); ++iter)
-    {
-        if (m_updater.activated())
-            m_updater.schedule_update(*iter->second, i_timer.GetCurrent());
-        else
-            iter->second->Update(i_timer.GetCurrent());
-    if (m_updater.activated())
-        m_updater.wait();
-
-    checkAndCorrectGridStatesArray();
+        iter->second->Update((uint32)i_timer.GetCurrent());
 
     for (TransportSet::iterator iter = m_Transports.begin(); iter != m_Transports.end(); ++iter)
         (*iter)->Update(i_timer.GetCurrent());

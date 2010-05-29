@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug_NoPCH|Win32">
@@ -471,7 +471,7 @@
     <ClCompile Include="..\..\src\game\PlayerbotRogueAI.cpp" />
     <ClCompile Include="..\..\src\game\PlayerbotShamanAI.cpp" />
     <ClCompile Include="..\..\src\game\PlayerbotWarlockAI.cpp" />
-    <ClCompile Include="..\..\src\game\PlayerbotWarriorAI.cpp" />	
+    <ClCompile Include="..\..\src\game\PlayerbotWarriorAI.cpp" />
     <ClCompile Include="..\..\src\game\PlayerDump.cpp" />
     <ClCompile Include="..\..\src\game\PointMovementGenerator.cpp" />
     <ClCompile Include="..\..\src\game\PoolManager.cpp" />
@@ -488,6 +488,7 @@
     <ClCompile Include="..\..\src\game\SocialMgr.cpp" />
     <ClCompile Include="..\..\src\game\Spell.cpp" />
     <ClCompile Include="..\..\src\game\SpellAuras.cpp" />
+    <ClCompile Include="..\..\src\game\SpellDBCHacks.cpp" />
     <ClCompile Include="..\..\src\game\SpellEffects.cpp" />
     <ClCompile Include="..\..\src\game\SpellHandler.cpp" />
     <ClCompile Include="..\..\src\game\SpellMgr.cpp" />
@@ -622,7 +623,7 @@
     <ClInclude Include="..\..\src\game\PlayerbotRogueAI.h" />
     <ClInclude Include="..\..\src\game\PlayerbotShamanAI.h" />
     <ClInclude Include="..\..\src\game\PlayerbotWarlockAI.h" />
-    <ClInclude Include="..\..\src\game\PlayerbotWarriorAI.h" />	
+    <ClInclude Include="..\..\src\game\PlayerbotWarriorAI.h" />
     <ClInclude Include="..\..\src\game\PlayerDump.h" />
     <ClInclude Include="..\..\src\game\PointMovementGenerator.h" />
     <ClInclude Include="..\..\src\game\PoolManager.h" />
