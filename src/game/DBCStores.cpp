@@ -462,28 +462,6 @@ void LoadDBCStores(const std::string& dataPath)
         #endif
     }
 
-    //Shaman totem bar hack-fix
-    SpellEntry *sfix1 = const_cast<SpellEntry*>(sSpellStore.LookupEntry(66842));
-    sfix1->EffectImplicitTargetA[0] = TARGET_SELF;
-    SpellEntry *sfix2 = const_cast<SpellEntry*>(sSpellStore.LookupEntry(66843));
-    sfix2->EffectImplicitTargetA[0] = TARGET_SELF;
-    SpellEntry *sfix3 = const_cast<SpellEntry*>(sSpellStore.LookupEntry(66844));
-    sfix3->EffectImplicitTargetA[0] = TARGET_SELF;
-
-    //Surge of power spells should be longer
-    SpellEntry *sfix4 = const_cast<SpellEntry*>(sSpellStore.LookupEntry(57407));
-    sfix4->DurationIndex = 28;
-    SpellEntry *sfix5 = const_cast<SpellEntry*>(sSpellStore.LookupEntry(60936));
-    sfix5->DurationIndex = 28;
-
-    //Lifebloom final heal
-    SpellEntry *sfix6 = const_cast<SpellEntry*>(sSpellStore.LookupEntry(33778));
-    sfix6->DmgClass = SPELL_DAMAGE_CLASS_MAGIC;
-
-    //Spirit of Redemption has AURA_INTERRUPT_FLAG_CAST, what the...? Maybe blizz changed this flag
-    SpellEntry *sfix7 = const_cast<SpellEntry*>(sSpellStore.LookupEntry(27827));
-    sfix7->AuraInterruptFlags = 0;
-
     for (uint32 j = 0; j < sSkillLineAbilityStore.GetNumRows(); ++j)
     {
         SkillLineAbilityEntry const *skillLine = sSkillLineAbilityStore.LookupEntry(j);

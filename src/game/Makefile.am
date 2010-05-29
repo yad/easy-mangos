@@ -240,6 +240,7 @@ libmangosgame_a_SOURCES = \
 	SpellAuras.cpp \
 	SpellAuras.h \
 	Spell.cpp \
+	SpellDBCHacks.cpp \
 	SpellEffects.cpp \
 	Spell.h \
 	SkillDiscovery.cpp \
