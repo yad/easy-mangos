@@ -17,7 +17,7 @@ PathInfo::PathInfo(WorldObject* from, const float x, const float y, const float 
 
 dtPolyRef PathInfo::getPathPolyByPosition(float x, float y, float z)
 {
-    if(!m_navMesh)
+    if(!m_navMesh || !m_pathPolyRefs)
         return 0;   // navmesh isn't loaded
 
     float distance;     // not used
@@ -89,7 +89,7 @@ void PathInfo::Build()
 
     if(!m_navMesh)
     {
-        sLog.outError("%u's Path Build failed: navMesh is null", m_sourceObject->GetGUID());
+        // sLog.outError("%u's Path Build failed: navMesh is null", m_sourceObject->GetGUID());
         // ignore obstacles/terrain is better than giving up
         m_length = 1;
         x = getEndPositionX();
@@ -130,7 +130,7 @@ void PathInfo::Build(dtPolyRef startPoly, dtPolyRef endPoly)
         // could mean start or end is...
         //     (x,y) is outside navmesh
         //     (z) is above/below the navmesh
-        sLog.outError("%u's Path Build failed: invalid start or end polygon", m_sourceObject->GetGUID());
+        // sLog.outError("%u's Path Build failed: invalid start or end polygon", m_sourceObject->GetGUID());
         m_length = 1;
         x = getEndPositionX();
         y = getEndPositionY();
@@ -178,7 +178,7 @@ void PathInfo::Build(dtPolyRef startPoly, dtPolyRef endPoly)
     if(m_length == 0)
     {
         // only happens if we passed bad data to findPath(), or navmesh is messed up
-        sLog.outError("%u's Path Build failed: 0-length path", m_sourceObject->GetGUID());
+        // sLog.outError("%u's Path Build failed: 0-length path", m_sourceObject->GetGUID());
         m_length = 1;
         x = getEndPositionX();
         y = getEndPositionY();
@@ -313,6 +313,9 @@ void PathInfo::Update(const float destX, const float destY, const float destZ)
 
     if(startOffPath)
     {
+        if(!m_pathPolyRefs)
+            return;
+
         bool adjacent = false;
         int i;
         for(i = 0; i < DT_VERTS_PER_POLYGON; ++i)
@@ -349,6 +352,9 @@ void PathInfo::Update(const float destX, const float destY, const float destZ)
 
     if(endOffPath)
     {
+        if(!m_pathPolyRefs)
+            return;
+
         bool adjacent = false;
         int i;
         for(i = 0; i < DT_VERTS_PER_POLYGON; ++i)
