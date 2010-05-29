@@ -49,7 +49,6 @@ void DynamicObject::AddToWorld()
 
 void DynamicObject::RemoveFromWorld()
 {
-    sWorld.m_objectRemoveLock.acquire();
     ///- Remove the dynamicObject from the accessor
     if(IsInWorld())
     {
@@ -58,7 +57,6 @@ void DynamicObject::RemoveFromWorld()
     }
 
     Object::RemoveFromWorld();
-    sWorld.m_objectRemoveLock.release();
 }
 
 bool DynamicObject::Create( uint32 guidlow, Unit *caster, uint32 spellId, SpellEffectIndex effIndex, float x, float y, float z, int32 duration, float radius )

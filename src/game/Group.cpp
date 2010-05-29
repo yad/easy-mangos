@@ -602,7 +602,7 @@ void Group::NeedBeforeGreed(WorldObject* object, Loot *loot)
     }
 }
 
-void Group::MasterLoot(WorldObject *object, Loot* loot)
+void Group::MasterLoot(WorldObject* object, Loot* loot)
 {
     for (LootItemList::iterator i=loot->items.begin(); i != loot->items.end(); ++i)
     {

@@ -505,6 +505,7 @@ Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputa
     {
         m_auraBaseMod[i][FLAT_MOD] = 0.0f;
         m_auraBaseMod[i][PCT_MOD] = 1.0f;
+        m_auraBaseMod[i][PCT_ADD_MOD] = 1.0f;
     }
 
     for (int i = 0; i < MAX_COMBAT_RATING; ++i)
@@ -2783,8 +2784,6 @@ void Player::AddToWorld()
 
 void Player::RemoveFromWorld()
 {
-     sWorld.m_objectRemoveLock.acquire();
-
     // cleanup
     if(IsInWorld())
     {
@@ -2803,8 +2802,6 @@ void Player::RemoveFromWorld()
     ///- It will crash when updating the ObjectAccessor
     ///- The player should only be removed when logging out
     Unit::RemoveFromWorld();
-
-    sWorld.m_objectRemoveLock.release();
 }
 
 void Player::RewardRage( uint32 damage, uint32 weaponSpeedHitFactor, bool attacker )
@@ -3279,7 +3276,7 @@ void Player::GiveXP(uint32 xp, Unit* victim)
     if ( xp < 1 )
         return;
 
-    if(!isAlive())
+    if(!isAlive() && !GetBattleGroundId())
         return;
 
     uint32 level = getLevel();
@@ -5779,6 +5776,13 @@ void Player::HandleBaseModValue(BaseModGroup modGroup, BaseModType modType, floa
             val = (100.0f + amount) / 100.0f;
             m_auraBaseMod[modGroup][modType] *= apply ? val : (1.0f/val);
             break;
+        case PCT_ADD_MOD:
+            if(amount <= -100.0f)
+                amount = -200.0f;
+
+            val = (100.0f + amount) / 100.0f - 1.0f;
+            m_auraBaseMod[modGroup][modType] += apply ? val : -val;
+            break;
     }
 
     if(!CanModifyStats())
@@ -5805,6 +5809,9 @@ float Player::GetBaseModValue(BaseModGroup modGroup, BaseModType modType) const
     if(modType == PCT_MOD && m_auraBaseMod[modGroup][PCT_MOD] <= 0.0f)
         return 0.0f;
 
+    if(modType == PCT_ADD_MOD && m_auraBaseMod[modGroup][PCT_ADD_MOD] <= 0.0f)
+        return 0.0f;
+
     return m_auraBaseMod[modGroup][modType];
 }
 
@@ -5819,13 +5826,16 @@ float Player::GetTotalBaseModValue(BaseModGroup modGroup) const
     if(m_auraBaseMod[modGroup][PCT_MOD] <= 0.0f)
         return 0.0f;
 
-    return m_auraBaseMod[modGroup][FLAT_MOD] * m_auraBaseMod[modGroup][PCT_MOD];
+    if(m_auraBaseMod[modGroup][PCT_ADD_MOD] <= 0.0f)
+        return 0.0f;
+
+    return m_auraBaseMod[modGroup][FLAT_MOD] * m_auraBaseMod[modGroup][PCT_ADD_MOD] * m_auraBaseMod[modGroup][PCT_MOD];
 }
 
 uint32 Player::GetShieldBlockValue() const
 {
-    float value = (m_auraBaseMod[SHIELD_BLOCK_VALUE][FLAT_MOD] + GetStat(STAT_STRENGTH) * 0.5f - 10)*m_auraBaseMod[SHIELD_BLOCK_VALUE][PCT_MOD];
-
+    float value = (m_auraBaseMod[SHIELD_BLOCK_VALUE][FLAT_MOD] + GetStat(STAT_STRENGTH) * 0.5f - 10) * m_auraBaseMod[SHIELD_BLOCK_VALUE][PCT_ADD_MOD] * m_auraBaseMod[SHIELD_BLOCK_VALUE][PCT_MOD];
+    
     value = (value < 0) ? 0 : value;
 
     return uint32(value);
@@ -19962,10 +19972,10 @@ bool Player::BuyItemFromVendorSlot(uint64 vendorguid, uint32 vendorslot, uint32 
         }
 
         ModifyMoney( -(int32)price );
-        uint32 extCostId = 0;
-        if (uint32 extendedCostId = crItem->GetExtendedCostId())
+        uint32 extCostId = crItem->GetExtendedCostId();
+        if (extCostId)
         {
-            ItemExtendedCostEntry const* iece = sItemExtendedCostStore.LookupEntry(extendedCostId);
+            ItemExtendedCostEntry const* iece = sItemExtendedCostStore.LookupEntry(extCostId);
             if (iece->reqhonorpoints)
                 ModifyHonorPoints( - int32(iece->reqhonorpoints * count));
             if (iece->reqarenapoints)
@@ -19975,7 +19985,6 @@ bool Player::BuyItemFromVendorSlot(uint64 vendorguid, uint32 vendorslot, uint32 
                 if (iece->reqitem[i])
                     DestroyItemCount(iece->reqitem[i], (iece->reqitemcount[i] * count), true);
             }
-            extCostId = iece->ID;
         }
 
         if (Item *it = StoreNewItem( dest, item, true ))
@@ -20062,17 +20071,31 @@ uint32 Player::GetMaxPersonalArenaRatingRequirement(uint32 minarenaslot)
     // the personal rating of the arena team must match the required limit as well
     // so return max[in arenateams](min(personalrating[teamtype], teamrating[teamtype]))
     uint32 max_personal_rating = 0;
-    for(int i = minarenaslot; i < MAX_ARENA_SLOT; ++i)
+    if(minarenaslot < MAX_ARENA_SLOT)
     {
-        if(ArenaTeam * at = sObjectMgr.GetArenaTeamById(GetArenaTeamId(i)))
+        for(int i = minarenaslot; i < MAX_ARENA_SLOT; ++i)
         {
-            uint32 p_rating = GetArenaPersonalRating(i);
-            uint32 t_rating = at->GetRating();
-            p_rating = p_rating < t_rating ? p_rating : t_rating;
-            if(max_personal_rating < p_rating)
-                max_personal_rating = p_rating;
+            if(ArenaTeam * at = sObjectMgr.GetArenaTeamById(GetArenaTeamId(i)))
+            {
+                uint32 p_rating = GetArenaPersonalRating(i);
+                uint32 t_rating = at->GetRating();
+                p_rating = p_rating < t_rating ? p_rating : t_rating;
+                if(max_personal_rating < p_rating)
+                    max_personal_rating = p_rating;
+            }
         }
     }
+    // rating is taken from direct personal
+    else if (minarenaslot < 2*MAX_ARENA_SLOT)
+    {
+        if(ArenaTeam * at = sObjectMgr.GetArenaTeamById(GetArenaTeamId(minarenaslot-MAX_ARENA_SLOT)))
+        {
+            uint32 p_rating = GetArenaPersonalRating(minarenaslot-MAX_ARENA_SLOT);
+            uint32 t_rating = at->GetRating();
+            max_personal_rating = p_rating < t_rating ? p_rating : t_rating;
+        }
+    }
+
     return max_personal_rating;
 }
 

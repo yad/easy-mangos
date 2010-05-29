@@ -77,8 +77,6 @@ void GameObject::AddToWorld()
 
 void GameObject::RemoveFromWorld()
 {
-    sWorld.m_objectRemoveLock.acquire();
-
     ///- Remove the gameobject from the accessor
     if(IsInWorld())
     {
@@ -99,7 +97,6 @@ void GameObject::RemoveFromWorld()
     }
 
     Object::RemoveFromWorld();
-    sWorld.m_objectRemoveLock.release();
 }
 
 bool GameObject::Create(uint32 guidlow, uint32 name_id, Map *map, uint32 phaseMask, float x, float y, float z, float ang, float rotation0, float rotation1, float rotation2, float rotation3, uint32 animprogress, GOState go_state)

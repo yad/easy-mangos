@@ -580,6 +580,7 @@ class BattleGround
         uint32 m_ClientInstanceID;                          //the instance-id which is sent to the client and without any other internal use
         uint32 m_StartTime;
         bool m_ArenaBuffSpawned;                            // to cache if arenabuff event is started (cause bool is faster than checking IsActiveEvent)
+        uint32 m_ArenaBuffTimer;
         int32 m_EndTime;                                    // it is set to 120000 when bg is ending and it decreases itself
         BattleGroundBracketId m_BracketId;
         uint8  m_ArenaType;                                 // 2=2v2, 3=3v3, 5=5v5

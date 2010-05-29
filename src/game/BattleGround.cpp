@@ -228,6 +228,8 @@ BattleGround::BattleGround()
     m_LevelMax          = 0;
     m_InBGFreeSlotQueue = false;
 
+    m_ArenaBuffTimer    = 0;
+
     m_MaxPlayersPerTeam = 0;
     m_MaxPlayers        = 0;
     m_MinPlayersPerTeam = 0;
@@ -397,14 +399,14 @@ void BattleGround::Update(uint32 diff)
     /*********************************************************/
     /***           ARENA BUFF OBJECT SPAWNING              ***/
     /*********************************************************/
-    if (isArena() && !m_ArenaBuffSpawned)
+    if (isArena() && !m_ArenaBuffSpawned && GetStatus() == STATUS_IN_PROGRESS)
     {
         // 60 seconds after start the buffobjects in arena should get spawned
-        if (m_StartTime > uint32(m_StartDelayTimes[BG_STARTING_EVENT_FIRST] + ARENA_SPAWN_BUFF_OBJECTS))
+        if (m_ArenaBuffTimer > uint32(m_StartDelayTimes[BG_STARTING_EVENT_FIRST] + ARENA_SPAWN_BUFF_OBJECTS))
         {
             SpawnEvent(ARENA_BUFF_EVENT, 0, true);
             m_ArenaBuffSpawned = true;
-        }
+        } else m_ArenaBuffTimer += diff;
     }
 
     /*********************************************************/
@@ -752,9 +754,40 @@ void BattleGround::EndBattleGround(uint32 winner)
             winner_rating = winner_arena_team->GetStats().rating;
             int32 winner_change = winner_arena_team->WonAgainst(loser_rating);
             int32 loser_change = loser_arena_team->LostAgainst(winner_rating);
-            DEBUG_LOG("--- Winner rating: %u, Loser rating: %u, Winner change: %u, Losser change: %u ---", winner_rating, loser_rating, winner_change, loser_change);
+            DEBUG_LOG("--- Winner rating: %u, Loser rating: %u, Winner change: %i, Losser change: %i ---", winner_rating, loser_rating, winner_change, loser_change);
             SetArenaTeamRatingChangeForTeam(winner, winner_change);
             SetArenaTeamRatingChangeForTeam(GetOtherTeam(winner), loser_change);
+
+            std::ostringstream winner_string;		
+            std::ostringstream loser_string;
+            winner_string << winner_arena_team->GetName().c_str() << " (";
+            loser_string << loser_arena_team->GetName().c_str() << " (";
+            for(BattleGroundPlayerMap::iterator itr = m_Players.begin(); itr != m_Players.end(); ++itr)
+            {
+                uint32 team = itr->second.Team;
+                if(Player *plr = sObjectMgr.GetPlayer(itr->first))
+                {
+                    if(!team) team = plr->GetTeam();
+                    QueryResult *result = loginDatabase.PQuery("SELECT last_ip FROM realmd.account WHERE id in (SELECT account FROM characters.characters WHERE guid = %u)", plr->GetGUIDLow());
+                    if(team == winner)
+                    {
+                        winner_string << plr->GetName();
+                        if(result)
+                            winner_string << "[" << result->Fetch()[0].GetString() << "]";
+                        winner_string << ", ";
+                    }
+                    else
+                    {
+                        loser_string << plr->GetName();
+                        if(result)
+                            loser_string << "[" << result->Fetch()[0].GetString() << "]";
+                        loser_string << ", ";
+                    }
+                }
+            }
+            winner_string << ")";
+            loser_string << ")";
+            sLog.outArenaLog("Bracket: %u, Rating difference: %i/%i Winner: %s , Loser: %s", winner_arena_team->GetType(), winner_change, loser_change, winner_string.str().c_str(), loser_string.str().c_str());
         }
         else
         {

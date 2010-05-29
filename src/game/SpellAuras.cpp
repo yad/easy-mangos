@@ -5409,13 +5409,6 @@ void Aura::HandlePeriodicDamage(bool apply, bool Real)
                         return;
                     }
                 }
-                // Drain Soul
-                else if (m_spellProto->SpellFamilyFlags & UI64LIT(0x0000000000004000))
-                {
-                    if (m_target->GetHealth() * 100 / m_target->GetMaxHealth() <= 25)
-                        m_modifier.m_amount *= 4;
-                }
-                break;
             }
             case SPELLFAMILY_DRUID:
             {
@@ -5424,11 +5417,11 @@ void Aura::HandlePeriodicDamage(bool apply, bool Real)
                     // $AP*0.18/3 bonus per tick
                     m_modifier.m_amount += int32(caster->GetTotalAttackPowerValue(BASE_ATTACK) * 6 / 100);
                 // Lacerate
-                if (m_spellProto->SpellFamilyFlags & UI64LIT(0x000000010000000000))
-                    // $AP*0.05 bonus per tick
-                    m_modifier.m_amount += int32(caster->GetTotalAttackPowerValue(BASE_ATTACK) * 5 / 100);
+                else if (m_spellProto->SpellFamilyFlags & UI64LIT(0x000000010000000000))
+                    // $AP*0.01 bonus per tick
+                    m_modifier.m_amount += int32(caster->GetTotalAttackPowerValue(BASE_ATTACK) * 1 / 100);
                 // Rip
-                if (m_spellProto->SpellFamilyFlags & UI64LIT(0x000000000000800000))
+                else if (m_spellProto->SpellFamilyFlags & UI64LIT(0x000000000000800000))
                 {
                     // 0.01*$AP*cp
                     if (caster->GetTypeId() != TYPEID_PLAYER)
@@ -5449,7 +5442,7 @@ void Aura::HandlePeriodicDamage(bool apply, bool Real)
                     m_modifier.m_amount += int32(caster->GetTotalAttackPowerValue(BASE_ATTACK) * cp / 100);
                 }
                 // Lock Jaw
-                if (m_spellProto->SpellFamilyFlags & UI64LIT(0x1000000000000000))
+                else if (m_spellProto->SpellFamilyFlags & UI64LIT(0x1000000000000000))
                     // 0.15*$AP
                     m_modifier.m_amount += int32(caster->GetTotalAttackPowerValue(BASE_ATTACK) * 15 / 100);
                 break;
@@ -5472,11 +5465,11 @@ void Aura::HandlePeriodicDamage(bool apply, bool Real)
                     m_modifier.m_amount += int32(caster->GetTotalAttackPowerValue(BASE_ATTACK) * AP_per_combo[cp]);
                 }
                 // Garrote
-                if (m_spellProto->SpellFamilyFlags & UI64LIT(0x000000000000000100))
+                else if (m_spellProto->SpellFamilyFlags & UI64LIT(0x000000000000000100))
                     // $AP*0.07 bonus per tick
                     m_modifier.m_amount += int32(caster->GetTotalAttackPowerValue(BASE_ATTACK) * 7 / 100);
                 // Deadly Poison
-                if (m_spellProto->SpellFamilyFlags & UI64LIT(0x0000000000010000))
+                else if (m_spellProto->SpellFamilyFlags & UI64LIT(0x0000000000010000))
                     // 0.12*$AP / 4 * amount of stack
                     m_modifier.m_amount += int32(caster->GetTotalAttackPowerValue(BASE_ATTACK) * 3 * GetStackAmount() / 100);
                 break;
@@ -5488,7 +5481,7 @@ void Aura::HandlePeriodicDamage(bool apply, bool Real)
                     // $RAP*0.2/5 bonus per tick
                     m_modifier.m_amount += int32(caster->GetTotalAttackPowerValue(RANGED_ATTACK) * 0.2 / 5);
                 // Immolation Trap
-                if ((m_spellProto->SpellFamilyFlags & UI64LIT(0x0000000000000004)) && m_spellProto->SpellIconID == 678)
+                else if ((m_spellProto->SpellFamilyFlags & UI64LIT(0x0000000000000004)) && m_spellProto->SpellIconID == 678)
                     // $RAP*0.1/5 bonus per tick
                     m_modifier.m_amount += int32(caster->GetTotalAttackPowerValue(RANGED_ATTACK) * 10 / 500);
                 break;
@@ -7468,7 +7461,21 @@ void Aura::HandleShieldBlockValue(bool apply, bool /*Real*/)
 {
     BaseModType modType = FLAT_MOD;
     if(m_modifier.m_auraname == SPELL_AURA_MOD_SHIELD_BLOCKVALUE_PCT)
-        modType = PCT_MOD;
+    {
+        switch(GetId())
+        {
+            case 2565:                  // Shield Block
+            case 29598:                 // Shield Mastery
+            case 29599:
+            case 55283:                 // Meta Gem
+            case 58374:                 // Glyph of Blocking
+                modType = PCT_ADD_MOD;
+                break;
+            default:
+                modType = PCT_MOD;
+                break;
+        }
+    }
 
     if(m_target->GetTypeId() == TYPEID_PLAYER)
         ((Player*)m_target)->HandleBaseModValue(SHIELD_BLOCK_VALUE, modType, float(m_modifier.m_amount), apply);

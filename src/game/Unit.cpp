@@ -2104,13 +2104,15 @@ void Unit::CalculateAbsorbAndResist(Unit *pCaster, SpellSchoolMask schoolMask, D
             {
                 // Cheat Death (make less prio with Guardian Spirit case)
                 if (!preventDeathSpell && spellProto->SpellIconID == 2109 &&
-                    GetTypeId()==TYPEID_PLAYER &&           // Only players
-                    !((Player*)this)->HasSpellCooldown(31231) &&
-                                                            // Only if no cooldown
-                    roll_chance_i((*i)->GetModifier()->m_amount))
-                                                            // Only if roll
+                    GetTypeId()==TYPEID_PLAYER)              // Only players
                 {
-                    preventDeathSpell = (*i)->GetSpellProto();
+                    if(!((Player*)this)->HasSpellCooldown(31231) &&
+                                                            // Only if no cooldown
+                        roll_chance_i((*i)->GetModifier()->m_amount)))
+                                                            // Only if roll
+                    {
+                        preventDeathSpell = (*i)->GetSpellProto();
+                    }
                     continue;
                 }
                 break;
@@ -9493,7 +9495,12 @@ Unit* Unit::SelectMagnetTarget(Unit *victim, SpellEntry const *spellInfo)
             if(Unit* magnet = (*i)->GetCaster())
                 if(magnet->isAlive() && magnet->IsWithinLOSInMap(this))
                     if(roll_chance_i((*i)->GetModifier()->m_amount))
-                        return magnet;
+                        if ((*i)->GetAuraCharges())
+                        {
+                            if((*i)->DropAuraCharge())
+                                victim->RemoveAura((*i),AURA_REMOVE_BY_DEFAULT);
+                            return magnet;
+                        }
     }
 
     return victim;
@@ -9781,7 +9788,15 @@ uint32 Unit::SpellDamageBonusDone(Unit *pVictim, SpellEntry const *spellProto, u
             break;
         }
         case SPELLFAMILY_WARLOCK:
+        {
+            // Drain Soul
+            if (spellProto->SpellFamilyFlags & UI64LIT(0x0000000000004000))
+            {
+                if (pVictim->GetHealth() * 100 / pVictim->GetMaxHealth() <= 25)
+                    DoneTotalMod *= 4;
+           	}
             break;
+        }
         case SPELLFAMILY_PRIEST:
         {
             // Glyph of Smite

@@ -2690,6 +2690,10 @@ void Spell::EffectTriggerSpell(SpellEffectIndex effIndex)
         // Vanish (not exist)
         case 18461:
         {
+            // Stop combat and remove attackers
+            unitTarget->CombatStop();
+            unitTarget->getHostileRefManager().deleteReferences();
+
             unitTarget->RemoveSpellsCausingAura(SPELL_AURA_MOD_ROOT);
             unitTarget->RemoveSpellsCausingAura(SPELL_AURA_MOD_DECREASE_SPEED);
             unitTarget->RemoveSpellsCausingAura(SPELL_AURA_MOD_STALKED);

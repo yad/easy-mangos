@@ -1045,6 +1045,8 @@ void World::SetInitialWorldSettings()
     sLog.outString( "Loading Items..." );                   // must be after LoadRandomEnchantmentsTable and LoadPageTexts
     sObjectMgr.LoadItemPrototypes();
 
+    sLog.outString( "Loading Items Extended Cost..." );
+    sObjectMgr.LoadItemExtendedCost();
     sLog.outString( "Loading Creature Model Based Info Data..." );
     sObjectMgr.LoadCreatureModelInfo();
 

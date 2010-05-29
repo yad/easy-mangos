@@ -1700,6 +1700,11 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
     if (spellInfo_1->Id == 66233 || spellInfo_2->Id == 66233) 
         return false;
 
+    //Renewed hope and gift of the naaru(have diff spell families)
+    if (spellInfo_2->SpellIconID == 329 && spellInfo_2->SpellFamilyName == SPELLFAMILY_PRIEST &&
+        spellInfo_1->SpellIconID == 329 && spellInfo_1->SpellVisual[0] == 7625)
+        return false;
+
     // Specific spell family spells
     switch(spellInfo_1->SpellFamilyName)
     {
@@ -2024,6 +2029,9 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                 if (spellInfo_1->SpellIconID == 51 && spellInfo_2->SpellIconID == 51 && spellInfo_2->SpellFamilyName == SPELLFAMILY_PALADIN)
                     return false;
             }
+            //Renewed hope and gift of the naaru(have diff spell families)
+            else if (spellInfo_1->SpellIconID == 329 && spellInfo_2->SpellIconID == 329 && spellInfo_2->SpellVisual[0] == 7625)
+                return false;
             break;
         case SPELLFAMILY_DRUID:
             if( spellInfo_2->SpellFamilyName == SPELLFAMILY_DRUID )
