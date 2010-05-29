@@ -436,11 +436,11 @@ void Unit::BuildHeartBeatMsg(WorldPacket *data) const
     //Hack for flying creatures, but it works!
     if(GetTypeId()!=TYPEID_PLAYER && ((Creature*)this)->canFly() &&
         !m_movementInfo.HasMovementFlag(MOVEFLAG_FLYING))
-        m_movementInfo.AddMovementFlag(MOVEFLAG_FLYING);
+        ((Unit*)this)->m_movementInfo.AddMovementFlag(MOVEFLAG_FLYING);
 
     data->Initialize(MSG_MOVE_HEARTBEAT);
     *data << GetPackGUID();
-    m_movementInfo.Write(*data);
+    ((Unit*)this)->m_movementInfo.Write(*data);
 }
 
 void Unit::resetAttackTimer(WeaponAttackType type)
@@ -2044,7 +2044,7 @@ void Unit::CalculateAbsorbAndResist(Unit *pCaster, SpellSchoolMask schoolMask, D
                 {
                     if(!((Player*)this)->HasSpellCooldown(31231) &&
                                                             // Only if no cooldown
-                        roll_chance_i((*i)->GetModifier()->m_amount)))
+                        roll_chance_i((*i)->GetModifier()->m_amount))
                                                             // Only if roll
                     {
                         preventDeathSpell = (*i)->GetSpellProto();
@@ -14489,9 +14489,9 @@ void Unit::EnterVehicle(Vehicle *vehicle, int8 seat_id, bool force)
 
     data << uint32(0);                                      // Time in between points
     data << uint32(1);                                      // 1 single waypoint
-    data << m_movementInfo.GetTransportPos().x;
-    data << m_movementInfo.GetTransportPos().y;
-    data << m_movementInfo.GetTransportPos().z;
+    data << m_movementInfo.GetTransportPos()->x;
+    data << m_movementInfo.GetTransportPos()->y;
+    data << m_movementInfo.GetTransportPos()->z;
     SendMessageToSet(&data, true);
 
     v->AddPassenger(this, seat_id, force);

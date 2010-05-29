@@ -17,8 +17,7 @@
  */
 
 #include "Common.h"
-#include "Opcodes.h"
-#include "Spell.h"
+#include "Unit.h"
 #include "SpellMgr.h"
 #include "SharedDefines.h"
 #include "DBCStores.h"
@@ -72,7 +71,7 @@ void SpellMgr::ApplySpellHacks()
     sfix8->EffectApplyAuraName[EFFECT_INDEX_1] = 0;
     sfix8->EffectAmplitude[EFFECT_INDEX_0] = 0;
     sfix8->EffectAmplitude[EFFECT_INDEX_1] = 0;
-    sfix8->EffectMiscValue[EFFECT_INDEX_0] = 0;,
+    sfix8->EffectMiscValue[EFFECT_INDEX_0] = 0;
     sfix8->EffectMiscValue[EFFECT_INDEX_1] = 0;
     sfix8->EffectMiscValueB[EFFECT_INDEX_0] = 0;
     sfix8->EffectMiscValueB[EFFECT_INDEX_1] = 0;

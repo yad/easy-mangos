@@ -762,7 +762,7 @@ class MovementInfo
 
         // Position manipulations
         Position const *GetPos() const { return &pos; }
-        void SetTransportData(ObjectGuid guid, float x, float y, float z, float o, uint32 time, int8 seat, uin32 dbc_seat = 0, uint32 seat_flags = 0, uint32 vehicle_flags = 0)
+        void SetTransportData(ObjectGuid guid, float x, float y, float z, float o, uint32 time, int8 seat, uint32 dbc_seat = 0, uint32 seat_flags = 0, uint32 vehicle_flags = 0)
         {
             t_guid = guid;
             t_pos.x = x;
