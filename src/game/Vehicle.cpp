@@ -469,6 +469,7 @@ void Vehicle::AddPassenger(Unit *unit, int8 seatId, bool force)
         return;
 
     unit->SetVehicleGUID(GetGUID());
+    unit->m_movementInfo.AddMovementFlag(MOVEFLAG_ONTRANSPORT);
 
     seat->second.passenger = unit;
     if(unit->GetTypeId() == TYPEID_UNIT && ((Creature*)unit)->isVehicle())
@@ -558,8 +559,6 @@ void Vehicle::AddPassenger(Unit *unit, int8 seatId, bool force)
     }
     if(seat->second.vs_flags & SF_UNATTACKABLE)
         unit->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
-
-    unit->m_movementInfo.AddMovementFlag(MOVEFLAG_ONTRANSPORT);
 
     EmptySeatsCountChanged();
 }
@@ -752,15 +751,15 @@ void Vehicle::InstallAllAccessories()
                 }
                 entry = data->id;
             }     
-            
             if(!pPassenger->Create(guid, GetMap(), GetPhaseMask(), entry, 0))
             {
                 delete pPassenger;
                 continue;
             }
-            pPassenger->AIM_Initialize();
+            pPassenger->LoadFromDB(guid, GetMap());
             pPassenger->Relocate(GetPositionX(), GetPositionY(), GetPositionZ());
             GetMap()->Add(pPassenger);
+            pPassenger->AIM_Initialize();
         }
         else
             pPassenger = (Creature*)SummonVehicle(cPassanger->entry, GetPositionX(), GetPositionY(), GetPositionZ(), 0);
