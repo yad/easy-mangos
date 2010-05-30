@@ -2866,13 +2866,15 @@ SpellMissInfo Unit::MeleeSpellHitResult(Unit *pVictim, SpellEntry const *spell)
 {
     WeaponAttackType attType = BASE_ATTACK;
 
-    if (spell->DmgClass == SPELL_DAMAGE_CLASS_RANGED)
+    // Only for hunters, other classes do not have ranged attack that would benefit from ranged hit
+    if (spell->DmgClass == SPELL_DAMAGE_CLASS_RANGED && (spell->SpellFamilyName == SPELLFAMILY_HUNTER || spell->SpellFamilyName == SPELLFAMILY_GENERIC))
         attType = RANGED_ATTACK;
 
     // bonus from skills is 0.04% per skill Diff
     int32 attackerWeaponSkill = int32(GetWeaponSkillValue(attType,pVictim));
 
-    if ( spell->SpellFamilyName == SPELLFAMILY_PALADIN )
+    // Probably not needed after [pr456]
+    /*if ( spell->SpellFamilyName == SPELLFAMILY_PALADIN )
     {
         // Hammer of Wrath
         if ( spell->SpellFamilyFlags & UI64LIT(0x0000008000000000) )
@@ -2897,7 +2899,7 @@ SpellMissInfo Unit::MeleeSpellHitResult(Unit *pVictim, SpellEntry const *spell)
                 case 54158: // Judgement
                     return SPELL_MISS_NONE;
             }
-    }
+    }*/
 
     int32 skillDiff = attackerWeaponSkill - int32(pVictim->GetMaxSkillValueForLevel(this));
     int32 fullSkillDiff = attackerWeaponSkill - int32(pVictim->GetDefenseSkillValue(this));
