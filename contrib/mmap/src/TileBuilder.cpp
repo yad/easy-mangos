@@ -5,6 +5,7 @@
 #include "IVMapManager.h"
 #include "VMapManager2.h"
 #include "MapTree.h"
+#include "ModelInstance.h"
 #include "G3D/Array.h"
 
 using namespace VMAP;

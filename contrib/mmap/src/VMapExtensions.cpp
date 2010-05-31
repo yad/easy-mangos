@@ -3,6 +3,7 @@
 #include "MapTree.h"
 #include "VMapManager2.h"
 #include "WorldModel.h"
+#include "ModelInstance.h"
 
 namespace VMAP
 {

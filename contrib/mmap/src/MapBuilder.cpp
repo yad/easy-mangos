@@ -4,6 +4,7 @@
 #include "MapBuilder.h"
 #include "VMapManager2.h"
 #include "MapTree.h"
+#include "ModelInstance.h"
 
 #include "pathfinding/ChunkyTriMesh.h"
 #include "pathfinding/Recast/Recast.h"
@@ -434,50 +435,6 @@ namespace MMAP
         else if(depth < GRID_SIZE)
             gridSize = depth;
 
-        const int tw = (int)ceil(gridSize);
-        const int th = (int)ceil(gridSize);
-        int tileBits = rcMin((int)ilog2(nextPow2(tw*th)), 14);
-        if (tileBits > 14) tileBits = 14;
-        int polyBits = 22 - tileBits;
-        int maxTiles = 1 << tileBits;
-        int maxPolysPerTile = 1 << polyBits;
-
-        dtNavMeshParams navMeshParams;
-        memset(&navMeshParams, 0, sizeof(dtNavMeshParams));
-        navMeshParams.tileWidth = gridSize;
-        navMeshParams.tileHeight = gridSize;
-        rcVcopy(navMeshParams.orig, bmin);          // may need to use bounds instead of {0,0,0}
-        navMeshParams.maxTiles = maxTiles;
-        navMeshParams.maxPolys = maxPolysPerTile;
-        navMeshParams.maxNodes = 2048;
-
-        dtNavMesh* navMesh = new dtNavMesh;
-        printf("Creating navMesh...                     \r");
-        if(!navMesh->init(&navMeshParams))
-        {
-            printf("Failed creating navmesh!                \n");
-            return;
-        }
-
-        printf("Creating ChunkyTriMesh...               \r");
-        rcChunkyTriMesh* chunkyMesh = new rcChunkyTriMesh;
-        if(!rcCreateChunkyTriMesh(verts, tris, triCount, 256, chunkyMesh))
-        {
-            printf("Failed creating ChunkyTriMesh!          \n");
-            return;
-        }
-
-        sprintf(fileName, "mmaps\\%03u.mmap", mapID);
-        if(!(file = fopen(fileName, "wb")))
-        {
-            printf("Failed to open %s for writing!\n", fileName);
-            return;
-        }
-
-        // now that we know navMesh params are valid, we can write them to file
-        fwrite(&navMeshParams, sizeof(dtNavMeshParams), 1, file);
-        fclose(file);
-
         // set common config
         rcConfig config;
         memset(&config, 0, sizeof(rcConfig));
@@ -506,9 +463,53 @@ namespace MMAP
         config.detailSampleDist = 6.f < 0.9f ? 0 : config.cs * 6.f;
         config.detailSampleMaxError = config.ch * 1.f;
 
-        // loop counter vars
+        // navmesh tile dimensions
         const int tilesWide = ceilf((bmax[0] - bmin[0]) / gridSize);
         const int tilesDeep = ceilf((bmax[2] - bmin[2]) / gridSize);
+
+        // calculate number of bits needed to store tiles & polys
+        int tileBits = rcMin((int)ilog2(nextPow2(tilesWide*tilesDeep)), 14);
+        if (tileBits > 14) tileBits = 14;
+        int polyBits = 22 - tileBits;
+        int maxTiles = 1 << tileBits;
+        int maxPolysPerTile = 1 << polyBits;
+
+        // nav mesh creation params
+        dtNavMeshParams navMeshParams;
+        memset(&navMeshParams, 0, sizeof(dtNavMeshParams));
+        navMeshParams.tileWidth = gridSize;
+        navMeshParams.tileHeight = gridSize;
+        rcVcopy(navMeshParams.orig, bmin);          // may need to use bounds instead of {0,0,0}
+        navMeshParams.maxTiles = maxTiles;
+        navMeshParams.maxPolys = maxPolysPerTile;
+        navMeshParams.maxNodes = 2048;
+
+        dtNavMesh* navMesh = new dtNavMesh;
+        printf("Creating navMesh...                     \r");
+        if(!navMesh->init(&navMeshParams))
+        {
+            printf("Failed creating navmesh!                \n");
+            return;
+        }
+
+        sprintf(fileName, "mmaps\\%03u.mmap", mapID);
+        if(!(file = fopen(fileName, "wb")))
+        {
+            printf("Failed to open %s for writing!\n", fileName);
+            return;
+        }
+
+        // now that we know navMesh params are valid, we can write them to file
+        fwrite(&navMeshParams, sizeof(dtNavMeshParams), 1, file);
+        fclose(file);
+
+        printf("Creating ChunkyTriMesh...               \r");
+        rcChunkyTriMesh* chunkyMesh = new rcChunkyTriMesh;
+        if(!rcCreateChunkyTriMesh(verts, tris, triCount, 256, chunkyMesh))
+        {
+            printf("Failed creating ChunkyTriMesh!          \n");
+            return;
+        }
 
         float xMin = bmin[0];
         float yMin = bmin[2];
@@ -687,7 +688,8 @@ namespace MMAP
                 printf("%sSetting polys as walkable...            \r", tileString);
                 for(int i = 0; i < iv.polyMesh->npolys; ++i)
                     if(iv.polyMesh->areas[i] == RC_WALKABLE_AREA)
-                        iv.polyMesh->areas[i] = 0;
+                        //iv.polyMesh->areas[i] = 0;
+                        iv.polyMesh->flags[i] = 1;
 
                 dtNavMeshCreateParams params;
                 memset(&params, 0, sizeof(params));
@@ -706,8 +708,8 @@ namespace MMAP
                 params.walkableHeight = agentHeight;
                 params.walkableRadius = agentRadius;
                 params.walkableClimb = agentMaxClimb;
-                params.tileX = tileX;
-                params.tileY = tileY;
+                params.tileX = x;
+                params.tileY = y;
                 rcVcopy(params.bmin, bmin);
                 rcVcopy(params.bmax, bmax);
                 params.cs = config.cs;
