@@ -2249,10 +2249,10 @@ void ObjectMgr::LoadItemExtendedCost()
         bar.step();
 
         uint32 Entry          = fields[0].GetUInt32();
-        uint32 newHonor       = fields[1].GetUInt32();
-        uint32 newArenaPoints = fields[2].GetUInt32();
-        uint32 newBracket     = fields[3].GetUInt32();
-        uint32 newRating      = fields[4].GetUInt32();
+        int32  newHonor       = fields[1].GetUInt32();
+        int32  newArenaPoints = fields[2].GetUInt32();
+        int32  newBracket     = fields[3].GetUInt32();
+        int32  newRating      = fields[4].GetUInt32();
 
         ItemExtendedCostEntry *pExtCost = const_cast<ItemExtendedCostEntry*>(sItemExtendedCostStore.LookupEntry(Entry));
 
