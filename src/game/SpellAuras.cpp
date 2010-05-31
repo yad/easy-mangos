@@ -7616,6 +7616,9 @@ void Aura::HandleSchoolAbsorb(bool apply, bool Real)
                     break;
             }
 
+            if(Player* modOwner = caster->GetSpellModOwner())
+                modOwner->ApplySpellMod(m_spellProto->Id, SPELLMOD_ALL_EFFECTS, DoneActualBenefit);
+
             DoneActualBenefit *= caster->CalculateLevelPenalty(GetSpellProto());
 
             m_modifier.m_amount += (int32)DoneActualBenefit;
