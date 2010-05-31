@@ -99,3 +99,53 @@ void duReadPolyMesh(int mapID, rcPolyMesh* &mesh)
             mesh = newMesh;
     }
 }
+
+void duReadDetailMesh(int mapID, rcPolyMeshDetail* &mesh)
+{
+    char fileName[25];
+    FILE* file;
+
+    vector<string> files;
+    sprintf(fileName, "%03i*.dmesh", mapID);
+    MMAP::getDirContents(files, "meshes", fileName);
+
+    if(!mesh)
+        mesh = new rcPolyMeshDetail;
+
+    for(int i = 0; i < files.size(); ++i)
+    {
+        rcPolyMeshDetail* newMesh = new rcPolyMeshDetail;
+
+        file = fopen(("meshes\\" + files[i]).c_str(), "rb");
+        if(!file)
+            continue;
+
+        fread(&(newMesh->nverts), sizeof(int), 1, file);
+        newMesh->verts = new float[newMesh->nverts*3];
+        fread(newMesh->verts, sizeof(float), newMesh->nverts*3, file);
+
+        fread(&(newMesh->ntris), sizeof(int), 1, file);
+        newMesh->tris = new unsigned char[newMesh->ntris*4];
+        fread(newMesh->tris, sizeof(char), newMesh->ntris*4, file);
+
+        fread(&(newMesh->nmeshes), sizeof(int), 1, file);
+        newMesh->meshes = new unsigned short[newMesh->nmeshes*4];
+        fread(newMesh->meshes, sizeof(short), newMesh->nmeshes*4, file);
+
+        fclose(file);
+
+        if(i > 0)
+        {
+            rcPolyMeshDetail* oldMesh = mesh;
+            mesh = new rcPolyMeshDetail;
+            rcPolyMeshDetail* meshes[2] = {oldMesh, newMesh};
+            rcMergePolyMeshDetails(meshes, 2, *mesh);
+
+            delete oldMesh;
+            delete newMesh;
+        }
+        else
+            mesh = newMesh;
+    }
+}
+

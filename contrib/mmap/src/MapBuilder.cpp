@@ -637,8 +637,6 @@ namespace MMAP
                     continue;
                 }
 
-                // TODO: if(m_debugOutput) write iv.polyMeshDetail to file
-
                 delete iv.compactHeightfield; iv.compactHeightfield = 0;
                 delete iv.contours; iv.contours = 0;
 
@@ -762,6 +760,13 @@ namespace MMAP
                     else
                         writePolyMesh(file, iv.polyMesh);
                     if(file) fclose(file);
+
+                    sprintf(fileName, "meshes\\%03u%02i%02i.dmesh", mapID, tileX, tileY);
+                    if(!(file = fopen(fileName, "wb")))
+                        printf("%sFailed to open %s for writing!\n",  tileString, fileName);
+                    else
+                        writeDetailMesh(file, iv.polyMeshDetail);
+                    if(file) fclose(file);
                 }
 
                 // now that tile is written to disk, we can unload it
@@ -841,6 +846,19 @@ namespace MMAP
         fwrite(mesh->flags, sizeof(unsigned short), mesh->npolys, file);
         fwrite(mesh->areas, sizeof(unsigned char), mesh->npolys, file);
         fwrite(mesh->regs, sizeof(unsigned short), mesh->npolys, file);
+    }
+
+    void MapBuilder::writeDetailMesh(FILE* file, const rcPolyMeshDetail* mesh)
+    {
+        if(!file || !mesh)
+            return;
+
+        fwrite(&(mesh->nverts), sizeof(int), 1, file);
+        fwrite(mesh->verts, sizeof(float), mesh->nverts*3, file);
+        fwrite(&(mesh->ntris), sizeof(int), 1, file);
+        fwrite(mesh->tris, sizeof(char), mesh->ntris*4, file);
+        fwrite(&(mesh->nmeshes), sizeof(int), 1, file);
+        fwrite(mesh->meshes, sizeof(short), mesh->nmeshes*4, file);
     }
 
     void MapBuilder::cleanup()

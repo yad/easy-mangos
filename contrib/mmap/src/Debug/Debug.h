@@ -8,5 +8,6 @@
 
 void duReadNavMesh(int mapID, dtNavMesh* &navMesh);
 void duReadPolyMesh(int mapID, rcPolyMesh* &mesh);
+void duReadDetailMesh(int mapID, rcPolyMeshDetail* &mesh);
 
 #endif

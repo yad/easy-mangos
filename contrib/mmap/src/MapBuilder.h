@@ -105,6 +105,7 @@ namespace MMAP
             void clearIntermediateValues(IntermediateValues &iv);
             void generateObjFile(uint32 mapID);
             void writePolyMesh(FILE* file, const rcPolyMesh* mesh);
+            void writeDetailMesh(FILE* file, const rcPolyMeshDetail* mesh);
             void cleanup();
             bool shouldSkipMap(uint32 mapID);
             bool isTransportMap(uint32 mapID);

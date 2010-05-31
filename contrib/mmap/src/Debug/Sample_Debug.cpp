@@ -379,6 +379,9 @@ bool Sample_Debug::handleBuild()
     duReadNavMesh(mapID, m_navMesh);
     duReadPolyMesh(mapID, m_pmesh);
 
+    // not working :(
+    //duReadDetailMesh(mapID, m_dmesh);
+
     if(m_tool)
         m_tool->init(this);
 
