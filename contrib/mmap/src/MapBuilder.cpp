@@ -886,7 +886,7 @@ namespace MMAP
 
     bool MapBuilder::shouldSkipMap(uint32 mapID)
     {
-        // debug: these maps worked, so skip them
+        // debug
         //switch(mapID)
         //{
         //    case 33:

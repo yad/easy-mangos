@@ -38,10 +38,11 @@ void duReadNavMesh(int mapID, dtNavMesh* &navMesh)
         fseek(file, 0, SEEK_END);
         int length = ftell(file);
         fseek(file, 0, SEEK_SET);
-        unsigned char* data = new unsigned char[length];
 
+        unsigned char* data = new unsigned char[length];
         fread(data, length, 1, file);
         fclose(file);
+
         navMesh->addTile(data, length, DT_TILE_FREE_DATA);
     }
 }
