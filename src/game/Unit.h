@@ -764,7 +764,7 @@ class MovementInfo
 
         // Position manipulations
         Position const *GetPos() const { return &pos; }
-        void SetTransportData(ObjectGuid guid, float x, float y, float z, float o, uint32 time, int8 seat)
+        void SetTransportData(ObjectGuid guid, float x, float y, float z, float o, uint32 time, int8 seat, uint32 dbc_seat = 0, uint32 seat_flags = 0, uint32 vehicle_flags = 0)
         {
             t_guid = guid;
             t_pos.x = x;
@@ -773,6 +773,9 @@ class MovementInfo
             t_pos.o = o;
             t_time = time;
             t_seat = seat;
+            t_dbc_seat = dbc_seat;
+            t_seat_flags = seat_flags;
+            t_vehicle_flags = vehicle_flags;
         }
         void ClearTransportData()
         {
@@ -783,11 +786,17 @@ class MovementInfo
             t_pos.o = 0.0f;
             t_time = 0;
             t_seat = -1;
+            t_dbc_seat = 0;
+            t_seat_flags = 0;
+            t_vehicle_flags = 0;
         }
         ObjectGuid const& GetTransportGuid() const { return t_guid; }
         Position const *GetTransportPos() const { return &t_pos; }
         int8 GetTransportSeat() const { return t_seat; }
         uint32 GetTransportTime() const { return t_time; }
+        uint32 GetTransportDBCSeat() const { return t_dbc_seat; }
+        uint32 GetVehicleSeatFlags() const { return t_seat_flags; }
+        uint32 GetVehicleFlags() const { return t_vehicle_flags; }
         uint32 GetFallTime() const { return fallTime; }
         void ChangePosition(float x, float y, float z, float o) { pos.x = x; pos.y = y; pos.z = z; pos.o = o; }
         void UpdateTime(uint32 _time) { time = _time; }
@@ -804,6 +813,9 @@ class MovementInfo
         uint32   t_time;
         int8     t_seat;
         uint32   t_time2;
+        uint32   t_dbc_seat;
+        uint32   t_seat_flags;
+        uint32   t_vehicle_flags;
         // swimming and flying
         float    s_pitch;
         // last fall time
@@ -886,7 +898,7 @@ struct CalcDamageInfo
 
 // Spell damage info structure based on structure sending in SMSG_SPELLNONMELEEDAMAGELOG opcode
 struct SpellNonMeleeDamage{
-    SpellNonMeleeDamage(Unit *_attacker, Unit *_target, uint32 _SpellID, uint32 _schoolMask)
+    SpellNonMeleeDamage(Unit *_attacker, Unit *_target, uint32 _SpellID, SpellSchoolMask _schoolMask)
         : target(_target), attacker(_attacker), SpellID(_SpellID), damage(0), overkill(0), schoolMask(_schoolMask),
         absorb(0), resist(0), physicalLog(false), unused(false), blocked(0), HitInfo(0)
     {}
@@ -896,7 +908,7 @@ struct SpellNonMeleeDamage{
     uint32 SpellID;
     uint32 damage;
     uint32 overkill;
-    uint32 schoolMask;
+    SpellSchoolMask schoolMask;
     uint32 absorb;
     uint32 resist;
     bool   physicalLog;
@@ -1083,24 +1095,6 @@ typedef std::set<uint64> GuardianPetList;
 #define REGEN_TIME_PRECISE  500                             // Used in Spell::CheckPower for precise regeneration in spell cast time
 
 struct SpellProcEventEntry;                                 // used only privately
-
-// vehicle system
-struct SeatData
-{
-    SeatData() : OffsetX(0.0f), OffsetY(0.0f),  OffsetZ(0.0f), Orientation(0.0f),
-                c_time(0), dbc_seat(0), seat(0), s_flags(0), v_flags(0) {}
-
-    float OffsetX;
-    float OffsetY;
-    float OffsetZ;
-    float Orientation;
-    uint32 c_time;
-    uint32 dbc_seat;
-    uint8 seat;
-    //custom, used as speedup
-    uint32 s_flags;
-    uint32 v_flags;
-};
 
 class MANGOS_DLL_SPEC Unit : public WorldObject
 {
@@ -1308,9 +1302,10 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         uint32 GetSpellCritDamageReduction(uint32 damage) const { return GetCombatRatingDamageReduction(CR_CRIT_TAKEN_SPELL, 2.2f, 33.0f, damage); }
 
         // player or player's pet resilience (-1%), cap 100%
-        uint32 GetMeleeDamageReduction(uint32 damage) const { return GetCombatRatingDamageReduction(CR_CRIT_TAKEN_MELEE, 1.0f, 100.0f, damage); }
-        uint32 GetRangedDamageReduction(uint32 damage) const { return GetCombatRatingDamageReduction(CR_CRIT_TAKEN_MELEE, 1.0f, 100.0f, damage); }
-        uint32 GetSpellDamageReduction(uint32 damage) const { return GetCombatRatingDamageReduction(CR_CRIT_TAKEN_MELEE, 1.0f, 100.0f, damage); }
+        // values below increased from 1.0 to 2.0 to match 3.3.3 resillience
+        uint32 GetMeleeDamageReduction(uint32 damage) const { return GetCombatRatingDamageReduction(CR_CRIT_TAKEN_MELEE, 2.0f, 100.0f, damage); }
+        uint32 GetRangedDamageReduction(uint32 damage) const { return GetCombatRatingDamageReduction(CR_CRIT_TAKEN_MELEE, 2.0f, 100.0f, damage); }
+        uint32 GetSpellDamageReduction(uint32 damage) const { return GetCombatRatingDamageReduction(CR_CRIT_TAKEN_MELEE, 2.0f, 100.0f, damage); } 
 
         float  MeleeSpellMissChance(Unit *pVictim, WeaponAttackType attType, int32 skillDiff, SpellEntry const *spell);
         SpellMissInfo MeleeSpellHitResult(Unit *pVictim, SpellEntry const *spell);
@@ -1869,9 +1864,6 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
          void ExitVehicle();
          uint64 GetVehicleGUID() { return m_vehicleGUID; }
          void SetVehicleGUID(uint64 guid) { m_vehicleGUID = guid; }
-         // using extra variables to avoid problems with transports
-         SeatData m_SeatData;
-         void BuildVehicleInfo(Unit *target = NULL);
          void ChangeSeat(int8 seatId, bool next);
 
     protected:

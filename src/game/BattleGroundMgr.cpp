@@ -1317,17 +1317,17 @@ void BattleGroundMgr::BuildPvpLogDataPacket(WorldPacket *data, BattleGround *bg)
 
     if(type)                                                // arena
     {
-        // it seems this must be according to BG_WINNER_A/H and _NOT_ BG_TEAM_A/H
-        for(int i = 1; i >= 0; --i)
+        // Rating Changes and Arena Team names seems to be correct for 3.3
+        for(int i = 0; i < BG_TEAMS_COUNT; ++i)
         {
-            *data << uint32(bg->m_ArenaTeamRatingChanges[i]);
-            *data << uint32(3999);                          // huge thanks for TOM_RUS for this!
-            *data << uint32(0);                             // added again in 3.1
+            *data << uint32(bg->m_ArenaTeamRatingChanges[(bg->GetWinner()+i)%BG_TEAMS_COUNT]);
+            *data << uint32(0);                             // seems it should be 0 since 3.0
+            *data << uint32(0);                             // matchmaking value
             DEBUG_LOG("rating change: %d", bg->m_ArenaTeamRatingChanges[i]);
         }
-        for(int i = 1; i >= 0; --i)
+        for(int i = 1; i <= BG_TEAMS_COUNT; ++i)
         {
-            uint32 at_id = bg->m_ArenaTeamIds[i];
+            uint32 at_id = bg->m_ArenaTeamIds[(bg->GetWinner()+i)%BG_TEAMS_COUNT];
             ArenaTeam * at = sObjectMgr.GetArenaTeamById(at_id);
             if (at)
                 *data << at->GetName();
@@ -1343,7 +1343,7 @@ void BattleGroundMgr::BuildPvpLogDataPacket(WorldPacket *data, BattleGround *bg)
     else
     {
         *data << uint8(1);                                  // bg ended
-        *data << uint8(bg->GetWinner());                    // who win
+        *data << uint8(0);                                  // ???
     }
 
     *data << (int32)(bg->GetPlayerScoresSize());
@@ -1356,7 +1356,7 @@ void BattleGroundMgr::BuildPvpLogDataPacket(WorldPacket *data, BattleGround *bg)
         {
             *data << (int32)itr->second->HonorableKills;
             *data << (int32)itr->second->Deaths;
-            *data << (int32)(itr->second->BonusHonor);
+            *data << (int32)itr->second->BonusHonor;
         }
         else
         {
@@ -1364,7 +1364,7 @@ void BattleGroundMgr::BuildPvpLogDataPacket(WorldPacket *data, BattleGround *bg)
             uint32 team = bg->GetPlayerTeam(itr->first);
             if (!team && plr)
                 team = plr->GetTeam();
-            if (( bg->GetWinner()==0 && team == ALLIANCE ) || ( bg->GetWinner()==1 && team==HORDE ))
+            if (( bg->GetWinner()== BG_TEAM_ALLIANCE && team == ALLIANCE ) || ( bg->GetWinner()== BG_TEAM_HORDE && team==HORDE ))
                 *data << uint8(1);
             else
                 *data << uint8(0);

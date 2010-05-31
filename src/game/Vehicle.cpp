@@ -399,9 +399,9 @@ void Vehicle::EmptySeatsCountChanged()
         if(Vehicle *vehicle = ObjectAccessor::GetVehicle(vehicleGUID))
         {
             if(u_count > 0)
-                vehicle->ChangeSeatFlag(m_SeatData.seat, SEAT_VEHICLE_FREE);
+                vehicle->ChangeSeatFlag(m_movementInfo.GetTransportSeat(), SEAT_VEHICLE_FREE);
             else
-                vehicle->ChangeSeatFlag(m_SeatData.seat, SEAT_VEHICLE_FULL);
+                vehicle->ChangeSeatFlag(m_movementInfo.GetTransportSeat(), SEAT_VEHICLE_FULL);
         }
     }
 }
@@ -426,9 +426,9 @@ void Vehicle::RellocatePassengers(Map *map)
             Unit *passengers = itr->second.passenger;
             assert(passengers);
 
-            float xx = GetPositionX() + passengers->m_SeatData.OffsetX;
-            float yy = GetPositionY() + passengers->m_SeatData.OffsetY;
-            float zz = GetPositionZ() + passengers->m_SeatData.OffsetZ;
+            float xx = GetPositionX() + passengers->m_movementInfo.GetTransportPos()->x;
+            float yy = GetPositionY() + passengers->m_movementInfo.GetTransportPos()->y;
+            float zz = GetPositionZ() + passengers->m_movementInfo.GetTransportPos()->z;
             //float oo = passengers->m_SeatData.Orientation;
             // this is not correct, we should recalculate
             // actual rotation depending on vehicle
@@ -445,9 +445,9 @@ void Vehicle::RellocatePassengers(Map *map)
             Unit *passengers = itr->second.passenger;
             assert(passengers);
 
-            float xx = GetPositionX() + passengers->m_SeatData.OffsetX;
-            float yy = GetPositionY() + passengers->m_SeatData.OffsetY;
-            float zz = GetPositionZ() + passengers->m_SeatData.OffsetZ;
+            float xx = GetPositionX() + passengers->m_movementInfo.GetTransportPos()->x;
+            float yy = GetPositionY() + passengers->m_movementInfo.GetTransportPos()->y;
+            float zz = GetPositionZ() + passengers->m_movementInfo.GetTransportPos()->z;
             //float oo = passengers->m_SeatData.Orientation;
             // this is not correct, we should recalculate
             // actual rotation depending on vehicle
@@ -469,6 +469,7 @@ void Vehicle::AddPassenger(Unit *unit, int8 seatId, bool force)
         return;
 
     unit->SetVehicleGUID(GetGUID());
+    unit->m_movementInfo.AddMovementFlag(MOVEFLAG_ONTRANSPORT);
 
     seat->second.passenger = unit;
     if(unit->GetTypeId() == TYPEID_UNIT && ((Creature*)unit)->isVehicle())
@@ -614,18 +615,11 @@ void Vehicle::RemovePassenger(Unit *unit)
                     unit->SendMessageToSet(&data1,true);
                 }
             }
-            unit->m_SeatData.OffsetX = 0.0f;
-            unit->m_SeatData.OffsetY = 0.0f;
-            unit->m_SeatData.OffsetZ = 0.0f;
-            unit->m_SeatData.Orientation = 0.0f;
-            unit->m_SeatData.c_time = 0;
-            unit->m_SeatData.dbc_seat = 0;
-            unit->m_SeatData.seat = 0;
-            unit->m_SeatData.s_flags = 0;
-            unit->m_SeatData.v_flags = 0;
-
+            unit->m_movementInfo.ClearTransportData();
             seat->second.passenger = NULL;
             seat->second.flags = SEAT_FREE;
+
+            unit->m_movementInfo.RemoveMovementFlag(MOVEFLAG_ONTRANSPORT);
             EmptySeatsCountChanged();
             break;
         }
@@ -757,29 +751,24 @@ void Vehicle::InstallAllAccessories()
                 }
                 entry = data->id;
             }     
-            
             if(!pPassenger->Create(guid, GetMap(), GetPhaseMask(), entry, 0))
             {
                 delete pPassenger;
                 continue;
             }
-            pPassenger->AIM_Initialize();
+            pPassenger->LoadFromDB(guid, GetMap());
             pPassenger->Relocate(GetPositionX(), GetPositionY(), GetPositionZ());
             GetMap()->Add(pPassenger);
+            pPassenger->AIM_Initialize();
         }
         else
             pPassenger = (Creature*)SummonVehicle(cPassanger->entry, GetPositionX(), GetPositionY(), GetPositionZ(), 0);
         // Enter vehicle...
         pPassenger->EnterVehicle(this, cPassanger->seat_idx, true);
         // ...and send update. Without this, client wont show this new creature/vehicle...
-        if(!isVehicle)
-        {
-            WorldPacket data;
-            pPassenger->BuildHeartBeatMsg(&data);
-            pPassenger->SendMessageToSet(&data, false);
-        }
-        else
-            BuildVehicleInfo((Unit*)pPassenger);
+        WorldPacket data;
+        pPassenger->BuildHeartBeatMsg(&data);
+        pPassenger->SendMessageToSet(&data, false);
     }
 }
 Unit *Vehicle::GetPassenger(int8 seatId) const

@@ -96,6 +96,7 @@ enum BattleGroundSpells
     SPELL_PREPARATION               = 44521,                // Preparation
     SPELL_RECENTLY_DROPPED_FLAG     = 42792,                // Recently Dropped Flag
     SPELL_AURA_PLAYER_INACTIVE      = 43681                 // Inactive
+    SPELL_AURA_PVP_HEALING          = 74410                 // PvP 10% healing reduction 
 };
 
 enum BattleGroundTimeIntervals

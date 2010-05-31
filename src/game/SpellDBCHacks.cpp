@@ -17,8 +17,7 @@
  */
 
 #include "Common.h"
-#include "Opcodes.h"
-#include "Spell.h"
+#include "Unit.h"
 #include "SpellMgr.h"
 #include "SharedDefines.h"
 #include "DBCStores.h"

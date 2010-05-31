@@ -7631,6 +7631,9 @@ void Aura::HandleSchoolAbsorb(bool apply, bool Real)
                     break;
             }
 
+            if(Player* modOwner = caster->GetSpellModOwner())
+                modOwner->ApplySpellMod(m_spellProto->Id, SPELLMOD_ALL_EFFECTS, DoneActualBenefit);
+
             DoneActualBenefit *= caster->CalculateLevelPenalty(GetSpellProto());
 
             m_modifier.m_amount += (int32)DoneActualBenefit;
@@ -8213,7 +8216,7 @@ void Aura::PeriodicTick()
 
             SpellEntry const* spellProto = GetSpellProto();
             // maybe has to be sent different to client, but not by SMSG_PERIODICAURALOG
-            SpellNonMeleeDamage damageInfo(pCaster, m_target, spellProto->Id, spellProto->SchoolMask);
+            SpellNonMeleeDamage damageInfo(pCaster, m_target, spellProto->Id, SpellSchoolMask(spellProto->SchoolMask));
             pCaster->CalculateSpellDamage(&damageInfo, gain, spellProto);
 
             damageInfo.target->CalculateAbsorbResistBlock(pCaster, &damageInfo, spellProto);

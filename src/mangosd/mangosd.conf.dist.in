@@ -1377,6 +1377,16 @@ BattleGround.PremadeGroupWaitForMatch = 1800000
 #        Default: 1 (active)
 #                 0 (finished)
 #
+#    Arena.LoserNoChange
+#        If winner or loser rating is below this limit, loser loses no rating
+#        Default: 0 (disable)
+#                 1400
+#
+#    Arena.LoserHalfChange
+#        If loser rating is below this limit, he loses half of rating
+#        Default: 0 (disable)
+#                 1500
+#
 ###################################################################################################################
 
 Arena.MaxRatingDifference = 150
@@ -1387,6 +1397,8 @@ Arena.QueueAnnouncer.Join = 0
 Arena.QueueAnnouncer.Exit = 0
 Arena.ArenaSeason.ID = 1
 Arena.ArenaSeason.InProgress = 1
+Arena.LoserNoChange = 0
+Arena.LoserHalfChange = 0
 
 ###################################################################################################################
 # NETWORK CONFIG

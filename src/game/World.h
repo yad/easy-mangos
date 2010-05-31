@@ -208,6 +208,8 @@ enum eConfigUInt32Values
     CONFIG_UINT32_TEAM_BG_BUFF_RED,
     CONFIG_UINT32_FACTIONED_MAP_FACTION,
     CONFIG_UINT32_FACTIONED_MAP_TEAM,
+    CONFIG_UINT32_LOSERNOCHANGE,
+    CONFIG_UINT32_LOSERHALFCHANGE,
     CONFIG_UINT32_AHBOT_ACCOUNT_ID,
     CONFIG_UINT32_AHBOT_CHARACTER_ID,
     CONFIG_UINT32_AHBOT_ITEMS_CYCLE,
@@ -733,7 +735,7 @@ class World
         IntervalTimer m_timers[WUPDATE_COUNT];
         uint32 mail_timer;
         uint32 mail_timer_expires;
-		uint32 world_diff_time;
+        uint32 world_diff_time;
 
         typedef UNORDERED_MAP<uint32, Weather*> WeatherMap;
         WeatherMap m_weathers;

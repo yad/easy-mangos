@@ -474,24 +474,14 @@ void Unit::SendMonsterMoveWithSpeed(float x, float y, float z, uint32 transitTim
 
 void Unit::BuildHeartBeatMsg(WorldPacket *data) const
 {
-    MovementFlags move_flags = GetTypeId()==TYPEID_PLAYER
-        ? ((Player const*)this)->m_movementInfo.GetMovementFlags()
-        : MOVEFLAG_NONE;
-
     //Hack for flying creatures, but it works!
-    if(GetTypeId()!=TYPEID_PLAYER && ((Creature*)this)->canFly())
-        move_flags = MOVEFLAG_FLYING;
+    if(GetTypeId()!=TYPEID_PLAYER && ((Creature*)this)->canFly() &&
+        !m_movementInfo.HasMovementFlag(MOVEFLAG_FLYING))
+        ((Unit*)this)->m_movementInfo.AddMovementFlag(MOVEFLAG_FLYING);
 
-    data->Initialize(MSG_MOVE_HEARTBEAT, 32);
+    data->Initialize(MSG_MOVE_HEARTBEAT);
     *data << GetPackGUID();
-    *data << uint32(move_flags);                            // movement flags
-    *data << uint16(0);                                     // 2.3.0
-    *data << uint32(getMSTime());                           // time
-    *data << float(GetPositionX());
-    *data << float(GetPositionY());
-    *data << float(GetPositionZ());
-    *data << float(GetOrientation());
-    *data << uint32(0);
+    ((Unit*)this)->m_movementInfo.Write(*data);
 }
 
 void Unit::resetAttackTimer(WeaponAttackType type)
@@ -1260,7 +1250,7 @@ void Unit::CastSpell(float x, float y, float z, SpellEntry const *spellInfo, boo
 uint32 Unit::SpellNonMeleeDamageLog(Unit *pVictim, uint32 spellID, uint32 damage)
 {
     SpellEntry const *spellInfo = sSpellStore.LookupEntry(spellID);
-    SpellNonMeleeDamage damageInfo(this, pVictim, spellInfo->Id, spellInfo->SchoolMask);
+    SpellNonMeleeDamage damageInfo(this, pVictim, spellInfo->Id, SpellSchoolMask(spellInfo->SchoolMask));
     CalculateSpellDamage(&damageInfo, damage, spellInfo);
     damageInfo.target->CalculateAbsorbResistBlock(this, &damageInfo, spellInfo);
     DealDamageMods(damageInfo.target,damageInfo.damage,&damageInfo.absorb);
@@ -1271,7 +1261,7 @@ uint32 Unit::SpellNonMeleeDamageLog(Unit *pVictim, uint32 spellID, uint32 damage
 
 void Unit::CalculateSpellDamage(SpellNonMeleeDamage *damageInfo, int32 damage, SpellEntry const *spellInfo, WeaponAttackType attackType)
 {
-    SpellSchoolMask damageSchoolMask = SpellSchoolMask(damageInfo->schoolMask);
+    SpellSchoolMask damageSchoolMask = damageInfo->schoolMask;
     Unit *pVictim = damageInfo->target;
 
     if (damage < 0)
@@ -1384,7 +1374,7 @@ void Unit::DealSpellDamage(SpellNonMeleeDamage *damageInfo, bool durabilityLoss)
 
     // Call default DealDamage (send critical in hit info for threat calculation)
     CleanDamage cleanDamage(0, BASE_ATTACK, damageInfo->HitInfo & SPELL_HIT_TYPE_CRIT ? MELEE_HIT_CRIT : MELEE_HIT_NORMAL);
-    DealDamage(pVictim, damageInfo->damage, &cleanDamage, SPELL_DIRECT_DAMAGE, SpellSchoolMask(damageInfo->schoolMask), spellProto, durabilityLoss, damageInfo->absorb);
+    DealDamage(pVictim, damageInfo->damage, &cleanDamage, SPELL_DIRECT_DAMAGE, damageInfo->schoolMask, spellProto, durabilityLoss, damageInfo->absorb);
 }
 
 //TODO for melee need create structure as in
@@ -2930,13 +2920,18 @@ SpellMissInfo Unit::MeleeSpellHitResult(Unit *pVictim, SpellEntry const *spell)
 {
     WeaponAttackType attType = BASE_ATTACK;
 
-    if (spell->DmgClass == SPELL_DAMAGE_CLASS_RANGED)
+    // Only for hunters/warriors, other classes do not have ranged attack that would benefit from ranged hit
+    if (spell->DmgClass == SPELL_DAMAGE_CLASS_RANGED &&
+        (spell->SpellFamilyName == SPELLFAMILY_WARRIOR ||
+        spell->SpellFamilyName == SPELLFAMILY_HUNTER ||
+        spell->SpellFamilyName == SPELLFAMILY_GENERIC))
         attType = RANGED_ATTACK;
 
     // bonus from skills is 0.04% per skill Diff
     int32 attackerWeaponSkill = int32(GetWeaponSkillValue(attType,pVictim));
 
-    if ( spell->SpellFamilyName == SPELLFAMILY_PALADIN )
+    // Probably not needed after [pr456]
+    /*if ( spell->SpellFamilyName == SPELLFAMILY_PALADIN )
     {
         // Hammer of Wrath
         if ( spell->SpellFamilyFlags & UI64LIT(0x0000008000000000) )
@@ -2961,7 +2956,7 @@ SpellMissInfo Unit::MeleeSpellHitResult(Unit *pVictim, SpellEntry const *spell)
                 case 54158: // Judgement
                     return SPELL_MISS_NONE;
             }
-    }
+    }*/
 
     int32 skillDiff = attackerWeaponSkill - int32(pVictim->GetMaxSkillValueForLevel(this));
     int32 fullSkillDiff = attackerWeaponSkill - int32(pVictim->GetDefenseSkillValue(this));
@@ -8604,9 +8599,6 @@ bool Unit::HandleOverrideClassScriptAuraProc(Unit *pVictim, uint32 /*damage*/, A
         case 5497:                                          // Improved Mana Gems (Serpent-Coil Braid)
             triggered_spell_id = 37445;                     // Mana Surge
             break;
-        case 6953:                                          // Warbringer
-            RemoveAurasAtMechanicImmunity(IMMUNE_TO_ROOT_AND_SNARE_MASK,0,true);
-            return true;
         case 7010:                                          // Revitalize (rank 1)
         case 7011:                                          // Revitalize (rank 2)
         case 7012:                                          // Revitalize (rank 3)
@@ -13487,7 +13479,7 @@ void Unit::ProcDamageAndSpellFor( bool isVictim, Unit * pTarget, uint32 procFlag
             case SPELL_AURA_PROC_TRIGGER_DAMAGE:
             {
                 DEBUG_FILTER_LOG(LOG_FILTER_SPELL_CAST, "ProcDamageAndSpell: doing %u damage from spell id %u (triggered by %s aura of spell %u)", auraModifier->m_amount, spellInfo->Id, (isVictim?"a victim's":"an attacker's"), triggeredByAura->GetId());
-                SpellNonMeleeDamage damageInfo(this, pTarget, spellInfo->Id, spellInfo->SchoolMask);
+                SpellNonMeleeDamage damageInfo(this, pTarget, spellInfo->Id, SpellSchoolMask(spellInfo->SchoolMask));
                 CalculateSpellDamage(&damageInfo, auraModifier->m_amount, spellInfo);
                 damageInfo.target->CalculateAbsorbResistBlock(this, &damageInfo, spellInfo);
                 DealDamageMods(damageInfo.target,damageInfo.damage,&damageInfo.absorb);
@@ -14537,15 +14529,12 @@ void Unit::EnterVehicle(Vehicle *vehicle, int8 seat_id, bool force)
     if(!veSeat)
         return;
 
-    m_SeatData.OffsetX = (veSeat->m_attachmentOffsetX + v->GetObjectSize()) * GetFloatValue(OBJECT_FIELD_SCALE_X);      // transport offsetX
-    m_SeatData.OffsetY = (veSeat->m_attachmentOffsetY + v->GetObjectSize()) * GetFloatValue(OBJECT_FIELD_SCALE_X);      // transport offsetY
-    m_SeatData.OffsetZ = (veSeat->m_attachmentOffsetZ + v->GetObjectSize()) * GetFloatValue(OBJECT_FIELD_SCALE_X);      // transport offsetZ
-    m_SeatData.Orientation = veSeat->m_passengerYaw;                                                                    // NOTE : needs confirmation
-    m_SeatData.c_time = v->GetCreationTime();
-    m_SeatData.dbc_seat = veSeat->m_ID;
-    m_SeatData.seat = seat_id;
-    m_SeatData.s_flags = sObjectMgr.GetSeatFlags(veSeat->m_ID);
-    m_SeatData.v_flags = v->GetVehicleFlags();
+    m_movementInfo.SetTransportData(v->GetGUID(),
+        (veSeat->m_attachmentOffsetX + v->GetObjectSize()) * GetFloatValue(OBJECT_FIELD_SCALE_X),
+        (veSeat->m_attachmentOffsetY + v->GetObjectSize()) * GetFloatValue(OBJECT_FIELD_SCALE_X),
+        (veSeat->m_attachmentOffsetZ + v->GetObjectSize()) * GetFloatValue(OBJECT_FIELD_SCALE_X),
+        veSeat->m_passengerYaw, v->GetCreationTime(), seat_id, veSeat->m_ID,
+        sObjectMgr.GetSeatFlags(veSeat->m_ID), v->GetVehicleFlags());
 
     addUnitState(UNIT_STAT_ON_VEHICLE);
     InterruptNonMeleeSpells(false);
@@ -14559,7 +14548,7 @@ void Unit::EnterVehicle(Vehicle *vehicle, int8 seat_id, bool force)
     WorldPacket data(SMSG_MONSTER_MOVE_TRANSPORT, 60);
     data << GetPackGUID();
     data << v->GetPackGUID();
-    data << uint8(m_SeatData.seat);
+    data << uint8(seat_id);
     data << uint8(0);                                       // new in 3.1
     data << v->GetPositionX() << v->GetPositionY() << v->GetPositionZ();
     data << uint32(getMSTime());
@@ -14571,9 +14560,9 @@ void Unit::EnterVehicle(Vehicle *vehicle, int8 seat_id, bool force)
 
     data << uint32(0);                                      // Time in between points
     data << uint32(1);                                      // 1 single waypoint
-    data << m_SeatData.OffsetX;
-    data << m_SeatData.OffsetY;
-    data << m_SeatData.OffsetZ;
+    data << m_movementInfo.GetTransportPos()->x;
+    data << m_movementInfo.GetTransportPos()->y;
+    data << m_movementInfo.GetTransportPos()->z;
     SendMessageToSet(&data, true);
 
     v->AddPassenger(this, seat_id, force);
@@ -14586,7 +14575,7 @@ void Unit::ExitVehicle()
         float v_size = 0.0f;
         if(Vehicle *vehicle = ObjectAccessor::GetVehicle(vehicleGUID))
         {
-            if(m_SeatData.s_flags & SF_MAIN_RIDER)
+            if(m_movementInfo.GetVehicleSeatFlags() & SF_MAIN_RIDER)
             {
                 if(vehicle->GetVehicleFlags() & VF_DESPAWN_AT_LEAVE)
                 {
@@ -14604,7 +14593,6 @@ void Unit::ExitVehicle()
         if(GetTypeId() == TYPEID_PLAYER)
         {
             ((Player*)this)->ResummonPetTemporaryUnSummonedIfAny();
-            ((Player*)this)->m_movementInfo.RemoveMovementFlag(MOVEFLAG_ONTRANSPORT);
             ((Player*)this)->m_movementInfo.RemoveMovementFlag(MOVEFLAG_ROOT);
         }
 
@@ -14614,38 +14602,6 @@ void Unit::ExitVehicle()
         GetClosePoint(x, y, z, 2.0f + v_size);
         SendMonsterMove(x, y, z, SPLINETYPE_NORMAL, SPLINEFLAG_FORWARD, 0);
     }
-}
-
-void Unit::BuildVehicleInfo(Unit *target)
-{
-    if(!target)
-        return;
-
-    if(!target->GetVehicleGUID())
-        return;
-
-    uint32 veh_time = getMSTimeDiff(target->m_SeatData.c_time,getMSTime());
-    WorldPacket data(MSG_MOVE_HEARTBEAT, 100);
-    data << target->GetPackGUID();
-    data << uint32(MOVEFLAG_ONTRANSPORT | 0x00000800);
-    data << uint16(m_movementInfo.GetMovementFlags2());
-    data << uint32(getMSTime());
-    data << float(target->GetPositionX());
-    data << float(target->GetPositionY());
-    data << float(target->GetPositionZ());
-    data << float(target->GetOrientation());
-    data.appendPackGUID(target->GetVehicleGUID());
-    data << float(target->m_SeatData.OffsetX);
-    data << float(target->m_SeatData.OffsetY);
-    data << float(target->m_SeatData.OffsetZ);
-    data << float(target->m_SeatData.Orientation);
-    data << uint32(veh_time);
-    data << uint8 (target->m_SeatData.seat);
-    data << uint32(m_movementInfo.GetFallTime());
-    //data << uint32(0);
-    SendMessageToSet(&data, GetTypeId() == TYPEID_PLAYER ? true : false);
-  //  if(GetTypeId() == TYPEID_PLAYER)
-    //    ((Player*)this)->GetSession()->SendPacket(&data);
 }
 
 void Unit::SetPvP( bool state )
