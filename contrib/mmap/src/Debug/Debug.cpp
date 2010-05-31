@@ -2,6 +2,8 @@
 #include "Debug.h"
 
 #include <vector>
+#include "pathfinding/Detour/DetourNavMesh.h"
+#include "pathfinding/Recast/Recast.h"
 #include "MMapCommon.h"
 
 void duReadNavMesh(int mapID, dtNavMesh* &navMesh)
@@ -44,3 +46,56 @@ void duReadNavMesh(int mapID, dtNavMesh* &navMesh)
     }
 }
 
+void duReadPolyMesh(int mapID, rcPolyMesh* &mesh)
+{
+    char fileName[25];
+    FILE* file;
+
+    vector<string> files;
+    sprintf(fileName, "%03i*.pmesh", mapID);
+    MMAP::getDirContents(files, "meshes", fileName);
+
+    //if(!mesh)
+    //    mesh = new rcPolyMesh;
+
+    for(int i = 0; i < files.size(); ++i)
+    {
+        rcPolyMesh* newMesh = new rcPolyMesh;
+
+        file = fopen(("meshes\\" + files[i]).c_str(), "rb");
+        if(!file)
+            continue;
+
+        fread(&(newMesh->cs), sizeof(float), 1, file);
+        fread(&(newMesh->ch), sizeof(float), 1, file);
+        fread(&(newMesh->nvp), sizeof(int), 1, file);
+        fread(newMesh->bmin, sizeof(float), 3, file);
+        fread(newMesh->bmax, sizeof(float), 3, file);
+        fread(&(newMesh->nverts), sizeof(int), 1, file);
+        newMesh->verts = new unsigned short[newMesh->nverts*3];
+        fread(newMesh->verts, sizeof(unsigned short), newMesh->nverts*3, file);
+        fread(&(newMesh->npolys), sizeof(int), 1, file);
+        newMesh->polys = new unsigned short[newMesh->npolys*newMesh->nvp*2];
+        newMesh->flags = new unsigned short[newMesh->npolys];
+        newMesh->areas = new unsigned char[newMesh->npolys];
+        newMesh->regs = new unsigned short[newMesh->npolys];
+        fread(newMesh->polys, sizeof(unsigned short), newMesh->npolys*newMesh->nvp*2, file);
+        fread(newMesh->flags, sizeof(unsigned short), newMesh->npolys, file);
+        fread(newMesh->areas, sizeof(unsigned char), newMesh->npolys, file);
+        fread(newMesh->regs, sizeof(unsigned short), newMesh->npolys, file);
+        fclose(file);
+
+        if(i > 0)
+        {
+            rcPolyMesh* oldMesh = mesh;
+            mesh = new rcPolyMesh;
+            rcPolyMesh* meshes[2] = {oldMesh, newMesh};
+            rcMergePolyMeshes(meshes, 2, *mesh);
+
+            delete oldMesh;
+            delete newMesh;
+        }
+        else
+            mesh = newMesh;
+    }
+}

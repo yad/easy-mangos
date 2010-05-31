@@ -629,8 +629,6 @@ namespace MMAP
                     continue;
                 }
 
-                // TODO: if(m_debugOutput) write iv.polyMesh to file
-
                 printf("%sBuilding polymesh detail...             \r", tileString);
                 iv.polyMeshDetail = new rcPolyMeshDetail;
                 if(!rcBuildPolyMeshDetail(*iv.polyMesh, *iv.compactHeightfield, config.detailSampleDist, config.detailSampleMaxError, *iv.polyMeshDetail))
@@ -756,6 +754,16 @@ namespace MMAP
                 fwrite(navData, sizeof(unsigned char), navDataSize, file);
                 fclose(file);
 
+                if(m_debugOutput)
+                {
+                    sprintf(fileName, "meshes\\%03u%02i%02i.pmesh", mapID, tileX, tileY);
+                    if(!(file = fopen(fileName, "wb")))
+                        printf("%sFailed to open %s for writing!\n",  tileString, fileName);
+                    else
+                        writePolyMesh(file, iv.polyMesh);
+                    if(file) fclose(file);
+                }
+
                 // now that tile is written to disk, we can unload it
                 navMesh->removeTile(tileRef, 0, 0);
             }
@@ -814,6 +822,25 @@ namespace MMAP
             fprintf(objFile, "f %i %i %i\n", m_triangles[i*3]+1, m_triangles[i*3+1]+1, m_triangles[i*3+2]+1);
 
         fclose(objFile);
+    }
+
+    void MapBuilder::writePolyMesh(FILE* file, const rcPolyMesh* mesh)
+    {
+        if(!file || !mesh)
+            return;
+
+        fwrite(&(mesh->cs), sizeof(float), 1, file);
+        fwrite(&(mesh->ch), sizeof(float), 1, file);
+        fwrite(&(mesh->nvp), sizeof(int), 1, file);
+        fwrite(mesh->bmin, sizeof(float), 3, file);
+        fwrite(mesh->bmax, sizeof(float), 3, file);
+        fwrite(&(mesh->nverts), sizeof(int), 1, file);
+        fwrite(mesh->verts, sizeof(unsigned short), mesh->nverts*3, file);
+        fwrite(&(mesh->npolys), sizeof(int), 1, file);
+        fwrite(mesh->polys, sizeof(unsigned short), mesh->npolys*mesh->nvp*2, file);
+        fwrite(mesh->flags, sizeof(unsigned short), mesh->npolys, file);
+        fwrite(mesh->areas, sizeof(unsigned char), mesh->npolys, file);
+        fwrite(mesh->regs, sizeof(unsigned short), mesh->npolys, file);
     }
 
     void MapBuilder::cleanup()
