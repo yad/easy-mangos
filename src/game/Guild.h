@@ -432,6 +432,11 @@ class Guild
         void   LogBankEvent(uint8 EventType, uint8 TabId, uint32 PlayerGuidLow, uint32 ItemOrMoney, uint8 ItemStackCount=0, uint8 DestTabId=0);
         bool   AddGBankItemToDB(uint32 GuildId, uint32 BankTab , uint32 BankTabSlot , uint32 GUIDLow, uint32 Entry );
 
+        //I currently set it just in db so its not needed
+        //void SetFriendlyGuildId(uint32 id);
+        void DeleteFriendlyGuildId();
+        MemberList GetMembers() { return members; }
+
     protected:
         void AddRank(const std::string& name,uint32 rights,uint32 money);
 
@@ -471,6 +476,10 @@ class Guild
         uint32 m_OnlineMembers;
         uint64 m_GuildBankMoney;
         uint8 m_PurchasedTabs;
+
+        //Friendly guild - they share guild chats
+        uint32 m_friendlyGuildId;
+        Guild *m_friendlyGuild;
 
     private:
         // used only from high level Swap/Move functions

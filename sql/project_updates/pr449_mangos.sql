@@ -1,4 +1,3 @@
-USE `mangos`;
 
 /*Table structure for table `item_extended_cost` */
 
