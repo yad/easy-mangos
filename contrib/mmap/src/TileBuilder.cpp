@@ -212,16 +212,17 @@ namespace MMAP
     inline void TileBuilder::getHeightCoord(int index, Grid grid, float xOffset, float yOffset, float* coord)
     {
         // wow coords: x, y, height
+        // coord is mirroed about the horizontal axes
         switch(grid)
         {
             case GRID_V9:
-                coord[0] = xOffset + index%(V9_SIZE)*GRID_PART_SIZE;
-                coord[1] = yOffset + (int)(index/(V9_SIZE))*GRID_PART_SIZE;
+                coord[0] = (xOffset + index%(V9_SIZE)*GRID_PART_SIZE) * -1.f;
+                coord[1] = (yOffset + (int)(index/(V9_SIZE))*GRID_PART_SIZE) * -1.f;
                 coord[2] = V9[index];
                 break;
             case GRID_V8:
-                coord[0] = xOffset + index%(V8_SIZE)*GRID_PART_SIZE + GRID_PART_SIZE/2.f;
-                coord[1] = yOffset + (int)(index/(V8_SIZE))*GRID_PART_SIZE + GRID_PART_SIZE/2.f;
+                coord[0] = (xOffset + index%(V8_SIZE)*GRID_PART_SIZE + GRID_PART_SIZE/2.f) * -1.f;
+                coord[1] = (yOffset + (int)(index/(V8_SIZE))*GRID_PART_SIZE + GRID_PART_SIZE/2.f) * -1.f;
                 coord[2] = V8[index];
                 break;
         }

@@ -342,7 +342,13 @@ namespace MMAP
     inline void MapBuilder::transform(vector<Vector3> source, vector<Vector3> &transformedVertices, float scale, G3D::Matrix3 rotation, Vector3 position)
     {
         for(vector<Vector3>::iterator it = source.begin(); it != source.end(); ++it)
-            transformedVertices.push_back((*it) * rotation * scale + position);
+        {
+            // apply tranform, then mirror along the horizontal axes
+            Vector3 v((*it) * rotation * scale + position);
+            v.x *= -1.f;
+            v.y *= -1.f;
+            transformedVertices.push_back(v);
+        }
     }
 
     inline void MapBuilder::copyVertices(vector<Vector3> source, vector<float> &dest)
@@ -399,17 +405,17 @@ namespace MMAP
         int triCount = m_triangles.size() / 3;
 
         rcCalcBounds(verts, vertCount, bmin, bmax);
-        float width = bmax[0] - bmin[0];
-        float depth = bmax[2] - bmin[2];
+        float yLen = abs(bmax[0] - bmin[0]);
+        float xLen = abs(bmax[2] - bmin[2]);
 
         // some maps are smaller than GRID_SIZE
         float gridSize = GRID_SIZE;
-        if(width < GRID_SIZE && depth < GRID_SIZE)
-            gridSize = max(width, depth);
-        else if(width < GRID_SIZE)
-            gridSize = width;
-        else if(depth < GRID_SIZE)
-            gridSize = depth;
+        if(yLen < GRID_SIZE && xLen < GRID_SIZE)
+            gridSize = max(yLen, xLen);
+        else if(yLen < GRID_SIZE)
+            gridSize = yLen;
+        else if(xLen < GRID_SIZE)
+            gridSize = xLen;
 
         // set common config
         rcConfig config;
@@ -440,12 +446,17 @@ namespace MMAP
         config.detailSampleMaxError = config.ch * 1.f;
 
         // navmesh tile dimensions
-        const int tilesWide = ceilf((bmax[0] - bmin[0]) / gridSize);
-        const int tilesDeep = ceilf((bmax[2] - bmin[2]) / gridSize);
+        // float precision: 533.33333 => 533.33331
+        // also force at least 1 tile, due to floor
+        int ycount = floor(yLen / gridSize);
+        int xcount = floor(xLen / gridSize);
+        const int yTileCount = ycount > 0 ? ycount : 1;
+        const int xTileCount = xcount > 0 ? xcount : 1;
 
         // calculate number of bits needed to store tiles & polys
-        int tileBits = rcMin((int)ilog2(nextPow2(tilesWide*tilesDeep)), 14);
+        int tileBits = rcMin((int)ilog2(nextPow2(yTileCount*xTileCount)), 14);
         if (tileBits > 14) tileBits = 14;
+        if (tileBits < 1) tileBits = 1;     // need at least one bit!
         int polyBits = 22 - tileBits;
         int maxTiles = 1 << tileBits;
         int maxPolysPerTile = 1 << polyBits;
@@ -455,7 +466,7 @@ namespace MMAP
         memset(&navMeshParams, 0, sizeof(dtNavMeshParams));
         navMeshParams.tileWidth = gridSize;
         navMeshParams.tileHeight = gridSize;
-        rcVcopy(navMeshParams.orig, bmin);          // may need to use bounds instead of {0,0,0}
+        rcVcopy(navMeshParams.orig, bmin);
         navMeshParams.maxTiles = maxTiles;
         navMeshParams.maxPolys = maxPolysPerTile;
         navMeshParams.maxNodes = 2048;
@@ -477,6 +488,11 @@ namespace MMAP
 
         // now that we know navMesh params are valid, we can write them to file
         fwrite(&navMeshParams, sizeof(dtNavMeshParams), 1, file);
+
+        int tileX, tileY;
+        float yMin = bmin[0];
+        float xMin = bmin[2];
+
         fclose(file);
 
         printf("Creating ChunkyTriMesh...               \r");
@@ -487,26 +503,22 @@ namespace MMAP
             return;
         }
 
-        float xMin = bmin[0];
-        float yMin = bmin[2];
-
         char tileString[10]; // "[xx,yy]: "
 
-        int tileX, tileY;
-        for(int x = 0; x < tilesWide; ++x)
+        for(int y = 0; y < yTileCount; ++y)
         {
             // set tile bounds
-            bmin[0] = xMin + gridSize*x;
+            bmin[0] = yMin + gridSize*y;
             bmax[0] = bmin[0] + gridSize;
 
-            for(int y = 0; y < tilesDeep; ++y)
+            for(int x = 0; x < xTileCount; ++x)
             {
                 // re-initialize
                 // do it at the start of each iteration!!
                 clearIntermediateValues(iv);
 
                 // set tile bounds
-                bmin[2] = yMin + gridSize*y;
+                bmin[2] = xMin + gridSize*x;
                 bmax[2] = bmin[2] + gridSize;
                 rcVcopy(config.bmin, bmin);
                 rcVcopy(config.bmax, bmax);
@@ -521,8 +533,8 @@ namespace MMAP
                 rcCalcGridSize(config.bmin, config.bmax, config.cs, &config.width, &config.height);
 
                 // set tile string
-                tileX = 32-(bmin[0] + .1f)/gridSize;
-                tileY = 32-(bmin[2] + .1f)/gridSize;
+                tileY = 32-((bmin[0] + bmax[0]) / 2)/gridSize;
+                tileX = 32-((bmin[2] + bmax[2]) / 2)/gridSize;
                 sprintf(tileString, "[%02i,%02i]: ", tileX, tileY);
 
                 // build heightfield
@@ -545,7 +557,7 @@ namespace MMAP
                 const int ncid = rcGetChunksInRect(chunkyMesh, tbmin, tbmax, cid, 512);
                 if(!ncid)
                 {
-                    // a lot of tiles with MAP_HEIGHT_NO_HEIGHT are empty
+                    // tiles with MAP_HEIGHT_NO_HEIGHT are usually empty, they can be skipped
                     continue;
                 }
 
@@ -680,8 +692,8 @@ namespace MMAP
                 params.walkableHeight = agentHeight;
                 params.walkableRadius = agentRadius;
                 params.walkableClimb = agentMaxClimb;
-                params.tileX = x;
-                params.tileY = y;
+                params.tileX = y;
+                params.tileY = x;
                 rcVcopy(params.bmin, bmin);
                 rcVcopy(params.bmax, bmax);
                 params.cs = config.cs;
@@ -728,7 +740,7 @@ namespace MMAP
                     continue;
                 }
 
-                int tileRef = 0;
+                dtTileRef tileRef = 0;
                 printf("%Adding tile to navmesh...                \r", tileString);
                 // DT_TILE_FREE_DATA tells detour to unallocate memory when the tile
                 // is removed via removeTile()
@@ -889,21 +901,10 @@ namespace MMAP
         // debug
         //switch(mapID)
         //{
-        //    case 33:
-        //    case 34:
-        //    case 35:
-        //    case 36:
-        //    case 43:
-        //    case 44:
-        //    case 47:
-        //    case 48:
-        //    case 70:
-        //    case 90:
-        //    case 109:
-        //    case 129:
-        //        return true;
+        //    case 309:
+        //        return false;
         //    default:
-        //        break;
+        //        return true;
         //}
 
         if(m_skipContinents)
