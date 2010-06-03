@@ -177,7 +177,7 @@ void PathInfo::Build(dtPolyRef startPoly, dtPolyRef endPoly)
         return;
     }
 
-    // pathPolyRefs was deleted when we entered Build()
+    // pathPolyRefs was deleted when we entered Build(dtPolyRef, dtPolyRef)
     m_pathPolyRefs = new dtPolyRef[m_length];
 
     int i;
