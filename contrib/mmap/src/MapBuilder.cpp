@@ -18,8 +18,8 @@ namespace MMAP
     MapBuilder::MapBuilder(float maxWalkableAngle, bool skipContinents/* = true*/, bool hiResHeightmaps/* = false*/) :
         m_completeLists     (false),
         m_skipJunkMaps      (true),
-        m_skipBattlegrounds (true),
-        m_debugOutput       (true),
+        m_skipBattlegrounds (false),
+        m_debugOutput       (false),
         m_maxWalkableAngle  (maxWalkableAngle),
         m_skipContinents    (skipContinents)
     {
