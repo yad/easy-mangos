@@ -1067,32 +1067,17 @@ float Map::GetHeight(float x, float y, float z, bool pUseVmaps) const
     }
 }
 
-bool Map::IsOutdoors(float x, float y, float z) const
+inline bool IsOutdoorWMO(uint32 mogpFlags, int32 adtId, int32 rootId, int32 groupId,
+                              WMOAreaTableEntry const* wmoEntry, AreaTableEntry const* atEntry)
 {
-    uint32 mogpFlags;
-    int32 adtId, rootId, groupId;
-
-    // no wmo found? -> outside by default
-    if(!GetAreaInfo(x, y, z, mogpFlags, adtId, rootId, groupId))
-        return true;
-
-    DEBUG_LOG("Got AreaInfo: flag %u, adt %i, root %i, group %i", mogpFlags, adtId, rootId, groupId);
     bool outdoor = true;
 
-    WMOAreaTableEntry const* wmoEntry= GetWMOAreaTableEntryByTripple(rootId, adtId, groupId);
-    if(wmoEntry)
+    if(wmoEntry && atEntry)
     {
-        DEBUG_LOG("Got WMOAreaTableEntry! flag %u, areaid %u", wmoEntry->Flags, wmoEntry->areaId);
-
-        AreaTableEntry const* atEntry = GetAreaEntryByAreaID(wmoEntry->areaId);
-        if(atEntry)
-        {
-            DEBUG_LOG("Got AreaTableEntry");
-            if(atEntry->flags & AREA_FLAG_OUTSIDE)
-                return true;
-            if(atEntry->flags & AREA_FLAG_INSIDE)
-                return false;
-        }
+        if(atEntry->flags & AREA_FLAG_OUTSIDE)
+            return true;
+        if(atEntry->flags & AREA_FLAG_INSIDE)
+            return false;
     }
 
     outdoor = mogpFlags&0x8;
@@ -1106,6 +1091,27 @@ bool Map::IsOutdoors(float x, float y, float z) const
             outdoor = false;
     }
     return outdoor;
+}
+
+bool Map::IsOutdoors(float x, float y, float z) const
+{
+    uint32 mogpFlags;
+    int32 adtId, rootId, groupId;
+
+    // no wmo found? -> outside by default
+    if(!GetAreaInfo(x, y, z, mogpFlags, adtId, rootId, groupId))
+        return true;
+
+    AreaTableEntry const* atEntry = 0;
+    WMOAreaTableEntry const* wmoEntry= GetWMOAreaTableEntryByTripple(rootId, adtId, groupId);
+    if(wmoEntry)
+    {
+        DEBUG_LOG("Got WMOAreaTableEntry! flag %u, areaid %u", wmoEntry->Flags, wmoEntry->areaId);
+
+        atEntry = GetAreaEntryByAreaID(wmoEntry->areaId);
+    }
+
+    return IsOutdoorWMO(mogpFlags, adtId, rootId, groupId, wmoEntry, atEntry);
 }
 
 bool Map::GetAreaInfo(float x, float y, float z, uint32 &flags, int32 &adtId, int32 &rootId, int32 &groupId) const
@@ -1127,29 +1133,40 @@ bool Map::GetAreaInfo(float x, float y, float z, uint32 &flags, int32 &adtId, in
     return false;
 }
 
-uint16 Map::GetAreaFlag(float x, float y, float z) const
+uint16 Map::GetAreaFlag(float x, float y, float z, bool *isOutdoors) const
 {
     uint32 mogpFlags;
     int32 adtId, rootId, groupId;
+    WMOAreaTableEntry const* wmoEntry = 0;
+    AreaTableEntry const* atEntry = 0;
+    bool haveAreaInfo = false;
 
     if(GetAreaInfo(x, y, z, mogpFlags, adtId, rootId, groupId))
     {
-        if(WMOAreaTableEntry const* wmoEntry= GetWMOAreaTableEntryByTripple(rootId, adtId, groupId))
-        {
-            if(AreaTableEntry const* atEntry = GetAreaEntryByAreaID(wmoEntry->areaId))
-            {
-                return atEntry->exploreFlag;
-            }
-        }
+        haveAreaInfo = true;
+        if(wmoEntry = GetWMOAreaTableEntryByTripple(rootId, adtId, groupId))
+            atEntry = GetAreaEntryByAreaID(wmoEntry->areaId);
     }
 
     uint16 areaflag;
-    if(GridMap *gmap = const_cast<Map*>(this)->GetGrid(x, y))
-        areaflag = gmap->getArea(x, y);
-    // this used while not all *.map files generated (instances)
+    if (atEntry)
+        areaflag = atEntry->exploreFlag;
     else
-        areaflag = GetAreaFlagByMapId(i_id);
+    {
+        if(GridMap *gmap = const_cast<Map*>(this)->GetGrid(x, y))
+            areaflag = gmap->getArea(x, y);
+        // this used while not all *.map files generated (instances)
+        else
+            areaflag = GetAreaFlagByMapId(i_id);
+    }
 
+    if (isOutdoors)
+    {
+        if (haveAreaInfo)
+            *isOutdoors = IsOutdoorWMO(mogpFlags, adtId, rootId, groupId, wmoEntry, atEntry);
+        else
+            *isOutdoors = true;
+    }
     return areaflag;
 }
 

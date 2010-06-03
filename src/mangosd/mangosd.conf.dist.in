@@ -142,8 +142,8 @@ BindIP = "0.0.0.0"
 #        These spells are ignored for LoS calculation
 #        List of ids with delimiter ','
 #
-#    vmap.indoorCheckInterval
-#        Interval in milliseconds between indoor checks; players will be dismounted inside buildings.
+#    vmap.enableIndoorCheck
+#        Enable/Disable VMap based indoor check to remove outdoor-only auras (mounts etc.)
 #        Default: 0 (disabled)
 #
 #
@@ -199,7 +199,7 @@ vmap.enableLOS = 0
 vmap.enableHeight = 0
 vmap.ignoreMapIds = "369"
 vmap.ignoreSpellIds = "7720"
-vmap.indoorCheckInterval = 0
+vmap.enableIndoorCheck = 0
 DetectPosCollision = 1
 TargetPosRecalculateRange = 1.5
 UpdateUptimeInterval = 10

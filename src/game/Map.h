@@ -155,7 +155,7 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
 
         GridMapLiquidStatus getLiquidStatus(float x, float y, float z, uint8 ReqLiquidType, GridMapLiquidData *data = 0) const;
 
-        uint16 GetAreaFlag(float x, float y, float z) const;
+        uint16 GetAreaFlag(float x, float y, float z, bool *isOutdoors=0) const;
         uint8 GetTerrainType(float x, float y ) const;
         float GetWaterLevel(float x, float y ) const;
         bool IsUnderWater(float x, float y, float z) const;

@@ -153,7 +153,7 @@ namespace VMAP
         uint32 ty = (pos.y - iCorner.y)/LIQUID_TILE_SIZE;
         if (ty<0 || ty >= iTilesY) return false;
         // checking for 0x08 *might* be enough, but disabled tiles always are 0x?F:
-        if (iFlags[tx + ty*iTilesX] & 0x0F == 0x0F)
+        if ((iFlags[tx + ty*iTilesX] & 0x0F) == 0x0F)
             return false;
         //placeholder...use only lower left corner vertex
         liqHeight = /* iCorner.z + */ iHeight[tx + ty*(iTilesX+1)];
