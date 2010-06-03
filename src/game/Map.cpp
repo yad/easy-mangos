@@ -122,6 +122,7 @@ void Map::LoadMapAndVMap(int gx,int gy)
     LoadMap(gx,gy);
     if(i_InstanceId == 0)
         LoadVMap(gx, gy);                                   // Only load the data for the base map
+    LoadNavMesh(gx,gy);
 }
 
 Map::Map(uint32 id, time_t expiry, uint32 InstanceId, uint8 SpawnMode, Map* _parent)
@@ -129,7 +130,8 @@ Map::Map(uint32 id, time_t expiry, uint32 InstanceId, uint8 SpawnMode, Map* _par
   i_id(id), i_InstanceId(InstanceId), m_unloadTimer(0),
   m_VisibleDistance(DEFAULT_VISIBILITY_DISTANCE),
   m_activeNonPlayersIter(m_activeNonPlayers.end()),
-  i_gridExpiry(expiry), m_parentMap(_parent ? _parent : this)
+  i_gridExpiry(expiry), m_parentMap(_parent ? _parent : this),
+  m_navMesh(0)
 {
     for(unsigned int idx=0; idx < MAX_NUMBER_OF_GRIDS; ++idx)
     {
@@ -942,6 +944,7 @@ bool Map::UnloadGrid(const uint32 &x, const uint32 &y, bool pForce)
                 delete GridMaps[gx][gy];
             }
             VMAP::VMapFactory::createOrGetVMapManager()->unloadMap(GetId(), gx, gy);
+            UnloadNavMesh(gx, gy);
         }
         else
             ((MapInstanced*)m_parentMap)->RemoveGridMapReference(GridPair(gx, gy));

@@ -69,6 +69,16 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner)
         if( i_destinationHolder.HasDestination() && i_destinationHolder.GetDestinationDiff(x,y,z) < bothObjectSize )
             return;
     */
+
+    if(!i_path)
+        i_path = new PathInfo(&owner, x, y, z);
+    else
+        i_path->Update(x, y, z);
+
+    // can check here to see what i_path->m_type
+    // maybe not move if m_type == PATHFIND_SHORTCUT
+    i_path->getNextPosition(x, y, z);
+
     Traveller<T> traveller(owner);
     i_destinationHolder.SetDestination(traveller, x, y, z);
 
@@ -160,21 +170,42 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
 
         //More distance let have better performance, less distance let have more sensitive reaction at target move.
 
-        // try to counter precision differences
-        if (i_destinationHolder.GetDistance3dFromDestSq(*i_target.getTarget()) >= dist * dist)
+        bool targetMoved = false, needNewDest = false;
+        float nextx, nexty, nextz, endx, endy, endz;
+        nextx = i_target->GetPositionX();
+        nexty = i_target->GetPositionY();
+
+        if(i_path)
         {
-            owner.SetInFront(i_target.getTarget());         // Set new Angle For Map::
-            _setTargetLocation(owner);                      //Calculate New Dest and Send data To Player
+            i_path->getNextPosition(nextx, nexty, nextz);
+            i_path->getEndPosition(endx, endy, endz);
+            needNewDest = (i_destinationHolder.HasArrived() && !isSamePoint(nextx, nexty, nextz, endx, endy, endz));
+            targetMoved = i_target->GetDistanceSqr(endx, endy, endz) >= dist*dist;
+        }
+
+        if (!i_path || targetMoved || needNewDest)
+        {
+            // (re)calculate path
+            _setTargetLocation(owner);
+
+            if(i_path)
+            {
+                i_path->getNextPosition(nextx, nexty, nextz);
+
+                // Set new Angle For Map::
+                owner.SetOrientation(owner.GetAngle(nextx, nexty));
+            }
         }
         // Update the Angle of the target only for Map::, no need to send packet for player
-        else if (!i_angle && !owner.HasInArc(0.01f, i_target.getTarget()))
-            owner.SetInFront(i_target.getTarget());
+        else if (!i_angle && !owner.HasInArc(0.01f, nextx, nexty))
+            owner.SetOrientation(owner.GetAngle(nextx, nexty));
 
         if ((owner.IsStopped() && !i_destinationHolder.HasArrived()) || i_recalculateTravel)
         {
             i_recalculateTravel = false;
+
             //Angle update will take place into owner.StopMoving()
-            owner.SetInFront(i_target.getTarget());
+            owner.SetOrientation(owner.GetAngle(nextx, nexty));
 
             owner.StopMoving();
             static_cast<D*>(this)->_reachTarget(owner);

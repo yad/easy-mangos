@@ -38,6 +38,8 @@
 #include <bitset>
 #include <list>
 
+#include "pathfinding/Detour/DetourNavMesh.h"
+
 class Creature;
 class Unit;
 class WorldPacket;
@@ -380,6 +382,17 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
             else
                 m_activeNonPlayers.erase(obj);
         }
+
+        // begin movemap-related
+    public:
+        dtNavMesh* GetNavMesh();
+
+    private:
+        void LoadNavMesh(int gx, int gy);
+        void UnloadNavMesh(int gx, int gy);
+        dtNavMesh* m_navMesh;
+        UNORDERED_MAP<uint32, uint32> m_mmapTileMap;    // maps [map grid coords] to [dtTile coords]
+        // end movemap-related
 };
 
 enum InstanceResetMethod
