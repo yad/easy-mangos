@@ -109,7 +109,7 @@ public:
 	virtual void handleMeshChanged(class InputGeom* geom);
 	virtual bool handleBuild();
 	
-	void setHighlightedTile(const float* pos);
+	virtual void setHighlightedTile(const float* pos);
 	inline int getHilightedTileX() const { return m_highLightedTileX; }
 	inline int getHilightedTileY() const { return m_highLightedTileY; }
 };

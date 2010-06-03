@@ -186,8 +186,7 @@ void Sample_Debug::handleRender()
 	rcCalcGridSize(bmin, bmax, m_cellSize, &gw, &gh);
 	const int tw = (gw + (int)m_tileSize-1) / (int)m_tileSize;
 	const int th = (gh + (int)m_tileSize-1) / (int)m_tileSize;
-	const float s = m_tileSize*m_cellSize;
-	duDebugDrawGridXZ(&dd, bmin[0],bmin[1],bmin[2], tw,th, s, duRGBA(0,0,0,64), 1.0f);
+	duDebugDrawGridXZ(&dd, bmin[0],bmin[1],bmin[2], tw,th, m_tileSize, duRGBA(0,0,0,64), 1.0f);
 	
 	if (m_navMesh &&
 		(m_drawMode == DRAWMODE_NAVMESH ||
@@ -263,6 +262,8 @@ bool Sample_Debug::handleBuild()
     duReadNavMesh(mapID, m_navMesh);
     duReadPolyMesh(mapID, m_pmesh);
 
+    m_tileSize = m_navMesh->getParams()->tileHeight;
+
     // not working :(
     //duReadDetailMesh(mapID, m_dmesh);
 
@@ -272,4 +273,18 @@ bool Sample_Debug::handleBuild()
     m_drawMode = DRAWMODE_NAVMESH_TRANS;
 
     return true;
+}
+
+void Sample_Debug::setHighlightedTile(const float* pos)
+{
+
+	if (!pos)
+	{
+		m_highLightedTileX = -1;
+		m_highLightedTileY = -1;
+		return;
+	}
+	const float* bmin = m_geom->getMeshBoundsMin();
+	m_highLightedTileX = (int)((pos[0] - bmin[0]) / m_tileSize);
+	m_highLightedTileY = (int)((pos[2] - bmin[2]) / m_tileSize);
 }

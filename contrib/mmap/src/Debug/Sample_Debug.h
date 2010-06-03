@@ -49,6 +49,7 @@ public:
 	virtual void handleRenderOverlay(double* proj, double* model, int* view);
 	virtual void handleMeshChanged(class InputGeom* geom);
 	virtual bool handleBuild();
+    virtual void setHighlightedTile(const float* pos);
 
 	virtual const float* getBoundsMin();
 	virtual const float* getBoundsMax();
