@@ -2866,15 +2866,17 @@ SpellMissInfo Unit::MeleeSpellHitResult(Unit *pVictim, SpellEntry const *spell)
 {
     WeaponAttackType attType = BASE_ATTACK;
 
-    // Only for hunters/warriors, other classes do not have ranged attack that would benefit from ranged hit
-    if (spell->DmgClass == SPELL_DAMAGE_CLASS_RANGED &&
-        (spell->SpellFamilyName == SPELLFAMILY_WARRIOR ||
-        spell->SpellFamilyName == SPELLFAMILY_HUNTER ||
-        spell->SpellFamilyName == SPELLFAMILY_GENERIC))
+    if (spell->DmgClass == SPELL_DAMAGE_CLASS_RANGED)
         attType = RANGED_ATTACK;
 
     // bonus from skills is 0.04% per skill Diff
     int32 attackerWeaponSkill = int32(GetWeaponSkillValue(attType,pVictim));
+
+    // Only for hunters/warriors, other classes do not have ranged attack that would benefit from ranged weapon skill
+    if(spell->SpellFamilyName != SPELLFAMILY_HUNTER ||
+       spell->SpellFamilyName != SPELLFAMILY_WARRIOR ||
+       spell->SpellFamilyName != SPELLFAMILY_GENERIC)
+        attackerWeaponSkill = int32(GetWeaponSkillValue(BASE_ATTACK,pVictim));
 
     // Probably not needed after [pr456]
     /*if ( spell->SpellFamilyName == SPELLFAMILY_PALADIN )
