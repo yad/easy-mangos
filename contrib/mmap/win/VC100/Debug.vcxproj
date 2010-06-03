@@ -71,7 +71,7 @@ copy ..\..\src\Debug\SDL\lib\SDL.dll $(TargetDir)\SDL.dll</Command>
       <AdditionalIncludeDirectories>..\..\..\..\dep\ACE_wrappers\;..\..\..\..\src\shared\;..\..\src\Debug\SDL\include;..\..\src\Debug\;..\..\src\;..\..\..\..\src\framework;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
