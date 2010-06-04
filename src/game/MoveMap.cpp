@@ -86,7 +86,7 @@ void Map::LoadNavMesh(int gx, int gy)
 
     uint32 packedTilePos = packTileID(uint32(header->x), uint32(header->y));
     m_mmapTileMap.insert(std::pair<uint32, uint32>(packedGridPos, packedTilePos));
-    sLog.outError("Loaded mmtile %03i[%02i,%02i] into %03i(%u)[%02i,%02i]", i_id, GetInstanceId(), gx, gy, i_id, GetInstanceId(), header->x, header->y);
+    sLog.outError("Loaded mmtile %03i[%02i,%02i] into %03i(%u)[%02i,%02i]", i_id, gx, gy, i_id, GetInstanceId(), header->x, header->y);
 }
 
 void Map::UnloadNavMesh(int gx, int gy)
