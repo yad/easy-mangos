@@ -525,9 +525,6 @@ void World::LoadConfigSettings(bool reload)
     setConfig(CONFIG_BOOL_STATS_SAVE_ONLY_ON_LOGOUT, "PlayerSave.Stats.SaveOnlyOnLogout", true);
 
     setConfigMin(CONFIG_UINT32_INTERVAL_GRIDCLEAN, "GridCleanUpDelay", 5 * MINUTE * IN_MILLISECONDS, MIN_GRID_DELAY);
-
-    setConfig(CONFIG_UINT32_NUMTHREADS, "MapUpdate.Threads", 2);
-
     if (reload)
         sMapMgr.SetGridCleanUpDelay(getConfig(CONFIG_UINT32_INTERVAL_GRIDCLEAN));
 
