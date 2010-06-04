@@ -21,8 +21,6 @@ class PathInfo
 
         ~PathInfo() { delete [] m_pathPolyRefs; delete [] m_pathPoints; }
 
-        inline void clear() { delete [] m_pathPolyRefs; delete [] m_pathPoints; m_length = 0; }
-
         inline void getStartPosition(float &x, float &y, float &z) { x = m_startPosition[0]; y = m_startPosition[1]; z = m_startPosition[2]; }
         inline void setStartPosition(float x, float y, float z) { m_startPosition[0] = x; m_startPosition[1] = y; m_startPosition[2] = z; }
 
@@ -31,7 +29,7 @@ class PathInfo
         
         inline void getEndPosition(float &x, float &y, float &z) { x = m_endPosition[0]; y = m_endPosition[1]; z = m_endPosition[2]; }
         inline void setEndPosition(float x, float y, float z) { m_endPosition[0] = x; m_endPosition[1] = y; m_endPosition[2] = z; }
-        
+
         dtPolyRef getPathPolyByPosition(float x, float y, float z);
         bool isPointInPolyBounds(float x, float y, float z, float &distance, dtPolyRef polyRef);
 
@@ -51,10 +49,18 @@ class PathInfo
         PathType        m_type;             // tells what kind of path this is
 
     private:
+        inline void clear()
+        {
+            delete [] m_pathPolyRefs; m_pathPolyRefs = 0;
+            delete [] m_pathPoints; m_pathPoints = 0;
+            m_length = 0;
+        }
+
         void updateNextPosition();
         void Build();
         void Build(dtPolyRef startPoly, dtPolyRef endPoly);
         void trim(dtPolyRef startPoly, dtPolyRef endPoly);
+        void shortcut();
 };
 
 inline bool isSamePoint(const float* point1, const float* point2)

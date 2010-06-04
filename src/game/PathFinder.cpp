@@ -92,10 +92,7 @@ void PathInfo::Build()
     if(!m_navMesh)
     {
         // ignore obstacles/terrain is better than giving up
-        m_length = 1;
-        getEndPosition(x, y, z);
-        setNextPosition(x, y, z);
-        m_type = PATHFIND_SHORTCUT;
+        shortcut();
         return;
     }
 
@@ -128,10 +125,7 @@ void PathInfo::Build(dtPolyRef startPoly, dtPolyRef endPoly)
         //     (x,y) outside navmesh
         //     (z) above/below the navmesh
         sLog.outError("%u's Path Build failed: invalid start or end polygon", m_sourceObject->GetGUID());
-        m_length = 1;
-        getEndPosition(x, y, z);
-        setNextPosition(x, y, z);
-        m_type = PATHFIND_SHORTCUT;
+        shortcut();
         return;
     }
 
@@ -170,10 +164,7 @@ void PathInfo::Build(dtPolyRef startPoly, dtPolyRef endPoly)
     {
         // only happens if we passed bad data to findPath(), or navmesh is messed up
         sLog.outError("%u's Path Build failed: 0-length path", m_sourceObject->GetGUID());
-        m_length = 1;
-        getEndPosition(x, y, z);
-        setNextPosition(x, y, z);
-        m_type = PATHFIND_SHORTCUT;
+        shortcut();
         return;
     }
 
@@ -207,10 +198,7 @@ void PathInfo::Update(const float destX, const float destY, const float destZ)
         if(!m_navMesh)
         {
             // can't pathfind if navmesh doesn't exist
-            m_length = 1;
-            getEndPosition(x, y, z);
-            setNextPosition(x, y, z);
-            m_type = PATHFIND_SHORTCUT;
+            shortcut();
             return;
         }
     }
@@ -266,10 +254,7 @@ void PathInfo::Update(const float destX, const float destY, const float destZ)
 
             // ignore obstacles/terrain is better than giving up
             // PATHFIND TODO: prevent walking/swimming mobs from flying into the air
-            m_length = 1;
-            getEndPosition(x, y, z);
-            setNextPosition(x, y, z);
-            m_type = PATHFIND_SHORTCUT;
+            shortcut();
             return;
         }
     }
@@ -388,10 +373,7 @@ void PathInfo::updateNextPosition()
 
         // only happens if pass bad data to findStraightPath or navmesh is broken
         sLog.outError("%u's UpdateNextPosition failed: 0 length path", m_sourceObject->GetGUID());
-        m_length = 1;
-        getEndPosition(x, y, z);
-        setNextPosition(x, y, z);
-        m_type = PATHFIND_SHORTCUT;
+        shortcut();
         return;
     }
 
@@ -413,6 +395,7 @@ void PathInfo::updateNextPosition()
 
     delete [] m_pathPoints;
     m_pathPoints = pathPoints;
+    //delete [] pathPoints;
 
     m_type = PATHFIND_NORMAL;
 }
@@ -442,4 +425,14 @@ void PathInfo::trim(dtPolyRef startPoly, dtPolyRef endPoly)
     
     delete [] m_pathPolyRefs;
     m_pathPolyRefs = newPolyRefs;
+}
+
+void PathInfo::shortcut()
+{
+    clear();
+
+    float x, y, z;
+    getEndPosition(x, y, z);
+    setNextPosition(x, y, z);
+    m_type = PATHFIND_SHORTCUT;
 }
