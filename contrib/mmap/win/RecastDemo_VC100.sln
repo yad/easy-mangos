@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Debug", "VC100\Debug.vcxproj", "{917BB8B4-1603-4829-81C2-90211E90F17A}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RecastDemo", "VC100\RecastDemo.vcxproj", "{917BB8B4-1603-4829-81C2-90211E90F17A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
