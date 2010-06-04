@@ -637,13 +637,8 @@ void BattleGround::RewardHonorToTeam(uint32 Honor, uint32 TeamID)
     }
 }
 
-void BattleGround::RewardReputationToTeam(uint32 faction_id, uint32 Reputation, uint32 TeamID)
+void BattleGround::RewardReputationToTeam(BattleGroundTypeId bgtype, uint32 Reputation, uint32 TeamID)
 {
-    FactionEntry const* factionEntry = sFactionStore.LookupEntry(faction_id);
-
-    if (!factionEntry)
-        return;
-
     for(BattleGroundPlayerMap::const_iterator itr = m_Players.begin(); itr != m_Players.end(); ++itr)
     {
         if (itr->second.OfflineRemoveTime)
@@ -659,8 +654,18 @@ void BattleGround::RewardReputationToTeam(uint32 faction_id, uint32 Reputation, 
         uint32 team = itr->second.Team;
         if(!team) team = plr->GetTeam();
 
-        if (team == TeamID)
-            plr->GetReputationMgr().ModifyReputation(factionEntry, Reputation);
+        uint32 faction_id;
+        switch(bgtype)
+        {
+            case BATTLEGROUND_AB: faction_id = TeamID == ALLIANCE ? 509 : 510;
+            case BATTLEGROUND_AV: faction_id = TeamID == ALLIANCE ? 730 : 729;
+            case BATTLEGROUND_WS: faction_id = TeamID == ALLIANCE ? 890 : 889;
+            default: faction_id = 0;
+        }
+
+        if (team == TeamID)		
+            if(FactionEntry const* factionEntry = sFactionStore.LookupEntry(faction_id))
+                plr->GetReputationMgr().ModifyReputation(factionEntry, Reputation);
     }
 }
 void BattleGround::RewardXpToTeam(uint32 Xp, float percentOfLevel, uint32 TeamID)
