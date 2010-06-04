@@ -1056,7 +1056,8 @@ void GameObject::Use(Unit* user)
                         break;
                 }
 
-                player->CastedCreatureOrGO(info->id, GetObjectGuid(), 0);
+                player->RewardPlayerAndGroupAtCast(this);
+
             }
 
             if (uint32 trapEntry = info->goober.linkedTrapId)

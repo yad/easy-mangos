@@ -14614,71 +14614,75 @@ void Player::KilledMonsterCredit( uint32 entry, ObjectGuid guid )
     }
 }
 
-void Player::CastedCreatureOrGO( uint32 entry, ObjectGuid guid, uint32 spell_id )
+void Player::CastedCreatureOrGO( uint32 entry, ObjectGuid guid, uint32 spell_id, bool original_caster )
 {
     bool isCreature = guid.IsCreature();
 
     uint32 addCastCount = 1;
-    for( int i = 0; i < MAX_QUEST_LOG_SIZE; ++i)
+    for(int i = 0; i < MAX_QUEST_LOG_SIZE; ++i)
     {
         uint32 questid = GetQuestSlotQuestId(i);
-        if(!questid)
+        if (!questid)
             continue;
 
         Quest const* qInfo = sObjectMgr.GetQuestTemplate(questid);
-        if ( !qInfo  )
+        if (!qInfo)
+            continue;
+
+        if (!original_caster && !qInfo->HasFlag(QUEST_FLAGS_SHARABLE))
+            continue;
+
+        if (!qInfo->HasFlag(QUEST_MANGOS_FLAGS_KILL_OR_CAST))
             continue;
 
         QuestStatusData& q_status = mQuestStatus[questid];
 
-        if ( q_status.m_status == QUEST_STATUS_INCOMPLETE )
+        if (q_status.m_status != QUEST_STATUS_INCOMPLETE)
+            continue;
+
+        for (int j = 0; j < QUEST_OBJECTIVES_COUNT; ++j)
         {
-            if( qInfo->HasFlag( QUEST_MANGOS_FLAGS_KILL_OR_CAST ) )
+            // skip kill creature objective (0) or wrong spell casts
+            if (qInfo->ReqSpell[j] != spell_id)
+                continue;
+
+            uint32 reqTarget = 0;
+
+            if (isCreature)
             {
-                for (int j = 0; j < QUEST_OBJECTIVES_COUNT; ++j)
-                {
-                    // skip kill creature objective (0) or wrong spell casts
-                    if(qInfo->ReqSpell[j] != spell_id )
-                        continue;
-
-                    uint32 reqTarget = 0;
-
-                    if(isCreature)
-                    {
-                        // creature activate objectives
-                        if(qInfo->ReqCreatureOrGOId[j] > 0)
-                            // checked at quest_template loading
-                            reqTarget = qInfo->ReqCreatureOrGOId[j];
-                    }
-                    else
-                    {
-                        // GO activate objective
-                        if(qInfo->ReqCreatureOrGOId[j] < 0)
-                            // checked at quest_template loading
-                            reqTarget = - qInfo->ReqCreatureOrGOId[j];
-                    }
-
-                    // other not this creature/GO related objectives
-                    if( reqTarget != entry )
-                        continue;
-
-                    uint32 reqCastCount = qInfo->ReqCreatureOrGOCount[j];
-                    uint32 curCastCount = q_status.m_creatureOrGOcount[j];
-                    if ( curCastCount < reqCastCount )
-                    {
-                        q_status.m_creatureOrGOcount[j] = curCastCount + addCastCount;
-                        if (q_status.uState != QUEST_NEW) q_status.uState = QUEST_CHANGED;
-
-                        SendQuestUpdateAddCreatureOrGo( qInfo, guid, j, curCastCount, addCastCount);
-                    }
-
-                    if ( CanCompleteQuest( questid ) )
-                        CompleteQuest( questid );
-
-                    // same objective target can be in many active quests, but not in 2 objectives for single quest (code optimization).
-                    break;
-                }
+                // creature activate objectives
+                if (qInfo->ReqCreatureOrGOId[j] > 0)
+                    // checked at quest_template loading
+                    reqTarget = qInfo->ReqCreatureOrGOId[j];
             }
+            else
+            {
+                // GO activate objective
+                if (qInfo->ReqCreatureOrGOId[j] < 0)
+                    // checked at quest_template loading
+                    reqTarget = - qInfo->ReqCreatureOrGOId[j];
+            }
+
+            // other not this creature/GO related objectives
+            if (reqTarget != entry)
+                continue;
+
+            uint32 reqCastCount = qInfo->ReqCreatureOrGOCount[j];
+            uint32 curCastCount = q_status.m_creatureOrGOcount[j];
+            if (curCastCount < reqCastCount)
+            {
+                q_status.m_creatureOrGOcount[j] = curCastCount + addCastCount;
+                if (q_status.uState != QUEST_NEW)
+                    q_status.uState = QUEST_CHANGED;
+
+                SendQuestUpdateAddCreatureOrGo( qInfo, guid, j, curCastCount, addCastCount);
+            }
+
+            if (CanCompleteQuest(questid))
+                CompleteQuest(questid);
+
+            // same objective target can be in many active quests, but not in 2 objectives for single quest (code optimization).
+            break;
         }
     }
 }
@@ -19694,7 +19698,7 @@ inline void UpdateVisibilityOf_helper(ObjectGuidSet& s64, GameObject* target)
 }
 
 template<class T>
-void Player::UpdateVisibilityOf(WorldObject const* viewPoint, T* target, UpdateData& data, UpdateDataMapType& /*data_updates*/, std::set<WorldObject*>& visibleNow)
+void Player::UpdateVisibilityOf(WorldObject const* viewPoint, T* target, UpdateData& data, std::set<WorldObject*>& visibleNow)
 {
     if(HaveAtClient(target))
     {
@@ -19723,11 +19727,11 @@ void Player::UpdateVisibilityOf(WorldObject const* viewPoint, T* target, UpdateD
     }
 }
 
-template void Player::UpdateVisibilityOf(WorldObject const* viewPoint, Player*        target, UpdateData& data, UpdateDataMapType& data_updates, std::set<WorldObject*>& visibleNow);
-template void Player::UpdateVisibilityOf(WorldObject const* viewPoint, Creature*      target, UpdateData& data, UpdateDataMapType& data_updates, std::set<WorldObject*>& visibleNow);
-template void Player::UpdateVisibilityOf(WorldObject const* viewPoint, Corpse*        target, UpdateData& data, UpdateDataMapType& data_updates, std::set<WorldObject*>& visibleNow);
-template void Player::UpdateVisibilityOf(WorldObject const* viewPoint, GameObject*    target, UpdateData& data, UpdateDataMapType& data_updates, std::set<WorldObject*>& visibleNow);
-template void Player::UpdateVisibilityOf(WorldObject const* viewPoint, DynamicObject* target, UpdateData& data, UpdateDataMapType& data_updates, std::set<WorldObject*>& visibleNow);
+template void Player::UpdateVisibilityOf(WorldObject const* viewPoint, Player*        target, UpdateData& data, std::set<WorldObject*>& visibleNow);
+template void Player::UpdateVisibilityOf(WorldObject const* viewPoint, Creature*      target, UpdateData& data, std::set<WorldObject*>& visibleNow);
+template void Player::UpdateVisibilityOf(WorldObject const* viewPoint, Corpse*        target, UpdateData& data, std::set<WorldObject*>& visibleNow);
+template void Player::UpdateVisibilityOf(WorldObject const* viewPoint, GameObject*    target, UpdateData& data, std::set<WorldObject*>& visibleNow);
+template void Player::UpdateVisibilityOf(WorldObject const* viewPoint, DynamicObject* target, UpdateData& data, std::set<WorldObject*>& visibleNow);
 
 void Player::InitPrimaryProfessions()
 {
@@ -20657,13 +20661,16 @@ bool Player::isHonorOrXPTarget(Unit* pVictim) const
     return true;
 }
 
-bool Player::RewardSinglePlayerAtKill(Unit* pVictim)
+void Player::RewardSinglePlayerAtKill(Unit* pVictim)
 {
     bool PvP = pVictim->isCharmedOwnedByPlayerOrPlayer();
     uint32 xp = PvP ? 0 : MaNGOS::XP::Gain(this, pVictim);
 
     // honor can be in PvP and !PvP (racial leader) cases
-    bool honored_kill = RewardHonor(pVictim,1);
+    RewardHonor(pVictim,1);
+
+    if(GetVehicleGUID() && !(m_movementInfo.GetVehicleFlags() & VF_GIVE_EXP))
+        xp = 0;
 
     // xp and reputation only in !PvP case
     if(!PvP)
@@ -20678,10 +20685,6 @@ bool Player::RewardSinglePlayerAtKill(Unit* pVictim)
         if(pVictim->GetTypeId()==TYPEID_UNIT)
             KilledMonster(((Creature*)pVictim)->GetCreatureInfo(), pVictim->GetObjectGuid());
     }
-        if(GetVehicleGUID() && !(m_movementInfo.GetVehicleFlags() & VF_GIVE_EXP))
-            xp = 0;
-
-    return xp || honored_kill;
 }
 
 void Player::RewardPlayerAndGroupAtEvent(uint32 creature_id, WorldObject* pRewardSource)
@@ -20707,6 +20710,29 @@ void Player::RewardPlayerAndGroupAtEvent(uint32 creature_id, WorldObject* pRewar
     }
     else                                                    // if (!pGroup)
         KilledMonsterCredit(creature_id, creature_guid);
+}
+
+void Player::RewardPlayerAndGroupAtCast(WorldObject* pRewardSource, uint32 spellid)
+{
+    // prepare data for near group iteration
+    if(Group *pGroup = GetGroup())
+    {
+        for(GroupReference *itr = pGroup->GetFirstMember(); itr != NULL; itr = itr->next())
+        {
+            Player* pGroupGuy = itr->getSource();
+            if(!pGroupGuy)
+                continue;
+
+            if(!pGroupGuy->IsAtGroupRewardDistance(pRewardSource))
+                continue;                               // member (alive or dead) or his corpse at req. distance
+
+            // quest objectives updated only for alive group member or dead but with not released body
+            if(pGroupGuy->isAlive()|| !pGroupGuy->HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_GHOST))
+                pGroupGuy->CastedCreatureOrGO(pRewardSource->GetEntry(), pRewardSource->GetObjectGuid(), spellid, pGroupGuy == this);
+        }
+    }
+    else                                                    // if (!pGroup)
+        CastedCreatureOrGO(pRewardSource->GetEntry(), pRewardSource->GetObjectGuid(), spellid);
 }
 
 bool Player::IsAtGroupRewardDistance(WorldObject const* pRewardSource) const
