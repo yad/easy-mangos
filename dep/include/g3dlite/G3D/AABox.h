@@ -191,16 +191,6 @@ public:
             (other.lo.z >= lo.z);
     }
 
-    inline bool contains(const AABox& other) const {
-        return 
-            (other.hi.x <= hi.x) &&
-            (other.hi.y <= hi.y) &&
-            (other.hi.z <= hi.z) &&
-            (other.lo.x >= lo.x) &&
-            (other.lo.y >= lo.y) &&
-            (other.lo.z >= lo.z);
-    }
-
     inline bool contains(
         const Vector3&      point) const {
         return
