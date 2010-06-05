@@ -294,8 +294,14 @@ void Unit::Update( uint32 p_time )
     // Spells must be processed with event system BEFORE they go to _UpdateSpells.
     // Or else we may have some SPELL_STATE_FINISHED spells stalled in pointers, that is bad.
     sWorld.m_spellUpdateLock.acquire();
+    #pragma omp critical(UpdateThreadSafety)
     m_Events.Update( p_time );
+
+    if(!IsInWorld())
+        return;
+
     _UpdateSpells( p_time );
+    #pragma omp end critical(UpdateThreadSafety)
     sWorld.m_spellUpdateLock.release();
 
     CleanupDeletedAuras();
