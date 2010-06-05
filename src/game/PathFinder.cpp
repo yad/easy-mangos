@@ -6,8 +6,6 @@
 #include "pathfinding/Detour/DetourCommon.h"
 #include "pathfinding/Recast/Recast.h"
 
-#include <windows.h>
-
 ////////////////// PathInfo //////////////////
 PathInfo::PathInfo(WorldObject* from, const float x, const float y, const float z) :
     m_length(0), m_pathPolyRefs(0), m_pathPoints(0),
