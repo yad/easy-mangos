@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2009 Mikko Mononen memon@inside.org
+// Copyright (c) 2009-2010 Mikko Mononen memon@inside.org
 //
 // This software is provided 'as-is', without any express or implied
 // warranty.  In no event will the authors be held liable for any damages
@@ -37,7 +37,7 @@ static int getCornerHeight(int x, int y, int i, int dir,
 	
 	// Combine region and area codes in order to prevent
 	// border vertices which are in between two areas to be removed. 
-	regs[0] = chf.regs[i] | (chf.areas[i] << 16);
+	regs[0] = chf.spans[i].reg | (chf.areas[i] << 16);
 	
 	if (rcGetCon(s, dir) != RC_NOT_CONNECTED)
 	{
@@ -46,7 +46,7 @@ static int getCornerHeight(int x, int y, int i, int dir,
 		const int ai = (int)chf.cells[ax+ay*chf.width].index + rcGetCon(s, dir);
 		const rcCompactSpan& as = chf.spans[ai];
 		ch = rcMax(ch, (int)as.y);
-		regs[1] = chf.regs[ai] | (chf.areas[ai] << 16);
+		regs[1] = chf.spans[ai].reg | (chf.areas[ai] << 16);
 		if (rcGetCon(as, dirp) != RC_NOT_CONNECTED)
 		{
 			const int ax2 = ax + rcGetDirOffsetX(dirp);
@@ -54,7 +54,7 @@ static int getCornerHeight(int x, int y, int i, int dir,
 			const int ai2 = (int)chf.cells[ax2+ay2*chf.width].index + rcGetCon(as, dirp);
 			const rcCompactSpan& as2 = chf.spans[ai2];
 			ch = rcMax(ch, (int)as2.y);
-			regs[2] = chf.regs[ai2] | (chf.areas[ai2] << 16);
+			regs[2] = chf.spans[ai2].reg | (chf.areas[ai2] << 16);
 		}
 	}
 	if (rcGetCon(s, dirp) != RC_NOT_CONNECTED)
@@ -64,7 +64,7 @@ static int getCornerHeight(int x, int y, int i, int dir,
 		const int ai = (int)chf.cells[ax+ay*chf.width].index + rcGetCon(s, dirp);
 		const rcCompactSpan& as = chf.spans[ai];
 		ch = rcMax(ch, (int)as.y);
-		regs[3] = chf.regs[ai] | (chf.areas[ai] << 16);
+		regs[3] = chf.spans[ai].reg | (chf.areas[ai] << 16);
 		if (rcGetCon(as, dir) != RC_NOT_CONNECTED)
 		{
 			const int ax2 = ax + rcGetDirOffsetX(dir);
@@ -72,7 +72,7 @@ static int getCornerHeight(int x, int y, int i, int dir,
 			const int ai2 = (int)chf.cells[ax2+ay2*chf.width].index + rcGetCon(as, dir);
 			const rcCompactSpan& as2 = chf.spans[ai2];
 			ch = rcMax(ch, (int)as2.y);
-			regs[2] = chf.regs[ai2] | (chf.areas[ai2] << 16);
+			regs[2] = chf.spans[ai2].reg | (chf.areas[ai2] << 16);
 		}
 	}
 
@@ -138,7 +138,7 @@ static void walkContour(int x, int y, int i,
 				const int ax = x + rcGetDirOffsetX(dir);
 				const int ay = y + rcGetDirOffsetY(dir);
 				const int ai = (int)chf.cells[ax+ay*chf.width].index + rcGetCon(s, dir);
-				r = (int)chf.regs[ai];
+				r = (int)chf.spans[ai].reg;
 				if (area != chf.areas[ai])
 					isAreaBorder = true;
 			}
@@ -183,9 +183,9 @@ static void walkContour(int x, int y, int i,
 	}
 }
 
-static float distancePtSeg(int x, int y, int z,
-						   int px, int py, int pz,
-						   int qx, int qy, int qz)
+static float distancePtSeg(const int x, const int z,
+						   const int px, const int pz,
+						   const int qx, const int qz)
 {
 /*	float pqx = (float)(qx - px);
 	float pqy = (float)(qy - py);
@@ -309,15 +309,13 @@ static void simplifyContour(rcIntArray& points, rcIntArray& simplified, float ma
 	{
 		int ii = (i+1) % (simplified.size()/4);
 		
-		int ax = simplified[i*4+0];
-		int ay = simplified[i*4+1];
-		int az = simplified[i*4+2];
-		int ai = simplified[i*4+3];
+		const int ax = simplified[i*4+0];
+		const int az = simplified[i*4+2];
+		const int ai = simplified[i*4+3];
 		
-		int bx = simplified[ii*4+0];
-		int by = simplified[ii*4+1];
-		int bz = simplified[ii*4+2];
-		int bi = simplified[ii*4+3];
+		const int bx = simplified[ii*4+0];
+		const int bz = simplified[ii*4+2];
+		const int bi = simplified[ii*4+3];
 
 		// Find maximum deviation from the segment.
 		float maxd = 0;
@@ -346,8 +344,7 @@ static void simplifyContour(rcIntArray& points, rcIntArray& simplified, float ma
 		{
 			while (ci != endi)
 			{
-				float d = distancePtSeg(points[ci*4+0], points[ci*4+1]/4, points[ci*4+2],
-										ax, ay/4, az, bx, by/4, bz);
+				float d = distancePtSeg(points[ci*4+0], points[ci*4+2], ax, az, bx, bz);
 				if (d > maxd)
 				{
 					maxd = d;
@@ -364,7 +361,7 @@ static void simplifyContour(rcIntArray& points, rcIntArray& simplified, float ma
 		{
 			// Add space for the new point.
 			simplified.resize(simplified.size()+4);
-			int n = simplified.size()/4;
+			const int n = simplified.size()/4;
 			for (int j = n-1; j > i; --j)
 			{
 				simplified[j*4+0] = simplified[(j-1)*4+0];
@@ -389,15 +386,15 @@ static void simplifyContour(rcIntArray& points, rcIntArray& simplified, float ma
 	{
 		for (int i = 0; i < simplified.size()/4; )
 		{
-			int ii = (i+1) % (simplified.size()/4);
+			const int ii = (i+1) % (simplified.size()/4);
 			
-			int ax = simplified[i*4+0];
-			int az = simplified[i*4+2];
-			int ai = simplified[i*4+3];
+			const int ax = simplified[i*4+0];
+			const int az = simplified[i*4+2];
+			const int ai = simplified[i*4+3];
 			
-			int bx = simplified[ii*4+0];
-			int bz = simplified[ii*4+2];
-			int bi = simplified[ii*4+3];
+			const int bx = simplified[ii*4+0];
+			const int bz = simplified[ii*4+2];
+			const int bi = simplified[ii*4+3];
 			
 			// Find maximum deviation from the segment.
 			int maxi = -1;
@@ -421,7 +418,7 @@ static void simplifyContour(rcIntArray& points, rcIntArray& simplified, float ma
 			{
 				// Add space for the new point.
 				simplified.resize(simplified.size()+4);
-				int n = simplified.size()/4;
+				const int n = simplified.size()/4;
 				for (int j = n-1; j > i; --j)
 				{
 					simplified[j*4+0] = simplified[(j-1)*4+0];
@@ -568,8 +565,8 @@ bool rcBuildContours(rcCompactHeightfield& chf,
 	
 	rcTimeVal startTime = rcGetPerformanceTimer();
 	
-	vcopy(cset.bmin, chf.bmin);
-	vcopy(cset.bmax, chf.bmax);
+	rcVcopy(cset.bmin, chf.bmin);
+	rcVcopy(cset.bmax, chf.bmax);
 	cset.cs = chf.cs;
 	cset.ch = chf.ch;
 	
@@ -600,7 +597,7 @@ bool rcBuildContours(rcCompactHeightfield& chf,
 			{
 				unsigned char res = 0;
 				const rcCompactSpan& s = chf.spans[i];
-				if (!chf.regs[i] || (chf.regs[i] & RC_BORDER_REG))
+				if (!chf.spans[i].reg || (chf.spans[i].reg & RC_BORDER_REG))
 				{
 					flags[i] = 0;
 					continue;
@@ -613,9 +610,9 @@ bool rcBuildContours(rcCompactHeightfield& chf,
 						const int ax = x + rcGetDirOffsetX(dir);
 						const int ay = y + rcGetDirOffsetY(dir);
 						const int ai = (int)chf.cells[ax+ay*w].index + rcGetCon(s, dir);
-						r = chf.regs[ai];
+						r = chf.spans[ai].reg;
 					}
-					if (r == chf.regs[i])
+					if (r == chf.spans[i].reg)
 						res |= (1 << dir);
 				}
 				flags[i] = res ^ 0xf; // Inverse, mark non connected edges.
@@ -642,7 +639,7 @@ bool rcBuildContours(rcCompactHeightfield& chf,
 					flags[i] = 0;
 					continue;
 				}
-				const unsigned short reg = chf.regs[i];
+				const unsigned short reg = chf.spans[i].reg;
 				if (!reg || (reg & RC_BORDER_REG))
 					continue;
 				const unsigned char area = chf.areas[i];

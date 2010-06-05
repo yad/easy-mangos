@@ -10,7 +10,4 @@
 # MaNGOS generated files at Windows build
 #
 
-*.ncb
-*.suo
-*.user
 bin

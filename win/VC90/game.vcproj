@@ -855,6 +855,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\game\MoveMap.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\game\MovementHandler.cpp"
 				>
 			</File>

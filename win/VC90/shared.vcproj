@@ -751,31 +751,11 @@
 			Name="vmaps"
 			>
 			<File
-				RelativePath="..\..\src\shared\vmap\AABSPTree.h"
+				RelativePath="..\..\src\shared\vmap\BIH.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\shared\vmap\BaseModel.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\shared\vmap\BaseModel.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\shared\vmap\CoordModelMapping.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\shared\vmap\CoordModelMapping.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\shared\vmap\DebugCmdLogger.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\shared\vmap\DebugCmdLogger.h"
+				RelativePath="..\..\src\shared\vmap\BIH.h"
 				>
 			</File>
 			<File
@@ -783,39 +763,19 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\shared\vmap\ManagedModelContainer.cpp"
+				RelativePath="..\..\src\shared\vmap\MapTree.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\shared\vmap\ManagedModelContainer.h"
+				RelativePath="..\..\src\shared\vmap\MapTree.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\shared\vmap\ModelContainer.cpp"
+				RelativePath="..\..\src\shared\vmap\ModelInstance.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\shared\vmap\ModelContainer.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\shared\vmap\NodeValueAccess.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\shared\vmap\ShortBox.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\shared\vmap\ShortVector.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\shared\vmap\SubModel.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\shared\vmap\SubModel.h"
+				RelativePath="..\..\src\shared\vmap\ModelInstance.h"
 				>
 			</File>
 			<File
@@ -824,14 +784,6 @@
 			</File>
 			<File
 				RelativePath="..\..\src\shared\vmap\TileAssembler.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\shared\vmap\TreeNode.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\shared\vmap\TreeNode.h"
 				>
 			</File>
 			<File
@@ -847,17 +799,181 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\shared\vmap\VMapManager.cpp"
+				RelativePath="..\..\src\shared\vmap\VMapManager2.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\shared\vmap\VMapManager.h"
+				RelativePath="..\..\src\shared\vmap\VMapManager2.h"
 				>
 			</File>
 			<File
 				RelativePath="..\..\src\shared\vmap\VMapTools.h"
 				>
 			</File>
+			<File
+				RelativePath="..\..\src\shared\vmap\WorldModel.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\shared\vmap\WorldModel.h"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="pathfinding"
+			>
+			<File
+				RelativePath="..\..\src\shared\pathfinding\ChunkyTriMesh.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\shared\pathfinding\ChunkyTriMesh.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\shared\pathfinding\InputGeom.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\shared\pathfinding\InputGeom.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\shared\pathfinding\MeshLoaderObj.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\shared\pathfinding\MeshLoaderObj.h"
+				>
+			</File>
+			<Filter
+				Name="Recast"
+				>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\Recast\Recast.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\Recast\Recast.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\Recast\RecastArea.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\Recast\RecastContour.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\Recast\RecastFilter.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\Recast\RecastLog.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\Recast\RecastLog.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\Recast\RecastMesh.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\Recast\RecastMeshDetail.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\Recast\RecastRasterization.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\Recast\RecastRegion.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\Recast\RecastTimer.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\Recast\RecastTimer.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="Detour"
+				>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\Detour\DetourCommon.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\Detour\DetourCommon.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\Detour\DetourNavMesh.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\Detour\DetourNavMesh.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\Detour\DetourNavMeshBuilder.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\Detour\DetourNavMeshBuilder.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\Detour\DetourNode.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\Detour\DetourNode.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="DebugUtils"
+				>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\DebugUtils\DebugDraw.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\DebugUtils\DebugDraw.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\DebugUtils\DetourDebugDraw.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\DebugUtils\DetourDebugDraw.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\DebugUtils\RecastDebugDraw.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\DebugUtils\RecastDebugDraw.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\DebugUtils\RecastDump.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\shared\pathfinding\DebugUtils\RecastDump.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="pathfinding"

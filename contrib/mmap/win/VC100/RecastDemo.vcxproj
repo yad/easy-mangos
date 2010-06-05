@@ -1,0 +1,168 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{917BB8B4-1603-4829-81C2-90211E90F17A}</ProjectGuid>
+    <RootNamespace>Debug</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>..\..\bin\$(Platform)_$(Configuration)\</OutDir>
+    <IntDir>.\$(ProjectName)__$(Platform)_$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>..\..\bin\$(Platform)_$(Configuration)\</OutDir>
+    <IntDir>.\$(ProjectName)__$(Platform)_$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>..\..\..\..\dep\ACE_wrappers\;..\..\..\..\src\shared\;..\..\src\Debug\SDL\include;..\..\src\Debug\;..\..\src\;..\..\..\..\src\framework;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>..\..\src\Debug\SDL\lib\</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opengl32.lib;glu32.lib;sdlmain.lib;sdl.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+    </Link>
+    <PostBuildEvent>
+      <Command>copy ..\..\src\Debug\DroidSans.ttf $(TargetDir)\DroidSans.ttf
+copy ..\..\src\Debug\SDL\lib\SDL.dll $(TargetDir)\SDL.dll</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <AdditionalIncludeDirectories>..\..\..\..\dep\ACE_wrappers\;..\..\..\..\src\shared\;..\..\src\Debug\SDL\include;..\..\src\Debug\;..\..\src\;..\..\..\..\src\framework;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>..\..\src\Debug\SDL\lib\</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opengl32.lib;glu32.lib;sdlmain.lib;sdl.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+    </Link>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
+    <PostBuildEvent>
+      <Command>copy ..\..\src\Debug\DroidSans.ttf $(TargetDir)\DroidSans.ttf
+copy ..\..\src\Debug\SDL\lib\SDL.dll $(TargetDir)\SDL.dll</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\..\src\shared\pathfinding\ChunkyTriMesh.h" />
+    <ClInclude Include="..\..\..\..\src\shared\pathfinding\DebugUtils\DebugDraw.h" />
+    <ClInclude Include="..\..\..\..\src\shared\pathfinding\DebugUtils\DetourDebugDraw.h" />
+    <ClInclude Include="..\..\..\..\src\shared\pathfinding\DebugUtils\RecastDebugDraw.h" />
+    <ClInclude Include="..\..\..\..\src\shared\pathfinding\DebugUtils\RecastDump.h" />
+    <ClInclude Include="..\..\..\..\src\shared\pathfinding\Detour\DetourCommon.h" />
+    <ClInclude Include="..\..\..\..\src\shared\pathfinding\Detour\DetourNavMesh.h" />
+    <ClInclude Include="..\..\..\..\src\shared\pathfinding\Detour\DetourNavMeshBuilder.h" />
+    <ClInclude Include="..\..\..\..\src\shared\pathfinding\Detour\DetourNode.h" />
+    <ClInclude Include="..\..\..\..\src\shared\pathfinding\InputGeom.h" />
+    <ClInclude Include="..\..\..\..\src\shared\pathfinding\MeshLoaderObj.h" />
+    <ClInclude Include="..\..\..\..\src\shared\pathfinding\Recast\Recast.h" />
+    <ClInclude Include="..\..\..\..\src\shared\pathfinding\Recast\RecastLog.h" />
+    <ClInclude Include="..\..\..\..\src\shared\pathfinding\Recast\RecastTimer.h" />
+    <ClInclude Include="..\..\src\Debug\ConvexVolumeTool.h" />
+    <ClInclude Include="..\..\src\Debug\Debug.h" />
+    <ClInclude Include="..\..\src\Debug\Filelist.h" />
+    <ClInclude Include="..\..\src\Debug\imgui.h" />
+    <ClInclude Include="..\..\src\Debug\imguiRenderGL.h" />
+    <ClInclude Include="..\..\src\Debug\NavMeshTesterTool.h" />
+    <ClInclude Include="..\..\src\Debug\OffMeshConnectionTool.h" />
+    <ClInclude Include="..\..\src\Debug\Sample.h" />
+    <ClInclude Include="..\..\src\Debug\Sample_Debug.h" />
+    <ClInclude Include="..\..\src\Debug\Sample_SoloMeshSimple.h" />
+    <ClInclude Include="..\..\src\Debug\Sample_SoloMeshTiled.h" />
+    <ClInclude Include="..\..\src\Debug\Sample_TileMesh.h" />
+    <ClInclude Include="..\..\src\Debug\SDLMain.h" />
+    <ClInclude Include="..\..\src\Debug\SlideShow.h" />
+    <ClInclude Include="..\..\src\Debug\stb_image.h" />
+    <ClInclude Include="..\..\src\Debug\stb_truetype.h" />
+    <ClInclude Include="..\..\src\Debug\TestCase.h" />
+    <ClInclude Include="..\..\src\MMapCommon.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\ChunkyTriMesh.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\DebugUtils\DebugDraw.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\DebugUtils\DetourDebugDraw.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\DebugUtils\RecastDebugDraw.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\DebugUtils\RecastDump.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Detour\DetourCommon.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Detour\DetourNavMesh.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Detour\DetourNavMeshBuilder.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Detour\DetourNode.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\InputGeom.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\MeshLoaderObj.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\Recast.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\RecastArea.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\RecastContour.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\RecastFilter.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\RecastLog.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\RecastMesh.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\RecastMeshDetail.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\RecastRasterization.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\RecastRegion.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\RecastTimer.cpp" />
+    <ClCompile Include="..\..\src\Debug\ConvexVolumeTool.cpp" />
+    <ClCompile Include="..\..\src\Debug\Debug.cpp" />
+    <ClCompile Include="..\..\src\Debug\Filelist.cpp" />
+    <ClCompile Include="..\..\src\Debug\imgui.cpp" />
+    <ClCompile Include="..\..\src\Debug\imguiRenderGL.cpp" />
+    <ClCompile Include="..\..\src\Debug\main.cpp" />
+    <ClCompile Include="..\..\src\Debug\NavMeshTesterTool.cpp" />
+    <ClCompile Include="..\..\src\Debug\OffMeshConnectionTool.cpp" />
+    <ClCompile Include="..\..\src\Debug\Sample.cpp" />
+    <ClCompile Include="..\..\src\Debug\Sample_Debug.cpp" />
+    <ClCompile Include="..\..\src\Debug\Sample_SoloMeshSimple.cpp" />
+    <ClCompile Include="..\..\src\Debug\Sample_SoloMeshTiled.cpp" />
+    <ClCompile Include="..\..\src\Debug\Sample_TileMesh.cpp" />
+    <ClCompile Include="..\..\src\Debug\SlideShow.cpp" />
+    <ClCompile Include="..\..\src\Debug\TestCase.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

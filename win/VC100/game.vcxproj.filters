@@ -463,6 +463,11 @@
     <ClCompile Include="..\..\src\game\PlayerbotWarriorAI.cpp" />
     <ClCompile Include="..\..\src\game\SpellDBCHacks.cpp">
       <Filter>Server</Filter>
+    <ClCompile Include="..\..\src\game\PathFinder.cpp">
+      <Filter>Motion generators</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\game\MoveMap.cpp">
+      <Filter>World/Handlers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -872,5 +877,8 @@
     <ClInclude Include="..\..\src\game\PlayerbotShamanAI.h" />
     <ClInclude Include="..\..\src\game\PlayerbotWarlockAI.h" />
     <ClInclude Include="..\..\src\game\PlayerbotWarriorAI.h" />
+    <ClInclude Include="..\..\src\game\PathFinder.h">
+      <Filter>Motion generators</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

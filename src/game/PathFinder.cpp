@@ -4,28 +4,29 @@
 #include "Map.h"
 #include "pathfinding/Detour/DetourNavMesh.h"
 #include "pathfinding/Detour/DetourCommon.h"
-
-#include <windows.h>
+#include "pathfinding/Recast/Recast.h"
 
 ////////////////// PathInfo //////////////////
-PathInfo::PathInfo(WorldObject* from, const float x, const float y, const float z)
-    : m_length(0), m_pathPolyRefs(0), m_pathPoints(0), m_sourceObject(from), m_type(PATHFIND_BLANK)
+PathInfo::PathInfo(WorldObject* from, const float x, const float y, const float z) :
+    m_length(0), m_pathPolyRefs(0), m_pathPoints(0),
+    m_sourceObject(from), m_type(PATHFIND_BLANK)
 {
+    clear();
     setEndPosition(x, y, z);
     Build();
 }
 
 dtPolyRef PathInfo::getPathPolyByPosition(float x, float y, float z)
 {
-    if(!m_navMesh || !m_pathPolyRefs)
-        return 0;   // navmesh isn't loaded
+    if(!m_navMesh)
+        return 0;       // navmesh isn't loaded
 
     float distance;     // not used
 
     int i;
     for(i = 0; i < this->m_length; ++i)
     {
-        const dtMeshTile* tile = this->m_navMesh->getTileByRef(this->m_pathPolyRefs[i], 0);
+        const dtMeshTile* tile = this->m_navMesh->getTileByPolyRef(this->m_pathPolyRefs[i], 0);
         if(!tile)
             continue;   // tile isn't loaded, no information about target polygon
 
@@ -39,29 +40,33 @@ dtPolyRef PathInfo::getPathPolyByPosition(float x, float y, float z)
 bool PathInfo::isPointInPolyBounds(float x, float y, float z, float &distance, dtPolyRef polyRef)
 {
     float point[3] = {y, z, x};
+    int polyindex;
 
-    const dtMeshTile* tile = this->m_navMesh->getTileByRef(polyRef, 0);
-    const dtPoly* poly = this->m_navMesh->getPolyByRef(polyRef);
+    const dtMeshTile* tile = m_navMesh->getTileByPolyRef(polyRef, &polyindex);
+    if(!tile)
+        return false;
+
+    const dtPoly poly = tile->polys[polyindex];
 
     float vertices[DT_VERTS_PER_POLYGON*3];
     float ed[DT_VERTS_PER_POLYGON];             // distance^2 from edge to point
     float et[DT_VERTS_PER_POLYGON];             // describes where on edge is nearest point
 
-	// Collect vertices.
-	int nv = 0;
-	for (int i = 0; i < (int)poly->vertCount; ++i)
-	{
-		vcopy(&vertices[nv*3], &tile->verts[poly->verts[i]*3]);
-		nv++;
-	}
-    
-    bool isInsidePoly = distancePtPolyEdgesSqr(point, vertices, nv, ed, et);
+    // Collect vertices.
+    int nv = 0;
+    for (int i = 0; i < (int)poly.vertCount; ++i)
+    {
+        rcVcopy(&vertices[nv*3], &tile->verts[poly.verts[i]*3]);
+        nv++;
+    }
+
+    bool isInsidePoly = dtDistancePtPolyEdgesSqr(point, vertices, nv, ed, et);
 
     if(!isInsidePoly)
     {
         // distance to nearest edge
         distance = FLT_MAX;
-        for(int i = 0; i < (int)poly->vertCount; ++i)
+        for(int i = 0; i < (int)poly.vertCount; ++i)
             if(ed[i] < distance)
                 distance = ed[i];
     }
@@ -73,30 +78,19 @@ bool PathInfo::isPointInPolyBounds(float x, float y, float z, float &distance, d
 
 void PathInfo::Build()
 {
-    // incase we are re-building
-    delete [] m_pathPolyRefs;
-    m_length = 0;
-
     float x, y, z;
-
     // set start and a default next position
     m_sourceObject->GetPosition(x, y, z);
     setStartPosition(x, y, z);
     setNextPosition(x, y, z);
 
     // get nav mesh
-    m_navMesh = m_sourceObject->GetMap()->GetNavMesh(x, y);
+    m_navMesh = m_sourceObject->GetMap()->GetNavMesh();
 
     if(!m_navMesh)
     {
-        // sLog.outError("%u's Path Build failed: navMesh is null", m_sourceObject->GetGUID());
         // ignore obstacles/terrain is better than giving up
-        m_length = 1;
-        x = getEndPositionX();
-        y = getEndPositionY();
-        z = getEndPositionZ();
-        setNextPosition(x, y, z);
-        m_type = PATHFIND_SHORTCUT;
+        shortcut();
         return;
     }
 
@@ -104,13 +98,9 @@ void PathInfo::Build()
     dtQueryFilter filter = dtQueryFilter();     // search filter
 
     // get start and end positions
-    x = getStartPositionX();
-    y = getStartPositionY();
-    z = getStartPositionZ();
+    getStartPosition(x, y, z);
     float startPos[3] = {y, z, x};
-    x = getEndPositionX();
-    y = getEndPositionY();
-    z = getEndPositionZ();
+    getEndPosition(x, y, z);
     float endPos[3] = {y, z, x};
 
     // find start and end poly
@@ -122,38 +112,31 @@ void PathInfo::Build()
 
 void PathInfo::Build(dtPolyRef startPoly, dtPolyRef endPoly)
 {
+    clear();
+
     float x, y, z;
 
     if(startPoly == 0 || endPoly == 0)
     {
         // polygon didn't touch the search box
-        // could mean start or end is...
-        //     (x,y) is outside navmesh
-        //     (z) is above/below the navmesh
-        // sLog.outError("%u's Path Build failed: invalid start or end polygon", m_sourceObject->GetGUID());
-        m_length = 1;
-        x = getEndPositionX();
-        y = getEndPositionY();
-        z = getEndPositionZ();
-        setNextPosition(x, y, z);
-        m_type = PATHFIND_SHORTCUT;
+        // could mean start or end has...
+        //     (x,y) outside navmesh
+        //     (z) above/below the navmesh
+        sLog.outError("%u's Path Build failed: invalid start or end polygon", m_sourceObject->GetGUID());
+        shortcut();
         return;
     }
 
-    x = getStartPositionX();
-    y = getStartPositionY();
-    z = getStartPositionZ();
+    getStartPosition(x, y, z);
     float startPos[3] = {y, z, x};
-    x = getEndPositionX();
-    y = getEndPositionY();
-    z = getEndPositionZ();
+    getEndPosition(x, y, z);
     float endPos[3] = {y, z, x};
 
     bool startOffPoly, endOffPoly;
     float distanceStart, distanceEnd;
     startOffPoly = !isPointInPolyBounds(startPos[2], startPos[0], startPos[1], distanceStart, startPoly);
     endOffPoly = !isPointInPolyBounds(endPos[2], endPos[0], endPos[1], distanceEnd, endPoly);
-    
+
     // if startPos is really far from startPoly, should we give up?
 
     // if endPos is really far from endPoly, should we clamp endPos to the polygon?
@@ -164,7 +147,7 @@ void PathInfo::Build(dtPolyRef startPoly, dtPolyRef endPoly)
     //endHeight = 
 
     dtQueryFilter filter = dtQueryFilter();
-    
+
     dtPolyRef pathPolys[MAX_PATH_LENGTH];
     m_length = m_navMesh->findPath(
         startPoly,          // start polygon
@@ -178,17 +161,12 @@ void PathInfo::Build(dtPolyRef startPoly, dtPolyRef endPoly)
     if(m_length == 0)
     {
         // only happens if we passed bad data to findPath(), or navmesh is messed up
-        // sLog.outError("%u's Path Build failed: 0-length path", m_sourceObject->GetGUID());
-        m_length = 1;
-        x = getEndPositionX();
-        y = getEndPositionY();
-        z = getEndPositionZ();
-        setNextPosition(x, y, z);
-        m_type = PATHFIND_SHORTCUT;
+        sLog.outError("%u's Path Build failed: 0-length path", m_sourceObject->GetGUID());
+        shortcut();
         return;
     }
 
-    // pathPolyRefs was deleted when we entered Build()
+    // pathPolyRefs was deleted when we entered Build(dtPolyRef, dtPolyRef)
     m_pathPolyRefs = new dtPolyRef[m_length];
 
     int i;
@@ -213,21 +191,22 @@ void PathInfo::Update(const float destX, const float destY, const float destZ)
     if(!m_navMesh)
     {
         m_sourceObject->GetPosition(x, y, z);
-        m_navMesh = m_sourceObject->GetMap()->GetNavMesh(x, y);
+        m_navMesh = m_sourceObject->GetMap()->GetNavMesh();
 
         if(!m_navMesh)
         {
             // can't pathfind if navmesh doesn't exist
-            // sLog.outError("%u's UpdatePath failed: navMesh is null", m_sourceObject->GetGUID());
-
-            m_length = 1;
-            x = getEndPositionX();
-            y = getEndPositionY();
-            z = getEndPositionZ();
-            setNextPosition(x, y, z);
-            m_type = PATHFIND_SHORTCUT;
+            shortcut();
             return;
         }
+    }
+
+    if(!m_pathPolyRefs)
+    {
+        // path was not built before, most likely because navmesh wasn't working
+        // start from scratch, then return
+        Build();
+        return;
     }
 
     // should be safe to update path now
@@ -237,13 +216,9 @@ void PathInfo::Update(const float destX, const float destY, const float destZ)
 
     // find start and end poly
     // navMesh.findNearestPoly is expensive, so first we check just the current path
-    x = getStartPositionX();
-    y = getStartPositionY();
-    z = getStartPositionZ();
+    getStartPosition(x, y, z);
     dtPolyRef startPoly = getPathPolyByPosition(x, y, z);
-    x = getEndPositionX();
-    y = getEndPositionY();
-    z = getEndPositionZ();
+    getEndPosition(x, y, z);
     dtPolyRef endPoly = getPathPolyByPosition(x, y, z);
 
     if(startPoly != 0 && endPoly != 0)
@@ -252,25 +227,19 @@ void PathInfo::Update(const float destX, const float destY, const float destZ)
     {
         // start or end is off the path, need to find the polygon
 
-        float extents[3] = {2.0f, 4.0f, 2.0f};      // bounds of poly search area
+        float extents[3] = {2.f, 4.f, 2.f};      // bounds of poly search area
         dtQueryFilter filter = dtQueryFilter();     // filter for poly search
 
         if(!startPoly)
         {
-            sLog.outDebug("New startpoly.");
-            x = getStartPositionX();
-            y = getStartPositionY();
-            z = getStartPositionZ();
+            getStartPosition(x, y, z);
             float startPos[3] = {y, z, x};
             startOffPath = true;
             startPoly = m_navMesh->findNearestPoly(startPos, extents, &filter, 0);
         }
         if(!endPoly)
         {
-            sLog.outDebug("New endpoly.");
-            x = getEndPositionX();
-            y = getEndPositionY();
-            z = getEndPositionZ();
+            getEndPosition(x, y, z);
             float endPos[3] = {y, z, x};
             endOffPath = true;
             endPoly = m_navMesh->findNearestPoly(endPos, extents, &filter, 0);
@@ -281,16 +250,9 @@ void PathInfo::Update(const float destX, const float destY, const float destZ)
             // source or dest not near navmesh polygons:
             // flying, falling, swimming, or navmesh has a hole
 
-            // sLog.outError("%u's UpdatePath failed: invalid start or end polygon", m_sourceObject->GetGUID());
-
             // ignore obstacles/terrain is better than giving up
             // PATHFIND TODO: prevent walking/swimming mobs from flying into the air
-            m_length = 1;
-            x = getEndPositionX();
-            y = getEndPositionY();
-            z = getEndPositionZ();
-            setNextPosition(x, y, z);
-            m_type = PATHFIND_SHORTCUT;
+            shortcut();
             return;
         }
     }
@@ -303,9 +265,7 @@ void PathInfo::Update(const float destX, const float destY, const float destZ)
         // PATHFIND TODO: prevent walking/swimming mobs from flying into the air
 
         m_length = 1;
-        x = getEndPositionX();
-        y = getEndPositionY();
-        z = getEndPositionZ();
+        getEndPosition(x, y, z);
         setNextPosition(x, y, z);
         m_type = PATHFIND_NORMAL;
         return;
@@ -313,9 +273,6 @@ void PathInfo::Update(const float destX, const float destY, const float destZ)
 
     if(startOffPath)
     {
-        if(!m_pathPolyRefs)
-            return;
-
         bool adjacent = false;
         int i;
         for(i = 0; i < DT_VERTS_PER_POLYGON; ++i)
@@ -338,23 +295,17 @@ void PathInfo::Update(const float destX, const float destY, const float destZ)
 
             delete [] m_pathPolyRefs;
             m_pathPolyRefs = temp;
-
-            sLog.outDebug("Added new polygon to the start of path.");
         }
         else
         {
             // waste of time to optimize, just find brand new path
             Build(startPoly, endPoly);
-            sLog.outDebug("Start off path, rebuilt");
             return;
         }
     }
 
     if(endOffPath)
     {
-        if(!m_pathPolyRefs)
-            return;
-
         bool adjacent = false;
         int i;
         for(i = 0; i < DT_VERTS_PER_POLYGON; ++i)
@@ -377,8 +328,6 @@ void PathInfo::Update(const float destX, const float destY, const float destZ)
 
                 delete [] m_pathPolyRefs;
                 m_pathPolyRefs = temp;
-
-                sLog.outDebug("Added new polygon to end.");
             }
             //else
             //    ;   // endPoly is adjacent to the path, we just don't have room to store it
@@ -387,7 +336,6 @@ void PathInfo::Update(const float destX, const float destY, const float destZ)
         {
             // waste of time to optimize, just find brand new path
             Build(startPoly, endPoly);
-            sLog.outDebug("End off path, rebuilt.");
             return;
         }
     }
@@ -399,13 +347,9 @@ void PathInfo::updateNextPosition()
 {
     float x, y, z;
 
-    x = getStartPositionX();
-    y = getStartPositionY();
-    z = getStartPositionZ();
+    getStartPosition(x, y, z);
     float startPos[3] = {y, z, x};
-    x = getEndPositionX();
-    y = getEndPositionY();
-    z = getEndPositionZ();
+    getEndPosition(x, y, z);
     float endPos[3] = {y, z, x};
 
     float* pathPoints = new float[MAX_PATH_LENGTH*3];
@@ -419,16 +363,15 @@ void PathInfo::updateNextPosition()
         0,                  // [out] shortened path  PATHFIND TODO: see if this is usable (IE, doesn't leave gaps in path)
         MAX_PATH_LENGTH);   // maximum number of points/polygons to use
 
+    // TODO: imitate PATHFIND_ITER code from RecastDemo so that terrain following is smoother
+
     if(pointCount == 0)
     {
+        delete [] pathPoints;
+
         // only happens if pass bad data to findStraightPath or navmesh is broken
-        // sLog.outError("%u's UpdateNextPosition failed: 0 length path", m_sourceObject->GetGUID());
-        m_length = 1;
-        x = getEndPositionX();
-        y = getEndPositionY();
-        z = getEndPositionZ();
-        setNextPosition(x, y, z);
-        m_type = PATHFIND_SHORTCUT;
+        sLog.outError("%u's UpdateNextPosition failed: 0 length path", m_sourceObject->GetGUID());
+        shortcut();
         return;
     }
 
@@ -450,6 +393,7 @@ void PathInfo::updateNextPosition()
 
     delete [] m_pathPoints;
     m_pathPoints = pathPoints;
+    //delete [] pathPoints;
 
     m_type = PATHFIND_NORMAL;
 }
@@ -479,4 +423,14 @@ void PathInfo::trim(dtPolyRef startPoly, dtPolyRef endPoly)
     
     delete [] m_pathPolyRefs;
     m_pathPolyRefs = newPolyRefs;
+}
+
+void PathInfo::shortcut()
+{
+    clear();
+
+    float x, y, z;
+    getEndPosition(x, y, z);
+    setNextPosition(x, y, z);
+    m_type = PATHFIND_SHORTCUT;
 }

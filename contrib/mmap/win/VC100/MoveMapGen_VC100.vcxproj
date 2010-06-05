@@ -42,6 +42,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <IntDir>.\$(ProjectName)__$(Platform)_$(Configuration)\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>..\..\bin\$(Platform)_$(Configuration)\</OutDir>
@@ -53,16 +54,22 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\..\..\..\src\shared\vmap;..\..\..\..\dep\include\g3dlite;..\..\dep\include</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\src\;..\..\..\..\src\shared\vmap;..\..\..\..\dep\include\g3dlite;..\..\..\..\src\framework\;..\..\..\..\dep\ACE_wrappers;..\..\..\..\src\shared\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;DEBUG;MMAP_GENERATOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>..\..\..\..\win\VC100\g3dlite__$(Platform)_$(Configuration)\;..\..\..\..\win\VC100\shared__$(Platform)_$(Configuration)\;</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\..\win\VC100\g3dlite__$(Platform)_$(Configuration)\;..\..\..\..\win\VC100\zlib__$(Platform)_$(Configuration)\;</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
-      <AdditionalDependencies>shared.lib;g3dlite.lib;msvcrtd.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>g3dlite.lib;zlib.lib;msvcrtd.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -70,29 +77,89 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\..\..\..\src\shared\vmap;..\..\..\..\dep\include\g3dlite;..\..\dep\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\src\;..\..\..\..\src\shared\vmap;..\..\..\..\dep\include\g3dlite;..\..\..\..\src\framework\;..\..\..\..\dep\ACE_wrappers;..\..\..\..\src\shared\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <PreprocessorDefinitions>WIN32;NDEBUG;MMAP_GENERATOR;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
     </ClCompile>
     <Link>
-      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
-      <AdditionalDependencies>shared.lib;g3dlite.lib;msvcrt.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\..\win\VC100\g3dlite__$(Platform)_$(Configuration)\;..\..\..\..\win\VC100\shared__$(Platform)_$(Configuration)\;</AdditionalLibraryDirectories>
+      <AdditionalDependencies>g3dlite.lib;zlib.lib;msvcrt.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\..\..\..\win\VC100\g3dlite__$(Platform)_$(Configuration)\;..\..\..\..\win\VC100\zlib__$(Platform)_$(Configuration)\;</AdditionalLibraryDirectories>
+      <GenerateMapFile>true</GenerateMapFile>
     </Link>
     <PostBuildEvent>
-      <Command>copy $(ProjectDir)\..\..\mmap.conf $(TargetDir)\mmap.conf</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\generator\GridMap.cpp" />
-    <ClCompile Include="..\..\src\generator\main.cpp" />
-    <ClCompile Include="..\..\src\generator\ModelContainerView.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\ChunkyTriMesh.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\DebugUtils\DebugDraw.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\DebugUtils\DetourDebugDraw.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\DebugUtils\RecastDebugDraw.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\DebugUtils\RecastDump.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Detour\DetourCommon.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Detour\DetourNavMesh.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Detour\DetourNavMeshBuilder.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Detour\DetourNode.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\InputGeom.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\MeshLoaderObj.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\Recast.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\RecastArea.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\RecastContour.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\RecastFilter.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\RecastLog.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\RecastMesh.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\RecastMeshDetail.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\RecastRasterization.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\RecastRegion.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\RecastTimer.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\vmap\BIH.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\vmap\MapTree.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\vmap\ModelInstance.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\vmap\TileAssembler.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\vmap\VMapFactory.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\vmap\VMapManager2.cpp" />
+    <ClCompile Include="..\..\..\..\src\shared\vmap\WorldModel.cpp" />
+    <ClCompile Include="..\..\src\generator.cpp" />
+    <ClCompile Include="..\..\src\MapBuilder.cpp" />
+    <ClCompile Include="..\..\src\TileBuilder.cpp" />
+    <ClCompile Include="..\..\src\VMapExtensions.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\src\generator\GridMap.h" />
-    <ClInclude Include="..\..\src\generator\ModelContainerView.h" />
+    <ClInclude Include="..\..\..\..\src\shared\pathfinding\ChunkyTriMesh.h" />
+    <ClInclude Include="..\..\..\..\src\shared\pathfinding\DebugUtils\DebugDraw.h" />
+    <ClInclude Include="..\..\..\..\src\shared\pathfinding\DebugUtils\DetourDebugDraw.h" />
+    <ClInclude Include="..\..\..\..\src\shared\pathfinding\DebugUtils\RecastDebugDraw.h" />
+    <ClInclude Include="..\..\..\..\src\shared\pathfinding\DebugUtils\RecastDump.h" />
+    <ClInclude Include="..\..\..\..\src\shared\pathfinding\Detour\DetourCommon.h" />
+    <ClInclude Include="..\..\..\..\src\shared\pathfinding\Detour\DetourNavMesh.h" />
+    <ClInclude Include="..\..\..\..\src\shared\pathfinding\Detour\DetourNavMeshBuilder.h" />
+    <ClInclude Include="..\..\..\..\src\shared\pathfinding\Detour\DetourNode.h" />
+    <ClInclude Include="..\..\..\..\src\shared\pathfinding\InputGeom.h" />
+    <ClInclude Include="..\..\..\..\src\shared\pathfinding\MeshLoaderObj.h" />
+    <ClInclude Include="..\..\..\..\src\shared\pathfinding\Recast\Recast.h" />
+    <ClInclude Include="..\..\..\..\src\shared\pathfinding\Recast\RecastLog.h" />
+    <ClInclude Include="..\..\..\..\src\shared\pathfinding\Recast\RecastTimer.h" />
+    <ClInclude Include="..\..\..\..\src\shared\vmap\BIH.h" />
+    <ClInclude Include="..\..\..\..\src\shared\vmap\IVMapManager.h" />
+    <ClInclude Include="..\..\..\..\src\shared\vmap\MapTree.h" />
+    <ClInclude Include="..\..\..\..\src\shared\vmap\ModelInstance.h" />
+    <ClInclude Include="..\..\..\..\src\shared\vmap\TileAssembler.h" />
+    <ClInclude Include="..\..\..\..\src\shared\vmap\VMapDefinitions.h" />
+    <ClInclude Include="..\..\..\..\src\shared\vmap\VMapFactory.h" />
+    <ClInclude Include="..\..\..\..\src\shared\vmap\VmapKDTree.h" />
+    <ClInclude Include="..\..\..\..\src\shared\vmap\VMapManager2.h" />
+    <ClInclude Include="..\..\..\..\src\shared\vmap\VMapTools.h" />
+    <ClInclude Include="..\..\..\..\src\shared\vmap\WorldModel.h" />
+    <ClInclude Include="..\..\src\MangosMap.h" />
+    <ClInclude Include="..\..\src\MapBuilder.h" />
+    <ClInclude Include="..\..\src\MMapCommon.h" />
+    <ClInclude Include="..\..\src\TileBuilder.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

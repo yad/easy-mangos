@@ -78,9 +78,7 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner)
 
     // can check here to see what i_path->m_type
     // maybe not move if m_type == PATHFIND_SHORTCUT
-    x = i_path->getNextPositionX();
-    y = i_path->getNextPositionY();
-    z = i_path->getNextPositionZ();
+    i_path->getNextPosition(x, y, z);
 
     Traveller<T> traveller(owner);
     i_destinationHolder.SetDestination(traveller, x, y, z);
@@ -173,29 +171,31 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
 
         //More distance let have better performance, less distance let have more sensitive reaction at target move.
 
+        bool targetMoved = false, needNewDest = false;
         float nextx, nexty, nextz, endx, endy, endz;
-        nextx = i_path->getNextPositionX();
-        nexty = i_path->getNextPositionY();
-        nextz = i_path->getNextPositionZ();
-        endx = i_path->getEndPositionX();
-        endy = i_path->getEndPositionY();
-        endz = i_path->getEndPositionZ();
+        nextx = i_target->GetPositionX();
+        nexty = i_target->GetPositionY();
 
-        bool targetMoved, needNewDest;
-        targetMoved = i_target->GetDistance(endx, endy, endz) >= dist;
-        needNewDest = (i_destinationHolder.HasArrived() && !isSamePoint(nextx, nexty, nextz, endx, endy, endz));
-
-        if (targetMoved || needNewDest)
+        if(i_path)
         {
-            // recalculate path
+            i_path->getNextPosition(nextx, nexty, nextz);
+            i_path->getEndPosition(endx, endy, endz);
+            needNewDest = (i_destinationHolder.HasArrived() && !isSamePoint(nextx, nexty, nextz, endx, endy, endz));
+            targetMoved = i_target->GetDistanceSqr(endx, endy, endz) >= dist*dist;
+        }
+
+        if (!i_path || targetMoved || needNewDest)
+        {
+            // (re)calculate path
             _setTargetLocation(owner);
 
-            nextx = i_path->getNextPositionX();
-            nexty = i_path->getNextPositionY();
-            nextz = i_path->getNextPositionZ();
+            if(i_path)
+            {
+                i_path->getNextPosition(nextx, nexty, nextz);
 
-            // Set new Angle For Map::
-            owner.SetOrientation(owner.GetAngle(nextx, nexty));
+                // Set new Angle For Map::
+                owner.SetOrientation(owner.GetAngle(nextx, nexty));
+            }
         }
         // Update the Angle of the target only for Map::, no need to send packet for player
         else if (!i_angle && !owner.HasInArc(0.01f, nextx, nexty))

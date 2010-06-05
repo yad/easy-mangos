@@ -9,9 +9,9 @@ class WorldObject;
 
 enum PathType
 {
-    PATHFIND_BLANK      = 0,    // path not built yet
-    PATHFIND_NORMAL     = 1,    // normal path
-    PATHFIND_SHORTCUT   = 2,    // travel through obstacles, terrain, air, etc (old behavior)
+    PATHFIND_BLANK      = 0x0001,    // path not built yet
+    PATHFIND_NORMAL     = 0x0002,    // normal path
+    PATHFIND_SHORTCUT   = 0x0004,    // travel through obstacles, terrain, air, etc (old behavior)
 };
 
 class PathInfo
@@ -21,37 +21,22 @@ class PathInfo
 
         ~PathInfo() { delete [] m_pathPolyRefs; delete [] m_pathPoints; }
 
-        //void getStartPosition(float &x, float &y, float &z) { x = m_startPosition[0]; y = m_startPosition[1]; z = m_startPosition[2]; }
-        void setStartPosition(float x, float y, float z) { m_startPosition[0] = x; m_startPosition[1] = y; m_startPosition[2] = z; }
-        float getStartPositionX() { return m_startPosition[0]; }
-        float getStartPositionY() { return m_startPosition[1]; }
-        float getStartPositionZ() { return m_startPosition[2]; }
+        inline void getStartPosition(float &x, float &y, float &z) { x = m_startPosition[0]; y = m_startPosition[1]; z = m_startPosition[2]; }
+        inline void setStartPosition(float x, float y, float z) { m_startPosition[0] = x; m_startPosition[1] = y; m_startPosition[2] = z; }
 
-        //void getNextPosition(float &x, float &y, float &z) { x = m_nextPosition[0]; y = m_nextPosition[1]; z = m_nextPosition[2]; }
-        void setNextPosition(float x, float y, float z) { m_nextPosition[0] = x; m_nextPosition[1] = y; m_nextPosition[2] = z; }
-        float getNextPositionX() { return m_nextPosition[0]; }
-        float getNextPositionY() { return m_nextPosition[1]; }
-        float getNextPositionZ() { return m_nextPosition[2]; }
+        inline void getNextPosition(float &x, float &y, float &z) { x = m_nextPosition[0]; y = m_nextPosition[1]; z = m_nextPosition[2]; }
+        inline void setNextPosition(float x, float y, float z) { m_nextPosition[0] = x; m_nextPosition[1] = y; m_nextPosition[2] = z; }
         
-        //void getEndPosition(float &x, float &y, float &z) { x = m_endPosition[0]; y = m_endPosition[1]; z = m_endPosition[2]; }
-        void setEndPosition(float x, float y, float z) { m_endPosition[0] = x; m_endPosition[1] = y; m_endPosition[2] = z; }
-        float getEndPositionX() { return m_endPosition[0]; }
-        float getEndPositionY() { return m_endPosition[1]; }
-        float getEndPositionZ() { return m_endPosition[2]; }
+        inline void getEndPosition(float &x, float &y, float &z) { x = m_endPosition[0]; y = m_endPosition[1]; z = m_endPosition[2]; }
+        inline void setEndPosition(float x, float y, float z) { m_endPosition[0] = x; m_endPosition[1] = y; m_endPosition[2] = z; }
 
         dtPolyRef getPathPolyByPosition(float x, float y, float z);
         bool isPointInPolyBounds(float x, float y, float z, float &distance, dtPolyRef polyRef);
 
         void Update(const float x, const float y, const float z);
-        int GetLength() { return m_length; }
-        dtPolyRef* GetPathPolyRefs() { return m_pathPolyRefs; }
-        dtPolyRef GetPathPolyRefs(int i) { return m_pathPolyRefs[i]; }
-        dtNavMesh* GetNavMesh() { return m_navMesh; }
+        void GetLength();
         float* GetPoints();
 
-
-
-    protected:
         dtPolyRef   *   m_pathPolyRefs;     // array of detour polygon references
         float       *   m_pathPoints;       // array of float[3] for (x, y, z) coords
         int             m_currentNode;      // node of m_pathPoints that we are moving to
@@ -59,15 +44,23 @@ class PathInfo
         float           m_startPosition[3]; // {x, y, z} of current location
         float           m_nextPosition[3];  // {x, y, z} of next location on the path
         float           m_endPosition[3];   // {x, y, z} of the destination
-        WorldObject *   m_sourceObject;     // the object that is moving
+        WorldObject *   m_sourceObject;     // the object that is moving (safe pointer because PathInfo is only accessed from the mover?)
         dtNavMesh   *   m_navMesh;          // the nav mesh used to find the path
         PathType        m_type;             // tells what kind of path this is
 
     private:
+        inline void clear()
+        {
+            delete [] m_pathPolyRefs; m_pathPolyRefs = 0;
+            delete [] m_pathPoints; m_pathPoints = 0;
+            m_length = 0;
+        }
+
         void updateNextPosition();
         void Build();
         void Build(dtPolyRef startPoly, dtPolyRef endPoly);
         void trim(dtPolyRef startPoly, dtPolyRef endPoly);
+        void shortcut();
 };
 
 inline bool isSamePoint(const float* point1, const float* point2)

@@ -34,12 +34,14 @@
 #include "GameSystem/GridRefManager.h"
 #include "MapRefManager.h"
 #include "Utilities/TypeList.h"
-#include "pathfinding/Detour/DetourNavMesh.h"
 #include "Unit.h"
 
 #include <bitset>
 #include <list>
 
+#include "pathfinding/Detour/DetourNavMesh.h"
+
+class Creature;
 class Unit;
 class WorldPacket;
 class InstanceData;
@@ -154,11 +156,11 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
         // some calls like isInWater should not use vmaps due to processor power
         // can return INVALID_HEIGHT if under z+2 z coord not found height
         float GetHeight(float x, float y, float z, bool pCheckVMap=true) const;
-        bool IsInWater(float x, float y, float z) const;    // does not use z pos. This is for future use
+        bool IsInWater(float x, float y, float z, GridMapLiquidData *data = 0) const;
 
         GridMapLiquidStatus getLiquidStatus(float x, float y, float z, uint8 ReqLiquidType, GridMapLiquidData *data = 0) const;
 
-        uint16 GetAreaFlag(float x, float y, float z) const;
+        uint16 GetAreaFlag(float x, float y, float z, bool *isOutdoors=0) const;
         uint8 GetTerrainType(float x, float y ) const;
         float GetWaterLevel(float x, float y ) const;
         bool IsUnderWater(float x, float y, float z) const;
@@ -273,6 +275,8 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
 
         // DynObjects currently
         uint32 GenerateLocalLowGuid(HighGuid guidhigh);
+        bool GetAreaInfo(float x, float y, float z, uint32 &mogpflags, int32 &adtId, int32 &rootId, int32 &groupId) const;
+        bool IsOutdoors(float x, float y, float z) const;
     private:
         void LoadMapAndVMap(int gx, int gy);
         void LoadVMap(int gx, int gy);
@@ -389,6 +393,17 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
             else
                 m_activeNonPlayers.erase(obj);
         }
+
+        // begin movemap-related
+    public:
+        dtNavMesh* GetNavMesh();
+
+    private:
+        void LoadNavMesh(int gx, int gy);
+        void UnloadNavMesh(int gx, int gy);
+        dtNavMesh* m_navMesh;
+        UNORDERED_MAP<uint32, uint32> m_mmapTileMap;    // maps [map grid coords] to [dtTile coords]
+        // end movemap-related
 };
 
 enum InstanceResetMethod

@@ -69,7 +69,7 @@ class MANGOS_DLL_SPEC TargetedMovementGeneratorMedium
         float i_angle;
         DestinationHolder< Traveller<T> > i_destinationHolder;
         bool i_recalculateTravel;
-        PathInfo *i_path;
+        PathInfo* i_path;
 };
 
 template<class T>

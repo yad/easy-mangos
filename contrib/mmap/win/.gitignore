@@ -1,6 +1,6 @@
 
-*.ncb
-*.suo
-*.sdf
-*.opensdf
 ipch
+*.sdf
+*.suo
+*.opensdf
+*.ncb

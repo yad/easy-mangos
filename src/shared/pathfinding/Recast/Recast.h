@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2009 Mikko Mononen memon@inside.org
+// Copyright (c) 2009-2010 Mikko Mononen memon@inside.org
 //
 // This software is provided 'as-is', without any express or implied
 // warranty.  In no event will the authors be held liable for any damages
@@ -92,8 +92,9 @@ struct rcCompactCell
 struct rcCompactSpan
 {
 	unsigned short y;			// Bottom coordinate of the span.
-	unsigned short con;			// Connections to neighbour cells.
-	unsigned char h;			// Height of the span.
+	unsigned short reg;
+	unsigned int con : 24;		// Connections to neighbour cells.
+	unsigned int h : 8;			// Height of the span.
 };
 
 // Compact static heightfield. 
@@ -101,13 +102,13 @@ struct rcCompactHeightfield
 {
 	inline rcCompactHeightfield() :
 		maxDistance(0), maxRegions(0), cells(0),
-		spans(0), dist(0), regs(0), areas(0) {}
+		spans(0), dist(0), /*regs(0),*/ areas(0) {}
 	inline ~rcCompactHeightfield()
 	{
 		delete [] cells;
 		delete [] spans;
 		delete [] dist;
-		delete [] regs;
+//		delete [] regs;
 		delete [] areas;
 	}
 	int width, height;					// Width and height of the heighfield.
@@ -120,7 +121,7 @@ struct rcCompactHeightfield
 	rcCompactCell* cells;				// Pointer to width*height cells.
 	rcCompactSpan* spans;				// Pointer to spans.
 	unsigned short* dist;				// Pointer to per span distance to border.
-	unsigned short* regs;				// Pointer to per span region ID.
+//	unsigned short* regs;				// Pointer to per span region ID.
 	unsigned char* areas;				// Pointer to per span area ID.
 };
 
@@ -262,18 +263,20 @@ static const unsigned char RC_NULL_AREA = 0;
 static const unsigned char RC_WALKABLE_AREA = 255;
 
 // Value returned by rcGetCon() if the direction is not connected.
-static const int RC_NOT_CONNECTED = 0xf;
+static const int RC_NOT_CONNECTED = 0x3f;
 
 // Compact span neighbour helpers.
 inline void rcSetCon(rcCompactSpan& s, int dir, int i)
 {
-	s.con &= ~(0xf << (dir*4));
-	s.con |= (i&0xf) << (dir*4);
+	const unsigned int shift = (unsigned int)dir*6;
+	unsigned int con = s.con;
+	s.con = (con & ~(0x3f << shift)) | (((unsigned int)i & 0x3f) << shift);
 }
 
 inline int rcGetCon(const rcCompactSpan& s, int dir)
 {
-	return (s.con >> (dir*4)) & 0xf;
+	const unsigned int shift = (unsigned int)dir*6;
+	return (s.con >> shift) & 0x3f;
 }
 
 inline int rcGetDirOffsetX(int dir)
@@ -297,61 +300,61 @@ template<class T> inline T rcSqr(T a) { return a*a; }
 template<class T> inline T rcClamp(T v, T mn, T mx) { return v < mn ? mn : (v > mx ? mx : v); }
 
 // Common vector helper functions.
-inline void vcross(float* dest, const float* v1, const float* v2)
+inline void rcVcross(float* dest, const float* v1, const float* v2)
 {
 	dest[0] = v1[1]*v2[2] - v1[2]*v2[1];
 	dest[1] = v1[2]*v2[0] - v1[0]*v2[2];
 	dest[2] = v1[0]*v2[1] - v1[1]*v2[0]; 
 }
 
-inline float vdot(const float* v1, const float* v2)
+inline float rcVdot(const float* v1, const float* v2)
 {
 	return v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2];
 }
 
-inline void vmad(float* dest, const float* v1, const float* v2, const float s)
+inline void rcVmad(float* dest, const float* v1, const float* v2, const float s)
 {
 	dest[0] = v1[0]+v2[0]*s;
 	dest[1] = v1[1]+v2[1]*s;
 	dest[2] = v1[2]+v2[2]*s;
 }
 
-inline void vadd(float* dest, const float* v1, const float* v2)
+inline void rcVadd(float* dest, const float* v1, const float* v2)
 {
 	dest[0] = v1[0]+v2[0];
 	dest[1] = v1[1]+v2[1];
 	dest[2] = v1[2]+v2[2];
 }
 
-inline void vsub(float* dest, const float* v1, const float* v2)
+inline void rcVsub(float* dest, const float* v1, const float* v2)
 {
 	dest[0] = v1[0]-v2[0];
 	dest[1] = v1[1]-v2[1];
 	dest[2] = v1[2]-v2[2];
 }
 
-inline void vmin(float* mn, const float* v)
+inline void rcVmin(float* mn, const float* v)
 {
 	mn[0] = rcMin(mn[0], v[0]);
 	mn[1] = rcMin(mn[1], v[1]);
 	mn[2] = rcMin(mn[2], v[2]);
 }
 
-inline void vmax(float* mx, const float* v)
+inline void rcVmax(float* mx, const float* v)
 {
 	mx[0] = rcMax(mx[0], v[0]);
 	mx[1] = rcMax(mx[1], v[1]);
 	mx[2] = rcMax(mx[2], v[2]);
 }
 
-inline void vcopy(float* dest, const float* v)
+inline void rcVcopy(float* dest, const float* v)
 {
 	dest[0] = v[0];
 	dest[1] = v[1];
 	dest[2] = v[2];
 }
 
-inline float vdist(const float* v1, const float* v2)
+inline float rcVdist(const float* v1, const float* v2)
 {
 	float dx = v2[0] - v1[0];
 	float dy = v2[1] - v1[1];
@@ -359,7 +362,7 @@ inline float vdist(const float* v1, const float* v2)
 	return sqrtf(dx*dx + dy*dy + dz*dz);
 }
 
-inline float vdistSqr(const float* v1, const float* v2)
+inline float rcVdistSqr(const float* v1, const float* v2)
 {
 	float dx = v2[0] - v1[0];
 	float dy = v2[1] - v1[1];
@@ -367,7 +370,7 @@ inline float vdistSqr(const float* v1, const float* v2)
 	return dx*dx + dy*dy + dz*dz;
 }
 
-inline void vnormalize(float* v)
+inline void rcVnormalize(float* v)
 {
 	float d = 1.0f / sqrtf(rcSqr(v[0]) + rcSqr(v[1]) + rcSqr(v[2]));
 	v[0] *= d;
@@ -375,10 +378,10 @@ inline void vnormalize(float* v)
 	v[2] *= d;
 }
 
-inline bool vequal(const float* p0, const float* p1)
+inline bool rcVequal(const float* p0, const float* p1)
 {
 	static const float thr = rcSqr(1.0f/16384.0f);
-	const float d = vdistSqr(p0, p1);
+	const float d = rcVdistSqr(p0, p1);
 	return d < thr;
 }
 
@@ -457,8 +460,8 @@ void rcRasterizeTriangle(const float* v0, const float* v1, const float* v2,
 //	nt - (in) triangle count
 //	solid - (in) heighfield where the triangles are rasterized
 //  flagMergeThr - (in) distance in voxel where walkable flag is favored over non-walkable.
-void rcRasterizeTriangles(const float* verts, int nv,
-						  const int* tris, const unsigned char* flags, int nt,
+void rcRasterizeTriangles(const float* verts, const int nv,
+						  const int* tris, const unsigned char* flags, const int nt,
 						  rcHeightfield& solid, const int flagMergeThr = 1);
 
 // Rasterizes indexed triangle mesh into heightfield spans.
@@ -470,8 +473,8 @@ void rcRasterizeTriangles(const float* verts, int nv,
 //	nt - (in) triangle count
 //	solid - (in) heighfield where the triangles are rasterized
 //  flagMergeThr - (in) distance in voxel where walkable flag is favored over non-walkable.
-void rcRasterizeTriangles(const float* verts, int nv,
-						  const unsigned short* tris, const unsigned char* flags, int nt,
+void rcRasterizeTriangles(const float* verts, const int nv,
+						  const unsigned short* tris, const unsigned char* flags, const int nt,
 						  rcHeightfield& solid, const int flagMergeThr = 1);
 
 // Rasterizes the triangles into heightfield spans.
@@ -480,7 +483,7 @@ void rcRasterizeTriangles(const float* verts, int nv,
 //	flags - (in) array of triangle flags (uses WALKABLE)
 //	nt - (in) triangle count
 //	solid - (in) heighfield where the triangles are rasterized
-void rcRasterizeTriangles(const float* verts, const unsigned char* flags, int nt,
+void rcRasterizeTriangles(const float* verts, const unsigned char* flags, const int nt,
 						  rcHeightfield& solid, const int flagMergeThr = 1);
 
 // Marks non-walkable low obstacles as walkable if they are closer than walkableClimb

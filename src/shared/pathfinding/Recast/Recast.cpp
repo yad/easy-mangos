@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2009 Mikko Mononen memon@inside.org
+// Copyright (c) 2009-2010 Mikko Mononen memon@inside.org
 //
 // This software is provided 'as-is', without any express or implied
 // warranty.  In no event will the authors be held liable for any damages
@@ -44,13 +44,13 @@ void rcIntArray::resize(int n)
 void rcCalcBounds(const float* verts, int nv, float* bmin, float* bmax)
 {
 	// Calculate bounding box.
-	vcopy(bmin, verts);
-	vcopy(bmax, verts);
+	rcVcopy(bmin, verts);
+	rcVcopy(bmax, verts);
 	for (int i = 1; i < nv; ++i)
 	{
 		const float* v = &verts[i*3];
-		vmin(bmin, v);
-		vmax(bmax, v);
+		rcVmin(bmin, v);
+		rcVmax(bmax, v);
 	}
 }
 
@@ -67,8 +67,8 @@ bool rcCreateHeightfield(rcHeightfield& hf, int width, int height,
 	hf.width = width;
 	hf.height = height;
 	hf.spans = new rcSpan*[hf.width*hf.height];
-	vcopy(hf.bmin, bmin);
-	vcopy(hf.bmax, bmax);
+	rcVcopy(hf.bmin, bmin);
+	rcVcopy(hf.bmax, bmax);
 	hf.cs = cs;
 	hf.ch = ch;
 	if (!hf.spans)
@@ -80,14 +80,14 @@ bool rcCreateHeightfield(rcHeightfield& hf, int width, int height,
 static void calcTriNormal(const float* v0, const float* v1, const float* v2, float* norm)
 {
 	float e0[3], e1[3];
-	vsub(e0, v1, v0);
-	vsub(e1, v2, v0);
-	vcross(norm, e0, e1);
-	vnormalize(norm);
+	rcVsub(e0, v1, v0);
+	rcVsub(e1, v2, v0);
+	rcVcross(norm, e0, e1);
+	rcVnormalize(norm);
 }
 
 void rcMarkWalkableTriangles(const float walkableSlopeAngle,
-							 const float* verts, int nv,
+							 const float* verts, int /*nv*/,
 							 const int* tris, int nt,
 							 unsigned char* flags)
 {
@@ -141,8 +141,8 @@ bool rcBuildCompactHeightfield(const int walkableHeight, const int walkableClimb
 	chf.walkableHeight = walkableHeight;
 	chf.walkableClimb = walkableClimb;
 	chf.maxRegions = 0;
-	vcopy(chf.bmin, hf.bmin);
-	vcopy(chf.bmax, hf.bmax);
+	rcVcopy(chf.bmin, hf.bmin);
+	rcVcopy(chf.bmax, hf.bmax);
 	chf.bmax[1] += walkableHeight*hf.ch;
 	chf.cs = hf.cs;
 	chf.ch = hf.ch;
@@ -202,6 +202,8 @@ bool rcBuildCompactHeightfield(const int walkableHeight, const int walkableClimb
 	}
 
 	// Find neighbour connections.
+	const float MAX_LAYERS = RC_NOT_CONNECTED-1;
+	int tooHighNeighbour = 0;
 	for (int y = 0; y < h; ++y)
 	{
 		for (int x = 0; x < w; ++x)
@@ -234,7 +236,13 @@ bool rcBuildCompactHeightfield(const int walkableHeight, const int walkableClimb
 						if ((top - bot) >= walkableHeight && rcAbs((int)ns.y - (int)s.y) <= walkableClimb)
 						{
 							// Mark direction as walkable.
-							rcSetCon(s, dir, k - (int)nc.index);
+							const int idx = k - (int)nc.index;
+							if (idx < 0 || idx > MAX_LAYERS)
+							{
+								tooHighNeighbour = rcMax(tooHighNeighbour, idx);
+								continue;
+							}
+							rcSetCon(s, dir, idx);
 							break;
 						}
 					}
@@ -242,6 +250,12 @@ bool rcBuildCompactHeightfield(const int walkableHeight, const int walkableClimb
 				}
 			}
 		}
+	}
+	
+	if (tooHighNeighbour > MAX_LAYERS)
+	{
+		if (rcGetLog())
+			rcGetLog()->log(RC_LOG_ERROR, "rcBuildCompactHeightfield: Heighfield has too many layers %d (max: %d)", tooHighNeighbour, MAX_LAYERS);
 	}
 	
 	rcTimeVal endTime = rcGetPerformanceTimer();
