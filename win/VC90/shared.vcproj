@@ -987,14 +987,6 @@
  			RelativePath="..\..\src\shared\Common.h"
  			>
  		</File>
- 		<File
-			RelativePath="..\..\src\shared\DelayExecutor.cpp"
-			>
-		</File>
-		<File
-			RelativePath="..\..\src\shared\DelayExecutor.h"
-			>
-		</File>
 		<File
 			RelativePath="..\..\src\shared\LockedQueue.h"
 			>

@@ -339,8 +339,8 @@ Spell::Spell( Unit* caster, SpellEntry const *info, bool triggered, ObjectGuid o
     else
         m_spellInfo = info;
 
-    m_caster = caster;
     m_destroyed = false;
+    m_caster = caster;
     m_spellInfo = info;
     m_selfContainer = NULL;
     m_triggeringContainer = triggeringContainer;
@@ -808,8 +808,7 @@ void Spell::CleanupTargetList()
         itr->deleted = true;
 
     for(tbb::concurrent_vector<GOTargetInfo>::iterator itr = m_UniqueGOTargetInfo.begin(); itr != m_UniqueGOTargetInfo.end(); ++itr)
-        itr->deleted = true;
-
+       itr->deleted = true;
     m_UniqueItemInfo.clear();
     m_delayMoment = 0;
 }
@@ -830,11 +829,8 @@ void Spell::AddUnitTarget(Unit* pVictim, SpellEffectIndex effIndex)
 
 
     // Lookup target in already in list
-    for(tbb::concurrent_vector<TargetInfo>::iterator ihit = m_UniqueTargetInfo.begin(); ihit != m_UniqueTargetInfo.end(); ++ihit)
+    for(std::list<TargetInfo>::iterator ihit = m_UniqueTargetInfo.begin(); ihit != m_UniqueTargetInfo.end(); ++ihit)
     {
-        if (ihit->deleted == true)
-            continue;
-
         if (targetGUID == ihit->targetGUID)                 // Found in list
         {
             if (!immuned)
@@ -850,7 +846,6 @@ void Spell::AddUnitTarget(Unit* pVictim, SpellEffectIndex effIndex)
     target.targetGUID = targetGUID;                         // Store target GUID
     target.effectMask = immuned ? 0 : (1 << effIndex);      // Store index of effect if not immuned
     target.processed  = false;                              // Effects not apply on target
-    target.deleted = false;
 
     // Calculate hit result
     target.missCondition = m_caster->SpellHitResult(pVictim, m_spellInfo, m_canReflect);
@@ -903,12 +898,15 @@ void Spell::AddGOTarget(GameObject* pVictim, SpellEffectIndex effIndex)
 
     ObjectGuid targetGUID = pVictim->GetObjectGuid();
 
+    for(tbb::concurrent_vector<GOTargetInfo>::iterator ihit = m_UniqueGOTargetInfo.begin(); ihit != m_UniqueGOTargetInfo.end(); ++ihit)
+	     {
+   
+
     // Lookup target in already in list
     for(tbb::concurrent_vector<GOTargetInfo>::iterator ihit = m_UniqueGOTargetInfo.begin(); ihit != m_UniqueGOTargetInfo.end(); ++ihit)
     {
         if (ihit->deleted == true)
             continue;
-
         if (targetGUID == ihit->targetGUID)                 // Found in list
         {
             ihit->effectMask |= (1 << effIndex);            // Add only effect mask
@@ -973,17 +971,13 @@ void Spell::AddItemTarget(Item* pitem, SpellEffectIndex effIndex)
 
 void Spell::DoAllEffectOnTarget(TargetInfo *target)
 {
-    if (this->m_spellInfo->Id <= 0 || this->m_spellInfo->Id > MAX_SPELL_ID ||  m_spellInfo->Id == 32 || m_spellInfo->Id == 80)
+    if (m_spellInfo->Id <= 0 || m_spellInfo->Id > MAX_SPELL_ID ||  m_spellInfo->Id == 32 || m_spellInfo->Id == 80)
         return;
 
     if (!target || target == (TargetInfo*)0x10 || target->processed)
         return;
-    
-    target->processed = true;
-    
-    Unit* unit = m_caster->GetObjectGuid() == target->targetGUID ? m_caster : ObjectAccessor::GetUnit(*m_caster, target->targetGUID);
-    if (!unit)
-        return;
+
+    target->processed = true;                               // Target checked in apply effects procedure
 
     // Get mask of effects for target
     uint32 mask = target->effectMask;
@@ -1208,7 +1202,7 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
         // ignore pets or autorepeat/melee casts for speed (not exist quest for spells (hm... )
         if (real_caster && !((Creature*)unit)->isPet() && !IsAutoRepeat() && !IsNextMeleeSwingSpell() && !IsChannelActive())
             if (Player* p = real_caster->GetCharmerOrOwnerPlayerOrPlayerItself())
-                p->CastedCreatureOrGO(unit->GetEntry(), unit->GetObjectGuid(), m_spellInfo->Id);
+                p->RewardPlayerAndGroupAtCast(unit, m_spellInfo->Id);
 
         if(((Creature*)unit)->AI())
             ((Creature*)unit)->AI()->SpellHit(m_caster, m_spellInfo);
@@ -1378,7 +1372,7 @@ void Spell::DoAllEffectOnTarget(GOTargetInfo *target)
     if( !IsAutoRepeat() && !IsNextMeleeSwingSpell() && !IsChannelActive() )
     {
         if ( Player* p = m_caster->GetCharmerOrOwnerPlayerOrPlayerItself() )
-            p->CastedCreatureOrGO(go->GetEntry(), go->GetObjectGuid(), m_spellInfo->Id);
+            p->RewardPlayerAndGroupAtCast(go, m_spellInfo->Id);
     }
 }
 
@@ -2830,7 +2824,7 @@ void Spell::cancel()
             for(tbb::concurrent_vector<TargetInfo>::const_iterator ihit= m_UniqueTargetInfo.begin(); ihit != m_UniqueTargetInfo.end(); ++ihit)
             {
                 if (ihit->deleted == true)
-                     continue;
+                    continue;
                 if( ihit->missCondition == SPELL_MISS_NONE )
                 {
                     Unit* unit = m_caster->GetObjectGuid() == (*ihit).targetGUID ? m_caster : ObjectAccessor::GetUnit(*m_caster, ihit->targetGUID);
@@ -2857,11 +2851,12 @@ void Spell::cancel()
 void Spell::cast(bool skipCheck)
 {
     if(m_spellInfo->Id <= 0 || m_spellInfo->Id > MAX_SPELL_ID)
-       return;
+        return;
 
     SpellEntry const* spellInfo = sSpellStore.LookupEntry(m_spellInfo->Id);
     if(!spellInfo)
-       return;
+        return;
+
     SetExecutedCurrently(true);
 
     if (!m_caster->CheckAndIncreaseCastCounter())
@@ -3187,9 +3182,9 @@ void Spell::handle_immediate()
 
         if (ihit->deleted == true)
             continue;
+
         DoAllEffectOnTarget(&(*ihit));
     }
-
     for (tbb::concurrent_vector<GOTargetInfo>::iterator ihit= m_UniqueGOTargetInfo.begin();ihit != m_UniqueGOTargetInfo.end();++ihit)
     {
         if (m_destroyed == true || ihit == m_UniqueGOTargetInfo.end() || m_UniqueGOTargetInfo.size() == 0)
@@ -3197,10 +3192,8 @@ void Spell::handle_immediate()
 
         if (ihit->deleted == true)
             continue;
-
         DoAllEffectOnTarget(&(*ihit));
     }
-
     // spell is finished, perform some last features of the spell here
     _handle_finish_phase();
 
@@ -3222,7 +3215,7 @@ uint64 Spell::handle_delayed(uint64 t_offset)
     }
 
     // now recheck units targeting correctness (need before any effects apply to prevent adding immunity at first effect not allow apply second spell effect and similar cases)
-    for(tbb::concurrent_vector<TargetInfo>::iterator ihit= m_UniqueTargetInfo.begin(); ihit != m_UniqueTargetInfo.end();++ihit)
+    for(tbb::concurrent_vector<TargetInfo>::iterator ihit = m_UniqueTargetInfo.begin(); ihit != m_UniqueTargetInfo.end(); ++ihit)
     {
         if (ihit->processed == false)
         {
@@ -3234,7 +3227,7 @@ uint64 Spell::handle_delayed(uint64 t_offset)
     }
 
     // now recheck gameobject targeting correctness
-    for(tbb::concurrent_vector<GOTargetInfo>::iterator ighit= m_UniqueGOTargetInfo.begin(); ighit != m_UniqueGOTargetInfo.end();++ighit)
+    for(tbb::concurrent_vector<GOTargetInfo>::iterator ighit = m_UniqueGOTargetInfo.begin(); ighit != m_UniqueGOTargetInfo.end(); ++ighit)
     {
         if (ighit->processed == false)
         {
@@ -3417,7 +3410,6 @@ void Spell::update(uint32 difftime)
                         {
                             if (ihit->deleted == true)
                                 continue;
-
                             TargetInfo* target = &*ihit;
                             if(!target->targetGUID.IsCreature())
                                 continue;
@@ -3426,7 +3418,7 @@ void Spell::update(uint32 difftime)
                             if (unit == NULL)
                                 continue;
 
-                            p->CastedCreatureOrGO(unit->GetEntry(), unit->GetObjectGuid(), m_spellInfo->Id);
+                            p->RewardPlayerAndGroupAtCast(unit, m_spellInfo->Id);
                         }
 
                         for(tbb::concurrent_vector<GOTargetInfo>::iterator ihit = m_UniqueGOTargetInfo.begin(); ihit != m_UniqueGOTargetInfo.end(); ++ihit)
@@ -3440,7 +3432,7 @@ void Spell::update(uint32 difftime)
                             if(!go)
                                 continue;
 
-                            p->CastedCreatureOrGO(go->GetEntry(), go->GetObjectGuid(), m_spellInfo->Id);
+                            p->RewardPlayerAndGroupAtCast(go, m_spellInfo->Id);
                         }
                     }
                 }
@@ -3543,7 +3535,7 @@ void Spell::finish(bool ok)
             for(tbb::concurrent_vector<TargetInfo>::const_iterator ihit = m_UniqueTargetInfo.begin(); ihit != m_UniqueTargetInfo.end(); ++ihit)
             {
                 if (ihit->deleted == true)
-                     continue;
+                    continue;
                 if (ihit->missCondition != SPELL_MISS_NONE && ihit->targetGUID != m_caster->GetObjectGuid())
                 {
                     needDrop = false;
@@ -4110,6 +4102,7 @@ void Spell::SendChannelStart(uint32 duration)
         {
             if (itr->deleted == true)
                 continue;
+            if( (itr->effectMask & (1 << 0)) && itr->reflectResult == SPELL_MISS_NONE && itr->targetGUID != m_caster->GetGUID())
             if( (itr->effectMask & (1 << 0)) && itr->reflectResult == SPELL_MISS_NONE && itr->targetGUID != m_caster->GetObjectGuid())
             {
                 target = ObjectAccessor::GetUnit(*m_caster, itr->targetGUID);
@@ -4119,10 +4112,8 @@ void Spell::SendChannelStart(uint32 duration)
     }
     else if(!m_UniqueGOTargetInfo.empty())
     {
-        for(tbb::concurrent_vector<GOTargetInfo>::const_iterator itr = m_UniqueGOTargetInfo.begin(); itr != m_UniqueGOTargetInfo.end(); ++itr)
+        for(std::list<GOTargetInfo>::const_iterator itr = m_UniqueGOTargetInfo.begin(); itr != m_UniqueGOTargetInfo.end(); ++itr)
         {
-            if (itr->deleted)
-                 continue;
             if(itr->effectMask & (1 << 0) )
             {
                 target = m_caster->GetMap()->GetGameObject(itr->targetGUID);
@@ -5848,10 +5839,10 @@ bool Spell::CanAutoCast(Unit* target)
         for(tbb::concurrent_vector<TargetInfo>::const_iterator ihit= m_UniqueTargetInfo.begin();ihit != m_UniqueTargetInfo.end();++ihit)
         {
             if (ihit->deleted == true)
-                 continue;
+                continue;
 
             if (ihit->targetGUID == targetguid)
-                 return true;
+                return true;
         }
     }
     return false;                                           //target invalid
@@ -6325,19 +6316,14 @@ SpellCastResult Spell::CheckItems()
                 if(!itemProto)
                     return SPELL_FAILED_CANT_BE_DISENCHANTED;
 
-                uint32 item_quality = itemProto->Quality;
-                // 2.0.x addon: Check player enchanting level against the item disenchanting requirements
-                uint32 item_disenchantskilllevel = itemProto->RequiredDisenchantSkill;
-                if (item_disenchantskilllevel == uint32(-1))
-                    return SPELL_FAILED_CANT_BE_DISENCHANTED;
-                if (item_disenchantskilllevel > p_caster->GetSkillValue(SKILL_ENCHANTING))
-                    return SPELL_FAILED_LOW_CASTLEVEL;
-                if(item_quality > 4 || item_quality < 2)
-                    return SPELL_FAILED_CANT_BE_DISENCHANTED;
-                if(itemProto->Class != ITEM_CLASS_WEAPON && itemProto->Class != ITEM_CLASS_ARMOR)
-                    return SPELL_FAILED_CANT_BE_DISENCHANTED;
+                // must have disenchant loot (other static req. checked at item prototype loading)
                 if (!itemProto->DisenchantID)
                     return SPELL_FAILED_CANT_BE_DISENCHANTED;
+
+                // 2.0.x addon: Check player enchanting level against the item disenchanting requirements
+                int32 item_disenchantskilllevel = itemProto->RequiredDisenchantSkill;
+                if (item_disenchantskilllevel > int32(p_caster->GetSkillValue(SKILL_ENCHANTING)))
+                    return SPELL_FAILED_LOW_CASTLEVEL;
                 break;
             }
             case SPELL_EFFECT_PROSPECTING:
@@ -6716,7 +6702,7 @@ bool Spell::HaveTargetsForEffect(SpellEffectIndex effect) const
     for(tbb::concurrent_vector<TargetInfo>::const_iterator itr = m_UniqueTargetInfo.begin(); itr != m_UniqueTargetInfo.end(); ++itr)
     {
         if(itr->deleted == true)
-           continue;
+            continue;
 
         if(itr->effectMask & (1 << effect))
             return true;
@@ -6725,16 +6711,17 @@ bool Spell::HaveTargetsForEffect(SpellEffectIndex effect) const
     for(tbb::concurrent_vector<GOTargetInfo>::const_iterator itr = m_UniqueGOTargetInfo.begin(); itr != m_UniqueGOTargetInfo.end(); ++itr)
     {
         if(itr->deleted == true)
-           continue;
+            continue;
 
         if(itr->effectMask & (1 << effect))
             return true;
     }
+    
     for(tbb::concurrent_vector<ItemTargetInfo>::const_iterator itr = m_UniqueItemInfo.begin(); itr != m_UniqueItemInfo.end(); ++itr)
     {
         if(itr->deleted == true)
-           continue;
-
+            continue;
+ 
         if(itr->effectMask & (1 << effect))
             return true;
     }

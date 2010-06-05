@@ -437,7 +437,6 @@
     <ClCompile Include="..\..\src\shared\Auth\SARC4.cpp" />
     <ClCompile Include="..\..\src\shared\Auth\Sha1.cpp" />
     <ClCompile Include="..\..\src\shared\Common.cpp" />
-    <ClCompile Include="..\..\src\shared\DelayExecutor.cpp" />
     <ClCompile Include="..\..\src\shared\Config\Config.cpp" />
     <ClCompile Include="..\..\src\shared\Config\dotconfpp\dotconfpp.cpp" />
     <ClCompile Include="..\..\src\shared\Config\dotconfpp\mempool.cpp" />
@@ -503,7 +502,6 @@
     <ClInclude Include="..\..\src\shared\pathfinding\Recast\RecastTimer.h" />
     <ClInclude Include="..\..\src\shared\WorldPacket.h" />
     <ClInclude Include="..\..\src\shared\Common.h" />
-    <ClInclude Include="..\..\src\shared\DelayExecutor.h" />
     <ClInclude Include="..\..\src\shared\Config\Config.h" />
     <ClInclude Include="..\..\src\shared\Config\ConfigEnv.h" />
     <ClInclude Include="..\..\src\shared\Config\dotconfpp\dotconfpp.h" />

@@ -671,7 +671,9 @@ void ObjectMgr::LoadCreatureTemplates()
         }
 
         // use below code for 0-checks for unit_class
-        if (/*!cInfo->unit_class ||*/cInfo->unit_class && ((1 << (cInfo->unit_class-1)) & CLASSMASK_ALL_CREATURES) == 0)
+        if (!cInfo->unit_class)
+            ERROR_DB_STRICT_LOG("Creature (Entry: %u) not has proper unit_class(%u) for creature_template", cInfo->Entry, cInfo->unit_class);
+        else if (((1 << (cInfo->unit_class-1)) & CLASSMASK_ALL_CREATURES) == 0)
             sLog.outErrorDb("Creature (Entry: %u) has invalid unit_class(%u) for creature_template", cInfo->Entry, cInfo->unit_class);
 
         if(cInfo->dmgschool >= MAX_SPELL_SCHOOL)
@@ -2146,6 +2148,51 @@ void ObjectMgr::LoadItemPrototypes()
         if(proto->GemProperties && !sGemPropertiesStore.LookupEntry(proto->GemProperties))
             sLog.outErrorDb("Item (Entry: %u) has wrong GemProperties (%u)",i,proto->GemProperties);
 
+        if (proto->RequiredDisenchantSkill < -1)
+        {
+            sLog.outErrorDb("Item (Entry: %u) has wrong RequiredDisenchantSkill (%i), set to (-1).",i,proto->RequiredDisenchantSkill);
+            const_cast<ItemPrototype*>(proto)->RequiredDisenchantSkill = -1;
+        }
+        else if (proto->RequiredDisenchantSkill != -1)
+        {
+            if (proto->Quality > ITEM_QUALITY_EPIC || proto->Quality < ITEM_QUALITY_UNCOMMON)
+            {
+                ERROR_DB_STRICT_LOG("Item (Entry: %u) has unexpected RequiredDisenchantSkill (%u) for non-disenchantable quality (%u), reset it.",i,proto->RequiredDisenchantSkill,proto->Quality);
+                const_cast<ItemPrototype*>(proto)->RequiredDisenchantSkill = -1;
+            }
+            else if (proto->Class != ITEM_CLASS_WEAPON && proto->Class != ITEM_CLASS_ARMOR)
+            {
+                // some wrong data in wdb for unused items
+                ERROR_DB_STRICT_LOG("Item (Entry: %u) has unexpected RequiredDisenchantSkill (%u) for non-disenchantable item class (%u), reset it.",i,proto->RequiredDisenchantSkill,proto->Class);
+                const_cast<ItemPrototype*>(proto)->RequiredDisenchantSkill = -1;
+            }
+        }
+
+        if (proto->DisenchantID)
+        {
+            if (proto->Quality > ITEM_QUALITY_EPIC || proto->Quality < ITEM_QUALITY_UNCOMMON)
+            {
+                sLog.outErrorDb("Item (Entry: %u) has wrong quality (%u) for disenchanting, remove disenchanting loot id.",i,proto->Quality);
+                const_cast<ItemPrototype*>(proto)->DisenchantID = 0;
+            }
+            else if (proto->Class != ITEM_CLASS_WEAPON && proto->Class != ITEM_CLASS_ARMOR)
+            {
+                sLog.outErrorDb("Item (Entry: %u) has wrong item class (%u) for disenchanting, remove disenchanting loot id.",i,proto->Class);
+                const_cast<ItemPrototype*>(proto)->DisenchantID = 0;
+            }
+            else if (proto->RequiredDisenchantSkill < 0)
+            {
+                sLog.outErrorDb("Item (Entry: %u) marked as non-disenchantable by RequiredDisenchantSkill == -1, remove disenchanting loot id.",i);
+                const_cast<ItemPrototype*>(proto)->DisenchantID = 0;
+            }
+        }
+        else
+        {
+            // lot DB cases
+            if (proto->RequiredDisenchantSkill >= 0)
+                ERROR_DB_STRICT_LOG("Item (Entry: %u) marked as disenchantable by RequiredDisenchantSkill, but not have disenchanting loot id.",i);
+        }
+
         if(proto->FoodType >= MAX_PET_DIET)
         {
             sLog.outErrorDb("Item (Entry: %u) has wrong FoodType value (%u)",i,proto->FoodType);
@@ -3170,8 +3217,8 @@ void ObjectMgr::LoadGuilds()
 
     //                                                    0             1          2          3           4           5           6
     QueryResult *result = CharacterDatabase.Query("SELECT guild.guildid,guild.name,leaderguid,EmblemStyle,EmblemColor,BorderStyle,BorderColor,"
-    //   7               8    9    10         11        12
-        "BackgroundColor,info,motd,createdate,BankMoney,(SELECT COUNT(guild_bank_tab.guildid) FROM guild_bank_tab WHERE guild_bank_tab.guildid = guild.guildid) "
+    //   7               8    9    10         11        12                                     13
+        "BackgroundColor,info,motd,createdate,BankMoney,(SELECT COUNT(guild_bank_tab.guildid), guild.friendlyGuildId FROM guild_bank_tab WHERE guild_bank_tab.guildid = guild.guildid) "
         "FROM guild ORDER BY guildid ASC");
 
     if( !result )
@@ -6077,11 +6124,10 @@ inline void CheckGOLinkedTrapId(GameObjectInfo const* goInfo,uint32 dataN,uint32
             sLog.outErrorDb("Gameobject (Entry: %u GoType: %u) have data%d=%u but GO (Entry %u) have not GAMEOBJECT_TYPE_TRAP (%u) type.",
             goInfo->id,goInfo->type,N,dataN,dataN,GAMEOBJECT_TYPE_TRAP);
     }
-    /* disable check for while (too many error reports baout not existed in trap templates
     else
-        sLog.outErrorDb("Gameobject (Entry: %u GoType: %u) have data%d=%u but trap GO (Entry %u) not exist in `gameobject_template`.",
+        // too many error reports about not existed trap templates
+        ERROR_DB_STRICT_LOG("Gameobject (Entry: %u GoType: %u) have data%d=%u but trap GO (Entry %u) not exist in `gameobject_template`.",
             goInfo->id,goInfo->type,N,dataN,dataN);
-    */
 }
 
 inline void CheckGOSpellId(GameObjectInfo const* goInfo,uint32 dataN,uint32 N)

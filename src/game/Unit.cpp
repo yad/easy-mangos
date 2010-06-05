@@ -317,8 +317,14 @@ void Unit::Update( uint32 p_time )
     // Spells must be processed with event system BEFORE they go to _UpdateSpells.
     // Or else we may have some SPELL_STATE_FINISHED spells stalled in pointers, that is bad.
     sWorld.m_spellUpdateLock.acquire();
+    #pragma omp critical(UpdateThreadSafety)
     m_Events.Update( p_time );
+
+    if(!IsInWorld())
+        return;
+
     _UpdateSpells( p_time );
+    #pragma omp end critical(UpdateThreadSafety)
     sWorld.m_spellUpdateLock.release();
 
     CleanupDeletedAuras();
@@ -614,6 +620,15 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
     // root type spells do not dispel the root effect
     if (!spellProto || !(spellProto->Mechanic == MECHANIC_ROOT || IsSpellHaveAura(spellProto,SPELL_AURA_MOD_ROOT)))
         pVictim->RemoveSpellbyDamageTaken(SPELL_AURA_MOD_ROOT, damage + absorb);
+
+    WeaponAttackType attType = GetWeaponAttackType(spellProto);
+    
+    // on weapon hit casts, proc from melee damage implemented in DealMeleeDamage() (sent with spellProto == NULL, which determines possible double proc)
+    if(GetTypeId() == TYPEID_PLAYER &&
+       spellProto &&
+       (spellProto->DmgClass == SPELL_DAMAGE_CLASS_MELEE ||
+       spellProto->DmgClass == SPELL_DAMAGE_CLASS_RANGED))
+        ((Player*)this)->CastItemCombatSpell(pVictim, attType);
 
     // no xp,health if type 8 /critters/
     if(pVictim->GetTypeId() != TYPEID_PLAYER && pVictim->GetCreatureType() == CREATURE_TYPE_CRITTER)
@@ -1749,7 +1764,7 @@ void Unit::DealMeleeDamage(CalcDamageInfo *damageInfo, bool durabilityLoss)
     // If not miss
     if (!(damageInfo->HitInfo & HITINFO_MISS))
     {
-        // on weapon hit casts
+        // on weapon hit casts, proc from melee and ranged spells implemented in DealDamage()
         if(GetTypeId() == TYPEID_PLAYER && pVictim->isAlive())
             ((Player*)this)->CastItemCombatSpell(pVictim, damageInfo->attackType);
 
@@ -2920,15 +2935,17 @@ SpellMissInfo Unit::MeleeSpellHitResult(Unit *pVictim, SpellEntry const *spell)
 {
     WeaponAttackType attType = BASE_ATTACK;
 
-    // Only for hunters/warriors, other classes do not have ranged attack that would benefit from ranged hit
-    if (spell->DmgClass == SPELL_DAMAGE_CLASS_RANGED &&
-        (spell->SpellFamilyName == SPELLFAMILY_WARRIOR ||
-        spell->SpellFamilyName == SPELLFAMILY_HUNTER ||
-        spell->SpellFamilyName == SPELLFAMILY_GENERIC))
+    if (spell->DmgClass == SPELL_DAMAGE_CLASS_RANGED)
         attType = RANGED_ATTACK;
 
     // bonus from skills is 0.04% per skill Diff
     int32 attackerWeaponSkill = int32(GetWeaponSkillValue(attType,pVictim));
+
+    // Only for hunters/warriors, other classes do not have ranged attack that would benefit from ranged weapon skill
+    if(spell->SpellFamilyName != SPELLFAMILY_HUNTER ||
+       spell->SpellFamilyName != SPELLFAMILY_WARRIOR ||
+       spell->SpellFamilyName != SPELLFAMILY_GENERIC)
+        attackerWeaponSkill = int32(GetWeaponSkillValue(BASE_ATTACK,pVictim));
 
     // Probably not needed after [pr456]
     /*if ( spell->SpellFamilyName == SPELLFAMILY_PALADIN )

@@ -1535,7 +1535,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         void ItemRemovedQuestCheck( uint32 entry, uint32 count );
         void KilledMonster( CreatureInfo const* cInfo, ObjectGuid guid );
         void KilledMonsterCredit( uint32 entry, ObjectGuid guid );
-        void CastedCreatureOrGO( uint32 entry, ObjectGuid guid, uint32 spell_id );
+        void CastedCreatureOrGO( uint32 entry, ObjectGuid guid, uint32 spell_id, bool original_caster = true );
         void TalkedToCreature( uint32 entry, ObjectGuid guid );
         void MoneyChanged( uint32 value );
         void ReputationChanged(FactionEntry const* factionEntry );
@@ -2041,8 +2041,9 @@ class MANGOS_DLL_SPEC Player : public Unit
         void InitDisplayIds();
 
         bool IsAtGroupRewardDistance(WorldObject const* pRewardSource) const;
-        bool RewardSinglePlayerAtKill(Unit* pVictim);
+        void RewardSinglePlayerAtKill(Unit* pVictim);
         void RewardPlayerAndGroupAtEvent(uint32 creature_id,WorldObject* pRewardSource);
+        void RewardPlayerAndGroupAtCast(WorldObject* pRewardSource, uint32 spellid = 0);
         bool isHonorOrXPTarget(Unit* pVictim) const;
 
         ReputationMgr&       GetReputationMgr()       { return m_reputationMgr; }
@@ -2322,11 +2323,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         bool isMoving() const { return m_movementInfo.HasMovementFlag(movementFlagsMask); }
         bool isMovingOrTurning() const { return m_movementInfo.HasMovementFlag(movementOrTurningFlagsMask); }
 
-        uint32 Anti__GetLastTeleTime() const { return m_anti_TeleTime; }
-        void Anti__SetLastTeleTime(uint32 TeleTime) { m_anti_TeleTime=TeleTime; }
-        //bool CanFly() const { return m_movementInfo.HasMovementFlag(MOVEFLAG_CAN_FLY); }
-        bool CanFly() const { return m_CanFly;  }
-        void SetCanFly(bool CanFly) { m_CanFly=CanFly; }
+        bool CanFly() const { return m_movementInfo.HasMovementFlag(MOVEFLAG_CAN_FLY); }
         bool IsFlying() const { return m_movementInfo.HasMovementFlag(MOVEFLAG_FLYING); }
         bool IsKnowHowFlyIn(uint32 mapid, uint32 zone, uint32 area) const;
 
@@ -2705,16 +2702,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         float m_rest_bonus;
         RestType rest_type;
         ////////////////////Rest System/////////////////////
-
-        //movement anticheat
-        uint32 m_anti_lastmovetime;     //last movement time
-        float  m_anti_MovedLen;         //Length of traveled way
-        uint32 m_anti_NextLenCheck;
-        float  m_anti_BeginFallZ;    //alternative falling begin
-        uint32 m_anti_lastalarmtime;    //last time when alarm generated
-        uint32 m_anti_alarmcount;       //alarm counter
-        uint32 m_anti_TeleTime;
-        bool m_CanFly;
 
         // Transports
         Transport * m_transport;

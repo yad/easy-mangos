@@ -20,7 +20,7 @@
 
 ## CPP flags for includes, defines, etc.
 AM_CPPFLAGS = $(MANGOS_INCLUDES) -I$(top_builddir)/src/shared -I$(srcdir) -I$(srcdir)/../../dep/tbb/include -I$(srcdir)/../../dep/include -I$(srcdir)/../framework -I$(srcdir)/../shared -I$(srcdir)/../shared/vmap -I$(srcdir)/../realmd -DSYSCONFDIR=\"$(sysconfdir)/\"
-
+ 
 ## Build MaNGOS game library as convenience library.
 #  All libraries will be convenience libraries. Might be changed to shared
 #  later.
@@ -184,8 +184,6 @@ libmangosgame_a_SOURCES = \
 	MapInstanced.h \
 	MapManager.cpp \
 	MapManager.h \
-	MapUpdater.cpp \
-	MapUpdater.h \
 	MapReference.h \
 	MapRefManager.h \
 	MiscHandler.cpp \

@@ -23,6 +23,7 @@
 #ifndef __WORLD_H
 #define __WORLD_H
 
+#include <omp.h>
 #include "Common.h"
 #include "Timer.h"
 #include "Policies/Singleton.h"
@@ -210,6 +211,7 @@ enum eConfigUInt32Values
     CONFIG_UINT32_FACTIONED_MAP_TEAM,
     CONFIG_UINT32_LOSERNOCHANGE,
     CONFIG_UINT32_LOSERHALFCHANGE,
+    CONFIG_UINT32_NUMTHREADS,
     CONFIG_UINT32_AHBOT_ACCOUNT_ID,
     CONFIG_UINT32_AHBOT_CHARACTER_ID,
     CONFIG_UINT32_AHBOT_ITEMS_CYCLE,
@@ -652,28 +654,6 @@ class World
         static float GetVisibleUnitGreyDistance()           { return m_VisibleUnitGreyDistance;       }
         static float GetVisibleObjectGreyDistance()         { return m_VisibleObjectGreyDistance;     }
 
-        //movement anticheat enable flag
-        inline bool GetMvAnticheatEnable()             {return m_MvAnticheatEnable;}
-        inline bool GetMvAnticheatKick()               {return m_MvAnticheatKick;}
-        inline bool GetMvAnticheatAnnounce()           {return m_MvAnticheatAnnounce;}
-        inline uint32 GetMvAnticheatAlarmCount()       {return m_MvAnticheatAlarmCount;}
-        inline uint32 GetMvAnticheatAlarmPeriod()      {return m_MvAnticheatAlarmPeriod;}
-        inline unsigned char GetMvAnticheatBan()       {return m_MvAntiCheatBan;}
-        inline std::string GetMvAnticheatBanTime()     {return m_MvAnticheatBanTime;}
-        inline unsigned char GetMvAnticheatGmLevel()   {return m_MvAnticheatGmLevel;}
-        inline bool GetMvAnticheatKill()               {return m_MvAnticheatKill;}
-        inline float GetMvAnticheatMaxXYT()            {return m_MvAnticheatMaxXYT;}
-        inline uint16 GetMvAnticheatIgnoreAfterTeleport()   {return m_MvAnticheatIgnoreAfterTeleport;}
-
-        inline bool GetMvAnticheatSpeedCheck()         {return m_MvAnticheatSpeedCheck;}
-        inline bool GetMvAnticheatWaterCheck()         {return m_MvAnticheatWaterCheck;}
-        inline bool GetMvAnticheatFlyCheck()           {return m_MvAnticheatFlyCheck;}
-        inline bool GetMvAnticheatMountainCheck()      {return m_MvAnticheatMountainCheck;}
-        inline bool GetMvAnticheatJumpCheck()          {return m_MvAnticheatJumpCheck;}
-        inline bool GetMvAnticheatTeleportCheck()      {return m_MvAnticheatTeleportCheck;}
-        inline bool GetMvAnticheatTeleport2PlaneCheck()  {return m_MvAnticheatTeleport2PlaneCheck;}
-
-
         void ProcessCliCommands();
         void QueueCliCommand(CliCommandHolder* commandHolder) { cliCmdQueue.add(commandHolder); }
 
@@ -767,26 +747,6 @@ class World
         static float m_MaxVisibleDistanceInFlight;
         static float m_VisibleUnitGreyDistance;
         static float m_VisibleObjectGreyDistance;
-
-        //movement anticheat enable flag
-        bool m_MvAnticheatEnable;
-        bool m_MvAnticheatKick;
-        bool m_MvAnticheatAnnounce;
-        uint32 m_MvAnticheatAlarmCount;
-        uint32 m_MvAnticheatAlarmPeriod;
-        unsigned char m_MvAntiCheatBan;
-        std::string m_MvAnticheatBanTime;
-        unsigned char m_MvAnticheatGmLevel;
-        bool m_MvAnticheatKill;
-        float m_MvAnticheatMaxXYT;
-        uint16 m_MvAnticheatIgnoreAfterTeleport;
-        bool m_MvAnticheatSpeedCheck;
-        bool m_MvAnticheatWaterCheck;
-        bool m_MvAnticheatFlyCheck;
-        bool m_MvAnticheatMountainCheck;
-        bool m_MvAnticheatJumpCheck;
-        bool m_MvAnticheatTeleportCheck;
-        bool m_MvAnticheatTeleport2PlaneCheck;
 
         // CLI command holder to be thread safe
         ACE_Based::LockedQueue<CliCommandHolder*,ACE_Thread_Mutex> cliCmdQueue;

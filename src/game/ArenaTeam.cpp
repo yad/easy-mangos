@@ -593,6 +593,12 @@ int32 ArenaTeam::LostAgainst(uint32 againstRating)
     float K = (m_stats.rating < 1500) ? 48.0f : 32.0f;
     // calculate the rating modification (ELO system with k=32 or k=48 if rating<1000)
     int32 mod = (int32)ceil(K * (0.0f - chance));
+	
+    if(againstRating <= sWorld.getConfig(CONFIG_UINT32_LOSERNOCHANGE) || m_stats.rating <= sWorld.getConfig(CONFIG_UINT32_LOSERNOCHANGE))
+        mod = 0;
+    else if (m_stats.rating <= sWorld.getConfig(CONFIG_UINT32_LOSERHALFCHANGE))
+        mod /= 2;
+
     // modify the team stats accordingly
     FinishGame(mod);
 
@@ -609,9 +615,15 @@ void ArenaTeam::MemberLost(Player * plr, uint32 againstRating)
         {
             // update personal rating
             float chance = GetChanceAgainst(itr->personal_rating, againstRating);
-            float K = (itr->personal_rating < 1000) ? 48.0f : 32.0f;
+            float K = (itr->personal_rating < 1500) ? 48.0f : 32.0f;
             // calculate the rating modification (ELO system with k=32 or k=48 if rating<1000)
             int32 mod = (int32)ceil(K * (0.0f - chance));
+
+            if(againstRating <= sWorld.getConfig(CONFIG_UINT32_LOSERNOCHANGE) || itr->personal_rating <= sWorld.getConfig(CONFIG_UINT32_LOSERNOCHANGE))
+                mod = 0;
+            else if (itr->personal_rating <= sWorld.getConfig(CONFIG_UINT32_LOSERHALFCHANGE))
+                mod /= 2;
+
             itr->ModifyPersonalRating(plr, mod, GetSlot());
             // update personal played stats
             itr->games_week += 1;
@@ -657,7 +669,7 @@ void ArenaTeam::MemberWon(Player * plr, uint32 againstRating)
         {
             // update personal rating
             float chance = GetChanceAgainst(itr->personal_rating, againstRating);
-            float K = (itr->personal_rating < 1000) ? 48.0f : 32.0f;
+            float K = (itr->personal_rating < 1500) ? 48.0f : 32.0f;
             // calculate the rating modification (ELO system with k=32 or k=48 if rating<1000)
             int32 mod = (int32)floor(K* (1.0f - chance));
             itr->ModifyPersonalRating(plr, mod, GetSlot());
