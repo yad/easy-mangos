@@ -6,7 +6,7 @@
 #include "Errors.h"
 
 
-Camera::Camera(Player* pl) : m_owner(*pl), m_source(pl)
+Camera::Camera(Player* pl) : m_owner(*pl), m_source(pl), caused_by_aura(0)
 {
     m_source->getViewPoint().Attach(this);
 }
@@ -32,7 +32,7 @@ void Camera::UpdateForCurrentViewPoint()
     UpdateVisibilityForOwner();
 }
 
-void Camera::SetView(WorldObject *obj)
+void Camera::SetView(WorldObject *obj, uint32 aura_id)
 {
     ASSERT(obj);
 
@@ -48,6 +48,8 @@ void Camera::SetView(WorldObject *obj)
         return;
     }
 
+    caused_by_aura = aura_id;
+
     m_source->getViewPoint().Detach(this);
     m_source = obj;
     m_source->getViewPoint().Attach(this);
@@ -55,24 +57,18 @@ void Camera::SetView(WorldObject *obj)
     UpdateForCurrentViewPoint();
 }
 
-bool Camera::Event_ResetView()
+void Camera::Event_ViewPointVisibilityChanged()
 {
-    if (&m_owner == m_source)
-        return false;
-
-    m_source = &m_owner;
-    m_source->getViewPoint().Attach(this);
-
-    UpdateForCurrentViewPoint();
-    return true;
-}
-
-bool Camera::Event_ViewPointVisibilityChanged()
-{
-    if (!m_owner.HaveAtClient(m_source))
-        return Event_ResetView();
-
-    return false;
+    if(!m_owner.HaveAtClient(m_source))
+    {
+        if(m_source->isType(TYPEMASK_UNIT) && caused_by_aura)
+        {
+            m_owner.RemoveAurasByCasterSpell(caused_by_aura, m_owner.GetGUID());
+            ((Unit*)m_source)->RemoveAurasByCasterSpell(caused_by_aura, m_owner.GetGUID()); // ResetView called at aura remove
+        }
+        else
+            ResetView();
+    }
 }
 
 void Camera::ResetView()
@@ -82,6 +78,7 @@ void Camera::ResetView()
     m_source->getViewPoint().Attach(this);
 
     UpdateForCurrentViewPoint();
+    caused_by_aura = 0;
 }
 
 void Camera::Event_AddedToWorld()
@@ -93,15 +90,15 @@ void Camera::Event_AddedToWorld()
     UpdateVisibilityForOwner();
 }
 
-bool Camera::Event_RemovedFromWorld()
+void Camera::Event_RemovedFromWorld()
 {
     if(m_source == &m_owner)
     {
         m_gridRef.unlink();
-        return false;
+        return;
     }
 
-    return Event_ResetView();
+    ResetView();
 }
 
 void Camera::Event_Moved()

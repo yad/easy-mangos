@@ -144,6 +144,10 @@ bool DynamicObject::isVisibleForInState(Player const* u, WorldObject const* view
     if(!IsInWorld() || !u->IsInWorld())
         return false;
 
+    // always seen by owner
+    if(GetCasterGUID()==u->GetGUID())
+        return true;
+
     // normal case
     return IsWithinDistInMap(viewPoint, World::GetMaxVisibleDistanceForObject() + (inVisibleList ? World::GetVisibleObjectGreyDistance() : 0.0f), false);
 }
