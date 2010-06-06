@@ -296,10 +296,12 @@ void Unit::Update( uint32 p_time )
     sWorld.m_spellUpdateLock.acquire();
     #pragma omp critical(UpdateThreadSafety)
     m_Events.Update( p_time );
-
+    // End this if unit is despawned
     if(!IsInWorld())
+    {
+        sWorld.m_spellUpdateLock.release(); // must release lock...
         return;
-
+    }
     _UpdateSpells( p_time );
     #pragma omp end critical(UpdateThreadSafety)
     sWorld.m_spellUpdateLock.release();
