@@ -115,11 +115,11 @@ MessageDeliverer::Visit(CameraMapType &m)
     }
 }
 
-void MessageDelivererExcept::Visit(PlayerMapType &m)
+void MessageDelivererExcept::Visit(CameraMapType &m)
 {
-    for(PlayerMapType::iterator it = m.begin(); it!= m.end(); ++it)
+    for(CameraMapType::iterator it = m.begin(); it!= m.end(); ++it)
     {
-        Player* player = it->getSource();
+        Player* player = it->getSource()->getOwner();
         if(!player->InSamePhase(i_phaseMask) || player == i_skipped_receiver)
             continue;
 
