@@ -103,10 +103,13 @@ namespace MMAP
             void buildMoveMap(uint32 mapID);
             void initIntermediateValues(IntermediateValues &iv);
             void clearIntermediateValues(IntermediateValues &iv);
+
             void generateObjFile(uint32 mapID);
             void writePolyMesh(FILE* file, const rcPolyMesh* mesh);
             void writeDetailMesh(FILE* file, const rcPolyMeshDetail* mesh);
+
             void cleanup();
+            float snapToGrid(const float coord);
             bool shouldSkipMap(uint32 mapID);
             bool isTransportMap(uint32 mapID);
 

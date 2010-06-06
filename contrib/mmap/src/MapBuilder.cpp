@@ -405,17 +405,17 @@ namespace MMAP
         int triCount = m_triangles.size() / 3;
 
         rcCalcBounds(verts, vertCount, bmin, bmax);
-        float yLen = abs(bmax[0] - bmin[0]);
-        float xLen = abs(bmax[2] - bmin[2]);
+        float yLen = abs(snapToGrid(bmax[0]) - snapToGrid(bmin[0]));
+        float xLen = abs(snapToGrid(bmax[2]) - snapToGrid(bmin[2]));
 
         // some maps are smaller than GRID_SIZE
         float gridSize = GRID_SIZE;
-        if(yLen < GRID_SIZE && xLen < GRID_SIZE)
-            gridSize = max(yLen, xLen);
-        else if(yLen < GRID_SIZE)
-            gridSize = yLen;
-        else if(xLen < GRID_SIZE)
-            gridSize = xLen;
+        //if(yLen < GRID_SIZE && xLen < GRID_SIZE)
+        //    gridSize = max(yLen, xLen);
+        //else if(yLen < GRID_SIZE)
+        //    gridSize = yLen;
+        //else if(xLen < GRID_SIZE)
+        //    gridSize = xLen;
 
         // set common config
         rcConfig config;
@@ -448,10 +448,10 @@ namespace MMAP
         // navmesh tile dimensions
         // float precision: 533.33333 => 533.33331
         // also force at least 1 tile, due to floor
-        int ycount = floor(yLen / gridSize);
-        int xcount = floor(xLen / gridSize);
-        const int yTileCount = ycount > 0 ? ycount : 1;
-        const int xTileCount = xcount > 0 ? xcount : 1;
+        int ycount = ceil(yLen / gridSize);
+        int xcount = ceil(xLen / gridSize);
+        const int yTileCount = ycount/* > 0 ? ycount : 1*/;
+        const int xTileCount = xcount/* > 0 ? xcount : 1*/;
 
         // calculate number of bits needed to store tiles & polys
         int tileBits = rcMin((int)ilog2(nextPow2(yTileCount*xTileCount)), 14);
@@ -490,8 +490,8 @@ namespace MMAP
         fwrite(&navMeshParams, sizeof(dtNavMeshParams), 1, file);
 
         int tileX, tileY;
-        float yMin = bmin[0];
-        float xMin = bmin[2];
+        float yMin = snapToGrid(bmin[0]);
+        float xMin = snapToGrid(bmin[2]);
 
         fclose(file);
 
@@ -894,6 +894,14 @@ namespace MMAP
 
         m_vertices.fastClear();
         m_triangles.fastClear();
+    }
+
+    float MapBuilder::snapToGrid(const float coord)
+    {
+        if(coord > 0)
+            return ceil(coord / GRID_SIZE) * GRID_SIZE;
+        else
+            return floor(coord / GRID_SIZE) * GRID_SIZE;
     }
 
     bool MapBuilder::shouldSkipMap(uint32 mapID)
