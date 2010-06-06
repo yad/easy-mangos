@@ -829,7 +829,7 @@ void Spell::AddUnitTarget(Unit* pVictim, SpellEffectIndex effIndex)
 
 
     // Lookup target in already in list
-    for(tbb::concurrent_vector<TargetInfo>::iterator ihit= m_UniqueTargetInfo.begin(); ihit != m_UniqueTargetInfo.end(); ++ihit)
+    for(tbb::concurrent_vector<TargetInfo>::iterator ihit = m_UniqueTargetInfo.begin(); ihit != m_UniqueTargetInfo.end(); ++ihit)
     {
         if (targetGUID == ihit->targetGUID)                 // Found in list
         {
@@ -978,6 +978,10 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
         return;
 
     if (!target || target == (TargetInfo*)0x10 || target->processed)
+        return;
+
+    Unit* unit = m_caster->GetObjectGuid() == target->targetGUID ? m_caster : ObjectAccessor::GetUnit(*m_caster, target->targetGUID);
+    if (!unit)
         return;
 
     target->processed = true;                               // Target checked in apply effects procedure
