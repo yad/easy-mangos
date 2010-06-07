@@ -689,8 +689,8 @@ namespace MMAP
                 params.walkableHeight = agentHeight;
                 params.walkableRadius = agentRadius;
                 params.walkableClimb = agentMaxClimb;
-                params.tileX = y;
-                params.tileY = x;
+                params.tileX = (((bmin[0] + bmax[0]) / 2) - navMesh->getParams()->orig[0]) / GRID_SIZE;
+                params.tileY = (((bmin[2] + bmax[2]) / 2) - navMesh->getParams()->orig[2]) / GRID_SIZE;
                 rcVcopy(params.bmin, bmin);
                 rcVcopy(params.bmax, bmax);
                 params.cs = config.cs;
