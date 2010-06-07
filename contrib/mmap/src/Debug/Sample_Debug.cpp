@@ -20,7 +20,7 @@
 #include <math.h>
 #include <stdio.h>
 #include "Sample_Debug.h"
-#include "pathfinding/InputGeom.h"
+#include "InputGeom.h"
 #include "pathfinding/Recast/Recast.h"
 #include "pathfinding/Detour/DetourNavMesh.h"
 #include "pathfinding/Recast/RecastLog.h"

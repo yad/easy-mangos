@@ -23,7 +23,7 @@
 #include "pathfinding/Detour/DetourNavMesh.h"
 #include "pathfinding/Recast/Recast.h"
 #include "pathfinding/Recast/RecastLog.h"
-#include "pathfinding/ChunkyTriMesh.h"
+#include "ChunkyTriMesh.h"
 
 class Sample_TileMesh : public Sample
 {

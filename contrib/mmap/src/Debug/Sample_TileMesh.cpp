@@ -23,7 +23,7 @@
 #include "SDL.h"
 #include "SDL_opengl.h"
 #include "imgui.h"
-#include "pathfinding/InputGeom.h"
+#include "InputGeom.h"
 #include "Sample.h"
 #include "Sample_TileMesh.h"
 #include "pathfinding/Recast/Recast.h"
