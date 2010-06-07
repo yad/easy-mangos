@@ -105,6 +105,11 @@ namespace MMAP
             void clearIntermediateValues(IntermediateValues &iv);
 
             void generateObjFile(uint32 mapID);
+            void writeIV(uint32 mapID, uint32 tileX, uint32 tileY, IntermediateValues iv);
+            void writeHeightfield(FILE* file, const rcHeightfield* hf);
+            void writeSpan(FILE* file, const rcSpan* span);
+            void writeCompactHeightfield(FILE* file, const rcCompactHeightfield* chf);
+            void writeChunkyTriMesh(FILE* file, const rcChunkyTriMesh* mesh);
             void writePolyMesh(FILE* file, const rcPolyMesh* mesh);
             void writeDetailMesh(FILE* file, const rcPolyMeshDetail* mesh);
 

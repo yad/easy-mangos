@@ -598,8 +598,11 @@ namespace MMAP
                     continue;
                 }
 
-                delete iv.heightfield;
-                iv.heightfield = 0;
+                if(!m_debugOutput)
+                {
+                    delete iv.heightfield;
+                    iv.heightfield = 0;
+                }
 
                 // build polymesh intermediates
                 printf("%sEroding walkable area width...          \r", tileString);
@@ -649,8 +652,11 @@ namespace MMAP
                     continue;
                 }
 
-                delete iv.compactHeightfield; iv.compactHeightfield = 0;
-                delete iv.contours; iv.contours = 0;
+                if(!m_debugOutput)
+                {
+                    delete iv.compactHeightfield; iv.compactHeightfield = 0;
+                    delete iv.contours; iv.contours = 0;
+                }
 
                 // this might be handled within Recast at some point
                 printf("%sCleaning vertex padding...              \r", tileString);
@@ -765,21 +771,7 @@ namespace MMAP
                 fclose(file);
 
                 if(m_debugOutput)
-                {
-                    sprintf(fileName, "meshes\\%03u%02i%02i.pmesh", mapID, tileX, tileY);
-                    if(!(file = fopen(fileName, "wb")))
-                        printf("%sFailed to open %s for writing!\n",  tileString, fileName);
-                    else
-                        writePolyMesh(file, iv.polyMesh);
-                    if(file) fclose(file);
-
-                    sprintf(fileName, "meshes\\%03u%02i%02i.dmesh", mapID, tileX, tileY);
-                    if(!(file = fopen(fileName, "wb")))
-                        printf("%sFailed to open %s for writing!\n",  tileString, fileName);
-                    else
-                        writeDetailMesh(file, iv.polyMeshDetail);
-                    if(file) fclose(file);
-                }
+                    writeIV(mapID, tileX, tileY, iv);
 
                 // now that tile is written to disk, we can unload it
                 navMesh->removeTile(tileRef, 0, 0);
@@ -831,14 +823,130 @@ namespace MMAP
             return;
         }
 
-        int i;
-        for(i = 0; i < m_vertices.size() / 3; ++i)
-            fprintf(objFile, "v %f %f %f\n", m_vertices[i*3], m_vertices[i*3+1], m_vertices[i*3+2]);
-        
-        for(i = 0; i < m_triangles.size() / 3; ++i)
-            fprintf(objFile, "f %i %i %i\n", m_triangles[i*3]+1, m_triangles[i*3+1]+1, m_triangles[i*3+2]+1);
+        int vertsSize = m_vertices.size() / 3;
+        int trisSize = m_triangles.size() / 3;
+        float* verts = m_vertices.getCArray();
+        int* tris = m_triangles.getCArray();
+
+        fwrite(&vertsSize, sizeof(int), 1, objFile);
+        fwrite(verts, sizeof(float), vertsSize*3, objFile);
+        fflush(objFile);
+
+        fwrite(&trisSize, sizeof(int), 1, objFile);
+        fwrite(tris, sizeof(int), trisSize*3, objFile);
+        fflush(objFile);
 
         fclose(objFile);
+    }
+
+    void MapBuilder::writeIV(uint32 mapID, uint32 tileX, uint32 tileY, IntermediateValues iv)
+    {
+        char fileName[25];
+        char tileString[25];
+        FILE* file;
+
+        sprintf(tileString, "[%02u,%02u]: ", tileX, tileY);
+
+        printf("%sWriting debug output...                       \r", tileString);
+
+        // heightfield
+        sprintf(fileName, "meshes\\%03u%02i%02i.hf", mapID, tileX, tileY);
+        if(!(file = fopen(fileName, "wb")))
+            printf("%sFailed to open %s for writing!\n",  tileString, fileName);
+        else
+            writeHeightfield(file, iv.heightfield);
+        if(file) fclose(file);
+
+        printf("%sWriting debug output...                       \r", tileString);
+
+        // compact heightfield
+        sprintf(fileName, "meshes\\%03u%02i%02i.chf", mapID, tileX, tileY);
+        if(!(file = fopen(fileName, "wb")))
+            printf("%sFailed to open %s for writing!\n",  tileString, fileName);
+        else
+            writeCompactHeightfield(file, iv.compactHeightfield);
+        if(file) fclose(file);
+
+        printf("%sWriting debug output...                       \r", tileString);
+
+        // poly mesh
+        sprintf(fileName, "meshes\\%03u%02i%02i.pmesh", mapID, tileX, tileY);
+        if(!(file = fopen(fileName, "wb")))
+            printf("%sFailed to open %s for writing!\n",  tileString, fileName);
+        else
+            writePolyMesh(file, iv.polyMesh);
+        if(file) fclose(file);
+
+        printf("%sWriting debug output...                       \r", tileString);
+
+        // detail mesh
+        sprintf(fileName, "meshes\\%03u%02i%02i.dmesh", mapID, tileX, tileY);
+        if(!(file = fopen(fileName, "wb")))
+            printf("%sFailed to open %s for writing!\n",  tileString, fileName);
+        else
+            writeDetailMesh(file, iv.polyMeshDetail);
+        if(file) fclose(file);
+    }
+
+    void MapBuilder::writeHeightfield(FILE* file, const rcHeightfield* mesh)
+    {
+        if(!file || !mesh)
+            return;
+
+        fwrite(&(mesh->cs), sizeof(float), 1, file);
+        fwrite(&(mesh->ch), sizeof(float), 1, file);
+        fwrite(&(mesh->width), sizeof(int), 1, file);
+        fwrite(&(mesh->height), sizeof(int), 1, file);
+        fwrite(mesh->bmin, sizeof(float), 3, file);
+        fwrite(mesh->bmax, sizeof(float), 3, file);
+
+        rcSpan blank;
+        memset(&blank, 0, sizeof(rcSpan));
+        // leave off the last member of spans, it's a pointer we don't need
+        for(int i = 0; i < (mesh->width * mesh->height); ++i)
+            if(mesh->spans[i])
+                fwrite(mesh->spans[i], sizeof(rcSpan)-sizeof(rcSpan*), 1, file);
+            else
+                fwrite(&blank, sizeof(rcSpan)-sizeof(rcSpan*), 1, file);
+    }
+
+    void MapBuilder::writeCompactHeightfield(FILE* file, const rcCompactHeightfield* chf)
+    {
+        if(!file | !chf)
+            return;
+
+        fwrite(&(chf->width), sizeof(chf->width), 1, file);
+        fwrite(&(chf->height), sizeof(chf->height), 1, file);
+        fwrite(&(chf->spanCount), sizeof(chf->spanCount), 1, file);
+
+        fwrite(&(chf->walkableHeight), sizeof(chf->walkableHeight), 1, file);
+        fwrite(&(chf->walkableClimb), sizeof(chf->walkableClimb), 1, file);
+
+        fwrite(&(chf->maxDistance), sizeof(chf->maxDistance), 1, file);
+        fwrite(&(chf->maxRegions), sizeof(chf->maxRegions), 1, file);
+
+        fwrite(chf->bmin, sizeof(chf->bmin), 1, file);
+        fwrite(chf->bmax, sizeof(chf->bmax), 1, file);
+
+        fwrite(&(chf->cs), sizeof(chf->cs), 1, file);
+        fwrite(&(chf->ch), sizeof(chf->ch), 1, file);
+
+        int tmp = 0;
+        if (chf->cells) tmp |= 1;
+        if (chf->spans) tmp |= 2;
+        if (chf->dist) tmp |= 4;
+        if (chf->areas) tmp |= 8;
+
+        fwrite(&tmp, sizeof(tmp), 1, file);
+
+        if (chf->cells)
+            fwrite(chf->cells, sizeof(rcCompactCell), chf->width*chf->height, file);
+        if (chf->spans)
+            fwrite(chf->spans, sizeof(rcCompactSpan), chf->spanCount, file);
+        if (chf->dist)
+            fwrite(chf->dist, sizeof(unsigned short), chf->spanCount, file);
+        if (chf->areas)
+            fwrite(chf->areas, sizeof(unsigned char), chf->spanCount, file);
     }
 
     void MapBuilder::writePolyMesh(FILE* file, const rcPolyMesh* mesh)
