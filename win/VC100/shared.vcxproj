@@ -449,7 +449,6 @@
     <ClCompile Include="..\..\src\shared\Database\SQLStorage.cpp" />
     <ClCompile Include="..\..\src\shared\Log.cpp" />
     <ClCompile Include="..\..\src\shared\MemoryLeaks.cpp" />
-    <ClCompile Include="..\..\src\shared\pathfinding\ChunkyTriMesh.cpp" />
     <ClCompile Include="..\..\src\shared\pathfinding\DebugUtils\DebugDraw.cpp" />
     <ClCompile Include="..\..\src\shared\pathfinding\DebugUtils\DetourDebugDraw.cpp" />
     <ClCompile Include="..\..\src\shared\pathfinding\DebugUtils\RecastDebugDraw.cpp" />
@@ -458,8 +457,6 @@
     <ClCompile Include="..\..\src\shared\pathfinding\Detour\DetourNavMesh.cpp" />
     <ClCompile Include="..\..\src\shared\pathfinding\Detour\DetourNavMeshBuilder.cpp" />
     <ClCompile Include="..\..\src\shared\pathfinding\Detour\DetourNode.cpp" />
-    <ClCompile Include="..\..\src\shared\pathfinding\InputGeom.cpp" />
-    <ClCompile Include="..\..\src\shared\pathfinding\MeshLoaderObj.cpp" />
     <ClCompile Include="..\..\src\shared\pathfinding\Recast\Recast.cpp" />
     <ClCompile Include="..\..\src\shared\pathfinding\Recast\RecastArea.cpp" />
     <ClCompile Include="..\..\src\shared\pathfinding\Recast\RecastContour.cpp" />
@@ -490,7 +487,6 @@
     <ClInclude Include="..\..\src\shared\Auth\SARC4.h" />
     <ClInclude Include="..\..\src\shared\Auth\Sha1.h" />
     <ClInclude Include="..\..\src\shared\ByteBuffer.h" />
-    <ClInclude Include="..\..\src\shared\pathfinding\ChunkyTriMesh.h" />
     <ClInclude Include="..\..\src\shared\pathfinding\DebugUtils\DebugDraw.h" />
     <ClInclude Include="..\..\src\shared\pathfinding\DebugUtils\DetourDebugDraw.h" />
     <ClInclude Include="..\..\src\shared\pathfinding\DebugUtils\RecastDebugDraw.h" />
@@ -499,8 +495,6 @@
     <ClInclude Include="..\..\src\shared\pathfinding\Detour\DetourNavMesh.h" />
     <ClInclude Include="..\..\src\shared\pathfinding\Detour\DetourNavMeshBuilder.h" />
     <ClInclude Include="..\..\src\shared\pathfinding\Detour\DetourNode.h" />
-    <ClInclude Include="..\..\src\shared\pathfinding\InputGeom.h" />
-    <ClInclude Include="..\..\src\shared\pathfinding\MeshLoaderObj.h" />
     <ClInclude Include="..\..\src\shared\pathfinding\Recast\Recast.h" />
     <ClInclude Include="..\..\src\shared\pathfinding\Recast\RecastLog.h" />
     <ClInclude Include="..\..\src\shared\pathfinding\Recast\RecastTimer.h" />
