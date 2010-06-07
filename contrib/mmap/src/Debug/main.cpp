@@ -25,7 +25,7 @@
 #include "imguiRenderGL.h"
 #include "pathfinding/Recast/Recast.h"
 #include "pathfinding/DebugUtils/RecastDebugDraw.h"
-#include "InputGeom.h"
+#include "pathfinding/InputGeom.h"
 #include "TestCase.h"
 #include "Filelist.h"
 #include "SlideShow.h"

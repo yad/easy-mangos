@@ -20,7 +20,7 @@
 #include <math.h>
 #include <stdio.h>
 #include "Sample_Debug.h"
-#include "InputGeom.h"
+#include "pathfinding/InputGeom.h"
 #include "pathfinding/Recast/Recast.h"
 #include "pathfinding/Detour/DetourNavMesh.h"
 #include "pathfinding/Recast/RecastLog.h"
@@ -39,7 +39,12 @@
 #	define snprintf _snprintf
 #endif
 
-Sample_Debug::Sample_Debug() : Sample_SoloMeshTiled()
+Sample_Debug::Sample_Debug() : Sample_SoloMeshTiled(),
+    m_hf(0), m_hfCount(0),
+    m_chf(0), m_chfCount(0),
+    m_cset(0), m_csetCount(0),
+    m_pmeshCount(0), m_dmeshCount(0),
+    m_tile(0)
 {
 	resetCommonSettings();
 
@@ -71,17 +76,10 @@ void Sample_Debug::handleDebugMode()
 	bool hasCset = false;
 	bool hasPmesh = false;
 	bool hasDmesh = false;
-	if (m_tileSet)
-	{
-		for (int i = 0; i < m_tileSet->width*m_tileSet->height; ++i)
-		{
-			if (m_tileSet->tiles[i].solid) hasSolid = true;
-			if (m_tileSet->tiles[i].chf) hasChf = true;
-			if (m_tileSet->tiles[i].cset) hasCset = true;
-			if (m_tileSet->tiles[i].pmesh) hasPmesh = true;
-			if (m_tileSet->tiles[i].dmesh) hasDmesh = true;
-		}
-	}
+
+	if (m_hf) hasSolid = true;
+	if (m_chf) hasChf = true;
+	if (m_cset) hasCset = true;
 	if (m_pmesh) hasPmesh = true;
 	if (m_dmesh) hasDmesh = true;
 	
@@ -127,24 +125,28 @@ void Sample_Debug::handleDebugMode()
 	//	m_drawMode = DRAWMODE_VOXELS;
 	//if (imguiCheck("Walkable Voxels", m_drawMode == DRAWMODE_VOXELS_WALKABLE, valid[DRAWMODE_VOXELS_WALKABLE]))
 	//	m_drawMode = DRAWMODE_VOXELS_WALKABLE;
-	//if (imguiCheck("Compact", m_drawMode == DRAWMODE_COMPACT, valid[DRAWMODE_COMPACT]))
-	//	m_drawMode = DRAWMODE_COMPACT;
-	//if (imguiCheck("Compact Distance", m_drawMode == DRAWMODE_COMPACT_DISTANCE, valid[DRAWMODE_COMPACT_DISTANCE]))
-	//	m_drawMode = DRAWMODE_COMPACT_DISTANCE;
-	//if (imguiCheck("Compact Regions", m_drawMode == DRAWMODE_COMPACT_REGIONS, valid[DRAWMODE_COMPACT_REGIONS]))
-	//	m_drawMode = DRAWMODE_COMPACT_REGIONS;
-	//if (imguiCheck("Region Connections", m_drawMode == DRAWMODE_REGION_CONNECTIONS, valid[DRAWMODE_REGION_CONNECTIONS]))
-	//	m_drawMode = DRAWMODE_REGION_CONNECTIONS;
-	//if (imguiCheck("Raw Contours", m_drawMode == DRAWMODE_RAW_CONTOURS, valid[DRAWMODE_RAW_CONTOURS]))
-	//	m_drawMode = DRAWMODE_RAW_CONTOURS;
-	//if (imguiCheck("Both Contours", m_drawMode == DRAWMODE_BOTH_CONTOURS, valid[DRAWMODE_BOTH_CONTOURS]))
-	//	m_drawMode = DRAWMODE_BOTH_CONTOURS;
-	//if (imguiCheck("Contours", m_drawMode == DRAWMODE_CONTOURS, valid[DRAWMODE_CONTOURS]))
-	//	m_drawMode = DRAWMODE_CONTOURS;
+	if (imguiCheck("Compact", m_drawMode == DRAWMODE_COMPACT, valid[DRAWMODE_COMPACT]))
+		m_drawMode = DRAWMODE_COMPACT;
+	if (imguiCheck("Compact Distance", m_drawMode == DRAWMODE_COMPACT_DISTANCE, valid[DRAWMODE_COMPACT_DISTANCE]))
+		m_drawMode = DRAWMODE_COMPACT_DISTANCE;
+	if (imguiCheck("Compact Regions", m_drawMode == DRAWMODE_COMPACT_REGIONS, valid[DRAWMODE_COMPACT_REGIONS]))
+		m_drawMode = DRAWMODE_COMPACT_REGIONS;
+	if (imguiCheck("Region Connections", m_drawMode == DRAWMODE_REGION_CONNECTIONS, valid[DRAWMODE_REGION_CONNECTIONS]))
+		m_drawMode = DRAWMODE_REGION_CONNECTIONS;
+	if (imguiCheck("Raw Contours", m_drawMode == DRAWMODE_RAW_CONTOURS, valid[DRAWMODE_RAW_CONTOURS]))
+		m_drawMode = DRAWMODE_RAW_CONTOURS;
+	if (imguiCheck("Both Contours", m_drawMode == DRAWMODE_BOTH_CONTOURS, valid[DRAWMODE_BOTH_CONTOURS]))
+		m_drawMode = DRAWMODE_BOTH_CONTOURS;
+	if (imguiCheck("Contours", m_drawMode == DRAWMODE_CONTOURS, valid[DRAWMODE_CONTOURS]))
+		m_drawMode = DRAWMODE_CONTOURS;
 	if (imguiCheck("Poly Mesh", m_drawMode == DRAWMODE_POLYMESH, valid[DRAWMODE_POLYMESH]))
 		m_drawMode = DRAWMODE_POLYMESH;
 	if (imguiCheck("Poly Mesh Detail", m_drawMode == DRAWMODE_POLYMESH_DETAIL, valid[DRAWMODE_POLYMESH_DETAIL]))
 		m_drawMode = DRAWMODE_POLYMESH_DETAIL;
+
+    float tile = m_tile;
+    imguiSlider("Tile", &tile, 0.f, float(m_pmeshCount), 1.f, true);
+    m_tile = int(tile);
 }
 
 void Sample_Debug::handleRender()
@@ -202,16 +204,96 @@ void Sample_Debug::handleRender()
 	
 	glDepthMask(GL_TRUE);
 	
+    if (m_drawMode == DRAWMODE_COMPACT)
+		for (int i = 0; i < m_chfCount; ++i)
+            if(i == m_tile)
+			duDebugDrawCompactHeightfieldSolid(&dd, m_chf[i]);
+
+	if (m_drawMode == DRAWMODE_COMPACT_DISTANCE)
+		for (int i = 0; i < m_chfCount; ++i)
+            if(i == m_tile)
+			duDebugDrawCompactHeightfieldDistance(&dd, m_chf[i]);
+
+	if (m_drawMode == DRAWMODE_COMPACT_REGIONS)
+		for (int i = 0; i < m_chfCount; ++i)
+            if(i == m_tile)
+			duDebugDrawCompactHeightfieldRegions(&dd, m_chf[i]);
+	
+	if (m_drawMode == DRAWMODE_VOXELS)
+	{
+		glEnable(GL_FOG);
+		for (int i = 0; i < m_hfCount; ++i)
+            if(i == m_tile)
+			duDebugDrawHeightfieldSolid(&dd, m_hf[i]);
+		glDisable(GL_FOG);
+	}
+
+	if (m_drawMode == DRAWMODE_VOXELS_WALKABLE)
+	{
+		glEnable(GL_FOG);
+		for (int i = 0; i < m_hfCount; ++i)
+            if(i == m_tile)
+			duDebugDrawHeightfieldWalkable(&dd, m_hf[i]);
+		glDisable(GL_FOG);
+	}
+
+	if (m_drawMode == DRAWMODE_RAW_CONTOURS)
+	{
+		glDepthMask(GL_FALSE);
+		for (int i = 0; i < m_csetCount; ++i)
+            if(i == m_tile)
+			duDebugDrawRawContours(&dd, m_cset[i]);
+		glDepthMask(GL_TRUE);
+	}
+
+	if (m_drawMode == DRAWMODE_BOTH_CONTOURS)
+	{
+		glDepthMask(GL_FALSE);
+		for (int i = 0; i < m_csetCount; ++i)
+            if(i == m_tile)
+		{
+			duDebugDrawRawContours(&dd, m_cset[i], 0.5f);
+			duDebugDrawContours(&dd, m_cset[i]);
+		}
+		glDepthMask(GL_TRUE);
+	}
+
+	if (m_drawMode == DRAWMODE_CONTOURS)
+	{
+		glDepthMask(GL_FALSE);
+		for (int i = 0; i < m_csetCount; ++i)
+            if(i == m_tile)
+			duDebugDrawContours(&dd, m_cset[i]);
+		glDepthMask(GL_TRUE);
+	}
+
+	if (m_drawMode == DRAWMODE_REGION_CONNECTIONS)
+	{
+		for (int i = 0; i < m_chfCount; ++i)
+            if(i == m_tile)
+			duDebugDrawCompactHeightfieldRegions(&dd, m_chf[i]);
+		
+		glDepthMask(GL_FALSE);
+		for (int i = 0; i < m_csetCount; ++i)
+            if(i == m_tile)
+			duDebugDrawRegionConnections(&dd, m_cset[i]);
+		glDepthMask(GL_TRUE);
+	}
+
 	if (/*m_pmesh &&*/ m_drawMode == DRAWMODE_POLYMESH)
 	{
 		glDepthMask(GL_FALSE);
-		duDebugDrawPolyMesh(&dd, *m_pmesh);
+        for(int i = 0; i < m_pmeshCount; ++i)
+            if(i == m_tile)
+		    duDebugDrawPolyMesh(&dd, m_pmesh[i]);
 		glDepthMask(GL_TRUE);
 	}
 	if (/*m_dmesh &&*/ m_drawMode == DRAWMODE_POLYMESH_DETAIL)
 	{
 		glDepthMask(GL_FALSE);
-		duDebugDrawPolyMeshDetail(&dd, *m_dmesh);
+        for(int i = 0; i < m_dmeshCount; ++i)
+            if(i == m_tile)
+		    duDebugDrawPolyMeshDetail(&dd, m_dmesh[i]);
 		glDepthMask(GL_TRUE);
 	}
 	
@@ -259,13 +341,19 @@ bool Sample_Debug::handleBuild()
     sprintf(sMapID, "%.3s", m_meshName);
     int mapID = atoi(sMapID);
 
+    delete m_navMesh;
+    delete [] m_pmesh; m_pmesh = 0;
+    delete [] m_hf; m_hf = 0; m_hfCount = 0;
+    delete [] m_chf; m_chf = 0; m_chfCount = 0;
+
     duReadNavMesh(mapID, m_navMesh);
-    duReadPolyMesh(mapID, m_pmesh);
+    m_pmeshCount = duReadPolyMesh(mapID, m_pmesh);
+    m_hfCount = duReadHeightfield(mapID, m_hf);
+    m_chfCount = duReadCompactHeightfield(mapID, m_chf);
 
     m_tileSize = m_navMesh->getParams()->tileHeight;
 
-    // not working :(
-    //duReadDetailMesh(mapID, m_dmesh);
+    m_dmeshCount = duReadDetailMesh(mapID, m_dmesh);
 
     if(m_tool)
         m_tool->init(this);

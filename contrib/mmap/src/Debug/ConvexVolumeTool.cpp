@@ -25,7 +25,7 @@
 #include "SDL_opengl.h"
 #include "imgui.h"
 #include "ConvexVolumeTool.h"
-#include "InputGeom.h"
+#include "pathfinding/InputGeom.h"
 #include "Sample.h"
 #include "pathfinding/Recast/Recast.h"
 #include "pathfinding/DebugUtils/RecastDebugDraw.h"
