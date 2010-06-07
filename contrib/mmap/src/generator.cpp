@@ -82,9 +82,9 @@ void handleArgs(int argc, char** argv,
         {
             param = argv[++i];
             if(strcmp(param, "true") == 0)
-                skipContinents = true;
+                skipJunkMaps = true;
             else if(strcmp(param, "false") == 0)
-                skipContinents = false;
+                skipJunkMaps = false;
             else
                 printf("invalid option for '--skipJunkMaps', using default\n");
         }
@@ -92,9 +92,9 @@ void handleArgs(int argc, char** argv,
         {
             param = argv[++i];
             if(strcmp(param, "true") == 0)
-                skipContinents = true;
+                skipBattlegrounds = true;
             else if(strcmp(param, "false") == 0)
-                skipContinents = false;
+                skipBattlegrounds = false;
             else
                 printf("invalid option for '--skipBattlegrounds', using default\n");
         }
@@ -102,9 +102,9 @@ void handleArgs(int argc, char** argv,
         {
             param = argv[++i];
             if(strcmp(param, "true") == 0)
-                skipContinents = true;
+                hiResHeightmaps = true;
             else if(strcmp(param, "false") == 0)
-                skipContinents = false;
+                hiResHeightmaps = false;
             else
                 printf("invalid option for '--hiResHeightmaps', using default\n");
         }
@@ -112,9 +112,9 @@ void handleArgs(int argc, char** argv,
         {
             param = argv[++i];
             if(strcmp(param, "true") == 0)
-                skipContinents = true;
+                shredHeightmaps = true;
             else if(strcmp(param, "false") == 0)
-                skipContinents = false;
+                shredHeightmaps = false;
             else
                 printf("invalid option for '--shredHeightmaps', using default true\n");
         }
@@ -122,9 +122,9 @@ void handleArgs(int argc, char** argv,
         {
             param = argv[++i];
             if(strcmp(param, "true") == 0)
-                skipContinents = true;
+                debugOutput = true;
             else if(strcmp(param, "false") == 0)
-                skipContinents = false;
+                debugOutput = false;
             else
                 printf("invalid option for '--debugOutput', using default true\n");
         }
