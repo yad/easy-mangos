@@ -553,8 +553,8 @@ namespace MMAP
                 tbmin[1] = config.bmin[2];
                 tbmax[0] = config.bmax[0];
                 tbmax[1] = config.bmax[2];
-                int cid[512];
-                const int ncid = rcGetChunksInRect(chunkyMesh, tbmin, tbmax, cid, 512);
+                int cid[2048];
+                const int ncid = rcGetChunksInRect(chunkyMesh, tbmin, tbmax, cid, 2048);
                 if(!ncid)
                 {
                     // tiles with MAP_HEIGHT_NO_HEIGHT are usually empty, they can be skipped
