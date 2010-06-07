@@ -627,7 +627,7 @@ namespace MMAP
                 }
 
                 // build polymesh
-                printf("Building polymesh...                    \r", tileString);
+                printf("%sBuilding polymesh...                    \r", tileString);
                 iv.polyMesh = new rcPolyMesh;
                 if(!rcBuildPolyMesh(*iv.contours, config.maxVertsPerPoly, *iv.polyMesh))
                 {
