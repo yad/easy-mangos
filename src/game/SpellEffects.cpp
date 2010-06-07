@@ -6461,9 +6461,8 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                         // Serpent Sting - Instantly deals 40% of the damage done by your Serpent Sting.
                         if ((familyFlag & UI64LIT(0x0000000000004000)) && aura->GetEffIndex() == EFFECT_INDEX_0)
                         {
-                            // m_amount does not include RAP bonus - must be calculated 
-                            basePoint = m_caster->MeleeDamageBonusDone(target, aura->GetModifier()->m_amount, RANGED_ATTACK, aura->GetSpellProto(), DOT, aura->GetStackAmount());
-                            basePoint = basePoint * (aura->GetAuraMaxDuration() / aura->GetModifier()->periodictime) * 40 / 100;
+                            // m_amount does include RAP bonus
+                            basePoint = aura->GetModifier()->m_amount * aura->GetAuraMaxTicks() * 40 / 100;
                             spellId = 53353;                // Chimera Shot - Serpent
                         }
 
