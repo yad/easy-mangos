@@ -406,17 +406,8 @@ namespace MMAP
         int triCount = m_triangles.size() / 3;
 
         rcCalcBounds(verts, vertCount, bmin, bmax);
-        float yLen = abs(snapToGrid(bmax[0]) - snapToGrid(bmin[0]));
-        float xLen = abs(snapToGrid(bmax[2]) - snapToGrid(bmin[2]));
-
-        // some maps are smaller than GRID_SIZE
-        float gridSize = GRID_SIZE;
-        //if(yLen < GRID_SIZE && xLen < GRID_SIZE)
-        //    gridSize = max(yLen, xLen);
-        //else if(yLen < GRID_SIZE)
-        //    gridSize = yLen;
-        //else if(xLen < GRID_SIZE)
-        //    gridSize = xLen;
+        float yLen = abs(snapToGrid(bmax[0] + GRID_SIZE - 1) - snapToGrid(bmin[0]));
+        float xLen = abs(snapToGrid(bmax[2] + GRID_SIZE - 1) - snapToGrid(bmin[2]));
 
         // set common config
         rcConfig config;
@@ -432,7 +423,7 @@ namespace MMAP
 
         // these are VOXEL-based metrics
         rcCalcGridSize(config.bmin, config.bmax, config.cs, &config.width, &config.height);
-        config.tileSize = (int)ceilf(config.width / (config.width * config.cs / gridSize));
+        config.tileSize = (int)ceilf(config.width / (config.width * config.cs / GRID_SIZE));
         config.walkableRadius = (int)ceilf(agentRadius / config.cs);
         config.borderSize = config.walkableRadius + 3;
         config.maxEdgeLen = (int)(12.f / config.cs);
@@ -447,12 +438,8 @@ namespace MMAP
         config.detailSampleMaxError = config.ch * 1.f;
 
         // navmesh tile dimensions
-        // float precision: 533.33333 => 533.33331
-        // also force at least 1 tile, due to floor
-        int ycount = ceil(yLen / gridSize);
-        int xcount = ceil(xLen / gridSize);
-        const int yTileCount = ycount/* > 0 ? ycount : 1*/;
-        const int xTileCount = xcount/* > 0 ? xcount : 1*/;
+        const int yTileCount = ceil(yLen / GRID_SIZE);
+        const int xTileCount = ceil(xLen / GRID_SIZE);
 
         // calculate number of bits needed to store tiles & polys
         int tileBits = rcMin((int)ilog2(nextPow2(yTileCount*xTileCount)), 14);
@@ -465,8 +452,8 @@ namespace MMAP
         // nav mesh creation params
         dtNavMeshParams navMeshParams;
         memset(&navMeshParams, 0, sizeof(dtNavMeshParams));
-        navMeshParams.tileWidth = gridSize;
-        navMeshParams.tileHeight = gridSize;
+        navMeshParams.tileWidth = GRID_SIZE;
+        navMeshParams.tileHeight = GRID_SIZE;
         rcVcopy(navMeshParams.orig, bmin);
         navMeshParams.maxTiles = maxTiles;
         navMeshParams.maxPolys = maxPolysPerTile;
@@ -509,8 +496,8 @@ namespace MMAP
         for(int y = 0; y < yTileCount; ++y)
         {
             // set tile bounds
-            bmin[0] = yMin + gridSize*y;
-            bmax[0] = bmin[0] + gridSize;
+            bmin[0] = yMin + GRID_SIZE*y;
+            bmax[0] = bmin[0] + GRID_SIZE;
 
             for(int x = 0; x < xTileCount; ++x)
             {
@@ -519,8 +506,8 @@ namespace MMAP
                 clearIntermediateValues(iv);
 
                 // set tile bounds
-                bmin[2] = xMin + gridSize*x;
-                bmax[2] = bmin[2] + gridSize;
+                bmin[2] = xMin + GRID_SIZE*x;
+                bmax[2] = bmin[2] + GRID_SIZE;
                 rcVcopy(config.bmin, bmin);
                 rcVcopy(config.bmax, bmax);
 
@@ -534,8 +521,8 @@ namespace MMAP
                 rcCalcGridSize(config.bmin, config.bmax, config.cs, &config.width, &config.height);
 
                 // set tile string
-                tileY = 32-((bmin[0] + bmax[0]) / 2)/gridSize;
-                tileX = 32-((bmin[2] + bmax[2]) / 2)/gridSize;
+                tileY = 32-((bmin[0] + bmax[0]) / 2)/GRID_SIZE;
+                tileX = 32-((bmin[2] + bmax[2]) / 2)/GRID_SIZE;
                 sprintf(tileString, "[%02i,%02i]: ", tileX, tileY);
 
                 // build heightfield
@@ -1010,10 +997,7 @@ namespace MMAP
 
     float MapBuilder::snapToGrid(const float coord)
     {
-        if(coord > 0)
-            return ceil(coord / GRID_SIZE) * GRID_SIZE;
-        else
-            return floor(coord / GRID_SIZE) * GRID_SIZE;
+        return floor(coord / GRID_SIZE) * GRID_SIZE;
     }
 
     bool MapBuilder::shouldSkipMap(uint32 mapID)
