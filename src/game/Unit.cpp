@@ -10052,6 +10052,10 @@ bool Unit::IsSpellCrit(Unit *pVictim, SpellEntry const *spellProto, SpellSchoolM
     if((spellProto->AttributesEx2 & SPELL_ATTR_EX2_CANT_CRIT))
         return false;
 
+    // Creatures cant crit with spells
+    if(GetTypeId() == TYPEID_UNIT && spellProto->DmgClass == SPELL_DAMAGE_CLASS_MAGIC)
+        return false;
+
     float crit_chance = 0.0f;
     switch(spellProto->DmgClass)
     {
