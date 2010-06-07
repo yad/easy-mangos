@@ -1,7 +1,5 @@
 generator command line args
 
-if no args specified, build all maps using default settings
-
 --maxAngle			[#]				max walkable inclination angle
 
 									float between 45 and 90 degrees (default 60)
@@ -18,7 +16,7 @@ if no args specified, build all maps using default settings
 
 --skipBattlegrouns	[true|false]	does not include PVP arenas
 
-									false: build battlegrouns (default)
+									true: skip battlegrounds (default)
 
 --hiResHeightmaps	[true|false]	hi-res heightmaps may result in better maps,
 									but dramatically increase memory requirements
@@ -33,6 +31,8 @@ if no args specified, build all maps using default settings
 
 --debugOutput		[true|false]	create debugging files for use with RecastDemo
 
-									false: create debugging files (default)
+									false: don't create debugging files (default)
 
 					[#]				build only the map specified by #
+									this command will build the map regardless of --skip* option settings
+									if you do not specify a map number, builds all maps that pass the filters specified by --skip* options
