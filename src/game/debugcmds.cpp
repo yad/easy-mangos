@@ -32,6 +32,7 @@
 #include "ObjectMgr.h"
 #include "ObjectGuid.h"
 #include "SpellMgr.h"
+#include "World.h"
 
 #include "pathfinding/Detour/DetourNavMesh.h"
 #include "pathfinding/Detour/DetourCommon.h"
@@ -342,9 +343,17 @@ bool ChatHandler::HandleDebugMoveMapCommand(const char* args)
     else if(w && strcmp(w, "tileloc") == 0)
     {
         PSendSysMessage("mmap tileloc:");
-        Player* player = m_session->GetPlayer();
-        dtNavMesh* navmesh = player->GetMap()->GetNavMesh();
 
+        // grid tile location
+        Player* player = m_session->GetPlayer();
+
+        int gx = 32 - player->GetPositionX() / 533.33333f;
+        int gy = 32 - player->GetPositionY() / 533.33333f;
+
+        PSendSysMessage("gridloc [%i,%i]", gx, gy);
+
+        // calculate navmesh tile location
+        dtNavMesh* navmesh = player->GetMap()->GetNavMesh();
         const float* min = navmesh->getParams()->orig;
 
         float x, y, z;
@@ -355,20 +364,43 @@ bool ChatHandler::HandleDebugMoveMapCommand(const char* args)
         int tilex = (int) (y - min[0]) / 533.33333;
         int tiley = (int) (x - min[2]) / 533.33333;
 
-        PSendSysMessage("Calc [%02i,%02i]", tilex, tiley);
+        PSendSysMessage("Calc   [%02i,%02i]", tilex, tiley);
 
+        // navmesh poly -> navmesh tile location
         dtPolyRef poly = navmesh->findNearestPoly(location, extents, &(dtQueryFilter()), 0);
         if(!poly)
+            PSendSysMessage("Dt     [??,??] (invalid poly, probably no tile loaded)");
+        else
         {
-            PSendSysMessage("Invalid polygon, tile coord mismatch likely.");
-            return true;
+            const dtMeshTile* tile = navmesh->getTileByPolyRef(poly, 0);
+            if(tile)
+                PSendSysMessage("Dt     [%02i,%02i]", tile->header->x, tile->header->y);
+            else
+                PSendSysMessage("Dt     [??,??] (no tile loaded)");
         }
 
-        const dtMeshTile* tile = navmesh->getTileByPolyRef(poly, 0);
-        if(tile)
-            PSendSysMessage("Dt   [%02i,%02i]", tile->header->x, tile->header->y);
+        // mmtile file header -> navmesh tile location
+        char path[512];
+        sprintf(path, "%smmaps/%03u%02i%02i.mmtile", sWorld.GetDataPath().c_str(), player->GetMapId(), gx, gy);
+        FILE* file = fopen(path, "rb");
+        if(!file)
+            PSendSysMessage("mmtile [??,??] (file %03u%02i%02i.mmtile not found)", player->GetMapId(), gx, gy);
         else
-            PSendSysMessage("Tile coord mismatch likely.");
+        {
+            fseek(file, 0, SEEK_END);
+            int length = ftell(file);
+            fseek(file, 0, SEEK_SET);
+
+            unsigned char* data = new unsigned char[length];
+            fread(data, length, 1, file);
+            fclose(file);
+
+            dtMeshHeader* header = (dtMeshHeader*)data;
+
+            PSendSysMessage("mmtile [%02i,%02i]", header->x, header->y);
+
+            delete [] data;
+        }
 
         return true;
     }
