@@ -554,13 +554,16 @@ namespace MMAP
                 tbmin[1] = config.bmin[2];
                 tbmax[0] = config.bmax[0];
                 tbmax[1] = config.bmax[2];
-                int cid[2048];
-                const int ncid = rcGetChunksInRect(chunkyMesh, tbmin, tbmax, cid, 2048);
+                const static int chunksPerTile = 4096;
+                int cid[chunksPerTile];
+                const int ncid = rcGetChunksInRect(chunkyMesh, tbmin, tbmax, cid, chunksPerTile);
                 if(!ncid)
                 {
                     // tiles with MAP_HEIGHT_NO_HEIGHT are usually empty, they can be skipped
                     continue;
                 }
+                if(ncid > chunksPerTile)
+                    printf("%sHave %i chunks, but we can only use %i!\n", ncid, chunksPerTile);
 
                 // rasterize triangles
                 printf("%sRasterizing triangles...                \r", tileString);
@@ -725,7 +728,7 @@ namespace MMAP
                 }
                 if (!params.vertCount || !params.verts)
                 {
-                    printf("%sNo vertices to build navMesh!           \n", tileString);
+                    //printf("%sNo vertices to build navMesh!           \n", tileString);
                     continue;
                 }
                 if (!params.polyCount || !params.polys)
