@@ -13,8 +13,9 @@ using namespace MaNGOS;
 
 namespace MMAP
 {
-    TileBuilder::TileBuilder(float maxWalkableAngle, bool hiRes, IVMapManager* vmapManager) :
+    TileBuilder::TileBuilder(float maxWalkableAngle, bool hiRes, bool shred, IVMapManager* vmapManager) :
         m_hiResHeightMaps   (hiRes),
+        m_shredHeightmaps   (shred),
         m_maxRadians        (maxWalkableAngle*G3D::pi()/180),
         m_groundNormal      (G3D::Plane(Vector3::unitY(), Vector3(0.f, 0.f, 0.f)).normal()),
         m_vmapManager       (vmapManager)
@@ -271,20 +272,25 @@ namespace MMAP
             }                                                           //           |    \|
                                                                         //          258---259 ... 515
 
-        // determine angle between triangle's plane and horizontal plane
-        // this information is used to throw away triangles:
-        // * that won't be used for paths because incline is too steep (speeds up recast's work)
-        // * that would block cave entrances, doors, etc
-        float* verts = m_vertices->getCArray();
-        float* f1 = &verts[(indices[2]+offset)*3];
-        float* f2 = &verts[(indices[1]+offset)*3];
-        float* f3 = &verts[(indices[0]+offset)*3];
-        Vector3 v1(f1[0], f1[1], f1[2]);
-        Vector3 v2(f2[0], f2[1], f2[2]);
-        Vector3 v3(f3[0], f3[1], f3[2]);
-        float angle = G3D::aCos(double(G3D::Plane(v1, v2, v3).normal().dot(m_groundNormal)));
+        if(m_shredHeightmaps)
+        {
+            // determine angle between triangle's plane and horizontal plane
+            // this information is used to throw away triangles:
+            // * that won't be used for paths because incline is too steep (speeds up recast's work)
+            // * that would block cave entrances, doors, etc
+            float* verts = m_vertices->getCArray();
+            float* f1 = &verts[(indices[2]+offset)*3];
+            float* f2 = &verts[(indices[1]+offset)*3];
+            float* f3 = &verts[(indices[0]+offset)*3];
+            Vector3 v1(f1[0], f1[1], f1[2]);
+            Vector3 v2(f2[0], f2[1], f2[2]);
+            Vector3 v3(f3[0], f3[1], f3[2]);
+            float angle = G3D::aCos(double(G3D::Plane(v1, v2, v3).normal().dot(m_groundNormal)));
 
-        return abs(angle) <= m_maxRadians;
+            return abs(angle) <= m_maxRadians;
+        }
+
+        return true;
     }
 
     void TileBuilder::loadModels()

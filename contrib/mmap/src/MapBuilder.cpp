@@ -15,16 +15,19 @@ using namespace std;
 
 namespace MMAP
 {
-    MapBuilder::MapBuilder(float maxWalkableAngle, bool skipContinents/* = true*/, bool hiResHeightmaps/* = false*/) :
-        m_completeLists     (false),
-        m_skipJunkMaps      (true),
-        m_skipBattlegrounds (false),
-        m_debugOutput       (false),
-        m_maxWalkableAngle  (maxWalkableAngle),
-        m_skipContinents    (skipContinents)
+    MapBuilder::MapBuilder(float maxWalkableAngle,
+                           bool skipContinents, bool skipJunkMaps, bool skipBattlegrounds,
+                           bool hiResHeightmaps, bool shredHeightmaps,
+                           bool debugOutput) :
+                           m_maxWalkableAngle  (maxWalkableAngle),
+                           m_skipContinents    (skipContinents),
+                           m_skipJunkMaps      (skipJunkMaps),
+                           m_skipBattlegrounds (skipBattlegrounds),
+                           m_debugOutput       (debugOutput),
+                           m_completeLists     (false)
     {
         m_vmapManager = new VMapManager2();
-        m_tileBuilder = new TileBuilder(m_maxWalkableAngle, hiResHeightmaps, m_vmapManager);
+        m_tileBuilder = new TileBuilder(m_maxWalkableAngle, hiResHeightmaps, shredHeightmaps, m_vmapManager);
     }
 
     MapBuilder::~MapBuilder()
@@ -165,14 +168,12 @@ namespace MMAP
         getMapAndTileLists();
 
         for(MapList::iterator it = m_maps.begin(); it != m_maps.end(); ++it)
-            build((*it));
+            if(!shouldSkipMap((*it)))
+                build((*it));
     }
 
     void MapBuilder::build(uint32 mapID)
     {
-        if(shouldSkipMap(mapID))
-            return;
-
         printf("Building map %03u:\n", mapID);
 
         if(!m_completeLists)

@@ -37,7 +37,14 @@ namespace MMAP
     class MapBuilder
     {
         public:
-            MapBuilder(float maxWalkableAngle, bool skipContinents = true, bool hiResHeightmaps = false);
+            MapBuilder(float maxWalkableAngle   = 60.f,
+                       bool skipContinents      = true,
+                       bool skipJunkMaps        = true,
+                       bool skipBattlegrounds   = true,
+                       bool hiResHeightmaps     = false,
+                       bool shredHeightmaps     = true,
+                       bool debugOutput         = false);
+
             ~MapBuilder();
 
             /**
