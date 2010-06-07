@@ -6,7 +6,7 @@
 #include "MapTree.h"
 #include "ModelInstance.h"
 
-#include "pathfinding/ChunkyTriMesh.h"
+#include "ChunkyTriMesh.h"
 #include "pathfinding/Recast/Recast.h"
 #include "pathfinding/Detour/DetourNavMeshBuilder.h"
 #include "pathfinding/Detour/DetourNavMesh.h"

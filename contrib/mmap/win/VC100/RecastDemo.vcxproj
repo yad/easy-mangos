@@ -71,7 +71,7 @@ copy ..\..\src\Debug\SDL\lib\SDL.dll $(TargetDir)\SDL.dll</Command>
       <AdditionalIncludeDirectories>..\..\..\..\dep\ACE_wrappers\;..\..\..\..\src\shared\;..\..\src\Debug\SDL\include;..\..\src\Debug\;..\..\src\;..\..\..\..\src\framework;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -91,7 +91,6 @@ copy ..\..\src\Debug\SDL\lib\SDL.dll $(TargetDir)\SDL.dll</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\src\shared\pathfinding\ChunkyTriMesh.h" />
     <ClInclude Include="..\..\..\..\src\shared\pathfinding\DebugUtils\DebugDraw.h" />
     <ClInclude Include="..\..\..\..\src\shared\pathfinding\DebugUtils\DetourDebugDraw.h" />
     <ClInclude Include="..\..\..\..\src\shared\pathfinding\DebugUtils\RecastDebugDraw.h" />
@@ -100,11 +99,10 @@ copy ..\..\src\Debug\SDL\lib\SDL.dll $(TargetDir)\SDL.dll</Command>
     <ClInclude Include="..\..\..\..\src\shared\pathfinding\Detour\DetourNavMesh.h" />
     <ClInclude Include="..\..\..\..\src\shared\pathfinding\Detour\DetourNavMeshBuilder.h" />
     <ClInclude Include="..\..\..\..\src\shared\pathfinding\Detour\DetourNode.h" />
-    <ClInclude Include="..\..\..\..\src\shared\pathfinding\InputGeom.h" />
-    <ClInclude Include="..\..\..\..\src\shared\pathfinding\MeshLoaderObj.h" />
     <ClInclude Include="..\..\..\..\src\shared\pathfinding\Recast\Recast.h" />
     <ClInclude Include="..\..\..\..\src\shared\pathfinding\Recast\RecastLog.h" />
     <ClInclude Include="..\..\..\..\src\shared\pathfinding\Recast\RecastTimer.h" />
+    <ClInclude Include="..\..\src\ChunkyTriMesh.h" />
     <ClInclude Include="..\..\src\Debug\ConvexVolumeTool.h" />
     <ClInclude Include="..\..\src\Debug\Debug.h" />
     <ClInclude Include="..\..\src\Debug\Filelist.h" />
@@ -122,10 +120,11 @@ copy ..\..\src\Debug\SDL\lib\SDL.dll $(TargetDir)\SDL.dll</Command>
     <ClInclude Include="..\..\src\Debug\stb_image.h" />
     <ClInclude Include="..\..\src\Debug\stb_truetype.h" />
     <ClInclude Include="..\..\src\Debug\TestCase.h" />
+    <ClInclude Include="..\..\src\InputGeom.h" />
+    <ClInclude Include="..\..\src\MeshLoaderObj.h" />
     <ClInclude Include="..\..\src\MMapCommon.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\..\src\shared\pathfinding\ChunkyTriMesh.cpp" />
     <ClCompile Include="..\..\..\..\src\shared\pathfinding\DebugUtils\DebugDraw.cpp" />
     <ClCompile Include="..\..\..\..\src\shared\pathfinding\DebugUtils\DetourDebugDraw.cpp" />
     <ClCompile Include="..\..\..\..\src\shared\pathfinding\DebugUtils\RecastDebugDraw.cpp" />
@@ -134,8 +133,6 @@ copy ..\..\src\Debug\SDL\lib\SDL.dll $(TargetDir)\SDL.dll</Command>
     <ClCompile Include="..\..\..\..\src\shared\pathfinding\Detour\DetourNavMesh.cpp" />
     <ClCompile Include="..\..\..\..\src\shared\pathfinding\Detour\DetourNavMeshBuilder.cpp" />
     <ClCompile Include="..\..\..\..\src\shared\pathfinding\Detour\DetourNode.cpp" />
-    <ClCompile Include="..\..\..\..\src\shared\pathfinding\InputGeom.cpp" />
-    <ClCompile Include="..\..\..\..\src\shared\pathfinding\MeshLoaderObj.cpp" />
     <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\Recast.cpp" />
     <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\RecastArea.cpp" />
     <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\RecastContour.cpp" />
@@ -146,6 +143,7 @@ copy ..\..\src\Debug\SDL\lib\SDL.dll $(TargetDir)\SDL.dll</Command>
     <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\RecastRasterization.cpp" />
     <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\RecastRegion.cpp" />
     <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\RecastTimer.cpp" />
+    <ClCompile Include="..\..\src\ChunkyTriMesh.cpp" />
     <ClCompile Include="..\..\src\Debug\ConvexVolumeTool.cpp" />
     <ClCompile Include="..\..\src\Debug\Debug.cpp" />
     <ClCompile Include="..\..\src\Debug\Filelist.cpp" />
@@ -161,6 +159,8 @@ copy ..\..\src\Debug\SDL\lib\SDL.dll $(TargetDir)\SDL.dll</Command>
     <ClCompile Include="..\..\src\Debug\Sample_TileMesh.cpp" />
     <ClCompile Include="..\..\src\Debug\SlideShow.cpp" />
     <ClCompile Include="..\..\src\Debug\TestCase.cpp" />
+    <ClCompile Include="..\..\src\InputGeom.cpp" />
+    <ClCompile Include="..\..\src\MeshLoaderObj.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

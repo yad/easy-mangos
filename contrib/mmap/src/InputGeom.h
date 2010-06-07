@@ -19,8 +19,8 @@
 #ifndef INPUTGEOM_H
 #define INPUTGEOM_H
 
-#include "pathfinding/ChunkyTriMesh.h"
-#include "pathfinding/MeshLoaderObj.h"
+#include "ChunkyTriMesh.h"
+#include "MeshLoaderObj.h"
 #include "Debug.h"
 
 static const int MAX_CONVEXVOL_PTS = 12;

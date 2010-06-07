@@ -9,7 +9,7 @@
 #include "IVMapManager.h"
 #include "G3D/Array.h"
 
-#include "pathfinding/ChunkyTriMesh.h"
+#include "ChunkyTriMesh.h"
 #include "pathfinding/Recast/Recast.h"
 
 using namespace std;

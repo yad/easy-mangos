@@ -5,8 +5,8 @@
 #include <math.h>
 #include "pathfinding/Detour/DetourNavMesh.h"
 #include "pathfinding/Recast/Recast.h"
-#include "pathfinding/ChunkyTriMesh.h"
-#include "pathfinding/MeshLoaderObj.h"
+#include "ChunkyTriMesh.h"
+#include "MeshLoaderObj.h"
 
 //void duReadObjMesh(int mapID, rcInputGeom* geom);
 void duReadNavMesh(int mapID, dtNavMesh* &navMesh);

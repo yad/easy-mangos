@@ -204,34 +204,14 @@
 				RelativePath="..\..\src\VMapExtensions.cpp"
 				>
 			</File>
+			<File
+				RelativePath="..\..\src\ChunkyTriMesh.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="pathfinding"
 			>
-			<File
-				RelativePath="..\..\..\..\src\shared\pathfinding\ChunkyTriMesh.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\shared\pathfinding\ChunkyTriMesh.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\shared\pathfinding\InputGeom.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\shared\pathfinding\InputGeom.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\shared\pathfinding\MeshLoaderObj.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\shared\pathfinding\MeshLoaderObj.h"
-				>
-			</File>
 			<Filter
 				Name="Detour"
 				>

@@ -108,8 +108,8 @@
     <ClCompile Include="..\..\..\..\src\shared\vmap\BIH.cpp">
       <Filter>vmap</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\src\shared\pathfinding\ChunkyTriMesh.cpp">
-      <Filter>pathfinding</Filter>
+    <ClCompile Include="..\..\src\ChunkyTriMesh.cpp">
+      <Filter>generator</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -191,8 +191,8 @@
     <ClInclude Include="..\..\src\MapBuilder.h">
       <Filter>generator</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\src\shared\pathfinding\ChunkyTriMesh.h">
-      <Filter>pathfinding</Filter>
+    <ClInclude Include="..\..\src\ChunkyTriMesh.h">
+      <Filter>generator</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
