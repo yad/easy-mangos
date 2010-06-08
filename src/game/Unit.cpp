@@ -5461,6 +5461,7 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
     // some dummy spells have trigger spell in spell data already (from 3.0.3)
     uint32 triggered_spell_id = dummySpell->EffectApplyAuraName[effIndex] == SPELL_AURA_DUMMY ? dummySpell->EffectTriggerSpell[effIndex] : 0;
     Unit* target = pVictim;
+    Unit* caster = this;
     int32  basepoints[MAX_EFFECT_INDEX] = {0, 0, 0};
 
     switch(dummySpell->SpellFamilyName)
@@ -5864,6 +5865,18 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                     else
                         triggered_spell_id = 71905;
 
+                    break;
+                }
+                // Petrified Bark
+                case 62933:
+                case 62337:
+                {
+                    if(procSpell->DmgClass != SPELL_DAMAGE_CLASS_MELEE)
+                        return false;
+
+                    caster = pVictim;
+                    triggered_spell_id = 62379;
+                    basepoints[EFFECT_INDEX_0] = damage;
                     break;
                 }
             }
@@ -7718,13 +7731,13 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
         return false;
 
     if (basepoints[EFFECT_INDEX_0] || basepoints[EFFECT_INDEX_1] || basepoints[EFFECT_INDEX_2])
-        CastCustomSpell(target, triggered_spell_id,
+        caster->CastCustomSpell(target, triggered_spell_id,
             basepoints[EFFECT_INDEX_0] ? &basepoints[EFFECT_INDEX_0] : NULL,
             basepoints[EFFECT_INDEX_1] ? &basepoints[EFFECT_INDEX_1] : NULL,
             basepoints[EFFECT_INDEX_2] ? &basepoints[EFFECT_INDEX_2] : NULL,
             true, castItem, triggeredByAura);
     else
-        CastSpell(target, triggered_spell_id, true, castItem, triggeredByAura);
+        caster->CastSpell(target, triggered_spell_id, true, castItem, triggeredByAura);
 
     if (cooldown && GetTypeId()==TYPEID_PLAYER)
         ((Player*)this)->AddSpellCooldown(triggered_spell_id,0,time(NULL) + cooldown);
