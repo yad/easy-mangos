@@ -584,7 +584,8 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
        spellProto &&
        (spellProto->DmgClass == SPELL_DAMAGE_CLASS_MELEE ||
        spellProto->DmgClass == SPELL_DAMAGE_CLASS_RANGED) &&
-       damagetype == SPELL_DIRECT_DAMAGE)
+       damagetype == SPELL_DIRECT_DAMAGE &&
+       !spellProto->AuraInterruptFlags & AURA_INTERRUPT_FLAG_DAMAGE)
         ((Player*)this)->CastItemCombatSpell(pVictim, attType);
 
     // no xp,health if type 8 /critters/
