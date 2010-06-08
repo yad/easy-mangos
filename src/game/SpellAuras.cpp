@@ -2533,6 +2533,17 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                 }
                 break;
             }
+            case SPELLFAMILY_ROGUE:
+            {
+                // Tricks of Trade
+                if (m_spellProto->Id == 57934)
+                {
+                    if (Spell* tot = m_target->FindCurrentSpellBySpellId(57934))
+                        if(Unit* altTarget = tot->m_targets.getUnitTarget())
+                            m_modifier.m_miscvalue = altTarget->GetGUID();
+                }
+                break;
+            }
             case SPELLFAMILY_WARRIOR:
             {
                 // Overpower
