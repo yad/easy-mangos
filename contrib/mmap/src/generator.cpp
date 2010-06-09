@@ -10,7 +10,7 @@
 using namespace std;
 using namespace MMAP;
 
-bool checkDirectories()
+bool checkDirectories(bool debugOutput)
 {
     vector<string> dirFiles;
 
@@ -35,11 +35,12 @@ bool checkDirectories()
     }
 
     dirFiles.clear();
-    if(!getDirContents(dirFiles, "Meshes"))
-    {
-        printf("'Meshes' directory does not exist\n");
-        return false;
-    }
+    if(debugOutput)
+        if(!getDirContents(dirFiles, "Meshes"))
+        {
+            printf("'Meshes' directory does not exist (no place to put debugOutput files)\n");
+            return false;
+        }
 
     return true;
 }
@@ -188,7 +189,7 @@ int main(int argc, char** argv)
             return 0;
     }
 
-    if(!checkDirectories())
+    if(!checkDirectories(debugOutput))
         return finish("Press any key to close...", -1);
 
     MapBuilder builder(maxAngle,
