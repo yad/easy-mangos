@@ -8627,6 +8627,24 @@ void Aura::PeriodicDummyTick()
                     caster->CastCustomSpell(m_target, 63278, 0, &bp1, 0, true);
                     return;
                 }
+                case 62717:                                 // Slag Pot
+                {
+                    Unit* caster = GetCaster();
+                    if(!caster)
+                        return;
+
+                    caster->CastSpell(m_target, 65722, true);
+                    return;
+                }
+                case 63477:                                 // Slag Pot(h)
+                {
+                    Unit* caster = GetCaster();
+                    if(!caster)
+                        return;
+
+                    caster->CastSpell(m_target, 65723, true);
+                    return;
+                }
 // Exist more after, need add later
                 default:
                     break;
