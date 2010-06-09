@@ -65,6 +65,7 @@
       <AdditionalLibraryDirectories>..\..\..\..\win\VC100\g3dlite__$(Platform)_$(Configuration)\;..\..\..\..\win\VC100\zlib__$(Platform)_$(Configuration)\;</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <AdditionalDependencies>g3dlite.lib;zlib.lib;msvcrtd.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <LargeAddressAware>true</LargeAddressAware>
     </Link>
     <PostBuildEvent>
       <Command>
@@ -90,6 +91,7 @@
       <AdditionalDependencies>g3dlite.lib;zlib.lib;msvcrt.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\..\..\..\win\VC100\g3dlite__$(Platform)_$(Configuration)\;..\..\..\..\win\VC100\zlib__$(Platform)_$(Configuration)\;</AdditionalLibraryDirectories>
       <GenerateMapFile>true</GenerateMapFile>
+      <LargeAddressAware>true</LargeAddressAware>
     </Link>
     <PostBuildEvent>
       <Command>

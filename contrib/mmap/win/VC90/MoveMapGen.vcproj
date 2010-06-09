@@ -66,6 +66,7 @@
 				AdditionalLibraryDirectories="..\..\..\..\win\VC90\g3dlite__$(PlatformName)_$(ConfigurationName)\;..\..\..\..\win\VC90\zlib__$(PlatformName)_$(ConfigurationName)\"
 				GenerateDebugInformation="true"
 				TargetMachine="1"
+				LargeAddressAware="2"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -142,6 +143,7 @@
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				TargetMachine="1"
+				LargeAddressAware="2"
 			/>
 			<Tool
 				Name="VCALinkTool"
