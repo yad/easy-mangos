@@ -42,7 +42,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\..\dep\include\g3dlite;..\..\..\src\shared\vmap;"
+				AdditionalIncludeDirectories="..\..\..\dep\include\g3dlite;..\..\..\src\shared\vmap;..\..\..\src\framework;..\..\..\dep\ACE_wrappers"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
