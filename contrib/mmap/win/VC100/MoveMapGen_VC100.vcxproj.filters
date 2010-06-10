@@ -39,15 +39,6 @@
     <ClCompile Include="..\..\..\..\src\shared\vmap\WorldModel.cpp">
       <Filter>vmap</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\src\shared\pathfinding\ChunkyTriMesh.cpp">
-      <Filter>pathfinding</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\src\shared\pathfinding\InputGeom.cpp">
-      <Filter>pathfinding</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\src\shared\pathfinding\MeshLoaderObj.cpp">
-      <Filter>pathfinding</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\Recast.cpp">
       <Filter>pathfinding\Recast</Filter>
     </ClCompile>
@@ -117,6 +108,9 @@
     <ClCompile Include="..\..\..\..\src\shared\vmap\BIH.cpp">
       <Filter>vmap</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\ChunkyTriMesh.cpp">
+      <Filter>generator</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\src\shared\vmap\BIH.h">
@@ -151,15 +145,6 @@
     </ClInclude>
     <ClInclude Include="..\..\..\..\src\shared\vmap\WorldModel.h">
       <Filter>vmap</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\src\shared\pathfinding\ChunkyTriMesh.h">
-      <Filter>pathfinding</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\src\shared\pathfinding\InputGeom.h">
-      <Filter>pathfinding</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\src\shared\pathfinding\MeshLoaderObj.h">
-      <Filter>pathfinding</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\..\src\shared\pathfinding\Recast\Recast.h">
       <Filter>pathfinding\Recast</Filter>
@@ -204,6 +189,9 @@
       <Filter>generator</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\MapBuilder.h">
+      <Filter>generator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ChunkyTriMesh.h">
       <Filter>generator</Filter>
     </ClInclude>
   </ItemGroup>

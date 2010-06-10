@@ -28,8 +28,19 @@
 class Sample_Debug : public Sample_SoloMeshTiled
 {
 protected:
+    int m_hfCount;
+    rcHeightfield* m_hf;
+
+    int m_chfCount;
 	rcCompactHeightfield* m_chf;
+
+    int m_csetCount;
 	rcContourSet* m_cset;
+
+    int m_pmeshCount;
+    int m_dmeshCount;
+
+    int m_tile;
 
 	float m_ext[3];
 	float m_center[3];

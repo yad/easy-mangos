@@ -1,0 +1,38 @@
+generator command line args
+
+--maxAngle			[#]				max walkable inclination angle
+
+									float between 45 and 90 degrees (default 60)
+
+--skipContinents	[true|false]	continents are maps 0 (Eastern Kingdoms),
+									1 (Kalimdor), 530 (Outlands), 571 (Northrend)
+
+									true: skip continents (default)
+
+--skipJunkMaps		[true|false]	junk maps include some unused
+									maps, transport maps, and some other
+
+									true: skip junk maps (default)
+
+--skipBattlegrouns	[true|false]	does not include PVP arenas
+
+									true: skip battlegrounds (default)
+
+--hiResHeightmaps	[true|false]	hi-res heightmaps may result in better maps,
+									but dramatically increase memory requirements
+
+									false: use low-res heightmaps (default)
+
+--shredHeightmaps	[true|false]	shreding the heightmap makes cave
+									entrances and buildings that are partly
+									inside the terrain work better
+
+									true: shred heightmap (default)
+
+--debugOutput		[true|false]	create debugging files for use with RecastDemo
+
+									false: don't create debugging files (default)
+
+					[#]				build only the map specified by #
+									this command will build the map regardless of --skip* option settings
+									if you do not specify a map number, builds all maps that pass the filters specified by --skip* options

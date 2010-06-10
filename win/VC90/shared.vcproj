@@ -774,30 +774,6 @@
 		<Filter
 			Name="pathfinding"
 			>
-			<File
-				RelativePath="..\..\src\shared\pathfinding\ChunkyTriMesh.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\shared\pathfinding\ChunkyTriMesh.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\shared\vmap\VMapDefinitions.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\shared\vmap\VMapFactory.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\shared\vmap\VMapFactory.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\shared\vmap\VMapManager2.cpp"
-				>
-			</File>
 			<Filter
 				Name="Recast"
 				>

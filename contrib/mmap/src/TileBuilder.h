@@ -39,7 +39,7 @@ namespace MMAP
     class TileBuilder
     {
         public:
-            TileBuilder(float maxWalkableAngle, bool hiRes, IVMapManager* vmapManager);
+            TileBuilder(float maxWalkableAngle, bool hiRes, bool shred, IVMapManager* vmapManager);
             ~TileBuilder();
 
             void build(uint32   mapID,
@@ -56,6 +56,7 @@ namespace MMAP
 
             // heightmap
             bool m_hiResHeightMaps;
+            bool m_shredHeightmaps;
             float m_heightOffset;
             float* V9;
             float* V8;

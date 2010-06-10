@@ -2,18 +2,19 @@
 #include "Map.h"
 #include "Log.h"
 #include "Utilities/UnorderedMap.h"
+#include "World.h"
 
 inline uint32 packTileID(uint32 tileX, uint32 tileY) { return tileX<<16 | tileY; }
 inline void unpackTileID(uint32 ID, uint32 &tileX, uint32 &tileY) { tileX = ID>>16; tileY = ID&0xFF; }
 
 void Map::LoadNavMesh(int gx, int gy)
 {
-    char fileName[25];
+    char fileName[512];
     FILE* file;
 
     if(!m_navMesh)
     {
-        sprintf(fileName, "mmaps\\%03i.mmap", i_id);
+        sprintf(fileName, "%smmaps/%03i.mmap", sWorld.GetDataPath().c_str(), i_id);
         file = fopen(fileName, "rb");
 
         if(!file)
@@ -42,8 +43,8 @@ void Map::LoadNavMesh(int gx, int gy)
     if(m_mmapTileMap.find(packedGridPos) != m_mmapTileMap.end())
         return;
 
-    // mmaps\0000000.mmtile
-    sprintf(fileName, "mmaps\\%03i%02i%02i.mmtile", i_id, gx, gy);
+    // mmaps/0000000.mmtile
+    sprintf(fileName, "%smmaps/%03i%02i%02i.mmtile", sWorld.GetDataPath().c_str(), i_id, gx, gy);
     file = fopen(fileName, "rb");
 
     if(!file)

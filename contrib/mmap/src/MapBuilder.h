@@ -9,7 +9,7 @@
 #include "IVMapManager.h"
 #include "G3D/Array.h"
 
-#include "pathfinding/ChunkyTriMesh.h"
+#include "ChunkyTriMesh.h"
 #include "pathfinding/Recast/Recast.h"
 
 using namespace std;
@@ -37,7 +37,14 @@ namespace MMAP
     class MapBuilder
     {
         public:
-            MapBuilder(float maxWalkableAngle, bool skipContinents = true, bool hiResHeightmaps = false);
+            MapBuilder(float maxWalkableAngle   = 60.f,
+                       bool skipContinents      = true,
+                       bool skipJunkMaps        = true,
+                       bool skipBattlegrounds   = true,
+                       bool hiResHeightmaps     = false,
+                       bool shredHeightmaps     = true,
+                       bool debugOutput         = false);
+
             ~MapBuilder();
 
             /**
@@ -103,10 +110,18 @@ namespace MMAP
             void buildMoveMap(uint32 mapID);
             void initIntermediateValues(IntermediateValues &iv);
             void clearIntermediateValues(IntermediateValues &iv);
+
             void generateObjFile(uint32 mapID);
+            void writeIV(uint32 mapID, uint32 tileX, uint32 tileY, IntermediateValues iv);
+            void writeHeightfield(FILE* file, const rcHeightfield* hf);
+            void writeSpan(FILE* file, const rcSpan* span);
+            void writeCompactHeightfield(FILE* file, const rcCompactHeightfield* chf);
+            void writeChunkyTriMesh(FILE* file, const rcChunkyTriMesh* mesh);
             void writePolyMesh(FILE* file, const rcPolyMesh* mesh);
             void writeDetailMesh(FILE* file, const rcPolyMeshDetail* mesh);
+
             void cleanup();
+            float snapToGrid(const float coord);
             bool shouldSkipMap(uint32 mapID);
             bool isTransportMap(uint32 mapID);
 

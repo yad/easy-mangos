@@ -21,14 +21,14 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
-#include "Recast/Recast.h"
-#include "Recast/RecastLog.h"
+#include "pathfinding/Recast/Recast.h"
+#include "pathfinding/Recast/RecastLog.h"
 #include "InputGeom.h"
 #include "ChunkyTriMesh.h"
 #include "MeshLoaderObj.h"
-#include "DebugUtils/DebugDraw.h"
-#include "DebugUtils/RecastDebugDraw.h"
-#include "Detour/DetourNavMesh.h"
+#include "pathfinding/DebugUtils/DebugDraw.h"
+#include "pathfinding/DebugUtils/RecastDebugDraw.h"
+#include "pathfinding/Detour/DetourNavMesh.h"
 
 static bool intersectSegmentTriangle(const float* sp, const float* sq,
 									 const float* a, const float* b, const float* c,
@@ -131,7 +131,7 @@ bool InputGeom::loadMesh(const char* filepath)
 	m_offMeshConCount = 0;
 	m_volumeCount = 0;
 	
-	m_mesh = new rcMeshLoaderObj;
+	m_mesh = new myMeshLoaderObj;
 	if (!m_mesh)
 	{
 		if (rcGetLog())
