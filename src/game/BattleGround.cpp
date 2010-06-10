@@ -720,6 +720,11 @@ void BattleGround::EndBattleGround(uint32 winner)
     ArenaTeam * loser_arena_team = NULL;
     uint32 loser_rating = 0;
     uint32 winner_rating = 0;
+    int32 winner_change = 0;
+    int32 loser_change = 0;
+    std::ostringstream basic;
+    std::ostringstream winner_string;
+    std::ostringstream loser_string;
     WorldPacket data;
     int32 winmsg_id = 0;
 
@@ -753,49 +758,22 @@ void BattleGround::EndBattleGround(uint32 winner)
     {
         winner_arena_team = sObjectMgr.GetArenaTeamById(GetArenaTeamIdForTeam(winner));
         loser_arena_team = sObjectMgr.GetArenaTeamById(GetArenaTeamIdForTeam(GetOtherTeam(winner)));
-        if (winner_arena_team && loser_arena_team && ArenaPlayersCount())
+        if (winner_arena_team && loser_arena_team)
         {
             loser_rating = loser_arena_team->GetStats().rating;
             winner_rating = winner_arena_team->GetStats().rating;
-            int32 winner_change = winner_arena_team->WonAgainst(loser_rating);
-            int32 loser_change = loser_arena_team->LostAgainst(winner_rating);
-            uint32 noratinglimit = sWorld.getConfig(CONFIG_UINT32_LOSERNOCHANGE);
-            uint32 halfratinglimit = sWorld.getConfig(CONFIG_UINT32_LOSERHALFCHANGE);
+
+            winner_string << "Winner: " << winner_arena_team->GetName().c_str() << " [" << winner_rating << "] "<< " (";
+            loser_string << "Loser: " << loser_arena_team->GetName().c_str() << " [" << loser_rating << "] "<< " (";
+
+            winner_change = winner_arena_team->WonAgainst(loser_rating);
+            loser_change = loser_arena_team->LostAgainst(winner_rating);
 
             DEBUG_LOG("--- Winner rating: %u, Loser rating: %u, Winner change: %i, Losser change: %i ---", winner_rating, loser_rating, winner_change, loser_change);
             SetArenaTeamRatingChangeForTeam(winner, winner_change);
             SetArenaTeamRatingChangeForTeam(GetOtherTeam(winner), loser_change);
 
-            std::ostringstream winner_string;		
-            std::ostringstream loser_string;
-            winner_string << winner_arena_team->GetName().c_str() << " (";
-            loser_string << loser_arena_team->GetName().c_str() << " (";
-            for(BattleGroundPlayerMap::iterator itr = m_Players.begin(); itr != m_Players.end(); ++itr)
-            {
-                uint32 team = itr->second.Team;
-                if(Player *plr = sObjectMgr.GetPlayer(itr->first))
-                {
-                    if(!team) team = plr->GetTeam();
-                    QueryResult *result = loginDatabase.PQuery("SELECT last_ip FROM realmd.account WHERE id in (SELECT account FROM characters.characters WHERE guid = %u)", plr->GetGUIDLow());
-                    if(team == winner)
-                    {
-                        winner_string << plr->GetName();
-                        if(result)
-                            winner_string << "[" << result->Fetch()[0].GetString() << "]";
-                        winner_string << ", ";
-                    }
-                    else
-                    {
-                        loser_string << plr->GetName();
-                        if(result)
-                            loser_string << "[" << result->Fetch()[0].GetString() << "]";
-                        loser_string << ", ";
-                    }
-                }
-            }
-            winner_string << ")";
-            loser_string << ")";
-            sLog.outArenaLog("Bracket: %u, Rating difference: %i/%i Winner: %s , Loser: %s", winner_arena_team->GetType(), winner_change, loser_change, winner_string.str().c_str(), loser_string.str().c_str());
+            basic << "Bracket: " << winner_arena_team->GetType() << " Rating change: " << winner_change << "/" << loser_change ;
         }
         else
         {
@@ -854,6 +832,8 @@ void BattleGround::EndBattleGround(uint32 winner)
         // per player calculation
         if (isArena() && isRated() && winner_arena_team && loser_arena_team)
         {
+            int32 change;
+            QueryResult *result = loginDatabase.PQuery("SELECT last_ip FROM realmd.account WHERE id in (SELECT account FROM characters.characters WHERE guid = %u)", plr->GetGUIDLow());
             if (team == winner)
             {
                 // update achievement BEFORE personal rating update
@@ -861,15 +841,22 @@ void BattleGround::EndBattleGround(uint32 winner)
                 if (member)
                     plr->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_WIN_RATED_ARENA, member->personal_rating);
 
-                winner_arena_team->MemberWon(plr,loser_rating);
+                change = winner_arena_team->MemberWon(plr,loser_rating);
             }
             else
             {
-                loser_arena_team->MemberLost(plr,winner_rating);
+                change = loser_arena_team->MemberLost(plr,winner_rating);
 
                 // Arena lost => reset the win_rated_arena having the "no_loose" condition
                 plr->GetAchievementMgr().ResetAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_WIN_RATED_ARENA, ACHIEVEMENT_CRITERIA_CONDITION_NO_LOOSE);
             }
+            (team == winner) ? winner_string : loser_string << plr->GetName() << " [";
+            if(result)
+                (team == winner) ? winner_string : loser_string << result->Fetch()[0].GetString();
+            else 
+                (team == winner) ? winner_string : loser_string << "ERROR: ip not found";
+            
+            (team == winner) ? winner_string : loser_string<< "] (" << change << "), ";
         }
 
         if (team == winner)
@@ -900,6 +887,9 @@ void BattleGround::EndBattleGround(uint32 winner)
         // this way all arena team members will get notified, not only the ones who participated in this match
         winner_arena_team->NotifyStatsChanged();
         loser_arena_team->NotifyStatsChanged();
+        winner_string << ")";
+        loser_string << ")";
+        sLog.outArenaLog("%s %s %s", basic.str().c_str(), winner_string.str().c_str(), loser_string.str().c_str());
     }
 
     if (winmsg_id)
@@ -1993,7 +1983,7 @@ void BattleGround::SetBracket( PvPDifficultyEntry const* bracketEntry )
     SetLevelRange(bracketEntry->minLevel,bracketEntry->maxLevel);
 }
 
-bool BattleGround::ArenaPlayersCount()
+/*bool BattleGround::ArenaPlayersCount()
 {
     if(!isArena() || !sWorld.getConfig(CONFIG_BOOL_END_ARENA_IF_NOT_ENOUGH_PLAYERS))
         return true;
@@ -2005,4 +1995,4 @@ bool BattleGround::ArenaPlayersCount()
         return false;
  
     return true;
-}
+}*/

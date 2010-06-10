@@ -606,7 +606,7 @@ int32 ArenaTeam::LostAgainst(uint32 againstRating)
     return mod;
 }
 
-void ArenaTeam::MemberLost(Player * plr, uint32 againstRating)
+int32 ArenaTeam::MemberLost(Player * plr, uint32 againstRating)
 {
     // called for each participant of a match after losing
     for(MemberList::iterator itr = m_members.begin(); itr !=  m_members.end(); ++itr)
@@ -631,12 +631,12 @@ void ArenaTeam::MemberLost(Player * plr, uint32 againstRating)
             // update the unit fields
             plr->SetArenaTeamInfoField(GetSlot(), ARENA_TEAM_GAMES_WEEK,  itr->games_week);
             plr->SetArenaTeamInfoField(GetSlot(), ARENA_TEAM_GAMES_SEASON,  itr->games_season);
-            return;
+            return mod;
         }
-    }
+    }return 0;
 }
 
-void ArenaTeam::OfflineMemberLost(uint64 guid, uint32 againstRating)
+int32 ArenaTeam::OfflineMemberLost(uint64 guid, uint32 againstRating)
 {
     // called for offline player after ending rated arena match!
     for(MemberList::iterator itr = m_members.begin(); itr !=  m_members.end(); ++itr)
@@ -655,12 +655,12 @@ void ArenaTeam::OfflineMemberLost(uint64 guid, uint32 againstRating)
             // update personal played stats
             itr->games_week += 1;
             itr->games_season += 1;
-            return;
+            return mod;
         }
-    }
+    }return 0;
 }
 
-void ArenaTeam::MemberWon(Player * plr, uint32 againstRating)
+int32 ArenaTeam::MemberWon(Player * plr, uint32 againstRating)
 {
     // called for each participant after winning a match
     for(MemberList::iterator itr = m_members.begin(); itr !=  m_members.end(); ++itr)
@@ -681,9 +681,9 @@ void ArenaTeam::MemberWon(Player * plr, uint32 againstRating)
             // update unit fields
             plr->SetArenaTeamInfoField(GetSlot(), ARENA_TEAM_GAMES_WEEK, itr->games_week);
             plr->SetArenaTeamInfoField(GetSlot(), ARENA_TEAM_GAMES_SEASON, itr->games_season);
-            return;
+            return mod;
         }
-    }
+    }return 0;
 }
 
 void ArenaTeam::UpdateArenaPointsHelper(std::map<uint32, uint32>& PlayerPoints)
