@@ -16,22 +16,22 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _VMAPDEFINITIONS_H
-#define _VMAPDEFINITIONS_H
-#include <cstring>
+#include "TreeNode.h"
+
+using namespace G3D;
 
 namespace VMAP
 {
-    //=====================================
-    #define MAX_CAN_FALL_DISTANCE 10.0f
-    const char VMAP_MAGIC[] = "VMAP_2.0";
 
-    class VMapDefinitions
+    TreeNode const* TreeNode::getChild(TreeNode const* pValueArray,int pNo) const
     {
-        public:
-            static float getMaxCanFallDistance() { return MAX_CAN_FALL_DISTANCE; }
-    };
+        if(iChilds[pNo] != -1)
+            return(&pValueArray[iChilds[pNo]]);
+        else
+            return(NULL);
+    }
 
-    //======================================
+    //=================================================================
+    //=================================================================
+    //=================================================================
 }
-#endif

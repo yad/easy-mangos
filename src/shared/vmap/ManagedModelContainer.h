@@ -16,22 +16,34 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _VMAPDEFINITIONS_H
-#define _VMAPDEFINITIONS_H
-#include <cstring>
+#ifndef _MANAGEDMODELCONTAINER_H
+#define _MANAGEDMODELCONTAINER_H
+
+#include "ModelContainer.h"
+
+//=======================================================
+/**
+This is a ModelContainer with reference count information.
+*/
 
 namespace VMAP
 {
-    //=====================================
-    #define MAX_CAN_FALL_DISTANCE 10.0f
-    const char VMAP_MAGIC[] = "VMAP_2.0";
+    //=======================================================
 
-    class VMapDefinitions
+    class ManagedModelContainer :
+    public ModelContainer
     {
+        private:
+            int refCount;
         public:
-            static float getMaxCanFallDistance() { return MAX_CAN_FALL_DISTANCE; }
+            ManagedModelContainer(void) ;
+            ~ManagedModelContainer(void);
+
+            void incRefCount() { ++refCount; }
+            void decRefCount() { --refCount; if(refCount < 0) refCount = 0; }
+            int getRefCount() { return refCount; }
     };
 
-    //======================================
+    //=======================================================
 }
 #endif
