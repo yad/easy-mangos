@@ -53,7 +53,17 @@ Sample_Debug::Sample_Debug() : Sample_SoloMeshTiled(),
 
 Sample_Debug::~Sample_Debug()
 {
-    Sample_SoloMeshTiled::cleanup();
+    cleanup();
+}
+
+void Sample_Debug::cleanup()
+{
+    delete [] m_hf;
+    delete [] m_chf;
+    delete [] m_cset;
+    delete [] m_pmesh;
+    delete [] m_dmesh;
+    delete m_navMesh;
 }
 
 void Sample_Debug::handleSettings()

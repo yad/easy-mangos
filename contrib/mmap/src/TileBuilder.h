@@ -42,15 +42,14 @@ namespace MMAP
             TileBuilder(float maxWalkableAngle, bool hiRes, bool shred, IVMapManager* vmapManager);
             ~TileBuilder();
 
-            void build(uint32   mapID,
-                       uint32   tileX,
-                       uint32   tileY,
-                       float*   &vertices,
-                       uint32   &vertCount,
-                       int*     &triangles,
-                       uint32   &triangleCount);
+            void build(uint32               mapID,
+                       uint32               tileX,
+                       uint32               tileY,
+                       G3D::Array<float>    &verts,
+                       G3D::Array<int>      &tris);
 
-            static float readHeightOffset(uint32 mapID, uint32 tileX, uint32 tileY);
+            int getMaxVertCount();
+            int getMaxTriCount();
 
         private:
 

@@ -111,6 +111,9 @@
     <ClCompile Include="..\..\src\ChunkyTriMesh.cpp">
       <Filter>generator</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\DebugAlloc.cpp">
+      <Filter>generator</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\src\shared\vmap\BIH.h">
@@ -192,6 +195,9 @@
       <Filter>generator</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\ChunkyTriMesh.h">
+      <Filter>generator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\DebugAlloc.h">
       <Filter>generator</Filter>
     </ClInclude>
   </ItemGroup>

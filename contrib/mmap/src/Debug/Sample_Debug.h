@@ -51,6 +51,7 @@ public:
 	Sample_Debug();
 	virtual ~Sample_Debug();
 	
+    virtual void cleanup();
 	virtual void handleSettings();
 	virtual void handleTools();
 	virtual void handleDebugMode();

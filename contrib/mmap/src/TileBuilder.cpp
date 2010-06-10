@@ -22,76 +22,53 @@ namespace MMAP
     {
         V9 = new float[V9_SIZE_SQ];
         V8 = new float[V8_SIZE_SQ];
-        m_vertices = new G3D::Array<float>;
-        m_triangles = new G3D::Array<int>;
     }
 
     TileBuilder::~TileBuilder()
     {
         delete [] V9;
         delete [] V8;
-        m_vertices->clear();
-        m_triangles->clear();
+    }
+
+    int TileBuilder::getMaxVertCount()
+    {
+        if(m_hiResHeightMaps)
+            return V9_SIZE_SQ + V8_SIZE_SQ;
+        else
+            return V9_SIZE_SQ;
+    }
+
+    int TileBuilder::getMaxTriCount()
+    {
+        if(m_hiResHeightMaps)
+            return V8_SIZE_SQ * 4;
+        else
+            return V9_SIZE_SQ * 2;
     }
 
     void TileBuilder::build(
         uint32 mapID,
         uint32 tileX,
         uint32 tileY,
-        float* &vertices,
-        uint32 &vertCount,
-        int* &triangles,
-        uint32 &triangleCount)
+        G3D::Array<float> &verts,
+        G3D::Array<int> &tris)
     {
         m_mapID =  mapID;
         m_tileX = tileX;
         m_tileY = tileY;
 
         char map[18];
-        sprintf(map, "maps\\%03u%02u%02u.map", m_mapID, m_tileY, m_tileX);
+        sprintf(map, "maps/%03u%02u%02u.map", m_mapID, m_tileY, m_tileX);
+
+        m_vertices = &verts;
+        m_triangles = &tris;
 
         cleanup();
         loadHeightMap(map);
-        intersect();
-
-        char obj[20];
-        sprintf(obj, "meshes\\%03u%02u%02u.obj", m_mapID, m_tileY, m_tileX);
-        //generateObjFile(obj);
-
-        // return vertices and triangles
-        vertCount = m_vertices->size() / 3;
-        triangleCount = m_triangles->size() / 3;
-        vertices = m_vertices->getCArray();
-        triangles = m_triangles->getCArray();
-    }
-
-    float TileBuilder::readHeightOffset(uint32 mapID, uint32 tileX, uint32 tileY)
-    {
-        char mapFileName[20];
-        sprintf(mapFileName, "maps\\%03u%02u%02u.map", mapID, tileY, tileX);
-
-        FILE* mapFile = fopen(mapFileName, "rb");
-
-        if(!mapFile)
-            return 0.f;
-
-        map_fileheader fileHeader;
-        fread(&fileHeader, sizeof(map_fileheader), 1, mapFile);
-
-        fseek(mapFile, fileHeader.heightMapOffset, SEEK_SET);
-
-        map_heightHeader heightHeader;
-        fread(&heightHeader, sizeof(map_heightHeader), 1, mapFile);
-
-        fclose(mapFile);
-
-        return heightHeader.gridHeight;
     }
 
     bool TileBuilder::loadHeightMap(const char* mapFileName)
     {
-        printf("[%02u,%02u]: Loading heightmap...       \r", m_tileY, m_tileX);
-
         FILE* mapFile = fopen(mapFileName, "rb");
 
         if(!mapFile)
@@ -438,8 +415,5 @@ namespace MMAP
         m_vmapManager->unloadMap(m_mapID, m_tileX, m_tileY);
         m_vmapManager->unloadMap(m_mapID);
         cout.clear(cout.goodbit);
-
-        m_vertices->fastClear();
-        m_triangles->fastClear();
     }
 }

@@ -250,19 +250,82 @@ myMeshLoaderObj::~myMeshLoaderObj()
 
 bool myMeshLoaderObj::load(const char* filename)
 {
-    FILE* file = fopen(filename, "rb");
-    if(!file)
+    char fileName[25];
+    FILE* file;
+
+    string fname(filename);
+
+    vector<string> files;
+    sprintf(fileName, "%s*.mesh", fname.substr(fname.find('/')+1,3).c_str());
+    MMAP::getDirContents(files, "Meshes", fileName);
+
+    if(!files.size())
         return false;
 
-    fread(&m_vertCount, sizeof(int), 1, file);
-    m_verts = new float[m_vertCount*3];
-    fread(m_verts, sizeof(float), m_vertCount*3, file);
+    float* verts = 0;
+    int vertCount = 0;
+    int* tris = 0;
+    int triCount = 0;
+    int newVertCount;
+    int newTriCount;
 
-    fread(&m_triCount, sizeof(int), 1, file);
-    m_tris = new int[m_triCount*3];
-    fread(m_tris, sizeof(int), m_triCount*3, file);
+    for(int i = 0; i < files.size(); ++i)
+    {
+        file = fopen(("meshes/" + files[i]).c_str(), "rb");
+        if(!file)
+            continue;
 
-    fclose(file);
+        if(verts)
+        {
+            fread(&newVertCount, sizeof(int), 1, file);
+
+            float* newVerts = new float[vertCount*3 + newVertCount*3];
+            memcpy(newVerts, verts, sizeof(float)*vertCount*3);
+
+            fread(&newVerts[vertCount*3], sizeof(float), newVertCount*3, file);
+
+            delete[] verts;
+            verts = newVerts;
+        }
+        else
+        {
+            fread(&vertCount, sizeof(int), 1, file);
+            verts = new float[vertCount*3];
+            fread(verts, sizeof(float), vertCount*3, file);
+        }
+
+        if(tris)
+        {
+            fread(&newTriCount, sizeof(int), 1, file);
+
+            int* newTris = new int[triCount*3 + newTriCount*3];
+            memcpy(newTris, tris, sizeof(int)*triCount*3);
+
+            fread(&newTris[triCount*3], sizeof(int), newTriCount*3, file);
+
+            delete[] tris;
+            tris = newTris;
+
+            for(int j = triCount*3; j < triCount*3 + newTriCount*3; ++j)
+                tris[j] += vertCount;
+
+            vertCount += newVertCount;
+            triCount += newTriCount;
+        }
+        else
+        {
+            fread(&triCount, sizeof(int), 1, file);
+            tris = new int[triCount*3];
+            fread(tris, sizeof(int), triCount*3, file);
+        }
+
+        fclose(file);
+    }
+
+    m_verts = verts;
+    m_vertCount = vertCount;
+    m_tris = tris;
+    m_triCount = triCount;
 
 	m_normals = new float[m_triCount*3];
 	for (int i = 0; i < m_triCount*3; i += 3)
