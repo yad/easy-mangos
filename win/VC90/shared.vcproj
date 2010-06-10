@@ -751,14 +751,6 @@
 			Name="vmaps"
 			>
 			<File
-				RelativePath="..\..\src\shared\vmap\BIH.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\shared\vmap\BIH.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\src\shared\vmap\IVMapManager.h"
 				>
 			</File>
@@ -778,12 +770,16 @@
 				RelativePath="..\..\src\shared\vmap\ModelInstance.h"
 				>
 			</File>
+		</Filter>
+		<Filter
+			Name="pathfinding"
+			>
 			<File
-				RelativePath="..\..\src\shared\vmap\TileAssembler.cpp"
+				RelativePath="..\..\src\shared\pathfinding\ChunkyTriMesh.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\shared\vmap\TileAssembler.h"
+				RelativePath="..\..\src\shared\pathfinding\ChunkyTriMesh.h"
 				>
 			</File>
 			<File
@@ -800,50 +796,6 @@
 			</File>
 			<File
 				RelativePath="..\..\src\shared\vmap\VMapManager2.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\shared\vmap\VMapManager2.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\shared\vmap\VMapTools.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\shared\vmap\WorldModel.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\shared\vmap\WorldModel.h"
-				>
-			</File>
-		</Filter>
-		<Filter
-			Name="pathfinding"
-			>
-			<File
-				RelativePath="..\..\src\shared\pathfinding\ChunkyTriMesh.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\shared\pathfinding\ChunkyTriMesh.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\shared\pathfinding\InputGeom.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\shared\pathfinding\InputGeom.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\shared\pathfinding\MeshLoaderObj.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\shared\pathfinding\MeshLoaderObj.h"
 				>
 			</File>
 			<Filter
@@ -979,27 +931,19 @@
 			Name="pathfinding"
 			>
 			<File
-				RelativePath="..\..\src\shared\pathfinding\ChunkyTriMesh.cpp"
+				RelativePath="..\..\src\shared\vmap\VMapManager2.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\shared\pathfinding\ChunkyTriMesh.h"
+				RelativePath="..\..\src\shared\vmap\VMapTools.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\shared\pathfinding\InputGeom.cpp"
+				RelativePath="..\..\src\shared\vmap\WorldModel.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\shared\pathfinding\InputGeom.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\shared\pathfinding\MeshLoaderObj.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\shared\pathfinding\MeshLoaderObj.h"
+				RelativePath="..\..\src\shared\vmap\WorldModel.h"
 				>
 			</File>
 			<Filter

@@ -175,6 +175,9 @@
     <ClCompile Include="..\..\src\shared\pathfinding\DebugUtils\DebugDraw.cpp">
       <Filter>pathfinding\DebugUtils</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\shared\vmap\BIH.cpp">
+      <Filter>vmaps</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\shared\Database\Database.h">

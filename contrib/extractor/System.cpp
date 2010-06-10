@@ -12,7 +12,7 @@
 #endif
 
 #include "dbcfile.h"
-#include "mpq_libmpq.h"
+#include "mpq_libmpq04.h"
 
 #include "loadlib/adt.h"
 #include "loadlib/wdt.h"
@@ -913,6 +913,7 @@ void ExtractMapsFromMpq(uint32 build)
             printf("Processing........................%d%%\r", (100 * (y+1)) / WDT_MAP_SIZE);
         }
     }
+    printf("Extract complete!                     \n");
     delete [] areas;
     delete [] map_ids;
 }

@@ -536,7 +536,6 @@
     <ClInclude Include="..\..\src\shared\Threading.h" />
     <ClInclude Include="..\..\src\shared\Timer.h" />
     <ClInclude Include="..\..\src\shared\Util.h" />
-    <ClInclude Include="..\..\src\shared\vmap\BIH.h" />
     <ClInclude Include="..\..\src\shared\vmap\IVMapManager.h" />
     <ClInclude Include="..\..\src\shared\vmap\MapTree.h" />
     <ClInclude Include="..\..\src\shared\vmap\ModelInstance.h" />

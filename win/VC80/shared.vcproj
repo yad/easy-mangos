@@ -745,14 +745,6 @@
 			Name="vmaps"
 			>
 			<File
-				RelativePath="..\..\src\shared\vmap\BIH.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\shared\vmap\BIH.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\src\shared\vmap\IVMapManager.h"
 				>
 			</File>
