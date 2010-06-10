@@ -3879,7 +3879,7 @@ void Aura::HandleBindSight(bool apply, bool /*Real*/)
 
     Camera& camera = ((Player*)caster)->GetCamera();
     if (apply)
-        camera.SetView(m_target);
+        camera.SetView(m_target, GetId());
     else
         camera.ResetView();
 }
@@ -3892,7 +3892,7 @@ void Aura::HandleFarSight(bool apply, bool /*Real*/)
 
     Camera& camera = ((Player*)caster)->GetCamera();
     if (apply)
-        camera.SetView(m_target);
+        camera.SetView(m_target, GetId());
     else
         camera.ResetView();
 }
@@ -3960,9 +3960,9 @@ void Aura::HandleModPossess(bool apply, bool Real)
 
         p_caster->SetCharm(target);
 
-        camera.SetView(m_target);
-        p_caster->SetClientControl(m_target, 1);
-        p_caster->SetMover(m_target);
+        camera.SetView(m_target, GetId());
+        p_caster->SetClientControl(target, 1);
+        p_caster->SetMover(target);
 
         target->CombatStop();
         target->DeleteThreatList();
@@ -3989,7 +3989,7 @@ void Aura::HandleModPossess(bool apply, bool Real)
         p_caster->SetCharm(NULL);
 
         camera.ResetView();
-        p_caster->SetClientControl(m_target, 0);
+        p_caster->SetClientControl(target, 0);
         p_caster->SetMover(NULL);
 
         p_caster->RemovePetActionBar();
@@ -4048,7 +4048,7 @@ void Aura::HandleModPossessPet(bool apply, bool Real)
     if(apply)
     {
         pet->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PLAYER_CONTROLLED);
-        camera.SetView(pet);
+        camera.SetView(pet, GetId());
     }
     else
     {
@@ -4612,7 +4612,7 @@ void Aura::HandleInvisibilityDetect(bool apply, bool Real)
         for(Unit::AuraList::const_iterator itr = auras.begin(); itr != auras.end(); ++itr)
             target->m_detectInvisibilityMask |= (1 << m_modifier.m_miscvalue);
     }
-    if(Real && m_target->GetTypeId()==TYPEID_PLAYER)
+    if(Real && target->GetTypeId()==TYPEID_PLAYER)
         ((Player*)m_target)->GetCamera().UpdateVisibilityForOwner();
 }
 

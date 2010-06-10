@@ -96,7 +96,7 @@ namespace MaNGOS
         MessageDelivererExcept(WorldObject const* obj, WorldPacket *msg, Player const* skipped)
             : i_phaseMask(obj->GetPhaseMask()), i_message(msg), i_skipped_receiver(skipped) {}
 
-        void Visit(PlayerMapType &m);
+        void Visit(CameraMapType &m);
         template<class SKIP> void Visit(GridRefManager<SKIP> &) {}
     };
 

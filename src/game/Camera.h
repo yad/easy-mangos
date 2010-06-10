@@ -21,10 +21,13 @@ class MANGOS_DLL_SPEC Camera
         WorldObject* getBody() { return m_source;}
         Player* getOwner() { return &m_owner;}
 
-        void SetView(WorldObject *obj);     // set camera's view to any worldobject.
-                                            // Note: this worldobject must be in same map, in same phase with camera's owner(player)
-                                            // Note: client supports only unit and dynamic objects as farsight objects
-        void ResetView();                   // set view to camera's owner
+        // set camera's view to any worldobject
+        // Note: this worldobject must be in same map, in same phase with camera's owner(player)
+        // client supports only unit and dynamic objects as farsight objects
+        void SetView(WorldObject *obj, uint32 caused_by_aura_id = 0);
+
+        // set view to camera's owner
+        void ResetView();
 
         template<class T>
         void UpdateVisibilityOf(T * obj, UpdateData &d, std::set<WorldObject*>& vis);
@@ -36,13 +39,14 @@ class MANGOS_DLL_SPEC Camera
     private:
         // called when viewpoint changes visibility state
         void Event_AddedToWorld();
-        bool Event_RemovedFromWorld();
+        void Event_RemovedFromWorld();
         void Event_Moved();
-        bool Event_ResetView();
-        bool Event_ViewPointVisibilityChanged();
+        void Event_ViewPointVisibilityChanged();
 
         Player & m_owner;
         WorldObject *m_source;
+        uint32 caused_by_aura;
+
         void UpdateForCurrentViewPoint();
 
     public:
@@ -57,41 +61,33 @@ class MANGOS_DLL_SPEC ViewPoint
 {
     friend class Camera;
 
-    std::vector<Camera*> m_cameras;
-    mutable GridType * m_grid;
+    std::list<Camera*> m_cameras;
+    std::list<Camera*>::iterator camera_iter;
+    GridType * m_grid;
     
     void Attach(Camera* c) { m_cameras.push_back(c); }
-    void Detach(Camera* c) { m_cameras.erase(remove(m_cameras.begin(),m_cameras.end(), c)); }
 
-    void CameraCall(bool (Camera::*handler)(void))
+    void Detach(Camera* c)
     {
-        if(m_cameras.size() == 1)   // the most common case
-        {
-            if( (m_cameras.front()->*handler)() == true)
-                m_cameras.clear();
-        }
+        if (*camera_iter == c)     // detach called during the loop
+            camera_iter = m_cameras.erase(camera_iter);
         else
-        {
-            for(std::vector<Camera*>::iterator it = m_cameras.begin(); it!=m_cameras.end(); ++it)
-                if( ((*it)->*handler)() )
-                    (*it) = 0; //mark poiners, that should be removed
-            m_cameras.erase(remove(m_cameras.begin(),m_cameras.end(), (Camera*)NULL), m_cameras.end());
-        }
+            m_cameras.remove(c);
     }
 
-    void CameraCall(void (Camera::*const_handler)(void)) const
+    void CameraCall(void (Camera::*handler)(void))
     {
-        for(std::vector<Camera*>::const_iterator it = m_cameras.begin(); it!=m_cameras.end(); ++it)
-            ((*it)->*const_handler)();
+        for(camera_iter = m_cameras.begin(); camera_iter!=m_cameras.end(); ++camera_iter)
+            ((*camera_iter)->*handler)();
     }
 
 public:
 
-    ViewPoint() : m_grid(0) {}
+    ViewPoint() : m_grid(0), camera_iter(m_cameras.end()) {}
     virtual ~ViewPoint();
 
     // these events are called when viewpoint changes visibility state
-    void Event_AddedToMap(GridType *grid) const
+    void Event_AddedToMap(GridType *grid)
     {
         m_grid = grid;
         if(!m_cameras.empty())
@@ -105,17 +101,11 @@ public:
             CameraCall(&Camera::Event_RemovedFromWorld);
     }
 
-    void Event_GridChanged(GridType *grid) const
+    void Event_GridChanged(GridType *grid)
     {
         m_grid = grid;
         if(!m_cameras.empty())
             CameraCall(&Camera::Event_Moved);
-    }
-
-    void Event_ResetView()
-    {
-        if(!m_cameras.empty())
-            CameraCall(&Camera::Event_ResetView);
     }
 
     void Event_ViewPointVisibilityChanged()
@@ -124,7 +114,7 @@ public:
             CameraCall(&Camera::Event_ViewPointVisibilityChanged);
     }
 
-    void Call_UpdateVisibilityForOwner() const
+    void Call_UpdateVisibilityForOwner()
     {
         if(!m_cameras.empty())
             CameraCall(&Camera::UpdateVisibilityForOwner);

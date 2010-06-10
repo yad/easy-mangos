@@ -446,7 +446,6 @@
       <Filter>Tool</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\game\AuctionHouseBot.cpp" />
-    <ClCompile Include="..\..\src\game\Camera.cpp" />
     <ClCompile Include="..\..\src\game\MapUpdater.cpp" />
     <ClCompile Include="..\..\src\game\PlayerbotMgr.cpp" />
     <ClCompile Include="..\..\src\game\PlayerbotAI.cpp" />
@@ -469,6 +468,8 @@
     </ClCompile>
     <ClCompile Include="..\..\src\game\MoveMap.cpp">
       <Filter>World/Handlers</Filter>
+    <ClCompile Include="..\..\src\game\Camera.cpp">
+      <Filter>Object</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -864,7 +865,6 @@
       <Filter>Tool</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\game\AuctionHouseBot.h" />
-    <ClInclude Include="..\..\src\game\Camera.h" />
     <ClInclude Include="..\..\src\game\PlayerbotMgr.h" />
     <ClInclude Include="..\..\src\game\PlayerbotAI.h" />
     <ClInclude Include="..\..\src\game\PlayerbotClassAI.h" />
@@ -880,6 +880,8 @@
     <ClInclude Include="..\..\src\game\PlayerbotWarriorAI.h" />
     <ClInclude Include="..\..\src\game\PathFinder.h">
       <Filter>Motion generators</Filter>
+    <ClInclude Include="..\..\src\game\Camera.h">
+      <Filter>Object</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
