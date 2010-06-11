@@ -392,7 +392,7 @@ void PlayerbotAI::SendQuestItemList( Player& player )
             << "]|h|r";
     }
 
-    TellMaster( "Voici la liste des objets dont j'ai besoin pour mes quetes :" );
+    TellMaster( "Voici la liste des objets dont j'ai besoin pour valider mes quêtes :" );
     TellMaster( out.str().c_str() );
 }
 
@@ -401,18 +401,25 @@ void PlayerbotAI::SendOrders( Player& player )
     std::ostringstream out;
     
     if( !m_combatOrder )
-        out << "Got no combat orders!";
+    //    out << "Got no combat orders!";
+        out << "Je n'ai pas d'ordre de combat";
     else if( m_combatOrder&ORDERS_TANK )
-        out << "I TANK";
+    //    out << "I TANK";
+        out << "Je tank ";
     else if( m_combatOrder&ORDERS_ASSIST )
-        out << "I ASSIST " << (m_targetAssist?m_targetAssist->GetName():"unknown");
+    //    out << "I ASSIST " << (m_targetAssist?m_targetAssist->GetName():"unknown");
+        out << "Je passe en assist " << (m_targetAssist?m_targetAssist->GetName():"unknown");
     else if( m_combatOrder&ORDERS_HEAL )
-        out << "I HEAL";
+    //    out << "I HEAL";
+        out << "Je prends en charge les soins ";
     if( (m_combatOrder&ORDERS_PRIMARY) && (m_combatOrder&ORDERS_SECONDARY) )
-        out << " and ";
+    //    out << " and ";
+        out << " et ";
     if( m_combatOrder&ORDERS_PROTECT )
-        out << "I PROTECT " << (m_targetProtect?m_targetProtect->GetName():"unknown");
+    //    out << "I PROTECT " << (m_targetProtect?m_targetProtect->GetName():"unknown");
+        out << "Je protège " << (m_targetProtect?m_targetProtect->GetName():"unknown");
     out << ".";
+    
     
     TellMaster( out.str().c_str() );
 }
@@ -692,10 +699,13 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
 
                 // send bot the message
                 std::ostringstream whisper;
-                whisper << "J'ai |cff00ff00" << gold
+                whisper << "Je possède actuellement |cff00ff00" << gold
+                        // << "|r|cfffffc00g|r|cff00ff00" << silver
+                        // << "|r|cffcdcdcds|r|cff00ff00" << copper
+                        // << "|r|cffffd333c|r" << " et les objets suivants :";
                         << "|r|cfffffc00g|r|cff00ff00" << silver
                         << "|r|cffcdcdcds|r|cff00ff00" << copper
-                        << "|r|cffffd333c|r" << " et les objets suivants :";
+                        << "|r|cffffd333c|r" << " et je peux échanger les objets suivants :";
                 SendWhisper(whisper.str().c_str(), *(m_bot->GetTrader()));
                 ChatHandler ch(m_bot->GetTrader());
                 ch.SendSysMessage(out.str().c_str());
@@ -1654,11 +1664,12 @@ void PlayerbotAI::TurnInQuests( WorldObject *questgiver )
                         if (m_bot->CanRewardQuest(pQuest, false))
                         {
                             m_bot->RewardQuest(pQuest, 0, questgiver, false);
-                            out << "Quete finie : |cff808080|Hquetes:" << questID << ':' << pQuest->GetQuestLevel() << "|h[" << questTitle << "]|h|r";
+                            out << "Quête finie : |cff808080|Hquetes:" << questID << ':' << pQuest->GetQuestLevel() << "|h[" << questTitle << "]|h|r";
                         }
                         else
                         {
-                            out << "|cffff0000Unable to turn quest in:|r |cff808080|Hquest:" << questID << ':' << pQuest->GetQuestLevel() << "|h[" << questTitle << "]|h|r";
+                        //   out << "|cffff0000Unable to turn quest in:|r |cff808080|Hquest:" << questID << ':' << pQuest->GetQuestLevel() << "|h[" << questTitle << "]|h|r";
+                            out << "|cffff0000Impossible de prendre la quête:|r |cff808080|Hquest:" << questID << ':' << pQuest->GetQuestLevel() << "|h[" << questTitle << "]|h|r";
                         }
                     }
                     
@@ -1676,14 +1687,14 @@ void PlayerbotAI::TurnInQuests( WorldObject *questgiver )
                             std::string itemName = pRewardItem->Name1;
                             ItemLocalization(itemName, pRewardItem->ItemId);
                             
-                            out << "Quete(s) finie(s) : "
+                            out << "Quête(s) finie(s) : "
                                 << " |cff808080|Hquest:" << questID << ':' << pQuest->GetQuestLevel() 
                                 << "|h[" << questTitle << "]|h|r reward: |cffffffff|Hitem:" 
                                 << pRewardItem->ItemId << ":0:0:0:0:0:0:0" << "|h[" << itemName << "]|h|r";
                         }
                         else
                         {
-                            out << "|cffff0000Impossible de prendre la quete :|r "
+                            out << "|cffff0000Impossible de prendre la quête :|r "
                                 << "|cff808080|Hquest:" << questID << ':' 
                                 << pQuest->GetQuestLevel() << "|h[" << questTitle << "]|h|r"
                                 << " reward: |cffffffff|Hitem:" 
@@ -1693,7 +1704,7 @@ void PlayerbotAI::TurnInQuests( WorldObject *questgiver )
                     
                     // else multiple rewards - let master pick
                     else {
-                        out << "Quelle recompense dois-je prendre|cff808080|Hquest:" << questID << ':' << pQuest->GetQuestLevel() 
+                        out << "Quelle récompense dois-je prendre|cff808080|Hquest:" << questID << ':' << pQuest->GetQuestLevel() 
                             << "|h[" << questTitle << "]|h|r? ";
                         for (uint8 i=0; i < pQuest->GetRewChoiceItemsCount(); ++i)
                         {
@@ -1707,12 +1718,12 @@ void PlayerbotAI::TurnInQuests( WorldObject *questgiver )
             }
 
             else if (status == QUEST_STATUS_INCOMPLETE) {
-                out << "|cffff0000Quete(s) incomplete(s):|r " 
+                out << "|cffff0000Quête(s) incomplète(s):|r " 
                     << " |cff808080|Hquest:" << questID << ':' << pQuest->GetQuestLevel() << "|h[" << questTitle << "]|h|r";
             }
 
             else if (status == QUEST_STATUS_AVAILABLE){
-                out << "|cff00ff00Quete(s) active(s):|r " 
+                out << "|cff00ff00Quête(s) active(s):|r " 
                     << " |cff808080|Hquest:" << questID << ':' << pQuest->GetQuestLevel() << "|h[" << questTitle << "]|h|r";
             }
 
@@ -2461,7 +2472,7 @@ bool PlayerbotAI::HasPick()
     {
         Item* const pItem = m_bot->GetItemByPos( INVENTORY_SLOT_BAG_0, slot );
         if (pItem )
-	{
+    {
             const ItemPrototype* const pItemProto = pItem->GetProto();
             if (!pItemProto )
                 continue;
@@ -3461,7 +3472,8 @@ void PlayerbotAI::HandleCommand(const std::string& text, Player& fromPlayer)
          uint32 silver = uint32(copper / 100);
          copper -= (silver * 100);
 
-         out << "|cffffffff[|h|cff00ffff" << m_bot->GetName() << "|h|cffffffff]" << " has |r|cff00ff00" << gold
+        // out << "|cffffffff[|h|cff00ffff" << m_bot->GetName() << "|h|cffffffff]" << " has |r|cff00ff00" << gold
+         out << "|cffffffff[|h|cff00ffff" << m_bot->GetName() << "|h|cffffffff]" << " possède |r|cff00ff00" << gold
                  << "|r|cfffffc00g|r|cff00ff00" << silver
                  << "|r|cffcdcdcds|r|cff00ff00" << copper
                  << "|r|cffffd333c" << "|h|cffffffff bag slots |h|cff00ff00" << totalfree;
@@ -3521,7 +3533,8 @@ void PlayerbotAI::HandleCommand(const std::string& text, Player& fromPlayer)
                                       m_bot->GetPlayerbotAI()->ItemLocalization(itemName, pRewardItem->ItemId);
 
                                       std::ostringstream out;
-                                      out << "|cffffffff|Hitem:" << pRewardItem->ItemId << ":0:0:0:0:0:0:0" << "|h[" << itemName << "]|h|r rewarded";
+                                      out << "J'ai pris |cffffffff|Hitem:" << pRewardItem->ItemId << ":0:0:0:0:0:0:0" << "|h[" << itemName << "]|h|r comme récompense de quête.";                  
+                                      //out << "|cffffffff|Hitem:" << pRewardItem->ItemId << ":0:0:0:0:0:0:0" << "|h[" << itemName << "]|h|r rewarded";
                                       SendWhisper(out.str(), fromPlayer);
                                       wasRewarded = true;
                                 }

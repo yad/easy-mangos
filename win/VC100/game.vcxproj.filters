@@ -439,38 +439,8 @@
       <Filter>References</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\game\pchdef.cpp" />
-    <ClCompile Include="..\..\src\game\PathFinder.cpp">
-      <Filter>Motion generators</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\game\CharacterDatabaseCleaner.cpp">
       <Filter>Tool</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\game\AuctionHouseBot.cpp" />
-    <ClCompile Include="..\..\src\game\MapUpdater.cpp" />
-    <ClCompile Include="..\..\src\game\PlayerbotMgr.cpp" />
-    <ClCompile Include="..\..\src\game\PlayerbotAI.cpp" />
-    <ClCompile Include="..\..\src\game\PlayerbotClassAI.cpp" />
-    <ClCompile Include="..\..\src\game\PlayerbotDeathKnightAI.cpp" />
-    <ClCompile Include="..\..\src\game\PlayerbotDruidAI.cpp" />
-    <ClCompile Include="..\..\src\game\PlayerbotHunterAI.cpp" />
-    <ClCompile Include="..\..\src\game\PlayerbotMageAI.cpp" />
-    <ClCompile Include="..\..\src\game\PlayerbotPaladinAI.cpp" />
-    <ClCompile Include="..\..\src\game\PlayerbotPriestAI.cpp" />
-    <ClCompile Include="..\..\src\game\PlayerbotRogueAI.cpp" />
-    <ClCompile Include="..\..\src\game\PlayerbotShamanAI.cpp" />
-    <ClCompile Include="..\..\src\game\PlayerbotWarlockAI.cpp" />
-    <ClCompile Include="..\..\src\game\PlayerbotWarriorAI.cpp" />
-    <ClCompile Include="..\..\src\game\SpellDBCHacks.cpp">
-      <Filter>Server</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\game\PathFinder.cpp">
-      <Filter>Motion generators</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\game\MoveMap.cpp">
-      <Filter>World/Handlers</Filter>
-    </ClCompile>	  
-    <ClCompile Include="..\..\src\game\Camera.cpp">
-      <Filter>Object</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -859,30 +829,8 @@
       <Filter>References</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\game\pchdef.h" />
-    <ClInclude Include="..\..\src\game\PathFinder.h">
-      <Filter>Motion generators</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\game\CharacterDatabaseCleaner.h">
       <Filter>Tool</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game\AuctionHouseBot.h" />
-    <ClInclude Include="..\..\src\game\PlayerbotMgr.h" />
-    <ClInclude Include="..\..\src\game\PlayerbotAI.h" />
-    <ClInclude Include="..\..\src\game\PlayerbotClassAI.h" />
-    <ClInclude Include="..\..\src\game\PlayerbotDeathKnightAI.h" />
-    <ClInclude Include="..\..\src\game\PlayerbotDruidAI.h" />
-    <ClInclude Include="..\..\src\game\PlayerbotHunterAI.h" />
-    <ClInclude Include="..\..\src\game\PlayerbotMageAI.h" />
-    <ClInclude Include="..\..\src\game\PlayerbotPaladinAI.h" />
-    <ClInclude Include="..\..\src\game\PlayerbotPriestAI.h" />
-    <ClInclude Include="..\..\src\game\PlayerbotRogueAI.h" />
-    <ClInclude Include="..\..\src\game\PlayerbotShamanAI.h" />
-    <ClInclude Include="..\..\src\game\PlayerbotWarlockAI.h" />
-    <ClInclude Include="..\..\src\game\PlayerbotWarriorAI.h" />
-    <ClInclude Include="..\..\src\game\PathFinder.h">
-      <Filter>Motion generators</Filter>
-    <ClInclude Include="..\..\src\game\Camera.h">
-      <Filter>Object</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
