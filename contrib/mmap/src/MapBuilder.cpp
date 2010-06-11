@@ -62,8 +62,8 @@ namespace MMAP
         getDirContents(files, "vmaps", filter);
         for(i = 0; i < files.size(); ++i)
         {
-            tileX = uint32(atoi(files[i].substr(4,2).c_str()));
             tileY = uint32(atoi(files[i].substr(7,2).c_str()));
+            tileX = uint32(atoi(files[i].substr(4,2).c_str()));
             tileID = StaticMapTree::packTileID(tileX, tileY);
 
             if(m_tiles.find(mapID) == m_tiles.end())
@@ -82,8 +82,8 @@ namespace MMAP
         getDirContents(files, "maps", filter);
         for(i = 0; i < files.size(); ++i)
         {
-            tileX = uint32(atoi(files[i].substr(5,2).c_str()));
             tileY = uint32(atoi(files[i].substr(3,2).c_str()));
+            tileX = uint32(atoi(files[i].substr(5,2).c_str()));
             tileID = StaticMapTree::packTileID(tileX, tileY);
 
             if(m_tiles.find(mapID) == m_tiles.end())
@@ -161,10 +161,10 @@ namespace MMAP
 
             // convert coord bounds to grid bounds
             uint32 minX, minY, maxX, maxY;
-            maxY = 32 - bmin[0] / GRID_SIZE;
-            maxX = 32 - bmin[2] / GRID_SIZE;
-            minY = 32 - bmax[0] / GRID_SIZE;
-            minX = 32 - bmax[2] / GRID_SIZE;
+            maxX = 32 - bmin[0] / GRID_SIZE;
+            maxY = 32 - bmin[2] / GRID_SIZE;
+            minX = 32 - bmax[0] / GRID_SIZE;
+            minY = 32 - bmax[2] / GRID_SIZE;
 
             // add all tiles within bounds to tile list.
             for(i = minX; i <= maxX; ++i)
@@ -876,8 +876,8 @@ namespace MMAP
         rcCalcBounds(verts, vertCount, bmin, bmax);
 
         // this is for width and depth
-        bmax[0] = (32 - int(tileY)) * GRID_SIZE;
-        bmax[2] = (32 - int(tileX)) * GRID_SIZE;
+        bmax[0] = (32 - int(tileX)) * GRID_SIZE;
+        bmax[2] = (32 - int(tileY)) * GRID_SIZE;
         bmin[0] = bmax[0] - GRID_SIZE;
         bmin[2] = bmax[2] - GRID_SIZE;
     }
@@ -906,9 +906,6 @@ namespace MMAP
 
     void MapBuilder::generateObjFile(uint32 mapID, uint32 tileX, uint32 tileY, float* verts, int vertCount, int* tris, int triCount)
     {
-        if(!m_debugOutput)
-            return;
-
         printf("Generating obj file...                  \r");
 
         char objFileName[20];
