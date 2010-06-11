@@ -43,7 +43,7 @@ namespace MMAP
         if(m_hiResHeightMaps)
             return V8_SIZE_SQ * 4;
         else
-            return V9_SIZE_SQ * 2;
+            return V8_SIZE_SQ * 2;
     }
 
     void TileBuilder::build(
