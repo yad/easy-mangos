@@ -64,7 +64,7 @@ namespace MMAP
         {
             tileX = uint32(atoi(files[i].substr(7,2).c_str()));
             tileY = uint32(atoi(files[i].substr(4,2).c_str()));
-            tileID = StaticMapTree::packTileID(tileX, tileY);
+            tileID = StaticMapTree::packTileID(tileY, tileX);
 
             if(m_tiles.find(mapID) == m_tiles.end())
             {
@@ -82,8 +82,8 @@ namespace MMAP
         getDirContents(files, "maps", filter);
         for(i = 0; i < files.size(); ++i)
         {
-            tileX = uint32(atoi(files[i].substr(3,2).c_str()));
-            tileY = uint32(atoi(files[i].substr(5,2).c_str()));
+            tileY = uint32(atoi(files[i].substr(3,2).c_str()));
+            tileX = uint32(atoi(files[i].substr(5,2).c_str()));
             tileID = StaticMapTree::packTileID(tileX, tileY);
 
             if(m_tiles.find(mapID) == m_tiles.end())
@@ -213,8 +213,8 @@ namespace MMAP
 
             // get model data
             printf("%sLoading models...                              \r", tileString);
-            loadVMap(mapID, tileX, tileY, modelVerts, modelTris);
-            unloadVMap(mapID, tileX, tileY);
+            loadVMap(mapID, tileY, tileX, modelVerts, modelTris);
+            unloadVMap(mapID, tileX, tileX);
 
             // we only want tiles that people can actually walk on
             if(!modelVerts.size() && !heightmapVerts.size())
@@ -513,7 +513,8 @@ namespace MMAP
                 tileYMin = tileY;
         }
 
-        float bmin[3];
+        float bmin[3], bmax[3];
+        getTileBounds(tileXMin, tileYMin, NULL, 0, bmin, bmax);
         bmin[0] = (int(tileYMin) - 32) * GRID_SIZE;
         bmin[2] = (int(tileXMin) - 32) * GRID_SIZE;
 
@@ -844,7 +845,7 @@ namespace MMAP
                 break;
             }
 
-            sprintf(fileName, "mmaps/%03u%02i%02i.mmtile", mapID, tileX, tileY);
+            sprintf(fileName, "mmaps/%03u%02i%02i.mmtile", mapID, tileY, tileX);
             if(!(file = fopen(fileName, "wb")))
             {
                 printf("%sFailed to open %s for writing!\n",  tileString, fileName);
@@ -873,7 +874,13 @@ namespace MMAP
     void MapBuilder::getTileBounds(uint32 tileX, uint32 tileY, float* verts, int vertCount, float* bmin, float* bmax)
     {
         // this is for elevation
-        rcCalcBounds(verts, vertCount, bmin, bmax);
+        if(verts && vertCount)
+            rcCalcBounds(verts, vertCount, bmin, bmax);
+        else
+        {
+            bmin[1] = 0.f;
+            bmax[1] = 0.f;
+        }
 
         // this is for width and depth
         bmax[0] = (32 - int(tileX)) * GRID_SIZE;

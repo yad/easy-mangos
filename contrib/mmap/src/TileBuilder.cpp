@@ -58,13 +58,18 @@ namespace MMAP
         m_tileY = tileY;
 
         char map[18];
-        sprintf(map, "maps/%03u%02u%02u.map", m_mapID, m_tileX, m_tileY);
 
         m_vertices = &verts;
         m_triangles = &tris;
 
         cleanup();
+
+        sprintf(map, "maps/%03u%02u%02u.map", m_mapID, m_tileY, m_tileX);
         loadHeightMap(map);
+        if(!m_vertices->size() || !m_triangles->size())
+            return;
+
+        // load adjacent tiles so that tiles can be sewn together
     }
 
     bool TileBuilder::loadHeightMap(const char* mapFileName)
