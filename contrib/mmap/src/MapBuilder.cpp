@@ -62,8 +62,8 @@ namespace MMAP
         getDirContents(files, "vmaps", filter);
         for(i = 0; i < files.size(); ++i)
         {
-            tileY = uint32(atoi(files[i].substr(7,2).c_str()));
-            tileX = uint32(atoi(files[i].substr(4,2).c_str()));
+            tileX = uint32(atoi(files[i].substr(7,2).c_str()));
+            tileY = uint32(atoi(files[i].substr(4,2).c_str()));
             tileID = StaticMapTree::packTileID(tileX, tileY);
 
             if(m_tiles.find(mapID) == m_tiles.end())
@@ -82,8 +82,8 @@ namespace MMAP
         getDirContents(files, "maps", filter);
         for(i = 0; i < files.size(); ++i)
         {
-            tileY = uint32(atoi(files[i].substr(3,2).c_str()));
-            tileX = uint32(atoi(files[i].substr(5,2).c_str()));
+            tileX = uint32(atoi(files[i].substr(3,2).c_str()));
+            tileY = uint32(atoi(files[i].substr(5,2).c_str()));
             tileID = StaticMapTree::packTileID(tileX, tileY);
 
             if(m_tiles.find(mapID) == m_tiles.end())
@@ -213,8 +213,8 @@ namespace MMAP
 
             // get model data
             printf("%sLoading models...                              \r", tileString);
-            loadVMap(mapID, tileY, tileX, modelVerts, modelTris);
-            unloadVMap(mapID, tileY, tileX);
+            loadVMap(mapID, tileX, tileY, modelVerts, modelTris);
+            unloadVMap(mapID, tileX, tileY);
 
             // we only want tiles that people can actually walk on
             if(!modelVerts.size() && !heightmapVerts.size())

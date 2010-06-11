@@ -58,7 +58,7 @@ namespace MMAP
         m_tileY = tileY;
 
         char map[18];
-        sprintf(map, "maps/%03u%02u%02u.map", m_mapID, m_tileY, m_tileX);
+        sprintf(map, "maps/%03u%02u%02u.map", m_mapID, m_tileX, m_tileY);
 
         m_vertices = &verts;
         m_triangles = &tris;
