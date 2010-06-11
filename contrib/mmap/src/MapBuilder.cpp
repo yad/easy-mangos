@@ -161,10 +161,10 @@ namespace MMAP
 
             // convert coord bounds to grid bounds
             uint32 minX, minY, maxX, maxY;
-            minX = 32 + bmin[0] / GRID_SIZE;
-            minY = 32 + bmin[2] / GRID_SIZE;
-            maxX = 32 + bmax[0] / GRID_SIZE;
-            maxY = 32 + bmax[2] / GRID_SIZE;
+            maxY = 32 - bmin[0] / GRID_SIZE;
+            maxX = 32 - bmin[2] / GRID_SIZE;
+            minY = 32 - bmax[0] / GRID_SIZE;
+            minX = 32 - bmax[2] / GRID_SIZE;
 
             // add all tiles within bounds to tile list.
             for(i = minX; i <= maxX; ++i)
@@ -629,7 +629,7 @@ namespace MMAP
                 break;
             }
 
-            // triangle flags for filtering walkable triangles
+            //// triangle flags for filtering walkable triangles
             //iv.triFlags = NEW_ARRAY(unsigned char, iv.chunkyMesh->maxTrisPerChunk);
             //float tbmin[2], tbmax[2];
             //tbmin[0] = config.bmin[0];
@@ -876,8 +876,8 @@ namespace MMAP
         rcCalcBounds(verts, vertCount, bmin, bmax);
 
         // this is for width and depth
-        bmax[0] = (32 - int(tileX)) * GRID_SIZE;
-        bmax[2] = (32 - int(tileY)) * GRID_SIZE;
+        bmax[0] = (32 - int(tileY)) * GRID_SIZE;
+        bmax[2] = (32 - int(tileX)) * GRID_SIZE;
         bmin[0] = bmax[0] - GRID_SIZE;
         bmin[2] = bmax[2] - GRID_SIZE;
     }
