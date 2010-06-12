@@ -13,6 +13,10 @@ Camera::Camera(Player* pl) : m_owner(*pl), m_source(pl), caused_by_aura(0)
 
 Camera::~Camera()
 {
+    // view of camera should be already reseted to owner (RemoveFromWorld -> Event_RemovedFromWorld -> ResetView)
+    ASSERT(m_source == &m_owner);	
+
+    // for symmetry with constructor and way to make viewpoint's list empty
     m_source->getViewPoint().Detach(this);
 }
 
@@ -137,7 +141,6 @@ ViewPoint::~ViewPoint()
 {
     if(!m_cameras.empty())
     {
-        sLog.outError("ViewPoint deconstructor called, but list of cameras is not empty");
+        sLog.outError("ViewPoint destructor called, but some cameras referenced to it");
     }
 }
-

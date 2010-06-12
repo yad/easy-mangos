@@ -12037,6 +12037,7 @@ void Unit::RemoveFromWorld()
         RemoveAllGameObjects();
         RemoveAllDynObjects();
         CleanupDeletedAuras();
+        getViewPoint().Event_RemovedFromWorld();
     }
 
     Object::RemoveFromWorld();

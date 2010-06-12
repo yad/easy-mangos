@@ -16,7 +16,7 @@ class MANGOS_DLL_SPEC Camera
     public:
 
         Camera(Player* pl);
-        virtual ~Camera();
+        ~Camera();
 
         WorldObject* getBody() { return m_source;}
         Player* getOwner() { return &m_owner;}
@@ -75,50 +75,46 @@ class MANGOS_DLL_SPEC ViewPoint
             m_cameras.remove(c);
     }
 
-    void CameraCall(void (Camera::*handler)(void))
-    {
-        for(camera_iter = m_cameras.begin(); camera_iter!=m_cameras.end(); ++camera_iter)
-            ((*camera_iter)->*handler)();
-    }
+    #define CameraCall(handler)             \
+        if(!m_cameras.empty())              \
+            for(camera_iter = m_cameras.begin(); camera_iter!=m_cameras.end(); ++camera_iter)   \
+                (*camera_iter)->handler();  \
 
 public:
 
     ViewPoint() : m_grid(0), camera_iter(m_cameras.end()) {}
-    virtual ~ViewPoint();
+    ~ViewPoint();
 
     // these events are called when viewpoint changes visibility state
-    void Event_AddedToMap(GridType *grid)
+    void Event_AddedToWorld(GridType *grid)
     {
         m_grid = grid;
-        if(!m_cameras.empty())
-            CameraCall(&Camera::Event_AddedToWorld);
+        CameraCall(Camera::Event_AddedToWorld);
     }
 
-    void Event_RemovedFromMap()
+    void Event_RemovedFromWorld()
     {
         m_grid = NULL;
-        if(!m_cameras.empty())
-            CameraCall(&Camera::Event_RemovedFromWorld);
+        CameraCall(Camera::Event_RemovedFromWorld);
     }
 
     void Event_GridChanged(GridType *grid)
     {
         m_grid = grid;
-        if(!m_cameras.empty())
-            CameraCall(&Camera::Event_Moved);
+        CameraCall(Camera::Event_Moved);
     }
 
     void Event_ViewPointVisibilityChanged()
     {
-        if(!m_cameras.empty())
-            CameraCall(&Camera::Event_ViewPointVisibilityChanged);
+        CameraCall(Camera::Event_ViewPointVisibilityChanged);
     }
 
     void Call_UpdateVisibilityForOwner()
     {
-        if(!m_cameras.empty())
-            CameraCall(&Camera::UpdateVisibilityForOwner);
+        CameraCall(Camera::UpdateVisibilityForOwner);
     }
+
+    #undef CameraCall
 };
 
 

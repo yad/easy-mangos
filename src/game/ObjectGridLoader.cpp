@@ -130,7 +130,7 @@ void LoadHelper(CellGuidSet const& guid_set, CellPair &cell, GridRefManager<T> &
         if(obj->isActiveObject())
             map->AddToActive(obj);
 
-        obj->getViewPoint().Event_AddedToMap(&grid);
+        obj->getViewPoint().Event_AddedToWorld(&grid);
 
         if (bg)
             bg->OnObjectDBLoad(obj);
@@ -277,7 +277,6 @@ ObjectGridUnloader::Visit(GridRefManager<T> &m)
             obj->SaveRespawnTime();
         ///- object must be out of world before delete
         obj->RemoveFromWorld();
-        obj->getViewPoint().Event_RemovedFromMap();
         ///- object will get delinked from the manager when deleted
         delete obj;
     }
