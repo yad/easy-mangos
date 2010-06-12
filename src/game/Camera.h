@@ -69,7 +69,7 @@ class MANGOS_DLL_SPEC ViewPoint
 
     void Detach(Camera* c)
     {
-        if (*camera_iter == c)     // detach called during the loop
+        if (camera_iter != m_cameras.end() && *camera_iter == c)     // detach called during the loop
             camera_iter = m_cameras.erase(camera_iter);
         else
             m_cameras.remove(c);
