@@ -74,10 +74,12 @@ class MANGOS_DLL_SPEC ViewPoint
             m_cameras.remove(c);
     }
 
-    #define CameraCall(handler)             \
-        if(!m_cameras.empty())              \
-            for(camera_iter = m_cameras.begin(); camera_iter!=m_cameras.end(); ++camera_iter)   \
-                (*camera_iter)->handler();  \
+    void CameraCall(void (Camera::*handler)())
+    {
+        if(!m_cameras.empty())
+            for(camera_iter = m_cameras.begin(); camera_iter!=m_cameras.end(); ++camera_iter)
+                ((*camera_iter)->*handler)();
+    }
 
 public:
 
@@ -88,32 +90,30 @@ public:
     void Event_AddedToWorld(GridType *grid)
     {
         m_grid = grid;
-        CameraCall(Camera::Event_AddedToWorld);
+        CameraCall(&Camera::Event_AddedToWorld);
     }
 
     void Event_RemovedFromWorld()
     {
         m_grid = NULL;
-        CameraCall(Camera::Event_RemovedFromWorld);
+        CameraCall(&Camera::Event_RemovedFromWorld);
     }
 
     void Event_GridChanged(GridType *grid)
     {
         m_grid = grid;
-        CameraCall(Camera::Event_Moved);
+        CameraCall(&Camera::Event_Moved);
     }
 
     void Event_ViewPointVisibilityChanged()
     {
-        CameraCall(Camera::Event_ViewPointVisibilityChanged);
+        CameraCall(&Camera::Event_ViewPointVisibilityChanged);
     }
 
     void Call_UpdateVisibilityForOwner()
     {
-        CameraCall(Camera::UpdateVisibilityForOwner);
+        CameraCall(&Camera::UpdateVisibilityForOwner);
     }
-
-    #undef CameraCall
 };
 
 
