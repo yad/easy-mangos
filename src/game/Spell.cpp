@@ -1032,14 +1032,16 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
     // recheck deflect for delayed spells on target with Deterrence,
     if (m_spellInfo->speed && unit->HasAura(19263))
     {
-        caster->SendSpellMiss(unit, m_spellInfo->Id, SPELL_MISS_DODGE);
-        missInfo = SPELL_MISS_DODGE;
+        caster->SendSpellMiss(unit, m_spellInfo->Id, SPELL_MISS_DEFLECT);
+        missInfo = SPELL_MISS_DEFLECT;
         return;
     }
     
     // recheck for visibility of target
-    if ((m_spellInfo->speed > 0.0f || m_spellInfo->EffectImplicitTargetA[0] == TARGET_CHAIN_DAMAGE) && 
-        !unit->isVisibleForOrDetect(caster, caster, false))
+    if ((m_spellInfo->speed > 0.0f || 
+        (m_spellInfo->EffectImplicitTargetA[0] == TARGET_CHAIN_DAMAGE &&
+        GetSpellCastTime(m_spellInfo, this) > 0)) 
+         && !unit->isVisibleForOrDetect(caster, caster, false))
     {
         caster->SendSpellMiss(unit, m_spellInfo->Id, SPELL_MISS_EVADE);
         missInfo = SPELL_MISS_EVADE;
