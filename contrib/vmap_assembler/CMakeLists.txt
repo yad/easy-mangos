@@ -20,6 +20,7 @@ ADD_DEFINITIONS("-Wall")
 ADD_DEFINITIONS("-ggdb")
 ADD_DEFINITIONS("-O3")
 
+include_directories(../../src/shared)
 include_directories(../../src/shared/vmap/)
 include_directories(../../dep/include/g3dlite/)
 include_directories(../../dep/ACE_wrappers/)
