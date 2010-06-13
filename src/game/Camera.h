@@ -24,7 +24,7 @@ class MANGOS_DLL_SPEC Camera
         // set camera's view to any worldobject
         // Note: this worldobject must be in same map, in same phase with camera's owner(player)
         // client supports only unit and dynamic objects as farsight objects
-        void SetView(WorldObject *obj, uint32 caused_by_aura_id = 0);
+        void SetView(WorldObject *obj);
 
         // set view to camera's owner
         void ResetView();
@@ -45,7 +45,6 @@ class MANGOS_DLL_SPEC Camera
 
         Player & m_owner;
         WorldObject *m_source;
-        uint32 caused_by_aura;
 
         void UpdateForCurrentViewPoint();
 

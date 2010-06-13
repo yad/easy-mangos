@@ -3545,7 +3545,7 @@ void Aura::HandleBindSight(bool apply, bool /*Real*/)
 
     Camera& camera = ((Player*)caster)->GetCamera();
     if (apply)
-        camera.SetView(m_target, GetId());
+        camera.SetView(m_target);
     else
         camera.ResetView();
 }
@@ -3558,7 +3558,7 @@ void Aura::HandleFarSight(bool apply, bool /*Real*/)
 
     Camera& camera = ((Player*)caster)->GetCamera();
     if (apply)
-        camera.SetView(m_target, GetId());
+        camera.SetView(m_target);
     else
         camera.ResetView();
 }
@@ -3626,7 +3626,7 @@ void Aura::HandleModPossess(bool apply, bool Real)
 
         p_caster->SetCharm(target);
 
-        camera.SetView(m_target, GetId());
+        camera.SetView(m_target);
         p_caster->SetClientControl(target, 1);
         p_caster->SetMover(target);
 
@@ -3708,7 +3708,7 @@ void Aura::HandleModPossessPet(bool apply, bool Real)
     if(apply)
     {
         pet->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PLAYER_CONTROLLED);
-        camera.SetView(pet, GetId());
+        camera.SetView(pet);
     }
     else
     {
