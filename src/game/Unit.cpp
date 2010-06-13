@@ -10792,7 +10792,7 @@ void Unit::SetVisibility(UnitVisibility x)
                     Aura* aura = (*it);
                     Unit* owner = aura->GetCaster();
 
-                    if (owner && aura->GetTarget() == this && !isVisibleForOrDetect(owner,this,false))
+                    if (!owner || !isVisibleForOrDetect(owner,this,false))
                     {
                         alist.erase(it);
                         RemoveAura(aura);
