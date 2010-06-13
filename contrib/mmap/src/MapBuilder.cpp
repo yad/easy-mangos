@@ -564,9 +564,10 @@ namespace MMAP
         char fileName[50];
         FILE* file = 0;
 
-        float cellSize = .55f;      // larger number => less voxels => faster build time
-        float agentHeight = 2.2f;
-        float agentRadius = .55f;
+        float cellSize = .5f;       // larger number => less voxels => faster build time
+                                    // too large, and tight spaces won't be pathable.
+        float agentHeight = 1.5f;
+        float agentRadius = .1f;
         float agentMaxClimb = 1.65f;
 
         IntermediateValues iv;
