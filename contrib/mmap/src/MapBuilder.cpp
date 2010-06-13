@@ -214,7 +214,7 @@ namespace MMAP
             // get model data
             printf("%sLoading models...                              \r", tileString);
             loadVMap(mapID, tileY, tileX, modelVerts, modelTris);
-            unloadVMap(mapID, tileX, tileX);
+            unloadVMap(mapID, tileY, tileX);
 
             // we only want tiles that people can actually walk on
             if(!modelVerts.size() && !heightmapVerts.size())
@@ -878,8 +878,8 @@ namespace MMAP
             rcCalcBounds(verts, vertCount, bmin, bmax);
         else
         {
-            bmin[1] = 0.f;
-            bmax[1] = 0.f;
+            bmin[1] = FLT_MIN;
+            bmax[1] = FLT_MAX;
         }
 
         // this is for width and depth

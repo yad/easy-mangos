@@ -53,96 +53,74 @@ namespace MMAP
         G3D::Array<float> &verts,
         G3D::Array<int> &tris)
     {
-        m_mapID =  mapID;
-        m_tileX = tileX;
-        m_tileY = tileY;
-
-        char map[18];
-
         m_vertices = &verts;
         m_triangles = &tris;
 
         cleanup();
 
-        sprintf(map, "maps/%03u%02u%02u.map", m_mapID, m_tileY, m_tileX);
-        loadHeightMap(map);
+        loadHeightMap(mapID, tileX, tileY, verts, tris, ENTIRE);
         if(!m_vertices->size() || !m_triangles->size())
             return;
 
-        // load adjacent tiles so that tiles can be sewn together
+        // TODO: load adjacent tiles so that tiles can be sewn together
+        loadHeightMap(mapID, tileX+1, tileY, verts, tris, LEFT);
+        loadHeightMap(mapID, tileX-1, tileY, verts, tris, RIGHT);
+        loadHeightMap(mapID, tileX, tileY+1, verts, tris, TOP);
+        loadHeightMap(mapID, tileX, tileY-1, verts, tris, BOTTOM);
     }
 
-    bool TileBuilder::loadHeightMap(const char* mapFileName)
+    void TileBuilder::loadHeightMap(uint32 mapID, uint32 tileX, uint32 tileY, G3D::Array<float> &vertices, G3D::Array<int> &triangles, Spot portion)
     {
+        char mapFileName[18];
+        sprintf(mapFileName, "maps/%03u%02u%02u.map", mapID, tileY, tileX);
+
         FILE* mapFile = fopen(mapFileName, "rb");
-
         if(!mapFile)
-            return false;
+            return;
 
-        map_fileheader header;
-        fread(&header, sizeof(map_fileheader), 1, mapFile);
+        map_fileheader fheader;
+        fread(&fheader, sizeof(map_fileheader), 1, mapFile);
+        fseek(mapFile, fheader.heightMapOffset, SEEK_SET);
 
-        readMapHeight(mapFile, header.heightMapOffset);
+        map_heightHeader hheader;
+        fread(&hheader, sizeof(map_heightHeader), 1, mapFile);
 
-        fclose(mapFile);
-
-        return true;
-    }
-
-    void TileBuilder::readMapHeight(FILE* mapFile, uint32 heightHeaderOffset)
-    {
-        fseek(mapFile, heightHeaderOffset, SEEK_SET);
-
-        map_heightHeader header;
-        fread(&header, sizeof(map_heightHeader), 1, mapFile);
-
-        m_heightOffset = header.gridHeight;
-
-        if(header.flags & MAP_HEIGHT_NO_HEIGHT)
+        if(hheader.flags & MAP_HEIGHT_NO_HEIGHT)
             return;
 
         int i;
         float heightMultiplier;
+        float V9[V9_SIZE_SQ], V8[V8_SIZE_SQ];
 
-        //if(header.flags & MAP_HEIGHT_NO_HEIGHT)
-        //{
-        //    for(i = 0; i < V9_SIZE_SQ; ++i)
-        //        V9[i] = header.gridHeight;
-
-        //    if(m_hiResHeightMaps)
-        //        for(i = 0; i < V8_SIZE_SQ; ++i)
-        //            V8[i] = header.gridHeight;
-        //}
-        //else
-        if(header.flags & MAP_HEIGHT_AS_INT8)
+        if(hheader.flags & MAP_HEIGHT_AS_INT8)
         {
             uint8 v9[V9_SIZE_SQ];
             uint8 v8[V8_SIZE_SQ];
             fread(v9, sizeof(uint8), V9_SIZE_SQ, mapFile);
             fread(v8, sizeof(uint8), V8_SIZE_SQ, mapFile);
-            heightMultiplier = (header.gridMaxHeight - header.gridHeight) / 255;
+            heightMultiplier = (hheader.gridMaxHeight - hheader.gridHeight) / 255;
 
             for(i = 0; i < V9_SIZE_SQ; ++i)
-                V9[i] = (float)v9[i]*heightMultiplier + header.gridHeight;
+                V9[i] = (float)v9[i]*heightMultiplier + hheader.gridHeight;
 
             if(m_hiResHeightMaps)
                 for(i = 0; i < V8_SIZE_SQ; ++i)
-                    V8[i] = (float)v8[i]*heightMultiplier + header.gridHeight;
+                    V8[i] = (float)v8[i]*heightMultiplier + hheader.gridHeight;
         }
-        else if(header.flags & MAP_HEIGHT_AS_INT16)
+        else if(hheader.flags & MAP_HEIGHT_AS_INT16)
         {
             uint16 v9[V9_SIZE_SQ];
             uint16 v8[V8_SIZE_SQ];
             fread(v9, sizeof(uint16), V9_SIZE_SQ, mapFile);
             fread(v8, sizeof(uint16), V8_SIZE_SQ, mapFile);
-            heightMultiplier = (header.gridMaxHeight - header.gridHeight) / 65535;
+            heightMultiplier = (hheader.gridMaxHeight - hheader.gridHeight) / 65535;
 
             for(i = 0; i < V9_SIZE_SQ; ++i)
-                V9[i] = (float)v9[i]*heightMultiplier + header.gridHeight;
+                V9[i] = (float)v9[i]*heightMultiplier + hheader.gridHeight;
 
             if(m_hiResHeightMaps)
                 for(i = 0; i < V8_SIZE_SQ; ++i)
-                    V8[i] = (float)v8[i]*heightMultiplier + header.gridHeight;
+                    V8[i] = (float)v8[i]*heightMultiplier + hheader.gridHeight;
         }
         else
         {
@@ -151,48 +129,77 @@ namespace MMAP
                 fread(V8, sizeof(float), V8_SIZE_SQ, mapFile);
         }
 
-        int count = m_vertices->size() / 3;
-        float xoffset = (float(m_tileX)-32)*533.33333f;
-        float yoffset = (float(m_tileY)-32)*533.33333f;
+        fclose(mapFile);
+
+        int count = vertices.size() / 3;
+        float xoffset = (float(tileX)-32)*GRID_SIZE;
+        float yoffset = (float(tileY)-32)*GRID_SIZE;
 
         float coord[3];
 
         for(i = 0; i < V9_SIZE_SQ; ++i)
         {
-            getHeightCoord(i, GRID_V9, xoffset, yoffset, coord);
-            m_vertices->append(coord[0]);
-            m_vertices->append(coord[2]);
-            m_vertices->append(coord[1]);
+            getHeightCoord(i, GRID_V9, xoffset, yoffset, coord, V9);
+            vertices.append(coord[0]);
+            vertices.append(coord[2]);
+            vertices.append(coord[1]);
         }
 
         if(m_hiResHeightMaps)
             for(i = 0; i < V8_SIZE_SQ; ++i)
             {
-                getHeightCoord(i, GRID_V8, xoffset, yoffset, coord);
-                m_vertices->append(coord[0]);
-                m_vertices->append(coord[2]);
-                m_vertices->append(coord[1]);
+                getHeightCoord(i, GRID_V8, xoffset, yoffset, coord, V8);
+                vertices.append(coord[0]);
+                vertices.append(coord[2]);
+                vertices.append(coord[1]);
             }
 
-        int inc;
+        int triInc, j, indices[3], loopStart, loopEnd, loopInc;
         if(m_hiResHeightMaps)
-            inc = 1;
+            triInc = 1;
         else
-            inc = BOTTOM-TOP;
+            triInc = BOTTOM-TOP;
 
-        int j;
-        int indices[3];
-        for(i = V8_SIZE*0; i < V8_SIZE_SQ; ++i)
-            for(j = TOP; j <= BOTTOM; j+=inc)
-                if(getHeightTriangle(i, TriangleSpot(j), indices, count))
+        switch(portion)
+        {
+            case ENTIRE:
+                loopStart = 0;
+                loopEnd = V8_SIZE_SQ;
+                loopInc = 1;
+                break;
+            case TOP:
+                loopStart = 0;
+                loopEnd = V8_SIZE;
+                loopInc = 1;
+                break;
+            case LEFT:
+                loopStart = 0;
+                loopEnd = V8_SIZE_SQ - V8_SIZE + 1;
+                loopInc = V8_SIZE;
+                break;
+            case RIGHT:
+                loopStart = V8_SIZE - 1;
+                loopEnd = V8_SIZE_SQ;
+                loopInc = V8_SIZE;
+                break;
+            case BOTTOM:
+                loopStart = V8_SIZE_SQ - V8_SIZE;
+                loopEnd = V8_SIZE_SQ;
+                loopInc = 1;
+                break;
+        }
+
+        for(i = loopStart; i < loopEnd; i+=loopInc)
+            for(j = TOP; j <= BOTTOM; j+=triInc)
+                if(getHeightTriangle(i, Spot(j), indices, count))
                 {
-                    m_triangles->append(indices[2] + count);
-                    m_triangles->append(indices[1] + count);
-                    m_triangles->append(indices[0] + count);
+                    triangles.append(indices[2] + count);
+                    triangles.append(indices[1] + count);
+                    triangles.append(indices[0] + count);
                 }
     }
 
-    inline void TileBuilder::getHeightCoord(int index, Grid grid, float xOffset, float yOffset, float* coord)
+    inline void TileBuilder::getHeightCoord(int index, Grid grid, float xOffset, float yOffset, float* coord, float* v)
     {
         // wow coords: x, y, height
         // coord is mirroed about the horizontal axes
@@ -201,36 +208,36 @@ namespace MMAP
             case GRID_V9:
                 coord[0] = (xOffset + index%(V9_SIZE)*GRID_PART_SIZE) * -1.f;
                 coord[1] = (yOffset + (int)(index/(V9_SIZE))*GRID_PART_SIZE) * -1.f;
-                coord[2] = V9[index];
+                coord[2] = v[index];
                 break;
             case GRID_V8:
                 coord[0] = (xOffset + index%(V8_SIZE)*GRID_PART_SIZE + GRID_PART_SIZE/2.f) * -1.f;
                 coord[1] = (yOffset + (int)(index/(V8_SIZE))*GRID_PART_SIZE + GRID_PART_SIZE/2.f) * -1.f;
-                coord[2] = V8[index];
+                coord[2] = v[index];
                 break;
         }
     }
 
-    inline bool TileBuilder::getHeightTriangle(int square, TriangleSpot triangle, int* indices, int offset)
+    inline bool TileBuilder::getHeightTriangle(int square, Spot triangle, int* indices, int offset)
     {
         int rowOffset = square/V8_SIZE;
         if(m_hiResHeightMaps)
             switch(triangle)
             {
                 case TOP:
-                    indices[0] = square+rowOffset;                      //           0-----1 .... 128
-                    indices[1] = square+1+rowOffset;                    //           |\ T /|
-                    indices[2] = (V9_SIZE_SQ)+square;              //           | \ / |
-                    break;                                              //           |L 0 R| .. 127
-                case LEFT:                                              //           | / \ |
-                    indices[0] = square+rowOffset;                      //           |/ B \|
-                    indices[1] = (V9_SIZE_SQ)+square;              //          129---130 ... 386
-                    indices[2] = square+V9_SIZE+rowOffset;              //           |\   /|
-                    break;                                              //           | \ / |
-                case RIGHT:                                             //           | 128 | .. 255
-                    indices[0] = square+1+rowOffset;                    //           | / \ |
-                    indices[1] = square+V9_SIZE+1+rowOffset;            //           |/   \|
-                    indices[2] = (V9_SIZE_SQ)+square;              //          258---259 ... 515
+                    indices[0] = square+rowOffset;                  //           0-----1 .... 128
+                    indices[1] = square+1+rowOffset;                //           |\ T /|
+                    indices[2] = (V9_SIZE_SQ)+square;               //           | \ / |
+                    break;                                          //           |L 0 R| .. 127
+                case LEFT:                                          //           | / \ |
+                    indices[0] = square+rowOffset;                  //           |/ B \|
+                    indices[1] = (V9_SIZE_SQ)+square;               //          129---130 ... 386
+                    indices[2] = square+V9_SIZE+rowOffset;          //           |\   /|
+                    break;                                          //           | \ / |
+                case RIGHT:                                         //           | 128 | .. 255
+                    indices[0] = square+1+rowOffset;                //           | / \ |
+                    indices[1] = square+V9_SIZE+1+rowOffset;        //           |/   \|
+                    indices[2] = (V9_SIZE_SQ)+square;               //          258---259 ... 515
                     break;
                 case BOTTOM:
                     indices[0] = (V9_SIZE_SQ)+square;
@@ -259,7 +266,7 @@ namespace MMAP
             // determine angle between triangle's plane and horizontal plane
             // this information is used to throw away triangles:
             // * that won't be used for paths because incline is too steep (speeds up recast's work)
-            // * that would block cave entrances, doors, etc
+            // * that would block cave entrances, doors, etc (some of them)
             float* verts = m_vertices->getCArray();
             float* f1 = &verts[(indices[2]+offset)*3];
             float* f2 = &verts[(indices[1]+offset)*3];
