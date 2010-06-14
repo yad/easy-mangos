@@ -11,6 +11,7 @@
 
 #include "ChunkyTriMesh.h"
 #include "pathfinding/Recast/Recast.h"
+#include "pathfinding/Detour/DetourNavMesh.h"
 
 using namespace std;
 using namespace VMAP;
@@ -21,11 +22,9 @@ namespace MMAP
     typedef set<uint32> MapList;
     typedef map<uint32,set<uint32>*> TileList;
 
-    typedef vector<vector<float>*> ModelVerts;
-    typedef vector<vector<int>*> ModelTris;
-
     struct IntermediateValues
     {
+        rcChunkyTriMesh* chunkyMesh;
         rcHeightfield* heightfield;
         unsigned char* triFlags;
         rcCompactHeightfield* compactHeightfield;
@@ -70,60 +69,56 @@ namespace MMAP
             void buildAll();
 
         private:
-            /**
-             lists .map and .vmap files to identify all maps that need processing for the specified map
-            */
-            void getMapAndTileList(uint32 mapID);
+            // detect maps and tiles
+            void getTileList(uint32 mapID);
+            void getMapList();
 
-            /**
-             lists .map and .vmap files to identify all maps that need processing for the specified map
-            */
-            void getMapAndTileLists();
+            // load and unload models
+            void loadEntireVMap(uint32 mapID);
+            void loadVMap(uint32 mapID, uint32 tileX, uint32 tileY, G3D::Array<float> &modelVerts, G3D::Array<int> &modelTris);
+            void unloadEntireVMap(uint32 mapID);
+            void unloadVMap(uint32 mapID, uint32 tileX, uint32 tileY);
 
-            /**
-             loads the entire vmap for the specified map, and applies tranforms to all of the models
-             the models are stored in m_modelVertices/m_modelTriangles
-            */
-            void loadVMap(uint32 mapID);
+            // vert and triangle methods
+            void transform(vector<Vector3> original, vector<Vector3> &transformed,
+                           float scale, G3D::Matrix3 rotation, Vector3 position);
+            void copyVertices(vector<Vector3> source, G3D::Array<float> &dest);
+            void copyIndices(vector<MeshTriangle> source, G3D::Array<int> &dest, int offest, bool flip);
+            void copyIndices(G3D::Array<int> &dest, G3D::Array<int> src, int offset);
 
-            /**
-             unloads the vmap
-            */
-            void unloadVMap(uint32 mapID);
+            void cleanup();
 
-            /**
-             applies the specified scale, rotation, and translation to all vertices in the model
-             results are copied to a new vector so that original data may be reused
-            */
-            void transform(vector<Vector3> original, vector<Vector3> &transformed, float scale, G3D::Matrix3 rotation, Vector3 position);
-
-            /**
-             appends (the data from source) to (dest)
-            */
-            void copyVertices(vector<Vector3> source, vector<float> &dest);
-
-            /**
-             appends (the data from source) to (dest), incrementing each entry by offset, and optionaly 
-             inverts the order of each set of indices (M2 models are 'insideout')
-            */
-            void copyIndices(vector<MeshTriangle> source, vector<int> &dest, int offest, bool flip);
+            // move map building
             void buildMoveMap(uint32 mapID);
+            void buildNavMesh(uint32 mapID, dtNavMesh* &navMesh);
+            void buildMoveMapTile(uint32 mapID,     uint32 tileX,
+                                  uint32 tileY,     float* verts,
+                                  int vertCount,    int* tris,
+                                  int triCount,     float* bmin,
+                                  float* bmax,      dtNavMesh* navMesh);
+
+            void getTileBounds(uint32 tileX, uint32 tileY,
+                               float* verts, int vertCount,
+                               float* bmin, float* bmax);
+
             void initIntermediateValues(IntermediateValues &iv);
             void clearIntermediateValues(IntermediateValues &iv);
 
-            void generateObjFile(uint32 mapID);
+            float snapToGrid(const float coord);
+
+            bool shouldSkipMap(uint32 mapID);
+            bool isTransportMap(uint32 mapID);
+
+            // debug output
+            void generateObjFile(uint32 mapID, uint32 tileX, uint32 tileY, float* verts, int vertCount, int* tris, int triCount);
             void writeIV(uint32 mapID, uint32 tileX, uint32 tileY, IntermediateValues iv);
             void writeHeightfield(FILE* file, const rcHeightfield* hf);
             void writeSpan(FILE* file, const rcSpan* span);
             void writeCompactHeightfield(FILE* file, const rcCompactHeightfield* chf);
+            void writeContours(FILE* file, const rcContourSet* cs);
             void writeChunkyTriMesh(FILE* file, const rcChunkyTriMesh* mesh);
             void writePolyMesh(FILE* file, const rcPolyMesh* mesh);
             void writeDetailMesh(FILE* file, const rcPolyMeshDetail* mesh);
-
-            void cleanup();
-            float snapToGrid(const float coord);
-            bool shouldSkipMap(uint32 mapID);
-            bool isTransportMap(uint32 mapID);
 
             inline unsigned int nextPow2(unsigned int v)
             {
@@ -156,18 +151,12 @@ namespace MMAP
             TileList m_tiles;
 
             bool m_debugOutput;
-            bool m_completeLists;
 
             bool m_skipContinents;
             bool m_skipJunkMaps;
             bool m_skipBattlegrounds;
 
             float m_maxWalkableAngle;
-
-            ModelVerts m_modelVertices;
-            ModelTris m_modelTriangles;
-            G3D::Array<float> m_vertices;
-            G3D::Array<int> m_triangles;
     };
 }
 

@@ -125,6 +125,7 @@
     <ClCompile Include="..\..\..\..\src\shared\vmap\VMapManager2.cpp" />
     <ClCompile Include="..\..\..\..\src\shared\vmap\WorldModel.cpp" />
     <ClCompile Include="..\..\src\ChunkyTriMesh.cpp" />
+    <ClCompile Include="..\..\src\DebugAlloc.cpp" />
     <ClCompile Include="..\..\src\generator.cpp" />
     <ClCompile Include="..\..\src\MapBuilder.cpp" />
     <ClCompile Include="..\..\src\TileBuilder.cpp" />
@@ -154,6 +155,7 @@
     <ClInclude Include="..\..\..\..\src\shared\vmap\VMapTools.h" />
     <ClInclude Include="..\..\..\..\src\shared\vmap\WorldModel.h" />
     <ClInclude Include="..\..\src\ChunkyTriMesh.h" />
+    <ClInclude Include="..\..\src\DebugAlloc.h" />
     <ClInclude Include="..\..\src\MangosMap.h" />
     <ClInclude Include="..\..\src\MapBuilder.h" />
     <ClInclude Include="..\..\src\MMapCommon.h" />

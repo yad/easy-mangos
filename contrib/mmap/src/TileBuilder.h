@@ -15,12 +15,13 @@ using namespace MaNGOS;
 
 namespace MMAP
 {
-    enum TriangleSpot
+    enum Spot
     {
         TOP     = 1,
         LEFT    = 2,
         RIGHT   = 3,
-        BOTTOM  = 4
+        BOTTOM  = 4,
+        ENTIRE  = 5
     };
 
     enum Grid
@@ -42,15 +43,14 @@ namespace MMAP
             TileBuilder(float maxWalkableAngle, bool hiRes, bool shred, IVMapManager* vmapManager);
             ~TileBuilder();
 
-            void build(uint32   mapID,
-                       uint32   tileX,
-                       uint32   tileY,
-                       float*   &vertices,
-                       uint32   &vertCount,
-                       int*     &triangles,
-                       uint32   &triangleCount);
+            void build(uint32               mapID,
+                       uint32               tileX,
+                       uint32               tileY,
+                       G3D::Array<float>    &verts,
+                       G3D::Array<int>      &tris);
 
-            static float readHeightOffset(uint32 mapID, uint32 tileX, uint32 tileY);
+            int getMaxVertCount();
+            int getMaxTriCount();
 
         private:
 
@@ -63,10 +63,9 @@ namespace MMAP
             G3D::Vector3 m_groundNormal;
             float m_maxRadians;
 
-            bool loadHeightMap(const char* mapFileName);
-            void readMapHeight(FILE* mapFile, uint32 heightHeaderOffset);
-            void getHeightCoord(int square, Grid grid, float xOffset, float yOffset, float* coord);
-            bool getHeightTriangle(int square, TriangleSpot triangle, int* indices, int offset);
+            void loadHeightMap(uint32 mapID, uint32 tileX, uint32 tileY, G3D::Array<float> &vertices, G3D::Array<int> &triangles, Spot portion);
+            void getHeightCoord(int square, Grid grid, float xOffset, float yOffset, float* coord, float* v);
+            bool getHeightTriangle(int square, Spot triangle, int* indices, int offset);
             float getAngle(Vector3 normal);
 
             // vmap models

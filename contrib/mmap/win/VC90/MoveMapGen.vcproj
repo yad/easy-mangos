@@ -210,6 +210,18 @@
 				RelativePath="..\..\src\ChunkyTriMesh.cpp"
 				>
 			</File>
+			<File
+				RelativePath="..\..\src\ChunkyTriMesh.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\DebugAlloc.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\DebugAlloc.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="pathfinding"
