@@ -17255,7 +17255,20 @@ void Player::SaveToDB()
     // check if stats should only be saved on logout
     // save stats can be out of transaction
     if (m_session->isLogingOut() || !sWorld.getConfig(CONFIG_BOOL_STATS_SAVE_ONLY_ON_LOGOUT))
+    {
+        /* WoWArmory */
+        std::ostringstream ps;
+        ps << "REPLACE INTO armory_character_stats (guid,data) VALUES ('" << GetGUIDLow() << "', '";
+        for(uint16 i = 0; i < m_valuesCount; ++i )
+        {
+            ps << GetUInt32Value(i) << " ";
+        }
+        ps << "')";
+        CharacterDatabase.Execute( ps.str().c_str() );
+        /* WoWArmory */
+
         _SaveStats();
+    }
 
     // save pet (hunter pet level and experience and all type pets health/mana).
     if (Pet* pet = GetPet())
