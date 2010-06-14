@@ -24,17 +24,20 @@ bool ChatHandler::HandlePlayerAI(const char* args)
 
     if (strncmp(args, "on", 3) == 0)
     {
-        PlayerAI* ai = new PlayerAI(chr);
+        PlayerAI* ai = chr->GetPlayerAI();
+        if(!ai)
+        {
+            PlayerAI* ai = new PlayerAI(chr);
+            if(ai)
+                chr->SetPlayerAI(ai);
+        }
+
+        ai = chr->GetPlayerAI();
         if(ai)
         {
-            chr->SetPlayerAI(ai);
-            ai = chr->GetPlayerAI();
-            if(ai)
-            {
-                ai->SetEnable(true);
-                SendSysMessage("PlayerAI Mode ON");
-                return true;
-            }
+            ai->SetEnable(true);
+            SendSysMessage("PlayerAI Mode ON");
+            return true;
         }
     }
     else if (strncmp(args, "off", 4) == 0)
