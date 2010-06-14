@@ -4500,7 +4500,6 @@ void Aura::HandleModStealth(bool apply, bool Real)
                     // Overkill
                     else if ((*i)->GetId() == 58426 && (GetSpellProto()->SpellFamilyFlags & UI64LIT(0x0000000000400000)|| UI64LIT(0x0000000000000800)))
                     {
-                        target->RemoveAurasDueToSpell(58428);
                         target->CastSpell(target, 58427, true);
                     }
                 }
@@ -4539,7 +4538,13 @@ void Aura::HandleModStealth(bool apply, bool Real)
                     target->CastSpell(target, 31666, true);
                 // Overkill
                 else if ((*i)->GetId() == 58426 && GetSpellProto()->SpellFamilyFlags & UI64LIT(0x0000000000400000))
-                    target->CastSpell(target, 58428, true);
+                {
+                    if (Aura* aura = target->GetAura(58427, EFFECT_INDEX_0))
+                    {
+                        aura->SetAuraMaxDuration(20*IN_MILLISECONDS);
+                        aura->RefreshAura();
+                    }
+                }
             }
         }
     }
@@ -5281,15 +5286,13 @@ void Aura::HandleAuraPeriodicDummy(bool apply, bool Real)
             switch(spell->Id)
             {
                 // Master of Subtlety
-                case 31666: if(!apply) m_target->RemoveAurasDueToSpell(31665); break;
-                // Overkill
-                case 58428:	if(!apply) m_target->RemoveAurasDueToSpell(58427); break;
+                case 31666: if(!apply) target->RemoveAurasDueToSpell(31665); break;
                 // Killing Spree
                 case 51690:
                     if(apply)
-                        m_target->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+                        target->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
                     else
-                        m_target->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+                        target->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
                     break;
             }
             break;
@@ -9354,4 +9357,18 @@ void Aura::ApplyHasteToPeriodic()
         m_maxduration = periodic * ticks;
     }
     m_modifier.periodictime = periodic;
+}
+
+void Aura::SetAuraMaxDuration( int32 duration )
+{
+    m_maxduration = duration;
+    
+    // possible overwrite persistent state
+    if (duration > 0)
+    {
+        if (!(m_isPassive && m_spellProto->DurationIndex == 0))
+            m_permanent = false;
+
+        m_auraFlags |= AFLAG_DURATION;
+    }
 }
