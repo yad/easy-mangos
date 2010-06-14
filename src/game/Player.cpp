@@ -5409,7 +5409,8 @@ bool Player::UpdateSkill(uint32 skill_id, uint32 step)
     if ((!max) || (!value) || (value >= max))
         return false;
 
-    if (value*512 < max*urand(0,512))
+    // modifier lowered from 512 to 64 
+    if (value*64 < max*urand(0,64))
     {
         uint32 new_value = value+step;
         if(new_value > max)
@@ -5626,11 +5627,12 @@ void Player::UpdateCombatSkills(Unit *pVictim, WeaponAttackType attType, bool de
         return;
 
     float chance = float(3 * lvldif * skilldif) / plevel;
-    if(!defence)
-    {
-        if(getClass() == CLASS_WARRIOR || getClass() == CLASS_ROGUE)
-            chance *= 0.1f * GetStat(STAT_INTELLECT);
-    }
+    // absolete from vanilla
+    //if(!defence)
+    //{
+    //    if(getClass() == CLASS_WARRIOR || getClass() == CLASS_ROGUE)
+    //        chance *= 0.1f * GetStat(STAT_INTELLECT);
+    //}
 
     chance = chance < 1.0f ? 1.0f : chance;                 //minimum chance to increase skill is 1%
 
