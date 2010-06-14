@@ -439,11 +439,6 @@ void Unit::SendMonsterMoveWithSpeed(float x, float y, float z, uint32 transitTim
 
 void Unit::BuildHeartBeatMsg(WorldPacket *data) const
 {
-    //Hack for flying creatures, but it works!
-    if(GetTypeId()!=TYPEID_PLAYER && ((Creature*)this)->canFly() &&
-        !m_movementInfo.HasMovementFlag(MOVEFLAG_FLYING))
-        ((Unit*)this)->m_movementInfo.AddMovementFlag(MOVEFLAG_FLYING);
-
     data->Initialize(MSG_MOVE_HEARTBEAT);
     *data << GetPackGUID();
     ((Unit*)this)->m_movementInfo.Write(*data);
@@ -11462,10 +11457,6 @@ bool Unit::isVisibleForOrDetect(Unit const* u, WorldObject const* viewPoint, boo
             return false;
     }
 
-    // always seen by far sight caster
-    if (u->GetTypeId()==TYPEID_PLAYER && ((Player*)u)->GetFarSight()==GetGUID())
-        return true;
-
     // different visible distance checks
     if (u->isInFlight())                                    // what see player in flight
     {
@@ -11699,12 +11690,41 @@ void Unit::SetVisibility(UnitVisibility x)
 
     if(IsInWorld())
     {
+        // some auras requires visible target
+        if(m_Visibility == VISIBILITY_GROUP_NO_DETECT || m_Visibility == VISIBILITY_OFF)
+        {   
+            static const AuraType auratypes[] = {SPELL_AURA_BIND_SIGHT, SPELL_AURA_FAR_SIGHT, SPELL_AURA_NONE};
+            for (AuraType const* type = &auratypes[0]; *type != SPELL_AURA_NONE; ++type)
+            {
+                AuraList& alist = m_modAuras[*type];
+                if(alist.empty())
+                    continue;
+
+                for (AuraList::iterator it = alist.begin(); it != alist.end();)
+                {
+                    Aura* aura = (*it);
+                    Unit* owner = aura->GetCaster();
+
+                    if (!owner || !isVisibleForOrDetect(owner,this,false))
+                    {
+                        alist.erase(it);
+                        RemoveAura(aura);
+                        it = alist.begin();
+                    }
+                    else
+                        ++it;
+                }
+            }
+        }
+
         Map *m = GetMap();
 
         if(GetTypeId()==TYPEID_PLAYER)
             m->PlayerRelocation((Player*)this,GetPositionX(),GetPositionY(),GetPositionZ(),GetOrientation());
         else
             m->CreatureRelocation((Creature*)this,GetPositionX(),GetPositionY(),GetPositionZ(),GetOrientation());
+
+        GetViewPoint().Event_ViewPointVisibilityChanged();
     }
 }
 
@@ -13016,6 +13036,7 @@ void Unit::RemoveFromWorld()
         RemoveAllGameObjects();
         RemoveAllDynObjects();
         CleanupDeletedAuras();
+        GetViewPoint().Event_RemovedFromWorld();
     }
 
     Object::RemoveFromWorld();
@@ -14843,22 +14864,18 @@ bool Unit::isIgnoreUnitState(SpellEntry const *spell)
     if(!HasAuraType(SPELL_AURA_IGNORE_UNIT_STATE))
         return false;
 
-    if(spell->SpellFamilyName == SPELLFAMILY_MAGE){
-        // Ice Lance
-        if(spell->SpellIconID == 186)
-            return true;
-        // Shatter
-        if(spell->Id == 11170 || spell->Id == 12982 || spell->Id == 12983)
-            return true;
-    }
+    // Ice Lance
+    if(spell->SpellIconID == 186 && spell->SpellFamilyName == SPELLFAMILY_MAGE)
+        return true;
+    // Shatter
+    if(spell->Id == 11170 || spell->Id == 12982 || spell->Id == 12983)
+        return true;
+
     Unit::AuraList const& stateAuras = GetAurasByType(SPELL_AURA_IGNORE_UNIT_STATE);
     for(Unit::AuraList::const_iterator j = stateAuras.begin();j != stateAuras.end(); ++j)
     {
         if((*j)->isAffectedOnSpell(spell))
-        {
             return true;
-            break;
-        }
     }
     return false;
 }

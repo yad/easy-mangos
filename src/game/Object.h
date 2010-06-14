@@ -23,8 +23,8 @@
 #include "ByteBuffer.h"
 #include "UpdateFields.h"
 #include "UpdateData.h"
-#include "GameSystem/GridReference.h"
 #include "ObjectGuid.h"
+#include "Camera.h"
 
 #include <set>
 #include <string>
@@ -367,6 +367,7 @@ class MANGOS_DLL_SPEC WorldObject : public Object
         }
         bool IsPositionValid() const;
         void UpdateGroundPositionZ(float x, float y, float &z, float maxDiff = 30.0f) const;
+        bool IsAtGroundLevel(float x, float y, float z) const;
 
         void GetRandomPoint( float x, float y, float z, float distance, float &rand_x, float &rand_y, float &rand_z ) const;
 
@@ -478,9 +479,11 @@ class MANGOS_DLL_SPEC WorldObject : public Object
         void BuildUpdateData(UpdateDataMapType &);
 
         Creature* SummonCreature(uint32 id, float x, float y, float z, float ang,TempSummonType spwtype,uint32 despwtime);
+
+        ViewPoint& GetViewPoint() { return m_viewPoint; }
+
         Vehicle* SummonVehicle(uint32 id, float x, float y, float z, float ang, uint32 vehicleId = NULL);
         GameObject* SummonGameobject(uint32 id, float x, float y, float z, float ang, uint32 despwTime);
-
     protected:
         explicit WorldObject();
 
@@ -503,6 +506,8 @@ class MANGOS_DLL_SPEC WorldObject : public Object
         float m_positionY;
         float m_positionZ;
         float m_orientation;
+
+        ViewPoint m_viewPoint;
 };
 
 #endif
