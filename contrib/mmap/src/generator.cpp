@@ -52,7 +52,6 @@ void handleArgs(int argc, char** argv,
                bool &skipJunkMaps,
                bool &skipBattlegrounds,
                bool &hiResHeightmaps,
-               bool &shredHeightmaps,
                bool &debugOutput,
                bool &invalidMapNum)
 {
@@ -109,16 +108,6 @@ void handleArgs(int argc, char** argv,
             else
                 printf("invalid option for '--hiResHeightmaps', using default\n");
         }
-        else if(strcmp(argv[i], "--shredHeightmaps") == 0)
-        {
-            param = argv[++i];
-            if(strcmp(param, "true") == 0)
-                shredHeightmaps = true;
-            else if(strcmp(param, "false") == 0)
-                shredHeightmaps = false;
-            else
-                printf("invalid option for '--shredHeightmaps', using default true\n");
-        }
         else if(strcmp(argv[i], "--debugOutput") == 0)
         {
             param = argv[++i];
@@ -158,7 +147,6 @@ int main(int argc, char** argv)
          skipJunkMaps = true,
          skipBattlegrounds = true,
          hiResHeightmaps = false,
-         shredHeightmaps = true,
          debugOutput = false,
          invalidMapNum = false;
 
@@ -170,7 +158,6 @@ int main(int argc, char** argv)
               skipJunkMaps,
               skipBattlegrounds,
               hiResHeightmaps,
-              shredHeightmaps,
               debugOutput,
               invalidMapNum);
 
@@ -197,7 +184,6 @@ int main(int argc, char** argv)
                        skipJunkMaps,
                        skipBattlegrounds,
                        hiResHeightmaps,
-                       shredHeightmaps,
                        debugOutput);
 
     if(mapnum >= 0)

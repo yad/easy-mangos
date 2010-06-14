@@ -17,8 +17,7 @@ namespace MMAP
 {
     MapBuilder::MapBuilder(float maxWalkableAngle,
                            bool skipContinents, bool skipJunkMaps, bool skipBattlegrounds,
-                           bool hiResHeightmaps, bool shredHeightmaps,
-                           bool debugOutput) :
+                           bool hiResHeightmaps, bool debugOutput) :
                            m_maxWalkableAngle   (maxWalkableAngle),
                            m_skipContinents     (skipContinents),
                            m_skipJunkMaps       (skipJunkMaps),
@@ -26,7 +25,7 @@ namespace MMAP
                            m_debugOutput        (debugOutput)
     {
         m_vmapManager = new VMapManager2();
-        m_tileBuilder = new TileBuilder(m_maxWalkableAngle, hiResHeightmaps, shredHeightmaps, m_vmapManager);
+        m_tileBuilder = new TileBuilder(m_maxWalkableAngle, hiResHeightmaps, m_vmapManager);
     }
 
     MapBuilder::~MapBuilder()
