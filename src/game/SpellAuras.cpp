@@ -2949,7 +2949,7 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                     if(GetTarget()->GetTypeId() != TYPEID_PLAYER)
                         return;
                     m_spellmod = new SpellModifier(SPELLMOD_DURATION, SPELLMOD_FLAT, GetMiscValue()*MINUTE*IN_MILLISECONDS, GetId(), UI64LIT(0x0000000000100));
-                    (Player*)GetTarget()->AddSpellMod(m_spellmod, apply);
+                    ((Player*)GetTarget())->AddSpellMod(m_spellmod, apply);
                     return;
             }
             break;
@@ -4806,7 +4806,9 @@ void Aura::HandleAuraModTotalThreat(bool apply, bool Real)
     if(GetId() == 55342)
         return;
 
-    if (!m_target->isAlive() || m_target->GetTypeId() != TYPEID_PLAYER)
+    Unit *target = GetTarget();
+
+    if (!target->isAlive() || !target->CanHaveThreatList())
         return;
 
     Unit* caster = GetCaster();
@@ -9245,19 +9247,7 @@ void Aura::HandleAllowOnlyAbility(bool apply, bool Real)
     if(!Real)
         return;
 
-    // aura should affect only abilities
-    /*if(apply)
-    {
-        target->setAttackTimer(BASE_ATTACK,m_duration);
-        target->setAttackTimer(RANGED_ATTACK,m_duration);
-        target->setAttackTimer(OFF_ATTACK,m_duration);
-    }
-    else
-    {
-        target->resetAttackTimer(BASE_ATTACK);
-        target->resetAttackTimer(RANGED_ATTACK);
-        target->resetAttackTimer(OFF_ATTACK);
-    }*/
+    Unit *target = GetTarget();
 
     target->UpdateDamagePhysical(BASE_ATTACK);
     target->UpdateDamagePhysical(RANGED_ATTACK);

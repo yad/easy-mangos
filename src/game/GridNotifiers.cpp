@@ -96,7 +96,7 @@ VisibleNotifier::Notify()
             player.SendAurasForTarget((Unit*)(*vItr));
             WorldPacket data;
             ((Unit*)(*vItr))->BuildHeartBeatMsg(&data);
-            i_player.GetSession()->SendPacket(&data);
+            player.GetSession()->SendPacket(&data);
         }
 
         // non finished movements show to player

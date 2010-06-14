@@ -155,7 +155,7 @@ bool RandomMovementGenerator<Creature>::Update(Creature &creature, const uint32 
         if (i_nextMoveTime.Passed())
         {
             float x,y,z;
-            if(i_destinationHolder.HasDestination()
+            if(i_destinationHolder.HasDestination())
                 i_destinationHolder.GetLocationNowNoMicroMovement(x,y,z);
             else
                 creature.GetPosition(x,y,z);
