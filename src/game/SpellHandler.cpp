@@ -584,8 +584,8 @@ void WorldSession::HandleSpellClick( WorldPacket & recv_data )
         vehicleId = cainfo->vehicle_id;
 
     if (_player->isInCombat() && !unit->isVehicle() && !vehicleId)                              // client prevent click and set different icon at combat state
-        return; 
-    
+        return;
+
     if(!_player->IsWithinDistInMap(unit, 10))
         return;
 

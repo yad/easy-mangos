@@ -265,7 +265,8 @@ void Object::BuildMovementUpdate(ByteBuffer * data, uint16 updateFlags) const
                 /*if (((Creature*)unit)->hasUnitState(UNIT_STAT_MOVING))
                     unit->m_movementInfo.SetMovementFlags(MOVEFLAG_FORWARD);*/
 
-                if (((Creature*)unit)->canFly())
+                if (((Creature*)unit)->canFly() && !(((Creature*)unit)->canWalk()
+                    && unit->IsAtGroundLevel(unit->GetPositionX(), unit->GetPositionY(), unit->GetPositionZ())))
                 {
                     // (ok) most seem to have this
                     unit->m_movementInfo.AddMovementFlag(MOVEFLAG_LEVITATING);
@@ -1489,7 +1490,7 @@ void WorldObject::UpdateGroundPositionZ(float x, float y, float &z, float maxDif
         useVmaps = !useVmaps;                                // try change vmap use
         normalizedZ = GetBaseMap()->GetHeight(x, y, z+2.0f, useVmaps);
         if(normalizedZ <= INVALID_HEIGHT || fabs(normalizedZ-z) > maxDiff)
-            return;                                        // Do nothing in case of another bad result 
+            return;                                        // Do nothing in case of another bad result
     }
     z = normalizedZ + 0.5f;                                // just to be sure that we are not a few pixel under the surface
 }
@@ -1497,6 +1498,14 @@ void WorldObject::UpdateGroundPositionZ(float x, float y, float &z, float maxDif
 bool WorldObject::IsPositionValid() const
 {
     return MaNGOS::IsValidMapCoord(m_positionX,m_positionY,m_positionZ,m_orientation);
+}
+
+bool WorldObject::IsAtGroundLevel(float x, float y, float z) const
+{
+    float groundZ = GetBaseMap()->GetHeight(x, y, z, true);
+    if(groundZ <= INVALID_HEIGHT || fabs(groundZ-z) > 0.5f)
+        return false;
+    return true;
 }
 
 void WorldObject::MonsterSay(const char* text, uint32 language, uint64 TargetGuid)
@@ -1986,7 +1995,7 @@ void WorldObject::SetPhaseMask(uint32 newPhaseMask, bool update)
     if(update && IsInWorld())
     {
         UpdateObjectVisibility();
-        getViewPoint().Event_ViewPointVisibilityChanged();
+        GetViewPoint().Event_ViewPointVisibilityChanged();
     }
 }
 
@@ -2045,7 +2054,7 @@ struct WorldObjectChangeAccumulator
     {
         for(CameraMapType::iterator iter = m.begin(); iter != m.end(); ++iter)
         {
-            Player* owner = iter->getSource()->getOwner();
+            Player* owner = iter->getSource()->GetOwner();
             if(owner != &i_object && owner->HaveAtClient(&i_object))
                 i_object.BuildUpdateDataForPlayer(owner, i_updateDatas);
         }

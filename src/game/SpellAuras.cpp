@@ -1569,9 +1569,9 @@ void Aura::HandleAddModifier(bool apply, bool Real)
     if(m_modifier.m_miscvalue >= MAX_SPELLMOD)
         return;
 
-    // Aura Mastery - Remove immunity effect 
-    if (!apply && m_spellProto->Id == 31821) 
-        m_target->RemoveAurasDueToSpell(64364); 
+    // Aura Mastery - Remove immunity effect
+    if (!apply && m_spellProto->Id == 31821)
+        m_target->RemoveAurasDueToSpell(64364);
 
     if (apply)
     {
@@ -2318,7 +2318,7 @@ void Aura::TriggerSpell()
             {
                 if ( Unit *caster = GetCaster() )
                 {
-                    if( Unit *owner = caster->GetOwner() ) 
+                    if( Unit *owner = caster->GetOwner() )
                     {
                         float chance = 0;
                         if ( owner->HasAura(51524) )
@@ -2329,7 +2329,7 @@ void Aura::TriggerSpell()
                         if (roll_chance_f(chance))
                             caster->CastSpell( caster, 59566, true );
 
-                        
+
                     }
                 }
                 break;
@@ -2634,7 +2634,7 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
             (GetSpellProto()->EffectApplyAuraName[EFFECT_INDEX_0] == 1 || GetSpellProto()->EffectApplyAuraName[EFFECT_INDEX_0] == 128)))
         {
             // spells with SpellEffect=72 and aura=4: 6196, 6197, 21171, 21425
-            ((Player*)m_target)->GetCamera().ResetView();
+            ((Player*)target)->GetCamera().ResetView();
             WorldPacket data(SMSG_CLEAR_FAR_SIGHT_IMMEDIATE, 0);
             ((Player*)target)->GetSession()->SendPacket(&data);
             return;
@@ -2945,6 +2945,13 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                     else
                         target->m_AuraFlags |= ~UNIT_AURAFLAG_ALIVE_INVISIBLE;
                     return;
+                //Glyph of Thorns
+                case 57862:
+                    if(GetTarget()->GetTypeId() != TYPEID_PLAYER)
+                        return;
+                    m_spellmod = new SpellModifier(SPELLMOD_DURATION, SPELLMOD_FLAT, GetMiscValue()*MINUTE*IN_MILLISECONDS, GetId(), UI64LIT(0x0000000000100));
+                    ((Player*)GetTarget())->AddSpellMod(m_spellmod, apply);
+                    return;
             }
             break;
         }
@@ -3062,7 +3069,7 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                                 m_modifier.m_amount = m_target->SpellHealingBonusTaken(caster, finalBloomEntry, m_modifier.m_amount, HEAL);
                             }else
                                 m_modifier.m_amount += (m_stackAmount == 2) ? m_modifier.m_amount : (m_modifier.m_amount / 2);
-                        } 
+                        }
                     }
                 }
                 else
@@ -3892,7 +3899,7 @@ void Aura::HandleFarSight(bool apply, bool /*Real*/)
 
     Camera& camera = ((Player*)caster)->GetCamera();
     if (apply)
-        camera.SetView(m_target);
+        camera.SetView(GetTarget());
     else
         camera.ResetView();
 }
@@ -3953,6 +3960,8 @@ void Aura::HandleModPossess(bool apply, bool Real)
 
     if( apply )
     {
+        target->addUnitState(UNIT_STAT_CONTROLED);
+
         target->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PLAYER_CONTROLLED);
 
         target->SetCharmerGUID(p_caster->GetGUID());
@@ -3960,28 +3969,32 @@ void Aura::HandleModPossess(bool apply, bool Real)
 
         p_caster->SetCharm(target);
 
-        camera.SetView(m_target);
+        camera.SetView(target);
         p_caster->SetClientControl(target, 1);
         p_caster->SetMover(target);
 
-        target->CombatStop();
+        target->CombatStop(true);
         target->DeleteThreatList();
+        target->getHostileRefManager().deleteReferences();
+
+        if(CharmInfo *charmInfo = target->InitCharmInfo(target))
+        {
+            charmInfo->InitPossessCreateSpells();
+            charmInfo->SetReactState(REACT_PASSIVE);
+            charmInfo->SetCommandState(COMMAND_STAY);
+        }
+
+        p_caster->PossessSpellInitialize();
 
         if(target->GetTypeId() == TYPEID_UNIT)
         {
-            target->StopMoving();
-            target->GetMotionMaster()->Clear();
-            target->GetMotionMaster()->MoveIdle();
+            ((Creature*)target)->AIM_Initialize();
         }
         else if(m_target->GetTypeId() == TYPEID_PLAYER && !m_target->GetVehicleGUID())
         {
             ((Player*)target)->SetClientControl(target, 0);
         }
 
-        if(CharmInfo *charmInfo = target->InitCharmInfo(target))
-            charmInfo->InitPossessCreateSpells();
-
-        p_caster->PossessSpellInitialize();
     }
     else
     {
@@ -3997,6 +4010,12 @@ void Aura::HandleModPossess(bool apply, bool Real)
         // on delete only do caster related effects
         if(m_removeMode == AURA_REMOVE_BY_DELETE)
             return;
+
+        target->clearUnitState(UNIT_STAT_CONTROLED);
+
+        target->CombatStop(true);
+        target->DeleteThreatList();
+        target->getHostileRefManager().deleteReferences();
 
         target->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PLAYER_CONTROLLED);
 
@@ -4112,8 +4131,9 @@ void Aura::HandleModCharm(bool apply, bool Real)
         target->CastStop(target == caster ? GetId() : 0);
         caster->SetCharm(target);
 
-        target->CombatStop();
+        target->CombatStop(true);
         target->DeleteThreatList();
+        target->getHostileRefManager().deleteReferences();
 
         if(target->GetTypeId() == TYPEID_UNIT)
         {
@@ -4195,6 +4215,10 @@ void Aura::HandleModCharm(bool apply, bool Real)
 
         if(caster->GetTypeId() == TYPEID_PLAYER)
             ((Player*)caster)->RemovePetActionBar();
+
+        target->CombatStop(true);
+        target->DeleteThreatList();
+        target->getHostileRefManager().deleteReferences();
 
         if(target->GetTypeId() == TYPEID_UNIT)
         {
@@ -4604,7 +4628,7 @@ void Aura::HandleInvisibility(bool apply, bool Real)
 void Aura::HandleInvisibilityDetect(bool apply, bool Real)
 {
     Unit *target = GetTarget();
-    
+
     if(apply)
     {
         target->m_detectInvisibilityMask |= (1 << m_modifier.m_miscvalue);
@@ -4618,7 +4642,7 @@ void Aura::HandleInvisibilityDetect(bool apply, bool Real)
             target->m_detectInvisibilityMask |= (1 << m_modifier.m_miscvalue);
     }
     if(Real && target->GetTypeId()==TYPEID_PLAYER)
-        ((Player*)m_target)->GetCamera().UpdateVisibilityForOwner();
+        ((Player*)target)->GetCamera().UpdateVisibilityForOwner();
 }
 
 void Aura::HandleAuraModRoot(bool apply, bool Real)
@@ -4783,7 +4807,9 @@ void Aura::HandleAuraModTotalThreat(bool apply, bool Real)
     if(GetId() == 55342)
         return;
 
-    if (!m_target->isAlive() || m_target->GetTypeId() != TYPEID_PLAYER)
+    Unit *target = GetTarget();
+
+    if (!target->isAlive() || !target->CanHaveThreatList())
         return;
 
     Unit* caster = GetCaster();
@@ -4801,7 +4827,7 @@ void Aura::HandleModTaunt(bool apply, bool Real)
     // only at real add/remove aura
     if (!Real)
         return;
-    
+
     Unit *target = GetTarget();
 
     if (!target->isAlive() || !target->CanHaveThreatList())
@@ -5307,7 +5333,7 @@ void Aura::HandleAuraPeriodicDummy(bool apply, bool Real)
                     {
                         if (m_target->GetGameObject(spell->Id))
                             m_target->RemoveGameObject(spell->Id,true);
-                    }                         
+                    }
                 break;
             }
         }
@@ -5570,10 +5596,10 @@ void Aura::HandlePeriodicDamage(bool apply, bool Real)
         // Parasitic Shadowfiend - handle summoning of two Shadowfiends on DoT expire
         if(spellProto->Id == 41917)
             target->CastSpell(target, 41915, true);
-        else if (m_spellProto->Id == 29865) // Deathbloom 
+        else if (m_spellProto->Id == 29865) // Deathbloom
             m_target->CastSpell(m_target, 55594, true, NULL, this);
         else if (m_spellProto->Id == 55053) // Deathbloom heroic
-            m_target->CastSpell(m_target, 55601, true, NULL, this); 
+            m_target->CastSpell(m_target, 55601, true, NULL, this);
     }
 }
 
@@ -6731,7 +6757,7 @@ void Aura::HandleShapeshiftBoosts(bool apply)
                             default: HotWSpellId = 0; break;
                         }
 
-                        
+
                         m_target->CastSpell(m_target, HotWSpellId, true);
                         break;
                     }
@@ -6759,7 +6785,7 @@ void Aura::HandleShapeshiftBoosts(bool apply)
                         case 10: HotWSpellId = form == FORM_CAT ? 30906 : 19259; break;
                         default: HotWSpellId = 0; break;
                      }
-                     
+
                      m_target->RemoveAurasDueToSpell(HotWSpellId);
                  }
              }
@@ -7373,7 +7399,7 @@ void Aura::HandleSpellSpecificBoosts(bool apply, bool last_stack)
         default:
             return;
     }
-    // prevent casting/removing auras on stack if they should not be 
+    // prevent casting/removing auras on stack if they should not be
     if(!last_stack && !cast_on_stack)
         return;
 
@@ -8755,7 +8781,7 @@ void Aura::PeriodicDummyTick()
                     if (!obj)
                       {
                          m_target->RemoveAurasDueToSpell(spell->Id);
-                         SendFakeAuraUpdate(62388,true);  
+                         SendFakeAuraUpdate(62388,true);
                          return;
                       }
                     // We must take a range of teleport spell, not summon.
@@ -9080,7 +9106,7 @@ void Aura::HandlePhase(bool apply, bool Real)
         return;
 
     Unit *target = GetTarget();
-    
+
     // always non stackable
     if(apply)
     {
@@ -9135,11 +9161,11 @@ void Aura::HandlePhase(bool apply, bool Real)
                 }
             }
         }
-          
+
         if(m_target->GetCharm() && !apply)//remove other auras from charm on unapply
         {
-            Creature * creat=((Creature*)m_target->GetCharm());                        
-            creat->RemoveAurasDueToSpellByCancel(GetId());            
+            Creature * creat=((Creature*)m_target->GetCharm());
+            creat->RemoveAurasDueToSpellByCancel(GetId());
         }
     }
     else
@@ -9252,23 +9278,25 @@ void Aura::HandleAllowOnlyAbility(bool apply, bool Real)
     if(!Real)
         return;
 
-    // aura should affect only abilities
-    /*if(apply)
-    {
-        target->setAttackTimer(BASE_ATTACK,m_duration);
-        target->setAttackTimer(RANGED_ATTACK,m_duration);
-        target->setAttackTimer(OFF_ATTACK,m_duration);
-    }
-    else
-    {
-        target->resetAttackTimer(BASE_ATTACK);
-        target->resetAttackTimer(RANGED_ATTACK);
-        target->resetAttackTimer(OFF_ATTACK);
-    }*/
+    Unit *target = GetTarget();
 
     m_target->UpdateDamagePhysical(BASE_ATTACK);
     m_target->UpdateDamagePhysical(RANGED_ATTACK);
     m_target->UpdateDamagePhysical(OFF_ATTACK);
+}
+
+void Aura::SetAuraMaxDuration( int32 duration )
+{
+    m_maxduration = duration;
+
+    // possible overwrite persistent state
+    if (duration > 0)
+    {
+        if (!(m_isPassive && m_spellProto->DurationIndex == 0))
+            m_permanent = false;
+
+        m_auraFlags |= AFLAG_DURATION;
+    }
 }
 
 void Aura::HandleAuraInitializeImages(bool Apply, bool Real)
@@ -9321,7 +9349,7 @@ void Aura::HandleAuraOpenStable(bool apply, bool Real)
     if(!apply || !Real)
         return;
 
-    Unit* caster = GetCaster();    
+    Unit* caster = GetCaster();
 
     if(!caster || caster->GetTypeId() != TYPEID_PLAYER)
         return;
@@ -9329,7 +9357,7 @@ void Aura::HandleAuraOpenStable(bool apply, bool Real)
     WorldPacket data;
     data << uint64(caster->GetGUID());
     ((Player*)caster)->GetSession()->HandleListStabledPetsOpcode(data);
-} 
+}
 
 void Aura::ApplyHasteToPeriodic()
 {
@@ -9357,18 +9385,4 @@ void Aura::ApplyHasteToPeriodic()
         m_maxduration = periodic * ticks;
     }
     m_modifier.periodictime = periodic;
-}
-
-void Aura::SetAuraMaxDuration( int32 duration )
-{
-    m_maxduration = duration;
-    
-    // possible overwrite persistent state
-    if (duration > 0)
-    {
-        if (!(m_isPassive && m_spellProto->DurationIndex == 0))
-            m_permanent = false;
-
-        m_auraFlags |= AFLAG_DURATION;
-    }
 }

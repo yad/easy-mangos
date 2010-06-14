@@ -2480,7 +2480,7 @@ enum CustomVehicleFLags
     VF_NON_SELECTABLE               = 0x0080,                   // vehicle will be not selectable after rider enter
     VF_FLYING                       = 0x0100,                   // Hack for now (256 in DB)
     VF_CAST_AURA                    = 0x0200,                   // Cast spell1 on player on vehicle enter and remove when he leaves.
-    VF_ALLOW_MELEE                  = 0x0400                    // Allow melee for players on vehicle   
+    VF_ALLOW_MELEE                  = 0x0400                    // Allow melee for players on vehicle
 };
 
 enum CustomVehicleSeatFLags

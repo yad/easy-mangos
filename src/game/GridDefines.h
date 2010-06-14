@@ -57,10 +57,12 @@ class Camera;
 #define MAP_HALFSIZE            (MAP_SIZE/2)
 
 // Creature used instead pet to simplify *::Visit templates (not required duplicate code for Creature->Pet case)
+// Cameras in world list just because linked with Player objects
 typedef TYPELIST_4(Player, Creature/*pets*/, Corpse/*resurrectable*/, Camera)           AllWorldObjectTypes;
 typedef TYPELIST_4(GameObject, Creature/*except pets*/, DynamicObject, Corpse/*Bones*/) AllGridObjectTypes;
 typedef TYPELIST_5(Creature, Pet, Vehicle, GameObject, DynamicObject)                   AllMapStoredObjectTypes;
 
+typedef GridRefManager<Camera>          CameraMapType;
 typedef GridRefManager<Corpse>          CorpseMapType;
 typedef GridRefManager<Creature>        CreatureMapType;
 typedef GridRefManager<DynamicObject>   DynamicObjectMapType;

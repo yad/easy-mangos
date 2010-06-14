@@ -207,16 +207,16 @@ struct AchievementCriteriaEntry
             uint32  castCount;                              // 4
         } cast_spell;
 
-        
+
         // ACHIEVEMENT_CRITERIA_TYPE_BG_OBJECTIVE_CAPTURE       = 30
         struct
         {
             uint32  captureID;                                // 3
             uint32  captureCount;                             // 4
-            //uint32  additionalRequirement1_type;            // 5 
-            //uint32  additionalRequirement1_value;           // 6 
-            //uint32  additionalRequirement2_type;            // 7 
-            //uint32  additionalRequirement2_value;           // 8 
+            //uint32  additionalRequirement1_type;            // 5
+            //uint32  additionalRequirement1_value;           // 6
+            //uint32  additionalRequirement2_type;            // 7
+            //uint32  additionalRequirement2_value;           // 8
         } objective_capture;
 
         // ACHIEVEMENT_CRITERIA_TYPE_HONORABLE_KILL_AT_AREA = 31

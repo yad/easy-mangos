@@ -52,7 +52,7 @@ void DynamicObject::RemoveFromWorld()
     if(IsInWorld())
     {
         GetMap()->GetObjectsStore().erase<DynamicObject>(GetGUID(), (DynamicObject*)NULL);
-        getViewPoint().Event_RemovedFromWorld();
+        GetViewPoint().Event_RemovedFromWorld();
     }
 
     Object::RemoveFromWorld();

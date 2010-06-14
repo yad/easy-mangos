@@ -61,7 +61,7 @@ void BattleGroundDS::Update(uint32 diff)
                     plr->KnockBackPlayerWithAngle(3.03f, 55.0f, 7.0f);
             }
             KnockbackCheck = false;
-                       
+
         }else m_uiKnockback -= diff;
 
         // just for sure if knockback wont work from any reason teleport down

@@ -128,7 +128,7 @@ HomeMovementGenerator<Creature>::Update(Creature &owner, const uint32& time_diff
     //        else
     //            // path doesn't exist, create one
     //            i_path = owner.GetMap()->GetPath(myx,myy,myz,x,y,z);
-    //        
+    //
     //        uint32 travel_time;
     //        if(i_path.Length)
     //            // if path is good, go to NextDestination

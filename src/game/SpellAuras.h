@@ -256,6 +256,7 @@ class MANGOS_DLL_SPEC Aura
         void SetAuraMaxDuration(int32 duration);
         int32 GetAuraOrigDuration() const { return m_origDuration; }
         void SetAuraOrigDuration(int32 duration) { m_origDuration = duration; }
+
         int32 GetAuraDuration() const { return m_duration; }
         void SetAuraDuration(int32 duration) { m_duration = duration; }
         time_t GetAuraApplyTime() const { return m_applyTime; }

@@ -797,7 +797,7 @@ void World::LoadConfigSettings(bool reload)
         else
             sLog.outError("ClientCacheVersion can't be negative %d, ignored.", clientCacheId);
     }
-    
+
     setConfig(CONFIG_UINT32_DUALSPEC_LEVEL, "MinDualSpecLevel", 40);
     setConfig(CONFIG_UINT32_DUALSPEC_PRICE, "DualSpecPrice", 10000000);
 
@@ -1001,13 +1001,13 @@ void World::SetInitialWorldSettings()
     sLog.outString( "Loading Spell Bonus Data..." );
     sSpellMgr.LoadSpellBonuses();                           // must be after LoadSpellChains
 
-    // DEVELOPER CODE START 
-    sLog.outString( "Loading Spell Stack Data..." ); 
-    sSpellMgr.LoadSpellStack(); 
- 
-    sLog.outString( "Loading Spell Stack Group Data..." ); 
-    sSpellMgr.LoadSpellStackGroup(); 
-    // DEVELOPER CODE END 
+    // DEVELOPER CODE START
+    sLog.outString( "Loading Spell Stack Data..." );
+    sSpellMgr.LoadSpellStack();
+
+    sLog.outString( "Loading Spell Stack Group Data..." );
+    sSpellMgr.LoadSpellStackGroup();
+    // DEVELOPER CODE END
 
     sLog.outString( "Loading Spell Proc Item Enchant..." );
     sSpellMgr.LoadSpellProcItemEnchant();                   // must be after LoadSpellChains

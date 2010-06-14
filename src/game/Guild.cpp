@@ -2447,5 +2447,5 @@ void Guild::DeleteFriendlyGuildId()
 {
     CharacterDatabase.PExecute("UPDATE guild SET friendlyGuildId = '0' WHERE guildid ='%u'", m_Id);
     m_friendlyGuild = NULL;
-    m_friendlyGuildId = 0; 
+    m_friendlyGuildId = 0;
 }

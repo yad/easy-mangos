@@ -38,12 +38,12 @@ namespace MaNGOS
 {
     struct MANGOS_DLL_DECL VisibleNotifier
     {
-        Camera& camera;
+        Camera& i_camera;
         UpdateData i_data;
         ObjectGuidSet i_clientGUIDs;
         std::set<WorldObject*> i_visibleNow;
 
-        explicit VisibleNotifier(Camera &c) : camera(c), i_clientGUIDs(c.getOwner()->m_clientGUIDs) {}
+        explicit VisibleNotifier(Camera &c) : i_camera(c), i_clientGUIDs(c.GetOwner()->m_clientGUIDs) {}
         template<class T> void Visit(GridRefManager<T> &m);
         void Visit(CameraMapType &m) {}
         void Notify(void);
@@ -506,8 +506,8 @@ namespace MaNGOS
         void Visit(CameraMapType &m)
         {
             for(CameraMapType::iterator itr=m.begin(); itr != m.end(); ++itr)
-                if (itr->getSource()->getBody()->InSamePhase(i_searcher) && itr->getSource()->getBody()->IsWithinDist(i_searcher,i_dist))
-                    i_do(itr->getSource()->getOwner());
+                if (itr->getSource()->GetBody()->InSamePhase(i_searcher) && itr->getSource()->GetBody()->IsWithinDist(i_searcher,i_dist))
+                    i_do(itr->getSource()->GetOwner());
         }
         template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) {}
     };

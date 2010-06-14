@@ -245,15 +245,15 @@ bool ChatHandler::HandleAHBotOptionsCommand(const char* args)
         {
             auctionbot.Commands(6, ahMapID, AHB_BLUE, param2);
         }
-        else if	(strncmp(param1,"purple",l) == 0)
+        else if    (strncmp(param1,"purple",l) == 0)
         {
             auctionbot.Commands(6, ahMapID, AHB_PURPLE, param2);
         }
-        else if	(strncmp(param1,"orange",l) == 0)
+        else if    (strncmp(param1,"orange",l) == 0)
         {
             auctionbot.Commands(6, ahMapID, AHB_ORANGE, param2);
         }
-        else if	(strncmp(param1,"yellow",l) == 0)
+        else if    (strncmp(param1,"yellow",l) == 0)
         {
             auctionbot.Commands(6, ahMapID, AHB_YELLOW, param2);
         }
@@ -288,15 +288,15 @@ bool ChatHandler::HandleAHBotOptionsCommand(const char* args)
         {
             auctionbot.Commands(7, ahMapID, AHB_BLUE, param2);
         }
-        else if	(strncmp(param1,"purple",l) == 0)
+        else if    (strncmp(param1,"purple",l) == 0)
         {
             auctionbot.Commands(7, ahMapID, AHB_PURPLE, param2);
         }
-        else if	(strncmp(param1,"orange",l) == 0)
+        else if    (strncmp(param1,"orange",l) == 0)
         {
             auctionbot.Commands(7, ahMapID, AHB_ORANGE, param2);
         }
-        else if	(strncmp(param1,"yellow",l) == 0)
+        else if    (strncmp(param1,"yellow",l) == 0)
         {
             auctionbot.Commands(7, ahMapID, AHB_YELLOW, param2);
         }
@@ -337,15 +337,15 @@ bool ChatHandler::HandleAHBotOptionsCommand(const char* args)
         {
             auctionbot.Commands(8, ahMapID, AHB_BLUE, param2);
         }
-        else if	(strncmp(param1,"purple",l) == 0)
+        else if    (strncmp(param1,"purple",l) == 0)
         {
             auctionbot.Commands(8, ahMapID, AHB_PURPLE, param2);
         }
-        else if	(strncmp(param1,"orange",l) == 0)
+        else if    (strncmp(param1,"orange",l) == 0)
         {
             auctionbot.Commands(8, ahMapID, AHB_ORANGE, param2);
         }
-        else if	(strncmp(param1,"yellow",l) == 0)
+        else if    (strncmp(param1,"yellow",l) == 0)
         {
             auctionbot.Commands(8, ahMapID, AHB_YELLOW, param2);
         }
@@ -386,15 +386,15 @@ bool ChatHandler::HandleAHBotOptionsCommand(const char* args)
         {
             auctionbot.Commands(9, ahMapID, AHB_BLUE, param2);
         }
-        else if	(strncmp(param1,"purple",l) == 0)
+        else if    (strncmp(param1,"purple",l) == 0)
         {
             auctionbot.Commands(9, ahMapID, AHB_PURPLE, param2);
         }
-        else if	(strncmp(param1,"orange",l) == 0)
+        else if    (strncmp(param1,"orange",l) == 0)
         {
             auctionbot.Commands(9, ahMapID, AHB_ORANGE, param2);
         }
-        else if	(strncmp(param1,"yellow",l) == 0)
+        else if    (strncmp(param1,"yellow",l) == 0)
         {
             auctionbot.Commands(9, ahMapID, AHB_YELLOW, param2);
         }
@@ -435,15 +435,15 @@ bool ChatHandler::HandleAHBotOptionsCommand(const char* args)
         {
             auctionbot.Commands(10, ahMapID, AHB_BLUE, param2);
         }
-        else if	(strncmp(param1,"purple",l) == 0)
+        else if    (strncmp(param1,"purple",l) == 0)
         {
             auctionbot.Commands(10, ahMapID, AHB_PURPLE, param2);
         }
-        else if	(strncmp(param1,"orange",l) == 0)
+        else if    (strncmp(param1,"orange",l) == 0)
         {
             auctionbot.Commands(10, ahMapID, AHB_ORANGE, param2);
         }
-        else if	(strncmp(param1,"yellow",l) == 0)
+        else if    (strncmp(param1,"yellow",l) == 0)
         {
             auctionbot.Commands(10, ahMapID, AHB_YELLOW, param2);
         }
@@ -478,15 +478,15 @@ bool ChatHandler::HandleAHBotOptionsCommand(const char* args)
         {
             auctionbot.Commands(11, ahMapID, AHB_BLUE, param2);
         }
-        else if	(strncmp(param1,"purple",l) == 0)
+        else if    (strncmp(param1,"purple",l) == 0)
         {
             auctionbot.Commands(11, ahMapID, AHB_PURPLE, param2);
         }
-        else if	(strncmp(param1,"orange",l) == 0)
+        else if    (strncmp(param1,"orange",l) == 0)
         {
             auctionbot.Commands(11, ahMapID, AHB_ORANGE, param2);
         }
-        else if	(strncmp(param1,"yellow",l) == 0)
+        else if    (strncmp(param1,"yellow",l) == 0)
         {
             auctionbot.Commands(11, ahMapID, AHB_YELLOW, param2);
         }
@@ -650,7 +650,7 @@ bool ChatHandler::HandleReloadAllSpellCommand(const char*)
     HandleReloadSpellElixirCommand("a");
     HandleReloadSpellLearnSpellCommand("a");
     HandleReloadSpellProcEventCommand("a");
-    HandleReloadSpellStackCommand("a"); 
+    HandleReloadSpellStackCommand("a");
     HandleReloadSpellBonusesCommand("a");
     HandleReloadSpellProcItemEnchantCommand("a");
     HandleReloadSpellScriptTargetCommand("a");
@@ -1064,15 +1064,15 @@ bool ChatHandler::HandleReloadSpellProcEventCommand(const char*)
     SendGlobalSysMessage("DB table `spell_proc_event` (spell proc trigger requirements) reloaded.");
     return true;
 }
-bool ChatHandler::HandleReloadSpellStackCommand(const char*) 
-{ 
-    sLog.outString( "Re-Loading Spell stacking conditions..." ); 
-    sSpellMgr.LoadSpellStack(); 
-    sSpellMgr.LoadSpellStackGroup(); 
-    SendGlobalSysMessage("DB table `spell_stack_data` and `spell_stack_group_data` reloaded."); 
-    return true; 
-} 
- 
+bool ChatHandler::HandleReloadSpellStackCommand(const char*)
+{
+    sLog.outString( "Re-Loading Spell stacking conditions..." );
+    sSpellMgr.LoadSpellStack();
+    sSpellMgr.LoadSpellStackGroup();
+    SendGlobalSysMessage("DB table `spell_stack_data` and `spell_stack_group_data` reloaded.");
+    return true;
+}
+
 bool ChatHandler::HandleReloadSpellBonusesCommand(const char*)
 {
     sLog.outString( "Re-Loading Spell Bonus Data..." );
@@ -2341,24 +2341,24 @@ bool ChatHandler::HandleLearnAllMyClassCommand(const char* /*args*/)
 bool ChatHandler::HandleLearnAllMySpellsCommand(const char* /*args*/)
 {
     Player* player = m_session->GetPlayer();
- 
+
     ChrClassesEntry const* clsEntry = sChrClassesStore.LookupEntry(player->getClass());
- 
+
     if(!clsEntry)
         return true;
- 
+
     uint32 family = clsEntry->spellfamily;
- 
+
     for (uint32 id = 0; id< sCreatureStorage.MaxEntry; ++id)
     {
         CreatureInfo const *cinfo = sObjectMgr.GetCreatureTemplate(id);
         if(cinfo)
         {
-            if((cinfo->npcflag & UNIT_NPC_FLAG_TRAINER) && ( (cinfo->trainer_class == player->getClass()) 
-                                                                || id == 2704 || id == 11865 || id == 11866 
-                                                                || id == 11867 || id == 11868 || id == 11869 
-                                                                || id == 11870 || id == 13084 || id == 16621 
-                                                                || id == 16773 || id == 17005 || id == 10256 
+            if((cinfo->npcflag & UNIT_NPC_FLAG_TRAINER) && ( (cinfo->trainer_class == player->getClass())
+                                                                || id == 2704 || id == 11865 || id == 11866
+                                                                || id == 11867 || id == 11868 || id == 11869
+                                                                || id == 11870 || id == 13084 || id == 16621
+                                                                || id == 16773 || id == 17005 || id == 10256
                                                                 || id == 10365  ) ) //Hardcode... special flag for weapon trainer ???
             {
                 TrainerSpellData const* trainer_spells = sObjectMgr.GetNpcTrainerSpells(id);
@@ -2390,8 +2390,8 @@ bool ChatHandler::HandleLearnAllMySpellsCommand(const char* /*args*/)
                     SpellEntry const* spellInfoSrcSpell = sSpellStore.LookupEntry(pQuest->GetSrcSpell());
                     if
                     (
-                        spellInfoSrcSpell 
-                        && (player->IsSpellFitByClassAndRace(pQuest->GetSrcSpell())) 
+                        spellInfoSrcSpell
+                        && (player->IsSpellFitByClassAndRace(pQuest->GetSrcSpell()))
                         && (spellInfoSrcSpell->SpellFamilyName == family)
                         && (!player->HasSpell(pQuest->GetSrcSpell()))
                     )
@@ -2402,8 +2402,8 @@ bool ChatHandler::HandleLearnAllMySpellsCommand(const char* /*args*/)
                     SpellEntry const* spellInfoRewSpell = sSpellStore.LookupEntry(pQuest->GetRewSpell());
                     if
                     (
-                        spellInfoRewSpell 
-                        && (player->IsSpellFitByClassAndRace(spellInfoRewSpell->Id)) 
+                        spellInfoRewSpell
+                        && (player->IsSpellFitByClassAndRace(spellInfoRewSpell->Id))
                         && (spellInfoRewSpell->SpellFamilyName == family)
                         && (!player->HasSpell(pQuest->GetRewSpell()))
                     )
@@ -2462,11 +2462,11 @@ bool ChatHandler::HandleLearnAllMySpellsCommand(const char* /*args*/)
 
     if(!player->HasSpell(54197))
         player->learnSpell(54197, false);
- 
+
     SendSysMessage(LANG_COMMAND_LEARN_CLASS_SPELLS);
     return true;
 }
- 
+
 bool ChatHandler::HandleLearnAllMyLevelCommand(const char* /*args*/)
 {
     Player* player = m_session->GetPlayer();
@@ -2475,17 +2475,17 @@ bool ChatHandler::HandleLearnAllMyLevelCommand(const char* /*args*/)
     if(!clsEntry)
         return true;
     uint32 family = clsEntry->spellfamily;
- 
+
     for (uint32 id = 0; id< sCreatureStorage.MaxEntry; ++id)
     {
         CreatureInfo const *cinfo = sObjectMgr.GetCreatureTemplate(id);
         if(cinfo)
         {
-            if((cinfo->npcflag & UNIT_NPC_FLAG_TRAINER) && ( (cinfo->trainer_class == player->getClass()) 
-                                                                || id == 2704 || id == 11865 || id == 11866 
-                                                                || id == 11867 || id == 11868 || id == 11869 
-                                                                || id == 11870 || id == 13084 || id == 16621 
-                                                                || id == 16773 || id == 17005 || id == 10256 
+            if((cinfo->npcflag & UNIT_NPC_FLAG_TRAINER) && ( (cinfo->trainer_class == player->getClass())
+                                                                || id == 2704 || id == 11865 || id == 11866
+                                                                || id == 11867 || id == 11868 || id == 11869
+                                                                || id == 11870 || id == 13084 || id == 16621
+                                                                || id == 16773 || id == 17005 || id == 10256
                                                                 || id == 10365  ) ) //Hardcode... special flag for weapon trainer ???
             {
                 TrainerSpellData const* trainer_spells = sObjectMgr.GetNpcTrainerSpells(id);
@@ -2517,8 +2517,8 @@ bool ChatHandler::HandleLearnAllMyLevelCommand(const char* /*args*/)
                     SpellEntry const* spellInfoSrcSpell = sSpellStore.LookupEntry(pQuest->GetSrcSpell());
                     if
                     (
-                        spellInfoSrcSpell 
-                        && (player->IsSpellFitByClassAndRace(pQuest->GetSrcSpell())) 
+                        spellInfoSrcSpell
+                        && (player->IsSpellFitByClassAndRace(pQuest->GetSrcSpell()))
                         && (spellInfoSrcSpell->SpellFamilyName == family)
                         && (!player->HasSpell(pQuest->GetSrcSpell()))
                         && (pQuest->GetMinLevel() <= level)
@@ -2530,8 +2530,8 @@ bool ChatHandler::HandleLearnAllMyLevelCommand(const char* /*args*/)
                     SpellEntry const* spellInfoRewSpell = sSpellStore.LookupEntry(pQuest->GetRewSpell());
                     if
                     (
-                        spellInfoRewSpell 
-                        && (player->IsSpellFitByClassAndRace(spellInfoRewSpell->Id)) 
+                        spellInfoRewSpell
+                        && (player->IsSpellFitByClassAndRace(spellInfoRewSpell->Id))
                         && (spellInfoRewSpell->SpellFamilyName == family)
                         && (!player->HasSpell(pQuest->GetRewSpell()))
                         && (pQuest->GetMinLevel() <= level)
@@ -2555,8 +2555,8 @@ bool ChatHandler::HandleLearnAllMyLevelCommand(const char* /*args*/)
                                     if
                                     (
                                         spellInfoRewSpellCastEffectTriggerSpell
-                                        && (player->IsSpellFitByClassAndRace(spellInfoRewSpellCastEffectTriggerSpell->Id)) 
-                                        && (spellInfoRewSpellCastEffectTriggerSpell->SpellFamilyName == family) 
+                                        && (player->IsSpellFitByClassAndRace(spellInfoRewSpellCastEffectTriggerSpell->Id))
+                                        && (spellInfoRewSpellCastEffectTriggerSpell->SpellFamilyName == family)
                                         && (!player->HasSpell(spellInfoRewSpellCast->EffectTriggerSpell[j]))
                                     )
                                         player->learnSpell(spellInfoRewSpellCast->EffectTriggerSpell[j],false);
@@ -4243,7 +4243,7 @@ bool ChatHandler::HandleAggroCommand(const char * args)
         return false;
     }
 
-    
+
     Player* pl = m_session->GetPlayer();
 
     if (pl->IsFriendlyTo(caster))
@@ -7323,7 +7323,7 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
     }
     else
         return false;
-    
+
     int32 newlevel = 100;
     if (newlevel < 1) newlevel = 1;
     if (newlevel > 100) newlevel = 100;
@@ -7858,7 +7858,7 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
             if(proto = sObjectMgr.GetItemPrototype(18778))
                 chr->learnSpell(proto->Spells[1].SpellId, false);
             if(proto = sObjectMgr.GetItemPrototype(18776))
-                chr->learnSpell(proto->Spells[1].SpellId, false);                
+                chr->learnSpell(proto->Spells[1].SpellId, false);
             break;
         }
         case RACE_ORC:
@@ -7876,7 +7876,7 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
             if(proto = sObjectMgr.GetItemPrototype(18797))
                 chr->learnSpell(proto->Spells[1].SpellId, false);
             if(proto = sObjectMgr.GetItemPrototype(18798))
-                chr->learnSpell(proto->Spells[1].SpellId, false);                        
+                chr->learnSpell(proto->Spells[1].SpellId, false);
             break;
         }
         case RACE_DWARF:
@@ -7892,7 +7892,7 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
             if(proto = sObjectMgr.GetItemPrototype(18786))
                 chr->learnSpell(proto->Spells[1].SpellId, false);
             if(proto = sObjectMgr.GetItemPrototype(18787))
-                chr->learnSpell(proto->Spells[1].SpellId, false);                        
+                chr->learnSpell(proto->Spells[1].SpellId, false);
             break;
         }
         case RACE_NIGHTELF:
@@ -7908,7 +7908,7 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
             if(proto = sObjectMgr.GetItemPrototype(18766))
                 chr->learnSpell(proto->Spells[1].SpellId, false);
             if(proto = sObjectMgr.GetItemPrototype(18767))
-                chr->learnSpell(proto->Spells[1].SpellId, false);                        
+                chr->learnSpell(proto->Spells[1].SpellId, false);
             break;
         }
         case RACE_UNDEAD_PLAYER:
@@ -7924,7 +7924,7 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
             if(proto = sObjectMgr.GetItemPrototype(18791))
                 chr->learnSpell(proto->Spells[1].SpellId, false);
             if(proto = sObjectMgr.GetItemPrototype(13334))
-                chr->learnSpell(proto->Spells[1].SpellId, false);                        
+                chr->learnSpell(proto->Spells[1].SpellId, false);
             break;
         }
         case RACE_TAUREN:
@@ -7940,7 +7940,7 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
             if(proto = sObjectMgr.GetItemPrototype(18794))
                 chr->learnSpell(proto->Spells[1].SpellId, false);
             if(proto = sObjectMgr.GetItemPrototype(18795))
-                chr->learnSpell(proto->Spells[1].SpellId, false);                        
+                chr->learnSpell(proto->Spells[1].SpellId, false);
             break;
         }
         case RACE_GNOME:
@@ -7958,7 +7958,7 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
             if(proto = sObjectMgr.GetItemPrototype(18774))
                 chr->learnSpell(proto->Spells[1].SpellId, false);
             if(proto = sObjectMgr.GetItemPrototype(18772))
-                chr->learnSpell(proto->Spells[1].SpellId, false);                        
+                chr->learnSpell(proto->Spells[1].SpellId, false);
             break;
         }
         case RACE_TROLL:
@@ -7974,7 +7974,7 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
             if(proto = sObjectMgr.GetItemPrototype(18790))
                 chr->learnSpell(proto->Spells[1].SpellId, false);
             if(proto = sObjectMgr.GetItemPrototype(18789))
-                chr->learnSpell(proto->Spells[1].SpellId, false);                        
+                chr->learnSpell(proto->Spells[1].SpellId, false);
             break;
         }
         case RACE_BLOODELF:
@@ -7992,7 +7992,7 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
             if(proto = sObjectMgr.GetItemPrototype(29223))
                 chr->learnSpell(proto->Spells[1].SpellId, false);
             if(proto = sObjectMgr.GetItemPrototype(29224))
-                chr->learnSpell(proto->Spells[1].SpellId, false);                        
+                chr->learnSpell(proto->Spells[1].SpellId, false);
             break;
         }
         case RACE_DRAENEI:
@@ -8008,7 +8008,7 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
             if(proto = sObjectMgr.GetItemPrototype(29746))
                 chr->learnSpell(proto->Spells[1].SpellId, false);
             if(proto = sObjectMgr.GetItemPrototype(29747))
-                chr->learnSpell(proto->Spells[1].SpellId, false);                        
+                chr->learnSpell(proto->Spells[1].SpellId, false);
             break;
         }
         default:
@@ -8032,7 +8032,7 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
             if(proto = sObjectMgr.GetItemPrototype(25531))
                 chr->learnSpell(proto->Spells[1].SpellId, false);
             if(proto = sObjectMgr.GetItemPrototype(25533))
-                chr->learnSpell(proto->Spells[1].SpellId, false);                        
+                chr->learnSpell(proto->Spells[1].SpellId, false);
             break;
         }
         case ALLIANCE:
@@ -8050,7 +8050,7 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
             if(proto = sObjectMgr.GetItemPrototype(25527))
                 chr->learnSpell(proto->Spells[1].SpellId, false);
             if(proto = sObjectMgr.GetItemPrototype(25473))
-                chr->learnSpell(proto->Spells[1].SpellId, false);                        
+                chr->learnSpell(proto->Spells[1].SpellId, false);
             break;
         }
         default:

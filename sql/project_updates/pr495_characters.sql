@@ -1,0 +1,1 @@
+ALTER TABLE character_pet DROP COLUMN `DeathState`,ADD COLUMN `DeathState` TINYINT(3) UNSIGNED DEFAULT '0' NOT NULL AFTER `abdata`;

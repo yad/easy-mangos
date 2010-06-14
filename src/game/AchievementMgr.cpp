@@ -808,7 +808,7 @@ void AchievementMgr::UpdateAchievementCriteria(AchievementCriteriaTypes type, ui
                             // set 8 minutes because there is 2 minutes long preparation
                             if(GetPlayer()->GetBattleGround()->GetStartTime() > (8 * MINUTE * IN_MILLISECONDS))
                                 continue;
-                            
+
                             break;
                         }
                         case 201:                            // WS, win under 7 minutes
@@ -816,7 +816,7 @@ void AchievementMgr::UpdateAchievementCriteria(AchievementCriteriaTypes type, ui
                             // set 9 minutes because there is 2 minutes long preparation
                             if(GetPlayer()->GetBattleGround()->GetStartTime() > (9 * MINUTE * IN_MILLISECONDS))
                                 continue;
-                            
+
                             break;
                         }
                         default:
@@ -1468,7 +1468,7 @@ void AchievementMgr::UpdateAchievementCriteria(AchievementCriteriaTypes type, ui
                 break;
             case ACHIEVEMENT_CRITERIA_TYPE_HONORABLE_KILL:
             case ACHIEVEMENT_CRITERIA_TYPE_GET_KILLING_BLOWS:
-            {    
+            {
                 BattleGround* bg = GetPlayer()->GetBattleGround();
                 if (!bg || !miscvalue1 || GetPlayer()->GetMapId() != achievementCriteria->healing_done.mapid)
                     continue;
@@ -1550,7 +1550,7 @@ void AchievementMgr::UpdateAchievementCriteria(AchievementCriteriaTypes type, ui
                     {
                         if(bg->GetTypeID() != BATTLEGROUND_AB)
                             continue;
-                        
+
                         if(miscvalue2 == 1)
                             continue;
 
@@ -1560,7 +1560,7 @@ void AchievementMgr::UpdateAchievementCriteria(AchievementCriteriaTypes type, ui
                     {
                         if(bg->GetTypeID() != BATTLEGROUND_AB)
                             continue;
-                        
+
                         if(miscvalue2 == 0)
                             continue;
 

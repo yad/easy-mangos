@@ -503,7 +503,7 @@ void BattleGroundAB::EndBattleGround(uint32 winner)
         RewardHonorToTeam(GetBonusHonorFromKill(sWorld.getConfig(CONFIG_UINT32_BONUS_HONOR_AB_WIN)), winner);
         RewardXpToTeam(0, 0.8, winner);
     }
-    
+
     //complete map_end rewards (even if no team wins)
     RewardHonorToTeam(GetBonusHonorFromKill(sWorld.getConfig(CONFIG_UINT32_BONUS_HONOR_AB_END)), HORDE);
     RewardHonorToTeam(GetBonusHonorFromKill(sWorld.getConfig(CONFIG_UINT32_BONUS_HONOR_AB_END)), ALLIANCE);

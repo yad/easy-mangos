@@ -304,7 +304,7 @@ bool Group::AddMember(const uint64 &guid, const char* name)
                     player->setFactionForRace(leader->getRace());
                     sLog.outDebug( "WORLD: Group Interfaction Interactions - Faction changed (AddMember)" );
                 }
-            }            
+            }
         }
         player->SetGroupUpdateFlag(GROUP_UPDATE_FULL);
         UpdatePlayerOutOfRange(player);
@@ -754,7 +754,7 @@ void Group::StartLootRool(WorldObject* lootTarget, Loot* loot, uint8 itemSlot, b
             else if(lootTarget->GetTypeId() == TYPEID_GAMEOBJECT)
             {
                 ((GameObject*)lootTarget)->m_groupLootTimer = 60000;
-                ((GameObject*)lootTarget)->m_groupLootId = GetId();  
+                ((GameObject*)lootTarget)->m_groupLootId = GetId();
             }
         }
 
@@ -999,8 +999,8 @@ void Group::SendUpdate()
         WorldPacket data(SMSG_GROUP_LIST, (1+1+1+1+8+4+GetMembersCount()*20));
         data << uint8(m_groupType);                         // group type (flags in 3.3)
         data << uint8(citr->group);                         // groupid
-        data << uint8(isBGGroup() ? 1 : 0);                 // 2.0.x, isBattleGroundGroup?
         data << uint8(GetFlags(*citr));                     // group flags
+        data << uint8(isBGGroup() ? 1 : 0);                 // 2.0.x, isBattleGroundGroup?
         if(m_groupType & GROUPTYPE_LFD)
         {
             data << uint8(0);

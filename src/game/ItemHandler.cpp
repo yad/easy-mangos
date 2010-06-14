@@ -1431,11 +1431,11 @@ void WorldSession::HandleItemRefundInfoRequest(WorldPacket& recv_data)
     ItemExtendedCostEntry const* iece = sItemExtendedCostStore.LookupEntry(item->GetExtCostId());
     if (!iece)
         return;
-        
+
     honor_points = iece->reqhonorpoints;
     arena_points = iece->reqarenapoints;
     for (uint8 i = 0; i < 5; ++i)
-    {          
+    {
         ExtendedCostId[i] = iece->reqitem[i];
         ExtendedCostCount[i] = iece->reqitemcount[i];
     }
@@ -1486,11 +1486,11 @@ void WorldSession::HandleItemRefund(WorldPacket& recv_data)
     ItemExtendedCostEntry const* iece = sItemExtendedCostStore.LookupEntry(item->GetExtCostId());
     if (!iece)
         return;
-        
+
     honor_points = iece->reqhonorpoints;
     arena_points = iece->reqarenapoints;
     for (uint8 i = 0; i < 5; ++i)
-    {          
+    {
         ExtendedCostId[i] = iece->reqitem[i];
         ExtendedCostCount[i] = iece->reqitemcount[i];
         //need to check for free slot
@@ -1507,7 +1507,7 @@ void WorldSession::HandleItemRefund(WorldPacket& recv_data)
             return;
         }
     }
-    
+
     //Refund money, honor and arena points and items
     _player->ModifyMoney(item->GetPrice());
     _player->ModifyHonorPoints(honor_points);
@@ -1537,7 +1537,7 @@ void WorldSession::HandleItemRefund(WorldPacket& recv_data)
         data << uint32(ExtendedCostId[i]);
         data << uint32(ExtendedCostCount[i]);
     }
-    SendPacket(&data);    
+    SendPacket(&data);
 
     //Remove item
     _player->DestroyItem(item->GetBagSlot(), item->GetSlot(), true);

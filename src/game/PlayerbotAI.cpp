@@ -1482,7 +1482,7 @@ void PlayerbotAI::DoLoot()
             // check for needed items
             m_bot->SendLoot( m_lootCurrent, LOOT_CORPSE );
             Loot *loot = &c->loot;
-            uint32 lootNum = loot->GetMaxSlotInLootfor ( m_bot );
+            uint32 lootNum = loot->GetMaxSlotInLootFor( m_bot );
             //sLog.outDebug( "[PlayerbotAI]: %s loot '%s' et prend %d items", m_bot->GetName(), c->GetName(), loot->GetMaxSlotInLootfor ( m_bot ) );
             for ( uint32 l=0; l<lootNum; l++ )
             {
@@ -3081,7 +3081,7 @@ void PlayerbotAI::HandleCommand(const std::string& text, Player& fromPlayer)
             m_bot->SetPosition(x, y, z, m_bot->GetOrientation());
             m_bot->SendLoot( m_lootCurrent, LOOT_CORPSE );
             Loot *loot = &go->loot;
-            uint32 lootNum = loot->GetMaxSlotInLootfor ( m_bot );
+            uint32 lootNum = loot->GetMaxSlotInLootFor( m_bot );
             // sLog.outDebug( "[PlayerbotAI]: GetGOType %u - %s looting: '%s' got %d items", go->GetGoType(), m_bot->GetName(), go->GetGOInfo()->name, loot->GetMaxSlotInLootfor ( m_bot ));
             if (lootNum == 0) // Handle opening gameobjects that contain no items
             {

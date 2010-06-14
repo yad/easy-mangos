@@ -32,8 +32,8 @@
 #include "ObjectMgr.h"
 #include "ObjectGuid.h"
 #include "SpellMgr.h"
- 
-#include "CellImpl.h"    
+
+#include "CellImpl.h"
 #include "GridNotifiers.h"
 #include "GridNotifiersImpl.h"
 
@@ -495,7 +495,7 @@ bool ChatHandler::HandleDebugMoveMapCommand(const char* args)
         PSendSysMessage("  polytest    print the current polygon's ref");
         PSendSysMessage("  loadedtiles print tile info for loaded tiles");
         PSendSysMessage("  stats       print stats about the current navmesh");
-        
+
         return true;
     }
 

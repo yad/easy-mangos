@@ -1466,107 +1466,107 @@ void SpellMgr::LoadSpellBonuses()
     sLog.outString();
     sLog.outString( ">> Loaded %u extra spell bonus data",  count);
 }
-//DEVELOPER CODE START 
- 
-struct DoSpellStack 
-{ 
-    DoSpellStack(SpellStackEntry const& _sse) : sse(_sse) {} 
-    void operator() (uint32 spell_id) { sSpellMgr.mSpellStackMap[spell_id] = sse; } 
-    SpellStackEntry const& sse; 
-}; 
- 
-void SpellMgr::LoadSpellStack() 
-{ 
-    mSpellStackMap.clear();                             // need for reload case 
-    uint32 count = 0; 
-    //                                                0      1             2             3 
-    QueryResult *result = WorldDatabase.Query("SELECT entry, stack_class1, stack_class2, stack_class3 FROM spell_stack_data"); 
- 
-    if( !result ) 
-    { 
-        barGoLink bar( 1 ); 
-        bar.step(); 
-        return; 
-    } 
- 
-    barGoLink bar( (int)result->GetRowCount() ); 
-    do 
-    { 
-        Field *fields = result->Fetch(); 
-        bar.step(); 
-        uint32 entry = fields[0].GetUInt32(); 
- 
-        SpellEntry const* spell = sSpellStore.LookupEntry(entry); 
- 
-        if (!spell) 
-            continue; 
-               
-        uint32 first_id = GetFirstSpellInChain(entry); 
-        if (first_id != entry) 
-        { 
-            sLog.outErrorDb("Spell %u listed in `spell_stack_data` is not first rank (%u) in chain", entry, first_id); 
-            // prevent loading since it won't have an effect anyway 
-            continue; 
-        } 
- 
-        SpellStackEntry sse; 
-               
-        sse.stackGroup[0] = fields[1].GetUInt32(); 
-        sse.stackGroup[1] = fields[2].GetUInt32(); 
-        sse.stackGroup[2] = fields[3].GetUInt32(); 
+//DEVELOPER CODE START
 
-        mSpellStackMap[entry] = sse; 
-                   
-          // also add to high ranks 
-        DoSpellStack worker(sse); 
-        doForHighRanks(entry,worker); 
- 
-        ++count; 
- 
-    } while (result->NextRow()); 
- 
-    delete result; 
- 
-       error_log("velikost stack mapy %u", mSpellStackMap.size()); 
-       sLog.outString( ">> Loaded %u spell stack data",  count); 
-} 
- 
-void SpellMgr::LoadSpellStackGroup() 
-{ 
-    mSpellStackGroupMap.clear();                             // need for reload case 
-    uint32 count = 0; 
-    //                                                0      1                 2           
-    QueryResult *result = WorldDatabase.Query("SELECT entry, stack_conditions, value FROM spell_stack_class_data"); 
- 
-    if( !result ) 
-    { 
-        barGoLink bar( 1 ); 
-        bar.step(); 
-        return; 
-    } 
- 
-    barGoLink bar( (int)result->GetRowCount() ); 
-    do 
-    { 
-        Field *fields = result->Fetch(); 
-        bar.step(); 
-        uint32 entry = fields[0].GetUInt32(); 
+struct DoSpellStack
+{
+    DoSpellStack(SpellStackEntry const& _sse) : sse(_sse) {}
+    void operator() (uint32 spell_id) { sSpellMgr.mSpellStackMap[spell_id] = sse; }
+    SpellStackEntry const& sse;
+};
 
-        SpellStackGroupEntry ssge; 
- 
-               ssge.type  = fields[1].GetUInt32(); 
-               ssge.value = fields[2].GetUInt32(); 
-               mSpellStackGroupMap[entry] = ssge; 
-        ++count; 
- 
-    } while( result->NextRow() ); 
- 
-    delete result; 
+void SpellMgr::LoadSpellStack()
+{
+    mSpellStackMap.clear();                             // need for reload case
+    uint32 count = 0;
+    //                                                0      1             2             3
+    QueryResult *result = WorldDatabase.Query("SELECT entry, stack_class1, stack_class2, stack_class3 FROM spell_stack_data");
 
-       sLog.outString( ">> Loaded %u spell stack class data",  count); 
-} 
-//DEVELOPER CODE END 
- 
+    if( !result )
+    {
+        barGoLink bar( 1 );
+        bar.step();
+        return;
+    }
+
+    barGoLink bar( (int)result->GetRowCount() );
+    do
+    {
+        Field *fields = result->Fetch();
+        bar.step();
+        uint32 entry = fields[0].GetUInt32();
+
+        SpellEntry const* spell = sSpellStore.LookupEntry(entry);
+
+        if (!spell)
+            continue;
+
+        uint32 first_id = GetFirstSpellInChain(entry);
+        if (first_id != entry)
+        {
+            sLog.outErrorDb("Spell %u listed in `spell_stack_data` is not first rank (%u) in chain", entry, first_id);
+            // prevent loading since it won't have an effect anyway
+            continue;
+        }
+
+        SpellStackEntry sse;
+
+        sse.stackGroup[0] = fields[1].GetUInt32();
+        sse.stackGroup[1] = fields[2].GetUInt32();
+        sse.stackGroup[2] = fields[3].GetUInt32();
+
+        mSpellStackMap[entry] = sse;
+
+          // also add to high ranks
+        DoSpellStack worker(sse);
+        doForHighRanks(entry,worker);
+
+        ++count;
+
+    } while (result->NextRow());
+
+    delete result;
+
+       error_log("velikost stack mapy %u", mSpellStackMap.size());
+       sLog.outString( ">> Loaded %u spell stack data",  count);
+}
+
+void SpellMgr::LoadSpellStackGroup()
+{
+    mSpellStackGroupMap.clear();                             // need for reload case
+    uint32 count = 0;
+    //                                                0      1                 2
+    QueryResult *result = WorldDatabase.Query("SELECT entry, stack_conditions, value FROM spell_stack_class_data");
+
+    if( !result )
+    {
+        barGoLink bar( 1 );
+        bar.step();
+        return;
+    }
+
+    barGoLink bar( (int)result->GetRowCount() );
+    do
+    {
+        Field *fields = result->Fetch();
+        bar.step();
+        uint32 entry = fields[0].GetUInt32();
+
+        SpellStackGroupEntry ssge;
+
+               ssge.type  = fields[1].GetUInt32();
+               ssge.value = fields[2].GetUInt32();
+               mSpellStackGroupMap[entry] = ssge;
+        ++count;
+
+    } while( result->NextRow() );
+
+    delete result;
+
+       sLog.outString( ">> Loaded %u spell stack class data",  count);
+}
+//DEVELOPER CODE END
+
 bool SpellMgr::IsSpellProcEventCanTriggeredBy(SpellProcEventEntry const * spellProcEvent, uint32 EventProcFlag, SpellEntry const * procSpell, uint32 procFlags, uint32 procExtra, bool active)
 {
     // No extra req need
@@ -1804,8 +1804,8 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
     if ((spellInfo_1->Attributes & SPELL_ATTR_PASSIVE)!=(spellInfo_2->Attributes & SPELL_ATTR_PASSIVE))
         return false;
 
-    //NOTHING can remove 66233 
-    if (spellInfo_1->Id == 66233 || spellInfo_2->Id == 66233) 
+    //NOTHING can remove 66233
+    if (spellInfo_1->Id == 66233 || spellInfo_2->Id == 66233)
         return false;
 
     //Renewed hope and gift of the naaru(have diff spell families)
@@ -2000,7 +2000,7 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                     (spellInfo_2->SpellFamilyFlags & UI64LIT(0x1)) && (spellInfo_1->SpellFamilyFlags & UI64LIT(0x400000)) )
                     return false;
 
-                //Focus magic 30min buff and 10s proc 
+                //Focus magic 30min buff and 10s proc
                 if( (spellInfo_1->Id == 54648) && (spellInfo_2->Id == 54646) ||
                     (spellInfo_2->Id == 54648) && (spellInfo_1->Id == 54646) )
                     return false;
@@ -2321,7 +2321,7 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
             // Devotion Aura and Essence of Gossamer
             if (spellInfo_1->SpellIconID == 291 && spellInfo_2->SpellIconID == 291 && spellInfo_2->SpellFamilyName == SPELLFAMILY_GENERIC)
                 return false;
-                       
+
             // Inner Fire and Consecration
             if (spellInfo_1->SpellIconID == 51 && spellInfo_2->SpellIconID == 51 && spellInfo_2->SpellFamilyName == SPELLFAMILY_PRIEST)
                 return false;

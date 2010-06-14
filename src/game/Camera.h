@@ -1,6 +1,5 @@
-
-#ifndef _CAMERA_H
-#define _CAMERA_H
+#ifndef MANGOSSERVER_CAMERA_H
+#define MANGOSSERVER_CAMERA_H
 
 #include "GridDefines.h"
 
@@ -8,6 +7,7 @@ class ViewPoint;
 class WorldObject;
 class UpdateData;
 class WorldPacket;
+class Player;
 
 /// Camera - object-receiver. Receives broadcast packets from nearby worldobjects, object visibility changes and sends them to client
 class MANGOS_DLL_SPEC Camera
@@ -15,11 +15,11 @@ class MANGOS_DLL_SPEC Camera
     friend class ViewPoint;
     public:
 
-        Camera(Player* pl);
+        explicit Camera(Player* pl);
         ~Camera();
 
-        WorldObject* getBody() { return m_source;}
-        Player* getOwner() { return &m_owner;}
+        WorldObject* GetBody() { return m_source;}
+        Player* GetOwner() { return &m_owner;}
 
         // set camera's view to any worldobject
         // Note: this worldobject must be in same map, in same phase with camera's owner(player)
@@ -34,7 +34,9 @@ class MANGOS_DLL_SPEC Camera
         void UpdateVisibilityOf(WorldObject* obj);
 
         void ReceivePacket(WorldPacket *data);
-        void UpdateVisibilityForOwner();    // updates visibility of worldobjects around viewpoint for camera's owner
+
+        // updates visibility of worldobjects around viewpoint for camera's owner
+        void UpdateVisibilityForOwner();
 
     private:
         // called when viewpoint changes visibility state
@@ -43,8 +45,8 @@ class MANGOS_DLL_SPEC Camera
         void Event_Moved();
         void Event_ViewPointVisibilityChanged();
 
-        Player & m_owner;
-        WorldObject *m_source;
+        Player& m_owner;
+        WorldObject* m_source;
 
         void UpdateForCurrentViewPoint();
 
@@ -61,15 +63,15 @@ class MANGOS_DLL_SPEC ViewPoint
     friend class Camera;
 
     std::list<Camera*> m_cameras;
-    std::list<Camera*>::iterator camera_iter;
+    std::list<Camera*>::iterator m_camera_iter;
     GridType * m_grid;
-    
+
     void Attach(Camera* c) { m_cameras.push_back(c); }
 
     /*void Detach(Camera* c)
     {
-        if (camera_iter != m_cameras.end() && *camera_iter == c)     // detach called during the loop
-            camera_iter = m_cameras.erase(camera_iter);
+        if (m_camera_iter != m_cameras.end() && *m_camera_iter == c)     // detach called during the loop
+            m_camera_iter = m_cameras.erase(m_camera_iter);
         else
             m_cameras.remove(c);
     }*/
@@ -77,14 +79,14 @@ class MANGOS_DLL_SPEC ViewPoint
 
     void CameraCall(void (Camera::*handler)())
     {
-        if(!m_cameras.empty())
-            for(camera_iter = m_cameras.begin(); camera_iter!=m_cameras.end(); ++camera_iter)
-                ((*camera_iter)->*handler)();
+        if (!m_cameras.empty())
+            for(m_camera_iter = m_cameras.begin(); m_camera_iter!=m_cameras.end(); ++m_camera_iter)
+                ((*m_camera_iter)->*handler)();
     }
 
 public:
 
-    ViewPoint() : m_grid(0), camera_iter(m_cameras.end()) {}
+    ViewPoint() : m_grid(0), m_camera_iter(m_cameras.end()) {}
     ~ViewPoint();
 
     // these events are called when viewpoint changes visibility state
@@ -116,7 +118,5 @@ public:
         CameraCall(&Camera::UpdateVisibilityForOwner);
     }
 };
-
-
 
 #endif

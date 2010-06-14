@@ -273,7 +273,7 @@ void BattleGroundEY::EndBattleGround(uint32 winner)
         RewardHonorToTeam(GetBonusHonorFromKill(sWorld.getConfig(CONFIG_UINT32_BONUS_HONOR_EOS_WIN)), winner);
         RewardXpToTeam(0, 0.8, winner);
     }
-    
+
     //complete map reward
     RewardHonorToTeam(GetBonusHonorFromKill(sWorld.getConfig(CONFIG_UINT32_BONUS_HONOR_EOS_END)), ALLIANCE);
     RewardHonorToTeam(GetBonusHonorFromKill(sWorld.getConfig(CONFIG_UINT32_BONUS_HONOR_EOS_END)), HORDE);

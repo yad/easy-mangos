@@ -1,23 +1,22 @@
-
 #include "Camera.h"
 #include "GridNotifiersImpl.h"
 #include "CellImpl.h"
 #include "Log.h"
 #include "Errors.h"
-
+#include "Player.h"
 
 Camera::Camera(Player* pl) : m_owner(*pl), m_source(pl)
 {
-    m_source->getViewPoint().Attach(this);
+    m_source->GetViewPoint().Attach(this);
 }
 
 Camera::~Camera()
 {
     // view of camera should be already reseted to owner (RemoveFromWorld -> Event_RemovedFromWorld -> ResetView)
-    ASSERT(m_source == &m_owner);    
+    ASSERT(m_source == &m_owner);
 
     // for symmetry with constructor and way to make viewpoint's list empty
-    m_source->getViewPoint().Detach(this);
+    m_source->GetViewPoint().Detach(this);
 }
 
 void Camera::ReceivePacket(WorldPacket *data)
@@ -29,7 +28,7 @@ void Camera::UpdateForCurrentViewPoint()
 {
     m_gridRef.unlink();
 
-    if(GridType* grid = m_source->getViewPoint().m_grid)
+    if (GridType* grid = m_source->GetViewPoint().m_grid)
         grid->AddWorldObject(this);
 
     m_owner.SetUInt64Value(PLAYER_FARSIGHT, (m_source == &m_owner ? 0 : m_source->GetGUID()));
@@ -52,31 +51,31 @@ void Camera::SetView(WorldObject *obj)
         return;
     }
 
-    m_source->getViewPoint().Detach(this);
+    m_source->GetViewPoint().Detach(this);
     m_source = obj;
-    m_source->getViewPoint().Attach(this);
+    m_source->GetViewPoint().Attach(this);
 
     UpdateForCurrentViewPoint();
 }
 
 void Camera::Event_ViewPointVisibilityChanged()
 {
-    if(!m_owner.HaveAtClient(m_source))
+    if (!m_owner.HaveAtClient(m_source))
         ResetView();
 }
 
 void Camera::ResetView()
 {
-    m_source->getViewPoint().Detach(this);
+    m_source->GetViewPoint().Detach(this);
     m_source = &m_owner;
-    m_source->getViewPoint().Attach(this);
+    m_source->GetViewPoint().Attach(this);
 
     UpdateForCurrentViewPoint();
 }
 
 void Camera::Event_AddedToWorld()
 {
-    GridType* grid = m_source->getViewPoint().m_grid;
+    GridType* grid = m_source->GetViewPoint().m_grid;
     ASSERT(grid);
     grid->AddWorldObject(this);
 
@@ -97,7 +96,7 @@ void Camera::Event_RemovedFromWorld()
 void Camera::Event_Moved()
 {
     m_gridRef.unlink();
-    m_source->getViewPoint().m_grid->AddWorldObject(this);
+    m_source->GetViewPoint().m_grid->AddWorldObject(this);
 }
 
 void Camera::UpdateVisibilityOf(WorldObject* target)
@@ -128,7 +127,7 @@ void Camera::UpdateVisibilityForOwner()
 
 ViewPoint::~ViewPoint()
 {
-    if(!m_cameras.empty())
+    if (!m_cameras.empty())
     {
         sLog.outError("ViewPoint destructor called, but some cameras referenced to it");
     }

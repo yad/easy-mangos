@@ -435,7 +435,7 @@ class Guild
         //I currently set it just in db so its not needed
         //void SetFriendlyGuildId(uint32 id);
         void DeleteFriendlyGuildId();
-        MemberList GetMembers() { return members; }
+        MemberList GetMembers() const { return members; }
 
     protected:
         void AddRank(const std::string& name,uint32 rights,uint32 money);

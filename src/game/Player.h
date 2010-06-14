@@ -1313,48 +1313,48 @@ class MANGOS_DLL_SPEC Player : public Unit
         //helpers
         bool isFlyingSpell(SpellEntry const* spellInfo) const
         {
-            return spellInfo->EffectApplyAuraName[0]==SPELL_AURA_MOUNTED && 
-            spellInfo->EffectApplyAuraName[1]==SPELL_AURA_MOD_FLIGHT_SPEED_MOUNTED && 
+            return spellInfo->EffectApplyAuraName[0]==SPELL_AURA_MOUNTED &&
+            spellInfo->EffectApplyAuraName[1]==SPELL_AURA_MOD_FLIGHT_SPEED_MOUNTED &&
             spellInfo->EffectApplyAuraName[2]==SPELL_AURA_MOD_INCREASE_MOUNTED_SPEED;
         }
 
         bool isRunningSpell(SpellEntry const* spellInfo) const
         {
             return spellInfo->EffectApplyAuraName[0]==SPELL_AURA_MOUNTED &&
-            spellInfo->EffectApplyAuraName[1]==SPELL_AURA_MOD_INCREASE_MOUNTED_SPEED; 
+            spellInfo->EffectApplyAuraName[1]==SPELL_AURA_MOD_INCREASE_MOUNTED_SPEED;
         }
 
         bool isFlyingFormSpell(SpellEntry const* spellInfo) const
-        { 
-            return spellInfo->EffectApplyAuraName[0]==SPELL_AURA_MOD_SHAPESHIFT && 
+        {
+            return spellInfo->EffectApplyAuraName[0]==SPELL_AURA_MOD_SHAPESHIFT &&
             spellInfo->EffectApplyAuraName[1]==SPELL_AURA_MECHANIC_IMMUNITY &&
             spellInfo->EffectApplyAuraName[2]==SPELL_AURA_FLY;
         }
 
         bool isRunningFormSpell(SpellEntry const* spellInfo) const
-        { 
+        {
             return spellInfo->EffectApplyAuraName[0]==SPELL_AURA_MOD_SHAPESHIFT &&
             spellInfo->EffectApplyAuraName[1]==SPELL_AURA_MECHANIC_IMMUNITY &&
             spellInfo->EffectApplyAuraName[2]!=SPELL_AURA_FLY;
         }
 
         void RemoveFlyingSpells()
-        { 
-            Unmount(); 
-            RemoveSpellsCausingAura(SPELL_AURA_MOUNTED); 
+        {
+            Unmount();
+            RemoveSpellsCausingAura(SPELL_AURA_MOUNTED);
             RemoveSpellsCausingAura(SPELL_AURA_MOD_FLIGHT_SPEED_MOUNTED);
             RemoveSpellsCausingAura(SPELL_AURA_MOD_INCREASE_MOUNTED_SPEED);
         }
 
         void RemoveFlyingFormSpells()
-        { 
+        {
             RemoveSpellsCausingAura(SPELL_AURA_MOD_SHAPESHIFT);
             RemoveSpellsCausingAura(SPELL_AURA_MECHANIC_IMMUNITY);
             RemoveSpellsCausingAura(SPELL_AURA_FLY);
         }
 
         void RemoveRunningFormSpells()
-        { 
+        {
             RemoveSpellsCausingAura(SPELL_AURA_MOD_SHAPESHIFT);
             RemoveSpellsCausingAura(SPELL_AURA_MECHANIC_IMMUNITY);
         }
@@ -2439,7 +2439,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         void HandleStealthedUnitsDetection();
 
         Camera& GetCamera() { return m_camera; }
-        Camera m_camera;
 
         uint8 m_forced_speed_changes[MAX_MOVE_TYPE];
 
@@ -2545,7 +2544,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         AccountInfos GetAccountInfos() {return m_AccountInfos; }
 
         void SetAddonTarget(uint64 guid) { m_AddonTarget = guid; };
-        uint64 GetAddonTarget() { return m_AddonTarget; };   
+        uint64 GetAddonTarget() { return m_AddonTarget; };
 
         // PlayerAI mod:
         void SetPlayerAI(PlayerAI* ai) { assert(!m_playerAI && !m_playerAIMgr); m_playerAI=ai; }
@@ -2819,7 +2818,7 @@ class MANGOS_DLL_SPEC Player : public Unit
                 m_DelayedOperations |= operation;
         }
 
-        void PerformIndoorCheck();
+        Camera m_camera;
 
         GridReference<Player> m_gridRef;
         MapReference m_mapRef;
@@ -2829,7 +2828,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         PlayerbotMgr* m_playerbotMgr;
         AccountInfos m_AccountInfos;
         uint64 m_AddonTarget;
- 
+
         // Playerbot mod:
         PlayerAI* m_playerAI;
         PlayerAIMgr* m_playerAIMgr;

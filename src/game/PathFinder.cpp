@@ -144,7 +144,7 @@ void PathInfo::Build(dtPolyRef startPoly, dtPolyRef endPoly)
     // PATHFIND TODO: find height above polygon
     //float startHeight, endHeight;
     //startHeight =
-    //endHeight = 
+    //endHeight =
 
     dtQueryFilter filter = dtQueryFilter();
 
@@ -406,7 +406,7 @@ void PathInfo::trim(dtPolyRef startPoly, dtPolyRef endPoly)
     for(pathStartIndex = 0; pathStartIndex < m_length; ++pathStartIndex)
         if(m_pathPolyRefs[pathStartIndex] == startPoly)
             break;
-    
+
     // find if end node is on the existing path
     for(pathEndIndex = pathStartIndex; pathEndIndex < m_length; ++pathEndIndex)
         if(m_pathPolyRefs[pathEndIndex] == endPoly)
@@ -420,7 +420,7 @@ void PathInfo::trim(dtPolyRef startPoly, dtPolyRef endPoly)
 
     for(i = pathStartIndex, j = 0; i < pathEndIndex; ++i, ++j)  // copy shortened path data
         newPolyRefs[j] = m_pathPolyRefs[i];
-    
+
     delete [] m_pathPolyRefs;
     m_pathPolyRefs = newPolyRefs;
 }

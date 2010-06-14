@@ -322,7 +322,7 @@ bool WorldSession::Update(uint32 /*diff*/)
     // since Playerbots are known to the World obj only by its master's WorldSession object
     // we need to process all master's bot's packets.
     if (GetPlayer() && GetPlayer()->GetPlayerbotMgr()) {
-        for (PlayerBotMap::const_iterator itr = GetPlayer()->GetPlayerbotMgr()->GetPlayerBotsBegin(); 
+        for (PlayerBotMap::const_iterator itr = GetPlayer()->GetPlayerbotMgr()->GetPlayerBotsBegin();
                 itr != GetPlayer()->GetPlayerbotMgr()->GetPlayerBotsEnd(); ++itr)
         {
             Player* const botPlayer = itr->second;
@@ -463,7 +463,7 @@ void WorldSession::LogoutPlayer(bool Save)
         ///- Reset the online field in the account table
         // no point resetting online in character table here as Player::SaveToDB() will set it to 1 since player has not been removed from world at this stage
         // No SQL injection as AccountID is uint32
-        if (! _player->GetPlayerbotAI())        
+        if (! _player->GetPlayerbotAI())
             loginDatabase.PExecute("UPDATE account SET active_realm_id = 0 WHERE id = '%u'", GetAccountId());
 
         ///- If the player is in a guild, update the guild roster and broadcast a logout message to other guild members

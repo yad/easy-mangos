@@ -141,7 +141,7 @@ void PlayerAI::DoLoot()
             // check for needed items
             player->SendLoot( victim->GetGUID(), LOOT_CORPSE );
             Loot *loot = &c->loot;
-            uint32 lootNum = loot->GetMaxSlotInLootfor ( player );
+            uint32 lootNum = loot->GetMaxSlotInLootFor( player );
             for ( uint32 l=0; l<lootNum; l++ )
             {
                 QuestItem *qitem=0, *ffaitem=0, *conditem=0;

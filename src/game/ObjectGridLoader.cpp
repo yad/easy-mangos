@@ -121,7 +121,7 @@ void LoadHelper(CellGuidSet const& guid_set, CellPair &cell, GridRefManager<T> &
             delete obj;
             continue;
         }
-        
+
         grid.AddGridObject(obj);
 
         addUnitState(obj,cell);
@@ -130,7 +130,7 @@ void LoadHelper(CellGuidSet const& guid_set, CellPair &cell, GridRefManager<T> &
         if(obj->isActiveObject())
             map->AddToActive(obj);
 
-        obj->getViewPoint().Event_AddedToWorld(&grid);
+        obj->GetViewPoint().Event_AddedToWorld(&grid);
 
         if (bg)
             bg->OnObjectDBLoad(obj);

@@ -1504,12 +1504,12 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     return;
                 }
                 case 51858:                                 // Siphon of Acherus - Complete Quest
-                {               
+                {
                     if (!m_caster || !m_caster->isAlive())
                         return;
 
-                    ((Player*)m_originalCaster->GetCharmer())->KilledMonsterCredit(m_caster->GetEntry(), m_caster->GetGUID());                                        
-                        
+                    ((Player*)m_originalCaster->GetCharmer())->KilledMonsterCredit(m_caster->GetEntry(), m_caster->GetGUID());
+
                 }
                 case 51866:                                 // Kick Nass
                 {
@@ -1668,12 +1668,12 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     m_caster->CastSpell(m_caster, spellShrink, true);
                     return;
                 }
-                case 54171:                                 // Divine Storm 
-                { 
-                    // split between targets 
-                    int32 bp = damage / m_UniqueTargetInfo.size(); 
-                    m_caster->CastCustomSpell(unitTarget, 54172, &bp, NULL, NULL, true); 
-                    return; 
+                case 54171:                                 // Divine Storm
+                {
+                    // split between targets
+                    int32 bp = damage / m_UniqueTargetInfo.size();
+                    m_caster->CastCustomSpell(unitTarget, 54172, &bp, NULL, NULL, true);
+                    return;
                 }
                 case 55004:                                 // Nitro Boosts
                 {
@@ -1883,7 +1883,7 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
 
                 //Juggernaut crit bonus
                 if(m_caster->HasAura(64976, EFFECT_INDEX_0))
-                    m_caster->CastSpell(m_caster, 65156, true);                                        
+                    m_caster->CastSpell(m_caster, 65156, true);
                 return;
             }
             // Execute
@@ -2068,7 +2068,7 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                 }
 
                 //Any effect which causes you to lose control of your character will supress the starfall effect.
-                //and Starfall should not remove stealth 
+                //and Starfall should not remove stealth
                 if (m_caster->hasUnitState(UNIT_STAT_NO_FREE_MOVE) || unitTarget->HasAuraType(SPELL_AURA_MOD_STEALTH))
                     return;
 
@@ -2251,7 +2251,7 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     if (!pet || !unitTarget)
                         return;
 
-                    // prevent pet's Master Call fail when pet rooted 
+                    // prevent pet's Master Call fail when pet rooted
                     pet->RemoveAurasAtMechanicImmunity(IMMUNE_TO_ROOT_AND_SNARE_MASK, 62305, true);
                     pet->CastSpell(unitTarget, m_spellInfo->CalculateSimpleValue(eff_idx), true);
                     return;
@@ -2553,8 +2553,8 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                 float z = m_caster->GetPositionZ()+1;
                 float orientation = unitTarget->GetOrientation();
 
-                m_caster->CastSpell(unitTarget,51399,true,NULL);                
-                    
+                m_caster->CastSpell(unitTarget,51399,true,NULL);
+
                 if(unitTarget->GetTypeId() != TYPEID_PLAYER)
                 {
                    unitTarget->GetMap()->CreatureRelocation((Creature*)unitTarget,x,y,z,orientation);
@@ -2566,19 +2566,19 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
             }
             // Raise Dead
             else if (m_spellInfo->Id == 46584)
-            {   
+            {
                 if( unitTarget->isDead() && unitTarget->GetCreatureType()==CREATURE_TYPE_HUMANOID && unitTarget->getLevel() >= m_caster->getLevel()-3 )
                 {
                     if( m_caster->GetTypeId()==TYPEID_PLAYER && ((Player*)m_caster)->HasSpell(52143) )
                     {
                         m_caster->CastSpell(m_caster, 52150, true, NULL);
-                        ((Player*)m_caster)->SendCooldownEvent(m_spellInfo,52150, this); 
+                        ((Player*)m_caster)->SendCooldownEvent(m_spellInfo,52150, this);
                         ((Player*)m_caster)->RemoveSpellCooldown(52150, true);
                     }
                     else
                     {
                         m_caster->CastSpell(m_caster, 46585, true, NULL);
-                        ((Player*)m_caster)->SendCooldownEvent(m_spellInfo,46585, this); 
+                        ((Player*)m_caster)->SendCooldownEvent(m_spellInfo,46585, this);
                         ((Player*)m_caster)->RemoveSpellCooldown(46585, true);
                     }
                 }
@@ -2589,20 +2589,20 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                            if( m_caster->GetTypeId()==TYPEID_PLAYER && ((Player*)m_caster)->HasSpell(52143) )
                         {
                             m_caster->CastSpell(m_caster, 52150, true, NULL);
-                            ((Player*)m_caster)->SendCooldownEvent(m_spellInfo,52150, this); 
+                            ((Player*)m_caster)->SendCooldownEvent(m_spellInfo,52150, this);
                             ((Player*)m_caster)->RemoveSpellCooldown(52150, true);
-                               
+
                         }
                         else
                         {
                             m_caster->CastSpell(m_caster, 46585, true, NULL);
-                            ((Player*)m_caster)->SendCooldownEvent(m_spellInfo,46585, this); 
+                            ((Player*)m_caster)->SendCooldownEvent(m_spellInfo,46585, this);
                             ((Player*)m_caster)->RemoveSpellCooldown(46585, true);
-                           
+
                         }
                         ((Player*)m_caster)->DestroyItemCount(37201,1,true);
                     }
-                    else 
+                    else
                         m_caster->CastStop();
                     return;
                 }
@@ -4058,9 +4058,9 @@ void Spell::EffectSummonPossessed(SpellEffectIndex eff_idx)
     uint32 creature_entry = m_spellInfo->EffectMiscValue[eff_idx];
     if (!creature_entry)
        return;
-  
+
     int32 duration = GetSpellDuration(m_spellInfo);
-  
+
     float px, py, pz;
     // If dest location if present
     if (m_targets.m_targetMask & TARGET_FLAG_DEST_LOCATION)
@@ -4073,16 +4073,16 @@ void Spell::EffectSummonPossessed(SpellEffectIndex eff_idx)
     // Summon if dest location not present near caster
     else
         m_caster->GetClosePoint(px, py, pz, 1.0f);
-  
+
     TempSummonType summonType = (duration == 0) ? TEMPSUMMON_TIMED_OR_CORPSE_DESPAWN : TEMPSUMMON_TIMED_DESPAWN;
     Creature *spawnCreature = m_caster->SummonCreature(creature_entry, px, py, pz, m_caster->GetOrientation(), summonType, duration);
- 
-    Unit* caster = GetAffectiveCaster();     
-    Aura* aur = CreateAura(m_spellInfo, eff_idx, &m_currentBasePoints[eff_idx], spawnCreature, caster, m_CastItem);     
+
+    Unit* caster = GetAffectiveCaster();
+    Aura* aur = CreateAura(m_spellInfo, eff_idx, &m_currentBasePoints[eff_idx], spawnCreature, caster, m_CastItem);
     Modifier* modifier=aur->GetModifier();
     aur->SetModifier(SPELL_AURA_MOD_POSSESS,modifier->m_amount,modifier->periodictime,modifier->m_miscvalue);
-    spawnCreature->AddAura(aur);     
-} 
+    spawnCreature->AddAura(aur);
+}
 
 void Spell::DoSummon(SpellEffectIndex eff_idx)
 {
@@ -5182,7 +5182,7 @@ void Spell::EffectWeaponDmg(SpellEffectIndex eff_idx)
                 case 71021:                                 // Saber Lash
                 {
                     uint32 count = 0;
-                    for(tbb::concurrent_vector<TargetInfo>::const_iterator ihit = m_UniqueTargetInfo.begin(); ihit != m_UniqueTargetInfo.end(); ++ihit) 
+                    for(tbb::concurrent_vector<TargetInfo>::const_iterator ihit = m_UniqueTargetInfo.begin(); ihit != m_UniqueTargetInfo.end(); ++ihit)
                         if(ihit->effectMask & (1<<eff_idx))
                             ++count;
 
@@ -5268,7 +5268,7 @@ void Spell::EffectWeaponDmg(SpellEffectIndex eff_idx)
             {
                 Item* weapon = ((Player*)m_caster)->GetWeaponForAttack(m_attackType,true,true);
                 if (weapon && weapon->GetProto()->SubClass == ITEM_SUBCLASS_WEAPON_DAGGER)
-                    totalDamagePercentMod *= 1.44f;         // 144% with dagger        
+                    totalDamagePercentMod *= 1.44f;         // 144% with dagger
             }
             break;
         }
@@ -6096,17 +6096,17 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                 {
                     if(!m_caster || m_caster->GetTypeId() != TYPEID_UNIT || !(m_caster->isCharmed()))
                         return;
- 
+
                     Creature *eye = ((Creature*)m_caster);
                     if(m_caster->GetCharmer()->GetTypeId() != TYPEID_PLAYER)
                         return;
 
-                    Player *player = ((Player*)m_caster->GetCharmer());                     
+                    Player *player = ((Player*)m_caster->GetCharmer());
                     if(eye->isInCombat())
                         return;
 
                     eye->GetMap()->CreatureRelocation(eye, player->GetPositionX(), player->GetPositionY(), player->GetPositionZ(), player->GetOrientation());
-                    eye->RemoveAurasDueToSpellByCancel(51852);        
+                    eye->RemoveAurasDueToSpellByCancel(51852);
                 }
                 case 52751:                                 // Death Gate
                 {
@@ -6337,7 +6337,7 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                 {
                     if(!unitTarget)
                         return;
-                    
+
                     uint32 spellId = urand(0,1) ? 62251 : 62252;
                     m_caster->CastSpell(unitTarget, spellId, true);
                     if(Aura *pAura = unitTarget->GetAura(spellId, EFFECT_INDEX_0))
@@ -7296,7 +7296,7 @@ void Spell::EffectLeapForward(SpellEffectIndex eff_idx)
         float dx,dy,dz;
         float angle = unitTarget->GetOrientation();
         unitTarget->GetPosition(cx,cy,cz);
-          
+
         //Check use of vamps//
         bool useVmap = false;
         bool swapZone = true;
@@ -7319,7 +7319,7 @@ void Spell::EffectLeapForward(SpellEffectIndex eff_idx)
             MaNGOS::NormalizeMapCoord(dx);
             MaNGOS::NormalizeMapCoord(dy);
             dz = cz;
-             
+
             //Prevent climbing and go around object maybe 2.0f is to small? use 3.0f?
             if( unitTarget->GetMap()->IsNextZcoordOK(dx, dy, dz, 3.0f) && (unitTarget->IsWithinLOS(dx, dy, dz)))
             {
@@ -7349,7 +7349,7 @@ void Spell::EffectLeapForward(SpellEffectIndex eff_idx)
                 }
             }
         }
-            
+
         //Prevent Falling during swap building/outerspace
         unitTarget->UpdateGroundPositionZ(cx, cy, cz);
 
@@ -8027,7 +8027,7 @@ void Spell::EffectStealBeneficialBuff(SpellEffectIndex eff_idx)
             // Remove buff from list for prevent doubles
             steal_list.erase(steal_itr);
 
-            SpellEntry const* spellInfo = aur->GetSpellProto(); 
+            SpellEntry const* spellInfo = aur->GetSpellProto();
             // Base dispel chance
             int32 miss_chance = 0;
             // Apply dispel mod from aura caster
