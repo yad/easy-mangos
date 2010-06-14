@@ -67,13 +67,14 @@ class MANGOS_DLL_SPEC ViewPoint
     
     void Attach(Camera* c) { m_cameras.push_back(c); }
 
-    void Detach(Camera* c)
+    /*void Detach(Camera* c)
     {
         if (*camera_iter == c)     // detach called during the loop
             camera_iter = m_cameras.erase(camera_iter);
         else
             m_cameras.remove(c);
-    }
+    }*/
+    void Detach(Camera* c) { m_cameras.erase(remove(m_cameras.begin(),m_cameras.end(), c)); }
 
     void CameraCall(void (Camera::*handler)(void))
     {
