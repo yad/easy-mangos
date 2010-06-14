@@ -1,0 +1,236 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="debug">
+      <UniqueIdentifier>{d28af388-3360-4df2-a811-f895d3bfbd9d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="debug\Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="debug\Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="pathfinding">
+      <UniqueIdentifier>{7b5cb8e2-10ca-494f-a7a1-0950e077797f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="pathfinding\Recast">
+      <UniqueIdentifier>{55c20409-a9f4-4f69-b7a6-07a9c706efd3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="pathfinding\Detour">
+      <UniqueIdentifier>{c15fd5df-4454-4d4a-a107-921e9a319dda}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="pathfinding\DebugUtils">
+      <UniqueIdentifier>{281fdd96-da4d-4a31-a249-134d78120e63}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\..\src\shared\pathfinding\Recast\Recast.h">
+      <Filter>pathfinding\Recast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\src\shared\pathfinding\Recast\RecastLog.h">
+      <Filter>pathfinding\Recast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\src\shared\pathfinding\Recast\RecastTimer.h">
+      <Filter>pathfinding\Recast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\src\shared\pathfinding\Detour\DetourCommon.h">
+      <Filter>pathfinding\Detour</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\src\shared\pathfinding\Detour\DetourNavMesh.h">
+      <Filter>pathfinding\Detour</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\src\shared\pathfinding\Detour\DetourNavMeshBuilder.h">
+      <Filter>pathfinding\Detour</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\src\shared\pathfinding\Detour\DetourNode.h">
+      <Filter>pathfinding\Detour</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\src\shared\pathfinding\DebugUtils\DebugDraw.h">
+      <Filter>pathfinding\DebugUtils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\src\shared\pathfinding\DebugUtils\DetourDebugDraw.h">
+      <Filter>pathfinding\DebugUtils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\src\shared\pathfinding\DebugUtils\RecastDebugDraw.h">
+      <Filter>pathfinding\DebugUtils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\src\shared\pathfinding\DebugUtils\RecastDump.h">
+      <Filter>pathfinding\DebugUtils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Debug\ConvexVolumeTool.h">
+      <Filter>debug\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Debug\Filelist.h">
+      <Filter>debug\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Debug\imgui.h">
+      <Filter>debug\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Debug\imguiRenderGL.h">
+      <Filter>debug\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Debug\NavMeshTesterTool.h">
+      <Filter>debug\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Debug\OffMeshConnectionTool.h">
+      <Filter>debug\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Debug\Sample.h">
+      <Filter>debug\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Debug\Sample_Debug.h">
+      <Filter>debug\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Debug\Sample_SoloMeshSimple.h">
+      <Filter>debug\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Debug\Sample_SoloMeshTiled.h">
+      <Filter>debug\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Debug\Sample_TileMesh.h">
+      <Filter>debug\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Debug\SDLMain.h">
+      <Filter>debug\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Debug\SlideShow.h">
+      <Filter>debug\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Debug\stb_image.h">
+      <Filter>debug\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Debug\stb_truetype.h">
+      <Filter>debug\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Debug\TestCase.h">
+      <Filter>debug\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\MMapCommon.h">
+      <Filter>debug</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Debug\Debug.h">
+      <Filter>debug</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ChunkyTriMesh.h">
+      <Filter>debug</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\InputGeom.h">
+      <Filter>debug</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\MeshLoaderObj.h">
+      <Filter>debug</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\Recast.cpp">
+      <Filter>pathfinding\Recast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\RecastArea.cpp">
+      <Filter>pathfinding\Recast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\RecastContour.cpp">
+      <Filter>pathfinding\Recast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\RecastFilter.cpp">
+      <Filter>pathfinding\Recast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\RecastLog.cpp">
+      <Filter>pathfinding\Recast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\RecastMesh.cpp">
+      <Filter>pathfinding\Recast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\RecastMeshDetail.cpp">
+      <Filter>pathfinding\Recast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\RecastRasterization.cpp">
+      <Filter>pathfinding\Recast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\RecastRegion.cpp">
+      <Filter>pathfinding\Recast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\RecastTimer.cpp">
+      <Filter>pathfinding\Recast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Detour\DetourCommon.cpp">
+      <Filter>pathfinding\Detour</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Detour\DetourNavMesh.cpp">
+      <Filter>pathfinding\Detour</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Detour\DetourNavMeshBuilder.cpp">
+      <Filter>pathfinding\Detour</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Detour\DetourNode.cpp">
+      <Filter>pathfinding\Detour</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\DebugUtils\DebugDraw.cpp">
+      <Filter>pathfinding\DebugUtils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\DebugUtils\DetourDebugDraw.cpp">
+      <Filter>pathfinding\DebugUtils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\DebugUtils\RecastDebugDraw.cpp">
+      <Filter>pathfinding\DebugUtils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\shared\pathfinding\DebugUtils\RecastDump.cpp">
+      <Filter>pathfinding\DebugUtils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Debug\ConvexVolumeTool.cpp">
+      <Filter>debug\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Debug\Filelist.cpp">
+      <Filter>debug\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Debug\imgui.cpp">
+      <Filter>debug\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Debug\imguiRenderGL.cpp">
+      <Filter>debug\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Debug\main.cpp">
+      <Filter>debug\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Debug\NavMeshTesterTool.cpp">
+      <Filter>debug\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Debug\OffMeshConnectionTool.cpp">
+      <Filter>debug\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Debug\Sample.cpp">
+      <Filter>debug\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Debug\Sample_Debug.cpp">
+      <Filter>debug\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Debug\Sample_SoloMeshSimple.cpp">
+      <Filter>debug\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Debug\Sample_SoloMeshTiled.cpp">
+      <Filter>debug\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Debug\Sample_TileMesh.cpp">
+      <Filter>debug\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Debug\SlideShow.cpp">
+      <Filter>debug\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Debug\TestCase.cpp">
+      <Filter>debug\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Debug\Debug.cpp">
+      <Filter>debug</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ChunkyTriMesh.cpp">
+      <Filter>debug</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\InputGeom.cpp">
+      <Filter>debug</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\MeshLoaderObj.cpp">
+      <Filter>debug</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
