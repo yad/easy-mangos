@@ -65,7 +65,11 @@ MotionMaster::UpdateMotion(uint32 diff)
 {
     if( i_owner->hasUnitState(UNIT_STAT_CAN_NOT_MOVE | UNIT_STAT_ON_VEHICLE) )
         return;
-    ASSERT( !empty() );
+    
+    //ASSERT( !empty() );
+    if(empty())
+        return;
+    
     m_cleanFlag |= MMCF_UPDATE;
     if (!top()->Update(*i_owner, diff))
     {
@@ -112,7 +116,9 @@ MotionMaster::DirectClean(bool reset, bool all)
 
     if (!all && reset)
     {
-        ASSERT( !empty() );
+        //ASSERT( !empty() );
+        if(empty())
+            return;
         top()->Reset(*i_owner);
     }
 }
@@ -144,7 +150,7 @@ MotionMaster::DelayedClean(bool reset, bool all)
 void
 MotionMaster::DirectExpire(bool reset)
 {
-    if (empty() || size() == 1)
+    if (size() <= 1)
         return;
 
     MovementGenerator *curr = top();

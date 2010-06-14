@@ -1032,14 +1032,16 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
     // recheck deflect for delayed spells on target with Deterrence,
     if (m_spellInfo->speed && unit->HasAura(19263))
     {
-        caster->SendSpellMiss(unit, m_spellInfo->Id, SPELL_MISS_DODGE);
-        missInfo = SPELL_MISS_DODGE;
+        caster->SendSpellMiss(unit, m_spellInfo->Id, SPELL_MISS_DEFLECT);
+        missInfo = SPELL_MISS_DEFLECT;
         return;
     }
     
     // recheck for visibility of target
-    if ((m_spellInfo->speed > 0.0f || m_spellInfo->EffectImplicitTargetA[0] == TARGET_CHAIN_DAMAGE) && 
-        !unit->isVisibleForOrDetect(caster, caster, false))
+    if ((m_spellInfo->speed > 0.0f || 
+        (m_spellInfo->EffectImplicitTargetA[0] == TARGET_CHAIN_DAMAGE &&
+        GetSpellCastTime(m_spellInfo, this) > 0)) 
+         && !unit->isVisibleForOrDetect(caster, caster, false))
     {
         caster->SendSpellMiss(unit, m_spellInfo->Id, SPELL_MISS_EVADE);
         missInfo = SPELL_MISS_EVADE;
@@ -1267,8 +1269,9 @@ void Spell::DoSpellHitOnUnit(Unit *unit, const uint32 effectMask)
             // not break stealth by cast targeting and some exceptions for spells which should break/not break stealth
             if (!(m_spellInfo->AttributesEx & SPELL_ATTR_EX_NOT_BREAK_STEALTH) || m_spellInfo->SpellFamilyFlags & SPELLFAMILYFLAG_ROGUE_SAP)
             {
-                if (!(m_spellInfo->Id == 39897 || m_spellInfo->Id == 32592 || m_spellInfo->Id == 32375|| m_spellInfo->Id == 1725
-                    || m_spellInfo->Id == 1038 || (m_spellInfo->SpellFamilyFlags2 & UI64LIT(0x00000100)) || m_spellInfo->Id == 3600))
+                if (!(m_spellInfo->Id == 39897 || m_spellInfo->Id == 32592 || m_spellInfo->Id == 32375|| m_spellInfo->Id == 1725 ||
+                    m_spellInfo->Id == 1038 || (m_spellInfo->SpellFamilyFlags2 & UI64LIT(0x00000100)) || m_spellInfo->Id == 3600 ||
+                    m_spellInfo->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_THREAT))
                     unit->RemoveSpellsCausingAura(SPELL_AURA_MOD_STEALTH);
             }
 
