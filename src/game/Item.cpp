@@ -285,6 +285,16 @@ void Item::UpdateDuration(Player* owner, uint32 diff)
     if (GetUInt32Value(ITEM_FIELD_DURATION)<=diff)
     {
         owner->DestroyItem(GetBagSlot(), GetSlot(), true);
+
+        //Some items with duration create new item after expire
+        if((GetProto()->ExtraFlags & ITEM_EXTRA_CREATE_ITEM_ON_EXPIRE) && !loot.empty())
+        {
+            for(LootItemList::iterator itr = loot.items.begin(); itr != loot.items.end(); ++itr)
+            {
+                if (Item* Item = owner->StoreNewItemInInventorySlot((*itr).itemid, (*itr).count))
+                    owner->SendNewItem(Item,(*itr).count, true, false);               
+            }
+        }
         return;
     }
 
