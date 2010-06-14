@@ -3960,7 +3960,7 @@ void Aura::HandleModPossess(bool apply, bool Real)
 
     if( apply )
     {
-        target->addUnitState(UNIT_STAT_CONTROLED);
+        target->addUnitState(UNIT_STAT_CONTROLLED);
 
         target->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PLAYER_CONTROLLED);
 
@@ -4011,7 +4011,7 @@ void Aura::HandleModPossess(bool apply, bool Real)
         if(m_removeMode == AURA_REMOVE_BY_DELETE)
             return;
 
-        target->clearUnitState(UNIT_STAT_CONTROLED);
+        target->clearUnitState(UNIT_STAT_CONTROLLED);
 
         target->CombatStop(true);
         target->DeleteThreatList();
