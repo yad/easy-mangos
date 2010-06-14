@@ -5146,7 +5146,8 @@ void ObjectMgr::ReturnOrDeleteOldMails(bool serverUp)
                     uint32 item_template = fields2[1].GetUInt32();
 
                     m->AddItem(item_guid_low, item_template);
-                    CharacterDatabase.PExecute("UPDATE item_instance SET owner_guid='%u' WHERE guid='%u'", m->receiver, item_guid_low);
+                    CharacterDatabase.PExecute("UPDATE item_instance SET owner_guid='%u' WHERE guid='%u'", m->sender, item_guid_low);
+                    CharacterDatabase.PExecute("UPDATE mail_items SET receiver='%u' WHERE item_guid='%u'", m->sender, item_guid_low);
                 }
                 while (resultItems->NextRow());
 
