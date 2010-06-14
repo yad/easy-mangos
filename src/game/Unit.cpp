@@ -482,9 +482,20 @@ void Unit::BuildHeartBeatMsg(WorldPacket *data) const
         !m_movementInfo.HasMovementFlag(MOVEFLAG_FLYING))
         ((Unit*)this)->m_movementInfo.AddMovementFlag(MOVEFLAG_FLYING);
 
-    data->Initialize(MSG_MOVE_HEARTBEAT);
+    MovementFlags move_flags = GetTypeId()==TYPEID_PLAYER
+        ? ((Player const*)this)->m_movementInfo.GetMovementFlags()
+        : MOVEFLAG_NONE;
+
+    data->Initialize(MSG_MOVE_HEARTBEAT, 32);
     *data << GetPackGUID();
-    ((Unit*)this)->m_movementInfo.Write(*data);
+    *data << uint32(move_flags);                            // movement flags
+    *data << uint16(0);                                     // 2.3.0
+    *data << uint32(getMSTime());                           // time
+    *data << float(GetPositionX());
+    *data << float(GetPositionY());
+    *data << float(GetPositionZ());
+    *data << float(GetOrientation());
+    *data << uint32(0);
 }
 
 void Unit::resetAttackTimer(WeaponAttackType type)

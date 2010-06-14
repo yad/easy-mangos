@@ -191,7 +191,7 @@ void Map::AddToGrid(Creature* obj, NGridType *grid, Cell const& cell)
     if(obj->isPet() || obj->isVehicle())
     {
         (*grid)(cell.CellX(), cell.CellY()).AddWorldObject<Creature>(obj);
-    obj->SetCurrentCell(cell);
+        obj->SetCurrentCell(cell);
     }
     // add to grid object store
     else
