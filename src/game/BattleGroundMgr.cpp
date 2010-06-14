@@ -1318,9 +1318,9 @@ void BattleGroundMgr::BuildPvpLogDataPacket(WorldPacket *data, BattleGround *bg)
     if(type)                                                // arena
     {
         // Rating Changes and Arena Team names seems to be correct for 3.3
-        for(int i = 1; i < BG_TEAMS_COUNT; ++i)
+        for(int i = 1; i <= BG_TEAMS_COUNT; ++i)
         {
-            *data << uint32(bg->m_ArenaTeamRatingChanges[(bg->GetWinner()+i)%BG_TEAMS_COUNT]);
+            *data << uint32(-(bg->m_ArenaTeamRatingChanges[(bg->GetWinner()+i)%BG_TEAMS_COUNT]));
             *data << uint32(0);                             // seems it should be 0 since 3.0
             *data << uint32(0);                             // matchmaking value
             DEBUG_LOG("rating change: %d", bg->m_ArenaTeamRatingChanges[i]);
