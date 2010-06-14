@@ -67,6 +67,10 @@
 #include "PlayerbotAI.h"
 #include "PlayerbotMgr.h"
 
+// PlayerAI mod:
+#include "PlayerAI.h"
+#include "PlayerAIMgr.h"
+
 #include <cmath>
 
 #define ZONE_UPDATE_INTERVAL (1*IN_MILLISECONDS)
@@ -338,6 +342,10 @@ Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputa
     m_playerbotMgr = 0;
     m_AddonTarget = 0;
 
+    // PlayerAI mod:
+    m_playerAI = 0;
+    m_playerAIMgr = 0;
+
     m_speakTime = 0;
     m_speakCount = 0;
 
@@ -594,6 +602,16 @@ Player::~Player ()
     if (m_playerbotMgr) {
         delete m_playerbotMgr;
         m_playerbotMgr = 0;
+    }
+
+    // PlayerAI mod
+    if (m_playerAI) {
+        delete m_playerAI;
+        m_playerAI = 0;
+    }
+    if (m_playerAIMgr) {
+        delete m_playerAIMgr;
+        m_playerAIMgr = 0;
     }
 }
 
@@ -2223,11 +2241,17 @@ void Player::Update( uint32 p_time )
     if(IsHasDelayedTeleport() && isAlive())
         TeleportTo(m_teleport_dest, m_teleport_options);
 
-        // Playerbot mod
+    // Playerbot mod
     if (m_playerbotAI)
         m_playerbotAI->UpdateAI(p_time);
     else if (m_playerbotMgr)
         m_playerbotMgr->UpdateAI(p_time);
+
+    // PlayerAI mod
+    if (m_playerAI)
+        m_playerAI->UpdateAI(p_time);
+    else if (m_playerAIMgr)
+        m_playerAIMgr->UpdateAI(p_time);
 }
 
 void Player::setDeathState(DeathState s)
