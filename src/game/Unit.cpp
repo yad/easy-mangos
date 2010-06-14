@@ -439,11 +439,6 @@ void Unit::SendMonsterMoveWithSpeed(float x, float y, float z, uint32 transitTim
 
 void Unit::BuildHeartBeatMsg(WorldPacket *data) const
 {
-    //Hack for flying creatures, but it works!
-    if(GetTypeId()!=TYPEID_PLAYER && ((Creature*)this)->canFly() &&
-        !m_movementInfo.HasMovementFlag(MOVEFLAG_FLYING))
-        ((Unit*)this)->m_movementInfo.AddMovementFlag(MOVEFLAG_FLYING);
-
     data->Initialize(MSG_MOVE_HEARTBEAT);
     *data << GetPackGUID();
     ((Unit*)this)->m_movementInfo.Write(*data);
