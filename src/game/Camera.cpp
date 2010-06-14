@@ -6,13 +6,17 @@
 #include "Errors.h"
 
 
-Camera::Camera(Player* pl) : m_owner(*pl), m_source(pl), caused_by_aura(0)
+Camera::Camera(Player* pl) : m_owner(*pl), m_source(pl)
 {
     m_source->getViewPoint().Attach(this);
 }
 
 Camera::~Camera()
 {
+    // view of camera should be already reseted to owner (RemoveFromWorld -> Event_RemovedFromWorld -> ResetView)
+    ASSERT(m_source == &m_owner);	
+
+    // for symmetry with constructor and way to make viewpoint's list empty
     m_source->getViewPoint().Detach(this);
 }
 
@@ -32,7 +36,7 @@ void Camera::UpdateForCurrentViewPoint()
     UpdateVisibilityForOwner();
 }
 
-void Camera::SetView(WorldObject *obj, uint32 aura_id)
+void Camera::SetView(WorldObject *obj)
 {
     ASSERT(obj);
 
@@ -48,8 +52,6 @@ void Camera::SetView(WorldObject *obj, uint32 aura_id)
         return;
     }
 
-    caused_by_aura = aura_id;
-
     m_source->getViewPoint().Detach(this);
     m_source = obj;
     m_source->getViewPoint().Attach(this);
@@ -60,15 +62,7 @@ void Camera::SetView(WorldObject *obj, uint32 aura_id)
 void Camera::Event_ViewPointVisibilityChanged()
 {
     if(!m_owner.HaveAtClient(m_source))
-    {
-        if(m_source->isType(TYPEMASK_UNIT) && caused_by_aura)
-        {
-            m_owner.RemoveAurasByCasterSpell(caused_by_aura, m_owner.GetGUID());
-            ((Unit*)m_source)->RemoveAurasByCasterSpell(caused_by_aura, m_owner.GetGUID()); // ResetView called at aura remove
-        }
-        else
-            ResetView();
-    }
+        ResetView();
 }
 
 void Camera::ResetView()
@@ -78,7 +72,6 @@ void Camera::ResetView()
     m_source->getViewPoint().Attach(this);
 
     UpdateForCurrentViewPoint();
-    caused_by_aura = 0;
 }
 
 void Camera::Event_AddedToWorld()
@@ -137,7 +130,6 @@ ViewPoint::~ViewPoint()
 {
     if(!m_cameras.empty())
     {
-        sLog.outError("ViewPoint deconstructor called, but list of cameras is not empty");
+        sLog.outError("ViewPoint destructor called, but some cameras referenced to it");
     }
 }
-

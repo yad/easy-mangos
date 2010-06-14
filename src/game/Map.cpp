@@ -379,7 +379,7 @@ bool Map::Add(Player *player)
     player->AddToWorld();
 
     NGridType* grid = getNGrid(cell.GridX(), cell.GridY());
-    player->getViewPoint().Event_AddedToMap(&(*grid)(cell.CellX(), cell.CellY()));
+    player->getViewPoint().Event_AddedToWorld(&(*grid)(cell.CellX(), cell.CellY()));
     UpdateObjectVisibility(player,cell,p);
 
     AddNotifier(player,cell,p);
@@ -430,7 +430,7 @@ Map::Add(T *obj)
 
     DEBUG_LOG("Object %u enters grid[%u,%u]", GUID_LOPART(obj->GetGUID()), cell.GridX(), cell.GridY());
 
-    obj->getViewPoint().Event_AddedToMap(&(*grid)(cell.CellX(), cell.CellY()));
+    obj->getViewPoint().Event_AddedToWorld(&(*grid)(cell.CellX(), cell.CellY()));
     UpdateObjectVisibility(obj,cell,p);
 
     AddNotifier(obj,cell,p);
@@ -739,8 +739,6 @@ Map::Remove(T *obj, bool remove)
         obj->CleanupsBeforeDelete();
     else
         obj->RemoveFromWorld();
-
-    obj->getViewPoint().Event_RemovedFromMap();
 
     UpdateObjectVisibility(obj,cell,p); // i think will be better to call this function while object still in grid, this changes nothing but logically is better(as for me)
     RemoveFromGrid(obj,grid,cell);
