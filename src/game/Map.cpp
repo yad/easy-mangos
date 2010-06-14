@@ -659,7 +659,7 @@ void Map::Update(const uint32 &t_diff)
         }
     }
 
-	///- Process necessary scripts
+    ///- Process necessary scripts
     if (!m_scriptSchedule.empty())
         ScriptsProcess();
 }
@@ -1520,7 +1520,7 @@ uint32 Map::GetPlayersCountExceptGMsAndBots() const
 {
     uint32 count = 0;
     for(MapRefManager::const_iterator itr = m_mapRefManager.begin(); itr != m_mapRefManager.end(); ++itr)
-		if(!itr->getSource()->GetPlayerbotAI() && !itr->getSource()->isGameMaster())
+        if(!itr->getSource()->GetPlayerbotAI() && !itr->getSource()->isGameMaster())
             ++count;
     return count;
 }

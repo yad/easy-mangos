@@ -17,9 +17,9 @@ class PlayerbotAI;
 class MANGOS_DLL_SPEC PlayerbotClassAI
 {
     public:
-        PlayerbotClassAI(Player* const master, Player* const bot, PlayerbotAI* const ai);
+        PlayerbotClassAI(Player* const bot, PlayerbotAI* const ai);
         virtual ~PlayerbotClassAI();
-        virtual void InitSpells(PlayerbotAI* const ai);        
+        virtual void InitSpells(PlayerbotAI* const ai);
 
         // all combat actions go here
         virtual bool DoFirstCombatManeuver(Unit*);
@@ -32,13 +32,11 @@ class MANGOS_DLL_SPEC PlayerbotClassAI
         virtual void BuffPlayer(Player* target);
 
         // Utilities
-        Player* GetMaster () {return m_master;}
         Player* GetPlayerBot() {return m_bot;}
         PlayerbotAI* GetAI (){return m_ai;};
 
 
     private:
-        Player* m_master;
         Player* m_bot;
         PlayerbotAI* m_ai;
 };

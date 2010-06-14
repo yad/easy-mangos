@@ -15,7 +15,7 @@ enum
 class MANGOS_DLL_SPEC PlayerbotWarlockAI : PlayerbotClassAI
 {
     public:
-        PlayerbotWarlockAI(Player* const master, Player* const bot, PlayerbotAI* const ai);
+        PlayerbotWarlockAI(Player* const bot, PlayerbotAI* const ai);
         virtual ~PlayerbotWarlockAI();
         void InitSpells(PlayerbotAI* const ai);
 

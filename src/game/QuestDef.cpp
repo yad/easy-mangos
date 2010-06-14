@@ -107,7 +107,7 @@ Quest::Quest(Field * questRecord)
 
     RewHonorAddition = questRecord[108].GetUInt32();
     RewHonorMultiplier = questRecord[109].GetFloat();
-	RewArenaPoints = questRecord[110].GetInt32();
+    RewArenaPoints = questRecord[110].GetInt32();
     RewOrReqMoney = questRecord[111].GetInt32();
     RewMoneyMaxLevel = questRecord[112].GetUInt32();
     RewSpell = questRecord[113].GetUInt32();

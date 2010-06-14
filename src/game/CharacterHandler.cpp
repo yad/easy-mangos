@@ -146,20 +146,22 @@ class CharacterHandler
 
             LoginQueryHolder* lqh = (LoginQueryHolder*) holder;
 
-            WorldSession* masterSession = sWorld.FindSession(lqh->GetAccountId());
+            /*WorldSession* masterSession = sWorld.FindSession(lqh->GetAccountId());
 
             if (! masterSession || sObjectMgr.GetPlayer(lqh->GetGuid()))
             {
                 delete holder;
                 return;
-            }
+            }*/
 
             // The bot's WorldSession is owned by the bot's Player object
             // The bot's WorldSession is deleted by PlayerbotMgr::LogoutPlayerBot
-            WorldSession *botSession = new WorldSession(lqh->GetAccountId(), NULL, SEC_PLAYER, masterSession->Expansion(), 0, LOCALE_enUS);
+            WorldSession *botSession = new WorldSession(lqh->GetAccountId(), NULL, SEC_PLAYER, 3, 0, LOCALE_enUS);
             botSession->m_Address = "bot";
             botSession->HandlePlayerLogin(lqh); // will delete lqh
-            masterSession->GetPlayer()->GetPlayerbotMgr()->OnBotLogin(botSession->GetPlayer());
+            PlayerbotMgr* mgr = new PlayerbotMgr();
+            botSession->GetPlayer()->SetPlayerbotMgr(mgr);
+            botSession->GetPlayer()->GetPlayerbotMgr()->OnBotLogin(botSession->GetPlayer());
         }
 } chrHandler;
 

@@ -17,7 +17,7 @@ enum
 class MANGOS_DLL_SPEC PlayerbotWarriorAI : PlayerbotClassAI
 {
     public:
-        PlayerbotWarriorAI(Player* const master, Player* const bot, PlayerbotAI* const ai);
+        PlayerbotWarriorAI(Player* const bot, PlayerbotAI* const ai);
         virtual ~PlayerbotWarriorAI();
         void InitSpells(PlayerbotAI* const ai);
 
@@ -34,7 +34,7 @@ class MANGOS_DLL_SPEC PlayerbotWarriorAI : PlayerbotClassAI
     private:
         // ARMS
         uint32 BATTLE_STANCE, CHARGE, HEROIC_STRIKE, REND, THUNDER_CLAP, HAMSTRING, MOCKING_BLOW, RETALIATION, SWEEPING_STRIKES, MORTAL_STRIKE, BLADESTORM, HEROIC_THROW, SHATTERING_THROW;
-        
+
         // PROTECTION
         uint32 DEFENSIVE_STANCE, BLOODRAGE, SUNDER_ARMOR, TAUNT, SHIELD_BASH, REVENGE, SHIELD_BLOCK, DISARM, SHIELD_WALL, SHIELD_SLAM, VIGILANCE, DEVASTATE, SHOCKWAVE, CONCUSSION_BLOW, SPELL_REFLECTION, LAST_STAND;
 

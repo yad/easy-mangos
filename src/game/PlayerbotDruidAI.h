@@ -16,9 +16,9 @@ enum
 class MANGOS_DLL_SPEC PlayerbotDruidAI : PlayerbotClassAI
 {
     public:
-        PlayerbotDruidAI(Player* const master, Player* const bot, PlayerbotAI* const ai);
+        PlayerbotDruidAI(Player* const bot, PlayerbotAI* const ai);
         virtual ~PlayerbotDruidAI();
-        void InitSpells(PlayerbotAI* const ai);        
+        void InitSpells(PlayerbotAI* const ai);
 
         // all combat actions go here
         void DoNextCombatManeuver(Unit*);

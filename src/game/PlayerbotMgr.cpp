@@ -3,6 +3,7 @@
 #include "Player.h"
 #include "PlayerbotAI.h"
 #include "PlayerbotMgr.h"
+#include "PlayerAI.h"
 #include "WorldPacket.h"
 #include "ObjectMgr.h"
 #include "GossipDef.h"
@@ -14,7 +15,7 @@ class LoginQueryHolder;
 class CharacterHandler;
 
 
-PlayerbotMgr::PlayerbotMgr(Player* const master) : m_master(master) 
+PlayerbotMgr::PlayerbotMgr()
 {
     // load config variables
     m_confDisableBots = sConfig.GetBoolDefault( "PlayerbotAI.DisableBots", false );
@@ -23,7 +24,7 @@ PlayerbotMgr::PlayerbotMgr(Player* const master) : m_master(master)
     m_confFollowDistance[1] = sConfig.GetFloatDefault( "PlayerbotAI.FollowDistanceMin", 1.0f );
 }
 
-PlayerbotMgr::~PlayerbotMgr() 
+PlayerbotMgr::~PlayerbotMgr()
 {
   LogoutAllBots();
 }
@@ -140,13 +141,13 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
                 case TEXTEMOTE_POINT:
                 {
                     uint64 attackOnGuid = m_master->GetSelection();
-                    if( !attackOnGuid ) return;
+                    if ( !attackOnGuid ) return;
 
                     Unit* thingToAttack = ObjectAccessor::GetUnit(*m_master, attackOnGuid);
-                    if( !thingToAttack ) return;
+                    if ( !thingToAttack ) return;
 
                     Player *bot = 0;
-                    for( PlayerBotMap::iterator itr=m_playerBots.begin(); itr!=m_playerBots.end(); ++itr )
+                    for ( PlayerBotMap::iterator itr=m_playerBots.begin(); itr!=m_playerBots.end(); ++itr )
                     {
                         bot = itr->second;
                         if (!bot->IsFriendlyTo(thingToAttack) && bot->IsWithinLOSInMap(thingToAttack))
@@ -202,14 +203,14 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
                 p >> objGUID;
 
                 GameObject *obj = m_master->GetMap()->GetGameObject( objGUID );
-                if( !obj )
+                if ( !obj )
                     return;
 
                 for (PlayerBotMap::const_iterator it = GetPlayerBotsBegin(); it != GetPlayerBotsEnd(); ++it)
                 {
                     Player* const bot = it->second;
 
-                    if( obj->GetGoType() == GAMEOBJECT_TYPE_QUESTGIVER )
+                    if ( obj->GetGoType() == GAMEOBJECT_TYPE_QUESTGIVER )
                     {
                         bot->GetPlayerbotAI()->TurnInQuests( obj );
                     }
@@ -227,7 +228,7 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
             p.rpos(0); // reset reader
             uint64 npcGUID;
             p >> npcGUID;
-            
+
             WorldObject* pNpc = m_master->GetMap()->GetWorldObject( npcGUID );
             if (!pNpc)
                 return;
@@ -238,7 +239,7 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
                 Player* const bot = it->second;
                 bot->GetPlayerbotAI()->TurnInQuests( pNpc );
             }
-                    
+
             return;
         }
 
@@ -256,11 +257,11 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
                 for (PlayerBotMap::const_iterator it = GetPlayerBotsBegin(); it != GetPlayerBotsEnd(); ++it)
                 {
                     Player* const bot = it->second;
-                    
+
                     if (bot->GetQuestStatus(quest) == QUEST_STATUS_COMPLETE)
                         bot->GetPlayerbotAI()->TellMaster("J'ai deja fini cette quete.");
                     else if (! bot->CanTakeQuest(qInfo, false))
-                    {                        
+                    {
                         if (! bot->SatisfyQuestStatus(qInfo, false))
                             bot->GetPlayerbotAI()->TellMaster("Je suis deja sur cette quete.");
                         else
@@ -300,11 +301,11 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
                 uint32 choice = urand(0,2); //returns 0,1,or 2
 
                 Player* const bot = it->second;
-                if(!bot)
+                if (!bot)
                     return;
 
                 Group* group = bot->GetGroup();
-                if(!group)
+                if (!group)
                     return;
 
                 switch (group->GetLootMethod())
@@ -357,11 +358,11 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
                {
 
                     Player* const bot = it->second;
-                    if(!bot)
+                    if (!bot)
                          return;
 
                     Group* group = bot->GetGroup();  // check if bot is a member of group
-                    if(!group)
+                    if (!group)
                          return;
 
                     Creature *unit = bot->GetNPCIfCanInteractWith(npcGUID, UNIT_NPC_FLAG_REPAIR);
@@ -372,7 +373,7 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
                     }
 
                     // remove fake death
-                    if(bot->hasUnitState(UNIT_STAT_DIED))
+                    if (bot->hasUnitState(UNIT_STAT_DIED))
                          bot->RemoveSpellsCausingAura(SPELL_AURA_FEIGN_DEATH);
 
                     // reputation discount
@@ -408,11 +409,11 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
         case CMSG_SPIRIT_HEALER_ACTIVATE:
         {
                // sLog.outDebug("SpiritHealer is resurrecting the Player %s",m_master->GetName());
-               for( PlayerBotMap::iterator itr=m_playerBots.begin(); itr!=m_playerBots.end(); ++itr )
+               for ( PlayerBotMap::iterator itr=m_playerBots.begin(); itr!=m_playerBots.end(); ++itr )
                {
                     Player* const bot = itr->second;
                     Group *grp = bot->GetGroup();
-                    if(grp)
+                    if (grp)
                        grp->RemoveMember(bot->GetGUID(),1);
                }
                return;
@@ -455,7 +456,7 @@ void PlayerbotMgr::HandleMasterOutgoingPacket(const WorldPacket& packet)
     switch (packet.GetOpcode())
     {
         // maybe our bots should only start looting after the master loots?
-        //case SMSG_LOOT_RELEASE_RESPONSE: {} 
+        //case SMSG_LOOT_RELEASE_RESPONSE: {}
         case SMSG_NAME_QUERY_RESPONSE:
         case SMSG_MONSTER_MOVE:
         case SMSG_COMPRESSED_UPDATE_OBJECT:
@@ -525,6 +526,20 @@ Player* PlayerbotMgr::GetPlayerBot(uint64 playerGuid) const
 
 void PlayerbotMgr::OnBotLogin(Player * const bot)
 {
+    PlayerAI* ai = bot->GetPlayerAI();
+    if (!ai)
+    {
+        PlayerAI* ai = new PlayerAI(bot);
+        if (ai)
+            bot->SetPlayerAI(ai);
+    }
+    ai = bot->GetPlayerAI();
+    if (ai)
+        ai->SetEnable(true);
+}
+
+void PlayerbotMgr::OnBotInvite(Player * const bot)
+{
     // give the bot some AI, object is owned by the player class
     PlayerbotAI* ai = new PlayerbotAI(this, bot);
     bot->SetPlayerbotAI(ai);
@@ -539,50 +554,91 @@ void PlayerbotMgr::OnBotLogin(Player * const bot)
          m_master->GetGroup()->IsMember(bot->GetGUID()) == false))
          bot->RemoveFromGroup();
 
-    // sometimes master can lose leadership, pass leadership to master check
+    /*// sometimes master can lose leadership, pass leadership to master check
     const uint64 masterGuid = m_master->GetGUID();
-    if (m_master->GetGroup() && 
+    if (m_master->GetGroup() &&
         ! m_master->GetGroup()->IsLeader(masterGuid))
         m_master->GetGroup()->ChangeLeader(masterGuid);
+
+    if (!bot->GetGroup())
+    {
+        if (m_master->GetGroup())
+        {
+            if (m_master->GetGroup()->GetMembersCount() > 4)
+            {
+                WorldPacket* const packet2 = new WorldPacket(CMSG_GROUP_RAID_CONVERT, 100);
+                m_master->GetSession()->QueuePacket(packet2);
+                WorldPacket* const packet = new WorldPacket(CMSG_GROUP_INVITE, 100);
+                *packet << bot->GetName();
+                m_master->GetSession()->QueuePacket(packet);
+            }
+            else
+            {
+                WorldPacket* const packet = new WorldPacket(CMSG_GROUP_INVITE, 100);
+                *packet << bot->GetName();
+                m_master->GetSession()->QueuePacket(packet);
+            }
+        }
+        else
+        {
+            WorldPacket* const packet = new WorldPacket(CMSG_GROUP_INVITE, 100);
+            *packet << bot->GetName();
+            m_master->GetSession()->QueuePacket(packet);
+        }
+    }
+    else if (!bot->GetGroup()->IsMember(m_master->GetGUID()))
+    {
+        bot->RemoveFromGroup();
+
+        if (m_master->GetGroup() && m_master->GetGroup()->GetMembersCount() > 4)
+        {
+            WorldPacket* const packet2 = new WorldPacket(CMSG_GROUP_RAID_CONVERT, 100);
+            m_master->GetSession()->QueuePacket(packet2);
+            WorldPacket* const packet = new WorldPacket(CMSG_GROUP_INVITE, 100);
+            *packet << bot->GetName();
+            m_master->GetSession()->QueuePacket(packet);
+        }
+        else
+        {
+            WorldPacket* const packet = new WorldPacket(CMSG_GROUP_INVITE, 100);
+            *packet << bot->GetName();
+            m_master->GetSession()->QueuePacket(packet);
+        }
+    }*/
+    //ai->FollowCheckTeleport(m_master);
+
+    // start following master (will also teleport bot to master)
+    // ai->SetMovementOrder( MOVEMENT_FOLLOW, m_master );
+    ai->SetIgnoreSpell(5);
 }
 
 void PlayerbotMgr::RemoveAllBotsFromGroup()
 {
-    AccountInfos m_AccountInfos = m_master->GetAccountInfos();
-    for(AccountInfos::iterator itr = m_AccountInfos.begin(); itr != m_AccountInfos.end(); ++itr)
+    Player* bot = NULL;
+    do
     {
-        if(itr->second.Guid != m_master->GetGUID())
+        bot = NULL;
+        for (GroupReference *itr = m_master->GetGroup()->GetFirstMember(); itr != NULL; itr = itr->next())
         {
-            Unit* target = ObjectAccessor::GetUnit( *m_master, itr->second.Guid );
-            if( target && target->IsInWorld() )
-            {
-                Player* plTarget = (Player*)target;
-                if(plTarget && plTarget->GetPlayerbotAI())
-                {
-                    plTarget->RemoveFromGroup();
-                }
-            }
+            bot = itr->getSource();
+            if (bot->GetPlayerbotAI())
+                break;
         }
-    }
-
-    /*for (PlayerBotMap::const_iterator it = GetPlayerBotsBegin(); m_master->GetGroup() && it != GetPlayerBotsEnd(); ++it)
-    {
-        Player* const bot = it->second;
-        if (bot->IsInSameGroupWith(m_master))
-            m_master->GetGroup()->RemoveMember(bot->GetGUID(), 0);
-    }*/
+        if (bot)
+            bot->RemoveFromGroup();
+    }while (bot);
 }
 
 bool ChatHandler::HandlePlayerbotCommand(const char* args)
 {
-    if(sConfig.GetBoolDefault("PlayerbotAI.DisableBots", false))
+    if (sConfig.GetBoolDefault("PlayerbotAI.DisableBots", false))
     {
         PSendSysMessage("|cffff0000Playerbot system is currently disabled!");
         SetSentErrorMessage(true);
         return false;
     }
 
-    if (! m_session)
+    if (!m_session)
     {
         PSendSysMessage("You may only add bots from an active session");
         SetSentErrorMessage(true);
@@ -609,7 +665,7 @@ bool ChatHandler::HandlePlayerbotCommand(const char* args)
     PlayerbotMgr* mgr = m_session->GetPlayer()->GetPlayerbotMgr();
     if (!mgr)
     {
-        mgr = new PlayerbotMgr(m_session->GetPlayer());
+        mgr = new PlayerbotMgr();
         m_session->GetPlayer()->SetPlayerbotMgr(mgr);
     }
 
@@ -624,7 +680,7 @@ bool ChatHandler::HandlePlayerbotCommand(const char* args)
         }
         std::string charnameStr = charname;
 
-        if(!normalizePlayerName(charnameStr))
+        if (!normalizePlayerName(charnameStr))
             return false;
 
         uint64 guid = sObjectMgr.GetPlayerGUIDByName(charnameStr.c_str());
@@ -635,21 +691,21 @@ bool ChatHandler::HandlePlayerbotCommand(const char* args)
             return false;
         }
 
-        uint32 accountId = sObjectMgr.GetPlayerAccountIdByGUID(guid);
+        /*uint32 accountId = sObjectMgr.GetPlayerAccountIdByGUID(guid);
         if (accountId != m_session->GetAccountId()) {
             PSendSysMessage("You may only add bots from the same account.");
             SetSentErrorMessage(true);
             return false;
-        }
+        }*/
 
-        if( m_session->GetPlayer()->GetGroup() )
+        if ( m_session->GetPlayer()->GetGroup() )
         {
             GroupReference *ref = m_session->GetPlayer()->GetGroup()->GetFirstMember();
-            while( ref )
+            while ( ref )
             {
-                if(ref->getSource()->GetPlayerbotAI())
+                if (ref->getSource()->GetPlayerbotAI())
                 {
-                    if(ref->getSource()->GetPlayerbotAI()->IsInCombat())
+                    if (ref->getSource()->GetPlayerbotAI()->IsInCombat())
                         return false;
                     break;
                 }
@@ -675,7 +731,7 @@ bool ChatHandler::HandlePlayerbotCommand(const char* args)
         }
         std::string charnameStr = charname;
 
-        if(!normalizePlayerName(charnameStr))
+        if (!normalizePlayerName(charnameStr))
             return false;
 
         uint64 guid = sObjectMgr.GetPlayerGUIDByName(charnameStr.c_str());
@@ -686,21 +742,21 @@ bool ChatHandler::HandlePlayerbotCommand(const char* args)
             return false;
         }
 
-        uint32 accountId = sObjectMgr.GetPlayerAccountIdByGUID(guid);
+        /*uint32 accountId = sObjectMgr.GetPlayerAccountIdByGUID(guid);
         if (accountId != m_session->GetAccountId()) {
             PSendSysMessage("You may only add bots from the same account.");
             SetSentErrorMessage(true);
             return false;
-        }
+        }*/
 
-        if( m_session->GetPlayer()->GetGroup() )
+        if ( m_session->GetPlayer()->GetGroup() )
         {
             GroupReference *ref = m_session->GetPlayer()->GetGroup()->GetFirstMember();
-            while( ref )
+            while ( ref )
             {
-                if(ref->getSource()->GetPlayerbotAI())
+                if (ref->getSource()->GetPlayerbotAI())
                 {
-                    if(ref->getSource()->GetPlayerbotAI()->IsInCombat())
+                    if (ref->getSource()->GetPlayerbotAI()->IsInCombat())
                         return false;
                     break;
                 }
@@ -717,14 +773,14 @@ bool ChatHandler::HandlePlayerbotCommand(const char* args)
     }
     else if (cmdStr == "addall" || cmdStr == "loginall")
     {
-        if( m_session->GetPlayer()->GetGroup() )
+        if ( m_session->GetPlayer()->GetGroup() )
         {
             GroupReference *ref = m_session->GetPlayer()->GetGroup()->GetFirstMember();
-            while( ref )
+            while ( ref )
             {
-                if(ref->getSource()->GetPlayerbotAI())
+                if (ref->getSource()->GetPlayerbotAI())
                 {
-                    if(ref->getSource()->GetPlayerbotAI()->IsInCombat())
+                    if (ref->getSource()->GetPlayerbotAI()->IsInCombat())
                         return false;
                     break;
                 }
@@ -733,9 +789,9 @@ bool ChatHandler::HandlePlayerbotCommand(const char* args)
         }
         bool one = false;
         AccountInfos m_AccountInfos = m_session->GetPlayer()->GetAccountInfos();
-        for(AccountInfos::iterator itr = m_AccountInfos.begin(); itr != m_AccountInfos.end(); ++itr)
+        for (AccountInfos::iterator itr = m_AccountInfos.begin(); itr != m_AccountInfos.end(); ++itr)
         {
-            if(itr->second.Guid != m_session->GetPlayer()->GetGUID())
+            if (itr->second.Guid != m_session->GetPlayer()->GetGUID())
             {
                 if (!mgr->GetPlayerBot(itr->second.Guid))
                 {
@@ -744,19 +800,19 @@ bool ChatHandler::HandlePlayerbotCommand(const char* args)
                 }
             }
         }
-        if(one)
+        if (one)
             PSendSysMessage("All Bots added successfully.");
     }
     else if (cmdStr == "removeall" || cmdStr == "logoutall")
     {
-        if( m_session->GetPlayer()->GetGroup() )
+        if ( m_session->GetPlayer()->GetGroup() )
         {
             GroupReference *ref = m_session->GetPlayer()->GetGroup()->GetFirstMember();
-            while( ref )
+            while ( ref )
             {
-                if(ref->getSource()->GetPlayerbotAI())
+                if (ref->getSource()->GetPlayerbotAI())
                 {
-                    if(ref->getSource()->GetPlayerbotAI()->IsInCombat())
+                    if (ref->getSource()->GetPlayerbotAI()->IsInCombat())
                         return false;
                     break;
                 }
@@ -765,9 +821,9 @@ bool ChatHandler::HandlePlayerbotCommand(const char* args)
         }
         bool one = false;
         AccountInfos m_AccountInfos = m_session->GetPlayer()->GetAccountInfos();
-        for(AccountInfos::iterator itr = m_AccountInfos.begin(); itr != m_AccountInfos.end(); ++itr)
+        for (AccountInfos::iterator itr = m_AccountInfos.begin(); itr != m_AccountInfos.end(); ++itr)
         {
-            if(itr->second.Guid != m_session->GetPlayer()->GetGUID())
+            if (itr->second.Guid != m_session->GetPlayer()->GetGUID())
             {
                 if (mgr->GetPlayerBot(itr->second.Guid))
                 {
@@ -776,7 +832,7 @@ bool ChatHandler::HandlePlayerbotCommand(const char* args)
                 }
             }
         }
-        if(one)
+        if (one)
             PSendSysMessage("All Bots removed successfully.");
     }
     else if (cmdStr == "co" || cmdStr == "combatorder")
@@ -790,7 +846,7 @@ bool ChatHandler::HandlePlayerbotCommand(const char* args)
         }
         std::string charnameStr = charname;
 
-        if(!normalizePlayerName(charnameStr))
+        if (!normalizePlayerName(charnameStr))
             return false;
 
         uint64 guid = sObjectMgr.GetPlayerGUIDByName(charnameStr.c_str());
@@ -803,26 +859,26 @@ bool ChatHandler::HandlePlayerbotCommand(const char* args)
 
         Unit *target = 0;
         char *orderChar = strtok( NULL, " " );
-        if( !orderChar ) {
+        if ( !orderChar ) {
             PSendSysMessage("Syntax error: .bot co <botName> <order=reset|tank|assist|heal|protect> [targetPlayer]");
             SetSentErrorMessage(true);
             return false;
         }
         std::string orderStr = orderChar;
-        if( orderStr == "protect" || orderStr == "assist" ) {
+        if ( orderStr == "protect" || orderStr == "assist" ) {
             char *targetChar = strtok( NULL, " " );
             uint64 targetGUID = m_session->GetPlayer()->GetSelection();
-            if( !targetChar && !targetGUID ) {
+            if ( !targetChar && !targetGUID ) {
                 PSendSysMessage("Combat orders protect and assist expect a target either by selection or by giving target player in command string!");
                 SetSentErrorMessage(true);
                 return false;
             }
             std::string targetStr = targetChar;
-            if( targetChar ) {
+            if ( targetChar ) {
                 targetGUID = sObjectMgr.GetPlayerGUIDByName( targetStr.c_str() );
             }
             target = ObjectAccessor::GetUnit( *m_session->GetPlayer(), targetGUID );
-            if( !target ) {
+            if ( !target ) {
                 PSendSysMessage("Invalid target for combat order protect or assist!");
                 SetSentErrorMessage(true);
                 return false;
@@ -854,15 +910,15 @@ bool ChatHandler::HandleGMBotCommand(const char* args)
         return false;
 
     AccountInfos m_AccountInfos = pPlayer->GetAccountInfos();
-    for(AccountInfos::iterator itr = m_AccountInfos.begin(); itr != m_AccountInfos.end(); ++itr)
+    for (AccountInfos::iterator itr = m_AccountInfos.begin(); itr != m_AccountInfos.end(); ++itr)
     {
-        if(itr->second.Guid != pPlayer->GetGUID())
+        if (itr->second.Guid != pPlayer->GetGUID())
         {
             Unit* target = ObjectAccessor::GetUnit( *m_session->GetPlayer(), itr->second.Guid );
-            if( target && target->IsInWorld() )
+            if ( target && target->IsInWorld() )
             {
                 Player* plTarget = (Player*)target;
-                if(plTarget && plTarget->GetPlayerbotAI())
+                if (plTarget && plTarget->GetPlayerbotAI())
                 {
                     plTarget->GetPlayerbotAI()->GmStartup();
                 }
@@ -923,7 +979,7 @@ bool ChatHandler::HandleChangeTargetCommand(const char* args)
     }
     std::string charnameStr = charname;
 
-    if(!normalizePlayerName(charnameStr))
+    if (!normalizePlayerName(charnameStr))
         return false;
 
     uint64 guid = sObjectMgr.GetPlayerGUIDByName(charnameStr.c_str());
@@ -935,7 +991,7 @@ bool ChatHandler::HandleChangeTargetCommand(const char* args)
     }
 
     Unit* target = ObjectAccessor::GetUnit( *m_session->GetPlayer(), guid );
-    if( !target )
+    if ( !target )
     {
         PSendSysMessage("Target does not exist");
         SetSentErrorMessage(true);
@@ -946,14 +1002,14 @@ bool ChatHandler::HandleChangeTargetCommand(const char* args)
     {
         PSendSysMessage("Target is not in world");
         SetSentErrorMessage(true);
-        return false;        
+        return false;
     }
 
     if ( target->GetTypeId() != TYPEID_PLAYER )
     {
         PSendSysMessage("Target is not a player");
         SetSentErrorMessage(true);
-        return false;   
+        return false;
     }
 
     //serverwide
@@ -965,14 +1021,14 @@ void Creature::LoadBotMenu(Player *pPlayer)
 {
     if (pPlayer->GetPlayerbotAI()) return;
 
-    if( pPlayer->GetGroup() )
+    if ( pPlayer->GetGroup() )
     {
         GroupReference *ref = pPlayer->GetGroup()->GetFirstMember();
-        while( ref )
+        while ( ref )
         {
-            if(ref->getSource()->GetPlayerbotAI())
+            if (ref->getSource()->GetPlayerbotAI())
             {
-                if(ref->getSource()->GetPlayerbotAI()->IsInCombat())
+                if (ref->getSource()->GetPlayerbotAI()->IsInCombat())
                     return;
                 break;
             }
@@ -981,24 +1037,24 @@ void Creature::LoadBotMenu(Player *pPlayer)
     }
 
     AccountInfos m_AccountInfos = pPlayer->GetAccountInfos();
-    for(AccountInfos::iterator itr = m_AccountInfos.begin(); itr != m_AccountInfos.end(); ++itr)
+    for (AccountInfos::iterator itr = m_AccountInfos.begin(); itr != m_AccountInfos.end(); ++itr)
     {
         uint64 guid = pPlayer->GetGUID();
         uint64 guidlo = itr->second.Guid;
         std::string name = itr->second.Name;
         std::string word = "";
 
-        if( (guid == 0) || (guid == guidlo) )
+        if ( (guid == 0) || (guid == guidlo) )
         {
             //not found or himself
         }
         else
         {
-            if(sConfig.GetBoolDefault("PlayerbotAI.DisableBots", false)) return;
+            if (sConfig.GetBoolDefault("PlayerbotAI.DisableBots", false)) return;
             // create the manager if it doesn't already exist
             if (! pPlayer->GetPlayerbotMgr())
-                pPlayer->SetPlayerbotMgr(new PlayerbotMgr(pPlayer));
-            if(pPlayer->GetPlayerbotMgr()->GetPlayerBot(guidlo) == NULL) // add (if not already in game)
+                pPlayer->SetPlayerbotMgr(new PlayerbotMgr());
+            if (pPlayer->GetPlayerbotMgr()->GetPlayerBot(guidlo) == NULL) // add (if not already in game)
             {
                 //word += "Recruit ";
                 word += "Recruter : ";
@@ -1006,7 +1062,7 @@ void Creature::LoadBotMenu(Player *pPlayer)
                 //word += " as a Bot.";
                 pPlayer->PlayerTalkClass->GetGossipMenu().AddMenuItem((uint8)9, word, guidlo, guidlo, word, false);
             }
-            else if(pPlayer->GetPlayerbotMgr()->GetPlayerBot(guidlo) != NULL) // remove (if in game)
+            else if (pPlayer->GetPlayerbotMgr()->GetPlayerBot(guidlo) != NULL) // remove (if in game)
             {
                 //word += "Dismiss ";
                 word += "Abandonner : ";
@@ -1016,59 +1072,17 @@ void Creature::LoadBotMenu(Player *pPlayer)
             }
         }
     }
-    /*
-    uint64 guid = pPlayer->GetGUID();
-    uint32 accountId = sObjectMgr.GetPlayerAccountIdByGUID(guid);
-    QueryResult *result = CharacterDatabase.PQuery("SELECT guid, name FROM characters WHERE account='%d'",accountId);
-    do
-    {
-        Field *fields = result->Fetch();
-        uint64 guidlo = fields[0].GetUInt64();
-        std::string name = fields[1].GetString();
-        std::string word = "";
-
-        if( (guid == 0) || (guid == guidlo) )
-        {
-            //not found or himself
-        }
-        else
-        {
-            if(sConfig.GetBoolDefault("PlayerbotAI.DisableBots", false)) return;
-            // create the manager if it doesn't already exist
-            if (! pPlayer->GetPlayerbotMgr())
-                pPlayer->SetPlayerbotMgr(new PlayerbotMgr(pPlayer));
-            if(pPlayer->GetPlayerbotMgr()->GetPlayerBot(guidlo) == NULL) // add (if not already in game)
-            {
-                //word += "Recruit ";
-                word += "Recruter : ";
-                word += name;
-                //word += " as a Bot.";
-                pPlayer->PlayerTalkClass->GetGossipMenu().AddMenuItem((uint8)9, word, guidlo, guidlo, word, false);
-            }
-            else if(pPlayer->GetPlayerbotMgr()->GetPlayerBot(guidlo) != NULL) // remove (if in game)
-            {
-                //word += "Dismiss ";
-                word += "Abandonner : ";
-                word += name;
-                //word += " from duty.";
-                pPlayer->PlayerTalkClass->GetGossipMenu().AddMenuItem((uint8)0, word, guidlo, guidlo, word, false);
-            }
-        }
-    }
-    while (result->NextRow());
-    delete result;
-    */
 }
 
 bool Creature::isBotGiver()
 {
     CreatureInfo const* crI = GetCreatureInfo();
-    if(!crI)
+    if (!crI)
         return false;
 
     std::string subname = crI->SubName;
-    
-    if( subname == "BotGiver" )
+
+    if ( subname == "BotGiver" )
         return true;
     return false;
 }

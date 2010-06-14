@@ -14,7 +14,7 @@ Camera::Camera(Player* pl) : m_owner(*pl), m_source(pl)
 Camera::~Camera()
 {
     // view of camera should be already reseted to owner (RemoveFromWorld -> Event_RemovedFromWorld -> ResetView)
-    ASSERT(m_source == &m_owner);	
+    ASSERT(m_source == &m_owner);    
 
     // for symmetry with constructor and way to make viewpoint's list empty
     m_source->getViewPoint().Detach(this);

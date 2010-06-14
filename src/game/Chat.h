@@ -231,7 +231,7 @@ class ChatHandler
         bool HandleLearnAllMyClassCommand(const char* args);
         bool HandleLearnAllMyPetTalentsCommand(const char* args);
         bool HandleLearnAllMySpellsCommand(const char* args);
-		bool HandleLearnAllMyLevelCommand(const char* args);
+        bool HandleLearnAllMyLevelCommand(const char* args);
         bool HandleLearnAllMyTalentsCommand(const char* args);
 
         bool HandleListAurasCommand(const char * args);
@@ -536,7 +536,7 @@ class ChatHandler
         bool HandleChangeTargetCommand(const char* args);
         bool HandleSaveTargetCommand(const char* args);
         bool HandleRestaureTargetCommand(const char* args);
-		
+        
         // Jail by WarHead
         bool HandleJailCommand(const char* args);
         bool HandleJailInfoCommand(const char* args);

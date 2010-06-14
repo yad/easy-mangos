@@ -15,9 +15,9 @@ enum
 class MANGOS_DLL_SPEC PlayerbotDeathKnightAI : PlayerbotClassAI
 {
     public:
-        PlayerbotDeathKnightAI(Player* const master, Player* const bot, PlayerbotAI* const ai);
+        PlayerbotDeathKnightAI(Player* const bot, PlayerbotAI* const ai);
         virtual ~PlayerbotDeathKnightAI();
-        void InitSpells(PlayerbotAI* const ai);        
+        void InitSpells(PlayerbotAI* const ai);
 
         // all combat actions go here
         void DoNextCombatManeuver(Unit*);
@@ -29,7 +29,7 @@ class MANGOS_DLL_SPEC PlayerbotDeathKnightAI : PlayerbotClassAI
         //void BuffPlayer(Player *target);
 
     private:
-        
+
         // Unholy
         uint32 BONE_SHIELD, PLAGUE_STRIKE, DEATH_GRIP, DEATH_COIL, DEATH_STRIKE, UNHOLY_BLIGHT, SCOURGE_STRIKE, DEATH_AND_DECAY, UNHOLY_PRESENCE, RAISE_DEAD, ARMY_OF_THE_DEAD, SUMMON_GARGOYLE, ANTI_MAGIC_SHELL, ANTI_MAGIC_ZONE, GHOUL_FRENZY, CORPSE_EXPLOSION;
 

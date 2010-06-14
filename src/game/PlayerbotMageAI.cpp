@@ -3,7 +3,7 @@
 
 class PlayerbotAI;
 
-PlayerbotMageAI::PlayerbotMageAI(Player* const master, Player* const bot, PlayerbotAI* const ai): PlayerbotClassAI(master, bot, ai)
+PlayerbotMageAI::PlayerbotMageAI(Player* const bot, PlayerbotAI* const ai): PlayerbotClassAI(bot, ai)
 {
     InitSpells(ai);
 }
@@ -50,7 +50,7 @@ void PlayerbotMageAI::InitSpells(PlayerbotAI* const ai)
     CONE_OF_COLD            = ai->getSpellId("cone of cold");
     ICE_BARRIER             = ai->getSpellId("ice barrier");
     SUMMON_WATER_ELEMENTAL  = ai->getSpellId("summon water elemental");
-    FROST_WARD              = ai->getSpellId("frost ward"); 
+    FROST_WARD              = ai->getSpellId("frost ward");
     ICE_LANCE               = ai->getSpellId("ice lance");
     FROST_ARMOR             = ai->getSpellId("frost armor");
     ICE_ARMOR               = ai->getSpellId("ice armor");
@@ -73,6 +73,10 @@ void PlayerbotMageAI::DoNextCombatManeuver(Unit *pTarget)
     if (!ai)
         return;
 
+    Player* pMaster = ai->GetMaster();
+    if (!pMaster)
+        return;
+
     switch (ai->GetScenarioType())
     {
         case PlayerbotAI::SCENARIO_DUEL:
@@ -83,7 +87,7 @@ void PlayerbotMageAI::DoNextCombatManeuver(Unit *pTarget)
 
     // ------- Non Duel combat ----------
 
-    //ai->SetMovementOrder( PlayerbotAI::MOVEMENT_FOLLOW, GetMaster() ); // dont want to melee mob
+    //ai->SetMovementOrder( PlayerbotAI::MOVEMENT_FOLLOW, pMaster ); // dont want to melee mob
 
     // Damage Spells (primitive example)
     ai->SetInFront( pTarget );
@@ -344,14 +348,21 @@ void PlayerbotMageAI::DoNonCombatActions()
     if (!m_bot)
         return;
 
-    SpellSequence = SPELL_FROST;
     PlayerbotAI* ai = GetAI();
+    if (!ai)
+        return;
+
+    Player* pMaster = ai->GetMaster();
+    if (!pMaster)
+        return;
+
+    SpellSequence = SPELL_FROST;
 
     // buff master
     if (DALARAN_BRILLIANCE > 0)
-        (!GetMaster()->HasAura(DALARAN_BRILLIANCE, EFFECT_INDEX_0) && ai->GetManaPercent() >= 81 && ai->CastSpell (DALARAN_BRILLIANCE, *GetMaster()));
+        (!pMaster->HasAura(DALARAN_BRILLIANCE, EFFECT_INDEX_0) && ai->GetManaPercent() >= 81 && ai->CastSpell (DALARAN_BRILLIANCE, *pMaster));
     else if (ARCANE_BRILLIANCE > 0)
-        (!GetMaster()->HasAura(ARCANE_BRILLIANCE, EFFECT_INDEX_0) && !GetMaster()->HasAura(DALARAN_BRILLIANCE, EFFECT_INDEX_0) && ai->GetManaPercent() >= 97 && ai->CastSpell (ARCANE_BRILLIANCE, *GetMaster()));
+        (!pMaster->HasAura(ARCANE_BRILLIANCE, EFFECT_INDEX_0) && !pMaster->HasAura(DALARAN_BRILLIANCE, EFFECT_INDEX_0) && ai->GetManaPercent() >= 97 && ai->CastSpell (ARCANE_BRILLIANCE, *pMaster));
 
     // buff myself
     if (DALARAN_INTELLECT > 0)
@@ -369,13 +380,13 @@ void PlayerbotMageAI::DoNonCombatActions()
         (!m_bot->HasAura(FROST_ARMOR, EFFECT_INDEX_0) && !m_bot->HasAura(MOLTEN_ARMOR, EFFECT_INDEX_0) && !m_bot->HasAura(MAGE_ARMOR, EFFECT_INDEX_0) && !m_bot->HasAura(ICE_ARMOR, EFFECT_INDEX_0) && ai->GetManaPercent() >= 34 && ai->CastSpell (FROST_ARMOR, *m_bot));
 
     // buff master's group
-    if (GetMaster()->GetGroup())
+    if (pMaster->GetGroup())
     {
-        Group::MemberSlotList const& groupSlot = GetMaster()->GetGroup()->GetMemberSlots();
+        Group::MemberSlotList const& groupSlot = pMaster->GetGroup()->GetMemberSlots();
         for (Group::member_citerator itr = groupSlot.begin(); itr != groupSlot.end(); itr++)
         {
             Player *tPlayer = sObjectMgr.GetPlayer(uint64 (itr->guid));
-            if( !tPlayer || !tPlayer->isAlive() )
+            if ( !tPlayer || !tPlayer->isAlive() )
                 continue;
             // buff
             (!tPlayer->HasAura(ARCANE_INTELLECT,EFFECT_INDEX_0) && !tPlayer->HasAura(DALARAN_BRILLIANCE, EFFECT_INDEX_0) && !tPlayer->HasAura(ARCANE_BRILLIANCE, EFFECT_INDEX_0) && !tPlayer->HasAura(DALARAN_INTELLECT,EFFECT_INDEX_0) && ai->GetManaPercent() >= 37 && ai->CastSpell (ARCANE_INTELLECT, *tPlayer));

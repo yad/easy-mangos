@@ -50,7 +50,7 @@ class MANGOS_DLL_SPEC PlayerbotAI
         enum CombatTargetType
         {
             TARGET_NORMAL       = 0x00,
-            TARGET_THREATEN     = 0x01     
+            TARGET_THREATEN     = 0x01
         };
 
         enum BotState
@@ -62,7 +62,7 @@ class MANGOS_DLL_SPEC PlayerbotAI
             BOTSTATE_LOOTING        // looting mode, used just after combat
         };
 
-        enum MovementOrderType 
+        enum MovementOrderType
         {
             MOVEMENT_NONE        = 0x00,
             MOVEMENT_FOLLOW        = 0x01,
@@ -200,13 +200,14 @@ class MANGOS_DLL_SPEC PlayerbotAI
         Player *GetPlayerBot() const {return m_bot;}
         Player *GetPlayer() const {return m_bot;}
         Player *GetMaster() const;
+        void SetMaster(Player* pl);
 
         BotState GetState() { return m_botState; };
         void SetState( BotState state );
         void SetQuestNeedItems();
         void SendQuestItemList( Player& player );
         void SendOrders( Player& player );
-        bool FollowCheckTeleport( WorldObject &obj );
+        bool FollowCheckTeleport( WorldObject *obj );
         bool GmStartup();
         void DoLoot();
 
@@ -288,7 +289,7 @@ class MANGOS_DLL_SPEC PlayerbotAI
 
         Unit *m_targetCombat;    // current combat target
         Unit *m_targetAssist;    // get new target by checking attacker list of assisted player
-        Unit *m_targetProtect;    // check 
+        Unit *m_targetProtect;    // check
 
         Unit *m_followTarget;    // whom to follow in non combat situation?
 };

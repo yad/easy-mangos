@@ -15,7 +15,7 @@ typedef UNORDERED_MAP<uint64, Player*> PlayerBotMap;
 class MANGOS_DLL_SPEC PlayerbotMgr
 {
     public:
-        PlayerbotMgr(Player* const master);
+        PlayerbotMgr();
         virtual ~PlayerbotMgr();
 
         // This is called from Unit.cpp and is called every second (I think)
@@ -33,12 +33,14 @@ class MANGOS_DLL_SPEC PlayerbotMgr
         void LogoutPlayerBot(uint64 guid);
         Player* GetPlayerBot (uint64 guid) const;
         Player* GetMaster() const { return m_master; };
+        void SetMaster(Player* pl) { m_master = pl; };
         PlayerBotMap::const_iterator GetPlayerBotsBegin() const { return m_playerBots.begin(); }
         PlayerBotMap::const_iterator GetPlayerBotsEnd()   const { return m_playerBots.end();   }
 
         void LogoutAllBots();
         void RemoveAllBotsFromGroup();
         void OnBotLogin(Player * const bot);
+        void OnBotInvite(Player * const bot);
         void Stay();
 
     public:
@@ -48,8 +50,8 @@ class MANGOS_DLL_SPEC PlayerbotMgr
         float m_confFollowDistance[2];
 
     private:
-        Player* const m_master;
-        PlayerBotMap m_playerBots;     
+        Player* m_master;
+        PlayerBotMap m_playerBots;
 };
 
 #endif

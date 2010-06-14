@@ -329,7 +329,7 @@ void WorldSession::HandleGossipSelectOptionOpcode( WorldPacket & recv_data )
         if(pCreature->isBotGiver() && !_player->GetPlayerbotAI())
         {
             if (!_player->GetPlayerbotMgr())
-                _player->SetPlayerbotMgr(new PlayerbotMgr(_player));
+                _player->SetPlayerbotMgr(new PlayerbotMgr());
             WorldSession * m_session = _player->GetSession();
             uint64 guidlo = _player->PlayerTalkClass->GossipOptionSender(gossipListId);
             if(_player->GetPlayerbotMgr()->GetPlayerBot(guidlo) != NULL)

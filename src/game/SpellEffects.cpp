@@ -1508,7 +1508,7 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     if (!m_caster || !m_caster->isAlive())
                         return;
 
-                    ((Player*)m_originalCaster->GetCharmer())->KilledMonsterCredit(m_caster->GetEntry(), m_caster->GetGUID());                    					
+                    ((Player*)m_originalCaster->GetCharmer())->KilledMonsterCredit(m_caster->GetEntry(), m_caster->GetGUID());                                        
                         
                 }
                 case 51866:                                 // Kick Nass
@@ -4077,11 +4077,11 @@ void Spell::EffectSummonPossessed(SpellEffectIndex eff_idx)
     TempSummonType summonType = (duration == 0) ? TEMPSUMMON_TIMED_OR_CORPSE_DESPAWN : TEMPSUMMON_TIMED_DESPAWN;
     Creature *spawnCreature = m_caster->SummonCreature(creature_entry, px, py, pz, m_caster->GetOrientation(), summonType, duration);
  
-    Unit* caster = GetAffectiveCaster();	 
-    Aura* aur = CreateAura(m_spellInfo, eff_idx, &m_currentBasePoints[eff_idx], spawnCreature, caster, m_CastItem);	 
+    Unit* caster = GetAffectiveCaster();     
+    Aura* aur = CreateAura(m_spellInfo, eff_idx, &m_currentBasePoints[eff_idx], spawnCreature, caster, m_CastItem);     
     Modifier* modifier=aur->GetModifier();
     aur->SetModifier(SPELL_AURA_MOD_POSSESS,modifier->m_amount,modifier->periodictime,modifier->m_miscvalue);
-    spawnCreature->AddAura(aur);	 
+    spawnCreature->AddAura(aur);     
 } 
 
 void Spell::DoSummon(SpellEffectIndex eff_idx)
@@ -5268,7 +5268,7 @@ void Spell::EffectWeaponDmg(SpellEffectIndex eff_idx)
             {
                 Item* weapon = ((Player*)m_caster)->GetWeaponForAttack(m_attackType,true,true);
                 if (weapon && weapon->GetProto()->SubClass == ITEM_SUBCLASS_WEAPON_DAGGER)
-                    totalDamagePercentMod *= 1.44f;         // 144% with dagger		
+                    totalDamagePercentMod *= 1.44f;         // 144% with dagger        
             }
             break;
         }
@@ -6101,12 +6101,12 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     if(m_caster->GetCharmer()->GetTypeId() != TYPEID_PLAYER)
                         return;
 
-                    Player *player = ((Player*)m_caster->GetCharmer());					 
+                    Player *player = ((Player*)m_caster->GetCharmer());                     
                     if(eye->isInCombat())
                         return;
 
                     eye->GetMap()->CreatureRelocation(eye, player->GetPositionX(), player->GetPositionY(), player->GetPositionZ(), player->GetOrientation());
-                    eye->RemoveAurasDueToSpellByCancel(51852);		
+                    eye->RemoveAurasDueToSpellByCancel(51852);        
                 }
                 case 52751:                                 // Death Gate
                 {
@@ -6308,7 +6308,7 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     m_caster->CastSpell(unitTarget, 72588, true);
                     return;
                 }
-                case 62678:									// Summon Allies of Nature
+                case 62678:                                    // Summon Allies of Nature
                 {
                     uint32 spellId = 0;
                     switch(urand(0,2))
@@ -6320,7 +6320,7 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     m_caster->CastSpell(m_caster, spellId, true);
                     return;
                 }
-                case 62688:									// Summon Wave - 10 Mob
+                case 62688:                                    // Summon Wave - 10 Mob
                 {
                     for(int8 i = 0; i < 12; i++)
                         m_caster->CastSpell(m_caster, 62687, true);

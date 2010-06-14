@@ -14,9 +14,9 @@ enum
 class MANGOS_DLL_SPEC PlayerbotHunterAI : PlayerbotClassAI
 {
     public:
-        PlayerbotHunterAI(Player* const master, Player* const bot, PlayerbotAI* const ai);
+        PlayerbotHunterAI(Player* const bot, PlayerbotAI* const ai);
         virtual ~PlayerbotHunterAI();
-        void InitSpells(PlayerbotAI* const ai);        
+        void InitSpells(PlayerbotAI* const ai);
         bool HasPet(Player* bot);
 
         // all combat actions go here

@@ -9138,8 +9138,8 @@ void Aura::HandlePhase(bool apply, bool Real)
           
         if(m_target->GetCharm() && !apply)//remove other auras from charm on unapply
         {
-            Creature * creat=((Creature*)m_target->GetCharm());						
-            creat->RemoveAurasDueToSpellByCancel(GetId());			
+            Creature * creat=((Creature*)m_target->GetCharm());                        
+            creat->RemoveAurasDueToSpellByCancel(GetId());            
         }
     }
     else

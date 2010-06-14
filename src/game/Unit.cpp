@@ -4658,7 +4658,7 @@ void Unit::RemoveAurasDueToSpellByCancel(uint32 spellId)
             RemoveAura(iter, AURA_REMOVE_BY_CANCEL);
         else
             ++iter;
-    }	
+    }    
 }
 
 void Unit::RemoveAurasWithDispelType( DispelType type )
@@ -6734,7 +6734,7 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                     target = this;
                     RemoveAurasDueToSpell(57934);
                     break;
-                }			
+                }            
 
             }
             // Cut to the Chase
@@ -9892,7 +9892,7 @@ uint32 Unit::SpellDamageBonusDone(Unit *pVictim, SpellEntry const *spellProto, u
             {
                 if (pVictim->GetHealth() * 100 / pVictim->GetMaxHealth() <= 25)
                     DoneTotalMod *= 4;
-           	}
+            }
             break;
         }
         case SPELLFAMILY_PRIEST:

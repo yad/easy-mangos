@@ -801,9 +801,9 @@ void AchievementMgr::UpdateAchievementCriteria(AchievementCriteriaTypes type, ui
                     // some hardcoded requirements
                     switch(achievementCriteria->referredAchievement)
                     {
-                        case 214:							// EY, win under 6 minutes
-                        case 226:							// AV, win under 6 minutes
-                        case 159:							// AB, win under 6 minutes
+                        case 214:                            // EY, win under 6 minutes
+                        case 226:                            // AV, win under 6 minutes
+                        case 159:                            // AB, win under 6 minutes
                         {
                             // set 8 minutes because there is 2 minutes long preparation
                             if(GetPlayer()->GetBattleGround()->GetStartTime() > (8 * MINUTE * IN_MILLISECONDS))
@@ -811,7 +811,7 @@ void AchievementMgr::UpdateAchievementCriteria(AchievementCriteriaTypes type, ui
                             
                             break;
                         }
-                        case 201:							// WS, win under 7 minutes
+                        case 201:                            // WS, win under 7 minutes
                         {
                             // set 9 minutes because there is 2 minutes long preparation
                             if(GetPlayer()->GetBattleGround()->GetStartTime() > (9 * MINUTE * IN_MILLISECONDS))
@@ -1468,7 +1468,7 @@ void AchievementMgr::UpdateAchievementCriteria(AchievementCriteriaTypes type, ui
                 break;
             case ACHIEVEMENT_CRITERIA_TYPE_HONORABLE_KILL:
             case ACHIEVEMENT_CRITERIA_TYPE_GET_KILLING_BLOWS:
-            {	
+            {    
                 BattleGround* bg = GetPlayer()->GetBattleGround();
                 if (!bg || !miscvalue1 || GetPlayer()->GetMapId() != achievementCriteria->healing_done.mapid)
                     continue;
@@ -1476,13 +1476,13 @@ void AchievementMgr::UpdateAchievementCriteria(AchievementCriteriaTypes type, ui
                 // some hardcoded requirements
                 switch(achievementCriteria->referredAchievement)
                 {
-                    case 231:					// Wrecking Ball
+                    case 231:                    // Wrecking Ball
                     {
                         if(bg->GetPlayerScore(GetPlayer(),SCORE_DEATHS) != 0)
                             continue;
                         break;
                     }
-                    case 233:					// Bloodthirsty Berserker
+                    case 233:                    // Bloodthirsty Berserker
                     {
                         if(bg->GetTypeID() != BATTLEGROUND_EY)
                             continue;

@@ -8,7 +8,7 @@ PlayerAIMgr::PlayerAIMgr(Player* const player) : m_player(player)
 {
 }
 
-PlayerAIMgr::~PlayerAIMgr() 
+PlayerAIMgr::~PlayerAIMgr()
 {
 }
 
@@ -25,15 +25,15 @@ bool ChatHandler::HandlePlayerAI(const char* args)
     if (strncmp(args, "on", 3) == 0)
     {
         PlayerAI* ai = chr->GetPlayerAI();
-        if(!ai)
+        if (!ai)
         {
             PlayerAI* ai = new PlayerAI(chr);
-            if(ai)
+            if (ai)
                 chr->SetPlayerAI(ai);
         }
 
         ai = chr->GetPlayerAI();
-        if(ai)
+        if (ai)
         {
             ai->SetEnable(true);
             SendSysMessage("PlayerAI Mode ON");
@@ -43,7 +43,7 @@ bool ChatHandler::HandlePlayerAI(const char* args)
     else if (strncmp(args, "off", 4) == 0)
     {
         PlayerAI* ai = chr->GetPlayerAI();
-        if(ai)
+        if (ai)
         {
             ai->SetEnable(false);
             SendSysMessage("PlayerAI Mode OFF");

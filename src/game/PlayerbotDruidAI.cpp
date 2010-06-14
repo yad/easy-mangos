@@ -8,7 +8,7 @@
 
 class PlayerbotAI;
 
-PlayerbotDruidAI::PlayerbotDruidAI(Player* const master, Player* const bot, PlayerbotAI* const ai): PlayerbotClassAI(master, bot, ai)
+PlayerbotDruidAI::PlayerbotDruidAI(Player* const bot, PlayerbotAI* const ai): PlayerbotClassAI(bot, ai)
 {
     InitSpells(ai);
 }
@@ -74,6 +74,13 @@ void PlayerbotDruidAI::InitSpells(PlayerbotAI* const ai)
 void PlayerbotDruidAI::HealTarget(Unit &target, uint8 hp)
 {
     PlayerbotAI* ai = GetAI();
+    if (!ai)
+        return;
+
+    Player* pMaster = ai->GetMaster();
+    if (!pMaster)
+        return;
+
     Player *m_bot = GetPlayerBot();
 
     if (hp < 70 && REJUVENATION > 0 && !target.HasAura(REJUVENATION, EFFECT_INDEX_0) && !target.HasAura(REGROWTH, EFFECT_INDEX_0) && ai->GetManaPercent() >=21)
@@ -104,6 +111,10 @@ void PlayerbotDruidAI::DoNextCombatManeuver(Unit *pTarget)
     if (!ai)
         return;
 
+    Player* pMaster = ai->GetMaster();
+    if (!pMaster)
+        return;
+
     switch (ai->GetScenarioType())
     {
         case PlayerbotAI::SCENARIO_DUEL:
@@ -111,13 +122,13 @@ void PlayerbotDruidAI::DoNextCombatManeuver(Unit *pTarget)
             return;
     }
 
-    uint32 masterHP = GetMaster()->GetHealth()*100 / GetMaster()->GetMaxHealth();
+    uint32 masterHP = pMaster->GetHealth()*100 / pMaster->GetMaxHealth();
 
     ai->SetInFront( pTarget );
     Player *m_bot = GetPlayerBot();
     Unit* pVictim = pTarget->getVictim();
 
-    if (pVictim && ai->GetHealthPercent() >= 40 && GetMaster()->GetHealth() >= GetMaster()->GetMaxHealth()*0.4)
+    if (pVictim && ai->GetHealthPercent() >= 40 && pMaster->GetHealth() >= pMaster->GetMaxHealth()*0.4)
     {
         if (pVictim == m_bot)
             SpellSequence = DruidTank;
@@ -127,7 +138,7 @@ void PlayerbotDruidAI::DoNextCombatManeuver(Unit *pTarget)
         if (pVictim != m_bot)
             SpellSequence = DruidSpell;
     }
-    else if (ai->GetHealthPercent() <= 40 || GetMaster()->GetHealth() <= GetMaster()->GetMaxHealth()*0.4)
+    else if (ai->GetHealthPercent() <= 40 || pMaster->GetHealth() <= pMaster->GetMaxHealth()*0.4)
         SpellSequence = DruidHeal;
     else
         SpellSequence = DruidCombat;
@@ -136,13 +147,13 @@ void PlayerbotDruidAI::DoNextCombatManeuver(Unit *pTarget)
     {
         case DruidTank: // Its now a tank druid!
 
-            if( !m_bot->HasInArc(M_PI_F, pTarget))
+            if ( !m_bot->HasInArc(M_PI_F, pTarget))
             {
                 m_bot->SetInFront(pTarget);
                 if (pVictim)
                     pVictim->Attack(pTarget, true);
             }
-            if(m_bot->HasAura(CAT_FORM, EFFECT_INDEX_0))
+            if (m_bot->HasAura(CAT_FORM, EFFECT_INDEX_0))
             {
                 m_bot->RemoveAurasDueToSpell(768);
             }
@@ -284,22 +295,22 @@ void PlayerbotDruidAI::DoNextCombatManeuver(Unit *pTarget)
             break;
 
         case DruidSpell:
-            if(m_bot->HasAura(CAT_FORM, EFFECT_INDEX_0))
+            if (m_bot->HasAura(CAT_FORM, EFFECT_INDEX_0))
             {
                 m_bot->RemoveAurasDueToSpell(768);
                 break;
             }
-            if(m_bot->HasAura(BEAR_FORM, EFFECT_INDEX_0))
+            if (m_bot->HasAura(BEAR_FORM, EFFECT_INDEX_0))
             {
                 m_bot->RemoveAurasDueToSpell(5487);
                 break;
             }
-            if(m_bot->HasAura(DIRE_BEAR_FORM, EFFECT_INDEX_0))
+            if (m_bot->HasAura(DIRE_BEAR_FORM, EFFECT_INDEX_0))
             {
                 m_bot->RemoveAurasDueToSpell(9634);
                 break;
             }
-            if(m_bot->HasAura(MOONKIN_FORM, EFFECT_INDEX_0))
+            if (m_bot->HasAura(MOONKIN_FORM, EFFECT_INDEX_0))
             {
                 m_bot->RemoveAurasDueToSpell(24858);
                 break;
@@ -390,22 +401,22 @@ void PlayerbotDruidAI::DoNextCombatManeuver(Unit *pTarget)
             break;
 
         case DruidHeal:
-            if(m_bot->HasAura(CAT_FORM, EFFECT_INDEX_0))
+            if (m_bot->HasAura(CAT_FORM, EFFECT_INDEX_0))
             {
                 m_bot->RemoveAurasDueToSpell(768);
                 break;
             }
-            if(m_bot->HasAura(BEAR_FORM, EFFECT_INDEX_0))
+            if (m_bot->HasAura(BEAR_FORM, EFFECT_INDEX_0))
             {
                 m_bot->RemoveAurasDueToSpell(5487);
                 break;
             }
-            if(m_bot->HasAura(DIRE_BEAR_FORM, EFFECT_INDEX_0))
+            if (m_bot->HasAura(DIRE_BEAR_FORM, EFFECT_INDEX_0))
             {
                 m_bot->RemoveAurasDueToSpell(9634);
                 break;
             }
-            if(m_bot->HasAura(MOONKIN_FORM, EFFECT_INDEX_0))
+            if (m_bot->HasAura(MOONKIN_FORM, EFFECT_INDEX_0))
             {
                 m_bot->RemoveAurasDueToSpell(24858);
                 break;
@@ -417,7 +428,7 @@ void PlayerbotDruidAI::DoNextCombatManeuver(Unit *pTarget)
             }
             if (masterHP <= 40)
             {
-                HealTarget (*GetMaster(), masterHP);
+                HealTarget (*pMaster, masterHP);
                 break;
             }
             else
@@ -428,23 +439,23 @@ void PlayerbotDruidAI::DoNextCombatManeuver(Unit *pTarget)
             break;
 
         case DruidCombat:
-            if( !m_bot->HasInArc(M_PI_F, pTarget))
+            if ( !m_bot->HasInArc(M_PI_F, pTarget))
             {
                 m_bot->SetInFront(pTarget);
                 if (pVictim)
                     pVictim->Attack(pTarget, true);
             }
-            if(m_bot->HasAura(BEAR_FORM, EFFECT_INDEX_0))
+            if (m_bot->HasAura(BEAR_FORM, EFFECT_INDEX_0))
             {
                 m_bot->RemoveAurasDueToSpell(5487);
                 break;
             }
-            if(m_bot->HasAura(DIRE_BEAR_FORM, EFFECT_INDEX_0))
+            if (m_bot->HasAura(DIRE_BEAR_FORM, EFFECT_INDEX_0))
             {
                 m_bot->RemoveAurasDueToSpell(9634);
                 break;
             }
-            if(m_bot->HasAura(MOONKIN_FORM, EFFECT_INDEX_0))
+            if (m_bot->HasAura(MOONKIN_FORM, EFFECT_INDEX_0))
             {
                 m_bot->RemoveAurasDueToSpell(24858);
                 break;
@@ -547,20 +558,26 @@ void PlayerbotDruidAI::DoNonCombatActions()
         return;
 
     PlayerbotAI* ai = GetAI();
+    if (!ai)
+        return;
 
-    if(m_bot->HasAura(CAT_FORM, EFFECT_INDEX_0))
+    Player* pMaster = ai->GetMaster();
+    if (!pMaster)
+        return;
+
+    if (m_bot->HasAura(CAT_FORM, EFFECT_INDEX_0))
     {
         m_bot->RemoveAurasDueToSpell(768);
     }
-    if(m_bot->HasAura(BEAR_FORM, EFFECT_INDEX_0))
+    if (m_bot->HasAura(BEAR_FORM, EFFECT_INDEX_0))
     {
         m_bot->RemoveAurasDueToSpell(5487);
     }
-    if(m_bot->HasAura(DIRE_BEAR_FORM, EFFECT_INDEX_0))
+    if (m_bot->HasAura(DIRE_BEAR_FORM, EFFECT_INDEX_0))
     {
         m_bot->RemoveAurasDueToSpell(9634);
     }
-    if(m_bot->HasAura(MOONKIN_FORM, EFFECT_INDEX_0))
+    if (m_bot->HasAura(MOONKIN_FORM, EFFECT_INDEX_0))
     {
         m_bot->RemoveAurasDueToSpell(24858);
     }
@@ -586,12 +603,12 @@ void PlayerbotDruidAI::DoNonCombatActions()
         ai->SetIgnoreUpdateTime(30);
         return;
     }
-    else if(pItem == NULL && INNERVATE>0 && !m_bot->HasAura(INNERVATE, EFFECT_INDEX_0) && ai->GetManaPercent() <= 70)
+    else if (pItem == NULL && INNERVATE>0 && !m_bot->HasAura(INNERVATE, EFFECT_INDEX_0) && ai->GetManaPercent() <= 70)
     {
         ai->CastSpell(INNERVATE, *m_bot);
         return;
     }
-    else if(pItem == NULL && MANA_REJUVENATION>0 && !m_bot->HasAura(INNERVATE, EFFECT_INDEX_0) && !m_bot->HasAura(MANA_REJUVENATION, EFFECT_INDEX_0) && ai->GetManaPercent() <= 70)
+    else if (pItem == NULL && MANA_REJUVENATION>0 && !m_bot->HasAura(INNERVATE, EFFECT_INDEX_0) && !m_bot->HasAura(MANA_REJUVENATION, EFFECT_INDEX_0) && ai->GetManaPercent() <= 70)
     {
         ai->CastSpell(MANA_REJUVENATION, *m_bot);
         return;
@@ -617,15 +634,15 @@ void PlayerbotDruidAI::DoNonCombatActions()
         ai->SetIgnoreUpdateTime(8);
         return;
     }
-    
+
     // buff and heal master's group
-    if (GetMaster()->GetGroup())
+    if (pMaster->GetGroup())
     {
-        Group::MemberSlotList const& groupSlot = GetMaster()->GetGroup()->GetMemberSlots();
+        Group::MemberSlotList const& groupSlot = pMaster->GetGroup()->GetMemberSlots();
         for (Group::member_citerator itr = groupSlot.begin(); itr != groupSlot.end(); itr++)
         {
             Player *tPlayer = sObjectMgr.GetPlayer(uint64 (itr->guid));
-            if( !tPlayer || !tPlayer->isAlive() )
+            if ( !tPlayer || !tPlayer->isAlive() )
                 continue;
 
              // buff and heal

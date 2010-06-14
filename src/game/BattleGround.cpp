@@ -663,7 +663,7 @@ void BattleGround::RewardReputationToTeam(BattleGroundTypeId bgtype, uint32 Repu
             default: faction_id = 0;
         }
 
-        if (team == TeamID)		
+        if (team == TeamID)        
             if(FactionEntry const* factionEntry = sFactionStore.LookupEntry(faction_id))
                 plr->GetReputationMgr().ModifyReputation(factionEntry, Reputation);
     }

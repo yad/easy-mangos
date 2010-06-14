@@ -46,7 +46,7 @@ BattleGroundDS::~BattleGroundDS()
 void BattleGroundDS::Update(uint32 diff)
 {
     BattleGround::Update(diff);
-	if (GetStatus() == STATUS_IN_PROGRESS)
+    if (GetStatus() == STATUS_IN_PROGRESS)
     {
         // first knockback
         if(m_uiKnockback < diff && KnockbackCheck)

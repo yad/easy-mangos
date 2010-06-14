@@ -171,10 +171,10 @@ void PlayerTaxi::InitTaxiNodesForLevel(uint32 race, uint32 chrClass, uint32 leve
         case RACE_TAUREN:   SetTaximaskNode(22); break;     // Tauren
         case RACE_GNOME:    SetTaximaskNode(6);  break;     // Gnome
         case RACE_TROLL:    SetTaximaskNode(23); break;     // Troll
-		case RACE_GOBLIN:   SetTaximaskNode(2);  break;     // Goblin
+        case RACE_GOBLIN:   SetTaximaskNode(2);  break;     // Goblin
         case RACE_BLOODELF: SetTaximaskNode(82); break;     // Blood Elf
         case RACE_DRAENEI:  SetTaximaskNode(94); break;     // Draenei
-		case RACE_FEL_ORC:  SetTaximaskNode(23); break;     // Fel Orc
+        case RACE_FEL_ORC:  SetTaximaskNode(23); break;     // Fel Orc
     }
 
     // new continent starting masks (It will be accessible only at new map)
@@ -2341,16 +2341,29 @@ void Player::Update( uint32 p_time )
         TeleportTo(m_teleport_dest, m_teleport_options);
 
     // Playerbot mod
-    if (m_playerbotAI)
+    if (m_playerbotAI && m_playerbotMgr && m_playerbotMgr->GetMaster())
+    {
+        //Say("m_playerbotAI", 0);
         m_playerbotAI->UpdateAI(p_time);
+    }
     else if (m_playerbotMgr)
+    {
+        //Say("m_playerbotMgr", 0);
         m_playerbotMgr->UpdateAI(p_time);
+        // PlayerAI mod
+        
+        if (m_playerAI)
+        {
+            //Say("m_playerAI", 0);
+            m_playerAI->UpdateAI(p_time);
+        }
+        else if (m_playerAIMgr)
+        {
+            //Say("m_playerAIMgr", 0);
+            m_playerAIMgr->UpdateAI(p_time);
+        }
+    }
 
-    // PlayerAI mod
-    if (m_playerAI)
-        m_playerAI->UpdateAI(p_time);
-    else if (m_playerAIMgr)
-        m_playerAIMgr->UpdateAI(p_time);
 }
 
 void Player::setDeathState(DeathState s)
@@ -23123,33 +23136,33 @@ void Player::ResummonPetTemporaryUnSummonedIfAny()
 
 void Player::ReceiveToken()
 {
-	if(!sWorld.getConfig(CONFIG_BOOL_PVP_TOKEN_ENABLE))
-		return;
+    if(!sWorld.getConfig(CONFIG_BOOL_PVP_TOKEN_ENABLE))
+        return;
 
-	uint8 mapRestriction = sWorld.getConfig(CONFIG_UINT32_PVP_TOKEN_RESTRICTION);
+    uint8 mapRestriction = sWorld.getConfig(CONFIG_UINT32_PVP_TOKEN_RESTRICTION);
 
-	if(mapRestriction == 1 && !InBattleGround() && !HasByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP) ||
-		mapRestriction == 2 && !HasByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP) ||
-		mapRestriction == 3 && !InBattleGround())
-		return;
+    if(mapRestriction == 1 && !InBattleGround() && !HasByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP) ||
+        mapRestriction == 2 && !HasByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP) ||
+        mapRestriction == 3 && !InBattleGround())
+        return;
 
-	uint32 itemID = sWorld.getConfig(CONFIG_UINT32_PVP_TOKEN_ITEMID);
-	uint32 itemCount = sWorld.getConfig(CONFIG_UINT32_PVP_TOKEN_ITEMCOUNT);
+    uint32 itemID = sWorld.getConfig(CONFIG_UINT32_PVP_TOKEN_ITEMID);
+    uint32 itemCount = sWorld.getConfig(CONFIG_UINT32_PVP_TOKEN_ITEMCOUNT);
 
-	ItemPosCountVec dest;
-	uint8 msg = CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, itemID, itemCount);
-	if(msg != EQUIP_ERR_OK)
-	{
-		SendEquipError(msg, NULL, NULL);
-		return;
-	}
+    ItemPosCountVec dest;
+    uint8 msg = CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, itemID, itemCount);
+    if(msg != EQUIP_ERR_OK)
+    {
+        SendEquipError(msg, NULL, NULL);
+        return;
+    }
 
-	Item *item = StoreNewItem(dest, itemID, true, Item::GenerateItemRandomPropertyId(itemID));
-	SendNewItem(item, itemCount, true, false);
+    Item *item = StoreNewItem(dest, itemID, true, Item::GenerateItemRandomPropertyId(itemID));
+    SendNewItem(item, itemCount, true, false);
 
-	ChatHandler(this).PSendSysMessage(LANG_YOU_RECEIVE_TOKEN);
+    ChatHandler(this).PSendSysMessage(LANG_YOU_RECEIVE_TOKEN);
 
-	// Note : L'objet est envoyé dans la boîte aux lettres si il n'y as pas de place dans le sac
+    // Note : L'objet est envoyé dans la boîte aux lettres si il n'y as pas de place dans le sac
 }
 
 bool Player::canSeeSpellClickOn(Creature const *c) const

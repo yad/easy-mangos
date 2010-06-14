@@ -96,6 +96,7 @@ void WorldSession::SendPacket(WorldPacket const* packet)
 {
     // Playerbot mod: send packet to bot AI
     if (GetPlayer()) {
+        ReadInvitePaquet(packet);
         if (GetPlayer()->GetPlayerbotAI())
             GetPlayer()->GetPlayerbotAI()->HandleBotOutgoingPacket(*packet);
         else if (GetPlayer()->GetPlayerbotMgr())
@@ -143,6 +144,33 @@ void WorldSession::SendPacket(WorldPacket const* packet)
 
     if (m_Socket->SendPacket (*packet) == -1)
         m_Socket->CloseSocket ();
+}
+
+bool WorldSession::ReadInvitePaquet(WorldPacket const* packet)
+{
+    if (!(m_Address == "bot"))
+        return false;
+
+    if (packet->GetOpcode() == SMSG_GROUP_INVITE)
+    {
+        if (GetPlayer()->GetGroupInvite())
+        {
+            const Group* const grp = GetPlayer()->GetGroupInvite();
+            if (!grp)
+                return false;
+
+            Player* const inviter = sObjectMgr.GetPlayer(grp->GetLeaderGUID());
+            if (!inviter)
+                return false;
+
+            if(!GetPlayer()->GetPlayerbotMgr())
+                return false;
+
+            GetPlayer()->GetPlayerbotMgr()->OnBotInvite(GetPlayer());
+            GetPlayer()->GetPlayerbotMgr()->SetMaster(inviter);
+        }
+    }
+    return true;
 }
 
 /// Add an incoming packet to the queue
@@ -203,10 +231,10 @@ bool WorldSession::Update(uint32 /*diff*/)
                     }
                     // lag can cause STATUS_LOGGEDIN opcodes to arrive after the player started a transfer
 
-					// playerbot mod
-					if (_player && _player->GetPlayerbotMgr())
-						_player->GetPlayerbotMgr()->HandleMasterIncomingPacket(*packet);
-					// playerbot mod end
+                    // playerbot mod
+                    if (_player && _player->GetPlayerbotMgr())
+                        _player->GetPlayerbotMgr()->HandleMasterIncomingPacket(*packet);
+                    // playerbot mod end
                     break;
                 case STATUS_LOGGEDIN_OR_RECENTLY_LOGGEDOUT:
                     if(!_player && !m_playerRecentlyLogout)
@@ -435,7 +463,7 @@ void WorldSession::LogoutPlayer(bool Save)
         ///- Reset the online field in the account table
         // no point resetting online in character table here as Player::SaveToDB() will set it to 1 since player has not been removed from world at this stage
         // No SQL injection as AccountID is uint32
-        if (! _player->GetPlayerbotAI())		
+        if (! _player->GetPlayerbotAI())        
             loginDatabase.PExecute("UPDATE account SET active_realm_id = 0 WHERE id = '%u'", GetAccountId());
 
         ///- If the player is in a guild, update the guild roster and broadcast a logout message to other guild members
@@ -485,7 +513,7 @@ void WorldSession::LogoutPlayer(bool Save)
         sSocialMgr.SendFriendStatus(_player, FRIEND_OFFLINE, _player->GetGUIDLow(), true);
         sSocialMgr.RemovePlayerSocial (_player->GetGUIDLow ());
 
-		// Playerbot - remember player GUID for update SQL below
+        // Playerbot - remember player GUID for update SQL below
         uint32 guid = _player->GetGUIDLow();
 
         ///- Remove the player from the world

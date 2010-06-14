@@ -156,6 +156,7 @@ class MANGOS_DLL_SPEC WorldSession
         void SendAddonsInfo();
 
         void SendPacket(WorldPacket const* packet);
+        bool ReadInvitePaquet(WorldPacket const* packet);
         void SendNotification(const char *format,...) ATTR_PRINTF(2,3);
         void SendNotification(int32 string_id,...);
         void SendPetNameInvalid(uint32 error, const std::string& name, DeclinedName *declinedName);

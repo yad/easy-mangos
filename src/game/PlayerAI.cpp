@@ -11,25 +11,25 @@ PlayerAI::PlayerAI(Player* const player) : m_player(player), m_victim(NULL), m_i
     m_position_x, m_position_y = 0.5f;
 }
 
-PlayerAI::~PlayerAI() 
+PlayerAI::~PlayerAI()
 {
 }
 
 void PlayerAI::UpdateAI(const uint32 p_time)
 {
-    if(m_ignoreAIUpdatesUntilTime > time(0))
+    if (m_ignoreAIUpdatesUntilTime > time(0))
         return;
 
     m_ignoreAIUpdatesUntilTime = time(0) + 1;
 
-    if(!IsEnable())
+    if (!IsEnable())
         return;
 
     Player* pPlayer = GetPlayer();
-    if(!pPlayer)
+    if (!pPlayer)
         return;
 
-    if(!pPlayer->isAlive())
+    if (!pPlayer->isAlive())
     {
         SetVictim(NULL);
         return;
@@ -39,26 +39,26 @@ void PlayerAI::UpdateAI(const uint32 p_time)
     float maxhealth = float(pPlayer->GetMaxHealth());
     float percent = health / maxhealth * 100.0f;
 
-    if (percent < 30.0f) 
+    if (percent < 30.0f)
         m_need_to_cure = true;
     else if (m_need_to_cure && (percent > 90.0f))
         m_need_to_cure = false;
-    if(m_need_to_cure && pPlayer->getAttackers().empty())
+    if (m_need_to_cure && pPlayer->getAttackers().empty())
         return;
 
     MovementUpdate();
     Unit* pVictim = GetVictim();
-    if(!pVictim || !pVictim->isAlive())
+    if (!pVictim || !pVictim->isAlive())
     {
-        DoLoot();
+        //DoLoot(); // not use it yet
         pVictim = FindNewVictim();
         pPlayer->GetMotionMaster()->Clear( true );
         pPlayer->SetStandState( UNIT_STAND_STATE_STAND );
     }
 
-    if(pVictim && pVictim->isAlive())
+    if (pVictim && pVictim->isAlive())
     {
-        if(!IsMoving())
+        if (!IsMoving())
         {
             pPlayer->GetMotionMaster()->Clear( true );
             pPlayer->clearUnitState( UNIT_STAND_STATE_STAND );
@@ -98,10 +98,10 @@ void PlayerAI::MovementUpdate()
     player->SendMessageToSet( &data, false );
 
     // call set position (updates states, exploration, etc.)
-    // pPlayer->SetPosition( pPlayer->GetPositionX(), pPlayer->GetPositionY(), pPlayer->GetPositionZ(), pPlayer->GetOrientation(), false );    
+    // pPlayer->SetPosition( pPlayer->GetPositionX(), pPlayer->GetPositionY(), pPlayer->GetPositionZ(), pPlayer->GetOrientation(), false );
 }
 
-bool PlayerAI::IsMoving() 
+bool PlayerAI::IsMoving()
 {
     Player* player = GetPlayer();
     return (player->GetMotionMaster()->GetCurrentMovementGeneratorType() == IDLE_MOTION_TYPE ? false : true);
@@ -112,11 +112,11 @@ void PlayerAI::CalculateXY(float &x, float &y)
     x = GetPositionX();
     y = GetPositionY();
 
-    if(x == 0.5f && y == 0.5f)
+    if (x == 0.5f && y == 0.5f)
         y = -0.5f;
-    else if(x == 0.5f && y == -0.5f)
+    else if (x == 0.5f && y == -0.5f)
         x = -0.5f;
-    else if(x == -0.5f && y == -0.5f)
+    else if (x == -0.5f && y == -0.5f)
         y = 0.5f;
     else
         x = 0.5f;
@@ -130,26 +130,26 @@ void PlayerAI::DoLoot()
     Player* player = GetPlayer();
     Unit* victim = GetVictim();
 
-    if( victim )
+    if ( victim )
     {
         Creature *c = player->GetMap()->GetCreature( victim->GetGUID() );
-        if( !c || c->getDeathState()!=CORPSE )
+        if ( !c || c->getDeathState()!=CORPSE )
             return;
 
-        if( player->IsWithinDistInMap( c, INTERACTION_DISTANCE ) )
+        if ( player->IsWithinDistInMap( c, INTERACTION_DISTANCE ) )
         {
             // check for needed items
             player->SendLoot( victim->GetGUID(), LOOT_CORPSE );
             Loot *loot = &c->loot;
-            uint32 lootNum = loot->GetMaxSlotInLootFor( player );
-            for( uint32 l=0; l<lootNum; l++ )
+            uint32 lootNum = loot->GetMaxSlotInLootfor ( player );
+            for ( uint32 l=0; l<lootNum; l++ )
             {
                 QuestItem *qitem=0, *ffaitem=0, *conditem=0;
                 LootItem *item = loot->LootItemInSlot( l, player, &qitem, &ffaitem, &conditem );
-                if( !item )
+                if ( !item )
                     continue;
 
-                if( !qitem && item->is_blocked )
+                if ( !qitem && item->is_blocked )
                 {
                     player->SendLootRelease( player->GetLootGUID() );
                     continue;

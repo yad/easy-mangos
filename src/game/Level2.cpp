@@ -2228,9 +2228,9 @@ bool ChatHandler::HandlePInfoCommand(const char* args)
         {
             PSendSysMessage(LANG_JAIL_GM_NOINFO, target->GetName());
             return true;
-		}
+        }
     return true;
-	}
+    }
 return true;
 }
 

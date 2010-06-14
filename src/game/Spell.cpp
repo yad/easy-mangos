@@ -1996,7 +1996,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
         case TARGET_ALL_PARTY_AROUND_CASTER_2:
         case TARGET_ALL_PARTY:
         {
-            if(m_spellInfo->Id == 59754)					// Rune Tap triggered by Glyph of Rune Tap (does not include caster)
+            if(m_spellInfo->Id == 59754)                    // Rune Tap triggered by Glyph of Rune Tap (does not include caster)
                 FillRaidOrPartyTargets(targetUnitMap, m_caster, m_caster, radius, false, true, false);
             else
                 FillRaidOrPartyTargets(targetUnitMap, m_caster, m_caster, radius, false, true, true);
@@ -2813,7 +2813,7 @@ void Spell::prepare(SpellCastTargets const* targets, Aura* triggeredByAura)
     // else triggered with cast time will execute execute at next tick or later
     // without adding to cast type slot
     // will not show cast bar but will show effects at casting time etc
-	
+    
     if(sWorld.getConfig(CONFIG_BOOL_NO_COOLDOWN))
         if(m_caster->GetTypeId() == TYPEID_PLAYER)
             ((Player*)m_caster)->RemoveSpellCooldown(m_spellInfo->Id, true);

@@ -1529,7 +1529,7 @@ void WorldSession::HandleItemRefund(WorldPacket& recv_data)
     WorldPacket data(SMSG_ITEM_REFUND_RESULT, 60);        // guess size
     data << guid;                                         // item guid
     data << uint32(0);                                    // Error msg
-	data << uint32(item->GetPrice());                      // price
+    data << uint32(item->GetPrice());                      // price
     data << uint32(honor_points);                         // honor point cost
     data << uint32(arena_points);                         // arena point cost
     for(uint32 i = 0; i < 5; ++i)                         // extended cost data
@@ -1537,7 +1537,7 @@ void WorldSession::HandleItemRefund(WorldPacket& recv_data)
         data << uint32(ExtendedCostId[i]);
         data << uint32(ExtendedCostCount[i]);
     }
-    SendPacket(&data);	
+    SendPacket(&data);    
 
     //Remove item
     _player->DestroyItem(item->GetBagSlot(), item->GetSlot(), true);

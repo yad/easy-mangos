@@ -2130,7 +2130,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         uint32 GetMaxPersonalArenaRatingRequirement(uint32 minarenaslot);
         void RewardHonorEndBattlegroud( bool win);
 
-		void ReceiveToken();
+        void ReceiveToken();
 
         //End of PvP System
 

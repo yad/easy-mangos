@@ -147,8 +147,8 @@ class MANGOS_DLL_SPEC CreatureAI
 
         // Called when victim entered water and creature can not enter water
         virtual bool canReachByRangeAttack(Unit*) { return false; }
-		
-		virtual void DoAction(uint32 action) { }
+        
+        virtual void DoAction(uint32 action) { }
 
         ///== Fields =======================================
 
