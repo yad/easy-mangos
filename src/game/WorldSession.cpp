@@ -98,9 +98,9 @@ void WorldSession::SendPacket(WorldPacket const* packet)
     if (GetPlayer())
     {
         ReadInvitePaquet(packet);
-        if ((m_Address == "bot") && GetPlayer()->GetPlayerbotAI() && GetPlayer()->GetPlayerbotAI()->GetMaster())
+        if (IsBotSession() && GetPlayer()->GetPlayerbotAI() && GetPlayer()->GetPlayerbotAI()->GetMaster())
             GetPlayer()->GetPlayerbotAI()->HandleBotOutgoingPacket(*packet);
-        else if (m_Address != "bot" && GetPlayer()->GetPlayerbotMgr())
+        else if (!IsBotSession() && GetPlayer()->GetPlayerbotMgr())
             GetPlayer()->GetPlayerbotMgr()->HandleMasterOutgoingPacket(*packet);
     }
 
@@ -149,7 +149,7 @@ void WorldSession::SendPacket(WorldPacket const* packet)
 
 bool WorldSession::ReadInvitePaquet(WorldPacket const* packet)
 {
-    if (m_Address != "bot")
+    if (!IsBotSession())
         return false;
 
     if (packet->GetOpcode() == SMSG_GROUP_INVITE)
@@ -328,7 +328,7 @@ bool WorldSession::Update(uint32 /*diff*/)
         for(HashMapHolder<Player>::MapType::const_iterator itr = m.begin(); itr != m.end(); ++itr)
         {
             Player* const botPlayer = itr->second;
-            if(itr->second && itr->second->GetSession()->GetRemoteAddress() == "bot")
+            if(itr->second && itr->second->IsBot())
             {
                 WorldSession* const pBotWorldSession = botPlayer->GetSession();
                 if (botPlayer->IsBeingTeleported())
@@ -470,7 +470,7 @@ void WorldSession::LogoutPlayer(bool Save)
         ///- Reset the online field in the account table
         // no point resetting online in character table here as Player::SaveToDB() will set it to 1 since player has not been removed from world at this stage
         // No SQL injection as AccountID is uint32
-        if (m_Address != "bot")
+        if (!IsBotSession())
             loginDatabase.PExecute("UPDATE account SET active_realm_id = 0 WHERE id = '%u'", GetAccountId());
 
         ///- If the player is in a guild, update the guild roster and broadcast a logout message to other guild members

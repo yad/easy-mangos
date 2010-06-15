@@ -174,6 +174,7 @@ class MANGOS_DLL_SPEC WorldSession
         char const* GetPlayerName() const;
         void SetSecurity(AccountTypes security) { _security = security; }
         std::string const& GetRemoteAddress() { return m_Address; }
+        bool IsBotSession() { return (m_Address == "bot"); }
         void SetPlayer(Player *plr);
         uint8 Expansion() const { return m_expansion; }
 

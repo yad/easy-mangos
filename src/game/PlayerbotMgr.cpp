@@ -538,7 +538,7 @@ Player* PlayerbotMgr::GetPlayerBot(uint64 playerGuid) const
     for(HashMapHolder<Player>::MapType::const_iterator itr = m.begin(); itr != m.end(); ++itr)
     {
         Player* const bot = itr->second;
-        if(bot && (bot->GetSession()->GetRemoteAddress() == "bot") && (bot->GetGUID() == playerGuid))
+        if(bot && bot->IsBot() && (bot->GetGUID() == playerGuid))
             return bot;
     }
     return NULL;
@@ -1032,7 +1032,7 @@ void PlayerbotMgr::RealPlayerLogout(Player * const player)
     if (!player)
         return;
 
-    if (player->GetSession()->GetRemoteAddress() != "bot")
+    if (!player->IsBot())
     {
         Player* bot = NULL;
         do
@@ -1048,7 +1048,7 @@ void PlayerbotMgr::RealPlayerLogout(Player * const player)
                 if (!bot)
                     continue;
 
-                if (bot->GetSession()->GetRemoteAddress() != "bot")
+                if (!bot->IsBot())
                     continue;
 
                 if (!bot->GetGroup())

@@ -350,7 +350,7 @@ void WorldSession::HandleGroupDisbandOpcode( WorldPacket & /*recv_data*/ )
     // everything is fine, do it
     SendPartyResult(PARTY_OP_LEAVE, GetPlayer()->GetName(), ERR_PARTY_RESULT_OK);
 
-    if ((m_Address != "bot") && GetPlayer()->GetPlayerbotMgr())
+    if (!IsBotSession() && GetPlayer()->GetPlayerbotMgr())
     {
         Player* bot = NULL;
         do

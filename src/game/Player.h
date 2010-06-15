@@ -2538,8 +2538,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         void SetPlayerbotMgr(PlayerbotMgr* mgr) { assert(!m_playerbotAI && !m_playerbotMgr); m_playerbotMgr=mgr; }
         PlayerbotMgr* GetPlayerbotMgr() { return m_playerbotMgr; }
         void SetBotDeathTimer() { m_deathTimer = 0; }
-
-        AccountInfos GetAccountInfos() {return m_AccountInfos; }
+        bool IsBot() { return (GetSession()->GetRemoteAddress() == "bot"); }
+        AccountInfos GetAccountInfos() { return m_AccountInfos; }
 
         void SetAddonTarget(uint64 guid) { m_AddonTarget = guid; };
         uint64 GetAddonTarget() { return m_AddonTarget; };
