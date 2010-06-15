@@ -64,6 +64,9 @@ namespace MMAP
             */
             void build(uint32 mapID);
 
+            // generates an obj file for the specified map tile
+            void buildTile(uint32 mapID, uint32 tileX, uint32 tileY);
+
             // builds list of maps, then iterates through them calling build(uint32 mapID)
             void buildAll();
 

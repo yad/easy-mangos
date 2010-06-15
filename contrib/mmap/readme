@@ -27,6 +27,12 @@ generator command line args
 
 									false: don't create debugging files (default)
 
+--tile				[#,#]			build the specified tile
+									seperate number with a comma ','
+									must specify a map number (see below)
+									if this option is not used, all tiles are built
+
 					[#]				build only the map specified by #
 									this command will build the map regardless of --skip* option settings
 									if you do not specify a map number, builds all maps that pass the filters specified by --skip* options
+

@@ -251,6 +251,101 @@ namespace MMAP
         printf("Complete!                               \n\n");
     }
 
+    void MapBuilder::buildTile(uint32 mapID, uint32 tileX, uint32 tileY)
+    {
+        printf("Building map %03u, tile [%02u,%02u]\n", mapID, tileX, tileY);
+
+        uint32 i, j, vertCount = 0, triCount = 0;
+        float bmin[3], bmax[3];
+        G3D::Array<float> modelVerts;
+        G3D::Array<int> modelTris;
+
+        // make sure we process maps which don't have tiles
+        // initialize the static tree, which loads WDT models
+        loadVMap(mapID, 64, 64, modelVerts, modelTris);
+
+        // get the coord bounds of the model data
+        if(modelVerts.size())
+        {
+            rcCalcBounds(modelVerts.getCArray(), modelVerts.size() / 3, bmin, bmax);
+
+            // convert coord bounds to grid bounds
+            uint32 minX, minY, maxX, maxY;
+            maxX = 32 - bmin[0] / GRID_SIZE;
+            maxY = 32 - bmin[2] / GRID_SIZE;
+            minX = 32 - bmax[0] / GRID_SIZE;
+            minY = 32 - bmax[2] / GRID_SIZE;
+
+            // if specified tile is outside of bounds, give up now
+            if(tileX < minX || tileX > maxX)
+                return;
+            if(tileY < minY || tileY > maxY)
+                return;
+        }
+
+        // build navMesh
+        dtNavMesh* navMesh = 0;
+        buildNavMesh(mapID, navMesh);
+        if(!navMesh)
+        {
+            printf("Failed creating navmesh!              \n");
+            printf("Failed!                               \n\n");
+            return;
+        }
+
+        G3D::Array<float> heightmapVerts, allVerts;
+        G3D::Array<int> heightmapTris, allTris;
+        char tileString[10];
+        sprintf(tileString, "[%02u,%02u]: ", tileX, tileY);
+
+        // ensure we start with clean data
+        allVerts.fastClear();
+        allTris.fastClear();
+        modelVerts.fastClear();
+        heightmapVerts.fastClear();
+        modelTris.fastClear();
+        heightmapTris.fastClear();
+
+        // get heightmap data
+        printf("%sLoading heightmap...                           \r", tileString);
+        m_tileBuilder->build(mapID, tileX, tileY, heightmapVerts, heightmapTris);
+
+        // get model data
+        printf("%sLoading models...                              \r", tileString);
+        loadVMap(mapID, tileY, tileX, modelVerts, modelTris);
+        unloadVMap(mapID, tileY, tileX);
+
+        // if there is no data, give up now
+        if(!modelVerts.size() && !heightmapVerts.size())
+            return;
+
+        // gather all mesh data
+        printf("%Aggregating mesh data...                        \r", tileString);
+        allTris.append(heightmapTris);
+        allVerts.append(heightmapVerts);
+        copyIndices(allTris, modelTris, allVerts.size() / 3);   // don't just append, need to increment index values
+        allVerts.append(modelVerts);
+
+        cleanVertices(allVerts, allTris);
+
+        // get bounds of current tile
+        getTileBounds(tileX, tileY, allVerts.getCArray(), allVerts.size() / 3, bmin, bmax);
+
+        // build navmesh tile
+        buildMoveMapTile(mapID,
+                            tileX,
+                            tileY,
+                            allVerts.getCArray(),
+                            allVerts.size() / 3,
+                            allTris.getCArray(),
+                            allTris.size() / 3,
+                            bmin,
+                            bmax,
+                            navMesh);
+
+        printf("%sComplete!                                      \n\n", tileString);
+    }
+
     void MapBuilder::loadEntireVMap(uint32 mapID)
     {
         printf("Loading vmap...                         \r");
@@ -525,6 +620,8 @@ namespace MMAP
 
     void MapBuilder::buildNavMesh(uint32 mapID, dtNavMesh* &navMesh)
     {
+        getTileList(mapID);
+
         set<uint32> tiles;
         if(m_tiles.find(mapID) != m_tiles.end())
             tiles = *m_tiles[mapID];

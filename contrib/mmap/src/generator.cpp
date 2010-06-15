@@ -47,13 +47,15 @@ bool checkDirectories(bool debugOutput)
 
 void handleArgs(int argc, char** argv,
                int &mapnum,
+               int &tileX,
+               int &tileY,
                float &maxAngle,
                bool &skipContinents,
                bool &skipJunkMaps,
                bool &skipBattlegrounds,
                bool &hiResHeightmaps,
                bool &debugOutput,
-               bool &invalidMapNum)
+               bool &badParam)
 {
     int i;
     char* param;
@@ -67,6 +69,25 @@ void handleArgs(int argc, char** argv,
                 maxAngle = maxangle;
             else
                 printf("invalid option for '--maxAngle', using default\n");
+        }
+        else if(strcmp(argv[i], "--tile") == 0)
+        {
+            param = argv[++i];
+            char* stileX = strtok(param, ",");
+            char* stileY = strtok(NULL, ",");
+            int tilex = atoi(stileX);
+            int tiley = atoi(stileY);
+
+            if((tilex > 0 && tilex < 64) || (tilex == 0 && strcmp(stileX, "0")))
+                tileX = tilex;
+            if((tiley > 0 && tiley < 64) || (tiley == 0 && strcmp(stileY, "0")))
+                tileY = tiley;
+
+            if(tileX < 0 || tileY < 0)
+            {
+                printf("invalid tile coords.\n");
+                badParam = true;
+            }
         }
         else if(strcmp(argv[i], "--skipContinents") == 0)
         {
@@ -125,8 +146,8 @@ void handleArgs(int argc, char** argv,
                 mapnum = map;
             else
             {
-                printf("invalid map number specified\n");
-                invalidMapNum = true;
+                printf("bad parameter\n");
+                badParam = true;
             }
         }
     }
@@ -143,29 +164,29 @@ int main(int argc, char** argv)
 {
     int mapnum = -1;
     float maxAngle = 60.f;
+    int tileX = -1, tileY = -1;
     bool skipContinents = true,
          skipJunkMaps = true,
          skipBattlegrounds = true,
          hiResHeightmaps = false,
          debugOutput = false,
-         invalidMapNum = false;
+         badParam = false;
 
     handleArgs(argc,
               argv,
               mapnum,
+              tileX,
+              tileY,
               maxAngle,
               skipContinents,
               skipJunkMaps,
               skipBattlegrounds,
               hiResHeightmaps,
               debugOutput,
-              invalidMapNum);
+              badParam);
 
-    if(invalidMapNum)
-    {
-        printf("Specify a valid (non-negative, integer) map number.");
-        return -1;
-    }
+    if(badParam)
+        return finish("You have specified invalid parameters", -1);
 
     if(mapnum == -1 && debugOutput)
     {
@@ -186,7 +207,9 @@ int main(int argc, char** argv)
                        hiResHeightmaps,
                        debugOutput);
 
-    if(mapnum >= 0)
+    if(tileX > -1 && tileY > -1 && mapnum >= 0)
+        builder.buildTile(mapnum, tileX, tileY);
+    else if(mapnum >= 0)
         builder.build(uint32(mapnum));
     else
         builder.buildAll();
