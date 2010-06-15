@@ -503,7 +503,7 @@ void Vehicle::AddPassenger(Unit *unit, int8 seatId, bool force)
             if(unit->GetTypeId() == TYPEID_PLAYER)
             {
                 ((Player*)unit)->SetMover(this);
-                ((Player*)unit)->SetMoverInQueve(this);
+                ((Player*)unit)->SetMoverInQueue(this);
                 ((Player*)unit)->SetClientControl(this, 1);
             }
             if(canFly() || HasAuraType(SPELL_AURA_FLY) || HasAuraType(SPELL_AURA_MOD_FLIGHT_SPEED))
@@ -579,7 +579,7 @@ void Vehicle::RemovePassenger(Unit *unit)
                 {
                     ((Player*)unit)->SetMover(unit);
                     ((Player*)unit)->SetClientControl(unit, 1);
-                    ((Player*)unit)->SetMoverInQueve(NULL);
+                    ((Player*)unit)->SetMoverInQueue(NULL);
                     ((Player*)unit)->RemovePetActionBar();
 
                     if(((Player*)unit)->GetGroup())

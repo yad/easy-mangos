@@ -2365,10 +2365,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         /*********************************************************/
         bool HasMovementFlag(MovementFlags f) const;        // for script access to m_movementInfo.HasMovementFlag
         void UpdateFallInformationIfNeed(MovementInfo const& minfo,uint16 opcode);
-        Unit *m_mover;
-        Unit *m_mover_in_queve;
-
-        void SetMoverInQueve(Unit* pet) {m_mover_in_queve = pet ? pet : this; }
 
         void SetFallInformation(uint32 time, float z)
         {
@@ -2388,6 +2384,9 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         void SetClientControl(Unit* target, uint8 allowMove);
         void SetMover(Unit* target) { m_mover = target ? target : this; }
+        Unit* GetMover() const { return m_mover; }
+        bool IsSelfMover() const { return m_mover == this; }// normal case for player not controlling other unit
+        void SetMoverInQueue(Unit* pet) {m_mover_in_queue = pet ? pet : this; }
 
         // vehicle system
         void SendEnterVehicle(Vehicle *vehicle, VehicleSeatEntry const *veSeat);
@@ -2817,6 +2816,8 @@ class MANGOS_DLL_SPEC Player : public Unit
                 m_DelayedOperations |= operation;
         }
 
+        Unit *m_mover;
+        Unit *m_mover_in_queue;
         Camera m_camera;
 
         GridReference<Player> m_gridRef;
