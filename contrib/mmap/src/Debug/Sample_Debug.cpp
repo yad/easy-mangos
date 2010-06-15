@@ -58,12 +58,13 @@ Sample_Debug::~Sample_Debug()
 
 void Sample_Debug::cleanup()
 {
-    delete [] m_hf;
-    delete [] m_chf;
-    delete [] m_cset;
-    delete [] m_pmesh;
-    delete [] m_dmesh;
-    delete m_navMesh;
+    delete [] m_hf; m_hf = 0;
+    delete [] m_chf; m_chf = 0;
+    delete [] m_cset; m_cset = 0;
+    delete [] m_pmesh; m_pmesh = 0;
+    delete [] m_dmesh; m_dmesh = 0;
+    delete m_tool; m_tool = 0;
+    delete m_navMesh; m_navMesh = 0;
 }
 
 void Sample_Debug::handleSettings()
@@ -358,7 +359,7 @@ bool Sample_Debug::handleBuild()
 
     duReadNavMesh(mapID, m_navMesh);
     m_pmeshCount = duReadPolyMesh(mapID, m_pmesh);
-    m_hfCount = duReadHeightfield(mapID, m_hf);
+    //m_hfCount = duReadHeightfield(mapID, m_hf);
     m_chfCount = duReadCompactHeightfield(mapID, m_chf);
 
     m_tileSize = m_navMesh->getParams()->tileHeight;

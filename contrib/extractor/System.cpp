@@ -822,12 +822,15 @@ bool ConvertADT(char *filename, char *filename2, int cell_y, int cell_x, uint32 
 
     // map hole info
     uint16 holes[ADT_CELLS_PER_GRID][ADT_CELLS_PER_GRID];
+
     if(map.liquidMapOffset)
         map.holesOffset = map.liquidMapOffset + map.liquidMapSize;
     else
         map.holesOffset = map.heightMapOffset + map.heightMapSize;
+
     map.holesSize = sizeof(holes);
     memset(holes, 0, map.holesSize);
+
     for(int i = 0; i < ADT_CELLS_PER_GRID; ++i)
     {
         for(int j = 0; j < ADT_CELLS_PER_GRID; ++j)

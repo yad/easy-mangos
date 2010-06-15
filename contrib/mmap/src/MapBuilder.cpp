@@ -672,16 +672,12 @@ namespace MMAP
             //DELETE(iv.chunkyMesh);
             DELETE_ARRAY(iv.triFlags);
 
-            // filter out unusable rasterization data (order of calls matters)
-            printf("%sFiltering low obstacles...              \r", tileString);
+            // filter out unusable rasterization data (order of calls matters, see rcFilterLowHangingWalkableObstacles)
             rcFilterLowHangingWalkableObstacles(config.walkableClimb, *iv.heightfield);
-
-            printf("%sFiltering edges...                      \r", tileString);
             rcFilterLedgeSpans(config.walkableHeight, config.walkableClimb, *iv.heightfield);
-
-            printf("%sFiltering low-clearance areas...        \r", tileString);
             rcFilterWalkableLowHeightSpans(config.walkableHeight, *iv.heightfield);
 
+            // compact heightfield spans
             printf("%sCompacting heightfield...               \r", tileString);
             iv.compactHeightfield = NEW(rcCompactHeightfield);
             if(!iv.compactHeightfield || !rcBuildCompactHeightfield(config.walkableHeight, config.walkableClimb, RC_WALKABLE, *iv.heightfield, *iv.compactHeightfield))
@@ -913,7 +909,9 @@ namespace MMAP
 
     void MapBuilder::generateObjFile(uint32 mapID, uint32 tileX, uint32 tileY, float* verts, int vertCount, int* tris, int triCount)
     {
-        printf("Generating obj file...                  \r");
+        char tileString[25];
+        sprintf(tileString, "[%02u,%02u]: ", tileX, tileY);
+        printf("%sWriting debug output...                       \r", tileString);
 
         char objFileName[20];
         FILE* objFile;
