@@ -84,6 +84,7 @@ namespace MMAP
             void copyVertices(vector<Vector3> source, G3D::Array<float> &dest);
             void copyIndices(vector<MeshTriangle> source, G3D::Array<int> &dest, int offest, bool flip);
             void copyIndices(G3D::Array<int> &dest, G3D::Array<int> src, int offset);
+            void cleanVertices(G3D::Array<float> &verts, G3D::Array<int> &tris);
 
             void cleanup();
 

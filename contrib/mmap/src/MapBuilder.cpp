@@ -225,6 +225,9 @@ namespace MMAP
             copyIndices(allTris, modelTris, allVerts.size() / 3);   // don't just append, need to increment index values
             allVerts.append(modelVerts);
 
+            // remove unused vertices
+            cleanVertices(allVerts, allTris);
+
             // get bounds of current tile
             getTileBounds(tileX, tileY, allVerts.getCArray(), allVerts.size() / 3, bmin, bmax);
 
@@ -475,6 +478,49 @@ namespace MMAP
         int* src = source.getCArray();
         for(int i = 0; i < source.size(); ++i)
             dest.append(src[i] + offset);
+    }
+
+    void MapBuilder::cleanVertices(G3D::Array<float> &verts, G3D::Array<int> &tris)
+    {
+        map<int, int> vertMap;
+
+        int* t = tris.getCArray();
+        float* v = verts.getCArray();
+
+        // collect all the vertex indices from triangle
+        for(int i = 0; i < tris.size(); ++i)
+        {
+            if(vertMap.find(t[i]) != vertMap.end())
+                continue;
+
+            vertMap.insert(std::pair<int, int>(t[i], 0));
+        }
+
+        // collect the vertices
+        G3D::Array<float> cleanVerts;
+        int index, count = 0;
+        for(map<int, int>::iterator it = vertMap.begin(); it != vertMap.end(); ++it)
+        {
+            index = (*it).first;
+            (*it).second = count;
+            cleanVerts.append(v[index*3], v[index*3+1], v[index*3+2]);
+            count++;
+        }
+        verts.fastClear();
+        verts.append(cleanVerts);
+        cleanVerts.clear();
+
+        // update triangles to use new indices
+        for(int i = 0; i < tris.size(); ++i)
+        {
+            map<int, int>::iterator it;
+            if((it = vertMap.find(t[i])) == vertMap.end())
+                continue;
+
+            t[i] = (*it).second;
+        }
+
+        vertMap.clear();
     }
 
     void MapBuilder::buildNavMesh(uint32 mapID, dtNavMesh* &navMesh)
