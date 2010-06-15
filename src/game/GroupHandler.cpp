@@ -350,8 +350,25 @@ void WorldSession::HandleGroupDisbandOpcode( WorldPacket & /*recv_data*/ )
     // everything is fine, do it
     SendPartyResult(PARTY_OP_LEAVE, GetPlayer()->GetName(), ERR_PARTY_RESULT_OK);
 
-    if (GetPlayer()->GetPlayerbotMgr())
-        GetPlayer()->GetPlayerbotMgr()->RemoveAllBotsFromGroup();
+    if ((m_Address != "bot") && GetPlayer()->GetPlayerbotMgr())
+    {
+        Player* bot = NULL;
+        do
+        {
+            bot = NULL;
+            if(!GetPlayer()->GetGroup())
+                return;
+
+            for (GroupReference *itr = GetPlayer()->GetGroup()->GetFirstMember(); itr != NULL; itr = itr->next())
+            {
+                bot = itr->getSource();
+                if (bot->GetPlayerbotAI())
+                    break;
+            }
+            if (bot)
+                bot->RemoveFromGroup();
+        }while (bot);
+    }
     GetPlayer()->RemoveFromGroup();
 }
 

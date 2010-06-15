@@ -2606,7 +2606,7 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
     // Playerbot mod: if this user has bots, tell them to stop following master
     // so they don't try to follow the master after the master teleports
     if (GetPlayerbotMgr())
-        GetPlayerbotMgr()->Stay();
+        GetPlayerbotMgr()->Stay(this);
 
     MapEntry const* mEntry = sMapStore.LookupEntry(mapid);
 

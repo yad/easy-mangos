@@ -34,14 +34,11 @@ class MANGOS_DLL_SPEC PlayerbotMgr
         Player* GetPlayerBot (uint64 guid) const;
         Player* GetMaster() const { return m_master; };
         void SetMaster(Player* pl) { m_master = pl; };
-        PlayerBotMap::const_iterator GetPlayerBotsBegin() const { return m_playerBots.begin(); }
-        PlayerBotMap::const_iterator GetPlayerBotsEnd()   const { return m_playerBots.end();   }
 
-        void LogoutAllBots();
-        void RemoveAllBotsFromGroup();
         void OnBotLogin(Player * const bot);
         void OnBotInvite(Player * const bot);
-        void Stay();
+        void RealPlayerLogout(Player * const player);
+        void Stay(Player * const player);
 
     public:
         // config variables
@@ -51,7 +48,6 @@ class MANGOS_DLL_SPEC PlayerbotMgr
 
     private:
         Player* m_master;
-        PlayerBotMap m_playerBots;
 };
 
 #endif

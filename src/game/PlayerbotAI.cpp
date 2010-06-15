@@ -545,31 +545,14 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
                 if (!inviter)
                     return;
 
-                SetMaster(inviter);
-
                 WorldPacket p;
-                /*if (!canObeyCommandFrom(*inviter))
-                {
-                    std::string buf = "Je ne peux pas accepter l'invitation tant que mon maitre n'est pas dans le groupe.";
-                    buf += GetMaster()->GetName();
-                    buf += ".";
-                    SendWhisper(buf, *inviter);
-                    m_bot->GetSession()->HandleGroupDeclineOpcode(p); // packet not used
-                }
-                else */
-                if (GetMaster()->GetGroup() && GetMaster()->GetGroup()->GetMembersCount() > 4)
+                if (inviter->GetGroup() && inviter->GetGroup()->IsFull())
                 {
                     WorldPacket* const packet2 = new WorldPacket(CMSG_GROUP_RAID_CONVERT, 100);
-                    GetMaster()->GetSession()->QueuePacket(packet2);
-                    /*WorldPacket* const packet = new WorldPacket(CMSG_GROUP_INVITE, 100);
-                    *packet << m_bot->GetName();
-                    GetMaster()->GetSession()->QueuePacket(packet);*/
-                    m_bot->GetSession()->HandleGroupAcceptOpcode(p); // packet not used
+                    inviter->GetSession()->QueuePacket(packet2);
+                    inviter->GetGroup()->ConvertToRaid();
                 }
-                else
-                {
-                    m_bot->GetSession()->HandleGroupAcceptOpcode(p); // packet not used
-                }
+                m_bot->GetSession()->HandleGroupAcceptOpcode(p); // packet not used
             }
             return;
         }
