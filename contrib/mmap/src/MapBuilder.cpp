@@ -10,6 +10,7 @@
 #include "pathfinding/Recast/Recast.h"
 #include "pathfinding/Detour/DetourNavMeshBuilder.h"
 #include "pathfinding/Detour/DetourNavMesh.h"
+#include "pathfinding/Detour/DetourCommon.h"
 
 using namespace std;
 
@@ -144,7 +145,7 @@ namespace MMAP
         }
 
         // vars that are used in multiple locations...
-        uint32 i, j, tileX, tileY, vertCount = 0, triCount = 0;
+        uint32 i, j, tileX, tileY;
         float bmin[3], bmax[3];
         G3D::Array<float> modelVerts;
         G3D::Array<int> modelTris;
@@ -255,7 +256,6 @@ namespace MMAP
     {
         printf("Building map %03u, tile [%02u,%02u]\n", mapID, tileX, tileY);
 
-        uint32 i, j, vertCount = 0, triCount = 0;
         float bmin[3], bmax[3];
         G3D::Array<float> modelVerts;
         G3D::Array<int> modelTris;
@@ -630,9 +630,8 @@ namespace MMAP
         FILE* file = 0;
 
         /*** calculate number of bits needed to store tiles & polys ***/
-        int tileBits = rcMin((int)ilog2(nextPow2(tiles.size())), 14);
-        if (tileBits > 14) tileBits = 14;
-        if (tileBits < 1) tileBits = 1;     // need at least one bit!
+        int tileBits = rcMin((int)dtIlog2(dtNextPow2(tiles.size())), 6);    // 6 bits is enough for 4096 tiles
+        if (tileBits < 1) tileBits = 1;                                     // need at least one bit!
         int polyBits = 22 - tileBits;
         int maxTiles = 1 << tileBits;
         int maxPolysPerTile = 1 << polyBits;

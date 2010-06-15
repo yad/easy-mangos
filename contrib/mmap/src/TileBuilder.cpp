@@ -77,12 +77,12 @@ namespace MMAP
         if(!mapFile)
             return;
 
-        map_fileheader fheader;
-        fread(&fheader, sizeof(map_fileheader), 1, mapFile);
+        GridMapFileHeader fheader;
+        fread(&fheader, sizeof(GridMapFileHeader), 1, mapFile);
         fseek(mapFile, fheader.heightMapOffset, SEEK_SET);
 
-        map_heightHeader hheader;
-        fread(&hheader, sizeof(map_heightHeader), 1, mapFile);
+        GridMapHeightHeader hheader;
+        fread(&hheader, sizeof(GridMapHeightHeader), 1, mapFile);
 
         if(hheader.flags & MAP_HEIGHT_NO_HEIGHT)
             return;

@@ -53,14 +53,11 @@ namespace MMAP
              * Second, iterates through the tiles and loads their heightmaps.
                These are processed so that steep inclines are removed.
                TODO: process liquid heightmap
-               TODO: process heightmap and remove parts that block horizonal entrances
 
              * Third, the vmap model and heightmap data is aggregated
 
              * Fourth, data is sent off to recast for processing.  This optionally includes generating
                an obj file, for debugging with RecastDemo
-               TODO: benchmark recast with and without steep inclines
-               TODO: attempt to optimize rcBuildRegions
             */
             void build(uint32 mapID);
 
@@ -122,30 +119,6 @@ namespace MMAP
             void writeChunkyTriMesh(FILE* file, const rcChunkyTriMesh* mesh);
             void writePolyMesh(FILE* file, const rcPolyMesh* mesh);
             void writeDetailMesh(FILE* file, const rcPolyMeshDetail* mesh);
-
-            inline unsigned int nextPow2(unsigned int v)
-            {
-                v--;
-                v |= v >> 1;
-                v |= v >> 2;
-                v |= v >> 4;
-                v |= v >> 8;
-                v |= v >> 16;
-                v++;
-                return v;
-            }
-
-            inline unsigned int ilog2(unsigned int v)
-            {
-                unsigned int r;
-                unsigned int shift;
-                r = (v > 0xffff) << 4; v >>= r;
-                shift = (v > 0xff) << 3; v >>= shift; r |= shift;
-                shift = (v > 0xf) << 2; v >>= shift; r |= shift;
-                shift = (v > 0x3) << 1; v >>= shift; r |= shift;
-                r |= (v >> 1);
-                return r;
-            }
 
             IVMapManager* m_vmapManager;
             TileBuilder* m_tileBuilder;

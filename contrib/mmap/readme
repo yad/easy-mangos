@@ -36,3 +36,17 @@ generator command line args
 									this command will build the map regardless of --skip* option settings
 									if you do not specify a map number, builds all maps that pass the filters specified by --skip* options
 
+
+examples:
+
+movemapgen
+builds maps using the default settings (see above for defaults)
+
+movemapgen --hiResHeightmaps true --skipContinents false
+builds the default maps, plus continents, using hi resolution heightmaps
+
+movemapgen 0
+builds all tiles of map 0
+
+movemapgen 0 --tile 34,46
+builds only tile 34,46 of map 0 (this is the souther face of blackrock mountain)
