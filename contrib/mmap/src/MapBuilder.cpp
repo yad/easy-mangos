@@ -496,26 +496,26 @@ namespace MMAP
 
         /***          calculate bounds of map         ***/
 
-        uint32 tileXMin = 64, tileYMin = 64, /*tileXMax = -1, tileYMax = -1, */tileX, tileY;
+        uint32 tileXMin = 64, tileYMin = 64, tileXMax = 0, tileYMax = 0, tileX, tileY;
         for(set<uint32>::iterator it = tiles.begin(); it != tiles.end(); ++it)
         {
             StaticMapTree::unpackTileID((*it), tileX, tileY);
 
-            /*if(tileX > tileXMax)
+            if(tileX > tileXMax)
                 tileXMax = tileX;
-            else */if(tileX < tileXMin)
+            else if(tileX < tileXMin)
                 tileXMin = tileX;
 
-            /*if(tileY > tileYMax)
+            if(tileY > tileYMax)
                 tileYMax = tileY;
-            else */if(tileY < tileYMin)
+            else if(tileY < tileYMin)
                 tileYMin = tileY;
         }
 
         float bmin[3], bmax[3];
-        getTileBounds(tileXMin, tileYMin, NULL, 0, bmin, bmax);
-        bmin[0] = (int(tileYMin) - 32) * GRID_SIZE;
-        bmin[2] = (int(tileXMin) - 32) * GRID_SIZE;
+
+        // use Max because '32 - tileX' is negative for values over 32
+        getTileBounds(tileXMax, tileYMax, NULL, 0, bmin, bmax);
 
         /***       now create the navmesh       ***/
 
