@@ -4244,7 +4244,8 @@ void Spell::EffectAddFarsight(SpellEffectIndex eff_idx)
     dynObj->SetUInt32Value(DYNAMICOBJECT_BYTES, 0x80000002);
     m_caster->AddDynObject(dynObj);
     m_caster->GetMap()->Add(dynObj);
-    ((Player*)m_caster)->SetFarSightGUID(dynObj->GetGUID());
+
+    ((Player*)m_caster)->GetCamera().SetView(dynObj);
 }
 
 void Spell::DoSummonWild(SpellEffectIndex eff_idx, uint32 forceFaction)
@@ -4519,10 +4520,6 @@ void Spell::EffectEnchantItemPerm(SpellEffectIndex eff_idx)
 
     // add new enchanting if equipped
     item_owner->ApplyEnchantment(itemTarget,PERM_ENCHANTMENT_SLOT,true);
-
-    // update trade window for show enchantment for caster in trade window
-    if (m_targets.m_targetMask & TARGET_FLAG_TRADE_ITEM)
-        p_caster->GetSession()->SendUpdateTrade();
 }
 
 void Spell::EffectEnchantItemPrismatic(SpellEffectIndex eff_idx)
@@ -4581,10 +4578,6 @@ void Spell::EffectEnchantItemPrismatic(SpellEffectIndex eff_idx)
 
     // add new enchanting if equipped
     item_owner->ApplyEnchantment(itemTarget,PRISMATIC_ENCHANTMENT_SLOT,true);
-
-    // update trade window for show enchantment for caster in trade window
-    if (m_targets.m_targetMask & TARGET_FLAG_TRADE_ITEM)
-        p_caster->GetSession()->SendUpdateTrade();
 }
 
 void Spell::EffectEnchantItemTmp(SpellEffectIndex eff_idx)
@@ -4712,10 +4705,6 @@ void Spell::EffectEnchantItemTmp(SpellEffectIndex eff_idx)
 
     // add new enchanting if equipped
     item_owner->ApplyEnchantment(itemTarget, TEMP_ENCHANTMENT_SLOT, true);
-
-    // update trade window for show enchantment for caster in trade window
-    if (m_targets.m_targetMask & TARGET_FLAG_TRADE_ITEM)
-        p_caster->GetSession()->SendUpdateTrade();
 }
 
 void Spell::EffectTameCreature(SpellEffectIndex /*eff_idx*/)
