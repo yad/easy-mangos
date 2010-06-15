@@ -443,7 +443,7 @@ WMOInstance::WMOInstance(MPQFile &f,const char* WmoInstName, uint32 mapID, uint3
     //-----------add_in _dir_file----------------
 
     char tempname[512];
-    sprintf(tempname, "Buildings/%s", WmoInstName);
+    sprintf(tempname, "%s/%s", szWorkDirWmo, WmoInstName);
     FILE *input;
     input = fopen(tempname, "r+b");
 
