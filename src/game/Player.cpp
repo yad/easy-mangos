@@ -417,6 +417,8 @@ Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputa
 
     m_valuesCount = PLAYER_END;
 
+    m_isActiveObject = true;
+
     m_session = session;
 
     m_divider = 0;
