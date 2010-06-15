@@ -41,7 +41,6 @@ namespace MMAP
                        bool skipJunkMaps        = true,
                        bool skipBattlegrounds   = true,
                        bool hiResHeightmaps     = false,
-                       bool shredHeightmaps     = true,
                        bool debugOutput         = false);
 
             ~MapBuilder();

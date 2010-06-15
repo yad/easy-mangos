@@ -40,7 +40,7 @@ namespace MMAP
     class TileBuilder
     {
         public:
-            TileBuilder(float maxWalkableAngle, bool hiRes, bool shred, IVMapManager* vmapManager);
+            TileBuilder(float maxWalkableAngle, bool hiRes, IVMapManager* vmapManager);
             ~TileBuilder();
 
             void build(uint32               mapID,
@@ -66,6 +66,7 @@ namespace MMAP
             void loadHeightMap(uint32 mapID, uint32 tileX, uint32 tileY, G3D::Array<float> &vertices, G3D::Array<int> &triangles, Spot portion);
             void getHeightCoord(int square, Grid grid, float xOffset, float yOffset, float* coord, float* v);
             bool getHeightTriangle(int square, Spot triangle, int* indices, int offset);
+            bool isHole(int square, const uint16 holes[16][16]);
             float getAngle(Vector3 normal);
 
             // vmap models

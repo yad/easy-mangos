@@ -13,9 +13,8 @@ using namespace MaNGOS;
 
 namespace MMAP
 {
-    TileBuilder::TileBuilder(float maxWalkableAngle, bool hiRes, bool shred, IVMapManager* vmapManager) :
+    TileBuilder::TileBuilder(float maxWalkableAngle, bool hiRes, IVMapManager* vmapManager) :
         m_hiResHeightMaps   (hiRes),
-        m_shredHeightmaps   (shred),
         m_maxRadians        (maxWalkableAngle*G3D::pi()/180),
         m_groundNormal      (G3D::Plane(Vector3::unitY(), Vector3(0.f, 0.f, 0.f)).normal()),
         m_vmapManager       (vmapManager)
@@ -129,6 +128,12 @@ namespace MMAP
                 fread(V8, sizeof(float), V8_SIZE_SQ, mapFile);
         }
 
+        // hole data
+        uint16 holes[16][16];
+        memset(holes, 0, fheader.holesSize);
+        fseek(mapFile, fheader.holesOffset, SEEK_SET);
+        fread(holes, fheader.holesSize, 1, mapFile);
+
         fclose(mapFile);
 
         int count = vertices.size() / 3;
@@ -190,13 +195,14 @@ namespace MMAP
         }
 
         for(i = loopStart; i < loopEnd; i+=loopInc)
-            for(j = TOP; j <= BOTTOM; j+=triInc)
-                if(getHeightTriangle(i, Spot(j), indices, count))
-                {
-                    triangles.append(indices[2] + count);
-                    triangles.append(indices[1] + count);
-                    triangles.append(indices[0] + count);
-                }
+            if(!isHole(i, holes))
+                for(j = TOP; j <= BOTTOM; j+=triInc)
+                    if(getHeightTriangle(i, Spot(j), indices, count))
+                    {
+                        triangles.append(indices[2] + count);
+                        triangles.append(indices[1] + count);
+                        triangles.append(indices[0] + count);
+                    }
     }
 
     inline void TileBuilder::getHeightCoord(int index, Grid grid, float xOffset, float yOffset, float* coord, float* v)
@@ -261,25 +267,45 @@ namespace MMAP
             }                                                           //           |    \|
                                                                         //          258---259 ... 515
 
-        if(m_shredHeightmaps)
-        {
-            // determine angle between triangle's plane and horizontal plane
-            // this information is used to throw away triangles:
-            // * that won't be used for paths because incline is too steep (speeds up recast's work)
-            // * that would block cave entrances, doors, etc (some of them)
-            float* verts = m_vertices->getCArray();
-            float* f1 = &verts[(indices[2]+offset)*3];
-            float* f2 = &verts[(indices[1]+offset)*3];
-            float* f3 = &verts[(indices[0]+offset)*3];
-            Vector3 v1(f1[0], f1[1], f1[2]);
-            Vector3 v2(f2[0], f2[1], f2[2]);
-            Vector3 v3(f3[0], f3[1], f3[2]);
-            float angle = G3D::aCos(double(G3D::Plane(v1, v2, v3).normal().dot(m_groundNormal)));
+        // not needed now that hole MCNK hole data is used
+        //if(m_shredHeightmaps)
+        //{
+        //    // determine angle between triangle's plane and horizontal plane
+        //    // this information is used to throw away triangles:
+        //    // * that won't be used for paths because incline is too steep (speeds up recast's work)
+        //    // * that would block cave entrances, doors, etc (some of them)
+        //    float* verts = m_vertices->getCArray();
+        //    float* f1 = &verts[(indices[2]+offset)*3];
+        //    float* f2 = &verts[(indices[1]+offset)*3];
+        //    float* f3 = &verts[(indices[0]+offset)*3];
+        //    Vector3 v1(f1[0], f1[1], f1[2]);
+        //    Vector3 v2(f2[0], f2[1], f2[2]);
+        //    Vector3 v3(f3[0], f3[1], f3[2]);
+        //    float angle = G3D::aCos(double(G3D::Plane(v1, v2, v3).normal().dot(m_groundNormal)));
 
-            return abs(angle) <= m_maxRadians;
-        }
+        //    return abs(angle) <= m_maxRadians;
+        //}
 
         return true;
+    }
+
+    static uint16 holetab_h[4] = {0x1111, 0x2222, 0x4444, 0x8888};
+    static uint16 holetab_v[4] = {0x000F, 0x00F0, 0x0F00, 0xF000};
+
+    bool TileBuilder::isHole(int square, const uint16 holes[16][16])
+    {
+        int row = square / 128;
+        int col = square % 128;
+        int cellRow = row / 8;     // 8 squares per cell
+        int cellCol = col / 8;
+        int holeRow = row % 8 / 2;
+        int holeCol = (square - (row * 128 + cellCol * 8)) / 2;
+
+        uint16 hole = holes[cellRow][cellCol];
+
+        bool isHole = (hole & holetab_h[holeCol] & holetab_v[holeRow]) != 0;
+
+        return isHole;
     }
 
     void TileBuilder::loadModels()

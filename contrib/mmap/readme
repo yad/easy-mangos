@@ -23,12 +23,6 @@ generator command line args
 
 									false: use low-res heightmaps (default)
 
---shredHeightmaps	[true|false]	shreding the heightmap makes cave
-									entrances and buildings that are partly
-									inside the terrain work better
-
-									true: shred heightmap (default)
-
 --debugOutput		[true|false]	create debugging files for use with RecastDemo
 
 									false: don't create debugging files (default)
