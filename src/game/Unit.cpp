@@ -11643,6 +11643,10 @@ bool Unit::isVisibleForOrDetect(Unit const* u, WorldObject const* viewPoint, boo
     if (u->hasUnitState(UNIT_STAT_STUNNED) && (u != this))
         return false;
 
+    //currently used for Shadow Sight(34709)
+    if(u->HasAura(SPELL_AURA_DETECT_STEALTH))
+        return true;
+
     // set max ditance
     float visibleDistance = (u->GetTypeId() == TYPEID_PLAYER) ? MAX_PLAYER_STEALTH_DETECT_RANGE : ((Creature const*)u)->GetAttackDistance(this);
 

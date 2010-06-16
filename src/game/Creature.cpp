@@ -2020,7 +2020,7 @@ float Creature::GetBaseSpeed() const
             case HUNTER_PET:
             {
                 //fixed speed fur hunter (and summon!?) pets
-                return 1.15;
+                return 1.15f;
             }
             case GUARDIAN_PET:
             case MINI_PET:
