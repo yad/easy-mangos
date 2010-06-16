@@ -11643,8 +11643,8 @@ bool Unit::isVisibleForOrDetect(Unit const* u, WorldObject const* viewPoint, boo
     if (u->hasUnitState(UNIT_STAT_STUNNED) && (u != this))
         return false;
 
-    //currently used for Shadow Sight(34709)
-    if(u->HasAura(SPELL_AURA_DETECT_STEALTH))
+    // currently used for Shadow Sight(34709)
+    if(u->HasAuraType(SPELL_AURA_DETECT_STEALTH))
         return true;
 
     // set max ditance
