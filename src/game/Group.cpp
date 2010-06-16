@@ -326,9 +326,6 @@ uint32 Group::RemoveMember(const uint64 &guid, const uint8 &method)
 
         if(Player *player = sObjectMgr.GetPlayer( guid ))
         {
-            if (player->IsBot())
-                player->GetPlayerbotMgr()->SetMaster(NULL);
-
             // quest related GO state dependent from raid membership
             if(isRaidGroup())
                 player->UpdateForQuestWorldObjects();

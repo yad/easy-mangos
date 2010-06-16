@@ -390,6 +390,9 @@ bool ChatHandler::HandleNamegoCommand(const char* args)
         return false;
 
     Player* _player = m_session->GetPlayer();
+    if (!_player)
+        return false;
+
     if (target == _player || target_guid == _player->GetGUID())
     {
         PSendSysMessage(LANG_CANT_TELEPORT_SELF);

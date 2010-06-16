@@ -37,6 +37,7 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
         // if master is logging out, log out all bots
         case CMSG_LOGOUT_REQUEST:
         {
+            RealPlayerLogout(m_master);
             return;
         }
 
@@ -1035,30 +1036,19 @@ void PlayerbotMgr::RealPlayerLogout(Player * const player)
     if (!player->IsBot())
     {
         Player* bot = NULL;
-        do
+        HashMapHolder<Player>::MapType& m = sObjectAccessor.GetPlayers();
+        for(HashMapHolder<Player>::MapType::const_iterator itr = m.begin(); itr != m.end(); ++itr)
         {
-            if (!player->GetGroup())
-                return;
+            bot = itr->second;
+            if (!bot || !bot->IsBot())
+                continue;
 
-            bot = NULL;
-            HashMapHolder<Player>::MapType& m = sObjectAccessor.GetPlayers();
-            for(HashMapHolder<Player>::MapType::const_iterator itr = m.begin(); itr != m.end(); ++itr)
+            if (bot->GetPlayerbotMgr()->GetMaster() && (bot->GetPlayerbotMgr()->GetMaster() == player))
             {
-                bot = itr->second;
-                if (!bot)
-                    continue;
-
-                if (!bot->IsBot())
-                    continue;
-
-                if (!bot->GetGroup())
-                    continue;
-
-                if (player->GetGroup()->IsMember(bot->GetGUID()))
-                    break;
+                if(bot->GetGroup())
+                    bot->RemoveFromGroup();
+                bot->GetPlayerbotMgr()->SetMaster(NULL);
             }
-            if (bot)
-                bot->RemoveFromGroup();
-        }while (bot);
+        }
     }
 }

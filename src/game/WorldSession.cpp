@@ -233,7 +233,7 @@ bool WorldSession::Update(uint32 /*diff*/)
                     // lag can cause STATUS_LOGGEDIN opcodes to arrive after the player started a transfer
 
                     // playerbot mod
-                    if (_player && _player->GetPlayerbotMgr())
+                    if (_player && !IsBotSession() && _player->GetPlayerbotMgr())
                         _player->GetPlayerbotMgr()->HandleMasterIncomingPacket(*packet);
                     // playerbot mod end
                     break;

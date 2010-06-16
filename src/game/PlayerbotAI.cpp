@@ -2053,6 +2053,14 @@ void PlayerbotAI::SetInFront( const Unit* obj )
 
 void PlayerbotAI::UpdateAI(const uint32 p_time)
 {
+    if (!GetMaster() || !GetMaster()->IsInWorld())
+    {
+        if (m_bot->GetGroup())
+            m_bot->RemoveFromGroup();
+        SetMaster(NULL);
+        return;
+    }
+
     if (m_bot->IsBeingTeleported())
         return;
 

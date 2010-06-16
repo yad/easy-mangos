@@ -437,13 +437,13 @@ Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputa
     m_transport = 0;
 
     // Playerbot mod:
-    m_playerbotAI = 0;
-    m_playerbotMgr = 0;
+    m_playerbotAI = NULL;
+    m_playerbotMgr = NULL;
     m_AddonTarget = 0;
 
     // PlayerAI mod:
-    m_playerAI = 0;
-    m_playerAIMgr = 0;
+    m_playerAI = NULL;
+    m_playerAIMgr = NULL;
 
     m_speakTime = 0;
     m_speakCount = 0;
@@ -695,21 +695,21 @@ Player::~Player ()
     // Playerbot mod
     if (m_playerbotAI) {
         delete m_playerbotAI;
-        m_playerbotAI = 0;
+        m_playerbotAI = NULL;
     }
     if (m_playerbotMgr) {
         delete m_playerbotMgr;
-        m_playerbotMgr = 0;
+        m_playerbotMgr = NULL;
     }
 
     // PlayerAI mod
     if (m_playerAI) {
         delete m_playerAI;
-        m_playerAI = 0;
+        m_playerAI = NULL;
     }
     if (m_playerAIMgr) {
         delete m_playerAIMgr;
-        m_playerAIMgr = 0;
+        m_playerAIMgr = NULL;
     }
 }
 

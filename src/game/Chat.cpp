@@ -850,6 +850,9 @@ bool ChatHandler::hasStringAbbr(const char* name, const char* part)
 
 void ChatHandler::SendSysMessage(const char *str)
 {
+    if(!m_session || !m_session->GetPlayer() || !m_session->GetPlayer()->IsInWorld())
+        return;
+
     WorldPacket data;
 
     // need copy to prevent corruption by strtok call in LineFromMessage original string
