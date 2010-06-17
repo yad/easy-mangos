@@ -1863,6 +1863,10 @@ void BattleGroundMgr::BuildBattleGroundListPacket(WorldPacket *data, const uint6
     if (!plr)
         return;
 
+    bool isRandom = false;
+    if(bgTypeId==BATTLEGROUND_RB)
+        isRandom = true;
+
     uint32 win = MaNGOS::Honor::hk_honor_at_level(plr->getLevel(), plr->RandomBGDone() ? 0 : 15);
     uint32 ap = plr->RandomBGDone() ? 0 : 15;
     uint32 loss = MaNGOS::Honor::hk_honor_at_level(plr->getLevel(), plr->RandomBGDone() ? 0 : 15);

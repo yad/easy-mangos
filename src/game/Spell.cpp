@@ -2806,7 +2806,6 @@ void Spell::prepare(SpellCastTargets const* targets, Aura* triggeredByAura)
         // will show cast bar
         SendSpellStart();
     }
-
     // execute triggered without cast time explicitly in call point
     else if(m_timer == 0)
         cast(true);
@@ -3021,15 +3020,7 @@ void Spell::cast(bool skipCheck)
                 if (m_targets.getUnitTarget() && m_targets.getUnitTarget() == m_caster)
                     AddPrecastSpell(61987);                 // Avenging Wrath Marker
             }
-            // Lay on Hands
-            else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000000000008000))
-            {
-                // only for self cast
-                if (m_caster == m_targets.getUnitTarget())
-                    AddPrecastSpell(25771);                     // Forbearance
-            }
-            // Avenging Wrath
-            else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000200000000000))
+            else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x200000000000))
                 AddPrecastSpell(61987);                     // Avenging Wrath Marker
             // Lay on Hands
             else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x000000008000))

@@ -253,6 +253,7 @@ class MANGOS_DLL_SPEC Aura
         int32 GetModMisc() const { return m_modifier.m_miscvalue;}
 
         int32 GetAuraMaxDuration() const { return m_maxduration; }
+
         void SetAuraMaxDuration(int32 duration);
         int32 GetAuraOrigDuration() const { return m_origDuration; }
         void SetAuraOrigDuration(int32 duration) { m_origDuration = duration; }

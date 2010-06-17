@@ -4819,7 +4819,7 @@ void Aura::HandleAuraModTotalThreat(bool apply, bool Real)
 
     float threatMod = apply ? float(m_modifier.m_amount) : float(-m_modifier.m_amount);
 
-    m_target->getHostileRefManager().threatAssist(caster, threatMod, GetSpellProto());
+    target->getHostileRefManager().threatAssist(caster, threatMod, GetSpellProto());
 }
 
 void Aura::HandleModTaunt(bool apply, bool Real)
@@ -7136,24 +7136,6 @@ void Aura::HandleSpellSpecificBoosts(bool apply, bool last_stack)
                 else
                     return;
             }
-            // Freezing Trap Effect
-            else if (m_spellProto->SpellFamilyFlags & UI64LIT(0x0000000000000008))
-            {
-                if(!apply)
-                {
-                    Unit *caster = GetCaster();
-                    // Glyph of Freezing Trap
-                    if (caster && caster->HasAura(56845))
-                    {
-                        cast_at_remove = true;
-                        spellId1 = 61394;
-                    }
-                    else
-                        return;
-                }
-                else
-                    return;
-            }
             // Aspect of the Dragonhawk dodge
             else if (GetSpellProto()->SpellFamilyFlags2 & 0x00001000)
             {
@@ -9116,14 +9098,6 @@ void Aura::HandlePhase(bool apply, bool Real)
     }
 
     // no-phase is also phase state so same code for apply and remove
-    uint32 phase;
-
-    // i think phase mask should be added to current mask, NOT overwrite it
-    // at least for this spell
-    if (m_spellProto->Id == 51852)
-        phase = apply ? (m_target->GetPhaseMask() | GetMiscValue()) : (m_target->GetPhaseMask() & ~GetMiscValue());
-    else
-        phase = apply ? GetMiscValue() : PHASEMASK_NORMAL;
 
     // phase auras normally not expected at BG but anyway better check
     if(target->GetTypeId() == TYPEID_PLAYER)
@@ -9160,12 +9134,6 @@ void Aura::HandlePhase(bool apply, bool Real)
                     }
                 }
             }
-        }
-
-        if(m_target->GetCharm() && !apply)//remove other auras from charm on unapply
-        {
-            Creature * creat=((Creature*)m_target->GetCharm());
-            creat->RemoveAurasDueToSpellByCancel(GetId());
         }
     }
     else
@@ -9280,9 +9248,9 @@ void Aura::HandleAllowOnlyAbility(bool apply, bool Real)
 
     Unit *target = GetTarget();
 
-    m_target->UpdateDamagePhysical(BASE_ATTACK);
-    m_target->UpdateDamagePhysical(RANGED_ATTACK);
-    m_target->UpdateDamagePhysical(OFF_ATTACK);
+    target->UpdateDamagePhysical(BASE_ATTACK);
+    target->UpdateDamagePhysical(RANGED_ATTACK);
+    target->UpdateDamagePhysical(OFF_ATTACK);
 }
 
 void Aura::SetAuraMaxDuration( int32 duration )
