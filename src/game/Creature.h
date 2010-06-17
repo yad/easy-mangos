@@ -711,7 +711,6 @@ class MANGOS_DLL_SPEC Creature : public Unit
     private:
         GridReference<Creature> m_gridRef;
         CreatureInfo const* m_creatureInfo;                 // in difficulty mode > 0 can different from ObjMgr::GetCreatureTemplate(GetEntry())
-        bool m_isActiveObject;
         SplineFlags m_splineFlags;
 };
 
