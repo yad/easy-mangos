@@ -1217,7 +1217,7 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         void RemovePet(Pet* pet, PetSaveMode mode, bool returnreagent = false);
         void RemoveMiniPet();
-        Pet* GetMiniPet();
+        Pet* GetMiniPet() const;
         void SetMiniPet(Pet* pet) { m_miniPet = pet->GetGUID(); }
 
         template<typename Func>
@@ -2394,7 +2394,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         // vehicle system
         void SendEnterVehicle(Vehicle *vehicle, VehicleSeatEntry const *veSeat);
 
-        uint64 GetFarSight() const { return GetUInt64Value(PLAYER_FARSIGHT); }
+        ObjectGuid const& GetFarSightGuid() const { return GetGuidValue(PLAYER_FARSIGHT); }
 
         // Transports
         Transport * GetTransport() const { return m_transport; }
@@ -2946,7 +2946,7 @@ template<typename Func>
 bool Player::CheckAllControlledUnits(Func const& func, bool withTotems, bool withGuardians, bool withCharms, bool withMiniPet) const
 {
     if (withMiniPet)
-        if(Unit* mini = GetMiniPet())
+        if(Unit const* mini = GetMiniPet())
             if (func(mini))
                 return true;
 
