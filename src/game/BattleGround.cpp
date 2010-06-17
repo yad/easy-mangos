@@ -403,11 +403,24 @@ void BattleGround::Update(uint32 diff)
     /*********************************************************/
     if (isArena() && !m_ArenaBuffSpawned)
     {
-        // 60 seconds after start the buffobjects in arena should get spawned
+        // 90 seconds after start the buffobjects in arena should get spawned
         if (m_ArenaBuffTimer > uint32(m_StartDelayTimes[BG_STARTING_EVENT_FIRST] + ARENA_SPAWN_BUFF_OBJECTS))
         {
             SpawnEvent(ARENA_BUFF_EVENT, 0, true);
             m_ArenaBuffSpawned = true;
+            m_ArenaBuffTimer = 0;
+        }
+        else
+            m_ArenaBuffTimer += diff;
+    }
+
+    // then every 90 seconds respawn
+    if (isArena() && m_ArenaBuffSpawned)
+    {
+        if (m_ArenaBuffTimer > ARENA_SPAWN_BUFF_OBJECTS)
+        {
+            SpawnEvent(ARENA_BUFF_EVENT, 0, true);
+            m_ArenaBuffTimer = 0;
         }
         else
             m_ArenaBuffTimer += diff;
