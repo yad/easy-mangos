@@ -987,7 +987,6 @@ void Creature::LoadBotMenu(Player *pPlayer)
 
         if ( (guid == 0) || (guid == guidlo) )
         {
-            //not found or himself
         }
         else
         {
@@ -995,20 +994,16 @@ void Creature::LoadBotMenu(Player *pPlayer)
             // create the manager if it doesn't already exist
             if (! pPlayer->GetPlayerbotMgr())
                 pPlayer->SetPlayerbotMgr(new PlayerbotMgr());
-            if (pPlayer->GetPlayerbotMgr()->GetPlayerBot(guidlo) == NULL) // add (if not already in game)
+            if (pPlayer->GetPlayerbotMgr()->GetPlayerBot(guidlo) == NULL)
             {
-                //word += "Recruit ";
                 word += "Recruter : ";
                 word += name;
-                //word += " as a Bot.";
                 pPlayer->PlayerTalkClass->GetGossipMenu().AddMenuItem((uint8)9, word, guidlo, guidlo, word, false);
             }
-            else if (pPlayer->GetPlayerbotMgr()->GetPlayerBot(guidlo) != NULL) // remove (if in game)
+            else if (pPlayer->GetPlayerbotMgr()->GetPlayerBot(guidlo) != NULL)
             {
-                //word += "Dismiss ";
                 word += "Abandonner : ";
                 word += name;
-                //word += " from duty.";
                 pPlayer->PlayerTalkClass->GetGossipMenu().AddMenuItem((uint8)0, word, guidlo, guidlo, word, false);
             }
         }
