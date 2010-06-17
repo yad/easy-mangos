@@ -513,6 +513,7 @@ class Spell
         void ClearCastItem();
 
         static void SelectMountByAreaAndSkill(Unit* target, uint32 spellId75, uint32 spellId150, uint32 spellId225, uint32 spellId300, uint32 spellIdSpecial);
+        bool isCausingAura(AuraType aura);
     protected:
 
         void SendLoot(uint64 guid, LootType loottype);

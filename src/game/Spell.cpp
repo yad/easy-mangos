@@ -1279,7 +1279,7 @@ void Spell::DoSpellHitOnUnit(Unit *unit, const uint32 effectMask)
             }
 
             // not break stealth by cast targeting and some exceptions for spells which should break/not break stealth
-            if (!(m_spellInfo->AttributesEx & SPELL_ATTR_EX_NOT_BREAK_STEALTH) || m_spellInfo->SpellFamilyFlags & SPELLFAMILYFLAG_ROGUE_SAP)
+            if (!(m_spellInfo->AttributesEx & SPELL_ATTR_EX_NOT_BREAK_STEALTH) || m_spellInfo->SpellFamilyFlags & SPELLFAMILYFLAG_ROGUE_SAP || isCausingAura(SPELL_AURA_DETECT_STEALTH))
             {
                 if (!(m_spellInfo->Id == 39897 || m_spellInfo->Id == 32592 || m_spellInfo->Id == 32375|| m_spellInfo->Id == 1725 ||
                     m_spellInfo->Id == 1038 || (m_spellInfo->SpellFamilyFlags2 & UI64LIT(0x00000100)) || m_spellInfo->Id == 3600 ||
@@ -7157,4 +7157,17 @@ void Spell::ClearCastItem()
         m_targets.setItemTarget(NULL);
 
     m_CastItem = NULL;
+}
+bool Spell::isCausingAura(AuraType aura)
+{
+    bool found = false;
+    for(uint8 i = 0; i < MAX_EFFECT_INDEX; ++i)
+    {
+        if(m_spellInfo->EffectApplyAuraName[i] == aura)
+        {
+            found = true;
+            break;
+        }
+    }
+    return found;
 }

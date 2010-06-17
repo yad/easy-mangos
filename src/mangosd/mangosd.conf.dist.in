@@ -1741,6 +1741,7 @@ BG.BonusHonor.Holiday = 5
 #    TeamBG.AllowAV
 #    TeamBG.AllowEOS
 #    TeamBG.AllowWSG
+#    TeamBG.AllowRandom
 #        Allow TeamBG in that bg
 #        Default: 0 (disable)
 #                 1 (enable)
@@ -1763,6 +1764,7 @@ TeamBG.AllowAB = 0
 TeamBG.AllowAV = 0
 TeamBG.AllowEOS = 0
 TeamBG.AllowWSG = 0
+TeamBG.AllowRandom = 0
 TeamBG.TeamBG.Faction.Blue = 1
 TeamBG.TeamBG.Faction.Red = 2
 TeamBG.Buff.Blue = 0

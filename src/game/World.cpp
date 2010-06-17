@@ -773,6 +773,7 @@ void World::LoadConfigSettings(bool reload)
     setConfig(CONFIG_BOOL_TEAM_BG_ALLOW_AV, "TeamBG.AllowAV", false);
     setConfig(CONFIG_BOOL_TEAM_BG_ALLOW_EOS, "TeamBG.AllowEOS", false);
     setConfig(CONFIG_BOOL_TEAM_BG_ALLOW_WSG, "TeamBG.AllowWSG", false);
+    setConfig(CONFIG_BOOL_TEAM_BG_ALLOW_WSG, "TeamBG.AllowRandom", false);
 
     setConfig(CONFIG_UINT32_TEAM_BG_FACTION_BLUE, "TeamBG.Faction.Blue", 1);
     setConfig(CONFIG_UINT32_TEAM_BG_FACTION_RED, "TeamBG.Faction.Red", 2);

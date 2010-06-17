@@ -2128,7 +2128,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         void ModifyArenaPoints( int32 value );
         void ModifyHKillPoints( int32 value ) { SetUInt32Value(PLAYER_FIELD_LIFETIME_HONORBALE_KILLS, value); }
         uint32 GetMaxPersonalArenaRatingRequirement(uint32 minarenaslot);
-        void RewardHonorEndBattlegroud( bool win);
+        void RewardRandomBattlegroud( bool win);
 
         void ReceiveToken();
 
@@ -2309,13 +2309,13 @@ class MANGOS_DLL_SPEC Player : public Unit
         bool isTotalImmune();
         bool CanCaptureTowerPoint();
 
-        bool FirstBGDone() { return m_FirstBGTime > 0; }
-        void SetFirstBGTime()
+        bool RandomBGDone() { return m_FirstRBTime > 0; }
+        void SetRandomBGDone()
         {
-            m_FirstBGTime = uint64(time(NULL));
-            m_FirstBattleground = true;
+            m_FirstRBTime = uint64(time(NULL));
+            m_FirstRBDone = true;
         }
-        void ResetBGStatus() { m_FirstBGTime = 0; }
+        void ResetBGStatus() { m_FirstRBTime = 0; }
 
         /*********************************************************/
         /***                    REST SYSTEM                    ***/
@@ -2732,7 +2732,7 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         bool   m_DailyQuestChanged;
         bool   m_WeeklyQuestChanged;
-        bool   m_FirstBattleground;
+        bool   m_FirstRBDone;
 
         uint32 m_drunkTimer;
         uint16 m_drunk;
@@ -2873,7 +2873,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         uint32 m_timeSyncServer;
 
         // Battleground reward system
-        uint32 m_FirstBGTime;
+        uint32 m_FirstRBTime;
         // TEAMBG helpers
         bool m_isInTeamBG;
         uint8 m_fakeTeam; // 0 nothing, 1 blue(ali), 2 red(horde)
