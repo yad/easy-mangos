@@ -1349,15 +1349,6 @@ void PlayerbotAI::DoCombatMovement() {
         float angle = rand_float(0, M_PI_F);
         float dist = rand_float( 1.0f, 3.0f );
         float distX, distY;
-        AccountInfos m_AccountInfos = m_bot->GetAccountInfos();
-        for (AccountInfos::iterator itr = m_AccountInfos.begin(); itr != m_AccountInfos.end(); ++itr)
-        {
-            if (itr->second.Guid == m_bot->GetGUID())
-            {
-                angle = itr->second.Angle;
-                break;
-            }
-        }
         m_bot->GetMotionMaster()->Clear(true);
         distX = m_targetCombat->GetPositionX() + (dist * cos(angle));
         distY = m_targetCombat->GetPositionY() + (dist * sin(angle));
@@ -1374,15 +1365,6 @@ void PlayerbotAI::DoCombatMovement() {
             float angle = rand_float(0, M_PI_F);
             float dist = rand_float( 10.0f, 20.0f );
             float distX, distY;
-            AccountInfos m_AccountInfos = m_bot->GetAccountInfos();
-            for (AccountInfos::iterator itr = m_AccountInfos.begin(); itr != m_AccountInfos.end(); ++itr)
-            {
-                if (itr->second.Guid == m_bot->GetGUID())
-                {
-                    angle = itr->second.Angle;
-                    break;
-                }
-            }
             m_bot->GetMotionMaster()->Clear(true);
             distX = m_targetCombat->GetPositionX() + (dist * cos(angle));
             distY = m_targetCombat->GetPositionY() + (dist * sin(angle));
@@ -1985,15 +1967,6 @@ void PlayerbotAI::MovementReset() {
             float angle = rand_float(0, M_PI_F);
             float dist = rand_float( 5.0f, 10.0f );
 
-            AccountInfos m_AccountInfos = m_bot->GetAccountInfos();
-            for (AccountInfos::iterator itr = m_AccountInfos.begin(); itr != m_AccountInfos.end(); ++itr)
-            {
-                if (itr->second.Guid == m_bot->GetGUID())
-                {
-                    angle = itr->second.Angle;
-                    break;
-                }
-            }
             if (m_bot->IsWithinDist(GetMaster(), 10.0f))
                 return;
 

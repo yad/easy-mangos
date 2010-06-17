@@ -13840,12 +13840,6 @@ void Player::PrepareGossipMenu(WorldObject *pSource, uint32 menuId)
 
     GossipMenuItemsMapBounds pMenuItemBounds = sObjectMgr.GetGossipMenuItemsMapBounds(menuId);
 
-    if(pSource->GetTypeId() == TYPEID_UNIT && ((Creature*)pSource)->isBotGiver())
-    {
-        ((Creature*)pSource)->LoadBotMenu(this);
-        return;
-    }
-
     // if default menuId and no menu options exist for this, use options from default options
     if (pMenuItemBounds.first == pMenuItemBounds.second && menuId == GetDefaultGossipMenuForSource(pSource))
         pMenuItemBounds = sObjectMgr.GetGossipMenuItemsMapBounds(0);
@@ -14057,18 +14051,6 @@ void Player::OnGossipSelect(WorldObject* pSource, uint32 gossipListId, uint32 me
     // if not same, then something funky is going on
     if (menuId != gossipmenu.GetMenuId())
         return;
-
-    if(pSource->GetTypeId() == TYPEID_UNIT)
-    {
-        Unit* pUnit = ((Unit*)pSource);
-        if(pUnit)
-        {
-            Creature *pCreature = ((Creature*)pUnit);
-            if(pCreature)
-                if(pCreature->isBotGiver())
-                    return;
-        }
-    }
 
     GossipMenuItem const&  menu_item = gossipmenu.GetItem(gossipListId);
 
@@ -23488,83 +23470,6 @@ void Player::_SaveEquipmentSets()
                 break;
         }
     }
-}
-
-void Player::_LoadAccountInfos()
-{
-    QueryResult *result = result = CharacterDatabase.PQuery("SELECT guid, name FROM characters WHERE account = '%d'", GetSession()->GetAccountId());
-    if (!result)
-        return;
-
-    uint32 count = 0;
-    do
-    {
-        Field *fields = result->Fetch();
-
-        AccountInfo aInfo;
-
-        aInfo.Guid      = fields[0].GetUInt64();
-        aInfo.Name      = fields[1].GetCppString();
-        aInfo.Angle     = 0.0f;
-
-        switch(count)
-        {
-            case 0:
-            {
-                aInfo.Angle = 0.0f * M_PI_F / 1.0f;
-                break;
-            }
-            case 1:
-            {
-                aInfo.Angle = 1.0f * M_PI_F / 1.0f;
-                break;
-            }
-            case 2:
-            {
-                aInfo.Angle = -1.0f * M_PI_F / 2.0f;
-                break;
-            }
-            case 3:
-            {
-                aInfo.Angle = 1.0f * M_PI_F / 2.0f;
-                break;
-            }
-            case 4:
-            {
-                aInfo.Angle = 1.0f * M_PI_F / 4.0f;
-                break;
-            }
-            case 5:
-            {
-                aInfo.Angle = 3.0f * M_PI_F / 4.0f;
-                break;
-            }
-            case 6:
-            {
-                aInfo.Angle = -3.0f * M_PI_F / 4.0f;
-                break;
-            }
-            case 7:
-            {
-                aInfo.Angle = -1.0f * M_PI_F / 4.0f;
-                break;
-            }
-            default:
-            {
-                aInfo.Angle = 1.0f * M_PI_F / 6.0f;
-                break;
-            }
-        }
-
-
-        m_AccountInfos[count] = aInfo;
-
-        ++count;
-
-        if(count >= 10)
-            break;
-    } while (result->NextRow());
-    delete result;
 }
 
 void Player::_SaveBGData()

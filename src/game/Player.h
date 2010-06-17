@@ -803,7 +803,6 @@ struct AccountInfo
 #define MAX_EQUIPMENT_SET_INDEX 10                          // client limit
 
 typedef std::map<uint32, EquipmentSet> EquipmentSets;
-typedef std::map<uint32, AccountInfo> AccountInfos;
 
 struct ItemPosCount
 {
@@ -2541,8 +2540,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         void SetPlayerbotMgr(PlayerbotMgr* mgr) { m_playerbotMgr = mgr; }
         PlayerbotMgr* GetPlayerbotMgr() { return m_playerbotMgr; }
         void SetBotDeathTimer() { m_deathTimer = 0; }
-        bool IsBot() { return (GetSession()->GetRemoteAddress() == "bot"); }
-        AccountInfos GetAccountInfos() { return m_AccountInfos; }
+        bool IsBot() { return (GetSession()->IsBotSession()); }
 
         void SetAddonTarget(uint64 guid) { m_AddonTarget = guid; };
         uint64 GetAddonTarget() { return m_AddonTarget; };
@@ -2615,7 +2613,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         void _LoadDeclinedNames(QueryResult *result);
         void _LoadArenaTeamInfo(QueryResult *result);
         void _LoadEquipmentSets(QueryResult *result);
-        void _LoadAccountInfos();
         void _LoadBGData(QueryResult* result);
         void _LoadBGStatus(QueryResult* result);
         void _LoadGlyphs(QueryResult *result);
@@ -2829,7 +2826,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         // Playerbot mod:
         PlayerbotAI* m_playerbotAI;
         PlayerbotMgr* m_playerbotMgr;
-        AccountInfos m_AccountInfos;
         uint64 m_AddonTarget;
 
         // Playerbot mod:

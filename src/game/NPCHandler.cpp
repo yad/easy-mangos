@@ -274,15 +274,6 @@ void WorldSession::HandleGossipHelloOpcode(WorldPacket & recv_data)
     if (!pCreature->IsStopped())
         pCreature->StopMoving();
 
-    // Playerbot mod
-    if(pCreature->isBotGiver())
-    {
-        GetPlayer()->TalkedToCreature(pCreature->GetEntry(),pCreature->GetGUID());
-        _player->PrepareGossipMenu(pCreature,GOSSIP_OPTION_BOT);
-        _player->SendPreparedGossip(pCreature);
-        return;
-    }
-
     if (pCreature->isSpiritGuide())
         pCreature->SendAreaSpiritHealerQueryOpcode(_player);
 
@@ -322,25 +313,6 @@ void WorldSession::HandleGossipSelectOptionOpcode( WorldPacket & recv_data )
         if (!pCreature)
         {
             DEBUG_LOG("WORLD: HandleGossipSelectOptionOpcode - %s not found or you can't interact with it.", guid.GetString().c_str());
-            return;
-        }
-
-        // Playerbot mod
-        if(pCreature->isBotGiver() && !_player->GetPlayerbotAI())
-        {
-            if (!_player->GetPlayerbotMgr())
-                _player->SetPlayerbotMgr(new PlayerbotMgr());
-            WorldSession * m_session = _player->GetSession();
-            uint64 guidlo = _player->PlayerTalkClass->GossipOptionSender(gossipListId);
-            if(_player->GetPlayerbotMgr()->GetPlayerBot(guidlo) != NULL)
-            {
-                _player->GetPlayerbotMgr()->LogoutPlayerBot(guidlo);
-            }
-            else if(_player->GetPlayerbotMgr()->GetPlayerBot(guidlo) == NULL)
-            {
-                _player->GetPlayerbotMgr()->AddPlayerBot(guidlo);
-            }
-            _player->PlayerTalkClass->CloseGossip();
             return;
         }
 
