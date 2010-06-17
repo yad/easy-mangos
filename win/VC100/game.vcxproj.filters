@@ -442,10 +442,16 @@
     <ClCompile Include="..\..\src\game\CharacterDatabaseCleaner.cpp">
       <Filter>Tool</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\game\PathFinder.cpp">
+      <Filter>Motion generators</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\game\MoveMap.cpp">
+      <Filter>World/Handlers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\game\Camera.cpp">
+      <Filter>Object</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\game\AuctionHouseBot.cpp" />
-    <ClCompile Include="..\..\src\game\Camera.cpp" />
-    <ClCompile Include="..\..\src\game\MoveMap.cpp" />
-    <ClCompile Include="..\..\src\game\PathFinder.cpp" />
     <ClCompile Include="..\..\src\game\PlayerbotMgr.cpp" />
     <ClCompile Include="..\..\src\game\PlayerbotAI.cpp" />
     <ClCompile Include="..\..\src\game\PlayerbotClassAI.cpp" />
@@ -461,7 +467,7 @@
     <ClCompile Include="..\..\src\game\PlayerbotWarriorAI.cpp" />
     <ClCompile Include="..\..\src\game\SpellDBCHacks.cpp" />
     <ClCompile Include="..\..\src\game\PlayerAIMgr.cpp" />
-    <ClCompile Include="..\..\src\game\PlayerAI.cpp" />
+    <ClCompile Include="..\..\src\game\PlayerAI.cpp" />	
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\game\AccountMgr.h">
@@ -852,9 +858,13 @@
     <ClInclude Include="..\..\src\game\CharacterDatabaseCleaner.h">
       <Filter>Tool</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\game\PathFinder.h">
+      <Filter>Motion generators</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\game\Camera.h">
+      <Filter>Object</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\src\game\AuctionHouseBot.h" />
-    <ClInclude Include="..\..\src\game\Camera.h" />
-    <ClInclude Include="..\..\src\game\PathFinder.h" />
     <ClInclude Include="..\..\src\game\PlayerbotMgr.h" />
     <ClInclude Include="..\..\src\game\PlayerbotAI.h" />
     <ClInclude Include="..\..\src\game\PlayerbotClassAI.h" />
@@ -869,6 +879,6 @@
     <ClInclude Include="..\..\src\game\PlayerbotWarlockAI.h" />
     <ClInclude Include="..\..\src\game\PlayerbotWarriorAI.h" />
     <ClInclude Include="..\..\src\game\PlayerAIMgr.h" />
-    <ClInclude Include="..\..\src\game\PlayerAI.h" />
+    <ClInclude Include="..\..\src\game\PlayerAI.h" />	
   </ItemGroup>
 </Project>

@@ -15,11 +15,13 @@ set(CMAKE_VERBOSE_MAKEFILE true)
 
 # uncomment next line to disable debug mode
 ADD_DEFINITIONS("-DIOMAP_DEBUG")
+ADD_DEFINITIONS("-DNO_CORE_FUNCS")
 
 ADD_DEFINITIONS("-Wall")
 ADD_DEFINITIONS("-ggdb")
 ADD_DEFINITIONS("-O3")
 
+include_directories(../../src/shared)
 include_directories(../../src/shared/vmap/)
 include_directories(../../dep/include/g3dlite/)
 include_directories(../../dep/ACE_wrappers/)

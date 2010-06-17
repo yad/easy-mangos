@@ -3,10 +3,10 @@
 
 #include "MMapCommon.h"
 
-// following is copied from src/game/Map.h (too many useless includes there to use original file)
+// following is copied from src/game/GridMap.h (too many useless includes there to use original file)
 namespace MaNGOS
 {
-    struct map_fileheader
+    struct GridMapFileHeader
     {
         uint32 mapMagic;
         uint32 versionMagic;
@@ -20,11 +20,11 @@ namespace MaNGOS
         uint32 holesOffset;
         uint32 holesSize;
     };
-
+    
     // ==============mmaps don't use area==============
     //#define MAP_AREA_NO_AREA      0x0001
 
-    //struct map_areaHeader
+    //struct GridMapAreaHeader
     //{
     //    uint32 fourcc;
     //    uint16 flags;
@@ -35,31 +35,31 @@ namespace MaNGOS
     #define MAP_HEIGHT_AS_INT16   0x0002
     #define MAP_HEIGHT_AS_INT8    0x0004
 
-    struct map_heightHeader
+    struct GridMapHeightHeader
     {
         uint32 fourcc;
         uint32 flags;
-        float  gridHeight;
-        float  gridMaxHeight;
+        float gridHeight;
+        float gridMaxHeight;
     };
 
     // ==============mmaps don't use liquid yet==============
     //#define MAP_LIQUID_NO_TYPE    0x0001
     //#define MAP_LIQUID_NO_HEIGHT  0x0002
 
-    //struct map_liquidHeader
+    //struct GridMapLiquidHeader
     //{
     //    uint32 fourcc;
     //    uint16 flags;
     //    uint16 liquidType;
-    //    uint8  offsetX;
-    //    uint8  offsetY;
-    //    uint8  width;
-    //    uint8  height;
-    //    float  liquidLevel;
+    //    uint8 offsetX;
+    //    uint8 offsetY;
+    //    uint8 width;
+    //    uint8 height;
+    //    float liquidLevel;
     //};
 
-    //enum ZLiquidStatus
+    //enum GridMapLiquidStatus
     //{
     //    LIQUID_MAP_NO_WATER     = 0x00000000,
     //    LIQUID_MAP_ABOVE_WATER  = 0x00000001,
@@ -79,11 +79,11 @@ namespace MaNGOS
     //#define MAP_LIQUID_TYPE_DARK_WATER  0x10
     //#define MAP_LIQUID_TYPE_WMO_WATER   0x20
 
-    //struct LiquidData
+    //struct GridMapLiquidData
     //{
     //    uint32 type;
-    //    float  level;
-    //    float  depth_level;
+    //    float level;
+    //    float depth_level;
     //};
 }
 

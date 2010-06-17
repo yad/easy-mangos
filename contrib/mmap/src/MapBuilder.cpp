@@ -10,6 +10,7 @@
 #include "pathfinding/Recast/Recast.h"
 #include "pathfinding/Detour/DetourNavMeshBuilder.h"
 #include "pathfinding/Detour/DetourNavMesh.h"
+#include "pathfinding/Detour/DetourCommon.h"
 
 using namespace std;
 
@@ -144,7 +145,7 @@ namespace MMAP
         }
 
         // vars that are used in multiple locations...
-        uint32 i, j, tileX, tileY, vertCount = 0, triCount = 0;
+        uint32 i, j, tileX, tileY;
         float bmin[3], bmax[3];
         G3D::Array<float> modelVerts;
         G3D::Array<int> modelTris;
@@ -225,6 +226,9 @@ namespace MMAP
             copyIndices(allTris, modelTris, allVerts.size() / 3);   // don't just append, need to increment index values
             allVerts.append(modelVerts);
 
+            // remove unused vertices
+            cleanVertices(allVerts, allTris);
+
             // get bounds of current tile
             getTileBounds(tileX, tileY, allVerts.getCArray(), allVerts.size() / 3, bmin, bmax);
 
@@ -246,6 +250,100 @@ namespace MMAP
         DELETE(navMesh);
 
         printf("Complete!                               \n\n");
+    }
+
+    void MapBuilder::buildTile(uint32 mapID, uint32 tileX, uint32 tileY)
+    {
+        printf("Building map %03u, tile [%02u,%02u]\n", mapID, tileX, tileY);
+
+        float bmin[3], bmax[3];
+        G3D::Array<float> modelVerts;
+        G3D::Array<int> modelTris;
+
+        // make sure we process maps which don't have tiles
+        // initialize the static tree, which loads WDT models
+        loadVMap(mapID, 64, 64, modelVerts, modelTris);
+
+        // get the coord bounds of the model data
+        if(modelVerts.size())
+        {
+            rcCalcBounds(modelVerts.getCArray(), modelVerts.size() / 3, bmin, bmax);
+
+            // convert coord bounds to grid bounds
+            uint32 minX, minY, maxX, maxY;
+            maxX = 32 - bmin[0] / GRID_SIZE;
+            maxY = 32 - bmin[2] / GRID_SIZE;
+            minX = 32 - bmax[0] / GRID_SIZE;
+            minY = 32 - bmax[2] / GRID_SIZE;
+
+            // if specified tile is outside of bounds, give up now
+            if(tileX < minX || tileX > maxX)
+                return;
+            if(tileY < minY || tileY > maxY)
+                return;
+        }
+
+        // build navMesh
+        dtNavMesh* navMesh = 0;
+        buildNavMesh(mapID, navMesh);
+        if(!navMesh)
+        {
+            printf("Failed creating navmesh!              \n");
+            printf("Failed!                               \n\n");
+            return;
+        }
+
+        G3D::Array<float> heightmapVerts, allVerts;
+        G3D::Array<int> heightmapTris, allTris;
+        char tileString[10];
+        sprintf(tileString, "[%02u,%02u]: ", tileX, tileY);
+
+        // ensure we start with clean data
+        allVerts.fastClear();
+        allTris.fastClear();
+        modelVerts.fastClear();
+        heightmapVerts.fastClear();
+        modelTris.fastClear();
+        heightmapTris.fastClear();
+
+        // get heightmap data
+        printf("%sLoading heightmap...                           \r", tileString);
+        m_tileBuilder->build(mapID, tileX, tileY, heightmapVerts, heightmapTris);
+
+        // get model data
+        printf("%sLoading models...                              \r", tileString);
+        loadVMap(mapID, tileY, tileX, modelVerts, modelTris);
+        unloadVMap(mapID, tileY, tileX);
+
+        // if there is no data, give up now
+        if(!modelVerts.size() && !heightmapVerts.size())
+            return;
+
+        // gather all mesh data
+        printf("%Aggregating mesh data...                        \r", tileString);
+        allTris.append(heightmapTris);
+        allVerts.append(heightmapVerts);
+        copyIndices(allTris, modelTris, allVerts.size() / 3);   // don't just append, need to increment index values
+        allVerts.append(modelVerts);
+
+        cleanVertices(allVerts, allTris);
+
+        // get bounds of current tile
+        getTileBounds(tileX, tileY, allVerts.getCArray(), allVerts.size() / 3, bmin, bmax);
+
+        // build navmesh tile
+        buildMoveMapTile(mapID,
+                            tileX,
+                            tileY,
+                            allVerts.getCArray(),
+                            allVerts.size() / 3,
+                            allTris.getCArray(),
+                            allTris.size() / 3,
+                            bmin,
+                            bmax,
+                            navMesh);
+
+        printf("%sComplete!                                      \n\n", tileString);
     }
 
     void MapBuilder::loadEntireVMap(uint32 mapID)
@@ -477,8 +575,53 @@ namespace MMAP
             dest.append(src[i] + offset);
     }
 
+    void MapBuilder::cleanVertices(G3D::Array<float> &verts, G3D::Array<int> &tris)
+    {
+        map<int, int> vertMap;
+
+        int* t = tris.getCArray();
+        float* v = verts.getCArray();
+
+        // collect all the vertex indices from triangle
+        for(int i = 0; i < tris.size(); ++i)
+        {
+            if(vertMap.find(t[i]) != vertMap.end())
+                continue;
+
+            vertMap.insert(std::pair<int, int>(t[i], 0));
+        }
+
+        // collect the vertices
+        G3D::Array<float> cleanVerts;
+        int index, count = 0;
+        for(map<int, int>::iterator it = vertMap.begin(); it != vertMap.end(); ++it)
+        {
+            index = (*it).first;
+            (*it).second = count;
+            cleanVerts.append(v[index*3], v[index*3+1], v[index*3+2]);
+            count++;
+        }
+        verts.fastClear();
+        verts.append(cleanVerts);
+        cleanVerts.clear();
+
+        // update triangles to use new indices
+        for(int i = 0; i < tris.size(); ++i)
+        {
+            map<int, int>::iterator it;
+            if((it = vertMap.find(t[i])) == vertMap.end())
+                continue;
+
+            t[i] = (*it).second;
+        }
+
+        vertMap.clear();
+    }
+
     void MapBuilder::buildNavMesh(uint32 mapID, dtNavMesh* &navMesh)
     {
+        getTileList(mapID);
+
         set<uint32> tiles;
         if(m_tiles.find(mapID) != m_tiles.end())
             tiles = *m_tiles[mapID];
@@ -487,9 +630,8 @@ namespace MMAP
         FILE* file = 0;
 
         /*** calculate number of bits needed to store tiles & polys ***/
-        int tileBits = rcMin((int)ilog2(nextPow2(tiles.size())), 14);
-        if (tileBits > 14) tileBits = 14;
-        if (tileBits < 1) tileBits = 1;     // need at least one bit!
+        int tileBits = rcMin((int)dtIlog2(dtNextPow2(tiles.size())), 6);    // 6 bits is enough for 4096 tiles
+        if (tileBits < 1) tileBits = 1;                                     // need at least one bit!
         int polyBits = 22 - tileBits;
         int maxTiles = 1 << tileBits;
         int maxPolysPerTile = 1 << polyBits;
@@ -672,16 +814,12 @@ namespace MMAP
             //DELETE(iv.chunkyMesh);
             DELETE_ARRAY(iv.triFlags);
 
-            // filter out unusable rasterization data (order of calls matters)
-            printf("%sFiltering low obstacles...              \r", tileString);
+            // filter out unusable rasterization data (order of calls matters, see rcFilterLowHangingWalkableObstacles)
             rcFilterLowHangingWalkableObstacles(config.walkableClimb, *iv.heightfield);
-
-            printf("%sFiltering edges...                      \r", tileString);
             rcFilterLedgeSpans(config.walkableHeight, config.walkableClimb, *iv.heightfield);
-
-            printf("%sFiltering low-clearance areas...        \r", tileString);
             rcFilterWalkableLowHeightSpans(config.walkableHeight, *iv.heightfield);
 
+            // compact heightfield spans
             printf("%sCompacting heightfield...               \r", tileString);
             iv.compactHeightfield = NEW(rcCompactHeightfield);
             if(!iv.compactHeightfield || !rcBuildCompactHeightfield(config.walkableHeight, config.walkableClimb, RC_WALKABLE, *iv.heightfield, *iv.compactHeightfield))
@@ -913,7 +1051,9 @@ namespace MMAP
 
     void MapBuilder::generateObjFile(uint32 mapID, uint32 tileX, uint32 tileY, float* verts, int vertCount, int* tris, int triCount)
     {
-        printf("Generating obj file...                  \r");
+        char tileString[25];
+        sprintf(tileString, "[%02u,%02u]: ", tileX, tileY);
+        printf("%sWriting debug output...                       \r", tileString);
 
         char objFileName[20];
         FILE* objFile;
