@@ -70,13 +70,13 @@ uint64 extractGuid(WorldPacket& packet)
 // we'd like to call on our bots
 class PlayerbotChatHandler: protected ChatHandler
 {
-public:
-    explicit PlayerbotChatHandler(Player* pMasterPlayer) : ChatHandler(pMasterPlayer) {}
-    bool revive(const Player& botPlayer) { return HandleReviveCommand(botPlayer.GetName()); }
-    bool teleport(const Player& botPlayer) { return HandleNamegoCommand(botPlayer.GetName()); }
-    void sysmessage(const char *str) { SendSysMessage(str); }
-    bool dropQuest(const char *str) { return HandleQuestRemove(str); }
-    bool gmstartup(const char *str) { return HandleGMStartUpCommand(str); }
+    public:
+        explicit PlayerbotChatHandler(Player* pMasterPlayer) : ChatHandler(pMasterPlayer) {}
+        bool revive(const Player& botPlayer) { return HandleReviveCommand(botPlayer.GetName()); }
+        bool teleport(const Player& botPlayer) { return HandleNamegoCommand(botPlayer.GetName()); }
+        void sysmessage(const char *str) { SendSysMessage(str); }
+        bool dropQuest(const char *str) { return HandleQuestRemove(str); }
+        bool gmstartup(const char *str) { return HandleGMStartUpCommand(str); }
 };
 
 PlayerbotAI::PlayerbotAI(PlayerbotMgr* const mgr, Player* const bot) :
@@ -85,8 +85,9 @@ PlayerbotAI::PlayerbotAI(PlayerbotMgr* const mgr, Player* const bot) :
     m_combatOrder(ORDERS_NONE), m_ScenarioType(SCENARIO_PVEEASY),
     m_TimeDoneEating(0), m_TimeDoneDrinking(0),
     m_CurrentlyCastingSpellId(0), m_spellIdCommand(0),
-    m_targetGuidCommand(0), m_classAI(0) {
-
+    m_targetGuidCommand(0), m_classAI(0)
+{
+    SetMaster(bot);
     // set bot state and needed item list
     m_botState = BOTSTATE_NORMAL;
     SetQuestNeedItems();
@@ -142,6 +143,8 @@ PlayerbotAI::PlayerbotAI(PlayerbotMgr* const mgr, Player* const bot) :
             m_classAI = (PlayerbotClassAI*)new PlayerbotDeathKnightAI(m_bot, this);
             break;
     }
+    bot->GetPosition(m_position_fin_x, m_position_fin_y, m_position_fin_z);
+    uint32 m_mapId_fin = bot->GetMapId();
 }
 
 PlayerbotAI::~PlayerbotAI()
@@ -473,7 +476,6 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
             if (guid != m_bot->GetGUID())
                 return;
             m_bot->m_movementInfo.AddMovementFlag(MOVEFLAG_FLYING);
-            //m_bot->SetSpeed(MOVE_RUN, GetMaster()->GetSpeed(MOVE_FLIGHT) +0.1f, true);
             return;
         }
 
@@ -485,7 +487,6 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
             if (guid != m_bot->GetGUID())
                 return;
             m_bot->m_movementInfo.RemoveMovementFlag(MOVEFLAG_FLYING);
-            //m_bot->SetSpeed(MOVE_RUN,GetMaster()->GetSpeedRate(MOVE_RUN),true);
             return;
         }
 
@@ -642,9 +643,6 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
                 // send bot the message
                 std::ostringstream whisper;
                 whisper << "Je possède actuellement |cff00ff00" << gold
-                        // << "|r|cfffffc00g|r|cff00ff00" << silver
-                        // << "|r|cffcdcdcds|r|cff00ff00" << copper
-                        // << "|r|cffffd333c|r" << " et les objets suivants :";
                         << "|r|cfffffc00g|r|cff00ff00" << silver
                         << "|r|cffcdcdcds|r|cff00ff00" << copper
                         << "|r|cffffd333c|r" << " et je peux échanger les objets suivants :";
@@ -690,37 +688,6 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
             }
             return;
         }
-
-        /* uncomment this and your bots will tell you all their outgoing packet opcode names
-        case SMSG_MONSTER_MOVE:
-        case SMSG_UPDATE_WORLD_STATE:
-        case SMSG_COMPRESSED_UPDATE_OBJECT:
-        case MSG_MOVE_SET_FACING:
-        case MSG_MOVE_STOP:
-        case MSG_MOVE_HEARTBEAT:
-        case MSG_MOVE_STOP_STRAFE:
-        case MSG_MOVE_START_STRAFE_LEFT:
-        case SMSG_UPDATE_OBJECT:
-        case MSG_MOVE_START_FORWARD:
-        case MSG_MOVE_START_STRAFE_RIGHT:
-        case SMSG_DESTROY_OBJECT:
-        case MSG_MOVE_START_BACKWARD:
-        case SMSG_AURA_UPDATE_ALL:
-        case MSG_MOVE_FALL_LAND:
-        case MSG_MOVE_JUMP:
-            return;
-
-        default:
-        {
-            const char* oc = LookupOpcodeName(packet.GetOpcode());
-
-            std::ostringstream out;
-            out << "botout: " << oc;
-            sLog.outError(out.str().c_str());
-
-            //TellMaster(oc);
-        }
-        */
     }
 }
 
@@ -1029,11 +996,6 @@ Item* PlayerbotAI::FindDrink() const
 
             if (pItemProto->Class == ITEM_CLASS_CONSUMABLE && pItemProto->SubClass == ITEM_SUBCLASS_FOOD)
             {
-                // if (pItemProto->Spells[0].SpellCategory == SPELL_CATEGORY_DRINK)
-
-                // this enum is no longer defined in mangos. Is it no longer valid?
-                // according to google it was 59
-                // if (pItemProto->Spells[0].SpellCategory == 59)
                 if (pItemProto->Spells[0].SpellCategory == 59)
                     return pItem;
             }
@@ -1057,10 +1019,6 @@ Item* PlayerbotAI::FindDrink() const
 
                     if (pItemProto->Class == ITEM_CLASS_CONSUMABLE && pItemProto->SubClass == ITEM_SUBCLASS_FOOD)
                     {
-                        // if is WATER
-                        // SPELL_CATEGORY_DRINK is no longer defined in an enum in mangos
-                        // google says the valus is 59. Is this still valid?
-                        // if (pItemProto->Spells[0].SpellCategory == SPELL_CATEGORY_DRINK)
                         if (pItemProto->Spells[0].SpellCategory == 59)
                             return pItem;
                     }
@@ -1242,7 +1200,8 @@ void PlayerbotAI::GetCombatTarget( Unit* forcedTarget )
             forcedTarget = newTarget;
             m_targetType = TARGET_THREATEN;
         }
-    } else if ( forcedTarget )
+    }
+    else if ( forcedTarget )
     {
         m_targetType = (m_combatOrder==ORDERS_TANK ? TARGET_THREATEN : TARGET_NORMAL);
     }
@@ -1672,28 +1631,16 @@ bool PlayerbotAI::IsInCombat()
     if (!GetMaster()->getAttackers().empty())
         return true;
 
-    //bool inCombat = false;
-    //inCombat |= m_bot->isInCombat();
-    //inCombat |= GetMaster()->isInCombat();
     if ( m_bot->GetGroup() )
     {
         GroupReference *ref = m_bot->GetGroup()->GetFirstMember();
         while ( ref )
         {
-            //inCombat |= ref->getSource()->isInCombat();
             if (!ref->getSource()->getAttackers().empty())
                 return true;
             ref = ref->next();
         }
     }
-    /*//This code cause crashes...
-    for (PlayerBotMap::const_iterator it = GetPlayer()->GetPlayerbotMgr()->GetPlayerBotsBegin(); it != GetPlayer()->GetPlayerbotMgr()->GetPlayerBotsEnd(); ++it)
-    {
-        Player* const bot = it->second;
-        if (!bot->getAttackers().empty())
-            return true;
-    }*/
-    //return inCombat;
     return false;
 }
 
@@ -1780,19 +1727,6 @@ void PlayerbotAI::UpdateAttackerInfo()
         }
         m_attackerInfo[itr->first].threat2 = t;
     }
-
-    // DEBUG: output attacker info
-    //sLog.outBasic( "[PlayerbotAI]: %s m_attackerInfo = {", m_bot->GetName() );
-    //for ( AttackerInfoList::iterator i=m_attackerInfo.begin(); i!=m_attackerInfo.end(); ++i )
-    //    sLog.outBasic( "[PlayerbotAI]:     [%016I64X] { %08X, %08X, %.2f, %.2f, %d, %d }",
-    //        i->first,
-    //        (i->second.attacker?i->second.attacker->GetGUIDLow():0),
-    //        (i->second.victim?i->second.victim->GetGUIDLow():0),
-    //        i->second.threat,
-    //        i->second.threat2,
-    //        i->second.count,
-    //        i->second.source );
-    //sLog.outBasic( "[PlayerbotAI]: };" );
 }
 
 uint32 PlayerbotAI::EstRepairAll()
@@ -1902,7 +1836,8 @@ Unit *PlayerbotAI::FindAttacker( ATTACKERINFOTYPE ait, Unit *victim )
     return a;
 }
 
-void PlayerbotAI::SetCombatOrderByStr( std::string str, Unit *target ) {
+void PlayerbotAI::SetCombatOrderByStr( std::string str, Unit *target )
+{
     CombatOrderType co;
     if ( str == "tank" ) co = ORDERS_TANK;
     else if ( str == "assist" ) co = ORDERS_ASSIST;
@@ -1912,7 +1847,8 @@ void PlayerbotAI::SetCombatOrderByStr( std::string str, Unit *target ) {
     SetCombatOrder( co, target );
 }
 
-void PlayerbotAI::SetCombatOrder( CombatOrderType co, Unit *target ) {
+void PlayerbotAI::SetCombatOrder( CombatOrderType co, Unit *target )
+{
     if ( (co == ORDERS_ASSIST || co == ORDERS_PROTECT) && !target )
         return;
     if ( co == ORDERS_RESET ) {
@@ -1931,19 +1867,22 @@ void PlayerbotAI::SetCombatOrder( CombatOrderType co, Unit *target ) {
         m_combatOrder = (CombatOrderType)(((uint32)m_combatOrder&(uint32)ORDERS_PRIMARY)|(uint32)co);
 }
 
-void PlayerbotAI::SetMovementOrder( MovementOrderType mo, Unit *followTarget ) {
+void PlayerbotAI::SetMovementOrder( MovementOrderType mo, Unit *followTarget )
+{
     m_movementOrder = mo;
     m_followTarget = followTarget;
     MovementReset();
 }
 
-void PlayerbotAI::MovementReset() {
+void PlayerbotAI::MovementReset()
+{
     // stop moving...
     MovementClear();
 
     if ( m_movementOrder == MOVEMENT_FOLLOW )
     {
-        if ( !m_followTarget ) return;
+        if ( !m_followTarget )
+            return;
 
         // target player is teleporting...
         if ( m_followTarget->GetTypeId()==TYPEID_PLAYER && ((Player*)m_followTarget)->IsBeingTeleported() )
@@ -1954,28 +1893,47 @@ void PlayerbotAI::MovementReset() {
         {
             if ( m_followTarget->GetTypeId()==TYPEID_PLAYER && ((Player*)m_followTarget)->GetCorpse() )
             {
-                if ( !FollowCheckTeleport(((Player*)m_followTarget)->GetCorpse()) ) return;
+                if ( !FollowCheckTeleport(((Player*)m_followTarget)->GetCorpse()) )
+                    return;
             }
             else
             {
-                if ( !FollowCheckTeleport( m_followTarget ) ) return;
+                if ( !FollowCheckTeleport( m_followTarget ) )
+                    return;
             }
         }
 
         if ( m_bot->isAlive() )
         {
-            float angle = rand_float(0, M_PI_F);
-            float dist = rand_float( 5.0f, 10.0f );
+            if(m_bot == GetMaster())
+            {
+                if(m_bot->IsInRange3d(m_position_fin_x, m_position_fin_y, m_position_fin_z, 0.0f, 10.0f))
+                {
+                    FindPOI(m_position_fin_x, m_position_fin_y, m_position_fin_z, m_mapId_fin);
+                    m_bot->GetMotionMaster()->Clear( true );
+                    m_bot->GetMotionMaster()->MovePoint(m_mapId_fin, m_position_fin_x, m_position_fin_y, m_position_fin_z);
+                }
+                else
+                {
+                    m_bot->GetMotionMaster()->Clear( true );
+                    m_bot->GetMotionMaster()->MovePoint(m_mapId_fin, m_position_fin_x, m_position_fin_y, m_position_fin_z);
+                }
+            }
+            else
+            {
+                float angle = rand_float(0, M_PI_F);
+                float dist = rand_float( 5.0f, 10.0f );
 
-            if (m_bot->IsWithinDist(GetMaster(), 10.0f))
-                return;
+                if (m_bot->IsWithinDist(GetMaster(), 10.0f))
+                    return;
 
-            float distX, distY;
-            distX = m_followTarget->GetPositionX() + (dist * cos(angle));
-            distY = m_followTarget->GetPositionY() + (dist * sin(angle));
-            m_bot->GetMotionMaster()->MovePoint(m_followTarget->GetMapId(), distX, distY, m_followTarget->GetPositionZ());
-            m_bot->SetInFront(m_followTarget);
-            m_followTarget->SendCreateUpdateToPlayer(m_bot);
+                float distX, distY;
+                distX = m_followTarget->GetPositionX() + (dist * cos(angle));
+                distY = m_followTarget->GetPositionY() + (dist * sin(angle));
+                m_bot->GetMotionMaster()->MovePoint(m_followTarget->GetMapId(), distX, distY, m_followTarget->GetPositionZ());
+                m_bot->SetInFront(m_followTarget);
+                m_followTarget->SendCreateUpdateToPlayer(m_bot);
+            }
         }
     }
 }
@@ -1987,8 +1945,30 @@ void PlayerbotAI::MovementUpdate()
     m_bot->BuildHeartBeatMsg( &data );
     m_bot->SendMessageToSet( &data, false );
 
+    float x = m_bot->GetPositionX();
+    float y = m_bot->GetPositionY();
+    float z = m_bot->GetPositionZ();
+    float o = m_bot->GetOrientation();
+
     // call set position (updates states, exploration, etc.)
-    // m_bot->SetPosition( m_bot->GetPositionX(), m_bot->GetPositionY(), m_bot->GetPositionZ(), m_bot->GetOrientation(), false );
+    m_bot->UpdateGroundPositionZ( x, y, z );
+    m_bot->SetPosition( x, y, z, o, false );
+}
+
+void PlayerbotAI::FindPOI(float &x, float &y, float &z, uint32 &mapId)
+{
+    float max_range = 500.0f;
+    Unit* target = m_bot->SelectRandomUnfriendlyTarget(0, max_range);
+    if(target)
+    {
+        target->GetPosition(x, y, z);
+        mapId = target->GetMapId();
+    }
+    else
+    {
+        m_bot->GetPosition(x, y, z);
+        mapId = m_bot->GetMapId();
+    }
 }
 
 void PlayerbotAI::MovementClear()
@@ -2026,11 +2006,33 @@ void PlayerbotAI::SetInFront( const Unit* obj )
 
 void PlayerbotAI::UpdateAI(const uint32 p_time)
 {
-    if (!GetMaster() || !GetMaster()->IsInWorld())
+    time_t currentTime = time(0);
+    if (currentTime < m_ignoreAIUpdatesUntilTime)
+        return;
+
+    // default updates occur every one second
+    m_ignoreAIUpdatesUntilTime = time(0) + 1;
+
+    if (!GetMaster())
+        SetMaster(m_bot);
+
+    if (!GetMaster()->IsInWorld())
     {
         if (m_bot->GetGroup())
             m_bot->RemoveFromGroup();
-        SetMaster(NULL);
+        SetMaster(m_bot);
+        float x, y, z;
+        m_bot->GetPosition(x, y, z);
+        SetPositionFin(x, y, z, m_bot->GetMapId());
+        return;
+    }
+
+    if ( (GetMaster() != m_bot) && !m_bot->GetGroup() )
+    {
+        SetMaster(m_bot);
+        float x, y, z;
+        m_bot->GetPosition(x, y, z);
+        SetPositionFin(x, y, z, m_bot->GetMapId());
         return;
     }
 
@@ -2050,13 +2052,6 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
             ref = ref->next();
         }
     }
-
-    time_t currentTime = time(0);
-    if (currentTime < m_ignoreAIUpdatesUntilTime)
-        return;
-
-    // default updates occur every one second
-    m_ignoreAIUpdatesUntilTime = time(0) + 1;
 
     // send heartbeat
     MovementUpdate();
@@ -2331,20 +2326,6 @@ bool PlayerbotAI::CastSpell(uint32 spellId)
     m_CurrentlyCastingSpellId = spellId;
     m_ignoreAIUpdatesUntilTime = time(0) + (int32)((float)pSpell->GetCastTime()/1000.0f) + 1;
 
-    // if this caused the caster to move (blink) update the position
-    // I think this is normally done on the client
-    // this should be done on spell success
-    /*
-     if (name == "Blink") {
-     float x,y,z;
-     m_bot->GetPosition(x,y,z);
-     m_bot->GetNearPoint(m_bot, x, y, z, 1, 5, 0);
-     m_bot->Relocate(x,y,z);
-     WorldPacket data;
-     m_bot->BuildHeartBeatMsg(&data);
-     m_bot->SendMessageToSet(&data,true);
-     }
-     */
     if ( m_mgr->m_confDebugWhisper )
     {
         std::ostringstream out;

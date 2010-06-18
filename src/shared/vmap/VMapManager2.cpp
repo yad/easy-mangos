@@ -299,11 +299,11 @@ namespace VMAP
             WorldModel *worldmodel = new WorldModel();
             if (!worldmodel->readFile(basepath + filename + ".vmo"))
             {
-                std::cout << "VMapManager2: could not load '" << basepath << filename << ".vmo'!\n";
+                //std::cout << "VMapManager2: could not load '" << basepath << filename << ".vmo'!\n";
                 delete worldmodel;
                 return NULL;
             }
-            std::cout << "VMapManager2: loading file '" << basepath << filename << "'.\n";
+            //std::cout << "VMapManager2: loading file '" << basepath << filename << "'.\n";
             model = iLoadedModelFiles.insert(std::pair<std::string, ManagedModel>(filename, ManagedModel())).first;
             model->second.setModel(worldmodel);
         }
@@ -316,12 +316,12 @@ namespace VMAP
         ModelFileMap::iterator model = iLoadedModelFiles.find(filename);
         if (model == iLoadedModelFiles.end())
         {
-            std::cout << "VMapManager2: trying to unload non-loaded file '" << filename << "'!\n";
+            //std::cout << "VMapManager2: trying to unload non-loaded file '" << filename << "'!\n";
             return;
         }
         if( model->second.decRefCount() == 0)
         {
-            std::cout << "VMapManager2: unloading file '" << filename << "'.\n";
+            //std::cout << "VMapManager2: unloading file '" << filename << "'.\n";
             delete model->second.getModel();
             iLoadedModelFiles.erase(model);
         }

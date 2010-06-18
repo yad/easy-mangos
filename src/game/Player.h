@@ -59,10 +59,6 @@ class Item;
 class PlayerbotAI;
 class PlayerbotMgr;
 
-// PlayerAI mod
-class PlayerAI;
-class PlayerAIMgr;
-
 typedef std::deque<Mail*> PlayerMails;
 
 #define PLAYER_MAX_SKILLS           127
@@ -2549,12 +2545,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         void SetAddonTarget(uint64 guid) { m_AddonTarget = guid; };
         uint64 GetAddonTarget() { return m_AddonTarget; };
 
-        // PlayerAI mod:
-        void SetPlayerAI(PlayerAI* ai) { m_playerAI = ai; }
-        PlayerAI* GetPlayerAI() { return m_playerAI; }
-        void SetPlayerAIMgr(PlayerAIMgr* mgr) { m_playerAIMgr = mgr; }
-        PlayerAIMgr* GetPlayerAIMgr() { return m_playerAIMgr; }
-
         //TEAMBG helpers
         bool isInTeamBG() { return m_isInTeamBG; };
         void SetTeamBG(bool isIn, uint8 side) { m_isInTeamBG = isIn; m_fakeTeam = side; };
@@ -2831,10 +2821,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         PlayerbotAI* m_playerbotAI;
         PlayerbotMgr* m_playerbotMgr;
         uint64 m_AddonTarget;
-
-        // Playerbot mod:
-        PlayerAI* m_playerAI;
-        PlayerAIMgr* m_playerAIMgr;
 
         // Homebind coordinates
         uint32 m_homebindMapId;

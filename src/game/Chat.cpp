@@ -205,7 +205,6 @@ ChatCommand * ChatHandler::getCommandTable()
         { "startup",        SEC_ADMINISTRATOR,  false, &ChatHandler::HandleGMStartUpCommand,           "", NULL },
         { "autoequip",      SEC_ADMINISTRATOR,  false, &ChatHandler::HandleGMAutoEquipCommand,         "", NULL },
         { "killermode",     SEC_ADMINISTRATOR,  false, &ChatHandler::HandleGMKillerMode,               "", NULL },
-        { "playerai",       SEC_ADMINISTRATOR,  false, &ChatHandler::HandlePlayerAI,                   "", NULL },
         { "",               SEC_MODERATOR,      false, &ChatHandler::HandleGMCommand,                  "", NULL },
         { NULL,             0,                  false, NULL,                                           "", NULL }
     };

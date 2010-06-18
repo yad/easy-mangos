@@ -230,6 +230,14 @@ class MANGOS_DLL_SPEC PlayerbotAI
         void MovementUpdate();
         void MovementClear();
         bool IsMoving();
+        void FindPOI(float &x, float &y, float &z, uint32 &mapId);
+        void SetPositionFin(float x, float y, float z, uint32 mapId)
+        {
+            m_position_fin_x = x;
+            m_position_fin_y = y;
+            m_position_fin_z = z;
+            m_mapId_fin = mapId;
+        };
 
         void SetInFront( const Unit* obj );
 
@@ -292,6 +300,11 @@ class MANGOS_DLL_SPEC PlayerbotAI
         Unit *m_targetProtect;    // check
 
         Unit *m_followTarget;    // whom to follow in non combat situation?
+
+        float m_position_fin_x;
+        float m_position_fin_y;
+        float m_position_fin_z;
+        uint32 m_mapId_fin;
 };
 
 #endif

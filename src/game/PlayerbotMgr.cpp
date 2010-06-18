@@ -3,7 +3,6 @@
 #include "Player.h"
 #include "PlayerbotAI.h"
 #include "PlayerbotMgr.h"
-#include "PlayerAI.h"
 #include "WorldPacket.h"
 #include "ObjectMgr.h"
 #include "GossipDef.h"
@@ -545,35 +544,27 @@ Player* PlayerbotMgr::GetPlayerBot(uint64 playerGuid) const
     return NULL;
 }
 
-void PlayerbotMgr::OnBotLogin(Player * const bot)
+void PlayerbotMgr::OnBotLogin(Player* bot)
 {
-    PlayerAI* ai = bot->GetPlayerAI();
+    PlayerbotAI* ai = bot->GetPlayerbotAI();
     if (!ai)
     {
-        PlayerAI* ai = new PlayerAI(bot);
+        PlayerbotAI* ai = new PlayerbotAI(this, bot);
         if (ai)
-            bot->SetPlayerAI(ai);
+            bot->SetPlayerbotAI(ai);
     }
-    ai = bot->GetPlayerAI();
-    if (ai)
-        ai->SetEnable(true);
+    ai = bot->GetPlayerbotAI();
+    ai->SetIgnoreSpell(5);
 
     if (bot->GetGroup())
         bot->RemoveFromGroup();
 
+    bot->PurgeMyBags();
     bot->SetLevel(urand(1, 80));
     ChatHandler ch(bot);
     ch.HandleGMStartUpCommand("");
     bot->SetHealth(bot->GetMaxHealth());
     bot->SetPower(bot->getPowerType(), bot->GetMaxPower(bot->getPowerType()));
-}
-
-void PlayerbotMgr::OnBotInvite(Player * const bot)
-{
-    // give the bot some AI, object is owned by the player class
-    PlayerbotAI* ai = new PlayerbotAI(this, bot);
-    bot->SetPlayerbotAI(ai);
-    ai->SetIgnoreSpell(5);
 }
 
 bool ChatHandler::HandlePlayerbotCommand(const char* args)
@@ -868,25 +859,22 @@ bool ChatHandler::HandleChangeTargetCommand(const char* args)
 
 void PlayerbotMgr::RealPlayerLogout(Player * const player)
 {
-    if (!player)
-        return;
-
-    if (!player->IsBot())
+    Player* bot = NULL;
+    HashMapHolder<Player>::MapType& m = sObjectAccessor.GetPlayers();
+    for(HashMapHolder<Player>::MapType::const_iterator itr = m.begin(); itr != m.end(); ++itr)
     {
-        Player* bot = NULL;
-        HashMapHolder<Player>::MapType& m = sObjectAccessor.GetPlayers();
-        for(HashMapHolder<Player>::MapType::const_iterator itr = m.begin(); itr != m.end(); ++itr)
-        {
-            bot = itr->second;
-            if (!bot || !bot->IsBot())
-                continue;
+        bot = itr->second;
+        if (!bot || !bot->IsBot())
+            continue;
 
-            if (bot->GetPlayerbotMgr()->GetMaster() && (bot->GetPlayerbotMgr()->GetMaster() == player))
-            {
-                if(bot->GetGroup())
-                    bot->RemoveFromGroup();
-                bot->GetPlayerbotMgr()->SetMaster(NULL);
-            }
+        if (bot->GetPlayerbotMgr()->GetMaster() && (bot->GetPlayerbotMgr()->GetMaster() == player))
+        {
+            if(bot->GetGroup())
+               bot->RemoveFromGroup();
+            bot->GetPlayerbotMgr()->SetMaster(NULL);
+            float x, y, z;
+            bot->GetPosition(x, y, z);
+            bot->GetPlayerbotAI()->SetPositionFin(x, y, z, bot->GetMapId());
         }
     }
 }

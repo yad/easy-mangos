@@ -153,7 +153,7 @@ class CharacterHandler
             botSession->HandlePlayerLogin(lqh); // will delete lqh
             PlayerbotMgr* mgr = new PlayerbotMgr();
             botSession->GetPlayer()->SetPlayerbotMgr(mgr);
-            botSession->GetPlayer()->GetPlayerbotMgr()->OnBotLogin(botSession->GetPlayer());
+            mgr->OnBotLogin(botSession->GetPlayer());
         }
 } chrHandler;
 
@@ -629,7 +629,7 @@ void PlayerbotMgr::AddAllBots(int nbBotsWanted)
     nbBotsWanted = nbBotsWanted - nbBotsActual;
     if(nbBotsWanted < 1)
         return;
-    
+
     QueryResult *result = CharacterDatabase.PQuery("SELECT guid FROM characters WHERE account = '%u'", accountId);
     if( result )
     {

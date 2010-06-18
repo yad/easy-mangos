@@ -67,10 +67,6 @@
 #include "PlayerbotAI.h"
 #include "PlayerbotMgr.h"
 
-// PlayerAI mod:
-#include "PlayerAI.h"
-#include "PlayerAIMgr.h"
-
 #include <cmath>
 
 #define ZONE_UPDATE_INTERVAL (1*IN_MILLISECONDS)
@@ -441,10 +437,6 @@ Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputa
     m_playerbotMgr = NULL;
     m_AddonTarget = 0;
 
-    // PlayerAI mod:
-    m_playerAI = NULL;
-    m_playerAIMgr = NULL;
-
     m_speakTime = 0;
     m_speakCount = 0;
 
@@ -700,16 +692,6 @@ Player::~Player ()
     if (m_playerbotMgr) {
         delete m_playerbotMgr;
         m_playerbotMgr = NULL;
-    }
-
-    // PlayerAI mod
-    if (m_playerAI) {
-        delete m_playerAI;
-        m_playerAI = NULL;
-    }
-    if (m_playerAIMgr) {
-        delete m_playerAIMgr;
-        m_playerAIMgr = NULL;
     }
 }
 
@@ -2905,28 +2887,10 @@ void Player::Update( uint32 p_time )
         TeleportTo(m_teleport_dest, m_teleport_options);
 
     // Playerbot mod
-    if (m_playerbotAI && m_playerbotMgr && m_playerbotMgr->GetMaster())
-    {
-        //Say("m_playerbotAI", 0);
+    if (m_playerbotAI && m_playerbotMgr)
         m_playerbotAI->UpdateAI(p_time);
-    }
     else if (m_playerbotMgr)
-    {
-        //Say("m_playerbotMgr", 0);
         m_playerbotMgr->UpdateAI(p_time);
-        // PlayerAI mod
-
-        if (m_playerAI)
-        {
-            //Say("m_playerAI", 0);
-            m_playerAI->UpdateAI(p_time);
-        }
-        else if (m_playerAIMgr)
-        {
-            //Say("m_playerAIMgr", 0);
-            m_playerAIMgr->UpdateAI(p_time);
-        }
-    }
 
 }
 

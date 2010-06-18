@@ -37,10 +37,9 @@ class MANGOS_DLL_SPEC PlayerbotMgr
         Player* GetMaster() const { return m_master; };
         void SetMaster(Player* pl) { m_master = pl; };
 
-        void OnBotLogin(Player * const bot);
-        void OnBotInvite(Player * const bot);
-        void RealPlayerLogout(Player * const player);
-        void Stay(Player * const player);
+        void OnBotLogin(Player* bot);
+        void RealPlayerLogout(Player* player);
+        void Stay(Player* player);
 
     public:
         // config variables

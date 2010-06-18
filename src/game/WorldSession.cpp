@@ -98,9 +98,15 @@ void WorldSession::SendPacket(WorldPacket const* packet)
     if (GetPlayer())
     {
         ReadInvitePaquet(packet);
-        if (IsBotSession() && GetPlayer()->GetPlayerbotAI() && GetPlayer()->GetPlayerbotAI()->GetMaster())
+        if (IsBotSession()
+            && GetPlayer()->GetPlayerbotAI()
+            && GetPlayer()->GetPlayerbotAI()->GetMaster()
+            && (GetPlayer()->GetPlayerbotAI()->GetMaster() != GetPlayer())
+            )
             GetPlayer()->GetPlayerbotAI()->HandleBotOutgoingPacket(*packet);
-        else if (!IsBotSession() && GetPlayer()->GetPlayerbotMgr())
+        else if (!IsBotSession()
+            && GetPlayer()->GetPlayerbotMgr()
+            )
             GetPlayer()->GetPlayerbotMgr()->HandleMasterOutgoingPacket(*packet);
     }
 
@@ -167,7 +173,6 @@ bool WorldSession::ReadInvitePaquet(WorldPacket const* packet)
             if(!GetPlayer()->GetPlayerbotMgr())
                 return false;
 
-            GetPlayer()->GetPlayerbotMgr()->OnBotInvite(GetPlayer());
             GetPlayer()->GetPlayerbotMgr()->SetMaster(inviter);
         }
     }
@@ -379,8 +384,7 @@ void WorldSession::LogoutPlayer(bool Save)
 
     if (_player)
     {
-
-        if (_player->GetPlayerbotMgr())
+        if (!IsBotSession())
             _player->GetPlayerbotMgr()->RealPlayerLogout(_player);
 
         sLog.outChar("Account: %d (IP: %s) Logout Character:[%s] (guid: %u)", GetAccountId(), GetRemoteAddress().c_str(), _player->GetName() ,_player->GetGUIDLow());

@@ -466,8 +466,6 @@
     <ClCompile Include="..\..\src\game\PlayerbotWarlockAI.cpp" />
     <ClCompile Include="..\..\src\game\PlayerbotWarriorAI.cpp" />
     <ClCompile Include="..\..\src\game\SpellDBCHacks.cpp" />
-    <ClCompile Include="..\..\src\game\PlayerAIMgr.cpp" />
-    <ClCompile Include="..\..\src\game\PlayerAI.cpp" />	
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\game\AccountMgr.h">
@@ -878,7 +876,5 @@
     <ClInclude Include="..\..\src\game\PlayerbotShamanAI.h" />
     <ClInclude Include="..\..\src\game\PlayerbotWarlockAI.h" />
     <ClInclude Include="..\..\src\game\PlayerbotWarriorAI.h" />
-    <ClInclude Include="..\..\src\game\PlayerAIMgr.h" />
-    <ClInclude Include="..\..\src\game\PlayerAI.h" />	
   </ItemGroup>
 </Project>
