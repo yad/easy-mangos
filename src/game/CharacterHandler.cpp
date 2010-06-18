@@ -146,17 +146,9 @@ class CharacterHandler
 
             LoginQueryHolder* lqh = (LoginQueryHolder*) holder;
 
-            /*WorldSession* masterSession = sWorld.FindSession(lqh->GetAccountId());
-
-            if (! masterSession || sObjectMgr.GetPlayer(lqh->GetGuid()))
-            {
-                delete holder;
-                return;
-            }*/
-
             // The bot's WorldSession is owned by the bot's Player object
             // The bot's WorldSession is deleted by PlayerbotMgr::LogoutPlayerBot
-            WorldSession *botSession = new WorldSession(lqh->GetAccountId(), NULL, SEC_PLAYER, 3, 0, LOCALE_enUS);
+            WorldSession *botSession = new WorldSession(lqh->GetAccountId(), NULL, SEC_ADMINISTRATOR, 3, 0, LOCALE_enUS);
             botSession->m_Address = "bot";
             botSession->HandlePlayerLogin(lqh); // will delete lqh
             PlayerbotMgr* mgr = new PlayerbotMgr();
@@ -622,6 +614,55 @@ void PlayerbotMgr::AddPlayerBot(uint64 playerGuid)
     CharacterDatabase.DelayQueryHolder(&chrHandler, &CharacterHandler::HandlePlayerBotLoginCallback, holder);
 }
 
+void PlayerbotMgr::AddAllBots(int nbBotsWanted)
+{
+    uint32 accountId = 1;
+    int nbBotsActual = 0;
+    HashMapHolder<Player>::MapType& m = sObjectAccessor.GetPlayers();
+    for(HashMapHolder<Player>::MapType::const_iterator itr = m.begin(); itr != m.end(); ++itr)
+    {
+        Player* bot = itr->second;
+        if (bot && bot->IsBot())
+            nbBotsActual++;
+    }
+
+    nbBotsWanted = nbBotsWanted - nbBotsActual;
+    if(nbBotsWanted < 1)
+        return;
+    
+    QueryResult *result = CharacterDatabase.PQuery("SELECT guid FROM characters WHERE account = '%u'", accountId);
+    if( result )
+    {
+        int itr = 0;
+        do
+        {
+            Field *fields = result->Fetch();
+            uint64 guid = fields[0].GetUInt64();
+
+            if (guid == 0)
+                continue;
+
+            // has bot already been added?
+            if (sObjectMgr.GetPlayer(guid))
+                continue;
+
+            LoginQueryHolder *holder = new LoginQueryHolder(accountId, guid);
+            if(!holder->Initialize())
+            {
+                delete holder;                                      // delete all unprocessed queries
+                continue;
+            }
+            CharacterDatabase.DelayQueryHolder(&chrHandler, &CharacterHandler::HandlePlayerBotLoginCallback, holder);
+
+            itr++;
+
+            if(itr > nbBotsWanted)
+                break;
+        }
+        while (result->NextRow());
+        delete result;
+    }
+}
 void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
 {
     uint64 playerGuid = holder->GetGuid();

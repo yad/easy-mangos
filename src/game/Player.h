@@ -1302,6 +1302,10 @@ class MANGOS_DLL_SPEC Player : public Unit
         bool StoreNewItemInBestSlots(uint32 item_id, uint32 item_count);
         Item* StoreNewItemInInventorySlot(uint32 itemEntry, uint32 amount);
         void AutoEquipItem();
+        void GetBestItemForMyLevel();
+        void PurgeMyBags();
+        bool IsForMyClass(const ItemPrototype *pProto);
+        bool IsbuggedItem(const ItemPrototype *pProto);
 
         void AutoStoreLoot(uint8 bag, uint8 slot, uint32 loot_id, LootStore const& store, bool broadcast = false);
         void AutoStoreLoot(uint32 loot_id, LootStore const& store, bool broadcast = false) { AutoStoreLoot(NULL_BAG,NULL_SLOT,loot_id,store,broadcast); }

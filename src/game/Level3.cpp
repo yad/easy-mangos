@@ -7315,40 +7315,12 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
     Player *player = m_session->GetPlayer();
     Player *chr = getSelectedPlayer();
 
-    int32 oldlevel = 0;
     if(chr && player)
-    {
-        oldlevel = chr->getLevel();
         player->SetSelection(chr->GetGUID());
-    }
     else
         return false;
 
-    int32 newlevel = 100;
-    if (newlevel < 1) newlevel = 1;
-    if (newlevel > 100) newlevel = 100;
-
-    chr->GiveLevel(newlevel);
-    chr->InitTalentForLevel();
-    chr->SetUInt32Value(PLAYER_XP,0);
-
-    uint32 spe = 1;
-    if (args)
-    {
-        char* buff = strtok((char*)args, " ");
-        if (buff)
-            spe = atoi(buff);
-    }
-
-    if (needReportToTarget(chr))
-    {
-        if (oldlevel == newlevel)
-            ChatHandler(chr).SendSysMessage(LANG_YOURS_LEVEL_PROGRESS_RESET);
-        else if (oldlevel < newlevel)
-            ChatHandler(chr).PSendSysMessage(LANG_YOURS_LEVEL_UP,newlevel-oldlevel);
-        else if (oldlevel > newlevel)
-            ChatHandler(chr).PSendSysMessage(LANG_YOURS_LEVEL_DOWN,newlevel-oldlevel);
-    }
+    uint32 level = chr->getLevel();
 
     HandleLearnAllMyTalentsCommand("");
     HandleLearnAllMyLevelCommand("");
@@ -7362,653 +7334,306 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
         if(chr->getClass() != CLASS_HUNTER)
             HandleAddItemCommand("23162");//bag 36
     }
+    chr->AutoEquipItem();
+    chr->PurgeMyBags();
 
-    switch(chr->getClass())
-    {
-        case CLASS_WARRIOR:
-        {
-            switch(spe)
-            {
-                case 1:
-                {
-                    HandleAddItemCommand("51225");//T10.9 Lvl 277
-                    HandleAddItemCommand("51226");//T10.9 Lvl 277
-                    HandleAddItemCommand("51227");//T10.9 Lvl 277
-                    HandleAddItemCommand("51228");//T10.9 Lvl 277
-                    HandleAddItemCommand("51229");//T10.9 Lvl 277
-                    HandleAddItemCommand("50639");//Pieds Lvl 277
-                    HandleAddItemCommand("50620");//Taille Lvl 277
-                    HandleAddItemCommand("50659");//Poignets Lvl 277
-                    HandleAddItemCommand("50677");//Cape Lvl 277
-                    break;
-                }
-                case 2:
-                {
-                    HandleAddItemCommand("51225");//T10.9 Lvl 277
-                    HandleAddItemCommand("51226");//T10.9 Lvl 277
-                    HandleAddItemCommand("51227");//T10.9 Lvl 277
-                    HandleAddItemCommand("51228");//T10.9 Lvl 277
-                    HandleAddItemCommand("51229");//T10.9 Lvl 277
-                    HandleAddItemCommand("50639");//Pieds Lvl 277
-                    HandleAddItemCommand("50620");//Taille Lvl 277
-                    HandleAddItemCommand("50659");//Poignets Lvl 277
-                    HandleAddItemCommand("50677");//Cape Lvl 277
-                    break;
-                }
-                case 3:
-                {
-                    HandleAddItemCommand("51220");//T10.9 Lvl 277
-                    HandleAddItemCommand("51221");//T10.9 Lvl 277
-                    HandleAddItemCommand("51222");//T10.9 Lvl 277
-                    HandleAddItemCommand("51223");//T10.9 Lvl 277
-                    HandleAddItemCommand("51224");//T10.9 Lvl 277
-                    HandleAddItemCommand("50625");//Pieds Lvl 277
-                    HandleAddItemCommand("50691");//Taille Lvl 277
-                    HandleAddItemCommand("50611");//Poignets Lvl 277
-                    HandleAddItemCommand("50729");//Bouclier Lvl 277
-                    HandleAddItemCommand("50718");//Cape Lvl 277
-                    break;
-                }
-                default:
-                    break;
-            }
-        }
-        case CLASS_PALADIN:
-        {
-            switch(spe)
-            {
-                case 1:
-                {
-                    HandleAddItemCommand("51270");//T10.9 Lvl 277
-                    HandleAddItemCommand("51271");//T10.9 Lvl 277
-                    HandleAddItemCommand("51272");//T10.9 Lvl 277
-                    HandleAddItemCommand("51273");//T10.9 Lvl 277
-                    HandleAddItemCommand("51274");//T10.9 Lvl 277
-                    HandleAddItemCommand("50632");//Pieds Lvl 277
-                    HandleAddItemCommand("50667");//Taille Lvl 277
-                    HandleAddItemCommand("50721");//Poignets Lvl 277
-                    HandleAddItemCommand("50616");//Bouclier Lvl 277
-                    HandleAddItemCommand("50628");//Cape Lvl 277
-                    break;
-                }
-                case 2:
-                {
-                    HandleAddItemCommand("51265");//T10.9 Lvl 277
-                    HandleAddItemCommand("51266");//T10.9 Lvl 277
-                    HandleAddItemCommand("51267");//T10.9 Lvl 277
-                    HandleAddItemCommand("51268");//T10.9 Lvl 277
-                    HandleAddItemCommand("51269");//T10.9 Lvl 277
-                    HandleAddItemCommand("50625");//Pieds Lvl 277
-                    HandleAddItemCommand("50691");//Taille Lvl 277
-                    HandleAddItemCommand("50611");//Poignets Lvl 277
-                    HandleAddItemCommand("50729");//Bouclier Lvl 277
-                    HandleAddItemCommand("50718");//Cape Lvl 277
-                    break;
-                }
-                case 3:
-                {
-                    HandleAddItemCommand("51275");//T10.9 Lvl 277
-                    HandleAddItemCommand("51276");//T10.9 Lvl 277
-                    HandleAddItemCommand("51277");//T10.9 Lvl 277
-                    HandleAddItemCommand("51278");//T10.9 Lvl 277
-                    HandleAddItemCommand("51279");//T10.9 Lvl 277
-                    HandleAddItemCommand("50639");//Pieds Lvl 277
-                    HandleAddItemCommand("50620");//Taille Lvl 277
-                    HandleAddItemCommand("50659");//Poignets Lvl 277
-                    HandleAddItemCommand("50677");//Cape Lvl 277
-                    break;
-                }
-                default:
-                    break;
-            }
-        }
-        case CLASS_HUNTER:
-        {
-            switch(spe)
-            {
-                case 1:
-                {
-                    HandleAddItemCommand("51285");//T10.9 Lvl 277
-                    HandleAddItemCommand("51286");//T10.9 Lvl 277
-                    HandleAddItemCommand("51287");//T10.9 Lvl 277
-                    HandleAddItemCommand("51288");//T10.9 Lvl 277
-                    HandleAddItemCommand("51289");//T10.9 Lvl 277
-                    HandleAddItemCommand("50639");//Pieds Lvl 277
-                    HandleAddItemCommand("50620");//Taille Lvl 277
-                    HandleAddItemCommand("50659");//Poignets Lvl 277
-                    HandleAddItemCommand("50653");//Cape Lvl 277
-                    break;
-                }
-                case 2:
-                {
-                    HandleAddItemCommand("51285");//T10.9 Lvl 277
-                    HandleAddItemCommand("51286");//T10.9 Lvl 277
-                    HandleAddItemCommand("51287");//T10.9 Lvl 277
-                    HandleAddItemCommand("51288");//T10.9 Lvl 277
-                    HandleAddItemCommand("51289");//T10.9 Lvl 277
-                    HandleAddItemCommand("50639");//Pieds Lvl 277
-                    HandleAddItemCommand("50620");//Taille Lvl 277
-                    HandleAddItemCommand("50659");//Poignets Lvl 277
-                    HandleAddItemCommand("50653");//Cape Lvl 277
-                    break;
-                }
-                case 3:
-                {
-                    HandleAddItemCommand("51285");//T10.9 Lvl 277
-                    HandleAddItemCommand("51286");//T10.9 Lvl 277
-                    HandleAddItemCommand("51287");//T10.9 Lvl 277
-                    HandleAddItemCommand("51288");//T10.9 Lvl 277
-                    HandleAddItemCommand("51289");//T10.9 Lvl 277
-                    HandleAddItemCommand("50639");//Pieds Lvl 277
-                    HandleAddItemCommand("50620");//Taille Lvl 277
-                    HandleAddItemCommand("50659");//Poignets Lvl 277
-                    HandleAddItemCommand("50653");//Cape Lvl 277
-                    break;
-                }
-                default:
-                    break;
-            }
-        }
-        case CLASS_ROGUE:
-        {
-            switch(spe)
-            {
-                case 1:
-                {
-                    HandleAddItemCommand("51250");//T10.9 Lvl 277
-                    HandleAddItemCommand("51251");//T10.9 Lvl 277
-                    HandleAddItemCommand("51252");//T10.9 Lvl 277
-                    HandleAddItemCommand("51253");//T10.9 Lvl 277
-                    HandleAddItemCommand("51254");//T10.9 Lvl 277
-                    HandleAddItemCommand("50607");//Pieds Lvl 277
-                    HandleAddItemCommand("50707");//Taille Lvl 277
-                    HandleAddItemCommand("50670");//Poignets Lvl 277
-                    HandleAddItemCommand("50653");//Cape Lvl 277
-                    break;
-                }
-                case 2:
-                {
-                    HandleAddItemCommand("51250");//T10.9 Lvl 277
-                    HandleAddItemCommand("51251");//T10.9 Lvl 277
-                    HandleAddItemCommand("51252");//T10.9 Lvl 277
-                    HandleAddItemCommand("51253");//T10.9 Lvl 277
-                    HandleAddItemCommand("51254");//T10.9 Lvl 277
-                    HandleAddItemCommand("50607");//Pieds Lvl 277
-                    HandleAddItemCommand("50707");//Taille Lvl 277
-                    HandleAddItemCommand("50670");//Poignets Lvl 277
-                    HandleAddItemCommand("50653");//Cape Lvl 277
-                    break;
-                }
-                case 3:
-                {
-                    HandleAddItemCommand("51250");//T10.9 Lvl 277
-                    HandleAddItemCommand("51251");//T10.9 Lvl 277
-                    HandleAddItemCommand("51252");//T10.9 Lvl 277
-                    HandleAddItemCommand("51253");//T10.9 Lvl 277
-                    HandleAddItemCommand("51254");//T10.9 Lvl 277
-                    HandleAddItemCommand("50607");//Pieds Lvl 277
-                    HandleAddItemCommand("50707");//Taille Lvl 277
-                    HandleAddItemCommand("50670");//Poignets Lvl 277
-                    HandleAddItemCommand("50653");//Cape Lvl 277
-                    break;
-                }
-                default:
-                    break;
-            }
-        }
-        case CLASS_PRIEST:
-        {
-            switch(spe)
-            {
-                case 1:
-                {
-                    HandleAddItemCommand("51255");//T10.9 Lvl 277
-                    HandleAddItemCommand("51256");//T10.9 Lvl 277
-                    HandleAddItemCommand("51257");//T10.9 Lvl 277
-                    HandleAddItemCommand("51258");//T10.9 Lvl 277
-                    HandleAddItemCommand("51259");//T10.9 Lvl 277
-                    HandleAddItemCommand("50699");//Pieds Lvl 277
-                    HandleAddItemCommand("50613");//Taille Lvl 277
-                    HandleAddItemCommand("50651");//Poignets Lvl 277
-                    HandleAddItemCommand("50628");//cape Lvl 277
-                    break;
-                }
-                case 2:
-                {
-                    HandleAddItemCommand("51260");//T10.9 Lvl 277
-                    HandleAddItemCommand("51261");//T10.9 Lvl 277
-                    HandleAddItemCommand("51262");//T10.9 Lvl 277
-                    HandleAddItemCommand("51263");//T10.9 Lvl 277
-                    HandleAddItemCommand("51264");//T10.9 Lvl 277
-                    HandleAddItemCommand("50699");//Pieds Lvl 277
-                    HandleAddItemCommand("50702");//Taille Lvl 277
-                    HandleAddItemCommand("50686");//Poignets Lvl 277
-                    HandleAddItemCommand("50668");//cape Lvl 277
-                    break;
-                }
-                case 3:
-                {
-                    HandleAddItemCommand("51255");//T10.9 Lvl 277
-                    HandleAddItemCommand("51256");//T10.9 Lvl 277
-                    HandleAddItemCommand("51257");//T10.9 Lvl 277
-                    HandleAddItemCommand("51258");//T10.9 Lvl 277
-                    HandleAddItemCommand("51259");//T10.9 Lvl 277
-                    HandleAddItemCommand("50699");//Pieds Lvl 277
-                    HandleAddItemCommand("50613");//Taille Lvl 277
-                    HandleAddItemCommand("50651");//Poignets Lvl 277
-                    HandleAddItemCommand("50628");//cape Lvl 277
-                    break;
-                }
-                default:
-                    break;
-            }
-        }
-        case CLASS_DEATH_KNIGHT:
-        {
-            switch(spe)
-            {
-                case 1:
-                {
-                    HandleAddItemCommand("51310");//T10.9 Lvl 277
-                    HandleAddItemCommand("51311");//T10.9 Lvl 277
-                    HandleAddItemCommand("51312");//T10.9 Lvl 277
-                    HandleAddItemCommand("51313");//T10.9 Lvl 277
-                    HandleAddItemCommand("51314");//T10.9 Lvl 277
-                    HandleAddItemCommand("50639");//Pieds Lvl 277
-                    HandleAddItemCommand("50620");//Taille Lvl 277
-                    HandleAddItemCommand("50659");//Poignets Lvl 277
-                    HandleAddItemCommand("50677");//Cape Lvl 277
-                    break;
-                }
-                case 2:
-                {
-                    HandleAddItemCommand("51305");//T10.9 Lvl 277
-                    HandleAddItemCommand("51306");//T10.9 Lvl 277
-                    HandleAddItemCommand("51307");//T10.9 Lvl 277
-                    HandleAddItemCommand("51308");//T10.9 Lvl 277
-                    HandleAddItemCommand("51309");//T10.9 Lvl 277
-                    HandleAddItemCommand("50625");//Pieds Lvl 277
-                    HandleAddItemCommand("50691");//Taille Lvl 277
-                    HandleAddItemCommand("50611");//Poignets Lvl 277
-                    HandleAddItemCommand("50718");//Cape Lvl 277
-                    break;
-                }
-                case 3:
-                {
-                    HandleAddItemCommand("51310");//T10.9 Lvl 277
-                    HandleAddItemCommand("51311");//T10.9 Lvl 277
-                    HandleAddItemCommand("51312");//T10.9 Lvl 277
-                    HandleAddItemCommand("51313");//T10.9 Lvl 277
-                    HandleAddItemCommand("51314");//T10.9 Lvl 277
-                    HandleAddItemCommand("50639");//Pieds Lvl 277
-                    HandleAddItemCommand("50620");//Taille Lvl 277
-                    HandleAddItemCommand("50659");//Poignets Lvl 277
-                    HandleAddItemCommand("50677");//Cape Lvl 277
-                    break;
-                }
-                default:
-                    break;
-            }
-        }
-        case CLASS_SHAMAN:
-        {
-            switch(spe)
-            {
-                case 1:
-                {
-                    HandleAddItemCommand("51235");//T10.9 Lvl 277
-                    HandleAddItemCommand("51236");//T10.9 Lvl 277
-                    HandleAddItemCommand("51237");//T10.9 Lvl 277
-                    HandleAddItemCommand("51238");//T10.9 Lvl 277
-                    HandleAddItemCommand("51239");//T10.9 Lvl 277
-                    HandleAddItemCommand("50652");//Pieds Lvl 277
-                    HandleAddItemCommand("50671");//Taille Lvl 277
-                    HandleAddItemCommand("50687");//Poignets Lvl 277
-                    HandleAddItemCommand("50628");//cape Lvl 277
-                    break;
-                }
-                case 2:
-                {
-                    HandleAddItemCommand("51240");//T10.9 Lvl 277
-                    HandleAddItemCommand("51241");//T10.9 Lvl 277
-                    HandleAddItemCommand("51242");//T10.9 Lvl 277
-                    HandleAddItemCommand("51243");//T10.9 Lvl 277
-                    HandleAddItemCommand("51244");//T10.9 Lvl 277
-                    HandleAddItemCommand("50711");//Pieds Lvl 277
-                    HandleAddItemCommand("50688");//Taille Lvl 277
-                    HandleAddItemCommand("50668");//Poignets Lvl 277
-                    break;
-                }
-                case 3:
-                {
-                    HandleAddItemCommand("51245");//T10.9 Lvl 277
-                    HandleAddItemCommand("51246");//T10.9 Lvl 277
-                    HandleAddItemCommand("51247");//T10.9 Lvl 277
-                    HandleAddItemCommand("51248");//T10.9 Lvl 277
-                    HandleAddItemCommand("51249");//T10.9 Lvl 277
-                    HandleAddItemCommand("50652");//Pieds Lvl 277
-                    HandleAddItemCommand("50671");//Taille Lvl 277
-                    HandleAddItemCommand("50687");//Poignets Lvl 277
-                    HandleAddItemCommand("50628");//cape Lvl 277
-                    break;
-                }
-                default:
-                    break;
-            }
-        }
-        case CLASS_MAGE:
-        {
-            switch(spe)
-            {
-                case 1:
-                {
-                    HandleAddItemCommand("51280");//T10.9 Lvl 277
-                    HandleAddItemCommand("51281");//T10.9 Lvl 277
-                    HandleAddItemCommand("51282");//T10.9 Lvl 277
-                    HandleAddItemCommand("51283");//T10.9 Lvl 277
-                    HandleAddItemCommand("51284");//T10.9 Lvl 277
-                    HandleAddItemCommand("50699");//Pieds Lvl 277
-                    HandleAddItemCommand("50613");//Taille Lvl 277
-                    HandleAddItemCommand("50651");//Poignets Lvl 277
-                    HandleAddItemCommand("50628");//cape Lvl 277
-                    break;
-                }
-                case 2:
-                {
-                    HandleAddItemCommand("51280");//T10.9 Lvl 277
-                    HandleAddItemCommand("51281");//T10.9 Lvl 277
-                    HandleAddItemCommand("51282");//T10.9 Lvl 277
-                    HandleAddItemCommand("51283");//T10.9 Lvl 277
-                    HandleAddItemCommand("51284");//T10.9 Lvl 277
-                    HandleAddItemCommand("50699");//Pieds Lvl 277
-                    HandleAddItemCommand("50613");//Taille Lvl 277
-                    HandleAddItemCommand("50651");//Poignets Lvl 277
-                    HandleAddItemCommand("50628");//cape Lvl 277
-                    break;
-                }
-                case 3:
-                {
-                    HandleAddItemCommand("51280");//T10.9 Lvl 277
-                    HandleAddItemCommand("51281");//T10.9 Lvl 277
-                    HandleAddItemCommand("51282");//T10.9 Lvl 277
-                    HandleAddItemCommand("51283");//T10.9 Lvl 277
-                    HandleAddItemCommand("51284");//T10.9 Lvl 277
-                    HandleAddItemCommand("50699");//Pieds Lvl 277
-                    HandleAddItemCommand("50613");//Taille Lvl 277
-                    HandleAddItemCommand("50651");//Poignets Lvl 277
-                    HandleAddItemCommand("50628");//cape Lvl 277
-                    break;
-                }
-                default:
-                    break;
-            }
-        }
-        case CLASS_WARLOCK:
-        {
-            switch(spe)
-            {
-                case 1:
-                {
-                    HandleAddItemCommand("51230");//T10.9 Lvl 277
-                    HandleAddItemCommand("51231");//T10.9 Lvl 277
-                    HandleAddItemCommand("51232");//T10.9 Lvl 277
-                    HandleAddItemCommand("51233");//T10.9 Lvl 277
-                    HandleAddItemCommand("51234");//T10.9 Lvl 277
-                    HandleAddItemCommand("50699");//Pieds Lvl 277
-                    HandleAddItemCommand("50613");//Taille Lvl 277
-                    HandleAddItemCommand("50651");//Poignets Lvl 277
-                    HandleAddItemCommand("50628");//cape Lvl 277
-                    break;
-                }
-                case 2:
-                {
-                    HandleAddItemCommand("51230");//T10.9 Lvl 277
-                    HandleAddItemCommand("51231");//T10.9 Lvl 277
-                    HandleAddItemCommand("51232");//T10.9 Lvl 277
-                    HandleAddItemCommand("51233");//T10.9 Lvl 277
-                    HandleAddItemCommand("51234");//T10.9 Lvl 277
-                    HandleAddItemCommand("50699");//Pieds Lvl 277
-                    HandleAddItemCommand("50613");//Taille Lvl 277
-                    HandleAddItemCommand("50651");//Poignets Lvl 277
-                    HandleAddItemCommand("50628");//cape Lvl 277
-                    break;
-                }
-                case 3:
-                {
-                    HandleAddItemCommand("51230");//T10.9 Lvl 277
-                    HandleAddItemCommand("51231");//T10.9 Lvl 277
-                    HandleAddItemCommand("51232");//T10.9 Lvl 277
-                    HandleAddItemCommand("51233");//T10.9 Lvl 277
-                    HandleAddItemCommand("51234");//T10.9 Lvl 277
-                    HandleAddItemCommand("50699");//Pieds Lvl 277
-                    HandleAddItemCommand("50613");//Taille Lvl 277
-                    HandleAddItemCommand("50651");//Poignets Lvl 277
-                    HandleAddItemCommand("50628");//cape Lvl 277
-                    break;
-                }
-                default:
-                    break;
-            }
-        }
-        case CLASS_DRUID:
-        {
-            switch(spe)
-            {
-                case 1:
-                {
-                    HandleAddItemCommand("51290");//T10.9 Lvl 277
-                    HandleAddItemCommand("51291");//T10.9 Lvl 277
-                    HandleAddItemCommand("51292");//T10.9 Lvl 277
-                    HandleAddItemCommand("51293");//T10.9 Lvl 277
-                    HandleAddItemCommand("51294");//T10.9 Lvl 277
-                    HandleAddItemCommand("50665");//Pieds Lvl 277
-                    HandleAddItemCommand("50705");//Taille Lvl 277
-                    HandleAddItemCommand("50630");//Poignets Lvl 277
-                    HandleAddItemCommand("50668");//cape Lvl 277
-                    break;
-                }
-                case 2:
-                {
-                    HandleAddItemCommand("51295");//T10.9 Lvl 277
-                    HandleAddItemCommand("51296");//T10.9 Lvl 277
-                    HandleAddItemCommand("51297");//T10.9 Lvl 277
-                    HandleAddItemCommand("51298");//T10.9 Lvl 277
-                    HandleAddItemCommand("51299");//T10.9 Lvl 277
-                    HandleAddItemCommand("50607");//Pieds Lvl 277
-                    HandleAddItemCommand("50707");//Taille Lvl 277
-                    HandleAddItemCommand("50670");//Poignets Lvl 277
-                    HandleAddItemCommand("50653");//cape Lvl 277
-                    break;
-                }
-                case 3:
-                {
-                    HandleAddItemCommand("51300");//T10.9 Lvl 277
-                    HandleAddItemCommand("51301");//T10.9 Lvl 277
-                    HandleAddItemCommand("51302");//T10.9 Lvl 277
-                    HandleAddItemCommand("51303");//T10.9 Lvl 277
-                    HandleAddItemCommand("51304");//T10.9 Lvl 277
-                    HandleAddItemCommand("50665");//Pieds Lvl 277
-                    HandleAddItemCommand("50705");//Taille Lvl 277
-                    HandleAddItemCommand("50630");//Poignets Lvl 277
-                    HandleAddItemCommand("50668");//cape Lvl 277
-                    break;
-                }
-                default:
-                    break;
-            }
-            break;
-        }
-        default:
-            break;
-    }
+    chr->GetBestItemForMyLevel();
+    chr->AutoEquipItem();
+    chr->PurgeMyBags();
 
-    const ItemPrototype * proto = NULL;
+    /*const ItemPrototype * proto = NULL;
     switch(chr->getRace())
     {
         case RACE_HUMAN:
         {
-            if(proto = sObjectMgr.GetItemPrototype(5656))
+            proto = sObjectMgr.GetItemPrototype(5656);
+            if(proto && )
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(5655))
+
+            proto = sObjectMgr.GetItemPrototype(5655);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(2414))
+
+            proto = sObjectMgr.GetItemPrototype(2414);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(18777))
+
+            proto = sObjectMgr.GetItemPrototype(18777);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(18778))
+
+            proto = sObjectMgr.GetItemPrototype(18778);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(18776))
+
+            proto = sObjectMgr.GetItemPrototype(18776);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
+
             break;
         }
         case RACE_ORC:
         {
-            if(proto = sObjectMgr.GetItemPrototype(5668))
+            proto = sObjectMgr.GetItemPrototype(5668);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(1132))
+
+            proto = sObjectMgr.GetItemPrototype(1132);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(46099))
+
+            proto = sObjectMgr.GetItemPrototype(46099);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(5665))
+
+            proto = sObjectMgr.GetItemPrototype(5665);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(18796))
+
+            proto = sObjectMgr.GetItemPrototype(18796);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(18797))
+
+            proto = sObjectMgr.GetItemPrototype(18797);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(18798))
+
+            proto = sObjectMgr.GetItemPrototype(18798);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
+
             break;
         }
         case RACE_DWARF:
         {
-            if(proto = sObjectMgr.GetItemPrototype(5873))
+            proto = sObjectMgr.GetItemPrototype(5873);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(5872))
+
+            proto = sObjectMgr.GetItemPrototype(5872);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(5864))
+
+            proto = sObjectMgr.GetItemPrototype(5864);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(18785))
+
+            proto = sObjectMgr.GetItemPrototype(18785);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(18786))
+
+            proto = sObjectMgr.GetItemPrototype(18786);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(18787))
+
+            proto = sObjectMgr.GetItemPrototype(18787);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
+
             break;
         }
         case RACE_NIGHTELF:
         {
-            if(proto = sObjectMgr.GetItemPrototype(8631))
+            proto = sObjectMgr.GetItemPrototype(8631);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(8632))
+
+            proto = sObjectMgr.GetItemPrototype(8632);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(8629))
+
+            proto = sObjectMgr.GetItemPrototype(8629);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(18902))
+
+            proto = sObjectMgr.GetItemPrototype(18902);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(18766))
+
+            proto = sObjectMgr.GetItemPrototype(18766);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(18767))
+
+            proto = sObjectMgr.GetItemPrototype(18767);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
+
             break;
         }
         case RACE_UNDEAD_PLAYER:
         {
-            if(proto = sObjectMgr.GetItemPrototype(13333))
+            proto = sObjectMgr.GetItemPrototype(13333);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(13332))
+
+            proto = sObjectMgr.GetItemPrototype(13332);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(46308))
+
+            proto = sObjectMgr.GetItemPrototype(46308);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(13331))
+
+            proto = sObjectMgr.GetItemPrototype(13331);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(18791))
+
+            proto = sObjectMgr.GetItemPrototype(18791);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(13334))
+
+            proto = sObjectMgr.GetItemPrototype(13334);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
+
             break;
         }
         case RACE_TAUREN:
         {
-            if(proto = sObjectMgr.GetItemPrototype(46100))
+            proto = sObjectMgr.GetItemPrototype(46100);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(15290))
+
+            proto = sObjectMgr.GetItemPrototype(15290);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(15277))
+
+            proto = sObjectMgr.GetItemPrototype(15277);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(18793))
+
+            proto = sObjectMgr.GetItemPrototype(18793);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(18794))
+
+            proto = sObjectMgr.GetItemPrototype(18794);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(18795))
+
+            proto = sObjectMgr.GetItemPrototype(18795);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
+
             break;
         }
         case RACE_GNOME:
         {
-            if(proto = sObjectMgr.GetItemPrototype(8595))
+            proto = sObjectMgr.GetItemPrototype(8595);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(8563))
+
+            proto = sObjectMgr.GetItemPrototype(8563);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(13321))
+
+            proto = sObjectMgr.GetItemPrototype(13321);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(13322))
+
+            proto = sObjectMgr.GetItemPrototype(13322);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(18773))
+
+            proto = sObjectMgr.GetItemPrototype(18773);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(18774))
+
+            proto = sObjectMgr.GetItemPrototype(18774);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(18772))
+
+            proto = sObjectMgr.GetItemPrototype(18772);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
+
             break;
         }
         case RACE_TROLL:
         {
-            if(proto = sObjectMgr.GetItemPrototype(8588))
+            proto = sObjectMgr.GetItemPrototype(8588);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(8591))
+
+            proto = sObjectMgr.GetItemPrototype(8591);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(8592))
+
+            proto = sObjectMgr.GetItemPrototype(8592);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(18788))
+
+            proto = sObjectMgr.GetItemPrototype(18788);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(18790))
+
+            proto = sObjectMgr.GetItemPrototype(18790);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(18789))
+
+            proto = sObjectMgr.GetItemPrototype(18789);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
+
             break;
         }
         case RACE_BLOODELF:
         {
-            if(proto = sObjectMgr.GetItemPrototype(29220))
+            proto = sObjectMgr.GetItemPrototype(29220);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(29221))
+
+            proto = sObjectMgr.GetItemPrototype(29221);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(28927))
+
+            proto = sObjectMgr.GetItemPrototype(28927);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(29222))
+
+            proto = sObjectMgr.GetItemPrototype(29222);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(28936))
+
+            proto = sObjectMgr.GetItemPrototype(28936);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(29223))
+
+            proto = sObjectMgr.GetItemPrototype(29223);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(29224))
+
+            proto = sObjectMgr.GetItemPrototype(29224);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
+
             break;
         }
         case RACE_DRAENEI:
         {
-            if(proto = sObjectMgr.GetItemPrototype(28481))
+            proto = sObjectMgr.GetItemPrototype(28481);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(29744))
+
+            proto = sObjectMgr.GetItemPrototype(29744);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(29743))
+
+            proto = sObjectMgr.GetItemPrototype(29743);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(29745))
+
+            proto = sObjectMgr.GetItemPrototype(29745);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(29746))
+
+            proto = sObjectMgr.GetItemPrototype(29746);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(29747))
+
+            proto = sObjectMgr.GetItemPrototype(29747);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
+
             break;
         }
         default:
@@ -8019,45 +7644,71 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
     {
         case HORDE:
         {
-            if(proto = sObjectMgr.GetItemPrototype(25475))
+            proto = sObjectMgr.GetItemPrototype(25475);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(25474))
+
+            proto = sObjectMgr.GetItemPrototype(25474);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(25476))
+
+            proto = sObjectMgr.GetItemPrototype(25476);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(25532))
+
+            proto = sObjectMgr.GetItemPrototype(25532);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(25477))
+
+            proto = sObjectMgr.GetItemPrototype(25477);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(25531))
+
+            proto = sObjectMgr.GetItemPrototype(25531);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(25533))
+
+            proto = sObjectMgr.GetItemPrototype(25533);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
+
             break;
         }
         case ALLIANCE:
         {
-            if(proto = sObjectMgr.GetItemPrototype(25472))
+            proto = sObjectMgr.GetItemPrototype(25472);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(25470))
+
+            proto = sObjectMgr.GetItemPrototype(25470);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-             if(proto = sObjectMgr.GetItemPrototype(25471))
+
+            proto = sObjectMgr.GetItemPrototype(25471);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(25529))
+
+            proto = sObjectMgr.GetItemPrototype(25529);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(25528))
+
+            proto = sObjectMgr.GetItemPrototype(25528);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(25527))
+
+            proto = sObjectMgr.GetItemPrototype(25527);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
-            if(proto = sObjectMgr.GetItemPrototype(25473))
+
+            proto = sObjectMgr.GetItemPrototype(25473);
+            if(proto)
                 chr->learnSpell(proto->Spells[1].SpellId, false);
+
             break;
         }
         default:
             break;
-    }
-
-    chr->AutoEquipItem();
+    }*/
     return true;
 }
 

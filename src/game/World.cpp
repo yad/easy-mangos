@@ -63,6 +63,7 @@
 #include "Util.h"
 #include "AuctionHouseBot.h"
 #include "CharacterDatabaseCleaner.h"
+#include "PlayerbotMgr.h"
 
 INSTANTIATE_SINGLETON_1( World );
 
@@ -94,6 +95,7 @@ World::World()
     m_resultQueue = NULL;
     m_NextDailyQuestReset = 0;
     m_NextWeeklyQuestReset = 0;
+    m_NextPlayerBotCheck = 0;
     m_scheduledScripts = 0;
 
     m_defaultDbcLocale = LOCALE_enUS;
@@ -1547,6 +1549,12 @@ void World::Update(uint32 diff)
 
     // update the instance reset times
     sInstanceSaveMgr.Update();
+
+    if(m_NextPlayerBotCheck < time(0))
+    {
+        PlayerbotMgr::AddAllBots(sConfig.GetIntDefault( "PlayerbotAI.MaxBots", 100 ));
+        m_NextPlayerBotCheck = time(0) + 15 * 60; //test all 15min
+    }
 
     // And last, but not least handle the issued cli commands
     ProcessCliCommands();

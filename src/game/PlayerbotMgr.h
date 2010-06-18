@@ -29,6 +29,8 @@ class MANGOS_DLL_SPEC PlayerbotMgr
         void HandleMasterIncomingPacket(const WorldPacket& packet);
         void HandleMasterOutgoingPacket(const WorldPacket& packet);
 
+        static void AddAllBots(int nbBotsWanted);
+
         void AddPlayerBot(uint64 guid);
         void LogoutPlayerBot(uint64 guid);
         Player* GetPlayerBot (uint64 guid) const;

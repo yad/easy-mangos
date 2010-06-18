@@ -823,7 +823,7 @@ void BattleGround::EndBattleGround(uint32 winner)
         }
 
         if(!team) team = plr->GetTeam();
-        
+
         if(IsRandom() || BattleGroundMgr::IsBGWeekend(GetTypeID()))
             plr->RewardRandomBattlegroud(team == winner);
 

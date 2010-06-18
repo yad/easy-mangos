@@ -18,8 +18,8 @@ class CharacterHandler;
 PlayerbotMgr::PlayerbotMgr()
 {
     // load config variables
-    m_confDisableBots = sConfig.GetBoolDefault( "PlayerbotAI.DisableBots", false );
-    m_confDebugWhisper = sConfig.GetBoolDefault( "PlayerbotAI.DebugWhisper", false );
+    m_confDisableBots       = sConfig.GetBoolDefault( "PlayerbotAI.DisableBots", false );
+    m_confDebugWhisper      = sConfig.GetBoolDefault( "PlayerbotAI.DebugWhisper", false );
     m_confFollowDistance[0] = sConfig.GetFloatDefault( "PlayerbotAI.FollowDistanceMin", 0.5f );
     m_confFollowDistance[1] = sConfig.GetFloatDefault( "PlayerbotAI.FollowDistanceMin", 1.0f );
 }
@@ -560,6 +560,12 @@ void PlayerbotMgr::OnBotLogin(Player * const bot)
 
     if (bot->GetGroup())
         bot->RemoveFromGroup();
+
+    bot->SetLevel(urand(1, 80));
+    ChatHandler ch(bot);
+    ch.HandleGMStartUpCommand("");
+    bot->SetHealth(bot->GetMaxHealth());
+    bot->SetPower(bot->getPowerType(), bot->GetMaxPower(bot->getPowerType()));
 }
 
 void PlayerbotMgr::OnBotInvite(Player * const bot)
@@ -632,27 +638,6 @@ bool ChatHandler::HandlePlayerbotCommand(const char* args)
             return false;
         }
 
-        /*uint32 accountId = sObjectMgr.GetPlayerAccountIdByGUID(guid);
-        if (accountId != m_session->GetAccountId()) {
-            PSendSysMessage("You may only add bots from the same account.");
-            SetSentErrorMessage(true);
-            return false;
-        }*/
-
-        if ( m_session->GetPlayer()->GetGroup() )
-        {
-            GroupReference *ref = m_session->GetPlayer()->GetGroup()->GetFirstMember();
-            while ( ref )
-            {
-                if (ref->getSource()->GetPlayerbotAI())
-                {
-                    if (ref->getSource()->GetPlayerbotAI()->IsInCombat())
-                        return false;
-                    break;
-                }
-                ref = ref->next();
-            }
-        }
         if (mgr->GetPlayerBot(guid)) {
             PSendSysMessage("Bot already exists in world.");
             SetSentErrorMessage(true);
@@ -683,27 +668,6 @@ bool ChatHandler::HandlePlayerbotCommand(const char* args)
             return false;
         }
 
-        /*uint32 accountId = sObjectMgr.GetPlayerAccountIdByGUID(guid);
-        if (accountId != m_session->GetAccountId()) {
-            PSendSysMessage("You may only add bots from the same account.");
-            SetSentErrorMessage(true);
-            return false;
-        }*/
-
-        if ( m_session->GetPlayer()->GetGroup() )
-        {
-            GroupReference *ref = m_session->GetPlayer()->GetGroup()->GetFirstMember();
-            while ( ref )
-            {
-                if (ref->getSource()->GetPlayerbotAI())
-                {
-                    if (ref->getSource()->GetPlayerbotAI()->IsInCombat())
-                        return false;
-                    break;
-                }
-                ref = ref->next();
-            }
-        }
         if (! mgr->GetPlayerBot(guid)) {
             PSendSysMessage("Bot can not be removed because bot does not exist in world.");
             SetSentErrorMessage(true);
@@ -711,6 +675,47 @@ bool ChatHandler::HandlePlayerbotCommand(const char* args)
         }
         mgr->LogoutPlayerBot(guid);
         PSendSysMessage("Bot removed successfully.");
+    }
+    else if (cmdStr == "all")
+    {
+        int nbBotsActual = 0;
+        int nbBotsWanted = sConfig.GetIntDefault( "PlayerbotAI.MaxBots", 100 );
+        HashMapHolder<Player>::MapType& m = sObjectAccessor.GetPlayers();
+        for(HashMapHolder<Player>::MapType::const_iterator itr = m.begin(); itr != m.end(); ++itr)
+        {
+            Player* bot = itr->second;
+            if (bot && bot->IsBot())
+                nbBotsActual++;
+        }
+
+        nbBotsWanted = nbBotsWanted - nbBotsActual;
+        if(nbBotsWanted < 1)
+            return false;
+
+        QueryResult *result = CharacterDatabase.PQuery("SELECT guid FROM characters WHERE account = '%u'", 1);
+        if( result )
+        {
+            int itr = 0;
+            do
+            {
+                Field *fields = result->Fetch();
+                uint64 guid = fields[0].GetUInt64();
+
+                if (guid == 0 || (guid == m_session->GetPlayer()->GetGUID()))
+                    continue;
+
+                if (mgr->GetPlayerBot(guid))
+                    continue;
+
+                mgr->AddPlayerBot(guid);
+                itr++;
+
+                if(itr > nbBotsWanted)
+                    break;
+            }
+            while (result->NextRow());
+            delete result;
+        }
     }
     else if (cmdStr == "co" || cmdStr == "combatorder")
     {

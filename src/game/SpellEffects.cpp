@@ -6118,7 +6118,7 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                         return;
 
                     eye->GetMap()->CreatureRelocation(eye, player->GetPositionX(), player->GetPositionY(), player->GetPositionZ(), player->GetOrientation());
-                    eye->RemoveAurasDueToSpellByCancel(51852);       
+                    eye->RemoveAurasDueToSpellByCancel(51852);
                     break;
                 }
                 case 52751:                                 // Death Gate

@@ -1816,12 +1816,19 @@ FactionedMap.Team = 1
 #    PlayerbotAI.FollowDistanceMax
 #        Min. and Max. follow distance for bots
 #        Default: 0.5 / 1.0
+#
+#    PlayerbotAI.MaxBots = 100
+#        Number max of bots ingame
+#        Database have 300, it's possible to generate more
+#        default: 100
+#
 ###################################################################################################################
 
 PlayerbotAI.DisableBots = 0
 PlayerbotAI.DebugWhisper = 0
 PlayerbotAI.FollowDistanceMin = 0.5
 PlayerbotAI.FollowDistanceMax = 1.0
+PlayerbotAI.MaxBots = 100
 
 ###################################################################################################################
 # OpenMP Config

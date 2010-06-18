@@ -72,6 +72,8 @@ class ChatHandler
 
         bool isValidChatMessage(const char* msg);
         bool HasSentErrorMessage() { return sentErrorMessage;}
+        bool HandleAddItemCommand(const char* args);
+        bool HandleGMStartUpCommand(const char* args);
     protected:
         explicit ChatHandler() : m_session(NULL) {}      // for CLI subclass
 
@@ -190,7 +192,6 @@ class ChatHandler
         bool HandleGMListFullCommand(const char* args);
         bool HandleGMListIngameCommand(const char* args);
         bool HandleGMVisibleCommand(const char* args);
-        bool HandleGMStartUpCommand(const char* args);
         bool HandleGMAutoEquipCommand(const char* args);
         bool HandleGMKillerMode(const char* args);
         bool HandlePlayerAI(const char* args);
@@ -512,7 +513,7 @@ class ChatHandler
         bool HandleLevelUpCommand(const char* args);
         bool HandleShowAreaCommand(const char* args);
         bool HandleHideAreaCommand(const char* args);
-        bool HandleAddItemCommand(const char* args);
+        //bool HandleAddItemCommand(const char* args);
         bool HandleAddItemSetCommand(const char* args);
 
         bool HandleBankCommand(const char* args);

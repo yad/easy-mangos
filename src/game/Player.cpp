@@ -1911,6 +1911,578 @@ void Player::AutoEquipItem()
     }
 }
 
+void Player::GetBestItemForMyLevel()
+{
+
+    ItemPrototype const *bestItemInSlot_head = NULL;
+    ItemPrototype const *bestItemInSlot_shoulders = NULL;
+    ItemPrototype const *bestItemInSlot_body = NULL;
+    ItemPrototype const *bestItemInSlot_chest = NULL;
+    ItemPrototype const *bestItemInSlot_robe = NULL;
+    ItemPrototype const *bestItemInSlot_waist = NULL;
+    ItemPrototype const *bestItemInSlot_legs = NULL;
+    ItemPrototype const *bestItemInSlot_feet = NULL;
+    ItemPrototype const *bestItemInSlot_wrists = NULL;
+    ItemPrototype const *bestItemInSlot_hands = NULL;
+    ItemPrototype const *bestItemInSlot_cloak = NULL;
+    ItemPrototype const *bestItemInSlot_weapon = NULL;
+    ItemPrototype const *bestItemInSlot_shield = NULL;
+    ItemPrototype const *bestItemInSlot_ranged = NULL;
+    ItemPrototype const *bestItemInSlot_2hweapon = NULL;
+    ItemPrototype const *bestItemInSlot_weaponmainhand = NULL;
+    ItemPrototype const *bestItemInSlot_weaponoffhand = NULL;
+    ItemPrototype const *bestItemInSlot_thrown = NULL;
+    ItemPrototype const *bestItemInSlot_rangedright = NULL;
+
+    for (uint32 id = 0; id < sItemStorage.MaxEntry; id++)
+    {
+        ItemPrototype const *pProto = sObjectMgr.GetItemPrototype(id);
+        if(!pProto)
+            continue;
+
+        switch( pProto->InventoryType )
+        {
+            case INVTYPE_HEAD:
+            {
+                if(!CanUseItem(pProto) || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                    break;
+
+                if(!bestItemInSlot_head)
+                    bestItemInSlot_head = pProto;
+
+                if(bestItemInSlot_head->Armor < pProto->Armor)
+                    bestItemInSlot_head = pProto;
+
+                break;
+            }
+            case INVTYPE_NECK:
+                /*if(i == EQUIPMENT_SLOT_NECK)*/
+                break;
+            case INVTYPE_SHOULDERS:
+            {
+                if(!CanUseItem(pProto) || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                    break;
+
+                if(!bestItemInSlot_shoulders)
+                    bestItemInSlot_shoulders = pProto;
+
+                if(bestItemInSlot_shoulders->Armor < pProto->Armor)
+                    bestItemInSlot_shoulders = pProto;
+
+                break;
+            }
+            case INVTYPE_BODY:
+            {
+                if(!CanUseItem(pProto) || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                    break;
+
+                if(!bestItemInSlot_body)
+                    bestItemInSlot_body = pProto;
+
+                if(bestItemInSlot_body->Armor < pProto->Armor)
+                    bestItemInSlot_body = pProto;
+
+                break;
+            }
+            case INVTYPE_CHEST:
+            {
+                if(!CanUseItem(pProto) || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                    break;
+
+                if(!bestItemInSlot_chest)
+                    bestItemInSlot_chest = pProto;
+
+                if(bestItemInSlot_chest->Armor < pProto->Armor)
+                    bestItemInSlot_chest = pProto;
+
+                break;
+            }
+            case INVTYPE_ROBE:
+            {
+                if(!CanUseItem(pProto) || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                    break;
+
+
+                if(!bestItemInSlot_robe)
+                    bestItemInSlot_robe = pProto;
+
+                if(bestItemInSlot_robe->Armor < pProto->Armor)
+                    bestItemInSlot_robe = pProto;
+
+                break;
+            }
+            case INVTYPE_WAIST:
+            {
+                if(!CanUseItem(pProto) || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                    break;
+
+                if(!bestItemInSlot_waist)
+                    bestItemInSlot_waist = pProto;
+
+                if(bestItemInSlot_waist->Armor < pProto->Armor)
+                    bestItemInSlot_waist = pProto;
+
+                break;
+            }
+            case INVTYPE_LEGS:
+            {
+                if(!CanUseItem(pProto) || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                    break;
+
+                if(!bestItemInSlot_legs)
+                    bestItemInSlot_legs = pProto;
+
+                if(bestItemInSlot_legs->Armor < pProto->Armor)
+                    bestItemInSlot_legs = pProto;
+
+                break;
+            }
+            case INVTYPE_FEET:
+            {
+                if(!CanUseItem(pProto) || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                    break;
+
+                if(!bestItemInSlot_feet)
+                    bestItemInSlot_feet = pProto;
+
+                if(bestItemInSlot_feet->Armor < pProto->Armor)
+                    bestItemInSlot_feet = pProto;
+
+                break;
+            }
+            case INVTYPE_WRISTS:
+            {
+                if(!CanUseItem(pProto) || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                    break;
+
+                if(!bestItemInSlot_wrists)
+                    bestItemInSlot_wrists = pProto;
+
+                if(bestItemInSlot_wrists->Armor < pProto->Armor)
+                    bestItemInSlot_wrists = pProto;
+
+                break;
+            }
+            case INVTYPE_HANDS:
+            {
+                if(!CanUseItem(pProto) || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                    break;
+
+                if(!bestItemInSlot_hands)
+                    bestItemInSlot_hands = pProto;
+
+                if(bestItemInSlot_hands->Armor < pProto->Armor)
+                    bestItemInSlot_hands = pProto;
+
+                break;
+            }
+            case INVTYPE_FINGER:
+                //if(i == EQUIPMENT_SLOT_FINGER1 || i = EQUIPMENT_SLOT_FINGER2)
+                break;
+            case INVTYPE_TRINKET:
+                //if(i == EQUIPMENT_SLOT_TRINKET1 || i == EQUIPMENT_SLOT_TRINKET2)
+                break;
+            case INVTYPE_CLOAK:
+            {
+                if(!CanUseItem(pProto) || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                    break;
+
+                if(!bestItemInSlot_cloak)
+                    bestItemInSlot_cloak = pProto;
+
+                if(bestItemInSlot_cloak->Armor < pProto->Armor)
+                    bestItemInSlot_cloak = pProto;
+
+                break;
+            }
+            case INVTYPE_WEAPON:
+            {
+                if(!CanUseItem(pProto) || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                    break;
+
+                if(!bestItemInSlot_weapon)
+                    bestItemInSlot_weapon = pProto;
+
+                if(bestItemInSlot_weapon->getDPS() < pProto->getDPS())
+                    bestItemInSlot_weapon = pProto;
+
+                break;
+                    /*if(CanDualWield())    slots[1] = EQUIPMENT_SLOT_OFFHAND;*/
+            }
+            case INVTYPE_SHIELD:
+            {
+                if(!CanUseItem(pProto) || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                    break;
+
+                if(!bestItemInSlot_shield)
+                    bestItemInSlot_shield = pProto;
+
+                if(bestItemInSlot_shield->Armor < pProto->Armor)
+                    bestItemInSlot_shield = pProto;
+
+                break;
+            }
+            case INVTYPE_RANGED:
+            {
+                if(!CanUseItem(pProto) || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                    break;
+
+                if(!bestItemInSlot_ranged)
+                    bestItemInSlot_ranged = pProto;
+
+                if(bestItemInSlot_ranged->getDPS() < pProto->getDPS())
+                    bestItemInSlot_ranged = pProto;
+
+                break;
+            }
+            case INVTYPE_2HWEAPON:
+            {
+                if(!CanUseItem(pProto) || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                    break;
+
+                if(!bestItemInSlot_2hweapon)
+                    bestItemInSlot_2hweapon = pProto;
+
+                if(bestItemInSlot_2hweapon->getDPS() < pProto->getDPS())
+                    bestItemInSlot_2hweapon = pProto;
+
+                break;
+                /*if (CanDualWield() && CanTitanGrip())    slots[1] = EQUIPMENT_SLOT_OFFHAND;*/
+            }
+            case INVTYPE_TABARD:
+                //if(i == EQUIPMENT_SLOT_TABARD)
+                break;
+            case INVTYPE_WEAPONMAINHAND:
+            {
+                if(!CanUseItem(pProto) || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                    break;
+
+                if(!bestItemInSlot_weaponmainhand)
+                    bestItemInSlot_weaponmainhand = pProto;
+
+                if(bestItemInSlot_weaponmainhand->getDPS() < pProto->getDPS())
+                    bestItemInSlot_weaponmainhand = pProto;
+
+                break;
+            }
+            case INVTYPE_WEAPONOFFHAND:
+            {
+                if(!CanUseItem(pProto) || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                    break;
+
+                if(!bestItemInSlot_weaponoffhand)
+                    bestItemInSlot_weaponoffhand = pProto;
+
+                if(bestItemInSlot_weaponoffhand->getDPS() < pProto->getDPS())
+                    bestItemInSlot_weaponoffhand = pProto;
+
+                break;
+            }
+            case INVTYPE_HOLDABLE:
+                //if(i == EQUIPMENT_SLOT_OFFHAND)
+                break;
+            case INVTYPE_THROWN:
+            {
+                if(!CanUseItem(pProto) || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                    break;
+
+                if(!bestItemInSlot_thrown)
+                    bestItemInSlot_thrown = pProto;
+
+                if(bestItemInSlot_thrown->getDPS() < pProto->getDPS())
+                    bestItemInSlot_thrown = pProto;
+
+                break;
+            }
+            case INVTYPE_RANGEDRIGHT:
+            {
+                if(!CanUseItem(pProto) || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                    break;
+
+                if(!bestItemInSlot_rangedright)
+                    bestItemInSlot_rangedright = pProto;
+
+                if(bestItemInSlot_rangedright->getDPS() < pProto->getDPS())
+                    bestItemInSlot_rangedright = pProto;
+
+                break;
+            }
+            case INVTYPE_BAG:
+                /*if(i == INVENTORY_SLOT_BAG_START + 0 || i == INVENTORY_SLOT_BAG_START + 1 ||
+                    i == INVENTORY_SLOT_BAG_START + 2 || i == INVENTORY_SLOT_BAG_START + 3)
+                {
+                    if(mon_item && mon_item->ContainerSlots >= new_item->ContainerSlots)
+                        break;
+                    else
+                    {
+                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
+                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                        SwapItem(src, dst);
+                    }
+                }*/
+                break;
+            case INVTYPE_RELIC:
+            {
+                /*switch(proto->SubClass)
+                {
+                    case ITEM_SUBCLASS_ARMOR_LIBRAM:
+                        if (pClass == CLASS_PALADIN)
+                            if(i == EQUIPMENT_SLOT_RANGED;
+                        break;
+                    case ITEM_SUBCLASS_ARMOR_IDOL:
+                        if (pClass == CLASS_DRUID)
+                            if(i == EQUIPMENT_SLOT_RANGED;
+                        break;
+                    case ITEM_SUBCLASS_ARMOR_TOTEM:
+                        if (pClass == CLASS_SHAMAN)
+                            if(i == EQUIPMENT_SLOT_RANGED;
+                        break;
+                    case ITEM_SUBCLASS_ARMOR_MISC:
+                        if (pClass == CLASS_WARLOCK)
+                            if(i == EQUIPMENT_SLOT_RANGED;
+                        break;
+                    case ITEM_SUBCLASS_ARMOR_SIGIL:
+                        if (pClass == CLASS_DEATH_KNIGHT)
+                            if(i == EQUIPMENT_SLOT_RANGED;
+                        break;
+                }*/
+                break;
+            }
+            default :
+                break;
+        }
+    }
+
+    if(bestItemInSlot_head)
+    {
+        char itemEntry[10] = "0";
+        sprintf(itemEntry, "%d", bestItemInSlot_head->ItemId);
+        ChatHandler(this).HandleAddItemCommand(itemEntry);
+    }
+
+    if(bestItemInSlot_shoulders)
+    {
+        char itemEntry[10] = "0";
+        sprintf(itemEntry, "%d", bestItemInSlot_shoulders->ItemId);
+        ChatHandler(this).HandleAddItemCommand(itemEntry);
+    }
+
+    if(bestItemInSlot_body)
+    {
+        char itemEntry[10] = "0";
+        sprintf(itemEntry, "%d", bestItemInSlot_body->ItemId);
+        ChatHandler(this).HandleAddItemCommand(itemEntry);
+    }
+
+    if(bestItemInSlot_chest)
+    {
+        char itemEntry[10] = "0";
+        sprintf(itemEntry, "%d", bestItemInSlot_chest->ItemId);
+        ChatHandler(this).HandleAddItemCommand(itemEntry);
+    }
+
+    if(bestItemInSlot_robe)
+    {
+        char itemEntry[10] = "0";
+        sprintf(itemEntry, "%d", bestItemInSlot_robe->ItemId);
+        ChatHandler(this).HandleAddItemCommand(itemEntry);
+    }
+
+    if(bestItemInSlot_waist)
+    {
+        char itemEntry[10] = "0";
+        sprintf(itemEntry, "%d", bestItemInSlot_waist->ItemId);
+        ChatHandler(this).HandleAddItemCommand(itemEntry);
+    }
+
+    if(bestItemInSlot_legs)
+    {
+        char itemEntry[10] = "0";
+        sprintf(itemEntry, "%d", bestItemInSlot_legs->ItemId);
+        ChatHandler(this).HandleAddItemCommand(itemEntry);
+    }
+
+    if(bestItemInSlot_feet)
+    {
+        char itemEntry[10] = "0";
+        sprintf(itemEntry, "%d", bestItemInSlot_feet->ItemId);
+        ChatHandler(this).HandleAddItemCommand(itemEntry);
+    }
+
+    if(bestItemInSlot_wrists)
+    {
+        char itemEntry[10] = "0";
+        sprintf(itemEntry, "%d", bestItemInSlot_wrists->ItemId);
+        ChatHandler(this).HandleAddItemCommand(itemEntry);
+    }
+
+    if(bestItemInSlot_hands)
+    {
+        char itemEntry[10] = "0";
+        sprintf(itemEntry, "%d", bestItemInSlot_hands->ItemId);
+        ChatHandler(this).HandleAddItemCommand(itemEntry);
+    }
+
+    if(bestItemInSlot_cloak)
+    {
+        char itemEntry[10] = "0";
+        sprintf(itemEntry, "%d", bestItemInSlot_cloak->ItemId);
+        ChatHandler(this).HandleAddItemCommand(itemEntry);
+    }
+
+    if(bestItemInSlot_weapon)
+    {
+        char itemEntry[10] = "0";
+        sprintf(itemEntry, "%d", bestItemInSlot_weapon->ItemId);
+        ChatHandler(this).HandleAddItemCommand(itemEntry);
+    }
+
+    if(bestItemInSlot_shield)
+    {
+        char itemEntry[10] = "0";
+        sprintf(itemEntry, "%d", bestItemInSlot_shield->ItemId);
+        ChatHandler(this).HandleAddItemCommand(itemEntry);
+    }
+
+    if(bestItemInSlot_ranged)
+    {
+        char itemEntry[10] = "0";
+        sprintf(itemEntry, "%d", bestItemInSlot_ranged->ItemId);
+        ChatHandler(this).HandleAddItemCommand(itemEntry);
+    }
+
+    if(bestItemInSlot_2hweapon)
+    {
+        char itemEntry[10] = "0";
+        sprintf(itemEntry, "%d", bestItemInSlot_2hweapon->ItemId);
+        ChatHandler(this).HandleAddItemCommand(itemEntry);
+    }
+
+    if(bestItemInSlot_weaponmainhand)
+    {
+        char itemEntry[10] = "0";
+        sprintf(itemEntry, "%d", bestItemInSlot_weaponmainhand->ItemId);
+        ChatHandler(this).HandleAddItemCommand(itemEntry);
+    }
+
+    if(bestItemInSlot_weaponoffhand)
+    {
+        char itemEntry[10] = "0";
+        sprintf(itemEntry, "%d", bestItemInSlot_weaponoffhand->ItemId);
+        ChatHandler(this).HandleAddItemCommand(itemEntry);
+    }
+
+    if(bestItemInSlot_thrown)
+    {
+        char itemEntry[10] = "0";
+        sprintf(itemEntry, "%d", bestItemInSlot_thrown->ItemId);
+        ChatHandler(this).HandleAddItemCommand(itemEntry);
+    }
+
+    if(bestItemInSlot_rangedright)
+    {
+        char itemEntry[10] = "0";
+        sprintf(itemEntry, "%d", bestItemInSlot_rangedright->ItemId);
+        ChatHandler(this).HandleAddItemCommand(itemEntry);
+    }
+}
+
+void Player::PurgeMyBags()
+{
+    // look for items in main bag
+    for (int slot=INVENTORY_SLOT_ITEM_START; slot < INVENTORY_SLOT_ITEM_END; ++slot)
+    {
+        const ItemPrototype *new_item = NULL;
+        Item* const pItem = GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
+        if (!pItem)
+            continue;
+
+        DestroyItem(INVENTORY_SLOT_BAG_0, slot, true);
+    }
+
+
+    // for all for items in other bags
+    for (int bag = INVENTORY_SLOT_BAG_START; bag < INVENTORY_SLOT_BAG_END; ++bag)
+    {
+        Bag* const pBag = (Bag*)GetItemByPos(INVENTORY_SLOT_BAG_0, bag);
+        if (!pBag)
+            continue;
+        for (uint32 slot = 0; slot < pBag->GetBagSize(); ++slot)
+        {
+            const ItemPrototype *new_item = NULL;
+            Item* const pItem = GetItemByPos(bag, slot);
+            if (!pItem)
+                continue;
+
+            DestroyItem(bag, slot, true);
+        }
+    }
+}
+
+bool Player::IsForMyClass(const ItemPrototype *pProto)
+{
+    switch (pProto->Class)
+    {
+        case ITEM_CLASS_WEAPON:
+            switch (pProto->SubClass)
+            {
+                case ITEM_SUBCLASS_WEAPON_AXE:      return HasSpell(196);
+                case ITEM_SUBCLASS_WEAPON_AXE2:     return HasSpell(197);
+                case ITEM_SUBCLASS_WEAPON_BOW:      return HasSpell(264);
+                case ITEM_SUBCLASS_WEAPON_GUN:      return HasSpell(266);
+                case ITEM_SUBCLASS_WEAPON_MACE:     return HasSpell(198);
+                case ITEM_SUBCLASS_WEAPON_MACE2:    return HasSpell(199);
+                case ITEM_SUBCLASS_WEAPON_POLEARM:  return HasSpell(200);
+                case ITEM_SUBCLASS_WEAPON_SWORD:    return HasSpell(201);
+                case ITEM_SUBCLASS_WEAPON_SWORD2:   return HasSpell(202);
+                case ITEM_SUBCLASS_WEAPON_STAFF:    return HasSpell(227);
+                case ITEM_SUBCLASS_WEAPON_DAGGER:   return HasSpell(1180);
+                case ITEM_SUBCLASS_WEAPON_THROWN:   return HasSpell(2567);
+                case ITEM_SUBCLASS_WEAPON_SPEAR:    return HasSpell(3386);
+                case ITEM_SUBCLASS_WEAPON_CROSSBOW: return HasSpell(5011);
+                case ITEM_SUBCLASS_WEAPON_WAND:     return HasSpell(5009);
+                default: return false;
+            }
+        case ITEM_CLASS_ARMOR:
+            switch(pProto->SubClass)
+            {
+                case ITEM_SUBCLASS_ARMOR_CLOTH:     return HasSpell(9078);
+                case ITEM_SUBCLASS_ARMOR_LEATHER:   return HasSpell(9077);
+                case ITEM_SUBCLASS_ARMOR_MAIL:      return HasSpell(8737);
+                case ITEM_SUBCLASS_ARMOR_PLATE:     return HasSpell(750);
+                case ITEM_SUBCLASS_ARMOR_SHIELD:    return HasSpell(9116);
+                default: return false;
+            }
+    }
+    return false;
+}
+
+bool Player::IsbuggedItem(const ItemPrototype *pProto)
+{
+    if((pProto->RequiredLevel == 0) && (pProto->ItemLevel > 1))
+        return false;
+
+    if((pProto->Quality == ITEM_QUALITY_UNCOMMON) && (getLevel() < 15))
+        return false;
+
+    if((pProto->Quality == ITEM_QUALITY_RARE) && (getLevel() < 25))
+        return false;
+
+    if((pProto->Quality == ITEM_QUALITY_EPIC) && (getLevel() < 35))
+        return false;
+
+    if(pProto->Quality == ITEM_QUALITY_LEGENDARY)
+        return false;
+
+    if(pProto->Quality == ITEM_QUALITY_ARTIFACT)
+        return false;
+
+    if(pProto->Quality == ITEM_QUALITY_HEIRLOOM)
+        return false;
+
+    return true;
+}
+
 ///The player sobers by 256 every 10 seconds
 void Player::HandleSobering()
 {

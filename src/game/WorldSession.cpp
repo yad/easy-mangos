@@ -328,15 +328,15 @@ bool WorldSession::Update(uint32 /*diff*/)
         for(HashMapHolder<Player>::MapType::const_iterator itr = m.begin(); itr != m.end(); ++itr)
         {
             Player* const botPlayer = itr->second;
-            if(itr->second && itr->second->IsBot())
+            if(botPlayer && botPlayer->IsBot() && botPlayer->GetPlayerbotAI())
             {
-                WorldSession* const pBotWorldSession = botPlayer->GetSession();
                 if (botPlayer->IsBeingTeleported())
                 {
                     botPlayer->GetPlayerbotAI()->HandleTeleportAck();
                 }
                 else if (botPlayer->IsInWorld())
                 {
+                    WorldSession* const pBotWorldSession = botPlayer->GetSession();
                     WorldPacket* packet;
                     while (pBotWorldSession->_recvQueue.next(packet))
                     {
