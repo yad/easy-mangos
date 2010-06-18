@@ -747,10 +747,14 @@ namespace MaNGOS
             AnyUnfriendlyUnitInObjectRangeCheck(WorldObject const* obj, Unit const* funit, float range) : i_obj(obj), i_funit(funit), i_range(range) {}
             bool operator()(Unit* u)
             {
+                if(u->GetTypeId() == TYPEID_UNIT)
+                    if(((Creature*)u)->isTotem())
+                        return false;
+
                 if(u->isAlive() && i_obj->IsWithinDistInMap(u, i_range) && !i_funit->IsFriendlyTo(u))
                     return true;
-                else
-                    return false;
+                
+                return false;
             }
         private:
             WorldObject const* i_obj;
@@ -766,6 +770,10 @@ namespace MaNGOS
 
             bool operator()(Unit* u)
             {
+                if(u->GetTypeId() == TYPEID_UNIT)
+                    if(((Creature*)u)->isTotem())
+                        return false;
+
                 return u->isAlive()
                     && i_obj->IsWithinDistInMap(u, i_range)
                     && !i_funit->IsFriendlyTo(u)
