@@ -337,47 +337,44 @@ void PlayerbotWarriorAI::DoNextCombatManeuver(Unit *pTarget)
     }
 }
 
-void PlayerbotWarriorAI::DoNonCombatActions()
+bool PlayerbotWarriorAI::DoNonCombatActions()
 {
     PlayerbotAI* ai = GetAI();
     if (!ai)
-        return;
+        return false;
 
     Player* pMaster = ai->GetMaster();
     if (!pMaster)
-        return;
+        return false;
 
     Player * m_bot = GetPlayerBot();
     if (!m_bot)
-        return;
+        return false;
 
-    // TODO (by Runsttren): check if shout aura bot has is casted by this bot,
-    // otherwise cast other useful shout
-    // If the bot is protect talented, she/he needs stamina not attack power.
-    // With stance change can the shout change to.
-    // Inserted line to battle shout m_bot->HasAura( COMMANDING_SHOUT, 0 )
-    // Natsukawa
-    if ( ( (COMMANDING_SHOUT>0 && !m_bot->HasAura( COMMANDING_SHOUT, EFFECT_INDEX_0 )) ||
-        (BATTLE_SHOUT>0 && !m_bot->HasAura( BATTLE_SHOUT, EFFECT_INDEX_0 )) ) &&
-        ai->GetRageAmount()<10 && BLOODRAGE>0 && !m_bot->HasAura( BLOODRAGE, EFFECT_INDEX_0) )
-    {
-        // we do have a useful shout, no rage coming but can cast bloodrage... do it
-        ai->CastSpell( BLOODRAGE, *m_bot );
-    }
-    else if ( COMMANDING_SHOUT>0 && !m_bot->HasAura( COMMANDING_SHOUT, EFFECT_INDEX_0) )
-    {
-        // use commanding shout now
-        ai->CastSpell( COMMANDING_SHOUT, *m_bot );
-    }
-    else if ( BATTLE_SHOUT>0 && !m_bot->HasAura( BATTLE_SHOUT, EFFECT_INDEX_0 ) && !m_bot->HasAura( COMMANDING_SHOUT, EFFECT_INDEX_0) )
-    {
-        // use battle shout
-        ai->CastSpell( BATTLE_SHOUT, *m_bot );
-    }
+    if ( ( ( (COMMANDING_SHOUT > 0) && (!m_bot->HasAura( COMMANDING_SHOUT, EFFECT_INDEX_0 )) )
+        || ( (BATTLE_SHOUT > 0) && (!m_bot->HasAura( BATTLE_SHOUT, EFFECT_INDEX_0 )) ) )
+        && (ai->GetRageAmount() < 10)
+        && (BLOODRAGE > 0)
+        && (!m_bot->HasAura( BLOODRAGE, EFFECT_INDEX_0))
+        && (ai->CastSpell( BLOODRAGE, *m_bot )) )
+        return true;
+
+    else if ( (COMMANDING_SHOUT > 0)
+        && (!m_bot->HasAura( COMMANDING_SHOUT, EFFECT_INDEX_0))
+        && (ai->CastSpell( COMMANDING_SHOUT, *m_bot )) )
+        return true;
+
+    else if ( (BATTLE_SHOUT > 0)
+        && (!m_bot->HasAura( BATTLE_SHOUT, EFFECT_INDEX_0 ))
+        && (!m_bot->HasAura( COMMANDING_SHOUT, EFFECT_INDEX_0))
+        && (ai->CastSpell( BATTLE_SHOUT, *m_bot )) )
+        return true;
 
     // buff master with VIGILANCE
-    if (VIGILANCE > 0)
-        (!pMaster->HasAura( VIGILANCE, EFFECT_INDEX_0 ) && ai->CastSpell( VIGILANCE, *pMaster ) );
+    if ( (VIGILANCE > 0)
+        && (!pMaster->HasAura( VIGILANCE, EFFECT_INDEX_0))
+        && (ai->CastSpell( VIGILANCE, *pMaster )) )
+        return true;
 
     // hp check
     if (m_bot->getStandState() != UNIT_STAND_STATE_STAND)
@@ -386,26 +383,33 @@ void PlayerbotWarriorAI::DoNonCombatActions()
     Item* pItem = ai->FindFood();
     Item* fItem = ai->FindBandage();
 
-    if (pItem != NULL && ai->GetHealthPercent() < 30)
+    if ( pItem
+        && (ai->GetHealthPercent() < 30) )
     {
         ai->TellMaster("J'ai besoin de manger un peu...");
         ai->UseItem(*pItem);
         ai->SetIgnoreUpdateTime(30);
-        return;
+        return true;
     }
-    else if (pItem == NULL && fItem != NULL && !m_bot->HasAura(RECENTLY_BANDAGED, EFFECT_INDEX_0) && ai->GetHealthPercent() < 70)
+    else if ( !pItem
+        && fItem
+        && (!m_bot->HasAura(RECENTLY_BANDAGED, EFFECT_INDEX_0))
+        && (ai->GetHealthPercent() < 70) )
     {
         ai->TellMaster("J'ai besoin de me faire un bandage...");
         ai->UseItem(*fItem);
         ai->SetIgnoreUpdateTime(8);
-        return;
+        return true;
     }
-    else if (pItem == NULL && fItem == NULL && m_bot->getRace() == RACE_DRAENEI && !m_bot->HasAura(GIFT_OF_THE_NAARU, EFFECT_INDEX_0) && ai->GetHealthPercent() < 70)
-    {
-        ai->CastSpell(GIFT_OF_THE_NAARU, *m_bot);
-        return;
-    }
-} // end DoNonCombatActions
+    else if ( !pItem
+        && !fItem
+        && (m_bot->getRace() == RACE_DRAENEI)
+        && (!m_bot->HasAura(GIFT_OF_THE_NAARU, EFFECT_INDEX_0))
+        && (ai->GetHealthPercent() < 70)
+        && (ai->CastSpell(GIFT_OF_THE_NAARU, *m_bot)) )
+        return true;
 
-void PlayerbotWarriorAI::BuffPlayer(Player* target) {
+    return false;
 }
+
+void PlayerbotWarriorAI::BuffPlayer(Player* target) {}

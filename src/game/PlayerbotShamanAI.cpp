@@ -75,26 +75,43 @@ void PlayerbotShamanAI::InitSpells(PlayerbotAI* const ai)
     BERSERKING               = ai->getSpellId("berserking"); // troll
 }
 
-void PlayerbotShamanAI::HealTarget(Unit &target, uint8 hp)
+bool PlayerbotShamanAI::HealTarget(Unit &target, uint8 hp)
 {
+    Player * m_bot = GetPlayerBot();
+    if (!m_bot)
+        return false;
+
     PlayerbotAI* ai = GetAI();
     if (!ai)
-        return;
+        return false;
 
     Player* pMaster = ai->GetMaster();
     if (!pMaster)
-        return;
+        return false;
 
-    Player *m_bot = GetPlayerBot();
+    if ( (hp < 30)
+        && (HEALING_WAVE > 0)
+        && (ai->GetManaPercent() >= 32)
+        && (ai->CastSpell(HEALING_WAVE, target)) )
+        return true;
+    else if ( (hp < 45)
+        && (LESSER_HEALING_WAVE > 0)
+        && (ai->GetManaPercent() >= 19)
+        && (ai->CastSpell(LESSER_HEALING_WAVE, target)) )
+        return true;
+    else if ( (hp < 55)
+        && (RIPTIDE > 0)
+        && (!target.HasAura(RIPTIDE, EFFECT_INDEX_0))
+        && (ai->GetManaPercent() >= 21)
+        && (ai->CastSpell(RIPTIDE, target)) )
+        return true;
+    else if ( (hp < 70)
+        && (CHAIN_HEAL > 0)
+        && (ai->GetManaPercent() >= 24)
+        && (ai->CastSpell(CHAIN_HEAL, target)) )
+        return true;
 
-    if (hp < 30 && HEALING_WAVE > 0 && ai->GetManaPercent() >= 32)
-        ai->CastSpell(HEALING_WAVE, target);
-    else if (hp < 45 && LESSER_HEALING_WAVE > 0 && ai->GetManaPercent() >= 19)
-        ai->CastSpell(LESSER_HEALING_WAVE, target);
-    else if (hp < 55 && RIPTIDE > 0 && !target.HasAura(RIPTIDE, EFFECT_INDEX_0) && ai->GetManaPercent() >= 21)
-        ai->CastSpell(RIPTIDE, target);
-    else if (hp < 70 && CHAIN_HEAL > 0 && ai->GetManaPercent() >= 24)
-        ai->CastSpell(CHAIN_HEAL, target);
+    return false;
     // end HealTarget
 }
 
@@ -461,44 +478,41 @@ void PlayerbotShamanAI::DoNextCombatManeuver(Unit *pTarget)
     }
 } // end DoNextCombatManeuver
 
-void PlayerbotShamanAI::DoNonCombatActions()
+bool PlayerbotShamanAI::DoNonCombatActions()
 {
     PlayerbotAI* ai = GetAI();
     if (!ai)
-        return;
+        return false;
 
     Player* pMaster = ai->GetMaster();
     if (!pMaster)
-        return;
+        return false;
 
     Player * m_bot = GetPlayerBot();
     if (!m_bot)
-        return;
+        return false;
 
     SpellSequence = SPELL_ENHANCEMENT;
 
     // buff master with EARTH_SHIELD
-    if (EARTH_SHIELD > 0)
-        (!pMaster->HasAura(EARTH_SHIELD, EFFECT_INDEX_0) && ai->CastSpell(EARTH_SHIELD,*(pMaster)) );
+    if ( (EARTH_SHIELD > 0)
+        && (!pMaster->HasAura(EARTH_SHIELD, EFFECT_INDEX_0))
+        && (ai->CastSpell(EARTH_SHIELD,*(pMaster))) )
+        return true;
 
     // buff myself with WATER_SHIELD, LIGHTNING_SHIELD
-    if (WATER_SHIELD > 0)
-        (!m_bot->HasAura(WATER_SHIELD, EFFECT_INDEX_0) && !m_bot->HasAura(LIGHTNING_SHIELD, EFFECT_INDEX_0) && ai->CastSpell(WATER_SHIELD,*m_bot) );
-    else if (LIGHTNING_SHIELD > 0)
-        (!m_bot->HasAura(LIGHTNING_SHIELD, EFFECT_INDEX_0) && !m_bot->HasAura(WATER_SHIELD, EFFECT_INDEX_0) && ai->CastSpell(LIGHTNING_SHIELD,*m_bot) );
-/*
-    // buff myself weapon
-    if (ROCKBITER_WEAPON > 0)
-        (!m_bot->HasAura(ROCKBITER_WEAPON, EFFECT_INDEX_0) && !m_bot->HasAura(EARTHLIVING_WEAPON, EFFECT_INDEX_0) && !m_bot->HasAura(WINDFURY_WEAPON, EFFECT_INDEX_0) && !m_bot->HasAura(FLAMETONGUE_WEAPON, EFFECT_INDEX_0) && !m_bot->HasAura(FROSTBRAND_WEAPON, EFFECT_INDEX_0) && ai->CastSpell(ROCKBITER_WEAPON,*m_bot) );
-    else if (EARTHLIVING_WEAPON > 0)
-        (!m_bot->HasAura(EARTHLIVING_WEAPON, EFFECT_INDEX_0) && !m_bot->HasAura(EARTHLIVING_WEAPON, EFFECT_INDEX_0) && !m_bot->HasAura(FLAMETONGUE_WEAPON, EFFECT_INDEX_0) && !m_bot->HasAura(FROSTBRAND_WEAPON, EFFECT_INDEX_0) && !m_bot->HasAura(ROCKBITER_WEAPON, EFFECT_INDEX_0) && ai->CastSpell(WINDFURY_WEAPON,*m_bot) );
-    else if (WINDFURY_WEAPON > 0)
-        (!m_bot->HasAura(WINDFURY_WEAPON, EFFECT_INDEX_0) && !m_bot->HasAura(EARTHLIVING_WEAPON, EFFECT_INDEX_0) && !m_bot->HasAura(FLAMETONGUE_WEAPON, EFFECT_INDEX_0) && !m_bot->HasAura(FROSTBRAND_WEAPON, EFFECT_INDEX_0) && !m_bot->HasAura(ROCKBITER_WEAPON, EFFECT_INDEX_0) && ai->CastSpell(WINDFURY_WEAPON,*m_bot) );
-    else if (FLAMETONGUE_WEAPON > 0)
-        (!m_bot->HasAura(FLAMETONGUE_WEAPON, EFFECT_INDEX_0) && !m_bot->HasAura(EARTHLIVING_WEAPON, EFFECT_INDEX_0) && !m_bot->HasAura(WINDFURY_WEAPON, EFFECT_INDEX_0) && !m_bot->HasAura(FROSTBRAND_WEAPON, EFFECT_INDEX_0) && !m_bot->HasAura(ROCKBITER_WEAPON, EFFECT_INDEX_0) && ai->CastSpell(FLAMETONGUE_WEAPON,*m_bot) );
-    else if (FROSTBRAND_WEAPON > 0)
-        (!m_bot->HasAura(FROSTBRAND_WEAPON, EFFECT_INDEX_0) && !m_bot->HasAura(EARTHLIVING_WEAPON, EFFECT_INDEX_0) && !m_bot->HasAura(WINDFURY_WEAPON, EFFECT_INDEX_0) && !m_bot->HasAura(FLAMETONGUE_WEAPON, EFFECT_INDEX_0) && !m_bot->HasAura(ROCKBITER_WEAPON, EFFECT_INDEX_0) && ai->CastSpell(FROSTBRAND_WEAPON,*m_bot) );
-*/
+    if ( (WATER_SHIELD > 0)
+        && (!m_bot->HasAura(WATER_SHIELD, EFFECT_INDEX_0))
+        && (!m_bot->HasAura(LIGHTNING_SHIELD, EFFECT_INDEX_0))
+        && (ai->CastSpell(WATER_SHIELD,*m_bot)) )
+        return true;
+
+    else if ( (LIGHTNING_SHIELD > 0)
+        && (!m_bot->HasAura(LIGHTNING_SHIELD, EFFECT_INDEX_0))
+        && (!m_bot->HasAura(WATER_SHIELD, EFFECT_INDEX_0))
+        && (ai->CastSpell(LIGHTNING_SHIELD,*m_bot)) )
+        return true;
+
     // mana check
     if (m_bot->getStandState() != UNIT_STAND_STATE_STAND)
         m_bot->SetStandState(UNIT_STAND_STATE_STAND);
@@ -506,12 +520,13 @@ void PlayerbotShamanAI::DoNonCombatActions()
     Item* pItem = ai->FindDrink();
     Item* fItem = ai->FindBandage();
 
-    if (pItem != NULL && ai->GetManaPercent() < 30)
+    if ( pItem
+        && (ai->GetManaPercent() < 30) )
     {
         ai->TellMaster("J'ai besoin de boire un peu...");
         ai->UseItem(*pItem);
         ai->SetIgnoreUpdateTime(30);
-        return;
+        return true;
     }
 
     // hp check
@@ -520,19 +535,23 @@ void PlayerbotShamanAI::DoNonCombatActions()
 
     pItem = ai->FindFood();
 
-    if (pItem != NULL && ai->GetHealthPercent() < 30)
+    if ( pItem
+        && (ai->GetHealthPercent() < 30) )
     {
         ai->TellMaster("J'ai besoin de manger un peu...");
         ai->UseItem(*pItem);
         ai->SetIgnoreUpdateTime(30);
-        return;
+        return true;
     }
-    else if (pItem == NULL && fItem != NULL && !m_bot->HasAura(RECENTLY_BANDAGED, EFFECT_INDEX_0) && ai->GetHealthPercent() < 70)
+    else if ( !pItem
+        && fItem
+        && (!m_bot->HasAura(RECENTLY_BANDAGED, EFFECT_INDEX_0))
+        && (ai->GetHealthPercent() < 70) )
     {
         ai->TellMaster("J'ai besoin d'un bandage...");
         ai->UseItem(*fItem);
         ai->SetIgnoreUpdateTime(8);
-        return;
+        return true;
     }
 
     // heal master's group
@@ -546,10 +565,12 @@ void PlayerbotShamanAI::DoNonCombatActions()
                 continue;
 
              // heal
-             (HealTarget(*tPlayer, tPlayer->GetHealth()*100 / tPlayer->GetMaxHealth()));
+             if (HealTarget(*tPlayer, tPlayer->GetHealth()*100 / tPlayer->GetMaxHealth()))
+                 return true;
         }
     }
-} // end DoNonCombatActions
 
-void PlayerbotShamanAI::BuffPlayer(Player* target) {
+    return false;
 }
+
+void PlayerbotShamanAI::BuffPlayer(Player* target) {}

@@ -84,7 +84,7 @@ PlayerbotAI::PlayerbotAI(PlayerbotMgr* const mgr, Player* const bot) :
     m_ignoreTeleport(0), m_ignoreSpellsAndItems(0),
     m_combatOrder(ORDERS_NONE), m_ScenarioType(SCENARIO_PVEEASY),
     m_TimeDoneEating(0), m_TimeDoneDrinking(0),
-    m_CurrentlyCastingSpellId(0), m_spellIdCommand(0),
+    m_CurrentlyCastingSpellId(0),
     m_targetGuidCommand(0), m_classAI(0)
 {
     SetMaster(bot);
@@ -1141,7 +1141,7 @@ void PlayerbotAI::Feast()
             && ((static_cast<float> (m_bot->GetPower(POWER_MANA)) / m_bot->GetMaxPower(POWER_MANA)) < 0.8))
     {
         Item* pItem = FindDrink();
-        if (pItem != NULL)
+        if (pItem)
         {
             //TellMaster("Je mange un morceau..."); (pourquoi en remarque ?)
             UseItem(*pItem);
@@ -1155,7 +1155,7 @@ void PlayerbotAI::Feast()
     if (currentTime > m_TimeDoneEating && ((static_cast<float> (m_bot->GetHealth()) / m_bot->GetMaxHealth()) < 0.8))
     {
         Item* pItem = FindFood();
-        if (pItem != NULL)
+        if (pItem)
         {
             //TellMaster("Je mange un morceau..."); (pourquoi en remarque ?)
             UseItem(*pItem);
@@ -2014,7 +2014,13 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
     m_ignoreAIUpdatesUntilTime = time(0) + 2;
 
     if (!GetMaster())
+    {
         SetMaster(m_bot);
+        float x, y, z;
+        m_bot->GetPosition(x, y, z);
+        SetPositionFin(x, y, z, m_bot->GetMapId());
+        return;
+    }
 
     if (!GetMaster()->IsInWorld())
     {
@@ -2124,16 +2130,6 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
         if (pSpell && !(pSpell->IsChannelActive() || pSpell->IsAutoRepeat()))
             InterruptCurrentCastingSpell();
 
-        // direct cast command from master
-        else if (m_spellIdCommand != 0)
-        {
-            Unit* pTarget = ObjectAccessor::GetUnit(*m_bot, m_targetGuidCommand);
-            if (pTarget != NULL)
-                CastSpell(m_spellIdCommand, *pTarget);
-            m_spellIdCommand = 0;
-            m_targetGuidCommand = 0;
-        }
-
         // handle combat (either self/master/group in combat, or combat state and valid target)
         else if ( IsInCombat() )
         {
@@ -2180,8 +2176,8 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
                 m_bot->AutoEquipItem();
                 SetIgnoreUpdateSpellsAndItems();
             }
-            (GetClassAI())->DoNonCombatActions();
-            SetMovementOrder( MOVEMENT_FOLLOW, GetMaster() );
+            if(!(GetClassAI())->DoNonCombatActions())
+                SetMovementOrder( MOVEMENT_FOLLOW, GetMaster() );
             CheckMount();
         }
     }
@@ -2772,18 +2768,6 @@ bool PlayerbotAI::FollowCheckTeleport( WorldObject *obj )
     return true;
 }
 
-bool PlayerbotAI::GmStartup()
-{
-    if (m_bot->getLevel() < 100)
-    {
-        PlayerbotChatHandler ch(m_bot);
-        if (!ch.gmstartup(""))
-            return false;
-        return true;
-    }
-    return false;
-}
-
 void PlayerbotAI::HandleTeleportAck()
 {
     //m_ignoreAIUpdatesUntilTime = time(0) + 6;
@@ -2928,24 +2912,6 @@ void PlayerbotAI::HandleCommand(const std::string& text, Player& fromPlayer)
         {
             TellMaster("Pas de cible.");
             m_bot->HandleEmoteCommand(EMOTE_ONESHOT_TALK);
-        }
-    }
-
-    // handle cast command
-    else if (text.size() > 2 && text.substr(0, 2) == "c " || text.size() > 5 && text.substr(0, 5) == "cast ")
-    {
-        std::string spellStr = text.substr(text.find(" ") + 1);
-        uint32 spellId = (uint32) atol(spellStr.c_str());
-
-        // try and get spell ID by name
-        if (spellId == 0)
-            spellId = getSpellId(spellStr.c_str(), true);
-
-        uint64 castOnGuid = fromPlayer.GetSelection();
-        if (spellId != 0 && castOnGuid != 0 && m_bot->HasSpell(spellId))
-        {
-            m_spellIdCommand = spellId;
-            m_targetGuidCommand = castOnGuid;
         }
     }
 
@@ -3411,7 +3377,7 @@ void PlayerbotAI::HandleCommand(const std::string& text, Player& fromPlayer)
 
         }
         else {
-            std::string msg = "Comment ? follow, stay, (c)ast <nom du sort>, spells, (e)quip <itemlink>, (u)se <itemlink>, drop <questlink>, report, quests, stats (Pour obtenir un <itemlink> ou <questlink> faites MAJ+Clic sur l'objet ou sur la quete pour le linker dans le canal de tchat)";
+            std::string msg = "Comment ? follow, stay, spells, (e)quip <itemlink>, (u)se <itemlink>, drop <questlink>, report, quests, stats (Pour obtenir un <itemlink> ou <questlink> faites MAJ+Clic sur l'objet ou sur la quete pour le linker dans le canal de tchat)";
             SendWhisper(msg, fromPlayer);
             m_bot->HandleEmoteCommand(EMOTE_ONESHOT_TALK);
         }

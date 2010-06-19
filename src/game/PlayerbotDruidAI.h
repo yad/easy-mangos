@@ -24,14 +24,14 @@ class MANGOS_DLL_SPEC PlayerbotDruidAI : PlayerbotClassAI
         void DoNextCombatManeuver(Unit*);
 
         // all non combat actions go here, ex buffs, heals, rezzes
-        void DoNonCombatActions();
+        bool DoNonCombatActions();
 
         // buff a specific player, usually a real PC who is not in group
         void BuffPlayer(Player *target);
 
     private:
         // Heals the target based off its hps
-        void HealTarget (Unit& target, uint8 hp);
+        bool HealTarget (Unit& target, uint8 hp);
 
         // druid cat/bear/dire bear/moonkin/tree of life forms
         uint32 CAT_FORM, BEAR_FORM, DIRE_BEAR_FORM, MOONKIN_FORM, TREE_OF_LIFE;

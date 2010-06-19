@@ -753,7 +753,7 @@ namespace MaNGOS
 
                 if(u->isAlive() && i_obj->IsWithinDistInMap(u, i_range) && !i_funit->IsFriendlyTo(u))
                     return true;
-               
+
                 return false;
             }
         private:

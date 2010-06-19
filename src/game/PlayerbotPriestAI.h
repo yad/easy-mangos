@@ -23,14 +23,14 @@ class MANGOS_DLL_SPEC PlayerbotPriestAI : PlayerbotClassAI
         void DoNextCombatManeuver(Unit*);
 
         // all non combat actions go here, ex buffs, heals, rezzes
-        void DoNonCombatActions();
+        bool DoNonCombatActions();
 
         // buff a specific player, usually a real PC who is not in group
         void BuffPlayer(Player *target);
 
     private:
         // Heals the target based off its hps
-        void HealTarget (Unit& target, uint8 hp);
+        bool HealTarget (Unit& target, uint8 hp);
 
         // holy
         uint32 GREAT_HEAL, RENEW, HEAL, FLASH_HEAL, REZZ, SMITE, CLEARCASTING, HOLY_NOVA, HOLY_FIRE, DESPERATE_PRAYER, PRAYER_OF_HEALING, CIRCLE_OF_HEALING, BINDING_HEAL, PRAYER_OF_MENDING, MANA_BURN;

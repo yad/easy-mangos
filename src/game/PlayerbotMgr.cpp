@@ -17,7 +17,6 @@ class CharacterHandler;
 PlayerbotMgr::PlayerbotMgr()
 {
     // load config variables
-    m_confDisableBots       = sConfig.GetBoolDefault( "PlayerbotAI.DisableBots", false );
     m_confDebugWhisper      = sConfig.GetBoolDefault( "PlayerbotAI.DebugWhisper", false );
     m_confFollowDistance[0] = sConfig.GetFloatDefault( "PlayerbotAI.FollowDistanceMin", 0.5f );
     m_confFollowDistance[1] = sConfig.GetFloatDefault( "PlayerbotAI.FollowDistanceMin", 1.0f );

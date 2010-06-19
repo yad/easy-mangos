@@ -208,7 +208,6 @@ class MANGOS_DLL_SPEC PlayerbotAI
         void SendQuestItemList( Player& player );
         void SendOrders( Player& player );
         bool FollowCheckTeleport( WorldObject *obj );
-        bool GmStartup();
         void DoLoot();
 
         uint32 EstRepairAll();
@@ -287,7 +286,6 @@ class MANGOS_DLL_SPEC PlayerbotAI
 
         // if master commands bot to do something, store here until updateAI
         // can do it
-        uint32 m_spellIdCommand;
         uint64 m_targetGuidCommand;
 
         AttackerInfoList m_attackerInfo;

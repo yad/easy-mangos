@@ -289,11 +289,19 @@ void PlayerbotRogueAI::DoNextCombatManeuver(Unit *pTarget)
 
 // end DoNextCombatManeuver
 
-void PlayerbotRogueAI::DoNonCombatActions()
+bool PlayerbotRogueAI::DoNonCombatActions()
 {
     Player * m_bot = GetPlayerBot();
     if (!m_bot)
-        return;
+        return false;
+
+    PlayerbotAI* ai = GetAI();
+    if (!ai)
+        return false;
+
+    Player* pMaster = ai->GetMaster();
+    if (!pMaster)
+        return false;
 
     // remove stealth
     if ( m_bot->HasAura( STEALTH ) )
@@ -303,69 +311,29 @@ void PlayerbotRogueAI::DoNonCombatActions()
     if (m_bot->getStandState() != UNIT_STAND_STATE_STAND)
         m_bot->SetStandState(UNIT_STAND_STATE_STAND);
 
-    Item* pItem = GetAI()->FindFood();
-    Item* fItem = GetAI()->FindBandage();
+    Item* pItem = ai->FindFood();
+    Item* fItem = ai->FindBandage();
 
-    if (pItem != NULL && GetAI()->GetHealthPercent() < 30)
+    if ( pItem
+        && (ai->GetHealthPercent() < 30) )
     {
-        GetAI()->TellMaster("J'ai besoin de manger un peu...");
-        GetAI()->UseItem(*pItem);
-        GetAI()->SetIgnoreUpdateTime(30);
-        return;
+        ai->TellMaster("J'ai besoin de manger un peu...");
+        ai->UseItem(*pItem);
+        ai->SetIgnoreUpdateTime(30);
+        return true;
     }
-    else if (pItem == NULL && fItem != NULL && !m_bot->HasAura(RECENTLY_BANDAGED, EFFECT_INDEX_0) && GetAI()->GetHealthPercent() < 70)
+    else if ( !pItem
+        && fItem
+        && (!m_bot->HasAura(RECENTLY_BANDAGED, EFFECT_INDEX_0))
+        && (ai->GetHealthPercent() < 70) )
     {
-        GetAI()->TellMaster("J'ai besoin de me faire un bandage...");
-        GetAI()->UseItem(*fItem);
-        GetAI()->SetIgnoreUpdateTime(8);
-        return;
+        ai->TellMaster("J'ai besoin de me faire un bandage...");
+        ai->UseItem(*fItem);
+        ai->SetIgnoreUpdateTime(8);
+        return true;
     }
-/*
-    // Poison check //Not working needs some mor testing...i think need to tell the bott where "slot" to apply poison.
 
-    enum EquipmentSlots                                         // 19 slots
-    {
-        EQUIPMENT_SLOT_START        = 0,
-        EQUIPMENT_SLOT_HEAD         = 0,
-        EQUIPMENT_SLOT_NECK         = 1,
-        EQUIPMENT_SLOT_SHOULDERS    = 2,
-        EQUIPMENT_SLOT_BODY         = 3,
-        EQUIPMENT_SLOT_CHEST        = 4,
-        EQUIPMENT_SLOT_WAIST        = 5,
-        EQUIPMENT_SLOT_LEGS         = 6,
-        EQUIPMENT_SLOT_FEET         = 7,
-        EQUIPMENT_SLOT_WRISTS       = 8,
-        EQUIPMENT_SLOT_HANDS        = 9,
-        EQUIPMENT_SLOT_FINGER1      = 10,
-        EQUIPMENT_SLOT_FINGER2      = 11,
-        EQUIPMENT_SLOT_TRINKET1     = 12,
-        EQUIPMENT_SLOT_TRINKET2     = 13,
-        EQUIPMENT_SLOT_BACK         = 14,
-        EQUIPMENT_SLOT_MAINHAND     = 15,
-        EQUIPMENT_SLOT_OFFHAND      = 16,
-        EQUIPMENT_SLOT_RANGED       = 17,
-        EQUIPMENT_SLOT_TABARD       = 18,
-        EQUIPMENT_SLOT_END          = 19
-    };
-
-//thi is only a guess, dont get how to apply temp enchant on weapons.
-    if (m_bot->getStandState() != UNIT_STAND_STATE_STAND)
-        m_bot->SetStandState(UNIT_STAND_STATE_STAND);
-
-    pItem = GetAI()->FindPoison();
-    Item* item = m_bot->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND);
-
-    if (pItem != NULL)
-    {
-        GetAI()->TellMaster("Il me faut des poisons...");
-//        GetAI()->UseItem(*pItem);
-        m_bot->ApplyEnchantment(item,TEMP_ENCHANTMENT_SLOT,true);
-        GetAI()->SetIgnoreUpdateTime(10);
-        return;
-    }
-*/
-
-} // end DoNonCombatActions
-
-void PlayerbotRogueAI::BuffPlayer(Player* target) {
+    return false;
 }
+
+void PlayerbotRogueAI::BuffPlayer(Player* target) {}

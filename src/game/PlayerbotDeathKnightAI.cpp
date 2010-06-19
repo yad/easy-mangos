@@ -109,11 +109,11 @@ void PlayerbotDeathKnightAI::DoNextCombatManeuver(Unit *pTarget)
     {
         case SPELL_DK_UNHOLY:
              if (UNHOLY_PRESENCE > 0)
-                (!m_bot->HasAura(UNHOLY_PRESENCE, EFFECT_INDEX_0) && !m_bot->HasAura(BLOOD_PRESENCE, EFFECT_INDEX_0) && !m_bot->HasAura(FROST_PRESENCE, EFFECT_INDEX_0) && ai->CastSpell (UNHOLY_PRESENCE, *m_bot));
+                (!m_bot->HasAura(UNHOLY_PRESENCE, EFFECT_INDEX_0) && !m_bot->HasAura(BLOOD_PRESENCE, EFFECT_INDEX_0) && !m_bot->HasAura(FROST_PRESENCE, EFFECT_INDEX_0) && ai->CastSpell(UNHOLY_PRESENCE, *m_bot));
 
             // check for BONE_SHIELD in combat
             if (BONE_SHIELD > 0)
-                 (!m_bot->HasAura(BONE_SHIELD, EFFECT_INDEX_0) && !m_bot->HasAura(ARMY_OF_THE_DEAD, EFFECT_INDEX_0) && ai->CastSpell (BONE_SHIELD, *m_bot));
+                 (!m_bot->HasAura(BONE_SHIELD, EFFECT_INDEX_0) && !m_bot->HasAura(ARMY_OF_THE_DEAD, EFFECT_INDEX_0) && ai->CastSpell(BONE_SHIELD, *m_bot));
 
             if (ARMY_OF_THE_DEAD > 0 && ai->GetAttackerCount()>=5 && LastSpellUnholyDK < 1)
             {
@@ -230,12 +230,12 @@ void PlayerbotDeathKnightAI::DoNextCombatManeuver(Unit *pTarget)
 
         case SPELL_DK_FROST:
             if (FROST_PRESENCE > 0)
-                (!m_bot->HasAura(FROST_PRESENCE, EFFECT_INDEX_0) && !m_bot->HasAura(BLOOD_PRESENCE, EFFECT_INDEX_0) && !m_bot->HasAura(UNHOLY_PRESENCE, EFFECT_INDEX_0) && ai->CastSpell (FROST_PRESENCE, *m_bot));
+                (!m_bot->HasAura(FROST_PRESENCE, EFFECT_INDEX_0) && !m_bot->HasAura(BLOOD_PRESENCE, EFFECT_INDEX_0) && !m_bot->HasAura(UNHOLY_PRESENCE, EFFECT_INDEX_0) && ai->CastSpell(FROST_PRESENCE, *m_bot));
 
             if (DEATHCHILL > 0)
-                (!m_bot->HasAura(DEATHCHILL, EFFECT_INDEX_0) && !m_bot->HasAura(KILLING_MACHINE, EFFECT_INDEX_0) && ai->CastSpell (DEATHCHILL, *m_bot));
+                (!m_bot->HasAura(DEATHCHILL, EFFECT_INDEX_0) && !m_bot->HasAura(KILLING_MACHINE, EFFECT_INDEX_0) && ai->CastSpell(DEATHCHILL, *m_bot));
             else if (KILLING_MACHINE > 0)
-                (!m_bot->HasAura(KILLING_MACHINE, EFFECT_INDEX_0) && !m_bot->HasAura(DEATHCHILL, EFFECT_INDEX_0) && ai->CastSpell (KILLING_MACHINE, *m_bot));
+                (!m_bot->HasAura(KILLING_MACHINE, EFFECT_INDEX_0) && !m_bot->HasAura(DEATHCHILL, EFFECT_INDEX_0) && ai->CastSpell(KILLING_MACHINE, *m_bot));
 
             if (ICY_TOUCH > 0 && !pTarget->HasAura(ICY_TOUCH, EFFECT_INDEX_0) && LastSpellFrostDK < 1)
             {
@@ -332,7 +332,7 @@ void PlayerbotDeathKnightAI::DoNextCombatManeuver(Unit *pTarget)
 
         case SPELL_DK_BLOOD:
             if (BLOOD_PRESENCE > 0)
-                (!m_bot->HasAura(BLOOD_PRESENCE, EFFECT_INDEX_0) && !m_bot->HasAura(UNHOLY_PRESENCE, EFFECT_INDEX_0) && !m_bot->HasAura(FROST_PRESENCE, EFFECT_INDEX_0) && ai->CastSpell (BLOOD_PRESENCE, *m_bot));
+                (!m_bot->HasAura(BLOOD_PRESENCE, EFFECT_INDEX_0) && !m_bot->HasAura(UNHOLY_PRESENCE, EFFECT_INDEX_0) && !m_bot->HasAura(FROST_PRESENCE, EFFECT_INDEX_0) && ai->CastSpell(BLOOD_PRESENCE, *m_bot));
 
             if (MARK_OF_BLOOD > 0 && !pTarget->HasAura(MARK_OF_BLOOD, EFFECT_INDEX_0) && LastSpellBloodDK < 1)
             {
@@ -433,25 +433,25 @@ void PlayerbotDeathKnightAI::DoNextCombatManeuver(Unit *pTarget)
     }
 } // end DoNextCombatManeuver
 
-void PlayerbotDeathKnightAI::DoNonCombatActions()
+bool PlayerbotDeathKnightAI::DoNonCombatActions()
 {
     PlayerbotAI* ai = GetAI();
     if (!ai)
-        return;
+        return false;
 
     Player* pMaster = ai->GetMaster();
     if (!pMaster)
-        return;
+        return false;
 
     Player *m_bot = GetPlayerBot();
     if (!m_bot)
-        return;
+        return false;
 
     SpellSequence = SPELL_DK_UNHOLY;
 
     // buff master with HORN_OF_WINTER
-    if (HORN_OF_WINTER> 0)
-        (!pMaster->HasAura(HORN_OF_WINTER,EFFECT_INDEX_0) && ai->CastSpell (HORN_OF_WINTER, *pMaster));
+    if ( (HORN_OF_WINTER > 0) && (!pMaster->HasAura(HORN_OF_WINTER,EFFECT_INDEX_0)) && (ai->CastSpell(HORN_OF_WINTER, *pMaster)) )
+        return true;
 
     // hp check
     if (m_bot->getStandState() != UNIT_STAND_STATE_STAND)
@@ -460,18 +460,20 @@ void PlayerbotDeathKnightAI::DoNonCombatActions()
     Item* pItem = ai->FindFood();
     Item* fItem = ai->FindBandage();
 
-    if (pItem != NULL && ai->GetHealthPercent() < 30)
+    if ( pItem && ai->GetHealthPercent() < 30)
     {
         ai->TellMaster("Je devrais manger un peu...");
         ai->UseItem(*pItem);
         ai->SetIgnoreUpdateTime(30);
-        return;
+        return true;
     }
-    else if (pItem == NULL && fItem != NULL && !m_bot->HasAura(RECENTLY_BANDAGED, EFFECT_INDEX_0) && ai->GetHealthPercent() < 70)
+    else if ( !pItem && fItem && !m_bot->HasAura(RECENTLY_BANDAGED, EFFECT_INDEX_0) && ai->GetHealthPercent() < 70)
     {
         ai->TellMaster("J'ai besoin d'un bandage...");
         ai->UseItem(*fItem);
         ai->SetIgnoreUpdateTime(8);
-        return;
+        return true;
     }
-} // end DoNonCombatActions
+
+    return false;
+}

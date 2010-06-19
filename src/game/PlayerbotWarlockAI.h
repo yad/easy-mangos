@@ -23,7 +23,7 @@ class MANGOS_DLL_SPEC PlayerbotWarlockAI : PlayerbotClassAI
         void DoNextCombatManeuver(Unit*);
 
         // all non combat actions go here, ex buffs, heals, rezzes
-        void DoNonCombatActions();
+        bool DoNonCombatActions();
 
         // buff a specific player, usually a real PC who is not in group
         //void BuffPlayer(Player *target);

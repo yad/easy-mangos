@@ -6,14 +6,9 @@ PlayerbotClassAI::~PlayerbotClassAI() {}
 
 void PlayerbotClassAI::InitSpells(PlayerbotAI* const ai){}
 
-bool PlayerbotClassAI::DoFirstCombatManeuver(Unit *)
-{
-    // return false, if done with opening moves/spells
-    return false;
-}
+bool PlayerbotClassAI::DoFirstCombatManeuver(Unit *){return false;}
 void PlayerbotClassAI::DoNextCombatManeuver(Unit *) {}
-
-void PlayerbotClassAI::DoNonCombatActions(){}
+bool PlayerbotClassAI::DoNonCombatActions(){return false;}
 
 void PlayerbotClassAI::BuffPlayer(Player* target) {}
 

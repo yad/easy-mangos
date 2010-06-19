@@ -22,14 +22,14 @@ class MANGOS_DLL_SPEC PlayerbotPaladinAI : PlayerbotClassAI
         void DoNextCombatManeuver(Unit*);
 
         // all non combat actions go here, ex buffs, heals, rezzes
-        void DoNonCombatActions();
+        bool DoNonCombatActions();
 
         // buff a specific player, usually a real PC who is not in group
         void BuffPlayer(Player *target);
 
     private:
         // Heals the target based off its hps
-        void HealTarget (Unit& target, uint8 hp);
+        bool HealTarget (Unit& target, uint8 hp);
 
         // Retribution
         uint32 RETRIBUTION_AURA, SEAL_OF_COMMAND, JUDGEMENT_OF_LIGHT, JUDGEMENT_OF_WISDOM, GREATER_BLESSING_OF_WISDOM, GREATER_BLESSING_OF_MIGHT, BLESSING_OF_WISDOM, BLESSING_OF_MIGHT, HAMMER_OF_JUSTICE, RIGHTEOUS_FURY, CRUSADER_AURA, CRUSADER_STRIKE, AVENGING_WRATH, DIVINE_STORM, JUDGEMENT_OF_JUSTICE;

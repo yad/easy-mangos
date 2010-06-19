@@ -23,14 +23,14 @@ class MANGOS_DLL_SPEC PlayerbotShamanAI : PlayerbotClassAI
         void DoNextCombatManeuver(Unit*);
 
         // all non combat actions go here, ex buffs, heals, rezzes
-        void DoNonCombatActions();
+        bool DoNonCombatActions();
 
         // buff a specific player, usually a real PC who is not in group
         void BuffPlayer(Player *target);
 
     private:
         // Heals the target based off its hps
-        void HealTarget (Unit& target, uint8 hp);
+        bool HealTarget (Unit& target, uint8 hp);
 
         // ENHANCEMENT
         uint32 ROCKBITER_WEAPON, STONESKIN_TOTEM, LIGHTNING_SHIELD, FLAMETONGUE_WEAPON, STRENGTH_OF_EARTH_TOTEM, FOCUSED, FROSTBRAND_WEAPON, FROST_RESISTANCE_TOTEM, FLAMETONGUE_TOTEM, FIRE_RESISTANCE_TOTEM, WINDFURY_WEAPON, GROUNDING_TOTEM, NATURE_RESISTANCE_TOTEM, WIND_FURY_TOTEM, STORMSTRIKE, LAVA_LASH, SHAMANISTIC_RAGE, WRATH_OF_AIR_TOTEM, EARTH_ELEMENTAL_TOTEM, BLOODLUST, HEROISM, FERAL_SPIRIT;

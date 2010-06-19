@@ -294,31 +294,35 @@ void PlayerbotHunterAI::DoNextCombatManeuver(Unit *pTarget)
     }
 } // end DoNextCombatManeuver
 
-void PlayerbotHunterAI::DoNonCombatActions()
+bool PlayerbotHunterAI::DoNonCombatActions()
 {
     PlayerbotAI* ai = GetAI();
     if (!ai)
-        return;
+        return false;
 
     Player* pMaster = ai->GetMaster();
     if (!pMaster)
-        return;
+        return false;
 
     Player * m_bot = GetPlayerBot();
     if (!m_bot)
-        return;
+        return false;
 
     // reset ranged combat state
     if ( !m_rangedCombat )
         m_rangedCombat = true;
 
     // buff group
-    if (TRUESHOT_AURA > 0)
-        (!m_bot->HasAura(TRUESHOT_AURA, EFFECT_INDEX_0) && ai->CastSpell (TRUESHOT_AURA, *m_bot));
+    if ( (TRUESHOT_AURA > 0)
+        && (!m_bot->HasAura(TRUESHOT_AURA, EFFECT_INDEX_0))
+        && (ai->CastSpell(TRUESHOT_AURA, *m_bot)) )
+        return true;
 
     // buff myself
-    if (ASPECT_OF_THE_HAWK > 0)
-        (!m_bot->HasAura(ASPECT_OF_THE_HAWK, EFFECT_INDEX_0) && ai->CastSpell (ASPECT_OF_THE_HAWK, *m_bot));
+    if ( (ASPECT_OF_THE_HAWK > 0)
+        && (!m_bot->HasAura(ASPECT_OF_THE_HAWK, EFFECT_INDEX_0))
+        && (ai->CastSpell(ASPECT_OF_THE_HAWK, *m_bot)) )
+        return true;
 
     // mana check
     if (m_bot->getStandState() != UNIT_STAND_STATE_STAND)
@@ -327,12 +331,13 @@ void PlayerbotHunterAI::DoNonCombatActions()
     Item* pItem = ai->FindDrink();
     Item* fItem = ai->FindBandage();
 
-    if (pItem != NULL && ai->GetManaPercent() < 30)
+    if ( pItem
+        && (ai->GetManaPercent() < 30) )
     {
         ai->TellMaster("J'ai besoin de boire un peu...");
         ai->UseItem(*pItem);
         ai->SetIgnoreUpdateTime(30);
-        return;
+        return true;
     }
 
     // hp check
@@ -341,35 +346,46 @@ void PlayerbotHunterAI::DoNonCombatActions()
 
     pItem = ai->FindFood();
 
-    if (pItem != NULL && ai->GetHealthPercent() < 30)
+    if ( pItem
+        && (ai->GetHealthPercent() < 30) )
     {
         ai->TellMaster("J'ai besoin de manger un peu...");
         ai->UseItem(*pItem);
         ai->SetIgnoreUpdateTime(30);
-        return;
+        return true;
     }
-    else if (pItem == NULL && fItem != NULL && !m_bot->HasAura(RECENTLY_BANDAGED, EFFECT_INDEX_0) && ai->GetHealthPercent() < 70)
+    else if ( !pItem
+        && fItem
+        && (!m_bot->HasAura(RECENTLY_BANDAGED, EFFECT_INDEX_0))
+        && (ai->GetHealthPercent() < 70) )
     {
         ai->TellMaster("J'ai besoin de me faire un bandage...");
         ai->UseItem(*fItem);
         ai->SetIgnoreUpdateTime(8);
-        return;
+        return true;
     }
-    else if (pItem == NULL && fItem == NULL && m_bot->getRace() == RACE_DRAENEI && !m_bot->HasAura(GIFT_OF_THE_NAARU, EFFECT_INDEX_0) && ai->GetHealthPercent() < 70)
+    else if ( !pItem
+        && !fItem
+        && (m_bot->getRace() == RACE_DRAENEI)
+        && (!m_bot->HasAura(GIFT_OF_THE_NAARU, EFFECT_INDEX_0))
+        && (ai->GetHealthPercent() < 70) )
     {
         ai->CastSpell(GIFT_OF_THE_NAARU, *m_bot);
-        return;
+        return true;
     }
 
     // check for pet
-    if ( PET_SUMMON>0 && !m_petSummonFailed && HasPet(m_bot) )
+    if ( (PET_SUMMON > 0)
+        && (!m_petSummonFailed)
+        && (HasPet(m_bot)) )
     {
         // we can summon pet, and no critical summon errors before
         Pet *pet = m_bot->GetPet();
         if ( !pet )
         {
             // summon pet
-            if ( PET_SUMMON>0 && ai->CastSpell(PET_SUMMON,*m_bot) )
+            if ( (PET_SUMMON > 0)
+                && (ai->CastSpell(PET_SUMMON,*m_bot)) )
                 ai->TellMaster( "J'appelle mon familier." );
             else
             {
@@ -380,13 +396,19 @@ void PlayerbotHunterAI::DoNonCombatActions()
         else if ( pet->getDeathState() != ALIVE )
         {
             // revive pet
-            if ( PET_REVIVE>0 && ai->GetManaPercent()>=80 && ai->CastSpell(PET_REVIVE,*m_bot) )
+            if ( (PET_REVIVE > 0)
+                && (ai->GetManaPercent()>=80)
+                && (ai->CastSpell(PET_REVIVE,*m_bot)) )
                 ai->TellMaster( "Je rescussite mon familier." );
         }
         else if ( ((float)pet->GetHealth()/(float)pet->GetMaxHealth()) < 0.5f )
         {
             // heal pet when health lower 50%
-            if ( PET_MEND>0 && !pet->getDeathState() != ALIVE && !pet->HasAura(PET_MEND,EFFECT_INDEX_0) && ai->GetManaPercent()>=13 && ai->CastSpell(PET_MEND,*m_bot) )
+            if ( (PET_MEND > 0)
+                && (!pet->getDeathState() != ALIVE)
+                && (!pet->HasAura(PET_MEND,EFFECT_INDEX_0))
+                && (ai->GetManaPercent()>=13)
+                && (ai->CastSpell(PET_MEND,*m_bot)) )
                 ai->TellMaster( "Je soigne mon familier." );
         }
         else if (pet->GetHappinessState() != HAPPY) // if pet is hungry
@@ -399,12 +421,11 @@ void PlayerbotHunterAI::DoNonCombatActions()
                 if (pItem)
                 {
                     const ItemPrototype* const pItemProto = pItem->GetProto();
-                if (!pItemProto )
-                    continue;
+                    if (!pItemProto )
+                        continue;
 
-                if (pet->HaveInDiet(pItemProto)) // is pItem in pets diet
+                    if (pet->HaveInDiet(pItemProto)) // is pItem in pets diet
                     {
-                        //sLog.outDebug("Food for pet: %s",pItemProto->Name1);
                         caster->CastSpell(caster,51284,true); // pet feed visual
                         uint32 count = 1; // number of items used
                         int32 benefit = pet->GetCurrentFoodBenefitLevel(pItemProto->ItemLevel); // nutritional value of food
@@ -412,7 +433,7 @@ void PlayerbotHunterAI::DoNonCombatActions()
                         m_bot->CastCustomSpell(m_bot,PET_FEED,&benefit,NULL,NULL,true); // feed pet
                         ai->TellMaster( "Je nourris mon familier." );
                         ai->SetIgnoreUpdateTime(10);
-                        return;
+                        return true;
                     }
                 }
             }
@@ -441,15 +462,18 @@ void PlayerbotHunterAI::DoNonCombatActions()
                                 m_bot->CastCustomSpell(m_bot,PET_FEED,&benefit,NULL,NULL,true); // feed pet
                                 ai->TellMaster( "Je nourris mon familier." );
                                 ai->SetIgnoreUpdateTime(10);
-                                return;
+                                return true;
                             }
                        }
                   }
               }
           }
-          if ( pet->HasAura(PET_MEND,EFFECT_INDEX_0) && !pet->HasAura(PET_FEED,EFFECT_INDEX_0) )
+          if ( (pet->HasAura(PET_MEND,EFFECT_INDEX_0))
+              && (!pet->HasAura(PET_FEED,EFFECT_INDEX_0)) )
              ai->TellMaster( "Je n'ai pas de nourriture pour mon familier!" );
           ai->SetIgnoreUpdateTime(7);
         }
     }
-} // end DoNonCombatActions
+
+    return false;
+}

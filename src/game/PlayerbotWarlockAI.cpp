@@ -337,37 +337,58 @@ void PlayerbotWarlockAI::DoNextCombatManeuver(Unit *pTarget)
     }
 } // end DoNextCombatManeuver
 
-void PlayerbotWarlockAI::DoNonCombatActions()
+bool PlayerbotWarlockAI::DoNonCombatActions()
 {
     PlayerbotAI* ai = GetAI();
     if (!ai)
-        return;
+        return false;
 
     Player* pMaster = ai->GetMaster();
     if (!pMaster)
-        return;
+        return false;
 
     Player * m_bot = GetPlayerBot();
     if (!m_bot)
-        return;
+        return false ;
 
     SpellSequence = SPELL_CURSES;
 
     Pet *pet = m_bot->GetPet();
 
     // buff myself DEMON_SKIN, DEMON_ARMOR, FEL_ARMOR
-    if (FEL_ARMOR > 0)
-        (!m_bot->HasAura(FEL_ARMOR, EFFECT_INDEX_0) && ai->CastSpell(FEL_ARMOR, *m_bot));
-    else if (DEMON_ARMOR > 0)
-        (!m_bot->HasAura(DEMON_ARMOR, EFFECT_INDEX_0) && !m_bot->HasAura(FEL_ARMOR, EFFECT_INDEX_0) && ai->CastSpell(DEMON_ARMOR, *m_bot));
-    else if (DEMON_SKIN > 0)
-        (!m_bot->HasAura(DEMON_SKIN, EFFECT_INDEX_0) && !m_bot->HasAura(FEL_ARMOR, EFFECT_INDEX_0) && !m_bot->HasAura(DEMON_ARMOR, EFFECT_INDEX_0) && ai->CastSpell(DEMON_SKIN, *m_bot));
+    if ( (FEL_ARMOR > 0)
+        && (!m_bot->HasAura(DEMON_SKIN, EFFECT_INDEX_0))
+        && (!m_bot->HasAura(FEL_ARMOR, EFFECT_INDEX_0))
+        && (!m_bot->HasAura(DEMON_ARMOR, EFFECT_INDEX_0))
+        && (ai->CastSpell(FEL_ARMOR, *m_bot)) )
+        return true;
+
+    if ( (DEMON_ARMOR > 0)
+        && (!m_bot->HasAura(DEMON_SKIN, EFFECT_INDEX_0))
+        && (!m_bot->HasAura(FEL_ARMOR, EFFECT_INDEX_0))
+        && (!m_bot->HasAura(DEMON_ARMOR, EFFECT_INDEX_0))
+        && (ai->CastSpell(DEMON_ARMOR, *m_bot)) )
+        return true;
+
+    if ( (DEMON_SKIN > 0)
+        && (!m_bot->HasAura(DEMON_SKIN, EFFECT_INDEX_0))
+        && (!m_bot->HasAura(FEL_ARMOR, EFFECT_INDEX_0))
+        && (!m_bot->HasAura(DEMON_ARMOR, EFFECT_INDEX_0))
+        && (ai->CastSpell(DEMON_SKIN, *m_bot)) )
+        return true;
 
     // buff myself & master DETECT_INVISIBILITY
-    if (DETECT_INVISIBILITY > 0)
-        (!m_bot->HasAura(DETECT_INVISIBILITY, EFFECT_INDEX_0) && ai->GetManaPercent() >= 2 && ai->CastSpell(DETECT_INVISIBILITY, *m_bot));
-    if (DETECT_INVISIBILITY > 0)
-        (!pMaster->HasAura(DETECT_INVISIBILITY, EFFECT_INDEX_0) && ai->GetManaPercent() >= 2 && ai->CastSpell(DETECT_INVISIBILITY, *pMaster));
+    if ( (DETECT_INVISIBILITY > 0)
+        && (!m_bot->HasAura(DETECT_INVISIBILITY, EFFECT_INDEX_0))
+        && (ai->GetManaPercent() >= 2)
+        && (ai->CastSpell(DETECT_INVISIBILITY, *m_bot)) )
+        return true;
+
+    if ( (DETECT_INVISIBILITY > 0)
+        && (!pMaster->HasAura(DETECT_INVISIBILITY, EFFECT_INDEX_0))
+        && (ai->GetManaPercent() >= 2)
+        && (ai->CastSpell(DETECT_INVISIBILITY, *pMaster)) )
+        return true;
 
     // mana check
     if (m_bot->getStandState() != UNIT_STAND_STATE_STAND)
@@ -376,25 +397,29 @@ void PlayerbotWarlockAI::DoNonCombatActions()
     Item* pItem = ai->FindDrink();
     Item* fItem = ai->FindBandage();
 
-    if (pItem != NULL && ai->GetManaPercent() < 25)
+    if ( pItem
+        && (ai->GetManaPercent() < 25) )
     {
         ai->TellMaster("J'ai besoin de boire un peu...");
         ai->UseItem(*pItem);
         ai->SetIgnoreUpdateTime(30);
-        return;
+        return true;
     }
-    else if (( pet )
-        && (pItem == NULL && DARK_PACT>0 && ai->GetManaPercent() <= 50 && pet->GetPower(POWER_MANA) > 0) )
-    {
-        ai->CastSpell(DARK_PACT, *m_bot);
-        return;
-    }
-    else if (( !pet )
-        && (pItem == NULL && LIFE_TAP>0 && ai->GetManaPercent() <= 50 && ai->GetHealthPercent() > 25) )
-    {
-        ai->CastSpell(LIFE_TAP, *m_bot);
-        return;
-    }
+    else if ( pet
+        && !pItem
+        && (DARK_PACT > 0)
+        && (ai->GetManaPercent() <= 50)
+        && (pet->GetPower(POWER_MANA) > 0)
+        && (ai->CastSpell(DARK_PACT, *m_bot)) )
+        return true;
+
+    else if ( !pet
+        && !pItem
+        && (LIFE_TAP > 0)
+        && (ai->GetManaPercent() <= 50)
+        && (ai->GetHealthPercent() > 25)
+        && (ai->CastSpell(LIFE_TAP, *m_bot)) )
+        return true;
 
     // hp check
     if (m_bot->getStandState() != UNIT_STAND_STATE_STAND)
@@ -402,69 +427,84 @@ void PlayerbotWarlockAI::DoNonCombatActions()
 
     pItem = ai->FindFood();
 
-    if (pItem != NULL && ai->GetHealthPercent() < 30)
+    if ( pItem
+        && (ai->GetHealthPercent() < 30) )
     {
         ai->TellMaster("J'ai besoin de manger un peu...");
         ai->UseItem(*pItem);
         ai->SetIgnoreUpdateTime(30);
-        return;
+        return true;
     }
-    else if (pItem == NULL && fItem != NULL && !m_bot->HasAura(RECENTLY_BANDAGED, EFFECT_INDEX_0) && ai->GetHealthPercent() < 70)
+    else if ( !pItem
+        && fItem
+        && (!m_bot->HasAura(RECENTLY_BANDAGED, EFFECT_INDEX_0))
+        && (ai->GetHealthPercent() < 70) )
     {
         ai->TellMaster("J'ai besoin de me faire un bandage...");
         ai->UseItem(*fItem);
         ai->SetIgnoreUpdateTime(8);
-        return;
+        return true;
     }
-    else if (( pet )
-        && (pItem == NULL && fItem == NULL && CONSUME_SHADOWS>0 && !m_bot->HasAura(CONSUME_SHADOWS, EFFECT_INDEX_0) && ai->GetHealthPercent() < 75) )
-    {
-        ai->CastSpell(CONSUME_SHADOWS, *m_bot);
-        return;
-    }
+    else if ( (pet)
+        && !pItem
+        && !fItem
+        && (CONSUME_SHADOWS > 0)
+        && (!m_bot->HasAura(CONSUME_SHADOWS, EFFECT_INDEX_0))
+        && (ai->GetHealthPercent() < 75)
+        && (ai->CastSpell(CONSUME_SHADOWS, *m_bot)) )
+        return true;
 
     // check for demon
-    if ( (SUMMON_FELGUARD>0 || SUMMON_FELHUNTER>0 || SUMMON_SUCCUBUS>0 || SUMMON_VOIDWALKER>0 || SUMMON_IMP>0) && !m_demonSummonFailed )
+    if ( ( (SUMMON_FELGUARD > 0)
+        || (SUMMON_FELHUNTER > 0)
+        || (SUMMON_SUCCUBUS > 0)
+        || (SUMMON_VOIDWALKER > 0)
+        || (SUMMON_IMP > 0) )
+        && !m_demonSummonFailed )
     {
-        if ( !pet )
+        if (!pet)
         {
             // summon demon
-            if ( SUMMON_FELGUARD>0 && ai->CastSpell(SUMMON_FELGUARD,*m_bot) )
-            {
-            }
-            else if ( SUMMON_FELHUNTER>0 && ai->CastSpell(SUMMON_FELHUNTER,*m_bot) )
-            {
-            }
-            else if ( SUMMON_SUCCUBUS>0 && ai->CastSpell(SUMMON_SUCCUBUS,*m_bot) )
-            {
-            }
-            else if ( SUMMON_VOIDWALKER>0 && ai->CastSpell(SUMMON_VOIDWALKER,*m_bot) )
-            {
-            }
-            else if ( SUMMON_IMP>0 && ai->GetManaPercent() >= 64 && ai->CastSpell(SUMMON_IMP,*m_bot) )
-            {
-            }
+            if ( (SUMMON_FELGUARD > 0)
+                && (ai->CastSpell(SUMMON_FELGUARD,*m_bot)) )
+                return true;
+            else if ( (SUMMON_FELHUNTER > 0)
+                && (ai->CastSpell(SUMMON_FELHUNTER,*m_bot)) )
+                return true;
+            else if ( (SUMMON_SUCCUBUS > 0)
+                && (ai->CastSpell(SUMMON_SUCCUBUS,*m_bot)) )
+                return true;
+            else if ( (SUMMON_VOIDWALKER > 0)
+                && (ai->CastSpell(SUMMON_VOIDWALKER,*m_bot)) )
+                return true;
+            else if ( (SUMMON_IMP > 0)
+                && (ai->GetManaPercent() >= 64)
+                && (ai->CastSpell(SUMMON_IMP,*m_bot)) )
+                return true;
             else
-            {
                 m_demonSummonFailed = true;
-            }
         }
     }
 
     // check for buffs with demon
-    if (( pet )
-        && ( SOUL_LINK>0 && !m_bot->HasAura(SOUL_LINK,EFFECT_INDEX_0) && ai->GetManaPercent() >= 16 && ai->CastSpell(SOUL_LINK,*m_bot) ))
-        {
-            return;
-        }
-    else if (( pet )
-        && ( BLOOD_PACT>0 && !m_bot->HasAura(BLOOD_PACT,EFFECT_INDEX_0) && ai->CastSpell(BLOOD_PACT,*m_bot) ))
-        {
-            return;
-        }
-    else if (( pet )
-        && ( FEL_INTELLIGENCE>0 && !m_bot->HasAura(FEL_INTELLIGENCE, EFFECT_INDEX_0) && ai->CastSpell(FEL_INTELLIGENCE,*m_bot) ))
-        {
-            return;
-        }
-} // end DoNonCombatActions
+    if ( pet
+        && (SOUL_LINK > 0)
+        && (!m_bot->HasAura(SOUL_LINK,EFFECT_INDEX_0))
+        && (ai->GetManaPercent() >= 16)
+        && (ai->CastSpell(SOUL_LINK,*m_bot)) )
+        return true;
+
+    else if ( pet
+        && (BLOOD_PACT > 0)
+        && (!m_bot->HasAura(BLOOD_PACT,EFFECT_INDEX_0))
+        && (ai->CastSpell(BLOOD_PACT,*m_bot)) )
+        return true;
+
+    else if ( pet
+        && (FEL_INTELLIGENCE > 0)
+        && (!m_bot->HasAura(FEL_INTELLIGENCE, EFFECT_INDEX_0))
+        && (ai->CastSpell(FEL_INTELLIGENCE,*m_bot)) )
+        return true;
+
+    return false;
+}

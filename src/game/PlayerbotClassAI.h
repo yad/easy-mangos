@@ -26,7 +26,7 @@ class MANGOS_DLL_SPEC PlayerbotClassAI
         virtual void DoNextCombatManeuver(Unit*);
 
         // all non combat actions go here, ex buffs, heals, rezzes
-        virtual void DoNonCombatActions();
+        virtual bool DoNonCombatActions();
 
         // buff a specific player, usually a real PC who is not in group
         virtual void BuffPlayer(Player* target);
