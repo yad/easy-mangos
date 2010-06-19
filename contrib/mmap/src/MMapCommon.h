@@ -1,6 +1,9 @@
 #ifndef _MMAP_COMMON_H
 #define _MMAP_COMMON_H
 
+// stop warning spam from ACE includes
+#pragma warning(disable : 4996)
+
 #include <string>
 #include <vector>
 

@@ -229,6 +229,9 @@ namespace MMAP
             // remove unused vertices
             cleanVertices(allVerts, allTris);
 
+            if(!allVerts.size())
+                continue;
+
             // get bounds of current tile
             getTileBounds(tileX, tileY, allVerts.getCArray(), allVerts.size() / 3, bmin, bmax);
 
@@ -298,50 +301,57 @@ namespace MMAP
         char tileString[10];
         sprintf(tileString, "[%02u,%02u]: ", tileX, tileY);
 
-        // ensure we start with clean data
-        allVerts.fastClear();
-        allTris.fastClear();
-        modelVerts.fastClear();
-        heightmapVerts.fastClear();
-        modelTris.fastClear();
-        heightmapTris.fastClear();
+        do
+        {
+            // ensure we start with clean data
+            allVerts.fastClear();
+            allTris.fastClear();
+            modelVerts.fastClear();
+            heightmapVerts.fastClear();
+            modelTris.fastClear();
+            heightmapTris.fastClear();
 
-        // get heightmap data
-        printf("%sLoading heightmap...                           \r", tileString);
-        m_tileBuilder->build(mapID, tileX, tileY, heightmapVerts, heightmapTris);
+            // get heightmap data
+            printf("%sLoading heightmap...                           \r", tileString);
+            m_tileBuilder->build(mapID, tileX, tileY, heightmapVerts, heightmapTris);
 
-        // get model data
-        printf("%sLoading models...                              \r", tileString);
-        loadVMap(mapID, tileY, tileX, modelVerts, modelTris);
-        unloadVMap(mapID, tileY, tileX);
+            // get model data
+            printf("%sLoading models...                              \r", tileString);
+            loadVMap(mapID, tileY, tileX, modelVerts, modelTris);
+            unloadVMap(mapID, tileY, tileX);
 
-        // if there is no data, give up now
-        if(!modelVerts.size() && !heightmapVerts.size())
-            return;
+            // if there is no data, give up now
+            if(!modelVerts.size() && !heightmapVerts.size())
+                break;
 
-        // gather all mesh data
-        printf("%Aggregating mesh data...                        \r", tileString);
-        allTris.append(heightmapTris);
-        allVerts.append(heightmapVerts);
-        copyIndices(allTris, modelTris, allVerts.size() / 3);   // don't just append, need to increment index values
-        allVerts.append(modelVerts);
+            // gather all mesh data
+            printf("%sAggregating mesh data...                        \r", tileString);
+            allTris.append(heightmapTris);
+            allVerts.append(heightmapVerts);
+            copyIndices(allTris, modelTris, allVerts.size() / 3);   // don't just append, need to increment index values
+            allVerts.append(modelVerts);
 
-        cleanVertices(allVerts, allTris);
+            cleanVertices(allVerts, allTris);
 
-        // get bounds of current tile
-        getTileBounds(tileX, tileY, allVerts.getCArray(), allVerts.size() / 3, bmin, bmax);
+            if(!allVerts.size())
+                break;
 
-        // build navmesh tile
-        buildMoveMapTile(mapID,
-                            tileX,
-                            tileY,
-                            allVerts.getCArray(),
-                            allVerts.size() / 3,
-                            allTris.getCArray(),
-                            allTris.size() / 3,
-                            bmin,
-                            bmax,
-                            navMesh);
+            // get bounds of current tile
+            getTileBounds(tileX, tileY, allVerts.getCArray(), allVerts.size() / 3, bmin, bmax);
+
+            // build navmesh tile
+            buildMoveMapTile(mapID,
+                                tileX,
+                                tileY,
+                                allVerts.getCArray(),
+                                allVerts.size() / 3,
+                                allTris.getCArray(),
+                                allTris.size() / 3,
+                                bmin,
+                                bmax,
+                                navMesh);
+
+        } while(0);
 
         printf("%sComplete!                                      \n\n", tileString);
     }
