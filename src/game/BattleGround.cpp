@@ -401,14 +401,29 @@ void BattleGround::Update(uint32 diff)
     /*********************************************************/
     /***           ARENA BUFF OBJECT SPAWNING              ***/
     /*********************************************************/
-    if (isArena() && !m_ArenaBuffSpawned && GetStatus() == STATUS_IN_PROGRESS)
+    if (isArena() && !m_ArenaBuffSpawned)
     {
-        // 60 seconds after start the buffobjects in arena should get spawned
+        // 90 seconds after start the buffobjects in arena should get spawned
         if (m_ArenaBuffTimer > uint32(m_StartDelayTimes[BG_STARTING_EVENT_FIRST] + ARENA_SPAWN_BUFF_OBJECTS))
         {
             SpawnEvent(ARENA_BUFF_EVENT, 0, true);
             m_ArenaBuffSpawned = true;
-        } else m_ArenaBuffTimer += diff;
+            m_ArenaBuffTimer = 0;
+        }
+        else
+            m_ArenaBuffTimer += diff;
+    }
+
+    // then every 90 seconds respawn
+    if (isArena() && m_ArenaBuffSpawned)
+    {
+        if (m_ArenaBuffTimer > ARENA_SPAWN_BUFF_OBJECTS)
+        {
+            SpawnEvent(ARENA_BUFF_EVENT, 0, true);
+            m_ArenaBuffTimer = 0;
+        }
+        else
+            m_ArenaBuffTimer += diff;
     }
 
     /*********************************************************/
@@ -859,6 +874,7 @@ void BattleGround::EndBattleGround(uint32 winner)
                     plr->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_WIN_RATED_ARENA, member->personal_rating);
 
                 change = winner_arena_team->MemberWon(plr,loser_rating);
+                winner_string << plr->GetName() << " [" << result ? result->Fetch()[0].GetString() : "ERROR: ip not found" << "] (" << change << "), ";
             }
             else
             {
@@ -866,14 +882,9 @@ void BattleGround::EndBattleGround(uint32 winner)
 
                 // Arena lost => reset the win_rated_arena having the "no_loose" condition
                 plr->GetAchievementMgr().ResetAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_WIN_RATED_ARENA, ACHIEVEMENT_CRITERIA_CONDITION_NO_LOOSE);
+                (team == winner) ? winner_string : loser_string << plr->GetName() << " [";
+                loser_string << plr->GetName() << " [" << result ? result->Fetch()[0].GetString() : "ERROR: ip not found" << "] (" << change << "), ";
             }
-            (team == winner) ? winner_string : loser_string << plr->GetName() << " [";
-            if(result)
-                (team == winner) ? winner_string : loser_string << result->Fetch()[0].GetString();
-            else
-                (team == winner) ? winner_string : loser_string << "ERROR: ip not found";
-
-            (team == winner) ? winner_string : loser_string<< "] (" << change << "), ";
         }
 
         if (team == winner)
