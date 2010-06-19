@@ -1996,8 +1996,8 @@ void PlayerbotAI::SetInFront( const Unit* obj )
 }
 
 // some possible things to use in AI
-//GetRandomContactPoint
-//GetPower, GetMaxPower
+// GetRandomContactPoint
+// GetPower, GetMaxPower
 // HasSpellCooldown
 // IsAffectedBySpellmod
 // isMoving
@@ -2010,8 +2010,8 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
     if (currentTime < m_ignoreAIUpdatesUntilTime)
         return;
 
-    // default updates occur every one second
-    m_ignoreAIUpdatesUntilTime = time(0) + 1;
+    // default updates occur every two seconds
+    m_ignoreAIUpdatesUntilTime = time(0) + 2;
 
     if (!GetMaster())
         SetMaster(m_bot);
@@ -2039,8 +2039,8 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
     if (m_bot->IsBeingTeleported())
         return;
 
-    if (GetMaster()->IsBeingTeleported())
-         return;
+    /*if (GetMaster()->IsBeingTeleported())
+         return;*/
 
     if ( m_bot->GetGroup() )
     {
@@ -2060,7 +2060,6 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
     {
         if ( m_botState != BOTSTATE_DEAD && m_botState != BOTSTATE_DEADRELEASED )
         {
-            //sLog.outDebug( "[PlayerbotAI]: %s died and is not in correct state...", m_bot->GetName() );
             // clear loot list on death
             m_lootCreature.clear();
             m_lootCurrent = 0;
@@ -2075,12 +2074,11 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
         else if ( m_botState == BOTSTATE_DEAD )
         {
             // become ghost
-            if ( m_bot->GetCorpse() ){
-                //sLog.outDebug( "[PlayerbotAI]: %s already has a corpse...", m_bot->GetName() );
+            if ( m_bot->GetCorpse() )
+            {
                 SetState( BOTSTATE_DEADRELEASED );
                 return;
             }
-
             m_bot->SetBotDeathTimer();
             m_bot->BuildPlayerRepop();
             // relocate ghost
@@ -2096,22 +2094,17 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
             // get bot's corpse
             Corpse *corpse = m_bot->GetCorpse();
             if ( !corpse )
-            {
-                //sLog.outDebug( "[PlayerbotAI]: %s has no corpse!", m_bot->GetName() );
                 return;
-            }
+
             // teleport ghost from graveyard to corpse
-            //sLog.outDebug( "[PlayerbotAI]: Teleport %s to corpse...", m_bot->GetName() );
             FollowCheckTeleport( corpse );
             // check if we are allowed to resurrect now
             if ( corpse->GetGhostTime() + m_bot->GetCorpseReclaimDelay( corpse->GetType()==CORPSE_RESURRECTABLE_PVP ) > time(0) )
             {
                 m_ignoreAIUpdatesUntilTime = corpse->GetGhostTime() + m_bot->GetCorpseReclaimDelay( corpse->GetType()==CORPSE_RESURRECTABLE_PVP );
-                //sLog.outDebug( "[PlayerbotAI]: %s has to wait for %d seconds to revive...", m_bot->GetName(), m_ignoreAIUpdatesUntilTime-time(0) );
                 return;
             }
             // resurrect now
-            //sLog.outDebug( "[PlayerbotAI]: Reviving %s to corpse...", m_bot->GetName() );
             m_ignoreAIUpdatesUntilTime = time(0) + 6;
             PlayerbotChatHandler ch(GetMaster());
             if (! ch.revive(*m_bot))
@@ -2142,7 +2135,6 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
         }
 
         // handle combat (either self/master/group in combat, or combat state and valid target)
-        //else if ( IsInCombat() || (m_botState == BOTSTATE_COMBAT && m_targetCombat) )
         else if ( IsInCombat() )
         {
             if (m_bot->getAttackers().empty() && !m_bot->IsWithinDistInMap( GetMaster(), 100, true ))
@@ -2161,13 +2153,10 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
             SetState( BOTSTATE_LOOTING );
             m_attackerInfo.clear();
         }
+
         else if (m_botState == BOTSTATE_LOOTING)
             DoLoot();
-/*
-        // are we sitting, if so feast if possible
-        else if (m_bot->getStandState() == UNIT_STAND_STATE_SIT)
-        Feast();
-*/
+
         // if commanded to follow master and not already following master then follow master
         else if (!IsInCombat() && !IsMoving() )
         {

@@ -2542,9 +2542,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         void SetBotDeathTimer() { m_deathTimer = 0; }
         bool IsBot() { return (GetSession()->IsBotSession()); }
 
-        void SetAddonTarget(uint64 guid) { m_AddonTarget = guid; };
-        uint64 GetAddonTarget() { return m_AddonTarget; };
-
         //TEAMBG helpers
         bool isInTeamBG() { return m_isInTeamBG; };
         void SetTeamBG(bool isIn, uint8 side) { m_isInTeamBG = isIn; m_fakeTeam = side; };
@@ -2820,7 +2817,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         // Playerbot mod:
         PlayerbotAI* m_playerbotAI;
         PlayerbotMgr* m_playerbotMgr;
-        uint64 m_AddonTarget;
 
         // Homebind coordinates
         uint32 m_homebindMapId;

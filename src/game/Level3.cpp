@@ -7335,8 +7335,6 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
             HandleAddItemCommand("23162");//bag 36
     }
     chr->AutoEquipItem();
-    chr->PurgeMyBags();
-
     chr->GetBestItemForMyLevel();
     chr->AutoEquipItem();
     chr->PurgeMyBags();

@@ -435,7 +435,6 @@ Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputa
     // Playerbot mod:
     m_playerbotAI = NULL;
     m_playerbotMgr = NULL;
-    m_AddonTarget = 0;
 
     m_speakTime = 0;
     m_speakCount = 0;
@@ -18635,6 +18634,9 @@ void Player::SaveToDB()
 {
     // Jail: Prevent saving of jailed players
     if (m_jail_isjailed) return;
+
+    // NEVER SAVE BOTS !!!
+    if (IsBot()) return;
 
     // we should assure this: ASSERT((m_nextSave != sWorld.getConfig(CONFIG_UINT32_INTERVAL_SAVE)));
     // delay auto save at any saves (manual, in code, or autosave)
