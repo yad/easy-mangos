@@ -23,7 +23,6 @@
 #ifndef __WORLD_H
 #define __WORLD_H
 
-#include <omp.h>
 #include "Common.h"
 #include "Timer.h"
 #include "Policies/Singleton.h"
@@ -210,7 +209,6 @@ enum eConfigUInt32Values
     CONFIG_UINT32_FACTIONED_MAP_TEAM,
     CONFIG_UINT32_LOSERNOCHANGE,
     CONFIG_UINT32_LOSERHALFCHANGE,
-    CONFIG_UINT32_NUMTHREADS,
     CONFIG_UINT32_AHBOT_ACCOUNT_ID,
     CONFIG_UINT32_AHBOT_CHARACTER_ID,
     CONFIG_UINT32_AHBOT_ITEMS_CYCLE,

@@ -16,7 +16,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <omp.h>
 #include "MapManager.h"
 #include "InstanceSaveMgr.h"
 #include "Policies/SingletonImp.h"
@@ -235,8 +234,6 @@ bool MapManager::CanPlayerEnter(uint32 mapid, Player* player)
 
 void MapManager::DeleteInstance(uint32 mapid, uint32 instanceId)
 {
-    Guard guard(*this);
-
     Map *m = _createBaseMap(mapid);
     if (m && m->Instanceable())
         ((MapInstanced*)m)->DestroyInstance(instanceId);
@@ -249,17 +246,8 @@ MapManager::Update(uint32 diff)
     if( !i_timer.Passed() )
         return;
 
-    MapMapType::iterator iter = i_maps.begin();
-    std::vector<Map*> update_queue(i_maps.size());
-
-    int omp_set_num_threads(sWorld.getConfig(CONFIG_UINT32_NUMTHREADS));
-
-    for (uint32 i = 0; iter != i_maps.end(); ++iter, ++i)
-    update_queue[i] = iter->second;
-
-    #pragma omp parallel for schedule(dynamic) private(i) shared(update_queue)
-    for (uint32 i = 0; i < i_maps.size(); ++i)
-        update_queue[i]->Update(i_timer.GetCurrent());
+    for(MapMapType::iterator iter=i_maps.begin(); iter != i_maps.end(); ++iter)
+        iter->second->Update((uint32)i_timer.GetCurrent());
 
     for (TransportSet::iterator iter = m_Transports.begin(); iter != m_Transports.end(); ++iter)
         (*iter)->Update(i_timer.GetCurrent());
@@ -316,8 +304,6 @@ void MapManager::InitMaxInstanceId()
 
 uint32 MapManager::GetNumInstances()
 {
-    Guard guard(*this);
-
     uint32 ret = 0;
     for(MapMapType::iterator itr = i_maps.begin(); itr != i_maps.end(); ++itr)
     {
@@ -332,8 +318,6 @@ uint32 MapManager::GetNumInstances()
 
 uint32 MapManager::GetNumPlayersInInstances()
 {
-    Guard guard(*this);
-
     uint32 ret = 0;
     for(MapMapType::iterator itr = i_maps.begin(); itr != i_maps.end(); ++itr)
     {

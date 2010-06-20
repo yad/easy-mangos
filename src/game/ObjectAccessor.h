@@ -143,8 +143,8 @@ class MANGOS_DLL_DECL ObjectAccessor : public MaNGOS::Singleton<ObjectAccessor, 
         void RemoveObject(Player *object) { HashMapHolder<Player>::Remove(object); }
 
         // TODO: This methods will need lock in MT environment
-        static void LinkMap(Map* map)   { ACE_Write_Guard<LockType> guard(m_Lock); i_mapList.push_back(map); }
-        static void DelinkMap(Map* map) { ACE_Write_Guard<LockType> guard(m_Lock); i_mapList.remove(map); }
+        static void LinkMap(Map* map)   { i_mapList.push_back(map); }
+        static void DelinkMap(Map* map) { i_mapList.remove(map); }
     private:
         // TODO: This methods will need lock in MT environment
         // Theoreticaly multiple threads can enter and search in this method but
@@ -166,7 +166,6 @@ class MANGOS_DLL_DECL ObjectAccessor : public MaNGOS::Singleton<ObjectAccessor, 
 
         typedef ACE_Thread_Mutex LockType;
         typedef MaNGOS::GeneralLock<LockType > Guard;
-        static LockType m_Lock;
 
         LockType i_playerGuard;
         LockType i_corpseGuard;

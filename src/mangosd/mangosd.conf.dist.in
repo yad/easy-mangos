@@ -1,4 +1,4 @@
-﻿#####################################
+#####################################
 # MaNGOS Configuration file         #
 #####################################
 
@@ -1830,20 +1830,6 @@ PlayerbotAI.DebugWhisper = 0
 PlayerbotAI.FollowDistanceMin = 0.5
 PlayerbotAI.FollowDistanceMax = 1.0
 PlayerbotAI.MaxBots = 100
-
-###################################################################################################################
-# OpenMP Config
-#
-#    OpenMP
-#    MapUpdate.Threads
-#        Number of threads to run if the binary was compiled with OpenMP support.
-#        Default: 1
-#        For stable work 4 (if online ~2000)
-#        1 (minimum, normal behavior (single-threaded updates)
-#
-###################################################################################################################
-
-MapUpdate.Threads = 1
 
 ###################################################################################################################
 #
