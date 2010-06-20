@@ -684,7 +684,7 @@ void Spell::FillTargetMap()
             AddUnitTarget((*iunit), SpellEffectIndex(i));
     }
 /*
-    for(tbb::concurrent_vector<TargetInfo>::iterator ihit = m_UniqueTargetInfo.begin(); ihit != m_UniqueTargetInfo.end(); ++ihit)
+    for(std::list<TargetInfo>::iterator ihit = m_UniqueTargetInfo.begin(); ihit != m_UniqueTargetInfo.end(); ++ihit)
     {
         error_log("GUID: %u", ihit->targetGUID.GetRawValue());
         if(ihit->targetGUID.IsPlayer())
@@ -971,10 +971,7 @@ void Spell::AddItemTarget(Item* pitem, SpellEffectIndex effIndex)
 
 void Spell::DoAllEffectOnTarget(TargetInfo *target)
 {
-    if (m_spellInfo->Id <= 0 || m_spellInfo->Id > MAX_SPELL_ID ||  m_spellInfo->Id == 32 || m_spellInfo->Id == 80)
-        return;
-
-    if (!target || target == (TargetInfo*)0x10 || target->processed)
+    if (target->processed)                                  // Check target
         return;
 
     Unit* unit = m_caster->GetObjectGuid() == target->targetGUID ? m_caster : ObjectAccessor::GetUnit(*m_caster, target->targetGUID);
@@ -3074,7 +3071,7 @@ void Spell::cast(bool skipCheck)
        {
            if(m_UniqueTargetInfo.size() > 1)
            {
-               tbb::concurrent_vector<TargetInfo>::iterator itr = m_UniqueTargetInfo.begin();
+               std::list<TargetInfo>::iterator itr = m_UniqueTargetInfo.begin();
                TargetInfo tInfo = (*itr);
                m_UniqueTargetInfo.clear();
                m_UniqueTargetInfo.push_back(tInfo);
@@ -3109,7 +3106,7 @@ void Spell::cast(bool skipCheck)
         TakeCastItem();
 
         // fill initial spell damage from caster for delayed casted spells
-        for(tbb::concurrent_vector<TargetInfo>::iterator ihit = m_UniqueTargetInfo.begin(); ihit != m_UniqueTargetInfo.end(); ++ihit)
+        for(std::list<TargetInfo>::iterator ihit = m_UniqueTargetInfo.begin(); ihit != m_UniqueTargetInfo.end(); ++ihit)
             HandleDelayedSpellLaunch(&(*ihit));
 
         // Okay, maps created, now prepare flags
@@ -3461,10 +3458,8 @@ void Spell::finish(bool ok)
         {
             SpellEffectIndex healEffIndex = EFFECT_INDEX_1;
             int32 healAmount = 0;
-            for(tbb::concurrent_vector<TargetInfo>::const_iterator ihit = m_UniqueTargetInfo.begin(); ihit != m_UniqueTargetInfo.end(); ++ihit)
+            for(std::list<TargetInfo>::const_iterator ihit = m_UniqueTargetInfo.begin(); ihit != m_UniqueTargetInfo.end(); ++ihit)
             {
-                if (ihit->deleted == true)
-                    continue;
                 Unit *unit = m_caster->GetObjectGuid() == ihit->targetGUID ? m_caster : ObjectAccessor::GetUnit(*m_caster, ihit->targetGUID);
                 if (unit && unit->isAlive())
                     healAmount += m_caster->CalculateSpellDamage(unit, m_spellInfo, healEffIndex, &m_currentBasePoints[healEffIndex]);
@@ -4069,7 +4064,7 @@ void Spell::SendChannelStart(uint32 duration)
     }
     else if(!m_UniqueGOTargetInfo.empty())
     {
-        for(tbb::concurrent_vector<GOTargetInfo>::const_iterator itr = m_UniqueGOTargetInfo.begin(); itr != m_UniqueGOTargetInfo.end(); ++itr)
+        for(std::list<GOTargetInfo>::const_iterator itr = m_UniqueGOTargetInfo.begin(); itr != m_UniqueGOTargetInfo.end(); ++itr)
         {
             if(itr->effectMask & (1 << 0) )
             {
