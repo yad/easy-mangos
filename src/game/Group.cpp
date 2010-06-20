@@ -978,7 +978,7 @@ void Group::SendUpdate()
         WorldPacket data(SMSG_GROUP_LIST, (1+1+1+1+8+4+GetMembersCount()*20));
         data << uint8(m_groupType);                         // group type (flags in 3.3)
         data << uint8(citr->group);                         // groupid
-        if(!isBGGroup()                                     // seems its causing errors in BGGroup
+        if(!isBGGroup())                                    // seems its causing errors in BGGroup
             data << uint8(GetFlags(*citr));                 // group flags
         else
             data << uint8(0);
@@ -1003,7 +1003,7 @@ void Group::SendUpdate()
             data << uint64(citr2->guid);
             data << uint8(onlineState);                     // online-state
             data << uint8(citr2->group);                    // groupid
-            if(!isBGGroup()                                 // seems its causing errors in BGGroup
+            if(!isBGGroup())                                // seems its causing errors in BGGroup
                 data << uint8(GetFlags(*citr2));            // group flags
             else
                 data << uint8(0);
