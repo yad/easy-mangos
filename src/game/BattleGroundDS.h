@@ -28,6 +28,9 @@ class BattleGroundDSScore : public BattleGroundScore
         //TODO fix me
 };
 
+#define DOORS_EVENT 254
+#define WATERFALL_EVENT 250
+
 class BattleGroundDS : public BattleGround
 {
     friend class BattleGroundMgr;
@@ -45,14 +48,19 @@ class BattleGroundDS : public BattleGround
         void RemovePlayer(Player *plr, uint64 guid);
         void HandleAreaTrigger(Player *Source, uint32 Trigger);
         bool SetupBattleGround();
+        void DespawnEvent(uint8 event1, uint8 event2);
+        void DespawnBGObject(uint64 const& guid);
     private:
         virtual void Reset();
-        virtual void FillInitialWorldStates(WorldPacket &d);
+        virtual void FillInitialWorldStates(WorldPacket &d, uint32& count);
         void HandleKillPlayer(Player* player, Player *killer);
         bool HandlePlayerUnderMap(Player * plr);
-        bool TeleportCheck;
         bool KnockbackCheck;
-        uint32 m_uiTeleport;
+        bool KnockbackSpam;
+        bool DoorsDespawned;
+        bool WaterfallActivated;
         uint32 m_uiKnockback;
+        uint32 m_uiKnockSpam;
+        uint32 m_uiWaterfall;
 };
 #endif
