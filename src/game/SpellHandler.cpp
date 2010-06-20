@@ -440,6 +440,9 @@ void WorldSession::HandleCancelAuraOpcode( WorldPacket& recvPacket)
     if (spellInfo->Attributes & SPELL_ATTR_CANT_CANCEL || spellId == 56266 || IsPassiveSpell(spellId))
         return;
 
+    if (IsPassiveSpell(spellInfo))
+        return;
+
     if (!IsPositiveSpell(spellId))
     {
         // ignore for remote control state
