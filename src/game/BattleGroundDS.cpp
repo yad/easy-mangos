@@ -72,6 +72,12 @@ void BattleGroundDS::Update(uint32 diff)
                 {
                     m_uiKnockSpam = 5000;
                     KnockbackSpam = true;
+
+                    // Remove Demonic Circle
+                    for(BattleGroundPlayerMap::const_iterator itr = m_Players.begin(); itr != m_Players.end(); ++itr)
+                        if (Player *plr = sObjectMgr.GetPlayer(itr->first))
+                            if(GameObject* obj = plr->GetGameObject(48018))
+                                obj->Delete();
                 }
             }else m_uiKnockback -= diff;
             
