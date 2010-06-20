@@ -270,6 +270,8 @@ BattleGround::BattleGround()
     m_PrematureCountDown = false;
     m_PrematureCountDown = 0;
 
+    m_ArenaEnded = false;
+
     m_StartDelayTimes[BG_STARTING_EVENT_FIRST]  = BG_START_DELAY_2M;
     m_StartDelayTimes[BG_STARTING_EVENT_SECOND] = BG_START_DELAY_1M;
     m_StartDelayTimes[BG_STARTING_EVENT_THIRD]  = BG_START_DELAY_30S;
@@ -525,11 +527,13 @@ void BattleGround::Update(uint32 diff)
         }
     }
 
-    if(isArena())
+    // Arena time limit
+    if(isArena() && !m_ArenaEnded)
     {
         if(m_StartTime > uint32(ARENA_TIME_LIMIT))
         {
             uint32 winner;
+            // winner is team with higher damage
             if(GetDamageDoneForTeam(ALLIANCE) > GetDamageDoneForTeam(HORDE))
                 winner = ALLIANCE;
             else if (GetDamageDoneForTeam(HORDE) > GetDamageDoneForTeam(ALLIANCE))
@@ -537,6 +541,7 @@ void BattleGround::Update(uint32 diff)
             else
                 winner = 0;
             EndBattleGround(winner);
+            m_ArenaEnded = true;
         }
     }
 
