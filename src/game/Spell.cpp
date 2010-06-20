@@ -1582,6 +1582,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
     switch(m_spellInfo->SpellFamilyName)
     {
         case SPELLFAMILY_GENERIC:
+        {
             switch(m_spellInfo->Id)
             {
                 case 31347:                                 // Doom TODO: exclude top threat target from target selection
@@ -1626,6 +1627,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 }
             }
             break;
+        }
         case SPELLFAMILY_PRIEST:
             if(m_spellInfo->SpellVisual[0] == 8253)         // Circle of Healing
             {
@@ -2770,7 +2772,6 @@ void Spell::prepare(SpellCastTargets const* targets, Aura* triggeredByAura)
     SpellCastResult result = CheckCast(true);
     if(result != SPELL_CAST_OK && !IsAutoRepeat())          //always cast autorepeat dummy for triggering
     {
-        //error_log("Spatne 1, spell %s", m_spellInfo->SpellName[0]);
         if(triggeredByAura)
         {
             SendChannelUpdate(0);

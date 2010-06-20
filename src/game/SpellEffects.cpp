@@ -3111,6 +3111,7 @@ void Spell::EffectApplyAura(SpellEffectIndex eff_idx)
 
 
     DEBUG_FILTER_LOG(LOG_FILTER_SPELL_CAST, "Spell: Aura is: %u", m_spellInfo->EffectApplyAuraName[eff_idx]);
+
     Aura* Aur = CreateAura(m_spellInfo, eff_idx, &m_currentBasePoints[eff_idx], unitTarget, caster, m_CastItem);
 
     // Now Reduce spell duration using data received at spell hit
@@ -3288,9 +3289,7 @@ void Spell::EffectHeal(SpellEffectIndex /*eff_idx*/)
         }
         // Death Pact (percent heal)
         else if (m_spellInfo->Id==48743)
-        {
             addhealth = addhealth * unitTarget->GetMaxHealth() / 100;
-        }
         // Swiftmend - consumes Regrowth or Rejuvenation
         else if (m_spellInfo->TargetAuraState == AURA_STATE_SWIFTMEND && unitTarget->HasAuraState(AURA_STATE_SWIFTMEND))
         {
@@ -7479,7 +7478,7 @@ void Spell::EffectCharge(SpellEffectIndex /*eff_idx*/)
     //TODO: research more ContactPoint/attack distance.
     //3.666666 instead of ATTACK_DISTANCE(5.0f) in below seem to give more accurate result.
     float x, y, z;
-    unitTarget->GetContactPoint(m_caster, x, y, z, 3.6f);
+    unitTarget->GetContactPoint(m_caster, x, y, z, 3.666666f);
 
     // Try to normalize Z coord cuz GetContactPoint do nothing with Z axis
     if(!m_caster->GetMap()->IsNextZcoordOK(x, y, z, 30.0f))
@@ -7517,7 +7516,7 @@ void Spell::EffectCharge2(SpellEffectIndex /*eff_idx*/)
             ((Creature *)unitTarget)->StopMoving();
     }
     else if (unitTarget && unitTarget != m_caster)
-        unitTarget->GetContactPoint(m_caster, x, y, z, 3.6f);
+        unitTarget->GetContactPoint(m_caster, x, y, z, 3.666666f);
     else
         return;
 
@@ -8197,7 +8196,8 @@ void Spell::EffectDamageBuilding(SpellEffectIndex eff_idx)
     gameObjTarget->DealSiegeDamage(damage);
 }
 void Spell::EffectPlayMusic(SpellEffectIndex eff_idx)
-{    if(!unitTarget || unitTarget->GetTypeId() != TYPEID_PLAYER)
+{
+    if(!unitTarget || unitTarget->GetTypeId() != TYPEID_PLAYER)
         return;
 
     uint32 soundid = m_spellInfo->EffectMiscValue[eff_idx];
