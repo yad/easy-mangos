@@ -24,7 +24,6 @@ namespace MMAP
 
     struct IntermediateValues
     {
-        rcChunkyTriMesh* chunkyMesh;
         rcHeightfield* heightfield;
         unsigned char* triFlags;
         rcCompactHeightfield* compactHeightfield;

@@ -6,7 +6,6 @@
 #include "MapTree.h"
 #include "ModelInstance.h"
 
-#include "ChunkyTriMesh.h"
 #include "pathfinding/Recast/Recast.h"
 #include "pathfinding/Detour/DetourNavMeshBuilder.h"
 #include "pathfinding/Detour/DetourNavMesh.h"
@@ -765,14 +764,6 @@ namespace MMAP
 
             /***********    start build     ***********/
 
-            //printf("Creating ChunkyTriMesh...               \r");
-            //iv.chunkyMesh = NEW(rcChunkyTriMesh);
-            //if(!iv.chunkyMesh || !rcCreateChunkyTriMesh(verts, tris, triCount, 256, iv.chunkyMesh))
-            //{
-            //    printf("Failed creating ChunkyTriMesh!          \n");
-            //    break;
-            //}
-
             // build heightfield
             printf("%sBuilding Recast Heightfield...          \r", tileString);
             iv.heightfield = NEW(rcHeightfield);
@@ -782,45 +773,11 @@ namespace MMAP
                 break;
             }
 
-            //// triangle flags for filtering walkable triangles
-            //iv.triFlags = NEW_ARRAY(unsigned char, iv.chunkyMesh->maxTrisPerChunk);
-            //float tbmin[2], tbmax[2];
-            //tbmin[0] = config.bmin[0];
-            //tbmin[1] = config.bmin[2];
-            //tbmax[0] = config.bmax[0];
-            //tbmax[1] = config.bmax[2];
-            //const static int chunksPerTile = 4096;
-            //int cid[chunksPerTile];
-            //const int ncid = rcGetChunksInRect(iv.chunkyMesh, tbmin, tbmax, cid, chunksPerTile);
-            //if(!ncid)
-            //{
-            //    printf("%sNo vertices to build tile! (ctm)        \n", tileString);
-            //    break;
-            //}
-            //if(ncid > chunksPerTile)
-            //    printf("%sHave %i chunks, but we can only use %i!\n", tileString, ncid, chunksPerTile);
-
-            //// rasterize triangles
             printf("%sRasterizing triangles...                   \r", tileString);
-            //int tileTriCount = 0;
-            //for(int i = 0; i < ncid; ++i)
-            //{
-            //    const rcChunkyTriMeshNode& node = iv.chunkyMesh->nodes[cid[i]];
-            //    const int* nodeTris = &iv.chunkyMesh->tris[node.i*3];
-            //    const int nNodeTris = node.n;
-
-            //    tileTriCount += nNodeTris;
-
-            //    memset(iv.triFlags, 0, nNodeTris*sizeof(unsigned char));
-            //    rcMarkWalkableTriangles(config.walkableSlopeAngle, verts, vertCount, nodeTris, nNodeTris, iv.triFlags);
-            //    rcRasterizeTriangles(verts, vertCount, nodeTris, iv.triFlags, nNodeTris, *iv.heightfield, config.walkableClimb);
-            //}
 
             iv.triFlags = NEW_ARRAY(unsigned char,triCount);
             memset(iv.triFlags, 0, triCount*sizeof(unsigned char));
             rcMarkWalkableTriangles(config.walkableSlopeAngle, verts, vertCount, tris, triCount, iv.triFlags);
-
-            //DELETE(iv.chunkyMesh);
             rcRasterizeTriangles(verts, vertCount, tris, iv.triFlags, RC_WALKABLE_AREA, triCount, *iv.heightfield, config.walkableClimb);
             DELETE_ARRAY(iv.triFlags);
 
@@ -1039,7 +996,6 @@ namespace MMAP
 
     void MapBuilder::initIntermediateValues(IntermediateValues &iv)
     {
-        iv.chunkyMesh = 0;
         iv.compactHeightfield = 0;
         iv.heightfield = 0;
         iv.triFlags = 0;
@@ -1050,7 +1006,6 @@ namespace MMAP
 
     void MapBuilder::clearIntermediateValues(IntermediateValues &iv)
     {
-        DELETE(iv.chunkyMesh);
         DELETE(iv.compactHeightfield);
         DELETE(iv.heightfield);
         DELETE_ARRAY(iv.triFlags);
