@@ -18,8 +18,8 @@ namespace MMAP
     enum Spot
     {
         TOP     = 1,
-        LEFT    = 2,
-        RIGHT   = 3,
+        RIGHT   = 2,
+        LEFT    = 3,
         BOTTOM  = 4,
         ENTIRE  = 5
     };
@@ -37,20 +37,23 @@ namespace MMAP
     static const float GRID_SIZE = 533.33333f;
     static const float GRID_PART_SIZE = (float)1/V8_SIZE*GRID_SIZE;
 
+    struct MeshData
+    {
+        G3D::Array<float> solidVerts;
+        G3D::Array<int> solidTris;
+
+        G3D::Array<float> liquidVerts;
+        G3D::Array<int> liquidTris;
+        G3D::Array<uint8> liquidType;
+    };
+
     class TileBuilder
     {
         public:
             TileBuilder(float maxWalkableAngle, bool hiRes, IVMapManager* vmapManager);
             ~TileBuilder();
 
-            void build(uint32               mapID,
-                       uint32               tileX,
-                       uint32               tileY,
-                       G3D::Array<float>    &verts,
-                       G3D::Array<int>      &tris);
-
-            int getMaxVertCount();
-            int getMaxTriCount();
+            bool loadMap(uint32 mapID, uint32 tileX, uint32 tileY, MeshData &meshData, Spot portion);
 
         private:
 
@@ -63,10 +66,15 @@ namespace MMAP
             G3D::Vector3 m_groundNormal;
             float m_maxRadians;
 
-            void loadHeightMap(uint32 mapID, uint32 tileX, uint32 tileY, G3D::Array<float> &vertices, G3D::Array<int> &triangles, Spot portion);
-            void getHeightCoord(int square, Grid grid, float xOffset, float yOffset, float* coord, float* v);
-            bool getHeightTriangle(int square, Spot triangle, int* indices, int offset);
+            void getLoopVars(Spot portion, int &loopStart, int &loopEnd, int &loopInc);
+            bool loadHeightMap(uint32 mapID, uint32 tileX, uint32 tileY, G3D::Array<float> &vertices, G3D::Array<int> &triangles, Spot portion);
+            bool loadLiquidMap(uint32 mapID, uint32 tileX, uint32 tileY, G3D::Array<float> &vertices, G3D::Array<int> &triangles, Spot portion);
+            void getHeightCoord(int index, Grid grid, float xOffset, float yOffset, float* coord, float* v);
+            void getHeightTriangle(int square, Spot triangle, int* indices, bool liquid = false);
+            void getLiquidCoord(int index, int index2, float xOffset, float yOffset, float* coord, float* v);
+            void getLiquidTriangle(int square, Spot triangle, int* indices, uint8 width);
             bool isHole(int square, const uint16 holes[16][16]);
+            uint8 getLiquidType(int square, const uint8 liquid_type[16][16]);
             float getAngle(Vector3 normal);
 
             // vmap models

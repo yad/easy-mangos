@@ -146,34 +146,38 @@ namespace MMAP
         // vars that are used in multiple locations...
         uint32 i, j, tileX, tileY;
         float bmin[3], bmax[3];
-        G3D::Array<float> modelVerts;
-        G3D::Array<int> modelTris;
 
-        // make sure we process maps which don't have tiles
-        if(!tiles->size())
+        // scope the model data arrays
+        do
         {
-            // initialize the static tree, which loads WDT models
-            loadVMap(mapID, 64, 64, modelVerts, modelTris);
+            G3D::Array<float> modelVerts;
+            G3D::Array<int> modelTris;
 
-            // get the coord bounds of the model data
-            rcCalcBounds(modelVerts.getCArray(), modelVerts.size() / 3, bmin, bmax);
+            // make sure we process maps which don't have tiles
+            if(!tiles->size())
+            {
+                // initialize the static tree, which loads WDT models
+                loadVMap(mapID, 64, 64, modelVerts, modelTris);
 
-            // convert coord bounds to grid bounds
-            uint32 minX, minY, maxX, maxY;
-            maxX = 32 - bmin[0] / GRID_SIZE;
-            maxY = 32 - bmin[2] / GRID_SIZE;
-            minX = 32 - bmax[0] / GRID_SIZE;
-            minY = 32 - bmax[2] / GRID_SIZE;
+                if(!modelVerts.size())
+                    break;
 
-            // add all tiles within bounds to tile list.
-            for(i = minX; i <= maxX; ++i)
-                for(j = minY; j <= maxY; ++j)
-                    tiles->insert(StaticMapTree::packTileID(i, j));
+                // get the coord bounds of the model data
+                rcCalcBounds(modelVerts.getCArray(), modelVerts.size() / 3, bmin, bmax);
 
-            // clear model data
-            modelVerts.fastClear();
-            modelTris.fastClear();
-        }
+                // convert coord bounds to grid bounds
+                uint32 minX, minY, maxX, maxY;
+                maxX = 32 - bmin[0] / GRID_SIZE;
+                maxY = 32 - bmin[2] / GRID_SIZE;
+                minX = 32 - bmax[0] / GRID_SIZE;
+                minY = 32 - bmax[2] / GRID_SIZE;
+
+                // add all tiles within bounds to tile list.
+                for(i = minX; i <= maxX; ++i)
+                    for(j = minY; j <= maxY; ++j)
+                        tiles->insert(StaticMapTree::packTileID(i, j));
+            }
+        } while(0);
 
         // build navMesh
         dtNavMesh* navMesh = 0;
@@ -186,21 +190,15 @@ namespace MMAP
         }
 
         // more data storage
-        G3D::Array<float> heightmapVerts, allVerts;
-        G3D::Array<int> heightmapTris, allTris;
+        G3D::Array<float> allVerts;
+        G3D::Array<int> allTris;
         char tileString[10];
         
         // now start building mmtiles for each tile
         printf("We have %i tiles.                          \n", tiles->size());
         for(set<uint32>::iterator it = tiles->begin(); it != tiles->end(); ++it)
         {
-            // ensure we start with clean data
-            allVerts.fastClear();
-            allTris.fastClear();
-            modelVerts.fastClear();
-            heightmapVerts.fastClear();
-            modelTris.fastClear();
-            heightmapTris.fastClear();
+            MeshData meshData;
 
             // unpack tile coords
             StaticMapTree::unpackTileID((*it), tileX, tileY);
@@ -208,40 +206,45 @@ namespace MMAP
 
             // get heightmap data
             printf("%sLoading heightmap...                           \r", tileString);
-            m_tileBuilder->build(mapID, tileX, tileY, heightmapVerts, heightmapTris);
+            m_tileBuilder->loadMap(mapID, tileX, tileY, meshData, ENTIRE);
+            m_tileBuilder->loadMap(mapID, tileX+1, tileY, meshData, LEFT);
+            m_tileBuilder->loadMap(mapID, tileX-1, tileY, meshData, RIGHT);
+            m_tileBuilder->loadMap(mapID, tileX, tileY+1, meshData, TOP);
+            m_tileBuilder->loadMap(mapID, tileX, tileY-1, meshData, BOTTOM);
 
             // get model data
             printf("%sLoading models...                              \r", tileString);
-            loadVMap(mapID, tileY, tileX, modelVerts, modelTris);
+            loadVMap(mapID, tileY, tileX, meshData.solidVerts, meshData.solidTris);
             unloadVMap(mapID, tileY, tileX);
 
             // we only want tiles that people can actually walk on
-            if(!modelVerts.size() && !heightmapVerts.size())
+            if(!meshData.solidVerts.size() && !meshData.liquidVerts.size())
                 continue;
 
-            // gather all mesh data
-            allTris.append(heightmapTris);
-            allVerts.append(heightmapVerts);
-            copyIndices(allTris, modelTris, allVerts.size() / 3);   // don't just append, need to increment index values
-            allVerts.append(modelVerts);
+            printf("%sAggregating mesh data...                        \r", tileString);
 
             // remove unused vertices
-            cleanVertices(allVerts, allTris);
+            cleanVertices(meshData.solidVerts, meshData.solidTris);
+            cleanVertices(meshData.liquidVerts, meshData.liquidTris);
+
+            // gather all mesh data for final data check, and bounds calculation
+            allTris.append(meshData.liquidTris);
+            allVerts.append(meshData.liquidVerts);
+            copyIndices(allTris, meshData.solidTris, allVerts.size() / 3);
+            allVerts.append(meshData.solidVerts);
 
             if(!allVerts.size())
-                continue;
+                break;
 
             // get bounds of current tile
             getTileBounds(tileX, tileY, allVerts.getCArray(), allVerts.size() / 3, bmin, bmax);
+            allVerts.fastClear();
 
             // build navmesh tile
             buildMoveMapTile(mapID,
                              tileX,
                              tileY,
-                             allVerts.getCArray(),
-                             allVerts.size() / 3,
-                             allTris.getCArray(),
-                             allTris.size() / 3,
+                             meshData,
                              bmin,
                              bmax,
                              navMesh);
@@ -295,57 +298,56 @@ namespace MMAP
             return;
         }
 
-        G3D::Array<float> heightmapVerts, allVerts;
-        G3D::Array<int> heightmapTris, allTris;
+        G3D::Array<float> allVerts;
+        G3D::Array<int> allTris;
         char tileString[10];
         sprintf(tileString, "[%02u,%02u]: ", tileX, tileY);
 
         do
         {
-            // ensure we start with clean data
-            allVerts.fastClear();
-            allTris.fastClear();
-            modelVerts.fastClear();
-            heightmapVerts.fastClear();
-            modelTris.fastClear();
-            heightmapTris.fastClear();
+            MeshData meshData;
 
             // get heightmap data
             printf("%sLoading heightmap...                           \r", tileString);
-            m_tileBuilder->build(mapID, tileX, tileY, heightmapVerts, heightmapTris);
+            m_tileBuilder->loadMap(mapID, tileX, tileY, meshData, ENTIRE);
+            //m_tileBuilder->loadMap(mapID, tileX+1, tileY, meshData, LEFT);
+            //m_tileBuilder->loadMap(mapID, tileX-1, tileY, meshData, RIGHT);
+            //m_tileBuilder->loadMap(mapID, tileX, tileY+1, meshData, TOP);
+            //m_tileBuilder->loadMap(mapID, tileX, tileY-1, meshData, BOTTOM);
 
             // get model data
             printf("%sLoading models...                              \r", tileString);
-            loadVMap(mapID, tileY, tileX, modelVerts, modelTris);
+            loadVMap(mapID, tileY, tileX, meshData.solidVerts, meshData.solidTris);
             unloadVMap(mapID, tileY, tileX);
 
             // if there is no data, give up now
-            if(!modelVerts.size() && !heightmapVerts.size())
+            if(!meshData.solidVerts.size() && !meshData.liquidVerts.size())
                 break;
 
-            // gather all mesh data
             printf("%sAggregating mesh data...                        \r", tileString);
-            allTris.append(heightmapTris);
-            allVerts.append(heightmapVerts);
-            copyIndices(allTris, modelTris, allVerts.size() / 3);   // don't just append, need to increment index values
-            allVerts.append(modelVerts);
 
-            cleanVertices(allVerts, allTris);
+            // remove unused vertices
+            cleanVertices(meshData.solidVerts, meshData.solidTris);
+            cleanVertices(meshData.liquidVerts, meshData.liquidTris);
+
+            // gather all mesh data for final data check, and bounds calculation
+            allTris.append(meshData.liquidTris);
+            allVerts.append(meshData.liquidVerts);
+            copyIndices(allTris, meshData.solidTris, allVerts.size() / 3);
+            allVerts.append(meshData.solidVerts);
 
             if(!allVerts.size())
                 break;
 
             // get bounds of current tile
             getTileBounds(tileX, tileY, allVerts.getCArray(), allVerts.size() / 3, bmin, bmax);
+            allVerts.fastClear();
 
             // build navmesh tile
             buildMoveMapTile(mapID,
                                 tileX,
                                 tileY,
-                                allVerts.getCArray(),
-                                allVerts.size() / 3,
-                                allTris.getCArray(),
-                                allTris.size() / 3,
+                                meshData,
                                 bmin,
                                 bmax,
                                 navMesh);
@@ -702,8 +704,7 @@ namespace MMAP
     }
 
     void MapBuilder::buildMoveMapTile(uint32 mapID, uint32 tileX, uint32 tileY,
-                                      float* verts, int vertCount, int* tris,
-                                      int triCount, float* bmin, float* bmax,
+                                      MeshData meshData, float* bmin, float* bmax,
                                       dtNavMesh* navMesh)
     {
         // console output
@@ -723,6 +724,16 @@ namespace MMAP
         IntermediateValues iv;
         initIntermediateValues(iv);
 
+        float* tVerts = meshData.solidVerts.getCArray();
+        int tVertCount = meshData.solidVerts.size() / 3;
+        int* tTris = meshData.solidTris.getCArray();
+        int tTriCount = meshData.solidTris.size() / 3;
+
+        float* lVerts = meshData.liquidVerts.getCArray();
+        int lVertCount = meshData.liquidVerts.size() / 3;
+        int* lTris = meshData.liquidTris.getCArray();
+        int lTriCount = meshData.liquidTris.size() / 3;
+        uint8* lTriFlags = meshData.liquidType.getCArray();
         do
         {
             /***     init config       ***/
@@ -775,16 +786,23 @@ namespace MMAP
 
             printf("%sRasterizing triangles...                   \r", tileString);
 
-            iv.triFlags = NEW_ARRAY(unsigned char,triCount);
-            memset(iv.triFlags, 0, triCount*sizeof(unsigned char));
-            rcMarkWalkableTriangles(config.walkableSlopeAngle, verts, vertCount, tris, triCount, iv.triFlags);
-            rcRasterizeTriangles(verts, vertCount, tris, iv.triFlags, RC_WALKABLE_AREA, triCount, *iv.heightfield, config.walkableClimb);
+            // flag walkable terrain triangles
+            iv.triFlags = NEW_ARRAY(unsigned char,tTriCount);
+            memset(iv.triFlags, 0, tTriCount*sizeof(unsigned char));
+            rcMarkWalkableTriangles(config.walkableSlopeAngle, tVerts, tVertCount, tTris, tTriCount, iv.triFlags);
+            rcRasterizeTriangles(tVerts, tVertCount, tTris, iv.triFlags, RC_WALKABLE_AREA, tTriCount, *iv.heightfield, config.walkableClimb);
             DELETE_ARRAY(iv.triFlags);
 
             // filter out unusable rasterization data (order of calls matters, see rcFilterLowHangingWalkableObstacles)
             rcFilterLowHangingWalkableObstacles(config.walkableClimb, *iv.heightfield);
             rcFilterLedgeSpans(config.walkableHeight, config.walkableClimb, *iv.heightfield);
             rcFilterWalkableLowHeightSpans(config.walkableHeight, *iv.heightfield);
+
+            // flag 'walkable' liquid triangles (done after filtering because same rules don't apply to swimming)
+            iv.triFlags = NEW_ARRAY(unsigned char,lTriCount);
+            memset(iv.triFlags, RC_WALKABLE, lTriCount*sizeof(unsigned char));
+            rcRasterizeTriangles(lVerts, lVertCount, lTris, iv.triFlags, lTriFlags, lTriCount, *iv.heightfield, config.walkableClimb);
+            DELETE_ARRAY(iv.triFlags);
 
             // compact heightfield spans
             printf("%sCompacting heightfield...               \r", tileString);
@@ -800,7 +818,7 @@ namespace MMAP
 
             // build polymesh intermediates
             printf("%sEroding walkable area width...          \r", tileString);
-            if(!rcErodeArea(RC_WALKABLE_AREA, config.walkableRadius, *iv.compactHeightfield))
+            if(!rcErodeArea(1 /*GROUND*/, config.walkableRadius, *iv.compactHeightfield))
             {
                 printf("%sFailed eroding area!                    \n", tileString);
                 break;
@@ -868,11 +886,10 @@ namespace MMAP
                 break;
             }
 
-            // TODO: implement flags
             printf("%sSetting polys as walkable...            \r", tileString);
             for(int i = 0; i < iv.polyMesh->npolys; ++i)
-                if(iv.polyMesh->areas[i] == RC_WALKABLE_AREA)
-                    iv.polyMesh->flags[i] = 1;
+                if(iv.polyMesh->areas[i] & RC_WALKABLE_AREA)
+                    iv.polyMesh->flags[i] = iv.polyMesh->areas[i];
 
             dtNavMeshCreateParams params;
             memset(&params, 0, sizeof(params));
@@ -1014,7 +1031,7 @@ namespace MMAP
         DELETE(iv.polyMeshDetail);
     }
 
-    void MapBuilder::generateObjFile(uint32 mapID, uint32 tileX, uint32 tileY, float* verts, int vertCount, int* tris, int triCount)
+    void MapBuilder::generateObjFile(uint32 mapID, uint32 tileX, uint32 tileY, MeshData meshData)
     {
         char tileString[25];
         sprintf(tileString, "[%02u,%02u]: ", tileX, tileY);
@@ -1037,6 +1054,19 @@ namespace MMAP
             perror(objFileName);
             return;
         }
+
+        G3D::Array<float> allVerts;
+        G3D::Array<int> allTris;
+
+        allTris.append(meshData.liquidTris);
+        allVerts.append(meshData.liquidVerts);
+        copyIndices(allTris, meshData.solidTris, allVerts.size() / 3);
+        allVerts.append(meshData.solidVerts);
+
+        float* verts = allVerts.getCArray();
+        int vertCount = allVerts.size() / 3;
+        int* tris = allTris.getCArray();
+        int triCount = allTris.size() / 3;
 
         fwrite(&vertCount, sizeof(int), 1, objFile);
         fwrite(verts, sizeof(float), vertCount*3, objFile);
