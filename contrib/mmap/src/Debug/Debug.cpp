@@ -46,6 +46,12 @@ void duReadNavMesh(int mapID, dtNavMesh* &navMesh)
 
         navMesh->addTile(data, length, DT_TILE_FREE_DATA);
     }
+
+    if(!fileNames.size())
+    {
+        delete navMesh;
+        navMesh = 0;
+    }
 }
 
 int duReadHeightfield(int mapID, rcHeightfield* &hf)
@@ -72,17 +78,35 @@ int duReadHeightfield(int mapID, rcHeightfield* &hf)
         fread(hf[i].bmin, sizeof(float), 3, file);
         fread(hf[i].bmax, sizeof(float), 3, file);
 
-        hf[i].spans = new rcSpan*[hf[i].width*hf[i].height + 1];
+        hf[i].spans = new rcSpan*[hf[i].width*hf[i].height];
+        memset(hf[i].spans, 0, sizeof(rcSpan*)*hf[i].width*hf[i].height);
 
-        for(int j = 0; j < hf[i].width*hf[i].height; ++j)
-            hf[i].spans[j] = new rcSpan;
-        hf[i].spans[hf[i].width*hf[i].height] = 0;
+        for(int y = 0; y < hf[i].height; ++y)
+            for(int x = 0; x < hf[i].width; ++x)
+            {
+                int spanCount;
+                fread(&spanCount, sizeof(int), 1, file);
 
-        for(int j = 0; j < hf[i].width*hf[i].height; ++j)
-        {
-            fread(hf[i].spans[j], sizeof(rcSpan)-sizeof(rcSpan*), 1, file);
-            hf[i].spans[j]->next = hf[i].spans[j+1];
-        }
+                if(spanCount)
+                    hf[i].spans[x + y*hf[i].width] = new rcSpan;
+                else
+                    hf[i].spans[x + y*hf[i].width] = NULL;
+
+                rcSpan* span = hf[i].spans[x + y*hf[i].width];
+
+                while(spanCount--)
+                {
+                    fread(span, sizeof(rcSpan), 1, file);
+
+                    if(spanCount)
+                    {
+                        span->next = new rcSpan;
+                        span = span->next;
+                    }
+                    else
+                        span->next = NULL;
+                }
+            }
 
         fclose(file);
     }

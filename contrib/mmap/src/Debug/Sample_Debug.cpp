@@ -132,10 +132,10 @@ void Sample_Debug::handleDebugMode()
 		m_drawMode = DRAWMODE_NAVMESH_TRANS;
 	if (imguiCheck("Navmesh BVTree", m_drawMode == DRAWMODE_NAVMESH_BVTREE, valid[DRAWMODE_NAVMESH_BVTREE]))
 		m_drawMode = DRAWMODE_NAVMESH_BVTREE;
-	//if (imguiCheck("Voxels", m_drawMode == DRAWMODE_VOXELS, valid[DRAWMODE_VOXELS]))
-	//	m_drawMode = DRAWMODE_VOXELS;
-	//if (imguiCheck("Walkable Voxels", m_drawMode == DRAWMODE_VOXELS_WALKABLE, valid[DRAWMODE_VOXELS_WALKABLE]))
-	//	m_drawMode = DRAWMODE_VOXELS_WALKABLE;
+	if (imguiCheck("Voxels", m_drawMode == DRAWMODE_VOXELS, valid[DRAWMODE_VOXELS]))
+		m_drawMode = DRAWMODE_VOXELS;
+	if (imguiCheck("Walkable Voxels", m_drawMode == DRAWMODE_VOXELS_WALKABLE, valid[DRAWMODE_VOXELS_WALKABLE]))
+		m_drawMode = DRAWMODE_VOXELS_WALKABLE;
 	if (imguiCheck("Compact", m_drawMode == DRAWMODE_COMPACT, valid[DRAWMODE_COMPACT]))
 		m_drawMode = DRAWMODE_COMPACT;
 	if (imguiCheck("Compact Distance", m_drawMode == DRAWMODE_COMPACT_DISTANCE, valid[DRAWMODE_COMPACT_DISTANCE]))
@@ -156,7 +156,7 @@ void Sample_Debug::handleDebugMode()
 		m_drawMode = DRAWMODE_POLYMESH_DETAIL;
 
     float tile = m_tile;
-    imguiSlider("Tile", &tile, 0.f, float(m_pmeshCount), 1.f, true);
+    imguiSlider("Tile", &tile, 0.f, float(m_pmeshCount - 1), 1.f, true);
     m_tile = int(tile);
 }
 
@@ -352,24 +352,25 @@ bool Sample_Debug::handleBuild()
     sprintf(sMapID, "%.3s", m_meshName);
     int mapID = atoi(sMapID);
 
-    delete m_navMesh;
+    delete m_navMesh; m_navMesh = 0;
     delete [] m_pmesh; m_pmesh = 0;
     delete [] m_hf; m_hf = 0; m_hfCount = 0;
     delete [] m_chf; m_chf = 0; m_chfCount = 0;
 
     duReadNavMesh(mapID, m_navMesh);
     m_pmeshCount = duReadPolyMesh(mapID, m_pmesh);
-    //m_hfCount = duReadHeightfield(mapID, m_hf);
+    m_hfCount = duReadHeightfield(mapID, m_hf);
     m_chfCount = duReadCompactHeightfield(mapID, m_chf);
-
-    m_tileSize = m_navMesh->getParams()->tileHeight;
-
     m_dmeshCount = duReadDetailMesh(mapID, m_dmesh);
 
     if(m_tool)
         m_tool->init(this);
 
-    m_drawMode = DRAWMODE_NAVMESH_TRANS;
+    if(m_navMesh)
+    {
+        m_drawMode = DRAWMODE_NAVMESH_TRANS;
+        m_tileSize = m_navMesh->getParams()->tileHeight;
+    }
 
     return true;
 }
@@ -383,7 +384,6 @@ void Sample_Debug::setHighlightedTile(const float* pos)
 		m_highLightedTileY = -1;
 		return;
 	}
-	const float* bmin = m_geom->getMeshBoundsMin();
     float extents[3] = {2.f, 4.f, 2.f};
     dtPolyRef polyRef = m_navMesh->findNearestPoly(pos, extents, &dtQueryFilter(), 0);
     const dtMeshTile* tile = m_navMesh->getTileByPolyRef(polyRef, 0);

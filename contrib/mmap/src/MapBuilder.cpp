@@ -1120,14 +1120,30 @@ namespace MMAP
         fwrite(mesh->bmin, sizeof(float), 3, file);
         fwrite(mesh->bmax, sizeof(float), 3, file);
 
-        rcSpan blank;
-        memset(&blank, 0, sizeof(rcSpan));
-        // leave off the last member of spans, it's a pointer we don't need
-        for(int i = 0; i < (mesh->width * mesh->height); ++i)
-            if(mesh->spans[i])
-                fwrite(mesh->spans[i], sizeof(rcSpan)-sizeof(rcSpan*), 1, file);
-            else
-                fwrite(&blank, sizeof(rcSpan)-sizeof(rcSpan*), 1, file);
+        for(int y = 0; y < mesh->height; ++y)
+            for(int x = 0; x < mesh->width; ++x)
+            {
+                rcSpan* span = mesh->spans[x+y*mesh->width];
+
+                // first, count the number of spans
+                int spanCount = 0;
+                while(span)
+                {
+                    spanCount++;
+                    span = span->next;
+                }
+
+                // write the span count
+                fwrite(&spanCount, sizeof(int), 1, file);
+
+                // write the spans
+                span = mesh->spans[x+y*mesh->width];
+                while(span)
+                {
+                    fwrite(span, sizeof(rcSpan), 1, file);
+                    span = span->next;
+                }
+            }
     }
 
     void MapBuilder::writeCompactHeightfield(FILE* file, const rcCompactHeightfield* chf)
