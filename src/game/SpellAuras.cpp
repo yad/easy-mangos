@@ -5479,6 +5479,7 @@ void Aura::HandlePeriodicDamage(bool apply, bool Real)
                         return;
                     }
                 }
+                break;
             }
             case SPELLFAMILY_DRUID:
             {
