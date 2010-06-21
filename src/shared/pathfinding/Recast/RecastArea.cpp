@@ -60,7 +60,7 @@ bool rcErodeArea(unsigned char areaId, int radius, rcCompactHeightfield& chf)
 							const int ax = x + rcGetDirOffsetX(dir);
 							const int ay = y + rcGetDirOffsetY(dir);
 							const int ai = (int)chf.cells[ax+ay*w].index + rcGetCon(s, dir);
-							if (chf.areas[ai] == areaId)
+							//if (chf.areas[ai] == areaId)
 								nc++;
 						}
 					}
@@ -192,7 +192,7 @@ bool rcErodeArea(unsigned char areaId, int radius, rcCompactHeightfield& chf)
 	
 	const unsigned char thr = (unsigned char)(radius*2);
 	for (int i = 0; i < chf.spanCount; ++i)
-		if (dist[i] < thr)
+        if (dist[i] < thr && chf.areas[i] == areaId)
 			chf.areas[i] = 0;
 	
 	delete [] dist;

@@ -47,6 +47,7 @@ struct rcSpan
 	unsigned int smin : 15;			// Span min height.
 	unsigned int smax : 15;			// Span max height.
 	unsigned int flags : 2;			// Span flags.
+    unsigned char area;             // Span area type.
 	rcSpan* next;					// Next span in column.
 };
 
@@ -439,16 +440,17 @@ void rcMarkWalkableTriangles(const float walkableSlopeAngle,
 //  flagMergeThr - (in) merge threshold.
 void rcAddSpan(rcHeightfield& solid, const int x, const int y,
 			   const unsigned short smin, const unsigned short smax,
-			   const unsigned short flags, const int flagMergeThr);
+			   const unsigned short flags, const unsigned char area, const int flagMergeThr);
 
 // Rasterizes a triangle into heightfield spans.
 // Params:
 //	v0,v1,v2 - (in) the vertices of the triangle.
 //	flags - (in) triangle flags (uses WALKABLE)
+//	areaFlag - (in) area flag to apply to spans
 //	solid - (in) heighfield where the triangle is rasterized
 //  flagMergeThr - (in) distance in voxel where walkable flag is favored over non-walkable.
 void rcRasterizeTriangle(const float* v0, const float* v1, const float* v2,
-						 unsigned char flags, rcHeightfield& solid,
+						 unsigned char flags, unsigned char areaFlags, rcHeightfield& solid,
 						 const int flagMergeThr = 1);
 
 // Rasterizes indexed triangle mesh into heightfield spans.
@@ -457,11 +459,12 @@ void rcRasterizeTriangle(const float* v0, const float* v1, const float* v2,
 //	nv - (in) vertex count
 //	tris - (in) array of triangle vertex indices
 //	flags - (in) array of triangle flags (uses WALKABLE)
+//	areaFlag - (in) area flag to apply to spans
 //	nt - (in) triangle count
 //	solid - (in) heighfield where the triangles are rasterized
 //  flagMergeThr - (in) distance in voxel where walkable flag is favored over non-walkable.
 void rcRasterizeTriangles(const float* verts, const int nv,
-						  const int* tris, const unsigned char* flags, const int nt,
+						  const int* tris, const unsigned char* flags, const unsigned char areaFlag, const int nt,
 						  rcHeightfield& solid, const int flagMergeThr = 1);
 
 // Rasterizes indexed triangle mesh into heightfield spans.
@@ -470,20 +473,36 @@ void rcRasterizeTriangles(const float* verts, const int nv,
 //	nv - (in) vertex count
 //	tris - (in) array of triangle vertex indices
 //	flags - (in) array of triangle flags (uses WALKABLE)
+//	areaFlags - (in) array of area flags to apply to spans
 //	nt - (in) triangle count
 //	solid - (in) heighfield where the triangles are rasterized
 //  flagMergeThr - (in) distance in voxel where walkable flag is favored over non-walkable.
 void rcRasterizeTriangles(const float* verts, const int nv,
-						  const unsigned short* tris, const unsigned char* flags, const int nt,
+						  const int* tris, const unsigned char* flags, const unsigned char* areaFlags, const int nt,
+						  rcHeightfield& solid, const int flagMergeThr = 1);
+
+// Rasterizes indexed triangle mesh into heightfield spans.
+// Params:
+//	verts - (in) array of vertices
+//	nv - (in) vertex count
+//	tris - (in) array of triangle vertex indices
+//	flags - (in) array of triangle flags (uses WALKABLE)
+//	areaFlags - (in) array of area flags to apply to spans
+//	nt - (in) triangle count
+//	solid - (in) heighfield where the triangles are rasterized
+//  flagMergeThr - (in) distance in voxel where walkable flag is favored over non-walkable.
+void rcRasterizeTriangles(const float* verts, const int nv,
+						  const unsigned short* tris, const unsigned char* flags, const unsigned char* areaFlags, const int nt,
 						  rcHeightfield& solid, const int flagMergeThr = 1);
 
 // Rasterizes the triangles into heightfield spans.
 // Params:
 //	verts - (in) array of vertices
 //	flags - (in) array of triangle flags (uses WALKABLE)
+//	areaFlags - (in) array of area flags to apply to spans
 //	nt - (in) triangle count
 //	solid - (in) heighfield where the triangles are rasterized
-void rcRasterizeTriangles(const float* verts, const unsigned char* flags, const int nt,
+void rcRasterizeTriangles(const float* verts, const unsigned char* flags, const unsigned char* areaFlags, const int nt,
 						  rcHeightfield& solid, const int flagMergeThr = 1);
 
 // Marks non-walkable low obstacles as walkable if they are closer than walkableClimb

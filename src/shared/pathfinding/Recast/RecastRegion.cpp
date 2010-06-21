@@ -55,7 +55,7 @@ static void calculateDistanceField(rcCompactHeightfield& chf, unsigned short* sr
 						const int ax = x + rcGetDirOffsetX(dir);
 						const int ay = y + rcGetDirOffsetY(dir);
 						const int ai = (int)chf.cells[ax+ay*w].index + rcGetCon(s, dir);
-						if (area == chf.areas[ai])
+						//if (area == chf.areas[ai])
 							nc++;
 					}
 				}
