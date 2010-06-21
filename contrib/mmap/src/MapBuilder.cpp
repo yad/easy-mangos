@@ -694,7 +694,9 @@ namespace MMAP
         if(!(file = fopen(fileName, "wb")))
         {
             DELETE(navMesh);
-            printf("Failed to open %s for writing!\n", fileName);
+            char message[1024];
+            sprintf(message, "Failed to open %s for writing!\n", fileName);
+            perror(message);
             return;
         }
 
@@ -712,7 +714,7 @@ namespace MMAP
         sprintf(tileString, "[%02i,%02i]: ", tileX, tileY);
 
         // file output
-        char fileName[50];
+        char fileName[255];
         FILE* file = 0;
 
         float cellSize = .5f;       // larger number => less voxels => faster build time
@@ -970,7 +972,9 @@ namespace MMAP
             sprintf(fileName, "mmaps/%03u%02i%02i.mmtile", mapID, tileY, tileX);
             if(!(file = fopen(fileName, "wb")))
             {
-                printf("%sFailed to open %s for writing!\n",  tileString, fileName);
+                char message[1024];
+                sprintf(message, "Failed to open %s for writing!\n", fileName);
+                perror(message);
                 navMesh->removeTile(tileRef, 0, 0);
                 break;
             }
@@ -1038,13 +1042,20 @@ namespace MMAP
         sprintf(tileString, "[%02u,%02u]: ", tileX, tileY);
         printf("%sWriting debug output...                       \r", tileString);
 
-        char objFileName[20];
+        char objFileName[255];
         FILE* objFile;
 
         char b = '\0';
 
         sprintf(objFileName, "meshes/%03u.obj", mapID);
-        objFile = fopen(objFileName, "wb");
+        if(!(objFile = fopen(objFileName, "wb")))
+        {
+            char message[1024];
+            sprintf(message, "Failed to open %s for writing!\n", objFileName);
+            perror(message);
+            return;
+        }
+
         fwrite(&b, sizeof(char), 1, objFile);
         fclose(objFile);
 
@@ -1052,7 +1063,9 @@ namespace MMAP
         objFile = fopen(objFileName, "wb");
         if(!objFile)
         {
-            perror(objFileName);
+            char message[1024];
+            sprintf(message, "Failed to open %s for writing!\n", objFileName);
+            perror(message);
             return;
         }
 
@@ -1082,7 +1095,7 @@ namespace MMAP
 
     void MapBuilder::writeIV(uint32 mapID, uint32 tileX, uint32 tileY, IntermediateValues iv)
     {
-        char fileName[25];
+        char fileName[255];
         char tileString[25];
         FILE* file;
 
@@ -1093,7 +1106,11 @@ namespace MMAP
         // heightfield
         sprintf(fileName, "meshes/%03u%02i%02i.hf", mapID, tileX, tileY);
         if(!(file = fopen(fileName, "wb")))
-            printf("%sFailed to open %s for writing!\n",  tileString, fileName);
+        {
+            char message[1024];
+            sprintf(message, "%sFailed to open %s for writing!\n",  tileString, fileName);
+            perror(message);
+        }
         else
             writeHeightfield(file, iv.heightfield);
         if(file) fclose(file);
@@ -1103,7 +1120,11 @@ namespace MMAP
         // compact heightfield
         sprintf(fileName, "meshes/%03u%02i%02i.chf", mapID, tileX, tileY);
         if(!(file = fopen(fileName, "wb")))
-            printf("%sFailed to open %s for writing!\n",  tileString, fileName);
+        {
+            char message[1024];
+            sprintf(message, "%sFailed to open %s for writing!\n",  tileString, fileName);
+            perror(message);
+        }
         else
             writeCompactHeightfield(file, iv.compactHeightfield);
         if(file) fclose(file);
@@ -1113,7 +1134,11 @@ namespace MMAP
         // contours
         sprintf(fileName, "meshes/%03u%02i%02i.cs", mapID, tileX, tileY);
         if(!(file = fopen(fileName, "wb")))
-            printf("%sFailed to open %s for writing!\n",  tileString, fileName);
+        {
+            char message[1024];
+            sprintf(message, "%sFailed to open %s for writing!\n",  tileString, fileName);
+            perror(message);
+        }
         else
             writeContours(file, iv.contours);
         if(file) fclose(file);
@@ -1123,7 +1148,11 @@ namespace MMAP
         // poly mesh
         sprintf(fileName, "meshes/%03u%02i%02i.pmesh", mapID, tileX, tileY);
         if(!(file = fopen(fileName, "wb")))
-            printf("%sFailed to open %s for writing!\n",  tileString, fileName);
+        {
+            char message[1024];
+            sprintf(message, "%sFailed to open %s for writing!\n",  tileString, fileName);
+            perror(message);
+        }
         else
             writePolyMesh(file, iv.polyMesh);
         if(file) fclose(file);
@@ -1133,7 +1162,11 @@ namespace MMAP
         // detail mesh
         sprintf(fileName, "meshes/%03u%02i%02i.dmesh", mapID, tileX, tileY);
         if(!(file = fopen(fileName, "wb")))
-            printf("%sFailed to open %s for writing!\n",  tileString, fileName);
+        {
+            char message[1024];
+            sprintf(message, "%sFailed to open %s for writing!\n",  tileString, fileName);
+            perror(message);
+        }
         else
             writeDetailMesh(file, iv.polyMeshDetail);
         if(file) fclose(file);

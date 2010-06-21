@@ -68,7 +68,7 @@ namespace MMAP
 
     bool TileBuilder::loadMap(uint32 mapID, uint32 tileX, uint32 tileY, MeshData &meshData, Spot portion)
     {
-        char mapFileName[18];
+        char mapFileName[255];
         sprintf(mapFileName, "maps/%03u%02u%02u.map", mapID, tileY, tileX);
 
         FILE* mapFile = fopen(mapFileName, "rb");
