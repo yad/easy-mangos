@@ -797,8 +797,8 @@ bool ConvertADT(char *filename, char *filename2, int cell_y, int cell_x, uint32 
         liquidHeader.liquidType = 0;
         liquidHeader.offsetX = minX;
         liquidHeader.offsetY = minY;
-        liquidHeader.width   = maxX - minX + 1;
-        liquidHeader.height  = maxY - minY + 1;
+        liquidHeader.width   = maxX - minX + 1 + 1;
+        liquidHeader.height  = maxY - minY + 1 + 1;
         liquidHeader.liquidLevel = minHeight;
 
         if (maxHeight == minHeight)
