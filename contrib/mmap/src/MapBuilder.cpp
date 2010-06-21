@@ -980,15 +980,16 @@ namespace MMAP
             fwrite(navData, sizeof(unsigned char), navDataSize, file);
             fclose(file);
 
-            if(m_debugOutput)
-            {
-                generateObjFile(mapID, tileX, tileY, verts, vertCount, tris, triCount);
-                writeIV(mapID, tileX, tileY, iv);
-            }
-
             // now that tile is written to disk, we can unload it
             navMesh->removeTile(tileRef, 0, 0);
+
         }while(0);
+
+        if(m_debugOutput)
+        {
+            generateObjFile(mapID, tileX, tileY, meshData);
+            writeIV(mapID, tileX, tileY, iv);
+        }
 
         clearIntermediateValues(iv);
     }
