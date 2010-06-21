@@ -423,7 +423,7 @@ bool Sample_SoloMeshSimple::handleBuild()
 	// the flags for each of the meshes and rasterize them.
 	memset(m_triflags, 0, ntris*sizeof(unsigned char));
 	rcMarkWalkableTriangles(m_cfg.walkableSlopeAngle, verts, nverts, tris, ntris, m_triflags);
-	rcRasterizeTriangles(verts, nverts, tris, m_triflags, ntris, *m_solid, m_cfg.walkableClimb);
+	rcRasterizeTriangles(verts, nverts, tris, m_triflags, RC_WALKABLE_AREA, ntris, *m_solid, m_cfg.walkableClimb);
 
 	if (!m_keepInterResults)
 	{

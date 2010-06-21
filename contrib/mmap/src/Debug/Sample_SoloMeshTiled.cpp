@@ -834,7 +834,7 @@ bool Sample_SoloMeshTiled::handleBuild()
 				rcMarkWalkableTriangles(tileCfg.walkableSlopeAngle,
 										verts, nverts, tris, ntris, triangleFlags);
 				
-				rcRasterizeTriangles(verts, nverts, tris, triangleFlags, ntris, *tile.solid, m_cfg.walkableClimb);
+				rcRasterizeTriangles(verts, nverts, tris, triangleFlags, RC_WALKABLE_AREA, ntris, *tile.solid, m_cfg.walkableClimb);
 			}	
 			
 			rcFilterLowHangingWalkableObstacles(m_cfg.walkableClimb, *tile.solid);
