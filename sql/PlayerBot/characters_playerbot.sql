@@ -3,6 +3,8 @@ CREATE TABLE `bot_flag_dont_delete` (
   PRIMARY KEY (`id`)
 );
 
+ALTER TABLE `characters` CHANGE `guid` `guid` int(11) unsigned NOT NULL COMMENT 'Global Unique Identifier' AUTO_INCREMENT;
+
 DELETE FROM `characters` WHERE `account` = 1;
 
 INSERT INTO `characters` (`account`, `name`, `race`, `class`, `gender`, `level`, `playerBytes`, `playerBytes2`, `position_x`, `position_y`, `position_z`, `map`, `orientation`, `taximask`, `health`)
