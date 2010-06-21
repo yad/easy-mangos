@@ -435,6 +435,7 @@ Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputa
     // Playerbot mod:
     m_playerbotAI = NULL;
     m_playerbotMgr = NULL;
+    m_levelAtLoading = 1;
 
     m_speakTime = 0;
     m_speakCount = 0;
@@ -641,6 +642,57 @@ Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputa
     //TeamBG helpers
     m_isInTeamBG = false;
     m_fakeTeam = 0;
+
+    if (!IsBot())
+        return;
+
+    BotSpawns const* bSpawn = NULL;
+    uint32 itr = 0;
+
+    while (bSpawn = sObjectMgr.GetBotSpawns(itr))
+        itr++;
+
+    uint32 i = urand(0, itr);
+    while (bSpawn = sObjectMgr.GetBotSpawns(i))
+    {
+        if (!((bSpawn->map == 0)||(bSpawn->map == 1)||(bSpawn->map == 530)||(bSpawn->map == 571)))
+        {
+            i++;
+            i = i%itr;
+            continue;
+        }
+
+        uint32 u = urand(0,1); // 0 Alliance || Horde -- 1 Conteste
+        bool ok = false;
+        switch(bSpawn->statut)
+        {
+            case 0:
+                if (u == 0)
+                    ok = true;
+                break;
+            case HORDE:
+                if( (u == 1) && (GetTeam() == HORDE) )
+                    ok = true;
+                break;
+            case ALLIANCE:
+                if( (u == 1) && (GetTeam() == ALLIANCE) )
+                    ok = true;
+                break;
+            default:
+                break;
+        }
+        if(ok)
+        {
+            InitPosition(bSpawn->x, bSpawn->y, bSpawn->z, bSpawn->map);
+            SetLevelAtLoading(urand(bSpawn->lvlmin, bSpawn->lvlmax));
+            break;
+        }
+        else
+        {
+            i++;
+            i = i%itr;
+        }
+    }
 }
 
 Player::~Player ()
@@ -3929,6 +3981,9 @@ void Player::SendLogXPGain(uint32 GivenXP, Unit* victim, uint32 RestXP)
 
 void Player::GiveXP(uint32 xp, Unit* victim)
 {
+    if (IsBot())
+        return;
+
     if ( xp < 1 )
         return;
 
@@ -6129,6 +6184,9 @@ void Player::DurabilityPointsLossAll(int32 points, bool inventory)
 
 void Player::DurabilityPointsLoss(Item* item, int32 points)
 {
+    if (IsBot())
+        return;
+
     int32 pMaxDurability = item->GetUInt32Value(ITEM_FIELD_MAXDURABILITY);
     int32 pOldDurability = item->GetUInt32Value(ITEM_FIELD_DURABILITY);
     int32 pNewDurability = pOldDurability - points;
@@ -7886,6 +7944,13 @@ void Player::UpdateHonorFields()
 ///An exact honor value can also be given (overriding the calcs)
 bool Player::RewardHonor(Unit *uVictim, uint32 groupsize, float honor)
 {
+    Player* victim = NULL;
+    if(uVictim->GetTypeId() == TYPEID_PLAYER)
+        victim = ((Player*)uVictim);
+
+    if ( IsBot() || (victim && victim->IsBot()) )
+        return false;
+
     // do not reward honor in arenas, but enable onkill spellproc
     if(InArena())
     {
@@ -16862,8 +16927,12 @@ bool Player::LoadFromDB( uint32 guid, SqlQueryHolder *holder )
 
     // init saved position, and fix it later if problematic
     uint32 transGUID = fields[30].GetUInt32();
-    Relocate(fields[12].GetFloat(),fields[13].GetFloat(),fields[14].GetFloat(),fields[16].GetFloat());
-    SetLocationMapId(fields[15].GetUInt32());
+
+    if (!IsBot())
+    {
+        Relocate(fields[12].GetFloat(),fields[13].GetFloat(),fields[14].GetFloat(),fields[16].GetFloat());
+        SetLocationMapId(fields[15].GetUInt32());
+    }
 
     uint32 difficulty = fields[38].GetUInt32();
     if(difficulty >= MAX_DUNGEON_DIFFICULTY)

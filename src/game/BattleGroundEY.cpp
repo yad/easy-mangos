@@ -92,7 +92,7 @@ void BattleGroundEY::Update(uint32 diff)
             UpdatePointStatuses();
             m_TowerCapCheckTimer = BG_EY_FPOINTS_TICK_TIME;
         }
-        
+
         // areatrigger for Fel Reaver was removed? so:
         if (m_FlagState)
             if(Player* plr = sObjectMgr.GetPlayer(GetFlagPickerGUID()))

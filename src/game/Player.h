@@ -2541,6 +2541,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         void SetPlayerbotMgr(PlayerbotMgr* mgr) { m_playerbotMgr = mgr; }
         PlayerbotMgr* GetPlayerbotMgr() { return m_playerbotMgr; }
         void SetBotDeathTimer() { m_deathTimer = 0; }
+        void SetLevelAtLoading(uint32 lvl) { m_levelAtLoading = lvl; }
+        uint32 GetLevelAtLoading() { return m_levelAtLoading; }
         bool IsBot() { return (GetSession()->IsBotSession()); }
 
         //TEAMBG helpers
@@ -2828,6 +2830,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         // Playerbot mod:
         PlayerbotAI* m_playerbotAI;
         PlayerbotMgr* m_playerbotMgr;
+        uint32 m_levelAtLoading;
 
         // Homebind coordinates
         uint32 m_homebindMapId;

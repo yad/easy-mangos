@@ -1,3 +1,8 @@
+CREATE TABLE `bot_flag_dont_delete` (
+  `id` int(3) unsigned NOT NULL,
+  PRIMARY KEY (`id`)
+);
+
 DELETE FROM `characters` WHERE `account` = 1;
 
 INSERT INTO `characters` (`account`, `name`, `race`, `class`, `gender`, `level`, `playerBytes`, `playerBytes2`, `position_x`, `position_y`, `position_z`, `map`, `orientation`, `taximask`, `health`)

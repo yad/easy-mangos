@@ -80,7 +80,7 @@ void BattleGroundDS::Update(uint32 diff)
                                 obj->Delete();
                 }
             }else m_uiKnockback -= diff;
-            
+
             if(KnockbackSpam)
             {
                 if(m_uiKnockSpam < diff)

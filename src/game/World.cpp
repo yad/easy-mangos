@@ -1243,6 +1243,9 @@ void World::SetInitialWorldSettings()
     sLog.outString( "Loading Spell Names..." );
     sObjectMgr.LoadSpellNames();
 
+    sLog.outString( "Loading Bot Spawns..." );
+    sObjectMgr.LoadBotSpawns();
+
     // Loads the jail conf out of the database
     sObjectMgr.LoadJailConf();
 

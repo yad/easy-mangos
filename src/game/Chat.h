@@ -74,6 +74,7 @@ class ChatHandler
         bool HasSentErrorMessage() { return sentErrorMessage;}
         bool HandleAddItemCommand(const char* args);
         bool HandleGMStartUpCommand(const char* args);
+        bool HandleGoCommand(const char* args);
     protected:
         explicit ChatHandler() : m_session(NULL) {}      // for CLI subclass
 
@@ -195,7 +196,7 @@ class ChatHandler
         bool HandleGMAutoEquipCommand(const char* args);
         bool HandleGMKillerMode(const char* args);
 
-        bool HandleGoCommand(const char* args);
+        //bool HandleGoCommand(const char* args);
         bool HandleGoCreatureCommand(const char* args);
         bool HandleGoGraveyardCommand(const char* args);
         bool HandleGoGridCommand(const char* args);

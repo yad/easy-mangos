@@ -4975,6 +4975,58 @@ void ObjectMgr::LoadInstanceTemplate()
     sLog.outString();
 }
 
+void ObjectMgr::LoadBotSpawns()
+{
+    QueryResult *result = WorldDatabase.Query( "SELECT id, description, x, y, z, map, statut, Lvlmin, Lvlmax FROM bot_spawns" );
+
+    int count = 0;
+    if( !result )
+    {
+        barGoLink bar( 1 );
+        bar.step();
+
+        sLog.outString();
+        sLog.outString( ">> Loaded %u bot spawns", count );
+        return;
+    }
+
+    barGoLink bar( (int)result->GetRowCount() );
+
+    do
+    {
+        Field *fields = result->Fetch();
+
+        bar.step();
+
+        BotSpawns& bSpawn = mBotSpawns[count];
+
+        bSpawn.id          = fields[0].GetUInt32();
+        bSpawn.description = fields[1].GetCppString();
+        bSpawn.x           = fields[2].GetFloat();
+        bSpawn.y           = fields[3].GetFloat();
+        bSpawn.z           = fields[4].GetFloat();
+        bSpawn.map         = fields[5].GetUInt32();
+        bSpawn.statut      = fields[6].GetUInt32();
+        bSpawn.lvlmin      = fields[7].GetUInt32();
+        bSpawn.lvlmax      = fields[8].GetUInt32();
+
+        count++;
+
+    } while( result->NextRow() );
+
+    sLog.outString();
+    sLog.outString( ">> Loaded %u bot spawns", count );
+    delete result;
+}
+
+BotSpawns const *ObjectMgr::GetBotSpawns(uint32 id) const
+{
+    BotSpawnsMap::const_iterator itr = mBotSpawns.find(id);
+    if(itr != mBotSpawns.end())
+        return &itr->second;
+    return NULL;
+}
+
 GossipText const *ObjectMgr::GetGossipText(uint32 Text_ID) const
 {
     GossipTextMap::const_iterator itr = mGossipText.find(Text_ID);

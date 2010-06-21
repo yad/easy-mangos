@@ -5316,7 +5316,7 @@ void Aura::HandleAuraPeriodicDummy(bool apply, bool Real)
             switch(spell->Id)
             {
                 // Master of Subtlety
-                case 31666: 
+                case 31666:
                     if(!apply)
                         target->RemoveAurasDueToSpell(31665);
                     break;

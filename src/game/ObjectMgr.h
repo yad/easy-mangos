@@ -340,6 +340,19 @@ struct PlayerCondition
     }
 };
 
+struct BotSpawns
+{
+    uint32 id;
+    std::string description;
+    float x;
+    float y;
+    float z;
+    uint32 map;
+    uint32 statut;
+    uint32 lvlmin;
+    uint32 lvlmax;
+};
+
 // NPC gossip text id
 typedef UNORDERED_MAP<uint32, uint32> CacheNpcTextIdMap;
 
@@ -539,6 +552,7 @@ class ObjectMgr
         }
 
         GossipText const* GetGossipText(uint32 Text_ID) const;
+        BotSpawns const* GetBotSpawns(uint32 id) const;
 
         WorldSafeLocsEntry const *GetClosestGraveYard(float x, float y, float z, uint32 MapId, uint32 team);
         bool AddGraveYardLink(uint32 id, uint32 zone, uint32 team, bool inDB = true);
@@ -636,6 +650,7 @@ class ObjectMgr
         void LoadGossipMenuItemsLocales();
         void LoadPointOfInterestLocales();
         void LoadInstanceTemplate();
+        void LoadBotSpawns();
         void LoadMailLevelRewards();
 
         void LoadGossipText();
@@ -989,6 +1004,7 @@ class ObjectMgr
         typedef std::set<uint32> TavernAreaTriggerSet;
         typedef std::set<uint32> GameObjectForQuestSet;
         typedef UNORDERED_MAP<uint32, std::string> SpellNameMap;
+        typedef UNORDERED_MAP<uint32, BotSpawns> BotSpawnsMap;
 
         GroupMap            mGroupMap;
         GuildMap            mGuildMap;
@@ -1002,6 +1018,7 @@ class ObjectMgr
         GossipTextMap       mGossipText;
         AreaTriggerMap      mAreaTriggers;
         AreaTriggerScriptMap  mAreaTriggerScripts;
+        BotSpawnsMap        mBotSpawns;
 
         RepOnKillMap        mRepOnKill;
 
