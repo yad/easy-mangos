@@ -57,6 +57,7 @@ void handleArgs(int argc, char** argv,
                bool &debugOutput,
                bool &badParam)
 {
+    char zero[2] = "0";
     int i;
     char* param;
     for(i = 1; i < argc; ++i)
@@ -78,9 +79,9 @@ void handleArgs(int argc, char** argv,
             int tilex = atoi(stileX);
             int tiley = atoi(stileY);
 
-            if((tilex > 0 && tilex < 64) || (tilex == 0 && strcmp(stileX, "0")))
+            if((tilex > 0 && tilex < 64) || (tilex == 0 && strcmp(stileX, zero) == 0))
                 tileX = tilex;
-            if((tiley > 0 && tiley < 64) || (tiley == 0 && strcmp(stileY, "0")))
+            if((tiley > 0 && tiley < 64) || (tiley == 0 && strcmp(stileY, zero) == 0))
                 tileY = tiley;
 
             if(tileX < 0 || tileY < 0)
@@ -142,7 +143,7 @@ void handleArgs(int argc, char** argv,
         else
         {
             int map = atoi(argv[i]);
-            if(map > 0 || (map == 0 && (strcmp(argv[i], "0") == 0)))
+            if(map > 0 || (map == 0 && (strcmp(argv[i], zero) == 0)))
                 mapnum = map;
             else
             {
