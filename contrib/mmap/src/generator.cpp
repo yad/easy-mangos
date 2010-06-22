@@ -14,21 +14,21 @@ bool checkDirectories(bool debugOutput)
 {
     vector<string> dirFiles;
 
-    if(!getDirContents(dirFiles, "maps") || !dirFiles.size())
+    if(getDirContents(dirFiles, "maps") == LISTFILE_DIRECTORY_NOT_FOUND || !dirFiles.size())
     {
         printf("'maps' directory is empty or does not exist\n");
         return false;
     }
 
     dirFiles.clear();
-    if(!getDirContents(dirFiles, "vmaps", "*.vmtree") || !dirFiles.size())
+    if(getDirContents(dirFiles, "vmaps", "*.vmtree") == LISTFILE_DIRECTORY_NOT_FOUND || !dirFiles.size())
     {
         printf("'vmaps' directory is empty or does not exist\n");
         return false;
     }
 
     dirFiles.clear();
-    if(!getDirContents(dirFiles, "mmaps"))
+    if(getDirContents(dirFiles, "mmaps") == LISTFILE_DIRECTORY_NOT_FOUND)
     {
         printf("'mmaps' directory does not exist\n");
         return false;
@@ -36,7 +36,7 @@ bool checkDirectories(bool debugOutput)
 
     dirFiles.clear();
     if(debugOutput)
-        if(!getDirContents(dirFiles, "Meshes"))
+        if(getDirContents(dirFiles, "Meshes") == LISTFILE_DIRECTORY_NOT_FOUND)
         {
             printf("'Meshes' directory does not exist (no place to put debugOutput files)\n");
             return false;
