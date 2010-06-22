@@ -185,6 +185,9 @@ inline Unit* ObjectAccessor::GetUnitInWorld(WorldObject const& obj, ObjectGuid g
     if (guid.IsVehicle())
         return obj.IsInWorld() ? ((Unit*)obj.GetMap()->GetVehicle(guid)) : NULL;
 
+    if (guid.IsVehicle())
+        return obj.IsInWorld() ? ((Unit*)obj.GetMap()->GetVehicle(guid)) : NULL;
+
     return GetCreatureInWorld(guid);
 
 }

@@ -46,6 +46,7 @@
 #include "BattleGround.h"
 #include "BattleGroundEY.h"
 #include "BattleGroundWS.h"
+#include "OutdoorPvPMgr.h"
 #include "VMapFactory.h"
 #include "Language.h"
 #include "SocialMgr.h"
@@ -147,8 +148,8 @@ pEffect SpellEffects[TOTAL_SPELL_EFFECTS]=
     &Spell::EffectStuck,                                    // 84 SPELL_EFFECT_STUCK
     &Spell::EffectSummonPlayer,                             // 85 SPELL_EFFECT_SUMMON_PLAYER
     &Spell::EffectActivateObject,                           // 86 SPELL_EFFECT_ACTIVATE_OBJECT
-    &Spell::EffectDamageBuilding,                           // 87 SPELL_EFFECT_WMO_DAMAGE
-    &Spell::EffectUnused,                                   // 88 SPELL_EFFECT_WMO_REPAIR
+    &Spell::EffectWMODamage,                                // 87 SPELL_EFFECT_WMO_DAMAGE
+    &Spell::EffectWMORepair,                                // 88 SPELL_EFFECT_WMO_REPAIR
     &Spell::EffectUnused,                                   // 89 SPELL_EFFECT_WMO_CHANGE
     &Spell::EffectKillCreditPersonal,                       // 90 SPELL_EFFECT_KILL_CREDIT              Kill credit but only for single person
     &Spell::EffectUnused,                                   // 91 SPELL_EFFECT_THREAT_ALL               one spell: zzOLDBrainwash
@@ -3782,6 +3783,12 @@ void Spell::EffectOpenLock(SpellEffectIndex eff_idx)
                 return;
             }
         }
+        // TODO: Add script for spell 41920 - Filling, becouse server it freze when use this spell
+        // handle outdoor pvp object opening, return true if go was registered for handling
+        // these objects must have been spawned by outdoorpvp!
+        else if(gameObjTarget->GetGOInfo()->type == GAMEOBJECT_TYPE_GOOBER && sOutdoorPvPMgr.HandleOpenGo(player, gameObjTarget->GetGUID()))
+            return;
+
         lockId = goInfo->GetLockId();
         guid = gameObjTarget->GetGUID();
     }
@@ -8184,17 +8191,6 @@ void Spell::EffectSummonVehicle(SpellEffectIndex eff_idx)
         v->SetSpawnDuration(duration);
 }
 
-void Spell::EffectDamageBuilding(SpellEffectIndex eff_idx)
-{
-    if(!gameObjTarget)
-        return;
-
-    if(gameObjTarget->GetGoType() != GAMEOBJECT_TYPE_DESTRUCTIBLE_BUILDING)
-        return;
-
-    // NOTE : this can be increased by scaling stat system in vehicles
-    gameObjTarget->DealSiegeDamage(damage);
-}
 void Spell::EffectPlayMusic(SpellEffectIndex eff_idx)
 {
     if(!unitTarget || unitTarget->GetTypeId() != TYPEID_PLAYER)
@@ -8244,6 +8240,29 @@ void Spell::EffectCastButtons(SpellEffectIndex eff_idx)
             if (actionButton->GetType()==ACTION_BUTTON_SPELL)
                 if (uint32 spell_id = actionButton->GetAction())
                     m_caster->CastSpell(unitTarget,spell_id,true);
+}
+
+void Spell::EffectWMODamage(SpellEffectIndex /*eff_idx*/)
+{
+    if (gameObjTarget && gameObjTarget->GetGoType() == GAMEOBJECT_TYPE_DESTRUCTIBLE_BUILDING)
+    {
+        Unit *caster = m_originalCaster;
+        if (!caster)
+            return;
+
+        FactionTemplateEntry const *casterft, *goft;
+        casterft = caster->getFactionTemplateEntry();
+        goft = sFactionTemplateStore.LookupEntry(gameObjTarget->GetUInt32Value(GAMEOBJECT_FACTION));
+        // Do not allow to damage GO's of friendly factions (ie: Wintergrasp Walls)
+        if (casterft && goft && !casterft->IsFriendlyTo(*goft))
+            gameObjTarget->TakenDamage((uint32)damage, caster);
+    }
+}
+
+void Spell::EffectWMORepair(SpellEffectIndex /*i*/)
+{
+    if (gameObjTarget && gameObjTarget->GetGoType() == GAMEOBJECT_TYPE_DESTRUCTIBLE_BUILDING)
+        gameObjTarget->Rebuild();
 }
 
 void Spell::EffectBind(SpellEffectIndex eff_idx)

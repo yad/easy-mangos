@@ -363,7 +363,6 @@ class Spell
         void EffectTitanGrip(SpellEffectIndex eff_id);
         void EffectEnchantItemPrismatic(SpellEffectIndex eff_id);
         void EffectSummonVehicle(SpellEffectIndex eff_id);
-        void EffectDamageBuilding(SpellEffectIndex eff_id);
         void EffectPlayMusic(SpellEffectIndex eff_id);
         void EffectSpecCount(SpellEffectIndex eff_id);
         void EffectActivateSpec(SpellEffectIndex eff_id);
@@ -373,7 +372,8 @@ class Spell
         void EffectTeachTaxiNode(SpellEffectIndex eff_idx);
         void EffectBreakPlayerTargeting(SpellEffectIndex eff_idx);
         void EffectSummonPossessed(SpellEffectIndex eff_idx);
-
+        void EffectWMODamage(SpellEffectIndex eff_idx);
+        void EffectWMORepair(SpellEffectIndex eff_idx);
 
         Spell( Unit* caster, SpellEntry const *info, bool triggered, ObjectGuid originalCasterGUID = ObjectGuid(), Spell** triggeringContainer = NULL );
         ~Spell();

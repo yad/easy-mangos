@@ -59,6 +59,9 @@ class Item;
 class PlayerbotAI;
 class PlayerbotMgr;
 
+// OutdoorPvP
+class OutdoorPvP;
+
 typedef std::deque<Mail*> PlayerMails;
 
 #define PLAYER_MAX_SKILLS           127
@@ -2097,6 +2100,7 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         static uint32 TeamForRace(uint8 race);
         uint32 GetTeam() const;
+        TeamId GetTeamId() const { return m_team == ALLIANCE ? TEAM_ALLIANCE : TEAM_HORDE; }
         static uint32 getFactionForRace(uint8 race);
         void setFactionForRace(uint8 race);
 
@@ -2319,6 +2323,14 @@ class MANGOS_DLL_SPEC Player : public Unit
             m_FirstRBDone = true;
         }
         void ResetBGStatus() { m_FirstRBTime = 0; }
+
+        /*********************************************************/
+        /***               OUTDOOR PVP SYSTEM                  ***/
+        /*********************************************************/
+
+        OutdoorPvP * GetOutdoorPvP() const;
+        // returns true if the player is in active state for outdoor pvp objective capturing, false otherwise
+        bool IsOutdoorPvPActive();
 
         /*********************************************************/
         /***                    REST SYSTEM                    ***/

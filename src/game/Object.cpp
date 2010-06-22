@@ -44,6 +44,7 @@
 #include "ObjectPosSelector.h"
 
 #include "TemporarySummon.h"
+#include "OutdoorPvPMgr.h"
 
 uint32 GuidHigh2TypeId(uint32 guid_hi)
 {
@@ -600,7 +601,7 @@ void Object::BuildValuesUpdate(uint8 updatetype, ByteBuffer * data, UpdateMask *
                 if( index == UNIT_NPC_FLAGS )
                 {
                     // remove custom flag before sending
-                    uint32 appendValue = m_uint32Values[ index ] & ~UNIT_NPC_FLAG_GUARD;
+                    uint32 appendValue = m_uint32Values[ index ] & ~(UNIT_NPC_FLAG_GUARD + UNIT_NPC_FLAG_OUTDOORPVP);
 
                     if (GetTypeId() == TYPEID_UNIT)
                     {
@@ -1091,7 +1092,7 @@ void Object::BuildUpdateData( UpdateDataMapType& /*update_players */)
 }
 
 WorldObject::WorldObject()
-    : m_isActiveObject(false), m_currMap(NULL), m_mapId(0), m_InstanceId(0), m_phaseMask(PHASEMASK_NORMAL),
+    : m_isActiveObject(false), m_currMap(NULL), m_zoneScript(NULL), m_mapId(0), m_InstanceId(0), m_phaseMask(PHASEMASK_NORMAL),
     m_positionX(0.0f), m_positionY(0.0f), m_positionZ(0.0f), m_orientation(0.0f)
 {
 }
@@ -1700,6 +1701,16 @@ void WorldObject::AddObjectToRemoveList()
 {
     GetMap()->AddObjectToRemoveList(this);
 }
+
+void WorldObject::SetZoneScript()
+{
+    if(Map *map = FindMap())
+    {
+        if(!map->IsBattleGroundOrArena() && !map->IsDungeon())
+            m_zoneScript = sOutdoorPvPMgr.GetZoneScript(GetZoneId());
+    }
+}
+
 
 Creature* WorldObject::SummonCreature(uint32 id, float x, float y, float z, float ang,TempSummonType spwtype,uint32 despwtime)
 {
