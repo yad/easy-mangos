@@ -19,7 +19,7 @@ void Map::LoadNavMesh(int gx, int gy)
 
         if(!file)
         {
-            sLog.outError("Error: Could not open mmap file '%s'", fileName);
+            //sLog.outError("Error: Could not open mmap file '%s'", fileName);
             return;
         }
 
@@ -49,7 +49,7 @@ void Map::LoadNavMesh(int gx, int gy)
 
     if(!file)
     {
-        sLog.outError("Error: Could not open mmtile file '%s'", fileName);
+        //sLog.outError("Error: Could not open mmtile file '%s'", fileName);
         return;
     }
 
