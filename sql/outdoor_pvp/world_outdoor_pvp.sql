@@ -47,7 +47,7 @@ DELETE FROM gameobject WHERE id IN (181899, 182096, 182097, 182173, 182174, 1821
 DELETE FROM creature WHERE id IN (18564, 18581);
 
 DELETE FROM npc_option WHERE id = 51;
-INSERT INTO npc_option(id, gossip_id, npcflag, icon, action, option_text) VALUES (51,0,536870912,0,18,"UNIT_NPC_FLAG_OUTDOORPVP");
+INSERT INTO npc_option(id, gossip_id, npcflag, icon, action, option_text) VALUES (51,0,536870912,0,19,"UNIT_NPC_FLAG_OUTDOORPVP");
 
 
 DELETE FROM `mangos_string` WHERE `entry` BETWEEN 9001 AND 9050;
