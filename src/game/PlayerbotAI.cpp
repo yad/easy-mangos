@@ -1664,7 +1664,9 @@ void PlayerbotAI::UpdateAttackerInfo()
     }
 
     // check master's attackers
-    ref = GetMaster()->getHostileRefManager().getFirst();
+    ref = NULL;
+    if ( (m_bot != GetMaster()) && m_bot->IsWithinDistInMap( GetMaster(), 100, true ) )
+        ref = GetMaster()->getHostileRefManager().getFirst();
     while ( ref )
     {
         ThreatManager *target = ref->getSource();
@@ -1692,7 +1694,9 @@ void PlayerbotAI::UpdateAttackerInfo()
                 gref = gref->next();
                 continue;
             }
-            ref = gref->getSource()->getHostileRefManager().getFirst();
+            ref = NULL;
+            if ( m_bot->IsWithinDistInMap( gref->getSource(), 100, true ) )
+                ref = gref->getSource()->getHostileRefManager().getFirst();
             while ( ref )
             {
                 ThreatManager *target = ref->getSource();

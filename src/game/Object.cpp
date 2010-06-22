@@ -1693,7 +1693,7 @@ void WorldObject::SetMap(Map * map)
 
 Map const* WorldObject::GetBaseMap() const
 {
-    ASSERT(m_currMap);
+    //ASSERT(m_currMap);
     return m_currMap->GetParent();
 }
 
