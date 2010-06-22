@@ -1878,7 +1878,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
 
         // Movement info
         MovementInfo m_movementInfo;
-        uint32 GetModelForForm(ShapeshiftForm form);
+
          // vehicle system
          void EnterVehicle(Vehicle *vehicle, int8 seat_id, bool force = false);
          void ExitVehicle();
