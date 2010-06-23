@@ -914,42 +914,6 @@
 					>
 				</File>
 			</Filter>
-			<Filter
-				Name="DebugUtils"
-				>
-				<File
-					RelativePath="..\..\src\shared\pathfinding\DebugUtils\DebugDraw.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\src\shared\pathfinding\DebugUtils\DebugDraw.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\src\shared\pathfinding\DebugUtils\DetourDebugDraw.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\src\shared\pathfinding\DebugUtils\DetourDebugDraw.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\src\shared\pathfinding\DebugUtils\RecastDebugDraw.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\src\shared\pathfinding\DebugUtils\RecastDebugDraw.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\src\shared\pathfinding\DebugUtils\RecastDump.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\src\shared\pathfinding\DebugUtils\RecastDump.h"
-					>
-				</File>
-			</Filter>
 		</Filter>
 		<File
 			RelativePath="..\..\src\shared\Common.cpp"

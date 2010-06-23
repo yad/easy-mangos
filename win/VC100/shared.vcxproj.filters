@@ -34,9 +34,6 @@
     <Filter Include="pathfinding\Detour">
       <UniqueIdentifier>{e0a615a0-1bc0-4407-9303-681bb81b0970}</UniqueIdentifier>
     </Filter>
-    <Filter Include="pathfinding\DebugUtils">
-      <UniqueIdentifier>{c787457f-7711-4fd8-b988-ac0b12cbc612}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\shared\Database\Database.cpp">
@@ -153,18 +150,6 @@
     </ClCompile>
     <ClCompile Include="..\..\src\shared\pathfinding\Recast\Recast.cpp">
       <Filter>pathfinding\Recast</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\shared\pathfinding\DebugUtils\RecastDebugDraw.cpp">
-      <Filter>pathfinding\DebugUtils</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\shared\pathfinding\DebugUtils\RecastDump.cpp">
-      <Filter>pathfinding\DebugUtils</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\shared\pathfinding\DebugUtils\DetourDebugDraw.cpp">
-      <Filter>pathfinding\DebugUtils</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\shared\pathfinding\DebugUtils\DebugDraw.cpp">
-      <Filter>pathfinding\DebugUtils</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -309,18 +294,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\shared\pathfinding\Recast\RecastLog.h">
       <Filter>pathfinding\Recast</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\shared\pathfinding\DebugUtils\RecastDebugDraw.h">
-      <Filter>pathfinding\DebugUtils</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\shared\pathfinding\DebugUtils\RecastDump.h">
-      <Filter>pathfinding\DebugUtils</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\shared\pathfinding\DebugUtils\DetourDebugDraw.h">
-      <Filter>pathfinding\DebugUtils</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\shared\pathfinding\DebugUtils\DebugDraw.h">
-      <Filter>pathfinding\DebugUtils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

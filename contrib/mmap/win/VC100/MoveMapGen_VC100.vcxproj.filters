@@ -16,9 +16,6 @@
     <Filter Include="pathfinding\Detour">
       <UniqueIdentifier>{f91e5783-db2b-455a-ad98-1dcb4a79f0d5}</UniqueIdentifier>
     </Filter>
-    <Filter Include="pathfinding\DebugUtils">
-      <UniqueIdentifier>{0f08c099-ce28-4e74-b2c8-dc7283739da0}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\..\src\shared\vmap\MapTree.cpp">
@@ -83,18 +80,6 @@
     </ClCompile>
     <ClCompile Include="..\..\src\generator.cpp">
       <Filter>generator</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\src\shared\pathfinding\DebugUtils\DebugDraw.cpp">
-      <Filter>pathfinding\DebugUtils</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\src\shared\pathfinding\DebugUtils\DetourDebugDraw.cpp">
-      <Filter>pathfinding\DebugUtils</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\src\shared\pathfinding\DebugUtils\RecastDebugDraw.cpp">
-      <Filter>pathfinding\DebugUtils</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\src\shared\pathfinding\DebugUtils\RecastDump.cpp">
-      <Filter>pathfinding\DebugUtils</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\TileBuilder.cpp">
       <Filter>generator</Filter>
@@ -169,18 +154,6 @@
     </ClInclude>
     <ClInclude Include="..\..\..\..\src\shared\pathfinding\Detour\DetourNode.h">
       <Filter>pathfinding\Detour</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\src\shared\pathfinding\DebugUtils\DebugDraw.h">
-      <Filter>pathfinding\DebugUtils</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\src\shared\pathfinding\DebugUtils\DetourDebugDraw.h">
-      <Filter>pathfinding\DebugUtils</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\src\shared\pathfinding\DebugUtils\RecastDebugDraw.h">
-      <Filter>pathfinding\DebugUtils</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\src\shared\pathfinding\DebugUtils\RecastDump.h">
-      <Filter>pathfinding\DebugUtils</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\TileBuilder.h">
       <Filter>generator</Filter>
