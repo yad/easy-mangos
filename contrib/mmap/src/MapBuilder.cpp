@@ -784,7 +784,7 @@ namespace MMAP
             iv.triFlags = NEW_ARRAY(unsigned char,tTriCount);
             memset(iv.triFlags, 0, tTriCount*sizeof(unsigned char));
             rcMarkWalkableTriangles(config.walkableSlopeAngle, tVerts, tVertCount, tTris, tTriCount, iv.triFlags);
-            rcRasterizeTriangles(tVerts, tVertCount, tTris, iv.triFlags, RC_WALKABLE_AREA, tTriCount, *iv.heightfield, config.walkableClimb);
+            rcRasterizeTriangles(tVerts, tVertCount, tTris, iv.triFlags, 1, tTriCount, *iv.heightfield, config.walkableClimb);
             DELETE_ARRAY(iv.triFlags);
 
             // filter out unusable rasterization data (order of calls matters, see rcFilterLowHangingWalkableObstacles)
