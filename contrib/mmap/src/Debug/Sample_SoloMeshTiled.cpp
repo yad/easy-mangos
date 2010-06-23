@@ -1041,10 +1041,8 @@ bool Sample_SoloMeshTiled::handleBuild()
 		{
 			if (m_pmesh->areas[i] == RC_WALKABLE_AREA)
 				m_pmesh->areas[i] = SAMPLE_POLYAREA_GROUND;
-			
-			if (m_pmesh->areas[i] == SAMPLE_POLYAREA_GROUND ||
-				m_pmesh->areas[i] == SAMPLE_POLYAREA_GRASS ||
-				m_pmesh->areas[i] == SAMPLE_POLYAREA_ROAD)
+				
+			if (m_pmesh->areas[i] == SAMPLE_POLYAREA_GROUND)
 			{
 				m_pmesh->flags[i] = SAMPLE_POLYFLAGS_WALK;
 			}
@@ -1052,9 +1050,13 @@ bool Sample_SoloMeshTiled::handleBuild()
 			{
 				m_pmesh->flags[i] = SAMPLE_POLYFLAGS_SWIM;
 			}
-			else if (m_pmesh->areas[i] == SAMPLE_POLYAREA_DOOR)
+			else if (m_pmesh->areas[i] == SAMPLE_POLYAREA_LAVA)
 			{
-				m_pmesh->flags[i] = SAMPLE_POLYFLAGS_WALK | SAMPLE_POLYFLAGS_DOOR;
+				m_pmesh->flags[i] = SAMPLE_POLYFLAGS_LAVA;
+			}
+			else if (m_pmesh->areas[i] == SAMPLE_POLYAREA_SLIME)
+			{
+				m_pmesh->flags[i] = SAMPLE_POLYFLAGS_SLIME;
 			}
 		}
 		

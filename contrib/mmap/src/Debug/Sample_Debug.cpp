@@ -386,6 +386,8 @@ void Sample_Debug::setHighlightedTile(const float* pos)
 	}
     float extents[3] = {2.f, 4.f, 2.f};
     dtPolyRef polyRef = m_navMesh->findNearestPoly(pos, extents, &dtQueryFilter(), 0);
+    unsigned char area = m_navMesh->getPolyArea(polyRef);
+    unsigned short flags = m_navMesh->getPolyFlags(polyRef);
     const dtMeshTile* tile = m_navMesh->getTileByPolyRef(polyRef, 0);
     if(!tile)
     {

@@ -22,6 +22,7 @@
 #include "pathfinding/Detour/DetourNavMesh.h"
 #include "pathfinding/Detour/DetourCommon.h"
 
+#include "Debug.h"
 
 static float distancePtLine2d(const float* pt, const float* p, const float* q)
 {
@@ -135,10 +136,36 @@ static void drawMeshTile(duDebugDraw* dd, const dtNavMesh& mesh, const dtMeshTil
 			col = duRGBA(255,196,0,64);
 		else
 		{
-			if (p->area == 0) // Treat zero area type as default.
-				col = duRGBA(0,192,255,64);
-			else
-				col = duIntToCol(p->area, 64);
+            switch(p->area)
+            {
+                case NAV_GROUND:
+                    col = duRGBA(160,128,40,64);
+                    break;
+                case NAV_MAGMA:
+                    col = duRGBA(240,95,50,64);
+                    break;
+                case NAV_SLIME:
+                    col = duRGBA(85,225,85,64);
+                    break;
+                case NAV_SHALLOW_WATER:
+                    col = duRGBA(160,160,245,64);
+                    break;
+                case NAV_AVERAGE_WATER:
+                    col = duRGBA(90,90,220,64);
+                    break;
+                case NAV_DEEP_WATER:
+                    col = duRGBA(45,45,180,64);
+                    break;
+                case NAV_SWIM_WATER:
+                    col = duRGBA(0,0,170,64);
+                    break;
+                case NAV_UNSPECIFIED:
+                    col = duRGBA(255,0,255,64);
+                    break;
+                default:
+                    col = duRGBA(0,0,0,64);
+                    break;
+            }
 		}
 		
 		for (int j = 0; j < pd->triCount; ++j)

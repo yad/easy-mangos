@@ -31,6 +31,8 @@
 #include "pathfinding/Detour/DetourNavMeshBuilder.h"
 #include "pathfinding/DebugUtils/DetourDebugDraw.h"
 
+#include "Debug.h"
+
 #ifdef WIN32
 #	define snprintf _snprintf
 #endif
@@ -136,12 +138,14 @@ void NavMeshTesterTool::init(Sample* sample)
 	if (m_navMesh)
 	{
 		// Change costs.
-		m_navMesh->setAreaCost(SAMPLE_POLYAREA_GROUND, 1.0f);
-		m_navMesh->setAreaCost(SAMPLE_POLYAREA_WATER, 10.0f);
-		m_navMesh->setAreaCost(SAMPLE_POLYAREA_ROAD, 1.0f);
-		m_navMesh->setAreaCost(SAMPLE_POLYAREA_DOOR, 1.0f);
-		m_navMesh->setAreaCost(SAMPLE_POLYAREA_GRASS, 2.0f);
-		m_navMesh->setAreaCost(SAMPLE_POLYAREA_JUMP, 1.5f);
+		m_navMesh->setAreaCost(NAV_GROUND, 1.0f);
+		m_navMesh->setAreaCost(NAV_MAGMA, 1.0f);
+		m_navMesh->setAreaCost(NAV_SLIME, 1.0f);
+		m_navMesh->setAreaCost(NAV_SHALLOW_WATER, 1.0f);
+		m_navMesh->setAreaCost(NAV_AVERAGE_WATER, 1.0f);
+		m_navMesh->setAreaCost(NAV_DEEP_WATER, 1.0f);
+		m_navMesh->setAreaCost(NAV_SWIM_WATER, 1.0f);
+        m_navMesh->setAreaCost(NAV_UNSPECIFIED, 1000000.f);
 	}
 
 	if (m_toolMode == TOOLMODE_PATHFIND_ITER || m_toolMode == TOOLMODE_PATHFIND_STRAIGHT)
@@ -184,56 +188,47 @@ void NavMeshTesterTool::handleMenu()
 
 	imguiSeparator();
 
-	imguiLabel("Include Flags");
+	imguiLabel("Size");
 
 	imguiIndent();
-	if (imguiCheck("Walk", (m_filter.includeFlags & SAMPLE_POLYFLAGS_WALK) != 0))
+	if (imguiCheck("Short", (m_filter.includeFlags & (NAV_GROUND | NAV_SHALLOW_WATER | NAV_AVERAGE_WATER)) == (NAV_GROUND | NAV_SHALLOW_WATER)))
 	{
-		m_filter.includeFlags ^= SAMPLE_POLYFLAGS_WALK;
+		m_filter.includeFlags = (NAV_GROUND | NAV_SHALLOW_WATER);
 		recalc();
 	}
-	if (imguiCheck("Swim", (m_filter.includeFlags & SAMPLE_POLYFLAGS_SWIM) != 0))
+	if (imguiCheck("Tall", (m_filter.includeFlags & (NAV_GROUND | NAV_SHALLOW_WATER | NAV_AVERAGE_WATER | NAV_DEEP_WATER)) == (NAV_GROUND | NAV_SHALLOW_WATER | NAV_AVERAGE_WATER)))
 	{
-		m_filter.includeFlags ^= SAMPLE_POLYFLAGS_SWIM;
+		m_filter.includeFlags = (NAV_GROUND | NAV_SHALLOW_WATER | NAV_AVERAGE_WATER);
 		recalc();
 	}
-	if (imguiCheck("Door", (m_filter.includeFlags & SAMPLE_POLYFLAGS_DOOR) != 0))
+	if (imguiCheck("Giant", (m_filter.includeFlags & (NAV_GROUND | NAV_SHALLOW_WATER | NAV_AVERAGE_WATER | NAV_DEEP_WATER)) == (NAV_GROUND | NAV_SHALLOW_WATER | NAV_AVERAGE_WATER | NAV_DEEP_WATER)))
 	{
-		m_filter.includeFlags ^= SAMPLE_POLYFLAGS_DOOR;
+		m_filter.includeFlags = (NAV_GROUND | NAV_SHALLOW_WATER | NAV_AVERAGE_WATER | NAV_DEEP_WATER);
 		recalc();
 	}
-	if (imguiCheck("Jump", (m_filter.includeFlags & SAMPLE_POLYFLAGS_JUMP) != 0))
+	imguiUnindent();
+
+	imguiLabel("Inhabit");
+
+	imguiIndent();
+	if (imguiCheck("Water", (m_filter.includeFlags & NAV_SWIM_WATER) != 0))
 	{
-		m_filter.includeFlags ^= SAMPLE_POLYFLAGS_JUMP;
+		m_filter.includeFlags ^= NAV_SWIM_WATER;
+		recalc();
+	}
+	if (imguiCheck("Magma", (m_filter.includeFlags & NAV_MAGMA) != 0))
+	{
+		m_filter.includeFlags ^= NAV_MAGMA;
+		recalc();
+	}
+	if (imguiCheck("Slime", (m_filter.includeFlags & NAV_SLIME) != 0))
+	{
+		m_filter.includeFlags ^= NAV_SLIME;
 		recalc();
 	}
 	imguiUnindent();
 
 	imguiSeparator();
-	imguiLabel("Exclude Flags");
-	
-	imguiIndent();
-	if (imguiCheck("Walk", (m_filter.excludeFlags & SAMPLE_POLYFLAGS_WALK) != 0))
-	{
-		m_filter.excludeFlags ^= SAMPLE_POLYFLAGS_WALK;
-		recalc();
-	}
-	if (imguiCheck("Swim", (m_filter.excludeFlags & SAMPLE_POLYFLAGS_SWIM) != 0))
-	{
-		m_filter.excludeFlags ^= SAMPLE_POLYFLAGS_SWIM;
-		recalc();
-	}
-	if (imguiCheck("Door", (m_filter.excludeFlags & SAMPLE_POLYFLAGS_DOOR) != 0))
-	{
-		m_filter.excludeFlags ^= SAMPLE_POLYFLAGS_DOOR;
-		recalc();
-	}
-	if (imguiCheck("Jump", (m_filter.excludeFlags & SAMPLE_POLYFLAGS_JUMP) != 0))
-	{
-		m_filter.excludeFlags ^= SAMPLE_POLYFLAGS_JUMP;
-		recalc();
-	}
-	imguiUnindent();
 
 	imguiSeparator();
 	
