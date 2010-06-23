@@ -928,7 +928,11 @@ namespace MMAP
             }
             if (!params.vertCount || !params.verts)
             {
-                printf("%sNo vertices to build tile!              \n", tileString);
+                // occurs mostly when adjacent tiles have models
+                // loaded but those models don't span into this tile
+
+                // message is an annoyance
+                //printf("%sNo vertices to build tile!              \n", tileString);
                 break;
             }
             if (!params.polyCount || !params.polys)
