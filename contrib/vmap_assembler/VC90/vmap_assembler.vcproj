@@ -4,7 +4,6 @@
 	Version="9.00"
 	Name="vmap_assembler"
 	ProjectGUID="{572FFF74-480C-4472-8ABF-81733BB4049D}"
-	RootNamespace="vmap_assembler"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="131072"
 	>
@@ -18,8 +17,8 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="..\bin\$(PlatformName)_$(ConfigurationName)\"
-			IntermediateDirectory="bin\$(ProjectName)__$(PlatformName)_$(ConfigurationName)\"
+			OutputDirectory="..\Debug"
+			IntermediateDirectory="..\Debug\obj"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			CharacterSet="2"
@@ -42,8 +41,8 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\..\dep\include\g3dlite;..\..\..\src\shared;..\..\..\src\shared\vmap;..\..\..\src\framework;..\..\..\dep\ACE_wrappers"
-				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;NO_CORE_FUNCS"
+				AdditionalIncludeDirectories="..\..\..\dep\include\g3dlite;..\..\..\src\shared\vmap;"
+				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -65,8 +64,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				OutputFile="$(OutDir)/vmap_assembler.exe"
-				LinkIncremental="1"
-				IgnoreDefaultLibraryNames=""
+				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/vmap_assembler.pdb"
 				SubSystem="1"
@@ -98,8 +96,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="..\bin\$(PlatformName)_$(ConfigurationName)\"
-			IntermediateDirectory="bin\$(ProjectName)__$(PlatformName)_$(ConfigurationName)\"
+			OutputDirectory="..\Release"
+			IntermediateDirectory="..\Release\obj"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			CharacterSet="2"
@@ -121,8 +119,8 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\..\..\dep\include\g3dlite;..\..\..\src\shared;..\..\..\src\shared\vmap;..\..\..\src\framework;..\..\..\dep\ACE_wrappers"
-				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;NO_CORE_FUNCS"
+				AdditionalIncludeDirectories="..\..\..\dep\include\g3dlite;..\..\..\src\shared\vmap;..\..\..\src\framework;..\..\..\dep\ACE_wrappers"
+				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
 				RuntimeLibrary="2"
 				EnableEnhancedInstructionSet="1"
 				UsePrecompiledHeader="0"
@@ -191,27 +189,67 @@
 			Name="vmaplib"
 			>
 			<File
-				RelativePath="..\..\..\src\shared\vmap\BIH.cpp"
+				RelativePath="..\..\..\src\shared\vmap\AABSPTree.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\shared\vmap\BIH.h"
+				RelativePath="..\..\..\src\shared\vmap\BaseModel.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\shared\vmap\MapTree.cpp"
+				RelativePath="..\..\..\src\shared\vmap\BaseModel.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\shared\vmap\MapTree.h"
+				RelativePath="..\..\..\src\shared\vmap\CoordModelMapping.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\shared\vmap\ModelInstance.cpp"
+				RelativePath="..\..\..\src\shared\vmap\CoordModelMapping.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\shared\vmap\ModelInstance.h"
+				RelativePath="..\..\..\src\shared\vmap\DebugCmdLogger.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\shared\vmap\DebugCmdLogger.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\shared\vmap\ManagedModelContainer.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\shared\vmap\ManagedModelContainer.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\shared\vmap\ModelContainer.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\shared\vmap\ModelContainer.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\shared\vmap\NodeValueAccess.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\shared\vmap\ShortBox.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\shared\vmap\ShortVector.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\shared\vmap\SubModel.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\shared\vmap\SubModel.h"
 				>
 			</File>
 			<File
@@ -223,23 +261,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\shared\vmap\VMapManager2.cpp"
+				RelativePath="..\..\..\src\shared\vmap\TreeNode.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\shared\vmap\VMapManager2.h"
+				RelativePath="..\..\..\src\shared\vmap\TreeNode.h"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\src\shared\vmap\VMapTools.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\shared\vmap\WorldModel.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\shared\vmap\WorldModel.h"
 				>
 			</File>
 		</Filter>

@@ -12,6 +12,5 @@
 
 *.ncb
 *.suo
-*.sdf
-*.opensdf
-bin
+Release
+Debug
