@@ -18,20 +18,13 @@ char const* MAP_VERSION_MAGIC = "v1.1";
 
 namespace MMAP
 {
-    TileBuilder::TileBuilder(float maxWalkableAngle, bool hiRes, IVMapManager* vmapManager) :
-        m_hiResHeightMaps   (hiRes),
-        m_maxRadians        (maxWalkableAngle*G3D::pi()/180),
-        m_groundNormal      (G3D::Plane(Vector3::unitY(), Vector3(0.f, 0.f, 0.f)).normal()),
-        m_vmapManager       (vmapManager)
+    TileBuilder::TileBuilder(bool hiRes) :
+        m_hiResHeightMaps   (hiRes)
     {
-        V9 = new float[V9_SIZE_SQ];
-        V8 = new float[V8_SIZE_SQ];
     }
 
     TileBuilder::~TileBuilder()
     {
-        delete [] V9;
-        delete [] V8;
     }
 
     void TileBuilder::getLoopVars(Spot portion, int &loopStart, int &loopEnd, int &loopInc)
@@ -63,6 +56,17 @@ namespace MMAP
                 loopEnd = V8_SIZE_SQ;
                 loopInc = 1;
                 break;
+        }
+    }
+
+    void TileBuilder::loadMap(uint32 mapID, uint32 tileX, uint32 tileY, MeshData &meshData)
+    {
+        if(loadMap(mapID, tileX, tileY, meshData, ENTIRE))
+        {
+            loadMap(mapID, tileX+1, tileY, meshData, LEFT);
+            loadMap(mapID, tileX-1, tileY, meshData, RIGHT);
+            loadMap(mapID, tileX, tileY+1, meshData, TOP);
+            loadMap(mapID, tileX, tileY-1, meshData, BOTTOM);
         }
     }
 
@@ -183,7 +187,6 @@ namespace MMAP
             triInc = m_hiResHeightMaps ? 1 : BOTTOM-TOP;
 
             for(i = loopStart; i < loopEnd; i+=loopInc)
-                //if(!isHole(i, holes))
                     for(j = TOP; j <= BOTTOM; j+=triInc)
                     {
                         getHeightTriangle(i, Spot(j), indices);
@@ -257,10 +260,13 @@ namespace MMAP
                     }
                 }
 
+                delete [] liquid_map;
+
                 int indices[3], loopStart, loopEnd, loopInc, triInc;
                 getLoopVars(portion, loopStart, loopEnd, loopInc);
                 triInc = BOTTOM-TOP;
 
+                // generate triangles
                 for(int i = loopStart; i < loopEnd; i+=loopInc)
                     for(int j = TOP; j <= BOTTOM; j+= triInc)
                     {
@@ -270,7 +276,6 @@ namespace MMAP
                         ltriangles.append(indices[0] + count);
                     }
 
-                delete [] liquid_map;
             }while(0);
         }
 
@@ -303,6 +308,7 @@ namespace MMAP
                     useLiquid = true;
                     uint8 liquidType;
 
+                    // if there is no liquid, don't use liquid
                     if(!liquid_type ||
                        !meshData.liquidVerts.size() ||
                        !ltriangles.size())
@@ -316,6 +322,7 @@ namespace MMAP
                             liquidType = type;
                     }
 
+                    // if there is no terrain, don't use terrain
                     if(!ttriangles.size())
                         useTerrain = false;
 
@@ -330,36 +337,37 @@ namespace MMAP
                             useLiquid = false;
                         }
 
+                    // if there is a hole here, don't use the terrain
                     if(useTerrain)
                         useTerrain = !isHole(i, holes);
 
                     if(useTerrain && useLiquid)
                     {
-                        if(liquidType & MAP_LIQUID_TYPE_DARK_WATER)
-                            useLiquid = false;
+                        // get the indexes of the corners of the quad
+                        int idx1, idx2, idx3;
+                        if(j == 0)
+                        {
+                            idx1 = 0;
+                            idx2 = 1;
+                            idx3 = tTriCount;   // accesses index from next triangle on low res
+                        }
                         else
                         {
-                            // get the indexes of the corners of the quad
-                            int idx1, idx2, idx3;
-                            if(j == 0)
-                            {
-                                idx1 = 0;
-                                idx2 = 1;
-                                idx3 = tTriCount;   // accesses index from next triangle on low res
-                            }
-                            else
-                            {
-                                idx1 = 0;
-                                idx2 = 3*tTriCount/2-2;
-                                idx3 = 3*tTriCount/2-1;
-                            }
+                            idx1 = 0;
+                            idx2 = 3*tTriCount/2-2;
+                            idx3 = 3*tTriCount/2-1;
+                        }
 
-                            if((&lverts[ltris[0]*3])[1] - 1.f > (&tverts[ttris[idx1]*3])[1] &&
-                               (&lverts[ltris[1]*3])[1] - 1.f > (&tverts[ttris[idx2]*3])[1] &&
-                               (&lverts[ltris[2]*3])[1] - 1.f > (&tverts[ttris[idx3]*3])[1])
-                                useTerrain = false;
-                            else if((liquidType & (MAP_LIQUID_TYPE_MAGMA | MAP_LIQUID_TYPE_SLIME)) == 0)
-                                useLiquid = false;
+                        if(useTerrain &&
+                            (&lverts[ltris[0]*3])[1] - 1.5f > (&tverts[ttris[idx1]*3])[1] &&
+                            (&lverts[ltris[1]*3])[1] - 1.5f > (&tverts[ttris[idx2]*3])[1] &&
+                            (&lverts[ltris[2]*3])[1] - 1.5f > (&tverts[ttris[idx3]*3])[1])
+                            useTerrain = false; // if the whole terrain triangle is 1.5yds under liquid, don't use it
+                        else if(useLiquid &&
+                                (&lverts[ltris[0]*3])[1] < (&tverts[ttris[idx1]*3])[1] &&
+                                (&lverts[ltris[1]*3])[1] < (&tverts[ttris[idx2]*3])[1] &&
+                                (&lverts[ltris[2]*3])[1] < (&tverts[ttris[idx3]*3])[1])
+                            useLiquid = false;  // if the whole liquid triangle is under terrain, don't use it
                         }
                     }
 
@@ -503,152 +511,5 @@ namespace MMAP
         int cellCol = col / 8;
 
         return liquid_type[cellRow][cellCol];
-    }
-
-    void TileBuilder::loadModels()
-    {
-        printf("[%02u,%02u]: Loading vmap models...                 \r", m_mapID, m_tileX, m_tileY);
-
-        cout.setstate(cout.badbit);
-        int result = m_vmapManager->loadMap("vmaps", m_mapID, (int)m_tileX, (int)m_tileY);
-        cout.clear(cout.goodbit);
-
-        if(result == VMAP_LOAD_RESULT_ERROR)
-            return;
-
-        ModelInstance* models = 0;
-        uint32 count = 0;
-
-        InstanceTreeMap instanceTrees;
-        ((VMapManager2*)m_vmapManager)->getInstanceMapTree(instanceTrees);
-
-        if(!instanceTrees[m_mapID])
-            return;
-
-        instanceTrees[m_mapID]->getModelInstances(models, count);
-
-        if(!models || !count)
-            return;
-
-        uint32 i;
-        int percent = -1, oldPercent = -2;
-        for(i = 0; i < count; ++i)
-        {
-            ModelInstance instance = models[i];
-
-            vector<float>* modelVertices = new vector<float>;
-            vector<int>* modelTriangles = new vector<int>;
-
-            // model instances exist in tree even though there are instances of that model in this tile
-            WorldModel* worldModel = instance.getWorldModel();
-            if(!worldModel)
-                continue;
-
-            vector<GroupModel> groupModels;
-            worldModel->getGroupModels(groupModels);
-
-            // all M2s need to have triangle indices reversed
-            bool isM2 = instance.name.find(".m2") != instance.name.npos || instance.name.find(".M2") != instance.name.npos;
-
-            // transform data
-            float scale = models[i].iScale;
-            G3D::Matrix3 rotation = G3D::Matrix3::fromEulerAnglesZYX(-1*G3D::pi()*instance.iRot.y/180.f, -1*G3D::pi()*instance.iRot.x/180.f, -1*G3D::pi()*instance.iRot.z/180.f);
-            Vector3 position = instance.iPos;
-            position.x -= 32*533.33333f;
-            position.y -= 32*533.33333f;
-            position.z += m_heightOffset;
-
-            for(vector<GroupModel>::iterator it = groupModels.begin(); it != groupModels.end(); ++it)
-            {
-                vector<Vector3> tempVertices;
-                vector<Vector3> transformedVertices;
-                vector<MeshTriangle> tempTriangles;
-
-                (*it).getMeshData(tempVertices, tempTriangles);
-
-                transform(tempVertices, transformedVertices, scale, rotation, position);
-
-                int offset = modelVertices->size() / 3;
-                copyVertices(transformedVertices, (*modelVertices));
-                copyIndices(tempTriangles, (*modelTriangles), offset, isM2);
-            }
-
-            m_modelsVertices.push_back(modelVertices);
-            m_modelsTriangles.push_back(modelTriangles);
-        }
-    }
-
-    inline void TileBuilder::transform(vector<Vector3> source, vector<Vector3> &transformedVertices, float scale, G3D::Matrix3 rotation, Vector3 position)
-    {
-        for(vector<Vector3>::iterator it = source.begin(); it != source.end(); ++it)
-            transformedVertices.push_back((*it) * rotation * scale + position);
-    }
-
-    inline void TileBuilder::copyVertices(vector<Vector3> source, vector<float> dest)
-    {
-        for(vector<Vector3>::iterator it = source.begin(); it != source.end(); ++it)
-        {
-            dest.push_back((*it).y);
-            dest.push_back((*it).z);
-            dest.push_back((*it).x);
-        }
-    }
-
-    inline void TileBuilder::copyIndices(vector<MeshTriangle> source, vector<int> dest, int offset, bool flip)
-    {
-        // evaluate flip once, makes faster code (but larger)
-        if(flip)
-        {
-            for(vector<MeshTriangle>::iterator it = source.begin(); it != source.end(); ++it)
-            {
-                dest.push_back((*it).idx2+offset);
-                dest.push_back((*it).idx1+offset);
-                dest.push_back((*it).idx0+offset);
-            }
-        }
-        else
-        {
-            for(vector<MeshTriangle>::iterator it = source.begin(); it != source.end(); ++it)
-            {
-                dest.push_back((*it).idx0+offset);
-                dest.push_back((*it).idx1+offset);
-                dest.push_back((*it).idx2+offset);
-            }
-        }
-    }
-
-    void TileBuilder::intersect()
-    {
-        printf("[%02u,%02u]: Intersecting meshes...     \r", m_tileY, m_tileX);
-    }
-
-    void TileBuilder::generateObjFile(const char* objFileName)
-    {
-        printf("[%02u,%02u]: Writing obj file           \r", m_tileX, m_tileY);
-
-        G3D::Array<float> verts = *m_vertices;
-        G3D::Array<int> tris = *m_triangles;
-
-        if(verts.size() == 0 && tris.size() == 0)
-            return;
-
-        FILE* objFile = fopen(objFileName, "wb");
-
-        int i;
-        for(i = 0; i < verts.size() / 3; ++i)
-            fprintf(objFile, "v %f %f %f\n", verts[i*3], verts[i*3+1], verts[i*3+2]);
-
-        for(i = 0; i < tris.size() / 3; ++i)
-            fprintf(objFile, "f %i %i %i\n", tris[i*3]+1, tris[i*3+1]+1, tris[i*3+2]+1);
-
-        fclose(objFile);
-    }
-
-    void TileBuilder::cleanup()
-    {
-        cout.setstate(cout.badbit);
-        m_vmapManager->unloadMap(m_mapID, m_tileX, m_tileY);
-        m_vmapManager->unloadMap(m_mapID);
-        cout.clear(cout.goodbit);
     }
 }

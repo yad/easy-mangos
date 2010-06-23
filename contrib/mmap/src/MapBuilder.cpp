@@ -25,7 +25,7 @@ namespace MMAP
                            m_debugOutput        (debugOutput)
     {
         m_vmapManager = new VMapManager2();
-        m_tileBuilder = new TileBuilder(m_maxWalkableAngle, hiResHeightmaps, m_vmapManager);
+        m_tileBuilder = new TileBuilder(hiResHeightmaps);
     }
 
     MapBuilder::~MapBuilder()
@@ -206,11 +206,7 @@ namespace MMAP
 
             // get heightmap data
             printf("%sLoading heightmap...                           \r", tileString);
-            m_tileBuilder->loadMap(mapID, tileX, tileY, meshData, ENTIRE);
-            m_tileBuilder->loadMap(mapID, tileX+1, tileY, meshData, LEFT);
-            m_tileBuilder->loadMap(mapID, tileX-1, tileY, meshData, RIGHT);
-            m_tileBuilder->loadMap(mapID, tileX, tileY+1, meshData, TOP);
-            m_tileBuilder->loadMap(mapID, tileX, tileY-1, meshData, BOTTOM);
+            m_tileBuilder->loadMap(mapID, tileX, tileY, meshData);
 
             // get model data
             printf("%sLoading models...                              \r", tileString);
@@ -309,11 +305,7 @@ namespace MMAP
 
             // get heightmap data
             printf("%sLoading heightmap...                           \r", tileString);
-            m_tileBuilder->loadMap(mapID, tileX, tileY, meshData, ENTIRE);
-            //m_tileBuilder->loadMap(mapID, tileX+1, tileY, meshData, LEFT);
-            //m_tileBuilder->loadMap(mapID, tileX-1, tileY, meshData, RIGHT);
-            //m_tileBuilder->loadMap(mapID, tileX, tileY+1, meshData, TOP);
-            //m_tileBuilder->loadMap(mapID, tileX, tileY-1, meshData, BOTTOM);
+            m_tileBuilder->loadMap(mapID, tileX, tileY, meshData);
 
             // get model data
             printf("%sLoading models...                              \r", tileString);

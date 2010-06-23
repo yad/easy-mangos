@@ -47,62 +47,52 @@ namespace MMAP
         G3D::Array<uint8> liquidType;
     };
 
+    enum NavTerrain
+    {
+        NAV_GROUND  = 0x01,
+
+        NAV_MAGMA   = 0x02,
+        NAV_SLIME   = 0x04,
+
+        NAV_SHALLOW_WATER   = 0x08,
+        NAV_AVERAGE_WATER   = 0x10,
+        NAV_DEEP_WATER      = 0x20,
+        NAV_SWIM_WATER      = 0x40,
+        NAV_WATER           = NAV_SHALLOW_WATER | NAV_AVERAGE_WATER | NAV_DEEP_WATER | NAV_SWIM_WATER,
+
+        NAV_UNSPECIFIED     = 0x80
+    };
+
     class TileBuilder
     {
         public:
-            TileBuilder(float maxWalkableAngle, bool hiRes, IVMapManager* vmapManager);
+            TileBuilder(bool hiRes);
             ~TileBuilder();
 
-            bool loadMap(uint32 mapID, uint32 tileX, uint32 tileY, MeshData &meshData, Spot portion);
+            void loadMap(uint32 mapID, uint32 tileX, uint32 tileY, MeshData &meshData);
 
         private:
 
-            // heightmap
-            bool m_hiResHeightMaps;
-            bool m_shredHeightmaps;
-            float m_heightOffset;
-            float* V9;
-            float* V8;
-            G3D::Vector3 m_groundNormal;
-            float m_maxRadians;
-
+            // general
+            bool loadMap(uint32 mapID, uint32 tileX, uint32 tileY, MeshData &meshData, Spot portion);
             void getLoopVars(Spot portion, int &loopStart, int &loopEnd, int &loopInc);
+
+            // terrain
+            bool m_hiResHeightMaps;
+
             bool loadHeightMap(uint32 mapID, uint32 tileX, uint32 tileY, G3D::Array<float> &vertices, G3D::Array<int> &triangles, Spot portion);
-            bool loadLiquidMap(uint32 mapID, uint32 tileX, uint32 tileY, G3D::Array<float> &vertices, G3D::Array<int> &triangles, Spot portion);
             void getHeightCoord(int index, Grid grid, float xOffset, float yOffset, float* coord, float* v);
             void getHeightTriangle(int square, Spot triangle, int* indices, bool liquid = false);
+            bool isHole(int square, const uint16 holes[16][16]);
+
+            // liquid
+            bool loadLiquidMap(uint32 mapID, uint32 tileX, uint32 tileY, G3D::Array<float> &vertices, G3D::Array<int> &triangles, Spot portion);
             void getLiquidCoord(int index, int index2, float xOffset, float yOffset, float* coord, float* v);
             void getLiquidTriangle(int square, Spot triangle, int* indices, uint8 width);
-            bool isHole(int square, const uint16 holes[16][16]);
             uint8 getLiquidType(int square, const uint8 liquid_type[16][16]);
-            float getAngle(Vector3 normal);
 
-            // vmap models
-            IVMapManager* m_vmapManager;
-            vector<vector<float>*> m_modelsVertices;
-            vector<vector<int>*> m_modelsTriangles;
-
-            void loadModels();
-            void transform(vector<Vector3> original, vector<Vector3> &transformed, float scale, G3D::Matrix3 rotation, Vector3 position);
-            void copyVertices(vector<Vector3> source, vector<float> dest);                              // copies vertices into m_vertices
-            void copyIndices(vector<MeshTriangle> source, vector<int> dest, int offest, bool flip);   // copies vertex index data into m_triangleIndices
-
-            // intersection of heightmap and models
-            void intersect();
-            void aggregate();
-
-            // debug
-            void generateObjFile(const char* objFileName);
-
-            // common
-            uint32 m_mapID;
-            uint32 m_tileX;
-            uint32 m_tileY;
-            G3D::Array<float> *m_vertices;
-            G3D::Array<int> *m_triangles;
-
+            // hide parameterless constructor
             TileBuilder();
-            void cleanup();
     };
 }
 
