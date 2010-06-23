@@ -2049,9 +2049,6 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
     if (m_bot->IsBeingTeleported())
         return;
 
-    /*if (GetMaster()->IsBeingTeleported())
-         return;*/
-
     if ( m_bot->GetGroup() )
     {
         GroupReference *ref = m_bot->GetGroup()->GetFirstMember();
