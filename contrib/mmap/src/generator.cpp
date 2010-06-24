@@ -165,10 +165,10 @@ int main(int argc, char** argv)
     int mapnum = -1;
     float maxAngle = 60.f;
     int tileX = -1, tileY = -1;
-    bool skipContinents = true,
-         skipJunkMaps = true,
-         skipBattlegrounds = true,
-         hiResHeightmaps = false,
+    bool skipContinents = false,
+         skipJunkMaps = false,
+         skipBattlegrounds = false,
+         hiResHeightmaps = true,
          debugOutput = false,
          badParam = false;
 
