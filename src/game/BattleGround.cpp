@@ -870,7 +870,7 @@ void BattleGround::EndBattleGround(uint32 winner)
         if (isArena() && isRated() && winner_arena_team && loser_arena_team)
         {
             int32 change;
-            QueryResult *result = loginDatabase.PQuery("SELECT last_ip FROM realmd.account WHERE id in (SELECT account FROM characters.characters WHERE guid = %u)", plr->GetGUIDLow());
+            QueryResult *result = LoginDatabase.PQuery("SELECT last_ip FROM realmd.account WHERE id in (SELECT account FROM characters.characters WHERE guid = %u)", plr->GetGUIDLow());
             if (team == winner)
             {
                 // update achievement BEFORE personal rating update
