@@ -492,4 +492,3 @@ namespace VMAP
         return success;
     }
 }
-
