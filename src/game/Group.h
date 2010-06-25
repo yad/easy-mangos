@@ -358,6 +358,7 @@ class MANGOS_DLL_SPEC Group
         InstanceGroupBind* GetBoundInstance(Player* player);
         InstanceGroupBind* GetBoundInstance(Map* aMap, Difficulty difficulty);
         BoundInstancesMap& GetBoundInstances(Difficulty difficulty) { return m_boundInstances[difficulty]; }
+        void BroadcastGroupUpdate(void);
 
     protected:
         bool _addMember(const uint64 &guid, const char* name, bool isAssistant=false);

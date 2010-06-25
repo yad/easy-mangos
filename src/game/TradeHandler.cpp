@@ -604,11 +604,11 @@ void WorldSession::HandleInitiateTradeOpcode(WorldPacket& recvPacket)
         return;
     }
 
-    if (pOther->getOriginalTeam() !=_player->getOriginalTeam() )
+    /*if (pOther->getOriginalTeam() !=_player->getOriginalTeam() )
     {
         SendTradeStatus(TRADE_STATUS_WRONG_FACTION);
         return;
-    }
+    }*/
 
     if (!pOther->IsWithinDistInMap(_player,10.0f,false))
     {

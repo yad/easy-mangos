@@ -254,6 +254,8 @@ Unit::Unit()
     for(int i=0; i < MAX_REACTIVE; ++i)
         m_reactiveTimer[i] = 0;
 
+    m_spoofSamePlayerFaction = false;
+
     baseMoveSpeed[MOVE_WALK] = 2.5f;
     baseMoveSpeed[MOVE_RUN] = 7.0f;
     baseMoveSpeed[MOVE_RUN_BACK] = 1.25f;
