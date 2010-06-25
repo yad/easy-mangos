@@ -96,10 +96,10 @@ void TFrmMain::SaveToFile(const char * pszFileName)
         TIniFile *ini;
         ini = new TIniFile( iniSetFile );
 
-	for(int i=1; i<sgEdit->RowCount; i++)
-	{
+    for(int i=1; i<sgEdit->RowCount; i++)
+    {
             for(int j=1; j<sgEdit->ColCount; j++)
-	    {
+        {
                if(j==1){ //ID
                        iVal=StrToInt(sgEdit->Cells[j][i]);
                        FileWrite(iFileHandle, &iVal, 4);
@@ -369,10 +369,10 @@ void __fastcall TFrmMain::OpenFileCol(AnsiString FileName,int ColIndex,int ColTy
         float fVal;
         FILE *stream;
         long curpos, length;
-	DWORD dwRows, dwCols, dwRowLen, dwTextLen;
+    DWORD dwRows, dwCols, dwRowLen, dwTextLen;
 
         DWORD dwTextStartPos;
-	char* pTextPtr ;
+    char* pTextPtr ;
 
 
    if ((stream = fopen(FileName.c_str(), "r+"))
@@ -542,10 +542,10 @@ if(OpenOk==false) return;
         float fVal;
         FILE *stream;
         long curpos, length;
-	DWORD dwRows, dwCols, dwRowLen, dwTextLen;
+    DWORD dwRows, dwCols, dwRowLen, dwTextLen;
 
         DWORD dwTextStartPos;
-	char* pTextPtr ;
+    char* pTextPtr ;
 
 
    //if ((stream = fopen(CurrentOpenFile.c_str(), "r+"))
@@ -602,10 +602,10 @@ if(OpenOk==false) return;
         float fVal;
         FILE *stream;
         long curpos, length;
-	DWORD dwRows, dwCols, dwRowLen, dwTextLen;
+    DWORD dwRows, dwCols, dwRowLen, dwTextLen;
 
         DWORD dwTextStartPos;
-	char* pTextPtr ;
+    char* pTextPtr ;
 
     iFileHandle = FileOpen(CurrentOpenFile, fmOpenRead|fmOpenWrite);//打开文件
 
@@ -665,10 +665,10 @@ if(OpenOk==false) return;
         float fVal;
         FILE *stream;
         long curpos, length;
-	DWORD dwRows, dwCols, dwRowLen, dwTextLen;
+    DWORD dwRows, dwCols, dwRowLen, dwTextLen;
 
         DWORD dwTextStartPos;
-	char* pTextPtr ;
+    char* pTextPtr ;
 
 
    if ((stream = fopen(CurrentOpenFile.c_str(), "r+"))
@@ -715,10 +715,10 @@ if(OpenOk==false) return;
         float fVal;
         FILE *stream;
         long curpos, length;
-	DWORD dwRows, dwCols, dwRowLen, dwTextLen;
+    DWORD dwRows, dwCols, dwRowLen, dwTextLen;
 
         DWORD dwTextStartPos;
-	char* pTextPtr ;
+    char* pTextPtr ;
 
 
    if ((stream = fopen(CurrentOpenFile.c_str(), "r+"))
@@ -760,9 +760,9 @@ if(OpenOk==false) return;
 
 void __fastcall TFrmMain::ToolButton4Click(TObject *Sender)
 {
-	AnsiString Cmd;
+    AnsiString Cmd;
         Cmd = "calc.exe";
-	WinExec(Cmd.c_str(), SW_SHOWNORMAL);
+    WinExec(Cmd.c_str(), SW_SHOWNORMAL);
 }
 //---------------------------------------------------------------------------
 

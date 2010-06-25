@@ -18,16 +18,16 @@
 
 union TypePtr
 {
-	long*			l;
-	DWORD*			dw;
-	WORD*			w;
-	char*			c;
-	void*			p;
-	float*			f;
+    long*            l;
+    DWORD*            dw;
+    WORD*            w;
+    char*            c;
+    void*            p;
+    float*            f;
 
-	TypePtr(void* in) :p(in)
-	{
-	}
+    TypePtr(void* in) :p(in)
+    {
+    }
 };
 
 #define TAG(x) (DWORD)(  (((DWORD)x&0x0000ff00)<<8)+(((DWORD)x&0x000000ff)<<24)+(((DWORD)x&0x00ff0000)>>8)+(((DWORD)x&0xff000000)>>24) )
@@ -36,7 +36,7 @@ union TypePtr
 //---------------------------------------------------------------------------
 class TFrmMain : public TForm
 {
-__published:	// IDE-managed Components
+__published:    // IDE-managed Components
         TPanel *Panel1;
         TCoolBar *CoolBar1;
         TToolBar *ToolBar1;
@@ -85,13 +85,13 @@ __published:	// IDE-managed Components
         void __fastcall btRowClearClick(TObject *Sender);
         void __fastcall btColClearClick(TObject *Sender);
         void __fastcall ToolButton4Click(TObject *Sender);
-private:	// User declarations
+private:    // User declarations
 
 
         thOpenFile  *thOpen;
         bool Term; 
 
-public:		// User declarations
+public:        // User declarations
         bool       OpenOk;
        
         AnsiString CurrentOpenFile;

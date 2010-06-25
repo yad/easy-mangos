@@ -11,7 +11,7 @@
 //---------------------------------------------------------------------------
 class TFrmSearch : public TForm
 {
-__published:	// IDE-managed Components
+__published:    // IDE-managed Components
         TRadioGroup *rgSI;
         TEdit *edSeach;
         TLabel *lbseach;
@@ -19,8 +19,8 @@ __published:	// IDE-managed Components
         TButton *btCancel;
         void __fastcall btOkClick(TObject *Sender);
         void __fastcall btCancelClick(TObject *Sender);
-private:	// User declarations
-public:		// User declarations
+private:    // User declarations
+public:        // User declarations
         __fastcall TFrmSearch(TComponent* Owner);
 };
 //---------------------------------------------------------------------------

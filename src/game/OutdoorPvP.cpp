@@ -371,7 +371,7 @@ bool OPvPCapturePoint::Update(uint32 diff)
     }
 
     for( std::list<Unit *>::iterator itr = targets.begin(); itr != targets.end(); ++itr )
-				if( (*itr)->GetTypeId() == TYPEID_PLAYER )
+                if( (*itr)->GetTypeId() == TYPEID_PLAYER )
                     players.push_back((Player*)(*itr));
 
     for (std::list<Player*>::iterator itr = players.begin(); itr != players.end(); ++itr)

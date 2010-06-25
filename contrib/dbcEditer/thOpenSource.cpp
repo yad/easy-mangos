@@ -53,26 +53,26 @@ void __fastcall thOpenFile::RunOpen()
 
 void thOpenFile::ReadAndModifyFromBuff(char *pBuff, DWORD dwSize, const char* pszFileName)
 {
-	char szErrorMsg[MAX_PATH];
-	char szNewFileName[MAX_PATH];
-	DWORD w;
+    char szErrorMsg[MAX_PATH];
+    char szNewFileName[MAX_PATH];
+    DWORD w;
         TIniFile *ini;
         
 
-	TypePtr p(pBuff);
-	if('WDBC' != TAG(*p.dw))
-	{
-		_snprintf(szErrorMsg, 512, "[%s]Not Wow's dbc file!", pszFileName);
-		ShowMessage(szErrorMsg);
-		return;
-	}
-	p.dw++;
+    TypePtr p(pBuff);
+    if('WDBC' != TAG(*p.dw))
+    {
+        _snprintf(szErrorMsg, 512, "[%s]Not Wow's dbc file!", pszFileName);
+        ShowMessage(szErrorMsg);
+        return;
+    }
+    p.dw++;
 
-	DWORD dwRows, dwCols, dwRowLen, dwTextLen;
-	dwRows = *p.dw++;
-	dwCols = *p.dw++;
-	dwRowLen = *p.dw++;
-	dwTextLen = *p.dw++;
+    DWORD dwRows, dwCols, dwRowLen, dwTextLen;
+    dwRows = *p.dw++;
+    dwCols = *p.dw++;
+    dwRowLen = *p.dw++;
+    dwTextLen = *p.dw++;
 
         FrmMain->sgEdit->RowCount = dwRows+1;
         FrmMain->sgEdit->ColCount = dwCols+1;
@@ -96,22 +96,22 @@ void thOpenFile::ReadAndModifyFromBuff(char *pBuff, DWORD dwSize, const char* ps
 
         //int   *ColType = new int[dwCols];
         
-	DWORD dwTextStartPos = dwRows*dwRowLen+20;
-	char* pTextPtr = pBuff + dwTextStartPos;
-	char pszTemp[MAX_PATH];
-	float fTemp;
-	long lTemp;
-	DWORD i, j;
-	BOOL* pbString = new BOOL[dwRows*dwCols];
+    DWORD dwTextStartPos = dwRows*dwRowLen+20;
+    char* pTextPtr = pBuff + dwTextStartPos;
+    char pszTemp[MAX_PATH];
+    float fTemp;
+    long lTemp;
+    DWORD i, j;
+    BOOL* pbString = new BOOL[dwRows*dwCols];
         float newTmp;
         //int   ColType;
 
         ini = new TIniFile( iniSetFile );
 
-	for(i=0; i<dwRows; i++)
-	{
-		for(j=0; j<dwCols; j++)
-		{
+    for(i=0; i<dwRows; i++)
+    {
+        for(j=0; j<dwCols; j++)
+        {
                     //SleepEx(0,0);
                     if(Terminated) return;
                     lTemp = *p.l;
@@ -148,7 +148,7 @@ void thOpenFile::ReadAndModifyFromBuff(char *pBuff, DWORD dwSize, const char* ps
                 }
         }
 
-	delete [] pbString;
+    delete [] pbString;
         //delete []  ColType;
         delete ini;
 
@@ -156,26 +156,26 @@ void thOpenFile::ReadAndModifyFromBuff(char *pBuff, DWORD dwSize, const char* ps
 
 void thOpenFile::LoadAndModify(const char * pszFileName)
 {
-	HANDLE hFile = NULL;
-	hFile = CreateFile(pszFileName, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
-	if(hFile == INVALID_HANDLE_VALUE)return;
+    HANDLE hFile = NULL;
+    hFile = CreateFile(pszFileName, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
+    if(hFile == INVALID_HANDLE_VALUE)return;
 
-	DWORD r = 0, nFileSize = 0;
-	nFileSize = GetFileSize(hFile, NULL);
-	char* pTmpBuf = new char[nFileSize];
-	if(pTmpBuf==NULL)
-	{
-		CloseHandle(hFile);
-		return;
-	}
-	ReadFile(hFile, pTmpBuf, nFileSize, &r, NULL);
+    DWORD r = 0, nFileSize = 0;
+    nFileSize = GetFileSize(hFile, NULL);
+    char* pTmpBuf = new char[nFileSize];
+    if(pTmpBuf==NULL)
+    {
+        CloseHandle(hFile);
+        return;
+    }
+    ReadFile(hFile, pTmpBuf, nFileSize, &r, NULL);
 
-	FrmMain->CurrentOpenFile=pszFileName;
+    FrmMain->CurrentOpenFile=pszFileName;
         FrmMain->btSave->Enabled=true;
 
-	ReadAndModifyFromBuff(pTmpBuf, nFileSize, pszFileName);
+    ReadAndModifyFromBuff(pTmpBuf, nFileSize, pszFileName);
 
-	//SAFE_DELETE_ARRAY(pTmpBuf);
+    //SAFE_DELETE_ARRAY(pTmpBuf);
         delete [] pTmpBuf;
         CloseHandle(hFile);
 
