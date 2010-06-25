@@ -414,7 +414,7 @@ void TradeData::SetAccepted(bool state, bool crosssend /*= false*/)
 
 UpdateMask Player::updateVisualBits;
 
-Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputationMgr(this), m_mover(this), m_mover_in_queue(NULL), m_camera(this)
+Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputationMgr(this), m_mover(this), m_camera(this)
 {
     // Jail by WarHead
     m_jail_guid     = 0;
@@ -21708,7 +21708,6 @@ void Player::SendInitialPacketsBeforeAddToMap()
         m_movementInfo.AddMovementFlag(MOVEFLAG_FLYING);
 
     SetMover(this);
-    m_mover_in_queue = NULL;
 }
 
 void Player::SendInitialPacketsAfterAddToMap()
@@ -23010,11 +23009,8 @@ void Player::ApplyGlyphs(bool apply)
         ApplyGlyph(i,apply);
 }
 
-void Player::SendEnterVehicle(Vehicle *vehicle, VehicleSeatEntry const *veSeat)
+void Player::SendEnterVehicle(Vehicle *vehicle)
 {
-    m_movementInfo.AddMovementFlag(MOVEFLAG_ONTRANSPORT);
-    m_movementInfo.AddMovementFlag(MOVEFLAG_ROOT);
-
     if(m_transport)                                         // if we were on a transport, leave
     {
         m_transport->RemovePassenger(this);
@@ -23024,23 +23020,8 @@ void Player::SendEnterVehicle(Vehicle *vehicle, VehicleSeatEntry const *veSeat)
     // with vehicle, ONLY my vehicle will be passenger on that transport
     // player ----> vehicle ----> zeppelin
 
-    vehicle->SetCharmerGUID(GetGUID());
-    vehicle->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_SPELLCLICK);
-    vehicle->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PLAYER_CONTROLLED);
-    vehicle->setFaction(getFaction());
-
-    SetCharm(vehicle);                                      // charm
-    m_camera.SetView(vehicle);                              // set view
-
-    SetClientControl(vehicle, 1);                           // redirect controls to vehicle
-    SetMover(vehicle);
-
     WorldPacket data(SMSG_ON_CANCEL_EXPECTED_RIDE_VEHICLE_AURA, 0);
     GetSession()->SendPacket(&data);
-
-    data.Initialize(SMSG_BREAK_TARGET, 8);
-    data << vehicle->GetPackGUID();
-    SendMessageToSet(&data, true);
 
     data.Initialize(MSG_MOVE_TELEPORT_ACK, 30);
     data << GetPackGUID();
@@ -23054,28 +23035,20 @@ void Player::SendEnterVehicle(Vehicle *vehicle, VehicleSeatEntry const *veSeat)
     data << vehicle->GetOrientation();                      // o
     // transport part, TODO: load/calculate seat offsets
     data << uint64(vehicle->GetGUID());                     // transport guid
-    data << float(veSeat->m_attachmentOffsetX);             // transport offsetX
-    data << float(veSeat->m_attachmentOffsetY);             // transport offsetY
-    data << float(veSeat->m_attachmentOffsetZ);             // transport offsetZ
-    data << float(0);                                       // transport orientation
+    data << float(m_movementInfo.GetTransportPos()->x);     // transport offsetX
+    data << float(m_movementInfo.GetTransportPos()->y);     // transport offsetY
+    data << float(m_movementInfo.GetTransportPos()->z);     // transport offsetZ
+    data << float(m_movementInfo.GetTransportPos()->o);     // transport orientation
     data << uint32(getMSTime());                            // transport time
     data << uint8(0);                                       // seat
     // end of transport part
     data << uint32(0);                                      // fall time
     GetSession()->SendPacket(&data);
 
-    data.Initialize(SMSG_PET_SPELLS, 8+2+4+4+4*MAX_UNIT_ACTION_BAR_INDEX+1+1);
-    data << uint64(vehicle->GetGUID());
-    data << uint16(0);
-    data << uint32(0);
-    data << uint32(0x00000101);
-
-    for(uint32 i = 0; i < 10; ++i)
-        data << uint16(0) << uint8(0) << uint8(i+8);
-
-    data << uint8(0);
-    data << uint8(0);
-    GetSession()->SendPacket(&data);
+    /*data.Initialize(SMSG_UNKNOWN_1191, 12);
+    data << uint64(GetGUID());
+    data << uint64(vehicle->GetVehicleId());                      // not sure
+    SendMessageToSet(&data, true);*/
 }
 
 /*void Player::ExitVehicle(Vehicle *vehicle)

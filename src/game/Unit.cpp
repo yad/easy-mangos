@@ -14688,6 +14688,8 @@ void Unit::EnterVehicle(Vehicle *vehicle, int8 seat_id, bool force)
         veSeat->m_passengerYaw, v->GetCreationTime(), seat_id, veSeat->m_ID,
         sObjectMgr.GetSeatFlags(veSeat->m_ID), v->GetVehicleFlags());
 
+    m_movementInfo.AddMovementFlag(MOVEFLAG_ONTRANSPORT);
+
     addUnitState(UNIT_STAT_ON_VEHICLE);
     InterruptNonMeleeSpells(false);
 
@@ -14695,7 +14697,7 @@ void Unit::EnterVehicle(Vehicle *vehicle, int8 seat_id, bool force)
         pet->Remove(PET_SAVE_AS_CURRENT);
 
     if(GetTypeId() == TYPEID_PLAYER)
-        ((Player*)this)->SendEnterVehicle(v, veSeat);
+        ((Player*)this)->SendEnterVehicle(v);
 
     WorldPacket data(SMSG_MONSTER_MOVE_TRANSPORT, 60);
     data << GetPackGUID();
@@ -14752,7 +14754,7 @@ void Unit::ExitVehicle()
         float y = GetPositionY();
         float z = GetPositionZ() + 2.0f;
         GetClosePoint(x, y, z, 2.0f + v_size);
-        SendMonsterMove(x, y, z, SPLINETYPE_NORMAL, SPLINEFLAG_FORWARD, 0);
+        SendMonsterMove(x, y, z, SPLINETYPE_NORMAL, SPLINEFLAG_WALKMODE, 0);
     }
 }
 

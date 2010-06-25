@@ -452,12 +452,6 @@ void WorldSession::HandleSetActiveMoverOpcode(WorldPacket &recv_data)
     ObjectGuid guid;
     recv_data >> guid;
 
-    if(_player->m_mover_in_queue && _player->m_mover_in_queue->GetObjectGuid() == guid)
-    {
-        _player->SetMover(_player->m_mover_in_queue);
-        _player->SetMoverInQueue(NULL);
-    }
-
     if(_player->GetMover()->GetObjectGuid() != guid)
     {
         sLog.outError("HandleSetActiveMoverOpcode: incorrect mover guid: mover is %s and should be %s",

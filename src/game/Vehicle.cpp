@@ -454,7 +454,6 @@ void Vehicle::RellocatePassengers(Map *map)
             float oo = passengers->GetOrientation();
 
             map->CreatureRelocation((Creature*)passengers, xx, yy, zz, oo);
-            ((Vehicle*)passengers)->RellocatePassengers(map);
         }
     }
 }
@@ -470,6 +469,7 @@ void Vehicle::AddPassenger(Unit *unit, int8 seatId, bool force)
 
     unit->SetVehicleGUID(GetGUID());
     unit->m_movementInfo.AddMovementFlag(MOVEFLAG_ONTRANSPORT);
+    unit->m_movementInfo.AddMovementFlag(MOVEFLAG_ROOT);
 
     seat->second.passenger = unit;
     if(unit->GetTypeId() == TYPEID_UNIT && ((Creature*)unit)->isVehicle())
@@ -492,6 +492,16 @@ void Vehicle::AddPassenger(Unit *unit, int8 seatId, bool force)
         unit->SendMessageToSet(&data0,true);
     }
 
+    if(unit->GetTypeId() == TYPEID_PLAYER)
+    {
+        uint8 allowMove = 1;
+        if(GetVehicleFlags() & VF_MOVEMENT)
+            allowMove = 0;
+        ((Player*)unit)->SetMover(this);
+        ((Player*)unit)->SetClientControl(this, 1);
+        ((Player*)unit)->GetCamera().SetView(this);
+    }
+
     if(seat->second.vs_flags & SF_MAIN_RIDER)
     {
         if(!(GetVehicleFlags() & VF_MOVEMENT))
@@ -500,12 +510,6 @@ void Vehicle::AddPassenger(Unit *unit, int8 seatId, bool force)
             GetMotionMaster()->MoveIdle();
             SetCharmerGUID(unit->GetGUID());
             unit->SetUInt64Value(UNIT_FIELD_CHARM, GetGUID());
-            if(unit->GetTypeId() == TYPEID_PLAYER)
-            {
-                ((Player*)unit)->SetMover(this);
-                ((Player*)unit)->SetMoverInQueue(this);
-                ((Player*)unit)->SetClientControl(this, 1);
-            }
             if(canFly() || HasAuraType(SPELL_AURA_FLY) || HasAuraType(SPELL_AURA_MOD_FLIGHT_SPEED))
             {
                 WorldPacket data3(SMSG_MOVE_SET_CAN_FLY, 12);
@@ -513,9 +517,6 @@ void Vehicle::AddPassenger(Unit *unit, int8 seatId, bool force)
                 data3 << (uint32)(0);
                 SendMessageToSet(&data3,false);
             }
-            //Make vehicle fly
-            if(GetVehicleFlags() & VF_FLYING)
-                CastSpell(this, 49303, false);
         }
 
         SpellClickInfoMapBounds clickPair = sObjectMgr.GetSpellClickInfoMapBounds(GetEntry());
@@ -535,8 +536,6 @@ void Vehicle::AddPassenger(Unit *unit, int8 seatId, bool force)
             if(((Player*)unit)->GetGroup())
                 ((Player*)unit)->SetGroupUpdateFlag(GROUP_UPDATE_VEHICLE);
 
-            ((Player*)unit)->GetCamera().SetView(this);
-
             BuildVehicleActionBar((Player*)unit);
         }
 
@@ -550,9 +549,6 @@ void Vehicle::AddPassenger(Unit *unit, int8 seatId, bool force)
             data2 << (uint32)(2);
             SendMessageToSet(&data2,false);
         }
-
-        if(GetVehicleFlags() & VF_CAST_AURA && m_VehicleData  && m_VehicleData->v_spells[0] != 0)
-            CastSpell(unit, m_VehicleData->v_spells[0], true);
 
         if(GetVehicleFlags() & VF_NON_SELECTABLE)
             SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
@@ -571,15 +567,18 @@ void Vehicle::RemovePassenger(Unit *unit)
         if((seat->second.flags & (SEAT_FULL | SEAT_VEHICLE_FREE | SEAT_VEHICLE_FULL)) && seat->second.passenger == unit)
         {
             unit->SetVehicleGUID(0);
+            if(unit->GetTypeId() == TYPEID_PLAYER)
+            {
+                ((Player*)unit)->SetMover(unit);
+                ((Player*)unit)->SetClientControl(unit, 1);
+                ((Player*)unit)->GetCamera().SetView(unit);
+            }
 
             if(seat->second.vs_flags & SF_MAIN_RIDER)
             {
                 RemoveSpellsCausingAura(SPELL_AURA_CONTROL_VEHICLE);
                 if(unit->GetTypeId() == TYPEID_PLAYER)
                 {
-                    ((Player*)unit)->SetMover(unit);
-                    ((Player*)unit)->SetClientControl(unit, 1);
-                    ((Player*)unit)->SetMoverInQueue(NULL);
                     ((Player*)unit)->RemovePetActionBar();
 
                     if(((Player*)unit)->GetGroup())
@@ -591,15 +590,11 @@ void Vehicle::RemovePassenger(Unit *unit)
             }
             if(GetVehicleFlags() & VF_NON_SELECTABLE)
                 RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
-            if(GetVehicleFlags() & VF_CAST_AURA && m_VehicleData  && m_VehicleData->v_spells[0] != 0)
-                unit->RemoveAurasDueToSpell(m_VehicleData->v_spells[0]);
             if(seat->second.vs_flags & SF_UNATTACKABLE)
                 unit->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
             // restore player control
             if(unit->GetTypeId() == TYPEID_PLAYER)
             {
-                ((Player*)unit)->GetCamera().ResetView();
-
                 if(seat->second.vs_flags & SF_CAN_CAST)
                 {
                     WorldPacket data0(SMSG_FORCE_MOVE_UNROOT, 10);
@@ -615,11 +610,12 @@ void Vehicle::RemovePassenger(Unit *unit)
                     unit->SendMessageToSet(&data1,true);
                 }
             }
+            unit->m_movementInfo.RemoveMovementFlag(MOVEFLAG_ONTRANSPORT);
+            unit->m_movementInfo.RemoveMovementFlag(MOVEFLAG_ROOT);
             unit->m_movementInfo.ClearTransportData();
+
             seat->second.passenger = NULL;
             seat->second.flags = SEAT_FREE;
-
-            unit->m_movementInfo.RemoveMovementFlag(MOVEFLAG_ONTRANSPORT);
             EmptySeatsCountChanged();
             break;
         }

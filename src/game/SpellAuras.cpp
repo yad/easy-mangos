@@ -9082,8 +9082,12 @@ void Aura::HandleAuraControlVehicle(bool apply, bool Real)
      if(!Real)
          return;
 
-    Unit *caster = GetCaster();
-    Vehicle *vehicle = dynamic_cast<Vehicle*>(GetTarget());
+    Unit* target = GetTarget();
+    Unit* caster = GetCaster();
+    if (target->GetTypeId() != TYPEID_UNIT || !((Creature*)target)->isVehicle())
+        return;
+    Vehicle* vehicle = (Vehicle*)target;
+
     if(!caster || !vehicle)
         return;
 
