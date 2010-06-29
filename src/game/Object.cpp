@@ -123,6 +123,14 @@ void Object::_Create( uint32 guidlow, uint32 entry, HighGuid guidhigh )
     m_PackGUID.Set(guid);
 }
 
+void Object::SetObjectScale(float newScale)
+{
+    if (newScale <= 0.0f)
+        newScale = DEFAULT_OBJECT_SCALE;
+
+    SetFloatValue(OBJECT_FIELD_SCALE_X, newScale);
+}
+
 void Object::BuildMovementUpdateBlock(UpdateData * data, uint16 flags ) const
 {
     ByteBuffer buf(500);
@@ -1207,7 +1215,7 @@ float WorldObject::GetDistance(const WorldObject* obj) const
     float dx = GetPositionX() - obj->GetPositionX();
     float dy = GetPositionY() - obj->GetPositionY();
     float dz = GetPositionZ() - obj->GetPositionZ();
-    float sizefactor = GetObjectSize() + obj->GetObjectSize();
+    float sizefactor = GetObjectBoundingRadius() + obj->GetObjectBoundingRadius();
     float dist = sqrt((dx*dx) + (dy*dy) + (dz*dz)) - sizefactor;
     return ( dist > 0 ? dist : 0);
 }
@@ -1216,7 +1224,7 @@ float WorldObject::GetDistance2d(float x, float y) const
 {
     float dx = GetPositionX() - x;
     float dy = GetPositionY() - y;
-    float sizefactor = GetObjectSize();
+    float sizefactor = GetObjectBoundingRadius();
     float dist = sqrt((dx*dx) + (dy*dy)) - sizefactor;
     return ( dist > 0 ? dist : 0);
 }
@@ -1226,7 +1234,7 @@ float WorldObject::GetDistance(float x, float y, float z) const
     float dx = GetPositionX() - x;
     float dy = GetPositionY() - y;
     float dz = GetPositionZ() - z;
-    float sizefactor = GetObjectSize();
+    float sizefactor = GetObjectBoundingRadius();
     float dist = sqrt((dx*dx) + (dy*dy) + (dz*dz)) - sizefactor;
     return ( dist > 0 ? dist : 0);
 }
@@ -1236,7 +1244,7 @@ float WorldObject::GetDistanceSqr(float x, float y, float z) const
     float dx = GetPositionX() - x;
     float dy = GetPositionY() - y;
     float dz = GetPositionZ() - z;
-    float sizefactor = GetObjectSize();
+    float sizefactor = GetObjectBoundingRadius();
     float dist = dx*dx+dy*dy+dz*dz-sizefactor;
     return (dist > 0 ? dist : 0);
 }
@@ -1245,7 +1253,7 @@ float WorldObject::GetDistance2d(const WorldObject* obj) const
 {
     float dx = GetPositionX() - obj->GetPositionX();
     float dy = GetPositionY() - obj->GetPositionY();
-    float sizefactor = GetObjectSize() + obj->GetObjectSize();
+    float sizefactor = GetObjectBoundingRadius() + obj->GetObjectBoundingRadius();
     float dist = sqrt((dx*dx) + (dy*dy)) - sizefactor;
     return ( dist > 0 ? dist : 0);
 }
@@ -1253,7 +1261,7 @@ float WorldObject::GetDistance2d(const WorldObject* obj) const
 float WorldObject::GetDistanceZ(const WorldObject* obj) const
 {
     float dz = fabs(GetPositionZ() - obj->GetPositionZ());
-    float sizefactor = GetObjectSize() + obj->GetObjectSize();
+    float sizefactor = GetObjectBoundingRadius() + obj->GetObjectBoundingRadius();
     float dist = dz - sizefactor;
     return ( dist > 0 ? dist : 0);
 }
@@ -1265,7 +1273,7 @@ bool WorldObject::IsWithinDist3d(float x, float y, float z, float dist2compare) 
     float dz = GetPositionZ() - z;
     float distsq = dx*dx + dy*dy + dz*dz;
 
-    float sizefactor = GetObjectSize();
+    float sizefactor = GetObjectBoundingRadius();
     float maxdist = dist2compare + sizefactor;
 
     return distsq < maxdist * maxdist;
@@ -1277,7 +1285,7 @@ bool WorldObject::IsWithinDist2d(float x, float y, float dist2compare) const
     float dy = GetPositionY() - y;
     float distsq = dx*dx + dy*dy;
 
-    float sizefactor = GetObjectSize();
+    float sizefactor = GetObjectBoundingRadius();
     float maxdist = dist2compare + sizefactor;
 
     return distsq < maxdist * maxdist;
@@ -1293,7 +1301,7 @@ bool WorldObject::_IsWithinDist(WorldObject const* obj, float dist2compare, bool
         float dz = GetPositionZ() - obj->GetPositionZ();
         distsq += dz*dz;
     }
-    float sizefactor = GetObjectSize() + obj->GetObjectSize();
+    float sizefactor = GetObjectBoundingRadius() + obj->GetObjectBoundingRadius();
     float maxdist = dist2compare + sizefactor;
 
     return distsq < maxdist * maxdist;
@@ -1349,7 +1357,7 @@ bool WorldObject::IsInRange(WorldObject const* obj, float minRange, float maxRan
         distsq += dz*dz;
     }
 
-    float sizefactor = GetObjectSize() + obj->GetObjectSize();
+    float sizefactor = GetObjectBoundingRadius() + obj->GetObjectBoundingRadius();
 
     // check only for real range
     if(minRange > 0.0f)
@@ -1369,7 +1377,7 @@ bool WorldObject::IsInRange2d(float x, float y, float minRange, float maxRange) 
     float dy = GetPositionY() - y;
     float distsq = dx*dx + dy*dy;
 
-    float sizefactor = GetObjectSize();
+    float sizefactor = GetObjectBoundingRadius();
 
     // check only for real range
     if(minRange > 0.0f)
@@ -1390,7 +1398,7 @@ bool WorldObject::IsInRange3d(float x, float y, float z, float minRange, float m
     float dz = GetPositionZ() - z;
     float distsq = dx*dx + dy*dy + dz*dz;
 
-    float sizefactor = GetObjectSize();
+    float sizefactor = GetObjectBoundingRadius();
 
     // check only for real range
     if(minRange > 0.0f)
@@ -1766,7 +1774,7 @@ Creature* WorldObject::SummonCreature(uint32 id, float x, float y, float z, floa
     }
 
     if (x == 0.0f && y == 0.0f && z == 0.0f)
-        GetClosePoint(x, y, z, pCreature->GetObjectSize());
+        GetClosePoint(x, y, z, pCreature->GetObjectBoundingRadius());
 
     pCreature->Relocate(x, y, z, ang);
     pCreature->SetSummonPoint(x, y, z, ang);
@@ -1816,7 +1824,7 @@ Vehicle* WorldObject::SummonVehicle(uint32 id, float x, float y, float z, float 
     }
 
     if (x == 0.0f && y == 0.0f && z == 0.0f)
-        GetClosePoint(x, y, z, v->GetObjectSize());
+        GetClosePoint(x, y, z, v->GetObjectBoundingRadius());
 
     v->Relocate(x, y, z, ang);
 
@@ -1917,7 +1925,7 @@ namespace MaNGOS
 
                 // dist include size of u
                 float dist2d = i_object.GetDistance2d(x,y);
-                i_selector.AddUsedPos(u->GetObjectSize(),angle,dist2d + i_object.GetObjectSize());
+                i_selector.AddUsedPos(u->GetObjectBoundingRadius(), angle, dist2d + i_object.GetObjectBoundingRadius());
             }
         private:
             WorldObject const& i_object;
@@ -1931,16 +1939,16 @@ namespace MaNGOS
 
 void WorldObject::GetNearPoint2D(float &x, float &y, float distance2d, float absAngle ) const
 {
-    x = GetPositionX() + (GetObjectSize() + distance2d) * cos(absAngle);
-    y = GetPositionY() + (GetObjectSize() + distance2d) * sin(absAngle);
+    x = GetPositionX() + (GetObjectBoundingRadius() + distance2d) * cos(absAngle);
+    y = GetPositionY() + (GetObjectBoundingRadius() + distance2d) * sin(absAngle);
 
     MaNGOS::NormalizeMapCoord(x);
     MaNGOS::NormalizeMapCoord(y);
 }
 
-void WorldObject::GetNearPoint(WorldObject const* searcher, float &x, float &y, float &z, float searcher_size, float distance2d, float absAngle ) const
+void WorldObject::GetNearPoint(WorldObject const* searcher, float &x, float &y, float &z, float searcher_bounding_radius, float distance2d, float absAngle) const
 {
-    GetNearPoint2D(x,y,distance2d+searcher_size,absAngle);
+    GetNearPoint2D(x, y, distance2d+searcher_bounding_radius, absAngle);
     z = GetPositionZ();
 
     // if detection disabled, return first point
@@ -1956,7 +1964,7 @@ void WorldObject::GetNearPoint(WorldObject const* searcher, float &x, float &y, 
     bool first_los_conflict = false;                        // first point LOS problems
 
     // prepare selector for work
-    ObjectPosSelector selector(GetPositionX(),GetPositionY(),GetObjectSize(),distance2d+searcher_size);
+    ObjectPosSelector selector(GetPositionX(), GetPositionY(), GetObjectBoundingRadius(), distance2d+searcher_bounding_radius);
 
     // adding used positions around object
     {
