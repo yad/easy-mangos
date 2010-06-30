@@ -32,39 +32,39 @@ protected:
     rcHeightfield* m_hf;
 
     int m_chfCount;
-    rcCompactHeightfield* m_chf;
+	rcCompactHeightfield* m_chf;
 
     int m_csetCount;
-    rcContourSet* m_cset;
+	rcContourSet* m_cset;
 
     int m_pmeshCount;
     int m_dmeshCount;
 
     int m_tile;
 
-    float m_ext[3];
-    float m_center[3];
-    float m_bmin[3], m_bmax[3];
-    dtPolyRef m_ref;
-    
+	float m_ext[3];
+	float m_center[3];
+	float m_bmin[3], m_bmax[3];
+	dtPolyRef m_ref;
+	
 public:
-    Sample_Debug();
-    virtual ~Sample_Debug();
-    
+	Sample_Debug();
+	virtual ~Sample_Debug();
+	
     virtual void cleanup();
-    virtual void handleSettings();
-    virtual void handleTools();
-    virtual void handleDebugMode();
-    virtual void handleClick(const float* p, bool shift);
-    virtual void handleStep();
-    virtual void handleRender();
-    virtual void handleRenderOverlay(double* proj, double* model, int* view);
-    virtual void handleMeshChanged(class InputGeom* geom);
-    virtual bool handleBuild();
+	virtual void handleSettings();
+	virtual void handleTools();
+	virtual void handleDebugMode();
+	virtual void handleClick(const float* p, bool shift);
+	virtual void handleStep();
+	virtual void handleRender();
+	virtual void handleRenderOverlay(double* proj, double* model, int* view);
+	virtual void handleMeshChanged(class InputGeom* geom);
+	virtual bool handleBuild();
     virtual void setHighlightedTile(const float* pos);
 
-    virtual const float* getBoundsMin();
-    virtual const float* getBoundsMax();
+	virtual const float* getBoundsMin();
+	virtual const float* getBoundsMax();
 };
 
 

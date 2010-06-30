@@ -82,8 +82,10 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner)
         i_path->Update(x, y, z);
 
     // can check here to see what i_path->m_type
-    // maybe not move if m_type == PATHFIND_SHORTCUT
-    i_path->getNextPosition(x, y, z);
+    if(i_path->noPath())
+        sLog.outDebug("No path to target!");
+    //else
+        i_path->getNextPosition(x, y, z);
 
     Traveller<T> traveller(owner);
     i_destinationHolder.SetDestination(traveller, x, y, z);

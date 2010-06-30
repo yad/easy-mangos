@@ -28,54 +28,54 @@
 class Sample_TileMesh : public Sample
 {
 protected:
-    bool m_keepInterResults;
-    bool m_buildAll;
-    rcBuildTimes m_buildTimes; 
-    float m_totalBuildTimeMs;
-    bool m_drawPortals;
-    
-    unsigned char* m_triflags;
-    rcHeightfield* m_solid;
-    rcCompactHeightfield* m_chf;
-    rcContourSet* m_cset;
-    rcPolyMesh* m_pmesh;
-    rcPolyMeshDetail* m_dmesh;
-    rcConfig m_cfg;    
-    
-    int m_maxTiles;
-    int m_maxPolysPerTile;
-    float m_tileSize;
-    
-    unsigned int m_tileCol;
-    float m_tileBmin[3];
-    float m_tileBmax[3];
-    float m_tileBuildTime;
-    float m_tileMemUsage;
-    int m_tileTriCount;
+	bool m_keepInterResults;
+	bool m_buildAll;
+	rcBuildTimes m_buildTimes; 
+	float m_totalBuildTimeMs;
+	bool m_drawPortals;
+	
+	unsigned char* m_triflags;
+	rcHeightfield* m_solid;
+	rcCompactHeightfield* m_chf;
+	rcContourSet* m_cset;
+	rcPolyMesh* m_pmesh;
+	rcPolyMeshDetail* m_dmesh;
+	rcConfig m_cfg;	
+	
+	int m_maxTiles;
+	int m_maxPolysPerTile;
+	float m_tileSize;
+	
+	unsigned int m_tileCol;
+	float m_tileBmin[3];
+	float m_tileBmax[3];
+	float m_tileBuildTime;
+	float m_tileMemUsage;
+	int m_tileTriCount;
 
-    unsigned char* buildTileMesh(const int tx, const int ty, const float* bmin, const float* bmax, int& dataSize);
-    
-    void cleanup();
-    
-    void saveAll(const char* path, const dtNavMesh* mesh);
-    dtNavMesh* loadAll(const char* path);
-    
+	unsigned char* buildTileMesh(const int tx, const int ty, const float* bmin, const float* bmax, int& dataSize);
+	
+	void cleanup();
+	
+	void saveAll(const char* path, const dtNavMesh* mesh);
+	dtNavMesh* loadAll(const char* path);
+	
 public:
-    Sample_TileMesh();
-    virtual ~Sample_TileMesh();
-    
-    virtual void handleSettings();
-    virtual void handleTools();
-    virtual void handleDebugMode();
-    virtual void handleRender();
-    virtual void handleRenderOverlay(double* proj, double* model, int* view);
-    virtual void handleMeshChanged(class InputGeom* geom);
-    virtual bool handleBuild();
-    
-    void buildTile(const float* pos);
-    void removeTile(const float* pos);
-    void buildAllTiles();
-    void removeAllTiles();
+	Sample_TileMesh();
+	virtual ~Sample_TileMesh();
+	
+	virtual void handleSettings();
+	virtual void handleTools();
+	virtual void handleDebugMode();
+	virtual void handleRender();
+	virtual void handleRenderOverlay(double* proj, double* model, int* view);
+	virtual void handleMeshChanged(class InputGeom* geom);
+	virtual bool handleBuild();
+	
+	void buildTile(const float* pos);
+	void removeTile(const float* pos);
+	void buildAllTiles();
+	void removeAllTiles();
 };
 
 

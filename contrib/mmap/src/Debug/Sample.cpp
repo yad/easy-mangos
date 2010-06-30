@@ -29,132 +29,132 @@
 #include "SDL_opengl.h"
 
 #ifdef WIN32
-#    define snprintf _snprintf
+#	define snprintf _snprintf
 #endif
 
 
 void DebugDrawGL::depthMask(bool state)
 {
-    glDepthMask(state ? GL_TRUE : GL_FALSE);
+	glDepthMask(state ? GL_TRUE : GL_FALSE);
 }
 
 void DebugDrawGL::begin(duDebugDrawPrimitives prim, float size)
 {
-    switch (prim)
-    {
-        case DU_DRAW_POINTS:
-            glPointSize(size);
-            glBegin(GL_POINTS);
-            break;
-        case DU_DRAW_LINES:
-            glLineWidth(size);
-            glBegin(GL_LINES);
-            break;
-        case DU_DRAW_TRIS:
-            glBegin(GL_TRIANGLES);
-            break;
-        case DU_DRAW_QUADS:
-            glBegin(GL_QUADS);
-            break;
-    };
+	switch (prim)
+	{
+		case DU_DRAW_POINTS:
+			glPointSize(size);
+			glBegin(GL_POINTS);
+			break;
+		case DU_DRAW_LINES:
+			glLineWidth(size);
+			glBegin(GL_LINES);
+			break;
+		case DU_DRAW_TRIS:
+			glBegin(GL_TRIANGLES);
+			break;
+		case DU_DRAW_QUADS:
+			glBegin(GL_QUADS);
+			break;
+	};
 }
-    
+	
 void DebugDrawGL::vertex(const float* pos, unsigned int color)
 {
-    glColor4ubv((GLubyte*)&color);
-    glVertex3fv(pos);
+	glColor4ubv((GLubyte*)&color);
+	glVertex3fv(pos);
 }
-    
+	
 void DebugDrawGL::vertex(const float x, const float y, const float z, unsigned int color)
 {
-    glColor4ubv((GLubyte*)&color);
-    glVertex3f(x,y,z);
+	glColor4ubv((GLubyte*)&color);
+	glVertex3f(x,y,z);
 }
-    
+	
 void DebugDrawGL::end()
 {
-    glEnd();
-    glLineWidth(1.0f);
-    glPointSize(1.0f);
+	glEnd();
+	glLineWidth(1.0f);
+	glPointSize(1.0f);
 }
 
 
 FileIO::FileIO() :
-    m_fp(0),
-    m_mode(-1)
+	m_fp(0),
+	m_mode(-1)
 {
 }
-        
+		
 FileIO::~FileIO()
 {
-    if (m_fp) fclose(m_fp);
+	if (m_fp) fclose(m_fp);
 }
 
 bool FileIO::openForWrite(const char* path)
 {
-    if (m_fp) return false;
-    m_fp = fopen(path, "wb");
-    if (!m_fp) return false;
-    m_mode = 1;
-    return true;
+	if (m_fp) return false;
+	m_fp = fopen(path, "wb");
+	if (!m_fp) return false;
+	m_mode = 1;
+	return true;
 }
 
 bool FileIO::openForRead(const char* path)
 {
-    if (m_fp) return false;
-    m_fp = fopen(path, "rb");
-    if (!m_fp) return false;
-    m_mode = 2;
-    return true;
+	if (m_fp) return false;
+	m_fp = fopen(path, "rb");
+	if (!m_fp) return false;
+	m_mode = 2;
+	return true;
 }
 
 bool FileIO::isWriting() const
 {
-    return m_mode == 1;
+	return m_mode == 1;
 }
 
 bool FileIO::isReading() const
 {
-    return m_mode == 2;
+	return m_mode == 2;
 }
 
 bool FileIO::write(const void* ptr, const size_t size)
 {
-    if (!m_fp || m_mode != 1) return false;
-    fwrite(ptr, size, 1, m_fp);
-    return true;
+	if (!m_fp || m_mode != 1) return false;
+	fwrite(ptr, size, 1, m_fp);
+	return true;
 }
 
 bool FileIO::read(void* ptr, const size_t size)
 {
-    if (!m_fp || m_mode != 2) return false;
-    fread(ptr, size, 1, m_fp);
-    return true;
+	if (!m_fp || m_mode != 2) return false;
+	fread(ptr, size, 1, m_fp);
+	return true;
 }
-        
+		
 
 
 Sample::Sample() :
-    m_geom(0),
-    m_navMesh(0),
-    m_navMeshDrawFlags(DU_DRAWNAVMESH_CLOSEDLIST|DU_DRAWNAVMESH_OFFMESHCONS),
-    m_tool(0)
+	m_geom(0),
+	m_navMesh(0),
+	m_navMeshDrawFlags(DU_DRAWNAVMESH_CLOSEDLIST|DU_DRAWNAVMESH_OFFMESHCONS),
+	m_tool(0)
 {
-    resetCommonSettings();
+	resetCommonSettings();
 }
 
 Sample::~Sample()
 {
-    delete m_navMesh;
-    delete m_tool;
+	delete m_navMesh;
+	delete m_tool;
 }
 
 void Sample::setTool(SampleTool* tool)
 {
-    delete m_tool;
-    m_tool = tool;
-    if (tool)
-        m_tool->init(this);
+	delete m_tool;
+	m_tool = tool;
+	if (tool)
+		m_tool->init(this);
 }
 
 void Sample::handleSettings()
@@ -171,18 +171,18 @@ void Sample::handleDebugMode()
 
 void Sample::handleRender()
 {
-    if (!m_geom)
-        return;
-    
-    DebugDrawGL dd;
-        
-    // Draw mesh
-    duDebugDrawTriMesh(&dd, m_geom->getMesh()->getVerts(), m_geom->getMesh()->getVertCount(),
-                       m_geom->getMesh()->getTris(), m_geom->getMesh()->getNormals(), m_geom->getMesh()->getTriCount(), 0);
-    // Draw bounds
-    const float* bmin = m_geom->getMeshBoundsMin();
-    const float* bmax = m_geom->getMeshBoundsMax();
-    duDebugDrawBoxWire(&dd, bmin[0],bmin[1],bmin[2], bmax[0],bmax[1],bmax[2], duRGBA(255,255,255,128), 1.0f);
+	if (!m_geom)
+		return;
+	
+	DebugDrawGL dd;
+		
+	// Draw mesh
+	duDebugDrawTriMesh(&dd, m_geom->getMesh()->getVerts(), m_geom->getMesh()->getVertCount(),
+					   m_geom->getMesh()->getTris(), m_geom->getMesh()->getNormals(), m_geom->getMesh()->getTriCount(), 0);
+	// Draw bounds
+	const float* bmin = m_geom->getMeshBoundsMin();
+	const float* bmax = m_geom->getMeshBoundsMax();
+	duDebugDrawBoxWire(&dd, bmin[0],bmin[1],bmin[2], bmax[0],bmax[1],bmax[2], duRGBA(255,255,255,128), 1.0f);
 }
 
 void Sample::handleRenderOverlay(double* /*proj*/, double* /*model*/, int* /*view*/)
@@ -191,96 +191,96 @@ void Sample::handleRenderOverlay(double* /*proj*/, double* /*model*/, int* /*vie
 
 void Sample::handleMeshChanged(InputGeom* geom)
 {
-    m_geom = geom;
+	m_geom = geom;
 }
 
 const float* Sample::getBoundsMin()
 {
-    if (!m_geom) return 0;
-    return m_geom->getMeshBoundsMin();
+	if (!m_geom) return 0;
+	return m_geom->getMeshBoundsMin();
 }
 
 const float* Sample::getBoundsMax()
 {
-    if (!m_geom) return 0;
-    return m_geom->getMeshBoundsMax();
+	if (!m_geom) return 0;
+	return m_geom->getMeshBoundsMax();
 }
 
 void Sample::resetCommonSettings()
 {
-    m_cellSize = 0.3f;
-    m_cellHeight = 0.2f;
-    m_agentHeight = 2.0f;
-    m_agentRadius = 0.6f;
-    m_agentMaxClimb = 0.9f;
-    m_agentMaxSlope = 45.0f;
-    m_regionMinSize = 50;
-    m_regionMergeSize = 20;
-    m_edgeMaxLen = 12.0f;
-    m_edgeMaxError = 1.3f;
-    m_vertsPerPoly = 6.0f;
-    m_detailSampleDist = 6.0f;
-    m_detailSampleMaxError = 1.0f;
+	m_cellSize = 0.3f;
+	m_cellHeight = 0.2f;
+	m_agentHeight = 2.0f;
+	m_agentRadius = 0.6f;
+	m_agentMaxClimb = 0.9f;
+	m_agentMaxSlope = 45.0f;
+	m_regionMinSize = 50;
+	m_regionMergeSize = 20;
+	m_edgeMaxLen = 12.0f;
+	m_edgeMaxError = 1.3f;
+	m_vertsPerPoly = 6.0f;
+	m_detailSampleDist = 6.0f;
+	m_detailSampleMaxError = 1.0f;
 }
 
 void Sample::handleCommonSettings()
 {
-    imguiLabel("Rasterization");
-    imguiSlider("Cell Size", &m_cellSize, 0.1f, 1.0f, 0.01f);
-    imguiSlider("Cell Height", &m_cellHeight, 0.1f, 1.0f, 0.01f);
-    
-    if (m_geom)
-    {
-        const float* bmin = m_geom->getMeshBoundsMin();
-        const float* bmax = m_geom->getMeshBoundsMax();
-        int gw = 0, gh = 0;
-        rcCalcGridSize(bmin, bmax, m_cellSize, &gw, &gh);
-        char text[64];
-        snprintf(text, 64, "Voxels  %d x %d", gw, gh);
-        imguiValue(text);
-    }
-    
-    imguiSeparator();
-    imguiLabel("Agent");
-    imguiSlider("Height", &m_agentHeight, 0.1f, 5.0f, 0.1f);
-    imguiSlider("Radius", &m_agentRadius, 0.0f, 5.0f, 0.1f);
-    imguiSlider("Max Climb", &m_agentMaxClimb, 0.1f, 5.0f, 0.1f);
-    imguiSlider("Max Slope", &m_agentMaxSlope, 0.0f, 90.0f, 1.0f);
-    
-    imguiSeparator();
-    imguiLabel("Region");
-    imguiSlider("Min Region Size", &m_regionMinSize, 0.0f, 150.0f, 1.0f);
-    imguiSlider("Merged Region Size", &m_regionMergeSize, 0.0f, 150.0f, 1.0f);
-    
-    imguiSeparator();
-    imguiLabel("Polygonization");
-    imguiSlider("Max Edge Length", &m_edgeMaxLen, 0.0f, 50.0f, 1.0f);
-    imguiSlider("Max Edge Error", &m_edgeMaxError, 0.1f, 3.0f, 0.1f);
-    imguiSlider("Verts Per Poly", &m_vertsPerPoly, 3.0f, 12.0f, 1.0f);        
+	imguiLabel("Rasterization");
+	imguiSlider("Cell Size", &m_cellSize, 0.1f, 1.0f, 0.01f);
+	imguiSlider("Cell Height", &m_cellHeight, 0.1f, 1.0f, 0.01f);
+	
+	if (m_geom)
+	{
+		const float* bmin = m_geom->getMeshBoundsMin();
+		const float* bmax = m_geom->getMeshBoundsMax();
+		int gw = 0, gh = 0;
+		rcCalcGridSize(bmin, bmax, m_cellSize, &gw, &gh);
+		char text[64];
+		snprintf(text, 64, "Voxels  %d x %d", gw, gh);
+		imguiValue(text);
+	}
+	
+	imguiSeparator();
+	imguiLabel("Agent");
+	imguiSlider("Height", &m_agentHeight, 0.1f, 5.0f, 0.1f);
+	imguiSlider("Radius", &m_agentRadius, 0.0f, 5.0f, 0.1f);
+	imguiSlider("Max Climb", &m_agentMaxClimb, 0.1f, 5.0f, 0.1f);
+	imguiSlider("Max Slope", &m_agentMaxSlope, 0.0f, 90.0f, 1.0f);
+	
+	imguiSeparator();
+	imguiLabel("Region");
+	imguiSlider("Min Region Size", &m_regionMinSize, 0.0f, 150.0f, 1.0f);
+	imguiSlider("Merged Region Size", &m_regionMergeSize, 0.0f, 150.0f, 1.0f);
+	
+	imguiSeparator();
+	imguiLabel("Polygonization");
+	imguiSlider("Max Edge Length", &m_edgeMaxLen, 0.0f, 50.0f, 1.0f);
+	imguiSlider("Max Edge Error", &m_edgeMaxError, 0.1f, 3.0f, 0.1f);
+	imguiSlider("Verts Per Poly", &m_vertsPerPoly, 3.0f, 12.0f, 1.0f);		
 
-    imguiSeparator();
-    imguiLabel("Detail Mesh");
-    imguiSlider("Sample Distance", &m_detailSampleDist, 0.0f, 16.0f, 1.0f);
-    imguiSlider("Max Sample Error", &m_detailSampleMaxError, 0.0f, 16.0f, 1.0f);
-    
-    imguiSeparator();
+	imguiSeparator();
+	imguiLabel("Detail Mesh");
+	imguiSlider("Sample Distance", &m_detailSampleDist, 0.0f, 16.0f, 1.0f);
+	imguiSlider("Max Sample Error", &m_detailSampleMaxError, 0.0f, 16.0f, 1.0f);
+	
+	imguiSeparator();
 }
 
 void Sample::handleClick(const float* p, bool shift)
 {
-    if (m_tool)
-        m_tool->handleClick(p, shift);
+	if (m_tool)
+		m_tool->handleClick(p, shift);
 }
 
 void Sample::handleStep()
 {
-    if (m_tool)
-        m_tool->handleStep();
+	if (m_tool)
+		m_tool->handleStep();
 }
 
 bool Sample::handleBuild()
 {
-    return true;
+	return true;
 }
 
 void Sample::setMeshName(char* meshName)

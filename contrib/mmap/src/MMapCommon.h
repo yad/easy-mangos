@@ -75,6 +75,8 @@ namespace MMAP
         }
         while (FindNextFile(hFind, &findFileInfo));
 
+        FindClose(hFind);
+
     #else
         const char *p = dirpath.c_str();
         DIR * dirp;

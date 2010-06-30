@@ -95,7 +95,7 @@ void PathInfo::Build()
     }
 
     float extents[3] = {2.0f, 4.0f, 2.0f};      // defines bounds of box for search area
-    dtQueryFilter filter = dtQueryFilter();     // search filter
+    dtQueryFilter filter = dtQueryFilter();     // use general filter so we know if we are near navmesh
 
     // get start and end positions
     getStartPosition(x, y, z);
@@ -137,16 +137,7 @@ void PathInfo::Build(dtPolyRef startPoly, dtPolyRef endPoly)
     startOffPoly = !isPointInPolyBounds(startPos[2], startPos[0], startPos[1], distanceStart, startPoly);
     endOffPoly = !isPointInPolyBounds(endPos[2], endPos[0], endPos[1], distanceEnd, endPoly);
 
-    // if startPos is really far from startPoly, should we give up?
-
-    // if endPos is really far from endPoly, should we clamp endPos to the polygon?
-
-    // PATHFIND TODO: find height above polygon
-    //float startHeight, endHeight;
-    //startHeight =
-    //endHeight =
-
-    dtQueryFilter filter = dtQueryFilter();
+    dtQueryFilter filter = createFilter();      // use special filter so we use proper terrain types
 
     dtPolyRef pathPolys[MAX_PATH_LENGTH];
     m_length = m_navMesh->findPath(
@@ -174,6 +165,9 @@ void PathInfo::Build(dtPolyRef startPoly, dtPolyRef endPoly)
         m_pathPolyRefs[i] = pathPolys[i];
 
     updateNextPosition();
+
+    if(m_length >= MAX_PATH_LENGTH)
+        m_type = PathType(m_type | PATHFIND_INCOMPLETE);
 
     m_currentNode = 0;
 }
@@ -264,10 +258,13 @@ void PathInfo::Update(const float destX, const float destY, const float destZ)
 
         // PATHFIND TODO: prevent walking/swimming mobs from flying into the air
 
+        clear();
+        m_pathPolyRefs = new dtPolyRef;
+        *m_pathPolyRefs = startPoly;
         m_length = 1;
         getEndPosition(x, y, z);
         setNextPosition(x, y, z);
-        m_type = PATHFIND_NORMAL;
+        m_type = PathType(m_type | PATHFIND_NORMAL);
         return;
     }
 
@@ -393,9 +390,16 @@ void PathInfo::updateNextPosition()
 
     delete [] m_pathPoints;
     m_pathPoints = pathPoints;
-    //delete [] pathPoints;
 
-    m_type = PATHFIND_NORMAL;
+    m_type = PathType(m_type | PATHFIND_NORMAL);
+
+    // if end position from findStraightPath isn't the
+    // place we want to go, there is likely no path
+    endPos[0] = pathPoints[(pointCount-1)*3+2];
+    endPos[1] = pathPoints[(pointCount-1)*3];
+    endPos[2] = pathPoints[(pointCount-1)*3+1];
+    if(!dtVequal(endPos, m_endPosition))
+        m_type = PathType(m_type | PATHFIND_NOPATH);
 }
 
 void PathInfo::trim(dtPolyRef startPoly, dtPolyRef endPoly)
@@ -433,4 +437,88 @@ void PathInfo::shortcut()
     getEndPosition(x, y, z);
     setNextPosition(x, y, z);
     m_type = PATHFIND_SHORTCUT;
+}
+
+dtQueryFilter PathInfo::createFilter()
+{
+    dtQueryFilter filter;
+
+    if(m_sourceObject->GetTypeId() != TYPEID_UNIT)
+        return filter;
+
+    Creature* creature = (Creature*)m_sourceObject;
+    filter.includeFlags = 0;
+    filter.excludeFlags = 0;
+
+    if(creature->canWalk())
+    {
+        filter.includeFlags |= NAV_GROUND;          // walk
+        filter.includeFlags |= NAV_SHALLOW_WATER;   // any creature can walk through shallow water
+    }
+
+    if(creature->canSwim())
+        filter.includeFlags |= NAV_WATER;           // swim
+    else
+    {
+        // TODO: check size of creature to determine NAV_AVERAGE_WATER and NAV_DEEP_WATER
+    }
+
+    // TODO: check for NAV_MAGMA
+    //if(creature->IsImmunedToDamage(SPELL_SCHOOL_MASK_FIRE))     // immune to fire damage - valid?
+
+    // TODO: check for NAV_SLIME
+
+    // allow creatures to cheat and use different movement types if they are moved
+    // forcefully into terrain they can't normally move in
+    if(creature->IsInWater() || creature->IsUnderWater())
+        filter.includeFlags |= getNavTerrain(creature->GetPositionX(),creature->GetPositionY(),creature->GetPositionZ());
+
+    return filter;
+}
+
+bool PathInfo::canFly()
+{
+    if(m_sourceObject->GetTypeId() != TYPEID_UNIT)
+        return false;
+
+    Creature* creature = (Creature*)m_sourceObject;
+    return creature->canFly();
+}
+
+bool PathInfo::canSwim()
+{
+    if(m_sourceObject->GetTypeId() != TYPEID_UNIT)
+        return false;
+
+    Creature* creature = (Creature*)m_sourceObject;
+    return creature->canSwim();
+}
+
+NavTerrain PathInfo::getNavTerrain(float x, float y, float z)
+{
+    GridMapLiquidData data;
+    m_sourceObject->GetMap()->getLiquidStatus(x,
+                                              y,
+                                              z,
+                                              MAP_ALL_LIQUIDS,
+                                              &data);
+
+    switch(data.type)
+    {
+        case MAP_LIQUID_TYPE_WATER:
+            return NAV_WATER;
+        case MAP_LIQUID_TYPE_MAGMA:
+            return NAV_MAGMA;
+        case MAP_LIQUID_TYPE_SLIME:
+            return NAV_SLIME;
+        default:
+            return NAV_UNSPECIFIED;
+    }
+}
+
+bool PathInfo::noPath()
+{
+    // basically:
+    // endOfPath != destination && completePath
+    return (m_type & PATHFIND_NOPATH) && !(m_type & PATHFIND_INCOMPLETE);
 }

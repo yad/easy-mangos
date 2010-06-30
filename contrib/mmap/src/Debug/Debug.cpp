@@ -46,6 +46,12 @@ void duReadNavMesh(int mapID, dtNavMesh* &navMesh)
 
         navMesh->addTile(data, length, DT_TILE_FREE_DATA);
     }
+
+    if(!fileNames.size())
+    {
+        delete navMesh;
+        navMesh = 0;
+    }
 }
 
 int duReadHeightfield(int mapID, rcHeightfield* &hf)
@@ -72,17 +78,35 @@ int duReadHeightfield(int mapID, rcHeightfield* &hf)
         fread(hf[i].bmin, sizeof(float), 3, file);
         fread(hf[i].bmax, sizeof(float), 3, file);
 
-        hf[i].spans = new rcSpan*[hf[i].width*hf[i].height + 1];
+        hf[i].spans = new rcSpan*[hf[i].width*hf[i].height];
+        memset(hf[i].spans, 0, sizeof(rcSpan*)*hf[i].width*hf[i].height);
 
-        for(int j = 0; j < hf[i].width*hf[i].height; ++j)
-            hf[i].spans[j] = new rcSpan;
-        hf[i].spans[hf[i].width*hf[i].height] = 0;
+        for(int y = 0; y < hf[i].height; ++y)
+            for(int x = 0; x < hf[i].width; ++x)
+            {
+                int spanCount;
+                fread(&spanCount, sizeof(int), 1, file);
 
-        for(int j = 0; j < hf[i].width*hf[i].height; ++j)
-        {
-            fread(hf[i].spans[j], sizeof(rcSpan)-sizeof(rcSpan*), 1, file);
-            hf[i].spans[j]->next = hf[i].spans[j+1];
-        }
+                if(spanCount)
+                    hf[i].spans[x + y*hf[i].width] = new rcSpan;
+                else
+                    hf[i].spans[x + y*hf[i].width] = NULL;
+
+                rcSpan* span = hf[i].spans[x + y*hf[i].width];
+
+                while(spanCount--)
+                {
+                    fread(span, sizeof(rcSpan), 1, file);
+
+                    if(spanCount)
+                    {
+                        span->next = new rcSpan;
+                        span = span->next;
+                    }
+                    else
+                        span->next = NULL;
+                }
+            }
 
         fclose(file);
     }
@@ -233,19 +257,19 @@ int duReadDetailMesh(int mapID, rcPolyMeshDetail* &mesh)
 }
 
 myMeshLoaderObj::myMeshLoaderObj() :
-    m_verts(0),
-    m_tris(0),
-    m_normals(0),
-    m_vertCount(0),
-    m_triCount(0)
+	m_verts(0),
+	m_tris(0),
+	m_normals(0),
+	m_vertCount(0),
+	m_triCount(0)
 {
 }
 
 myMeshLoaderObj::~myMeshLoaderObj()
 {
-    delete [] m_verts;
-    delete [] m_normals;
-    delete [] m_tris;
+	delete [] m_verts;
+	delete [] m_normals;
+	delete [] m_tris;
 }
 
 bool myMeshLoaderObj::load(const char* filename)
@@ -327,34 +351,34 @@ bool myMeshLoaderObj::load(const char* filename)
     m_tris = tris;
     m_triCount = triCount;
 
-    m_normals = new float[m_triCount*3];
-    for (int i = 0; i < m_triCount*3; i += 3)
-    {
-        const float* v0 = &m_verts[m_tris[i]*3];
-        const float* v1 = &m_verts[m_tris[i+1]*3];
-        const float* v2 = &m_verts[m_tris[i+2]*3];
-        float e0[3], e1[3];
-        for (int j = 0; j < 3; ++j)
-        {
-            e0[j] = v1[j] - v0[j];
-            e1[j] = v2[j] - v0[j];
-        }
-        float* n = &m_normals[i];
-        n[0] = e0[1]*e1[2] - e0[2]*e1[1];
-        n[1] = e0[2]*e1[0] - e0[0]*e1[2];
-        n[2] = e0[0]*e1[1] - e0[1]*e1[0];
-        float d = sqrtf(n[0]*n[0] + n[1]*n[1] + n[2]*n[2]);
-        if (d > 0)
-        {
-            d = 1.0f/d;
-            n[0] *= d;
-            n[1] *= d;
-            n[2] *= d;
-        }
-    }
-    
-    strncpy(m_filename, filename, sizeof(m_filename));
-    m_filename[sizeof(m_filename)-1] = '\0';
-    
-    return true;
+	m_normals = new float[m_triCount*3];
+	for (int i = 0; i < m_triCount*3; i += 3)
+	{
+		const float* v0 = &m_verts[m_tris[i]*3];
+		const float* v1 = &m_verts[m_tris[i+1]*3];
+		const float* v2 = &m_verts[m_tris[i+2]*3];
+		float e0[3], e1[3];
+		for (int j = 0; j < 3; ++j)
+		{
+			e0[j] = v1[j] - v0[j];
+			e1[j] = v2[j] - v0[j];
+		}
+		float* n = &m_normals[i];
+		n[0] = e0[1]*e1[2] - e0[2]*e1[1];
+		n[1] = e0[2]*e1[0] - e0[0]*e1[2];
+		n[2] = e0[0]*e1[1] - e0[1]*e1[0];
+		float d = sqrtf(n[0]*n[0] + n[1]*n[1] + n[2]*n[2]);
+		if (d > 0)
+		{
+			d = 1.0f/d;
+			n[0] *= d;
+			n[1] *= d;
+			n[2] *= d;
+		}
+	}
+	
+	strncpy(m_filename, filename, sizeof(m_filename));
+	m_filename[sizeof(m_filename)-1] = '\0';
+	
+	return true;
 }

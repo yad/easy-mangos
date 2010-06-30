@@ -99,10 +99,6 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\..\src\shared\pathfinding\DebugUtils\DebugDraw.cpp" />
-    <ClCompile Include="..\..\..\..\src\shared\pathfinding\DebugUtils\DetourDebugDraw.cpp" />
-    <ClCompile Include="..\..\..\..\src\shared\pathfinding\DebugUtils\RecastDebugDraw.cpp" />
-    <ClCompile Include="..\..\..\..\src\shared\pathfinding\DebugUtils\RecastDump.cpp" />
     <ClCompile Include="..\..\..\..\src\shared\pathfinding\Detour\DetourCommon.cpp" />
     <ClCompile Include="..\..\..\..\src\shared\pathfinding\Detour\DetourNavMesh.cpp" />
     <ClCompile Include="..\..\..\..\src\shared\pathfinding\Detour\DetourNavMeshBuilder.cpp" />
@@ -132,10 +128,6 @@
     <ClCompile Include="..\..\src\VMapExtensions.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\src\shared\pathfinding\DebugUtils\DebugDraw.h" />
-    <ClInclude Include="..\..\..\..\src\shared\pathfinding\DebugUtils\DetourDebugDraw.h" />
-    <ClInclude Include="..\..\..\..\src\shared\pathfinding\DebugUtils\RecastDebugDraw.h" />
-    <ClInclude Include="..\..\..\..\src\shared\pathfinding\DebugUtils\RecastDump.h" />
     <ClInclude Include="..\..\..\..\src\shared\pathfinding\Detour\DetourCommon.h" />
     <ClInclude Include="..\..\..\..\src\shared\pathfinding\Detour\DetourNavMesh.h" />
     <ClInclude Include="..\..\..\..\src\shared\pathfinding\Detour\DetourNavMeshBuilder.h" />

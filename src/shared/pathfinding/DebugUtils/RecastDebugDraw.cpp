@@ -497,8 +497,16 @@ void duDebugDrawPolyMesh(duDebugDraw* dd, const struct rcPolyMesh& mesh)
 			color = duRGBA(0,192,255,64);
 		else if (mesh.areas[i] == RC_NULL_AREA)
 			color = duRGBA(0,0,0,64);
-		else
-			color = duIntToCol(mesh.areas[i], 255);
+		else if (mesh.areas[i] == 1)    // GROUND
+			color = duRGBA(145,145,90,64);
+        else if (mesh.areas[i] == 2 || mesh.areas[i] == 0x80)    // WATER || unused
+            color = duRGBA(120,205,205,64);
+        else if (mesh.areas[i] == 4)    // LAVA
+            color = duRGBA(240,95,50,64);
+        else if (mesh.areas[i] == 8)    // SLIME
+            color = duRGBA(85,225,85,64);
+        else
+            color = duIntToCol(mesh.areas[i], 64);
 		
 		unsigned short vi[3];
 		for (int j = 2; j < nvp; ++j)

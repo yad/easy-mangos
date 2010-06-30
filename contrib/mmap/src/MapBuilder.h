@@ -24,7 +24,6 @@ namespace MMAP
 
     struct IntermediateValues
     {
-        rcChunkyTriMesh* chunkyMesh;
         rcHeightfield* heightfield;
         unsigned char* triFlags;
         rcCompactHeightfield* compactHeightfield;
@@ -91,11 +90,13 @@ namespace MMAP
             // move map building
             void buildMoveMap(uint32 mapID);
             void buildNavMesh(uint32 mapID, dtNavMesh* &navMesh);
-            void buildMoveMapTile(uint32 mapID,     uint32 tileX,
-                                  uint32 tileY,     float* verts,
-                                  int vertCount,    int* tris,
-                                  int triCount,     float* bmin,
-                                  float* bmax,      dtNavMesh* navMesh);
+            void buildMoveMapTile(uint32 mapID,
+                                  uint32 tileX,
+                                  uint32 tileY,
+                                  MeshData meshData,
+                                  float* bmin,
+                                  float* bmax,
+                                  dtNavMesh* navMesh);
 
             void getTileBounds(uint32 tileX, uint32 tileY,
                                float* verts, int vertCount,
@@ -110,7 +111,7 @@ namespace MMAP
             bool isTransportMap(uint32 mapID);
 
             // debug output
-            void generateObjFile(uint32 mapID, uint32 tileX, uint32 tileY, float* verts, int vertCount, int* tris, int triCount);
+            void generateObjFile(uint32 mapID, uint32 tileX, uint32 tileY, MeshData meshData);
             void writeIV(uint32 mapID, uint32 tileX, uint32 tileY, IntermediateValues iv);
             void writeHeightfield(FILE* file, const rcHeightfield* hf);
             void writeSpan(FILE* file, const rcSpan* span);

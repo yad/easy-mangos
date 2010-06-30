@@ -5,13 +5,31 @@
 
 class WorldObject;
 
-#define MAX_PATH_LENGTH 50
+#define MAX_PATH_LENGTH 256
+
+enum NavTerrain
+{
+    NAV_GROUND  = 0x01,
+
+    NAV_MAGMA   = 0x02,
+    NAV_SLIME   = 0x04,
+
+    NAV_SHALLOW_WATER   = 0x08,
+    NAV_AVERAGE_WATER   = 0x10,
+    NAV_DEEP_WATER      = 0x20,
+    NAV_SWIM_WATER      = 0x40,
+    NAV_WATER           = NAV_SHALLOW_WATER | NAV_AVERAGE_WATER | NAV_DEEP_WATER | NAV_SWIM_WATER,
+
+    NAV_UNSPECIFIED     = 0x80
+};
 
 enum PathType
 {
-    PATHFIND_BLANK      = 0x0001,    // path not built yet
-    PATHFIND_NORMAL     = 0x0002,    // normal path
-    PATHFIND_SHORTCUT   = 0x0004,    // travel through obstacles, terrain, air, etc (old behavior)
+    PATHFIND_BLANK      = 0x0001,   // path not built yet
+    PATHFIND_NORMAL     = 0x0002,   // normal path
+    PATHFIND_SHORTCUT   = 0x0004,   // travel through obstacles, terrain, air, etc (old behavior)
+    PATHFIND_INCOMPLETE = 0x0008,   // path is too long, more will be calculated later
+    PATHFIND_NOPATH     = 0x0010    // could not find a path
 };
 
 class PathInfo
@@ -34,6 +52,7 @@ class PathInfo
         bool isPointInPolyBounds(float x, float y, float z, float &distance, dtPolyRef polyRef);
 
         void Update(const float x, const float y, const float z);
+        bool noPath();
         void GetLength();
         float* GetPoints();
 
@@ -61,6 +80,15 @@ class PathInfo
         void Build(dtPolyRef startPoly, dtPolyRef endPoly);
         void trim(dtPolyRef startPoly, dtPolyRef endPoly);
         void shortcut();
+
+        dtQueryFilter createFilter();
+
+        bool canFly();
+        bool canSwim();
+        NavTerrain getNavTerrain(float x, float y, float z);
+
+        inline void coreToRecast(float core[3], float recast[3]) {recast[0] = core[1]; recast[1] = core[2]; recast[2] = core[0];}
+        inline void recastToCore(float recast[3], float core[3]) {core[0] = recast[2]; core[1] = recast[0]; core[2] = recast[1];}
 };
 
 inline bool isSamePoint(const float* point1, const float* point2)

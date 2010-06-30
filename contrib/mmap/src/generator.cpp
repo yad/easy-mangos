@@ -14,21 +14,21 @@ bool checkDirectories(bool debugOutput)
 {
     vector<string> dirFiles;
 
-    if(!getDirContents(dirFiles, "maps") || !dirFiles.size())
+    if(getDirContents(dirFiles, "maps") == LISTFILE_DIRECTORY_NOT_FOUND || !dirFiles.size())
     {
         printf("'maps' directory is empty or does not exist\n");
         return false;
     }
 
     dirFiles.clear();
-    if(!getDirContents(dirFiles, "vmaps", "*.vmtree") || !dirFiles.size())
+    if(getDirContents(dirFiles, "vmaps", "*.vmtree") == LISTFILE_DIRECTORY_NOT_FOUND || !dirFiles.size())
     {
         printf("'vmaps' directory is empty or does not exist\n");
         return false;
     }
 
     dirFiles.clear();
-    if(!getDirContents(dirFiles, "mmaps"))
+    if(getDirContents(dirFiles, "mmaps") == LISTFILE_DIRECTORY_NOT_FOUND)
     {
         printf("'mmaps' directory does not exist\n");
         return false;
@@ -36,7 +36,7 @@ bool checkDirectories(bool debugOutput)
 
     dirFiles.clear();
     if(debugOutput)
-        if(!getDirContents(dirFiles, "Meshes"))
+        if(getDirContents(dirFiles, "Meshes") == LISTFILE_DIRECTORY_NOT_FOUND)
         {
             printf("'Meshes' directory does not exist (no place to put debugOutput files)\n");
             return false;
@@ -57,6 +57,7 @@ void handleArgs(int argc, char** argv,
                bool &debugOutput,
                bool &badParam)
 {
+    char zero[2] = "0";
     int i;
     char* param;
     for(i = 1; i < argc; ++i)
@@ -78,9 +79,9 @@ void handleArgs(int argc, char** argv,
             int tilex = atoi(stileX);
             int tiley = atoi(stileY);
 
-            if((tilex > 0 && tilex < 64) || (tilex == 0 && strcmp(stileX, "0")))
+            if((tilex > 0 && tilex < 64) || (tilex == 0 && strcmp(stileX, zero) == 0))
                 tileX = tilex;
-            if((tiley > 0 && tiley < 64) || (tiley == 0 && strcmp(stileY, "0")))
+            if((tiley > 0 && tiley < 64) || (tiley == 0 && strcmp(stileY, zero) == 0))
                 tileY = tiley;
 
             if(tileX < 0 || tileY < 0)
@@ -142,7 +143,7 @@ void handleArgs(int argc, char** argv,
         else
         {
             int map = atoi(argv[i]);
-            if(map > 0 || (map == 0 && (strcmp(argv[i], "0") == 0)))
+            if(map > 0 || (map == 0 && (strcmp(argv[i], zero) == 0)))
                 mapnum = map;
             else
             {

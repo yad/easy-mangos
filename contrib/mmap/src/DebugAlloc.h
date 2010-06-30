@@ -29,6 +29,7 @@
 #ifndef _DEBUG_ALLOC_H
 #define _DEBUG_ALLOC_H
 
+#include <new>
 #include <map>
 #include <string>
 

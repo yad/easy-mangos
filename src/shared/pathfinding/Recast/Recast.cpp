@@ -169,7 +169,7 @@ bool rcBuildCompactHeightfield(const int walkableHeight, const int walkableClimb
 			rcGetLog()->log(RC_LOG_ERROR, "rcBuildCompactHeightfield: Out of memory 'chf.areas' (%d)", spanCount);
 		return false;
 	}
-	memset(chf.areas, RC_WALKABLE_AREA, sizeof(unsigned char)*spanCount);
+	memset(chf.areas, 0, sizeof(unsigned char)*spanCount);
 	
 	const int MAX_HEIGHT = 0xffff;
 	
@@ -193,6 +193,7 @@ bool rcBuildCompactHeightfield(const int walkableHeight, const int walkableClimb
 					const int top = s->next ? (int)s->next->smin : MAX_HEIGHT;
 					chf.spans[idx].y = (unsigned short)rcClamp(bot, 0, 0xffff);
 					chf.spans[idx].h = (unsigned char)rcClamp(top - bot, 0, 0xff);
+                    chf.areas[idx] = s->area;
 					idx++;
 					c.count++;
 				}

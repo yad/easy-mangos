@@ -19,7 +19,7 @@ void Map::LoadNavMesh(int gx, int gy)
 
         if(!file)
         {
-            //sLog.outError("Error: Could not open mmap file '%s'", fileName);
+            sLog.outDebug("Error: Could not open mmap file '%s'", fileName);
             return;
         }
 
@@ -49,7 +49,7 @@ void Map::LoadNavMesh(int gx, int gy)
 
     if(!file)
     {
-        //sLog.outError("Error: Could not open mmtile file '%s'", fileName);
+        sLog.outDebug("Error: Could not open mmtile file '%s'", fileName);
         return;
     }
 
@@ -87,7 +87,7 @@ void Map::LoadNavMesh(int gx, int gy)
 
     uint32 packedTilePos = packTileID(uint32(header->x), uint32(header->y));
     m_mmapTileMap.insert(std::pair<uint32, uint32>(packedGridPos, packedTilePos));
-    sLog.outError("Loaded mmtile %03i[%02i,%02i] into %03i(%u)[%02i,%02i]", i_id, gx, gy, i_id, GetInstanceId(), header->x, header->y);
+    sLog.outDetail("Loaded mmtile %03i[%02i,%02i] into %03i(%u)[%02i,%02i]", i_id, gx, gy, i_id, GetInstanceId(), header->x, header->y);
 }
 
 void Map::UnloadNavMesh(int gx, int gy)
@@ -104,7 +104,7 @@ void Map::UnloadNavMesh(int gx, int gy)
     m_navMesh->removeTile(m_navMesh->getTileRefAt(int(tileX), int(tileY)), 0, 0);
     m_mmapTileMap.erase(packedGridPos);
 
-    sLog.outError("Unloaded mmtile %03i[%02i,%02i] from %03i(%u)", i_id, gx, gy, i_id, GetInstanceId());
+    sLog.outDetail("Unloaded mmtile %03i[%02i,%02i] from %03i(%u)", i_id, gx, gy, i_id, GetInstanceId());
 }
 
 dtNavMesh* Map::GetNavMesh()
