@@ -77,7 +77,7 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner)
 
     // can check here to see what i_path->m_type
     if(i_path->noPath())
-        sLog.outError("No path to target!");
+        sLog.outDebug("No path to target!");
     //else
         i_path->getNextPosition(x, y, z);
 
