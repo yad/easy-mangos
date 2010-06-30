@@ -137,15 +137,6 @@ void PathInfo::Build(dtPolyRef startPoly, dtPolyRef endPoly)
     startOffPoly = !isPointInPolyBounds(startPos[2], startPos[0], startPos[1], distanceStart, startPoly);
     endOffPoly = !isPointInPolyBounds(endPos[2], endPos[0], endPos[1], distanceEnd, endPoly);
 
-    // if startPos is really far from startPoly, should we give up?
-
-    // if endPos is really far from endPoly, should we clamp endPos to the polygon?
-
-    // PATHFIND TODO: find height above polygon
-    //float startHeight, endHeight;
-    //startHeight =
-    //endHeight = 
-
     dtQueryFilter filter = createFilter();      // use special filter so we use proper terrain types
 
     dtPolyRef pathPolys[MAX_PATH_LENGTH];
@@ -399,7 +390,6 @@ void PathInfo::updateNextPosition()
 
     delete [] m_pathPoints;
     m_pathPoints = pathPoints;
-    //delete [] pathPoints;
 
     m_type = PathType(m_type | PATHFIND_NORMAL);
 

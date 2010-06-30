@@ -13,7 +13,7 @@ using namespace MaNGOS;
 
 // see following files:
 // contrib/extractor/system.cpp
-// src/GridMap.cpp
+// src/game/GridMap.cpp
 char const* MAP_VERSION_MAGIC = "v1.2";
 
 namespace MMAP
@@ -228,6 +228,7 @@ namespace MMAP
                 float coord[3];
                 int row, col;
 
+                // generate coordinates
                 if (!(lheader.flags & MAP_LIQUID_NO_HEIGHT))
                 {
                     int j = 0;

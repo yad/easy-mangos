@@ -792,7 +792,8 @@ namespace MMAP
             rcFilterLedgeSpans(config.walkableHeight, config.walkableClimb, *iv.heightfield);
             rcFilterWalkableLowHeightSpans(config.walkableHeight, *iv.heightfield);
 
-            // flag 'walkable' liquid triangles (done after filtering because same rules don't apply to swimming)
+            // flag 'walkable' liquid triangles
+            // do after filtering because same rules don't apply to swimming
             iv.triFlags = NEW_ARRAY(unsigned char,lTriCount);
             memset(iv.triFlags, RC_WALKABLE, lTriCount*sizeof(unsigned char));
             rcRasterizeTriangles(lVerts, lVertCount, lTris, iv.triFlags, lTriFlags, lTriCount, *iv.heightfield, config.walkableClimb);
