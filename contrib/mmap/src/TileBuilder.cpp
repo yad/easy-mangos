@@ -14,7 +14,7 @@ using namespace MaNGOS;
 // see following files:
 // contrib/extractor/system.cpp
 // src/GridMap.cpp
-char const* MAP_VERSION_MAGIC = "v1.1";
+char const* MAP_VERSION_MAGIC = "v1.2";
 
 namespace MMAP
 {
