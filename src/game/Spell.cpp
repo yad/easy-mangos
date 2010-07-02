@@ -1985,10 +1985,26 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
         case TARGET_ALL_PARTY_AROUND_CASTER_2:
         case TARGET_ALL_PARTY:
         {
-            if(m_spellInfo->Id == 59754)                    // Rune Tap triggered by Glyph of Rune Tap (does not include caster)
-                FillRaidOrPartyTargets(targetUnitMap, m_caster, m_caster, radius, false, true, false);
-            else
-                FillRaidOrPartyTargets(targetUnitMap, m_caster, m_caster, radius, false, true, true);
+            switch(m_spellInfo->Id)
+            {
+                case 70893:                                 // Culling the Herd
+                case 53434:                                 // Call of the Wild
+                {
+                    if (Unit *owner = m_caster->GetOwner())
+                        targetUnitMap.push_back(owner);
+                    break;
+                }
+                case 59754:                                 // Rune Tap triggered by Glyph of Rune Tap (does not include caster)
+                {
+                    FillRaidOrPartyTargets(targetUnitMap, m_caster, m_caster, radius, false, true, false);
+                    break;
+                }
+                default:
+                {
+                    FillRaidOrPartyTargets(targetUnitMap, m_caster, m_caster, radius, false, true, true);
+                    break;
+                }
+            }
             break;
         }
         case TARGET_ALL_RAID_AROUND_CASTER:
