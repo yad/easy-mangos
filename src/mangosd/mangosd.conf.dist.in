@@ -1828,12 +1828,33 @@ FactionedMap.Team = 1
 #        Database have 300, it's possible to generate more
 #        default: 100
 #
+#    PlayerbotAI.Percent.XX.YY
+#        Percent of bots by 10 levels
+#        Sum MUST BE egal to 100 else default values are loaded
+#        default:
+#            PlayerbotAI.Percent.01.10 = 12.5
+#            PlayerbotAI.Percent.11.20 = 12.5
+#            PlayerbotAI.Percent.21.30 = 12.5
+#            PlayerbotAI.Percent.31.40 = 12.5
+#            PlayerbotAI.Percent.41.50 = 12.5
+#            PlayerbotAI.Percent.51.60 = 12.5
+#            PlayerbotAI.Percent.61.70 = 12.5
+#            PlayerbotAI.Percent.71.80 = 12.5
+#
 ###################################################################################################################
 
 PlayerbotAI.Key = defaultkey
 PlayerbotAI.DebugWhisper = 0
 PlayerbotAI.FollowDistanceMin = 0.5
 PlayerbotAI.FollowDistanceMax = 1.0
+PlayerbotAI.Percent.01.10 = 12.5
+PlayerbotAI.Percent.11.20 = 12.5
+PlayerbotAI.Percent.21.30 = 12.5
+PlayerbotAI.Percent.31.40 = 12.5
+PlayerbotAI.Percent.41.50 = 12.5
+PlayerbotAI.Percent.51.60 = 12.5
+PlayerbotAI.Percent.61.70 = 12.5
+PlayerbotAI.Percent.71.80 = 12.5
 PlayerbotAI.MaxBots = 100
 
 ###################################################################################################################

@@ -503,6 +503,37 @@ void World::LoadConfigSettings(bool reload)
     setConfigPos(CONFIG_FLOAT_RATE_CHARSWIMSPEED,   "Rate.CharSwimSpeed",   1.0f);
     setConfigPos(CONFIG_FLOAT_RATE_CHARFLIGHTSPEED, "Rate.CharFlightSpeed", 1.0f);
 
+    setConfigPos(CONFIG_FLOAT_PLAYERBOTAI_01_10,    "PlayerbotAI.Percent.01.10", 12.5f);
+    setConfigPos(CONFIG_FLOAT_PLAYERBOTAI_11_20,    "PlayerbotAI.Percent.11.20", 12.5f);
+    setConfigPos(CONFIG_FLOAT_PLAYERBOTAI_21_30,    "PlayerbotAI.Percent.21.30", 12.5f);
+    setConfigPos(CONFIG_FLOAT_PLAYERBOTAI_31_40,    "PlayerbotAI.Percent.31.40", 12.5f);
+    setConfigPos(CONFIG_FLOAT_PLAYERBOTAI_41_50,    "PlayerbotAI.Percent.41.50", 12.5f);
+    setConfigPos(CONFIG_FLOAT_PLAYERBOTAI_51_60,    "PlayerbotAI.Percent.51.60", 12.5f);
+    setConfigPos(CONFIG_FLOAT_PLAYERBOTAI_61_70,    "PlayerbotAI.Percent.61.70", 12.5f);
+    setConfigPos(CONFIG_FLOAT_PLAYERBOTAI_71_80,    "PlayerbotAI.Percent.71.80", 12.5f);
+
+    float playerBotAIPercent
+        = getConfig(CONFIG_FLOAT_PLAYERBOTAI_01_10)
+        + getConfig(CONFIG_FLOAT_PLAYERBOTAI_11_20)
+        + getConfig(CONFIG_FLOAT_PLAYERBOTAI_21_30)
+        + getConfig(CONFIG_FLOAT_PLAYERBOTAI_31_40)
+        + getConfig(CONFIG_FLOAT_PLAYERBOTAI_41_50)
+        + getConfig(CONFIG_FLOAT_PLAYERBOTAI_51_60)
+        + getConfig(CONFIG_FLOAT_PLAYERBOTAI_61_70)
+        + getConfig(CONFIG_FLOAT_PLAYERBOTAI_71_80);
+
+    if (playerBotAIPercent != 100.0f)
+    {
+        setConfig(CONFIG_FLOAT_PLAYERBOTAI_01_10,    12.5f);
+        setConfig(CONFIG_FLOAT_PLAYERBOTAI_11_20,    12.5f);
+        setConfig(CONFIG_FLOAT_PLAYERBOTAI_21_30,    12.5f);
+        setConfig(CONFIG_FLOAT_PLAYERBOTAI_31_40,    12.5f);
+        setConfig(CONFIG_FLOAT_PLAYERBOTAI_41_50,    12.5f);
+        setConfig(CONFIG_FLOAT_PLAYERBOTAI_51_60,    12.5f);
+        setConfig(CONFIG_FLOAT_PLAYERBOTAI_61_70,    12.5f);
+        setConfig(CONFIG_FLOAT_PLAYERBOTAI_71_80,    12.5f);
+    }
+
     setConfigMinMax(CONFIG_FLOAT_RATE_TARGET_POS_RECALCULATION_RANGE, "TargetPosRecalculateRange", 1.5f, CONTACT_DISTANCE, ATTACK_DISTANCE);
 
     setConfigPos(CONFIG_FLOAT_RATE_DURABILITY_LOSS_DAMAGE, "DurabilityLossChance.Damage", 0.5f);
