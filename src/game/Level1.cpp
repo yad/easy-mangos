@@ -339,15 +339,6 @@ bool ChatHandler::HandleGPSCommand(const char* args)
     }
     else PSendSysMessage("no VMAP available for area info");
 
-    if(have_vmap)
-    {
-        if(map->IsOutdoors(obj->GetPositionX(), obj->GetPositionY(), obj->GetPositionZ()))
-            PSendSysMessage("You are OUTdoor");
-        else
-            PSendSysMessage("You are INdoor");
-    }
-    else PSendSysMessage("no VMAP available for area info");
-
     PSendSysMessage(LANG_MAP_POSITION,
         obj->GetMapId(), (mapEntry ? mapEntry->name[GetSessionDbcLocale()] : "<unknown>" ),
         zone_id, (zoneEntry ? zoneEntry->area_name[GetSessionDbcLocale()] : "<unknown>" ),

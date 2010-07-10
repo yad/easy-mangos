@@ -3790,8 +3790,8 @@ GameObject* Player::GetGameObjectIfCanInteractWith(ObjectGuid guid, uint32 gameo
             if (go->IsWithinDistInMap(this, maxdist) && go->isSpawned())
                 return go;
 
-            sLog.outError("GetGameObjectIfCanInteractWith: GameObject '%s' [GUID: %u] is too far away from player %s [GUID: %u] to be used by him (distance=%f, maximal 10 is allowed)", go->GetGOInfo()->name,
-                go->GetGUIDLow(), GetName(), GetGUIDLow(), go->GetDistance(this));
+            sLog.outError("GetGameObjectIfCanInteractWith: GameObject '%s' [GUID: %u] is too far away from player %s [GUID: %u] to be used by him (distance=%f, maximal %f is allowed)",
+                go->GetGOInfo()->name,  go->GetGUIDLow(), GetName(), GetGUIDLow(), go->GetDistance(this), maxdist);
         }
     }
     return NULL;
@@ -5992,13 +5992,13 @@ void Player::ResurrectPlayer(float restore_percent, bool applySickness)
         {
             int32 delta = (int32(getLevel()) - startLevel + 1)*MINUTE;
 
-            for(int i = 0; i < MAX_EFFECT_INDEX; ++i)
+            if (SpellAuraHolder* holder = GetSpellAuraHolder(SPELL_ID_PASSIVE_RESURRECTION_SICKNESS))
             {
-                if(Aura* Aur = GetAura(SPELL_ID_PASSIVE_RESURRECTION_SICKNESS,SpellEffectIndex(i)))
-                {
-                    Aur->SetAuraDuration(delta*IN_MILLISECONDS);
-                    Aur->SendAuraUpdate(false);
-                }
+                for(int i = 0; i < MAX_EFFECT_INDEX; ++i)
+                    if(Aura* Aur = holder->GetAuraByEffectIndex(SpellEffectIndex(i)))
+                        Aur->SetAuraDuration(delta*IN_MILLISECONDS);
+
+                holder->SendAuraUpdate(false);
             }
         }
     }
@@ -8438,8 +8438,8 @@ void Player::DuelComplete(DuelCompleteType type)
 
     /* remove auras */
     std::vector<uint32> auras2remove;
-    AuraMap const& vAuras = duel->opponent->GetAuras();
-    for (AuraMap::const_iterator i = vAuras.begin(); i != vAuras.end(); ++i)
+    SpellAuraHolderMap const& vAuras = duel->opponent->GetSpellAuraHolderMap();
+    for (SpellAuraHolderMap::const_iterator i = vAuras.begin(); i != vAuras.end(); ++i)
     {
         if (!i->second->IsPositive() && i->second->GetCasterGUID() == GetGUID() && i->second->GetAuraApplyTime() >= duel->startTime)
             auras2remove.push_back(i->second->GetId());
@@ -8449,8 +8449,8 @@ void Player::DuelComplete(DuelCompleteType type)
         duel->opponent->RemoveAurasDueToSpell(auras2remove[i]);
 
     auras2remove.clear();
-    AuraMap const& auras = GetAuras();
-    for (AuraMap::const_iterator i = auras.begin(); i != auras.end(); ++i)
+    SpellAuraHolderMap const& auras = GetSpellAuraHolderMap();
+    for (SpellAuraHolderMap::const_iterator i = auras.begin(); i != auras.end(); ++i)
     {
         if (!i->second->IsPositive() && i->second->GetCasterGUID() == duel->opponent->GetGUID() && i->second->GetAuraApplyTime() >= duel->startTime)
             auras2remove.push_back(i->second->GetId());
@@ -8935,8 +8935,8 @@ void Player::ApplyEquipSpell(SpellEntry const* spellInfo, Item* item, bool apply
             bool found = false;
             for (int k=0; k < MAX_EFFECT_INDEX; ++k)
             {
-                spellEffectPair spair = spellEffectPair(spellInfo->Id, SpellEffectIndex(k));
-                for (AuraMap::const_iterator iter = m_Auras.lower_bound(spair); iter != m_Auras.upper_bound(spair); ++iter)
+                SpellAuraHolderBounds spair = GetSpellAuraHolderBounds(spellInfo->Id);
+                for (SpellAuraHolderMap::const_iterator iter = spair.first; iter != spair.second; ++iter)
                 {
                     if(!item || iter->second->GetCastItemGUID() == item->GetGUID())
                     {
@@ -11724,6 +11724,10 @@ uint8 Player::_CanStoreItem( uint8 bag, uint8 slot, ItemPosCountVec &dest, uint3
             }
         }
     }
+
+    // Normally it would be impossible to autostore not empty bags
+    if (pItem && pItem->IsBag() && !((Bag*)pItem)->IsEmpty())
+        return EQUIP_ERR_NONEMPTY_BAG_OVER_OTHER_BAG;
 
     // search free slot
     res = _CanStoreItem_InInventorySlots(INVENTORY_SLOT_ITEM_START,INVENTORY_SLOT_ITEM_END,dest,pProto,count,false,pItem,bag,slot);
@@ -15164,22 +15168,9 @@ bool Player::CanAddQuest( Quest const *pQuest, bool msg ) const
     if (!SatisfyQuestLog( msg ))
         return false;
 
-    uint32 srcitem = pQuest->GetSrcItemId();
-    if (srcitem > 0)
-    {
-        uint32 count = pQuest->GetSrcItemCount();
-        ItemPosCountVec dest;
-        uint8 msg2 = CanStoreNewItem( NULL_BAG, NULL_SLOT, dest, srcitem, count );
+    if (!CanGiveQuestSourceItem(pQuest))
+        return false;
 
-        // player already have max number (in most case 1) source item, no additional item needed and quest can be added.
-        if (msg2 == EQUIP_ERR_CANT_CARRY_MORE_OF_THIS)
-            return true;
-        else if (msg2 != EQUIP_ERR_OK)
-        {
-            SendEquipError(msg2, NULL, NULL, srcitem);
-            return false;
-        }
-    }
     return true;
 }
 
@@ -15379,7 +15370,8 @@ void Player::AddQuest( Quest const *pQuest, Object *questGiver )
             questStatusData.m_creatureOrGOcount[i] = 0;
     }
 
-    GiveQuestSourceItem( pQuest );
+    GiveQuestSourceItem(pQuest);
+
     AdjustQuestReqItemCount( pQuest, questStatusData );
 
     if( pQuest->GetRepObjectiveFaction() )
@@ -16006,7 +15998,7 @@ bool Player::SatisfyQuestWeek( Quest const* qInfo, bool msg ) const
     return m_weeklyquests.find(qInfo->GetQuestId()) == m_weeklyquests.end();
 }
 
-bool Player::GiveQuestSourceItem( Quest const *pQuest )
+bool Player::CanGiveQuestSourceItem( Quest const *pQuest, ItemPosCountVec* dest ) const
 {
     uint32 srcitem = pQuest->GetSrcItemId();
     if (srcitem > 0)
@@ -16015,14 +16007,17 @@ bool Player::GiveQuestSourceItem( Quest const *pQuest )
         if( count <= 0 )
             count = 1;
 
-        ItemPosCountVec dest;
-        uint8 msg = CanStoreNewItem( NULL_BAG, NULL_SLOT, dest, srcitem, count );
-        if (msg == EQUIP_ERR_OK)
+        uint8 msg;
+        if (!dest)
         {
-            Item * item = StoreNewItem(dest, srcitem, true);
-            SendNewItem(item, count, true, false);
-            return true;
+            ItemPosCountVec destTemp;
+            msg = CanStoreNewItem( NULL_BAG, NULL_SLOT, destTemp, srcitem, count );
         }
+        else
+            msg = CanStoreNewItem( NULL_BAG, NULL_SLOT, *dest, srcitem, count );
+
+        if (msg == EQUIP_ERR_OK)
+            return true;
         // player already have max amount required item, just report success
         else if (msg == EQUIP_ERR_CANT_CARRY_MORE_OF_THIS)
             return true;
@@ -16033,6 +16028,22 @@ bool Player::GiveQuestSourceItem( Quest const *pQuest )
 
     return true;
 }
+
+void Player::GiveQuestSourceItem( Quest const *pQuest )
+{
+    ItemPosCountVec dest;
+
+    if (CanGiveQuestSourceItem(pQuest, &dest) && !dest.empty())
+    {
+        uint32 count = 0;
+        for(ItemPosCountVec::const_iterator c_itr = dest.begin(); c_itr != dest.end(); ++c_itr)
+            count += c_itr->count;
+
+        Item * item = StoreNewItem(dest, pQuest->GetSrcItemId(), true);
+        SendNewItem(item, count, true, false);
+    }
+}
+
 
 bool Player::TakeQuestSourceItem( uint32 quest_id, bool msg )
 {
@@ -16549,7 +16560,7 @@ bool Player::HasQuestForItem( uint32 itemid ) const
                 continue;
 
             // hide quest if player is in raid-group and quest is no raid quest
-            if (GetGroup() && GetGroup()->isRaidGroup() && qinfo->IsAllowedInRaid() && !InBattleGround())
+            if (GetGroup() && GetGroup()->isRaidGroup() && !qinfo->IsAllowedInRaid() && !InBattleGround())
                 continue;
 
             // There should be no mixed ReqItem/ReqSource drop
@@ -17644,7 +17655,7 @@ void Player::_LoadAuras(QueryResult *result, uint32 timediff)
 {
     //RemoveAllAuras(); -- some spells casted before aura load, for example in LoadSkills, aura list explcitly cleaned early
 
-    //QueryResult *result = CharacterDatabase.PQuery("SELECT caster_guid,spell,effect_index,stackcount,amount,maxduration,remaintime,remaincharges FROM character_aura WHERE guid = '%u'",GetGUIDLow());
+    //QueryResult *result = CharacterDatabase.PQuery("SELECT caster_guid,spell,stackcount,remaincharges,basepoints0,basepoints1,basepoints2,maxduration0,maxduration1,maxduration2,remaintime0,remaintime1,remaintime2,effIndexMask FROM character_aura WHERE guid = '%u'",GetGUIDLow());
 
     if(result)
     {
@@ -17653,67 +17664,79 @@ void Player::_LoadAuras(QueryResult *result, uint32 timediff)
             Field *fields = result->Fetch();
             uint64 caster_guid = fields[0].GetUInt64();
             uint32 spellid = fields[1].GetUInt32();
-            SpellEffectIndex effindex = SpellEffectIndex(fields[2].GetUInt32());
-            uint32 stackcount = fields[3].GetUInt32();
-            int32 damage     = fields[4].GetInt32();
-            int32 maxduration = fields[5].GetInt32();
-            int32 remaintime = fields[6].GetInt32();
-            int32 remaincharges = fields[7].GetInt32();
+            uint32 stackcount = fields[2].GetUInt32();
+            int32 remaincharges = (int32)fields[3].GetUInt32();
+            int32 damage[MAX_EFFECT_INDEX];
+            int32 maxduration[MAX_EFFECT_INDEX];
+            int32 remaintime[MAX_EFFECT_INDEX];
+            for (int32 i = 0; i < MAX_EFFECT_INDEX; ++i)
+            {
+                damage[i]  = (int32)fields[i+4].GetUInt32();
+                maxduration[i] = (int32)fields[i+7].GetUInt32();
+                remaintime[i] = (int32)fields[i+10].GetUInt32();
+            }
+            uint32 effIndexMask = (int32)fields[13].GetUInt32();
 
             SpellEntry const* spellproto = sSpellStore.LookupEntry(spellid);
-            if (!spellproto)
+            if(!spellproto)
             {
-                sLog.outError("Unknown aura (spellid %u, effindex %u), ignore.",spellid,effindex);
+                sLog.outError("Unknown spell (spellid %u), ignore.",spellid);
                 continue;
-            }
-
-            if (effindex >= MAX_EFFECT_INDEX)
-            {
-                sLog.outError("Invalid effect index (spellid %u, effindex %u), ignore.",spellid,effindex);
-                continue;
-            }
-
-            // negative effects should continue counting down after logout
-            if (remaintime != -1 && !IsPositiveEffect(spellid, effindex))
-            {
-                if (remaintime/IN_MILLISECONDS <= int32(timediff))
-                    continue;
-
-                remaintime -= timediff*IN_MILLISECONDS;
             }
 
             // prevent wrong values of remaincharges
-            if (spellproto->procCharges)
+            if(spellproto->procCharges)
             {
-                if (remaincharges <= 0 || remaincharges > (int32)spellproto->procCharges)
+                if(remaincharges <= 0 || remaincharges > (int32)spellproto->procCharges)
                     remaincharges = spellproto->procCharges;
             }
             else
                 remaincharges = 0;
 
+            if (spellproto->StackAmount < stackcount)
+                stackcount = spellproto->StackAmount;
 
-            for(uint32 i = 0; i < stackcount; ++i)
+            SpellAuraHolder *holder = CreateSpellAuraHolder(spellproto, this, NULL);
+            for (int32 i = 0; i < MAX_EFFECT_INDEX; ++i)
             {
-                Aura* aura = CreateAura(spellproto, effindex, NULL, this, NULL);
-                if (!damage)
-                    damage = aura->GetModifier()->m_amount;
+                if ((effIndexMask & (1 << i)) == 0)
+                    continue;
 
-                // reset stolen single target auras
-                if (caster_guid != GetGUID() && aura->IsSingleTarget())
-                    aura->SetIsSingleTarget(false);
+                if (remaintime[i] != -1 && !IsPositiveEffect(spellid, SpellEffectIndex(i)))
+                {
+                    if (remaintime[i]/IN_MILLISECONDS <= int32(timediff))
+                    continue;
 
-                aura->SetLoadedState(caster_guid,damage,maxduration,remaintime,remaincharges);
-                AddAura(aura);
-                DETAIL_LOG("Added aura spellid %u, effect %u", spellproto->Id, effindex);
+                    remaintime[i] -= timediff*IN_MILLISECONDS;
+                }
+
+                Aura* aura = CreateAura(spellproto, SpellEffectIndex(i), NULL, holder, this);
+                if (!damage[i])
+                    damage[i] = aura->GetModifier()->m_amount;
+
+                aura->SetLoadedState(damage[i], maxduration[i], remaintime[i]);
+                holder->AddAura(aura, SpellEffectIndex(i));
             }
+            
+            if (!holder->IsEmptyHolder())
+            {
+                // reset stolen single target auras
+                if (caster_guid != GetGUID() && holder->IsSingleTarget())
+                    holder->SetIsSingleTarget(false);
+
+                holder->SetLoadedState(caster_guid, stackcount, remaincharges);
+                AddSpellAuraHolder(holder);
+                DETAIL_LOG("Added auras from spellid %u", spellproto->Id);
+            }
+            else
+                delete holder;
         }
         while( result->NextRow() );
-
         delete result;
     }
 
     if(getClass() == CLASS_WARRIOR && !HasAuraType(SPELL_AURA_MOD_SHAPESHIFT))
-        CastSpell(this,SPELL_ID_PASSIVE_BATTLE_STANCE,true);
+        CastSpell(this,SPELL_ID_PASSIVE_BATTLE_STANCE,true); 
 }
 
 void Player::_LoadGlyphs(QueryResult *result)
@@ -19084,61 +19107,50 @@ void Player::_SaveAuras()
 {
     CharacterDatabase.PExecute("DELETE FROM character_aura WHERE guid = '%u'",GetGUIDLow());
 
-    AuraMap const& auras = GetAuras();
+    SpellAuraHolderMap const& auraHolders = GetSpellAuraHolderMap();
 
-    if (auras.empty())
+    if (auraHolders.empty())
         return;
 
-    spellEffectPair lastEffectPair = auras.begin()->first;
-    uint32 stackCounter = 1;
-
     /* copied following sql-code partly from achievementmgr */
-    bool first_round = true;
-    std::ostringstream ss;
-    for(AuraMap::const_iterator itr = auras.begin(); ; ++itr)
+
+    for(SpellAuraHolderMap::const_iterator itr = auraHolders.begin(); itr != auraHolders.end(); ++itr)
     {
-        if(itr == auras.end() || lastEffectPair != itr->first)
+        SpellAuraHolder *holder = itr->second; 
+        //skip all holders from spells that are passive
+        //do not save single target holders (unless they were cast by the player)
+        if (!holder->IsPassive() && (holder->GetCasterGUID() == GetGUID() || !holder->IsSingleTarget()))
         {
-            AuraMap::const_iterator itr2 = itr;
-            // save previous spellEffectPair to db
-            itr2--;
+            int32 damage[MAX_EFFECT_INDEX];
+            int32 remaintime[MAX_EFFECT_INDEX];
+            int32 maxduration[MAX_EFFECT_INDEX];
+            uint32 effIndexMask = 0;
 
-            //skip all auras from spells that are passive
-            //do not save single target auras (unless they were cast by the player)
-            if (!itr2->second->IsPassive() && (itr2->second->GetCasterGUID() == GetGUID() || !itr2->second->IsSingleTarget()))
+            for (int32 i = 0; i < MAX_EFFECT_INDEX; ++i)
             {
-                if (first_round)
+                damage[i] = 0;
+                remaintime[i] = 0;
+                maxduration[i] = 0;
+
+                if (Aura *aur = holder->GetAuraByEffectIndex(SpellEffectIndex(i)))
                 {
-                    ss << "INSERT INTO character_aura (guid,caster_guid,spell,effect_index,stackcount,amount,maxduration,remaintime,remaincharges)VALUES ";
-                    first_round = false;
+                    // don't save not own area auras
+                    if (aur->IsAreaAura() && holder->GetCasterGUID() != GetGUID())
+                        continue;
+
+                    damage[i] = aur->GetModifier()->m_amount;
+                    remaintime[i] = aur->GetAuraDuration();
+                    maxduration[i] = aur->GetAuraMaxDuration();
+                    effIndexMask |= (1 << i);
                 }
-                // next new/changed record prefix
-                else
-                    ss << ", ";
-
-                ss << "("<< GetGUIDLow() << "," << itr2->second->GetCasterGUID() << ","
-                    << (uint32)itr2->second->GetId() << "," << (uint32)itr2->second->GetEffIndex() << ","
-                    << stackCounter << "," << itr2->second->GetModifier()->m_amount << ","
-                    <<int(itr2->second->GetAuraMaxDuration()) << "," << int(itr2->second->GetAuraDuration()) << ","
-                    << int(itr2->second->GetAuraCharges()) << ")";
             }
+            
+            if (!effIndexMask)
+                continue;
 
-            if(itr == auras.end())
-                break;
-        }
-
-        if (lastEffectPair == itr->first)
-            stackCounter++;
-        else
-        {
-            lastEffectPair = itr->first;
-            stackCounter = 1;
+            CharacterDatabase.PExecute("INSERT INTO character_aura (guid, caster_guid, spell, stackcount, remaincharges, basepoints0, basepoints1, basepoints2, maxduration0, maxduration1, maxduration2, remaintime0, remaintime1, remaintime2, effIndexMask) VALUES ('%u', '" UI64FMTD "', '%u', '%u', '%u', '%d', '%d', '%d', '%d', '%d', '%d', '%d', '%d', '%d', '%u')", GetGUIDLow(), holder->GetCasterGUID(), holder->GetId(), holder->GetStackAmount(), holder->GetAuraCharges(), damage[EFFECT_INDEX_0], damage[EFFECT_INDEX_1], damage[EFFECT_INDEX_2], maxduration[EFFECT_INDEX_0], maxduration[EFFECT_INDEX_1], maxduration[EFFECT_INDEX_2], remaintime[EFFECT_INDEX_0], remaintime[EFFECT_INDEX_1], remaintime[EFFECT_INDEX_2], effIndexMask);
         }
     }
-
-    // if something changed execute
-    if (!first_round)
-        CharacterDatabase.Execute( ss.str().c_str() );
 }
 
 void Player::_SaveGlyphs()
@@ -22046,38 +22058,51 @@ void Player::SendAurasForTarget(Unit *target)
     Unit::VisibleAuraMap const *visibleAuras = target->GetVisibleAuras();
     for(Unit::VisibleAuraMap::const_iterator itr = visibleAuras->begin(); itr != visibleAuras->end(); ++itr)
     {
-        for(int j = 0; j < MAX_EFFECT_INDEX; ++j)
+        SpellAuraHolderBounds bounds = target->GetSpellAuraHolderBounds(itr->second);
+        for (SpellAuraHolderMap::const_iterator iter = bounds.first; iter != bounds.second; ++iter)
         {
-            if(Aura *aura = target->GetAura(itr->second, SpellEffectIndex(j)))
+            SpellAuraHolder *holder = iter->second;
+            data << uint8(holder->GetAuraSlot());
+            data << uint32(holder->GetId());
+
+            if(holder->GetId())
             {
-                data << uint8(aura->GetAuraSlot());
-                data << uint32(aura->GetId());
+                uint8 auraFlags = holder->GetAuraFlags();
+                // flags
+                data << uint8(auraFlags);
+                // level
+                data << uint8(holder->GetAuraLevel());
+                // charges
+                if (holder->GetAuraCharges())
+                    data << uint8(holder->GetAuraCharges() * holder->GetStackAmount());
+                else
+                    data << uint8(holder->GetStackAmount());
 
-                if(aura->GetId())
+                if(!(auraFlags & AFLAG_NOT_CASTER))     // packed GUID of caster
                 {
-                    uint8 auraFlags = aura->GetAuraFlags();
-                    // flags
-                    data << uint8(auraFlags);
-                    // level
-                    data << uint8(aura->GetAuraLevel());
-                    // charges
-                    if (aura->GetAuraCharges())
-                        data << uint8(aura->GetAuraCharges() * aura->GetStackAmount());
-                    else
-                        data << uint8(aura->GetStackAmount());
-
-                    if(!(auraFlags & AFLAG_NOT_CASTER))     // packed GUID of caster
-                    {
-                        data.appendPackGUID(aura->GetCasterGUID());
-                    }
-
-                    if(auraFlags & AFLAG_DURATION)          // include aura duration
-                    {
-                        data << uint32(aura->GetAuraMaxDuration());
-                        data << uint32(aura->GetAuraDuration());
-                    }
+                    data.appendPackGUID(holder->GetCasterGUID());
                 }
-                break;
+
+                if(auraFlags & AFLAG_DURATION)          // include aura duration
+                {
+                    // take highest - to display icon even if stun fades
+                    uint32 max_duration = 0;
+                    uint32 duration = 0;
+                    for (int32 i = 0; i < MAX_EFFECT_INDEX; ++i)
+                    {
+                        if (Aura *aura = holder->GetAuraByEffectIndex(SpellEffectIndex(i)))
+                        {
+                            if (uint32(aura->GetAuraMaxDuration()) > max_duration)
+                            {
+                                max_duration = aura->GetAuraMaxDuration();
+                                duration = aura->GetAuraDuration();
+                            }
+                        }
+                    }
+
+                    data << uint32(max_duration);
+                    data << uint32(duration);
+                }
             }
         }
     }
@@ -22216,7 +22241,7 @@ bool Player::HasQuestForGO(int32 GOId) const
             if(!qinfo)
                 continue;
 
-            if(GetGroup() && GetGroup()->isRaidGroup() && qinfo->IsAllowedInRaid())
+            if(GetGroup() && GetGroup()->isRaidGroup() && !qinfo->IsAllowedInRaid())
                 continue;
 
             for (int j = 0; j < QUEST_OBJECTIVES_COUNT; ++j)
@@ -22417,14 +22442,14 @@ bool Player::CanNoReagentCast(SpellEntry const* spellInfo) const
 
 void Player::RemoveItemDependentAurasAndCasts( Item * pItem )
 {
-    AuraMap& auras = GetAuras();
-    for(AuraMap::const_iterator itr = auras.begin(); itr != auras.end(); )
+    SpellAuraHolderMap& auras = GetSpellAuraHolderMap();
+    for(SpellAuraHolderMap::const_iterator itr = auras.begin(); itr != auras.end(); )
     {
-        Aura* aura = itr->second;
+        SpellAuraHolder* holder = itr->second;
 
         // skip passive (passive item dependent spells work in another way) and not self applied auras
-        SpellEntry const* spellInfo = aura->GetSpellProto();
-        if(aura->IsPassive() ||  aura->GetCasterGUID()!=GetGUID())
+        SpellEntry const* spellInfo = holder->GetSpellProto();
+        if(holder->IsPassive() ||  holder->GetCasterGUID()!=GetGUID())
         {
             ++itr;
             continue;
@@ -22438,7 +22463,7 @@ void Player::RemoveItemDependentAurasAndCasts( Item * pItem )
         }
 
         // no alt item, remove aura, restart check
-        RemoveAurasDueToSpell(aura->GetId());
+        RemoveAurasDueToSpell(holder->GetId());
         itr = auras.begin();
     }
 
@@ -22668,11 +22693,14 @@ void Player::UpdateZoneDependentAuras( uint32 newZone )
 void Player::UpdateAreaDependentAuras( uint32 newArea )
 {
     // remove auras from spells with area limitations
-    for(AuraMap::iterator iter = m_Auras.begin(); iter != m_Auras.end();)
+    for(SpellAuraHolderMap::iterator iter = m_spellAuraHolders.begin(); iter != m_spellAuraHolders.end();)
     {
         // use m_zoneUpdateId for speed: UpdateArea called from UpdateZone or instead UpdateZone in both cases m_zoneUpdateId up-to-date
         if(sSpellMgr.GetSpellAllowedInLocationError(iter->second->GetSpellProto(),GetMapId(),m_zoneUpdateId,newArea,this) != SPELL_CAST_OK)
-            RemoveAura(iter);
+        {
+            RemoveSpellAuraHolder(iter->second);
+            iter = m_spellAuraHolders.begin();
+        }
         else
             ++iter;
     }

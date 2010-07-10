@@ -145,8 +145,10 @@ BindIP = "0.0.0.0"
 #        List of ids with delimiter ','
 #
 #    vmap.enableIndoorCheck
-#        Enable/Disable VMap based indoor check to remove outdoor-only auras (mounts etc.)
-#        Default: 0 (disabled)
+#        Enable/Disable VMap based indoor check to remove outdoor-only auras (mounts etc.).
+#        Requires VMaps enabled to work.
+#        Default: 1 (Enabled)
+#                 0 (Disabled)
 #
 #
 #    DetectPosCollision
@@ -199,9 +201,9 @@ PlayerSave.Stats.MinLevel = 0
 PlayerSave.Stats.SaveOnlyOnLogout = 1
 vmap.enableLOS = 0
 vmap.enableHeight = 0
-vmap.ignoreMapIds = "369"
+vmap.ignoreMapIds = ""
 vmap.ignoreSpellIds = "7720"
-vmap.enableIndoorCheck = 0
+vmap.enableIndoorCheck = 1
 DetectPosCollision = 1
 TargetPosRecalculateRange = 1.5
 UpdateUptimeInterval = 10
@@ -613,6 +615,11 @@ ArenaRatedLogFile = "Arena.log"
 #        Hour in one from weekly days when weekly quests reset (0..23)
 #        Default: 6
 #
+#    Quests.IgnoreRaid
+#        Non-raid quests allowed in raids
+#        Default: 0 (not allowed)
+#                 1 (allowed)
+#
 #    Guild.EventLogRecordsCount
 #        Count of guild event log records stored in guild_eventlog table
 #        Increase to store more guild events in table, minimum is 100
@@ -751,6 +758,7 @@ Quests.HighLevelHideDiff = 7
 Quests.Daily.ResetHour = 6
 Quests.Weekly.ResetWeekDay = 3
 Quests.Weekly.ResetHour = 6
+Quests.IgnoreRaid = 0
 Guild.EventLogRecordsCount = 100
 Guild.BankEventLogRecordsCount = 25
 TimerBar.Fatigue.GMLevel = 4

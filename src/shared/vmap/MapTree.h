@@ -57,7 +57,7 @@ namespace VMAP
             std::string iBasePath;
 
         private:
-            float getIntersectionTime(const G3D::Ray& pRay, float pMaxDist, bool pStopAtFirstHit) const;
+            bool getIntersectionTime(const G3D::Ray& pRay, float &pMaxDist, bool pStopAtFirstHit) const;
             //bool containsLoadedMapTile(unsigned int pTileIdent) const { return(iLoadedMapTiles.containsKey(pTileIdent)); }
         public:
             static std::string getTileFileName(uint32 mapID, uint32 tileX, uint32 tileY);
@@ -80,11 +80,6 @@ namespace VMAP
             void UnloadMapTile(uint32 tileX, uint32 tileY, VMapManager2 *vm);
             bool isTiled() const { return iIsTiled; }
             uint32 numLoadedTiles() const { return iLoadedTiles.size(); }
-
-#ifdef MMAP_GENERATOR
-        public:
-            void getModelInstances(ModelInstance* &models, uint32 &count);
-#endif
     };
 
     struct AreaInfo
