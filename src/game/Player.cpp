@@ -12431,10 +12431,11 @@ uint8 Player::CanUseItem( Item *pItem, bool not_loading ) const
 
                             if(player->CanUseFlyingMounts(sEntry))
                             {
+                                SpellAuraHolder *holder = CreateSpellAuraHolder(sEntry, player, NULL);
                                 for(int j = 0; j < MAX_EFFECT_INDEX; ++j)
                                 {
-                                    Aura* aur = CreateAura(sEntry, SpellEffectIndex(j), NULL, player, player, NULL);
-                                    player->AddAura(aur);
+                                    Aura* aur = CreateAura(sEntry, SpellEffectIndex(j), NULL, holder, player, NULL);
+                                    holder->AddAura(aur, SpellEffectIndex(j));
                                 }
                             }
                             return EQUIP_ERR_OK;
@@ -12452,8 +12453,12 @@ uint8 Player::CanUseItem( Item *pItem, bool not_loading ) const
                             {
                                 for(int j = 0; j < MAX_EFFECT_INDEX; ++j)
                                 {
-                                    Aura* aur = CreateAura(sEntry, SpellEffectIndex(j), NULL, player, player, NULL);
-                                    player->AddAura(aur);
+                                    SpellAuraHolder *holder = CreateSpellAuraHolder(sEntry, player, NULL);
+                                    for(int j = 0; j < MAX_EFFECT_INDEX; ++j)
+                                    {
+                                        Aura* aur = CreateAura(sEntry, SpellEffectIndex(j), NULL, holder, player, NULL);
+                                        holder->AddAura(aur, SpellEffectIndex(j));
+                                    }
                                 }
                             }
                             return EQUIP_ERR_OK;

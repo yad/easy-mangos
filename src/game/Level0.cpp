@@ -95,12 +95,10 @@ bool ChatHandler::HandleStartCommand(const char* /*args*/)
 bool ChatHandler::HandleServerInfoCommand(const char* /*args*/)
 {
     uint32 activeClientsNum = sWorld.GetActiveSessionCount();
-    //uint32 queuedClientsNum = sWorld.GetQueuedSessionCount();
+    uint32 queuedClientsNum = sWorld.GetQueuedSessionCount();
     uint32 maxActiveClientsNum = sWorld.GetMaxActiveSessionCount();
-    //uint32 maxQueuedClientsNum = sWorld.GetMaxQueuedSessionCount();
+    uint32 maxQueuedClientsNum = sWorld.GetMaxQueuedSessionCount();
     std::string str = secsToTimeString(sWorld.GetUptime());
-    char const* valhalla_rev = REVISION_VP;
-    char const* valhalla_rev_date = REVISION_VP_DATE;
 
     char const* full;
     if(m_session)
@@ -109,37 +107,12 @@ bool ChatHandler::HandleServerInfoCommand(const char* /*args*/)
         full = _FULLVERSION(REVISION_DATE,REVISION_TIME,REVISION_NR,REVISION_ID);
 
     SendSysMessage(full);
-    if(GetAccessLevel() > SEC_PLAYER)
-    {
-        PSendSysMessage(LANG_USING_SCRIPT_LIB,sWorld.GetScriptsVersion());
-        PSendSysMessage(LANG_USING_WORLD_DB,sWorld.GetDBVersion());
-        PSendSysMessage(LANG_USING_EVENT_AI,sWorld.GetCreatureEventAIVersion());
-    }
-    PSendSysMessage("Revision [%s][%s] - MaNGOS modified for Valhalla Server", valhalla_rev_date, valhalla_rev);
-    SendSysMessage("Changelog: http://valhalla-team.com/web/changelog.php");
-    PSendSysMessage(LANG_CONNECTED_USERS, activeClientsNum, maxActiveClientsNum);
+    PSendSysMessage(LANG_USING_SCRIPT_LIB,sWorld.GetScriptsVersion());
+    PSendSysMessage(LANG_USING_WORLD_DB,sWorld.GetDBVersion());
+    PSendSysMessage(LANG_USING_EVENT_AI,sWorld.GetCreatureEventAIVersion());
+    PSendSysMessage(LANG_CONNECTED_USERS, activeClientsNum, maxActiveClientsNum, queuedClientsNum, maxQueuedClientsNum);
     PSendSysMessage(LANG_UPTIME, str.c_str());
-    PSendSysMessage("World diff time: %u", sWorld.GetDiffTime());
-    if(sWorld.IsShutdowning())
-    {
-        const char *type = (sWorld.GetShutdownMask() & SHUTDOWN_MASK_RESTART) ? "Restart" : "Shutdown";
-        uint32 shutdownTimer = sWorld.GetShutdownTimer();
-        if(shutdownTimer > 60*60) //Hours
-        {
-            uint8 hours = shutdownTimer / (60*60);
-            uint8 mins = (shutdownTimer - hours*60*60) / 60;
-            uint8 secs = (shutdownTimer - hours*60*60 - mins*60);
-            PSendSysMessage("[SERVER] %s in %u hours, %u minutes and %u seconds", type, hours, mins, secs);
-        }
-        else if(shutdownTimer > 60) // Minutes
-        {
-            uint8 mins = shutdownTimer / 60;
-            uint8 secs = (shutdownTimer - mins*60);
-            PSendSysMessage("[SERVER] %s in %u minutes and %u seconds", type,  mins, secs);
-        }
-        else //Only seconds
-            PSendSysMessage("[SERVER] %s in %u seconds", type, shutdownTimer);
-    }
+
     return true;
 }
 

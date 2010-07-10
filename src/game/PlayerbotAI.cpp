@@ -703,7 +703,7 @@ bool PlayerbotAI::HasAura(uint32 spellId, const Unit& player) const
     if (!m_bot->IsWithinDistInMap(&player, 50, true))
         return true;
 
-    for (Unit::AuraMap::const_iterator iter = player.GetAuras().begin(); iter != player.GetAuras().end(); ++iter)
+    for (Unit::SpellAuraHolderMap::const_iterator iter = player.GetSpellAuraHolderMap().begin(); iter != player.GetSpellAuraHolderMap().end(); ++iter)
     {
         if (iter->second->GetId() == spellId)
             return true;
