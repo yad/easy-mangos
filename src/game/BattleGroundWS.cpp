@@ -256,7 +256,7 @@ void BattleGroundWS::EventPlayerCapturedFlag(Player *Source)
     }
     //for flag capture is reward 2 honorable kills
     RewardHonorToTeam(GetBonusHonorFromKill(sWorld.getConfig(CONFIG_UINT32_BONUS_HONOR_FLAG_WSG)), Source->GetTeam());
-    RewardXpToTeam(0, 0.6, Source->GetTeam());
+    RewardXpToTeam(0, 0.6f, Source->GetTeam());
 
     //flag carrier gets another 2 honorable kills
     Source->RewardHonor(NULL, 0, GetBonusHonorFromKill(sWorld.getConfig(CONFIG_UINT32_BONUS_HONOR_FLAG_WSG)));
@@ -608,14 +608,14 @@ void BattleGroundWS::EndBattleGround(uint32 winner)
     if (winner)
     {
         RewardHonorToTeam(GetBonusHonorFromKill(sWorld.getConfig(CONFIG_UINT32_BONUS_HONOR_WSG_WIN)), winner);
-        RewardXpToTeam(0, 0.8, winner);
+        RewardXpToTeam(0, 0.8f, winner);
     }
 
     //complete map_end rewards (even if no team wins)
     RewardHonorToTeam(GetBonusHonorFromKill(sWorld.getConfig(CONFIG_UINT32_BONUS_HONOR_WSG_END)), ALLIANCE);
     RewardHonorToTeam(GetBonusHonorFromKill(sWorld.getConfig(CONFIG_UINT32_BONUS_HONOR_WSG_END)), HORDE);
-    RewardXpToTeam(0, 0.8, ALLIANCE);
-    RewardXpToTeam(0, 0.8, HORDE);
+    RewardXpToTeam(0, 0.8f, ALLIANCE);
+    RewardXpToTeam(0, 0.8f, HORDE);
 
     BattleGround::EndBattleGround(winner);
 }

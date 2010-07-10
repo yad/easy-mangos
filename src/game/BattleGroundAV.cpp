@@ -75,7 +75,7 @@ void BattleGroundAV::HandleKillUnit(Creature *creature, Player *killer)
                 return;
             RewardReputationToTeam(BATTLEGROUND_AV, m_RepCaptain, HORDE);
             RewardHonorToTeam(GetBonusHonorFromKill(BG_AV_KILL_CAPTAIN), HORDE);
-            RewardXpToTeam(0, 0.91, HORDE);
+            RewardXpToTeam(0, 0.91f, HORDE);
             UpdateScore(BG_TEAM_ALLIANCE, (-1) * BG_AV_RES_CAPTAIN);
             // spawn destroyed aura
             SpawnEvent(BG_AV_NodeEventCaptainDead_A, 0, true);
@@ -85,7 +85,7 @@ void BattleGroundAV::HandleKillUnit(Creature *creature, Player *killer)
                 return;
             RewardReputationToTeam(BATTLEGROUND_AV, m_RepCaptain, ALLIANCE);
             RewardHonorToTeam(GetBonusHonorFromKill(BG_AV_KILL_CAPTAIN), ALLIANCE);
-            RewardXpToTeam(0, 0.91, ALLIANCE);
+            RewardXpToTeam(0, 0.91f, ALLIANCE);
             UpdateScore(BG_TEAM_HORDE, (-1) * BG_AV_RES_CAPTAIN);
             // spawn destroyed aura
             SpawnEvent(BG_AV_NodeEventCaptainDead_H, 0, true);
@@ -327,7 +327,7 @@ void BattleGroundAV::EndBattleGround(uint32 winner)
         {
             RewardReputationToTeam(BATTLEGROUND_AV, tower_survived[i] * m_RepSurviveTower, team[i]);
             RewardHonorToTeam(GetBonusHonorFromKill(tower_survived[i] * BG_AV_KILL_SURVIVING_TOWER), team[i]);
-            RewardXpToTeam(0, 0.6, team[i]);
+            RewardXpToTeam(0, 0.6f, team[i]);
         }
         DEBUG_LOG("BattleGroundAV: EndbattleGround: bgteam: %u towers:%u honor:%u rep:%u", i, tower_survived[i], GetBonusHonorFromKill(tower_survived[i] * BG_AV_KILL_SURVIVING_TOWER), tower_survived[i] * BG_AV_REP_SURVIVING_TOWER);
         if (graves_owned[i])
@@ -439,7 +439,7 @@ void BattleGroundAV::EventPlayerDestroyedPoint(BG_AV_Nodes node)
         UpdateScore(BattleGroundTeamId(owner^0x1), (-1) * BG_AV_RES_TOWER);
         RewardReputationToTeam(BATTLEGROUND_AV, m_RepTowerDestruction, owner);
         RewardHonorToTeam(GetBonusHonorFromKill(BG_AV_KILL_TOWER), owner);
-        RewardXpToTeam(0, 0.91, owner);
+        RewardXpToTeam(0, 0.91f, owner);
         SendYell2ToAll(LANG_BG_AV_TOWER_TAKEN, LANG_UNIVERSAL, GetSingleCreatureGuid(BG_AV_HERALD, 0), GetNodeName(node), ( owner == BG_TEAM_ALLIANCE ) ? LANG_BG_ALLY : LANG_BG_HORDE);
     }
     else

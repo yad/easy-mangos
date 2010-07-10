@@ -137,7 +137,7 @@ void BattleGroundAB::Update(uint32 diff)
                 }
                 if (m_ExperiencesTicks[team] >= BG_AB_ExperiencesTicks)
                 {
-                    RewardXpToTeam(0, 0.8, (team == BG_TEAM_ALLIANCE) ? ALLIANCE : HORDE);
+                    RewardXpToTeam(0, 0.8f, (team == BG_TEAM_ALLIANCE) ? ALLIANCE : HORDE);
                     m_ExperiencesTicks[team] -= BG_AB_ExperiencesTicks;
                 }
 
@@ -501,15 +501,15 @@ void BattleGroundAB::EndBattleGround(uint32 winner)
     if (winner)
     {
         RewardHonorToTeam(GetBonusHonorFromKill(sWorld.getConfig(CONFIG_UINT32_BONUS_HONOR_AB_WIN)), winner);
-        RewardXpToTeam(0, 0.8, winner);
+        RewardXpToTeam(0, 0.8f, winner);
     }
 
     //complete map_end rewards (even if no team wins)
     RewardHonorToTeam(GetBonusHonorFromKill(sWorld.getConfig(CONFIG_UINT32_BONUS_HONOR_AB_END)), HORDE);
     RewardHonorToTeam(GetBonusHonorFromKill(sWorld.getConfig(CONFIG_UINT32_BONUS_HONOR_AB_END)), ALLIANCE);
 
-    RewardXpToTeam(0, 0.8, HORDE);
-    RewardXpToTeam(0, 0.8, ALLIANCE);
+    RewardXpToTeam(0, 0.8f, HORDE);
+    RewardXpToTeam(0, 0.8f, ALLIANCE);
 
     BattleGround::EndBattleGround(winner);
 }
