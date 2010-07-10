@@ -1,3 +1,21 @@
+/*
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
 #ifndef _PlayerbotMageAI_H
 #define _PlayerbotMageAI_H
 
@@ -10,8 +28,6 @@ enum
     SPELL_ARCANE
 };
 
-//class Player;
-
 class MANGOS_DLL_SPEC PlayerbotMageAI : PlayerbotClassAI
 {
     public:
@@ -19,32 +35,15 @@ class MANGOS_DLL_SPEC PlayerbotMageAI : PlayerbotClassAI
         virtual ~PlayerbotMageAI();
         void InitSpells(PlayerbotAI* const ai);
 
-        // all combat actions go here
-        void DoNextCombatManeuver(Unit*);
-
-        // all non combat actions go here, ex buffs, heals, rezzes
+        bool DoNextCombatManeuver(Unit*);
         bool DoNonCombatActions();
 
-        // buff a specific player, usually a real PC who is not in group
-        void BuffPlayer(Player *target);
-
     private:
-        // ARCANE
         uint32 ARCANE_MISSILES, ARCANE_EXPLOSION, COUNTERSPELL, SLOW, ARCANE_BARRAGE, ARCANE_BLAST, MIRROR_IMAGE, ARCANE_POWER;
-
-        // FIRE
         uint32 FIREBALL, FIRE_BLAST, FLAMESTRIKE, SCORCH, PYROBLAST, BLAST_WAVE, COMBUSTION, DRAGONS_BREATH, LIVING_BOMB, FROSTFIRE_BOLT, FIRE_WARD;
-
-        // FROST
         uint32 DEEP_FREEZE, FROSTBOLT, FROST_NOVA, BLIZZARD, ICY_VEINS, CONE_OF_COLD, ICE_BARRIER, SUMMON_WATER_ELEMENTAL, ICE_LANCE, FROST_WARD, ICE_BLOCK, COLD_SNAP;
-
-        // buffs
         uint32 FROST_ARMOR, ICE_ARMOR, MAGE_ARMOR, MOLTEN_ARMOR, ARCANE_INTELLECT, ARCANE_BRILLIANCE, DALARAN_INTELLECT, DALARAN_BRILLIANCE, MANA_SHIELD, DAMPEN_MAGIC, AMPLIFY_MAGIC;
-
-        // first aid
         uint32 RECENTLY_BANDAGED;
-
-        // racial
         uint32 ARCANE_TORRENT, GIFT_OF_THE_NAARU, STONEFORM, ESCAPE_ARTIST, EVERY_MAN_FOR_HIMSELF, SHADOWMELD, BLOOD_FURY, WAR_STOMP, BERSERKING, WILL_OF_THE_FORSAKEN;
 
         uint32 SpellSequence, LastSpellArcane, LastSpellFire, LastSpellFrost, CONJURE_WATER, CONJURE_FOOD;
