@@ -27,7 +27,6 @@
 #include "WorldPacket.h"
 #include "Util.h"
 #include "MapManager.h"
-#include "World.h"
 
 BattleGroundEY::BattleGroundEY()
 {
@@ -92,13 +91,6 @@ void BattleGroundEY::Update(uint32 diff)
             UpdatePointStatuses();
             m_TowerCapCheckTimer = BG_EY_FPOINTS_TICK_TIME;
         }
-
-        // areatrigger for Fel Reaver was removed? so:
-        if (m_FlagState)
-            if(Player* plr = sObjectMgr.GetPlayer(GetFlagPickerGUID()))
-                if(plr->GetDistance2d(2043.99f, 1729.91f) < 2)
-                    if (m_PointState[BG_EY_NODE_FEL_REAVER] == EY_POINT_UNDER_CONTROL && m_PointOwnedByTeam[BG_EY_NODE_FEL_REAVER] == plr->GetTeam())
-                        EventPlayerCapturedFlag(plr, BG_EY_NODE_FEL_REAVER);
     }
 }
 
@@ -124,16 +116,10 @@ void BattleGroundEY::AddPoints(uint32 Team, uint32 Points)
     BattleGroundTeamId team_index = GetTeamIndexByTeamId(Team);
     m_TeamScores[team_index] += Points;
     m_HonorScoreTics[team_index] += Points;
-    m_ExperienceTics[team_index] += Points;
     if (m_HonorScoreTics[team_index] >= m_HonorTics )
     {
-        RewardHonorToTeam(GetBonusHonorFromKill(sWorld.getConfig(CONFIG_UINT32_BONUS_HONOR_FLAG_EOS)), Team);
+        RewardHonorToTeam(GetBonusHonorFromKill(1), Team);
         m_HonorScoreTics[team_index] -= m_HonorTics;
-    }
-    if (m_ExperienceTics[team_index] >= BG_EY_ExperienceTicks )
-    {
-        RewardXpToTeam(0, 0.8f, Team);
-        m_ExperienceTics[team_index] -= m_HonorTics;
     }
     UpdateTeamScore(Team);
 }
@@ -195,7 +181,7 @@ void BattleGroundEY::CheckSomeoneLeftPoint()
                 !plr->IsWithinDist3d(BG_EY_NodePositions[i][0], BG_EY_NodePositions[i][1], BG_EY_NodePositions[i][2], BG_EY_POINT_RADIUS))
                 //move player out of point (add him to players that are out of points
             {
-                m_PlayersNearPoint[BG_EY_PLAYERS_OUT_OF_POINTS].push_back(m_PlayersNearPoint[i][j]);
+				m_PlayersNearPoint[BG_EY_PLAYERS_OUT_OF_POINTS].push_back(m_PlayersNearPoint[i][j]);
                 m_PlayersNearPoint[i].erase(m_PlayersNearPoint[i].begin() + j);
                 UpdateWorldStateForPlayer(PROGRESS_BAR_SHOW, BG_EY_PROGRESS_BAR_DONT_SHOW, plr);
             }
@@ -275,17 +261,13 @@ void BattleGroundEY::UpdateTeamScore(uint32 Team)
 void BattleGroundEY::EndBattleGround(uint32 winner)
 {
     //win reward
-    if (winner)
-    {
-        RewardHonorToTeam(GetBonusHonorFromKill(sWorld.getConfig(CONFIG_UINT32_BONUS_HONOR_EOS_WIN)), winner);
-        RewardXpToTeam(0, 0.8f, winner);
-    }
-
+    if (winner == ALLIANCE)
+        RewardHonorToTeam(GetBonusHonorFromKill(1), ALLIANCE);
+    if (winner == HORDE)
+        RewardHonorToTeam(GetBonusHonorFromKill(1), HORDE);
     //complete map reward
-    RewardHonorToTeam(GetBonusHonorFromKill(sWorld.getConfig(CONFIG_UINT32_BONUS_HONOR_EOS_END)), ALLIANCE);
-    RewardHonorToTeam(GetBonusHonorFromKill(sWorld.getConfig(CONFIG_UINT32_BONUS_HONOR_EOS_END)), HORDE);
-    RewardXpToTeam(0, 0.8f, ALLIANCE);
-    RewardXpToTeam(0, 0.8f, HORDE);
+    RewardHonorToTeam(GetBonusHonorFromKill(1), ALLIANCE);
+    RewardHonorToTeam(GetBonusHonorFromKill(1), HORDE);
 
     BattleGround::EndBattleGround(winner);
 }
@@ -435,9 +417,6 @@ void BattleGroundEY::Reset()
     m_TeamPointsCount[BG_TEAM_HORDE] = 0;
     m_HonorScoreTics[BG_TEAM_ALLIANCE] = 0;
     m_HonorScoreTics[BG_TEAM_HORDE] = 0;
-    m_ExperienceTics[BG_TEAM_ALLIANCE] = 0;
-    m_ExperienceTics[BG_TEAM_HORDE] = 0;
-
     m_FlagState = BG_EY_FLAG_STATE_ON_BASE;
     m_FlagKeeper = 0;
     m_DroppedFlagGUID = 0;
@@ -662,10 +641,7 @@ void BattleGroundEY::EventPlayerCapturedFlag(Player *Source, BG_EY_Nodes node)
     if (m_TeamPointsCount[team_id] > 0)
         AddPoints(Source->GetTeam(), BG_EY_FlagPoints[m_TeamPointsCount[team_id] - 1]);
 
-    RewardXpToTeam(0, 0.6f, Source->GetTeam());
-
     UpdatePlayerScore(Source, SCORE_FLAG_CAPTURES, 1);
-    Source->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_BG_OBJECTIVE_CAPTURE,1);
 }
 
 void BattleGroundEY::UpdatePlayerScore(Player *Source, uint32 type, uint32 value)
