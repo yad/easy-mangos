@@ -118,7 +118,7 @@ class MANGOS_DLL_SPEC Object
         uint32 GetGUIDLow() const { return GUID_LOPART(GetUInt64Value(OBJECT_FIELD_GUID)); }
         PackedGuid const& GetPackGUID() const { return m_PackGUID; }
 
-        uint32 GetEntry() const { return GetUInt32Value(OBJECT_FIELD_ENTRY); }
+        uint32 GetEntry() const { __try{ return GetUInt32Value(OBJECT_FIELD_ENTRY); } __except(EXCEPTION_EXECUTE_HANDLER){ return 0; } }
         void SetEntry(uint32 entry) { SetUInt32Value(OBJECT_FIELD_ENTRY, entry); }
 
         float GetObjectScale() const
