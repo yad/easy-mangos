@@ -115,7 +115,7 @@ void AuctionHouseMgr::SendAuctionWonMail( AuctionEntry *auction )
             }
         }
 
-        if( bidder_security > SEC_PLAYER )
+        if( bidder_security > SEC_VIP )
         {
             std::string owner_name;
             if(!sObjectMgr.GetPlayerNameByGUID(auction->owner,owner_name))

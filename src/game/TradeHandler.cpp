@@ -151,7 +151,7 @@ void WorldSession::moveItems(Item* myItems[], Item* hisItems[])
             {
                 // logging
                 DEBUG_LOG("partner storing: %s", myItems[i]->GetObjectGuid().GetString().c_str());
-                if (_player->GetSession()->GetSecurity() > SEC_PLAYER && sWorld.getConfig(CONFIG_BOOL_GM_LOG_TRADE))
+                if (_player->GetSession()->GetSecurity() > SEC_VIP && sWorld.getConfig(CONFIG_BOOL_GM_LOG_TRADE))
                 {
                     sLog.outCommand(_player->GetSession()->GetAccountId(),"GM %s (Account: %u) trade: %s (Entry: %d Count: %u) to player: %s (Account: %u)",
                         _player->GetName(), _player->GetSession()->GetAccountId(),
@@ -167,7 +167,7 @@ void WorldSession::moveItems(Item* myItems[], Item* hisItems[])
             {
                 // logging
                 DEBUG_LOG("player storing: %s", hisItems[i]->GetObjectGuid().GetString().c_str());
-                if (trader->GetSession()->GetSecurity() > SEC_PLAYER && sWorld.getConfig(CONFIG_BOOL_GM_LOG_TRADE))
+                if (trader->GetSession()->GetSecurity() > SEC_VIP && sWorld.getConfig(CONFIG_BOOL_GM_LOG_TRADE))
                 {
                     sLog.outCommand(trader->GetSession()->GetAccountId(),"GM %s (Account: %u) trade: %s (Entry: %d Count: %u) to player: %s (Account: %u)",
                         trader->GetName(), trader->GetSession()->GetAccountId(),
@@ -444,14 +444,14 @@ void WorldSession::HandleAcceptTradeOpcode(WorldPacket& recvPacket)
         // logging money
         if (sWorld.getConfig(CONFIG_BOOL_GM_LOG_TRADE))
         {
-            if (_player->GetSession()->GetSecurity() > SEC_PLAYER && my_trade->GetMoney() > 0)
+            if (_player->GetSession()->GetSecurity() > SEC_VIP && my_trade->GetMoney() > 0)
             {
                 sLog.outCommand(_player->GetSession()->GetAccountId(),"GM %s (Account: %u) give money (Amount: %u) to player: %s (Account: %u)",
                     _player->GetName(),_player->GetSession()->GetAccountId(),
                     my_trade->GetMoney(),
                     trader->GetName(), trader->GetSession()->GetAccountId());
             }
-            if (trader->GetSession()->GetSecurity() > SEC_PLAYER && his_trade->GetMoney() > 0)
+            if (trader->GetSession()->GetSecurity() > SEC_VIP && his_trade->GetMoney() > 0)
             {
                 sLog.outCommand(trader->GetSession()->GetAccountId(),"GM %s (Account: %u) give money (Amount: %u) to player: %s (Account: %u)",
                     trader->GetName(), trader->GetSession()->GetAccountId(),
