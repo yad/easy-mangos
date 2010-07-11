@@ -538,13 +538,11 @@ void Channel::Say(uint64 p, const char *what, uint32 lang)
 {
     if(!what)
         return;
-
-    Player *plr = sObjectMgr.GetPlayer(p);
-
-    if (sWorld.getConfig(CONFIG_BOOL_ALLOW_TWO_SIDE_INTERACTION_CHANNEL) || (plr && plr->isInTeamBG())) //<-- TeamBG code
+    if (sWorld.getConfig(CONFIG_BOOL_ALLOW_TWO_SIDE_INTERACTION_CHANNEL))
         lang = LANG_UNIVERSAL;
 
     uint32 sec = 0;
+    Player *plr = sObjectMgr.GetPlayer(p);
     if(plr)
         sec = plr->GetSession()->GetSecurity();
 
@@ -608,7 +606,7 @@ void Channel::Invite(uint64 p, const char *newname)
     if (!plr)
         return;
 
-    if (newp->GetTeam() != plr->GetTeam() && !sWorld.getConfig(CONFIG_BOOL_ALLOW_TWO_SIDE_INTERACTION_CHANNEL) && !plr->isInTeamBG())
+    if (newp->GetTeam() != plr->GetTeam() && !sWorld.getConfig(CONFIG_BOOL_ALLOW_TWO_SIDE_INTERACTION_CHANNEL))
     {
         WorldPacket data;
         MakeInviteWrongFaction(&data);

@@ -61,7 +61,7 @@ enum LogType
 const int LogType_count = int(LogError) +1;
 
 Log::Log() :
-    raLogfile(NULL), logfile(NULL), gmLogfile(NULL), charLogfile(NULL), arenaLogfile(NULL),
+    raLogfile(NULL), logfile(NULL), gmLogfile(NULL), charLogfile(NULL),
     dberLogfile(NULL), m_colored(false), m_includeTime(false), m_gmlog_per_account(false)
 {
     Initialize();
@@ -260,7 +260,6 @@ void Log::Initialize()
     dberLogfile = openLogFile("DBErrorLogFile",NULL,"a");
     raLogfile = openLogFile("RaLogFile",NULL,"a");
     worldLogfile = openLogFile("WorldLogFile","WorldLogTimestamp","a");
-    arenaLogfile = openLogFile("ArenaRatedLogFile",NULL,"a");
 
     // Main log file settings
     m_includeTime  = sConfig.GetBoolDefault("LogTime", false);
@@ -820,24 +819,6 @@ void Log::outRALog(    const char * str, ... )
         fflush(raLogfile);
     }
 
-    fflush(stdout);
-}
-
-void Log::outArenaLog(const char * str, ...)
-{
-    if(!str)
-        return;
-
-    if (arenaLogfile)
-    {
-        va_list ap;
-        outTimestamp(arenaLogfile);
-        va_start(ap, str);
-        vfprintf(arenaLogfile, str, ap);
-        fprintf(arenaLogfile, "\n" );
-        va_end(ap);
-        fflush(arenaLogfile);
-    }
     fflush(stdout);
 }
 

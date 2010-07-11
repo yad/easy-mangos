@@ -642,10 +642,6 @@ enum AtLoginFlags
     AT_LOGIN_CUSTOMIZE         = 0x08,
     AT_LOGIN_RESET_PET_TALENTS = 0x10,
     AT_LOGIN_FIRST             = 0x20,
-    AT_LOGIN_ADD_EQUIP         = 0x40,
-    AT_LOGIN_LEARN_CLASS_SPELLS= 0x80,
-    AT_LOGIN_LEARN_SKILL_RECIPES=0x100,
-    AT_LOGIN_LEARN_TAXI_NODES  = 0x200,
 };
 
 typedef std::map<uint32, QuestStatusData> QuestStatusMap;
@@ -788,17 +784,6 @@ struct EquipmentSet
     EquipmentSetUpdateState state;
 };
 
-struct AccountInfo
-{
-    AccountInfo() : Guid(0), Name("")
-    {
-    }
-
-    uint64 Guid;
-    std::string Name;
-    float Angle;
-};
-
 #define MAX_EQUIPMENT_SET_INDEX 10                          // client limit
 
 typedef std::map<uint32, EquipmentSet> EquipmentSets;
@@ -935,7 +920,7 @@ enum PlayerLoginQueryIndex
     PLAYER_LOGIN_QUERY_LOADTALENTS,
     PLAYER_LOGIN_QUERY_LOADWEKLYQUESTSTATUS,
     PLAYER_LOGIN_QUERY_LOADWEEKLYQUESTSTATUS,
-    PLAYER_LOGIN_QUERY_LOADBGSTATUS,
+
     MAX_PLAYER_LOGIN_QUERY
 };
 
@@ -2100,8 +2085,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         void CheckAreaExploreAndOutdoor(void);
 
         static uint32 TeamForRace(uint8 race);
-        uint32 GetTeam() const;
-        TeamId GetTeamId() const { return m_team == ALLIANCE ? TEAM_ALLIANCE : TEAM_HORDE; }
+        uint32 GetTeam() const { return m_team; }
         static uint32 getFactionForRace(uint8 race);
         void setFactionForRace(uint8 race);
 
@@ -2136,7 +2120,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         void ModifyArenaPoints( int32 value );
         void ModifyHKillPoints( int32 value ) { SetUInt32Value(PLAYER_FIELD_LIFETIME_HONORBALE_KILLS, value); }
         uint32 GetMaxPersonalArenaRatingRequirement(uint32 minarenaslot);
-        void RewardRandomBattlegroud( bool win);
 
         void ReceiveToken();
 
@@ -2317,14 +2300,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         bool isTotalImmune();
         bool CanCaptureTowerPoint();
 
-        bool RandomBGDone() { return m_FirstRBTime > 0; }
-        void SetRandomBGDone()
-        {
-            m_FirstRBTime = uint64(time(NULL));
-            m_FirstRBDone = true;
-        }
-        void ResetBGStatus() { m_FirstRBTime = 0; }
-
         /*********************************************************/
         /***               OUTDOOR PVP SYSTEM                  ***/
         /*********************************************************/
@@ -2381,7 +2356,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         /*********************************************************/
         bool HasMovementFlag(MovementFlags f) const;        // for script access to m_movementInfo.HasMovementFlag
         void UpdateFallInformationIfNeed(MovementInfo const& minfo,uint16 opcode);
-
         void SetFallInformation(uint32 time, float z)
         {
             m_lastFallTime = time;
@@ -2558,13 +2532,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         uint32 GetLevelAtLoading() { return m_levelAtLoading; }
         bool IsBot() { return (GetSession()->IsBotSession()); }
 
-        //TEAMBG helpers
-        bool isInTeamBG() { return m_isInTeamBG; };
-        void SetTeamBG(bool isIn, uint8 side) { m_isInTeamBG = isIn; m_fakeTeam = side; };
-
         Player* LastDmgDealer;
-        uint8 getFakeTeam() { return m_fakeTeam; };
-        void SetFakeTeam(uint8 side) { m_fakeTeam = side; };
         uint32 getOriginalTeam() { return TeamForRace(getRace()); };
     protected:
 
@@ -2621,13 +2589,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         void _LoadArenaTeamInfo(QueryResult *result);
         void _LoadEquipmentSets(QueryResult *result);
         void _LoadBGData(QueryResult* result);
-        void _LoadBGStatus(QueryResult* result);
         void _LoadGlyphs(QueryResult *result);
         void _LoadIntoDataField(const char* data, uint32 startOffset, uint32 count);
-        void AddLoginEquip();
-        void LearnAvailableSpells();
-        void LearnSkillRecipesFromTrainer();
-        void LearnAllAvailableTaxiPaths();
 
         /*********************************************************/
         /***                   SAVE SYSTEM                     ***/
@@ -2644,7 +2607,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         void _SaveSpells();
         void _SaveEquipmentSets();
         void _SaveBGData();
-        void _SaveBGStatus();
         void _SaveGlyphs();
         void _SaveTalents();
         void _SaveStats();
@@ -2739,7 +2701,6 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         bool   m_DailyQuestChanged;
         bool   m_WeeklyQuestChanged;
-        bool   m_FirstRBDone;
 
         uint32 m_drunkTimer;
         uint16 m_drunk;
@@ -2879,16 +2840,11 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         AchievementMgr m_achievementMgr;
         ReputationMgr  m_reputationMgr;
+
         uint32 m_timeSyncCounter;
         uint32 m_timeSyncTimer;
         uint32 m_timeSyncClient;
         uint32 m_timeSyncServer;
-
-        // Battleground reward system
-        uint32 m_FirstRBTime;
-        // TEAMBG helpers
-        bool m_isInTeamBG;
-        uint8 m_fakeTeam; // 0 nothing, 1 blue(ali), 2 red(horde)
 };
 
 void AddItemsSetItem(Player*player,Item *item);

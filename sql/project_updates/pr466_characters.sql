@@ -1,1 +1,1 @@
-ALTER TABLE `guild` ADD `friendlyGuildId` INT( 6 ) UNSIGNED NOT NULL DEFAULT '0';
+ALTER TABLE `guild` DROP COLUMN `friendlyGuildId`;

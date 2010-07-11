@@ -650,7 +650,6 @@ bool ChatHandler::HandleReloadAllSpellCommand(const char*)
     HandleReloadSpellElixirCommand("a");
     HandleReloadSpellLearnSpellCommand("a");
     HandleReloadSpellProcEventCommand("a");
-    HandleReloadSpellStackCommand("a");
     HandleReloadSpellBonusesCommand("a");
     HandleReloadSpellProcItemEnchantCommand("a");
     HandleReloadSpellScriptTargetCommand("a");
@@ -1062,14 +1061,6 @@ bool ChatHandler::HandleReloadSpellProcEventCommand(const char*)
     sLog.outString( "Re-Loading Spell Proc Event conditions..." );
     sSpellMgr.LoadSpellProcEvents();
     SendGlobalSysMessage("DB table `spell_proc_event` (spell proc trigger requirements) reloaded.");
-    return true;
-}
-bool ChatHandler::HandleReloadSpellStackCommand(const char*)
-{
-    sLog.outString( "Re-Loading Spell stacking conditions..." );
-    sSpellMgr.LoadSpellStack();
-    sSpellMgr.LoadSpellStackGroup();
-    SendGlobalSysMessage("DB table `spell_stack_data` and `spell_stack_group_data` reloaded.");
     return true;
 }
 

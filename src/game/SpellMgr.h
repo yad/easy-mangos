@@ -851,9 +851,6 @@ class SpellMgr
     friend struct DoSpellBonuses;
     friend struct DoSpellProcEvent;
     friend struct DoSpellProcItemEnchant;
-    // DEVELOPER CODE START
-       friend struct DoSpellStack;
-    //DEVELOPER CODE END
 
     // Constructors
     public:
@@ -1186,11 +1183,6 @@ class SpellMgr
         void LoadPetLevelupSpellMap();
         void LoadPetDefaultSpells();
         void LoadSpellAreas();
-        // DEVELOPMENT CODE START
-        void LoadSpellStack();
-        void LoadSpellStackGroup();
-        // DEVELOPMENT CODE END
-
         void ApplySpellHacks();
 
     private:

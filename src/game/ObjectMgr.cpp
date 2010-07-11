@@ -3384,8 +3384,8 @@ void ObjectMgr::LoadGuilds()
 
     //                                                    0             1          2          3           4           5           6
     QueryResult *result = CharacterDatabase.Query("SELECT guild.guildid,guild.name,leaderguid,EmblemStyle,EmblemColor,BorderStyle,BorderColor,"
-    //   7               8    9    10         11        12                                                                                                       13
-        "BackgroundColor,info,motd,createdate,BankMoney,(SELECT COUNT(guild_bank_tab.guildid) FROM guild_bank_tab WHERE guild_bank_tab.guildid = guild.guildid), guild.friendlyGuildId "
+    //   7               8    9    10         11        12
+        "BackgroundColor,info,motd,createdate,BankMoney,(SELECT COUNT(guild_bank_tab.guildid) FROM guild_bank_tab WHERE guild_bank_tab.guildid = guild.guildid) "
         "FROM guild ORDER BY guildid ASC");
 
     if( !result )
@@ -3440,10 +3440,9 @@ void ObjectMgr::LoadGuilds()
             delete newGuild;
             continue;
         }
-        //Tassadar(16.1.2010): I think that better is to load it when some guild member need this, not now
-        //newGuild->LoadGuildEventLogFromDB();
-        //newGuild->LoadGuildBankEventLogFromDB();
-        //newGuild->LoadGuildBankFromDB();
+        newGuild->LoadGuildEventLogFromDB();
+        newGuild->LoadGuildBankEventLogFromDB();
+        newGuild->LoadGuildBankFromDB();
         AddGuild(newGuild);
     } while( result->NextRow() );
 
@@ -3723,17 +3722,17 @@ void ObjectMgr::LoadQuests()
     //   103           104           105           106           107
         "RewRepValue1, RewRepValue2, RewRepValue3, RewRepValue4, RewRepValue5,"
     //   108               109                 110             111            112               113
-        "RewHonorAddition, RewHonorMultiplier, RewArenaPoints, RewOrReqMoney, RewMoneyMaxLevel, RewSpell,"
+        "RewHonorAddition, RewHonorMultiplier, RewOrReqMoney, RewMoneyMaxLevel, RewSpell, RewSpellCast,"
     //   114           115                116               117         118     119
-        "RewSpellCast, RewMailTemplateId, RewMailDelaySecs, PointMapId, PointX, PointY,"
+        "RewMailTemplateId, RewMailDelaySecs, PointMapId, PointX, PointY, PointOpt,"
     //   120       121            122            123            124            125                 126                 127
-        "PointOpt, DetailsEmote1, DetailsEmote2, DetailsEmote3, DetailsEmote4, DetailsEmoteDelay1, DetailsEmoteDelay2, DetailsEmoteDelay3,"
+        "DetailsEmote1, DetailsEmote2, DetailsEmote3, DetailsEmote4, DetailsEmoteDelay1, DetailsEmoteDelay2, DetailsEmoteDelay3, DetailsEmoteDelay4,"
     //   128                 129              130            131                132                133
-        "DetailsEmoteDelay4, IncompleteEmote, CompleteEmote, OfferRewardEmote1, OfferRewardEmote2, OfferRewardEmote3,"
+        "IncompleteEmote, CompleteEmote, OfferRewardEmote1, OfferRewardEmote2, OfferRewardEmote3, OfferRewardEmote4,"
     //   134                135                     136                     137
-        "OfferRewardEmote4, OfferRewardEmoteDelay1, OfferRewardEmoteDelay2, OfferRewardEmoteDelay3,"
-    //   138                     139          140
-        "OfferRewardEmoteDelay4, StartScript, CompleteScript"
+        "OfferRewardEmoteDelay1, OfferRewardEmoteDelay2, OfferRewardEmoteDelay3, OfferRewardEmoteDelay4,"
+    //   138          139
+        "StartScript, CompleteScript"
         " FROM quest_template");
     if (result == NULL)
     {
