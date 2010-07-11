@@ -7006,7 +7006,14 @@ void Player::DuelComplete(DuelCompleteType type)
     {
         GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_LOSE_DUEL, 1);
         if (duel->opponent)
-            duel->opponent->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_WIN_DUEL, 1);
+            {
+                duel->opponent->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_WIN_DUEL, 1);
+                //Credit for quest Death's Challenge
+                if (getClass() == CLASS_DEATH_KNIGHT && duel->opponent->GetQuestStatus(12733) == QUEST_STATUS_INCOMPLETE)
+                    duel->opponent->CastSpell(duel->opponent, 52994, true);
+                //Emote for winner. Just fo fun =)
+                duel->opponent->HandleEmoteCommand(EMOTE_ONESHOT_CHEER);
+            }
     }
 
     //Remove Duel Flag object
