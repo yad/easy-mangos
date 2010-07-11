@@ -2410,6 +2410,9 @@ class MANGOS_DLL_SPEC Player : public Unit
         bool TeleportToHomebind(uint32 options = 0) { return TeleportTo(m_homebindMapId, m_homebindX, m_homebindY, m_homebindZ, GetOrientation(), options); }
 
         Object* GetObjectByTypeMask(ObjectGuid guid, TypeMask typemask);
+        
+        /* WoWArmory Feed Log */
+        void WriteWowArmoryDatabaseLog(uint32 type, uint32 data);
 
         // currently visible objects at player client
         ObjectGuidSet m_clientGUIDs;

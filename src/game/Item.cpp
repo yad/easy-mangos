@@ -981,7 +981,15 @@ Item* Item::CreateItem( uint32 item, uint32 count, Player const* player )
             count = pProto->GetMaxStackSize();
 
         ASSERT(count !=0 && "pProto->Stackable==0 but checked at loading already");
-
+        
+        if (pProto->Quality > 2 && pProto->Flags != 2048 && (pProto->Class == ITEM_CLASS_WEAPON || pProto->Class == ITEM_CLASS_ARMOR) && player)
+        {
+            /* WoWArmory Feed Log */
+            std::ostringstream ss;
+            sLog.outDetail("WoWArmory: write feed log (guid: %u, type: 2, data: %u)", player->GetGUIDLow(), item);
+            ss << "REPLACE INTO character_feed_log (guid, type, data, counter) VALUES (" << player->GetGUIDLow() << ", 2, " << item << ", 1)";
+            CharacterDatabase.PExecute( ss.str().c_str() );
+        }
         Item *pItem = NewItemOrBag( pProto );
         if( pItem->Create(sObjectMgr.GenerateLowGuid(HIGHGUID_ITEM), item, player) )
         {

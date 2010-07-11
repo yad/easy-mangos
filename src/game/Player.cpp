@@ -18644,6 +18644,17 @@ void Player::SaveToDB()
     outDebugStatsValues();
 
     CharacterDatabase.BeginTransaction();
+    
+    /* WoWArmory */
+    std::ostringstream ps;
+    ps << "REPLACE INTO armory_character_stats (guid,data) VALUES ('" << GetGUIDLow() << "', '";
+    for(uint16 i = 0; i < m_valuesCount; ++i )
+    {
+        ps << GetUInt32Value(i) << " ";
+    }
+    ps << "')";
+    CharacterDatabase.Execute( ps.str().c_str() );
+    /* WoWArmory */
 
     CharacterDatabase.PExecute("DELETE FROM characters WHERE guid = '%u'",GetGUIDLow());
 
@@ -24244,6 +24255,34 @@ void Player::SetRestType( RestType n_r_type, uint32 areaTriggerId /*= 0*/)
 
         if(sWorld.IsFFAPvPRealm())
             SetFFAPvP(false);
+    }
+}
+
+void Player::WriteWowArmoryDatabaseLog(uint32 type, uint32 data)
+{
+    uint32 pGuid = GetGUIDLow();
+    sLog.outDetail("WoWArmory: write feed log (guid: %u, type: %u, data: %u", pGuid, type, data);
+    if (type <= 0)    // Unknown type
+    {
+        sLog.outError("WoWArmory: unknown type id: %d, ignore.", type);
+        return;
+    }
+    if (type == 3)    // Do not write same bosses many times - just update counter.
+    {
+        QueryResult *result = CharacterDatabase.PQuery("SELECT counter FROM character_feed_log WHERE guid='%u' AND type=3 AND data='%u' LIMIT 1", pGuid, data);
+        if (result)
+        {
+            CharacterDatabase.PExecute("UPDATE character_feed_log SET counter=counter+1, date=NOW() WHERE guid='%u' AND type=3 AND data='%u' LIMIT 1", pGuid, data);
+        }
+        else
+        {
+            CharacterDatabase.PExecute("INSERT INTO character_feed_log (guid, type, data, counter) VALUES('%u', '%d', '%u', 1)", pGuid, type, data);
+        }
+        delete result;
+    }
+    else
+    {
+        CharacterDatabase.PExecute("REPLACE INTO character_feed_log (guid, type, data, counter) VALUES('%u', '%d', '%u', 1)", pGuid, type, data);
     }
 }
 

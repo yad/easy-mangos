@@ -723,6 +723,44 @@ void BattleGround::EndBattleGround(uint32 winner)
             DEBUG_LOG("--- Winner rating: %u, Loser rating: %u, Winner change: %u, Losser change: %u ---", winner_rating, loser_rating, winner_change, loser_change);
             SetArenaTeamRatingChangeForTeam(winner, winner_change);
             SetArenaTeamRatingChangeForTeam(GetOtherTeam(winner), loser_change);
+            /* WoWArmory */
+            uint32 maxChartID;
+            QueryResult *result = CharacterDatabase.PQuery("SELECT MAX(gameid) FROM armory_game_chart");
+            if(!result)
+                maxChartID = 0;
+            else
+            {
+                maxChartID = (*result)[0].GetUInt32();
+                delete result;
+            }
+            uint32 gameID = maxChartID+1;
+            for(BattleGroundScoreMap::const_iterator itr = m_PlayerScores.begin(); itr != m_PlayerScores.end(); ++itr)
+            {
+                Player *plr = sObjectMgr.GetPlayer(itr->first);
+                if (!plr)
+                    continue;
+                uint32 plTeamID = plr->GetArenaTeamId(winner_arena_team->GetSlot());
+                uint32 changeType;
+                uint32 resultRating;
+                uint32 resultTeamID;
+                if (plTeamID == winner_arena_team->GetId())
+                {
+                    changeType = 1; //win
+                    resultRating = winner_rating;
+                    resultTeamID = plTeamID;
+                }
+                else
+                {
+                    changeType = 2; //lose
+                    resultRating = loser_rating;
+                    resultTeamID = loser_arena_team->GetId();
+                }
+                std::ostringstream sql_query;
+                //                                                        gameid,              teamid,                     guid,                    changeType,             ratingChange,               teamRating,                  damageDone,                          deaths,                          healingDone,                           damageTaken,                           healingTaken,                         killingBlows,                      mapId,                 start,                   end
+                sql_query << "INSERT INTO armory_game_chart VALUES ('" << gameID << "', '" << resultTeamID << "', '" << plr->GetGUID() << "', '" << changeType << "', '" << winner_change << "', '" << resultRating << "', '" << itr->second->DamageDone << "', '" << itr->second->Deaths << "', '" << itr->second->HealingDone << "', '" << itr->second->DamageTaken << "', '" << itr->second->HealingTaken << "', '" << itr->second->KillingBlows << "', '" << m_MapId << "', '" << m_StartTime << "', '" << m_EndTime << "')";
+                CharacterDatabase.Execute(sql_query.str().c_str());
+            }
+            //* WoWArmory *//
         }
         else
         {
@@ -730,7 +768,6 @@ void BattleGround::EndBattleGround(uint32 winner)
             SetArenaTeamRatingChangeForTeam(HORDE, 0);
         }
     }
-
     for(BattleGroundPlayerMap::iterator itr = m_Players.begin(); itr != m_Players.end(); ++itr)
     {
         uint32 team = itr->second.Team;
@@ -1373,6 +1410,13 @@ void BattleGround::UpdatePlayerScore(Player *Source, uint32 type, uint32 value)
             break;
         case SCORE_HEALING_DONE:                            // Healing Done
             itr->second->HealingDone += value;
+            break;
+        /* WoWArmory (arena game chart) */
+        case SCORE_DAMAGE_TAKEN:
+            itr->second->DamageTaken += value;              // Damage Taken
+            break;
+        case SCORE_HEALING_TAKEN:
+            itr->second->HealingTaken += value;             // Healing Taken
             break;
         default:
             sLog.outError("BattleGround: Unknown player score type %u", type);
