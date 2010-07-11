@@ -155,7 +155,7 @@ void WorldSession::HandleGroupInviteOpcode( WorldPacket & recv_data )
     // ok, we do it
     WorldPacket data(SMSG_GROUP_INVITE, 10);                // guess size
     data << uint8(1);                                       // invited/already in group flag
-    data << membername;                                     // max len 48
+    data << GetPlayer()->GetName();                         // max len 48
     data << uint32(0);                                      // unk
     data << uint8(0);                                       // count
     //for(int i = 0; i < count; ++i)
@@ -168,7 +168,7 @@ void WorldSession::HandleGroupInviteOpcode( WorldPacket & recv_data )
 
 void WorldSession::HandleGroupAcceptOpcode( WorldPacket & recv_data )
 {
-    //recv_data.read_skip<uint32>();                          // roles mask?
+    recv_data.read_skip<uint32>();                          // roles mask?
 
     Group *group = GetPlayer()->GetGroupInvite();
     if (!group)

@@ -54,8 +54,6 @@
 #include "BattleGround.h"
 #include "BattleGroundAV.h"
 #include "BattleGroundMgr.h"
-#include "OutdoorPvP.h"
-#include "OutdoorPvPMgr.h"
 #include "ArenaTeam.h"
 #include "Chat.h"
 #include "Database/DatabaseImpl.h"
@@ -63,7 +61,9 @@
 #include "SocialMgr.h"
 #include "AchievementMgr.h"
 #include "Mail.h"
-#include "GameEventMgr.h"
+#include "GameEventMgr.h"	  
+#include "OutdoorPvP.h"
+#include "OutdoorPvPMgr.h"
 
 // Playerbot mod:
 #include "PlayerbotAI.h"
@@ -495,7 +495,6 @@ Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputa
     // group is initialized in the reference constructor
     SetGroupInvite(NULL);
     m_groupUpdateMask = 0;
-    m_auraUpdateMask = 0;
 
     duel = NULL;
 
@@ -2717,7 +2716,7 @@ void Player::Update( uint32 p_time )
                     }
                 }
                 //120 degrees of radiant range
-                else if( !HasInArc( 2*M_PI_F/3, pVictim ) && !GetVehicleGUID()) // - on vehicles is wrong facing set?
+                else if( !HasInArc( 2*M_PI_F/3, pVictim ))
                 {
                     setAttackTimer(BASE_ATTACK,100);
                     if(m_swingErrorMsg != 2)                // send single time (client auto repeat)
@@ -8046,7 +8045,6 @@ bool Player::RewardHonor(Unit *uVictim, uint32 groupsize, float honor)
         if(groupsize > 1)
             honor /= groupsize;
     }
-
 
     // honor - for show honor points in log
     // victim_guid - for show victim name in log
@@ -20090,7 +20088,6 @@ void Player::HandleStealthedUnitsDetection()
 
                 // target aura duration for caster show only if target exist at caster client
                 // send data at target visibility change (adding to client)
-
                 if((*i)!=this && (*i)->isType(TYPEMASK_UNIT))
                 {
                     SendAurasForTarget(*i);
@@ -21360,12 +21357,13 @@ void Player::InitPrimaryProfessions()
 void Player::SendComboPoints()
 {
     Unit *combotarget = ObjectAccessor::GetUnit(*this, m_comboTarget);
-    if (combotarget)
-    {
+    if (!combotarget)
+        return;
+
         WorldPacket data;
-        if(!GetVehicleGUID()){
+    if(!GetVehicleGUID())
             data.Initialize(SMSG_UPDATE_COMBO_POINTS, combotarget->GetPackGUID().size()+1);
-        }else{
+    else{
             if(Unit *vehicle = ObjectAccessor::GetUnit(*this, GetVehicleGUID()))
             {
                 data.Initialize(SMSG_PET_UPDATE_COMBO_POINTS, vehicle->GetPackGUID().size()+combotarget->GetPackGUID().size()+1);
@@ -21376,7 +21374,6 @@ void Player::SendComboPoints()
         data << uint8(m_comboPoints);
         GetSession()->SendPacket(&data);
     }
-}
 
 void Player::AddComboPoints(Unit* target, int8 count)
 {
@@ -21553,6 +21550,7 @@ void Player::SendInitialPacketsAfterAddToMap()
         data3 << (uint32)((m_movementInfo.GetVehicleSeatFlags() & SF_CAN_CAST) ? 2 : 0);
         SendMessageToSet(&data3,true);
     }
+
     SendAurasForTarget(this);
     SendEnchantmentDurations();                             // must be after add to map
     SendItemDurations();                                    // must be after add to map                                    // must be after add to map
@@ -22303,11 +22301,8 @@ void Player::RewardSinglePlayerAtKill(Unit* pVictim)
     // honor can be in PvP and !PvP (racial leader) cases
     RewardHonor(pVictim,1);
 
-    if(GetVehicleGUID() && !(m_movementInfo.GetVehicleFlags() & VF_GIVE_EXP))
-        xp = 0;
-
-    // xp and reputation only in !PvP case
-    if(!PvP)
+    // xp and reputation only in !PvP case and not in vehicle
+    if(!PvP && !(GetVehicleGUID() && (m_movementInfo.GetVehicleFlags() & VF_GIVE_EXP)))
     {
         RewardReputation(pVictim,1);
         GiveXP(xp, pVictim);
@@ -22855,38 +22850,6 @@ void Player::SendEnterVehicle(Vehicle *vehicle)
     data << uint64(vehicle->GetVehicleId());                      // not sure
     SendMessageToSet(&data, true);*/
 }
-
-/*void Player::ExitVehicle(Vehicle *vehicle)
-{
-    vehicle->SetCharmerGUID(0);
-    vehicle->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_SPELLCLICK);
-    vehicle->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PLAYER_CONTROLLED);
-    vehicle->setFaction((GetTeam() == ALLIANCE) ? vehicle->GetCreatureInfo()->faction_A : vehicle->GetCreatureInfo()->faction_H);
-
-    SetCharm(NULL);
-    m_camera.ResetView();
-
-    SetClientControl(vehicle, 0);
-    SetMover(NULL);
-
-    WorldPacket data(MSG_MOVE_TELEPORT_ACK, 30);
-    data << GetPackGUID();
-    data << uint32(0);                                      // counter?
-    data << uint32(MOVEFLAG_ROOT);                          // fly unk
-    data << uint16(MOVEFLAG2_UNK4);                         // special flags
-    data << uint32(getMSTime());                            // time
-    data << vehicle->GetPositionX();                        // x
-    data << vehicle->GetPositionY();                        // y
-    data << vehicle->GetPositionZ();                        // z
-    data << vehicle->GetOrientation();                      // o
-    data << uint32(0);                                      // fall time
-    GetSession()->SendPacket(&data);
-
-    RemovePetActionBar();
-
-    // maybe called at dummy aura remove?
-    // CastSpell(this, 45472, true);                        // Parachute
-} */
 
 bool Player::isTotalImmune()
 {

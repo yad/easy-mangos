@@ -41,7 +41,6 @@
 
 #include "pathfinding/Detour/DetourNavMesh.h"
 
-class Creature;
 class Unit;
 class WorldPacket;
 class InstanceData;

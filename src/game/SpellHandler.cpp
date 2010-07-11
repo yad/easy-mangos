@@ -319,13 +319,13 @@ void WorldSession::HandleCastSpellOpcode(WorldPacket& recvPacket)
         return;
     }
 
+    DEBUG_LOG("WORLD: got cast spell packet, spellId - %u, cast_count: %u, unk_flags %u, data length = %i",
+        spellId, cast_count, unk_flags, (uint32)recvPacket.size());
+
     // vehicle spells are handled by CMSG_PET_CAST_SPELL,
     // but player is still able to cast own spells
     if(_player->GetCharmGUID() && _player->GetCharmGUID() == _player->GetVehicleGUID())
         mover = _player;
-
-    DEBUG_LOG("WORLD: got cast spell packet, spellId - %u, cast_count: %u, unk_flags %u, data length = %i",
-        spellId, cast_count, unk_flags, (uint32)recvPacket.size());
 
     SpellEntry const *spellInfo = sSpellStore.LookupEntry(spellId );
 
@@ -593,16 +593,11 @@ void WorldSession::HandleSpellClick( WorldPacket & recv_data )
     uint64 guid;
     recv_data >> guid;
 
-    Creature *unit = ObjectAccessor::GetCreatureOrPetOrVehicle(*_player, guid);
-    if (!unit || unit->isInCombat())                        // client prevent click and set different icon at combat state
+    if (_player->isInCombat())                              // client prevent click and set different icon at combat state
         return;
 
-    uint32 vehicleId = 0;
-    CreatureDataAddon const *cainfo = unit->GetCreatureAddon();
-    if(cainfo)
-        vehicleId = cainfo->vehicle_id;
-
-    if (_player->isInCombat() && !unit->isVehicle() && !vehicleId)                              // client prevent click and set different icon at combat state
+    Creature *unit = ObjectAccessor::GetCreatureOrPetOrVehicle(*_player, guid);
+    if (!unit || unit->isInCombat())                        // client prevent click and set different icon at combat state
         return;
 
     if(!_player->IsWithinDistInMap(unit, 10))
@@ -611,6 +606,11 @@ void WorldSession::HandleSpellClick( WorldPacket & recv_data )
     // cheater?
     if(!unit->HasFlag(UNIT_NPC_FLAGS,UNIT_NPC_FLAG_SPELLCLICK))
         return;
+
+    uint32 vehicleId = 0;
+    CreatureDataAddon const *cainfo = unit->GetCreatureAddon();
+    if(cainfo)
+        vehicleId = cainfo->vehicle_id;
 
     // handled other (hacky) way to avoid overwriting auras
     if(vehicleId || unit->isVehicle())
@@ -637,8 +637,6 @@ void WorldSession::HandleSpellClick( WorldPacket & recv_data )
             }
             unit = v;
         }
-
-        unit->SetHealth(unit->GetMaxHealth());
 
         if(((Vehicle*)unit)->GetVehicleData())
             if(uint32 r_aura = ((Vehicle*)unit)->GetVehicleData()->req_aura)

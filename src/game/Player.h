@@ -2356,6 +2356,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         /*********************************************************/
         bool HasMovementFlag(MovementFlags f) const;        // for script access to m_movementInfo.HasMovementFlag
         void UpdateFallInformationIfNeed(MovementInfo const& minfo,uint16 opcode);
+
         void SetFallInformation(uint32 time, float z)
         {
             m_lastFallTime = time;
@@ -2748,7 +2749,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         GroupReference m_originalGroup;
         Group *m_groupInvite;
         uint32 m_groupUpdateMask;
-        uint64 m_auraUpdateMask;
 
         uint64 m_miniPet;
 

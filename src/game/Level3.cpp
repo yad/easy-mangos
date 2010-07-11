@@ -4223,32 +4223,6 @@ bool ChatHandler::HandleDamageCommand(const char * args)
     return true;
 }
 
-bool ChatHandler::HandleAggroCommand(const char * args)
-{
-    Creature* caster = getSelectedCreature();
-
-    if(!caster)
-    {
-        SendSysMessage(LANG_SELECT_CREATURE);
-        SetSentErrorMessage(true);
-        return false;
-    }
-
-
-    Player* pl = m_session->GetPlayer();
-
-    if (pl->IsFriendlyTo(caster))
-        return false;
-
-    if (!pl->IsWithinDistInMap(caster, 35))
-        return false;
-
-    //caster->SetSplineFlags(SPLINEFLAG_FORWARD);
-
-    caster->GetMotionMaster()->MoveChase(pl);
-    return true;
-}
-
 bool ChatHandler::HandleModifyArenaCommand(const char * args)
 {
     if (!*args)
@@ -5234,17 +5208,17 @@ bool ChatHandler::HandleResetSpellsCommand(const char * args)
 
     if(target)
     {
-        target->resetSpells(/* bool myClassOnly */);
+        target->resetSpells();
 
         ChatHandler(target).SendSysMessage(LANG_RESET_SPELLS);
         if(!m_session || m_session->GetPlayer()!=target)
             PSendSysMessage(LANG_RESET_SPELLS_ONLINE,GetNameLink(target).c_str());
     }
-    /*else
+    else
     {
         CharacterDatabase.PExecute("UPDATE characters SET at_login = at_login | '%u' WHERE guid = '%u'",uint32(AT_LOGIN_RESET_SPELLS), GUID_LOPART(target_guid));
         PSendSysMessage(LANG_RESET_SPELLS_OFFLINE,target_name.c_str());
-    } */
+    }
 
     return true;
 }

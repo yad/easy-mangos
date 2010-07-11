@@ -104,7 +104,6 @@ ObjectAccessor::FindPlayer(ObjectGuid guid)
 Player*
 ObjectAccessor::FindPlayerByName(const char *name)
 {
-    //TODO: Player Guard
     HashMapHolder<Player>::ReadGuard g(HashMapHolder<Player>::GetLock());
     HashMapHolder<Player>::MapType& m = sObjectAccessor.GetPlayers();
     for(HashMapHolder<Player>::MapType::iterator iter = m.begin(); iter != m.end(); ++iter)

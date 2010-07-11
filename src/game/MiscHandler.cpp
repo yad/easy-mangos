@@ -38,10 +38,10 @@
 #include "ObjectAccessor.h"
 #include "Object.h"
 #include "BattleGround.h"
-#include "OutdoorPvP.h"
 #include "Pet.h"
 #include "SocialMgr.h"
 #include "DBCEnums.h"
+#include "OutdoorPvP.h"
 
 void WorldSession::HandleRepopRequestOpcode( WorldPacket & recv_data )
 {

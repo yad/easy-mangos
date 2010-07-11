@@ -310,8 +310,7 @@ void Object::BuildMovementUpdate(ByteBuffer * data, uint16 updateFlags) const
 
                 if(((Unit*)this)->GetVehicleGUID())
                     player->m_movementInfo.AddMovementFlag(MOVEFLAG_ONTRANSPORT);
-
-                if(((Player*)this)->isInFlight())
+                if(player->isInFlight())
                 {
                     ASSERT(player->GetMotionMaster()->GetCurrentMovementGeneratorType() == FLIGHT_MOTION_TYPE);
                     player->m_movementInfo.AddMovementFlag(MOVEFLAG_FORWARD);
@@ -1748,13 +1747,12 @@ void WorldObject::AddObjectToRemoveList()
 
 void WorldObject::SetZoneScript()
 {
-    if(Map *map = FindMap())
+    if(Map *map = GetMap())
     {
         if(!map->IsBattleGroundOrArena() && !map->IsDungeon())
             m_zoneScript = sOutdoorPvPMgr.GetZoneScript(GetZoneId());
     }
 }
-
 
 Creature* WorldObject::SummonCreature(uint32 id, float x, float y, float z, float ang,TempSummonType spwtype,uint32 despwtime)
 {
@@ -1880,7 +1878,7 @@ namespace MaNGOS
 
                 float x,y,z;
 
-                if( !c->isAlive() || c->hasUnitState(UNIT_STAT_NOT_MOVE | UNIT_STAT_ON_VEHICLE) ||
+                if( !c->isAlive() || c->hasUnitState(UNIT_STAT_NOT_MOVE) ||
                     !c->GetMotionMaster()->GetDestination(x,y,z) )
                 {
                     x = c->GetPositionX();

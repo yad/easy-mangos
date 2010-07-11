@@ -38,7 +38,6 @@
 #include "Creature.h"
 #include "Formulas.h"
 #include "BattleGround.h"
-#include "OutdoorPvPMgr.h"
 #include "CreatureAI.h"
 #include "ScriptCalls.h"
 #include "Util.h"
@@ -46,6 +45,7 @@
 #include "GridNotifiersImpl.h"
 #include "Vehicle.h"
 #include "CellImpl.h"
+#include "OutdoorPvPMgr.h"
 
 #define NULL_AURA_SLOT 0xFF
 
@@ -3275,7 +3275,7 @@ void Aura::HandleModPossess(bool apply, bool Real)
         {
             ((Creature*)target)->AIM_Initialize();
         }
-        else if(target->GetTypeId() == TYPEID_PLAYER)
+        else if(target->GetTypeId() == TYPEID_PLAYER && !target->GetVehicleGUID())
         {
             ((Player*)target)->SetClientControl(target, 0);
         }
@@ -3306,7 +3306,7 @@ void Aura::HandleModPossess(bool apply, bool Real)
 
         target->SetCharmerGUID(0);
 
-        if(target->GetTypeId() == TYPEID_PLAYER)
+        if(target->GetTypeId() == TYPEID_PLAYER &&  !target->GetVehicleGUID())
         {
             ((Player*)target)->setFactionForRace(target->getRace());
             ((Player*)target)->SetClientControl(target, 1);
@@ -3872,11 +3872,13 @@ void Aura::HandleAuraModRoot(bool apply, bool Real)
 
         if(target->GetTypeId() == TYPEID_PLAYER)
         {
-            WorldPacket data(SMSG_FORCE_MOVE_ROOT, 10);
-            data << target->GetPackGUID();
-            data << (uint32)2;
-            target->SendMessageToSet(&data, true);
-
+            if(!target->hasUnitState(UNIT_STAT_ON_VEHICLE))
+            {
+                WorldPacket data(SMSG_FORCE_MOVE_ROOT, 10);
+                data << target->GetPackGUID();
+                data << (uint32)2;
+                target->SendMessageToSet(&data, true);
+            }
             //Clear unit movement flags
             ((Player*)target)->m_movementInfo.SetMovementFlags(MOVEFLAG_NONE);
         }
@@ -3914,7 +3916,7 @@ void Aura::HandleAuraModRoot(bool apply, bool Real)
 
         target->clearUnitState(UNIT_STAT_ROOT);
 
-        if(!target->hasUnitState(UNIT_STAT_STUNNED))      // prevent allow move if have also stun effect
+        if(!target->hasUnitState(UNIT_STAT_STUNNED | UNIT_STAT_ON_VEHICLE))      // prevent allow move if have also stun effect
         {
             if(target->getVictim() && target->isAlive())
                 target->SetTargetGUID(target->getVictim()->GetGUID());
@@ -8407,7 +8409,6 @@ void SpellAuraHolder::HandleSpellSpecificBoosts(bool apply)
             switch (GetId())
             {
                 case 49039: spellId1 = 50397; break;        // Lichborne
-
                 case 48263:                                 // Frost Presence
                 case 48265:                                 // Unholy Presence
                 case 48266:                                 // Blood Presence
@@ -8509,7 +8510,6 @@ void SpellAuraHolder::HandleSpellSpecificBoosts(bool apply)
                                 }
                             }
                         }
-
                         if (power_pct)
                         {
                             int32 bp = 5;

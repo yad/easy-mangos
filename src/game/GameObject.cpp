@@ -172,8 +172,10 @@ bool GameObject::Create(uint32 guidlow, uint32 name_id, Map *map, uint32 phaseMa
     //Only works if you create the object in it, not if it is moves to that map.
     //Normally non-players do not teleport to other maps.
     if(map->IsDungeon() && ((InstanceMap*)map)->GetInstanceData())
+    {
         ((InstanceMap*)map)->GetInstanceData()->OnObjectCreate(this);
-
+    }
+	
     SetZoneScript();
 
     return true;
@@ -456,8 +458,10 @@ void GameObject::Update(uint32 p_time)
             if(!m_respawnDelayTime)
                 return;
 
-            // since pool system can fail to roll unspawned object, this one can remain spawned, so must set respawn nevertheless
             m_respawnTime = m_spawnedByDefault ? time(NULL) + m_respawnDelayTime : 0;
+
+            // since pool system can fail to roll unspawned object, this one can remain spawned, so must set respawn nevertheless
+            m_respawnTime = time(NULL) + m_respawnDelayTime;
 
             // if option not set then object will be saved at grid unload
             if(sWorld.getConfig(CONFIG_BOOL_SAVE_RESPAWN_TIME_IMMEDIATLY))
@@ -1635,6 +1639,18 @@ bool GameObject::IsFriendlyTo(Unit const* unit) const
 
     // common faction based case (GvC,GvP)
     return tester_faction->IsFriendlyTo(*target_faction);
+}
+
+void GameObject::DealSiegeDamage(uint32 damage)
+{
+    m_actualHealth -= damage;
+
+    // TODO : there are a lot of thinghts to do here
+    if(m_actualHealth < 0)
+    {
+        m_actualHealth = GetGOInfo()->destructibleBuilding.intactNumHits;
+        SetLootState(GO_JUST_DEACTIVATED);
+    }
 }
 
 float GameObject::GetObjectBoundingRadius() const

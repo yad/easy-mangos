@@ -583,12 +583,12 @@ void WorldSession::HandleChangeSeatsOnControlledVehicle(WorldPacket &recv_data)
 
     if(recv_data.GetOpcode() == CMSG_REQUEST_VEHICLE_PREV_SEAT)
     {
-        GetPlayer()->ChangeSeat(-1, false);
+        _player->ChangeSeat(-1, false);
         return;
     }
     else if(recv_data.GetOpcode() == CMSG_REQUEST_VEHICLE_NEXT_SEAT)
     {
-        GetPlayer()->ChangeSeat(-1, true);
+        _player->ChangeSeat(-1, true);
         return;
     }
 

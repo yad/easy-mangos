@@ -22,8 +22,6 @@
 #include "World.h"
 #include "ObjectMgr.h"
 #include "ObjectGuid.h"
-#include "Object.h"
-#include "ZoneScript.h"
 #include "SpellMgr.h"
 #include "Creature.h"
 #include "QuestDef.h"
@@ -45,7 +43,9 @@
 #include "GridNotifiers.h"
 #include "GridNotifiersImpl.h"
 #include "CellImpl.h"
-#include "Vehicle.h"
+#include "Vehicle.h"	  
+#include "Object.h"
+#include "ZoneScript.h"
 
 // apply implementation of the singletons
 #include "Policies/SingletonImp.h"
@@ -280,8 +280,8 @@ bool Creature::InitEntry(uint32 Entry, uint32 team, const CreatureData *data )
 
     SetFloatValue(UNIT_MOD_CAST_SPEED, 1.0f);
 
-    SetSpeedRate(MOVE_WALK, cinfo->speed_walk );
-    SetSpeedRate(MOVE_RUN,  cinfo->speed_run );
+    SetSpeedRate(MOVE_WALK, cinfo->speed_walk);
+    SetSpeedRate(MOVE_RUN,  cinfo->speed_run);
     SetSpeedRate(MOVE_SWIM, 1.0f);                          // using 1.0 rate
     SetSpeedRate(MOVE_FLIGHT, 1.0f);                        // using 1.0 rate
 
@@ -2048,7 +2048,7 @@ float Creature::GetBaseSpeed() const
             }
         }
     }
-    return m_creatureInfo->speed_walk;
+    return m_creatureInfo->speed_run;
 }
 
 bool Creature::HasSpell(uint32 spellID) const

@@ -36,16 +36,13 @@ Vehicle::~Vehicle()
 
 void Vehicle::AddToWorld()
 {
+    ///- Register the vehicle for guid lookup
     if(!IsInWorld())
         GetMap()->GetObjectsStore().insert<Vehicle>(GetGUID(), (Vehicle*)this);
 
     Unit::AddToWorld();
 }
-void Vehicle::Respawn()
-{
-    Creature::Respawn();
-    InstallAllAccessories();
-}
+
 void Vehicle::RemoveFromWorld()
 {
     ///- Remove the vehicle from the accessor
@@ -54,6 +51,12 @@ void Vehicle::RemoveFromWorld()
 
     ///- Don't call the function for Creature, normal mobs + totems go in a different storage
     Unit::RemoveFromWorld();
+}
+
+void Vehicle::Respawn()
+{
+    Creature::Respawn();
+    InstallAllAccessories();
 }
 
 void Vehicle::setDeathState(DeathState s)                       // overwrite virtual Creature::setDeathState and Unit::setDeathState
@@ -83,7 +86,7 @@ void Vehicle::Update(uint32 diff)
     if(m_regenTimer <= diff)
     {
         RegeneratePower(getPowerType());
-        m_regenTimer = 500;
+        m_regenTimer = 4000;
     }
     else
         m_regenTimer -= diff;
@@ -99,23 +102,14 @@ void Vehicle::RegeneratePower(Powers power)
 
     float addvalue = 0.0f;
 
-    // hack: needs more research of power type from the dbc.
+    // hack: needs more research of power type from the dbc. 
     // It must contains some info about vehicles like Salvaged Chopper.
     if(m_vehicleInfo->m_powerType == POWER_TYPE_PYRITE)
         return;
 
-    addvalue = 10.0f;
+    addvalue = 20.0f;
 
     ModifyPower(power, (int32)addvalue);
-
-    for(int i =0; i != MAX_SEAT; i++)
-    {
-        if(Unit *pPassanger = GetPassenger(i))
-        {
-            if(pPassanger->GetTypeId() == TYPEID_PLAYER)
-                SendCreateUpdateToPlayer((Player*)pPassanger);
-        }
-    }
 }
 
 bool Vehicle::Create(uint32 guidlow, Map *map, uint32 phaseMask, uint32 Entry, uint32 vehicleId, uint32 team, const CreatureData *data)
@@ -160,7 +154,7 @@ bool Vehicle::Create(uint32 guidlow, Map *map, uint32 phaseMask, uint32 Entry, u
     {
         ((InstanceMap*)map)->GetInstanceData()->OnCreatureCreate(this);
     }
-
+    
     if(m_vehicleInfo->m_powerType == POWER_TYPE_STEAM)
     {
         setPowerType(POWER_ENERGY);
@@ -197,6 +191,7 @@ bool Vehicle::Create(uint32 guidlow, Map *map, uint32 phaseMask, uint32 Entry, u
     }
     SetHealth(GetMaxHealth());
     InstallAllAccessories();
+
     return true;
 }
 
@@ -343,7 +338,6 @@ int8 Vehicle::GetEmptySeatsCount(bool force)
 
     return count;
 }
-
 int8 Vehicle::GetNextEmptySeatNum(int8 seatId, bool next) const
 {
     SeatMap::const_iterator seat = m_Seats.find(seatId);
@@ -513,7 +507,7 @@ void Vehicle::AddPassenger(Unit *unit, int8 seatId, bool force)
             if(canFly() || HasAuraType(SPELL_AURA_FLY) || HasAuraType(SPELL_AURA_MOD_FLIGHT_SPEED))
             {
                 WorldPacket data3(SMSG_MOVE_SET_CAN_FLY, 12);
-                data3 << GetPackGUID();
+                data3<< GetPackGUID();
                 data3 << (uint32)(0);
                 SendMessageToSet(&data3,false);
             }
@@ -545,7 +539,7 @@ void Vehicle::AddPassenger(Unit *unit, int8 seatId, bool force)
         if(GetVehicleFlags() & VF_CANT_MOVE)
         {
             WorldPacket data2(SMSG_FORCE_MOVE_ROOT, 10);
-            data2 << GetPackGUID();
+            data2<< GetPackGUID();
             data2 << (uint32)(2);
             SendMessageToSet(&data2,false);
         }
@@ -707,7 +701,7 @@ void Vehicle::BuildVehicleActionBar(Player *plr) const
 void Vehicle::InstallAllAccessories()
 {
     if(!GetMap())
-        return;
+       return;
 
     CreatureDataAddon const *cainfo = GetCreatureAddon();
     if(!cainfo || !cainfo->passengers)
@@ -741,17 +735,12 @@ void Vehicle::InstallAllAccessories()
             {
                 CreatureData const* data = sObjectMgr.GetCreatureData(guid);
                 if(!data)
-                {
-                    delete pPassenger;
                     continue;
-                }
                 entry = data->id;
-            }
+            }     
+            
             if(!pPassenger->Create(guid, GetMap(), GetPhaseMask(), entry, 0))
-            {
-                delete pPassenger;
                 continue;
-            }
             pPassenger->LoadFromDB(guid, GetMap());
             pPassenger->Relocate(GetPositionX(), GetPositionY(), GetPositionZ());
             GetMap()->Add(pPassenger);
@@ -767,6 +756,7 @@ void Vehicle::InstallAllAccessories()
         pPassenger->SendMessageToSet(&data, false);
     }
 }
+
 Unit *Vehicle::GetPassenger(int8 seatId) const
 {
     SeatMap::const_iterator seat = m_Seats.find(seatId);
@@ -781,4 +771,3 @@ void Vehicle::Die()
                 ((Vehicle*)passenger)->Dismiss();
     RemoveAllPassengers();
 }
-

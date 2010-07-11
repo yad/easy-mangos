@@ -157,9 +157,9 @@ MessageDistDeliverer::Visit(CameraMapType &m)
     for(CameraMapType::iterator iter=m.begin(); iter != m.end(); ++iter)
     {
         Player * owner = iter->getSource()->GetOwner();
+
         if ((i_toSelf || owner != &i_player ) &&
             (!i_ownTeamOnly || owner->GetTeam() == i_player.GetTeam() ) &&
-            (!i_enemyTeamOnly || owner->GetTeam() != i_player.GetTeam()) &&
             (!i_dist || iter->getSource()->GetBody()->IsWithinDist(&i_player,i_dist)))
         {
             if (!i_player.InSamePhase(iter->getSource()->GetBody()))
