@@ -357,7 +357,7 @@ bool OPvPCapturePoint::Update(uint32 diff)
     CellPair p(MaNGOS::ComputeCellPair(m_capturePoint->GetPositionX(), m_capturePoint->GetPositionY()));
     Cell cell(p);
     cell.data.Part.reserved = ALL_DISTRICT;
-    cell.SetNoCreate();   
+    cell.SetNoCreate();
 
     {
     MaNGOS::AnyUnitInObjectRangeCheck u_check(m_capturePoint, radius);

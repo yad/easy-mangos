@@ -1831,7 +1831,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
             return false;
         }
 
-	    void SetLastManaUse() { m_lastManaUseTimer = 5000; }
+        void SetLastManaUse() { m_lastManaUseTimer = 5000; }
         bool IsUnderLastManaUseEffect() const;
 
         uint32 GetRegenTimer() const { return m_regenTimer; }

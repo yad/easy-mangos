@@ -249,7 +249,7 @@ bool PlayerbotDruidAI::DoNextCombatManeuver(Unit *pTarget)
                 && (ai->GetManaPercent() >= 91)
                 && (ai->CastSpell(HURRICANE, *pTarget)))
             {
-                ai->SetIgnoreUpdateTime(10);			
+                ai->SetIgnoreUpdateTime(10);
                 DruidSpellCombat++;
                 return true;
             }
@@ -467,7 +467,7 @@ bool PlayerbotDruidAI::DoNextCombatManeuver(Unit *pTarget)
                 && (ai->GetManaPercent() >= 91)
                 && (ai->CastSpell(HURRICANE, *pTarget)))
             {
-                ai->SetIgnoreUpdateTime(10);			
+                ai->SetIgnoreUpdateTime(10);
                 DruidSpellCombat++;
                 return true;
             }

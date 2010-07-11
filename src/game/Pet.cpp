@@ -51,8 +51,8 @@ m_declinedname(NULL), m_petModeFlags(PET_MODE_DEFAULT)
     if(type == MINI_PET)                                    // always passive
         charmInfo->SetReactState(REACT_PASSIVE);
     else if(type == GUARDIAN_PET)                           // always aggressive
-        charmInfo->SetReactState(REACT_AGGRESSIVE);	
-		
+        charmInfo->SetReactState(REACT_AGGRESSIVE);
+
     baseMoveSpeed[MOVE_WALK] = 2.5f;
     baseMoveSpeed[MOVE_RUN] = 7.0f * sWorld.getConfig(CONFIG_FLOAT_RATE_CHARRUNSPEED);
     baseMoveSpeed[MOVE_RUN_BACK] = 1.25f;
@@ -61,7 +61,7 @@ m_declinedname(NULL), m_petModeFlags(PET_MODE_DEFAULT)
     baseMoveSpeed[MOVE_TURN_RATE] = 3.141594f;
     baseMoveSpeed[MOVE_FLIGHT] = 7.0f * sWorld.getConfig(CONFIG_FLOAT_RATE_CHARFLIGHTSPEED);
     baseMoveSpeed[MOVE_FLIGHT_BACK] = 4.5f;
-    baseMoveSpeed[MOVE_PITCH_RATE] = 3.14f;		
+    baseMoveSpeed[MOVE_PITCH_RATE] = 3.14f;
 }
 
 Pet::~Pet()
@@ -1153,7 +1153,7 @@ void Pet::_SaveSpells()
 void Pet::_LoadAuras(uint32 timediff)
 {
     RemoveAllAuras();
-    
+
     QueryResult *result = CharacterDatabase.PQuery("SELECT caster_guid,spell,stackcount,remaincharges,basepoints0,basepoints1,basepoints2,maxduration0,maxduration1,maxduration2,remaintime0,remaintime1,remaintime2,effIndexMask FROM pet_aura WHERE guid = '%u'",m_charmInfo->GetPetNumber());
 
     if(result)
@@ -1220,7 +1220,7 @@ void Pet::_LoadAuras(uint32 timediff)
                 aura->SetLoadedState(damage[i], maxduration[i], remaintime[i]);
                 holder->AddAura(aura, SpellEffectIndex(i));
             }
-            
+
             if (!holder->IsEmptyHolder())
             {
                 holder->SetLoadedState(caster_guid, stackcount, remaincharges);

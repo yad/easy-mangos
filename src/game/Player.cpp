@@ -61,7 +61,7 @@
 #include "SocialMgr.h"
 #include "AchievementMgr.h"
 #include "Mail.h"
-#include "GameEventMgr.h"	  
+#include "GameEventMgr.h"
 #include "OutdoorPvP.h"
 #include "OutdoorPvPMgr.h"
 
@@ -17632,7 +17632,7 @@ void Player::_LoadAuras(QueryResult *result, uint32 timediff)
                 aura->SetLoadedState(damage[i], maxduration[i], remaintime[i]);
                 holder->AddAura(aura, SpellEffectIndex(i));
             }
-            
+
             if (!holder->IsEmptyHolder())
             {
                 // reset stolen single target auras
@@ -17651,7 +17651,7 @@ void Player::_LoadAuras(QueryResult *result, uint32 timediff)
     }
 
     if(getClass() == CLASS_WARRIOR && !HasAuraType(SPELL_AURA_MOD_SHAPESHIFT))
-        CastSpell(this,SPELL_ID_PASSIVE_BATTLE_STANCE,true); 
+        CastSpell(this,SPELL_ID_PASSIVE_BATTLE_STANCE,true);
 }
 
 void Player::_LoadGlyphs(QueryResult *result)
@@ -18886,7 +18886,7 @@ void Player::_SaveAuras()
 
     for(SpellAuraHolderMap::const_iterator itr = auraHolders.begin(); itr != auraHolders.end(); ++itr)
     {
-        SpellAuraHolder *holder = itr->second; 
+        SpellAuraHolder *holder = itr->second;
         //skip all holders from spells that are passive
         //do not save single target holders (unless they were cast by the player)
         if (!holder->IsPassive() && (holder->GetCasterGUID() == GetGUID() || !holder->IsSingleTarget()))
@@ -18914,7 +18914,7 @@ void Player::_SaveAuras()
                     effIndexMask |= (1 << i);
                 }
             }
-            
+
             if (!effIndexMask)
                 continue;
 
@@ -23015,9 +23015,9 @@ uint32 Player::CalculateTalentsPoints() const
 
 bool Player::IsKnowHowFlyIn(uint32 mapid, uint32 zone, uint32 area) const
 {
-    if(sWorld.getConfig(CONFIG_BOOL_ALLOW_FLYING_MOUNTS_EVERYWHERE)) 
-	    return true;
-		
+    if(sWorld.getConfig(CONFIG_BOOL_ALLOW_FLYING_MOUNTS_EVERYWHERE))
+        return true;
+
     // continent checked in SpellMgr::GetSpellAllowedInLocationError at cast and area update
     uint32 v_map = GetVirtualMapForMapAndZone(mapid, zone);
 

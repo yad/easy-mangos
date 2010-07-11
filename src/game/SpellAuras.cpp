@@ -770,7 +770,7 @@ void AreaAura::Update(uint32 diff)
                         actualBasePoints = actualSpellInfo->CalculateSimpleValue(m_effIndex);
 
                     SpellAuraHolder *holder = (*tIter)->GetSpellAuraHolder(actualSpellInfo->Id, GetCasterGUID());
-                   
+
                     bool addedToExisting = true;
                     if (!holder)
                     {
@@ -3832,7 +3832,7 @@ void Aura::HandleInvisibility(bool apply, bool Real)
 void Aura::HandleInvisibilityDetect(bool apply, bool Real)
 {
     Unit *target = GetTarget();
-    
+
     if(apply)
     {
         target->m_detectInvisibilityMask |= (1 << m_modifier.m_miscvalue);
@@ -4027,7 +4027,7 @@ void Aura::HandleModTaunt(bool apply, bool Real)
     // only at real add/remove aura
     if (!Real)
         return;
-    
+
     Unit *target = GetTarget();
 
     if (!target->isAlive() || !target->CanHaveThreatList())
@@ -7400,7 +7400,7 @@ void Aura::HandlePhase(bool apply, bool Real)
         return;
 
     Unit *target = GetTarget();
-    
+
     // always non stackable
     if(apply)
     {
@@ -7535,16 +7535,16 @@ void Aura::HandleAllowOnlyAbility(bool apply, bool Real)
 
 void Aura::SetAuraMaxDuration( int32 duration )
 {
-	m_maxduration = duration;
+    m_maxduration = duration;
 
-	// possible overwrite persistent state
-	if (duration > 0)
-	{
-		if (!(GetHolder()->IsPassive() && GetSpellProto()->DurationIndex == 0))
-			GetHolder()->SetPermanent(false);
+    // possible overwrite persistent state
+    if (duration > 0)
+    {
+        if (!(GetHolder()->IsPassive() && GetSpellProto()->DurationIndex == 0))
+            GetHolder()->SetPermanent(false);
 
-		GetHolder()->SetAuraFlags(GetHolder()->GetAuraFlags() | AFLAG_DURATION);
-	}
+        GetHolder()->SetAuraFlags(GetHolder()->GetAuraFlags() | AFLAG_DURATION);
+    }
 }
 
 bool Aura::IsLastAuraOnHolder()
@@ -7557,12 +7557,12 @@ bool Aura::IsLastAuraOnHolder()
 
 SpellAuraHolder::SpellAuraHolder(SpellEntry const* spellproto, Unit *target, WorldObject *caster, Item *castItem) : m_caster_guid(0), m_target(target),
 m_castItemGuid(castItem?castItem->GetGUID():0), m_permanent(false),
-m_isRemovedOnShapeLost(true), m_in_use(0), m_deleted(false), m_removeMode(AURA_REMOVE_BY_DEFAULT), m_AuraDRGroup(DIMINISHING_NONE), m_auraSlot(MAX_AURAS), 
+m_isRemovedOnShapeLost(true), m_in_use(0), m_deleted(false), m_removeMode(AURA_REMOVE_BY_DEFAULT), m_AuraDRGroup(DIMINISHING_NONE), m_auraSlot(MAX_AURAS),
 m_auraFlags(AFLAG_NONE), m_auraLevel(1), m_procCharges(0), m_stackAmount(1)
 {
     ASSERT(target);
     ASSERT(spellproto && spellproto == sSpellStore.LookupEntry( spellproto->Id ) && "`info` must be pointer to sSpellStore element");
-    
+
     if(!caster)
         m_caster_guid = target->GetGUID();
     else
@@ -7674,7 +7674,7 @@ void SpellAuraHolder::_AddSpellAuraHolder()
     }
     flags |= ((GetCasterGUID() == GetTarget()->GetGUID()) ? AFLAG_NOT_CASTER : AFLAG_NONE) | ((GetSpellMaxDuration(m_spellProto) > 0) ? AFLAG_DURATION : AFLAG_NONE) | (IsPositive() ? AFLAG_POSITIVE : AFLAG_NEGATIVE);
     SetAuraFlags(flags);
-    
+
     SetAuraLevel(caster ? caster->getLevel() : sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL));
 
     if (IsNeedVisibleSlot(caster))
@@ -7730,7 +7730,7 @@ void SpellAuraHolder::_AddSpellAuraHolder()
         // Enrage aura state
         if(m_spellProto->Dispel == DISPEL_ENRAGE)
             m_target->ModifyAuraState(AURA_STATE_ENRAGE, true);
-        
+
     }
 }
 
@@ -8616,7 +8616,7 @@ void SpellAuraHolder::HandleSpellSpecificBoosts(bool apply)
         if (spellId4)
             m_target->RemoveAurasByCasterSpell(spellId4, GetCasterGUID());
     }
- 
+
     SetInUse(false);
 }
 
@@ -8826,8 +8826,8 @@ void Aura::ApplyHasteToPeriodic()
 void Aura::HandleIgnoreUnitState(bool apply, bool Real)
 {
     Unit* target = GetTarget();
-	if(!target)
-		return;
+    if(!target)
+        return;
 
     if(target->GetTypeId() != TYPEID_PLAYER || !Real)
         return;
@@ -8862,8 +8862,8 @@ void Aura::HandleAuraModDisarmOffhand(bool apply, bool Real)
         return;
 
     Unit* target = GetTarget();
-	if(!target)
-		return;
+    if(!target)
+        return;
 
     if(!apply && target->HasAuraType(SPELL_AURA_MOD_DISARM_OFFHAND))
         return;
@@ -8896,8 +8896,8 @@ void Aura::HandleAuraModDisarm(bool apply, bool Real)
         return;
 
     Unit *target = GetTarget();
-	if(!target)
-		return;
+    if(!target)
+        return;
 
     if(!apply && target->HasAuraType(SPELL_AURA_MOD_DISARM))
         return;
@@ -8927,8 +8927,8 @@ void Aura::HandleAuraModDisarm(bool apply, bool Real)
 void Aura::SendAuraUpdate(bool remove)
 {
     Unit *target = GetTarget();
-	if(!target)
-		return;
+    if(!target)
+        return;
 
     WorldPacket data(SMSG_AURA_UPDATE);
     data << target->GetPackGUID();

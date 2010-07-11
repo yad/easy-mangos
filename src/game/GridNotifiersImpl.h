@@ -174,13 +174,13 @@ inline void MaNGOS::DynamicObjectUpdater::VisitHelper(Unit* target)
     // Apply PersistentAreaAura on target
 
     SpellAuraHolder *holder = target->GetSpellAuraHolder(spellInfo->Id, i_dynobject.GetCaster()->GetGUID());
-                   
+
     bool addedToExisting = true;
     if (!holder)
     {
         holder = CreateSpellAuraHolder(spellInfo, target, i_dynobject.GetCaster());
         addedToExisting = false;
-    
+
     }
     PersistentAreaAura* Aur = new PersistentAreaAura(spellInfo, eff_index, NULL, holder, target, i_dynobject.GetCaster());
     holder->AddAura(Aur, eff_index);

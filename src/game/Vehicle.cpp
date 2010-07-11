@@ -102,7 +102,7 @@ void Vehicle::RegeneratePower(Powers power)
 
     float addvalue = 0.0f;
 
-    // hack: needs more research of power type from the dbc. 
+    // hack: needs more research of power type from the dbc.
     // It must contains some info about vehicles like Salvaged Chopper.
     if(m_vehicleInfo->m_powerType == POWER_TYPE_PYRITE)
         return;
@@ -154,7 +154,7 @@ bool Vehicle::Create(uint32 guidlow, Map *map, uint32 phaseMask, uint32 Entry, u
     {
         ((InstanceMap*)map)->GetInstanceData()->OnCreatureCreate(this);
     }
-    
+
     if(m_vehicleInfo->m_powerType == POWER_TYPE_STEAM)
     {
         setPowerType(POWER_ENERGY);
@@ -737,8 +737,8 @@ void Vehicle::InstallAllAccessories()
                 if(!data)
                     continue;
                 entry = data->id;
-            }     
-            
+            }
+
             if(!pPassenger->Create(guid, GetMap(), GetPhaseMask(), entry, 0))
                 continue;
             pPassenger->LoadFromDB(guid, GetMap());
