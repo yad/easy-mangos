@@ -696,6 +696,11 @@ void Player::ApplyManaRegenBonus(int32 amount, bool apply)
     UpdateManaRegen();
 }
 
+void Player::ApplyHealthRegenBonus(int32 amount, bool apply)
+{
+    m_baseHealthRegen+= apply ? amount : -amount;
+}
+
 void Player::UpdateManaRegen()
 {
     float Intellect = GetStat(STAT_INTELLECT);
