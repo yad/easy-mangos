@@ -2188,6 +2188,26 @@ class MANGOS_DLL_SPEC Player : public Unit
         bool CanSpeak() const;
         void ChangeSpeakTime(int utime);
 
+        // Jail by WarHead
+        // ---------------
+        // Char datas...
+        bool m_jail_warning;
+        bool m_jail_amnestie;
+        bool m_jail_isjailed;           // Is this player jailed?
+        std::string m_jail_char;        // Name of jailed char
+        uint32 m_jail_guid;             // guid of the jailed char
+        uint32 m_jail_release;          // When is the player a free man/woman?
+        std::string m_jail_reason;      // Why was the char jailed?
+        uint32 m_jail_times;            // How often was the player jailed?
+        uint32 m_jail_amnestietime;
+        uint32 m_jail_gmacc;            // Used GM acc
+        std::string m_jail_gmchar;      // Used GM char
+        std::string m_jail_lasttime;    // Last jail time
+        uint32 m_jail_duration;         // Duration of the jail
+        // Load / save functions...
+        void _LoadJail(void);           // Loads the jail datas
+        void _SaveJail(void);           // Saves the jail datas
+
         /*********************************************************/
         /***                 VARIOUS SYSTEMS                   ***/
         /*********************************************************/

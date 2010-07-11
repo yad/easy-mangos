@@ -1207,6 +1207,9 @@ void World::SetInitialWorldSettings()
     sLog.outString( "Returning old mails..." );
     sObjectMgr.ReturnOrDeleteOldMails(false);
 
+    // Loads the jail conf out of the database
+    sObjectMgr.LoadJailConf();
+
     ///- Load and initialize scripts
     sLog.outString( "Loading Scripts..." );
     sLog.outString();

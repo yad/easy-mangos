@@ -407,6 +407,22 @@ UpdateMask Player::updateVisualBits;
 
 Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputationMgr(this), m_mover(this), m_camera(this)
 {
+    // Jail by WarHead
+    m_jail_guid     = 0;
+    m_jail_char     = "";
+    m_jail_amnestie = false;
+    m_jail_warning  = false;
+    m_jail_isjailed = false;
+    m_jail_amnestietime =0;
+    m_jail_release  = 0;
+    m_jail_times    = 0;
+    m_jail_reason   = "";
+    m_jail_gmacc    = 0;
+    m_jail_gmchar   = "";
+    m_jail_lasttime = "";
+    m_jail_duration = 0;
+    // Jail end
+
     m_transport = 0;
 
     m_speakTime = 0;
@@ -1204,6 +1220,79 @@ void Player::Update( uint32 p_time )
     Unit::Update( p_time );
     SetCanDelayTeleport(false);
 
+    if (m_jail_isjailed)
+    {
+        time_t localtime;
+        localtime = time(NULL);
+
+        if (m_jail_release <= localtime)
+        {
+            m_jail_isjailed = false;
+            m_jail_release = 0;
+
+            _SaveJail();
+
+            sWorld.SendWorldText(LANG_JAIL_CHAR_FREE, GetName());
+
+            CastSpell(this,8690,false);
+
+            return;
+        }
+
+        if (m_team == ALLIANCE)
+        {
+            if (GetDistance(sObjectMgr.m_jailconf_ally_x, sObjectMgr.m_jailconf_ally_y, sObjectMgr.m_jailconf_ally_z) > sObjectMgr.m_jailconf_radius)
+            {
+                TeleportTo(sObjectMgr.m_jailconf_ally_m, sObjectMgr.m_jailconf_ally_x,
+                    sObjectMgr.m_jailconf_ally_y, sObjectMgr.m_jailconf_ally_z, sObjectMgr.m_jailconf_ally_o);
+                return;
+            }
+        }
+        else
+        {
+            if (GetDistance(sObjectMgr.m_jailconf_horde_x, sObjectMgr.m_jailconf_horde_y, sObjectMgr.m_jailconf_horde_z) > sObjectMgr.m_jailconf_radius)
+            {
+                TeleportTo(sObjectMgr.m_jailconf_horde_m, sObjectMgr.m_jailconf_horde_x,
+                    sObjectMgr.m_jailconf_horde_y, sObjectMgr.m_jailconf_horde_z, sObjectMgr.m_jailconf_horde_o);
+                return;
+            }
+
+        }
+    }
+
+    if(m_jail_warning == true)
+    {
+        m_jail_warning  = false;
+
+        if(sObjectMgr.m_jailconf_warn_player == m_jail_times || sObjectMgr.m_jailconf_warn_player <= m_jail_times)
+        {
+            if ((sObjectMgr.m_jailconf_max_jails-1 == m_jail_times-1) && sObjectMgr.m_jailconf_ban-1)
+            {
+                ChatHandler(this).PSendSysMessage(LANG_JAIL_WARNING_BAN, m_jail_times , sObjectMgr.m_jailconf_max_jails-1);
+            }
+            else
+            {
+                ChatHandler(this).PSendSysMessage(LANG_JAIL_WARNING, m_jail_times , sObjectMgr.m_jailconf_max_jails);
+            }
+
+        }
+                return;
+    }
+
+    if(m_jail_amnestie == true && sObjectMgr.m_jailconf_amnestie > 0 )
+    {
+        m_jail_amnestie =false;
+        time_t localtime;
+        localtime    = time(NULL);
+
+        if(localtime >  m_jail_amnestietime)
+        {
+            CharacterDatabase.PExecute("DELETE FROM `jail` WHERE `guid` = '%u'",GetGUIDLow());
+            ChatHandler(this).PSendSysMessage(LANG_JAIL_AMNESTII);
+        }
+        return;
+    }
+
     // update player only attacks
     if(uint32 ranged_att = getAttackTimer(RANGED_ATTACK))
     {
@@ -1404,9 +1493,16 @@ void Player::Update( uint32 p_time )
     }
 
     if (m_deathState == JUST_DIED)
-        KillPlayer();
+    {   // Prevent death of jailed players
+        if (!m_jail_isjailed) KillPlayer();
+        else
+        {
+            m_deathState = ALIVE;
+            RegenerateAll();
+        }
+    }
 
-    if(m_nextSave > 0)
+    if(m_nextSave > 0 && !m_jail_isjailed)
     {
         if(p_time >= m_nextSave)
         {
@@ -4298,6 +4394,10 @@ void Player::DeleteFromDB(uint64 playerguid, uint32 accountId, bool updateRealmC
             CharacterDatabase.PExecute("DELETE FROM character_homebind WHERE guid = '%u'",guid);
             CharacterDatabase.PExecute("DELETE FROM character_instance WHERE guid = '%u'",guid);
             CharacterDatabase.PExecute("DELETE FROM group_instance WHERE leaderGuid = '%u'",guid);
+            CharacterDatabase.PExecute("DELETE FROM group_member WHERE groupId = '%u'",guid);
+            CharacterDatabase.PExecute("DELETE FROM group_member WHERE memberGuid = '%u'",guid);
+            CharacterDatabase.PExecute("DELETE FROM groups WHERE leaderGuid = '%u'",guid);
+            CharacterDatabase.PExecute("DELETE FROM `jail` WHERE `guid` = '%u'",guid);
             CharacterDatabase.PExecute("DELETE FROM character_inventory WHERE guid = '%u'",guid);
             CharacterDatabase.PExecute("DELETE FROM character_queststatus WHERE guid = '%u'",guid);
             CharacterDatabase.PExecute("DELETE FROM character_queststatus_daily WHERE guid = '%u'",guid);
@@ -15543,12 +15643,87 @@ bool Player::LoadFromDB( uint32 guid, SqlQueryHolder *holder )
 
     _LoadDeclinedNames(holder->GetResult(PLAYER_LOGIN_QUERY_LOADDECLINEDNAMES));
 
+    // Loads the jail datas and if jailed it corrects the position to the corresponding jail
+    _LoadJail();
+
     m_achievementMgr.LoadFromDB(holder->GetResult(PLAYER_LOGIN_QUERY_LOADACHIEVEMENTS), holder->GetResult(PLAYER_LOGIN_QUERY_LOADCRITERIAPROGRESS));
     m_achievementMgr.CheckAllAchievementCriteria();
 
     _LoadEquipmentSets(holder->GetResult(PLAYER_LOGIN_QUERY_LOADEQUIPMENTSETS));
 
     return true;
+}
+
+// Loads the jail datas (added by WarHead).
+void Player::_LoadJail(void)
+{
+    CharacterDatabase.BeginTransaction();
+    QueryResult *result = CharacterDatabase.PQuery("SELECT * FROM `jail` WHERE `guid`='%u' LIMIT 1", GetGUIDLow());
+    CharacterDatabase.CommitTransaction();
+
+    if (!result)
+    {
+        m_jail_isjailed = false;
+        return;
+    }
+
+    Field *fields = result->Fetch();
+    m_jail_warning = true;
+    m_jail_isjailed = true;
+    m_jail_guid = fields[0].GetUInt32();
+    m_jail_char = fields[1].GetString();
+    m_jail_release = fields[2].GetUInt32();
+    m_jail_amnestietime = fields[3].GetUInt32();
+    m_jail_reason = fields[4].GetString();
+    m_jail_times = fields[5].GetUInt32();
+    m_jail_gmacc = fields[6].GetUInt32();
+    m_jail_gmchar = fields[7].GetString();
+    m_jail_lasttime = fields[8].GetString();
+    m_jail_duration = fields[9].GetUInt32();
+
+    if (m_jail_release == 0)
+    {
+        m_jail_isjailed = false;
+        delete result;
+        return;
+    }
+
+    time_t localtime;
+    localtime = time(NULL);
+
+    if (m_jail_release <= localtime)
+    {
+        m_jail_isjailed = false;
+        m_jail_release = 0;
+
+        _SaveJail();
+
+        sWorld.SendWorldText(LANG_JAIL_CHAR_FREE, GetName());
+
+        CastSpell(this,8690,false);
+
+        delete result;
+        return;
+    }
+
+    if (m_jail_isjailed)
+    {
+        if (m_team == ALLIANCE)
+        {
+            TeleportTo(sObjectMgr.m_jailconf_ally_m, sObjectMgr.m_jailconf_ally_x,
+                sObjectMgr.m_jailconf_ally_y, sObjectMgr.m_jailconf_ally_z, sObjectMgr.m_jailconf_ally_o);
+        }
+        else
+        {
+            TeleportTo(sObjectMgr.m_jailconf_horde_m, sObjectMgr.m_jailconf_horde_x,
+                sObjectMgr.m_jailconf_horde_y, sObjectMgr.m_jailconf_horde_z, sObjectMgr.m_jailconf_horde_o);
+        }
+
+        sWorld.SendWorldText(LANG_JAIL_CHAR_TELE, GetName() );
+    }
+
+    delete result;
+
 }
 
 bool Player::isAllowedToLoot(Creature* creature)
@@ -16646,8 +16821,23 @@ bool Player::_LoadHomeBind(QueryResult *result)
 /***                   SAVE SYSTEM                     ***/
 /*********************************************************/
 
+// Saves the jail datas (added by WarHead).
+void Player::_SaveJail(void)
+{
+    CharacterDatabase.BeginTransaction();
+    QueryResult *result = CharacterDatabase.PQuery("SELECT `guid` FROM `jail` WHERE `guid`='%u' LIMIT 1", m_jail_guid);
+    if (!result) CharacterDatabase.PExecute("INSERT INTO `jail` VALUES ('%u','%s','%u', '%u','%s','%u','%u','%s',CURRENT_TIMESTAMP,'%u')", m_jail_guid, m_jail_char.c_str(), m_jail_release, m_jail_amnestietime, m_jail_reason.c_str(), m_jail_times, m_jail_gmacc, m_jail_gmchar.c_str(), m_jail_duration);
+    else CharacterDatabase.PExecute("UPDATE `jail` SET `release`='%u', `amnestietime`='%u',`reason`='%s',`times`='%u',`gmacc`='%u',`gmchar`='%s',`duration`='%u' WHERE `guid`='%u' LIMIT 1", m_jail_release, m_jail_amnestietime, m_jail_reason.c_str(), m_jail_times, m_jail_gmacc, m_jail_gmchar.c_str(), m_jail_duration, m_jail_guid);
+    CharacterDatabase.CommitTransaction();
+
+    if (result) delete result;
+}
+
 void Player::SaveToDB()
 {
+    // Jail: Prevent saving of jailed players
+    if (m_jail_isjailed) return;
+
     // we should assure this: ASSERT((m_nextSave != sWorld.getConfig(CONFIG_UINT32_INTERVAL_SAVE)));
     // delay auto save at any saves (manual, in code, or autosave)
     m_nextSave = sWorld.getConfig(CONFIG_UINT32_INTERVAL_SAVE);
