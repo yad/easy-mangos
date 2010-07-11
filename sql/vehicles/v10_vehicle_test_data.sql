@@ -327,9 +327,7 @@ UPDATE creature_template SET maxhealth = 50000, minhealth = 50000 WHERE entry IN
 
 UPDATE creature_template SET minlevel = 80, maxlevel = 80 WHERE entry IN (28312,32627,28319,32629,28094,28670);
 
-UPDATE creature_template SET speed_walk = 2, InhabitType = 1 WHERE entry IN (28312,32627,28319,32629,28094,29929,28782);
 UPDATE creature_template SET speed_run = 2, InhabitType = 1 WHERE entry IN (28312,32627,28319,32629,28094,29929,28782);
-UPDATE creature_template SET speed_walk = 2.4, InhabitType = 4 WHERE entry IN (28670);
 UPDATE creature_template SET speed_run = 2.4, InhabitType = 4 WHERE entry IN (28670);
 UPDATE creature_template SET mechanic_immune_mask = 652951551 WHERE entry IN (28670,28312,32627,28319,32629,28094,29929,28782);
 
@@ -381,7 +379,6 @@ INSERT INTO vehicle_seat_data VALUES
 
 /* Some quests
 Argent tournament*/
-UPDATE creature_template SET speed_walk = '1.5', unit_flags = 8 WHERE entry IN (33844,33845);
 UPDATE creature_template SET speed_run = '1.5', unit_flags = 8 WHERE entry IN (33844,33845);
 DELETE FROM creature_addon WHERE guid IN (SELECT guid FROM creature WHERE id IN (33844,33845));
 DELETE FROM creature WHERE id IN (33844,33845);
@@ -479,10 +476,78 @@ REPLACE INTO vehicle_seat_data VALUES (3005, 1);
 REPLACE INTO npc_spellclick_spells VALUES (33109, 52196, 0, 0, 0, 0);
 REPLACE INTO creature_template_addon VALUES (33109, 0, 0, 0, 0, 0, 338, NULL, NULL); 
 REPLACE INTO vehicle_data VALUES (338, 12, 62306, 62490, 62308, 62324, 0, 0, 0, 0, 0, 0, 0);
-REPLACE INTO vehicle_seat_data VALUES (3011, 1);
+REPLACE INTO vehicle_seat_data VALUES (3011, 1),(3005, 1),(3004, 2);
  
 /* Salvaged Siege Engine */
 REPLACE INTO npc_spellclick_spells VALUES (33060, 52196, 0, 0, 0, 0); 
 REPLACE INTO creature_template_addon VALUES (33060, 0, 0, 0, 0, 0, 336, NULL, NULL); 
 REPLACE INTO vehicle_data VALUES (336, 12, 62345, 62522, 62346, 0, 0, 0, 0, 0, 0, 0, 0);
 REPLACE INTO vehicle_seat_data VALUES (3006, 1);
+
+/* Wintergrasp Tower Cannon */
+DELETE FROM npc_spellclick_spells WHERE npc_entry IN (28366);
+INSERT INTO npc_spellclick_spells VALUES (28366, 60968, 0, 0, 0, 1);
+REPLACE INTO creature_template_addon VALUES (28366, 0, 0, 0, 0, 0, 160, NULL, NULL);
+REPLACE INTO vehicle_data VALUES (160, 5, 51362, 51421, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+REPLACE INTO vehicle_seat_data VALUES (2029, 1);
+ 
+/* Salvaged Siege Turret */
+DELETE FROM npc_spellclick_spells WHERE npc_entry = 33067;
+INSERT INTO npc_spellclick_spells VALUES (33067, 67373, 0, 0, 0, 1);
+REPLACE INTO creature_template_addon VALUES (33067, 0, 0, 0, 0, 0, 337, NULL, NULL);
+REPLACE INTO vehicle_data VALUES (337, 5, 62358, 64677, 62359, 0, 0, 0, 0, 0, 0, 0, 0);
+REPLACE INTO vehicle_data VALUES (336, 4, 62345, 62522, 62346, 0, 0, 0, 0, 0, 0, 0, 0);
+REPLACE INTO vehicle_seat_data VALUES (3006, 1),(3010, 1),(4026, 8),(4027, 8),(3009, 8);
+UPDATE `creature_template` SET `minhealth` = 1134000, `maxhealth` = 1134000 WHERE `entry` = 33067;
+UPDATE `creature_template` SET `unit_flags` = 16384 WHERE `entry` = 33067;
+DELETE FROM `creature` WHERE `id`= 33067;
+ 
+/* Gunner Salvaged Demolisher */
+DELETE FROM npc_spellclick_spells WHERE npc_entry IN (33167);
+INSERT INTO npc_spellclick_spells VALUES (33167, 67373, 0, 0, 0, 1);
+REPLACE INTO creature_template_addon VALUES (33167, 0, 0, 0, 0, 0, 345, NULL, NULL);
+REPLACE INTO vehicle_data VALUES (345, 5, 62634, 64979, 62479, 62471, 0, 62428, 0, 0, 0, 0, 0);
+REPLACE INTO vehicle_data VALUES (338, 4, 62306, 62490, 62308, 62324, 0, 0, 0, 0, 0, 0, 0);
+REPLACE INTO vehicle_seat_data VALUES (3077, 1),(3106, 8);
+REPLACE INTO vehicle_seat_data VALUES (3011, 1),(3146, 8),(3013, 8),(3147, 8);
+UPDATE `creature_template` SET `unit_flags` = 16384 WHERE `entry` = 33167;
+UPDATE `creature_template` SET `minhealth` = 630000, `maxhealth` = 630000 WHERE `entry` = 33167;
+DELETE FROM `creature` WHERE `id`=33167;
+
+/* Massacre At Light's Point */
+DELETE FROM creature_addon WHERE guid IN (SELECT guid FROM creature WHERE id IN (28887, 28833, 28864));
+DELETE FROM vehicle_data WHERE entry IN (25, 79);
+INSERT INTO vehicle_data VALUES (25, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),(79, 5, 52435, 52576, 52588, 0, 0, 0, 0, 0, 0, 0, 0);
+DELETE FROM vehicle_seat_data WHERE seat IN (1427, 341);
+INSERT INTO vehicle_seat_data VALUES (1427, 1),(341, 1);
+DELETE FROM npc_spellclick_spells WHERE npc_entry IN (28887, 28833, 28864);
+INSERT INTO npc_spellclick_spells VALUES (28833, 52447, 12701, 1, 12701, 1),(28887, 52447, 12701, 1, 12701, 1),(28864, 67373, 0, 0, 0, 1);
+DELETE FROM creature_template_addon WHERE entry IN (28887, 28833, 28864);
+INSERT INTO creature_template_addon VALUES (28887, 0, 0, 2049, 0, 0, 79, '', ''),(28833, 0, 0, 2049, 0, 0, 79, '', ''),(28864,0,0,0,0,0,25,NULL,'61453 0 61453 2');
+
+DELETE FROM creature_template_addon WHERE entry = 28670;
+INSERT INTO creature_template_addon VALUES (28670, 0, 50331648, 1, 0, 1024, 156, NULL, '53112 0 53112 1 53112 2');
+UPDATE creature_template SET InhabitType = 3 WHERE entry = 28670;
+
+/* the Oculus */
+DELETE FROM spell_script_target where entry IN (49460, 49346, 49464);
+DELETE FROM npc_spellclick_spells where npc_entry IN (27755, 27692, 27756);
+DELETE FROM creature_template_addon where entry IN (27755, 27692, 27756);
+/* Amber Drake */
+INSERT INTO spell_script_target VALUES (49460, 1, 27755);
+INSERT INTO npc_spellclick_spells VALUES (27755, 49459, 0, 0, 0, 1);
+INSERT INTO creature_template_addon VALUES (27755, 0, 0, 0, 0, 0, 29, NULL, '53112 0 53112 1');
+REPLACE INTO vehicle_data VALUES (29, 12, 49840, 49838, 49592, 0, 0, 0, 0, 0, 0, 0, 0);
+REPLACE INTO vehicle_seat_data VALUES (422, 3);
+/* Emerald Drake */
+INSERT INTO spell_script_target VALUES (49346, 1, 27692);
+INSERT INTO npc_spellclick_spells VALUES (27692, 49427, 0, 0, 0, 1);
+INSERT INTO creature_template_addon VALUES (27692, 0, 0, 0, 0, 0, 39, NULL, '53112 0 53112 1');
+REPLACE INTO vehicle_data VALUES (39, 12, 50328, 50341, 50344, 0, 0, 0, 0, 0, 0, 0, 0);
+REPLACE INTO vehicle_seat_data VALUES (662, 3);
+/* Ruby Drake */
+INSERT INTO spell_script_target VALUES (49464, 1, 27756);
+INSERT INTO npc_spellclick_spells VALUES (27756, 49463, 0, 0, 0, 1);
+INSERT INTO creature_template_addon VALUES (27756, 0, 0, 0, 0, 0, 43, NULL, '53112 0 53112 1');
+REPLACE INTO vehicle_data VALUES (43, 12, 50232, 50248, 50240, 0, 0, 0, 0, 0, 0, 0, 0);
+REPLACE INTO vehicle_seat_data VALUES (742, 3);
