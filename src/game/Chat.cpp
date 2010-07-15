@@ -131,6 +131,8 @@ ChatCommand * ChatHandler::getCommandTable()
     static ChatCommand characterCommandTable[] =
     {
         { "customize",      SEC_GAMEMASTER,     true,  &ChatHandler::HandleCharacterCustomizeCommand,  "", NULL },
+        { "changefaction",  SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleCharacterChangeFactionCommand,   "", NULL },
+        { "changerace",     SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleCharacterChangeRaceCommand,   "", NULL },
         { "deleted",        SEC_GAMEMASTER,     true,  NULL,                                           "", characterDeletedCommandTable},
         { "erase",          SEC_CONSOLE,        true,  &ChatHandler::HandleCharacterEraseCommand,      "", NULL },
         { "level",          SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleCharacterLevelCommand,      "", NULL },
