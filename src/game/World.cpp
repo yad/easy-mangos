@@ -638,6 +638,7 @@ void World::LoadConfigSettings(bool reload)
 
     setConfig(CONFIG_BOOL_SKILL_PROSPECTING, "SkillChance.Prospecting", false);
     setConfig(CONFIG_BOOL_SKILL_MILLING,     "SkillChance.Milling",     false);
+    setConfig(CONFIG_CHECK_PROF_AT_LOGIN,    "CheckProfAtLogin",        false);
 
     setConfigPos(CONFIG_UINT32_SKILL_GAIN_CRAFTING,  "SkillGain.Crafting",  1);
     setConfigPos(CONFIG_UINT32_SKILL_GAIN_DEFENSE,   "SkillGain.Defense",   1);
