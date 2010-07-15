@@ -5805,6 +5805,29 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     // Torture the Torturer: High Executor's Branding Iron Impact
                     unitTarget->CastSpell(unitTarget, 48614, true);
                     return;
+
+                // Gender spells
+                case 48762:                                 // A Fall from Grace: Scarlet Raven Priest Image - Master
+                case 45759:                                 // Warsong Orc Disguise
+                case 69672:                                 // Sunreaver Disguise
+                case 69673:                                 // Silver Covenant Disguise
+                {
+                    if (!unitTarget)
+                        return;
+
+                    uint8 gender = unitTarget->getGender();
+                    uint32 spellId;
+                    switch (m_spellInfo->Id)
+                    {
+                        case 48762: spellId = (gender == GENDER_MALE ? 48763 : 48761); break;
+                        case 45759: spellId = (gender == GENDER_MALE ? 45760 : 45762); break;
+                        case 69672: spellId = (gender == GENDER_MALE ? 70974 : 70973); break;
+                        case 69673: spellId = (gender == GENDER_MALE ? 70972 : 70971); break;
+                        default: return;
+                    }
+                    unitTarget->CastSpell(unitTarget, spellId, true);
+                    return;
+                }
                 case 50217:                                 // The Cleansing: Script Effect Player Cast Mirror Image
                 {
                     // Summon Your Inner Turmoil
@@ -7316,7 +7339,7 @@ void Spell::EffectPlayerPull(SpellEffectIndex eff_idx)
 
 void Spell::EffectDispelMechanic(SpellEffectIndex eff_idx)
 {
-    if(!unitTarget)
+    if (!unitTarget)
         return;
 
     uint32 mechanic = m_spellInfo->EffectMiscValue[eff_idx];
@@ -7326,17 +7349,16 @@ void Spell::EffectDispelMechanic(SpellEffectIndex eff_idx)
     {
         next = iter;
         ++next;
-        SpellEntry const *spell = sSpellStore.LookupEntry(iter->second->GetSpellProto()->Id);
-        if(spell->Mechanic == mechanic || iter->second->HasAuraAndMechanicEffect(mechanic))
+        SpellEntry const *spell = iter->second->GetSpellProto();
+        if (spell->Mechanic == mechanic || iter->second->HasAuraAndMechanicEffect(mechanic))
         {
             unitTarget->RemoveAurasDueToSpell(spell->Id);
-            if(Auras.empty())
+            if (Auras.empty())
                 break;
             else
                 next = Auras.begin();
         }
     }
-    return;
 }
 
 void Spell::EffectSummonDeadPet(SpellEffectIndex /*eff_idx*/)
