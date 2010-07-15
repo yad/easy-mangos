@@ -535,6 +535,8 @@ uint32 ArenaTeam::GetPoints(uint32 MemberRating)
     else if(m_Type == ARENA_TEAM_3v3)
         points *= 0.88f;
 
+    points *= sWorld.getConfig(CONFIG_FLOAT_RATE_ARENA_POINT);
+
     return (uint32) points;
 }
 
