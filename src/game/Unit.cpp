@@ -643,8 +643,13 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
     if (pVictim->GetTypeId() == TYPEID_PLAYER)
         ((Player*)pVictim)->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HIGHEST_HIT_RECEIVED, damage);
 
-    if (pVictim->GetTypeId() == TYPEID_UNIT && !((Creature*)pVictim)->isPet() && !((Creature*)pVictim)->HasLootRecipient())
-        ((Creature*)pVictim)->SetLootRecipient(this);
+    if (pVictim->GetTypeId() == TYPEID_UNIT && !((Creature*)pVictim)->isPet())
+    {
+        if(!((Creature*)pVictim)->HasLootRecipient())
+            ((Creature*)pVictim)->SetLootRecipient(this);
+
+        ((Creature*)pVictim)->IncrementReceivedDamage(this, health < damage ? health : damage);
+    }
 
     if (health <= damage)
     {
@@ -657,14 +662,21 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
 
         // find owner of pVictim, used for creature cases, AI calls
         Unit* pOwner = pVictim->GetCharmerOrOwner();
+        bool bRewardIsAllowed = true;
 
         // in creature kill case group/player tap stored for creature
         if (pVictim->GetTypeId() == TYPEID_UNIT)
         {
-            group_tap = ((Creature*)pVictim)->GetGroupLootRecipient();
+            bRewardIsAllowed = ((Creature*)pVictim)->AreLootAndRewardAllowed();
+            if(!bRewardIsAllowed)
+                ((Creature*)pVictim)->SetLootRecipient(NULL);
+            else
+            {
+                group_tap = ((Creature*)pVictim)->GetGroupLootRecipient();
 
-            if (Player* recipient = ((Creature*)pVictim)->GetOriginalLootRecipient())
-                player_tap = recipient;
+                if (Player* recipient = ((Creature*)pVictim)->GetOriginalLootRecipient())
+                    player_tap = recipient;
+            }
         }
         // in player kill case group tap selected by player_tap (killer-player itself, or charmer, or owner, etc)
         else
@@ -681,7 +693,7 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
         }
 
         // call kill spell proc event (before real die and combat stop to triggering auras removed at death/combat stop)
-        if(player_tap && player_tap != pVictim)
+        if(bRewardIsAllowed && player_tap && player_tap != pVictim)
         {
             player_tap->ProcDamageAndSpell(pVictim, PROC_FLAG_KILL, PROC_FLAG_KILLED, PROC_EX_NONE, 0);
 
@@ -696,7 +708,7 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
         }
 
         // Reward player, his pets, and group/raid members
-        if (player_tap != pVictim)
+        if (bRewardIsAllowed && player_tap != pVictim)
         {
             if (group_tap)
                 group_tap->RewardGroupAtKill(pVictim, player_tap);
