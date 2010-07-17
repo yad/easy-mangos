@@ -17,6 +17,7 @@
  */
 
 #include "Common.h"
+#include "Config/Config.h"
 #include "Database/DatabaseEnv.h"
 #include "DBCStores.h"
 #include "ObjectMgr.h"
@@ -2154,6 +2155,7 @@ bool ChatHandler::HandlePInfoCommand(const char* args)
     uint32 total_player_time = 0;
     uint32 level = 0;
     uint32 latency = 0;
+    uint32 realmID = sConfig.GetIntDefault("RealmId", 0);
 
     // get additional information from Player object
     if (target)
@@ -2198,7 +2200,17 @@ bool ChatHandler::HandlePInfoCommand(const char* args)
     {
         Field* fields = result->Fetch();
         username = fields[0].GetCppString();
-        security = (AccountTypes)fields[1].GetUInt32();
+
+        QueryResult *result2 = LoginDatabase.PQuery("SELECT Security FROM account_forcepermission WHERE AccountID = '%u' AND `realmID` = '%u'", accId, realmID);
+
+        if (result2)
+        {
+            Field* newfields = result2->Fetch();
+            security = (AccountTypes)newfields[0].GetUInt32();
+            delete result2;
+        }
+        else
+            security = (AccountTypes)fields[1].GetUInt32();
 
         if (GetAccessLevel() >= security)
         {
