@@ -1379,7 +1379,15 @@ bool Spell::IsAliveUnitPresentInTargetList()
 
             // either unit is alive and normal spell, or unit dead and deathonly-spell
             if (unit && (unit->isAlive() != IsDeathOnlySpell(m_spellInfo)))
+            {  
                 needAliveTargetMask &= ~ihit->effectMask;   // remove from need alive mask effect that have alive target
+                // check if spell aura on target does not exist anymore (for channeled spells)
+                if (IsChanneledSpell(m_spellInfo) && m_spellInfo->AuraInterruptFlags != 0)
+                {
+                    if ( !unit->HasAura(m_spellInfo->Id) )
+                       return false;
+                }
+            }
         }
     }
 
