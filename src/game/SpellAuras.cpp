@@ -45,7 +45,6 @@
 #include "GridNotifiersImpl.h"
 #include "Vehicle.h"
 #include "CellImpl.h"
-#include "OutdoorPvPMgr.h"
 
 #define NULL_AURA_SLOT 0xFF
 
@@ -771,7 +770,7 @@ void AreaAura::Update(uint32 diff)
                         actualBasePoints = actualSpellInfo->CalculateSimpleValue(m_effIndex);
 
                     SpellAuraHolder *holder = (*tIter)->GetSpellAuraHolder(actualSpellInfo->Id, GetCasterGUID());
-                   
+
                     bool addedToExisting = true;
                     if (!holder)
                     {
@@ -3899,7 +3898,7 @@ void Aura::HandleInvisibility(bool apply, bool Real)
 void Aura::HandleInvisibilityDetect(bool apply, bool Real)
 {
     Unit *target = GetTarget();
-    
+
     if(apply)
     {
         target->m_detectInvisibilityMask |= (1 << m_modifier.m_miscvalue);
@@ -4094,7 +4093,7 @@ void Aura::HandleModTaunt(bool apply, bool Real)
     // only at real add/remove aura
     if (!Real)
         return;
-    
+
     Unit *target = GetTarget();
 
     if (!target->isAlive() || !target->CanHaveThreatList())
@@ -4326,8 +4325,6 @@ void Aura::HandleAuraModEffectImmunity(bool apply, bool /*Real*/)
     {
         if( BattleGround *bg = ((Player*)target)->GetBattleGround() )
             bg->EventPlayerDroppedFlag(((Player*)target));
-        else
-            sOutdoorPvPMgr.HandleDropFlag((Player*)target,GetSpellProto()->Id);
     }
 
     target->ApplySpellImmune(GetId(), IMMUNITY_EFFECT, m_modifier.m_miscvalue, apply);
@@ -7467,7 +7464,7 @@ void Aura::HandlePhase(bool apply, bool Real)
         return;
 
     Unit *target = GetTarget();
-    
+
     // always non stackable
     if(apply)
     {
@@ -7629,7 +7626,7 @@ m_auraFlags(AFLAG_NONE), m_auraLevel(1), m_procCharges(0), m_stackAmount(1)
 {
     ASSERT(target);
     ASSERT(spellproto && spellproto == sSpellStore.LookupEntry( spellproto->Id ) && "`info` must be pointer to sSpellStore element");
-    
+
     if(!caster)
         m_caster_guid = target->GetGUID();
     else
@@ -7739,7 +7736,7 @@ void SpellAuraHolder::_AddSpellAuraHolder()
     }
     flags |= ((GetCasterGUID() == GetTarget()->GetGUID()) ? AFLAG_NOT_CASTER : AFLAG_NONE) | ((GetSpellMaxDuration(m_spellProto) > 0) ? AFLAG_DURATION : AFLAG_NONE) | (IsPositive() ? AFLAG_POSITIVE : AFLAG_NEGATIVE);
     SetAuraFlags(flags);
-    
+
     SetAuraLevel(caster ? caster->getLevel() : sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL));
 
     if (IsNeedVisibleSlot(caster))
@@ -7795,7 +7792,7 @@ void SpellAuraHolder::_AddSpellAuraHolder()
         // Enrage aura state
         if(m_spellProto->Dispel == DISPEL_ENRAGE)
             m_target->ModifyAuraState(AURA_STATE_ENRAGE, true);
-        
+
     }
 }
 
@@ -8683,7 +8680,7 @@ void SpellAuraHolder::HandleSpellSpecificBoosts(bool apply)
         if (spellId4)
             m_target->RemoveAurasByCasterSpell(spellId4, GetCasterGUID());
     }
- 
+
     SetInUse(false);
 }
 

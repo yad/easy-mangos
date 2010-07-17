@@ -340,10 +340,7 @@ class Spell
         void EffectSpecCount(SpellEffectIndex eff_idx);
         void EffectActivateSpec(SpellEffectIndex eff_idx);
         void EffectSummonPossessed(SpellEffectIndex eff_idx);
-        void EffectWMODamage(SpellEffectIndex eff_idx);
-        void EffectWMORepair(SpellEffectIndex eff_idx);
         void EffectSummonVehicle(SpellEffectIndex eff_idx);
-        void EffectDamageBuilding(SpellEffectIndex eff_idx);
 
         Spell( Unit* caster, SpellEntry const *info, bool triggered, ObjectGuid originalCasterGUID = ObjectGuid(), Spell** triggeringContainer = NULL );
         ~Spell();

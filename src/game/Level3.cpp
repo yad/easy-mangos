@@ -5061,7 +5061,7 @@ bool ChatHandler::HandleListAurasCommand (const char * /*args*/)
     for (Unit::SpellAuraHolderMap::const_iterator itr = uAuras.begin(); itr != uAuras.end(); ++itr)
     {
         bool talent = GetTalentSpellCost(itr->second->GetId()) > 0;
-        
+
         SpellAuraHolder *holder = itr->second;
         char const* name = holder->GetSpellProto()->SpellName[GetSessionDbcLocale()];
 
@@ -5070,7 +5070,7 @@ bool ChatHandler::HandleListAurasCommand (const char * /*args*/)
             Aura *aur = holder->GetAuraByEffectIndex(SpellEffectIndex(i));
             if (!aur)
                 continue;
-            
+
             if (m_session)
             {
                 std::ostringstream ss_name;

@@ -59,9 +59,6 @@ class Item;
 class PlayerbotAI;
 class PlayerbotMgr;
 
-// OutdoorPvP
-class OutdoorPvP;
-
 typedef std::deque<Mail*> PlayerMails;
 
 #define PLAYER_MAX_SKILLS           127
@@ -2087,7 +2084,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         void CheckAreaExploreAndOutdoor(void);
 
         static uint32 TeamForRace(uint8 race);
-        TeamId GetTeamId() const { return m_team == ALLIANCE ? TEAM_ALLIANCE : TEAM_HORDE; }
         uint32 GetTeam() const { return m_team; }
         static uint32 getFactionForRace(uint8 race);
         void setFactionForRace(uint8 race);
@@ -2304,14 +2300,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         bool CanCaptureTowerPoint();
 
         /*********************************************************/
-        /***               OUTDOOR PVP SYSTEM                  ***/
-        /*********************************************************/
-
-        OutdoorPvP * GetOutdoorPvP() const;
-        // returns true if the player is in active state for outdoor pvp objective capturing, false otherwise
-        bool IsOutdoorPvPActive();
-
-        /*********************************************************/
         /***                    REST SYSTEM                    ***/
         /*********************************************************/
 
@@ -2359,7 +2347,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         /*********************************************************/
         bool HasMovementFlag(MovementFlags f) const;        // for script access to m_movementInfo.HasMovementFlag
         void UpdateFallInformationIfNeed(MovementInfo const& minfo,uint16 opcode);
-
         void SetFallInformation(uint32 time, float z)
         {
             m_lastFallTime = time;
@@ -2414,7 +2401,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         bool TeleportToHomebind(uint32 options = 0) { return TeleportTo(m_homebindMapId, m_homebindX, m_homebindY, m_homebindZ, GetOrientation(), options); }
 
         Object* GetObjectByTypeMask(ObjectGuid guid, TypeMask typemask);
-        
+
         /* WoWArmory Feed Log */
         void WriteWowArmoryDatabaseLog(uint32 type, uint32 data);
 

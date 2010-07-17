@@ -358,15 +358,15 @@ struct GameObjectInfo
         {
             uint32 intactNumHits;                           //0
             uint32 creditProxyCreature;                     //1
-            uint32 state1Name;                              //2
+            uint32 empty1;                                  //2
             uint32 intactEvent;                             //3
-            uint32 damagedDisplayId;                        //4
+            uint32 empty2;                                  //4
             uint32 damagedNumHits;                          //5
             uint32 empty3;                                  //6
             uint32 empty4;                                  //7
             uint32 empty5;                                  //8
             uint32 damagedEvent;                            //9
-            uint32 destroyedDisplayId;                      //10
+            uint32 empty6;                                  //10
             uint32 empty7;                                  //11
             uint32 empty8;                                  //12
             uint32 empty9;                                  //13
@@ -551,7 +551,6 @@ enum GOState
 // from `gameobject`
 struct GameObjectData
 {
-    explicit GameObjectData() : dbData(true) {}
     uint32 id;                                              // entry in gamobject_template
     uint16 mapid;
     uint16 phaseMask;
@@ -567,8 +566,6 @@ struct GameObjectData
     uint32 animprogress;
     GOState go_state;
     uint8 spawnMask;
-    uint8 artKit;
-    bool dbData;
 };
 
 // For containers:  [GO_NOT_READY]->GO_READY (close)->GO_ACTIVATED (open) ->GO_JUST_DEACTIVATED->GO_READY        -> ...
@@ -597,11 +594,9 @@ class MANGOS_DLL_SPEC GameObject : public WorldObject
         void AddToWorld();
         void RemoveFromWorld();
 
-        bool Create(uint32 guidlow, uint32 name_id, Map *map, uint32 phaseMask, float x, float y, float z, float ang, float rotation0, float rotation1, float rotation2, float rotation3, uint32 animprogress, GOState go_state, uint32 artKit = 0);
+        bool Create(uint32 guidlow, uint32 name_id, Map *map, uint32 phaseMask, float x, float y, float z, float ang, float rotation0, float rotation1, float rotation2, float rotation3, uint32 animprogress, GOState go_state);
         void Update(uint32 p_time);
-        GameObjectInfo const* GetGOInfo() const { return m_goInfo; }
-        GameObjectData const* GetGOData() const { return m_goData; }
-        GameObjectValue * GetGOValue() const { return m_goValue; }
+        GameObjectInfo const* GetGOInfo() const;
 
         bool IsTransport() const;
 
@@ -670,9 +665,7 @@ class MANGOS_DLL_SPEC GameObject : public WorldObject
         GOState GetGoState() const { return GOState(GetByteValue(GAMEOBJECT_BYTES_1, 0)); }
         void SetGoState(GOState state) { SetByteValue(GAMEOBJECT_BYTES_1, 0, state); }
         uint8 GetGoArtKit() const { return GetByteValue(GAMEOBJECT_BYTES_1, 2); }
-        //void SetGoArtKit(uint8 artkit) { SetByteValue(GAMEOBJECT_BYTES_1, 2, artkit); }
-        void SetGoArtKit(uint8 artkit);
-        static void SetGoArtKit(uint8 artkit, GameObject *go, uint32 lowguid = 0);
+        void SetGoArtKit(uint8 artkit) { SetByteValue(GAMEOBJECT_BYTES_1, 2, artkit); }
         uint8 GetGoAnimProgress() const { return GetByteValue(GAMEOBJECT_BYTES_1, 3); }
         void SetGoAnimProgress(uint8 animprogress) { SetByteValue(GAMEOBJECT_BYTES_1, 3, animprogress); }
 
@@ -721,20 +714,15 @@ class MANGOS_DLL_SPEC GameObject : public WorldObject
 
         GameObject* LookupFishingHoleAround(float range);
 
-        void TakenDamage(uint32 damage, Unit* who = NULL);
-        void Rebuild();
-
         GridReference<GameObject> &GetGridRef() { return m_gridRef; }
 
         uint64 GetRotation() const { return m_rotation; }
-        void DealSiegeDamage(uint32 damage);
     protected:
         uint32      m_spellId;
         time_t      m_respawnTime;                          // (secs) time of next respawn (or despawn if GO have owner()),
         uint32      m_respawnDelayTime;                     // (secs) if 0 then current GO state no dependent from timer
         LootState   m_lootState;
         bool        m_spawnedByDefault;
-        int32       m_actualHealth;                         // current health state
         time_t      m_cooldownTime;                         // used as internal reaction delay time store (not state change reaction).
                                                             // For traps this: spell casting cooldown, for doors/buttons: reset time.
         std::list<uint32> m_SkillupList;
@@ -744,8 +732,6 @@ class MANGOS_DLL_SPEC GameObject : public WorldObject
 
         uint32 m_DBTableGuid;                               ///< For new or temporary gameobjects is 0 for saved it is lowguid
         GameObjectInfo const* m_goInfo;
-        GameObjectData const* m_goData;
-        GameObjectValue * const m_goValue;
         uint64 m_rotation;
     private:
         void SwitchDoorOrButton(bool activate, bool alternative = false);

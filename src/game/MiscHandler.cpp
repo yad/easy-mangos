@@ -41,7 +41,6 @@
 #include "Pet.h"
 #include "SocialMgr.h"
 #include "DBCEnums.h"
-#include "OutdoorPvP.h"
 
 void WorldSession::HandleRepopRequestOpcode( WorldPacket & recv_data )
 {
@@ -736,12 +735,6 @@ void WorldSession::HandleAreaTriggerOpcode(WorldPacket & recv_data)
         if (BattleGround* bg = pl->GetBattleGround())
             bg->HandleAreaTrigger(pl, Trigger_ID);
         return;
-    }
-
-    if(OutdoorPvP * pvp = GetPlayer()->GetOutdoorPvP())
-    {
-        if(pvp->HandleAreaTrigger(_player, Trigger_ID))
-            return;
     }
 
     // NULL if all values default (non teleport trigger)

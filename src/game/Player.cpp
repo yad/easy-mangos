@@ -62,8 +62,6 @@
 #include "AchievementMgr.h"
 #include "Mail.h"
 #include "GameEventMgr.h"
-#include "OutdoorPvP.h"
-#include "OutdoorPvPMgr.h"
 
 // Playerbot mod:
 #include "PlayerbotAI.h"
@@ -3730,7 +3728,6 @@ void Player::RemoveFromWorld()
         ///- Release charmed creatures, unsummon totems and remove pets/guardians
         UnsummonAllTotems();
         RemoveMiniPet();
-        sOutdoorPvPMgr.HandlePlayerLeaveZone(this, m_zoneUpdateId);
     }
 
     for(int i = PLAYER_SLOT_START; i < PLAYER_SLOT_END; ++i)
@@ -6198,7 +6195,6 @@ void Player::ResurrectPlayer(float restore_percent, bool applySickness)
     uint32 newzone, newarea;
     GetZoneAndAreaId(newzone,newarea);
     UpdateZone(newzone,newarea);
-    sOutdoorPvPMgr.HandlePlayerResurrects(this, newzone);
 
     // update visibility of world around viewpoint
     m_camera.UpdateVisibilityForOwner();
@@ -8451,8 +8447,6 @@ void Player::UpdateZone(uint32 newZone, uint32 newArea)
 
     if(m_zoneUpdateId != newZone)
     {
-        sOutdoorPvPMgr.HandlePlayerLeaveZone(this, m_zoneUpdateId);
-        sOutdoorPvPMgr.HandlePlayerEnterZone(this, newZone);
         SendInitWorldStates(newZone, newArea);              // only if really enters to new zone, not just area change, works strange...
 
         if (sWorld.getConfig(CONFIG_BOOL_WEATHER))
@@ -8588,16 +8582,6 @@ void Player::CheckDuelDistance(time_t currTime)
             DuelComplete(DUEL_FLED);
         }
     }
-}
-
-OutdoorPvP * Player::GetOutdoorPvP() const
-{
-    return sOutdoorPvPMgr.GetOutdoorPvPToZoneId(GetZoneId());
-}
-
-bool Player::IsOutdoorPvPActive()
-{
-    return isAlive() && !HasInvisibilityAura() && !HasStealthAura() && (IsPvP() || sWorld.IsPvPRealm())  && !HasMovementFlag(MOVEFLAG_FLYING) && !IsTaxiFlying();
 }
 
 void Player::DuelComplete(DuelCompleteType type)
@@ -10199,7 +10183,6 @@ void Player::SendInitWorldStates(uint32 zoneid, uint32 areaid)
     // data depends on zoneid/mapid...
     BattleGround* bg = GetBattleGround();
     uint32 mapid = GetMapId();
-    OutdoorPvP * pvp = sOutdoorPvPMgr.GetOutdoorPvPToZoneId(zoneid);
 
     DEBUG_LOG("Sending SMSG_INIT_WORLD_STATES to Map:%u, Zone: %u", mapid, zoneid);
 
@@ -10241,66 +10224,6 @@ void Player::SendInitWorldStates(uint32 zoneid, uint32 areaid)
         case 1519:
         case 1537:
         case 2257:
-            break;
-        case 139: // EPL
-            {
-                if(pvp && pvp->GetTypeId() == OUTDOOR_PVP_EP)
-                    pvp->FillInitialWorldStates(data);
-                else
-                {
-                    data << uint32(0x97a) << uint32(0x0); // 10 2426
-                    data << uint32(0x917) << uint32(0x0); // 11 2327
-                    data << uint32(0x918) << uint32(0x0); // 12 2328
-                    data << uint32(0x97b) << uint32(0x32); // 13 2427
-                    data << uint32(0x97c) << uint32(0x32); // 14 2428
-                    data << uint32(0x933) << uint32(0x1); // 15 2355
-                    data << uint32(0x946) << uint32(0x0); // 16 2374
-                    data << uint32(0x947) << uint32(0x0); // 17 2375
-                    data << uint32(0x948) << uint32(0x0); // 18 2376
-                    data << uint32(0x949) << uint32(0x0); // 19 2377
-                    data << uint32(0x94a) << uint32(0x0); // 20 2378
-                    data << uint32(0x94b) << uint32(0x0); // 21 2379
-                    data << uint32(0x932) << uint32(0x0); // 22 2354
-                    data << uint32(0x934) << uint32(0x0); // 23 2356
-                    data << uint32(0x935) << uint32(0x0); // 24 2357
-                    data << uint32(0x936) << uint32(0x0); // 25 2358
-                    data << uint32(0x937) << uint32(0x0); // 26 2359
-                    data << uint32(0x938) << uint32(0x0); // 27 2360
-                    data << uint32(0x939) << uint32(0x1); // 28 2361
-                    data << uint32(0x930) << uint32(0x1); // 29 2352
-                    data << uint32(0x93a) << uint32(0x0); // 30 2362
-                    data << uint32(0x93b) << uint32(0x0); // 31 2363
-                    data << uint32(0x93c) << uint32(0x0); // 32 2364
-                    data << uint32(0x93d) << uint32(0x0); // 33 2365
-                    data << uint32(0x944) << uint32(0x0); // 34 2372
-                    data << uint32(0x945) << uint32(0x0); // 35 2373
-                    data << uint32(0x931) << uint32(0x1); // 36 2353
-                    data << uint32(0x93e) << uint32(0x0); // 37 2366
-                    data << uint32(0x931) << uint32(0x1); // 38 2367 ??  grey horde not in dbc! send for consistency's sake, and to match field count
-                    data << uint32(0x940) << uint32(0x0); // 39 2368
-                    data << uint32(0x941) << uint32(0x0); // 7 2369
-                    data << uint32(0x942) << uint32(0x0); // 8 2370
-                    data << uint32(0x943) << uint32(0x0); // 9 2371
-                }
-            }
-            break;
-        case 1377: // Silithus
-            {
-                if (pvp && pvp->GetTypeId() == OUTDOOR_PVP_SI)
-                    pvp->FillInitialWorldStates(data);
-                else
-                {
-                    // states are always shown
-                    data << uint32(2313) << uint32(0x0); // 7 ally silityst gathered
-                    data << uint32(2314) << uint32(0x0); // 8 horde silityst gathered
-                    data << uint32(2317) << uint32(0x0); // 9 max silithyst
-                }
-                // dunno about these... aq opening event maybe?
-                data << uint32(2322) << uint32(0x0); // 10 sandworm N
-                data << uint32(2323) << uint32(0x0); // 11 sandworm S
-                data << uint32(2324) << uint32(0x0); // 12 sandworm SW
-                data << uint32(2325) << uint32(0x0); // 13 sandworm E
-            }
             break;
         case 2597:                                          // AV
             if (bg && bg->GetTypeID() == BATTLEGROUND_AV)
@@ -10366,61 +10289,6 @@ void Player::SendInitWorldStates(uint32 zoneid, uint32 areaid)
             }
             break;
         case 3703:                                          // Shattrath City
-            break;
-        case 4384:                                          // SA
-            /*if (bg && bg->GetTypeID() == BATTLEGROUND_SA)
-                bg->FillInitialWorldStates(data);
-            else
-            {*/
-                // 1-3 A defend, 4-6 H defend, 7-9 unk defend, 1 - ok, 2 - half destroyed, 3 - destroyed
-                data << uint32(0xf09) << uint32(0x4);       // 7  3849 Gate of Temple
-                data << uint32(0xe36) << uint32(0x4);       // 8  3638 Gate of Yellow Moon
-                data << uint32(0xe27) << uint32(0x4);       // 9  3623 Gate of Green Emerald
-                data << uint32(0xe24) << uint32(0x4);       // 10 3620 Gate of Blue Sapphire
-                data << uint32(0xe21) << uint32(0x4);       // 11 3617 Gate of Red Sun
-                data << uint32(0xe1e) << uint32(0x4);       // 12 3614 Gate of Purple Ametyst
-
-                data << uint32(0xdf3) << uint32(0x0);       // 13 3571 bonus timer (1 - on, 0 - off)
-                data << uint32(0xded) << uint32(0x0);       // 14 3565 Horde Attacker
-                data << uint32(0xdec) << uint32(0x1);       // 15 3564 Alliance Attacker
-                // End Round (timer), better explain this by example, eg. ends in 19:59 -> A:BC
-                data << uint32(0xde9) << uint32(0x9);       // 16 3561 C
-                data << uint32(0xde8) << uint32(0x5);       // 17 3560 B
-                data << uint32(0xde7) << uint32(0x19);      // 18 3559 A
-                data << uint32(0xe35) << uint32(0x1);       // 19 3637 East g - Horde control
-                data << uint32(0xe34) << uint32(0x1);       // 20 3636 West g - Horde control
-                data << uint32(0xe33) << uint32(0x1);       // 21 3635 South g - Horde control
-                data << uint32(0xe32) << uint32(0x0);       // 22 3634 East g - Alliance control
-                data << uint32(0xe31) << uint32(0x0);       // 23 3633 West g - Alliance control
-                data << uint32(0xe30) << uint32(0x0);       // 24 3632 South g - Alliance control
-                data << uint32(0xe2f) << uint32(0x1);       // 25 3631 Chamber of Ancients - Horde control
-                data << uint32(0xe2e) << uint32(0x0);       // 26 3630 Chamber of Ancients - Alliance control
-                data << uint32(0xe2d) << uint32(0x0);       // 27 3629 Beach1 - Horde control
-                data << uint32(0xe2c) << uint32(0x0);       // 28 3628 Beach2 - Horde control
-                data << uint32(0xe2b) << uint32(0x1);       // 29 3627 Beach1 - Alliance control
-                data << uint32(0xe2a) << uint32(0x1);       // 30 3626 Beach2 - Alliance control
-                // and many unks...
-            //}
-            break;
-        case 4378:                                          // Dalaran Sewers
-            if (bg && bg->GetTypeID() == BATTLEGROUND_DS)
-                bg->FillInitialWorldStates(data, count);
-            else
-            {
-                FillInitialWorldState(data, count, 0xe11, 0x0);  // 7 gold
-                FillInitialWorldState(data, count, 0xe10, 0x0);  // 8 green
-                FillInitialWorldState(data, count, 0xe1a, 0x0);  // 9 show
-            }
-            break;
-        case 4406:                                          // Ring of Valor
-            if (bg && bg->GetTypeID() == BATTLEGROUND_RV)
-                bg->FillInitialWorldStates(data, count);
-            else
-            {
-                FillInitialWorldState(data,count,0xe11,0x0);// 7 gold
-                FillInitialWorldState(data,count,0xe10,0x0);// 8 green
-                FillInitialWorldState(data,count,0xe1a,0x0);// 9 show
-            }
             break;
         default:
             FillInitialWorldState(data,count, 0x914, 0x0);  // 7
@@ -14815,10 +14683,6 @@ void Player::PrepareGossipMenu(WorldObject *pSource, uint32 menuId)
                 case GOSSIP_OPTION_TABARDDESIGNER:
                 case GOSSIP_OPTION_AUCTIONEER:
                     break;                                  // no checks
-                case GOSSIP_OPTION_OUTDOORPVP:
-                    if (!sOutdoorPvPMgr.CanTalkTo(this, pCreature, itr->second))
-                        hasMenuItem = false;
-                    break;
                 default:
                     sLog.outErrorDb("Creature entry %u have unknown gossip option %u for menu %u", pCreature->GetEntry(), itr->second.option_id, itr->second.menu_id);
                     hasMenuItem = false;
@@ -14990,9 +14854,6 @@ void Player::OnGossipSelect(WorldObject* pSource, uint32 gossipListId, uint32 me
 
             break;
         }
-        case GOSSIP_OPTION_OUTDOORPVP:
-            sOutdoorPvPMgr.HandleGossipOption(this, pSource->GetGUID(), gossipListId);
-            break;
         case GOSSIP_OPTION_SPIRITHEALER:
             if (isDead())
                 ((Creature*)pSource)->CastSpell(((Creature*)pSource),17251,true,NULL,NULL,GetGUID());
@@ -18881,7 +18742,7 @@ void Player::SaveToDB()
     outDebugStatsValues();
 
     CharacterDatabase.BeginTransaction();
-    
+
     /* WoWArmory */
     std::ostringstream ps;
     ps << "REPLACE INTO armory_character_stats (guid,data) VALUES ('" << GetGUIDLow() << "', '";

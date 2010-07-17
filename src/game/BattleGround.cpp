@@ -768,6 +768,7 @@ void BattleGround::EndBattleGround(uint32 winner)
             SetArenaTeamRatingChangeForTeam(HORDE, 0);
         }
     }
+
     for(BattleGroundPlayerMap::iterator itr = m_Players.begin(); itr != m_Players.end(); ++itr)
     {
         uint32 team = itr->second.Team;

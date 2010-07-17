@@ -443,14 +443,6 @@
     <ClCompile Include="..\..\src\game\ObjectGuid.cpp" />
     <ClCompile Include="..\..\src\game\ObjectPosSelector.cpp" />
     <ClCompile Include="..\..\src\game\Opcodes.cpp" />
-    <ClCompile Include="..\..\src\game\OutdoorPvP.cpp" />
-    <ClCompile Include="..\..\src\game\OutdoorPvPEP.cpp" />
-    <ClCompile Include="..\..\src\game\OutdoorPvPHP.cpp" />
-    <ClCompile Include="..\..\src\game\OutdoorPvPMgr.cpp" />
-    <ClCompile Include="..\..\src\game\OutdoorPvPNA.cpp" />
-    <ClCompile Include="..\..\src\game\OutdoorPvPSI.cpp" />
-    <ClCompile Include="..\..\src\game\OutdoorPvPTF.cpp" />
-    <ClCompile Include="..\..\src\game\OutdoorPvPZM.cpp" />
     <ClCompile Include="..\..\src\game\PathFinder.cpp" />
     <ClCompile Include="..\..\src\game\pchdef.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -497,7 +489,7 @@
     <ClCompile Include="..\..\src\game\Spell.cpp" />
     <ClCompile Include="..\..\src\game\SpellAuras.cpp" />
     <ClCompile Include="..\..\src\game\SpellDBCHacks.cpp" />
-	<ClCompile Include="..\..\src\game\UnitAuraProcHandler.cpp" />
+    <ClCompile Include="..\..\src\game\UnitAuraProcHandler.cpp" />
     <ClCompile Include="..\..\src\game\SpellEffects.cpp" />
     <ClCompile Include="..\..\src\game\SpellHandler.cpp" />
     <ClCompile Include="..\..\src\game\SpellMgr.cpp" />
@@ -614,15 +606,6 @@
     <ClInclude Include="..\..\src\game\ObjectMgr.h" />
     <ClInclude Include="..\..\src\game\ObjectPosSelector.h" />
     <ClInclude Include="..\..\src\game\Opcodes.h" />
-    <ClInclude Include="..\..\src\game\OutdoorPvP.h" />
-    <ClInclude Include="..\..\src\game\OutdoorPvPEP.h" />
-    <ClInclude Include="..\..\src\game\OutdoorPvPHP.h" />
-    <ClInclude Include="..\..\src\game\OutdoorPvPImpl.h" />
-    <ClInclude Include="..\..\src\game\OutdoorPvPMgr.h" />
-    <ClInclude Include="..\..\src\game\OutdoorPvPNA.h" />
-    <ClInclude Include="..\..\src\game\OutdoorPvPSI.h" />
-    <ClInclude Include="..\..\src\game\OutdoorPvPTF.h" />
-    <ClInclude Include="..\..\src\game\OutdoorPvPZM.h" />
     <ClInclude Include="..\..\src\game\Path.h" />
     <ClInclude Include="..\..\src\game\PathFinder.h" />
     <ClInclude Include="..\..\src\game\pchdef.h" />
@@ -678,7 +661,6 @@
     <ClInclude Include="..\..\src\game\WorldSession.h" />
     <ClInclude Include="..\..\src\game\WorldSocket.h" />
     <ClInclude Include="..\..\src\game\WorldSocketMgr.h" />
-    <ClInclude Include="..\..\src\game\ZoneScript.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="shared.vcxproj">
