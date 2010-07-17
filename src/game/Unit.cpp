@@ -4058,8 +4058,7 @@ bool Unit::AddSpellAuraHolder(SpellAuraHolder *holder)
 
     for (int32 i = 0; i < MAX_EFFECT_INDEX; ++i)
         if (Aura *aur = holder->GetAuraByEffectIndex(SpellEffectIndex(i)))
-            if (aur->GetModifier()->m_auraname < TOTAL_AURAS)
-                m_modAuras[aur->GetModifier()->m_auraname].push_back(aur);
+            AddAuraToModList(aur);
 
     holder->ApplyAuraModifiers(true, true);
     DEBUG_LOG("Holder of spell %u now is in use", holder->GetId());
@@ -4072,6 +4071,12 @@ bool Unit::AddSpellAuraHolder(SpellAuraHolder *holder)
     holder->HandleSpellSpecificBoosts(true);
 
     return true;
+}
+
+void Unit::AddAuraToModList(Aura *aura)
+{
+    if (aura->GetModifier()->m_auraname < TOTAL_AURAS)
+        m_modAuras[aura->GetModifier()->m_auraname].push_back(aura);
 }
 
 void Unit::RemoveRankAurasDueToSpell(uint32 spellId)
@@ -4590,10 +4595,10 @@ void Unit::RemoveSpellAuraHolder(SpellAuraHolder *holder, AuraRemoveMode mode)
     // Statue unsummoned at holder remove
     SpellEntry const* AurSpellInfo = holder->GetSpellProto();
     Totem* statue = NULL;
-    if(IsChanneledSpell(AurSpellInfo))
-        if(Unit* caster = holder->GetCaster())
-            if(caster->GetTypeId()==TYPEID_UNIT && ((Creature*)caster)->isTotem() && ((Totem*)caster)->GetTotemType()==TOTEM_STATUE)
-                statue = ((Totem*)caster);
+    Unit* caster = holder->GetCaster();
+    if(IsChanneledSpell(AurSpellInfo) && caster)
+        if(caster->GetTypeId()==TYPEID_UNIT && ((Creature*)caster)->isTotem() && ((Totem*)caster)->GetTotemType()==TOTEM_STATUE)
+            statue = ((Totem*)caster);
 
     if (m_spellAuraHoldersUpdateIterator != m_spellAuraHolders.end() && m_spellAuraHoldersUpdateIterator->second == holder)
         ++m_spellAuraHoldersUpdateIterator;
@@ -4631,6 +4636,9 @@ void Unit::RemoveSpellAuraHolder(SpellAuraHolder *holder, AuraRemoveMode mode)
         m_deletedHolders.push_back(holder);
     else
         delete holder;
+
+    if (IsChanneledSpell(AurSpellInfo) && caster && caster->GetGUID() != GetGUID())
+        caster->InterruptSpell(CURRENT_CHANNELED_SPELL);
 }
 
 void Unit::RemoveSingleAuraFromSpellAuraHolder(SpellAuraHolder *holder, SpellEffectIndex index, AuraRemoveMode mode)
