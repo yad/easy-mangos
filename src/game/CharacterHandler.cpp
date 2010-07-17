@@ -654,8 +654,8 @@ void PlayerbotMgr::AddAllBots(int nbBotsWanted)
             CharacterDatabase.DelayQueryHolder(&chrHandler, &CharacterHandler::HandlePlayerBotLoginCallback, holder);
 
             itr++;
-
-            if(itr > nbBotsWanted)
+            //sLog.outString( "Bot Number : %u added", nbBotsActual + itr);
+            if(itr == nbBotsWanted)
                 break;
         }
         while (result->NextRow());

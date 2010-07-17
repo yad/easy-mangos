@@ -179,15 +179,18 @@ class MANGOS_DLL_SPEC PlayerbotAI
         bool DoNextCombatManeuver();
         void DoCombatMovement();
         void SetIgnoreUpdateTime(uint8 t) {m_ignoreAIUpdatesUntilTime =time(0) + t; };
-        void SetIgnoreTeleport(uint8 t) {m_ignoreTeleport =time(0) + t; };
-        void SetIgnoreSpell(uint8 t) { m_ignoreSpell =time(0) + t; };
-        void SetIgnoreUpdateSpellsAndItems() { m_ignoreSpellsAndItems =time(0) + 30; };
+        void SetIgnoreTeleport(uint8 t) {m_ignoreTeleport = time(0) + t; };
+        void SetIgnoreSpell(uint8 t) { m_ignoreSpell = time(0) + t; };
+        void SetIgnoreUpdateSpellsAndItems() { m_ignoreSpellsAndItems = time(0) + 30; };
         time_t GetIgnoreSpell() { return m_ignoreSpell; };
 
         Player *GetPlayerBot() const { return m_bot; }
         Player *GetPlayer() const { return m_bot; }
         Player *GetMaster() const;
         void SetMaster(Player* pl);
+
+        uint8 GetSpe() { return m_spe; };
+        void SetSpe(uint8 spe) { m_spe = spe; };
 
         BotState GetState() { return m_botState; };
         void SetState(BotState state);
@@ -205,12 +208,12 @@ class MANGOS_DLL_SPEC PlayerbotAI
 
         bool IsInCombat();
         void UpdateAttackerInfo();
-        Unit* FindAttacker(ATTACKERINFOTYPE ait =AIT_NONE, Unit *victim =0);
+        Unit* FindAttacker(ATTACKERINFOTYPE ait =AIT_NONE, Unit *victim = 0);
         uint32 GetAttackerCount() { return m_attackerInfo.size(); };
-        void SetCombatOrderByStr(std::string str, Unit *target =0);
-        void SetCombatOrder(CombatOrderType co, Unit *target =0);
+        void SetCombatOrderByStr(std::string str, Unit *target = 0);
+        void SetCombatOrder(CombatOrderType co, Unit *target = 0);
         CombatOrderType GetCombatOrder() { return this->m_combatOrder; }
-        void SetMovementOrder(MovementOrderType mo, Unit *followTarget =0);
+        void SetMovementOrder(MovementOrderType mo, Unit *followTarget = 0);
         MovementOrderType GetMovementOrder() { return this->m_movementOrder; }
         void MovementReset();
         void MovementUpdate();
@@ -238,6 +241,7 @@ class MANGOS_DLL_SPEC PlayerbotAI
         PlayerbotMgr* const m_mgr;
         Player* const m_bot;
         PlayerbotClassAI* m_classAI;
+        uint8 m_spe;
 
         time_t m_ignoreAIUpdatesUntilTime;
         time_t m_ignoreTeleport;

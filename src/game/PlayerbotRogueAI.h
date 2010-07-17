@@ -23,7 +23,7 @@
 
 enum
 {
-    RogueCombat,
+    RogueComba,
     RogueSpellPreventing,
     RogueThreat,
     RogueStealth

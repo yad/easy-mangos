@@ -2511,6 +2511,243 @@ bool Player::IsbuggedItem(const ItemPrototype *pProto)
     return true;
 }
 
+ItemPrototype* Player::CompareTwoItems(const ItemPrototype *pProto1, const ItemPrototype *pProto2)
+{
+    PlayerbotAI* ai = GetPlayerbotAI();
+    uint8 spe = 0;
+    if(!ai)
+    {
+        switch(getClass())
+        {
+            case CLASS_WARRIOR:
+                spe = uint8(WarriorProtection);
+                break;
+            case CLASS_PALADIN:
+                spe = uint8(PaladinHoly);
+                break;
+            case CLASS_HUNTER:
+                spe = uint8(HunterBeastMastery);
+                break;
+            case CLASS_ROGUE:
+                spe = uint8(RogueSubtlety);
+                break;
+            case CLASS_PRIEST:
+                spe = uint8(PriestHoly);
+                break;
+            case CLASS_DEATH_KNIGHT:
+                spe = uint8(DeathKnightUnholy);
+                break;
+            case CLASS_SHAMAN:
+                spe = uint8(ShamanElementalCombat);
+                break;
+            case CLASS_MAGE:
+                spe = uint8(MageFrost);
+                break;
+            case CLASS_WARLOCK:
+                spe = uint8(WarlockDestruction);
+                break;
+            case CLASS_DRUID:
+                spe = uint8(DruidFeralCombat);
+                break;
+        }
+    }
+    else
+    {
+        switch(getClass())
+        {
+            case CLASS_WARRIOR:
+                spe = uint8(ai->GetSpe());
+                break;
+            case CLASS_PALADIN:
+                spe = uint8(ai->GetSpe());
+                break;
+            case CLASS_HUNTER:
+                spe = uint8(ai->GetSpe());
+                break;
+            case CLASS_ROGUE:
+                spe = uint8(ai->GetSpe());
+                break;
+            case CLASS_PRIEST:
+                spe = uint8(ai->GetSpe());
+                break;
+            case CLASS_DEATH_KNIGHT:
+                spe = uint8(ai->GetSpe());
+                break;
+            case CLASS_SHAMAN:
+                spe = uint8(ai->GetSpe());
+                break;
+            case CLASS_MAGE:
+                spe = uint8(ai->GetSpe());
+                break;
+            case CLASS_WARLOCK:
+                spe = uint8(ai->GetSpe());
+                break;
+            case CLASS_DRUID:
+                spe = uint8(ai->GetSpe());
+                break;
+        }
+    }
+
+    switch(spe)
+    {
+        case MageFire:
+            /*for (uint8 i = 0; i < pProto1->StatsCount; i++)
+            {
+                uint32 statType = pProto1->ItemStat[i].ItemStatType;
+                int32 val = pProto1->ItemStat[i].ItemStatValue;
+            }
+
+            pProto1->StatsCount*/
+            //Intelligence
+            //Puissance des sorts
+            //Critique
+            break;
+        case MageArcane:
+            //Intelligence
+            //Puissance des sorts
+            //Score de toucher
+            break;
+        case MageFrost:
+            //Intelligence
+            //Puissance des sorts
+            //Score de toucher
+            break;
+        case WarriorArms:
+            //Puissance d’attaque
+            //Score de critique
+            //Score de toucher
+            break;
+        case WarriorProtection:
+            //Endurance
+            //Armure
+            //Défense
+            //Blocage
+            break;
+        case WarriorFury:
+            //Puissance d’attaque
+            //Score de critique/Score de toucher
+            break;
+        case RogueCombat:
+            //Agilité
+            //Puissance d’attaque
+            //Score de toucher
+            break;
+        case RogueAssassination:
+            //Agilité
+            //Puissance d’attaque
+            //Score de toucher
+            break;
+        case RogueSubtlety:
+            //Agilité
+            //Puissance d’attaque
+            //Score de toucher
+            break;
+        case PriestDiscipline:
+            //Intelligence
+            //Bonus de sort
+            //Critique
+            break;
+        case PriestHoly:
+            //Intelligence
+            //Bonus de sort
+            //Esprit
+            break;
+        case PriestShadow:
+            //Intelligence
+            //Bonus de sort
+            //Score de toucher
+            break;
+        case ShamanElementalCombat:
+            //Intelligence
+            //Puissance de sort
+            //Critique
+            break;
+        case ShamanRestoration:
+            //Intelligence
+            //Puissance de Sort
+            //Esprit
+            break;
+        case ShamanEnhancement:
+            //Agilité
+            //Puissance d’attaque
+            //Score de toucher
+            break;
+        case DruidFeralCombat:
+            //Endurance
+            //Esquive
+            //Puissance d’attaque
+            //Agilité
+            //Puissance d’attaque
+            //Critique
+            break;
+        case DruidRestoration:
+            //Intelligence
+            //Puissance de Sort
+            //Esprit
+            break;
+        case DruidBalance:
+            //Intelligence
+            //Puissance de Sort
+            //Score de critique
+            break;
+        case WarlockDestruction:
+            //Endurance
+            //Puissance de sorts
+            //Critique
+            break;
+        case WarlockCurses:
+            //Endurance
+            //Puissance des sorts
+            //Critique
+            break;
+        case WarlockSummoning:
+            //Endurance
+            //Puissance de sorts
+            //Critique
+            break;
+        case HunterBeastMastery:
+            //Agilité
+            //Puissance d’attaque
+            //Score de critique
+            break;
+        case HunterSurvival:
+            //Endurance
+            //Puissance d’attaque
+            //Score de toucher
+            break;
+        case HunterMarksmanship:
+            //Agilité
+            //Puissance d’attaque
+            //Score de critique
+            break;
+        case PaladinCombat:
+            //Puissance d’attaque
+            //Score de critique
+            //Score de toucher
+            break;
+        case PaladinHoly:
+            //Intelligence
+            //Bonus de sort
+            //Critique
+            break;
+        case PaladinProtection:
+            //Armure
+            //Défense
+            //Blocage
+            break;
+        case DeathKnightBlood:
+        case DeathKnightFrost:
+        case DeathKnightUnholy:
+            //Armure
+            //Défense
+            //Blocage
+            //Puissance d’attaque
+            //Score de critique
+            //Score de toucher
+            break;
+    }
+}
+
 ///The player sobers by 256 every 10 seconds
 void Player::HandleSobering()
 {

@@ -125,7 +125,7 @@ bool PlayerbotRogueAI::DoNextCombatManeuver(Unit *pTarget)
         && (ai->GetHealthPercent() < 40))
         SpellSequence = RogueThreat;
     else
-        SpellSequence = RogueCombat;
+        SpellSequence = RogueComba;
 
     if (fTargetDist > ATTACK_DISTANCE)
         return false;
@@ -216,7 +216,7 @@ bool PlayerbotRogueAI::DoNextCombatManeuver(Unit *pTarget)
 
             break;
 
-        case RogueCombat:
+        case RogueComba:
         default:
 
             if (m_bot->GetComboPoints() <= 4)

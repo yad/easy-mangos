@@ -2458,14 +2458,18 @@ bool ChatHandler::HandleLearnAllMySpellsCommand(const char* /*args*/)
     return true;
 }
 
-bool ChatHandler::HandleLearnAllMyLevelCommand(const char* /*args*/)
+bool ChatHandler::HandleLearnAllMySpellsForMyLevelCommand(const char* /*args*/)
 {
     Player* player = m_session->GetPlayer();
     uint32 level = player->getLevel();
+
     ChrClassesEntry const* clsEntry = sChrClassesStore.LookupEntry(player->getClass());
     if(!clsEntry)
         return true;
+
     uint32 family = clsEntry->spellfamily;
+
+    player->learnDefaultSpells();
 
     for (uint32 id = 0; id< sCreatureStorage.MaxEntry; ++id)
     {
@@ -2584,6 +2588,84 @@ bool ChatHandler::HandleLearnAllMyLevelCommand(const char* /*args*/)
         player->learnSpell(54197, false);
 
     SendSysMessage(LANG_COMMAND_LEARN_CLASS_SPELLS);
+    return true;
+}
+
+bool ChatHandler::HandleLearnAllMyTalentsForMyLevelCommand(const char* /*args*/)
+{
+    Player* player = m_session->GetPlayer();
+    uint32 classMask = player->getClassMask();
+    uint32 level = player->getLevel();
+
+    for (uint32 i = 0; i < sTalentStore.GetNumRows(); ++i)
+    {
+        TalentEntry const *talentInfo = sTalentStore.LookupEntry(i);
+        if(!talentInfo)
+            continue;
+
+        TalentTabEntry const *talentTabInfo = sTalentTabStore.LookupEntry( talentInfo->TalentTab );
+        if(!talentTabInfo)
+            continue;
+
+        if( (classMask & talentTabInfo->ClassMask) == 0 )
+            continue;
+
+        // search highest talent rank
+        uint32 spellid = 0;
+
+        for(int rank = MAX_TALENT_RANK-1; rank >= 0; --rank)
+        {
+            if(talentInfo->RankID[rank]!=0)
+            {
+                spellid = talentInfo->RankID[rank];
+                break;
+            }
+        }
+
+        if(!spellid)                                        // ??? none spells in talent
+            continue;
+
+        SpellEntry const* spellInfo = sSpellStore.LookupEntry(spellid);
+        if(!spellInfo || !SpellMgr::IsSpellValid(spellInfo,m_session->GetPlayer(),false))
+            continue;
+
+        if(level < 10)
+            continue;
+
+        if(level < 20 && talentInfo->Row > 0)
+            continue;
+
+        if(level < 30 && talentInfo->Row > 1)
+            continue;
+
+        if(level < 38 && talentInfo->Row > 2)
+            continue;
+
+        if(level < 46 && talentInfo->Row > 3)
+            continue;
+
+        if(level < 53 && talentInfo->Row > 4)
+            continue;
+
+        if(level < 60 && talentInfo->Row > 5)
+            continue;
+
+        if(level < 66 && talentInfo->Row > 6)
+            continue;
+
+        if(level < 71 && talentInfo->Row > 7)
+            continue;
+
+        if(level < 77 && talentInfo->Row > 8)
+            continue;
+
+        // learn highest rank of talent and learn all non-talent spell ranks (recursive by tree)
+        player->learnSpellHighRank(spellid);
+    }
+
+    player->SendTalentsInfoData(false);
+
+    SendSysMessage(LANG_COMMAND_LEARN_CLASS_TALENTS);
     return true;
 }
 
@@ -7301,17 +7383,16 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
 
     uint32 level = chr->getLevel();
 
-    HandleLearnAllMyTalentsCommand("");
-    HandleLearnAllMyLevelCommand("");
+    HandleLearnAllMyTalentsForMyLevelCommand("");
+    HandleLearnAllMySpellsForMyLevelCommand("");
     HandleMaxSkillCommand("");
 
-    if(!chr->HasItemCount(23162, 3, false))
+    if(!chr->HasItemCount(23162, 4, false))
     {
         HandleAddItemCommand("23162");//bag 36
         HandleAddItemCommand("23162");//bag 36
         HandleAddItemCommand("23162");//bag 36
-        if(chr->getClass() != CLASS_HUNTER)
-            HandleAddItemCommand("23162");//bag 36
+        HandleAddItemCommand("23162");//bag 36
     }
     chr->AutoEquipItem();
     chr->GetBestItemForMyLevel();

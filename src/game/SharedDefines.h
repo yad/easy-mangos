@@ -82,6 +82,43 @@ enum Classes
     CLASS_DRUID         = 11,
 };
 
+enum Spe
+{
+    MageFire              =  41,
+    MageArcane            =  81,
+    MageFrost             =  61,
+    WarriorArms           = 161,
+    WarriorProtection     = 163,
+    WarriorFury           = 164,
+    RogueCombat           = 181,
+    RogueAssassination    = 182,
+    RogueSubtlety         = 183,
+    PriestDiscipline      = 201,
+    PriestHoly            = 202,
+    PriestShadow          = 203,
+    ShamanElementalCombat = 261,
+    ShamanRestoration     = 262,
+    ShamanEnhancement     = 263,
+    DruidFeralCombat      = 281,
+    DruidRestoration      = 282,
+    DruidBalance          = 283,
+    WarlockDestruction    = 301,
+    WarlockCurses         = 302,
+    WarlockSummoning      = 303,
+    HunterBeastMastery    = 361,
+    HunterSurvival        = 362,
+    HunterMarksmanship    = 363,
+    // HunterPetTenacity     = 409,
+    // HunterPetFerocity     = 410,
+    // HunterPetCunning      = 411,
+    PaladinCombat         = 381,
+    PaladinHoly           = 382,
+    PaladinProtection     = 383,
+    DeathKnightBlood      = 398,
+    DeathKnightFrost      = 399,
+    DeathKnightUnholy     = 400,
+};
+
 // max+1 for player class
 #define MAX_CLASSES       12
 

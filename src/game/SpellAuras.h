@@ -62,13 +62,13 @@ class MANGOS_DLL_SPEC SpellAuraHolder
         void SetStackAmount(uint8 stackAmount);
         bool ModStackAmount(int32 num); // return true if last charge dropped
 
-        Aura* GetAuraByEffectIndex(SpellEffectIndex index) const 
-        { 
-            if (Aura *aur = m_auras[index]) 
-                return aur; 
-            else 
+        Aura* GetAuraByEffectIndex(SpellEffectIndex index) const
+        {
+            if (Aura *aur = m_auras[index])
+                return aur;
+            else
                 return NULL;
-        } 
+        }
 
         uint32 GetId() const { return m_spellProto->Id; }
         SpellEntry const* GetSpellProto() const { return m_spellProto; }
@@ -107,7 +107,7 @@ class MANGOS_DLL_SPEC SpellAuraHolder
         void UpdateHolder(uint32 diff) { SetInUse(true); Update(diff); SetInUse(false); }
         void Update(uint32 diff);
         void RefreshHolder();
-        
+
         bool IsSingleTarget() {return m_isSingleTarget; }
         void SetIsSingleTarget(bool val) { m_isSingleTarget = val; }
         void UnregisterSingleCastHolder();
@@ -378,7 +378,7 @@ class MANGOS_DLL_SPEC Aura
         Modifier const* GetModifier() const { return &m_modifier; }
         int32 GetMiscValue() const { return m_spellAuraHolder->GetSpellProto()->EffectMiscValue[m_effIndex]; }
         int32 GetMiscBValue() const { return m_spellAuraHolder->GetSpellProto()->EffectMiscValueB[m_effIndex]; }
-        
+
         SpellEntry const* GetSpellProto() const { return GetHolder()->GetSpellProto(); }
         uint32 GetId() const{ return GetHolder()->GetSpellProto()->Id; }
         uint64 GetCastItemGUID() const { return GetHolder()->GetCastItemGUID(); }
@@ -490,7 +490,7 @@ class MANGOS_DLL_SPEC Aura
         AuraRemoveMode m_removeMode:8;                      // Store info for know remove aura reason
 
         SpellEffectIndex m_effIndex :8;                     // Aura effect index in spell
-      
+
         bool m_positive:1;
         bool m_isPeriodic:1;
         bool m_isAreaAura:1;
