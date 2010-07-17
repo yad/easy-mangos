@@ -1152,7 +1152,7 @@ bool Creature::CreateFromProto(uint32 guidlow, uint32 Entry, uint32 team, const 
     }
     m_originalEntry = Entry;
 
-   Object::_Create(guidlow, Entry, HIGHGUID_UNIT);
+    Object::_Create(guidlow, Entry, HIGHGUID_UNIT);
 
     if (!UpdateEntry(Entry, team, data, false))
         return false;
@@ -1866,7 +1866,7 @@ bool Creature::LoadCreaturesAddon(bool reload)
             }
 
             SpellAuraHolder *holder = GetSpellAuraHolder(cAura->spell_id, GetGUID());
-
+                   
             bool addedToExisting = true;
             if (!holder)
             {
@@ -1885,7 +1885,7 @@ bool Creature::LoadCreaturesAddon(bool reload)
             }
             else
                 AddSpellAuraHolder(holder);
-
+         
             DEBUG_FILTER_LOG(LOG_FILTER_SPELL_CAST, "Spell: %u - Aura %u added to creature (GUIDLow: %u Entry: %u )", cAura->spell_id, AdditionalSpellInfo->EffectApplyAuraName[EFFECT_INDEX_0],GetGUIDLow(),GetEntry());
         }
     }
