@@ -684,7 +684,6 @@ class ObjectMgr
         void LoadGameobjects();
         void LoadGameobjectRespawnTimes();
         void LoadItemPrototypes();
-        void LoadItemExtendedCost();
         void LoadItemRequiredTarget();
         void LoadItemLocales();
         void LoadQuestLocales();
@@ -1005,9 +1004,9 @@ class ObjectMgr
 
             return &iter->second;
         }
-        void AddVendorItem(uint32 entry,uint32 item, uint32 maxcount, uint32 incrtime, int32 ExtendedCost);
+        void AddVendorItem(uint32 entry,uint32 item, uint32 maxcount, uint32 incrtime, uint32 ExtendedCost);
         bool RemoveVendorItem(uint32 entry,uint32 item);
-        bool IsVendorItemValid( uint32 vendor_entry, uint32 item, uint32 maxcount, uint32 ptime, int32 ExtendedCost, Player* pl = NULL, std::set<uint32>* skip_vendors = NULL ) const;
+        bool IsVendorItemValid( uint32 vendor_entry, uint32 item, uint32 maxcount, uint32 ptime, uint32 ExtendedCost, Player* pl = NULL, std::set<uint32>* skip_vendors = NULL ) const;
 
         void LoadScriptNames();
         ScriptNameMap &GetScriptNames() { return m_scriptNames; }

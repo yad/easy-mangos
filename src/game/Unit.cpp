@@ -244,8 +244,6 @@ Unit::Unit()
     for(int i=0; i < MAX_REACTIVE; ++i)
         m_reactiveTimer[i] = 0;
 
-    m_spoofSamePlayerFaction = false;
-
     baseMoveSpeed[MOVE_WALK] = 2.5f;
     baseMoveSpeed[MOVE_RUN] = 7.0f;
     baseMoveSpeed[MOVE_RUN_BACK] = 1.25f;
@@ -539,7 +537,7 @@ void Unit::DealDamageMods(Unit *pVictim, uint32 &damage, uint32* absorb)
         *absorb += (originalDamage - damage);
 }
 
-uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDamage, DamageEffectType damagetype, SpellSchoolMask damageSchoolMask, SpellEntry const *spellProto, bool durabilityLoss, uint32 absorb)
+uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDamage, DamageEffectType damagetype, SpellSchoolMask damageSchoolMask, SpellEntry const *spellProto, bool durabilityLoss)
 {
     // remove affects from victim (including from 0 damage and DoTs)
     if(pVictim != this)
@@ -558,7 +556,7 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
             pVictim->SetStandState(UNIT_STAND_STATE_STAND);
     }
 
-    if(!damage && !absorb)
+    if(!damage)
     {
         // Rage from physical damage received .
         if(cleanDamage && cleanDamage->damage && (damageSchoolMask & SPELL_SCHOOL_MASK_NORMAL) && pVictim->GetTypeId() == TYPEID_PLAYER && (pVictim->getPowerType() == POWER_RAGE))
@@ -567,21 +565,10 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
         return 0;
     }
     if (!spellProto || !IsSpellHaveAura(spellProto,SPELL_AURA_MOD_FEAR))
-        pVictim->RemoveSpellbyDamageTaken(SPELL_AURA_MOD_FEAR, damage + absorb);
+        pVictim->RemoveSpellbyDamageTaken(SPELL_AURA_MOD_FEAR, damage);
     // root type spells do not dispel the root effect
     if (!spellProto || !(spellProto->Mechanic == MECHANIC_ROOT || IsSpellHaveAura(spellProto,SPELL_AURA_MOD_ROOT)))
-        pVictim->RemoveSpellbyDamageTaken(SPELL_AURA_MOD_ROOT, damage + absorb);
-
-    WeaponAttackType attType = GetWeaponAttackType(spellProto);
-
-    // on weapon hit casts, proc from melee damage implemented in DealMeleeDamage() (sent with spellProto == NULL, which determines possible double proc)
-    if(GetTypeId() == TYPEID_PLAYER &&
-       spellProto &&
-       (spellProto->DmgClass == SPELL_DAMAGE_CLASS_MELEE ||
-       spellProto->DmgClass == SPELL_DAMAGE_CLASS_RANGED) &&
-       damagetype == SPELL_DIRECT_DAMAGE &&
-       !(spellProto->AuraInterruptFlags & AURA_INTERRUPT_FLAG_DAMAGE))
-        ((Player*)this)->CastItemCombatSpell(pVictim, attType);
+        pVictim->RemoveSpellbyDamageTaken(SPELL_AURA_MOD_ROOT, damage);
 
     // no xp,health if type 8 /critters/
     if(pVictim->GetTypeId() != TYPEID_PLAYER && pVictim->GetCreatureType() == CREATURE_TYPE_CRITTER)
@@ -601,9 +588,6 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
     }
 
     DEBUG_FILTER_LOG(LOG_FILTER_DAMAGE,"DealDamageStart");
-
-    if(pVictim->GetTypeId() == TYPEID_PLAYER && GetTypeId() == TYPEID_PLAYER)
-        ((Player*)pVictim)->LastDmgDealer = (Player*)this;
 
     uint32 health = pVictim->GetHealth();
     DEBUG_FILTER_LOG(LOG_FILTER_DAMAGE,"deal dmg:%d to health:%d ",damage,health);
@@ -718,9 +702,6 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
 
         if (pVictim->GetTypeId() == TYPEID_PLAYER)
         {
-            if(GetTypeId() == TYPEID_PLAYER)
-                group_tap = ((Player*)this)->GetGroup();
-
             ((Player*)pVictim)->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_TOTAL_DAMAGE_RECEIVED, health);
             if (player_tap)
                 player_tap->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_SPECIAL_PVP_KILL,1,0,pVictim);
@@ -951,17 +932,9 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
                 if (IsSpellHaveAura(morphEntry, SPELL_AURA_MOD_CONFUSE))
                     pVictim->RemoveAurasDueToSpell(morphSpell);
                 else if (IsSpellHaveAura(morphEntry, SPELL_AURA_MOD_PACIFY_SILENCE))
-                    pVictim->RemoveSpellbyDamageTaken(SPELL_AURA_MOD_PACIFY_SILENCE, damage + absorb);
+                    pVictim->RemoveSpellbyDamageTaken(SPELL_AURA_MOD_PACIFY_SILENCE, damage);
             }
         }
-
-        //Shiver
-        if(pVictim->HasAura(57949))
-           CastSpell(pVictim, 57952, true);
-
-        //Shiver heroic
-        if(pVictim->HasAura(59978))
-            CastSpell(pVictim, 59979, true);
 
         if(damagetype == DIRECT_DAMAGE || damagetype == SPELL_DIRECT_DAMAGE)
         {
@@ -980,7 +953,7 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
             // Rage from damage received
             if(this != pVictim && pVictim->getPowerType() == POWER_RAGE)
             {
-                uint32 rage_damage = absorb + damage + (cleanDamage ? cleanDamage->damage : 0);
+                uint32 rage_damage = damage + (cleanDamage ? cleanDamage->damage : 0);
                 ((Player*)pVictim)->RewardRage(rage_damage, 0, false);
             }
 
@@ -1051,24 +1024,15 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
 
             if(Spell* spell = pVictim->m_currentSpells[CURRENT_CHANNELED_SPELL])
             {
-                if(damagetype != DOT)
+                if (spell->getState() == SPELL_STATE_CASTING)
                 {
-                    if (spell->getState() == SPELL_STATE_CASTING)
+                    uint32 channelInterruptFlags = spell->m_spellInfo->ChannelInterruptFlags;
+                    if( channelInterruptFlags & CHANNEL_FLAG_DELAY )
                     {
-                        uint32 channelInterruptFlags = spell->m_spellInfo->ChannelInterruptFlags;
-                        if( channelInterruptFlags & CHANNEL_FLAG_DELAY )
-                        {
-                            if(pVictim!=this)                   //don't shorten the duration of channeling if you damage yourself
-                                spell->DelayedChannel();
-                        }
-                        else if( (channelInterruptFlags & (CHANNEL_FLAG_DAMAGE | CHANNEL_FLAG_DAMAGE2)) )
-                        {
-                            sLog.outDetail("Spell %u canceled at damage!",spell->m_spellInfo->Id);
-                            pVictim->InterruptSpell(CURRENT_CHANNELED_SPELL);
-                        }
+                        if(pVictim!=this)                   //don't shorten the duration of channeling if you damage yourself
+                            spell->DelayedChannel();
                     }
-                    else if (spell->getState() == SPELL_STATE_DELAYED)
-                        // break channeled spell in delayed state on damage
+                    else if( (channelInterruptFlags & (CHANNEL_FLAG_DAMAGE | CHANNEL_FLAG_DAMAGE2)) )
                     {
                         DETAIL_LOG("Spell %u canceled at damage!",spell->m_spellInfo->Id);
                         pVictim->InterruptSpell(CURRENT_CHANNELED_SPELL);
@@ -4558,7 +4522,7 @@ void Unit::RemoveNotOwnSingleTargetAuras(uint32 newPhase)
             if(!newPhase)
             {
                 RemoveSpellAuraHolder(iter->second);
-                m_spellAuraHolders.begin();
+                iter = m_spellAuraHolders.begin();
             }
             else
             {
@@ -4566,7 +4530,7 @@ void Unit::RemoveNotOwnSingleTargetAuras(uint32 newPhase)
                 if(!caster || !caster->InSamePhase(newPhase))
                 {
                     RemoveSpellAuraHolder(iter->second);
-                    m_spellAuraHolders.begin();
+                    iter = m_spellAuraHolders.begin();
                 }
                 else
                     ++iter;
@@ -9638,8 +9602,15 @@ void Unit::ProcDamageAndSpellFor( bool isVictim, Unit * pTarget, uint32 procFlag
                     continue;
             }
 
-            if (!(*this.*AuraProcHandler[auraModifier->m_auraname])(pTarget, damage, triggeredByAura, procSpell, procFlag, procExtra, cooldown))
-                procSuccess = false;
+            SpellAuraProcResult procResult = (*this.*AuraProcHandler[auraModifier->m_auraname])(pTarget, damage, triggeredByAura, procSpell, procFlag, procExtra, cooldown);
+            switch (procResult)
+            {
+                case SPELL_AURA_PROC_CANT_TRIGGER:
+                    continue;
+                case SPELL_AURA_PROC_FAILED:
+                    procSuccess = false;
+                    break;
+            }
 
             anyAuraProc = true;
             triggeredByAura->SetInUse(false);

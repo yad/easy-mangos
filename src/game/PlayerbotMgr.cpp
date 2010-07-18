@@ -237,7 +237,6 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
         }
         case CMSG_LOOT_ROLL:
         {
-
             WorldPacket p(packet);
             uint64 Guid;
             uint32 NumberOfPlayers;
@@ -252,34 +251,19 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
 
             for (GroupReference *itr = m_master->GetGroup()->GetFirstMember(); itr != NULL; itr = itr->next())
             {
+                uint32 choice = urand(0,3);
+
                 Player* const bot = itr->getSource();
-
-                uint32 choice = urand(0, 2);
-
-                if (!bot)
-                    return;
+                if(!bot)
+                     return;
 
                 Group* group = bot->GetGroup();
-                if (!group)
+                if(!group)
                     return;
 
-                switch (group->GetLootMethod())
-                {
-                    case GROUP_LOOT:
-                        group->CountRollVote(bot->GetGUID(), Guid, NumberOfPlayers, RollVote(choice));
-                        break;
-                    case NEED_BEFORE_GREED:
-                        choice = 1;
-                        group->CountRollVote(bot->GetGUID(), Guid, NumberOfPlayers, RollVote(choice));
-                        break;
-                    case MASTER_LOOT:
-                        choice = 0;
-                        group->CountRollVote(bot->GetGUID(), Guid, NumberOfPlayers, RollVote(choice));
-                        break;
-                    default:
-                        break;
-                }
-                switch (rollType)
+                group->CountRollVote(bot, Guid, NumberOfPlayers, RollVote(choice));
+
+                switch (choice)
                 {
                     case ROLL_NEED:
                         bot->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_ROLL_NEED, 1);

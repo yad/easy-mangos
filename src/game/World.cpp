@@ -1017,9 +1017,6 @@ void World::SetInitialWorldSettings()
     sLog.outString( "Loading Items..." );                   // must be after LoadRandomEnchantmentsTable and LoadPageTexts
     sObjectMgr.LoadItemPrototypes();
 
-    sLog.outString( "Loading Items Extended Cost..." );
-    sObjectMgr.LoadItemExtendedCost();
-
     sLog.outString( "Loading Creature Model Based Info Data..." );
     sObjectMgr.LoadCreatureModelInfo();
 
@@ -1257,6 +1254,7 @@ void World::SetInitialWorldSettings()
 
     sLog.outString( "Loading VehicleData..." );
     sObjectMgr.LoadVehicleData();
+
     sLog.outString( "Loading VehicleSeatData..." );
     sObjectMgr.LoadVehicleSeatData();
 
@@ -1326,10 +1324,6 @@ void World::SetInitialWorldSettings()
     sBattleGroundMgr.CreateInitialBattleGrounds();
     sBattleGroundMgr.InitAutomaticArenaPointDistribution();
 
-    // - Apply spell hacks
-    sLog.outString( "Apply spell hacks..." );
-    sSpellMgr.ApplySpellHacks();
-
     //Not sure if this can be moved up in the sequence (with static data loading) as it uses MapManager
     sLog.outString( "Loading Transports..." );
     sMapMgr.LoadTransports();
@@ -1345,8 +1339,6 @@ void World::SetInitialWorldSettings()
 
     sLog.outString("Starting objects Pooling system..." );
     sPoolMgr.Initialize();
-
-    sLog.outString("Starting Autobroadcast system by Xeross..." );
 
     sLog.outString("Starting Game Event system..." );
     uint32 nextGameEvent = sGameEventMgr.Initialize();

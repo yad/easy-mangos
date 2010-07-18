@@ -460,7 +460,6 @@
     <ClCompile Include="..\..\src\game\UnitAuraProcHandler.cpp">
       <Filter>World/Handlers</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\game\SpellDBCHacks.cpp" />
     <ClCompile Include="..\..\src\game\PlayerbotAI.cpp">
       <Filter>Playerbot</Filter>
     </ClCompile>

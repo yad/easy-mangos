@@ -93,7 +93,7 @@ void WorldSession::HandleGuildInviteOpcode(WorldPacket& recvPacket)
         return;
 
     // not let enemies sign guild charter
-    if (!sWorld.getConfig(CONFIG_BOOL_ALLOW_TWO_SIDE_INTERACTION_GUILD) && player->getOriginalTeam() != GetPlayer()->getOriginalTeam())
+    if (!sWorld.getConfig(CONFIG_BOOL_ALLOW_TWO_SIDE_INTERACTION_GUILD) && player->GetTeam() != GetPlayer()->GetTeam())
     {
         SendGuildCommandResult(GUILD_INVITE_S, Invitedname, ERR_GUILD_NOT_ALLIED);
         return;

@@ -297,22 +297,22 @@ pAuraHandler AuraHandler[TOTAL_AURAS]=
     &Aura::HandleComprehendLanguage,                        //244 SPELL_AURA_COMPREHEND_LANGUAGE
     &Aura::HandleNoImmediateEffect,                         //245 SPELL_AURA_MOD_DURATION_OF_MAGIC_EFFECTS     implemented in Unit::CalculateSpellDuration
     &Aura::HandleNoImmediateEffect,                         //246 SPELL_AURA_MOD_DURATION_OF_EFFECTS_BY_DISPEL implemented in Unit::CalculateSpellDuration
-    &Aura::HandleAuraCloneCaster,                           //247 SPELL_AURA_CLONE_CASTER
+    &Aura::HandleNULL,                                      //247 target to become a clone of the caster
     &Aura::HandleNoImmediateEffect,                         //248 SPELL_AURA_MOD_COMBAT_RESULT_CHANCE         implemented in Unit::RollMeleeOutcomeAgainst
     &Aura::HandleAuraConvertRune,                           //249 SPELL_AURA_CONVERT_RUNE
     &Aura::HandleAuraModIncreaseHealth,                     //250 SPELL_AURA_MOD_INCREASE_HEALTH_2
     &Aura::HandleNULL,                                      //251 SPELL_AURA_MOD_ENEMY_DODGE
     &Aura::HandleModCombatSpeedPct,                         //252 SPELL_AURA_SLOW_ALL
     &Aura::HandleNoImmediateEffect,                         //253 SPELL_AURA_MOD_BLOCK_CRIT_CHANCE             implemented in Unit::CalculateMeleeDamage
-    &Aura::HandleAuraModDisarmOffhand,                      //254 SPELL_AURA_MOD_DISARM_OFFHAND disarm Offhand
+    &Aura::HandleNULL,                                      //254 SPELL_AURA_MOD_DISARM_SHIELD disarm Shield
     &Aura::HandleNoImmediateEffect,                         //255 SPELL_AURA_MOD_MECHANIC_DAMAGE_TAKEN_PERCENT    implemented in Unit::SpellDamageBonusTaken
     &Aura::HandleNoReagentUseAura,                          //256 SPELL_AURA_NO_REAGENT_USE Use SpellClassMask for spell select
     &Aura::HandleNULL,                                      //257 SPELL_AURA_MOD_TARGET_RESIST_BY_SPELL_CLASS Use SpellClassMask for spell select
     &Aura::HandleNULL,                                      //258 SPELL_AURA_MOD_SPELL_VISUAL
-    &Aura::HandleNoImmediateEffect,                         //259 SPELL_AURA_MOD_PERIODIC_HEAL                    implemented in Unit::SpellHealingBonus
+    &Aura::HandleNULL,                                      //259 corrupt healing over time spell
     &Aura::HandleNoImmediateEffect,                         //260 SPELL_AURA_SCREEN_EFFECT (miscvalue = id in ScreenEffect.dbc) not required any code
     &Aura::HandlePhase,                                     //261 SPELL_AURA_PHASE undetectable invisibility?     implemented in Unit::isVisibleForOrDetect
-    &Aura::HandleIgnoreUnitState,                           //262 SPELL_AURA_IGNORE_UNIT_STATE Alows some abilities whitch are aviable only in some cases.... implented in Unit::isIgnoreUnitState & Spell::CheckCast
+    &Aura::HandleNULL,                                      //262 ignore combat/aura state?
     &Aura::HandleAllowOnlyAbility,                          //263 SPELL_AURA_ALLOW_ONLY_ABILITY player can use only abilities set in SpellClassMask
     &Aura::HandleUnused,                                    //264 unused (3.0.8a-3.2.2a)
     &Aura::HandleUnused,                                    //265 unused (3.0.8a-3.2.2a)
@@ -328,8 +328,8 @@ pAuraHandler AuraHandler[TOTAL_AURAS]=
     &Aura::HandleNoImmediateEffect,                         //275 SPELL_AURA_MOD_IGNORE_SHAPESHIFT Use SpellClassMask for spell select
     &Aura::HandleNULL,                                      //276 mod damage % mechanic?
     &Aura::HandleNoImmediateEffect,                         //277 SPELL_AURA_MOD_MAX_AFFECTED_TARGETS Use SpellClassMask for spell select
-    &Aura::HandleAuraModDisarmRanged,                       //278 SPELL_AURA_MOD_DISARM_RANGED disarm ranged weapon
-    &Aura::HandleAuraInitializeImages,                      //279 SPELL_AURA_INITIALIZE_IMAGES
+    &Aura::HandleNULL,                                      //278 SPELL_AURA_MOD_DISARM_RANGED disarm ranged weapon
+    &Aura::HandleNULL,                                      //279 visual effects? 58836 and 57507
     &Aura::HandleModTargetArmorPct,                         //280 SPELL_AURA_MOD_TARGET_ARMOR_PCT
     &Aura::HandleNoImmediateEffect,                         //281 SPELL_AURA_MOD_HONOR_GAIN             implemented in Player::RewardHonor
     &Aura::HandleAuraIncreaseBaseHealthPercent,             //282 SPELL_AURA_INCREASE_BASE_HEALTH_PERCENT
@@ -337,12 +337,12 @@ pAuraHandler AuraHandler[TOTAL_AURAS]=
     &Aura::HandleNULL,                                      //284 51 spells
     &Aura::HandleAuraModAttackPowerOfArmor,                 //285 SPELL_AURA_MOD_ATTACK_POWER_OF_ARMOR  implemented in Player::UpdateAttackPowerAndDamage
     &Aura::HandleNoImmediateEffect,                         //286 SPELL_AURA_ABILITY_PERIODIC_CRIT      implemented in Aura::IsCritFromAbilityAura called from Aura::PeriodicTick
-    &Aura::HandleNoImmediateEffect,                         //287 SPELL_AURA_DEFLECT_SPELLS             implemented in Unit::MagicSpellHitResult
-    &Aura::HandleNoImmediateEffect,                         //288 SPELL_AURA_DEFLECT_RANGED_HIT         implemented in Unit::MeleeSpellHitResult
+    &Aura::HandleNoImmediateEffect,                         //287 SPELL_AURA_DEFLECT_SPELLS             implemented in Unit::MagicSpellHitResult and Unit::MeleeSpellHitResult
+    &Aura::HandleNULL,                                      //288 increase parry/deflect, prevent attack (single spell used 67801)
     &Aura::HandleUnused,                                    //289 unused (3.2.2a)
     &Aura::HandleAuraModAllCritChance,                      //290 SPELL_AURA_MOD_ALL_CRIT_CHANCE
     &Aura::HandleNoImmediateEffect,                         //291 SPELL_AURA_MOD_QUEST_XP_PCT           implemented in Player::GiveXP
-    &Aura::HandleAuraOpenStable,                            //292 call stabled pet
+    &Aura::HandleNULL,                                      //292 call stabled pet
     &Aura::HandleNULL,                                      //293 3 spells
     &Aura::HandleNULL,                                      //294 2 spells, possible prevent mana regen
     &Aura::HandleUnused,                                    //295 unused (3.2.2a)
@@ -366,7 +366,7 @@ pAuraHandler AuraHandler[TOTAL_AURAS]=
     &Aura::HandleNULL,                                      //313 0 spells in 3.3
     &Aura::HandleNULL,                                      //314 1 test spell (reduce duration of silince/magic)
     &Aura::HandleNULL,                                      //315 underwater walking
-    &Aura::HandleNoImmediateEffect,                         //316 SPELL_AURA_APPLY_HASTE_TO_AURA makes haste affect HOT/DOT ticks
+    &Aura::HandleNULL                                       //316 makes haste affect HOT/DOT ticks
 };
 
 static AuraType const frozenAuraTypes[] = { SPELL_AURA_MOD_ROOT, SPELL_AURA_MOD_STUN, SPELL_AURA_NONE };
@@ -2170,10 +2170,14 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
             }
             case 58600:                                     // Restricted Flight Area
             {
-                // Remove Flight Auras
-                target->CastSpell(target, 58601, true);
-                // Parachute
-                target->CastSpell(target, 45472, true);
+                AreaTableEntry const* area = GetAreaEntryByAreaID(target->GetAreaId());
+
+                // Dalaran restricted flight zone (recheck before apply unmount)
+                if (area && target->GetTypeId() == TYPEID_PLAYER && (area->flags & AREA_FLAG_CANNOT_FLY) &&
+                    ((Player*)target)->IsFreeFlying() && !((Player*)target)->isGameMaster())
+                {
+                    target->CastSpell(target, 58601, true); // Remove Flight Auras (also triggered Parachute (45472))
+                }
                 return;
             }
         }
@@ -3594,21 +3598,21 @@ void Aura::HandleFeignDeath(bool apply, bool Real)
     GetTarget()->SetFeignDeath(apply, GetCasterGUID(), GetId());
 }
 
-void Aura::HandleAuraModDisarmRanged(bool apply, bool Real)
+void Aura::HandleAuraModDisarm(bool apply, bool Real)
 {
     if(!Real)
         return;
 
     Unit *target = GetTarget();
 
-    if(!apply && target->HasAuraType(SPELL_AURA_MOD_DISARM_RANGED))
+    if(!apply && target->HasAuraType(SPELL_AURA_MOD_DISARM))
         return;
 
     // not sure for it's correctness
     if(apply)
-        target->SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_DISARMED_RANGED);
+        target->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_DISARMED);
     else
-        target->RemoveFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_DISARMED_RANGED);
+        target->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_DISARMED);
 
     // only at real add/remove aura
     if (target->GetTypeId() != TYPEID_PLAYER)
@@ -3619,11 +3623,11 @@ void Aura::HandleAuraModDisarmRanged(bool apply, bool Real)
         return;
 
     if (apply)
-        target->SetAttackTime(RANGED_ATTACK, BASE_ATTACK_TIME);
+        target->SetAttackTime(BASE_ATTACK,BASE_ATTACK_TIME);
     else
         ((Player *)target)->SetRegularAttackTime();
 
-    target->UpdateDamagePhysical(RANGED_ATTACK);
+    target->UpdateDamagePhysical(BASE_ATTACK);
 }
 
 void Aura::HandleAuraModStun(bool apply, bool Real)
@@ -8056,7 +8060,7 @@ bool SpellAuraHolder::IsNeedVisibleSlot(Unit const* caster) const
         return true;
     else if (IsSpellHaveAura(m_spellProto, SPELL_AURA_MOD_IGNORE_SHAPESHIFT))
         return true;
-    else if (IsSpellHaveAura(m_spellProto, SPELL_AURA_IGNORE_UNIT_STATE))
+    else if (IsSpellHaveAura(m_spellProto, SPELL_AURA_262))
         return true;
 
     // passive auras (except totem auras) do not get placed in the slots
@@ -8792,234 +8796,4 @@ void SpellAuraHolder::UnregisterSingleCastHolder()
         }
         m_isSingleTarget = false;
     }
-}
-
-void Aura::HandleAuraInitializeImages(bool Apply, bool Real)
-{
-    Unit* target = GetTarget();
-    if (!Real || !Apply || !target || target->GetTypeId() != TYPEID_UNIT)
-        return;
-    Unit* caster = GetCaster();
-    Unit* creator = Unit::GetUnit(*target,target->GetCreatorGUID());
-    Creature* pImmage = (Creature*)target;
-    if (!creator || !caster || creator != caster || pImmage->isPet())
-        return;
-
-    // set stats and visual
-    pImmage->SetDisplayId(creator->GetDisplayId());
-//    pImmage->SetLevel(creator->getLevel());
-    pImmage->SetMaxHealth(creator->GetMaxHealth()/5);
-    pImmage->SetHealth(creator->GetHealth()/2);
-    pImmage->SetMaxPower(POWER_MANA, creator->GetMaxPower(POWER_MANA));
-    pImmage->SetPower(POWER_MANA, creator->GetPower(POWER_MANA));
-    pImmage->setFaction(creator->getFaction());
-    pImmage->SetUInt32Value(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_UNK2 | UNIT_FLAG2_REGENERATE_POWER);
-    if (creator->IsPvP())
-        pImmage->SetPvP(true);
-
-    if (creator->isInCombat() && pImmage->isAlive())
-        pImmage->CastSpell(pImmage, 58838, true);
-    else
-    {
-       pImmage->GetMotionMaster()->Clear();
-       pImmage->GetMotionMaster()->MoveFollow(creator, pImmage->GetDistance(creator), pImmage->GetAngle(creator));
-    }
-}
-
-void Aura::HandleAuraCloneCaster(bool Apply, bool Real)
-{
-    if (!Real || !Apply)
-        return;
-
-    Unit * caster = GetCaster();
-    if (!caster)
-        return;
-
-    Unit* target = GetTarget();
-    if (!target)
-        return;
-
-    // Set item visual
-    target->SetDisplayId(caster->GetDisplayId());
-    target->SetUInt32Value(UNIT_FIELD_FLAGS_2, 2064);
-}
-
-void Aura::HandleAuraOpenStable(bool apply, bool Real)
-{
-    if(!apply || !Real)
-        return;
-
-    Unit* caster = GetCaster();
-
-    if(!caster || caster->GetTypeId() != TYPEID_PLAYER)
-        return;
-
-    WorldPacket data;
-    data << uint64(caster->GetGUID());
-    ((Player*)caster)->GetSession()->HandleListStabledPetsOpcode(data);
-}
-
-void Aura::ApplyHasteToPeriodic()
-{
-    int32 periodic = m_modifier.periodictime;
-    int32 duration = m_origDuration;
-    if(duration == 0 || periodic == 0)
-        return;
-
-    int32 ticks = duration / periodic;
-
-    if(!GetCaster())
-        return;
-
-    Player* modOwner = GetCaster()->GetSpellModOwner();
-
-    if(modOwner)
-        modOwner->ApplySpellMod(GetId(), SPELLMOD_ACTIVATION_TIME, periodic);
-
-    if( !(GetSpellProto()->Attributes & (SPELL_ATTR_UNK4|SPELL_ATTR_TRADESPELL)) )
-        duration = int32(duration * GetCaster()->GetFloatValue(UNIT_MOD_CAST_SPEED));
-
-    if(m_origDuration != duration)
-    {
-        periodic = int32(periodic * GetCaster()->GetFloatValue(UNIT_MOD_CAST_SPEED));
-        m_maxduration = periodic * ticks;
-    }
-    m_modifier.periodictime = periodic;
-}
-
-void Aura::HandleIgnoreUnitState(bool apply, bool Real)
-{
-    Unit* target = GetTarget();
-    if(!target)
-        return;
-
-    if(target->GetTypeId() != TYPEID_PLAYER || !Real)
-        return;
-
-    if(Unit* caster = GetCaster())
-    {
-        if (apply)
-        {
-            switch(GetId())
-            {
-                // Fingers of Frost
-                case 44544:
-                    GetHolder()->SetAuraCharges(3); // 3 because first is droped on proc
-                    break;
-                // Juggernaut & Warbringer both need special slot and flag
-                // for alowing charge in combat and Warbringer
-                // for alowing charge in different stances, too
-                case 64976:
-                case 57499:
-                    GetHolder()->SetAuraSlot(255);
-                    GetHolder()->SetAuraFlags(19);
-                    SendAuraUpdate(false);
-                    break;
-            }
-        }
-    }
-}
-
-void Aura::HandleAuraModDisarmOffhand(bool apply, bool Real)
-{
-    if(!Real)
-        return;
-
-    Unit* target = GetTarget();
-    if(!target)
-        return;
-
-    if(!apply && target->HasAuraType(SPELL_AURA_MOD_DISARM_OFFHAND))
-        return;
-
-    // not sure for it's correctness
-    if(apply)
-        target->SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_DISARMED_OFFHAND);
-    else
-        target->RemoveFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_DISARMED_OFFHAND);
-
-    // only at real add/remove aura
-    if (target->GetTypeId() != TYPEID_PLAYER)
-        return;
-
-    // main-hand attack speed already set to special value for feral form already and don't must change and reset at remove.
-    if (target->IsInFeralForm())
-        return;
-
-    if (apply)
-        target->SetAttackTime(OFF_ATTACK, BASE_ATTACK_TIME);
-    else
-        ((Player *)target)->SetRegularAttackTime();
-
-    target->UpdateDamagePhysical(OFF_ATTACK);
-}
-
-void Aura::HandleAuraModDisarm(bool apply, bool Real)
-{
-    if(!Real)
-        return;
-
-    Unit *target = GetTarget();
-    if(!target)
-        return;
-
-    if(!apply && target->HasAuraType(SPELL_AURA_MOD_DISARM))
-        return;
-
-    // not sure for it's correctness
-    if(apply)
-        target->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_DISARMED);
-    else
-        target->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_DISARMED);
-
-    // only at real add/remove aura
-    if (target->GetTypeId() != TYPEID_PLAYER)
-        return;
-
-    // main-hand attack speed already set to special value for feral form already and don't must change and reset at remove.
-    if (target->IsInFeralForm())
-        return;
-
-    if (apply)
-        target->SetAttackTime(BASE_ATTACK,BASE_ATTACK_TIME);
-    else
-        ((Player *)target)->SetRegularAttackTime();
-
-    target->UpdateDamagePhysical(BASE_ATTACK);
-}
-
-void Aura::SendAuraUpdate(bool remove)
-{
-    Unit *target = GetTarget();
-    if(!target)
-        return;
-
-    WorldPacket data(SMSG_AURA_UPDATE);
-    data << target->GetPackGUID();
-    data << uint8(GetHolder()->GetAuraSlot());
-    data << uint32(remove ? 0 : GetId());
-
-    if(remove)
-    {
-        target->SendMessageToSet(&data, true);
-        return;
-    }
-
-    uint8 auraFlags = GetHolder()->GetAuraFlags();
-    data << uint8(auraFlags);
-    data << uint8(GetHolder()->GetAuraLevel());
-    data << uint8(GetHolder()->GetAuraCharges() ? GetHolder()->GetAuraCharges() * GetHolder()->GetStackAmount() : GetStackAmount());
-
-    if(!(auraFlags & AFLAG_NOT_CASTER))
-    {
-        data.appendPackGUID(GetCasterGUID());
-    }
-
-    if(auraFlags & AFLAG_DURATION)
-    {
-        data << uint32(GetAuraMaxDuration());
-        data << uint32(GetAuraDuration());
-    }
-
-    target->SendMessageToSet(&data, true);
 }

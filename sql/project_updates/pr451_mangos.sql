@@ -1,1 +1,0 @@
-ALTER TABLE item_extended_cost CHANGE `honor` `honor` MEDIUMINT(16) NOT NULL COMMENT 'Honor cost', CHANGE `arena_points` `arena_points` MEDIUMINT(16) NOT NULL COMMENT 'Arena points cost', CHANGE `bracket` `bracket` MEDIUMINT(16) NOT NULL COMMENT 'Minimum bracket, 0 = 2v2, 1 = 3v3, 2 = 5v5', CHANGE `rating` `rating` MEDIUMINT(16) NOT NULL COMMENT 'Personal rating needed';

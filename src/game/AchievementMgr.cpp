@@ -342,14 +342,12 @@ bool AchievementCriteriaRequirement::Meets(uint32 criteria_id, Player const* sou
                     return false;
             }
             InstanceData* data = ((InstanceMap*)map)->GetInstanceData();
-            if (!data || !target)
+            if (!data)
             {
                 sLog.outErrorDb("Achievement system call ACHIEVEMENT_CRITERIA_REQUIRE_INSTANCE_SCRIPT (%u) for achievement criteria %u for map %u but map not have instance script",
                     ACHIEVEMENT_CRITERIA_REQUIRE_INSTANCE_SCRIPT, criteria_id, map->GetId());
                 return false;
             }
-            if(!target->IsInWorld() || !target->isAlive())
-                return false;
             return data->CheckAchievementCriteriaMeet(criteria_id, source, target, miscvalue1);
         }
         case ACHIEVEMENT_CRITERIA_REQUIRE_S_EQUIPED_ITEM_LVL:
@@ -781,10 +779,10 @@ void AchievementMgr::UpdateAchievementCriteria(AchievementCriteriaTypes type, ui
 
                 if (achievementCriteria->win_bg.additionalRequirement1_type || achievementCriteria->win_bg.additionalRequirement2_type)
                 {
-                            // those requirements couldn't be found in the dbc
-                            AchievementCriteriaRequirementSet const* data = sAchievementMgr.GetCriteriaRequirementSet(achievementCriteria);
-                            if (!data || !data->Meets(GetPlayer(),unit))
-                                continue;
+                    // those requirements couldn't be found in the dbc
+                    AchievementCriteriaRequirementSet const* data = sAchievementMgr.GetCriteriaRequirementSet(achievementCriteria);
+                    if (!data || !data->Meets(GetPlayer(),unit))
+                        continue;
                 }
                 // some hardcoded requirements
                 else
@@ -1305,7 +1303,7 @@ void AchievementMgr::UpdateAchievementCriteria(AchievementCriteriaTypes type, ui
                 break;
             case ACHIEVEMENT_CRITERIA_TYPE_SPECIAL_PVP_KILL:
             {
-                //AchievementMgr::UpdateAchievementCriteria might also be called on login - skip in this case
+                // AchievementMgr::UpdateAchievementCriteria might also be called on login - skip in this case
                 if (!miscvalue1)
                     continue;
 
@@ -1696,7 +1694,7 @@ bool AchievementMgr::IsCompletedAchievement(AchievementEntry const* entry)
 
         // completed as have req. count of completed criterias
         if(achievementForTestCount > 0 && achievementForTestCount <= count)
-           return true;
+            return true;
     }
 
     // all criterias completed requirement

@@ -368,10 +368,10 @@ bool Map::Add(Player *player)
     CellPair p = MaNGOS::ComputeCellPair(player->GetPositionX(), player->GetPositionY());
     Cell cell(p);
     EnsureGridLoadedAtEnter(cell, player);
+    player->AddToWorld();
 
     SendInitSelf(player);
     SendInitTransports(player);
-    player->AddToWorld();
 
     NGridType* grid = getNGrid(cell.GridX(), cell.GridY());
     player->GetViewPoint().Event_AddedToWorld(&(*grid)(cell.CellX(), cell.CellY()));
@@ -555,9 +555,9 @@ void Map::Update(const uint32 &t_diff)
         CellArea area = Cell::CalculateCellArea(*plr, GetVisibilityDistance());
         area.ResizeBorders(begin_cell, end_cell);
 
-        for(uint32 x = begin_cell.x_coord; x < end_cell.x_coord; ++x)
+        for(uint32 x = begin_cell.x_coord; x <= end_cell.x_coord; ++x)
         {
-            for(uint32 y = begin_cell.y_coord; y < end_cell.y_coord; ++y)
+            for(uint32 y = begin_cell.y_coord; y <= end_cell.y_coord; ++y)
             {
                 // marked cells are those that have been visited
                 // don't visit the same cell twice
@@ -603,9 +603,9 @@ void Map::Update(const uint32 &t_diff)
             begin_cell << 1; begin_cell -= 1;               // upper left
             end_cell >> 1; end_cell += 1;                   // lower right
 
-            for(uint32 x = begin_cell.x_coord; x < end_cell.x_coord; ++x)
+            for(uint32 x = begin_cell.x_coord; x <= end_cell.x_coord; ++x)
             {
-                for(uint32 y = begin_cell.y_coord; y < end_cell.y_coord; ++y)
+                for(uint32 y = begin_cell.y_coord; y <= end_cell.y_coord; ++y)
                 {
                     // marked cells are those that have been visited
                     // don't visit the same cell twice
@@ -691,7 +691,7 @@ void Map::Remove(Player *player, bool remove)
     SendRemoveTransports(player);
     UpdateObjectVisibility(player,cell,p);
 
-    //player->ResetMap();
+    player->ResetMap();
     if( remove )
         DeleteFromWorld(player);
 }
@@ -1685,7 +1685,7 @@ bool InstanceMap::CanEnter(Player *player)
 
     // cannot enter while players in the instance are in combat
     Group *pGroup = player->GetGroup();
-    if(pGroup && pGroup->InCombatToInstance(GetInstanceId(), true) && player->GetMapId() != GetId())
+    if(pGroup && pGroup->InCombatToInstance(GetInstanceId()) && player->isAlive() && player->GetMapId() != GetId())
     {
         player->SendTransferAborted(GetId(), TRANSFER_ABORT_ZONE_IN_COMBAT);
         return false;
@@ -1775,8 +1775,7 @@ bool InstanceMap::Add(Player *player)
                                 sLog.outError("GroupBind save players: %d, group count: %d", groupBind->save->GetPlayerCount(), groupBind->save->GetGroupCount());
                             else
                                 sLog.outError("GroupBind save NULL");
-                            player->SendTransferAborted(GetId(), TRANSFER_ABORT_MAP_NOT_ALLOWED);
-                            return false;
+                            ASSERT(false);
                         }
                         // if the group/leader is permanently bound to the instance
                         // players also become permanently bound when they enter

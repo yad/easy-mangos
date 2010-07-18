@@ -34,7 +34,7 @@ void WorldSession::HandleJoinChannel(WorldPacket& recvPacket)
         return;
 
     recvPacket >> pass;
-    if(ChannelMgr* cMgr = channelMgr(_player->getOriginalTeam()))
+    if(ChannelMgr* cMgr = channelMgr(_player->GetTeam()))
         if(Channel *chn = cMgr->GetJoinChannel(channelname, channel_id))
             chn->Join(_player->GetGUID(), pass.c_str());
 }
@@ -67,7 +67,7 @@ void WorldSession::HandleChannelList(WorldPacket& recvPacket)
     std::string channelname;
     recvPacket >> channelname;
 
-    if(ChannelMgr* cMgr = channelMgr(_player->getOriginalTeam()))
+    if(ChannelMgr* cMgr = channelMgr(_player->GetTeam()))
         if(Channel *chn = cMgr->GetChannel(channelname, _player))
             chn->List(_player);
 }
@@ -279,7 +279,7 @@ void WorldSession::HandleChannelDisplayListQuery(WorldPacket &recvPacket)
     //recvPacket.hexlike();
     std::string channelname;
     recvPacket >> channelname;
-    if(ChannelMgr* cMgr = channelMgr(_player->getOriginalTeam()))
+    if(ChannelMgr* cMgr = channelMgr(_player->GetTeam()))
         if(Channel *chn = cMgr->GetChannel(channelname, _player))
             chn->List(_player);
 }
@@ -290,7 +290,7 @@ void WorldSession::HandleGetChannelMemberCount(WorldPacket &recvPacket)
     //recvPacket.hexlike();
     std::string channelname;
     recvPacket >> channelname;
-    if(ChannelMgr* cMgr = channelMgr(_player->getOriginalTeam()))
+    if(ChannelMgr* cMgr = channelMgr(_player->GetTeam()))
     {
         if(Channel *chn = cMgr->GetChannel(channelname, _player))
         {

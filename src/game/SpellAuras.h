@@ -233,8 +233,6 @@ class MANGOS_DLL_SPEC Aura
         void HandleModTaunt(bool Apply, bool Real);
         void HandleFeignDeath(bool Apply, bool Real);
         void HandleAuraModDisarm(bool Apply, bool Real);
-        void HandleAuraModDisarmOffhand(bool Apply, bool Real);
-        void HandleAuraModDisarmRanged(bool Apply, bool Real);
         void HandleAuraModStalked(bool Apply, bool Real);
         void HandleAuraWaterWalk(bool Apply, bool Real);
         void HandleAuraFeatherFall(bool Apply, bool Real);
@@ -363,13 +361,9 @@ class MANGOS_DLL_SPEC Aura
         void HandleAuraIncreaseBaseHealthPercent(bool Apply, bool Real);
         void HandleNoReagentUseAura(bool Apply, bool Real);
         void HandlePhase(bool Apply, bool Real);
-        void HandleIgnoreUnitState(bool Apply, bool Real);
         void HandleModTargetArmorPct(bool Apply, bool Real);
         void HandleAuraModAllCritChance(bool Apply, bool Real);
         void HandleAllowOnlyAbility(bool Apply, bool Real);
-        void HandleAuraInitializeImages(bool Apply, bool Real);
-        void HandleAuraCloneCaster(bool Apply, bool Real);
-        void HandleAuraOpenStable(bool apply, bool Real);
 
         virtual ~Aura();
 
@@ -388,13 +382,9 @@ class MANGOS_DLL_SPEC Aura
 
         SpellEffectIndex GetEffIndex() const{ return m_effIndex; }
         int32 GetBasePoints() const { return m_currentBasePoints; }
-        int32 GetModMisc() const { return m_modifier.m_miscvalue;}
 
         int32 GetAuraMaxDuration() const { return m_maxduration; }
         void SetAuraMaxDuration(int32 duration);
-        int32 GetAuraOrigDuration() const { return m_origDuration; }
-        void SetAuraOrigDuration(int32 duration) { m_origDuration = duration; }
-
         int32 GetAuraDuration() const { return m_duration; }
         void SetAuraDuration(int32 duration) { m_duration = duration; }
         time_t GetAuraApplyTime() const { return m_applyTime; }
@@ -411,12 +401,6 @@ class MANGOS_DLL_SPEC Aura
                 m_periodicTick = maxticks - m_duration / m_modifier.periodictime;
         }
 
-        void UnregisterSingleCastAura();
-
-        void SendAuraUpdate(bool remove);
-        void SendFakeAuraUpdate(uint32 auraId, bool remove);
-
-        void RefreshAura();
         bool IsPositive() { return m_positive; }
         bool IsPersistent() const { return m_isPersistent; }
         bool IsAreaAura() const { return m_isAreaAura; }
@@ -446,15 +430,12 @@ class MANGOS_DLL_SPEC Aura
 
         // add/remove SPELL_AURA_MOD_SHAPESHIFT (36) linked auras
         void HandleShapeshiftBoosts(bool apply);
-        void HandleSpellSpecificBoosts(bool apply, bool last_stack);
 
         void TriggerSpell();
         void TriggerSpellWithValue();
 
         uint32 const *getAuraSpellClassMask() const { return  m_spellAuraHolder->GetSpellProto()->GetEffectSpellClassMask(m_effIndex); }
         bool isAffectedOnSpell(SpellEntry const *spell) const;
-        bool isWeaponBuffCoexistableWith(Aura* ref);
-        void ApplyHasteToPeriodic();
 
         //SpellAuraHolder const* GetHolder() const { return m_spellHolder; }
         SpellAuraHolder* GetHolder() { return m_spellAuraHolder; }
@@ -485,7 +466,6 @@ class MANGOS_DLL_SPEC Aura
         int32 m_timeCla;                                    // Timer for power per sec calcultion
         int32 m_periodicTimer;                              // Timer for periodic auras
         uint32 m_periodicTick;                              // Tick count pass (including current if use in tick code) from aura apply, used for some tick count dependent aura effects
-        uint32 m_origDuration;                              // Duration before applying haste, etc...
 
         AuraRemoveMode m_removeMode:8;                      // Store info for know remove aura reason
 

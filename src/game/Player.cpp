@@ -1067,28 +1067,11 @@ uint32 Player::EnvironmentalDamage(EnviromentalDamage type, uint32 damage)
     data << uint32(resist);
     SendMessageToSet(&data, true);
 
-    Player* DmgSource = this;
-    if(isInCombat() && GetHealth() <= damage )
-    {
-        AttackerSet const& attackers = getAttackers();
-        for(AttackerSet::const_iterator itr = attackers.begin(); itr != attackers.end(); ++itr)
-        {
-            if(!LastDmgDealer)
-                continue;
-
-            if ((*itr)->GetGUID() == LastDmgDealer->GetGUID())
-            {
-                DmgSource = LastDmgDealer;
-                continue;
-            }
-        }
-    }
-
-    uint32 final_damage = DmgSource->DealDamage(this, damage, NULL, SELF_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, NULL, false, absorb);
+    uint32 final_damage = DealDamage(this, damage, NULL, SELF_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, NULL, false);
 
     if(!isAlive())
     {
-        if(type==DAMAGE_FALL && DmgSource == this)          // DealDamage not apply item durability loss at self damage
+        if(type==DAMAGE_FALL)                               // DealDamage not apply item durability loss at self damage
         {
             DEBUG_LOG("We are fall to death, loosing 10 percents durability");
             DurabilityLossAll(0.10f,false);
@@ -2992,268 +2975,268 @@ ItemPrototype const* Player::BestItemBetween(ItemPrototype const* pProto1, ItemP
     {
         case MageFire:
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_INTELLECT);
-            if(pProto) 
+            if(pProto)
                 return pProto;
 
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_SPELL_POWER);
-            if(pProto) 
+            if(pProto)
                 return pProto;
 
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_CRIT_SPELL_RATING);
-            if(pProto) 
+            if(pProto)
                 return pProto;
             break;
         case MageArcane:
         case MageFrost:
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_INTELLECT);
-            if(pProto) 
+            if(pProto)
                 return pProto;
 
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_SPELL_POWER);
-            if(pProto) 
+            if(pProto)
                 return pProto;
 
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_HIT_SPELL_RATING);
-            if(pProto) 
+            if(pProto)
                 return pProto;
             break;
         case WarriorArms:
         case WarriorFury:
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_STRENGTH);
-            if(pProto) 
+            if(pProto)
                 return pProto;
 
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_CRIT_MELEE_RATING);
-            if(pProto) 
+            if(pProto)
                 return pProto;
             break;
         case WarriorProtection:
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_STAMINA);
-            if(pProto) 
+            if(pProto)
                 return pProto;
 
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_DEFENSE_SKILL_RATING);
-            if(pProto) 
+            if(pProto)
                 return pProto;
 
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_BLOCK_RATING);
-            if(pProto) 
+            if(pProto)
                 return pProto;
             break;
         case RogueCombat:
         case RogueAssassination:
         case RogueSubtlety:
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_AGILITY);
-            if(pProto) 
+            if(pProto)
                 return pProto;
 
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_CRIT_MELEE_RATING);
-            if(pProto) 
+            if(pProto)
                 return pProto;
             break;
         case PriestDiscipline:
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_INTELLECT);
-            if(pProto) 
+            if(pProto)
                 return pProto;
 
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_SPELL_POWER);
-            if(pProto) 
+            if(pProto)
                 return pProto;
 
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_CRIT_SPELL_RATING);
-            if(pProto) 
+            if(pProto)
                 return pProto;
             break;
         case PriestShadow:
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_INTELLECT);
-            if(pProto) 
+            if(pProto)
                 return pProto;
 
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_SPELL_POWER);
-            if(pProto) 
+            if(pProto)
                 return pProto;
 
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_HIT_SPELL_RATING);
-            if(pProto) 
+            if(pProto)
                 return pProto;
             break;
         case PriestHoly:
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_SPIRIT);
-            if(pProto) 
+            if(pProto)
                 return pProto;
 
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_INTELLECT);
-            if(pProto) 
+            if(pProto)
                 return pProto;
 
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_SPELL_POWER);
-            if(pProto) 
+            if(pProto)
                 return pProto;
             break;
         case ShamanElementalCombat:
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_INTELLECT);
-            if(pProto) 
+            if(pProto)
                 return pProto;
 
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_SPELL_POWER);
-            if(pProto) 
+            if(pProto)
                 return pProto;
 
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_CRIT_SPELL_RATING);
-            if(pProto) 
+            if(pProto)
                 return pProto;
             break;
         case ShamanRestoration:
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_INTELLECT);
-            if(pProto) 
+            if(pProto)
                 return pProto;
 
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_SPELL_POWER);
-            if(pProto) 
+            if(pProto)
                 return pProto;
 
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_SPIRIT);
-            if(pProto) 
+            if(pProto)
                 return pProto;
             break;
         case ShamanEnhancement:
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_STRENGTH);
-            if(pProto) 
+            if(pProto)
                 return pProto;
 
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_CRIT_MELEE_RATING);
-            if(pProto) 
+            if(pProto)
                 return pProto;
-            break;            
+            break;
         case DruidFeralCombat:
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_STAMINA);
-            if(pProto) 
+            if(pProto)
                 return pProto;
 
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_STRENGTH);
-            if(pProto) 
+            if(pProto)
                 return pProto;
 
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_AGILITY);
-            if(pProto) 
+            if(pProto)
                 return pProto;
             break;
         case DruidRestoration:
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_INTELLECT);
-            if(pProto) 
+            if(pProto)
                 return pProto;
 
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_SPIRIT);
-            if(pProto) 
+            if(pProto)
                 return pProto;
 
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_SPELL_POWER);
-            if(pProto) 
+            if(pProto)
                 return pProto;
             break;
         case DruidBalance:
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_INTELLECT);
-            if(pProto) 
+            if(pProto)
                 return pProto;
 
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_SPELL_POWER);
-            if(pProto) 
+            if(pProto)
                 return pProto;
 
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_CRIT_SPELL_RATING);
-            if(pProto) 
+            if(pProto)
                 return pProto;
-            break;            
+            break;
         case WarlockDestruction:
         case WarlockCurses:
         case WarlockSummoning:
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_STAMINA);
-            if(pProto) 
+            if(pProto)
                 return pProto;
 
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_SPELL_POWER);
-            if(pProto) 
+            if(pProto)
                 return pProto;
 
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_CRIT_SPELL_RATING);
-            if(pProto) 
+            if(pProto)
                 return pProto;
             break;
         case HunterBeastMastery:
         case HunterMarksmanship:
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_AGILITY);
-            if(pProto) 
+            if(pProto)
                 return pProto;
 
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_STAMINA);
-            if(pProto) 
+            if(pProto)
                 return pProto;
 
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_CRIT_RANGED_RATING);
-            if(pProto) 
+            if(pProto)
                 return pProto;
             break;
         case HunterSurvival:
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_STAMINA);
-            if(pProto) 
+            if(pProto)
                 return pProto;
 
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_AGILITY);
-            if(pProto) 
+            if(pProto)
                 return pProto;
 
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_CRIT_RANGED_RATING);
-            if(pProto) 
+            if(pProto)
                 return pProto;
             break;
         case PaladinCombat:
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_STRENGTH);
-            if(pProto) 
+            if(pProto)
                 return pProto;
 
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_CRIT_MELEE_RATING);
-            if(pProto) 
+            if(pProto)
                 return pProto;
             break;
         case PaladinHoly:
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_INTELLECT);
-            if(pProto) 
+            if(pProto)
                 return pProto;
 
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_SPELL_POWER);
-            if(pProto) 
+            if(pProto)
                 return pProto;
 
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_CRIT_SPELL_RATING);
-            if(pProto) 
+            if(pProto)
                 return pProto;
             break;
         case PaladinProtection:
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_STAMINA);
-            if(pProto) 
+            if(pProto)
                 return pProto;
 
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_DEFENSE_SKILL_RATING);
-            if(pProto) 
+            if(pProto)
                 return pProto;
 
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_BLOCK_RATING);
-            if(pProto) 
+            if(pProto)
                 return pProto;
             break;
         case DeathKnightBlood:
         case DeathKnightFrost:
         case DeathKnightUnholy:
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_STAMINA);
-            if(pProto) 
+            if(pProto)
                 return pProto;
 
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_STRENGTH);
-            if(pProto) 
+            if(pProto)
                 return pProto;
 
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_CRIT_MELEE_RATING);
-            if(pProto) 
+            if(pProto)
                 return pProto;
             break;
     }
@@ -5213,7 +5196,7 @@ bool Player::addSpell(uint32 spell_id, bool active, bool learning, bool dependen
     if (!spellInfo)
     {
         // do character spell book cleanup (all characters)
-        if (!IsInWorld() && !learning)                      // spell load case
+        if(!IsInWorld() && !learning)                       // spell load case
         {
             sLog.outError("Player::addSpell: Non-existed in SpellStore spell #%u request, deleting for all characters in `character_spell`.",spell_id);
             CharacterDatabase.PExecute("DELETE FROM character_spell WHERE spell = '%u'",spell_id);
@@ -5602,6 +5585,15 @@ void Player::learnSpell(uint32 spell_id, bool dependent)
 
     bool learning = addSpell(spell_id, active, true, dependent, false);
 
+    // prevent duplicated entires in spell book, also not send if not in world (loading)
+    if (learning && IsInWorld())
+    {
+        WorldPacket data(SMSG_LEARNED_SPELL, 6);
+        data << uint32(spell_id);
+        data << uint16(0);                                  // 3.3.3 unk
+        GetSession()->SendPacket(&data);
+    }
+
     // learn all disabled higher ranks (recursive)
     if(disabled)
     {
@@ -5613,15 +5605,6 @@ void Player::learnSpell(uint32 spell_id, bool dependent)
                 learnSpell(i->second, false);
         }
     }
-
-    // prevent duplicated entires in spell book, also not send if not in world (loading)
-    if(!learning || !IsInWorld ())
-        return;
-
-    WorldPacket data(SMSG_LEARNED_SPELL, 6);
-    data << uint32(spell_id);
-    data << uint16(0);                                      // 3.3.3 unk
-    GetSession()->SendPacket(&data);
 }
 
 void Player::removeSpell(uint32 spell_id, bool disabled, bool learn_low_rank, bool sendUpdate)
@@ -5821,7 +5804,6 @@ void Player::removeSpell(uint32 spell_id, bool disabled, bool learn_low_rank, bo
         if (IsSpellHaveEffect(spellInfo, SPELL_EFFECT_TITAN_GRIP))
         {
             m_canTitanGrip = false;
-            RemoveAurasDueToSpellByCancel(49152);
             if(sWorld.getConfig(CONFIG_BOOL_OFFHAND_CHECK_AT_TALENTS_RESET))
                 AutoUnequipOffhandIfNeed();
         }
@@ -7612,8 +7594,7 @@ bool Player::UpdateSkill(uint32 skill_id, uint32 step)
     if ((!max) || (!value) || (value >= max))
         return false;
 
-    // modifier lowered from 512 to 64
-    if (value*64 < max*urand(0,64))
+    if (value*512 < max*urand(0,512))
     {
         uint32 new_value = value+step;
         if(new_value > max)
@@ -7830,12 +7811,11 @@ void Player::UpdateCombatSkills(Unit *pVictim, WeaponAttackType attType, bool de
         return;
 
     float chance = float(3 * lvldif * skilldif) / plevel;
-    // absolete from vanilla
-    //if(!defence)
-    //{
-    //    if(getClass() == CLASS_WARRIOR || getClass() == CLASS_ROGUE)
-    //        chance *= 0.1f * GetStat(STAT_INTELLECT);
-    //}
+    if(!defence)
+    {
+        if(getClass() == CLASS_WARRIOR || getClass() == CLASS_ROGUE)
+            chance *= 0.1f * GetStat(STAT_INTELLECT);
+    }
 
     chance = chance < 1.0f ? 1.0f : chance;                 //minimum chance to increase skill is 1%
 
@@ -8353,13 +8333,10 @@ void Player::SendMessageToSetInRange(WorldPacket *data, float dist, bool self)
         GetSession()->SendPacket(data);
 }
 
-void Player::SendMessageToSetInRange(WorldPacket *data, float dist, bool self, bool own_team_only, bool enemy_team_only)
+void Player::SendMessageToSetInRange(WorldPacket *data, float dist, bool self, bool own_team_only)
 {
     if (IsInWorld())
-    {
-        GetMap()->MessageDistBroadcast(this, data, dist, self, own_team_only, enemy_team_only);
-        return;
-    }
+        GetMap()->MessageDistBroadcast(this, data, dist, false, own_team_only);
 
     if (self)
         GetSession()->SendPacket(data);
@@ -8727,7 +8704,7 @@ bool Player::RewardHonor(Unit *uVictim, uint32 groupsize, float honor)
                 return false;
 
             float f = 1;                                    //need for total kills (?? need more info)
-            uint32 k_grey_diff = 0;
+            uint32 k_grey = 0;
             uint32 k_level = getLevel();
             uint32 v_level = pVictim->getLevel();
 
@@ -8754,28 +8731,17 @@ bool Player::RewardHonor(Unit *uVictim, uint32 groupsize, float honor)
                     victim_guid = 0;                        // Don't show HK: <rank> message, only log.
             }
 
-            k_grey_diff = k_level - MaNGOS::XP::GetGrayLevel(k_level);
-            if(v_level <= k_level - k_grey_diff || v_level >= k_level + k_grey_diff)
+            k_grey = MaNGOS::XP::GetGrayLevel(k_level);
+
+            if(v_level<=k_grey)
                 return false;
 
-            honor = MaNGOS::Honor::hk_honor_at_level(v_level);
-
-            if(InBattleGround())
-            {
-                // Call To Arms events
-                uint16 m_event = 0;
-                switch(GetMapId())
-                {
-                    case 30:  m_event = 18; break;
-                    case 489: m_event = 19; break;
-                    case 529: m_event = 20; break;
-                    case 566: m_event = 21; break;
-                }
-                if(sGameEventMgr.IsActiveEvent(m_event))
-                    honor *= 1.5;
-            }
+            float diff_level = (k_level == k_grey) ? 1 : ((float(v_level) - float(k_grey)) / (float(k_level) - float(k_grey)));
 
             int32 v_rank =1;                                //need more info
+
+            honor = ((f * diff_level * (190 + v_rank*10))/6);
+            honor *= ((float)k_level) / 70.0f;              //factor of dependence on levels of the killer
 
             // count the number of playerkills in one day
             ApplyModUInt32Value(PLAYER_FIELD_KILLS, 1, true);
@@ -8804,6 +8770,8 @@ bool Player::RewardHonor(Unit *uVictim, uint32 groupsize, float honor)
 
         if(groupsize > 1)
             honor /= groupsize;
+
+        honor *= (((float)urand(8,12))/10);                 // approx honor: 80% - 120% of real honor
     }
 
     // honor - for show honor points in log
@@ -8955,8 +8923,8 @@ void Player::UpdateArea(uint32 newArea)
     if (area)
     {
         // Dalaran restricted flight zone
-        if ((area->flags & AREA_FLAG_CANNOT_FLY) && IsFreeFlying() && !isGameMaster())
-            CastSpell(this, 58600, true);
+        if ((area->flags & AREA_FLAG_CANNOT_FLY) && IsFreeFlying() && !isGameMaster() && !HasAura(58600))
+            CastSpell(this, 58600, true);                   // Restricted Flight Area
 
         // TODO: implement wintergrasp parachute when battle in progress
         /* if ((area->flags & AREA_FLAG_OUTDOOR_PVP) && IsFreeFlying() && <WINTERGRASP_BATTLE_IN_PROGRESS> && !isGameMaster())
@@ -9059,10 +9027,6 @@ void Player::UpdateZone(uint32 newZone, uint32 newArea)
 
     // check some item equip limitations (in result lost CanTitanGrip at talent reset, for example)
     AutoUnequipOffhandIfNeed();
-    if (!HasAura(49152) && IsTwoHandUsedInDualWield() && CanTitanGrip())
-    {
-        CastSpell(this, 49152, true);
-    }
 
     // recent client version not send leave/join channel packets for built-in local channels
     UpdateLocalChannels( newZone );
@@ -9195,19 +9159,13 @@ void Player::_ApplyItemMods(Item *item, uint8 slot,bool apply)
     if(slot >= INVENTORY_SLOT_BAG_END || !item)
         return;
 
+    // not apply/remove mods for broken item
+    if(item->IsBroken())
+        return;
+
     ItemPrototype const *proto = item->GetProto();
 
     if(!proto)
-        return;
-
-    if(item->IsBroken() && proto->Socket[0].Color)  //This need to remove bonuses from meta if item broken
-    {
-        CorrectMetaGemEnchants(slot, apply);
-        return;
-    }
-
-    // not apply/remove mods for broken item
-    if(item->IsBroken())
         return;
 
     DETAIL_LOG("applying mods for item %u ",item->GetGUIDLow());
@@ -9512,7 +9470,7 @@ void Player::_ApplyItemBonuses(ItemPrototype const *proto, uint8 slot, bool appl
             ApplyFeralAPBonus(feral_bonus, apply);
     }
 
-    if(!IsUseEquipedWeapon(attType))
+    if(!IsUseEquipedWeapon(slot==EQUIPMENT_SLOT_MAINHAND))
         return;
 
     if (proto->Delay)
@@ -10146,63 +10104,12 @@ void Player::SendLoot(ObjectGuid guid, LootType loot_type)
                     loot->clear();
                     loot->FillLoot(lootid, LootTemplates_Gameobject, this, false);
                     loot->generateMoneyLoot(go->GetGOInfo()->MinMoneyLoot, go->GetGOInfo()->MaxMoneyLoot);
-                    if(go->GetGoType() == GAMEOBJECT_TYPE_CHEST && go->GetGOInfo()->chest.groupLootRules)
-                    {
-                        if(Group* group = GetGroup())
-                        {
-                            group->UpdateLooterGuid(go,true);
-
-                            switch (group->GetLootMethod())
-                            {
-                                case GROUP_LOOT:
-                                    // GroupLoot delete items over threshold (threshold even not implemented), and roll them. Items with quality<threshold, round robin
-                                    group->GroupLoot(go, loot);
-                                    permission = GROUP_PERMISSION;
-                                    break;
-                                case NEED_BEFORE_GREED:
-                                    group->NeedBeforeGreed(go, loot);
-                                    permission = GROUP_PERMISSION;
-                                    break;
-                                case MASTER_LOOT:
-                                    group->MasterLoot(go, loot);
-                                    permission = MASTER_PERMISSION;
-                                    break;
-                                default:
-                                    break;
-                            }
-                        }
-                    }
                 }
 
                 if (loot_type == LOOT_FISHING)
                     go->getFishLoot(loot,this);
 
                 go->SetLootState(GO_ACTIVATED);
-            }
-            if ((go->getLootState() == GO_ACTIVATED) && (go->GetGoType() == GAMEOBJECT_TYPE_CHEST))
-            {
-                if (go->GetGOInfo()->chest.groupLootRules == 1)
-                {
-                    if(Group* group = GetGroup())
-                    {
-                        if (group == this->GetGroup())
-                        {
-                            if (group->GetLootMethod() == FREE_FOR_ALL)
-                                permission = ALL_PERMISSION;
-                            else if (group->GetLooterGuid() == GetGUID())
-                            {
-                                if (group->GetLootMethod() == MASTER_LOOT)
-                                    permission = MASTER_PERMISSION;
-                                else
-                                    permission = ALL_PERMISSION;
-                            }
-                            else
-                                permission = GROUP_PERMISSION;
-                        }
-                        else
-                            permission = NONE_PERMISSION;
-                    }
-                }
             }
             break;
         }
@@ -11368,7 +11275,7 @@ Item* Player::GetWeaponForAttack(WeaponAttackType attackType, bool nonbroken, bo
     if (!item || item->GetProto()->Class != ITEM_CLASS_WEAPON)
         return NULL;
 
-    if (useable && !IsUseEquipedWeapon(attackType))
+    if (useable && !IsUseEquipedWeapon(attackType==BASE_ATTACK))
         return NULL;
 
     if (nonbroken && item->IsBroken())
@@ -11386,7 +11293,7 @@ Item* Player::GetShield(bool useable) const
     if(!useable)
         return item;
 
-    if( item->IsBroken() || !IsUseEquipedWeapon(OFF_ATTACK))
+    if( item->IsBroken())
         return NULL;
 
     return item;
@@ -13486,16 +13393,6 @@ Item* Player::EquipItem( uint16 pos, Item *pItem, bool update )
     GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_EQUIP_ITEM, pItem->GetEntry());
     GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_EQUIP_EPIC_ITEM, slot+1);
 
-    // titans grip dmg penalty for 2h weapons
-    ItemPrototype const *pProto = pItem->GetProto();
-    uint32 type = pProto->InventoryType;
-    if (!HasAura(49152))
-    {
-        if (type == INVTYPE_2HWEAPON && CanTitanGrip())
-        {
-            CastSpell(this,49152,true);
-        }
-    }
     return pItem;
 }
 
@@ -13636,19 +13533,6 @@ void Player::RemoveItem( uint8 bag, uint8 slot, bool update )
         pItem->SetSlot( NULL_SLOT );
         if( IsInWorld() && update )
             pItem->SendCreateUpdateToPlayer( this );
-    }
-    // titans grip dmg penalty for 2h weapons removed if player does not have any
-    ItemPrototype const *pProto = pItem->GetProto();
-    uint32 type = pProto->InventoryType;
-    if (HasAura(49152))
-    {
-        if (type == INVTYPE_2HWEAPON)
-        {
-            if (!IsTwoHandUsedInDualWield())
-            {
-                RemoveAurasDueToSpellByCancel(49152);
-            }
-        }
     }
 }
 
@@ -16032,17 +15916,6 @@ void Player::RewardQuest( Quest const *pQuest, uint32 reward, Object* questGiver
     {
         if (pQuest->ReqItemId[i])
             DestroyItemCount( pQuest->ReqItemId[i], pQuest->ReqItemCount[i], true);
-    }
-
-    //Destroy quest item
-    uint32 srcitem = pQuest->GetSrcItemId();
-    if( srcitem > 0 )
-    {
-        uint32 count = pQuest->GetSrcItemCount();
-        if( count <= 0 )
-            count = 1;
-
-        DestroyItemCount(srcitem, count, true, true);
     }
 
     RemoveTimedQuest(quest_id);
@@ -20725,12 +20598,7 @@ void Player::HandleStealthedUnitsDetection()
                 // target aura duration for caster show only if target exist at caster client
                 // send data at target visibility change (adding to client)
                 if((*i)!=this && (*i)->isType(TYPEMASK_UNIT))
-                {
                     SendAurasForTarget(*i);
-                    WorldPacket data;
-                    (*i)->BuildHeartBeatMsg(&data);
-                    GetSession()->SendPacket(&data);
-                }
             }
         }
         else
@@ -21171,7 +21039,7 @@ bool Player::BuyItemFromVendorSlot(uint64 vendorguid, uint32 vendorslot, uint32 
         return false;
     }
 
-    if (uint32 extendedCostId = crItem->GetExtendedCostId())
+    if (uint32 extendedCostId = crItem->ExtendedCost)
     {
         ItemExtendedCostEntry const* iece = sItemExtendedCostStore.LookupEntry(extendedCostId);
         if (!iece)
@@ -21213,7 +21081,7 @@ bool Player::BuyItemFromVendorSlot(uint64 vendorguid, uint32 vendorslot, uint32 
         }
     }
 
-    uint32 price  = crItem->IsExcludeMoneyPrice() ? 0 : pProto->BuyPrice * count;
+    uint32 price  = (crItem->ExtendedCost == 0 || pProto->Flags2 & ITEM_FLAGS2_EXT_COST_REQUIRES_GOLD) ? pProto->BuyPrice * count : 0;
 
     // reputation discount
     if (price)
@@ -21236,10 +21104,9 @@ bool Player::BuyItemFromVendorSlot(uint64 vendorguid, uint32 vendorslot, uint32 
         }
 
         ModifyMoney( -(int32)price );
-        uint32 extCostId = crItem->GetExtendedCostId();
-        if (extCostId)
+        if (uint32 extendedCostId = crItem->ExtendedCost)
         {
-            ItemExtendedCostEntry const* iece = sItemExtendedCostStore.LookupEntry(extCostId);
+            ItemExtendedCostEntry const* iece = sItemExtendedCostStore.LookupEntry(extendedCostId);
             if (iece->reqhonorpoints)
                 ModifyHonorPoints( - int32(iece->reqhonorpoints * count));
             if (iece->reqarenapoints)
@@ -21263,14 +21130,6 @@ bool Player::BuyItemFromVendorSlot(uint64 vendorguid, uint32 vendorslot, uint32 
             GetSession()->SendPacket(&data);
 
             SendNewItem(it, pProto->BuyCount*count, true, false, false);
-
-            // Item Refund system, only works for non stackable items with extendedcost
-            if(count == 1 && crItem->ExtendedCost )
-            {
-                it->SetUInt32Value(ITEM_FIELD_CREATE_PLAYED_TIME, m_Played_time[0]);
-                it->SetPrice(price); // <- cuz of faction discount
-                it->SetExtCostId(extCostId); // <- because we cant get to it afterwards :/
-            }
         }
     }
     else if (IsEquipmentPos(bag, slot))
@@ -21290,7 +21149,7 @@ bool Player::BuyItemFromVendorSlot(uint64 vendorguid, uint32 vendorslot, uint32 
         }
 
         ModifyMoney( -(int32)price );
-        if (uint32 extendedCostId = crItem->GetExtendedCostId())
+        if (uint32 extendedCostId = crItem->ExtendedCost)
         {
             ItemExtendedCostEntry const* iece = sItemExtendedCostStore.LookupEntry(extendedCostId);
             if (iece->reqhonorpoints)
@@ -21923,12 +21782,7 @@ void Player::UpdateVisibilityOf(WorldObject const* viewPoint, WorldObject* targe
             // target aura duration for caster show only if target exist at caster client
             // send data at target visibility change (adding to client)
             if(target!=this && target->isType(TYPEMASK_UNIT))
-            {
                 SendAurasForTarget((Unit*)target);
-                WorldPacket data;
-                ((Unit*)target)->BuildHeartBeatMsg(&data);
-                GetSession()->SendPacket(&data);
-            }
 
             if(target->GetTypeId()==TYPEID_UNIT && ((Creature*)target)->isAlive())
                 ((Creature*)target)->SendMonsterMoveWithSpeedToCurrentDestination(this);
@@ -22137,13 +21991,6 @@ void Player::SendInitialPacketsBeforeAddToMap()
 
 void Player::SendInitialPacketsAfterAddToMap()
 {
-    if(getClass() == CLASS_DEATH_KNIGHT)
-        ResyncRunes(MAX_RUNES);
-
-    WorldPacket data0(SMSG_SET_PHASE_SHIFT, 4);
-    data0 << uint32(GetPhaseMask());
-    GetSession()->SendPacket(&data0);
-
     // update zone
     uint32 newzone, newarea;
     GetZoneAndAreaId(newzone,newarea);
@@ -22192,26 +22039,7 @@ void Player::SendInitialPacketsAfterAddToMap()
 
     SendAurasForTarget(this);
     SendEnchantmentDurations();                             // must be after add to map
-    SendItemDurations();                                    // must be after add to map                                    // must be after add to map
-
-    // Juggernaut & Warbringer both need special packet
-    // for alowing charge in combat and Warbringer
-    // for alowing charge in different stances, too
-    if(HasAura(64976) || HasAura(57499))
-    {
-        WorldPacket aura_update(SMSG_AURA_UPDATE);
-        aura_update << GetPackGUID();
-        aura_update << uint8(255);
-        if(HasAura(64976))
-            aura_update << uint32(64976);
-        if(HasAura(57499))
-            aura_update << uint32(57499);
-        aura_update << uint8(19);
-        aura_update << uint8(getLevel());
-        aura_update << uint8(1);
-        aura_update << uint8(0);
-        GetSession()->SendPacket(&aura_update);
-    }
+    SendItemDurations();                                    // must be after add to map
 }
 
 void Player::SendUpdateToOutOfRangeGroupMembers()
@@ -22753,7 +22581,7 @@ void Player::AutoUnequipOffhandIfNeed()
         return;
 
     // need unequip offhand for 2h-weapon without TitanGrip (in any from hands)
-    if (CanTitanGrip() || !((IsTwoHandUsedInDualWield() && offItem->GetProto()->InventoryType != INVTYPE_NON_EQUIP) || offItem->GetProto()->InventoryType == INVTYPE_2HWEAPON))
+    if (CanTitanGrip() || (offItem->GetProto()->InventoryType != INVTYPE_2HWEAPON && !IsTwoHandUsed()))
         return;
 
     ItemPosCountVec off_dest;
@@ -23105,9 +22933,7 @@ void Player::UpdateAreaDependentAuras( uint32 newArea )
     for(SpellAreaForAreaMap::const_iterator itr = saBounds.first; itr != saBounds.second; ++itr)
         if(itr->second->autocast && itr->second->IsFitToRequirements(this,m_zoneUpdateId,newArea))
             if (!HasAura(itr->second->spellId, EFFECT_INDEX_0))
-                // Rescricted Flight Area should not be casted while not fly-mounted
-                if(itr->second->spellId != 58600 || (HasAuraType(SPELL_AURA_MOD_FLIGHT_SPEED_MOUNTED) || HasAuraType(SPELL_AURA_FLY) || IsTaxiFlying()))
-                    CastSpell(this,itr->second->spellId,true);
+                CastSpell(this,itr->second->spellId,true);
 }
 
 uint32 Player::GetCorpseReclaimDelay(bool pvp) const
@@ -23362,7 +23188,7 @@ bool Player::CanCaptureTowerPoint()
            );
 }
 
-uint32 Player::GetBarberShopCost(uint8 newhairstyle, uint8 newhaircolor, uint8 newfacialhair, uint8 newskintone)
+uint32 Player::GetBarberShopCost(uint8 newhairstyle, uint8 newhaircolor, uint8 newfacialhair)
 {
     uint32 level = getLevel();
 
@@ -23372,10 +23198,8 @@ uint32 Player::GetBarberShopCost(uint8 newhairstyle, uint8 newhaircolor, uint8 n
     uint8 hairstyle = GetByteValue(PLAYER_BYTES, 2);
     uint8 haircolor = GetByteValue(PLAYER_BYTES, 3);
     uint8 facialhair = GetByteValue(PLAYER_BYTES_2, 0);
-    uint8 skintone = GetByteValue(PLAYER_BYTES, 0);
 
-    if((hairstyle == newhairstyle) && (haircolor == newhaircolor) && (facialhair == newfacialhair) &&
-        ((skintone == newskintone) || (newskintone == 0)))
+    if((hairstyle == newhairstyle) && (haircolor == newhaircolor) && (facialhair == newfacialhair))
         return 0;
 
     GtBarberShopCostBaseEntry const *bsc = sGtBarberShopCostBaseStore.LookupEntry(level - 1);
@@ -23393,9 +23217,6 @@ uint32 Player::GetBarberShopCost(uint8 newhairstyle, uint8 newhaircolor, uint8 n
 
     if(facialhair != newfacialhair)
         cost += bsc->cost * 0.75f;                          // +3/4 of price
-
-    if(skintone != newskintone && newskintone != 0)         // +1/2 of price
-        cost += bsc->cost * 0.5f;
 
     return uint32(cost);
 }
@@ -23555,8 +23376,7 @@ void Player::ConvertRune(uint8 index, RuneType newType)
 
 void Player::ResyncRunes(uint8 count)
 {
-    WorldPacket data(SMSG_RESYNC_RUNES, 4 + count * 2);
-    data << uint32(count + 1);
+    WorldPacket data(SMSG_RESYNC_RUNES, count * 2);
     for(uint32 i = 0; i < count; ++i)
     {
         data << uint8(GetCurrentRune(i));                   // rune type

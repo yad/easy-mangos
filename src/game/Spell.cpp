@@ -2062,7 +2062,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
         case TARGET_NARROW_FRONTAL_CONE:
             FillAreaTargets(targetUnitMap, m_caster->GetPositionX(), m_caster->GetPositionY(), radius, PUSH_IN_FRONT_15, SPELL_TARGETS_AOE_DAMAGE);
             break;
-        case TARGET_IN_FRONT_OF_CASTER_2:
+        case TARGET_IN_FRONT_OF_CASTER_30:
             FillAreaTargets(targetUnitMap, m_caster->GetPositionX(), m_caster->GetPositionY(), radius, PUSH_IN_FRONT_30, SPELL_TARGETS_AOE_DAMAGE);
             break;
         case TARGET_DUELVSPLAYER:

@@ -78,7 +78,7 @@ void WorldSession::HandleGroupInviteOpcode( WorldPacket & recv_data )
     }
 
     // can't group with
-    if(!sWorld.getConfig(CONFIG_BOOL_ALLOW_TWO_SIDE_INTERACTION_GROUP) && GetPlayer()->getOriginalTeam() != player->getOriginalTeam())
+    if(!sWorld.getConfig(CONFIG_BOOL_ALLOW_TWO_SIDE_INTERACTION_GROUP) && GetPlayer()->GetTeam() != player->GetTeam())
     {
         SendPartyResult(PARTY_OP_INVITE, membername, ERR_PLAYER_WRONG_FACTION);
         return;
@@ -209,8 +209,6 @@ void WorldSession::HandleGroupAcceptOpcode( WorldPacket & recv_data )
     // everything is fine, do it, PLAYER'S GROUP IS SET IN ADDMEMBER!!!
     if(!group->AddMember(GetPlayer()->GetGUID(), GetPlayer()->GetName()))
         return;
-
-    group->BroadcastGroupUpdate();
 }
 
 void WorldSession::HandleGroupDeclineOpcode( WorldPacket & /*recv_data*/ )
@@ -415,8 +413,9 @@ void WorldSession::HandleLootRoll( WorldPacket &recv_data )
     if (rollType >= MAX_ROLL_FROM_CLIENT)
         return;
 
-    // everything is fine, do it
-    group->CountRollVote(GetPlayer()->GetObjectGuid(), lootedTarget, itemSlot, RollVote(rollType));
+    // everything is fine, do it, if false then some cheating problem found
+    if(!group->CountRollVote(GetPlayer(), lootedTarget, itemSlot, RollVote(rollType)))
+        return;
 
     switch (rollType)
     {
@@ -424,6 +423,7 @@ void WorldSession::HandleLootRoll( WorldPacket &recv_data )
             GetPlayer()->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_ROLL_NEED, 1);
             break;
         case ROLL_GREED:
+        case ROLL_DISENCHANT:
             GetPlayer()->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_ROLL_GREED, 1);
             break;
     }

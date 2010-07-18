@@ -435,7 +435,7 @@ const uint32 ItemQualityColors[MAX_ITEM_QUALITY] = {
 #define SPELL_ATTR_EX5_UNK10                      0x00000400            // 10
 #define SPELL_ATTR_EX5_UNK11                      0x00000800            // 11
 #define SPELL_ATTR_EX5_UNK12                      0x00001000            // 12
-#define SPELL_ATTR_EX5_AFFECTED_BY_HASTE          0x00002000            // 13 haste affects duration (e.g. 8050 since 3.3.3)
+#define SPELL_ATTR_EX5_UNK13                      0x00002000            // 13 haste affects duration (e.g. 8050 since 3.3.3)
 #define SPELL_ATTR_EX5_UNK14                      0x00004000            // 14
 #define SPELL_ATTR_EX5_UNK15                      0x00008000            // 15
 #define SPELL_ATTR_EX5_UNK16                      0x00010000            // 16
@@ -956,7 +956,7 @@ enum AuraState
     AURA_STATE_SWIFTMEND                    = 15,           //   T |
     AURA_STATE_DEADLY_POISON                = 16,           //   T |
     AURA_STATE_ENRAGE                       = 17,           // C   |
-    AURA_STATE_MECHANIC_BLEED               = 18,           // C  t|
+    //AURA_STATE_UNKNOWN18                  = 18,           // C  t|
     //AURA_STATE_UNKNOWN19                  = 19,           //     | not used
     //AURA_STATE_UNKNOWN20                  = 20,           //  c  | only (45317 Suicide)
     //AURA_STATE_UNKNOWN21                  = 21,           //     | not used
@@ -975,7 +975,7 @@ enum Mechanics
     MECHANIC_FEAR             = 5,
     MECHANIC_GRIP             = 6,
     MECHANIC_ROOT             = 7,
-    MECHANIC_SLOWATTACK       = 8,                          //0 spells use this mechanic, but some SPELL_AURA_MOD_HASTE and SPELL_AURA_MOD_RANGED_HASTE use as effect mechanic
+    MECHANIC_PACIFY           = 8,                          //0 spells use this mechanic
     MECHANIC_SILENCE          = 9,
     MECHANIC_SLEEP            = 10,
     MECHANIC_SNARE            = 11,
@@ -1004,7 +1004,7 @@ enum Mechanics
 // Used for spell 42292 Immune Movement Impairment and Loss of Control (0x49967da6)
 #define IMMUNE_TO_MOVEMENT_IMPAIRMENT_AND_LOSS_CONTROL_MASK ( \
     (1<<(MECHANIC_CHARM   -1))|(1<<(MECHANIC_DISORIENTED-1))|(1<<(MECHANIC_FEAR  -1))| \
-    (1<<(MECHANIC_ROOT    -1))|(1<<(MECHANIC_SLOWATTACK -1))|(1<<(MECHANIC_SLEEP -1))| \
+    (1<<(MECHANIC_ROOT    -1))|(1<<(MECHANIC_PACIFY     -1))|(1<<(MECHANIC_SLEEP -1))| \
     (1<<(MECHANIC_SNARE   -1))|(1<<(MECHANIC_STUN       -1))|(1<<(MECHANIC_FREEZE-1))| \
     (1<<(MECHANIC_KNOCKOUT-1))|(1<<(MECHANIC_POLYMORPH  -1))|(1<<(MECHANIC_BANISH-1))| \
     (1<<(MECHANIC_SHACKLE -1))|(1<<(MECHANIC_TURN       -1))|(1<<(MECHANIC_HORROR-1))| \
@@ -1024,10 +1024,10 @@ enum Mechanics
 
 // Daze and all croud control spells except polymorph are not removed
 #define MECHANIC_NOT_REMOVED_BY_SHAPESHIFT ( \
-    (1<<(MECHANIC_CHARM  -1))|(1<<(MECHANIC_DISORIENTED-1))|(1<<(MECHANIC_FEAR  -1))| \
-    (1<<(MECHANIC_STUN   -1))|(1<<(MECHANIC_FREEZE     -1))|(1<<(MECHANIC_BANISH-1))| \
-    (1<<(MECHANIC_SHACKLE-1))|(1<<(MECHANIC_HORROR     -1))|(1<<(MECHANIC_TURN  -1))| \
-    (1<<(MECHANIC_DAZE   -1))|(1<<(MECHANIC_SAPPED     -1)))
+    (1<<(MECHANIC_CHARM -1))|(1<<(MECHANIC_DISORIENTED-1))|(1<<(MECHANIC_FEAR  -1))| \
+    (1<<(MECHANIC_PACIFY-1))|(1<<(MECHANIC_STUN       -1))|(1<<(MECHANIC_FREEZE-1))| \
+    (1<<(MECHANIC_BANISH-1))|(1<<(MECHANIC_SHACKLE    -1))|(1<<(MECHANIC_HORROR-1))| \
+    (1<<(MECHANIC_TURN  -1))|(1<<(MECHANIC_DAZE       -1))|(1<<(MECHANIC_SAPPED-1)))
 
 // Spell dispell type
 enum DispelType
@@ -1145,8 +1145,7 @@ enum Targets
     TARGET_SELF2                       = 87,
     TARGET_DIRECTLY_FORWARD            = 89,
     TARGET_NONCOMBAT_PET               = 90,
-    TARGET_RANDOM_POINT_AROUND_CASTER  = 91,                // currently used only for Freya spell waves, should work simmilar like 73
-    TARGET_IN_FRONT_OF_CASTER_2        = 104,
+    TARGET_IN_FRONT_OF_CASTER_30       = 104,
 };
 
 enum SpellMissInfo
@@ -1255,8 +1254,8 @@ enum GameObjectFlags
     GO_FLAG_TRIGGERED       = 0x00000040,                   //typically, summoned objects. Triggered by spell or other events
     GO_FLAG_UNK_8           = 0x00000080,
     GO_FLAG_UNK_9           = 0x00000100,                   //? Seen on type 33, possible meaning "destruct in progress"
-    GO_FLAG_DAMAGED         = 0x00000200,                   //? Seen on type 33
-    GO_FLAG_DESTROYED       = 0x00000400                    //? Seen on type 33, possibly meaning "destructed"
+    GO_FLAG_UNK_10          = 0x00000200,                   //? Seen on type 33
+    GO_FLAG_UNK_11          = 0x00000400                    //? Seen on type 33, possibly meaning "destructed"
 };
 
 enum TextEmotes
@@ -2488,20 +2487,17 @@ enum DiminishingGroup
     DIMINISHING_TRIGGER_STUN,                               // By aura proced stuns, usualy chance on hit talents
     DIMINISHING_CONTROL_ROOT,                               // Immobilizing effects from casted spells
     DIMINISHING_TRIGGER_ROOT,                               // Immobilizing effects from triggered spells like Frostbite
-    DIMINISHING_FEAR_BLIND,                                 // Fears & blind
-    DIMINISHING_DISORIENT,                                  // Various disorients like Sap, Polymorph, Repentance od Wyvern Sting
-    // Warlock and Priest Specific
-    DIMINISHING_HORROR,                                     // Death Coil and Psychic Horror
+    // Shared Class Specific
+    DIMINISHING_FEAR_CHARM_BLIND,                           // Fears & charm and Blind
+    DIMINISHING_DISORIENT,
+    DIMINISHING_HORROR,
     // Druid Specific
-    DIMINISHING_CYCLONE,                                    // From 2.3.0
+    DIMINISHING_CYCLONE,
     DIMINISHING_CHEAPSHOT_POUNCE,
     DIMINISHING_DISARM,                                     // From 2.3.0
     DIMINISHING_SILENCE,                                    // From 2.3.0
+    DIMINISHING_FREEZE_SLEEP,                               // Hunter's Freezing Trap
     DIMINISHING_BANISH,
-    DIMINISHING_HIBERNATE,
-    DIMINISHING_ENTRAPMENT,
-    DIMINISHING_SCATTER_SHOT,
-    DIMINISHING_MIND_CONTROL,
     // Other
     // Don't Diminish, but limit duration to 10s
     DIMINISHING_LIMITONLY

@@ -104,7 +104,6 @@ enum SpellSpecific
     SPELL_DRINK             = 21,
     SPELL_FOOD_AND_DRINK    = 22,
     SPELL_UA_IMMOLATE       = 23,                           // Unstable Affliction and Immolate
-    SPELL_MAGE_BOMB         = 24,
 };
 
 SpellSpecific GetSpellSpecific(uint32 spellId);
@@ -292,7 +291,7 @@ inline bool IsCasterSourceTarget(uint32 target)
         case TARGET_SELF2:
         case TARGET_DIRECTLY_FORWARD:
         case TARGET_NONCOMBAT_PET:
-        case TARGET_IN_FRONT_OF_CASTER_2:
+        case TARGET_IN_FRONT_OF_CASTER_30:
             return true;
         default:
             break;
@@ -382,7 +381,7 @@ inline bool IsAreaEffectTarget( Targets target )
         case TARGET_AREAEFFECT_CUSTOM_2:
         case TARGET_ALL_RAID_AROUND_CASTER:
         case TARGET_AREAEFFECT_PARTY_AND_CLASS:
-        case TARGET_IN_FRONT_OF_CASTER_2:
+        case TARGET_IN_FRONT_OF_CASTER_30:
             return true;
         default:
             break;
@@ -507,7 +506,7 @@ inline uint32 GetDispellMask(DispelType dispel)
     else
         return (1 << dispel);
 }
-int32 ApplyHasteToChannelSpell(int32 orginalDuration, SpellEntry const* spellInfo, Spell const* spell);
+
 // Diminishing Returns interaction with spells
 DiminishingGroup GetDiminishingReturnsGroupForSpell(SpellEntry const* spellproto, bool triggered);
 bool IsDiminishingReturnsGroupDurationLimited(DiminishingGroup group);
@@ -615,42 +614,6 @@ struct SpellBonusEntry
     float  dot_damage;
     float  ap_bonus;
 };
-//DEVELOPER CODE START
-
-#define MAX_SPELLSTACK 3
-
-struct SpellStackEntry
-{
-       uint32 stackGroup[MAX_SPELLSTACK];
-};
-
-enum StackType
-{
-       SPELLSTACKING_UNDEFINED = 0x00000000,
-       SPELLSTACKING_NONE      = 0x00000001,
-       SPELLSTACKING_PERCASTER = 0x00000002,
-       SPELLSTACKING_FULL      = 0x00000008
-};
-
-enum StackOption
-{
-       STACKOPTION_NONE        = 0x00000000,
-       STACKOPTION_INTERNAL    = 0x00000001,
-       STACKOPTION_WORSEWIN    = 0x00000002,
-       STACKOPTION_SHORTERWIN  = 0x00000004,
-       STACKOPTION_SPECIAL     = 0x00000008
-};
-
-struct SpellStackGroupEntry
-{
-       uint32 type;
-       uint32 value; //unused so far
-};
-
-typedef UNORDERED_MAP<uint32, SpellStackEntry>     SpellStackMap;
-typedef UNORDERED_MAP<uint32, SpellStackGroupEntry> SpellStackGroupMap;
-
-//DEVELOPER CODE END
 
 typedef UNORDERED_MAP<uint32, SpellProcEventEntry> SpellProcEventMap;
 typedef UNORDERED_MAP<uint32, SpellBonusEntry>     SpellBonusMap;
@@ -927,50 +890,6 @@ class SpellMgr
             return NULL;
         }
 
-//DEVELOPER CODE START
-
-         SpellStackEntry const* GetSpellStackData(uint32 spellId) const
-        {
-            // Lookup data
-            SpellStackMap::const_iterator itr = mSpellStackMap.find(spellId);
-            if (itr != mSpellStackMap.end())
-                return &itr->second;
-
-            return NULL;
-        }
-        SpellStackGroupEntry const* GetSpellStackGroupData(uint32 maskId) const
-        {
-            // Lookup data
-            SpellStackGroupMap::const_iterator itr = mSpellStackGroupMap.find(maskId);
-            if (itr != mSpellStackGroupMap.end())
-                return &itr->second;
-
-            return NULL;
-        }
-
-        SpellStackGroupEntry const* GetStackConditionsForSpells(uint32 spellId1, uint32 spellId2)
-        {
-            SpellStackEntry const* spellStack1 = GetSpellStackData(spellId1);
-            SpellStackEntry const* spellStack2 = GetSpellStackData(spellId2);
-            if (!spellStack1 || !spellStack2)
-                return NULL;
-
-            for (int32 i = 0; i < MAX_SPELLSTACK; i++)
-            {
-                for (int32 j = 0; j < MAX_SPELLSTACK; j++)
-                {
-                    if (spellStack1->stackGroup[i] != spellStack2->stackGroup[j])
-                       continue;
-
-                    if (SpellStackGroupEntry const* stackGroup = GetSpellStackGroupData(spellStack1->stackGroup[i]))
-                        return stackGroup;
-                }
-            }
-
-            return NULL;
-     }
-
-//DEVELOPER CODE END
         // Spell target coordinates
         SpellTargetPosition const* GetSpellTargetPosition(uint32 spell_id) const
         {
@@ -1183,7 +1102,6 @@ class SpellMgr
         void LoadPetLevelupSpellMap();
         void LoadPetDefaultSpells();
         void LoadSpellAreas();
-        void ApplySpellHacks();
 
     private:
         SpellScriptTarget  mSpellScriptTarget;
@@ -1207,10 +1125,6 @@ class SpellMgr
         SpellAreaForQuestMap mSpellAreaForQuestEndMap;
         SpellAreaForAuraMap  mSpellAreaForAuraMap;
         SpellAreaForAreaMap  mSpellAreaForAreaMap;
-        //DEVELOPER CODE START
-        SpellStackMap      mSpellStackMap;
-        SpellStackGroupMap mSpellStackGroupMap;
-        //DEVELOPER CODE END
 };
 
 #define sSpellMgr SpellMgr::Instance()

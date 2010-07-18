@@ -916,7 +916,6 @@ enum PlayerLoginQueryIndex
     PLAYER_LOGIN_QUERY_LOADMAILS,
     PLAYER_LOGIN_QUERY_LOADMAILEDITEMS,
     PLAYER_LOGIN_QUERY_LOADTALENTS,
-    PLAYER_LOGIN_QUERY_LOADWEKLYQUESTSTATUS,
     PLAYER_LOGIN_QUERY_LOADWEEKLYQUESTSTATUS,
 
     MAX_PLAYER_LOGIN_QUERY
@@ -1143,7 +1142,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         std::string afkMsg;
         std::string dndMsg;
 
-        uint32 GetBarberShopCost(uint8 newhairstyle, uint8 newhaircolor, uint8 newfacialhair, uint8 newskintone);
+        uint32 GetBarberShopCost(uint8 newhairstyle, uint8 newhaircolor, uint8 newfacialhair);
 
         PlayerSocial *GetSocial() { return m_social; }
 
@@ -1425,32 +1424,15 @@ class MANGOS_DLL_SPEC Player : public Unit
         void AddArmorProficiency(uint32 newflag) { m_ArmorProficiency |= newflag; }
         uint32 GetWeaponProficiency() const { return m_WeaponProficiency; }
         uint32 GetArmorProficiency() const { return m_ArmorProficiency; }
-
-        bool IsWeaponDisarmed(uint8 slot)
+        bool IsUseEquipedWeapon( bool mainhand ) const
         {
-            bool IsDisarmed = false;
-            switch(slot)
-            {
-                case EQUIPMENT_SLOT_MAINHAND: IsDisarmed = HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_DISARMED); break;
-                case EQUIPMENT_SLOT_OFFHAND: IsDisarmed = HasFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_DISARMED_OFFHAND); break;
-                case EQUIPMENT_SLOT_RANGED: IsDisarmed = HasFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_DISARMED_RANGED); break;
-                default:
-                    break;
-            }
-
-            return IsDisarmed;
+            // disarm applied only to mainhand weapon
+            return !IsInFeralForm() && (!mainhand || !HasFlag(UNIT_FIELD_FLAGS,UNIT_FLAG_DISARMED) );
         }
-
         bool IsTwoHandUsed() const
         {
             Item* mainItem = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND);
             return mainItem && mainItem->GetProto()->InventoryType == INVTYPE_2HWEAPON && !CanTitanGrip();
-        }
-        bool IsTwoHandUsedInDualWield() const
-        {
-            Item* offItem = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
-            Item* mainItem = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND);
-            return mainItem && mainItem->GetProto()->InventoryType == INVTYPE_2HWEAPON || offItem && offItem->GetProto()->InventoryType == INVTYPE_2HWEAPON;
         }
         void SendNewItem( Item *item, uint32 count, bool received, bool created, bool broadcast = false );
         bool BuyItemFromVendorSlot(uint64 vendorguid, uint32 vendorslot, uint32 item, uint8 count, uint8 bag, uint8 slot);
@@ -1630,12 +1612,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         void SaveToDB();
         void SaveInventoryAndGoldToDB();                    // fast save function for item/money cheating preventing
         void SaveGoldToDB();
-        void SaveDataFieldToDB();
-        static bool SaveValuesArrayInDB(Tokens const& data,uint64 guid);
         static void SetUInt32ValueInArray(Tokens& data,uint16 index, uint32 value);
         static void SetFloatValueInArray(Tokens& data,uint16 index, float value);
-        static void SetUInt32ValueInDB(uint16 index, uint32 value, uint64 guid);
-        static void SetFloatValueInDB(uint16 index, float value, uint64 guid);
         static void Customize(uint64 guid, uint8 gender, uint8 skin, uint8 face, uint8 hairStyle, uint8 hairColor, uint8 facialHair);
         static void SavePositionInDB(uint32 mapid, float x,float y,float z,float o,uint32 zone,uint64 guid);
 
@@ -2024,7 +2002,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         void SendMessageToSet(WorldPacket *data, bool self);// overwrite Object::SendMessageToSet
         void SendMessageToSetInRange(WorldPacket *data, float fist, bool self);
                                                             // overwrite Object::SendMessageToSetInRange
-        void SendMessageToSetInRange(WorldPacket *data, float dist, bool self, bool own_team_only, bool enemy_team_only = false);
+        void SendMessageToSetInRange(WorldPacket *data, float dist, bool self, bool own_team_only);
 
         Corpse *GetCorpse() const;
         void SpawnCorpseBones();
@@ -2527,9 +2505,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         void SetLevelAtLoading(uint32 lvl) { m_levelAtLoading = lvl; }
         uint32 GetLevelAtLoading() { return m_levelAtLoading; }
         bool IsBot() { return (GetSession()->IsBotSession()); }
-
-        Player* LastDmgDealer;
-        uint32 getOriginalTeam() { return TeamForRace(getRace()); };
     protected:
 
         uint32 m_contestedPvPTimer;
@@ -2814,7 +2789,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         uint8 m_MirrorTimerFlags;
         uint8 m_MirrorTimerFlagsLast;
         bool m_isInWater;
-        uint32 m_IndoorCheckTimer;
 
         // Current teleport data
         WorldLocation m_teleport_dest;

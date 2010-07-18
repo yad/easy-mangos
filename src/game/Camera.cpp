@@ -91,7 +91,7 @@ void Camera::Event_AddedToWorld()
 
 void Camera::Event_RemovedFromWorld()
 {
-    if(m_source == &m_owner)
+    if (m_source == &m_owner)
     {
         m_gridRef.unlink();
         return;
