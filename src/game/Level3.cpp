@@ -2509,6 +2509,9 @@ bool ChatHandler::HandleLearnAllMySpellsForMyLevelCommand(const char* /*args*/)
                 {
                     Quest const *pQuest = sObjectMgr.GetQuestTemplate(itr->second);
 
+                    if (!pQuest)
+                        continue;
+
                     SpellEntry const* spellInfoSrcSpell = sSpellStore.LookupEntry(pQuest->GetSrcSpell());
                     if
                     (

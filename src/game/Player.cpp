@@ -1264,14 +1264,12 @@ void Player::AutoEquipItem()
         if(Item* pItem = GetItemByPos( INVENTORY_SLOT_BAG_0, i ))
         {
             uint16 eDest;
-            // equip offhand weapon/shield if it attempt equipped before main-hand weapon
             uint8 msg = CanEquipItem( NULL_SLOT, eDest, pItem, false );
             if( msg == EQUIP_ERR_OK )
             {
                 RemoveItem(INVENTORY_SLOT_BAG_0, i,true);
                 EquipItem( eDest, pItem, true);
             }
-            // move other items to more appropriate slots (ammo not equipped in special bag)
             else
             {
                 ItemPosCountVec sDest;
@@ -1281,8 +1279,6 @@ void Player::AutoEquipItem()
                     RemoveItem(INVENTORY_SLOT_BAG_0, i,true);
                     pItem = StoreItem( sDest, pItem, true);
                 }
-
-                // if  this is ammo then use it
                 uint8 msg = CanUseAmmo( pItem->GetEntry() );
                 if( msg == EQUIP_ERR_OK )
                     SetAmmo( pItem->GetEntry() );
@@ -1290,38 +1286,45 @@ void Player::AutoEquipItem()
         }
     }
 
-    // look for items in main bag
     for (int slot=INVENTORY_SLOT_ITEM_START; slot < INVENTORY_SLOT_ITEM_END; ++slot)
     {
-        const ItemPrototype *new_item = NULL;
         Item* const pItem = GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
-        if (!pItem) // si il n'y a pas d'objet dans l'emplacement sac
+        if (!pItem)
             continue;
-        new_item = pItem->GetProto();
-        if (new_item->InventoryType == INVTYPE_NON_EQUIP) // si l'objet n'est pas equipable
+
+        const ItemPrototype* bItem = pItem->GetProto();
+        if (!bItem)
             continue;
-        if (new_item->RequiredLevel > getLevel() ) // si je n'ai pas le niveau
+
+        if (bItem->InventoryType == INVTYPE_NON_EQUIP)
             continue;
+
         for (int i = EQUIPMENT_SLOT_START; i < EQUIPMENT_SLOT_END; i++)
         {
-            const ItemPrototype *mon_item = NULL;
             Item *item = GetItemByPos(INVENTORY_SLOT_BAG_0, i);
-            if(item) //Si il y a un item alors si
-            {
-                mon_item = item->GetProto();
-                if(mon_item->ItemId == new_item->ItemId) //C'est le même donc osef...
-                    continue;
-                if(mon_item->ItemLevel > new_item->ItemLevel) //Il est moins bien (couleur) donc osef...
-                    continue;
-            }
-            switch( new_item->InventoryType )
+            if (!item)
+                continue;
+
+            const ItemPrototype *eItem = item->GetProto();
+            if (!eItem)
+                continue;
+
+            if (eItem->ItemId == bItem->ItemId)
+                continue;
+
+            switch (bItem->InventoryType)
             {
                 case INVTYPE_HEAD:
                 {
-                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                        break;
-                    else if(i == EQUIPMENT_SLOT_HEAD)
+                    if(i == EQUIPMENT_SLOT_HEAD)
                     {
+                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                            break;
+
+                        const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
+                        if (tItem == eItem)
+                            break;
+
                         uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
                         uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
                         SwapItem(src, dst);
@@ -1329,14 +1332,33 @@ void Player::AutoEquipItem()
                     break;
                 }
                 case INVTYPE_NECK:
-                    /*if(i == EQUIPMENT_SLOT_NECK)*/
+                {
+                    if(i == EQUIPMENT_SLOT_NECK)
+                    {
+                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                            break;
+
+                        const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
+                        if (tItem == eItem)
+                            break;
+
+                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
+                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                        SwapItem(src, dst);
+                    }
                     break;
+                }
                 case INVTYPE_SHOULDERS:
                 {
-                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                        break;
-                    else if(i == EQUIPMENT_SLOT_SHOULDERS)
+                    if(i == EQUIPMENT_SLOT_SHOULDERS)
                     {
+                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                            break;
+
+                        const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
+                        if (tItem == eItem)
+                            break;
+
                         uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
                         uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
                         SwapItem(src, dst);
@@ -1345,10 +1367,15 @@ void Player::AutoEquipItem()
                 }
                 case INVTYPE_BODY:
                 {
-                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                        break;
-                    else if(i == EQUIPMENT_SLOT_BODY)
+                    if(i == EQUIPMENT_SLOT_BODY)
                     {
+                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                            break;
+
+                        const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
+                        if (tItem == eItem)
+                            break;
+
                         uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
                         uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
                         SwapItem(src, dst);
@@ -1357,10 +1384,15 @@ void Player::AutoEquipItem()
                 }
                 case INVTYPE_CHEST:
                 {
-                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                        break;
-                    else if(i == EQUIPMENT_SLOT_CHEST)
+                    if(i == EQUIPMENT_SLOT_CHEST)
                     {
+                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                            break;
+
+                        const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
+                        if (tItem == eItem)
+                            break;
+
                         uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
                         uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
                         SwapItem(src, dst);
@@ -1369,10 +1401,15 @@ void Player::AutoEquipItem()
                 }
                 case INVTYPE_ROBE:
                 {
-                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                        break;
-                    else if(i == EQUIPMENT_SLOT_CHEST)
+                    if(i == EQUIPMENT_SLOT_CHEST)
                     {
+                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                            break;
+
+                        const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
+                        if (tItem == eItem)
+                            break;
+
                         uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
                         uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
                         SwapItem(src, dst);
@@ -1381,10 +1418,15 @@ void Player::AutoEquipItem()
                 }
                 case INVTYPE_WAIST:
                 {
-                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                        break;
-                    else if(i == EQUIPMENT_SLOT_WAIST)
+                    if(i == EQUIPMENT_SLOT_WAIST)
                     {
+                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                            break;
+
+                        const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
+                        if (tItem == eItem)
+                            break;
+
                         uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
                         uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
                         SwapItem(src, dst);
@@ -1393,10 +1435,15 @@ void Player::AutoEquipItem()
                 }
                 case INVTYPE_LEGS:
                 {
-                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                        break;
-                    else if(i == EQUIPMENT_SLOT_LEGS)
+                    if(i == EQUIPMENT_SLOT_LEGS)
                     {
+                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                            break;
+
+                        const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
+                        if (tItem == eItem)
+                            break;
+
                         uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
                         uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
                         SwapItem(src, dst);
@@ -1405,10 +1452,15 @@ void Player::AutoEquipItem()
                 }
                 case INVTYPE_FEET:
                 {
-                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                        break;
-                    else if(i == EQUIPMENT_SLOT_FEET)
+                    if(i == EQUIPMENT_SLOT_FEET)
                     {
+                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                            break;
+
+                        const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
+                        if (tItem == eItem)
+                            break;
+
                         uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
                         uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
                         SwapItem(src, dst);
@@ -1417,10 +1469,15 @@ void Player::AutoEquipItem()
                 }
                 case INVTYPE_WRISTS:
                 {
-                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                        break;
-                    else if(i == EQUIPMENT_SLOT_WRISTS)
+                    if(i == EQUIPMENT_SLOT_WRISTS)
                     {
+                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                            break;
+
+                        const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
+                        if (tItem == eItem)
+                            break;
+
                         uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
                         uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
                         SwapItem(src, dst);
@@ -1429,10 +1486,15 @@ void Player::AutoEquipItem()
                 }
                 case INVTYPE_HANDS:
                 {
-                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                        break;
-                    else if(i == EQUIPMENT_SLOT_HANDS)
+                    if(i == EQUIPMENT_SLOT_HANDS)
                     {
+                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                            break;
+
+                        const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
+                        if (tItem == eItem)
+                            break;
+
                         uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
                         uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
                         SwapItem(src, dst);
@@ -1440,17 +1502,50 @@ void Player::AutoEquipItem()
                     break;
                 }
                 case INVTYPE_FINGER:
-                    //if(i == EQUIPMENT_SLOT_FINGER1 || i = EQUIPMENT_SLOT_FINGER2)
+                {
+                    if(i == EQUIPMENT_SLOT_FINGER1 || i == EQUIPMENT_SLOT_FINGER2)
+                    {
+                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                            break;
+
+                        const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
+                        if (tItem == eItem)
+                            break;
+
+                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
+                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                        SwapItem(src, dst);
+                    }
                     break;
+                }
                 case INVTYPE_TRINKET:
-                    //if(i == EQUIPMENT_SLOT_TRINKET1 || i == EQUIPMENT_SLOT_TRINKET2)
+                {
+                    if(i == EQUIPMENT_SLOT_TRINKET1 || i == EQUIPMENT_SLOT_TRINKET2)
+                    {
+                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                            break;
+
+                        const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
+                        if (tItem == eItem)
+                            break;
+
+                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
+                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                        SwapItem(src, dst);
+                    }
                     break;
+                }
                 case INVTYPE_CLOAK:
                 {
-                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                        break;
-                    else if(i ==  EQUIPMENT_SLOT_BACK)
+                    if(i ==  EQUIPMENT_SLOT_BACK)
                     {
+                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                            break;
+
+                        const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
+                        if (tItem == eItem)
+                            break;
+
                         uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
                         uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
                         SwapItem(src, dst);
@@ -1459,23 +1554,32 @@ void Player::AutoEquipItem()
                 }
                 case INVTYPE_WEAPON:
                 {
-                    if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
-                        break;
-                    else if(i == EQUIPMENT_SLOT_MAINHAND)
+                    if(i == EQUIPMENT_SLOT_MAINHAND)
                     {
+                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                            break;
+
+                        const ItemPrototype *tItem = BestItemBetween(eItem, bItem, true);
+                        if (tItem == eItem)
+                            break;
+
                         uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
                         uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
                         SwapItem(src, dst);
                     }
                     break;
-                        /*if(CanDualWield())    slots[1] = EQUIPMENT_SLOT_OFFHAND;*/
                 }
                 case INVTYPE_SHIELD:
                 {
-                    if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                        break;
-                    else if(i == EQUIPMENT_SLOT_OFFHAND)
+                    if(i == EQUIPMENT_SLOT_OFFHAND)
                     {
+                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                            break;
+
+                        const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
+                        if (tItem == eItem)
+                            break;
+
                         uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
                         uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
                         SwapItem(src, dst);
@@ -1484,10 +1588,15 @@ void Player::AutoEquipItem()
                 }
                 case INVTYPE_RANGED:
                 {
-                    if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
-                        break;
-                    else if(i == EQUIPMENT_SLOT_RANGED)
+                    if(i == EQUIPMENT_SLOT_RANGED)
                     {
+                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                            break;
+
+                        const ItemPrototype *tItem = BestItemBetween(eItem, bItem, true);
+                        if (tItem == eItem)
+                            break;
+
                         uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
                         uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
                         SwapItem(src, dst);
@@ -1496,26 +1605,35 @@ void Player::AutoEquipItem()
                 }
                 case INVTYPE_2HWEAPON:
                 {
-                    if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
-                        break;
-                    else if(i == EQUIPMENT_SLOT_MAINHAND)
+                    if(i == EQUIPMENT_SLOT_MAINHAND)
                     {
+                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                            break;
+
+                        const ItemPrototype *tItem = BestItemBetween(eItem, bItem, true);
+                        if (tItem == eItem)
+                            break;
+
                         uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
                         uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
                         SwapItem(src, dst);
                     }
-                    /*if (CanDualWield() && CanTitanGrip())    slots[1] = EQUIPMENT_SLOT_OFFHAND;*/
-                break;
+                    break;
                 }
                 case INVTYPE_TABARD:
                     //if(i == EQUIPMENT_SLOT_TABARD)
                     break;
                 case INVTYPE_WEAPONMAINHAND:
                 {
-                    if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
-                        break;
-                    else if(i == EQUIPMENT_SLOT_MAINHAND)
+                    if(i == EQUIPMENT_SLOT_MAINHAND)
                     {
+                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                            break;
+
+                        const ItemPrototype *tItem = BestItemBetween(eItem, bItem, true);
+                        if (tItem == eItem)
+                            break;
+
                         uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
                         uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
                         SwapItem(src, dst);
@@ -1524,10 +1642,15 @@ void Player::AutoEquipItem()
                 }
                 case INVTYPE_WEAPONOFFHAND:
                 {
-                    if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
-                        break;
-                    else if(i == EQUIPMENT_SLOT_OFFHAND)
+                    if(i == EQUIPMENT_SLOT_OFFHAND)
                     {
+                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                            break;
+
+                        const ItemPrototype *tItem = BestItemBetween(eItem, bItem, true);
+                        if (tItem == eItem)
+                            break;
+
                         uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
                         uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
                         SwapItem(src, dst);
@@ -1539,10 +1662,15 @@ void Player::AutoEquipItem()
                     break;
                 case INVTYPE_THROWN:
                 {
-                    if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
-                        break;
-                    else if(i == EQUIPMENT_SLOT_RANGED)
+                    if(i == EQUIPMENT_SLOT_RANGED)
                     {
+                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                            break;
+
+                        const ItemPrototype *tItem = BestItemBetween(eItem, bItem, true);
+                        if (tItem == eItem)
+                            break;
+
                         uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
                         uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
                         SwapItem(src, dst);
@@ -1551,30 +1679,21 @@ void Player::AutoEquipItem()
                 }
                 case INVTYPE_RANGEDRIGHT:
                 {
-                    if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
-                        break;
-                    else if(i == EQUIPMENT_SLOT_RANGED)
+                    if(i == EQUIPMENT_SLOT_RANGED)
                     {
+                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                            break;
+
+                        const ItemPrototype *tItem = BestItemBetween(eItem, bItem, true);
+                        if (tItem == eItem)
+                            break;
+
                         uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
                         uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
                         SwapItem(src, dst);
                     }
                     break;
                 }
-                case INVTYPE_BAG:
-                    /*if(i == INVENTORY_SLOT_BAG_START + 0 || i == INVENTORY_SLOT_BAG_START + 1 ||
-                        i == INVENTORY_SLOT_BAG_START + 2 || i == INVENTORY_SLOT_BAG_START + 3)
-                    {
-                        if(mon_item && new_item && mon_item->ContainerSlots >= new_item->ContainerSlots)
-                            break;
-                        else
-                        {
-                            uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
-                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                            SwapItem(src, dst);
-                        }
-                    }*/
-                    break;
                 case INVTYPE_RELIC:
                 {
                     /*switch(proto->SubClass)
@@ -1608,43 +1727,51 @@ void Player::AutoEquipItem()
         }
     }
 
-    // for all for items in other bags
     for (int bag = INVENTORY_SLOT_BAG_START; bag < INVENTORY_SLOT_BAG_END; ++bag)
     {
         Bag* const pBag = (Bag*)GetItemByPos(INVENTORY_SLOT_BAG_0, bag);
         if (!pBag)
             continue;
+
         for (uint32 slot = 0; slot < pBag->GetBagSize(); ++slot)
         {
-            const ItemPrototype *new_item = NULL;
             Item* const pItem = GetItemByPos(bag, slot);
-            if (!pItem) // si il n'y a pas d'objet dans l'emplacement sac
+            if (!pItem)
                 continue;
-            new_item = pItem->GetProto();
-            if (new_item->InventoryType == INVTYPE_NON_EQUIP) // si l'objet n'est pas equipable
+
+            const ItemPrototype *bItem = pItem->GetProto();
+            if (!bItem)
                 continue;
-            if (new_item->RequiredLevel > getLevel() ) // si je n'ai pas le niveau
+
+            if (bItem->InventoryType == INVTYPE_NON_EQUIP)
                 continue;
+
             for (int i = EQUIPMENT_SLOT_START; i < EQUIPMENT_SLOT_END; i++)
             {
-                const ItemPrototype *mon_item = NULL;
                 Item *item = GetItemByPos(INVENTORY_SLOT_BAG_0, i);
-                if(item) //Si il y a un item alors si
-                {
-                    mon_item = item->GetProto();
-                    if(mon_item->ItemId == new_item->ItemId) //C'est le même donc osef...
-                        continue;
-                    if(mon_item->ItemLevel > new_item->ItemLevel) //Il est moins bien (couleur) donc osef...
-                        continue;
-                }
-                switch( new_item->InventoryType )
+                if(!item)
+                    continue;
+
+                const ItemPrototype *eItem = item->GetProto();
+                if (!eItem)
+                    continue;
+
+                if(eItem->ItemId == bItem->ItemId)
+                    continue;
+
+                switch( bItem->InventoryType )
                 {
                     case INVTYPE_HEAD:
                     {
-                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                            break;
-                        else if(i == EQUIPMENT_SLOT_HEAD)
+                        if(i == EQUIPMENT_SLOT_HEAD)
                         {
+                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                                break;
+
+                            const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
+                            if (tItem == eItem)
+                                break;
+
                             uint16 src = ((bag << 8) | slot);
                             uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
                             SwapItem(src, dst);
@@ -1653,15 +1780,32 @@ void Player::AutoEquipItem()
                     }
                     case INVTYPE_NECK:
                     {
-                        //if(i == EQUIPMENT_SLOT_NECK)
+                        if(i == EQUIPMENT_SLOT_NECK)
+                        {
+                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                                break;
+
+                            const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
+                            if (tItem == eItem)
+                                break;
+
+                            uint16 src = ((bag << 8) | slot);
+                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                            SwapItem(src, dst);
+                        }
                         break;
                     }
                     case INVTYPE_SHOULDERS:
                     {
-                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                            break;
-                        else if(i == EQUIPMENT_SLOT_SHOULDERS)
+                        if(i == EQUIPMENT_SLOT_SHOULDERS)
                         {
+                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                                break;
+
+                            const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
+                            if (tItem == eItem)
+                                break;
+
                             uint16 src = ((bag << 8) | slot);
                             uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
                             SwapItem(src, dst);
@@ -1670,10 +1814,15 @@ void Player::AutoEquipItem()
                     }
                     case INVTYPE_BODY:
                     {
-                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                            break;
-                        else if(i == EQUIPMENT_SLOT_BODY)
+                        if(i == EQUIPMENT_SLOT_BODY)
                         {
+                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                                break;
+
+                            const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
+                            if (tItem == eItem)
+                                break;
+
                             uint16 src = ((bag << 8) | slot);
                             uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
                             SwapItem(src, dst);
@@ -1682,10 +1831,15 @@ void Player::AutoEquipItem()
                     }
                     case INVTYPE_CHEST:
                     {
-                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                            break;
-                        else if(i == EQUIPMENT_SLOT_CHEST)
+                        if(i == EQUIPMENT_SLOT_CHEST)
                         {
+                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                                break;
+
+                            const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
+                            if (tItem == eItem)
+                                break;
+
                             uint16 src = ((bag << 8) | slot);
                             uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
                             SwapItem(src, dst);
@@ -1694,10 +1848,15 @@ void Player::AutoEquipItem()
                     }
                     case INVTYPE_ROBE:
                     {
-                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                            break;
-                        else if(i == EQUIPMENT_SLOT_CHEST)
+                        if(i == EQUIPMENT_SLOT_CHEST)
                         {
+                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                                break;
+
+                            const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
+                            if (tItem == eItem)
+                                break;
+
                             uint16 src = ((bag << 8) | slot);
                             uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
                             SwapItem(src, dst);
@@ -1706,10 +1865,15 @@ void Player::AutoEquipItem()
                     }
                     case INVTYPE_WAIST:
                     {
-                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                            break;
-                        else if(i == EQUIPMENT_SLOT_WAIST)
+                        if(i == EQUIPMENT_SLOT_WAIST)
                         {
+                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                                break;
+
+                            const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
+                            if (tItem == eItem)
+                                break;
+
                             uint16 src = ((bag << 8) | slot);
                             uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
                             SwapItem(src, dst);
@@ -1718,10 +1882,15 @@ void Player::AutoEquipItem()
                     }
                     case INVTYPE_LEGS:
                     {
-                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                            break;
-                        else if(i == EQUIPMENT_SLOT_LEGS)
+                        if(i == EQUIPMENT_SLOT_LEGS)
                         {
+                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                                break;
+
+                            const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
+                            if (tItem == eItem)
+                                break;
+
                             uint16 src = ((bag << 8) | slot);
                             uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
                             SwapItem(src, dst);
@@ -1730,10 +1899,15 @@ void Player::AutoEquipItem()
                     }
                     case INVTYPE_FEET:
                     {
-                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                            break;
-                        else if(i == EQUIPMENT_SLOT_FEET)
+                        if(i == EQUIPMENT_SLOT_FEET)
                         {
+                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                                break;
+
+                            const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
+                            if (tItem == eItem)
+                                break;
+
                             uint16 src = ((bag << 8) | slot);
                             uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
                             SwapItem(src, dst);
@@ -1742,10 +1916,15 @@ void Player::AutoEquipItem()
                     }
                     case INVTYPE_WRISTS:
                     {
-                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                            break;
-                        else if(i == EQUIPMENT_SLOT_WRISTS)
+                        if(i == EQUIPMENT_SLOT_WRISTS)
                         {
+                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                                break;
+
+                            const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
+                            if (tItem == eItem)
+                                break;
+
                             uint16 src = ((bag << 8) | slot);
                             uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
                             SwapItem(src, dst);
@@ -1754,10 +1933,15 @@ void Player::AutoEquipItem()
                     }
                     case INVTYPE_HANDS:
                     {
-                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                            break;
-                        else if(i == EQUIPMENT_SLOT_HANDS)
+                        if(i == EQUIPMENT_SLOT_HANDS)
                         {
+                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                                break;
+
+                            const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
+                            if (tItem == eItem)
+                                break;
+
                             uint16 src = ((bag << 8) | slot);
                             uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
                             SwapItem(src, dst);
@@ -1765,17 +1949,50 @@ void Player::AutoEquipItem()
                         break;
                     }
                     case INVTYPE_FINGER:
-                        //if(i == EQUIPMENT_SLOT_FINGER1 || i = EQUIPMENT_SLOT_FINGER2)
+                    {
+                        if(i == EQUIPMENT_SLOT_FINGER1 || i == EQUIPMENT_SLOT_FINGER2)
+                        {
+                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                                break;
+
+                            const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
+                            if (tItem == eItem)
+                                break;
+
+                            uint16 src = ((bag << 8) | slot);
+                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                            SwapItem(src, dst);
+                        }
                         break;
+                    }
                     case INVTYPE_TRINKET:
-                        //if(i == EQUIPMENT_SLOT_TRINKET1 || i == EQUIPMENT_SLOT_TRINKET2)
+                    {
+                        if(i == EQUIPMENT_SLOT_TRINKET1 || i == EQUIPMENT_SLOT_TRINKET2)
+                        {
+                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                                break;
+
+                            const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
+                            if (tItem == eItem)
+                                break;
+
+                            uint16 src = ((bag << 8) | slot);
+                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
+                            SwapItem(src, dst);
+                        }
                         break;
+                    }
                     case INVTYPE_CLOAK:
                     {
-                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                            break;
-                        else if(i ==  EQUIPMENT_SLOT_BACK)
+                        if(i == EQUIPMENT_SLOT_BACK)
                         {
+                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                                break;
+
+                            const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
+                            if (tItem == eItem)
+                                break;
+
                             uint16 src = ((bag << 8) | slot);
                             uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
                             SwapItem(src, dst);
@@ -1784,23 +2001,32 @@ void Player::AutoEquipItem()
                     }
                     case INVTYPE_WEAPON:
                     {
-                        if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
-                            break;
-                        else if(i == EQUIPMENT_SLOT_MAINHAND)
+                        if(i == EQUIPMENT_SLOT_MAINHAND)
                         {
+                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                                break;
+
+                            const ItemPrototype *tItem = BestItemBetween(eItem, bItem, true);
+                            if (tItem == eItem)
+                                break;
+
                             uint16 src = ((bag << 8) | slot);
                             uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
                             SwapItem(src, dst);
                         }
-                        /*if(CanDualWield()) slots[1] = EQUIPMENT_SLOT_OFFHAND;*/
                         break;
                     }
                     case INVTYPE_SHIELD:
                     {
-                        if(mon_item && new_item && mon_item->Armor >= new_item->Armor)//Il défend moins bien donc osef...
-                            break;
-                        else if(i == EQUIPMENT_SLOT_OFFHAND)
+                        if(i == EQUIPMENT_SLOT_OFFHAND)
                         {
+                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                                break;
+
+                            const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
+                            if (tItem == eItem)
+                                break;
+
                             uint16 src = ((bag << 8) | slot);
                             uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
                             SwapItem(src, dst);
@@ -1809,10 +2035,15 @@ void Player::AutoEquipItem()
                     }
                     case INVTYPE_RANGED:
                     {
-                        if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
-                            break;
-                        else if(i == EQUIPMENT_SLOT_RANGED)
+                        if(i == EQUIPMENT_SLOT_RANGED)
                         {
+                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                                break;
+
+                            const ItemPrototype *tItem = BestItemBetween(eItem, bItem, true);
+                            if (tItem == eItem)
+                                break;
+
                             uint16 src = ((bag << 8) | slot);
                             uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
                             SwapItem(src, dst);
@@ -1821,15 +2052,19 @@ void Player::AutoEquipItem()
                     }
                     case INVTYPE_2HWEAPON:
                     {
-                        if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
-                            break;
-                        else if(i == EQUIPMENT_SLOT_MAINHAND)
+                        if(i == EQUIPMENT_SLOT_MAINHAND)
                         {
+                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                                break;
+
+                            const ItemPrototype *tItem = BestItemBetween(eItem, bItem, true);
+                            if (tItem == eItem)
+                                break;
+
                             uint16 src = ((bag << 8) | slot);
                             uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
                             SwapItem(src, dst);
                         }
-                        /*if (CanDualWield() && CanTitanGrip()) slots[1] = EQUIPMENT_SLOT_OFFHAND;*/
                         break;
                     }
                     case INVTYPE_TABARD:
@@ -1837,10 +2072,15 @@ void Player::AutoEquipItem()
                         break;
                     case INVTYPE_WEAPONMAINHAND:
                     {
-                        if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
-                            break;
-                        else if(i == EQUIPMENT_SLOT_MAINHAND)
+                        if(i == EQUIPMENT_SLOT_MAINHAND)
                         {
+                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                                break;
+
+                            const ItemPrototype *tItem = BestItemBetween(eItem, bItem, true);
+                            if (tItem == eItem)
+                                break;
+
                             uint16 src = ((bag << 8) | slot);
                             uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
                             SwapItem(src, dst);
@@ -1849,10 +2089,15 @@ void Player::AutoEquipItem()
                     }
                     case INVTYPE_WEAPONOFFHAND:
                     {
-                        if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
-                            break;
-                        else if(i == EQUIPMENT_SLOT_OFFHAND)
+                        if(i == EQUIPMENT_SLOT_OFFHAND)
                         {
+                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                                break;
+
+                            const ItemPrototype *tItem = BestItemBetween(eItem, bItem, true);
+                            if (tItem == eItem)
+                                break;
+
                             uint16 src = ((bag << 8) | slot);
                             uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
                             SwapItem(src, dst);
@@ -1864,10 +2109,15 @@ void Player::AutoEquipItem()
                         break;
                     case INVTYPE_THROWN:
                     {
-                        if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
-                            break;
-                        else if(i == EQUIPMENT_SLOT_RANGED)
+                        if(i == EQUIPMENT_SLOT_RANGED)
                         {
+                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                                break;
+
+                            const ItemPrototype *tItem = BestItemBetween(eItem, bItem, true);
+                            if (tItem == eItem)
+                                break;
+
                             uint16 src = ((bag << 8) | slot);
                             uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
                             SwapItem(src, dst);
@@ -1876,30 +2126,19 @@ void Player::AutoEquipItem()
                     }
                     case INVTYPE_RANGEDRIGHT:
                     {
-                        if(mon_item && new_item && mon_item->getDPS() >= new_item->getDPS())//Il tape moins fort donc osef...
-                            break;
-                        else if(i == EQUIPMENT_SLOT_RANGED)
+                        if(i == EQUIPMENT_SLOT_RANGED)
                         {
+                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                                break;
+
+                            const ItemPrototype *tItem = BestItemBetween(eItem, bItem, true);
+                            if (tItem == eItem)
+                                break;
+
                             uint16 src = ((bag << 8) | slot);
                             uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
                             SwapItem(src, dst);
                         }
-                        break;
-                    }
-                    case INVTYPE_BAG:
-                    {
-                        /*if(i == INVENTORY_SLOT_BAG_START + 0 || i == INVENTORY_SLOT_BAG_START + 1 ||
-                            i == INVENTORY_SLOT_BAG_START + 2 || i == INVENTORY_SLOT_BAG_START + 3)
-                        {
-                            if(mon_item && new_item && mon_item->ContainerSlots >= new_item->ContainerSlots)
-                                break;
-                            else
-                            {
-                                uint16 src = ((bag << 8) | slot);
-                                uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                                SwapItem(src, dst);
-                            }
-                        }*/
                         break;
                     }
                     case INVTYPE_RELIC:
@@ -1941,6 +2180,7 @@ void Player::GetBestItemForMyLevel()
 {
 
     ItemPrototype const *bestItemInSlot_head = NULL;
+    ItemPrototype const *bestItemInSlot_neck = NULL;
     ItemPrototype const *bestItemInSlot_shoulders = NULL;
     ItemPrototype const *bestItemInSlot_body = NULL;
     ItemPrototype const *bestItemInSlot_chest = NULL;
@@ -1950,6 +2190,10 @@ void Player::GetBestItemForMyLevel()
     ItemPrototype const *bestItemInSlot_feet = NULL;
     ItemPrototype const *bestItemInSlot_wrists = NULL;
     ItemPrototype const *bestItemInSlot_hands = NULL;
+    ItemPrototype const *bestItemInSlot_finger1 = NULL;
+    ItemPrototype const *bestItemInSlot_finger2 = NULL;
+    ItemPrototype const *bestItemInSlot_trinket1 = NULL;
+    ItemPrototype const *bestItemInSlot_trinket2 = NULL;
     ItemPrototype const *bestItemInSlot_cloak = NULL;
     ItemPrototype const *bestItemInSlot_weapon = NULL;
     ItemPrototype const *bestItemInSlot_shield = NULL;
@@ -1970,237 +2214,334 @@ void Player::GetBestItemForMyLevel()
         {
             case INVTYPE_HEAD:
             {
-                if(!CanUseItem(pProto) || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
                     break;
 
                 if(!bestItemInSlot_head)
+                {
                     bestItemInSlot_head = pProto;
+                    break;
+                }
 
-                if(bestItemInSlot_head->Armor < pProto->Armor)
-                    bestItemInSlot_head = pProto;
+                bestItemInSlot_head = BestItemBetween(bestItemInSlot_head, pProto, false);
 
                 break;
             }
             case INVTYPE_NECK:
-                /*if(i == EQUIPMENT_SLOT_NECK)*/
+            {
+                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                    break;
+
+                if (pProto->StatsCount == 0)
+                    break;
+
+                if(!bestItemInSlot_neck)
+                {
+                    bestItemInSlot_neck = pProto;
+                    break;
+                }
+
+                bestItemInSlot_neck = BestItemBetween(bestItemInSlot_neck, pProto, false);
+
                 break;
+            }
             case INVTYPE_SHOULDERS:
             {
-                if(!CanUseItem(pProto) || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
                     break;
 
                 if(!bestItemInSlot_shoulders)
+                {
                     bestItemInSlot_shoulders = pProto;
+                    break;
+                }
 
-                if(bestItemInSlot_shoulders->Armor < pProto->Armor)
-                    bestItemInSlot_shoulders = pProto;
+                bestItemInSlot_shoulders = BestItemBetween(bestItemInSlot_shoulders, pProto, false);
 
                 break;
             }
             case INVTYPE_BODY:
             {
-                if(!CanUseItem(pProto) || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
                     break;
 
                 if(!bestItemInSlot_body)
+                {
                     bestItemInSlot_body = pProto;
+                    break;
+                }
 
-                if(bestItemInSlot_body->Armor < pProto->Armor)
-                    bestItemInSlot_body = pProto;
+                bestItemInSlot_body = BestItemBetween(bestItemInSlot_body, pProto, false);
 
                 break;
             }
             case INVTYPE_CHEST:
             {
-                if(!CanUseItem(pProto) || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
                     break;
 
                 if(!bestItemInSlot_chest)
+                {
                     bestItemInSlot_chest = pProto;
+                    break;
+                }
 
-                if(bestItemInSlot_chest->Armor < pProto->Armor)
-                    bestItemInSlot_chest = pProto;
+                bestItemInSlot_chest = BestItemBetween(bestItemInSlot_chest, pProto, false);
 
                 break;
             }
             case INVTYPE_ROBE:
             {
-                if(!CanUseItem(pProto) || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
                     break;
 
 
                 if(!bestItemInSlot_robe)
+                {
                     bestItemInSlot_robe = pProto;
+                    break;
+                }
 
-                if(bestItemInSlot_robe->Armor < pProto->Armor)
-                    bestItemInSlot_robe = pProto;
+                bestItemInSlot_robe = BestItemBetween(bestItemInSlot_robe, pProto, false);
 
                 break;
             }
             case INVTYPE_WAIST:
             {
-                if(!CanUseItem(pProto) || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
                     break;
 
                 if(!bestItemInSlot_waist)
+                {
                     bestItemInSlot_waist = pProto;
+                    break;
+                }
 
-                if(bestItemInSlot_waist->Armor < pProto->Armor)
-                    bestItemInSlot_waist = pProto;
+                bestItemInSlot_waist = BestItemBetween(bestItemInSlot_waist, pProto, false);
 
                 break;
             }
             case INVTYPE_LEGS:
             {
-                if(!CanUseItem(pProto) || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
                     break;
 
                 if(!bestItemInSlot_legs)
+                {
                     bestItemInSlot_legs = pProto;
+                    break;
+                }
 
-                if(bestItemInSlot_legs->Armor < pProto->Armor)
-                    bestItemInSlot_legs = pProto;
+                bestItemInSlot_legs = BestItemBetween(bestItemInSlot_legs, pProto, false);
 
                 break;
             }
             case INVTYPE_FEET:
             {
-                if(!CanUseItem(pProto) || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
                     break;
 
                 if(!bestItemInSlot_feet)
+                {
                     bestItemInSlot_feet = pProto;
+                    break;
+                }
 
-                if(bestItemInSlot_feet->Armor < pProto->Armor)
-                    bestItemInSlot_feet = pProto;
+                bestItemInSlot_feet = BestItemBetween(bestItemInSlot_feet, pProto, false);
 
                 break;
             }
             case INVTYPE_WRISTS:
             {
-                if(!CanUseItem(pProto) || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
                     break;
 
                 if(!bestItemInSlot_wrists)
+                {
                     bestItemInSlot_wrists = pProto;
+                    break;
+                }
 
-                if(bestItemInSlot_wrists->Armor < pProto->Armor)
-                    bestItemInSlot_wrists = pProto;
+                bestItemInSlot_wrists = BestItemBetween(bestItemInSlot_wrists, pProto, false);
 
                 break;
             }
             case INVTYPE_HANDS:
             {
-                if(!CanUseItem(pProto) || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
                     break;
 
                 if(!bestItemInSlot_hands)
+                {
                     bestItemInSlot_hands = pProto;
+                    break;
+                }
 
-                if(bestItemInSlot_hands->Armor < pProto->Armor)
-                    bestItemInSlot_hands = pProto;
+                bestItemInSlot_hands = BestItemBetween(bestItemInSlot_hands, pProto, false);
 
                 break;
             }
             case INVTYPE_FINGER:
-                //if(i == EQUIPMENT_SLOT_FINGER1 || i = EQUIPMENT_SLOT_FINGER2)
+            {
+                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                    break;
+
+                if (pProto->StatsCount == 0)
+                    break;
+
+                if(!bestItemInSlot_finger1)
+                {
+                    bestItemInSlot_finger1 = pProto;
+                    break;
+                }
+
+                if(!bestItemInSlot_finger2)
+                {
+                    bestItemInSlot_finger2 = pProto;
+                    break;
+                }
+
+                ItemPrototype const *bestItemInSlot_finger = BestItemBetween(bestItemInSlot_finger1, bestItemInSlot_finger2, false);
+                if (bestItemInSlot_finger == bestItemInSlot_finger1)
+                    bestItemInSlot_finger2 = BestItemBetween(bestItemInSlot_finger2, pProto, false);
+                else
+                    bestItemInSlot_finger1 = BestItemBetween(bestItemInSlot_finger1, pProto, false);
+
                 break;
+            }
             case INVTYPE_TRINKET:
-                //if(i == EQUIPMENT_SLOT_TRINKET1 || i == EQUIPMENT_SLOT_TRINKET2)
+            {
+                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                    break;
+
+                if (pProto->StatsCount == 0)
+                    break;
+
+                if(!bestItemInSlot_trinket1)
+                {
+                    bestItemInSlot_trinket1 = pProto;
+                    break;
+                }
+
+                if(!bestItemInSlot_trinket2)
+                {
+                    bestItemInSlot_trinket2 = pProto;
+                    break;
+                }
+
+                ItemPrototype const *bestItemInSlot_trinket = BestItemBetween(bestItemInSlot_trinket1, bestItemInSlot_trinket2, false);
+                if (bestItemInSlot_trinket == bestItemInSlot_trinket1)
+                    bestItemInSlot_trinket2 = BestItemBetween(bestItemInSlot_trinket2, pProto, false);
+                else
+                    bestItemInSlot_trinket1 = BestItemBetween(bestItemInSlot_trinket1, pProto, false);
+
                 break;
+            }
             case INVTYPE_CLOAK:
             {
-                if(!CanUseItem(pProto) || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
                     break;
 
                 if(!bestItemInSlot_cloak)
+                {
                     bestItemInSlot_cloak = pProto;
+                    break;
+                }
 
-                if(bestItemInSlot_cloak->Armor < pProto->Armor)
-                    bestItemInSlot_cloak = pProto;
+                bestItemInSlot_cloak = BestItemBetween(bestItemInSlot_cloak, pProto, false);
 
                 break;
             }
             case INVTYPE_WEAPON:
             {
-                if(!CanUseItem(pProto) || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
                     break;
 
                 if(!bestItemInSlot_weapon)
+                {
                     bestItemInSlot_weapon = pProto;
+                    break;
+                }
 
-                if(bestItemInSlot_weapon->getDPS() < pProto->getDPS())
-                    bestItemInSlot_weapon = pProto;
+                bestItemInSlot_weapon = BestItemBetween(bestItemInSlot_weapon, pProto, true);
 
                 break;
-                    /*if(CanDualWield())    slots[1] = EQUIPMENT_SLOT_OFFHAND;*/
             }
             case INVTYPE_SHIELD:
             {
-                if(!CanUseItem(pProto) || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
                     break;
 
                 if(!bestItemInSlot_shield)
+                {
                     bestItemInSlot_shield = pProto;
+                    break;
+                }
 
-                if(bestItemInSlot_shield->Armor < pProto->Armor)
-                    bestItemInSlot_shield = pProto;
+                bestItemInSlot_shield = BestItemBetween(bestItemInSlot_shield, pProto, false);
 
                 break;
             }
             case INVTYPE_RANGED:
             {
-                if(!CanUseItem(pProto) || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
                     break;
 
                 if(!bestItemInSlot_ranged)
+                {
                     bestItemInSlot_ranged = pProto;
+                    break;
+                }
 
-                if(bestItemInSlot_ranged->getDPS() < pProto->getDPS())
-                    bestItemInSlot_ranged = pProto;
+                bestItemInSlot_ranged = BestItemBetween(bestItemInSlot_ranged, pProto, true);
 
                 break;
             }
             case INVTYPE_2HWEAPON:
             {
-                if(!CanUseItem(pProto) || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
                     break;
 
                 if(!bestItemInSlot_2hweapon)
+                {
                     bestItemInSlot_2hweapon = pProto;
+                    break;
+                }
 
-                if(bestItemInSlot_2hweapon->getDPS() < pProto->getDPS())
-                    bestItemInSlot_2hweapon = pProto;
+                bestItemInSlot_2hweapon = BestItemBetween(bestItemInSlot_2hweapon, pProto, true);
 
                 break;
-                /*if (CanDualWield() && CanTitanGrip())    slots[1] = EQUIPMENT_SLOT_OFFHAND;*/
             }
             case INVTYPE_TABARD:
                 //if(i == EQUIPMENT_SLOT_TABARD)
                 break;
             case INVTYPE_WEAPONMAINHAND:
             {
-                if(!CanUseItem(pProto) || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
                     break;
 
                 if(!bestItemInSlot_weaponmainhand)
+                {
                     bestItemInSlot_weaponmainhand = pProto;
+                    break;
+                }
 
-                if(bestItemInSlot_weaponmainhand->getDPS() < pProto->getDPS())
-                    bestItemInSlot_weaponmainhand = pProto;
+                bestItemInSlot_weaponmainhand = BestItemBetween(bestItemInSlot_weaponmainhand, pProto, true);
 
                 break;
             }
             case INVTYPE_WEAPONOFFHAND:
             {
-                if(!CanUseItem(pProto) || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
                     break;
 
                 if(!bestItemInSlot_weaponoffhand)
+                {
                     bestItemInSlot_weaponoffhand = pProto;
+                    break;
+                }
 
-                if(bestItemInSlot_weaponoffhand->getDPS() < pProto->getDPS())
-                    bestItemInSlot_weaponoffhand = pProto;
+                bestItemInSlot_weaponoffhand = BestItemBetween(bestItemInSlot_weaponoffhand, pProto, true);
 
                 break;
             }
@@ -2209,44 +2550,34 @@ void Player::GetBestItemForMyLevel()
                 break;
             case INVTYPE_THROWN:
             {
-                if(!CanUseItem(pProto) || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
                     break;
 
                 if(!bestItemInSlot_thrown)
+                {
                     bestItemInSlot_thrown = pProto;
+                    break;
+                }
 
-                if(bestItemInSlot_thrown->getDPS() < pProto->getDPS())
-                    bestItemInSlot_thrown = pProto;
+                bestItemInSlot_thrown = BestItemBetween(bestItemInSlot_thrown, pProto, true);
 
                 break;
             }
             case INVTYPE_RANGEDRIGHT:
             {
-                if(!CanUseItem(pProto) || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
                     break;
 
                 if(!bestItemInSlot_rangedright)
+                {
                     bestItemInSlot_rangedright = pProto;
+                    break;
+                }
 
-                if(bestItemInSlot_rangedright->getDPS() < pProto->getDPS())
-                    bestItemInSlot_rangedright = pProto;
+                bestItemInSlot_rangedright = BestItemBetween(bestItemInSlot_rangedright, pProto, true);
 
                 break;
             }
-            case INVTYPE_BAG:
-                /*if(i == INVENTORY_SLOT_BAG_START + 0 || i == INVENTORY_SLOT_BAG_START + 1 ||
-                    i == INVENTORY_SLOT_BAG_START + 2 || i == INVENTORY_SLOT_BAG_START + 3)
-                {
-                    if(mon_item && mon_item->ContainerSlots >= new_item->ContainerSlots)
-                        break;
-                    else
-                    {
-                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
-                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                        SwapItem(src, dst);
-                    }
-                }*/
-                break;
             case INVTYPE_RELIC:
             {
                 /*switch(proto->SubClass)
@@ -2283,6 +2614,13 @@ void Player::GetBestItemForMyLevel()
     {
         char itemEntry[10] = "0";
         sprintf(itemEntry, "%d", bestItemInSlot_head->ItemId);
+        ChatHandler(this).HandleAddItemCommand(itemEntry);
+    }
+
+    if(bestItemInSlot_neck)
+    {
+        char itemEntry[10] = "0";
+        sprintf(itemEntry, "%d", bestItemInSlot_neck->ItemId);
         ChatHandler(this).HandleAddItemCommand(itemEntry);
     }
 
@@ -2346,6 +2684,34 @@ void Player::GetBestItemForMyLevel()
     {
         char itemEntry[10] = "0";
         sprintf(itemEntry, "%d", bestItemInSlot_hands->ItemId);
+        ChatHandler(this).HandleAddItemCommand(itemEntry);
+    }
+
+    if(bestItemInSlot_finger1)
+    {
+        char itemEntry[10] = "0";
+        sprintf(itemEntry, "%d", bestItemInSlot_finger1->ItemId);
+        ChatHandler(this).HandleAddItemCommand(itemEntry);
+    }
+
+    if(bestItemInSlot_finger2)
+    {
+        char itemEntry[10] = "0";
+        sprintf(itemEntry, "%d", bestItemInSlot_finger2->ItemId);
+        ChatHandler(this).HandleAddItemCommand(itemEntry);
+    }
+
+    if(bestItemInSlot_trinket1)
+    {
+        char itemEntry[10] = "0";
+        sprintf(itemEntry, "%d", bestItemInSlot_trinket1->ItemId);
+        ChatHandler(this).HandleAddItemCommand(itemEntry);
+    }
+
+    if(bestItemInSlot_trinket2)
+    {
+        char itemEntry[10] = "0";
+        sprintf(itemEntry, "%d", bestItemInSlot_trinket2->ItemId);
         ChatHandler(this).HandleAddItemCommand(itemEntry);
     }
 
@@ -2445,7 +2811,7 @@ void Player::PurgeMyBags()
     }
 }
 
-bool Player::IsForMyClass(const ItemPrototype *pProto)
+bool Player::IsForMyClass(ItemPrototype const* pProto)
 {
     switch (pProto->Class)
     {
@@ -2467,7 +2833,7 @@ bool Player::IsForMyClass(const ItemPrototype *pProto)
                 case ITEM_SUBCLASS_WEAPON_SPEAR:    return HasSpell(3386);
                 case ITEM_SUBCLASS_WEAPON_CROSSBOW: return HasSpell(5011);
                 case ITEM_SUBCLASS_WEAPON_WAND:     return HasSpell(5009);
-                default: return false;
+                default: return true;
             }
         case ITEM_CLASS_ARMOR:
             switch(pProto->SubClass)
@@ -2477,13 +2843,13 @@ bool Player::IsForMyClass(const ItemPrototype *pProto)
                 case ITEM_SUBCLASS_ARMOR_MAIL:      return HasSpell(8737);
                 case ITEM_SUBCLASS_ARMOR_PLATE:     return HasSpell(750);
                 case ITEM_SUBCLASS_ARMOR_SHIELD:    return HasSpell(9116);
-                default: return false;
+                default: return true;
             }
     }
-    return false;
+    return true;
 }
 
-bool Player::IsbuggedItem(const ItemPrototype *pProto)
+bool Player::IsbuggedItem(ItemPrototype const* pProto)
 {
     if((pProto->RequiredLevel == 0) && (pProto->ItemLevel > 1))
         return false;
@@ -2509,10 +2875,46 @@ bool Player::IsbuggedItem(const ItemPrototype *pProto)
     return true;
 }
 
-ItemPrototype* Player::CompareTwoItems(const ItemPrototype *pProto1, const ItemPrototype *pProto2)
+ItemPrototype const* Player::CompareItem(ItemPrototype const* pProto1, ItemPrototype const* pProto2, ItemModType pType)
+{
+    for (uint8 i = 0; i < pProto1->StatsCount; i++)
+    {
+        if (pProto1->ItemStat[i].ItemStatType != pType)
+            continue;
+
+        for (uint8 j = 0; j < pProto2->StatsCount; j++)
+        {
+            if (pProto2->ItemStat[j].ItemStatType != pType)
+                continue;
+
+            if (pProto1->ItemStat[i].ItemStatValue == pProto2->ItemStat[j].ItemStatValue)
+                return NULL;
+
+            if (pProto1->ItemStat[i].ItemStatValue > pProto2->ItemStat[j].ItemStatValue)
+                return pProto1;
+            else
+                return pProto2;
+        }
+
+        return pProto1;
+    }
+
+    for (uint8 j = 0; j < pProto2->StatsCount; j++)
+    {
+        if (pProto2->ItemStat[j].ItemStatType != pType)
+           continue;
+        else
+            return pProto2;
+    }
+
+    return NULL;
+}
+
+ItemPrototype const* Player::BestItemBetween(ItemPrototype const* pProto1, ItemPrototype const* pProto2, bool DPS)
 {
     PlayerbotAI* ai = GetPlayerbotAI();
     uint8 spe = 0;
+    ItemPrototype const *pProto = NULL;
     if(!ai)
     {
         switch(getClass())
@@ -2586,165 +2988,290 @@ ItemPrototype* Player::CompareTwoItems(const ItemPrototype *pProto1, const ItemP
         }
     }
 
-    switch(spe)
+    switch (spe)
     {
         case MageFire:
-            /*for (uint8 i = 0; i < pProto1->StatsCount; i++)
-            {
-                uint32 statType = pProto1->ItemStat[i].ItemStatType;
-                int32 val = pProto1->ItemStat[i].ItemStatValue;
-            }
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_INTELLECT);
+            if(pProto) 
+                return pProto;
 
-            pProto1->StatsCount*/
-            //Intelligence
-            //Puissance des sorts
-            //Critique
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_SPELL_POWER);
+            if(pProto) 
+                return pProto;
+
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_CRIT_SPELL_RATING);
+            if(pProto) 
+                return pProto;
             break;
         case MageArcane:
-            //Intelligence
-            //Puissance des sorts
-            //Score de toucher
-            break;
         case MageFrost:
-            //Intelligence
-            //Puissance des sorts
-            //Score de toucher
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_INTELLECT);
+            if(pProto) 
+                return pProto;
+
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_SPELL_POWER);
+            if(pProto) 
+                return pProto;
+
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_HIT_SPELL_RATING);
+            if(pProto) 
+                return pProto;
             break;
         case WarriorArms:
-            //Puissance d’attaque
-            //Score de critique
-            //Score de toucher
+        case WarriorFury:
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_STRENGTH);
+            if(pProto) 
+                return pProto;
+
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_CRIT_MELEE_RATING);
+            if(pProto) 
+                return pProto;
             break;
         case WarriorProtection:
-            //Endurance
-            //Armure
-            //Défense
-            //Blocage
-            break;
-        case WarriorFury:
-            //Puissance d’attaque
-            //Score de critique/Score de toucher
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_STAMINA);
+            if(pProto) 
+                return pProto;
+
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_DEFENSE_SKILL_RATING);
+            if(pProto) 
+                return pProto;
+
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_BLOCK_RATING);
+            if(pProto) 
+                return pProto;
             break;
         case RogueCombat:
-            //Agilité
-            //Puissance d’attaque
-            //Score de toucher
-            break;
         case RogueAssassination:
-            //Agilité
-            //Puissance d’attaque
-            //Score de toucher
-            break;
         case RogueSubtlety:
-            //Agilité
-            //Puissance d’attaque
-            //Score de toucher
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_AGILITY);
+            if(pProto) 
+                return pProto;
+
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_CRIT_MELEE_RATING);
+            if(pProto) 
+                return pProto;
             break;
         case PriestDiscipline:
-            //Intelligence
-            //Bonus de sort
-            //Critique
-            break;
-        case PriestHoly:
-            //Intelligence
-            //Bonus de sort
-            //Esprit
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_INTELLECT);
+            if(pProto) 
+                return pProto;
+
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_SPELL_POWER);
+            if(pProto) 
+                return pProto;
+
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_CRIT_SPELL_RATING);
+            if(pProto) 
+                return pProto;
             break;
         case PriestShadow:
-            //Intelligence
-            //Bonus de sort
-            //Score de toucher
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_INTELLECT);
+            if(pProto) 
+                return pProto;
+
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_SPELL_POWER);
+            if(pProto) 
+                return pProto;
+
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_HIT_SPELL_RATING);
+            if(pProto) 
+                return pProto;
+            break;
+        case PriestHoly:
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_SPIRIT);
+            if(pProto) 
+                return pProto;
+
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_INTELLECT);
+            if(pProto) 
+                return pProto;
+
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_SPELL_POWER);
+            if(pProto) 
+                return pProto;
             break;
         case ShamanElementalCombat:
-            //Intelligence
-            //Puissance de sort
-            //Critique
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_INTELLECT);
+            if(pProto) 
+                return pProto;
+
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_SPELL_POWER);
+            if(pProto) 
+                return pProto;
+
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_CRIT_SPELL_RATING);
+            if(pProto) 
+                return pProto;
             break;
         case ShamanRestoration:
-            //Intelligence
-            //Puissance de Sort
-            //Esprit
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_INTELLECT);
+            if(pProto) 
+                return pProto;
+
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_SPELL_POWER);
+            if(pProto) 
+                return pProto;
+
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_SPIRIT);
+            if(pProto) 
+                return pProto;
             break;
         case ShamanEnhancement:
-            //Agilité
-            //Puissance d’attaque
-            //Score de toucher
-            break;
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_STRENGTH);
+            if(pProto) 
+                return pProto;
+
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_CRIT_MELEE_RATING);
+            if(pProto) 
+                return pProto;
+            break;            
         case DruidFeralCombat:
-            //Endurance
-            //Esquive
-            //Puissance d’attaque
-            //Agilité
-            //Puissance d’attaque
-            //Critique
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_STAMINA);
+            if(pProto) 
+                return pProto;
+
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_STRENGTH);
+            if(pProto) 
+                return pProto;
+
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_AGILITY);
+            if(pProto) 
+                return pProto;
             break;
         case DruidRestoration:
-            //Intelligence
-            //Puissance de Sort
-            //Esprit
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_INTELLECT);
+            if(pProto) 
+                return pProto;
+
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_SPIRIT);
+            if(pProto) 
+                return pProto;
+
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_SPELL_POWER);
+            if(pProto) 
+                return pProto;
             break;
         case DruidBalance:
-            //Intelligence
-            //Puissance de Sort
-            //Score de critique
-            break;
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_INTELLECT);
+            if(pProto) 
+                return pProto;
+
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_SPELL_POWER);
+            if(pProto) 
+                return pProto;
+
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_CRIT_SPELL_RATING);
+            if(pProto) 
+                return pProto;
+            break;            
         case WarlockDestruction:
-            //Endurance
-            //Puissance de sorts
-            //Critique
-            break;
         case WarlockCurses:
-            //Endurance
-            //Puissance des sorts
-            //Critique
-            break;
         case WarlockSummoning:
-            //Endurance
-            //Puissance de sorts
-            //Critique
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_STAMINA);
+            if(pProto) 
+                return pProto;
+
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_SPELL_POWER);
+            if(pProto) 
+                return pProto;
+
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_CRIT_SPELL_RATING);
+            if(pProto) 
+                return pProto;
             break;
         case HunterBeastMastery:
-            //Agilité
-            //Puissance d’attaque
-            //Score de critique
+        case HunterMarksmanship:
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_AGILITY);
+            if(pProto) 
+                return pProto;
+
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_STAMINA);
+            if(pProto) 
+                return pProto;
+
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_CRIT_RANGED_RATING);
+            if(pProto) 
+                return pProto;
             break;
         case HunterSurvival:
-            //Endurance
-            //Puissance d’attaque
-            //Score de toucher
-            break;
-        case HunterMarksmanship:
-            //Agilité
-            //Puissance d’attaque
-            //Score de critique
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_STAMINA);
+            if(pProto) 
+                return pProto;
+
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_AGILITY);
+            if(pProto) 
+                return pProto;
+
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_CRIT_RANGED_RATING);
+            if(pProto) 
+                return pProto;
             break;
         case PaladinCombat:
-            //Puissance d’attaque
-            //Score de critique
-            //Score de toucher
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_STRENGTH);
+            if(pProto) 
+                return pProto;
+
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_CRIT_MELEE_RATING);
+            if(pProto) 
+                return pProto;
             break;
         case PaladinHoly:
-            //Intelligence
-            //Bonus de sort
-            //Critique
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_INTELLECT);
+            if(pProto) 
+                return pProto;
+
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_SPELL_POWER);
+            if(pProto) 
+                return pProto;
+
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_CRIT_SPELL_RATING);
+            if(pProto) 
+                return pProto;
             break;
         case PaladinProtection:
-            //Armure
-            //Défense
-            //Blocage
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_STAMINA);
+            if(pProto) 
+                return pProto;
+
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_DEFENSE_SKILL_RATING);
+            if(pProto) 
+                return pProto;
+
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_BLOCK_RATING);
+            if(pProto) 
+                return pProto;
             break;
         case DeathKnightBlood:
         case DeathKnightFrost:
         case DeathKnightUnholy:
-            //Armure
-            //Défense
-            //Blocage
-            //Puissance d’attaque
-            //Score de critique
-            //Score de toucher
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_STAMINA);
+            if(pProto) 
+                return pProto;
+
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_STRENGTH);
+            if(pProto) 
+                return pProto;
+
+            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_CRIT_MELEE_RATING);
+            if(pProto) 
+                return pProto;
             break;
     }
-    return NULL;
+
+    if (DPS)
+    {
+        if (pProto1->getDPS() > pProto2->getDPS())
+            return pProto1;
+        else
+            return pProto2;
+    }
+    else
+    {
+        if (pProto1->Armor > pProto2->Armor)
+            return pProto1;
+        else
+            return pProto2;
+    }
 }
 
 ///The player sobers by 256 every 10 seconds

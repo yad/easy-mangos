@@ -1286,9 +1286,10 @@ class MANGOS_DLL_SPEC Player : public Unit
         void AutoEquipItem();
         void GetBestItemForMyLevel();
         void PurgeMyBags();
-        bool IsForMyClass(const ItemPrototype *pProto);
-        bool IsbuggedItem(const ItemPrototype *pProto);
-        ItemPrototype* CompareTwoItems(const ItemPrototype *pProto1, const ItemPrototype *pProto2);
+        bool IsForMyClass(ItemPrototype const* pProto);
+        bool IsbuggedItem(ItemPrototype const* pProto);
+        ItemPrototype const* BestItemBetween(ItemPrototype const* pProto1, ItemPrototype const* pProto2, bool DPS);
+        ItemPrototype const* CompareItem(ItemPrototype const* pProto1, ItemPrototype const* pProto2, ItemModType pType);
 
         void AutoStoreLoot(uint8 bag, uint8 slot, uint32 loot_id, LootStore const& store, bool broadcast = false);
         void AutoStoreLoot(uint32 loot_id, LootStore const& store, bool broadcast = false) { AutoStoreLoot(NULL_BAG,NULL_SLOT,loot_id,store,broadcast); }
