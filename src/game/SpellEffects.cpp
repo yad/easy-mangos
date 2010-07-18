@@ -6679,6 +6679,12 @@ void Spell::EffectStuck(SpellEffectIndex /*eff_idx*/)
     // homebind location is loaded always
     pTarget->TeleportToHomebind(unitTarget==m_caster ? TELE_TO_SPELL : 0);
 
+    if(pTarget->isDead())
+    {       
+      pTarget->ResurrectPlayer(0.0f);
+      pTarget->SpawnCorpseBones();
+    }
+
     // Stuck spell trigger Hearthstone cooldown
     SpellEntry const *spellInfo = sSpellStore.LookupEntry(8690);
     if(!spellInfo)
