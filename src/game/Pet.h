@@ -245,6 +245,9 @@ class Pet : public Creature
 
         DeclinedName const* GetDeclinedNames() const { return m_declinedname; }
 
+        float GetFollowAngle() const { return m_followAngle;}
+        void  SelectFollowAngle();
+        void  SetFollowAngle(float angle) { m_followAngle = angle;}
         bool    m_removed;                                  // prevent overwrite pet state in DB at next Pet::Update if pet already removed(saved)
     protected:
         uint32  m_happinessTimer;
@@ -253,6 +256,7 @@ class Pet : public Creature
         int32   m_bonusdamage;
         uint64  m_auraUpdateMask;
         bool    m_loading;
+        float   m_followAngle;
 
         DeclinedName *m_declinedname;
 
