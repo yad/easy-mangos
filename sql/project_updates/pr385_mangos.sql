@@ -1,1 +1,0 @@
-UPDATE mangos_string SET content_default = 'Online players: %u (max: %u)' WHERE entry = 12;
