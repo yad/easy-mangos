@@ -414,22 +414,6 @@ UpdateMask Player::updateVisualBits;
 
 Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputationMgr(this), m_mover(this), m_camera(this)
 {
-    // Jail by WarHead
-    m_jail_guid     = 0;
-    m_jail_char     = "";
-    m_jail_amnestie = false;
-    m_jail_warning  = false;
-    m_jail_isjailed = false;
-    m_jail_amnestietime =0;
-    m_jail_release  = 0;
-    m_jail_times    = 0;
-    m_jail_reason   = "";
-    m_jail_gmacc    = 0;
-    m_jail_gmchar   = "";
-    m_jail_lasttime = "";
-    m_jail_duration = 0;
-    // Jail end
-
     m_transport = 0;
 
     // Playerbot mod:
@@ -594,7 +578,6 @@ Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputa
     {
         m_auraBaseMod[i][FLAT_MOD] = 0.0f;
         m_auraBaseMod[i][PCT_MOD] = 1.0f;
-        m_auraBaseMod[i][PCT_ADD_MOD] = 1.0f;
     }
 
     for (int i = 0; i < MAX_COMBAT_RATING; ++i)
@@ -3323,75 +3306,6 @@ void Player::Update( uint32 p_time )
     Unit::Update( p_time );
     SetCanDelayTeleport(false);
 
-    if (m_jail_isjailed)
-    {
-        time_t localtime;
-        localtime = time(NULL);
-
-        if (m_jail_release <= localtime)
-        {
-            m_jail_isjailed = false;
-            m_jail_release = 0;
-            _SaveJail();
-            sWorld.SendWorldText(LANG_JAIL_CHAR_FREE, GetName());
-            CastSpell(this,8690,false);
-            return;
-        }
-
-        if (m_team == ALLIANCE)
-        {
-            if (GetDistance(sObjectMgr.m_jailconf_ally_x, sObjectMgr.m_jailconf_ally_y, sObjectMgr.m_jailconf_ally_z) > sObjectMgr.m_jailconf_radius)
-            {
-                TeleportTo(sObjectMgr.m_jailconf_ally_m, sObjectMgr.m_jailconf_ally_x,
-                    sObjectMgr.m_jailconf_ally_y, sObjectMgr.m_jailconf_ally_z, sObjectMgr.m_jailconf_ally_o);
-                return;
-            }
-        }
-        else
-        {
-            if (GetDistance(sObjectMgr.m_jailconf_horde_x, sObjectMgr.m_jailconf_horde_y, sObjectMgr.m_jailconf_horde_z) > sObjectMgr.m_jailconf_radius)
-            {
-                TeleportTo(sObjectMgr.m_jailconf_horde_m, sObjectMgr.m_jailconf_horde_x,
-                   sObjectMgr.m_jailconf_horde_y, sObjectMgr.m_jailconf_horde_z, sObjectMgr.m_jailconf_horde_o);
-                return;
-            }
-
-        }
-    }
-
-    if(m_jail_warning == true)
-    {
-        m_jail_warning  = false;
-
-        if(sObjectMgr.m_jailconf_warn_player == m_jail_times || sObjectMgr.m_jailconf_warn_player <= m_jail_times)
-        {
-            if ((sObjectMgr.m_jailconf_max_jails-1 == m_jail_times-1) && sObjectMgr.m_jailconf_ban-1)
-            {
-                ChatHandler(this).PSendSysMessage(LANG_JAIL_WARNING_BAN, m_jail_times , sObjectMgr.m_jailconf_max_jails-1);
-            }
-            else
-            {
-                ChatHandler(this).PSendSysMessage(LANG_JAIL_WARNING, m_jail_times , sObjectMgr.m_jailconf_max_jails);
-            }
-
-        }
-                return;
-    }
-
-    if(m_jail_amnestie == true && sObjectMgr.m_jailconf_amnestie > 0 )
-    {
-        m_jail_amnestie =false;
-        time_t localtime;
-        localtime    = time(NULL);
-
-        if(localtime >  m_jail_amnestietime)
-        {
-            CharacterDatabase.PExecute("DELETE FROM `jail` WHERE `guid` = '%u'",GetGUIDLow());
-            ChatHandler(this).PSendSysMessage(LANG_JAIL_AMNESTII);
-        }
-        return;
-    }
-
     // update player only attacks
     if(uint32 ranged_att = getAttackTimer(RANGED_ATTACK))
     {
@@ -3594,17 +3508,9 @@ void Player::Update( uint32 p_time )
         SetHealth(0);
     }
     if (m_deathState == JUST_DIED)
-    {   // Prevent death of jailed players
-        if (!m_jail_isjailed)
-            KillPlayer();
-        else
-        {
-            m_deathState = ALIVE;
-            RegenerateAll();
-        }
-    }
+        KillPlayer();
 
-    if(m_nextSave > 0 && !m_jail_isjailed)
+    if(m_nextSave > 0)
     {
         if(p_time >= m_nextSave)
         {
@@ -4447,10 +4353,6 @@ Creature* Player::GetNPCIfCanInteractWith(ObjectGuid guid, uint32 npcflagmask)
     if (hasUnitState(UNIT_STAT_CAN_NOT_REACT_OR_LOST_CONTROL))
         return NULL;
 
-    //needed for call stabled pet
-    if (GetGUID() == guid.GetRawValue())
-        return ((Creature*)this);
-
     // exist (we need look pets also for some interaction (quest/etc)
     Creature *unit = ObjectAccessor::GetCreatureOrPetOrVehicle(*this,guid);
     if (!unit)
@@ -4734,9 +4636,6 @@ void Player::GiveXP(uint32 xp, Unit* victim)
 
     // XP to money conversion processed in Player::RewardQuest
     if(level >= sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL))
-        return;
-
-    if(HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_XP_USER_DISABLED))
         return;
 
     if(victim)
@@ -6540,7 +6439,6 @@ void Player::DeleteFromDB(uint64 playerguid, uint32 accountId, bool updateRealmC
             CharacterDatabase.PExecute("DELETE FROM character_equipmentsets WHERE guid = '%u'",guid);
             CharacterDatabase.PExecute("DELETE FROM guild_eventlog WHERE PlayerGuid1 = '%u' OR PlayerGuid2 = '%u'",guid, guid);
             CharacterDatabase.PExecute("DELETE FROM guild_bank_eventlog WHERE PlayerGuid = '%u'",guid);
-            CharacterDatabase.PExecute("DELETE FROM jail WHERE guid = '%u'",guid);
             CharacterDatabase.CommitTransaction();
             break;
         }
@@ -7224,13 +7122,6 @@ void Player::HandleBaseModValue(BaseModGroup modGroup, BaseModType modType, floa
             val = (100.0f + amount) / 100.0f;
             m_auraBaseMod[modGroup][modType] *= apply ? val : (1.0f/val);
             break;
-        case PCT_ADD_MOD:
-            if(amount <= -100.0f)
-                amount = -200.0f;
-
-            val = (100.0f + amount) / 100.0f - 1.0f;
-            m_auraBaseMod[modGroup][modType] += apply ? val : -val;
-            break;
     }
 
     if(!CanModifyStats())
@@ -7257,9 +7148,6 @@ float Player::GetBaseModValue(BaseModGroup modGroup, BaseModType modType) const
     if(modType == PCT_MOD && m_auraBaseMod[modGroup][PCT_MOD] <= 0.0f)
         return 0.0f;
 
-    if(modType == PCT_ADD_MOD && m_auraBaseMod[modGroup][PCT_ADD_MOD] <= 0.0f)
-        return 0.0f;
-
     return m_auraBaseMod[modGroup][modType];
 }
 
@@ -7274,15 +7162,12 @@ float Player::GetTotalBaseModValue(BaseModGroup modGroup) const
     if(m_auraBaseMod[modGroup][PCT_MOD] <= 0.0f)
         return 0.0f;
 
-    if(m_auraBaseMod[modGroup][PCT_ADD_MOD] <= 0.0f)
-        return 0.0f;
-
-    return m_auraBaseMod[modGroup][FLAT_MOD] * m_auraBaseMod[modGroup][PCT_ADD_MOD] * m_auraBaseMod[modGroup][PCT_MOD];
+    return m_auraBaseMod[modGroup][FLAT_MOD] * m_auraBaseMod[modGroup][PCT_MOD];
 }
 
 uint32 Player::GetShieldBlockValue() const
 {
-    float value = (m_auraBaseMod[SHIELD_BLOCK_VALUE][FLAT_MOD] + GetStat(STAT_STRENGTH) * 0.5f - 10) * m_auraBaseMod[SHIELD_BLOCK_VALUE][PCT_ADD_MOD] * m_auraBaseMod[SHIELD_BLOCK_VALUE][PCT_MOD];
+    float value = (m_auraBaseMod[SHIELD_BLOCK_VALUE][FLAT_MOD] + GetStat(STAT_STRENGTH) * 0.5f - 10)*m_auraBaseMod[SHIELD_BLOCK_VALUE][PCT_MOD];
 
     value = (value < 0) ? 0 : value;
 
@@ -8514,37 +8399,11 @@ void Player::RewardReputation(Unit *pVictim, float rate)
     if(!Rep)
         return;
 
-    uint32 Repfaction1 = Rep->repfaction1;
-    uint32 Repfaction2 = Rep->repfaction2;
-    uint32 tabardFactionID = 0;
-
-    // Championning tabard reputation system
-    // aura 57818 is a hidden aura common to northrend tabards allowing championning.
-    if(pVictim->GetMap()->IsDungeon() && HasAura(57818))
-    {
-        InstanceTemplate const* mInstance = sObjectMgr.GetInstanceTemplate(pVictim->GetMapId());
-        MapEntry const* StoredMap = sMapStore.LookupEntry(pVictim->GetMapId());
-
-        // only for expansion 2 map (wotlk), and : min level >= lv75 or dungeon only heroic mod
-        // entering a lv80 designed instance require a min level>=75. note : min level != suggested level
-        if ( StoredMap->Expansion() == 2 && ( mInstance->levelMin >= 75 || pVictim->GetMap()->GetDifficulty() == DUNGEON_DIFFICULTY_HEROIC ) )
-        {
-            if( Item* pItem = GetItemByPos( INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_TABARD ) )
-            {
-                if ( tabardFactionID = pItem->GetProto()->RequiredReputationFaction )
-                {
-                     Repfaction1 = tabardFactionID;
-                     Repfaction2 = tabardFactionID;
-                }
-            }
-        }
-    }
-
     if(Rep->repfaction1 && (!Rep->team_dependent || GetTeam()==ALLIANCE))
     {
-        int32 donerep1 = CalculateReputationGain(pVictim->getLevel(), Rep->repvalue1, Repfaction1, false);
+        int32 donerep1 = CalculateReputationGain(pVictim->getLevel(), Rep->repvalue1, Rep->repfaction1, false);
         donerep1 = int32(donerep1*rate);
-        FactionEntry const *factionEntry1 = sFactionStore.LookupEntry(Repfaction1);
+        FactionEntry const *factionEntry1 = sFactionStore.LookupEntry(Rep->repfaction1);
         uint32 current_reputation_rank1 = GetReputationMgr().GetRank(factionEntry1);
         if (factionEntry1 && current_reputation_rank1 <= Rep->reputation_max_cap1)
             GetReputationMgr().ModifyReputation(factionEntry1, donerep1);
@@ -8560,9 +8419,9 @@ void Player::RewardReputation(Unit *pVictim, float rate)
 
     if(Rep->repfaction2 && (!Rep->team_dependent || GetTeam()==HORDE))
     {
-        int32 donerep2 = CalculateReputationGain(pVictim->getLevel(), Rep->repvalue2, Repfaction2, false);
+        int32 donerep2 = CalculateReputationGain(pVictim->getLevel(), Rep->repvalue2, Rep->repfaction2, false);
         donerep2 = int32(donerep2*rate);
-        FactionEntry const *factionEntry2 = sFactionStore.LookupEntry(Repfaction2);
+        FactionEntry const *factionEntry2 = sFactionStore.LookupEntry(Rep->repfaction2);
         uint32 current_reputation_rank2 = GetReputationMgr().GetRank(factionEntry2);
         if (factionEntry2 && current_reputation_rank2 <= Rep->reputation_max_cap2)
             GetReputationMgr().ModifyReputation(factionEntry2, donerep2);
@@ -17934,79 +17793,9 @@ bool Player::LoadFromDB( uint32 guid, SqlQueryHolder *holder )
     m_achievementMgr.CheckAllAchievementCriteria();
 
     _LoadEquipmentSets(holder->GetResult(PLAYER_LOGIN_QUERY_LOADEQUIPMENTSETS));
-    // Loads the jail datas and if jailed it corrects the position to the corresponding jail
-    _LoadJail();
 
     return true;
 }
-
- // Loads the jail datas (added by WarHead).
- void Player::_LoadJail(void)
- {
-     CharacterDatabase.BeginTransaction();
-     QueryResult *result = CharacterDatabase.PQuery("SELECT * FROM `jail` WHERE `guid`='%u' LIMIT 1", GetGUIDLow());
-     CharacterDatabase.CommitTransaction();
-
-     if (!result)
-     {
-         m_jail_isjailed = false;
-         return;
-     }
-
-        Field *fields = result->Fetch();
-        m_jail_warning = true;
-        m_jail_isjailed = true;
-        m_jail_guid = fields[0].GetUInt32();
-        m_jail_char = fields[1].GetString();
-        m_jail_release = fields[2].GetUInt32();
-        m_jail_amnestietime = fields[3].GetUInt32();
-        m_jail_reason = fields[4].GetString();
-        m_jail_times = fields[5].GetUInt32();
-        m_jail_gmacc = fields[6].GetUInt32();
-        m_jail_gmchar = fields[7].GetString();
-        m_jail_lasttime = fields[8].GetString();
-        m_jail_duration = fields[9].GetUInt32();
-
-     if (m_jail_release == 0)
-     {
-         m_jail_isjailed = false;
-         delete result;
-         return;
-     }
-
-     time_t localtime;
-     localtime = time(NULL);
-
-     if (m_jail_release <= localtime)
-     {
-         m_jail_isjailed = false;
-         m_jail_release = 0;
-         _SaveJail();
-         sWorld.SendWorldText(LANG_JAIL_CHAR_FREE, GetName());
-         CastSpell(this,8690,false);
-         delete result;
-         return;
-     }
-
-     if (m_jail_isjailed)
-    {
-         if (m_team == ALLIANCE)
-         {
-             TeleportTo(sObjectMgr.m_jailconf_ally_m, sObjectMgr.m_jailconf_ally_x,
-                 sObjectMgr.m_jailconf_ally_y, sObjectMgr.m_jailconf_ally_z, sObjectMgr.m_jailconf_ally_o);
-         }
-         else
-         {
-             TeleportTo(sObjectMgr.m_jailconf_horde_m, sObjectMgr.m_jailconf_horde_x,
-                 sObjectMgr.m_jailconf_horde_y, sObjectMgr.m_jailconf_horde_z, sObjectMgr.m_jailconf_horde_o);
-        }
-
-         sWorld.SendWorldText(LANG_JAIL_CHAR_TELE, GetName() );
-     }
-
-     delete result;
-
-  }
 
 bool Player::isAllowedToLoot(Creature* creature)
 {
@@ -19103,24 +18892,8 @@ bool Player::_LoadHomeBind(QueryResult *result)
 /***                   SAVE SYSTEM                     ***/
 /*********************************************************/
 
-// Saves the jail datas (added by WarHead).
-void Player::_SaveJail(void)
-{
-    CharacterDatabase.BeginTransaction();
-    QueryResult *result = CharacterDatabase.PQuery("SELECT `guid` FROM `jail` WHERE `guid`='%u' LIMIT 1", m_jail_guid);
-    if (!result) CharacterDatabase.PExecute("INSERT INTO `jail` VALUES ('%u','%s','%u', '%u','%s','%u','%u','%s',CURRENT_TIMESTAMP,'%u')", m_jail_guid, m_jail_char.c_str(), m_jail_release, m_jail_amnestietime, m_jail_reason.c_str(), m_jail_times, m_jail_gmacc, m_jail_gmchar.c_str(), m_jail_duration);
-    else CharacterDatabase.PExecute("UPDATE `jail` SET `release`='%u', `amnestietime`='%u',`reason`='%s',`times`='%u',`gmacc`='%u',`gmchar`='%s',`duration`='%u' WHERE `guid`='%u' LIMIT 1", m_jail_release, m_jail_amnestietime, m_jail_reason.c_str(), m_jail_times, m_jail_gmacc, m_jail_gmchar.c_str(), m_jail_duration, m_jail_guid);
-    CharacterDatabase.CommitTransaction();
-
-    if (result) delete result;
-}
-
-
 void Player::SaveToDB()
 {
-    // Jail: Prevent saving of jailed players
-    if (m_jail_isjailed) return;
-
     // NEVER SAVE BOTS !!!
     if (IsBot()) return;
 

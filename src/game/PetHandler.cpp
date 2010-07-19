@@ -566,7 +566,7 @@ void WorldSession::HandlePetSpellAutocastOpcode( WorldPacket& recvPacket )
     uint8  state;                                           //1 for on, 0 for off
     recvPacket >> guid >> spellid >> state;
 
-    if (!_player->GetPet() && !_player->GetCharm())
+    if(!_player->GetPet() && !_player->GetCharm())
         return;
 
     if(ObjectAccessor::FindPlayer(guid))
@@ -574,24 +574,24 @@ void WorldSession::HandlePetSpellAutocastOpcode( WorldPacket& recvPacket )
 
     Creature* pet=ObjectAccessor::GetCreatureOrPetOrVehicle(*_player,guid);
 
-    if (!pet || (pet != _player->GetPet() && pet != _player->GetCharm()))
+    if(!pet || (pet != _player->GetPet() && pet != _player->GetCharm()))
     {
         sLog.outError( "HandlePetSpellAutocastOpcode.Pet %u isn't pet of player %s .", uint32(GUID_LOPART(guid)),GetPlayer()->GetName() );
         return;
     }
 
     // do not add not learned spells/ passive spells
-    if (!pet->HasSpell(spellid) || IsPassiveSpell(spellid))
+    if(!pet->HasSpell(spellid) || IsPassiveSpell(spellid))
         return;
 
     CharmInfo *charmInfo = pet->GetCharmInfo();
-    if (!charmInfo)
+    if(!charmInfo)
     {
         sLog.outError("WorldSession::HandlePetSpellAutocastOpcod: object (GUID: %u TypeId: %u) is considered pet-like but doesn't have a charminfo!", pet->GetGUIDLow(), pet->GetTypeId());
         return;
     }
 
-    if (pet->isCharmed())
+    if(pet->isCharmed())
                                                             //state can be used as boolean
         pet->GetCharmInfo()->ToggleCreatureAutocast(spellid, state);
     else
@@ -603,23 +603,6 @@ void WorldSession::HandlePetSpellAutocastOpcode( WorldPacket& recvPacket )
 void WorldSession::HandlePetCastSpellOpcode( WorldPacket& recvPacket )
 {
     DETAIL_LOG("WORLD: CMSG_PET_CAST_SPELL");
-    recvPacket.hexlike();
-    recvPacket.print_storage();
-
-    //2 - 0 - 0 - 43 - 129 - 0 - 80 - 241 | - 42 - 211 - 253 - 0 | - 0 | - 2 |- 96 - 0 - 0 - 0 | - 0 - 26
-    //- 164 - 59 - 196 - 174 - 98 - 131 | - 194 - 182 - 171 - 218| - 67 - 0 - 48 - 93| - 0 - 196 - 32
-    //- 177| - 242 - 193 - 22 - 110 - 224 - 67 - 203 - 166 | - 68 - 61 - 133 - 1| - 240 - 66 - 1 - 183 |
-    //- 0 - 0 - 0 - 217| - 2 - 43 - 129 - 80 - 241 - 0 - 10 - 0 - 0 - 0 - 0 - 76 - 109 - 175 - 0
-    //- 238 - 115 - 58 - 196 - 20 - 110 - 121 - 194 - 187 - 107 - 217 - 67 - 32 - 44 - 27 - 62 - 217
-    //- 1 - 36 - 129 - 80 - 241 - 0 - 0 - 160 - 64 - 0 - 0 - 160 - 64 - 0 - 0 - 160 - 64 - 192 - 233
-    //- 172 - 62 - 4 - 0 - 0 - 0 - 7 - 230 - 0 - 0 - 0 -
-
-    //5 - 0 - 0 - 43 - 129 - 0 - 80 - 241 | - 85 - 211 - 253 - 0 | - 0 | - 2 | - 96 - 0 - 0 - 0 | - 0 - 69 - 60 - 61
-    //- 196 - 171 - 248 - 107| - 194 - 8 - 236 - 218 | - 67 - 0 - 177 - 11 | - 46 - 196 - 89 - 16 | - 14 - 195
-    //- 5 - 38 - 231 - 67 - 23 - 221 | - 110 - 62 - 15 - 3 | - 240 - 66 -| 1 - 183 | - 0 - 0 - 0 - 217 | - 5 - 43
-    //- 129 - 80 - 241 - 0 - 10 - 0 - 0 - 0 - 0 - 233 - 41 - 203 - 0 - 106 - 207 - 59 - 196 - 179 - 173 - 83
-    //- 194 - 8 - 108 - 217 - 67 - 127 - 153 - 170 - 64 - 217 - 4 - 36 - 129 - 80 - 241 - 0 - 0 - 160 - 64
-    //- 0 - 0 - 160 - 64 - 0 - 0 - 160 - 64 - 7 - 77 - 175 - 64 - 4 - 0 - 0 - 0 - 7 - 195 - 0 - 0 - 0 -
 
     uint64 guid;
     uint32 spellid;

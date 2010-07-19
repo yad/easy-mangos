@@ -783,21 +783,6 @@ void CreatureEventAI::ProcessAction(CreatureEventAI_Action const& action, uint32
                 InvinceabilityHpLevel = action.invincibility_hp_level.hp_level;
             break;
         }
-        case ACTION_T_SUMMON_GAMEOBJECT :
-        {
-            CreatureEventAI_Summon_Map::const_iterator i = sEventAIMgr.GetCreatureEventAISummonMap().find(action.summon_gameobject.spawnId);
-            if (i == sEventAIMgr.GetCreatureEventAISummonMap().end())
-            {
-                sLog.outErrorDb( "CreatureEventAI: failed to spawn gameobject %u. Summon map index %u does not exist. EventID %d. GameobjectID %d", action.summon_gameobject.gameobjectId, action.summon_gameobject.spawnId, EventId, m_creature->GetEntry());
-                return;
-            }
-
-            GameObject* pGameobject = NULL;
-            pGameobject = m_creature->SummonGameobject(action.summon_gameobject.gameobjectId, (*i).second.position_x, (*i).second.position_y, (*i).second.position_z, (*i).second.orientation, (*i).second.SpawnTimeSecs*1000);
-            if (!pGameobject)
-                sLog.outErrorDb( "CreatureEventAI: failed to spawn gameobject %u. EventId %d.Creature %d", action.summon_gameobject.gameobjectId, EventId, m_creature->GetEntry());
-            break;
-        }
     }
 }
 

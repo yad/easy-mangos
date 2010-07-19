@@ -68,10 +68,26 @@ RandomMovementGenerator<Creature>::_setRandomLocation(Creature &creature)
     //else if (is_water_ok)                                 // 3D system under water and above ground (swimming mode)
     else                                                    // 2D only
     {
-        nz = Z;
-        if(!map->IsNextZcoordOK(nx, ny, nz, dist))
-            return;                                         // let's forget this bad coords where a z cannot be find and retry at next tick
-        creature.UpdateGroundPositionZ(nx, ny, nz, dist);
+        dist = dist >= 100.0f ? 10.0f : sqrtf(dist);        // 10.0 is the max that vmap high can check (MAX_CAN_FALL_DISTANCE)
+
+        // The fastest way to get an accurate result 90% of the time.
+        // Better result can be obtained like 99% accuracy with a ray light, but the cost is too high and the code is too long.
+        nz = map->GetHeight(nx, ny, Z+dist-2.0f, false);
+
+        if (fabs(nz-Z) > dist)                              // Map check
+        {
+            nz = map->GetHeight(nx, ny, Z-2.0f, true);      // Vmap Horizontal or above
+
+            if (fabs(nz-Z) > dist)
+            {
+                // Vmap Higher
+                nz = map->GetHeight(nx, ny, Z+dist-2.0f, true);
+
+                // let's forget this bad coords where a z cannot be find and retry at next tick
+                if (fabs(nz-Z) > dist)
+                    return;
+            }
+        }
     }
 
     Traveller<Creature> traveller(creature);
@@ -80,7 +96,7 @@ RandomMovementGenerator<Creature>::_setRandomLocation(Creature &creature)
     i_destinationHolder.SetDestination(traveller, nx, ny, nz);
     creature.addUnitState(UNIT_STAT_ROAMING_MOVE);
 
-    if (is_air_ok && !(creature.canWalk() && creature.IsAtGroundLevel(nx, ny, nz)))
+    if (is_air_ok)
     {
         i_nextMoveTime.Reset(i_destinationHolder.GetTotalTravelTime());
         creature.AddSplineFlag(SPLINEFLAG_UNKNOWN7);
@@ -99,8 +115,7 @@ void RandomMovementGenerator<Creature>::Initialize(Creature &creature)
     if (!creature.isAlive())
         return;
 
-    if (creature.canFly() && !(creature.canWalk() &&
-        creature.IsAtGroundLevel(creature.GetPositionX(), creature.GetPositionY(), creature.GetPositionZ())))
+    if (creature.canFly())
         creature.AddSplineFlag(SPLINEFLAG_UNKNOWN7);
     else
         creature.AddSplineFlag(SPLINEFLAG_WALKMODE);
@@ -130,7 +145,7 @@ void RandomMovementGenerator<Creature>::Finalize(Creature &creature)
 template<>
 bool RandomMovementGenerator<Creature>::Update(Creature &creature, const uint32 &diff)
 {
-    if (creature.hasUnitState(UNIT_STAT_NOT_MOVE | UNIT_STAT_ON_VEHICLE))
+    if (creature.hasUnitState(UNIT_STAT_NOT_MOVE))
     {
         i_nextMoveTime.Update(i_nextMoveTime.GetExpiry());  // Expire the timer
         creature.clearUnitState(UNIT_STAT_ROAMING_MOVE);
@@ -154,13 +169,7 @@ bool RandomMovementGenerator<Creature>::Update(Creature &creature, const uint32 
 
         if (i_nextMoveTime.Passed())
         {
-            float x,y,z;
-            if(i_destinationHolder.HasDestination())
-                i_destinationHolder.GetLocationNowNoMicroMovement(x,y,z);
-            else
-                creature.GetPosition(x,y,z);
-
-            if (creature.canFly() && !(creature.canWalk() && creature.IsAtGroundLevel(x,y,z)))
+            if (creature.canFly())
                 creature.AddSplineFlag(SPLINEFLAG_UNKNOWN7);
             else
                 creature.AddSplineFlag(SPLINEFLAG_WALKMODE);

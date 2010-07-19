@@ -516,15 +516,6 @@ struct GameObjectInfo
     }
 };
 
-union GameObjectValue
-{
-    //33 GAMEOBJECT_TYPE_DESTRUCTIBLE_BUILDING
-    struct
-    {
-        uint32 health;
-    }destructibleBuilding;
-};
-
 // GCC have alternative #pragma pack() syntax and old gcc version not support pack(pop), also any gcc version not support it at some platform
 #if defined( __GNUC__ )
 #pragma pack()
@@ -694,8 +685,6 @@ class MANGOS_DLL_SPEC GameObject : public WorldObject
         void SaveRespawnTime();
 
         Loot        loot;
-        uint32 m_groupLootTimer;                            // (msecs)timer used for group loot
-        uint32 m_groupLootId;                               // used to find group which is looting corpse
 
         bool hasQuest(uint32 quest_id) const;
         bool hasInvolvedQuest(uint32 quest_id) const;

@@ -33,7 +33,6 @@
 #include "MapInstanced.h"
 #include "Util.h"
 #include "LootMgr.h"
-#include "PlayerbotMgr.h"
 
 #define LOOT_ROLL_TIMEOUT  (1*MINUTE*IN_MILLISECONDS)
 

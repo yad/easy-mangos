@@ -34,7 +34,7 @@ void Map::LoadNavMesh(int gx, int gy)
         {
             delete m_navMesh;
             m_navMesh = 0;
-            sLog.outError("Error: Failed to initialize mmap %03u from file %s", i_id, fileName);
+            sLog.outDebug("Error: Failed to initialize mmap %03u from file %s", i_id, fileName);
             return;
         }
     }
@@ -64,13 +64,13 @@ void Map::LoadNavMesh(int gx, int gy)
     dtMeshHeader* header = (dtMeshHeader*)data;
     if (header->magic != DT_NAVMESH_MAGIC)
     {
-        sLog.outError("Error: %03u%02i%02i.mmtile has an invalid header", i_id, gx, gy);
+        sLog.outDebug("Error: %03u%02i%02i.mmtile has an invalid header", i_id, gx, gy);
         delete [] data;
         return;
     }
     if (header->version != DT_NAVMESH_VERSION)
     {
-        sLog.outError("Error: %03u%02i%02i.mmtile was built with Detour v%i, expected v%i",
+        sLog.outDebug("Error: %03u%02i%02i.mmtile was built with Detour v%i, expected v%i",
                               i_id, gx, gy,                 header->version, DT_NAVMESH_VERSION);
         delete [] data;
         return;
@@ -78,7 +78,7 @@ void Map::LoadNavMesh(int gx, int gy)
 
     if(!m_navMesh->addTile(data, length, DT_TILE_FREE_DATA))
     {
-        sLog.outError("Error: could not load %03u%02i%02i.mmtile into navmesh", i_id, gx, gy);
+        sLog.outDebug("Error: could not load %03u%02i%02i.mmtile into navmesh", i_id, gx, gy);
         delete [] data;
         return;
     }
@@ -87,7 +87,7 @@ void Map::LoadNavMesh(int gx, int gy)
 
     uint32 packedTilePos = packTileID(uint32(header->x), uint32(header->y));
     m_mmapTileMap.insert(std::pair<uint32, uint32>(packedGridPos, packedTilePos));
-    sLog.outDetail("Loaded mmtile %03i[%02i,%02i] into %03i(%u)[%02i,%02i]", i_id, gx, gy, i_id, GetInstanceId(), header->x, header->y);
+    sLog.outDebug("Loaded mmtile %03i[%02i,%02i] into %03i(%u)[%02i,%02i]", i_id, gx, gy, i_id, GetInstanceId(), header->x, header->y);
 }
 
 void Map::UnloadNavMesh(int gx, int gy)
@@ -104,7 +104,7 @@ void Map::UnloadNavMesh(int gx, int gy)
     m_navMesh->removeTile(m_navMesh->getTileRefAt(int(tileX), int(tileY)), 0, 0);
     m_mmapTileMap.erase(packedGridPos);
 
-    sLog.outDetail("Unloaded mmtile %03i[%02i,%02i] from %03i(%u)", i_id, gx, gy, i_id, GetInstanceId());
+    sLog.outDebug("Unloaded mmtile %03i[%02i,%02i] from %03i(%u)", i_id, gx, gy, i_id, GetInstanceId());
 }
 
 dtNavMesh* Map::GetNavMesh()

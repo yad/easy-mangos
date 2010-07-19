@@ -174,7 +174,7 @@ enum EnchantmentSlot
 };
 
 #define MAX_VISIBLE_ITEM_OFFSET       2                     // 2 fields per visible item (entry+enchantment)
-#define PRISMATIC_SOCKET              14                    // 1110 mask = blue(1) yellow(1) red(1) meta(0)
+
 #define MAX_GEM_SOCKETS               MAX_ITEM_PROTO_SOCKETS// (BONUS_ENCHANTMENT_SLOT-SOCK_ENCHANTMENT_SLOT) and item proto size, equal value expected
 
 enum EnchantmentOffset
@@ -328,12 +328,6 @@ class MANGOS_DLL_SPEC Item : public Object
         void AddToClientUpdateList();
         void RemoveFromClientUpdateList();
         void BuildUpdateData(UpdateDataMapType& update_players);
-
-        // Item refund data only
-        void SetExtCostId(uint32 id) { m_ExtendedCostId = id; };
-        uint32 GetExtCostId() { return m_ExtendedCostId; };
-        void SetPrice(uint32 price) { m_price = price; };
-        uint32 GetPrice() { return m_price; };
     private:
         std::string m_text;
         uint8 m_slot;
@@ -341,7 +335,5 @@ class MANGOS_DLL_SPEC Item : public Object
         ItemUpdateState uState;
         int16 uQueuePos;
         bool mb_in_trade;                                   // true if item is currently in trade-window
-        uint32 m_price;
-        uint32 m_ExtendedCostId;
 };
 #endif

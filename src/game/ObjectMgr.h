@@ -727,29 +727,6 @@ class ObjectMgr
         void LoadGossipMenu();
         void LoadGossipMenuItems();
 
-        // Loads the jail conf out of the database
-        void LoadJailConf(void);
-
-        // Jail Config...
-        std::string m_jail_obt;
-        uint32 m_jailconf_max_jails;    // Jail times when the char will be deleted
-        uint32 m_jailconf_max_duration; // Max. jail duration in hours
-        uint32 m_jailconf_min_reason;   // Min. char length of the reason
-        uint32 m_jailconf_warn_player;  // Warn player every login if max_jails is nearly reached?
-        uint32 m_jailconf_amnestie;     // player amnestie
-        float m_jailconf_ally_x;        // Coords of the jail for the allies
-        float m_jailconf_ally_y;
-        float m_jailconf_ally_z;
-        float m_jailconf_ally_o;
-        uint32 m_jailconf_ally_m;
-        float m_jailconf_horde_x;       // Coords of the jail for the horde
-        float m_jailconf_horde_y;
-        float m_jailconf_horde_z;
-        float m_jailconf_horde_o;
-        uint32 m_jailconf_horde_m;
-        uint32 m_jailconf_ban;          // Ban acc if max. jailtimes is reached?
-        uint32 m_jailconf_radius;       // Radius in which a jailed char can walk
-
         void LoadVendors();
         void LoadTrainerSpell();
 
@@ -941,8 +918,6 @@ class ObjectMgr
         void RemoveCreatureFromGrid(uint32 guid, CreatureData const* data);
         void AddGameobjectToGrid(uint32 guid, GameObjectData const* data);
         void RemoveGameobjectFromGrid(uint32 guid, GameObjectData const* data);
-        uint32 AddGOData(uint32 entry, uint32 map, float x, float y, float z, float o, uint32 spawntimedelay = 0, float rotation0 = 0, float rotation1 = 0, float rotation2 = 0, float rotation3 = 0);
-        uint32 AddCreData(uint32 entry, uint32 team, uint32 map, float x, float y, float z, float o, uint32 spawntimedelay = 0);
 
         // reserved names
         void LoadReservedPlayersNames();
@@ -1084,9 +1059,7 @@ class ObjectMgr
         GroupMap            mGroupMap;
         GuildMap            mGuildMap;
         ArenaTeamMap        mArenaTeamMap;
-
         SpellNameMap        mSpellNames;
-
         QuestAreaTriggerMap mQuestAreaTriggerMap;
         TavernAreaTriggerSet mTavernAreaTriggerSet;
         GameObjectForQuestSet mGameObjectForQuestSet;
@@ -1094,7 +1067,6 @@ class ObjectMgr
         AreaTriggerMap      mAreaTriggers;
         AreaTriggerScriptMap  mAreaTriggerScripts;
         BotSpawnsMap        mBotSpawns;
-
         RepOnKillMap        mRepOnKill;
 
         GossipMenusMap      m_mGossipMenusMap;

@@ -193,10 +193,8 @@ class ChatHandler
         bool HandleGMListFullCommand(const char* args);
         bool HandleGMListIngameCommand(const char* args);
         bool HandleGMVisibleCommand(const char* args);
-        bool HandleGMAutoEquipCommand(const char* args);
         bool HandleGMKillerMode(const char* args);
 
-        //bool HandleGoCommand(const char* args);
         bool HandleGoCreatureCommand(const char* args);
         bool HandleGoGraveyardCommand(const char* args);
         bool HandleGoGridCommand(const char* args);
@@ -512,7 +510,6 @@ class ChatHandler
         bool HandleLevelUpCommand(const char* args);
         bool HandleShowAreaCommand(const char* args);
         bool HandleHideAreaCommand(const char* args);
-        //bool HandleAddItemCommand(const char* args);
         bool HandleAddItemSetCommand(const char* args);
 
         bool HandleBankCommand(const char* args);
@@ -530,12 +527,6 @@ class ChatHandler
         bool HandleRepairitemsCommand(const char* args);
         bool HandleWaterwalkCommand(const char* args);
         bool HandleQuitCommand(const char* args);
-
-        // Jail by WarHead
-        bool HandleJailCommand(const char* args);
-        bool HandleJailInfoCommand(const char* args);
-        bool HandleUnJailCommand(const char* args);
-        bool HandleJailReloadCommand(const char* args);
 
         //! Development Commands
         bool HandleSaveAllCommand(const char* args);

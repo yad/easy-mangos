@@ -66,10 +66,10 @@ bool Config::Reload()
     delete mConf;
     mConf = new ACE_Configuration_Heap;
 
-    if (mConf->open() != -1)
+    if (mConf->open() == 0)
     {
         ACE_Ini_ImpExp config_importer(*mConf);
-        if (config_importer.import_config(mFilename.c_str()) != -1)
+        if (config_importer.import_config(mFilename.c_str()) == 0)
             return true;
     }
 

@@ -531,14 +531,6 @@ bool ChatHandler::HandleAHBotOptionsCommand(const char* args)
 }
 
 //reload commands
-
-bool ChatHandler::HandleJailReloadCommand(const char* arg)
- {
-     sObjectMgr.LoadJailConf();
-     SendSysMessage(LANG_JAIL_RELOAD);
-     return true;
- }
-
 bool ChatHandler::HandleReloadAllCommand(const char*)
 {
     HandleReloadSkillFishingBaseLevelCommand("");
@@ -7770,16 +7762,6 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
         default:
             break;
     }*/
-    return true;
-}
-
-bool ChatHandler::HandleGMAutoEquipCommand(const char* args)
-{
-    Player *chr = getSelectedPlayer();
-    if(chr)
-        chr->AutoEquipItem();
-    else
-        return false;
     return true;
 }
 

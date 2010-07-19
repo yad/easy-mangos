@@ -438,7 +438,7 @@ void Player::CalculateMinMaxDamage(WeaponAttackType attType, bool normalized, fl
         weapon_mindamage = lvl*0.85f*att_speed;
         weapon_maxdamage = lvl*1.25f*att_speed;
     }
-    else if(!IsUseEquipedWeapon(attType))                   //check if player not in form but still can't use weapon (broken/etc)
+    else if(!IsUseEquipedWeapon(attType==BASE_ATTACK))      //check if player not in form but still can't use weapon (broken/etc)
     {
         weapon_mindamage = BASE_MINDAMAGE;
         weapon_maxdamage = BASE_MAXDAMAGE;
@@ -876,19 +876,7 @@ bool Pet::UpdateStats(Stats stat)
     if ( stat == STAT_STAMINA )
     {
         if(owner)
-        {
-            float scale_coeff = 0.3f;
-            switch (owner->getClass())
-            {
-                case CLASS_HUNTER:
-                    scale_coeff = 0.45f;
-                    break;
-                case CLASS_WARLOCK:
-                    scale_coeff = 0.75f;
-                    break;
-            }
-            value += float(owner->GetStat(stat)) * scale_coeff;
-        }
+            value += float(owner->GetStat(stat)) * 0.3f;
     }
                                                             //warlock's and mage's pets gain 30% of owner's intellect
     else if ( stat == STAT_INTELLECT && getPetType() == SUMMON_PET )
@@ -967,9 +955,7 @@ void Pet::UpdateArmor()
 void Pet::UpdateMaxHealth()
 {
     UnitMods unitMod = UNIT_MOD_HEALTH;
-    UnitMods unitModStam = UNIT_MOD_STAT_STAMINA;
     float stamina = GetStat(STAT_STAMINA) - GetCreateStat(STAT_STAMINA);
-    stamina  *= GetModifierValue(unitModStam, TOTAL_PCT);
 
     float value   = GetModifierValue(unitMod, BASE_VALUE) + GetCreateHealth();
     value  *= GetModifierValue(unitMod, BASE_PCT);

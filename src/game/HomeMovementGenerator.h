@@ -51,6 +51,5 @@ class MANGOS_DLL_SPEC HomeMovementGenerator<Creature>
         DestinationHolder< Traveller<Creature> > i_destinationHolder;
 
         uint32 i_travel_timer;
-        //PathInfo i_path;
 };
 #endif

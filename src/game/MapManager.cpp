@@ -28,7 +28,6 @@
 #include "World.h"
 #include "CellImpl.h"
 #include "Corpse.h"
-#include "Config/Config.h"
 #include "ObjectMgr.h"
 
 #define CLASS_LOCK MaNGOS::ClassLevelLockable<MapManager, ACE_Thread_Mutex>

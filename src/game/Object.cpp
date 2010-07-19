@@ -270,8 +270,7 @@ void Object::BuildMovementUpdate(ByteBuffer * data, uint16 updateFlags) const
                 /*if (((Creature*)unit)->hasUnitState(UNIT_STAT_MOVING))
                     unit->m_movementInfo.SetMovementFlags(MOVEFLAG_FORWARD);*/
 
-                if (((Creature*)unit)->canFly() && !(((Creature*)unit)->canWalk()
-                    && unit->IsAtGroundLevel(unit->GetPositionX(), unit->GetPositionY(), unit->GetPositionZ())))
+                if (((Creature*)unit)->canFly())
                 {
                     // (ok) most seem to have this
                     unit->m_movementInfo.AddMovementFlag(MOVEFLAG_LEVITATING);
@@ -1172,6 +1171,16 @@ float WorldObject::GetDistance(const WorldObject* obj) const
     return ( dist > 0 ? dist : 0);
 }
 
+float WorldObject::GetDistanceSqr(float x, float y, float z) const
+{
+    float dx = GetPositionX() - x;
+    float dy = GetPositionY() - y;
+    float dz = GetPositionZ() - z;
+    float sizefactor = GetObjectBoundingRadius();
+    float dist = dx*dx+dy*dy+dz*dz-sizefactor;
+    return (dist > 0 ? dist : 0);
+}
+
 float WorldObject::GetDistance2d(float x, float y) const
 {
     float dx = GetPositionX() - x;
@@ -1189,16 +1198,6 @@ float WorldObject::GetDistance(float x, float y, float z) const
     float sizefactor = GetObjectBoundingRadius();
     float dist = sqrt((dx*dx) + (dy*dy) + (dz*dz)) - sizefactor;
     return ( dist > 0 ? dist : 0);
-}
-
-float WorldObject::GetDistanceSqr(float x, float y, float z) const
-{
-    float dx = GetPositionX() - x;
-    float dy = GetPositionY() - y;
-    float dz = GetPositionZ() - z;
-    float sizefactor = GetObjectBoundingRadius();
-    float dist = dx*dx+dy*dy+dz*dz-sizefactor;
-    return (dist > 0 ? dist : 0);
 }
 
 float WorldObject::GetDistance2d(const WorldObject* obj) const
@@ -1476,36 +1475,16 @@ void WorldObject::GetRandomPoint( float x, float y, float z, float distance, flo
     UpdateGroundPositionZ(rand_x,rand_y,rand_z);            // update to LOS height if available
 }
 
-void WorldObject::UpdateGroundPositionZ(float x, float y, float &z, float maxDiff) const
+void WorldObject::UpdateGroundPositionZ(float x, float y, float &z) const
 {
-    maxDiff = maxDiff >= 100.0f ? 10.0f : sqrtf(maxDiff);
-    bool useVmaps = false;
-    if( GetBaseMap()->GetHeight(x, y, z+2.0f, false) <  GetBaseMap()->GetHeight(x, y, z+2.0f, true) ) // check use of vmaps
-        useVmaps = true;
-
-    float normalizedZ = GetBaseMap()->GetHeight(x, y, z+2.0f, useVmaps);
-    // check if its reacheable
-    if(normalizedZ <= INVALID_HEIGHT || fabs(normalizedZ-z) > maxDiff)
-    {
-        useVmaps = !useVmaps;                                // try change vmap use
-        normalizedZ = GetBaseMap()->GetHeight(x, y, z+2.0f, useVmaps);
-        if(normalizedZ <= INVALID_HEIGHT || fabs(normalizedZ-z) > maxDiff)
-            return;                                        // Do nothing in case of another bad result
-    }
-    z = normalizedZ + 0.5f;                                // just to be sure that we are not a few pixel under the surface
+    float new_z = GetBaseMap()->GetHeight(x,y,z,true);
+    if(new_z > INVALID_HEIGHT)
+        z = new_z+ 0.05f;                                   // just to be sure that we are not a few pixel under the surface
 }
 
 bool WorldObject::IsPositionValid() const
 {
     return MaNGOS::IsValidMapCoord(m_positionX,m_positionY,m_positionZ,m_orientation);
-}
-
-bool WorldObject::IsAtGroundLevel(float x, float y, float z) const
-{
-    float groundZ = GetBaseMap()->GetHeight(x, y, z, true);
-    if(groundZ <= INVALID_HEIGHT || fabs(groundZ-z) > 0.5f)
-        return false;
-    return true;
 }
 
 void WorldObject::MonsterSay(const char* text, uint32 language, uint64 TargetGuid)
@@ -1691,7 +1670,8 @@ void WorldObject::SetMap(Map * map)
 
 Map const* WorldObject::GetBaseMap() const
 {
-    //ASSERT(m_currMap);
+    if (!m_currMap)
+        return NULL;
     return m_currMap->GetParent();
 }
 
@@ -1770,26 +1750,6 @@ Vehicle* WorldObject::SummonVehicle(uint32 id, float x, float y, float z, float 
         ((Creature*)this)->AI()->JustSummoned((Creature*)v);
 
     return v;
-}
-
-GameObject* WorldObject::SummonGameobject(uint32 id, float x, float y, float z, float ang, uint32 despwTime)
-{
-    GameObject* GameObj = new GameObject;
-
-    Map *map = GetMap();
-    if(!GameObj->Create(sObjectMgr.GenerateLowGuid(HIGHGUID_GAMEOBJECT), id, map,
-        GetPhaseMask(), x, y, z, ang, 0.0f, 0.0f, 0.0f, 0.0f, 100, GO_STATE_READY))
-    {
-        delete GameObj;
-        return NULL;
-    }
-    GameObj->SetRespawnTime(despwTime);
-
-    map->Add(GameObj);
-
-    GameObj->SummonLinkedTrapIfAny();
-
-    return GameObj;
 }
 
 namespace MaNGOS

@@ -89,7 +89,6 @@ World::World()
     m_ShutdownTimer = 0;
     m_gameTime=time(NULL);
     m_startTime=m_gameTime;
-    world_diff_time = 0;
     m_maxActiveSessionCount = 0;
     m_maxQueuedSessionCount = 0;
     m_resultQueue = NULL;
@@ -1235,9 +1234,6 @@ void World::SetInitialWorldSettings()
     sLog.outString( "Loading Bot Spawns..." );
     sObjectMgr.LoadBotSpawns();
 
-    // Loads the jail conf out of the database
-    sObjectMgr.LoadJailConf();
-
     ///- Load and initialize scripts
     sLog.outString( "Loading Scripts..." );
     sLog.outString();
@@ -1404,9 +1400,6 @@ void World::DetectDBCLang()
 /// Update the World !
 void World::Update(uint32 diff)
 {
-    //World diff time, showed in .s info, for lag detect...
-    world_diff_time = diff;
-
     ///- Update the different timers
     for(int i = 0; i < WUPDATE_COUNT; ++i)
     {

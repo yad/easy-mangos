@@ -290,8 +290,6 @@ class MANGOS_DLL_SPEC Object
 
         virtual bool hasQuest(uint32 /* quest_id */) const { return false; }
         virtual bool hasInvolvedQuest(uint32 /* quest_id */) const { return false; }
-
-        void ForceValuesUpdateAtIndex(uint32);
     protected:
 
         Object ( );
@@ -379,8 +377,7 @@ class MANGOS_DLL_SPEC WorldObject : public Object
         virtual float GetObjectBoundingRadius() const { return DEFAULT_WORLD_OBJECT_SIZE; }
 
         bool IsPositionValid() const;
-        void UpdateGroundPositionZ(float x, float y, float &z, float maxDiff = 30.0f) const;
-        bool IsAtGroundLevel(float x, float y, float z) const;
+        void UpdateGroundPositionZ(float x, float y, float &z) const;
 
         void GetRandomPoint( float x, float y, float z, float distance, float &rand_x, float &rand_y, float &rand_z ) const;
 
@@ -482,7 +479,7 @@ class MANGOS_DLL_SPEC WorldObject : public Object
         virtual bool isVisibleForInState(Player const* u, WorldObject const* viewPoint, bool inVisibleList) const = 0;
 
         void SetMap(Map * map);
-        Map * GetMap() const { /*ASSERT(m_currMap);*/ return m_currMap; }
+        Map * GetMap() const { if (!m_currMap) return NULL; return m_currMap; }
         //used to check all object's GetMap() calls when object is not in world!
         void ResetMap() { m_currMap = NULL; }
 
@@ -500,7 +497,6 @@ class MANGOS_DLL_SPEC WorldObject : public Object
         ViewPoint& GetViewPoint() { return m_viewPoint; }
 
         Vehicle* SummonVehicle(uint32 id, float x, float y, float z, float ang, uint32 vehicleId = NULL);
-        GameObject* SummonGameobject(uint32 id, float x, float y, float z, float ang, uint32 despwTime);
     protected:
         explicit WorldObject();
 

@@ -727,7 +727,6 @@ class MANGOS_DLL_SPEC WorldSession
 
         void HandleCancelTempEnchantmentOpcode(WorldPacket& recv_data);
         void HandleItemRefundInfoRequest(WorldPacket& recv_data);
-        void HandleItemRefund(WorldPacket& recv_data);
 
         void HandleChannelVoiceOnOpcode(WorldPacket & recv_data);
         void HandleVoiceSessionEnableOpcode(WorldPacket& recv_data);
@@ -767,7 +766,6 @@ class MANGOS_DLL_SPEC WorldSession
         void HandleCalendarGetNumPending(WorldPacket& recv_data);
 
         void HandleSpellClick(WorldPacket& recv_data);
-        void HandleMirrorImageDataRequest(WorldPacket & recv_data);
         void HandleAlterAppearance(WorldPacket& recv_data);
         void HandleRemoveGlyph(WorldPacket& recv_data);
         void HandleCharCustomize(WorldPacket& recv_data);

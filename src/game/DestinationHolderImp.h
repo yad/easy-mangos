@@ -206,13 +206,6 @@ DestinationHolder<TRAVELLER>::GetDistance3dFromDestSq(const WorldObject &obj) co
 
 template<typename TRAVELLER>
 float
-DestinationHolder<TRAVELLER>::GetDistance3dFromDestSq(float x, float y, float z) const
-{
-    return (i_destX-x)*(i_destX-x)+(i_destY-y)*(i_destY-y)+(i_destZ-z)*(i_destZ-z);
-}
-
-template<typename TRAVELLER>
-float
 DestinationHolder<TRAVELLER>::GetDestinationDiff(float x, float y, float z) const
 {
     return sqrt(((x-i_destX)*(x-i_destX)) + ((y-i_destY)*(y-i_destY)) + ((z-i_destZ)*(z-i_destZ)));
