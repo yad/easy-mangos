@@ -2665,6 +2665,13 @@ void Spell::EffectTriggerSpell(SpellEffectIndex effIndex)
                 pet->CastSpell(pet, 28305, true);
             return;
         }
+        // Glyph of Mirror Image
+        case 58832:
+        {
+            if (m_caster->HasAura(63093))
+                m_caster->CastSpell(m_caster, 65047, true); // Mirror Image
+            break;
+        }
     }
 
     // normal case
@@ -3841,6 +3848,9 @@ void Spell::EffectSummonType(SpellEffectIndex eff_idx)
                     // Snake trap exception
                     else if (m_spellInfo->EffectMiscValueB[eff_idx] == 2301)
                         DoSummonSnakes(eff_idx);
+                    //Mirror Image
+                    else if (prop_id == 1021)
+                        DoSummonGuardian(eff_idx, summon_prop->FactionId);
                     else
                         DoSummonWild(eff_idx, summon_prop->FactionId);
                     break;
@@ -4439,6 +4449,56 @@ void Spell::DoSummonGuardian(SpellEffectIndex eff_idx, uint32 forceFaction)
         m_caster->AddGuardian(spawnCreature);
 
         map->Add((Creature*)spawnCreature);
+
+        switch(pet_entry)
+        {
+            case 31216:
+            {
+                // set bounding and combat radiuses to player defaults values
+                spawnCreature->SetFloatValue(UNIT_FIELD_BOUNDINGRADIUS, DEFAULT_WORLD_OBJECT_SIZE);
+                spawnCreature->SetFloatValue(UNIT_FIELD_COMBATREACH, 1.5f);
+                // copy onwer's SheathState and UnitBytes2_Flags
+                spawnCreature->SetUInt32Value(UNIT_FIELD_BYTES_2,m_caster->GetUInt32Value(UNIT_FIELD_BYTES_2));
+                //Set Health and Manna
+                spawnCreature->SetMaxHealth(m_caster->GetMaxHealth());
+                spawnCreature->SetHealth(m_caster->GetHealth());
+                spawnCreature->SetMaxPower(POWER_MANA, m_caster->GetMaxPower(POWER_MANA));
+                spawnCreature->SetPower(POWER_MANA, m_caster->GetPower(POWER_MANA));
+                // copy owner auras
+                Unit::SpellAuraHolderMap const& auras = m_caster->GetSpellAuraHolderMap();
+                for(Unit::SpellAuraHolderMap::const_iterator itr = auras.begin(); itr != auras.end(); ++itr)
+                {
+                    SpellAuraHolder *holder = itr->second;
+
+                    if (holder && holder->IsPositive() && !holder->IsPassive())
+                    {
+                        SpellAuraHolder *new_holder = CreateSpellAuraHolder(holder->GetSpellProto(), (Unit*)spawnCreature, (Unit*)spawnCreature);
+
+                        for (int32 i = 0; i < MAX_EFFECT_INDEX; ++i)
+                        {
+                            Aura *aur = holder->GetAuraByEffectIndex(SpellEffectIndex(i));
+
+                            if (!aur)
+                                continue;
+
+                            int32 basePoints = aur->GetBasePoints();
+                            Aura * new_aur = CreateAura(aur->GetSpellProto(), aur->GetEffIndex(), &basePoints, new_holder, (Unit*)spawnCreature, (Unit*)spawnCreature);
+
+                            new_aur->SetAuraMaxDuration( aur->GetAuraMaxDuration() );
+                            new_aur->SetAuraDuration( aur->GetAuraDuration() );
+
+                            new_holder->AddAura(new_aur, new_aur->GetEffIndex());
+                            new_holder->SetIsSingleTarget(false);
+                        }
+
+                        spawnCreature->AddSpellAuraHolder(new_holder);
+                    }
+                }
+                break;
+            }
+            default:
+                break;
+         }
     }
 }
 
@@ -5757,6 +5817,9 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     unitTarget->CastSpell(unitTarget, 44870, true);
                     break;
                 }
+                case 45204: // Clone Me!
+                    unitTarget->CastSpell(m_caster, damage, true);
+                    break;
                 case 45206:                                 // Copy Off-hand Weapon
                 {
                     if (m_caster->GetTypeId() != TYPEID_UNIT || !unitTarget || unitTarget->GetTypeId() != TYPEID_PLAYER)
