@@ -122,7 +122,7 @@ void PathInfo::Build(dtPolyRef startPoly, dtPolyRef endPoly)
         // could mean start or end has...
         //     (x,y) outside navmesh
         //     (z) above/below the navmesh
-        sLog.outError("%u's Path Build failed: invalid start or end polygon", m_sourceObject->GetGUID());
+        sLog.outDebug("%u's Path Build failed: invalid start or end polygon", m_sourceObject->GetGUID());
         shortcut();
         return;
     }
@@ -152,7 +152,7 @@ void PathInfo::Build(dtPolyRef startPoly, dtPolyRef endPoly)
     if(m_length == 0)
     {
         // only happens if we passed bad data to findPath(), or navmesh is messed up
-        sLog.outError("%u's Path Build failed: 0-length path", m_sourceObject->GetGUID());
+        sLog.outDebug("%u's Path Build failed: 0-length path", m_sourceObject->GetGUID());
         shortcut();
         return;
     }
@@ -367,7 +367,7 @@ void PathInfo::updateNextPosition()
         delete [] pathPoints;
 
         // only happens if pass bad data to findStraightPath or navmesh is broken
-        sLog.outError("%u's UpdateNextPosition failed: 0 length path", m_sourceObject->GetGUID());
+        sLog.outDebug("%u's UpdateNextPosition failed: 0 length path", m_sourceObject->GetGUID());
         shortcut();
         return;
     }
