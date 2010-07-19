@@ -8439,9 +8439,24 @@ bool Unit::SelectHostileTarget()
         }
     }
 
+    if (CanHaveThreatList())
+    {
     if ( !target && !m_ThreatManager.isThreatListEmpty() )
         // No taunt aura or taunt aura caster is dead standart target selection
         target = m_ThreatManager.getHostileTarget();
+    }
+    else if(GetCharmInfo() && !GetCharmInfo()->HasReactState(REACT_PASSIVE))
+    {
+        target = getAttackerForHelper();
+        if (!target)
+        {
+            if (Unit * owner = GetOwner())
+            {
+                if (owner->isInCombat())
+                    target = owner->getAttackerForHelper();
+            }
+        }
+    }
 
     if (target)
     {
