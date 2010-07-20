@@ -12788,14 +12788,8 @@ uint8 Player::CanUseItem( Item *pItem, bool not_loading ) const
                                 player->RemoveRunningFormSpells();
 
                             if(player->CanUseFlyingMounts(sEntry))
-                            {
-                                SpellAuraHolder *holder = CreateSpellAuraHolder(sEntry, player, NULL);
-                                for(int j = 0; j < MAX_EFFECT_INDEX; ++j)
-                                {
-                                    Aura* aur = CreateAura(sEntry, SpellEffectIndex(j), NULL, holder, player, NULL);
-                                    holder->AddAura(aur, SpellEffectIndex(j));
-                                }
-                            }
+                                player->CastSpell(player, sEntry, false);
+
                             return EQUIP_ERR_OK;
                         }
                         else if(isFlyingFormSpell(sEntry))
@@ -12808,17 +12802,8 @@ uint8 Player::CanUseItem( Item *pItem, bool not_loading ) const
                                 player->RemoveRunningFormSpells();*/
 
                             if(player->CanUseFlyingMounts(sEntry))
-                            {
-                                for(int j = 0; j < MAX_EFFECT_INDEX; ++j)
-                                {
-                                    SpellAuraHolder *holder = CreateSpellAuraHolder(sEntry, player, NULL);
-                                    for(int j = 0; j < MAX_EFFECT_INDEX; ++j)
-                                    {
-                                        Aura* aur = CreateAura(sEntry, SpellEffectIndex(j), NULL, holder, player, NULL);
-                                        holder->AddAura(aur, SpellEffectIndex(j));
-                                    }
-                                }
-                            }
+                                player->CastSpell(player, sEntry, false);
+
                             return EQUIP_ERR_OK;
                         }
                         else if (isRunningSpell(sEntry) || isRunningFormSpell(sEntry))

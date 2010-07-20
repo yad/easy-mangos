@@ -2370,6 +2370,9 @@ bool ChatHandler::HandleLearnAllMySpellsCommand(const char* /*args*/)
                 {
                     Quest const *pQuest = sObjectMgr.GetQuestTemplate(itr->second);
 
+                    if (!pQuest)
+                        continue;
+
                     SpellEntry const* spellInfoSrcSpell = sSpellStore.LookupEntry(pQuest->GetSrcSpell());
                     if
                     (
@@ -2445,6 +2448,70 @@ bool ChatHandler::HandleLearnAllMySpellsCommand(const char* /*args*/)
 
     if(!player->HasSpell(54197))
         player->learnSpell(54197, false);
+
+    switch (player->GetTeam())
+    {
+        case ALLIANCE:
+        {
+            static uint32 atMounts[] = {458, 470, 472, 6648, 6777, 6898, 6898, 8394, 10789, 10793, 10873, 10969, 15779,
+                16055, 16056, 16082, 16083, 17229, 17453, 17454, 17459, 17460, 17461, 22717, 22719, 22720, 22723, 23219,
+                23221, 23222, 23223, 23225, 23227, 23228, 23229, 23238, 23239, 23240, 23338, 23510, 34406, 34896, 34897,
+                34898, 34899, 35710, 35711, 35712, 35713, 35714, 39315, 39317, 39318, 39319, 48027, 59785, 59791, 59799,
+                60114, 60118, 61425, 61465, 61470, 63232, 63636, 63637, 63638, 63639, 65637, 65638, 65640, 65642, 65643,
+                66090, 66847, 68057, 68809};
+
+            for(uint32* bsl = &atMounts[0]; *bsl; ++bsl)
+                if(!player->HasSpell(*bsl))
+                    player->learnSpell(*bsl, false);
+
+            static uint32 afMounts[] = {61996, 32242, 61229, 32289, 32290, 32292, 66087, 32239, 32235, 32240};
+
+            for(uint32* bsl = &afMounts[0]; *bsl; ++bsl)
+                if(!player->HasSpell(*bsl))
+                    player->learnSpell(*bsl, false);
+
+            break;
+        }
+        case HORDE:
+        {
+            static uint32 htMounts[] = {580, 6653, 6654, 8395, 10796, 10799, 16080, 16081, 16084, 17450, 17462, 17463, 
+                17464, 17465, 18989, 18990, 18991, 18992, 22718, 22721, 22722, 22724, 23241, 23242, 23243, 23246, 23247,
+                23248, 23249, 23250, 23251, 23252, 23509, 33660, 34767, 34769, 34795, 34896, 34897, 34898, 34899, 35018,
+                35020, 35022, 35025, 35027, 35028, 39315, 39317, 39318, 39319, 59788, 59793, 59797, 60116, 60119, 61447,
+                61467, 61469, 63635, 63640, 63641, 63642, 63643, 64656, 64657, 64658, 64659, 64977, 65639, 65641, 65644, 
+                65645, 65646, 66091, 66846, 68056, 68768};
+
+            for(uint32* bsl = &htMounts[0]; *bsl; ++bsl)
+                if(!player->HasSpell(*bsl))
+                    player->learnSpell(*bsl, false);
+
+            static uint32 hfMounts[] = {32243, 32244, 32245, 32246, 32295, 32296, 32297, 61230, 61997, 66088};
+
+            for(uint32* bsl = &hfMounts[0]; *bsl; ++bsl)
+                if(!player->HasSpell(*bsl))
+                    player->learnSpell(*bsl, false);
+            break;
+        }
+        default:
+            break;
+    }
+
+    static uint32 ntMounts[] = {54197, 5784, 17481, 23161, 24242, 24252, 26656, 30174, 36702, 41252, 42668, 42776, 42777,
+                43688, 43899, 43900, 46628, 47977, 48025, 49322, 49379, 51412, 54753, 55531, 58983, 60424, 64731, 65917,
+                66906, 67466, 71342};
+
+    for(uint32* bsl = &ntMounts[0]; *bsl; ++bsl)
+        if(!player->HasSpell(*bsl))
+            player->learnSpell(*bsl, false);
+
+    static uint32 nfMounts[] = {37015, 39798, 39800, 39801, 39802, 39803, 40192, 41513, 41514, 41515, 41516, 41517, 41518,
+                42667, 42668, 43927, 44151, 44153, 44744, 46197, 46199, 49193, 54729, 58615, 59567, 59568, 59569, 59570,
+                59571, 59650, 59961, 59976, 59996, 60002, 60021, 60024, 60025, 61294, 61309, 61451, 63796, 63844, 63956,
+                63963, 64927, 65439, 69395};
+
+    for(uint32* bsl = &nfMounts[0]; *bsl; ++bsl)
+        if(!player->HasSpell(*bsl))
+            player->learnSpell(*bsl, false);
 
     SendSysMessage(LANG_COMMAND_LEARN_CLASS_SPELLS);
     return true;
@@ -2581,6 +2648,167 @@ bool ChatHandler::HandleLearnAllMySpellsForMyLevelCommand(const char* /*args*/)
 
     if(!player->HasSpell(54197) && player->getLevel() > 76)
         player->learnSpell(54197, false);
+
+    switch (player->GetTeam())
+    {
+        case ALLIANCE:
+        {
+            static uint32 atMounts[] = {458, 470, 472, 6648, 6777, 6898, 6898, 8394, 10789, 10793, 10873, 10969, 15779,
+                16055, 16056, 16082, 16083, 17229, 17453, 17454, 17459, 17460, 17461, 22717, 22719, 22720, 22723, 23219,
+                23221, 23222, 23223, 23225, 23227, 23228, 23229, 23238, 23239, 23240, 23338, 23510, 34406, 34896, 34897,
+                34898, 34899, 35710, 35711, 35712, 35713, 35714, 39315, 39317, 39318, 39319, 48027, 59785, 59791, 59799,
+                60114, 60118, 61425, 61465, 61470, 63232, 63636, 63637, 63638, 63639, 65637, 65638, 65640, 65642, 65643,
+                66090, 66847, 68057, 68809};
+
+            for(uint32* bsl = &atMounts[0]; *bsl; ++bsl)
+            {
+                SpellEntry const *sEntry = sSpellStore.LookupEntry(*bsl);
+                if (sEntry && player->isRunningSpell(sEntry))
+                {
+                    if (sEntry->CalculateSimpleValue(SpellEffectIndex(1)) < 100)
+                    {
+                        if (player->getLevel() > 19)
+                            if(!player->HasSpell(*bsl))
+                                player->learnSpell(*bsl, false);
+                    }
+                    else
+                    {
+                        if (player->getLevel() > 39)
+                            if(!player->HasSpell(*bsl))
+                                player->learnSpell(*bsl, false);
+                    }
+                }
+            }
+
+            static uint32 afMounts[] = {61996, 32242, 61229, 32289, 32290, 32292, 66087, 32239, 32235, 32240};
+
+            for(uint32* bsl = &afMounts[0]; *bsl; ++bsl)
+            {
+                SpellEntry const *sEntry = sSpellStore.LookupEntry(*bsl);
+                if (sEntry && player->isFlyingSpell(sEntry))
+                {
+                    if (sEntry->CalculateSimpleValue(SpellEffectIndex(1)) < 280)
+                    {
+                        if (player->getLevel() > 59)
+                            if(!player->HasSpell(*bsl))
+                                player->learnSpell(*bsl, false);
+                    }
+                    else
+                    {
+                        if (player->getLevel() > 69)
+                            if(!player->HasSpell(*bsl))
+                                player->learnSpell(*bsl, false);
+                    }
+                }
+            }
+
+            break;
+        }
+        case HORDE:
+        {
+            static uint32 htMounts[] = {580, 6653, 6654, 8395, 10796, 10799, 16080, 16081, 16084, 17450, 17462, 17463, 
+                17464, 17465, 18989, 18990, 18991, 18992, 22718, 22721, 22722, 22724, 23241, 23242, 23243, 23246, 23247,
+                23248, 23249, 23250, 23251, 23252, 23509, 33660, 34767, 34769, 34795, 34896, 34897, 34898, 34899, 35018,
+                35020, 35022, 35025, 35027, 35028, 39315, 39317, 39318, 39319, 59788, 59793, 59797, 60116, 60119, 61447,
+                61467, 61469, 63635, 63640, 63641, 63642, 63643, 64656, 64657, 64658, 64659, 64977, 65639, 65641, 65644, 
+                65645, 65646, 66091, 66846, 68056, 68768};
+
+            for(uint32* bsl = &htMounts[0]; *bsl; ++bsl)
+            {
+                SpellEntry const *sEntry = sSpellStore.LookupEntry(*bsl);
+                if (sEntry && player->isRunningSpell(sEntry))
+                {
+                    if (sEntry->CalculateSimpleValue(SpellEffectIndex(1)) < 100)
+                    {
+                        if (player->getLevel() > 19)
+                            if(!player->HasSpell(*bsl))
+                                player->learnSpell(*bsl, false);
+                    }
+                    else
+                    {
+                        if (player->getLevel() > 39)
+                            if(!player->HasSpell(*bsl))
+                                player->learnSpell(*bsl, false);
+                    }
+                }
+            }
+
+            static uint32 hfMounts[] = {32243, 32244, 32245, 32246, 32295, 32296, 32297, 61230, 61997, 66088};
+
+            for(uint32* bsl = &hfMounts[0]; *bsl; ++bsl)
+            {
+                SpellEntry const *sEntry = sSpellStore.LookupEntry(*bsl);
+                if (sEntry && player->isFlyingSpell(sEntry))
+                {
+                    if (sEntry->CalculateSimpleValue(SpellEffectIndex(1)) < 280)
+                    {
+                        if (player->getLevel() > 59)
+                            if(!player->HasSpell(*bsl))
+                                player->learnSpell(*bsl, false);
+                    }
+                    else
+                    {
+                        if (player->getLevel() > 69)
+                            if(!player->HasSpell(*bsl))
+                                player->learnSpell(*bsl, false);
+                    }
+                }
+            }
+
+            break;
+        }
+        default:
+            break;
+    }
+
+    static uint32 ntMounts[] = {54197, 5784, 17481, 23161, 24242, 24252, 26656, 30174, 36702, 41252, 42668, 42776, 42777,
+                43688, 43899, 43900, 46628, 47977, 48025, 49322, 49379, 51412, 54753, 55531, 58983, 60424, 64731, 65917,
+                66906, 67466, 71342};
+
+    for(uint32* bsl = &ntMounts[0]; *bsl; ++bsl)
+    {
+        SpellEntry const *sEntry = sSpellStore.LookupEntry(*bsl);
+        if (sEntry && player->isRunningSpell(sEntry))
+        {
+            if (sEntry->CalculateSimpleValue(SpellEffectIndex(1)) < 100)
+            {
+                if (player->getLevel() > 19)
+                    if(!player->HasSpell(*bsl))
+                        player->learnSpell(*bsl, false);
+            }
+            else
+            {
+                if (player->getLevel() > 39)
+                    if(!player->HasSpell(*bsl))
+                        player->learnSpell(*bsl, false);
+            }
+        }
+    }
+
+    static uint32 nfMounts[] = {37015, 39798, 39800, 39801, 39802, 39803, 40192, 41513, 41514, 41515, 41516, 41517, 41518,
+                42667, 42668, 43927, 44151, 44153, 44744, 46197, 46199, 49193, 54729, 58615, 59567, 59568, 59569, 59570,
+                59571, 59650, 59961, 59976, 59996, 60002, 60021, 60024, 60025, 61294, 61309, 61451, 63796, 63844, 63956,
+                63963, 64927, 65439, 69395};
+
+    for(uint32* bsl = &nfMounts[0]; *bsl; ++bsl)
+    {
+        SpellEntry const *sEntry = sSpellStore.LookupEntry(*bsl);
+        if (sEntry && player->isFlyingSpell(sEntry))
+        {
+            if (sEntry->CalculateSimpleValue(SpellEffectIndex(1)) < 280)
+            {
+                if (player->getLevel() > 59)
+                    if(!player->HasSpell(*bsl))
+                        player->learnSpell(*bsl, false);
+            }
+            else
+            {
+                if (player->getLevel() > 69)
+                    if(!player->HasSpell(*bsl))
+                        player->learnSpell(*bsl, false);
+            }
+        }
+    }
 
     SendSysMessage(LANG_COMMAND_LEARN_CLASS_SPELLS);
     return true;
@@ -7393,375 +7621,6 @@ bool ChatHandler::HandleGMStartUpCommand(const char* args)
     chr->GetBestItemForMyLevel();
     chr->AutoEquipItem();
     chr->PurgeMyBags();
-
-    /*const ItemPrototype * proto = NULL;
-    switch(chr->getRace())
-    {
-        case RACE_HUMAN:
-        {
-            proto = sObjectMgr.GetItemPrototype(5656);
-            if(proto && )
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(5655);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(2414);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(18777);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(18778);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(18776);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            break;
-        }
-        case RACE_ORC:
-        {
-            proto = sObjectMgr.GetItemPrototype(5668);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(1132);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(46099);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(5665);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(18796);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(18797);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(18798);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            break;
-        }
-        case RACE_DWARF:
-        {
-            proto = sObjectMgr.GetItemPrototype(5873);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(5872);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(5864);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(18785);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(18786);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(18787);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            break;
-        }
-        case RACE_NIGHTELF:
-        {
-            proto = sObjectMgr.GetItemPrototype(8631);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(8632);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(8629);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(18902);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(18766);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(18767);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            break;
-        }
-        case RACE_UNDEAD_PLAYER:
-        {
-            proto = sObjectMgr.GetItemPrototype(13333);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(13332);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(46308);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(13331);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(18791);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(13334);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            break;
-        }
-        case RACE_TAUREN:
-        {
-            proto = sObjectMgr.GetItemPrototype(46100);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(15290);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(15277);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(18793);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(18794);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(18795);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            break;
-        }
-        case RACE_GNOME:
-        {
-            proto = sObjectMgr.GetItemPrototype(8595);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(8563);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(13321);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(13322);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(18773);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(18774);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(18772);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            break;
-        }
-        case RACE_TROLL:
-        {
-            proto = sObjectMgr.GetItemPrototype(8588);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(8591);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(8592);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(18788);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(18790);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(18789);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            break;
-        }
-        case RACE_BLOODELF:
-        {
-            proto = sObjectMgr.GetItemPrototype(29220);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(29221);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(28927);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(29222);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(28936);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(29223);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(29224);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            break;
-        }
-        case RACE_DRAENEI:
-        {
-            proto = sObjectMgr.GetItemPrototype(28481);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(29744);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(29743);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(29745);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(29746);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(29747);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            break;
-        }
-        default:
-            break;
-    }
-
-    switch(chr->GetTeam())
-    {
-        case HORDE:
-        {
-            proto = sObjectMgr.GetItemPrototype(25475);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(25474);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(25476);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(25532);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(25477);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(25531);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(25533);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            break;
-        }
-        case ALLIANCE:
-        {
-            proto = sObjectMgr.GetItemPrototype(25472);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(25470);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(25471);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(25529);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(25528);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(25527);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            proto = sObjectMgr.GetItemPrototype(25473);
-            if(proto)
-                chr->learnSpell(proto->Spells[1].SpellId, false);
-
-            break;
-        }
-        default:
-            break;
-    }*/
     return true;
 }
 
