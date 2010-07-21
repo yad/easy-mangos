@@ -2344,10 +2344,6 @@ Creature* Player::GetNPCIfCanInteractWith(ObjectGuid guid, uint32 npcflagmask)
     if (hasUnitState(UNIT_STAT_CAN_NOT_REACT_OR_LOST_CONTROL))
         return NULL;
 
-    // needed by Aura 292
-    if (GetGUID() == guid.GetRawValue())
-        return ((Creature*)this);
-
     // exist (we need look pets also for some interaction (quest/etc)
     Creature *unit = GetMap()->GetCreatureOrPetOrVehicle(guid);
     if (!unit)
