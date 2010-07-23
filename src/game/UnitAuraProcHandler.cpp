@@ -717,7 +717,7 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura
                         SpellEntry const *spell = iter->second->GetSpellProto();
 
                         if( spell->Mechanic == MECHANIC_STUN ||
-                            iter->second->HasAuraAndMechanicEffect(MECHANIC_STUN))
+                            iter->second->HasMechanic(MECHANIC_STUN))
                         {
                             pVictim->RemoveAurasDueToSpell(spell->Id);
                             iter = Auras.begin();
@@ -2227,6 +2227,34 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura
                 target = this;
                 break;
             }
+            // Flametongue Weapon (Passive), Ranks
+            if (dummySpell->SpellFamilyFlags & UI64LIT(0x0000000000200000))
+            {
+                if (GetTypeId()!=TYPEID_PLAYER || !castItem)
+                    return SPELL_AURA_PROC_FAILED;
+
+                // Only proc for enchanted weapon
+                Item *usedWeapon = ((Player *)this)->GetWeaponForAttack(procFlag & PROC_FLAG_SUCCESSFUL_OFFHAND_HIT ? OFF_ATTACK : BASE_ATTACK, true, true);
+                if (usedWeapon != castItem)
+                    return SPELL_AURA_PROC_FAILED;
+
+                switch (dummySpell->Id)
+                {
+                    case 10400: triggered_spell_id =  8026; break; // Rank 1
+                    case 15567: triggered_spell_id =  8028; break; // Rank 2
+                    case 15568: triggered_spell_id =  8029; break; // Rank 3
+                    case 15569: triggered_spell_id = 10445; break; // Rank 4
+                    case 16311: triggered_spell_id = 16343; break; // Rank 5
+                    case 16312: triggered_spell_id = 16344; break; // Rank 6
+                    case 16313: triggered_spell_id = 25488; break; // Rank 7
+                    case 58784: triggered_spell_id = 58786; break; // Rank 8
+                    case 58791: triggered_spell_id = 58787; break; // Rank 9
+                    case 58792: triggered_spell_id = 58788; break; // Rank 10
+                    default:
+                        return SPELL_AURA_PROC_FAILED;
+                }
+                break;
+            }
             // Earth Shield
             if (dummySpell->SpellFamilyFlags & UI64LIT(0x0000040000000000))
             {
@@ -2756,7 +2784,7 @@ SpellAuraProcResult Unit::HandleProcTriggerSpellAuraProc(Unit *pVictim, uint32 d
             }
             break;
         case SPELLFAMILY_MAGE:
-            if (auraSpellInfo->SpellIconID == 2127)     // Blazing Speed
+            if (auraSpellInfo->SpellIconID == 2127)         // Blazing Speed
             {
                 switch (auraSpellInfo->Id)
                 {
@@ -2765,17 +2793,23 @@ SpellAuraProcResult Unit::HandleProcTriggerSpellAuraProc(Unit *pVictim, uint32 d
                         trigger_spell_id = 31643;
                         break;
                     default:
-                        sLog.outError("Unit::HandleProcTriggerSpellAuraProc: Spell %u miss posibly Blazing Speed",auraSpellInfo->Id);
+                        sLog.outError("Unit::HandleProcTriggerSpellAuraProc: Spell %u miss possibly Blazing Speed",auraSpellInfo->Id);
                         return SPELL_AURA_PROC_FAILED;
                 }
             }
-            // Persistent Shield (Scarab Brooch trinket)
-            else if(auraSpellInfo->Id == 26467)
+            else if(auraSpellInfo->Id == 26467)             // Persistent Shield (Scarab Brooch trinket)
             {
-                // This spell originally trigger 13567 - Dummy Trigger (vs dummy efect)
+                // This spell originally trigger 13567 - Dummy Trigger (vs dummy effect)
                 basepoints[0] = damage * 15 / 100;
                 target = pVictim;
                 trigger_spell_id = 26470;
+            }
+            else if(auraSpellInfo->Id == 71761)             // Deep Freeze Immunity State
+            {
+                // spell applied only to permanent immunes to stun targets (bosses)
+                if (pVictim->GetTypeId() != TYPEID_UNIT ||
+                    (((Creature*)pVictim)->GetCreatureInfo()->MechanicImmuneMask & (1 << (MECHANIC_STUN - 1))) == 0)
+                    return SPELL_AURA_PROC_FAILED;
             }
             break;
         case SPELLFAMILY_WARRIOR:
@@ -3651,5 +3685,10 @@ SpellAuraProcResult Unit::HandleModDamagePercentDoneAuraProc(Unit* /*pVictim*/, 
 
         CastCustomSpell(this, 34075, &bp, NULL, NULL, true, castItem, triggeredByAura);
     }
+    // Arcane Blast
+    else if (spellInfo->Id == 36032 && procSpell->SpellFamilyName == SPELLFAMILY_MAGE && procSpell->SpellIconID == 2294)
+        // prevent proc from self(spell that triggered this aura)
+        return SPELL_AURA_PROC_FAILED;
+
     return SPELL_AURA_PROC_OK;
 }

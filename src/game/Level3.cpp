@@ -5166,6 +5166,13 @@ bool ChatHandler::HandleBankCommand(const char* /*args*/)
     return true;
 }
 
+bool ChatHandler::HandleStableCommand(const char* /*args*/)
+{
+    m_session->SendStablePet(m_session->GetPlayer()->GetGUID());
+
+    return true;
+}
+
 bool ChatHandler::HandleChangeWeather(const char* args)
 {
     if(!*args)

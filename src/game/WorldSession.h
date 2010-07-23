@@ -28,6 +28,7 @@
 
 struct ItemPrototype;
 struct AuctionEntry;
+struct AuctionHouseEntry;
 struct DeclinedName;
 
 class ObjectGuid;
@@ -228,14 +229,16 @@ class MANGOS_DLL_SPEC WorldSession
         void SendBattlegGroundList( uint64 guid, BattleGroundTypeId bgTypeId );
 
         void SendTradeStatus(TradeStatus status);
+        void SendUpdateTrade(bool trader_state = true);
         void SendCancelTrade();
 
-        void SendStablePet(uint64 guid );
         void SendPetitionQueryOpcode( uint64 petitionguid);
-        void SendUpdateTrade(bool trader_state = true);
 
         //pet
         void SendPetNameQuery(uint64 guid, uint32 petnumber);
+        void SendStablePet(ObjectGuid guid);
+        void SendStableResult(uint8 res);
+        bool CheckStableMaster(ObjectGuid guid);
 
         // Account Data
         AccountData *GetAccountData(AccountDataType type) { return &m_accountData[type]; }
@@ -264,12 +267,13 @@ class MANGOS_DLL_SPEC WorldSession
         bool SendItemInfo( uint32 itemid, WorldPacket data );
 
         //auction
-        void SendAuctionHello( uint64 guid, Creature * unit );
+        void SendAuctionHello(Creature * unit);
         void SendAuctionCommandResult( uint32 auctionId, uint32 Action, uint32 ErrorCode, uint32 bidError = 0);
         void SendAuctionBidderNotification( uint32 location, uint32 auctionId, uint64 bidder, uint32 bidSum, uint32 diff, uint32 item_template);
         void SendAuctionOwnerNotification( AuctionEntry * auction );
         void SendAuctionOutbiddedMail( AuctionEntry * auction, uint32 newPrice );
         void SendAuctionCancelledToBidderMail( AuctionEntry* auction );
+        AuctionHouseEntry const* GetCheckedAuctionHouseForAuctioneer(ObjectGuid guid);
 
         //Item Enchantment
         void SendEnchantmentLog(uint64 Target, uint64 Caster,uint32 ItemID,uint32 SpellID);
