@@ -1033,6 +1033,9 @@ void World::SetInitialWorldSettings()
     sLog.outString( "Loading ItemRequiredTarget...");
     sObjectMgr.LoadItemRequiredTarget();
 
+    sLog.outString( "Loading Reputation Reward Rates...");
+    sObjectMgr.LoadReputationRewardRate();
+
     sLog.outString( "Loading Creature Reputation OnKill Data..." );
     sObjectMgr.LoadReputationOnKill();
 
