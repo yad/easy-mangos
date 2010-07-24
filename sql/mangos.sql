@@ -24,7 +24,7 @@ CREATE TABLE `db_version` (
   `version` varchar(120) default NULL,
   `creature_ai_version` varchar(120) default NULL,
   `cache_id` int(10) default '0',
-  `required_10237_01_mangos_spell_bonus_data` bit(1) default NULL
+  `required_10257_01_mangos_command` bit(1) default NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 ROW_FORMAT=FIXED COMMENT='Used DB version notes';
 
 --
@@ -520,6 +520,10 @@ INSERT INTO `command` VALUES
 ('additem',3,'Syntax: .additem #itemid/[#itemname]/#shift-click-item-link #itemcount\r\n\r\nAdds the specified number of items of id #itemid (or exact (!) name $itemname in brackets, or link created by shift-click at item in inventory or recipe) to your or selected character inventory. If #itemcount is omitted, only one item will be added.\r\n.'),
 ('additemset',3,'Syntax: .additemset #itemsetid\r\n\r\nAdd items from itemset of id #itemsetid to your or selected character inventory. Will add by one example each item from itemset.'),
 ('announce',1,'Syntax: .announce $MessageToBroadcast\r\n\r\nSend a global message to all players online in chat log.'),
+('auction',3,'Syntax: .auction\r\n\r\nShow your team auction store.'),
+('auction alliance',3,'Syntax: .auction alliance\r\n\r\nShow alliance auction store independent from your team.'),
+('auction goblin',3,'Syntax: .auction goblin\r\n\r\nShow goblin auction store common for all teams.'),
+('auction horde',3,'Syntax: .auction horde\r\n\r\nShow horde auction store independent from your team.'),
 ('aura',3,'Syntax: .aura #spellid\r\n\r\nAdd the aura from spell #spellid to the selected Unit.'),
 ('ban account',3,'Syntax: .ban account $Name $bantime $reason\r\nBan account kick player.\r\n$bantime: negative value leads to permban, otherwise use a timestring like \"4d20h3s\".'),
 ('ban character',3,'Syntax: .ban character $Name $bantime $reason\r\nBan account and kick player.\r\n$bantime: negative value leads to permban, otherwise use a timestring like \"4d20h3s\".'),
@@ -766,6 +770,7 @@ INSERT INTO `command` VALUES
 ('server shutdown cancel',3,'Syntax: .server shutdown cancel\r\n\r\nCancel the restart/shutdown timer if any.'),
 ('setskill',3,'Syntax: .setskill #skill #level [#max]\r\n\r\nSet a skill of id #skill with a current skill value of #level and a maximum value of #max (or equal current maximum if not provide) for the selected character. If no character is selected, you learn the skill.'),
 ('showarea',3,'Syntax: .showarea #areaid\r\n\r\nReveal the area of #areaid to the selected character. If no character is selected, reveal this area to you.'),
+('stable',3,'Syntax: .stable\r\n\r\nShow your pet stable.'),
 ('start',0,'Syntax: .start\r\n\r\nTeleport you to the starting area of your character.'),
 ('taxicheat',1,'Syntax: .taxicheat on/off\r\n\r\nTemporary grant access or remove to all taxi routes for the selected character. If no character is selected, hide or reveal all routes to you.\r\n\r\nVisited taxi nodes sill accessible after removing access.'),
 ('tele',1,'Syntax: .tele #location\r\n\r\nTeleport player to a given location.'),
@@ -787,7 +792,6 @@ INSERT INTO `command` VALUES
 ('waterwalk',2,'Syntax: .waterwalk on/off\r\n\r\nSet on/off waterwalk state for selected player.'),
 ('wchange',3,'Syntax: .wchange #weathertype #status\r\n\r\nSet current weather to #weathertype with an intensity of #status.\r\n\r\n#weathertype can be 1 for rain, 2 for snow, and 3 for sand. #status can be 0 for disabled, and 1 for enabled.'),
 ('whispers',1,'Syntax: .whispers on|off\r\nEnable/disable accepting whispers by GM from players. By default use mangosd.conf setting.'),
-('wp',2,'Using WP Command:\r\nEach Waypoint Command has it\'s own description!'),
 ('wp add',2,'Syntax: .wp add [#creature_guid or Select a Creature]'),
 ('wp export',3,'Syntax: .wp export [#creature_guid or Select a Creature] $filename'),
 ('wp import',3,'Syntax: .wp import $filename'),
@@ -14002,6 +14006,28 @@ CREATE TABLE `reference_loot_template` (
 LOCK TABLES `reference_loot_template` WRITE;
 /*!40000 ALTER TABLE `reference_loot_template` DISABLE KEYS */;
 /*!40000 ALTER TABLE `reference_loot_template` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `reputation_reward_rate`
+--
+
+DROP TABLE IF EXISTS `reputation_reward_rate`;
+CREATE TABLE `reputation_reward_rate` (
+  `faction` mediumint(8) unsigned NOT NULL default '0',
+  `quest_rate` float NOT NULL default '1',
+  `creature_rate` float NOT NULL default '1',
+  `spell_rate` float NOT NULL default '1',
+  PRIMARY KEY  (`faction`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+--
+-- Dumping data for table `reputation_reward_rate`
+--
+
+LOCK TABLES `reputation_reward_rate` WRITE;
+/*!40000 ALTER TABLE `reputation_reward_rate` DISABLE KEYS */;
+/*!40000 ALTER TABLE `reputation_reward_rate` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
