@@ -6844,7 +6844,7 @@ void Spell::EffectStuck(SpellEffectIndex /*eff_idx*/)
     pTarget->TeleportToHomebind(unitTarget==m_caster ? TELE_TO_SPELL : 0);
 
     if(pTarget->isDead())
-    {       
+    {
       pTarget->ResurrectPlayer(0.0f);
       pTarget->SpawnCorpseBones();
     }

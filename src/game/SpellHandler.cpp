@@ -679,7 +679,7 @@ void WorldSession::HandleMirrorImageDataRequest( WorldPacket & recv_data )
     // Get SPELL_AURA_247 caster
     if (!unit->GetAurasByType(SPELL_AURA_MIRROR_IMAGE).empty())
         creator = unit->GetAurasByType(SPELL_AURA_MIRROR_IMAGE).front()->GetCaster();
-    
+
     WorldPacket data(SMSG_MIRRORIMAGE_DATA, 68);
     data << (uint64)guid;
     data << (uint32)creator->GetDisplayId();
@@ -697,7 +697,7 @@ void WorldSession::HandleMirrorImageDataRequest( WorldPacket & recv_data )
         data << (uint8)pCreator->GetByteValue(PLAYER_BYTES_2, 0); // facialhair
 
         data << (uint32)pCreator->GetGuildId();  // unk
-        static const EquipmentSlots ItemSlots[] = 
+        static const EquipmentSlots ItemSlots[] =
         {
             EQUIPMENT_SLOT_HEAD,
             EQUIPMENT_SLOT_SHOULDERS,

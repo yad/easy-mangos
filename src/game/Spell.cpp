@@ -1397,7 +1397,7 @@ bool Spell::IsAliveUnitPresentInTargetList()
 
             // either unit is alive and normal spell, or unit dead and deathonly-spell
             if (unit && (unit->isAlive() != IsDeathOnlySpell(m_spellInfo)))
-            {  
+            {
                 needAliveTargetMask &= ~ihit->effectMask;   // remove from need alive mask effect that have alive target
                 // check if spell aura on target does not exist anymore (for channeled spells)
                 if (IsChanneledSpell(m_spellInfo) && m_spellInfo->AuraInterruptFlags != 0)
@@ -5088,7 +5088,7 @@ SpellCastResult Spell::CheckCast(bool strict)
                 if (m_caster->GetTypeId() == TYPEID_PLAYER)
                     if (((Player*)m_caster)->HasMovementFlag(MOVEFLAG_ONTRANSPORT))
                         return SPELL_FAILED_CANT_DO_THAT_RIGHT_NOW;
-                    
+
                 break;
             }
             case SPELL_EFFECT_SUMMON_PET:

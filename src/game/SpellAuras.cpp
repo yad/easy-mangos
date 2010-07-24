@@ -4629,7 +4629,7 @@ void Aura::HandleAuraPeriodicDummy(bool apply, bool Real)
             {
                 case 48018:
                        if (apply)
-                          target->CastSpell(target, 62388, true);                
+                          target->CastSpell(target, 62388, true);
                         else
                         {
                           target->RemoveGameObject(spell->Id,true);
@@ -7275,7 +7275,7 @@ void Aura::PeriodicDummyTick()
                     if (!obj)
                     {
                         target->RemoveAurasDueToSpell(spell->Id);
-                        target->RemoveAurasDueToSpell(62388); 
+                        target->RemoveAurasDueToSpell(62388);
                         return;
                     }
                     // We must take a range of teleport spell, not summon.

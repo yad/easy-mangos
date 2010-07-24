@@ -10603,7 +10603,7 @@ void Unit::KnockBackFrom(Unit* target, float horizontalSpeed, float verticalSpee
     {
         float dh = verticalSpeed*verticalSpeed / (2*19.23f); // maximum parabola height
         float time = (verticalSpeed) ? sqrtf(dh/(0.124976 * verticalSpeed)) : 0.0f;  //full move time in seconds
- 
+
         float dis = time * horizontalSpeed;
 
         float ox, oy, oz;
@@ -10769,7 +10769,7 @@ uint32 Unit::GetModelForForm(ShapeshiftForm form)
                 switch (hairColor)
                 {
                     case 7: // Violet
-                    case 8: 
+                    case 8:
                         return 29405;
                     case 3: // Light Blue
                         return 29406;
@@ -10801,7 +10801,7 @@ uint32 Unit::GetModelForForm(ShapeshiftForm form)
                         case 10:
                         case 11:
                             return 29410;
-                        case 6: // Brown 
+                        case 6: // Brown
                         case 7:
                         case 8:
                             return 29411;

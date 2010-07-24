@@ -644,7 +644,7 @@ class MANGOS_DLL_SPEC Creature : public Unit
         {
             if(!pAttacker || !unDamage)
                 return;
- 
+
            if(pAttacker->GetCharmerOrOwnerPlayerOrPlayerItself())
            {
                m_unPlayerDamageDone += unDamage;
