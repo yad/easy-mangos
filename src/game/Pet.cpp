@@ -44,6 +44,7 @@ m_declinedname(NULL), m_petModeFlags(PET_MODE_DEFAULT)
 {
     m_name = "Pet";
     m_regenTimer = 4000;
+    m_followAngle = PET_FOLLOW_ANGLE;
 
     // pets always have a charminfo, even if they are not actually charmed
     CharmInfo* charmInfo = InitCharmInfo(this);
@@ -1943,6 +1944,13 @@ struct DoPetLearnSpell
     void operator() (uint32 spell_id) { pet.learnSpell(spell_id); }
     Pet& pet;
 };
+
+void Pet::SelectFollowAngle()
+{
+    if (Unit* owner = GetOwner())
+        m_followAngle = owner->GetAngle(this);
+    else m_followAngle = PET_FOLLOW_ANGLE;
+}
 
 void Pet::learnSpellHighRank(uint32 spellid)
 {

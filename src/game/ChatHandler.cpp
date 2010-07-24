@@ -468,8 +468,22 @@ void WorldSession::HandleMessagechatOpcode( WorldPacket & recv_data )
                 break;
 
             if(ChannelMgr* cMgr = channelMgr(_player->GetTeam()))
-                if(Channel *chn = cMgr->GetChannel(channel, _player))
-                    chn->Say(_player->GetGUID(), msg.c_str(), lang);
+            {
+                if(Channel *chn = cMgr->GetChannel(channel,_player))
+                {
+                    uint32 money = sWorld.getConfig(CONFIG_LFG_COST);
+                    if ((chn->IsLFG()) && !(_player->isGameMaster()))
+                    {
+                       if (_player->GetMoney()<money)
+                          {
+                           _player->SendBuyError( BUY_ERR_NOT_ENOUGHT_MONEY, 0, 0, 0);
+                           break;
+                          }
+                        _player->ModifyMoney(-(int32)money);
+                    }
+                    chn->Say(_player->GetGUID(),msg.c_str(),lang);
+                }
+            }
         } break;
 
         case CHAT_MSG_AFK:

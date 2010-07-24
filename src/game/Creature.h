@@ -33,7 +33,6 @@
 struct SpellEntry;
 
 class CreatureAI;
-class Group;
 class Quest;
 class Player;
 class WorldSession;
@@ -605,8 +604,6 @@ class MANGOS_DLL_SPEC Creature : public Unit
         float GetRespawnRadius() const { return m_respawnradius; }
         void SetRespawnRadius(float dist) { m_respawnradius = dist; }
 
-        void StartGroupLoot(Group* group, uint32 timer);
-
         void SendZoneUnderAttackMessage(Player* attacker);
 
         void SetInCombatWithZone();
@@ -643,14 +640,36 @@ class MANGOS_DLL_SPEC Creature : public Unit
 
         void SendAreaSpiritHealerQueryOpcode(Player *pl);
 
+        void IncrementReceivedDamage(Unit* pAttacker, uint32 unDamage)
+        {
+            if(!pAttacker || !unDamage)
+                return;
+ 
+           if(pAttacker->GetCharmerOrOwnerPlayerOrPlayerItself())
+           {
+               m_unPlayerDamageDone += unDamage;
+               return;
+           }
+           else if(pAttacker->GetTypeId() == TYPEID_UNIT)
+           {
+               //some conditions can be placed here
+               m_unUnitDamageDone += unDamage;
+               return;
+           }
+       }
+       bool AreLootAndRewardAllowed() { return (!m_unUnitDamageDone || (m_unPlayerDamageDone > m_unUnitDamageDone)); }
+       void ResetObtainedDamage()
+       {
+           m_unPlayerDamageDone = 0;
+           m_unUnitDamageDone = 0;
+       }
+
     protected:
         bool CreateFromProto(uint32 guidlow,uint32 Entry,uint32 team, const CreatureData *data = NULL);
         bool InitEntry(uint32 entry, uint32 team=ALLIANCE, const CreatureData* data=NULL);
         void RelocationNotify();
-
-        uint32 m_groupLootTimer;                            // (msecs)timer used for group loot
-        uint32 m_groupLootId;                               // used to find group which is looting corpse
-        void StopGroupLoot();
+        uint32 m_unPlayerDamageDone;
+        uint32 m_unUnitDamageDone;
 
         // vendor items
         VendorItemCounts m_vendorItemCounts;
