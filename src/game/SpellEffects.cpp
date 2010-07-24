@@ -3019,7 +3019,7 @@ void Spell::EffectApplyAura(SpellEffectIndex eff_idx)
         return;
     }
     // Mixology: increase duration and effect of elixirs and flasks
-    if (Aur->GetSpellProto()->SpellClass == SPELLFAMILY_POTION &&
+    if (Aur->GetSpellProto()->SpellFamilyName == SPELLFAMILY_POTION &&
         caster->GetTypeId() == TYPEID_PLAYER && caster->HasAura(53042))
     {
         SpellSpecific spellSpec = GetSpellSpecific(Aur->GetId());
