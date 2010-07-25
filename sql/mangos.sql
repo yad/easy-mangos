@@ -24,7 +24,7 @@ CREATE TABLE `db_version` (
   `version` varchar(120) default NULL,
   `creature_ai_version` varchar(120) default NULL,
   `cache_id` int(10) default '0',
-  `required_10252_01_mangos_reputation_reward_rate` bit(1) default NULL
+  `required_10263_03_mangos_pool_pool` bit(1) default NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 ROW_FORMAT=FIXED COMMENT='Used DB version notes';
 
 --
@@ -520,6 +520,10 @@ INSERT INTO `command` VALUES
 ('additem',3,'Syntax: .additem #itemid/[#itemname]/#shift-click-item-link #itemcount\r\n\r\nAdds the specified number of items of id #itemid (or exact (!) name $itemname in brackets, or link created by shift-click at item in inventory or recipe) to your or selected character inventory. If #itemcount is omitted, only one item will be added.\r\n.'),
 ('additemset',3,'Syntax: .additemset #itemsetid\r\n\r\nAdd items from itemset of id #itemsetid to your or selected character inventory. Will add by one example each item from itemset.'),
 ('announce',1,'Syntax: .announce $MessageToBroadcast\r\n\r\nSend a global message to all players online in chat log.'),
+('auction',3,'Syntax: .auction\r\n\r\nShow your team auction store.'),
+('auction alliance',3,'Syntax: .auction alliance\r\n\r\nShow alliance auction store independent from your team.'),
+('auction goblin',3,'Syntax: .auction goblin\r\n\r\nShow goblin auction store common for all teams.'),
+('auction horde',3,'Syntax: .auction horde\r\n\r\nShow horde auction store independent from your team.'),
 ('aura',3,'Syntax: .aura #spellid\r\n\r\nAdd the aura from spell #spellid to the selected Unit.'),
 ('ban account',3,'Syntax: .ban account $Name $bantime $reason\r\nBan account kick player.\r\n$bantime: negative value leads to permban, otherwise use a timestring like \"4d20h3s\".'),
 ('ban character',3,'Syntax: .ban character $Name $bantime $reason\r\nBan account and kick player.\r\n$bantime: negative value leads to permban, otherwise use a timestring like \"4d20h3s\".'),
@@ -13604,8 +13608,8 @@ CREATE TABLE `pool_creature` (
   `pool_entry` mediumint(8) unsigned NOT NULL default '0',
   `chance` float unsigned NOT NULL default '0',
   `description` varchar(255) NOT NULL,
-  PRIMARY KEY  (`pool_entry`,`guid`),
-  INDEX `idx_guid`(`guid`)
+  PRIMARY KEY  (`guid`),
+  INDEX `pool_idx` (pool_entry)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 
@@ -13628,8 +13632,8 @@ CREATE TABLE `pool_gameobject` (
   `pool_entry` mediumint(8) unsigned NOT NULL default '0',
   `chance` float unsigned NOT NULL default '0',
   `description` varchar(255) NOT NULL,
-  PRIMARY KEY  (`guid`,`pool_entry`),
-  INDEX `idx_guid`(`guid`)
+  PRIMARY KEY  (`guid`),
+  INDEX `pool_idx` (pool_entry)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 --
@@ -13651,7 +13655,8 @@ CREATE TABLE `pool_pool` (
   `mother_pool` mediumint(8) unsigned NOT NULL default '0',
   `chance` float NOT NULL default '0',
   `description` varchar(255) NOT NULL,
-  PRIMARY KEY  (`pool_id`,`mother_pool`)
+  PRIMARY KEY  (pool_id),
+  INDEX pool_idx (mother_pool)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 --
