@@ -283,6 +283,12 @@ void WorldSession::HandleAuctionSellItem( WorldPacket & recv_data )
     uint32 auction_time = uint32(etime * sWorld.getConfig(CONFIG_FLOAT_RATE_AUCTION_TIME));
 
     AuctionEntry *AH = new AuctionEntry;
+    // Added by AHBot, Unknown use (Commented)
+    /*if(sWorld.getConfig(CONFIG_ALLOW_TWO_SIDE_INTERACTION_AUCTION))
+        AH->auctioneer = 23442;
+    else
+        AH->auctioneer = GUID_LOPART(auctioneer);*/
+    // Original
     AH->Id = sObjectMgr.GenerateAuctionID();
     AH->item_guidlow = GUID_LOPART(item);
     AH->item_template = it->GetEntry();

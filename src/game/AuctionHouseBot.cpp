@@ -25,7 +25,7 @@ void AuctionHouseBot::addNewAuctions(Player *AHBplayer, AHBConfig *config)
     if (!sWorld.getConfig(CONFIG_BOOL_AHBOT_SELLER_ENABLED))
          return;
 
-    AuctionHouseEntry const* ahEntry = sAuctionMgr.GetAuctionHouseEntry(config->GetAHFID());
+    AuctionHouseEntry const* ahEntry = sAuctionMgr.GetAuctionHouseEntry((Unit*)AHBplayer);
     AuctionHouseObject* auctionHouse = sAuctionMgr.GetAuctionsMap(ahEntry);
     uint32 items = 0;
     uint32 minItems = config->GetMinItems();
@@ -431,7 +431,7 @@ void AuctionHouseBot::addNewAuctions(Player *AHBplayer, AHBConfig *config)
 
         AuctionEntry* auctionEntry = new AuctionEntry;
         auctionEntry->Id = sObjectMgr.GenerateAuctionID();
-        auctionEntry->auctioneer = AuctioneerGUID;
+        //auctionEntry->auctioneer = AuctioneerGUID;
         auctionEntry->item_guidlow = item->GetGUIDLow();
         auctionEntry->item_template = item->GetEntry();
         auctionEntry->owner = AHBplayer->GetGUIDLow();
@@ -456,8 +456,7 @@ void AuctionHouseBot::addNewAuctionBuyerBotBid(Player *AHBplayer, AHBConfig *con
         return;
 
     // Fetches content of selected AH
-    AuctionHouseEntry const* ahEntry = sAuctionMgr.GetAuctionHouseEntry(config->GetAHFID());
-    AuctionHouseObject* auctionHouse = sAuctionMgr.GetAuctionsMap(ahEntry);
+    AuctionHouseObject* auctionHouse = sAuctionMgr.GetAuctionsMap(sAuctionMgr.GetAuctionHouseEntry((Unit*)AHBplayer));
     vector<uint32> possibleBids;
 
     for (AuctionHouseObject::AuctionEntryMap::const_iterator itr = auctionHouse->GetAuctionsBegin();itr != auctionHouse->GetAuctionsEnd();++itr)
@@ -1090,19 +1089,18 @@ void AuctionHouseBot::Commands(uint32 command, uint32 ahMapID, uint32 col, char*
     {
     case 0:     //ahexpire
         {
-            AuctionHouseEntry const* ahEntry = sAuctionMgr.GetAuctionHouseEntry(config->GetAHFID());
-            AuctionHouseObject* auctionHouse = sAuctionMgr.GetAuctionsMap(ahEntry);
+            //AuctionHouseObject* auctionHouse = sAuctionMgr.GetAuctionsMap(sAuctionMgr.GetAuctionHouseEntry((Unit*)AHBplayer));
 
-            AuctionHouseObject::AuctionEntryMap::iterator itr;
-            itr = auctionHouse->GetAuctionsBegin();
+            //AuctionHouseObject::AuctionEntryMap::iterator itr;
+            //itr = auctionHouse->GetAuctionsBegin();
 
-            while (itr != auctionHouse->GetAuctionsEnd())
-            {
-                if (itr->second->owner == sWorld.getConfig(CONFIG_UINT32_AHBOT_CHARACTER_ID))
-                    itr->second->expire_time = sWorld.GetGameTime();
+            //while (itr != auctionHouse->GetAuctionsEnd())
+            //{
+            //    if (itr->second->owner == sWorld.getConfig(CONFIG_UINT32_AHBOT_CHARACTER_ID))
+            //        itr->second->expire_time = sWorld.GetGameTime();
 
-                ++itr;
-            }
+            //    ++itr;
+            //}
         }break;
     case 1:     //min items
         {
