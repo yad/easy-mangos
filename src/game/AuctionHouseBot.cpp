@@ -431,6 +431,7 @@ void AuctionHouseBot::addNewAuctions(Player *AHBplayer, AHBConfig *config)
 
         AuctionEntry* auctionEntry = new AuctionEntry;
         auctionEntry->Id = sObjectMgr.GenerateAuctionID();
+        auctionEntry->auctioneer = AuctioneerGUID;
         auctionEntry->item_guidlow = item->GetGUIDLow();
         auctionEntry->item_template = item->GetEntry();
         auctionEntry->owner = AHBplayer->GetGUIDLow();
