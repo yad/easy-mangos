@@ -24,7 +24,7 @@ CREATE TABLE `db_version` (
   `version` varchar(120) default NULL,
   `creature_ai_version` varchar(120) default NULL,
   `cache_id` int(10) default '0',
-  `required_10257_01_mangos_command` bit(1) default NULL
+  `required_10270_01_mangos_reputation_spillover_template` bit(1) default NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 ROW_FORMAT=FIXED COMMENT='Used DB version notes';
 
 --
@@ -13608,8 +13608,8 @@ CREATE TABLE `pool_creature` (
   `pool_entry` mediumint(8) unsigned NOT NULL default '0',
   `chance` float unsigned NOT NULL default '0',
   `description` varchar(255) NOT NULL,
-  PRIMARY KEY  (`pool_entry`,`guid`),
-  INDEX `idx_guid`(`guid`)
+  PRIMARY KEY  (`guid`),
+  INDEX `pool_idx` (pool_entry)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 
@@ -13632,8 +13632,8 @@ CREATE TABLE `pool_gameobject` (
   `pool_entry` mediumint(8) unsigned NOT NULL default '0',
   `chance` float unsigned NOT NULL default '0',
   `description` varchar(255) NOT NULL,
-  PRIMARY KEY  (`guid`,`pool_entry`),
-  INDEX `idx_guid`(`guid`)
+  PRIMARY KEY  (`guid`),
+  INDEX `pool_idx` (pool_entry)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 --
@@ -13655,7 +13655,8 @@ CREATE TABLE `pool_pool` (
   `mother_pool` mediumint(8) unsigned NOT NULL default '0',
   `chance` float NOT NULL default '0',
   `description` varchar(255) NOT NULL,
-  PRIMARY KEY  (`pool_id`,`mother_pool`)
+  PRIMARY KEY  (pool_id),
+  INDEX pool_idx (mother_pool)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 --
@@ -14028,6 +14029,37 @@ CREATE TABLE `reputation_reward_rate` (
 LOCK TABLES `reputation_reward_rate` WRITE;
 /*!40000 ALTER TABLE `reputation_reward_rate` DISABLE KEYS */;
 /*!40000 ALTER TABLE `reputation_reward_rate` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `reputation_spillover_template`
+--
+
+DROP TABLE IF EXISTS `reputation_spillover_template`;
+CREATE TABLE `reputation_spillover_template` (
+  `faction` smallint(6) unsigned NOT NULL default '0' COMMENT 'faction entry',
+  `faction1` smallint(6) unsigned NOT NULL default '0' COMMENT 'faction to give spillover for',
+  `rate_1` float NOT NULL default '0' COMMENT 'the given rep points * rate',
+  `rank_1` tinyint(3) unsigned NOT NULL default '0' COMMENT 'max rank, above this will not give any spillover',
+  `faction2` smallint(6) unsigned NOT NULL default '0',
+  `rate_2` float NOT NULL default '0',
+  `rank_2` tinyint(3) unsigned NOT NULL default '0',
+  `faction3` smallint(6) unsigned NOT NULL default '0',
+  `rate_3` float NOT NULL default '0',
+  `rank_3` tinyint(3) unsigned NOT NULL default '0',
+  `faction4` smallint(6) unsigned NOT NULL default '0',
+  `rate_4` float NOT NULL default '0',
+  `rank_4` tinyint(3) unsigned NOT NULL default '0',
+  PRIMARY KEY  (`faction`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC COMMENT='Reputation spillover reputation gain';
+
+--
+-- Dumping data for table `reputation_spillover_template`
+--
+
+LOCK TABLES `reputation_spillover_template` WRITE;
+/*!40000 ALTER TABLE `reputation_spillover_template` DISABLE KEYS */;
+/*!40000 ALTER TABLE `reputation_spillover_template` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
