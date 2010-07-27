@@ -283,12 +283,6 @@ void WorldSession::HandleAuctionSellItem( WorldPacket & recv_data )
     uint32 auction_time = uint32(etime * sWorld.getConfig(CONFIG_FLOAT_RATE_AUCTION_TIME));
 
     AuctionEntry *AH = new AuctionEntry;
-    // Added by AHBot, Unknown use (Commented)
-    /*if(sWorld.getConfig(CONFIG_ALLOW_TWO_SIDE_INTERACTION_AUCTION))
-        AH->auctioneer = 23442;
-    else
-        AH->auctioneer = GUID_LOPART(auctioneer);*/
-    // Original
     AH->Id = sObjectMgr.GenerateAuctionID();
     AH->item_guidlow = GUID_LOPART(item);
     AH->item_template = it->GetEntry();
@@ -301,8 +295,9 @@ void WorldSession::HandleAuctionSellItem( WorldPacket & recv_data )
     AH->deposit = deposit;
     AH->auctionHouseEntry = auctionHouseEntry;
 
-    DETAIL_LOG("selling item %u to auctioneer %s with initial bid %u with buyout %u and with time %u (in sec) in auctionhouse %u",
-        GUID_LOPART(item), auctioneerGuid.GetString().c_str(), bid, buyout, auction_time, AH->GetHouseId());
+    // Modified for AHBot
+    DETAIL_LOG("selling item %u to auctioneer %u with initial bid %u with buyout %u and with time %u (in sec) in auctionhouse %u",
+         GUID_LOPART(item), auctioneerGuid.GetString().c_str(), bid, buyout, auction_time, AH->GetHouseId());
     auctionHouse->AddAuction(AH);
 
     sAuctionMgr.AddAItem(it);
