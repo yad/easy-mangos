@@ -626,50 +626,29 @@ Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputa
 
     BotSpawns const* bSpawn = NULL;
     uint32 itr = 0;
-
     while (bSpawn = sObjectMgr.GetBotSpawns(itr))
-        itr++;
+        ++itr;
+    --itr;
 
     uint32 i = urand(0, itr);
     while (bSpawn = sObjectMgr.GetBotSpawns(i))
     {
         if (!((bSpawn->map == 0)||(bSpawn->map == 1)||(bSpawn->map == 530)||(bSpawn->map == 571)))
         {
-            i++;
+            ++i;
             i = i%itr;
             continue;
         }
 
-        uint32 u = urand(0,1); // 0 Alliance || Horde -- 1 Conteste
-        bool ok = false;
-        switch(bSpawn->statut)
-        {
-            case 0:
-                if (u == 0)
-                    ok = true;
-                break;
-            case HORDE:
-                if( (u == 1) && (GetTeam() == HORDE) )
-                    ok = true;
-                break;
-            case ALLIANCE:
-                if( (u == 1) && (GetTeam() == ALLIANCE) )
-                    ok = true;
-                break;
-            default:
-                break;
-        }
-        if(ok)
+        /*if ((GetTeam() == bSpawn->statut))*/ //Bugged...
         {
             InitPosition(bSpawn->x, bSpawn->y, bSpawn->z, bSpawn->map);
             SetLevelAtLoading(urand(bSpawn->lvlmin, bSpawn->lvlmax));
-            break;
+            return;
         }
-        else
-        {
-            i++;
-            i = i%itr;
-        }
+
+        ++i;
+        i = i%itr;
     }
 }
 
