@@ -1817,8 +1817,7 @@ void PlayerbotAI::MovementUpdate()
 
 void PlayerbotAI::FindPOI(float &x, float &y, float &z, uint32 &mapId)
 {
-    float max_range = 500.0f;
-    Unit* target = m_bot->SelectRandomUnfriendlyTarget(0, max_range);
+    Unit* target = m_bot->SelectRandomFriendlyTarget(0, 500.0f);
     if (target)
     {
         target->GetPosition(x, y, z);
