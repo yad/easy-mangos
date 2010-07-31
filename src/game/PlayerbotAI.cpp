@@ -511,12 +511,6 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
                     return;
 
                 WorldPacket p;
-                if ((inviter->GetGroup()) && (inviter->GetGroup()->IsFull()))
-                {
-                    WorldPacket* const packet2 = new WorldPacket(CMSG_GROUP_RAID_CONVERT, 100);
-                    inviter->GetSession()->QueuePacket(packet2);
-                    inviter->GetGroup()->ConvertToRaid();
-                }
                 m_bot->GetSession()->HandleGroupAcceptOpcode(p);
             }
             return;
@@ -1879,6 +1873,17 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
         m_bot->GetPlayerbotMgr()->LogoutPlayerBot(m_bot->GetGUID());
         m_bot->GetPlayerbotMgr()->AddAllBots(sConfig.GetIntDefault( "PlayerbotAI.MaxBots", 100 ));
         return;
+    }
+
+    if (GetMaster()->getLevel() != m_bot->getLevel())
+    {
+        ChatHandler ch(m_bot);
+        m_bot->PurgeMyBags();
+        m_bot->GiveLevel(GetMaster()->getLevel());
+        ch.HandleGMStartUpCommand("");
+        m_bot->SetHealth(m_bot->GetMaxHealth());
+        m_bot->SetPower(m_bot->getPowerType(), m_bot->GetMaxPower(m_bot->getPowerType()));
+        (GetClassAI())->InitSpells(m_bot->GetPlayerbotAI());
     }
 
     if (m_bot->IsBeingTeleported())
