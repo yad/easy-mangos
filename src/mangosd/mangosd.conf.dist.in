@@ -1114,12 +1114,6 @@ GM.LowerSecurity         = 0
 GM.AllowAchievementGain  = 1
 
 ###################################################################################################################
-
-Visibility.Notify.Period.OnContinents = 1000
-Visibility.Notify.Period.InInstances  = 1000
-Visibility.Notify.Period.InBGArenas   = 1000
-
-###################################################################################################################
 # SERVER RATES
 #
 #    Rate.Health

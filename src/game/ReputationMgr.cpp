@@ -20,6 +20,7 @@
 #include "DBCStores.h"
 #include "Player.h"
 #include "WorldPacket.h"
+#include "ObjectMgr.h"
 
 const int32 ReputationMgr::PointsInRank[MAX_REPUTATION_RANK] = {36000, 3000, 3000, 3000, 6000, 12000, 21000, 1000};
 
@@ -191,12 +192,6 @@ void ReputationMgr::SendInitialReputations()
     }
 
     m_player->SendDirectMessage(&data);
-}
-
-void ReputationMgr::SendStates() const
-{
-    for(FactionStateList::const_iterator itr = m_factions.begin(); itr != m_factions.end(); ++itr)
-        SendState(&(itr->second));
 }
 
 void ReputationMgr::SendVisible(FactionState const* faction) const

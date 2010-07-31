@@ -57,6 +57,9 @@ pkgdata_DATA = \
 	10263_02_mangos_pool_gameobject.sql \
 	10263_03_mangos_pool_pool.sql \
 	10270_01_mangos_reputation_spillover_template.sql \
+	10286_01_mangos_creature_addon.sql \
+	10289_01_mangos_creature_template.sql \
+	10289_02_mangos_creature_model_info.sql \
 	README
 
 ## Additional files to include when running 'make dist'
@@ -94,4 +97,7 @@ EXTRA_DIST = \
 	10263_02_mangos_pool_gameobject.sql \
 	10263_03_mangos_pool_pool.sql \
 	10270_01_mangos_reputation_spillover_template.sql \
+	10286_01_mangos_creature_addon.sql \
+	10289_01_mangos_creature_template.sql \
+	10289_02_mangos_creature_model_info.sql \
 	README
