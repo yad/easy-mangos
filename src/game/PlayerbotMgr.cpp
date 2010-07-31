@@ -416,10 +416,8 @@ void PlayerbotMgr::RealPlayerLogout(Player * const player)
         {
             if (bot->GetGroup())
                bot->RemoveFromGroup();
-            bot->GetPlayerbotMgr()->SetMaster(NULL);
-            float x, y, z;
-            bot->GetPosition(x, y, z);
-            bot->GetPlayerbotAI()->SetPositionFin(x, y, z, bot->GetMapId());
+            bot->GetPlayerbotMgr()->LogoutPlayerBot(bot->GetGUID());
+            AddAllBots(sConfig.GetIntDefault( "PlayerbotAI.MaxBots", 100 ));
         }
     }
 }

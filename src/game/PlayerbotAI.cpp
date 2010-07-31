@@ -16,6 +16,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "Config/Config.h"
 #include "Common.h"
 #include "Database/DatabaseEnv.h"
 #include "ItemPrototype.h"
@@ -1860,10 +1861,8 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
 
     if (!GetMaster())
     {
-        SetMaster(m_bot);
-        float x, y, z;
-        m_bot->GetPosition(x, y, z);
-        SetPositionFin(x, y, z, m_bot->GetMapId());
+        m_bot->GetPlayerbotMgr()->LogoutPlayerBot(m_bot->GetGUID());
+        m_bot->GetPlayerbotMgr()->AddAllBots(sConfig.GetIntDefault( "PlayerbotAI.MaxBots", 100 ));
         return;
     }
 
@@ -1871,19 +1870,15 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
     {
         if (m_bot->GetGroup())
             m_bot->RemoveFromGroup();
-        SetMaster(m_bot);
-        float x, y, z;
-        m_bot->GetPosition(x, y, z);
-        SetPositionFin(x, y, z, m_bot->GetMapId());
+        m_bot->GetPlayerbotMgr()->LogoutPlayerBot(m_bot->GetGUID());
+        m_bot->GetPlayerbotMgr()->AddAllBots(sConfig.GetIntDefault( "PlayerbotAI.MaxBots", 100 ));
         return;
     }
 
     if ((GetMaster() != m_bot) && !m_bot->GetGroup())
     {
-        SetMaster(m_bot);
-        float x, y, z;
-        m_bot->GetPosition(x, y, z);
-        SetPositionFin(x, y, z, m_bot->GetMapId());
+        m_bot->GetPlayerbotMgr()->LogoutPlayerBot(m_bot->GetGUID());
+        m_bot->GetPlayerbotMgr()->AddAllBots(sConfig.GetIntDefault( "PlayerbotAI.MaxBots", 100 ));
         return;
     }
 

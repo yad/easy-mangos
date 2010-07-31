@@ -220,13 +220,6 @@ class MANGOS_DLL_SPEC PlayerbotAI
         void MovementClear();
         bool IsMoving();
         void FindPOI(float &x, float &y, float &z, uint32 &mapId);
-        void SetPositionFin(float x, float y, float z, uint32 mapId)
-        {
-            m_position_fin_x = x;
-            m_position_fin_y = y;
-            m_position_fin_z = z;
-            m_mapId_fin = mapId;
-        };
 
         void SetInFront(const Unit* obj);
 
