@@ -8613,7 +8613,7 @@ void Player::UpdateHonorFields()
 bool Player::RewardHonor(Unit *uVictim, uint32 groupsize, float honor)
 {
     Player* victim = NULL;
-    if(uVictim->GetTypeId() == TYPEID_PLAYER)
+    if(uVictim && (uVictim->GetTypeId() == TYPEID_PLAYER))
         victim = ((Player*)uVictim);
 
     if ( IsBot() || (victim && victim->IsBot()) )
