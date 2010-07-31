@@ -620,36 +620,6 @@ Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputa
     baseMoveSpeed[MOVE_FLIGHT] = 7.0f * sWorld.getConfig(CONFIG_FLOAT_RATE_CHARFLIGHTSPEED);
     baseMoveSpeed[MOVE_FLIGHT_BACK] = 4.5f;
     baseMoveSpeed[MOVE_PITCH_RATE] = 3.14f;
-
-    if (!IsBot())
-        return;
-
-    BotSpawns const* bSpawn = NULL;
-    uint32 itr = 0;
-    while (bSpawn = sObjectMgr.GetBotSpawns(itr))
-        ++itr;
-    --itr;
-
-    uint32 i = urand(0, itr);
-    while (bSpawn = sObjectMgr.GetBotSpawns(i))
-    {
-        if (!((bSpawn->map == 0)||(bSpawn->map == 1)||(bSpawn->map == 530)||(bSpawn->map == 571)))
-        {
-            ++i;
-            i = i%itr;
-            continue;
-        }
-
-        /*if ((GetTeam() == bSpawn->statut))*/ //Bugged...
-        {
-            InitPosition(bSpawn->x, bSpawn->y, bSpawn->z, bSpawn->map);
-            SetLevelAtLoading(urand(bSpawn->lvlmin, bSpawn->lvlmax));
-            return;
-        }
-
-        ++i;
-        i = i%itr;
-    }
 }
 
 Player::~Player ()
@@ -17506,6 +17476,29 @@ bool Player::LoadFromDB( uint32 guid, SqlQueryHolder *holder )
     {
         Relocate(fields[12].GetFloat(),fields[13].GetFloat(),fields[14].GetFloat(),fields[16].GetFloat());
         SetLocationMapId(fields[15].GetUInt32());
+    }
+    else
+    {
+        BotSpawns const* bSpawn = NULL;
+        uint32 itr = 0;
+        while (bSpawn = sObjectMgr.GetBotSpawns(itr))
+            ++itr;
+        --itr;
+
+        uint32 i = urand(0, itr);
+        while (bSpawn = sObjectMgr.GetBotSpawns(i))
+        {
+            if ((GetTeam() == bSpawn->statut))
+            {
+                Relocate(bSpawn->x, bSpawn->y, bSpawn->z, fields[16].GetFloat());
+                SetLocationMapId(bSpawn->map);
+                SetLevelAtLoading(urand(bSpawn->lvlmin, bSpawn->lvlmax));
+                break;
+            }
+
+            ++i;
+            i = i%itr;
+        }
     }
 
     uint32 difficulty = fields[38].GetUInt32();

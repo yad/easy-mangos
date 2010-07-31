@@ -361,7 +361,6 @@ class MANGOS_DLL_SPEC WorldObject : public Object
             { x = m_positionX; y = m_positionY; z = m_positionZ; }
         void GetPosition( WorldLocation &loc ) const
             { loc.mapid = m_mapId; GetPosition(loc.coord_x, loc.coord_y, loc.coord_z); loc.orientation = GetOrientation(); }
-        void InitPosition( float x, float y, float z, uint32 mapid) { m_positionX = x; m_positionY = y; m_positionZ = z; m_mapId = mapid; }
         float GetOrientation( ) const { return m_orientation; }
         void GetNearPoint2D( float &x, float &y, float distance, float absAngle) const;
         void GetNearPoint(WorldObject const* searcher, float &x, float &y, float &z, float searcher_bounding_radius, float distance2d, float absAngle) const;
