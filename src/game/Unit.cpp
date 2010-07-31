@@ -360,6 +360,9 @@ void Unit::Update( uint32 p_time )
 
 bool Unit::haveOffhandWeapon() const
 {
+    if (!IsUseEquipedWeapon(OFF_ATTACK))
+        return false;
+
     if(GetTypeId() == TYPEID_PLAYER)
         return ((Player*)this)->GetWeaponForAttack(OFF_ATTACK,true,true);
     else
@@ -2429,6 +2432,67 @@ void Unit::CalculateAbsorbResistBlock(Unit *pCaster, SpellNonMeleeDamage *damage
     damageInfo->damage-= damageInfo->absorb + damageInfo->resist;
 }
 
+void Unit::CalculateHealAbsorb(Unit *pVictim, const SpellEntry *spellProto, uint32 &HealAmount, uint32 &Absorbed)
+{
+    int32 finalAmount = int32(HealAmount);
+    bool existExpired = false;
+
+    // handle heal absorb effects
+    AuraList const& healAbsorbAuras = pVictim->GetAurasByType(SPELL_AURA_SCHOOL_HEAL_ABSORB);
+    for (AuraList::const_iterator aura = healAbsorbAuras.begin(); aura != healAbsorbAuras.end() && finalAmount > 0; ++aura)
+    {
+        Modifier* mod = (*aura)->GetModifier();
+
+        // check if affects this school
+        if (!(mod->m_miscvalue & spellProto->SchoolMask))
+            continue;
+
+        // max amount that can be absorbed by this aura
+        int32 currentAbsorb = mod->m_amount;
+
+       // found empty aura (impossible but..)
+        if (currentAbsorb <= 0)
+        {
+            existExpired = true;
+           continue;
+        }
+
+        // can't absorb more than heal amount
+        if (finalAmount < currentAbsorb)
+            currentAbsorb = finalAmount;
+
+        // reduce heal amount by absorb amount
+        finalAmount -= currentAbsorb;
+
+        // reduce aura amount
+        mod->m_amount -= currentAbsorb;
+
+        if ((*aura)->GetHolder()->DropAuraCharge())
+            mod->m_amount = 0;
+
+        // check if aura needs to be removed
+        if (mod->m_amount <= 0)
+            existExpired = true;
+    }
+    // Remove all consumed absorb auras
+    if (existExpired)
+    {
+        for (AuraList::const_iterator aura = healAbsorbAuras.begin(); aura != healAbsorbAuras.end(); )
+        {
+            if ((*aura)->GetModifier()->m_amount <= 0)
+            {
+                pVictim->RemoveAurasDueToSpell((*aura)->GetId());
+                aura = healAbsorbAuras.begin();
+            }
+            else
+                ++aura;
+        }
+    }
+
+    Absorbed = HealAmount - finalAmount;
+    HealAmount = finalAmount;
+}
+
 void Unit::AttackerStateUpdate (Unit *pVictim, WeaponAttackType attType, bool extra )
 {
     if(hasUnitState(UNIT_STAT_CAN_NOT_REACT) || HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PACIFIED) )
@@ -3258,7 +3322,7 @@ float Unit::GetUnitBlockChance() const
     if(GetTypeId() == TYPEID_PLAYER)
     {
         Player const* player = (Player const*)this;
-        if(player->CanBlock() )
+        if(player->CanBlock() && player->IsUseEquipedWeapon(OFF_ATTACK))
         {
             Item *tmpitem = player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
             if(tmpitem && !tmpitem->IsBroken() && tmpitem->GetProto()->Block)
@@ -5061,6 +5125,7 @@ void Unit::SendPeriodicAuraLog(SpellPeriodicAuraLogInfo *pInfo)
         case SPELL_AURA_OBS_MOD_HEALTH:
             data << uint32(pInfo->damage);                  // damage
             data << uint32(pInfo->overDamage);              // overheal?
+            data << uint32(pInfo->absorb);                  // absorb
             data << uint8(pInfo->critical ? 1 : 0);         // new 3.1.2 critical flag
             break;
         case SPELL_AURA_OBS_MOD_MANA:
@@ -5958,7 +6023,11 @@ void Unit::UnsummonAllTotems()
 
 int32 Unit::DealHeal(Unit *pVictim, uint32 addhealth, SpellEntry const *spellProto, bool critical)
 {
-    int32 gain = pVictim->ModifyHealth(int32(addhealth));
+    // calculate heal absorb and reduce healing
+    uint32 absorb = 0;
+    CalculateHealAbsorb(pVictim, spellProto, addhealth, absorb);
+
+    int32 gain = addhealth ? pVictim->ModifyHealth(int32(addhealth)) : 0;
 
     Unit* unit = this;
 
@@ -5968,7 +6037,7 @@ int32 Unit::DealHeal(Unit *pVictim, uint32 addhealth, SpellEntry const *spellPro
     if (unit->GetTypeId()==TYPEID_PLAYER)
     {
         // overheal = addhealth - gain
-        unit->SendHealSpellLog(pVictim, spellProto->Id, addhealth, addhealth - gain, critical);
+        unit->SendHealSpellLog(pVictim, spellProto->Id, addhealth, addhealth - gain, absorb, critical);
 
         if (BattleGround *bg = ((Player*)unit)->GetBattleGround())
             bg->UpdatePlayerScore((Player*)unit, SCORE_HEALING_DONE, gain);
@@ -6021,15 +6090,16 @@ Unit* Unit::SelectMagnetTarget(Unit *victim, SpellEntry const *spellInfo)
     return victim;
 }
 
-void Unit::SendHealSpellLog(Unit *pVictim, uint32 SpellID, uint32 Damage, uint32 OverHeal, bool critical)
+void Unit::SendHealSpellLog(Unit *pVictim, uint32 SpellID, uint32 Damage, uint32 OverHeal, uint32 Absorbed, bool critical)
 {
     // we guess size
-    WorldPacket data(SMSG_SPELLHEALLOG, (8+8+4+4+1));
+    WorldPacket data(SMSG_SPELLHEALLOG, (8+8+4+4+4+4+1+1));
     data << pVictim->GetPackGUID();
     data << GetPackGUID();
     data << uint32(SpellID);
     data << uint32(Damage);
     data << uint32(OverHeal);
+    data << uint32(Absorbed);
     data << uint8(critical ? 1 : 0);
     data << uint8(0);                                       // unused in client?
     SendMessageToSet(&data, true);
@@ -6916,6 +6986,13 @@ uint32 Unit::SpellHealingBonusTaken(Unit *pCaster, SpellEntry const *spellProto,
     for(AuraList::const_iterator i = mHealingGet.begin(); i != mHealingGet.end(); ++i)
         if ((*i)->isAffectedOnSpell(spellProto))
             TakenTotalMod *= ((*i)->GetModifier()->m_amount + 100.0f) / 100.0f;
+
+    if (damagetype == DOT)
+    {
+        AuraList const& mDecreaseHealingDoT = GetAurasByType(SPELL_AURA_DECREASE_PERIODIC_HEAL);
+        for(AuraList::const_iterator i = mDecreaseHealingDoT.begin(); i != mDecreaseHealingDoT.end(); ++i)
+            TakenTotalMod *= ((*i)->GetModifier()->m_amount + 100.0f) / 100.0f;
+    }
 
     // use float as more appropriate for negative values and percent applying
     float heal = (healamount + TakenTotal * int32(stack)) * TakenTotalMod;
