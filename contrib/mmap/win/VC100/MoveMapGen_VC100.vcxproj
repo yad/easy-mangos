@@ -142,7 +142,6 @@
     <ClInclude Include="..\..\..\..\src\shared\vmap\TileAssembler.h" />
     <ClInclude Include="..\..\..\..\src\shared\vmap\VMapDefinitions.h" />
     <ClInclude Include="..\..\..\..\src\shared\vmap\VMapFactory.h" />
-    <ClInclude Include="..\..\..\..\src\shared\vmap\VmapKDTree.h" />
     <ClInclude Include="..\..\..\..\src\shared\vmap\VMapManager2.h" />
     <ClInclude Include="..\..\..\..\src\shared\vmap\VMapTools.h" />
     <ClInclude Include="..\..\..\..\src\shared\vmap\WorldModel.h" />

@@ -18,8 +18,9 @@ char const* MAP_VERSION_MAGIC = "v1.2";
 
 namespace MMAP
 {
-    TileBuilder::TileBuilder(bool hiRes) :
-        m_hiResHeightMaps   (hiRes)
+    TileBuilder::TileBuilder(bool skipLiquid, bool hiRes) :
+        m_hiResHeightMaps   (hiRes),
+        m_skipLiquid        (skipLiquid)
     {
     }
 
@@ -94,7 +95,7 @@ namespace MMAP
         fread(&hheader, sizeof(GridMapHeightHeader), 1, mapFile);
 
         bool haveTerrain = !(hheader.flags & MAP_HEIGHT_NO_HEIGHT);
-        bool haveLiquid = fheader.liquidMapOffset;
+        bool haveLiquid = fheader.liquidMapOffset && !m_skipLiquid;
 
         // no data in this map file
         if(!haveTerrain && !haveLiquid)

@@ -214,11 +214,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\shared\vmap\TileAssembler.cpp"
+				RelativePath="..\..\..\dep\include\g3dlite\G3D\CollisionDetection.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\shared\vmap\TileAssembler.h"
+				RelativePath="..\..\..\dep\include\g3dlite\G3D\CoordinateFrame.h"
 				>
 			</File>
 			<File
@@ -230,7 +230,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\shared\vmap\VMapTools.h"
+				RelativePath="..\..\..\dep\include\g3dlite\G3D\format.h"
 				>
 			</File>
 			<File

@@ -4,6 +4,10 @@ generator command line args
 
 									float between 45 and 90 degrees (default 60)
 
+--skipLiquid						liquid data for maps
+
+									true: do not include liquid data (default)
+
 --skipContinents	[true|false]	continents are maps 0 (Eastern Kingdoms),
 									1 (Kalimdor), 530 (Outlands), 571 (Northrend)
 

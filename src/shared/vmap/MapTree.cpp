@@ -386,7 +386,7 @@ namespace VMAP
 #ifdef VMAP_DEBUG
                         if (referencedVal > iNTreeValues)
                         {
-                            DEBUG_LOG("invalid tree element! (%u/%u)", referencedVal, iNTreeValues);
+                            DEBUG_LOG("invalid tree element! (%u/%u)", referencedVal, iNTreeValues);dd42b44
                             continue;
                         }
 #endif

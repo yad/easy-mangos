@@ -66,7 +66,7 @@ namespace MMAP
     class TileBuilder
     {
         public:
-            TileBuilder(bool hiRes);
+            TileBuilder(bool skipLiquid, bool hiRes);
             ~TileBuilder();
 
             void loadMap(uint32 mapID, uint32 tileX, uint32 tileY, MeshData &meshData);
@@ -86,6 +86,8 @@ namespace MMAP
             bool isHole(int square, const uint16 holes[16][16]);
 
             // liquid
+            bool m_skipLiquid;
+
             bool loadLiquidMap(uint32 mapID, uint32 tileX, uint32 tileY, G3D::Array<float> &vertices, G3D::Array<int> &triangles, Spot portion);
             void getLiquidCoord(int index, int index2, float xOffset, float yOffset, float* coord, float* v);
             void getLiquidTriangle(int square, Spot triangle, int* indices, uint8 width);

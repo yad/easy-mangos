@@ -36,6 +36,7 @@ namespace MMAP
     {
         public:
             MapBuilder(float maxWalkableAngle   = 60.f,
+                       bool skipLiquid          = true,
                        bool skipContinents      = true,
                        bool skipJunkMaps        = true,
                        bool skipBattlegrounds   = true,
