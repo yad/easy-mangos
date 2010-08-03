@@ -89,7 +89,7 @@ void PathInfo::Build()
 
     if(!m_navMesh)
     {
-        // ignore obstacles/terrain is better than giving up
+        // if there is no navmesh, just move to destination
         shortcut();
         return;
     }
@@ -123,7 +123,8 @@ void PathInfo::Build(dtPolyRef startPoly, dtPolyRef endPoly)
         //     (x,y) outside navmesh
         //     (z) above/below the navmesh
         sLog.outError("%u's Path Build failed: invalid start or end polygon", m_sourceObject->GetGUID());
-        shortcut();
+        //if(canFly())    // TODO
+            shortcut();
         return;
     }
 
