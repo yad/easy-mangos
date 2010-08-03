@@ -3368,6 +3368,50 @@ void SpellMgr::LoadSpellAreas()
     sLog.outString( ">> Loaded %u spell area requirements", count );
 }
 
+void SpellMgr::LoadDisabledSpells()
+{
+    mSpellDisabledSet.clear();                              // need for reload case
+
+    uint32 count = 0;
+
+    QueryResult *result = WorldDatabase.Query("SELECT entry FROM spell_disabled WHERE active=1");
+    if (!result)
+    {
+        barGoLink bar(1);
+        bar.step();
+
+        sLog.outString();
+        sLog.outString(">> Loaded %u disabled spells", count);
+        return;
+    }
+
+    barGoLink bar(result->GetRowCount());
+
+    do
+    {
+        Field* fields = result->Fetch();
+        bar.step();
+
+        uint32 spellId = fields[0].GetUInt32();
+
+        SpellEntry const* spellInfo = sSpellStore.LookupEntry(spellId);
+        if (!spellInfo)
+        {
+            sLog.outErrorDb("Spell %u listed in `spell_disabled` does not exist", spellId);
+            continue;
+        }
+
+        mSpellDisabledSet.insert(spellId);
+        ++count;
+    }
+    while (result->NextRow());
+
+    delete result;
+
+    sLog.outString();
+    sLog.outString(">> Loaded %u disabled spells", count);
+}
+
 SpellCastResult SpellMgr::GetSpellAllowedInLocationError(SpellEntry const *spellInfo, uint32 map_id, uint32 zone_id, uint32 area_id, Player const* player)
 {
     // normal case

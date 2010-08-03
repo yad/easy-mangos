@@ -1,4 +1,5 @@
 /*
+/*
  * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -174,6 +175,7 @@ bool ChatHandler::HandleReloadAllSpellCommand(const char*)
     HandleReloadSpellScriptTargetCommand("a");
     HandleReloadSpellTargetPositionCommand("a");
     HandleReloadSpellThreatsCommand("a");
+    HandleReloadSpellDisabledCommand("a");
     HandleReloadSpellPetAurasCommand("a");
     return true;
 }
@@ -636,6 +638,14 @@ bool ChatHandler::HandleReloadSpellThreatsCommand(const char*)
     sLog.outString( "Re-Loading Aggro Spells Definitions...");
     sSpellMgr.LoadSpellThreats();
     SendGlobalSysMessage("DB table `spell_threat` (spell aggro definitions) reloaded.");
+    return true;
+}
+
+bool ChatHandler::HandleReloadSpellDisabledCommand(const char*)
+{
+    sLog.outString("Re-Loading list of disabled spells...");
+    sSpellMgr.LoadDisabledSpells();
+    SendGlobalSysMessage("DB table `spell_disabled` (list of disabled spells) reloaded.");
     return true;
 }
 
@@ -6569,6 +6579,84 @@ bool ChatHandler::HandleModifyGenderCommand(const char *args)
 
     if (needReportToTarget(player))
         ChatHandler(player).PSendSysMessage(LANG_YOUR_GENDER_CHANGED, gender_full, GetNameLink().c_str());
+
+    return true;
+}
+
+bool ChatHandler::HandleSpellDisableCommand(const char *args)
+{
+    if (!*args)
+        return false;
+
+    // number or [name] Shift-click form |color|Hspell:spell_id|h[name]|h|r or Htalent form
+    uint32 spellId = extractSpellIdFromLink((char*)args);
+    if (!spellId)
+        return false;
+
+    SpellEntry const* spellInfo = sSpellStore.LookupEntry(spellId);
+    if (!spellInfo)
+        return false;
+
+    if (sSpellMgr.IsSpellDisabled(spellId))
+        return false;
+
+    WorldDatabase.PExecute("REPLACE INTO spell_disabled VALUES('%d', '1', '%s');", spellId, m_session->GetPlayerName());
+    PSendSysMessage(LANG_DISABLE_SPELL, spellInfo->SpellName[GetSessionDbcLocale()], spellId);
+    sSpellMgr.DisableSpell(spellId);
+
+    return true;
+}
+
+bool ChatHandler::HandleSpellEnableCommand(const char *args)
+{
+    if (!*args)
+        return false;
+
+    // number or [name] Shift-click form |color|Hspell:spell_id|h[name]|h|r or Htalent form
+    uint32 spellId = extractSpellIdFromLink((char*)args);
+    if (!spellId)
+        return false;
+
+    SpellEntry const* spellInfo = sSpellStore.LookupEntry(spellId);
+    if (!spellInfo)
+        return false;
+
+    if (!sSpellMgr.IsSpellDisabled(spellId))
+        return false;
+
+    WorldDatabase.PExecute("DELETE FROM spell_disabled WHERE entry = '%d';", spellId);
+    PSendSysMessage(LANG_ENABLE_SPELL, spellInfo->SpellName[GetSessionDbcLocale()], spellId);
+    sSpellMgr.EnableSpell(spellId);
+
+    return true;
+}
+
+bool ChatHandler::HandleSpellStateCommand(const char *args)
+{
+    if (!*args)
+        return false;
+
+    // number or [name] Shift-click form |color|Hspell:spell_id|h[name]|h|r or Htalent form
+    uint32 spellId = extractSpellIdFromLink((char*)args);
+    if (!spellId)
+        return false;
+
+    SpellEntry const* spellInfo = sSpellStore.LookupEntry(spellId);
+    if (!spellInfo)
+        return false;
+
+    if (sSpellMgr.IsSpellDisabled(spellId))
+    {
+        QueryResult *result = WorldDatabase.PQuery( "SELECT DisabledBy FROM spell_disabled WHERE entry='%u'", spellId);
+        if(result)
+        {
+            Field *fields = result->Fetch();
+            std::string name = fields[0].GetCppString();
+            PSendSysMessage(LANG_SPELL_DISABLED, spellInfo->SpellName[GetSessionDbcLocale()], spellId, name.c_str());
+        }
+    }
+    else
+        PSendSysMessage(LANG_SPELL_ENABLED, spellInfo->SpellName[GetSessionDbcLocale()], spellId);
 
     return true;
 }

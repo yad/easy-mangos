@@ -2637,6 +2637,16 @@ void Spell::prepare(SpellCastTargets const* targets, Aura* triggeredByAura)
         finish(false);
         return;
     }
+	
+    if (sSpellMgr.IsSpellDisabled(m_spellInfo->Id))
+    {
+        if (m_caster->GetTypeId() == TYPEID_PLAYER)
+            sLog.outDebug("Player %s (GUID: %u) cast a spell %u which was disabled by server administrator", m_caster->GetName(), m_caster->GetGUIDLow(), m_spellInfo->Id);
+
+        SendCastResult(SPELL_FAILED_SPELL_UNAVAILABLE);
+        finish(false);
+        return;
+    }
 
     // Fill cost data
     m_powerCost = CalculatePowerCost();

@@ -987,6 +987,9 @@ void World::SetInitialWorldSettings()
 
     sLog.outString( "Loading Aggro Spells Definitions...");
     sSpellMgr.LoadSpellThreats();
+	
+    sLog.outString("Loading list of disabled spells...");
+    sSpellMgr.LoadDisabledSpells();
 
     sLog.outString( "Loading NPC Texts..." );
     sObjectMgr.LoadGossipText();

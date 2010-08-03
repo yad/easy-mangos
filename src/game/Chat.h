@@ -292,6 +292,10 @@ class ChatHandler
         bool HandleModifyArenaCommand(const char* args);
         bool HandleModifyPhaseCommand(const char* args);
         bool HandleModifyGenderCommand(const char* args);
+		
+        bool HandleSpellDisableCommand(const char* args);
+        bool HandleSpellEnableCommand(const char* args);
+        bool HandleSpellStateCommand(const char* args);
 
         //-----------------------Npc Commands-----------------------
         bool HandleNpcAddCommand(const char* args);
@@ -423,6 +427,7 @@ class ChatHandler
         bool HandleReloadSpellScriptsCommand(const char* args);
         bool HandleReloadSpellTargetPositionCommand(const char* args);
         bool HandleReloadSpellThreatsCommand(const char* args);
+        bool HandleReloadSpellDisabledCommand(const char* args);
         bool HandleReloadSpellPetAurasCommand(const char* args);
 
         bool HandleResetAchievementsCommand(const char * args);
