@@ -259,8 +259,8 @@ void PathInfo::Update(const float destX, const float destY, const float destZ)
         // PATHFIND TODO: prevent walking/swimming mobs from flying into the air
 
         clear();
-        m_pathPolyRefs = new dtPolyRef;
-        *m_pathPolyRefs = startPoly;
+        m_pathPolyRefs = new dtPolyRef[1];
+        m_pathPolyRefs[0] = startPoly;
         m_length = 1;
         getEndPosition(x, y, z);
         setNextPosition(x, y, z);
