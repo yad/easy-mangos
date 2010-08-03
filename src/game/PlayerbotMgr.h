@@ -42,7 +42,7 @@ class MANGOS_DLL_SPEC PlayerbotMgr
 
         static void AddAllBots(int nbBotsWanted);
 
-        void AddPlayerBot(uint64 guid);
+        void AddPlayerBot(uint64 guid, uint8 fclass);
         void LogoutPlayerBot(uint64 guid);
         Player* GetPlayerBot(uint64 guid) const;
         Player* GetMaster() const { return m_master; };
