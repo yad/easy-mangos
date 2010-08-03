@@ -251,7 +251,7 @@ bool Item::Create( uint32 guidlow, uint32 itemid, Player const* owner)
     Object::_Create( guidlow, 0, HIGHGUID_ITEM );
 
     SetEntry(itemid);
-    SetFloatValue(OBJECT_FIELD_SCALE_X, 1.0f);
+    SetObjectScale(DEFAULT_OBJECT_SCALE);
 
     SetUInt64Value(ITEM_FIELD_OWNER, owner ? owner->GetGUID() : 0);
     SetUInt64Value(ITEM_FIELD_CONTAINED, owner ? owner->GetGUID() : 0);
@@ -770,7 +770,10 @@ bool Item::IsFitToSpellRequirements(SpellEntry const* spellInfo) const
         }
     }
 
-    if(spellInfo->EquippedItemInventoryTypeMask != 0)       // 0 == any inventory type
+    // Only check for item enchantments (TARGET_FLAG_ITEM), all other spells are either NPC spells
+    // or spells where slot requirements are already handled with AttributesEx3 fields
+    // and special code (Titan's Grip, Windfury Attack). Check clearly not applicable for Lava Lash.
+    if(spellInfo->EquippedItemInventoryTypeMask != 0 && (spellInfo->Targets & TARGET_FLAG_ITEM))    // 0 == any inventory type
     {
         if((spellInfo->EquippedItemInventoryTypeMask  & (1 << proto->InventoryType)) == 0)
             return false;                                   // inventory type not present in mask
@@ -969,10 +972,10 @@ Item* Item::CloneItem( uint32 count, Player const* player ) const
     if(!newItem)
         return NULL;
 
-    newItem->SetUInt32Value( ITEM_FIELD_CREATOR,      GetUInt32Value( ITEM_FIELD_CREATOR ) );
-    newItem->SetUInt32Value( ITEM_FIELD_GIFTCREATOR,  GetUInt32Value( ITEM_FIELD_GIFTCREATOR ) );
-    newItem->SetUInt32Value( ITEM_FIELD_FLAGS,        GetUInt32Value( ITEM_FIELD_FLAGS ) );
-    newItem->SetUInt32Value( ITEM_FIELD_DURATION,     GetUInt32Value( ITEM_FIELD_DURATION ) );
+    newItem->SetGuidValue(ITEM_FIELD_CREATOR,     GetGuidValue(ITEM_FIELD_CREATOR));
+    newItem->SetGuidValue(ITEM_FIELD_GIFTCREATOR, GetGuidValue(ITEM_FIELD_GIFTCREATOR));
+    newItem->SetUInt32Value(ITEM_FIELD_FLAGS,     GetUInt32Value(ITEM_FIELD_FLAGS));
+    newItem->SetUInt32Value(ITEM_FIELD_DURATION,  GetUInt32Value(ITEM_FIELD_DURATION));
     newItem->SetItemRandomProperties(GetItemRandomPropertyId());
     return newItem;
 }

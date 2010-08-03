@@ -260,6 +260,13 @@ void WorldSession::HandleDestroyItemOpcode( WorldPacket & recv_data )
         return;
     }
 
+    // checked at client side and not have server side appropriate error output
+    if (pItem->HasFlag(ITEM_FIELD_FLAGS, ITEM_FLAGS_INDESTRUCTIBLE))
+    {
+        _player->SendEquipError( EQUIP_ERR_CANT_DROP_SOULBOUND, NULL, NULL );
+        return;
+    }
+
     if(count)
     {
         uint32 i_count = count;
@@ -309,7 +316,7 @@ void WorldSession::HandleItemQuerySingleOpcode( WorldPacket & recv_data )
         data << pProto->DisplayInfoID;
         data << pProto->Quality;
         data << pProto->Flags;
-        data << pProto->Faction;                            // 3.2 faction?
+        data << pProto->Flags2;                             // new in 3.2
         data << pProto->BuyPrice;
         data << pProto->SellPrice;
         data << pProto->InventoryType;
@@ -480,18 +487,22 @@ void WorldSession::HandlePageQuerySkippedOpcode( WorldPacket & recv_data )
 void WorldSession::HandleSellItemOpcode( WorldPacket & recv_data )
 {
     DEBUG_LOG(  "WORLD: Received CMSG_SELL_ITEM" );
-    uint64 vendorguid, itemguid;
+
+    ObjectGuid vendorGuid;
+    uint64 itemguid;
     uint32 count;
 
-    recv_data >> vendorguid >> itemguid >> count;
+    recv_data >> vendorGuid;
+    recv_data >> itemguid;
+    recv_data >> count;
 
     if(!itemguid)
         return;
 
-    Creature *pCreature = GetPlayer()->GetNPCIfCanInteractWith(vendorguid, UNIT_NPC_FLAG_VENDOR);
+    Creature *pCreature = GetPlayer()->GetNPCIfCanInteractWith(vendorGuid, UNIT_NPC_FLAG_VENDOR);
     if (!pCreature)
     {
-        DEBUG_LOG( "WORLD: HandleSellItemOpcode - Unit (GUID: %u) not found or you can't interact with him.", uint32(GUID_LOPART(vendorguid)) );
+        DEBUG_LOG("WORLD: HandleSellItemOpcode - %s not found or you can't interact with him.", vendorGuid.GetString().c_str());
         _player->SendSellError( SELL_ERR_CANT_FIND_VENDOR, NULL, itemguid, 0);
         return;
     }
@@ -589,15 +600,15 @@ void WorldSession::HandleSellItemOpcode( WorldPacket & recv_data )
 void WorldSession::HandleBuybackItem(WorldPacket & recv_data)
 {
     DEBUG_LOG( "WORLD: Received CMSG_BUYBACK_ITEM" );
-    uint64 vendorguid;
+    ObjectGuid vendorGuid;
     uint32 slot;
 
-    recv_data >> vendorguid >> slot;
+    recv_data >> vendorGuid >> slot;
 
-    Creature *pCreature = GetPlayer()->GetNPCIfCanInteractWith(vendorguid, UNIT_NPC_FLAG_VENDOR);
+    Creature *pCreature = GetPlayer()->GetNPCIfCanInteractWith(vendorGuid, UNIT_NPC_FLAG_VENDOR);
     if (!pCreature)
     {
-        DEBUG_LOG( "WORLD: HandleBuybackItem - Unit (GUID: %u) not found or you can't interact with him.", uint32(GUID_LOPART(vendorguid)) );
+        DEBUG_LOG("WORLD: HandleBuybackItem - %s not found or you can't interact with him.", vendorGuid.GetString().c_str());
         _player->SendSellError( SELL_ERR_CANT_FIND_VENDOR, NULL, 0, 0);
         return;
     }
@@ -733,7 +744,11 @@ void WorldSession::SendListInventory(uint64 vendorguid)
 
     if (!vItems)
     {
-        _player->SendSellError(SELL_ERR_CANT_FIND_VENDOR, NULL, 0, 0);
+        WorldPacket data( SMSG_LIST_INVENTORY, (8+1+1) );
+        data << uint64(vendorguid);
+        data << uint8(0);                                   // count==0, next will be error code
+        data << uint8(0);                                   // "Vendor has no inventory"
+        SendPacket(&data);
         return;
     }
 
@@ -744,23 +759,37 @@ void WorldSession::SendListInventory(uint64 vendorguid)
     data << uint64(vendorguid);
 
     size_t count_pos = data.wpos();
-    data << uint8(count);                                   // placeholder
+    data << uint8(count);                                   // placeholder, client limit 150 items (as of 3.3.3)
 
     float discountMod = _player->GetReputationPriceDiscount(pCreature);
 
     for(uint8 vendorslot = 0; vendorslot < numitems; ++vendorslot )
     {
-        if(VendorItem const* crItem = vItems->GetItem(vendorslot))
+        if (VendorItem const* crItem = vItems->GetItem(vendorslot))
         {
-            if(ItemPrototype const *pProto = ObjectMgr::GetItemPrototype(crItem->item))
+            if (ItemPrototype const *pProto = ObjectMgr::GetItemPrototype(crItem->item))
             {
-                if((pProto->AllowableClass & _player->getClassMask()) == 0 && pProto->Bonding == BIND_WHEN_PICKED_UP && !_player->isGameMaster())
-                    continue;
+                if (!_player->isGameMaster())
+                {
+                    // class wrong item skip only for bindable case
+                    if ((pProto->AllowableClass & _player->getClassMask()) == 0 && pProto->Bonding == BIND_WHEN_PICKED_UP)
+                        continue;
+
+                    // race wrong item skip always
+                    if ((pProto->Flags2 & ITEM_FLAGS2_HORDE_ONLY) && _player->GetTeam() != HORDE)
+                        continue;
+
+                    if ((pProto->Flags2 & ITEM_FLAGS2_ALLIANCE_ONLY) && _player->GetTeam() != ALLIANCE)
+                        continue;
+
+                    if ((pProto->AllowableRace & _player->getRaceMask()) == 0)
+                        continue;
+                }
 
                 ++count;
 
                 // reputation discount
-                uint32 price = crItem->IsExcludeMoneyPrice() ? 0 : uint32(floor(pProto->BuyPrice * discountMod));
+                uint32 price = (crItem->ExtendedCost == 0 || pProto->Flags2 & ITEM_FLAGS2_EXT_COST_REQUIRES_GOLD) ? uint32(floor(pProto->BuyPrice * discountMod)) : 0;
 
                 data << uint32(vendorslot +1);              // client size expected counting from 1
                 data << uint32(crItem->item);
@@ -769,16 +798,20 @@ void WorldSession::SendListInventory(uint64 vendorguid)
                 data << uint32(price);
                 data << uint32(pProto->MaxDurability);
                 data << uint32(pProto->BuyCount);
-                data << uint32(crItem->GetExtendedCostId());
+                data << uint32(crItem->ExtendedCost);
             }
         }
     }
 
-    if ( count == 0 || data.size() != 8 + 1 + size_t(count) * 8 * 4 )
+    if (count == 0)
+    {
+        data << uint8(0);                                   // "Vendor has no inventory"
+        SendPacket(&data);
         return;
+    }
 
     data.put<uint8>(count_pos, count);
-    SendPacket( &data );
+    SendPacket(&data);
 }
 
 void WorldSession::HandleAutoStoreBagItemOpcode( WorldPacket & recv_data )
@@ -1052,13 +1085,13 @@ void WorldSession::HandleWrapItemOpcode(WorldPacket& recv_data)
     DEBUG_LOG("WRAP: receive gift_bag = %u, gift_slot = %u, item_bag = %u, item_slot = %u", gift_bag, gift_slot, item_bag, item_slot);
 
     Item *gift = _player->GetItemByPos( gift_bag, gift_slot );
-    if(!gift)
+    if (!gift)
     {
         _player->SendEquipError( EQUIP_ERR_ITEM_NOT_FOUND, gift, NULL );
         return;
     }
 
-    if(!gift->HasFlag(ITEM_FIELD_FLAGS, ITEM_FLAGS_WRAPPER))// cheating: non-wrapper wrapper
+    if (!gift->HasFlag(ITEM_FIELD_FLAGS, ITEM_FLAGS_WRAPPER))// cheating: non-wrapper wrapper
     {
         _player->SendEquipError( EQUIP_ERR_ITEM_NOT_FOUND, gift, NULL );
         return;
@@ -1066,50 +1099,50 @@ void WorldSession::HandleWrapItemOpcode(WorldPacket& recv_data)
 
     Item *item = _player->GetItemByPos( item_bag, item_slot );
 
-    if( !item )
+    if (!item)
     {
         _player->SendEquipError( EQUIP_ERR_ITEM_NOT_FOUND, item, NULL );
         return;
     }
 
-    if(item == gift)                                        // not possible with packet from real client
+    if (item == gift)                                       // not possible with packet from real client
     {
         _player->SendEquipError( EQUIP_ERR_WRAPPED_CANT_BE_WRAPPED, item, NULL );
         return;
     }
 
-    if(item->IsEquipped())
+    if (item->IsEquipped())
     {
         _player->SendEquipError( EQUIP_ERR_EQUIPPED_CANT_BE_WRAPPED, item, NULL );
         return;
     }
 
-    if(item->GetUInt64Value(ITEM_FIELD_GIFTCREATOR))        // HasFlag(ITEM_FIELD_FLAGS, ITEM_FLAGS_WRAPPED);
+    if (!item->GetGuidValue(ITEM_FIELD_GIFTCREATOR).IsEmpty())// HasFlag(ITEM_FIELD_FLAGS, ITEM_FLAGS_WRAPPED);
     {
         _player->SendEquipError( EQUIP_ERR_WRAPPED_CANT_BE_WRAPPED, item, NULL );
         return;
     }
 
-    if(item->IsBag())
+    if (item->IsBag())
     {
         _player->SendEquipError( EQUIP_ERR_BAGS_CANT_BE_WRAPPED, item, NULL );
         return;
     }
 
-    if(item->IsSoulBound())
+    if (item->IsSoulBound())
     {
         _player->SendEquipError( EQUIP_ERR_BOUND_CANT_BE_WRAPPED, item, NULL );
         return;
     }
 
-    if(item->GetMaxStackCount() != 1)
+    if (item->GetMaxStackCount() != 1)
     {
         _player->SendEquipError( EQUIP_ERR_STACKABLE_CANT_BE_WRAPPED, item, NULL );
         return;
     }
 
     // maybe not correct check  (it is better than nothing)
-    if(item->GetProto()->MaxCount > 0)
+    if (item->GetProto()->MaxCount > 0)
     {
         _player->SendEquipError( EQUIP_ERR_UNIQUE_CANT_BE_WRAPPED, item, NULL );
         return;
@@ -1128,7 +1161,7 @@ void WorldSession::HandleWrapItemOpcode(WorldPacket& recv_data)
         case 17307: item->SetEntry(17308); break;
         case 21830: item->SetEntry(21831); break;
     }
-    item->SetUInt64Value(ITEM_FIELD_GIFTCREATOR, _player->GetGUID());
+    item->SetGuidValue(ITEM_FIELD_GIFTCREATOR, _player->GetObjectGuid());
     item->SetUInt32Value(ITEM_FIELD_FLAGS, ITEM_FLAGS_WRAPPED);
     item->SetState(ITEM_CHANGED, _player);
 
@@ -1283,7 +1316,7 @@ void WorldSession::HandleSocketOpcode(WorldPacket& recv_data)
                         if (iGemProto->ItemLimitCategory == Gems[j]->GetProto()->ItemLimitCategory)
                             ++limit_newcount;
                     }
-                    // existed gem
+                    // existing gem
                     else if(OldEnchants[j])
                     {
                         if(SpellItemEnchantmentEntry const* enchantEntry = sSpellItemEnchantmentStore.LookupEntry(OldEnchants[j]))

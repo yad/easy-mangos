@@ -74,7 +74,7 @@ bool VendorItemData::RemoveItem( uint32 item_id )
     return found;
 }
 
-VendorItem const* VendorItemData::FindItemCostPair(uint32 item_id, int32 extendedCost) const
+VendorItem const* VendorItemData::FindItemCostPair(uint32 item_id, uint32 extendedCost) const
 {
     for(VendorItemList::const_iterator i = m_items.begin(); i != m_items.end(); ++i )
         if((*i)->item == item_id && (*i)->ExtendedCost == extendedCost)
@@ -117,7 +117,7 @@ m_subtype(subtype), m_defaultMovementType(IDLE_MOTION_TYPE), m_DBTableGuid(0), m
 m_AlreadyCallAssistance(false), m_AlreadySearchedAssistance(false),
 m_regenHealth(true), m_AI_locked(false), m_isDeadByDefault(false), m_needNotify(false),
 m_meleeDamageSchoolMask(SPELL_SCHOOL_MASK_NORMAL),
-m_creatureInfo(NULL), m_isActiveObject(false), m_splineFlags(SPLINEFLAG_WALKMODE)
+m_creatureInfo(NULL), m_splineFlags(SPLINEFLAG_WALKMODE)
 {
     m_regenTimer = 200;
     m_valuesCount = UNIT_END;
@@ -221,13 +221,15 @@ bool Creature::InitEntry(uint32 Entry, uint32 team, const CreatureData *data )
     SetEntry(Entry);                                        // normal entry always
     m_creatureInfo = cinfo;                                 // map mode related always
 
+    SetObjectScale(cinfo->scale);
+
     // equal to player Race field, but creature does not have race
     SetByteValue(UNIT_FIELD_BYTES_0, 0, 0);
 
     // known valid are: CLASS_WARRIOR,CLASS_PALADIN,CLASS_ROGUE,CLASS_MAGE
     SetByteValue(UNIT_FIELD_BYTES_0, 1, uint8(cinfo->unit_class));
 
-    uint32 display_id = sObjectMgr.ChooseDisplayId(team, GetCreatureInfo(), data);
+    uint32 display_id = ChooseDisplayId(team, GetCreatureInfo(), data);
     if (!display_id)                                        // Cancel load if no display id
     {
         sLog.outErrorDb("Creature (Entry: %u) has no model defined in table `creature_template`, can't load.", Entry);
@@ -243,8 +245,18 @@ bool Creature::InitEntry(uint32 Entry, uint32 team, const CreatureData *data )
 
     display_id = minfo->modelid;                            // it can be different (for another gender)
 
-    SetDisplayId(display_id);
     SetNativeDisplayId(display_id);
+
+    // special case for totems (model for team==HORDE is stored in creature_template as the default)
+    if (team == ALLIANCE && cinfo->type == CREATURE_TYPE_TOTEM)
+    {
+        uint32 modelid_tmp = sObjectMgr.GetCreatureModelOtherTeamModel(display_id);
+        display_id = modelid_tmp ? modelid_tmp : display_id;
+    }
+
+    // normally the same as native, see above for the exeption
+    SetDisplayId(display_id);
+
     SetByteValue(UNIT_FIELD_BYTES_0, 2, minfo->gender);
 
     // Load creature equipment
@@ -262,17 +274,12 @@ bool Creature::InitEntry(uint32 Entry, uint32 team, const CreatureData *data )
 
     SetName(normalInfo->Name);                              // at normal entry always
 
-    SetFloatValue(UNIT_FIELD_BOUNDINGRADIUS, minfo->bounding_radius);
-    SetFloatValue(UNIT_FIELD_COMBATREACH, minfo->combat_reach);
-
     SetFloatValue(UNIT_MOD_CAST_SPEED, 1.0f);
 
     SetSpeedRate(MOVE_WALK, cinfo->speed_walk);
     SetSpeedRate(MOVE_RUN,  cinfo->speed_run);
     SetSpeedRate(MOVE_SWIM, 1.0f);                          // using 1.0 rate
     SetSpeedRate(MOVE_FLIGHT, 1.0f);                        // using 1.0 rate
-
-    SetFloatValue(OBJECT_FIELD_SCALE_X, cinfo->scale);
 
     // checked at loading
     m_defaultMovementType = MovementGeneratorType(cinfo->MovementType);
@@ -337,6 +344,57 @@ bool Creature::UpdateEntry(uint32 Entry, uint32 team, const CreatureData *data, 
         m_spells[i] = GetCreatureInfo()->spells[i];
 
     return true;
+}
+
+uint32 Creature::ChooseDisplayId(uint32 team, const CreatureInfo *cinfo, const CreatureData *data /*= NULL*/)
+{
+    // Use creature model explicit, override template (creature.modelid)
+    if (data && data->modelid_override)
+        return data->modelid_override;
+
+    // use defaults from the template
+    uint32 display_id = 0;
+
+    // models may be categorized as (in this order):
+    // if mod4 && mod3 && mod2 && mod1  use any, by 25%-chance (other gender is selected and replaced after this function)
+    // if mod3 && mod2 && mod1          use mod3 unless mod2 has modelid_alt_model (then all by 33%-chance)
+    // if mod2                          use mod2 unless mod2 has modelid_alt_model (then both by 50%-chance)
+    // if mod1                          use mod1
+
+    // model selected here may be replaced with other_gender using own function
+
+    if (cinfo->ModelId[3] && cinfo->ModelId[2] && cinfo->ModelId[1] && cinfo->ModelId[0])
+    {
+        display_id = cinfo->ModelId[urand(0,3)];
+    }
+    else if (cinfo->ModelId[2] && cinfo->ModelId[1] && cinfo->ModelId[0])
+    {
+        uint32 modelid_tmp = sObjectMgr.GetCreatureModelAlternativeModel(cinfo->ModelId[1]);
+        display_id = modelid_tmp ? cinfo->ModelId[urand(0,2)] : cinfo->ModelId[2];
+    }
+    else if (cinfo->ModelId[1])
+    {
+        // We use this to eliminate invisible models vs. "dummy" models (infernals, etc).
+        // Where it's expected to select one of two, model must have a alternative model defined (alternative model is normally the same as defined in ModelId1).
+        // Same pattern is used in the above model selection, but the result may be ModelId3 and not ModelId2 as here.
+        uint32 modelid_tmp = sObjectMgr.GetCreatureModelAlternativeModel(cinfo->ModelId[1]);
+        display_id = modelid_tmp ? modelid_tmp : cinfo->ModelId[1];
+    }
+    else if (cinfo->ModelId[0])
+    {
+        display_id = cinfo->ModelId[0];
+    }
+
+    // fail safe, we use creature entry 1 and make error
+    if (!display_id)
+    {
+        sLog.outErrorDb("Call customer support, ChooseDisplayId can not select native model for creature entry %u, model from creature entry 1 will be used instead.", cinfo->Entry);
+
+        if (const CreatureInfo *creatureDefault = sObjectMgr.GetCreatureTemplate(1))
+            display_id = creatureDefault->ModelId[0];
+    }
+
+    return display_id;
 }
 
 void Creature::Update(uint32 diff)
@@ -791,29 +849,6 @@ bool Creature::isCanTrainingAndResetTalentsOf(Player* pPlayer) const
         && pPlayer->getClass() == GetCreatureInfo()->trainer_class;
 }
 
-void Creature::AI_SendMoveToPacket(float x, float y, float z, uint32 time, SplineFlags flags, SplineType type)
-{
-    /*    uint32 timeElap = getMSTime();
-        if ((timeElap - m_startMove) < m_moveTime)
-        {
-            oX = (dX - oX) * ( (timeElap - m_startMove) / m_moveTime );
-            oY = (dY - oY) * ( (timeElap - m_startMove) / m_moveTime );
-        }
-        else
-        {
-            oX = dX;
-            oY = dY;
-        }
-
-        dX = x;
-        dY = y;
-        m_orientation = atan2((oY - dY), (oX - dX));
-
-        m_startMove = getMSTime();
-        m_moveTime = time;*/
-    SendMonsterMove(x, y, z, type, flags, time);
-}
-
 void Creature::PrepareBodyLootState()
 {
     loot.clear();
@@ -920,7 +955,7 @@ void Creature::SetLootRecipient(Unit *unit)
     // set player for non group case or if group will disbanded
     m_lootRecipientGuid = player->GetObjectGuid();
 
-    // set group for group existed case including if player will leave group at loot time
+    // set group for group existing case including if player will leave group at loot time
     if (Group* group = player->GetGroup())
         m_lootGroupRecipientId = group->GetId();
 
@@ -954,28 +989,14 @@ void Creature::SaveToDB(uint32 mapid, uint8 spawnMask, uint32 phaseMask)
     CreatureInfo const *cinfo = GetCreatureInfo();
     if (cinfo)
     {
-        if (displayId != cinfo->DisplayID_A[0] && displayId != cinfo->DisplayID_A[1] &&
-            displayId != cinfo->DisplayID_H[0] && displayId != cinfo->DisplayID_H[1])
+        if (displayId != cinfo->ModelId[0] && displayId != cinfo->ModelId[1] &&
+            displayId != cinfo->ModelId[2] && displayId != cinfo->ModelId[3])
         {
-            if (cinfo->DisplayID_A[0])
-                if (CreatureModelInfo const *minfo = sObjectMgr.GetCreatureModelInfo(cinfo->DisplayID_A[0]))
-                    if(displayId == minfo->modelid_other_gender)
-                        displayId = 0;
-
-            if (displayId && cinfo->DisplayID_A[1])
-                if (CreatureModelInfo const *minfo = sObjectMgr.GetCreatureModelInfo(cinfo->DisplayID_A[1]))
-                    if(displayId == minfo->modelid_other_gender)
-                        displayId = 0;
-
-            if (displayId && cinfo->DisplayID_H[0])
-                if (CreatureModelInfo const *minfo = sObjectMgr.GetCreatureModelInfo(cinfo->DisplayID_H[0]))
-                    if(displayId == minfo->modelid_other_gender)
-                        displayId = 0;
-
-            if (displayId && cinfo->DisplayID_H[1])
-                if (CreatureModelInfo const *minfo = sObjectMgr.GetCreatureModelInfo(cinfo->DisplayID_H[1]))
-                    if(displayId == minfo->modelid_other_gender)
-                        displayId = 0;
+            for(int i = 0; i < MAX_CREATURE_MODEL && displayId; ++i)
+                if (cinfo->ModelId[i])
+                    if (CreatureModelInfo const *minfo = sObjectMgr.GetCreatureModelInfo(cinfo->ModelId[i]))
+                        if (displayId == minfo->modelid_other_gender)
+                            displayId = 0;
         }
         else
             displayId = 0;
@@ -985,7 +1006,7 @@ void Creature::SaveToDB(uint32 mapid, uint8 spawnMask, uint32 phaseMask)
     data.id = GetEntry();
     data.mapid = mapid;
     data.phaseMask = phaseMask;
-    data.displayid = displayId;
+    data.modelid_override = displayId;
     data.equipmentId = GetEquipmentId();
     data.posX = GetPositionX();
     data.posY = GetPositionY();
@@ -1400,8 +1421,8 @@ bool Creature::FallGround()
     if (getDeathState() == DEAD_FALLING)
         return false;
 
-    // Let's do with no vmap because no way to get far distance with vmap high call
-    float tz = GetMap()->GetHeight(GetPositionX(), GetPositionY(), GetPositionZ(), false);
+    // use larger distance for vmap height search than in most other cases
+    float tz = GetMap()->GetHeight(GetPositionX(), GetPositionY(), GetPositionZ(), true, MAX_FALL_DISTANCE);
 
     // Abort too if the ground is very near
     if (fabs(GetPositionZ() - tz) < 0.1f)
@@ -1839,9 +1860,28 @@ bool Creature::LoadCreaturesAddon(bool reload)
                 continue;
             }
 
-            Aura* AdditionalAura = CreateAura(AdditionalSpellInfo, cAura->effect_idx, NULL, this, this, 0);
-            AddAura(AdditionalAura);
-            DEBUG_FILTER_LOG(LOG_FILTER_SPELL_CAST, "Spell: %u with Aura %u added to creature (GUIDLow: %u Entry: %u )", cAura->spell_id, AdditionalSpellInfo->EffectApplyAuraName[EFFECT_INDEX_0],GetGUIDLow(),GetEntry());
+            SpellAuraHolder *holder = GetSpellAuraHolder(cAura->spell_id, GetGUID());
+
+            bool addedToExisting = true;
+            if (!holder)
+            {
+                holder = CreateSpellAuraHolder(AdditionalSpellInfo, this, this);
+                addedToExisting = false;
+            }
+            Aura* AdditionalAura = CreateAura(AdditionalSpellInfo, cAura->effect_idx, NULL, holder, this, this, 0);
+            holder->AddAura(AdditionalAura, cAura->effect_idx);
+
+            if (addedToExisting)
+            {
+                AddAuraToModList(AdditionalAura);
+                holder->SetInUse(true);
+                AdditionalAura->ApplyModifier(true,true);
+                holder->SetInUse(false);
+            }
+            else
+                AddSpellAuraHolder(holder);
+
+            DEBUG_FILTER_LOG(LOG_FILTER_SPELL_CAST, "Spell: %u - Aura %u added to creature (GUIDLow: %u Entry: %u )", cAura->spell_id, AdditionalSpellInfo->EffectApplyAuraName[EFFECT_INDEX_0],GetGUIDLow(),GetEntry());
         }
     }
     return true;
@@ -2037,8 +2077,6 @@ void Creature::AllLootRemovedFromCorpse()
     if (lootForBody && !HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_SKINNABLE))
     {
         uint32 nDeathTimer;
-
-        CreatureInfo const *cinfo = GetCreatureInfo();
 
         // corpse was not skinned -> apply corpse looted timer
         if (!lootForSkin)

@@ -82,6 +82,7 @@ namespace VMAP
             // build global map tree
             std::vector<ModelSpawn*> mapSpawns;
             UniqueEntryMap::iterator entry;
+            printf("Calculating model bounds for map %u...\n", map_iter->first);
             for (entry = map_iter->second->UniqueEntries.begin(); entry != map_iter->second->UniqueEntries.end(); ++entry)
             {
                 // M2 models don't have a bound set in WDT/ADT placement data, i still think they're not used for LoS at all on retail
@@ -100,6 +101,7 @@ namespace VMAP
                 spawnedModelFiles.insert(entry->second.name);
             }
 
+            printf("Creating map tree...\n");
             BIH pTree;
             pTree.build(mapSpawns, BoundsTrait<ModelSpawn*>::getBounds);
 
@@ -107,8 +109,6 @@ namespace VMAP
             std::map<uint32, uint32> modelNodeIdx;
             for (uint32 i=0; i<mapSpawns.size(); ++i)
                 modelNodeIdx.insert(pair<uint32, uint32>(mapSpawns[i]->ID, i));
-            if (!modelNodeIdx.empty())
-                printf("min GUID: %u, max GUID: %u\n", modelNodeIdx.begin()->first, modelNodeIdx.rbegin()->first);
 
             // write map tree file
             std::stringstream mapfilename;
@@ -158,6 +158,8 @@ namespace VMAP
                 StaticMapTree::unpackTileID(tile->first, x, y);
                 tilefilename << std::setw(2) << x << "_" << std::setw(2) << y << ".vmtile";
                 FILE *tilefile = fopen(tilefilename.str().c_str(), "wb");
+                // file header
+                if (success && fwrite(VMAP_MAGIC, 1, 8, tilefile) != 8) success = false;
                 // write number of tile spawns
                 if (success && fwrite(&nSpawns, sizeof(uint32), 1, tilefile) != 1) success = false;
                 // write tile spawns

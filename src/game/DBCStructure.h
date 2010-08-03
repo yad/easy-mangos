@@ -802,10 +802,10 @@ struct FactionEntry
     int32       BaseRepValue[4];                            // 10-13    m_reputationBase
     uint32      ReputationFlags[4];                         // 14-17    m_reputationFlags
     uint32      team;                                       // 18       m_parentFactionID
-    //float     unk1;                                       // 19
-    //float     unk2;                                       // 20
-    //uint32    unk3                                        // 21
-    //uint32    unk4;                                       // 22
+    //float     spilloverRate1;                             // 19       Members of the team gain (received_rep*rate). If spilloverRate1 is (0.0 || 1.0), spilloverRate2 are used instead...
+    //float     spilloverRate2;                             // 20       ...but only if spilloverRate2 is not (1.0 || 0.0). Faction must be member of a team before spillover are given.
+    //uint32    spilloverMaxRank;                           // 21       The highest rank player will receive spillover at (the cap). Above this rank will not give any spillover for this faction
+    //uint32    spilloverRank_unk;                          // 22
     char*       name[16];                                   // 23-38    m_name_lang
                                                             // 39 string flags
     //char*     description[16];                            // 40-55    m_description_lang
@@ -867,7 +867,8 @@ struct GameObjectDisplayInfoEntry
     uint32      Displayid;                                  // 0        m_ID
     // char* filename;                                      // 1
     // uint32 unknown2[10];                                 // 2-11     unknown data
-    // float  unknown12[6];                                 // 12-17    unknown data
+    float  unknown12;                                       // 12-17    unknown size data, use first value as interact dist, mostly in hacks way
+    // float  unknown13[5];                                 // 12-17    unknown size data
     // uint32 unknown18;                                    // 18       unknown data
 };
 
@@ -1518,11 +1519,16 @@ struct SpellRadiusEntry
 
 struct SpellRangeEntry
 {
-    uint32    ID;
-    float     minRange;
-    float     minRangeFriendly;
-    float     maxRange;
-    float     maxRangeFriendly;
+    uint32    ID;                                           // 0
+    float     minRange;                                     // 1
+    float     minRangeFriendly;                             // 2
+    float     maxRange;                                     // 3
+    float     maxRangeFriendly;                             // 4
+    //uint32  Flags;                                        // 5
+    //char*   Name[16];                                     // 6-21 unused
+    //uint32  NameFlags;                                    // 22 unused
+    //char*   ShortName[16];                                // 23-38 unused
+    //uint32  NameFlags;                                    // 39 unused
 };
 
 struct SpellRuneCostEntry

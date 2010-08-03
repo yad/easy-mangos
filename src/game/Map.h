@@ -81,6 +81,8 @@ enum LevelRequirementVsMode
 
 #define MAX_HEIGHT            100000.0f                     // can be use for find ground height at surface
 #define INVALID_HEIGHT       -100000.0f                     // for check, must be equal to VMAP_INVALID_HEIGHT, real value for unknown height is VMAP_INVALID_HEIGHT_VALUE
+#define MAX_FALL_DISTANCE     250000.0f                     // "unlimited fall" to find VMap ground if it is available, just larger than MAX_HEIGHT - INVALID_HEIGHT
+#define DEFAULT_HEIGHT_SEARCH     10.0f                     // default search distance to find height at nearby locations
 #define MIN_UNLOAD_DELAY      1                             // immediate unload
 
 class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::ObjectLevelLockable<Map, ACE_Thread_Mutex>
@@ -152,7 +154,7 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
 
         // some calls like isInWater should not use vmaps due to processor power
         // can return INVALID_HEIGHT if under z+2 z coord not found height
-        float GetHeight(float x, float y, float z, bool pCheckVMap=true) const;
+        float GetHeight(float x, float y, float z, bool pCheckVMap=true, float maxSearchDist=DEFAULT_HEIGHT_SEARCH) const;
         bool IsInWater(float x, float y, float z, GridMapLiquidData *data = 0) const;
 
         GridMapLiquidStatus getLiquidStatus(float x, float y, float z, uint8 ReqLiquidType, GridMapLiquidData *data = 0) const;
@@ -212,6 +214,8 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
         bool IsBattleArena() const { return i_mapEntry && i_mapEntry->IsBattleArena(); }
         bool IsBattleGroundOrArena() const { return i_mapEntry && i_mapEntry->IsBattleGroundOrArena(); }
 
+        InstanceSave* GetInstanceSave() const { return m_instanceSave; }
+
         void AddObjectToRemoveList(WorldObject *obj);
 
         void UpdateObjectVisibility(WorldObject* obj, Cell cell, CellPair cellpair);
@@ -234,16 +238,9 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
         void ScriptCommandStart(ScriptInfo const& script, uint32 delay, Object* source, Object* target);
 
         // must called with AddToWorld
-        template<class T>
-        void AddToActive(T* obj) { AddToActiveHelper(obj); }
-
-        void AddToActive(Creature* obj);
-
+        void AddToActive(WorldObject* obj);
         // must called with RemoveFromWorld
-        template<class T>
-        void RemoveFromActive(T* obj) { RemoveFromActiveHelper(obj); }
-
-        void RemoveFromActive(Creature* obj);
+        void RemoveFromActive(WorldObject* obj);
 
         Creature* GetCreature(ObjectGuid guid);
         Vehicle* GetVehicle(ObjectGuid guid);
@@ -323,6 +320,7 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
         uint32 i_InstanceId;
         uint32 m_unloadTimer;
         float m_VisibleDistance;
+        InstanceSave* m_instanceSave;                       // can be NULL for non dungeons...
 
         MapRefManager m_mapRefManager;
         MapRefManager::iterator m_mapRefIter;
@@ -362,27 +360,6 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
 
         template<class T>
             void DeleteFromWorld(T*);
-
-        template<class T>
-        void AddToActiveHelper(T* obj)
-        {
-            m_activeNonPlayers.insert(obj);
-        }
-
-        template<class T>
-        void RemoveFromActiveHelper(T* obj)
-        {
-            // Map::Update for active object in proccess
-            if(m_activeNonPlayersIter != m_activeNonPlayers.end())
-            {
-                ActiveNonPlayers::iterator itr = m_activeNonPlayers.find(obj);
-                if(itr==m_activeNonPlayersIter)
-                    ++m_activeNonPlayersIter;
-                m_activeNonPlayers.erase(itr);
-            }
-            else
-                m_activeNonPlayers.erase(obj);
-        }
 
         // begin movemap-related
     public:

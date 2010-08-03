@@ -27,6 +27,7 @@
 #include "WorldPacket.h"
 #include "DBCStores.h"
 #include "ProgressBar.h"
+#include "ScriptCalls.h"
 
 void MapManager::LoadTransports()
 {
@@ -161,7 +162,7 @@ bool Transport::Create(uint32 guidlow, uint32 mapid, float x, float y, float z, 
 
     m_goInfo = goinfo;
 
-    SetFloatValue(OBJECT_FIELD_SCALE_X, goinfo->size);
+    SetObjectScale(goinfo->size);
 
     SetUInt32Value(GAMEOBJECT_FACTION, goinfo->faction);
     //SetUInt32Value(GAMEOBJECT_FLAGS, goinfo->flags);
@@ -484,7 +485,7 @@ bool Transport::RemovePassenger(Player* passenger)
     return true;
 }
 
-void Transport::Update(time_t /*p_time*/)
+void Transport::Update(uint32 /*p_time*/)
 {
     if (m_WayPoints.size() <= 1)
         return;
@@ -566,6 +567,8 @@ void Transport::DoEventIfAny(WayPointMap::value_type const& node, bool departure
     if (uint32 eventid = departure ? node.second.departureEventID : node.second.arrivalEventID)
     {
         DEBUG_FILTER_LOG(LOG_FILTER_TRANSPORT_MOVES, "Taxi %s event %u of node %u of %s (%s) path", departure ? "departure" : "arrival", eventid, node.first, GetName(), GetObjectGuid().GetString().c_str());
-        GetMap()->ScriptsStart(sEventScripts, eventid, this, this);
+
+        if (!Script->ProcessEventId(eventid, this, this, departure))
+            GetMap()->ScriptsStart(sEventScripts, eventid, this, this);
     }
 }

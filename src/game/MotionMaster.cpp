@@ -40,8 +40,11 @@ inline bool isStatic(MovementGenerator *mv)
 void
 MotionMaster::Initialize()
 {
+    // stop current move
+    if (!i_owner->IsStopped())
+        i_owner->StopMoving();
+
     // clear ALL movement generators (including default)
-    i_owner->StopMoving();
     Clear(false,true);
 
     // set new default movement generator
@@ -372,7 +375,7 @@ MotionMaster::MoveTaxiFlight(uint32 path, uint32 pathnode)
         }
         else
         {
-            sLog.outError("%s attempt taxi to (not existed Path %u node %u)",
+            sLog.outError("%s attempt taxi to (nonexistent Path %u node %u)",
                 i_owner->GetObjectGuid().GetString().c_str(), path, pathnode );
         }
     }

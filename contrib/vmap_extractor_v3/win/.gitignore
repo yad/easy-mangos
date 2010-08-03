@@ -1,0 +1,7 @@
+
+*.opensdf
+*.ncb
+*.sdf
+*.suo
+bin
+ipch

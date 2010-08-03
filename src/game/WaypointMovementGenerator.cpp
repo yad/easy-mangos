@@ -39,6 +39,7 @@ alter table creature_movement add `wpguid` int(11) default '0';
 #include "CreatureAI.h"
 #include "WaypointManager.h"
 #include "WorldPacket.h"
+#include "ScriptCalls.h"
 
 #include <cassert>
 
@@ -310,7 +311,7 @@ void FlightPathMovementGenerator::Initialize(Player &player)
 void FlightPathMovementGenerator::Finalize(Player & player)
 {
     // remove flag to prevent send object build movement packets for flight state and crash (movement generator already not at top of stack)
-    player.clearUnitState(UNIT_STAT_IN_FLIGHT);
+    player.clearUnitState(UNIT_STAT_TAXI_FLIGHT);
 
     float x, y, z;
     i_destinationHolder.GetLocationNow(player.GetBaseMap(), x, y, z);
@@ -334,13 +335,13 @@ void FlightPathMovementGenerator::Finalize(Player & player)
 
 void FlightPathMovementGenerator::Interrupt(Player & player)
 {
-    player.clearUnitState(UNIT_STAT_IN_FLIGHT);
+    player.clearUnitState(UNIT_STAT_TAXI_FLIGHT);
 }
 
 void FlightPathMovementGenerator::Reset(Player & player)
 {
     player.getHostileRefManager().setOnlineOfflineState(false);
-    player.addUnitState(UNIT_STAT_IN_FLIGHT);
+    player.addUnitState(UNIT_STAT_TAXI_FLIGHT);
     player.SetFlag(UNIT_FIELD_FLAGS,UNIT_FLAG_DISABLE_MOVE | UNIT_FLAG_TAXI_FLIGHT);
     Traveller<Player> traveller(player);
     // do not send movement, it was sent already
@@ -412,7 +413,9 @@ void FlightPathMovementGenerator::DoEventIfAny(Player& player, TaxiPathNodeEntry
     if (uint32 eventid = departure ? node.departureEventID : node.arrivalEventID)
     {
         DEBUG_FILTER_LOG(LOG_FILTER_AI_AND_MOVEGENSS, "Taxi %s event %u of node %u of path %u for player %s", departure ? "departure" : "arrival", eventid, node.index, node.path, player.GetName());
-        player.GetMap()->ScriptsStart(sEventScripts, eventid, &player, &player);
+
+        if (!Script->ProcessEventId(eventid, &player, &player, departure))
+            player.GetMap()->ScriptsStart(sEventScripts, eventid, &player, &player);
     }
 }
 

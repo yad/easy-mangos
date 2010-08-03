@@ -67,6 +67,8 @@ class GameEventMgr
         uint32 Initialize();
         void StartEvent(uint16 event_id, bool overwrite = false);
         void StopEvent(uint16 event_id, bool overwrite = false);
+        template<typename T>
+        int16 GetGameEventId(uint32 guid_or_poolid);
     private:
         void AddActiveEvent(uint16 event_id) { m_ActiveEvents.insert(event_id); }
         void RemoveActiveEvent(uint16 event_id) { m_ActiveEvents.erase(event_id); }
@@ -88,11 +90,11 @@ class GameEventMgr
         typedef std::pair<uint32, uint32> QuestRelation;
         typedef std::list<QuestRelation> QuestRelList;
         typedef std::vector<QuestRelList> GameEventQuestMap;
-        GameEventQuestMap mGameEventQuests;
-        GameEventModelEquipMap mGameEventModelEquip;
-        GameEventGuidMap  mGameEventCreatureGuids;
-        GameEventGuidMap  mGameEventGameobjectGuids;
-        GameEventIdMap    mGameEventPoolIds;
+        GameEventQuestMap mGameEventQuests;                 // events*2-1
+        GameEventModelEquipMap mGameEventModelEquip;        // events*2-1
+        GameEventGuidMap  mGameEventCreatureGuids;          // events*2-1
+        GameEventGuidMap  mGameEventGameobjectGuids;        // events*2-1
+        GameEventIdMap    mGameEventSpawnPoolIds;           // events size, only positive event case
         GameEventDataMap  mGameEvent;
         ActiveEvents m_ActiveEvents;
         bool m_IsGameEventsInit;

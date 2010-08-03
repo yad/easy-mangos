@@ -27,7 +27,7 @@
 #include "ScriptCalls.h"
 #include "ObjectMgr.h"
 #include "WorldSession.h"
-#include "Config/ConfigEnv.h"
+#include "Config/Config.h"
 #include "Util.h"
 #include "AccountMgr.h"
 #include "CliRunnable.h"
@@ -137,7 +137,7 @@ bool ChatHandler::GetDeletedCharacterInfoList(DeletedInfoList& foundList, std::s
             info.name       = fields[1].GetCppString();
             info.accountId  = fields[2].GetUInt32();
 
-            // account name will be empty for not existed account
+            // account name will be empty for nonexistent account
             sAccountMgr.GetName (info.accountId, info.accountName);
 
             info.deleteDate = time_t(fields[3].GetUInt64());
@@ -205,11 +205,11 @@ void ChatHandler::HandleCharacterDeletedListHelper(DeletedInfoList const& foundL
 
         if (!m_session)
             PSendSysMessage(LANG_CHARACTER_DELETED_LIST_LINE_CONSOLE,
-                itr->lowguid, itr->name.c_str(), itr->accountName.empty() ? "<Not existed>" : itr->accountName.c_str(),
+                itr->lowguid, itr->name.c_str(), itr->accountName.empty() ? "<nonexistent>" : itr->accountName.c_str(),
                 itr->accountId, dateStr.c_str());
         else
             PSendSysMessage(LANG_CHARACTER_DELETED_LIST_LINE_CHAT,
-                itr->lowguid, itr->name.c_str(), itr->accountName.empty() ? "<Not existed>" : itr->accountName.c_str(),
+                itr->lowguid, itr->name.c_str(), itr->accountName.empty() ? "<nonexistent>" : itr->accountName.c_str(),
                 itr->accountId, dateStr.c_str());
     }
 
@@ -320,7 +320,7 @@ bool ChatHandler::HandleCharacterDeletedRestoreCommand(const char* args)
 
     if (newCharName.empty())
     {
-        // Drop not existed account cases
+        // Drop nonexistent account cases
         for (DeletedInfoList::iterator itr = foundList.begin(); itr != foundList.end(); ++itr)
             HandleCharacterDeletedRestoreHelper(*itr);
     }
@@ -483,7 +483,7 @@ bool ChatHandler::HandleAccountOnlineListCommand(const char* args)
 
     ///- Get the list of accounts ID logged to the realm
     //                                                 0   1         2        3        4
-    QueryResult *result = loginDatabase.PQuery("SELECT id, username, last_ip, gmlevel, expansion FROM account WHERE active_realm_id = %u", realmID);
+    QueryResult *result = LoginDatabase.PQuery("SELECT id, username, last_ip, gmlevel, expansion FROM account WHERE active_realm_id = %u", realmID);
 
     return ShowAccountListHelper(result,&limit);
 }
@@ -593,7 +593,7 @@ bool ChatHandler::HandleServerLogLevelCommand(const char *args)
 {
     if(!*args)
     {
-        PSendSysMessage("Log level: %u");
+        PSendSysMessage("Log level: %u", sLog.GetLogLevel());
         return true;
     }
 
@@ -629,7 +629,7 @@ void CliRunnable::run()
     ///- Display the list of available CLI functions then beep
     sLog.outString();
 
-    if(sConfig.GetBoolDefault("BeepAtStart", true))
+    if (sConfig.GetBoolDefault("BeepAtStart", true))
         printf("\a");                                       // \a = Alert
 
     // print this here the first time

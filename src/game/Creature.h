@@ -59,6 +59,7 @@ enum CreatureFlagsExtra
 #endif
 
 #define MAX_KILL_CREDIT 2
+#define MAX_CREATURE_MODEL 4
 
 // from `creature_template` table
 struct CreatureInfo
@@ -66,8 +67,7 @@ struct CreatureInfo
     uint32  Entry;
     uint32  DifficultyEntry[MAX_DIFFICULTY - 1];
     uint32  KillCredit[MAX_KILL_CREDIT];
-    uint32  DisplayID_A[2];
-    uint32  DisplayID_H[2];
+    uint32  ModelId[MAX_CREATURE_MODEL];
     char*   Name;
     char*   SubName;
     char*   IconName;
@@ -190,7 +190,7 @@ struct CreatureData
     uint32 id;                                              // entry in creature_template
     uint16 mapid;
     uint16 phaseMask;
-    uint32 displayid;
+    uint32 modelid_override;                                // overrides any model defined in creature_template
     int32 equipmentId;
     float posX;
     float posY;
@@ -230,7 +230,9 @@ struct CreatureModelInfo
     float bounding_radius;
     float combat_reach;
     uint8 gender;
-    uint32 modelid_other_gender;
+    uint32 modelid_other_gender;                            // The oposite gender for this modelid (male/female)
+    uint32 modelid_alternative;                             // An alternative model. Generally same gender(2)
+    uint32 modelid_other_team;                              // The oposite team. Generally for alliance totem
 };
 
 enum InhabitTypeValues
@@ -276,17 +278,13 @@ enum AttackingTarget
 // Vendors
 struct VendorItem
 {
-    VendorItem(uint32 _item, uint32 _maxcount, uint32 _incrtime, int32 _ExtendedCost)
+    VendorItem(uint32 _item, uint32 _maxcount, uint32 _incrtime, uint32 _ExtendedCost)
         : item(_item), maxcount(_maxcount), incrtime(_incrtime), ExtendedCost(_ExtendedCost) {}
 
     uint32 item;
     uint32 maxcount;                                        // 0 for infinity item amount
     uint32 incrtime;                                        // time for restore items amount if maxcount != 0
-    int32  ExtendedCost;                                    // negative if need exclude normal item money cost
-
-    // helpers
-    uint32 IsExcludeMoneyPrice() const { return ExtendedCost < 0; }
-    uint32 GetExtendedCostId() const { return std::abs(ExtendedCost); }
+    uint32 ExtendedCost;                                    // index in ItemExtendedCost.dbc
 };
 typedef std::vector<VendorItem*> VendorItemList;
 
@@ -301,12 +299,12 @@ struct VendorItemData
     }
     bool Empty() const { return m_items.empty(); }
     uint8 GetItemCount() const { return m_items.size(); }
-    void AddItem( uint32 item, uint32 maxcount, uint32 ptime, int32 ExtendedCost)
+    void AddItem( uint32 item, uint32 maxcount, uint32 ptime, uint32 ExtendedCost)
     {
         m_items.push_back(new VendorItem(item, maxcount, ptime, ExtendedCost));
     }
     bool RemoveItem( uint32 item_id );
-    VendorItem const* FindItemCostPair(uint32 item_id, int32 extendedCost) const;
+    VendorItem const* FindItemCostPair(uint32 item_id, uint32 extendedCost) const;
 
     void Clear()
     {
@@ -444,7 +442,6 @@ class MANGOS_DLL_SPEC Creature : public Unit
 
         bool AIM_Initialize();
 
-        void AI_SendMoveToPacket(float x, float y, float z, uint32 time, SplineFlags MovementFlags, SplineType type);
         CreatureAI* AI() { return i_AI; }
 
         void AddSplineFlag(SplineFlags f)
@@ -509,6 +506,8 @@ class MANGOS_DLL_SPEC Creature : public Unit
 
         CreatureInfo const *GetCreatureInfo() const { return m_creatureInfo; }
         CreatureDataAddon const* GetCreatureAddon() const;
+
+        static uint32 ChooseDisplayId(uint32 team, const CreatureInfo *cinfo, const CreatureData *data = NULL);
 
         std::string GetAIName() const;
         std::string GetScriptName() const;
@@ -627,7 +626,6 @@ class MANGOS_DLL_SPEC Creature : public Unit
 
         void SetDeadByDefault (bool death_state) { m_isDeadByDefault = death_state; }
 
-        bool isActiveObject() const { return m_isActiveObject || HasAuraType(SPELL_AURA_BIND_SIGHT) || HasAuraType(SPELL_AURA_FAR_SIGHT); }
         void SetActiveObjectState(bool on);
 
         void SetNeedNotify() { m_needNotify = true; }
@@ -692,7 +690,6 @@ class MANGOS_DLL_SPEC Creature : public Unit
     private:
         GridReference<Creature> m_gridRef;
         CreatureInfo const* m_creatureInfo;                 // in difficulty mode > 0 can different from ObjMgr::GetCreatureTemplate(GetEntry())
-        bool m_isActiveObject;
         SplineFlags m_splineFlags;
 };
 

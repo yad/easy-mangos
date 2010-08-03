@@ -129,6 +129,7 @@ enum eConfigUInt32Values
     CONFIG_UINT32_GROUP_VISIBILITY,
     CONFIG_UINT32_MAIL_DELIVERY_DELAY,
     CONFIG_UINT32_UPTIME_UPDATE,
+    CONFIG_UINT32_AUCTION_DEPOSIT_MIN,
     CONFIG_UINT32_SKILL_CHANCE_ORANGE,
     CONFIG_UINT32_SKILL_CHANCE_YELLOW,
     CONFIG_UINT32_SKILL_CHANCE_GREEN,
@@ -188,6 +189,8 @@ enum eConfigUInt32Values
 enum eConfigInt32Values
 {
     CONFIG_INT32_DEATH_SICKNESS_LEVEL = 0,
+    CONFIG_INT32_ARENA_STARTRATING,
+    CONFIG_INT32_ARENA_STARTPERSONALRATING,
     CONFIG_INT32_VALUE_COUNT
 };
 
@@ -289,6 +292,7 @@ enum eConfigBoolValues
     CONFIG_BOOL_ALWAYS_MAX_SKILL_FOR_LEVEL,
     CONFIG_BOOL_WEATHER,
     CONFIG_BOOL_EVENT_ANNOUNCE,
+    CONFIG_BOOL_QUEST_IGNORE_RAID,
     CONFIG_BOOL_DETECT_POS_COLLISION,
     CONFIG_BOOL_RESTRICTED_LFG_CHANNEL,
     CONFIG_BOOL_SILENTLY_GM_JOIN_TO_CHANNEL,
@@ -411,6 +415,7 @@ enum RealmZone
 #define SCRIPT_COMMAND_PLAY_SOUND           16              // source = any object, target=any/player, datalong (sound_id), datalong2 (bitmask: 0/1=anyone/target, 0/2=with distance dependent, so 1|2 = 3 is target with distance dependent)
 #define SCRIPT_COMMAND_CREATE_ITEM          17              // source or target must be player, datalong = item entry, datalong2 = amount
 #define SCRIPT_COMMAND_DESPAWN_SELF         18              // source or target must be creature, datalong = despawn delay
+#define SCRIPT_COMMAND_PLAY_MOVIE           19              // target can only be a player, datalog = movie id
 
 /// Storage class for commands issued for delayed execution
 struct CliCommandHolder

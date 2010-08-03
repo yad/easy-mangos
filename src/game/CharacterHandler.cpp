@@ -75,7 +75,7 @@ bool LoginQueryHolder::Initialize()
         "health, power1, power2, power3, power4, power5, power6, power7, specCount, activeSpec, exploredZones, equipmentCache, ammoId, knownTitles, actionBars FROM characters WHERE guid = '%u'", GUID_LOPART(m_guid));
     res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADGROUP,           "SELECT groupId FROM group_member WHERE memberGuid ='%u'", GUID_LOPART(m_guid));
     res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADBOUNDINSTANCES,  "SELECT id, permanent, map, difficulty, resettime FROM character_instance LEFT JOIN instance ON instance = id WHERE guid = '%u'", GUID_LOPART(m_guid));
-    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADAURAS,           "SELECT caster_guid,spell,effect_index,stackcount,amount,maxduration,remaintime,remaincharges FROM character_aura WHERE guid = '%u'", GUID_LOPART(m_guid));
+    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADAURAS,           "SELECT caster_guid,spell,stackcount,remaincharges,basepoints0,basepoints1,basepoints2,maxduration0,maxduration1,maxduration2,remaintime0,remaintime1,remaintime2,effIndexMask FROM character_aura WHERE guid = '%u'", GUID_LOPART(m_guid));
     res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADSPELLS,          "SELECT spell,active,disabled FROM character_spell WHERE guid = '%u'", GUID_LOPART(m_guid));
     res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADQUESTSTATUS,     "SELECT quest,status,rewarded,explored,timer,mobcount1,mobcount2,mobcount3,mobcount4,itemcount1,itemcount2,itemcount3,itemcount4 FROM character_queststatus WHERE guid = '%u'", GUID_LOPART(m_guid));
     res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADDAILYQUESTSTATUS,"SELECT quest FROM character_queststatus_daily WHERE guid = '%u'", GUID_LOPART(m_guid));
@@ -286,7 +286,7 @@ void WorldSession::HandleCharCreateOpcode( WorldPacket & recv_data )
         return;
     }
 
-    QueryResult *resultacct = loginDatabase.PQuery("SELECT SUM(numchars) FROM realmcharacters WHERE acctid = '%d'", GetAccountId());
+    QueryResult *resultacct = LoginDatabase.PQuery("SELECT SUM(numchars) FROM realmcharacters WHERE acctid = '%d'", GetAccountId());
     if (resultacct)
     {
         Field *fields=resultacct->Fetch();
@@ -471,8 +471,8 @@ void WorldSession::HandleCharCreateOpcode( WorldPacket & recv_data )
     pNewChar->SaveToDB();
     charcount += 1;
 
-    loginDatabase.PExecute("DELETE FROM realmcharacters WHERE acctid= '%d' AND realmid = '%d'", GetAccountId(), realmID);
-    loginDatabase.PExecute("INSERT INTO realmcharacters (numchars, acctid, realmid) VALUES (%u, %u, %u)",  charcount, GetAccountId(), realmID);
+    LoginDatabase.PExecute("DELETE FROM realmcharacters WHERE acctid= '%d' AND realmid = '%d'", GetAccountId(), realmID);
+    LoginDatabase.PExecute("INSERT INTO realmcharacters (numchars, acctid, realmid) VALUES (%u, %u, %u)",  charcount, GetAccountId(), realmID);
 
     data << (uint8)CHAR_CREATE_SUCCESS;
     SendPacket( &data );
@@ -650,7 +650,7 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
         pCurrChar->SetRank(fields[1].GetUInt32());
         delete resultGuild;
     }
-    else if(pCurrChar->GetGuildId())                        // clear guild related fields in case wrong data about non existed membership
+    else if(pCurrChar->GetGuildId())                        // clear guild related fields in case wrong data about nonexistent membership
     {
         pCurrChar->SetInGuild(0);
         pCurrChar->SetRank(0);
@@ -675,7 +675,7 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
         else
         {
             // remove wrong guild data
-            sLog.outError("Player %s (GUID: %u) marked as member not existed guild (id: %u), removing guild membership for player.",pCurrChar->GetName(),pCurrChar->GetGUIDLow(),pCurrChar->GetGuildId());
+            sLog.outError("Player %s (GUID: %u) marked as member of nonexistent guild (id: %u), removing guild membership for player.",pCurrChar->GetName(),pCurrChar->GetGUIDLow(),pCurrChar->GetGuildId());
             pCurrChar->SetInGuild(0);
         }
     }
@@ -703,6 +703,7 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
 
     if (!pCurrChar->GetMap()->Add(pCurrChar))
     {
+        // normal delayed teleport protection not applied (and this correct) for this case (Player object just created)
         AreaTrigger const* at = sObjectMgr.GetGoBackTrigger(pCurrChar->GetMapId());
         if(at)
             pCurrChar->TeleportTo(at->target_mapId, at->target_X, at->target_Y, at->target_Z, pCurrChar->GetOrientation());
@@ -716,7 +717,7 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
     pCurrChar->SendInitialPacketsAfterAddToMap();
 
     CharacterDatabase.PExecute("UPDATE characters SET online = 1 WHERE guid = '%u'", pCurrChar->GetGUIDLow());
-    loginDatabase.PExecute("UPDATE account SET active_realm_id = %d WHERE id = '%u'", realmID, GetAccountId());
+    LoginDatabase.PExecute("UPDATE account SET active_realm_id = %d WHERE id = '%u'", realmID, GetAccountId());
     pCurrChar->SetInGameTime( getMSTime() );
 
     // announce group about member online (must be after add to player list to receive announce to self)
@@ -805,32 +806,6 @@ void WorldSession::HandleSetFactionAtWar( WorldPacket & recv_data )
     recv_data >> flag;
 
     GetPlayer()->GetReputationMgr().SetAtWar(repListID, flag);
-}
-
-//I think this function is never used :/ I dunno, but i guess this opcode not exists
-void WorldSession::HandleSetFactionCheat( WorldPacket & /*recv_data*/ )
-{
-    sLog.outError("WORLD SESSION: HandleSetFactionCheat, not expected call, please report.");
-    /*
-        uint32 FactionID;
-        uint32 Standing;
-
-        recv_data >> FactionID;
-        recv_data >> Standing;
-
-        std::list<struct Factions>::iterator itr;
-
-        for(itr = GetPlayer()->factions.begin(); itr != GetPlayer()->factions.end(); ++itr)
-        {
-            if(itr->ReputationListID == FactionID)
-            {
-                itr->Standing += Standing;
-                itr->Flags = (itr->Flags | 1);
-                break;
-            }
-        }
-    */
-    GetPlayer()->GetReputationMgr().SendStates();
 }
 
 void WorldSession::HandleMeetingStoneInfo( WorldPacket & /*recv_data*/ )

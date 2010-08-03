@@ -37,12 +37,17 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner)
     if (owner.hasUnitState(UNIT_STAT_NOT_MOVE))
         return;
 
+    float x, y, z;
+
     // prevent redundant micro-movement for pets, other followers.
     if (i_offset && i_target->IsWithinDistInMap(&owner,2*i_offset))
-        return;
+    {
+        if (i_destinationHolder.HasDestination())
+            return;
 
-    float x, y, z;
-    if (!i_offset)
+        owner.GetPosition(x, y, z);
+    }
+    else if (!i_offset)
     {
         // to nearest contact position
         i_target->GetContactPoint( &owner, x, y, z );
@@ -50,7 +55,7 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner)
     else
     {
         // to at i_offset distance from target and i_angle from target facing
-        i_target->GetClosePoint(x,y,z,owner.GetObjectSize(),i_offset,i_angle);
+        i_target->GetClosePoint(x, y, z, owner.GetObjectBoundingRadius(), i_offset, i_angle);
     }
 
     /*
@@ -65,7 +70,7 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner)
         ralf
 
         //We don't update Mob Movement, if the difference between New destination and last destination is < BothObjectSize
-        float  bothObjectSize = i_target->GetObjectSize() + owner.GetObjectSize() + CONTACT_DISTANCE;
+        float  bothObjectSize = i_target->GetObjectBoundingRadius() + owner.GetObjectBoundingRadius() + CONTACT_DISTANCE;
         if( i_destinationHolder.HasDestination() && i_destinationHolder.GetDestinationDiff(x,y,z) < bothObjectSize )
             return;
     */
@@ -165,10 +170,10 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
             return true;                                    // not expire now, but already lost
 
         // put targeted movement generators on a higher priority
-        if (owner.GetObjectSize())
+        if (owner.GetObjectBoundingRadius())
             i_destinationHolder.ResetUpdate(50);
 
-        float dist = i_target->GetObjectSize() + owner.GetObjectSize() + sWorld.getConfig(CONFIG_FLOAT_RATE_TARGET_POS_RECALCULATION_RANGE);
+        float dist = i_target->GetObjectBoundingRadius() + owner.GetObjectBoundingRadius() + sWorld.getConfig(CONFIG_FLOAT_RATE_TARGET_POS_RECALCULATION_RANGE);
 
         //More distance let have better performance, less distance let have more sensitive reaction at target move.
 

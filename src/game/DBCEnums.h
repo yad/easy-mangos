@@ -244,8 +244,8 @@ enum AreaFlags
     AREA_FLAG_OUTDOOR_PVP           = 0x01000000,           // Wintergrasp and it's subzones
     AREA_FLAG_INSIDE                = 0x02000000,           // used for determinating spell related inside/outside questions in Map::IsOutdoors
     AREA_FLAG_OUTSIDE               = 0x04000000,           // used for determinating spell related inside/outside questions in Map::IsOutdoors
-    AREA_FLAG_CAN_HEARTH_AND_RES    = 0x08000000            // Wintergrasp and it's subzones
-    // 0x20000000 not flyable?
+    AREA_FLAG_CAN_HEARTH_AND_RES    = 0x08000000,           // Wintergrasp and it's subzones
+    AREA_FLAG_CANNOT_FLY            = 0x20000000            // not allowed to fly, only used in Dalaran areas (zone 4395)
 };
 
 enum Difficulty
@@ -397,6 +397,32 @@ enum SummonPropFlags
     SUMMON_PROP_FLAG_UNK12             = 0x0800,            // 30 spells in 3.0.3, no idea
     SUMMON_PROP_FLAG_UNK13             = 0x1000,            // 8 spells in 3.0.3, siege vehicle
     SUMMON_PROP_FLAG_UNK14             = 0x2000,            // 2 spells in 3.0.3, escort?
+};
+
+// SpellEntry::Targets
+enum SpellCastTargetFlags
+{
+    TARGET_FLAG_SELF            = 0x00000000,
+    TARGET_FLAG_UNUSED1         = 0x00000001,               // not used in any spells as of 3.0.3 (can be set dynamically)
+    TARGET_FLAG_UNIT            = 0x00000002,               // pguid
+    TARGET_FLAG_UNUSED2         = 0x00000004,               // not used in any spells as of 3.0.3 (can be set dynamically)
+    TARGET_FLAG_UNUSED3         = 0x00000008,               // not used in any spells as of 3.0.3 (can be set dynamically)
+    TARGET_FLAG_ITEM            = 0x00000010,               // pguid
+    TARGET_FLAG_SOURCE_LOCATION = 0x00000020,               // 3 float
+    TARGET_FLAG_DEST_LOCATION   = 0x00000040,               // 3 float
+    TARGET_FLAG_OBJECT_UNK      = 0x00000080,               // used in 7 spells only
+    TARGET_FLAG_UNIT_UNK        = 0x00000100,               // looks like self target (480 spells)
+    TARGET_FLAG_PVP_CORPSE      = 0x00000200,               // pguid
+    TARGET_FLAG_UNIT_CORPSE     = 0x00000400,               // 10 spells (gathering professions)
+    TARGET_FLAG_OBJECT          = 0x00000800,               // pguid, 2 spells
+    TARGET_FLAG_TRADE_ITEM      = 0x00001000,               // pguid, 0 spells
+    TARGET_FLAG_STRING          = 0x00002000,               // string, 0 spells
+    TARGET_FLAG_UNK1            = 0x00004000,               // 199 spells, opening object/lock
+    TARGET_FLAG_CORPSE          = 0x00008000,               // pguid, resurrection spells
+    TARGET_FLAG_UNK2            = 0x00010000,               // pguid, not used in any spells as of 3.0.3 (can be set dynamically)
+    TARGET_FLAG_GLYPH           = 0x00020000,               // used in glyph spells
+    TARGET_FLAG_UNK3            = 0x00040000,               //
+    TARGET_FLAG_UNK4            = 0x00080000                // uint32, loop { vec3, guid -> if guid == 0 break }
 };
 
 enum SpellEffectIndex

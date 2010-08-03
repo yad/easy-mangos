@@ -665,7 +665,7 @@ int WorldSocket::ProcessIncoming (WorldPacket* new_pct)
 
     if (opcode >= NUM_MSG_TYPES)
     {
-        sLog.outError( "SESSION: received non-existed opcode 0x%.4X", opcode);
+        sLog.outError( "SESSION: received nonexistent opcode 0x%.4X", opcode);
         return -1;
     }
 
@@ -743,7 +743,7 @@ int WorldSocket::HandleAuthSession (WorldPacket& recvPacket)
     // NOTE: ATM the socket is singlethread, have this in mind ...
     uint8 digest[20];
     uint32 clientSeed;
-    uint32 unk2, unk3;
+    uint32 unk2, unk3, unk5, unk6, unk7;
     uint64 unk4;
     uint32 ClientBuild;
     uint32 id, security;
@@ -762,6 +762,7 @@ int WorldSocket::HandleAuthSession (WorldPacket& recvPacket)
     recvPacket >> account;
     recvPacket >> unk3;
     recvPacket >> clientSeed;
+    recvPacket >> unk5 >> unk6 >> unk7;
     recvPacket >> unk4;
     recvPacket.read (digest, 20);
 
@@ -786,11 +787,11 @@ int WorldSocket::HandleAuthSession (WorldPacket& recvPacket)
 
     // Get the account information from the realmd database
     std::string safe_account = account; // Duplicate, else will screw the SHA hash verification below
-    loginDatabase.escape_string (safe_account);
+    LoginDatabase.escape_string (safe_account);
     // No SQL injection, username escaped.
 
     QueryResult *result =
-          loginDatabase.PQuery ("SELECT "
+          LoginDatabase.PQuery ("SELECT "
                                 "id, "                      //0
                                 "gmlevel, "                 //1
                                 "sessionkey, "              //2
@@ -870,7 +871,7 @@ int WorldSocket::HandleAuthSession (WorldPacket& recvPacket)
 
     // Re-check account ban (same check as in realmd)
     QueryResult *banresult =
-          loginDatabase.PQuery ("SELECT 1 FROM account_banned WHERE id = %u AND active = 1 AND (unbandate > UNIX_TIMESTAMP() OR unbandate = bandate)"
+          LoginDatabase.PQuery ("SELECT 1 FROM account_banned WHERE id = %u AND active = 1 AND (unbandate > UNIX_TIMESTAMP() OR unbandate = bandate)"
                                 "UNION "
                                 "SELECT 1 FROM ip_banned WHERE (unbandate = bandate OR unbandate > UNIX_TIMESTAMP()) AND ip = '%s'",
                                 id, GetRemoteAddress().c_str());
@@ -933,9 +934,9 @@ int WorldSocket::HandleAuthSession (WorldPacket& recvPacket)
 
     // Update the last_ip in the database
     // No SQL injection, username escaped.
-    loginDatabase.escape_string (address);
+    LoginDatabase.escape_string (address);
 
-    loginDatabase.PExecute ("UPDATE account "
+    LoginDatabase.PExecute ("UPDATE account "
                             "SET last_ip = '%s' "
                             "WHERE username = '%s'",
                             address.c_str (),

@@ -91,7 +91,7 @@ inline void CreatureCreatureRelocationWorker(Creature* c1, Creature* c2)
 
 inline void MaNGOS::PlayerRelocationNotifier::Visit(CreatureMapType &m)
 {
-    if (!i_player.isAlive() || i_player.isInFlight())
+    if (!i_player.isAlive() || i_player.IsTaxiFlying())
         return;
 
     WorldObject const* viewPoint = i_player.GetCamera().GetBody();
@@ -109,7 +109,7 @@ inline void MaNGOS::CreatureRelocationNotifier::Visit(PlayerMapType &m)
 
     for(PlayerMapType::iterator iter=m.begin(); iter != m.end(); ++iter)
         if (Player* player = iter->getSource())
-            if (player->isAlive() && !player->isInFlight())
+            if (player->isAlive() && !player->IsTaxiFlying())
                 PlayerCreatureRelocationWorker(player, player->GetCamera().GetBody(), &i_creature);
 }
 
@@ -129,7 +129,7 @@ inline void MaNGOS::CreatureRelocationNotifier::Visit(CreatureMapType &m)
 
 inline void MaNGOS::DynamicObjectUpdater::VisitHelper(Unit* target)
 {
-    if (!target->isAlive() || target->isInFlight() )
+    if (!target->isAlive() || target->IsTaxiFlying() )
         return;
 
     if (target->GetTypeId() == TYPEID_UNIT && ((Creature*)target)->isTotem())
@@ -172,8 +172,29 @@ inline void MaNGOS::DynamicObjectUpdater::VisitHelper(Unit* target)
         return;
 
     // Apply PersistentAreaAura on target
-    PersistentAreaAura* Aur = new PersistentAreaAura(spellInfo, eff_index, NULL, target, i_dynobject.GetCaster());
-    target->AddAura(Aur);
+
+    SpellAuraHolder *holder = target->GetSpellAuraHolder(spellInfo->Id, i_dynobject.GetCaster()->GetGUID());
+                   
+    bool addedToExisting = true;
+    if (!holder)
+    {
+        holder = CreateSpellAuraHolder(spellInfo, target, i_dynobject.GetCaster());
+        addedToExisting = false;
+    
+    }
+    PersistentAreaAura* Aur = new PersistentAreaAura(spellInfo, eff_index, NULL, holder, target, i_dynobject.GetCaster());
+    holder->AddAura(Aur, eff_index);
+
+    if (addedToExisting)
+    {
+        target->AddAuraToModList(Aur);
+        holder->SetInUse(true);
+        Aur->ApplyModifier(true,true);
+        holder->SetInUse(false);
+    }
+    else
+        target->AddSpellAuraHolder(holder);
+
     i_dynobject.AddAffected(target);
 }
 

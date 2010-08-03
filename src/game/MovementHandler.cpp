@@ -144,7 +144,7 @@ void WorldSession::HandleMoveWorldportAckOpcode()
         {
             if (mapDiff->resetTime)
             {
-                if (time_t timeReset = sInstanceSaveMgr.GetResetTimeFor(mEntry->MapID,diff))
+                if (time_t timeReset = sInstanceSaveMgr.GetScheduler().GetResetTimeFor(mEntry->MapID,diff))
                 {
                     uint32 timeleft = uint32(timeReset - time(NULL));
                     GetPlayer()->SendInstanceResetWarning(mEntry->MapID, diff, timeleft);
@@ -288,7 +288,7 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
     }
 
     // fall damage generation (ignore in flight case that can be triggered also at lags in moment teleportation to another map).
-    if (opcode == MSG_MOVE_FALL_LAND && plMover && !plMover->isInFlight())
+    if (opcode == MSG_MOVE_FALL_LAND && plMover && !plMover->IsTaxiFlying())
         plMover->HandleFall(movementInfo);
 
     if (plMover && (movementInfo.HasMovementFlag(MOVEFLAG_SWIMMING) != plMover->IsInWater()))
