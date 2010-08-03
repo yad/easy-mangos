@@ -50,6 +50,7 @@ void handleArgs(int argc, char** argv,
                int &tileX,
                int &tileY,
                float &maxAngle,
+               bool &skipLiquid,
                bool &skipContinents,
                bool &skipJunkMaps,
                bool &skipBattlegrounds,
@@ -89,6 +90,16 @@ void handleArgs(int argc, char** argv,
                 printf("invalid tile coords.\n");
                 badParam = true;
             }
+        }
+        else if(strcmp(argv[i], "--skipLiquid") == 0)
+        {
+            param = argv[++i];
+            if(strcmp(param, "true") == 0)
+                skipLiquid = true;
+            else if(strcmp(param, "false") == 0)
+                skipLiquid = false;
+            else
+                printf("invalid option for '--skipLiquid', using default\n");
         }
         else if(strcmp(argv[i], "--skipContinents") == 0)
         {
@@ -166,7 +177,8 @@ int main(int argc, char** argv)
     int mapnum = -1;
     float maxAngle = 60.f;
     int tileX = -1, tileY = -1;
-    bool skipContinents = true,
+    bool skipLiquid = true,
+         skipContinents = true,
          skipJunkMaps = true,
          skipBattlegrounds = true,
          hiResHeightmaps = false,
@@ -179,6 +191,7 @@ int main(int argc, char** argv)
               tileX,
               tileY,
               maxAngle,
+              skipLiquid,
               skipContinents,
               skipJunkMaps,
               skipBattlegrounds,
@@ -202,6 +215,7 @@ int main(int argc, char** argv)
         return finish("Press any key to close...", -1);
 
     MapBuilder builder(maxAngle,
+                       skipLiquid,
                        skipContinents,
                        skipJunkMaps,
                        skipBattlegrounds,
