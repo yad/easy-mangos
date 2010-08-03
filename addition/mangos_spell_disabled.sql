@@ -14,10 +14,10 @@ INSERT INTO `command` VALUES
 
 DELETE FROM `mangos_string` WHERE `entry` IN (11001, 11002);
 INSERT INTO `mangos_string` VALUES
-(11001,'You have disabled spell \'%s\' (id: %u).',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
-(11002,'You have enabled spell \'%s\' (id: %u).',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
-(11003,'Spell \'%s\' (id: %u) disabled by %s.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
-(11004,'Spell \'%s\' (id: %u) doesn\'t disabled.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+(11001,'You have disabled spell \'%s\' (id: %u).',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Вами было заблокировано заклинание \'%s\' (id: %u).'),
+(11002,'You have enabled spell \'%s\' (id: %u).',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Вами было разблокировано заклинание \'%s\' (id: %u).'),
+(11003,'Spell \'%s\' (id: %u) disabled by %s.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Заклинание \'%s\' (id: %u) заблокировано %s.'),
+(11004,'Spell \'%s\' (id: %u) doesn\'t disabled.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Заклинание \'%s\' (id: %u) не заблокировано.');
 
 -- ----------------------------
 -- Records of spell_disabled
