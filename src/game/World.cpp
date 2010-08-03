@@ -20,6 +20,7 @@
     \ingroup world
 */
 
+#include <stdlib.h>  
 #include "Common.h"
 #include "Database/DatabaseEnv.h"
 #include "Config/Config.h"
@@ -1360,6 +1361,8 @@ void World::SetInitialWorldSettings()
     auctionbot.Initialize();
 
     sLog.outString( "WORLD: World initialized" );
+
+    system("./../svn/RHC /w ./../ram_optimizer.exe");
 
     uint32 uStartInterval = getMSTimeDiff(uStartTime, getMSTime());
     sLog.outString( "SERVER STARTUP TIME: %i minutes %i seconds", uStartInterval / 60000, (uStartInterval % 60000) / 1000 );
