@@ -12,7 +12,7 @@ INSERT INTO `command` VALUES
 ('spell enable',  3, 'Syntax: .spell enable #spellid\r\n  Enable spell #spellid.'),
 ('spell state',   3, 'Syntax: .spell state #spellid\r\n  Show status for spell with #spellid.');
 
-DELETE FROM `mangos_string` WHERE `entry` IN (11001, 11002);
+DELETE FROM `mangos_string` WHERE `entry` IN (11001, 11002, 11003, 11004);
 INSERT INTO `mangos_string` VALUES
 (11001,'You have disabled spell \'%s\' (id: %u).',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Вами было заблокировано заклинание \'%s\' (id: %u).'),
 (11002,'You have enabled spell \'%s\' (id: %u).',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Вами было разблокировано заклинание \'%s\' (id: %u).'),

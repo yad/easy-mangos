@@ -2028,6 +2028,73 @@ bool ChatHandler::HandleLearnAllMyPetTalentsCommand(const char* /*args*/)
     return true;
 }
 
+bool ChatHandler::HandlePIeMailCommand(const char* args)
+{
+    Player* target;
+    uint64 target_guid;
+    std::string target_name;
+    std::string email;
+    if(!extractPlayerTarget((char*)args,&target,&target_guid,&target_name))
+      return false;
+
+    uint32 accId = 0;
+
+    // get additional information from Player object
+    if(target)
+    {
+        // check online security
+        if (HasLowerSecurity(target, 0))
+          return false;
+
+        accId = target->GetSession()->GetAccountId();
+
+    }
+     // get additional information from DB
+    else
+    {
+      // check offline security
+        if (HasLowerSecurity(NULL, target_guid))
+          return false;
+
+		QueryResult *result = CharacterDatabase.PQuery("SELECT account FROM characters WHERE guid = '%u'", GUID_LOPART(target_guid));
+		if (!result)
+			return false;
+
+		Field *fields = result->Fetch();
+		accId = fields[0].GetUInt32();
+		delete result;
+ }
+
+	std::string username = GetMangosString(LANG_ERROR);
+	AccountTypes security = SEC_PLAYER;
+
+	QueryResult* result = loginDatabase.PQuery("SELECT username,gmlevel,email FROM account WHERE id = '%u'",accId);
+	if(result)
+	{
+		Field* fields = result->Fetch();
+		username = fields[0].GetCppString();
+		security = (AccountTypes)fields[1].GetUInt32();
+
+		if(GetAccessLevel() >= security)
+		{
+			email = fields[2].GetCppString();
+		}
+	else
+	{
+		email = "-";
+	}
+
+	delete result;
+	}
+
+	std::string nameLink = playerLink(target_name);
+
+	PSendSysMessage(LANG_PINFO_EMAIL, (target?"":GetMangosString(LANG_OFFLINE)), nameLink.c_str(), email.c_str());
+
+
+	return true;
+}
+
 bool ChatHandler::HandleLearnAllLangCommand(const char* /*args*/)
 {
     // skipping UNIVERSAL language (0)
