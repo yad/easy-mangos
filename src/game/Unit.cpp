@@ -1808,29 +1808,29 @@ void Unit::DealMeleeDamage(CalcDamageInfo *damageInfo, bool durabilityLoss)
 }
 
 
-void Unit::HandleEmoteCommand(uint32 anim_id)
+void Unit::HandleEmoteCommand(uint32 emote_id)
 {
     WorldPacket data( SMSG_EMOTE, 4 + 8 );
-    data << uint32(anim_id);
+    data << uint32(emote_id);
     data << uint64(GetGUID());
     SendMessageToSet(&data, true);
 }
 
-void Unit::HandleEmoteState(uint32 anim_id)
+void Unit::HandleEmoteState(uint32 emote_id)
 {
-    SetUInt32Value(UNIT_NPC_EMOTESTATE, anim_id);
+    SetUInt32Value(UNIT_NPC_EMOTESTATE, emote_id);
 }
 
-void Unit::HandleEmote(uint32 anim_id)
+void Unit::HandleEmote(uint32 emote_id)
 {
-    if (!anim_id)
+    if (!emote_id)
         HandleEmoteState(0);
-    else if (EmotesEntry const* emoteEntry = sEmotesStore.LookupEntry(anim_id))
+    else if (EmotesEntry const* emoteEntry = sEmotesStore.LookupEntry(emote_id))
     {
         if (emoteEntry->EmoteType)                          // 1,2 states, 0 command
-            HandleEmoteState(anim_id);
+            HandleEmoteState(emote_id);
         else
-            HandleEmoteCommand(anim_id);
+            HandleEmoteCommand(emote_id);
     }
 }
 
@@ -6397,7 +6397,7 @@ uint32 Unit::SpellDamageBonusDone(Unit *pVictim, SpellEntry const *spellProto, u
             if (spellProto->SpellFamilyFlags & UI64LIT(0x00000080))
             {
                 // Holy Fire
-                if (pVictim->GetAura(SPELL_AURA_PERIODIC_DAMAGE, SPELLFAMILY_PRIEST, UI64LIT(0x00100000), NULL))
+                if (pVictim->GetAura(SPELL_AURA_PERIODIC_DAMAGE, SPELLFAMILY_PRIEST, UI64LIT(0x00100000)))
                     if (Aura *aur = GetAura(55692, EFFECT_INDEX_0))
                         DoneTotalMod *= (aur->GetModifier()->m_amount+100.0f) / 100.0f;
             }
