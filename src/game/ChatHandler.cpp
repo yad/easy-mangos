@@ -602,9 +602,9 @@ void WorldSession::HandleTextEmoteOpcode( WorldPacket & recv_data )
     if (!em)
         return;
 
-    uint32 emote_anim = em->textid;
+    uint32 emote_id = em->textid;
 
-    switch(emote_anim)
+    switch(emote_id)
     {
         case EMOTE_STATE_SLEEP:
         case EMOTE_STATE_SIT:
@@ -612,7 +612,7 @@ void WorldSession::HandleTextEmoteOpcode( WorldPacket & recv_data )
         case EMOTE_ONESHOT_NONE:
             break;
         default:
-            GetPlayer()->HandleEmoteCommand(emote_anim);
+            GetPlayer()->HandleEmoteCommand(emote_id);
             break;
     }
 
