@@ -5802,6 +5802,13 @@ SpellCastResult Spell::CheckItems()
                 if(m_CastItem->GetSpellCharges(i) == 0)
                     return SPELL_FAILED_NO_CHARGES_REMAIN;
 
+        // scroll target level checks
+        if (proto->Class == ITEM_CLASS_CONSUMABLE && proto->SubClass == ITEM_SUBCLASS_SCROLL && m_targets.getUnitTarget())
+        {
+            if (proto->RequiredLevel > m_targets.getUnitTarget()->getLevel())
+            return SPELL_FAILED_LOWLEVEL;
+        }
+
         // consumable cast item checks
         if (proto->Class == ITEM_CLASS_CONSUMABLE && m_targets.getUnitTarget())
         {
