@@ -493,7 +493,8 @@ void Spell::EffectSchoolDMG(SpellEffectIndex effect_idx)
                     if (aura)
                     {
                         int32 damagetick = aura->GetModifier()->m_amount;
-                        damage += damagetick * 4;
+                        damage += damagetick * 21/8;
+                        m_currentBasePoints[1]=damage * 2/9;
 
                         // Glyph of Conflagrate
                         if (!m_caster->HasAura(56235))
