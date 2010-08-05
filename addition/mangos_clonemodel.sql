@@ -1,0 +1,1 @@
+INSERT INTO `command` VALUES ('npc clonemodel', '3', 'Set your model to model of selected creature');
