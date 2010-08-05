@@ -327,6 +327,7 @@ class ChatHandler
         bool HandleNpcUnFollowCommand(const char* args);
         bool HandleNpcWhisperCommand(const char* args);
         bool HandleNpcYellCommand(const char* args);
+        bool HandleNpcCloneModelCommand(const char* args);
 
         //TODO: NpcCommands that needs to be fixed :
         bool HandleNpcAddWeaponCommand(const char* args);
