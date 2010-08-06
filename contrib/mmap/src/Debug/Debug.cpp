@@ -176,6 +176,58 @@ int duReadCompactHeightfield(int mapID, rcCompactHeightfield* &chf)
     return files.size();
 }
 
+int duReadContourSet(int mapID, rcContourSet* &cs)
+{
+    char fileName[25];
+    FILE* file;
+
+    vector<string> files;
+    sprintf(fileName, "%03i*.cs", mapID);
+    MMAP::getDirContents(files, "meshes", fileName);
+
+    cs = new rcContourSet[files.size()];
+
+    for(int i = 0; i < files.size(); ++i)
+    {
+        rcContourSet* newCs = &cs[i];
+        memset(newCs, 0, sizeof(rcContourSet));
+
+        file = fopen(("meshes\\" + files[i]).c_str(), "rb");
+        if(!file)
+            continue;
+
+        fread(&(newCs->cs), sizeof(float), 1, file);
+        fread(&(newCs->ch), sizeof(float), 1, file);
+        fread(newCs->bmin, sizeof(float), 3, file);
+        fread(newCs->bmax, sizeof(float), 3, file);
+        fread(&(newCs->nconts), sizeof(int), 1, file);
+
+        if(newCs->nconts)
+            newCs->conts = new rcContour[newCs->nconts];
+
+        for(int j = 0; j < newCs->nconts; ++j)
+        {
+            newCs->conts[j].verts = 0;
+            newCs->conts[j].rverts = 0;
+
+            fread(&(newCs->conts[j].area), sizeof(unsigned char), 1, file);
+            fread(&(newCs->conts[j].reg), sizeof(unsigned short), 1, file);
+
+            fread(&(newCs->conts[j].nverts), sizeof(int), 1, file);
+            newCs->conts[j].verts = new int[newCs->conts[j].nverts*4];
+            fread(newCs->conts[j].verts, sizeof(int), newCs->conts[j].nverts*4, file);
+
+            fread(&(newCs->conts[j].nrverts), sizeof(int), 1, file);
+            newCs->conts[j].rverts = new int[newCs->conts[j].nrverts*4];
+            fread(newCs->conts[j].rverts, sizeof(int), newCs->conts[j].nrverts*4, file);
+        }
+
+        fclose(file);
+    }
+
+    return files.size();
+}
+
 int duReadPolyMesh(int mapID, rcPolyMesh* &mesh)
 {
     char fileName[25];

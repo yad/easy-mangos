@@ -1091,6 +1091,42 @@ namespace MMAP
         fclose(objFile);
     }
 
+    void MapBuilder::generateRealObj(uint32 mapID, uint32 tileX, uint32 tileY, MeshData meshData)
+    {
+        char objFileName[255];
+        FILE* objFile;
+
+        char b = '\0';
+
+        sprintf(objFileName, "meshes/map%03u.obj", mapID);
+        if(!(objFile = fopen(objFileName, "wb")))
+        {
+            char message[1024];
+            sprintf(message, "Failed to open %s for writing!\n", objFileName);
+            perror(message);
+            return;
+        }
+
+        G3D::Array<float> allVerts;
+        G3D::Array<int> allTris;
+
+        allTris.append(meshData.liquidTris);
+        allVerts.append(meshData.liquidVerts);
+        copyIndices(allTris, meshData.solidTris, allVerts.size() / 3);
+        allVerts.append(meshData.solidVerts);
+
+        float* verts = allVerts.getCArray();
+        int* tris = allTris.getCArray();
+
+        for(int i = 0; i < allVerts.size() / 3; i++)
+            fprintf(objFile, "v %f %f %f\n", verts[i*3], verts[i*3 + 1], verts[i*3 + 2]);
+
+        for(int i = 0; i < allTris.size() / 3; i++)
+            fprintf(objFile, "f %i %i %i\n", tris[i*3], tris[i*3 + 1], tris[i*3 + 2]);
+
+        fclose(objFile);
+    }
+
     void MapBuilder::writeIV(uint32 mapID, uint32 tileX, uint32 tileY, IntermediateValues iv)
     {
         char fileName[255];

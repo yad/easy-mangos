@@ -356,12 +356,14 @@ bool Sample_Debug::handleBuild()
     delete [] m_pmesh; m_pmesh = 0;
     delete [] m_hf; m_hf = 0; m_hfCount = 0;
     delete [] m_chf; m_chf = 0; m_chfCount = 0;
+    delete [] m_cset; m_cset = 0; m_csetCount = 0;
 
     duReadNavMesh(mapID, m_navMesh);
     m_pmeshCount = duReadPolyMesh(mapID, m_pmesh);
     m_hfCount = duReadHeightfield(mapID, m_hf);
     m_chfCount = duReadCompactHeightfield(mapID, m_chf);
     m_dmeshCount = duReadDetailMesh(mapID, m_dmesh);
+    m_csetCount = duReadContourSet(mapID, m_cset);
 
     if(m_tool)
         m_tool->init(this);
