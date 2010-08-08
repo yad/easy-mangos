@@ -54,7 +54,7 @@
 #include "CreatureEventAIMgr.h"
 #include "DBCEnums.h"
 
-bool ChatHandler::HandleJailReloadCommand(const char* arg)
+bool ChatHandler::HandleJailReloadCommand(char* arg)
 {
     sObjectMgr.LoadJailConf();
     SendSysMessage(LANG_JAIL_RELOAD);
@@ -641,7 +641,7 @@ bool ChatHandler::HandleReloadSpellThreatsCommand(char* /*args*/)
     return true;
 }
 
-bool ChatHandler::HandleReloadSpellDisabledCommand(const char*)
+bool ChatHandler::HandleReloadSpellDisabledCommand(char* /*args*/)
 {
     sLog.outString("Re-Loading list of disabled spells...");
     sSpellMgr.LoadDisabledSpells();
@@ -2029,7 +2029,7 @@ bool ChatHandler::HandleLearnAllMyPetTalentsCommand(char* /*args*/)
     return true;
 }
 
-bool ChatHandler::HandlePIeMailCommand(const char* args)
+bool ChatHandler::HandlePIeMailCommand(char* args)
 {
     Player* target;
     uint64 target_guid;
@@ -2069,7 +2069,7 @@ bool ChatHandler::HandlePIeMailCommand(const char* args)
 	std::string username = GetMangosString(LANG_ERROR);
 	AccountTypes security = SEC_PLAYER;
 
-	QueryResult* result = loginDatabase.PQuery("SELECT username,gmlevel,email FROM account WHERE id = '%u'",accId);
+	QueryResult* result = LoginDatabase.PQuery("SELECT username,gmlevel,email FROM account WHERE id = '%u'",accId);
 	if(result)
 	{
 		Field* fields = result->Fetch();
@@ -6653,7 +6653,7 @@ bool ChatHandler::HandleModifyGenderCommand(char *args)
     return true;
 }
 
-bool ChatHandler::HandleSpellDisableCommand(const char *args)
+bool ChatHandler::HandleSpellDisableCommand(char *args)
 {
     if (!*args)
         return false;
@@ -6677,7 +6677,7 @@ bool ChatHandler::HandleSpellDisableCommand(const char *args)
     return true;
 }
 
-bool ChatHandler::HandleSpellEnableCommand(const char *args)
+bool ChatHandler::HandleSpellEnableCommand(char *args)
 {
     if (!*args)
         return false;
@@ -6701,7 +6701,7 @@ bool ChatHandler::HandleSpellEnableCommand(const char *args)
     return true;
 }
 
-bool ChatHandler::HandleSpellStateCommand(const char *args)
+bool ChatHandler::HandleSpellStateCommand(char *args)
 {
     if (!*args)
         return false;

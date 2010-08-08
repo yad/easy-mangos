@@ -2344,7 +2344,7 @@ bool ChatHandler::HandleNpcSetDeathStateCommand(char* args)
 }
 
 // .npc clonemodel command. Set model of user of this command to model of selected creature.
-bool ChatHandler::HandleNpcCloneModelCommand(const char* args)
+bool ChatHandler::HandleNpcCloneModelCommand(char* args)
 {
     Creature *pCreature = getSelectedCreature();
  
@@ -4090,7 +4090,7 @@ bool ChatHandler::HandleCharacterCustomizeCommand(char* args)
 }
 
 // change player faction
-bool ChatHandler::HandleCharacterChangeFactionCommand(const char* args)
+bool ChatHandler::HandleCharacterChangeFactionCommand(char* args)
 {
     Player* target;
     uint64 target_guid;
@@ -4118,7 +4118,7 @@ bool ChatHandler::HandleCharacterChangeFactionCommand(const char* args)
 }
 
 // change player race
-bool ChatHandler::HandleCharacterChangeRaceCommand(const char* args)
+bool ChatHandler::HandleCharacterChangeRaceCommand(char* args)
 {
     Player* target;
     uint64 target_guid;

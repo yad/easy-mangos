@@ -550,20 +550,20 @@ class ChatHandler
         //! Development Commands
         bool HandleSaveAllCommand(char* args);
 
-        bool HandleNameAnnounceCommand(const char* args);
+        bool HandleNameAnnounceCommand(char* args);
         // Jail by WarHead
-        bool HandleJailCommand(const char* args);
-        bool HandleJailInfoCommand(const char* args);
-        bool HandleUnJailCommand(const char* args);
-        bool HandleJailReloadCommand(const char* args);
-        bool HandleCharacterChangeFactionCommand(const char* args);
-        bool HandleCharacterChangeRaceCommand(const char* args);
-        bool HandleSpellDisableCommand(const char* args);
-        bool HandleSpellEnableCommand(const char* args);
-        bool HandleSpellStateCommand(const char* args);
-        bool HandleReloadSpellDisabledCommand(const char* args);
-        bool HandlePIeMailCommand(const char* args);
-        bool HandleNpcCloneModelCommand(const char* args);
+        bool HandleJailCommand(char* args);
+        bool HandleJailInfoCommand(char* args);
+        bool HandleUnJailCommand(char* args);
+        bool HandleJailReloadCommand(char* args);
+        bool HandleCharacterChangeFactionCommand(char* args);
+        bool HandleCharacterChangeRaceCommand(char* args);
+        bool HandleSpellDisableCommand(char* args);
+        bool HandleSpellEnableCommand(char* args);
+        bool HandleSpellStateCommand(char* args);
+        bool HandleReloadSpellDisabledCommand(char* args);
+        bool HandlePIeMailCommand(char* args);
+        bool HandleNpcCloneModelCommand(char* args);
 
         Player*   getSelectedPlayer();
         Creature* getSelectedCreature();

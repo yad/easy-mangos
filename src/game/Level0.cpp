@@ -257,7 +257,7 @@ bool ChatHandler::HandleAccountPasswordCommand(char* args)
     return true;
 }
 
-bool ChatHandler::HandleJailInfoCommand(const char* args)
+bool ChatHandler::HandleJailInfoCommand(char* args)
 {
     time_t localtime;
     localtime = time(NULL);

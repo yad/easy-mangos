@@ -134,7 +134,7 @@ bool ChatHandler::HandleAnnounceCommand(char* args)
 }
 
 // Nameannounce
-bool ChatHandler::HandleNameAnnounceCommand(const char* args)
+bool ChatHandler::HandleNameAnnounceCommand(char* args)
 {
     int32 strid = 0;
 
@@ -1910,13 +1910,13 @@ bool ChatHandler::HandleSaveAllCommand(char* /*args*/)
 }
 
 // Jail by WarHead
-bool ChatHandler::HandleJailCommand(const char *args)
+bool ChatHandler::HandleJailCommand(char *args)
 {
     std::string cname, announce, ban_reason, ban_by;
     time_t localtime;
     localtime = time(NULL);
 
-    char *charname = strtok((char*)args, " ");
+    char *charname = strtok(args, " ");
     if (charname == NULL)
     {
         SendSysMessage(LANG_JAIL_NONAME);
@@ -1930,7 +1930,7 @@ bool ChatHandler::HandleJailCommand(const char *args)
         return true;
     }
 
-    uint32 jailtime = (uint32) atoi((char*)timetojail);
+    uint32 jailtime = (uint32) atoi(timetojail);
     if (jailtime < 1 || jailtime > sObjectMgr.m_jailconf_max_duration)
     {
         PSendSysMessage(LANG_JAIL_VALUE, sObjectMgr.m_jailconf_max_duration);
@@ -1939,7 +1939,7 @@ bool ChatHandler::HandleJailCommand(const char *args)
 
     char *reason = strtok(NULL, "\0");
     std::string jailreason;
-    if (reason == NULL || strlen((const char*)reason) < sObjectMgr.m_jailconf_min_reason)
+    if (reason == NULL || strlen(reason) < sObjectMgr.m_jailconf_min_reason)
     {
         PSendSysMessage(LANG_JAIL_NOREASON, sObjectMgr.m_jailconf_min_reason);
         return true;
@@ -2012,7 +2012,7 @@ bool ChatHandler::HandleJailCommand(const char *args)
         announce += GetMangosString(LANG_JAIL_ANNOUNCE4);
         announce += jail_reason;
 
-        HandleAnnounceCommand(announce.c_str());
+        HandleAnnounceCommand((char*)announce.c_str());
 
         if (result) delete result;
 
@@ -2116,7 +2116,7 @@ bool ChatHandler::HandleJailCommand(const char *args)
     announce += GetMangosString(LANG_JAIL_ANNOUNCE4);
     announce += chr->m_jail_reason;
 
-    HandleAnnounceCommand(announce.c_str());
+    HandleAnnounceCommand((char*)announce.c_str());
 
     if (sObjectMgr.m_jailconf_max_jails == chr->m_jail_times)
     {
@@ -2141,9 +2141,9 @@ bool ChatHandler::HandleJailCommand(const char *args)
     return true;
 }
 
-bool ChatHandler::HandleUnJailCommand(const char *args)
+bool ChatHandler::HandleUnJailCommand(char *args)
 {
-    char *charname = strtok((char*)args, " ");
+    char *charname = strtok(args, " ");
     std::string cname;
 
     if (charname == NULL) return false;
