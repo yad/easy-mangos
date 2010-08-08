@@ -7485,9 +7485,6 @@ void Spell::EffectReputation(SpellEffectIndex eff_idx)
 
     int32  rep_change = m_currentBasePoints[eff_idx];
 
-    if (rep_change == 400) //There are should be some factions flag???
-        rep_change *= 1.3;
-
     uint32 faction_id = m_spellInfo->EffectMiscValue[eff_idx];
 
     FactionEntry const* factionEntry = sFactionStore.LookupEntry(faction_id);
