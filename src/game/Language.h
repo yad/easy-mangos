@@ -360,7 +360,8 @@ enum MangosStrings
     LANG_TRIGGER_REQ_QUEST_NORMAL       = 369,
     LANG_TRIGGER_REQ_KEYS_HEROIC        = 370,
     LANG_TRIGGER_REQ_QUEST_HEROIC       = 371,
-    // Room for more level 2              372-399 not used
+    LANG_COMMAND_ACHIEVEMENT_NOTFOUND   = 372,
+    // Room for more level 2              373-399 not used
 
     // level 3 chat
     LANG_SCRIPTS_RELOADED               = 400,
@@ -875,7 +876,11 @@ enum MangosStrings
     LANG_MOVIE_NOT_EXIST                = 1201,
     // Room for more debug                1202-1299 not used
 
-    // FREE IDS                           1300-9999
+    // Reserved for old client release branches specific strings
+    // Room for old clients 2.x           1300-1399 not used
+    // Room for old clients 1.x           1400-1499 not used
+
+    // FREE IDS                           1500-9999
 
     // Use for not-in-offcial-sources patches
     //                                    10000-10999
