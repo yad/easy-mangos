@@ -15919,7 +15919,7 @@ bool Player::LoadFromDB( uint32 guid, SqlQueryHolder *holder )
                 {
                     SetSkill(skill_id,0 , 0, 0);
                     sLog.outError("Player %s has more than two professions. Skill %u removed",GetName(),skill_id);
-                    sWorld.BanAccount(BAN_CHARACTER, GetName(), "7d" , "Not bad more proff? xD", "Server-anticheat");
+                    sWorld.BanAccount(BAN_CHARACTER, GetName(), TimeStringToSecs ("7d") , (char*) "Not bad more proff? xD", (char*) "Server-anticheat");
                 }
             }    
         }
