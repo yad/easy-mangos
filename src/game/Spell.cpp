@@ -437,7 +437,7 @@ WorldObject* Spell::FindCorpseUsing()
 
     WorldObject* result = NULL;
 
-    T u_check(m_caster, max_range);
+    T u_check(((Player*)m_caster), max_range);
     MaNGOS::WorldObjectSearcher<T> searcher(m_caster, result, u_check);
 
     Cell::VisitGridObjects(m_caster, searcher, max_range);
@@ -446,6 +446,77 @@ WorldObject* Spell::FindCorpseUsing()
         Cell::VisitWorldObjects(m_caster, searcher, max_range);
 
     return result;
+}
+
+void Spell::FillCustomTargetMap(SpellEffectIndex eff_idx, UnitList &targetUnitMap)
+{
+    float radius;
+    if (m_spellInfo->EffectRadiusIndex[eff_idx])
+        radius = GetSpellRadius(sSpellRadiusStore.LookupEntry(m_spellInfo->EffectRadiusIndex[eff_idx]));
+    else
+        radius = GetSpellMaxRange(sSpellRangeStore.LookupEntry(m_spellInfo->rangeIndex));
+    // Resulting effect depends on spell that we want to cast
+
+    switch (m_spellInfo->SpellIconID)
+    {
+        case 1737: //Corpse Explosion 
+        {
+            // if not our ghoul AND
+            if (!(m_targets.getUnitTarget()->GetEntry() == 26125 && m_targets.getUnitTarget()->GetOwnerGUID() == m_caster->GetGUID()) &&
+            // alive target or not suitable corpse
+            ( ((Creature*)m_targets.getUnitTarget())->isDeadByDefault() ||
+            (m_targets.getUnitTarget()->getDeathState() != CORPSE && m_targets.getUnitTarget()->getDeathState() != GHOULED) ||
+            (m_targets.getUnitTarget()->GetCreatureTypeMask() & CREATURE_TYPEMASK_MECHANICAL_OR_ELEMENTAL)!=0 ||
+            (m_targets.getUnitTarget()->GetDisplayId() != m_targets.getUnitTarget()->GetNativeDisplayId()) ))
+            {
+                 targetUnitMap.clear();
+                 CleanupTargetList();
+
+                 WorldObject* result = FindCorpseUsing <MaNGOS::ExplodeCorpseObjectCheck> ();
+                 if(result)
+                 {
+                     targetUnitMap.push_back((Unit*)result);
+                     break;
+                 }
+                 else
+                 {
+                     if (m_caster->GetTypeId()==TYPEID_PLAYER)
+                         ((Player*)m_caster)->RemoveSpellCooldown(m_spellInfo->Id,true);
+                     SendCastResult(SPELL_FAILED_CANT_DO_THAT_RIGHT_NOW);
+                     finish(false);
+                 }
+            }
+            break;
+        }
+        break;
+    }
+
+    switch (m_spellInfo->Id)
+    {
+        case 46584: // Raise Dead
+        {
+            WorldObject* result = FindCorpseUsing <MaNGOS::RaiseDeadObjectCheck> ();
+
+            if(result)
+            {
+                switch(result->GetTypeId())
+                {
+                    case TYPEID_UNIT:
+                        targetUnitMap.push_back((Unit*)result);
+                        break;
+                    default:
+                        break;
+                }
+            }
+            break;
+        }
+        case 47496: // Ghoul's explode
+        {
+                FillAreaTargets(targetUnitMap,m_targets.m_destX, m_targets.m_destY,radius,PUSH_DEST_CENTER,SPELL_TARGETS_AOE_DAMAGE);
+                break;
+        }
+        break;
+    }
 }
 
 void Spell::FillTargetMap()
@@ -512,6 +583,11 @@ void Spell::FillTargetMap()
                 }
                 break;
             case TARGET_EFFECT_SELECT:
+                if (m_spellInfo->Id == 46584 || m_spellInfo->Id == 47496)
+                {
+                    FillCustomTargetMap(SpellEffectIndex(i) ,tmpUnitMap);
+                    break;
+                }
                 switch(m_spellInfo->EffectImplicitTargetB[i])
                 {
                     case 0:
@@ -1577,8 +1653,10 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 // caster included here?
                 FillAreaTargets(targetUnitMap, dest_x, dest_y, radius, PUSH_DEST_CENTER, SPELL_TARGETS_AOE_DAMAGE);
             }
-            else
-                targetUnitMap.push_back(m_caster);
+            else if (IsPositiveSpell(m_spellInfo->Id))
+                    targetUnitMap.push_back(m_caster);
+            // This targetMode is often used as 'last' implicitTarget for positive spells, that just require coordinates
+            // and no unitTarget (e.g. summon effects). As MaNGOS always needs a unitTarget we add just the caster here.
 
             break;
         }
@@ -1806,6 +1884,11 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
             {
                 targetUnitMap.push_back(m_caster);
                 break;
+            }
+            else if ((m_spellInfo->SpellIconID == 1737) && (m_spellInfo->SpellFamilyName == SPELLFAMILY_DEATHKNIGHT))
+            {
+                 FillCustomTargetMap(SpellEffectIndex(effIndex) ,targetUnitMap);
+                 break;
             }
 
             UnitList tempTargetUnitMap;
@@ -3439,6 +3522,11 @@ void Spell::SendCastResult(Player* caster, SpellEntry const* spellInfo, uint8 ca
                     data << uint32(0);
                     break;
             }
+            break;
+        case SPELL_FAILED_REAGENTS:
+            // normally client checks reagents, just some script effects here
+            if(spellInfo->Id == 46584)                      // Raise Dead
+                data << uint32(37201);                      // Corpse Dust
             break;
         case SPELL_FAILED_TOTEMS:
             for(int i = 0; i < MAX_SPELL_TOTEMS; ++i)
