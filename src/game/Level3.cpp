@@ -2034,7 +2034,7 @@ bool ChatHandler::HandlePIeMailCommand(char* args)
     uint64 target_guid;
     std::string target_name;
     std::string email;
-    if(!extractPlayerTarget((char*)args,&target,&target_guid,&target_name))
+    if(!ExtractPlayerTarget(&args,&target,&target_guid,&target_name))
       return false;
 
     uint32 accId = 0;
@@ -6552,7 +6552,7 @@ bool ChatHandler::HandleSpellDisableCommand(char *args)
         return false;
 
     // number or [name] Shift-click form |color|Hspell:spell_id|h[name]|h|r or Htalent form
-    uint32 spellId = extractSpellIdFromLink((char*)args);
+    uint32 spellId = ExtractSpellIdFromLink(&args);
     if (!spellId)
         return false;
 
@@ -6576,7 +6576,7 @@ bool ChatHandler::HandleSpellEnableCommand(char *args)
         return false;
 
     // number or [name] Shift-click form |color|Hspell:spell_id|h[name]|h|r or Htalent form
-    uint32 spellId = extractSpellIdFromLink((char*)args);
+    uint32 spellId = ExtractSpellIdFromLink(&args);
     if (!spellId)
         return false;
 
@@ -6600,7 +6600,7 @@ bool ChatHandler::HandleSpellStateCommand(char *args)
         return false;
 
     // number or [name] Shift-click form |color|Hspell:spell_id|h[name]|h|r or Htalent form
-    uint32 spellId = extractSpellIdFromLink((char*)args);
+    uint32 spellId = ExtractSpellIdFromLink(&args);
     if (!spellId)
         return false;
 
