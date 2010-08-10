@@ -210,6 +210,7 @@ class MANGOS_DLL_SPEC WorldSession
         void SendNameQueryOpcode(Player* p);
         void SendNameQueryOpcodeFromDB(uint64 guid);
         static void SendNameQueryOpcodeFromDBCallBack(QueryResult *result, uint32 accountId);
+		void SendFakeNameForAHBotQueryOPcode();
 
         void SendTrainerList( uint64 guid );
         void SendTrainerList( uint64 guid, const std::string& strTitle );

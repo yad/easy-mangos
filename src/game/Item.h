@@ -283,10 +283,12 @@ class MANGOS_DLL_SPEC Item : public Object
         int32 GetItemRandomPropertyId() const { return GetInt32Value(ITEM_FIELD_RANDOM_PROPERTIES_ID); }
         uint32 GetItemSuffixFactor() const { return GetUInt32Value(ITEM_FIELD_PROPERTY_SEED); }
         void SetItemRandomProperties(int32 randomPropId);
-        bool UpdateItemSuffixFactor();
+        void SetItemRandomPropertiesNoUpdate(int32 randomPropId);
+		bool UpdateItemSuffixFactor();
         static int32 GenerateItemRandomPropertyId(uint32 item_id);
         void SetEnchantment(EnchantmentSlot slot, uint32 id, uint32 duration, uint32 charges);
-        void SetEnchantmentDuration(EnchantmentSlot slot, uint32 duration);
+        void SetEnchantmentNoUpdate(EnchantmentSlot slot, uint32 id, uint32 duration, uint32 charges);
+		void SetEnchantmentDuration(EnchantmentSlot slot, uint32 duration);
         void SetEnchantmentCharges(EnchantmentSlot slot, uint32 charges);
         void ClearEnchantment(EnchantmentSlot slot);
         uint32 GetEnchantmentId(EnchantmentSlot slot)       const { return GetUInt32Value(ITEM_FIELD_ENCHANTMENT_1_1 + slot*MAX_ENCHANTMENT_OFFSET + ENCHANTMENT_ID_OFFSET);}
