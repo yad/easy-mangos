@@ -80,6 +80,7 @@ enum WorldTimers
     WUPDATE_DELETECHARS = 7,
     WUPDATE_COUNT       = 8
 };
+
 /// Configuration elements
 enum eConfigUInt32Values
 {
