@@ -122,9 +122,9 @@ void WorldSession::SendAuctionOutbiddedMail(AuctionEntry *auction, uint32 newPri
     {
         std::ostringstream msgAuctionOutbiddedSubject;
         msgAuctionOutbiddedSubject << auction->item_template << ":0:" << AUCTION_OUTBIDDED << ":0:0";
-        
-		// Added for AHBot
-		if (oldBidder && !_player)
+
+        // Added for AHBot
+        if (oldBidder && !_player)
             oldBidder->GetSession()->SendAuctionBidderNotification( auction->GetHouseId(), auction->Id, auctionbot.GetAHBplayerGUID(), newPrice, auction->GetAuctionOutBid(), auction->item_template);
 
         // Modified for AHBot

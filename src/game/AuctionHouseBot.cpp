@@ -990,8 +990,8 @@ void AuctionHouseBot::Initialize()
         {
             sLog.outString("AuctionHouseBot> Error, no items from xxxx_loot_template tables.");
             sLog.outString("AuctionHouseBot> AHBot is disabled!");
-			sWorld.setConfig(CONFIG_BOOL_AHBOT_SELLER_ENABLED, false);
-			return;
+            sWorld.setConfig(CONFIG_BOOL_AHBOT_SELLER_ENABLED, false);
+            return;
         }
 
         sLog.outString("========AuctionHouseBot========");
@@ -1013,7 +1013,7 @@ void AuctionHouseBot::Initialize()
     sLog.outString("AuctionHouseBot> [AHBot-x003] is now loaded");
     sLog.outString("AuctionHouseBot> updated by Cyberium from Xeross git");
     sLog.outString("AuctionHouseBot> (Original by Naicisum, ChrisK, Paradox)");
-	sLog.outString("AuctionHouseBot> Includes AHBuyer by Kerbe and Paradox");
+    sLog.outString("AuctionHouseBot> Includes AHBuyer by Kerbe and Paradox");
 }
 
 void AuctionHouseBot::Commands(uint32 command, uint32 ahMapID, uint32 col, char* args)
