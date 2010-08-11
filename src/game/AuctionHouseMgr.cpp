@@ -257,7 +257,7 @@ void AuctionHouseMgr::SendAuctionExpiredMail( AuctionEntry * auction )
         owner_accId = sObjectMgr.GetPlayerAccountIdByGUID(owner_guid);
 
     // owner exist
-    if (owner || owner_accId)
+    if(owner || owner_accId)
     {
         std::ostringstream subject;
         subject << auction->item_template << ":0:" << AUCTION_EXPIRED << ":0:0";
