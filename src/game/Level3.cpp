@@ -1495,6 +1495,269 @@ bool ChatHandler::HandleAccountSetPasswordCommand(char* args)
     return true;
 }
 
+
+void ChatHandler::ShowAchievementCriteriaListHelper(AchievementCriteriaEntry const* criEntry, AchievementEntry const * achEntry, LocaleConstant loc, Player* target /*= NULL*/)
+{
+    std::ostringstream ss;
+    if (m_session)
+    {
+        ss << criEntry->ID << " - |cffffffff|Hachievement_criteria:" << criEntry->ID << "|h[" << criEntry->name[loc] << " " << localeNames[loc] << "]|h|r";
+    }
+    else
+        ss << criEntry->ID << " - " << criEntry->name[loc] << " " << localeNames[loc];
+
+    if (target)
+        ss << " = " << target->GetAchievementMgr().GetCriteriaProgressCounter(criEntry);
+
+    if (achEntry->flags & ACHIEVEMENT_FLAG_COUNTER)
+        ss << GetMangosString(LANG_COUNTER);
+    else
+    {
+        ss << " [" << AchievementMgr::GetCriteriaProgressMaxCounter(criEntry) << "]";
+
+        if (target && target->GetAchievementMgr().IsCompletedCriteria(criEntry, achEntry))
+            ss << GetMangosString(LANG_COMPLETE);
+    }
+
+    SendSysMessage(ss.str().c_str());
+}
+
+bool ChatHandler::HandleAchievementCommand(char* args)
+{
+    char* nameStr = ExtractOptNotLastArg(&args);
+
+    Player* target = NULL;
+
+    if (nameStr)
+    {
+        if (!ExtractPlayerTarget(&nameStr, &target))
+            return false;
+    }
+    else
+        target = getSelectedPlayer();
+
+    uint32 achId;
+    if (!ExtractUint32KeyFromLink(&args, "Hachievement", achId))
+        return false;
+
+    AchievementEntry const *achEntry = sAchievementStore.LookupEntry(achId);
+    if (!achEntry)
+    {
+        PSendSysMessage(LANG_ACHIEVEMENT_NOT_EXIST, achId);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    LocaleConstant loc = GetSessionDbcLocale();
+
+    CompletedAchievementData const* completed = target ? target->GetAchievementMgr().GetCompleteData(achId) : NULL;
+
+    ShowAchievementListHelper(achEntry, loc, completed ? &completed->date : NULL, target);
+
+    if (AchievementCriteriaEntryList const* criteriaList = sAchievementMgr.GetAchievementCriteriaByAchievement(achEntry->ID))
+    {
+        SendSysMessage(LANG_COMMAND_ACHIEVEMENT_CREATERIA);
+        for (AchievementCriteriaEntryList::const_iterator itr = criteriaList->begin(); itr != criteriaList->end(); ++itr)
+            ShowAchievementCriteriaListHelper(*itr, achEntry, loc, target);
+    }
+
+    return true;
+}
+
+bool ChatHandler::HandleAchievementAddCommand(char* args)
+{
+    char* nameStr = ExtractOptNotLastArg(&args);
+
+    Player* target;
+    if (!ExtractPlayerTarget(&nameStr, &target))
+        return false;
+
+    uint32 achId;
+    if (!ExtractUint32KeyFromLink(&args, "Hachievement", achId))
+        return false;
+
+    AchievementEntry const *achEntry = sAchievementStore.LookupEntry(achId);
+    if (!achEntry || achEntry->flags & ACHIEVEMENT_FLAG_COUNTER)
+    {
+        PSendSysMessage(LANG_ACHIEVEMENT_NOT_EXIST, achId);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    AchievementMgr& mgr = target->GetAchievementMgr();
+
+    if (AchievementCriteriaEntryList const* criteriaList = sAchievementMgr.GetAchievementCriteriaByAchievement(achEntry->ID))
+    {
+        for (AchievementCriteriaEntryList::const_iterator itr = criteriaList->begin(); itr != criteriaList->end(); ++itr)
+        {
+            if (mgr.IsCompletedCriteria(*itr, achEntry))
+                continue;
+
+            uint32 maxValue = AchievementMgr::GetCriteriaProgressMaxCounter(*itr);
+            mgr.SetCriteriaProgress(*itr, achEntry, maxValue);
+        }
+    }
+
+    LocaleConstant loc = GetSessionDbcLocale();
+    CompletedAchievementData const* completed = target ? target->GetAchievementMgr().GetCompleteData(achId) : NULL;
+    ShowAchievementListHelper(achEntry, loc, completed ? &completed->date : NULL, target);
+    return true;
+}
+
+bool ChatHandler::HandleAchievementRemoveCommand(char* args)
+{
+    char* nameStr = ExtractOptNotLastArg(&args);
+
+    Player* target;
+    if (!ExtractPlayerTarget(&nameStr, &target))
+        return false;
+
+    uint32 achId;
+    if (!ExtractUint32KeyFromLink(&args, "Hachievement", achId))
+        return false;
+
+    AchievementEntry const *achEntry = sAchievementStore.LookupEntry(achId);
+    if (!achEntry)
+    {
+        PSendSysMessage(LANG_ACHIEVEMENT_NOT_EXIST, achId);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    AchievementMgr& mgr = target->GetAchievementMgr();
+
+    if (AchievementCriteriaEntryList const* criteriaList = sAchievementMgr.GetAchievementCriteriaByAchievement(achEntry->ID))
+        for (AchievementCriteriaEntryList::const_iterator itr = criteriaList->begin(); itr != criteriaList->end(); ++itr)
+            mgr.SetCriteriaProgress(*itr, achEntry, 0);
+
+    LocaleConstant loc = GetSessionDbcLocale();
+    CompletedAchievementData const* completed = target ? target->GetAchievementMgr().GetCompleteData(achId) : NULL;
+    ShowAchievementListHelper(achEntry, loc, completed ? &completed->date : NULL, target);
+    return true;
+}
+
+bool ChatHandler::HandleAchievementCriteriaAddCommand(char* args)
+{
+    Player* target;
+    uint32 criId;
+
+    if (!ExtractUint32KeyFromLink(&args, "Hachievement_criteria", criId))
+    {
+        // maybe player first
+        char* nameStr = ExtractArg(&args);
+        if (!ExtractPlayerTarget(&nameStr, &target))
+            return false;
+
+        if (!ExtractUint32KeyFromLink(&args, "Hachievement_criteria", criId))
+            return false;
+    }
+    else
+        target = getSelectedPlayer();
+
+    AchievementCriteriaEntry const *criEntry = sAchievementCriteriaStore.LookupEntry(criId);
+    if (!criEntry)
+    {
+        PSendSysMessage(LANG_ACHIEVEMENT_CRITERIA_NOT_EXIST, criId);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    AchievementEntry const *achEntry = sAchievementStore.LookupEntry(criEntry->referredAchievement);
+    if (!achEntry)
+        return false;
+
+    LocaleConstant loc = GetSessionDbcLocale();
+
+    uint32 maxValue = AchievementMgr::GetCriteriaProgressMaxCounter(criEntry);
+
+    AchievementMgr& mgr = target->GetAchievementMgr();
+
+    // nothing do if completed
+    if (mgr.IsCompletedCriteria(criEntry, achEntry))
+    {
+        ShowAchievementCriteriaListHelper(criEntry, achEntry, loc, target);
+        return true;
+    }
+
+    uint32 progress = mgr.GetCriteriaProgressCounter(criEntry);
+
+    uint32 val;
+    if (!ExtractOptUInt32(&args, val, maxValue ? maxValue : 1))
+        return false;
+
+    uint32 new_val;
+    
+    if (maxValue)
+        new_val = progress < maxValue && maxValue - progress > val ? progress + val : maxValue;
+    else
+    {
+        uint32 max_int = std::numeric_limits<uint32>::max();
+        new_val = progress < max_int && max_int - progress > val ? progress + val : max_int;
+    }
+
+    mgr.SetCriteriaProgress(criEntry, achEntry, new_val);   // value will move to allowed range into function
+
+    ShowAchievementCriteriaListHelper(criEntry, achEntry, loc, target);
+    return true;
+}
+
+bool ChatHandler::HandleAchievementCriteriaRemoveCommand(char* args)
+{
+    Player* target;
+    uint32 criId;
+
+    if (!ExtractUint32KeyFromLink(&args, "Hachievement_criteria", criId))
+    {
+        // maybe player first
+        char* nameStr = ExtractArg(&args);
+        if (!ExtractPlayerTarget(&nameStr, &target))
+            return false;
+
+        if (!ExtractUint32KeyFromLink(&args, "Hachievement_criteria", criId))
+            return false;
+    }
+    else
+        target = getSelectedPlayer();
+
+    AchievementCriteriaEntry const *criEntry = sAchievementCriteriaStore.LookupEntry(criId);
+    if (!criEntry)
+    {
+        PSendSysMessage(LANG_ACHIEVEMENT_CRITERIA_NOT_EXIST, criId);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    AchievementEntry const *achEntry = sAchievementStore.LookupEntry(criEntry->referredAchievement);
+    if (!achEntry)
+        return false;
+
+    LocaleConstant loc = GetSessionDbcLocale();
+
+    uint32 maxValue = AchievementMgr::GetCriteriaProgressMaxCounter(criEntry);
+
+    AchievementMgr& mgr = target->GetAchievementMgr();
+
+    uint32 progress = mgr.GetCriteriaProgressCounter(criEntry);
+
+    // nothing do if not started
+    if (progress == 0)
+    {
+        ShowAchievementCriteriaListHelper(criEntry, achEntry, loc, target);
+        return true;
+    }
+
+    uint32 change;
+    if (!ExtractOptUInt32(&args, change, maxValue ? maxValue : 1))
+        return false;
+
+    uint32 newval = change < progress ? progress - change : 0;
+
+    mgr.SetCriteriaProgress(criEntry, achEntry, newval);    // value will move to allowed range into function
+
+    ShowAchievementCriteriaListHelper(criEntry, achEntry, loc, target);
+    return true;
+}
+
 bool ChatHandler::HandleMaxSkillCommand(char* /*args*/)
 {
     Player* SelectedPlayer = getSelectedPlayer();
@@ -4645,9 +4908,6 @@ bool ChatHandler::HandleStableCommand(char* /*args*/)
 
 bool ChatHandler::HandleChangeWeatherCommand(char* args)
 {
-    if (!*args)
-        return false;
-
     //Weather is OFF
     if (!sWorld.getConfig(CONFIG_BOOL_WEATHER))
     {
@@ -4656,15 +4916,21 @@ bool ChatHandler::HandleChangeWeatherCommand(char* args)
         return false;
     }
 
-    //*Change the weather of a cell
-    char* px = strtok(args, " ");
-    char* py = strtok(NULL, " ");
-
-    if (!px || !py)
+    uint32 type;
+    if (!ExtractUInt32(&args, type))
         return false;
 
-    uint32 type = (uint32)atoi(px);                         //0 to 3, 0: fine, 1: rain, 2: snow, 3: sand
-    float grade = (float)atof(py);                          //0 to 1, sending -1 is instand good weather
+    //0 to 3, 0: fine, 1: rain, 2: snow, 3: sand
+    if (type > 3)
+        return false;
+
+    float grade;
+    if (!ExtractFloat(&args, grade))
+        return false;
+
+    //0 to 1, sending -1 is instand good weather
+    if (grade < 0.0f || grade > 1.0f)
+        return false;
 
     Player *player = m_session->GetPlayer();
     uint32 zoneid = player->GetZoneId();
@@ -5136,141 +5402,81 @@ bool ChatHandler::HandleServerShutDownCancelCommand(char* /*args*/)
 
 bool ChatHandler::HandleServerShutDownCommand(char* args)
 {
-    if (!*args)
+    uint32 delay;
+    if (!ExtractUInt32(&args, delay))
         return false;
 
-    char* time_str = strtok(args, " ");
-    char* exitcode_str = strtok(NULL, "");
-
-    int32 time = atoi(time_str);
-
-    ///- Prevent interpret wrong arg value as 0 secs shutdown time
-    if ((time == 0 && (time_str[0]!='0' || time_str[1]!='\0')) || time < 0)
+    uint32 exitcode;
+    if (!ExtractOptUInt32(&args, exitcode, SHUTDOWN_EXIT_CODE))
         return false;
 
-    if (exitcode_str)
-    {
-        int32 exitcode = atoi (exitcode_str);
+    // Exit code should be in range of 0-125, 126-255 is used
+    // in many shells for their own return codes and code > 255
+    // is not supported in many others
+    if (exitcode < 0 || exitcode > 125)
+        return false;
 
-        // Handle atoi() errors
-        if (exitcode == 0 && (exitcode_str[0] != '0' || exitcode_str[1] != '\0'))
-            return false;
-
-        // Exit code should be in range of 0-125, 126-255 is used
-        // in many shells for their own return codes and code > 255
-        // is not supported in many others
-        if (exitcode < 0 || exitcode > 125)
-            return false;
-
-        sWorld.ShutdownServ (time, 0, exitcode);
-    }
-    else
-        sWorld.ShutdownServ(time,0,SHUTDOWN_EXIT_CODE);
+    sWorld.ShutdownServ (delay, 0, exitcode);
     return true;
 }
 
 bool ChatHandler::HandleServerRestartCommand(char* args)
 {
-    if (!*args)
+    uint32 delay;
+    if (!ExtractUInt32(&args, delay))
         return false;
 
-    char* time_str = strtok(args, " ");
-    char* exitcode_str = strtok(NULL, "");
-
-    int32 time = atoi(time_str);
-
-    ///- Prevent interpret wrong arg value as 0 secs shutdown time
-    if ((time == 0 && (time_str[0]!='0' || time_str[1]!='\0')) || time < 0)
+    uint32 exitcode;
+    if (!ExtractOptUInt32(&args, exitcode, RESTART_EXIT_CODE))
         return false;
 
-    if (exitcode_str)
-    {
-        int32 exitcode = atoi(exitcode_str);
+    // Exit code should be in range of 0-125, 126-255 is used
+    // in many shells for their own return codes and code > 255
+    // is not supported in many others
+    if (exitcode < 0 || exitcode > 125)
+        return false;
 
-        // Handle atoi() errors
-        if (exitcode == 0 && (exitcode_str[0] != '0' || exitcode_str[1] != '\0'))
-            return false;
-
-        // Exit code should be in range of 0-125, 126-255 is used
-        // in many shells for their own return codes and code > 255
-        // is not supported in many others
-        if (exitcode < 0 || exitcode > 125)
-            return false;
-
-        sWorld.ShutdownServ(time, SHUTDOWN_MASK_RESTART, exitcode);
-    }
-    else
-        sWorld.ShutdownServ(time, SHUTDOWN_MASK_RESTART, RESTART_EXIT_CODE);
+    sWorld.ShutdownServ(delay, SHUTDOWN_MASK_RESTART, exitcode);
     return true;
 }
 
 bool ChatHandler::HandleServerIdleRestartCommand(char* args)
 {
-    if (!*args)
+    uint32 delay;
+    if (!ExtractUInt32(&args, delay))
         return false;
 
-    char* time_str = strtok(args, " ");
-    char* exitcode_str = strtok(NULL, "");
-
-    int32 time = atoi(time_str);
-
-    ///- Prevent interpret wrong arg value as 0 secs shutdown time
-    if ((time == 0 && (time_str[0]!='0' || time_str[1]!='\0')) || time < 0)
+    uint32 exitcode;
+    if (!ExtractOptUInt32(&args, exitcode, RESTART_EXIT_CODE))
         return false;
 
-    if (exitcode_str)
-    {
-        int32 exitcode = atoi(exitcode_str);
+    // Exit code should be in range of 0-125, 126-255 is used
+    // in many shells for their own return codes and code > 255
+    // is not supported in many others
+    if (exitcode < 0 || exitcode > 125)
+        return false;
 
-        // Handle atoi() errors
-        if (exitcode == 0 && (exitcode_str[0] != '0' || exitcode_str[1] != '\0'))
-            return false;
-
-        // Exit code should be in range of 0-125, 126-255 is used
-        // in many shells for their own return codes and code > 255
-        // is not supported in many others
-        if (exitcode < 0 || exitcode > 125)
-            return false;
-
-        sWorld.ShutdownServ(time, SHUTDOWN_MASK_RESTART|SHUTDOWN_MASK_IDLE, exitcode);
-    }
-    else
-        sWorld.ShutdownServ(time,SHUTDOWN_MASK_RESTART|SHUTDOWN_MASK_IDLE,RESTART_EXIT_CODE);
+    sWorld.ShutdownServ(delay, SHUTDOWN_MASK_RESTART|SHUTDOWN_MASK_IDLE, exitcode);
     return true;
 }
 
 bool ChatHandler::HandleServerIdleShutDownCommand(char* args)
 {
-    if (!*args)
+    uint32 delay;
+    if (!ExtractUInt32(&args, delay))
         return false;
 
-    char* time_str = strtok(args, " ");
-    char* exitcode_str = strtok(NULL, "");
-
-    int32 time = atoi(time_str);
-
-    ///- Prevent interpret wrong arg value as 0 secs shutdown time
-    if ((time == 0 && (time_str[0]!='0' || time_str[1]!='\0')) || time < 0)
+    uint32 exitcode;
+    if (!ExtractOptUInt32(&args, exitcode, SHUTDOWN_EXIT_CODE))
         return false;
 
-    if (exitcode_str)
-    {
-        int32 exitcode = atoi(exitcode_str);
+    // Exit code should be in range of 0-125, 126-255 is used
+    // in many shells for their own return codes and code > 255
+    // is not supported in many others
+    if (exitcode < 0 || exitcode > 125)
+        return false;
 
-        // Handle atoi() errors
-        if (exitcode == 0 && (exitcode_str[0] != '0' || exitcode_str[1] != '\0'))
-            return false;
-
-        // Exit code should be in range of 0-125, 126-255 is used
-        // in many shells for their own return codes and code > 255
-        // is not supported in many others
-        if (exitcode < 0 || exitcode > 125)
-            return false;
-
-        sWorld.ShutdownServ(time, SHUTDOWN_MASK_IDLE, exitcode);
-    }
-    else
-        sWorld.ShutdownServ(time,SHUTDOWN_MASK_IDLE,SHUTDOWN_EXIT_CODE);
+    sWorld.ShutdownServ(delay, SHUTDOWN_MASK_IDLE, exitcode);
     return true;
 }
 
@@ -5674,7 +5880,7 @@ bool ChatHandler::HandleBanInfoIPCommand(char* args)
     if (!*args)
         return false;
 
-    char* cIP = strtok (args, "");
+    char* cIP = ExtractQuotedOrLiteralArg(&args);
     if(!cIP)
         return false;
 
@@ -5704,7 +5910,7 @@ bool ChatHandler::HandleBanListCharacterCommand(char* args)
 {
     LoginDatabase.Execute("DELETE FROM ip_banned WHERE unbandate<=UNIX_TIMESTAMP() AND unbandate<>bandate");
 
-    char* cFilter = strtok (args, " ");
+    char* cFilter = ExtractLiteralArg(&args);
     if(!cFilter)
         return false;
 
@@ -5724,7 +5930,7 @@ bool ChatHandler::HandleBanListAccountCommand(char* args)
 {
     LoginDatabase.Execute("DELETE FROM ip_banned WHERE unbandate<=UNIX_TIMESTAMP() AND unbandate<>bandate");
 
-    char* cFilter = strtok(args, " ");
+    char* cFilter = ExtractLiteralArg(&args);
     std::string filter = cFilter ? cFilter : "";
     LoginDatabase.escape_string(filter);
 
@@ -5833,7 +6039,7 @@ bool ChatHandler::HandleBanListIPCommand(char* args)
 {
     LoginDatabase.Execute("DELETE FROM ip_banned WHERE unbandate<=UNIX_TIMESTAMP() AND unbandate<>bandate");
 
-    char* cFilter = strtok(args, " ");
+    char* cFilter = ExtractLiteralArg(&args);
     std::string filter = cFilter ? cFilter : "";
     LoginDatabase.escape_string(filter);
 
