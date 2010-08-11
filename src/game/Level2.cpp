@@ -2730,7 +2730,7 @@ bool ChatHandler::HandleTicketCommand(char* args)
 
     // ticket #num
     uint32 num;
-    if (!ExtractUInt32(&px, num))
+    if (ExtractUInt32(&px, num))
     {
         if (num == 0)
             return false;
@@ -4546,14 +4546,15 @@ bool ChatHandler::HandleLearnAllRecipesCommand(char* args)
 
 bool ChatHandler::HandleLookupAccountEmailCommand(char* args)
 {
-
-    if (!*args)
+    char* emailStr = ExtractQuotedOrLiteralArg(&args);
+    if (!emailStr)
         return false;
 
-    std::string email = strtok(args, " ");
-    char* limit_str = strtok(NULL, " ");
-    uint32 limit = limit_str ? atoi(limit_str) : 100;
+    uint32 limit;
+    if (!ExtractOptUInt32(&args, limit, 100))
+        return false;
 
+    std::string email = emailStr;
     LoginDatabase.escape_string(email);
     //                                                 0   1         2        3        4
     QueryResult *result = LoginDatabase.PQuery("SELECT id, username, last_ip, gmlevel, expansion FROM account WHERE email "_LIKE_" "_CONCAT3_("'%%'","'%s'","'%%'"), email.c_str ());
@@ -4563,13 +4564,15 @@ bool ChatHandler::HandleLookupAccountEmailCommand(char* args)
 
 bool ChatHandler::HandleLookupAccountIpCommand(char* args)
 {
-    if (!*args)
+    char* ipStr = ExtractQuotedOrLiteralArg(&args);
+    if (!ipStr)
         return false;
 
-    std::string ip = strtok(args, " ");
-    char* limit_str = strtok(NULL, " ");
-    uint32 limit = limit_str ? atoi(limit_str) : 100;
+    uint32 limit;
+    if (!ExtractOptUInt32(&args, limit, 100))
+        return false;
 
+    std::string ip = ipStr;
     LoginDatabase.escape_string(ip);
 
     //                                                 0   1         2        3        4
@@ -4580,13 +4583,15 @@ bool ChatHandler::HandleLookupAccountIpCommand(char* args)
 
 bool ChatHandler::HandleLookupAccountNameCommand(char* args)
 {
-    if (!*args)
+    char* accountStr = ExtractQuotedOrLiteralArg(&args);
+    if (!accountStr)
         return false;
 
-    std::string account = strtok(args, " ");
-    char* limit_str = strtok(NULL, " ");
-    uint32 limit = limit_str ? atoi(limit_str) : 100;
+    uint32 limit;
+    if (!ExtractOptUInt32(&args, limit, 100))
+        return false;
 
+    std::string account = accountStr;
     if (!AccountMgr::normalizeString(account))
         return false;
 
@@ -4651,13 +4656,15 @@ bool ChatHandler::ShowAccountListHelper(QueryResult* result, uint32* limit, bool
 
 bool ChatHandler::HandleLookupPlayerIpCommand(char* args)
 {
-    if (!*args)
+    char* ipStr = ExtractQuotedOrLiteralArg(&args);
+    if (!ipStr)
         return false;
 
-    std::string ip = strtok(args, " ");
-    char* limit_str = strtok(NULL, " ");
-    uint32 limit = limit_str ? atoi(limit_str) : 100;
+    uint32 limit;
+    if (!ExtractOptUInt32(&args, limit, 100))
+        return false;
 
+    std::string ip = ipStr;
     LoginDatabase.escape_string(ip);
 
     QueryResult* result = LoginDatabase.PQuery ("SELECT id,username FROM account WHERE last_ip "_LIKE_" "_CONCAT3_("'%%'","'%s'","'%%'"), ip.c_str ());
@@ -4667,13 +4674,15 @@ bool ChatHandler::HandleLookupPlayerIpCommand(char* args)
 
 bool ChatHandler::HandleLookupPlayerAccountCommand(char* args)
 {
-    if (!*args)
+    char* accountStr = ExtractQuotedOrLiteralArg(&args);
+    if (!accountStr)
         return false;
 
-    std::string account = strtok(args, " ");
-    char* limit_str = strtok(NULL, " ");
-    uint32 limit = limit_str ? atoi(limit_str) : 100;
+    uint32 limit;
+    if (!ExtractOptUInt32(&args, limit, 100))
+        return false;
 
+    std::string account = accountStr;
     if (!AccountMgr::normalizeString(account))
         return false;
 
@@ -4686,13 +4695,15 @@ bool ChatHandler::HandleLookupPlayerAccountCommand(char* args)
 
 bool ChatHandler::HandleLookupPlayerEmailCommand(char* args)
 {
-    if (!*args)
+    char* emailStr = ExtractQuotedOrLiteralArg(&args);
+    if (!emailStr)
         return false;
 
-    std::string email = strtok(args, " ");
-    char* limit_str = strtok(NULL, " ");
-    uint32 limit = limit_str ? atoi(limit_str) : 100;
+    uint32 limit;
+    if (!ExtractOptUInt32(&args, limit, 100))
+        return false;
 
+    std::string email = emailStr;
     LoginDatabase.escape_string(email);
 
     QueryResult* result = LoginDatabase.PQuery("SELECT id,username FROM account WHERE email "_LIKE_" "_CONCAT3_("'%%'","'%s'","'%%'"), email.c_str ());

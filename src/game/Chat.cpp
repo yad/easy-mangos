@@ -39,6 +39,7 @@
 // Supported shift-links (client generated and server side)
 // |color|Hachievement:achievement_id:player_guid_hex:completed_0_1:mm:dd:yy_from_2000:criteriaMask1:criteriaMask2:criteriaMask3:criteriaMask4|h[name]|h|r
 //                                                                        - client, item icon shift click, not used in server currently
+// |color|Hachievement_criteria:criteria_id|h[name]|h|r
 // |color|Harea:area_id|h[name]|h|r
 // |color|Hareatrigger:id|h[name]|h|r
 // |color|Hareatrigger_target:id|h[name]|h|r                
@@ -85,6 +86,22 @@ ChatCommand * ChatHandler::getCommandTable()
         { "password",       SEC_PLAYER,         true,  &ChatHandler::HandleAccountPasswordCommand,     "", NULL },
         { "",               SEC_PLAYER,         true,  &ChatHandler::HandleAccountCommand,             "", NULL },
         { NULL,             0,                  false, NULL,                                           "", NULL }
+    };
+
+    static ChatCommand achievementCreateriaCommandTable[] =
+    {
+        { "add",            SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleAchievementCriteriaAddCommand,   "", NULL },
+        { "remove",         SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleAchievementCriteriaRemoveCommand,"", NULL },
+        { NULL,             0,                  true,  NULL,                                                "", NULL }
+    };
+
+    static ChatCommand achievementCommandTable[] =
+    {
+        { "createria",      SEC_ADMINISTRATOR,  true,  NULL,                                           "", achievementCreateriaCommandTable },
+        { "add",            SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleAchievementAddCommand,      "", NULL },
+        { "remove",         SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleAchievementRemoveCommand,   "", NULL },
+        { "",               SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleAchievementCommand,         "", NULL },
+        { NULL,             0,                  true,  NULL,                                           "", NULL }
     };
 
     static ChatCommand auctionCommandTable[] =
@@ -654,6 +671,7 @@ ChatCommand * ChatHandler::getCommandTable()
     static ChatCommand commandTable[] =
     {
         { "account",        SEC_PLAYER,         true,  NULL,                                           "", accountCommandTable  },
+        { "achievement",    SEC_ADMINISTRATOR,  true,  NULL,                                           "", achievementCommandTable },
         { "auction",        SEC_ADMINISTRATOR,  false, NULL,                                           "", auctionCommandTable  },
         { "cast",           SEC_ADMINISTRATOR,  false, NULL,                                           "", castCommandTable     },
         { "character",      SEC_GAMEMASTER,     true,  NULL,                                           "", characterCommandTable},
@@ -2013,7 +2031,8 @@ Unit* ChatHandler::getSelectedUnit()
     if (guid == 0)
         return m_session->GetPlayer();
 
-    return ObjectAccessor::GetUnit(*m_session->GetPlayer(),guid);
+    // can be selected player at another map
+    return ObjectAccessor::GetUnit(*m_session->GetPlayer(), guid);
 }
 
 Creature* ChatHandler::getSelectedCreature()
@@ -2021,7 +2040,7 @@ Creature* ChatHandler::getSelectedCreature()
     if(!m_session)
         return NULL;
 
-    return m_session->GetPlayer()->GetMap()->GetCreatureOrPetOrVehicle(m_session->GetPlayer()->GetSelection());
+    return m_session->GetPlayer()->GetMap()->GetAnyTypeCreature(m_session->GetPlayer()->GetSelection());
 }
 
 /**
@@ -2221,33 +2240,40 @@ char* ChatHandler::ExtractLiteralArg(char** args, char const* lit /*= NULL*/)
 
     if (lit)
     {
-        int diff = strncmp(head, lit, strlen(lit));
+        int l = strlen(lit);
+        int diff = strncmp(head, lit, l);
 
-        if (diff > 0)
+        if (diff != 0)
             return NULL;
 
-        if (diff < 0 && !head[-diff] && !isWhiteSpace(head[-diff]))
+        if (head[l] && !isWhiteSpace(head[l]))
             return NULL;
 
         char* arg = head;
 
-        if (head[-diff])
+        if (head[l])
         {
-            head[-diff] = '\0';
+            head[l] = '\0';
 
-            head += -diff + 1;
+            head += l + 1;
 
             *args = head;
         }
         else
-            *args = NULL;
+            *args = head + l;
 
         SkipWhiteSpaces(args);
         return arg;
     }
 
     char* name = strtok(head, " ");
-    *args = strtok(NULL, "");
+
+    char* tail = strtok(NULL, "");
+
+    *args = tail ? tail : (char*)"";                        // *args don't must be NULL
+
+    SkipWhiteSpaces(args);
+
     return name;
 }
 
@@ -2274,7 +2300,8 @@ char* ChatHandler::ExtractQuotedArg( char** args )
 
     char* str = strtok((*args)+1, guard);                   // skip start guard symbol
 
-    *args = strtok(NULL, "");
+    char* tail = strtok(NULL, "");
+    *args = tail ? tail : (char*)"";                        // *args don't must be NULL
 
     SkipWhiteSpaces(args);
 
@@ -2541,7 +2568,7 @@ char* ChatHandler::ExtractOptNotLastArg(char** args)
         return arg;
 
     // optional name not found
-    *args = arg;
+    *args = arg ? arg : (char*)"";                          // *args don't must be NULL
 
     return NULL;
 }
