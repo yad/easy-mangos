@@ -1677,6 +1677,13 @@ bool InstanceMap::CanEnter(Player *player)
         return false;
     }
 
+    if(!player->isGameMaster() && i_data && i_data->IsEncounterInProgress())
+    {
+        sLog.outDebug("MAP: Player '%s' can't enter instance '%s' while an encounter is in progress.", player->GetName(), GetMapName());
+        player->SendTransferAborted(GetId(), TRANSFER_ABORT_ZONE_IN_COMBAT);
+            return false;
+    }
+
     return Map::CanEnter(player);
 }
 
