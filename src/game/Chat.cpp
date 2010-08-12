@@ -334,6 +334,13 @@ ChatCommand * ChatHandler::getCommandTable()
         { "ip",             SEC_GAMEMASTER,     true,  &ChatHandler::HandleLookupPlayerIpCommand,      "", NULL },
         { NULL,             0,                  false, NULL,                                           "", NULL }
     };
+	
+    static ChatCommand npcCloneModelCommandTable[] =
+    {
+        { "id",             SEC_GAMEMASTER,     false, &ChatHandler::HandleNpcCloneModelIdCommand,     "", NULL },
+        { "",               SEC_GAMEMASTER,     false, &ChatHandler::HandleNpcCloneModelCommand,       "", NULL },
+        { NULL,             0,                  false, NULL,                                           "", NULL }
+    };
 
     static ChatCommand lookupCommandTable[] =
     {
@@ -412,7 +419,7 @@ ChatCommand * ChatHandler::getCommandTable()
         { "yell",           SEC_MODERATOR,      false, &ChatHandler::HandleNpcYellCommand,             "", NULL },
         { "tame",           SEC_GAMEMASTER,     false, &ChatHandler::HandleNpcTameCommand,             "", NULL },
         { "setdeathstate",  SEC_GAMEMASTER,     false, &ChatHandler::HandleNpcSetDeathStateCommand,    "", NULL },
-        { "clonemodel",     SEC_GAMEMASTER,     false, &ChatHandler::HandleNpcCloneModelCommand,       "", NULL },
+        { "clonemodel",     SEC_GAMEMASTER,     false, NULL,                                           "", npcCloneModelCommandTable },
 
         //{ TODO: fix or remove this commands
         { "addweapon",      SEC_ADMINISTRATOR,  false, &ChatHandler::HandleNpcAddWeaponCommand,        "", NULL },

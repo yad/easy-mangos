@@ -572,6 +572,7 @@ class ChatHandler
         bool HandleReloadSpellDisabledCommand(char* args);
         bool HandlePIeMailCommand(char* args);
         bool HandleNpcCloneModelCommand(char* args);
+        bool HandleNpcCloneModelIdCommand(char* args);
 
         Player*   getSelectedPlayer();
         Creature* getSelectedCreature();

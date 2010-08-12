@@ -2289,7 +2289,7 @@ bool ChatHandler::HandleNpcSetDeathStateCommand(char* args)
 }
 
 // .npc clonemodel command. Set model of user of this command to model of selected creature.
-bool ChatHandler::HandleNpcCloneModelCommand(char* args)
+bool ChatHandler::HandleNpcCloneModelCommand(char* /*args*/)
 {
     Creature *pCreature = getSelectedCreature();
  
@@ -2306,6 +2306,27 @@ bool ChatHandler::HandleNpcCloneModelCommand(char* args)
     return true;
 }
 
+bool ChatHandler::HandleNpcCloneModelIdCommand(char* args)
+{
+    if (!*args)
+        return false;
+
+    uint32 id;
+    if (!ExtractUint32KeyFromLink(&args, "Hcreature_entry", id))
+        return false;
+
+    CreatureInfo const* cInfo = sObjectMgr.GetCreatureTemplate(id);
+	if (!cInfo)
+    {
+        SendSysMessage("Unable to get creatureInfo for creature with entered ID.");
+        SetSentErrorMessage(true);
+        return false;
+    }
+ 
+    m_session->GetPlayer()->SetDisplayId(cInfo->ModelId[0]);
+	
+    return true;
+}
 
 //TODO: NpcCommands that need to be fixed :
 
