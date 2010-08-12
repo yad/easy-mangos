@@ -6707,12 +6707,12 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
  
                     switch(entry)
                     {
-                        case 31897: spellID = 7001; break;   // Lightwell Renew	Rank 1
-                        case 31896: spellID = 27873; break;  // Lightwell Renew	Rank 2
-                        case 31895: spellID = 27874; break;  // Lightwell Renew	Rank 3
-                        case 31894: spellID = 28276; break;  // Lightwell Renew	Rank 4
-                        case 31893: spellID = 48084; break;  // Lightwell Renew	Rank 5
-                        case 31883: spellID = 48085; break;  // Lightwell Renew	Rank 6
+                        case 31897: spellID = 7001; break;   // Lightwell Renew Rank 1
+                        case 31896: spellID = 27873; break;  // Lightwell Renew Rank 2
+                        case 31895: spellID = 27874; break;  // Lightwell Renew Rank 3
+                        case 31894: spellID = 28276; break;  // Lightwell Renew Rank 4
+                        case 31893: spellID = 48084; break;  // Lightwell Renew Rank 5
+                        case 31883: spellID = 48085; break;  // Lightwell Renew Rank 6
                         default:
                             sLog.outError("Unknown Lightwell spell caster %u", m_caster->GetEntry());
                             return;

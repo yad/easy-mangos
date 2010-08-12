@@ -1172,7 +1172,7 @@ void Pet::_SaveSpells()
 void Pet::_LoadAuras(uint32 timediff)
 {
     RemoveAllAuras();
-    
+
     QueryResult *result = CharacterDatabase.PQuery("SELECT caster_guid,item_guid,spell,stackcount,remaincharges,basepoints0,basepoints1,basepoints2,maxduration0,maxduration1,maxduration2,remaintime0,remaintime1,remaintime2,effIndexMask FROM pet_aura WHERE guid = '%u'",m_charmInfo->GetPetNumber());
 
     if(result)

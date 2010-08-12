@@ -1706,7 +1706,7 @@ bool ChatHandler::HandleAchievementCriteriaAddCommand(char* args)
         return false;
 
     uint32 new_val;
-    
+
     if (maxValue)
         new_val = progress < maxValue && maxValue - progress > val ? progress + val : maxValue;
     else

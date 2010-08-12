@@ -24431,7 +24431,7 @@ void Player::ActivateSpec(uint8 specNum)
     if(specNum >= GetSpecsCount())
         return;
 
-    if (GetMap()->IsBattleGround() && !HasAura(44521)) // In BattleGround with no Preparation buff 	  	
+    if (GetMap()->IsBattleGround() && !HasAura(44521)) // In BattleGround with no Preparation buff           
         return;
 
     UnsummonPetTemporaryIfAny();
