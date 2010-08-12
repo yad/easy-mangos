@@ -78,6 +78,7 @@ public:
         }
     private:
         Record(DBCFile &file, unsigned char *offset): file(file), offset(offset) {}
+        DBCFile &file;
         unsigned char *offset;
 
         friend class DBCFile;

@@ -38,7 +38,7 @@ namespace VMAP
     #define ASSERT(x) 0
     #define DEBUG_LOG(...) 0
     #define DETAIL_LOG(...) 0
-    #define ERROR_LOG(...) 0
+    #define ERROR_LOG(...) do{ printf("ERROR:"); printf(__VA_ARGS__); printf("\n"); } while(0)
 #else
     #include <assert.h>
     #define ASSERT(x) assert(x)

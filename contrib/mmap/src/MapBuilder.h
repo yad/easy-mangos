@@ -113,6 +113,7 @@ namespace MMAP
 
             // debug output
             void generateObjFile(uint32 mapID, uint32 tileX, uint32 tileY, MeshData meshData);
+            void generateRealObj(uint32 mapID, uint32 tileX, uint32 tileY, MeshData meshData);
             void writeIV(uint32 mapID, uint32 tileX, uint32 tileY, IntermediateValues iv);
             void writeHeightfield(FILE* file, const rcHeightfield* hf);
             void writeSpan(FILE* file, const rcSpan* span);

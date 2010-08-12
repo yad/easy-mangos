@@ -28,6 +28,7 @@ enum NavTerrain
 void duReadNavMesh(int mapID, dtNavMesh* &navMesh);
 int duReadHeightfield(int mapID, rcHeightfield* &hf);
 int duReadCompactHeightfield(int mapID, rcCompactHeightfield* &chf);
+int duReadContourSet(int mapID, rcContourSet* &cs);
 int duReadPolyMesh(int mapID, rcPolyMesh* &mesh);
 int duReadDetailMesh(int mapID, rcPolyMeshDetail* &mesh);
 
