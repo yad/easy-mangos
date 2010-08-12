@@ -1582,6 +1582,22 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     m_caster->CastSpell(m_caster, 30452, true, NULL);
                     return;
                 }
+                case 51962:  //Offer Jungle Punch. For quest 12645. Don't know how do it else                               
+                {
+                    if (unitTarget->GetTypeId() != TYPEID_PLAYER)
+                        return;
+
+                    Unit *pTarget = unitTarget->GetMap()->GetUnit(((Player*)unitTarget)->GetSelection());
+                    if (pTarget && pTarget->GetTypeId() == TYPEID_UNIT)
+                    {
+                       uint32 entry = pTarget->GetEntry();
+                       if (entry != 27986 && entry != 28047 && entry != 28568) //prevent exploits
+                            SendCastResult(SPELL_FAILED_BAD_TARGETS);
+                       else
+                            ((Player*)unitTarget)->KilledMonsterCredit(entry, 0);
+                    }
+                    return;
+                }
                 case 51840:                                 // Despawn Fruit Tosser
                 {
                     if (!unitTarget || unitTarget->GetTypeId() != TYPEID_UNIT)
