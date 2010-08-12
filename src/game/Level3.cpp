@@ -2596,8 +2596,8 @@ bool ChatHandler::HandleLearnAllGMCommand(char* /*args*/)
 
 bool ChatHandler::HandleLearnAllMyClassCommand(char* /*args*/)
 {
-    HandleLearnAllMySpellsCommand("");
-    HandleLearnAllMyTalentsCommand("");
+    HandleLearnAllMySpellsCommand((char*)"");
+    HandleLearnAllMyTalentsCommand((char*)"");
     return true;
 }
 
