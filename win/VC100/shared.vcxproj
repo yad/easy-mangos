@@ -446,6 +446,7 @@
     <ClCompile Include="..\..\src\shared\Database\SqlDelayThread.cpp" />
     <ClCompile Include="..\..\src\shared\Database\SqlOperations.cpp" />
     <ClCompile Include="..\..\src\shared\Database\SQLStorage.cpp" />
+    <ClCompile Include="..\..\src\shared\DelayExecutor.cpp" />
     <ClCompile Include="..\..\src\shared\Log.cpp" />
     <ClCompile Include="..\..\src\shared\MemoryLeaks.cpp" />
     <ClCompile Include="..\..\src\shared\pathfinding\Detour\DetourCommon.cpp" />
@@ -482,6 +483,7 @@
     <ClInclude Include="..\..\src\shared\Auth\SARC4.h" />
     <ClInclude Include="..\..\src\shared\Auth\Sha1.h" />
     <ClInclude Include="..\..\src\shared\ByteBuffer.h" />
+    <ClInclude Include="..\..\src\shared\DelayExecutor.h" />
     <ClInclude Include="..\..\src\shared\pathfinding\Detour\DetourCommon.h" />
     <ClInclude Include="..\..\src\shared\pathfinding\Detour\DetourNavMesh.h" />
     <ClInclude Include="..\..\src\shared\pathfinding\Detour\DetourNavMeshBuilder.h" />
