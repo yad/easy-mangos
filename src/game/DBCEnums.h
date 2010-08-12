@@ -432,6 +432,19 @@ enum SpellEffectIndex
     EFFECT_INDEX_2     = 2
 };
 
+enum VehicleSeatFlags
+{
+    SEAT_FREE                   = 0x01,                     // free seat
+    SEAT_FULL                   = 0x02,                     // seat occupied by player/creature
+    // special cases
+    SEAT_VEHICLE_FREE           = 0x04,                     // seat occupied by vehicle, but that vehicle is free
+    SEAT_VEHICLE_FULL           = 0x08,                     // seat occupied by vehicle and that vehicle is full too
+    SEAT_FLAG_HIDE_PASSENGER    = 0x00000200,               // Passenger is hidden
+    SEAT_FLAG_MAIN_RIDER        = 0x00000800,               // Can control vehicle
+    SEAT_FLAG_USABLE            = 0x02000000,
+    SEAT_FLAG_CAN_CAST          = 0x20000000,
+};
+
 #define MAX_EFFECT_INDEX 3
 
 #endif

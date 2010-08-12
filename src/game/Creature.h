@@ -116,6 +116,7 @@ struct CreatureInfo
     int32   resistance6;
     uint32  spells[CREATURE_MAX_SPELLS];
     uint32  PetSpellDataId;
+    uint32  VehicleEntry;
     uint32  mingold;
     uint32  maxgold;
     char const* AIName;
@@ -407,9 +408,6 @@ class MANGOS_DLL_SPEC Creature : public Unit
         void Update( uint32 time );                         // overwrited Unit::Update
         void GetRespawnCoord(float &x, float &y, float &z, float* ori = NULL, float* dist =NULL) const;
         uint32 GetEquipmentId() const { return m_equipmentId; }
-
-        bool CreateVehicleKit(uint32 id);
-        Vehicle *GetVehicleKit()const { return m_vehicleKit; }
 
         CreatureSubtype GetSubtype() const { return m_subtype; }
         bool isPet() const { return m_subtype == CREATURE_SUBTYPE_PET; }
@@ -715,7 +713,6 @@ class MANGOS_DLL_SPEC Creature : public Unit
         float CombatStartX;
         float CombatStartY;
         float CombatStartZ;
-        Vehicle* m_vehicleKit;
         float m_summonXpoint;
         float m_summonYpoint;
         float m_summonZpoint;

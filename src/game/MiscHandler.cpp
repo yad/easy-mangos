@@ -269,6 +269,7 @@ void WorldSession::HandleLogoutRequestOpcode( WorldPacket & /*recv_data*/ )
     if( GetPlayer()->isInCombat() ||                        //...is in combat
         GetPlayer()->duel         ||                        //...is in Duel
         GetPlayer()->GetVehicleGUID() ||                    //...is in vehicle
+        GetPlayer()->GetVehicleKit()  ||                    //...is in vehicle mount
                                                             //...is jumping ...is falling
         GetPlayer()->m_movementInfo.HasMovementFlag(MovementFlags(MOVEFLAG_FALLING | MOVEFLAG_FALLINGFAR)))
     {

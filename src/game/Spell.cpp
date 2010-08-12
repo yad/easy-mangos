@@ -4694,12 +4694,12 @@ SpellCastResult Spell::CheckCast(bool strict)
         return locRes;
 
     // not let players cast spells at mount (and let do it to creatures)
-    if ((m_caster->IsMounted() || m_caster->GetVehicleGUID()) && m_caster->GetTypeId()==TYPEID_PLAYER && !m_IsTriggeredSpell &&
+    if ((m_caster->IsMounted() || m_caster->GetVehicle() || m_caster->GetVehicleGUID()) && m_caster->GetTypeId()==TYPEID_PLAYER && !m_IsTriggeredSpell &&
         !IsPassiveSpell(m_spellInfo) && !(m_spellInfo->Attributes & SPELL_ATTR_CASTABLE_WHILE_MOUNTED))
     {
         if (m_caster->IsTaxiFlying())
             return SPELL_FAILED_NOT_ON_TAXI;
-        else if(m_caster->GetVehicleGUID())
+        else if(m_caster->GetVehicleGUID() || m_caster->GetVehicle())
         {
             if(!(m_caster->m_movementInfo.GetVehicleSeatFlags() & SF_CAN_CAST))
                 return SPELL_FAILED_NOT_MOUNTED;

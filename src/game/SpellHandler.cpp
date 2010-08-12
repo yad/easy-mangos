@@ -593,12 +593,7 @@ void WorldSession::HandleSpellClick( WorldPacket & recv_data )
     uint64 guid;
     recv_data >> guid;
 
-    if (_player->isInCombat())                              // client prevent click and set different icon at combat state
-        return;
-
     Creature *unit = ObjectAccessor::GetAnyTypeCreature(*_player, guid);
-    if (!unit || unit->isInCombat())                        // client prevent click and set different icon at combat state
-        return;
 
     if(!_player->IsWithinDistInMap(unit, 10))
         return;
@@ -616,6 +611,9 @@ void WorldSession::HandleSpellClick( WorldPacket & recv_data )
     if(vehicleId || unit->isVehicle())
     {
         if(!unit->isAlive())
+            return;
+
+        if(_player->GetVehicle())
             return;
 
         if(_player->GetVehicleGUID())
