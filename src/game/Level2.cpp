@@ -2316,7 +2316,7 @@ bool ChatHandler::HandleNpcCloneModelIdCommand(char* args)
         return false;
 
     CreatureInfo const* cInfo = sObjectMgr.GetCreatureTemplate(id);
-	if (!cInfo)
+    if (!cInfo)
     {
         SendSysMessage("Unable to get creatureInfo for creature with entered ID.");
         SetSentErrorMessage(true);
