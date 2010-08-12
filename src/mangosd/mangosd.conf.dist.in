@@ -1475,9 +1475,9 @@ Network.KickOnBadPacket = 0
 #        Enable/Disable the part of AHBot that buys items from players
 #    Default 0 (disabled)
 #
-#    AuctionHouseBot.NPC.Entry
-#        If you want show the name of any NPC in place of "AHBot" to auction house, just type his entry number.
-#    Default: 0 ("AHBot" name)
+#    AuctionHouseBot.Name
+#        If you want show other name in place of "AHBot" to auction house, just type it between the quote
+#    Default: "" ("AHBot" name)
 #
 #    AuctionHouseBot.Items.Vendor
 #        Include items that can be bought from vendors.
@@ -1544,7 +1544,7 @@ Network.KickOnBadPacket = 0
 
 AuctionHouseBot.Seller.Enabled = 0
 AuctionHouseBot.Buyer.Enabled = 0
-AuctionHouseBot.NPC.Entry = 0
+AuctionHouseBot.Name = ""
 
 AuctionHouseBot.Items.Vendor = 0
 AuctionHouseBot.Items.Loot = 1

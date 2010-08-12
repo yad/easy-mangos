@@ -871,7 +871,7 @@ void World::LoadConfigSettings(bool reload)
     setConfig(CONFIG_BOOL_AHBOT_SELLER_ENABLED  , "AuctionHouseBot.Seller.Enabled"  , false);
     setConfig(CONFIG_BOOL_AHBOT_BUYER_ENABLED   , "AuctionHouseBot.Buyer.Enabled"   , false);
 
-    setConfig(CONFIG_UINT32_AHBOT_NPC_ENTRY    , "AuctionHouseBot.NPC.Entry"         , 0);
+    SetAHBotName( sConfig.GetStringDefault("AuctionHouseBot.Name", "AHBot" ) );
 
     setConfig(CONFIG_BOOL_AHBOT_ITEMS_VENDOR    , "AuctionHouseBot.Items.Vendor"    , false);
     setConfig(CONFIG_BOOL_AHBOT_ITEMS_LOOT      , "AuctionHouseBot.Items.Loot"      , true);

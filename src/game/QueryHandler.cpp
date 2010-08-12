@@ -130,32 +130,11 @@ void WorldSession::SendNameQueryOpcodeFromDBCallBack(QueryResult *result, uint32
 // Fake name for AHBot Guid
 void WorldSession::SendFakeNameForAHBotQueryOPcode()
 {
-    uint32 entry=sWorld.getConfig(CONFIG_UINT32_AHBOT_NPC_ENTRY);
-    std::string dName = "AHBot";
-    if (entry!=0)
-    {
-        CreatureInfo const *ci = ObjectMgr::GetCreatureTemplate(entry);
-        if (ci)
-        {
-            dName = ci->Name;
-            int loc_idx = GetSessionDbLocaleIndex();
-            if (loc_idx >= 0)
-            {
-                CreatureLocale const *cl = sObjectMgr.GetCreatureLocale(entry);
-                if (cl)
-                {
-                    if (cl->Name.size() > size_t(loc_idx) && !cl->Name[loc_idx].empty())
-                        dName = cl->Name[loc_idx];
-                }
-            }
-            DETAIL_LOG("WORLD: CMSG_CREATURE_QUERY '%s' - Entry: %u.", ci->Name, entry);
-        }
-    }
                                                                         // guess size
     WorldPacket data( SMSG_NAME_QUERY_RESPONSE, (8+1+1+1+1+1+10) );
     data.appendPackGUID(auctionbot.GetAHBplayerGUID());
     data << uint8(0);													// added in 3.1; if > 1, then end of packet
-    data << dName;														// played name
+    data << sWorld.GetAHBotName();														// played name
     data << uint8(0);													// realm name for cross realm BG usage
     data << uint8(0);													// race
     data << uint8(0);													// gender
