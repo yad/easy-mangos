@@ -216,6 +216,9 @@ bool Pet::LoadPetFromDB( Player* owner, uint32 petentry, uint32 petnumber, bool 
             SetUInt32Value(UNIT_FIELD_BYTES_0, 2048);
             SetUInt32Value(UNIT_FIELD_FLAGS, UNIT_FLAG_PVP_ATTACKABLE);
                                                             // this enables popup window (pet dismiss, cancel)
+            // DK ghouls have energy
+            if (cinfo->family == CREATURE_FAMILY_GHOUL)
+                setPowerType(POWER_ENERGY);
             break;
         case HUNTER_PET:
             SetUInt32Value(UNIT_FIELD_BYTES_0, 0x02020100);
@@ -345,6 +348,10 @@ bool Pet::LoadPetFromDB( Player* owner, uint32 petentry, uint32 petnumber, bool 
             delete result;
         }
     }
+
+    //set last used pet number (for use in BG's)
+    if(owner->GetTypeId() == TYPEID_PLAYER && isControlled() && !isTemporarySummoned() && (getPetType() == SUMMON_PET || getPetType() == HUNTER_PET))
+        ((Player*)owner)->SetLastPetNumber(pet_number);
 
     m_loading = false;
 
@@ -483,6 +490,17 @@ void Pet::setDeathState(DeathState s)                       // overwrite virtual
                 ModifyPower(POWER_HAPPINESS, -HAPPINESS_LEVEL_SIZE);
 
             SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_STUNNED);
+        }
+        // send cooldown for summon spell if necessary
+        if (Player* p_owner = GetCharmerOrOwnerPlayerOrPlayerItself())
+        {
+            SpellEntry const *spellInfo = sSpellStore.LookupEntry(GetUInt32Value(UNIT_CREATED_BY_SPELL));
+            if (spellInfo && spellInfo->Attributes & SPELL_ATTR_DISABLED_WHILE_ACTIVE)
+                p_owner->SendCooldownEvent(spellInfo);
+            // Raise Dead hack
+            if (spellInfo->SpellFamilyName == SPELLFAMILY_DEATHKNIGHT && spellInfo->SpellFamilyFlags & 0x1000)
+                if (spellInfo = sSpellStore.LookupEntry(46584))
+                    p_owner->SendCooldownEvent(spellInfo);
         }
     }
     else if(getDeathState()==ALIVE)
@@ -1154,8 +1172,8 @@ void Pet::_SaveSpells()
 void Pet::_LoadAuras(uint32 timediff)
 {
     RemoveAllAuras();
-
-    QueryResult *result = CharacterDatabase.PQuery("SELECT caster_guid,spell,stackcount,remaincharges,basepoints0,basepoints1,basepoints2,maxduration0,maxduration1,maxduration2,remaintime0,remaintime1,remaintime2,effIndexMask FROM pet_aura WHERE guid = '%u'",m_charmInfo->GetPetNumber());
+    
+    QueryResult *result = CharacterDatabase.PQuery("SELECT caster_guid,item_guid,spell,stackcount,remaincharges,basepoints0,basepoints1,basepoints2,maxduration0,maxduration1,maxduration2,remaintime0,remaintime1,remaintime2,effIndexMask FROM pet_aura WHERE guid = '%u'",m_charmInfo->GetPetNumber());
 
     if(result)
     {
@@ -1163,19 +1181,20 @@ void Pet::_LoadAuras(uint32 timediff)
         {
             Field *fields = result->Fetch();
             uint64 caster_guid = fields[0].GetUInt64();
-            uint32 spellid = fields[1].GetUInt32();
-            uint32 stackcount= fields[2].GetUInt32();
-            int32 remaincharges = (int32)fields[3].GetUInt32();
+            uint32 item_lowguid = fields[1].GetUInt32();
+            uint32 spellid = fields[2].GetUInt32();
+            uint32 stackcount= fields[3].GetUInt32();
+            int32 remaincharges = (int32)fields[4].GetUInt32();
             int32 damage[MAX_EFFECT_INDEX];
             int32 maxduration[MAX_EFFECT_INDEX];
             int32 remaintime[MAX_EFFECT_INDEX];
             for (int32 i = 0; i < MAX_EFFECT_INDEX; ++i)
             {
-                damage[i]  = (int32)fields[i+4].GetUInt32();
-                maxduration[i] = (int32)fields[i+7].GetUInt32();
-                remaintime[i] = (int32)fields[i+10].GetUInt32();
+                damage[i]  = (int32)fields[i+5].GetUInt32();
+                maxduration[i] = (int32)fields[i+8].GetUInt32();
+                remaintime[i] = (int32)fields[i+11].GetUInt32();
             }
-            uint32 effIndexMask = (int32)fields[13].GetUInt32();
+            uint32 effIndexMask = (int32)fields[14].GetUInt32();
 
             SpellEntry const* spellproto = sSpellStore.LookupEntry(spellid);
             if(!spellproto)
@@ -1224,7 +1243,7 @@ void Pet::_LoadAuras(uint32 timediff)
 
             if (!holder->IsEmptyHolder())
             {
-                holder->SetLoadedState(caster_guid, stackcount, remaincharges);
+                holder->SetLoadedState(caster_guid, item_lowguid ? MAKE_NEW_GUID(item_lowguid, 0, HIGHGUID_ITEM) : 0, stackcount, remaincharges);
                 AddSpellAuraHolder(holder);
             }
             else
@@ -1293,7 +1312,13 @@ void Pet::_SaveAuras()
             if (!effIndexMask)
                 continue;
 
-            CharacterDatabase.PExecute("INSERT INTO pet_aura (guid, caster_guid, spell, stackcount, remaincharges, basepoints0, basepoints1, basepoints2, maxduration0, maxduration1, maxduration2, remaintime0, remaintime1, remaintime2, effIndexMask) VALUES ('%u', '" UI64FMTD "', '%u', '%u', '%u', '%d', '%d', '%d', '%d', '%d', '%d', '%d', '%d', '%d', '%u')", m_charmInfo->GetPetNumber(), holder->GetCasterGUID(), holder->GetId(), holder->GetStackAmount(), holder->GetAuraCharges(), damage[EFFECT_INDEX_0], damage[EFFECT_INDEX_1], damage[EFFECT_INDEX_2], maxduration[EFFECT_INDEX_0], maxduration[EFFECT_INDEX_1], maxduration[EFFECT_INDEX_2], remaintime[EFFECT_INDEX_0], remaintime[EFFECT_INDEX_1], remaintime[EFFECT_INDEX_2], effIndexMask);
+            CharacterDatabase.PExecute("INSERT INTO pet_aura (guid, caster_guid, item_guid, spell, stackcount, remaincharges, basepoints0, basepoints1, basepoints2, maxduration0, maxduration1, maxduration2, remaintime0, remaintime1, remaintime2, effIndexMask) VALUES "
+                "('%u', '" UI64FMTD "', '%u', '%u', '%u', '%u', '%d', '%d', '%d', '%d', '%d', '%d', '%d', '%d', '%d', '%u')",
+                m_charmInfo->GetPetNumber(), holder->GetCasterGUID(), GUID_LOPART(holder->GetCastItemGUID()), holder->GetId(), holder->GetStackAmount(), holder->GetAuraCharges(),
+                damage[EFFECT_INDEX_0], damage[EFFECT_INDEX_1], damage[EFFECT_INDEX_2],
+                maxduration[EFFECT_INDEX_0], maxduration[EFFECT_INDEX_1], maxduration[EFFECT_INDEX_2],
+                remaintime[EFFECT_INDEX_0], remaintime[EFFECT_INDEX_1], remaintime[EFFECT_INDEX_2],
+                effIndexMask);
         }
     }
 }
@@ -1929,13 +1954,37 @@ void Pet::CastPetAura(PetAura const* aura)
     if(!auraId)
         return;
 
-    if(auraId == 35696)                                       // Demonic Knowledge
+    switch (auraId)
     {
-        int32 basePoints = int32(aura->GetDamage() * (GetStat(STAT_STAMINA) + GetStat(STAT_INTELLECT)) / 100);
-        CastCustomSpell(this, auraId, &basePoints, NULL, NULL, true);
+        case 35696: // Demonic Knowledge
+        {
+            int32 basePoints = int32(aura->GetDamage() * (GetStat(STAT_STAMINA) + GetStat(STAT_INTELLECT)) / 100);
+            CastCustomSpell(this, auraId, &basePoints, NULL, NULL, true);
+            break;
+        }
+        case 54566: // Ravenous Dead
+        {
+            Unit* owner = GetOwner();
+            if (owner)
+            {
+                // We must give x% bonus to base bonus from owner's stamina to ghoul stamina
+                int32 basePoints0 =
+                    int32(owner->GetStat(STAT_STAMINA)*0.3f*(aura->GetDamage()+100.0f)/100.0f
+                    - (GetStat(STAT_STAMINA)-GetCreateStat(STAT_STAMINA)));
+                // We must give x% bonus to base bonus from owner's strength to ghoul strength
+                int32 basePoints1 =
+                    int32(owner->GetStat(STAT_STRENGTH)*0.3f*(aura->GetDamage()+100.0f)/100.0f
+                    - (GetStat(STAT_STRENGTH)-GetCreateStat(STAT_STRENGTH)));
+                CastCustomSpell(this, auraId, &basePoints0, &basePoints1, NULL, true);
+            }
+            break;
+        }
+        default:
+        {
+            CastSpell(this, auraId, true);
+            break;
+        }
     }
-    else
-        CastSpell(this, auraId, true);
 }
 
 struct DoPetLearnSpell

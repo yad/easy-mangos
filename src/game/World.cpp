@@ -449,8 +449,9 @@ void World::LoadConfigSettings(bool reload)
     setConfig(CONFIG_FLOAT_RATE_POWER_RAGE_INCOME, "Rate.Rage.Income", 1.0f);
     setConfigPos(CONFIG_FLOAT_RATE_POWER_RAGE_LOSS, "Rate.Rage.Loss", 1.0f);
     setConfig(CONFIG_FLOAT_RATE_POWER_RUNICPOWER_INCOME, "Rate.RunicPower.Income", 1.0f);
-    setConfigPos(CONFIG_FLOAT_RATE_POWER_RUNICPOWER_LOSS,   "Rate.RunicPower.Loss",   1.0f);
-    setConfig(CONFIG_FLOAT_RATE_POWER_FOCUS,          "Rate.Focus", 1.0f);
+    setConfigPos(CONFIG_FLOAT_RATE_POWER_RUNICPOWER_LOSS,"Rate.RunicPower.Loss",   1.0f);
+    setConfig(CONFIG_FLOAT_RATE_POWER_FOCUS,             "Rate.Focus",  1.0f);
+    setConfig(CONFIG_FLOAT_RATE_POWER_ENERGY,            "Rate.Energy", 1.0f);
     setConfigPos(CONFIG_FLOAT_RATE_SKILL_DISCOVERY,      "Rate.Skill.Discovery",      1.0f);
     setConfigPos(CONFIG_FLOAT_RATE_DROP_ITEM_POOR,       "Rate.Drop.Item.Poor",       1.0f);
     setConfigPos(CONFIG_FLOAT_RATE_DROP_ITEM_NORMAL,     "Rate.Drop.Item.Normal",     1.0f);
@@ -1713,15 +1714,14 @@ void World::KickAllLess(AccountTypes sec)
             itr->second->KickPlayer();
 }
 
-/// Ban an account or ban an IP address, duration will be parsed using TimeStringToSecs if it is positive, otherwise permban
-BanReturn World::BanAccount(BanMode mode, std::string nameOrIP, std::string duration, std::string reason, std::string author)
+/// Ban an account or ban an IP address, duration_secs if it is positive used, otherwise permban
+BanReturn World::BanAccount(BanMode mode, std::string nameOrIP, uint32 duration_secs, std::string reason, std::string author)
 {
     LoginDatabase.escape_string(nameOrIP);
     LoginDatabase.escape_string(reason);
     std::string safe_author=author;
     LoginDatabase.escape_string(safe_author);
 
-    uint32 duration_secs = TimeStringToSecs(duration);
     QueryResult *resultAccounts = NULL;                     //used for kicking
 
     ///- Update the database with ban information

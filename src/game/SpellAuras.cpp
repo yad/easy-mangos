@@ -1949,6 +1949,23 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                         m_modifier.periodictime = 30*IN_MILLISECONDS;
                         m_periodicTimer = m_modifier.periodictime;
                         return;
+                    case 10255:                             // Stoned
+                    {
+                        if (Unit* caster = GetCaster())
+                        {
+                            if (caster->GetTypeId() != TYPEID_UNIT)
+                                return;
+
+                            caster->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+                            caster->addUnitState(UNIT_STAT_ROOT);
+                        }
+                        return;
+                    }
+                    case 13139:                             // net-o-matic
+                        // root to self part of (root_target->charge->root_self sequence
+                        if (Unit* caster = GetCaster())
+                            caster->CastSpell(caster, 13138, true, NULL, this);
+                        return;
                     case 31606:                             // Stormcrow Amulet
                     {
                         CreatureInfo const * cInfo = ObjectMgr::GetCreatureTemplate(17970);
@@ -1959,11 +1976,6 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
 
                         return;
                     }
-                    case 13139:                             // net-o-matic
-                        // root to self part of (root_target->charge->root_self sequence
-                        if (Unit* caster = GetCaster())
-                            caster->CastSpell(caster, 13138, true, NULL, this);
-                        return;
                     case 32045:                             // Soul Charge
                     case 32051:
                     case 32052:
@@ -2161,6 +2173,18 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
 
         switch(GetId())
         {
+            case 10255:                                     // Stoned
+            {
+                if (Unit* caster = GetCaster())
+                {
+                    if (caster->GetTypeId() != TYPEID_UNIT)
+                        return;
+
+                    // see dummy effect of spell 10254 for removal of flags etc
+                    caster->CastSpell(caster, 10254, true);
+                }
+                return;
+            }
             case 12479:                                     // Hex of Jammal'an
                 target->CastSpell(target, 12480, true, NULL, this);
                 return;
@@ -5988,11 +6012,27 @@ void Aura::HandleShapeshiftBoosts(bool apply)
                 if (itr->second.state == PLAYERSPELL_REMOVED) continue;
                 if (itr->first==spellId1 || itr->first==spellId2) continue;
                 SpellEntry const *spellInfo = sSpellStore.LookupEntry(itr->first);
-                if (!spellInfo || !(spellInfo->Attributes & (SPELL_ATTR_PASSIVE | (1<<7))))
+                if (!spellInfo || !(spellInfo->Attributes & (SPELL_ATTR_PASSIVE | SPELL_ATTR_UNK7)))
                     continue;
-                if (spellInfo->Stances & (1<<(form-1)))
+                // passive spells with SPELL_ATTR_EX2_NOT_NEED_SHAPESHIFT are already active without shapeshift, do no recast!
+                if (spellInfo->Stances & (1<<(form-1)) && !(spellInfo->AttributesEx2 & SPELL_ATTR_EX2_NOT_NEED_SHAPESHIFT))
                     target->CastSpell(target, itr->first, true, NULL, this);
             }
+            // remove auras that do not require shapeshift, but are not active in this specific form (like Improved Barkskin)
+            Unit::SpellAuraHolderMap& tAuras = target->GetSpellAuraHolderMap();
+            for (Unit::SpellAuraHolderMap::iterator itr = tAuras.begin(); itr != tAuras.end();)
+            {
+                SpellEntry const *spellInfo = itr->second->GetSpellProto();
+                if (itr->second->IsPassive() && (spellInfo->AttributesEx2 & SPELL_ATTR_EX2_NOT_NEED_SHAPESHIFT)
+                    && (spellInfo->StancesNot & (1<<(form-1))))
+                {
+                    target->RemoveAurasDueToSpell(itr->second->GetId());
+                    itr = tAuras.begin();
+                }
+                else
+                    ++itr;
+            }
+
 
             // Master Shapeshifter
             if (MasterShaperSpellId)
@@ -6074,6 +6114,19 @@ void Aura::HandleShapeshiftBoosts(bool apply)
             target->RemoveAurasDueToSpell(spellId2);
         if(MasterShaperSpellId)
             target->RemoveAurasDueToSpell(MasterShaperSpellId);
+
+        // re-apply passive spells that don't need shapeshift but were inactive in current form:
+        const PlayerSpellMap& sp_list = ((Player *)target)->GetSpellMap();
+        for (PlayerSpellMap::const_iterator itr = sp_list.begin(); itr != sp_list.end(); ++itr)
+        {
+            if (itr->second.state == PLAYERSPELL_REMOVED) continue;
+            if (itr->first==spellId1 || itr->first==spellId2) continue;
+            SpellEntry const *spellInfo = sSpellStore.LookupEntry(itr->first);
+            if (!spellInfo || !IsPassiveSpell(spellInfo))
+                continue;
+            if ((spellInfo->AttributesEx2 & SPELL_ATTR_EX2_NOT_NEED_SHAPESHIFT) && spellInfo->StancesNot & (1<<(form-1)))
+                target->CastSpell(target, itr->first, true, NULL, this);
+        }
 
         Unit::SpellAuraHolderMap& tAuras = target->GetSpellAuraHolderMap();
         for (Unit::SpellAuraHolderMap::iterator itr = tAuras.begin(); itr != tAuras.end();)
@@ -7928,12 +7981,9 @@ void SpellAuraHolder::RemoveAura(SpellEffectIndex index)
 
 void SpellAuraHolder::ApplyAuraModifiers(bool apply, bool real)
 {
-    for (int32 i = 0; i < MAX_EFFECT_INDEX; ++i)
-    {
-        Aura *aur = GetAuraByEffectIndex(SpellEffectIndex(i));
-        if (aur)
+    for (int32 i = 0; i < MAX_EFFECT_INDEX && !IsDeleted(); ++i)
+        if (Aura *aur = GetAuraByEffectIndex(SpellEffectIndex(i)))
             aur->ApplyModifier(apply, real);
-    }
 }
 
 void SpellAuraHolder::_AddSpellAuraHolder()
@@ -8264,6 +8314,10 @@ Unit* SpellAuraHolder::GetCaster() const
 
 bool SpellAuraHolder::IsWeaponBuffCoexistableWith(SpellAuraHolder* ref)
 {
+    // only item casted spells
+    if (!GetCastItemGUID())
+        return false;
+
     // Exclude Debuffs
     if (!IsPositive())
         return false;
@@ -8290,7 +8344,7 @@ bool SpellAuraHolder::IsWeaponBuffCoexistableWith(SpellAuraHolder* ref)
         return false;
 
     // form different weapons
-    return ref->GetCastItemGUID() != GetCastItemGUID();
+    return ref->GetCastItemGUID() && ref->GetCastItemGUID() != GetCastItemGUID();
 }
 
 bool SpellAuraHolder::IsNeedVisibleSlot(Unit const* caster) const

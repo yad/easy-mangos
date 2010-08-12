@@ -536,6 +536,23 @@ void Unit::RemoveSpellbyDamageTaken(AuraType auraType, uint32 damage)
 
     // The chance to dispel an aura depends on the damage taken with respect to the casters level.
     uint32 max_dmg = getLevel() > 8 ? 25 * getLevel() - 150 : 50;
+
+    AuraList const& typeAuras = GetAurasByType(auraType);
+    for (AuraList::const_iterator iter = typeAuras.begin(); iter != typeAuras.end(); ++iter)
+    {
+        Unit *caster = (*iter)->GetCaster();
+
+        if (!caster)
+            continue;
+
+        AuraList const& mOverrideClassScript = caster->GetAurasByType(SPELL_AURA_OVERRIDE_CLASS_SCRIPTS);
+        for(AuraList::const_iterator i = mOverrideClassScript.begin(); i != mOverrideClassScript.end(); ++i)
+        {
+            if ((*i)->GetModifier()->m_miscvalue == 7801 && (*i)->isAffectedOnSpell((*iter)->GetSpellProto()))
+                max_dmg += (*i)->GetModifier()->m_amount * max_dmg / 100;
+        }
+    }
+
     float chance = float(damage) / max_dmg * 100.0f;
     if (roll_chance_f(chance))
         RemoveSpellsCausingAura(auraType);
@@ -583,6 +600,13 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
     if(pVictim != this)
         pVictim->RemoveSpellsCausingAura(SPELL_AURA_MOD_STEALTH);
 
+    // Divine Storm heal hack
+    if ( spellProto && spellProto->Id == 53385 )
+    {
+        int32 divineDmg = damage * (25 + (HasAura(63220) ? 15 : 0)) / 100; //25%, if has Glyph of Divine Storm -> 40%
+        CastCustomSpell(this, 54171, &divineDmg, NULL, NULL, true);
+    }
+
     // remove affects from attacker at any non-DoT damage (including 0 damage)
     if( damagetype != DOT)
     {
@@ -594,6 +618,16 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
 
         if(pVictim->GetTypeId() == TYPEID_PLAYER && !pVictim->IsStandState() && !pVictim->hasUnitState(UNIT_STAT_STUNNED))
             pVictim->SetStandState(UNIT_STAND_STATE_STAND);
+    }
+
+    // Blessed Life talent of Paladin
+    if( pVictim->GetTypeId() == TYPEID_PLAYER )
+    {
+        Unit::AuraList const& BlessedLife = pVictim->GetAurasByType(SPELL_AURA_PROC_TRIGGER_SPELL);
+        for(Unit::AuraList::const_iterator i = BlessedLife.begin(); i != BlessedLife.end(); ++i)
+            if((*i)->GetSpellProto()->SpellFamilyName == SPELLFAMILY_PALADIN && (*i)->GetSpellProto()->SpellIconID == 2137)
+                if( urand(0,100) < (*i)->GetSpellProto()->procChance )
+                    damage *= 0.5;
     }
 
     if(!damage)
@@ -4035,7 +4069,7 @@ bool Unit::AddSpellAuraHolder(SpellAuraHolder *holder)
 
             bool stop = false;
 
-            for (int32 i = 0; i < MAX_EFFECT_INDEX; ++i)
+            for (int32 i = 0; i < MAX_EFFECT_INDEX && !stop; ++i)
             {
                 // no need to check non stacking auras that weren't/won't be applied on this target
                 if (!foundHolder->m_auras[i] || !holder->m_auras[i])
@@ -4715,7 +4749,10 @@ void Unit::RemoveSpellAuraHolder(SpellAuraHolder *holder, AuraRemoveMode mode)
     // If holder in use (removed from code that plan access to it data after return)
     // store it in holder list with delayed deletion
     if (holder->IsInUse())
+    {
+        holder->SetDeleted();
         m_deletedHolders.push_back(holder);
+    }
     else
         delete holder;
 
@@ -5931,7 +5968,13 @@ void Unit::SetPet(Pet* pet)
     SetPetGUID(pet ? pet->GetGUID() : 0);
 
     if(pet && GetTypeId() == TYPEID_PLAYER)
+    {
         ((Player*)this)->SendPetGUIDs();
+        // set infinite cooldown for summon spell
+        SpellEntry const *spellInfo = sSpellStore.LookupEntry(pet->GetUInt32Value(UNIT_CREATED_BY_SPELL));
+        if (spellInfo && spellInfo->Attributes & SPELL_ATTR_DISABLED_WHILE_ACTIVE)
+            ((Player*)this)->AddSpellAndCategoryCooldowns(spellInfo, 0, NULL,true);
+    }
 }
 
 void Unit::SetCharm(Unit* pet)
@@ -5947,6 +5990,13 @@ void Unit::AddGuardian( Pet* pet )
 void Unit::RemoveGuardian( Pet* pet )
 {
     m_guardianPets.erase(pet->GetGUID());
+
+    if(GetTypeId() == TYPEID_PLAYER)
+    {
+        SpellEntry const *spellInfo = sSpellStore.LookupEntry(pet->GetUInt32Value(UNIT_CREATED_BY_SPELL));
+        if (spellInfo && spellInfo->Attributes & SPELL_ATTR_DISABLED_WHILE_ACTIVE)
+            ((Player*)this)->AddSpellAndCategoryCooldowns(spellInfo, 0, NULL,true);
+    }
 }
 
 void Unit::RemoveGuardians()
@@ -6498,6 +6548,11 @@ uint32 Unit::SpellDamageBonusTaken(Unit *pCaster, SpellEntry const *spellProto, 
     {
         if ((*i)->GetModifier()->m_miscvalue & GetSpellSchoolMask(spellProto))
             TakenTotalMod *= ((*i)->GetModifier()->m_amount + 100.0f) / 100.0f;
+
+        // Glyph of Salvation
+        if ((*i)->GetId() == 1038 && (*i)->GetCasterGUID() == GetGUID())
+            if (Aura *dummy = GetDummyAura(63225))
+                TakenTotalMod *= (-(dummy->GetModifier()->m_amount) + 100.0f) / 100.0f;
     }
 
     // .. taken pct: dummy auras
@@ -7462,6 +7517,16 @@ uint32 Unit::MeleeDamageBonusTaken(Unit *pCaster, uint32 pdamage,WeaponAttackTyp
     if(spellProto && IsAreaOfEffectSpell(spellProto))
         TakenPercent *= GetTotalAuraMultiplier(SPELL_AURA_MOD_AOE_DAMAGE_AVOIDANCE);
 
+    // ..taken (SPELL_AURA_MOD_DAMAGE_PERCENT_TAKEN)
+    AuraList const& mModDamagePercentTaken = GetAurasByType(SPELL_AURA_MOD_DAMAGE_PERCENT_TAKEN);
+    for(AuraList::const_iterator i = mModDamagePercentTaken.begin(); i != mModDamagePercentTaken.end(); ++i)
+    {
+        // Glyph of Salvation
+        if ((*i)->GetId() == 1038 && (*i)->GetCasterGUID() == GetGUID())
+            if (Aura *dummy = GetDummyAura(63225))
+                TakenPercent *= (-(dummy->GetModifier()->m_amount) + 100.0f) / 100.0f;
+    }
+
 
     // special dummys/class scripts and other effects
     // =============================================
@@ -7659,6 +7724,12 @@ void Unit::SetInCombatState(bool PvP, Unit* enemy)
 
     if (isCharmed() || (GetTypeId()!=TYPEID_PLAYER && ((Creature*)this)->isPet()))
         SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PET_IN_COMBAT);
+
+    // interrupt all delayed non-combat casts
+    for (uint32 i = CURRENT_FIRST_NON_MELEE_SPELL; i < CURRENT_MAX_SPELL; ++i)
+        if (Spell* spell = GetCurrentSpell(CurrentSpellTypes(i)))
+            if (IsNonCombatSpell(spell->m_spellInfo))
+                InterruptSpell(CurrentSpellTypes(i),false);
 
     if (creatureNotInCombat)
     {
@@ -8423,6 +8494,7 @@ void Unit::setDeathState(DeathState s)
     if (m_deathState != ALIVE && s == ALIVE)
     {
         //_ApplyAllAuraMods();
+        SetDisplayId(GetNativeDisplayId());
     }
     m_deathState = s;
 }

@@ -451,7 +451,7 @@ WorldObject* Spell::FindCorpseUsing()
 
     WorldObject* result = NULL;
 
-    T u_check(m_caster, max_range);
+    T u_check(((Player*)m_caster), max_range);
     MaNGOS::WorldObjectSearcher<T> searcher(m_caster, result, u_check);
 
     Cell::VisitGridObjects(m_caster, searcher, max_range);
@@ -460,6 +460,77 @@ WorldObject* Spell::FindCorpseUsing()
         Cell::VisitWorldObjects(m_caster, searcher, max_range);
 
     return result;
+}
+
+void Spell::FillCustomTargetMap(SpellEffectIndex eff_idx, UnitList &targetUnitMap)
+{
+    float radius;
+    if (m_spellInfo->EffectRadiusIndex[eff_idx])
+        radius = GetSpellRadius(sSpellRadiusStore.LookupEntry(m_spellInfo->EffectRadiusIndex[eff_idx]));
+    else
+        radius = GetSpellMaxRange(sSpellRangeStore.LookupEntry(m_spellInfo->rangeIndex));
+    // Resulting effect depends on spell that we want to cast
+
+    switch (m_spellInfo->SpellIconID)
+    {
+        case 1737: //Corpse Explosion 
+        {
+            // if not our ghoul AND
+            if (!(m_targets.getUnitTarget()->GetEntry() == 26125 && m_targets.getUnitTarget()->GetOwnerGUID() == m_caster->GetGUID()) &&
+            // alive target or not suitable corpse
+            ( ((Creature*)m_targets.getUnitTarget())->isDeadByDefault() ||
+            (m_targets.getUnitTarget()->getDeathState() != CORPSE && m_targets.getUnitTarget()->getDeathState() != GHOULED) ||
+            (m_targets.getUnitTarget()->GetCreatureTypeMask() & CREATURE_TYPEMASK_MECHANICAL_OR_ELEMENTAL)!=0 ||
+            (m_targets.getUnitTarget()->GetDisplayId() != m_targets.getUnitTarget()->GetNativeDisplayId()) ))
+            {
+                 targetUnitMap.clear();
+                 CleanupTargetList();
+
+                 WorldObject* result = FindCorpseUsing <MaNGOS::ExplodeCorpseObjectCheck> ();
+                 if(result)
+                 {
+                     targetUnitMap.push_back((Unit*)result);
+                     break;
+                 }
+                 else
+                 {
+                     if (m_caster->GetTypeId()==TYPEID_PLAYER)
+                         ((Player*)m_caster)->RemoveSpellCooldown(m_spellInfo->Id,true);
+                     SendCastResult(SPELL_FAILED_CANT_DO_THAT_RIGHT_NOW);
+                     finish(false);
+                 }
+            }
+            break;
+        }
+        break;
+    }
+
+    switch (m_spellInfo->Id)
+    {
+        case 46584: // Raise Dead
+        {
+            WorldObject* result = FindCorpseUsing <MaNGOS::RaiseDeadObjectCheck> ();
+
+            if(result)
+            {
+                switch(result->GetTypeId())
+                {
+                    case TYPEID_UNIT:
+                        targetUnitMap.push_back((Unit*)result);
+                        break;
+                    default:
+                        break;
+                }
+            }
+            break;
+        }
+        case 47496: // Ghoul's explode
+        {
+                FillAreaTargets(targetUnitMap,m_targets.m_destX, m_targets.m_destY,radius,PUSH_DEST_CENTER,SPELL_TARGETS_AOE_DAMAGE);
+                break;
+        }
+        break;
+    }
 }
 
 void Spell::FillTargetMap()
@@ -526,6 +597,11 @@ void Spell::FillTargetMap()
                 }
                 break;
             case TARGET_EFFECT_SELECT:
+                if (m_spellInfo->Id == 46584 || m_spellInfo->Id == 47496)
+                {
+                    FillCustomTargetMap(SpellEffectIndex(i) ,tmpUnitMap);
+                    break;
+                }
                 switch(m_spellInfo->EffectImplicitTargetB[i])
                 {
                     case 0:
@@ -1593,8 +1669,10 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 // caster included here?
                 FillAreaTargets(targetUnitMap, dest_x, dest_y, radius, PUSH_DEST_CENTER, SPELL_TARGETS_AOE_DAMAGE);
             }
-            else
-                targetUnitMap.push_back(m_caster);
+            else if (IsPositiveSpell(m_spellInfo->Id))
+                    targetUnitMap.push_back(m_caster);
+            // This targetMode is often used as 'last' implicitTarget for positive spells, that just require coordinates
+            // and no unitTarget (e.g. summon effects). As MaNGOS always needs a unitTarget we add just the caster here.
 
             break;
         }
@@ -1825,6 +1903,11 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 targetUnitMap.push_back(m_caster);
                 break;
             }
+            else if ((m_spellInfo->SpellIconID == 1737) && (m_spellInfo->SpellFamilyName == SPELLFAMILY_DEATHKNIGHT))
+            {
+                 FillCustomTargetMap(SpellEffectIndex(effIndex) ,targetUnitMap);
+                 break;
+            }
 
             UnitList tempTargetUnitMap;
             SpellScriptTargetBounds bounds = sSpellMgr.GetSpellScriptTargetBounds(m_spellInfo->Id);
@@ -1950,17 +2033,20 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
         case TARGET_ALL_FRIENDLY_UNITS_AROUND_CASTER:
             switch (m_spellInfo->Id)
             {
+                case 54171:                                     // Divine Storm
+                    FillRaidOrPartyHealthPriorityTargets(targetUnitMap, m_caster, m_caster, radius, 3, true, false, true);
+                    break;
                 case 56153:                                 // Guardian Aura - Ahn'Kahet
                     FillAreaTargets(targetUnitMap, m_targets.m_destX, m_targets.m_destY, radius, PUSH_SELF_CENTER, SPELL_TARGETS_FRIENDLY);
                     targetUnitMap.remove(m_caster);
                     break;
                 case 64844:                                 // Divine Hymn
                     // target amount stored in parent spell dummy effect but hard to access
-                    FillRaidOrPartyHealthPriorityTargets(targetUnitMap, m_caster, m_caster, radius, 3, true, false, false);
+                    FillRaidOrPartyHealthPriorityTargets(targetUnitMap, m_caster, m_caster, radius, 3, true, false, true);
                     break;
                 case 64904:                                 // Hymn of Hope
                     // target amount stored in parent spell dummy effect but hard to access
-                    FillRaidOrPartyManaPriorityTargets(targetUnitMap, m_caster, m_caster, radius, 3, true, false, false);
+                    FillRaidOrPartyManaPriorityTargets(targetUnitMap, m_caster, m_caster, radius, 3, true, false, true);
                     break;
                 default:
                     // selected friendly units (for casting objects) around casting object
@@ -3466,6 +3552,11 @@ void Spell::SendCastResult(Player* caster, SpellEntry const* spellInfo, uint8 ca
                     break;
             }
             break;
+        case SPELL_FAILED_REAGENTS:
+            // normally client checks reagents, just some script effects here
+            if(spellInfo->Id == 46584)                      // Raise Dead
+                data << uint32(37201);                      // Corpse Dust
+            break;
         case SPELL_FAILED_TOTEMS:
             for(int i = 0; i < MAX_SPELL_TOTEMS; ++i)
                 if(spellInfo->Totem[i])
@@ -4295,15 +4386,18 @@ SpellCastResult Spell::CheckCast(bool strict)
     }
 
     // only allow triggered spells if at an ended battleground
-    if( !m_IsTriggeredSpell && m_caster->GetTypeId() == TYPEID_PLAYER)
+    if (!m_IsTriggeredSpell && m_caster->GetTypeId() == TYPEID_PLAYER)
         if(BattleGround * bg = ((Player*)m_caster)->GetBattleGround())
             if(bg->GetStatus() == STATUS_WAIT_LEAVE)
                 return SPELL_FAILED_DONT_REPORT;
 
-    if(m_caster->GetTypeId() == TYPEID_PLAYER && !((Player*)m_caster)->isGameMaster() &&
-            VMAP::VMapFactory::createOrGetVMapManager()->isLineOfSightCalcEnabled())
+    if (m_caster->isInCombat() && IsNonCombatSpell(m_spellInfo))
+        return m_triggeredByAuraSpell ? SPELL_FAILED_DONT_REPORT : SPELL_FAILED_AFFECTING_COMBAT;
+
+    if (m_caster->GetTypeId() == TYPEID_PLAYER && !((Player*)m_caster)->isGameMaster() &&
+        VMAP::VMapFactory::createOrGetVMapManager()->isLineOfSightCalcEnabled())
     {
-        if(m_spellInfo->Attributes & SPELL_ATTR_OUTDOORS_ONLY &&
+        if (m_spellInfo->Attributes & SPELL_ATTR_OUTDOORS_ONLY &&
                 !m_caster->GetMap()->IsOutdoors(m_caster->GetPositionX(), m_caster->GetPositionY(), m_caster->GetPositionZ()))
             return SPELL_FAILED_ONLY_OUTDOORS;
 
@@ -4655,6 +4749,7 @@ SpellCastResult Spell::CheckCast(bool strict)
                 SpellRangeEntry const* srange = sSpellRangeStore.LookupEntry(m_spellInfo->rangeIndex);
                 float range = GetSpellMaxRange(srange);
 
+                Creature* targetExplicit = NULL;            // used for cases where a target is provided (by script for example)
                 Creature* creatureScriptTarget = NULL;
                 GameObject* goScriptTarget = NULL;
 
@@ -4705,19 +4800,21 @@ SpellCastResult Spell::CheckCast(bool strict)
                                 {
                                     if (i_spellST->second.type == SPELL_TARGET_TYPE_DEAD && pTarget->isDead())
                                     {
-                                        if (pTarget->IsWithinDistInMap(m_caster, range))
-                                            p_Creature = (Creature*)pTarget;
+                                        // always use spellMaxRange, in case GetLastRange returned different in a previous pass
+                                        if (pTarget->IsWithinDistInMap(m_caster, GetSpellMaxRange(srange)))
+                                            targetExplicit = (Creature*)pTarget;
                                     }
                                     else if (i_spellST->second.type == SPELL_TARGET_TYPE_CREATURE && pTarget->isAlive())
                                     {
-                                        if (pTarget->IsWithinDistInMap(m_caster, range))
-                                            p_Creature = (Creature*)pTarget;
+                                        // always use spellMaxRange, in case GetLastRange returned different in a previous pass
+                                        if (pTarget->IsWithinDistInMap(m_caster, GetSpellMaxRange(srange)))
+                                            targetExplicit = (Creature*)pTarget;
                                     }
                                 }
                             }
 
                             // no target provided or it was not valid, so use closest in range
-                            if (!p_Creature)
+                            if (!targetExplicit)
                             {
                                 MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck u_check(*m_caster, i_spellST->second.targetEntry, i_spellST->second.type != SPELL_TARGET_TYPE_DEAD, range);
                                 MaNGOS::CreatureLastSearcher<MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck> searcher(m_caster, p_Creature, u_check);
@@ -4728,11 +4825,14 @@ SpellCastResult Spell::CheckCast(bool strict)
                                 range = u_check.GetLastRange();
                             }
 
-                            if (p_Creature)
-                            {
+                            // always prefer provided target if it's valid
+                            if (targetExplicit)
+                                creatureScriptTarget = targetExplicit;
+                            else if (p_Creature)
                                 creatureScriptTarget = p_Creature;
+
+                            if (creatureScriptTarget)
                                 goScriptTarget = NULL;
-                            }
 
                             break;
                         }
@@ -5006,7 +5106,7 @@ SpellCastResult Spell::CheckCast(bool strict)
                 if(!pet->GetCurrentFoodBenefitLevel(foodItem->GetProto()->ItemLevel))
                     return SPELL_FAILED_FOOD_LOWLEVEL;
 
-                if(m_caster->isInCombat() || pet->isInCombat())
+                if(pet->isInCombat())
                     return SPELL_FAILED_AFFECTING_COMBAT;
 
                 break;
@@ -5839,6 +5939,8 @@ SpellCastResult Spell::CheckItems()
         return SPELL_CAST_OK;
 
     Player* p_caster = (Player*)m_caster;
+    bool isScrollItem = false;
+    bool isVellumTarget = false;
 
     if ((sWorld.getConfig(CONFIG_BOOL_ALLOW_FLYING_MOUNTS_EVERYWHERE)) && (m_spellInfo->Id==55884))
     {
@@ -5864,10 +5966,19 @@ SpellCastResult Spell::CheckItems()
         if(!proto)
             return SPELL_FAILED_ITEM_NOT_FOUND;
 
+        if(proto->Flags & ITEM_FLAGS_ENCHANT_SCROLL) isScrollItem = true;
+
         for (int i = 0; i < 5; ++i)
             if (proto->Spells[i].SpellCharges)
                 if(m_CastItem->GetSpellCharges(i) == 0)
                     return SPELL_FAILED_NO_CHARGES_REMAIN;
+
+        // scroll target level checks
+        if (proto->Class == ITEM_CLASS_CONSUMABLE && proto->SubClass == ITEM_SUBCLASS_SCROLL && m_targets.getUnitTarget())
+        {
+            if (proto->RequiredLevel > m_targets.getUnitTarget()->getLevel())
+            return SPELL_FAILED_LOWLEVEL;
+        }
 
         // consumable cast item checks
         if (proto->Class == ITEM_CLASS_CONSUMABLE && m_targets.getUnitTarget())
@@ -5930,8 +6041,13 @@ SpellCastResult Spell::CheckItems()
         if(!m_targets.getItemTarget())
             return SPELL_FAILED_ITEM_GONE;
 
+        isVellumTarget = m_targets.getItemTarget()->GetProto()->IsVellum();
         if(!m_targets.getItemTarget()->IsFitToSpellRequirements(m_spellInfo))
             return SPELL_FAILED_EQUIPPED_ITEM_CLASS;
+
+            // Do not enchant vellum with scroll
+        if(isVellumTarget && isScrollItem)
+            return SPELL_FAILED_BAD_TARGETS;
     }
     // if not item target then required item must be equipped
     else
@@ -6084,6 +6200,17 @@ SpellCastResult Spell::CheckItems()
 
                 if( targetItem->GetProto()->ItemLevel < m_spellInfo->baseLevel )
                     return SPELL_FAILED_LOWLEVEL;
+                // Check if we can store a new scroll, enchanting vellum has implicit SPELL_EFFECT_CREATE_ITEM
+                if(isVellumTarget && m_spellInfo->EffectItemType[i])
+                {
+                    ItemPosCountVec dest;
+                    uint8 msg = p_caster->CanStoreNewItem( NULL_BAG, NULL_SLOT, dest, m_spellInfo->EffectItemType[i], 1 );
+                    if(msg != EQUIP_ERR_OK)
+                    {
+                        p_caster->SendEquipError( msg, NULL, NULL );
+                        return SPELL_FAILED_DONT_REPORT;
+                    }
+                }
                 // Not allow enchant in trade slot for some enchant type
                 if( targetItem->GetOwner() != m_caster )
                 {
@@ -6093,6 +6220,9 @@ SpellCastResult Spell::CheckItems()
                         return SPELL_FAILED_ERROR;
                     if (pEnchant->slot & ENCHANTMENT_CAN_SOULBOUND)
                         return SPELL_FAILED_NOT_TRADEABLE;
+                    // cannot replace vellum with scroll in trade slot
+                    if (isVellumTarget)
+                        return SPELL_FAILED_BAD_TARGETS;
                 }
                 break;
             }

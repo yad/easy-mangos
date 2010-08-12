@@ -1,3 +1,3 @@
-INSERT INTO `mangos_string` VALUES (1301,'|c1f40af20 <Mod>|cffff0000[%s]|c1f40af20 announce:|cffffff00 %s|r','|c1f40af20 <Modo>|cffff0000[%s]|c1f40af20 annonce:|cffffff00 %s|r',NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO `mangos_string` VALUES (1302,'|c1f40af20 <GM>|cffff0000[%s]|c1f40af20 announce:|cffffff00 %s|r','|c1f40af20 <MJ>|cffff0000[%s]|c1f40af20 annonce:|cffffff00 %s|r',NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO `mangos_string` VALUES (1303,'|c1f40af20 <Admin>|cffff0000[%s]|c1f40af20 announce:|cffffff00 %s|r','|c1f40af20 <Admin>|cffff0000[%s]|c1f40af20 annonce:|cffffff00 %s|r',NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO `mangos_string` VALUES (1501,'|c1f40af20 <Mod>|cffff0000[%s]|c1f40af20 announce:|cffffff00 %s|r','|c1f40af20 <Modo>|cffff0000[%s]|c1f40af20 annonce:|cffffff00 %s|r',NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO `mangos_string` VALUES (1502,'|c1f40af20 <GM>|cffff0000[%s]|c1f40af20 announce:|cffffff00 %s|r','|c1f40af20 <MJ>|cffff0000[%s]|c1f40af20 annonce:|cffffff00 %s|r',NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO `mangos_string` VALUES (1503,'|c1f40af20 <Admin>|cffff0000[%s]|c1f40af20 announce:|cffffff00 %s|r','|c1f40af20 <Admin>|cffff0000[%s]|c1f40af20 annonce:|cffffff00 %s|r',NULL,NULL,NULL,NULL,NULL,NULL,NULL);
