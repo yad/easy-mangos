@@ -1583,6 +1583,22 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     m_caster->CastSpell(m_caster, 30452, true, NULL);
                     return;
                 }
+                case 51962:  //Offer Jungle Punch. For quest 12645. Don't know how do it else                               
+                {
+                    if (unitTarget->GetTypeId() != TYPEID_PLAYER)
+                        return;
+
+                    Unit *pTarget = unitTarget->GetMap()->GetUnit(((Player*)unitTarget)->GetSelection());
+                    if (pTarget && pTarget->GetTypeId() == TYPEID_UNIT)
+                    {
+                       uint32 entry = pTarget->GetEntry();
+                       if (entry != 27986 && entry != 28047 && entry != 28568) //prevent exploits
+                            SendCastResult(SPELL_FAILED_BAD_TARGETS);
+                       else
+                            ((Player*)unitTarget)->KilledMonsterCredit(entry, 0);
+                    }
+                    return;
+                }
                 case 51840:                                 // Despawn Fruit Tosser
                 {
                     if (!unitTarget || unitTarget->GetTypeId() != TYPEID_UNIT)
@@ -2205,6 +2221,9 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                         SpellEntry const *spellInfo = sSpellStore.LookupEntry(itr->first);
 
                         if (spellInfo->SpellFamilyName == SPELLFAMILY_ROGUE && (spellInfo->SpellFamilyFlags & UI64LIT(0x0000024000000860)))
+                            ((Player*)m_caster)->RemoveSpellCooldown((itr++)->first,true);
+                        // Glyph of Preparation
+                        else if (m_caster->HasAura(56819) && (spellInfo->SpellFamilyName == SPELLFAMILY_ROGUE && (spellInfo->SpellFamilyFlags & 0x40000010 || spellInfo->Id == 51722)))
                             ((Player*)m_caster)->RemoveSpellCooldown((itr++)->first,true);
                         else
                             ++itr;
@@ -4490,6 +4509,11 @@ void Spell::EffectDispel(SpellEffectIndex eff_idx)
             {
                 int32 heal_amount = m_spellInfo->CalculateSimpleValue(EFFECT_INDEX_1);
                 m_caster->CastCustomSpell(m_caster, 19658, &heal_amount, NULL, NULL, true);
+
+                // Glyph of Felhunter
+                if (Unit *owner = m_caster->GetOwner())
+                    if (owner->HasAura(56249))
+                        m_caster->CastCustomSpell(owner, 19658, &heal_amount, NULL, NULL, true);
             }
         }
         // Send fail log to client
@@ -6619,6 +6643,24 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     unitTarget->RemoveSpellsCausingAura(SPELL_AURA_MOD_DECREASE_SPEED);
                     unitTarget->RemoveSpellsCausingAura(SPELL_AURA_MOD_STALKED);
                     unitTarget->RemoveSpellsCausingAura(SPELL_AURA_MOD_STUN);
+                    return;
+                }
+                case 54846:                                 // Glyph of Starfire
+                {
+                    if (Aura * aurEff = unitTarget->GetAura(SPELL_AURA_PERIODIC_DAMAGE,SPELLFAMILY_DRUID,0x00000002,0,m_caster->GetGUID()))
+                    {
+                        uint32 countMin = aurEff->GetAuraMaxDuration();
+                        uint32 countMax = 18000;
+                        countMax += m_caster->HasAura(38414) ? 3000 : 0;
+                        countMax += m_caster->HasAura(57865) ? 3000 : 0;
+
+                        if (countMin < countMax)
+                        {
+                            aurEff->SetAuraDuration(uint32(aurEff->GetAuraDuration()+3000));
+                            aurEff->SetAuraMaxDuration(countMin+3000);
+                            aurEff->GetHolder()->SendAuraUpdate(false);
+                        }
+                    }
                     return;
                 }
                 case 55693:                                 // Remove Collapsing Cave Aura
