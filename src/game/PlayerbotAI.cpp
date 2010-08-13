@@ -2076,8 +2076,9 @@ bool PlayerbotAI::CastSpell(uint32 spellId)
 
     if (m_mgr->m_confDebugWhisper)
     {
+        uint32 loc = GetMaster()->GetSession()->GetSessionDbLocaleIndex();
         std::ostringstream out;
-        out << "Je lance : " << pSpellInfo->SpellName[2];
+        out << "Je lance : " << pSpellInfo->SpellName[loc];
         m_bot->GetPlayerbotAI()->TellMaster(out.str().c_str());
     }
     return true;
@@ -3185,7 +3186,7 @@ void PlayerbotAI::HandleCommand(const std::string& text, Player& fromPlayer)
         }
         else
         {
-            std::string msg = "What? follow, stay, (c)ast <spellname>, spells, (e)quip <itemlink>, (u)se <itemlink>, drop <questlink>, report, quests, stats";
+            std::string msg = "What? follow, stay, spells, (e)quip <itemlink>, (u)se <itemlink>, drop <questlink>, report, quests, stats";
             SendWhisper(msg, fromPlayer);
             m_bot->HandleEmoteCommand(EMOTE_ONESHOT_TALK);
         }
