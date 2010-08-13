@@ -29,47 +29,51 @@ PlayerbotRogueAI::~PlayerbotRogueAI() {}
 
 void PlayerbotRogueAI::InitSpells(PlayerbotAI* const ai)
 {
-    SINISTER_STRIKE = ai->getSpellId("sinister strike");
-    BACKSTAB = ai->getSpellId("backstab");
-    KICK = ai->getSpellId("kick");
-    FEINT = ai->getSpellId("feint");
-    FAN_OF_KNIVES = ai->getSpellId("fan of knives");
-    DEADLY_POISON = 25351;
-    CRIPPLING_POISON = 3408;
-    MIND_NUMBING_POISON = 5761;
-    GOUGE = ai->getSpellId("gouge");
-    SPRINT = ai->getSpellId("sprint");
-    SHADOWSTEP = ai->getSpellId("shadowstep");
-    STEALTH = ai->getSpellId("stealth");
-    VANISH = ai->getSpellId("vanish");
-    EVASION = ai->getSpellId("evasion");
-    CLOAK_OF_SHADOWS = ai->getSpellId("cloak of shadows");
-    HEMORRHAGE = ai->getSpellId("hemorrhage");
-    GHOSTLY_STRIKE = ai->getSpellId("ghostly strike");
-    SHADOW_DANCE = ai->getSpellId("shadow dance");
-    BLIND = ai->getSpellId("blind");
-    DISTRACT = ai->getSpellId("distract");
-    PREPARATION = ai->getSpellId("preparation");
-    PREMEDITATION = ai->getSpellId("premeditation");
-    EVISCERATE = ai->getSpellId("eviscerate");
-    KIDNEY_SHOT = ai->getSpellId("kidney shot");
-    SLICE_DICE = ai->getSpellId("slice and dice");
-    GARROTE = ai->getSpellId("garrote");
-    EXPOSE_ARMOR = ai->getSpellId("expose armor");
-    RUPTURE = ai->getSpellId("rupture");
-    DISMANTLE = ai->getSpellId("dismantle");
-    CHEAP_SHOT = ai->getSpellId("cheap shot");
-    AMBUSH = ai->getSpellId("ambush");
-    MUTILATE = ai->getSpellId("mutilate");
-    RECENTLY_BANDAGED = 11196;
-    ARCANE_TORRENT = ai->getSpellId("arcane torrent");
-    STONEFORM = ai->getSpellId("stoneform");
-    ESCAPE_ARTIST = ai->getSpellId("escape artist");
-    EVERY_MAN_FOR_HIMSELF = ai->getSpellId("every man for himself");
-    SHADOWMELD = ai->getSpellId("shadowmeld");
-    BLOOD_FURY = ai->getSpellId("blood fury");
-    BERSERKING = ai->getSpellId("berserking");
-    WILL_OF_THE_FORSAKEN = ai->getSpellId("will of the forsaken");
+    SINISTER_STRIKE          = ai->initSpell(SINISTER_STRIKE_1);
+    BACKSTAB                 = ai->initSpell(BACKSTAB_1);
+    KICK                     = ai->initSpell(KICK_1);
+    FEINT                    = ai->initSpell(FEINT_1);
+    FAN_OF_KNIVES            = ai->initSpell(FAN_OF_KNIVES_1);
+    DEADLY_POISON            = 25351; //SpellID
+    CRIPPLING_POISON         = 3408;  //SpellID
+    MIND_NUMBING_POISON      = 5761;  //SpellID
+    GOUGE                    = ai->initSpell(GOUGE_1);
+    SPRINT                   = ai->initSpell(SPRINT_1);
+
+    SHADOWSTEP               = ai->initSpell(SHADOWSTEP_1);
+    STEALTH                  = ai->initSpell(STEALTH_1);
+    VANISH                   = ai->initSpell(VANISH_1);
+    EVASION                  = ai->initSpell(EVASION_1);
+    CLOAK_OF_SHADOWS         = ai->initSpell(CLOAK_OF_SHADOWS_1);
+    HEMORRHAGE               = ai->initSpell(HEMORRHAGE_1);
+    GHOSTLY_STRIKE           = ai->initSpell(GHOSTLY_STRIKE_1);
+    SHADOW_DANCE             = ai->initSpell(SHADOW_DANCE_1);
+    BLIND                    = ai->initSpell(BLIND_1);
+    DISTRACT                 = ai->initSpell(DISTRACT_1);
+    PREPARATION              = ai->initSpell(PREPARATION_1);
+    PREMEDITATION            = ai->initSpell(PREMEDITATION_1);
+
+    EVISCERATE               = ai->initSpell(EVISCERATE_1);
+    KIDNEY_SHOT              = ai->initSpell(KIDNEY_SHOT_1);
+    SLICE_DICE               = ai->initSpell(SLICE_AND_DICE_1);
+    GARROTE                  = ai->initSpell(GARROTE_1);
+    EXPOSE_ARMOR             = ai->initSpell(EXPOSE_ARMOR_1);
+    RUPTURE                  = ai->initSpell(RUPTURE_1);
+    DISMANTLE                = ai->initSpell(DISMANTLE_1);
+    CHEAP_SHOT               = ai->initSpell(CHEAP_SHOT_1);
+    AMBUSH                   = ai->initSpell(AMBUSH_1);
+    MUTILATE                 = ai->initSpell(MUTILATE_1);
+
+    RECENTLY_BANDAGED   = 11196; // first aid check
+    // racial
+    ARCANE_TORRENT           = ai->initSpell(ARCANE_TORRENT_ROGUE);
+    STONEFORM                = ai->initSpell(STONEFORM_ALL); // dwarf
+    ESCAPE_ARTIST            = ai->initSpell(ESCAPE_ARTIST_ALL); // gnome
+    EVERY_MAN_FOR_HIMSELF    = ai->initSpell(EVERY_MAN_FOR_HIMSELF_ALL); // human
+    SHADOWMELD               = ai->initSpell(SHADOWMELD_ALL);
+    BLOOD_FURY               = ai->initSpell(BLOOD_FURY_MELEE_CLASSES); // orc
+    BERSERKING               = ai->initSpell(BERSERKING_ALL); // troll
+    WILL_OF_THE_FORSAKEN     = ai->initSpell(WILL_OF_THE_FORSAKEN_ALL); // undead
 }
 
 bool PlayerbotRogueAI::DoFirstCombatManeuver(Unit *pTarget)
@@ -118,21 +122,21 @@ bool PlayerbotRogueAI::DoNextCombatManeuver(Unit *pTarget)
         return true;
 
     else if (m_bot->HasAura(STEALTH))
-        SpellSequence = RogueStealth;
+        SpellSequence = RogueSpeStealth;
     else if (pTarget->IsNonMeleeSpellCasted(true))
         SpellSequence = RogueSpellPreventing;
     else if ((pVictim ==m_bot)
         && (ai->GetHealthPercent() < 40))
-        SpellSequence = RogueThreat;
+        SpellSequence = RogueSpeThreat;
     else
-        SpellSequence = RogueComba;
+        SpellSequence = RogueSpeCombat;
 
     if (fTargetDist > ATTACK_DISTANCE)
         return false;
 
     switch (SpellSequence)
     {
-        case RogueStealth:
+        case RogueSpeStealth:
 
             if ((PREMEDITATION > 0)
                 && (ai->CastSpell(PREMEDITATION, *pTarget)))
@@ -156,7 +160,7 @@ bool PlayerbotRogueAI::DoNextCombatManeuver(Unit *pTarget)
 
             break;
 
-        case RogueThreat:
+        case RogueSpeThreat:
 
             if ((GOUGE > 0)
                 && (ai->GetEnergyAmount() >= 45)
@@ -216,7 +220,7 @@ bool PlayerbotRogueAI::DoNextCombatManeuver(Unit *pTarget)
 
             break;
 
-        case RogueComba:
+        case RogueSpeCombat:
         default:
 
             if (m_bot->GetComboPoints() <= 4)

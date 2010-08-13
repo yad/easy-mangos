@@ -4710,43 +4710,6 @@ void ObjectMgr::LoadSpellScripts()
     }
 }
 
-void ObjectMgr::LoadSpellNames()
-{
-    QueryResult *result = WorldDatabase.Query("SELECT entry, name FROM spell_names");
-
-    uint32 count = 0;
-
-    if( !result )
-    {
-        barGoLink bar( 1 );
-        bar.step();
-
-        sLog.outString();
-        sLog.outString( ">> Loaded %u spell names", count );
-        return;
-    }
-
-    barGoLink bar( result->GetRowCount() );
-
-    Field* fields;
-    do
-    {
-        bar.step();
-
-        fields = result->Fetch();
-
-        mSpellNames[ fields[0].GetUInt32() ] = fields[1].GetCppString();
-
-        ++count;
-
-    } while ( result->NextRow() );
-
-    delete result;
-
-    sLog.outString();
-    sLog.outString( ">> Loaded %u spell names", count );
-}
-
 void ObjectMgr::LoadEventScripts()
 {
     LoadScripts(sEventScripts, "event_scripts");

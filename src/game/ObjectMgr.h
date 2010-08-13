@@ -709,7 +709,6 @@ class ObjectMgr
         void LoadEventScripts();
         void LoadSpellScripts();
         void LoadGossipScripts();
-        void LoadSpellNames();
         void LoadCreatureMovementScripts();
 
         bool LoadMangosStrings(DatabaseType& db, char const* table, int32 min_value, int32 max_value);
@@ -802,15 +801,6 @@ class ObjectMgr
         //uint32 GenerateItemTextID() { return m_ItemGuids.Generate(); }
         uint32 GenerateMailID() { return m_MailIds.Generate(); }
         uint32 GeneratePetNumber() { return m_PetNumbers.Generate(); }
-
-        std::string GetSpellName( uint32 id )
-        {
-            SpellNameMap::const_iterator itr = mSpellNames.find( id );
-            if ( itr != mSpellNames.end() )
-                return itr->second;
-            else
-                return "There is no name for this spell";
-        }
 
         typedef std::multimap<int32, uint32> ExclusiveQuestGroups;
         ExclusiveQuestGroups mExclusiveQuestGroups;
@@ -1099,13 +1089,11 @@ class ObjectMgr
         typedef UNORDERED_MAP<uint32, uint32> QuestAreaTriggerMap;
         typedef std::set<uint32> TavernAreaTriggerSet;
         typedef std::set<uint32> GameObjectForQuestSet;
-        typedef UNORDERED_MAP<uint32, std::string> SpellNameMap;
         typedef UNORDERED_MAP<uint32, BotSpawns> BotSpawnsMap;
 
         GroupMap            mGroupMap;
         GuildMap            mGuildMap;
         ArenaTeamMap        mArenaTeamMap;
-        SpellNameMap        mSpellNames;
         QuestAreaTriggerMap mQuestAreaTriggerMap;
         TavernAreaTriggerSet mTavernAreaTriggerSet;
         GameObjectForQuestSet mGameObjectForQuestSet;

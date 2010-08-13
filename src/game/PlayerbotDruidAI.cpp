@@ -29,51 +29,58 @@ PlayerbotDruidAI::~PlayerbotDruidAI() {}
 
 void PlayerbotDruidAI::InitSpells(PlayerbotAI* const ai)
 {
-    MOONFIRE = ai->getSpellId("moonfire");
-    STARFIRE = ai->getSpellId("starfire");
-    STARFALL = ai->getSpellId("starfall");
-    WRATH = ai->getSpellId("wrath");
-    ROOTS = ai->getSpellId("roots");
-    INSECT_SWARM = ai->getSpellId("insect swarm");
-    FORCE_OF_NATURE = ai->getSpellId("force of nature");
-    HURRICANE = ai->getSpellId("hurricane");
-    MARK_OF_THE_WILD = ai->getSpellId("mark of the wild");
-    THORNS = ai->getSpellId("thorns");
-    BARKSKIN = ai->getSpellId("barkskin");
-    INNERVATE = ai->getSpellId("innervate");
-    MANA_REJUVENATION = ai->getSpellId("mana rejuvenation");
-    FAERIE_FIRE = ai->getSpellId("faerie fire");
-    REJUVENATION = ai->getSpellId("rejuvenation");
-    REGROWTH = ai->getSpellId("regrowth");
-    WILD_GROWTH = ai->getSpellId("wild growth");
-    LIFEBLOOM = ai->getSpellId("lifebloom");
-    NOURISH = ai->getSpellId("nourish");
-    HEALING_TOUCH = ai->getSpellId("healing touch");
-    SWIFTMEND = ai->getSpellId("swiftmend");
-    TRANQUILITY = ai->getSpellId("tranquility");
-    MOONKIN_FORM = ai->getSpellId("moonkin form");
-    DIRE_BEAR_FORM = ai->getSpellId("dire bear form");
-    BEAR_FORM = ai->getSpellId("bear form");
-    CAT_FORM = ai->getSpellId("cat form");
-    TREE_OF_LIFE = 33891;
-    RAKE = ai->getSpellId("rake");
-    CLAW = ai->getSpellId("claw");
-    COWER = ai->getSpellId("cower");
-    MANGLE = ai->getSpellId("mangle");
-    TIGERS_FURY = ai->getSpellId("tigers's fury");
-    RIP = ai->getSpellId("rip");
-    FEROCIOUS_BITE = ai->getSpellId("ferocious bite");
-    MAIM = ai->getSpellId("maim");
-    BASH = ai->getSpellId("bash");
-    MAUL = ai->getSpellId("maul");
-    SWIPE = ai->getSpellId("swipe");
-    DEMORALIZING_ROAR = ai->getSpellId("roar");
-    CHALLENGING_ROAR = ai->getSpellId("challenging roar");
-    ENRAGE = ai->getSpellId("enrage");
-    GROWL = ai->getSpellId("growl");
-    RECENTLY_BANDAGED = 11196;
-    SHADOWMELD = ai->getSpellId("shadowmeld");
-    WAR_STOMP = ai->getSpellId("war stomp");
+    MOONFIRE                      = ai->initSpell(MOONFIRE_1); // attacks
+    STARFIRE                      = ai->initSpell(STARFIRE_1);
+    STARFALL                      = ai->initSpell(STARFALL_1);
+    WRATH                         = ai->initSpell(WRATH_1);
+    ROOTS                         = ai->initSpell(ENTANGLING_ROOTS_1);
+    INSECT_SWARM                  = ai->initSpell(INSECT_SWARM_1);
+    FORCE_OF_NATURE               = ai->initSpell(FORCE_OF_NATURE_1);
+    HURRICANE                     = ai->initSpell(HURRICANE_1);
+    MARK_OF_THE_WILD              = ai->initSpell(MARK_OF_THE_WILD_1); // buffs
+    THORNS                        = ai->initSpell(THORNS_1);
+    BARKSKIN                      = ai->initSpell(BARKSKIN_1);
+    INNERVATE                     = ai->initSpell(INNERVATE_1);
+    MANA_REJUVENATION             = 0; // Who on earth put it here?
+    FAERIE_FIRE                   = ai->initSpell(FAERIE_FIRE_1); // debuffs
+    REJUVENATION                  = ai->initSpell(REJUVENATION_1); // heals
+    REGROWTH                      = ai->initSpell(REGROWTH_1);
+    WILD_GROWTH                   = ai->initSpell(WILD_GROWTH_1);
+    LIFEBLOOM                     = ai->initSpell(LIFEBLOOM_1);
+    NOURISH                       = ai->initSpell(NOURISH_1);
+    HEALING_TOUCH                 = ai->initSpell(HEALING_TOUCH_1);
+    SWIFTMEND                     = ai->initSpell(SWIFTMEND_1);
+    TRANQUILITY                   = ai->initSpell(TRANQUILITY_1);
+    // Druid Forms
+    MOONKIN_FORM                  = ai->initSpell(MOONKIN_FORM_1);
+    DIRE_BEAR_FORM                = ai->initSpell(DIRE_BEAR_FORM_1);
+    BEAR_FORM                     = ai->initSpell(BEAR_FORM_1);
+    CAT_FORM                      = ai->initSpell(CAT_FORM_1);
+    TREE_OF_LIFE                  = ai->initSpell(TREE_OF_LIFE_1);
+    // Cat Attack type's
+    RAKE                          = ai->initSpell(RAKE_1);
+    CLAW                          = ai->initSpell(CLAW_1); // 45
+    COWER                         = ai->initSpell(COWER_1); // 20
+    MANGLE                        = ai->initSpell(MANGLE_1); // 45
+    TIGERS_FURY                   = ai->initSpell(TIGERS_FURY_1);
+    // Cat Finishing Move's
+    RIP                           = ai->initSpell(RIP_1); // 30
+    FEROCIOUS_BITE                = ai->initSpell(FEROCIOUS_BITE_1); // 35
+    MAIM                          = ai->initSpell(MAIM_1); // 35
+    // Bear/Dire Bear Attacks & Buffs
+    BASH                          = ai->initSpell(BASH_1);
+    MAUL                          = ai->initSpell(MAUL_1); // 15
+    SWIPE                         = ai->initSpell(SWIPE_BEAR_1); // 20
+    DEMORALIZING_ROAR             = ai->initSpell(DEMORALIZING_ROAR_1); // 10
+    CHALLENGING_ROAR              = ai->initSpell(CHALLENGING_ROAR_1);
+    ENRAGE                        = ai->initSpell(ENRAGE_1);
+    GROWL                         = ai->initSpell(GROWL_1);
+
+    RECENTLY_BANDAGED             = 11196; // first aid check
+
+    // racial
+    SHADOWMELD                    = ai->initSpell(SHADOWMELD_ALL);
+    WAR_STOMP                     = ai->initSpell(WAR_STOMP_ALL); // tauren
 }
 
 bool PlayerbotDruidAI::HealTarget(Unit &target, uint8 hp)

@@ -1244,9 +1244,6 @@ void World::SetInitialWorldSettings()
     sLog.outString( "Returning old mails..." );
     sObjectMgr.ReturnOrDeleteOldMails(false);
 
-    sLog.outString( "Loading Spell Names..." );
-    sObjectMgr.LoadSpellNames();
-
     sLog.outString( "Loading Bot Spawns..." );
     sObjectMgr.LoadBotSpawns();
 
