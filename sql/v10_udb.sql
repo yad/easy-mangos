@@ -1,0 +1,1 @@
+REPLACE INTO creature_template_addon (`entry`,`passengers`) values (33214,'33218 1'),(33113,'33114 0 33114 1 33114 2 33114 3 33139 7');

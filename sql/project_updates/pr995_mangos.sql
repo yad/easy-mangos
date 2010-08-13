@@ -154,35 +154,35 @@ Insert into `gossip_menu_option` (`menu_id`, `id`, `option_icon`, `option_text`,
 	( @GossipMenu + 3, 5, 3, '-> Retour <-' , 1, 1, @GossipMenu, 0, 0, 0, 0);
 	
 -- Liste des actions
-Insert into `gossip_scripts` (`id`, `command`, `datalong`, `datalong2`, `x`, `y`, `z`, `o`) values
+Insert into `gossip_scripts` (`id`, `command`, `datalong`, `datalong2`) values
 /* Spawn Maître de Classe */
-	( @GossipScript    , 10, @MasterID  , @Delay, '', '', '', ''),
-	( @GossipScript + 1, 10, @MasterID+1, @Delay, '', '', '', ''),
-	( @GossipScript + 2, 10, @MasterID+2, @Delay, '', '', '', ''),
-	( @GossipScript + 3, 10, @MasterID+3, @Delay, '', '', '', ''),
-	( @GossipScript + 4, 10, @MasterID+4, @Delay, '', '', '', ''),
-	( @GossipScript + 5, 10, @MasterID+5, @Delay, '', '', '', ''),
-	( @GossipScript + 6, 10, @MasterID+6, @Delay, '', '', '', ''),
-	( @GossipScript + 7, 10, @MasterID+7, @Delay, '', '', '', ''),
-	( @GossipScript + 8, 10, @MasterID+8, @Delay, '', '', '', ''),
-	( @GossipScript + 9, 10, @MasterID+9, @Delay, '', '', '', ''),
+	( @GossipScript    , 10, @MasterID  , @Delay),
+	( @GossipScript + 1, 10, @MasterID+1, @Delay),
+	( @GossipScript + 2, 10, @MasterID+2, @Delay),
+	( @GossipScript + 3, 10, @MasterID+3, @Delay),
+	( @GossipScript + 4, 10, @MasterID+4, @Delay),
+	( @GossipScript + 5, 10, @MasterID+5, @Delay),
+	( @GossipScript + 6, 10, @MasterID+6, @Delay),
+	( @GossipScript + 7, 10, @MasterID+7, @Delay),
+	( @GossipScript + 8, 10, @MasterID+8, @Delay),
+	( @GossipScript + 9, 10, @MasterID+9, @Delay),
 /* Spawn Maître de Profession Principal */
-	( (@GossipScript + 9) +  1, 10, @MasterID+10, @Delay, '', '', '', ''),
-	( (@GossipScript + 9) +  2, 10, @MasterID+11, @Delay, '', '', '', ''),
-	( (@GossipScript + 9) +  3, 10, @MasterID+12, @Delay, '', '', '', ''),
-	( (@GossipScript + 9) +  4, 10, @MasterID+13, @Delay, '', '', '', ''),
-	( (@GossipScript + 9) +  5, 10, @MasterID+14, @Delay, '', '', '', ''),
-	( (@GossipScript + 9) +  6, 10, @MasterID+15, @Delay, '', '', '', ''),
-	( (@GossipScript + 9) +  7, 10, @MasterID+16, @Delay, '', '', '', ''),
-	( (@GossipScript + 9) +  8, 10, @MasterID+17, @Delay, '', '', '', ''),
-	( (@GossipScript + 9) +  9, 10, @MasterID+18, @Delay, '', '', '', ''),
-	( (@GossipScript + 9) + 10, 10, @MasterID+19, @Delay, '', '', '', ''),
-	( (@GossipScript + 9) + 11, 10, @MasterID+20, @Delay, '', '', '', ''),
+	( (@GossipScript + 9) +  1, 10, @MasterID+10, @Delay),
+	( (@GossipScript + 9) +  2, 10, @MasterID+11, @Delay),
+	( (@GossipScript + 9) +  3, 10, @MasterID+12, @Delay),
+	( (@GossipScript + 9) +  4, 10, @MasterID+13, @Delay),
+	( (@GossipScript + 9) +  5, 10, @MasterID+14, @Delay),
+	( (@GossipScript + 9) +  6, 10, @MasterID+15, @Delay),
+	( (@GossipScript + 9) +  7, 10, @MasterID+16, @Delay),
+	( (@GossipScript + 9) +  8, 10, @MasterID+17, @Delay),
+	( (@GossipScript + 9) +  9, 10, @MasterID+18, @Delay),
+	( (@GossipScript + 9) + 10, 10, @MasterID+19, @Delay),
+	( (@GossipScript + 9) + 11, 10, @MasterID+20, @Delay),
 /* Spawn Maître de Profession Secondaire */	
-	( (@GossipScript + 20) + 1, 10, @MasterID+21, @Delay, '', '', '', ''),
-	( (@GossipScript + 20) + 2, 10, @MasterID+22, @Delay, '', '', '', ''),
-	( (@GossipScript + 20) + 3, 10, @MasterID+23, @Delay, '', '', '', ''),
-	( (@GossipScript + 20) + 4, 10, @MasterID+24, @Delay, '', '', '', '');
+	( (@GossipScript + 20) + 1, 10, @MasterID+21, @Delay),
+	( (@GossipScript + 20) + 2, 10, @MasterID+22, @Delay),
+	( (@GossipScript + 20) + 3, 10, @MasterID+23, @Delay),
+	( (@GossipScript + 20) + 4, 10, @MasterID+24, @Delay);
 	
 -- Liste des sort des Maîtres
 INSERT INTO `npc_trainer` (entry, spell, spellcost, reqskill, reqskillvalue, reqlevel) VALUES 
