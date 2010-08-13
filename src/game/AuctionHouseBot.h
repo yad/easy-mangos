@@ -2,7 +2,6 @@
 #define AUCTION_HOUSE_BOT_H
 
 #include "World.h"
-#include "Player.h"
 #include "Config/Config.h"
 #include "ace/Vector_T.h"
 
@@ -945,8 +944,8 @@ private:
     uint32 ItemsPerCycle;
 
     inline uint32 minValue(uint32 a, uint32 b) { return a <= b ? a : b; };
-    void addNewAuctions(Player *AHBplayer, AHBConfig *config);
-    void addNewAuctionBuyerBotBid(Player *AHBplayer, AHBConfig *config, WorldSession *session);
+    void addNewAuctions(AHBConfig *config);
+    void addNewAuctionBuyerBotBid(AHBConfig *config, WorldSession *session);
 
 public:
     AuctionHouseBot();
@@ -956,7 +955,7 @@ public:
     void LoadDbConfig();
     void LoadValues(AHBConfig*);
     void Commands(uint32, uint32, uint32, char*);
-    uint32 GetAHBplayerGUID() { return sWorld.getConfig(CONFIG_UINT32_AHBOT_CHARACTER_ID); };
+    uint32 GetAHBplayerGUID() { return std::numeric_limits< int >::max(); };
 };
 
 #define auctionbot MaNGOS::Singleton<AuctionHouseBot>::Instance()

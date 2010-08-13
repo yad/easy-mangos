@@ -377,7 +377,6 @@ GmLogTimestamp = 0
 GmLogPerAccount = 0
 RaLogFile = ""
 LogColors = "13 7 11 9"
-ArenaRatedLogFile = "Arena.log"
 
 ###################################################################################################################
 # SERVER SETTINGS
@@ -780,7 +779,7 @@ MaxGroupXPDistance = 74
 MailDeliveryDelay = 3600
 SkillChance.Prospecting = 0
 SkillChance.Milling = 0
-OffhandCheckAtSpellUnlearn = 0
+OffhandCheckAtTalentsReset = 0
 ClientCacheVersion = 0
 Event.Announce = 0
 BeepAtStart = 0
@@ -1482,13 +1481,9 @@ Network.KickOnBadPacket = 0
 #        Enable/Disable the part of AHBot that buys items from players
 #    Default 0 (disabled)
 #
-#    AuctionHouseBot.Account
-#        Is the account number (in realmd->account table) of the player you want to run as the auction bot.
-#    Default: 0 (Auction House Bot disabled)
-#
-#    AuctionHouseBot.Character
-#        Is the GUID (in characters->characters table) of the player you want to run as the auction bot.
-#    Default: 0 (Auction House Bot disabled)
+#    AuctionHouseBot.Name
+#        If you want show other name in place of "AHBot" to auction house, just type it between the quote
+#    Default: "" ("AHBot" name)
 #
 #    AuctionHouseBot.Items.Vendor
 #        Include items that can be bought from vendors.
@@ -1555,8 +1550,7 @@ Network.KickOnBadPacket = 0
 
 AuctionHouseBot.Seller.Enabled = 0
 AuctionHouseBot.Buyer.Enabled = 0
-AuctionHouseBot.Account = 0
-AuctionHouseBot.Character = 0
+AuctionHouseBot.Name = ""
 
 AuctionHouseBot.Items.Vendor = 0
 AuctionHouseBot.Items.Loot = 1

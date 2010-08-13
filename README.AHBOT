@@ -7,17 +7,6 @@ mail from the AH or get returned mail.
 ===============================================================================
 ~~HOW TO CONFIGURE~~
 ===============================================================================
-Step 1.) Create a character that you are going to use as the auction house bot
-         character. This character will be the auction's owner for all the
-         items created by the bot.
-Step 2.) Go into the realm database and note the account number for the
-         character.
-Step 3.) Go into the characters database and note the character's GUID.
-Step 4.) Log in at least once with this character.
-         (Do not change the configuration before this)
-Step 5.) Tune the configuration options in the configuration file and the
-         Database.
-
 #These are the settings in the Database:
 #Each Auctionhouse has it's own set of these
 
