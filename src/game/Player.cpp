@@ -3447,6 +3447,10 @@ void Player::Update( uint32 p_time )
 
     if (isAlive())
     {
+        // if no longer casting, set regen power as soon as it is up.
+        if (!IsUnderLastManaUseEffect())
+            SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_REGENERATE_POWER);
+
         if (!m_regenTimer)
             RegenerateAll();
 
