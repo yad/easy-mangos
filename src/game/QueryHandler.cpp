@@ -134,7 +134,7 @@ void WorldSession::SendFakeNameForAHBotQueryOPcode()
     WorldPacket data( SMSG_NAME_QUERY_RESPONSE, (8+1+1+1+1+1+10) );
     data.appendPackGUID(auctionbot.GetAHBplayerGUID());
     data << uint8(0);                                                    // added in 3.1; if > 1, then end of packet
-    data << sWorld.GetAHBotName();                                                        // played name
+    data << sWorld.GetAHBotName();                                       // played name
     data << uint8(0);                                                    // realm name for cross realm BG usage
     data << uint8(0);                                                    // race
     data << uint8(0);                                                    // gender
