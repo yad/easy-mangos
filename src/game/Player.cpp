@@ -419,7 +419,6 @@ Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputa
     // Playerbot mod:
     m_playerbotAI = NULL;
     m_playerbotMgr = NULL;
-    m_levelAtLoading = 1;
 
     m_speakTime = 0;
     m_speakCount = 0;
