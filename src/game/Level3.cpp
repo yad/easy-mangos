@@ -554,7 +554,6 @@ bool ChatHandler::HandleReloadAllCommand(char* /*args*/)
 
     HandleReloadVehicleDataCommand((char*)"");
     HandleReloadVehicleSeatDataCommand((char*)"");
-
     return true;
 }
 

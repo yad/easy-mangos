@@ -427,8 +427,9 @@ void GameObject::Update(uint32 diff)
             if(!m_respawnDelayTime)
                 return;
 
-            // since pool system can fail to roll unspawned object, this one can remain spawned, so must set respawn nevertheless
             m_respawnTime = m_spawnedByDefault ? time(NULL) + m_respawnDelayTime : 0;
+
+            // since pool system can fail to roll unspawned object, this one can remain spawned, so must set respawn nevertheless
 
             // if option not set then object will be saved at grid unload
             if(sWorld.getConfig(CONFIG_BOOL_SAVE_RESPAWN_TIME_IMMEDIATLY))
@@ -1588,4 +1589,16 @@ float GameObject::GetObjectBoundingRadius() const
         return fabs(dispEntry->unknown12) * GetObjectScale();
 
     return DEFAULT_WORLD_OBJECT_SIZE;
+}
+
+void GameObject::DealSiegeDamage(uint32 damage)
+{
+    m_actualHealth -= damage;
+
+    // TODO : there are a lot of thinghts to do here
+    if(m_actualHealth < 0)
+    {
+        m_actualHealth = GetGOInfo()->destructibleBuilding.intactNumHits;
+        SetLootState(GO_JUST_DEACTIVATED);
+    }
 }

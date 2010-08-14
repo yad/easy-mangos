@@ -148,9 +148,9 @@ pEffect SpellEffects[TOTAL_SPELL_EFFECTS]=
     &Spell::EffectStuck,                                    // 84 SPELL_EFFECT_STUCK
     &Spell::EffectSummonPlayer,                             // 85 SPELL_EFFECT_SUMMON_PLAYER
     &Spell::EffectActivateObject,                           // 86 SPELL_EFFECT_ACTIVATE_OBJECT
-    &Spell::EffectNULL,                                     // 87 SPELL_EFFECT_WMO_DAMAGE (57 spells in 3.3.2)
-    &Spell::EffectNULL,                                     // 88 SPELL_EFFECT_WMO_REPAIR (2 spells in 3.3.2)
-    &Spell::EffectNULL,                                     // 89 SPELL_EFFECT_WMO_CHANGE (7 spells in 3.3.2)
+    &Spell::EffectDamageBuilding,                           // 87 SPELL_EFFECT_WMO_DAMAGE
+    &Spell::EffectUnused,                                   // 88 SPELL_EFFECT_WMO_REPAIR
+    &Spell::EffectUnused,                                   // 89 SPELL_EFFECT_WMO_CHANGE
     &Spell::EffectKillCreditPersonal,                       // 90 SPELL_EFFECT_KILL_CREDIT              Kill credit but only for single person
     &Spell::EffectUnused,                                   // 91 SPELL_EFFECT_THREAT_ALL               one spell: zzOLDBrainwash
     &Spell::EffectEnchantHeldItem,                          // 92 SPELL_EFFECT_ENCHANT_HELD_ITEM
@@ -1583,7 +1583,7 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     m_caster->CastSpell(m_caster, 30452, true, NULL);
                     return;
                 }
-                case 51962:  //Offer Jungle Punch. For quest 12645. Don't know how do it else                               
+                case 51962:  //Offer Jungle Punch. For quest 12645. Don't know how do it else
                 {
                     if (unitTarget->GetTypeId() != TYPEID_PLAYER)
                         return;
@@ -2666,7 +2666,7 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                 unitTarget->SetDisplayId(25537+urand(0,3));
             }
             // Raise dead effect
-            else if(m_spellInfo->Id == 46584) 
+            else if(m_spellInfo->Id == 46584)
             {
                 if (m_caster->GetTypeId() != TYPEID_PLAYER)
                     return;
@@ -6746,7 +6746,7 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
 
                     uint32 spellID;
                     uint32 entry  = m_caster->GetEntry();
- 
+
                     switch(entry)
                     {
                         case 31897: spellID = 7001; break;   // Lightwell Renew Rank 1
@@ -8609,6 +8609,18 @@ void Spell::EffectSummonVehicle(SpellEffectIndex eff_idx)
     int32 duration = GetSpellMaxDuration(m_spellInfo);
     if(duration > 0)
         v->SetSpawnDuration(duration);
+}
+
+void Spell::EffectDamageBuilding(SpellEffectIndex eff_idx)
+{
+    if(!gameObjTarget)
+        return;
+
+    if(gameObjTarget->GetGoType() != GAMEOBJECT_TYPE_DESTRUCTIBLE_BUILDING)
+        return;
+
+    // NOTE : this can be increased by scaling stat system in vehicles
+    gameObjTarget->DealSiegeDamage(damage);
 }
 
 void Spell::EffectPlayMusic(SpellEffectIndex eff_idx)

@@ -8578,8 +8578,8 @@ void Unit::setDeathState(DeathState s)
         ClearAllReactives();
         ClearDiminishings();
         ProcDamageAndSpell(this, PROC_FLAG_NONE, PROC_FLAG_ON_DEATH, PROC_EX_NONE, 0);
-         if (GetVehicleKit())
-             GetVehicleKit()->RemoveAllPassengers();
+        if (GetVehicleKit())
+            GetVehicleKit()->RemoveAllPassengers();
     }
     else if(s == JUST_ALIVED)
     {

@@ -1094,12 +1094,14 @@ class ObjectMgr
         GroupMap            mGroupMap;
         GuildMap            mGuildMap;
         ArenaTeamMap        mArenaTeamMap;
+
         QuestAreaTriggerMap mQuestAreaTriggerMap;
         TavernAreaTriggerSet mTavernAreaTriggerSet;
         GameObjectForQuestSet mGameObjectForQuestSet;
         GossipTextMap       mGossipText;
         AreaTriggerMap      mAreaTriggers;
-        AreaTriggerScriptMap  mAreaTriggerScripts;
+
+        AreaTriggerScriptMap    mAreaTriggerScripts;
         EventIdScriptMap        mEventIdScripts;
         BotSpawnsMap        mBotSpawns;
 

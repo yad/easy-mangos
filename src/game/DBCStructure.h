@@ -496,7 +496,7 @@ struct AchievementCriteriaEntry
                                                             // 1: ByEventId(?) (serverside IDs),    2: ByQuestId,   5: ByCastSpellId(?)
                                                             // 6: BySpellIdTarget(some of these are unknown spells, some not, some maybe spells)
                                                             // 7: ByKillNpcId,  9: ByUseItemId
-    uint32  timedCriteriaMiscId;                            // 28 Alway appears with timed events, used internally to start the achievement, store 
+    uint32  timedCriteriaMiscId;                            // 28 Alway appears with timed events, used internally to start the achievement, store
     uint32  timeLimit;                                      // 29 time limit in seconds
     uint32  showOrder;                                      // 30 show order, also used in achievement shift-links as index in state bitmask
 

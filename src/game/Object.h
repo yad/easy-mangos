@@ -74,7 +74,6 @@ class Map;
 class UpdateMask;
 class InstanceData;
 class Vehicle;
-class GameObject;
 
 typedef UNORDERED_MAP<Player*, UpdateData> UpdateDataMapType;
 
@@ -504,6 +503,7 @@ class MANGOS_DLL_SPEC WorldObject : public Object
         ViewPoint& GetViewPoint() { return m_viewPoint; }
 
         Vehicle* SummonVehicle(uint32 id, float x, float y, float z, float ang, uint32 vehicleId = NULL);
+
     protected:
         explicit WorldObject();
 

@@ -308,6 +308,7 @@ void Object::BuildMovementUpdate(ByteBuffer * data, uint16 updateFlags) const
 
                 if(((Unit*)this)->GetVehicleGUID())
                     player->m_movementInfo.AddMovementFlag(MOVEFLAG_ONTRANSPORT);
+
                 if(player->IsTaxiFlying())
                 {
                     ASSERT(player->GetMotionMaster()->GetCurrentMovementGeneratorType() == FLIGHT_MOTION_TYPE);

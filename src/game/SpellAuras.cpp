@@ -7597,49 +7597,6 @@ void Aura::HandleArenaPreparation(bool apply, bool Real)
         GetTarget()->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PREPARATION);
 }
 
-/**
- * Such auras are applied from a caster(=player) to a vehicle.
- * This has been verified using spell #49256
- */
-void Aura::HandleAuraControlVehicle(bool apply, bool Real)
-{
-     if(!Real)
-         return;
-
-    Unit* target = GetTarget();
-    Unit* caster = GetCaster();
-    if (target->GetTypeId() != TYPEID_UNIT || !((Creature*)target)->isVehicle())
-        return;
-    Vehicle* vehicle = (Vehicle*)target;
-
-    if(!caster || !vehicle)
-        return;
-
-    // this can happen due to wrong caster/target spell handling
-    // note : SPELL_AURA_CONTROL_VEHICLE can have EffectImplicitTargetA
-    // TARGET_SCRIPT, TARGET_DUELVSPLAYER.. etc
-    if(caster->GetGUID() == vehicle->GetGUID())
-        return;
-
-    if (apply)
-    {
-        if(caster->GetTypeId() == TYPEID_PLAYER)
-        {
-            WorldPacket data(SMSG_ON_CANCEL_EXPECTED_RIDE_VEHICLE_AURA, 0);
-            ((Player*)caster)->GetSession()->SendPacket(&data);
-        }
-        // if we leave and enter again, this will refresh
-        int32 duration = GetSpellMaxDuration(GetSpellProto());
-        if(duration > 0)
-            vehicle->SetSpawnDuration(duration);
-    }
-    else
-    {
-        // some SPELL_AURA_CONTROL_VEHICLE auras have a dummy effect on the player - remove them
-        caster->RemoveAurasDueToSpell(GetId());
-    }
-}
-
 void Aura::HandleAuraMirrorImage(bool Apply, bool Real)
 {
     if (!Real)
@@ -7900,6 +7857,45 @@ void Aura::HandleAllowOnlyAbility(bool apply, bool Real)
     target->UpdateDamagePhysical(OFF_ATTACK);
 }
 
+void Aura::HandleAuraControlVehicle(bool apply, bool Real)
+{
+     if(!Real)
+         return;
+
+    Unit* target = GetTarget();
+    Unit* caster = GetCaster();
+    if (target->GetTypeId() != TYPEID_UNIT || !((Creature*)target)->isVehicle())
+        return;
+    Vehicle* vehicle = (Vehicle*)target;
+
+    if(!caster || !vehicle)
+        return;
+
+    // this can happen due to wrong caster/target spell handling
+    // note : SPELL_AURA_CONTROL_VEHICLE can have EffectImplicitTargetA
+    // TARGET_SCRIPT, TARGET_DUELVSPLAYER.. etc
+    if(caster->GetGUID() == vehicle->GetGUID())
+        return;
+
+    if (apply)
+    {
+        if(caster->GetTypeId() == TYPEID_PLAYER)
+        {
+            WorldPacket data(SMSG_ON_CANCEL_EXPECTED_RIDE_VEHICLE_AURA, 0);
+            ((Player*)caster)->GetSession()->SendPacket(&data);
+        }
+        // if we leave and enter again, this will refresh
+        int32 duration = GetSpellMaxDuration(GetSpellProto());
+        if(duration > 0)
+            vehicle->SetSpawnDuration(duration);
+    }
+    else
+    {
+        // some SPELL_AURA_CONTROL_VEHICLE auras have a dummy effect on the player - remove them
+        caster->RemoveAurasDueToSpell(GetId());
+    }
+}
+
 void Aura::SetAuraMaxDuration( int32 duration )
 {
     m_maxduration = duration;
@@ -7935,7 +7931,7 @@ m_auraFlags(AFLAG_NONE), m_auraLevel(1), m_procCharges(0), m_stackAmount(1)
     else
     {
         // remove this assert when not unit casters will be supported
-        ASSERT(caster->GetObjectGuid().IsUnit())
+        ASSERT(caster->GetObjectGuid().IsUnit() || caster->GetObjectGuid().IsVehicle())
         m_caster_guid = caster->GetGUID();
     }
 

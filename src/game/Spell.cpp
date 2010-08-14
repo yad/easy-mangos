@@ -475,7 +475,7 @@ void Spell::FillCustomTargetMap(SpellEffectIndex eff_idx, UnitList &targetUnitMa
 
     switch (m_spellInfo->SpellIconID)
     {
-        case 1737: //Corpse Explosion 
+        case 1737: //Corpse Explosion
         {
             // if not our ghoul AND
             if (!(m_targets.getUnitTarget()->GetEntry() == 26125 && m_targets.getUnitTarget()->GetOwnerGUID() == m_caster->GetGUID()) &&
@@ -3500,7 +3500,7 @@ void Spell::finish(bool ok)
         if (needDrop)
         {
             if(m_caster->GetTypeId() == TYPEID_PLAYER)
-            ((Player*)m_caster)->ClearComboPoints();
+                ((Player*)m_caster)->ClearComboPoints();
             else
                 ((Player*)m_caster->GetCharmer())->ClearComboPoints();
         }
@@ -3538,7 +3538,7 @@ void Spell::finish(bool ok)
                     break_for = true;
                 }
                 break;
-            case 60503:        // Taste for blood 
+            case 60503:        // Taste for blood
             case 68051:        // Glyph of overpower - Both should disappear after overpower
                 if(m_spellInfo->Id == 7384)
                 {
@@ -6712,7 +6712,7 @@ bool Spell::HaveTargetsForEffect(SpellEffectIndex effect) const
     {
         if (itr->deleted == true)
             continue;
- 
+
         if (itr->effectMask & (1 << effect))
             return true;
     }
@@ -6721,7 +6721,7 @@ bool Spell::HaveTargetsForEffect(SpellEffectIndex effect) const
     {
         if (itr->deleted == true)
             continue;
- 
+
         if (itr->effectMask & (1 << effect))
             return true;
     }
