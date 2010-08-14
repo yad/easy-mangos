@@ -1042,12 +1042,8 @@ void Spell::AddItemTarget(Item* pitem, SpellEffectIndex effIndex)
 
 void Spell::DoAllEffectOnTarget(TargetInfo *target)
 {
-    if (this->m_spellInfo->Id <= 0 || this->m_spellInfo->Id > MAX_SPELL_ID ||  m_spellInfo->Id == 32 || m_spellInfo->Id == 80)
+    if (target->processed)                                  // Check target
         return;
-
-    if (!target || target == (TargetInfo*)0x10 || target->processed)
-        return;
-
     target->processed = true;                               // Target checked in apply effects procedure
 
     // Get mask of effects for target
@@ -2878,13 +2874,6 @@ void Spell::cancel()
 
 void Spell::cast(bool skipCheck)
 {
-    if (m_spellInfo->Id <= 0 || m_spellInfo->Id > MAX_SPELL_ID)
-        return;
-
-    SpellEntry const* spellInfo = sSpellStore.LookupEntry(m_spellInfo->Id);
-    if (!spellInfo)
-        return;
-
     SetExecutedCurrently(true);
 
     if (!m_caster->CheckAndIncreaseCastCounter())
@@ -3135,13 +3124,6 @@ void Spell::cast(bool skipCheck)
 
 void Spell::handle_immediate()
 {
-    if (m_spellInfo->Id <= 0 || m_spellInfo->Id > MAX_SPELL_ID || m_spellInfo->Id == 32 || m_spellInfo->Id == 48 || m_spellInfo->Id == 576 || m_spellInfo->Id == 80 || m_spellInfo->Id == 160)
-        return;
-
-    SpellEntry const* spellInfo = sSpellStore.LookupEntry(m_spellInfo->Id);
-    if (!spellInfo)
-        return;
-
     // start channeling if applicable
     if(IsChanneledSpell(m_spellInfo))
     {
