@@ -2538,7 +2538,7 @@ void PlayerbotAI::HandleCommand(const std::string& text, Player& fromPlayer)
 
     if (!canObeyCommandFrom(fromPlayer))
     {
-        std::string msg = "I can't talk to you. Please speak to my master ";
+        std::string msg = "Je n'ai pas l'autorisation de discuter avec vous. Voyez plutôt avec ";
         msg += GetMaster()->GetName();
         SendWhisper(msg, fromPlayer);
         m_bot->HandleEmoteCommand(EMOTE_ONESHOT_NO);
@@ -2553,11 +2553,11 @@ void PlayerbotAI::HandleCommand(const std::string& text, Player& fromPlayer)
         std::list<uint32> itemIds;
         extractItemIds(text, itemIds);
         if (itemIds.size() == 0)
-            SendWhisper("Show me what item you want by shift clicking the item in the chat window.", fromPlayer);
+            SendWhisper("Montrez-moi l'objet que vous souhaitez dans la fenêtre de dialogue (Maj+Clic).", fromPlayer);
         else if( !strncmp( text.c_str(), "nt ", 3 ) )
         {
             if( itemIds.size() > 1 )
-                SendWhisper( "There is only one 'Will not be traded' slot. Shift-click just one item, please!", fromPlayer );
+                SendWhisper( "Il n'existe qu'un seul emplacement pour les objets non-échangés. (Maj+Clic sur un seul objet !)", fromPlayer );
             else
             {
                 std::list<Item*> itemList;
@@ -2566,7 +2566,7 @@ void PlayerbotAI::HandleCommand(const std::string& text, Player& fromPlayer)
                 if( itemList.size()>0 )
                     TradeItem( (**itemList.begin()), TRADE_SLOT_NONTRADED );
                 else
-                    SendWhisper( "I do not have this item equipped or in my bags!", fromPlayer );
+                    SendWhisper( "Je n'ai pas cet objet dans mon inventaire, ni sur moi !", fromPlayer );
             }
         }
         else
@@ -2607,7 +2607,7 @@ void PlayerbotAI::HandleCommand(const std::string& text, Player& fromPlayer)
         }
         else
         {
-            TellMaster("No target is selected.");
+            TellMaster("Il me faut une cible.");
             m_bot->HandleEmoteCommand(EMOTE_ONESHOT_TALK);
         }
     }
@@ -2645,7 +2645,7 @@ void PlayerbotAI::HandleCommand(const std::string& text, Player& fromPlayer)
              m_bot->GetMotionMaster()->MovePoint( mapid, x, y, z );
         }
         else
-             SendWhisper("I have no info on that object", fromPlayer);
+             SendWhisper("Je n'ai pas d'information sur cet objet", fromPlayer);
     }
 
     else if (text.size() > 2 && text.substr(0, 2) == "g " || text.size() > 4 && text.substr(0, 4) == "get ")
@@ -2796,17 +2796,17 @@ void PlayerbotAI::HandleCommand(const std::string& text, Player& fromPlayer)
             SetQuestNeedItems();
         }
         else
-            SendWhisper("I have no info on that object", fromPlayer);
+            SendWhisper("Je n'ai pas d'information sur cet objet", fromPlayer);
     }
 
     else if (text == "quests")
     {
         bool hasIncompleteQuests = false;
         std::ostringstream incomout;
-        incomout << "my incomplete quests are:";
+        incomout << "Je n'ai pas terminé la(les) quête(s) suivante(s) :";
         bool hasCompleteQuests = false;
         std::ostringstream comout;
-        comout << "my complete quests are:";
+        comout << "J'ai pas terminé la(les) quête(s) suivante(s) :";
         for (uint16 slot = 0; slot < MAX_QUEST_LOG_SIZE; ++slot)
         {
             if(uint32 questId = m_bot->GetQuestSlotQuestId(slot))
@@ -2819,12 +2819,12 @@ void PlayerbotAI::HandleCommand(const std::string& text, Player& fromPlayer)
                 if (m_bot->GetQuestStatus(questId) == QUEST_STATUS_COMPLETE)
                 {
                     hasCompleteQuests = true;
-                    comout << " |cFFFFFF00|Hquest:" << questId << ':' << pQuest->GetQuestLevel() << "|h[" << questTitle << "]|h|r";
+                    comout << " |cFFFFFF00|HQuête(s) :" << questId << ':' << pQuest->GetQuestLevel() << "|h[" << questTitle << "]|h|r";
                 }
                 else
                 {
                     hasIncompleteQuests = true;
-                    incomout << " |cFFFFFF00|Hquest:" << questId << ':' << pQuest->GetQuestLevel() << "|h[" <<  questTitle << "]|h|r";
+                    incomout << " |cFFFFFF00|HQuête(s) " << questId << ':' << pQuest->GetQuestLevel() << "|h[" <<  questTitle << "]|h|r";
                 }
             }
         }
@@ -2834,7 +2834,7 @@ void PlayerbotAI::HandleCommand(const std::string& text, Player& fromPlayer)
         if (hasIncompleteQuests)
             SendWhisper(incomout.str(), fromPlayer);
         if (! hasCompleteQuests && ! hasIncompleteQuests)
-            SendWhisper("I have no quests!", fromPlayer);
+            SendWhisper("Je n'ai pas de quête !", fromPlayer);
     }
 
     else if (text.size() > 5 && text.substr(0, 5) == "drop ")
@@ -2847,7 +2847,7 @@ void PlayerbotAI::HandleCommand(const std::string& text, Player& fromPlayer)
         }
         PlayerbotChatHandler ch(GetMaster());
         if (! ch.dropQuest((char*)text.substr(5).c_str()))
-            ch.sysmessage("ERROR: could not drop quest");
+            ch.sysmessage("ERREUR : Impossible d'annuler la quête.");
         if (oldSelectionGUID)
             fromPlayer.SetSelection(oldSelectionGUID);
     }
@@ -2857,7 +2857,7 @@ void PlayerbotAI::HandleCommand(const std::string& text, Player& fromPlayer)
         Pet * pet = m_bot->GetPet();
         if (!pet)
         {
-            SendWhisper("I have no pet.", fromPlayer);
+            SendWhisper("Je n'ai pas de familier.", fromPlayer);
             return;
         }
 
@@ -2894,13 +2894,13 @@ void PlayerbotAI::HandleCommand(const std::string& text, Player& fromPlayer)
             switch (pet->GetCharmInfo()->GetReactState())
             {
                 case REACT_AGGRESSIVE:
-                    SendWhisper("My pet is aggressive.", fromPlayer);
+                    SendWhisper("Mon familier est en mode aggressif.", fromPlayer);
                     break;
                 case REACT_DEFENSIVE:
-                    SendWhisper("My pet is defensive.", fromPlayer);
+                    SendWhisper("Mon familier est en mode defensif.", fromPlayer);
                     break;
                 case REACT_PASSIVE:
-                    SendWhisper("My pet is passive.", fromPlayer);
+                    SendWhisper("Mon familier est en mode passif.", fromPlayer);
             }
         }
         else if (subcommand == "spells" && !argumentFound)
@@ -2932,17 +2932,17 @@ void PlayerbotAI::HandleCommand(const std::string& text, Player& fromPlayer)
                 }
 
                 if (IsPositiveSpell(spellId))
-                    posOut << " |" << color << "|Hspell:" << spellId << "|h["
+                     posOut << " |" << color << "|HSorts :" << spellId << "|h["
                            << pSpellInfo->SpellName[loc] << "]|h|r";
                 else
-                    negOut << " |" << color << "|Hspell:" << spellId << "|h["
+/                    negOut << " |" << color << "|HSorts :" << spellId << "|h["
                            << pSpellInfo->SpellName[loc] << "]|h|r";
             }
 
             ChatHandler ch(&fromPlayer);
-            SendWhisper("Here's my pet's non-attack spells:", fromPlayer);
+            SendWhisper("Voici les sorts non-offensifs de mon familier :", fromPlayer);
             ch.SendSysMessage(posOut.str().c_str());
-            SendWhisper("and here's my pet's attack spells:", fromPlayer);
+            SendWhisper("et ses sorts offensifs :", fromPlayer);
             ch.SendSysMessage(negOut.str().c_str());
         }
     }
@@ -3022,20 +3022,20 @@ void PlayerbotAI::HandleCommand(const std::string& text, Player& fromPlayer)
 
         for (spellMap::const_iterator iter = posSpells.begin(); iter != posSpells.end(); ++iter)
         {
-            posOut << " |cffffffff|Hspell:" << iter->second << "|h["
+            posOut << " |cffffffff|HSorts :" << iter->second << "|h["
                    << iter->first << "]|h|r";
         }
 
         for (spellMap::const_iterator iter = negSpells.begin(); iter != negSpells.end(); ++iter)
         {
-            negOut << " |cffffffff|Hspell:" << iter->second << "|h["
+            negOut << " |cffffffff|HSorts :" << iter->second << "|h["
                    << iter->first << "]|h|r";
         }
 
         ChatHandler ch(&fromPlayer);
-        SendWhisper("here's my non-attack spells:", fromPlayer);
+        SendWhisper("Voici mes sorts non-offensifs :", fromPlayer);
         ch.SendSysMessage(posOut.str().c_str());
-        SendWhisper("and here's my attack spells:", fromPlayer);
+        SendWhisper("et mes sorts offensifs :", fromPlayer);
         ch.SendSysMessage(negOut.str().c_str());
     }
 
@@ -3128,10 +3128,10 @@ void PlayerbotAI::HandleCommand(const std::string& text, Player& fromPlayer)
          uint32 silver = uint32(copper / 100);
          copper -= (silver * 100);
 
-         out << "|cffffffff[|h|cff00ffff" << m_bot->GetName() << "|h|cffffffff]" << " has |r|cff00ff00" << gold
-                 << "|r|cfffffc00g|r|cff00ff00" << silver
-                 << "|r|cffcdcdcds|r|cff00ff00" << copper
-                 << "|r|cffffd333c" << "|h|cffffffff bag slots |h|cff00ff00" << totalfree;
+         out << "|cffffffff[|h|cff00ffff" << m_bot->GetName() << "|h|cffffffff]" << " possède |r|cff00ff00" << gold
+                 << "|r|cfffffc00 po |r|cff00ff00" << silver
+                 << "|r|cffcdcdcd pa |r|cff00ff00" << copper
+                 << "|r|cffffd333 pc " << "|h|cffffffff et emplacements disponibles : |h|cff00ff00" << totalfree;
 
          copper = EstRepairAll();
          gold = uint32(copper / 10000);
@@ -3186,7 +3186,7 @@ void PlayerbotAI::HandleCommand(const std::string& text, Player& fromPlayer)
                             m_bot->GetPlayerbotAI()->ItemLocalization(itemName, pRewardItem->ItemId);
 
                             std::ostringstream out;
-                            out << "|cffffffff|Hitem:" << pRewardItem->ItemId << ":0:0:0:0:0:0:0" << "|h[" << itemName << "]|h|r rewarded";
+                            out << "|cffffffff|H Objet :" << pRewardItem->ItemId << ":0:0:0:0:0:0:0" << "|h[" << itemName << "]|h|r obtenu.";
                             SendWhisper(out.str(), fromPlayer);
                             wasRewarded = true;
                         }
@@ -3196,7 +3196,7 @@ void PlayerbotAI::HandleCommand(const std::string& text, Player& fromPlayer)
         }
         else
         {
-            std::string msg = "What? follow, stay, spells, (e)quip <itemlink>, (u)se <itemlink>, drop <questlink>, report, quests, stats";
+            std::string msg = "Pardon ? Les commandes que je peux interpréter sont les suivantes : follow, stay, spells, (e)quip <itemlink>, (u)se <itemlink>, drop <questlink>, report, quests, stats.";
             SendWhisper(msg, fromPlayer);
             m_bot->HandleEmoteCommand(EMOTE_ONESHOT_TALK);
         }
