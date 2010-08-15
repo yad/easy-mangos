@@ -1310,7 +1310,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         void GetBestItemForMyLevel();
         void PurgeMyBags();
         bool IsForMyClass(ItemPrototype const* pProto);
-        bool IsbuggedItem(ItemPrototype const* pProto);
+        bool IsNotAllowedItem(ItemPrototype const* pProto);
         ItemPrototype const* BestItemBetween(ItemPrototype const* pProto1, ItemPrototype const* pProto2, bool DPS);
         ItemPrototype const* CompareItem(ItemPrototype const* pProto1, ItemPrototype const* pProto2, ItemModType pType);
 
@@ -2521,6 +2521,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         void SetLevelAtLoading(uint32 lvl) { m_levelAtLoading = lvl; }
         uint32 GetLevelAtLoading() { return m_levelAtLoading; }
         bool IsBot() { return (GetSession()->IsBotSession()); }
+        uint16 GetSpe();
     protected:
 
         uint32 m_contestedPvPTimer;

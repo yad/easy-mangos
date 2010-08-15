@@ -106,52 +106,52 @@ PlayerbotAI::PlayerbotAI(PlayerbotMgr* const mgr, Player* const bot):
     {
         case CLASS_WARRIOR:
             m_combatStyle = COMBAT_MELEE;
-            m_spe = (uint8)WarriorProtection;
+            m_spe = WarriorProtection;
             m_classAI = (PlayerbotClassAI*) new PlayerbotWarriorAI(m_bot, this);
             break;
         case CLASS_PALADIN:
             m_combatStyle = COMBAT_MELEE;
-            m_spe = (uint8)PaladinHoly;
+            m_spe = PaladinHoly;
             m_classAI = (PlayerbotClassAI*) new PlayerbotPaladinAI(m_bot, this);
             break;
         case CLASS_HUNTER:
             m_combatStyle = COMBAT_RANGED;
-            m_spe = (uint8)HunterBeastMastery;
+            m_spe = HunterBeastMastery;
             m_classAI = (PlayerbotClassAI*) new PlayerbotHunterAI(m_bot, this);
             break;
         case CLASS_ROGUE:
             m_combatStyle = COMBAT_MELEE;
-            m_spe = (uint8)RogueSubtlety;
+            m_spe = RogueSubtlety;
             m_classAI = (PlayerbotClassAI*) new PlayerbotRogueAI(m_bot, this);
             break;
         case CLASS_PRIEST:
             m_combatStyle = COMBAT_RANGED;
-            m_spe = (uint8)PriestHoly;
+            m_spe = PriestHoly;
             m_classAI = (PlayerbotClassAI*) new PlayerbotPriestAI(m_bot, this);
             break;
         case CLASS_DEATH_KNIGHT:
             m_combatStyle = COMBAT_MELEE;
-            m_spe = (uint8)DeathKnightUnholy;
+            m_spe = DeathKnightUnholy;
             m_classAI = (PlayerbotClassAI*) new PlayerbotDeathKnightAI(m_bot, this);
             break;
         case CLASS_SHAMAN:
             m_combatStyle = COMBAT_MELEE;
-            m_spe = (uint8)ShamanElementalCombat;
+            m_spe = ShamanElementalCombat;
             m_classAI = (PlayerbotClassAI*) new PlayerbotShamanAI(m_bot, this);
             break;
         case CLASS_MAGE:
             m_combatStyle = COMBAT_RANGED;
-            m_spe = (uint8)MageFrost;
+            m_spe = MageFrost;
             m_classAI = (PlayerbotClassAI*) new PlayerbotMageAI(m_bot, this);
             break;
         case CLASS_WARLOCK:
             m_combatStyle = COMBAT_RANGED;
-            m_spe = (uint8)WarlockDestruction;
+            m_spe = WarlockDestruction;
             m_classAI = (PlayerbotClassAI*) new PlayerbotWarlockAI(m_bot, this);
             break;
         case CLASS_DRUID:
             m_combatStyle = COMBAT_MELEE;
-            m_spe = (uint8)DruidFeralCombat;
+            m_spe = DruidFeralCombat;
             m_classAI = (PlayerbotClassAI*) new PlayerbotDruidAI(m_bot, this);
             break;
     }
@@ -2935,7 +2935,7 @@ void PlayerbotAI::HandleCommand(const std::string& text, Player& fromPlayer)
                      posOut << " |" << color << "|HSorts :" << spellId << "|h["
                            << pSpellInfo->SpellName[loc] << "]|h|r";
                 else
-/                    negOut << " |" << color << "|HSorts :" << spellId << "|h["
+                     negOut << " |" << color << "|HSorts :" << spellId << "|h["
                            << pSpellInfo->SpellName[loc] << "]|h|r";
             }
 

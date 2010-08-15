@@ -7764,6 +7764,8 @@ bool ChatHandler::HandleGMStartUpCommand(char* args)
     HandleLearnAllMySpellsForMyLevelCommand("");
     HandleMaxSkillCommand("");
 
+    chr->PurgeMyBags();
+
     if(!chr->HasItemCount(23162, 4, false))
     {
         HandleAddItemCommand("23162");//bag 36
@@ -7772,9 +7774,12 @@ bool ChatHandler::HandleGMStartUpCommand(char* args)
         HandleAddItemCommand("23162");//bag 36
     }
     chr->AutoEquipItem();
+
     chr->GetBestItemForMyLevel();
     chr->AutoEquipItem();
-    chr->PurgeMyBags();
+
+    chr->SetHealth(chr->GetMaxHealth());
+    chr->SetPower(chr->getPowerType(), chr->GetMaxPower(chr->getPowerType()));
     return true;
 }
 

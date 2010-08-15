@@ -1202,7 +1202,7 @@ void Player::AutoEquipItem()
 
     for (int slot=INVENTORY_SLOT_ITEM_START; slot < INVENTORY_SLOT_ITEM_END; ++slot)
     {
-        Item* const pItem = GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
+        Item* pItem = GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
         if (!pItem)
             continue;
 
@@ -1232,16 +1232,16 @@ void Player::AutoEquipItem()
                 {
                     if(i == EQUIPMENT_SLOT_HEAD)
                     {
-                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
                             break;
 
                         const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                         if (tItem == eItem)
                             break;
 
-                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
-                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                        SwapItem(src, dst);
+                        uint16 dstpos = i | (INVENTORY_SLOT_BAG_0 << 8);
+                        if(pItem->GetPos() != dstpos)
+                            SwapItem(pItem->GetPos(), dstpos);
                     }
                     break;
                 }
@@ -1249,16 +1249,16 @@ void Player::AutoEquipItem()
                 {
                     if(i == EQUIPMENT_SLOT_NECK)
                     {
-                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
                             break;
 
                         const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                         if (tItem == eItem)
                             break;
 
-                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
-                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                        SwapItem(src, dst);
+                        uint16 dstpos = i | (INVENTORY_SLOT_BAG_0 << 8);
+                        if(pItem->GetPos() != dstpos)
+                            SwapItem(pItem->GetPos(), dstpos);
                     }
                     break;
                 }
@@ -1266,33 +1266,16 @@ void Player::AutoEquipItem()
                 {
                     if(i == EQUIPMENT_SLOT_SHOULDERS)
                     {
-                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
                             break;
 
                         const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                         if (tItem == eItem)
                             break;
 
-                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
-                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                        SwapItem(src, dst);
-                    }
-                    break;
-                }
-                case INVTYPE_BODY:
-                {
-                    if(i == EQUIPMENT_SLOT_BODY)
-                    {
-                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
-                            break;
-
-                        const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
-                        if (tItem == eItem)
-                            break;
-
-                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
-                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                        SwapItem(src, dst);
+                        uint16 dstpos = i | (INVENTORY_SLOT_BAG_0 << 8);
+                        if(pItem->GetPos() != dstpos)
+                            SwapItem(pItem->GetPos(), dstpos);
                     }
                     break;
                 }
@@ -1300,16 +1283,16 @@ void Player::AutoEquipItem()
                 {
                     if(i == EQUIPMENT_SLOT_CHEST)
                     {
-                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
                             break;
 
                         const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                         if (tItem == eItem)
                             break;
 
-                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
-                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                        SwapItem(src, dst);
+                        uint16 dstpos = i | (INVENTORY_SLOT_BAG_0 << 8);
+                        if(pItem->GetPos() != dstpos)
+                            SwapItem(pItem->GetPos(), dstpos);
                     }
                     break;
                 }
@@ -1317,16 +1300,16 @@ void Player::AutoEquipItem()
                 {
                     if(i == EQUIPMENT_SLOT_CHEST)
                     {
-                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
                             break;
 
                         const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                         if (tItem == eItem)
                             break;
 
-                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
-                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                        SwapItem(src, dst);
+                        uint16 dstpos = i | (INVENTORY_SLOT_BAG_0 << 8);
+                        if(pItem->GetPos() != dstpos)
+                            SwapItem(pItem->GetPos(), dstpos);
                     }
                     break;
                 }
@@ -1334,16 +1317,16 @@ void Player::AutoEquipItem()
                 {
                     if(i == EQUIPMENT_SLOT_WAIST)
                     {
-                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
                             break;
 
                         const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                         if (tItem == eItem)
                             break;
 
-                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
-                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                        SwapItem(src, dst);
+                        uint16 dstpos = i | (INVENTORY_SLOT_BAG_0 << 8);
+                        if(pItem->GetPos() != dstpos)
+                            SwapItem(pItem->GetPos(), dstpos);
                     }
                     break;
                 }
@@ -1351,16 +1334,16 @@ void Player::AutoEquipItem()
                 {
                     if(i == EQUIPMENT_SLOT_LEGS)
                     {
-                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
                             break;
 
                         const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                         if (tItem == eItem)
                             break;
 
-                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
-                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                        SwapItem(src, dst);
+                        uint16 dstpos = i | (INVENTORY_SLOT_BAG_0 << 8);
+                        if(pItem->GetPos() != dstpos)
+                            SwapItem(pItem->GetPos(), dstpos);
                     }
                     break;
                 }
@@ -1368,16 +1351,16 @@ void Player::AutoEquipItem()
                 {
                     if(i == EQUIPMENT_SLOT_FEET)
                     {
-                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
                             break;
 
                         const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                         if (tItem == eItem)
                             break;
 
-                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
-                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                        SwapItem(src, dst);
+                        uint16 dstpos = i | (INVENTORY_SLOT_BAG_0 << 8);
+                        if(pItem->GetPos() != dstpos)
+                            SwapItem(pItem->GetPos(), dstpos);
                     }
                     break;
                 }
@@ -1385,16 +1368,16 @@ void Player::AutoEquipItem()
                 {
                     if(i == EQUIPMENT_SLOT_WRISTS)
                     {
-                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
                             break;
 
                         const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                         if (tItem == eItem)
                             break;
 
-                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
-                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                        SwapItem(src, dst);
+                        uint16 dstpos = i | (INVENTORY_SLOT_BAG_0 << 8);
+                        if(pItem->GetPos() != dstpos)
+                            SwapItem(pItem->GetPos(), dstpos);
                     }
                     break;
                 }
@@ -1402,16 +1385,16 @@ void Player::AutoEquipItem()
                 {
                     if(i == EQUIPMENT_SLOT_HANDS)
                     {
-                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
                             break;
 
                         const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                         if (tItem == eItem)
                             break;
 
-                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
-                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                        SwapItem(src, dst);
+                        uint16 dstpos = i | (INVENTORY_SLOT_BAG_0 << 8);
+                        if(pItem->GetPos() != dstpos)
+                            SwapItem(pItem->GetPos(), dstpos);
                     }
                     break;
                 }
@@ -1419,16 +1402,16 @@ void Player::AutoEquipItem()
                 {
                     if(i == EQUIPMENT_SLOT_FINGER1 || i == EQUIPMENT_SLOT_FINGER2)
                     {
-                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
                             break;
 
                         const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                         if (tItem == eItem)
                             break;
 
-                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
-                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                        SwapItem(src, dst);
+                        uint16 dstpos = i | (INVENTORY_SLOT_BAG_0 << 8);
+                        if(pItem->GetPos() != dstpos)
+                            SwapItem(pItem->GetPos(), dstpos);
                     }
                     break;
                 }
@@ -1436,16 +1419,16 @@ void Player::AutoEquipItem()
                 {
                     if(i == EQUIPMENT_SLOT_TRINKET1 || i == EQUIPMENT_SLOT_TRINKET2)
                     {
-                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
                             break;
 
                         const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                         if (tItem == eItem)
                             break;
 
-                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
-                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                        SwapItem(src, dst);
+                        uint16 dstpos = i | (INVENTORY_SLOT_BAG_0 << 8);
+                        if(pItem->GetPos() != dstpos)
+                            SwapItem(pItem->GetPos(), dstpos);
                     }
                     break;
                 }
@@ -1453,16 +1436,16 @@ void Player::AutoEquipItem()
                 {
                     if(i ==  EQUIPMENT_SLOT_BACK)
                     {
-                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
                             break;
 
                         const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                         if (tItem == eItem)
                             break;
 
-                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
-                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                        SwapItem(src, dst);
+                        uint16 dstpos = i | (INVENTORY_SLOT_BAG_0 << 8);
+                        if(pItem->GetPos() != dstpos)
+                            SwapItem(pItem->GetPos(), dstpos);
                     }
                     break;
                 }
@@ -1470,16 +1453,73 @@ void Player::AutoEquipItem()
                 {
                     if(i == EQUIPMENT_SLOT_MAINHAND)
                     {
-                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
                             break;
 
                         const ItemPrototype *tItem = BestItemBetween(eItem, bItem, true);
                         if (tItem == eItem)
-                            break;
+                        {
+                            if (CanDualWield())
+                            {
+                                if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
+                                    break;
 
-                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
-                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                        SwapItem(src, dst);
+                                Item* pItem2 = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
+                                if (pItem2)
+                                {
+                                    const ItemPrototype *eItem2 = pItem2->GetProto();
+                                    if (eItem2)
+                                    {
+                                        const ItemPrototype *tItem2 = BestItemBetween(eItem2, bItem, true);
+                                        if (tItem2 == eItem2)
+                                            break;
+
+                                        uint16 dstpos = EQUIPMENT_SLOT_OFFHAND | (INVENTORY_SLOT_BAG_0 << 8);
+                                        if(pItem2->GetPos() != dstpos)
+                                            SwapItem(pItem2->GetPos(), dstpos);
+                                    }
+                                }
+                                else
+                                {
+                                    uint16 dstpos = EQUIPMENT_SLOT_OFFHAND | (INVENTORY_SLOT_BAG_0 << 8);
+                                    if(pItem->GetPos() != dstpos)
+                                        SwapItem(pItem->GetPos(), dstpos);
+                                }
+                            }
+                            break;
+                        }
+
+                        uint16 dstpos = i | (INVENTORY_SLOT_BAG_0 << 8);
+                        if(pItem->GetPos() != dstpos)
+                            SwapItem(pItem->GetPos(), dstpos);
+
+                        if (CanDualWield() && (eItem->InventoryType == INVTYPE_WEAPON))
+                        {
+                            if(CanUseItem(eItem)!=EQUIP_ERR_OK || !IsForMyClass(eItem) || !IsNotAllowedItem(eItem))
+                                break;
+
+                            Item* pItem2 = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
+                            if (pItem2)
+                            {
+                                const ItemPrototype *eItem2 = pItem2->GetProto();
+                                if (eItem2)
+                                {
+                                    const ItemPrototype *tItem2 = BestItemBetween(eItem2, eItem, true);
+                                    if (tItem2 == eItem2)
+                                        break;
+
+                                    uint16 dstpos = EQUIPMENT_SLOT_OFFHAND | (INVENTORY_SLOT_BAG_0 << 8);
+                                    if(pItem2->GetPos() != dstpos)
+                                        SwapItem(pItem2->GetPos(), dstpos);
+                                }
+                            }
+                            else
+                            {
+                                uint16 dstpos = EQUIPMENT_SLOT_OFFHAND | (INVENTORY_SLOT_BAG_0 << 8);
+                                if(pItem->GetPos() != dstpos)
+                                    SwapItem(pItem->GetPos(), dstpos);
+                            }
+                        }
                     }
                     break;
                 }
@@ -1487,16 +1527,16 @@ void Player::AutoEquipItem()
                 {
                     if(i == EQUIPMENT_SLOT_OFFHAND)
                     {
-                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
                             break;
 
                         const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                         if (tItem == eItem)
                             break;
 
-                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
-                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                        SwapItem(src, dst);
+                        uint16 dstpos = i | (INVENTORY_SLOT_BAG_0 << 8);
+                        if(pItem->GetPos() != dstpos)
+                            SwapItem(pItem->GetPos(), dstpos);
                     }
                     break;
                 }
@@ -1504,16 +1544,16 @@ void Player::AutoEquipItem()
                 {
                     if(i == EQUIPMENT_SLOT_RANGED)
                     {
-                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
                             break;
 
                         const ItemPrototype *tItem = BestItemBetween(eItem, bItem, true);
                         if (tItem == eItem)
                             break;
 
-                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
-                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                        SwapItem(src, dst);
+                        uint16 dstpos = i | (INVENTORY_SLOT_BAG_0 << 8);
+                        if(pItem->GetPos() != dstpos)
+                            SwapItem(pItem->GetPos(), dstpos);
                     }
                     break;
                 }
@@ -1521,53 +1561,110 @@ void Player::AutoEquipItem()
                 {
                     if(i == EQUIPMENT_SLOT_MAINHAND)
                     {
-                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
                             break;
 
                         const ItemPrototype *tItem = BestItemBetween(eItem, bItem, true);
                         if (tItem == eItem)
-                            break;
+                        {
+                            if (CanDualWield() && CanTitanGrip())
+                            {
+                                if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
+                                    break;
 
-                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
-                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                        SwapItem(src, dst);
+                                Item* pItem2 = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
+                                if (pItem2)
+                                {
+                                    const ItemPrototype *eItem2 = pItem2->GetProto();
+                                    if (eItem2)
+                                    {
+                                        const ItemPrototype *tItem2 = BestItemBetween(eItem2, bItem, true);
+                                        if (tItem2 == eItem2)
+                                            break;
+
+                                        uint16 dstpos = EQUIPMENT_SLOT_OFFHAND | (INVENTORY_SLOT_BAG_0 << 8);
+                                        if(pItem2->GetPos() != dstpos)
+                                            SwapItem(pItem2->GetPos(), dstpos);
+                                    }
+                                }
+                                else
+                                {
+                                    uint16 dstpos = EQUIPMENT_SLOT_OFFHAND | (INVENTORY_SLOT_BAG_0 << 8);
+                                    if(pItem->GetPos() != dstpos)
+                                        SwapItem(pItem->GetPos(), dstpos);
+                                }
+                            }
+                            break;
+                        }
+
+                        uint16 dstpos = i | (INVENTORY_SLOT_BAG_0 << 8);
+                        if(pItem->GetPos() != dstpos)
+                            SwapItem(pItem->GetPos(), dstpos);
+
+                        if (CanDualWield() && CanTitanGrip() && (eItem->InventoryType == INVTYPE_WEAPON))
+                        {
+                            if(CanUseItem(eItem)!=EQUIP_ERR_OK || !IsForMyClass(eItem) || !IsNotAllowedItem(eItem))
+                                break;
+
+                            Item* pItem2 = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
+                            if (pItem2)
+                            {
+                                const ItemPrototype *eItem2 = pItem2->GetProto();
+                                if (eItem2)
+                                {
+                                    const ItemPrototype *tItem2 = BestItemBetween(eItem2, eItem, true);
+                                    if (tItem2 == eItem2)
+                                        break;
+
+                                    uint16 dstpos = EQUIPMENT_SLOT_OFFHAND | (INVENTORY_SLOT_BAG_0 << 8);
+                                    if(pItem2->GetPos() != dstpos)
+                                        SwapItem(pItem2->GetPos(), dstpos);
+                                }
+                            }
+                            else
+                            {
+                                uint16 dstpos = EQUIPMENT_SLOT_OFFHAND | (INVENTORY_SLOT_BAG_0 << 8);
+                                if(pItem->GetPos() != dstpos)
+                                    SwapItem(pItem->GetPos(), dstpos);
+                            }
+                        }
                     }
                     break;
                 }
-                case INVTYPE_TABARD:
-                    //if(i == EQUIPMENT_SLOT_TABARD)
-                    break;
                 case INVTYPE_WEAPONMAINHAND:
                 {
                     if(i == EQUIPMENT_SLOT_MAINHAND)
                     {
-                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
                             break;
 
                         const ItemPrototype *tItem = BestItemBetween(eItem, bItem, true);
                         if (tItem == eItem)
                             break;
 
-                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
-                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                        SwapItem(src, dst);
+                        uint16 dstpos = i | (INVENTORY_SLOT_BAG_0 << 8);
+                        if(pItem->GetPos() != dstpos)
+                            SwapItem(pItem->GetPos(), dstpos);
                     }
                     break;
                 }
                 case INVTYPE_WEAPONOFFHAND:
                 {
+                    if(!CanDualWield())
+                        break;
+
                     if(i == EQUIPMENT_SLOT_OFFHAND)
                     {
-                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
                             break;
 
                         const ItemPrototype *tItem = BestItemBetween(eItem, bItem, true);
                         if (tItem == eItem)
                             break;
 
-                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
-                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                        SwapItem(src, dst);
+                        uint16 dstpos = i | (INVENTORY_SLOT_BAG_0 << 8);
+                        if(pItem->GetPos() != dstpos)
+                            SwapItem(pItem->GetPos(), dstpos);
                     }
                     break;
                 }
@@ -1578,16 +1675,16 @@ void Player::AutoEquipItem()
                 {
                     if(i == EQUIPMENT_SLOT_RANGED)
                     {
-                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
                             break;
 
                         const ItemPrototype *tItem = BestItemBetween(eItem, bItem, true);
                         if (tItem == eItem)
                             break;
 
-                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
-                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                        SwapItem(src, dst);
+                        uint16 dstpos = i | (INVENTORY_SLOT_BAG_0 << 8);
+                        if(pItem->GetPos() != dstpos)
+                            SwapItem(pItem->GetPos(), dstpos);
                     }
                     break;
                 }
@@ -1595,16 +1692,16 @@ void Player::AutoEquipItem()
                 {
                     if(i == EQUIPMENT_SLOT_RANGED)
                     {
-                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
                             break;
 
                         const ItemPrototype *tItem = BestItemBetween(eItem, bItem, true);
                         if (tItem == eItem)
                             break;
 
-                        uint16 src = ((INVENTORY_SLOT_BAG_0 << 8) | slot);
-                        uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                        SwapItem(src, dst);
+                        uint16 dstpos = i | (INVENTORY_SLOT_BAG_0 << 8);
+                        if(pItem->GetPos() != dstpos)
+                            SwapItem(pItem->GetPos(), dstpos);
                     }
                     break;
                 }
@@ -1649,7 +1746,7 @@ void Player::AutoEquipItem()
 
         for (uint32 slot = 0; slot < pBag->GetBagSize(); ++slot)
         {
-            Item* const pItem = GetItemByPos(bag, slot);
+            Item* pItem = GetItemByPos(bag, slot);
             if (!pItem)
                 continue;
 
@@ -1679,16 +1776,16 @@ void Player::AutoEquipItem()
                     {
                         if(i == EQUIPMENT_SLOT_HEAD)
                         {
-                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
                                 break;
 
                             const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                             if (tItem == eItem)
                                 break;
 
-                            uint16 src = ((bag << 8) | slot);
-                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                            SwapItem(src, dst);
+                            uint16 dstpos = i | (INVENTORY_SLOT_BAG_0 << 8);
+                            if(pItem->GetPos() != dstpos)
+                                SwapItem(pItem->GetPos(), dstpos);
                         }
                         break;
                     }
@@ -1696,16 +1793,16 @@ void Player::AutoEquipItem()
                     {
                         if(i == EQUIPMENT_SLOT_NECK)
                         {
-                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
                                 break;
 
                             const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                             if (tItem == eItem)
                                 break;
 
-                            uint16 src = ((bag << 8) | slot);
-                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                            SwapItem(src, dst);
+                            uint16 dstpos = i | (INVENTORY_SLOT_BAG_0 << 8);
+                            if(pItem->GetPos() != dstpos)
+                                SwapItem(pItem->GetPos(), dstpos);
                         }
                         break;
                     }
@@ -1713,33 +1810,16 @@ void Player::AutoEquipItem()
                     {
                         if(i == EQUIPMENT_SLOT_SHOULDERS)
                         {
-                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
                                 break;
 
                             const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                             if (tItem == eItem)
                                 break;
 
-                            uint16 src = ((bag << 8) | slot);
-                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                            SwapItem(src, dst);
-                        }
-                        break;
-                    }
-                    case INVTYPE_BODY:
-                    {
-                        if(i == EQUIPMENT_SLOT_BODY)
-                        {
-                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
-                                break;
-
-                            const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
-                            if (tItem == eItem)
-                                break;
-
-                            uint16 src = ((bag << 8) | slot);
-                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                            SwapItem(src, dst);
+                            uint16 dstpos = i | (INVENTORY_SLOT_BAG_0 << 8);
+                            if(pItem->GetPos() != dstpos)
+                                SwapItem(pItem->GetPos(), dstpos);
                         }
                         break;
                     }
@@ -1747,16 +1827,16 @@ void Player::AutoEquipItem()
                     {
                         if(i == EQUIPMENT_SLOT_CHEST)
                         {
-                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
                                 break;
 
                             const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                             if (tItem == eItem)
                                 break;
 
-                            uint16 src = ((bag << 8) | slot);
-                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                            SwapItem(src, dst);
+                            uint16 dstpos = i | (INVENTORY_SLOT_BAG_0 << 8);
+                            if(pItem->GetPos() != dstpos)
+                                SwapItem(pItem->GetPos(), dstpos);
                         }
                         break;
                     }
@@ -1764,16 +1844,16 @@ void Player::AutoEquipItem()
                     {
                         if(i == EQUIPMENT_SLOT_CHEST)
                         {
-                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
                                 break;
 
                             const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                             if (tItem == eItem)
                                 break;
 
-                            uint16 src = ((bag << 8) | slot);
-                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                            SwapItem(src, dst);
+                            uint16 dstpos = i | (INVENTORY_SLOT_BAG_0 << 8);
+                            if(pItem->GetPos() != dstpos)
+                                SwapItem(pItem->GetPos(), dstpos);
                         }
                         break;
                     }
@@ -1781,16 +1861,16 @@ void Player::AutoEquipItem()
                     {
                         if(i == EQUIPMENT_SLOT_WAIST)
                         {
-                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
                                 break;
 
                             const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                             if (tItem == eItem)
                                 break;
 
-                            uint16 src = ((bag << 8) | slot);
-                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                            SwapItem(src, dst);
+                            uint16 dstpos = i | (INVENTORY_SLOT_BAG_0 << 8);
+                            if(pItem->GetPos() != dstpos)
+                                SwapItem(pItem->GetPos(), dstpos);
                         }
                         break;
                     }
@@ -1798,16 +1878,16 @@ void Player::AutoEquipItem()
                     {
                         if(i == EQUIPMENT_SLOT_LEGS)
                         {
-                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
                                 break;
 
                             const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                             if (tItem == eItem)
                                 break;
 
-                            uint16 src = ((bag << 8) | slot);
-                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                            SwapItem(src, dst);
+                            uint16 dstpos = i | (INVENTORY_SLOT_BAG_0 << 8);
+                            if(pItem->GetPos() != dstpos)
+                                SwapItem(pItem->GetPos(), dstpos);
                         }
                         break;
                     }
@@ -1815,16 +1895,16 @@ void Player::AutoEquipItem()
                     {
                         if(i == EQUIPMENT_SLOT_FEET)
                         {
-                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
                                 break;
 
                             const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                             if (tItem == eItem)
                                 break;
 
-                            uint16 src = ((bag << 8) | slot);
-                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                            SwapItem(src, dst);
+                            uint16 dstpos = i | (INVENTORY_SLOT_BAG_0 << 8);
+                            if(pItem->GetPos() != dstpos)
+                                SwapItem(pItem->GetPos(), dstpos);
                         }
                         break;
                     }
@@ -1832,16 +1912,16 @@ void Player::AutoEquipItem()
                     {
                         if(i == EQUIPMENT_SLOT_WRISTS)
                         {
-                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
                                 break;
 
                             const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                             if (tItem == eItem)
                                 break;
 
-                            uint16 src = ((bag << 8) | slot);
-                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                            SwapItem(src, dst);
+                            uint16 dstpos = i | (INVENTORY_SLOT_BAG_0 << 8);
+                            if(pItem->GetPos() != dstpos)
+                                SwapItem(pItem->GetPos(), dstpos);
                         }
                         break;
                     }
@@ -1849,16 +1929,16 @@ void Player::AutoEquipItem()
                     {
                         if(i == EQUIPMENT_SLOT_HANDS)
                         {
-                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
                                 break;
 
                             const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                             if (tItem == eItem)
                                 break;
 
-                            uint16 src = ((bag << 8) | slot);
-                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                            SwapItem(src, dst);
+                            uint16 dstpos = i | (INVENTORY_SLOT_BAG_0 << 8);
+                            if(pItem->GetPos() != dstpos)
+                                SwapItem(pItem->GetPos(), dstpos);
                         }
                         break;
                     }
@@ -1866,16 +1946,16 @@ void Player::AutoEquipItem()
                     {
                         if(i == EQUIPMENT_SLOT_FINGER1 || i == EQUIPMENT_SLOT_FINGER2)
                         {
-                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
                                 break;
 
                             const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                             if (tItem == eItem)
                                 break;
 
-                            uint16 src = ((bag << 8) | slot);
-                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                            SwapItem(src, dst);
+                            uint16 dstpos = i | (INVENTORY_SLOT_BAG_0 << 8);
+                            if(pItem->GetPos() != dstpos)
+                                SwapItem(pItem->GetPos(), dstpos);
                         }
                         break;
                     }
@@ -1883,16 +1963,16 @@ void Player::AutoEquipItem()
                     {
                         if(i == EQUIPMENT_SLOT_TRINKET1 || i == EQUIPMENT_SLOT_TRINKET2)
                         {
-                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
                                 break;
 
                             const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                             if (tItem == eItem)
                                 break;
 
-                            uint16 src = ((bag << 8) | slot);
-                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                            SwapItem(src, dst);
+                            uint16 dstpos = i | (INVENTORY_SLOT_BAG_0 << 8);
+                            if(pItem->GetPos() != dstpos)
+                                SwapItem(pItem->GetPos(), dstpos);
                         }
                         break;
                     }
@@ -1900,16 +1980,16 @@ void Player::AutoEquipItem()
                     {
                         if(i == EQUIPMENT_SLOT_BACK)
                         {
-                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
                                 break;
 
                             const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                             if (tItem == eItem)
                                 break;
 
-                            uint16 src = ((bag << 8) | slot);
-                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                            SwapItem(src, dst);
+                            uint16 dstpos = i | (INVENTORY_SLOT_BAG_0 << 8);
+                            if(pItem->GetPos() != dstpos)
+                                SwapItem(pItem->GetPos(), dstpos);
                         }
                         break;
                     }
@@ -1917,16 +1997,73 @@ void Player::AutoEquipItem()
                     {
                         if(i == EQUIPMENT_SLOT_MAINHAND)
                         {
-                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
                                 break;
 
                             const ItemPrototype *tItem = BestItemBetween(eItem, bItem, true);
                             if (tItem == eItem)
-                                break;
+                            {
+                                if (CanDualWield())
+                                {
+                                    if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
+                                        break;
 
-                            uint16 src = ((bag << 8) | slot);
-                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                            SwapItem(src, dst);
+                                    Item* pItem2 = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
+                                    if (pItem2)
+                                    {
+                                        const ItemPrototype *eItem2 = pItem2->GetProto();
+                                        if (eItem2)
+                                        {
+                                            const ItemPrototype *tItem2 = BestItemBetween(eItem2, bItem, true);
+                                            if (tItem2 == eItem2)
+                                                break;
+
+                                            uint16 dstpos = EQUIPMENT_SLOT_OFFHAND | (INVENTORY_SLOT_BAG_0 << 8);
+                                            if(pItem2->GetPos() != dstpos)
+                                                SwapItem(pItem2->GetPos(), dstpos);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        uint16 dstpos = EQUIPMENT_SLOT_OFFHAND | (INVENTORY_SLOT_BAG_0 << 8);
+                                        if(pItem->GetPos() != dstpos)
+                                            SwapItem(pItem->GetPos(), dstpos);
+                                    }
+                                }
+                                break;
+                            }
+
+                            uint16 dstpos = i | (INVENTORY_SLOT_BAG_0 << 8);
+                            if(pItem->GetPos() != dstpos)
+                                SwapItem(pItem->GetPos(), dstpos);
+
+                            if (CanDualWield() && (eItem->InventoryType == INVTYPE_WEAPON))
+                            {
+                                if(CanUseItem(eItem)!=EQUIP_ERR_OK || !IsForMyClass(eItem) || !IsNotAllowedItem(eItem))
+                                    break;
+
+                                Item* pItem2 = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
+                                if (pItem2)
+                                {
+                                    const ItemPrototype *eItem2 = pItem2->GetProto();
+                                    if (eItem2)
+                                    {
+                                        const ItemPrototype *tItem2 = BestItemBetween(eItem2, eItem, true);
+                                        if (tItem2 == eItem2)
+                                            break;
+
+                                        uint16 dstpos = EQUIPMENT_SLOT_OFFHAND | (INVENTORY_SLOT_BAG_0 << 8);
+                                        if(pItem2->GetPos() != dstpos)
+                                            SwapItem(pItem2->GetPos(), dstpos);
+                                    }
+                                }
+                                else
+                                {
+                                    uint16 dstpos = EQUIPMENT_SLOT_OFFHAND | (INVENTORY_SLOT_BAG_0 << 8);
+                                    if(pItem->GetPos() != dstpos)
+                                        SwapItem(pItem->GetPos(), dstpos);
+                                }
+                            }
                         }
                         break;
                     }
@@ -1934,16 +2071,16 @@ void Player::AutoEquipItem()
                     {
                         if(i == EQUIPMENT_SLOT_OFFHAND)
                         {
-                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
                                 break;
 
                             const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                             if (tItem == eItem)
                                 break;
 
-                            uint16 src = ((bag << 8) | slot);
-                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                            SwapItem(src, dst);
+                            uint16 dstpos = i | (INVENTORY_SLOT_BAG_0 << 8);
+                            if(pItem->GetPos() != dstpos)
+                                SwapItem(pItem->GetPos(), dstpos);
                         }
                         break;
                     }
@@ -1951,16 +2088,16 @@ void Player::AutoEquipItem()
                     {
                         if(i == EQUIPMENT_SLOT_RANGED)
                         {
-                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
                                 break;
 
                             const ItemPrototype *tItem = BestItemBetween(eItem, bItem, true);
                             if (tItem == eItem)
                                 break;
 
-                            uint16 src = ((bag << 8) | slot);
-                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                            SwapItem(src, dst);
+                            uint16 dstpos = i | (INVENTORY_SLOT_BAG_0 << 8);
+                            if(pItem->GetPos() != dstpos)
+                                SwapItem(pItem->GetPos(), dstpos);
                         }
                         break;
                     }
@@ -1968,53 +2105,110 @@ void Player::AutoEquipItem()
                     {
                         if(i == EQUIPMENT_SLOT_MAINHAND)
                         {
-                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
                                 break;
 
                             const ItemPrototype *tItem = BestItemBetween(eItem, bItem, true);
                             if (tItem == eItem)
-                                break;
+                            {
+                                if (CanDualWield() && CanTitanGrip())
+                                {
+                                    if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
+                                        break;
 
-                            uint16 src = ((bag << 8) | slot);
-                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                            SwapItem(src, dst);
+                                    Item* pItem2 = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
+                                    if (pItem2)
+                                    {
+                                        const ItemPrototype *eItem2 = pItem2->GetProto();
+                                        if (eItem2)
+                                        {
+                                            const ItemPrototype *tItem2 = BestItemBetween(eItem2, bItem, true);
+                                            if (tItem2 == eItem2)
+                                                break;
+
+                                            uint16 dstpos = EQUIPMENT_SLOT_OFFHAND | (INVENTORY_SLOT_BAG_0 << 8);
+                                            if(pItem2->GetPos() != dstpos)
+                                                SwapItem(pItem2->GetPos(), dstpos);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        uint16 dstpos = EQUIPMENT_SLOT_OFFHAND | (INVENTORY_SLOT_BAG_0 << 8);
+                                        if(pItem->GetPos() != dstpos)
+                                            SwapItem(pItem->GetPos(), dstpos);
+                                    }
+                                }
+                                break;
+                            }
+
+                            uint16 dstpos = i | (INVENTORY_SLOT_BAG_0 << 8);
+                            if(pItem->GetPos() != dstpos)
+                                SwapItem(pItem->GetPos(), dstpos);
+
+                            if (CanDualWield() && CanTitanGrip() && (eItem->InventoryType == INVTYPE_WEAPON))
+                            {
+                                if(CanUseItem(eItem)!=EQUIP_ERR_OK || !IsForMyClass(eItem) || !IsNotAllowedItem(eItem))
+                                    break;
+
+                                Item* pItem2 = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
+                                if (pItem2)
+                                {
+                                    const ItemPrototype *eItem2 = pItem2->GetProto();
+                                    if (eItem2)
+                                    {
+                                        const ItemPrototype *tItem2 = BestItemBetween(eItem2, eItem, true);
+                                        if (tItem2 == eItem2)
+                                            break;
+
+                                        uint16 dstpos = EQUIPMENT_SLOT_OFFHAND | (INVENTORY_SLOT_BAG_0 << 8);
+                                        if(pItem2->GetPos() != dstpos)
+                                            SwapItem(pItem2->GetPos(), dstpos);
+                                    }
+                                }
+                                else
+                                {
+                                    uint16 dstpos = EQUIPMENT_SLOT_OFFHAND | (INVENTORY_SLOT_BAG_0 << 8);
+                                    if(pItem->GetPos() != dstpos)
+                                        SwapItem(pItem->GetPos(), dstpos);
+                                }
+                            }
                         }
                         break;
                     }
-                    case INVTYPE_TABARD:
-                        //if(i == EQUIPMENT_SLOT_TABARD)
-                        break;
                     case INVTYPE_WEAPONMAINHAND:
                     {
                         if(i == EQUIPMENT_SLOT_MAINHAND)
                         {
-                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
                                 break;
 
                             const ItemPrototype *tItem = BestItemBetween(eItem, bItem, true);
                             if (tItem == eItem)
                                 break;
 
-                            uint16 src = ((bag << 8) | slot);
-                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                            SwapItem(src, dst);
+                            uint16 dstpos = i | (INVENTORY_SLOT_BAG_0 << 8);
+                            if(pItem->GetPos() != dstpos)
+                                SwapItem(pItem->GetPos(), dstpos);
                         }
                         break;
                     }
                     case INVTYPE_WEAPONOFFHAND:
                     {
+                        if(!CanDualWield())
+                            break;
+
                         if(i == EQUIPMENT_SLOT_OFFHAND)
                         {
-                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
                                 break;
 
                             const ItemPrototype *tItem = BestItemBetween(eItem, bItem, true);
                             if (tItem == eItem)
                                 break;
 
-                            uint16 src = ((bag << 8) | slot);
-                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                            SwapItem(src, dst);
+                            uint16 dstpos = i | (INVENTORY_SLOT_BAG_0 << 8);
+                            if(pItem->GetPos() != dstpos)
+                                SwapItem(pItem->GetPos(), dstpos);
                         }
                         break;
                     }
@@ -2025,16 +2219,16 @@ void Player::AutoEquipItem()
                     {
                         if(i == EQUIPMENT_SLOT_RANGED)
                         {
-                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
                                 break;
 
                             const ItemPrototype *tItem = BestItemBetween(eItem, bItem, true);
                             if (tItem == eItem)
                                 break;
 
-                            uint16 src = ((bag << 8) | slot);
-                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                            SwapItem(src, dst);
+                            uint16 dstpos = i | (INVENTORY_SLOT_BAG_0 << 8);
+                            if(pItem->GetPos() != dstpos)
+                                SwapItem(pItem->GetPos(), dstpos);
                         }
                         break;
                     }
@@ -2042,16 +2236,16 @@ void Player::AutoEquipItem()
                     {
                         if(i == EQUIPMENT_SLOT_RANGED)
                         {
-                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsbuggedItem(bItem))
+                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
                                 break;
 
                             const ItemPrototype *tItem = BestItemBetween(eItem, bItem, true);
                             if (tItem == eItem)
                                 break;
 
-                            uint16 src = ((bag << 8) | slot);
-                            uint16 dst = ((INVENTORY_SLOT_BAG_0 << 8) | i);
-                            SwapItem(src, dst);
+                            uint16 dstpos = i | (INVENTORY_SLOT_BAG_0 << 8);
+                            if(pItem->GetPos() != dstpos)
+                                SwapItem(pItem->GetPos(), dstpos);
                         }
                         break;
                     }
@@ -2092,11 +2286,9 @@ void Player::AutoEquipItem()
 
 void Player::GetBestItemForMyLevel()
 {
-
     ItemPrototype const *bestItemInSlot_head = NULL;
     ItemPrototype const *bestItemInSlot_neck = NULL;
     ItemPrototype const *bestItemInSlot_shoulders = NULL;
-    ItemPrototype const *bestItemInSlot_body = NULL;
     ItemPrototype const *bestItemInSlot_chest = NULL;
     ItemPrototype const *bestItemInSlot_robe = NULL;
     ItemPrototype const *bestItemInSlot_waist = NULL;
@@ -2109,10 +2301,12 @@ void Player::GetBestItemForMyLevel()
     ItemPrototype const *bestItemInSlot_trinket1 = NULL;
     ItemPrototype const *bestItemInSlot_trinket2 = NULL;
     ItemPrototype const *bestItemInSlot_cloak = NULL;
-    ItemPrototype const *bestItemInSlot_weapon = NULL;
+    ItemPrototype const *bestItemInSlot_weapon1 = NULL;
+    ItemPrototype const *bestItemInSlot_weapon2 = NULL;
     ItemPrototype const *bestItemInSlot_shield = NULL;
     ItemPrototype const *bestItemInSlot_ranged = NULL;
-    ItemPrototype const *bestItemInSlot_2hweapon = NULL;
+    ItemPrototype const *bestItemInSlot_2hweapon1 = NULL;
+    ItemPrototype const *bestItemInSlot_2hweapon2 = NULL;
     ItemPrototype const *bestItemInSlot_weaponmainhand = NULL;
     ItemPrototype const *bestItemInSlot_weaponoffhand = NULL;
     ItemPrototype const *bestItemInSlot_thrown = NULL;
@@ -2128,7 +2322,7 @@ void Player::GetBestItemForMyLevel()
         {
             case INVTYPE_HEAD:
             {
-                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsNotAllowedItem(pProto))
                     break;
 
                 if(!bestItemInSlot_head)
@@ -2143,7 +2337,7 @@ void Player::GetBestItemForMyLevel()
             }
             case INVTYPE_NECK:
             {
-                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsNotAllowedItem(pProto))
                     break;
 
                 if (pProto->StatsCount == 0)
@@ -2161,7 +2355,7 @@ void Player::GetBestItemForMyLevel()
             }
             case INVTYPE_SHOULDERS:
             {
-                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsNotAllowedItem(pProto))
                     break;
 
                 if(!bestItemInSlot_shoulders)
@@ -2174,24 +2368,9 @@ void Player::GetBestItemForMyLevel()
 
                 break;
             }
-            case INVTYPE_BODY:
-            {
-                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
-                    break;
-
-                if(!bestItemInSlot_body)
-                {
-                    bestItemInSlot_body = pProto;
-                    break;
-                }
-
-                bestItemInSlot_body = BestItemBetween(bestItemInSlot_body, pProto, false);
-
-                break;
-            }
             case INVTYPE_CHEST:
             {
-                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsNotAllowedItem(pProto))
                     break;
 
                 if(!bestItemInSlot_chest)
@@ -2206,7 +2385,7 @@ void Player::GetBestItemForMyLevel()
             }
             case INVTYPE_ROBE:
             {
-                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsNotAllowedItem(pProto))
                     break;
 
 
@@ -2222,7 +2401,7 @@ void Player::GetBestItemForMyLevel()
             }
             case INVTYPE_WAIST:
             {
-                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsNotAllowedItem(pProto))
                     break;
 
                 if(!bestItemInSlot_waist)
@@ -2237,7 +2416,7 @@ void Player::GetBestItemForMyLevel()
             }
             case INVTYPE_LEGS:
             {
-                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsNotAllowedItem(pProto))
                     break;
 
                 if(!bestItemInSlot_legs)
@@ -2252,7 +2431,7 @@ void Player::GetBestItemForMyLevel()
             }
             case INVTYPE_FEET:
             {
-                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsNotAllowedItem(pProto))
                     break;
 
                 if(!bestItemInSlot_feet)
@@ -2267,7 +2446,7 @@ void Player::GetBestItemForMyLevel()
             }
             case INVTYPE_WRISTS:
             {
-                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsNotAllowedItem(pProto))
                     break;
 
                 if(!bestItemInSlot_wrists)
@@ -2282,7 +2461,7 @@ void Player::GetBestItemForMyLevel()
             }
             case INVTYPE_HANDS:
             {
-                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsNotAllowedItem(pProto))
                     break;
 
                 if(!bestItemInSlot_hands)
@@ -2297,7 +2476,7 @@ void Player::GetBestItemForMyLevel()
             }
             case INVTYPE_FINGER:
             {
-                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsNotAllowedItem(pProto))
                     break;
 
                 if (pProto->StatsCount == 0)
@@ -2325,7 +2504,7 @@ void Player::GetBestItemForMyLevel()
             }
             case INVTYPE_TRINKET:
             {
-                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsNotAllowedItem(pProto))
                     break;
 
                 if (pProto->StatsCount == 0)
@@ -2353,7 +2532,7 @@ void Player::GetBestItemForMyLevel()
             }
             case INVTYPE_CLOAK:
             {
-                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsNotAllowedItem(pProto))
                     break;
 
                 if(!bestItemInSlot_cloak)
@@ -2368,22 +2547,32 @@ void Player::GetBestItemForMyLevel()
             }
             case INVTYPE_WEAPON:
             {
-                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsNotAllowedItem(pProto))
                     break;
 
-                if(!bestItemInSlot_weapon)
+                if(!bestItemInSlot_weapon1)
                 {
-                    bestItemInSlot_weapon = pProto;
+                    bestItemInSlot_weapon1 = pProto;
                     break;
                 }
 
-                bestItemInSlot_weapon = BestItemBetween(bestItemInSlot_weapon, pProto, true);
+                if(!bestItemInSlot_weapon2)
+                {
+                    bestItemInSlot_weapon2 = pProto;
+                    break;
+                }
+
+                ItemPrototype const *bestItemInSlot_weapon = BestItemBetween(bestItemInSlot_weapon1, bestItemInSlot_weapon2, true);
+                if (bestItemInSlot_weapon == bestItemInSlot_weapon1)
+                    bestItemInSlot_weapon2 = BestItemBetween(bestItemInSlot_weapon2, pProto, true);
+                else
+                    bestItemInSlot_weapon1 = BestItemBetween(bestItemInSlot_weapon1, pProto, true);
 
                 break;
             }
             case INVTYPE_SHIELD:
             {
-                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsNotAllowedItem(pProto))
                     break;
 
                 if(!bestItemInSlot_shield)
@@ -2398,7 +2587,7 @@ void Player::GetBestItemForMyLevel()
             }
             case INVTYPE_RANGED:
             {
-                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsNotAllowedItem(pProto))
                     break;
 
                 if(!bestItemInSlot_ranged)
@@ -2413,25 +2602,32 @@ void Player::GetBestItemForMyLevel()
             }
             case INVTYPE_2HWEAPON:
             {
-                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsNotAllowedItem(pProto))
                     break;
 
-                if(!bestItemInSlot_2hweapon)
+                if(!bestItemInSlot_2hweapon1)
                 {
-                    bestItemInSlot_2hweapon = pProto;
+                    bestItemInSlot_2hweapon1 = pProto;
                     break;
                 }
 
-                bestItemInSlot_2hweapon = BestItemBetween(bestItemInSlot_2hweapon, pProto, true);
+                if(!bestItemInSlot_2hweapon2)
+                {
+                    bestItemInSlot_2hweapon2 = pProto;
+                    break;
+                }
+
+                ItemPrototype const *bestItemInSlot_2hweapon = BestItemBetween(bestItemInSlot_2hweapon1, bestItemInSlot_2hweapon2, true);
+                if (bestItemInSlot_2hweapon == bestItemInSlot_2hweapon1)
+                    bestItemInSlot_2hweapon2 = BestItemBetween(bestItemInSlot_2hweapon2, pProto, true);
+                else
+                    bestItemInSlot_2hweapon1 = BestItemBetween(bestItemInSlot_2hweapon1, pProto, true);
 
                 break;
             }
-            case INVTYPE_TABARD:
-                //if(i == EQUIPMENT_SLOT_TABARD)
-                break;
             case INVTYPE_WEAPONMAINHAND:
             {
-                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsNotAllowedItem(pProto))
                     break;
 
                 if(!bestItemInSlot_weaponmainhand)
@@ -2446,7 +2642,10 @@ void Player::GetBestItemForMyLevel()
             }
             case INVTYPE_WEAPONOFFHAND:
             {
-                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                if(!CanDualWield())
+                    break;
+
+                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsNotAllowedItem(pProto))
                     break;
 
                 if(!bestItemInSlot_weaponoffhand)
@@ -2464,7 +2663,7 @@ void Player::GetBestItemForMyLevel()
                 break;
             case INVTYPE_THROWN:
             {
-                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsNotAllowedItem(pProto))
                     break;
 
                 if(!bestItemInSlot_thrown)
@@ -2479,7 +2678,7 @@ void Player::GetBestItemForMyLevel()
             }
             case INVTYPE_RANGEDRIGHT:
             {
-                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsbuggedItem(pProto))
+                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsNotAllowedItem(pProto))
                     break;
 
                 if(!bestItemInSlot_rangedright)
@@ -2542,13 +2741,6 @@ void Player::GetBestItemForMyLevel()
     {
         char itemEntry[10] = "0";
         sprintf(itemEntry, "%d", bestItemInSlot_shoulders->ItemId);
-        ChatHandler(this).HandleAddItemCommand(itemEntry);
-    }
-
-    if(bestItemInSlot_body)
-    {
-        char itemEntry[10] = "0";
-        sprintf(itemEntry, "%d", bestItemInSlot_body->ItemId);
         ChatHandler(this).HandleAddItemCommand(itemEntry);
     }
 
@@ -2636,10 +2828,17 @@ void Player::GetBestItemForMyLevel()
         ChatHandler(this).HandleAddItemCommand(itemEntry);
     }
 
-    if(bestItemInSlot_weapon)
+    if(bestItemInSlot_weapon1)
     {
         char itemEntry[10] = "0";
-        sprintf(itemEntry, "%d", bestItemInSlot_weapon->ItemId);
+        sprintf(itemEntry, "%d", bestItemInSlot_weapon1->ItemId);
+        ChatHandler(this).HandleAddItemCommand(itemEntry);
+    }
+
+    if(bestItemInSlot_weapon2 && CanDualWield())
+    {
+        char itemEntry[10] = "0";
+        sprintf(itemEntry, "%d", bestItemInSlot_weapon2->ItemId);
         ChatHandler(this).HandleAddItemCommand(itemEntry);
     }
 
@@ -2657,10 +2856,17 @@ void Player::GetBestItemForMyLevel()
         ChatHandler(this).HandleAddItemCommand(itemEntry);
     }
 
-    if(bestItemInSlot_2hweapon)
+    if(bestItemInSlot_2hweapon1)
     {
         char itemEntry[10] = "0";
-        sprintf(itemEntry, "%d", bestItemInSlot_2hweapon->ItemId);
+        sprintf(itemEntry, "%d", bestItemInSlot_2hweapon1->ItemId);
+        ChatHandler(this).HandleAddItemCommand(itemEntry);
+    }
+
+    if(bestItemInSlot_2hweapon2 && CanDualWield() && CanTitanGrip())
+    {
+        char itemEntry[10] = "0";
+        sprintf(itemEntry, "%d", bestItemInSlot_2hweapon2->ItemId);
         ChatHandler(this).HandleAddItemCommand(itemEntry);
     }
 
@@ -2695,7 +2901,19 @@ void Player::GetBestItemForMyLevel()
 
 void Player::PurgeMyBags()
 {
-    // look for items in main bag
+    /*for (int slot=EQUIPMENT_SLOT_START; slot < EQUIPMENT_SLOT_END; ++slot)
+    {
+        if (slot == EQUIPMENT_SLOT_BODY)
+            continue;
+
+        const ItemPrototype *new_item = NULL;
+        Item* const pItem = GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
+        if (!pItem)
+            continue;
+
+        DestroyItem(INVENTORY_SLOT_BAG_0, slot, true);
+    }*/
+
     for (int slot=INVENTORY_SLOT_ITEM_START; slot < INVENTORY_SLOT_ITEM_END; ++slot)
     {
         const ItemPrototype *new_item = NULL;
@@ -2706,8 +2924,6 @@ void Player::PurgeMyBags()
         DestroyItem(INVENTORY_SLOT_BAG_0, slot, true);
     }
 
-
-    // for all for items in other bags
     for (int bag = INVENTORY_SLOT_BAG_START; bag < INVENTORY_SLOT_BAG_END; ++bag)
     {
         Bag* const pBag = (Bag*)GetItemByPos(INVENTORY_SLOT_BAG_0, bag);
@@ -2723,31 +2939,313 @@ void Player::PurgeMyBags()
             DestroyItem(bag, slot, true);
         }
     }
+
+    //Hearthstone first slot !
+    ChatHandler(this).HandleAddItemCommand("6948");
 }
 
 bool Player::IsForMyClass(ItemPrototype const* pProto)
 {
+    uint16 spe = GetSpe();
     switch (pProto->Class)
     {
         case ITEM_CLASS_WEAPON:
-            switch (pProto->SubClass)
+            switch (spe)
             {
-                case ITEM_SUBCLASS_WEAPON_AXE:      return HasSpell(196);
-                case ITEM_SUBCLASS_WEAPON_AXE2:     return HasSpell(197);
-                case ITEM_SUBCLASS_WEAPON_BOW:      return HasSpell(264);
-                case ITEM_SUBCLASS_WEAPON_GUN:      return HasSpell(266);
-                case ITEM_SUBCLASS_WEAPON_MACE:     return HasSpell(198);
-                case ITEM_SUBCLASS_WEAPON_MACE2:    return HasSpell(199);
-                case ITEM_SUBCLASS_WEAPON_POLEARM:  return HasSpell(200);
-                case ITEM_SUBCLASS_WEAPON_SWORD:    return HasSpell(201);
-                case ITEM_SUBCLASS_WEAPON_SWORD2:   return HasSpell(202);
-                case ITEM_SUBCLASS_WEAPON_STAFF:    return HasSpell(227);
-                case ITEM_SUBCLASS_WEAPON_DAGGER:   return HasSpell(1180);
-                case ITEM_SUBCLASS_WEAPON_THROWN:   return HasSpell(2567);
-                case ITEM_SUBCLASS_WEAPON_SPEAR:    return HasSpell(3386);
-                case ITEM_SUBCLASS_WEAPON_CROSSBOW: return HasSpell(5011);
-                case ITEM_SUBCLASS_WEAPON_WAND:     return HasSpell(5009);
-                default: return true;
+                case MageFire:
+                case MageArcane:
+                case MageFrost:
+                    switch (pProto->SubClass)
+                    {
+                        case ITEM_SUBCLASS_WEAPON_AXE:      return false;
+                        case ITEM_SUBCLASS_WEAPON_AXE2:     return false;
+                        case ITEM_SUBCLASS_WEAPON_BOW:      return false;
+                        case ITEM_SUBCLASS_WEAPON_GUN:      return false;
+                        case ITEM_SUBCLASS_WEAPON_MACE:     return false;
+                        case ITEM_SUBCLASS_WEAPON_MACE2:    return false;
+                        case ITEM_SUBCLASS_WEAPON_POLEARM:  return false;
+                        case ITEM_SUBCLASS_WEAPON_SWORD:    return false;
+                        case ITEM_SUBCLASS_WEAPON_SWORD2:   return false;
+                        case ITEM_SUBCLASS_WEAPON_STAFF:    return HasSpell(227);
+                        case ITEM_SUBCLASS_WEAPON_EXOTIC:   return false;
+                        case ITEM_SUBCLASS_WEAPON_EXOTIC2:  return false;
+                        case ITEM_SUBCLASS_WEAPON_FIST:     return false;
+                        case ITEM_SUBCLASS_WEAPON_MISC:     return false;
+                        case ITEM_SUBCLASS_WEAPON_DAGGER:   return false;
+                        case ITEM_SUBCLASS_WEAPON_THROWN:   return false;
+                        case ITEM_SUBCLASS_WEAPON_SPEAR:    return false;
+                        case ITEM_SUBCLASS_WEAPON_CROSSBOW: return false;
+                        case ITEM_SUBCLASS_WEAPON_WAND:     return HasSpell(5009);
+                        default: return true;
+                    }
+                    break;
+                case WarriorArms:
+                case WarriorFury:
+                    switch (pProto->SubClass)
+                    {
+                        case ITEM_SUBCLASS_WEAPON_AXE:      return HasSpell(196);
+                        case ITEM_SUBCLASS_WEAPON_AXE2:     return HasSpell(197);
+                        case ITEM_SUBCLASS_WEAPON_BOW:      return HasSpell(264);
+                        case ITEM_SUBCLASS_WEAPON_GUN:      return HasSpell(266);
+                        case ITEM_SUBCLASS_WEAPON_MACE:     return HasSpell(198);
+                        case ITEM_SUBCLASS_WEAPON_MACE2:    return HasSpell(199);
+                        case ITEM_SUBCLASS_WEAPON_POLEARM:  return false;
+                        case ITEM_SUBCLASS_WEAPON_SWORD:    return HasSpell(201);
+                        case ITEM_SUBCLASS_WEAPON_SWORD2:   return HasSpell(202);
+                        case ITEM_SUBCLASS_WEAPON_STAFF:    return false;
+                        case ITEM_SUBCLASS_WEAPON_EXOTIC:   return false;
+                        case ITEM_SUBCLASS_WEAPON_EXOTIC2:  return false;
+                        case ITEM_SUBCLASS_WEAPON_FIST:     return false;
+                        case ITEM_SUBCLASS_WEAPON_MISC:     return false;
+                        case ITEM_SUBCLASS_WEAPON_DAGGER:   return false;
+                        case ITEM_SUBCLASS_WEAPON_THROWN:   return false;
+                        case ITEM_SUBCLASS_WEAPON_SPEAR:    return false;
+                        case ITEM_SUBCLASS_WEAPON_CROSSBOW: return HasSpell(5011);
+                        case ITEM_SUBCLASS_WEAPON_WAND:     return false;
+                        default: return true;
+                    }
+                    break;
+                case WarriorProtection:
+                    switch (pProto->SubClass)
+                    {   //GERER BOUCLIER ET AMBIDEXTRIE -- POIGNE TITAN
+                        case ITEM_SUBCLASS_WEAPON_AXE:      return HasSpell(196);
+                        case ITEM_SUBCLASS_WEAPON_AXE2:     return HasSpell(197);
+                        case ITEM_SUBCLASS_WEAPON_BOW:      return HasSpell(264);
+                        case ITEM_SUBCLASS_WEAPON_GUN:      return HasSpell(266);
+                        case ITEM_SUBCLASS_WEAPON_MACE:     return HasSpell(198);
+                        case ITEM_SUBCLASS_WEAPON_MACE2:    return HasSpell(199);
+                        case ITEM_SUBCLASS_WEAPON_POLEARM:  return false;
+                        case ITEM_SUBCLASS_WEAPON_SWORD:    return HasSpell(201);
+                        case ITEM_SUBCLASS_WEAPON_SWORD2:   return HasSpell(202);
+                        case ITEM_SUBCLASS_WEAPON_STAFF:    return false;
+                        case ITEM_SUBCLASS_WEAPON_EXOTIC:   return false;
+                        case ITEM_SUBCLASS_WEAPON_EXOTIC2:  return false;
+                        case ITEM_SUBCLASS_WEAPON_FIST:     return false;
+                        case ITEM_SUBCLASS_WEAPON_MISC:     return false;
+                        case ITEM_SUBCLASS_WEAPON_DAGGER:   return false;
+                        case ITEM_SUBCLASS_WEAPON_THROWN:   return false;
+                        case ITEM_SUBCLASS_WEAPON_SPEAR:    return false;
+                        case ITEM_SUBCLASS_WEAPON_CROSSBOW: return HasSpell(5011);
+                        case ITEM_SUBCLASS_WEAPON_WAND:     return false;
+                        default: return true;
+                    }
+                    break;
+                case RogueCombat:
+                case RogueAssassination:
+                case RogueSubtlety:
+                    switch (pProto->SubClass)
+                    {
+                        case ITEM_SUBCLASS_WEAPON_AXE:      return false;
+                        case ITEM_SUBCLASS_WEAPON_AXE2:     return false;
+                        case ITEM_SUBCLASS_WEAPON_BOW:      return false;
+                        case ITEM_SUBCLASS_WEAPON_GUN:      return false;
+                        case ITEM_SUBCLASS_WEAPON_MACE:     return false;
+                        case ITEM_SUBCLASS_WEAPON_MACE2:    return false;
+                        case ITEM_SUBCLASS_WEAPON_POLEARM:  return false;
+                        case ITEM_SUBCLASS_WEAPON_SWORD:    return false;
+                        case ITEM_SUBCLASS_WEAPON_SWORD2:   return false;
+                        case ITEM_SUBCLASS_WEAPON_STAFF:    return false;
+                        case ITEM_SUBCLASS_WEAPON_EXOTIC:   return false;
+                        case ITEM_SUBCLASS_WEAPON_EXOTIC2:  return false;
+                        case ITEM_SUBCLASS_WEAPON_FIST:     return false;
+                        case ITEM_SUBCLASS_WEAPON_MISC:     return false;
+                        case ITEM_SUBCLASS_WEAPON_DAGGER:   return HasSpell(1180);
+                        case ITEM_SUBCLASS_WEAPON_THROWN:   return HasSpell(2567);
+                        case ITEM_SUBCLASS_WEAPON_SPEAR:    return false;
+                        case ITEM_SUBCLASS_WEAPON_CROSSBOW: return false;
+                        case ITEM_SUBCLASS_WEAPON_WAND:     return false;
+                        default: return true;
+                    }
+                    break;
+                case PriestDiscipline:
+                case PriestHoly:
+                case PriestShadow:
+                    switch (pProto->SubClass)
+                    {
+                        case ITEM_SUBCLASS_WEAPON_AXE:      return false;
+                        case ITEM_SUBCLASS_WEAPON_AXE2:     return false;
+                        case ITEM_SUBCLASS_WEAPON_BOW:      return false;
+                        case ITEM_SUBCLASS_WEAPON_GUN:      return false;
+                        case ITEM_SUBCLASS_WEAPON_MACE:     return HasSpell(198);
+                        case ITEM_SUBCLASS_WEAPON_MACE2:    return HasSpell(199);
+                        case ITEM_SUBCLASS_WEAPON_POLEARM:  return false;
+                        case ITEM_SUBCLASS_WEAPON_SWORD:    return false;
+                        case ITEM_SUBCLASS_WEAPON_SWORD2:   return false;
+                        case ITEM_SUBCLASS_WEAPON_STAFF:    return HasSpell(227);
+                        case ITEM_SUBCLASS_WEAPON_EXOTIC:   return false;
+                        case ITEM_SUBCLASS_WEAPON_EXOTIC2:  return false;
+                        case ITEM_SUBCLASS_WEAPON_FIST:     return false;
+                        case ITEM_SUBCLASS_WEAPON_MISC:     return false;
+                        case ITEM_SUBCLASS_WEAPON_DAGGER:   return false;
+                        case ITEM_SUBCLASS_WEAPON_THROWN:   return false;
+                        case ITEM_SUBCLASS_WEAPON_SPEAR:    return false;
+                        case ITEM_SUBCLASS_WEAPON_CROSSBOW: return false;
+                        case ITEM_SUBCLASS_WEAPON_WAND:     return HasSpell(5009);
+                        default: return true;
+                    }
+                    break;
+                case ShamanElementalCombat:
+                case ShamanRestoration:
+                case ShamanEnhancement:
+                    switch (pProto->SubClass)
+                    {
+                        case ITEM_SUBCLASS_WEAPON_AXE:      return false;
+                        case ITEM_SUBCLASS_WEAPON_AXE2:     return false;
+                        case ITEM_SUBCLASS_WEAPON_BOW:      return false;
+                        case ITEM_SUBCLASS_WEAPON_GUN:      return false;
+                        case ITEM_SUBCLASS_WEAPON_MACE:     return HasSpell(198);
+                        case ITEM_SUBCLASS_WEAPON_MACE2:    return HasSpell(199);
+                        case ITEM_SUBCLASS_WEAPON_POLEARM:  return false;
+                        case ITEM_SUBCLASS_WEAPON_SWORD:    return false;
+                        case ITEM_SUBCLASS_WEAPON_SWORD2:   return false;
+                        case ITEM_SUBCLASS_WEAPON_STAFF:    return HasSpell(227);
+                        case ITEM_SUBCLASS_WEAPON_EXOTIC:   return false;
+                        case ITEM_SUBCLASS_WEAPON_EXOTIC2:  return false;
+                        case ITEM_SUBCLASS_WEAPON_FIST:     return false;
+                        case ITEM_SUBCLASS_WEAPON_MISC:     return false;
+                        case ITEM_SUBCLASS_WEAPON_DAGGER:   return false;
+                        case ITEM_SUBCLASS_WEAPON_THROWN:   return false;
+                        case ITEM_SUBCLASS_WEAPON_SPEAR:    return false;
+                        case ITEM_SUBCLASS_WEAPON_CROSSBOW: return false;
+                        case ITEM_SUBCLASS_WEAPON_WAND:     return false;
+                        default: return true;
+                    }
+                    break;
+                case DruidFeralCombat:
+                case DruidRestoration:
+                case DruidBalance:
+                    switch (pProto->SubClass)
+                    {
+                        case ITEM_SUBCLASS_WEAPON_AXE:      return false;
+                        case ITEM_SUBCLASS_WEAPON_AXE2:     return false;
+                        case ITEM_SUBCLASS_WEAPON_BOW:      return false;
+                        case ITEM_SUBCLASS_WEAPON_GUN:      return false;
+                        case ITEM_SUBCLASS_WEAPON_MACE:     return HasSpell(198);
+                        case ITEM_SUBCLASS_WEAPON_MACE2:    return HasSpell(199);
+                        case ITEM_SUBCLASS_WEAPON_POLEARM:  return false;
+                        case ITEM_SUBCLASS_WEAPON_SWORD:    return false;
+                        case ITEM_SUBCLASS_WEAPON_SWORD2:   return false;
+                        case ITEM_SUBCLASS_WEAPON_STAFF:    return HasSpell(227);
+                        case ITEM_SUBCLASS_WEAPON_EXOTIC:   return false;
+                        case ITEM_SUBCLASS_WEAPON_EXOTIC2:  return false;
+                        case ITEM_SUBCLASS_WEAPON_FIST:     return false;
+                        case ITEM_SUBCLASS_WEAPON_MISC:     return false;
+                        case ITEM_SUBCLASS_WEAPON_DAGGER:   return false;
+                        case ITEM_SUBCLASS_WEAPON_THROWN:   return false;
+                        case ITEM_SUBCLASS_WEAPON_SPEAR:    return false;
+                        case ITEM_SUBCLASS_WEAPON_CROSSBOW: return false;
+                        case ITEM_SUBCLASS_WEAPON_WAND:     return false;
+                        default: return true;
+                    }
+                    break;
+                case WarlockDestruction:
+                case WarlockCurses:
+                case WarlockSummoning:
+                    switch (pProto->SubClass)
+                    {
+                        case ITEM_SUBCLASS_WEAPON_AXE:      return false;
+                        case ITEM_SUBCLASS_WEAPON_AXE2:     return false;
+                        case ITEM_SUBCLASS_WEAPON_BOW:      return false;
+                        case ITEM_SUBCLASS_WEAPON_GUN:      return false;
+                        case ITEM_SUBCLASS_WEAPON_MACE:     return false;
+                        case ITEM_SUBCLASS_WEAPON_MACE2:    return false;
+                        case ITEM_SUBCLASS_WEAPON_POLEARM:  return false;
+                        case ITEM_SUBCLASS_WEAPON_SWORD:    return false;
+                        case ITEM_SUBCLASS_WEAPON_SWORD2:   return false;
+                        case ITEM_SUBCLASS_WEAPON_STAFF:    return HasSpell(227);
+                        case ITEM_SUBCLASS_WEAPON_EXOTIC:   return false;
+                        case ITEM_SUBCLASS_WEAPON_EXOTIC2:  return false;
+                        case ITEM_SUBCLASS_WEAPON_FIST:     return false;
+                        case ITEM_SUBCLASS_WEAPON_MISC:     return false;
+                        case ITEM_SUBCLASS_WEAPON_DAGGER:   return HasSpell(1180);
+                        case ITEM_SUBCLASS_WEAPON_THROWN:   return false;
+                        case ITEM_SUBCLASS_WEAPON_SPEAR:    return false;
+                        case ITEM_SUBCLASS_WEAPON_CROSSBOW: return false;
+                        case ITEM_SUBCLASS_WEAPON_WAND:     return HasSpell(5009);
+                        default: return true;
+                    }
+                    break;
+                case HunterBeastMastery:
+                case HunterSurvival:
+                case HunterMarksmanship:
+                    switch (pProto->SubClass)
+                    {
+                        case ITEM_SUBCLASS_WEAPON_AXE:      return HasSpell(196);
+                        case ITEM_SUBCLASS_WEAPON_AXE2:     return HasSpell(197);
+                        case ITEM_SUBCLASS_WEAPON_BOW:      return HasSpell(264);
+                        case ITEM_SUBCLASS_WEAPON_GUN:      return HasSpell(266);
+                        case ITEM_SUBCLASS_WEAPON_MACE:     return false;
+                        case ITEM_SUBCLASS_WEAPON_MACE2:    return false;
+                        case ITEM_SUBCLASS_WEAPON_POLEARM:  return false;
+                        case ITEM_SUBCLASS_WEAPON_SWORD:    return HasSpell(201);
+                        case ITEM_SUBCLASS_WEAPON_SWORD2:   return HasSpell(202);
+                        case ITEM_SUBCLASS_WEAPON_STAFF:    return false;
+                        case ITEM_SUBCLASS_WEAPON_EXOTIC:   return false;
+                        case ITEM_SUBCLASS_WEAPON_EXOTIC2:  return false;
+                        case ITEM_SUBCLASS_WEAPON_FIST:     return false;
+                        case ITEM_SUBCLASS_WEAPON_MISC:     return false;
+                        case ITEM_SUBCLASS_WEAPON_DAGGER:   return false;
+                        case ITEM_SUBCLASS_WEAPON_THROWN:   return false;
+                        case ITEM_SUBCLASS_WEAPON_SPEAR:    return false;
+                        case ITEM_SUBCLASS_WEAPON_CROSSBOW: return HasSpell(5011);
+                        case ITEM_SUBCLASS_WEAPON_WAND:     return false;
+                        default: return true;
+                    }
+                    break;
+                case PaladinCombat:
+                case PaladinHoly:
+                case PaladinProtection:
+                    switch (pProto->SubClass)
+                    {
+                        case ITEM_SUBCLASS_WEAPON_AXE:      return false;
+                        case ITEM_SUBCLASS_WEAPON_AXE2:     return false;
+                        case ITEM_SUBCLASS_WEAPON_BOW:      return false;
+                        case ITEM_SUBCLASS_WEAPON_GUN:      return false;
+                        case ITEM_SUBCLASS_WEAPON_MACE:     return HasSpell(198);
+                        case ITEM_SUBCLASS_WEAPON_MACE2:    return HasSpell(199);
+                        case ITEM_SUBCLASS_WEAPON_POLEARM:  return false;
+                        case ITEM_SUBCLASS_WEAPON_SWORD:    return HasSpell(201);
+                        case ITEM_SUBCLASS_WEAPON_SWORD2:   return HasSpell(202);
+                        case ITEM_SUBCLASS_WEAPON_STAFF:    return false;
+                        case ITEM_SUBCLASS_WEAPON_EXOTIC:   return false;
+                        case ITEM_SUBCLASS_WEAPON_EXOTIC2:  return false;
+                        case ITEM_SUBCLASS_WEAPON_FIST:     return false;
+                        case ITEM_SUBCLASS_WEAPON_MISC:     return false;
+                        case ITEM_SUBCLASS_WEAPON_DAGGER:   return false;
+                        case ITEM_SUBCLASS_WEAPON_THROWN:   return false;
+                        case ITEM_SUBCLASS_WEAPON_SPEAR:    return false;
+                        case ITEM_SUBCLASS_WEAPON_CROSSBOW: return false;
+                        case ITEM_SUBCLASS_WEAPON_WAND:     return false;
+                        default: return true;
+                    }
+                    break;
+                case DeathKnightBlood:
+                case DeathKnightFrost:
+                case DeathKnightUnholy:
+                    switch (pProto->SubClass)
+                    {
+                        case ITEM_SUBCLASS_WEAPON_AXE:      return HasSpell(196);
+                        case ITEM_SUBCLASS_WEAPON_AXE2:     return HasSpell(197);
+                        case ITEM_SUBCLASS_WEAPON_BOW:      return false;
+                        case ITEM_SUBCLASS_WEAPON_GUN:      return false;
+                        case ITEM_SUBCLASS_WEAPON_MACE:     return false;
+                        case ITEM_SUBCLASS_WEAPON_MACE2:    return false;
+                        case ITEM_SUBCLASS_WEAPON_POLEARM:  return false;
+                        case ITEM_SUBCLASS_WEAPON_SWORD:    return HasSpell(201);
+                        case ITEM_SUBCLASS_WEAPON_SWORD2:   return HasSpell(202);
+                        case ITEM_SUBCLASS_WEAPON_STAFF:    return false;
+                        case ITEM_SUBCLASS_WEAPON_EXOTIC:   return false;
+                        case ITEM_SUBCLASS_WEAPON_EXOTIC2:  return false;
+                        case ITEM_SUBCLASS_WEAPON_FIST:     return false;
+                        case ITEM_SUBCLASS_WEAPON_MISC:     return false;
+                        case ITEM_SUBCLASS_WEAPON_DAGGER:   return false;
+                        case ITEM_SUBCLASS_WEAPON_THROWN:   return false;
+                        case ITEM_SUBCLASS_WEAPON_SPEAR:    return false;
+                        case ITEM_SUBCLASS_WEAPON_CROSSBOW: return false;
+                        case ITEM_SUBCLASS_WEAPON_WAND:     return false;
+                        default: return true;
+                    }
+                    break;
             }
         case ITEM_CLASS_ARMOR:
             switch(pProto->SubClass)
@@ -2763,10 +3261,33 @@ bool Player::IsForMyClass(ItemPrototype const* pProto)
     return true;
 }
 
-bool Player::IsbuggedItem(ItemPrototype const* pProto)
+bool Player::IsNotAllowedItem(ItemPrototype const* pProto)
 {
     if((pProto->RequiredLevel == 0) && (pProto->ItemLevel > 1))
         return false;
+
+    if ((pProto->MaxCount > 0) && (uint32(pProto->MaxCount) <= GetItemCount(pProto->ItemId)))
+        return false;
+
+    if ((pProto->Flags & ITEM_FLAGS_UNIQUE_EQUIPPED) && (GetItemCount(pProto->ItemId) > 0))
+        return false;
+
+    switch (pProto->InventoryType)
+    {
+        case INVTYPE_SHOULDERS:
+        case INVTYPE_FINGER:
+            if (getLevel() < 20)
+                return false;
+            return true;
+        case INVTYPE_HEAD:
+        case INVTYPE_TRINKET:
+        case INVTYPE_NECK:
+            if (getLevel() < 30)
+                return false;
+            return true;
+        default:
+            break;
+    }
 
     if((pProto->Quality == ITEM_QUALITY_UNCOMMON) && (getLevel() < 15))
         return false;
@@ -2826,81 +3347,8 @@ ItemPrototype const* Player::CompareItem(ItemPrototype const* pProto1, ItemProto
 
 ItemPrototype const* Player::BestItemBetween(ItemPrototype const* pProto1, ItemPrototype const* pProto2, bool DPS)
 {
-    PlayerbotAI* ai = GetPlayerbotAI();
-    uint8 spe = 0;
+    uint16 spe = GetSpe();
     ItemPrototype const *pProto = NULL;
-    if(!ai)
-    {
-        switch(getClass())
-        {
-            case CLASS_WARRIOR:
-                spe = uint8(WarriorProtection);
-                break;
-            case CLASS_PALADIN:
-                spe = uint8(PaladinHoly);
-                break;
-            case CLASS_HUNTER:
-                spe = uint8(HunterBeastMastery);
-                break;
-            case CLASS_ROGUE:
-                spe = uint8(RogueSubtlety);
-                break;
-            case CLASS_PRIEST:
-                spe = uint8(PriestHoly);
-                break;
-            case CLASS_DEATH_KNIGHT:
-                spe = uint8(DeathKnightUnholy);
-                break;
-            case CLASS_SHAMAN:
-                spe = uint8(ShamanElementalCombat);
-                break;
-            case CLASS_MAGE:
-                spe = uint8(MageFrost);
-                break;
-            case CLASS_WARLOCK:
-                spe = uint8(WarlockDestruction);
-                break;
-            case CLASS_DRUID:
-                spe = uint8(DruidFeralCombat);
-                break;
-        }
-    }
-    else
-    {
-        switch(getClass())
-        {
-            case CLASS_WARRIOR:
-                spe = uint8(ai->GetSpe());
-                break;
-            case CLASS_PALADIN:
-                spe = uint8(ai->GetSpe());
-                break;
-            case CLASS_HUNTER:
-                spe = uint8(ai->GetSpe());
-                break;
-            case CLASS_ROGUE:
-                spe = uint8(ai->GetSpe());
-                break;
-            case CLASS_PRIEST:
-                spe = uint8(ai->GetSpe());
-                break;
-            case CLASS_DEATH_KNIGHT:
-                spe = uint8(ai->GetSpe());
-                break;
-            case CLASS_SHAMAN:
-                spe = uint8(ai->GetSpe());
-                break;
-            case CLASS_MAGE:
-                spe = uint8(ai->GetSpe());
-                break;
-            case CLASS_WARLOCK:
-                spe = uint8(ai->GetSpe());
-                break;
-            case CLASS_DRUID:
-                spe = uint8(ai->GetSpe());
-                break;
-        }
-    }
 
     switch (spe)
     {
@@ -3186,6 +3634,64 @@ ItemPrototype const* Player::BestItemBetween(ItemPrototype const* pProto1, ItemP
         else
             return pProto2;
     }
+}
+
+uint16 Player::GetSpe()
+{
+    PlayerbotAI* ai = GetPlayerbotAI();
+    if(!ai)
+    {
+        switch(getClass())
+        {
+            case CLASS_WARRIOR:
+                return WarriorProtection;
+            case CLASS_PALADIN:
+                return PaladinHoly;
+            case CLASS_HUNTER:
+                return HunterBeastMastery;
+            case CLASS_ROGUE:
+                return RogueSubtlety;
+            case CLASS_PRIEST:
+                return PriestHoly;
+            case CLASS_DEATH_KNIGHT:
+                return DeathKnightUnholy;
+            case CLASS_SHAMAN:
+                return ShamanElementalCombat;
+            case CLASS_MAGE:
+                return MageFrost;
+            case CLASS_WARLOCK:
+                return WarlockDestruction;
+            case CLASS_DRUID:
+                return DruidFeralCombat;
+        }
+    }
+    else
+    {
+        switch(getClass())
+        {
+            case CLASS_WARRIOR:
+                return ai->GetSpe();
+            case CLASS_PALADIN:
+                return ai->GetSpe();
+            case CLASS_HUNTER:
+                return ai->GetSpe();
+            case CLASS_ROGUE:
+                return ai->GetSpe();
+            case CLASS_PRIEST:
+                return ai->GetSpe();
+            case CLASS_DEATH_KNIGHT:
+                return ai->GetSpe();
+            case CLASS_SHAMAN:
+                return ai->GetSpe();
+            case CLASS_MAGE:
+                return ai->GetSpe();
+            case CLASS_WARLOCK:
+                return ai->GetSpe();
+            case CLASS_DRUID:
+                return ai->GetSpe();
+        }
+    }
+    return 0; //NEVER HAPPENS
 }
 
 ///The player sobers by 256 every 10 seconds
@@ -6340,7 +6846,7 @@ void Player::DeleteFromDB(uint64 playerguid, uint32 accountId, bool updateRealmC
                                     continue;
                                 }
 
-                                Item *pItem = NewItemOrBag(itemProto);
+                                Item* pItem = NewItemOrBag(itemProto);
                                 if (!pItem->LoadFromDB(item_guidlow, MAKE_NEW_GUID(guid, 0, HIGHGUID_PLAYER),resultItems))
                                 {
                                     pItem->FSetState(ITEM_REMOVED);

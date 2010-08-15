@@ -210,8 +210,8 @@ class MANGOS_DLL_SPEC PlayerbotAI
         Player *GetMaster() const;
         void SetMaster(Player* pl);
 
-        uint8 GetSpe() { return m_spe; };
-        void SetSpe(uint8 spe) { m_spe = spe; };
+        uint16 GetSpe() { return m_spe; };
+        void SetSpe(uint16 spe) { m_spe = spe; };
 
         BotState GetState() { return m_botState; };
         void SetState(BotState state);
@@ -259,7 +259,7 @@ class MANGOS_DLL_SPEC PlayerbotAI
         PlayerbotMgr* const m_mgr;
         Player* const m_bot;
         PlayerbotClassAI* m_classAI;
-        uint8 m_spe;
+        uint16 m_spe;
 
         time_t m_ignoreAIUpdatesUntilTime;
         time_t m_ignoreTeleport;
