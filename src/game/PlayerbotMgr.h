@@ -28,8 +28,6 @@ class Object;
 class Item;
 class PlayerbotClassAI;
 
-typedef UNORDERED_MAP<uint64, Player*> PlayerBotMap;
-
 class MANGOS_DLL_SPEC PlayerbotMgr
 {
     public:
@@ -41,6 +39,7 @@ class MANGOS_DLL_SPEC PlayerbotMgr
         void HandleMasterIncomingPacket(const WorldPacket& packet);
 
         static void AddAllBots(int nbBotsWanted);
+        static void RemoveAllBotsInGroup(Player* player);
 
         void AddPlayerBot(uint64 guid, uint8 fclass);
         void LogoutPlayerBot(uint64 guid);
@@ -49,7 +48,6 @@ class MANGOS_DLL_SPEC PlayerbotMgr
         void SetMaster(Player* pl) { m_master = pl; };
 
         void OnBotLogin(Player* bot);
-        void RealPlayerLogout(Player* player);
         void Stay(Player* player);
 
     public:

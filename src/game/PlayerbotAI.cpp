@@ -453,7 +453,7 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
             if (operation == PARTY_OP_LEAVE)
             {
                 if (member == GetMaster()->GetName())
-                    m_bot->GetSession()->HandleGroupDisbandOpcode(p);
+                    PlayerbotMgr::RemoveAllBotsInGroup(GetMaster());
             }
             return;
         }
@@ -1807,40 +1807,6 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
 
     m_ignoreAIUpdatesUntilTime = time(0) + 2;
 
-    if (!GetMaster())
-    {
-        m_bot->GetPlayerbotMgr()->LogoutPlayerBot(m_bot->GetGUID());
-        m_bot->GetPlayerbotMgr()->AddAllBots(sConfig.GetIntDefault( "PlayerbotAI.MaxBots", 100 ));
-        return;
-    }
-
-    if (!GetMaster()->IsInWorld())
-    {
-        if (m_bot->GetGroup())
-            m_bot->RemoveFromGroup();
-        m_bot->GetPlayerbotMgr()->LogoutPlayerBot(m_bot->GetGUID());
-        m_bot->GetPlayerbotMgr()->AddAllBots(sConfig.GetIntDefault( "PlayerbotAI.MaxBots", 100 ));
-        return;
-    }
-
-    if ((GetMaster() != m_bot) && !m_bot->GetGroup())
-    {
-        m_bot->GetPlayerbotMgr()->LogoutPlayerBot(m_bot->GetGUID());
-        m_bot->GetPlayerbotMgr()->AddAllBots(sConfig.GetIntDefault( "PlayerbotAI.MaxBots", 100 ));
-        return;
-    }
-
-    if (GetMaster()->getLevel() != m_bot->getLevel())
-    {
-        ChatHandler ch(m_bot);
-        m_bot->PurgeMyBags();
-        m_bot->GiveLevel(GetMaster()->getLevel());
-        ch.HandleGMStartUpCommand("");
-        m_bot->SetHealth(m_bot->GetMaxHealth());
-        m_bot->SetPower(m_bot->getPowerType(), m_bot->GetMaxPower(m_bot->getPowerType()));
-        (GetClassAI())->InitSpells(m_bot->GetPlayerbotAI());
-    }
-
     if (m_bot->IsBeingTeleported())
         return;
 
@@ -1853,6 +1819,32 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
                 return;
             ref = ref->next();
         }
+    }
+
+    if (!GetMaster() || !GetMaster()->IsInWorld())
+    {
+        if (m_bot->GetGroup())
+            m_bot->RemoveFromGroup();
+        m_bot->GetPlayerbotMgr()->LogoutPlayerBot(m_bot->GetGUID());
+        PlayerbotMgr::AddAllBots(sConfig.GetIntDefault( "PlayerbotAI.MaxBots", 100 ));
+        return;
+    }
+    if ((GetMaster() != m_bot) && !m_bot->GetGroup())
+    {
+        m_bot->GetPlayerbotMgr()->LogoutPlayerBot(m_bot->GetGUID());
+        PlayerbotMgr::AddAllBots(sConfig.GetIntDefault( "PlayerbotAI.MaxBots", 100 ));
+        return;
+    }
+
+    if (GetMaster()->getLevel() != m_bot->getLevel())
+    {
+        ChatHandler ch(m_bot);
+        m_bot->PurgeMyBags();
+        m_bot->GiveLevel(GetMaster()->getLevel());
+        ch.HandleGMStartUpCommand("");
+        m_bot->SetHealth(m_bot->GetMaxHealth());
+        m_bot->SetPower(m_bot->getPowerType(), m_bot->GetMaxPower(m_bot->getPowerType()));
+        (GetClassAI())->InitSpells(m_bot->GetPlayerbotAI());
     }
 
     MovementUpdate();

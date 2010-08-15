@@ -366,8 +366,8 @@ void WorldSession::LogoutPlayer(bool Save)
 
     if (_player)
     {
-        if (!IsBotSession())
-            _player->GetPlayerbotMgr()->RealPlayerLogout(_player);
+        if (!IsBotSession() && _player->GetGroup())
+            PlayerbotMgr::RemoveAllBotsInGroup(_player);
 
         sLog.outChar("Account: %d (IP: %s) Logout Character:[%s] (guid: %u)", GetAccountId(), GetRemoteAddress().c_str(), _player->GetName() ,_player->GetGUIDLow());
 

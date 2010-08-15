@@ -49,7 +49,7 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
     {
         case CMSG_LOGOUT_REQUEST:
         {
-            RealPlayerLogout(m_master);
+            PlayerbotMgr::RemoveAllBotsInGroup(m_master);
             return;
         }
         case CMSG_INSPECT:
@@ -402,22 +402,35 @@ void PlayerbotMgr::OnBotLogin(Player* bot)
     bot->SetPower(bot->getPowerType(), bot->GetMaxPower(bot->getPowerType()));
 }
 
-void PlayerbotMgr::RealPlayerLogout(Player * const player)
+void PlayerbotMgr::RemoveAllBotsInGroup(Player* player)
 {
-    Player* bot = NULL;
-    HashMapHolder < Player > ::MapType& m = sObjectAccessor.GetPlayers();
-    for (HashMapHolder < Player > ::MapType::const_iterator itr = m.begin(); itr != m.end(); ++itr)
+    sLog.outError("PlayerbotMgr::RemoveAllBotsInGroup(...)");
+    bool removed = false;
+    do
     {
-        bot = itr->second;
-        if (!bot || !bot->IsBot())
-            continue;
+        removed = false;
+        Player* bot = NULL;
 
-        if (bot->GetPlayerbotMgr()->GetMaster() && (bot->GetPlayerbotMgr()->GetMaster() == player))
+        if (player->GetGroup())
         {
-            if (bot->GetGroup())
-               bot->RemoveFromGroup();
-            bot->GetPlayerbotMgr()->LogoutPlayerBot(bot->GetGUID());
-            AddAllBots(sConfig.GetIntDefault( "PlayerbotAI.MaxBots", 100 ));
+            GroupReference *ref = player->GetGroup()->GetFirstMember();
+            while (ref)
+            {
+                bot = ref->getSource();
+
+                if (!bot || !bot->IsBot() || bot == player)
+                {
+                    ref = ref->next();
+                    continue;
+                }
+
+                sLog.outError("Player name : %s, removed", bot->GetName());
+                bot->RemoveFromGroup();
+                bot->GetPlayerbotMgr()->LogoutPlayerBot(bot->GetGUID());
+                removed = true;
+                break;
+            }
         }
-    }
+    }while(removed);
+    PlayerbotMgr::AddAllBots(sConfig.GetIntDefault( "PlayerbotAI.MaxBots", 100 ));
 }
