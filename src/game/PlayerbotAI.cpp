@@ -1807,46 +1807,13 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
 
     m_ignoreAIUpdatesUntilTime = time(0) + 2;
 
-    if (m_bot->IsBeingTeleported())
+    if (!CheckTeleport())
         return;
 
-    if (m_bot->GetGroup())
-    {
-        GroupReference *ref = m_bot->GetGroup()->GetFirstMember();
-        while (ref)
-        {
-            if (ref->getSource()->IsBeingTeleported())
-                return;
-            ref = ref->next();
-        }
-    }
-
-    if (!GetMaster() || !GetMaster()->IsInWorld())
-    {
-        if (m_bot->GetGroup())
-            m_bot->RemoveFromGroup();
-        m_bot->GetPlayerbotMgr()->LogoutPlayerBot(m_bot->GetGUID());
-        PlayerbotMgr::AddAllBots(sConfig.GetIntDefault( "PlayerbotAI.MaxBots", 100 ));
+    if (!CheckMaster())
         return;
-    }
-    if ((GetMaster() != m_bot) && !m_bot->GetGroup())
-    {
-        m_bot->GetPlayerbotMgr()->LogoutPlayerBot(m_bot->GetGUID());
-        PlayerbotMgr::AddAllBots(sConfig.GetIntDefault( "PlayerbotAI.MaxBots", 100 ));
-        return;
-    }
 
-    if (GetMaster()->getLevel() != m_bot->getLevel())
-    {
-        ChatHandler ch(m_bot);
-        m_bot->PurgeMyBags();
-        m_bot->GiveLevel(GetMaster()->getLevel());
-        ch.HandleGMStartUpCommand("");
-        m_bot->SetHealth(m_bot->GetMaxHealth());
-        m_bot->SetPower(m_bot->getPowerType(), m_bot->GetMaxPower(m_bot->getPowerType()));
-        (GetClassAI())->InitSpells(m_bot->GetPlayerbotAI());
-    }
-
+    CheckStuff();
     MovementUpdate();
 
     if (!m_bot->isAlive())
@@ -1954,6 +1921,57 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
             CheckMount();
         }
     }
+}
+
+bool PlayerbotAI::CheckTeleport()
+{
+    if (m_bot->IsBeingTeleported())
+        return false;
+
+    if (m_bot->GetGroup())
+    {
+        GroupReference *ref = m_bot->GetGroup()->GetFirstMember();
+        while (ref)
+        {
+            if (ref->getSource()->IsBeingTeleported())
+                return false;
+            ref = ref->next();
+        }
+    }
+    return true;
+}
+
+bool PlayerbotAI::CheckMaster()
+{
+    if (!GetMaster() || !GetMaster()->IsInWorld())
+    {
+        if (m_bot->GetGroup())
+            m_bot->RemoveFromGroup();
+        m_bot->GetPlayerbotMgr()->LogoutPlayerBot(m_bot->GetGUID());
+        PlayerbotMgr::AddAllBots(sConfig.GetIntDefault( "PlayerbotAI.MaxBots", 100 ));
+        return false;
+    }
+    if ((GetMaster() != m_bot) && !m_bot->GetGroup())
+    {
+        m_bot->GetPlayerbotMgr()->LogoutPlayerBot(m_bot->GetGUID());
+        PlayerbotMgr::AddAllBots(sConfig.GetIntDefault( "PlayerbotAI.MaxBots", 100 ));
+        return false;
+    }
+    return true;
+}
+
+void PlayerbotAI::CheckStuff()
+{
+    if (GetMaster()->getLevel() == m_bot->getLevel())
+        return;
+
+    ChatHandler ch(m_bot);
+    m_bot->PurgeMyBags();
+    m_bot->GiveLevel(GetMaster()->getLevel());
+    ch.HandleGMStartUpCommand("");
+    m_bot->SetHealth(m_bot->GetMaxHealth());
+    m_bot->SetPower(m_bot->getPowerType(), m_bot->GetMaxPower(m_bot->getPowerType()));
+    (GetClassAI())->InitSpells(m_bot->GetPlayerbotAI());
 }
 
 Spell* PlayerbotAI::GetCurrentSpell() const

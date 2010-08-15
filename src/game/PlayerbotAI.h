@@ -221,6 +221,10 @@ class MANGOS_DLL_SPEC PlayerbotAI
         bool FollowCheckTeleport(WorldObject *obj);
         void DoLoot();
 
+        bool CheckTeleport();
+        bool CheckMaster();
+        void CheckStuff();
+
         uint32 EstRepairAll();
         uint32 EstRepair(uint16 pos);
 
