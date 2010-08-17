@@ -1308,6 +1308,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         Item* StoreNewItemInInventorySlot(uint32 itemEntry, uint32 amount);
         void AutoEquipItem();
         void GetBestItemForMyLevel();
+        ItemPrototype const* CheckItemSet(ItemPrototype const* bestItemInSlot, ItemPrototype const* bestItemFromSet);
+        void GiveItem(ItemPrototype const* bestItemInSlot);
         void PurgeMyBags();
         bool IsForMyClass(ItemPrototype const* pProto);
         bool IsNotAllowedItem(ItemPrototype const* pProto);

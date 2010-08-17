@@ -1210,6 +1210,9 @@ void Player::AutoEquipItem()
         if (!bItem)
             continue;
 
+        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
+            continue;
+
         if (bItem->InventoryType == INVTYPE_NON_EQUIP)
             continue;
 
@@ -1232,9 +1235,6 @@ void Player::AutoEquipItem()
                 {
                     if(i == EQUIPMENT_SLOT_HEAD)
                     {
-                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-                            break;
-
                         const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                         if (tItem == eItem)
                             break;
@@ -1249,9 +1249,6 @@ void Player::AutoEquipItem()
                 {
                     if(i == EQUIPMENT_SLOT_NECK)
                     {
-                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-                            break;
-
                         const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                         if (tItem == eItem)
                             break;
@@ -1266,9 +1263,6 @@ void Player::AutoEquipItem()
                 {
                     if(i == EQUIPMENT_SLOT_SHOULDERS)
                     {
-                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-                            break;
-
                         const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                         if (tItem == eItem)
                             break;
@@ -1283,9 +1277,6 @@ void Player::AutoEquipItem()
                 {
                     if(i == EQUIPMENT_SLOT_CHEST)
                     {
-                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-                            break;
-
                         const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                         if (tItem == eItem)
                             break;
@@ -1300,9 +1291,6 @@ void Player::AutoEquipItem()
                 {
                     if(i == EQUIPMENT_SLOT_CHEST)
                     {
-                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-                            break;
-
                         const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                         if (tItem == eItem)
                             break;
@@ -1317,9 +1305,6 @@ void Player::AutoEquipItem()
                 {
                     if(i == EQUIPMENT_SLOT_WAIST)
                     {
-                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-                            break;
-
                         const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                         if (tItem == eItem)
                             break;
@@ -1334,9 +1319,6 @@ void Player::AutoEquipItem()
                 {
                     if(i == EQUIPMENT_SLOT_LEGS)
                     {
-                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-                            break;
-
                         const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                         if (tItem == eItem)
                             break;
@@ -1351,9 +1333,6 @@ void Player::AutoEquipItem()
                 {
                     if(i == EQUIPMENT_SLOT_FEET)
                     {
-                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-                            break;
-
                         const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                         if (tItem == eItem)
                             break;
@@ -1368,9 +1347,6 @@ void Player::AutoEquipItem()
                 {
                     if(i == EQUIPMENT_SLOT_WRISTS)
                     {
-                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-                            break;
-
                         const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                         if (tItem == eItem)
                             break;
@@ -1385,9 +1361,6 @@ void Player::AutoEquipItem()
                 {
                     if(i == EQUIPMENT_SLOT_HANDS)
                     {
-                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-                            break;
-
                         const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                         if (tItem == eItem)
                             break;
@@ -1402,9 +1375,6 @@ void Player::AutoEquipItem()
                 {
                     if(i == EQUIPMENT_SLOT_FINGER1 || i == EQUIPMENT_SLOT_FINGER2)
                     {
-                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-                            break;
-
                         const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                         if (tItem == eItem)
                             break;
@@ -1419,9 +1389,6 @@ void Player::AutoEquipItem()
                 {
                     if(i == EQUIPMENT_SLOT_TRINKET1 || i == EQUIPMENT_SLOT_TRINKET2)
                     {
-                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-                            break;
-
                         const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                         if (tItem == eItem)
                             break;
@@ -1436,9 +1403,6 @@ void Player::AutoEquipItem()
                 {
                     if(i ==  EQUIPMENT_SLOT_BACK)
                     {
-                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-                            break;
-
                         const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                         if (tItem == eItem)
                             break;
@@ -1453,17 +1417,11 @@ void Player::AutoEquipItem()
                 {
                     if(i == EQUIPMENT_SLOT_MAINHAND)
                     {
-                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-                            break;
-
                         const ItemPrototype *tItem = BestItemBetween(eItem, bItem, true);
                         if (tItem == eItem)
                         {
                             if (CanDualWield())
                             {
-                                if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-                                    break;
-
                                 Item* pItem2 = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
                                 if (pItem2)
                                 {
@@ -1527,9 +1485,6 @@ void Player::AutoEquipItem()
                 {
                     if(i == EQUIPMENT_SLOT_OFFHAND)
                     {
-                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-                            break;
-
                         const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                         if (tItem == eItem)
                             break;
@@ -1544,9 +1499,6 @@ void Player::AutoEquipItem()
                 {
                     if(i == EQUIPMENT_SLOT_RANGED)
                     {
-                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-                            break;
-
                         const ItemPrototype *tItem = BestItemBetween(eItem, bItem, true);
                         if (tItem == eItem)
                             break;
@@ -1561,17 +1513,11 @@ void Player::AutoEquipItem()
                 {
                     if(i == EQUIPMENT_SLOT_MAINHAND)
                     {
-                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-                            break;
-
                         const ItemPrototype *tItem = BestItemBetween(eItem, bItem, true);
                         if (tItem == eItem)
                         {
                             if (CanDualWield() && CanTitanGrip())
                             {
-                                if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-                                    break;
-
                                 Item* pItem2 = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
                                 if (pItem2)
                                 {
@@ -1635,9 +1581,6 @@ void Player::AutoEquipItem()
                 {
                     if(i == EQUIPMENT_SLOT_MAINHAND)
                     {
-                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-                            break;
-
                         const ItemPrototype *tItem = BestItemBetween(eItem, bItem, true);
                         if (tItem == eItem)
                             break;
@@ -1655,9 +1598,6 @@ void Player::AutoEquipItem()
 
                     if(i == EQUIPMENT_SLOT_OFFHAND)
                     {
-                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-                            break;
-
                         const ItemPrototype *tItem = BestItemBetween(eItem, bItem, true);
                         if (tItem == eItem)
                             break;
@@ -1668,16 +1608,10 @@ void Player::AutoEquipItem()
                     }
                     break;
                 }
-                case INVTYPE_HOLDABLE:
-                    //if(i == EQUIPMENT_SLOT_OFFHAND)
-                    break;
                 case INVTYPE_THROWN:
                 {
                     if(i == EQUIPMENT_SLOT_RANGED)
                     {
-                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-                            break;
-
                         const ItemPrototype *tItem = BestItemBetween(eItem, bItem, true);
                         if (tItem == eItem)
                             break;
@@ -1692,9 +1626,6 @@ void Player::AutoEquipItem()
                 {
                     if(i == EQUIPMENT_SLOT_RANGED)
                     {
-                        if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-                            break;
-
                         const ItemPrototype *tItem = BestItemBetween(eItem, bItem, true);
                         if (tItem == eItem)
                             break;
@@ -1703,33 +1634,6 @@ void Player::AutoEquipItem()
                         if(pItem->GetPos() != dstpos)
                             SwapItem(pItem->GetPos(), dstpos);
                     }
-                    break;
-                }
-                case INVTYPE_RELIC:
-                {
-                    /*switch(proto->SubClass)
-                    {
-                        case ITEM_SUBCLASS_ARMOR_LIBRAM:
-                            if (pClass == CLASS_PALADIN)
-                                if(i == EQUIPMENT_SLOT_RANGED;
-                            break;
-                        case ITEM_SUBCLASS_ARMOR_IDOL:
-                            if (pClass == CLASS_DRUID)
-                                if(i == EQUIPMENT_SLOT_RANGED;
-                            break;
-                        case ITEM_SUBCLASS_ARMOR_TOTEM:
-                            if (pClass == CLASS_SHAMAN)
-                                if(i == EQUIPMENT_SLOT_RANGED;
-                            break;
-                        case ITEM_SUBCLASS_ARMOR_MISC:
-                            if (pClass == CLASS_WARLOCK)
-                                if(i == EQUIPMENT_SLOT_RANGED;
-                            break;
-                        case ITEM_SUBCLASS_ARMOR_SIGIL:
-                            if (pClass == CLASS_DEATH_KNIGHT)
-                                if(i == EQUIPMENT_SLOT_RANGED;
-                            break;
-                    }*/
                     break;
                 }
                 default :
@@ -1754,6 +1658,9 @@ void Player::AutoEquipItem()
             if (!bItem)
                 continue;
 
+            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
+                continue;
+
             if (bItem->InventoryType == INVTYPE_NON_EQUIP)
                 continue;
 
@@ -1776,9 +1683,6 @@ void Player::AutoEquipItem()
                     {
                         if(i == EQUIPMENT_SLOT_HEAD)
                         {
-                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-                                break;
-
                             const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                             if (tItem == eItem)
                                 break;
@@ -1793,9 +1697,6 @@ void Player::AutoEquipItem()
                     {
                         if(i == EQUIPMENT_SLOT_NECK)
                         {
-                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-                                break;
-
                             const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                             if (tItem == eItem)
                                 break;
@@ -1810,9 +1711,6 @@ void Player::AutoEquipItem()
                     {
                         if(i == EQUIPMENT_SLOT_SHOULDERS)
                         {
-                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-                                break;
-
                             const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                             if (tItem == eItem)
                                 break;
@@ -1827,9 +1725,6 @@ void Player::AutoEquipItem()
                     {
                         if(i == EQUIPMENT_SLOT_CHEST)
                         {
-                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-                                break;
-
                             const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                             if (tItem == eItem)
                                 break;
@@ -1844,9 +1739,6 @@ void Player::AutoEquipItem()
                     {
                         if(i == EQUIPMENT_SLOT_CHEST)
                         {
-                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-                                break;
-
                             const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                             if (tItem == eItem)
                                 break;
@@ -1861,9 +1753,6 @@ void Player::AutoEquipItem()
                     {
                         if(i == EQUIPMENT_SLOT_WAIST)
                         {
-                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-                                break;
-
                             const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                             if (tItem == eItem)
                                 break;
@@ -1878,9 +1767,6 @@ void Player::AutoEquipItem()
                     {
                         if(i == EQUIPMENT_SLOT_LEGS)
                         {
-                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-                                break;
-
                             const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                             if (tItem == eItem)
                                 break;
@@ -1895,9 +1781,6 @@ void Player::AutoEquipItem()
                     {
                         if(i == EQUIPMENT_SLOT_FEET)
                         {
-                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-                                break;
-
                             const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                             if (tItem == eItem)
                                 break;
@@ -1912,9 +1795,6 @@ void Player::AutoEquipItem()
                     {
                         if(i == EQUIPMENT_SLOT_WRISTS)
                         {
-                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-                                break;
-
                             const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                             if (tItem == eItem)
                                 break;
@@ -1929,9 +1809,6 @@ void Player::AutoEquipItem()
                     {
                         if(i == EQUIPMENT_SLOT_HANDS)
                         {
-                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-                                break;
-
                             const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                             if (tItem == eItem)
                                 break;
@@ -1946,9 +1823,6 @@ void Player::AutoEquipItem()
                     {
                         if(i == EQUIPMENT_SLOT_FINGER1 || i == EQUIPMENT_SLOT_FINGER2)
                         {
-                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-                                break;
-
                             const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                             if (tItem == eItem)
                                 break;
@@ -1963,9 +1837,6 @@ void Player::AutoEquipItem()
                     {
                         if(i == EQUIPMENT_SLOT_TRINKET1 || i == EQUIPMENT_SLOT_TRINKET2)
                         {
-                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-                                break;
-
                             const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                             if (tItem == eItem)
                                 break;
@@ -1980,9 +1851,6 @@ void Player::AutoEquipItem()
                     {
                         if(i == EQUIPMENT_SLOT_BACK)
                         {
-                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-                                break;
-
                             const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                             if (tItem == eItem)
                                 break;
@@ -1997,17 +1865,11 @@ void Player::AutoEquipItem()
                     {
                         if(i == EQUIPMENT_SLOT_MAINHAND)
                         {
-                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-                                break;
-
                             const ItemPrototype *tItem = BestItemBetween(eItem, bItem, true);
                             if (tItem == eItem)
                             {
                                 if (CanDualWield())
                                 {
-                                    if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-                                        break;
-
                                     Item* pItem2 = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
                                     if (pItem2)
                                     {
@@ -2071,9 +1933,6 @@ void Player::AutoEquipItem()
                     {
                         if(i == EQUIPMENT_SLOT_OFFHAND)
                         {
-                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-                                break;
-
                             const ItemPrototype *tItem = BestItemBetween(eItem, bItem, false);
                             if (tItem == eItem)
                                 break;
@@ -2088,9 +1947,6 @@ void Player::AutoEquipItem()
                     {
                         if(i == EQUIPMENT_SLOT_RANGED)
                         {
-                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-                                break;
-
                             const ItemPrototype *tItem = BestItemBetween(eItem, bItem, true);
                             if (tItem == eItem)
                                 break;
@@ -2105,17 +1961,11 @@ void Player::AutoEquipItem()
                     {
                         if(i == EQUIPMENT_SLOT_MAINHAND)
                         {
-                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-                                break;
-
                             const ItemPrototype *tItem = BestItemBetween(eItem, bItem, true);
                             if (tItem == eItem)
                             {
                                 if (CanDualWield() && CanTitanGrip())
                                 {
-                                    if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-                                        break;
-
                                     Item* pItem2 = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
                                     if (pItem2)
                                     {
@@ -2179,9 +2029,6 @@ void Player::AutoEquipItem()
                     {
                         if(i == EQUIPMENT_SLOT_MAINHAND)
                         {
-                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-                                break;
-
                             const ItemPrototype *tItem = BestItemBetween(eItem, bItem, true);
                             if (tItem == eItem)
                                 break;
@@ -2199,9 +2046,6 @@ void Player::AutoEquipItem()
 
                         if(i == EQUIPMENT_SLOT_OFFHAND)
                         {
-                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-                                break;
-
                             const ItemPrototype *tItem = BestItemBetween(eItem, bItem, true);
                             if (tItem == eItem)
                                 break;
@@ -2212,16 +2056,10 @@ void Player::AutoEquipItem()
                         }
                         break;
                     }
-                    case INVTYPE_HOLDABLE:
-                        //if(i == EQUIPMENT_SLOT_OFFHAND)
-                        break;
                     case INVTYPE_THROWN:
                     {
                         if(i == EQUIPMENT_SLOT_RANGED)
                         {
-                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-                                break;
-
                             const ItemPrototype *tItem = BestItemBetween(eItem, bItem, true);
                             if (tItem == eItem)
                                 break;
@@ -2236,9 +2074,6 @@ void Player::AutoEquipItem()
                     {
                         if(i == EQUIPMENT_SLOT_RANGED)
                         {
-                            if(CanUseItem(bItem)!=EQUIP_ERR_OK || !IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-                                break;
-
                             const ItemPrototype *tItem = BestItemBetween(eItem, bItem, true);
                             if (tItem == eItem)
                                 break;
@@ -2247,33 +2082,6 @@ void Player::AutoEquipItem()
                             if(pItem->GetPos() != dstpos)
                                 SwapItem(pItem->GetPos(), dstpos);
                         }
-                        break;
-                    }
-                    case INVTYPE_RELIC:
-                    {
-                        /*switch(proto->SubClass)
-                        {
-                            case ITEM_SUBCLASS_ARMOR_LIBRAM:
-                                if (pClass == CLASS_PALADIN)
-                                    if(i == EQUIPMENT_SLOT_RANGED;
-                                break;
-                            case ITEM_SUBCLASS_ARMOR_IDOL:
-                                if (pClass == CLASS_DRUID)
-                                    if(i == EQUIPMENT_SLOT_RANGED;
-                                break;
-                            case ITEM_SUBCLASS_ARMOR_TOTEM:
-                                if (pClass == CLASS_SHAMAN)
-                                    if(i == EQUIPMENT_SLOT_RANGED;
-                                break;
-                            case ITEM_SUBCLASS_ARMOR_MISC:
-                                if (pClass == CLASS_WARLOCK)
-                                    if(i == EQUIPMENT_SLOT_RANGED;
-                                break;
-                            case ITEM_SUBCLASS_ARMOR_SIGIL:
-                                if (pClass == CLASS_DEATH_KNIGHT)
-                                    if(i == EQUIPMENT_SLOT_RANGED;
-                                break;
-                        }*/
                         break;
                     }
                     default :
@@ -2318,326 +2126,200 @@ void Player::GetBestItemForMyLevel()
         if(!pProto)
             continue;
 
+        if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsNotAllowedItem(pProto))
+            continue;
+
         switch( pProto->InventoryType )
         {
             case INVTYPE_HEAD:
             {
-                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsNotAllowedItem(pProto))
-                    break;
-
                 if(!bestItemInSlot_head)
-                {
                     bestItemInSlot_head = pProto;
-                    break;
-                }
-
-                bestItemInSlot_head = BestItemBetween(bestItemInSlot_head, pProto, false);
-
+                else
+                    bestItemInSlot_head = BestItemBetween(bestItemInSlot_head, pProto, false);
                 break;
             }
             case INVTYPE_NECK:
             {
-                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsNotAllowedItem(pProto))
-                    break;
-
                 if (pProto->StatsCount == 0)
                     break;
 
                 if(!bestItemInSlot_neck)
-                {
                     bestItemInSlot_neck = pProto;
-                    break;
-                }
-
-                bestItemInSlot_neck = BestItemBetween(bestItemInSlot_neck, pProto, false);
-
+                else
+                    bestItemInSlot_neck = BestItemBetween(bestItemInSlot_neck, pProto, false);
                 break;
             }
             case INVTYPE_SHOULDERS:
             {
-                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsNotAllowedItem(pProto))
-                    break;
-
                 if(!bestItemInSlot_shoulders)
-                {
                     bestItemInSlot_shoulders = pProto;
-                    break;
-                }
-
-                bestItemInSlot_shoulders = BestItemBetween(bestItemInSlot_shoulders, pProto, false);
-
+                else
+                    bestItemInSlot_shoulders = BestItemBetween(bestItemInSlot_shoulders, pProto, false);
                 break;
             }
             case INVTYPE_CHEST:
             {
-                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsNotAllowedItem(pProto))
-                    break;
+                if (getClass()==CLASS_PRIEST || getClass()==CLASS_MAGE || getClass()==CLASS_WARLOCK)
+                    continue;
 
                 if(!bestItemInSlot_chest)
-                {
                     bestItemInSlot_chest = pProto;
-                    break;
-                }
-
-                bestItemInSlot_chest = BestItemBetween(bestItemInSlot_chest, pProto, false);
-
+                else
+                    bestItemInSlot_chest = BestItemBetween(bestItemInSlot_chest, pProto, false);
                 break;
             }
             case INVTYPE_ROBE:
             {
-                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsNotAllowedItem(pProto))
-                    break;
-
+                if (getClass()!=CLASS_PRIEST && getClass()!=CLASS_MAGE && getClass()!=CLASS_WARLOCK)
+                    continue;
 
                 if(!bestItemInSlot_robe)
-                {
                     bestItemInSlot_robe = pProto;
-                    break;
-                }
-
-                bestItemInSlot_robe = BestItemBetween(bestItemInSlot_robe, pProto, false);
-
+                else
+                    bestItemInSlot_robe = BestItemBetween(bestItemInSlot_robe, pProto, false);
                 break;
             }
             case INVTYPE_WAIST:
             {
-                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsNotAllowedItem(pProto))
-                    break;
-
                 if(!bestItemInSlot_waist)
-                {
                     bestItemInSlot_waist = pProto;
-                    break;
-                }
-
-                bestItemInSlot_waist = BestItemBetween(bestItemInSlot_waist, pProto, false);
-
+                else
+                    bestItemInSlot_waist = BestItemBetween(bestItemInSlot_waist, pProto, false);
                 break;
             }
             case INVTYPE_LEGS:
             {
-                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsNotAllowedItem(pProto))
-                    break;
-
                 if(!bestItemInSlot_legs)
-                {
                     bestItemInSlot_legs = pProto;
-                    break;
-                }
-
-                bestItemInSlot_legs = BestItemBetween(bestItemInSlot_legs, pProto, false);
-
+                else
+                    bestItemInSlot_legs = BestItemBetween(bestItemInSlot_legs, pProto, false);
                 break;
             }
             case INVTYPE_FEET:
             {
-                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsNotAllowedItem(pProto))
-                    break;
-
                 if(!bestItemInSlot_feet)
-                {
                     bestItemInSlot_feet = pProto;
-                    break;
-                }
-
-                bestItemInSlot_feet = BestItemBetween(bestItemInSlot_feet, pProto, false);
-
+                else
+                    bestItemInSlot_feet = BestItemBetween(bestItemInSlot_feet, pProto, false);
                 break;
             }
             case INVTYPE_WRISTS:
             {
-                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsNotAllowedItem(pProto))
-                    break;
-
                 if(!bestItemInSlot_wrists)
-                {
                     bestItemInSlot_wrists = pProto;
-                    break;
-                }
-
-                bestItemInSlot_wrists = BestItemBetween(bestItemInSlot_wrists, pProto, false);
-
+                else
+                    bestItemInSlot_wrists = BestItemBetween(bestItemInSlot_wrists, pProto, false);
                 break;
             }
             case INVTYPE_HANDS:
             {
-                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsNotAllowedItem(pProto))
-                    break;
-
                 if(!bestItemInSlot_hands)
-                {
                     bestItemInSlot_hands = pProto;
-                    break;
-                }
-
-                bestItemInSlot_hands = BestItemBetween(bestItemInSlot_hands, pProto, false);
-
+                else
+                    bestItemInSlot_hands = BestItemBetween(bestItemInSlot_hands, pProto, false);
                 break;
             }
             case INVTYPE_FINGER:
             {
-                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsNotAllowedItem(pProto))
-                    break;
-
                 if (pProto->StatsCount == 0)
                     break;
 
                 if(!bestItemInSlot_finger1)
-                {
                     bestItemInSlot_finger1 = pProto;
-                    break;
-                }
-
-                if(!bestItemInSlot_finger2)
-                {
+                else if(!bestItemInSlot_finger2)
                     bestItemInSlot_finger2 = pProto;
-                    break;
-                }
-
-                ItemPrototype const *bestItemInSlot_finger = BestItemBetween(bestItemInSlot_finger1, bestItemInSlot_finger2, false);
-                if (bestItemInSlot_finger == bestItemInSlot_finger1)
-                    bestItemInSlot_finger2 = BestItemBetween(bestItemInSlot_finger2, pProto, false);
                 else
-                    bestItemInSlot_finger1 = BestItemBetween(bestItemInSlot_finger1, pProto, false);
-
+                {
+                    ItemPrototype const *bestItemInSlot_finger = BestItemBetween(bestItemInSlot_finger1, bestItemInSlot_finger2, false);
+                    if (bestItemInSlot_finger == bestItemInSlot_finger1)
+                        bestItemInSlot_finger2 = BestItemBetween(bestItemInSlot_finger2, pProto, false);
+                    else
+                        bestItemInSlot_finger1 = BestItemBetween(bestItemInSlot_finger1, pProto, false);
+                }
                 break;
             }
             case INVTYPE_TRINKET:
             {
-                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsNotAllowedItem(pProto))
-                    break;
-
                 if (pProto->StatsCount == 0)
                     break;
 
                 if(!bestItemInSlot_trinket1)
-                {
                     bestItemInSlot_trinket1 = pProto;
-                    break;
-                }
-
-                if(!bestItemInSlot_trinket2)
-                {
+                else if(!bestItemInSlot_trinket2)
                     bestItemInSlot_trinket2 = pProto;
-                    break;
-                }
-
-                ItemPrototype const *bestItemInSlot_trinket = BestItemBetween(bestItemInSlot_trinket1, bestItemInSlot_trinket2, false);
-                if (bestItemInSlot_trinket == bestItemInSlot_trinket1)
-                    bestItemInSlot_trinket2 = BestItemBetween(bestItemInSlot_trinket2, pProto, false);
                 else
-                    bestItemInSlot_trinket1 = BestItemBetween(bestItemInSlot_trinket1, pProto, false);
-
+                {
+                    ItemPrototype const *bestItemInSlot_trinket = BestItemBetween(bestItemInSlot_trinket1, bestItemInSlot_trinket2, false);
+                    if (bestItemInSlot_trinket == bestItemInSlot_trinket1)
+                        bestItemInSlot_trinket2 = BestItemBetween(bestItemInSlot_trinket2, pProto, false);
+                    else
+                        bestItemInSlot_trinket1 = BestItemBetween(bestItemInSlot_trinket1, pProto, false);
+                }
                 break;
             }
             case INVTYPE_CLOAK:
             {
-                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsNotAllowedItem(pProto))
-                    break;
-
                 if(!bestItemInSlot_cloak)
-                {
                     bestItemInSlot_cloak = pProto;
-                    break;
-                }
-
-                bestItemInSlot_cloak = BestItemBetween(bestItemInSlot_cloak, pProto, false);
-
+                else
+                    bestItemInSlot_cloak = BestItemBetween(bestItemInSlot_cloak, pProto, false);
                 break;
             }
             case INVTYPE_WEAPON:
             {
-                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsNotAllowedItem(pProto))
-                    break;
-
                 if(!bestItemInSlot_weapon1)
-                {
                     bestItemInSlot_weapon1 = pProto;
-                    break;
-                }
-
-                if(!bestItemInSlot_weapon2)
-                {
+                else if(!bestItemInSlot_weapon2)
                     bestItemInSlot_weapon2 = pProto;
-                    break;
-                }
-
-                ItemPrototype const *bestItemInSlot_weapon = BestItemBetween(bestItemInSlot_weapon1, bestItemInSlot_weapon2, true);
-                if (bestItemInSlot_weapon == bestItemInSlot_weapon1)
-                    bestItemInSlot_weapon2 = BestItemBetween(bestItemInSlot_weapon2, pProto, true);
                 else
-                    bestItemInSlot_weapon1 = BestItemBetween(bestItemInSlot_weapon1, pProto, true);
-
+                {
+                    ItemPrototype const *bestItemInSlot_weapon = BestItemBetween(bestItemInSlot_weapon1, bestItemInSlot_weapon2, true);
+                    if (bestItemInSlot_weapon == bestItemInSlot_weapon1)
+                        bestItemInSlot_weapon2 = BestItemBetween(bestItemInSlot_weapon2, pProto, true);
+                    else
+                        bestItemInSlot_weapon1 = BestItemBetween(bestItemInSlot_weapon1, pProto, true);
+                }
                 break;
             }
             case INVTYPE_SHIELD:
             {
-                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsNotAllowedItem(pProto))
-                    break;
-
                 if(!bestItemInSlot_shield)
-                {
                     bestItemInSlot_shield = pProto;
-                    break;
-                }
-
-                bestItemInSlot_shield = BestItemBetween(bestItemInSlot_shield, pProto, false);
-
+                else
+                    bestItemInSlot_shield = BestItemBetween(bestItemInSlot_shield, pProto, false);
                 break;
             }
             case INVTYPE_RANGED:
             {
-                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsNotAllowedItem(pProto))
-                    break;
-
                 if(!bestItemInSlot_ranged)
-                {
                     bestItemInSlot_ranged = pProto;
-                    break;
-                }
-
-                bestItemInSlot_ranged = BestItemBetween(bestItemInSlot_ranged, pProto, true);
-
+                else
+                    bestItemInSlot_ranged = BestItemBetween(bestItemInSlot_ranged, pProto, true);
                 break;
             }
             case INVTYPE_2HWEAPON:
             {
-                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsNotAllowedItem(pProto))
-                    break;
-
                 if(!bestItemInSlot_2hweapon1)
-                {
                     bestItemInSlot_2hweapon1 = pProto;
-                    break;
-                }
-
-                if(!bestItemInSlot_2hweapon2)
-                {
+                else if(!bestItemInSlot_2hweapon2)
                     bestItemInSlot_2hweapon2 = pProto;
-                    break;
-                }
-
-                ItemPrototype const *bestItemInSlot_2hweapon = BestItemBetween(bestItemInSlot_2hweapon1, bestItemInSlot_2hweapon2, true);
-                if (bestItemInSlot_2hweapon == bestItemInSlot_2hweapon1)
-                    bestItemInSlot_2hweapon2 = BestItemBetween(bestItemInSlot_2hweapon2, pProto, true);
                 else
-                    bestItemInSlot_2hweapon1 = BestItemBetween(bestItemInSlot_2hweapon1, pProto, true);
-
+                {
+                    ItemPrototype const *bestItemInSlot_2hweapon = BestItemBetween(bestItemInSlot_2hweapon1, bestItemInSlot_2hweapon2, true);
+                    if (bestItemInSlot_2hweapon == bestItemInSlot_2hweapon1)
+                        bestItemInSlot_2hweapon2 = BestItemBetween(bestItemInSlot_2hweapon2, pProto, true);
+                    else
+                        bestItemInSlot_2hweapon1 = BestItemBetween(bestItemInSlot_2hweapon1, pProto, true);
+                }
                 break;
             }
             case INVTYPE_WEAPONMAINHAND:
             {
-                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsNotAllowedItem(pProto))
-                    break;
-
                 if(!bestItemInSlot_weaponmainhand)
-                {
                     bestItemInSlot_weaponmainhand = pProto;
-                    break;
-                }
-
-                bestItemInSlot_weaponmainhand = BestItemBetween(bestItemInSlot_weaponmainhand, pProto, true);
-
+                else
+                    bestItemInSlot_weaponmainhand = BestItemBetween(bestItemInSlot_weaponmainhand, pProto, true);
                 break;
             }
             case INVTYPE_WEAPONOFFHAND:
@@ -2645,77 +2327,26 @@ void Player::GetBestItemForMyLevel()
                 if(!CanDualWield())
                     break;
 
-                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsNotAllowedItem(pProto))
-                    break;
-
                 if(!bestItemInSlot_weaponoffhand)
-                {
                     bestItemInSlot_weaponoffhand = pProto;
-                    break;
-                }
-
-                bestItemInSlot_weaponoffhand = BestItemBetween(bestItemInSlot_weaponoffhand, pProto, true);
-
+                else
+                    bestItemInSlot_weaponoffhand = BestItemBetween(bestItemInSlot_weaponoffhand, pProto, true);
                 break;
             }
-            case INVTYPE_HOLDABLE:
-                //if(i == EQUIPMENT_SLOT_OFFHAND)
-                break;
             case INVTYPE_THROWN:
             {
-                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsNotAllowedItem(pProto))
-                    break;
-
                 if(!bestItemInSlot_thrown)
-                {
                     bestItemInSlot_thrown = pProto;
-                    break;
-                }
-
-                bestItemInSlot_thrown = BestItemBetween(bestItemInSlot_thrown, pProto, true);
-
+                else
+                    bestItemInSlot_thrown = BestItemBetween(bestItemInSlot_thrown, pProto, true);
                 break;
             }
             case INVTYPE_RANGEDRIGHT:
             {
-                if(CanUseItem(pProto)!=EQUIP_ERR_OK || !IsForMyClass(pProto) || !IsNotAllowedItem(pProto))
-                    break;
-
                 if(!bestItemInSlot_rangedright)
-                {
                     bestItemInSlot_rangedright = pProto;
-                    break;
-                }
-
-                bestItemInSlot_rangedright = BestItemBetween(bestItemInSlot_rangedright, pProto, true);
-
-                break;
-            }
-            case INVTYPE_RELIC:
-            {
-                /*switch(proto->SubClass)
-                {
-                    case ITEM_SUBCLASS_ARMOR_LIBRAM:
-                        if (pClass == CLASS_PALADIN)
-                            if(i == EQUIPMENT_SLOT_RANGED;
-                        break;
-                    case ITEM_SUBCLASS_ARMOR_IDOL:
-                        if (pClass == CLASS_DRUID)
-                            if(i == EQUIPMENT_SLOT_RANGED;
-                        break;
-                    case ITEM_SUBCLASS_ARMOR_TOTEM:
-                        if (pClass == CLASS_SHAMAN)
-                            if(i == EQUIPMENT_SLOT_RANGED;
-                        break;
-                    case ITEM_SUBCLASS_ARMOR_MISC:
-                        if (pClass == CLASS_WARLOCK)
-                            if(i == EQUIPMENT_SLOT_RANGED;
-                        break;
-                    case ITEM_SUBCLASS_ARMOR_SIGIL:
-                        if (pClass == CLASS_DEATH_KNIGHT)
-                            if(i == EQUIPMENT_SLOT_RANGED;
-                        break;
-                }*/
+                else
+                    bestItemInSlot_rangedright = BestItemBetween(bestItemInSlot_rangedright, pProto, true);
                 break;
             }
             default :
@@ -2723,180 +2354,158 @@ void Player::GetBestItemForMyLevel()
         }
     }
 
-    if(bestItemInSlot_head)
+    ItemPrototype const *bestItemFromSet = NULL;
+    bestItemFromSet = CheckItemSet(bestItemInSlot_head,           bestItemFromSet);
+    bestItemFromSet = CheckItemSet(bestItemInSlot_neck,           bestItemFromSet);
+    bestItemFromSet = CheckItemSet(bestItemInSlot_shoulders,      bestItemFromSet);
+    bestItemFromSet = CheckItemSet(bestItemInSlot_chest,          bestItemFromSet);
+    bestItemFromSet = CheckItemSet(bestItemInSlot_robe,           bestItemFromSet);
+    bestItemFromSet = CheckItemSet(bestItemInSlot_waist,          bestItemFromSet);
+    bestItemFromSet = CheckItemSet(bestItemInSlot_legs,           bestItemFromSet);
+    bestItemFromSet = CheckItemSet(bestItemInSlot_feet,           bestItemFromSet);
+    bestItemFromSet = CheckItemSet(bestItemInSlot_wrists,         bestItemFromSet);
+    bestItemFromSet = CheckItemSet(bestItemInSlot_hands,          bestItemFromSet);
+    bestItemFromSet = CheckItemSet(bestItemInSlot_finger1,        bestItemFromSet);
+    bestItemFromSet = CheckItemSet(bestItemInSlot_finger2,        bestItemFromSet);
+    bestItemFromSet = CheckItemSet(bestItemInSlot_trinket1,       bestItemFromSet);
+    bestItemFromSet = CheckItemSet(bestItemInSlot_trinket2,       bestItemFromSet);
+    bestItemFromSet = CheckItemSet(bestItemInSlot_cloak,          bestItemFromSet);
+    bestItemFromSet = CheckItemSet(bestItemInSlot_weapon1,        bestItemFromSet);
+    bestItemFromSet = CheckItemSet(bestItemInSlot_weapon2,        bestItemFromSet);
+    bestItemFromSet = CheckItemSet(bestItemInSlot_shield,         bestItemFromSet);
+    bestItemFromSet = CheckItemSet(bestItemInSlot_ranged,         bestItemFromSet);
+    bestItemFromSet = CheckItemSet(bestItemInSlot_2hweapon1,      bestItemFromSet);
+    bestItemFromSet = CheckItemSet(bestItemInSlot_2hweapon2,      bestItemFromSet);
+    bestItemFromSet = CheckItemSet(bestItemInSlot_weaponmainhand, bestItemFromSet);
+    bestItemFromSet = CheckItemSet(bestItemInSlot_weaponoffhand,  bestItemFromSet);
+    bestItemFromSet = CheckItemSet(bestItemInSlot_thrown,         bestItemFromSet);
+    bestItemFromSet = CheckItemSet(bestItemInSlot_rangedright,    bestItemFromSet);
+
+    if (bestItemFromSet && bestItemFromSet->ItemSet > 0)
     {
-        char itemEntry[10] = "0";
-        sprintf(itemEntry, "%d", bestItemInSlot_head->ItemId);
-        ChatHandler(this).HandleAddItemCommand(itemEntry);
+        for (uint32 id = 0; id < sItemStorage.MaxEntry; id++)
+        {
+            ItemPrototype const *pProto = sObjectMgr.GetItemPrototype(id);
+            if (!pProto)
+                continue;
+
+            if (pProto->ItemSet != bestItemFromSet->ItemSet)
+                continue;
+
+            if (pProto->ItemLevel != bestItemFromSet->ItemLevel)
+                continue;
+
+            switch( pProto->InventoryType )
+            {
+                case INVTYPE_HEAD:           {bestItemInSlot_head =           pProto; break;}
+                case INVTYPE_NECK:           {bestItemInSlot_neck =           pProto; break;}
+                case INVTYPE_SHOULDERS:      {bestItemInSlot_shoulders =      pProto; break;}
+                case INVTYPE_CHEST:          {bestItemInSlot_chest =          pProto; break;}
+                case INVTYPE_ROBE:           {bestItemInSlot_robe =           pProto; break;}
+                case INVTYPE_WAIST:          {bestItemInSlot_waist =          pProto; break;}
+                case INVTYPE_LEGS:           {bestItemInSlot_legs =           pProto; break;}
+                case INVTYPE_FEET:           {bestItemInSlot_feet =           pProto; break;}
+                case INVTYPE_WRISTS:         {bestItemInSlot_wrists =         pProto; break;}
+                case INVTYPE_HANDS:          {bestItemInSlot_hands =          pProto; break;}
+                case INVTYPE_FINGER:
+                {
+                    if((bestItemInSlot_finger1->ItemSet != pProto->ItemSet) && (bestItemInSlot_finger1->ItemLevel != pProto->ItemLevel))
+                        bestItemInSlot_finger1 = pProto;
+                    else if((bestItemInSlot_finger2->ItemSet != pProto->ItemSet) && (bestItemInSlot_finger2->ItemLevel != pProto->ItemLevel))
+                        bestItemInSlot_finger2 = pProto;
+                    break;
+                }
+                case INVTYPE_TRINKET:
+                {
+                    if((bestItemInSlot_trinket1->ItemSet != pProto->ItemSet) && (bestItemInSlot_trinket1->ItemLevel != pProto->ItemLevel))
+                        bestItemInSlot_trinket1 = pProto;
+                    else if((bestItemInSlot_trinket2->ItemSet != pProto->ItemSet) && (bestItemInSlot_trinket2->ItemLevel != pProto->ItemLevel))
+                        bestItemInSlot_trinket2 = pProto;
+                    break;
+                }
+                case INVTYPE_CLOAK:          {bestItemInSlot_cloak = pProto;          break;}
+                case INVTYPE_WEAPON:
+                {
+                    if((bestItemInSlot_weapon1->ItemSet != pProto->ItemSet) && (bestItemInSlot_weapon1->ItemLevel != pProto->ItemLevel))
+                        bestItemInSlot_weapon1 = pProto;
+                    else if((bestItemInSlot_weapon2->ItemSet != pProto->ItemSet) && (bestItemInSlot_weapon2->ItemLevel != pProto->ItemLevel))
+                        bestItemInSlot_weapon2 = pProto;
+                    break;
+                }
+                case INVTYPE_SHIELD:         {bestItemInSlot_shield = pProto;         break;}
+                case INVTYPE_RANGED:         {bestItemInSlot_ranged = pProto;         break;}
+                case INVTYPE_2HWEAPON:
+                {
+                    if((bestItemInSlot_2hweapon1->ItemSet != pProto->ItemSet) && (bestItemInSlot_2hweapon1->ItemLevel != pProto->ItemLevel))
+                        bestItemInSlot_2hweapon1 = pProto;
+                    else if((bestItemInSlot_2hweapon2->ItemSet != pProto->ItemSet) && (bestItemInSlot_2hweapon2->ItemLevel != pProto->ItemLevel))
+                        bestItemInSlot_2hweapon2 = pProto;
+                    break;
+                }
+                case INVTYPE_WEAPONMAINHAND: {bestItemInSlot_weaponmainhand = pProto; break;}
+                case INVTYPE_WEAPONOFFHAND:
+                {
+                    if(CanDualWield()) bestItemInSlot_weaponoffhand = pProto; break;
+                }
+                case INVTYPE_THROWN:         {bestItemInSlot_thrown = pProto;         break;}
+                case INVTYPE_RANGEDRIGHT:    {bestItemInSlot_rangedright = pProto;    break;}
+                default:                                                              break;
+            }
+        }
     }
 
-    if(bestItemInSlot_neck)
-    {
-        char itemEntry[10] = "0";
-        sprintf(itemEntry, "%d", bestItemInSlot_neck->ItemId);
-        ChatHandler(this).HandleAddItemCommand(itemEntry);
-    }
+    GiveItem(bestItemInSlot_head);
+    GiveItem(bestItemInSlot_neck);
+    GiveItem(bestItemInSlot_shoulders);
+    GiveItem(bestItemInSlot_chest);
+    GiveItem(bestItemInSlot_robe);
+    GiveItem(bestItemInSlot_waist);
+    GiveItem(bestItemInSlot_legs);
+    GiveItem(bestItemInSlot_feet);
+    GiveItem(bestItemInSlot_wrists);
+    GiveItem(bestItemInSlot_hands);
+    GiveItem(bestItemInSlot_finger1);
+    GiveItem(bestItemInSlot_finger2);
+    GiveItem(bestItemInSlot_trinket1);
+    GiveItem(bestItemInSlot_trinket2);
+    GiveItem(bestItemInSlot_cloak);
+    GiveItem(bestItemInSlot_weapon1);
+    if (CanDualWield())
+        GiveItem(bestItemInSlot_weapon2);
+    GiveItem(bestItemInSlot_shield);
+    GiveItem(bestItemInSlot_ranged);
+    GiveItem(bestItemInSlot_2hweapon1);
+    if (CanDualWield() && CanTitanGrip())
+        GiveItem(bestItemInSlot_2hweapon2);
+    GiveItem(bestItemInSlot_weaponmainhand);
+    GiveItem(bestItemInSlot_weaponoffhand);
+    GiveItem(bestItemInSlot_thrown);
+    GiveItem(bestItemInSlot_rangedright);
+}
 
-    if(bestItemInSlot_shoulders)
-    {
-        char itemEntry[10] = "0";
-        sprintf(itemEntry, "%d", bestItemInSlot_shoulders->ItemId);
-        ChatHandler(this).HandleAddItemCommand(itemEntry);
-    }
+ItemPrototype const* Player::CheckItemSet(ItemPrototype const* bestItemInSlot, ItemPrototype const* bestItemFromSet)
+{
+    if (!bestItemFromSet || bestItemFromSet->ItemSet < 1)
+        return bestItemInSlot;
 
-    if(bestItemInSlot_chest)
-    {
-        char itemEntry[10] = "0";
-        sprintf(itemEntry, "%d", bestItemInSlot_chest->ItemId);
-        ChatHandler(this).HandleAddItemCommand(itemEntry);
-    }
+    if (!bestItemInSlot)
+        return NULL;
 
-    if(bestItemInSlot_robe)
-    {
-        char itemEntry[10] = "0";
-        sprintf(itemEntry, "%d", bestItemInSlot_robe->ItemId);
-        ChatHandler(this).HandleAddItemCommand(itemEntry);
-    }
+    if ((bestItemInSlot->ItemSet > 0)
+        && (bestItemInSlot->ItemLevel > bestItemFromSet->ItemLevel))
+        return bestItemInSlot;
 
-    if(bestItemInSlot_waist)
-    {
-        char itemEntry[10] = "0";
-        sprintf(itemEntry, "%d", bestItemInSlot_waist->ItemId);
-        ChatHandler(this).HandleAddItemCommand(itemEntry);
-    }
+    return bestItemFromSet;
+}
 
-    if(bestItemInSlot_legs)
-    {
-        char itemEntry[10] = "0";
-        sprintf(itemEntry, "%d", bestItemInSlot_legs->ItemId);
-        ChatHandler(this).HandleAddItemCommand(itemEntry);
-    }
+void Player::GiveItem(ItemPrototype const* bestItemInSlot)
+{
+    if (!bestItemInSlot)
+        return;
 
-    if(bestItemInSlot_feet)
-    {
-        char itemEntry[10] = "0";
-        sprintf(itemEntry, "%d", bestItemInSlot_feet->ItemId);
-        ChatHandler(this).HandleAddItemCommand(itemEntry);
-    }
-
-    if(bestItemInSlot_wrists)
-    {
-        char itemEntry[10] = "0";
-        sprintf(itemEntry, "%d", bestItemInSlot_wrists->ItemId);
-        ChatHandler(this).HandleAddItemCommand(itemEntry);
-    }
-
-    if(bestItemInSlot_hands)
-    {
-        char itemEntry[10] = "0";
-        sprintf(itemEntry, "%d", bestItemInSlot_hands->ItemId);
-        ChatHandler(this).HandleAddItemCommand(itemEntry);
-    }
-
-    if(bestItemInSlot_finger1)
-    {
-        char itemEntry[10] = "0";
-        sprintf(itemEntry, "%d", bestItemInSlot_finger1->ItemId);
-        ChatHandler(this).HandleAddItemCommand(itemEntry);
-    }
-
-    if(bestItemInSlot_finger2)
-    {
-        char itemEntry[10] = "0";
-        sprintf(itemEntry, "%d", bestItemInSlot_finger2->ItemId);
-        ChatHandler(this).HandleAddItemCommand(itemEntry);
-    }
-
-    if(bestItemInSlot_trinket1)
-    {
-        char itemEntry[10] = "0";
-        sprintf(itemEntry, "%d", bestItemInSlot_trinket1->ItemId);
-        ChatHandler(this).HandleAddItemCommand(itemEntry);
-    }
-
-    if(bestItemInSlot_trinket2)
-    {
-        char itemEntry[10] = "0";
-        sprintf(itemEntry, "%d", bestItemInSlot_trinket2->ItemId);
-        ChatHandler(this).HandleAddItemCommand(itemEntry);
-    }
-
-    if(bestItemInSlot_cloak)
-    {
-        char itemEntry[10] = "0";
-        sprintf(itemEntry, "%d", bestItemInSlot_cloak->ItemId);
-        ChatHandler(this).HandleAddItemCommand(itemEntry);
-    }
-
-    if(bestItemInSlot_weapon1)
-    {
-        char itemEntry[10] = "0";
-        sprintf(itemEntry, "%d", bestItemInSlot_weapon1->ItemId);
-        ChatHandler(this).HandleAddItemCommand(itemEntry);
-    }
-
-    if(bestItemInSlot_weapon2 && CanDualWield())
-    {
-        char itemEntry[10] = "0";
-        sprintf(itemEntry, "%d", bestItemInSlot_weapon2->ItemId);
-        ChatHandler(this).HandleAddItemCommand(itemEntry);
-    }
-
-    if(bestItemInSlot_shield)
-    {
-        char itemEntry[10] = "0";
-        sprintf(itemEntry, "%d", bestItemInSlot_shield->ItemId);
-        ChatHandler(this).HandleAddItemCommand(itemEntry);
-    }
-
-    if(bestItemInSlot_ranged)
-    {
-        char itemEntry[10] = "0";
-        sprintf(itemEntry, "%d", bestItemInSlot_ranged->ItemId);
-        ChatHandler(this).HandleAddItemCommand(itemEntry);
-    }
-
-    if(bestItemInSlot_2hweapon1)
-    {
-        char itemEntry[10] = "0";
-        sprintf(itemEntry, "%d", bestItemInSlot_2hweapon1->ItemId);
-        ChatHandler(this).HandleAddItemCommand(itemEntry);
-    }
-
-    if(bestItemInSlot_2hweapon2 && CanDualWield() && CanTitanGrip())
-    {
-        char itemEntry[10] = "0";
-        sprintf(itemEntry, "%d", bestItemInSlot_2hweapon2->ItemId);
-        ChatHandler(this).HandleAddItemCommand(itemEntry);
-    }
-
-    if(bestItemInSlot_weaponmainhand)
-    {
-        char itemEntry[10] = "0";
-        sprintf(itemEntry, "%d", bestItemInSlot_weaponmainhand->ItemId);
-        ChatHandler(this).HandleAddItemCommand(itemEntry);
-    }
-
-    if(bestItemInSlot_weaponoffhand)
-    {
-        char itemEntry[10] = "0";
-        sprintf(itemEntry, "%d", bestItemInSlot_weaponoffhand->ItemId);
-        ChatHandler(this).HandleAddItemCommand(itemEntry);
-    }
-
-    if(bestItemInSlot_thrown)
-    {
-        char itemEntry[10] = "0";
-        sprintf(itemEntry, "%d", bestItemInSlot_thrown->ItemId);
-        ChatHandler(this).HandleAddItemCommand(itemEntry);
-    }
-
-    if(bestItemInSlot_rangedright)
-    {
-        char itemEntry[10] = "0";
-        sprintf(itemEntry, "%d", bestItemInSlot_rangedright->ItemId);
-        ChatHandler(this).HandleAddItemCommand(itemEntry);
-    }
+    char itemEntry[10] = "0";
+    sprintf(itemEntry, "%d", bestItemInSlot->ItemId);
+    ChatHandler(this).HandleAddItemCommand(itemEntry);
 }
 
 void Player::PurgeMyBags()
@@ -2906,7 +2515,6 @@ void Player::PurgeMyBags()
         if (slot == EQUIPMENT_SLOT_BODY)
             continue;
 
-        const ItemPrototype *new_item = NULL;
         Item* const pItem = GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
         if (!pItem)
             continue;
@@ -2916,7 +2524,6 @@ void Player::PurgeMyBags()
 
     for (int slot=INVENTORY_SLOT_ITEM_START; slot < INVENTORY_SLOT_ITEM_END; ++slot)
     {
-        const ItemPrototype *new_item = NULL;
         Item* const pItem = GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
         if (!pItem)
             continue;
@@ -2929,9 +2536,9 @@ void Player::PurgeMyBags()
         Bag* const pBag = (Bag*)GetItemByPos(INVENTORY_SLOT_BAG_0, bag);
         if (!pBag)
             continue;
+
         for (uint32 slot = 0; slot < pBag->GetBagSize(); ++slot)
         {
-            const ItemPrototype *new_item = NULL;
             Item* const pItem = GetItemByPos(bag, slot);
             if (!pItem)
                 continue;
@@ -2957,26 +2564,11 @@ bool Player::IsForMyClass(ItemPrototype const* pProto)
                 case MageFrost:
                     switch (pProto->SubClass)
                     {
-                        case ITEM_SUBCLASS_WEAPON_AXE:      return false;
-                        case ITEM_SUBCLASS_WEAPON_AXE2:     return false;
-                        case ITEM_SUBCLASS_WEAPON_BOW:      return false;
-                        case ITEM_SUBCLASS_WEAPON_GUN:      return false;
-                        case ITEM_SUBCLASS_WEAPON_MACE:     return false;
-                        case ITEM_SUBCLASS_WEAPON_MACE2:    return false;
-                        case ITEM_SUBCLASS_WEAPON_POLEARM:  return false;
-                        case ITEM_SUBCLASS_WEAPON_SWORD:    return false;
-                        case ITEM_SUBCLASS_WEAPON_SWORD2:   return false;
+                        case ITEM_SUBCLASS_WEAPON_SWORD:    return HasSpell(201);
                         case ITEM_SUBCLASS_WEAPON_STAFF:    return HasSpell(227);
-                        case ITEM_SUBCLASS_WEAPON_EXOTIC:   return false;
-                        case ITEM_SUBCLASS_WEAPON_EXOTIC2:  return false;
-                        case ITEM_SUBCLASS_WEAPON_FIST:     return false;
-                        case ITEM_SUBCLASS_WEAPON_MISC:     return false;
-                        case ITEM_SUBCLASS_WEAPON_DAGGER:   return false;
-                        case ITEM_SUBCLASS_WEAPON_THROWN:   return false;
-                        case ITEM_SUBCLASS_WEAPON_SPEAR:    return false;
-                        case ITEM_SUBCLASS_WEAPON_CROSSBOW: return false;
+                        case ITEM_SUBCLASS_WEAPON_DAGGER:   return HasSpell(1180);
                         case ITEM_SUBCLASS_WEAPON_WAND:     return HasSpell(5009);
-                        default: return true;
+                        default: return false;
                     }
                     break;
                 case WarriorArms:
@@ -2989,45 +2581,22 @@ bool Player::IsForMyClass(ItemPrototype const* pProto)
                         case ITEM_SUBCLASS_WEAPON_GUN:      return HasSpell(266);
                         case ITEM_SUBCLASS_WEAPON_MACE:     return HasSpell(198);
                         case ITEM_SUBCLASS_WEAPON_MACE2:    return HasSpell(199);
-                        case ITEM_SUBCLASS_WEAPON_POLEARM:  return false;
                         case ITEM_SUBCLASS_WEAPON_SWORD:    return HasSpell(201);
                         case ITEM_SUBCLASS_WEAPON_SWORD2:   return HasSpell(202);
-                        case ITEM_SUBCLASS_WEAPON_STAFF:    return false;
-                        case ITEM_SUBCLASS_WEAPON_EXOTIC:   return false;
-                        case ITEM_SUBCLASS_WEAPON_EXOTIC2:  return false;
-                        case ITEM_SUBCLASS_WEAPON_FIST:     return false;
-                        case ITEM_SUBCLASS_WEAPON_MISC:     return false;
-                        case ITEM_SUBCLASS_WEAPON_DAGGER:   return false;
-                        case ITEM_SUBCLASS_WEAPON_THROWN:   return false;
-                        case ITEM_SUBCLASS_WEAPON_SPEAR:    return false;
                         case ITEM_SUBCLASS_WEAPON_CROSSBOW: return HasSpell(5011);
-                        case ITEM_SUBCLASS_WEAPON_WAND:     return false;
-                        default: return true;
+                        default: return false;
                     }
                     break;
                 case WarriorProtection:
                     switch (pProto->SubClass)
-                    {   //GERER BOUCLIER ET AMBIDEXTRIE -- POIGNE TITAN
+                    {
                         case ITEM_SUBCLASS_WEAPON_AXE:      return HasSpell(196);
-                        case ITEM_SUBCLASS_WEAPON_AXE2:     return HasSpell(197);
                         case ITEM_SUBCLASS_WEAPON_BOW:      return HasSpell(264);
                         case ITEM_SUBCLASS_WEAPON_GUN:      return HasSpell(266);
                         case ITEM_SUBCLASS_WEAPON_MACE:     return HasSpell(198);
-                        case ITEM_SUBCLASS_WEAPON_MACE2:    return HasSpell(199);
-                        case ITEM_SUBCLASS_WEAPON_POLEARM:  return false;
                         case ITEM_SUBCLASS_WEAPON_SWORD:    return HasSpell(201);
-                        case ITEM_SUBCLASS_WEAPON_SWORD2:   return HasSpell(202);
-                        case ITEM_SUBCLASS_WEAPON_STAFF:    return false;
-                        case ITEM_SUBCLASS_WEAPON_EXOTIC:   return false;
-                        case ITEM_SUBCLASS_WEAPON_EXOTIC2:  return false;
-                        case ITEM_SUBCLASS_WEAPON_FIST:     return false;
-                        case ITEM_SUBCLASS_WEAPON_MISC:     return false;
-                        case ITEM_SUBCLASS_WEAPON_DAGGER:   return false;
-                        case ITEM_SUBCLASS_WEAPON_THROWN:   return false;
-                        case ITEM_SUBCLASS_WEAPON_SPEAR:    return false;
                         case ITEM_SUBCLASS_WEAPON_CROSSBOW: return HasSpell(5011);
-                        case ITEM_SUBCLASS_WEAPON_WAND:     return false;
-                        default: return true;
+                        default: return false;
                     }
                     break;
                 case RogueCombat:
@@ -3035,26 +2604,9 @@ bool Player::IsForMyClass(ItemPrototype const* pProto)
                 case RogueSubtlety:
                     switch (pProto->SubClass)
                     {
-                        case ITEM_SUBCLASS_WEAPON_AXE:      return false;
-                        case ITEM_SUBCLASS_WEAPON_AXE2:     return false;
-                        case ITEM_SUBCLASS_WEAPON_BOW:      return false;
-                        case ITEM_SUBCLASS_WEAPON_GUN:      return false;
-                        case ITEM_SUBCLASS_WEAPON_MACE:     return false;
-                        case ITEM_SUBCLASS_WEAPON_MACE2:    return false;
-                        case ITEM_SUBCLASS_WEAPON_POLEARM:  return false;
-                        case ITEM_SUBCLASS_WEAPON_SWORD:    return false;
-                        case ITEM_SUBCLASS_WEAPON_SWORD2:   return false;
-                        case ITEM_SUBCLASS_WEAPON_STAFF:    return false;
-                        case ITEM_SUBCLASS_WEAPON_EXOTIC:   return false;
-                        case ITEM_SUBCLASS_WEAPON_EXOTIC2:  return false;
-                        case ITEM_SUBCLASS_WEAPON_FIST:     return false;
-                        case ITEM_SUBCLASS_WEAPON_MISC:     return false;
                         case ITEM_SUBCLASS_WEAPON_DAGGER:   return HasSpell(1180);
                         case ITEM_SUBCLASS_WEAPON_THROWN:   return HasSpell(2567);
-                        case ITEM_SUBCLASS_WEAPON_SPEAR:    return false;
-                        case ITEM_SUBCLASS_WEAPON_CROSSBOW: return false;
-                        case ITEM_SUBCLASS_WEAPON_WAND:     return false;
-                        default: return true;
+                        default: return false;
                     }
                     break;
                 case PriestDiscipline:
@@ -3062,26 +2614,9 @@ bool Player::IsForMyClass(ItemPrototype const* pProto)
                 case PriestShadow:
                     switch (pProto->SubClass)
                     {
-                        case ITEM_SUBCLASS_WEAPON_AXE:      return false;
-                        case ITEM_SUBCLASS_WEAPON_AXE2:     return false;
-                        case ITEM_SUBCLASS_WEAPON_BOW:      return false;
-                        case ITEM_SUBCLASS_WEAPON_GUN:      return false;
                         case ITEM_SUBCLASS_WEAPON_MACE:     return HasSpell(198);
-                        case ITEM_SUBCLASS_WEAPON_MACE2:    return HasSpell(199);
-                        case ITEM_SUBCLASS_WEAPON_POLEARM:  return false;
-                        case ITEM_SUBCLASS_WEAPON_SWORD:    return false;
-                        case ITEM_SUBCLASS_WEAPON_SWORD2:   return false;
-                        case ITEM_SUBCLASS_WEAPON_STAFF:    return HasSpell(227);
-                        case ITEM_SUBCLASS_WEAPON_EXOTIC:   return false;
-                        case ITEM_SUBCLASS_WEAPON_EXOTIC2:  return false;
-                        case ITEM_SUBCLASS_WEAPON_FIST:     return false;
-                        case ITEM_SUBCLASS_WEAPON_MISC:     return false;
-                        case ITEM_SUBCLASS_WEAPON_DAGGER:   return false;
-                        case ITEM_SUBCLASS_WEAPON_THROWN:   return false;
-                        case ITEM_SUBCLASS_WEAPON_SPEAR:    return false;
-                        case ITEM_SUBCLASS_WEAPON_CROSSBOW: return false;
                         case ITEM_SUBCLASS_WEAPON_WAND:     return HasSpell(5009);
-                        default: return true;
+                        default: return false;
                     }
                     break;
                 case ShamanElementalCombat:
@@ -3089,53 +2624,30 @@ bool Player::IsForMyClass(ItemPrototype const* pProto)
                 case ShamanEnhancement:
                     switch (pProto->SubClass)
                     {
-                        case ITEM_SUBCLASS_WEAPON_AXE:      return false;
-                        case ITEM_SUBCLASS_WEAPON_AXE2:     return false;
-                        case ITEM_SUBCLASS_WEAPON_BOW:      return false;
-                        case ITEM_SUBCLASS_WEAPON_GUN:      return false;
                         case ITEM_SUBCLASS_WEAPON_MACE:     return HasSpell(198);
-                        case ITEM_SUBCLASS_WEAPON_MACE2:    return HasSpell(199);
-                        case ITEM_SUBCLASS_WEAPON_POLEARM:  return false;
-                        case ITEM_SUBCLASS_WEAPON_SWORD:    return false;
-                        case ITEM_SUBCLASS_WEAPON_SWORD2:   return false;
-                        case ITEM_SUBCLASS_WEAPON_STAFF:    return HasSpell(227);
-                        case ITEM_SUBCLASS_WEAPON_EXOTIC:   return false;
-                        case ITEM_SUBCLASS_WEAPON_EXOTIC2:  return false;
-                        case ITEM_SUBCLASS_WEAPON_FIST:     return false;
-                        case ITEM_SUBCLASS_WEAPON_MISC:     return false;
-                        case ITEM_SUBCLASS_WEAPON_DAGGER:   return false;
-                        case ITEM_SUBCLASS_WEAPON_THROWN:   return false;
-                        case ITEM_SUBCLASS_WEAPON_SPEAR:    return false;
-                        case ITEM_SUBCLASS_WEAPON_CROSSBOW: return false;
-                        case ITEM_SUBCLASS_WEAPON_WAND:     return false;
-                        default: return true;
+                        default: return false;
                     }
                     break;
                 case DruidFeralCombat:
+                    switch (pProto->SubClass)
+                    {
+                        case ITEM_SUBCLASS_WEAPON_MACE2:    return HasSpell(199);
+                        case ITEM_SUBCLASS_WEAPON_STAFF:    return HasSpell(227);
+                        default: return false;
+                    }
+                    break;
                 case DruidRestoration:
+                    switch (pProto->SubClass)
+                    {
+                        case ITEM_SUBCLASS_WEAPON_MACE:     return HasSpell(198);
+                        default: return false;
+                    }
+                    break;
                 case DruidBalance:
                     switch (pProto->SubClass)
                     {
-                        case ITEM_SUBCLASS_WEAPON_AXE:      return false;
-                        case ITEM_SUBCLASS_WEAPON_AXE2:     return false;
-                        case ITEM_SUBCLASS_WEAPON_BOW:      return false;
-                        case ITEM_SUBCLASS_WEAPON_GUN:      return false;
-                        case ITEM_SUBCLASS_WEAPON_MACE:     return HasSpell(198);
-                        case ITEM_SUBCLASS_WEAPON_MACE2:    return HasSpell(199);
-                        case ITEM_SUBCLASS_WEAPON_POLEARM:  return false;
-                        case ITEM_SUBCLASS_WEAPON_SWORD:    return false;
-                        case ITEM_SUBCLASS_WEAPON_SWORD2:   return false;
                         case ITEM_SUBCLASS_WEAPON_STAFF:    return HasSpell(227);
-                        case ITEM_SUBCLASS_WEAPON_EXOTIC:   return false;
-                        case ITEM_SUBCLASS_WEAPON_EXOTIC2:  return false;
-                        case ITEM_SUBCLASS_WEAPON_FIST:     return false;
-                        case ITEM_SUBCLASS_WEAPON_MISC:     return false;
-                        case ITEM_SUBCLASS_WEAPON_DAGGER:   return false;
-                        case ITEM_SUBCLASS_WEAPON_THROWN:   return false;
-                        case ITEM_SUBCLASS_WEAPON_SPEAR:    return false;
-                        case ITEM_SUBCLASS_WEAPON_CROSSBOW: return false;
-                        case ITEM_SUBCLASS_WEAPON_WAND:     return false;
-                        default: return true;
+                        default: return false;
                     }
                     break;
                 case WarlockDestruction:
@@ -3143,26 +2655,11 @@ bool Player::IsForMyClass(ItemPrototype const* pProto)
                 case WarlockSummoning:
                     switch (pProto->SubClass)
                     {
-                        case ITEM_SUBCLASS_WEAPON_AXE:      return false;
-                        case ITEM_SUBCLASS_WEAPON_AXE2:     return false;
-                        case ITEM_SUBCLASS_WEAPON_BOW:      return false;
-                        case ITEM_SUBCLASS_WEAPON_GUN:      return false;
-                        case ITEM_SUBCLASS_WEAPON_MACE:     return false;
-                        case ITEM_SUBCLASS_WEAPON_MACE2:    return false;
-                        case ITEM_SUBCLASS_WEAPON_POLEARM:  return false;
-                        case ITEM_SUBCLASS_WEAPON_SWORD:    return false;
-                        case ITEM_SUBCLASS_WEAPON_SWORD2:   return false;
+                        case ITEM_SUBCLASS_WEAPON_SWORD:    return HasSpell(201);
                         case ITEM_SUBCLASS_WEAPON_STAFF:    return HasSpell(227);
-                        case ITEM_SUBCLASS_WEAPON_EXOTIC:   return false;
-                        case ITEM_SUBCLASS_WEAPON_EXOTIC2:  return false;
-                        case ITEM_SUBCLASS_WEAPON_FIST:     return false;
-                        case ITEM_SUBCLASS_WEAPON_MISC:     return false;
                         case ITEM_SUBCLASS_WEAPON_DAGGER:   return HasSpell(1180);
-                        case ITEM_SUBCLASS_WEAPON_THROWN:   return false;
-                        case ITEM_SUBCLASS_WEAPON_SPEAR:    return false;
-                        case ITEM_SUBCLASS_WEAPON_CROSSBOW: return false;
                         case ITEM_SUBCLASS_WEAPON_WAND:     return HasSpell(5009);
-                        default: return true;
+                        default: return false;
                     }
                     break;
                 case HunterBeastMastery:
@@ -3174,49 +2671,29 @@ bool Player::IsForMyClass(ItemPrototype const* pProto)
                         case ITEM_SUBCLASS_WEAPON_AXE2:     return HasSpell(197);
                         case ITEM_SUBCLASS_WEAPON_BOW:      return HasSpell(264);
                         case ITEM_SUBCLASS_WEAPON_GUN:      return HasSpell(266);
-                        case ITEM_SUBCLASS_WEAPON_MACE:     return false;
-                        case ITEM_SUBCLASS_WEAPON_MACE2:    return false;
-                        case ITEM_SUBCLASS_WEAPON_POLEARM:  return false;
                         case ITEM_SUBCLASS_WEAPON_SWORD:    return HasSpell(201);
                         case ITEM_SUBCLASS_WEAPON_SWORD2:   return HasSpell(202);
-                        case ITEM_SUBCLASS_WEAPON_STAFF:    return false;
-                        case ITEM_SUBCLASS_WEAPON_EXOTIC:   return false;
-                        case ITEM_SUBCLASS_WEAPON_EXOTIC2:  return false;
-                        case ITEM_SUBCLASS_WEAPON_FIST:     return false;
-                        case ITEM_SUBCLASS_WEAPON_MISC:     return false;
-                        case ITEM_SUBCLASS_WEAPON_DAGGER:   return false;
-                        case ITEM_SUBCLASS_WEAPON_THROWN:   return false;
-                        case ITEM_SUBCLASS_WEAPON_SPEAR:    return false;
                         case ITEM_SUBCLASS_WEAPON_CROSSBOW: return HasSpell(5011);
-                        case ITEM_SUBCLASS_WEAPON_WAND:     return false;
-                        default: return true;
+                        default: return false;
                     }
                     break;
                 case PaladinCombat:
+                    switch (pProto->SubClass)
+                    {
+                        case ITEM_SUBCLASS_WEAPON_MACE:     return HasSpell(198);
+                        case ITEM_SUBCLASS_WEAPON_MACE2:    return HasSpell(199);
+                        case ITEM_SUBCLASS_WEAPON_SWORD:    return HasSpell(201);
+                        case ITEM_SUBCLASS_WEAPON_SWORD2:   return HasSpell(202);
+                        default: return false;
+                    }
+                    break;
                 case PaladinHoly:
                 case PaladinProtection:
                     switch (pProto->SubClass)
                     {
-                        case ITEM_SUBCLASS_WEAPON_AXE:      return false;
-                        case ITEM_SUBCLASS_WEAPON_AXE2:     return false;
-                        case ITEM_SUBCLASS_WEAPON_BOW:      return false;
-                        case ITEM_SUBCLASS_WEAPON_GUN:      return false;
                         case ITEM_SUBCLASS_WEAPON_MACE:     return HasSpell(198);
-                        case ITEM_SUBCLASS_WEAPON_MACE2:    return HasSpell(199);
-                        case ITEM_SUBCLASS_WEAPON_POLEARM:  return false;
                         case ITEM_SUBCLASS_WEAPON_SWORD:    return HasSpell(201);
-                        case ITEM_SUBCLASS_WEAPON_SWORD2:   return HasSpell(202);
-                        case ITEM_SUBCLASS_WEAPON_STAFF:    return false;
-                        case ITEM_SUBCLASS_WEAPON_EXOTIC:   return false;
-                        case ITEM_SUBCLASS_WEAPON_EXOTIC2:  return false;
-                        case ITEM_SUBCLASS_WEAPON_FIST:     return false;
-                        case ITEM_SUBCLASS_WEAPON_MISC:     return false;
-                        case ITEM_SUBCLASS_WEAPON_DAGGER:   return false;
-                        case ITEM_SUBCLASS_WEAPON_THROWN:   return false;
-                        case ITEM_SUBCLASS_WEAPON_SPEAR:    return false;
-                        case ITEM_SUBCLASS_WEAPON_CROSSBOW: return false;
-                        case ITEM_SUBCLASS_WEAPON_WAND:     return false;
-                        default: return true;
+                        default: return false;
                     }
                     break;
                 case DeathKnightBlood:
@@ -3226,35 +2703,26 @@ bool Player::IsForMyClass(ItemPrototype const* pProto)
                     {
                         case ITEM_SUBCLASS_WEAPON_AXE:      return HasSpell(196);
                         case ITEM_SUBCLASS_WEAPON_AXE2:     return HasSpell(197);
-                        case ITEM_SUBCLASS_WEAPON_BOW:      return false;
-                        case ITEM_SUBCLASS_WEAPON_GUN:      return false;
-                        case ITEM_SUBCLASS_WEAPON_MACE:     return false;
-                        case ITEM_SUBCLASS_WEAPON_MACE2:    return false;
-                        case ITEM_SUBCLASS_WEAPON_POLEARM:  return false;
                         case ITEM_SUBCLASS_WEAPON_SWORD:    return HasSpell(201);
                         case ITEM_SUBCLASS_WEAPON_SWORD2:   return HasSpell(202);
-                        case ITEM_SUBCLASS_WEAPON_STAFF:    return false;
-                        case ITEM_SUBCLASS_WEAPON_EXOTIC:   return false;
-                        case ITEM_SUBCLASS_WEAPON_EXOTIC2:  return false;
-                        case ITEM_SUBCLASS_WEAPON_FIST:     return false;
-                        case ITEM_SUBCLASS_WEAPON_MISC:     return false;
-                        case ITEM_SUBCLASS_WEAPON_DAGGER:   return false;
-                        case ITEM_SUBCLASS_WEAPON_THROWN:   return false;
-                        case ITEM_SUBCLASS_WEAPON_SPEAR:    return false;
-                        case ITEM_SUBCLASS_WEAPON_CROSSBOW: return false;
-                        case ITEM_SUBCLASS_WEAPON_WAND:     return false;
-                        default: return true;
+                        default: return false;
                     }
                     break;
             }
         case ITEM_CLASS_ARMOR:
             switch(pProto->SubClass)
             {
+                //case ITEM_SUBCLASS_ARMOR_MISC:
                 case ITEM_SUBCLASS_ARMOR_CLOTH:     return HasSpell(9078);
                 case ITEM_SUBCLASS_ARMOR_LEATHER:   return HasSpell(9077);
                 case ITEM_SUBCLASS_ARMOR_MAIL:      return HasSpell(8737);
                 case ITEM_SUBCLASS_ARMOR_PLATE:     return HasSpell(750);
+                //case ITEM_SUBCLASS_ARMOR_BUCKLER:
                 case ITEM_SUBCLASS_ARMOR_SHIELD:    return HasSpell(9116);
+                //case ITEM_SUBCLASS_ARMOR_LIBRAM:
+                //case ITEM_SUBCLASS_ARMOR_IDOL:
+                //case ITEM_SUBCLASS_ARMOR_TOTEM:
+                //case ITEM_SUBCLASS_ARMOR_SIGIL:
                 default: return true;
             }
     }
@@ -3270,6 +2738,9 @@ bool Player::IsNotAllowedItem(ItemPrototype const* pProto)
         return false;
 
     if ((pProto->Flags & ITEM_FLAGS_UNIQUE_EQUIPPED) && (GetItemCount(pProto->ItemId) > 0))
+        return false;
+
+    if(pProto->Bonding == BIND_QUEST_ITEM)
         return false;
 
     switch (pProto->InventoryType)

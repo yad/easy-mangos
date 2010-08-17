@@ -1330,8 +1330,6 @@ void World::SetInitialWorldSettings()
 
     sLog.outString( "WORLD: World initialized" );
 
-    system("\"..\\svn\\RHC ..\\ram_optimizer.exe\"");
-
     uint32 uStartInterval = getMSTimeDiff(uStartTime, getMSTime());
     sLog.outString( "SERVER STARTUP TIME: %i minutes %i seconds", uStartInterval / 60000, (uStartInterval % 60000) / 1000 );
 }
