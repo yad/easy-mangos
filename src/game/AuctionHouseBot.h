@@ -942,7 +942,7 @@ private:
     time_t _lastrun_n;
 
     uint32 ItemsPerCycle;
-
+    ObjectGuid m_FakeGuid;
     inline uint32 minValue(uint32 a, uint32 b) { return a <= b ? a : b; };
     void addNewAuctions(AHBConfig *config);
     void addNewAuctionBuyerBotBid(AHBConfig *config, WorldSession *session);
@@ -955,7 +955,7 @@ public:
     void LoadDbConfig();
     void LoadValues(AHBConfig*);
     void Commands(uint32, uint32, uint32, char*);
-    uint32 GetAHBplayerGUID() { return std::numeric_limits< int >::max(); };
+    ObjectGuid GetAHBplayerGUID() { return m_FakeGuid; };
 };
 
 #define auctionbot MaNGOS::Singleton<AuctionHouseBot>::Instance()

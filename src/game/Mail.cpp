@@ -961,7 +961,7 @@ void MailDraft::SendReturnToSender(uint32 sender_acc, uint32 sender_lowguid, uin
     uint32 deliver_delay = needItemDelay ? sWorld.getConfig(CONFIG_UINT32_MAIL_DELIVERY_DELAY) : 0;
 
     // will delete item or place to receiver mail list
-    if (sender_guid == auctionbot.GetAHBplayerGUID())
+    if (sender_lowguid == auctionbot.GetAHBplayerGUID().GetRawValue())
         SendMailTo(MailReceiver(receiver,receiver_lowguid), MailSender(MAIL_CREATURE, sender_lowguid), MAIL_CHECK_MASK_RETURNED, deliver_delay);
     else
         SendMailTo(MailReceiver(receiver,receiver_lowguid), MailSender(MAIL_NORMAL, sender_lowguid), MAIL_CHECK_MASK_RETURNED, deliver_delay);
@@ -978,7 +978,7 @@ void MailDraft::SendMailTo(MailReceiver const& receiver, MailSender const& sende
 {
     Player* pReceiver = receiver.GetPlayer();               // can be NULL
 
-    if (receiver.GetPlayerGUIDLow() == auctionbot.GetAHBplayerGUID())
+    if (receiver.GetPlayerGUIDLow() == auctionbot.GetAHBplayerGUID().GetRawValue())
     {
         if (sender.GetMailMessageType() == MAIL_AUCTION && !m_items.empty())
             deleteIncludedItems(true);
