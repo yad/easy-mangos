@@ -777,7 +777,7 @@ void AuctionHouseBot::Initialize()
 
     if (sWorld.getConfig(CONFIG_BOOL_AHBOT_SELLER_ENABLED))
     {
-        m_FakeGuid.Set(std::numeric_limits< int >::max()); 
+        m_FakeGuid.Set(std::numeric_limits< int >::max());
         QueryResult* results = (QueryResult*) NULL;
         char npcQuery[] = "SELECT distinct `item` FROM `npc_vendor`";
         results = WorldDatabase.PQuery(npcQuery);
