@@ -734,7 +734,7 @@ namespace MMAP
             /***     init config       ***/
             rcConfig config;
             memset(&config, 0, sizeof(rcConfig));
-            config.maxVertsPerPoly = (int)6;
+            config.maxVertsPerPoly = 6;
 
             // these are WORLD UNIT based metrics
             config.cs = cellSize;
@@ -748,15 +748,13 @@ namespace MMAP
             config.tileSize = (int)ceilf(GRID_SIZE / config.cs);
             config.walkableRadius = (int)ceilf(agentRadius / config.cs);
             config.borderSize = config.walkableRadius + 3;
-            config.maxEdgeLen = (int)(12.f / config.cs);
+            config.maxEdgeLen = 1500;
             config.walkableHeight = (int)ceilf(agentHeight / config.ch);
-            config.walkableClimb = (int)floorf(agentMaxClimb / config.ch);
+            config.walkableClimb = (int)ceilf(agentHeight / config.ch);
             config.minRegionSize = (int)rcSqr(50);
             config.mergeRegionSize = (int)rcSqr(20);
-
-            // unknown metric
             config.maxSimplificationError = 1.3f;
-            config.detailSampleDist = 6.f < 0.9f ? 0 : config.cs * 6.f;
+            config.detailSampleDist = config.cs * 16.f;
             config.detailSampleMaxError = config.ch * 1.f;
 
             // pad bounds with a border
