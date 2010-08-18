@@ -132,7 +132,7 @@ void WorldSession::SendFakeNameForAHBotQueryOPcode()
 {
                                                                         // guess size
     WorldPacket data( SMSG_NAME_QUERY_RESPONSE, (8+1+1+1+1+1+10) );
-    data.appendPackGUID(auctionbot.GetAHBplayerGUID().GetRawValue());
+    data.appendPackGUID(auctionbot.GetAHBObjectGuid().GetRawValue());
     data << uint8(0);													// added in 3.1; if > 1, then end of packet
     data << sWorld.GetAHBotName();										// played name
     data << uint8(0);													// realm name for cross realm BG usage
@@ -153,7 +153,7 @@ void WorldSession::HandleNameQueryOpcode( WorldPacket & recv_data )
     if (pChar)
         SendNameQueryOpcode(pChar);
     else
-        if (guid!=auctionbot.GetAHBplayerGUID().GetRawValue())
+        if (guid!=auctionbot.GetAHBObjectGuid().GetRawValue())
             SendNameQueryOpcodeFromDB(guid);
         else
             SendFakeNameForAHBotQueryOPcode();
