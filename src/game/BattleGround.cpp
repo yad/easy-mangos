@@ -1076,10 +1076,6 @@ void BattleGround::RemovePlayerAtLeave(uint64 guid, bool Transport, bool SendPac
                 plr->RemoveArenaAuras(true);                // removes debuffs / dots etc., we don't want the player to die after porting out
                 bgTypeId=BATTLEGROUND_AA;                   // set the bg type to all arenas (it will be used for queue refreshing)
 
-                // unsummon current and summon old pet if there was one and there isn't a current pet
-                plr->RemovePet(NULL, PET_SAVE_NOT_IN_SLOT);
-                plr->ResummonPetTemporaryUnSummonedIfAny();
-
                 if (isRated() && GetStatus() == STATUS_IN_PROGRESS)
                 {
                     //left a rated match while the encounter was in progress, consider as loser
@@ -1207,7 +1203,7 @@ void BattleGround::AddPlayer(Player *plr)
 
     // score struct must be created in inherited class
 
-    uint64 guid = plr->GetGUID();
+    ObjectGuid guid = plr->GetObjectGuid();
     uint32 team = plr->GetBGTeam();
 
     BattleGroundPlayer bp;
@@ -1215,7 +1211,7 @@ void BattleGround::AddPlayer(Player *plr)
     bp.Team = team;
 
     // Add to list/maps
-    m_Players[guid] = bp;
+    m_Players[guid.GetRawValue()] = bp;
 
     UpdatePlayersCountByTeam(team, false);                  // +1 player
 
@@ -1245,7 +1241,7 @@ void BattleGround::AddPlayer(Player *plr)
         }
 
         plr->DestroyConjuredItems(true);
-        plr->UnsummonPetTemporaryIfAny();
+        plr->RemovePet(NULL, PET_SAVE_NOT_IN_SLOT);
 
         if(GetStatus() == STATUS_WAIT_JOIN)                 // not started yet
         {
@@ -1273,16 +1269,9 @@ void BattleGround::AddPlayer(Player *plr)
 }
 
 /* this method adds player to his team's bg group, or sets his correct group if player is already in bg group */
-void BattleGround::AddOrSetPlayerToCorrectBgGroup(Player *plr, uint64 plr_guid, uint32 team)
+void BattleGround::AddOrSetPlayerToCorrectBgGroup(Player *plr, ObjectGuid plr_guid, uint32 team)
 {
-    Group* group = GetBgRaid(team);
-    if(!group)                                      // first player joined
-    {
-        group = new Group;
-        SetBgRaid(team, group);
-        group->Create(plr_guid, plr->GetName());
-    }
-    else                                            // raid already exist
+    if (Group* group = GetBgRaid(team))                     // raid already exist
     {
         if (group->IsMember(plr_guid))
         {
@@ -1296,6 +1285,12 @@ void BattleGround::AddOrSetPlayerToCorrectBgGroup(Player *plr, uint64 plr_guid, 
                 if (originalGroup->IsLeader(plr_guid))
                     group->ChangeLeader(plr_guid);
         }
+    }
+    else                                                    // first player joined
+    {
+        group = new Group;
+        SetBgRaid(team, group);
+        group->Create(plr_guid, plr->GetName());
     }
 }
 

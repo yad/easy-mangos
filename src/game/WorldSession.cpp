@@ -161,7 +161,7 @@ bool WorldSession::ReadInvitePaquet(WorldPacket const* packet)
             if (!grp)
                 return false;
 
-            Player* const inviter = sObjectMgr.GetPlayer(grp->GetLeaderGUID());
+            Player* const inviter = sObjectMgr.GetPlayer(grp->GetLeaderGuid());
             if (!inviter)
                 return false;
 

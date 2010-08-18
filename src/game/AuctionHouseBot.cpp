@@ -32,7 +32,7 @@ void AuctionHouseBot::addNewAuctions(AHBConfig *config)
     uint32 maxItems = config->GetMaxItems();
     uint32 auctions = auctionHouse->Getcount();
 
-    if (auctions >= minItems)
+	if (auctions >= minItems)
         return;
 
     if (auctions <= maxItems)
@@ -405,12 +405,12 @@ void AuctionHouseBot::addNewAuctions(AHBConfig *config)
             break;
         }
 
-        item->SetCount(stackCount);
+		item->SetCount(stackCount);
         AuctionEntry* auctionEntry = new AuctionEntry;
         auctionEntry->Id = sObjectMgr.GenerateAuctionID();
         auctionEntry->item_guidlow = item->GetGUIDLow();
         auctionEntry->item_template = item->GetEntry();
-        auctionEntry->owner = GetAHBplayerGUID();
+        auctionEntry->owner = GetAHBplayerGUID().GetRawValue();
         auctionEntry->startbid = bidPrice;
         auctionEntry->buyout = buyoutPrice;
         auctionEntry->bidder = 0;
@@ -432,7 +432,7 @@ void AuctionHouseBot::addNewAuctionBuyerBotBid(AHBConfig *config, WorldSession *
 
     // Fetches content of selected AH
     AuctionHouseEntry const* ahEntry = sAuctionMgr.GetAuctionHouseEntryByFaction(config->GetAHFID());
-    AuctionHouseObject* auctionHouse = sAuctionMgr.GetAuctionsMap(ahEntry);
+	AuctionHouseObject* auctionHouse = sAuctionMgr.GetAuctionsMap(ahEntry);
     vector<uint32> possibleBids;
 
     for (AuctionHouseObject::AuctionEntryMap::const_iterator itr = auctionHouse->GetAuctionsBegin();itr != auctionHouse->GetAuctionsEnd();++itr)
@@ -676,7 +676,7 @@ void AuctionHouseBot::addNewAuctionBuyerBotBid(AHBConfig *config, WorldSession *
 
             if (auction->bidder > 0)
             {
-                if (auction->bidder == GetAHBplayerGUID())
+                if (auction->bidder == GetAHBplayerGUID().GetRawValue())
                 {
                     //pl->ModifyMoney(-int32(price - auction->bid));
                 }
@@ -688,7 +688,7 @@ void AuctionHouseBot::addNewAuctionBuyerBotBid(AHBConfig *config, WorldSession *
                 }
             }
 
-            auction->bidder = GetAHBplayerGUID();
+            auction->bidder = GetAHBplayerGUID().GetRawValue();
             auction->bid = bidprice;
 
             // Saving auction into database
@@ -697,7 +697,7 @@ void AuctionHouseBot::addNewAuctionBuyerBotBid(AHBConfig *config, WorldSession *
         else
         {
             //buyout
-            if (GetAHBplayerGUID() == auction->bidder)
+            if (GetAHBplayerGUID().GetRawValue() == auction->bidder)
             {
                 //pl->ModifyMoney(-int32(auction->buyout - auction->bid));
             }
@@ -709,7 +709,7 @@ void AuctionHouseBot::addNewAuctionBuyerBotBid(AHBConfig *config, WorldSession *
                     session->SendAuctionOutbiddedMail(auction, auction->buyout);
                 }
             }
-            auction->bidder = GetAHBplayerGUID();
+            auction->bidder = GetAHBplayerGUID().GetRawValue();
             auction->bid = auction->buyout;
 
             // Send mails to buyer & seller
@@ -777,6 +777,7 @@ void AuctionHouseBot::Initialize()
 
     if (sWorld.getConfig(CONFIG_BOOL_AHBOT_SELLER_ENABLED))
     {
+        m_FakeGuid.Set(std::numeric_limits< int >::max());
         QueryResult* results = (QueryResult*) NULL;
         char npcQuery[] = "SELECT distinct `item` FROM `npc_vendor`";
         results = WorldDatabase.PQuery(npcQuery);
@@ -1063,14 +1064,14 @@ void AuctionHouseBot::Commands(uint32 command, uint32 ahMapID, uint32 col, char*
     case 0:     //ahexpire
         {
             AuctionHouseEntry const* ahEntry = sAuctionMgr.GetAuctionHouseEntryByFaction(config->GetAHFID());
-            AuctionHouseObject* auctionHouse = sAuctionMgr.GetAuctionsMap(ahEntry);
+			AuctionHouseObject* auctionHouse = sAuctionMgr.GetAuctionsMap(ahEntry);
 
             AuctionHouseObject::AuctionEntryMap::iterator itr;
             itr = auctionHouse->GetAuctionsBegin();
 
             while (itr != auctionHouse->GetAuctionsEnd())
             {
-                if (itr->second->owner == GetAHBplayerGUID())
+                if (itr->second->owner == GetAHBplayerGUID().GetRawValue())
                     itr->second->expire_time = sWorld.GetGameTime();
 
                 ++itr;

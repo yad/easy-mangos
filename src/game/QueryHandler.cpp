@@ -91,7 +91,7 @@ void WorldSession::SendNameQueryOpcodeFromDBCallBack(QueryResult *result, uint32
     }
 
     Field *fields = result->Fetch();
-    uint32 guid      = fields[0].GetUInt32();
+    uint32 lowguid      = fields[0].GetUInt32();
     std::string name = fields[1].GetCppString();
     uint8 pRace = 0, pGender = 0, pClass = 0;
     if(name == "")
@@ -104,7 +104,7 @@ void WorldSession::SendNameQueryOpcodeFromDBCallBack(QueryResult *result, uint32
     }
                                                             // guess size
     WorldPacket data( SMSG_NAME_QUERY_RESPONSE, (8+1+1+1+1+1+1+10) );
-    data.appendPackGUID(MAKE_NEW_GUID(guid, 0, HIGHGUID_PLAYER));
+    data << ObjectGuid(HIGHGUID_PLAYER, lowguid).WriteAsPacked();
     data << uint8(0);                                       // added in 3.1; if > 1, then end of packet
     data << name;
     data << uint8(0);                                       // realm name for cross realm BG usage
@@ -132,16 +132,17 @@ void WorldSession::SendFakeNameForAHBotQueryOPcode()
 {
                                                                         // guess size
     WorldPacket data( SMSG_NAME_QUERY_RESPONSE, (8+1+1+1+1+1+10) );
-    data.appendPackGUID(auctionbot.GetAHBplayerGUID());
-    data << uint8(0);                                                    // added in 3.1; if > 1, then end of packet
-    data << sWorld.GetAHBotName();                                       // played name
-    data << uint8(0);                                                    // realm name for cross realm BG usage
-    data << uint8(0);                                                    // race
-    data << uint8(0);                                                    // gender
-    data << uint8(0);                                                    // class
-    data << uint8(0);                                                    // is not declined
+	data.appendPackGUID(auctionbot.GetAHBplayerGUID().GetRawValue());
+    data << uint8(0);													// added in 3.1; if > 1, then end of packet
+    data << sWorld.GetAHBotName();										// played name
+    data << uint8(0);													// realm name for cross realm BG usage
+    data << uint8(0);													// race
+    data << uint8(0);													// gender
+    data << uint8(0);													// class
+    data << uint8(0);													// is not declined
     SendPacket(&data);
 }
+
 
 void WorldSession::HandleNameQueryOpcode( WorldPacket & recv_data )
 {
@@ -154,7 +155,7 @@ void WorldSession::HandleNameQueryOpcode( WorldPacket & recv_data )
     if (pChar)
         SendNameQueryOpcode(pChar);
     else
-        if (guid!=auctionbot.GetAHBplayerGUID())
+		if (guid!=auctionbot.GetAHBplayerGUID().GetRawValue())
             SendNameQueryOpcodeFromDB(guid);
         else
             SendFakeNameForAHBotQueryOPcode();

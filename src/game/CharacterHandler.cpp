@@ -25,7 +25,6 @@
 #include "Log.h"
 #include "World.h"
 #include "ObjectMgr.h"
-#include "ObjectGuid.h"
 #include "Player.h"
 #include "Guild.h"
 #include "UpdateMask.h"
@@ -508,7 +507,7 @@ void WorldSession::HandleCharCreateOpcode( WorldPacket & recv_data )
 
 void WorldSession::HandleCharDeleteOpcode( WorldPacket & recv_data )
 {
-    uint64 guid;
+    ObjectGuid guid;
     recv_data >> guid;
 
     // can't delete loaded character
@@ -536,7 +535,9 @@ void WorldSession::HandleCharDeleteOpcode( WorldPacket & recv_data )
         return;
     }
 
-    QueryResult *result = CharacterDatabase.PQuery("SELECT account,name FROM characters WHERE guid='%u'", GUID_LOPART(guid));
+    uint32 lowguid = guid.GetCounter();
+
+    QueryResult *result = CharacterDatabase.PQuery("SELECT account,name FROM characters WHERE guid='%u'", lowguid);
     if(result)
     {
         Field *fields = result->Fetch();
@@ -550,13 +551,13 @@ void WorldSession::HandleCharDeleteOpcode( WorldPacket & recv_data )
         return;
 
     std::string IP_str = GetRemoteAddress();
-    BASIC_LOG("Account: %d (IP: %s) Delete Character:[%s] (guid: %u)", GetAccountId(), IP_str.c_str(), name.c_str(), GUID_LOPART(guid));
-    sLog.outChar("Account: %d (IP: %s) Delete Character:[%s] (guid: %u)", GetAccountId(), IP_str.c_str(), name.c_str(), GUID_LOPART(guid));
+    BASIC_LOG("Account: %d (IP: %s) Delete Character:[%s] (guid: %u)", GetAccountId(), IP_str.c_str(), name.c_str(), lowguid);
+    sLog.outChar("Account: %d (IP: %s) Delete Character:[%s] (guid: %u)", GetAccountId(), IP_str.c_str(), name.c_str(), lowguid);
 
     if(sLog.IsOutCharDump())                                // optimize GetPlayerDump call
     {
-        std::string dump = PlayerDumpWriter().GetDump(GUID_LOPART(guid));
-        sLog.outCharDump(dump.c_str(), GetAccountId(), GUID_LOPART(guid), name.c_str());
+        std::string dump = PlayerDumpWriter().GetDump(lowguid);
+        sLog.outCharDump(dump.c_str(), GetAccountId(), lowguid, name.c_str());
     }
 
     Player::DeleteFromDB(guid, GetAccountId());
@@ -1038,7 +1039,7 @@ void WorldSession::HandleChangePlayerNameOpcodeCallBack(QueryResult *result, uin
     }
 
     uint32 guidLow = result->Fetch()[0].GetUInt32();
-    uint64 guid = MAKE_NEW_GUID(guidLow, 0, HIGHGUID_PLAYER);
+    ObjectGuid guid = ObjectGuid(HIGHGUID_PLAYER, guidLow);
     std::string oldname = result->Fetch()[1].GetCppString();
 
     delete result;
@@ -1050,7 +1051,7 @@ void WorldSession::HandleChangePlayerNameOpcodeCallBack(QueryResult *result, uin
 
     WorldPacket data(SMSG_CHAR_RENAME, 1+8+(newname.size()+1));
     data << uint8(RESPONSE_SUCCESS);
-    data << uint64(guid);
+    data << guid;
     data << newname;
     session->SendPacket(&data);
 }
@@ -1304,7 +1305,7 @@ void WorldSession::HandleCharFactionOrRaceChange(WorldPacket& recv_data)
         CharacterDatabase.PExecute("DELETE FROM `character_social` WHERE `guid`= '%u'",GUID_LOPART(guid));
         CharacterDatabase.PExecute("DELETE FROM `character_social` WHERE `friend`= '%u'",GUID_LOPART(guid));
         // Leave Arena Teams
-        Player::LeaveAllArenaTeams(GUID_LOPART(guid));
+        //Player::LeaveAllArenaTeams(GUID_LOPART(guid));
         // Reset Language (will be added automatically after faction change)
         CharacterDatabase.PExecute("DELETE FROM `character_spell` WHERE `spell` IN (668, 7340, 671, 672, 814, 29932, 17737, 816, 7341, 669, 813, 670) AND guid ='%u'",GUID_LOPART(guid));
 
