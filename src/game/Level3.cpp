@@ -7772,8 +7772,8 @@ bool ChatHandler::HandleGMStartUpCommand(char* args)
         HandleAddItemCommand("23162");//bag 36
         HandleAddItemCommand("23162");//bag 36
         HandleAddItemCommand("23162");//bag 36
+        chr->AutoEquipItem();
     }
-    chr->AutoEquipItem();
 
     chr->GetBestItemForMyLevel();
     chr->AutoEquipItem();

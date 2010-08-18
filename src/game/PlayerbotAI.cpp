@@ -1900,7 +1900,6 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
             if (currentTime > m_ignoreSpellsAndItems)
             {
                (GetClassAI())->InitSpells(m_bot->GetPlayerbotAI());
-                m_bot->AutoEquipItem();
                 SetIgnoreUpdateSpellsAndItems();
             }
             MovementReset();
@@ -1913,7 +1912,6 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
             if (currentTime > m_ignoreSpellsAndItems)
             {
                (GetClassAI())->InitSpells(m_bot->GetPlayerbotAI());
-                m_bot->AutoEquipItem();
                 SetIgnoreUpdateSpellsAndItems();
             }
             if (!(GetClassAI())->DoNonCombatActions())

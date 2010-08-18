@@ -1308,6 +1308,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         Item* StoreNewItemInInventorySlot(uint32 itemEntry, uint32 amount);
         void AutoEquipItem();
         void GetBestItemForMyLevel();
+        void XSwapItem(ItemPrototype const* eItem, ItemPrototype const* bItem, bool DPS, int i, Item* pItem);
         ItemPrototype const* CheckItemSet(ItemPrototype const* bestItemInSlot, ItemPrototype const* bestItemFromSet);
         void GiveItem(ItemPrototype const* bestItemInSlot);
         void PurgeMyBags();
@@ -2754,6 +2755,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         DeclinedName *m_declinedname;
         Runes *m_runes;
         EquipmentSets m_EquipmentSets;
+        ItemPrototype const *bestItemFromSet;
     private:
         // internal common parts for CanStore/StoreItem functions
         uint8 _CanStoreItem_InSpecificSlot( uint8 bag, uint8 slot, ItemPosCountVec& dest, ItemPrototype const *pProto, uint32& count, bool swap, Item *pSrcItem ) const;
