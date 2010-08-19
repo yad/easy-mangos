@@ -4,6 +4,7 @@
 #include "World.h"
 #include "Config/Config.h"
 #include "ace/Vector_T.h"
+#include "ObjectGuid.h"
 
 #define AHB_GREY        0
 #define AHB_WHITE       1
@@ -43,8 +44,6 @@ class AHBConfig
 private:
     uint32 AHID;
     uint32 AHFID;
-    uint32 minItems;
-    uint32 maxItems;
     uint32 minTime;
     uint32 maxTime;
 
@@ -111,27 +110,6 @@ public:
     uint32 GetAHFID()
     {
         return AHFID;
-    }
-    void SetMinItems(uint32 value)
-    {
-        minItems = value;
-    }
-    uint32 GetMinItems()
-    {
-        if ((minItems  == 0) && (maxItems))
-            return maxItems;
-        else if ((maxItems) && (minItems > maxItems))
-            return maxItems;
-        else
-            return minItems;
-    }
-    void SetMaxItems(uint32 value)
-    {
-        maxItems = value;
-    }
-    uint32 GetMaxItems()
-    {
-        return maxItems;
     }
     void SetMinTime(uint32 value)
     {

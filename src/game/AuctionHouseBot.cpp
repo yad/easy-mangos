@@ -750,7 +750,7 @@ void AuctionHouseBot::Initialize()
         sLog.outString("loaded %d orange items", orangeItemsBin.size());
         sLog.outString("loaded %d yellow items", yellowItemsBin.size());
     }
-    sLog.outString("AuctionHouseBot> [AHBot-x003] is now loaded");
+    sLog.outString("AuctionHouseBot> [AHBot-x004] is now loaded");
     sLog.outString("AuctionHouseBot> updated by Cyberium from Xeross git");
     sLog.outString("AuctionHouseBot> (Original by Naicisum, ChrisK, Paradox)");
     sLog.outString("AuctionHouseBot> Includes AHBuyer by Kerbe and Paradox");
@@ -818,17 +818,11 @@ void AuctionHouseBot::Commands(uint32 command, uint32 ahMapID, uint32 col, char*
         }break;
     case 1:     //min items
         {
-            char * param1 = strtok(args, " ");
-            uint32 minItems = (uint32) strtoul(param1, NULL, 0);
-            CharacterDatabase.PExecute("UPDATE auction_house_bot_config SET minitems = '%u' WHERE auctionhouse = '%u'", minItems, ahMapID);
-            config->SetMinItems(minItems);
+
         }break;
     case 2:     //max items
         {
-            char * param1 = strtok(args, " ");
-            uint32 maxItems = (uint32) strtoul(param1, NULL, 0);
-            CharacterDatabase.PExecute("UPDATE auction_house_bot_config SET maxitems = '%u' WHERE auctionhouse = '%u'", maxItems, ahMapID);
-            config->SetMaxItems(maxItems);
+
         }break;
     case 3:     //min time
         {
