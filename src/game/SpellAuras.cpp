@@ -2806,14 +2806,23 @@ void Aura::HandleAuraModShapeshift(bool apply, bool Real)
         else
         {
             // players are a bit different since the dbc has seldomly an horde modelid
-            if (Player::TeamForRace(target->getRace()) == HORDE)
+            switch(form)
             {
-                if (ssEntry->modelID_H)
-                    modelid = ssEntry->modelID_H;           // 3.2.3 only the moonkin form has this information
-                else                                        // get model for race
-                    modelid = sObjectMgr.GetModelForRace(ssEntry->modelID_A, target->getRaceMask());
+                case FORM_CAT:
+                case FORM_DIREBEAR:
+                case FORM_BEAR:
+                    modelid = target->GetModelForForm(form);
+                    break;
+                default:
+                    if (Player::TeamForRace(target->getRace()) == HORDE)
+                    {
+                        if (ssEntry->modelID_H)
+                            modelid = ssEntry->modelID_H;           // 3.2.3 only the moonkin form has this information
+                        else                                        // get model for race
+                            modelid = sObjectMgr.GetModelForRace(ssEntry->modelID_A, target->getRaceMask());
+                    }
+                    break;
             }
-
             // nothing found in above, so use default
             if (!modelid)
                 modelid = ssEntry->modelID_A;
