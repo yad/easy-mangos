@@ -2804,8 +2804,7 @@ void Aura::HandleAuraModShapeshift(bool apply, bool Real)
         if (target->GetTypeId() != TYPEID_PLAYER)
             modelid = ssEntry->modelID_A;
         else
-            modelid = target->GetModelForForm(form);
-       /* {
+        {
             // players are a bit difficult since the dbc has seldomly an horde modelid
             // so we add hacks here to set the right model
             if (Player::TeamForRace(target->getRace()) == ALLIANCE)
@@ -2839,7 +2838,7 @@ void Aura::HandleAuraModShapeshift(bool apply, bool Real)
                         break;
                 }
             }
-        } */
+        }
     }
 
     // now only powertype must be set

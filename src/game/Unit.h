@@ -1910,7 +1910,6 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         void AddPetAura(PetAura const* petSpell);
         void RemovePetAura(PetAura const* petSpell);
         virtual float GetFollowAngle() const { return M_PI_F/2; }
-        uint32 GetModelForForm(ShapeshiftForm form);
         void SetThreatRedirectionTarget(uint64 guid, uint32 pct)
         {
             m_misdirectionTargetGUID = guid;
