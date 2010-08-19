@@ -1781,13 +1781,13 @@ void BattleGroundMgr::DistributeArenaPoints()
     sWorld.SendWorldText(LANG_DIST_ARENA_POINTS_END);
 }
 
-void BattleGroundMgr::BuildBattleGroundListPacket(WorldPacket *data, const uint64& guid, Player* plr, BattleGroundTypeId bgTypeId, uint8 fromWhere)
+void BattleGroundMgr::BuildBattleGroundListPacket(WorldPacket *data, ObjectGuid guid, Player* plr, BattleGroundTypeId bgTypeId, uint8 fromWhere)
 {
     if (!plr)
         return;
 
     data->Initialize(SMSG_BATTLEFIELD_LIST);
-    *data << uint64(guid);                                  // battlemaster guid
+    *data << guid;                                          // battlemaster guid
     *data << uint8(fromWhere);                              // from where you joined
     *data << uint32(bgTypeId);                              // battleground id
     *data << uint8(0);                                      // unk
@@ -2054,6 +2054,7 @@ HolidayIds BattleGroundMgr::BGTypeToWeekendHolidayId(BattleGroundTypeId bgTypeId
         case BATTLEGROUND_EY: return HOLIDAY_CALL_TO_ARMS_EY;
         case BATTLEGROUND_WS: return HOLIDAY_CALL_TO_ARMS_WS;
         case BATTLEGROUND_SA: return HOLIDAY_CALL_TO_ARMS_SA;
+        case BATTLEGROUND_AB: return HOLIDAY_CALL_TO_ARMS_AB;
         default: return HOLIDAY_NONE;
     }
 }
@@ -2066,6 +2067,7 @@ BattleGroundTypeId BattleGroundMgr::WeekendHolidayIdToBGType(HolidayIds holiday)
         case HOLIDAY_CALL_TO_ARMS_EY: return BATTLEGROUND_EY;
         case HOLIDAY_CALL_TO_ARMS_WS: return BATTLEGROUND_WS;
         case HOLIDAY_CALL_TO_ARMS_SA: return BATTLEGROUND_SA;
+        case HOLIDAY_CALL_TO_ARMS_AB: return BATTLEGROUND_AB;
         default: return BATTLEGROUND_TYPE_NONE;
     }
 }
