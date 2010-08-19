@@ -372,9 +372,15 @@ bool CreatureEventAI::ProcessEvent(CreatureEventAIHolder& pHolder, Unit* pAction
 
             // find selected action, skipping not used
             uint32 j = 0;
-            for (; idx; ++j)
+            for (; ; ++j)
+            {
                 if (pHolder.Event.action[j].type != ACTION_T_NONE)
+                {
+                    if (!idx)
+                        break;
                     --idx;
+                }
+            }
 
             ProcessAction(pHolder.Event.action[j], rnd, pHolder.Event.event_id, pActionInvoker);
         }
@@ -450,7 +456,7 @@ void CreatureEventAI::ProcessAction(CreatureEventAI_Action const& action, uint32
                 {
                     if (CreatureInfo const* ci = GetCreatureTemplateStore(action.morph.creatureId))
                     {
-                        uint32 display_id = Creature::ChooseDisplayId(0,ci);
+                        uint32 display_id = Creature::ChooseDisplayId(ci);
                         m_creature->SetDisplayId(display_id);
                     }
                 }
@@ -811,7 +817,7 @@ void CreatureEventAI::ProcessAction(CreatureEventAI_Action const& action, uint32
                 {
                     if (CreatureInfo const* cInfo = GetCreatureTemplateStore(action.mount.creatureId))
                     {
-                        uint32 display_id = Creature::ChooseDisplayId(0, cInfo);
+                        uint32 display_id = Creature::ChooseDisplayId(cInfo);
                         m_creature->Mount(display_id);
                     }
                 }
