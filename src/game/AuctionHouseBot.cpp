@@ -28,7 +28,6 @@ void AuctionHouseBot::SetStat(AHBConfig& config)
 
     AuctionHouseEntry const* ahEntry = sAuctionMgr.GetAuctionHouseEntryByFaction(config.GetAHFID());
     AuctionHouseObject* auctionHouse = sAuctionMgr.GetAuctionsMap(ahEntry);
-    uint32 i = 0;
     for (AuctionHouseObject::AuctionEntryMap::const_iterator itr = auctionHouse->GetAuctionsBegin();itr != auctionHouse->GetAuctionsEnd();++itr)
     {
         AuctionEntry *Aentry = itr->second;
@@ -40,11 +39,6 @@ void AuctionHouseBot::SetStat(AHBConfig& config)
             {
                 if ( Aentry->owner == GetAHBObjectGuid().GetRawValue()) 
                     ++ItemsInAH[prototype->Quality];
-
-                if (i==0) 
-                {
-                    printf("Aentryownerguid =%u, ahbguid=%u\n",Aentry->owner, GetAHBObjectGuid().GetRawValue()); i=1;
-                }
             }
         }
     }
@@ -96,17 +90,11 @@ void AuctionHouseBot::addNewAuctions(AHBConfig& config)
     std::vector<uint32> RandArray;
     std::vector<uint32> ItemsAdded(7);
     uint32 items=ItemsPerCycle;
-    uint32 i=0;
     // only insert a few at a time, so as not to peg the processor
     while (getRandomArray(config,RandArray, ItemsAdded) && (items>0))
     {
         --items;
         uint32 itemID = 0;
-        if (i=0)
-        {
-            sLog.outString("AuctionHouseBot> Entering loopppppp");
-        }
-        i=1;
         switch ((e_ahb_quality)(RandArray[urand(1,RandArray.size())-1]))
         {
             case E_GREY     : itemID = greyItemsBin[urand(1, greyItemsBin.size())-1]; ++ItemsAdded[E_GREY]; break;
