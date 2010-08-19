@@ -1171,9 +1171,9 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                         return;
 
                     if( m_caster->GetDistance( -145.554f, 1511.28f, 34.3641f ) < 90 )
-                        ((Player*)m_caster)->KilledMonsterCredit( 19291, 0 );
+                        ((Player*)m_caster)->KilledMonsterCredit(19291);
                     if( m_caster->GetDistance( -304.408f, 1524.45f, 37.9685f ) < 90 )
-                        ((Player*)m_caster)->KilledMonsterCredit( 19292, 0 );
+                        ((Player*)m_caster)->KilledMonsterCredit(19292);
                     return;
                 }
                 case 34665:                                 //Administer Antidote
@@ -1609,7 +1609,7 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                        if (entry != 27986 && entry != 28047 && entry != 28568) //prevent exploits
                             SendCastResult(SPELL_FAILED_BAD_TARGETS);
                        else
-                            ((Player*)unitTarget)->KilledMonsterCredit(entry, 0);
+                            ((Player*)unitTarget)->KilledMonsterCredit(entry);
                     }
                     return;
                 }

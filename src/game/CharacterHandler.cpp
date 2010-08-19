@@ -1209,7 +1209,7 @@ void WorldSession::HandleCharFactionOrRaceChange(WorldPacket& recv_data)
         CharacterDatabase.PExecute("DELETE FROM `character_social` WHERE `guid`= '%u'",GUID_LOPART(guid));
         CharacterDatabase.PExecute("DELETE FROM `character_social` WHERE `friend`= '%u'",GUID_LOPART(guid));
         // Leave Arena Teams
-        Player::LeaveAllArenaTeams(GUID_LOPART(guid));
+        Player::LeaveAllArenaTeams(ObjectGuid(guid));
         // Reset Language (will be added automatically after faction change)
         CharacterDatabase.PExecute("DELETE FROM `character_spell` WHERE `spell` IN (668, 7340, 671, 672, 814, 29932, 17737, 816, 7341, 669, 813, 670) AND guid ='%u'",GUID_LOPART(guid));
 
@@ -1279,7 +1279,7 @@ void WorldSession::HandleCharFactionOrRaceChange(WorldPacket& recv_data)
                 uint32 spell_alliance = fields2[0].GetUInt32();
                 uint32 spell_horde = fields2[1].GetUInt32();
 
-                CharacterDatabase.PExecute("UPDATE `character_spell` set spell = '%u' where spell = '%u' AND guid = '%u'",
+                CharacterDatabase.PExecute("UPDATE IGNORE`character_spell` set spell = '%u' where spell = '%u' AND guid = '%u'",
                 team == BG_TEAM_ALLIANCE ? spell_alliance : spell_horde, team == BG_TEAM_ALLIANCE ? spell_horde : spell_alliance, GUID_LOPART(guid));
             }
             while( result2->NextRow() );

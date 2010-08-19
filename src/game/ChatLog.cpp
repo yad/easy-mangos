@@ -218,7 +218,7 @@ void ChatLog::PartyMsg(Player *player, std::string &msg)
 
         uint8 gm_count = group->GetMembersCount();
         uint8 gm_count_m1 = gm_count - 1;
-        uint64 gm_leader_GUID = group->GetLeaderGUID();
+        ObjectGuid gm_leader_GUID = group->GetLeaderGuid();
         Player *gm_member;
 
         gm_member = sObjectMgr.GetPlayer(gm_leader_GUID);
@@ -418,7 +418,7 @@ void ChatLog::RaidMsg(Player *player, std::string &msg, uint32 type)
 
         uint8 gm_count = group->GetMembersCount();
         uint8 gm_count_m1 = gm_count - 1;
-        uint64 gm_leader_GUID = group->GetLeaderGUID();
+        ObjectGuid gm_leader_GUID = group->GetLeaderGuid();
         Player *gm_member;
 
         gm_member = sObjectMgr.GetPlayer(gm_leader_GUID);
@@ -496,7 +496,7 @@ void ChatLog::BattleGroundMsg(Player *player, std::string &msg, uint32 type)
 
         uint8 gm_count = group->GetMembersCount();
         uint8 gm_count_m1 = gm_count - 1;
-        uint64 gm_leader_GUID = group->GetLeaderGUID();
+        ObjectGuid gm_leader_GUID = group->GetLeaderGuid();
         Player *gm_member;
 
         gm_member = sObjectMgr.GetPlayer(gm_leader_GUID);
