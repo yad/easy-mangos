@@ -1,6 +1,4 @@
 #include "AuctionHouseBot.h"
-#include "ObjectMgr.h"
-#include "AuctionHouseMgr.h"
 #include "ProgressBar.h"
 #include "Policies/SingletonImp.h"
 
