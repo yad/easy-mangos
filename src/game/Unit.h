@@ -34,6 +34,7 @@
 #include "DBCStructure.h"
 #include "Path.h"
 #include "WorldPacket.h"
+#include "MapManager.h"
 #include "Timer.h"
 #include <list>
 
@@ -1916,7 +1917,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
             m_ThreatRedirectionPercent = pct;
         }
         uint32 GetThreatRedirectionPercent() { return m_ThreatRedirectionPercent; }
-        Unit *GetMisdirectionTarget() { return m_misdirectionTargetGUID ? GetUnit(*this, m_misdirectionTargetGUID) : NULL; }
+        Unit *GetMisdirectionTarget() { return m_misdirectionTargetGUID ? GetMap()->GetUnit(m_misdirectionTargetGUID) : NULL; }
 
         // Movement info
         MovementInfo m_movementInfo;

@@ -599,7 +599,7 @@ void WorldSession::HandleMirrorImageDataRequest( WorldPacket & recv_data )
     DEBUG_LOG("WORLD: CMSG_GET_MIRRORIMAGE_DATA");
 
     // Get unit for which data is needed by client
-    Unit *unit = ObjectAccessor::GetUnit(*_player, guid);
+    Unit *unit = _player->GetMap()->GetUnit(guid);
     if (!unit)
         return;
 
