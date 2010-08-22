@@ -1014,7 +1014,7 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura
                             break;
                         }
                         case CLASS_SHAMAN:
-						{
+                        {
                             uint32 RandomSpell[]={71485,71486,71492};
                             triggered_spell_id = RandomSpell[ irand(0, sizeof(RandomSpell)/sizeof(uint32) - 1) ];
                             break;
@@ -1079,7 +1079,7 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura
                             break;
                         }
                         case CLASS_SHAMAN:
-						{
+                        {
                             uint32 RandomSpell[]={71556,71558,71560};
                             triggered_spell_id = RandomSpell[ irand(0, sizeof(RandomSpell)/sizeof(uint32) - 1) ];
                             break;
