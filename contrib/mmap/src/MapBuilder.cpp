@@ -199,6 +199,9 @@ namespace MMAP
         printf("We have %i tiles.                          \n", tiles->size());
         for(set<uint32>::iterator it = tiles->begin(); it != tiles->end(); ++it)
         {
+            allVerts.fastClear();
+            allTris.fastClear();
+
             MeshData meshData;
 
             // unpack tile coords
@@ -229,13 +232,15 @@ namespace MMAP
             allVerts.append(meshData.liquidVerts);
             copyIndices(allTris, meshData.solidTris, allVerts.size() / 3);
             allVerts.append(meshData.solidVerts);
-
-            if(!allVerts.size())
-                break;
+            
+            if(!allVerts.size() || !allTris.size())
+                continue;
 
             // get bounds of current tile
             getTileBounds(tileX, tileY, allVerts.getCArray(), allVerts.size() / 3, bmin, bmax);
+
             allVerts.fastClear();
+            allTris.fastClear();
 
             // build navmesh tile
             buildMoveMapTile(mapID,
@@ -329,12 +334,14 @@ namespace MMAP
             copyIndices(allTris, meshData.solidTris, allVerts.size() / 3);
             allVerts.append(meshData.solidVerts);
 
-            if(!allVerts.size())
+            if(!allVerts.size() || !allTris.size())
                 break;
 
             // get bounds of current tile
             getTileBounds(tileX, tileY, allVerts.getCArray(), allVerts.size() / 3, bmin, bmax);
-            allVerts.fastClear();
+
+            allVerts.clear();
+            allTris.clear();
 
             // build navmesh tile
             buildMoveMapTile(mapID,
