@@ -281,6 +281,8 @@ AH_BOTTOM([#endif /* !AC_CONFIG_H */])
 AC_CONFIG_FILES([
    dep/include/Makefile
    dep/lib/Makefile
+   dep/recastnavigation/Makefile
+   dep/recastnavigation/Detour/Makefile
    dep/src/Makefile
    dep/src/g3dlite/Makefile
    dep/src/zlib/Makefile
@@ -302,9 +304,6 @@ AC_CONFIG_FILES([
    src/shared/Config/Makefile
    src/shared/Database/Makefile
    src/shared/vmap/Makefile
-   src/shared/pathfinding/Makefile
-   src/shared/pathfinding/Detour/Makefile
-   src/shared/pathfinding/Recast/Makefile
    src/shared/SystemConfig.h
    src/game/Makefile
    src/realmd/Makefile

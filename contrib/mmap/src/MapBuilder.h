@@ -9,9 +9,8 @@
 #include "IVMapManager.h"
 #include "G3D/Array.h"
 
-#include "ChunkyTriMesh.h"
-#include "pathfinding/Recast/Recast.h"
-#include "pathfinding/Detour/DetourNavMesh.h"
+#include "Recast.h"
+#include "DetourNavMesh.h"
 
 using namespace std;
 using namespace VMAP;
@@ -119,7 +118,6 @@ namespace MMAP
             void writeSpan(FILE* file, const rcSpan* span);
             void writeCompactHeightfield(FILE* file, const rcCompactHeightfield* chf);
             void writeContours(FILE* file, const rcContourSet* cs);
-            void writeChunkyTriMesh(FILE* file, const rcChunkyTriMesh* mesh);
             void writePolyMesh(FILE* file, const rcPolyMesh* mesh);
             void writeDetailMesh(FILE* file, const rcPolyMeshDetail* mesh);
 

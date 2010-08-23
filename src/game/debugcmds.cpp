@@ -34,8 +34,8 @@
 #include "SpellMgr.h"
 #include "World.h"
 
-#include "pathfinding/Detour/DetourNavMesh.h"
-#include "pathfinding/Detour/DetourCommon.h"
+#include "../recastnavigation/Detour/Include/DetourNavMesh.h"
+#include "../recastnavigation/Detour/Include/DetourCommon.h"
 #include "PathFinder.h"
 
 bool ChatHandler::HandleDebugSendSpellFailCommand(const char* args)
@@ -264,11 +264,11 @@ bool ChatHandler::HandleDebugMoveMapCommand(const char* args)
                 PSendSysMessage("       %i", path.m_pathPolyRefs[i]);
 
             // unit polyrefs
-            dtPolyRef startPoly = path.m_navMesh->findNearestPoly(start, extents, &filter, 0);
-            dtPolyRef endPoly = path.m_navMesh->findNearestPoly(end, extents, &filter, 0);
+            dtPolyRef startPoly = path.m_navMeshQuery->findNearestPoly(start, extents, &filter, 0);
+            dtPolyRef endPoly = path.m_navMeshQuery->findNearestPoly(end, extents, &filter, 0);
 
             // straithPath
-            int length = path.m_navMesh->findStraightPath(start, end, path.m_pathPolyRefs, path.m_length, pathPos, 0, 0, MAX_PATH_LENGTH);
+            int length = path.m_navMeshQuery->findStraightPath(start, end, path.m_pathPolyRefs, path.m_length, pathPos, 0, 0, MAX_PATH_LENGTH);
             PSendSysMessage("Path positions:");
             for(int i = 0; i < length; ++i)
                 PSendSysMessage("(%.2f,%.2f,%.2f)", pathPos[i*3], pathPos[i*3+1], pathPos[i*3+2]);
@@ -303,39 +303,38 @@ bool ChatHandler::HandleDebugMoveMapCommand(const char* args)
             return true;
         }
 
-        dtPolyRef startPoly = path.m_navMesh->findNearestPoly(start, extents, &filter, 0);
-        dtPolyRef endPoly = path.m_navMesh->findNearestPoly(end, extents, &filter, 0);
+        dtPolyRef startPoly = path.m_navMeshQuery->findNearestPoly(start, extents, &filter, 0);
+        dtPolyRef endPoly = path.m_navMeshQuery->findNearestPoly(end, extents, &filter, 0);
 
         // vertices stuff
-        int polyindex;
-        const dtMeshTile* tile = path.m_navMesh->getTileByPolyRef(startPoly, &polyindex);
-        dtPoly poly = tile->polys[polyindex];
+        const dtMeshTile* tile;
+        const dtPoly* poly;
+        path.m_navMesh->getTileAndPolyByRef(startPoly, &tile, &poly);
         float vertices[DT_VERTS_PER_POLYGON*3];
 
         // startpoly vertices
         int nv = 0;
-        for (int i = 0; i < (int)poly.vertCount; ++i)
+        for (int i = 0; i < (int)poly->vertCount; ++i)
         {
-            dtVcopy(&vertices[nv*3], &tile->verts[poly.verts[i]*3]);
+            dtVcopy(&vertices[nv*3], &tile->verts[poly->verts[i]*3]);
             nv++;
         }
 
         PSendSysMessage("Poly vertices for %i:", startPoly);
-        for(int i = 0; i < (int)poly.vertCount; ++i)
+        for(int i = 0; i < (int)poly->vertCount; ++i)
             PSendSysMessage("(%.2f,%.2f,%.2f)", vertices[i*3], vertices[i*3+1], vertices[i*3+2]);
 
         // endpoly vertices
-        tile = path.m_navMesh->getTileByPolyRef(endPoly, &polyindex);
-        poly = tile->polys[polyindex];
+        path.m_navMesh->getTileAndPolyByRef(endPoly, &tile, &poly);
         nv = 0;
-        for (int i = 0; i < (int)poly.vertCount; ++i)
+        for (int i = 0; i < (int)poly->vertCount; ++i)
         {
-            dtVcopy(&vertices[nv*3], &tile->verts[poly.verts[i]*3]);
+            dtVcopy(&vertices[nv*3], &tile->verts[poly->verts[i]*3]);
             nv++;
         }
 
         PSendSysMessage("Poly vertices for %i:", endPoly);
-        for(int i = 0; i < (int)poly.vertCount; ++i)
+        for(int i = 0; i < (int)poly->vertCount; ++i)
             PSendSysMessage("(%.2f,%.2f,%.2f)", vertices[i*3], vertices[i*3+1], vertices[i*3+2]);
 
         return true;
@@ -354,6 +353,9 @@ bool ChatHandler::HandleDebugMoveMapCommand(const char* args)
 
         // calculate navmesh tile location
         dtNavMesh* navmesh = player->GetMap()->GetNavMesh();
+        dtNavMeshQuery* query = dtAllocNavMeshQuery();
+        query->init(navmesh, 1024);
+
         const float* min = navmesh->getParams()->orig;
 
         float x, y, z;
@@ -367,12 +369,15 @@ bool ChatHandler::HandleDebugMoveMapCommand(const char* args)
         PSendSysMessage("Calc   [%02i,%02i]", tilex, tiley);
 
         // navmesh poly -> navmesh tile location
-        dtPolyRef poly = navmesh->findNearestPoly(location, extents, &(dtQueryFilter()), 0);
+        dtPolyRef polyRef = query->findNearestPoly(location, extents, &(dtQueryFilter()), NULL);
+        const dtMeshTile* tile;
+        const dtPoly* poly;
+
         if(!poly)
             PSendSysMessage("Dt     [??,??] (invalid poly, probably no tile loaded)");
         else
         {
-            const dtMeshTile* tile = navmesh->getTileByPolyRef(poly, 0);
+            navmesh->getTileAndPolyByRef(polyRef, &tile, &poly);
             if(tile)
                 PSendSysMessage("Dt     [%02i,%02i]", tile->header->x, tile->header->y);
             else
@@ -408,7 +413,10 @@ bool ChatHandler::HandleDebugMoveMapCommand(const char* args)
     {
         PSendSysMessage("mmap polytest:");
         Player* player = m_session->GetPlayer();
+
         dtNavMesh* navmesh = player->GetMap()->GetNavMesh();
+        dtNavMeshQuery* query = dtAllocNavMeshQuery();
+        query->init(navmesh, 1024);
 
         float x, y, z;
         player->GetPosition(x, y, z);
@@ -417,11 +425,9 @@ bool ChatHandler::HandleDebugMoveMapCommand(const char* args)
         dtQueryFilter filter = dtQueryFilter();
         filter.includeFlags = 0xFFFF;
 
-        dtPolyRef nearestPoly;
-
         PSendSysMessage("Nearest poly is:");
 
-        nearestPoly = navmesh->findNearestPoly(location, extents, &filter, 0);
+        dtPolyRef nearestPoly = query->findNearestPoly(location, extents, &filter, NULL);
         PSendSysMessage("(y,z,x)");
         PSendSysMessage("(%.2f,%.2f,%.2f)", y, z, x);
         PSendSysMessage("%u", nearestPoly);
@@ -431,11 +437,14 @@ bool ChatHandler::HandleDebugMoveMapCommand(const char* args)
     else if(w && strcmp(w, "loadedtiles") == 0)
     {
         PSendSysMessage("mmap loadedtiles:");
+
         dtNavMesh* navmesh = m_session->GetPlayer()->GetMap()->GetNavMesh();
+        dtNavMeshQuery* query = dtAllocNavMeshQuery();
+        query->init(navmesh, 1024);
 
         for(int i = 0; i < navmesh->getMaxTiles(); ++i)
         {
-            const dtMeshTile* tile = navmesh->getTile(i);
+            const dtMeshTile* tile = ((dtNavMesh const*)navmesh)->getTile(i);
             if(!tile || !tile->header)
                 continue;
 
@@ -458,7 +467,7 @@ bool ChatHandler::HandleDebugMoveMapCommand(const char* args)
         uint32 dataSize = 0;
         for(int i = 0; i < navmesh->getMaxTiles(); ++i)
         {
-            const dtMeshTile* tile = navmesh->getTile(i);
+            const dtMeshTile* tile = ((dtNavMesh const*)navmesh)->getTile(i);
             if(!tile || !tile->header)
                 continue;
 

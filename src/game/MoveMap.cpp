@@ -29,7 +29,7 @@ void Map::LoadNavMesh(int gx, int gy)
         fread(&offset, sizeof(uint32), 1, file);
         fclose(file);
 
-        m_navMesh = new dtNavMesh;
+        m_navMesh = dtAllocNavMesh();
         if(!m_navMesh->init(&params))
         {
             delete m_navMesh;

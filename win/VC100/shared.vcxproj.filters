@@ -22,15 +22,6 @@
     <Filter Include="vmaps">
       <UniqueIdentifier>{948284d3-9d89-4609-8cdd-28a213edb53e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="pathfinding">
-      <UniqueIdentifier>{beefb892-4931-4f40-9c64-dbbd9af2c42c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="pathfinding\Recast">
-      <UniqueIdentifier>{892c5c27-2cf4-4e29-8cd6-3c058ed1e878}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="pathfinding\Detour">
-      <UniqueIdentifier>{e0a615a0-1bc0-4407-9303-681bb81b0970}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\shared\Database\Database.cpp">
@@ -100,48 +91,6 @@
     <ClCompile Include="..\..\src\shared\vmap\ModelInstance.cpp" />
     <ClCompile Include="..\..\src\shared\vmap\VMapManager2.cpp" />
     <ClCompile Include="..\..\src\shared\vmap\WorldModel.cpp" />
-    <ClCompile Include="..\..\src\shared\pathfinding\Detour\DetourCommon.cpp">
-      <Filter>pathfinding\Detour</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\shared\pathfinding\Detour\DetourNavMesh.cpp">
-      <Filter>pathfinding\Detour</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\shared\pathfinding\Detour\DetourNavMeshBuilder.cpp">
-      <Filter>pathfinding\Detour</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\shared\pathfinding\Detour\DetourNode.cpp">
-      <Filter>pathfinding\Detour</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\shared\pathfinding\Recast\RecastArea.cpp">
-      <Filter>pathfinding\Recast</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\shared\pathfinding\Recast\RecastContour.cpp">
-      <Filter>pathfinding\Recast</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\shared\pathfinding\Recast\RecastFilter.cpp">
-      <Filter>pathfinding\Recast</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\shared\pathfinding\Recast\RecastLog.cpp">
-      <Filter>pathfinding\Recast</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\shared\pathfinding\Recast\RecastMesh.cpp">
-      <Filter>pathfinding\Recast</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\shared\pathfinding\Recast\RecastMeshDetail.cpp">
-      <Filter>pathfinding\Recast</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\shared\pathfinding\Recast\RecastRasterization.cpp">
-      <Filter>pathfinding\Recast</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\shared\pathfinding\Recast\RecastRegion.cpp">
-      <Filter>pathfinding\Recast</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\shared\pathfinding\Recast\RecastTimer.cpp">
-      <Filter>pathfinding\Recast</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\shared\pathfinding\Recast\Recast.cpp">
-      <Filter>pathfinding\Recast</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\shared\Database\Database.h">
@@ -256,27 +205,6 @@
     <ClInclude Include="..\..\src\shared\vmap\ModelInstance.h" />
     <ClInclude Include="..\..\src\shared\vmap\VMapManager2.h" />
     <ClInclude Include="..\..\src\shared\vmap\WorldModel.h" />
-    <ClInclude Include="..\..\src\shared\pathfinding\Detour\DetourNode.h">
-      <Filter>pathfinding\Detour</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\shared\pathfinding\Detour\DetourCommon.h">
-      <Filter>pathfinding\Detour</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\shared\pathfinding\Detour\DetourNavMesh.h">
-      <Filter>pathfinding\Detour</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\shared\pathfinding\Detour\DetourNavMeshBuilder.h">
-      <Filter>pathfinding\Detour</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\shared\pathfinding\Recast\Recast.h">
-      <Filter>pathfinding\Recast</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\shared\pathfinding\Recast\RecastTimer.h">
-      <Filter>pathfinding\Recast</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\shared\pathfinding\Recast\RecastLog.h">
-      <Filter>pathfinding\Recast</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="..\..\src\shared\revision.h" />

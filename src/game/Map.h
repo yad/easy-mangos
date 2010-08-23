@@ -38,7 +38,7 @@
 #include <bitset>
 #include <list>
 
-#include "pathfinding/Detour/DetourNavMesh.h"
+#include "../recastnavigation/Detour/Include/DetourNavMesh.h"
 
 class Creature;
 class Unit;

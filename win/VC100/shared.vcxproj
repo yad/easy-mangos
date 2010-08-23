@@ -1,4 +1,5 @@
-﻿<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug_NoPCH|Win32">
       <Configuration>Debug_NoPCH</Configuration>
@@ -447,20 +448,6 @@
     <ClCompile Include="..\..\src\shared\Database\SQLStorage.cpp" />
     <ClCompile Include="..\..\src\shared\Log.cpp" />
     <ClCompile Include="..\..\src\shared\MemoryLeaks.cpp" />
-    <ClCompile Include="..\..\src\shared\pathfinding\Detour\DetourCommon.cpp" />
-    <ClCompile Include="..\..\src\shared\pathfinding\Detour\DetourNavMesh.cpp" />
-    <ClCompile Include="..\..\src\shared\pathfinding\Detour\DetourNavMeshBuilder.cpp" />
-    <ClCompile Include="..\..\src\shared\pathfinding\Detour\DetourNode.cpp" />
-    <ClCompile Include="..\..\src\shared\pathfinding\Recast\Recast.cpp" />
-    <ClCompile Include="..\..\src\shared\pathfinding\Recast\RecastArea.cpp" />
-    <ClCompile Include="..\..\src\shared\pathfinding\Recast\RecastContour.cpp" />
-    <ClCompile Include="..\..\src\shared\pathfinding\Recast\RecastFilter.cpp" />
-    <ClCompile Include="..\..\src\shared\pathfinding\Recast\RecastLog.cpp" />
-    <ClCompile Include="..\..\src\shared\pathfinding\Recast\RecastMesh.cpp" />
-    <ClCompile Include="..\..\src\shared\pathfinding\Recast\RecastMeshDetail.cpp" />
-    <ClCompile Include="..\..\src\shared\pathfinding\Recast\RecastRasterization.cpp" />
-    <ClCompile Include="..\..\src\shared\pathfinding\Recast\RecastRegion.cpp" />
-    <ClCompile Include="..\..\src\shared\pathfinding\Recast\RecastTimer.cpp" />
     <ClCompile Include="..\..\src\shared\ProgressBar.cpp" />
     <ClCompile Include="..\..\src\shared\ServiceWin32.cpp" />
     <ClCompile Include="..\..\src\shared\Threading.cpp" />
@@ -481,13 +468,6 @@
     <ClInclude Include="..\..\src\shared\Auth\SARC4.h" />
     <ClInclude Include="..\..\src\shared\Auth\Sha1.h" />
     <ClInclude Include="..\..\src\shared\ByteBuffer.h" />
-    <ClInclude Include="..\..\src\shared\pathfinding\Detour\DetourCommon.h" />
-    <ClInclude Include="..\..\src\shared\pathfinding\Detour\DetourNavMesh.h" />
-    <ClInclude Include="..\..\src\shared\pathfinding\Detour\DetourNavMeshBuilder.h" />
-    <ClInclude Include="..\..\src\shared\pathfinding\Detour\DetourNode.h" />
-    <ClInclude Include="..\..\src\shared\pathfinding\Recast\Recast.h" />
-    <ClInclude Include="..\..\src\shared\pathfinding\Recast\RecastLog.h" />
-    <ClInclude Include="..\..\src\shared\pathfinding\Recast\RecastTimer.h" />
     <ClInclude Include="..\..\src\shared\WorldPacket.h" />
     <ClInclude Include="..\..\src\shared\Common.h" />
     <ClInclude Include="..\..\src\shared\Config\Config.h" />

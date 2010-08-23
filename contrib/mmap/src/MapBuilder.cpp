@@ -6,10 +6,10 @@
 #include "MapTree.h"
 #include "ModelInstance.h"
 
-#include "pathfinding/Recast/Recast.h"
-#include "pathfinding/Detour/DetourNavMeshBuilder.h"
-#include "pathfinding/Detour/DetourNavMesh.h"
-#include "pathfinding/Detour/DetourCommon.h"
+#include "Recast.h"
+#include "DetourNavMeshBuilder.h"
+#include "DetourNavMesh.h"
+#include "DetourCommon.h"
 
 using namespace std;
 
@@ -673,7 +673,6 @@ namespace MMAP
         rcVcopy(navMeshParams.orig, bmin);
         navMeshParams.maxTiles = maxTiles;
         navMeshParams.maxPolys = maxPolysPerTile;
-        navMeshParams.maxNodes = 2048;
 
         navMesh = NEW(dtNavMesh);
         printf("Creating navMesh...                     \r");
@@ -766,12 +765,15 @@ namespace MMAP
             // this sets the dimensions of the heightfield - should maybe happen before border padding
             rcCalcGridSize(config.bmin, config.bmax, config.cs, &config.width, &config.height);
 
+            // build performance
+            rcBuildContext context;
+
             /***********    start build     ***********/
 
             // build heightfield
             printf("%sBuilding Recast Heightfield...          \r", tileString);
-            iv.heightfield = NEW(rcHeightfield);
-            if(!iv.heightfield || !rcCreateHeightfield(*iv.heightfield, config.width, config.height, config.bmin, config.bmax, config.cs, config.ch))
+            iv.heightfield = rcAllocHeightfield();
+            if(!iv.heightfield || !rcCreateHeightfield(&context, *iv.heightfield, config.width, config.height, config.bmin, config.bmax, config.cs, config.ch))
             {
                 printf("%sFailed building heightfield!            \n", tileString);
                 break;
@@ -781,45 +783,51 @@ namespace MMAP
 
             // flag walkable terrain triangles
             iv.triFlags = NEW_ARRAY(unsigned char,tTriCount);
-            memset(iv.triFlags, 0, tTriCount*sizeof(unsigned char));
-            rcMarkWalkableTriangles(config.walkableSlopeAngle, tVerts, tVertCount, tTris, tTriCount, iv.triFlags);
-            rcRasterizeTriangles(tVerts, tVertCount, tTris, iv.triFlags, 1, tTriCount, *iv.heightfield, config.walkableClimb);
+            memset(iv.triFlags, NAV_GROUND, tTriCount*sizeof(unsigned char));
+            rcClearUnwalkableTriangles(&context, config.walkableSlopeAngle, tVerts, tVertCount, tTris, tTriCount, iv.triFlags);
+            rcRasterizeTriangles(&context, tVerts, tVertCount, tTris, iv.triFlags, tTriCount, *iv.heightfield, config.walkableClimb);
             DELETE_ARRAY(iv.triFlags);
 
-            // filter out unusable rasterization data (order of calls matters, see rcFilterLowHangingWalkableObstacles)
-            rcFilterLowHangingWalkableObstacles(config.walkableClimb, *iv.heightfield);
-            rcFilterLedgeSpans(config.walkableHeight, config.walkableClimb, *iv.heightfield);
-            rcFilterWalkableLowHeightSpans(config.walkableHeight, *iv.heightfield);
+            // filter out unwalkable spans (order of calls matters, see rcFilterLowHangingWalkableObstacles)
+            rcFilterLowHangingWalkableObstacles(&context, config.walkableClimb, *iv.heightfield);
+            rcFilterLedgeSpans(&context, config.walkableHeight, config.walkableClimb, *iv.heightfield);
+            rcFilterWalkableLowHeightSpans(&context, config.walkableHeight, *iv.heightfield);
 
-            // flag 'walkable' liquid triangles
             // do after filtering because same rules don't apply to swimming
-            iv.triFlags = NEW_ARRAY(unsigned char,lTriCount);
-            memset(iv.triFlags, RC_WALKABLE, lTriCount*sizeof(unsigned char));
-            rcRasterizeTriangles(lVerts, lVertCount, lTris, iv.triFlags, lTriFlags, lTriCount, *iv.heightfield, config.walkableClimb);
-            DELETE_ARRAY(iv.triFlags);
+            rcRasterizeTriangles(&context, lVerts, lVertCount, lTris, lTriFlags, lTriCount, *iv.heightfield, config.walkableClimb);
 
             // compact heightfield spans
             printf("%sCompacting heightfield...               \r", tileString);
-            iv.compactHeightfield = NEW(rcCompactHeightfield);
-            if(!iv.compactHeightfield || !rcBuildCompactHeightfield(config.walkableHeight, config.walkableClimb, RC_WALKABLE, *iv.heightfield, *iv.compactHeightfield))
+            iv.compactHeightfield = rcAllocCompactHeightfield();
+            if(!iv.compactHeightfield || !rcBuildCompactHeightfield(&context, config.walkableHeight, config.walkableClimb, *iv.heightfield, *iv.compactHeightfield))
             {
                 printf("%sFailed compacting heightfield!            \n", tileString);
                 break;
             }
 
             if(!m_debugOutput)
-                DELETE(iv.heightfield);
+            {
+                rcFreeHeightField(iv.heightfield);
+                iv.heightfield = NULL;
+            }
 
             // build polymesh intermediates
             printf("%sEroding walkable area width...          \r", tileString);
-            if(!rcErodeArea(1 /*GROUND*/, config.walkableRadius, *iv.compactHeightfield))
+            if(!rcErodeWalkableArea(&context, config.walkableRadius, *iv.compactHeightfield))
             {
                 printf("%sFailed eroding area!                    \n", tileString);
                 break;
             }
 
+            printf("%sSmoothing area boundaries...          \r", tileString);
+            if(!rcMedianFilterWalkableArea(&context, *iv.compactHeightfield))
+            {
+                printf("%sFailed median filter!                    \n", tileString);
+                break;
+            }
+
             printf("%sBuilding distance field...              \r", tileString);
-            if(!rcBuildDistanceField(*iv.compactHeightfield))
+            if(!rcBuildDistanceField(&context, *iv.compactHeightfield))
             {
                 printf("%sFailed building distance field!         \n", tileString);
                 break;
@@ -827,15 +835,15 @@ namespace MMAP
 
             // bottleneck is here
             printf("%sBuilding regions...                     \r", tileString);
-            if(!rcBuildRegions(*iv.compactHeightfield, config.borderSize, config.minRegionSize, config.mergeRegionSize))
+            if(!rcBuildRegions(&context, *iv.compactHeightfield, config.borderSize, config.minRegionSize, config.mergeRegionSize))
             {
                 printf("%sFailed building regions!                \n", tileString);
                 break;
             }
 
             printf("%sBuilding contours...                    \r", tileString);
-            iv.contours = NEW(rcContourSet);
-            if(!iv.contours || !rcBuildContours(*iv.compactHeightfield, config.maxSimplificationError, config.maxEdgeLen, *iv.contours))
+            iv.contours = rcAllocContourSet();
+            if(!iv.contours || !rcBuildContours(&context, *iv.compactHeightfield, config.maxSimplificationError, config.maxEdgeLen, *iv.contours))
             {
                 printf("%sFailed building contours!               \n", tileString);
                 break;
@@ -843,16 +851,16 @@ namespace MMAP
 
             // build polymesh
             printf("%sBuilding polymesh...                    \r", tileString);
-            iv.polyMesh = NEW(rcPolyMesh);
-            if(!iv.polyMesh || !rcBuildPolyMesh(*iv.contours, config.maxVertsPerPoly, *iv.polyMesh))
+            iv.polyMesh = rcAllocPolyMesh();
+            if(!iv.polyMesh || !rcBuildPolyMesh(&context, *iv.contours, config.maxVertsPerPoly, *iv.polyMesh))
             {
                 printf("%sFailed building polymesh!               \n", tileString);
                 break;
             }
 
             printf("%sBuilding polymesh detail...             \r", tileString);
-            iv.polyMeshDetail = NEW(rcPolyMeshDetail);
-            if(!iv.polyMeshDetail || !rcBuildPolyMeshDetail(*iv.polyMesh, *iv.compactHeightfield, config.detailSampleDist, config.detailSampleMaxError, *iv.polyMeshDetail))
+            iv.polyMeshDetail = rcAllocPolyMeshDetail();
+            if(!iv.polyMeshDetail || !rcBuildPolyMeshDetail(&context, *iv.polyMesh, *iv.compactHeightfield, config.detailSampleDist, config.detailSampleMaxError, *iv.polyMeshDetail))
             {
                 printf("%sFailed building polymesh detail!        \n", tileString);
                 break;
@@ -860,8 +868,10 @@ namespace MMAP
 
             if(!m_debugOutput)
             {
-                DELETE(iv.compactHeightfield);
-                DELETE(iv.contours);
+                rcFreeCompactHeightfield(iv.compactHeightfield);
+                iv.compactHeightfield = NULL;
+                rcFreeContourSet(iv.contours);
+                iv.contours = NULL;
             }
 
             // this might be handled within Recast at some point
@@ -1024,16 +1034,18 @@ namespace MMAP
 
     void MapBuilder::clearIntermediateValues(IntermediateValues &iv)
     {
-        DELETE(iv.compactHeightfield);
-        DELETE(iv.heightfield);
-        DELETE_ARRAY(iv.triFlags);
-        DELETE(iv.contours);
-        DELETE(iv.polyMesh);
-        DELETE(iv.polyMeshDetail);
+        rcFreeCompactHeightfield(iv.compactHeightfield); iv.compactHeightfield = NULL;
+        rcFreeHeightField(iv.heightfield); iv.heightfield = NULL;
+        rcFreeContourSet(iv.contours); iv.contours = NULL;
+        rcFreePolyMesh(iv.polyMesh); iv.polyMesh = NULL;
+        rcFreePolyMeshDetail(iv.polyMeshDetail); iv.polyMeshDetail = NULL;
+        DELETE_ARRAY(iv.triFlags); iv.triFlags = NULL;
     }
 
     void MapBuilder::generateObjFile(uint32 mapID, uint32 tileX, uint32 tileY, MeshData meshData)
     {
+        generateRealObj(mapID, tileX, tileY, meshData);
+
         char tileString[25];
         sprintf(tileString, "[%02u,%02u]: ", tileX, tileY);
         printf("%sWriting debug output...                       \r", tileString);

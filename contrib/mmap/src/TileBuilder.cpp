@@ -321,8 +321,8 @@ namespace MMAP
                         switch(liquidType)
                         {
                             case 0:
-                                // flag unknown liquid types
-                                liquidType = NAV_UNSPECIFIED;
+                                // unknown liquid gets no terrain type
+                                liquidType = 0;
                                 break;
                             case MAP_LIQUID_TYPE_WATER:
                             case MAP_LIQUID_TYPE_OCEAN:
@@ -389,23 +389,6 @@ namespace MMAP
                                 (&lverts[ltris[1]*3])[1] < (&tverts[ttris[idx2]*3])[1] &&
                                 (&lverts[ltris[2]*3])[1] < (&tverts[ttris[idx3]*3])[1])
                             useLiquid = false;  // if the whole liquid triangle is under terrain, don't use it
-
-                        if(useLiquid && liquidType == NAV_WATER)
-                        {
-                            float depth1 = (&lverts[ltris[0]*3])[1] - (&tverts[ttris[idx1]*3])[1];
-                            float depth2 = (&lverts[ltris[1]*3])[1] - (&tverts[ttris[idx2]*3])[1];
-                            float depth3 = (&lverts[ltris[2]*3])[1] - (&tverts[ttris[idx3]*3])[1];
-
-                            float avgDepth = (depth1 + depth2 + depth3) / 3;
-                            if(avgDepth < 1.5f)
-                                liquidType = NAV_SHALLOW_WATER;
-                            else if(avgDepth < 3.f)
-                                liquidType = NAV_AVERAGE_WATER;
-                            else if(avgDepth < 5.f)
-                                liquidType = NAV_DEEP_WATER;
-                            else
-                                liquidType = NAV_SWIM_WATER;
-                        }
                     }
 
                     if(useLiquid)
