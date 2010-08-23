@@ -5,7 +5,7 @@
 #include "Config/Config.h"
 #include "ace/Vector_T.h"
 #include "ObjectGuid.h"
-#include "AuctionHouseMgr.h"
+#include "Item.h"
 
 #define AHB_GREY        0
 #define AHB_WHITE       1
