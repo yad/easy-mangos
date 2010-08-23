@@ -729,9 +729,10 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
             }
         }
 
-        DEBUG_FILTER_LOG(LOG_FILTER_DAMAGE,"SET JUST_DIED");
-        if(!spiritOfRedemtionTalentReady)
+        if (!spiritOfRedemtionTalentReady)
             pVictim->setDeathState(JUST_DIED);
+        else
+            DEBUG_FILTER_LOG(LOG_FILTER_DAMAGE,"SET JUST_DIED");
 
         DEBUG_FILTER_LOG(LOG_FILTER_DAMAGE,"DealDamageHealth1");
 
@@ -1711,8 +1712,8 @@ void Unit::DealMeleeDamage(CalcDamageInfo *damageInfo, bool durabilityLoss)
                 pVictim->DealDamageMods(this,damage,NULL);
 
                 WorldPacket data(SMSG_SPELLDAMAGESHIELD,(8+8+4+4+4+4));
-                data << uint64(pVictim->GetGUID());
-                data << uint64(GetGUID());
+                data << pVictim->GetObjectGuid();
+                data << GetObjectGuid();
                 data << uint32(i_spellProto->Id);
                 data << uint32(damage);                  // Damage
                 data << uint32(0);                       // Overkill
@@ -1734,7 +1735,7 @@ void Unit::HandleEmoteCommand(uint32 emote_id)
 {
     WorldPacket data( SMSG_EMOTE, 4 + 8 );
     data << uint32(emote_id);
-    data << uint64(GetGUID());
+    data << GetObjectGuid();
     SendMessageToSet(&data, true);
 }
 
@@ -2670,8 +2671,8 @@ float Unit::CalculateLevelPenalty(SpellEntry const* spellProto) const
 void Unit::SendMeleeAttackStart(Unit* pVictim)
 {
     WorldPacket data( SMSG_ATTACKSTART, 8 + 8 );
-    data << uint64(GetGUID());
-    data << uint64(pVictim->GetGUID());
+    data << GetObjectGuid();
+    data << pVictim->GetObjectGuid();
 
     SendMessageToSet(&data, true);
     DEBUG_LOG( "WORLD: Sent SMSG_ATTACKSTART" );
@@ -5024,11 +5025,11 @@ void Unit::SendSpellMiss(Unit *target, uint32 spellID, SpellMissInfo missInfo)
 {
     WorldPacket data(SMSG_SPELLLOGMISS, (4+8+1+4+8+1));
     data << uint32(spellID);
-    data << uint64(GetGUID());
+    data << GetObjectGuid();
     data << uint8(0);                                       // can be 0 or 1
     data << uint32(1);                                      // target count
     // for(i = 0; i < target count; ++i)
-    data << uint64(target->GetGUID());                      // target GUID
+    data << target->GetObjectGuid();                        // target GUID
     data << uint8(missInfo);
     // end loop
     SendMessageToSet(&data, true);
@@ -7480,7 +7481,7 @@ void Unit::SetInCombatState(bool PvP, Unit* enemy)
         if (((Creature*)this)->AI())
             ((Creature*)this)->AI()->EnterCombat(enemy);
 
-        if (InstanceData* mapInstance = this->GetInstanceData())
+        if (InstanceData* mapInstance = GetInstanceData())
             mapInstance->OnCreatureEnterCombat((Creature*)this);
     }
 }
@@ -8342,7 +8343,7 @@ void Unit::TauntFadeOut(Unit *taunter)
         if(((Creature*)this)->AI())
             ((Creature*)this)->AI()->EnterEvadeMode();
 
-        if (InstanceData* mapInstance = this->GetInstanceData())
+        if (InstanceData* mapInstance = GetInstanceData())
             mapInstance->OnCreatureEvade((Creature*)this);
 
         return;
@@ -8440,7 +8441,7 @@ bool Unit::SelectHostileTarget()
     // enter in evade mode in other case
     ((Creature*)this)->AI()->EnterEvadeMode();
 
-    if (InstanceData* mapInstance = this->GetInstanceData())
+    if (InstanceData* mapInstance = GetInstanceData())
         mapInstance->OnCreatureEvade((Creature*)this);
 
     return false;
@@ -9637,7 +9638,7 @@ void Unit::SendPetTalk (uint32 pettalk)
         return;
 
     WorldPacket data(SMSG_PET_ACTION_SOUND, 8 + 4);
-    data << uint64(GetGUID());
+    data << GetObjectGuid();
     data << uint32(pettalk);
     ((Player*)owner)->GetSession()->SendPacket(&data);
 }
