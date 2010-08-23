@@ -200,7 +200,11 @@ enum InventoryType
     INVTYPE_THROWN                              = 25,
     INVTYPE_RANGEDRIGHT                         = 26,
     INVTYPE_QUIVER                              = 27,
-    INVTYPE_RELIC                               = 28
+    INVTYPE_RELIC                               = 28,
+    INVTYPE_FINGER2                             = 29,
+    INVTYPE_TRINKET2                            = 30,
+    INVTYPE_WEAPON2                             = 31,
+    INVTYPE_2HWEAPON2                           = 32
 };
 
 #define MAX_INVTYPE                               29

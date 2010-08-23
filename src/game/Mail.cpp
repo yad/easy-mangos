@@ -979,7 +979,7 @@ void MailDraft::SendMailTo(MailReceiver const& receiver, MailSender const& sende
 {
     Player* pReceiver = receiver.GetPlayer();               // can be NULL
 
-	if (receiver.GetPlayerGUIDLow() == auctionbot.GetAHBplayerGUID().GetRawValue())
+    if (receiver.GetPlayerGUIDLow() == auctionbot.GetAHBplayerGUID().GetRawValue())
     {
         if (sender.GetMailMessageType() == MAIL_AUCTION && !m_items.empty())
             deleteIncludedItems(true);

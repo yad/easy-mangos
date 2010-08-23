@@ -2202,7 +2202,7 @@ void Unit::CalculateAbsorbAndResist(Unit *pCaster, SpellSchoolMask schoolMask, D
                     {
                         // Cast healing spell, completely avoid damage
                         RemainingDamage = 0;
-                        
+
                         uint32 defenseSkillValue = GetDefenseSkillValue();
                         // Max heal when defense skill denies critical hits from raid bosses
                         // Formula: max defense at level + 140 (raiting from gear)

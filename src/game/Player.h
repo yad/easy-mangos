@@ -1307,11 +1307,12 @@ class MANGOS_DLL_SPEC Player : public Unit
         bool StoreNewItemInBestSlots(uint32 item_id, uint32 item_count);
         Item* StoreNewItemInInventorySlot(uint32 itemEntry, uint32 amount);
         void AutoEquipItem();
-        void GetBestItemForMyLevel();
-        void XSwapItem(ItemPrototype const* eItem, ItemPrototype const* bItem, bool DPS, int i, Item* pItem);
+        void GiveMeBestItemsForMyLevel();
+        void XSwapItem(Item* eitem, Item* bitem, bool DPS);
         ItemPrototype const* CheckItemSet(ItemPrototype const* bestItemInSlot, ItemPrototype const* bestItemFromSet);
         void GiveItem(ItemPrototype const* bestItemInSlot);
-        void PurgeMyBags();
+        bool OtherItemsInSetAreAllowedForMe(ItemPrototype const* pProto);
+        void RemoveMyEquipement();
         bool IsForMyClass(ItemPrototype const* pProto);
         bool IsNotAllowedItem(ItemPrototype const* pProto);
         ItemPrototype const* BestItemBetween(ItemPrototype const* pProto1, ItemPrototype const* pProto2, bool DPS);

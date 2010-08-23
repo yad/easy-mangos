@@ -1964,7 +1964,7 @@ void PlayerbotAI::CheckStuff()
         return;
 
     ChatHandler ch(m_bot);
-    m_bot->PurgeMyBags();
+    m_bot->RemoveMyEquipement();
     m_bot->GiveLevel(GetMaster()->getLevel());
     ch.HandleGMStartUpCommand("");
     m_bot->SetHealth(m_bot->GetMaxHealth());

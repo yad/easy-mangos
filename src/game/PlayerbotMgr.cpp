@@ -395,7 +395,7 @@ void PlayerbotMgr::OnBotLogin(Player* bot)
         bot->RemoveFromGroup();
 
     ChatHandler ch(bot);
-    bot->PurgeMyBags();
+    bot->RemoveMyEquipement();
     bot->GiveLevel(bot->GetLevelAtLoading());
     ch.HandleGMStartUpCommand("");
     bot->SetHealth(bot->GetMaxHealth());

@@ -20,7 +20,7 @@
     \ingroup world
 */
 
-#include <stdlib.h>  
+#include <stdlib.h>
 #include "Common.h"
 #include "Database/DatabaseEnv.h"
 #include "Config/Config.h"

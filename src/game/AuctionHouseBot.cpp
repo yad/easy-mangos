@@ -32,7 +32,7 @@ void AuctionHouseBot::addNewAuctions(AHBConfig *config)
     uint32 maxItems = config->GetMaxItems();
     uint32 auctions = auctionHouse->Getcount();
 
-	if (auctions >= minItems)
+    if (auctions >= minItems)
         return;
 
     if (auctions <= maxItems)
@@ -405,7 +405,7 @@ void AuctionHouseBot::addNewAuctions(AHBConfig *config)
             break;
         }
 
-		item->SetCount(stackCount);
+        item->SetCount(stackCount);
         AuctionEntry* auctionEntry = new AuctionEntry;
         auctionEntry->Id = sObjectMgr.GenerateAuctionID();
         auctionEntry->item_guidlow = item->GetGUIDLow();
@@ -432,7 +432,7 @@ void AuctionHouseBot::addNewAuctionBuyerBotBid(AHBConfig *config, WorldSession *
 
     // Fetches content of selected AH
     AuctionHouseEntry const* ahEntry = sAuctionMgr.GetAuctionHouseEntryByFaction(config->GetAHFID());
-	AuctionHouseObject* auctionHouse = sAuctionMgr.GetAuctionsMap(ahEntry);
+    AuctionHouseObject* auctionHouse = sAuctionMgr.GetAuctionsMap(ahEntry);
     vector<uint32> possibleBids;
 
     for (AuctionHouseObject::AuctionEntryMap::const_iterator itr = auctionHouse->GetAuctionsBegin();itr != auctionHouse->GetAuctionsEnd();++itr)
@@ -1064,7 +1064,7 @@ void AuctionHouseBot::Commands(uint32 command, uint32 ahMapID, uint32 col, char*
     case 0:     //ahexpire
         {
             AuctionHouseEntry const* ahEntry = sAuctionMgr.GetAuctionHouseEntryByFaction(config->GetAHFID());
-			AuctionHouseObject* auctionHouse = sAuctionMgr.GetAuctionsMap(ahEntry);
+            AuctionHouseObject* auctionHouse = sAuctionMgr.GetAuctionsMap(ahEntry);
 
             AuctionHouseObject::AuctionEntryMap::iterator itr;
             itr = auctionHouse->GetAuctionsBegin();

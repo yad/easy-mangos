@@ -7777,7 +7777,7 @@ bool ChatHandler::HandleGMStartUpCommand(char* args)
     HandleLearnAllMySpellsForMyLevelCommand("");
     HandleMaxSkillCommand("");
 
-    chr->PurgeMyBags();
+    chr->RemoveMyEquipement();
 
     if(!chr->HasItemCount(23162, 4, false))
     {
@@ -7788,7 +7788,7 @@ bool ChatHandler::HandleGMStartUpCommand(char* args)
         chr->AutoEquipItem();
     }
 
-    chr->GetBestItemForMyLevel();
+    chr->GiveMeBestItemsForMyLevel();
     chr->AutoEquipItem();
 
     chr->SetHealth(chr->GetMaxHealth());

@@ -1119,7 +1119,7 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura
                                         return SPELL_AURA_PROC_FAILED;
                                 }
                             }
-                        } 
+                        }
                     }
                     return SPELL_AURA_PROC_FAILED;
                 }
