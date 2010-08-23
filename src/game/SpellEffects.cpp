@@ -7205,7 +7205,24 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
             }
             break;
         }
+       case SPELLFAMILY_WARRIOR:
+        {
+            switch(m_spellInfo->Id)
+            {
+                case 64380:                                 // Shattering Throw
+                {
+                    if (!unitTarget || !unitTarget->isAlive())
+                        return;
+
+                    // remove immunity effects
+                    unitTarget->RemoveAurasBySpellMechanic(MECHANIC_IMMUNE_SHIELD);
+                    break;
+                }
+            }
+            break;
+        }
     }
+	
 
     // normal DB scripted effect
     if (!unitTarget)

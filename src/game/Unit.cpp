@@ -3216,18 +3216,23 @@ SpellMissInfo Unit::SpellHitResult(Unit *pVictim, SpellEntry const *spell, bool 
     if (pVictim->GetTypeId()==TYPEID_UNIT && ((Creature*)pVictim)->IsInEvadeMode())
         return SPELL_MISS_EVADE;
 
-    // Check for immune
-    if (pVictim->IsImmunedToSpell(spell))
-        return SPELL_MISS_IMMUNE;
+    if (!(spell->Attributes & SPELL_ATTR_UNAFFECTED_BY_INVULNERABILITY))
+    {
+        // Check for immune
+        if (pVictim->IsImmunedToSpell(spell))
+            return SPELL_MISS_IMMUNE;
 
-    // All positive spells can`t miss
-    // TODO: client not show miss log for this spells - so need find info for this in dbc and use it!
-    if (IsPositiveSpell(spell->Id))
+        // All positive spells can`t miss
+        // TODO: client not show miss log for this spells - so need find info for this in dbc and use it!
+        if (IsPositiveSpell(spell->Id) && IsFriendlyTo(pVictim))
+            return SPELL_MISS_NONE;
+
+        // Check for immune
+        if (pVictim->IsImmunedToDamage(GetSpellSchoolMask(spell)))
+            return SPELL_MISS_IMMUNE;
+    }
+    else if (IsPositiveSpell(spell->Id) && IsFriendlyTo(pVictim))
         return SPELL_MISS_NONE;
-
-    // Check for immune
-    if (pVictim->IsImmunedToDamage(GetSpellSchoolMask(spell)))
-        return SPELL_MISS_IMMUNE;
 
     // Try victim reflect spell
     if (CanReflect)
@@ -10557,6 +10562,29 @@ void Unit::RemoveAurasAtMechanicImmunity(uint32 mechMask, uint32 exceptSpellId, 
             else
                 iter = auras.begin();
          }
+        else
+            ++iter;
+    }
+}
+
+void Unit::RemoveAurasBySpellMechanic(uint32 mechMask)
+{
+    Unit::SpellAuraHolderMap& auras = GetSpellAuraHolderMap();
+    for(Unit::SpellAuraHolderMap::iterator iter = auras.begin(); iter != auras.end();)
+    {
+        SpellEntry const *spell = iter->second->GetSpellProto();
+
+        if (!iter->second->IsPositive())
+            ++iter;
+
+        else if (spell->Mechanic & mechMask)
+        {
+            RemoveAurasDueToSpell(spell->Id);
+            if(auras.empty())
+                break;
+            else
+                iter = auras.begin();
+        }
         else
             ++iter;
     }
