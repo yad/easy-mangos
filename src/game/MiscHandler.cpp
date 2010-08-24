@@ -1393,8 +1393,19 @@ void WorldSession::HandleSetDungeonDifficultyOpcode( WorldPacket & recv_data )
     {
         if (pGroup->IsLeader(_player->GetObjectGuid()))
         {
-            // the difficulty is set even if the instances can't be reset
-            //_player->SendDungeonDifficulty(true);
+            Group::MemberSlotList const& groupMembers = pGroup->GetMemberSlots();
+
+            for (Group::member_citerator itr = groupMembers.begin(); itr != groupMembers.end(); ++itr)
+            {
+                Player *pMember = sObjectMgr.GetPlayer(itr->guid);
+
+                if (pMember && pMember->GetMap()->IsDungeon())
+                {
+
+                    _player->SendDungeonDifficulty(true);
+                    return;
+                }
+            }
             pGroup->ResetInstances(INSTANCE_RESET_CHANGE_DIFFICULTY, false, _player);
             pGroup->SetDungeonDifficulty(Difficulty(mode));
         }
@@ -1437,8 +1448,19 @@ void WorldSession::HandleSetRaidDifficultyOpcode( WorldPacket & recv_data )
     {
         if (pGroup->IsLeader(_player->GetObjectGuid()))
         {
-            // the difficulty is set even if the instances can't be reset
-            //_player->SendDungeonDifficulty(true);
+            Group::MemberSlotList const& groupMembers = pGroup->GetMemberSlots();
+
+            for (Group::member_citerator itr = groupMembers.begin(); itr != groupMembers.end(); ++itr)
+            {
+
+                Player *pMember = sObjectMgr.GetPlayer(itr->guid);
+
+                if (pMember && pMember->GetMap()->IsDungeon())
+                {
+                    _player->SendRaidDifficulty(true);
+                    return;
+                }
+            }
             pGroup->ResetInstances(INSTANCE_RESET_CHANGE_DIFFICULTY, true, _player);
             pGroup->SetRaidDifficulty(Difficulty(mode));
         }
