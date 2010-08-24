@@ -627,12 +627,8 @@ bool IsPositiveEffect(uint32 spellId, SpellEffectIndex effIndex)
     SpellEntry const *spellproto = sSpellStore.LookupEntry(spellId);
     if (!spellproto) return false;
 
-    switch(spellproto->Effect[effIndex])
+    switch(spellId)
     {
-        case SPELL_EFFECT_DUMMY:
-            // some explicitly required dummy effect sets
-            switch(spellId)
-            {
         case 36032:                                         // Arcane Blaste
         case 47540:                                         // Penance start dummy aura - Rank 1
         case 53005:                                         // Penance start dummy aura - Rank 2
