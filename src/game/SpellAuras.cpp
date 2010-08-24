@@ -2061,6 +2061,11 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                     case 75614:                             // Celestial Steed
                         Spell::SelectMountByAreaAndSkill(target, 75619, 75620, 75617, 75618, 76153);
                         return;
+                    case 72350:                             // Fury of Frostmourne
+                         if (GetEffIndex() == EFFECT_INDEX_0)
+                             if (Unit* caster = GetCaster())
+                                 caster->CastSpell(caster, 72351, true);
+                         return;
                 }
                 break;
             }
@@ -6537,6 +6542,18 @@ void Aura::PeriodicTick()
                             pCaster->CalculateSpellDamage(target, spellProto, SpellEffectIndex(GetEffIndex() + 1)) :
                             100;
                         if(target->GetHealth() * 100 >= target->GetMaxHealth() * percent )
+                        {
+                            target->RemoveAurasDueToSpell(GetId());
+                            return;
+                        }
+                        break;
+                    }
+                    case 70541:
+                    case 73779:
+                    case 73780:
+                    case 73781:
+                    {
+                        if(target->GetHealth() >= target->GetMaxHealth() * 0.9 )
                         {
                             target->RemoveAurasDueToSpell(GetId());
                             return;
