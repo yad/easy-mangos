@@ -1,7 +1,9 @@
 #include "AuctionHouseBot.h"
 #include "ProgressBar.h"
-#include "Policies/SingletonImp.h"
+#include "ObjectMgr.h"
 #include "AuctionHouseMgr.h"
+
+#include "Policies/SingletonImp.h"
 
 INSTANTIATE_SINGLETON_1( AuctionHouseBot );
 
