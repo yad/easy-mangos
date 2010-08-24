@@ -2309,6 +2309,30 @@ void ObjectMgr::LoadItemPrototypes()
         sLog.outErrorDb("Item (Entry: %u) not exist in `item_template` but referenced in `CharStartOutfit.dbc`", *itr);
 }
 
+void ObjectMgr::LoadItemSetPrototypes()
+{
+    uint32 count = 0;
+    for (uint32 id = 0; id < sItemStorage.MaxEntry; id++)
+    {
+        ItemPrototype const *pProto = sObjectMgr.GetItemPrototype(id);
+        if (!pProto || pProto->ItemSet == 0)
+            continue;
+
+        ShortItemSet is;
+        is.ItemId        = pProto->ItemId;
+        is.ItemSet       = pProto->ItemSet;
+        is.ItemLevel     = pProto->ItemLevel;
+        is.RequiredLevel = pProto->RequiredLevel;
+
+        m_ItemSetMap[count] = is;
+
+        ++count;
+
+    }
+    sLog.outString();
+    sLog.outString( ">> Loaded %u Items in Sets", count );
+}
+
 void ObjectMgr::LoadItemRequiredTarget()
 {
     m_ItemRequiredTarget.clear();                           // needed for reload case

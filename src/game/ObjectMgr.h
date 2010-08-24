@@ -68,6 +68,16 @@ struct GameTele
 
 typedef UNORDERED_MAP<uint32, GameTele > GameTeleMap;
 
+struct ShortItemSet
+{
+    uint32 ItemId;
+    uint32 ItemSet;
+    uint32 ItemLevel;
+    uint32 RequiredLevel;
+};
+
+typedef UNORDERED_MAP<uint32, ShortItemSet > ItemSetMap;
+
 struct ScriptInfo
 {
     uint32 id;
@@ -725,6 +735,7 @@ class ObjectMgr
         void LoadGameobjects();
         void LoadGameobjectRespawnTimes();
         void LoadItemPrototypes();
+        void LoadItemSetPrototypes();
         void LoadItemRequiredTarget();
         void LoadItemLocales();
         void LoadQuestLocales();
@@ -989,6 +1000,8 @@ class ObjectMgr
         bool AddGameTele(GameTele& data);
         bool DeleteGameTele(const std::string& name);
 
+        ItemSetMap const& GetItemSetMap() const { return m_ItemSetMap; }
+
         uint32 GetNpcGossip(uint32 entry) const
         {
             CacheNpcTextIdMap::const_iterator iter = m_mCacheNpcTextIdMap.find(entry);
@@ -1124,6 +1137,7 @@ class ObjectMgr
         GraveYardMap        mGraveYardMap;
 
         GameTeleMap         m_GameTeleMap;
+        ItemSetMap          m_ItemSetMap;
 
         ScriptNameMap       m_scriptNames;
 

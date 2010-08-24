@@ -1938,20 +1938,17 @@ void Player::GiveMeBestItemsForMyLevel()
 
     if (bestItemFromSet && bestItemFromSet->ItemSet > 0)
     {
-        for (uint32 id = 0; id < sItemStorage.MaxEntry; id++)
+        ItemSetMap const & mItemSet = sObjectMgr.GetItemSetMap();
+        for (ItemSetMap::const_iterator itr = mItemSet.begin(); itr != mItemSet.end(); ++itr)
         {
-            ItemPrototype const *pProto = sObjectMgr.GetItemPrototype(id);
-            if (!pProto)
-                continue;
-
-            if (pProto->ItemSet != bestItemFromSet->ItemSet)
+            if (itr->second.ItemSet != bestItemFromSet->ItemSet)
                 continue;
 
             //156 is The Twin Blades of Azzinoth
-            if (pProto->ItemLevel > 155 && pProto->ItemLevel != bestItemFromSet->ItemLevel)
+            if (itr->second.ItemLevel > 155 && itr->second.ItemLevel != bestItemFromSet->ItemLevel)
                 continue;
 
-            if (pProto->RequiredLevel > this->getLevel())
+            if (itr->second.RequiredLevel > getLevel())
             {
                 bestItemFromSet = NULL;
                 break;
@@ -1961,17 +1958,18 @@ void Player::GiveMeBestItemsForMyLevel()
 
     if (bestItemFromSet && bestItemFromSet->ItemSet > 0)
     {
-        for (uint32 id = 0; id < sItemStorage.MaxEntry; id++)
+        ItemSetMap const & mItemSet = sObjectMgr.GetItemSetMap();
+        for (ItemSetMap::const_iterator itr = mItemSet.begin(); itr != mItemSet.end(); ++itr)
         {
-            ItemPrototype const *pProto = sObjectMgr.GetItemPrototype(id);
-            if (!pProto)
-                continue;
-
-            if (pProto->ItemSet != bestItemFromSet->ItemSet)
+            if (itr->second.ItemSet != bestItemFromSet->ItemSet)
                 continue;
 
             //156 is The Twin Blades of Azzinoth
-            if (pProto->ItemLevel > 155 && pProto->ItemLevel != bestItemFromSet->ItemLevel)
+            if (itr->second.ItemLevel > 155 && itr->second.ItemLevel != bestItemFromSet->ItemLevel)
+                continue;
+
+            ItemPrototype const *pProto = sObjectMgr.GetItemPrototype(itr->second.ItemId);
+            if (!pProto)
                 continue;
 
             switch( pProto->InventoryType )
@@ -2059,22 +2057,23 @@ void Player::GiveMeBestItemsForMyLevel()
 
 bool Player::OtherItemsInSetAreAllowedForMe(ItemPrototype const* pProto)
 {
-    for (uint32 id = 0; id < sItemStorage.MaxEntry; id++)
+    ItemSetMap const & mItemSet = sObjectMgr.GetItemSetMap();
+    for (ItemSetMap::const_iterator itr = mItemSet.begin(); itr != mItemSet.end(); ++itr)
     {
-        ItemPrototype const *oProto = sObjectMgr.GetItemPrototype(id);
-        if (!oProto)
-            continue;
-
-        if (oProto->ItemSet != pProto->ItemSet)
+        if (itr->second.ItemSet != pProto->ItemSet)
             continue;
 
         //156 is The Twin Blades of Azzinoth
-        if (oProto->ItemLevel > 155 && oProto->ItemLevel != pProto->ItemLevel)
+        if (itr->second.ItemLevel > 155 && itr->second.ItemLevel != pProto->ItemLevel)
             continue;
-            
+
         uint16 eDest;
-        if (CanEquipNewItem(NULL_SLOT, eDest, id, false)!=EQUIP_ERR_OK)
+        if (CanEquipNewItem(NULL_SLOT, eDest, itr->second.ItemId, false)!=EQUIP_ERR_OK)
             return false;
+
+        ItemPrototype const *oProto = sObjectMgr.GetItemPrototype(itr->second.ItemId);
+        if (!oProto)
+            continue;
 
         if(!IsForMyClass(oProto) || !IsNotAllowedItem(oProto))
             return false;
@@ -14064,7 +14063,7 @@ void Player::RemoveItemFromBuyBackSlot( uint32 slot, bool del )
 
 void Player::SendEquipError( uint8 msg, Item* pItem, Item *pItem2, uint32 itemid /*= 0*/ ) const
 {
-    sLog.outError( "WORLD: Sent SMSG_INVENTORY_CHANGE_FAILURE (%u) %s, %u", msg, pItem->GetProto()->Name1, pItem->GetProto()->ItemId);
+    DEBUG_LOG( "WORLD: Sent SMSG_INVENTORY_CHANGE_FAILURE (%u)", msg);
     WorldPacket data(SMSG_INVENTORY_CHANGE_FAILURE, 1+8+8+1);
     data << uint8(msg);
 
