@@ -10,3 +10,6 @@ INSERT INTO `spell_proc_event` VALUES ('70808',	'8', '11', '400', '400', '400', 
 DELETE FROM `spell_proc_event` WHERE `entry` = 70756;
 INSERT INTO `spell_proc_event` VALUES ('70756', '2', '10', '0x00200000', '0x00200000', '0x00200000', '0', '0', '0', '0', '0', '0', '16384', '0', '0', '0', '0');
 
+/* Item - Priest T10 Healer 2P Bonus */
+DELETE FROM `spell_proc_event` WHERE `entry` = 70770;
+INSERT INTO `spell_proc_event` VALUES ('70770', '2', '6', '0x00000800', '0x00000800', '0x00000800', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0');

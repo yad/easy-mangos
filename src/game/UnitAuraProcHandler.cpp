@@ -1605,6 +1605,16 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura
                     triggered_spell_id = 56161;
                     break;
                 }
+                // Item - Priest T10 Healer 2P Bonus
+                case 70770:
+                {
+                    if (GetTypeId() != TYPEID_PLAYER)
+                        return SPELL_AURA_PROC_FAILED;
+
+                    basepoints[0] = int32(damage * triggerAmount / 100 / 3); // 11% per 1 tick
+                    triggered_spell_id = 70772;
+                    break;
+                }
             }
             break;
         }
