@@ -633,6 +633,26 @@ bool IsPositiveEffect(uint32 spellId, SpellEffectIndex effIndex)
             // some explicitly required dummy effect sets
             switch(spellId)
             {
+        case 36032:                                         // Arcane Blaste
+        case 47540:                                         // Penance start dummy aura - Rank 1
+        case 53005:                                         // Penance start dummy aura - Rank 2
+        case 53006:                                         // Penance start dummy aura - Rank 3
+        case 53007:                                         // Penance start dummy aura - Rank 4
+        case 47757:                                         // Penance heal effect trigger - Rank 1
+        case 52986:                                         // Penance heal effect trigger - Rank 2
+        case 52987:                                         // Penance heal effect trigger - Rank 3
+        case 52988:                                         // Penance heal effect trigger - Rank 4
+        case 61716:                                         // Rabbit Costume
+        case 61734:                                         // Noblegarden Bunny
+            return true;
+    }
+
+    switch(spellproto->Effect[effIndex])
+    {
+        case SPELL_EFFECT_DUMMY:
+            // some explicitly required dummy effect sets
+            switch(spellId)
+            {
                 case 28441:                                 // AB Effect 000
                     return false;
                 default:
