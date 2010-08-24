@@ -1,4 +1,5 @@
 #include "Object.h"
+#include "Creature.h"
 #include "PathFinder.h"
 #include "ObjectGuid.h"
 #include "Map.h"
