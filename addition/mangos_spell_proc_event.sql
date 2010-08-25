@@ -17,3 +17,8 @@ INSERT INTO `spell_proc_event` VALUES ('70770', '2', '6', '0x00000800', '0x00000
 /* Item - Shaman T10 Enhancement 2P Bonus */
 DELETE FROM `spell_proc_event` WHERE `entry` = 70830;
 INSERT INTO `spell_proc_event` VALUES ('70830', '1', '11', '0', '0', '0', '0x00020000 ', '0x00020000', '0x00020000', '0', '0', '0', '16384', '0', '0', '0', '0');
+
+/* Item - Icecrown 25 Normal & Heroic Dagger Proc */
+DELETE FROM `spell_proc_event` WHERE `entry` IN ('71880', '71892');
+INSERT INTO `spell_proc_event` VALUES ('71880', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '20', '0');
+INSERT INTO `spell_proc_event` VALUES ('71892', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '20', '0');
