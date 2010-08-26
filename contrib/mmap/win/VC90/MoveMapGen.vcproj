@@ -43,7 +43,7 @@
 				Optimization="0"
 				FavorSizeOrSpeed="1"
 				WholeProgramOptimization="false"
-				AdditionalIncludeDirectories="..\..\src\;..\..\..\..\src\shared\vmap;..\..\..\..\dep\include\g3dlite\;..\..\..\..\src\framework\;..\..\..\..\dep\ACE_wrappers\;..\..\..\..\src\shared\"
+				AdditionalIncludeDirectories="..\..\src\;..\..\..\..\src\shared\vmap;..\..\..\..\dep\include\g3dlite\;..\..\..\..\src\framework\;..\..\..\..\dep\ACE_wrappers\;..\..\..\..\dep\recastnavigation\Detour\Include\;..\..\..\..\dep\recastnavigation\Recast\Include\;"
 				PreprocessorDefinitions="WIN32;DEBUG;MMAP_GENERATOR;NO_CORE_FUNCS;"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -62,11 +62,11 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="g3dlite.lib zlib.lib"
-				AdditionalLibraryDirectories="..\..\..\..\win\VC90\g3dlite__$(PlatformName)_$(ConfigurationName)\;..\..\..\..\win\VC90\zlib__$(PlatformName)_$(ConfigurationName)\"
+				AdditionalDependencies="Detour.lib Recast.lib g3dlite.lib zlib.lib"
+				AdditionalLibraryDirectories="..\..\..\..\dep\lib\$(PlatformName)_$(ConfigurationName)\;..\..\..\..\win\VC90\g3dlite__$(PlatformName)_$(ConfigurationName)\;..\..\..\..\win\VC90\zlib__$(PlatformName)_$(ConfigurationName)\"
 				GenerateDebugInformation="true"
-				TargetMachine="1"
 				LargeAddressAware="2"
+				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -119,7 +119,7 @@
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				AdditionalIncludeDirectories="..\..\src\;..\..\..\..\src\shared\vmap;..\..\..\..\dep\include\g3dlite\;..\..\..\..\src\framework\;..\..\..\..\dep\ACE_wrappers\;..\..\..\..\src\shared\"
+				AdditionalIncludeDirectories="..\..\src\;..\..\..\..\src\shared\vmap;..\..\..\..\dep\include\g3dlite\;..\..\..\..\src\framework\;..\..\..\..\dep\ACE_wrappers\;..\..\..\..\dep\recastnavigation\Detour\Include\;..\..\..\..\dep\recastnavigation\Recast\Include\;"
 				PreprocessorDefinitions="WIN32;NDEBUG;MMAP_GENERATOR;NO_CORE_FUNCS;"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
@@ -137,13 +137,13 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="g3dlite.lib zlib.lib"
-				AdditionalLibraryDirectories="..\..\..\..\win\VC90\g3dlite__$(PlatformName)_$(ConfigurationName)\;..\..\..\..\win\VC90\zlib__$(PlatformName)_$(ConfigurationName)\"
+				AdditionalDependencies="Detour.lib Recast.lib g3dlite.lib zlib.lib"
+				AdditionalLibraryDirectories="..\..\..\..\dep\lib\$(PlatformName)_$(ConfigurationName)\;..\..\..\..\win\VC90\g3dlite__$(PlatformName)_$(ConfigurationName)\;..\..\..\..\win\VC90\zlib__$(PlatformName)_$(ConfigurationName)\"
 				GenerateDebugInformation="true"
+				LargeAddressAware="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				TargetMachine="1"
-				LargeAddressAware="2"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -174,6 +174,14 @@
 		<Filter
 			Name="generator"
 			>
+			<File
+				RelativePath="..\..\src\DebugAlloc.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\DebugAlloc.h"
+				>
+			</File>
 			<File
 				RelativePath="..\..\src\generator.cpp"
 				>
@@ -206,118 +214,6 @@
 				RelativePath="..\..\src\VMapExtensions.cpp"
 				>
 			</File>
-			<File
-				RelativePath="..\..\src\ChunkyTriMesh.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\ChunkyTriMesh.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\DebugAlloc.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\DebugAlloc.h"
-				>
-			</File>
-		</Filter>
-		<Filter
-			Name="pathfinding"
-			>
-			<Filter
-				Name="Detour"
-				>
-				<File
-					RelativePath="..\..\..\..\src\shared\pathfinding\Detour\DetourCommon.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\..\..\src\shared\pathfinding\Detour\DetourCommon.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\..\..\src\shared\pathfinding\Detour\DetourNavMesh.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\..\..\src\shared\pathfinding\Detour\DetourNavMesh.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\..\..\src\shared\pathfinding\Detour\DetourNavMeshBuilder.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\..\..\src\shared\pathfinding\Detour\DetourNavMeshBuilder.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\..\..\src\shared\pathfinding\Detour\DetourNode.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\..\..\src\shared\pathfinding\Detour\DetourNode.h"
-					>
-				</File>
-			</Filter>
-			<Filter
-				Name="Recast"
-				>
-				<File
-					RelativePath="..\..\..\..\src\shared\pathfinding\Recast\Recast.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\..\..\src\shared\pathfinding\Recast\Recast.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\..\..\src\shared\pathfinding\Recast\RecastArea.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\..\..\src\shared\pathfinding\Recast\RecastContour.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\..\..\src\shared\pathfinding\Recast\RecastFilter.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\..\..\src\shared\pathfinding\Recast\RecastLog.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\..\..\src\shared\pathfinding\Recast\RecastLog.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\..\..\src\shared\pathfinding\Recast\RecastMesh.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\..\..\src\shared\pathfinding\Recast\RecastMeshDetail.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\..\..\src\shared\pathfinding\Recast\RecastRasterization.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\..\..\src\shared\pathfinding\Recast\RecastRegion.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\..\..\src\shared\pathfinding\Recast\RecastTimer.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\..\..\src\shared\pathfinding\Recast\RecastTimer.h"
-					>
-				</File>
-			</Filter>
 		</Filter>
 		<Filter
 			Name="vmap"
