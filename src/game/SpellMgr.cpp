@@ -1843,6 +1843,10 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                     // Improved Hamstring -> Hamstring (multi-family check)
                     if( (spellInfo_2->SpellFamilyFlags & UI64LIT(0x2)) && spellInfo_1->Id == 23694 )
                         return false;
+						
+                    // Stoicism (Warrior Tier-10 4-piece set bonus) and Shield Block
+                    if( spellInfo_1->Id == 70845 && spellInfo_2->Id == 2565 )
+                        return false;
 
                     break;
                 }
@@ -2073,6 +2077,10 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
 
             // Bloodlust and Bloodthirst (multi-family check)
             if( spellInfo_2->Id == 2825 && spellInfo_1->SpellIconID == 38 && spellInfo_1->SpellVisual[0] == 0 )
+                return false;
+
+            // Stoicism (Warrior Tier-10 4-piece set bonus) and Shield Block
+            if( spellInfo_2->Id == 70845 && spellInfo_1->Id == 2565 )
                 return false;
 
             break;
