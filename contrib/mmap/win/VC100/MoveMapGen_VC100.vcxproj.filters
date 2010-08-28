@@ -7,59 +7,8 @@
     <Filter Include="vmap">
       <UniqueIdentifier>{8c2c5f18-4147-4fdb-bd45-aa9664476e6c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="pathfinding">
-      <UniqueIdentifier>{59ff0d7c-3ebe-461c-af41-a1ce2df917d3}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="pathfinding\Recast">
-      <UniqueIdentifier>{af53d3e0-4993-41a1-a75f-d420f3638389}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="pathfinding\Detour">
-      <UniqueIdentifier>{f91e5783-db2b-455a-ad98-1dcb4a79f0d5}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\Recast.cpp">
-      <Filter>pathfinding\Recast</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\RecastArea.cpp">
-      <Filter>pathfinding\Recast</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\RecastContour.cpp">
-      <Filter>pathfinding\Recast</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\RecastFilter.cpp">
-      <Filter>pathfinding\Recast</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\RecastLog.cpp">
-      <Filter>pathfinding\Recast</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\RecastMesh.cpp">
-      <Filter>pathfinding\Recast</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\RecastMeshDetail.cpp">
-      <Filter>pathfinding\Recast</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\RecastRasterization.cpp">
-      <Filter>pathfinding\Recast</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\RecastRegion.cpp">
-      <Filter>pathfinding\Recast</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Recast\RecastTimer.cpp">
-      <Filter>pathfinding\Recast</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Detour\DetourCommon.cpp">
-      <Filter>pathfinding\Detour</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Detour\DetourNavMesh.cpp">
-      <Filter>pathfinding\Detour</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Detour\DetourNavMeshBuilder.cpp">
-      <Filter>pathfinding\Detour</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\src\shared\pathfinding\Detour\DetourNode.cpp">
-      <Filter>pathfinding\Detour</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\generator.cpp">
       <Filter>generator</Filter>
     </ClCompile>
@@ -70,9 +19,6 @@
       <Filter>generator</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\MapBuilder.cpp">
-      <Filter>generator</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\ChunkyTriMesh.cpp">
       <Filter>generator</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\DebugAlloc.cpp">
@@ -101,27 +47,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\src\shared\pathfinding\Recast\Recast.h">
-      <Filter>pathfinding\Recast</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\src\shared\pathfinding\Recast\RecastLog.h">
-      <Filter>pathfinding\Recast</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\src\shared\pathfinding\Recast\RecastTimer.h">
-      <Filter>pathfinding\Recast</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\src\shared\pathfinding\Detour\DetourCommon.h">
-      <Filter>pathfinding\Detour</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\src\shared\pathfinding\Detour\DetourNavMesh.h">
-      <Filter>pathfinding\Detour</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\src\shared\pathfinding\Detour\DetourNavMeshBuilder.h">
-      <Filter>pathfinding\Detour</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\src\shared\pathfinding\Detour\DetourNode.h">
-      <Filter>pathfinding\Detour</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\TileBuilder.h">
       <Filter>generator</Filter>
     </ClInclude>
@@ -132,9 +57,6 @@
       <Filter>generator</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\MapBuilder.h">
-      <Filter>generator</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\ChunkyTriMesh.h">
       <Filter>generator</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\DebugAlloc.h">

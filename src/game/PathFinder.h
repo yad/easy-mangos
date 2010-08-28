@@ -1,26 +1,23 @@
 #ifndef MANGOS_PATH_FINDER_H
 #define MANGOS_PATH_FINDER_H
 
-#include "pathfinding/Detour/DetourNavMesh.h"
+#include "../recastnavigation/Detour/Include/DetourNavMesh.h"
+#include "../recastnavigation/Detour/Include/DetourNavMeshQuery.h"
 
 class WorldObject;
 
 #define MAX_PATH_LENGTH 256
 
+// see contrib/mmap/src/TileBuilder.h
 enum NavTerrain
 {
     NAV_GROUND  = 0x01,
-
     NAV_MAGMA   = 0x02,
     NAV_SLIME   = 0x04,
-
-    NAV_SHALLOW_WATER   = 0x08,
-    NAV_AVERAGE_WATER   = 0x10,
-    NAV_DEEP_WATER      = 0x20,
-    NAV_SWIM_WATER      = 0x40,
-    NAV_WATER           = NAV_SHALLOW_WATER | NAV_AVERAGE_WATER | NAV_DEEP_WATER | NAV_SWIM_WATER,
-
-    NAV_UNSPECIFIED     = 0x80
+    NAV_WATER   = 0x08,
+    NAV_UNUSED1 = 0x10,
+    NAV_UNUSED2 = 0x20
+    // we only have 6 bits of a bitfield
 };
 
 enum PathType
@@ -37,7 +34,7 @@ class PathInfo
     public:
         PathInfo(WorldObject* from, const float x, const float y, const float z);
 
-        ~PathInfo() { delete [] m_pathPolyRefs; delete [] m_pathPoints; }
+        ~PathInfo() { delete [] m_pathPolyRefs; delete [] m_pathPoints; dtFreeNavMeshQuery(m_navMeshQuery); }
 
         inline void getStartPosition(float &x, float &y, float &z) { x = m_startPosition[0]; y = m_startPosition[1]; z = m_startPosition[2]; }
         inline void setStartPosition(float x, float y, float z) { m_startPosition[0] = x; m_startPosition[1] = y; m_startPosition[2] = z; }
@@ -64,7 +61,8 @@ class PathInfo
         float           m_nextPosition[3];  // {x, y, z} of next location on the path
         float           m_endPosition[3];   // {x, y, z} of the destination
         WorldObject *   m_sourceObject;     // the object that is moving (safe pointer because PathInfo is only accessed from the mover?)
-        dtNavMesh   *   m_navMesh;          // the nav mesh used to find the path
+        dtNavMesh   *   m_navMesh;          // the nav mesh
+        dtNavMeshQuery* m_navMeshQuery;     // the nav mesh query used to find the path
         PathType        m_type;             // tells what kind of path this is
 
     private:
@@ -100,6 +98,13 @@ inline bool isSamePoint(const float x1, const float y1, const float z1,
                         const float x2, const float y2, const float z2)
 {
     return (x1 == x2 && y1 == y2 && z1 == z2);
+}
+
+inline void copyVertex(float* dest, const float* v)
+{
+    dest[0] = v[0];
+    dest[1] = v[1];
+    dest[2] = v[2];
 }
 
 #endif

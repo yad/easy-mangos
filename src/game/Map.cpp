@@ -39,6 +39,8 @@
 #include "VMapFactory.h"
 #include "BattleGroundMgr.h"
 
+#include "../recastnavigation/Detour/Include/DetourNavMesh.h"
+
 struct ScriptAction
 {
     uint64 sourceGUID;
@@ -57,6 +59,12 @@ Map::~Map()
 
     if (m_instanceSave)
         m_instanceSave->SetUsedByMapState(false);           // field pointer can be deleted after this
+
+    if (m_navMesh)
+    {
+        dtFreeNavMesh(m_navMesh);
+        m_navMesh = NULL;
+    }
 }
 
 void Map::LoadVMap(int gx,int gy)

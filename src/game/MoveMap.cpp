@@ -29,7 +29,7 @@ void Map::LoadNavMesh(int gx, int gy)
         fread(&offset, sizeof(uint32), 1, file);
         fclose(file);
 
-        m_navMesh = new dtNavMesh;
+        m_navMesh = dtAllocNavMesh();
         if(!m_navMesh->init(&params))
         {
             delete m_navMesh;
@@ -57,7 +57,7 @@ void Map::LoadNavMesh(int gx, int gy)
     int length = ftell(file);
     fseek(file, 0, SEEK_SET);
 
-    unsigned char* data = new unsigned char[length];
+    unsigned char* data =  (unsigned char*)dtAlloc(length, DT_ALLOC_PERM);
     fread(data, length, 1, file);
     fclose(file);
 
