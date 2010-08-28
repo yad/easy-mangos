@@ -50,11 +50,10 @@ GameObject::GameObject() : WorldObject()
     m_respawnDelayTime = 25;
     m_lootState = GO_NOT_READY;
     m_spawnedByDefault = true;
-    m_usetimes = 0;
+    m_useTimes = 0;
     m_spellId = 0;
     m_cooldownTime = 0;
     m_goInfo = NULL;
-    m_ritualOwner = NULL;
 
     m_DBTableGuid = 0;
     m_rotation = 0;
@@ -155,6 +154,13 @@ bool GameObject::Create(uint32 guidlow, uint32 name_id, Map *map, uint32 phaseMa
         ((InstanceMap*)map)->GetInstanceData()->OnObjectCreate(this);
     }
 
+    if (goinfo->type == GAMEOBJECT_TYPE_TRANSPORT)
+    {
+        SetUInt32Value(GAMEOBJECT_LEVEL, goinfo->transport.pause);
+        if (goinfo->transport.startOpen)
+            SetGoState(GO_STATE_ACTIVE);
+    }
+
     return true;
 }
 
@@ -219,8 +225,7 @@ void GameObject::Update(uint32 diff)
                 if (m_respawnTime <= time(NULL))            // timer expired
                 {
                     m_respawnTime = 0;
-                    m_SkillupList.clear();
-                    m_usetimes = 0;
+                    ClearAllUsesData();
 
                     switch (GetGoType())
                     {
@@ -336,9 +341,9 @@ void GameObject::Update(uint32 diff)
 
                 if (uint32 max_charges = goInfo->GetCharges())
                 {
-                    if (m_usetimes >= max_charges)
+                    if (m_useTimes >= max_charges)
                     {
-                        m_usetimes = 0;
+                        m_useTimes = 0;
                         SetLootState(GO_JUST_DEACTIVATED);  // can be despawned or destroyed
                     }
                 }
@@ -386,16 +391,11 @@ void GameObject::Update(uint32 diff)
 
                 if(spellId)
                 {
-                    std::set<uint32>::const_iterator it = m_unique_users.begin();
-                    std::set<uint32>::const_iterator end = m_unique_users.end();
-                    for (; it != end; it++)
-                    {
-                        if (Unit* owner = Unit::GetUnit(*this, uint64(*it)))
+                    for (GuidsSet::const_iterator itr = m_UniqueUsers.begin(); itr != m_UniqueUsers.end(); ++itr)
+                        if (Player* owner = GetMap()->GetPlayer(*itr))
                             owner->CastSpell(owner, spellId, false, NULL, NULL, GetGUID());
-                    }
 
-                    m_unique_users.clear();
-                    m_usetimes = 0;
+                    ClearAllUsesData();
                 }
 
                 SetGoState(GO_STATE_READY);
@@ -461,7 +461,12 @@ void GameObject::Refresh()
 void GameObject::AddUniqueUse(Player* player)
 {
     AddUse();
-    m_unique_users.insert(player->GetGUIDLow());
+
+    if (m_firstUser.IsEmpty())
+        m_firstUser = player->GetObjectGuid();
+
+    m_UniqueUsers.insert(player->GetObjectGuid());
+    
 }
 
 void GameObject::Delete()
@@ -672,6 +677,15 @@ bool GameObject::IsTransport() const
     return gInfo->type == GAMEOBJECT_TYPE_TRANSPORT || gInfo->type == GAMEOBJECT_TYPE_MO_TRANSPORT;
 }
 
+// is Dynamic transport = non-stop Transport
+bool GameObject::IsDynTransport() const
+{
+    // If something is marked as a transport, don't transmit an out of range packet for it.
+    GameObjectInfo const * gInfo = GetGOInfo();
+    if(!gInfo) return false;
+    return gInfo->type == GAMEOBJECT_TYPE_MO_TRANSPORT || (gInfo->type == GAMEOBJECT_TYPE_TRANSPORT && !gInfo->transport.pause);
+}
+
 Unit* GameObject::GetOwner() const
 {
     return ObjectAccessor::GetUnit(*this, GetOwnerGUID());
@@ -742,7 +756,7 @@ bool GameObject::ActivateToQuest( Player *pTarget)const
                 //look for battlegroundAV for some objects which are only activated after mine gots captured by own team
                 if (GetEntry() == BG_AV_OBJECTID_MINE_N || GetEntry() == BG_AV_OBJECTID_MINE_S)
                     if (BattleGround *bg = pTarget->GetBattleGround())
-                        if (bg->GetTypeID() == BATTLEGROUND_AV && !(((BattleGroundAV*)bg)->PlayerCanDoMineQuest(GetEntry(),pTarget->GetTeam())))
+                        if (bg->GetTypeID(true) == BATTLEGROUND_AV && !(((BattleGroundAV*)bg)->PlayerCanDoMineQuest(GetEntry(),pTarget->GetTeam())))
                             return false;
                 return true;
             }
@@ -1189,10 +1203,6 @@ void GameObject::Use(Unit* user)
 
             GameObjectInfo const* info = GetGOInfo();
 
-            // ritual owner is set for GO's without owner (not summoned)
-            if (!m_ritualOwner && !owner)
-                m_ritualOwner = player;
-
             if (owner)
             {
                 if (owner->GetTypeId() != TYPEID_PLAYER)
@@ -1211,8 +1221,16 @@ void GameObject::Use(Unit* user)
             }
             else
             {
-                if (player != m_ritualOwner && (info->summoningRitual.castersGrouped && !player->IsInSameRaidWith(m_ritualOwner)))
-                    return;
+                if (!m_firstUser.IsEmpty() && player->GetObjectGuid() != m_firstUser && info->summoningRitual.castersGrouped)
+                {
+                    if (Group* group = player->GetGroup())
+                    {
+                        if (!group->IsMember(m_firstUser))
+                            return;
+                    }
+                    else
+                        return;
+                }
 
                 spellCaster = player;
             }
@@ -1227,40 +1245,31 @@ void GameObject::Use(Unit* user)
                 triggered = true;
             }
 
-            // full amount unique participants including original summoner
-            if (GetUniqueUseCount() == info->summoningRitual.reqParticipants)
-            {
-                spellCaster = m_ritualOwner ? m_ritualOwner : spellCaster;
-
-                spellId = info->summoningRitual.spellId;
-
-                if (spellId == 62330)                       // GO store nonexistent spell, replace by expected
-                {
-                    // spell have reagent and mana cost but it not expected use its
-                    // it triggered spell in fact casted at currently channeled GO
-                    spellId = 61993;
-                    triggered = true;
-                }
-
-                // finish owners spell
-                if (owner)
-                    owner->FinishSpell(CURRENT_CHANNELED_SPELL);
-
-                // can be deleted now, if
-                if (!info->summoningRitual.ritualPersistent)
-                    SetLootState(GO_JUST_DEACTIVATED);
-                else
-                {
-                    // reset ritual for this GO
-                    m_ritualOwner = NULL;
-                    m_unique_users.clear();
-                    m_usetimes = 0;
-                }
-            }
-            else
-            {
+            // full amount unique participants including original summoner, need more
+            if (GetUniqueUseCount() < info->summoningRitual.reqParticipants)
                 return;
-            }
+
+            spellCaster = GetMap()->GetPlayer(m_firstUser);
+
+            spellId = info->summoningRitual.spellId;
+
+            if (spellId == 62330)                           // GO store nonexistent spell, replace by expected
+                spellId = 61993;
+
+            // spell have reagent and mana cost but it not expected use its
+            // it triggered spell in fact casted at currently channeled GO
+            triggered = true;
+
+            // finish owners spell
+            if (owner)
+                owner->FinishSpell(CURRENT_CHANNELED_SPELL);
+
+            // can be deleted now, if
+            if (!info->summoningRitual.ritualPersistent)
+                SetLootState(GO_JUST_DEACTIVATED);
+            // reset ritual for this GO
+            else
+                ClearAllUsesData();
 
             // go to end function to spell casting
             break;
@@ -1385,15 +1394,15 @@ void GameObject::Use(Unit* user)
                     {
                         case 179785:                        // Silverwing Flag
                             // check if it's correct bg
-                            if(bg->GetTypeID() == BATTLEGROUND_WS)
+                            if(bg->GetTypeID(true) == BATTLEGROUND_WS)
                                 bg->EventPlayerClickedOnFlag(player, this);
                             break;
                         case 179786:                        // Warsong Flag
-                            if(bg->GetTypeID() == BATTLEGROUND_WS)
+                            if(bg->GetTypeID(true) == BATTLEGROUND_WS)
                                 bg->EventPlayerClickedOnFlag(player, this);
                             break;
                         case 184142:                        // Netherstorm Flag
-                            if(bg->GetTypeID() == BATTLEGROUND_EY)
+                            if(bg->GetTypeID(true) == BATTLEGROUND_EY)
                                 bg->EventPlayerClickedOnFlag(player, this);
                             break;
                     }
@@ -1601,4 +1610,14 @@ void GameObject::DealSiegeDamage(uint32 damage)
         m_actualHealth = GetGOInfo()->destructibleBuilding.intactNumHits;
         SetLootState(GO_JUST_DEACTIVATED);
     }
+}
+
+bool GameObject::IsInSkillupList(Player* player) const
+{
+    return m_SkillupSet.find(player->GetObjectGuid()) != m_SkillupSet.end();
+}
+
+void GameObject::AddToSkillupList(Player* player)
+{
+    m_SkillupSet.insert(player->GetObjectGuid());
 }

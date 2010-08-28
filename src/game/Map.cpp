@@ -999,8 +999,7 @@ uint32 Map::GetMaxPlayers() const
 
 uint32 Map::GetMaxResetDelay() const
 {
-    MapDifficulty const* mapDiff = GetMapDifficulty();
-    return mapDiff ? mapDiff->resetTime : 0;
+    return InstanceResetScheduler::GetMaxResetTimeFor(GetMapDifficulty());
 }
 
 inline GridMap *Map::GetGrid(float x, float y)
@@ -1722,7 +1721,8 @@ bool InstanceMap::Add(Player *player)
                         GetInstanceSave()->GetMapId(), GetInstanceSave()->GetInstanceId(),
                         GetInstanceSave()->GetDifficulty(), GetInstanceSave()->GetPlayerCount(),
                         GetInstanceSave()->GetGroupCount(), GetInstanceSave()->CanReset());
-                    ASSERT(false);
+                    player->RepopAtGraveyard();
+                    return false;
                 }
             }
             else
@@ -1746,7 +1746,8 @@ bool InstanceMap::Add(Player *player)
                                 pGroup->GetId(),
                                 groupBind->save->GetMapId(), groupBind->save->GetInstanceId(), groupBind->save->GetDifficulty(),
                                 groupBind->save->GetPlayerCount(), groupBind->save->GetGroupCount(), groupBind->save->CanReset());
-                        ASSERT(false);
+                            player->RepopAtGraveyard();
+                            return false;
                     }
                     // bind to the group or keep using the group save
                     if (!groupBind)
@@ -1772,7 +1773,8 @@ bool InstanceMap::Add(Player *player)
                                 sLog.outError("GroupBind save players: %d, group count: %d", groupBind->save->GetPlayerCount(), groupBind->save->GetGroupCount());
                             else
                                 sLog.outError("GroupBind save NULL");
-                            ASSERT(false);
+                            player->RepopAtGraveyard();
+                            return false;
                         }
                         // if the group/leader is permanently bound to the instance
                         // players also become permanently bound when they enter
@@ -1835,10 +1837,16 @@ void BattleGroundMap::Update(const uint32& diff)
 void InstanceMap::Remove(Player *player, bool remove)
 {
     DETAIL_LOG("MAP: Removing player '%s' from instance '%u' of map '%s' before relocating to other map", player->GetName(), GetInstanceId(), GetMapName());
+
     //if last player set unload timer
     if(!m_unloadTimer && m_mapRefManager.getSize() == 1)
         m_unloadTimer = m_unloadWhenEmpty ? MIN_UNLOAD_DELAY : std::max(sWorld.getConfig(CONFIG_UINT32_INSTANCE_UNLOAD_DELAY), (uint32)MIN_UNLOAD_DELAY);
+
+    if (i_data)
+        i_data->OnPlayerLeave(player);
+
     Map::Remove(player, remove);
+
     // for normal instances schedule the reset after all players have left
     SetResetSchedule(true);
 }

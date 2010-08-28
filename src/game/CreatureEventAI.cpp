@@ -372,9 +372,15 @@ bool CreatureEventAI::ProcessEvent(CreatureEventAIHolder& pHolder, Unit* pAction
 
             // find selected action, skipping not used
             uint32 j = 0;
-            for (; idx; ++j)
+            for (; ; ++j)
+            {
                 if (pHolder.Event.action[j].type != ACTION_T_NONE)
+                {
+                    if (!idx)
+                        break;
                     --idx;
+                }
+            }
 
             ProcessAction(pHolder.Event.action[j], rnd, pHolder.Event.event_id, pActionInvoker);
         }
@@ -545,7 +551,7 @@ void CreatureEventAI::ProcessAction(CreatureEventAI_Action const& action, uint32
         {
             ThreatList const& threatList = m_creature->getThreatManager().getThreatList();
             for (ThreatList::const_iterator i = threatList.begin(); i != threatList.end(); ++i)
-                if(Unit* Temp = Unit::GetUnit(*m_creature,(*i)->getUnitGuid()))
+                if(Unit* Temp = m_creature->GetMap()->GetUnit((*i)->getUnitGuid()))
                     m_creature->getThreatManager().modifyThreatPercent(Temp, action.threat_all_pct.percent);
             break;
         }
@@ -646,19 +652,14 @@ void CreatureEventAI::ProcessAction(CreatureEventAI_Action const& action, uint32
             break;
         case ACTION_T_QUEST_EVENT_ALL:
             if (pActionInvoker && pActionInvoker->GetTypeId() == TYPEID_PLAYER)
-            {
-                if (Unit* Temp = Unit::GetUnit(*m_creature,pActionInvoker->GetGUID()))
-                    if (Temp->GetTypeId() == TYPEID_PLAYER)
-                        ((Player*)Temp)->GroupEventHappens(action.quest_event_all.questId,m_creature);
-            }
+                ((Player*)pActionInvoker)->GroupEventHappens(action.quest_event_all.questId,m_creature);
             break;
         case ACTION_T_CAST_EVENT_ALL:
         {
             ThreatList const& threatList = m_creature->getThreatManager().getThreatList();
             for (ThreatList::const_iterator i = threatList.begin(); i != threatList.end(); ++i)
-                if (Unit* Temp = Unit::GetUnit(*m_creature,(*i)->getUnitGuid()))
-                    if (Temp->GetTypeId() == TYPEID_PLAYER)
-                        ((Player*)Temp)->CastedCreatureOrGO(action.cast_event_all.creatureId, m_creature->GetObjectGuid(), action.cast_event_all.spellId);
+                if (Player* temp = m_creature->GetMap()->GetPlayer((*i)->getUnitGuid()))
+                        temp->CastedCreatureOrGO(action.cast_event_all.creatureId, m_creature->GetObjectGuid(), action.cast_event_all.spellId);
             break;
         }
         case ACTION_T_REMOVEAURASFROMSPELL:

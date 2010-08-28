@@ -34,6 +34,7 @@
 #include "DBCStructure.h"
 #include "Path.h"
 #include "WorldPacket.h"
+#include "MapManager.h"
 #include "Timer.h"
 #include <list>
 
@@ -1584,6 +1585,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         // removing unknown aura stacks by diff reasons and selections
         void RemoveNotOwnSingleTargetAuras(uint32 newPhase = 0x0);
         void RemoveAurasAtMechanicImmunity(uint32 mechMask, uint32 exceptSpellId, bool non_positive = false);
+        void RemoveAurasBySpellMechanic(uint32 mechMask);
         void RemoveSpellsCausingAura(AuraType auraType);
         void RemoveRankAurasDueToSpell(uint32 spellId);
         bool RemoveNoStackAurasDueToAuraHolder(SpellAuraHolder *holder);
@@ -1892,7 +1894,6 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
 
         void addFollower(FollowerReference* pRef) { m_FollowingRefManager.insertFirst(pRef); }
         void removeFollower(FollowerReference* /*pRef*/ ) { /* nothing to do yet */ }
-        static Unit* GetUnit(WorldObject const& object, uint64 guid);
 
         MotionMaster* GetMotionMaster() { return &i_motionMaster; }
 
@@ -1931,13 +1932,6 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         void RemovePetAura(PetAura const* petSpell);
         virtual float GetFollowAngle() const { return M_PI_F/2; }
         uint32 GetModelForForm(ShapeshiftForm form);
-        void SetThreatRedirectionTarget(uint64 guid, uint32 pct)
-        {
-            m_misdirectionTargetGUID = guid;
-            m_ThreatRedirectionPercent = pct;
-        }
-        uint32 GetThreatRedirectionPercent() { return m_ThreatRedirectionPercent; }
-        Unit *GetMisdirectionTarget() { return m_misdirectionTargetGUID ? GetUnit(*this, m_misdirectionTargetGUID) : NULL; }
 
         // Movement info
         MovementInfo m_movementInfo;
@@ -2018,6 +2012,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         uint32 GetCombatRatingDamageReduction(CombatRating cr, float rate, float cap, uint32 damage) const;
 
         Unit* _GetTotem(TotemSlot slot) const;              // for templated function without include need
+        Pet* _GetPet(ObjectGuid guid) const;                // for templated function without include need
 
         uint32 m_state;                                     // Even derived shouldn't modify
         uint32 m_CombatTimer;
@@ -2038,8 +2033,6 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         ComboPointHolderSet m_ComboPointHolders;
 
         GuardianPetList m_guardianPets;
-        uint32 m_ThreatRedirectionPercent;
-        uint64 m_misdirectionTargetGUID;
 
         uint64 m_TotemSlot[MAX_TOTEM_SLOT];
 };
@@ -2047,13 +2040,13 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
 template<typename Func>
 void Unit::CallForAllControlledUnits(Func const& func, bool withTotems, bool withGuardians, bool withCharms)
 {
-    if(Pet* pet = GetPet())
+    if (Pet* pet = GetPet())
         func(pet);
 
     if (withGuardians)
     {
         for(GuardianPetList::const_iterator itr = m_guardianPets.begin(); itr != m_guardianPets.end(); ++itr)
-            if(Unit* guardian = Unit::GetUnit(*this,*itr))
+            if (Pet* guardian = _GetPet(*itr))
                 func(guardian);
     }
 
@@ -2065,7 +2058,7 @@ void Unit::CallForAllControlledUnits(Func const& func, bool withTotems, bool wit
     }
 
     if (withCharms)
-        if(Unit* charm = GetCharm())
+        if (Unit* charm = GetCharm())
             func(charm);
 }
 
@@ -2080,7 +2073,7 @@ bool Unit::CheckAllControlledUnits(Func const& func, bool withTotems, bool withG
     if (withGuardians)
     {
         for(GuardianPetList::const_iterator itr = m_guardianPets.begin(); itr != m_guardianPets.end(); ++itr)
-            if (Unit const* guardian = Unit::GetUnit(*this,*itr))
+            if (Pet const* guardian = _GetPet(*itr))
                 if (func(guardian))
                     return true;
 
@@ -2095,7 +2088,7 @@ bool Unit::CheckAllControlledUnits(Func const& func, bool withTotems, bool withG
     }
 
     if (withCharms)
-        if(Unit const* charm = GetCharm())
+        if (Unit const* charm = GetCharm())
             if (func(charm))
                 return true;
 

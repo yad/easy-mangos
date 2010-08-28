@@ -555,7 +555,6 @@ class ObjectMgr
         CreatureModelInfo const *GetCreatureModelInfo( uint32 modelid );
         CreatureModelInfo const* GetCreatureModelRandomGender(uint32 display_id);
         uint32 GetCreatureModelAlternativeModel(uint32 modelId);
-        uint32 GetCreatureModelOtherTeamModel(uint32 modelId);
 
         EquipmentInfo const *GetEquipmentInfo( uint32 entry );
         static CreatureDataAddon const *GetCreatureAddon( uint32 lowguid )
@@ -730,6 +729,7 @@ class ObjectMgr
         void LoadCreatureRespawnTimes();
         void LoadCreatureAddons();
         void LoadCreatureModelInfo();
+        void LoadCreatureModelRace();
         void LoadEquipmentTemplates();
         void LoadGameObjectLocales();
         void LoadGameobjects();
@@ -1077,6 +1077,8 @@ class ObjectMgr
             return GossipMenuItemsMapBounds(m_mGossipMenuItemsMap.lower_bound(uiMenuId),m_mGossipMenuItemsMap.upper_bound(uiMenuId));
         }
 
+        uint32 GetModelForRace(uint32 sourceModelId, uint32 racemask);
+
     protected:
 
         // first free id for selected id type
@@ -1103,6 +1105,8 @@ class ObjectMgr
         typedef std::set<uint32> TavernAreaTriggerSet;
         typedef std::set<uint32> GameObjectForQuestSet;
         typedef UNORDERED_MAP<uint32, BotSpawns> BotSpawnsMap;
+
+        typedef std::multimap<uint32, CreatureModelRace> CreatureModelRaceMap;
 
         GroupMap            mGroupMap;
         GuildMap            mGuildMap;
@@ -1200,6 +1204,8 @@ class ObjectMgr
         // Storage for Conditions. First element (index 0) is reserved for zero-condition (nothing required)
         typedef std::vector<PlayerCondition> ConditionStore;
         ConditionStore mConditions;
+
+        CreatureModelRaceMap    m_mCreatureModelRaceMap;
 
         CacheNpcTextIdMap m_mCacheNpcTextIdMap;
         CacheVendorItemMap m_mCacheVendorItemMap;

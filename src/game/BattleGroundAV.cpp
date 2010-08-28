@@ -522,9 +522,11 @@ void BattleGroundAV::EventPlayerClickedOnFlag(Player *source, GameObject* target
     {
         case POINT_CONTROLLED:
             EventPlayerAssaultsPoint(source, node);
+            source->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_BG_OBJECTIVE_CAPTURE,1, IsTower(node) ? 0:1);
             break;
         case POINT_ASSAULTED:
             EventPlayerDefendsPoint(source, node);
+            source->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_BG_OBJECTIVE_CAPTURE,1, IsTower(node) ? 2:3);
             break;
         default:
             break;

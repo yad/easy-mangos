@@ -207,6 +207,18 @@ struct AchievementCriteriaEntry
             uint32  castCount;                              // 4
         } cast_spell;
 
+        
+        // ACHIEVEMENT_CRITERIA_TYPE_BG_OBJECTIVE_CAPTURE       = 30
+        struct
+        {
+            uint32  captureID;                                // 3
+            uint32  captureCount;                             // 4
+            //uint32  additionalRequirement1_type;            // 5 
+            //uint32  additionalRequirement1_value;           // 6 
+            //uint32  additionalRequirement2_type;            // 7 
+            //uint32  additionalRequirement2_value;           // 8 
+        } objective_capture;
+
         // ACHIEVEMENT_CRITERIA_TYPE_HONORABLE_KILL_AT_AREA = 31
         struct
         {
@@ -411,6 +423,8 @@ struct AchievementCriteriaEntry
         {
             uint32  unused;                                 // 3
             uint32  killCount;                              // 4
+            uint32  flag;                                   // 5
+            uint32  mapid;                                  // 6
         } special_pvp_kill;
 
         // ACHIEVEMENT_CRITERIA_TYPE_FISH_IN_GAMEOBJECT     = 72
@@ -1163,8 +1177,8 @@ struct MapDifficultyEntry
     uint32      Difficulty;                                 // 2 (for arenas: arena slot)
     //char*       areaTriggerText[16];                      // 3-18 text showed when transfer to map failed (missing requirements)
     //uint32      textFlags;                                // 19
-    uint32      resetTime;                                  // 20
-    uint32      maxPlayers;                                 // 21
+    uint32      resetTime;                                  // 20, in secs, 0 if no fixed reset time
+    uint32      maxPlayers;                                 // 21, some heroic versions have 0 when expected same amount as in normal version
     //char*       difficultyString;                         // 22
 };
 
@@ -1864,7 +1878,7 @@ struct MapDifficulty
     MapDifficulty() : resetTime(0), maxPlayers(0) {}
     MapDifficulty(uint32 _resetTime, uint32 _maxPlayers) : resetTime(_resetTime), maxPlayers(_maxPlayers) {}
 
-    uint32 resetTime;
+    uint32 resetTime;                                       // in secs, 0 if no fixed reset time
     uint32 maxPlayers;                                      // some heroic dungeons have 0 when expect same value as in normal dificulty case
 };
 

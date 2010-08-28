@@ -2655,11 +2655,11 @@ void PlayerbotAI::HandleCommand(const std::string& text, Player& fromPlayer)
         bool looted = false;
         if (extractGOinfo(text, guid, entry, mapid, x, y, z))
         {
-            m_lootCurrent = MAKE_NEW_GUID(guid, entry, HIGHGUID_GAMEOBJECT);
-            GameObject *go = m_bot->GetMap()->GetGameObject(m_lootCurrent);
+            ObjectGuid lootCurrent = ObjectGuid(HIGHGUID_GAMEOBJECT,entry,guid);
+            GameObject *go = m_bot->GetMap()->GetGameObject(lootCurrent);
             if (!go)
             {
-                m_lootCurrent = 0;
+                lootCurrent = 0;
                 return;
             }
 
@@ -2669,7 +2669,7 @@ void PlayerbotAI::HandleCommand(const std::string& text, Player& fromPlayer)
             m_bot->UpdateGroundPositionZ(x,y,z);
             m_bot->GetMotionMaster()->MovePoint( mapid, x, y, z );
             m_bot->SetPosition(x, y, z, m_bot->GetOrientation());
-            m_bot->SendLoot( m_lootCurrent, LOOT_CORPSE );
+            m_bot->SendLoot( lootCurrent, LOOT_CORPSE );
             Loot *loot = &go->loot;
             uint32 lootNum = loot->GetMaxSlotInLootFor( m_bot );
             if(lootNum == 0)
@@ -2707,7 +2707,7 @@ void PlayerbotAI::HandleCommand(const std::string& text, Player& fromPlayer)
 
                 if ( !qitem && item->is_blocked )
                 {
-                    m_bot->SendLootRelease( m_lootCurrent );
+                    m_bot->SendLootRelease( lootCurrent );
                     continue;
                 }
 
@@ -2788,7 +2788,7 @@ void PlayerbotAI::HandleCommand(const std::string& text, Player& fromPlayer)
                 }
             }
             if(looted)
-                m_bot->GetSession()->DoLootRelease( m_lootCurrent );
+                m_bot->GetSession()->DoLootRelease( lootCurrent );
             else
                 m_bot->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_LOOTING);
             SetQuestNeedItems();
@@ -3080,7 +3080,7 @@ void PlayerbotAI::HandleCommand(const std::string& text, Player& fromPlayer)
                 float z = fields[4].GetFloat();
                 int mapid = fields[5].GetUInt16();
 
-                GameObject *go = m_bot->GetMap()->GetGameObject(MAKE_NEW_GUID(guid, entry, HIGHGUID_GAMEOBJECT));
+                GameObject *go = m_bot->GetMap()->GetGameObject(ObjectGuid(HIGHGUID_GAMEOBJECT,entry,guid));
                 if (!go)
                     continue;
 
