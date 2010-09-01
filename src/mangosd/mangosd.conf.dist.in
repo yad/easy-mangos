@@ -1545,13 +1545,30 @@ Network.KickOnBadPacket = 0
 #
 ###################################################################################################################
 
-AuctionHouseBot.Seller.Enabled = 0
-AuctionHouseBot.Buyer.Enabled = 0
-AuctionHouseBot.Name = ""
+AuctionHouseBot.Alliance.Items.Amount.Ratio = 10
+AuctionHouseBot.Horde.Items.Amount.Ratio = 10
+AuctionHouseBot.Neutral.Items.Amount.Ratio = 10
 
-AuctionHouseBot.Items.Vendor = 0
+AuctionHouseBot.Name = "AhBot"
+AuctionHouseBot.MinTime = 1
+AuctionHouseBot.MaxTime = 72
+
+AuctionHouseBot.Items.Vendor = 1
 AuctionHouseBot.Items.Loot = 1
-AuctionHouseBot.Items.Misc = 0
+AuctionHouseBot.Items.Misc = 1
+AuctionHouseBot.Bind.No = 1
+AuctionHouseBot.Bind.Pickup = 0
+AuctionHouseBot.Bind.Equip = 1
+AuctionHouseBot.Bind.Use = 1
+AuctionHouseBot.Bind.Quest = 0
+
+AuctionHouseBot.ItemsPerCycle.Boost = 2000
+AuctionHouseBot.ItemsPerCycle.Normal = 200
+AuctionHouseBot.BuyPrice.Seller = 1
+AuctionHouseBot.BuyPrice.Buyer = 0
+AuctionHouseBot.Allience.Price.Ratio = 50
+AuctionHouseBot.Horde.Price.Ratio = 0
+AuctionHouseBot.Neutral.Price.Ratio = 0
 
 AuctionHouseBot.Items.ItemLevel.Min = 0
 AuctionHouseBot.Items.ItemLevel.Max = 0
@@ -1560,21 +1577,45 @@ AuctionHouseBot.Items.ReqLevel.Max = 0
 AuctionHouseBot.Items.ReqSkill.Min = 0
 AuctionHouseBot.Items.ReqSkill.Max = 0
 
-AuctionHouseBot.Tradegoods.ItemLevel.Min = 0
-AuctionHouseBot.Tradegoods.ItemLevel.Max = 0
-AuctionHouseBot.Tradegoods.ReqLevel.Min = 0
-AuctionHouseBot.Tradegoods.ReqLevel.Max = 0
-AuctionHouseBot.Tradegoods.ReqSkill.Min = 0
-AuctionHouseBot.Tradegoods.ReqSkill.Max = 0
+AuctionHouseBot.Items.Amount.Grey = 0
+AuctionHouseBot.Items.Amount.White = 200
+AuctionHouseBot.Items.Amount.Green = 250
+AuctionHouseBot.Items.Amount.Blue = 150
+AuctionHouseBot.Items.Amount.Purple = 500
+AuctionHouseBot.Items.Amount.Orange = 0
+AuctionHouseBot.Items.Amount.Yellow = 0
 
-AuctionHouseBot.Bind.No = 1
-AuctionHouseBot.Bind.Pickup = 0
-AuctionHouseBot.Bind.Equip = 1
-AuctionHouseBot.Bind.Use = 1
-AuctionHouseBot.Bind.Quest = 0
-AuctionHouseBot.ItemsPerCycle = 200
-AuctionHouseBot.BuyPrice.Seller = 0
-AuctionHouseBot.BuyPrice.Buyer = 0
+AuctionHouseBot.Class.Consumable = 6
+AuctionHouseBot.Class.Container = 4
+AuctionHouseBot.Class.Weapon = 8
+AuctionHouseBot.Class.Gem = 3
+AuctionHouseBot.Class.Armor = 8
+AuctionHouseBot.Class.Reagent = 1
+AuctionHouseBot.Class.Projectile = 2
+AuctionHouseBot.Class.TradeGood = 10
+AuctionHouseBot.Class.Generic = 1
+AuctionHouseBot.Class.Reciepe = 6
+AuctionHouseBot.Class.Quiver = 1
+AuctionHouseBot.Class.Quest = 1
+AuctionHouseBot.Class.Key = 1
+AuctionHouseBot.Class.Misc = 5
+AuctionHouseBot.Class.Glyph = 3
+
+# Buyer config
+AuctionHouseBot.Alliance.Buyer.Enabled = 1
+AuctionHouseBot.Horde.Buyer.Enabled = 1
+AuctionHouseBot.Neutral.Buyer.Enabled = 1
+
+AuctionHouseBot.Buyer.Bid.Interval = 1
+AuctionHouseBot.Buyer.BidDigin.Interval = 1
+
+AuctionHouseBot.BuyerPrice.Grey = 1
+AuctionHouseBot.BuyerPrice.White = 1
+AuctionHouseBot.BuyerPrice.Green = 5
+AuctionHouseBot.BuyerPrice.Blue = 12
+AuctionHouseBot.BuyerPrice.Purple = 15
+AuctionHouseBot.BuyerPrice.Orange = 20
+AuctionHouseBot.BuyerPrice.Yellow = 22
 
 ###################################################################################################################
 # CONSOLE, REMOTE ACCESS AND SOAP
