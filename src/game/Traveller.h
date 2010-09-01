@@ -50,7 +50,7 @@ struct MANGOS_DLL_DECL Traveller
 
     float Speed(void) { ASSERT(false); return 0.0f; }
     float GetMoveDestinationTo(float x, float y, float z);
-    uint32 GetTotalTrevelTimeTo(float x, float y, float z);
+    uint32 GetTotalTravelTimeTo(float x, float y, float z);
 
     void Relocation(float x, float y, float z, float orientation) {}
     void Relocation(float x, float y, float z) { Relocation(x, y, z, i_traveller.GetOrientation()); }
@@ -59,7 +59,7 @@ struct MANGOS_DLL_DECL Traveller
 };
 
 template<class T>
-inline uint32 Traveller<T>::GetTotalTrevelTimeTo(float x, float y, float z)
+inline uint32 Traveller<T>::GetTotalTravelTimeTo(float x, float y, float z)
 {
     float dist = GetMoveDestinationTo(x,y,z);
     double speed = Speed();
@@ -92,7 +92,7 @@ inline float Traveller<Creature>::GetMoveDestinationTo(float x, float y, float z
     float dx = x - GetPositionX();
     float dy = y - GetPositionY();
 
-    if(i_traveller.hasUnitState(UNIT_STAT_TAXI_FLIGHT))
+    if (i_traveller.canFly())
     {
         float dz = z - GetPositionZ();
         return sqrt((dx*dx) + (dy*dy) + (dz*dz));
