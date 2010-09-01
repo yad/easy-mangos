@@ -1567,8 +1567,8 @@ AuctionHouseBot.ItemsPerCycle.Normal = 20
 AuctionHouseBot.BuyPrice.Seller = 1
 AuctionHouseBot.BuyPrice.Buyer = 0
 AuctionHouseBot.Allience.Price.Ratio = 50
-AuctionHouseBot.Horde.Price.Ratio = 0
-AuctionHouseBot.Neutral.Price.Ratio = 0
+AuctionHouseBot.Horde.Price.Ratio = 50
+AuctionHouseBot.Neutral.Price.Ratio = 50
 
 AuctionHouseBot.Items.ItemLevel.Min = 0
 AuctionHouseBot.Items.ItemLevel.Max = 0
