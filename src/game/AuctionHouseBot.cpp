@@ -874,7 +874,7 @@ void AuctionHouseBot::LoadSellerValues(AHBConfig& config)
     uint32 PriceRatio;
     switch(config.GetAHID())
     {
-    case 2: PriceRatio = sWorld.getConfig(CONFIG_UINT32_AHBOT_ALLIENCE_PRICE_RATIO); break;
+    case 2: PriceRatio = sWorld.getConfig(CONFIG_UINT32_AHBOT_ALLIANCE_PRICE_RATIO); break;
     case 6: PriceRatio = sWorld.getConfig(CONFIG_UINT32_AHBOT_HORDE_PRICE_RATIO); break;
     case 7: PriceRatio = sWorld.getConfig(CONFIG_UINT32_AHBOT_NEUTRAL_PRICE_RATIO); break;
     default:

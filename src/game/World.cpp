@@ -925,7 +925,7 @@ void World::LoadConfigSettings(bool reload)
     setConfig(CONFIG_UINT32_AHBOT_CLASS_MISC_AMOUNT         , "AuctionHouseBot.Class.Misc"                  , 10);
     setConfig(CONFIG_UINT32_AHBOT_CLASS_GLYPH_AMOUNT        , "AuctionHouseBot.Class.Glyph"                 , 10);
 
-    setConfig(CONFIG_UINT32_AHBOT_ALLIENCE_PRICE_RATIO      , "AuctionHouseBot.Allience.Price.Ratio"        , 1);
+    setConfig(CONFIG_UINT32_AHBOT_ALLIANCE_PRICE_RATIO      , "AuctionHouseBot.Alliance.Price.Ratio"        , 1);
     setConfig(CONFIG_UINT32_AHBOT_HORDE_PRICE_RATIO         , "AuctionHouseBot.Horde.Price.Ratio"           , 1);
     setConfig(CONFIG_UINT32_AHBOT_NEUTRAL_PRICE_RATIO       , "AuctionHouseBot.Neutral.Price.Ratio"         , 1);
 
