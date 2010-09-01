@@ -22,6 +22,9 @@
     <Filter Include="References">
       <UniqueIdentifier>{64bb42b8-e7ba-4247-b337-492f644daeeb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="AhBot">
+      <UniqueIdentifier>{481ad376-5cba-439d-af8c-2ef73de2ed8b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\game\AccountMgr.cpp">
@@ -448,6 +451,9 @@
     <ClCompile Include="..\..\src\game\UnitAuraProcHandler.cpp">
       <Filter>World/Handlers</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\game\AuctionHouseBot.cpp">
+      <Filter>AhBot</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\game\AccountMgr.h">
@@ -834,12 +840,15 @@
     <ClInclude Include="..\..\src\game\ThreatManager.h">
       <Filter>References</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\game\pchdef.h" />
     <ClInclude Include="..\..\src\game\CharacterDatabaseCleaner.h">
       <Filter>Tool</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\game\Camera.h">
       <Filter>Object</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\game\AuctionHouseBot.h">
+      <Filter>AhBot</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\game\pchdef.h" />
   </ItemGroup>
 </Project>

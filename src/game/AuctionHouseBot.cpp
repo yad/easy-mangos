@@ -15,6 +15,10 @@ AuctionHouseBot::AuctionHouseBot()
     HordeConfig = AHBConfig(6);
     NeutralConfig = AHBConfig(7);
     m_FakeGuid.Set(std::numeric_limits< uint32 >::max());
+    ItemPool.resize(AHB_QUALITY_MAX);
+    for (uint32 j=0; j<AHB_QUALITY_MAX; ++j)
+        for (uint32 i=0;i<MAX_ITEM_CLASS;++i) 
+            ItemPool[j].resize(MAX_ITEM_CLASS);
 }
 
 AuctionHouseBot::~AuctionHouseBot()
@@ -23,9 +27,17 @@ AuctionHouseBot::~AuctionHouseBot()
 }
 
 //Set statisque of items on one faction.
-void AuctionHouseBot::SetStat(AHBConfig& config)
+uint32 AuctionHouseBot::SetStat(AHBConfig& config)
 {
-    std::vector<uint32> ItemsInAH(7);
+    struct s_itemInAh
+    {
+        uint32 count;
+        std::vector<uint32> itemClass;
+        s_itemInAh() { count = 0; itemClass.resize(MAX_ITEM_CLASS); }
+    };
+
+
+    std::vector<std::vector<uint32>> ItemsInAH(AHB_QUALITY_MAX, vector<uint32> (MAX_ITEM_CLASS));
 
     AuctionHouseEntry const* ahEntry = sAuctionMgr.GetAuctionHouseEntryByFaction(config.GetAHFID());
     AuctionHouseObject* auctionHouse = sAuctionMgr.GetAuctionsMap(ahEntry);
@@ -38,96 +50,116 @@ void AuctionHouseBot::SetStat(AHBConfig& config)
             ItemPrototype const *prototype = item->GetProto();
             if (prototype)
             {
-                if ( Aentry->owner == GetAHBObjectGuid().GetRawValue()) 
-                    ++ItemsInAH[prototype->Quality];
+                if ( Aentry->owner == GetAHBObjectGuid().GetRawValue())
+                {
+                    ++ItemsInAH[prototype->Quality][prototype->Class];
+                }
             }
         }
     }
-
-    for (uint32 i=0;i<7;++i) config.SetMissItems(ItemsInAH[((e_ahb_quality) i)],((e_ahb_quality) i)); 
+    uint32 count=0;
+    for (uint32 j=0; j<AHB_QUALITY_MAX; ++j)
+    {
+        for (uint32 i=0;i<MAX_ITEM_CLASS;++i) 
+        {
+            config.ItemInfos[j].ItemClassInfos[i].SetMissItems(ItemsInAH[j][i]);
+            count+=config.ItemInfos[j].ItemClassInfos[i].GetMissItems();
+        }
+    }
 
     if (debug_Out)
     {
-        sLog.outString("Missed grey=%u, white=%u, green=%u, blue=%u, purple=%u, orange=%u, yellow=%u in AH=%u",
-            config.GetMissItems(E_GREY),config.GetMissItems(E_WHITE),config.GetMissItems(E_GREEN),config.GetMissItems(E_BLUE),config.GetMissItems(E_PURPLE),config.GetMissItems(E_ORANGE),config.GetMissItems(E_YELLOW),
-            config.GetAHID());
+        sLog.outString("Missed Item\tGrey\tWhite\tGreen\tBlue\tPurple\tOrange\tYellow");
+        for (uint32 i=0; i<MAX_ITEM_CLASS;++i)
+        {
+            sLog.outString("%-11s\t%u\t%u\t%u\t%u\t%u\t%u\t%u",config.ItemInfos[0].ItemClassInfos[i].GetName().c_str(),config.ItemInfos[0].ItemClassInfos[i].GetMissItems(),config.ItemInfos[1].ItemClassInfos[i].GetMissItems(),config.ItemInfos[2].ItemClassInfos[i].GetMissItems(),
+                config.ItemInfos[3].ItemClassInfos[i].GetMissItems(),config.ItemInfos[4].ItemClassInfos[i].GetMissItems(),config.ItemInfos[5].ItemClassInfos[i].GetMissItems(),config.ItemInfos[6].ItemClassInfos[i].GetMissItems());
+        }
     }
+
+    return count;
 }
 
-bool AuctionHouseBot::getRandomArray( AHBConfig& config, std::vector<uint32>& ra, const std::vector<uint32>& addedItem  )
+bool AuctionHouseBot::getRandomArray( AHBConfig& config, std::vector<s_randomArray>& ra, const std::vector<std::vector<uint32>>& addedItem  )
 {
     ra.clear();
+    s_randomArray miss_item;
     bool Ok=false;
-    if ((config.GetMissItems(E_GREY)     >   addedItem[E_GREY])      && (greyItemsBin.size()>0))         {ra.push_back(E_GREY); Ok=true;}
-    if ((config.GetMissItems(E_WHITE)    >   addedItem[E_WHITE])     && (whiteItemsBin.size()>0))        {ra.push_back(E_WHITE); Ok=true;}
-    if ((config.GetMissItems(E_GREEN)    >   addedItem[E_GREEN])     && (greenItemsBin.size()>0))        {ra.push_back(E_GREEN); Ok=true;}
-    if ((config.GetMissItems(E_BLUE)     >   addedItem[E_BLUE])      && (blueItemsBin.size()>0))         {ra.push_back(E_BLUE); Ok=true;}
-    if ((config.GetMissItems(E_PURPLE)   >   addedItem[E_PURPLE])    && (purpleItemsBin.size()>0))       {ra.push_back(E_PURPLE); Ok=true;}
-    if ((config.GetMissItems(E_ORANGE)   >   addedItem[E_ORANGE])    && (orangeItemsBin.size()>0))       {ra.push_back(E_ORANGE); Ok=true;}
-    if ((config.GetMissItems(E_YELLOW)   >   addedItem[E_YELLOW])    && (yellowItemsBin.size()>0))       {ra.push_back(E_YELLOW); Ok=true;}
+
+    for (uint32 j=0; j<AHB_QUALITY_MAX; ++j)
+    {
+        for (uint32 i=0; i<MAX_ITEM_CLASS; ++i)
+            if ((config.ItemInfos[j].ItemClassInfos[i].GetMissItems()   > addedItem[j][i]) && ItemPool[j][i].size() >0)    
+            {
+                miss_item.color=j;
+                miss_item.itemclass=i;
+                ra.push_back(miss_item);
+                Ok=true;
+            }
+    }
+
     return Ok;
 }
 
+
 void AuctionHouseBot::SetPricesOfItem(const Item *item,AHBConfig& config, uint32& buyp, uint32& bidp, uint32& stackcnt, e_ahb_quality AHB_ITEMS)
 {
-    if (config.GetMaxStack(AHB_ITEMS) != 0)
+    if (config.ItemInfos[AHB_ITEMS].GetMaxStack() != 0)
     {
-        stackcnt = urand(1, minValue(item->GetMaxStackCount(), config.GetMaxStack(AHB_ITEMS)));
+        stackcnt = urand(1, minValue(item->GetMaxStackCount(), config.ItemInfos[AHB_ITEMS].GetMaxStack()));
     }
-    buyp *= urand(config.GetMinPrice(AHB_ITEMS), config.GetMaxPrice(AHB_ITEMS)) * stackcnt;
+    buyp *= urand(config.ItemInfos[AHB_ITEMS].GetMinPrice(), config.ItemInfos[AHB_ITEMS].GetMaxPrice()) * stackcnt;
     buyp /= 100;
-    bidp = buyp * urand(config.GetMinBidPrice(AHB_ITEMS), config.GetMaxBidPrice(AHB_ITEMS));
+    bidp = buyp * urand(config.ItemInfos[AHB_ITEMS].GetMinBidPrice(), config.ItemInfos[AHB_ITEMS].GetMaxBidPrice());
     bidp /= 100;
 }
 
 void AuctionHouseBot::addNewAuctions(AHBConfig& config)
 {
-    if (!sWorld.getConfig(CONFIG_BOOL_AHBOT_SELLER_ENABLED))
-        return;
-    SetStat(config);
+    uint32 MissItems=SetStat(config);
+    if (MissItems==0) return;
+
+    uint32 items;
+    if (MissItems > ItemsPerCycleBoost) 
+    {
+        items=ItemsPerCycleBoost;
+        sLog.outString("AHBot> Boost value used to fill AH! (if this happens often adjust both ItemsPerCycle in mangosd.conf)");
+    }
+    else items=ItemsPerCycleNormal;
+
     AuctionHouseEntry const* ahEntry = sAuctionMgr.GetAuctionHouseEntryByFaction(config.GetAHFID());
     AuctionHouseObject* auctionHouse = sAuctionMgr.GetAuctionsMap(ahEntry);
 
-    std::vector<uint32> RandArray;
-    std::vector<uint32> ItemsAdded(7);
-    uint32 items=ItemsPerCycle;
+    std::vector<s_randomArray> RandArray;
+    std::vector<std::vector<uint32>> ItemsAdded(AHB_QUALITY_MAX,std::vector<uint32> (MAX_ITEM_CLASS));
     // only insert a few at a time, so as not to peg the processor
     while (getRandomArray(config,RandArray, ItemsAdded) && (items>0))
     {
         --items;
         uint32 itemID = 0;
-        switch ((e_ahb_quality)(RandArray[urand(1,RandArray.size())-1]))
-        {
-            case E_GREY     : itemID = greyItemsBin[urand(1, greyItemsBin.size())-1]; ++ItemsAdded[E_GREY]; break;
-            case E_WHITE    : itemID = whiteItemsBin[urand(1, whiteItemsBin.size())-1]; ++ItemsAdded[E_WHITE]; break;
-            case E_GREEN    : itemID = greenItemsBin[urand(1, greenItemsBin.size())-1]; ++ItemsAdded[E_GREEN]; break;
-            case E_BLUE     : itemID = blueItemsBin[urand(1, blueItemsBin.size())-1]; ++ItemsAdded[E_BLUE]; break;
-            case E_PURPLE   : itemID = purpleItemsBin[urand(1, purpleItemsBin.size())-1]; ++ItemsAdded[E_PURPLE]; break;
-            case E_ORANGE   : itemID = orangeItemsBin[urand(1, orangeItemsBin.size())-1]; ++ItemsAdded[E_ORANGE]; break;
-            case E_YELLOW   : itemID = yellowItemsBin[urand(1, yellowItemsBin.size())-1]; ++ItemsAdded[E_YELLOW]; break;
-            default:
-                sLog.outString("AuctionHouseBot> itemID Switch - Default Reached");
-            break;
-        }
+        uint32 pos =  (urand(0,RandArray.size()-1));
+
+        itemID = ItemPool[RandArray[pos].color][RandArray[pos].itemclass][urand(0,ItemPool[RandArray[pos].color][RandArray[pos].itemclass].size()-1)];
+        ++ ItemsAdded[RandArray[pos].color][RandArray[pos].itemclass];
 
         if (itemID == 0)
         {
             if (debug_Out)
-                sLog.outString("AuctionHouseBot> Item::CreateItem() - Unable to find item");
+                sLog.outString("AHBot> Item::CreateItem() - Unable to find item");
             continue;
         }
 
         ItemPrototype const* prototype = sObjectMgr.GetItemPrototype(itemID);
         if (prototype == NULL)
         {
-            sLog.outString("AuctionHouseBot> Huh?!?! prototype == NULL");
+            sLog.outString("AHBot> Huh?!?! prototype == NULL");
             continue;
         }
 
         Item* item = Item::CreateItem(itemID, 1);
         if (item == NULL)
         {
-            sLog.outString("AuctionHouseBot> Item::CreateItem() returned NULL");
+            sLog.outString("AHBot> Item::CreateItem() returned NULL");
             return;
         }
 
@@ -142,7 +174,6 @@ void AuctionHouseBot::addNewAuctions(AHBConfig& config)
             buyoutPrice  = prototype->BuyPrice * item->GetCount();
         else
             buyoutPrice  = prototype->SellPrice * item->GetCount();
-
         SetPricesOfItem(item, config, buyoutPrice, bidPrice, stackCount, ((e_ahb_quality) prototype->Quality));
         item->SetCount(stackCount);
         item->SetOwnerGUID(GetAHBObjectGuid().GetRawValue());
@@ -167,9 +198,6 @@ void AuctionHouseBot::addNewAuctions(AHBConfig& config)
 
 void AuctionHouseBot::addNewAuctionBuyerBotBid(AHBConfig *config, WorldSession *session)
 {
-    if (!sWorld.getConfig(CONFIG_BOOL_AHBOT_BUYER_ENABLED))
-        return;
-
     // Fetches content of selected AH
     AuctionHouseEntry const* ahEntry = sAuctionMgr.GetAuctionHouseEntryByFaction(config->GetAHFID());
     AuctionHouseObject* auctionHouse = sAuctionMgr.GetAuctionsMap(ahEntry);
@@ -267,111 +295,17 @@ void AuctionHouseBot::addNewAuctionBuyerBotBid(AHBConfig *config, WorldSession *
 
         // check that bid has acceptable value and take bid based on vendorprice, stacksize and quality
         if(sWorld.getConfig(CONFIG_BOOL_AHBOT_BUYPRICE_BUYER))
-        {
-            switch (prototype->Quality)
+        {                
+            if (currentprice < prototype->BuyPrice * pItem->GetCount() * config->ItemInfos[prototype->Quality].GetBuyerPrice())
             {
-            case 0:
-                if (currentprice < prototype->BuyPrice * pItem->GetCount() * config->GetBuyerPrice(AHB_GREY))
-                {
-                    bidMax = prototype->BuyPrice * pItem->GetCount() * config->GetBuyerPrice(AHB_GREY);
-                }
-                break;
-            case 1:
-                if (currentprice < prototype->BuyPrice * pItem->GetCount() * config->GetBuyerPrice(AHB_WHITE))
-                {
-                    bidMax = prototype->BuyPrice * pItem->GetCount() * config->GetBuyerPrice(AHB_WHITE);
-                }
-                break;
-            case 2:
-                if (currentprice < prototype->BuyPrice * pItem->GetCount() * config->GetBuyerPrice(AHB_GREEN))
-                {
-                    bidMax = prototype->BuyPrice * pItem->GetCount() * config->GetBuyerPrice(AHB_GREEN);
-                }
-                break;
-            case 3:
-                if (currentprice < prototype->BuyPrice * pItem->GetCount() * config->GetBuyerPrice(AHB_BLUE))
-                {
-                    bidMax = prototype->BuyPrice * pItem->GetCount() * config->GetBuyerPrice(AHB_BLUE);
-                }
-                break;
-            case 4:
-                if (currentprice < prototype->BuyPrice * pItem->GetCount() * config->GetBuyerPrice(AHB_PURPLE))
-                {
-                    bidMax = prototype->BuyPrice * pItem->GetCount() * config->GetBuyerPrice(AHB_PURPLE);
-                }
-                break;
-            case 5:
-                if (currentprice < prototype->BuyPrice * pItem->GetCount() * config->GetBuyerPrice(AHB_ORANGE))
-                {
-                    bidMax = prototype->BuyPrice * pItem->GetCount() * config->GetBuyerPrice(AHB_ORANGE);
-                }
-                break;
-            case 6:
-                if (currentprice < prototype->BuyPrice * pItem->GetCount() * config->GetBuyerPrice(AHB_YELLOW))
-                {
-                    bidMax = prototype->BuyPrice * pItem->GetCount() * config->GetBuyerPrice(AHB_YELLOW);
-                }
-                break;
-            default:
-                // quality is something it shouldn't be, let's get out of here
-                if (debug_Out)
-                    sLog.outError("bidMax(fail): %f", bidMax);
-                continue;
-                break;
+                bidMax = prototype->BuyPrice * pItem->GetCount() * config->ItemInfos[prototype->Quality].GetBuyerPrice();
             }
         }
         else
         {
-            switch (prototype->Quality)
+            if (currentprice < prototype->SellPrice * pItem->GetCount() * config->ItemInfos[prototype->Quality].GetBuyerPrice())
             {
-            case 0:
-                if (currentprice < prototype->SellPrice * pItem->GetCount() * config->GetBuyerPrice(AHB_GREY))
-                {
-                    bidMax = prototype->SellPrice * pItem->GetCount() * config->GetBuyerPrice(AHB_GREY);
-                }
-                break;
-            case 1:
-                if (currentprice < prototype->SellPrice * pItem->GetCount() * config->GetBuyerPrice(AHB_WHITE))
-                {
-                    bidMax = prototype->SellPrice * pItem->GetCount() * config->GetBuyerPrice(AHB_WHITE);
-                }
-                break;
-            case 2:
-                if (currentprice < prototype->SellPrice * pItem->GetCount() * config->GetBuyerPrice(AHB_GREEN))
-                {
-                    bidMax = prototype->SellPrice * pItem->GetCount() * config->GetBuyerPrice(AHB_GREEN);
-                }
-                break;
-            case 3:
-                if (currentprice < prototype->SellPrice * pItem->GetCount() * config->GetBuyerPrice(AHB_BLUE))
-                {
-                    bidMax = prototype->SellPrice * pItem->GetCount() * config->GetBuyerPrice(AHB_BLUE);
-                }
-                break;
-            case 4:
-                if (currentprice < prototype->SellPrice * pItem->GetCount() * config->GetBuyerPrice(AHB_PURPLE))
-                {
-                    bidMax = prototype->SellPrice * pItem->GetCount() * config->GetBuyerPrice(AHB_PURPLE);
-                }
-                break;
-            case 5:
-                if (currentprice < prototype->SellPrice * pItem->GetCount() * config->GetBuyerPrice(AHB_ORANGE))
-                {
-                    bidMax = prototype->SellPrice * pItem->GetCount() * config->GetBuyerPrice(AHB_ORANGE);
-                }
-                break;
-            case 6:
-                if (currentprice < prototype->SellPrice * pItem->GetCount() * config->GetBuyerPrice(AHB_YELLOW))
-                {
-                    bidMax = prototype->SellPrice * pItem->GetCount() * config->GetBuyerPrice(AHB_YELLOW);
-                }
-                break;
-            default:
-                // quality is something it shouldn't be, let's get out of here
-                if (debug_Out)
-                    sLog.outError("bidMax(fail): %f", bidMax);
-                continue;
-                break;
+                bidMax = prototype->SellPrice * pItem->GetCount() * config->ItemInfos[prototype->Quality].GetBuyerPrice();
             }
         }
 
@@ -469,292 +403,263 @@ void AuctionHouseBot::addNewAuctionBuyerBotBid(AHBConfig *config, WorldSession *
 void AuctionHouseBot::Update()
 {
     time_t _newrun = time(NULL);
-    if ((!sWorld.getConfig(CONFIG_BOOL_AHBOT_SELLER_ENABLED)) && (!sWorld.getConfig(CONFIG_BOOL_AHBOT_BUYER_ENABLED)))
-        return;
-
+    if ((sWorld.getConfig(CONFIG_UINT32_AHBOT_ALLIANCE_RATIO)==0) && (sWorld.getConfig(CONFIG_UINT32_AHBOT_HORDE_RATIO)==0) && (sWorld.getConfig(CONFIG_UINT32_AHBOT_NEUTRAL_RATIO)==0) &&
+        (sWorld.getConfig(CONFIG_BOOL_AHBOT_BUYER_ALLIANCE_ENABLED)!=true) && (sWorld.getConfig(CONFIG_BOOL_AHBOT_BUYER_HORDE_ENABLED)!=true) && (sWorld.getConfig(CONFIG_BOOL_AHBOT_BUYER_NEUTRAL_ENABLED)!=true))
+         return;
+    
     WorldSession _session(0, NULL, SEC_PLAYER, true, 0, LOCALE_enUS);
 
     // Add New Bids
-    if (!sWorld.getConfig(CONFIG_BOOL_ALLOW_TWO_SIDE_INTERACTION_AUCTION))
-    {
-        addNewAuctions(AllianceConfig);
-        if (((_newrun - _lastrun_a) > (AllianceConfig.GetBiddingInterval() * 60)) && (AllianceConfig.GetBidsPerInterval() > 0))
-        {
-            addNewAuctionBuyerBotBid(&AllianceConfig, &_session);
-            _lastrun_a = _newrun;
-        }
+    if (sWorld.getConfig(CONFIG_UINT32_AHBOT_ALLIANCE_RATIO)>0) addNewAuctions(AllianceConfig);
+    if (sWorld.getConfig(CONFIG_UINT32_AHBOT_HORDE_RATIO)>0) addNewAuctions(HordeConfig);
+    if (sWorld.getConfig(CONFIG_UINT32_AHBOT_NEUTRAL_RATIO)>0) addNewAuctions(NeutralConfig);
 
-        addNewAuctions(HordeConfig);
-        if (((_newrun - _lastrun_h) > (HordeConfig.GetBiddingInterval() *60)) && (HordeConfig.GetBidsPerInterval() > 0))
-        {
-            addNewAuctionBuyerBotBid(&HordeConfig, &_session);
-            _lastrun_h = _newrun;
-        }
+    if (((_newrun - _lastrun_a) > (AllianceConfig.GetBiddingInterval() * 60)) && (AllianceConfig.GetBidsPerInterval() > 0) && (sWorld.getConfig(CONFIG_BOOL_AHBOT_BUYER_ALLIANCE_ENABLED)==true))
+    {
+        addNewAuctionBuyerBotBid(&AllianceConfig, &_session);
+        _lastrun_a = _newrun;
     }
-    addNewAuctions(NeutralConfig);
-    if (((_newrun - _lastrun_n) > (NeutralConfig.GetBiddingInterval() * 60)) && (NeutralConfig.GetBidsPerInterval() > 0))
+
+    if (((_newrun - _lastrun_h) > (HordeConfig.GetBiddingInterval() *60)) && (HordeConfig.GetBidsPerInterval() > 0) && (sWorld.getConfig(CONFIG_BOOL_AHBOT_BUYER_HORDE_ENABLED)==true))
+    {
+        addNewAuctionBuyerBotBid(&HordeConfig, &_session);
+        _lastrun_h = _newrun;
+    }
+
+    if (((_newrun - _lastrun_n) > (NeutralConfig.GetBiddingInterval() * 60)) && (NeutralConfig.GetBidsPerInterval() > 0) && (sWorld.getConfig(CONFIG_BOOL_AHBOT_BUYER_NEUTRAL_ENABLED)==true))
     {
         addNewAuctionBuyerBotBid(&NeutralConfig, &_session);
         _lastrun_n = _newrun;
     }
 }
 
-void AuctionHouseBot::LoadDbConfig()
+void AuctionHouseBot::LoadConfig()
 {
-    if (!sWorld.getConfig(CONFIG_BOOL_ALLOW_TWO_SIDE_INTERACTION_AUCTION))
-    {
-        LoadValues(AllianceConfig);
-        LoadValues(HordeConfig);
-    }
-    LoadValues(NeutralConfig);
+    if (sWorld.getConfig(CONFIG_UINT32_AHBOT_ALLIANCE_RATIO)>0)             LoadSellerValues(AllianceConfig);
+    if (sWorld.getConfig(CONFIG_UINT32_AHBOT_HORDE_RATIO)>0)                LoadSellerValues(HordeConfig);
+    if (sWorld.getConfig(CONFIG_UINT32_AHBOT_NEUTRAL_RATIO)>0)              LoadSellerValues(NeutralConfig);
+    if (sWorld.getConfig(CONFIG_BOOL_AHBOT_BUYER_ALLIANCE_ENABLED)==true)   LoadBuyerValues(AllianceConfig);
+    if (sWorld.getConfig(CONFIG_BOOL_AHBOT_BUYER_HORDE_ENABLED)==true)      LoadBuyerValues(HordeConfig);
+    if (sWorld.getConfig(CONFIG_BOOL_AHBOT_BUYER_NEUTRAL_ENABLED)==true)    LoadBuyerValues(NeutralConfig);
 }
 
 void AuctionHouseBot::Initialize()
 {
     debug_Out = sConfig.GetIntDefault("AuctionHouseBot.DEBUG", 0);
-    ItemsPerCycle = sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEMS_CYCLE);
-    LoadDbConfig();
-    if (sWorld.getConfig(CONFIG_BOOL_AHBOT_SELLER_ENABLED))
+    sLog.outString("");
+    sLog.outString("-------------------------------");
+    sLog.outString("------- AuctionHouseBot -------");
+    sLog.outString("-------------------------------");
+    sLog.outString("");
+    sLog.outString("AHBot> New CORE by Cyberium (Original by Xeross, Naicisum, ChrisK, Paradox)");
+    sLog.outString("AHBot> Includes AHBuyer by Kerbe and Paradox (Not tested)");
+
+    if ((sWorld.getConfig(CONFIG_UINT32_AHBOT_ALLIANCE_RATIO)==0) && (sWorld.getConfig(CONFIG_UINT32_AHBOT_HORDE_RATIO)==0) && (sWorld.getConfig(CONFIG_UINT32_AHBOT_NEUTRAL_RATIO)==0) &&
+        (sWorld.getConfig(CONFIG_BOOL_AHBOT_BUYER_ALLIANCE_ENABLED)!=true) && (sWorld.getConfig(CONFIG_BOOL_AHBOT_BUYER_HORDE_ENABLED)!=true) && (sWorld.getConfig(CONFIG_BOOL_AHBOT_BUYER_NEUTRAL_ENABLED)!=true))
     {
-        QueryResult* results = (QueryResult*) NULL;
-        char npcQuery[] = "SELECT distinct `item` FROM `npc_vendor`";
-        sLog.outString(">> Loading npc...");
-        results = WorldDatabase.PQuery(npcQuery);
-        if (results != NULL)
-        {
-            barGoLink bar((int)results->GetRowCount());
-            do
-            {
-                bar.step();
-                Field* fields = results->Fetch();
-                npcItems.push_back(fields[0].GetUInt32());
-
-            } while (results->NextRow());
-
-            delete results;
-        }
-        else
-        {
-            sLog.outString("AuctionHouseBot> \"%s\" failed", npcQuery);
-            return;
-        }
-        char lootQuery[] = "SELECT `item` FROM `creature_loot_template` UNION "
-            "SELECT `item` FROM `disenchant_loot_template` UNION "
-            "SELECT `item` FROM `fishing_loot_template` UNION "
-            "SELECT `item` FROM `gameobject_loot_template` UNION "
-            "SELECT `item` FROM `item_loot_template` UNION "
-            "SELECT `item` FROM `milling_loot_template` UNION "
-            "SELECT `item` FROM `pickpocketing_loot_template` UNION "
-            "SELECT `item` FROM `prospecting_loot_template` UNION "
-            "SELECT `item` FROM `skinning_loot_template`";
-
-        sLog.outString(">> Loading Items...");
-        results = WorldDatabase.PQuery(lootQuery);
-        if (results != NULL)
-        {
-
-            barGoLink bar((int)results->GetRowCount());
-            do
-            {
-                bar.step();
-                Field* fields = results->Fetch();
-                lootItems.push_back(fields[0].GetUInt32());
-            } while (results->NextRow());
-            delete results;
-        }
-        else
-        {
-            sLog.outString("AuctionHouseBot> \"%s\" failed", lootQuery);
-            return;
-        }
-        sLog.outString(">> Sorting and cleaning Items bases...");
-
-        barGoLink bar(sItemStorage.MaxEntry);
-        for (uint32 itemID = 0; itemID < sItemStorage.MaxEntry; itemID++)
-        {
-            ItemPrototype const* prototype = sObjectMgr.GetItemPrototype(itemID);
-            bar.step();
-            if (prototype == NULL)
-                continue;
-
-            switch (prototype->Bonding)
-            {
-            case 0:
-                if (!sWorld.getConfig(CONFIG_BOOL_AHBOT_BIND_NO))
-                    continue;
-                break;
-            case 1:
-                if (!sWorld.getConfig(CONFIG_BOOL_AHBOT_BIND_PICKUP))
-                    continue;
-                break;
-            case 2:
-                if (!sWorld.getConfig(CONFIG_BOOL_AHBOT_BIND_EQUIP))
-                    continue;
-                break;
-            case 3:
-                if (!sWorld.getConfig(CONFIG_BOOL_AHBOT_BIND_USE))
-                    continue;
-                break;
-            case 4:
-                if (!sWorld.getConfig(CONFIG_BOOL_AHBOT_BIND_QUEST))
-                    continue;
-                break;
-            default:
-                continue;
-                break;
-            }
-
-            if(sWorld.getConfig(CONFIG_BOOL_AHBOT_BUYPRICE_SELLER))
-            {
-                if(prototype->BuyPrice == 0)
-                    continue;
-            }
-            else
-            {
-                if (prototype->SellPrice == 0)
-                    continue;
-            }
-
-            if ((prototype->Quality < 0) || (prototype->Quality > 6))
-                continue;
-
-            if (!sWorld.getConfig(CONFIG_BOOL_AHBOT_ITEMS_VENDOR))
-            {
-                bool isVendorItem = false;
-
-                for (unsigned int i = 0; (i < npcItems.size()) && (!isVendorItem); i++)
-                {
-                    if (itemID == npcItems[i])
-                        isVendorItem = true;
-                }
-
-                if (isVendorItem)
-                    continue;
-            }
-
-            if (!sWorld.getConfig(CONFIG_BOOL_AHBOT_ITEMS_LOOT))
-            {
-                bool isLootItem = false;
-
-                for (unsigned int i = 0; (i < lootItems.size()) && (!isLootItem); i++)
-                {
-                    if (itemID == lootItems[i])
-                        isLootItem = true;
-                }
-
-                if (isLootItem)
-                    continue;
-            }
-
-            if (!sWorld.getConfig(CONFIG_BOOL_AHBOT_ITEMS_MISC))
-            {
-                bool isVendorItem = false;
-                bool isLootItem = false;
-
-                for (unsigned int i = 0; (i < npcItems.size()) && (!isVendorItem); i++)
-                {
-                    if (itemID == npcItems[i])
-                        isVendorItem = true;
-                }
-                for (unsigned int i = 0; (i < lootItems.size()) && (!isLootItem); i++)
-                {
-                    if (itemID == lootItems[i])
-                        isLootItem = true;
-                }
-                if ((!isLootItem) && (!isVendorItem))
-                    continue;
-            }
-
-            // Disable Items with an item level lower than X
-            if ((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_MIN_ITEM_LEVEL)) && (prototype->Class != ITEM_CLASS_TRADE_GOODS) && (prototype->ItemLevel < sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_MIN_ITEM_LEVEL)))
-                continue;
-
-            // Disable Items with an item level higher than X
-            if ((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_MAX_ITEM_LEVEL)) && (prototype->Class != ITEM_CLASS_TRADE_GOODS) && (prototype->ItemLevel > sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_MAX_ITEM_LEVEL)))
-                continue;
-
-            // Disable trade goods with an item level lower than X
-            if ((sWorld.getConfig(CONFIG_UINT32_AHBOT_TG_MIN_ITEM_LEVEL)) && (prototype->Class == ITEM_CLASS_TRADE_GOODS) && (prototype->ItemLevel < sWorld.getConfig(CONFIG_UINT32_AHBOT_TG_MIN_ITEM_LEVEL)))
-                continue;
-
-            // Disable trade goods with an item level higher than X
-            if ((sWorld.getConfig(CONFIG_UINT32_AHBOT_TG_MAX_ITEM_LEVEL)) && (prototype->Class == ITEM_CLASS_TRADE_GOODS) && (prototype->ItemLevel > sWorld.getConfig(CONFIG_UINT32_AHBOT_TG_MAX_ITEM_LEVEL)))
-                continue;
-
-            // Disable items for level lower than X
-            if ((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_MIN_REQ_LEVEL)) && (prototype->Class != ITEM_CLASS_TRADE_GOODS) && (prototype->RequiredLevel < sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_MIN_REQ_LEVEL)))
-                continue;
-
-            // Disable items for level higher than X
-            if ((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_MAX_REQ_LEVEL)) && (prototype->Class != ITEM_CLASS_TRADE_GOODS) && (prototype->RequiredLevel > sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_MAX_REQ_LEVEL)))
-                continue;
-
-            // Disable trade goods for level lower than X
-            if ((sWorld.getConfig(CONFIG_UINT32_AHBOT_TG_MIN_REQ_LEVEL)) && (prototype->Class == ITEM_CLASS_TRADE_GOODS) && (prototype->RequiredLevel < sWorld.getConfig(CONFIG_UINT32_AHBOT_TG_MIN_REQ_LEVEL)))
-                continue;
-
-            // Disable trade goods for level higher than X
-            if ((sWorld.getConfig(CONFIG_UINT32_AHBOT_TG_MAX_REQ_LEVEL)) && (prototype->Class == ITEM_CLASS_TRADE_GOODS) && (prototype->RequiredLevel > sWorld.getConfig(CONFIG_UINT32_AHBOT_TG_MAX_REQ_LEVEL)))
-                continue;
-
-            // Disable items with skill requirement lower then X
-            if ((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_MIN_SKILL_RANK)) && (prototype->Class != ITEM_CLASS_TRADE_GOODS) && (prototype->RequiredSkillRank < sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_MIN_SKILL_RANK)))
-                continue;
-
-            // Disable items with skill requirement higher then X
-            if ((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_MAX_SKILL_RANK)) && (prototype->Class != ITEM_CLASS_TRADE_GOODS) && (prototype->RequiredSkillRank < sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_MAX_SKILL_RANK)))
-                continue;
-
-            // Disable trade goods with skill requirement lower then X
-            if ((sWorld.getConfig(CONFIG_UINT32_AHBOT_TG_MIN_SKILL_RANK)) && (prototype->Class == ITEM_CLASS_TRADE_GOODS) && (prototype->RequiredSkillRank < sWorld.getConfig(CONFIG_UINT32_AHBOT_TG_MIN_SKILL_RANK)))
-                continue;
-
-            // Disable trade goods with skill requirement higher then X
-            if ((sWorld.getConfig(CONFIG_UINT32_AHBOT_TG_MAX_SKILL_RANK)) && (prototype->Class == ITEM_CLASS_TRADE_GOODS) && (prototype->RequiredSkillRank < sWorld.getConfig(CONFIG_UINT32_AHBOT_TG_MAX_SKILL_RANK)))
-                continue;
-
-            switch (prototype->Quality)
-            {
-            case 0: greyItemsBin.push_back(itemID);     break;
-            case 1: whiteItemsBin.push_back(itemID);    break;
-            case 2: greenItemsBin.push_back(itemID);    break;
-            case 3: blueItemsBin.push_back(itemID);     break;
-            case 4: purpleItemsBin.push_back(itemID);   break;
-            case 5: orangeItemsBin.push_back(itemID);   break;
-            case 6: yellowItemsBin.push_back(itemID);   break;
-            }
-        }
-
-        if (
-            (greyItemsBin.size() == 0) &&
-            (whiteItemsBin.size() == 0) &&
-            (greenItemsBin.size() == 0) &&
-            (blueItemsBin.size() == 0) &&
-            (purpleItemsBin.size() == 0) &&
-            (orangeItemsBin.size() == 0) &&
-            (yellowItemsBin.size() == 0)
-            )
-        {
-            sLog.outString("AuctionHouseBot> Error, no items from xxxx_loot_template tables.");
-            sLog.outString("AuctionHouseBot> AHBot is disabled!");
-            sWorld.setConfig(CONFIG_BOOL_AHBOT_SELLER_ENABLED, false);
-            return;
-        }
-        sLog.outString("-------------------------------");
-        sLog.outString("------- AuctionHouseBot -------");
-        sLog.outString("-------------------------------");
-        sLog.outString("loaded %d grey items", greyItemsBin.size());
-        sLog.outString("loaded %d white items", whiteItemsBin.size());
-        sLog.outString("loaded %d green items", greenItemsBin.size());
-        sLog.outString("loaded %d blue items", blueItemsBin.size());
-        sLog.outString("loaded %d purple items", purpleItemsBin.size());
-        sLog.outString("loaded %d orange items", orangeItemsBin.size());
-        sLog.outString("loaded %d yellow items", yellowItemsBin.size());
+        sLog.outString("All feature of AuctionHouseBot are disabled! (If you want to use it please set config in 'mangos.conf')");
+        return;
     }
-    sLog.outString("AuctionHouseBot> [AHBot-x004] is now loaded");
-    sLog.outString("AuctionHouseBot> updated by Cyberium from Xeross git");
-    sLog.outString("AuctionHouseBot> (Original by Naicisum, ChrisK, Paradox)");
-    sLog.outString("AuctionHouseBot> Includes AHBuyer by Kerbe and Paradox");
+    if ((sWorld.getConfig(CONFIG_UINT32_AHBOT_ALLIANCE_RATIO)==0) && (sWorld.getConfig(CONFIG_UINT32_AHBOT_HORDE_RATIO)==0) && (sWorld.getConfig(CONFIG_UINT32_AHBOT_NEUTRAL_RATIO)==0))
+    {
+        sLog.outString("AuctionHouseBot SELLER is disabled! (If you want to use it please set config in 'mangos.conf')");
+        return;
+    }
+    if ((sWorld.getConfig(CONFIG_BOOL_AHBOT_BUYER_ALLIANCE_ENABLED)!=true) && (sWorld.getConfig(CONFIG_BOOL_AHBOT_BUYER_HORDE_ENABLED)!=true) && (sWorld.getConfig(CONFIG_BOOL_AHBOT_BUYER_NEUTRAL_ENABLED)!=true))
+    {
+        sLog.outString("AuctionHouseBot BUYER is disabled! (If you want to use it please set config in 'mangos.conf')");
+    }
+
+    ItemsPerCycleBoost = sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEMS_PER_CYCLE_BOOST);
+    ItemsPerCycleNormal = sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEMS_PER_CYCLE_NORMAL);
+    bool ItemAdded=false;
+    QueryResult* results = (QueryResult*) NULL;
+    char npcQuery[] = "SELECT distinct `item` FROM `npc_vendor`";
+    sLog.outString(">> Loading npc...");
+    results = WorldDatabase.PQuery(npcQuery);
+    if (results != NULL)
+    {
+        barGoLink bar((int)results->GetRowCount());
+        do
+        {
+            bar.step();
+            Field* fields = results->Fetch();
+            npcItems.push_back(fields[0].GetUInt32());
+
+        } while (results->NextRow());
+
+        delete results;
+    }
+    else
+    {
+        sLog.outString("AHBot> \"%s\" failed", npcQuery);
+        return;
+    }
+    char lootQuery[] = "SELECT `item` FROM `creature_loot_template` UNION "
+        "SELECT `item` FROM `disenchant_loot_template` UNION "
+        "SELECT `item` FROM `fishing_loot_template` UNION "
+        "SELECT `item` FROM `gameobject_loot_template` UNION "
+        "SELECT `item` FROM `item_loot_template` UNION "
+        "SELECT `item` FROM `milling_loot_template` UNION "
+        "SELECT `item` FROM `pickpocketing_loot_template` UNION "
+        "SELECT `item` FROM `prospecting_loot_template` UNION "
+        "SELECT `item` FROM `skinning_loot_template`";
+
+    sLog.outString(">> Loading Items...");
+    results = WorldDatabase.PQuery(lootQuery);
+    if (results != NULL)
+    {
+
+        barGoLink bar((int)results->GetRowCount());
+        do
+        {
+            bar.step();
+            Field* fields = results->Fetch();
+            lootItems.push_back(fields[0].GetUInt32());
+        } while (results->NextRow());
+        delete results;
+    }
+    else
+    {
+        sLog.outString("AHBot> \"%s\" failed", lootQuery);
+        return;
+    }
+    sLog.outString(">> Sorting and cleaning Items bases...");
+
+    barGoLink bar(sItemStorage.MaxEntry);
+    for (uint32 itemID = 0; itemID < sItemStorage.MaxEntry; itemID++)
+    {
+        ItemPrototype const* prototype = sObjectMgr.GetItemPrototype(itemID);
+        bar.step();
+        if (prototype == NULL)
+            continue;
+
+        switch (prototype->Bonding)
+        {
+        case 0:
+            if (!sWorld.getConfig(CONFIG_BOOL_AHBOT_BIND_NO))
+                continue;
+            break;
+        case 1:
+            if (!sWorld.getConfig(CONFIG_BOOL_AHBOT_BIND_PICKUP))
+                continue;
+            break;
+        case 2:
+            if (!sWorld.getConfig(CONFIG_BOOL_AHBOT_BIND_EQUIP))
+                continue;
+            break;
+        case 3:
+            if (!sWorld.getConfig(CONFIG_BOOL_AHBOT_BIND_USE))
+                continue;
+            break;
+        case 4:
+            if (!sWorld.getConfig(CONFIG_BOOL_AHBOT_BIND_QUEST))
+                continue;
+            break;
+        default:
+            continue;
+            break;
+        }
+
+        if(sWorld.getConfig(CONFIG_BOOL_AHBOT_BUYPRICE_SELLER))
+        {
+            if(prototype->BuyPrice == 0)
+                continue;
+        }
+        else
+        {
+            if (prototype->SellPrice == 0)
+                continue;
+        }
+
+        if ((prototype->Quality < 0) || (prototype->Quality > 6))
+            continue;
+
+        if (!sWorld.getConfig(CONFIG_BOOL_AHBOT_ITEMS_VENDOR))
+        {
+            bool isVendorItem = false;
+
+            for (unsigned int i = 0; (i < npcItems.size()) && (!isVendorItem); i++)
+            {
+                if (itemID == npcItems[i])
+                    isVendorItem = true;
+            }
+
+            if (isVendorItem)
+                continue;
+        }
+
+        if (!sWorld.getConfig(CONFIG_BOOL_AHBOT_ITEMS_LOOT))
+        {
+            bool isLootItem = false;
+
+            for (unsigned int i = 0; (i < lootItems.size()) && (!isLootItem); i++)
+            {
+                if (itemID == lootItems[i])
+                    isLootItem = true;
+            }
+
+            if (isLootItem)
+                continue;
+        }
+
+        if (!sWorld.getConfig(CONFIG_BOOL_AHBOT_ITEMS_MISC))
+        {
+            bool isVendorItem = false;
+            bool isLootItem = false;
+
+            for (unsigned int i = 0; (i < npcItems.size()) && (!isVendorItem); i++)
+            {
+                if (itemID == npcItems[i])
+                    isVendorItem = true;
+            }
+            for (unsigned int i = 0; (i < lootItems.size()) && (!isLootItem); i++)
+            {
+                if (itemID == lootItems[i])
+                    isLootItem = true;
+            }
+            if ((!isLootItem) && (!isVendorItem))
+                continue;
+        }
+
+        if ((prototype->Class==ITEM_CLASS_ARMOR)||(prototype->Class==ITEM_CLASS_WEAPON)||(prototype->Class==ITEM_CLASS_ARMOR))
+        {
+            if (((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_MIN_ITEM_LEVEL)) > 0) && (prototype->ItemLevel < sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_MIN_ITEM_LEVEL))) continue;
+            if (((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_MAX_ITEM_LEVEL)) > 0) && (prototype->ItemLevel > sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_MAX_ITEM_LEVEL))) continue;
+            if (((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_MIN_REQ_LEVEL)) > 0) && (prototype->RequiredLevel < sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_MIN_REQ_LEVEL))) continue;
+            if (((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_MAX_REQ_LEVEL)) > 0) && (prototype->RequiredLevel > sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_MAX_REQ_LEVEL))) continue;
+            if (((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_MIN_SKILL_RANK)) > 0) && (prototype->RequiredSkill < sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_MIN_SKILL_RANK))) continue;
+            if (((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_MAX_SKILL_RANK)) > 0) && (prototype->RequiredSkill > sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_MAX_SKILL_RANK))) continue;
+        }
+
+        if ((prototype->Class==ITEM_CLASS_RECIPE)||(prototype->Class==ITEM_CLASS_CONSUMABLE)||(prototype->Class==ITEM_CLASS_PROJECTILE))
+        {
+            if (((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_MIN_REQ_LEVEL)) > 0) && (prototype->RequiredLevel < sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_MIN_REQ_LEVEL))) continue;
+            if (((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_MAX_REQ_LEVEL)) > 0) && (prototype->RequiredLevel > sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_MAX_REQ_LEVEL))) continue;
+            if (((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_MIN_SKILL_RANK)) > 0) && (prototype->RequiredSkill < sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_MIN_SKILL_RANK))) continue;
+            if (((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_MAX_SKILL_RANK)) > 0) && (prototype->RequiredSkill > sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_MAX_SKILL_RANK))) continue;
+        }
+
+        ItemPool[prototype->Quality][prototype->Class].push_back(itemID);
+        ItemAdded = true;
+
+    }
+    LoadConfig();
+    if (!ItemAdded)
+    {
+        sLog.outString("AuctionHouseBot> Error, no items from xxxx_loot_template tables.");
+        sLog.outString("AuctionHouseBot> AHBot is disabled!");
+        sWorld.setConfig(CONFIG_UINT32_AHBOT_ALLIANCE_RATIO, 0);
+        sWorld.setConfig(CONFIG_UINT32_AHBOT_HORDE_RATIO, 0);
+        sWorld.setConfig(CONFIG_UINT32_AHBOT_NEUTRAL_RATIO, 0);
+        return;
+    }
+    sLog.outString("\nItems loaded\tGrey\tWhite\tGreen\tBlue\tPurple\tOrange\tYellow");
+    for (uint32 i=0; i<MAX_ITEM_CLASS;++i)
+    {
+        sLog.outString("%-11s\t%u\t%u\t%u\t%u\t%u\t%u\t%u",AllianceConfig.ItemInfos[0].ItemClassInfos[i].GetName().c_str(), ItemPool[0][i].size(),ItemPool[1][i].size(),ItemPool[2][i].size(),ItemPool[3][i].size(),ItemPool[4][i].size(),ItemPool[5][i].size(),ItemPool[6][i].size());
+    }
+    sLog.outString("\nAHBot> [AHBot-beta] is now loaded");
 }
 
 void AuctionHouseBot::Commands(uint32 command, uint32 ahMapID, uint32 col, char* args)
@@ -799,362 +704,266 @@ void AuctionHouseBot::Commands(uint32 command, uint32 ahMapID, uint32 col, char*
     default:
         break;
     }
-    switch (command)
+    //switch (command)
+}
+
+void AuctionHouseBot::LoadSellerValues(AHBConfig& config)
+{
+    config.ItemInfos[E_GREY].SetAmountOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_GREY_AMOUNT));
+    config.ItemInfos[E_WHITE].SetAmountOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_WHITE_AMOUNT));
+    config.ItemInfos[E_GREEN].SetAmountOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_GREEN_AMOUNT));
+    config.ItemInfos[E_BLUE].SetAmountOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_BLUE_AMOUNT));
+    config.ItemInfos[E_PURPLE].SetAmountOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_PURPLE_AMOUNT));
+    config.ItemInfos[E_ORANGE].SetAmountOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_ORANGE_AMOUNT));
+    config.ItemInfos[E_YELLOW].SetAmountOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_YELLOW_AMOUNT));
+    if (sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_CONSUMABLE_AMOUNT)>10) sWorld.setConfig(CONFIG_UINT32_AHBOT_CLASS_CONSUMABLE_AMOUNT,10);
+    if (sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_CONTAINER_AMOUNT)>10) sWorld.setConfig(CONFIG_UINT32_AHBOT_CLASS_CONTAINER_AMOUNT,10);
+    if (sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_WEAPON_AMOUNT)>10) sWorld.setConfig(CONFIG_UINT32_AHBOT_CLASS_WEAPON_AMOUNT,10);
+    if (sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_GEM_AMOUNT)>10) sWorld.setConfig(CONFIG_UINT32_AHBOT_CLASS_GEM_AMOUNT,10);
+    if (sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_ARMOR_AMOUNT)>10) sWorld.setConfig(CONFIG_UINT32_AHBOT_CLASS_ARMOR_AMOUNT,10);
+    if (sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_REAGENT_AMOUNT)>10) sWorld.setConfig(CONFIG_UINT32_AHBOT_CLASS_REAGENT_AMOUNT,10);
+    if (sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_PROJECTILE_AMOUNT)>10) sWorld.setConfig(CONFIG_UINT32_AHBOT_CLASS_PROJECTILE_AMOUNT,10);
+    if (sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_TRADEGOOD_AMOUNT)>10) sWorld.setConfig(CONFIG_UINT32_AHBOT_CLASS_TRADEGOOD_AMOUNT,10);
+    if (sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_GENERIC_AMOUNT)>10) sWorld.setConfig(CONFIG_UINT32_AHBOT_CLASS_GENERIC_AMOUNT,10);
+    if (sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_RECIPE_AMOUNT)>10) sWorld.setConfig(CONFIG_UINT32_AHBOT_CLASS_RECIPE_AMOUNT,10);
+    if (sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_QUIVER_AMOUNT)>10) sWorld.setConfig(CONFIG_UINT32_AHBOT_CLASS_QUIVER_AMOUNT,10);
+    if (sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_QUEST_AMOUNT)>10) sWorld.setConfig(CONFIG_UINT32_AHBOT_CLASS_QUEST_AMOUNT,10);
+    if (sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_KEY_AMOUNT)>10) sWorld.setConfig(CONFIG_UINT32_AHBOT_CLASS_KEY_AMOUNT,10);
+    if (sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_MISC_AMOUNT)>10) sWorld.setConfig(CONFIG_UINT32_AHBOT_CLASS_MISC_AMOUNT,10);
+    if (sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_GLYPH_AMOUNT)>10) sWorld.setConfig(CONFIG_UINT32_AHBOT_CLASS_GLYPH_AMOUNT,10);
+
+    for (uint32 j=0; j<AHB_QUALITY_MAX; ++j)
     {
-    case 0:     //ahexpire
+        switch ((e_ahb_quality) j)
         {
-            AuctionHouseEntry const* ahEntry = sAuctionMgr.GetAuctionHouseEntryByFaction(config->GetAHFID());
-            AuctionHouseObject* auctionHouse = sAuctionMgr.GetAuctionsMap(ahEntry);
+        case E_GREY :
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_CONSUMABLE].SetQuantityOfItems(0);
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_CONTAINER].SetQuantityOfItems(0);
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_WEAPON].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_WEAPON_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_GEM].SetQuantityOfItems(0);
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_ARMOR].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_ARMOR_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_REAGENT].SetQuantityOfItems(0);
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_PROJECTILE].SetQuantityOfItems(0);
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_TRADE_GOODS].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_TRADEGOOD_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_GENERIC].SetQuantityOfItems(0);
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_RECIPE].SetQuantityOfItems(0);
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_QUIVER].SetQuantityOfItems(0);
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_QUEST].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_QUEST_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_KEY].SetQuantityOfItems(0);
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_MISC].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_MISC_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_GLYPH].SetQuantityOfItems(0);
+            break;
+        case E_WHITE :
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_CONSUMABLE].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_CONSUMABLE_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_CONTAINER].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_CONTAINER_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_WEAPON].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_WEAPON_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_GEM].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_GEM_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_ARMOR].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_ARMOR_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_REAGENT].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_REAGENT_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_PROJECTILE].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_PROJECTILE_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_TRADE_GOODS].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_TRADEGOOD_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_GENERIC].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_GENERIC_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_RECIPE].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_RECIPE_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_QUIVER].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_QUIVER_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_QUEST].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_QUEST_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_KEY].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_KEY_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_MISC].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_MISC_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_GLYPH].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_GLYPH_AMOUNT));
+            break;
+        case E_GREEN :
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_CONSUMABLE].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_CONSUMABLE_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_CONTAINER].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_CONTAINER_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_WEAPON].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_WEAPON_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_GEM].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_GEM_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_ARMOR].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_ARMOR_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_REAGENT].SetQuantityOfItems(0);
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_PROJECTILE].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_PROJECTILE_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_TRADE_GOODS].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_TRADEGOOD_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_GENERIC].SetQuantityOfItems(0);
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_RECIPE].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_RECIPE_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_QUIVER].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_QUIVER_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_QUEST].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_QUEST_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_KEY].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_KEY_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_MISC].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_MISC_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_GLYPH].SetQuantityOfItems(0);
+            break;
+        case E_BLUE :
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_CONSUMABLE].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_CONSUMABLE_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_CONTAINER].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_CONTAINER_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_WEAPON].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_WEAPON_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_GEM].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_GEM_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_ARMOR].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_ARMOR_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_REAGENT].SetQuantityOfItems(0);
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_PROJECTILE].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_PROJECTILE_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_TRADE_GOODS].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_TRADEGOOD_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_GENERIC].SetQuantityOfItems(0);
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_RECIPE].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_RECIPE_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_QUIVER].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_QUIVER_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_QUEST].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_QUEST_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_KEY].SetQuantityOfItems(0);
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_MISC].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_MISC_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_GLYPH].SetQuantityOfItems(0);
+            break;
+        case E_PURPLE :
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_CONSUMABLE].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_CONSUMABLE_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_CONTAINER].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_CONTAINER_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_WEAPON].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_WEAPON_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_GEM].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_GEM_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_ARMOR].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_ARMOR_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_REAGENT].SetQuantityOfItems(0);
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_PROJECTILE].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_PROJECTILE_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_TRADE_GOODS].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_TRADEGOOD_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_GENERIC].SetQuantityOfItems(0);
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_RECIPE].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_RECIPE_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_QUIVER].SetQuantityOfItems(0);
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_QUEST].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_QUEST_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_KEY].SetQuantityOfItems(0);
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_MISC].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_MISC_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_GLYPH].SetQuantityOfItems(0);
+            break;
+        case E_ORANGE :
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_CONSUMABLE].SetQuantityOfItems(0);
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_CONTAINER].SetQuantityOfItems(0);
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_WEAPON].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_WEAPON_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_GEM].SetQuantityOfItems(0);
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_ARMOR].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_ARMOR_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_REAGENT].SetQuantityOfItems(0);
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_PROJECTILE].SetQuantityOfItems(0);
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_TRADE_GOODS].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_TRADEGOOD_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_GENERIC].SetQuantityOfItems(0);
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_RECIPE].SetQuantityOfItems(0);
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_QUIVER].SetQuantityOfItems(0);
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_QUEST].SetQuantityOfItems(0);
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_KEY].SetQuantityOfItems(0);
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_MISC].SetQuantityOfItems(0);
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_GLYPH].SetQuantityOfItems(0);
+            break;
+        case E_YELLOW :
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_CONSUMABLE].SetQuantityOfItems(0);
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_CONTAINER].SetQuantityOfItems(0);
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_WEAPON].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_WEAPON_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_GEM].SetQuantityOfItems(0);
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_ARMOR].SetQuantityOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_ARMOR_AMOUNT));
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_REAGENT].SetQuantityOfItems(0);
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_PROJECTILE].SetQuantityOfItems(0);
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_TRADE_GOODS].SetQuantityOfItems(0);
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_GENERIC].SetQuantityOfItems(0);
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_RECIPE].SetQuantityOfItems(0);
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_QUIVER].SetQuantityOfItems(0);
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_QUEST].SetQuantityOfItems(0);
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_KEY].SetQuantityOfItems(0);
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_MISC].SetQuantityOfItems(0);
+            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_GLYPH].SetQuantityOfItems(0);
+            break;
+        }
+    }
 
-            AuctionHouseObject::AuctionEntryMap::iterator itr;
-            itr = auctionHouse->GetAuctionsBegin();
-
-            while (itr != auctionHouse->GetAuctionsEnd())
-            {
-                if (itr->second->owner == GetAHBObjectGuid().GetRawValue())
-                    itr->second->expire_time = sWorld.GetGameTime();
-
-                ++itr;
-            }
-        }break;
-    case 1:     //min items
+    for (uint32 j=0; j<AHB_QUALITY_MAX; ++j)
+    {
+        uint32 indice = config.ItemInfos[j].GetAmountOfItems()/
+            (sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_CONSUMABLE_AMOUNT) + sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_CONTAINER_AMOUNT) + sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_WEAPON_AMOUNT) +
+            sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_GEM_AMOUNT) + sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_ARMOR_AMOUNT) + sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_REAGENT_AMOUNT) +
+            sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_PROJECTILE_AMOUNT) + sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_TRADEGOOD_AMOUNT) + sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_GENERIC_AMOUNT) +
+            sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_RECIPE_AMOUNT) + sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_QUIVER_AMOUNT) + sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_QUEST_AMOUNT) +
+            sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_KEY_AMOUNT) + sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_MISC_AMOUNT) + sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_GLYPH_AMOUNT));
+        for (uint32 i=0;i<MAX_ITEM_CLASS;++i)
         {
-
-        }break;
-    case 2:     //max items
-        {
-
-        }break;
-    case 3:     //min time
-        {
-            char * param1 = strtok(args, " ");
-            uint32 minTime = (uint32) strtoul(param1, NULL, 0);
-            CharacterDatabase.PExecute("UPDATE auction_house_bot_config SET mintime = '%u' WHERE auctionhouse = '%u'", minTime, ahMapID);
-            config->SetMinTime(minTime);
-        }break;
-    case 4:     //max time
-        {
-            char * param1 = strtok(args, " ");
-            uint32 maxTime = (uint32) strtoul(param1, NULL, 0);
-            CharacterDatabase.PExecute("UPDATE auction_house_bot_config SET maxtime = '%u' WHERE auctionhouse = '%u'", maxTime, ahMapID);
-            config->SetMaxTime(maxTime);
-        }break;
-    case 5:     //percentages
-        {
-            char * param1 = strtok(args, " ");
-            char * param2 = strtok(NULL, " ");
-            char * param3 = strtok(NULL, " ");
-            char * param4 = strtok(NULL, " ");
-            char * param5 = strtok(NULL, " ");
-            char * param6 = strtok(NULL, " ");
-            char * param7 = strtok(NULL, " ");
-
-            uint32 greyi = (uint32) strtoul(param1, NULL, 0);
-            uint32 whitei = (uint32) strtoul(param2, NULL, 0);
-            uint32 greeni = (uint32) strtoul(param3, NULL, 0);
-            uint32 bluei = (uint32) strtoul(param4, NULL, 0);
-            uint32 purplei = (uint32) strtoul(param5, NULL, 0);
-            uint32 orangei = (uint32) strtoul(param6, NULL, 0);
-            uint32 yellowi = (uint32) strtoul(param7, NULL, 0);
-
-            CharacterDatabase.BeginTransaction();
-            CharacterDatabase.PExecute("UPDATE auction_house_bot_config SET percentgreyitems = '%u' WHERE auctionhouse = '%u'", greyi, ahMapID);
-            CharacterDatabase.PExecute("UPDATE auction_house_bot_config SET percentwhiteitems = '%u' WHERE auctionhouse = '%u'", whitei, ahMapID);
-            CharacterDatabase.PExecute("UPDATE auction_house_bot_config SET percentgreenitems = '%u' WHERE auctionhouse = '%u'", greeni, ahMapID);
-            CharacterDatabase.PExecute("UPDATE auction_house_bot_config SET percentblueitems = '%u' WHERE auctionhouse = '%u'", bluei, ahMapID);
-            CharacterDatabase.PExecute("UPDATE auction_house_bot_config SET percentpurpleitems = '%u' WHERE auctionhouse = '%u'", purplei, ahMapID);
-            CharacterDatabase.PExecute("UPDATE auction_house_bot_config SET percentorangeitems = '%u' WHERE auctionhouse = '%u'", orangei, ahMapID);
-            CharacterDatabase.PExecute("UPDATE auction_house_bot_config SET percentyellowitems = '%u' WHERE auctionhouse = '%u'", yellowi, ahMapID);
-            CharacterDatabase.CommitTransaction();
-            //config->SetPercentages(greytg, whitetg, greentg, bluetg, purpletg, orangetg, yellowtg, greyi, whitei, greeni, bluei, purplei, orangei, yellowi);
-        }break;
-    case 6:     //min prices
-        {
-            char * param1 = strtok(args, " ");
-            uint32 minPrice = (uint32) strtoul(param1, NULL, 0);
-            CharacterDatabase.PExecute("UPDATE auction_house_bot_config SET minprice%s = '%u' WHERE auctionhouse = '%u'",color.c_str(), minPrice, ahMapID);
-            //config->SetMinPrice(col, minPrice);
-        }break;
-    case 7:     //max prices
-        {
-            char * param1 = strtok(args, " ");
-            uint32 maxPrice = (uint32) strtoul(param1, NULL, 0);
-            CharacterDatabase.PExecute("UPDATE auction_house_bot_config SET maxprice%s = '%u' WHERE auctionhouse = '%u'",color.c_str(), maxPrice, ahMapID);
-            //config->SetMaxPrice(col, maxPrice);
-        }break;
-    case 8:     //min bid price
-        {
-            char * param1 = strtok(args, " ");
-            uint32 minBidPrice = (uint32) strtoul(param1, NULL, 0);
-            CharacterDatabase.PExecute("UPDATE auction_house_bot_config SET minbidprice%s = '%u' WHERE auctionhouse = '%u'",color.c_str(), minBidPrice, ahMapID);
-            //config->SetMinBidPrice(col, minBidPrice);
-        }break;
-    case 9:     //max bid price
-        {
-            char * param1 = strtok(args, " ");
-            uint32 maxBidPrice = (uint32) strtoul(param1, NULL, 0);
-            CharacterDatabase.PExecute("UPDATE auction_house_bot_config SET maxbidprice%s = '%u' WHERE auctionhouse = '%u'",color.c_str(), maxBidPrice, ahMapID);
-            //config->SetMaxBidPrice(col, maxBidPrice);
-        }break;
-    case 10:        //max stacks
-        {
-            char * param1 = strtok(args, " ");
-            uint32 maxStack = (uint32) strtoul(param1, NULL, 0);
-            CharacterDatabase.PExecute("UPDATE auction_house_bot_config SET maxstack%s = '%u' WHERE auctionhouse = '%u'",color.c_str(), maxStack, ahMapID);
-            //config->SetMaxStack(col, maxStack);
-        }break;
-    case 11:        //buyer bid prices
-        {
-            char * param1 = strtok(args, " ");
-            uint32 buyerPrice = (uint32) strtoul(param1, NULL, 0);
-            CharacterDatabase.PExecute("UPDATE auction_house_bot_config SET buyerprice%s = '%u' WHERE auctionhouse = '%u'",color.c_str(), buyerPrice, ahMapID);
-            config->SetBuyerPrice(col, buyerPrice);
-        }break;
-    case 12:        //buyer bidding interval
-        {
-            char * param1 = strtok(args, " ");
-            uint32 bidInterval = (uint32) strtoul(param1, NULL, 0);
-            CharacterDatabase.PExecute("UPDATE auction_house_bot_config SET buyerbiddinginterval = '%u' WHERE auctionhouse = '%u'", bidInterval, ahMapID);
-            config->SetBiddingInterval(bidInterval);
-        }break;
-    case 13:        //buyer bids per interval
-        {
-            char * param1 = strtok(args, " ");
-            uint32 bidsPerInterval = (uint32) strtoul(param1, NULL, 0);
-            CharacterDatabase.PExecute("UPDATE auction_house_bot_config SET buyerbidsperinterval = '%u' WHERE auctionhouse = '%u'", bidsPerInterval, ahMapID);
-            config->SetBidsPerInterval(bidsPerInterval);
-        }break;
+            config.ItemInfos[j].ItemClassInfos[i].SetAmountOfItems(indice);
+        }
+    }
+    uint32 PriceRatio;
+    switch(config.GetAHID())
+    {
+    case 2: PriceRatio = sWorld.getConfig(CONFIG_UINT32_AHBOT_ALLIENCE_PRICE_RATIO); break;
+    case 6: PriceRatio = sWorld.getConfig(CONFIG_UINT32_AHBOT_HORDE_PRICE_RATIO); break;
+    case 7: PriceRatio = sWorld.getConfig(CONFIG_UINT32_AHBOT_NEUTRAL_PRICE_RATIO); break;
     default:
+        PriceRatio = sWorld.getConfig(CONFIG_UINT32_AHBOT_NEUTRAL_PRICE_RATIO);
         break;
     }
+    config.ItemInfos[E_GREY].SetMaxPrice(10+PriceRatio);
+    config.ItemInfos[E_WHITE].SetMaxPrice(15+PriceRatio);
+    config.ItemInfos[E_GREEN].SetMaxPrice(25+PriceRatio);
+    config.ItemInfos[E_BLUE].SetMaxPrice(40+PriceRatio);
+    config.ItemInfos[E_PURPLE].SetMaxPrice(60+PriceRatio);
+    config.ItemInfos[E_ORANGE].SetMaxPrice(85+PriceRatio);
+    config.ItemInfos[E_YELLOW].SetMaxPrice(95+PriceRatio);
+    config.ItemInfos[E_GREY].SetMinPrice(5+PriceRatio);
+    config.ItemInfos[E_WHITE].SetMinPrice(10+PriceRatio);
+    config.ItemInfos[E_GREEN].SetMinPrice(15+PriceRatio);
+    config.ItemInfos[E_BLUE].SetMinPrice(25+PriceRatio);
+    config.ItemInfos[E_PURPLE].SetMinPrice(35+PriceRatio);
+    config.ItemInfos[E_ORANGE].SetMinPrice(45+PriceRatio);
+    config.ItemInfos[E_YELLOW].SetMinPrice(55+PriceRatio);
+    config.ItemInfos[E_GREY].SetMaxBidPrice(10+PriceRatio);
+    config.ItemInfos[E_WHITE].SetMaxBidPrice(10+PriceRatio);
+    config.ItemInfos[E_GREEN].SetMaxBidPrice(10+PriceRatio);
+    config.ItemInfos[E_BLUE].SetMaxBidPrice(20+PriceRatio);
+    config.ItemInfos[E_PURPLE].SetMaxBidPrice(30+PriceRatio);
+    config.ItemInfos[E_ORANGE].SetMaxBidPrice(40+PriceRatio);
+    config.ItemInfos[E_YELLOW].SetMaxBidPrice(50+PriceRatio);
+    config.ItemInfos[E_GREY].SetMinBidPrice(5+PriceRatio);
+    config.ItemInfos[E_WHITE].SetMinBidPrice(5+PriceRatio);
+    config.ItemInfos[E_GREEN].SetMinBidPrice(5+PriceRatio);
+    config.ItemInfos[E_BLUE].SetMinBidPrice(5+PriceRatio);
+    config.ItemInfos[E_PURPLE].SetMinBidPrice(5+PriceRatio);
+    config.ItemInfos[E_ORANGE].SetMinBidPrice(5+PriceRatio);
+    config.ItemInfos[E_YELLOW].SetMinBidPrice(5+PriceRatio);
+    //load min and max auction times
+    config.SetMinTime(sWorld.getConfig(CONFIG_UINT32_AHBOT_MINTIME));
+    config.SetMaxTime(sWorld.getConfig(CONFIG_UINT32_AHBOT_MAXTIME));
+    if (debug_Out)
+    {
+        sLog.outString("minTime = %u", config.GetMinTime());
+        sLog.outString("maxTime = %u", config.GetMaxTime());
+    }
+    //load percentages
+
+    if (debug_Out)
+    {
+        sLog.outString("GreyItems = %u", config.ItemInfos[E_GREY].GetAmountOfItems());
+        sLog.outString("WhiteItems = %u", config.ItemInfos[E_WHITE].GetAmountOfItems());
+        sLog.outString("GreenItems = %u", config.ItemInfos[E_GREEN].GetAmountOfItems());
+        sLog.outString("BlueItems = %u", config.ItemInfos[E_BLUE].GetAmountOfItems());
+        sLog.outString("PurpleItems = %u", config.ItemInfos[E_PURPLE].GetAmountOfItems());
+        sLog.outString("OrangeItems = %u", config.ItemInfos[E_ORANGE].GetAmountOfItems());
+        sLog.outString("YellowItems = %u", config.ItemInfos[E_YELLOW].GetAmountOfItems());
+    }
+
 }
 
-void AuctionHouseBot::LoadValues(AHBConfig& config)
+void AuctionHouseBot::LoadBuyerValues(AHBConfig& config)
 {
-    if (sWorld.getConfig(CONFIG_BOOL_AHBOT_SELLER_ENABLED))
-    {
-        sLog.outString("In Load Values...");
-        config.SetAmountOfItems(CharacterDatabase.PQuery("SELECT greyitems FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32(),E_GREY);
-        config.SetAmountOfItems(CharacterDatabase.PQuery("SELECT whiteitems FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32(),E_WHITE);
-        config.SetAmountOfItems(CharacterDatabase.PQuery("SELECT greenitems FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32(),E_GREEN);
-        config.SetAmountOfItems(CharacterDatabase.PQuery("SELECT blueitems FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32(),E_BLUE);
-        config.SetAmountOfItems(CharacterDatabase.PQuery("SELECT purpleitems FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32(),E_PURPLE);
-        config.SetAmountOfItems(CharacterDatabase.PQuery("SELECT orangeitems FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32(),E_ORANGE);
-        config.SetAmountOfItems(CharacterDatabase.PQuery("SELECT yellowitems FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32(),E_YELLOW);
-        
-        //load min and max auction times
-        config.SetMinTime(CharacterDatabase.PQuery("SELECT mintime FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32());
-        config.SetMaxTime(CharacterDatabase.PQuery("SELECT maxtime FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32());
-        if (debug_Out)
-        {
-            sLog.outError("minTime = %u", config.GetMinTime());
-            sLog.outError("maxTime = %u", config.GetMaxTime());
-        }
-        sLog.outString("Load percentages...");
-        //load percentages
+    //load buyer bid prices
+    config.ItemInfos[AHB_GREY].SetBuyerPrice(sWorld.getConfig(CONFIG_UINT32_AHBOT_BUYER_PRICE_GREY));
+    config.ItemInfos[AHB_WHITE].SetBuyerPrice(sWorld.getConfig(CONFIG_UINT32_AHBOT_BUYER_PRICE_WHITE));
+    config.ItemInfos[AHB_GREEN].SetBuyerPrice(sWorld.getConfig(CONFIG_UINT32_AHBOT_BUYER_PRICE_GREEN));
+    config.ItemInfos[AHB_BLUE].SetBuyerPrice(sWorld.getConfig(CONFIG_UINT32_AHBOT_BUYER_PRICE_BLUE));
+    config.ItemInfos[AHB_PURPLE].SetBuyerPrice(sWorld.getConfig(CONFIG_UINT32_AHBOT_BUYER_PRICE_PURPLE));
+    config.ItemInfos[AHB_ORANGE].SetBuyerPrice(sWorld.getConfig(CONFIG_UINT32_AHBOT_BUYER_PRICE_ORANGE));
+    config.ItemInfos[AHB_YELLOW].SetBuyerPrice(sWorld.getConfig(CONFIG_UINT32_AHBOT_BUYER_PRICE_YELLOW));
 
-        if (debug_Out)
-        {
-            sLog.outError("GreyItems = %u", config.GetAmountOfItems(E_GREY));
-            sLog.outError("WhiteItems = %u", config.GetAmountOfItems(E_WHITE));
-            sLog.outError("GreenItems = %u", config.GetAmountOfItems(E_GREEN));
-            sLog.outError("BlueItems = %u", config.GetAmountOfItems(E_BLUE));
-            sLog.outError("PurpleItems = %u", config.GetAmountOfItems(E_PURPLE));
-            sLog.outError("OrangeItems = %u", config.GetAmountOfItems(E_ORANGE));
-            sLog.outError("YellowItems = %u", config.GetAmountOfItems(E_YELLOW));
-        }
-        //load min and max prices
-        config.SetMinPrice( CharacterDatabase.PQuery("SELECT minpricegrey FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32(), E_GREY);
-        config.SetMaxPrice( CharacterDatabase.PQuery("SELECT maxpricegrey FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32(), E_GREY);
-        if (debug_Out)
-        {
-            sLog.outError("minPriceGrey = %u", config.GetMinPrice(E_GREY));
-            sLog.outError("maxPriceGrey = %u", config.GetMaxPrice(E_GREY));
-        }
-        config.SetMinPrice( CharacterDatabase.PQuery("SELECT minpricewhite FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32(), E_WHITE);
-        config.SetMaxPrice( CharacterDatabase.PQuery("SELECT maxpricewhite FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32(), E_WHITE);
-        if (debug_Out)
-        {
-            sLog.outError("minPriceWhite = %u", config.GetMinPrice(E_WHITE));
-            sLog.outError("maxPriceWhite = %u", config.GetMaxPrice(E_WHITE));
-        }
-        config.SetMinPrice( CharacterDatabase.PQuery("SELECT minpricegreen FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32(), E_GREEN);
-        config.SetMaxPrice( CharacterDatabase.PQuery("SELECT maxpricegreen FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32(), E_GREEN);
-        if (debug_Out)
-        {
-            sLog.outError("minPriceGreen = %u", config.GetMinPrice(E_GREEN));
-            sLog.outError("maxPriceGreen = %u", config.GetMaxPrice(E_GREEN));
-        }
-        config.SetMinPrice( CharacterDatabase.PQuery("SELECT minpriceblue FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32(), E_BLUE);
-        config.SetMaxPrice( CharacterDatabase.PQuery("SELECT maxpriceblue FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32(), E_BLUE);
-        if (debug_Out)
-        {
-            sLog.outError("minPriceBlue = %u", config.GetMinPrice(E_BLUE));
-            sLog.outError("maxPriceBlue = %u", config.GetMaxPrice(E_BLUE));
-        }
-        config.SetMinPrice( CharacterDatabase.PQuery("SELECT minpricepurple FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32(), E_PURPLE);
-        config.SetMaxPrice( CharacterDatabase.PQuery("SELECT maxpricepurple FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32(), E_PURPLE);
-        if (debug_Out)
-        {
-            sLog.outError("minPricePurple = %u", config.GetMinPrice(E_PURPLE));
-            sLog.outError("maxPricePurple = %u", config.GetMaxPrice(E_PURPLE));
-        }
-        config.SetMinPrice( CharacterDatabase.PQuery("SELECT minpriceorange FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32(), E_ORANGE);
-        config.SetMaxPrice( CharacterDatabase.PQuery("SELECT maxpriceorange FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32(), E_ORANGE);
-        if (debug_Out)
-        {
-            sLog.outError("minPriceOrange = %u", config.GetMinPrice(E_ORANGE));
-            sLog.outError("maxPriceOrange = %u", config.GetMaxPrice(E_ORANGE));
-        }
-        config.SetMinPrice( CharacterDatabase.PQuery("SELECT minpriceyellow FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32(), E_YELLOW);
-        config.SetMaxPrice( CharacterDatabase.PQuery("SELECT maxpriceyellow FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32(), E_YELLOW);
-        if (debug_Out)
-        {
-            sLog.outError("minPriceYellow = %u", config.GetMinPrice(E_YELLOW));
-            sLog.outError("maxPriceYellow = %u", config.GetMaxPrice(E_YELLOW));
-        }
-        //load min and max bid prices
-        config.SetMinBidPrice( CharacterDatabase.PQuery("SELECT minbidpricegrey FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32(), E_GREY);
-        if (debug_Out)
-        {
-            sLog.outError("minBidPriceGrey = %u", config.GetMinBidPrice(E_GREY));
-        }
-        config.SetMaxBidPrice( CharacterDatabase.PQuery("SELECT maxbidpricegrey FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32(), E_GREY);
-        if (debug_Out)
-        {
-            sLog.outError("maxBidPriceGrey = %u", config.GetMaxBidPrice(E_GREY));
-        }
-        config.SetMinBidPrice( CharacterDatabase.PQuery("SELECT minbidpricewhite FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32(), E_WHITE);
-        if (debug_Out)
-        {
-            sLog.outError("minBidPriceWhite = %u", config.GetMinBidPrice(E_WHITE));
-        }
-        config.SetMaxBidPrice( CharacterDatabase.PQuery("SELECT maxbidpricewhite FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32(), E_WHITE);
-        if (debug_Out)
-        {
-            sLog.outError("maxBidPriceWhite = %u", config.GetMaxBidPrice(E_WHITE));
-        }
-        config.SetMinBidPrice( CharacterDatabase.PQuery("SELECT minbidpricegreen FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32(), E_GREEN);
-        if (debug_Out)
-        {
-            sLog.outError("minBidPriceGreen = %u", config.GetMinBidPrice(E_GREEN));
-        }
-        config.SetMaxBidPrice( CharacterDatabase.PQuery("SELECT maxbidpricegreen FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32(), E_GREEN);
-        if (debug_Out)
-        {
-            sLog.outError("maxBidPriceGreen = %u", config.GetMaxBidPrice(E_GREEN));
-        }
-        config.SetMinBidPrice( CharacterDatabase.PQuery("SELECT minbidpriceblue FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32(), E_BLUE);
-        if (debug_Out)
-        {
-            sLog.outError("minBidPriceBlue = %u", config.GetMinBidPrice(E_BLUE));
-        }
-        config.SetMaxBidPrice( CharacterDatabase.PQuery("SELECT maxbidpriceblue FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32(), E_BLUE);
-        if (debug_Out)
-        {
-            sLog.outError("maxBidPriceBlue = %u", config.GetMinBidPrice(E_BLUE));
-        }
-        config.SetMinBidPrice( CharacterDatabase.PQuery("SELECT minbidpricepurple FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32(), E_PURPLE);
-        if (debug_Out)
-        {
-            sLog.outError("minBidPricePurple = %u", config.GetMinBidPrice(E_PURPLE));
-        }
-        config.SetMaxBidPrice( CharacterDatabase.PQuery("SELECT maxbidpricepurple FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32(), E_PURPLE);
-        if (debug_Out)
-        {
-            sLog.outError("maxBidPricePurple = %u", config.GetMaxBidPrice(E_PURPLE));
-        }
-        config.SetMinBidPrice( CharacterDatabase.PQuery("SELECT minbidpriceorange FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32(), E_ORANGE);
-        if (debug_Out)
-        {
-            sLog.outError("minBidPriceOrange = %u", config.GetMinBidPrice(E_ORANGE));
-        }
-        config.SetMaxBidPrice( CharacterDatabase.PQuery("SELECT maxbidpriceorange FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32(), E_ORANGE);
-        if (debug_Out)
-        {
-            sLog.outError("maxBidPriceOrange = %u", config.GetMaxBidPrice(E_ORANGE));
-        }
-        config.SetMinBidPrice( CharacterDatabase.PQuery("SELECT minbidpriceyellow FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32(), E_YELLOW);
-        if (debug_Out)
-        {
-            sLog.outError("minBidPriceYellow = %u", config.GetMinBidPrice(E_YELLOW));
-        }
-        config.SetMaxBidPrice( CharacterDatabase.PQuery("SELECT maxbidpriceyellow FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32(), E_YELLOW);
-        if (debug_Out)
-        {sLog.outError("maxBidPriceYellow = %u", config.GetMaxBidPrice(E_YELLOW));
-        }
-        //load max stacks
-        config.SetMaxStack( CharacterDatabase.PQuery("SELECT maxstackgrey FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32(), E_GREY);
-        if (debug_Out)
-        {
-            sLog.outError("maxStackGrey = %u", config.GetMaxStack(E_GREY));
-        }
-        config.SetMaxStack( CharacterDatabase.PQuery("SELECT maxstackwhite FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32(), E_WHITE);
-        if (debug_Out)
-        {
-            sLog.outError("maxStackWhite = %u", config.GetMaxStack(E_WHITE));
-        }
-        config.SetMaxStack( CharacterDatabase.PQuery("SELECT maxstackgreen FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32(), E_GREEN);
-        if (debug_Out)
-        {
-            sLog.outError("maxStackGreen = %u", config.GetMaxStack(E_GREEN));
-        }
-        config.SetMaxStack( CharacterDatabase.PQuery("SELECT maxstackblue FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32(), E_BLUE);
-        if (debug_Out)
-        {
-            sLog.outError("maxStackBlue = %u", config.GetMaxStack(E_BLUE));
-        }
-        config.SetMaxStack( CharacterDatabase.PQuery("SELECT maxstackpurple FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32(), E_PURPLE);
-        if (debug_Out)
-        {
-            sLog.outError("maxStackPurple = %u", config.GetMaxStack(E_PURPLE));
-        }
-        config.SetMaxStack( CharacterDatabase.PQuery("SELECT maxstackorange FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32(), E_ORANGE);
-        if (debug_Out)
-        {
-            sLog.outError("maxStackOrange = %u", config.GetMaxStack(E_ORANGE));
-        }
-        config.SetMaxStack( CharacterDatabase.PQuery("SELECT maxstackyellow FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32(), E_YELLOW);
-        if (debug_Out)
-        {
-            sLog.outError("maxStackYellow = %u", config.GetMaxStack(E_YELLOW));
-        }
-    }
-    if (sWorld.getConfig(CONFIG_BOOL_AHBOT_BUYER_ENABLED))
+    if (debug_Out)
     {
-        //load buyer bid prices
-        config.SetBuyerPrice(AHB_GREY, CharacterDatabase.PQuery("SELECT buyerpricegrey FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32());
-        config.SetBuyerPrice(AHB_WHITE, CharacterDatabase.PQuery("SELECT buyerpricewhite FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32());
-        config.SetBuyerPrice(AHB_GREEN, CharacterDatabase.PQuery("SELECT buyerpricegreen FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32());
-        config.SetBuyerPrice(AHB_BLUE, CharacterDatabase.PQuery("SELECT buyerpriceblue FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32());
-        config.SetBuyerPrice(AHB_PURPLE, CharacterDatabase.PQuery("SELECT buyerpricepurple FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32());
-        config.SetBuyerPrice(AHB_ORANGE, CharacterDatabase.PQuery("SELECT buyerpriceorange FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32());
-        config.SetBuyerPrice(AHB_YELLOW, CharacterDatabase.PQuery("SELECT buyerpriceyellow FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32());
-        if (debug_Out)
-        {
-            sLog.outError("buyerPriceGrey = %u", config.GetBuyerPrice(AHB_GREY));
-            sLog.outError("buyerPriceWhite = %u", config.GetBuyerPrice(AHB_WHITE));
-            sLog.outError("buyerPriceGreen = %u", config.GetBuyerPrice(AHB_GREEN));
-            sLog.outError("buyerPriceBlue = %u", config.GetBuyerPrice(AHB_BLUE));
-            sLog.outError("buyerPricePurple = %u", config.GetBuyerPrice(AHB_PURPLE));
-            sLog.outError("buyerPriceOrange = %u", config.GetBuyerPrice(AHB_ORANGE));
-            sLog.outError("buyerPriceYellow = %u", config.GetBuyerPrice(AHB_YELLOW));
-        }
-        //load bidding interval
-        config.SetBiddingInterval(CharacterDatabase.PQuery("SELECT buyerbiddinginterval FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32());
-        if (debug_Out)
-        {
-            sLog.outError("buyerBiddingInterval = %u", config.GetBiddingInterval());
-        }
-        //load bids per interval
-        config.SetBidsPerInterval(CharacterDatabase.PQuery("SELECT buyerbidsperinterval FROM auction_house_bot_config WHERE auctionhouse = %u",config.GetAHID())->Fetch()->GetUInt32());
-        if (debug_Out)
-        {
-            sLog.outError("buyerBidsPerInterval = %u", config.GetBidsPerInterval());
-        }
+        sLog.outString("buyerPriceGrey = %u",   config.ItemInfos[AHB_GREY].GetBuyerPrice());
+        sLog.outString("buyerPriceWhite = %u",  config.ItemInfos[AHB_WHITE].GetBuyerPrice());
+        sLog.outString("buyerPriceGreen = %u",  config.ItemInfos[AHB_GREEN].GetBuyerPrice());
+        sLog.outString("buyerPriceBlue = %u",   config.ItemInfos[AHB_BLUE].GetBuyerPrice());
+        sLog.outString("buyerPricePurple = %u", config.ItemInfos[AHB_PURPLE].GetBuyerPrice());
+        sLog.outString("buyerPriceOrange = %u", config.ItemInfos[AHB_ORANGE].GetBuyerPrice());
+        sLog.outString("buyerPriceYellow = %u", config.ItemInfos[AHB_YELLOW].GetBuyerPrice());
     }
-}
+    //load bidding interval
+    config.SetBiddingInterval(sWorld.getConfig(CONFIG_UINT32_AHBOT_BUYER_BIDDIGIN_INTERVAL));
+    if (debug_Out)
+    {
+        sLog.outString("buyerBiddingInterval = %u", config.GetBiddingInterval());
+    }
+    //load bids per interval
+    config.SetBidsPerInterval(sWorld.getConfig(CONFIG_UINT32_AHBOT_BUYER_BID_INTERVAL));
+    if (debug_Out)
+    {
+        sLog.outString("buyerBidsPerInterval = %u", config.GetBidsPerInterval());
+    }
 
-void AuctionHouseBot::debug()
-{
 }

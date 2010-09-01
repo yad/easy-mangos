@@ -518,7 +518,7 @@ bool ChatHandler::HandleAHBotOptionsCommand(char* args)
     }
     else if (strncmp(opt,"reloaddbconfig",l) == 0)
     {
-        auctionbot.LoadDbConfig();
+        //auctionbot.LoadConfig();
         PSendSysMessage("AHBOT> DB Config reloaded");
     }
     else
