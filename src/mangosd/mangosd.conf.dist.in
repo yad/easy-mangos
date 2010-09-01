@@ -1562,8 +1562,8 @@ AuctionHouseBot.Bind.Equip = 1
 AuctionHouseBot.Bind.Use = 1
 AuctionHouseBot.Bind.Quest = 0
 
-AuctionHouseBot.ItemsPerCycle.Boost = 2000
-AuctionHouseBot.ItemsPerCycle.Normal = 200
+AuctionHouseBot.ItemsPerCycle.Boost = 1000
+AuctionHouseBot.ItemsPerCycle.Normal = 20
 AuctionHouseBot.BuyPrice.Seller = 1
 AuctionHouseBot.BuyPrice.Buyer = 0
 AuctionHouseBot.Allience.Price.Ratio = 50
@@ -1578,10 +1578,10 @@ AuctionHouseBot.Items.ReqSkill.Min = 0
 AuctionHouseBot.Items.ReqSkill.Max = 0
 
 AuctionHouseBot.Items.Amount.Grey = 0
-AuctionHouseBot.Items.Amount.White = 200
-AuctionHouseBot.Items.Amount.Green = 250
-AuctionHouseBot.Items.Amount.Blue = 150
-AuctionHouseBot.Items.Amount.Purple = 500
+AuctionHouseBot.Items.Amount.White = 2000
+AuctionHouseBot.Items.Amount.Green = 2500
+AuctionHouseBot.Items.Amount.Blue = 1500
+AuctionHouseBot.Items.Amount.Purple = 1000
 AuctionHouseBot.Items.Amount.Orange = 0
 AuctionHouseBot.Items.Amount.Yellow = 0
 
