@@ -1470,17 +1470,36 @@ Network.KickOnBadPacket = 0
 ###################################################################################################################
 # AUCTION HOUSE BOT SETTINGS
 #
-#    AuctionHouseBot.Seller.Enabled
-#        Enable/Disable the part of AHBot that puts items up for auction
-#    Default 0 (disabled)
+#    AuctionHouseBot.Alliance.Items.Amount.Ratio
+#        Enable/Disable (disabled if 0) the part of AHBot that puts items up for auction on Alliance AH
+#    Default 100 (Enabled with 100% of items specified in AuctionHouse.Items.Amount.color section)
 #
+#    AuctionHouseBot.Horde.Items.Amount.Ratio
+#        Enable/Disable (disabled if 0) the part of AHBot that puts items up for auction on Horde AH
+#    Default 100 (Enabled with 100% of items specified in AuctionHouse.Items.Amount.color section)
+#
+#    AuctionHouseBot.Neutral.Items.Amount.Ratio
+#        Enable/Disable (disabled if 0) the part of AHBot that puts items up for auction on Neutral AH
+#    Default 100 (Enabled with 100% of items specified in AuctionHouse.Items.Amount.color section)
+#
+#    AuctionHouseBot.Alliance.Items.Amount.Ratio
+#        Enable/Disable (disabled if 0) the part of AHBot that puts items up for auction on Alliance AH
+#    Default 100 (Enabled with 100% of items specified in AuctionHouse.Items.Amount.color section)
 #    AuctionHouseBot.Buyer.Enabled
 #        Enable/Disable the part of AHBot that buys items from players
 #    Default 0 (disabled)
 #
 #    AuctionHouseBot.Name
 #        If you want show other name in place of "AHBot" to auction house, just type it between the quote
-#    Default: "" ("AHBot" name)
+#    Default: "AhBot" ("AhBot" name)
+#
+#    AuctionHouseBot.MinTime
+#        Minimum time for the new auction
+#    Default 1 (Hour)
+#
+#    AuctionHouseBot.MaxTime
+#        Maximum time for the new auction
+#    Default 72 (Hours)
 #
 #    AuctionHouseBot.Items.Vendor
 #        Include items that can be bought from vendors.
@@ -1489,33 +1508,6 @@ Network.KickOnBadPacket = 0
 #    AuctionHouseBot.Items.Loot
 #        Include items that can be looted or fished for.
 #    Default 1
-#
-#
-#    AuctionHouseBot.Items.ItemLevel.*
-#        Prevent seller from listing items below/above this item level
-#    Default 0 (Disabled)
-#
-#    AuctionHouseBot.Items.ReqLevel.*
-#        Prevent seller from listing items below/above this required level
-#    Default 0 (Disabled)
-#
-#    AuctionHouseBot.Items.ReqSkill.*
-#        Prevent seller from listing items below/above this skill level
-#    Default 0 (Disabled)
-#
-#
-#    AuctionHouseBot.Tradegoods.ItemLevel.*
-#        Prevent seller from listing tradegoods below/above this item level
-#    Default 0 (Disabled)
-#
-#    AuctionHouseBot.Tradegoods.ReqLevel.*
-#        Prevent seller from listing tradegoods below/above this required level
-#    Default 0 (Disabled)
-#
-#    AuctionHouseBot.Tradegoods.ReqSkill.*
-#        Prevent seller from listing tradegoods below/above this skill level
-#    Default 0 (Disabled)
-#
 #
 #    AuctionHouseBot.Items.Misc
 #        Include misc. items.
@@ -1529,19 +1521,60 @@ Network.KickOnBadPacket = 0
 #            Use    - Items that bind on use           Default 1 (Allowed)
 #            Quest  - Quest Items                      Default 0 (Not Allowed)
 #
-#    AuctionHouseBot.ItemsPerCycle
-#        Number of Items to Add/Remove from the AH during mass operations
-#    Default 200
+#    AuctionHouseBot.ItemsPerCycle.Boost
+#        This value is used to fill DB faster than normal when there is more than this value missed items.
+#        Normaly this value is used only first start of the server with empty auction table.
+#    Default 1000
+#
+#    AuctionHouseBot.ItemsPerCycle.Normal
+#        This value is used to fill DB normal way with less cpu/db using.
+#        Normaly this value is used always when auction table is already initialised.
+#    Default 20
 #
 #    AuctionHouseBot.BuyPrice.Seller
 #        Should the Seller use BuyPrice or SellPrice to determine Bid Prices
-#    Default 0 (use SellPrice)
+#    Default 1 (use SellPrice)
 #
 #    AuctionHouseBot.BuyPrice.Buyer
 #        Should the Buyer use BuyPrice or SellPrice to determine Bid Prices
 #    Default 0 (use SellPrice)
 #
-#    All other settings have been moved to sql
+#    AuctionHouseBot.Alliance.Price.Ratio
+#        Define the price of selled item here for the Alliance Auction House
+#    Default 50
+#
+#    AuctionHouseBot.Horde.Price.Ratio
+#        Define the price of selled item here for the Horde Auction House
+#    Default 50
+#
+#    AuctionHouseBot.Alliance.Price.Ratio
+#        Define the price of selled item here for the Neutral Auction House
+#    Default 50
+#
+#    AuctionHouseBot.Items.ItemLevel.*
+#        Prevent seller from listing items below/above this item level
+#    Default 0 (Disabled)
+#
+#    AuctionHouseBot.Items.ReqLevel.*
+#        Prevent seller from listing items below/above this required level
+#    Default 0 (Disabled)
+#
+#    AuctionHouseBot.Items.ReqSkill.*
+#        Prevent seller from listing items below/above this skill level
+#    Default 0 (Disabled)
+#
+#    AuctionHouseBot.Items.Amount.*
+#        Define here for every items quality how many item you whant to be show in Auction House
+#        This value will be adjusted by AuctionHouseBot.FACTION.Items.Amount.Ratio to define exact amount of
+#        items will be show on Auction House
+#    Default 0, 2000, 2500, 1500, 1000, 0, 0 (grey, white, green, blue, purple, orange, yellow)
+#
+#    AustionHouseBot.Class.*
+#        Here you can set the class of items you prefer to be show on AH
+#        These value is preference value, it's not percentage. So the maximum is 10.
+#        The minimum is 0 (disabled).
+#    Default 6,4,8,3,8,1,2,10,1,6,1,1,1,5,3 
+#
 #
 ###################################################################################################################
 
