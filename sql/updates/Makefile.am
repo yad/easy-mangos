@@ -66,6 +66,34 @@ pkgdata_DATA = \
 	10307_03_mangos_scripted_event_id.sql \
 	10312_01_characters_character_aura.sql \
 	10312_02_characters_pet_aura.sql \
+	10314_01_mangos_mangos_string.sql \
+	10314_02_mangos_command.sql \
+	10323_01_mangos_mangos_string.sql \
+	10323_02_mangos_command.sql \
+	10331_01_mangos_mangos_string.sql \
+	10331_02_mangos_command.sql \
+	10332_01_characters_character_aura.sql \
+	10332_02_characters_pet_aura.sql \
+	10342_01_mangos_mangos_string.sql \
+	10342_02_mangos_command.sql \
+	10349_01_mangos_spell_proc_event.sql \
+	10350_02_mangos_command.sql \
+	10353_01_mangos_mangos_string.sql \
+	10353_02_mangos_command.sql \
+	10362_01_mangos_creature_movement_template.sql \
+	10365_01_mangos_creature_ai_scripts.sql \
+	10381_01_mangos_creature_model_race.sql \
+	10400_01_mangos_mangos_string.sql \
+	10409_01_mangos_spell_chain.sql \
+	10409_02_mangos_spell_proc_event.sql \
+	10410_01_mangos_spell_chain.sql \
+	10411_01_mangos_spell_proc_event.sql \
+	10416_01_mangos_spell_proc_event.sql \
+	10419_01_mangos_spell_chain.sql \
+	10422_01_mangos_spell_proc_event.sql \
+	10423_01_mangos_spell_chain.sql \
+	10427_01_mangos_spell_proc_event.sql \
+	10430_01_mangos_spell_chain.sql \
 	README
 
 ## Additional files to include when running 'make dist'
@@ -112,4 +140,32 @@ EXTRA_DIST = \
 	10307_03_mangos_scripted_event_id.sql \
 	10312_01_characters_character_aura.sql \
 	10312_02_characters_pet_aura.sql \
+	10314_01_mangos_mangos_string.sql \
+	10314_02_mangos_command.sql \
+	10323_01_mangos_mangos_string.sql \
+	10323_02_mangos_command.sql \
+	10331_01_mangos_mangos_string.sql \
+	10331_02_mangos_command.sql \
+	10332_01_characters_character_aura.sql \
+	10332_02_characters_pet_aura.sql \
+	10342_01_mangos_mangos_string.sql \
+	10342_02_mangos_command.sql \
+	10349_01_mangos_spell_proc_event.sql \
+	10350_02_mangos_command.sql \
+	10353_01_mangos_mangos_string.sql \
+	10353_02_mangos_command.sql \
+	10362_01_mangos_creature_movement_template.sql \
+	10365_01_mangos_creature_ai_scripts.sql \
+	10381_01_mangos_creature_model_race.sql \
+	10400_01_mangos_mangos_string.sql \
+	10409_01_mangos_spell_chain.sql \
+	10409_02_mangos_spell_proc_event.sql \
+	10410_01_mangos_spell_chain.sql \
+	10411_01_mangos_spell_proc_event.sql \
+	10416_01_mangos_spell_proc_event.sql \
+	10419_01_mangos_spell_chain.sql \
+	10422_01_mangos_spell_proc_event.sql \
+	10423_01_mangos_spell_chain.sql \
+	10427_01_mangos_spell_proc_event.sql \
+	10430_01_mangos_spell_chain.sql \
 	README

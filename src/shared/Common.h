@@ -65,7 +65,7 @@
 // must be the first thing to include for it to work
 #include "MemoryLeaks.h"
 
-#include "Utilities/UnorderedMap.h"
+#include "Utilities/UnorderedMapSet.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -87,6 +87,7 @@
 #include <sstream>
 #include <algorithm>
 
+#include "Errors.h"
 #include "LockedQueue.h"
 #include "Threading.h"
 

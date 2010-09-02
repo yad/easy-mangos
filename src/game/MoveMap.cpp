@@ -1,7 +1,7 @@
 
 #include "Map.h"
 #include "Log.h"
-#include "Utilities/UnorderedMap.h"
+#include "Utilities/UnorderedMapSet.h"
 #include "World.h"
 
 inline uint32 packTileID(uint32 tileX, uint32 tileY) { return tileX<<16 | tileY; }

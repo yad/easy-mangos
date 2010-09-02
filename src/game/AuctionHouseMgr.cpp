@@ -16,14 +16,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "Common.h"
+#include "AuctionHouseMgr.h"
 #include "Database/DatabaseEnv.h"
 #include "Database/SQLStorage.h"
 #include "DBCStores.h"
 #include "ProgressBar.h"
 
 #include "AccountMgr.h"
-#include "AuctionHouseMgr.h"
 #include "Item.h"
 #include "Language.h"
 #include "Log.h"
@@ -84,7 +83,7 @@ void AuctionHouseMgr::SendAuctionWonMail( AuctionEntry *auction )
     if(!pItem)
         return;
 
-    uint64 bidder_guid = MAKE_NEW_GUID(auction->bidder, 0, HIGHGUID_PLAYER);
+    ObjectGuid bidder_guid = ObjectGuid(HIGHGUID_PLAYER, auction->bidder);
     Player *bidder = sObjectMgr.GetPlayer(bidder_guid);
 
     uint32 bidder_accId = 0;
@@ -105,26 +104,27 @@ void AuctionHouseMgr::SendAuctionWonMail( AuctionEntry *auction )
             bidder_accId = sObjectMgr.GetPlayerAccountIdByGUID(bidder_guid);
             bidder_security = sAccountMgr.GetSecurity(bidder_accId);
 
-            if(bidder_security > SEC_PLAYER )               // not do redundant DB requests
+            if (bidder_security > SEC_PLAYER )              // not do redundant DB requests
             {
-                if(!sObjectMgr.GetPlayerNameByGUID(bidder_guid,bidder_name))
+                if (!sObjectMgr.GetPlayerNameByGUID(bidder_guid, bidder_name))
                     bidder_name = sObjectMgr.GetMangosStringForDBCLocale(LANG_UNKNOWN);
             }
         }
 
-        if( bidder_security > SEC_PLAYER )
+        if (bidder_security > SEC_PLAYER)
         {
+            ObjectGuid owner_guid = ObjectGuid(HIGHGUID_PLAYER, auction->owner);
             std::string owner_name;
-            if(!sObjectMgr.GetPlayerNameByGUID(auction->owner,owner_name))
+            if(!sObjectMgr.GetPlayerNameByGUID(owner_guid, owner_name))
                 owner_name = sObjectMgr.GetMangosStringForDBCLocale(LANG_UNKNOWN);
 
-            uint32 owner_accid = sObjectMgr.GetPlayerAccountIdByGUID(auction->owner);
+            uint32 owner_accid = sObjectMgr.GetPlayerAccountIdByGUID(owner_guid);
 
             sLog.outCommand(bidder_accId,"GM %s (Account: %u) won item in auction: %s (Entry: %u Count: %u) and pay money: %u. Original owner %s (Account: %u)",
                 bidder_name.c_str(),bidder_accId,pItem->GetProto()->Name1,pItem->GetEntry(),pItem->GetCount(),auction->bid,owner_name.c_str(),owner_accid);
         }
     }
-    else if(!bidder)
+    else if (!bidder)
         bidder_accId = sObjectMgr.GetPlayerAccountIdByGUID(bidder_guid);
 
     // receiver exist
@@ -169,7 +169,7 @@ void AuctionHouseMgr::SendAuctionWonMail( AuctionEntry *auction )
 
 void AuctionHouseMgr::SendAuctionSalePendingMail( AuctionEntry * auction )
 {
-    uint64 owner_guid = MAKE_NEW_GUID(auction->owner, 0, HIGHGUID_PLAYER);
+    ObjectGuid owner_guid = ObjectGuid(HIGHGUID_PLAYER, auction->owner);
     Player *owner = sObjectMgr.GetPlayer(owner_guid);
 
     // owner exist (online or offline)
@@ -199,7 +199,7 @@ void AuctionHouseMgr::SendAuctionSalePendingMail( AuctionEntry * auction )
 //call this method to send mail to auction owner, when auction is successful, it does not clear ram
 void AuctionHouseMgr::SendAuctionSuccessfulMail( AuctionEntry * auction )
 {
-    uint64 owner_guid = MAKE_NEW_GUID(auction->owner, 0, HIGHGUID_PLAYER);
+    ObjectGuid owner_guid = ObjectGuid(HIGHGUID_PLAYER, auction->owner);
     Player *owner = sObjectMgr.GetPlayer(owner_guid);
 
     uint32 owner_accId = 0;
@@ -249,7 +249,7 @@ void AuctionHouseMgr::SendAuctionExpiredMail( AuctionEntry * auction )
         return;
     }
 
-    uint64 owner_guid = MAKE_NEW_GUID(auction->owner, 0, HIGHGUID_PLAYER);
+    ObjectGuid owner_guid = ObjectGuid(HIGHGUID_PLAYER, auction->owner);
     Player *owner = sObjectMgr.GetPlayer(owner_guid);
 
     uint32 owner_accId = 0;
@@ -438,8 +438,8 @@ void AuctionHouseMgr::LoadAuctions()
 
 void AuctionHouseMgr::AddAItem( Item* it )
 {
-    ASSERT( it );
-    ASSERT( mAitems.find(it->GetGUIDLow()) == mAitems.end());
+    MANGOS_ASSERT( it );
+    MANGOS_ASSERT( mAitems.find(it->GetGUIDLow()) == mAitems.end());
     mAitems[it->GetGUIDLow()] = it;
 }
 
@@ -686,13 +686,13 @@ bool AuctionEntry::BuildAuctionInfo(WorldPacket & data) const
     data << uint32(pItem->GetCount());                      //item->count
     data << uint32(pItem->GetSpellCharges());               //item->charge FFFFFFF
     data << uint32(0);                                      //Unknown
-    data << uint64(owner);                                  //Auction->owner
+    data << ObjectGuid(HIGHGUID_PLAYER, owner);             //Auction->owner
     data << uint32(startbid);                               //Auction->startbid (not sure if useful)
     data << uint32(bid ? GetAuctionOutBid() : 0);
     //minimal outbid
     data << uint32(buyout);                                 //auction->buyout
     data << uint32((expire_time-time(NULL))*IN_MILLISECONDS);//time left
-    data << uint64(bidder) ;                                //auction->bidder current
+    data << ObjectGuid(HIGHGUID_PLAYER, bidder);            //auction->bidder current
     data << uint32(bid);                                    //current bid
     return true;
 }

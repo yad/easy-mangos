@@ -24,11 +24,12 @@
  * types of object at the same time.
  */
 
+#include <cassert>
 #include <map>
 #include <vector>
 #include "Platform/Define.h"
 #include "Utilities/TypeList.h"
-#include "Utilities/UnorderedMap.h"
+#include "Utilities/UnorderedMapSet.h"
 #include "GameSystem/GridRefManager.h"
 
 template<class OBJECT, class KEY_TYPE>
@@ -89,7 +90,7 @@ class TypeUnorderedMapContainer
             }
             else
             {
-                ASSERT(i->second == obj && "Object with certain key already in but objects are different!");
+                assert(i->second == obj && "Object with certain key already in but objects are different!");
                 return false;
             }
         }

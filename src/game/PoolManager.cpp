@@ -339,8 +339,8 @@ void PoolGroup<T>::SpawnObject(SpawnedPoolData& spawns, uint32 limit, uint32 tri
 
         if (obj->guid == triggerFrom)
         {
-            ASSERT(spawns.IsSpawnedObject<T>(obj->guid));
-            ASSERT(spawns.GetSpawnedObjects(poolId) > 0);
+            MANGOS_ASSERT(spawns.IsSpawnedObject<T>(obj->guid));
+            MANGOS_ASSERT(spawns.GetSpawnedObjects(poolId) > 0);
             ReSpawn1Object(obj);
             triggerFrom = 0;
             continue;
@@ -457,7 +457,7 @@ template <>
 void PoolGroup<Creature>::ReSpawn1Object(PoolObject* obj)
 {
     if (CreatureData const* data = sObjectMgr.GetCreatureData(obj->guid))
-        if (Creature* pCreature = ObjectAccessor::GetCreatureInWorld(MAKE_NEW_GUID(obj->guid, data->id, HIGHGUID_UNIT)))
+        if (Creature* pCreature = ObjectAccessor::GetCreatureInWorld(ObjectGuid(HIGHGUID_UNIT, data->id, obj->guid)))
             pCreature->GetMap()->Add(pCreature);
 }
 

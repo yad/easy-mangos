@@ -16,9 +16,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "Common.h"
-#include "Database/SQLStorage.h"
+#include "InstanceSaveMgr.h"
 
+#include "Database/SQLStorage.h"
 #include "Player.h"
 #include "GridNotifiers.h"
 #include "Log.h"
@@ -27,7 +27,6 @@
 #include "Map.h"
 #include "MapManager.h"
 #include "MapInstanced.h"
-#include "InstanceSaveMgr.h"
 #include "Timer.h"
 #include "GridNotifiersImpl.h"
 #include "Transports.h"
@@ -74,7 +73,7 @@ void InstanceSave::SaveToDB()
     Map *map = sMapMgr.FindMap(GetMapId(),m_instanceid);
     if(map)
     {
-        ASSERT(map->IsDungeon());
+        MANGOS_ASSERT(map->IsDungeon());
         InstanceData *iData = ((InstanceMap *)map)->GetInstanceData();
         if(iData && iData->Save())
         {
@@ -86,7 +85,7 @@ void InstanceSave::SaveToDB()
     CharacterDatabase.PExecute("INSERT INTO instance VALUES ('%u', '%u', '"UI64FMTD"', '%u', '%s')", m_instanceid, GetMapId(), (uint64)GetResetTimeForDB(), GetDifficulty(), data.c_str());
 }
 
-time_t InstanceSave::GetResetTimeForDB()
+time_t InstanceSave::GetResetTimeForDB() const
 {
     // only save the reset time for normal instances
     const MapEntry *entry = sMapStore.LookupEntry(GetMapId());
@@ -97,12 +96,12 @@ time_t InstanceSave::GetResetTimeForDB()
 }
 
 // to cache or not to cache, that is the question
-InstanceTemplate const* InstanceSave::GetTemplate()
+InstanceTemplate const* InstanceSave::GetTemplate() const
 {
     return ObjectMgr::GetInstanceTemplate(m_mapid);
 }
 
-MapEntry const* InstanceSave::GetMapEntry()
+MapEntry const* InstanceSave::GetMapEntry() const
 {
     return sMapStore.LookupEntry(m_mapid);
 }
@@ -125,6 +124,19 @@ bool InstanceSave::UnloadIfEmpty()
 }
 
 //== InstanceResetScheduler functions ======================
+
+uint32 InstanceResetScheduler::GetMaxResetTimeFor(MapDifficulty const* mapDiff)
+{
+    if (!mapDiff || !mapDiff->resetTime)
+        return 0;
+
+    uint32 delay = uint32(mapDiff->resetTime / DAY * sWorld.getConfig(CONFIG_FLOAT_RATE_INSTANCE_RESET_TIME)) * DAY;
+
+    if (delay < DAY)                                        // the reset_delay must be at least one day
+        delay = DAY;
+
+    return delay;
+}
 
 void InstanceResetScheduler::LoadResetTimes()
 {
@@ -229,11 +241,7 @@ void InstanceResetScheduler::LoadResetTimes()
         if (!mapDiff->resetTime)
             continue;
 
-        // the reset_delay must be at least one day
-        uint32 period =  uint32(mapDiff->resetTime / DAY * sWorld.getConfig(CONFIG_FLOAT_RATE_INSTANCE_RESET_TIME)) * DAY;
-        if (period < DAY)
-            period = DAY;
-
+        uint32 period = GetMaxResetTimeFor(mapDiff);
         time_t t = GetResetTimeFor(mapid,difficulty);
         if(!t)
         {
@@ -428,7 +436,7 @@ void InstanceSaveManager::RemoveInstanceSave(uint32 InstanceId)
 void InstanceSaveManager::_DelHelper(DatabaseType &db, const char *fields, const char *table, const char *queryTail,...)
 {
     Tokens fieldTokens = StrSplit(fields, ", ");
-    ASSERT(fieldTokens.size() != 0);
+    MANGOS_ASSERT(fieldTokens.size() != 0);
 
     va_list ap;
     char szQueryTail [MAX_QUERY_LEN];
@@ -637,7 +645,7 @@ void InstanceSaveManager::_ResetOrWarnAll(uint32 mapid, Difficulty difficulty, b
 
         // calculate the next reset time
         uint32 diff = sWorld.getConfig(CONFIG_UINT32_INSTANCE_RESET_TIME_HOUR) * HOUR;
-        uint32 period = mapDiff->resetTime * DAY;
+        uint32 period = InstanceResetScheduler::GetMaxResetTimeFor(mapDiff);
         time_t next_reset = ((now + timeLeft + MINUTE) / DAY * DAY) + period + diff;
         // update it in the DB
         CharacterDatabase.PExecute("UPDATE instance_reset SET resettime = '"UI64FMTD"' WHERE mapid = '%d' AND difficulty = '%d'", (uint64)next_reset, mapid, difficulty);

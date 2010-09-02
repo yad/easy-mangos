@@ -19,6 +19,7 @@
 #ifndef MANGOS_MAP_H
 #define MANGOS_MAP_H
 
+#include "Common.h"
 #include "Platform/Define.h"
 #include "Policies/ThreadingModel.h"
 #include "ace/RW_Thread_Mutex.h"
@@ -242,14 +243,16 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
         // must called with RemoveFromWorld
         void RemoveFromActive(WorldObject* obj);
 
+        Player* GetPlayer(ObjectGuid guid);
         Creature* GetCreature(ObjectGuid guid);
         Vehicle* GetVehicle(ObjectGuid guid);
         Pet* GetPet(ObjectGuid guid);
-        Creature* GetCreatureOrPetOrVehicle(ObjectGuid guid);
+        Creature* GetAnyTypeCreature(ObjectGuid guid);      // normal creature or pet or vehicle
         GameObject* GetGameObject(ObjectGuid guid);
         DynamicObject* GetDynamicObject(ObjectGuid guid);
-        Corpse* GetCorpse(ObjectGuid guid);
-        WorldObject* GetWorldObject(ObjectGuid guid);
+        Corpse* GetCorpse(ObjectGuid guid);                 // !!! find corpse can be not in world
+        Unit* GetUnit(ObjectGuid guid);                     // only use if sure that need objects at current map, specially for player case
+        WorldObject* GetWorldObject(ObjectGuid guid);       // only use if sure that need objects at current map, specially for player case
 
         TypeUnorderedMapContainer<AllMapStoredObjectTypes>& GetObjectsStore() { return m_objectsStore; }
 
@@ -296,8 +299,8 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
 
         NGridType* getNGrid(uint32 x, uint32 y) const
         {
-            ASSERT(x < MAX_NUMBER_OF_GRIDS);
-            ASSERT(y < MAX_NUMBER_OF_GRIDS);
+            MANGOS_ASSERT(x < MAX_NUMBER_OF_GRIDS);
+            MANGOS_ASSERT(y < MAX_NUMBER_OF_GRIDS);
             return i_grids[x][y];
         }
 
