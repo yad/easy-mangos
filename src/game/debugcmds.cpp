@@ -368,15 +368,14 @@ bool ChatHandler::HandleDebugMoveMapCommand(char* args)
         const dtMeshTile* tile;
         const dtPoly* poly;
 
-        if(!poly)
+        if(!navmesh->getTileAndPolyByRef(polyRef, &tile, &poly))
             PSendSysMessage("Dt     [??,??] (invalid poly, probably no tile loaded)");
         else
         {
-            navmesh->getTileAndPolyByRef(polyRef, &tile, &poly);
             if(tile)
                 PSendSysMessage("Dt     [%02i,%02i]", tile->header->x, tile->header->y);
             else
-                PSendSysMessage("Dt     [??,??] (no tile loaded)");
+                PSendSysMessage("Dt     [??,??] (invalid tile)");
         }
 
         // mmtile file header -> navmesh tile location

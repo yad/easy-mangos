@@ -50,7 +50,6 @@ dtPolyRef PathInfo::getPathPolyByPosition(float x, float y, float z)
 bool PathInfo::isPointInPolyBounds(float x, float y, float z, float &distance, dtPolyRef polyRef)
 {
     float point[3] = {y, z, x};
-    int polyindex;
 
     const dtMeshTile* tile;
     const dtPoly* poly;
