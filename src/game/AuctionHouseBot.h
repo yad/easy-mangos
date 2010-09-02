@@ -326,7 +326,7 @@ private:
     ACE_Vector<uint32> npcItems;
     ACE_Vector<uint32> lootItems;
     
-    std::vector<std::vector<std::vector<uint32>>> ItemPool;
+    std::vector<std::vector<std::vector<uint32> > > ItemPool;
     
     bool debug_Out;
 
