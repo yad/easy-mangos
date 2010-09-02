@@ -37,7 +37,7 @@ uint32 AuctionHouseBot::SetStat(AHBConfig& config)
     };
 
 
-    std::vector<std::vector<uint32>> ItemsInAH(AHB_QUALITY_MAX, vector<uint32> (MAX_ITEM_CLASS));
+    std::vector<std::vector<uint32> > ItemsInAH(AHB_QUALITY_MAX, vector<uint32> (MAX_ITEM_CLASS));
 
     AuctionHouseEntry const* ahEntry = sAuctionMgr.GetAuctionHouseEntryByFaction(config.GetAHFID());
     AuctionHouseObject* auctionHouse = sAuctionMgr.GetAuctionsMap(ahEntry);
@@ -80,7 +80,7 @@ uint32 AuctionHouseBot::SetStat(AHBConfig& config)
     return count;
 }
 
-bool AuctionHouseBot::getRandomArray( AHBConfig& config, std::vector<s_randomArray>& ra, const std::vector<std::vector<uint32>>& addedItem  )
+bool AuctionHouseBot::getRandomArray( AHBConfig& config, std::vector<s_randomArray>& ra, const std::vector<std::vector<uint32> >& addedItem  )
 {
     ra.clear();
     s_randomArray miss_item;
@@ -131,7 +131,7 @@ void AuctionHouseBot::addNewAuctions(AHBConfig& config)
     AuctionHouseObject* auctionHouse = sAuctionMgr.GetAuctionsMap(ahEntry);
 
     std::vector<s_randomArray> RandArray;
-    std::vector<std::vector<uint32>> ItemsAdded(AHB_QUALITY_MAX,std::vector<uint32> (MAX_ITEM_CLASS));
+    std::vector<std::vector<uint32> > ItemsAdded(AHB_QUALITY_MAX,std::vector<uint32> (MAX_ITEM_CLASS));
     // only insert a few at a time, so as not to peg the processor
     while (getRandomArray(config,RandArray, ItemsAdded) && (items>0))
     {

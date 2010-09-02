@@ -347,7 +347,7 @@ private:
     void    addNewAuctions(AHBConfig& config);
     void    addNewAuctionBuyerBotBid(AHBConfig *config, WorldSession *session);
     uint32  SetStat(AHBConfig& config);
-    bool    getRandomArray( AHBConfig& config, std::vector<s_randomArray>& ra, const std::vector<std::vector<uint32>>& addedItem  );
+    bool    getRandomArray( AHBConfig& config, std::vector<s_randomArray>& ra, const std::vector<std::vector<uint32> >& addedItem  );
     void    SetPricesOfItem(const Item *item, AHBConfig& config, uint32& buyp, uint32& bidp, uint32& stackcnt, e_ahb_quality AHB_ITEMS);
 public:
     AuctionHouseBot();
