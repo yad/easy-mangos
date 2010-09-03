@@ -37,7 +37,7 @@
 #include "UpdateMask.h"
 #include "Unit.h"
 #include "Language.h"
-#include "AuctionHouseBot.h"
+#include "AuctionHouseBot/AuctionHouseBot.h"
 #include "DBCStores.h"
 #include "BattleGroundMgr.h"
 #include "Item.h"

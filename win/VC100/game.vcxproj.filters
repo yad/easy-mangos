@@ -451,7 +451,7 @@
     <ClCompile Include="..\..\src\game\UnitAuraProcHandler.cpp">
       <Filter>World/Handlers</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\game\AuctionHouseBot.cpp">
+    <ClCompile Include="..\..\src\game\AuctionHouseBot\AuctionHouseBot.cpp">
       <Filter>AhBot</Filter>
     </ClCompile>
   </ItemGroup>
@@ -847,7 +847,7 @@
     <ClInclude Include="..\..\src\game\Camera.h">
       <Filter>Object</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\game\AuctionHouseBot.h">
+    <ClInclude Include="..\..\src\game\AuctionHouseBot\AuctionHouseBot.h">
       <Filter>AhBot</Filter>
     </ClInclude>
   </ItemGroup>

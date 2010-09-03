@@ -52,7 +52,7 @@
 #include "InstanceData.h"
 #include "CreatureEventAIMgr.h"
 #include "DBCEnums.h"
-#include "AuctionHouseBot.h"
+#include "AuctionHouseBot/AuctionHouseBot.h"
 
 bool ChatHandler::HandleAHBotOptionsCommand(char* args)
 {

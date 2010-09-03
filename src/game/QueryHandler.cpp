@@ -33,7 +33,7 @@
 #include "Pet.h"
 #include "MapManager.h"
 #include "Config/Config.h"
-#include "AuctionHouseBot.h"
+#include "AuctionHouseBot/AuctionHouseBot.h"
 
 void WorldSession::SendNameQueryOpcode(Player *p)
 {
@@ -134,7 +134,7 @@ void WorldSession::SendFakeNameForAHBotQueryOPcode()
     WorldPacket data( SMSG_NAME_QUERY_RESPONSE, (8+1+1+1+1+1+10) );
     data.appendPackGUID(auctionbot.GetAHBObjectGuid().GetRawValue());
     data << uint8(0);													// added in 3.1; if > 1, then end of packet
-    data << sWorld.GetAHBotName();										// played name
+    data << auctionbot.GetAHBotName();										// played name
     data << uint8(0);													// realm name for cross realm BG usage
     data << uint8(0);													// race
     data << uint8(0);													// gender
