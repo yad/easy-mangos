@@ -1578,9 +1578,9 @@ Network.KickOnBadPacket = 0
 #
 ###################################################################################################################
 
-AuctionHouseBot.Alliance.Items.Amount.Ratio = 10
-AuctionHouseBot.Horde.Items.Amount.Ratio = 10
-AuctionHouseBot.Neutral.Items.Amount.Ratio = 10
+AuctionHouseBot.Alliance.Items.Amount.Ratio = 100
+AuctionHouseBot.Horde.Items.Amount.Ratio = 100
+AuctionHouseBot.Neutral.Items.Amount.Ratio = 100
 
 AuctionHouseBot.Name = "AhBot"
 AuctionHouseBot.MinTime = 1

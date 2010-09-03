@@ -709,13 +709,50 @@ void AuctionHouseBot::Commands(uint32 command, uint32 ahMapID, uint32 col, char*
 
 void AuctionHouseBot::LoadSellerValues(AHBConfig& config)
 {
-    config.ItemInfos[E_GREY].SetAmountOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_GREY_AMOUNT));
-    config.ItemInfos[E_WHITE].SetAmountOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_WHITE_AMOUNT));
-    config.ItemInfos[E_GREEN].SetAmountOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_GREEN_AMOUNT));
-    config.ItemInfos[E_BLUE].SetAmountOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_BLUE_AMOUNT));
-    config.ItemInfos[E_PURPLE].SetAmountOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_PURPLE_AMOUNT));
-    config.ItemInfos[E_ORANGE].SetAmountOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_ORANGE_AMOUNT));
-    config.ItemInfos[E_YELLOW].SetAmountOfItems(sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_YELLOW_AMOUNT));
+    if (sWorld.getConfig(CONFIG_UINT32_AHBOT_ALLIANCE_RATIO)>10000) sWorld.setConfig(CONFIG_UINT32_AHBOT_ALLIANCE_RATIO,10000);
+    if (sWorld.getConfig(CONFIG_UINT32_AHBOT_HORDE_RATIO)>10000) sWorld.setConfig(CONFIG_UINT32_AHBOT_HORDE_RATIO,10000);
+    if (sWorld.getConfig(CONFIG_UINT32_AHBOT_NEUTRAL_RATIO)>10000) sWorld.setConfig(CONFIG_UINT32_AHBOT_NEUTRAL_RATIO,10000);
+
+    switch(config.GetAHID())
+    {
+    case 2:
+        config.ItemInfos[E_GREY].SetAmountOfItems(((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_GREY_AMOUNT)*sWorld.getConfig(CONFIG_UINT32_AHBOT_ALLIANCE_RATIO))/100));
+        config.ItemInfos[E_WHITE].SetAmountOfItems(((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_WHITE_AMOUNT)*sWorld.getConfig(CONFIG_UINT32_AHBOT_ALLIANCE_RATIO))/100));
+        config.ItemInfos[E_GREEN].SetAmountOfItems(((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_GREEN_AMOUNT)*sWorld.getConfig(CONFIG_UINT32_AHBOT_ALLIANCE_RATIO))/100));
+        config.ItemInfos[E_BLUE].SetAmountOfItems(((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_BLUE_AMOUNT)*sWorld.getConfig(CONFIG_UINT32_AHBOT_ALLIANCE_RATIO))/100));
+        config.ItemInfos[E_PURPLE].SetAmountOfItems(((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_PURPLE_AMOUNT)*sWorld.getConfig(CONFIG_UINT32_AHBOT_ALLIANCE_RATIO))/100));
+        config.ItemInfos[E_ORANGE].SetAmountOfItems(((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_ORANGE_AMOUNT)*sWorld.getConfig(CONFIG_UINT32_AHBOT_ALLIANCE_RATIO))/100));
+        config.ItemInfos[E_YELLOW].SetAmountOfItems(((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_YELLOW_AMOUNT)*sWorld.getConfig(CONFIG_UINT32_AHBOT_ALLIANCE_RATIO))/100));
+        break;
+    case 6:
+        config.ItemInfos[E_GREY].SetAmountOfItems(((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_GREY_AMOUNT)*sWorld.getConfig(CONFIG_UINT32_AHBOT_HORDE_RATIO))/100));
+        config.ItemInfos[E_WHITE].SetAmountOfItems(((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_WHITE_AMOUNT)*sWorld.getConfig(CONFIG_UINT32_AHBOT_HORDE_RATIO))/100));
+        config.ItemInfos[E_GREEN].SetAmountOfItems(((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_GREEN_AMOUNT)*sWorld.getConfig(CONFIG_UINT32_AHBOT_HORDE_RATIO))/100));
+        config.ItemInfos[E_BLUE].SetAmountOfItems(((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_BLUE_AMOUNT)*sWorld.getConfig(CONFIG_UINT32_AHBOT_HORDE_RATIO))/100));
+        config.ItemInfos[E_PURPLE].SetAmountOfItems(((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_PURPLE_AMOUNT)*sWorld.getConfig(CONFIG_UINT32_AHBOT_HORDE_RATIO))/100));
+        config.ItemInfos[E_ORANGE].SetAmountOfItems(((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_ORANGE_AMOUNT)*sWorld.getConfig(CONFIG_UINT32_AHBOT_HORDE_RATIO))/100));
+        config.ItemInfos[E_YELLOW].SetAmountOfItems(((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_YELLOW_AMOUNT)*sWorld.getConfig(CONFIG_UINT32_AHBOT_HORDE_RATIO))/100));
+        break;
+    case 7:
+        config.ItemInfos[E_GREY].SetAmountOfItems(((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_GREY_AMOUNT)*sWorld.getConfig(CONFIG_UINT32_AHBOT_NEUTRAL_RATIO))/100));
+        config.ItemInfos[E_WHITE].SetAmountOfItems(((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_WHITE_AMOUNT)*sWorld.getConfig(CONFIG_UINT32_AHBOT_NEUTRAL_RATIO))/100));
+        config.ItemInfos[E_GREEN].SetAmountOfItems(((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_GREEN_AMOUNT)*sWorld.getConfig(CONFIG_UINT32_AHBOT_NEUTRAL_RATIO))/100));
+        config.ItemInfos[E_BLUE].SetAmountOfItems(((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_BLUE_AMOUNT)*sWorld.getConfig(CONFIG_UINT32_AHBOT_NEUTRAL_RATIO))/100));
+        config.ItemInfos[E_PURPLE].SetAmountOfItems(((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_PURPLE_AMOUNT)*sWorld.getConfig(CONFIG_UINT32_AHBOT_NEUTRAL_RATIO))/100));
+        config.ItemInfos[E_ORANGE].SetAmountOfItems(((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_ORANGE_AMOUNT)*sWorld.getConfig(CONFIG_UINT32_AHBOT_NEUTRAL_RATIO))/100));
+        config.ItemInfos[E_YELLOW].SetAmountOfItems(((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_YELLOW_AMOUNT)*sWorld.getConfig(CONFIG_UINT32_AHBOT_NEUTRAL_RATIO))/100));
+        break;
+    default:
+        config.ItemInfos[E_GREY].SetAmountOfItems(((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_GREY_AMOUNT)*sWorld.getConfig(CONFIG_UINT32_AHBOT_NEUTRAL_RATIO))/100));
+        config.ItemInfos[E_WHITE].SetAmountOfItems(((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_WHITE_AMOUNT)*sWorld.getConfig(CONFIG_UINT32_AHBOT_NEUTRAL_RATIO))/100));
+        config.ItemInfos[E_GREEN].SetAmountOfItems(((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_GREEN_AMOUNT)*sWorld.getConfig(CONFIG_UINT32_AHBOT_NEUTRAL_RATIO))/100));
+        config.ItemInfos[E_BLUE].SetAmountOfItems(((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_BLUE_AMOUNT)*sWorld.getConfig(CONFIG_UINT32_AHBOT_NEUTRAL_RATIO))/100));
+        config.ItemInfos[E_PURPLE].SetAmountOfItems(((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_PURPLE_AMOUNT)*sWorld.getConfig(CONFIG_UINT32_AHBOT_NEUTRAL_RATIO))/100));
+        config.ItemInfos[E_ORANGE].SetAmountOfItems(((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_ORANGE_AMOUNT)*sWorld.getConfig(CONFIG_UINT32_AHBOT_NEUTRAL_RATIO))/100));
+        config.ItemInfos[E_YELLOW].SetAmountOfItems(((sWorld.getConfig(CONFIG_UINT32_AHBOT_ITEM_YELLOW_AMOUNT)*sWorld.getConfig(CONFIG_UINT32_AHBOT_NEUTRAL_RATIO))/100));
+        break;
+    }
+
     if (sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_CONSUMABLE_AMOUNT)>10) sWorld.setConfig(CONFIG_UINT32_AHBOT_CLASS_CONSUMABLE_AMOUNT,10);
     if (sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_CONTAINER_AMOUNT)>10) sWorld.setConfig(CONFIG_UINT32_AHBOT_CLASS_CONTAINER_AMOUNT,10);
     if (sWorld.getConfig(CONFIG_UINT32_AHBOT_CLASS_WEAPON_AMOUNT)>10) sWorld.setConfig(CONFIG_UINT32_AHBOT_CLASS_WEAPON_AMOUNT,10);
@@ -921,6 +958,7 @@ void AuctionHouseBot::LoadSellerValues(AHBConfig& config)
 
     if (debug_Out)
     {
+        sLog.outString("\nFor AH number %u",config.GetAHID());
         sLog.outString("GreyItems = %u", config.ItemInfos[E_GREY].GetAmountOfItems());
         sLog.outString("WhiteItems = %u", config.ItemInfos[E_WHITE].GetAmountOfItems());
         sLog.outString("GreenItems = %u", config.ItemInfos[E_GREEN].GetAmountOfItems());
