@@ -873,11 +873,11 @@ void World::LoadConfigSettings(bool reload)
     setConfig(CONFIG_UINT32_AHBOT_NEUTRAL_RATIO             , "AuctionHouseBot.Neutral.Items.Amount.Ratio"  , 0);
 
     SetAHBotName( sConfig.GetStringDefault("AuctionHouseBot.Name", "AHBot" ) );
-    
+
     setConfig(CONFIG_BOOL_AHBOT_BUYER_ALLIANCE_ENABLED      , "AuctionHouseBot.Alliance.Buyer.Enabled"   , false);
     setConfig(CONFIG_BOOL_AHBOT_BUYER_HORDE_ENABLED         , "AuctionHouseBot.Horde.Buyer.Enabled"   , false);
     setConfig(CONFIG_BOOL_AHBOT_BUYER_NEUTRAL_ENABLED       , "AuctionHouseBot.Neutral.Buyer.Enabled"   , false);
-    
+
     setConfig(CONFIG_BOOL_AHBOT_ITEMS_VENDOR                , "AuctionHouseBot.Items.Vendor"    , false);
     setConfig(CONFIG_BOOL_AHBOT_ITEMS_LOOT                  , "AuctionHouseBot.Items.Loot"      , true);
     setConfig(CONFIG_BOOL_AHBOT_ITEMS_MISC                  , "AuctionHouseBot.Items.Misc"      , false);

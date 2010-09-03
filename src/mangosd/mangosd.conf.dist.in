@@ -1573,7 +1573,7 @@ Network.KickOnBadPacket = 0
 #        Here you can set the class of items you prefer to be show on AH
 #        These value is preference value, it's not percentage. So the maximum is 10.
 #        The minimum is 0 (disabled).
-#    Default 6,4,8,3,8,1,2,10,1,6,1,1,1,5,3 
+#    Default 6,4,8,3,8,1,2,10,1,6,1,1,1,5,3
 #
 #
 ###################################################################################################################
