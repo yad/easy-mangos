@@ -3,7 +3,7 @@
 ## Sub-directories to parse
 
 ## CPP flags for includes, defines, etc.
-AM_CPPFLAGS = $(MANGOS_INCLUDES) -I$(srcdir)
+AM_CPPFLAGS = $(MANGOS_INCLUDES) -I$(srcdir)/Include
 
 ## Build detour as convenience library.
 noinst_LIBRARIES = libdetour.a
