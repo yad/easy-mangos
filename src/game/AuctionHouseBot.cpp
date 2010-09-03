@@ -17,7 +17,7 @@ AuctionHouseBot::AuctionHouseBot()
     m_FakeGuid.Set(std::numeric_limits< uint32 >::max());
     ItemPool.resize(AHB_QUALITY_MAX);
     for (uint32 j=0; j<AHB_QUALITY_MAX; ++j)
-        for (uint32 i=0;i<MAX_ITEM_CLASS;++i) 
+        for (uint32 i=0;i<MAX_ITEM_CLASS;++i)
             ItemPool[j].resize(MAX_ITEM_CLASS);
 }
 
@@ -60,7 +60,7 @@ uint32 AuctionHouseBot::SetStat(AHBConfig& config)
     uint32 count=0;
     for (uint32 j=0; j<AHB_QUALITY_MAX; ++j)
     {
-        for (uint32 i=0;i<MAX_ITEM_CLASS;++i) 
+        for (uint32 i=0;i<MAX_ITEM_CLASS;++i)
         {
             config.ItemInfos[j].ItemClassInfos[i].SetMissItems(ItemsInAH[j][i]);
             count+=config.ItemInfos[j].ItemClassInfos[i].GetMissItems();
@@ -89,7 +89,7 @@ bool AuctionHouseBot::getRandomArray( AHBConfig& config, std::vector<s_randomArr
     for (uint32 j=0; j<AHB_QUALITY_MAX; ++j)
     {
         for (uint32 i=0; i<MAX_ITEM_CLASS; ++i)
-            if ((config.ItemInfos[j].ItemClassInfos[i].GetMissItems()   > addedItem[j][i]) && ItemPool[j][i].size() >0)    
+            if ((config.ItemInfos[j].ItemClassInfos[i].GetMissItems()   > addedItem[j][i]) && ItemPool[j][i].size() >0)
             {
                 miss_item.color=j;
                 miss_item.itemclass=i;
@@ -120,7 +120,7 @@ void AuctionHouseBot::addNewAuctions(AHBConfig& config)
     if (MissItems==0) return;
 
     uint32 items;
-    if (MissItems > ItemsPerCycleBoost) 
+    if (MissItems > ItemsPerCycleBoost)
     {
         items=ItemsPerCycleBoost;
         sLog.outString("AHBot> Boost value used to fill AH! (if this happens often adjust both ItemsPerCycle in mangosd.conf)");
@@ -295,7 +295,7 @@ void AuctionHouseBot::addNewAuctionBuyerBotBid(AHBConfig *config, WorldSession *
 
         // check that bid has acceptable value and take bid based on vendorprice, stacksize and quality
         if(sWorld.getConfig(CONFIG_BOOL_AHBOT_BUYPRICE_BUYER))
-        {                
+        {
             if (currentprice < prototype->BuyPrice * pItem->GetCount() * config->ItemInfos[prototype->Quality].GetBuyerPrice())
             {
                 bidMax = prototype->BuyPrice * pItem->GetCount() * config->ItemInfos[prototype->Quality].GetBuyerPrice();
@@ -406,7 +406,7 @@ void AuctionHouseBot::Update()
     if ((sWorld.getConfig(CONFIG_UINT32_AHBOT_ALLIANCE_RATIO)==0) && (sWorld.getConfig(CONFIG_UINT32_AHBOT_HORDE_RATIO)==0) && (sWorld.getConfig(CONFIG_UINT32_AHBOT_NEUTRAL_RATIO)==0) &&
         (sWorld.getConfig(CONFIG_BOOL_AHBOT_BUYER_ALLIANCE_ENABLED)!=true) && (sWorld.getConfig(CONFIG_BOOL_AHBOT_BUYER_HORDE_ENABLED)!=true) && (sWorld.getConfig(CONFIG_BOOL_AHBOT_BUYER_NEUTRAL_ENABLED)!=true))
          return;
-    
+
     WorldSession _session(0, NULL, SEC_PLAYER, true, 0, LOCALE_enUS);
 
     // Add New Bids

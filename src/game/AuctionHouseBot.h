@@ -134,7 +134,7 @@ public:
 
     c_ItemInfos(uint32 indice=0)
     {
-        for (int i=0; i<MAX_ITEM_CLASS; ++i) 
+        for (int i=0; i<MAX_ITEM_CLASS; ++i)
         {
             ItemClassInfos.push_back(c_ItemClassInfos(i));
         }
@@ -256,7 +256,7 @@ public:
             break;
         }
 
-        for (int i=0; i<AHB_QUALITY_MAX; ++i) 
+        for (int i=0; i<AHB_QUALITY_MAX; ++i)
         {
             ItemInfos.push_back(c_ItemInfos(i));
         }
@@ -325,9 +325,9 @@ class AuctionHouseBot
 private:
     ACE_Vector<uint32> npcItems;
     ACE_Vector<uint32> lootItems;
-    
+
     std::vector<std::vector<std::vector<uint32> > > ItemPool;
-    
+
     bool debug_Out;
 
     AHBConfig AllianceConfig;
