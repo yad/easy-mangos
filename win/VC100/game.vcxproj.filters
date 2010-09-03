@@ -840,6 +840,7 @@
     <ClInclude Include="..\..\src\game\ThreatManager.h">
       <Filter>References</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\game\pchdef.h" />
     <ClInclude Include="..\..\src\game\CharacterDatabaseCleaner.h">
       <Filter>Tool</Filter>
     </ClInclude>
@@ -849,6 +850,5 @@
     <ClInclude Include="..\..\src\game\AuctionHouseBot.h">
       <Filter>AhBot</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\game\pchdef.h" />
   </ItemGroup>
 </Project>
