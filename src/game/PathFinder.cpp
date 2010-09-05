@@ -19,10 +19,7 @@
 #include "Object.h"
 #include "Creature.h"
 #include "PathFinder.h"
-#include "ObjectGuid.h"
 #include "Map.h"
-#include "../recastnavigation/Detour/Include/DetourNavMesh.h"
-#include "../recastnavigation/Detour/Include/DetourNavMeshQuery.h"
 #include "../recastnavigation/Detour/Include/DetourCommon.h"
 
 ////////////////// PathInfo //////////////////
