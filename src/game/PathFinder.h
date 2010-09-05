@@ -52,51 +52,67 @@ enum PathType
 class PathInfo
 {
     public:
-        PathInfo(WorldObject* from, const float x, const float y, const float z);
-
-        ~PathInfo() { delete [] m_pathPolyRefs; delete [] m_pathPoints; dtFreeNavMeshQuery(m_navMeshQuery); }
+        PathInfo(const WorldObject* from, const float x, const float y, const float z);
+        ~PathInfo();
 
         inline void getStartPosition(float &x, float &y, float &z) { x = m_startPosition[0]; y = m_startPosition[1]; z = m_startPosition[2]; }
-        inline void setStartPosition(float x, float y, float z) { m_startPosition[0] = x; m_startPosition[1] = y; m_startPosition[2] = z; }
-
         inline void getNextPosition(float &x, float &y, float &z) { x = m_nextPosition[0]; y = m_nextPosition[1]; z = m_nextPosition[2]; }
-        inline void setNextPosition(float x, float y, float z) { m_nextPosition[0] = x; m_nextPosition[1] = y; m_nextPosition[2] = z; }
-        
         inline void getEndPosition(float &x, float &y, float &z) { x = m_endPosition[0]; y = m_endPosition[1]; z = m_endPosition[2]; }
-        inline void setEndPosition(float x, float y, float z) { m_endPosition[0] = x; m_endPosition[1] = y; m_endPosition[2] = z; }
 
-        dtPolyRef getPathPolyByPosition(float x, float y, float z);
-        bool isPointInPolyBounds(float x, float y, float z, float &distance, dtPolyRef polyRef);
+        inline uint32 getFullPath(float **pathPoints) { *pathPoints = m_pathPoints; return m_pointLength; };
 
         void Update(const float x, const float y, const float z);
         bool noPath();
-        void GetLength();
-        float* GetPoints();
+
+        // only for debug
+        dtNavMesh *getMesh(){ return m_navMesh;}
+        dtNavMeshQuery *getMeshQuery(){ return m_navMeshQuery;}
+        dtPolyRef *getPathPolyRef(){ return m_pathPolyRefs;}
+        uint32 getPolyLength(){ return m_polyLength; }
+
+    private:
 
         dtPolyRef   *   m_pathPolyRefs;     // array of detour polygon references
+        uint32          m_polyLength;       // number of polygons in the path
+
         float       *   m_pathPoints;       // array of float[3] for (x, y, z) coords
-        int             m_currentNode;      // node of m_pathPoints that we are moving to
-        int             m_length;           // number of polygons in the path
-        float           m_startPosition[3]; // {x, y, z} of current location
-        float           m_nextPosition[3];  // {x, y, z} of next location on the path
-        float           m_endPosition[3];   // {x, y, z} of the destination
-        WorldObject *   m_sourceObject;     // the object that is moving (safe pointer because PathInfo is only accessed from the mover?)
+        uint32          m_pointLength;      // number of points in the path
+        uint32          m_pointPathPointer; // points to current triple in m_pathPoints - used when dest do not change
+
+        float           m_startPosition[VERTEX_SIZE]; // {x, y, z} of current location
+        float           m_nextPosition[VERTEX_SIZE];  // {x, y, z} of next location on the path
+        float           m_endPosition[VERTEX_SIZE];   // {x, y, z} of the destination
+
+        const WorldObject *   m_sourceObject;     // the object that is moving (safe pointer because PathInfo is only accessed from the mover?)
         dtNavMesh   *   m_navMesh;          // the nav mesh
         dtNavMeshQuery* m_navMeshQuery;     // the nav mesh query used to find the path
         PathType        m_type;             // tells what kind of path this is
 
-    private:
+        inline void setNextPosition(float x, float y, float z) { m_nextPosition[0] = x; m_nextPosition[1] = y; m_nextPosition[2] = z; }
+        inline void setStartPosition(float x, float y, float z) { m_startPosition[0] = x; m_startPosition[1] = y; m_startPosition[2] = z; }
+        inline void setEndPosition(float x, float y, float z) { m_endPosition[0] = x; m_endPosition[1] = y; m_endPosition[2] = z; }
+
         inline void clear()
         {
-            delete [] m_pathPolyRefs; m_pathPolyRefs = 0;
-            delete [] m_pathPoints; m_pathPoints = 0;
-            m_length = 0;
+            delete [] m_pathPolyRefs;
+            m_pathPolyRefs = NULL;
+
+            delete [] m_pathPoints;
+            m_pathPoints = NULL;
+
+            m_polyLength = 0;
+            m_pointLength = 0;
+            m_pointPathPointer = 0;
         }
 
+        dtPolyRef getPathPolyByPosition(float x, float y, float z);
+        bool isPointInPolyBounds(float x, float y, float z, float &distance, dtPolyRef polyRef);
+
+        void BuildFreshPath();
+        void BuildPath(dtPolyRef startPoly, float* startPos, dtPolyRef endPoly, float* endPos);
+        // NODE: startPos, endPos is in Y,Z,X format!
+
         void updateNextPosition();
-        void Build();
-        void Build(dtPolyRef startPoly, dtPolyRef endPoly);
-        void trim(dtPolyRef startPoly, dtPolyRef endPoly);
         void shortcut();
 
         dtQueryFilter createFilter();
@@ -104,27 +120,22 @@ class PathInfo
         bool canFly();
         bool canSwim();
         NavTerrain getNavTerrain(float x, float y, float z);
-
-        inline void coreToRecast(float core[3], float recast[3]) {recast[0] = core[1]; recast[1] = core[2]; recast[2] = core[0];}
-        inline void recastToCore(float recast[3], float core[3]) {core[0] = recast[2]; core[1] = recast[0]; core[2] = recast[1];}
 };
 
-inline bool isSamePoint(const float* point1, const float* point2)
+// using == for two float numbers wont do us much good, use diff
+inline bool isSamePoint(const float diff, const float* point1, const float* point2)
 {
-    return (point1[0] == point2[0] && point1[1] == point2[1] && point1[2] == point2[2]);
+    return (abs(point1[0] - point2[0]) <= diff &&
+            abs(point1[1] - point2[1]) <= diff &&
+            abs(point1[2] - point2[2]) <= diff);
 }
 
-inline bool isSamePoint(const float x1, const float y1, const float z1,
-                        const float x2, const float y2, const float z2)
+inline bool isSamePoint(const float diff, const float x1, const float y1, const float z1,
+                                          const float x2, const float y2, const float z2)
 {
-    return (x1 == x2 && y1 == y2 && z1 == z2);
-}
-
-inline void copyVertex(float* dest, const float* v)
-{
-    dest[0] = v[0];
-    dest[1] = v[1];
-    dest[2] = v[2];
+    return (abs(x1 - x2) <= diff &&
+            abs(y1 - y2) <= diff &&
+            abs(z1 - z2) <= diff);
 }
 
 #endif

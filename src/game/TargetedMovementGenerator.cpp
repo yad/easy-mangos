@@ -85,11 +85,9 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner)
     else
         i_path->Update(x, y, z);
 
-    // can check here to see what i_path->m_type
-    if(i_path->noPath())
-        sLog.outDebug("No path to target!");
-    //else
-        i_path->getNextPosition(x, y, z);
+    // we always have a path to the target - shortcut in worst case
+    // even is this map don't have mmaps at all
+    i_path->getNextPosition(x, y, z);
 
     Traveller<T> traveller(owner);
     i_destinationHolder.SetDestination(traveller, x, y, z);
@@ -176,23 +174,25 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
 
         // put targeted movement generators on a higher priority
         if (owner.GetObjectBoundingRadius())
-            i_destinationHolder.ResetUpdate(50);
+            i_destinationHolder.ResetUpdate(100);
 
         float dist = i_target->GetObjectBoundingRadius() + owner.GetObjectBoundingRadius() + sWorld.getConfig(CONFIG_FLOAT_RATE_TARGET_POS_RECALCULATION_RANGE);
 
         //More distance let have better performance, less distance let have more sensitive reaction at target move.
 
         bool targetMoved = false, needNewDest = false;
-        float nextx, nexty, nextz, endx, endy, endz;
-        nextx = i_target->GetPositionX();
-        nexty = i_target->GetPositionY();
+        float end_x, end_y, end_z;
+        float next_x = i_target->GetPositionX();
+        float next_y = i_target->GetPositionY();
+        float next_z = i_target->GetPositionZ();
 
         if(i_path)
         {
-            i_path->getNextPosition(nextx, nexty, nextz);
-            i_path->getEndPosition(endx, endy, endz);
-            needNewDest = (i_destinationHolder.HasArrived() && !isSamePoint(nextx, nexty, nextz, endx, endy, endz));
-            targetMoved = i_target->GetDistanceSqr(endx, endy, endz) >= dist*dist;
+            i_path->getNextPosition(next_x, next_y, next_z);
+            i_path->getEndPosition(end_x, end_y, end_z);
+
+            needNewDest = i_destinationHolder.HasArrived() && !isSamePoint(dist, next_x, next_y, next_z, end_x, end_y, end_z);
+            targetMoved = i_target->GetDistanceSqr(end_x, end_y, end_z) >= dist*dist;
         }
 
         if (!i_path || targetMoved || needNewDest)
@@ -202,22 +202,22 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
 
             if(i_path)
             {
-                i_path->getNextPosition(nextx, nexty, nextz);
+                i_path->getNextPosition(next_x, next_y, next_z);
 
                 // Set new Angle For Map::
-                owner.SetOrientation(owner.GetAngle(nextx, nexty));
+                owner.SetOrientation(owner.GetAngle(next_x, next_y));
             }
         }
         // Update the Angle of the target only for Map::, no need to send packet for player
-        else if (!i_angle && !owner.HasInArc(0.01f, nextx, nexty))
-            owner.SetOrientation(owner.GetAngle(nextx, nexty));
+        else if (!i_angle && !owner.HasInArc(0.01f, next_x, next_y))
+            owner.SetOrientation(owner.GetAngle(next_x, next_y));
 
         if ((owner.IsStopped() && !i_destinationHolder.HasArrived()) || i_recalculateTravel)
         {
             i_recalculateTravel = false;
 
             //Angle update will take place into owner.StopMoving()
-            owner.SetOrientation(owner.GetAngle(nextx, nexty));
+            owner.SetOrientation(owner.GetAngle(next_x, next_y));
 
             owner.StopMoving();
             static_cast<D*>(this)->_reachTarget(owner);
