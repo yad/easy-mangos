@@ -24,7 +24,9 @@
 
 class WorldObject;
 
+#define MESH_MAX_NODES 2048
 #define MAX_PATH_LENGTH 256
+#define VERTEX_SIZE 3
 
 // see contrib/mmap/src/TileBuilder.h
 enum NavTerrain

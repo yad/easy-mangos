@@ -64,14 +64,14 @@ dtPolyRef PathInfo::getPathPolyByPosition(float x, float y, float z)
 
 bool PathInfo::isPointInPolyBounds(float x, float y, float z, float &distance, dtPolyRef polyRef)
 {
-    float point[3] = {y, z, x};
+    float point[VERTEX_SIZE] = {y, z, x};
 
     const dtMeshTile* tile;
     const dtPoly* poly;
     if(!m_navMesh->getTileAndPolyByRef(polyRef, &tile, &poly))
         return false;   // m_pathPolyRefs[i] is invalid
 
-    float vertices[DT_VERTS_PER_POLYGON*3];
+    float vertices[DT_VERTS_PER_POLYGON*VERTEX_SIZE];
     float ed[DT_VERTS_PER_POLYGON];             // distance^2 from edge to point
     float et[DT_VERTS_PER_POLYGON];             // describes where on edge is nearest point
 
@@ -79,7 +79,7 @@ bool PathInfo::isPointInPolyBounds(float x, float y, float z, float &distance, d
     int nv = 0;
     for (int i = 0; i < (int)poly->vertCount; ++i)
     {
-        copyVertex(&vertices[nv*3], &tile->verts[poly->verts[i]*3]);
+        dtVcopy(&vertices[nv*VERTEX_SIZE], &tile->verts[poly->verts[i]*VERTEX_SIZE]);
         nv++;
     }
 
@@ -114,14 +114,14 @@ void PathInfo::Build()
         return;
     }
 
-    float extents[3] = {2.0f, 4.0f, 2.0f};      // defines bounds of box for search area
+    float extents[VERTEX_SIZE] = {2.0f, 4.0f, 2.0f};      // defines bounds of box for search area
     dtQueryFilter filter = dtQueryFilter();     // use general filter so we know if we are near navmesh
 
     // get start and end positions
     getStartPosition(x, y, z);
-    float startPos[3] = {y, z, x};
+    float startPos[VERTEX_SIZE] = {y, z, x};
     getEndPosition(x, y, z);
-    float endPos[3] = {y, z, x};
+    float endPos[VERTEX_SIZE] = {y, z, x};
 
     // find start and end poly
     dtPolyRef startPoly = m_navMeshQuery->findNearestPoly(startPos, extents, &filter, 0);
@@ -396,9 +396,9 @@ void PathInfo::updateNextPosition()
     float x, y, z;
 
     getStartPosition(x, y, z);
-    float startPos[3] = {y, z, x};
+    float startPos[VERTEX_SIZE] = {y, z, x};
     getEndPosition(x, y, z);
-    float endPos[3] = {y, z, x};
+    float endPos[VERTEX_SIZE] = {y, z, x};
 
     float* pathPoints = new float[MAX_PATH_LENGTH*3];
     int pointCount = m_navMeshQuery->findStraightPath(

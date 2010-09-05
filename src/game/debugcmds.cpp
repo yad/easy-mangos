@@ -229,7 +229,7 @@ bool ChatHandler::HandleDebugMoveMapCommand(char* args)
     if (w && strcmp(w, "path") == 0)
     {
         PSendSysMessage("mmap path:");
-        float extents[3] = {2.f, 4.f, 2.f};
+        float extents[VERTEX_SIZE] = {2.f, 4.f, 2.f};
         dtQueryFilter filter = dtQueryFilter();
 
         // units
@@ -239,9 +239,9 @@ bool ChatHandler::HandleDebugMoveMapCommand(char* args)
         // unit locations
         float x, y, z;
         target->GetPosition(x, y, z);
-        float start[3] = {y, z, x};
+        float start[VERTEX_SIZE] = {y, z, x};
         player->GetPosition(x, y, z);
-        float end[3] = {y, z, x};
+        float end[VERTEX_SIZE] = {y, z, x};
         float pathPos[MAX_PATH_LENGTH];
 
         // path
@@ -266,7 +266,7 @@ bool ChatHandler::HandleDebugMoveMapCommand(char* args)
             int length = path.m_navMeshQuery->findStraightPath(start, end, path.m_pathPolyRefs, path.m_length, pathPos, 0, 0, MAX_PATH_LENGTH);
             PSendSysMessage("Path positions:");
             for(int i = 0; i < length; ++i)
-                PSendSysMessage("(%.2f,%.2f,%.2f)", pathPos[i*3], pathPos[i*3+1], pathPos[i*3+2]);
+                PSendSysMessage("(%.2f,%.2f,%.2f)", pathPos[i*VERTEX_SIZE], pathPos[i*VERTEX_SIZE+1], pathPos[i*VERTEX_SIZE+2]);
         }
         else
             PSendSysMessage("Path is 0 length");
@@ -276,7 +276,7 @@ bool ChatHandler::HandleDebugMoveMapCommand(char* args)
     else if(w && strcmp(w, "verts") == 0)
     {
         PSendSysMessage("mmap verts:");
-        float extents[3] = {2.f, 4.f, 2.f};
+        float extents[VERTEX_SIZE] = {2.f, 4.f, 2.f};
         dtQueryFilter filter = dtQueryFilter();
 
         // units
@@ -286,9 +286,9 @@ bool ChatHandler::HandleDebugMoveMapCommand(char* args)
         // unit locations
         float x, y, z;
         target->GetPosition(x, y, z);
-        float start[3] = {y, z, x};
+        float start[VERTEX_SIZE] = {y, z, x};
         player->GetPosition(x, y, z);
-        float end[3] = {y, z, x};
+        float end[VERTEX_SIZE] = {y, z, x};
 
         PathInfo path = PathInfo(target, x, y, z);
 
@@ -305,32 +305,32 @@ bool ChatHandler::HandleDebugMoveMapCommand(char* args)
         const dtMeshTile* tile;
         const dtPoly* poly;
         path.m_navMesh->getTileAndPolyByRef(startPoly, &tile, &poly);
-        float vertices[DT_VERTS_PER_POLYGON*3];
+        float vertices[DT_VERTS_PER_POLYGON*VERTEX_SIZE];
 
         // startpoly vertices
         int nv = 0;
         for (int i = 0; i < (int)poly->vertCount; ++i)
         {
-            dtVcopy(&vertices[nv*3], &tile->verts[poly->verts[i]*3]);
+            dtVcopy(&vertices[nv*VERTEX_SIZE], &tile->verts[poly->verts[i]*VERTEX_SIZE]);
             nv++;
         }
 
         PSendSysMessage("Poly vertices for %i:", startPoly);
         for(int i = 0; i < (int)poly->vertCount; ++i)
-            PSendSysMessage("(%.2f,%.2f,%.2f)", vertices[i*3], vertices[i*3+1], vertices[i*3+2]);
+            PSendSysMessage("(%.2f,%.2f,%.2f)", vertices[i*VERTEX_SIZE], vertices[i*VERTEX_SIZE+1], vertices[i*VERTEX_SIZE+2]);
 
         // endpoly vertices
         path.m_navMesh->getTileAndPolyByRef(endPoly, &tile, &poly);
         nv = 0;
         for (int i = 0; i < (int)poly->vertCount; ++i)
         {
-            dtVcopy(&vertices[nv*3], &tile->verts[poly->verts[i]*3]);
+            dtVcopy(&vertices[nv*VERTEX_SIZE], &tile->verts[poly->verts[i]*VERTEX_SIZE]);
             nv++;
         }
 
         PSendSysMessage("Poly vertices for %i:", endPoly);
         for(int i = 0; i < (int)poly->vertCount; ++i)
-            PSendSysMessage("(%.2f,%.2f,%.2f)", vertices[i*3], vertices[i*3+1], vertices[i*3+2]);
+            PSendSysMessage("(%.2f,%.2f,%.2f)", vertices[i*VERTEX_SIZE], vertices[i*VERTEX_SIZE+1], vertices[i*VERTEX_SIZE+2]);
 
         return true;
     }
@@ -349,14 +349,14 @@ bool ChatHandler::HandleDebugMoveMapCommand(char* args)
         // calculate navmesh tile location
         dtNavMesh* navmesh = player->GetMap()->GetNavMesh();
         dtNavMeshQuery* query = dtAllocNavMeshQuery();
-        query->init(navmesh, 1024);
+        query->init(navmesh, MESH_MAX_NODES);
 
         const float* min = navmesh->getParams()->orig;
 
         float x, y, z;
         player->GetPosition(x, y, z);
-        float location[3] = {y, z, x};
-        float extents[3] = {2.f,4.f,2.f};
+        float location[VERTEX_SIZE] = {y, z, x};
+        float extents[VERTEX_SIZE] = {2.f,4.f,2.f};
 
         int tilex = (int) (y - min[0]) / 533.33333;
         int tiley = (int) (x - min[2]) / 533.33333;
@@ -410,12 +410,12 @@ bool ChatHandler::HandleDebugMoveMapCommand(char* args)
 
         dtNavMesh* navmesh = player->GetMap()->GetNavMesh();
         dtNavMeshQuery* query = dtAllocNavMeshQuery();
-        query->init(navmesh, 1024);
+        query->init(navmesh, MESH_MAX_NODES);
 
         float x, y, z;
         player->GetPosition(x, y, z);
-        float location[3] = {y, z, x};
-        float extents[3] = {2.f,4.f,2.f};
+        float location[VERTEX_SIZE] = {y, z, x};
+        float extents[VERTEX_SIZE] = {2.f,4.f,2.f};
         dtQueryFilter filter = dtQueryFilter();
         filter.includeFlags = 0xFFFF;
 
@@ -434,7 +434,7 @@ bool ChatHandler::HandleDebugMoveMapCommand(char* args)
 
         dtNavMesh* navmesh = m_session->GetPlayer()->GetMap()->GetNavMesh();
         dtNavMeshQuery* query = dtAllocNavMeshQuery();
-        query->init(navmesh, 1024);
+        query->init(navmesh, MESH_MAX_NODES);
 
         for(int i = 0; i < navmesh->getMaxTiles(); ++i)
         {
