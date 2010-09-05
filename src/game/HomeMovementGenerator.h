@@ -22,6 +22,7 @@
 #include "MovementGenerator.h"
 #include "DestinationHolder.h"
 #include "Traveller.h"
+#include "PathFinder.h"
 
 class Creature;
 
@@ -34,15 +35,14 @@ class MANGOS_DLL_SPEC HomeMovementGenerator<Creature>
 {
     public:
 
-        HomeMovementGenerator() {}
-        ~HomeMovementGenerator() {}
+        HomeMovementGenerator():i_path(NULL){}
+        ~HomeMovementGenerator() { delete i_path; }
 
         void Initialize(Creature &);
         void Finalize(Creature &) {}
         void Interrupt(Creature &) {}
         void Reset(Creature &);
         bool Update(Creature &, const uint32 &);
-        void modifyTravelTime(uint32 travel_time) { i_travel_timer = travel_time; }
         MovementGeneratorType GetMovementGeneratorType() const { return HOME_MOTION_TYPE; }
 
         bool GetDestination(float& x, float& y, float& z) const { i_destinationHolder.GetDestination(x,y,z); return true; }
@@ -50,6 +50,6 @@ class MANGOS_DLL_SPEC HomeMovementGenerator<Creature>
         void _setTargetLocation(Creature &);
         DestinationHolder< Traveller<Creature> > i_destinationHolder;
 
-        uint32 i_travel_timer;
+        PathInfo* i_path;
 };
 #endif
