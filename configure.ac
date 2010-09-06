@@ -309,7 +309,8 @@ AC_CONFIG_FILES([
    src/mangosd/Makefile
    src/mangosd/mangosd.conf.dist
    src/game/AuctionHouseBot/Makefile
-   src/game/AuctionHouseBot/auctionhousebot.conf.dist.in
+   src/game/AuctionHouseBot/config.h
+   src/game/AuctionHouseBot/ahbot.conf.dist
    src/bindings/Makefile
    src/bindings/universal/Makefile
 ])

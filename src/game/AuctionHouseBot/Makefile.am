@@ -17,20 +17,34 @@
 ## Process this file with automake to produce Makefile.in
 
 ## Sub-directories to parse
+## CPP flags for includes, defines, etc.
+AM_CPPFLAGS = $(MANGOS_INCLUDES) -I$(top_builddir)/src/shared -I$(srcdir) -I$(srcdir)/../../../dep/include -I$(srcdir)/../../framework -I$(srcdir)/../../shared -I$(srcdir)/../../shared/vmap -I$(srcdir)/../../realmd -DSYSCONFDIR=\"$(sysconfdir)/\"
+
+## Build MaNGOS game library as convenience library.
+#  All libraries will be convenience libraries. Might be changed to shared
+#  later.
+noinst_LIBRARIES = libmangosahbot.a
+
+#  libmangossgame library will later be reused by ...
+libmangosahbot_a_SOURCES = \
+	config.h \
+	AuctionHouseBot.cpp \
+	AuctionHouseBot.h
 
 ## Additional files to include when running 'make dist'
-#  Include world daemon configuration
+#  Precompiled Headers for WIN
 EXTRA_DIST = \
-	ahbot.conf.dist.in
+	config.h \
+	ahbot.conf.dist
 
 ## Additional files to install
 sysconf_DATA = \
-	ahbot.conf.dist.in
+	ahbot.conf.dist
 
 install-data-hook:
 	@list='$(sysconf_DATA)'
 	for p in $$list; do \
-		dest=`echo $$p | sed -e s/.dist.in//`; \
+		dest=`echo $$p | sed -e s/.dist//`; \
 		if test -f $(DESTDIR)$(sysconfdir)/$$dest; then \
 			echo "$@ will not overwrite existing $(DESTDIR)$(sysconfdir)/$$dest"; \
 		else \
