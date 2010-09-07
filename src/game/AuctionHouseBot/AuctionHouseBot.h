@@ -415,10 +415,10 @@ private:
     ObjectGuid m_FakeGuid;
 
     std::string m_AHBotName;
-    
+
     uint32 m_configUint32Values[CONFIG_UINT32_AHBOT_UINT32_COUNT];
     bool m_configBoolValues[CONFIG_UINT32_AHBOT_BOOL_COUNT];
-    
+
     inline uint32 minValue(uint32 a, uint32 b) { return a <= b ? a : b; };
     void    addNewAuctions(AHBConfig& config);
     void    addNewAuctionBuyerBotBid(AHBConfig *config, WorldSession *session);
