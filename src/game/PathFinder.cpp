@@ -238,26 +238,26 @@ void PathInfo::BuildPath(dtPolyRef startPoly, float* startPos, dtPolyRef endPoly
         dtPolyRef prefixPathPolys[MAX_PATH_LENGTH];
         memcpy(prefixPathPolys, m_pathPolyRefs+pathStartIndex, prefixPolyLength*sizeof(dtPolyRef));
 
-        dtPolyRef sufixStartPoly = prefixPathPolys[prefixPolyLength-1];
-        dtPolyRef sufixPathPolys[MAX_PATH_LENGTH];
-        uint32 sufixPolyLenght = 0;
+        dtPolyRef suffixStartPoly = prefixPathPolys[prefixPolyLength-1];
+        dtPolyRef suffixPathPolys[MAX_PATH_LENGTH];
+        uint32 suffixPolyLength = 0;
 
         // we need any point on our sufix start poly to generate poly-path, so we need last poly in prefix data
         const dtMeshTile* tile;
         const dtPoly* poly;
-        if(m_navMesh->getTileAndPolyByRef(sufixStartPoly, &tile, &poly))
+        if(m_navMesh->getTileAndPolyByRef(suffixStartPoly, &tile, &poly))
         {
             dtQueryFilter filter = createFilter();
 
             // generate sufix
-            sufixPolyLenght = m_navMeshQuery->findPath(
-                    sufixStartPoly,     // start polygon
+            suffixPolyLength = m_navMeshQuery->findPath(
+                    suffixStartPoly,     // start polygon
                     endPoly,            // end polygon
                     // we might need to get better point here
                     &tile->verts[poly->verts[0]], // start position
                     endPos,             // end position
                     &filter,            // polygon search filter
-                    sufixPathPolys,     // [out] path
+                    suffixPathPolys,     // [out] path
                     MAX_PATH_LENGTH);   // max number of polygons in output path
 
             if(sufixPolyLenght == 0)
@@ -321,7 +321,7 @@ void PathInfo::BuildPath(dtPolyRef startPoly, float* startPos, dtPolyRef endPoly
 
 void PathInfo::Update(const float destX, const float destY, const float destZ)
 {
-        // make sure navMesh works - we can run on map w/o mmap
+    // make sure navMesh works - we can run on map w/o mmap
     // can we switch map/get different mesh?
     if(!m_navMesh || m_navMesh != m_sourceObject->GetMap()->GetNavMesh())
     {
@@ -363,6 +363,7 @@ void PathInfo::Update(const float destX, const float destY, const float destZ)
     }
     else
     {
+        // target moved, so we need to update the poly path
         m_pointPathPointer = 0;
         setEndPosition(destX, destY, destZ);
     }
@@ -378,8 +379,8 @@ void PathInfo::Update(const float destX, const float destY, const float destZ)
         if(startPoly == 0 || endPoly == 0)
         {
             // start or end is off the path, need to find the polygon
-            float extents[VERTEX_SIZE] = {2.f, 4.f, 2.f};      // bounds of poly search area
-            dtQueryFilter filter = dtQueryFilter();     // filter for poly search
+            float extents[VERTEX_SIZE] = {2.f, 4.f, 2.f};   // bounds of poly search area
+            dtQueryFilter filter = dtQueryFilter();         // filter for poly search
 
             if(startPoly == 0)
                 startPoly = m_navMeshQuery->findNearestPoly(startPos, extents, &filter, 0);
