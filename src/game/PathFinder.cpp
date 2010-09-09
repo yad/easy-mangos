@@ -260,23 +260,34 @@ void PathInfo::BuildPath(dtPolyRef startPoly, float* startPos, dtPolyRef endPoly
                     suffixPathPolys,     // [out] path
                     MAX_PATH_LENGTH);   // max number of polygons in output path
 
-            if(sufixPolyLenght == 0)
+            if(suffixPolyLength)
             {
-                // only happens if we passed bad data to findPath(), or navmesh is messed up
+                // new path = prefix + suffix - overlap
+
+                m_polyLength = prefixPolyLength + suffixPolyLength - 1;
+                delete [] m_pathPolyRefs;
+                m_pathPolyRefs = new dtPolyRef[m_polyLength];
+
+                // copy the part of the old path we keep - prefix
+                memcpy(m_pathPolyRefs, prefixPathPolys, prefixPolyLength*sizeof(dtPolyRef));
+
+                // copy the newly created suffix - skip first poly, we have it at prefix end
+                memcpy(m_pathPolyRefs+prefixPolyLength, suffixPathPolys+1, (suffixPolyLength-1)*sizeof(dtPolyRef));
+            }
+            else
+            {
+                // this is probably an error state, but we'll leave it
+                // and hopefully recover on the next Update
                 sLog.outError("%u's Path Build failed: 0 length path", m_sourceObject->GetGUID());
-                // we have refix ready, use it - we'll recover later
             }
         }
-
-        delete [] m_pathPolyRefs;
-
-        // copy the part of the old path we keep - prefix
-        // copy the newly created sufix - skip first poly, we have it at prefix end
-        m_polyLength = prefixPolyLength + sufixPolyLenght - 1;
-        m_pathPolyRefs = new dtPolyRef[m_polyLength];
-        memcpy(m_pathPolyRefs, prefixPathPolys, prefixPolyLength*sizeof(dtPolyRef));
-        if(sufixPolyLenght)
-            memcpy(m_pathPolyRefs+prefixPolyLength, sufixPathPolys+1, (sufixPolyLenght-1)*sizeof(dtPolyRef));
+        else
+        {
+            // suffixStartPoly is invalid somehow, or the navmesh is broken
+            // we need to get usable start/end polyRefs and recalculate path from scratch
+            BuildFreshPath();
+            return;
+        }
     }
     else
     {
@@ -284,8 +295,11 @@ void PathInfo::BuildPath(dtPolyRef startPoly, float* startPos, dtPolyRef endPoly
 
         // either we have no path at all -> first run
         // or something went really wrong -> we aren't moving along the path to the target
-
         // just generate new path
+
+        // free and invalidate old path data (particularly m_pointPathPointer)
+        clear();
+
         dtQueryFilter filter = createFilter();      // use special filter so we use proper terrain types
         dtPolyRef pathPolys[MAX_PATH_LENGTH];
 
@@ -306,13 +320,11 @@ void PathInfo::BuildPath(dtPolyRef startPoly, float* startPos, dtPolyRef endPoly
             return;
         }
 
-        delete [] m_pathPolyRefs;
-
         m_pathPolyRefs = new dtPolyRef[m_polyLength];
         memcpy(m_pathPolyRefs, pathPolys, m_polyLength*sizeof(dtPolyRef));
     }
 
-    if(m_polyLength >= MAX_PATH_LENGTH)
+    if(m_polyLength >= MAX_PATH_LENGTH && m_pathPolyRefs[m_polyLength - 1] != endPoly)
          m_type = PathType(m_type | PATHFIND_INCOMPLETE);
 
     // generate the point-path out of our up-to-date poly-path
@@ -370,22 +382,33 @@ void PathInfo::Update(const float destX, const float destY, const float destZ)
 
     if(!m_pointPathPointer)
     {
-        // find start and end poly
-        // navMesh.findNearestPoly is expensive, so first we check just the current path
         float startPos[VERTEX_SIZE] = {y, z, x};
         float endPos[VERTEX_SIZE] = {destY, destZ, destX};
+
+        const dtMeshTile* tile;
+        const dtPoly* poly;
+
+        // find start and end poly
+        // first we check the current path
+        // if the current path doesn't contain the current poly or the current poly
+        // can't be resolved by the navmesh, we need to use the expensive navMesh.findNearestPoly
+
         dtPolyRef startPoly = getPathPolyByPosition(x, y, z);
         dtPolyRef endPoly = getPathPolyByPosition(destX, destY, destZ);
-        if(startPoly == 0 || endPoly == 0)
+
+        bool needStartPoly = (startPoly == 0 || !m_navMesh->getTileAndPolyByRef(startPoly, &tile, &poly));
+        bool needEndPoly = (endPoly == 0 || !m_navMesh->getTileAndPolyByRef(endPoly, &tile, &poly));
+
+        if(needStartPoly || needEndPoly)
         {
-            // start or end is off the path, need to find the polygon
+            // start or end is off the path or invalid, need to find the polygon
             float extents[VERTEX_SIZE] = {2.f, 4.f, 2.f};   // bounds of poly search area
             dtQueryFilter filter = dtQueryFilter();         // filter for poly search
 
-            if(startPoly == 0)
+            if(needStartPoly)
                 startPoly = m_navMeshQuery->findNearestPoly(startPos, extents, &filter, 0);
 
-            if(endPoly == 0)
+            if(needEndPoly)
                 endPoly = m_navMeshQuery->findNearestPoly(endPos, extents, &filter, 0);
         }
 
