@@ -283,7 +283,9 @@ void PathInfo::BuildPath(dtPolyRef startPoly, float* startPos, dtPolyRef endPoly
         }
         else
         {
-            // suffixStartPoly is invalid somehow, or the navmesh is broken
+            // suffixStartPoly is invalid somehow, or the navmesh is broken => error state
+            sLog.outError("%u's Path Build failed: invalid polyRef in path", m_sourceObject->GetGUID());
+
             // we need to get usable start/end polyRefs and recalculate path from scratch
             BuildFreshPath();
             return;
@@ -385,30 +387,23 @@ void PathInfo::Update(const float destX, const float destY, const float destZ)
         float startPos[VERTEX_SIZE] = {y, z, x};
         float endPos[VERTEX_SIZE] = {destY, destZ, destX};
 
-        const dtMeshTile* tile;
-        const dtPoly* poly;
-
         // find start and end poly
         // first we check the current path
-        // if the current path doesn't contain the current poly or the current poly
-        // can't be resolved by the navmesh, we need to use the expensive navMesh.findNearestPoly
+        // if the current path doesn't contain the current poly,
+        // we need to use the expensive navMesh.findNearestPoly
 
         dtPolyRef startPoly = getPathPolyByPosition(x, y, z);
         dtPolyRef endPoly = getPathPolyByPosition(destX, destY, destZ);
-
-        bool needStartPoly = (startPoly == 0 || !m_navMesh->getTileAndPolyByRef(startPoly, &tile, &poly));
-        bool needEndPoly = (endPoly == 0 || !m_navMesh->getTileAndPolyByRef(endPoly, &tile, &poly));
-
-        if(needStartPoly || needEndPoly)
+        if(startPoly == 0 || endPoly == 0)
         {
             // start or end is off the path or invalid, need to find the polygon
             float extents[VERTEX_SIZE] = {2.f, 4.f, 2.f};   // bounds of poly search area
             dtQueryFilter filter = dtQueryFilter();         // filter for poly search
 
-            if(needStartPoly)
+            if(startPoly == 0)
                 startPoly = m_navMeshQuery->findNearestPoly(startPos, extents, &filter, 0);
 
-            if(needEndPoly)
+            if(endPoly == 0)
                 endPoly = m_navMeshQuery->findNearestPoly(endPos, extents, &filter, 0);
         }
 
