@@ -28,6 +28,8 @@ class WorldObject;
 #define MAX_PATH_LENGTH 256
 #define VERTEX_SIZE 3
 
+#define INVALID_POLYREF 0
+
 // see contrib/mmap/src/TileBuilder.h
 enum NavTerrain
 {
