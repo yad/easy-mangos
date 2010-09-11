@@ -1554,6 +1554,12 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura
                     triggered_spell_id = 54755;
                     break;
                 }
+                // Glyph of Rake
+                case 54821:
+                {
+                    triggered_spell_id = 54820;
+                    break;
+                }
                 // Item - Druid T10 Restoration 4P Bonus (Rejuvenation)
                 case 70664:
                 {
@@ -1626,6 +1632,13 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura
                         return SPELL_AURA_PROC_FAILED;
 
                     triggered_spell_id = 32747;
+                    break;
+                }
+                // Tricks of the trade
+                case 57934:
+                {
+                    triggered_spell_id = 59628;             // 6 sec buff on self
+                    target = this;
                     break;
                 }
             }
@@ -1730,6 +1743,13 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura
             {
                 pVictim->CastSpell(pVictim, 57894, true, NULL, NULL, GetGUID());
                 return SPELL_AURA_PROC_OK;
+            }
+            // Misdirection
+            else if(dummySpell->Id == 34477)
+            {
+                triggered_spell_id = 35079;                 // 4 sec buff on self
+                target = this;
+                break;
             }
             break;
         }
@@ -2119,6 +2139,10 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura
                     }
 
                     int32 extra_attack_power = CalculateSpellDamage(pVictim, windfurySpellEntry, EFFECT_INDEX_1);
+                    
+                    // Totem of Splintering
+                    if (Aura* aura = GetAura(60764, EFFECT_INDEX_0))
+                        extra_attack_power += aura->GetModifier()->m_amount;
 
                     // Off-Hand case
                     if (castItem->GetSlot() == EQUIPMENT_SLOT_OFFHAND)
