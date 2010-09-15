@@ -114,7 +114,7 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner)
     if (m_pathPointsSent < 3 || startIndex == 1)
     {
         // send 10 nodes, or send all nodes if there are less than 10 left
-        m_pathPointsSent = std::min(uint32(10), pointPath.size() - startIndex);
+        m_pathPointsSent = std::min(uint32(10), uint32(pointPath.size() - startIndex));
         uint32 endIndex = m_pathPointsSent + startIndex;
 
         // dist to next node + world-unit length of the path
