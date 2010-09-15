@@ -32,12 +32,11 @@
 #include "ObjectMgr.h"
 #include "ObjectGuid.h"
 #include "SpellMgr.h"
-
+#include "SpellAuras.h"
+#include "World.h"
 #include "CellImpl.h"
 #include "GridNotifiers.h"
 #include "GridNotifiersImpl.h"
-
-#include "World.h"
 
 #include "../recastnavigation/Detour/Include/DetourNavMesh.h"
 #include "../recastnavigation/Detour/Include/DetourCommon.h"
@@ -261,16 +260,13 @@ bool ChatHandler::HandleDebugMoveMapCommand(char* args)
 
         // unit locations
         float x, y, z;
-        target->GetPosition(x, y, z);
-        float start[VERTEX_SIZE] = {y, z, x};
         player->GetPosition(x, y, z);
         float end[VERTEX_SIZE] = {y, z, x};
-        float pathPos[MAX_PATH_LENGTH];
 
         // path
         PathInfo path = PathInfo(target, x, y, z);
         PSendSysMessage("%s's path to %s:", target->GetName(), player->GetName());
-        PSendSysMessage("length %i", path.getPolyLength());
+        PSendSysMessage("length %i", path.getFullPath().size());
 
         float start_x, start_y, start_z;
         float next_x, next_y, next_z;
@@ -286,20 +282,20 @@ bool ChatHandler::HandleDebugMoveMapCommand(char* args)
 
         if(uint32 pathLen = path.getPolyLength())
         {
-            dtPolyRef * pathPolyRefs = path.getPathPolyRef();
-            PSendSysMessage("path");
-            for(uint32 i = 0; i < pathLen; ++i)
-                PSendSysMessage("       %i", pathPolyRefs[i]);
-
-            // unit polyrefs
-            dtPolyRef startPoly = path.getMeshQuery()->findNearestPoly(start, extents, &filter, 0);
-            dtPolyRef endPoly = path.getMeshQuery()->findNearestPoly(end, extents, &filter, 0);
-
             // straithPath
-            uint32 length = path.getMeshQuery()->findStraightPath(start, end, pathPolyRefs, pathLen, pathPos, 0, 0, MAX_PATH_LENGTH);
+            PointPath pointPath = path.getFullPath();
             PSendSysMessage("Path positions:");
-            for(uint32 i = 0; i < length; ++i)
-                PSendSysMessage("(%.2f,%.2f,%.2f)", pathPos[i*VERTEX_SIZE], pathPos[i*VERTEX_SIZE+1], pathPos[i*VERTEX_SIZE+2]);
+            for(uint32 i = 0; i < pointPath.size(); ++i)
+            {
+                // move player to location and cast spell to mark point
+                player->Relocate(pointPath[i].x, pointPath[i].y, pointPath[i].z);
+                player->RemoveSpellCooldown(1543);
+                player->CastSpell(player, 1543, true);
+            }
+
+            // go back to old location, leave combat incase they got aggro
+            player->Relocate(x, y, z);
+            player->CombatStop();
         }
         else
             PSendSysMessage("Path is 0 length");

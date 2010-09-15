@@ -66,6 +66,12 @@ void handleArgs(int argc, char** argv,
         if(strcmp(argv[i], "--maxAngle") == 0)
         {
             param = argv[++i];
+            if(!param)
+            {
+                badParam = true;
+                return;
+            }
+
             float maxangle = atof(param);
             if(maxangle <= 90.f && maxangle >= 45.f)
                 maxAngle = maxangle;
@@ -75,6 +81,12 @@ void handleArgs(int argc, char** argv,
         else if(strcmp(argv[i], "--tile") == 0)
         {
             param = argv[++i];
+            if(!param)
+            {
+                badParam = true;
+                return;
+            }
+
             char* stileX = strtok(param, ",");
             char* stileY = strtok(NULL, ",");
             int tilex = atoi(stileX);
@@ -94,6 +106,12 @@ void handleArgs(int argc, char** argv,
         else if(strcmp(argv[i], "--skipLiquid") == 0)
         {
             param = argv[++i];
+            if(!param)
+            {
+                badParam = true;
+                return;
+            }
+
             if(strcmp(param, "true") == 0)
                 skipLiquid = true;
             else if(strcmp(param, "false") == 0)
@@ -104,6 +122,12 @@ void handleArgs(int argc, char** argv,
         else if(strcmp(argv[i], "--skipContinents") == 0)
         {
             param = argv[++i];
+            if(!param)
+            {
+                badParam = true;
+                return;
+            }
+
             if(strcmp(param, "true") == 0)
                 skipContinents = true;
             else if(strcmp(param, "false") == 0)
@@ -114,6 +138,12 @@ void handleArgs(int argc, char** argv,
         else if(strcmp(argv[i], "--skipJunkMaps") == 0)
         {
             param = argv[++i];
+            if(!param)
+            {
+                badParam = true;
+                return;
+            }
+
             if(strcmp(param, "true") == 0)
                 skipJunkMaps = true;
             else if(strcmp(param, "false") == 0)
@@ -124,6 +154,12 @@ void handleArgs(int argc, char** argv,
         else if(strcmp(argv[i], "--skipBattlegrounds") == 0)
         {
             param = argv[++i];
+            if(!param)
+            {
+                badParam = true;
+                return;
+            }
+
             if(strcmp(param, "true") == 0)
                 skipBattlegrounds = true;
             else if(strcmp(param, "false") == 0)
@@ -134,6 +170,12 @@ void handleArgs(int argc, char** argv,
         else if(strcmp(argv[i], "--hiResHeightmaps") == 0)
         {
             param = argv[++i];
+            if(!param)
+            {
+                badParam = true;
+                return;
+            }
+
             if(strcmp(param, "true") == 0)
                 hiResHeightmaps = true;
             else if(strcmp(param, "false") == 0)
@@ -144,6 +186,12 @@ void handleArgs(int argc, char** argv,
         else if(strcmp(argv[i], "--debugOutput") == 0)
         {
             param = argv[++i];
+            if(!param)
+            {
+                badParam = true;
+                return;
+            }
+
             if(strcmp(param, "true") == 0)
                 debugOutput = true;
             else if(strcmp(param, "false") == 0)

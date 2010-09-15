@@ -40,11 +40,11 @@ class MANGOS_DLL_SPEC TargetedMovementGeneratorMedium
 {
     protected:
         TargetedMovementGeneratorMedium()
-            : TargetedMovementGeneratorBase(), i_offset(0), i_angle(0), i_recalculateTravel(false), i_path(NULL) {}
+            : TargetedMovementGeneratorBase(), i_offset(0), i_angle(0), i_recalculateTravel(false), i_path(NULL), m_pathPointsSent(0) {}
         TargetedMovementGeneratorMedium(Unit &target)
-            : TargetedMovementGeneratorBase(target), i_offset(0), i_angle(0), i_recalculateTravel(false), i_path(NULL) {}
+            : TargetedMovementGeneratorBase(target), i_offset(0), i_angle(0), i_recalculateTravel(false), i_path(NULL), m_pathPointsSent(0) {}
         TargetedMovementGeneratorMedium(Unit &target, float offset, float angle)
-            : TargetedMovementGeneratorBase(target), i_offset(offset), i_angle(angle), i_recalculateTravel(false), i_path(NULL) {}
+            : TargetedMovementGeneratorBase(target), i_offset(offset), i_angle(angle), i_recalculateTravel(false), i_path(NULL), m_pathPointsSent(0) {}
         ~TargetedMovementGeneratorMedium() { delete i_path; }
 
     public:
@@ -71,6 +71,7 @@ class MANGOS_DLL_SPEC TargetedMovementGeneratorMedium
         bool i_recalculateTravel;
 
         PathInfo* i_path;
+        uint32 m_pathPointsSent;
 };
 
 template<class T>
