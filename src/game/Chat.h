@@ -136,7 +136,6 @@ class ChatHandler
         bool HandleAccountSetAddonCommand(char* args);
         bool HandleAccountSetGmLevelCommand(char* args);
         bool HandleAccountSetPasswordCommand(char* args);
-        bool HandleAHBotOptionsCommand(char* args);
 
         bool HandleAuctionAllianceCommand(char* args);
         bool HandleAuctionGoblinCommand(char* args);
@@ -454,8 +453,6 @@ class ChatHandler
         bool HandleReloadSpellTargetPositionCommand(char* args);
         bool HandleReloadSpellThreatsCommand(char* args);
         bool HandleReloadSpellPetAurasCommand(char* args);
-        bool HandleReloadVehicleDataCommand(char* args);
-        bool HandleReloadVehicleSeatDataCommand(char* args);
 
         bool HandleResetAchievementsCommand(char* args);
         bool HandleResetAllCommand(char* args);
@@ -577,8 +574,6 @@ class ChatHandler
         bool HandleSaveAllCommand(char* args);
 
         bool HandleNameAnnounceCommand(char* args);
-        bool HandleCharacterChangeFactionCommand(char* args);
-        bool HandleCharacterChangeRaceCommand(char* args);
 
         Player*   getSelectedPlayer();
         Creature* getSelectedCreature();

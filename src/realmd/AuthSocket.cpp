@@ -535,7 +535,7 @@ bool AuthSocket::_HandleLogonChallenge()
                 if (B.GetNumBytes() < 32)
                     sLog.outDetail("Interesting, calculation of B in realmd is < 32.");
                         
-                ASSERT(gmod.GetNumBytes() <= 32);
+                MANGOS_ASSERT(gmod.GetNumBytes() <= 32);
 
                 BigNumber unk3;
                 unk3.SetRand(16*8);

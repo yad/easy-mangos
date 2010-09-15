@@ -42,8 +42,6 @@
 #include "GridNotifiers.h"
 #include "GridNotifiersImpl.h"
 #include "CellImpl.h"
-#include "Vehicle.h"
-#include "Object.h"
 
 // apply implementation of the singletons
 #include "Policies/SingletonImp.h"
@@ -137,7 +135,6 @@ m_creatureInfo(NULL), m_splineFlags(SPLINEFLAG_WALKMODE)
     m_CreatureSpellCooldowns.clear();
     m_CreatureCategoryCooldowns.clear();
     m_GlobalCooldown = 0;
-    ResetObtainedDamage();
 
     m_splineFlags = SPLINEFLAG_WALKMODE;
 }
@@ -172,7 +169,7 @@ void Creature::RemoveFromWorld()
 
 void Creature::RemoveCorpse()
 {
-    if (((getDeathState() != CORPSE && getDeathState() != GHOULED) && !m_isDeadByDefault) || (getDeathState() != ALIVE && m_isDeadByDefault))
+    if ((getDeathState() != CORPSE && !m_isDeadByDefault) || (getDeathState() != ALIVE && m_isDeadByDefault))
         return;
 
     m_corpseDecayTimer = 0;
@@ -470,7 +467,6 @@ void Creature::Update(uint32 diff)
             break;
         }
         case CORPSE:
-        case GHOULED:
         {
             if (m_isDeadByDefault)
                 break;
@@ -1409,15 +1405,12 @@ void Creature::setDeathState(DeathState s)
             return;
 
         Unit::setDeathState(CORPSE);
-        if(isVehicle())
-            ((Vehicle*)this)->Die();
     }
 
     if (s == JUST_ALIVED)
     {
         SetHealth(GetMaxHealth());
         SetLootRecipient(NULL);
-        ResetObtainedDamage();
         CreatureInfo const *cinfo = GetCreatureInfo();
         SetUInt32Value(UNIT_DYNAMIC_FLAGS, 0);
         RemoveFlag (UNIT_FIELD_FLAGS, UNIT_FLAG_SKINNABLE);
@@ -1538,32 +1531,6 @@ bool Creature::IsImmunedToSpellEffect(SpellEntry const* spellInfo, SpellEffectIn
         // Spell effect taunt check
         else if (spellInfo->Effect[index] == SPELL_EFFECT_ATTACK_ME)
             return true;
-    }
-
-    // Heal immunity
-    if (isVehicle() && !(((Vehicle*)this)->GetVehicleFlags() & VF_CAN_BE_HEALED))
-    {
-        switch(spellInfo->Effect[index])
-        {
-            case SPELL_EFFECT_APPLY_AURA:
-                switch(spellInfo->EffectApplyAuraName[index])
-                {
-                    case SPELL_AURA_PERIODIC_HEAL:
-                    case SPELL_AURA_OBS_MOD_HEALTH:
-                    case SPELL_AURA_PERIODIC_HEALTH_FUNNEL:
-                    case SPELL_AURA_MOD_REGEN:
-                        return true;
-                    default: break;
-                }
-                break;
-            case SPELL_EFFECT_HEAL:
-            case SPELL_EFFECT_HEAL_MAX_HEALTH:
-            // NOTE : this too?
-            case SPELL_EFFECT_HEAL_MECHANICAL:
-            case SPELL_EFFECT_HEAL_PCT:
-                return true;
-            default : break;
-        }
     }
 
     return Unit::IsImmunedToSpellEffect(spellInfo, index);
@@ -2085,29 +2052,6 @@ bool Creature::HasSpellCooldown(uint32 spell_id) const
 bool Creature::IsInEvadeMode() const
 {
     return !i_motionMaster.empty() && i_motionMaster.GetCurrentMovementGeneratorType() == HOME_MOTION_TYPE;
-}
-
-float Creature::GetBaseSpeed() const
-{
-    if( isPet() )
-    {
-        switch( ((Pet*)this)->getPetType() )
-        {
-            case SUMMON_PET:
-            case HUNTER_PET:
-            {
-                //fixed speed fur hunter (and summon!?) pets
-                return 1.15f;
-            }
-            case GUARDIAN_PET:
-            case MINI_PET:
-            {
-                //speed of CreatureInfo for guardian- and minipets
-                break;
-            }
-        }
-    }
-    return m_creatureInfo->speed_run;
 }
 
 bool Creature::HasSpell(uint32 spellID) const

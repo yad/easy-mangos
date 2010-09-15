@@ -2485,7 +2485,7 @@ void PlayerbotAI::HandleTeleportAck()
         p.appendPackGUID(m_bot->GetGUID());
         p << (uint32)0;
         p << (uint32)time(0);
-        m_bot->GetSession()->HandleMoveTeleportAck(p);
+        m_bot->GetSession()->HandleMoveTeleportAckOpcode(p);
     }
     else if (m_bot->IsBeingTeleportedFar())
         m_bot->GetSession()->HandleMoveWorldportAckOpcode();

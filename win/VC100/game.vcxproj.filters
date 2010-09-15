@@ -499,9 +499,6 @@
     <ClCompile Include="..\..\src\game\PlayerbotWarriorAI.cpp">
       <Filter>Playerbot</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\game\AuctionHouseBot.cpp">
-      <Filter>AuctionHouseBot</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\game\MapUpdater.cpp">
       <Filter>World/Handlers</Filter>
     </ClCompile>
@@ -939,9 +936,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\game\PlayerbotWarlockAI.h">
       <Filter>Playerbot</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game\AuctionHouseBot.h">
-      <Filter>AuctionHouseBot</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\game\MapUpdater.h">
       <Filter>World/Handlers</Filter>

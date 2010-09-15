@@ -44,7 +44,6 @@ void MotionMaster::Initialize()
         m_owner->StopMoving();
 
     // clear ALL movement generators (including default)
-    i_owner->StopMoving();
     Clear(false,true);
 
     // set new default movement generator

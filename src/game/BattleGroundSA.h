@@ -24,10 +24,8 @@ class BattleGround;
 class BattleGroundSAScore : public BattleGroundScore
 {
     public:
-        BattleGroundSAScore(): DemolishersDestroyed(0), GatesDestroyed(0) {};
+        BattleGroundSAScore() {};
         virtual ~BattleGroundSAScore() {};
-        uint32 DemolishersDestroyed;
-        uint32 GatesDestroyed;
 };
 
 class BattleGroundSA : public BattleGround

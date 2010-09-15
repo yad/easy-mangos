@@ -60,7 +60,6 @@
 #include "WaypointManager.h"
 #include "GMTicketMgr.h"
 #include "Util.h"
-#include "AuctionHouseBot.h"
 #include "CharacterDatabaseCleaner.h"
 #include "PlayerbotMgr.h"
 
@@ -491,7 +490,6 @@ void World::LoadConfigSettings(bool reload)
     setConfig(CONFIG_FLOAT_RATE_AUCTION_CUT,     "Rate.Auction.Cut", 1.0f);
     setConfigPos(CONFIG_UINT32_AUCTION_DEPOSIT_MIN, "Auction.Deposit.Min", SILVER);
     setConfig(CONFIG_FLOAT_RATE_HONOR, "Rate.Honor",1.0f);
-    setConfig(CONFIG_FLOAT_RATE_ARENA_POINT, "Rate.Arena.Point",1.0f);
     setConfigPos(CONFIG_FLOAT_RATE_MINING_AMOUNT, "Rate.Mining.Amount", 1.0f);
     setConfigPos(CONFIG_FLOAT_RATE_MINING_NEXT,   "Rate.Mining.Next", 1.0f);
     setConfigPos(CONFIG_FLOAT_RATE_INSTANCE_RESET_TIME, "Rate.InstanceResetTime", 1.0f);
@@ -694,8 +692,6 @@ void World::LoadConfigSettings(bool reload)
 
     setConfig(CONFIG_BOOL_QUEST_IGNORE_RAID, "Quests.IgnoreRaid", false);
 
-    setConfig(CONFIG_BOOL_LOOT_CHESTS_IGNORE_DB, "Loot.IgnoreChestGroupRulesFromDB", false);
-
     setConfig(CONFIG_BOOL_DETECT_POS_COLLISION, "DetectPosCollision", true);
 
     setConfig(CONFIG_BOOL_RESTRICTED_LFG_CHANNEL,      "Channel.RestrictedLfg", true);
@@ -723,14 +719,6 @@ void World::LoadConfigSettings(bool reload)
 
     setConfig(CONFIG_FLOAT_THREAT_RADIUS, "ThreatRadius", 100.0f);
 
-    // Système "PvP Token"
-    setConfig(CONFIG_BOOL_PVP_TOKEN_ENABLE,         "PvPToken.Active", true);
-    setConfig(CONFIG_UINT32_PVP_TOKEN_ITEMID,         "PvPToken.ObjetID", 29434);
-    setConfig(CONFIG_UINT32_PVP_TOKEN_ITEMCOUNT,     "PvPToken.QuantiteObjet", 1);
-    setConfig(CONFIG_UINT32_PVP_TOKEN_RESTRICTION,    "PvPToken.RestrictionMap", 4);
-    if(getConfig(CONFIG_UINT32_PVP_TOKEN_ITEMCOUNT) <= 0)
-        setConfig(CONFIG_BOOL_PVP_TOKEN_ENABLE, false);
-
     // always use declined names in the russian client
     if (getConfig(CONFIG_UINT32_REALM_ZONE) == REALM_ZONE_RUSSIAN)
         setConfig(CONFIG_BOOL_DECLINED_NAMES_USED, true);
@@ -743,7 +731,6 @@ void World::LoadConfigSettings(bool reload)
     setConfig(CONFIG_UINT32_BATTLEGROUND_INVITATION_TYPE,              "Battleground.InvitationType", 0);
     setConfig(CONFIG_UINT32_BATTLEGROUND_PREMATURE_FINISH_TIMER,       "BattleGround.PrematureFinishTimer", 5 * MINUTE * IN_MILLISECONDS);
     setConfig(CONFIG_UINT32_BATTLEGROUND_PREMADE_GROUP_WAIT_FOR_MATCH, "BattleGround.PremadeGroupWaitForMatch", 30 * MINUTE * IN_MILLISECONDS);
-    setConfigMinMax(CONFIG_UINT32_RANDOM_BG_RESET_HOUR,                "BattleGround.Random.ResetHour", 6, 0, 23);
     setConfig(CONFIG_UINT32_ARENA_MAX_RATING_DIFFERENCE,               "Arena.MaxRatingDifference", 150);
     setConfig(CONFIG_UINT32_ARENA_RATING_DISCARD_TIMER,                "Arena.RatingDiscardTimer", 10 * MINUTE * IN_MILLISECONDS);
     setConfig(CONFIG_BOOL_ARENA_AUTO_DISTRIBUTE_POINTS,                "Arena.AutoDistributePoints", false);
@@ -786,8 +773,6 @@ void World::LoadConfigSettings(bool reload)
     setConfig(CONFIG_UINT32_TIMERBAR_BREATH_MAX,      "TimerBar.Breath.Max", 180);
     setConfig(CONFIG_UINT32_TIMERBAR_FIRE_GMLEVEL,    "TimerBar.Fire.GMLevel", SEC_CONSOLE);
     setConfig(CONFIG_UINT32_TIMERBAR_FIRE_MAX,        "TimerBar.Fire.Max", 1);
-    setConfig(CONFIG_LFG_COST,                        "LFGMsg.Cost", 0);
-
 
     setConfigPos(CONFIG_FLOAT_SPEED_GAME,                 "Custom.SpeedGame",                   1.0f);
     setConfig(CONFIG_BOOL_NO_CAST_TIME,                   "Custom.NoCastTime",                  false);
@@ -829,41 +814,6 @@ void World::LoadConfigSettings(bool reload)
     sLog.outString( "WORLD: VMap support included. LineOfSight:%i, getHeight:%i",enableLOS, enableHeight);
     sLog.outString( "WORLD: VMap data directory is: %svmaps",m_dataPath.c_str());
     sLog.outString( "WORLD: VMap config keys are: vmap.enableLOS, vmap.enableHeight, vmap.ignoreMapIds, vmap.ignoreSpellIds");
-
-    /* AHBot Configuration Settings */
-    setConfig(CONFIG_BOOL_AHBOT_SELLER_ENABLED  , "AuctionHouseBot.Seller.Enabled"  , false);
-    setConfig(CONFIG_BOOL_AHBOT_BUYER_ENABLED   , "AuctionHouseBot.Buyer.Enabled"   , false);
-
-    SetAHBotName( sConfig.GetStringDefault("AuctionHouseBot.Name", "AHBot" ) );
-
-    setConfig(CONFIG_BOOL_AHBOT_ITEMS_VENDOR    , "AuctionHouseBot.Items.Vendor"    , false);
-    setConfig(CONFIG_BOOL_AHBOT_ITEMS_LOOT      , "AuctionHouseBot.Items.Loot"      , true);
-    setConfig(CONFIG_BOOL_AHBOT_ITEMS_MISC      , "AuctionHouseBot.Items.Misc"      , false);
-
-    setConfig(CONFIG_BOOL_AHBOT_BIND_NO         , "AuctionHouseBot.Bind.No"         , true);
-    setConfig(CONFIG_BOOL_AHBOT_BIND_PICKUP     , "AuctionHouseBot.Bind.Pickup"     , false);
-    setConfig(CONFIG_BOOL_AHBOT_BIND_EQUIP      , "AuctionHouseBot.Bind.Equip"      , true);
-    setConfig(CONFIG_BOOL_AHBOT_BIND_USE        , "AuctionHouseBot.Bind.Use"        , true);
-    setConfig(CONFIG_BOOL_AHBOT_BIND_QUEST      , "AuctionHouseBot.Bind.Quest"      , false);
-
-    setConfig(CONFIG_BOOL_AHBOT_BUYPRICE_SELLER , "AuctionHouseBot.BuyPrice.Seller" , false);
-    setConfig(CONFIG_BOOL_AHBOT_BUYPRICE_BUYER  , "AuctionHouseBot.BuyPrice.Buyer"  , false);
-
-    setConfig(CONFIG_UINT32_AHBOT_ITEMS_CYCLE   , "AuctionHouseBot.ItemsPerCycle"   , 200);
-
-    setConfig(CONFIG_UINT32_AHBOT_ITEM_MIN_ITEM_LEVEL    , "AuctionHouseBot.Items.ItemLevel.Min"         , 0);
-    setConfig(CONFIG_UINT32_AHBOT_ITEM_MAX_ITEM_LEVEL    , "AuctionHouseBot.Items.ItemLevel.Max"         , 0);
-    setConfig(CONFIG_UINT32_AHBOT_ITEM_MIN_REQ_LEVEL     , "AuctionHouseBot.Items.ReqLevel.Min"          , 0);
-    setConfig(CONFIG_UINT32_AHBOT_ITEM_MAX_REQ_LEVEL     , "AuctionHouseBot.Items.ReqLevel.Max"          , 0);
-    setConfig(CONFIG_UINT32_AHBOT_ITEM_MIN_SKILL_RANK    , "AuctionHouseBot.Items.ReqSkill.Min"          , 0);
-    setConfig(CONFIG_UINT32_AHBOT_ITEM_MAX_SKILL_RANK    , "AuctionHouseBot.Items.ReqSkill.Max"          , 0);
-
-    setConfig(CONFIG_UINT32_AHBOT_TG_MIN_ITEM_LEVEL      , "AuctionHouseBot.Tradegoods.ItemLevel.Min"    , 0);
-    setConfig(CONFIG_UINT32_AHBOT_TG_MAX_ITEM_LEVEL      , "AuctionHouseBot.Tradegoods.ItemLevel.Max"    , 0);
-    setConfig(CONFIG_UINT32_AHBOT_TG_MIN_REQ_LEVEL       , "AuctionHouseBot.Tradegoods.ReqLevel.Min"     , 0);
-    setConfig(CONFIG_UINT32_AHBOT_TG_MAX_REQ_LEVEL       , "AuctionHouseBot.Tradegoods.ReqLevel.Max"     , 0);
-    setConfig(CONFIG_UINT32_AHBOT_TG_MIN_SKILL_RANK      , "AuctionHouseBot.Tradegoods.ReqSkill.Min"     , 0);
-    setConfig(CONFIG_UINT32_AHBOT_TG_MAX_SKILL_RANK      , "AuctionHouseBot.Tradegoods.ReqSkill.Max"     , 0);
 }
 
 /// Initialize the World
@@ -1238,12 +1188,6 @@ void World::SetInitialWorldSettings()
     sLog.outString( "Loading Scripts text locales..." );    // must be after Load*Scripts calls
     sObjectMgr.LoadDbScriptStrings();
 
-    sLog.outString( "Loading VehicleData..." );
-    sObjectMgr.LoadVehicleData();
-
-    sLog.outString( "Loading VehicleSeatData..." );
-    sObjectMgr.LoadVehicleSeatData();
-
     sLog.outString( "Loading CreatureEventAI Texts...");
     sEventAIMgr.LoadCreatureEventAI_Texts(false);       // false, will checked in LoadCreatureEventAI_Scripts
 
@@ -1323,9 +1267,6 @@ void World::SetInitialWorldSettings()
     sLog.outString("Calculate next weekly quest reset time..." );
     InitWeeklyQuestResetTime();
 
-    sLog.outString("Calculate random battleground reset time..." );
-    InitRandomBGResetTime();
-
     sLog.outString("Starting objects Pooling system..." );
     sPoolMgr.Initialize();
 
@@ -1335,9 +1276,6 @@ void World::SetInitialWorldSettings()
 
     // Delete all characters which have been deleted X days before
     Player::DeleteOldCharacters();
-
-    sLog.outString("Initialize AuctionHouseBot...");
-    auctionbot.Initialize();
 
     sLog.outString( "WORLD: World initialized" );
 
@@ -1413,13 +1351,9 @@ void World::Update(uint32 diff)
     if (m_gameTime > m_NextWeeklyQuestReset)
         ResetWeeklyQuests();
 
-    if (m_gameTime > m_NextRandomBGReset)
-        ResetRandomBG();
-
     /// <ul><li> Handle auctions when the timer has passed
     if (m_timers[WUPDATE_AUCTIONS].Passed())
     {
-        auctionbot.Update();
         m_timers[WUPDATE_AUCTIONS].Reset();
 
         ///- Update mails (return old mails with item, or delete them)
@@ -1516,7 +1450,7 @@ void World::Update(uint32 diff)
         if (m_timers[WUPDATE_AUTOBROADCAST].Passed())
         {
            m_timers[WUPDATE_AUTOBROADCAST].Reset();
-            SendBroadcast();
+           SendBroadcast();
        }
     }
 
@@ -2083,37 +2017,6 @@ void World::InitDailyQuestResetTime()
         delete result;
 }
 
-void World::InitRandomBGResetTime()
-{
-    QueryResult * result = CharacterDatabase.Query("SELECT NextRandomBGResetTime FROM saved_variables");
-    if (!result)
-        m_NextRandomBGReset = time_t(time(NULL));         // game time not yet init
-    else
-        m_NextRandomBGReset = time_t((*result)[0].GetUInt64());
-
-    // generate time by config
-    time_t curTime = time(NULL);
-    tm localTm = *localtime(&curTime);
-    localTm.tm_hour = getConfig(CONFIG_UINT32_RANDOM_BG_RESET_HOUR);
-    localTm.tm_min  = 0;
-    localTm.tm_sec  = 0;
-
-    // current day reset time
-    time_t nextDayResetTime = mktime(&localTm);
-
-    // next reset time before current moment
-    if (curTime >= nextDayResetTime)
-        nextDayResetTime += DAY;
-
-    // normalize reset time
-    m_NextRandomBGReset = m_NextRandomBGReset < curTime ? nextDayResetTime - DAY : nextDayResetTime;
-
-    if (!result)
-        CharacterDatabase.PExecute("INSERT INTO saved_variables (NextRandomBGResetTime) VALUES ('"UI64FMTD"')", uint64(m_NextRandomBGReset));
-    else
-        delete result;
-}
-
 void World::ResetDailyQuests()
 {
     DETAIL_LOG("Daily quests reset for all characters.");
@@ -2136,18 +2039,6 @@ void World::ResetWeeklyQuests()
 
     m_NextWeeklyQuestReset = time_t(m_NextWeeklyQuestReset + WEEK);
     CharacterDatabase.PExecute("UPDATE saved_variables SET NextWeeklyQuestResetTime = '"UI64FMTD"'", uint64(m_NextWeeklyQuestReset));
-}
-
-void World::ResetRandomBG()
-{
-    sLog.outDetail("Random BG status reset for all characters.");
-    CharacterDatabase.Execute("DELETE FROM character_battleground_random");
-    for(SessionMap::const_iterator itr = m_sessions.begin(); itr != m_sessions.end(); ++itr)
-        if (itr->second->GetPlayer())
-            itr->second->GetPlayer()->SetRandomWinner(false);
-
-    m_NextRandomBGReset = time_t(m_NextRandomBGReset + DAY);
-    CharacterDatabase.PExecute("UPDATE saved_variables SET NextRandomBGResetTime = '"UI64FMTD"'", uint64(m_NextRandomBGReset));
 }
 
 void World::SetPlayerLimit( int32 limit, bool needUpdate )

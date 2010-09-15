@@ -181,29 +181,11 @@ enum eConfigUInt32Values
     CONFIG_UINT32_TIMERBAR_BREATH_MAX,
     CONFIG_UINT32_TIMERBAR_FIRE_GMLEVEL,
     CONFIG_UINT32_TIMERBAR_FIRE_MAX,
-    CONFIG_LFG_COST,
     CONFIG_UINT32_MIN_LEVEL_STAT_SAVE,
     CONFIG_UINT32_CHARDELETE_KEEP_DAYS,
     CONFIG_UINT32_CHARDELETE_METHOD,
     CONFIG_UINT32_CHARDELETE_MIN_LEVEL,
-    CONFIG_UINT32_RANDOM_BG_RESET_HOUR,
     CONFIG_UINT32_NUMTHREADS,
-    CONFIG_UINT32_PVP_TOKEN_ITEMID,
-    CONFIG_UINT32_PVP_TOKEN_ITEMCOUNT,
-    CONFIG_UINT32_PVP_TOKEN_RESTRICTION,
-    CONFIG_UINT32_AHBOT_ITEMS_CYCLE,
-    CONFIG_UINT32_AHBOT_ITEM_MIN_ITEM_LEVEL,
-    CONFIG_UINT32_AHBOT_ITEM_MAX_ITEM_LEVEL,
-    CONFIG_UINT32_AHBOT_TG_MIN_ITEM_LEVEL,
-    CONFIG_UINT32_AHBOT_TG_MAX_ITEM_LEVEL,
-    CONFIG_UINT32_AHBOT_ITEM_MIN_REQ_LEVEL,
-    CONFIG_UINT32_AHBOT_ITEM_MAX_REQ_LEVEL,
-    CONFIG_UINT32_AHBOT_TG_MIN_REQ_LEVEL,
-    CONFIG_UINT32_AHBOT_TG_MAX_REQ_LEVEL,
-    CONFIG_UINT32_AHBOT_ITEM_MIN_SKILL_RANK,
-    CONFIG_UINT32_AHBOT_ITEM_MAX_SKILL_RANK,
-    CONFIG_UINT32_AHBOT_TG_MIN_SKILL_RANK,
-    CONFIG_UINT32_AHBOT_TG_MAX_SKILL_RANK,
     CONFIG_UINT32_VALUE_COUNT
 };
 
@@ -267,7 +249,6 @@ enum eConfigFloatValues
     CONFIG_FLOAT_RATE_AUCTION_DEPOSIT,
     CONFIG_FLOAT_RATE_AUCTION_CUT,
     CONFIG_FLOAT_RATE_HONOR,
-    CONFIG_FLOAT_RATE_ARENA_POINT,
     CONFIG_FLOAT_RATE_MINING_AMOUNT,
     CONFIG_FLOAT_RATE_MINING_NEXT,
     CONFIG_FLOAT_RATE_TALENT,
@@ -346,25 +327,11 @@ enum eConfigBoolValues
     CONFIG_BOOL_STATS_SAVE_ONLY_ON_LOGOUT,
     CONFIG_BOOL_CLEAN_CHARACTER_DB,
     CONFIG_BOOL_VMAP_INDOOR_CHECK,
-    CONFIG_BOOL_LOOT_CHESTS_IGNORE_DB,
     CONFIG_BOOL_NO_CAST_TIME,
     CONFIG_BOOL_NO_COOLDOWN,
     CONFIG_BOOL_HURT_IN_REAL_TIME,
     CONFIG_BOOL_NO_WAIT_AFTER_CAST,
     CONFIG_BOOL_ALLOW_FLYING_MOUNTS_EVERYWHERE,
-    CONFIG_BOOL_PVP_TOKEN_ENABLE,
-    CONFIG_BOOL_AHBOT_SELLER_ENABLED,
-    CONFIG_BOOL_AHBOT_BUYER_ENABLED,
-    CONFIG_BOOL_AHBOT_ITEMS_VENDOR,
-    CONFIG_BOOL_AHBOT_ITEMS_LOOT,
-    CONFIG_BOOL_AHBOT_ITEMS_MISC,
-    CONFIG_BOOL_AHBOT_BIND_NO,
-    CONFIG_BOOL_AHBOT_BIND_PICKUP,
-    CONFIG_BOOL_AHBOT_BIND_EQUIP,
-    CONFIG_BOOL_AHBOT_BIND_USE,
-    CONFIG_BOOL_AHBOT_BIND_QUEST,
-    CONFIG_BOOL_AHBOT_BUYPRICE_SELLER,
-    CONFIG_BOOL_AHBOT_BUYPRICE_BUYER,
     CONFIG_BOOL_VALUE_COUNT
 };
 
@@ -556,7 +523,6 @@ class World
         /// Next daily quests reset time
         time_t GetNextDailyQuestsResetTime() const { return m_NextDailyQuestReset; }
         time_t GetNextWeeklyQuestsResetTime() const { return m_NextWeeklyQuestReset; }
-        time_t GetNextRandomBGResetTime() const { return m_NextRandomBGReset; }
 
         /// Get the maximum skill level a player can reach
         uint16 GetConfigMaxSkillValue() const
@@ -651,10 +617,6 @@ class World
         void SetScriptsVersion(char const* version) { m_ScriptsVersion = version ? version : "unknown scripting library"; }
         char const* GetScriptsVersion() { return m_ScriptsVersion.c_str(); }
 
-        //Added By AHBot
-        void SetAHBotName(const std::string& AHBotName) { if (AHBotName.size()>0) m_AHBotName = AHBotName; else m_AHBotName="AHBot"; }
-        const char* GetAHBotName() const { return m_AHBotName.c_str(); }
-
     protected:
         void _UpdateGameTime();
         // callback for UpdateRealmCharacters
@@ -662,10 +624,8 @@ class World
 
         void InitDailyQuestResetTime();
         void InitWeeklyQuestResetTime();
-        void InitRandomBGResetTime();
         void ResetDailyQuests();
         void ResetWeeklyQuests();
-        void ResetRandomBG();
     private:
         void setConfig(eConfigUInt32Values index, char const* fieldname, uint32 defvalue);
         void setConfig(eConfigInt32Values index, char const* fieldname, int32 defvalue);
@@ -737,7 +697,6 @@ class World
         time_t m_NextDailyQuestReset;
         time_t m_NextWeeklyQuestReset;
         time_t m_NextPlayerBotCheck;
-        time_t m_NextRandomBGReset;
 
         //Player Queue
         Queue m_QueuedPlayer;
@@ -750,9 +709,6 @@ class World
         std::string m_DBVersion;
         std::string m_CreatureEventAIVersion;
         std::string m_ScriptsVersion;
-
-        //Added By AHBot
-        std::string m_AHBotName;
 };
 
 extern uint32 realmID;

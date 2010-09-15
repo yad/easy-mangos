@@ -213,7 +213,6 @@ class MANGOS_DLL_SPEC WorldSession
         void SendNameQueryOpcode(Player* p);
         void SendNameQueryOpcodeFromDB(uint64 guid);
         static void SendNameQueryOpcodeFromDBCallBack(QueryResult *result, uint32 accountId);
-        void SendFakeNameForAHBotQueryOPcode();
 
         void SendTrainerList( uint64 guid );
         void SendTrainerList( uint64 guid, const std::string& strTitle );
@@ -432,13 +431,6 @@ class MANGOS_DLL_SPEC WorldSession
         void HandleSetActiveMoverOpcode(WorldPacket &recv_data);
         void HandleMoveNotActiveMoverOpcode(WorldPacket &recv_data);
         void HandleDismissControlledVehicle(WorldPacket &recv_data);
-        void HandleRequestVehicleExit(WorldPacket &recv_data);
-        void HandleRequestVehiclePrevSeat(WorldPacket &recv_data);
-        void HandleRequestVehicleNextSeat(WorldPacket &recv_data);
-        void HandleRequestVehicleSwitchSeat(WorldPacket &recv_data);
-        void HandleChangeSeatsOnControlledVehicle(WorldPacket &recv_data);
-        void HandleEnterPlayerVehicle(WorldPacket &recv_data);
-        void HandleEjectPasenger(WorldPacket &recv_data);
         void HandleMoveTimeSkippedOpcode(WorldPacket &recv_data);
 
         void HandleRequestRaidInfoOpcode( WorldPacket & recv_data );

@@ -26,19 +26,12 @@ CreatureAI::~CreatureAI()
 
 void CreatureAI::AttackedBy( Unit* attacker )
 {
-    // vehicle dont have threat list, so this is unnecessary, because it calls move chase
-    if(m_creature->isVehicle())
-        return;
-
     if(!m_creature->getVictim())
         AttackStart(attacker);
 }
 
 CanCastResult CreatureAI::CanCastSpell(Unit* pTarget, const SpellEntry *pSpell, bool isTriggered)
 {
-    if (!pTarget)
-        return CAST_FAIL_OTHER;
-
     // If not triggered, we check
     if (!isTriggered)
     {
@@ -81,9 +74,6 @@ CanCastResult CreatureAI::CanCastSpell(Unit* pTarget, const SpellEntry *pSpell, 
 
 CanCastResult CreatureAI::DoCastSpellIfCan(Unit* pTarget, uint32 uiSpell, uint32 uiCastFlags, uint64 uiOriginalCasterGUID)
 {
-    if (!pTarget)
-        return CAST_FAIL_OTHER;
-
     Unit* pCaster = m_creature;
 
     if (uiCastFlags & CAST_FORCE_TARGET_SELF)

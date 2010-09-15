@@ -153,17 +153,10 @@ bool GameObject::Create(uint32 guidlow, uint32 name_id, Map *map, uint32 phaseMa
         ((InstanceMap*)map)->GetInstanceData()->OnObjectCreate(this);
     }
 
-    if (goinfo->type == GAMEOBJECT_TYPE_TRANSPORT)
-    {
-        SetUInt32Value(GAMEOBJECT_LEVEL, goinfo->transport.pause);
-        if (goinfo->transport.startOpen)
-            SetGoState(GO_STATE_ACTIVE);
-    }
-
     return true;
 }
 
-void GameObject::Update(uint32 diff)
+void GameObject::Update(uint32 /*p_time*/)
 {
     if (GetObjectGuid().IsMOTransport())
     {
@@ -367,15 +360,6 @@ void GameObject::Update(uint32 diff)
                         m_cooldownTime = 0;
                     }
                     break;
-                case GAMEOBJECT_TYPE_CHEST:
-                    if (m_groupLootId)
-                    {
-                        if(diff < m_groupLootTimer)
-                            m_groupLootTimer -= diff;
-                        else
-                            StopGroupLoot();
-                    }
-                    break;
                 default:
                     break;
             }
@@ -426,9 +410,8 @@ void GameObject::Update(uint32 diff)
             if(!m_respawnDelayTime)
                 return;
 
-            m_respawnTime = m_spawnedByDefault ? time(NULL) + m_respawnDelayTime : 0;
-
             // since pool system can fail to roll unspawned object, this one can remain spawned, so must set respawn nevertheless
+            m_respawnTime = m_spawnedByDefault ? time(NULL) + m_respawnDelayTime : 0;
 
             // if option not set then object will be saved at grid unload
             if(sWorld.getConfig(CONFIG_BOOL_SAVE_RESPAWN_TIME_IMMEDIATLY))
@@ -676,15 +659,6 @@ bool GameObject::IsTransport() const
     return gInfo->type == GAMEOBJECT_TYPE_TRANSPORT || gInfo->type == GAMEOBJECT_TYPE_MO_TRANSPORT;
 }
 
-// is Dynamic transport = non-stop Transport
-bool GameObject::IsDynTransport() const
-{
-    // If something is marked as a transport, don't transmit an out of range packet for it.
-    GameObjectInfo const * gInfo = GetGOInfo();
-    if(!gInfo) return false;
-    return gInfo->type == GAMEOBJECT_TYPE_MO_TRANSPORT || (gInfo->type == GAMEOBJECT_TYPE_TRANSPORT && !gInfo->transport.pause);
-}
-
 Unit* GameObject::GetOwner() const
 {
     return ObjectAccessor::GetUnit(*this, GetOwnerGUID());
@@ -755,7 +729,7 @@ bool GameObject::ActivateToQuest( Player *pTarget)const
                 //look for battlegroundAV for some objects which are only activated after mine gots captured by own team
                 if (GetEntry() == BG_AV_OBJECTID_MINE_N || GetEntry() == BG_AV_OBJECTID_MINE_S)
                     if (BattleGround *bg = pTarget->GetBattleGround())
-                        if (bg->GetTypeID(true) == BATTLEGROUND_AV && !(((BattleGroundAV*)bg)->PlayerCanDoMineQuest(GetEntry(),pTarget->GetTeam())))
+                        if (bg->GetTypeID() == BATTLEGROUND_AV && !(((BattleGroundAV*)bg)->PlayerCanDoMineQuest(GetEntry(),pTarget->GetTeam())))
                             return false;
                 return true;
             }
@@ -1340,8 +1314,6 @@ void GameObject::Use(Unit* user)
                 BattleGround *bg = player->GetBattleGround();
                 if (!bg)
                     return;
-                if (player->GetVehicle())
-                    return;
                 // BG flag click
                 // AB:
                 // 15001
@@ -1378,8 +1350,6 @@ void GameObject::Use(Unit* user)
                 BattleGround *bg = player->GetBattleGround();
                 if (!bg)
                     return;
-                if (player->GetVehicle())
-                    return;
                 // BG flag dropped
                 // WS:
                 // 179785 - Silverwing Flag
@@ -1393,15 +1363,15 @@ void GameObject::Use(Unit* user)
                     {
                         case 179785:                        // Silverwing Flag
                             // check if it's correct bg
-                            if(bg->GetTypeID(true) == BATTLEGROUND_WS)
+                            if(bg->GetTypeID() == BATTLEGROUND_WS)
                                 bg->EventPlayerClickedOnFlag(player, this);
                             break;
                         case 179786:                        // Warsong Flag
-                            if(bg->GetTypeID(true) == BATTLEGROUND_WS)
+                            if(bg->GetTypeID() == BATTLEGROUND_WS)
                                 bg->EventPlayerClickedOnFlag(player, this);
                             break;
                         case 184142:                        // Netherstorm Flag
-                            if(bg->GetTypeID(true) == BATTLEGROUND_EY)
+                            if(bg->GetTypeID() == BATTLEGROUND_EY)
                                 bg->EventPlayerClickedOnFlag(player, this);
                             break;
                     }
@@ -1597,18 +1567,6 @@ float GameObject::GetObjectBoundingRadius() const
         return fabs(dispEntry->unknown12) * GetObjectScale();
 
     return DEFAULT_WORLD_OBJECT_SIZE;
-}
-
-void GameObject::DealSiegeDamage(uint32 damage)
-{
-    m_actualHealth -= damage;
-
-    // TODO : there are a lot of thinghts to do here
-    if(m_actualHealth < 0)
-    {
-        m_actualHealth = GetGOInfo()->destructibleBuilding.intactNumHits;
-        SetLootState(GO_JUST_DEACTIVATED);
-    }
 }
 
 bool GameObject::IsInSkillupList(Player* player) const

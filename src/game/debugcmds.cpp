@@ -912,8 +912,7 @@ bool ChatHandler::HandleDebugSpawnVehicleCommand(char* args)
 
     Vehicle *v = new Vehicle;
     Map *map = m_session->GetPlayer()->GetMap();
-
-    if (!v->Create(sObjectMgr.GenerateLowGuid(HIGHGUID_VEHICLE), map, m_session->GetPlayer()->GetPhaseMaskForSpawn(), entry, id, m_session->GetPlayer()->GetTeam()))
+    if (!v->Create(map->GenerateLocalLowGuid(HIGHGUID_VEHICLE), map, entry, id, m_session->GetPlayer()->GetTeam()))
     {
         delete v;
         return false;
@@ -933,7 +932,6 @@ bool ChatHandler::HandleDebugSpawnVehicleCommand(char* args)
     }
 
     map->Add((Creature*)v);
-    v->AIM_Initialize();
 
     return true;
 }

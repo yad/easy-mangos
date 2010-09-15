@@ -902,13 +902,11 @@ enum MangosStrings
     LANG_SYSTEMMESSAGE_MODERATOR        = 1501,
     LANG_SYSTEMMESSAGE_GAMEMASTER       = 1502,
     LANG_SYSTEMMESSAGE_ADMINISTRATOR    = 1503,
-    LANG_COMMAND_MODIFY_HKILL           = 1500,
+    LANG_COMMAND_MODIFY_HKILL           = 1600,
     // Use for not-in-offcial-sources patches
     //                                    10000-10999
 
     // Use for custom patches             11000-11999
-    LANG_ANNOUNCE_CHEAT                 = 11000,
-    LANG_YOU_RECEIVE_TOKEN              = 11050,
 
     // NOT RESERVED IDS                   12000-1999999999
     // `db_script_string` table index     2000000000-2000009999 (MIN_DB_SCRIPT_STRING_ID-MAX_DB_SCRIPT_STRING_ID)

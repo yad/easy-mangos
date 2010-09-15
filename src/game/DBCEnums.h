@@ -57,7 +57,7 @@ enum AchievementFactionFlags
 enum AchievementFlags
 {
     ACHIEVEMENT_FLAG_COUNTER           = 0x00000001,        // Just count statistic (never stop and complete)
-    ACHIEVEMENT_FLAG_HIDDEN            = 0x00000002,        // not show in client
+    ACHIEVEMENT_FLAG_UNK2              = 0x00000002,        // not used
     ACHIEVEMENT_FLAG_STORE_MAX_VALUE   = 0x00000004,        // Store only max value? used only in "Reach level xx"
     ACHIEVEMENT_FLAG_SUMM              = 0x00000008,        // Use summ criteria value from all reqirements (and calculate max value)
     ACHIEVEMENT_FLAG_MAX_USED          = 0x00000010,        // Show max criteria (and calculate max value ??)
@@ -424,19 +424,6 @@ enum SpellEffectIndex
     EFFECT_INDEX_0     = 0,
     EFFECT_INDEX_1     = 1,
     EFFECT_INDEX_2     = 2
-};
-
-enum VehicleSeatFlags
-{
-    SEAT_FREE                   = 0x01,                     // free seat
-    SEAT_FULL                   = 0x02,                     // seat occupied by player/creature
-    // special cases
-    SEAT_VEHICLE_FREE           = 0x04,                     // seat occupied by vehicle, but that vehicle is free
-    SEAT_VEHICLE_FULL           = 0x08,                     // seat occupied by vehicle and that vehicle is full too
-    SEAT_FLAG_HIDE_PASSENGER    = 0x00000200,               // Passenger is hidden
-    SEAT_FLAG_MAIN_RIDER        = 0x00000800,               // Can control vehicle
-    SEAT_FLAG_USABLE            = 0x02000000,
-    SEAT_FLAG_CAN_CAST          = 0x20000000,
 };
 
 #define MAX_EFFECT_INDEX 3

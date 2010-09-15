@@ -207,18 +207,6 @@ struct AchievementCriteriaEntry
             uint32  castCount;                              // 4
         } cast_spell;
 
-        
-        // ACHIEVEMENT_CRITERIA_TYPE_BG_OBJECTIVE_CAPTURE       = 30
-        struct
-        {
-            uint32  captureID;                                // 3
-            uint32  captureCount;                             // 4
-            //uint32  additionalRequirement1_type;            // 5 
-            //uint32  additionalRequirement1_value;           // 6 
-            //uint32  additionalRequirement2_type;            // 7 
-            //uint32  additionalRequirement2_value;           // 8 
-        } objective_capture;
-
         // ACHIEVEMENT_CRITERIA_TYPE_HONORABLE_KILL_AT_AREA = 31
         struct
         {
@@ -423,8 +411,6 @@ struct AchievementCriteriaEntry
         {
             uint32  unused;                                 // 3
             uint32  killCount;                              // 4
-            uint32  flag;                                   // 5
-            uint32  mapid;                                  // 6
         } special_pvp_kill;
 
         // ACHIEVEMENT_CRITERIA_TYPE_FISH_IN_GAMEOBJECT     = 72
@@ -1609,9 +1595,9 @@ struct SpellItemEnchantmentEntry
     uint32      slot;                                       // 32       m_flags
     uint32      GemID;                                      // 33       m_src_itemID
     uint32      EnchantmentCondition;                       // 34       m_condition_id
-    uint32      requiredSkill;                              // 35       m_requiredSkillID
-    uint32      requiredSkillValue;                         // 36       m_requiredSkillRank
-    uint32      requiredLevel;                              // 37       m_requiredLevel
+    //uint32      requiredSkill;                            // 35       m_requiredSkillID
+    //uint32      requiredSkillValue;                       // 36       m_requiredSkillRank
+                                                            // 37       new in 3.1
 };
 
 struct SpellItemEnchantmentConditionEntry
@@ -1718,8 +1704,6 @@ struct TotemCategoryEntry
     uint32    categoryMask;                                 // 19 (compatibility mask for same type: different for totems, compatible from high to low for rods)
 };
 
-#define MAX_VEHICLE_SEAT 8
-
 struct VehicleEntry
 {
     uint32  m_ID;                                           // 0
@@ -1728,7 +1712,7 @@ struct VehicleEntry
     float   m_pitchSpeed;                                   // 3
     float   m_pitchMin;                                     // 4
     float   m_pitchMax;                                     // 5
-    uint32  m_seatID[MAX_VEHICLE_SEAT];                     // 6-13
+    uint32  m_seatID[8];                                    // 6-13
     float   m_mouseLookOffsetPitch;                         // 14
     float   m_cameraFadeDistScalarMin;                      // 15
     float   m_cameraFadeDistScalarMax;                      // 16
@@ -1752,7 +1736,7 @@ struct VehicleEntry
     uint32  m_uiLocomotionType;                             // 34
     float   m_msslTrgtImpactTexRadius;                      // 35
     uint32  m_uiSeatIndicatorType;                          // 36
-    uint32  m_powerType;                                    // 37, new in 3.1                                                        // 37, new in 3.1
+                                                            // 37, new in 3.1
                                                             // 38, new in 3.1
                                                             // 39, new in 3.1
 };
@@ -1806,8 +1790,6 @@ struct VehicleSeatEntry
     int32   m_uiSkin;                                       // 44
     uint32  m_flagsB;                                       // 45
                                                             // 46-57 added in 3.1, floats mostly
-
-    bool IsUsable() const { return m_flags & SEAT_FLAG_USABLE; }
 };
 
 struct WMOAreaTableEntry
