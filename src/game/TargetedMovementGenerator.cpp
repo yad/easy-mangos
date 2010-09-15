@@ -28,7 +28,7 @@
 
 #include <cmath>
 
-class ACE_High_Res_Timer;
+//class ACE_High_Res_Timer;
 
 //-----------------------------------------------//
 template<class T, typename D>
