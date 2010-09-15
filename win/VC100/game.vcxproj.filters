@@ -25,8 +25,8 @@
     <Filter Include="Playerbot">
       <UniqueIdentifier>{4cfbb1d6-47a2-43d4-b325-1a2c9d633ede}</UniqueIdentifier>
     </Filter>
-    <Filter Include="AuctionHouseBot">
-      <UniqueIdentifier>{d34b4a34-e0ad-4a9c-9bb6-d93aabb52665}</UniqueIdentifier>
+    <Filter Include="AhBot">
+      <UniqueIdentifier>{481ad376-5cba-439d-af8c-2ef73de2ed8b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -501,6 +501,9 @@
     </ClCompile>
     <ClCompile Include="..\..\src\game\MapUpdater.cpp">
       <Filter>World/Handlers</Filter>
+    </ClCompile>	  
+    <ClCompile Include="..\..\src\game\AuctionHouseBot\AuctionHouseBot.cpp">
+      <Filter>AhBot</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -939,6 +942,9 @@
     </ClInclude>
     <ClInclude Include="..\..\src\game\MapUpdater.h">
       <Filter>World/Handlers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\game\AuctionHouseBot\AuctionHouseBot.h">
+      <Filter>AhBot</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

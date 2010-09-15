@@ -310,6 +310,9 @@ AC_CONFIG_FILES([
    src/realmd/realmd.conf.dist
    src/mangosd/Makefile
    src/mangosd/mangosd.conf.dist
+   src/game/AuctionHouseBot/Makefile
+   src/game/AuctionHouseBot/config.h
+   src/game/AuctionHouseBot/ahbot.conf.dist
    src/bindings/Makefile
    src/bindings/universal/Makefile
 ])

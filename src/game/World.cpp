@@ -60,6 +60,7 @@
 #include "WaypointManager.h"
 #include "GMTicketMgr.h"
 #include "Util.h"
+#include "AuctionHouseBot/AuctionHouseBot.h"
 #include "CharacterDatabaseCleaner.h"
 #include "PlayerbotMgr.h"
 
@@ -1277,6 +1278,9 @@ void World::SetInitialWorldSettings()
     // Delete all characters which have been deleted X days before
     Player::DeleteOldCharacters();
 
+    sLog.outString("Initialize AuctionHouseBot...");
+    auctionbot.Initialize();
+
     sLog.outString( "WORLD: World initialized" );
 
     uint32 uStartInterval = getMSTimeDiff(uStartTime, getMSTime());
@@ -1354,6 +1358,7 @@ void World::Update(uint32 diff)
     /// <ul><li> Handle auctions when the timer has passed
     if (m_timers[WUPDATE_AUCTIONS].Passed())
     {
+        auctionbot.Update();
         m_timers[WUPDATE_AUCTIONS].Reset();
 
         ///- Update mails (return old mails with item, or delete them)

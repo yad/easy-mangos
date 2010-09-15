@@ -334,11 +334,6 @@ MapUpdate.Threads = 3
 #        Default: "Ra.log"
 #                 "" - Empty name for disable
 #
-#    ArenaRatedLogFile
-#        Log of arena matches
-#        Default: "Arena.log"
-#                 "" - Empty name for disable
-#
 #    LogColors
 #        Color for messages (format "normal_color details_color debug_color error_color")
 #        Colors: 0 - BLACK, 1 - RED, 2 - GREEN,  3 - BROWN, 4 - BLUE, 5 - MAGENTA, 6 -  CYAN, 7 - GREY,
@@ -1039,7 +1034,6 @@ ChatFlood.MessageCount = 10
 ChatFlood.MessageDelay = 1
 ChatFlood.MuteTime = 10
 Channel.RestrictedLfg = 1
-LFGMsg.Cost = 0
 Channel.SilentlyGMJoin = 0
 
 ###################################################################################################################
@@ -1178,9 +1172,6 @@ GM.AllowAchievementGain  = 1
 #    Rate.Honor
 #        Honor gain rate
 #
-#    Rate.Arena.Point
-#        Arena gain rate
-#
 #    Rate.Mining.Amount
 #    Rate.Mining.Next
 #        Mining Rates (Mining.Amount changes minimum/maximum usetimes of a deposit,
@@ -1301,7 +1292,6 @@ Rate.Auction.Deposit = 1
 Rate.Auction.Cut = 1
 Auction.Deposit.Min = 100
 Rate.Honor = 1
-Rate.Arena.Point = 1
 Rate.Mining.Amount = 1
 Rate.Mining.Next   = 1
 Rate.Talent = 1
@@ -1472,148 +1462,6 @@ Network.OutKBuff = -1
 Network.OutUBuff = 65536
 Network.TcpNodelay = 1
 Network.KickOnBadPacket = 0
-
-###################################################################################################################
-# AUCTION HOUSE BOT SETTINGS
-#
-#    AuctionHouseBot.Seller.Enabled
-#        Enable/Disable the part of AHBot that puts items up for auction
-#    Default 0 (disabled)
-#
-#    AuctionHouseBot.Buyer.Enabled
-#        Enable/Disable the part of AHBot that buys items from players
-#    Default 0 (disabled)
-#
-#    AuctionHouseBot.Name
-#        If you want show other name in place of "AHBot" to auction house, just type it between the quote
-#    Default: "" ("AHBot" name)
-#
-#    AuctionHouseBot.Items.Vendor
-#        Include items that can be bought from vendors.
-#    Default 0
-#
-#    AuctionHouseBot.Items.Loot
-#        Include items that can be looted or fished for.
-#    Default 1
-#
-#
-#    AuctionHouseBot.Items.ItemLevel.*
-#        Prevent seller from listing items below/above this item level
-#    Default 0 (Disabled)
-#
-#    AuctionHouseBot.Items.ReqLevel.*
-#        Prevent seller from listing items below/above this required level
-#    Default 0 (Disabled)
-#
-#    AuctionHouseBot.Items.ReqSkill.*
-#        Prevent seller from listing items below/above this skill level
-#    Default 0 (Disabled)
-#
-#
-#    AuctionHouseBot.Tradegoods.ItemLevel.*
-#        Prevent seller from listing tradegoods below/above this item level
-#    Default 0 (Disabled)
-#
-#    AuctionHouseBot.Tradegoods.ReqLevel.*
-#        Prevent seller from listing tradegoods below/above this required level
-#    Default 0 (Disabled)
-#
-#    AuctionHouseBot.Tradegoods.ReqSkill.*
-#        Prevent seller from listing tradegoods below/above this skill level
-#    Default 0 (Disabled)
-#
-#
-#    AuctionHouseBot.Items.Misc
-#        Include misc. items.
-#    Default 0
-#
-#    AuctionHouseBot.Bind.*
-#        Indicates which bonding types to allow the bot to put up for auction
-#            No     - Items that don't bind            Default 1 (Allowed)
-#            Pickup - Items that bind on pickup        Default 0 (Not Allowed)
-#            Equip  - Items that bind on equip         Default 1 (Allowed)
-#            Use    - Items that bind on use           Default 1 (Allowed)
-#            Quest  - Quest Items                      Default 0 (Not Allowed)
-#
-#    AuctionHouseBot.ItemsPerCycle
-#        Number of Items to Add/Remove from the AH during mass operations
-#    Default 200
-#
-#    AuctionHouseBot.BuyPrice.Seller
-#        Should the Seller use BuyPrice or SellPrice to determine Bid Prices
-#    Default 0 (use SellPrice)
-#
-#    AuctionHouseBot.BuyPrice.Buyer
-#        Should the Buyer use BuyPrice or SellPrice to determine Bid Prices
-#    Default 0 (use SellPrice)
-#
-#    All other settings have been moved to sql
-#
-###################################################################################################################
-
-AuctionHouseBot.Seller.Enabled = 0
-AuctionHouseBot.Buyer.Enabled = 0
-AuctionHouseBot.Name = ""
-
-AuctionHouseBot.Items.Vendor = 0
-AuctionHouseBot.Items.Loot = 1
-AuctionHouseBot.Items.Misc = 0
-
-AuctionHouseBot.Items.ItemLevel.Min = 0
-AuctionHouseBot.Items.ItemLevel.Max = 0
-AuctionHouseBot.Items.ReqLevel.Min = 0
-AuctionHouseBot.Items.ReqLevel.Max = 0
-AuctionHouseBot.Items.ReqSkill.Min = 0
-AuctionHouseBot.Items.ReqSkill.Max = 0
-
-AuctionHouseBot.Tradegoods.ItemLevel.Min = 0
-AuctionHouseBot.Tradegoods.ItemLevel.Max = 0
-AuctionHouseBot.Tradegoods.ReqLevel.Min = 0
-AuctionHouseBot.Tradegoods.ReqLevel.Max = 0
-AuctionHouseBot.Tradegoods.ReqSkill.Min = 0
-AuctionHouseBot.Tradegoods.ReqSkill.Max = 0
-
-AuctionHouseBot.Bind.No = 1
-AuctionHouseBot.Bind.Pickup = 0
-AuctionHouseBot.Bind.Equip = 1
-AuctionHouseBot.Bind.Use = 1
-AuctionHouseBot.Bind.Quest = 0
-AuctionHouseBot.ItemsPerCycle = 200
-AuctionHouseBot.BuyPrice.Seller = 0
-AuctionHouseBot.BuyPrice.Buyer = 0
-
-###################################################################################################################
-# Systeme "PvP Token"  (Patch personnalise)
-#
-#     Auteur : dythzer
-#     Readaptation et traduction : Nico
-#
-#    PvPToken.Active
-#        Active/Desactive le systeme "PvP Token".
-#        Default: 1 (active)
-#                 0 (desactive)
-#
-#    PvPToken.ObjetID
-#        L'ID de l'objet que le joueur va recevoir apres avoir tue un ennemi.
-#        Default: 29434 (Insigne de justice)
-#
-#    PvPToken.QuantiteObjet
-#        Le nombre d'exemplaires de l'objet que le joueur va recevoir.
-#        Default: 1
-#
-#    PvPToken.RestrictionMap
-#        Le type de maps ou le joueur peut recevoir l'objet
-#        Default: 4 - Toutes les maps
-#                 3 - Seulement les champs de bataille
-#                 2 - FFA PvP seulement (Arenes de tournoi)
-#                 1 - Champs de bataille et FFA PvP seulement
-#
-###################################################################################################################
-
-PvPToken.Active = 1
-PvPToken.ObjetID = 29434
-PvPToken.QuantiteObjet = 1
-PvPToken.RestrictionMap = 4
 
 ###################################################################################################################
 # CONSOLE, REMOTE ACCESS AND SOAP

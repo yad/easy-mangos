@@ -86,6 +86,10 @@ class AuctionHouseObject
 
         uint32 Getcount() { return AuctionsMap.size(); }
 
+        // Added by AHBot
+        AuctionEntryMap::iterator GetAuctionsBegin() {return AuctionsMap.begin();}
+        AuctionEntryMap::iterator GetAuctionsEnd() {return AuctionsMap.end();}
+
         void AddAuction(AuctionEntry *ah)
         {
             MANGOS_ASSERT( ah );
@@ -145,6 +149,7 @@ class AuctionHouseMgr
 
         static uint32 GetAuctionHouseTeam(AuctionHouseEntry const* house);
         static AuctionHouseEntry const* GetAuctionHouseEntry(Unit* unit);
+        static AuctionHouseEntry const* GetAuctionHouseEntryByFaction(uint32 factionTemplateId);
 
     public:
         //load first auction items, because of check if item exists, when loading
