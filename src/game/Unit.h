@@ -2045,7 +2045,7 @@ inline void Unit::SendMonsterMoveByPath(Path<Elem,Node> const& path, uint32 star
     data << uint32(traveltime);
     data << uint32(pathSize);
 
-    if (HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_TAXI_FLIGHT))
+    if (flags & SplineFlags(SPLINEFLAG_FLYING | SPLINEFLAG_CATMULLROM))
     {
         // sending a taxi flight path
         for(uint32 i = start; i < end; ++i)
