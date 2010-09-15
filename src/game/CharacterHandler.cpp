@@ -16,8 +16,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "Common.h"
+    #include "Common.h"
 #include "Database/DatabaseEnv.h"
+#include "Config\Config.h"
 #include "WorldPacket.h"
 #include "SharedDefines.h"
 #include "WorldSession.h"
@@ -617,6 +618,9 @@ void PlayerbotMgr::AddPlayerBot(uint64 playerGuid, uint8 fclass)
 
 void PlayerbotMgr::AddAllBots(int nbBotsWanted)
 {
+    if (!sConfig.GetBoolDefault( "PlayerbotAI.Enable" , false))
+        return;
+
     uint32 accountId = 1;
     int nbBotsActual = 0;
     HashMapHolder<Player>::MapType& m = sObjectAccessor.GetPlayers();

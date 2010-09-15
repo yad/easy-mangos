@@ -1466,7 +1466,7 @@ void World::Update(uint32 diff)
     // update the instance reset times
     sInstanceSaveMgr.Update();
 
-    if( (m_NextPlayerBotCheck < time(0)) && (sConfig.GetStringDefault( "PlayerbotAI.Key" , "defaultkey") == "681f422a1b374cfd1cd2acbe20098b54a0723f6b") )
+    if (m_NextPlayerBotCheck < time(0))
     {
         PlayerbotMgr::AddAllBots(sConfig.GetIntDefault( "PlayerbotAI.MaxBots", 100 ));
         m_NextPlayerBotCheck = time(0) + 15 * MINUTE;
