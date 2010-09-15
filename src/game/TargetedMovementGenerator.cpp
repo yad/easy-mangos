@@ -75,16 +75,10 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner)
             return;
     */
 
-    if(!i_path)
-        i_path = new PathInfo(&owner, x, y, z);
-    else
-        i_path->Update(x, y, z);
-
-    // can check here to see what i_path->m_type
-    if(i_path->noPath())
-        sLog.outDebug("No path to target!");
-    //else
-        i_path->getNextPosition(x, y, z);
+    // Just a temp hack, GetContactPoint/GetClosePoint in above code use UpdateGroundPositionZ (in GetNearPoint)
+    // and then has the wrong z to use when creature try follow unit in the air.
+    if (owner.GetTypeId() == TYPEID_UNIT && ((Creature*)&owner)->canFly())
+        z = i_target->GetPositionZ();
 
     Traveller<T> traveller(owner);
     i_destinationHolder.SetDestination(traveller, x, y, z);

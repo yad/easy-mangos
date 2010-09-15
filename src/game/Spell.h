@@ -19,6 +19,7 @@
 #ifndef __SPELL_H
 #define __SPELL_H
 
+#include "Common.h"
 #include "GridDefines.h"
 #include "SharedDefines.h"
 #include "DBCEnums.h"
@@ -308,6 +309,7 @@ class Spell
         void EffectCharge(SpellEffectIndex eff_idx);
         void EffectCharge2(SpellEffectIndex eff_idx);
         void EffectProspecting(SpellEffectIndex eff_idx);
+        void EffectRedirectThreat(SpellEffectIndex eff_idx);
         void EffectMilling(SpellEffectIndex eff_idx);
         void EffectRenamePet(SpellEffectIndex eff_idx);
         void EffectSendTaxi(SpellEffectIndex eff_idx);
@@ -708,7 +710,7 @@ namespace MaNGOS
 
         template<class T> inline void Visit(GridRefManager<T>  &m)
         {
-            ASSERT(i_data);
+            MANGOS_ASSERT(i_data);
 
             if(!i_originalCaster)
                 return;

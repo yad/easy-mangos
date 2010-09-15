@@ -291,7 +291,7 @@ HostileReference* ThreatContainer::selectNextVictim(Creature* pAttacker, Hostile
         currentRef = (*iter);
 
         Unit* target = currentRef->getTarget();
-        ASSERT(target);                                     // if the ref has status online the target must be there !
+        MANGOS_ASSERT(target);                              // if the ref has status online the target must be there !
 
         // some units are prefered in comparison to others
         if(!noPriorityTargetFound && (target->IsImmunedToDamage(pAttacker->GetMeleeDamageSchoolMask()) || target->hasNegativeAuraWithInterruptFlag(AURA_INTERRUPT_FLAG_DAMAGE)) )
@@ -388,10 +388,31 @@ void ThreatManager::addThreat(Unit* pVictim, float pThreat, bool crit, SpellScho
     if(!pVictim->isAlive() || !getOwner()->isAlive() )
         return;
 
-    ASSERT(getOwner()->GetTypeId()== TYPEID_UNIT);
+    MANGOS_ASSERT(getOwner()->GetTypeId()== TYPEID_UNIT);
 
     float threat = ThreatCalcHelper::calcThreat(pVictim, iOwner, pThreat, crit, schoolMask, pThreatSpell);
 
+    if (threat > 0.0f)
+    {
+        if (float redirectedMod = pVictim->getHostileRefManager().GetThreatRedirectionMod())
+        {
+            if (Unit* redirectedTarget = pVictim->getHostileRefManager().GetThreatRedirectionTarget())
+            {
+                if (redirectedTarget != getOwner() && redirectedTarget->isAlive())
+                {
+                    float redirectedThreat = threat * redirectedMod;
+                    threat -= redirectedThreat;
+                    addThreatDirectly(redirectedTarget, redirectedThreat);
+                }
+            }
+        }
+    }
+
+    addThreatDirectly(pVictim, threat);
+}
+
+void ThreatManager::addThreatDirectly(Unit* pVictim, float threat)
+{
     HostileReference* ref = iThreatContainer.addThreat(pVictim, threat);
     // Ref is online
     if (ref)
@@ -402,7 +423,7 @@ void ThreatManager::addThreat(Unit* pVictim, float pThreat, bool crit, SpellScho
 
     if(!ref)                                                // there was no ref => create a new one
     {
-                                                            // threat has to be 0 here
+        // threat has to be 0 here
         HostileReference* hostileReference = new HostileReference(pVictim, this, 0);
         iThreatContainer.addReference(hostileReference);
         hostileReference->addThreat(threat);                // now we add the real threat

@@ -191,7 +191,7 @@ pEffect SpellEffects[TOTAL_SPELL_EFFECTS]=
     &Spell::EffectProspecting,                              //127 SPELL_EFFECT_PROSPECTING              Prospecting spell
     &Spell::EffectApplyAreaAura,                            //128 SPELL_EFFECT_APPLY_AREA_AURA_FRIEND
     &Spell::EffectApplyAreaAura,                            //129 SPELL_EFFECT_APPLY_AREA_AURA_ENEMY
-    &Spell::EffectNULL,                                     //130 SPELL_EFFECT_REDIRECT_THREAT
+    &Spell::EffectRedirectThreat,                           //130 SPELL_EFFECT_REDIRECT_THREAT
     &Spell::EffectUnused,                                   //131 SPELL_EFFECT_131                      used in some test spells
     &Spell::EffectPlayMusic,                                //132 SPELL_EFFECT_PLAY_MUSIC               sound id in misc value (SoundEntries.dbc)
     &Spell::EffectUnlearnSpecialization,                    //133 SPELL_EFFECT_UNLEARN_SPECIALIZATION   unlearn profession specialization
@@ -290,7 +290,7 @@ void Spell::EffectEnvironmentalDMG(SpellEffectIndex eff_idx)
     // currently each enemy selected explicitly and self cast damage, we prevent apply self casted spell bonuses/etc
     damage = m_spellInfo->CalculateSimpleValue(eff_idx);
 
-    m_caster->CalculateAbsorbAndResist(m_caster, GetSpellSchoolMask(m_spellInfo), SPELL_DIRECT_DAMAGE, damage, &absorb, &resist);
+    m_caster->CalculateDamageAbsorbAndResist(m_caster, GetSpellSchoolMask(m_spellInfo), SPELL_DIRECT_DAMAGE, damage, &absorb, &resist);
 
     m_caster->SendSpellNonMeleeDamageLog(m_caster, m_spellInfo->Id, damage, GetSpellSchoolMask(m_spellInfo), absorb, resist, false, 0, false);
     if(m_caster->GetTypeId() == TYPEID_PLAYER)
@@ -1838,7 +1838,7 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
 
                     if (Aura* pAura = m_caster->GetAura(spellShrink, EFFECT_INDEX_0))
                     {
-                        uint8 stackNum = pAura->GetStackAmount();
+                        uint32 stackNum = pAura->GetStackAmount();
 
                         // chance to become pygmified (5, 10, 15 etc)
                         if (roll_chance_i(stackNum*5))
@@ -2711,78 +2711,24 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                 m_caster->CastCustomSpell(m_caster, 45470, &bp, NULL, NULL, true);
                 return;
             }
-            // Death Grip
-            else if(m_spellInfo->Id == 49576)
+            // Obliterate
+            else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0002000000000000))
             {
-                if (!unitTarget)
-                    return;
-
-                unitTarget->KnockBackFrom(m_caster, -float(unitTarget->GetDistance2d(m_caster)), 6.0f);
-                m_caster->CastSpell(unitTarget, 49560, true);
-                return;
-            }
-            // Corpse Explosion
-            else if(m_spellInfo->SpellIconID == 1737)
-            {
-                // Dummy effect is called 2 times for 1 spell. I don't think that it is needed.
-                if (eff_idx!=1)
-                    return;
-                // Living ghoul as a target
-                if (unitTarget->GetEntry() == 26125 && unitTarget->isAlive())
+                // search for Annihilation
+                Unit::AuraList const& dummyList = m_caster->GetAurasByType(SPELL_AURA_DUMMY);
+                for (Unit::AuraList::const_iterator itr = dummyList.begin(); itr != dummyList.end(); ++itr)
                 {
-                    int32 bp = unitTarget->GetMaxHealth()*0.25f;
-                    unitTarget->CastCustomSpell(unitTarget,47496,&bp,NULL,NULL,true);
-                }
-                // Some corpse
-                else
-                {
-                    // In this case only (m_currentBasePoints[0]+1) can guarantee real damage amount.
-                    int32 bp = m_currentBasePoints[0]+1;
-                    m_caster->CastCustomSpell(unitTarget,50444,&bp,NULL,NULL,true);
-                }
-                unitTarget->SetDisplayId(25537+urand(0,3));
-            }
-            // Raise dead effect
-            else if(m_spellInfo->Id == 46584)
-            {
-                if (m_caster->GetTypeId() != TYPEID_PLAYER)
-                    return;
-                // We can have a summoned pet/guardian only in 2 cases:
-                // 1. It was summoned from corpse in EffectScriptEffect.
-                if (getState() == SPELL_STATE_FINISHED)
-                    return;
-                // 2. Cooldown of Raise Dead is finished and we want to repeat the cast with active pet.
-                if (((Player*)m_caster)->GetPet())
-                {
-                    ((Player*)m_caster)->RemoveSpellCooldown(m_spellInfo->Id,true);
-                    SendCastResult(SPELL_FAILED_ALREADY_HAVE_SUMMON);
-                    return;
-                }
-                // We will get here ONLY if we have no corpse.
-                bool allow_cast = false;
-                // We do not need any reagent if we have Glyph of Raise Dead.
-                if (m_caster->HasAura(60200))
-                    allow_cast = true;
-                else
-                    // We need Corpse Dust to cast a spell.
-                    if (((Player*)m_caster)->HasItemCount(37201,1))
+                    if ((*itr)->GetSpellProto()->SpellFamilyName == SPELLFAMILY_DEATHKNIGHT && (*itr)->GetSpellProto()->SpellIconID == 2710)
                     {
-                        ((Player*)m_caster)->DestroyItemCount(37201,1,true);
-                        allow_cast = true;
+                        if (roll_chance_i((*itr)->GetModifier()->m_amount)) // don't consume if found
+                            return;
+                        else
+                            break;
                     }
-                if (allow_cast)
-                {
-                    if (m_caster->HasSpell(52143))
-                        m_caster->CastSpell(m_caster,52150,true);
-                    else
-                        m_caster->CastSpell(m_caster,46585,true);
                 }
-                else
-                {
-                    ((Player*)m_caster)->RemoveSpellCooldown(m_spellInfo->Id,true);
-                    SendCastResult(SPELL_FAILED_REAGENTS);
-                }
-                return;
+
+                // consume diseases
+                unitTarget->RemoveAurasWithDispelType(DISPEL_DISEASE, m_caster->GetGUID());
             }
             break;
         }
@@ -3546,6 +3492,13 @@ void Spell::EffectHeal(SpellEffectIndex /*eff_idx*/)
 
             addhealth += tickheal * tickcount;
         }
+        // Runic Healing Injector & Healing Potion Injector effect increase for engineers
+        else if ((m_spellInfo->Id == 67486 || m_spellInfo->Id == 67489) && unitTarget->GetTypeId() == TYPEID_PLAYER)
+        {
+            Player* player = (Player*)unitTarget;
+            if (player->HasSkill(SKILL_ENGINEERING))
+                addhealth += int32(addhealth * 0.25);
+        }
 
         // Chain Healing
         if (m_spellInfo->SpellFamilyName == SPELLFAMILY_SHAMAN && m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000000000000100))
@@ -3583,8 +3536,10 @@ void Spell::EffectHealPct(SpellEffectIndex /*eff_idx*/)
         addhealth = caster->SpellHealingBonusDone(unitTarget, m_spellInfo, addhealth, HEAL);
         addhealth = unitTarget->SpellHealingBonusTaken(caster, m_spellInfo, addhealth, HEAL);
 
-        int32 gain = caster->DealHeal(unitTarget, addhealth, m_spellInfo);
-        if (m_spellInfo->Id !=61607)
+        uint32 absorb = 0;
+        unitTarget->CalculateHealAbsorb(addhealth, &absorb);
+
+        int32 gain = caster->DealHeal(unitTarget, addhealth - absorb, m_spellInfo, false, absorb);
         unitTarget->getHostileRefManager().threatAssist(m_caster, float(gain) * 0.5f, m_spellInfo);
     }
 }
@@ -3602,7 +3557,10 @@ void Spell::EffectHealMechanical(SpellEffectIndex /*eff_idx*/)
         uint32 addhealth = caster->SpellHealingBonusDone(unitTarget, m_spellInfo, damage, HEAL);
         addhealth = unitTarget->SpellHealingBonusTaken(caster, m_spellInfo, addhealth, HEAL);
 
-        caster->DealHeal(unitTarget, addhealth, m_spellInfo);
+        uint32 absorb = 0;
+        unitTarget->CalculateHealAbsorb(addhealth, &absorb);
+
+        caster->DealHeal(unitTarget, addhealth - absorb, m_spellInfo, false, absorb);
     }
 }
 
@@ -3633,7 +3591,10 @@ void Spell::EffectHealthLeech(SpellEffectIndex eff_idx)
     {
         heal = m_caster->SpellHealingBonusTaken(m_caster, m_spellInfo, heal, HEAL);
 
-        m_caster->DealHeal(m_caster, heal, m_spellInfo);
+        uint32 absorb = 0;
+        m_caster->CalculateHealAbsorb(heal, &absorb);
+
+        m_caster->DealHeal(m_caster, heal - absorb, m_spellInfo, false, absorb);
     }
 }
 
@@ -3849,6 +3810,17 @@ void Spell::EffectEnergize(SpellEffectIndex eff_idx)
         case 68082:                                         // Glyph of Seal of Command
             damage = damage * unitTarget->GetCreateMana() / 100;
             break;
+        case 67487:                                         // Mana Potion Injector
+        case 67490:                                         // Runic Mana Injector
+        {
+            if (unitTarget->GetTypeId() == TYPEID_PLAYER)
+            {
+                Player* player = (Player*)unitTarget;
+                if (player->HasSkill(SKILL_ENGINEERING))
+                    damage += int32(damage * 0.25);
+            }
+            break;
+        }
         default:
             break;
     }
@@ -4720,9 +4692,9 @@ void Spell::DoSummonWild(SpellEffectIndex eff_idx, uint32 forceFaction)
     if (m_caster->GetTypeId()==TYPEID_PLAYER && m_CastItem)
     {
         ItemPrototype const *proto = m_CastItem->GetProto();
-        if (proto && proto->RequiredSkill == SKILL_ENGINERING)
+        if (proto && proto->RequiredSkill == SKILL_ENGINEERING)
         {
-            uint16 skill202 = ((Player*)m_caster)->GetSkillValue(SKILL_ENGINERING);
+            uint16 skill202 = ((Player*)m_caster)->GetSkillValue(SKILL_ENGINEERING);
             if (skill202)
                 level = skill202/5;
         }
@@ -4785,9 +4757,9 @@ void Spell::DoSummonGuardian(SpellEffectIndex eff_idx, uint32 forceFaction)
     if (m_caster->GetTypeId() == TYPEID_PLAYER && m_CastItem)
     {
         ItemPrototype const *proto = m_CastItem->GetProto();
-        if (proto && proto->RequiredSkill == SKILL_ENGINERING)
+        if (proto && proto->RequiredSkill == SKILL_ENGINEERING)
         {
-            uint16 skill202 = ((Player*)m_caster)->GetSkillValue(SKILL_ENGINERING);
+            uint16 skill202 = ((Player*)m_caster)->GetSkillValue(SKILL_ENGINEERING);
             if (skill202)
             {
                 level = skill202 / 5;
@@ -5680,16 +5652,16 @@ void Spell::EffectWeaponDmg(SpellEffectIndex eff_idx)
             // Ghostly Strike
             else if (m_caster->GetTypeId() == TYPEID_PLAYER && m_spellInfo->Id == 14278)
             {
-               Item* weapon = ((Player*)m_caster)->GetWeaponForAttack(m_attackType,true,true);
-               if (weapon && weapon->GetProto()->SubClass == ITEM_SUBCLASS_WEAPON_DAGGER)
-                   totalDamagePercentMod *= 1.44f; // 144% to daggers
+                Item* weapon = ((Player*)m_caster)->GetWeaponForAttack(m_attackType,true,true);
+                if (weapon && weapon->GetProto()->SubClass == ITEM_SUBCLASS_WEAPON_DAGGER)
+                    totalDamagePercentMod *= 1.44f;         // 144% to daggers
             }
             // Hemorrhage
             else if (m_caster->GetTypeId() == TYPEID_PLAYER && (m_spellInfo->SpellFamilyFlags & UI64LIT(0x2000000)))
             {
-               Item* weapon = ((Player*)m_caster)->GetWeaponForAttack(m_attackType,true,true);
-               if (weapon && weapon->GetProto()->SubClass == ITEM_SUBCLASS_WEAPON_DAGGER)
-                   totalDamagePercentMod *= 1.45f; // 145% to daggers
+                Item* weapon = ((Player*)m_caster)->GetWeaponForAttack(m_attackType,true,true);
+                if (weapon && weapon->GetProto()->SubClass == ITEM_SUBCLASS_WEAPON_DAGGER)
+                    totalDamagePercentMod *= 1.45f;         // 145% to daggers
             }
             break;
         }
@@ -7766,7 +7738,7 @@ void Spell::DoSummonTotem(SpellEffectIndex eff_idx, uint8 slot_dbc)
     if (slot < MAX_TOTEM_SLOT)
         m_caster->_AddTotem(TotemSlot(slot),pTotem);
 
-    pTotem->SetOwner(m_caster->GetGUID());
+    pTotem->SetOwner(m_caster);
     pTotem->SetTypeBySummonSpell(m_spellInfo);              // must be after Create call where m_spells initialized
 
     int32 duration=GetSpellDuration(m_spellInfo);
@@ -8992,6 +8964,12 @@ void Spell::EffectRestoreItemCharges( SpellEffectIndex eff_idx )
         return;
 
     item->RestoreCharges();
+}
+
+void Spell::EffectRedirectThreat(SpellEffectIndex eff_idx)
+{
+    if (unitTarget)
+        m_caster->getHostileRefManager().SetThreatRedirection(unitTarget->GetObjectGuid(), uint32(damage));
 }
 
 void Spell::EffectTeachTaxiNode( SpellEffectIndex eff_idx )

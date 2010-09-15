@@ -463,6 +463,8 @@ enum RealmZone
 #define SCRIPT_COMMAND_CREATE_ITEM          17              // source or target must be player, datalong = item entry, datalong2 = amount
 #define SCRIPT_COMMAND_DESPAWN_SELF         18              // source or target must be creature, datalong = despawn delay
 #define SCRIPT_COMMAND_PLAY_MOVIE           19              // target can only be a player, datalog = movie id
+#define SCRIPT_COMMAND_MOVEMENT             20              // source or target must be creature. datalong = MovementType (0:idle, 1:random or 2:waypoint)
+                                                            // datalong2 = creature entry (searching for a buddy, closest to source), datalong3 = creature search radius
 
 /// Storage class for commands issued for delayed execution
 struct CliCommandHolder
@@ -622,7 +624,7 @@ class World
 
         // for max speed access
         static float GetMaxVisibleDistanceOnContinents()    { return m_MaxVisibleDistanceOnContinents; }
-        static float GetMaxVisibleDistanceInInstances()     { return m_MaxVisibleDistanceInInctances;  }
+        static float GetMaxVisibleDistanceInInstances()     { return m_MaxVisibleDistanceInInstances;  }
         static float GetMaxVisibleDistanceInBGArenas()      { return m_MaxVisibleDistanceInBGArenas;   }
         static float GetMaxVisibleDistanceForObject()       { return m_MaxVisibleDistanceForObject;   }
 
@@ -719,7 +721,7 @@ class World
 
         // for max speed access
         static float m_MaxVisibleDistanceOnContinents;
-        static float m_MaxVisibleDistanceInInctances;
+        static float m_MaxVisibleDistanceInInstances;
         static float m_MaxVisibleDistanceInBGArenas;
         static float m_MaxVisibleDistanceForObject;
 

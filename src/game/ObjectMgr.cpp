@@ -16,7 +16,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "Common.h"
+#include "ObjectMgr.h"
 #include "Database/DatabaseEnv.h"
 #include "Database/SQLStorage.h"
 #include "Database/SQLStorageImpl.h"
@@ -24,7 +24,6 @@
 
 #include "Log.h"
 #include "MapManager.h"
-#include "ObjectMgr.h"
 #include "ObjectGuid.h"
 #include "SpellMgr.h"
 #include "UpdateMask.h"
@@ -1218,7 +1217,7 @@ void ObjectMgr::LoadCreatureModelRace()
         if (raceData.creature_entry)
         {
             if (raceData.modelid_racial)
-                sLog.outErrorDb("Table `creature_model_race` modelid %u has modelid_racial for modelid %u but a creature_entry are already defined, modelid_racial will never be used.", raceData.modelid);
+                sLog.outErrorDb("Table `creature_model_race` modelid %u has modelid_racial for modelid %u but a creature_entry are already defined, modelid_racial will never be used.", raceData.modelid, raceData.modelid_racial);
 
             if (!sCreatureStorage.LookupEntry<CreatureInfo>(raceData.creature_entry))
             {
@@ -4776,7 +4775,28 @@ void ObjectMgr::LoadScripts(ScriptMapMap& scripts, char const* tablename)
                     continue;
                 }
                 break;
-           }
+            }
+            case SCRIPT_COMMAND_MOVEMENT:
+            {
+                if (tmp.datalong >= MAX_DB_MOTION_TYPE)
+                {
+                    sLog.outErrorDb("Table `%s` SCRIPT_COMMAND_MOVEMENT has invalid MovementType %u for script id %u",
+                        tablename, tmp.datalong, tmp.id);
+                    continue;
+                }
+                if (tmp.datalong2 && !GetCreatureTemplate(tmp.datalong2))
+                {
+                    sLog.outErrorDb("Table `%s` has datalong2 = %u in SCRIPT_COMMAND_MOVEMENT for script id %u, but this creature_template does not exist.", tablename, tmp.datalong2, tmp.id);
+                    continue;
+                }
+                if (tmp.datalong2 && !tmp.datalong3)
+                {
+                    sLog.outErrorDb("Table `%s` has datalong2 = %u in SCRIPT_COMMAND_MOVEMENT for script id %u, but search radius is too small (datalong3 = %u).", tablename, tmp.datalong2, tmp.id, tmp.datalong3);
+                    continue;
+                }
+
+                break;
+            }
         }
 
         if (scripts.find(tmp.id) == scripts.end())
@@ -6272,10 +6292,10 @@ uint32 ObjectMgr::GenerateLowGuid(HighGuid guidhigh)
         case HIGHGUID_CORPSE:
             return m_CorpseGuids.Generate();
         default:
-            ASSERT(0);
+            MANGOS_ASSERT(0);
     }
 
-    ASSERT(0);
+    MANGOS_ASSERT(0);
     return 0;
 }
 
