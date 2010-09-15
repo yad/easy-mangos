@@ -1429,7 +1429,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         void SendMonsterMoveWithSpeed(float x, float y, float z, uint32 transitTime = 0, Player* player = NULL);
 
         template<typename PathElem, typename PathNode>
-        void SendMonsterMoveByPath(Path<PathElem,PathNode> const& path, uint32 start, uint32 end, SplineFlags flags);
+        void SendMonsterMoveByPath(Path<PathElem,PathNode> const& path, uint32 start, uint32 end, SplineFlags flags, uint32 traveltime);
 
         void SendHighestThreatUpdate(HostileReference* pHostileReference);
         void SendThreatClear();
@@ -2029,10 +2029,8 @@ bool Unit::CheckAllControlledUnits(Func const& func, bool withTotems, bool withG
 }
 
 template<typename Elem, typename Node>
-inline void Unit::SendMonsterMoveByPath(Path<Elem,Node> const& path, uint32 start, uint32 end, SplineFlags flags)
+inline void Unit::SendMonsterMoveByPath(Path<Elem,Node> const& path, uint32 start, uint32 end, SplineFlags flags, uint32 traveltime)
 {
-    uint32 traveltime = uint32(path.GetTotalLength(start, end) * 32);
-
     uint32 pathSize = end - start;
 
     WorldPacket data( SMSG_MONSTER_MOVE, (GetPackGUID().size()+1+4+4+4+4+1+4+4+4+pathSize*4*3) );
@@ -2047,11 +2045,32 @@ inline void Unit::SendMonsterMoveByPath(Path<Elem,Node> const& path, uint32 star
     data << uint32(traveltime);
     data << uint32(pathSize);
 
-    for(uint32 i = start; i < end; ++i)
+    if (HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_TAXI_FLIGHT))
     {
-        data << float(path[i].x);
-        data << float(path[i].y);
-        data << float(path[i].z);
+        // sending a taxi flight path
+        for(uint32 i = start; i < end; ++i)
+        {
+            data << float(path[i].x);
+            data << float(path[i].y);
+            data << float(path[i].z);
+        }
+    }
+    else
+    {
+        // sending a series of points
+
+        // destination
+        data << path[end-1].x;
+        data << path[end-1].y;
+        data << path[end-1].z;
+
+        // all other points are relative to the center of the path
+        float mid_X = (GetPositionX() + path[end-1].x) / 2.f;
+        float mid_Y = (GetPositionY() + path[end-1].y) / 2.f;
+        float mid_Z = (GetPositionZ() + path[end-1].z) / 2.f;
+
+        for (uint32 i = start; i < end - 1; ++i)
+            data.appendPackXYZ(mid_X - path[i].x, mid_Y - path[i].y, mid_Z - path[i].z);
     }
 
     SendMessageToSet(&data, true);

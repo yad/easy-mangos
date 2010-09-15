@@ -28,6 +28,11 @@ class WorldObject;
 #define MAX_PATH_LENGTH 256
 #define VERTEX_SIZE 3
 
+#define _USE_SMOOTH_PATH
+#define MAX_SMOOTH_PATH_LENGTH  2048
+#define SMOOTH_PATH_STEP_SIZE   8.0f
+#define SMOOTH_PATH_SLOP        0.5f
+
 #define INVALID_POLYREF 0
 
 // see contrib/mmap/src/TileBuilder.h
@@ -51,20 +56,35 @@ enum PathType
     PATHFIND_NOPATH     = 0x0010    // could not find a path
 };
 
+struct PathNode
+{
+    PathNode(): x(0.0f), y(0.0f), z(0.0f) { }
+    PathNode(float _x, float _y, float _z): x(_x), y(_y), z(_z) { }
+    float x, y, z;
+};
+
+typedef Path<PathNode> PointPath;
+
 class PathInfo
 {
     public:
         PathInfo(const WorldObject* from, const float x, const float y, const float z);
         ~PathInfo();
 
-        inline void getStartPosition(float &x, float &y, float &z) { x = m_startPosition[0]; y = m_startPosition[1]; z = m_startPosition[2]; }
-        inline void getNextPosition(float &x, float &y, float &z) { x = m_nextPosition[0]; y = m_nextPosition[1]; z = m_nextPosition[2]; }
-        inline void getEndPosition(float &x, float &y, float &z) { x = m_endPosition[0]; y = m_endPosition[1]; z = m_endPosition[2]; }
+        inline void getStartPosition(float &x, float &y, float &z) { x = m_startPosition.x; y = m_startPosition.y; z = m_startPosition.z; }
+        inline void getNextPosition(float &x, float &y, float &z) { x = m_nextPosition.x; y = m_nextPosition.y; z = m_nextPosition.z; }
+        inline void getEndPosition(float &x, float &y, float &z) { x = m_endPosition.x; y = m_endPosition.y; z = m_endPosition.z; }
 
-        inline uint32 getFullPath(float **pathPoints) { *pathPoints = m_pathPoints; return m_pointLength; };
+        inline PathNode getStartPosition() { return m_startPosition; }
+        inline PathNode getNextPosition() { return m_nextPosition; }
+        inline PathNode getEndPosition() { return m_endPosition; }
+
+        inline uint32 getPathPointer() { return m_pointPathPointer == 0 ? 1 : m_pointPathPointer; }
+        inline PointPath& getFullPath() { return m_pathPoints; }
 
         void Update(const float x, const float y, const float z);
         bool noPath();
+        bool incompletePath();
 
         // only for debug
         dtNavMesh *getMesh(){ return m_navMesh;}
@@ -77,33 +97,31 @@ class PathInfo
         dtPolyRef   *   m_pathPolyRefs;     // array of detour polygon references
         uint32          m_polyLength;       // number of polygons in the path
 
-        float       *   m_pathPoints;       // array of float[3] for (x, y, z) coords
-        uint32          m_pointLength;      // number of points in the path
+        PointPath       m_pathPoints;       // our actual (x,y,z) path to the target
         uint32          m_pointPathPointer; // points to current triple in m_pathPoints - used when dest do not change
+                                            // the triple is the one that is currently being moved toward
 
-        float           m_startPosition[VERTEX_SIZE]; // {x, y, z} of current location
-        float           m_nextPosition[VERTEX_SIZE];  // {x, y, z} of next location on the path
-        float           m_endPosition[VERTEX_SIZE];   // {x, y, z} of the destination
+        PathNode        m_startPosition;    // {x, y, z} of current location
+        PathNode        m_nextPosition;     // {x, y, z} of next location on the path
+        PathNode        m_endPosition;      // {x, y, z} of the destination
 
         const WorldObject *   m_sourceObject;     // the object that is moving (safe pointer because PathInfo is only accessed from the mover?)
         dtNavMesh   *   m_navMesh;          // the nav mesh
         dtNavMeshQuery* m_navMeshQuery;     // the nav mesh query used to find the path
         PathType        m_type;             // tells what kind of path this is
 
-        inline void setNextPosition(float x, float y, float z) { m_nextPosition[0] = x; m_nextPosition[1] = y; m_nextPosition[2] = z; }
-        inline void setStartPosition(float x, float y, float z) { m_startPosition[0] = x; m_startPosition[1] = y; m_startPosition[2] = z; }
-        inline void setEndPosition(float x, float y, float z) { m_endPosition[0] = x; m_endPosition[1] = y; m_endPosition[2] = z; }
+        inline void setNextPosition(PathNode point) { m_nextPosition = point; }
+        inline void setStartPosition(PathNode point) { m_startPosition = point; }
+        inline void setEndPosition(PathNode point) { m_endPosition = point; }
 
         inline void clear()
         {
             delete [] m_pathPolyRefs;
             m_pathPolyRefs = NULL;
 
-            delete [] m_pathPoints;
-            m_pathPoints = NULL;
-
             m_polyLength = 0;
-            m_pointLength = 0;
+
+            m_pathPoints.clear();
             m_pointPathPointer = 0;
         }
 
@@ -122,22 +140,36 @@ class PathInfo
         bool canFly();
         bool canSwim();
         NavTerrain getNavTerrain(float x, float y, float z);
+
+        // smooth path functions
+
+        uint32 fixupCorridor(dtPolyRef* path, const uint32 npath, const uint32 maxPath,
+                             const dtPolyRef* visited, const uint32 nvisited);
+        bool getSteerTarget(const float* startPos, const float* endPos, const float minTargetDist,
+                            const dtPolyRef* path, const uint32 pathSize, float* steerPos,
+                            unsigned char& steerPosFlag, dtPolyRef& steerPosRef,
+                            float* outPoints = 0, uint32* outPountcount = 0);
+        uint32 findSmoothPath(const float* startPos, const float* endPos,
+                              const dtPolyRef* path, const uint32 pathSize,
+                              float* smoothPath, const uint32 smoothPathMaxSize);
 };
 
 // using == for two float numbers wont do us much good, use diff
-inline bool isSamePoint(const float diff, const float* point1, const float* point2)
+inline bool inRangeYZX(const float* v1, const float* v2, const float r, const float h)
 {
-    return (abs(point1[0] - point2[0]) <= diff &&
-            abs(point1[1] - point2[1]) <= diff &&
-            abs(point1[2] - point2[2]) <= diff);
+    const float dx = v2[0] - v1[0];
+    const float dy = v2[1] - v1[1]; // elevation
+    const float dz = v2[2] - v1[2];
+    return (dx*dx + dz*dz) < r*r && fabsf(dy) < h;
 }
 
-inline bool isSamePoint(const float diff, const float x1, const float y1, const float z1,
-                                          const float x2, const float y2, const float z2)
+inline bool inRange(const PathNode p1, const PathNode p2,
+                    const float r, const float h)
 {
-    return (abs(x1 - x2) <= diff &&
-            abs(y1 - y2) <= diff &&
-            abs(z1 - z2) <= diff);
+    const float dx = p2.x - p1.x;
+    const float dy = p2.y - p1.y;
+    const float dz = p2.z - p1.z;
+    return (dx*dx + dy*dy) < r*r && fabsf(dz) < h;
 }
 
 #endif
