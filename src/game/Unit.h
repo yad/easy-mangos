@@ -30,6 +30,7 @@
 #include "FollowerReference.h"
 #include "FollowerRefManager.h"
 #include "Utilities/EventProcessor.h"
+#include "MapManager.h"
 #include "MotionMaster.h"
 #include "DBCStructure.h"
 #include "Path.h"
@@ -233,7 +234,7 @@ enum UnitRename
     UNIT_CAN_BE_ABANDONED   = 0x02,
 };
 
-#define CREATURE_MAX_SPELLS     4
+#define CREATURE_MAX_SPELLS     8
 
 enum Swing
 {
@@ -302,10 +303,13 @@ class Creature;
 class Spell;
 class DynamicObject;
 class GameObject;
+class SpellCastTargets;
 class Item;
 class Pet;
 class PetAura;
 class Totem;
+class Transport;
+class VehicleKit;
 
 struct SpellImmune
 {
@@ -411,7 +415,8 @@ enum DeathState
     CORPSE      = 2,
     DEAD        = 3,
     JUST_ALIVED = 4,
-    DEAD_FALLING= 5
+    DEAD_FALLING= 5,
+    GHOULED     = 6
 };
 
 // internal state flags for some auras and movement generators, other.
@@ -443,24 +448,25 @@ enum UnitState
     UNIT_STAT_FOLLOW_MOVE     = 0x00010000,
     UNIT_STAT_FLEEING         = 0x00020000,                     // FleeMovementGenerator/TimedFleeingMovementGenerator active/onstack
     UNIT_STAT_FLEEING_MOVE    = 0x00040000,
+    UNIT_STAT_ON_VEHICLE      = 0x00080000,                     // Unit is on vehicle
 
     // masks (only for check)
 
     // can't move currently
-    UNIT_STAT_CAN_NOT_MOVE    = UNIT_STAT_ROOT | UNIT_STAT_STUNNED | UNIT_STAT_DIED,
+    UNIT_STAT_CAN_NOT_MOVE    = UNIT_STAT_ROOT | UNIT_STAT_STUNNED | UNIT_STAT_DIED | UNIT_STAT_ON_VEHICLE,
 
     // stay by different reasons
     UNIT_STAT_NOT_MOVE        = UNIT_STAT_ROOT | UNIT_STAT_STUNNED | UNIT_STAT_DIED |
-                                UNIT_STAT_DISTRACTED,
+                                UNIT_STAT_DISTRACTED | UNIT_STAT_ON_VEHICLE,
 
     // stay or scripted movement for effect( = in player case you can't move by client command)
     UNIT_STAT_NO_FREE_MOVE    = UNIT_STAT_ROOT | UNIT_STAT_STUNNED | UNIT_STAT_DIED |
                                 UNIT_STAT_TAXI_FLIGHT |
-                                UNIT_STAT_CONFUSED | UNIT_STAT_FLEEING,
+                                UNIT_STAT_CONFUSED | UNIT_STAT_FLEEING | UNIT_STAT_ON_VEHICLE,
 
     // not react at move in sight or other
     UNIT_STAT_CAN_NOT_REACT   = UNIT_STAT_STUNNED | UNIT_STAT_DIED |
-                                UNIT_STAT_CONFUSED | UNIT_STAT_FLEEING,
+                                UNIT_STAT_CONFUSED | UNIT_STAT_FLEEING | UNIT_STAT_ON_VEHICLE,
 
     // AI disabled by some reason
     UNIT_STAT_LOST_CONTROL    = UNIT_STAT_FLEEING | UNIT_STAT_CONTROLLED,
@@ -583,6 +589,7 @@ enum UnitFlags2
     UNIT_FLAG2_FEIGN_DEATH          = 0x00000001,
     UNIT_FLAG2_UNK1                 = 0x00000002,           // Hides unit model (show only player equip)
     UNIT_FLAG2_COMPREHEND_LANG      = 0x00000008,
+    UNIT_FLAG2_MIRROR_IMAGE         = 0x00000010,
     UNIT_FLAG2_FORCE_MOVE           = 0x00000040,
     UNIT_FLAG2_DISARM               = 0x00000400,           // disarm or something
     UNIT_FLAG2_REGENERATE_POWER     = 0x00000800,
@@ -617,6 +624,7 @@ enum NPCFlags
     UNIT_NPC_FLAG_STABLEMASTER          = 0x00400000,       // 100%
     UNIT_NPC_FLAG_GUILD_BANKER          = 0x00800000,       // cause client to send 997 opcode
     UNIT_NPC_FLAG_SPELLCLICK            = 0x01000000,       // cause client to send 1015 opcode (spell click), dynamic, set at loading and don't must be set in DB
+    UNIT_NPC_FLAG_PLAYER_VEHICLE        = 0x02000000,       // players with mounts that have vehicle data should have it set
     UNIT_NPC_FLAG_GUARD                 = 0x10000000        // custom flag for guards
 };
 
@@ -753,7 +761,7 @@ class MovementInfo
 {
     public:
         MovementInfo() : moveFlags(MOVEFLAG_NONE), moveFlags2(MOVEFLAG2_NONE), time(0),
-            t_time(0), t_seat(-1), t_time2(0), s_pitch(0.0f), fallTime(0), j_velocity(0.0f), j_sinAngle(0.0f),
+            t_time(0), t_seat(-1), t_seatInfo(NULL), t_time2(0), s_pitch(0.0f), fallTime(0), j_velocity(0.0f), j_sinAngle(0.0f),
             j_cosAngle(0.0f), j_xyspeed(0.0f), u_unk1(0.0f) {}
 
         // Read/Write methods
@@ -770,7 +778,7 @@ class MovementInfo
 
         // Position manipulations
         Position const *GetPos() const { return &pos; }
-        void SetTransportData(ObjectGuid guid, float x, float y, float z, float o, uint32 time, int8 seat)
+        void SetTransportData(ObjectGuid guid, float x, float y, float z, float o, uint32 time, int8 seat, VehicleSeatEntry const* seatInfo = NULL)
         {
             t_guid = guid;
             t_pos.x = x;
@@ -779,6 +787,7 @@ class MovementInfo
             t_pos.o = o;
             t_time = time;
             t_seat = seat;
+            t_seatInfo = seatInfo;
         }
         void ClearTransportData()
         {
@@ -789,10 +798,13 @@ class MovementInfo
             t_pos.o = 0.0f;
             t_time = 0;
             t_seat = -1;
+            t_seatInfo = NULL;
         }
         ObjectGuid const& GetTransportGuid() const { return t_guid; }
         Position const *GetTransportPos() const { return &t_pos; }
         int8 GetTransportSeat() const { return t_seat; }
+        uint32 GetTransportDBCSeat() const { return t_seatInfo ? t_seatInfo->m_ID : 0; }
+        uint32 GetVehicleSeatFlags() const { return t_seatInfo ? t_seatInfo->m_flags : 0; }
         uint32 GetTransportTime() const { return t_time; }
         uint32 GetFallTime() const { return fallTime; }
         void ChangePosition(float x, float y, float z, float o) { pos.x = x; pos.y = y; pos.z = z; pos.o = o; }
@@ -809,6 +821,7 @@ class MovementInfo
         Position t_pos;
         uint32   t_time;
         int8     t_seat;
+        VehicleSeatEntry const* t_seatInfo;
         uint32   t_time2;
         // swimming and flying
         float    s_pitch;
@@ -1052,6 +1065,7 @@ struct CharmInfo
         bool HasReactState(ReactStates state) { return (m_reactState == state); }
 
         void InitPossessCreateSpells();
+        void InitVehicleCreateSpells();
         void InitCharmCreateSpells();
         void InitPetActionBar();
         void InitEmptyActionBar();
@@ -1066,6 +1080,7 @@ struct CharmInfo
         {
             PetActionBar[index].SetActionAndType(spellOrAction,type);
         }
+
         UnitActionBarEntry const* GetActionBarEntry(uint8 index) const { return &(PetActionBar[index]); }
 
         void ToggleCreatureAutocast(uint32 spellid, bool apply);
@@ -1094,6 +1109,7 @@ enum ReactiveType
 #define MAX_REACTIVE 3
 
 typedef std::set<uint64> GuardianPetList;
+typedef std::set<uint64> GroupPetList;
 
 // delay time next attack to prevent client attack animation problems
 #define ATTACK_DISPLAY_DELAY 200
@@ -1272,7 +1288,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
 
         bool IsMounted() const { return HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_MOUNT ); }
         uint32 GetMountID() const { return GetUInt32Value(UNIT_FIELD_MOUNTDISPLAYID); }
-        void Mount(uint32 mount, uint32 spellId = 0);
+        void Mount(uint32 mount, uint32 spellId = 0, uint32 vehicleId = 0);
         void Unmount();
 
         uint16 GetMaxSkillValueForLevel(Unit const* target = NULL) const { return (target ? getLevelForTarget(target) : getLevel()) * 5; }
@@ -1391,6 +1407,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         bool IsPolymorphed() const;
 
         bool isFrozen() const;
+        bool isIgnoreUnitState(SpellEntry const *spell);
 
         void RemoveSpellbyDamageTaken(AuraType auraType, uint32 damage);
 
@@ -1431,7 +1448,11 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         // recommend use MonsterMove/MonsterMoveWithSpeed for most case that correctly work with movegens
         // if used additional args in ... part then floats must explicitly casted to double
         void SendMonsterMove(float x, float y, float z, SplineType type, SplineFlags flags, uint32 Time, Player* player = NULL, ...);
+        void SendMonsterMoveJump(float NewPosX, float NewPosY, float NewPosZ, float vert_speed, uint32 flags, uint32 Time, Player* player = NULL);
         void SendMonsterMoveWithSpeed(float x, float y, float z, uint32 transitTime = 0, Player* player = NULL);
+        void SendMonsterMoveTransport(WorldObject *transport, SplineType type, SplineFlags flags, uint32 moveTime, ...);
+
+        virtual bool SetPosition(float x, float y, float z, float orientation, bool teleport = false);
 
         template<typename PathElem, typename PathNode>
         void SendMonsterMoveByPath(Path<PathElem,PathNode> const& path, uint32 start, uint32 end, SplineFlags flags);
@@ -1480,6 +1501,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         Pet* GetPet() const;
         Unit* GetCharmer() const;
         Unit* GetCharm() const;
+        Unit* GetCreator() const;
         void Uncharm();
         Unit* GetCharmerOrOwner() const { return GetCharmerGUID() ? GetCharmer() : GetOwner(); }
         Unit* GetCharmerOrOwnerOrSelf()
@@ -1496,10 +1518,15 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         void SetPet(Pet* pet);
         void SetCharm(Unit* pet);
 
+        void AddPetToList(Pet* pet);
+        void RemovePetFromList(Pet* pet);
+        GroupPetList const& GetPets() { return m_groupPets; }
+
         void AddGuardian(Pet* pet);
         void RemoveGuardian(Pet* pet);
         void RemoveGuardians();
         Pet* FindGuardianWithEntry(uint32 entry);
+        GuardianPetList const& GetGuardians() const { return m_guardianPets; }
 
         bool isCharmed() const { return GetCharmerGUID() != 0; }
 
@@ -1523,6 +1550,8 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         bool AddSpellAuraHolder(SpellAuraHolder *holder);
         void AddAuraToModList(Aura *aura);
 
+        void _AddAura(uint32 spellID, uint32 duration = 60000);
+
         // removing specific aura stack
         void RemoveAura(Aura* aura, AuraRemoveMode mode = AURA_REMOVE_BY_DEFAULT);
         void RemoveAura(uint32 spellId, SpellEffectIndex effindex, Aura* except = NULL);
@@ -1540,6 +1569,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         // removing unknown aura stacks by diff reasons and selections
         void RemoveNotOwnSingleTargetAuras(uint32 newPhase = 0x0);
         void RemoveAurasAtMechanicImmunity(uint32 mechMask, uint32 exceptSpellId, bool non_positive = false);
+        void RemoveAurasBySpellMechanic(uint32 mechMask);
         void RemoveSpellsCausingAura(AuraType auraType);
         void RemoveRankAurasDueToSpell(uint32 spellId);
         bool RemoveNoStackAurasDueToAuraHolder(SpellAuraHolder *holder);
@@ -1835,6 +1865,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         bool isHover() const { return HasAuraType(SPELL_AURA_HOVER); }
 
         void KnockBackFrom(Unit* target, float horizontalSpeed, float verticalSpeed);
+        void KnockBackPlayerWithAngle(float angle, float horizontalSpeed, float verticalSpeed);
 
         void _RemoveAllAuraMods();
         void _ApplyAllAuraMods();
@@ -1868,6 +1899,8 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         void SendPetTalk (uint32 pettalk);
         void SendPetAIReaction(uint64 guid);
         ///----------End of Pet responses methods----------
+        void DoPetAction (Player* owner, uint8 flag, uint32 spellid, uint64 guid1, uint64 guid2);
+        void DoPetCastSpell (Player *owner, uint8 cast_count, SpellCastTargets targets, SpellEntry const* spellInfo);
 
         void propagateSpeedChange() { GetMotionMaster()->propagateSpeedChange(); }
 
@@ -1885,8 +1918,36 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         void AddPetAura(PetAura const* petSpell);
         void RemovePetAura(PetAura const* petSpell);
 
+        void SetThreatRedirectionTarget(uint64 guid, uint32 pct)
+        {
+            m_misdirectionTargetGUID = guid;
+            m_ThreatRedirectionPercent = pct;
+        }
+        uint32 GetThreatRedirectionPercent() { return m_ThreatRedirectionPercent; }
+        Unit *GetMisdirectionTarget();
+
         // Movement info
         MovementInfo m_movementInfo;
+
+        // Transports
+        Transport* GetTransport() const { return m_transport; }
+        void SetTransport(Transport* pTransport) { m_transport = pTransport; }
+
+        float GetTransOffsetX() const { return m_movementInfo.GetTransportPos()->x; }
+        float GetTransOffsetY() const { return m_movementInfo.GetTransportPos()->y; }
+        float GetTransOffsetZ() const { return m_movementInfo.GetTransportPos()->z; }
+        float GetTransOffsetO() const { return m_movementInfo.GetTransportPos()->o; }
+        uint32 GetTransTime() const { return m_movementInfo.GetTransportTime(); }
+        int8 GetTransSeat() const { return m_movementInfo.GetTransportSeat(); }
+
+        // Vehicle system
+        void EnterVehicle(VehicleKit *vehicle, int8 seatId = -1);
+        void ExitVehicle();
+        void ChangeSeat(int8 seatId, bool next = true);
+        VehicleKit* GetVehicle() const { return m_pVehicle; }
+        VehicleKit* GetVehicleKit() const { return m_pVehicleKit; }
+        bool CreateVehicleKit(uint32 vehicleId);
+        void RemoveVehicleKit();
 
     protected:
         explicit Unit ();
@@ -1922,6 +1983,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         float m_auraModifiersGroup[UNIT_MOD_END][MODIFIER_TYPE_END];
         float m_weaponDamage[MAX_ATTACK][2];
         bool m_canModifyStats;
+
         //std::list< spellEffectPair > AuraSpells[TOTAL_AURAS];  // TODO: use this if ok for mem
         VisibleAuraMap m_visibleAuras;
 
@@ -1938,6 +2000,11 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         uint32 m_regenTimer;
         uint32 m_lastManaUseTimer;
 
+        // Transports
+        Transport* m_transport;
+
+        VehicleKit* m_pVehicle;
+        VehicleKit* m_pVehicleKit;
     private:
         void CleanupDeletedAuras();
 
@@ -1966,7 +2033,11 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
 
         ComboPointHolderSet m_ComboPointHolders;
 
+        GroupPetList m_groupPets;
+
         GuardianPetList m_guardianPets;
+        uint32 m_ThreatRedirectionPercent;
+        uint64 m_misdirectionTargetGUID;
 
         uint64 m_TotemSlot[MAX_TOTEM_SLOT];
 };

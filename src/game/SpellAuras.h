@@ -199,7 +199,7 @@ typedef void(Aura::*pAuraHandler)(bool Apply, bool Real);
 class MANGOS_DLL_SPEC Aura
 {
     friend struct ReapplyAffectedPassiveAurasHelper;
-    friend Aura* CreateAura(SpellEntry const* spellproto, SpellEffectIndex eff, int32 *currentBasePoints, SpellAuraHolder *holder, Unit *target, Unit *caster, Item* castItem);
+    MANGOS_DLL_SPEC friend Aura* CreateAura(SpellEntry const* spellproto, SpellEffectIndex eff, int32 *currentBasePoints, SpellAuraHolder *holder, Unit *target, Unit *caster, Item* castItem);
 
     public:
         //aura handlers
@@ -359,8 +359,11 @@ class MANGOS_DLL_SPEC Aura
         void HandleAuraIncreaseBaseHealthPercent(bool Apply, bool Real);
         void HandleNoReagentUseAura(bool Apply, bool Real);
         void HandlePhase(bool Apply, bool Real);
+        void HandleIgnoreUnitState(bool Apply, bool Real);
         void HandleModTargetArmorPct(bool Apply, bool Real);
         void HandleAuraModAllCritChance(bool Apply, bool Real);
+        void HandleAuraMirrorImage(bool Apply, bool Real);
+        void HandleAuraLinked(bool Apply, bool Real);
         void HandleAllowOnlyAbility(bool Apply, bool Real);
         void HandleAuraOpenStable(bool apply, bool Real);
 
@@ -389,7 +392,8 @@ class MANGOS_DLL_SPEC Aura
         time_t GetAuraApplyTime() const { return m_applyTime; }
         uint32 GetAuraTicks() const { return m_periodicTick; }
         uint32 GetAuraMaxTicks() const { return m_maxduration > 0 && m_modifier.periodictime > 0 ? m_maxduration / m_modifier.periodictime : 0; }
-        uint32 GetStackAmount() const { return GetHolder()->GetStackAmount(); }
+        uint8 GetStackAmount() const { return GetHolder()->GetStackAmount(); }
+        void SetAuraPeriodicTimer (int32 timer) { m_periodicTimer = timer; }
 
         void SetLoadedState(int32 damage,int32 maxduration,int32 duration)
         {
@@ -505,7 +509,7 @@ class MANGOS_DLL_SPEC PersistentAreaAura : public Aura
 
 class MANGOS_DLL_SPEC SingleEnemyTargetAura : public Aura
 {
-    friend Aura* CreateAura(SpellEntry const* spellproto, SpellEffectIndex eff, int32 *currentBasePoints, SpellAuraHolder *holder, Unit *target, Unit *caster, Item* castItem);
+    MANGOS_DLL_SPEC friend Aura* CreateAura(SpellEntry const* spellproto, SpellEffectIndex eff, int32 *currentBasePoints, SpellAuraHolder *holder, Unit *target, Unit *caster, Item* castItem);
 
     public:
         ~SingleEnemyTargetAura();
@@ -516,6 +520,6 @@ class MANGOS_DLL_SPEC SingleEnemyTargetAura : public Aura
         uint64 m_casters_target_guid;
 };
 
-Aura* CreateAura(SpellEntry const* spellproto, SpellEffectIndex eff, int32 *currentBasePoints, SpellAuraHolder *holder, Unit *target, Unit *caster = NULL, Item* castItem = NULL);
-SpellAuraHolder* CreateSpellAuraHolder(SpellEntry const* spellproto, Unit *target, WorldObject *caster, Item *castItem = NULL);
+MANGOS_DLL_SPEC Aura* CreateAura(SpellEntry const* spellproto, SpellEffectIndex eff, int32 *currentBasePoints, SpellAuraHolder *holder, Unit *target, Unit *caster = NULL, Item* castItem = NULL);
+MANGOS_DLL_SPEC SpellAuraHolder* CreateSpellAuraHolder(SpellEntry const* spellproto, Unit *target, WorldObject *caster, Item *castItem = NULL);
 #endif

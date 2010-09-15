@@ -898,15 +898,16 @@ enum MangosStrings
 
     // FREE IDS                           1500-9999
     // Broadcaster
-    LANG_AUTO_BROADCAST                 = 1500,
-    LANG_SYSTEMMESSAGE_MODERATOR        = 1501,
-    LANG_SYSTEMMESSAGE_GAMEMASTER       = 1502,
-    LANG_SYSTEMMESSAGE_ADMINISTRATOR    = 1503,
-    LANG_COMMAND_MODIFY_HKILL           = 1600,
+    LANG_AUTO_BROADCAST                 = 1300,
+    LANG_SYSTEMMESSAGE_MODERATOR        = 1301,
+    LANG_SYSTEMMESSAGE_GAMEMASTER       = 1302,
+    LANG_SYSTEMMESSAGE_ADMINISTRATOR    = 1303,
+    LANG_COMMAND_MODIFY_HKILL           = 1500,
     // Use for not-in-offcial-sources patches
     //                                    10000-10999
 
     // Use for custom patches             11000-11999
+    LANG_ANNOUNCE_CHEAT                 = 11000,
 
     // NOT RESERVED IDS                   12000-1999999999
     // `db_script_string` table index     2000000000-2000009999 (MIN_DB_SCRIPT_STRING_ID-MAX_DB_SCRIPT_STRING_ID)

@@ -191,11 +191,11 @@ class ChatHandler
         bool HandleDebugSetAuraStateCommand(char* args);
         bool HandleDebugSetItemValueCommand(char* args);
         bool HandleDebugSetValueCommand(char* args);
-        bool HandleDebugSpawnVehicleCommand(char* args);
         bool HandleDebugSpellCheckCommand(char* args);
         bool HandleDebugSpellModsCommand(char* args);
         bool HandleDebugUpdateWorldStateCommand(char* args);
         bool HandleDebugMoveMapCommand(char* args);
+        bool HandleDebugSendCalendarResultCommand(char* args);
 
         bool HandleDebugPlayCinematicCommand(char* args);
         bool HandleDebugPlayMovieCommand(char* args);
@@ -283,6 +283,7 @@ class ChatHandler
         bool HandleLookupAccountEmailCommand(char* args);
         bool HandleLookupAccountIpCommand(char* args);
         bool HandleLookupAccountNameCommand(char* args);
+
         bool HandleLookupAchievementCommand(char* args);
         bool HandleLookupAreaCommand(char* args);
         bool HandleLookupCreatureCommand(char* args);
@@ -322,6 +323,8 @@ class ChatHandler
         bool HandleModifyArenaCommand(char* args);
         bool HandleModifyPhaseCommand(char* args);
         bool HandleModifyGenderCommand(char* args);
+
+        bool HandleModifyPowerTypeCommand(char* args);
 
         //-----------------------Npc Commands-----------------------
         bool HandleNpcAddCommand(char* args);

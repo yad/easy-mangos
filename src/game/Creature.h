@@ -33,7 +33,6 @@
 struct SpellEntry;
 
 class CreatureAI;
-class Group;
 class Quest;
 class Player;
 class WorldSession;
@@ -76,6 +75,7 @@ struct CreatureInfo
     uint32  maxlevel;
     uint32  minhealth;
     uint32  maxhealth;
+    uint8   powerType;
     uint32  minmana;
     uint32  maxmana;
     uint32  armor;
@@ -117,13 +117,14 @@ struct CreatureInfo
     int32   resistance6;
     uint32  spells[CREATURE_MAX_SPELLS];
     uint32  PetSpellDataId;
+    uint32  VehicleId;
     uint32  mingold;
     uint32  maxgold;
     char const* AIName;
     uint32  MovementType;
     uint32  InhabitType;
     float   unk16;
-    float   unk17;
+    float   power_mod;
     bool    RacialLeader;
     uint32  questItems[6];
     uint32  movementId;
@@ -377,7 +378,6 @@ enum CreatureSubtype
     CREATURE_SUBTYPE_GENERIC,                               // new Creature
     CREATURE_SUBTYPE_PET,                                   // new Pet
     CREATURE_SUBTYPE_TOTEM,                                 // new Totem
-    CREATURE_SUBTYPE_VEHICLE,                               // new Vehicle
     CREATURE_SUBTYPE_TEMPORARY_SUMMON,                      // new TemporarySummon
 };
 
@@ -407,7 +407,6 @@ class MANGOS_DLL_SPEC Creature : public Unit
 
         CreatureSubtype GetSubtype() const { return m_subtype; }
         bool isPet() const { return m_subtype == CREATURE_SUBTYPE_PET; }
-        bool isVehicle() const { return m_subtype == CREATURE_SUBTYPE_VEHICLE; }
         bool isTotem() const { return m_subtype == CREATURE_SUBTYPE_TOTEM; }
         bool isTemporarySummon() const { return m_subtype == CREATURE_SUBTYPE_TEMPORARY_SUMMON; }
 
@@ -544,15 +543,8 @@ class MANGOS_DLL_SPEC Creature : public Unit
         bool lootForSkin;
 
         void PrepareBodyLootState();
-        ObjectGuid GetLootRecipientGuid() const { return m_lootRecipientGuid; }
-        uint32 GetLootGroupRecipientId() const { return m_lootGroupRecipientId; }
-        Player* GetLootRecipient() const;                   // use group cases as prefered
-        Group* GetGroupLootRecipient() const;
-        bool HasLootRecipient() const { return m_lootGroupRecipientId || !m_lootRecipientGuid.IsEmpty(); }
-        bool IsGroupLootRecipient() const { return m_lootGroupRecipientId; }
         void SetLootRecipient(Unit* unit);
         void AllLootRemovedFromCorpse();
-        Player* GetOriginalLootRecipient() const;           // ignore group changes/etc, not for looting
 
         SpellEntry const *reachWithSpellAttack(Unit *pVictim);
         SpellEntry const *reachWithSpellCure(Unit *pVictim);
@@ -601,8 +593,6 @@ class MANGOS_DLL_SPEC Creature : public Unit
         float GetRespawnRadius() const { return m_respawnradius; }
         void SetRespawnRadius(float dist) { m_respawnradius = dist; }
 
-        void StartGroupLoot(Group* group, uint32 timer);
-
         void SendZoneUnderAttackMessage(Player* attacker);
 
         void SetInCombatWithZone();
@@ -640,13 +630,9 @@ class MANGOS_DLL_SPEC Creature : public Unit
         void SendAreaSpiritHealerQueryOpcode(Player *pl);
 
     protected:
-        bool CreateFromProto(uint32 guidlow,uint32 Entry,uint32 team, const CreatureData *data = NULL);
+        bool CreateFromProto(ObjectGuid guid, uint32 Entry, uint32 team, const CreatureData *data = NULL);
         bool InitEntry(uint32 entry, uint32 team=ALLIANCE, const CreatureData* data=NULL);
         void RelocationNotify();
-
-        uint32 m_groupLootTimer;                            // (msecs)timer used for group loot
-        uint32 m_groupLootId;                               // used to find group which is looting corpse
-        void StopGroupLoot();
 
         // vendor items
         VendorItemCounts m_vendorItemCounts;
@@ -657,8 +643,6 @@ class MANGOS_DLL_SPEC Creature : public Unit
         static float _GetDamageMod(int32 Rank);
 
         uint32 m_lootMoney;
-        ObjectGuid m_lootRecipientGuid;                     // player who will have rights for looting if m_lootGroupRecipient==0 or group disbanded
-        uint32 m_lootGroupRecipientId;                      // group who will have rights for looting if set and exist
 
         /// Timers
         uint32 m_corpseDecayTimer;                          // (msecs)timer for death or corpse disappearance
@@ -668,7 +652,7 @@ class MANGOS_DLL_SPEC Creature : public Unit
         float m_respawnradius;
 
         CreatureSubtype m_subtype;                          // set in Creatures subclasses for fast it detect without dynamic_cast use
-        void RegenerateMana();
+        void Regenerate(Powers power);
         void RegenerateHealth();
         MovementGeneratorType m_defaultMovementType;
         Cell m_currentCell;                                 // store current cell where creature listed

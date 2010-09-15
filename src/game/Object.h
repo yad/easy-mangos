@@ -295,7 +295,7 @@ class MANGOS_DLL_SPEC Object
         Object ( );
 
         void _InitValues();
-        void _Create (uint32 guidlow, uint32 entry, HighGuid guidhigh);
+        void _Create(ObjectGuid guid);
 
         virtual void _SetUpdateBits(UpdateMask *updateMask, Player *target) const;
 
@@ -345,7 +345,7 @@ class MANGOS_DLL_SPEC WorldObject : public Object
 
         virtual void Update ( uint32 /*time_diff*/ ) { }
 
-        void _Create( uint32 guidlow, HighGuid guidhigh, uint32 phaseMask);
+        void _Create(ObjectGuid guid, uint32 phaseMask);
 
         void Relocate(float x, float y, float z, float orientation);
         void Relocate(float x, float y, float z);
@@ -490,10 +490,23 @@ class MANGOS_DLL_SPEC WorldObject : public Object
         void BuildUpdateData(UpdateDataMapType &);
 
         Creature* SummonCreature(uint32 id, float x, float y, float z, float ang,TempSummonType spwtype,uint32 despwtime);
+        GameObject* SummonGameobject(uint32 id, float x, float y, float z, float angle, uint32 despwtime);
+
+        void StartGroupLoot(Group* group, uint32 timer);
+        void StopGroupLoot();
+        ObjectGuid GetLootRecipientGuid() const { return m_lootRecipientGuid; }
+        uint32 GetLootGroupRecipientId() const { return m_lootGroupRecipientId; }
+        Player* GetLootRecipient() const;                   // use group cases as prefered
+        Group* GetGroupLootRecipient() const;
+        bool HasLootRecipient() const { return m_lootGroupRecipientId || !m_lootRecipientGuid.IsEmpty(); }
+        bool IsGroupLootRecipient() const { return m_lootGroupRecipientId; }
+        void SetLootRecipient(Unit* unit);
+        Player* GetOriginalLootRecipient() const;           // ignore group changes/etc, not for looting
 
         bool isActiveObject() const { return m_isActiveObject || m_viewPoint.hasViewers(); }
 
         ViewPoint& GetViewPoint() { return m_viewPoint; }
+
     protected:
         explicit WorldObject();
 
@@ -502,6 +515,12 @@ class MANGOS_DLL_SPEC WorldObject : public Object
         //mapId/instanceId should be set in SetMap() function!
         void SetLocationMapId(uint32 _mapId) { m_mapId = _mapId; }
         void SetLocationInstanceId(uint32 _instanceId) { m_InstanceId = _instanceId; }
+
+        uint32 m_groupLootTimer;                            // (msecs)timer used for group loot
+        uint32 m_groupLootId;                               // used to find group which is looting corpse
+
+        ObjectGuid m_lootRecipientGuid;                     // player who will have rights for looting if m_lootGroupRecipient==0 or group disbanded
+        uint32 m_lootGroupRecipientId;                      // group who will have rights for looting if set and exist
 
         std::string m_name;
 

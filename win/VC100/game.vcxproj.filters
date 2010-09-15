@@ -501,7 +501,7 @@
     </ClCompile>
     <ClCompile Include="..\..\src\game\MapUpdater.cpp">
       <Filter>World/Handlers</Filter>
-    </ClCompile>	  
+    </ClCompile>
     <ClCompile Include="..\..\src\game\AuctionHouseBot\AuctionHouseBot.cpp">
       <Filter>AhBot</Filter>
     </ClCompile>

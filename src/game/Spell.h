@@ -278,6 +278,7 @@ class Spell
         void EffectTriggerMissileSpell(SpellEffectIndex eff_idx);
         void EffectThreat(SpellEffectIndex eff_idx);
         void EffectRestoreItemCharges(SpellEffectIndex eff_idx);
+        void EffectRemoveAura(SpellEffectIndex eff_idx);
         void EffectHealMaxHealth(SpellEffectIndex eff_idx);
         void EffectInterruptCast(SpellEffectIndex eff_idx);
         void EffectSummonObjectWild(SpellEffectIndex eff_idx);
@@ -336,6 +337,7 @@ class Spell
         void EffectKillCreditPersonal(SpellEffectIndex eff_idx);
         void EffectKillCredit(SpellEffectIndex eff_idx);
         void EffectQuestFail(SpellEffectIndex eff_idx);
+        void EffectQuestStart(SpellEffectIndex eff_idx);
         void EffectActivateRune(SpellEffectIndex eff_idx);
         void EffectTeachTaxiNode(SpellEffectIndex eff_idx);
         void EffectTitanGrip(SpellEffectIndex eff_idx);
@@ -382,17 +384,19 @@ class Spell
         void setState(uint32 state) { m_spellState = state; }
 
         void DoCreateItem(SpellEffectIndex eff_idx, uint32 itemtype);
-        void DoSummon(SpellEffectIndex eff_idx);
+        void DoSummonGroupPets(SpellEffectIndex eff_idx);
         void DoSummonWild(SpellEffectIndex eff_idx, uint32 forceFaction = 0);
         void DoSummonGuardian(SpellEffectIndex eff_idx, uint32 forceFaction = 0);
         void DoSummonTotem(SpellEffectIndex eff_idx, uint8 slot_dbc = 0);
         void DoSummonCritter(SpellEffectIndex eff_idx, uint32 forceFaction = 0);
+        void DoSummonSnakes(SpellEffectIndex eff_idx);
 
         void WriteSpellGoTargets( WorldPacket * data );
         void WriteAmmoToPacket( WorldPacket * data );
 
         typedef std::list<Unit*> UnitList;
         void FillTargetMap();
+        bool FillCustomTargetMap(uint32 i, UnitList &targetUnitMap); 
         void SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList &targetUnitMap);
 
         void FillAreaTargets(UnitList &targetUnitMap, float x, float y, float radius, SpellNotifyPushType pushType, SpellTargets spellTargets, WorldObject* originalCaster = NULL);

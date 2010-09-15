@@ -129,6 +129,7 @@ typedef std::vector<uint32> AutoSpellList;
 #define ACTIVE_SPELLS_MAX           4
 
 #define PET_FOLLOW_DIST  1.0f
+#define PET_DEFAULT_FOLLOW_ANGLE M_PI_F/2
 #define PET_FOLLOW_ANGLE M_PI_F/2
 
 class Player;
@@ -168,7 +169,6 @@ class Pet : public Creature
                 return m_autospells[pos];
         }
 
-        void Regenerate(Powers power);
         void LooseHappiness();
         HappinessState GetHappinessState();
         void GivePetXP(uint32 xp);
@@ -202,6 +202,14 @@ class Pet : public Creature
         void LearnPetPassives();
         void CastPetAuras(bool current);
         void CastPetAura(PetAura const* aura);
+        void CastPetPassiveSpells(bool current = true);
+        void CastPetPassiveSpell(uint32 SpellID, int damage = 0);
+        void ApplyStatBonus(Stats stat, bool apply);
+        void ApplyResistanceBonus(uint32 school, bool apply);
+        void ApplyAttackPowerBonus(bool apply);
+        void ApplySpellPowerBonus(int32 amount, bool apply);
+        void ApplyOtherBonuses(bool apply);
+        void ApplyAllBonuses(bool apply);
 
         void _LoadSpellCooldowns();
         void _SaveSpellCooldowns();
@@ -241,6 +249,17 @@ class Pet : public Creature
         void SetAuraUpdateMask(uint8 slot) { m_auraUpdateMask |= (uint64(1) << slot); }
         void ResetAuraUpdateMask() { m_auraUpdateMask = 0; }
 
+        float GetPetFollowAngle() const { return m_petFollowAngle; }
+        void SetPetFollowAngle(float angle) { m_petFollowAngle = angle; }
+
+        Unit* GetOwner() const;
+        bool GetNeedSave() const { return m_needSave; }
+        void SetNeedSave(bool needSave) { m_needSave = needSave; }
+        uint8 GetPetCounter() { return m_petCounter; }
+        void SetPetCounter(uint8 counter) { m_petCounter = counter; }
+        bool SetSummonPosition(float x = 0.0f, float y = 0.0f, float z = 0.0f);
+        bool Summon(int32 duration = 0, uint8 counter = 0);
+
         // overwrite Creature function for name localization back to WorldObject version without localization
         const char* GetNameForLocaleIdx(int32 locale_idx) const { return WorldObject::GetNameForLocaleIdx(locale_idx); }
 
@@ -254,6 +273,15 @@ class Pet : public Creature
         int32   m_bonusdamage;
         uint64  m_auraUpdateMask;
         bool    m_loading;
+        bool    m_needSave;                                 // is pet needed to be saved in DB
+        float   m_petFollowAngle;                           // follow angle for the pet
+        uint8   m_petCounter;
+        int16   m_baseStatBonus[MAX_STATS];
+        int16   m_baseResistanceBonus[MAX_SPELL_SCHOOL];
+        int16   m_baseAPBonus;
+        int16   m_baseRatingValue[MAX_COMBAT_RATING];
+        uint16  m_baseSpellPower;
+        uint16  m_basePowerRegen;
 
         DeclinedName *m_declinedname;
 

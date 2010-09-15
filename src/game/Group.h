@@ -222,7 +222,7 @@ class MANGOS_DLL_SPEC Group
         void   ChangeLeader(ObjectGuid guid);
         void   SetLootMethod(LootMethod method) { m_lootMethod = method; }
         void   SetLooterGuid(ObjectGuid guid) { m_looterGuid = guid; }
-        void   UpdateLooterGuid( Creature* creature, bool ifneed = false );
+        void   UpdateLooterGuid(WorldObject* object, bool ifneed = false );
         void   SetLootThreshold(ItemQualities threshold) { m_lootThreshold = threshold; }
         void   Disband(bool hideDestroy=false);
 
@@ -233,6 +233,7 @@ class MANGOS_DLL_SPEC Group
         bool isBGGroup()   const { return m_bgGroup != NULL; }
         bool IsCreated()   const { return GetMembersCount() > 0; }
         ObjectGuid GetLeaderGuid() const { return m_leaderGuid; }
+        const uint8& GetCreatorRace() const { return m_creatorRace; }
         const char * GetLeaderName() const { return m_leaderName.c_str(); }
         LootMethod    GetLootMethod() const { return m_lootMethod; }
         ObjectGuid GetLooterGuid() const { return m_looterGuid; }
@@ -345,11 +346,11 @@ class MANGOS_DLL_SPEC Group
         void SendLootRoll(ObjectGuid const& targetGuid, uint8 rollNumber, uint8 rollType, const Roll &r);
         void SendLootRollWon(ObjectGuid const& targetGuid, uint8 rollNumber, RollVote rollType, const Roll &r);
         void SendLootAllPassed(const Roll &r);
-        void GroupLoot(Creature *creature, Loot *loot);
-        void NeedBeforeGreed(Creature *creature, Loot *loot);
-        void MasterLoot(Creature *creature, Loot *loot);
+        void GroupLoot(WorldObject* object, Loot *loot);
+        void NeedBeforeGreed(WorldObject* object, Loot *loot);
+        void MasterLoot(WorldObject* object, Loot *loot);
         bool CountRollVote(Player* player, ObjectGuid const& lootedTarget, uint32 itemSlot, RollVote vote);
-        void StartLootRool(Creature* lootTarget, LootMethod method, Loot* loot, uint8 itemSlot, uint32 maxEnchantingSkill);
+        void StartLootRool(WorldObject* lootTarget, LootMethod method, Loot* loot, uint8 itemSlot, uint32 maxEnchantingSkill);
         void EndRoll();
 
         void LinkMember(GroupReference *pRef) { m_memberMgr.insertFirst(pRef); }
@@ -440,6 +441,7 @@ class MANGOS_DLL_SPEC Group
         GroupRefManager     m_memberMgr;
         InvitesList         m_invitees;
         ObjectGuid          m_leaderGuid;
+        uint8               m_creatorRace;
         std::string         m_leaderName;
         ObjectGuid          m_mainTankGuid;
         ObjectGuid          m_mainAssistantGuid;

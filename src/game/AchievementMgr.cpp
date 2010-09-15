@@ -627,6 +627,10 @@ void AchievementMgr::SendAchievementEarned(AchievementEntry const* achievement)
 
     DEBUG_FILTER_LOG(LOG_FILTER_ACHIEVEMENT_UPDATES, "AchievementMgr::SendAchievementEarned(%u)", achievement->ID);
 
+    // Not broadcast a hidden achievement
+    if(achievement->flags & ACHIEVEMENT_FLAG_HIDDEN)
+        return;
+
     if(Guild* guild = sObjectMgr.GetGuildById(GetPlayer()->GetGuildId()))
     {
         MaNGOS::AchievementChatBuilder say_builder(*GetPlayer(), CHAT_MSG_GUILD_ACHIEVEMENT, LANG_ACHIEVEMENT_EARNED,achievement->ID);
@@ -872,7 +876,7 @@ void AchievementMgr::UpdateAchievementCriteria(AchievementCriteriaTypes type, ui
                     {
                         case 161:                           // AB, Overcome a 500 resource disadvantage
                         {
-                            if (bg->GetTypeID() != BATTLEGROUND_AB)
+                            if (bg->GetTypeID(true) != BATTLEGROUND_AB)
                                 continue;
                             if(!((BattleGroundAB*)bg)->IsTeamScores500Disadvantage(GetPlayer()->GetTeam()))
                                 continue;
@@ -2120,6 +2124,10 @@ void AchievementMgr::BuildAllDataPacket(WorldPacket *data)
 {
     for(CompletedAchievementMap::const_iterator iter = m_completedAchievements.begin(); iter!=m_completedAchievements.end(); ++iter)
     {
+        const AchievementEntry *achiev = sAchievementStore.LookupEntry(iter->first);
+        if(achiev->flags & ACHIEVEMENT_FLAG_HIDDEN)
+            continue;
+
         *data << uint32(iter->first);
         *data << uint32(secsToTimeBitFields(iter->second.date));
     }

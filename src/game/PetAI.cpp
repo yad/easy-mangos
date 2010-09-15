@@ -62,7 +62,6 @@ void PetAI::MoveInLineOfSight(Unit *u)
             if(m_creature->IsWithinLOSInMap(u))
             {
                 AttackStart(u);
-                u->RemoveSpellsCausingAura(SPELL_AURA_MOD_STEALTH);
             }
         }
     }
@@ -121,7 +120,7 @@ void PetAI::_stopAttack()
 
     if(owner && m_creature->GetCharmInfo() && m_creature->GetCharmInfo()->HasCommandState(COMMAND_FOLLOW))
     {
-        m_creature->GetMotionMaster()->MoveFollow(owner,PET_FOLLOW_DIST,PET_FOLLOW_ANGLE);
+        m_creature->GetMotionMaster()->MoveFollow(owner,PET_FOLLOW_DIST, m_creature->isPet() ? ((Pet*)m_creature)->GetPetFollowAngle() : PET_DEFAULT_FOLLOW_ANGLE);
     }
     else
     {
@@ -167,7 +166,7 @@ void PetAI::UpdateAI(const uint32 diff)
                     return;
             }
             // not required to be stopped case
-            else if (m_creature->isAttackReady() && m_creature->canReachWithAttack(m_creature->getVictim()))
+            else if (m_creature->isAttackReady() && m_creature->IsWithinDistInMap(m_creature->getVictim(), ATTACK_DISTANCE))
             {
                 m_creature->AttackerStateUpdate(m_creature->getVictim());
 
@@ -194,7 +193,7 @@ void PetAI::UpdateAI(const uint32 diff)
         {
             if (!m_creature->hasUnitState(UNIT_STAT_FOLLOW) )
             {
-                m_creature->GetMotionMaster()->MoveFollow(owner,PET_FOLLOW_DIST,PET_FOLLOW_ANGLE);
+                m_creature->GetMotionMaster()->MoveFollow(owner,PET_FOLLOW_DIST, m_creature->isPet() ? ((Pet*)m_creature)->GetPetFollowAngle() : PET_DEFAULT_FOLLOW_ANGLE);
             }
         }
     }
@@ -358,6 +357,6 @@ void PetAI::AttackedBy(Unit *attacker)
 {
     //when attacked, fight back in case 1)no victim already AND 2)not set to passive AND 3)not set to stay, unless can it can reach attacker with melee attack anyway
     if(!m_creature->getVictim() && m_creature->GetCharmInfo() && !m_creature->GetCharmInfo()->HasReactState(REACT_PASSIVE) &&
-        (!m_creature->GetCharmInfo()->HasCommandState(COMMAND_STAY) || m_creature->canReachWithAttack(attacker)))
+        (!m_creature->GetCharmInfo()->HasCommandState(COMMAND_STAY) || m_creature->IsWithinDistInMap(m_creature->getVictim(), ATTACK_DISTANCE)))
         AttackStart(attacker);
 }

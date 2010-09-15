@@ -267,6 +267,7 @@ void WorldSession::HandleLogoutRequestOpcode( WorldPacket & /*recv_data*/ )
     //Can not logout if...
     if( GetPlayer()->isInCombat() ||                        //...is in combat
         GetPlayer()->duel         ||                        //...is in Duel
+        GetPlayer()->GetVehicle() ||                        //...is in vehicle
                                                             //...is jumping ...is falling
         GetPlayer()->m_movementInfo.HasMovementFlag(MovementFlags(MOVEFLAG_FALLING | MOVEFLAG_FALLINGFAR)))
     {
@@ -1396,6 +1397,14 @@ void WorldSession::HandleSetDungeonDifficultyOpcode( WorldPacket & recv_data )
     {
         if (pGroup->IsLeader(_player->GetObjectGuid()))
         {
+            //do not let set dungeon difficulty if any one in this group in dungeon
+            Group::MemberSlotList g_members = pGroup->GetMemberSlots();
+            for (Group::member_citerator itr = g_members.begin(); itr != g_members.end(); itr++)
+            {
+                Player *gm_member = sObjectMgr.GetPlayer(itr->guid);
+                if (gm_member && gm_member->GetMap() && gm_member->GetMap()->IsDungeon())
+                    return;
+            }
             // the difficulty is set even if the instances can't be reset
             //_player->SendDungeonDifficulty(true);
             pGroup->ResetInstances(INSTANCE_RESET_CHANGE_DIFFICULTY, false, _player);
@@ -1440,6 +1449,14 @@ void WorldSession::HandleSetRaidDifficultyOpcode( WorldPacket & recv_data )
     {
         if (pGroup->IsLeader(_player->GetObjectGuid()))
         {
+            //do not let set dungeon difficulty if any one in this group in dungeon
+            Group::MemberSlotList g_members = pGroup->GetMemberSlots();
+            for (Group::member_citerator itr = g_members.begin(); itr != g_members.end(); itr++)
+            {
+                Player *gm_member = sObjectMgr.GetPlayer(itr->guid);
+                if (gm_member && gm_member->GetMap() && gm_member->GetMap()->IsDungeon())
+                    return;
+            }
             // the difficulty is set even if the instances can't be reset
             //_player->SendDungeonDifficulty(true);
             pGroup->ResetInstances(INSTANCE_RESET_CHANGE_DIFFICULTY, true, _player);

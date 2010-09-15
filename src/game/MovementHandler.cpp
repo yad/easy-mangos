@@ -31,6 +31,8 @@
 #include "WaypointMovementGenerator.h"
 #include "InstanceSaveMgr.h"
 #include "ObjectMgr.h"
+#include "World.h"
+#include "Language.h"
 
 void WorldSession::HandleMoveWorldportAckOpcode( WorldPacket & /*recv_data*/ )
 {
@@ -43,6 +45,9 @@ void WorldSession::HandleMoveWorldportAckOpcode()
     // ignore unexpected far teleports
     if(!GetPlayer()->IsBeingTeleportedFar())
         return;
+
+    if (_player->GetVehicleKit())
+        _player->GetVehicleKit()->RemoveAllPassengers();
 
     // get the teleport destination
     WorldLocation &loc = GetPlayer()->GetTeleportDest();
@@ -270,24 +275,30 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
         }
 
         // if we boarded a transport, add us to it
-        if (plMover && !plMover->m_transport)
+        if (plMover && !plMover->GetTransport())
         {
             // elevators also cause the client to send MOVEFLAG_ONTRANSPORT - just unmount if the guid can be found in the transport list
             for (MapManager::TransportSet::const_iterator iter = sMapMgr.m_Transports.begin(); iter != sMapMgr.m_Transports.end(); ++iter)
             {
-                if ((*iter)->GetObjectGuid() == movementInfo.GetTransportGuid())
+                Transport* transport = *iter;
+
+                if (transport->GetObjectGuid() == movementInfo.GetTransportGuid())
                 {
-                    plMover->m_transport = (*iter);
-                    (*iter)->AddPassenger(plMover);
+                    plMover->SetTransport(transport);
+                    transport->AddPassenger(plMover);
+
+                    if (plMover->GetVehicleKit())
+                        plMover->GetVehicleKit()->RemoveAllPassengers();
+
                     break;
                 }
             }
         }
     }
-    else if (plMover && plMover->m_transport)               // if we were on a transport, leave
+    else if (plMover && plMover->GetTransport())            // if we were on a transport, leave
     {
-        plMover->m_transport->RemovePassenger(plMover);
-        plMover->m_transport = NULL;
+        plMover->GetTransport()->RemovePassenger(plMover);
+        plMover->SetTransport(NULL);
         movementInfo.ClearTransportData();
     }
 
@@ -301,8 +312,6 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
         plMover->SetInWater( !plMover->IsInWater() || plMover->GetBaseMap()->IsUnderWater(movementInfo.GetPos()->x, movementInfo.GetPos()->y, movementInfo.GetPos()->z) );
     }
 
-    /*----------------------*/
-
     /* process position-change */
     movementInfo.UpdateTime(getMSTime());
 
@@ -311,10 +320,11 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
     movementInfo.Write(data);                               // write data
     mover->SendMessageToSetExcept(&data, _player);
 
+    mover->m_movementInfo = movementInfo;
+    mover->SetPosition(movementInfo.GetPos()->x, movementInfo.GetPos()->y, movementInfo.GetPos()->z, movementInfo.GetPos()->o);
+
     if(plMover)                                             // nothing is charmed, or player charmed
     {
-        plMover->SetPosition(movementInfo.GetPos()->x, movementInfo.GetPos()->y, movementInfo.GetPos()->z, movementInfo.GetPos()->o);
-        plMover->m_movementInfo = movementInfo;
         plMover->UpdateFallInformationIfNeed(movementInfo, opcode);
 
         // after move info set
@@ -354,11 +364,6 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
                 plMover->RepopAtGraveyard();
             }
         }
-    }
-    else                                                    // creature charmed
-    {
-        if(mover->IsInWorld())
-            mover->GetMap()->CreatureRelocation((Creature*)mover, movementInfo.GetPos()->x, movementInfo.GetPos()->y, movementInfo.GetPos()->z, movementInfo.GetPos()->o);
     }
 }
 
@@ -441,12 +446,10 @@ void WorldSession::HandleSetActiveMoverOpcode(WorldPacket &recv_data)
     ObjectGuid guid;
     recv_data >> guid;
 
-    if(_player->GetMover()->GetObjectGuid() != guid)
-    {
-        sLog.outError("HandleSetActiveMoverOpcode: incorrect mover guid: mover is %s and should be %s",
-            _player->GetMover()->GetObjectGuid().GetString().c_str(), guid.GetString().c_str());
-        return;
-    }
+    if (Unit *pMover = ObjectAccessor::GetUnit(*GetPlayer(), guid))
+        GetPlayer()->SetMover(pMover);
+    else
+        GetPlayer()->SetMover(NULL);
 }
 
 void WorldSession::HandleMoveNotActiveMoverOpcode(WorldPacket &recv_data)
@@ -475,7 +478,7 @@ void WorldSession::HandleMoveNotActiveMoverOpcode(WorldPacket &recv_data)
 
 void WorldSession::HandleDismissControlledVehicle(WorldPacket &recv_data)
 {
-    DEBUG_LOG("WORLD: Recvd CMSG_DISMISS_CONTROLLED_VEHICLE");
+    DEBUG_LOG("WORLD: Received CMSG_DISMISS_CONTROLLED_VEHICLE");
     recv_data.hexlike();
 
     ObjectGuid guid;
@@ -484,19 +487,97 @@ void WorldSession::HandleDismissControlledVehicle(WorldPacket &recv_data)
     recv_data >> guid.ReadAsPacked();
     recv_data >> mi;
 
-    uint64 vehicleGUID = _player->GetCharmGUID();
-
-    if(!vehicleGUID)                                        // something wrong here...
+    if(!GetPlayer()->GetVehicle())
         return;
 
-    _player->m_movementInfo = mi;
+    GetPlayer()->m_movementInfo = mi;
+    GetPlayer()->ExitVehicle();
+}
 
-    // using charm guid, because we don't have vehicle guid...
-    if(Vehicle *vehicle = _player->GetMap()->GetVehicle(vehicleGUID))
-    {
-        // Aura::HandleAuraControlVehicle will call Player::ExitVehicle
-        vehicle->RemoveSpellsCausingAura(SPELL_AURA_CONTROL_VEHICLE);
-    }
+void WorldSession::HandleRequestVehicleExit(WorldPacket &recv_data)
+{
+    DEBUG_LOG("WORLD: Received CMSG_REQUEST_VEHICLE_EXIT");
+
+    GetPlayer()->ExitVehicle();
+}
+
+void WorldSession::HandleRequestVehiclePrevSeat(WorldPacket &recv_data)
+{
+    DEBUG_LOG("WORLD: Received CMSG_REQUEST_VEHICLE_PREV_SEAT");
+
+    GetPlayer()->ChangeSeat(-1, false);
+}
+
+void WorldSession::HandleRequestVehicleNextSeat(WorldPacket &recv_data)
+{
+    DEBUG_LOG("WORLD: Received CMSG_REQUEST_VEHICLE_NEXT_SEAT");
+
+    GetPlayer()->ChangeSeat(-1, true);
+}
+
+void WorldSession::HandleRequestVehicleSwitchSeat(WorldPacket &recv_data)
+{
+    DEBUG_LOG("WORLD: Received CMSG_REQUEST_VEHICLE_SWITCH_SEAT");
+    recv_data.hexlike();
+
+    ObjectGuid guid;
+    recv_data >> guid.ReadAsPacked();
+
+    int8 seatId;
+    recv_data >> seatId;
+
+    VehicleKit* pVehicle = GetPlayer()->GetVehicle();
+
+    if (!pVehicle)
+        return;
+
+    if (pVehicle->GetBase()->GetObjectGuid() == guid)
+        GetPlayer()->ChangeSeat(seatId);
+}
+
+void WorldSession::HandleEnterPlayerVehicle(WorldPacket &recv_data)
+{
+    DEBUG_LOG("WORLD: Received CMSG_PLAYER_VEHICLE_ENTER");
+    recv_data.hexlike();
+
+    ObjectGuid guid;
+    recv_data >> guid;
+
+    Player* player = sObjectMgr.GetPlayer(guid);
+
+    if (!player)
+        return;
+
+    if (!GetPlayer()->IsInSameRaidWith(player))
+        return;
+
+    if (!GetPlayer()->IsWithinDistInMap(player, INTERACTION_DISTANCE))
+        return;
+
+    if (player->GetTransport())
+        return;
+
+    if (VehicleKit* pVehicle = player->GetVehicleKit())
+        GetPlayer()->EnterVehicle(pVehicle);
+}
+
+void WorldSession::HandleEjectPasenger(WorldPacket &recv_data)
+{
+    DEBUG_LOG("WORLD: Received CMSG_EJECT_PASSENGER");
+    recv_data.hexlike();
+
+    ObjectGuid guid;
+    recv_data >> guid;
+
+    Unit* passenger = ObjectAccessor::GetUnit(*GetPlayer(), guid);
+
+    if (!passenger)
+        return;
+
+    if (!passenger->GetVehicle() || passenger->GetVehicle() != GetPlayer()->GetVehicleKit())
+        return;
+
+    passenger->ExitVehicle();
 }
 
 void WorldSession::HandleMountSpecialAnimOpcode(WorldPacket& /*recvdata*/)

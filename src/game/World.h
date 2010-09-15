@@ -185,6 +185,7 @@ enum eConfigUInt32Values
     CONFIG_UINT32_CHARDELETE_KEEP_DAYS,
     CONFIG_UINT32_CHARDELETE_METHOD,
     CONFIG_UINT32_CHARDELETE_MIN_LEVEL,
+    CONFIG_UINT32_RANDOM_BG_RESET_HOUR,
     CONFIG_UINT32_NUMTHREADS,
     CONFIG_UINT32_VALUE_COUNT
 };
@@ -327,6 +328,7 @@ enum eConfigBoolValues
     CONFIG_BOOL_STATS_SAVE_ONLY_ON_LOGOUT,
     CONFIG_BOOL_CLEAN_CHARACTER_DB,
     CONFIG_BOOL_VMAP_INDOOR_CHECK,
+    CONFIG_BOOL_LOOT_CHESTS_IGNORE_DB,
     CONFIG_BOOL_NO_CAST_TIME,
     CONFIG_BOOL_NO_COOLDOWN,
     CONFIG_BOOL_HURT_IN_REAL_TIME,
@@ -523,6 +525,7 @@ class World
         /// Next daily quests reset time
         time_t GetNextDailyQuestsResetTime() const { return m_NextDailyQuestReset; }
         time_t GetNextWeeklyQuestsResetTime() const { return m_NextWeeklyQuestReset; }
+        time_t GetNextRandomBGResetTime() const { return m_NextRandomBGReset; }
 
         /// Get the maximum skill level a player can reach
         uint16 GetConfigMaxSkillValue() const
@@ -624,8 +627,10 @@ class World
 
         void InitDailyQuestResetTime();
         void InitWeeklyQuestResetTime();
+        void InitRandomBGResetTime();
         void ResetDailyQuests();
         void ResetWeeklyQuests();
+        void ResetRandomBG();
     private:
         void setConfig(eConfigUInt32Values index, char const* fieldname, uint32 defvalue);
         void setConfig(eConfigInt32Values index, char const* fieldname, int32 defvalue);
@@ -697,6 +702,7 @@ class World
         time_t m_NextDailyQuestReset;
         time_t m_NextWeeklyQuestReset;
         time_t m_NextPlayerBotCheck;
+        time_t m_NextRandomBGReset;
 
         //Player Queue
         Queue m_QueuedPlayer;

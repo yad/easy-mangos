@@ -1127,7 +1127,7 @@ struct MapEntry
     float   ghost_entrance_y;                               // 61 entrance y coordinate in ghost mode  (in most cases = normal entrance)
     //uint32  timeOfDayOverride;                            // 62 time of day override
     uint32  addon;                                          // 63 expansion
-                                                            // 64 some kind of time?
+    uint32  instanceResetOffset;                            // 64 offset used instead of first period while creating reset table
     //uint32 maxPlayers;                                    // 65 max players
 
     // Helpers
@@ -1595,9 +1595,9 @@ struct SpellItemEnchantmentEntry
     uint32      slot;                                       // 32       m_flags
     uint32      GemID;                                      // 33       m_src_itemID
     uint32      EnchantmentCondition;                       // 34       m_condition_id
-    //uint32      requiredSkill;                            // 35       m_requiredSkillID
-    //uint32      requiredSkillValue;                       // 36       m_requiredSkillRank
-                                                            // 37       new in 3.1
+    uint32      requiredSkill;                              // 35       m_requiredSkillID
+    uint32      requiredSkillValue;                         // 36       m_requiredSkillRank
+    uint32      requiredLevel;                              // 37       m_requiredLevel
 };
 
 struct SpellItemEnchantmentConditionEntry
@@ -1704,6 +1704,8 @@ struct TotemCategoryEntry
     uint32    categoryMask;                                 // 19 (compatibility mask for same type: different for totems, compatible from high to low for rods)
 };
 
+#define MAX_VEHICLE_SEAT 8
+
 struct VehicleEntry
 {
     uint32  m_ID;                                           // 0
@@ -1712,7 +1714,7 @@ struct VehicleEntry
     float   m_pitchSpeed;                                   // 3
     float   m_pitchMin;                                     // 4
     float   m_pitchMax;                                     // 5
-    uint32  m_seatID[8];                                    // 6-13
+    uint32  m_seatID[MAX_VEHICLE_SEAT];                     // 6-13
     float   m_mouseLookOffsetPitch;                         // 14
     float   m_cameraFadeDistScalarMin;                      // 15
     float   m_cameraFadeDistScalarMax;                      // 16
@@ -1790,6 +1792,7 @@ struct VehicleSeatEntry
     int32   m_uiSkin;                                       // 44
     uint32  m_flagsB;                                       // 45
                                                             // 46-57 added in 3.1, floats mostly
+    bool IsUsable() const { return m_flags & SEAT_FLAG_USABLE; }
 };
 
 struct WMOAreaTableEntry
@@ -1807,6 +1810,7 @@ struct WMOAreaTableEntry
     uint32 areaId;                                          // 10 link to AreaTableEntry.ID
     //char *Name[16];
     //uint32 nameFlags;
+
 };
 
 struct WorldMapAreaEntry

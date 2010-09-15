@@ -625,6 +625,12 @@ void ObjectMgr::LoadCreatureTemplates()
         if (!displayScaleEntry)
             sLog.outErrorDb("Creature (Entry: %u) has nonexistent modelid in modelid_1/modelid_2/modelid_3/modelid_4", cInfo->Entry);
 
+        if (cInfo->powerType >= MAX_POWERS)
+        {
+            sLog.outErrorDb("Creature (Entry: %u) has invalid power type (%u)", cInfo->Entry, cInfo->powerType);
+            const_cast<CreatureInfo*>(cInfo)->powerType = POWER_MANA;
+        }
+
         // use below code for 0-checks for unit_class
         if (!cInfo->unit_class)
             ERROR_DB_STRICT_LOG("Creature (Entry: %u) not has proper unit_class(%u) for creature_template", cInfo->Entry, cInfo->unit_class);
@@ -684,6 +690,17 @@ void ObjectMgr::LoadCreatureTemplates()
             {
                 sLog.outErrorDb("Creature (Entry: %u) has non-existing Spell%d (%u), set to 0", cInfo->Entry, j+1,cInfo->spells[j]);
                 const_cast<CreatureInfo*>(cInfo)->spells[j] = 0;
+            }
+        }
+
+        if (cInfo->VehicleId)
+        {
+            VehicleEntry const* pVehicleEntry = sVehicleStore.LookupEntry(cInfo->VehicleId);
+
+            if (!pVehicleEntry)
+            {
+                sLog.outErrorDb("Creature (Entry: %u) has non-existing VehicleId (%u)", cInfo->Entry, cInfo->VehicleId);
+                const_cast<CreatureInfo*>(cInfo)->VehicleId = 0;
             }
         }
 
@@ -2478,8 +2495,8 @@ void ObjectMgr::LoadPetLevelInfo()
 {
     // Loading levels data
     {
-        //                                                 0               1      2   3     4    5    6    7     8    9
-        QueryResult *result  = WorldDatabase.Query("SELECT creature_entry, level, hp, mana, str, agi, sta, inte, spi, armor FROM pet_levelstats");
+        //                                                 0               1      2   3     4    5    6    7     8    9      10      11      12
+        QueryResult *result  = WorldDatabase.Query("SELECT creature_entry, level, hp, mana, str, agi, sta, inte, spi, armor, mindmg, maxdmg, attackpower FROM pet_levelstats");
 
         uint32 count = 0;
 
@@ -2536,6 +2553,9 @@ void ObjectMgr::LoadPetLevelInfo()
             pLevelInfo->health = fields[2].GetUInt16();
             pLevelInfo->mana   = fields[3].GetUInt16();
             pLevelInfo->armor  = fields[9].GetUInt16();
+            pLevelInfo->mindmg = fields[10].GetUInt32();
+            pLevelInfo->maxdmg = fields[11].GetUInt32();
+            pLevelInfo->attackpower = fields[12].GetUInt32();
 
             for (int i = 0; i < MAX_STATS; i++)
             {
@@ -2553,15 +2573,19 @@ void ObjectMgr::LoadPetLevelInfo()
         sLog.outString( ">> Loaded %u level pet stats definitions", count );
     }
 
+    PetLevelInfo* petBaseInfo = petInfo[1];
+
     // Fill gaps and check integrity
     for (PetLevelInfoMap::iterator itr = petInfo.begin(); itr != petInfo.end(); ++itr)
     {
+        if (itr->first == 1) continue; // No fill data for default pet! _Must_ be exist!
+
         PetLevelInfo* pInfo = itr->second;
 
-        // fatal error if no level 1 data
-        if(!pInfo || pInfo[0].health == 0 )
+        // fatal error if no level 1 and max health data
+        if(!pInfo || pInfo[0].health == 0 || pInfo[sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL)-1].health == 0 )
         {
-            sLog.outErrorDb("Creature %u does not have pet stats data for Level 1!",itr->first);
+            sLog.outErrorDb("Creature %u does not have pet stats data for Levels 1 or %u! Must be exist!",itr->first, sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL));
             Log::WaitBeforeContinueIfNeed();
             exit(1);
         }
@@ -2569,10 +2593,44 @@ void ObjectMgr::LoadPetLevelInfo()
         // fill level gaps
         for (uint32 level = 1; level < sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL); ++level)
         {
-            if(pInfo[level].health == 0)
+            if(   pInfo[level].health == 0
+               || pInfo[level].mana == 0
+               || pInfo[level].armor == 0
+               || pInfo[level].mindmg == 0
+               || pInfo[level].maxdmg == 0
+               || pInfo[level].stats[STAT_STRENGTH] == 0
+               || pInfo[level].stats[STAT_STAMINA] == 0
+               || pInfo[level].stats[STAT_AGILITY] == 0
+               || pInfo[level].stats[STAT_INTELLECT] == 0
+               || pInfo[level].stats[STAT_SPIRIT] == 0
+            )
             {
-                sLog.outErrorDb("Creature %u has no data for Level %i pet stats data, using data of Level %i.",itr->first,level+1, level);
-                pInfo[level] = pInfo[level-1];
+                DEBUG_LOG("Creature %u has no full data set for Level %i pet stats data, using approximated (from default pet progression) data",itr->first,level+1);
+
+                if(pInfo[level].health == 0)
+                    pInfo[level].health = uint16(pInfo[sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL)-1].health * (petBaseInfo[level].health / petBaseInfo[sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL)-1].health));
+
+                if(pInfo[level].mana == 0)
+                    pInfo[level].mana = uint16(pInfo[sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL)-1].mana * (petBaseInfo[level].mana / petBaseInfo[sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL)-1].mana));
+
+                if(pInfo[level].armor == 0)
+                    pInfo[level].armor = uint16(pInfo[sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL)-1].armor * (petBaseInfo[level].armor / petBaseInfo[sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL)-1].armor));
+
+                if(pInfo[level].mindmg == 0)
+                    pInfo[level].mindmg = uint16(pInfo[sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL)-1].mindmg * (petBaseInfo[level].mindmg / petBaseInfo[sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL)-1].mindmg));
+
+                if(pInfo[level].maxdmg == 0)
+                    pInfo[level].mana = uint16(pInfo[sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL)-1].maxdmg * (petBaseInfo[level].maxdmg / petBaseInfo[sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL)-1].maxdmg));
+
+                if(pInfo[level].attackpower == 0)
+                    pInfo[level].mana = uint16(pInfo[sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL)-1].attackpower * (petBaseInfo[level].attackpower / petBaseInfo[sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL)-1].attackpower));
+
+                for (int i = 0; i < MAX_STATS; i++)
+                {
+                    if(pInfo[level].stats[i] == 0)
+                        pInfo[level].stats[i] = uint16(pInfo[sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL)-1].stats[i] * (petBaseInfo[level].stats[i] / petBaseInfo[sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL)-1].stats[i]));
+                }
+
             }
         }
     }
@@ -6194,6 +6252,7 @@ uint32 ObjectMgr::GenerateLowGuid(HighGuid guidhigh)
         case HIGHGUID_ITEM:
             return m_ItemGuids.Generate();
         case HIGHGUID_UNIT:
+        case HIGHGUID_VEHICLE:
             return m_CreatureGuids.Generate();
         case HIGHGUID_PLAYER:
             return m_CharGuids.Generate();
@@ -7914,8 +7973,14 @@ uint16 ObjectMgr::GetConditionId( ConditionType condition, uint32 value1, uint32
     return mConditions.size() - 1;
 }
 
-bool ObjectMgr::CheckDeclinedNames( std::wstring mainpart, DeclinedName const& names )
+bool ObjectMgr::CheckDeclinedNames( std::wstring w_ownname, DeclinedName const& names )
 {
+    // get main part of the name
+    std::wstring mainpart = GetMainPartOfName(w_ownname, 0);
+    // prepare flags
+    bool x = true;
+    bool y = true;
+    // check declined names
     for(int i =0; i < MAX_DECLINED_NAME_CASES; ++i)
     {
         std::wstring wname;
@@ -7923,9 +7988,12 @@ bool ObjectMgr::CheckDeclinedNames( std::wstring mainpart, DeclinedName const& n
             return false;
 
         if(mainpart!=GetMainPartOfName(wname,i+1))
-            return false;
+            x = false;
+
+        if(w_ownname!=wname)
+            y = false;
     }
-    return true;
+    return (x||y);
 }
 
 uint32 ObjectMgr::GetAreaTriggerScriptId(uint32 trigger_id)
