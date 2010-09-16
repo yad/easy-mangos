@@ -204,7 +204,7 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
         return true;
     }
 
-    if (i_destinationHolder.UpdateTraveller(traveller, time_diff, false))
+    if (i_destinationHolder.UpdateTraveller(traveller, time_diff, i_recalculateTravel))
     {
         if (!IsActive(owner))                               // force stop processing (movement can move out active zone with cleanup movegens list)
             return true;                                    // not expire now, but already lost
@@ -235,7 +235,7 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
                 targetMoved = i_target->GetDistance2d(end_point.x, end_point.y) >= dist;
         }
 
-        if (!i_path || targetMoved || needNewDest)
+        if (!i_path || targetMoved || needNewDest || i_recalculateTravel)
         {
             // (re)calculate path
             _setTargetLocation(owner);
