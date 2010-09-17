@@ -111,7 +111,7 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner)
     // send the path if we have visited almost all of the previously
     // sent points, so that the monster never stops moving
     // also send the path if it is new
-    if (m_pathPointsSent < 3 || startIndex == 1)
+    if (m_pathPointsSent < 3 || startIndex == 1 || i_recalculateTravel)
     {
         // send 10 nodes, or send all nodes if there are less than 10 left
         m_pathPointsSent = std::min(uint32(10), pointPath.size() - startIndex);
