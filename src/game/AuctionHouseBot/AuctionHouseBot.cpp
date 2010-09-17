@@ -106,14 +106,18 @@ bool AuctionHouseBot::getRandomArray( AHBConfig& config, std::vector<s_randomArr
 
 void AuctionHouseBot::SetPricesOfItem(const Item *item,AHBConfig& config, uint32& buyp, uint32& bidp, uint32& stackcnt, e_ahb_quality AHB_ITEMS)
 {
+
     if (config.ItemInfos[AHB_ITEMS].GetMaxStack() != 0)
     {
         stackcnt = urand(1, minValue(item->GetMaxStackCount(), config.ItemInfos[AHB_ITEMS].GetMaxStack()));
     }
-    buyp *= urand(config.ItemInfos[AHB_ITEMS].GetMinPrice(), config.ItemInfos[AHB_ITEMS].GetMaxPrice()) * stackcnt;
-    buyp /= 100;
-    bidp = buyp * urand(config.ItemInfos[AHB_ITEMS].GetMinBidPrice(), config.ItemInfos[AHB_ITEMS].GetMaxBidPrice());
-    bidp /= 100;
+    buyp *= (config.ItemInfos[AHB_ITEMS].GetPriceRatio()/100) *stackcnt;
+    uint32 randrange = buyp * 0.4;
+    buyp = urand(buyp-randrange, buyp+randrange);
+    randrange=buyp*0.4;
+    bidp = buyp*0.5;
+    bidp = urand(bidp-randrange, bidp+randrange);
+
 }
 
 void AuctionHouseBot::addNewAuctions(AHBConfig& config)
@@ -533,9 +537,9 @@ void AuctionHouseBot::Initialize()
     setConfig(CONFIG_UINT32_AHBOT_CLASS_MISC_AMOUNT         , "AuctionHouseBot.Class.Misc"                  , 10);
     setConfig(CONFIG_UINT32_AHBOT_CLASS_GLYPH_AMOUNT        , "AuctionHouseBot.Class.Glyph"                 , 10);
 
-    setConfig(CONFIG_UINT32_AHBOT_ALLIANCE_PRICE_RATIO      , "AuctionHouseBot.Alliance.Price.Ratio"        , 1);
-    setConfig(CONFIG_UINT32_AHBOT_HORDE_PRICE_RATIO         , "AuctionHouseBot.Horde.Price.Ratio"           , 1);
-    setConfig(CONFIG_UINT32_AHBOT_NEUTRAL_PRICE_RATIO       , "AuctionHouseBot.Neutral.Price.Ratio"         , 1);
+    setConfig(CONFIG_UINT32_AHBOT_ALLIANCE_PRICE_RATIO      , "AuctionHouseBot.Alliance.Price.Ratio"        , 100);
+    setConfig(CONFIG_UINT32_AHBOT_HORDE_PRICE_RATIO         , "AuctionHouseBot.Horde.Price.Ratio"           , 100);
+    setConfig(CONFIG_UINT32_AHBOT_NEUTRAL_PRICE_RATIO       , "AuctionHouseBot.Neutral.Price.Ratio"         , 100);
 
     setConfig(CONFIG_UINT32_AHBOT_MINTIME                   , "AuctionHouseBot.MinTime"                     , 1);
     setConfig(CONFIG_UINT32_AHBOT_MAXTIME                   , "AuctionHouseBot.MaxTime"                     , 72);
@@ -1017,34 +1021,14 @@ void AuctionHouseBot::LoadSellerValues(AHBConfig& config)
         PriceRatio = getConfig(CONFIG_UINT32_AHBOT_NEUTRAL_PRICE_RATIO);
         break;
     }
-    config.ItemInfos[E_GREY].SetMaxPrice(10+PriceRatio);
-    config.ItemInfos[E_WHITE].SetMaxPrice(15+PriceRatio);
-    config.ItemInfos[E_GREEN].SetMaxPrice(25+PriceRatio);
-    config.ItemInfos[E_BLUE].SetMaxPrice(40+PriceRatio);
-    config.ItemInfos[E_PURPLE].SetMaxPrice(60+PriceRatio);
-    config.ItemInfos[E_ORANGE].SetMaxPrice(85+PriceRatio);
-    config.ItemInfos[E_YELLOW].SetMaxPrice(95+PriceRatio);
-    config.ItemInfos[E_GREY].SetMinPrice(5+PriceRatio);
-    config.ItemInfos[E_WHITE].SetMinPrice(10+PriceRatio);
-    config.ItemInfos[E_GREEN].SetMinPrice(15+PriceRatio);
-    config.ItemInfos[E_BLUE].SetMinPrice(25+PriceRatio);
-    config.ItemInfos[E_PURPLE].SetMinPrice(35+PriceRatio);
-    config.ItemInfos[E_ORANGE].SetMinPrice(45+PriceRatio);
-    config.ItemInfos[E_YELLOW].SetMinPrice(55+PriceRatio);
-    config.ItemInfos[E_GREY].SetMaxBidPrice(10+PriceRatio);
-    config.ItemInfos[E_WHITE].SetMaxBidPrice(10+PriceRatio);
-    config.ItemInfos[E_GREEN].SetMaxBidPrice(10+PriceRatio);
-    config.ItemInfos[E_BLUE].SetMaxBidPrice(20+PriceRatio);
-    config.ItemInfos[E_PURPLE].SetMaxBidPrice(30+PriceRatio);
-    config.ItemInfos[E_ORANGE].SetMaxBidPrice(40+PriceRatio);
-    config.ItemInfos[E_YELLOW].SetMaxBidPrice(50+PriceRatio);
-    config.ItemInfos[E_GREY].SetMinBidPrice(5+PriceRatio);
-    config.ItemInfos[E_WHITE].SetMinBidPrice(5+PriceRatio);
-    config.ItemInfos[E_GREEN].SetMinBidPrice(5+PriceRatio);
-    config.ItemInfos[E_BLUE].SetMinBidPrice(5+PriceRatio);
-    config.ItemInfos[E_PURPLE].SetMinBidPrice(5+PriceRatio);
-    config.ItemInfos[E_ORANGE].SetMinBidPrice(5+PriceRatio);
-    config.ItemInfos[E_YELLOW].SetMinBidPrice(5+PriceRatio);
+    config.ItemInfos[E_GREY].SetPriceRatio(PriceRatio);
+    config.ItemInfos[E_WHITE].SetPriceRatio(PriceRatio);
+    config.ItemInfos[E_GREEN].SetPriceRatio(PriceRatio);
+    config.ItemInfos[E_BLUE].SetPriceRatio(PriceRatio);
+    config.ItemInfos[E_PURPLE].SetPriceRatio(PriceRatio);
+    config.ItemInfos[E_ORANGE].SetPriceRatio(PriceRatio);
+    config.ItemInfos[E_YELLOW].SetPriceRatio(PriceRatio);
+
     //load min and max auction times
     config.SetMinTime(getConfig(CONFIG_UINT32_AHBOT_MINTIME));
     config.SetMaxTime(getConfig(CONFIG_UINT32_AHBOT_MAXTIME));
