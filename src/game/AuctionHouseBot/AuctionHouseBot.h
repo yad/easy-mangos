@@ -192,6 +192,7 @@ private:
     uint32 m_MaxStack;
     uint32 m_MissItems;
     uint32 m_buyerPrice;
+    uint32 m_PriceRatio;
 
     uint32 m_indice;
 
@@ -233,38 +234,13 @@ public:
     {
         return m_AmountOfItems;
     }
-    void SetMinPrice(uint32 value)
+    void SetPriceRatio(uint32 value)
     {
-        m_MinItemsPrice=value;
+        m_PriceRatio=value;
     }
-    uint32 GetMinPrice()
+    uint32 GetPriceRatio()
     {
-        return m_MinItemsPrice;
-    }
-
-    void SetMaxPrice(uint32 value)
-    {
-        m_MaxItemsPrice=value;
-    }
-    uint32 GetMaxPrice()
-    {
-        return m_MaxItemsPrice;
-    }
-    void SetMinBidPrice(uint32 value)
-    {
-        m_MinBidPrice=value;
-    }
-    uint32 GetMinBidPrice()
-    {
-        return m_MinBidPrice;
-    }
-    void SetMaxBidPrice(uint32 value)
-    {
-        m_MaxBidPrice=value;
-    }
-    uint32 GetMaxBidPrice()
-    {
-        return m_MaxBidPrice;
+        return m_PriceRatio;
     }
     void SetMaxStack(uint32 value)
     {

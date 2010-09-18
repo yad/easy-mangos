@@ -79,15 +79,15 @@ ConfVersion=2010090101
 #
 #    AuctionHouseBot.Alliance.Price.Ratio
 #        Define the price of selled item here for the Alliance Auction House
-#    Default 50
+#    Default 100
 #
 #    AuctionHouseBot.Horde.Price.Ratio
 #        Define the price of selled item here for the Horde Auction House
-#    Default 50
+#    Default 100
 #
 #    AuctionHouseBot.Alliance.Price.Ratio
 #        Define the price of selled item here for the Neutral Auction House
-#    Default 50
+#    Default 100
 #
 #    AuctionHouseBot.Items.ItemLevel.*
 #        Prevent seller from listing items below/above this item level
@@ -137,9 +137,9 @@ AuctionHouseBot.ItemsPerCycle.Boost = 1000
 AuctionHouseBot.ItemsPerCycle.Normal = 20
 AuctionHouseBot.BuyPrice.Seller = 1
 AuctionHouseBot.BuyPrice.Buyer = 0
-AuctionHouseBot.Alliance.Price.Ratio = 50
-AuctionHouseBot.Horde.Price.Ratio = 50
-AuctionHouseBot.Neutral.Price.Ratio = 50
+AuctionHouseBot.Alliance.Price.Ratio = 200
+AuctionHouseBot.Horde.Price.Ratio = 200
+AuctionHouseBot.Neutral.Price.Ratio = 200
 
 AuctionHouseBot.Items.ItemLevel.Min = 0
 AuctionHouseBot.Items.ItemLevel.Max = 0
