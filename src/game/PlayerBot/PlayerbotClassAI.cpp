@@ -23,7 +23,6 @@ PlayerbotClassAI::PlayerbotClassAI(Player* const bot, PlayerbotAI* const ai): m_
 PlayerbotClassAI::~PlayerbotClassAI() {}
 
 void PlayerbotClassAI::InitSpells(PlayerbotAI* const ai) {}
-
-bool PlayerbotClassAI::DoFirstCombatManeuver(Unit *) { return false; }
-bool PlayerbotClassAI::DoNextCombatManeuver(Unit *) { return false; }
-bool PlayerbotClassAI::DoNonCombatActions() { return false; }
+bool PlayerbotClassAI::DoFirstCombatManeuver(Unit *) {return false;}
+void PlayerbotClassAI::DoNextCombatManeuver(Unit *) {}
+void PlayerbotClassAI::DoNonCombatActions() {}

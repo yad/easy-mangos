@@ -468,7 +468,7 @@ void WorldSession::HandlePetSpellAutocastOpcode( WorldPacket& recvPacket )
                 if (Pet* _pet = _player->GetMap()->GetPet(*itr))
                     _pet->ToggleAutocast(spellid, state);
         }
-        else 
+        else
             ((Pet*)pet)->ToggleAutocast(spellid, state);
     }
 
@@ -524,7 +524,7 @@ void WorldSession::HandlePetCastSpellOpcode( WorldPacket& recvPacket )
             if (Pet* _pet = _player->GetMap()->GetPet(*itr))
                _pet->DoPetCastSpell( GetPlayer(), cast_count, targets, spellInfo );
     }
-    else 
+    else
         pet->DoPetCastSpell( GetPlayer(), cast_count, targets, spellInfo );
 }
 

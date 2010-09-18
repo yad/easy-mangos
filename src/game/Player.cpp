@@ -60,10 +60,8 @@
 #include "SocialMgr.h"
 #include "AchievementMgr.h"
 #include "Mail.h"
-
-// Playerbot mod:
-#include "PlayerbotAI.h"
-#include "PlayerbotMgr.h"
+#include "PlayerBot/PlayerbotAI.h"
+#include "PlayerBot/PlayerbotMgr.h"
 
 #include <cmath>
 
@@ -3376,7 +3374,7 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
     // Playerbot mod: if this user has bots, tell them to stop following master
     // so they don't try to follow the master after the master teleports
     if (GetPlayerbotMgr())
-        GetPlayerbotMgr()->Stay(this);
+        GetPlayerbotMgr()->Stay();
 
     MapEntry const* mEntry = sMapStore.LookupEntry(mapid);
 
@@ -8122,7 +8120,7 @@ void Player::RewardReputation(Unit *pVictim, float rate)
      uint32 Repfaction1 = Rep->repfaction1;
      uint32 Repfaction2 = Rep->repfaction2;
      uint32 tabardFactionID = 0;
-     
+
      // Championning tabard reputation system
      // aura 57818 is a hidden aura common to northrend tabards allowing championning.
      if(HasAura(57818))
@@ -8133,10 +8131,10 @@ void Player::RewardReputation(Unit *pVictim, float rate)
          // only for expansion 2 map (wotlk), and : min level >= lv75 or dungeon only heroic mod
          // entering a lv80 designed instance require a min level>=75. note : min level != suggested level
          if ( StoredMap->Expansion() == 2 && ( mInstance->levelMin >= 75 || pVictim->GetMap()->GetDifficulty() == DUNGEON_DIFFICULTY_HEROIC ) )
-         {             
+         {
              if( Item* pItem = GetItemByPos( INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_TABARD ) )
-             {                 
-                 if ( tabardFactionID = pItem->GetProto()->RequiredReputationFaction ) 
+             {
+                 if ( tabardFactionID = pItem->GetProto()->RequiredReputationFaction )
                  {
                       Repfaction1 = tabardFactionID;
                       Repfaction2 = tabardFactionID;

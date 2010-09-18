@@ -29,7 +29,7 @@
 #include "SocialMgr.h"
 #include "Util.h"
 #include "Vehicle.h"
-#include "PlayerbotMgr.h"
+#include "PlayerBot/PlayerbotMgr.h"
 
 /* differeces from off:
     -you can uninvite yourself - is is useful
@@ -349,7 +349,7 @@ void WorldSession::HandleGroupDisbandOpcode( WorldPacket & /*recv_data*/ )
     /** error handling **/
     /********************/
 
-    PlayerbotMgr::RemoveAllBotsInGroup(GetPlayer());
+    PlayerbotMgr::RemoveAllBotsFromGroup(GetPlayer());
 
     if(!GetPlayer()->GetGroup())
         return;

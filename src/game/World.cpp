@@ -62,7 +62,7 @@
 #include "Util.h"
 #include "AuctionHouseBot/AuctionHouseBot.h"
 #include "CharacterDatabaseCleaner.h"
-#include "PlayerbotMgr.h"
+#include "PlayerBot/PlayerbotMgr.h"
 
 INSTANTIATE_SINGLETON_1( World );
 

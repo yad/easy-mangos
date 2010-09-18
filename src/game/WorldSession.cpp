@@ -38,10 +38,8 @@
 #include "Auth/AuthCrypt.h"
 #include "Auth/HMACSHA1.h"
 #include "zlib/zlib.h"
-
-// Playerbot mod
-#include "PlayerbotMgr.h"
-#include "PlayerbotAI.h"
+#include "PlayerBot/PlayerbotMgr.h"
+#include "PlayerBot/PlayerbotAI.h"
 
 /// WorldSession constructor
 WorldSession::WorldSession(uint32 id, WorldSocket *sock, AccountTypes sec, uint8 expansion, time_t mute_time, LocaleConstant locale) :
@@ -367,7 +365,7 @@ void WorldSession::LogoutPlayer(bool Save)
     if (_player)
     {
         if (!IsBotSession() && _player->GetGroup())
-            PlayerbotMgr::RemoveAllBotsInGroup(_player);
+            PlayerbotMgr::RemoveAllBotsFromGroup(_player);
 
         sLog.outChar("Account: %d (IP: %s) Logout Character:[%s] (guid: %u)", GetAccountId(), GetRemoteAddress().c_str(), _player->GetName() ,_player->GetGUIDLow());
 

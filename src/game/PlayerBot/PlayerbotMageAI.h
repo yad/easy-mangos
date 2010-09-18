@@ -86,38 +86,92 @@ enum MageSpells
     SPELLSTEAL_1                    = 30449,
     SUMMON_WATER_ELEMENTAL_1        = 31687
 };
+//class Player;
 
 class MANGOS_DLL_SPEC PlayerbotMageAI : PlayerbotClassAI
 {
-    public:
-        PlayerbotMageAI(Player* const bot, PlayerbotAI* const ai);
-        virtual ~PlayerbotMageAI();
-        void InitSpells(PlayerbotAI* const ai);
+public:
+    PlayerbotMageAI(Player* const bot, PlayerbotAI* const ai);
+    virtual ~PlayerbotMageAI();
 
-        bool DoNextCombatManeuver(Unit*);
-        bool DoNonCombatActions();
-        bool BuffPlayer(Player *target);
+private:
+    void InitSpells(PlayerbotAI* const ai);
+    void DoNextCombatManeuver(Unit*);
+    void DoNonCombatActions();
+    bool HealTarget(Unit* target, uint8 hp);
 
-    protected:
-        // ARCANE
-        uint32 ARCANE_MISSILES, ARCANE_EXPLOSION, COUNTERSPELL, SLOW, ARCANE_BARRAGE, ARCANE_BLAST, MIRROR_IMAGE, ARCANE_POWER;
+protected:
+    // ARCANE
+    uint32 ARCANE_MISSILES,
+           ARCANE_EXPLOSION,
+           COUNTERSPELL,
+           SLOW,
+           ARCANE_BARRAGE,
+           ARCANE_BLAST,
+           MIRROR_IMAGE,
+           ARCANE_POWER;
 
-        // FIRE
-        uint32 FIREBALL, FIRE_BLAST, FLAMESTRIKE, SCORCH, PYROBLAST, BLAST_WAVE, COMBUSTION, DRAGONS_BREATH, LIVING_BOMB, FROSTFIRE_BOLT, FIRE_WARD;
+    // FIRE
+    uint32 FIREBALL,
+           FIRE_BLAST,
+           FLAMESTRIKE,
+           SCORCH,
+           PYROBLAST,
+           BLAST_WAVE,
+           COMBUSTION,
+           DRAGONS_BREATH,
+           LIVING_BOMB,
+           FROSTFIRE_BOLT,
+           FIRE_WARD;
 
-        // FROST
-        uint32 DEEP_FREEZE, FROSTBOLT, FROST_NOVA, BLIZZARD, ICY_VEINS, CONE_OF_COLD, ICE_BARRIER, SUMMON_WATER_ELEMENTAL, ICE_LANCE, FROST_WARD, ICE_BLOCK, COLD_SNAP;
+    // FROST
+    uint32 DEEP_FREEZE,
+           FROSTBOLT,
+           FROST_NOVA,
+           BLIZZARD,
+           ICY_VEINS,
+           CONE_OF_COLD,
+           ICE_BARRIER,
+           SUMMON_WATER_ELEMENTAL,
+           ICE_LANCE,
+           FROST_WARD,
+           ICE_BLOCK,
+           COLD_SNAP;
 
-        // buffs
-        uint32 FROST_ARMOR, ICE_ARMOR, MAGE_ARMOR, MOLTEN_ARMOR, ARCANE_INTELLECT, ARCANE_BRILLIANCE, DALARAN_INTELLECT, DALARAN_BRILLIANCE, MANA_SHIELD, DAMPEN_MAGIC, AMPLIFY_MAGIC;
+    // buffs
+    uint32 FROST_ARMOR,
+           ICE_ARMOR,
+           MAGE_ARMOR,
+           MOLTEN_ARMOR,
+           ARCANE_INTELLECT,
+           ARCANE_BRILLIANCE,
+           DALARAN_INTELLECT,
+           DALARAN_BRILLIANCE,
+           MANA_SHIELD,
+           DAMPEN_MAGIC,
+           AMPLIFY_MAGIC,
+           CONJURE_WATER,
+           CONJURE_FOOD;
 
-        // first aid
-        uint32 RECENTLY_BANDAGED;
+    // first aid
+    uint32 RECENTLY_BANDAGED;
 
-        // racial
-        uint32 ARCANE_TORRENT, GIFT_OF_THE_NAARU, STONEFORM, ESCAPE_ARTIST, EVERY_MAN_FOR_HIMSELF, SHADOWMELD, BLOOD_FURY, WAR_STOMP, BERSERKING, WILL_OF_THE_FORSAKEN;
+    // racial
+    uint32 ARCANE_TORRENT,
+           GIFT_OF_THE_NAARU,
+           STONEFORM,
+           ESCAPE_ARTIST,
+           EVERY_MAN_FOR_HIMSELF,
+           SHADOWMELD,
+           BLOOD_FURY,
+           WAR_STOMP,
+           BERSERKING,
+           WILL_OF_THE_FORSAKEN;
 
-        uint32 SpellSequence, LastSpellArcane, LastSpellFire, LastSpellFrost, CONJURE_WATER, CONJURE_FOOD;
+    uint32 SpellSequence,
+           LastSpellArcane,
+           LastSpellFire,
+           LastSpellFrost;
 };
 
 #endif

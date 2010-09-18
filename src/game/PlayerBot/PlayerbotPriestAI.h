@@ -88,79 +88,83 @@ enum PriestSpells
     VAMPIRIC_EMBRACE_1              = 15286,
     VAMPIRIC_TOUCH_1                = 34914
 };
+//class Player;
 
 class MANGOS_DLL_SPEC PlayerbotPriestAI : PlayerbotClassAI
 {
-    public:
-        PlayerbotPriestAI(Player* const bot, PlayerbotAI* const ai);
-        virtual ~PlayerbotPriestAI();
-        void InitSpells(PlayerbotAI* const ai);
+public:
+    PlayerbotPriestAI(Player* const bot, PlayerbotAI* const ai);
+    virtual ~PlayerbotPriestAI();
 
-        bool DoNextCombatManeuver(Unit*);
-        bool DoNonCombatActions();
-        bool BuffPlayer(Player *target);
-        bool HealTarget(Unit& target, uint8 hp);
+private:
+    void InitSpells(PlayerbotAI* const ai);
+    void DoNextCombatManeuver(Unit*);
+    void DoNonCombatActions();
+    bool HealTarget(Unit* target, uint8 hp);
 
-    protected:
-        // holy
-        uint32 BINDING_HEAL,
-               CIRCLE_OF_HEALING,
-               CLEARCASTING,
-               DESPERATE_PRAYER,
-               FLASH_HEAL,
-               GREATER_HEAL,
-               HEAL,
-               HOLY_FIRE,
-               HOLY_NOVA,
-               LESSER_HEAL,
-               MANA_BURN,
-               PRAYER_OF_HEALING,
-               PRAYER_OF_MENDING,
-               RENEW,
-               RESURRECTION,
-               SMITE;
+protected:
+    // holy
+    uint32 BINDING_HEAL,
+           CIRCLE_OF_HEALING,
+           CLEARCASTING,
+           DESPERATE_PRAYER,
+           FLASH_HEAL,
+           GREATER_HEAL,
+           HEAL,
+           HOLY_FIRE,
+           HOLY_NOVA,
+           LESSER_HEAL,
+           MANA_BURN,
+           PRAYER_OF_HEALING,
+           PRAYER_OF_MENDING,
+           RENEW,
+           RESURRECTION,
+           SMITE;
 
-        // shadowmagic
-        uint32 FADE,
-               SHADOW_WORD_PAIN,
-               MIND_BLAST,
-               SCREAM,
-               MIND_FLAY,
-               DEVOURING_PLAGUE,
-               SHADOW_PROTECTION,
-               VAMPIRIC_TOUCH,
-               PRAYER_OF_SHADOW_PROTECTION,
-               SHADOWFIEND,
-               MIND_SEAR;
+    // shadowmagic
+    uint32 FADE,
+           SHADOW_WORD_PAIN,
+           MIND_BLAST,
+           SCREAM,
+           MIND_FLAY,
+           DEVOURING_PLAGUE,
+           SHADOW_PROTECTION,
+           VAMPIRIC_TOUCH,
+           PRAYER_OF_SHADOW_PROTECTION,
+           SHADOWFIEND,
+           MIND_SEAR;
 
-        // discipline
-        uint32 POWER_WORD_SHIELD,
-               INNER_FIRE,
-               POWER_WORD_FORTITUDE,
-               PRAYER_OF_FORTITUDE,
-               FEAR_WARD,
-               POWER_INFUSION,
-               MASS_DISPEL,
-               PENANCE,
-               DIVINE_SPIRIT,
-               PRAYER_OF_SPIRIT,
-               INNER_FOCUS;
+    // discipline
+    uint32 POWER_WORD_SHIELD,
+           INNER_FIRE,
+           POWER_WORD_FORTITUDE,
+           PRAYER_OF_FORTITUDE,
+           FEAR_WARD,
+           POWER_INFUSION,
+           MASS_DISPEL,
+           PENANCE,
+           DIVINE_SPIRIT,
+           PRAYER_OF_SPIRIT,
+           INNER_FOCUS;
 
-        // first aid
-        uint32 RECENTLY_BANDAGED;
+    // first aid
+    uint32 RECENTLY_BANDAGED;
 
-        // racial
-        uint32 ARCANE_TORRENT,
-               GIFT_OF_THE_NAARU,
-               STONEFORM,
-               ESCAPE_ARTIST,
-               EVERY_MAN_FOR_HIMSELF,
-               SHADOWMELD,
-               WAR_STOMP,
-               BERSERKING,
-               WILL_OF_THE_FORSAKEN;
+    // racial
+    uint32 ARCANE_TORRENT,
+           GIFT_OF_THE_NAARU,
+           STONEFORM,
+           ESCAPE_ARTIST,
+           EVERY_MAN_FOR_HIMSELF,
+           SHADOWMELD,
+           WAR_STOMP,
+           BERSERKING,
+           WILL_OF_THE_FORSAKEN;
 
-        uint32 SpellSequence, LastSpellHoly, LastSpellShadowMagic, LastSpellDiscipline;
+    uint32 SpellSequence,
+           LastSpellHoly,
+           LastSpellShadowMagic,
+           LastSpellDiscipline;
 };
 
 #endif

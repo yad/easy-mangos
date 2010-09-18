@@ -995,7 +995,7 @@ void Pet::UpdateMaxHealth()
 
 void Pet::UpdateMaxPower(Powers power)
 {
-    if (!CanModifyStats()) 
+    if (!CanModifyStats())
         return;
 
     UnitMods unitMod = UnitMods(UNIT_MOD_POWER_START + power);

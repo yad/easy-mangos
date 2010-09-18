@@ -77,34 +77,92 @@ enum DeathKnightSpells
     UNHOLY_PRESENCE_1               = 48265,
     VAMPIRIC_BLOOD_1                = 55233
 };
+//class Player;
 
 class MANGOS_DLL_SPEC PlayerbotDeathKnightAI : PlayerbotClassAI
 {
-    public:
-        PlayerbotDeathKnightAI(Player* const bot, PlayerbotAI* const ai);
-        virtual ~PlayerbotDeathKnightAI();
-        void InitSpells(PlayerbotAI* const ai);
+public:
+    PlayerbotDeathKnightAI(Player* const bot, PlayerbotAI* const ai);
+    virtual ~PlayerbotDeathKnightAI();
 
-        bool DoNextCombatManeuver(Unit*);
-        bool DoNonCombatActions();
+private:
+    void InitSpells(PlayerbotAI* const ai);
+    void DoNextCombatManeuver(Unit*);
+    void DoNonCombatActions();
+    bool HealTarget(Unit* target, uint8 hp);
 
-    protected:
-        // Unholy
-        uint32 BONE_SHIELD, PLAGUE_STRIKE, DEATH_GRIP, DEATH_COIL, DEATH_STRIKE, UNHOLY_BLIGHT, SCOURGE_STRIKE, DEATH_AND_DECAY, UNHOLY_PRESENCE, RAISE_DEAD, ARMY_OF_THE_DEAD, SUMMON_GARGOYLE, ANTI_MAGIC_SHELL, ANTI_MAGIC_ZONE, GHOUL_FRENZY, CORPSE_EXPLOSION;
+protected:
+    // Unholy
+    uint32 BONE_SHIELD,
+           PLAGUE_STRIKE,
+           DEATH_GRIP,
+           DEATH_COIL,
+           DEATH_STRIKE,
+           UNHOLY_BLIGHT,
+           SCOURGE_STRIKE,
+           DEATH_AND_DECAY,
+           UNHOLY_PRESENCE,
+           RAISE_DEAD,
+           ARMY_OF_THE_DEAD,
+           SUMMON_GARGOYLE,
+           ANTI_MAGIC_SHELL,
+           ANTI_MAGIC_ZONE,
+           GHOUL_FRENZY,
+           CORPSE_EXPLOSION;
 
-        // Frost
-        uint32 ICY_TOUCH, OBLITERATE, HOWLING_BLAST, FROST_STRIKE, CHAINS_OF_ICE, RUNE_STRIKE, ICY_CLUTCH, HORN_OF_WINTER, KILLING_MACHINE, FROST_PRESENCE, DEATHCHILL, ICEBOUND_FORTITUDE, MIND_FREEZE, EMPOWER_WEAPON, HUNGERING_COLD, UNBREAKABLE_ARMOR;
+    // Frost
+    uint32 ICY_TOUCH,
+           OBLITERATE,
+           HOWLING_BLAST,
+           FROST_STRIKE,
+           CHAINS_OF_ICE,
+           RUNE_STRIKE,
+           ICY_CLUTCH,
+           HORN_OF_WINTER,
+           KILLING_MACHINE,
+           FROST_PRESENCE,
+           DEATHCHILL,
+           ICEBOUND_FORTITUDE,
+           MIND_FREEZE,
+           EMPOWER_WEAPON,
+           HUNGERING_COLD,
+           UNBREAKABLE_ARMOR;
 
-        // Blood
-        uint32 BLOOD_STRIKE, PESTILENCE, STRANGULATE, BLOOD_BOIL, HEART_STRIKE, MARK_OF_BLOOD, BLOOD_PRESENCE, RUNE_TAP, VAMPIRIC_BLOOD, DEATH_PACT, DEATH_RUNE_MASTERY, HYSTERIA, DANCING_WEAPON, DARK_COMMAND;
+    // Blood
+    uint32 BLOOD_STRIKE,
+           PESTILENCE,
+           STRANGULATE,
+           BLOOD_BOIL,
+           HEART_STRIKE,
+           MARK_OF_BLOOD,
+           BLOOD_PRESENCE,
+           RUNE_TAP,
+           VAMPIRIC_BLOOD,
+           DEATH_PACT,
+           DEATH_RUNE_MASTERY,
+           HYSTERIA,
+           DANCING_WEAPON,
+           DARK_COMMAND;
 
-        // first aid
-        uint32 RECENTLY_BANDAGED;
+    // first aid
+    uint32 RECENTLY_BANDAGED;
 
-        // racial
-        uint32 ARCANE_TORRENT, GIFT_OF_THE_NAARU, STONEFORM, ESCAPE_ARTIST, EVERY_MAN_FOR_HIMSELF, SHADOWMELD, BLOOD_FURY, WAR_STOMP, BERSERKING, WILL_OF_THE_FORSAKEN;
+    // racial
+    uint32 ARCANE_TORRENT,
+           GIFT_OF_THE_NAARU,
+           STONEFORM,
+           ESCAPE_ARTIST,
+           EVERY_MAN_FOR_HIMSELF,
+           SHADOWMELD,
+           BLOOD_FURY,
+           WAR_STOMP,
+           BERSERKING,
+           WILL_OF_THE_FORSAKEN;
 
-        uint32 SpellSequence, LastSpellUnholyDK, LastSpellFrostDK, LastSpellBloodDK;
+    uint32 SpellSequence,
+           LastSpellUnholyDK,
+           LastSpellFrostDK,
+           LastSpellBloodDK;
 };
 
 #endif

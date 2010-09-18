@@ -38,9 +38,7 @@
 #include "Util.h"
 #include "ArenaTeam.h"
 #include "Language.h"
-
-// Playerbot mod:
-#include "PlayerbotMgr.h"
+#include "PlayerBot/PlayerbotMgr.h"
 
 // config option SkipCinematics supported values
 enum CinematicsSkipMode
@@ -597,7 +595,7 @@ void WorldSession::HandlePlayerLoginOpcode( WorldPacket & recv_data )
 
 // Playerbot mod. Can't easily reuse HandlePlayerLoginOpcode for logging in bots because it assumes
 // a WorldSession exists for the bot. The WorldSession for a bot is created after the character is loaded.
-void PlayerbotMgr::AddPlayerBot(uint64 playerGuid, uint8 fclass)
+void PlayerbotMgr::AddPlayerBot(uint64 playerGuid)
 {
     // has bot already been added?
     if (sObjectMgr.GetPlayer(playerGuid))
@@ -607,7 +605,7 @@ void PlayerbotMgr::AddPlayerBot(uint64 playerGuid, uint8 fclass)
     if (accountId == 0)
         return;
 
-    CharacterDatabase.DirectPExecute("UPDATE characters SET class = %u WHERE guid = %u", fclass, playerGuid);
+    //CharacterDatabase.DirectPExecute("UPDATE characters SET class = %u WHERE guid = %u", fclass, playerGuid);
     LoginQueryHolder *holder = new LoginQueryHolder(accountId, playerGuid);
     if(!holder->Initialize())
     {

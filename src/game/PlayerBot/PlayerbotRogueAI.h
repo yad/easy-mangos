@@ -29,6 +29,13 @@ enum
     RogueSpeStealth
 };
 
+enum RoguePoisonDisplayId
+{
+    DEADLY_POISON_DISPLAYID  = 13707,
+    INSTANT_POISON_DISPLAYID = 13710,
+    WOUND_POISON_DISPLAYID   = 37278
+};
+
 enum RogueSpells
 {
     ADRENALINE_RUSH_1               = 13750,
@@ -75,36 +82,84 @@ enum RogueSpells
     TRICKS_OF_THE_TRADE_1           = 57934,
     VANISH_1                        = 1856
 };
+//class Player;
 
 class MANGOS_DLL_SPEC PlayerbotRogueAI : PlayerbotClassAI
 {
-    public:
-        PlayerbotRogueAI(Player* const bot, PlayerbotAI* const ai);
-        virtual ~PlayerbotRogueAI();
-        void InitSpells(PlayerbotAI* const ai);
+public:
+    PlayerbotRogueAI(Player* const bot, PlayerbotAI* const ai);
+    virtual ~PlayerbotRogueAI();
 
-        bool DoFirstCombatManeuver(Unit*);
-        bool DoNextCombatManeuver(Unit*);
-        bool DoNonCombatActions();
-        bool BuffPlayer(Player *target);
+private:
+    void InitSpells(PlayerbotAI* const ai);
+    bool DoFirstCombatManeuver(Unit*);
+    void DoNextCombatManeuver(Unit*);
+    void DoNonCombatActions();
+    bool HealTarget(Unit* target, uint8 hp);
 
-    protected:
-        // COMBAT
-        uint32 SINISTER_STRIKE, BACKSTAB, GOUGE, EVASION, SPRINT, KICK, FEINT, SHIV, FAN_OF_KNIVES;
+protected:
+    // COMBAT
+    uint32 SINISTER_STRIKE,
+           BACKSTAB,
+           GOUGE,
+           EVASION,
+           SPRINT,
+           KICK,
+           FEINT,
+           SHIV,
+           FAN_OF_KNIVES;
 
-        // SUBTLETY
-        uint32 SHADOWSTEP, STEALTH, VANISH, HEMORRHAGE, BLIND, SHADOW_DANCE, CLOAK_OF_SHADOWS, TRICK_TRADE, CRIPPLING_POISON, DEADLY_POISON, MIND_NUMBING_POISON, GHOSTLY_STRIKE, DISTRACT, PREPARATION, PREMEDITATION;
+    // SUBTLETY
+    uint32 SHADOWSTEP,
+           STEALTH,
+           VANISH,
+           HEMORRHAGE,
+           BLIND,
+           SHADOW_DANCE,
+           CLOAK_OF_SHADOWS,
+           TRICK_TRADE,
+           CRIPPLING_POISON,
+           DEADLY_POISON,
+           MIND_NUMBING_POISON,
+           GHOSTLY_STRIKE,
+           DISTRACT,
+           PREPARATION,
+           PREMEDITATION;
 
-        // ASSASSINATION
-        uint32 EVISCERATE, SLICE_DICE, GARROTE, EXPOSE_ARMOR, AMBUSH, RUPTURE, DISMANTLE, CHEAP_SHOT, KIDNEY_SHOT, MUTILATE, ENVENOM, DEADLY_THROW;
+    // ASSASSINATION
+    uint32 EVISCERATE,
+           SLICE_DICE,
+           GARROTE,
+           EXPOSE_ARMOR,
+           AMBUSH,
+           RUPTURE,
+           DISMANTLE,
+           CHEAP_SHOT,
+           KIDNEY_SHOT,
+           MUTILATE,
+           ENVENOM,
+           DEADLY_THROW;
 
-        // first aid
-        uint32 RECENTLY_BANDAGED;
+    // first aid
+    uint32 RECENTLY_BANDAGED;
 
-        // racial
-        uint32 ARCANE_TORRENT, GIFT_OF_THE_NAARU, STONEFORM, ESCAPE_ARTIST, EVERY_MAN_FOR_HIMSELF, SHADOWMELD, BLOOD_FURY, WAR_STOMP, BERSERKING, WILL_OF_THE_FORSAKEN;
+    // racial
+    uint32 ARCANE_TORRENT,
+           GIFT_OF_THE_NAARU,
+           STONEFORM,
+           ESCAPE_ARTIST,
+           EVERY_MAN_FOR_HIMSELF,
+           SHADOWMELD,
+           BLOOD_FURY,
+           WAR_STOMP,
+           BERSERKING,
+           WILL_OF_THE_FORSAKEN;
 
-        uint32 SpellSequence, LastSpellCombat, LastSpellSubtlety, LastSpellAssassination, Aura;
+    uint32 SpellSequence,
+           LastSpellCombat,
+           LastSpellSubtlety,
+           LastSpellAssassination,
+           Aura;
 };
 
 #endif

@@ -20,13 +20,13 @@
 #define _PLAYERBOTCLASSAI_H
 
 #include "Common.h"
-#include "World.h"
-#include "SpellMgr.h"
-#include "Player.h"
-#include "ObjectMgr.h"
-#include "WorldPacket.h"
-#include "Unit.h"
-#include "SharedDefines.h"
+#include "../World.h"
+#include "../SpellMgr.h"
+#include "../Player.h"
+#include "../ObjectMgr.h"
+#include "../WorldPacket.h"
+#include "../Unit.h"
+#include "../SharedDefines.h"
 #include "PlayerbotAI.h"
 
 class Player;
@@ -34,21 +34,22 @@ class PlayerbotAI;
 
 class MANGOS_DLL_SPEC PlayerbotClassAI
 {
-    public:
-        PlayerbotClassAI(Player* const bot, PlayerbotAI* const ai);
-        virtual ~PlayerbotClassAI();
-        virtual void InitSpells(PlayerbotAI* const ai);
+public:
+    PlayerbotClassAI(Player * const bot, PlayerbotAI * const ai);
+    virtual ~PlayerbotClassAI();
 
-        virtual bool DoFirstCombatManeuver(Unit*);
-        virtual bool DoNextCombatManeuver(Unit*);
-        virtual bool DoNonCombatActions();
+    // Utilities
+    Player* GetPlayerBot() {return m_bot; }
+    PlayerbotAI* GetAI (){return m_ai; };
 
-        Player* GetPlayerBot() { return m_bot; }
-        PlayerbotAI* GetAI() { return m_ai; };
+    virtual bool DoFirstCombatManeuver(Unit*);
+    virtual void DoNextCombatManeuver(Unit*);
+    virtual void DoNonCombatActions();
+    virtual void InitSpells(PlayerbotAI* const ai);
 
-    private:
-        Player* m_bot;
-        PlayerbotAI* m_ai;
+protected:
+    Player* m_bot;
+    PlayerbotAI* m_ai;
 };
 
 #endif
