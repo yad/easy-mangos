@@ -111,7 +111,7 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner)
     // send the path if we have visited almost all of the previously
     // sent points, so that the monster never stops moving
     // also send the path if it is new
-    if (m_pathPointsSent < 3 || startIndex == 1)
+    if (m_pathPointsSent < 3 || startIndex == 1 || i_recalculateTravel)
     {
         // send 10 nodes, or send all nodes if there are less than 10 left
         m_pathPointsSent = std::min(uint32(10), uint32(pointPath.size() - startIndex));
@@ -204,7 +204,7 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
         return true;
     }
 
-    if (i_destinationHolder.UpdateTraveller(traveller, time_diff, false))
+    if (i_destinationHolder.UpdateTraveller(traveller, time_diff, i_recalculateTravel))
     {
         if (!IsActive(owner))                               // force stop processing (movement can move out active zone with cleanup movegens list)
             return true;                                    // not expire now, but already lost
@@ -235,7 +235,7 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
                 targetMoved = i_target->GetDistance2d(end_point.x, end_point.y) >= dist;
         }
 
-        if (!i_path || targetMoved || needNewDest)
+        if (!i_path || targetMoved || needNewDest || i_recalculateTravel)
         {
             // (re)calculate path
             _setTargetLocation(owner);

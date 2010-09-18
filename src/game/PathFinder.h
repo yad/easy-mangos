@@ -19,6 +19,7 @@
 #ifndef MANGOS_PATH_FINDER_H
 #define MANGOS_PATH_FINDER_H
 
+#include "Path.h"
 #include "../recastnavigation/Detour/Include/DetourNavMesh.h"
 #include "../recastnavigation/Detour/Include/DetourNavMeshQuery.h"
 
@@ -55,15 +56,6 @@ enum PathType
     PATHFIND_INCOMPLETE = 0x0008,   // path is too long, more will be calculated later
     PATHFIND_NOPATH     = 0x0010    // could not find a path
 };
-
-struct PathNode
-{
-    PathNode(): x(0.0f), y(0.0f), z(0.0f) { }
-    PathNode(float _x, float _y, float _z): x(_x), y(_y), z(_z) { }
-    float x, y, z;
-};
-
-typedef Path<PathNode> PointPath;
 
 class PathInfo
 {
