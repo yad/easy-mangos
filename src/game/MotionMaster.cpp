@@ -110,8 +110,10 @@ void MotionMaster::DirectClean(bool reset, bool all)
     {
         MovementGenerator *curr = top();
         pop();
+
         if (m_owner && m_owner->IsInWorld())
             curr->Finalize(*m_owner);
+
         if (!isStatic( curr ))
             delete curr;
     }
@@ -119,7 +121,9 @@ void MotionMaster::DirectClean(bool reset, bool all)
     if (!all && reset)
     {
         if (!empty())
+        {
             top()->Reset(*m_owner);
+        }
     }
 }
 
@@ -140,8 +144,10 @@ void MotionMaster::DelayedClean(bool reset, bool all)
     {
         MovementGenerator *curr = top();
         pop();
+
         if (m_owner && m_owner->IsInWorld())
             curr->Finalize(*m_owner);
+
         if (!isStatic( curr ))
             m_expList->push_back(curr);
     }
@@ -244,7 +250,7 @@ void MotionMaster::MoveTargetedHome()
         if (Unit *target = ((Creature*)m_owner)->GetCharmerOrOwner())
         {
             DEBUG_FILTER_LOG(LOG_FILTER_AI_AND_MOVEGENSS, "%s follow to %s", m_owner->GetObjectGuid().GetString().c_str(), target->GetObjectGuid().GetString().c_str());
-            Mutate(new FollowMovementGenerator<Creature>(*target,PET_FOLLOW_DIST,((Creature*)m_owner)->isPet() ? ((Pet*)m_owner)->GetPetFollowAngle() : PET_DEFAULT_FOLLOW_ANGLE));
+            Mutate(new FollowMovementGenerator<Creature>(*target,PET_FOLLOW_DIST,PET_FOLLOW_ANGLE));
         }
         else
         {

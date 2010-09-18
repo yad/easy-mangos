@@ -18,6 +18,7 @@
 
 #include "Unit.h"
 #include "Player.h"
+#include "ObjectMgr.h"
 #include "Pet.h"
 #include "Creature.h"
 #include "SharedDefines.h"
@@ -46,7 +47,7 @@ bool Player::UpdateStats(Stats stat)
         {
             for (GroupPetList::const_iterator itr = m_groupPets.begin(); itr != m_groupPets.end(); ++itr)
                 if (Pet* _pet = GetMap()->GetPet(*itr))
-                    _pet->UpdateStats(stat);
+                    _pet->ApplyStatScalingBonus(stat, false);
         }
     }
 
@@ -103,6 +104,20 @@ void Player::ApplySpellPowerBonus(int32 amount, bool apply)
     ApplyModUInt32Value(PLAYER_FIELD_MOD_HEALING_DONE_POS, amount, apply);
     for(int i = SPELL_SCHOOL_HOLY; i < MAX_SPELL_SCHOOL; ++i)
         ApplyModUInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_POS+i, amount, apply);;
+
+    if(Pet* pet = GetPet())
+    {
+        GroupPetList m_groupPets = GetPets();
+        if (!m_groupPets.empty())
+        {
+            for (GroupPetList::const_iterator itr = m_groupPets.begin(); itr != m_groupPets.end(); ++itr)
+                if (Pet* _pet = GetMap()->GetPet(*itr))
+                {
+                    _pet->ApplyAttackPowerScalingBonus(false);
+                    _pet->ApplyDamageScalingBonus(false);
+                }
+        }
+    }
 }
 
 void Player::UpdateSpellDamageAndHealingBonus()
@@ -122,7 +137,7 @@ void Player::UpdateSpellDamageAndHealingBonus()
         {
             for (GroupPetList::const_iterator itr = m_groupPets.begin(); itr != m_groupPets.end(); ++itr)
                 if (Pet* _pet = GetMap()->GetPet(*itr))
-                    _pet->UpdateAttackPowerAndDamage();
+                    _pet->ApplyAttackPowerScalingBonus(false);
         }
     }
 
@@ -166,19 +181,21 @@ void Player::UpdateResistances(uint32 school)
     {
         float value  = GetTotalAuraModValue(UnitMods(UNIT_MOD_RESISTANCE_START + school));
         SetResistance(SpellSchools(school), int32(value));
-        if(Pet* pet = GetPet())
-        {
-            GroupPetList m_groupPets = GetPets();
-            if  (!m_groupPets.empty())
-            {
-                for (GroupPetList::const_iterator itr = m_groupPets.begin(); itr != m_groupPets.end(); ++itr)
-                    if (Pet* _pet = GetMap()->GetPet(*itr))
-                        _pet->UpdateResistances(school);
-            }
-        }
     }
     else
         UpdateArmor();
+
+    if(Pet* pet = GetPet())
+    {
+        GroupPetList m_groupPets = GetPets();
+        if  (!m_groupPets.empty())
+        {
+            for (GroupPetList::const_iterator itr = m_groupPets.begin(); itr != m_groupPets.end(); ++itr)
+                if (Pet* _pet = GetMap()->GetPet(*itr))
+                    _pet->ApplyResistanceScalingBonus(SpellSchools(school),false);
+        }
+    }
+
 }
 
 void Player::UpdateArmor()
@@ -204,17 +221,16 @@ void Player::UpdateArmor()
 
     SetArmor(int32(value));
 
-        if(Pet* pet = GetPet())
+    if(Pet* pet = GetPet())
+    {
+        GroupPetList m_groupPets = GetPets();
+        if  (!m_groupPets.empty())
         {
-            GroupPetList m_groupPets = GetPets();
-            if  (!m_groupPets.empty())
-            {
-                for (GroupPetList::const_iterator itr = m_groupPets.begin(); itr != m_groupPets.end(); ++itr)
-                    if (Pet* _pet = GetMap()->GetPet(*itr))
-                        _pet->UpdateArmor();
-            }
+            for (GroupPetList::const_iterator itr = m_groupPets.begin(); itr != m_groupPets.end(); ++itr)
+                if (Pet* _pet = GetMap()->GetPet(*itr))
+                    _pet->ApplyResistanceScalingBonus(SPELL_SCHOOL_NORMAL,false);
         }
-
+    }
     UpdateAttackPowerAndDamage();                           // armor dependent auras update for SPELL_AURA_MOD_ATTACK_POWER_OF_ARMOR
 }
 
@@ -424,7 +440,10 @@ void Player::UpdateAttackPowerAndDamage(bool ranged )
         {
             for (GroupPetList::const_iterator itr = m_groupPets.begin(); itr != m_groupPets.end(); ++itr)
                 if (Pet* _pet = GetMap()->GetPet(*itr))
-                    _pet->UpdateAttackPowerAndDamage();
+                {
+                    _pet->ApplyAttackPowerScalingBonus(false);
+                    _pet->ApplyDamageScalingBonus(false);
+                }
         }
     }
 
@@ -906,20 +925,23 @@ bool Pet::UpdateStats(Stats stat)
     if(stat > STAT_SPIRIT || stat < STAT_STRENGTH )
         return false;
 
-    ApplyStatBonus(stat, true);
-
     // value = ((create_value + base_value * base_pct) + total_value) * total_pct
     float value  = GetTotalStatValue(stat);
     SetStat(stat, int32(value));
 
     switch(stat)
     {
-        case STAT_STRENGTH:         UpdateAttackPowerAndDamage();        break;
+        case STAT_STRENGTH:
+            UpdateAttackPowerAndDamage();
+            break;
         case STAT_AGILITY:
 //            UpdateAllCritPercentages();
+            UpdateAttackPowerAndDamage(true);
             UpdateArmor();
             break;
-        case STAT_STAMINA:          UpdateMaxHealth();                   break;
+        case STAT_STAMINA:
+            UpdateMaxHealth();
+            break;
         case STAT_INTELLECT:
             UpdateMaxPower(POWER_MANA);
 //            UpdateAllSpellCritChances();
@@ -928,10 +950,6 @@ bool Pet::UpdateStats(Stats stat)
         default:
             break;
     }
-
-    // Need update (exist AP from stat auras)
-    UpdateAttackPowerAndDamage();
-    UpdateAttackPowerAndDamage(true);
     return true;
 }
 
@@ -946,13 +964,15 @@ bool Pet::UpdateAllStats()
     for (int i = SPELL_SCHOOL_NORMAL; i < MAX_SPELL_SCHOOL; ++i)
         UpdateResistances(i);
 
+    UpdateAttackPowerAndDamage();
+    UpdateAttackPowerAndDamage(true);
+    UpdateSpellPower();
+
     return true;
 }
 
 void Pet::UpdateResistances(uint32 school)
 {
-    ApplyResistanceBonus(school, true);
-
     if(school > SPELL_SCHOOL_NORMAL)
     {
         SetResistance(SpellSchools(school),
@@ -964,8 +984,6 @@ void Pet::UpdateResistances(uint32 school)
 
 void Pet::UpdateArmor()
 {
-    ApplyResistanceBonus(SPELL_SCHOOL_NORMAL, true);
-
     float value = 0.0f;
     UnitMods unitMod = UNIT_MOD_ARMOR;
 
@@ -983,9 +1001,9 @@ void Pet::UpdateMaxHealth()
         return;
 
     UnitMods unitMod = UNIT_MOD_HEALTH;
-    float stamina = GetStat(STAT_STAMINA) - GetCreateStat(STAT_STAMINA);
+    float staminaBonus = (GetStat(STAT_STAMINA) - GetCreateStat(STAT_STAMINA)) * (CalculateScalingData()->healthScale / 100.0f);
 
-    float value   = GetModifierValue(unitMod, BASE_VALUE) + GetCreateHealth() + stamina * 10.0f;
+    float value   = GetModifierValue(unitMod, BASE_VALUE) + GetCreateHealth() + staminaBonus;
     value  *= GetModifierValue(unitMod, BASE_PCT);
     value  += GetModifierValue(unitMod, TOTAL_VALUE);
     value  *= GetModifierValue(unitMod, TOTAL_PCT);
@@ -1000,9 +1018,9 @@ void Pet::UpdateMaxPower(Powers power)
 
     UnitMods unitMod = UnitMods(UNIT_MOD_POWER_START + power);
 
-    float intellectAdd = (power == POWER_MANA) ? GetStat(STAT_INTELLECT) - GetCreateStat(STAT_INTELLECT) : 0.0f;
+    float intellectBonus = (power == POWER_MANA) ? (GetStat(STAT_INTELLECT) - GetCreateStat(STAT_INTELLECT))*(CalculateScalingData()->powerScale / 100.0f) : 0.0f;
 
-    float value  = GetModifierValue(unitMod, BASE_VALUE) + GetCreatePowers(power) + intellectAdd * 15.0f;
+    float value  = GetModifierValue(unitMod, BASE_VALUE) + GetCreatePowers(power) + intellectBonus;
     value *= GetModifierValue(unitMod, BASE_PCT);
     value += GetModifierValue(unitMod, TOTAL_VALUE);
     value *= GetModifierValue(unitMod, TOTAL_PCT);
@@ -1012,27 +1030,28 @@ void Pet::UpdateMaxPower(Powers power)
 
 void Pet::UpdateAttackPowerAndDamage(bool ranged)
 {
-    ApplyAttackPowerBonus(true);
-
-    float baseAP       = 0.0f;
-
     UnitMods unitMod;
+    float baseAP       = 0.0f;
 
     if (!ranged)
     {
-       unitMod  = UNIT_MOD_ATTACK_POWER;
-    if(GetEntry() == 416)                                   // imp's attack power
-        baseAP = GetStat(STAT_STRENGTH) - 10.0f;
-    else
-        baseAP = 2 * GetStat(STAT_STRENGTH) - 20.0f;
+        unitMod  = UNIT_MOD_ATTACK_POWER;
+        baseAP = (CalculateScalingData()->APBaseScale / 100.0f) * (GetStat(STAT_STRENGTH) - CalculateScalingData()->APBasepoint);
     }
     else
     {
-       unitMod  = UNIT_MOD_ATTACK_POWER_RANGED;
+        unitMod  = UNIT_MOD_ATTACK_POWER_RANGED;
+        baseAP = (CalculateScalingData()->APBaseScale / 100.0f) * (GetStat(STAT_AGILITY) - CalculateScalingData()->APBasepoint);
     }
 
+
+    if ((baseAP) < 0.0f)
+        baseAP = 0.0f;
+
+    SetModifierValue(unitMod, BASE_VALUE, baseAP);
+
     //in BASE_VALUE of UNIT_MOD_ATTACK_POWER for creatures we store data of meleeattackpower field in DB
-    float base_attPower      = (GetModifierValue(unitMod, BASE_VALUE) + baseAP) * GetModifierValue(unitMod, BASE_PCT);
+    float base_attPower      = GetModifierValue(unitMod, BASE_VALUE) * GetModifierValue(unitMod, BASE_PCT);
     float attPowerMod        = GetModifierValue(unitMod, TOTAL_VALUE);
     float attPowerMultiplier = GetModifierValue(unitMod, TOTAL_PCT) - 1.0f;
 
@@ -1054,16 +1073,14 @@ void Pet::UpdateAttackPowerAndDamage(bool ranged)
 
 void Pet::UpdateDamagePhysical(WeaponAttackType attType)
 {
-    // Temporary not support for ranged attack
-    if(attType > BASE_ATTACK)
-        return;
-
     UnitMods unitMod;
 
     if (attType == BASE_ATTACK)
-       unitMod  = UNIT_MOD_DAMAGE_MAINHAND;
+        unitMod  = UNIT_MOD_DAMAGE_MAINHAND;
     else if (attType == RANGED_ATTACK)
        unitMod  = UNIT_MOD_DAMAGE_RANGED;
+    else
+        return;
 
     float att_speed = float(GetAttackTime(attType))/1000.0f;
 
@@ -1099,7 +1116,24 @@ void Pet::UpdateDamagePhysical(WeaponAttackType attType)
         }
     }
 
-    SetStatFloatValue(UNIT_FIELD_MINDAMAGE, mindamage);
-    SetStatFloatValue(UNIT_FIELD_MAXDAMAGE, maxdamage);
+    if (attType == BASE_ATTACK)
+    {
+        SetStatFloatValue(UNIT_FIELD_MINDAMAGE, mindamage);
+        SetStatFloatValue(UNIT_FIELD_MAXDAMAGE, maxdamage);
+    }
+    else if (attType == RANGED_ATTACK)
+    {
+        SetStatFloatValue(UNIT_FIELD_MINRANGEDDAMAGE, mindamage);
+        SetStatFloatValue(UNIT_FIELD_MAXRANGEDDAMAGE, maxdamage);
+    }
 }
 
+void Pet::UpdateSpellPower()
+{
+    Unit* owner = GetOwner();
+
+    if(!owner || owner->GetTypeId()!=TYPEID_PLAYER)
+        return;
+                                                  // Only for displaying in client!
+    owner->SetUInt32Value(PLAYER_PET_SPELL_POWER, SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_SPELL));
+}

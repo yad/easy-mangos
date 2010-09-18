@@ -392,7 +392,7 @@ class MANGOS_DLL_SPEC Aura
         time_t GetAuraApplyTime() const { return m_applyTime; }
         uint32 GetAuraTicks() const { return m_periodicTick; }
         uint32 GetAuraMaxTicks() const { return m_maxduration > 0 && m_modifier.periodictime > 0 ? m_maxduration / m_modifier.periodictime : 0; }
-        uint8 GetStackAmount() const { return GetHolder()->GetStackAmount(); }
+        uint32 GetStackAmount() const { return GetHolder()->GetStackAmount(); }
         void SetAuraPeriodicTimer (int32 timer) { m_periodicTimer = timer; }
 
         void SetLoadedState(int32 damage,int32 maxduration,int32 duration)
