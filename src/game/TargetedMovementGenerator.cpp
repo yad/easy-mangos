@@ -108,10 +108,12 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner, bool upd
     i_path->getNextPosition(x, y, z);
     i_destinationHolder.SetDestination(traveller, x, y, z, false);
 
-    // send the path if we have visited almost all of the previously
-    // sent points, so that the monster never stops moving
-    // also send the path if it is new
-    if (m_pathPointsSent < 3 || startIndex == 1 || i_recalculateTravel)
+    // send the path if:
+    //    we have visited almost all of the previously sent points
+    //    the path appears to be new
+    //    movespeed has changed
+    //    the owner is stopped
+    if (m_pathPointsSent < 2 || startIndex == 1 || i_recalculateTravel || owner.IsStopped())
     {
         // send 10 nodes, or send all nodes if there are less than 10 left
         m_pathPointsSent = std::min(uint32(10), pointPath.size() - startIndex);
@@ -194,17 +196,8 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
 
     if (!i_destinationHolder.HasDestination())
         _setTargetLocation(owner);
-    if (owner.IsStopped() && !i_destinationHolder.HasArrived())
-    {
-        D::_addUnitStateMove(owner);
-        if (owner.GetTypeId() == TYPEID_UNIT && ((Creature*)&owner)->canFly())
-            ((Creature&)owner).AddSplineFlag(SPLINEFLAG_UNKNOWN7);
 
-        i_destinationHolder.StartTravel(traveller);
-        return true;
-    }
-
-    if (i_destinationHolder.UpdateTraveller(traveller, time_diff, i_recalculateTravel))
+    if (i_destinationHolder.UpdateTraveller(traveller, time_diff, i_recalculateTravel || owner.IsStopped()))
     {
         if (!IsActive(owner))                               // force stop processing (movement can move out active zone with cleanup movegens list)
             return true;                                    // not expire now, but already lost
@@ -235,7 +228,7 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
                 targetMoved = i_target->GetDistance2d(end_point.x, end_point.y) >= dist;
         }
 
-        if (!i_path || targetMoved || needNewDest || i_recalculateTravel)
+        if (!i_path || targetMoved || needNewDest || i_recalculateTravel || owner.IsStopped())
         {
             // (re)calculate path
             _setTargetLocation(owner, targetMoved || needNewDest);
