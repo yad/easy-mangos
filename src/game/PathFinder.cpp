@@ -292,8 +292,7 @@ void PathInfo::BuildPath(dtPolyRef startPoly, float* startPos, dtPolyRef endPoly
 void PathInfo::Update(const float destX, const float destY, const float destZ)
 {
     // make sure navMesh works - we can run on map w/o mmap
-    // guard against target changing maps
-    if(!m_navMesh || m_navMesh != m_sourceObject->GetMap()->GetNavMesh())
+    if(!m_navMesh)
     {
         setEndPosition(PathNode(destX, destY, destZ));
         shortcut();
