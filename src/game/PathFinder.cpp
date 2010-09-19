@@ -299,10 +299,11 @@ void PathInfo::Update(const float destX, const float destY, const float destZ)
         return;
     }
 
-    if(!m_pathPolyRefs)
+    if(!m_pathPolyRefs && m_pathPoints.empty())
     {
-         // path was not built before, most likely because navmesh wasn't working
-         // start from scratch, then return
+        // path was not built before, most likely because we are on shortcut path
+        // start from scratch, then return
+        setEndPosition(PathNode(destX, destY, destZ));
         BuildFreshPath();
         return;
     }
