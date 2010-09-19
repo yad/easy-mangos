@@ -118,7 +118,6 @@ class PathInfo
         }
 
         dtPolyRef getPathPolyByPosition(float x, float y, float z);
-        bool isPointInPolyBounds(float x, float y, float z, float &distance, dtPolyRef polyRef);
 
         void BuildFreshPath();
         void BuildPath(dtPolyRef startPoly, float* startPos, dtPolyRef endPoly, float* endPos);

@@ -52,10 +52,9 @@ PathInfo::~PathInfo()
 dtPolyRef PathInfo::getPathPolyByPosition(float x, float y, float z)
 {
     if(!m_navMesh || !m_pathPolyRefs)
-        return 0;       // navmesh isn't loaded
+        return INVALID_POLYREF;
 
-    float distance;     // not used
-
+    float point[VERTEX_SIZE] = {y, z, x};
     for(uint32 i = 0; i < m_polyLength; ++i)
     {
         const dtMeshTile* tile;
@@ -66,48 +65,11 @@ dtPolyRef PathInfo::getPathPolyByPosition(float x, float y, float z)
         if(!tile)
             continue;   // tile isn't loaded, no information about target polygon
 
-        if(isPointInPolyBounds(x, y, z, distance, m_pathPolyRefs[i]))
+        if(dtPointInPolygon(point, tile->verts, poly->vertCount))
             return m_pathPolyRefs[i];   // point is inside this polygon
     }
 
-    return 0;   // point is not inside the path
-}
-
-bool PathInfo::isPointInPolyBounds(float x, float y, float z, float &distance, dtPolyRef polyRef)
-{
-    float point[VERTEX_SIZE] = {y, z, x};
-
-    const dtMeshTile* tile;
-    const dtPoly* poly;
-    if(!m_navMesh->getTileAndPolyByRef(polyRef, &tile, &poly))
-        return false;   // m_pathPolyRefs[i] is invalid
-
-    float vertices[DT_VERTS_PER_POLYGON*VERTEX_SIZE];
-    float ed[DT_VERTS_PER_POLYGON];             // distance^2 from edge to point
-    float et[DT_VERTS_PER_POLYGON];             // describes where on edge is nearest point
-
-    // Collect vertices.
-    uint32 nv = 0;
-    for (uint32 i = 0; i < poly->vertCount; ++i)
-    {
-        dtVcopy(&vertices[nv*VERTEX_SIZE], &tile->verts[poly->verts[i]*VERTEX_SIZE]);
-        nv++;
-    }
-
-    bool isInsidePoly = dtDistancePtPolyEdgesSqr(point, vertices, nv, ed, et);
-
-    if(!isInsidePoly)
-    {
-        // distance to nearest edge
-        distance = FLT_MAX;
-        for(uint32 i = 0; i < poly->vertCount; ++i)
-            if(ed[i] < distance)
-                distance = ed[i];
-    }
-    else
-        distance = 0.0f;
-
-    return isInsidePoly;
+    return INVALID_POLYREF;   // point is not inside the path
 }
 
 void PathInfo::BuildFreshPath()
