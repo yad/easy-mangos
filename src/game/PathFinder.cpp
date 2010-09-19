@@ -282,15 +282,12 @@ void PathInfo::BuildPath(dtPolyRef startPoly, float* startPos, dtPolyRef endPoly
         memcpy(m_pathPolyRefs, pathPolys, m_polyLength*sizeof(dtPolyRef));
     }
 
-    float dist;
-
-    if(m_pathPolyRefs[m_polyLength - 1] == endPoly &&
-       (isPointInPolyBounds(endPos[2], endPos[0], endPos[1], dist, endPoly) || dist < .001f))
+    if(m_pathPolyRefs[m_polyLength - 1] == endPoly)
         m_type = PATHFIND_NORMAL;
-    else if (m_polyLength >= MAX_PATH_LENGTH)
-        m_type = PATHFIND_INCOMPLETE;
-    else
+    else if (m_polyLength < MAX_PATH_LENGTH)
         m_type = PATHFIND_NOPATH;
+    else
+        m_type = PATHFIND_INCOMPLETE;
 
     // generate the point-path out of our up-to-date poly-path
     updateNextPosition();
