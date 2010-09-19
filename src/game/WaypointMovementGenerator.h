@@ -30,6 +30,7 @@
 #include "WaypointManager.h"
 #include "Path.h"
 #include "Traveller.h"
+#include "PathFinder.h"
 
 #include "Player.h"
 
@@ -97,6 +98,8 @@ public PathMovementBase<Creature, WaypointPath const*>
         bool GetDestination(float& x, float& y, float& z) const { return PathMovementBase<Creature, WaypointPath const*>::GetDestination(x,y,z); }
 
         bool GetResetPosition(Creature&, float& x, float& y, float& z);
+
+        void MoveToNextNode(CreatureTraveller &traveller);
 
     private:
         TimeTrackerSmall i_nextMoveTime;
