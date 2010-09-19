@@ -1563,30 +1563,6 @@ CharDelete.MinLevel = 0
 CharDelete.KeepDays = 30
 
 ###################################################################################################################
-# PLAYERBOTAI CONFIGURATION
-#
-#    PlayerbotAI.Enable
-#        Enable bot system (Work In Progress, use it at your own risks)
-#        Default: 0 - off
-#                 1 - on
-#
-#    PlayerbotAI.DebugWhisper
-#        Enable debug output by whispering master
-#        Default: 0 - off
-#                 1 - on
-#
-#    PlayerbotAI.MaxBots = 100
-#        Number max of bots ingame
-#        Database has 300, it's possible to generate more
-#        default: 100
-#
-###################################################################################################################
-
-PlayerbotAI.Enable = 0
-PlayerbotAI.DebugWhisper = 0
-PlayerbotAI.MaxBots = 100
-
-###################################################################################################################
 #
 #     Custom.SpeedGame
 #         Set it to a number upper than 1 to speed up realm timer
