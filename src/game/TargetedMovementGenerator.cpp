@@ -32,7 +32,7 @@
 
 //-----------------------------------------------//
 template<class T, typename D>
-void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner)
+void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner, bool updateRequired)
 {
     if (!i_target.isValid() || !i_target->IsInWorld())
         return;
@@ -85,11 +85,11 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner)
 
     //ACE_High_Res_Timer timer = ACE_High_Res_Timer();
     //ACE_hrtime_t elapsed;
-    //timer.start()
+    //timer.start();
 
     if(!i_path)
         i_path = new PathInfo(&owner, x, y, z);
-    else
+    else if (updateRequired)
         i_path->Update(x, y, z);
 
     //timer.stop();
@@ -101,17 +101,19 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner)
     // get current dest node's index
     uint32 startIndex = i_path->getPathPointer();
 
-    if (m_pathPointsSent)
+    if (i_destinationHolder.HasArrived())
         --m_pathPointsSent;
 
     Traveller<T> traveller(owner);
     i_path->getNextPosition(x, y, z);
     i_destinationHolder.SetDestination(traveller, x, y, z, false);
 
-    // send the path if we have visited almost all of the previously
-    // sent points, so that the monster never stops moving
-    // also send the path if it is new
-    if (m_pathPointsSent < 3 || startIndex == 1 || i_recalculateTravel)
+    // send the path if:
+    //    we have visited almost all of the previously sent points
+    //    the path appears to be new
+    //    movespeed has changed
+    //    the owner is stopped
+    if (m_pathPointsSent < 2 || startIndex == 1 || i_recalculateTravel || owner.IsStopped())
     {
         // send 10 nodes, or send all nodes if there are less than 10 left
         m_pathPointsSent = std::min(uint32(10), uint32(pointPath.size() - startIndex));
@@ -194,24 +196,15 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
 
     if (!i_destinationHolder.HasDestination())
         _setTargetLocation(owner);
-    if (owner.IsStopped() && !i_destinationHolder.HasArrived())
-    {
-        D::_addUnitStateMove(owner);
-        if (owner.GetTypeId() == TYPEID_UNIT && ((Creature*)&owner)->canFly())
-            ((Creature&)owner).AddSplineFlag(SPLINEFLAG_UNKNOWN7);
 
-        i_destinationHolder.StartTravel(traveller);
-        return true;
-    }
-
-    if (i_destinationHolder.UpdateTraveller(traveller, time_diff, i_recalculateTravel))
+    if (i_destinationHolder.UpdateTraveller(traveller, time_diff, i_recalculateTravel || owner.IsStopped()))
     {
         if (!IsActive(owner))                               // force stop processing (movement can move out active zone with cleanup movegens list)
             return true;                                    // not expire now, but already lost
 
         // put targeted movement generators on a higher priority
         if (owner.GetObjectBoundingRadius())
-            i_destinationHolder.ResetUpdate(50);
+            i_destinationHolder.ResetUpdate(100);
 
         float dist = i_target->GetObjectBoundingRadius() + owner.GetObjectBoundingRadius() + sWorld.getConfig(CONFIG_FLOAT_RATE_TARGET_POS_RECALCULATION_RANGE);
 
@@ -235,10 +228,10 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
                 targetMoved = i_target->GetDistance2d(end_point.x, end_point.y) >= dist;
         }
 
-        if (!i_path || targetMoved || needNewDest || i_recalculateTravel)
+        if (!i_path || targetMoved || needNewDest || i_recalculateTravel || owner.IsStopped())
         {
             // (re)calculate path
-            _setTargetLocation(owner);
+            _setTargetLocation(owner, targetMoved || needNewDest);
 
             if(i_path)
             {
@@ -387,10 +380,10 @@ void FollowMovementGenerator<T>::Reset(T &owner)
 }
 
 //-----------------------------------------------//
-template void TargetedMovementGeneratorMedium<Player,ChaseMovementGenerator<Player> >::_setTargetLocation(Player &);
-template void TargetedMovementGeneratorMedium<Player,FollowMovementGenerator<Player> >::_setTargetLocation(Player &);
-template void TargetedMovementGeneratorMedium<Creature,ChaseMovementGenerator<Creature> >::_setTargetLocation(Creature &);
-template void TargetedMovementGeneratorMedium<Creature,FollowMovementGenerator<Creature> >::_setTargetLocation(Creature &);
+template void TargetedMovementGeneratorMedium<Player,ChaseMovementGenerator<Player> >::_setTargetLocation(Player &, bool);
+template void TargetedMovementGeneratorMedium<Player,FollowMovementGenerator<Player> >::_setTargetLocation(Player &, bool);
+template void TargetedMovementGeneratorMedium<Creature,ChaseMovementGenerator<Creature> >::_setTargetLocation(Creature &, bool);
+template void TargetedMovementGeneratorMedium<Creature,FollowMovementGenerator<Creature> >::_setTargetLocation(Creature &, bool);
 template bool TargetedMovementGeneratorMedium<Player,ChaseMovementGenerator<Player> >::Update(Player &, const uint32 &);
 template bool TargetedMovementGeneratorMedium<Player,FollowMovementGenerator<Player> >::Update(Player &, const uint32 &);
 template bool TargetedMovementGeneratorMedium<Creature,ChaseMovementGenerator<Creature> >::Update(Creature &, const uint32 &);

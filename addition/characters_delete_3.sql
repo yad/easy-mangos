@@ -1,1 +1,0 @@
-ALTER TABLE `item_instance` ADD `ExtendedCost` INT( 11 ) NOT NULL DEFAULT '0' COMMENT 'For item refund system';

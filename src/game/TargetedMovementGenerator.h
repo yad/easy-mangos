@@ -63,7 +63,7 @@ class MANGOS_DLL_SPEC TargetedMovementGeneratorMedium
         void UpdateFinalDistance(float fDistance);
 
     protected:
-        void _setTargetLocation(T &);
+        void _setTargetLocation(T &, bool updateRequired = true);
 
         float i_offset;
         float i_angle;

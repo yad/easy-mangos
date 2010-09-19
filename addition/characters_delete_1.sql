@@ -1,1 +1,0 @@
-DROP TABLE `character_battleground_status`;

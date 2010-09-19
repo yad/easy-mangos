@@ -54,11 +54,11 @@ HomeMovementGenerator<Creature>::_setTargetLocation(Creature & owner)
     PathInfo path(&owner, x, y, z);
     PointPath pointPath = path.getFullPath();
 
-    float speed = traveller.Speed() * .001f; // in ms
+    float speed = traveller.Speed() * 0.001f; // in ms
     uint32 traveltime = uint32(pointPath.GetTotalLength() / speed);
     modifyTravelTime(traveltime);
 
-    owner.SendMonsterMoveByPath(pointPath, path.getPathPointer(), pointPath.size(), owner.GetSplineFlags(), traveltime);
+    owner.SendMonsterMoveByPath(pointPath, 1, pointPath.size(), owner.GetSplineFlags(), traveltime);
     owner.clearUnitState(UNIT_STAT_ALL_STATE);
 }
 

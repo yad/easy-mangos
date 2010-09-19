@@ -4299,7 +4299,7 @@ void Spell::DoSummonGroupPets(SpellEffectIndex eff_idx)
     }
 
     // Pet not found in database
-    for (int32 count = 0; count < amount; ++count)
+    for (uint32 count = 0; count < amount; ++count)
     {
         Map* map = m_caster->GetMap();
         Pet* creature = new Pet(SUMMON_PET);
