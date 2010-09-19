@@ -10591,9 +10591,9 @@ void Unit::SendMonsterMoveByPath(Path<Elem,Node> const& path, uint32 start, uint
         data << path[end-1].z;
 
         // all other points are relative to the center of the path
-        float mid_X = (GetPositionX() + path[end-1].x) / 2.f;
-        float mid_Y = (GetPositionY() + path[end-1].y) / 2.f;
-        float mid_Z = (GetPositionZ() + path[end-1].z) / 2.f;
+        float mid_X = (GetPositionX() + path[end-1].x) * 0.5f;
+        float mid_Y = (GetPositionY() + path[end-1].y) * 0.5f;
+        float mid_Z = (GetPositionZ() + path[end-1].z) * 0.5f;
 
         for (uint32 i = start; i < end - 1; ++i)
             data.appendPackXYZ(mid_X - path[i].x, mid_Y - path[i].y, mid_Z - path[i].z);

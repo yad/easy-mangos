@@ -133,7 +133,6 @@ class PathInfo
         NavTerrain getNavTerrain(float x, float y, float z);
 
         // smooth path functions
-
         uint32 fixupCorridor(dtPolyRef* path, const uint32 npath, const uint32 maxPath,
                              const dtPolyRef* visited, const uint32 nvisited);
         bool getSteerTarget(const float* startPos, const float* endPos, const float minTargetDist,
@@ -145,7 +144,6 @@ class PathInfo
                               float* smoothPath, const uint32 smoothPathMaxSize);
 };
 
-// using == for two float numbers wont do us much good, use diff
 inline bool inRangeYZX(const float* v1, const float* v2, const float r, const float h)
 {
     const float dx = v2[0] - v1[0];

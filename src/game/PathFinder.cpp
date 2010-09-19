@@ -16,10 +16,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "Object.h"
 #include "Creature.h"
 #include "PathFinder.h"
-#include "Map.h"
 #include "../recastnavigation/Detour/Include/DetourCommon.h"
 
 ////////////////// PathInfo //////////////////
@@ -81,15 +79,15 @@ void PathInfo::BuildFreshPath()
     m_sourceObject->GetPosition(x, y, z);
     setStartPosition(PathNode(x, y, z));
 
-    float extents[VERTEX_SIZE] = {2.0f, 4.0f, 2.0f};      // defines bounds of box for search area
-    dtQueryFilter filter = dtQueryFilter();     // use general filter so we know if we are near navmesh
-
     // get start and end positions
     float startPos[VERTEX_SIZE] = {y, z, x};
     getEndPosition(x, y, z);
     float endPos[VERTEX_SIZE] = {y, z, x};
 
     // find start and end poly
+    float extents[VERTEX_SIZE] = {2.0f, 4.0f, 2.0f};      // defines bounds of box for search area
+    dtQueryFilter filter = dtQueryFilter();     // use general filter so we know if we are near navmesh
+
     dtPolyRef startPoly = m_navMeshQuery->findNearestPoly(startPos, extents, &filter, NULL);
     dtPolyRef endPoly = m_navMeshQuery->findNearestPoly(endPos, extents, &filter, NULL);
 
@@ -116,8 +114,6 @@ void PathInfo::BuildPath(dtPolyRef startPoly, float* startPos, dtPolyRef endPoly
     if(startPoly == endPoly)
     {
         //printf("++ PathInfo::BuildPath :: (startPoly == endPoly) %u\n",m_sourceObject->GetGUID());
-
-        // PATHFIND TODO: prevent walking/swimming mobs from flying into the air
         shortcut();
 
         m_pathPolyRefs = new dtPolyRef[1];
@@ -205,7 +201,7 @@ void PathInfo::BuildPath(dtPolyRef startPoly, float* startPos, dtPolyRef endPoly
         {
             dtQueryFilter filter = createFilter();
 
-            // generate sufix
+            // generate suffix
             suffixPolyLength = m_navMeshQuery->findPath(
                     suffixStartPoly,     // start polygon
                     endPoly,            // end polygon
@@ -355,10 +351,10 @@ void PathInfo::Update(const float destX, const float destY, const float destZ)
             float extents[VERTEX_SIZE] = {2.f, 4.f, 2.f};   // bounds of poly search area
             dtQueryFilter filter = dtQueryFilter();         // filter for poly search
 
-            if(startPoly == 0)
+            if(startPoly == INVALID_POLYREF)
                 startPoly = m_navMeshQuery->findNearestPoly(startPos, extents, &filter, NULL);
 
-            if(endPoly == 0)
+            if(endPoly == INVALID_POLYREF)
                 endPoly = m_navMeshQuery->findNearestPoly(endPos, extents, &filter, NULL);
         }
 
@@ -419,7 +415,6 @@ void PathInfo::updateNextPosition()
         return;
     }
 
-    m_pathPoints.clear();
     m_pathPoints.resize(pointCount);
     for (uint32 i = 0; i < pointCount; ++i)
         m_pathPoints.set(i, PathNode(pathPoints[i*VERTEX_SIZE+2], pathPoints[i*VERTEX_SIZE], pathPoints[i*VERTEX_SIZE+1]));
