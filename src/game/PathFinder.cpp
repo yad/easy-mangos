@@ -100,12 +100,15 @@ void PathInfo::BuildPath(dtPolyRef startPoly, float* startPos, dtPolyRef endPoly
     {
         // source or dest not near navmesh polygons:
         // flying, falling, swimming, or navmesh has a hole
-
         // ignore obstacles/terrain is better than giving up
-        // PATHFIND TODO: prevent walking/swimming mobs from flying into the air
-        sLog.outError("%u's Path Build failed: invalid start or end polygon", m_sourceObject->GetGUID());
-        //if(canFly())    // TODO
-            shortcut();
+        //printf("++ PathInfo::BuildPath :: (startPoly == 0 || endPoly == 0) %u\n", m_sourceObject->GetGUID());
+        shortcut();
+
+        // TODO: swimming case
+        // in both cases paths will be generated here
+        if(canFly())
+            m_type = PATHFIND_NORMAL;
+
         return;
     }
 
