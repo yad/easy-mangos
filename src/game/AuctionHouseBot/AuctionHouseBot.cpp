@@ -28,17 +28,10 @@ AuctionHouseBot::~AuctionHouseBot()
 
 }
 
-//Set statisque of items on one faction.
+// Set static of items on one AH faction.
+// Fill ItemInfos object with real content of AH.
 uint32 AuctionHouseBot::SetStat(AHBConfig& config)
 {
-    struct s_itemInAh
-    {
-        uint32 count;
-        std::vector<uint32> itemClass;
-        s_itemInAh() { count = 0; itemClass.resize(MAX_ITEM_CLASS); }
-    };
-
-
     std::vector<std::vector<uint32> > ItemsInAH(AHB_QUALITY_MAX, vector<uint32> (MAX_ITEM_CLASS));
 
     AuctionHouseEntry const* ahEntry = sAuctionMgr.GetAuctionHouseEntryByFaction(config.GetAHFID());
@@ -52,7 +45,7 @@ uint32 AuctionHouseBot::SetStat(AHBConfig& config)
             ItemPrototype const *prototype = item->GetProto();
             if (prototype)
             {
-                if ( Aentry->owner == GetAHBObjectGuid().GetRawValue())
+                if ( Aentry->owner == GetAHBObjectGuid().GetRawValue()) // Add only ahbot items
                 {
                     ++ItemsInAH[prototype->Quality][prototype->Class];
                 }
@@ -82,6 +75,7 @@ uint32 AuctionHouseBot::SetStat(AHBConfig& config)
     return count;
 }
 
+// getRandomArray is used to make aviable the possibility to add any of missed item in place of first one to last one. 
 bool AuctionHouseBot::getRandomArray( AHBConfig& config, std::vector<s_randomArray>& ra, const std::vector<std::vector<uint32> >& addedItem  )
 {
     ra.clear();
@@ -103,10 +97,9 @@ bool AuctionHouseBot::getRandomArray( AHBConfig& config, std::vector<s_randomArr
     return Ok;
 }
 
-
+// Set items price. All important value are passed by address. This method set olso stack value.
 void AuctionHouseBot::SetPricesOfItem(const Item *item,AHBConfig& config, uint32& buyp, uint32& bidp, uint32& stackcnt, e_ahb_quality AHB_ITEMS)
 {
-
     if (config.ItemInfos[AHB_ITEMS].GetMaxStack() != 0)
     {
         stackcnt = urand(1, minValue(item->GetMaxStackCount(), config.ItemInfos[AHB_ITEMS].GetMaxStack()));
@@ -117,15 +110,18 @@ void AuctionHouseBot::SetPricesOfItem(const Item *item,AHBConfig& config, uint32
     randrange=buyp*0.4;
     bidp = buyp*0.5;
     bidp = urand(bidp-randrange, bidp+randrange);
-
 }
 
+// Add new auction to one of the factions. 
+// Faction and setting assossiated is defined passed argument ( config )
 void AuctionHouseBot::addNewAuctions(AHBConfig& config)
 {
+    // If there any missed items on AH? (buyed or expired)
     uint32 MissItems=SetStat(config);
     if (MissItems==0) return;
 
     uint32 items;
+    // If there is large amount of items missed we can use boost value to get fast filled AH
     if (MissItems > ItemsPerCycleBoost)
     {
         items=ItemsPerCycleBoost;
@@ -133,20 +129,25 @@ void AuctionHouseBot::addNewAuctions(AHBConfig& config)
     }
     else items=ItemsPerCycleNormal;
 
+
     AuctionHouseEntry const* ahEntry = sAuctionMgr.GetAuctionHouseEntryByFaction(config.GetAHFID());
     AuctionHouseObject* auctionHouse = sAuctionMgr.GetAuctionsMap(ahEntry);
 
     std::vector<s_randomArray> RandArray;
     std::vector<std::vector<uint32> > ItemsAdded(AHB_QUALITY_MAX,std::vector<uint32> (MAX_ITEM_CLASS));
-    // only insert a few at a time, so as not to peg the processor
-    while (getRandomArray(config,RandArray, ItemsAdded) && (items>0))
+    // Main loop
+    // getRandomArray will give what categories of items should be added (return true if there is at least 1 items missed)
+    while (getRandomArray(config,RandArray, ItemsAdded) && (items>0)) 
     {
         --items;
         uint32 itemID = 0;
+        // Select random position from missed items table
         uint32 pos =  (urand(0,RandArray.size()-1));
 
+        // Set itemID with random item ID for selected categories and color, from ItemPool table
         itemID = ItemPool[RandArray[pos].color][RandArray[pos].itemclass][urand(0,ItemPool[RandArray[pos].color][RandArray[pos].itemclass].size()-1)];
-        ++ ItemsAdded[RandArray[pos].color][RandArray[pos].itemclass];
+        ++ ItemsAdded[RandArray[pos].color][RandArray[pos].itemclass]; // Helper table to avoid rescan from DB in this loop. (has we add item in random orders)
+
 
         if (itemID == 0)
         {
@@ -168,7 +169,7 @@ void AuctionHouseBot::addNewAuctions(AHBConfig& config)
             sLog.outString("AHBot> Item::CreateItem() returned NULL");
             return;
         }
-
+        // Some items need to set random property (agility or intellect for ex)
         uint32 randomPropertyId = Item::GenerateItemRandomPropertyId(itemID);
         if (randomPropertyId != 0)
             item->SetItemRandomPropertiesNoUpdate(randomPropertyId);
@@ -176,13 +177,17 @@ void AuctionHouseBot::addNewAuctions(AHBConfig& config)
         uint32 buyoutPrice;
         uint32 bidPrice = 0;
         uint32 stackCount = urand(1, item->GetMaxStackCount());
+        // Not sure if i will keep the next test
         if(getConfig(CONFIG_BOOL_AHBOT_BUYPRICE_SELLER))
             buyoutPrice  = prototype->BuyPrice * item->GetCount();
         else
             buyoutPrice  = prototype->SellPrice * item->GetCount();
+        // Price of items are set here
         SetPricesOfItem(item, config, buyoutPrice, bidPrice, stackCount, ((e_ahb_quality) prototype->Quality));
+
         item->SetCount(stackCount);
         item->SetOwnerGUID(GetAHBObjectGuid().GetRawValue());
+        // Add Auction now on the AH
         AuctionEntry* auctionEntry = new AuctionEntry;
         auctionEntry->Id = sObjectMgr.GenerateAuctionID();
         auctionEntry->item_guidlow = item->GetGUIDLow();
@@ -213,12 +218,12 @@ void AuctionHouseBot::addNewAuctionBuyerBotBid(AHBConfig *config, WorldSession *
     {
         // Check if the auction is ours
         // if it is, we skip this iteration.
-        if (itr->second->owner == std::numeric_limits< int >::max())
+        if (itr->second->owner == GetAHBObjectGuid().GetRawValue())
         {
             continue;
         }
         // Check that we haven't bidded in this auction already.
-        if (itr->second->bidder != std::numeric_limits< int >::max())
+        if (itr->second->bidder != GetAHBObjectGuid().GetRawValue())
         {
             uint32 tmpdata = itr->second->Id;
             possibleBids.push_back(tmpdata);
