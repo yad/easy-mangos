@@ -489,10 +489,10 @@ void Unit::DealDamageMods(Unit *pVictim, uint32 &damage, uint32* absorb)
 
     //You don't lose health from damage taken from another player while in a sanctuary
     //You still see it in the combat log though
-    if(pVictim != this && GetTypeId() == TYPEID_PLAYER && pVictim->GetTypeId() == TYPEID_PLAYER)
+    if (pVictim != this && IsCharmerOrOwnerPlayerOrPlayerItself() && pVictim->IsCharmerOrOwnerPlayerOrPlayerItself())
     {
         const AreaTableEntry *area = GetAreaEntryByAreaID(pVictim->GetAreaId());
-        if(area && area->flags & AREA_FLAG_SANCTUARY)       //sanctuary
+        if (area && area->flags & AREA_FLAG_SANCTUARY)      //sanctuary
         {
             if(absorb)
                 *absorb += damage;
@@ -1308,10 +1308,10 @@ void Unit::DealSpellDamage(SpellNonMeleeDamage *damageInfo, bool durabilityLoss)
 
     //You don't lose health from damage taken from another player while in a sanctuary
     //You still see it in the combat log though
-    if(pVictim != this && GetTypeId() == TYPEID_PLAYER && pVictim->GetTypeId() == TYPEID_PLAYER)
+    if (pVictim != this && IsCharmerOrOwnerPlayerOrPlayerItself() && pVictim->IsCharmerOrOwnerPlayerOrPlayerItself())
     {
         const AreaTableEntry *area = GetAreaEntryByAreaID(pVictim->GetAreaId());
-        if(area && area->flags & AREA_FLAG_SANCTUARY)       // sanctuary
+        if (area && area->flags & AREA_FLAG_SANCTUARY)      // sanctuary
             return;
     }
 
@@ -1612,17 +1612,17 @@ void Unit::DealMeleeDamage(CalcDamageInfo *damageInfo, bool durabilityLoss)
 
     //You don't lose health from damage taken from another player while in a sanctuary
     //You still see it in the combat log though
-    if(pVictim != this && GetTypeId() == TYPEID_PLAYER && pVictim->GetTypeId() == TYPEID_PLAYER)
+    if (pVictim != this && IsCharmerOrOwnerPlayerOrPlayerItself() && pVictim->IsCharmerOrOwnerPlayerOrPlayerItself())
     {
         const AreaTableEntry *area = GetAreaEntryByAreaID(pVictim->GetAreaId());
-        if(area && area->flags & AREA_FLAG_SANCTUARY)       // sanctuary
+        if (area && area->flags & AREA_FLAG_SANCTUARY)      // sanctuary
             return;
     }
 
     // Hmmmm dont like this emotes client must by self do all animations
     if (damageInfo->HitInfo&HITINFO_CRITICALHIT)
         pVictim->HandleEmoteCommand(EMOTE_ONESHOT_WOUNDCRITICAL);
-    if(damageInfo->blocked_amount && damageInfo->TargetState!=VICTIMSTATE_BLOCKS)
+    if (damageInfo->blocked_amount && damageInfo->TargetState!=VICTIMSTATE_BLOCKS)
         pVictim->HandleEmoteCommand(EMOTE_ONESHOT_PARRYSHIELD);
 
     if(damageInfo->TargetState == VICTIMSTATE_PARRY)
@@ -2377,7 +2377,6 @@ void Unit::CalculateHealAbsorb(const uint32 heal, uint32 *absorb)
     for(AuraList::const_iterator i = vHealAbsorb.begin(); i != vHealAbsorb.end() && RemainingHeal > 0; ++i)
     {
         Modifier* mod = (*i)->GetModifier();
-        SpellEntry const* spellProto = (*i)->GetSpellProto();
 
         // Max Amount can be absorbed by this aura
         int32  currentAbsorb = mod->m_amount;
@@ -4382,7 +4381,7 @@ void Unit::RemoveAuraHolderDueToSpellByDispel(uint32 spellId, int32 stackAmount,
     {
         if (Aura *dot = GetAura(SPELL_AURA_PERIODIC_DAMAGE, SPELLFAMILY_PRIEST, UI64LIT(0x0000040000000000), 0x00000000, casterGUID))
         {
-            if(Unit* caster = dot->GetCaster())
+            if (dot->GetCaster())
             {
                 // use clean value for initial damage
                 int32 bp0 = dot->GetSpellProto()->CalculateSimpleValue(EFFECT_INDEX_1);
@@ -4689,8 +4688,6 @@ void Unit::RemoveSingleAuraFromSpellAuraHolder(SpellAuraHolder *holder, SpellEff
 
 void Unit::RemoveAura(Aura *Aur, AuraRemoveMode mode)
 {
-    SpellEntry const* AurSpellInfo = Aur->GetSpellProto();
-
     // remove from list before mods removing (prevent cyclic calls, mods added before including to aura list - use reverse order)
     if (Aur->GetModifier()->m_auraname < TOTAL_AURAS)
     {
@@ -9621,7 +9618,6 @@ void Unit::ProcDamageAndSpellFor( bool isVictim, Unit * pTarget, uint32 procFlag
             continue;
 
         SpellProcEventEntry const *spellProcEvent = i->spellProcEvent;
-        SpellEntry const *spellInfo = triggeredByHolder->GetSpellProto();
         bool useCharges = triggeredByHolder->GetAuraCharges() > 0;
         bool procSuccess = true;
         bool anyAuraProc = false;
