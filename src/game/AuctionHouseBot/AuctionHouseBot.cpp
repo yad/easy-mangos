@@ -75,7 +75,7 @@ uint32 AuctionHouseBot::SetStat(AHBConfig& config)
     return count;
 }
 
-// getRandomArray is used to make aviable the possibility to add any of missed item in place of first one to last one. 
+// getRandomArray is used to make aviable the possibility to add any of missed item in place of first one to last one.
 bool AuctionHouseBot::getRandomArray( AHBConfig& config, std::vector<s_randomArray>& ra, const std::vector<std::vector<uint32> >& addedItem  )
 {
     ra.clear();
@@ -104,15 +104,15 @@ void AuctionHouseBot::SetPricesOfItem(const Item *item,AHBConfig& config, uint32
     {
         stackcnt = urand(1, minValue(item->GetMaxStackCount(), config.ItemInfos[AHB_ITEMS].GetMaxStack()));
     }
-    buyp *= (config.ItemInfos[AHB_ITEMS].GetPriceRatio()/100) *stackcnt;
-    uint32 randrange = buyp * 0.4;
-    buyp = urand(buyp-randrange, buyp+randrange);
-    randrange=buyp*0.4;
-    bidp = buyp*0.5;
-    bidp = urand(bidp-randrange, bidp+randrange);
+    double temp_buyp = buyp * config.ItemInfos[AHB_ITEMS].GetPriceRatio() *stackcnt;
+    double randrange = temp_buyp * 0.4;
+    buyp = (urand(temp_buyp-randrange, temp_buyp+randrange)/100)+1;
+    double urandrange=buyp*40;
+    double temp_bidp = buyp*50;
+    bidp = (urand(temp_bidp-urandrange, temp_bidp+urandrange)/100)+1;
 }
 
-// Add new auction to one of the factions. 
+// Add new auction to one of the factions.
 // Faction and setting assossiated is defined passed argument ( config )
 void AuctionHouseBot::addNewAuctions(AHBConfig& config)
 {
@@ -137,7 +137,7 @@ void AuctionHouseBot::addNewAuctions(AHBConfig& config)
     std::vector<std::vector<uint32> > ItemsAdded(AHB_QUALITY_MAX,std::vector<uint32> (MAX_ITEM_CLASS));
     // Main loop
     // getRandomArray will give what categories of items should be added (return true if there is at least 1 items missed)
-    while (getRandomArray(config,RandArray, ItemsAdded) && (items>0)) 
+    while (getRandomArray(config,RandArray, ItemsAdded) && (items>0))
     {
         --items;
         uint32 itemID = 0;
