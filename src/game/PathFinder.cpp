@@ -18,6 +18,7 @@
 
 #include "Creature.h"
 #include "PathFinder.h"
+#include "Map.h"
 #include "../recastnavigation/Detour/Include/DetourCommon.h"
 
 ////////////////// PathInfo //////////////////
