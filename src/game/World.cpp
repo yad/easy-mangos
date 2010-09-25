@@ -778,6 +778,7 @@ void World::LoadConfigSettings(bool reload)
     setConfig(CONFIG_UINT32_TIMERBAR_BREATH_MAX,      "TimerBar.Breath.Max", 180);
     setConfig(CONFIG_UINT32_TIMERBAR_FIRE_GMLEVEL,    "TimerBar.Fire.GMLevel", SEC_CONSOLE);
     setConfig(CONFIG_UINT32_TIMERBAR_FIRE_MAX,        "TimerBar.Fire.Max", 1);
+    setConfig(CONFIG_BOOL_PET_UNSUMMON_AT_MOUNT,      "PetUnsummonAtMount", true);
 
     setConfigPos(CONFIG_FLOAT_SPEED_GAME,                 "Custom.SpeedGame",                   1.0f);
     setConfig(CONFIG_BOOL_NO_CAST_TIME,                   "Custom.NoCastTime",                  false);

@@ -120,7 +120,7 @@ void PetAI::_stopAttack()
 
     if(owner && m_creature->GetCharmInfo() && m_creature->GetCharmInfo()->HasCommandState(COMMAND_FOLLOW))
     {
-        m_creature->GetMotionMaster()->MoveFollow(owner,PET_FOLLOW_DIST, m_creature->isPet() ? ((Pet*)m_creature)->GetPetFollowAngle() : PET_DEFAULT_FOLLOW_ANGLE);
+        m_creature->GetMotionMaster()->MoveFollow(owner,PET_FOLLOW_DIST, m_creature->isPet() ? ((Pet*)m_creature)->GetPetFollowAngle() : PET_FOLLOW_ANGLE);
     }
     else
     {
@@ -193,13 +193,13 @@ void PetAI::UpdateAI(const uint32 diff)
         {
             if (!m_creature->hasUnitState(UNIT_STAT_FOLLOW) )
             {
-                m_creature->GetMotionMaster()->MoveFollow(owner,PET_FOLLOW_DIST, m_creature->isPet() ? ((Pet*)m_creature)->GetPetFollowAngle() : PET_DEFAULT_FOLLOW_ANGLE);
+                m_creature->GetMotionMaster()->MoveFollow(owner,PET_FOLLOW_DIST, m_creature->isPet() ? ((Pet*)m_creature)->GetPetFollowAngle() : PET_FOLLOW_ANGLE);
             }
         }
     }
 
     // Autocast (casted only in combat or persistent spells in any state)
-    if (m_creature->GetGlobalCooldown() == 0 && !m_creature->IsNonMeleeSpellCasted(false))
+    if (!m_creature->IsNonMeleeSpellCasted(false))
     {
         typedef std::vector<std::pair<Unit*, Spell*> > TargetSpellList;
         TargetSpellList targetSpellStore;
@@ -212,6 +212,9 @@ void PetAI::UpdateAI(const uint32 diff)
 
             SpellEntry const *spellInfo = sSpellStore.LookupEntry(spellID);
             if (!spellInfo)
+                continue;
+
+            if (m_creature->GetCharmInfo() && m_creature->GetCharmInfo()->GetGlobalCooldownMgr().HasGlobalCooldown(spellInfo))
                 continue;
 
             // ignore some combinations of combat state and combat/noncombat spells

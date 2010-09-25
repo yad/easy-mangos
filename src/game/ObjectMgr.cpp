@@ -2655,8 +2655,8 @@ void ObjectMgr::LoadPetScalingData()
     QueryResult *result  = WorldDatabase.Query("SELECT creature_entry, aura, healthbase, health, powerbase, power,  str, agi, sta, inte, spi,"
     //                                          11     12           13           14           15           16           17
                                                "armor, resistance1, resistance2, resistance3, resistance4, resistance5, resistance6," 
-    //                                          18      19           20           21      22          23   24         25           26
-                                               "apbase, apbasescale, attackpower, damage, spellpower, hit, expertize, attackspeed, crit FROM pet_scaling_data");
+    //                                          18      19           20           21      22        23   24         25           26    27
+                                               "apbase, apbasescale, attackpower, damage, spellhit, hit, expertize, attackspeed, crit, regen FROM pet_scaling_data");
 
     uint32 count = 0;
 
@@ -2712,11 +2712,12 @@ void ObjectMgr::LoadPetScalingData()
         pScalingDataEntry->APBaseScale = fields[19].GetInt32();
         pScalingDataEntry->attackpowerScale = fields[20].GetInt32();
         pScalingDataEntry->damageScale = fields[21].GetInt32();
-        pScalingDataEntry->spellpowerScale = fields[22].GetInt32();
-        pScalingDataEntry->hitScale = fields[23].GetInt32();
+        pScalingDataEntry->spellHitScale = fields[22].GetInt32();
+        pScalingDataEntry->meleeHitScale = fields[23].GetInt32();
         pScalingDataEntry->expertizeScale = fields[24].GetInt32();
         pScalingDataEntry->attackspeedScale = fields[25].GetInt32();
         pScalingDataEntry->critScale = fields[26].GetInt32();
+        pScalingDataEntry->powerregenScale = fields[27].GetInt32();
 
         pScalingDataList->push_back(pScalingDataEntry);
 
@@ -8345,6 +8346,12 @@ bool PlayerCondition::Meets(Player const * player) const
             }
             return false;
         }
+        case CONDITION_QUEST_NONE:
+        {
+            if (!player->IsCurrentQuest(value1) && !player->GetQuestRewardStatus(value1))
+                return true;
+            return false;
+        }
         default:
             return false;
     }
@@ -8456,6 +8463,7 @@ bool PlayerCondition::IsValid(ConditionType condition, uint32 value1, uint32 val
         case CONDITION_QUESTREWARDED:
         case CONDITION_QUESTTAKEN:
         case CONDITION_QUESTAVAILABLE:
+        case CONDITION_QUEST_NONE:
         {
             Quest const *Quest = sObjectMgr.GetQuestTemplate(value1);
             if (!Quest)

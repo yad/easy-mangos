@@ -415,7 +415,6 @@ ChatCommand * ChatHandler::getCommandTable()
         { "unfollow",       SEC_GAMEMASTER,     false, &ChatHandler::HandleNpcUnFollowCommand,         "", NULL },
         { "whisper",        SEC_MODERATOR,      false, &ChatHandler::HandleNpcWhisperCommand,          "", NULL },
         { "yell",           SEC_MODERATOR,      false, &ChatHandler::HandleNpcYellCommand,             "", NULL },
-        { "tame",           SEC_GAMEMASTER,     false, &ChatHandler::HandleNpcTameCommand,             "", NULL },
         { "setdeathstate",  SEC_GAMEMASTER,     false, &ChatHandler::HandleNpcSetDeathStateCommand,    "", NULL },
 
         //{ TODO: fix or remove this commands
@@ -2714,7 +2713,7 @@ GameObject* ChatHandler::GetObjectGlobalyWithGuidOrNearWithDbGuid(uint32 lowguid
     if(!obj && sObjectMgr.GetGOData(lowguid))                   // guid is DB guid of object
     {
         MaNGOS::GameObjectWithDbGUIDCheck go_check(*pl,lowguid);
-        MaNGOS::GameObjectSearcher<MaNGOS::GameObjectWithDbGUIDCheck> checker(pl,obj,go_check);
+        MaNGOS::GameObjectSearcher<MaNGOS::GameObjectWithDbGUIDCheck> checker(obj,go_check);
         Cell::VisitGridObjects(pl,checker, pl->GetMap()->GetVisibilityDistance());
     }
 

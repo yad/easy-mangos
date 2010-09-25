@@ -1635,6 +1635,14 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     ((Creature*)unitTarget)->ForcedDespawn(5000);
                     return;
                 }
+                case 51858:                                 // Siphon of Acherus - Complete Quest
+                {
+                    if (!m_caster || !m_caster->isAlive())
+                        return;
+
+                    ((Player*)m_originalCaster->GetCharmer())->KilledMonsterCredit(m_caster->GetEntry(), m_caster->GetGUID());
+                        return;
+                }
                 case 51866:                                 // Kick Nass
                 {
                     // It is possible that Nass Heartbeat (spell id 61438) is involved in this
@@ -1657,7 +1665,7 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     float fRange = GetSpellMaxRange(sSpellRangeStore.LookupEntry(m_spellInfo->rangeIndex));
 
                     MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck u_check(*m_caster, 28523, true, fRange*2);
-                    MaNGOS::CreatureLastSearcher<MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck> searcher(m_caster, pTargetDummy, u_check);
+                    MaNGOS::CreatureLastSearcher<MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck> searcher(pTargetDummy, u_check);
 
                     Cell::VisitGridObjects(m_caster, searcher, fRange*2);
 
@@ -4183,9 +4191,16 @@ void Spell::EffectSummonType(SpellEffectIndex eff_idx)
         }
         case SUMMON_PROP_GROUP_CONTROLLABLE:
         {
-            // no type here
-            // maybe wrong - but thats the handler currently used for those
+            switch(prop_id)
+            {
+                case 65:
+                case 428:
+                    EffectSummonPossessed(eff_idx);
+                    break;
+                default:
                     DoSummonGuardian(eff_idx, summon_prop->FactionId);
+                break;
+            }
             break;
         }
         case SUMMON_PROP_GROUP_VEHICLE:
@@ -4218,7 +4233,7 @@ void Spell::DoSummonGroupPets(SpellEffectIndex eff_idx)
     int32 duration = GetSpellDuration(m_spellInfo);
 
     if (pet_entry == 37994)    // Mage: Water Elemental from Glyph
-        duration = 0;
+        duration = 86400000;   // 24 hours
 
     if(Player* modOwner = m_caster->GetSpellModOwner())
         modOwner->ApplySpellMod(m_spellInfo->Id, SPELLMOD_DURATION, duration);
@@ -4228,14 +4243,12 @@ void Spell::DoSummonGroupPets(SpellEffectIndex eff_idx)
     if (amount > 5)
         amount = 1;  // Don't find any cast, summons over 3 pet.
 
-    Unit* summoner = m_caster;
-
     uint8 petindex = 0;
 
-    if (summoner->GetTypeId()==TYPEID_PLAYER)
+    if (m_caster->GetTypeId()==TYPEID_PLAYER)
     {
         QueryResult* result = CharacterDatabase.PQuery("SELECT id FROM character_pet WHERE owner = '%u' AND entry = '%u'",
-            summoner->GetGUIDLow(), pet_entry);
+            m_caster->GetGUIDLow(), pet_entry);
 
         std::vector<uint32> petnumber;
 
@@ -4258,41 +4271,35 @@ void Spell::DoSummonGroupPets(SpellEffectIndex eff_idx)
             {
                 if (petnumber[i])
                 {
-                    Pet* creature = new Pet(SUMMON_PET);
-                    creature->SetPetCounter(amount-1);
-                    if (creature->LoadPetFromDB((Player*)summoner,pet_entry, petnumber[i]))
+                    Pet* pet = new Pet(SUMMON_PET);
+                    pet->SetPetCounter(amount-1);
+                    // set timer for unsummon
+                    pet->SetDuration(duration);
+                    if (pet->LoadPetFromDB((Player*)m_caster,pet_entry, petnumber[i]))
                     {
-                        creature->SetOwnerGUID(summoner->GetGUID());
-                        creature->SetCreatorGUID(m_caster->GetGUID());
                         if (m_targets.m_targetMask & TARGET_FLAG_DEST_LOCATION)
                         {
-                            if (!creature->SetSummonPosition(m_targets.m_destX,m_targets.m_destY,m_targets.m_destZ))
+                            if (!pet->SetSummonPosition(m_targets.m_destX,m_targets.m_destY,m_targets.m_destZ))
                             {
                                 sLog.outError("Pet (guidlow %d, entry %d) not summoned. Suggested coordinates isn't valid (X: %f Y: %f)",
-                                     creature->GetGUIDLow(), creature->GetEntry(), creature->GetPositionX(), creature->GetPositionY());
-                                delete creature;
+                                     pet->GetGUIDLow(), pet->GetEntry(), pet->GetPositionX(), pet->GetPositionY());
+                                delete pet;
                                 return;
                              }
                          }
-                         else if (!creature->SetSummonPosition())
+                         else if (!pet->SetSummonPosition())
                          {
                              sLog.outError("Pet (guidlow %d, entry %d) not summoned. Suggested coordinates isn't valid (X: %f Y: %f)",
-                                 creature->GetGUIDLow(), creature->GetEntry(), creature->GetPositionX(), creature->GetPositionY());
-                             delete creature;
+                                 pet->GetGUIDLow(), pet->GetEntry(), pet->GetPositionX(), pet->GetPositionY());
+                             delete pet;
                              return;
                          }
                          --amount;
-                        // set timer for unsummon
-                        if (duration > 0)
-                        {
-                            creature->SetDuration(duration);
-                            creature->GetCharmInfo()->SetReactState( REACT_AGGRESSIVE );
-                        }
-                        DEBUG_LOG("Pet (guidlow %d, entry %d) summoned. Counter is %d ",
-                                     creature->GetGUIDLow(), creature->GetEntry(), creature->GetPetCounter());
+                        DEBUG_LOG("Pet (guidlow %d, entry %d) summoned (from database). Counter is %d ",
+                                     pet->GetGUIDLow(), pet->GetEntry(), pet->GetPetCounter());
                     }
                     else
-                        delete creature;
+                        delete pet;
                 }
             }
         }
@@ -4302,54 +4309,103 @@ void Spell::DoSummonGroupPets(SpellEffectIndex eff_idx)
     for (uint32 count = 0; count < amount; ++count)
     {
         Map* map = m_caster->GetMap();
-        Pet* creature = new Pet(SUMMON_PET);
-        creature->SetPetCounter(amount - count - 1);
+        Pet* pet = new Pet(SUMMON_PET);
+        pet->SetPetCounter(amount - count - 1);
 
         uint32 pet_number = sObjectMgr.GeneratePetNumber();
-        if (!creature->Create(map->GenerateLocalLowGuid(HIGHGUID_PET), map, summoner->GetPhaseMask(),
+        if (!pet->Create(map->GenerateLocalLowGuid(HIGHGUID_PET), map, m_caster->GetPhaseMask(),
             m_spellInfo->EffectMiscValue[eff_idx], pet_number))
         {
             sLog.outErrorDb("Spell::EffectSummonGroupPets: no such creature entry %u",m_spellInfo->EffectMiscValue[eff_idx]);
-            delete creature;
+            delete pet;
             return;
         }
 
-        creature->SetUInt32Value(UNIT_CREATED_BY_SPELL, m_spellInfo->Id);
-        creature->SetOwnerGUID(summoner->GetGUID());
-        creature->SetCreatorGUID(m_caster->GetGUID());
-        creature->GetCharmInfo()->SetPetNumber(pet_number, false);
+        pet->SetUInt32Value(UNIT_CREATED_BY_SPELL, m_spellInfo->Id);
+        pet->SetOwnerGUID(m_caster->GetGUID());
+        pet->SetCreatorGUID(m_caster->GetGUID());
+        pet->GetCharmInfo()->SetPetNumber(pet_number, false);
+        pet->setPetType(SUMMON_PET);
+        pet->setFaction(m_caster->getFaction());
 
         if (m_targets.m_targetMask & TARGET_FLAG_DEST_LOCATION)
         {
-            if (!creature->SetSummonPosition(m_targets.m_destX,m_targets.m_destY,m_targets.m_destZ))
+            if (!pet->SetSummonPosition(m_targets.m_destX,m_targets.m_destY,m_targets.m_destZ))
             {
                 sLog.outError("Pet (guidlow %d, entry %d) not summoned. Suggested coordinates isn't valid (X: %f Y: %f)",
-                    creature->GetGUIDLow(), creature->GetEntry(), creature->GetPositionX(), creature->GetPositionY());
-                delete creature;
+                    pet->GetGUIDLow(), pet->GetEntry(), pet->GetPositionX(), pet->GetPositionY());
+                delete pet;
                 return;
             }
         }
-        else if (!creature->SetSummonPosition())
+        else if (!pet->SetSummonPosition())
         {
             sLog.outError("Pet (guidlow %d, entry %d) not summoned. Suggested coordinates isn't valid (X: %f Y: %f)",
-                creature->GetGUIDLow(), creature->GetEntry(), creature->GetPositionX(), creature->GetPositionY());
-            delete creature;
+                pet->GetGUIDLow(), pet->GetEntry(), pet->GetPositionX(), pet->GetPositionY());
+            delete pet;
             return;
         }
 
-        if (!creature->Summon( duration, amount - count - 1))
+        if (!pet->Summon( duration, amount - count - 1))
         {
             sLog.outError("Pet (guidlow %d, entry %d) not summoned by undefined reason. ",
-                creature->GetGUIDLow(), creature->GetEntry());
-            delete creature;
+                pet->GetGUIDLow(), pet->GetEntry());
+            delete pet;
             return;
         }
 
-        summoner->SetPet(creature);
-
+        DEBUG_LOG("Pet (guidlow %d, entry %d) summoned (default). Counter is %d ", pet->GetGUIDLow(), pet->GetEntry(), pet->GetPetCounter());
         ++petindex;
     }
 
+}
+
+void Spell::EffectSummonPossessed(SpellEffectIndex eff_idx)
+{
+    uint32 creature_entry = m_spellInfo->EffectMiscValue[eff_idx];
+    if(!creature_entry)
+        return;
+
+    int32 duration = GetSpellDuration(m_spellInfo);
+
+        float px, py, pz;
+    // If dest location if present
+    if (m_targets.m_targetMask & TARGET_FLAG_DEST_LOCATION)
+    {
+        // Summon 1 unit in dest location
+        px = m_targets.m_destX;
+        py = m_targets.m_destY;
+        pz = m_targets.m_destZ;
+    }
+    // Summon if dest location not present near caster
+    else
+        m_caster->GetClosePoint(px,py,pz,1.0f);
+
+    TempSummonType summonType = (duration == 0) ? TEMPSUMMON_DEAD_DESPAWN : TEMPSUMMON_TIMED_OR_DEAD_DESPAWN;
+    Creature *summon = m_caster->SummonCreature(creature_entry,px,py,pz,m_caster->GetOrientation(),summonType,duration);
+
+    summon->addUnitState(UNIT_STAT_CONTROLLED);
+    summon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PLAYER_CONTROLLED);
+    summon->SetCharmerGUID(m_caster->GetGUID());
+    summon->setFaction(m_caster->getFaction());
+
+    ((Player*)m_caster)->GetCamera().SetView(summon);
+
+    m_caster->SetCharm(summon);
+    ((Player*)m_caster)->SetClientControl(summon, 1);
+    ((Player*)m_caster)->SetMover(summon);
+
+    summon->CombatStop(true);
+    summon->DeleteThreatList();
+
+    if(CharmInfo *charmInfo = summon->InitCharmInfo(summon))
+    {
+        charmInfo->InitPossessCreateSpells();
+        charmInfo->SetReactState(REACT_PASSIVE);
+        charmInfo->SetCommandState(COMMAND_STAY);
+    }
+
+    ((Player*)m_caster)->PossessSpellInitialize();
 }
 
 void Spell::EffectLearnSpell(SpellEffectIndex eff_idx)
@@ -4773,8 +4829,7 @@ void Spell::DoSummonGuardian(SpellEffectIndex eff_idx, uint32 forceFaction)
             return;
         }
 
-        if (duration > 0)
-            spawnCreature->SetDuration(duration);
+        spawnCreature->SetDuration(duration);
 
         spawnCreature->SetOwnerGUID(m_caster->GetGUID());
         spawnCreature->SetCreatorGUID(m_caster->GetGUID());
@@ -5144,29 +5199,47 @@ void Spell::EffectTameCreature(SpellEffectIndex /*eff_idx*/)
     //SendChannelUpdate(0);
     finish();
 
-    Pet* pet = plr->CreateTamedPetFrom(creatureTarget, m_spellInfo->Id);
-    if(!pet)                                                // in versy specific state like near world end/etc.
-        return;
+    Pet* pet = new Pet(HUNTER_PET);
 
+    if(!pet->CreateBaseAtCreature(creatureTarget))
+    {
+        delete pet;
+        return;
+    }
+
+    pet->SetOwnerGUID(plr->GetGUID());
+    pet->SetCreatorGUID(plr->GetGUID());
+    pet->setFaction(plr->getFaction());
+    pet->SetUInt32Value(UNIT_CREATED_BY_SPELL, m_spellInfo->Id);
+    pet->GetCharmInfo()->SetPetNumber(sObjectMgr.GeneratePetNumber(), true);
+
+    uint16 level = (creatureTarget->getLevel() < (plr->getLevel() - 5)) ? (plr->getLevel() - 5) : creatureTarget->getLevel();
+
+
+    // prepare visual effect for levelup
+    pet->SetLevel(level - 1);
+
+    // add to world
+    if (!pet->SetSummonPosition())
+    {
+        sLog.outError("Pet (guidlow %d, entry %d) not summoned from tame effect. Suggested coordinates isn't valid (X: %f Y: %f)",
+                pet->GetGUIDLow(), pet->GetEntry(), pet->GetPositionX(), pet->GetPositionY());
+        delete pet;
+        return;
+    }
+    if (!pet->Summon(0,0))
+    {
+        sLog.outError("Pet (guidlow %d, entry %d) not summoned from tame effect by undefined reason. ",
+            pet->GetGUIDLow(), pet->GetEntry());
+        delete pet;
+        return;
+    }
     // "kill" original creature
     creatureTarget->ForcedDespawn();
 
-    uint32 level = (creatureTarget->getLevel() < (plr->getLevel() - 5)) ? (plr->getLevel() - 5) : creatureTarget->getLevel();
-
-    // prepare visual effect for levelup
-    pet->SetUInt32Value(UNIT_FIELD_LEVEL, level - 1);
-
-    // add to world
-    pet->GetMap()->Add((Creature*)pet);
-
     // visual effect for levelup
-    pet->SetUInt32Value(UNIT_FIELD_LEVEL, level);
+    pet->SetLevel(level);
 
-    // caster have pet now
-    plr->SetPet(pet);
-
-    pet->SavePetToDB(PET_SAVE_AS_CURRENT);
-    plr->PetSpellInitialize();
 }
 
 void Spell::EffectSummonPet(SpellEffectIndex eff_idx)
@@ -5237,6 +5310,8 @@ void Spell::EffectSummonPet(SpellEffectIndex eff_idx)
     NewSummon->SetOwnerGUID(m_caster->GetGUID());
     NewSummon->SetCreatorGUID(m_caster->GetGUID());
     NewSummon->SetUInt32Value(UNIT_CREATED_BY_SPELL, m_spellInfo->Id);
+    NewSummon->setPetType(SUMMON_PET);
+    NewSummon->setFaction(m_caster->getFaction());
 
     if(!NewSummon->SetSummonPosition())
     {
@@ -5272,9 +5347,7 @@ void Spell::EffectSummonPet(SpellEffectIndex eff_idx)
         }
     }
 
-    m_caster->SetPet(NewSummon);
     DEBUG_LOG("New Pet has guid %u", NewSummon->GetGUIDLow());
-
 }
 
 void Spell::EffectLearnPetSpell(SpellEffectIndex eff_idx)
@@ -6050,7 +6123,7 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
 
                     // search for a reef cow nearby
                     MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck u_check(*m_caster, 24797, true, range);
-                    MaNGOS::CreatureLastSearcher<MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck> searcher(m_caster, pQuestCow, u_check);
+                    MaNGOS::CreatureLastSearcher<MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck> searcher(pQuestCow, u_check);
 
                     Cell::VisitGridObjects(m_caster, searcher, range);
 
@@ -6353,6 +6426,36 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                             ((Player*)m_caster)->RemovePet(pPet, PET_SAVE_NOT_IN_SLOT);
                     }
                     return;
+                }
+                case 51904:                                 // Summon Ghouls Of Scarlet Crusade
+                {
+                    if(!unitTarget)
+                        return;
+
+                    unitTarget->CastSpell(unitTarget, 54522, true);
+                    break;
+                }
+                case 52694:                                 // Recall Eye of Acherus
+                {
+                    if(!m_caster || m_caster->GetTypeId() != TYPEID_UNIT)
+                        return;
+
+                    Unit *target = m_caster->GetCharmer();
+
+                    if(!target || target->GetTypeId() != TYPEID_PLAYER)
+                        return;
+
+                    m_caster->SetCharmerGUID(0);
+                    target->RemoveAurasDueToSpell(51852);
+                    target->SetCharm(NULL);
+
+                    ((Player*)target)->GetCamera().ResetView();
+                    ((Player*)target)->SetClientControl(m_caster,0);
+                    ((Player*)target)->SetMover(NULL);
+
+                    m_caster->CleanupsBeforeDelete();
+                    m_caster->AddObjectToRemoveList();
+                        return;
                 }
                 case 52751:                                 // Death Gate
                 {

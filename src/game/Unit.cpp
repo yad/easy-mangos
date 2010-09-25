@@ -67,6 +67,9 @@ float baseMoveSpeed[MAX_MOVE_TYPE] =
     3.14f                                                   // MOVE_PITCH_RATE
 };
 
+////////////////////////////////////////////////////////////
+// Methods of class MovementInfo
+
 void MovementInfo::Read(ByteBuffer &data)
 {
     data >> moveFlags;
@@ -156,6 +159,28 @@ void MovementInfo::Write(ByteBuffer &data) const
         data << u_unk1;
     }
 }
+
+////////////////////////////////////////////////////////////
+// Methods of class GlobalCooldownMgr
+
+bool GlobalCooldownMgr::HasGlobalCooldown(SpellEntry const* spellInfo) const
+{
+    GlobalCooldownList::const_iterator itr = m_GlobalCooldowns.find(spellInfo->StartRecoveryCategory);
+    return itr != m_GlobalCooldowns.end() && itr->second.duration && getMSTimeDiff(itr->second.cast_time, getMSTime()) < itr->second.duration;
+}
+
+void GlobalCooldownMgr::AddGlobalCooldown(SpellEntry const* spellInfo, uint32 gcd)
+{
+    m_GlobalCooldowns[spellInfo->StartRecoveryCategory] = GlobalCooldown(gcd, getMSTime());
+}
+
+void GlobalCooldownMgr::CancelGlobalCooldown(SpellEntry const* spellInfo)
+{
+    m_GlobalCooldowns[spellInfo->StartRecoveryCategory].duration = 0;
+}
+
+////////////////////////////////////////////////////////////
+// Methods of class Unit
 
 Unit::Unit()
 : WorldObject(), i_motionMaster(this), m_ThreatManager(this), m_HostileRefManager(this)
@@ -6125,18 +6150,18 @@ float Unit::GetCombatDistance( const Unit* target ) const
 
 void Unit::SetPet(Pet* pet)
 {
-    SetPetGUID(pet && !pet->GetPetCounter() ? pet->GetGUID() : 0);  //Using last pet guid for player
-
-    AddPetToList(pet);
-
-    if(pet && GetTypeId() == TYPEID_PLAYER)
+    if (pet)
     {
-        ((Player*)this)->SendPetGUIDs();
-        // set infinite cooldown for summon spell
-        SpellEntry const *spellInfo = sSpellStore.LookupEntry(pet->GetUInt32Value(UNIT_CREATED_BY_SPELL));
-        if (spellInfo && spellInfo->Attributes & SPELL_ATTR_DISABLED_WHILE_ACTIVE)
-            ((Player*)this)->AddSpellAndCategoryCooldowns(spellInfo, 0, NULL,true);
+        if (!pet->GetPetCounter())
+            SetPetGUID(pet->GetGUID()) ;  //Using last pet guid for player
+
+        AddPetToList(pet);
+
+        if(GetTypeId() == TYPEID_PLAYER)
+            ((Player*)this)->SendPetGUIDs();
     }
+    else
+        SetPetGUID(0);
 }
 
 void Unit::SetCharm(Unit* pet)
@@ -7839,8 +7864,11 @@ void Unit::Mount(uint32 mount, uint32 spellId, uint32 vehicleId)
             // Normal case (Unsummon only permanent pet)
             else if (Pet* pet = GetPet())
             {
-                if (pet->IsPermanentPetFor((Player*)this) && !((Player*)this)->InArena())
+                if (pet->IsPermanentPetFor((Player*)this) && !((Player*)this)->InArena() &&
+                    sWorld.getConfig(CONFIG_BOOL_PET_UNSUMMON_AT_MOUNT))
+                {
                     ((Player*)this)->UnsummonPetTemporaryIfAny();
+                }
                 else
                     pet->ApplyModeFlags(PET_MODE_DISABLE_ACTIONS,true);
             }
@@ -9978,7 +10006,7 @@ void Unit::DoPetAction( Player* owner, uint8 flag, uint32 spellid, uint64 guid1,
                     break;
                 case COMMAND_FOLLOW:                        //spellid=1792  //FOLLOW
                     AttackStop();
-                    GetMotionMaster()->MoveFollow(owner,PET_FOLLOW_DIST,((Creature*)this)->isPet() ? ((Pet*)this)->GetPetFollowAngle() : PET_DEFAULT_FOLLOW_ANGLE);
+                    GetMotionMaster()->MoveFollow(owner,PET_FOLLOW_DIST,((Creature*)this)->isPet() ? ((Pet*)this)->GetPetFollowAngle() : PET_FOLLOW_ANGLE);
                     GetCharmInfo()->SetCommandState( COMMAND_FOLLOW );
                     break;
                 case COMMAND_ATTACK:                        //spellid=1792  //ATTACK
@@ -10056,8 +10084,6 @@ void Unit::DoPetAction( Player* owner, uint8 flag, uint32 spellid, uint64 guid1,
         case ACT_ENABLED:                                   // 0xC1    spell
         {
             Unit* unit_target = NULL;
-            if (((Creature*)this)->GetGlobalCooldown() > 0)
-                return;
 
             if(guid2)
                 unit_target = owner->GetMap()->GetUnit(guid2);
@@ -10069,6 +10095,9 @@ void Unit::DoPetAction( Player* owner, uint8 flag, uint32 spellid, uint64 guid1,
                 sLog.outError("WORLD: unknown PET spell id %i", spellid);
                 return;
             }
+
+            if (GetCharmInfo() && GetCharmInfo()->GetGlobalCooldownMgr().HasGlobalCooldown(spellInfo))
+                return;
 
             for(int i = 0; i < MAX_EFFECT_INDEX;++i)
             {
@@ -10781,7 +10810,7 @@ Unit* Unit::SelectRandomUnfriendlyTarget(Unit* except /*= NULL*/, float radius /
     std::list<Unit *> targets;
 
     MaNGOS::AnyUnfriendlyUnitInObjectRangeCheck u_check(this, this, radius);
-    MaNGOS::UnitListSearcher<MaNGOS::AnyUnfriendlyUnitInObjectRangeCheck> searcher(this, targets, u_check);
+    MaNGOS::UnitListSearcher<MaNGOS::AnyUnfriendlyUnitInObjectRangeCheck> searcher(targets, u_check);
     Cell::VisitAllObjects(this, searcher, radius);
 
     // remove current target
@@ -10819,7 +10848,7 @@ Unit* Unit::SelectRandomFriendlyTarget(Unit* except /*= NULL*/, float radius /*=
     std::list<Unit *> targets;
 
     MaNGOS::AnyFriendlyUnitInObjectRangeCheck u_check(this, radius);
-    MaNGOS::UnitListSearcher<MaNGOS::AnyFriendlyUnitInObjectRangeCheck> searcher(this, targets, u_check);
+    MaNGOS::UnitListSearcher<MaNGOS::AnyFriendlyUnitInObjectRangeCheck> searcher(targets, u_check);
 
     Cell::VisitAllObjects(this, searcher, radius);
     // remove current target
@@ -10980,14 +11009,16 @@ void Unit::AddPetAura(PetAura const* petSpell)
 {
     m_petAuras.insert(petSpell);
     if(Pet* pet = GetPet())
-        pet->CastPetAura(petSpell);
-}
+    {
+        GroupPetList m_groupPets = GetPets();
+        if (!m_groupPets.empty())
+        {
+            for (GroupPetList::const_iterator itr = m_groupPets.begin(); itr != m_groupPets.end(); ++itr)
+                if (Pet* _pet = GetMap()->GetPet(*itr))
+                    _pet->CastPetAura(petSpell);
+        }
+    }
 
-void Unit::RemovePetAura(PetAura const* petSpell)
-{
-    m_petAuras.erase(petSpell);
-    if(Pet* pet = GetPet())
-        pet->RemoveAurasDueToSpell(petSpell->GetAura(pet->GetEntry()));
 }
 
 Unit* Unit::GetMisdirectionTarget()
@@ -10995,48 +11026,19 @@ Unit* Unit::GetMisdirectionTarget()
     return m_misdirectionTargetGUID ? GetMap()->GetUnit(m_misdirectionTargetGUID) : NULL;
 }
 
-Pet* Unit::CreateTamedPetFrom(Creature* creatureTarget,uint32 spell_id)
+void Unit::RemovePetAura(PetAura const* petSpell)
 {
-    Pet* pet = new Pet(HUNTER_PET);
-
-    if(!pet->CreateBaseAtCreature(creatureTarget))
+    m_petAuras.erase(petSpell);
+    if(Pet* pet = GetPet())
     {
-        delete pet;
-        return NULL;
+        GroupPetList m_groupPets = GetPets();
+        if (!m_groupPets.empty())
+        {
+            for (GroupPetList::const_iterator itr = m_groupPets.begin(); itr != m_groupPets.end(); ++itr)
+                if (Pet* _pet = GetMap()->GetPet(*itr))
+                    _pet->RemoveAurasDueToSpell(petSpell->GetAura(_pet->GetEntry()));
+        }
     }
-
-    pet->SetOwnerGUID(GetGUID());
-    pet->SetCreatorGUID(GetGUID());
-    pet->setFaction(getFaction());
-    pet->SetUInt32Value(UNIT_CREATED_BY_SPELL, spell_id);
-
-    if(GetTypeId()==TYPEID_PLAYER)
-        pet->SetUInt32Value(UNIT_FIELD_FLAGS, UNIT_FLAG_PVP_ATTACKABLE);
-
-    if(IsPvP())
-        pet->SetPvP(true);
-
-    if(IsFFAPvP())
-        pet->SetFFAPvP(true);
-
-    uint32 level = (creatureTarget->getLevel() < (getLevel() - 5)) ? (getLevel() - 5) : creatureTarget->getLevel();
-
-    if(!pet->InitStatsForLevel(level))
-    {
-        sLog.outError("Pet::InitStatsForLevel() failed for creature (Entry: %u)!",creatureTarget->GetEntry());
-        delete pet;
-        return NULL;
-    }
-
-    pet->GetCharmInfo()->SetPetNumber(sObjectMgr.GeneratePetNumber(), true);
-    // this enables pet details window (Shift+P)
-    pet->AIM_Initialize();
-    pet->InitPetCreateSpells();
-    pet->InitLevelupSpellsForLevel();
-    pet->InitTalentForLevel();
-    pet->SetHealth(pet->GetMaxHealth());
-
-    return pet;
 }
 
 void Unit::RemoveAurasAtMechanicImmunity(uint32 mechMask, uint32 exceptSpellId, bool non_positive /*= false*/)
