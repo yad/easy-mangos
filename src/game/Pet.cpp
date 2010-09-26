@@ -2665,13 +2665,13 @@ bool Pet::Summon(int32 duration, uint8 counter)
     SetHealth(GetMaxHealth());
     SetPower(getPowerType(), GetMaxPower(getPowerType()));
 
+    owner->SetPet(this);
+
     map->Add((Creature*)this);
 
 
     if (owner->GetTypeId() == TYPEID_PLAYER)
     {
-        owner->SetPet(this);
-
         if (getPetType() == SUMMON_PET || getPetType() == HUNTER_PET && !GetPetCounter())
         {
             CleanupActionBar();                                     // remove unknown spells from action bar after load
@@ -2797,6 +2797,8 @@ PetScalingData* Pet::CalculateScalingData(bool recalculate)
         pScalingDataList = sObjectMgr.GetPetScalingData(0);
     else if (getPetType() == HUNTER_PET)                      // Using creature_id = 1 for hunter pets
         pScalingDataList = sObjectMgr.GetPetScalingData(1);
+    else if (getPetType() == GUARDIAN_PET)                    // Using creature_id = 0 for guardians
+        pScalingDataList = sObjectMgr.GetPetScalingData(0);
     else
         pScalingDataList = sObjectMgr.GetPetScalingData(GetEntry());
 
@@ -2805,7 +2807,7 @@ PetScalingData* Pet::CalculateScalingData(bool recalculate)
         pScalingDataList = sObjectMgr.GetPetScalingData(0);   // if no records in DB ising record for creature_id = 0. Must be exist.
     }
 
-    if (pScalingDataList->empty())                            // Zero values...
+    if (!pScalingDataList || pScalingDataList->empty())                            // Zero values...
         return m_PetScalingData;
 
     for (PetScalingDataList::const_iterator itr = pScalingDataList->begin(); itr != pScalingDataList->end(); ++itr)

@@ -1022,7 +1022,8 @@ void SpellMgr::LoadSpellTargetPositions()
         bool found = false;
         for(int i = 0; i < MAX_EFFECT_INDEX; ++i)
         {
-            if (spellInfo->EffectImplicitTargetA[i]==TARGET_TABLE_X_Y_Z_COORDINATES || spellInfo->EffectImplicitTargetB[i]==TARGET_TABLE_X_Y_Z_COORDINATES)
+            if (spellInfo->EffectImplicitTargetA[i] == TARGET_TABLE_X_Y_Z_COORDINATES || spellInfo->EffectImplicitTargetB[i] == TARGET_TABLE_X_Y_Z_COORDINATES ||
+                spellInfo->EffectImplicitTargetB[i] == TARGET_SELF2)
             {
                 // additional requirements
                 if (spellInfo->Effect[i]==SPELL_EFFECT_BIND && spellInfo->EffectMiscValue[i])
@@ -1778,6 +1779,11 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                     (spellInfo_2->Id == 23170 && spellInfo_1->Id == 23171) )
                     return false;
 
+                // Blood Oath and Blood Oath
+                if ((spellInfo_1->Id == 50141 && spellInfo_2->Id == 50001) ||
+                    (spellInfo_2->Id == 50141 && spellInfo_1->Id == 50001))
+                    return false;
+
                 // Cool Down (See PeriodicAuraTick())
                 if ((spellInfo_1->Id == 52441 && spellInfo_2->Id == 52443) ||
                     (spellInfo_2->Id == 52441 && spellInfo_1->Id == 52443))
@@ -1869,6 +1875,11 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                 // Battle Shout and Rampage
                 if( (spellInfo_1->SpellIconID == 456 && spellInfo_2->SpellIconID == 2006) ||
                     (spellInfo_2->SpellIconID == 456 && spellInfo_1->SpellIconID == 2006) )
+                    return false;
+
+                // Taste of Blood and Sudden Death
+                if( (spellInfo_1->Id == 52437 && spellInfo_2->Id == 60503) ||
+                    (spellInfo_2->Id == 52437 && spellInfo_1->Id == 60503) )
                     return false;
             }
             break;
