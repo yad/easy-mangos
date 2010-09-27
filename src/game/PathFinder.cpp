@@ -131,13 +131,23 @@ void PathInfo::BuildPath(dtPolyRef startPoly, float* startPos, dtPolyRef endPoly
     // look for startPoly/endPoly in current path
     bool startPolyFound = false;
     bool endPolyFound = false;
-    for(uint32 i = 0; i < m_polyLength; ++i)
-    {
-        if(m_pathPolyRefs[i] == startPoly)
-            startPolyFound = true;
+    uint32 pathStartIndex, pathEndIndex;
 
-        if(m_pathPolyRefs[i] == endPoly)
-            endPolyFound = true;
+    if(m_polyLength)
+    {
+        for(pathStartIndex = 0; pathStartIndex < m_polyLength; ++pathStartIndex)
+            if(m_pathPolyRefs[pathStartIndex] == startPoly)
+            {
+                startPolyFound = true;
+                break;
+            }
+
+        for(pathEndIndex = m_polyLength-1; pathEndIndex > pathStartIndex; --pathEndIndex)
+            if(m_pathPolyRefs[pathEndIndex] == endPoly)
+            {
+                endPolyFound = true;
+                break;
+            }
     }
 
     if(startPolyFound && endPolyFound)
@@ -147,18 +157,6 @@ void PathInfo::BuildPath(dtPolyRef startPoly, float* startPos, dtPolyRef endPoly
         // we moved along the path and the target did not move out of our old poly-path
         // our path is a simple subpath case, we have all the data we need
         // just "cut" it out
-
-        uint32 pathStartIndex, pathEndIndex; // keep outside loops
-
-        // find if start node is on the existing path
-        for(pathStartIndex = 0; pathStartIndex < m_polyLength; ++pathStartIndex)
-            if(m_pathPolyRefs[pathStartIndex] == startPoly)
-                break;
-
-        // find if end node is on the existing path - start from last
-        for(pathEndIndex = m_polyLength-1; pathEndIndex > pathStartIndex; --pathEndIndex)
-            if(m_pathPolyRefs[pathEndIndex] == endPoly)
-                break;
 
         m_polyLength = pathEndIndex - pathStartIndex + 1;
 
@@ -174,12 +172,6 @@ void PathInfo::BuildPath(dtPolyRef startPoly, float* startPos, dtPolyRef endPoly
 
         // we are moving on the old path but target moved out
         // so we have atleast part of poly-path ready
-
-        // find if start node is on the existing path
-        uint32 pathStartIndex;
-        for(pathStartIndex = 0; pathStartIndex < m_polyLength; ++pathStartIndex)
-            if(m_pathPolyRefs[pathStartIndex] == startPoly)
-                break;
 
         m_polyLength -= pathStartIndex;
 
