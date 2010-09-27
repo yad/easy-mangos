@@ -187,18 +187,25 @@ void PathInfo::BuildPath(dtPolyRef startPoly, float* startPos, dtPolyRef endPoly
         memcpy(prefixPathPolys, m_pathPolyRefs+pathStartIndex, prefixPolyLength*sizeof(dtPolyRef));
 
         dtPolyRef suffixStartPoly = prefixPathPolys[prefixPolyLength-1];
-        dtPolyRef suffixPathPolys[MAX_PATH_LENGTH];
-        uint32 suffixPolyLength = 0;
 
         // we need any point on our suffix start poly to generate poly-path, so we need last poly in prefix data
         const dtMeshTile* tile;
         const dtPoly* poly;
-        if(m_navMesh->getTileAndPolyByRef(suffixStartPoly, &tile, &poly))
+        if(!m_navMesh->getTileAndPolyByRef(suffixStartPoly, &tile, &poly))
         {
-            dtQueryFilter filter = createFilter();
+            // suffixStartPoly is invalid somehow, or the navmesh is broken => error state
+            sLog.outError("%u's Path Build failed: invalid polyRef in path", m_sourceObject->GetGUID());
 
-            // generate suffix
-            suffixPolyLength = m_navMeshQuery->findPath(
+            // we need to get usable start/end polyRefs and recalculate path from scratch
+            BuildFreshPath();
+            return;
+        }
+
+        dtQueryFilter filter = createFilter();
+        dtPolyRef suffixPathPolys[MAX_PATH_LENGTH];
+
+        // generate suffix
+        uint32 suffixPolyLength = m_navMeshQuery->findPath(
                     suffixStartPoly,     // start polygon
                     endPoly,            // end polygon
                     // we might need to get better point here
@@ -208,36 +215,25 @@ void PathInfo::BuildPath(dtPolyRef startPoly, float* startPos, dtPolyRef endPoly
                     suffixPathPolys,     // [out] path
                     MAX_PATH_LENGTH);   // max number of polygons in output path
 
-            if(suffixPolyLength)
-            {
-                // new path = prefix + suffix - overlap
-
-                m_polyLength = prefixPolyLength + suffixPolyLength - 1;
-                delete [] m_pathPolyRefs;
-                m_pathPolyRefs = new dtPolyRef[m_polyLength];
-
-                // copy the part of the old path we keep - prefix
-                memcpy(m_pathPolyRefs, prefixPathPolys, prefixPolyLength*sizeof(dtPolyRef));
-
-                // copy the newly created suffix - skip first poly, we have it at prefix end
-                memcpy(m_pathPolyRefs+prefixPolyLength, suffixPathPolys+1, (suffixPolyLength-1)*sizeof(dtPolyRef));
-            }
-            else
-            {
-                // this is probably an error state, but we'll leave it
-                // and hopefully recover on the next Update
-                sLog.outError("%u's Path Build failed: 0 length path", m_sourceObject->GetGUID());
-            }
-        }
-        else
+        if(suffixPolyLength == 0)
         {
-            // suffixStartPoly is invalid somehow, or the navmesh is broken => error state
-            sLog.outError("%u's Path Build failed: invalid polyRef in path", m_sourceObject->GetGUID());
-
-            // we need to get usable start/end polyRefs and recalculate path from scratch
-            BuildFreshPath();
-            return;
+            // this is probably an error state, but we'll leave it
+            // and hopefully recover on the next Update
+            // we still need to copy our preffix
+            sLog.outError("%u's Path Build failed: 0 length path", m_sourceObject->GetGUID());
         }
+
+        // new path = prefix + suffix - overlap
+        m_polyLength = prefixPolyLength + suffixPolyLength - 1;
+        delete [] m_pathPolyRefs;
+        m_pathPolyRefs = new dtPolyRef[m_polyLength];
+
+        // copy the part of the old path we keep - prefix
+        memcpy(m_pathPolyRefs, prefixPathPolys, prefixPolyLength*sizeof(dtPolyRef));
+
+        // copy the newly created suffix - skip first poly, we have it at prefix end
+        if(suffixPathPolys)
+            memcpy(m_pathPolyRefs+prefixPolyLength, suffixPathPolys+1, (suffixPolyLength-1)*sizeof(dtPolyRef));
     }
     else
     {
