@@ -688,6 +688,11 @@ LogColors = ""
 #        Default: 0 - recheck offhand slot weapon only at zone update
 #                 1 - recheck offhand slot weapon at talent reset also
 #
+#    PetUnsummonAtMount
+#        Persmanent pet will unsummoned at player mount
+#                 0 - unsummon only for flying mounts
+#        Default: 1 - unsummon for any mount
+#
 #    ClientCacheVersion
 #        Client cache version for client cache data reset. Use any different from DB value and not recently used for triggering reset.
 #        Default: 0 (use DB value from world DB db_version.cache_id field)
@@ -769,6 +774,7 @@ MailDeliveryDelay = 3600
 SkillChance.Prospecting = 0
 SkillChance.Milling = 0
 OffhandCheckAtTalentsReset = 0
+PetUnsummonAtMount = 1
 ClientCacheVersion = 0
 Event.Announce = 0
 BeepAtStart = 1
@@ -869,12 +875,12 @@ TalentsInspecting = 1
 #    Corpse.Decay.ELITE
 #    Corpse.Decay.RAREELITE
 #    Corpse.Decay.WORLDBOSS
-#        Seconds until creature corpse will decay without being looted or skinned.
-#        Default: 60, 300, 300, 300, 3600
+#        Seconds until creature corpse will decay without being looted or skinned (not used when creature does not have loot initially)
+#        Default: 300, 900, 600, 1200, 3600
 #
 #    Rate.Corpse.Decay.Looted
 #         Controls how long the creature corpse stays after it had been looted, as a multiplier of its Corpse.Decay.* config.
-#         Default: 0.1
+#         Default: 0.0 (will use modifier /3 of the creatures spawntimesecs when 0.0)
 #
 #    Rate.Creature.Normal.Damage
 #    Rate.Creature.Elite.Elite.Damage
@@ -922,12 +928,12 @@ CreatureFamilyAssistanceDelay = 1500
 CreatureFamilyFleeDelay = 7000
 WorldBossLevelDiff = 3
 Corpse.EmptyLootShow = 1
-Corpse.Decay.NORMAL = 60
-Corpse.Decay.RARE = 300
-Corpse.Decay.ELITE = 300
-Corpse.Decay.RAREELITE = 300
+Corpse.Decay.NORMAL = 300
+Corpse.Decay.RARE = 900
+Corpse.Decay.ELITE = 600
+Corpse.Decay.RAREELITE = 1200
 Corpse.Decay.WORLDBOSS = 3600
-Rate.Corpse.Decay.Looted = 0.1
+Rate.Corpse.Decay.Looted = 0.0
 Rate.Creature.Normal.Damage = 1
 Rate.Creature.Elite.Elite.Damage = 1
 Rate.Creature.Elite.RAREELITE.Damage = 1

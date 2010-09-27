@@ -141,7 +141,7 @@ struct CreatureInfo
         else if(type_flags & CREATURE_TYPEFLAGS_MININGLOOT)
             return SKILL_MINING;
         else if(type_flags & CREATURE_TYPEFLAGS_ENGINEERLOOT)
-            return SKILL_ENGINERING;
+            return SKILL_ENGINEERING;
         else
             return SKILL_SKINNING;                          // normal case
     }
@@ -560,7 +560,6 @@ class MANGOS_DLL_SPEC Creature : public Unit
         uint32 m_spells[CREATURE_MAX_SPELLS];
         CreatureSpellCooldowns m_CreatureSpellCooldowns;
         CreatureSpellCooldowns m_CreatureCategoryCooldowns;
-        uint32 m_GlobalCooldown;
 
         float GetAttackDistance(Unit const* pl) const;
 
@@ -629,8 +628,6 @@ class MANGOS_DLL_SPEC Creature : public Unit
         void SetSummonPoint(float fX, float fY, float fZ, float fOrient) { m_summonXpoint = fX; m_summonYpoint = fY; m_summonZpoint = fZ; m_summonOrientation = fOrient; }
         void GetSummonPoint(float &fX, float &fY, float &fZ, float &fOrient) const { fX = m_summonXpoint; fY = m_summonYpoint; fZ = m_summonZpoint; fOrient = m_summonOrientation; }
 
-        uint32 GetGlobalCooldown() const { return m_GlobalCooldown; }
-
         void SetDeadByDefault (bool death_state) { m_isDeadByDefault = death_state; }
 
         void SetActiveObjectState(bool on);
@@ -661,7 +658,7 @@ class MANGOS_DLL_SPEC Creature : public Unit
         uint32 m_lootGroupRecipientId;                      // group who will have rights for looting if set and exist
 
         /// Timers
-        uint32 m_deathTimer;                                // (msecs)timer for death or corpse disappearance
+        uint32 m_corpseDecayTimer;                          // (msecs)timer for death or corpse disappearance
         time_t m_respawnTime;                               // (secs) time of next respawn
         uint32 m_respawnDelay;                              // (secs) delay between corpse disappearance and respawning
         uint32 m_corpseDelay;                               // (secs) delay between death and corpse disappearance

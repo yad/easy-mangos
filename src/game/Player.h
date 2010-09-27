@@ -1341,7 +1341,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         void AddArmorProficiency(uint32 newflag) { m_ArmorProficiency |= newflag; }
         uint32 GetWeaponProficiency() const { return m_WeaponProficiency; }
         uint32 GetArmorProficiency() const { return m_ArmorProficiency; }
-        bool IsUseEquipedWeapon( bool mainhand ) const
+        bool IsUseEquippedWeapon( bool mainhand ) const
         {
             // disarm applied only to mainhand weapon
             return !IsInFeralForm() && (!mainhand || !HasFlag(UNIT_FIELD_FLAGS,UNIT_FLAG_DISARMED) );
@@ -1644,7 +1644,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         bool IsNeedCastPassiveSpellAtLearn(SpellEntry const* spellInfo) const;
         bool IsImmunedToSpellEffect(SpellEntry const* spellInfo, SpellEffectIndex index) const;
 
-        void SendProficiency(uint8 pr1, uint32 pr2);
+        void SendProficiency(ItemClass itemClass, uint32 itemSubclassMask);
         void SendInitialSpells();
         bool addSpell(uint32 spell_id, bool active, bool learning, bool dependent, bool disabled);
         void learnSpell(uint32 spell_id, bool dependent);
@@ -1722,6 +1722,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         void RemoveSpellCooldown(uint32 spell_id, bool update = false);
         void RemoveSpellCategoryCooldown(uint32 cat, bool update = false);
         void SendClearCooldown( uint32 spell_id, Unit* target );
+
+        GlobalCooldownMgr& GetGlobalCooldownMgr() { return m_GlobalCooldownMgr; }
 
         void RemoveArenaSpellCooldowns();
         void RemoveAllSpellCooldown();
@@ -2378,7 +2380,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         void SetCurrentRune(uint8 index, RuneType currentRune) { m_runes->runes[index].CurrentRune = currentRune; }
         void SetRuneCooldown(uint8 index, uint16 cooldown) { m_runes->runes[index].Cooldown = cooldown; m_runes->SetRuneState(index, (cooldown == 0) ? true : false); }
         void ConvertRune(uint8 index, RuneType newType);
-        void ResyncRunes(uint8 count);
+        bool ActivateRunes(RuneType type, uint32 count);
+        void ResyncRunes();
         void AddRunePower(uint8 index);
         void InitRunes();
 
@@ -2523,6 +2526,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         PlayerTalentMap m_talents[MAX_TALENT_SPEC_COUNT];
         SpellCooldowns m_spellCooldowns;
         uint32 m_lastPotionId;                              // last used health/mana potion in combat, that block next potion use
+
+        GlobalCooldownMgr m_GlobalCooldownMgr;
 
         uint8 m_activeSpec;
         uint8 m_specsCount;

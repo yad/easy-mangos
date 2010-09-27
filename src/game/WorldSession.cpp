@@ -42,9 +42,9 @@
 /// WorldSession constructor
 WorldSession::WorldSession(uint32 id, WorldSocket *sock, AccountTypes sec, uint8 expansion, time_t mute_time, LocaleConstant locale) :
 LookingForGroup_auto_join(false), LookingForGroup_auto_add(false), m_muteTime(mute_time),
-_player(NULL), m_Socket(sock),_security(sec), _accountId(id), m_expansion(expansion),
+_player(NULL), m_Socket(sock),_security(sec), _accountId(id), m_expansion(expansion), _logoutTime(0),
+m_inQueue(false), m_playerLoading(false), m_playerLogout(false), m_playerRecentlyLogout(false), m_playerSave(false),
 m_sessionDbcLocale(sWorld.GetAvailableDbcLocale(locale)), m_sessionDbLocaleIndex(sObjectMgr.GetIndexForLocale(locale)),
-_logoutTime(0), m_inQueue(false), m_playerLoading(false), m_playerLogout(false), m_playerRecentlyLogout(false), m_playerSave(false),
 m_latency(0), m_tutorialState(TUTORIALDATA_UNCHANGED)
 {
     if (sock)
@@ -527,7 +527,7 @@ const char * WorldSession::GetMangosString( int32 entry ) const
 
 void WorldSession::Handle_NULL( WorldPacket& recvPacket )
 {
-    sLog.outError( "SESSION: received unhandled opcode %s (0x%.4X)",
+    DEBUG_LOG("SESSION: received unimplemented opcode %s (0x%.4X)",
         LookupOpcodeName(recvPacket.GetOpcode()),
         recvPacket.GetOpcode());
 }
@@ -541,7 +541,7 @@ void WorldSession::Handle_EarlyProccess( WorldPacket& recvPacket )
 
 void WorldSession::Handle_ServerSide( WorldPacket& recvPacket )
 {
-    sLog.outError( "SESSION: received server-side opcode %s (0x%.4X)",
+    sLog.outError("SESSION: received server-side opcode %s (0x%.4X)",
         LookupOpcodeName(recvPacket.GetOpcode()),
         recvPacket.GetOpcode());
 }
