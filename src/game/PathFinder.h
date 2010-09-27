@@ -39,6 +39,7 @@ class WorldObject;
 // see contrib/mmap/src/TileBuilder.h
 enum NavTerrain
 {
+    NAV_EMPTY   = 0x00,
     NAV_GROUND  = 0x01,
     NAV_MAGMA   = 0x02,
     NAV_SLIME   = 0x04,

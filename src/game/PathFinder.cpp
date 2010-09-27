@@ -513,7 +513,7 @@ NavTerrain PathInfo::getNavTerrain(float x, float y, float z)
         case MAP_LIQUID_TYPE_SLIME:
             return NAV_SLIME;
         default:
-            return NavTerrain(0);
+            return NAV_EMPTY;
     }
 }
 
