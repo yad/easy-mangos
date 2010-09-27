@@ -31,8 +31,8 @@ class WorldObject;
 
 #define _USE_SMOOTH_PATH
 #define MAX_SMOOTH_PATH_LENGTH  2048
-#define SMOOTH_PATH_STEP_SIZE   8.0f
-#define SMOOTH_PATH_SLOP        0.5f
+#define SMOOTH_PATH_STEP_SIZE   6.0f
+#define SMOOTH_PATH_SLOP        0.2f
 
 #define INVALID_POLYREF 0
 
