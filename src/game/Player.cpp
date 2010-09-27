@@ -18444,15 +18444,6 @@ void Player::_LoadGroup(QueryResult *result)
                 SetDungeonDifficulty(group->GetDungeonDifficulty());
                 SetRaidDifficulty(group->GetRaidDifficulty());
             }
-            // Group Interfactions interactions (test)
-            if (sWorld.getConfig(CONFIG_BOOL_ALLOW_TWO_SIDE_INTERACTION_GROUP))
-            {
-                if (group->GetCreatorRace())
-                {
-                    setFactionForRace(group->GetCreatorRace());
-                    sLog.outDebug( "PLAYER LOAD: Group Interfaction Interactions - Faction changed (LoadPlayer)" );
-                } else sLog.outDebug( "PLAYER LOAD: Group Interfaction Interactions - cannot change faction, CreatorRace is NULL" );
-            }
         }
     }
 }
@@ -23073,7 +23064,8 @@ void Player::ConvertRune(uint8 index, RuneType newType, uint32 spellid)
 
 void Player::ResyncRunes(uint8 count)
 {
-    WorldPacket data(SMSG_RESYNC_RUNES, count * 2);
+    WorldPacket data(SMSG_RESYNC_RUNES, 4 + count * 2);
+    data << uint32(count);
     for(uint32 i = 0; i < count; ++i)
     {
         data << uint8(GetCurrentRune(i));                   // rune type
