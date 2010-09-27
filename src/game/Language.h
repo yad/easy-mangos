@@ -897,12 +897,8 @@ enum MangosStrings
     // Room for old clients 1.x           1400-1499 not used
 
     // FREE IDS                           1500-9999
-    // Broadcaster
-    LANG_AUTO_BROADCAST                 = 1300,
-    LANG_SYSTEMMESSAGE_MODERATOR        = 1301,
-    LANG_SYSTEMMESSAGE_GAMEMASTER       = 1302,
-    LANG_SYSTEMMESSAGE_ADMINISTRATOR    = 1303,
     LANG_COMMAND_MODIFY_HKILL           = 1500,
+	
     // Use for not-in-offcial-sources patches
     //                                    10000-10999
 

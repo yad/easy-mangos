@@ -858,9 +858,6 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
             {
                 // FIXME: kept by compatibility. don't know in BG if the restriction apply.
                 bg->UpdatePlayerScore(killer, SCORE_DAMAGE_DONE, damage);
-                /* WoWArmory (arena game chart) */
-                if (BattleGround * bgV = ((Player*)pVictim)->GetBattleGround())
-                    bgV->UpdatePlayerScore(((Player*)pVictim), SCORE_DAMAGE_TAKEN, damage);
             }
         }
 
@@ -872,7 +869,7 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
         ((Player*)pVictim)->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HIGHEST_HIT_RECEIVED, damage);
 
     if (pVictim->GetTypeId() == TYPEID_UNIT && !((Creature*)pVictim)->isPet() && !((Creature*)pVictim)->HasLootRecipient())
-            ((Creature*)pVictim)->SetLootRecipient(this);
+        ((Creature*)pVictim)->SetLootRecipient(this);
 
     if (health <= damage)
     {
@@ -889,11 +886,11 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
         // in creature kill case group/player tap stored for creature
         if (pVictim->GetTypeId() == TYPEID_UNIT)
         {
-                group_tap = ((Creature*)pVictim)->GetGroupLootRecipient();
+            group_tap = ((Creature*)pVictim)->GetGroupLootRecipient();
 
-                if (Player* recipient = ((Creature*)pVictim)->GetOriginalLootRecipient())
-                    player_tap = recipient;
-            }
+            if (Player* recipient = ((Creature*)pVictim)->GetOriginalLootRecipient())
+                player_tap = recipient;
+        }
         // in player kill case group tap selected by player_tap (killer-player itself, or charmer, or owner, etc)
         else
         {
@@ -1062,10 +1059,7 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
                     if (m->IsRaidOrHeroicDungeon())
                     {
                         if(cVictim->GetCreatureInfo()->flags_extra & CREATURE_FLAG_EXTRA_INSTANCE_BIND)
-                        {
                             ((InstanceMap *)m)->PermBindAllPlayers(creditedPlayer);
-                            creditedPlayer->WriteWowArmoryDatabaseLog(3, cVictim->GetCreatureInfo()->Entry);
-                        }
                     }
                     else
                     {
@@ -2292,7 +2286,7 @@ void Unit::CalculateDamageAbsorbAndResist(Unit *pCaster, SpellSchoolMask schoolM
                     {
                         // Cast healing spell, completely avoid damage
                         RemainingDamage = 0;
-
+                        
                         uint32 defenseSkillValue = GetDefenseSkillValue();
                         // Max heal when defense skill denies critical hits from raid bosses
                         // Formula: max defense at level + 140 (raiting from gear)
@@ -5156,10 +5150,10 @@ Aura* Unit::GetAura(AuraType type, uint32 family, uint64 familyFlag, uint32 fami
     for(AuraList::const_iterator i = auras.begin();i != auras.end(); ++i)
     {
         SpellEntry const *spell = (*i)->GetSpellProto();
-
+		
         if (!spell)
             continue;
-
+		
         if (spell->SpellFamilyName == family && (spell->SpellFamilyFlags & familyFlag || spell->SpellFamilyFlags2 & familyFlag2))
         {
             if (casterGUID && (*i)->GetCasterGUID()!=casterGUID)
@@ -5550,8 +5544,8 @@ void Unit::setPowerType(Powers new_powertype)
         {
             Unit *owner = GetOwner();
             if(owner && (owner->GetTypeId() == TYPEID_PLAYER) && ((Player*)owner)->GetGroup())
-            ((Player*)owner)->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_PET_POWER_TYPE);
-    }
+                ((Player*)owner)->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_PET_POWER_TYPE);
+        }
     }
 
     switch(new_powertype)
@@ -6328,10 +6322,6 @@ int32 Unit::DealHeal(Unit *pVictim, uint32 addhealth, SpellEntry const *spellPro
 
     if (pVictim->GetTypeId()==TYPEID_PLAYER)
     {
-        /* WoWArmory (arena game chart) */
-        if (BattleGround *bgV = ((Player*)pVictim)->GetBattleGround())
-            bgV->UpdatePlayerScore(((Player*)pVictim), SCORE_HEALING_TAKEN, gain);
-
         ((Player*)pVictim)->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_TOTAL_HEALING_RECEIVED, gain);
         ((Player*)pVictim)->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HIGHEST_HEALING_RECEIVED, addhealth);
     }
@@ -7426,7 +7416,7 @@ bool Unit::IsImmunedToSpellEffect(SpellEntry const* spellInfo, SpellEffectIndex 
                 ((*iter)->GetModifier()->m_miscvalue & GetSpellSchoolMask(spellInfo)) &&  // Check school
                 !IsPositiveEffect(spellInfo->Id, index))                                  // Harmful
                 return true;
-
+                
         AuraList const& immuneMechanicAuraApply = GetAurasByType(SPELL_AURA_MECHANIC_IMMUNITY_MASK);
         for(AuraList::const_iterator i = immuneMechanicAuraApply.begin(); i != immuneMechanicAuraApply.end(); ++i)
             if ((spellInfo->EffectMechanic[index] & (*i)->GetMiscValue() ||
@@ -9009,7 +8999,7 @@ bool Unit::SelectHostileTarget()
     }
 
     // enter in evade mode in other case
-        ((Creature*)this)->AI()->EnterEvadeMode();
+    ((Creature*)this)->AI()->EnterEvadeMode();
 
     if (InstanceData* mapInstance = GetInstanceData())
         mapInstance->OnCreatureEvade((Creature*)this);
@@ -9132,7 +9122,7 @@ int32 Unit::CalculateSpellDuration(SpellEntry const* spellProto, SpellEffectInde
                 break;
         }
     }
-
+       
     if (duration > 0)
     {
         int32 mechanic = GetEffectMechanic(spellProto, effect_index);
@@ -9562,9 +9552,9 @@ void Unit::SetHealth(uint32 val)
         {
             Unit *owner = GetOwner();
             if(owner && (owner->GetTypeId() == TYPEID_PLAYER) && ((Player*)owner)->GetGroup())
-            ((Player*)owner)->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_PET_CUR_HP);
+                ((Player*)owner)->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_PET_CUR_HP);
+        }
     }
-}
 }
 
 void Unit::SetMaxHealth(uint32 val)
@@ -9585,8 +9575,8 @@ void Unit::SetMaxHealth(uint32 val)
         {
             Unit *owner = GetOwner();
             if(owner && (owner->GetTypeId() == TYPEID_PLAYER) && ((Player*)owner)->GetGroup())
-            ((Player*)owner)->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_PET_MAX_HP);
-    }
+                ((Player*)owner)->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_PET_MAX_HP);
+        }
     }
 
     if(val < health)
@@ -9629,16 +9619,16 @@ void Unit::SetPower(Powers power, uint32 val)
         {
             Unit *owner = GetOwner();
             if(owner && (owner->GetTypeId() == TYPEID_PLAYER) && ((Player*)owner)->GetGroup())
-            ((Player*)owner)->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_PET_CUR_POWER);
+                ((Player*)owner)->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_PET_CUR_POWER);
         }
 
-            // Update the pet's character sheet with happiness damage bonus
-            if(pet->getPetType() == HUNTER_PET && power == POWER_HAPPINESS)
-            {
-                pet->UpdateDamagePhysical(BASE_ATTACK);
-            }
+        // Update the pet's character sheet with happiness damage bonus
+        if(pet->getPetType() == HUNTER_PET && power == POWER_HAPPINESS)
+        {
+            pet->UpdateDamagePhysical(BASE_ATTACK);
         }
     }
+}
 
 void Unit::SetMaxPower(Powers power, uint32 val)
 {
@@ -9658,7 +9648,7 @@ void Unit::SetMaxPower(Powers power, uint32 val)
         {
             Unit *owner = GetOwner();
             if(owner && (owner->GetTypeId() == TYPEID_PLAYER) && ((Player*)owner)->GetGroup())
-            ((Player*)owner)->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_PET_MAX_POWER);
+                ((Player*)owner)->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_PET_MAX_POWER);
         }
     }
 
@@ -9683,7 +9673,7 @@ void Unit::ApplyPowerMod(Powers power, uint32 val, bool apply)
         {
             Unit *owner = GetOwner();
             if(owner && (owner->GetTypeId() == TYPEID_PLAYER) && ((Player*)owner)->GetGroup())
-            ((Player*)owner)->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_PET_CUR_POWER);
+                ((Player*)owner)->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_PET_CUR_POWER);
         }
     }
 }
@@ -9705,7 +9695,7 @@ void Unit::ApplyMaxPowerMod(Powers power, uint32 val, bool apply)
         {
             Unit *owner = GetOwner();
             if(owner && (owner->GetTypeId() == TYPEID_PLAYER) && ((Player*)owner)->GetGroup())
-            ((Player*)owner)->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_PET_MAX_POWER);
+                ((Player*)owner)->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_PET_MAX_POWER);
         }
     }
 }
@@ -10749,7 +10739,7 @@ void Unit::SetDisplayId(uint32 modelId)
         Unit *owner = GetOwner();
         if(owner && (owner->GetTypeId() == TYPEID_PLAYER) && ((Player*)owner)->GetGroup())
             ((Player*)owner)->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_PET_MODEL_ID);
-}
+    }
 }
 
 void Unit::UpdateModelData()
@@ -11375,7 +11365,7 @@ void Unit::KnockBackFrom(Unit* target, float horizontalSpeed, float verticalSpee
     {
         float dh = verticalSpeed*verticalSpeed / (2*19.23f); // maximum parabola height
         float time = (verticalSpeed) ? sqrtf(dh/(0.124976 * verticalSpeed)) : 0.0f;  //full move time in seconds
-
+ 
         float dis = time * horizontalSpeed;
 
         float ox, oy, oz;

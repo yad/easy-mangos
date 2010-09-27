@@ -643,7 +643,9 @@ Player::~Player ()
     delete PlayerTalkClass;
 
     if (m_transport)
+    {
         m_transport->RemovePassenger(this);
+    }
 
     for(size_t x = 0; x < ItemSetEff.size(); x++)
         if(ItemSetEff[x])
@@ -8120,7 +8122,7 @@ void Player::RewardReputation(Unit *pVictim, float rate)
      uint32 Repfaction1 = Rep->repfaction1;
      uint32 Repfaction2 = Rep->repfaction2;
      uint32 tabardFactionID = 0;
-
+     
      // Championning tabard reputation system
      // aura 57818 is a hidden aura common to northrend tabards allowing championning.
      if(HasAura(57818))
@@ -8131,10 +8133,10 @@ void Player::RewardReputation(Unit *pVictim, float rate)
          // only for expansion 2 map (wotlk), and : min level >= lv75 or dungeon only heroic mod
          // entering a lv80 designed instance require a min level>=75. note : min level != suggested level
          if ( StoredMap->Expansion() == 2 && ( mInstance->levelMin >= 75 || pVictim->GetMap()->GetDifficulty() == DUNGEON_DIFFICULTY_HEROIC ) )
-         {
+         {             
              if( Item* pItem = GetItemByPos( INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_TABARD ) )
-             {
-                 if ( tabardFactionID = pItem->GetProto()->RequiredReputationFaction )
+             {                 
+                 if ( tabardFactionID = pItem->GetProto()->RequiredReputationFaction ) 
                  {
                       Repfaction1 = tabardFactionID;
                       Repfaction2 = tabardFactionID;
@@ -8698,7 +8700,7 @@ void Player::DuelComplete(DuelCompleteType type)
     {
         GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_LOSE_DUEL, 1);
         if (duel->opponent)
-                duel->opponent->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_WIN_DUEL, 1);
+            duel->opponent->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_WIN_DUEL, 1);
     }
 
     //Remove Duel Flag object
@@ -18798,17 +18800,6 @@ void Player::SaveToDB()
 
     CharacterDatabase.BeginTransaction();
 
-    /* WoWArmory */
-    std::ostringstream ps;
-    ps << "REPLACE INTO armory_character_stats (guid,data) VALUES ('" << GetGUIDLow() << "', '";
-    for(uint16 i = 0; i < m_valuesCount; ++i )
-    {
-        ps << GetUInt32Value(i) << " ";
-    }
-    ps << "')";
-    CharacterDatabase.Execute( ps.str().c_str() );
-    /* WoWArmory */
-
     CharacterDatabase.PExecute("DELETE FROM characters WHERE guid = '%u'",GetGUIDLow());
 
     std::string sql_name = m_name;
@@ -18973,20 +18964,7 @@ void Player::SaveToDB()
     // check if stats should only be saved on logout
     // save stats can be out of transaction
     if (m_session->isLogingOut() || !sWorld.getConfig(CONFIG_BOOL_STATS_SAVE_ONLY_ON_LOGOUT))
-    {
-        /* WoWArmory */
-        std::ostringstream ps;
-        ps << "REPLACE INTO armory_character_stats (guid,data) VALUES ('" << GetGUIDLow() << "', '";
-        for(uint16 i = 0; i < m_valuesCount; ++i )
-        {
-            ps << GetUInt32Value(i) << " ";
-        }
-        ps << "')";
-        CharacterDatabase.Execute( ps.str().c_str() );
-        /* WoWArmory */
-
         _SaveStats();
-    }
 
     // save pet (hunter pet level and experience and all type pets health/mana).
     if (Pet* pet = GetPet())
@@ -21581,12 +21559,12 @@ void Player::SendComboPoints()
 {
     Unit *combotarget = ObjectAccessor::GetUnit(*this, m_comboTarget);
     if (combotarget)
-       {
+    {
         WorldPacket data(SMSG_UPDATE_COMBO_POINTS, combotarget->GetPackGUID().size()+1);
-    data << combotarget->GetPackGUID();
-    data << uint8(m_comboPoints);
-    GetSession()->SendPacket(&data);
-}
+        data << combotarget->GetPackGUID();
+        data << uint8(m_comboPoints);
+        GetSession()->SendPacket(&data);
+    }
 }
 
 void Player::AddComboPoints(Unit* target, int8 count)
@@ -24404,34 +24382,6 @@ void Player::SetRestType( RestType n_r_type, uint32 areaTriggerId /*= 0*/)
 
         if(sWorld.IsFFAPvPRealm())
             SetFFAPvP(false);
-    }
-}
-
-void Player::WriteWowArmoryDatabaseLog(uint32 type, uint32 data)
-{
-    uint32 pGuid = GetGUIDLow();
-    sLog.outDetail("WoWArmory: write feed log (guid: %u, type: %u, data: %u", pGuid, type, data);
-    if (type <= 0)    // Unknown type
-    {
-        sLog.outError("WoWArmory: unknown type id: %d, ignore.", type);
-        return;
-    }
-    if (type == 3)    // Do not write same bosses many times - just update counter.
-    {
-        QueryResult *result = CharacterDatabase.PQuery("SELECT counter FROM character_feed_log WHERE guid='%u' AND type=3 AND data='%u' LIMIT 1", pGuid, data);
-        if (result)
-        {
-            CharacterDatabase.PExecute("UPDATE character_feed_log SET counter=counter+1, date=NOW() WHERE guid='%u' AND type=3 AND data='%u' LIMIT 1", pGuid, data);
-        }
-        else
-        {
-            CharacterDatabase.PExecute("INSERT INTO character_feed_log (guid, type, data, counter) VALUES('%u', '%d', '%u', 1)", pGuid, type, data);
-        }
-        delete result;
-    }
-    else
-    {
-        CharacterDatabase.PExecute("REPLACE INTO character_feed_log (guid, type, data, counter) VALUES('%u', '%d', '%u', 1)", pGuid, type, data);
     }
 }
 

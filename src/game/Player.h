@@ -2395,9 +2395,6 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         Object* GetObjectByTypeMask(ObjectGuid guid, TypeMask typemask);
 
-        /* WoWArmory Feed Log */
-        void WriteWowArmoryDatabaseLog(uint32 type, uint32 data);
-
         // currently visible objects at player client
         ObjectGuidSet m_clientGUIDs;
 

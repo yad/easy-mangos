@@ -576,8 +576,6 @@ class ChatHandler
         //! Development Commands
         bool HandleSaveAllCommand(char* args);
 
-        bool HandleNameAnnounceCommand(char* args);
-
         Player*   getSelectedPlayer();
         Creature* getSelectedCreature();
         Unit*     getSelectedUnit();

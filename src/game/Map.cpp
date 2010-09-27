@@ -3289,7 +3289,7 @@ Player* Map::GetPlayer(ObjectGuid guid)
 }
 
 /**
- * Function return creature (non-pet and then most summoned by spell creatures) that in world at CURRENT map
+ * Function return creature (non-pet and then most summoned by spell creatures) that in world at CURRENT map 
  *
  * @param guid must be creature guid (HIGHGUID_UNIT)
  */
@@ -3404,16 +3404,19 @@ WorldObject* Map::GetWorldObject(ObjectGuid guid)
 void Map::SendObjectUpdates()
 {
     UpdateDataMapType update_players;
-    for (std::set<Object*>::const_iterator it = i_objectsToClientUpdate.begin();it!= i_objectsToClientUpdate.end();++it)
-        (*it)->BuildUpdateData(update_players);
 
-    i_objectsToClientUpdate.clear();
+    while(!i_objectsToClientUpdate.empty())
+    {
+        Object* obj = *i_objectsToClientUpdate.begin();
+        i_objectsToClientUpdate.erase(i_objectsToClientUpdate.begin());
+        obj->BuildUpdateData(update_players);
+    }
 
     WorldPacket packet;                                     // here we allocate a std::vector with a size of 0x10000
     for(UpdateDataMapType::iterator iter = update_players.begin(); iter != update_players.end(); ++iter)
     {
-        if (iter->second.BuildPacket(&packet))
-            iter->first->GetSession()->SendPacket(&packet);
+        iter->second.BuildPacket(&packet);
+        iter->first->GetSession()->SendPacket(&packet);
         packet.clear();                                     // clean the string
     }
 }

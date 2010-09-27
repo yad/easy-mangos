@@ -438,23 +438,23 @@ void WorldSession::HandlePetSpellAutocastOpcode( WorldPacket& recvPacket )
     uint8  state;                                           //1 for on, 0 for off
     recvPacket >> guid >> spellid >> state;
 
-    if (!_player->GetPet() && !_player->GetCharm())
+    if(!_player->GetPet() && !_player->GetCharm())
         return;
 
     Creature* pet = _player->GetMap()->GetAnyTypeCreature(guid);
 
-    if (!pet || (pet != _player->GetPet() && pet != _player->GetCharm()))
+    if(!pet || (pet != _player->GetPet() && pet != _player->GetCharm()))
     {
         sLog.outError( "HandlePetSpellAutocastOpcode.Pet %u isn't pet of player %s .", uint32(GUID_LOPART(guid)),GetPlayer()->GetName() );
         return;
     }
 
     // do not add not learned spells/ passive spells
-    if (!pet->HasSpell(spellid) || IsPassiveSpell(spellid))
+    if(!pet->HasSpell(spellid) || IsPassiveSpell(spellid))
         return;
 
     CharmInfo *charmInfo = pet->GetCharmInfo();
-    if (!charmInfo)
+    if(!charmInfo)
     {
         sLog.outError("WorldSession::HandlePetSpellAutocastOpcod: object (GUID: %u TypeId: %u) is considered pet-like but doesn't have a charminfo!", pet->GetGUIDLow(), pet->GetTypeId());
         return;
@@ -474,7 +474,7 @@ void WorldSession::HandlePetSpellAutocastOpcode( WorldPacket& recvPacket )
                 if (Pet* _pet = _player->GetMap()->GetPet(*itr))
                     _pet->ToggleAutocast(spellid, state);
         }
-        else
+        else 
             ((Pet*)pet)->ToggleAutocast(spellid, state);
     }
 
@@ -531,7 +531,7 @@ void WorldSession::HandlePetCastSpellOpcode( WorldPacket& recvPacket )
             if (Pet* _pet = _player->GetMap()->GetPet(*itr))
                _pet->DoPetCastSpell( GetPlayer(), cast_count, targets, spellInfo );
     }
-    else
+    else 
         pet->DoPetCastSpell( GetPlayer(), cast_count, targets, spellInfo );
 }
 

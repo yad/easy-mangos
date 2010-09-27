@@ -28,7 +28,6 @@
 #include "Group.h"
 #include "SocialMgr.h"
 #include "Util.h"
-#include "Vehicle.h"
 #include "PlayerBot/PlayerbotMgr.h"
 
 /* differeces from off:

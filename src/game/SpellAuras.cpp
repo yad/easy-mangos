@@ -2121,7 +2121,7 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                     case 75614:                             // Celestial Steed
                         Spell::SelectMountByAreaAndSkill(target, 75619, 75620, 75617, 75618, 76153);
                         return;
-                    case 75973:                             // X-53 Touring Rocket
+                    case 75973:                             // X-53 Touring Rocket 
                         Spell::SelectMountByAreaAndSkill(target, 0, 75957, 75972, 76154, 0);
                         return;
                 }
@@ -2982,7 +2982,7 @@ void Aura::HandleAuraModShapeshift(bool apply, bool Real)
                         else if (hairColour == 7) modelid = 29417;
                         else if (hairColour == 4) modelid = 29416;
                     }
-                }
+                } 
                 else if (Player::TeamForRace(target->getRace()) == HORDE)
                 {
                     uint8 skinColour = target->GetByteValue(PLAYER_BYTES, 0);
@@ -3978,10 +3978,10 @@ void Aura::HandleAuraModStun(bool apply, bool Real)
             target->SetStandState(UNIT_STAND_STATE_STAND);// in 1.5 client
         }
 
-            WorldPacket data(SMSG_FORCE_MOVE_ROOT, 8);
-            data << target->GetPackGUID();
-            data << uint32(0);
-            target->SendMessageToSet(&data,true);
+        WorldPacket data(SMSG_FORCE_MOVE_ROOT, 8);
+        data << target->GetPackGUID();
+        data << uint32(0);
+        target->SendMessageToSet(&data, true);
 
         // Summon the Naj'entus Spine GameObject on target if spell is Impaling Spine
         if(GetId() == 39837)
@@ -4443,11 +4443,11 @@ void Aura::HandleAuraModIncreaseSpeed(bool apply, bool Real)
     // all applied/removed only at real aura add/remove
     if(!Real)
         return;
-
+        
     Unit *target = GetTarget();
 
     GetTarget()->UpdateSpeed(MOVE_RUN, true);
-
+    
     if (apply && GetSpellProto()->Id == 58875)
         target->CastSpell(target, 58876, true);
 }
@@ -4914,7 +4914,7 @@ void Aura::HandleAuraPeriodicDummy(bool apply, bool Real)
             {
                 case 48018:
                     if (apply)
-                        target->CastSpell(target, 62388, true);
+                        target->CastSpell(target, 62388, true);                
                     else
                     {
                         target->RemoveGameObject(spell->Id,true);
@@ -6711,7 +6711,7 @@ void Aura::HandleSchoolAbsorb(bool apply, bool Real)
                         data << uint32(60000);
                         ((Player*)caster)->GetSession()->SendPacket(&data);
                     }
-
+                        
             }
         }
     }
@@ -7936,7 +7936,7 @@ void Aura::HandleArenaPreparation(bool apply, bool Real)
  */
 void Aura::HandleAuraControlVehicle(bool apply, bool Real)
 {
-    if (!Real)
+    if(!Real)
         return;
 
     Unit *caster = GetCaster();
@@ -8185,16 +8185,16 @@ void Aura::HandleAuraModAllCritChance(bool apply, bool Real)
 
 void Aura::SetAuraMaxDuration( int32 duration )
 {
-    m_maxduration = duration;
+	m_maxduration = duration;
 
-    // possible overwrite persistent state
-    if (duration > 0)
-    {
-        if (!(GetHolder()->IsPassive() && GetSpellProto()->DurationIndex == 0))
-            GetHolder()->SetPermanent(false);
+	// possible overwrite persistent state
+	if (duration > 0)
+	{
+		if (!(GetHolder()->IsPassive() && GetSpellProto()->DurationIndex == 0))
+			GetHolder()->SetPermanent(false);
 
-        GetHolder()->SetAuraFlags(GetHolder()->GetAuraFlags() | AFLAG_DURATION);
-    }
+		GetHolder()->SetAuraFlags(GetHolder()->GetAuraFlags() | AFLAG_DURATION);
+	}
 }
 
 bool Aura::IsLastAuraOnHolder()
