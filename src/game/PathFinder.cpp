@@ -680,7 +680,7 @@ uint32 PathInfo::findSmoothPath(const float* startPos, const float* endPos,
         {
             // Reached end of path.
             dtVcopy(iterPos, targetPos);
-            if (m_nsmoothPath < MAX_SMOOTH_PATH_LENGTH)
+            if (m_nsmoothPath < maxSmoothPathSize)
             {
                 dtVcopy(&smoothPath[m_nsmoothPath*VERTEX_SIZE], iterPos);
                 m_nsmoothPath++;
