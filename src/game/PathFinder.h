@@ -31,14 +31,15 @@ class WorldObject;
 
 #define _USE_SMOOTH_PATH
 #define MAX_SMOOTH_PATH_LENGTH  2048
-#define SMOOTH_PATH_STEP_SIZE   8.0f
-#define SMOOTH_PATH_SLOP        0.5f
+#define SMOOTH_PATH_STEP_SIZE   6.0f
+#define SMOOTH_PATH_SLOP        0.2f
 
 #define INVALID_POLYREF 0
 
 // see contrib/mmap/src/TileBuilder.h
 enum NavTerrain
 {
+    NAV_EMPTY   = 0x00,
     NAV_GROUND  = 0x01,
     NAV_MAGMA   = 0x02,
     NAV_SLIME   = 0x04,
@@ -50,11 +51,11 @@ enum NavTerrain
 
 enum PathType
 {
-    PATHFIND_BLANK      = 0x0001,   // path not built yet
-    PATHFIND_NORMAL     = 0x0002,   // normal path
-    PATHFIND_SHORTCUT   = 0x0004,   // travel through obstacles, terrain, air, etc (old behavior)
-    PATHFIND_INCOMPLETE = 0x0008,   // path is too long, more will be calculated later
-    PATHFIND_NOPATH     = 0x0010    // could not find a path
+    PATHFIND_BLANK      = 0x0000,   // path not built yet
+    PATHFIND_NORMAL     = 0x0001,   // normal path
+    PATHFIND_SHORTCUT   = 0x0002,   // travel through obstacles, terrain, air, etc (old behavior)
+    PATHFIND_INCOMPLETE = 0x0004,   // path is too long, more will be calculated later
+    PATHFIND_NOPATH     = 0x0008    // could not find a path
 };
 
 class PathInfo
