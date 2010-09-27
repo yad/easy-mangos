@@ -51,11 +51,11 @@ enum NavTerrain
 
 enum PathType
 {
-    PATHFIND_BLANK      = 0x0001,   // path not built yet
-    PATHFIND_NORMAL     = 0x0002,   // normal path
-    PATHFIND_SHORTCUT   = 0x0004,   // travel through obstacles, terrain, air, etc (old behavior)
-    PATHFIND_INCOMPLETE = 0x0008,   // path is too long, more will be calculated later
-    PATHFIND_NOPATH     = 0x0010    // could not find a path
+    PATHFIND_BLANK      = 0x0000,   // path not built yet
+    PATHFIND_NORMAL     = 0x0001,   // normal path
+    PATHFIND_SHORTCUT   = 0x0002,   // travel through obstacles, terrain, air, etc (old behavior)
+    PATHFIND_INCOMPLETE = 0x0004,   // path is too long, more will be calculated later
+    PATHFIND_NOPATH     = 0x0008    // could not find a path
 };
 
 class PathInfo
