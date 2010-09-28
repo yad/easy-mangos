@@ -1470,7 +1470,7 @@ void World::Update(uint32 diff)
 
     if (m_NextPlayerBotCheck < time(0))
     {
-        PlayerbotMgr::AddAllBots(sConfig.GetIntDefault( "PlayerbotAI.MaxBots", 100 ));
+        PlayerbotMgr::AddAllBots();
         m_NextPlayerBotCheck = time(0) + 15 * MINUTE;
     }
 

@@ -2365,13 +2365,13 @@ bool PlayerbotAI::CheckMaster()
         if (m_bot->GetGroup())
             m_bot->RemoveFromGroup();
         m_bot->GetPlayerbotMgr()->LogoutPlayerBot(m_bot->GetGUID());
-        PlayerbotMgr::AddAllBots(sConfig.GetIntDefault( "PlayerbotAI.MaxBots", 100 ));
+        PlayerbotMgr::AddAllBots();
         return false;
     }
     if ((GetMaster() != m_bot) && !m_bot->GetGroup())
     {
         m_bot->GetPlayerbotMgr()->LogoutPlayerBot(m_bot->GetGUID());
-        PlayerbotMgr::AddAllBots(sConfig.GetIntDefault( "PlayerbotAI.MaxBots", 100 ));
+        PlayerbotMgr::AddAllBots();
         return false;
     }
     return true;

@@ -45,7 +45,7 @@ public:
     void HandleMasterIncomingPacket(const WorldPacket& packet);
     void HandleMasterOutgoingPacket(const WorldPacket& packet);
 
-    static void AddAllBots(int nbBotsWanted);
+    static void AddAllBots();
     static void RemoveAllBotsFromGroup(Player* player);
 
     void AddPlayerBot(uint64 guid);

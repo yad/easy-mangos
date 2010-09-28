@@ -31,8 +31,6 @@
 class LoginQueryHolder;
 class CharacterHandler;
 
-Config botConfig;
-
 PlayerbotMgr::PlayerbotMgr()
 {
 }
@@ -592,7 +590,7 @@ void PlayerbotMgr::RemoveAllBotsFromGroup(Player* player)
             }
         }
     }while(removed);
-    PlayerbotMgr::AddAllBots(sConfig.GetIntDefault( "PlayerbotAI.MaxBots", 100 ));
+    PlayerbotMgr::AddAllBots();
 }     
 
 /*void Creature::LoadBotMenu(Player *pPlayer)

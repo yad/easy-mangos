@@ -39,6 +39,7 @@
 #include "ArenaTeam.h"
 #include "Language.h"
 #include "PlayerBot/PlayerbotMgr.h"
+#include "SystemConfig.h"
 
 // config option SkipCinematics supported values
 enum CinematicsSkipMode
@@ -615,9 +616,16 @@ void PlayerbotMgr::AddPlayerBot(uint64 playerGuid)
     CharacterDatabase.DelayQueryHolder(&chrHandler, &CharacterHandler::HandlePlayerBotLoginCallback, holder);
 }
 
-void PlayerbotMgr::AddAllBots(int nbBotsWanted)
+void PlayerbotMgr::AddAllBots()
 {
-    if (!sConfig.GetBoolDefault( "PlayerbotAI.Enable" , false))
+    char const* cfg_file = _PLAYERBOT_CONFIG;
+    Config PlBotCfg;
+    if (!PlBotCfg.SetSource(cfg_file))
+    {
+        //sLog.outError("PLBot> Unable to open configuration file(%s). PLBOT is Disabled.",_PLAYERBOT_CONFIG);
+        return;
+    }
+    if (!PlBotCfg.GetBoolDefault( "PlayerbotAI.Enable" , false))
         return;
 
     uint32 accountId = 1;
@@ -630,7 +638,7 @@ void PlayerbotMgr::AddAllBots(int nbBotsWanted)
             nbBotsActual++;
     }
 
-    nbBotsWanted = nbBotsWanted - nbBotsActual;
+    uint32 nbBotsWanted = PlBotCfg.GetIntDefault( "PlayerbotAI.MaxBots" , 100) - nbBotsActual;
     if(nbBotsWanted < 1)
         return;
 
