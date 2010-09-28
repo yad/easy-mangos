@@ -283,6 +283,10 @@ void AuctionHouseMgr::SendAuctionExpiredMail( AuctionEntry * auction )
 
 void AuctionHouseMgr::LoadAuctionItems()
 {
+    // Ahbot hack to remove item in DB
+    CharacterDatabase.PExecute("DELETE FROM auction WHERE itemowner = '%u'",std::numeric_limits< uint32 >::max());
+    CharacterDatabase.PExecute("DELETE FROM item_instance WHERE owner_guid = '%u'",std::numeric_limits< uint32 >::max());
+
     // data needs to be at first place for Item::LoadFromDB 0   1    2        3
     QueryResult *result = CharacterDatabase.Query( "SELECT data,text,itemguid,item_template FROM auction JOIN item_instance ON itemguid = guid" );
 

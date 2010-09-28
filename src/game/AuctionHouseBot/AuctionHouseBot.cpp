@@ -200,10 +200,10 @@ void AuctionHouseBot::addNewAuctions(AHBConfig& config)
         auctionEntry->deposit = 0;
         auctionEntry->expire_time = (time_t) (urand(config.GetMinTime(), config.GetMaxTime()) * 60 * 60 + time(NULL));
         auctionEntry->auctionHouseEntry = ahEntry;
-        item->SaveToDB();
+        //item->SaveToDB();
         sAuctionMgr.AddAItem(item);
         auctionHouse->AddAuction(auctionEntry);
-        auctionEntry->SaveToDB();
+        //auctionEntry->SaveToDB();
     }
 }
 
@@ -406,7 +406,7 @@ void AuctionHouseBot::addNewAuctionBuyerBotBid(AHBConfig *config, WorldSession *
             // Remove auction
             auctionHouse->RemoveAuction(auction->Id);
             // Remove from database
-            auction->DeleteFromDB();
+            //auction->DeleteFromDB();
         }
     }
 }
