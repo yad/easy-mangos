@@ -342,7 +342,18 @@ uint32 PlayerbotAI::initSpell(uint32 spellId)
         }
     }
     if (next == 0)
+    {
         sLog.outDebug("initSpell: Found spellid: %u", spellId);
+
+        // Add spell to spellrange map
+        const SpellEntry* const pSpellInfo = sSpellStore.LookupEntry(spellId);
+        Spell *spell = new Spell(m_bot, pSpellInfo, false);
+        SpellRangeEntry const* srange = sSpellRangeStore.LookupEntry(pSpellInfo->rangeIndex);
+        float range = GetSpellMaxRange(srange, IsPositiveSpell(spellId));
+        m_bot->ApplySpellMod(spellId, SPELLMOD_RANGE, range, spell);
+        m_spellRangeMap.insert(std::pair<uint32,float>(spellId, range));
+        delete spell;
+    }
     return (next == 0) ? spellId : next;
 }
 
@@ -2466,12 +2477,20 @@ bool PlayerbotAI::CastSpell(uint32 spellId)
     // set target
     uint64 targetGUID = m_bot->GetSelection();
     Unit* pTarget = ObjectAccessor::GetUnit(*m_bot, m_bot->GetSelection());
-
     if (!pTarget)
         pTarget = m_bot;
 
-    if (!m_bot->IsWithinDistInMap(pTarget, 50, true))
+    if (!m_bot->IsWithinLOSInMap(pTarget))
         return false;
+
+    // Check spell range
+    std::map<uint32, float>::iterator it = m_spellRangeMap.find(spellId);
+    if (it != m_spellRangeMap.end() && (int)it->second != 0)
+    {
+        float dist = m_bot->GetCombatDistance(pTarget);
+        if (dist > it->second + 1.25) // See Spell::CheckRange for modifier value
+            return false;
+    }
 
     if (IsPositiveSpell(spellId))
     {

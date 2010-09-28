@@ -348,6 +348,7 @@ protected:
     Unit *m_targetProtect;      // check
 
     Unit *m_followTarget;       // whom to follow in non combat situation?
+    std::map<uint32, float> m_spellRangeMap;
 
     float m_position_fin_x;
     float m_position_fin_y;
