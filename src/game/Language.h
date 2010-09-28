@@ -898,7 +898,7 @@ enum MangosStrings
 
     // FREE IDS                           1500-9999
     LANG_COMMAND_MODIFY_HKILL           = 1500,
-	
+    
     // Use for not-in-offcial-sources patches
     //                                    10000-10999
 

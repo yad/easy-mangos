@@ -8185,16 +8185,16 @@ void Aura::HandleAuraModAllCritChance(bool apply, bool Real)
 
 void Aura::SetAuraMaxDuration( int32 duration )
 {
-	m_maxduration = duration;
+    m_maxduration = duration;
 
-	// possible overwrite persistent state
-	if (duration > 0)
-	{
-		if (!(GetHolder()->IsPassive() && GetSpellProto()->DurationIndex == 0))
-			GetHolder()->SetPermanent(false);
+    // possible overwrite persistent state
+    if (duration > 0)
+    {
+        if (!(GetHolder()->IsPassive() && GetSpellProto()->DurationIndex == 0))
+            GetHolder()->SetPermanent(false);
 
-		GetHolder()->SetAuraFlags(GetHolder()->GetAuraFlags() | AFLAG_DURATION);
-	}
+        GetHolder()->SetAuraFlags(GetHolder()->GetAuraFlags() | AFLAG_DURATION);
+    }
 }
 
 bool Aura::IsLastAuraOnHolder()

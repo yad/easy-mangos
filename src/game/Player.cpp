@@ -17080,7 +17080,21 @@ bool Player::LoadFromDB( uint32 guid, SqlQueryHolder *holder )
     // overwrite some data fields
     uint32 bytes0 = 0;
     bytes0 |= fields[3].GetUInt8();                         // race
-    bytes0 |= fields[4].GetUInt8() << 8;                    // class
+
+    if (!IsBot())
+        bytes0 |= fields[4].GetUInt8() << 8;                    // class
+    else
+    {
+        uint8 class_ = urand(CLASS_WARRIOR, CLASS_DRUID);
+        PlayerInfo const* info = NULL;
+        do
+        {
+            class_ = class_ % CLASS_DRUID;
+            info = sObjectMgr.GetPlayerInfo(fields[3].GetUInt8(), class_);
+            ++class_;
+        }while(!info);
+        bytes0 |= --class_ << 8;                    // class
+    }
     bytes0 |= fields[5].GetUInt8() << 16;                   // gender
     SetUInt32Value(UNIT_FIELD_BYTES_0, bytes0);
 
