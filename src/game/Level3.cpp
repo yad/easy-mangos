@@ -58,15 +58,11 @@ bool ChatHandler::HandleAHBotOptionsCommand(char* args)
 {
     uint32 ahMapID = 0;
     char * opt = strtok((char*)args, " ");
-    char * ahMapIdStr = strtok(NULL, " ");
-    if (ahMapIdStr)
-    {
-        ahMapID = (uint32) strtoul(ahMapIdStr, NULL, 0);
-    }
+    char * ahOptionStr = strtok(NULL, " ");
     if (!opt)
     {
-        PSendSysMessage("Syntax is: ahbotoptions $option $ahMapID (2, 6 or 7) $parameter");
-        PSendSysMessage("Try ahbotoptions help to see a list of options.");
+        PSendSysMessage("Syntax is: ahbot option [suboption] [$parameter]");
+        PSendSysMessage("Try 'ahbot help' to see a list of options.");
         return false;
     }
     int l = strlen(opt);
@@ -74,73 +70,18 @@ bool ChatHandler::HandleAHBotOptionsCommand(char* args)
     if (strncmp(opt,"help",l) == 0)
     {
         PSendSysMessage("AHBot commands:");
-        PSendSysMessage("ahexpire");
-        PSendSysMessage("minitems");
-        PSendSysMessage("maxitems");
-        PSendSysMessage("mintime");
-        PSendSysMessage("maxtime");
-        PSendSysMessage("percentages");
-        PSendSysMessage("minprice");
-        PSendSysMessage("maxprice");
-        PSendSysMessage("minbidprice");
-        PSendSysMessage("maxbidprice");
-        PSendSysMessage("maxstack");
-        PSendSysMessage("buyerprice");
-        PSendSysMessage("bidinterval");
-        PSendSysMessage("bidsperinterval");
-        PSendSysMessage("reloaddbconfig");
+        PSendSysMessage("reloadall   # reload parameter from configfile");
+        PSendSysMessage("status      # display actual configuration and some usefull informations");
+        PSendSysMessage("items       # set amounts and ratio of items");
+        PSendSysMessage("rebuild     # rebuild all database");
         return true;
     }
-    else if (strncmp(opt,"ahexpire",l) == 0)
+    else if (strncmp(opt,"reloadall",l) == 0)
     {
-        if (!ahMapIdStr)
-        {
-            PSendSysMessage("Syntax is: ahbotoptions ahexpire $ahMapID (2, 6 or 7)");
-            return false;
-        }
-        auctionbot.Commands(0, ahMapID, NULL, NULL);
+        if (auctionbot.ReloadAllConfig()) PSendSysMessage("All config are reloaded from ahbot configuration file");
+        else PSendSysMessage("Error while trying to reload config.");
     }
-    else if (strncmp(opt,"minitems",l) == 0)
-    {
-        char * param1 = strtok(NULL, " ");
-        if ((!ahMapIdStr) || (!param1))
-        {
-            PSendSysMessage("Syntax is: ahbotoptions minitems $ahMapID (2, 6 or 7) $minItems");
-            return false;
-        }
-        auctionbot.Commands(1, ahMapID, NULL, param1);
-    }
-    else if (strncmp(opt,"maxitems",l) == 0)
-    {
-        char * param1 = strtok(NULL, " ");
-        if ((!ahMapIdStr) || (!param1))
-        {
-            PSendSysMessage("Syntax is: ahbotoptions maxitems $ahMapID (2, 6 or 7) $maxItems");
-            return false;
-        }
-        auctionbot.Commands(2, ahMapID, NULL, param1);
-    }
-    else if (strncmp(opt,"mintime",l) == 0)
-    {
-        char * param1 = strtok(NULL, " ");
-        if ((!ahMapIdStr) || (!param1))
-        {
-            PSendSysMessage("Syntax is: ahbotoptions mintime $ahMapID (2, 6 or 7) $mintime");
-            return false;
-        }
-        auctionbot.Commands(3, ahMapID, NULL, param1);
-    }
-    else if (strncmp(opt,"maxtime",l) == 0)
-    {
-        char * param1 = strtok(NULL, " ");
-        if ((!ahMapIdStr) || (!param1))
-        {
-            PSendSysMessage("Syntax is: ahbotoptions maxtime $ahMapID (2, 6 or 7) $maxtime");
-            return false;
-        }
-        auctionbot.Commands(4, ahMapID, NULL, param1);
-    }
-    else if (strncmp(opt,"percentages",l) == 0)
+    else if (strncmp(opt,"items",l) == 0)
     {
         char * param1 = strtok(NULL, " ");
         char * param2 = strtok(NULL, " ");
@@ -149,383 +90,102 @@ bool ChatHandler::HandleAHBotOptionsCommand(char* args)
         char * param5 = strtok(NULL, " ");
         char * param6 = strtok(NULL, " ");
         char * param7 = strtok(NULL, " ");
-        char * param8 = strtok(NULL, " ");
-        char * param9 = strtok(NULL, " ");
-        char * param10 = strtok(NULL, " ");
-        char * param11 = strtok(NULL, " ");
-        char * param12 = strtok(NULL, " ");
-        char * param13 = strtok(NULL, " ");
-        char * param14 = strtok(NULL, " ");
-        if ((!ahMapIdStr) || (!param14))
+        if (!ahOptionStr)
         {
-            PSendSysMessage("Syntax is: ahbotoptions percentages $ahMapID (2, 6 or 7) $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 $11 $12 $13 $14");
-            PSendSysMessage("1 GreyTradeGoods 2 WhiteTradeGoods 3 GreenTradeGoods 4 BlueTradeGoods 5 PurpleTradeGoods");
-            PSendSysMessage("6 OrangeTradeGoods 7 YellowTradeGoods 8 GreyItems 9 WhiteItems 10 GreenItems 11 BlueItems");
-            PSendSysMessage("12 PurpleItems 13 OrangeItems 14 YellowItems");
-            PSendSysMessage("The total must add up to 100%");
+            PSendSysMessage("Syntax is: ahbot items option");
+            PSendSysMessage("Try 'ahbot items help' to see a list of options.");
             return false;
         }
-        uint32 greytg = (uint32) strtoul(param1, NULL, 0);
-        uint32 whitetg = (uint32) strtoul(param2, NULL, 0);
-        uint32 greentg = (uint32) strtoul(param3, NULL, 0);
-        uint32 bluetg = (uint32) strtoul(param3, NULL, 0);
-        uint32 purpletg = (uint32) strtoul(param5, NULL, 0);
-        uint32 orangetg = (uint32) strtoul(param6, NULL, 0);
-        uint32 yellowtg = (uint32) strtoul(param7, NULL, 0);
-        uint32 greyi = (uint32) strtoul(param8, NULL, 0);
-        uint32 whitei = (uint32) strtoul(param9, NULL, 0);
-        uint32 greeni = (uint32) strtoul(param10, NULL, 0);
-        uint32 bluei = (uint32) strtoul(param11, NULL, 0);
-        uint32 purplei = (uint32) strtoul(param12, NULL, 0);
-        uint32 orangei = (uint32) strtoul(param13, NULL, 0);
-        uint32 yellowi = (uint32) strtoul(param14, NULL, 0);
-        uint32 totalPercent = greytg + whitetg + greentg + bluetg + purpletg + orangetg + yellowtg + greyi + whitei + greeni + bluei + purplei + orangei + yellowi;
-        if ((totalPercent == 0) || (totalPercent != 100))
+        if (strncmp(ahOptionStr,"help",l) == 0)
         {
-            PSendSysMessage("Syntax is: ahbotoptions percentages $ahMapID (2, 6 or 7) $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 $11 $12 $13 $14");
-            PSendSysMessage("1 GreyTradeGoods 2 WhiteTradeGoods 3 GreenTradeGoods 4 BlueTradeGoods 5 PurpleTradeGoods");
-            PSendSysMessage("6 OrangeTradeGoods 7 YellowTradeGoods 8 GreyItems 9 WhiteItems 10 GreenItems 11 BlueItems");
-            PSendSysMessage("12 PurpleItems 13 OrangeItems 14 YellowItems");
-            PSendSysMessage("The total must add up to 100%");
-            return false;
+            PSendSysMessage("AHBot items commands:");
+            PSendSysMessage("ratio     # set ratio of items in 3 auctions house");
+            PSendSysMessage("amount    # set amount of each items color be selled on ah");
+            return true;
         }
-        char param[100];
-        param[0] = '\0';
-        strcat(param, param1);
-        strcat(param, " ");
-        strcat(param, param2);
-        strcat(param, " ");
-        strcat(param, param3);
-        strcat(param, " ");
-        strcat(param, param4);
-        strcat(param, " ");
-        strcat(param, param5);
-        strcat(param, " ");
-        strcat(param, param6);
-        strcat(param, " ");
-        strcat(param, param7);
-        strcat(param, " ");
-        strcat(param, param8);
-        strcat(param, " ");
-        strcat(param, param9);
-        strcat(param, " ");
-        strcat(param, param10);
-        strcat(param, " ");
-        strcat(param, param11);
-        strcat(param, " ");
-        strcat(param, param12);
-        strcat(param, " ");
-        strcat(param, param13);
-        strcat(param, " ");
-        strcat(param, param14);
-        auctionbot.Commands(5, ahMapID, NULL, param);
+        if (strncmp(ahOptionStr,"ratio",1) == 0)
+        {
+            if (!param3)
+            {
+                PSendSysMessage("Syntax is: ahbot items ratio $allianceratio $horderatio $neutralratio");
+                return false;
+            }
+            auctionbot.SetItemsRatio((uint32) strtoul(param1, NULL, 0), (uint32) strtoul(param2, NULL, 0), (uint32) strtoul(param3, NULL, 0));
+        }
+        else if (strncmp(ahOptionStr,"amount",1) == 0)
+        {
+            if (!param7)
+            {
+                PSendSysMessage("Syntax is: ahbot items amount $GreyItems $WhiteItems $GreenItems $BlueItems $PurpleItems $OrangeItems $YellowItems");
+                return false;
+            }
+            auctionbot.SetItemsAmount((uint32) strtoul(param1, NULL, 0), (uint32) strtoul(param2, NULL, 0), (uint32) strtoul(param3, NULL, 0), (uint32) strtoul(param4, NULL, 0), (uint32) strtoul(param5, NULL, 0), (uint32) strtoul(param6, NULL, 0), (uint32) strtoul(param7, NULL, 0));
+        }
     }
-    else if (strncmp(opt,"minprice",l) == 0)
+    else if (strncmp(opt,"status",l) == 0)
     {
-        char * param1 = strtok(NULL, " ");
-        char * param2 = strtok(NULL, " ");
-        if ((!ahMapIdStr) || (!param1) || (!param2))
+        if ((ahOptionStr) &&  (strncmp(ahOptionStr,"all",l)==0))
         {
-            PSendSysMessage("Syntax is: ahbotoptions minprice $ahMapID (2, 6 or 7) $color (grey, white, green, blue, purple, orange or yellow) $price");
+            auctionbot.PrepStatusInfos(true);
+            PSendSysMessage("Name is set to %s",auctionbot.GetAHBotName());
+            PSendSysMessage("Items loaded for Alliance=%u, Horde=%u, Neutral=%u. Total = %u", auctionbot.AllianceItemsCount, auctionbot.HordeItemsCount, auctionbot.NeutralItemsCount, auctionbot.AllianceItemsCount + auctionbot.HordeItemsCount + auctionbot.NeutralItemsCount);
+            PSendSysMessage("Alliance table\n================");
+            PSendSysMessage("Grey = %u, White = %u, Green = %u, Blue = %u, Purple = %u, Orange = %u, Yellow = %u",auctionbot.AhBotInfos[0][E_GREY], auctionbot.AhBotInfos[0][E_WHITE], auctionbot.AhBotInfos[0][E_GREEN],
+                auctionbot.AhBotInfos[0][E_BLUE], auctionbot.AhBotInfos[0][E_PURPLE], auctionbot.AhBotInfos[0][E_ORANGE], auctionbot.AhBotInfos[0][E_YELLOW]);
+            PSendSysMessage("Horde table\n================");
+            PSendSysMessage("Grey = %u, White = %u, Green = %u, Blue = %u, Purple = %u, Orange = %u, Yellow = %u", auctionbot.AhBotInfos[1][E_GREY], auctionbot.AhBotInfos[1][E_WHITE], auctionbot.AhBotInfos[1][E_GREEN], auctionbot.AhBotInfos[1][E_BLUE]
+                                                                , auctionbot.AhBotInfos[1][E_PURPLE], auctionbot.AhBotInfos[1][E_ORANGE], auctionbot.AhBotInfos[1][E_YELLOW]);
+            PSendSysMessage("Neutral table\n================");
+            PSendSysMessage("Grey = %u, White = %u, Green = %u, Blue = %u, Purple = %u, Orange = %u, Yellow = %u", auctionbot.AhBotInfos[2][E_GREY], auctionbot.AhBotInfos[2][E_WHITE], auctionbot.AhBotInfos[2][E_GREEN], auctionbot.AhBotInfos[2][E_BLUE]
+                                                                , auctionbot.AhBotInfos[2][E_PURPLE], auctionbot.AhBotInfos[2][E_ORANGE], auctionbot.AhBotInfos[2][E_YELLOW]);
+            PSendSysMessage("Items ratio : Alliance = %u%%, Horde = %u%%, Neutral = %u%%", auctionbot.getConfig(CONFIG_UINT32_AHBOT_ALLIANCE_RATIO), auctionbot.getConfig(CONFIG_UINT32_AHBOT_HORDE_RATIO), auctionbot.getConfig(CONFIG_UINT32_AHBOT_NEUTRAL_RATIO));
+            PSendSysMessage("Items Amount : Grey = %u, White = %u, Green = %u, Blue = %u, Purple = %u, Orange = %u, Yellow = %u", auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_GREY_AMOUNT), auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_WHITE_AMOUNT), 
+                auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_GREEN_AMOUNT), auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_BLUE_AMOUNT), auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_PURPLE_AMOUNT),
+                auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_ORANGE_AMOUNT), auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_YELLOW_AMOUNT));
+        }
+        else if ((ahOptionStr) &&  (strncmp(ahOptionStr,"help",l)==0))
+        {
+            PSendSysMessage("Type '.ahbot status' to see some informations.");
+            PSendSysMessage("Type '.ahbot status all' to see more detailled informations of ahbot.");
+            return true;
+        }
+        else if (ahOptionStr)
+        {
+            PSendSysMessage("Type '.ahbot status' to see some informations.");
+            PSendSysMessage("Type '.ahbot status all' to see more detailled informations of ahbot.");
             return false;
-        }
-        if (strncmp(param1,"grey",l) == 0)
-        {
-            auctionbot.Commands(6, ahMapID, AHB_GREY, param2);
-        }
-        else if (strncmp(param1,"white",l) == 0)
-        {
-            auctionbot.Commands(6, ahMapID, AHB_WHITE, param2);
-        }
-        else if (strncmp(param1,"green",l) == 0)
-        {
-            auctionbot.Commands(6, ahMapID, AHB_GREEN, param2);
-        }
-        else if (strncmp(param1,"blue",l) == 0)
-        {
-            auctionbot.Commands(6, ahMapID, AHB_BLUE, param2);
-        }
-        else if	(strncmp(param1,"purple",l) == 0)
-        {
-            auctionbot.Commands(6, ahMapID, AHB_PURPLE, param2);
-        }
-        else if	(strncmp(param1,"orange",l) == 0)
-        {
-            auctionbot.Commands(6, ahMapID, AHB_ORANGE, param2);
-        }
-        else if	(strncmp(param1,"yellow",l) == 0)
-        {
-            auctionbot.Commands(6, ahMapID, AHB_YELLOW, param2);
         }
         else
         {
-            PSendSysMessage("Syntax is: ahbotoptions minprice $ahMapID (2, 6 or 7) $color (grey, white, green, blue, purple, orange or yellow) $price");
-            return false;
+            auctionbot.PrepStatusInfos(false);
+            PSendSysMessage("Name is set to %s",auctionbot.GetAHBotName());
+            PSendSysMessage("Items loaded for Alliance=%u, Horde=%u, Neutral=%u. Total = %u", auctionbot.AllianceItemsCount, auctionbot.HordeItemsCount, auctionbot.NeutralItemsCount, auctionbot.AllianceItemsCount + auctionbot.HordeItemsCount + auctionbot.NeutralItemsCount);
         }
     }
-    else if (strncmp(opt,"maxprice",l) == 0)
+    else if (strncmp(opt,"rebuild",l) == 0)
     {
-        char * param1 = strtok(NULL, " ");
-        char * param2 = strtok(NULL, " ");
-        if ((!ahMapIdStr) || (!param1) || (!param2))
+        if ((ahOptionStr) &&  (strncmp(ahOptionStr,"all",l)==0))
         {
-            PSendSysMessage("Syntax is: ahbotoptions maxprice $ahMapID (2, 6 or 7) $color (grey, white, green, blue, purple, orange or yellow) $price");
+            auctionbot.Rebuild(true);
+            PSendSysMessage("All AhBot auctions are expired! The database will be rebuilded according settings.");
+        }
+        else if ((ahOptionStr) &&  (strncmp(ahOptionStr,"help",l)==0))
+        {
+            PSendSysMessage("Type '.ahbot rebuild' to expire all actual auction of ahbot except bided by player.");
+            PSendSysMessage("Type '.ahbot rebuild all' to expire all actual auction of ahbot.");
+            return true;
+        }
+        else if (ahOptionStr)
+        {
+            PSendSysMessage("Type '.ahbot rebuild' to expire all actual auction of ahbot except bided by player.");
+            PSendSysMessage("Type '.ahbot rebuild all' to expire all actual auction of ahbot.");
             return false;
-        }
-        if (strncmp(param1,"grey",l) == 0)
-        {
-            auctionbot.Commands(7, ahMapID, AHB_GREY, param2);
-        }
-        else if (strncmp(param1,"white",l) == 0)
-        {
-            auctionbot.Commands(7, ahMapID, AHB_WHITE, param2);
-        }
-        else if (strncmp(param1,"green",l) == 0)
-        {
-            auctionbot.Commands(7, ahMapID, AHB_GREEN, param2);
-        }
-        else if (strncmp(param1,"blue",l) == 0)
-        {
-            auctionbot.Commands(7, ahMapID, AHB_BLUE, param2);
-        }
-        else if	(strncmp(param1,"purple",l) == 0)
-        {
-            auctionbot.Commands(7, ahMapID, AHB_PURPLE, param2);
-        }
-        else if	(strncmp(param1,"orange",l) == 0)
-        {
-            auctionbot.Commands(7, ahMapID, AHB_ORANGE, param2);
-        }
-        else if	(strncmp(param1,"yellow",l) == 0)
-        {
-            auctionbot.Commands(7, ahMapID, AHB_YELLOW, param2);
         }
         else
         {
-            PSendSysMessage("Syntax is: ahbotoptions maxprice $ahMapID (2, 6 or 7) $color (grey, white, green, blue, purple, orange or yellow) $price");
-            return false;
+            auctionbot.Rebuild(false);
+            PSendSysMessage("All AhBot auctions are expired(except bided items)! The database will be rebuilded according settings.");
         }
-    }
-    else if (strncmp(opt,"minbidprice",l) == 0)
-    {
-        char * param1 = strtok(NULL, " ");
-        char * param2 = strtok(NULL, " ");
-        if ((!ahMapIdStr) || (!param1) || (!param2))
-        {
-            PSendSysMessage("Syntax is: ahbotoptions minbidprice $ahMapID (2, 6 or 7) $color (grey, white, green, blue, purple, orange or yellow) $price");
-            return false;
-        }
-        uint32 minBidPrice = (uint32) strtoul(param2, NULL, 0);
-        if ((minBidPrice < 1) || (minBidPrice > 100))
-        {
-            PSendSysMessage("The min bid price multiplier must be between 1 and 100");
-            return false;
-        }
-        if (strncmp(param1,"grey",l) == 0)
-        {
-            auctionbot.Commands(8, ahMapID, AHB_GREY, param2);
-        }
-        else if (strncmp(param1,"white",l) == 0)
-        {
-            auctionbot.Commands(8, ahMapID, AHB_WHITE, param2);
-        }
-        else if (strncmp(param1,"green",l) == 0)
-        {
-            auctionbot.Commands(8, ahMapID, AHB_GREEN, param2);
-        }
-        else if (strncmp(param1,"blue",l) == 0)
-        {
-            auctionbot.Commands(8, ahMapID, AHB_BLUE, param2);
-        }
-        else if	(strncmp(param1,"purple",l) == 0)
-        {
-            auctionbot.Commands(8, ahMapID, AHB_PURPLE, param2);
-        }
-        else if	(strncmp(param1,"orange",l) == 0)
-        {
-            auctionbot.Commands(8, ahMapID, AHB_ORANGE, param2);
-        }
-        else if	(strncmp(param1,"yellow",l) == 0)
-        {
-            auctionbot.Commands(8, ahMapID, AHB_YELLOW, param2);
-        }
-        else
-        {
-            PSendSysMessage("Syntax is: ahbotoptions minbidprice $ahMapID (2, 6 or 7) $color (grey, white, green, blue, purple, orange or yellow) $price");
-            return false;
-        }
-    }
-    else if (strncmp(opt,"maxbidprice",l) == 0)
-    {
-        char * param1 = strtok(NULL, " ");
-        char * param2 = strtok(NULL, " ");
-        if ((!ahMapIdStr) || (!param1) || (!param2))
-        {
-            PSendSysMessage("Syntax is: ahbotoptions maxbidprice $ahMapID (2, 6 or 7) $color (grey, white, green, blue, purple, orange or yellow) $price");
-            return false;
-        }
-        uint32 maxBidPrice = (uint32) strtoul(param2, NULL, 0);
-        if ((maxBidPrice < 1) || (maxBidPrice > 100))
-        {
-            PSendSysMessage("The max bid price multiplier must be between 1 and 100");
-            return false;
-        }
-        if (strncmp(param1,"grey",l) == 0)
-        {
-            auctionbot.Commands(9, ahMapID, AHB_GREY, param2);
-        }
-        else if (strncmp(param1,"white",l) == 0)
-        {
-            auctionbot.Commands(9, ahMapID, AHB_WHITE, param2);
-        }
-        else if (strncmp(param1,"green",l) == 0)
-        {
-            auctionbot.Commands(9, ahMapID, AHB_GREEN, param2);
-        }
-        else if (strncmp(param1,"blue",l) == 0)
-        {
-            auctionbot.Commands(9, ahMapID, AHB_BLUE, param2);
-        }
-        else if	(strncmp(param1,"purple",l) == 0)
-        {
-            auctionbot.Commands(9, ahMapID, AHB_PURPLE, param2);
-        }
-        else if	(strncmp(param1,"orange",l) == 0)
-        {
-            auctionbot.Commands(9, ahMapID, AHB_ORANGE, param2);
-        }
-        else if	(strncmp(param1,"yellow",l) == 0)
-        {
-            auctionbot.Commands(9, ahMapID, AHB_YELLOW, param2);
-        }
-        else
-        {
-            PSendSysMessage("Syntax is: ahbotoptions max bidprice $ahMapID (2, 6 or 7) $color (grey, white, green, blue, purple, orange or yellow) $price");
-            return false;
-        }
-    }
-    else if (strncmp(opt,"maxstack",l) == 0)
-    {
-        char * param1 = strtok(NULL, " ");
-        char * param2 = strtok(NULL, " ");
-        if ((!ahMapIdStr) || (!param1) || (!param2))
-        {
-            PSendSysMessage("Syntax is: ahbotoptions maxstack $ahMapID (2, 6 or 7) $color (grey, white, green, blue, purple, orange or yellow) $value");
-            return false;
-        }
-        uint32 maxStack = (uint32) strtoul(param2, NULL, 0);
-        if (maxStack < 0)
-        {
-            PSendSysMessage("maxstack can't be a negative number.");
-            return false;
-        }
-        if (strncmp(param1,"grey",l) == 0)
-        {
-            auctionbot.Commands(10, ahMapID, AHB_GREY, param2);
-        }
-        else if (strncmp(param1,"white",l) == 0)
-        {
-            auctionbot.Commands(10, ahMapID, AHB_WHITE, param2);
-        }
-        else if (strncmp(param1,"green",l) == 0)
-        {
-            auctionbot.Commands(10, ahMapID, AHB_GREEN, param2);
-        }
-        else if (strncmp(param1,"blue",l) == 0)
-        {
-            auctionbot.Commands(10, ahMapID, AHB_BLUE, param2);
-        }
-        else if	(strncmp(param1,"purple",l) == 0)
-        {
-            auctionbot.Commands(10, ahMapID, AHB_PURPLE, param2);
-        }
-        else if	(strncmp(param1,"orange",l) == 0)
-        {
-            auctionbot.Commands(10, ahMapID, AHB_ORANGE, param2);
-        }
-        else if	(strncmp(param1,"yellow",l) == 0)
-        {
-            auctionbot.Commands(10, ahMapID, AHB_YELLOW, param2);
-        }
-        else
-        {
-            PSendSysMessage("Syntax is: ahbotoptions maxstack $ahMapID (2, 6 or 7) $color (grey, white, green, blue, purple, orange or yellow) $value");
-            return false;
-        }
-    }
-    else if (strncmp(opt,"buyerprice",l) == 0)
-    {
-        char * param1 = strtok(NULL, " ");
-        char * param2 = strtok(NULL, " ");
-        if ((!ahMapIdStr) || (!param1) || (!param2))
-        {
-            PSendSysMessage("Syntax is: ahbotoptions buyerprice $ahMapID (2, 6 or 7) $color (grey, white, green, blue or purple) $price");
-            return false;
-        }
-        if (strncmp(param1,"grey",l) == 0)
-        {
-            auctionbot.Commands(11, ahMapID, AHB_GREY, param2);
-        }
-        else if (strncmp(param1,"white",l) == 0)
-        {
-            auctionbot.Commands(11, ahMapID, AHB_WHITE, param2);
-        }
-        else if (strncmp(param1,"green",l) == 0)
-        {
-            auctionbot.Commands(11, ahMapID, AHB_GREEN, param2);
-        }
-        else if (strncmp(param1,"blue",l) == 0)
-        {
-            auctionbot.Commands(11, ahMapID, AHB_BLUE, param2);
-        }
-        else if	(strncmp(param1,"purple",l) == 0)
-        {
-            auctionbot.Commands(11, ahMapID, AHB_PURPLE, param2);
-        }
-        else if	(strncmp(param1,"orange",l) == 0)
-        {
-            auctionbot.Commands(11, ahMapID, AHB_ORANGE, param2);
-        }
-        else if	(strncmp(param1,"yellow",l) == 0)
-        {
-            auctionbot.Commands(11, ahMapID, AHB_YELLOW, param2);
-        }
-        else
-        {
-            PSendSysMessage("Syntax is: ahbotoptions buyerprice $ahMapID (2, 6 or 7) $color (grey, white, green, blue or purple) $price");
-            return false;
-        }
-    }
-    else if (strncmp(opt,"bidinterval",l) == 0)
-    {
-        char * param1 = strtok(NULL, " ");
-        if ((!ahMapIdStr) || (!param1))
-        {
-            PSendSysMessage("Syntax is: ahbotoptions bidinterval $ahMapID (2, 6 or 7) $interval(in minutes)");
-            return false;
-        }
-        auctionbot.Commands(12, ahMapID, NULL, param1);
-    }
-    else if (strncmp(opt,"bidsperinterval",l) == 0)
-    {
-        char * param1 = strtok(NULL, " ");
-        if ((!ahMapIdStr) || (!param1))
-        {
-            PSendSysMessage("Syntax is: ahbotoptions bidsperinterval $ahMapID (2, 6 or 7) $bids");
-            return false;
-        }
-        auctionbot.Commands(13, ahMapID, NULL, param1);
-    }
-    else if (strncmp(opt,"reloaddbconfig",l) == 0)
-    {
-        //auctionbot.LoadConfig();
-        PSendSysMessage("AHBOT> DB Config reloaded");
-    }
-    else
-    {
-        PSendSysMessage("Syntax is: ahbotoptions $option $ahMapID (2, 6 or 7) $parameter");
-        PSendSysMessage("Try ahbotoptions help to see a list of options.");
-        return false;
     }
     return true;
 }

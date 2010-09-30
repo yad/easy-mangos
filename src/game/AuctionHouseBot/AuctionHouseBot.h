@@ -29,16 +29,17 @@
 #define AHB_ORANGE_I    12
 #define AHB_YELLOW_I    13
 
-#define AHB_QUALITY_MAX 7
+//#define AHB_QUALITY_MAX 7
 
 enum e_ahb_quality{
-    E_GREY      = 0,
-    E_WHITE     = 1,
-    E_GREEN     = 2,
-    E_BLUE      = 3,
-    E_PURPLE    = 4,
-    E_ORANGE    = 5,
-    E_YELLOW    = 6,
+    E_GREY = 0,
+    E_WHITE,
+    E_GREEN,
+    E_BLUE,
+    E_PURPLE,
+    E_ORANGE,
+    E_YELLOW,
+    AHB_QUALITY_MAX
 };
 
 enum e_AHBOTConfigUInt32Values{
@@ -285,21 +286,6 @@ public:
     AHBConfig(uint32 ahid=120)
     {
         AHID = ahid;
-        switch(ahid)
-        {
-        case 2:
-            AHFID = 55;
-            break;
-        case 6:
-            AHFID = 29;
-            break;
-        case 7:
-            AHFID = 120;
-            break;
-        default:
-            AHFID = 120;
-            break;
-        }
 
         for (int i=0; i<AHB_QUALITY_MAX; ++i)
         {
@@ -311,10 +297,6 @@ public:
     uint32 GetAHID()
     {
         return AHID;
-    }
-    uint32 GetAHFID()
-    {
-        return AHFID;
     }
         void SetMinTime(uint32 value)
     {
@@ -400,27 +382,45 @@ private:
     void    addNewAuctionBuyerBotBid(AHBConfig *config, WorldSession *session);
     uint32  SetStat(AHBConfig& config);
     bool    getRandomArray( AHBConfig& config, std::vector<s_randomArray>& ra, const std::vector<std::vector<uint32> >& addedItem  );
+
     void    SetPricesOfItem(const Item *item, AHBConfig& config, uint32& buyp, uint32& bidp, uint32& stackcnt, e_ahb_quality AHB_ITEMS);
     void    setConfig(e_AHBOTConfigUInt32Values index, char const* fieldname, uint32 defvalue);
     void    setConfig(e_AHBOTConfigBoolValues index, char const* fieldname, bool defvalue);
+    void    setConfig(e_AHBOTConfigBoolValues index, bool value) { m_configBoolValues[index]=value; }
+    void    setConfig(e_AHBOTConfigUInt32Values index, uint32 value) { m_configUint32Values[index]=value; }
+
+    void    LoadConfig();
+    void    LoadSellerValues(AHBConfig& config);
+    void    LoadBuyerValues(AHBConfig& config);
+    void    GetConfigFromFile();
+    void    LoadItemsQuantity(AHBConfig& config);
+
 public:
     AuctionHouseBot();
     ~AuctionHouseBot();
+
+    ObjectGuid GetAHBObjectGuid() { return m_FakeGuid; };
+    std::vector < std::vector < uint32 > > AhBotInfos;
+    uint32 AllianceItemsCount;
+    uint32 HordeItemsCount;
+    uint32 NeutralItemsCount;
+
     void Update();
     void Initialize();
-    void LoadConfig();
-    void LoadSellerValues(AHBConfig& config);
-    void LoadBuyerValues(AHBConfig& config);
-    void Commands(uint32, uint32, uint32, char*);
-    ObjectGuid GetAHBObjectGuid() { return m_FakeGuid; };
 
-    void setConfig(e_AHBOTConfigUInt32Values index, uint32 value) { m_configUint32Values[index]=value; }
+    //void setConfig(e_AHBOTConfigUInt32Values index, uint32 value) { m_configUint32Values[index]=value; }
     uint32 getConfig(e_AHBOTConfigUInt32Values index) const { return m_configUint32Values[index]; }
-    void setConfig(e_AHBOTConfigBoolValues index, bool value) { m_configBoolValues[index]=value; }
+    //void setConfig(e_AHBOTConfigBoolValues index, bool value) { m_configBoolValues[index]=value; }
     bool getConfig(e_AHBOTConfigBoolValues index) const { return m_configBoolValues[index]; }
 
     void SetAHBotName(const std::string& AHBotName) { if (AHBotName.size()>0) m_AHBotName = AHBotName; else m_AHBotName="AHBot"; }
     const char* GetAHBotName() const { return m_AHBotName.c_str(); }
+
+    bool ReloadAllConfig();
+    void SetItemsRatio(uint32 al, uint32 ho, uint32 ne);
+    void SetItemsAmount(uint32 gry, uint32 wh, uint32 grn, uint32 bl, uint32 pu, uint32 or, uint32 ye);
+    void PrepStatusInfos(bool all);
+    void Rebuild(bool all);
 };
 
 #define auctionbot MaNGOS::Singleton<AuctionHouseBot>::Instance()

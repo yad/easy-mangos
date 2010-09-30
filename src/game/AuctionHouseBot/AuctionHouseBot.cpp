@@ -13,14 +13,16 @@ using namespace std;
 
 AuctionHouseBot::AuctionHouseBot()
 {
+    // Define faction for our main class.
     AllianceConfig = AHBConfig(2);
     HordeConfig = AHBConfig(6);
     NeutralConfig = AHBConfig(7);
+
+    // Define the last usable number for GUID will be used has AhBot GUID.
     m_FakeGuid.Set(std::numeric_limits< uint32 >::max());
-    ItemPool.resize(AHB_QUALITY_MAX);
-    for (uint32 j=0; j<AHB_QUALITY_MAX; ++j)
-        for (uint32 i=0;i<MAX_ITEM_CLASS;++i)
-            ItemPool[j].resize(MAX_ITEM_CLASS);
+
+    // Initialise ItemPool (list of items in database will be used to fill AH)
+    ItemPool.resize(AHB_QUALITY_MAX, std::vector< std::vector< uint32 > >( MAX_ITEM_CLASS ));
 }
 
 AuctionHouseBot::~AuctionHouseBot()
@@ -34,7 +36,7 @@ uint32 AuctionHouseBot::SetStat(AHBConfig& config)
 {
     std::vector<std::vector<uint32> > ItemsInAH(AHB_QUALITY_MAX, vector<uint32> (MAX_ITEM_CLASS));
 
-    AuctionHouseEntry const* ahEntry = sAuctionMgr.GetAuctionHouseEntryByFaction(config.GetAHFID());
+    AuctionHouseEntry const* ahEntry = sAuctionHouseStore.LookupEntry(config.GetAHID());
     AuctionHouseObject* auctionHouse = sAuctionMgr.GetAuctionsMap(ahEntry);
     for (AuctionHouseObject::AuctionEntryMap::const_iterator itr = auctionHouse->GetAuctionsBegin();itr != auctionHouse->GetAuctionsEnd();++itr)
     {
@@ -130,7 +132,7 @@ void AuctionHouseBot::addNewAuctions(AHBConfig& config)
     else items=ItemsPerCycleNormal;
 
 
-    AuctionHouseEntry const* ahEntry = sAuctionMgr.GetAuctionHouseEntryByFaction(config.GetAHFID());
+    AuctionHouseEntry const* ahEntry = sAuctionHouseStore.LookupEntry(config.GetAHID());
     AuctionHouseObject* auctionHouse = sAuctionMgr.GetAuctionsMap(ahEntry);
 
     std::vector<s_randomArray> RandArray;
@@ -210,7 +212,7 @@ void AuctionHouseBot::addNewAuctions(AHBConfig& config)
 void AuctionHouseBot::addNewAuctionBuyerBotBid(AHBConfig *config, WorldSession *session)
 {
     // Fetches content of selected AH
-    AuctionHouseEntry const* ahEntry = sAuctionMgr.GetAuctionHouseEntryByFaction(config->GetAHFID());
+    AuctionHouseEntry const* ahEntry = sAuctionHouseStore.LookupEntry(config->GetAHID());
     AuctionHouseObject* auctionHouse = sAuctionMgr.GetAuctionsMap(ahEntry);
     vector<uint32> possibleBids;
 
@@ -464,23 +466,9 @@ void AuctionHouseBot::setConfig(e_AHBOTConfigBoolValues index, char const* field
     setConfig(index, AhBotCfg.GetBoolDefault(fieldname,defvalue));
 }
 
-void AuctionHouseBot::Initialize()
+//Get AuctionHousebot configuration file
+void AuctionHouseBot::GetConfigFromFile()
 {
-
-    char const* cfg_file = _AUCTIONHOUSEBOT_CONFIG;
-
-    sLog.outString("");
-    sLog.outString("-------------------------------");
-    sLog.outString("------- AuctionHouseBot -------");
-    sLog.outString("-------------------------------");
-    sLog.outString("");
-    sLog.outString("AHBot> New CORE by Cyberium (Original by Xeross, Naicisum, ChrisK, Paradox)");
-    sLog.outString("AHBot> Includes AHBuyer by Kerbe and Paradox (Not tested)");
-    //Get AuctionHousebot configuration file
-    if (!AhBotCfg.SetSource(cfg_file))
-        sLog.outError("AHBot> Unable to open configuration file(%s). AHBOT is Disabled.",_AUCTIONHOUSEBOT_CONFIG);
-    else
-        sLog.outString("AHBot> Using configuration file %s",_AUCTIONHOUSEBOT_CONFIG);
     //Check config file version
     if (AhBotCfg.GetIntDefault("ConfVersion", 0) != AUCTIONHOUSEBOT_CONF_VERSION)
         sLog.outError("AHBot> Configuration file version doesn't match expected version. Some config variables may be wrong or missing.");
@@ -560,7 +548,30 @@ void AuctionHouseBot::Initialize()
     setConfig(CONFIG_UINT32_AHBOT_BUYER_BIDDIGIN_INTERVAL   , "AuctionHouseBot.Buyer.Biddigin.Interval"     , 1);
 
     debug_Out = AhBotCfg.GetIntDefault("AuctionHouseBot.DEBUG", 0);
+}
 
+void AuctionHouseBot::Initialize()
+{
+    sLog.outString("");
+    sLog.outString("-------------------------------");
+    sLog.outString("------- AuctionHouseBot -------");
+    sLog.outString("-------------------------------");
+    sLog.outString("");
+    sLog.outString("AHBot> New CORE by Cyberium (Original by Xeross, Naicisum, ChrisK, Paradox)");
+    sLog.outString("AHBot> Includes AHBuyer by Kerbe and Paradox (Not tested)");
+    char const* cfg_file = _AUCTIONHOUSEBOT_CONFIG;
+
+    if (!AhBotCfg.SetSource(cfg_file))
+    {
+        sLog.outError("AHBot> Unable to open configuration file(%s). AHBOT is Disabled.",_AUCTIONHOUSEBOT_CONFIG);
+        setConfig(CONFIG_UINT32_AHBOT_ALLIANCE_RATIO, 0);
+        setConfig(CONFIG_UINT32_AHBOT_HORDE_RATIO, 0);
+        setConfig(CONFIG_UINT32_AHBOT_NEUTRAL_RATIO, 0);
+        return;
+    }
+    else
+        sLog.outString("AHBot> Using configuration file %s",_AUCTIONHOUSEBOT_CONFIG);
+    GetConfigFromFile();
 
     if ((getConfig(CONFIG_UINT32_AHBOT_ALLIANCE_RATIO)==0) && (getConfig(CONFIG_UINT32_AHBOT_HORDE_RATIO)==0) && (getConfig(CONFIG_UINT32_AHBOT_NEUTRAL_RATIO)==0) &&
         (getConfig(CONFIG_BOOL_AHBOT_BUYER_ALLIANCE_ENABLED)!=true) && (getConfig(CONFIG_BOOL_AHBOT_BUYER_HORDE_ENABLED)!=true) && (getConfig(CONFIG_BOOL_AHBOT_BUYER_NEUTRAL_ENABLED)!=true))
@@ -770,52 +781,7 @@ void AuctionHouseBot::Initialize()
     sLog.outString("\nAHBot> [AHBot-beta] is now loaded");
 }
 
-void AuctionHouseBot::Commands(uint32 command, uint32 ahMapID, uint32 col, char* args)
-{
-    AHBConfig *config;
-    switch (ahMapID)
-    {
-    case 2:
-        config = &AllianceConfig;
-        break;
-    case 6:
-        config = &HordeConfig;
-        break;
-    case 7:
-        config = &NeutralConfig;
-        break;
-    }
-    std::string color;
-    switch (col)
-    {
-    case AHB_GREY:
-        color = "grey";
-        break;
-    case AHB_WHITE:
-        color = "white";
-        break;
-    case AHB_GREEN:
-        color = "green";
-        break;
-    case AHB_BLUE:
-        color = "blue";
-        break;
-    case AHB_PURPLE:
-        color = "purple";
-        break;
-    case AHB_ORANGE:
-        color = "orange";
-        break;
-    case AHB_YELLOW:
-        color = "yellow";
-        break;
-    default:
-        break;
-    }
-    //switch (command)
-}
-
-void AuctionHouseBot::LoadSellerValues(AHBConfig& config)
+void AuctionHouseBot::LoadItemsQuantity(AHBConfig& config)
 {
     if (getConfig(CONFIG_UINT32_AHBOT_ALLIANCE_RATIO)>10000) setConfig(CONFIG_UINT32_AHBOT_ALLIANCE_RATIO,10000);
     if (getConfig(CONFIG_UINT32_AHBOT_HORDE_RATIO)>10000) setConfig(CONFIG_UINT32_AHBOT_HORDE_RATIO,10000);
@@ -861,6 +827,7 @@ void AuctionHouseBot::LoadSellerValues(AHBConfig& config)
         break;
     }
 
+    // Limit to 0..10 class amount ratio
     if (getConfig(CONFIG_UINT32_AHBOT_CLASS_CONSUMABLE_AMOUNT)>10) setConfig(CONFIG_UINT32_AHBOT_CLASS_CONSUMABLE_AMOUNT,10);
     if (getConfig(CONFIG_UINT32_AHBOT_CLASS_CONTAINER_AMOUNT)>10) setConfig(CONFIG_UINT32_AHBOT_CLASS_CONTAINER_AMOUNT,10);
     if (getConfig(CONFIG_UINT32_AHBOT_CLASS_WEAPON_AMOUNT)>10) setConfig(CONFIG_UINT32_AHBOT_CLASS_WEAPON_AMOUNT,10);
@@ -877,132 +844,123 @@ void AuctionHouseBot::LoadSellerValues(AHBConfig& config)
     if (getConfig(CONFIG_UINT32_AHBOT_CLASS_MISC_AMOUNT)>10) setConfig(CONFIG_UINT32_AHBOT_CLASS_MISC_AMOUNT,10);
     if (getConfig(CONFIG_UINT32_AHBOT_CLASS_GLYPH_AMOUNT)>10) setConfig(CONFIG_UINT32_AHBOT_CLASS_GLYPH_AMOUNT,10);
 
-    for (uint32 j=0; j<AHB_QUALITY_MAX; ++j)
-    {
-        switch ((e_ahb_quality) j)
-        {
-        case E_GREY :
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_CONSUMABLE].SetQuantityOfItems(0);
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_CONTAINER].SetQuantityOfItems(0);
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_WEAPON].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_WEAPON_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_GEM].SetQuantityOfItems(0);
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_ARMOR].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_ARMOR_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_REAGENT].SetQuantityOfItems(0);
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_PROJECTILE].SetQuantityOfItems(0);
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_TRADE_GOODS].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_TRADEGOOD_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_GENERIC].SetQuantityOfItems(0);
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_RECIPE].SetQuantityOfItems(0);
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_QUIVER].SetQuantityOfItems(0);
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_QUEST].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_QUEST_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_KEY].SetQuantityOfItems(0);
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_MISC].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_MISC_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_GLYPH].SetQuantityOfItems(0);
-            break;
-        case E_WHITE :
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_CONSUMABLE].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_CONSUMABLE_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_CONTAINER].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_CONTAINER_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_WEAPON].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_WEAPON_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_GEM].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_GEM_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_ARMOR].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_ARMOR_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_REAGENT].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_REAGENT_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_PROJECTILE].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_PROJECTILE_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_TRADE_GOODS].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_TRADEGOOD_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_GENERIC].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_GENERIC_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_RECIPE].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_RECIPE_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_QUIVER].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_QUIVER_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_QUEST].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_QUEST_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_KEY].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_KEY_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_MISC].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_MISC_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_GLYPH].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_GLYPH_AMOUNT));
-            break;
-        case E_GREEN :
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_CONSUMABLE].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_CONSUMABLE_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_CONTAINER].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_CONTAINER_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_WEAPON].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_WEAPON_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_GEM].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_GEM_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_ARMOR].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_ARMOR_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_REAGENT].SetQuantityOfItems(0);
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_PROJECTILE].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_PROJECTILE_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_TRADE_GOODS].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_TRADEGOOD_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_GENERIC].SetQuantityOfItems(0);
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_RECIPE].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_RECIPE_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_QUIVER].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_QUIVER_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_QUEST].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_QUEST_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_KEY].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_KEY_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_MISC].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_MISC_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_GLYPH].SetQuantityOfItems(0);
-            break;
-        case E_BLUE :
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_CONSUMABLE].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_CONSUMABLE_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_CONTAINER].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_CONTAINER_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_WEAPON].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_WEAPON_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_GEM].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_GEM_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_ARMOR].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_ARMOR_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_REAGENT].SetQuantityOfItems(0);
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_PROJECTILE].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_PROJECTILE_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_TRADE_GOODS].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_TRADEGOOD_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_GENERIC].SetQuantityOfItems(0);
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_RECIPE].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_RECIPE_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_QUIVER].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_QUIVER_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_QUEST].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_QUEST_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_KEY].SetQuantityOfItems(0);
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_MISC].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_MISC_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_GLYPH].SetQuantityOfItems(0);
-            break;
-        case E_PURPLE :
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_CONSUMABLE].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_CONSUMABLE_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_CONTAINER].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_CONTAINER_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_WEAPON].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_WEAPON_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_GEM].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_GEM_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_ARMOR].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_ARMOR_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_REAGENT].SetQuantityOfItems(0);
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_PROJECTILE].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_PROJECTILE_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_TRADE_GOODS].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_TRADEGOOD_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_GENERIC].SetQuantityOfItems(0);
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_RECIPE].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_RECIPE_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_QUIVER].SetQuantityOfItems(0);
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_QUEST].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_QUEST_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_KEY].SetQuantityOfItems(0);
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_MISC].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_MISC_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_GLYPH].SetQuantityOfItems(0);
-            break;
-        case E_ORANGE :
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_CONSUMABLE].SetQuantityOfItems(0);
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_CONTAINER].SetQuantityOfItems(0);
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_WEAPON].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_WEAPON_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_GEM].SetQuantityOfItems(0);
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_ARMOR].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_ARMOR_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_REAGENT].SetQuantityOfItems(0);
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_PROJECTILE].SetQuantityOfItems(0);
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_TRADE_GOODS].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_TRADEGOOD_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_GENERIC].SetQuantityOfItems(0);
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_RECIPE].SetQuantityOfItems(0);
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_QUIVER].SetQuantityOfItems(0);
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_QUEST].SetQuantityOfItems(0);
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_KEY].SetQuantityOfItems(0);
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_MISC].SetQuantityOfItems(0);
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_GLYPH].SetQuantityOfItems(0);
-            break;
-        case E_YELLOW :
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_CONSUMABLE].SetQuantityOfItems(0);
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_CONTAINER].SetQuantityOfItems(0);
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_WEAPON].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_WEAPON_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_GEM].SetQuantityOfItems(0);
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_ARMOR].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_ARMOR_AMOUNT));
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_REAGENT].SetQuantityOfItems(0);
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_PROJECTILE].SetQuantityOfItems(0);
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_TRADE_GOODS].SetQuantityOfItems(0);
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_GENERIC].SetQuantityOfItems(0);
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_RECIPE].SetQuantityOfItems(0);
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_QUIVER].SetQuantityOfItems(0);
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_QUEST].SetQuantityOfItems(0);
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_KEY].SetQuantityOfItems(0);
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_MISC].SetQuantityOfItems(0);
-            config.ItemInfos[j].ItemClassInfos[ITEM_CLASS_GLYPH].SetQuantityOfItems(0);
-            break;
-        }
-    }
+    // Set quantity wanted but only on possible item color
+    // This avoid any no-exist class-color items selection by random items create function
+    // ============================================================================================
+    config.ItemInfos[E_GREY].ItemClassInfos[ITEM_CLASS_CONSUMABLE].SetQuantityOfItems(0);
+    config.ItemInfos[E_GREY].ItemClassInfos[ITEM_CLASS_CONTAINER].SetQuantityOfItems(0);
+    config.ItemInfos[E_GREY].ItemClassInfos[ITEM_CLASS_WEAPON].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_WEAPON_AMOUNT));
+    config.ItemInfos[E_GREY].ItemClassInfos[ITEM_CLASS_GEM].SetQuantityOfItems(0);
+    config.ItemInfos[E_GREY].ItemClassInfos[ITEM_CLASS_ARMOR].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_ARMOR_AMOUNT));
+    config.ItemInfos[E_GREY].ItemClassInfos[ITEM_CLASS_REAGENT].SetQuantityOfItems(0);
+    config.ItemInfos[E_GREY].ItemClassInfos[ITEM_CLASS_PROJECTILE].SetQuantityOfItems(0);
+    config.ItemInfos[E_GREY].ItemClassInfos[ITEM_CLASS_TRADE_GOODS].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_TRADEGOOD_AMOUNT));
+    config.ItemInfos[E_GREY].ItemClassInfos[ITEM_CLASS_GENERIC].SetQuantityOfItems(0);
+    config.ItemInfos[E_GREY].ItemClassInfos[ITEM_CLASS_RECIPE].SetQuantityOfItems(0);
+    config.ItemInfos[E_GREY].ItemClassInfos[ITEM_CLASS_QUIVER].SetQuantityOfItems(0);
+    config.ItemInfos[E_GREY].ItemClassInfos[ITEM_CLASS_QUEST].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_QUEST_AMOUNT));
+    config.ItemInfos[E_GREY].ItemClassInfos[ITEM_CLASS_KEY].SetQuantityOfItems(0);
+    config.ItemInfos[E_GREY].ItemClassInfos[ITEM_CLASS_MISC].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_MISC_AMOUNT));
+    config.ItemInfos[E_GREY].ItemClassInfos[ITEM_CLASS_GLYPH].SetQuantityOfItems(0);
 
+    config.ItemInfos[E_WHITE].ItemClassInfos[ITEM_CLASS_CONSUMABLE].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_CONSUMABLE_AMOUNT));
+    config.ItemInfos[E_WHITE].ItemClassInfos[ITEM_CLASS_CONTAINER].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_CONTAINER_AMOUNT));
+    config.ItemInfos[E_WHITE].ItemClassInfos[ITEM_CLASS_WEAPON].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_WEAPON_AMOUNT));
+    config.ItemInfos[E_WHITE].ItemClassInfos[ITEM_CLASS_GEM].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_GEM_AMOUNT));
+    config.ItemInfos[E_WHITE].ItemClassInfos[ITEM_CLASS_ARMOR].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_ARMOR_AMOUNT));
+    config.ItemInfos[E_WHITE].ItemClassInfos[ITEM_CLASS_REAGENT].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_REAGENT_AMOUNT));
+    config.ItemInfos[E_WHITE].ItemClassInfos[ITEM_CLASS_PROJECTILE].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_PROJECTILE_AMOUNT));
+    config.ItemInfos[E_WHITE].ItemClassInfos[ITEM_CLASS_TRADE_GOODS].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_TRADEGOOD_AMOUNT));
+    config.ItemInfos[E_WHITE].ItemClassInfos[ITEM_CLASS_GENERIC].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_GENERIC_AMOUNT));
+    config.ItemInfos[E_WHITE].ItemClassInfos[ITEM_CLASS_RECIPE].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_RECIPE_AMOUNT));
+    config.ItemInfos[E_WHITE].ItemClassInfos[ITEM_CLASS_QUIVER].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_QUIVER_AMOUNT));
+    config.ItemInfos[E_WHITE].ItemClassInfos[ITEM_CLASS_QUEST].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_QUEST_AMOUNT));
+    config.ItemInfos[E_WHITE].ItemClassInfos[ITEM_CLASS_KEY].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_KEY_AMOUNT));
+    config.ItemInfos[E_WHITE].ItemClassInfos[ITEM_CLASS_MISC].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_MISC_AMOUNT));
+    config.ItemInfos[E_WHITE].ItemClassInfos[ITEM_CLASS_GLYPH].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_GLYPH_AMOUNT));
+
+    config.ItemInfos[E_GREEN].ItemClassInfos[ITEM_CLASS_CONSUMABLE].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_CONSUMABLE_AMOUNT));
+    config.ItemInfos[E_GREEN].ItemClassInfos[ITEM_CLASS_CONTAINER].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_CONTAINER_AMOUNT));
+    config.ItemInfos[E_GREEN].ItemClassInfos[ITEM_CLASS_WEAPON].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_WEAPON_AMOUNT));
+    config.ItemInfos[E_GREEN].ItemClassInfos[ITEM_CLASS_GEM].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_GEM_AMOUNT));
+    config.ItemInfos[E_GREEN].ItemClassInfos[ITEM_CLASS_ARMOR].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_ARMOR_AMOUNT));
+    config.ItemInfos[E_GREEN].ItemClassInfos[ITEM_CLASS_REAGENT].SetQuantityOfItems(0);
+    config.ItemInfos[E_GREEN].ItemClassInfos[ITEM_CLASS_PROJECTILE].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_PROJECTILE_AMOUNT));
+    config.ItemInfos[E_GREEN].ItemClassInfos[ITEM_CLASS_TRADE_GOODS].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_TRADEGOOD_AMOUNT));
+    config.ItemInfos[E_GREEN].ItemClassInfos[ITEM_CLASS_GENERIC].SetQuantityOfItems(0);
+    config.ItemInfos[E_GREEN].ItemClassInfos[ITEM_CLASS_RECIPE].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_RECIPE_AMOUNT));
+    config.ItemInfos[E_GREEN].ItemClassInfos[ITEM_CLASS_QUIVER].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_QUIVER_AMOUNT));
+    config.ItemInfos[E_GREEN].ItemClassInfos[ITEM_CLASS_QUEST].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_QUEST_AMOUNT));
+    config.ItemInfos[E_GREEN].ItemClassInfos[ITEM_CLASS_KEY].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_KEY_AMOUNT));
+    config.ItemInfos[E_GREEN].ItemClassInfos[ITEM_CLASS_MISC].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_MISC_AMOUNT));
+    config.ItemInfos[E_GREEN].ItemClassInfos[ITEM_CLASS_GLYPH].SetQuantityOfItems(0);
+
+    config.ItemInfos[E_BLUE].ItemClassInfos[ITEM_CLASS_CONSUMABLE].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_CONSUMABLE_AMOUNT));
+    config.ItemInfos[E_BLUE].ItemClassInfos[ITEM_CLASS_CONTAINER].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_CONTAINER_AMOUNT));
+    config.ItemInfos[E_BLUE].ItemClassInfos[ITEM_CLASS_WEAPON].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_WEAPON_AMOUNT));
+    config.ItemInfos[E_BLUE].ItemClassInfos[ITEM_CLASS_GEM].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_GEM_AMOUNT));
+    config.ItemInfos[E_BLUE].ItemClassInfos[ITEM_CLASS_ARMOR].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_ARMOR_AMOUNT));
+    config.ItemInfos[E_BLUE].ItemClassInfos[ITEM_CLASS_REAGENT].SetQuantityOfItems(0);
+    config.ItemInfos[E_BLUE].ItemClassInfos[ITEM_CLASS_PROJECTILE].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_PROJECTILE_AMOUNT));
+    config.ItemInfos[E_BLUE].ItemClassInfos[ITEM_CLASS_TRADE_GOODS].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_TRADEGOOD_AMOUNT));
+    config.ItemInfos[E_BLUE].ItemClassInfos[ITEM_CLASS_GENERIC].SetQuantityOfItems(0);
+    config.ItemInfos[E_BLUE].ItemClassInfos[ITEM_CLASS_RECIPE].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_RECIPE_AMOUNT));
+    config.ItemInfos[E_BLUE].ItemClassInfos[ITEM_CLASS_QUIVER].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_QUIVER_AMOUNT));
+    config.ItemInfos[E_BLUE].ItemClassInfos[ITEM_CLASS_QUEST].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_QUEST_AMOUNT));
+    config.ItemInfos[E_BLUE].ItemClassInfos[ITEM_CLASS_KEY].SetQuantityOfItems(0);
+    config.ItemInfos[E_BLUE].ItemClassInfos[ITEM_CLASS_MISC].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_MISC_AMOUNT));
+    config.ItemInfos[E_BLUE].ItemClassInfos[ITEM_CLASS_GLYPH].SetQuantityOfItems(0);
+
+    config.ItemInfos[E_PURPLE].ItemClassInfos[ITEM_CLASS_CONSUMABLE].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_CONSUMABLE_AMOUNT));
+    config.ItemInfos[E_PURPLE].ItemClassInfos[ITEM_CLASS_CONTAINER].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_CONTAINER_AMOUNT));
+    config.ItemInfos[E_PURPLE].ItemClassInfos[ITEM_CLASS_WEAPON].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_WEAPON_AMOUNT));
+    config.ItemInfos[E_PURPLE].ItemClassInfos[ITEM_CLASS_GEM].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_GEM_AMOUNT));
+    config.ItemInfos[E_PURPLE].ItemClassInfos[ITEM_CLASS_ARMOR].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_ARMOR_AMOUNT));
+    config.ItemInfos[E_PURPLE].ItemClassInfos[ITEM_CLASS_REAGENT].SetQuantityOfItems(0);
+    config.ItemInfos[E_PURPLE].ItemClassInfos[ITEM_CLASS_PROJECTILE].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_PROJECTILE_AMOUNT));
+    config.ItemInfos[E_PURPLE].ItemClassInfos[ITEM_CLASS_TRADE_GOODS].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_TRADEGOOD_AMOUNT));
+    config.ItemInfos[E_PURPLE].ItemClassInfos[ITEM_CLASS_GENERIC].SetQuantityOfItems(0);
+    config.ItemInfos[E_PURPLE].ItemClassInfos[ITEM_CLASS_RECIPE].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_RECIPE_AMOUNT));
+    config.ItemInfos[E_PURPLE].ItemClassInfos[ITEM_CLASS_QUIVER].SetQuantityOfItems(0);
+    config.ItemInfos[E_PURPLE].ItemClassInfos[ITEM_CLASS_QUEST].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_QUEST_AMOUNT));
+    config.ItemInfos[E_PURPLE].ItemClassInfos[ITEM_CLASS_KEY].SetQuantityOfItems(0);
+    config.ItemInfos[E_PURPLE].ItemClassInfos[ITEM_CLASS_MISC].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_MISC_AMOUNT));
+    config.ItemInfos[E_PURPLE].ItemClassInfos[ITEM_CLASS_GLYPH].SetQuantityOfItems(0);
+
+    config.ItemInfos[E_ORANGE].ItemClassInfos[ITEM_CLASS_CONSUMABLE].SetQuantityOfItems(0);
+    config.ItemInfos[E_ORANGE].ItemClassInfos[ITEM_CLASS_CONTAINER].SetQuantityOfItems(0);
+    config.ItemInfos[E_ORANGE].ItemClassInfos[ITEM_CLASS_WEAPON].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_WEAPON_AMOUNT));
+    config.ItemInfos[E_ORANGE].ItemClassInfos[ITEM_CLASS_GEM].SetQuantityOfItems(0);
+    config.ItemInfos[E_ORANGE].ItemClassInfos[ITEM_CLASS_ARMOR].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_ARMOR_AMOUNT));
+    config.ItemInfos[E_ORANGE].ItemClassInfos[ITEM_CLASS_REAGENT].SetQuantityOfItems(0);
+    config.ItemInfos[E_ORANGE].ItemClassInfos[ITEM_CLASS_PROJECTILE].SetQuantityOfItems(0);
+    config.ItemInfos[E_ORANGE].ItemClassInfos[ITEM_CLASS_TRADE_GOODS].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_TRADEGOOD_AMOUNT));
+    config.ItemInfos[E_ORANGE].ItemClassInfos[ITEM_CLASS_GENERIC].SetQuantityOfItems(0);
+    config.ItemInfos[E_ORANGE].ItemClassInfos[ITEM_CLASS_RECIPE].SetQuantityOfItems(0);
+    config.ItemInfos[E_ORANGE].ItemClassInfos[ITEM_CLASS_QUIVER].SetQuantityOfItems(0);
+    config.ItemInfos[E_ORANGE].ItemClassInfos[ITEM_CLASS_QUEST].SetQuantityOfItems(0);
+    config.ItemInfos[E_ORANGE].ItemClassInfos[ITEM_CLASS_KEY].SetQuantityOfItems(0);
+    config.ItemInfos[E_ORANGE].ItemClassInfos[ITEM_CLASS_MISC].SetQuantityOfItems(0);
+    config.ItemInfos[E_ORANGE].ItemClassInfos[ITEM_CLASS_GLYPH].SetQuantityOfItems(0);
+
+    config.ItemInfos[E_YELLOW].ItemClassInfos[ITEM_CLASS_CONSUMABLE].SetQuantityOfItems(0);
+    config.ItemInfos[E_YELLOW].ItemClassInfos[ITEM_CLASS_CONTAINER].SetQuantityOfItems(0);
+    config.ItemInfos[E_YELLOW].ItemClassInfos[ITEM_CLASS_WEAPON].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_WEAPON_AMOUNT));
+    config.ItemInfos[E_YELLOW].ItemClassInfos[ITEM_CLASS_GEM].SetQuantityOfItems(0);
+    config.ItemInfos[E_YELLOW].ItemClassInfos[ITEM_CLASS_ARMOR].SetQuantityOfItems(getConfig(CONFIG_UINT32_AHBOT_CLASS_ARMOR_AMOUNT));
+    config.ItemInfos[E_YELLOW].ItemClassInfos[ITEM_CLASS_REAGENT].SetQuantityOfItems(0);
+    config.ItemInfos[E_YELLOW].ItemClassInfos[ITEM_CLASS_PROJECTILE].SetQuantityOfItems(0);
+    config.ItemInfos[E_YELLOW].ItemClassInfos[ITEM_CLASS_TRADE_GOODS].SetQuantityOfItems(0);
+    config.ItemInfos[E_YELLOW].ItemClassInfos[ITEM_CLASS_GENERIC].SetQuantityOfItems(0);
+    config.ItemInfos[E_YELLOW].ItemClassInfos[ITEM_CLASS_RECIPE].SetQuantityOfItems(0);
+    config.ItemInfos[E_YELLOW].ItemClassInfos[ITEM_CLASS_QUIVER].SetQuantityOfItems(0);
+    config.ItemInfos[E_YELLOW].ItemClassInfos[ITEM_CLASS_QUEST].SetQuantityOfItems(0);
+    config.ItemInfos[E_YELLOW].ItemClassInfos[ITEM_CLASS_KEY].SetQuantityOfItems(0);
+    config.ItemInfos[E_YELLOW].ItemClassInfos[ITEM_CLASS_MISC].SetQuantityOfItems(0);
+    config.ItemInfos[E_YELLOW].ItemClassInfos[ITEM_CLASS_GLYPH].SetQuantityOfItems(0);
+    // ============================================================================================
+
+    // Set the best value to get nearest amount of items wanted
     for (uint32 j=0; j<AHB_QUALITY_MAX; ++j)
     {
         uint32 indice = config.ItemInfos[j].GetAmountOfItems()/
@@ -1016,6 +974,10 @@ void AuctionHouseBot::LoadSellerValues(AHBConfig& config)
             config.ItemInfos[j].ItemClassInfos[i].SetAmountOfItems(indice);
         }
     }
+}
+void AuctionHouseBot::LoadSellerValues(AHBConfig& config)
+{
+    LoadItemsQuantity(config);
     uint32 PriceRatio;
     switch(config.GetAHID())
     {
@@ -1092,4 +1054,117 @@ void AuctionHouseBot::LoadBuyerValues(AHBConfig& config)
         sLog.outString("buyerBidsPerInterval = %u", config.GetBidsPerInterval());
     }
 
+}
+
+bool AuctionHouseBot::ReloadAllConfig()
+{
+
+    if (AhBotCfg.Reload())
+    {
+        GetConfigFromFile();
+        LoadConfig();
+        return true;
+    }
+    else
+    {
+        sLog.outError("Error while trying to reload config from file!");
+        return false;
+    }
+
+}
+
+void AuctionHouseBot::SetItemsRatio(uint32 al, uint32 ho, uint32 ne)
+{
+    setConfig(CONFIG_UINT32_AHBOT_ALLIANCE_RATIO, al);
+    setConfig(CONFIG_UINT32_AHBOT_HORDE_RATIO, ho);
+    setConfig(CONFIG_UINT32_AHBOT_NEUTRAL_RATIO, ne);
+    LoadItemsQuantity(AllianceConfig);
+    LoadItemsQuantity(HordeConfig);
+    LoadItemsQuantity(NeutralConfig);
+}
+
+void AuctionHouseBot::SetItemsAmount(uint32 gry, uint32 wh, uint32 grn, uint32 bl, uint32 pu, uint32 or, uint32 ye)
+{
+    setConfig(CONFIG_UINT32_AHBOT_ITEM_GREY_AMOUNT,gry);
+    setConfig(CONFIG_UINT32_AHBOT_ITEM_WHITE_AMOUNT,wh);
+    setConfig(CONFIG_UINT32_AHBOT_ITEM_GREEN_AMOUNT,grn);
+    setConfig(CONFIG_UINT32_AHBOT_ITEM_BLUE_AMOUNT,bl);
+    setConfig(CONFIG_UINT32_AHBOT_ITEM_PURPLE_AMOUNT,pu);
+    setConfig(CONFIG_UINT32_AHBOT_ITEM_ORANGE_AMOUNT,or);
+    setConfig(CONFIG_UINT32_AHBOT_ITEM_YELLOW_AMOUNT,ye);
+    LoadItemsQuantity(AllianceConfig);
+    LoadItemsQuantity(HordeConfig);
+    LoadItemsQuantity(NeutralConfig);
+}
+
+void AuctionHouseBot::PrepStatusInfos(bool all)
+{
+
+    AhBotInfos.clear();
+    AhBotInfos.resize(3,vector < uint32 > (AHB_QUALITY_MAX));
+    AllianceItemsCount=HordeItemsCount=NeutralItemsCount=0;
+    for (uint32 i=0; i<3; i++)
+    {
+        uint32 faction;
+        switch (i)
+        {
+        case 0 : faction = 2; break;
+        case 1 : faction = 6; break;
+        case 2 : faction = 7; break;
+        default : faction = 7;
+        }
+        AuctionHouseEntry const* ahEntry = sAuctionHouseStore.LookupEntry(faction);
+        AuctionHouseObject* auctionHouse = sAuctionMgr.GetAuctionsMap(ahEntry);
+        for (AuctionHouseObject::AuctionEntryMap::const_iterator itr = auctionHouse->GetAuctionsBegin();itr != auctionHouse->GetAuctionsEnd();++itr)
+        {
+            AuctionEntry *Aentry = itr->second;
+            Item *item = sAuctionMgr.GetAItem(Aentry->item_guidlow);
+            if (item)
+            {
+                ItemPrototype const *prototype = item->GetProto();
+                if (prototype)
+                {
+                    if ( Aentry->owner == GetAHBObjectGuid().GetRawValue()) // Add only ahbot items
+                    {
+                        ++AhBotInfos[i][prototype->Quality];
+                        switch (i)
+                        {
+                        case 0 : ++AllianceItemsCount; break;
+                        case 1 : ++HordeItemsCount; break;
+                        case 2 : ++NeutralItemsCount; break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+void AuctionHouseBot::Rebuild(bool all)
+{
+    for (uint32 i=0; i<3; i++)
+    {
+        uint32 faction;
+        switch (i)
+        {
+        case 0 : faction = 2; break;
+        case 1 : faction = 6; break;
+        case 2 : faction = 7; break;
+        default : faction = 7;
+        }
+        AuctionHouseEntry const* ahEntry = sAuctionHouseStore.LookupEntry(faction);
+        if(!ahEntry) return;
+
+        AuctionHouseObject* auctionHouse = sAuctionMgr.GetAuctionsMap(ahEntry);
+        if(!auctionHouse) return;
+
+        for (AuctionHouseObject::AuctionEntryMap::const_iterator itr = auctionHouse->GetAuctionsBegin();itr != auctionHouse->GetAuctionsEnd();++itr)
+        {
+            if (itr->second->owner == GetAHBObjectGuid().GetRawValue())
+            {
+                if (all==true) itr->second->expire_time = sWorld.GetGameTime();
+                else if (itr->second->bid == 0) itr->second->expire_time = sWorld.GetGameTime();
+            }
+        }
+    }
 }
