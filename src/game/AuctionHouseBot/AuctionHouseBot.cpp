@@ -1083,15 +1083,15 @@ void AuctionHouseBot::SetItemsRatio(uint32 al, uint32 ho, uint32 ne)
     LoadItemsQuantity(NeutralConfig);
 }
 
-void AuctionHouseBot::SetItemsAmount(uint32 gry, uint32 wh, uint32 grn, uint32 bl, uint32 pu, uint32 or, uint32 ye)
+void AuctionHouseBot::SetItemsAmount(uint32 grey_i, uint32 white_i, uint32 green_i, uint32 blue_i, uint32 purple_i, uint32 orange_i, uint32 yellow_i)
 {
-    setConfig(CONFIG_UINT32_AHBOT_ITEM_GREY_AMOUNT,gry);
-    setConfig(CONFIG_UINT32_AHBOT_ITEM_WHITE_AMOUNT,wh);
-    setConfig(CONFIG_UINT32_AHBOT_ITEM_GREEN_AMOUNT,grn);
-    setConfig(CONFIG_UINT32_AHBOT_ITEM_BLUE_AMOUNT,bl);
-    setConfig(CONFIG_UINT32_AHBOT_ITEM_PURPLE_AMOUNT,pu);
-    setConfig(CONFIG_UINT32_AHBOT_ITEM_ORANGE_AMOUNT,or);
-    setConfig(CONFIG_UINT32_AHBOT_ITEM_YELLOW_AMOUNT,ye);
+    setConfig(CONFIG_UINT32_AHBOT_ITEM_GREY_AMOUNT,grey_i);
+    setConfig(CONFIG_UINT32_AHBOT_ITEM_WHITE_AMOUNT,white_i);
+    setConfig(CONFIG_UINT32_AHBOT_ITEM_GREEN_AMOUNT,green_i);
+    setConfig(CONFIG_UINT32_AHBOT_ITEM_BLUE_AMOUNT,blue_i);
+    setConfig(CONFIG_UINT32_AHBOT_ITEM_PURPLE_AMOUNT,purple_i);
+    setConfig(CONFIG_UINT32_AHBOT_ITEM_ORANGE_AMOUNT,orange_i);
+    setConfig(CONFIG_UINT32_AHBOT_ITEM_YELLOW_AMOUNT,yellow_i);
     LoadItemsQuantity(AllianceConfig);
     LoadItemsQuantity(HordeConfig);
     LoadItemsQuantity(NeutralConfig);

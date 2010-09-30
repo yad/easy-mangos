@@ -418,7 +418,7 @@ public:
 
     bool ReloadAllConfig();
     void SetItemsRatio(uint32 al, uint32 ho, uint32 ne);
-    void SetItemsAmount(uint32 gry, uint32 wh, uint32 grn, uint32 bl, uint32 pu, uint32 or, uint32 ye);
+    void SetItemsAmount(uint32 grey_i, uint32 white_i, uint32 green_i, uint32 blue_i, uint32 purple_i, uint32 orange_i, uint32 yellow_i);
     void PrepStatusInfos(bool all);
     void Rebuild(bool all);
 };
