@@ -115,25 +115,26 @@ void WorldSession::HandlePetAction( WorldPacket & recv_data )
                         if (pet->getVictim())
                             pet->AttackStop();
 
-                        if(pet->GetTypeId() != TYPEID_PLAYER)
+                        if (pet->hasUnitState(UNIT_STAT_CONTROLLED))
+                        {
+                            pet->Attack(TargetUnit, true);
+                            pet->SendPetAIReaction(guid1);
+                        }
+                        else
                         {
                             pet->GetMotionMaster()->Clear();
+
                             if (((Creature*)pet)->AI())
                                 ((Creature*)pet)->AI()->AttackStart(TargetUnit);
 
-                            //10% chance to play special pet attack talk, else growl
-                            if(((Creature*)pet)->isPet() && ((Pet*)pet)->getPetType() == SUMMON_PET && pet != TargetUnit && urand(0, 100) < 10)
+                            // 10% chance to play special pet attack talk, else growl
+                            if(((Creature*)pet)->isPet() && ((Pet*)pet)->getPetType() == SUMMON_PET && pet != TargetUnit && roll_chance_i(10))
                                 pet->SendPetTalk((uint32)PET_TALK_ATTACK);
                             else
                             {
                                 // 90% chance for pet and 100% chance for charmed creature
                                 pet->SendPetAIReaction(guid1);
                             }
-                        }
-                        else                                // charmed player
-                        {
-                            pet->Attack(TargetUnit,true);
-                            pet->SendPetAIReaction(guid1);
                         }
                     }
                     break;
@@ -170,9 +171,6 @@ void WorldSession::HandlePetAction( WorldPacket & recv_data )
         case ACT_ENABLED:                                   // 0xC1    spell
         {
             Unit* unit_target = NULL;
-            if (((Creature*)pet)->GetGlobalCooldown() > 0)
-                return;
-
             if(guid2)
                 unit_target = _player->GetMap()->GetUnit(guid2);
 
@@ -183,6 +181,9 @@ void WorldSession::HandlePetAction( WorldPacket & recv_data )
                 sLog.outError("WORLD: unknown PET spell id %i", spellid);
                 return;
             }
+
+            if (pet->GetCharmInfo() && pet->GetCharmInfo()->GetGlobalCooldownMgr().HasGlobalCooldown(spellInfo))
+                return;
 
             for(int i = 0; i < MAX_EFFECT_INDEX;++i)
             {
@@ -615,15 +616,16 @@ void WorldSession::HandlePetCastSpellOpcode( WorldPacket& recvPacket )
         return;
     }
 
-    if (pet->GetGlobalCooldown() > 0)
-        return;
-
     SpellEntry const *spellInfo = sSpellStore.LookupEntry(spellid);
     if (!spellInfo)
     {
         sLog.outError("WORLD: unknown PET spell id %i", spellid);
         return;
     }
+
+    if (pet->GetCharmInfo() && pet->GetCharmInfo()->GetGlobalCooldownMgr().HasGlobalCooldown(spellInfo))
+        return;
+
 
     // do not cast not learned spells
     if (!pet->HasSpell(spellid) || IsPassiveSpell(spellInfo))
