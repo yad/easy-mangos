@@ -1573,7 +1573,7 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     float fRange = GetSpellMaxRange(sSpellRangeStore.LookupEntry(m_spellInfo->rangeIndex));
 
                     MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck u_check(*m_caster, 28523, true, fRange*2);
-                    MaNGOS::CreatureLastSearcher<MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck> searcher(m_caster, pTargetDummy, u_check);
+                    MaNGOS::CreatureLastSearcher<MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck> searcher(pTargetDummy, u_check);
 
                     Cell::VisitGridObjects(m_caster, searcher, fRange*2);
 
@@ -1772,6 +1772,11 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                         return;
 
                     m_caster->CastSpell(unitTarget,60934,true,NULL);
+                    return;
+                }
+                case 64385:                                 // Spinning (from Unusual Compass)
+                {
+                    m_caster->SetFacingTo(frand(0, M_PI_F*2), true);
                     return;
                 }
                 case 67019:                                 // Flask of the North
@@ -2729,6 +2734,19 @@ void Spell::EffectTriggerSpell(SpellEffectIndex effIndex)
         {
             if (Unit *pet = unitTarget->GetPet())
                 pet->CastSpell(pet, 28305, true);
+            return;
+        }
+        // Empower Rune Weapon
+        case 53258:
+        {
+            // remove cooldown of frost/death, undead/blood activated in main spell
+            if (unitTarget->GetTypeId() == TYPEID_PLAYER)
+            {
+                bool res1 = ((Player*)unitTarget)->ActivateRunes(RUNE_FROST, 2);
+                bool res2 = ((Player*)unitTarget)->ActivateRunes(RUNE_DEATH, 2);
+                if (res1 || res2)
+                    ((Player*)unitTarget)->ResyncRunes();
+            }
             return;
         }
     }
@@ -5758,7 +5776,7 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
 
                     // search for a reef cow nearby
                     MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck u_check(*m_caster, 24797, true, range);
-                    MaNGOS::CreatureLastSearcher<MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck> searcher(m_caster, pQuestCow, u_check);
+                    MaNGOS::CreatureLastSearcher<MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck> searcher(pQuestCow, u_check);
 
                     Cell::VisitGridObjects(m_caster, searcher, range);
 
@@ -7198,7 +7216,7 @@ void Spell::EffectLeapForward(SpellEffectIndex eff_idx)
             fx = fx2;
             fy = fy2;
             fz = fz2;
-            unitTarget->UpdateGroundPositionZ(fx, fy, fz);
+            unitTarget->UpdateAllowedPositionZ(fx, fy, fz);
         }
 
         unitTarget->NearTeleportTo(fx, fy, fz, unitTarget->GetOrientation(), unitTarget == m_caster);
@@ -7912,13 +7930,9 @@ void Spell::EffectActivateRune(SpellEffectIndex eff_idx)
     if(plr->getClass() != CLASS_DEATH_KNIGHT)
         return;
 
-    for(uint32 j = 0; j < MAX_RUNES; ++j)
-    {
-        if(plr->GetRuneCooldown(j) && plr->GetCurrentRune(j) == RuneType(m_spellInfo->EffectMiscValue[eff_idx]))
-        {
-            plr->SetRuneCooldown(j, 0);
-        }
-    }
+    int32 count = damage;                                   // max amount of reset runes
+    if (plr->ActivateRunes(RuneType(m_spellInfo->EffectMiscValue[eff_idx]), count))
+        plr->ResyncRunes();
 }
 
 void Spell::EffectTitanGrip(SpellEffectIndex eff_idx)
