@@ -1073,31 +1073,31 @@ bool AuctionHouseBot::ReloadAllConfig()
 
 }
 
-void AuctionHouseBot::SetItemsRatio(uint32 al, uint32 ho, uint32 ne)
+void AuctionHouseBot::SetItemsRatio(uint32* al, uint32* ho, uint32* ne)
 {
-    setConfig(CONFIG_UINT32_AHBOT_ALLIANCE_RATIO, al);
-    setConfig(CONFIG_UINT32_AHBOT_HORDE_RATIO, ho);
-    setConfig(CONFIG_UINT32_AHBOT_NEUTRAL_RATIO, ne);
+    if (al != NULL) setConfig(CONFIG_UINT32_AHBOT_ALLIANCE_RATIO, *al);
+    if (ho != NULL) setConfig(CONFIG_UINT32_AHBOT_HORDE_RATIO, *ho);
+    if (ne != NULL) setConfig(CONFIG_UINT32_AHBOT_NEUTRAL_RATIO, *ne);
     LoadItemsQuantity(AllianceConfig);
     LoadItemsQuantity(HordeConfig);
     LoadItemsQuantity(NeutralConfig);
 }
 
-void AuctionHouseBot::SetItemsAmount(uint32 grey_i, uint32 white_i, uint32 green_i, uint32 blue_i, uint32 purple_i, uint32 orange_i, uint32 yellow_i)
+void AuctionHouseBot::SetItemsAmount(uint32* grey_i, uint32* white_i, uint32* green_i, uint32* blue_i, uint32* purple_i, uint32* orange_i, uint32* yellow_i)
 {
-    setConfig(CONFIG_UINT32_AHBOT_ITEM_GREY_AMOUNT,grey_i);
-    setConfig(CONFIG_UINT32_AHBOT_ITEM_WHITE_AMOUNT,white_i);
-    setConfig(CONFIG_UINT32_AHBOT_ITEM_GREEN_AMOUNT,green_i);
-    setConfig(CONFIG_UINT32_AHBOT_ITEM_BLUE_AMOUNT,blue_i);
-    setConfig(CONFIG_UINT32_AHBOT_ITEM_PURPLE_AMOUNT,purple_i);
-    setConfig(CONFIG_UINT32_AHBOT_ITEM_ORANGE_AMOUNT,orange_i);
-    setConfig(CONFIG_UINT32_AHBOT_ITEM_YELLOW_AMOUNT,yellow_i);
+    if (grey_i != NULL) setConfig(CONFIG_UINT32_AHBOT_ITEM_GREY_AMOUNT,*grey_i);
+    if (white_i != NULL) setConfig(CONFIG_UINT32_AHBOT_ITEM_WHITE_AMOUNT,*white_i);
+    if (green_i != NULL) setConfig(CONFIG_UINT32_AHBOT_ITEM_GREEN_AMOUNT,*green_i);
+    if (blue_i != NULL) setConfig(CONFIG_UINT32_AHBOT_ITEM_BLUE_AMOUNT,*blue_i);
+    if (purple_i != NULL) setConfig(CONFIG_UINT32_AHBOT_ITEM_PURPLE_AMOUNT,*purple_i);
+    if (orange_i != NULL) setConfig(CONFIG_UINT32_AHBOT_ITEM_ORANGE_AMOUNT,*orange_i);
+    if (yellow_i != NULL) setConfig(CONFIG_UINT32_AHBOT_ITEM_YELLOW_AMOUNT,*yellow_i);
     LoadItemsQuantity(AllianceConfig);
     LoadItemsQuantity(HordeConfig);
     LoadItemsQuantity(NeutralConfig);
 }
 
-void AuctionHouseBot::PrepStatusInfos(bool all)
+void AuctionHouseBot::PrepStatusInfos()
 {
 
     AhBotInfos.clear();

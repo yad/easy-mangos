@@ -417,9 +417,9 @@ public:
     const char* GetAHBotName() const { return m_AHBotName.c_str(); }
 
     bool ReloadAllConfig();
-    void SetItemsRatio(uint32 al, uint32 ho, uint32 ne);
-    void SetItemsAmount(uint32 grey_i, uint32 white_i, uint32 green_i, uint32 blue_i, uint32 purple_i, uint32 orange_i, uint32 yellow_i);
-    void PrepStatusInfos(bool all);
+    void SetItemsRatio(uint32* al, uint32* ho, uint32* ne);
+    void SetItemsAmount(uint32* grey_i, uint32* white_i, uint32* green_i, uint32* blue_i, uint32* purple_i, uint32* orange_i, uint32* yellow_i);
+    void PrepStatusInfos();
     void Rebuild(bool all);
 };
 
