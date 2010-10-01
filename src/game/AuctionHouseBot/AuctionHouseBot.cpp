@@ -9,8 +9,6 @@
 
 INSTANTIATE_SINGLETON_1( AuctionHouseBot );
 
-using namespace std;
-
 AuctionHouseBot::AuctionHouseBot()
 {
     // Define faction for our main class.
@@ -34,7 +32,7 @@ AuctionHouseBot::~AuctionHouseBot()
 // Fill ItemInfos object with real content of AH.
 uint32 AuctionHouseBot::SetStat(AHBConfig& config)
 {
-    std::vector<std::vector<uint32> > ItemsInAH(AHB_QUALITY_MAX, vector<uint32> (MAX_ITEM_CLASS));
+    std::vector<std::vector<uint32> > ItemsInAH(AHB_QUALITY_MAX, std::vector< uint32 > (MAX_ITEM_CLASS));
 
     AuctionHouseEntry const* ahEntry = sAuctionHouseStore.LookupEntry(config.GetAHID());
     AuctionHouseObject* auctionHouse = sAuctionMgr.GetAuctionsMap(ahEntry);
@@ -214,7 +212,7 @@ void AuctionHouseBot::addNewAuctionBuyerBotBid(AHBConfig *config, WorldSession *
     // Fetches content of selected AH
     AuctionHouseEntry const* ahEntry = sAuctionHouseStore.LookupEntry(config->GetAHID());
     AuctionHouseObject* auctionHouse = sAuctionMgr.GetAuctionsMap(ahEntry);
-    vector<uint32> possibleBids;
+    std::vector<uint32> possibleBids;
 
     for (AuctionHouseObject::AuctionEntryMap::const_iterator itr = auctionHouse->GetAuctionsBegin();itr != auctionHouse->GetAuctionsEnd();++itr)
     {
@@ -243,7 +241,7 @@ void AuctionHouseBot::addNewAuctionBuyerBotBid(AHBConfig *config, WorldSession *
         uint32 auctionID = possibleBids[vectorPos];
 
         // Erase the auction from the vector to prevent bidding on item in next iteration.
-        vector<uint32>::iterator iter = possibleBids.begin();
+        std::vector< uint32 >::iterator iter = possibleBids.begin();
         advance(iter, vectorPos);
         possibleBids.erase(iter);
 
@@ -1101,7 +1099,7 @@ void AuctionHouseBot::PrepStatusInfos()
 {
 
     AhBotInfos.clear();
-    AhBotInfos.resize(3,vector < uint32 > (AHB_QUALITY_MAX));
+    AhBotInfos.resize(3, std::vector < uint32 > (AHB_QUALITY_MAX));
     AllianceItemsCount=HordeItemsCount=NeutralItemsCount=0;
     for (uint32 i=0; i<3; i++)
     {
