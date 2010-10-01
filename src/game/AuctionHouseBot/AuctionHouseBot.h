@@ -7,30 +7,6 @@
 #include "../ObjectGuid.h"
 #include "../Item.h"
 
-#define AHB_GREY        0
-#define AHB_WHITE       1
-#define AHB_GREEN       2
-#define AHB_BLUE        3
-#define AHB_PURPLE      4
-#define AHB_ORANGE      5
-#define AHB_YELLOW      6
-#define AHB_GREY_TG     0
-#define AHB_WHITE_TG    1
-#define AHB_GREEN_TG    2
-#define AHB_BLUE_TG     3
-#define AHB_PURPLE_TG   4
-#define AHB_ORANGE_TG   5
-#define AHB_YELLOW_TG   6
-#define AHB_GREY_I      7
-#define AHB_WHITE_I     8
-#define AHB_GREEN_I     9
-#define AHB_BLUE_I      10
-#define AHB_PURPLE_I    11
-#define AHB_ORANGE_I    12
-#define AHB_YELLOW_I    13
-
-//#define AHB_QUALITY_MAX 7
-
 enum e_ahb_quality{
     E_GREY = 0,
     E_WHITE,
@@ -350,25 +326,23 @@ struct s_randomArray
 class AuctionHouseBot
 {
 private:
-    ACE_Vector<uint32> npcItems;
-    ACE_Vector<uint32> lootItems;
 
-    std::vector<std::vector<std::vector<uint32> > > ItemPool;
+    std::vector<std::vector<std::vector<uint32> > > m_ItemPool;
 
-    bool debug_Out;
+    bool m_debug_Out;
 
-    Config AhBotCfg;
+    Config m_AhBotCfg;
 
-    AHBConfig AllianceConfig;
-    AHBConfig HordeConfig;
-    AHBConfig NeutralConfig;
+    AHBConfig m_AllianceConfig;
+    AHBConfig m_HordeConfig;
+    AHBConfig m_NeutralConfig;
 
-    time_t _lastrun_a;
-    time_t _lastrun_h;
-    time_t _lastrun_n;
+    time_t m_lastrun_a;
+    time_t m_lastrun_h;
+    time_t m_lastrun_n;
 
-    uint32 ItemsPerCycleBoost;
-    uint32 ItemsPerCycleNormal;
+    uint32 m_ItemsPerCycleBoost;
+    uint32 m_ItemsPerCycleNormal;
 
     ObjectGuid m_FakeGuid;
 
@@ -384,6 +358,7 @@ private:
     bool    getRandomArray( AHBConfig& config, std::vector<s_randomArray>& ra, const std::vector<std::vector<uint32> >& addedItem  );
 
     void    SetPricesOfItem(const Item *item, AHBConfig& config, uint32& buyp, uint32& bidp, uint32& stackcnt, e_ahb_quality AHB_ITEMS);
+
     void    setConfig(e_AHBOTConfigUInt32Values index, char const* fieldname, uint32 defvalue);
     void    setConfig(e_AHBOTConfigBoolValues index, char const* fieldname, bool defvalue);
     void    setConfig(e_AHBOTConfigBoolValues index, bool value) { m_configBoolValues[index]=value; }

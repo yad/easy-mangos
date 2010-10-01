@@ -14,15 +14,15 @@ using namespace std;
 AuctionHouseBot::AuctionHouseBot()
 {
     // Define faction for our main class.
-    AllianceConfig = AHBConfig(2);
-    HordeConfig = AHBConfig(6);
-    NeutralConfig = AHBConfig(7);
+    m_AllianceConfig = AHBConfig(2);
+    m_HordeConfig = AHBConfig(6);
+    m_NeutralConfig = AHBConfig(7);
 
     // Define the last usable number for GUID will be used has AhBot GUID.
     m_FakeGuid.Set(std::numeric_limits< uint32 >::max());
 
-    // Initialise ItemPool (list of items in database will be used to fill AH)
-    ItemPool.resize(AHB_QUALITY_MAX, std::vector< std::vector< uint32 > >( MAX_ITEM_CLASS ));
+    // Initialise m_ItemPool (list of items in database will be used to fill AH)
+    m_ItemPool.resize(AHB_QUALITY_MAX, std::vector< std::vector< uint32 > >( MAX_ITEM_CLASS ));
 }
 
 AuctionHouseBot::~AuctionHouseBot()
@@ -64,7 +64,7 @@ uint32 AuctionHouseBot::SetStat(AHBConfig& config)
         }
     }
 
-    if (debug_Out)
+    if (m_debug_Out)
     {
         sLog.outString("Missed Item\tGrey\tWhite\tGreen\tBlue\tPurple\tOrange\tYellow");
         for (uint32 i=0; i<MAX_ITEM_CLASS;++i)
@@ -87,7 +87,7 @@ bool AuctionHouseBot::getRandomArray( AHBConfig& config, std::vector<s_randomArr
     for (uint32 j=0; j<AHB_QUALITY_MAX; ++j)
     {
         for (uint32 i=0; i<MAX_ITEM_CLASS; ++i)
-            if ((config.ItemInfos[j].ItemClassInfos[i].GetMissItems()   > addedItem[j][i]) && ItemPool[j][i].size() >0)
+            if ((config.ItemInfos[j].ItemClassInfos[i].GetMissItems()   > addedItem[j][i]) && m_ItemPool[j][i].size() >0)
             {
                 miss_item.color=j;
                 miss_item.itemclass=i;
@@ -124,12 +124,12 @@ void AuctionHouseBot::addNewAuctions(AHBConfig& config)
 
     uint32 items;
     // If there is large amount of items missed we can use boost value to get fast filled AH
-    if (MissItems > ItemsPerCycleBoost)
+    if (MissItems > m_ItemsPerCycleBoost)
     {
-        items=ItemsPerCycleBoost;
+        items=m_ItemsPerCycleBoost;
         sLog.outString("AHBot> Boost value used to fill AH! (if this happens often adjust both ItemsPerCycle in mangosd.conf)");
     }
-    else items=ItemsPerCycleNormal;
+    else items=m_ItemsPerCycleNormal;
 
 
     AuctionHouseEntry const* ahEntry = sAuctionHouseStore.LookupEntry(config.GetAHID());
@@ -146,14 +146,14 @@ void AuctionHouseBot::addNewAuctions(AHBConfig& config)
         // Select random position from missed items table
         uint32 pos =  (urand(0,RandArray.size()-1));
 
-        // Set itemID with random item ID for selected categories and color, from ItemPool table
-        itemID = ItemPool[RandArray[pos].color][RandArray[pos].itemclass][urand(0,ItemPool[RandArray[pos].color][RandArray[pos].itemclass].size()-1)];
+        // Set itemID with random item ID for selected categories and color, from m_ItemPool table
+        itemID = m_ItemPool[RandArray[pos].color][RandArray[pos].itemclass][urand(0,m_ItemPool[RandArray[pos].color][RandArray[pos].itemclass].size()-1)];
         ++ ItemsAdded[RandArray[pos].color][RandArray[pos].itemclass]; // Helper table to avoid rescan from DB in this loop. (has we add item in random orders)
 
 
         if (itemID == 0)
         {
-            if (debug_Out)
+            if (m_debug_Out)
                 sLog.outString("AHBot> Item::CreateItem() - Unable to find item");
             continue;
         }
@@ -236,11 +236,7 @@ void AuctionHouseBot::addNewAuctionBuyerBotBid(AHBConfig *config, WorldSession *
     {
 
         // Do we have anything to bid? If not, stop here.
-        if (possibleBids.empty())
-        {
-            count = config->GetBidsPerInterval();
-            continue;
-        }
+        if (possibleBids.empty()) break;
 
         // Choose random auction from possible auctions
         uint32 vectorPos = urand(0, possibleBids.size() - 1);
@@ -271,7 +267,7 @@ void AuctionHouseBot::addNewAuctionBuyerBotBid(AHBConfig *config, WorldSession *
         ItemPrototype const* prototype = sObjectMgr.GetItemPrototype(auction->item_template);
 
         // check which price we have to use, startbid or if it is bidded already
-        if (debug_Out)
+        if (m_debug_Out)
         {
             sLog.outError("Auction Number: %u", auction->Id);
             sLog.outError("Item Template: %u", auction->item_template);
@@ -283,13 +279,13 @@ void AuctionHouseBot::addNewAuctionBuyerBotBid(AHBConfig *config, WorldSession *
         if (auction->bid)
         {
             currentprice = auction->bid;
-            if (debug_Out)
+            if (m_debug_Out)
                 sLog.outError("Current Price: %u", auction->bid);
         }
         else
         {
             currentprice = auction->startbid;
-            if (debug_Out)
+            if (m_debug_Out)
                 sLog.outError("Current Price: %u", auction->startbid);
         }
         uint32 bidprice;
@@ -297,11 +293,11 @@ void AuctionHouseBot::addNewAuctionBuyerBotBid(AHBConfig *config, WorldSession *
         // Prepare portion from maximum bid
         uint32 tmprate2 = urand(0, 100);
         double tmprate = static_cast<double>(tmprate2);
-        if (debug_Out)
+        if (m_debug_Out)
             sLog.outError("tmprate: %f", tmprate);
 
         double bidrate = tmprate / 100;
-        if (debug_Out)
+        if (m_debug_Out)
             sLog.outError("bidrate: %f", bidrate);
 
         long double bidMax = 0;
@@ -322,7 +318,7 @@ void AuctionHouseBot::addNewAuctionBuyerBotBid(AHBConfig *config, WorldSession *
             }
         }
 
-        if (debug_Out)
+        if (m_debug_Out)
             sLog.outError("bidMax(succeed): %f", bidMax);
 
         // check some special items, and do recalculating to their prices
@@ -341,19 +337,19 @@ void AuctionHouseBot::addNewAuctionBuyerBotBid(AHBConfig *config, WorldSession *
 
         // Calculate our bid
         long double bidvalue = currentprice + ((bidMax - currentprice) * bidrate);
-        if (debug_Out)
+        if (m_debug_Out)
             sLog.outError("bidvalue: %f", bidvalue);
 
         // Convert to uint32
         bidprice = static_cast<uint32>(bidvalue);
-        if (debug_Out)
+        if (m_debug_Out)
             sLog.outError("bidprice: %u", bidprice);
 
         // Check our bid is high enough to be valid. If not, correct it to minimum.
         if ((currentprice + auction->GetAuctionOutBid()) > bidprice)
         {
             bidprice = currentprice + auction->GetAuctionOutBid();
-            if (debug_Out)
+            if (m_debug_Out)
                 sLog.outError("bidprice(>): %u", bidprice);
         }
 
@@ -423,61 +419,61 @@ void AuctionHouseBot::Update()
     WorldSession _session(0, NULL, SEC_PLAYER, true, 0, LOCALE_enUS);
 
     // Add New Bids
-    if (getConfig(CONFIG_UINT32_AHBOT_ALLIANCE_RATIO)>0) addNewAuctions(AllianceConfig);
-    if (getConfig(CONFIG_UINT32_AHBOT_HORDE_RATIO)>0) addNewAuctions(HordeConfig);
-    if (getConfig(CONFIG_UINT32_AHBOT_NEUTRAL_RATIO)>0) addNewAuctions(NeutralConfig);
+    if (getConfig(CONFIG_UINT32_AHBOT_ALLIANCE_RATIO)>0) addNewAuctions(m_AllianceConfig);
+    if (getConfig(CONFIG_UINT32_AHBOT_HORDE_RATIO)>0) addNewAuctions(m_HordeConfig);
+    if (getConfig(CONFIG_UINT32_AHBOT_NEUTRAL_RATIO)>0) addNewAuctions(m_NeutralConfig);
 
-    if (((_newrun - _lastrun_a) > (AllianceConfig.GetBiddingInterval() * 60)) && (AllianceConfig.GetBidsPerInterval() > 0) && (getConfig(CONFIG_BOOL_AHBOT_BUYER_ALLIANCE_ENABLED)==true))
+    if (((_newrun - m_lastrun_a) > (m_AllianceConfig.GetBiddingInterval() * 60)) && (m_AllianceConfig.GetBidsPerInterval() > 0) && (getConfig(CONFIG_BOOL_AHBOT_BUYER_ALLIANCE_ENABLED)==true))
     {
-        addNewAuctionBuyerBotBid(&AllianceConfig, &_session);
-        _lastrun_a = _newrun;
+        addNewAuctionBuyerBotBid(&m_AllianceConfig, &_session);
+        m_lastrun_a = _newrun;
     }
 
-    if (((_newrun - _lastrun_h) > (HordeConfig.GetBiddingInterval() *60)) && (HordeConfig.GetBidsPerInterval() > 0) && (getConfig(CONFIG_BOOL_AHBOT_BUYER_HORDE_ENABLED)==true))
+    if (((_newrun - m_lastrun_h) > (m_HordeConfig.GetBiddingInterval() *60)) && (m_HordeConfig.GetBidsPerInterval() > 0) && (getConfig(CONFIG_BOOL_AHBOT_BUYER_HORDE_ENABLED)==true))
     {
-        addNewAuctionBuyerBotBid(&HordeConfig, &_session);
-        _lastrun_h = _newrun;
+        addNewAuctionBuyerBotBid(&m_HordeConfig, &_session);
+        m_lastrun_h = _newrun;
     }
 
-    if (((_newrun - _lastrun_n) > (NeutralConfig.GetBiddingInterval() * 60)) && (NeutralConfig.GetBidsPerInterval() > 0) && (getConfig(CONFIG_BOOL_AHBOT_BUYER_NEUTRAL_ENABLED)==true))
+    if (((_newrun - m_lastrun_n) > (m_NeutralConfig.GetBiddingInterval() * 60)) && (m_NeutralConfig.GetBidsPerInterval() > 0) && (getConfig(CONFIG_BOOL_AHBOT_BUYER_NEUTRAL_ENABLED)==true))
     {
-        addNewAuctionBuyerBotBid(&NeutralConfig, &_session);
-        _lastrun_n = _newrun;
+        addNewAuctionBuyerBotBid(&m_NeutralConfig, &_session);
+        m_lastrun_n = _newrun;
     }
 }
 
 void AuctionHouseBot::LoadConfig()
 {
-    if (getConfig(CONFIG_UINT32_AHBOT_ALLIANCE_RATIO)>0)             LoadSellerValues(AllianceConfig);
-    if (getConfig(CONFIG_UINT32_AHBOT_HORDE_RATIO)>0)                LoadSellerValues(HordeConfig);
-    if (getConfig(CONFIG_UINT32_AHBOT_NEUTRAL_RATIO)>0)              LoadSellerValues(NeutralConfig);
-    if (getConfig(CONFIG_BOOL_AHBOT_BUYER_ALLIANCE_ENABLED)==true)   LoadBuyerValues(AllianceConfig);
-    if (getConfig(CONFIG_BOOL_AHBOT_BUYER_HORDE_ENABLED)==true)      LoadBuyerValues(HordeConfig);
-    if (getConfig(CONFIG_BOOL_AHBOT_BUYER_NEUTRAL_ENABLED)==true)    LoadBuyerValues(NeutralConfig);
+    if (getConfig(CONFIG_UINT32_AHBOT_ALLIANCE_RATIO)>0)             LoadSellerValues(m_AllianceConfig);
+    if (getConfig(CONFIG_UINT32_AHBOT_HORDE_RATIO)>0)                LoadSellerValues(m_HordeConfig);
+    if (getConfig(CONFIG_UINT32_AHBOT_NEUTRAL_RATIO)>0)              LoadSellerValues(m_NeutralConfig);
+    if (getConfig(CONFIG_BOOL_AHBOT_BUYER_ALLIANCE_ENABLED)==true)   LoadBuyerValues(m_AllianceConfig);
+    if (getConfig(CONFIG_BOOL_AHBOT_BUYER_HORDE_ENABLED)==true)      LoadBuyerValues(m_HordeConfig);
+    if (getConfig(CONFIG_BOOL_AHBOT_BUYER_NEUTRAL_ENABLED)==true)    LoadBuyerValues(m_NeutralConfig);
 }
 
 void AuctionHouseBot::setConfig(e_AHBOTConfigUInt32Values index, char const* fieldname, uint32 defvalue)
 {
-    setConfig(index, AhBotCfg.GetIntDefault(fieldname,defvalue));
+    setConfig(index, m_AhBotCfg.GetIntDefault(fieldname,defvalue));
 }
 
 void AuctionHouseBot::setConfig(e_AHBOTConfigBoolValues index, char const* fieldname, bool defvalue)
 {
-    setConfig(index, AhBotCfg.GetBoolDefault(fieldname,defvalue));
+    setConfig(index, m_AhBotCfg.GetBoolDefault(fieldname,defvalue));
 }
 
 //Get AuctionHousebot configuration file
 void AuctionHouseBot::GetConfigFromFile()
 {
     //Check config file version
-    if (AhBotCfg.GetIntDefault("ConfVersion", 0) != AUCTIONHOUSEBOT_CONF_VERSION)
+    if (m_AhBotCfg.GetIntDefault("ConfVersion", 0) != AUCTIONHOUSEBOT_CONF_VERSION)
         sLog.outError("AHBot> Configuration file version doesn't match expected version. Some config variables may be wrong or missing.");
 
     setConfig(CONFIG_UINT32_AHBOT_ALLIANCE_RATIO            , "AuctionHouseBot.Alliance.Items.Amount.Ratio"  , 0);
     setConfig(CONFIG_UINT32_AHBOT_HORDE_RATIO               , "AuctionHouseBot.Horde.Items.Amount.Ratio"  , 0);
     setConfig(CONFIG_UINT32_AHBOT_NEUTRAL_RATIO             , "AuctionHouseBot.Neutral.Items.Amount.Ratio"  , 0);
 
-    SetAHBotName( AhBotCfg.GetStringDefault("AuctionHouseBot.Name", "AHBot" ) );
+    SetAHBotName( m_AhBotCfg.GetStringDefault("AuctionHouseBot.Name", "AHBot" ) );
 
     setConfig(CONFIG_BOOL_AHBOT_BUYER_ALLIANCE_ENABLED      , "AuctionHouseBot.Alliance.Buyer.Enabled"   , false);
     setConfig(CONFIG_BOOL_AHBOT_BUYER_HORDE_ENABLED         , "AuctionHouseBot.Horde.Buyer.Enabled"   , false);
@@ -547,7 +543,7 @@ void AuctionHouseBot::GetConfigFromFile()
     setConfig(CONFIG_UINT32_AHBOT_BUYER_BID_INTERVAL        , "AuctionHouseBot.Buyer.Bid.Interval"          , 1);
     setConfig(CONFIG_UINT32_AHBOT_BUYER_BIDDIGIN_INTERVAL   , "AuctionHouseBot.Buyer.Biddigin.Interval"     , 1);
 
-    debug_Out = AhBotCfg.GetIntDefault("AuctionHouseBot.DEBUG", 0);
+    m_debug_Out = m_AhBotCfg.GetIntDefault("AuctionHouseBot.DEBUG", 0);
 }
 
 void AuctionHouseBot::Initialize()
@@ -558,10 +554,10 @@ void AuctionHouseBot::Initialize()
     sLog.outString("-------------------------------");
     sLog.outString("");
     sLog.outString("AHBot> New CORE by Cyberium (Original by Xeross, Naicisum, ChrisK, Paradox)");
-    sLog.outString("AHBot> Includes AHBuyer by Kerbe and Paradox (Not tested)");
+    sLog.outString("AHBot> Includes AHBuyer by Kerbe and Paradox (beta)");
     char const* cfg_file = _AUCTIONHOUSEBOT_CONFIG;
 
-    if (!AhBotCfg.SetSource(cfg_file))
+    if (!m_AhBotCfg.SetSource(cfg_file))
     {
         sLog.outError("AHBot> Unable to open configuration file(%s). AHBOT is Disabled.",_AUCTIONHOUSEBOT_CONFIG);
         setConfig(CONFIG_UINT32_AHBOT_ALLIANCE_RATIO, 0);
@@ -589,8 +585,12 @@ void AuctionHouseBot::Initialize()
         sLog.outString("AuctionHouseBot BUYER is disabled! (If you want to use it please set config in 'mangos.conf')");
     }
 
-    ItemsPerCycleBoost = getConfig(CONFIG_UINT32_AHBOT_ITEMS_PER_CYCLE_BOOST);
-    ItemsPerCycleNormal = getConfig(CONFIG_UINT32_AHBOT_ITEMS_PER_CYCLE_NORMAL);
+    m_ItemsPerCycleBoost = getConfig(CONFIG_UINT32_AHBOT_ITEMS_PER_CYCLE_BOOST);
+    m_ItemsPerCycleNormal = getConfig(CONFIG_UINT32_AHBOT_ITEMS_PER_CYCLE_NORMAL);
+    
+    std::vector<uint32> npcItems;
+    std::vector<uint32> lootItems;
+    
     bool ItemAdded=false;
     QueryResult* results = (QueryResult*) NULL;
     char npcQuery[] = "SELECT distinct `item` FROM `npc_vendor`";
@@ -759,7 +759,7 @@ void AuctionHouseBot::Initialize()
             if (((getConfig(CONFIG_UINT32_AHBOT_ITEM_MAX_SKILL_RANK)) > 0) && (prototype->RequiredSkill > getConfig(CONFIG_UINT32_AHBOT_ITEM_MAX_SKILL_RANK))) continue;
         }
 
-        ItemPool[prototype->Quality][prototype->Class].push_back(itemID);
+        m_ItemPool[prototype->Quality][prototype->Class].push_back(itemID);
         ItemAdded = true;
 
     }
@@ -776,7 +776,7 @@ void AuctionHouseBot::Initialize()
     sLog.outString("\nItems loaded\tGrey\tWhite\tGreen\tBlue\tPurple\tOrange\tYellow");
     for (uint32 i=0; i<MAX_ITEM_CLASS;++i)
     {
-        sLog.outString("%-11s\t%u\t%u\t%u\t%u\t%u\t%u\t%u",AllianceConfig.ItemInfos[0].ItemClassInfos[i].GetName().c_str(), ItemPool[0][i].size(),ItemPool[1][i].size(),ItemPool[2][i].size(),ItemPool[3][i].size(),ItemPool[4][i].size(),ItemPool[5][i].size(),ItemPool[6][i].size());
+        sLog.outString("%-11s\t%u\t%u\t%u\t%u\t%u\t%u\t%u",m_AllianceConfig.ItemInfos[0].ItemClassInfos[i].GetName().c_str(), m_ItemPool[0][i].size(),m_ItemPool[1][i].size(),m_ItemPool[2][i].size(),m_ItemPool[3][i].size(),m_ItemPool[4][i].size(),m_ItemPool[5][i].size(),m_ItemPool[6][i].size());
     }
     sLog.outString("\nAHBot> [AHBot-beta] is now loaded");
 }
@@ -999,14 +999,14 @@ void AuctionHouseBot::LoadSellerValues(AHBConfig& config)
     //load min and max auction times
     config.SetMinTime(getConfig(CONFIG_UINT32_AHBOT_MINTIME));
     config.SetMaxTime(getConfig(CONFIG_UINT32_AHBOT_MAXTIME));
-    if (debug_Out)
+    if (m_debug_Out)
     {
         sLog.outString("minTime = %u", config.GetMinTime());
         sLog.outString("maxTime = %u", config.GetMaxTime());
     }
     //load percentages
 
-    if (debug_Out)
+    if (m_debug_Out)
     {
         sLog.outString("\nFor AH number %u",config.GetAHID());
         sLog.outString("GreyItems = %u", config.ItemInfos[E_GREY].GetAmountOfItems());
@@ -1023,33 +1023,33 @@ void AuctionHouseBot::LoadSellerValues(AHBConfig& config)
 void AuctionHouseBot::LoadBuyerValues(AHBConfig& config)
 {
     //load buyer bid prices
-    config.ItemInfos[AHB_GREY].SetBuyerPrice(getConfig(CONFIG_UINT32_AHBOT_BUYER_PRICE_GREY));
-    config.ItemInfos[AHB_WHITE].SetBuyerPrice(getConfig(CONFIG_UINT32_AHBOT_BUYER_PRICE_WHITE));
-    config.ItemInfos[AHB_GREEN].SetBuyerPrice(getConfig(CONFIG_UINT32_AHBOT_BUYER_PRICE_GREEN));
-    config.ItemInfos[AHB_BLUE].SetBuyerPrice(getConfig(CONFIG_UINT32_AHBOT_BUYER_PRICE_BLUE));
-    config.ItemInfos[AHB_PURPLE].SetBuyerPrice(getConfig(CONFIG_UINT32_AHBOT_BUYER_PRICE_PURPLE));
-    config.ItemInfos[AHB_ORANGE].SetBuyerPrice(getConfig(CONFIG_UINT32_AHBOT_BUYER_PRICE_ORANGE));
-    config.ItemInfos[AHB_YELLOW].SetBuyerPrice(getConfig(CONFIG_UINT32_AHBOT_BUYER_PRICE_YELLOW));
+    config.ItemInfos[E_GREY].SetBuyerPrice(getConfig(CONFIG_UINT32_AHBOT_BUYER_PRICE_GREY));
+    config.ItemInfos[E_WHITE].SetBuyerPrice(getConfig(CONFIG_UINT32_AHBOT_BUYER_PRICE_WHITE));
+    config.ItemInfos[E_GREEN].SetBuyerPrice(getConfig(CONFIG_UINT32_AHBOT_BUYER_PRICE_GREEN));
+    config.ItemInfos[E_BLUE].SetBuyerPrice(getConfig(CONFIG_UINT32_AHBOT_BUYER_PRICE_BLUE));
+    config.ItemInfos[E_PURPLE].SetBuyerPrice(getConfig(CONFIG_UINT32_AHBOT_BUYER_PRICE_PURPLE));
+    config.ItemInfos[E_ORANGE].SetBuyerPrice(getConfig(CONFIG_UINT32_AHBOT_BUYER_PRICE_ORANGE));
+    config.ItemInfos[E_YELLOW].SetBuyerPrice(getConfig(CONFIG_UINT32_AHBOT_BUYER_PRICE_YELLOW));
 
-    if (debug_Out)
+    if (m_debug_Out)
     {
-        sLog.outString("buyerPriceGrey = %u",   config.ItemInfos[AHB_GREY].GetBuyerPrice());
-        sLog.outString("buyerPriceWhite = %u",  config.ItemInfos[AHB_WHITE].GetBuyerPrice());
-        sLog.outString("buyerPriceGreen = %u",  config.ItemInfos[AHB_GREEN].GetBuyerPrice());
-        sLog.outString("buyerPriceBlue = %u",   config.ItemInfos[AHB_BLUE].GetBuyerPrice());
-        sLog.outString("buyerPricePurple = %u", config.ItemInfos[AHB_PURPLE].GetBuyerPrice());
-        sLog.outString("buyerPriceOrange = %u", config.ItemInfos[AHB_ORANGE].GetBuyerPrice());
-        sLog.outString("buyerPriceYellow = %u", config.ItemInfos[AHB_YELLOW].GetBuyerPrice());
+        sLog.outString("buyerPriceGrey = %u",   config.ItemInfos[E_GREY].GetBuyerPrice());
+        sLog.outString("buyerPriceWhite = %u",  config.ItemInfos[E_WHITE].GetBuyerPrice());
+        sLog.outString("buyerPriceGreen = %u",  config.ItemInfos[E_GREEN].GetBuyerPrice());
+        sLog.outString("buyerPriceBlue = %u",   config.ItemInfos[E_BLUE].GetBuyerPrice());
+        sLog.outString("buyerPricePurple = %u", config.ItemInfos[E_PURPLE].GetBuyerPrice());
+        sLog.outString("buyerPriceOrange = %u", config.ItemInfos[E_ORANGE].GetBuyerPrice());
+        sLog.outString("buyerPriceYellow = %u", config.ItemInfos[E_YELLOW].GetBuyerPrice());
     }
     //load bidding interval
     config.SetBiddingInterval(getConfig(CONFIG_UINT32_AHBOT_BUYER_BIDDIGIN_INTERVAL));
-    if (debug_Out)
+    if (m_debug_Out)
     {
         sLog.outString("buyerBiddingInterval = %u", config.GetBiddingInterval());
     }
     //load bids per interval
     config.SetBidsPerInterval(getConfig(CONFIG_UINT32_AHBOT_BUYER_BID_INTERVAL));
-    if (debug_Out)
+    if (m_debug_Out)
     {
         sLog.outString("buyerBidsPerInterval = %u", config.GetBidsPerInterval());
     }
@@ -1059,7 +1059,7 @@ void AuctionHouseBot::LoadBuyerValues(AHBConfig& config)
 bool AuctionHouseBot::ReloadAllConfig()
 {
 
-    if (AhBotCfg.Reload())
+    if (m_AhBotCfg.Reload())
     {
         GetConfigFromFile();
         LoadConfig();
@@ -1078,9 +1078,9 @@ void AuctionHouseBot::SetItemsRatio(uint32* al, uint32* ho, uint32* ne)
     if (al != NULL) setConfig(CONFIG_UINT32_AHBOT_ALLIANCE_RATIO, *al);
     if (ho != NULL) setConfig(CONFIG_UINT32_AHBOT_HORDE_RATIO, *ho);
     if (ne != NULL) setConfig(CONFIG_UINT32_AHBOT_NEUTRAL_RATIO, *ne);
-    LoadItemsQuantity(AllianceConfig);
-    LoadItemsQuantity(HordeConfig);
-    LoadItemsQuantity(NeutralConfig);
+    LoadItemsQuantity(m_AllianceConfig);
+    LoadItemsQuantity(m_HordeConfig);
+    LoadItemsQuantity(m_NeutralConfig);
 }
 
 void AuctionHouseBot::SetItemsAmount(uint32* grey_i, uint32* white_i, uint32* green_i, uint32* blue_i, uint32* purple_i, uint32* orange_i, uint32* yellow_i)
@@ -1092,9 +1092,9 @@ void AuctionHouseBot::SetItemsAmount(uint32* grey_i, uint32* white_i, uint32* gr
     if (purple_i != NULL) setConfig(CONFIG_UINT32_AHBOT_ITEM_PURPLE_AMOUNT,*purple_i);
     if (orange_i != NULL) setConfig(CONFIG_UINT32_AHBOT_ITEM_ORANGE_AMOUNT,*orange_i);
     if (yellow_i != NULL) setConfig(CONFIG_UINT32_AHBOT_ITEM_YELLOW_AMOUNT,*yellow_i);
-    LoadItemsQuantity(AllianceConfig);
-    LoadItemsQuantity(HordeConfig);
-    LoadItemsQuantity(NeutralConfig);
+    LoadItemsQuantity(m_AllianceConfig);
+    LoadItemsQuantity(m_HordeConfig);
+    LoadItemsQuantity(m_NeutralConfig);
 }
 
 void AuctionHouseBot::PrepStatusInfos()
