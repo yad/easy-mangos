@@ -581,7 +581,8 @@ void Aura::Update(uint32 diff)
         // all spells with manaPerSecond/manaPerSecondPerLevel have aura in effect 0
         if (GetEffIndex() == EFFECT_INDEX_0 && m_timeCla <= 0)
         {
-            if(Unit* caster = GetCaster())
+            Unit* caster = GetCaster();
+            if (caster && caster->IsInWorld())
             {
                 Powers powertype = Powers(GetSpellProto()->powerType);
                 int32 manaPerSecond = GetSpellProto()->manaPerSecond + GetSpellProto()->manaPerSecondPerLevel * caster->getLevel();
@@ -643,9 +644,17 @@ void AreaAura::Update(uint32 diff)
                             {
                                 if(caster->IsWithinDistInMap(Target, m_radius))
                                     targets.push_back(Target);
-                                Pet *pet = Target->GetPet();
-                                if(pet && pet->isAlive() && caster->IsWithinDistInMap(pet, m_radius))
-                                    targets.push_back(pet);
+                                if (Pet *pet = Target->GetPet())
+                                {
+                                    GroupPetList m_groupPets = Target->GetPets();
+                                    if (!m_groupPets.empty())
+                                    {
+                                        for (GroupPetList::const_iterator itr = m_groupPets.begin(); itr != m_groupPets.end(); ++itr)
+                                            if (Pet* _pet = Target->GetMap()->GetPet(*itr))
+                                                if(_pet && _pet->isAlive() && caster->IsWithinDistInMap(_pet, m_radius))
+                                                    targets.push_back(_pet);
+                                    }
+                                }
                             }
                         }
                     }
@@ -655,9 +664,17 @@ void AreaAura::Update(uint32 diff)
                         if( owner != caster && caster->IsWithinDistInMap(owner, m_radius) )
                             targets.push_back(owner);
                         // add caster's pet
-                        Unit* pet = caster->GetPet();
-                        if( pet && caster->IsWithinDistInMap(pet, m_radius))
-                            targets.push_back(pet);
+                        if (Pet *pet = caster->GetPet())
+                        {
+                            GroupPetList m_groupPets = caster->GetPets();
+                            if (!m_groupPets.empty())
+                            {
+                                for (GroupPetList::const_iterator itr = m_groupPets.begin(); itr != m_groupPets.end(); ++itr)
+                                    if (Pet* _pet = caster->GetMap()->GetPet(*itr))
+                                        if(_pet && caster->IsWithinDistInMap(_pet, m_radius))
+                                            targets.push_back(_pet);
+                            }
+                        }
                     }
                     break;
                 }
@@ -677,9 +694,17 @@ void AreaAura::Update(uint32 diff)
                             {
                                 if(caster->IsWithinDistInMap(Target, m_radius))
                                     targets.push_back(Target);
-                                Pet *pet = Target->GetPet();
-                                if(pet && pet->isAlive() && caster->IsWithinDistInMap(pet, m_radius))
-                                    targets.push_back(pet);
+                                if (Pet *pet = Target->GetPet())
+                                {
+                                    GroupPetList m_groupPets = Target->GetPets();
+                                    if (!m_groupPets.empty())
+                                    {
+                                        for (GroupPetList::const_iterator itr = m_groupPets.begin(); itr != m_groupPets.end(); ++itr)
+                                            if (Pet* _pet = caster->GetMap()->GetPet(*itr))
+                                                if(_pet && caster->IsWithinDistInMap(_pet, m_radius))
+                                                    targets.push_back(_pet);
+                                    }
+                                }
                             }
                         }
                     }
@@ -689,9 +714,17 @@ void AreaAura::Update(uint32 diff)
                         if( owner != caster && caster->IsWithinDistInMap(owner, m_radius) )
                             targets.push_back(owner);
                         // add caster's pet
-                        Unit* pet = caster->GetPet();
-                        if( pet && caster->IsWithinDistInMap(pet, m_radius))
-                            targets.push_back(pet);
+                        if (Pet *pet = caster->GetPet())
+                        {
+                            GroupPetList m_groupPets = caster->GetPets();
+                            if (!m_groupPets.empty())
+                            {
+                                for (GroupPetList::const_iterator itr = m_groupPets.begin(); itr != m_groupPets.end(); ++itr)
+                                    if (Pet* _pet = caster->GetMap()->GetPet(*itr))
+                                        if(_pet && caster->IsWithinDistInMap(_pet, m_radius))
+                                            targets.push_back(_pet);
+                            }
+                        }
                     }
                     break;
                 }
@@ -954,7 +987,10 @@ bool Aura::CanProcFrom(SpellEntry const *spell, uint32 EventProcEx, uint32 procE
 
 void Aura::ReapplyAffectedPassiveAuras( Unit* target, bool owner_mode )
 {
-    std::set<uint32> affectedSelf;
+    // we need store cast item guids for self casted spells
+    // expected that not exist permanent auras from stackable auras from different items
+    std::map<uint32, ObjectGuid> affectedSelf;
+
     std::set<uint32> affectedAuraCaster;
 
     for(Unit::SpellAuraHolderMap::const_iterator itr = target->GetSpellAuraHolderMap().begin(); itr != target->GetSpellAuraHolderMap().end(); ++itr)
@@ -969,16 +1005,22 @@ void Aura::ReapplyAffectedPassiveAuras( Unit* target, bool owner_mode )
         {
             // only applied by self or aura caster
             if (itr->second->GetCasterGUID() == target->GetGUID())
-                affectedSelf.insert(itr->second->GetId());
+                affectedSelf[itr->second->GetId()] = itr->second->GetCastItemGUID();
             else if (itr->second->GetCasterGUID() == GetCasterGUID())
                 affectedAuraCaster.insert(itr->second->GetId());
         }
     }
 
-    for(std::set<uint32>::const_iterator set_itr = affectedSelf.begin(); set_itr != affectedSelf.end(); ++set_itr)
+    if (!affectedSelf.empty())
     {
-        target->RemoveAurasDueToSpell(*set_itr);
-        target->CastSpell(GetTarget(), *set_itr, true);
+        Player* pTarget = target->GetTypeId() == TYPEID_PLAYER ? (Player*)target : NULL;
+
+        for(std::map<uint32, ObjectGuid>::const_iterator map_itr = affectedSelf.begin(); map_itr != affectedSelf.end(); ++map_itr)
+        {
+            Item* item = pTarget && !map_itr->second.IsEmpty() ? pTarget->GetItemByGuid(map_itr->second) : NULL;
+            target->RemoveAurasDueToSpell(map_itr->first);
+            target->CastSpell(target, map_itr->first, true, item);
+        }
     }
 
     if (!affectedAuraCaster.empty())
@@ -3988,7 +4030,7 @@ void Aura::HandleAuraModStun(bool apply, bool Real)
         {
             GameObject* pObj = new GameObject;
             if(pObj->Create(sObjectMgr.GenerateLowGuid(HIGHGUID_GAMEOBJECT), 185584, target->GetMap(), target->GetPhaseMask(),
-                target->GetPositionX(), target->GetPositionY(), target->GetPositionZ(), target->GetOrientation(), 0.0f, 0.0f, 0.0f, 0.0f, 100, GO_STATE_READY))
+                target->GetPositionX(), target->GetPositionY(), target->GetPositionZ(), target->GetOrientation(), 0.0f, 0.0f, 0.0f, 0.0f, GO_ANIMPROGRESS_DEFAULT, GO_STATE_READY))
             {
                 pObj->SetRespawnTime(GetAuraDuration()/IN_MILLISECONDS);
                 pObj->SetSpellId(GetId());
@@ -7812,9 +7854,6 @@ void Aura::PeriodicDummyTick()
             // Summon Gargoyle
 //            if (spell->SpellFamilyFlags & UI64LIT(0x0000008000000000))
 //                return;
-            // Death Rune Mastery
-//            if (spell->SpellFamilyFlags & UI64LIT(0x0000000000004000))
-//                return;
             // Bladed Armor
             if (spell->SpellIconID == 2653)
             {
@@ -7825,44 +7864,24 @@ void Aura::PeriodicDummyTick()
                 return;
             }
             // Death Rune Mastery
-            if (spell->SpellIconID == 2622)
+            // Reaping
+            // Blood of the North
+            if (spell->SpellIconID == 22 || spell->SpellIconID == 3041 || spell->SpellIconID == 30412)
             {
-                if (target->GetTypeId() != TYPEID_PLAYER || target->isInCombat())
+                if (target->GetTypeId() != TYPEID_PLAYER)
+                    return;
+                if (target->isInCombat())
                     return;
 
-                Player *player = (Player*)target;
-                for (uint32 i = 0; i < MAX_RUNES; ++i)
+                Player *plr = (Player*)GetTarget();
+                for(uint32 i = 0; i < MAX_RUNES; ++i)
                 {
-                    if (!player->GetRuneCooldown(i))
-                    {
-                        RuneType type = player->GetBaseRune(i);
-                        if (player->GetCurrentRune(i) == RUNE_DEATH && (type == RUNE_FROST || type == RUNE_UNHOLY) && player->IsRuneConvertedBy(i, spell->Id))
-                        {
-                            player->ConvertRune(i, type);
-                            player->ClearConvertedBy(i);
-                        }
-                    }
+                    RuneType rune = plr->GetCurrentRune(i);
+                    if (rune == RUNE_DEATH)
+                        plr->ConvertRune(i, plr->GetBaseRune(i));
                 }
-            }
-            // Blood of the North and Reaping
-            if (spell->SpellIconID == 3041 || spell->SpellIconID == 22)
-            {
-                if (target->GetTypeId() != TYPEID_PLAYER || target->isInCombat())
-                    return;
 
-                Player *player = (Player*)target;
-                for (uint32 i = 0; i < MAX_RUNES; ++i)
-                {
-                    if (!player->GetRuneCooldown(i) && player->IsRuneConvertedBy(i, spell->Id))
-                    {
-                        RuneType type = player->GetBaseRune(i);
-                        if (player->GetCurrentRune(i) == RUNE_DEATH && type == RUNE_BLOOD)
-                        {
-                            player->ConvertRune(i, type);
-                            player->ClearConvertedBy(i);
-                        }
-                    }
-                }
+                return;
             }
             break;
         }
@@ -7939,11 +7958,19 @@ void Aura::HandleAuraControlVehicle(bool apply, bool Real)
     if(!Real)
         return;
 
-    Unit *caster = GetCaster();
+    Unit* caster = GetCaster();
+
+    if (!caster)
+        return;
+
     Unit* target = GetTarget();
+
+    if (!target)
+        return;
+
     VehicleKit* pVehicle = target->GetVehicleKit();
 
-    if (!caster || target->GetTypeId() != TYPEID_UNIT || !pVehicle)
+    if (target->GetTypeId() != TYPEID_UNIT || !pVehicle)
         return;
 
     if (apply)
@@ -8757,7 +8784,7 @@ void SpellAuraHolder::HandleSpellSpecificBoosts(bool apply)
                     }
                     break;
                 }
-                case 69260:
+                case 69290:
                 {
                     if (!apply)
                     {

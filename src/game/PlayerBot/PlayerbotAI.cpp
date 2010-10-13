@@ -2149,7 +2149,7 @@ void PlayerbotAI::MovementUpdate()
 {
     // send heartbeats to world
     WorldPacket data;
-    m_bot->BuildHeartBeatMsg(&data);
+    m_bot->BuildHeartBeatMsg(data);
     m_bot->SendMessageToSet(&data, false);
 
     float x = m_bot->GetPositionX();

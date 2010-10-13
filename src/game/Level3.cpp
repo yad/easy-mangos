@@ -2497,8 +2497,8 @@ bool ChatHandler::HandleLearnAllMySpellsCommand(char* /*args*/)
             }
             if(cinfo->npcflag & UNIT_NPC_FLAG_QUESTGIVER)
             {
-                QuestRelations const& qr = sObjectMgr.mCreatureQuestRelations;
-                for(QuestRelations::const_iterator itr = qr.lower_bound(id); itr != qr.upper_bound(id); ++itr)
+                QuestRelationsMapBounds bounds = sObjectMgr.GetCreatureQuestRelationsMapBounds(id);
+                for(QuestRelationsMap::const_iterator itr = bounds.first; itr != bounds.second; ++itr)
                 {
                     Quest const *pQuest = sObjectMgr.GetQuestTemplate(itr->second);
 
@@ -2695,8 +2695,8 @@ bool ChatHandler::HandleLearnAllMySpellsForMyLevelCommand(char* /*args*/)
             }
             if(cinfo->npcflag & UNIT_NPC_FLAG_QUESTGIVER)
             {
-                QuestRelations const& qr = sObjectMgr.mCreatureQuestRelations;
-                for(QuestRelations::const_iterator itr = qr.lower_bound(id); itr != qr.upper_bound(id); ++itr)
+                QuestRelationsMapBounds bounds = sObjectMgr.GetCreatureQuestRelationsMapBounds(id);
+                for(QuestRelationsMap::const_iterator itr = bounds.first; itr != bounds.second; ++itr)
                 {
                     Quest const *pQuest = sObjectMgr.GetQuestTemplate(itr->second);
 
@@ -5158,6 +5158,9 @@ bool ChatHandler::HandleCharacterLevelCommand(char* args)
     if (newlevel > STRONG_MAX_LEVEL)                        // hardcoded maximum level
         newlevel = STRONG_MAX_LEVEL;
 
+    if (newlevel > sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL))
+        newlevel = sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL);
+
     HandleCharacterLevel(target, target_guid, oldlevel, newlevel);
 
     if (!m_session || m_session->GetPlayer() != target)     // including player==NULL
@@ -5202,6 +5205,9 @@ bool ChatHandler::HandleLevelUpCommand(char* args)
 
     if (newlevel > STRONG_MAX_LEVEL)                        // hardcoded maximum level
         newlevel = STRONG_MAX_LEVEL;
+
+    if (newlevel > sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL))
+        newlevel = sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL);
 
     HandleCharacterLevel(target,target_guid,oldlevel,newlevel);
 
