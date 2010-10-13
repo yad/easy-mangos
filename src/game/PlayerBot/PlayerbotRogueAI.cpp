@@ -48,6 +48,7 @@ void PlayerbotRogueAI::InitSpells(PlayerbotAI* const ai)
     DISTRACT                 = ai->initSpell(DISTRACT_1);
     PREPARATION              = ai->initSpell(PREPARATION_1);
     PREMEDITATION            = ai->initSpell(PREMEDITATION_1);
+    PICK_POCKET              = ai->initSpell(PICK_POCKET_1);
 
     EVISCERATE               = ai->initSpell(EVISCERATE_1);
     KIDNEY_SHOT              = ai->initSpell(KIDNEY_SHOT_1);
@@ -85,9 +86,16 @@ bool PlayerbotRogueAI::DoFirstCombatManeuver(Unit* pTarget)
         return false;
 
     if (!ai->HasAura(STEALTH, m_bot) && ai->CastSpell(STEALTH, m_bot))
+    {
+        m_bot->addUnitState(UNIT_STAT_CHASE); // ensure that the bot does not use MoveChase(), as this doesn't seem to work with STEALTH
         return true;
-
-    return true;
+    }
+    else if (ai->HasAura(STEALTH, m_bot))
+    {
+        m_bot->GetMotionMaster()->MoveFollow(pTarget, 4.5f, m_bot->GetOrientation());
+        return false;
+    }
+    return false;
 }
 
 void PlayerbotRogueAI::DoNextCombatManeuver(Unit* pTarget)
@@ -163,12 +171,16 @@ void PlayerbotRogueAI::DoNextCombatManeuver(Unit* pTarget)
         case RogueSpeStealth:        
             if (ai->CastSpell(PREMEDITATION, pTarget))
                 return;
+            else if (ai->CastSpell(PICK_POCKET, pTarget) && ai->PickPocket(pTarget))
+                return;
             else if (ai->GetEnergyAmount() >= 60 && ai->CastSpell(AMBUSH, pTarget))
                 return;
             else if (!ai->HasAura(CHEAP_SHOT, pTarget) && ai->GetEnergyAmount() >= 60 && ai->CastSpell(CHEAP_SHOT, pTarget))
                 return;
             else if (ai->GetEnergyAmount() >= 50 && ai->CastSpell(GARROTE, pTarget))
                 return;
+            else
+                m_bot->RemoveSpellsCausingAura(SPELL_AURA_MOD_STEALTH);
                 
             return;
                 

@@ -116,6 +116,7 @@ protected:
            HEMORRHAGE,
            BLIND,
            SHADOW_DANCE,
+           PICK_POCKET,
            CLOAK_OF_SHADOWS,
            TRICK_TRADE,
            CRIPPLING_POISON,

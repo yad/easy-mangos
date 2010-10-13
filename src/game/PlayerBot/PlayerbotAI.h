@@ -198,6 +198,7 @@ public:
     bool HasAura(const char* spellName, const Unit* target) const;
     bool HasAura(const char* spellName) const;
 
+    bool PickPocket(Unit* pTarget);
     bool HasPick();
 
     uint8 GetHealthPercent(const Unit& target) const;

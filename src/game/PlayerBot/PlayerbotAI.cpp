@@ -2646,6 +2646,48 @@ Item* PlayerbotAI::FindItem(uint32 ItemId)
     return NULL;
 }
 
+bool PlayerbotAI::PickPocket(Unit* pTarget)
+{
+    bool looted = false;
+
+	ObjectGuid markGuid = pTarget->GetObjectGuid();
+    Creature *c = m_bot->GetMap()->GetCreature(markGuid);
+    m_bot->SendLoot(markGuid, LOOT_PICKPOCKETING);
+    Loot *loot = &c->loot;
+    uint32 lootNum = loot->GetMaxSlotInLootFor(m_bot);
+
+    if (loot->gold)
+    {
+        m_bot->ModifyMoney( loot->gold );
+        m_bot->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_LOOT_MONEY, loot->gold);
+        loot->gold = 0;
+        loot->NotifyMoneyRemoved();
+    }
+
+    for (uint32 l = 0; l < lootNum; l++)
+    {
+        QuestItem *qitem = 0, *ffaitem = 0, *conditem = 0;
+        LootItem *item = loot->LootItemInSlot(l, m_bot, &qitem, &ffaitem, &conditem);
+        if (!item)
+            continue;
+
+        ItemPosCountVec dest;
+        if (m_bot->CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, item->itemid, item->count) == EQUIP_ERR_OK)
+        {
+            Item* pItem = m_bot->StoreNewItem (dest, item->itemid, true, item->randomPropertyId);
+            m_bot->SendNewItem(pItem, uint32(item->count), false, false, true);
+            --loot->unlootedCount;
+            looted = true;
+        }
+    }
+    // release loot
+    if (looted)
+        m_bot->GetSession()->DoLootRelease(markGuid);
+
+    return false; // ensures that the rogue only pick pockets target once
+}
+
+
 bool PlayerbotAI::HasPick()
 {
     QueryResult *result;
@@ -3034,13 +3076,17 @@ bool PlayerbotAI::TradeItem(const Item& item, int8 slot)
     int8 tradeSlot = -1;
 
     TradeData* pTrade = m_bot->GetTradeData();
-    if ((slot >= 0 && slot < TRADE_SLOT_COUNT) && pTrade->GetTraderData()->GetItem(TradeSlots(slot)) == NULL)
+    if ((slot >= 0 && slot < TRADE_SLOT_COUNT) && pTrade->GetItem(TradeSlots(slot)) == NULL)
         tradeSlot = slot;
     else
         for (uint8 i = 0; i < TRADE_SLOT_TRADED_COUNT && tradeSlot == -1; i++)
         {
-            if (pTrade->GetTraderData()->GetItem(TradeSlots(i)) == NULL)
+            if (pTrade->GetItem(TradeSlots(i)) == NULL)
+            {
+                // reserve trade slot to allow multiple items to be traded
                 tradeSlot = i;
+                pTrade->SetItem(TradeSlots(i), const_cast<Item*>(&item));
+            }
         }
 
     if (tradeSlot == -1) return false;
