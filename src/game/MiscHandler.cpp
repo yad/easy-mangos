@@ -164,6 +164,9 @@ void WorldSession::HandleWhoOpcode( WorldPacket & recv_data )
         if (!(itr->second->IsVisibleGloballyFor(_player)))
             continue;
 
+        if (itr->second->GetTeam() != team && itr->second->IsBot())
+            continue;
+
         // check if target's level is in level range
         uint32 lvl = itr->second->getLevel();
         if (lvl < level_min || lvl > level_max)
