@@ -3,7 +3,7 @@
 ################################################
 
 [AhbotConf]
-ConfVersion=2010090101
+ConfVersion=2010100801
 
 ###################################################################################################################
 # AUCTION HOUSE BOT SETTINGS
@@ -173,17 +173,12 @@ AuctionHouseBot.Class.Misc = 5
 AuctionHouseBot.Class.Glyph = 3
 
 # Buyer config
-AuctionHouseBot.Alliance.Buyer.Enabled = 1
-AuctionHouseBot.Horde.Buyer.Enabled = 1
-AuctionHouseBot.Neutral.Buyer.Enabled = 1
+AuctionHouseBot.Buyer.Alliance.Enabled = 1
+AuctionHouseBot.Buyer.Horde.Enabled = 1
+AuctionHouseBot.Buyer.Neutral.Enabled = 1
 
-AuctionHouseBot.Buyer.Bid.Interval = 1
-AuctionHouseBot.Buyer.BidDigin.Interval = 1
+AuctionHouseBot.Buyer.Recheck.Interval = 20
 
-AuctionHouseBot.BuyerPrice.Grey = 1
-AuctionHouseBot.BuyerPrice.White = 1
-AuctionHouseBot.BuyerPrice.Green = 5
-AuctionHouseBot.BuyerPrice.Blue = 12
-AuctionHouseBot.BuyerPrice.Purple = 15
-AuctionHouseBot.BuyerPrice.Orange = 20
-AuctionHouseBot.BuyerPrice.Yellow = 22
+AuctionHouseBot.Buyer.Alliance.Chance.Ratio = 3
+AuctionHouseBot.Buyer.Horde.Chance.Ratio = 3
+AuctionHouseBot.Buyer.Neutral.Chance.Ratio = 3
