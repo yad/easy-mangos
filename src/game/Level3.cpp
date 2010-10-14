@@ -177,7 +177,7 @@ bool ChatHandler::HandleAHBotOptionsCommand(char* args)
             }
             else if (param3)
             {
-                auctionbot.SetItemsRatio(&uparam1, &uparam2, &uparam3);                
+                auctionbot.SetItemsRatio(&uparam1, &uparam2, &uparam3);
                 PSendSysMessage("Items ratio for alliance is set to %u.",auctionbot.getConfig(CONFIG_UINT32_AHBOT_ALLIANCE_RATIO));
                 PSendSysMessage("Items ratio for the horde is set to %u.",auctionbot.getConfig(CONFIG_UINT32_AHBOT_HORDE_RATIO));
                 PSendSysMessage("Items ratio for neutral is set to %u.",auctionbot.getConfig(CONFIG_UINT32_AHBOT_NEUTRAL_RATIO));
@@ -351,7 +351,7 @@ bool ChatHandler::HandleAHBotOptionsCommand(char* args)
             PSendSysMessage("Grey = %u, White = %u, Green = %u, Blue = %u, Purple = %u, Orange = %u, Yellow = %u", auctionbot.AhBotInfos[2][E_GREY], auctionbot.AhBotInfos[2][E_WHITE], auctionbot.AhBotInfos[2][E_GREEN], auctionbot.AhBotInfos[2][E_BLUE]
                                                                 , auctionbot.AhBotInfos[2][E_PURPLE], auctionbot.AhBotInfos[2][E_ORANGE], auctionbot.AhBotInfos[2][E_YELLOW]);
             PSendSysMessage("Items ratio : Alliance = %u%%, Horde = %u%%, Neutral = %u%%", auctionbot.getConfig(CONFIG_UINT32_AHBOT_ALLIANCE_RATIO), auctionbot.getConfig(CONFIG_UINT32_AHBOT_HORDE_RATIO), auctionbot.getConfig(CONFIG_UINT32_AHBOT_NEUTRAL_RATIO));
-            PSendSysMessage("Items Amount : Grey = %u, White = %u, Green = %u, Blue = %u, Purple = %u, Orange = %u, Yellow = %u", auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_GREY_AMOUNT), auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_WHITE_AMOUNT), 
+            PSendSysMessage("Items Amount : Grey = %u, White = %u, Green = %u, Blue = %u, Purple = %u, Orange = %u, Yellow = %u", auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_GREY_AMOUNT), auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_WHITE_AMOUNT),
                 auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_GREEN_AMOUNT), auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_BLUE_AMOUNT), auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_PURPLE_AMOUNT),
                 auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_ORANGE_AMOUNT), auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_YELLOW_AMOUNT));
         }
@@ -1558,7 +1558,7 @@ bool ChatHandler::HandleAchievementCriteriaAddCommand(char* args)
         return false;
 
     uint32 new_val;
-    
+
     if (maxValue)
         new_val = progress < maxValue && maxValue - progress > val ? progress + val : maxValue;
     else
@@ -5446,7 +5446,7 @@ bool ChatHandler::HandleListAurasCommand (char* /*args*/)
     for (Unit::SpellAuraHolderMap::const_iterator itr = uAuras.begin(); itr != uAuras.end(); ++itr)
     {
         bool talent = GetTalentSpellCost(itr->second->GetId()) > 0;
-        
+
         SpellAuraHolder *holder = itr->second;
         char const* name = holder->GetSpellProto()->SpellName[GetSessionDbcLocale()];
 
@@ -5455,7 +5455,7 @@ bool ChatHandler::HandleListAurasCommand (char* /*args*/)
             Aura *aur = holder->GetAuraByEffectIndex(SpellEffectIndex(i));
             if (!aur)
                 continue;
-            
+
             if (m_session)
             {
                 std::ostringstream ss_name;

@@ -5,31 +5,8 @@
 #include "Config/Config.h"
 #include "ace/Vector_T.h"
 #include "../ObjectGuid.h"
+#include "../AuctionHouseMgr.h"
 #include "../Item.h"
-
-#define AHB_GREY        0
-#define AHB_WHITE       1
-#define AHB_GREEN       2
-#define AHB_BLUE        3
-#define AHB_PURPLE      4
-#define AHB_ORANGE      5
-#define AHB_YELLOW      6
-#define AHB_GREY_TG     0
-#define AHB_WHITE_TG    1
-#define AHB_GREEN_TG    2
-#define AHB_BLUE_TG     3
-#define AHB_PURPLE_TG   4
-#define AHB_ORANGE_TG   5
-#define AHB_YELLOW_TG   6
-#define AHB_GREY_I      7
-#define AHB_WHITE_I     8
-#define AHB_GREEN_I     9
-#define AHB_BLUE_I      10
-#define AHB_PURPLE_I    11
-#define AHB_ORANGE_I    12
-#define AHB_YELLOW_I    13
-
-//#define AHB_QUALITY_MAX 7
 
 enum e_ahb_quality{
     E_GREY = 0,
@@ -81,15 +58,10 @@ enum e_AHBOTConfigUInt32Values{
     CONFIG_UINT32_AHBOT_ALLIANCE_PRICE_RATIO,
     CONFIG_UINT32_AHBOT_HORDE_PRICE_RATIO,
     CONFIG_UINT32_AHBOT_NEUTRAL_PRICE_RATIO,
-    CONFIG_UINT32_AHBOT_BUYER_PRICE_GREY,
-    CONFIG_UINT32_AHBOT_BUYER_PRICE_WHITE,
-    CONFIG_UINT32_AHBOT_BUYER_PRICE_GREEN,
-    CONFIG_UINT32_AHBOT_BUYER_PRICE_BLUE,
-    CONFIG_UINT32_AHBOT_BUYER_PRICE_PURPLE,
-    CONFIG_UINT32_AHBOT_BUYER_PRICE_ORANGE,
-    CONFIG_UINT32_AHBOT_BUYER_PRICE_YELLOW,
-    CONFIG_UINT32_AHBOT_BUYER_BID_INTERVAL,
-    CONFIG_UINT32_AHBOT_BUYER_BIDDIGIN_INTERVAL,
+    CONFIG_UINT32_AHBOT_BUYER_CHANCE_RATIO_ALLIANCE,
+    CONFIG_UINT32_AHBOT_BUYER_CHANCE_RATIO_HORDE,
+    CONFIG_UINT32_AHBOT_BUYER_CHANCE_RATIO_NEUTRAL,
+    CONFIG_UINT32_AHBOT_BUYER_RECHECK_INTERVAL,
     CONFIG_UINT32_AHBOT_UINT32_COUNT
 };
 
@@ -261,6 +233,36 @@ public:
     }
 };
 
+struct s_itemEval
+{
+    uint32  AhEntry;
+    uint32  item_guidlow;
+    time_t  lastchecked;
+    time_t  LastExist;
+    s_itemEval()
+    {
+        lastchecked=0;
+    }
+};
+
+struct s_itemInfo
+{
+    uint32  ItemCount;
+    double  BuyPrice;
+    double  BidPrice;
+    uint32  MinBuyPrice;
+    uint32  MinBidPrice;
+
+    s_itemInfo()
+    {
+        ItemCount=0;
+        BuyPrice=0;
+        BidPrice=0;
+        MinBuyPrice=0;
+        MinBidPrice=0;
+    }
+};
+
 class AHBConfig
 {
 private:
@@ -269,19 +271,22 @@ private:
     uint32 minTime;
     uint32 maxTime;
 
-    uint32 buyerPriceGrey;
-    uint32 buyerPriceWhite;
-    uint32 buyerPriceGreen;
-    uint32 buyerPriceBlue;
-    uint32 buyerPricePurple;
-    uint32 buyerPriceOrange;
-    uint32 buyerPriceYellow;
     uint32 buyerBiddingInterval;
     uint32 buyerBidsPerInterval;
 
 public:
+    typedef std::map< uint32 , s_itemInfo > t_itemInfo;
+    typedef std::map< uint32, s_itemEval > t_checkEntryMap;
 
+    uint32 m_FactionChance;
+
+    t_itemInfo m_SameItemInfo;
     std::vector<c_ItemInfos> ItemInfos;
+    t_checkEntryMap m_CheckedEntry;
+
+    bool   BuyerEnabled;
+    uint32 LastMissedItem;
+    uint32 Buyer_Price_Ratio;
 
     AHBConfig(uint32 ahid=120)
     {
@@ -292,7 +297,6 @@ public:
             ItemInfos.push_back(c_ItemInfos(i));
         }
     }
-
 
     uint32 GetAHID()
     {
@@ -319,22 +323,6 @@ public:
     {
         return maxTime;
     }
-    void SetBiddingInterval(uint32 value)
-    {
-        buyerBiddingInterval = value;
-    }
-    uint32 GetBiddingInterval()
-    {
-        return buyerBiddingInterval;
-    }
-    void SetBidsPerInterval(uint32 value)
-    {
-        buyerBidsPerInterval = value;
-    }
-    uint32 GetBidsPerInterval()
-    {
-        return buyerBidsPerInterval;
-    }
 
     ~AHBConfig()
     {
@@ -350,25 +338,31 @@ struct s_randomArray
 class AuctionHouseBot
 {
 private:
-    ACE_Vector<uint32> npcItems;
-    ACE_Vector<uint32> lootItems;
 
-    std::vector<std::vector<std::vector<uint32> > > ItemPool;
+    std::vector<std::vector<std::vector<uint32> > > m_ItemPool;
 
-    bool debug_Out;
+    bool m_debug_Seller;
+    bool m_debug_Buyer;
 
-    Config AhBotCfg;
+    uint32 m_CheckInterval;
 
-    AHBConfig AllianceConfig;
-    AHBConfig HordeConfig;
-    AHBConfig NeutralConfig;
+    WorldSession* m_Session;
 
-    time_t _lastrun_a;
-    time_t _lastrun_h;
-    time_t _lastrun_n;
+    uint32 m_OperationSelector;
 
-    uint32 ItemsPerCycleBoost;
-    uint32 ItemsPerCycleNormal;
+    Config m_AhBotCfg;
+
+    AHBConfig m_AllianceConfig;
+    AHBConfig m_HordeConfig;
+    AHBConfig m_NeutralConfig;
+
+    time_t m_lastrun_a;
+    time_t m_lastrun_h;
+    time_t m_lastrun_n;
+    time_t m_LastBuyableEntryChecked;
+
+    uint32 m_ItemsPerCycleBoost;
+    uint32 m_ItemsPerCycleNormal;
 
     ObjectGuid m_FakeGuid;
 
@@ -378,12 +372,21 @@ private:
     bool m_configBoolValues[CONFIG_UINT32_AHBOT_BOOL_COUNT];
 
     inline uint32 minValue(uint32 a, uint32 b) { return a <= b ? a : b; };
+
+    bool    IsBuyableEntry(uint32 buyoutPrice, double InGame_BuyPrice, double MaxBuyablePrice, uint32 MinBuyPrice, uint32 MaxChance, uint32 ChanceRatio);
+    bool    IsBidableEntry(uint32 bidPrice, double InGame_BuyPrice, double MaxBidablePrice, uint32 MinBidPrice, uint32 MaxChance, uint32 ChanceRatio);
+    void    PlaceBidToEntry(AuctionHouseObject* auctionHouse, AuctionEntry* auction, uint32 bidPrice);
+    void    BuyEntry(AuctionHouseObject* auctionHouse, AuctionEntry* auction);
     void    addNewAuctions(AHBConfig& config);
-    void    addNewAuctionBuyerBotBid(AHBConfig *config, WorldSession *session);
+    void    PrepareListOfEntry(AHBConfig& config);
+    void    addNewAuctionBuyerBotBid(AHBConfig& config);
     uint32  SetStat(AHBConfig& config);
+    uint32  GetBuyableEntry( AHBConfig& config );
+
     bool    getRandomArray( AHBConfig& config, std::vector<s_randomArray>& ra, const std::vector<std::vector<uint32> >& addedItem  );
 
     void    SetPricesOfItem(const Item *item, AHBConfig& config, uint32& buyp, uint32& bidp, uint32& stackcnt, e_ahb_quality AHB_ITEMS);
+
     void    setConfig(e_AHBOTConfigUInt32Values index, char const* fieldname, uint32 defvalue);
     void    setConfig(e_AHBOTConfigBoolValues index, char const* fieldname, bool defvalue);
     void    setConfig(e_AHBOTConfigBoolValues index, bool value) { m_configBoolValues[index]=value; }
@@ -399,18 +402,16 @@ public:
     AuctionHouseBot();
     ~AuctionHouseBot();
 
-    ObjectGuid GetAHBObjectGuid() { return m_FakeGuid; };
     std::vector < std::vector < uint32 > > AhBotInfos;
     uint32 AllianceItemsCount;
     uint32 HordeItemsCount;
     uint32 NeutralItemsCount;
 
+    ObjectGuid GetAHBObjectGuid() { return m_FakeGuid; };
     void Update();
     void Initialize();
 
-    //void setConfig(e_AHBOTConfigUInt32Values index, uint32 value) { m_configUint32Values[index]=value; }
     uint32 getConfig(e_AHBOTConfigUInt32Values index) const { return m_configUint32Values[index]; }
-    //void setConfig(e_AHBOTConfigBoolValues index, bool value) { m_configBoolValues[index]=value; }
     bool getConfig(e_AHBOTConfigBoolValues index) const { return m_configBoolValues[index]; }
 
     void SetAHBotName(const std::string& AHBotName) { if (AHBotName.size()>0) m_AHBotName = AHBotName; else m_AHBotName="AHBot"; }

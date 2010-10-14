@@ -18,4 +18,4 @@
 
 // Format is YYYYMMDDRR where RR is the change in the conf file
 // for that day.
-#define AUCTIONHOUSEBOT_CONF_VERSION    2010090101
+#define AUCTIONHOUSEBOT_CONF_VERSION    2010100801
