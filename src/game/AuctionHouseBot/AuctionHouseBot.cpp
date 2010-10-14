@@ -488,113 +488,124 @@ void AuctionHouseBot::addNewAuctionBuyerBotBid(AHBConfig& config)
     PrepareListOfEntry(config);
 
     time_t Now = time(NULL);
+    uint32 BuyCycles;
+    if (config.m_CheckedEntry.size() > m_ItemsPerCycleBoost)
+    {
+        BuyCycles=m_ItemsPerCycleBoost;
+        sLog.outString("Boost value used for Buyer! (if this happens often adjust both ItemsPerCycle in mangosd.conf)");
+    }
+    else BuyCycles=m_ItemsPerCycleNormal;
 
-    for (AHBConfig::t_checkEntryMap::iterator itr=config.m_CheckedEntry.begin();itr != config.m_CheckedEntry.end(); itr++)
+    for (AHBConfig::t_checkEntryMap::iterator itr=config.m_CheckedEntry.begin();itr!=config.m_CheckedEntry.end();++itr)
     {
         AuctionEntry* auction = auctionHouse->GetAuction(itr->second.AhEntry);
         if (!auction)
+        {
+            if ((itr->second.lastchecked == 0) || ((Now - itr->second.lastchecked) > m_CheckInterval))
+            {
+                if (BuyCycles == 0) break;
+                uint32 BasePrice;
+                double MaxBuyablePrice;
+                double MaxBidablePrice;
+                double InGame_BuyPrice;
+                double InGame_BidPrice;
+                uint32 MaxChance=5000;
+                uint32 Chance=0;
+                AHBConfig::t_itemInfo::iterator sameitem_itr;
+                Item *item = sAuctionMgr.GetAItem(itr->second.item_guidlow);
+                if (item)
+                {
+                    ItemPrototype const *prototype = item->GetProto();
+                    if (prototype)
+                    {
+                        (getConfig(CONFIG_BOOL_AHBOT_BUYPRICE_BUYER)) ? BasePrice = prototype->BuyPrice : BasePrice = prototype->SellPrice;
+                        BasePrice *= item->GetCount();
+                        MaxBuyablePrice = ( BasePrice * config.Buyer_Price_Ratio )/100;
+                        sameitem_itr = config.m_SameItemInfo.find(item->GetEntry());
+                        uint32 buyoutPrice = auction->buyout/item->GetCount();
+                        uint32 bidPrice;
+                        uint32 bidPriceByItem;
+                        if (auction->bid >= auction->startbid)
+                        {
+                            bidPrice = auction->GetAuctionOutBid();
+                            bidPriceByItem = auction->bid/item->GetCount();
+                        }
+                        else
+                        {
+                            bidPrice = auction->startbid;
+                            bidPriceByItem = auction->startbid/item->GetCount();
+                        }
+                        if (sameitem_itr==config.m_SameItemInfo.end())
+                        {
+                            InGame_BuyPrice=0;
+                            InGame_BidPrice=0;
+                        }
+                        else
+                        {
+                            if (sameitem_itr->second.ItemCount == 1) MaxBuyablePrice = MaxBuyablePrice * 5; // if only one item exist can be buyed if the price is high too.
+                            InGame_BuyPrice=sameitem_itr->second.BuyPrice/sameitem_itr->second.ItemCount;
+                            InGame_BidPrice=sameitem_itr->second.BidPrice/sameitem_itr->second.ItemCount;
+                        }
+                        MaxBidablePrice = MaxBuyablePrice - ( MaxBuyablePrice / 30); // Max Bidable price defined to 70% of max buyable price
+                        if (m_debug_Buyer)
+                        {
+                            sLog.outString("===========================================================================");
+                            sLog.outString("MaxPrice of Entry %u is %.1fg.",itr->second.AhEntry,MaxBuyablePrice/10000);
+                            sLog.outString("GamePrice buy=%.1fg, bid=%.1fg.",InGame_BuyPrice/10000, InGame_BidPrice/10000);
+                            sLog.outString("Minimal price see in AH Buy=%ug, Bid=%ug.",sameitem_itr->second.MinBuyPrice/10000,sameitem_itr->second.MinBidPrice/10000);
+                            sLog.outString("Actual Entry price,  Buy=%ug, Bid=%ug.",buyoutPrice/10000, bidPrice/10000);
+                            sLog.outString("---------------------------------------------------------------------------");
+                        }
+                        if (auction->owner == GetAHBObjectGuid().GetRawValue()) // Original auction owner
+                        {
+                            MaxChance = MaxChance / 5; // if Owner is AHBot this mean player placed bid on this auction. We divide by 5 chance for AhBuyer to place bid on it. (This make more challenge than ignore entry)
+                        }
+                        if (auction->buyout != 0) // Is the item directly buyable?
+                        {
+                            if (IsBuyableEntry(buyoutPrice, InGame_BuyPrice, MaxBuyablePrice, sameitem_itr->second.MinBuyPrice, MaxChance, config.m_FactionChance))
+                            {
+                                if (IsBidableEntry(bidPriceByItem, InGame_BuyPrice, MaxBidablePrice, sameitem_itr->second.MinBidPrice, MaxChance/2, config.m_FactionChance))
+                                {
+                                    if (urand(0,5)==0) PlaceBidToEntry(auctionHouse, auction,bidPrice); else BuyEntry(auctionHouse, auction);
+                                }
+                                else
+                                {
+                                    BuyEntry(auctionHouse, auction);
+                                }
+                            }
+                            else
+                            {
+                                if (IsBidableEntry(bidPriceByItem, InGame_BuyPrice, MaxBidablePrice, sameitem_itr->second.MinBidPrice,MaxChance/2, config.m_FactionChance))
+                                    PlaceBidToEntry(auctionHouse, auction,bidPrice);
+                            }
+                        }
+                        else // buyout = 0 mean only bid are possible
+                        {
+                            if (IsBidableEntry(bidPriceByItem, InGame_BuyPrice, MaxBidablePrice, sameitem_itr->second.MinBidPrice,MaxChance, config.m_FactionChance))
+                                PlaceBidToEntry(auctionHouse, auction, bidPrice);
+                        }
+                    }
+                    else
+                    {
+                        sLog.outError("AHBot - buyer > Item guidLow (%u) have no prototype (AH entry = %u)!",itr->second.item_guidlow,itr->second.AhEntry);
+                    }
+                    itr->second.lastchecked=Now;
+                    --BuyCycles;
+                }
+                else
+                {
+                    if (m_debug_Buyer) sLog.outString("AHBot - buyer > Item in entry %u is not reachable!",itr->second.AhEntry);
+                    config.m_CheckedEntry.erase(itr);
+                }
+            }
+            else if (m_debug_Buyer) sLog.outString("In time interval wait for entry %u!",auction->Id);
+        }
+        else
         {
             if (m_debug_Buyer) sLog.outString("Entry doesn't exists, perhaps bought already?");
             config.m_CheckedEntry.erase(itr);
             continue;
         }
-        if ((itr->second.lastchecked == 0) || ((Now - itr->second.lastchecked) > m_CheckInterval))
-        {
-            uint32 BasePrice;
-            double MaxBuyablePrice;
-            double MaxBidablePrice;
-            double InGame_BuyPrice;
-            double InGame_BidPrice;
-            uint32 MaxChance=5000;
-            uint32 Chance=0;
-            AHBConfig::t_itemInfo::iterator sameitem_itr;
-            Item *item = sAuctionMgr.GetAItem(itr->second.item_guidlow);
-            if (item)
-            {
-                ItemPrototype const *prototype = item->GetProto();
-                if (prototype)
-                {
-                    (getConfig(CONFIG_BOOL_AHBOT_BUYPRICE_BUYER)) ? BasePrice = prototype->BuyPrice : BasePrice = prototype->SellPrice;
-                    BasePrice *= item->GetCount();
-                    MaxBuyablePrice = ( BasePrice * config.Buyer_Price_Ratio )/100;
-                    sameitem_itr = config.m_SameItemInfo.find(item->GetEntry());
-                    uint32 buyoutPrice = auction->buyout/item->GetCount();
-                    uint32 bidPrice;
-                    uint32 bidPriceByItem;
-                    if (auction->bid >= auction->startbid)
-                    {
-                        bidPrice = auction->GetAuctionOutBid();
-                        bidPriceByItem = auction->bid/item->GetCount();
-                    }
-                    else
-                    {
-                        bidPrice = auction->startbid;
-                        bidPriceByItem = auction->startbid/item->GetCount();
-                    }
-                    if (sameitem_itr==config.m_SameItemInfo.end())
-                    {
-                        InGame_BuyPrice=0;
-                        InGame_BidPrice=0;
-                    }
-                    else
-                    {
-                        if (sameitem_itr->second.ItemCount == 1) MaxBuyablePrice = MaxBuyablePrice * 5; // if only one item exist can be buyed if the price is high too.
-                        InGame_BuyPrice=sameitem_itr->second.BuyPrice/sameitem_itr->second.ItemCount;
-                        InGame_BidPrice=sameitem_itr->second.BidPrice/sameitem_itr->second.ItemCount;
-                    }
-                    MaxBidablePrice = MaxBuyablePrice - ( MaxBuyablePrice / 30); // Max Bidable price defined to 70% of max buyable price
-                    if (m_debug_Buyer)
-                    {
-                        sLog.outString("===========================================================================");
-                        sLog.outString("MaxPrice of Entry %u is %.1fg.",itr->second.AhEntry,MaxBuyablePrice/10000);
-                        sLog.outString("GamePrice buy=%.1fg, bid=%.1fg.",InGame_BuyPrice/10000, InGame_BidPrice/10000);
-                        sLog.outString("Minimal price see in AH Buy=%ug, Bid=%ug.",sameitem_itr->second.MinBuyPrice/10000,sameitem_itr->second.MinBidPrice/10000);
-                        sLog.outString("Actual Entry price,  Buy=%ug, Bid=%ug.",buyoutPrice/10000, bidPrice/10000);
-                        sLog.outString("---------------------------------------------------------------------------");
-                    }
-                    if (auction->owner == GetAHBObjectGuid().GetRawValue()) // Original auction owner
-                    {
-                        MaxChance = MaxChance / 5; // if Owner is AHBot this mean player placed bid on this auction. We divide by 5 chance for AhBuyer to place bid on it. (This make more challenge than ignore entry)
-                    }
-                    if (auction->buyout != 0) // Is the item directly buyable?
-                    {
-                        if (IsBuyableEntry(buyoutPrice, InGame_BuyPrice, MaxBuyablePrice, sameitem_itr->second.MinBuyPrice, MaxChance, config.m_FactionChance))
-                        {
-                            if (IsBidableEntry(bidPriceByItem, InGame_BuyPrice, MaxBidablePrice, sameitem_itr->second.MinBidPrice, MaxChance/2, config.m_FactionChance))
-                            {
-                                if (urand(0,5)==0) PlaceBidToEntry(auctionHouse, auction,bidPrice); else BuyEntry(auctionHouse, auction);
-                            }
-                            else
-                            {
-                                BuyEntry(auctionHouse, auction);
-                            }
-                        }
-                        else
-                        {
-                            if (IsBidableEntry(bidPriceByItem, InGame_BuyPrice, MaxBidablePrice, sameitem_itr->second.MinBidPrice,MaxChance/2, config.m_FactionChance))
-                                PlaceBidToEntry(auctionHouse, auction,bidPrice);
-                        }
-                    }
-                    else // buyout = 0 mean only bid are possible
-                    {
-                        if (IsBidableEntry(bidPriceByItem, InGame_BuyPrice, MaxBidablePrice, sameitem_itr->second.MinBidPrice,MaxChance, config.m_FactionChance))
-                            PlaceBidToEntry(auctionHouse, auction, bidPrice);
-                    }
-                }
-                else
-                {
-                    sLog.outError("AHBot - buyer > Item guidLow (%u) have no prototype (AH entry = %u)!",itr->second.item_guidlow,itr->second.AhEntry);
-                }
-            }
-            else
-            {
-                if (m_debug_Buyer) sLog.outString("AHBot - buyer > Item in entry %u is not reachable!",itr->second.AhEntry);
-                config.m_CheckedEntry.erase(itr);
-            }
-
-            itr->second.lastchecked=Now;
-        }
-        else if (m_debug_Buyer) sLog.outString("In time interval wait for entry %u!",auction->Id);
     }
 }
 
