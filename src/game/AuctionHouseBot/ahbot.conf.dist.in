@@ -3,7 +3,7 @@
 ################################################
 
 [AhbotConf]
-ConfVersion=2010100801
+ConfVersion=2010101701
 
 ###################################################################################################################
 # AUCTION HOUSE BOT SETTINGS
@@ -116,6 +116,8 @@ ConfVersion=2010100801
 #
 ###################################################################################################################
 
+AuctionHouseBot.Seller.Enabled = 1
+
 AuctionHouseBot.Alliance.Items.Amount.Ratio = 100
 AuctionHouseBot.Horde.Items.Amount.Ratio = 100
 AuctionHouseBot.Neutral.Items.Amount.Ratio = 100
@@ -173,6 +175,9 @@ AuctionHouseBot.Class.Misc = 5
 AuctionHouseBot.Class.Glyph = 3
 
 # Buyer config
+
+AuctionHouseBot.Buyer.Enabled = 1
+
 AuctionHouseBot.Buyer.Alliance.Enabled = 1
 AuctionHouseBot.Buyer.Horde.Enabled = 1
 AuctionHouseBot.Buyer.Neutral.Enabled = 1
