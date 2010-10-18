@@ -709,7 +709,7 @@ bool AHB_Seller::Initialize()
     std::vector<uint32> npcItems;
     std::vector<uint32> lootItems;
 
-    bool itemAdded = false;
+    uint32 itemsAdded = 0;
 
     QueryResult* results = (QueryResult*) NULL;
     char npcQuery[] = "SELECT distinct `item` FROM `npc_vendor`";
@@ -762,7 +762,7 @@ bool AHB_Seller::Initialize()
         sLog.outString("AHBot> \"%s\" failed", lootQuery);
         return false;
     }
-    sLog.outString("\n>> %u items loaded, ME=%u",lootItems.size(),sItemStorage.MaxEntry);
+    sLog.outString("\n>> %u items loaded from your DB.",lootItems.size());
     sLog.outString("\n>> Sorting and cleaning Items bases...");
 
     //barGoLink bar(sItemStorage.MaxEntry);
@@ -873,12 +873,17 @@ bool AHB_Seller::Initialize()
             if (((m_BaseConfig->getConfig(CONFIG_UINT32_AHBOT_ITEM_MIN_SKILL_RANK)) > 0) && (prototype->RequiredSkill < m_BaseConfig->getConfig(CONFIG_UINT32_AHBOT_ITEM_MIN_SKILL_RANK))) continue;
             if (((m_BaseConfig->getConfig(CONFIG_UINT32_AHBOT_ITEM_MAX_SKILL_RANK)) > 0) && (prototype->RequiredSkill > m_BaseConfig->getConfig(CONFIG_UINT32_AHBOT_ITEM_MAX_SKILL_RANK))) continue;
         }
+        if ((prototype->Class==ITEM_CLASS_MISC) && (prototype->Flags == 4))
+        {
+            // If iam not wrong this case represent majority of bag/box with items on it. 
+            continue;
+        }
 
         m_ItemPool[prototype->Quality][prototype->Class].push_back(itemID);
-        itemAdded=true;
+        ++itemsAdded;
     }
 
-    if (!itemAdded)
+    if (itemsAdded==0)
     {
         sLog.outString("\nAuctionHouseBot> Error, no items from xxxx_loot_template tables.");
         sLog.outString("AuctionHouseBot> AHBot is disabled!");
@@ -887,6 +892,7 @@ bool AHB_Seller::Initialize()
         m_BaseConfig->setConfig(CONFIG_UINT32_AHBOT_NEUTRAL_RATIO, 0);
         return false;
     }
+    sLog.outString("\n>> %u items will be used to fill AH. (according your config choices)",itemsAdded);
     LoadConfig();
     sLog.outString("\nItems loaded\tGrey\tWhite\tGreen\tBlue\tPurple\tOrange\tYellow");
     for (uint32 i=0; i<MAX_ITEM_CLASS;++i)
