@@ -35,9 +35,9 @@ RandomMovementGenerator<Creature>::_setRandomLocation(Creature &creature)
     Map const* map = creature.GetBaseMap();
 
     // For 2D/3D system selection
-    //bool is_land_ok  = creature.canWalk();                // not used?
-    //bool is_water_ok = creature.canSwim();                // not used?
-    bool is_air_ok = creature.canFly();
+    //bool is_land_ok  = creature.CanWalk();                // not used?
+    //bool is_water_ok = creature.CanSwim();                // not used?
+    bool is_air_ok = creature.CanFly();
 
     const float angle = rand_norm_f() * (M_PI_F*2.0f);
     const float range = rand_norm_f() * wander_distance;
@@ -67,28 +67,10 @@ RandomMovementGenerator<Creature>::_setRandomLocation(Creature &creature)
     //else if (is_water_ok)                                 // 3D system under water and above ground (swimming mode)
     else                                                    // 2D only
     {
-        // 10.0 is the max that vmap high can check (MAX_CAN_FALL_DISTANCE)
-        travelDistZ = travelDistZ >= 100.0f ? 10.0f : sqrtf(travelDistZ);
-
-        // The fastest way to get an accurate result 90% of the time.
-        // Better result can be obtained like 99% accuracy with a ray light, but the cost is too high and the code is too long.
-        destZ = map->GetHeight(destX, destY, respZ+travelDistZ-2.0f, false);
-
-        if (fabs(destZ - respZ) > travelDistZ)              // Map check
-        {
-            // Vmap Horizontal or above
-            destZ = map->GetHeight(destX, destY, respZ - 2.0f, true);
-
-            if (fabs(destZ - respZ) > travelDistZ)
-            {
-                // Vmap Higher
-                destZ = map->GetHeight(destX, destY, respZ+travelDistZ-2.0f, true);
-
-                // let's forget this bad coords where a z cannot be find and retry at next tick
-                if (fabs(destZ - respZ) > travelDistZ)
-                    return;
-            }
-        }
+        destZ = respZ;
+        if(!map->IsNextZcoordOK(destX, destY, destZ, travelDistZ))
+            return;                                         // let's forget this bad coords where a z cannot be find and retry at next tick
+        creature.UpdateGroundPositionZ(destX, destY, destZ, travelDistZ);
     }
 
     Traveller<Creature> traveller(creature);
@@ -116,7 +98,7 @@ void RandomMovementGenerator<Creature>::Initialize(Creature &creature)
     if (!creature.isAlive())
         return;
 
-    if (creature.canFly())
+    if (creature.CanFly())
         creature.AddSplineFlag(SPLINEFLAG_UNKNOWN7);
     else
         creature.AddSplineFlag(SPLINEFLAG_WALKMODE);
@@ -155,7 +137,7 @@ bool RandomMovementGenerator<Creature>::Update(Creature &creature, const uint32 
 
     i_nextMoveTime.Update(diff);
 
-    if (i_destinationHolder.HasArrived() && !creature.IsStopped() && !creature.canFly())
+    if (i_destinationHolder.HasArrived() && !creature.IsStopped() && !creature.CanFly())
         creature.clearUnitState(UNIT_STAT_ROAMING_MOVE);
 
     if (!i_destinationHolder.HasArrived() && creature.IsStopped())
@@ -170,14 +152,14 @@ bool RandomMovementGenerator<Creature>::Update(Creature &creature, const uint32 
 
         if (i_nextMoveTime.Passed())
         {
-            if (creature.canFly())
+            if (creature.CanFly())
                 creature.AddSplineFlag(SPLINEFLAG_UNKNOWN7);
             else
                 creature.AddSplineFlag(SPLINEFLAG_WALKMODE);
 
             _setRandomLocation(creature);
         }
-        else if (creature.isPet() && creature.GetOwner() && !creature.IsWithinDist(creature.GetOwner(), PET_FOLLOW_DIST+2.5f))
+        else if (creature.IsPet() && creature.GetOwner() && !creature.IsWithinDist(creature.GetOwner(), PET_FOLLOW_DIST+2.5f))
         {
             creature.AddSplineFlag(SPLINEFLAG_WALKMODE);
             _setRandomLocation(creature);

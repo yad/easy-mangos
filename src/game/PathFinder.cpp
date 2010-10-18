@@ -449,10 +449,10 @@ dtQueryFilter PathInfo::createFilter()
     filter.includeFlags = 0;
     filter.excludeFlags = 0;
 
-    if(creature->canWalk())
+    if(creature->CanWalk())
         filter.includeFlags |= NAV_GROUND;          // walk
 
-    if(creature->canSwim())
+    if(creature->CanSwim())
         filter.includeFlags |= NAV_WATER;           // swim
 
     // TODO: check for NAV_MAGMA
@@ -474,7 +474,7 @@ bool PathInfo::canFly()
         return false;
 
     Creature* creature = (Creature*)m_sourceObject;
-    return creature->canFly();
+    return creature->CanFly();
 }
 
 bool PathInfo::canSwim()
@@ -483,7 +483,7 @@ bool PathInfo::canSwim()
         return false;
 
     Creature* creature = (Creature*)m_sourceObject;
-    return creature->canSwim();
+    return creature->CanSwim();
 }
 
 NavTerrain PathInfo::getNavTerrain(float x, float y, float z)

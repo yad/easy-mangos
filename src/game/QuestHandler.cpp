@@ -129,7 +129,7 @@ void WorldSession::HandleQuestgiverAcceptQuestOpcode( WorldPacket & recv_data )
 
     // no or incorrect quest giver
     if(!pObject
-        || (pObject->GetTypeId()!=TYPEID_PLAYER && !pObject->hasQuest(quest))
+        || (pObject->GetTypeId()!=TYPEID_PLAYER && !pObject->HasQuest(quest))
         || (pObject->GetTypeId()==TYPEID_PLAYER && !((Player*)pObject)->CanShareQuest(quest))
         )
     {
@@ -244,7 +244,7 @@ void WorldSession::HandleQuestgiverQueryQuestOpcode( WorldPacket & recv_data )
 
     // Verify that the guid is valid and is a questgiver or involved in the requested quest
     Object* pObject = _player->GetObjectByTypeMask(guid, TYPEMASK_CREATURE_GAMEOBJECT_OR_ITEM);
-    if(!pObject||!pObject->hasQuest(quest) && !pObject->hasInvolvedQuest(quest))
+    if(!pObject||!pObject->HasQuest(quest) && !pObject->HasInvolvedQuest(quest))
     {
         _player->PlayerTalkClass->CloseGossip();
         return;
@@ -291,7 +291,7 @@ void WorldSession::HandleQuestgiverChooseRewardOpcode( WorldPacket & recv_data )
     if(!pObject)
         return;
 
-    if(!pObject->hasInvolvedQuest(quest))
+    if(!pObject->HasInvolvedQuest(quest))
         return;
 
     Quest const *pQuest = sObjectMgr.GetQuestTemplate(quest);
@@ -338,7 +338,7 @@ void WorldSession::HandleQuestgiverRequestRewardOpcode( WorldPacket & recv_data 
     DEBUG_LOG( "WORLD: Received CMSG_QUESTGIVER_REQUEST_REWARD npc = %u, quest = %u",uint32(GUID_LOPART(guid)),quest );
 
     Object* pObject = _player->GetObjectByTypeMask(guid, TYPEMASK_CREATURE_OR_GAMEOBJECT);
-    if(!pObject||!pObject->hasInvolvedQuest(quest))
+    if(!pObject||!pObject->HasInvolvedQuest(quest))
         return;
 
     if ( _player->CanCompleteQuest( quest ) )
@@ -668,7 +668,7 @@ void WorldSession::HandleQuestgiverStatusMultipleQuery(WorldPacket& /*recvPacket
             // need also pet quests case support
             Creature *questgiver = GetPlayer()->GetMap()->GetAnyTypeCreature(*itr);
 
-            if (!questgiver ||questgiver->isPet() || questgiver->IsHostileTo(_player))
+            if (!questgiver || questgiver->IsHostileTo(_player))
                 continue;
 
             if (!questgiver->HasFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER))

@@ -127,7 +127,7 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner, bool upd
     }
 
     D::_addUnitStateMove(owner);
-    if (owner.GetTypeId() == TYPEID_UNIT && ((Creature*)&owner)->canFly())
+    if (owner.GetTypeId() == TYPEID_UNIT && ((Creature*)&owner)->CanFly())
         ((Creature&)owner).AddSplineFlag(SPLINEFLAG_UNKNOWN7);
 }
 
@@ -191,6 +191,15 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
 
     if (!i_destinationHolder.HasDestination())
         _setTargetLocation(owner);
+    if (owner.IsStopped() && !i_destinationHolder.HasArrived())
+    {
+        D::_addUnitStateMove(owner);
+        if (owner.GetTypeId() == TYPEID_UNIT && ((Creature*)&owner)->CanFly())
+            ((Creature&)owner).AddSplineFlag(SPLINEFLAG_UNKNOWN7);
+
+        i_destinationHolder.StartTravel(traveller);
+        return true;
+    }
 
     if (i_destinationHolder.UpdateTraveller(traveller, time_diff, i_recalculateTravel || owner.IsStopped()))
     {
@@ -217,7 +226,7 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
 
             // GetClosePoint() will always return a point on the ground, so we need to
             // handle the difference in elevation when the creature is flying
-            if (owner.GetTypeId() == TYPEID_UNIT && ((Creature*)&owner)->canFly())
+            if (owner.GetTypeId() == TYPEID_UNIT && ((Creature*)&owner)->CanFly())
                 targetMoved = i_target->GetDistanceSqr(end_point.x, end_point.y, end_point.z) >= dist*dist;
             else
                 targetMoved = i_target->GetDistance2d(end_point.x, end_point.y) >= dist;
@@ -275,7 +284,7 @@ void ChaseMovementGenerator<Creature>::Initialize(Creature &owner)
     owner.addUnitState(UNIT_STAT_CHASE|UNIT_STAT_CHASE_MOVE);
     owner.RemoveSplineFlag(SPLINEFLAG_WALKMODE);
 
-    if (((Creature*)&owner)->canFly())
+    if (((Creature*)&owner)->CanFly())
         owner.AddSplineFlag(SPLINEFLAG_UNKNOWN7);
 
     _setTargetLocation(owner);
@@ -303,7 +312,7 @@ void ChaseMovementGenerator<T>::Reset(T &owner)
 template<>
 void FollowMovementGenerator<Creature>::_updateWalkMode(Creature &u)
 {
-    if (i_target.isValid() && u.isPet())
+    if (i_target.isValid() && u.IsPet())
         u.UpdateWalkMode(i_target.getTarget());
 }
 
@@ -322,7 +331,7 @@ template<>
 void FollowMovementGenerator<Creature>::_updateSpeed(Creature &u)
 {
     // pet only sync speed with owner
-    if (!((Creature&)u).isPet() || !i_target.isValid() || i_target->GetGUID() != u.GetOwnerGUID())
+    if (!((Creature&)u).IsPet() || !i_target.isValid() || i_target->GetGUID() != u.GetOwnerGUID())
         return;
 
     u.UpdateSpeed(MOVE_RUN,true);
@@ -346,7 +355,7 @@ void FollowMovementGenerator<Creature>::Initialize(Creature &owner)
     _updateWalkMode(owner);
     _updateSpeed(owner);
 
-    if (((Creature*)&owner)->canFly())
+    if (((Creature*)&owner)->CanFly())
         owner.AddSplineFlag(SPLINEFLAG_UNKNOWN7);
 
     _setTargetLocation(owner);
