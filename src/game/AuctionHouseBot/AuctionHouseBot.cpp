@@ -875,7 +875,7 @@ bool AHB_Seller::Initialize()
         }
         if ((prototype->Class==ITEM_CLASS_MISC) && (prototype->Flags == 4))
         {
-            // If iam not wrong this case represent majority of bag/box with items on it. 
+            // If iam not wrong this case represent majority of bag/box with items on it.
             continue;
         }
 
