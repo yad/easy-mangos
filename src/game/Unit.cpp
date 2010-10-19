@@ -510,7 +510,6 @@ void Unit::SendMonsterMoveWithSpeed(float x, float y, float z, uint32 transitTim
     SendMonsterMove(x, y, z, SPLINETYPE_NORMAL, flags, transitTime, player);
 }
 
-
 bool Unit::SetPosition(float x, float y, float z, float orientation, bool teleport)
 {
     // prevent crash when a bad coord is sent by the client
@@ -596,11 +595,12 @@ void Unit::SendMonsterMoveTransport(WorldObject *transport, SplineType type, Spl
     SendMessageToSet(&data, true);
 }
 
-void Unit::BuildHeartBeatMsg(WorldPacket& data) const
+void Unit::SendHeartBeat(bool toSelf)
 {
-    data.Initialize(MSG_MOVE_HEARTBEAT);
+    WorldPacket data(MSG_MOVE_HEARTBEAT, 64);
     data << GetPackGUID();
-    m_movementInfo.Write(data);
+    data << m_movementInfo;
+    SendMessageToSet(&data, toSelf);
 }
 
 void Unit::resetAttackTimer(WeaponAttackType type)
@@ -3973,9 +3973,7 @@ void Unit::SetFacingTo(float ori, bool bToSelf /*= false*/)
     SetOrientation(ori);
 
     // and client
-    WorldPacket data;
-    BuildHeartBeatMsg(data);
-    SendMessageToSet(&data, bToSelf);
+    SendHeartBeat(bToSelf);
 }
 
 // Consider move this to Creature:: since only creature appear to be able to use this
@@ -6238,10 +6236,12 @@ void Unit::RemoveGuardian( Pet* pet )
 
     if(GetTypeId() == TYPEID_PLAYER)
     {
-        uint32 SpellID = pet->GetUInt32Value(UNIT_CREATED_BY_SPELL);
+        uint32 SpellID = pet->GetCreateSpellID();
         SpellEntry const *spellInfo = sSpellStore.LookupEntry(SpellID);
         if (spellInfo && spellInfo->Attributes & SPELL_ATTR_DISABLED_WHILE_ACTIVE)
-            ((Player*)this)->AddSpellAndCategoryCooldowns(spellInfo, 0, NULL,true);
+        {
+            ((Player*)this)->SendCooldownEvent(spellInfo);
+        }
     }
 }
 
@@ -6252,8 +6252,6 @@ void Unit::RemoveGuardians()
         uint64 guid = *m_guardianPets.begin();
         if(Pet* pet = GetMap()->GetPet(guid))
             pet->Remove(PET_SAVE_AS_DELETED);
-
-        m_guardianPets.erase(guid);
     }
 }
 
@@ -10615,9 +10613,7 @@ void Unit::StopMoving()
     SendMonsterMove(GetPositionX(), GetPositionY(), GetPositionZ(), SPLINETYPE_STOP, GetTypeId() == TYPEID_PLAYER ? SPLINEFLAG_WALKMODE : SPLINEFLAG_NONE, 0);
 
     // update position and orientation for near players
-    WorldPacket data;
-    BuildHeartBeatMsg(data);
-    SendMessageToSet(&data, false);
+    SendHeartBeat(false);
 }
 
 void Unit::SetFeared(bool apply, uint64 const& casterGUID, uint32 spellID, uint32 time)
@@ -11201,9 +11197,8 @@ void Unit::NearTeleportTo( float x, float y, float z, float orientation, bool ca
 
         SetPosition(x, y, z, orientation, true);
 
-        WorldPacket data;
-        BuildHeartBeatMsg(data);
-        SendMessageToSet(&data, false);
+        SendHeartBeat(false);
+
         // finished relocation, movegen can different from top before creature relocation,
         // but apply Reset expected to be safe in any case
         if (!c->GetMotionMaster()->empty())
@@ -11620,14 +11615,8 @@ bool Unit::isIgnoreUnitState(SpellEntry const *spell)
         return false;
 
     if(spell->SpellFamilyName == SPELLFAMILY_MAGE)
-    {
-        // Ice Lance
-        if(spell->SpellIconID == 186)
-            return true;
-        // Shatter
-        if(spell->Id == 11170 || spell->Id == 12982 || spell->Id == 12983)
-            return true;
-    }
+        return true; 
+
     Unit::AuraList const& stateAuras = GetAurasByType(SPELL_AURA_IGNORE_UNIT_STATE);
     for(Unit::AuraList::const_iterator j = stateAuras.begin();j != stateAuras.end(); ++j)
     {

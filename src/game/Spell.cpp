@@ -442,7 +442,7 @@ WorldObject* Spell::FindCorpseUsing()
     return result;
 }
 
-bool Spell::FillCustomTargetMap(uint32 i, UnitList &targetUnitMap)
+bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
 {
     float radius;
 
@@ -456,20 +456,29 @@ bool Spell::FillCustomTargetMap(uint32 i, UnitList &targetUnitMap)
     {
         case 46584: // Raise Dead
             {
-            WorldObject* result = FindCorpseUsing <MaNGOS::RaiseDeadObjectCheck>  ();
+                WorldObject* result = FindCorpseUsing <MaNGOS::RaiseDeadObjectCheck>  ();
 
-            if(result)
-            {
-                switch(result->GetTypeId())
+                if (result)
                 {
-                    case TYPEID_UNIT:
-                        targetUnitMap.push_back((Unit*)result);
-                        break;
-                    default:
-                        break;
-                };
-            };
-            break;
+                    switch(result->GetTypeId())
+                    {
+                        case TYPEID_UNIT:
+                        case TYPEID_PLAYER:
+                            targetUnitMap.push_back((Unit*)result);
+                            break;
+                        case TYPEID_CORPSE:
+                            m_targets.setCorpseTarget((Corpse*)result);
+                            if (Player* owner = ObjectAccessor::FindPlayer(((Corpse*)result)->GetOwnerGUID()))
+                                targetUnitMap.push_back(owner);
+                            break;
+                        default:
+                            targetUnitMap.push_back(m_caster);
+                            break;
+                    };
+                }
+                else
+                    targetUnitMap.push_back(m_caster);
+                break;
             }
         break;
 
@@ -581,7 +590,7 @@ void Spell::FillTargetMap()
                         break;
                     case TARGET_AREAEFFECT_CUSTOM:
                     case TARGET_ALL_ENEMY_IN_AREA_INSTANT:
-                        if (FillCustomTargetMap(i,tmpUnitMap)) break;
+                        if (FillCustomTargetMap(SpellEffectIndex(i),tmpUnitMap)) break;
                     default:
                         SetTargetMap(SpellEffectIndex(i), m_spellInfo->EffectImplicitTargetB[i], tmpUnitMap);
                         break;
@@ -4480,9 +4489,7 @@ SpellCastResult Spell::CheckCast(bool strict)
             if(bg->GetStatus() == STATUS_WAIT_LEAVE)
                 return SPELL_FAILED_DONT_REPORT;
 
-    //Check Caster for combat
-    if(m_caster->isInCombat() && IsNonCombatSpell(m_spellInfo) &&
-        !m_IsTriggeredSpell && !m_caster->isIgnoreUnitState(m_spellInfo))
+    if (m_caster->isInCombat() && IsNonCombatSpell(m_spellInfo) && !m_IsTriggeredSpell && !m_caster->isIgnoreUnitState(m_spellInfo))
         return SPELL_FAILED_AFFECTING_COMBAT;
 
     if (m_caster->GetTypeId() == TYPEID_PLAYER && !((Player*)m_caster)->isGameMaster() &&
