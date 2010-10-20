@@ -225,7 +225,10 @@ bool ChatHandler::HandleDebugMoveMapCommand(char* args)
         return true;
     }
 
-    char* w = strtok((char*)args, " ");
+    char* para = NULL;
+    char* w = strtok(args, " ");
+    if(w)
+        para = strtok(NULL, " ");
 
     if (w && strcmp(w, "path") == 0)
     {
@@ -240,23 +243,30 @@ bool ChatHandler::HandleDebugMoveMapCommand(char* args)
             return true;
         }
 
+        bool useStraightPath = false;
+        if(para && strcmp(para, "true") == 0)
+            useStraightPath = true;
+
         // unit locations
         float x, y, z;
         player->GetPosition(x, y, z);
 
         // path
-        PathInfo path = PathInfo(target, x, y, z);
+        PathInfo path(target, x, y, z, useStraightPath);
         PointPath pointPath = path.getFullPath();
         PSendSysMessage("%s's path to %s:", target->GetName(), player->GetName());
-        PSendSysMessage("length %i", pointPath.size());
+        PSendSysMessage("Building %s", useStraightPath ? "StraightPath" : "SmoothPath");
+        PSendSysMessage("length %i type %u", pointPath.size(), path.getPathType());
 
         PathNode start = path.getStartPosition();
         PathNode next = path.getNextPosition();
         PathNode end = path.getEndPosition();
+        PathNode actualEnd = path.getActualEndPosition();
 
-        PSendSysMessage("start  (%f,%f,%f)", start.x, start.y, start.z);
-        PSendSysMessage("next   (%f,%f,%f)", next.x, next.y, next.z);
-        PSendSysMessage("end    (%f,%f,%f)", end.x, end.y, end.z);
+        PSendSysMessage("start      (%.3f, %.3f, %.3f)", start.x, start.y, start.z);
+        PSendSysMessage("next       (%.3f, %.3f, %.3f)", next.x, next.y, next.z);
+        PSendSysMessage("end        (%.3f, %.3f, %.3f)", end.x, end.y, end.z);
+        PSendSysMessage("actual end (%.3f, %.3f, %.3f)", actualEnd.x, actualEnd.y, actualEnd.z);
 
         // this entry visible only to GM's with "gm on"
         static const uint32 WAYPOINT_NPC_ENTRY = 1;
@@ -268,7 +278,7 @@ bool ChatHandler::HandleDebugMoveMapCommand(char* args)
     else if(w && strcmp(w, "verts") == 0)
     {
         PSendSysMessage("mmap verts:");
-        
+
         // units
         Player* player = m_session->GetPlayer();
         Unit* target = getSelectedUnit();
@@ -285,50 +295,55 @@ bool ChatHandler::HandleDebugMoveMapCommand(char* args)
         player->GetPosition(x, y, z);
         float end[VERTEX_SIZE] = {y, z, x};
 
-        PathInfo path = PathInfo(target, x, y, z);
-
-        if(path.getPolyLength() == 0)
-        {
-            PSendSysMessage("Path is 0 length");
-            return true;
-        }
+        dtNavMesh* navmesh = player->GetMap()->GetNavMesh();
+        dtNavMeshQuery* query = dtAllocNavMeshQuery();
+        query->init(navmesh, MESH_MAX_NODES);
 
         float extents[VERTEX_SIZE] = {2.f, 4.f, 2.f};
         dtQueryFilter filter = dtQueryFilter();
-        dtPolyRef startPoly = path.getMeshQuery()->findNearestPoly(start, extents, &filter, 0);
-        dtPolyRef endPoly = path.getMeshQuery()->findNearestPoly(end, extents, &filter, 0);
+        dtPolyRef startPoly = query->findNearestPoly(start, extents, &filter, NULL);
+        dtPolyRef endPoly = query->findNearestPoly(end, extents, &filter, NULL);
 
         // vertices stuff
+        float vertices[DT_VERTS_PER_POLYGON*VERTEX_SIZE];
         const dtMeshTile* tile;
         const dtPoly* poly;
-        path.getMesh()->getTileAndPolyByRef(startPoly, &tile, &poly);
-        float vertices[DT_VERTS_PER_POLYGON*VERTEX_SIZE];
+        uint32 nv = 0;
 
         // startpoly vertices
-        int nv = 0;
-        for (uint32 i = 0; i < poly->vertCount; ++i)
+        if(!navmesh->getTileAndPolyByRef(startPoly, &tile, &poly))
+            PSendSysMessage("No start poly found.");
+        else
         {
-            dtVcopy(&vertices[nv*VERTEX_SIZE], &tile->verts[poly->verts[i]*VERTEX_SIZE]);
-            nv++;
-        }
+            for (uint32 i = 0; i < poly->vertCount; ++i)
+            {
+                dtVcopy(&vertices[nv*VERTEX_SIZE], &tile->verts[poly->verts[i]*VERTEX_SIZE]);
+                nv++;
+            }
 
-        PSendSysMessage("Poly vertices for %i:", startPoly);
-        for(uint32 i = 0; i < poly->vertCount; ++i)
-            PSendSysMessage("(%.2f,%.2f,%.2f)", vertices[i*VERTEX_SIZE], vertices[i*VERTEX_SIZE+1], vertices[i*VERTEX_SIZE+2]);
+            PSendSysMessage("Poly vertices for %i:", startPoly);
+            for(uint32 i = 0; i < poly->vertCount; ++i)
+                PSendSysMessage("(%.2f,%.2f,%.2f)", vertices[i*VERTEX_SIZE], vertices[i*VERTEX_SIZE+1], vertices[i*VERTEX_SIZE+2]);
+        }
 
         // endpoly vertices
-        path.getMesh()->getTileAndPolyByRef(endPoly, &tile, &poly);
-        nv = 0;
-        for (uint32 i = 0; i < poly->vertCount; ++i)
+        if(!navmesh->getTileAndPolyByRef(endPoly, &tile, &poly))
+            PSendSysMessage("No end poly found.");
+        else
         {
-            dtVcopy(&vertices[nv*VERTEX_SIZE], &tile->verts[poly->verts[i]*VERTEX_SIZE]);
-            nv++;
+            nv = 0;
+            for (uint32 i = 0; i < poly->vertCount; ++i)
+            {
+                dtVcopy(&vertices[nv*VERTEX_SIZE], &tile->verts[poly->verts[i]*VERTEX_SIZE]);
+                nv++;
+            }
+
+            PSendSysMessage("Poly vertices for %i:", endPoly);
+            for(uint32 i = 0; i < poly->vertCount; ++i)
+                PSendSysMessage("(%.2f,%.2f,%.2f)", vertices[i*VERTEX_SIZE], vertices[i*VERTEX_SIZE+1], vertices[i*VERTEX_SIZE+2]);
         }
 
-        PSendSysMessage("Poly vertices for %i:", endPoly);
-        for(uint32 i = 0; i < poly->vertCount; ++i)
-            PSendSysMessage("(%.2f,%.2f,%.2f)", vertices[i*VERTEX_SIZE], vertices[i*VERTEX_SIZE+1], vertices[i*VERTEX_SIZE+2]);
-
+        dtFreeNavMeshQuery(query);
         return true;
     }
     else if(w && strcmp(w, "tileloc") == 0)
@@ -362,8 +377,8 @@ bool ChatHandler::HandleDebugMoveMapCommand(char* args)
 
         // navmesh poly -> navmesh tile location
         dtPolyRef polyRef = query->findNearestPoly(location, extents, &(dtQueryFilter()), NULL);
-        
-        if(!polyRef)
+
+        if(polyRef == INVALID_POLYREF)
             PSendSysMessage("Dt     [??,??] (invalid poly, probably no tile loaded)");
         else
         {
@@ -399,6 +414,7 @@ bool ChatHandler::HandleDebugMoveMapCommand(char* args)
             delete [] data;
         }
 
+        dtFreeNavMeshQuery(query);
         return true;
     }
     else if(w && strcmp(w, "polytest") == 0)
@@ -413,7 +429,7 @@ bool ChatHandler::HandleDebugMoveMapCommand(char* args)
         float x, y, z;
         player->GetPosition(x, y, z);
         float location[VERTEX_SIZE] = {y, z, x};
-        float extents[VERTEX_SIZE] = {2.f,4.f,2.f};
+        float extents[VERTEX_SIZE] = {1.f,2.f,1.f};
         dtQueryFilter filter = dtQueryFilter();
         filter.includeFlags = 0xFFFF;
 
@@ -424,6 +440,7 @@ bool ChatHandler::HandleDebugMoveMapCommand(char* args)
         PSendSysMessage("(%.2f,%.2f,%.2f)", y, z, x);
         PSendSysMessage("%u", nearestPoly);
 
+        dtFreeNavMeshQuery(query);
         return true;
     }
     else if(w && strcmp(w, "loadedtiles") == 0)
@@ -443,6 +460,7 @@ bool ChatHandler::HandleDebugMoveMapCommand(char* args)
             PSendSysMessage("[%02i,%02i]", tile->header->x, tile->header->y);
         }
 
+        dtFreeNavMeshQuery(query);
         return true;
     }
     else if(w && strcmp(w, "stats") == 0)
@@ -491,7 +509,7 @@ bool ChatHandler::HandleDebugMoveMapCommand(char* args)
         PSendSysMessage("  polytest    print the current polygon's ref");
         PSendSysMessage("  loadedtiles print tile info for loaded tiles");
         PSendSysMessage("  stats       print stats about the current navmesh");
-        
+
         return true;
     }
 
