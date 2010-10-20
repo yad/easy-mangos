@@ -25,6 +25,8 @@
 #include "FollowerReference.h"
 #include "PathFinder.h"
 
+#define EVADE_TIME 2000 // in ms
+
 class MANGOS_DLL_SPEC TargetedMovementGeneratorBase
 {
     public:
@@ -40,11 +42,14 @@ class MANGOS_DLL_SPEC TargetedMovementGeneratorMedium
 {
     protected:
         TargetedMovementGeneratorMedium()
-            : TargetedMovementGeneratorBase(), i_offset(0), i_angle(0), i_recalculateTravel(false), i_path(NULL), m_pathPointsSent(0) {}
+            : TargetedMovementGeneratorBase(), i_offset(0), i_angle(0), i_recalculateTravel(false),
+                i_path(NULL), m_pathPointsSent(0), i_evade_timer(EVADE_TIME) {}
         TargetedMovementGeneratorMedium(Unit &target)
-            : TargetedMovementGeneratorBase(target), i_offset(0), i_angle(0), i_recalculateTravel(false), i_path(NULL), m_pathPointsSent(0) {}
+            : TargetedMovementGeneratorBase(target), i_offset(0), i_angle(0), i_recalculateTravel(false),
+                i_path(NULL), m_pathPointsSent(0), i_evade_timer(EVADE_TIME) {}
         TargetedMovementGeneratorMedium(Unit &target, float offset, float angle)
-            : TargetedMovementGeneratorBase(target), i_offset(offset), i_angle(angle), i_recalculateTravel(false), i_path(NULL), m_pathPointsSent(0) {}
+            : TargetedMovementGeneratorBase(target), i_offset(offset), i_angle(angle), i_recalculateTravel(false),
+                i_path(NULL), m_pathPointsSent(0), i_evade_timer(EVADE_TIME) {}
         ~TargetedMovementGeneratorMedium() { delete i_path; }
 
     public:
@@ -72,6 +77,8 @@ class MANGOS_DLL_SPEC TargetedMovementGeneratorMedium
 
         PathInfo* i_path;
         uint32 m_pathPointsSent;
+
+        uint32 i_evade_timer;
 };
 
 template<class T>

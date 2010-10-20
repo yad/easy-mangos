@@ -1917,6 +1917,8 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         // Movement info
         MovementInfo m_movementInfo;
 
+        // evade code will be called next update
+        void evadeWhenCan() { m_evadeWhenCan = true; }
     protected:
         explicit Unit ();
 
@@ -1967,6 +1969,8 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         uint32 m_lastManaUseTimer;
 
     private:
+        bool m_evadeWhenCan;
+
         void CleanupDeletedAuras();
 
         // player or player's pet
