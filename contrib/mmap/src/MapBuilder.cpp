@@ -19,11 +19,14 @@ namespace MMAP
                            bool skipLiquid,
                            bool skipContinents, bool skipJunkMaps, bool skipBattlegrounds,
                            bool hiResHeightmaps, bool debugOutput) :
-                           m_maxWalkableAngle   (maxWalkableAngle),
+                           m_vmapManager(NULL),
+                           m_tileBuilder(NULL),
+                           m_debugOutput        (debugOutput),
                            m_skipContinents     (skipContinents),
                            m_skipJunkMaps       (skipJunkMaps),
                            m_skipBattlegrounds  (skipBattlegrounds),
-                           m_debugOutput        (debugOutput)
+                           m_maxWalkableAngle   (maxWalkableAngle)
+
     {
         m_vmapManager = new VMapManager2();
         m_tileBuilder = new TileBuilder(skipLiquid, hiResHeightmaps);
@@ -194,9 +197,9 @@ namespace MMAP
         G3D::Array<float> allVerts;
         G3D::Array<int> allTris;
         char tileString[10];
-        
+
         // now start building mmtiles for each tile
-        printf("We have %i tiles.                          \n", tiles->size());
+        printf("We have %u tiles.                          \n", (unsigned int)tiles->size());
         for(set<uint32>::iterator it = tiles->begin(); it != tiles->end(); ++it)
         {
             allVerts.fastClear();
@@ -232,7 +235,7 @@ namespace MMAP
             allVerts.append(meshData.liquidVerts);
             copyIndices(allTris, meshData.solidTris, allVerts.size() / 3);
             allVerts.append(meshData.solidVerts);
-            
+
             if(!allVerts.size() || !allTris.size())
                 continue;
 
@@ -378,7 +381,7 @@ namespace MMAP
             StaticMapTree::unpackTileID((*it), tileX, tileY);
 
             cout.setstate(cout.badbit);
-            int result = m_vmapManager->loadMap("vmaps", mapID, tileX, tileY);
+            m_vmapManager->loadMap("vmaps", mapID, tileX, tileY);
             cout.clear(cout.goodbit);
         }
 
@@ -445,7 +448,7 @@ namespace MMAP
     void MapBuilder::loadVMap(uint32 mapID, uint32 tileX, uint32 tileY, G3D::Array<float> &modelVertices, G3D::Array<int> &modelTriangles)
     {
         cout.setstate(cout.badbit);
-        int result = m_vmapManager->loadMap("vmaps", mapID, tileX, tileY);
+        m_vmapManager->loadMap("vmaps", mapID, tileX, tileY);
         cout.clear(cout.goodbit);
 
         ModelInstance* models = 0;
@@ -520,7 +523,7 @@ namespace MMAP
             m_vmapManager->unloadMap(mapID, tileX, tileY);
             cout.clear(cout.goodbit);
         }
-        
+
         cout.setstate(cout.badbit);
         m_vmapManager->unloadMap(mapID);
         cout.clear(cout.goodbit);
@@ -935,12 +938,12 @@ namespace MMAP
             // so we have a clear error message
             if (params.nvp > DT_VERTS_PER_POLYGON)
             {
-                printf("%sInvalid verts-per-polygon value!        \n", tileString);
+                printf("%s Invalid verts-per-polygon value!        \n", tileString);
                 break;
             }
             if (params.vertCount >= 0xffff)
             {
-                printf("%sToo many vertices!                      \n", tileString);
+                printf("%s Too many vertices!                      \n", tileString);
                 break;
             }
             if (!params.vertCount || !params.verts)
@@ -954,30 +957,30 @@ namespace MMAP
             }
             if (!params.polyCount || !params.polys)
             {
-                printf("%sNo polygons to build tile!              \n", tileString);
+                printf("%s No polygons to build tile!              \n", tileString);
                 break;
             }
             if (!params.detailMeshes || !params.detailVerts || !params.detailTris)
             {
-                printf("%sNo detail mesh to build tile!           \n", tileString);
+                printf("%s No detail mesh to build tile!           \n", tileString);
                 break;
             }
 
-            printf("%sBuilding navmesh tile...                \r", tileString);
+            printf("%s Building navmesh tile...                \r", tileString);
             if(!dtCreateNavMeshData(&params, &navData, &navDataSize))
             {
-                printf("%sFailed building navmesh tile!           \n", tileString);
+                printf("%s Failed building navmesh tile!           \n", tileString);
                 delete [] navData;
                 break;
             }
 
             dtTileRef tileRef = 0;
-            printf("%Adding tile to navmesh...                \r", tileString);
+            printf("%s Adding tile to navmesh...                \r", tileString);
             // DT_TILE_FREE_DATA tells detour to unallocate memory when the tile
             // is removed via removeTile()
             if(!(tileRef = navMesh->addTile(navData, navDataSize, DT_TILE_FREE_DATA)))
             {
-                printf("%Failed adding tile to navmesh!           \n", tileString);
+                printf("%s Failed adding tile to navmesh!           \n", tileString);
                 delete [] navData;
                 break;
             }
@@ -992,7 +995,7 @@ namespace MMAP
                 break;
             }
 
-            printf("%sWriting to file...                      \r", tileString);
+            printf("%s Writing to file...                      \r", tileString);
             // should write navDataSize first... for now, just use ftell to find length when reading
             fwrite(navData, sizeof(unsigned char), navDataSize, file);
             fclose(file);
@@ -1112,8 +1115,6 @@ namespace MMAP
     {
         char objFileName[255];
         FILE* objFile;
-
-        char b = '\0';
 
         sprintf(objFileName, "meshes/map%03u.obj", mapID);
         if(!(objFile = fopen(objFileName, "wb")))
@@ -1304,7 +1305,7 @@ namespace MMAP
     {
         if(!file || !cs)
             return;
-        
+
         fwrite(&(cs->cs), sizeof(float), 1, file);
         fwrite(&(cs->ch), sizeof(float), 1, file);
         fwrite(cs->bmin, sizeof(float), 3, file);

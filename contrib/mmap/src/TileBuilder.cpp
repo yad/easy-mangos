@@ -459,6 +459,7 @@ namespace MMAP
                     indices[1] = square+V9_SIZE+1+rowOffset;
                     indices[2] = square+V9_SIZE+rowOffset;
                     break;
+                default: break;
             }
         else
             switch(triangle)
@@ -473,8 +474,9 @@ namespace MMAP
                     indices[1] = square+V9_SIZE+1+rowOffset;            //           | \   |
                     indices[2] = square+V9_SIZE+rowOffset;              //           |  \  |
                     break;                                              //           |   \ |
-            }                                                           //           |    \|
-                                                                        //          258---259 ... 515
+                default: break;                                         //           |    \|
+            }                                                           //          258---259 ... 515
+
     }
 
     inline void TileBuilder::getLiquidCoord(int index, int index2, float xOffset, float yOffset, float* coord, float* v)
@@ -501,6 +503,7 @@ namespace MMAP
                 indices[1] = square+V9_SIZE+1+rowOffset;
                 indices[2] = square+V9_SIZE+rowOffset;
                 break;
+            default: break;
         }
     }
 

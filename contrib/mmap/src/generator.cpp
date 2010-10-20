@@ -36,9 +36,9 @@ bool checkDirectories(bool debugOutput)
 
     dirFiles.clear();
     if(debugOutput)
-        if(getDirContents(dirFiles, "Meshes") == LISTFILE_DIRECTORY_NOT_FOUND)
+        if(getDirContents(dirFiles, "meshes") == LISTFILE_DIRECTORY_NOT_FOUND)
         {
-            printf("'Meshes' directory does not exist (no place to put debugOutput files)\n");
+            printf("'meshes' directory does not exist (no place to put debugOutput files)\n");
             return false;
         }
 
@@ -213,7 +213,7 @@ void handleArgs(int argc, char** argv,
     }
 }
 
-int finish(char* message, int returnValue)
+int finish(const char* message, int returnValue)
 {
     printf("%s", message);
     getchar();
