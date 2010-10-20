@@ -22,12 +22,8 @@
 #include "Creature.h"
 #include "DestinationHolderImp.h"
 #include "World.h"
+
 //#include "ace/High_Res_Timer.h"
-
-#define SMALL_ALPHA 0.05f
-
-#include <cmath>
-
 //class ACE_High_Res_Timer;
 
 //-----------------------------------------------//
@@ -103,7 +99,7 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner, bool upd
     // get current dest node's index
     uint32 startIndex = i_path->getPathPointer();
 
-    if (i_destinationHolder.HasArrived())
+    if (i_destinationHolder.HasArrived() && m_pathPointsSent)
         --m_pathPointsSent;
 
     Traveller<T> traveller(owner);
@@ -118,7 +114,7 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner, bool upd
     if (m_pathPointsSent < 2 || startIndex == 1 || i_recalculateTravel || owner.IsStopped())
     {
         // send 10 nodes, or send all nodes if there are less than 10 left
-        m_pathPointsSent = std::min(uint32(10), uint32(pointPath.size() - startIndex));
+        m_pathPointsSent = std::min<uint32>(10, pointPath.size() - startIndex);
         uint32 endIndex = m_pathPointsSent + startIndex;
 
         // dist to next node + world-unit length of the path
@@ -254,13 +250,10 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
             // (re)calculate path
             _setTargetLocation(owner, targetMoved || needNewDest);
 
-            if(i_path)
-            {
-                next_point = i_path->getNextPosition();
+            next_point = i_path->getNextPosition();
 
-                // Set new Angle For Map::
-                owner.SetOrientation(owner.GetAngle(next_point.x, next_point.y));
-            }
+            // Set new Angle For Map::
+            owner.SetOrientation(owner.GetAngle(next_point.x, next_point.y));
         }
         // Update the Angle of the target only for Map::, no need to send packet for player
         else if (!i_angle && !owner.HasInArc(0.01f, next_point.x, next_point.y))
