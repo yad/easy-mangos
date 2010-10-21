@@ -376,7 +376,8 @@ bool ChatHandler::HandleDebugMoveMapCommand(char* args)
         PSendSysMessage("Calc   [%02i,%02i]", tilex, tiley);
 
         // navmesh poly -> navmesh tile location
-        dtPolyRef polyRef = query->findNearestPoly(location, extents, &(dtQueryFilter()), NULL);
+        dtQueryFilter filter = dtQueryFilter();
+        dtPolyRef polyRef = query->findNearestPoly(location, extents, &filter, NULL);
 
         if(polyRef == INVALID_POLYREF)
             PSendSysMessage("Dt     [??,??] (invalid poly, probably no tile loaded)");
