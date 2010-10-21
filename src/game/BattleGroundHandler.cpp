@@ -76,7 +76,7 @@ void WorldSession::SendBattlegGroundList( ObjectGuid guid, BattleGroundTypeId bg
 
 void WorldSession::HandleBattlemasterJoinOpcode( WorldPacket & recv_data )
 {
-    uint64 guid;
+    ObjectGuid guid;
     uint32 bgTypeId_;
     uint32 instanceId;
     uint8 joinAsGroup;
@@ -96,7 +96,7 @@ void WorldSession::HandleBattlemasterJoinOpcode( WorldPacket & recv_data )
 
     BattleGroundTypeId bgTypeId = BattleGroundTypeId(bgTypeId_);
 
-    DEBUG_LOG( "WORLD: Recvd CMSG_BATTLEMASTER_JOIN Message from (GUID: %u TypeId:%u)", GUID_LOPART(guid), GuidHigh2TypeId(GUID_HIPART(guid)));
+    DEBUG_LOG( "WORLD: Recvd CMSG_BATTLEMASTER_JOIN Message from %s", guid.GetString().c_str());
 
     // can do this, since it's battleground, not arena
     BattleGroundQueueTypeId bgQueueTypeId = BattleGroundMgr::BGQueueTypeId(bgTypeId, 0);
@@ -562,7 +562,7 @@ void WorldSession::HandleAreaSpiritHealerQueryOpcode( WorldPacket & recv_data )
     if (!bg)
         return;
 
-    uint64 guid;
+    ObjectGuid guid;
     recv_data >> guid;
 
     Creature *unit = GetPlayer()->GetMap()->GetCreature(guid);
@@ -583,7 +583,7 @@ void WorldSession::HandleAreaSpiritHealerQueueOpcode( WorldPacket & recv_data )
     if (!bg)
         return;
 
-    uint64 guid;
+    ObjectGuid guid;
     recv_data >> guid;
 
     Creature *unit = GetPlayer()->GetMap()->GetCreature(guid);
@@ -601,7 +601,7 @@ void WorldSession::HandleBattlemasterJoinArena( WorldPacket & recv_data )
     DEBUG_LOG("WORLD: CMSG_BATTLEMASTER_JOIN_ARENA");
     //recv_data.hexlike();
 
-    uint64 guid;                                            // arena Battlemaster guid
+    ObjectGuid guid;                                        // arena Battlemaster guid
     uint8 arenaslot;                                        // 2v2, 3v3 or 5v5
     uint8 asGroup;                                          // asGroup
     uint8 isRated;                                          // isRated
