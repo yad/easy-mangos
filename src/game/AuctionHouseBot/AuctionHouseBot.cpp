@@ -811,7 +811,6 @@ bool AHB_Seller::Initialize()
 
         if ((prototype->Quality < 0) || (prototype->Quality > 6))
             continue;
-
         if (!m_BaseConfig->getConfig(CONFIG_BOOL_AHBOT_ITEMS_VENDOR))
         {
             bool isVendorItem = false;
@@ -825,7 +824,6 @@ bool AHB_Seller::Initialize()
             if (isVendorItem)
                 continue;
         }
-
         if (!m_BaseConfig->getConfig(CONFIG_BOOL_AHBOT_ITEMS_LOOT))
         {
             bool isLootItem = false;
