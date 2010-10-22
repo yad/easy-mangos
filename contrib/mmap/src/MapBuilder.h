@@ -59,7 +59,6 @@ namespace MMAP
 
             // load and unload models
             bool loadVMap(uint32 mapID, uint32 tileX, uint32 tileY, G3D::Array<float> &modelVerts, G3D::Array<int> &modelTris);
-            void unloadEntireVMap(uint32 mapID);
             void unloadVMap(uint32 mapID, uint32 tileX, uint32 tileY);
 
             // vert and triangle methods
