@@ -1,6 +1,6 @@
 #include <sstream>
 
-#include "TileBuilder.h"
+#include "TerrainBuilder.h"
 
 #include "IVMapManager.h"
 #include "VMapManager2.h"
@@ -18,17 +18,17 @@ char const* MAP_VERSION_MAGIC = "v1.2";
 
 namespace MMAP
 {
-    TileBuilder::TileBuilder(bool skipLiquid, bool hiRes) :
+    TerrainBuilder::TerrainBuilder(bool skipLiquid, bool hiRes) :
         m_hiResHeightMaps   (hiRes),
         m_skipLiquid        (skipLiquid)
     {
     }
 
-    TileBuilder::~TileBuilder()
+    TerrainBuilder::~TerrainBuilder()
     {
     }
 
-    void TileBuilder::getLoopVars(Spot portion, int &loopStart, int &loopEnd, int &loopInc)
+    void TerrainBuilder::getLoopVars(Spot portion, int &loopStart, int &loopEnd, int &loopInc)
     {
         switch(portion)
         {
@@ -60,7 +60,7 @@ namespace MMAP
         }
     }
 
-    void TileBuilder::loadMap(uint32 mapID, uint32 tileX, uint32 tileY, MeshData &meshData)
+    void TerrainBuilder::loadMap(uint32 mapID, uint32 tileX, uint32 tileY, MeshData &meshData)
     {
         if(loadMap(mapID, tileX, tileY, meshData, ENTIRE))
         {
@@ -71,7 +71,7 @@ namespace MMAP
         }
     }
 
-    bool TileBuilder::loadMap(uint32 mapID, uint32 tileX, uint32 tileY, MeshData &meshData, Spot portion)
+    bool TerrainBuilder::loadMap(uint32 mapID, uint32 tileX, uint32 tileY, MeshData &meshData, Spot portion)
     {
         char mapFileName[255];
         sprintf(mapFileName, "maps/%03u%02u%02u.map", mapID, tileY, tileX);
@@ -414,7 +414,7 @@ namespace MMAP
         return true;
     }
 
-    inline void TileBuilder::getHeightCoord(int index, Grid grid, float xOffset, float yOffset, float* coord, float* v)
+    inline void TerrainBuilder::getHeightCoord(int index, Grid grid, float xOffset, float yOffset, float* coord, float* v)
     {
         // wow coords: x, y, height
         // coord is mirroed about the horizontal axes
@@ -433,7 +433,7 @@ namespace MMAP
         }
     }
 
-    inline void TileBuilder::getHeightTriangle(int square, Spot triangle, int* indices, bool liquid/* = false*/)
+    inline void TerrainBuilder::getHeightTriangle(int square, Spot triangle, int* indices, bool liquid/* = false*/)
     {
         int rowOffset = square/V8_SIZE;
         if(m_hiResHeightMaps && !liquid)
@@ -479,7 +479,7 @@ namespace MMAP
 
     }
 
-    inline void TileBuilder::getLiquidCoord(int index, int index2, float xOffset, float yOffset, float* coord, float* v)
+    inline void TerrainBuilder::getLiquidCoord(int index, int index2, float xOffset, float yOffset, float* coord, float* v)
     {
         // wow coords: x, y, height
         // coord is mirroed about the horizontal axes
@@ -491,7 +491,7 @@ namespace MMAP
     static uint16 holetab_h[4] = {0x1111, 0x2222, 0x4444, 0x8888};
     static uint16 holetab_v[4] = {0x000F, 0x00F0, 0x0F00, 0xF000};
 
-    bool TileBuilder::isHole(int square, const uint16 holes[16][16])
+    bool TerrainBuilder::isHole(int square, const uint16 holes[16][16])
     {
         int row = square / 128;
         int col = square % 128;
@@ -507,7 +507,7 @@ namespace MMAP
         return isHole;
     }
 
-    uint8 TileBuilder::getLiquidType(int square, const uint8 liquid_type[16][16])
+    uint8 TerrainBuilder::getLiquidType(int square, const uint8 liquid_type[16][16])
     {
         int row = square / 128;
         int col = square % 128;

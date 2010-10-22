@@ -4,7 +4,7 @@
 #include "MMapCommon.h"
 #include "VMapManager2.h"
 #include "MapBuilder.h"
-#include "TileBuilder.h"
+#include "TerrainBuilder.h"
 #include "MapTree.h"
 
 using namespace std;

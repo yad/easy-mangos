@@ -12,9 +12,6 @@
     <ClCompile Include="..\..\src\generator.cpp">
       <Filter>generator</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\TileBuilder.cpp">
-      <Filter>generator</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\VMapExtensions.cpp">
       <Filter>generator</Filter>
     </ClCompile>
@@ -45,11 +42,11 @@
     <ClCompile Include="..\..\..\..\src\shared\vmap\WorldModel.cpp">
       <Filter>vmap</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\TerrainBuilder.cpp">
+      <Filter>generator</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\src\TileBuilder.h">
-      <Filter>generator</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\MMapCommon.h">
       <Filter>generator</Filter>
     </ClInclude>
@@ -91,6 +88,9 @@
     </ClInclude>
     <ClInclude Include="..\..\..\..\src\shared\vmap\WorldModel.h">
       <Filter>vmap</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\TerrainBuilder.h">
+      <Filter>generator</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

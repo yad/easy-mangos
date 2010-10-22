@@ -29,7 +29,7 @@ namespace MMAP
 
     {
         m_vmapManager = new VMapManager2();
-        m_tileBuilder = new TileBuilder(skipLiquid, hiResHeightmaps);
+        m_tileBuilder = new TerrainBuilder(skipLiquid, hiResHeightmaps);
     }
 
     MapBuilder::~MapBuilder()

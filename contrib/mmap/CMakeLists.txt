@@ -167,7 +167,7 @@ set(SOURCES
     ./src/DebugAlloc.cpp
     ./src/generator.cpp
     ./src/MapBuilder.cpp
-    ./src/TileBuilder.cpp
+    ./src/TerrainBuilder.cpp
     ./src/VMapExtensions.cpp
 )
 

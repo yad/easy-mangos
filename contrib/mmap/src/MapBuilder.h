@@ -5,7 +5,7 @@
 #include <set>
 #include <map>
 
-#include "TileBuilder.h"
+#include "TerrainBuilder.h"
 #include "IVMapManager.h"
 #include "G3D/Array.h"
 
@@ -106,7 +106,7 @@ namespace MMAP
             void writeDetailMesh(FILE* file, const rcPolyMeshDetail* mesh);
 
             IVMapManager* m_vmapManager;
-            TileBuilder* m_tileBuilder;
+            TerrainBuilder* m_tileBuilder;
 
             MapList m_maps;
             TileList m_tiles;
