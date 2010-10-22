@@ -44,26 +44,13 @@ namespace MMAP
 
             ~MapBuilder();
 
-            /**
-             Builds a mmap for the specifiec map id.
-             * First, the entire vmap is loaded. Cannot do it tile-by-tile because vmap tiles only load models
-               whose origin is in that tile.  Large models may span across tiles (stormwind, etc)
-
-             * Second, iterates through the tiles and loads their heightmaps.
-               These are processed so that steep inclines are removed.
-               TODO: process liquid heightmap
-
-             * Third, the vmap model and heightmap data is aggregated
-
-             * Fourth, data is sent off to recast for processing.  This optionally includes generating
-               an obj file, for debugging with RecastDemo
-            */
+            // builds all mmap tiles for the specified map id (ignores skip settings)
             void build(uint32 mapID);
 
-            // generates an obj file for the specified map tile
+            // builds an mmap tile for the specified map tile (ignores skip settings)
             void buildTile(uint32 mapID, uint32 tileX, uint32 tileY);
 
-            // builds list of maps, then iterates through them calling build(uint32 mapID)
+            // builds list of maps, then builds all of mmap tiles (based on the skip settings)
             void buildAll();
 
         private:
@@ -72,7 +59,6 @@ namespace MMAP
             void getMapList();
 
             // load and unload models
-            void loadEntireVMap(uint32 mapID);
             void loadVMap(uint32 mapID, uint32 tileX, uint32 tileY, G3D::Array<float> &modelVerts, G3D::Array<int> &modelTris);
             void unloadEntireVMap(uint32 mapID);
             void unloadVMap(uint32 mapID, uint32 tileX, uint32 tileY);
@@ -104,8 +90,6 @@ namespace MMAP
 
             void initIntermediateValues(IntermediateValues &iv);
             void clearIntermediateValues(IntermediateValues &iv);
-
-            float snapToGrid(const float coord);
 
             bool shouldSkipMap(uint32 mapID);
             bool isTransportMap(uint32 mapID);

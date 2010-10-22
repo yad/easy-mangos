@@ -86,11 +86,11 @@ namespace MMAP
 
             bool loadLiquidMap(uint32 mapID, uint32 tileX, uint32 tileY, G3D::Array<float> &vertices, G3D::Array<int> &triangles, Spot portion);
             void getLiquidCoord(int index, int index2, float xOffset, float yOffset, float* coord, float* v);
-            void getLiquidTriangle(int square, Spot triangle, int* indices, uint8 width);
             uint8 getLiquidType(int square, const uint8 liquid_type[16][16]);
 
-            // hide parameterless constructor
+            // hide parameterless and copy constructor
             TileBuilder();
+            TileBuilder(const TileBuilder &tb);
     };
 }
 

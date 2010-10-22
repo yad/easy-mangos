@@ -255,7 +255,7 @@ namespace MMAP
                              navMesh);
         }
 
-        unloadEntireVMap(mapID);
+        m_vmapManager->unloadMap(mapID);
 
         DELETE(navMesh);
 
@@ -360,96 +360,9 @@ namespace MMAP
         printf("%sComplete!                                      \n\n", tileString);
     }
 
-    void MapBuilder::loadEntireVMap(uint32 mapID)
-    {
-        printf("Loading vmap...                         \r");
-
-        // any loadMap call initializes the StaticMapTree, which loads
-        // models stored in the WDT. Necessary for maps that don't have
-        // a heightmap or ADTs
-        cout.setstate(cout.badbit);
-        m_vmapManager->loadMap("vmaps", mapID, 64, 64);
-        cout.clear(cout.goodbit);
-
-        set<uint32> tiles;
-        if(m_tiles.find(mapID) != m_tiles.end())
-            tiles = *m_tiles[mapID];
-
-        uint32 tileX, tileY;
-        for(set<uint32>::iterator it = tiles.begin(); it != tiles.end(); ++it)
-        {
-            StaticMapTree::unpackTileID((*it), tileX, tileY);
-
-            cout.setstate(cout.badbit);
-            m_vmapManager->loadMap("vmaps", mapID, tileX, tileY);
-            cout.clear(cout.goodbit);
-        }
-
-        ModelInstance* models = 0;
-        uint32 count = 0;
-
-        InstanceTreeMap instanceTrees;
-        ((VMapManager2*)m_vmapManager)->getInstanceMapTree(instanceTrees);
-
-        if(!instanceTrees[mapID])
-            return;
-
-        instanceTrees[mapID]->getModelInstances(models, count);
-
-        if(!models || !count)
-            return;
-
-        uint32 i;
-        for(i = 0; i < count; ++i)
-        {
-            ModelInstance instance = models[i];
-
-            G3D::Array<float>* modelVertices = NEW(G3D::Array<float>);
-            G3D::Array<int>* modelTriangles = NEW(G3D::Array<int>);
-
-            // model instances exist in tree even though there are instances of that model in this tile
-            WorldModel* worldModel = instance.getWorldModel();
-            if(!worldModel)
-                continue;
-
-            vector<GroupModel> groupModels;
-            worldModel->getGroupModels(groupModels);
-
-            // all M2s need to have triangle indices reversed
-            bool isM2 = instance.name.find(".m2") != instance.name.npos || instance.name.find(".M2") != instance.name.npos;
-
-            // transform data
-            float scale = models[i].iScale;
-            G3D::Matrix3 rotation = G3D::Matrix3::fromEulerAnglesZYX(-1*G3D::pi()*instance.iRot.y/180.f, -1*G3D::pi()*instance.iRot.x/180.f, -1*G3D::pi()*instance.iRot.z/180.f);
-            Vector3 position = instance.iPos;
-            position.x -= 32*533.33333f;
-            position.y -= 32*533.33333f;
-
-            for(vector<GroupModel>::iterator it = groupModels.begin(); it != groupModels.end(); ++it)
-            {
-                vector<Vector3> tempVertices;
-                vector<Vector3> transformedVertices;
-                vector<MeshTriangle> tempTriangles;
-
-                (*it).getMeshData(tempVertices, tempTriangles);
-
-                transform(tempVertices, transformedVertices, scale, rotation, position);
-
-                int offset = modelVertices->size() / 3;
-
-                copyVertices(transformedVertices, (*modelVertices));
-                copyIndices(tempTriangles, (*modelTriangles), offset, isM2);
-            }
-        }
-
-        unloadEntireVMap(mapID);
-    }
-
     void MapBuilder::loadVMap(uint32 mapID, uint32 tileX, uint32 tileY, G3D::Array<float> &modelVertices, G3D::Array<int> &modelTriangles)
     {
-        cout.setstate(cout.badbit);
         m_vmapManager->loadMap("vmaps", mapID, tileX, tileY);
-        cout.clear(cout.goodbit);
 
         ModelInstance* models = 0;
         uint32 count = 0;
@@ -504,38 +417,14 @@ namespace MMAP
                 copyIndices(tempTriangles, modelTriangles, offset, isM2);
             }
         }
-    }
 
-    void MapBuilder::unloadEntireVMap(uint32 mapID)
-    {
-        printf("Unloading vmap...                       \r");
-
-        set<uint32> tiles;
-        if(m_tiles.find(mapID) != m_tiles.end())
-            tiles = *m_tiles[mapID];
-
-        uint32 tileX, tileY;
-        for(set<uint32>::iterator it = tiles.begin(); it != tiles.end(); ++it)
-        {
-            StaticMapTree::unpackTileID((*it), tileX, tileY);
-
-            cout.setstate(cout.badbit);
-            m_vmapManager->unloadMap(mapID, tileX, tileY);
-            cout.clear(cout.goodbit);
-        }
-
-        cout.setstate(cout.badbit);
-        m_vmapManager->unloadMap(mapID);
-        cout.clear(cout.goodbit);
     }
 
     void MapBuilder::unloadVMap(uint32 mapID, uint32 tileX, uint32 tileY)
     {
         printf("Unloading vmap...                       \r");
 
-        cout.setstate(cout.badbit);
         m_vmapManager->unloadMap(mapID, tileX, tileY);
-        cout.clear(cout.goodbit);
     }
 
     inline void MapBuilder::transform(vector<Vector3> source, vector<Vector3> &transformedVertices, float scale, G3D::Matrix3 rotation, Vector3 position)

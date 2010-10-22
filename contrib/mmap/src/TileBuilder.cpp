@@ -488,25 +488,6 @@ namespace MMAP
         coord[2] = v[index2];
     }
 
-    inline void TileBuilder::getLiquidTriangle(int square, Spot triangle, int* indices, uint8 width)
-    {
-        int rowOffset = square/V8_SIZE;
-        switch(triangle)
-        {
-            case TOP:
-                indices[0] = square+rowOffset;
-                indices[1] = square+1+rowOffset;
-                indices[2] = square+V9_SIZE+1+rowOffset;
-                break;
-            case BOTTOM:
-                indices[0] = square+rowOffset;
-                indices[1] = square+V9_SIZE+1+rowOffset;
-                indices[2] = square+V9_SIZE+rowOffset;
-                break;
-            default: break;
-        }
-    }
-
     static uint16 holetab_h[4] = {0x1111, 0x2222, 0x4444, 0x8888};
     static uint16 holetab_v[4] = {0x000F, 0x00F0, 0x0F00, 0xF000};
 
