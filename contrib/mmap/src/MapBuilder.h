@@ -96,12 +96,12 @@ namespace MMAP
             void generateObjFile(uint32 mapID, uint32 tileX, uint32 tileY, MeshData meshData);
             void generateRealObj(uint32 mapID, uint32 tileX, uint32 tileY, MeshData meshData);
             void writeIV(uint32 mapID, uint32 tileX, uint32 tileY, IntermediateValues iv);
-            void writeHeightfield(FILE* file, const rcHeightfield* hf);
-            void writeSpan(FILE* file, const rcSpan* span);
-            void writeCompactHeightfield(FILE* file, const rcCompactHeightfield* chf);
-            void writeContours(FILE* file, const rcContourSet* cs);
-            void writePolyMesh(FILE* file, const rcPolyMesh* mesh);
-            void writeDetailMesh(FILE* file, const rcPolyMeshDetail* mesh);
+            void debugWrite(FILE* file, const rcHeightfield* hf);
+            void debugWrite(FILE* file, const rcSpan* span);
+            void debugWrite(FILE* file, const rcCompactHeightfield* chf);
+            void debugWrite(FILE* file, const rcContourSet* cs);
+            void debugWrite(FILE* file, const rcPolyMesh* mesh);
+            void debugWrite(FILE* file, const rcPolyMeshDetail* mesh);
 
             IVMapManager* m_vmapManager;
             TerrainBuilder* m_tileBuilder;

@@ -1034,76 +1034,30 @@ namespace MMAP
 
         printf("%sWriting debug output...                       \r", tileString);
 
-        // heightfield
-        sprintf(fileName, "meshes/%03u%02i%02i.hf", mapID, tileX, tileY);
-        if(!(file = fopen(fileName, "wb")))
-        {
-            char message[1024];
-            sprintf(message, "%sFailed to open %s for writing!\n",  tileString, fileName);
-            perror(message);
-        }
-        else
-            writeHeightfield(file, iv.heightfield);
-        if(file) fclose(file);
+        string name("meshes/%03u%02i%02i.");
+#define DEBUG_WRITE(fileExtension,data) \
+    sprintf(fileName, (name + fileExtension).c_str(), mapID, tileX, tileY); \
+    if (!(file = fopen(fileName, "wb"))) \
+    { \
+        char message[1024]; \
+            sprintf(message, "%sFailed to open %s for writing!\n",  tileString, fileName); \
+            perror(message); \
+        } \
+        else \
+            debugWrite(file, data); \
+        if(file) fclose(file); \
+        printf("%sWriting debug output...                       \r", tileString)
 
-        printf("%sWriting debug output...                       \r", tileString);
+        DEBUG_WRITE("hf", iv.heightfield);
+        DEBUG_WRITE("chf", iv.compactHeightfield);
+        DEBUG_WRITE("cs", iv.contours);
+        DEBUG_WRITE("pmesh", iv.polyMesh);
+        DEBUG_WRITE("dmesh", iv.polyMeshDetail);
 
-        // compact heightfield
-        sprintf(fileName, "meshes/%03u%02i%02i.chf", mapID, tileX, tileY);
-        if(!(file = fopen(fileName, "wb")))
-        {
-            char message[1024];
-            sprintf(message, "%sFailed to open %s for writing!\n",  tileString, fileName);
-            perror(message);
-        }
-        else
-            writeCompactHeightfield(file, iv.compactHeightfield);
-        if(file) fclose(file);
-
-        printf("%sWriting debug output...                       \r", tileString);
-
-        // contours
-        sprintf(fileName, "meshes/%03u%02i%02i.cs", mapID, tileX, tileY);
-        if(!(file = fopen(fileName, "wb")))
-        {
-            char message[1024];
-            sprintf(message, "%sFailed to open %s for writing!\n",  tileString, fileName);
-            perror(message);
-        }
-        else
-            writeContours(file, iv.contours);
-        if(file) fclose(file);
-
-        printf("%sWriting debug output...                       \r", tileString);
-
-        // poly mesh
-        sprintf(fileName, "meshes/%03u%02i%02i.pmesh", mapID, tileX, tileY);
-        if(!(file = fopen(fileName, "wb")))
-        {
-            char message[1024];
-            sprintf(message, "%sFailed to open %s for writing!\n",  tileString, fileName);
-            perror(message);
-        }
-        else
-            writePolyMesh(file, iv.polyMesh);
-        if(file) fclose(file);
-
-        printf("%sWriting debug output...                       \r", tileString);
-
-        // detail mesh
-        sprintf(fileName, "meshes/%03u%02i%02i.dmesh", mapID, tileX, tileY);
-        if(!(file = fopen(fileName, "wb")))
-        {
-            char message[1024];
-            sprintf(message, "%sFailed to open %s for writing!\n",  tileString, fileName);
-            perror(message);
-        }
-        else
-            writeDetailMesh(file, iv.polyMeshDetail);
-        if(file) fclose(file);
+#undef DEBUG_WRITE
     }
 
-    void MapBuilder::writeHeightfield(FILE* file, const rcHeightfield* mesh)
+    void MapBuilder::debugWrite(FILE* file, const rcHeightfield* mesh)
     {
         if(!file || !mesh)
             return;
@@ -1141,7 +1095,7 @@ namespace MMAP
             }
     }
 
-    void MapBuilder::writeCompactHeightfield(FILE* file, const rcCompactHeightfield* chf)
+    void MapBuilder::debugWrite(FILE* file, const rcCompactHeightfield* chf)
     {
         if(!file | !chf)
             return;
@@ -1180,7 +1134,7 @@ namespace MMAP
             fwrite(chf->areas, sizeof(unsigned char), chf->spanCount, file);
     }
 
-    void MapBuilder::writeContours(FILE* file, const rcContourSet* cs)
+    void MapBuilder::debugWrite(FILE* file, const rcContourSet* cs)
     {
         if(!file || !cs)
             return;
@@ -1201,7 +1155,7 @@ namespace MMAP
         }
     }
 
-    void MapBuilder::writePolyMesh(FILE* file, const rcPolyMesh* mesh)
+    void MapBuilder::debugWrite(FILE* file, const rcPolyMesh* mesh)
     {
         if(!file || !mesh)
             return;
@@ -1220,7 +1174,7 @@ namespace MMAP
         fwrite(mesh->regs, sizeof(unsigned short), mesh->npolys, file);
     }
 
-    void MapBuilder::writeDetailMesh(FILE* file, const rcPolyMeshDetail* mesh)
+    void MapBuilder::debugWrite(FILE* file, const rcPolyMeshDetail* mesh)
     {
         if(!file || !mesh)
             return;
