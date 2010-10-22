@@ -18,7 +18,6 @@ using namespace VMAP;
 
 namespace MMAP
 {
-    typedef set<uint32> MapList;
     typedef map<uint32,set<uint32>*> TileList;
 
     struct IntermediateValues
@@ -55,8 +54,8 @@ namespace MMAP
 
         private:
             // detect maps and tiles
-            void getTileList(uint32 mapID);
-            void getMapList();
+            void discoverTiles();
+            set<uint32>* getTileList(uint32 mapID);
 
             // load and unload models
             void loadVMap(uint32 mapID, uint32 tileX, uint32 tileY, G3D::Array<float> &modelVerts, G3D::Array<int> &modelTris);
@@ -108,7 +107,6 @@ namespace MMAP
             IVMapManager* m_vmapManager;
             TerrainBuilder* m_tileBuilder;
 
-            MapList m_maps;
             TileList m_tiles;
 
             bool m_debugOutput;
