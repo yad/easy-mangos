@@ -153,9 +153,7 @@ namespace MMAP
             if(!tiles->size())
             {
                 // initialize the static tree, which loads WDT models
-                loadVMap(mapID, 64, 64, modelVerts, modelTris);
-
-                if(!modelVerts.size())
+                if (!loadVMap(mapID, 64, 64, modelVerts, modelTris) || !modelVerts.size())
                     break;
 
                 // get the coord bounds of the model data
@@ -352,9 +350,12 @@ namespace MMAP
         printf("%sComplete!                                      \n\n", tileString);
     }
 
-    void MapBuilder::loadVMap(uint32 mapID, uint32 tileX, uint32 tileY, G3D::Array<float> &modelVertices, G3D::Array<int> &modelTriangles)
+    bool MapBuilder::loadVMap(uint32 mapID, uint32 tileX, uint32 tileY, G3D::Array<float> &modelVertices, G3D::Array<int> &modelTriangles)
     {
-        m_vmapManager->loadMap("vmaps", mapID, tileX, tileY);
+        VMAPLoadResult result = m_vmapManager->loadMap("vmaps", mapID, tileX, tileY);
+
+        if (result == VMAP_LOAD_RESULT_ERROR)
+            return false;
 
         ModelInstance* models = 0;
         uint32 count = 0;
@@ -363,12 +364,12 @@ namespace MMAP
         ((VMapManager2*)m_vmapManager)->getInstanceMapTree(instanceTrees);
 
         if(!instanceTrees[mapID])
-            return;
+            return false;
 
         instanceTrees[mapID]->getModelInstances(models, count);
 
         if(!models || !count)
-            return;
+            return false;
 
         uint32 i;
         for(i = 0; i < count; ++i)
@@ -410,6 +411,7 @@ namespace MMAP
             }
         }
 
+        return true;
     }
 
     void MapBuilder::unloadVMap(uint32 mapID, uint32 tileX, uint32 tileY)
