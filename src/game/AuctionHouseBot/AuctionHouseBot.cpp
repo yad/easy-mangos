@@ -93,9 +93,9 @@ void AHB_Base::GetConfigFromFile()
     setConfig(CONFIG_BOOL_AHBOT_BIND_EQUIP                   , "AuctionHouseBot.Bind.Equip"                  , true);
     setConfig(CONFIG_BOOL_AHBOT_BIND_USE                     , "AuctionHouseBot.Bind.Use"                    , true);
     setConfig(CONFIG_BOOL_AHBOT_BIND_QUEST                   , "AuctionHouseBot.Bind.Quest"                  , false);
-
-    setConfig(CONFIG_BOOL_AHBOT_BUYPRICE_SELLER              , "AuctionHouseBot.BuyPrice.Seller"             , false);
-    setConfig(CONFIG_BOOL_AHBOT_BUYPRICE_BUYER               , "AuctionHouseBot.BuyPrice.Buyer"              , false);
+    setConfig(CONFIG_BOOL_AHBOT_LOCKBOX_ENABLED              , "AuctionHouseBot.LockBox.Enabled"             , false);
+    
+    setConfig(CONFIG_BOOL_AHBOT_BUYPRICE_SELLER              , "AuctionHouseBot.BuyPrice.Seller"             , true);
 
     setConfig(CONFIG_UINT32_AHBOT_ITEMS_PER_CYCLE_BOOST      , "AuctionHouseBot.ItemsPerCycle.Boost"         , 1000);
     setConfig(CONFIG_UINT32_AHBOT_ITEMS_PER_CYCLE_NORMAL     , "AuctionHouseBot.ItemsPerCycle.Normal"        , 10);
@@ -147,6 +147,7 @@ void AHB_Base::GetConfigFromFile()
     setConfig(CONFIG_BOOL_AHBOT_DEBUG_BUYER                  , "AuctionHouseBot.DEBUG.Buyer"                , false);
     setConfig(CONFIG_BOOL_AHBOT_SELLER_ENABLED               , "AuctionHouseBot.Seller.Enabled"             , false);
     setConfig(CONFIG_BOOL_AHBOT_BUYER_ENABLED                , "AuctionHouseBot.Buyer.Enabled"              , false);
+    setConfig(CONFIG_BOOL_AHBOT_BUYPRICE_BUYER               , "AuctionHouseBot.Buyer.Buyprice"             , true);
 }
 
 bool AHB_Base::Reload()
@@ -873,8 +874,16 @@ bool AHB_Seller::Initialize()
         }
         if ((prototype->Class==ITEM_CLASS_MISC) && (prototype->Flags == 4))
         {
-            // If iam not wrong this case represent majority of bag/box with items on it.
-            continue;
+            if (prototype->LockID == 0)
+            {
+                // If iam not wrong this case represent majority of bag/box with items on it not locked.
+                continue;
+            }
+            else
+            {
+                if (!m_BaseConfig->getConfig(CONFIG_BOOL_AHBOT_LOCKBOX_ENABLED))
+                    continue;
+            }
         }
 
         m_ItemPool[prototype->Quality][prototype->Class].push_back(itemID);
