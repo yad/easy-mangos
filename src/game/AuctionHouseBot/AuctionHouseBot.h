@@ -8,7 +8,8 @@
 #include "../AuctionHouseMgr.h"
 #include "../Item.h"
 
-enum e_ahb_quality{
+enum e_ahb_quality
+{
     E_GREY = 0,
     E_WHITE,
     E_GREEN,
@@ -19,7 +20,8 @@ enum e_ahb_quality{
     AHB_QUALITY_MAX
 };
 
-enum e_AHBOTConfigUInt32Values{
+enum e_AHBOTConfigUInt32Values
+{
     CONFIG_UINT32_AHBOT_MAXTIME,
     CONFIG_UINT32_AHBOT_MINTIME,
     CONFIG_UINT32_AHBOT_ITEMS_PER_CYCLE_BOOST,
@@ -65,8 +67,8 @@ enum e_AHBOTConfigUInt32Values{
     CONFIG_UINT32_AHBOT_UINT32_COUNT
 };
 
-enum e_AHBOTConfigBoolValues{
-    /* Start AHBot */
+enum e_AHBOTConfigBoolValues
+{
     CONFIG_BOOL_AHBOT_BUYER_ALLIANCE_ENABLED,
     CONFIG_BOOL_AHBOT_BUYER_HORDE_ENABLED,
     CONFIG_BOOL_AHBOT_BUYER_NEUTRAL_ENABLED,
@@ -85,20 +87,11 @@ enum e_AHBOTConfigBoolValues{
     CONFIG_BOOL_AHBOT_SELLER_ENABLED,
     CONFIG_BOOL_AHBOT_BUYER_ENABLED,
     CONFIG_BOOL_AHBOT_LOCKBOX_ENABLED,
-	/* End AHBot */
     CONFIG_UINT32_AHBOT_BOOL_COUNT
 };
 
 class c_ItemClassInfos
 {
-private:
-    uint32 m_AmountOfItems;
-    uint32 m_MissItems;
-    uint32 m_Quantity;
-    uint32 m_class;
-
-    std::string m_className;
-
 public:
     c_ItemClassInfos(uint32 indice=0)
     {
@@ -157,25 +150,18 @@ public:
     {
         return m_MissItems;
     }
+
+private:
+    uint32 m_AmountOfItems;
+    uint32 m_MissItems;
+    uint32 m_Quantity;
+    uint32 m_class;
+
+    std::string m_className;
 };
 
 class c_ItemInfos
 {
-private:
-    uint32 m_AmountOfItems;
-    uint32 m_MaxItemsPrice;
-    uint32 m_MinItemsPrice;
-    uint32 m_MinBidPrice;
-    uint32 m_MaxBidPrice;
-    uint32 m_MaxStack;
-    uint32 m_MissItems;
-    uint32 m_buyerPrice;
-    uint32 m_PriceRatio;
-
-    uint32 m_indice;
-
-    std::string m_color;
-
 public:
 
     std::vector<c_ItemClassInfos> ItemClassInfos;
@@ -236,6 +222,21 @@ public:
     {
         return m_buyerPrice;
     }
+
+private:
+    uint32 m_AmountOfItems;
+    uint32 m_MaxItemsPrice;
+    uint32 m_MinItemsPrice;
+    uint32 m_MinBidPrice;
+    uint32 m_MaxBidPrice;
+    uint32 m_MaxStack;
+    uint32 m_MissItems;
+    uint32 m_buyerPrice;
+    uint32 m_PriceRatio;
+
+    uint32 m_indice;
+
+    std::string m_color;
 };
 
 struct s_itemEval
@@ -270,11 +271,6 @@ struct s_itemInfo
 
 class AHB_Seller_Config
 {
-private:
-    uint32 AHID;
-    uint32 minTime;
-    uint32 maxTime;
-
 public:
 
     std::vector<c_ItemInfos> ItemInfos;
@@ -282,7 +278,7 @@ public:
 
     AHB_Seller_Config(uint32 ahid=7)
     {
-        AHID = ahid;
+        m_AHID = ahid;
 
         for (int i=0; i<AHB_QUALITY_MAX; ++i)
         {
@@ -292,40 +288,42 @@ public:
 
     uint32 GetAHID()
     {
-        return AHID;
+        return m_AHID;
     }
         void SetMinTime(uint32 value)
     {
-        minTime = value;
+        m_minTime = value;
     }
     uint32 GetMinTime()
     {
-        if (minTime < 1)
+        if (m_minTime < 1)
             return 1;
-        else if ((maxTime) && (minTime > maxTime))
-            return maxTime;
+        else if ((m_maxTime) && (m_minTime > m_maxTime))
+            return m_maxTime;
         else
-            return minTime;
+            return m_minTime;
     }
     void SetMaxTime(uint32 value)
     {
-        maxTime = value;
+        m_maxTime = value;
     }
     uint32 GetMaxTime()
     {
-        return maxTime;
+        return m_maxTime;
     }
 
     ~AHB_Seller_Config()
     {
     }
+
+private:
+    uint32 m_AHID;
+    uint32 m_minTime;
+    uint32 m_maxTime;
 };
 
 class AHB_Buyer_Config
 {
-private:
-    uint32 AHID;
-
 public:
     typedef std::map< uint32 , s_itemInfo > t_itemInfo;
     typedef std::map< uint32, s_itemEval > t_checkEntryMap;
@@ -340,17 +338,20 @@ public:
 
     AHB_Buyer_Config(uint32 ahid=7)
     {
-        AHID = ahid;
+        m_AHID = ahid;
     }
 
     uint32 GetAHID()
     {
-        return AHID;
+        return m_AHID;
     }
 
     ~AHB_Buyer_Config()
     {
     }
+
+private:
+    uint32 m_AHID;
 };
 
 struct s_randomArray
@@ -361,23 +362,6 @@ struct s_randomArray
 
 class AHB_Base
 {
-private :
-    ObjectGuid      m_FakeGuid;
-    std::string     m_AHBotName;
-    Config          m_AhBotCfg;
-    uint32          m_ItemsPerCycleBoost;
-    uint32          m_ItemsPerCycleNormal;
-    WorldSession*   m_Session;
-
-    uint32      m_configUint32Values[CONFIG_UINT32_AHBOT_UINT32_COUNT];
-    bool        m_configBoolValues[CONFIG_UINT32_AHBOT_BOOL_COUNT];
-
-    void        SetAHBotName(const std::string& AHBotName) { if (AHBotName.size()>0) m_AHBotName = AHBotName; else m_AHBotName="AHBot"; }
-
-    void        setConfig(e_AHBOTConfigUInt32Values index, char const* fieldname, uint32 defvalue);
-    void        setConfig(e_AHBOTConfigBoolValues index, char const* fieldname, bool defvalue);
-    void        GetConfigFromFile();
-
 public :
     AHB_Base()
     {
@@ -395,10 +379,35 @@ public :
     uint32      GetItemPerCycleBoost()  { return m_ItemsPerCycleBoost; }
     uint32      GetItemPerCycleNormal() { return m_ItemsPerCycleNormal; }
     bool        Reload();
+
+private :
+    ObjectGuid      m_FakeGuid;
+    std::string     m_AHBotName;
+    Config          m_AhBotCfg;
+    uint32          m_ItemsPerCycleBoost;
+    uint32          m_ItemsPerCycleNormal;
+    WorldSession*   m_Session;
+
+    uint32      m_configUint32Values[CONFIG_UINT32_AHBOT_UINT32_COUNT];
+    bool        m_configBoolValues[CONFIG_UINT32_AHBOT_BOOL_COUNT];
+
+    void        SetAHBotName(const std::string& AHBotName) { if (AHBotName.size()>0) m_AHBotName = AHBotName; else m_AHBotName="AHBot"; }
+
+    void        setConfig(e_AHBOTConfigUInt32Values index, char const* fieldname, uint32 defvalue);
+    void        setConfig(e_AHBOTConfigBoolValues index, char const* fieldname, bool defvalue);
+    void        GetConfigFromFile();
 };
 
 class AHB_Buyer
 {
+public:
+    AHB_Buyer();
+    ~AHB_Buyer();
+    bool        Initialize();
+    void        LoadConfig();
+    void        addNewAuctionBuyerBotBid(AHB_Buyer_Config& config);
+    bool        Update(uint32 operationSelector);
+
 private:
     AHB_Base*           m_BaseConfig;
     uint32              m_OperationSelector;
@@ -416,34 +425,13 @@ private:
     void        BuyEntry(AuctionHouseObject* auctionHouse, AuctionEntry* auction);
     void        PrepareListOfEntry(AHB_Buyer_Config& config);
     uint32      GetBuyableEntry( AHB_Buyer_Config& config );
-
-public:
-    AHB_Buyer();
-    ~AHB_Buyer();
-    bool        Initialize();
-    void        LoadConfig();
-    void        addNewAuctionBuyerBotBid(AHB_Buyer_Config& config);
-    bool        Update(uint32 operationSelector);
 };
 
 class AHB_Seller
 {
-private:
-    AHB_Base*            m_BaseConfig;
-    AHB_Seller_Config   m_AllianceConfig;
-    AHB_Seller_Config   m_HordeConfig;
-    AHB_Seller_Config   m_NeutralConfig;
-    bool                m_debug_Seller;
-
-    std::vector<std::vector<std::vector<uint32> > > m_ItemPool;
-
-    void        LoadSellerValues(AHB_Seller_Config& config);
-    uint32      SetStat(AHB_Seller_Config& config);
-    bool        getRandomArray( AHB_Seller_Config& config, std::vector<s_randomArray>& ra, const std::vector<std::vector<uint32> >& addedItem  );
-    void        SetPricesOfItem(const Item *item, AHB_Seller_Config& config, uint32& buyp, uint32& bidp, uint32& stackcnt, e_ahb_quality AHB_ITEMS);
-    void        LoadItemsQuantity(AHB_Seller_Config& config);
-
 public:
+    typedef std::vector<std::vector<std::vector<uint32> > > t_ItemPool;
+
     AHB_Seller();
     ~AHB_Seller();
     bool        Initialize();
@@ -452,19 +440,25 @@ public:
     void        SetItemsRatio(uint32* al, uint32* ho, uint32* ne);
     void        SetItemsAmount(uint32* grey_i, uint32* white_i, uint32* green_i, uint32* blue_i, uint32* purple_i, uint32* orange_i, uint32* yellow_i);
     void        LoadConfig();
+
+private:
+    AHB_Base*            m_BaseConfig;
+    AHB_Seller_Config   m_AllianceConfig;
+    AHB_Seller_Config   m_HordeConfig;
+    AHB_Seller_Config   m_NeutralConfig;
+    bool                m_debug_Seller;
+
+    t_ItemPool m_ItemPool;
+
+    void        LoadSellerValues(AHB_Seller_Config& config);
+    uint32      SetStat(AHB_Seller_Config& config);
+    bool        getRandomArray( AHB_Seller_Config& config, std::vector<s_randomArray>& ra, const std::vector<std::vector<uint32> >& addedItem  );
+    void        SetPricesOfItem(const Item *item, AHB_Seller_Config& config, uint32& buyp, uint32& bidp, uint32& stackcnt, e_ahb_quality AHB_ITEMS);
+    void        LoadItemsQuantity(AHB_Seller_Config& config);
 };
 
 class AuctionHouseBot
 {
-private:
-    AHB_Base*        m_BaseConfig;
-    uint32          m_OperationSelector;
-    time_t          m_LastBuyableEntryChecked;
-    bool            m_BuyerEnabled;
-    bool            m_SellerEnabled;
-    AHB_Buyer*      m_Buyer;
-    AHB_Seller*     m_Seller;
-
 public:
     AuctionHouseBot();
     ~AuctionHouseBot();
@@ -485,6 +479,14 @@ public:
     void        PrepStatusInfos();
     void        Rebuild(bool all);
 
+private:
+    AHB_Base*       m_BaseConfig;
+    uint32          m_OperationSelector;
+    time_t          m_LastBuyableEntryChecked;
+    bool            m_BuyerEnabled;
+    bool            m_SellerEnabled;
+    AHB_Buyer*      m_Buyer;
+    AHB_Seller*     m_Seller;
 };
 
 #define auctionbot MaNGOS::Singleton<AuctionHouseBot>::Instance()
