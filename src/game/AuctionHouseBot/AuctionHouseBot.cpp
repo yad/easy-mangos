@@ -8,6 +8,7 @@
 #include "Policies/SingletonImp.h"
 
 INSTANTIATE_SINGLETON_1( AuctionHouseBot );
+INSTANTIATE_SINGLETON_1( AHB_Base );
 
 //======================================================================================================
 //================                Base class                                        ====================
@@ -166,14 +167,14 @@ bool AHB_Base::Reload()
 //= This class handle all Buyer method (superclass of AHB_Base class)
 //------------------------------------------------------------------------------------------------------
 
-AHB_Buyer::AHB_Buyer(AHB_Base* BaseConfig)
+AHB_Buyer::AHB_Buyer()
 {
         // Define faction for our main data class.
         m_AllianceConfig = AHB_Buyer_Config(2);
         m_HordeConfig = AHB_Buyer_Config(6);
         m_NeutralConfig = AHB_Buyer_Config(7);
         m_Session= new WorldSession(0, NULL, SEC_PLAYER, true, 0, LOCALE_enUS);
-        m_BaseConfig=BaseConfig;
+        m_BaseConfig=&MaNGOS::Singleton<AHB_Base>::Instance();
 }
 
 AHB_Buyer::~AHB_Buyer()
@@ -689,7 +690,7 @@ bool AHB_Buyer::Update(uint32 operationSelector)
 //= This class handle all Selling method (superclass of AHB_Base class)
 //------------------------------------------------------------------------------------------------------
 
-AHB_Seller::AHB_Seller(AHB_Base* BaseConfig)
+AHB_Seller::AHB_Seller()
 {
     // Define faction for our main data class.
     m_AllianceConfig = AHB_Seller_Config(2);
@@ -697,8 +698,7 @@ AHB_Seller::AHB_Seller(AHB_Base* BaseConfig)
     m_NeutralConfig = AHB_Seller_Config(7);
     // Initialise column and row of m_ItemPool (list of items in database will be used to fill AH)
     m_ItemPool.resize(AHB_QUALITY_MAX, std::vector< std::vector< uint32 > >( MAX_ITEM_CLASS ));
-
-    m_BaseConfig=BaseConfig;
+    m_BaseConfig = &MaNGOS::Singleton<AHB_Base>::Instance();
 }
 
 AHB_Seller::~AHB_Seller()
@@ -1401,6 +1401,7 @@ AuctionHouseBot::AuctionHouseBot()
     m_OperationSelector=0;
     m_BuyerEnabled=false;
     m_SellerEnabled=false;
+    //m_BaseConfig = MaNGOS::Singleton<AHB_Base>::Instance();
 }
 
 AuctionHouseBot::~AuctionHouseBot()
@@ -1413,25 +1414,20 @@ AuctionHouseBot::~AuctionHouseBot()
 
 void AuctionHouseBot::Initialize()
 {
-    m_BaseConfig=new AHB_Base;
+    m_BaseConfig = &MaNGOS::Singleton<AHB_Base>::Instance();
     m_BuyerEnabled=false;
     m_SellerEnabled=false;
-    if (m_BaseConfig==NULL)
-    {
-        sLog.outError("Error trying to create AHB_Base class! Program couldn't continue.");
-        exit(-1);
-    }
     if (m_BaseConfig->Initialize())
     {
         if (m_BaseConfig->getConfig(CONFIG_BOOL_AHBOT_SELLER_ENABLED))
         {
-            m_Seller = new AHB_Seller(m_BaseConfig);
+            m_Seller = new AHB_Seller();
             if (m_Seller!= NULL)
                 m_SellerEnabled=m_Seller->Initialize();
         }
         if (m_BaseConfig->getConfig(CONFIG_BOOL_AHBOT_BUYER_ENABLED))
         {
-            m_Buyer = new AHB_Buyer(m_BaseConfig);
+            m_Buyer = new AHB_Buyer();
             if (m_Buyer!= NULL)
                 m_BuyerEnabled=m_Buyer->Initialize();
         }
@@ -1453,7 +1449,7 @@ void AuctionHouseBot::SetItemsAmount(uint32* grey_i, uint32* white_i, uint32* gr
 bool AuctionHouseBot::ReloadAllConfig()
 {
 
-    if ((m_BaseConfig!=NULL) && (m_BaseConfig->Reload()))
+    if ((m_BaseConfig->Reload()))
     {
         if ((m_SellerEnabled) && (m_Seller!= NULL)) delete m_Seller;
         if ((m_BuyerEnabled) && (m_Buyer!= NULL)) delete m_Buyer;
@@ -1461,18 +1457,16 @@ bool AuctionHouseBot::ReloadAllConfig()
         m_BuyerEnabled=false;
         if (m_BaseConfig->getConfig(CONFIG_BOOL_AHBOT_SELLER_ENABLED))
         {
-            m_Seller = new AHB_Seller(m_BaseConfig);
+            m_Seller = new AHB_Seller();
             if (m_Seller!= NULL)
                 m_SellerEnabled=m_Seller->Initialize();
         }
         if (m_BaseConfig->getConfig(CONFIG_BOOL_AHBOT_BUYER_ENABLED))
         {
-            m_Buyer = new AHB_Buyer(m_BaseConfig);
+            m_Buyer = new AHB_Buyer();
             if (m_Buyer!= NULL)
                 m_BuyerEnabled=m_Buyer->Initialize();
         }
-        //if (m_Seller!= NULL) m_Seller->LoadConfig();
-        //if (m_Buyer!= NULL) m_Buyer->LoadConfig();
         return true;
     }
     else

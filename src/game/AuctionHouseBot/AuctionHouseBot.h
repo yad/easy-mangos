@@ -397,7 +397,7 @@ public :
     bool        Reload();
 };
 
-class AHB_Buyer // : virtual public AHB_Base
+class AHB_Buyer
 {
 private:
     AHB_Base*           m_BaseConfig;
@@ -418,7 +418,7 @@ private:
     uint32      GetBuyableEntry( AHB_Buyer_Config& config );
 
 public:
-    AHB_Buyer(AHB_Base* BaseConfig);
+    AHB_Buyer();
     ~AHB_Buyer();
     bool        Initialize();
     void        LoadConfig();
@@ -426,10 +426,10 @@ public:
     bool        Update(uint32 operationSelector);
 };
 
-class AHB_Seller // : virtual public AHB_Base
+class AHB_Seller
 {
 private:
-    AHB_Base*           m_BaseConfig;
+    AHB_Base*            m_BaseConfig;
     AHB_Seller_Config   m_AllianceConfig;
     AHB_Seller_Config   m_HordeConfig;
     AHB_Seller_Config   m_NeutralConfig;
@@ -444,7 +444,7 @@ private:
     void        LoadItemsQuantity(AHB_Seller_Config& config);
 
 public:
-    AHB_Seller(AHB_Base* BaseConfig);
+    AHB_Seller();
     ~AHB_Seller();
     bool        Initialize();
     void        addNewAuctions(AHB_Seller_Config& config);
@@ -454,10 +454,10 @@ public:
     void        LoadConfig();
 };
 
-class AuctionHouseBot// : virtual public AHB_Base
+class AuctionHouseBot
 {
 private:
-    AHB_Base*       m_BaseConfig;
+    AHB_Base*        m_BaseConfig;
     uint32          m_OperationSelector;
     time_t          m_LastBuyableEntryChecked;
     bool            m_BuyerEnabled;
