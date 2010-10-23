@@ -398,6 +398,8 @@ private :
     void        GetConfigFromFile();
 };
 
+#define sAHB_BaseConfig MaNGOS::Singleton<AHB_Base>::Instance()
+
 class AHB_Buyer
 {
 public:
@@ -409,7 +411,6 @@ public:
     bool        Update(uint32 operationSelector);
 
 private:
-    AHB_Base*           m_BaseConfig;
     uint32              m_OperationSelector;
     WorldSession*       m_Session;
     bool                m_debug_Buyer;
@@ -442,7 +443,6 @@ public:
     void        LoadConfig();
 
 private:
-    AHB_Base*            m_BaseConfig;
     AHB_Seller_Config   m_AllianceConfig;
     AHB_Seller_Config   m_HordeConfig;
     AHB_Seller_Config   m_NeutralConfig;
@@ -470,9 +470,9 @@ public:
 
     void        Update();
     void        Initialize();
-    ObjectGuid  GetAHBObjectGuid() { return m_BaseConfig->GetAHBObjectGuid(); }
-    const char* GetAHBotName() const { return m_BaseConfig->GetAHBotName(); }
-    uint32      getConfig(e_AHBOTConfigUInt32Values index) const { return m_BaseConfig->getConfig(index); }
+    ObjectGuid  GetAHBObjectGuid() { return sAHB_BaseConfig.GetAHBObjectGuid(); }
+    const char* GetAHBotName() const { return sAHB_BaseConfig.GetAHBotName(); }
+    uint32      getConfig(e_AHBOTConfigUInt32Values index) const { return sAHB_BaseConfig.getConfig(index); }
     void        SetItemsRatio(uint32* al, uint32* ho, uint32* ne);
     void        SetItemsAmount(uint32* grey_i, uint32* white_i, uint32* green_i, uint32* blue_i, uint32* purple_i, uint32* orange_i, uint32* yellow_i);
     bool        ReloadAllConfig();
@@ -480,7 +480,6 @@ public:
     void        Rebuild(bool all);
 
 private:
-    AHB_Base*       m_BaseConfig;
     uint32          m_OperationSelector;
     time_t          m_LastBuyableEntryChecked;
     bool            m_BuyerEnabled;
