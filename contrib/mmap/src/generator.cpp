@@ -225,7 +225,7 @@ int main(int argc, char** argv)
     int mapnum = -1;
     float maxAngle = 60.f;
     int tileX = -1, tileY = -1;
-    bool skipLiquid = true,
+    bool skipLiquid = false,
          skipContinents = true,
          skipJunkMaps = true,
          skipBattlegrounds = true,
