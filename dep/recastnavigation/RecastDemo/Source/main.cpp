@@ -52,9 +52,9 @@ Sample* createDebug() { return new Sample_Debug(); }
 
 static SampleItem g_samples[] =
 {
-	{ createSoloSimple, "Solo Mesh Simple" },
-	{ createSoloTiled, "Solo Mesh Tiled" },
-	{ createTile, "Tile Mesh" },
+	//{ createSoloSimple, "Solo Mesh Simple" },
+	//{ createSoloTiled, "Solo Mesh Tiled" },
+	//{ createTile, "Tile Mesh" },
 	{ createDebug, "Debug" },
 };
 static const int g_nsamples = sizeof(g_samples)/sizeof(SampleItem); 
