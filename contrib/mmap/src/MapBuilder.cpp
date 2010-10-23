@@ -20,7 +20,7 @@ namespace MMAP
                            bool skipContinents, bool skipJunkMaps, bool skipBattlegrounds,
                            bool hiResHeightmaps, bool debugOutput) :
                            m_vmapManager(NULL),
-                           m_tileBuilder(NULL),
+                           m_terrainBuilder(NULL),
                            m_debugOutput        (debugOutput),
                            m_skipContinents     (skipContinents),
                            m_skipJunkMaps       (skipJunkMaps),
@@ -29,7 +29,7 @@ namespace MMAP
 
     {
         m_vmapManager = new VMapManager2();
-        m_tileBuilder = new TerrainBuilder(skipLiquid, hiResHeightmaps);
+        m_terrainBuilder = new TerrainBuilder(skipLiquid, hiResHeightmaps);
 
         discoverTiles();
     }
@@ -43,7 +43,7 @@ namespace MMAP
         }
         m_tiles.clear();
 
-        delete m_tileBuilder;
+        delete m_terrainBuilder;
         delete m_vmapManager;
     }
 
@@ -203,7 +203,7 @@ namespace MMAP
 
             // get heightmap data
             printf("%sLoading heightmap...                           \r", tileString);
-            m_tileBuilder->loadMap(mapID, tileX, tileY, meshData);
+            m_terrainBuilder->loadMap(mapID, tileX, tileY, meshData);
 
             // get model data
             printf("%sLoading models...                              \r", tileString);
@@ -304,7 +304,7 @@ namespace MMAP
 
             // get heightmap data
             printf("%sLoading heightmap...                           \r", tileString);
-            m_tileBuilder->loadMap(mapID, tileX, tileY, meshData);
+            m_terrainBuilder->loadMap(mapID, tileX, tileY, meshData);
 
             // get model data
             printf("%sLoading models...                              \r", tileString);
@@ -1035,18 +1035,19 @@ namespace MMAP
         printf("%sWriting debug output...                       \r", tileString);
 
         string name("meshes/%03u%02i%02i.");
+
 #define DEBUG_WRITE(fileExtension,data) \
     sprintf(fileName, (name + fileExtension).c_str(), mapID, tileX, tileY); \
     if (!(file = fopen(fileName, "wb"))) \
     { \
         char message[1024]; \
-            sprintf(message, "%sFailed to open %s for writing!\n",  tileString, fileName); \
-            perror(message); \
-        } \
-        else \
-            debugWrite(file, data); \
-        if(file) fclose(file); \
-        printf("%sWriting debug output...                       \r", tileString)
+        sprintf(message, "%sFailed to open %s for writing!\n",  tileString, fileName); \
+        perror(message); \
+    } \
+    else \
+        debugWrite(file, data); \
+    if(file) fclose(file); \
+    printf("%sWriting debug output...                       \r", tileString)
 
         DEBUG_WRITE("hf", iv.heightfield);
         DEBUG_WRITE("chf", iv.compactHeightfield);

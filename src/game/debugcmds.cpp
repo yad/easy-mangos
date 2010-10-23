@@ -268,6 +268,9 @@ bool ChatHandler::HandleDebugMoveMapCommand(char* args)
         PSendSysMessage("end        (%.3f, %.3f, %.3f)", end.x, end.y, end.z);
         PSendSysMessage("actual end (%.3f, %.3f, %.3f)", actualEnd.x, actualEnd.y, actualEnd.z);
 
+        if (!player->isGameMaster())
+            PSendSysMessage("Enable GM mode to see the path points.");
+
         // this entry visible only to GM's with "gm on"
         static const uint32 WAYPOINT_NPC_ENTRY = 1;
         for(uint32 i = 0; i < pointPath.size(); ++i)
