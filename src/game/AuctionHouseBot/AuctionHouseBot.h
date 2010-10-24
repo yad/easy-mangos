@@ -369,10 +369,10 @@ public:
     bool        ReloadAllConfig();
     void        PrepStatusInfos();
     void        Rebuild(bool all);
-    uint32      GetAllianceItemsCount() { return m_AllianceItemsCount; } 
+    uint32      GetAllianceItemsCount() { return m_AllianceItemsCount; }
     uint32      GetHordeItemsCount() { return m_HordeItemsCount; }
     uint32      GetNeutralItemsCount() { return m_NeutralItemsCount; }
-    uint32      GetAHBotItemInfos(uint32 FactionNum, e_ahb_quality Quality) { return m_AhBotInfos[FactionNum][Quality]; } 
+    uint32      GetAHBotItemInfos(uint32 FactionNum, e_ahb_quality Quality) { return m_AhBotInfos[FactionNum][Quality]; }
 
 private:
     AHB_Buyer*      m_Buyer;
