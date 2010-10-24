@@ -60,7 +60,7 @@ void WorldSession::SendNameQueryOpcode(Player *p)
     SendPacket(&data);
 }
 
-void WorldSession::SendNameQueryOpcodeFromDB(uint64 guid)
+void WorldSession::SendNameQueryOpcodeFromDB(ObjectGuid guid)
 {
     CharacterDatabase.AsyncPQuery(&WorldSession::SendNameQueryOpcodeFromDBCallBack, GetAccountId(),
         !sWorld.getConfig(CONFIG_BOOL_DECLINED_NAMES_USED) ?
@@ -75,7 +75,7 @@ void WorldSession::SendNameQueryOpcodeFromDB(uint64 guid)
     //   5         6       7           8             9
         "genitive, dative, accusative, instrumental, prepositional "
         "FROM characters LEFT JOIN character_declinedname ON characters.guid = character_declinedname.guid WHERE characters.guid = '%u'",
-        GUID_LOPART(guid));
+        guid.GetCounter());
 }
 
 void WorldSession::SendNameQueryOpcodeFromDBCallBack(QueryResult *result, uint32 accountId)
@@ -145,7 +145,7 @@ void WorldSession::SendFakeNameForAHBotQueryOPcode()
 
 void WorldSession::HandleNameQueryOpcode( WorldPacket & recv_data )
 {
-    uint64 guid;
+    ObjectGuid guid;
 
     recv_data >> guid;
 
@@ -169,7 +169,7 @@ void WorldSession::HandleCreatureQueryOpcode( WorldPacket & recv_data )
 {
     uint32 entry;
     recv_data >> entry;
-    uint64 guid;
+    ObjectGuid guid;
     recv_data >> guid;
 
     CreatureInfo const *ci = ObjectMgr::GetCreatureTemplate(entry);
@@ -220,8 +220,8 @@ void WorldSession::HandleCreatureQueryOpcode( WorldPacket & recv_data )
     }
     else
     {
-        DEBUG_LOG("WORLD: CMSG_CREATURE_QUERY - NO CREATURE INFO! (GUID: %u, ENTRY: %u)",
-            GUID_LOPART(guid), entry);
+        DEBUG_LOG("WORLD: CMSG_CREATURE_QUERY - Guid: %s Entry: %u NO CREATURE INFO!",
+            guid.GetString().c_str(), entry);
         WorldPacket data( SMSG_CREATURE_QUERY_RESPONSE, 4 );
         data << uint32(entry | 0x80000000);
         SendPacket( &data );
@@ -234,7 +234,7 @@ void WorldSession::HandleGameObjectQueryOpcode( WorldPacket & recv_data )
 {
     uint32 entryID;
     recv_data >> entryID;
-    uint64 guid;
+    ObjectGuid guid;
     recv_data >> guid;
 
     const GameObjectInfo *info = ObjectMgr::GetGameObjectInfo(entryID);
@@ -279,8 +279,8 @@ void WorldSession::HandleGameObjectQueryOpcode( WorldPacket & recv_data )
     }
     else
     {
-        DEBUG_LOG(  "WORLD: CMSG_GAMEOBJECT_QUERY - Missing gameobject info for (GUID: %u, ENTRY: %u)",
-            GUID_LOPART(guid), entryID );
+        DEBUG_LOG("WORLD: CMSG_GAMEOBJECT_QUERY - Guid: %s Entry: %u Missing gameobject info!",
+            guid.GetString().c_str(), entryID);
         WorldPacket data ( SMSG_GAMEOBJECT_QUERY_RESPONSE, 4 );
         data << uint32(entryID | 0x80000000);
         SendPacket( &data );
@@ -342,13 +342,14 @@ void WorldSession::HandleCorpseQueryOpcode(WorldPacket & /*recv_data*/)
 void WorldSession::HandleNpcTextQueryOpcode( WorldPacket & recv_data )
 {
     uint32 textID;
-    uint64 guid;
+    ObjectGuid guid;
 
     recv_data >> textID;
+    recv_data >> guid;
+
     DETAIL_LOG("WORLD: CMSG_NPC_TEXT_QUERY ID '%u'", textID);
 
-    recv_data >> guid;
-    _player->SetTargetGUID(guid);
+    _player->SetTargetGuid(guid);
 
     GossipText const* pGossip = sObjectMgr.GetGossipText(textID);
 

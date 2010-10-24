@@ -504,6 +504,9 @@
     </ClCompile>
     <ClCompile Include="..\..\src\game\PlayerBot\PlayerbotWarriorAI.cpp">
       <Filter>Playerbot</Filter>
+    </ClCompile>	  
+    <ClCompile Include="..\..\src\game\VehicleHandler.cpp">
+      <Filter>Object</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -948,6 +951,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\game\PlayerBot\PlayerbotWarriorAI.h">
       <Filter>Playerbot</Filter>
-    </ClInclude>
+    </ClInclude>	  
   </ItemGroup>
 </Project>

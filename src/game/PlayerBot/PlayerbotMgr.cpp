@@ -150,8 +150,9 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
                 // emote to attack selected target
                 case TEXTEMOTE_POINT:
                 {
-                    uint64 attackOnGuid = m_master->GetSelection();
-                    if (!attackOnGuid) return;
+                    ObjectGuid attackOnGuid = m_master->GetSelectionGuid();
+                    if (attackOnGuid.IsEmpty())
+                        return;
 
                     Unit* thingToAttack = ObjectAccessor::GetUnit(*m_master, attackOnGuid);
                     if (!thingToAttack) return;
@@ -172,7 +173,7 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
                 // emote to stay
                 case TEXTEMOTE_STAND:
                 {
-                    Player* const bot = GetPlayerBot(m_master->GetSelection());
+                    Player* const bot = GetPlayerBot(m_master->GetSelectionGuid().GetRawValue());
                     if (bot)
                         bot->GetPlayerbotAI()->SetMovementOrder(PlayerbotAI::MOVEMENT_STAY);
                     else
@@ -194,7 +195,7 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
                 case 324:
                 case TEXTEMOTE_WAVE:
                 {
-                    Player* const bot = GetPlayerBot(m_master->GetSelection());
+                    Player* const bot = GetPlayerBot(m_master->GetSelectionGuid().GetRawValue());
                     if (bot)
                         bot->GetPlayerbotAI()->SetMovementOrder(PlayerbotAI::MOVEMENT_FOLLOW, m_master);
                     else

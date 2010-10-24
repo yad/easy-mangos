@@ -376,11 +376,11 @@ void PlayerbotPriestAI::DoNonCombatActions()
                 continue;
 
             // first rezz em
-            if (!tPlayer->isAlive() && !tPlayer->GetPlayerbotAI())
+            if (!tPlayer->isAlive())
             {
                 // rez is only 10 sec, but give time for lag
                 if (ai->CastSpell(RESURRECTION, tPlayer))
-                    ai->SetIgnoreUpdateTime(17);
+                    ai->SetIgnoreUpdateTime(12);
             }
             else if (tPlayer->isAlive())
             {
