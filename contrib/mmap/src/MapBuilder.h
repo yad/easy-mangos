@@ -5,7 +5,7 @@
 #include <set>
 #include <map>
 
-#include "TileBuilder.h"
+#include "TerrainBuilder.h"
 #include "IVMapManager.h"
 #include "G3D/Array.h"
 
@@ -18,7 +18,6 @@ using namespace VMAP;
 
 namespace MMAP
 {
-    typedef set<uint32> MapList;
     typedef map<uint32,set<uint32>*> TileList;
 
     struct IntermediateValues
@@ -44,37 +43,22 @@ namespace MMAP
 
             ~MapBuilder();
 
-            /**
-             Builds a mmap for the specifiec map id.
-             * First, the entire vmap is loaded. Cannot do it tile-by-tile because vmap tiles only load models
-               whose origin is in that tile.  Large models may span across tiles (stormwind, etc)
-
-             * Second, iterates through the tiles and loads their heightmaps.
-               These are processed so that steep inclines are removed.
-               TODO: process liquid heightmap
-
-             * Third, the vmap model and heightmap data is aggregated
-
-             * Fourth, data is sent off to recast for processing.  This optionally includes generating
-               an obj file, for debugging with RecastDemo
-            */
+            // builds all mmap tiles for the specified map id (ignores skip settings)
             void build(uint32 mapID);
 
-            // generates an obj file for the specified map tile
+            // builds an mmap tile for the specified map tile (ignores skip settings)
             void buildTile(uint32 mapID, uint32 tileX, uint32 tileY);
 
-            // builds list of maps, then iterates through them calling build(uint32 mapID)
+            // builds list of maps, then builds all of mmap tiles (based on the skip settings)
             void buildAll();
 
         private:
             // detect maps and tiles
-            void getTileList(uint32 mapID);
-            void getMapList();
+            void discoverTiles();
+            set<uint32>* getTileList(uint32 mapID);
 
             // load and unload models
-            void loadEntireVMap(uint32 mapID);
-            void loadVMap(uint32 mapID, uint32 tileX, uint32 tileY, G3D::Array<float> &modelVerts, G3D::Array<int> &modelTris);
-            void unloadEntireVMap(uint32 mapID);
+            bool loadVMap(uint32 mapID, uint32 tileX, uint32 tileY, G3D::Array<float> &modelVerts, G3D::Array<int> &modelTris);
             void unloadVMap(uint32 mapID, uint32 tileX, uint32 tileY);
 
             // vert and triangle methods
@@ -105,8 +89,6 @@ namespace MMAP
             void initIntermediateValues(IntermediateValues &iv);
             void clearIntermediateValues(IntermediateValues &iv);
 
-            float snapToGrid(const float coord);
-
             bool shouldSkipMap(uint32 mapID);
             bool isTransportMap(uint32 mapID);
 
@@ -114,17 +96,16 @@ namespace MMAP
             void generateObjFile(uint32 mapID, uint32 tileX, uint32 tileY, MeshData meshData);
             void generateRealObj(uint32 mapID, uint32 tileX, uint32 tileY, MeshData meshData);
             void writeIV(uint32 mapID, uint32 tileX, uint32 tileY, IntermediateValues iv);
-            void writeHeightfield(FILE* file, const rcHeightfield* hf);
-            void writeSpan(FILE* file, const rcSpan* span);
-            void writeCompactHeightfield(FILE* file, const rcCompactHeightfield* chf);
-            void writeContours(FILE* file, const rcContourSet* cs);
-            void writePolyMesh(FILE* file, const rcPolyMesh* mesh);
-            void writeDetailMesh(FILE* file, const rcPolyMeshDetail* mesh);
+            void debugWrite(FILE* file, const rcHeightfield* hf);
+            void debugWrite(FILE* file, const rcSpan* span);
+            void debugWrite(FILE* file, const rcCompactHeightfield* chf);
+            void debugWrite(FILE* file, const rcContourSet* cs);
+            void debugWrite(FILE* file, const rcPolyMesh* mesh);
+            void debugWrite(FILE* file, const rcPolyMeshDetail* mesh);
 
             IVMapManager* m_vmapManager;
-            TileBuilder* m_tileBuilder;
+            TerrainBuilder* m_tileBuilder;
 
-            MapList m_maps;
             TileList m_tiles;
 
             bool m_debugOutput;

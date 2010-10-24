@@ -20,7 +20,7 @@ namespace MaNGOS
         uint32 holesOffset;
         uint32 holesSize;
     };
-    
+
     // ==============mmaps don't use area==============
     //#define MAP_AREA_NO_AREA      0x0001
 

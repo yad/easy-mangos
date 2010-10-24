@@ -1471,6 +1471,10 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         void MonsterMoveWithSpeed(float x, float y, float z, uint32 transitTime = 0);
         void MonsterJump(float x, float y, float z, float o, uint32 transitTime, uint32 verticalSpeed);
 
+        void MonsterMoveByPath(float x, float y, float z, uint32 speed, bool smoothPath = true);
+        template<typename PathElem, typename PathNode>
+        void MonsterMoveByPath(Path<PathElem,PathNode> const& path, uint32 start, uint32 end, uint32 transitTime = 0);
+
         // recommend use MonsterMove/MonsterMoveWithSpeed for most case that correctly work with movegens
         // if used additional args in ... part then floats must explicitly casted to double
         void SendMonsterMove(float x, float y, float z, SplineType type, SplineFlags flags, uint32 Time, Player* player = NULL, ...);
@@ -1985,6 +1989,8 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         bool CreateVehicleKit(uint32 vehicleId);
         void RemoveVehicleKit();
 
+        // evade code will be called next update
+        void evadeWhenCan() { m_evadeWhenCan = true; }
     protected:
         explicit Unit ();
 
@@ -2047,6 +2053,8 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         VehicleKit* m_pVehicleKit;
 
     private:
+        bool m_evadeWhenCan;
+
         void CleanupDeletedAuras();
 
         // player or player's pet

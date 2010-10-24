@@ -22,12 +22,8 @@
 #include "Creature.h"
 #include "DestinationHolderImp.h"
 #include "World.h"
+
 //#include "ace/High_Res_Timer.h"
-
-#define SMALL_ALPHA 0.05f
-
-#include <cmath>
-
 //class ACE_High_Res_Timer;
 
 //-----------------------------------------------//
@@ -91,12 +87,19 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner, bool upd
     //timer.elapsed_microseconds(elapsed);
     //sLog.outDebug("Path found in %llu microseconds", elapsed);
 
+    // we need to evade - evade code must be called from outside movement master
+    if(i_path->getPathType() & PATHFIND_NOPATH)
+    {
+        owner.evadeWhenCan();
+        return;
+    }
+
     PointPath pointPath = i_path->getFullPath();
 
     // get current dest node's index
     uint32 startIndex = i_path->getPathPointer();
 
-    if (i_destinationHolder.HasArrived())
+    if (i_destinationHolder.HasArrived() && m_pathPointsSent)
         --m_pathPointsSent;
 
     Traveller<T> traveller(owner);
@@ -111,7 +114,7 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner, bool upd
     if (m_pathPointsSent < 2 || startIndex == 1 || i_recalculateTravel || owner.IsStopped())
     {
         // send 10 nodes, or send all nodes if there are less than 10 left
-        m_pathPointsSent = std::min(uint32(10), uint32(pointPath.size() - startIndex));
+        m_pathPointsSent = std::min<uint32>(10, pointPath.size() - startIndex);
         uint32 endIndex = m_pathPointsSent + startIndex;
 
         // dist to next node + world-unit length of the path
@@ -210,19 +213,38 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
         if (owner.GetObjectBoundingRadius())
             i_destinationHolder.ResetUpdate(100);
 
+         //More distance let have better performance, less distance let have more sensitive reaction at target move.
         float dist = i_target->GetObjectBoundingRadius() + owner.GetObjectBoundingRadius() + sWorld.getConfig(CONFIG_FLOAT_RATE_TARGET_POS_RECALCULATION_RANGE);
 
-        //More distance let have better performance, less distance let have more sensitive reaction at target move.
+        float x,y,z;
+        i_target->GetPosition(x, y, z);
+        PathNode target_point(x, y, z);
+        PathNode next_point(x, y, z);
 
         bool targetMoved = false, needNewDest = false;
-        PathNode next_point(i_target->GetPositionX(), i_target->GetPositionY(), i_target->GetPositionZ());
-
         if(i_path)
         {
             PathNode end_point = i_path->getEndPosition();
             next_point = i_path->getNextPosition();
 
-            needNewDest = i_destinationHolder.HasArrived() && !inRange(next_point, end_point, dist, 2*dist);
+            // check if we cannot hit the target while we are at the end of the path
+            // if so, evade after EVADE_TIME
+            if(i_destinationHolder.HasArrived()
+                && inRange(next_point, i_path->getActualEndPosition(), dist, dist)
+                && ((i_path->getPathType() & PATHFIND_INCOMPLETE)
+                        || !inRange(end_point, target_point, 2*dist, dist + CREATURE_Z_ATTACK_RANGE))
+                )
+            {
+                if (i_evade_timer < time_diff)
+                {
+                    owner.evadeWhenCan();
+                    return true;
+                }
+                else i_evade_timer -= time_diff;
+            }
+            else i_evade_timer = EVADE_TIME;
+
+            needNewDest = i_destinationHolder.HasArrived() && !inRange(next_point, i_path->getActualEndPosition(), dist, 2*dist);
 
             // GetClosePoint() will always return a point on the ground, so we need to
             // handle the difference in elevation when the creature is flying
@@ -237,13 +259,10 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
             // (re)calculate path
             _setTargetLocation(owner, targetMoved || needNewDest);
 
-            if(i_path)
-            {
-                next_point = i_path->getNextPosition();
+            next_point = i_path->getNextPosition();
 
-                // Set new Angle For Map::
-                owner.SetOrientation(owner.GetAngle(next_point.x, next_point.y));
-            }
+            // Set new Angle For Map::
+            owner.SetOrientation(owner.GetAngle(next_point.x, next_point.y));
         }
         // Update the Angle of the target only for Map::, no need to send packet for player
         else if (!i_angle && !owner.HasInArc(0.01f, next_point.x, next_point.y))

@@ -307,11 +307,11 @@ void WaypointMovementGenerator<Creature>::MoveToNextNode(CreatureTraveller &trav
     i_destinationHolder.SetDestination(traveller, node.x, node.y, node.z, false);
 
     PathInfo sub_path(owner, node.x, node.y, node.z);
-    PointPath myPath = sub_path.getFullPath();
+    PointPath pointPath = sub_path.getFullPath();
 
     float speed = traveller.Speed()*0.001f; // in ms
-    uint32 traveltime = uint32(myPath.GetTotalLength()/speed);
-    owner->SendMonsterMoveByPath(myPath, 1, myPath.size(), owner->GetSplineFlags(), traveltime);
+    uint32 traveltime = uint32(pointPath.GetTotalLength()/speed);
+    owner->SendMonsterMoveByPath(pointPath, 1, pointPath.size(), owner->GetSplineFlags(), traveltime);
 
     i_nextMoveTime.Reset(traveltime);
 }

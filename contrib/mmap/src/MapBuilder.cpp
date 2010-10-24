@@ -19,20 +19,23 @@ namespace MMAP
                            bool skipLiquid,
                            bool skipContinents, bool skipJunkMaps, bool skipBattlegrounds,
                            bool hiResHeightmaps, bool debugOutput) :
-                           m_maxWalkableAngle   (maxWalkableAngle),
+                           m_vmapManager(NULL),
+                           m_tileBuilder(NULL),
+                           m_debugOutput        (debugOutput),
                            m_skipContinents     (skipContinents),
                            m_skipJunkMaps       (skipJunkMaps),
                            m_skipBattlegrounds  (skipBattlegrounds),
-                           m_debugOutput        (debugOutput)
+                           m_maxWalkableAngle   (maxWalkableAngle)
+
     {
         m_vmapManager = new VMapManager2();
-        m_tileBuilder = new TileBuilder(skipLiquid, hiResHeightmaps);
+        m_tileBuilder = new TerrainBuilder(skipLiquid, hiResHeightmaps);
+
+        discoverTiles();
     }
 
     MapBuilder::~MapBuilder()
     {
-        m_maps.clear();
-
         for(TileList::iterator it = m_tiles.begin(); it != m_tiles.end(); ++it)
         {
             (*it).second->clear();
@@ -44,105 +47,97 @@ namespace MMAP
         delete m_vmapManager;
     }
 
-    void MapBuilder::getTileList(uint32 mapID)
+    void MapBuilder::discoverTiles()
     {
         uint32 i;
-        set<uint32>* tiles;
         vector<string> files;
-        uint32 tileX, tileY, tileID;
+        uint32 mapID, tileX, tileY, tileID, count = 0;
         char filter[12];
 
-        if(m_maps.find(mapID) == m_maps.end())
-            getMapList();
-
-        if(m_maps.find(mapID) == m_maps.end())
-            return;
-
-        sprintf(filter, "%03u*.vmtile", mapID);
-        getDirContents(files, "vmaps", filter);
-        for(i = 0; i < files.size(); ++i)
-        {
-            tileX = uint32(atoi(files[i].substr(7,2).c_str()));
-            tileY = uint32(atoi(files[i].substr(4,2).c_str()));
-            tileID = StaticMapTree::packTileID(tileY, tileX);
-
-            if(m_tiles.find(mapID) == m_tiles.end())
-            {
-                tiles = new set<uint32>;
-                m_tiles.insert(pair<uint32,set<uint32>*>(mapID, tiles));
-            }
-            else
-                tiles = m_tiles[mapID];
-
-            tiles->insert(tileID);
-        }
-
-        sprintf(filter, "%03u*", mapID);
-        files.clear();
-        getDirContents(files, "maps", filter);
-        for(i = 0; i < files.size(); ++i)
-        {
-            tileY = uint32(atoi(files[i].substr(3,2).c_str()));
-            tileX = uint32(atoi(files[i].substr(5,2).c_str()));
-            tileID = StaticMapTree::packTileID(tileX, tileY);
-
-            if(m_tiles.find(mapID) == m_tiles.end())
-            {
-                tiles = new set<uint32>;
-                m_tiles.insert(pair<uint32,set<uint32>*>(mapID, tiles));
-            }
-            else
-                tiles = m_tiles[mapID];
-
-            tiles->insert(tileID);
-        }
-    }
-
-    void MapBuilder::getMapList()
-    {
-        uint32 i;
-        vector<string> files;
-        uint32 mapID;
-
-        getDirContents(files, "vmaps", "*.vmtree");
-        for(i = 0; i < files.size(); ++i)
-        {
-            mapID = uint32(atoi(files[i].substr(0,3).c_str()));
-            m_maps.insert(mapID);
-        }
-
-        files.clear();
+        printf("Discovering maps... ");
         getDirContents(files, "maps");
         for(i = 0; i < files.size(); ++i)
         {
             mapID = uint32(atoi(files[i].substr(0,3).c_str()));
-            m_maps.insert(mapID);
+            if (m_tiles.find(mapID) == m_tiles.end())
+            {
+                m_tiles.insert(pair<uint32,set<uint32>*>(mapID, new set<uint32>));
+                count++;
+            }
         }
+
+        files.clear();
+        getDirContents(files, "vmaps", "*.vmtree");
+        for(i = 0; i < files.size(); ++i)
+        {
+            mapID = uint32(atoi(files[i].substr(0,3).c_str()));
+            m_tiles.insert(pair<uint32,set<uint32>*>(mapID, new set<uint32>));
+            count++;
+        }
+        printf("found %u.\n", count);
+
+        count = 0;
+        printf("Discovering tiles... ");
+        for(TileList::iterator itr = m_tiles.begin(); itr != m_tiles.end(); itr++)
+        {
+            set<uint32>* tiles = (*itr).second;
+            mapID = (*itr).first;
+
+            sprintf(filter, "%03u*.vmtile", mapID);
+            files.clear();
+            getDirContents(files, "vmaps", filter);
+            for(i = 0; i < files.size(); ++i)
+            {
+                tileX = uint32(atoi(files[i].substr(7,2).c_str()));
+                tileY = uint32(atoi(files[i].substr(4,2).c_str()));
+                tileID = StaticMapTree::packTileID(tileY, tileX);
+
+                tiles->insert(tileID);
+                count++;
+            }
+
+            sprintf(filter, "%03u*", mapID);
+            files.clear();
+            getDirContents(files, "maps", filter);
+            for(i = 0; i < files.size(); ++i)
+            {
+                tileY = uint32(atoi(files[i].substr(3,2).c_str()));
+                tileX = uint32(atoi(files[i].substr(5,2).c_str()));
+                tileID = StaticMapTree::packTileID(tileX, tileY);
+
+                if (tiles->insert(tileID).second)
+                    count++;
+            }
+        }
+        printf("found %u.\n\n", count);
+    }
+
+    set<uint32>* MapBuilder::getTileList(uint32 mapID)
+    {
+        TileList::iterator itr = m_tiles.find(mapID);
+        if (itr != m_tiles.end())
+            return (*itr).second;
+
+        set<uint32>* tiles = new set<uint32>;
+        m_tiles.insert(pair<uint32, set<uint32>*>(mapID, tiles));
+        return tiles;
     }
 
     void MapBuilder::buildAll()
     {
-        getMapList();
-
-        for(MapList::iterator it = m_maps.begin(); it != m_maps.end(); ++it)
-            if(!shouldSkipMap((*it)))
-                build((*it));
+        for(TileList::iterator it = m_tiles.begin(); it != m_tiles.end(); ++it)
+        {
+            uint32 mapID = (*it).first;
+            if(!shouldSkipMap((*it).first))
+                build((*it).first);
+        }
     }
 
     void MapBuilder::build(uint32 mapID)
     {
         printf("Building map %03u:\n", mapID);
 
-        getTileList(mapID);
-
-        set<uint32>* tiles;
-        if(m_tiles.find(mapID) != m_tiles.end())
-            tiles = m_tiles[mapID];
-        else
-        {
-            tiles = new set<uint32>;
-            m_tiles.insert(std::pair<uint32,set<uint32>*>(mapID, tiles));
-        }
+        set<uint32>* tiles = getTileList(mapID);
 
         // vars that are used in multiple locations...
         uint32 i, j, tileX, tileY;
@@ -158,9 +153,7 @@ namespace MMAP
             if(!tiles->size())
             {
                 // initialize the static tree, which loads WDT models
-                loadVMap(mapID, 64, 64, modelVerts, modelTris);
-
-                if(!modelVerts.size())
+                if (!loadVMap(mapID, 64, 64, modelVerts, modelTris) || !modelVerts.size())
                     break;
 
                 // get the coord bounds of the model data
@@ -194,9 +187,9 @@ namespace MMAP
         G3D::Array<float> allVerts;
         G3D::Array<int> allTris;
         char tileString[10];
-        
+
         // now start building mmtiles for each tile
-        printf("We have %i tiles.                          \n", tiles->size());
+        printf("We have %u tiles.                          \n", (unsigned int)tiles->size());
         for(set<uint32>::iterator it = tiles->begin(); it != tiles->end(); ++it)
         {
             allVerts.fastClear();
@@ -232,7 +225,7 @@ namespace MMAP
             allVerts.append(meshData.liquidVerts);
             copyIndices(allTris, meshData.solidTris, allVerts.size() / 3);
             allVerts.append(meshData.solidVerts);
-            
+
             if(!allVerts.size() || !allTris.size())
                 continue;
 
@@ -252,7 +245,7 @@ namespace MMAP
                              navMesh);
         }
 
-        unloadEntireVMap(mapID);
+        m_vmapManager->unloadMap(mapID);
 
         DELETE(navMesh);
 
@@ -357,30 +350,12 @@ namespace MMAP
         printf("%sComplete!                                      \n\n", tileString);
     }
 
-    void MapBuilder::loadEntireVMap(uint32 mapID)
+    bool MapBuilder::loadVMap(uint32 mapID, uint32 tileX, uint32 tileY, G3D::Array<float> &modelVertices, G3D::Array<int> &modelTriangles)
     {
-        printf("Loading vmap...                         \r");
+        VMAPLoadResult result = m_vmapManager->loadMap("vmaps", mapID, tileX, tileY);
 
-        // any loadMap call initializes the StaticMapTree, which loads
-        // models stored in the WDT. Necessary for maps that don't have
-        // a heightmap or ADTs
-        cout.setstate(cout.badbit);
-        m_vmapManager->loadMap("vmaps", mapID, 64, 64);
-        cout.clear(cout.goodbit);
-
-        set<uint32> tiles;
-        if(m_tiles.find(mapID) != m_tiles.end())
-            tiles = *m_tiles[mapID];
-
-        uint32 tileX, tileY;
-        for(set<uint32>::iterator it = tiles.begin(); it != tiles.end(); ++it)
-        {
-            StaticMapTree::unpackTileID((*it), tileX, tileY);
-
-            cout.setstate(cout.badbit);
-            int result = m_vmapManager->loadMap("vmaps", mapID, tileX, tileY);
-            cout.clear(cout.goodbit);
-        }
+        if (result == VMAP_LOAD_RESULT_ERROR)
+            return false;
 
         ModelInstance* models = 0;
         uint32 count = 0;
@@ -389,78 +364,12 @@ namespace MMAP
         ((VMapManager2*)m_vmapManager)->getInstanceMapTree(instanceTrees);
 
         if(!instanceTrees[mapID])
-            return;
+            return false;
 
         instanceTrees[mapID]->getModelInstances(models, count);
 
         if(!models || !count)
-            return;
-
-        uint32 i;
-        for(i = 0; i < count; ++i)
-        {
-            ModelInstance instance = models[i];
-
-            G3D::Array<float>* modelVertices = NEW(G3D::Array<float>);
-            G3D::Array<int>* modelTriangles = NEW(G3D::Array<int>);
-
-            // model instances exist in tree even though there are instances of that model in this tile
-            WorldModel* worldModel = instance.getWorldModel();
-            if(!worldModel)
-                continue;
-
-            vector<GroupModel> groupModels;
-            worldModel->getGroupModels(groupModels);
-
-            // all M2s need to have triangle indices reversed
-            bool isM2 = instance.name.find(".m2") != instance.name.npos || instance.name.find(".M2") != instance.name.npos;
-
-            // transform data
-            float scale = models[i].iScale;
-            G3D::Matrix3 rotation = G3D::Matrix3::fromEulerAnglesZYX(-1*G3D::pi()*instance.iRot.y/180.f, -1*G3D::pi()*instance.iRot.x/180.f, -1*G3D::pi()*instance.iRot.z/180.f);
-            Vector3 position = instance.iPos;
-            position.x -= 32*533.33333f;
-            position.y -= 32*533.33333f;
-
-            for(vector<GroupModel>::iterator it = groupModels.begin(); it != groupModels.end(); ++it)
-            {
-                vector<Vector3> tempVertices;
-                vector<Vector3> transformedVertices;
-                vector<MeshTriangle> tempTriangles;
-
-                (*it).getMeshData(tempVertices, tempTriangles);
-
-                transform(tempVertices, transformedVertices, scale, rotation, position);
-
-                int offset = modelVertices->size() / 3;
-
-                copyVertices(transformedVertices, (*modelVertices));
-                copyIndices(tempTriangles, (*modelTriangles), offset, isM2);
-            }
-        }
-
-        unloadEntireVMap(mapID);
-    }
-
-    void MapBuilder::loadVMap(uint32 mapID, uint32 tileX, uint32 tileY, G3D::Array<float> &modelVertices, G3D::Array<int> &modelTriangles)
-    {
-        cout.setstate(cout.badbit);
-        int result = m_vmapManager->loadMap("vmaps", mapID, tileX, tileY);
-        cout.clear(cout.goodbit);
-
-        ModelInstance* models = 0;
-        uint32 count = 0;
-
-        InstanceTreeMap instanceTrees;
-        ((VMapManager2*)m_vmapManager)->getInstanceMapTree(instanceTrees);
-
-        if(!instanceTrees[mapID])
-            return;
-
-        instanceTrees[mapID]->getModelInstances(models, count);
-
-        if(!models || !count)
-            return;
+            return false;
 
         uint32 i;
         for(i = 0; i < count; ++i)
@@ -501,38 +410,15 @@ namespace MMAP
                 copyIndices(tempTriangles, modelTriangles, offset, isM2);
             }
         }
-    }
 
-    void MapBuilder::unloadEntireVMap(uint32 mapID)
-    {
-        printf("Unloading vmap...                       \r");
-
-        set<uint32> tiles;
-        if(m_tiles.find(mapID) != m_tiles.end())
-            tiles = *m_tiles[mapID];
-
-        uint32 tileX, tileY;
-        for(set<uint32>::iterator it = tiles.begin(); it != tiles.end(); ++it)
-        {
-            StaticMapTree::unpackTileID((*it), tileX, tileY);
-
-            cout.setstate(cout.badbit);
-            m_vmapManager->unloadMap(mapID, tileX, tileY);
-            cout.clear(cout.goodbit);
-        }
-        
-        cout.setstate(cout.badbit);
-        m_vmapManager->unloadMap(mapID);
-        cout.clear(cout.goodbit);
+        return true;
     }
 
     void MapBuilder::unloadVMap(uint32 mapID, uint32 tileX, uint32 tileY)
     {
         printf("Unloading vmap...                       \r");
 
-        cout.setstate(cout.badbit);
         m_vmapManager->unloadMap(mapID, tileX, tileY);
-        cout.clear(cout.goodbit);
     }
 
     inline void MapBuilder::transform(vector<Vector3> source, vector<Vector3> &transformedVertices, float scale, G3D::Matrix3 rotation, Vector3 position)
@@ -631,17 +517,13 @@ namespace MMAP
 
     void MapBuilder::buildNavMesh(uint32 mapID, dtNavMesh* &navMesh)
     {
-        getTileList(mapID);
-
-        set<uint32> tiles;
-        if(m_tiles.find(mapID) != m_tiles.end())
-            tiles = *m_tiles[mapID];
+        set<uint32>* tiles = getTileList(mapID);
 
         char fileName[25];
         FILE* file = 0;
 
         /*** calculate number of bits needed to store tiles & polys ***/
-        int tileBits = rcMin((int)dtIlog2(dtNextPow2(tiles.size())), 6);    // 6 bits is enough for 4096 tiles
+        int tileBits = rcMin((int)dtIlog2(dtNextPow2(tiles->size())), 6);    // 6 bits is enough for 4096 tiles
         if (tileBits < 1) tileBits = 1;                                     // need at least one bit!
         int polyBits = 22 - tileBits;
         int maxTiles = 1 << tileBits;
@@ -650,7 +532,7 @@ namespace MMAP
         /***          calculate bounds of map         ***/
 
         uint32 tileXMin = 64, tileYMin = 64, tileXMax = 0, tileYMax = 0, tileX, tileY;
-        for(set<uint32>::iterator it = tiles.begin(); it != tiles.end(); ++it)
+        for(set<uint32>::iterator it = tiles->begin(); it != tiles->end(); ++it)
         {
             StaticMapTree::unpackTileID((*it), tileX, tileY);
 
@@ -935,12 +817,12 @@ namespace MMAP
             // so we have a clear error message
             if (params.nvp > DT_VERTS_PER_POLYGON)
             {
-                printf("%sInvalid verts-per-polygon value!        \n", tileString);
+                printf("%s Invalid verts-per-polygon value!        \n", tileString);
                 break;
             }
             if (params.vertCount >= 0xffff)
             {
-                printf("%sToo many vertices!                      \n", tileString);
+                printf("%s Too many vertices!                      \n", tileString);
                 break;
             }
             if (!params.vertCount || !params.verts)
@@ -954,30 +836,30 @@ namespace MMAP
             }
             if (!params.polyCount || !params.polys)
             {
-                printf("%sNo polygons to build tile!              \n", tileString);
+                printf("%s No polygons to build tile!              \n", tileString);
                 break;
             }
             if (!params.detailMeshes || !params.detailVerts || !params.detailTris)
             {
-                printf("%sNo detail mesh to build tile!           \n", tileString);
+                printf("%s No detail mesh to build tile!           \n", tileString);
                 break;
             }
 
-            printf("%sBuilding navmesh tile...                \r", tileString);
+            printf("%s Building navmesh tile...                \r", tileString);
             if(!dtCreateNavMeshData(&params, &navData, &navDataSize))
             {
-                printf("%sFailed building navmesh tile!           \n", tileString);
+                printf("%s Failed building navmesh tile!           \n", tileString);
                 delete [] navData;
                 break;
             }
 
             dtTileRef tileRef = 0;
-            printf("%Adding tile to navmesh...                \r", tileString);
+            printf("%s Adding tile to navmesh...                \r", tileString);
             // DT_TILE_FREE_DATA tells detour to unallocate memory when the tile
             // is removed via removeTile()
             if(!(tileRef = navMesh->addTile(navData, navDataSize, DT_TILE_FREE_DATA)))
             {
-                printf("%Failed adding tile to navmesh!           \n", tileString);
+                printf("%s Failed adding tile to navmesh!           \n", tileString);
                 delete [] navData;
                 break;
             }
@@ -992,7 +874,7 @@ namespace MMAP
                 break;
             }
 
-            printf("%sWriting to file...                      \r", tileString);
+            printf("%s Writing to file...                      \r", tileString);
             // should write navDataSize first... for now, just use ftell to find length when reading
             fwrite(navData, sizeof(unsigned char), navDataSize, file);
             fclose(file);
@@ -1113,8 +995,6 @@ namespace MMAP
         char objFileName[255];
         FILE* objFile;
 
-        char b = '\0';
-
         sprintf(objFileName, "meshes/map%03u.obj", mapID);
         if(!(objFile = fopen(objFileName, "wb")))
         {
@@ -1139,7 +1019,7 @@ namespace MMAP
             fprintf(objFile, "v %f %f %f\n", verts[i*3], verts[i*3 + 1], verts[i*3 + 2]);
 
         for(int i = 0; i < allTris.size() / 3; i++)
-            fprintf(objFile, "f %i %i %i\n", tris[i*3], tris[i*3 + 1], tris[i*3 + 2]);
+            fprintf(objFile, "f %i %i %i\n", tris[i*3] + 1, tris[i*3 + 1] + 1, tris[i*3 + 2] + 1);
 
         fclose(objFile);
     }
@@ -1154,76 +1034,30 @@ namespace MMAP
 
         printf("%sWriting debug output...                       \r", tileString);
 
-        // heightfield
-        sprintf(fileName, "meshes/%03u%02i%02i.hf", mapID, tileX, tileY);
-        if(!(file = fopen(fileName, "wb")))
-        {
-            char message[1024];
-            sprintf(message, "%sFailed to open %s for writing!\n",  tileString, fileName);
-            perror(message);
-        }
-        else
-            writeHeightfield(file, iv.heightfield);
-        if(file) fclose(file);
+        string name("meshes/%03u%02i%02i.");
+#define DEBUG_WRITE(fileExtension,data) \
+    sprintf(fileName, (name + fileExtension).c_str(), mapID, tileX, tileY); \
+    if (!(file = fopen(fileName, "wb"))) \
+    { \
+        char message[1024]; \
+            sprintf(message, "%sFailed to open %s for writing!\n",  tileString, fileName); \
+            perror(message); \
+        } \
+        else \
+            debugWrite(file, data); \
+        if(file) fclose(file); \
+        printf("%sWriting debug output...                       \r", tileString)
 
-        printf("%sWriting debug output...                       \r", tileString);
+        DEBUG_WRITE("hf", iv.heightfield);
+        DEBUG_WRITE("chf", iv.compactHeightfield);
+        DEBUG_WRITE("cs", iv.contours);
+        DEBUG_WRITE("pmesh", iv.polyMesh);
+        DEBUG_WRITE("dmesh", iv.polyMeshDetail);
 
-        // compact heightfield
-        sprintf(fileName, "meshes/%03u%02i%02i.chf", mapID, tileX, tileY);
-        if(!(file = fopen(fileName, "wb")))
-        {
-            char message[1024];
-            sprintf(message, "%sFailed to open %s for writing!\n",  tileString, fileName);
-            perror(message);
-        }
-        else
-            writeCompactHeightfield(file, iv.compactHeightfield);
-        if(file) fclose(file);
-
-        printf("%sWriting debug output...                       \r", tileString);
-
-        // contours
-        sprintf(fileName, "meshes/%03u%02i%02i.cs", mapID, tileX, tileY);
-        if(!(file = fopen(fileName, "wb")))
-        {
-            char message[1024];
-            sprintf(message, "%sFailed to open %s for writing!\n",  tileString, fileName);
-            perror(message);
-        }
-        else
-            writeContours(file, iv.contours);
-        if(file) fclose(file);
-
-        printf("%sWriting debug output...                       \r", tileString);
-
-        // poly mesh
-        sprintf(fileName, "meshes/%03u%02i%02i.pmesh", mapID, tileX, tileY);
-        if(!(file = fopen(fileName, "wb")))
-        {
-            char message[1024];
-            sprintf(message, "%sFailed to open %s for writing!\n",  tileString, fileName);
-            perror(message);
-        }
-        else
-            writePolyMesh(file, iv.polyMesh);
-        if(file) fclose(file);
-
-        printf("%sWriting debug output...                       \r", tileString);
-
-        // detail mesh
-        sprintf(fileName, "meshes/%03u%02i%02i.dmesh", mapID, tileX, tileY);
-        if(!(file = fopen(fileName, "wb")))
-        {
-            char message[1024];
-            sprintf(message, "%sFailed to open %s for writing!\n",  tileString, fileName);
-            perror(message);
-        }
-        else
-            writeDetailMesh(file, iv.polyMeshDetail);
-        if(file) fclose(file);
+#undef DEBUG_WRITE
     }
 
-    void MapBuilder::writeHeightfield(FILE* file, const rcHeightfield* mesh)
+    void MapBuilder::debugWrite(FILE* file, const rcHeightfield* mesh)
     {
         if(!file || !mesh)
             return;
@@ -1261,7 +1095,7 @@ namespace MMAP
             }
     }
 
-    void MapBuilder::writeCompactHeightfield(FILE* file, const rcCompactHeightfield* chf)
+    void MapBuilder::debugWrite(FILE* file, const rcCompactHeightfield* chf)
     {
         if(!file | !chf)
             return;
@@ -1300,11 +1134,11 @@ namespace MMAP
             fwrite(chf->areas, sizeof(unsigned char), chf->spanCount, file);
     }
 
-    void MapBuilder::writeContours(FILE* file, const rcContourSet* cs)
+    void MapBuilder::debugWrite(FILE* file, const rcContourSet* cs)
     {
         if(!file || !cs)
             return;
-        
+
         fwrite(&(cs->cs), sizeof(float), 1, file);
         fwrite(&(cs->ch), sizeof(float), 1, file);
         fwrite(cs->bmin, sizeof(float), 3, file);
@@ -1321,7 +1155,7 @@ namespace MMAP
         }
     }
 
-    void MapBuilder::writePolyMesh(FILE* file, const rcPolyMesh* mesh)
+    void MapBuilder::debugWrite(FILE* file, const rcPolyMesh* mesh)
     {
         if(!file || !mesh)
             return;
@@ -1340,7 +1174,7 @@ namespace MMAP
         fwrite(mesh->regs, sizeof(unsigned short), mesh->npolys, file);
     }
 
-    void MapBuilder::writeDetailMesh(FILE* file, const rcPolyMeshDetail* mesh)
+    void MapBuilder::debugWrite(FILE* file, const rcPolyMeshDetail* mesh)
     {
         if(!file || !mesh)
             return;
