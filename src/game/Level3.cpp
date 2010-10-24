@@ -340,20 +340,31 @@ bool ChatHandler::HandleAHBotOptionsCommand(char* args)
         {
             auctionbot.PrepStatusInfos();
             PSendSysMessage("Name is set to %s",auctionbot.GetAHBotName());
-            PSendSysMessage("Items loaded for Alliance=%u, Horde=%u, Neutral=%u. Total = %u", auctionbot.AllianceItemsCount, auctionbot.HordeItemsCount, auctionbot.NeutralItemsCount, auctionbot.AllianceItemsCount + auctionbot.HordeItemsCount + auctionbot.NeutralItemsCount);
+            PSendSysMessage("Items loaded for Alliance=%u, Horde=%u, Neutral=%u. Total = %u",
+                auctionbot.GetAllianceItemsCount(), auctionbot.GetHordeItemsCount(), auctionbot.GetNeutralItemsCount(),
+                auctionbot.GetAllianceItemsCount() + auctionbot.GetHordeItemsCount() + auctionbot.GetNeutralItemsCount());
             PSendSysMessage("Alliance table\n================");
-            PSendSysMessage("Grey = %u, White = %u, Green = %u, Blue = %u, Purple = %u, Orange = %u, Yellow = %u",auctionbot.AhBotInfos[0][E_GREY], auctionbot.AhBotInfos[0][E_WHITE], auctionbot.AhBotInfos[0][E_GREEN],
-                auctionbot.AhBotInfos[0][E_BLUE], auctionbot.AhBotInfos[0][E_PURPLE], auctionbot.AhBotInfos[0][E_ORANGE], auctionbot.AhBotInfos[0][E_YELLOW]);
+            PSendSysMessage("Grey = %u, White = %u, Green = %u, Blue = %u, Purple = %u, Orange = %u, Yellow = %u",
+                auctionbot.GetAHBotItemInfos(0, E_GREY), auctionbot.GetAHBotItemInfos(0, E_WHITE), auctionbot.GetAHBotItemInfos(0, E_GREEN),
+                auctionbot.GetAHBotItemInfos(0, E_BLUE), auctionbot.GetAHBotItemInfos(0, E_PURPLE), auctionbot.GetAHBotItemInfos(0, E_ORANGE),
+                auctionbot.GetAHBotItemInfos(0, E_YELLOW));
             PSendSysMessage("Horde table\n================");
-            PSendSysMessage("Grey = %u, White = %u, Green = %u, Blue = %u, Purple = %u, Orange = %u, Yellow = %u", auctionbot.AhBotInfos[1][E_GREY], auctionbot.AhBotInfos[1][E_WHITE], auctionbot.AhBotInfos[1][E_GREEN], auctionbot.AhBotInfos[1][E_BLUE]
-                                                                , auctionbot.AhBotInfos[1][E_PURPLE], auctionbot.AhBotInfos[1][E_ORANGE], auctionbot.AhBotInfos[1][E_YELLOW]);
+            PSendSysMessage("Grey = %u, White = %u, Green = %u, Blue = %u, Purple = %u, Orange = %u, Yellow = %u",
+                auctionbot.GetAHBotItemInfos(1, E_GREY), auctionbot.GetAHBotItemInfos(1, E_WHITE), auctionbot.GetAHBotItemInfos(1, E_GREEN),
+                auctionbot.GetAHBotItemInfos(1, E_BLUE), auctionbot.GetAHBotItemInfos(1, E_PURPLE), auctionbot.GetAHBotItemInfos(1, E_ORANGE),
+                auctionbot.GetAHBotItemInfos(1, E_YELLOW));
             PSendSysMessage("Neutral table\n================");
-            PSendSysMessage("Grey = %u, White = %u, Green = %u, Blue = %u, Purple = %u, Orange = %u, Yellow = %u", auctionbot.AhBotInfos[2][E_GREY], auctionbot.AhBotInfos[2][E_WHITE], auctionbot.AhBotInfos[2][E_GREEN], auctionbot.AhBotInfos[2][E_BLUE]
-                                                                , auctionbot.AhBotInfos[2][E_PURPLE], auctionbot.AhBotInfos[2][E_ORANGE], auctionbot.AhBotInfos[2][E_YELLOW]);
-            PSendSysMessage("Items ratio : Alliance = %u%%, Horde = %u%%, Neutral = %u%%", auctionbot.getConfig(CONFIG_UINT32_AHBOT_ALLIANCE_RATIO), auctionbot.getConfig(CONFIG_UINT32_AHBOT_HORDE_RATIO), auctionbot.getConfig(CONFIG_UINT32_AHBOT_NEUTRAL_RATIO));
-            PSendSysMessage("Items Amount : Grey = %u, White = %u, Green = %u, Blue = %u, Purple = %u, Orange = %u, Yellow = %u", auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_GREY_AMOUNT), auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_WHITE_AMOUNT),
-                auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_GREEN_AMOUNT), auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_BLUE_AMOUNT), auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_PURPLE_AMOUNT),
-                auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_ORANGE_AMOUNT), auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_YELLOW_AMOUNT));
+            PSendSysMessage("Grey = %u, White = %u, Green = %u, Blue = %u, Purple = %u, Orange = %u, Yellow = %u",
+                auctionbot.GetAHBotItemInfos(2, E_GREY), auctionbot.GetAHBotItemInfos(2, E_WHITE), auctionbot.GetAHBotItemInfos(2, E_GREEN),
+                auctionbot.GetAHBotItemInfos(2, E_BLUE), auctionbot.GetAHBotItemInfos(2, E_PURPLE), auctionbot.GetAHBotItemInfos(2, E_ORANGE),
+                auctionbot.GetAHBotItemInfos(2, E_YELLOW));
+            PSendSysMessage("Items ratio : Alliance = %u%%, Horde = %u%%, Neutral = %u%%",
+                auctionbot.getConfig(CONFIG_UINT32_AHBOT_ALLIANCE_RATIO), auctionbot.getConfig(CONFIG_UINT32_AHBOT_HORDE_RATIO), auctionbot.getConfig(CONFIG_UINT32_AHBOT_NEUTRAL_RATIO));
+            PSendSysMessage("Items Amount : Grey = %u, White = %u, Green = %u, Blue = %u, Purple = %u, Orange = %u, Yellow = %u",
+                auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_GREY_AMOUNT), auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_WHITE_AMOUNT),
+                auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_GREEN_AMOUNT), auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_BLUE_AMOUNT),
+                auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_PURPLE_AMOUNT), auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_ORANGE_AMOUNT),
+                auctionbot.getConfig(CONFIG_UINT32_AHBOT_ITEM_YELLOW_AMOUNT));
         }
         else if ((ahOptionStr) &&  (strncmp(ahOptionStr,"help",l)==0))
         {
@@ -371,7 +382,9 @@ bool ChatHandler::HandleAHBotOptionsCommand(char* args)
         {
             auctionbot.PrepStatusInfos();
             PSendSysMessage("Name is set to %s",auctionbot.GetAHBotName());
-            PSendSysMessage("Items loaded for Alliance=%u, Horde=%u, Neutral=%u. Total = %u", auctionbot.AllianceItemsCount, auctionbot.HordeItemsCount, auctionbot.NeutralItemsCount, auctionbot.AllianceItemsCount + auctionbot.HordeItemsCount + auctionbot.NeutralItemsCount);
+            PSendSysMessage("Items loaded for Alliance=%u, Horde=%u, Neutral=%u. Total = %u",
+                auctionbot.GetAllianceItemsCount(), auctionbot.GetHordeItemsCount(), auctionbot.GetNeutralItemsCount(),
+                auctionbot.GetAllianceItemsCount() + auctionbot.GetHordeItemsCount() + auctionbot.GetNeutralItemsCount());
         }
     }
     else if (strncmp(opt,"rebuild",l) == 0)

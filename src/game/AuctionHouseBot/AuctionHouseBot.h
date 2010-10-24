@@ -90,168 +90,19 @@ enum e_AHBOTConfigBoolValues
     CONFIG_UINT32_AHBOT_BOOL_COUNT
 };
 
-class c_ItemClassInfos
-{
-public:
-    c_ItemClassInfos(uint32 indice=0)
-    {
-        m_class=(indice % MAX_ITEM_CLASS);
-
-        switch (m_class)
-        {
-        case 0:     m_className = "Consumable"; break;
-        case 1:     m_className = "Container"; break;
-        case 2:     m_className = "Weapon"; break;
-        case 3:     m_className = "Gem"; break;
-        case 4:     m_className = "Armor"; break;
-        case 5:     m_className = "Reageant"; break;
-        case 6:     m_className = "Projectile"; break;
-        case 7:     m_className = "Trade_Goods"; break;
-        case 8:     m_className = "Generic"; break;
-        case 9:     m_className = "Recipe"; break;
-        case 10:    m_className = "Money"; break;
-        case 11:    m_className = "Quiver"; break;
-        case 12:    m_className = "Quest"; break;
-        case 13:    m_className = "Key"; break;
-        case 14:    m_className = "Permanant"; break;
-        case 15:    m_className = "Misc"; break;
-        case 16:    m_className = "Glyph"; break;
-        }
-        m_AmountOfItems=0;
-        m_MissItems=0;
-        m_Quantity=0;
-    }
-
-    const std::string GetName()
-    {
-        return m_className;
-    }
-    void SetAmountOfItems(uint32 indice)
-    {
-        m_AmountOfItems = indice*m_Quantity;
-    }
-    uint32 GetAmountOfItems()
-    {
-        return m_AmountOfItems;
-    }
-    void SetQuantityOfItems(uint32 quantity)
-    {
-        m_Quantity = quantity;
-    }
-    uint32 GetQuantityOfItems()
-    {
-        return m_Quantity;
-    }
-    void SetMissItems(uint32 value)
-    {
-        (m_AmountOfItems > value ) ? m_MissItems=m_AmountOfItems-value: m_MissItems = 0;
-    }
-    uint32 GetMissItems()
-    {
-        return m_MissItems;
-    }
-
-private:
-    uint32 m_AmountOfItems;
-    uint32 m_MissItems;
-    uint32 m_Quantity;
-    uint32 m_class;
-
-    std::string m_className;
-};
-
-class c_ItemInfos
-{
-public:
-
-    std::vector<c_ItemClassInfos> ItemClassInfos;
-
-    c_ItemInfos(uint32 indice=0)
-    {
-        for (int i=0; i<MAX_ITEM_CLASS; ++i)
-        {
-            ItemClassInfos.push_back(c_ItemClassInfos(i));
-        }
-
-        m_indice=(indice % AHB_QUALITY_MAX);
-
-        switch (m_indice)
-        {
-        case 0: m_color = "grey"; break;
-        case 1: m_color = "white"; break;
-        case 2: m_color = "green"; break;
-        case 3: m_color = "blue"; break;
-        case 4: m_color = "purple"; break;
-        case 5: m_color = "orange"; break;
-        case 6: m_color = "yellow"; break;
-        }
-    }
-    const std::string GetColor()
-    {
-        return m_color;
-    }
-    void SetAmountOfItems(uint32 cnt)
-    {
-        m_AmountOfItems=cnt;
-    }
-    uint32 GetAmountOfItems()
-    {
-        return m_AmountOfItems;
-    }
-    void SetPriceRatio(uint32 value)
-    {
-        m_PriceRatio=value;
-    }
-    uint32 GetPriceRatio()
-    {
-        return m_PriceRatio;
-    }
-    void SetMaxStack(uint32 value)
-    {
-        m_MaxStack=value;
-    }
-    uint32 GetMaxStack()
-    {
-        return m_MaxStack;
-    }
-    void SetBuyerPrice(uint32 value)
-    {
-        m_buyerPrice = value;
-     }
-    uint32 GetBuyerPrice()
-    {
-        return m_buyerPrice;
-    }
-
-private:
-    uint32 m_AmountOfItems;
-    uint32 m_MaxItemsPrice;
-    uint32 m_MinItemsPrice;
-    uint32 m_MinBidPrice;
-    uint32 m_MaxBidPrice;
-    uint32 m_MaxStack;
-    uint32 m_MissItems;
-    uint32 m_buyerPrice;
-    uint32 m_PriceRatio;
-
-    uint32 m_indice;
-
-    std::string m_color;
-};
-
-struct s_itemEval
+struct s_BuyerItemEval
 {
     uint32  AhEntry;
     uint32  item_guidlow;
     time_t  lastchecked;
     time_t  LastExist;
-    s_itemEval()
+    s_BuyerItemEval()
     {
         lastchecked=0;
     }
 };
 
-struct s_itemInfo
+struct s_BuyerItemInfo
 {
     uint32  ItemCount;
     double  BuyPrice;
@@ -259,7 +110,7 @@ struct s_itemInfo
     uint32  MinBuyPrice;
     uint32  MinBidPrice;
 
-    s_itemInfo()
+    s_BuyerItemInfo()
     {
         ItemCount=0;
         BuyPrice=0;
@@ -269,21 +120,80 @@ struct s_itemInfo
     }
 };
 
+typedef std::map< uint32 , s_BuyerItemInfo > t_itemInfo;
+typedef std::map< uint32, s_BuyerItemEval > t_checkEntryMap;
+
+struct AHB_Buyer_Config
+{
+    AHB_Buyer_Config(uint32 ahid=7) { AHID = ahid; }
+
+    uint32          AHID;
+    t_itemInfo      SameItemInfo;
+    t_checkEntryMap CheckedEntry;
+    uint32          FactionChance;
+    bool            BuyerEnabled;
+    uint32          Buyer_Price_Ratio;
+};
+
+struct s_randomArray
+{
+    uint32 color;
+    uint32 itemclass;
+};
+
+struct s_SellerItemClassInfo
+{
+    uint32 AmountOfItems;
+    uint32 MissItems;
+    uint32 Quantity;
+
+    s_SellerItemClassInfo()
+    {
+        AmountOfItems=0;
+        MissItems=0;
+        Quantity=0;
+    }
+};
+
+struct s_SellerItemInfo
+{
+    uint32 AmountOfItems;
+    uint32 MaxItemsPrice;
+    uint32 MinItemsPrice;
+    uint32 MinBidPrice;
+    uint32 MaxBidPrice;
+    uint32 MaxStack;
+    uint32 MissItems;
+    uint32 buyerPrice;
+    uint32 PriceRatio;
+
+    std::vector<s_SellerItemClassInfo> ItemClassInfos;
+
+    s_SellerItemInfo()
+    {
+        ItemClassInfos.resize(MAX_ITEM_CLASS);
+        AmountOfItems=0;
+        MaxItemsPrice=0;
+        MinItemsPrice=0;
+        MinBidPrice=0;
+        MaxBidPrice=0;
+        MaxStack=0;
+        MissItems=0;
+        buyerPrice=0;
+        PriceRatio=0;
+    }
+};
+
 class AHB_Seller_Config
 {
 public:
 
-    std::vector<c_ItemInfos> ItemInfos;
     uint32 LastMissedItem;
 
     AHB_Seller_Config(uint32 ahid=7)
     {
         m_AHID = ahid;
-
-        for (int i=0; i<AHB_QUALITY_MAX; ++i)
-        {
-            ItemInfos.push_back(c_ItemInfos(i));
-        }
+        m_ItemInfo.resize(AHB_QUALITY_MAX);
     }
 
     uint32 GetAHID()
@@ -303,61 +213,42 @@ public:
         else
             return m_minTime;
     }
-    void SetMaxTime(uint32 value)
-    {
-        m_maxTime = value;
-    }
-    uint32 GetMaxTime()
-    {
-        return m_maxTime;
-    }
 
-    ~AHB_Seller_Config()
+    void        SetMaxTime(uint32 value) { m_maxTime = value; }
+    uint32      GetMaxTime() { return m_maxTime; }
+    // Data access classified by item class and item quality //
+    void        SetItemsAmountPerClass(e_ahb_quality quality, ItemClass itemclass, uint32 amount) { m_ItemInfo[quality].ItemClassInfos[itemclass].AmountOfItems=amount * m_ItemInfo[quality].ItemClassInfos[itemclass].Quantity; }
+    uint32      GetItemsAmountPerClass(e_ahb_quality quality, ItemClass itemclass) { return m_ItemInfo[quality].ItemClassInfos[itemclass].AmountOfItems; }
+    void        SetItemsQuantityPerClass(e_ahb_quality quality, ItemClass itemclass, uint32 qty) { m_ItemInfo[quality].ItemClassInfos[itemclass].Quantity=qty; }
+    uint32      GetItemsQuantityPerClass(e_ahb_quality quality, ItemClass itemclass) { return m_ItemInfo[quality].ItemClassInfos[itemclass].Quantity; }
+    void        SetMissedItemsPerClass(e_ahb_quality quality, ItemClass itemclass, uint32 found)
     {
+        if (m_ItemInfo[quality].ItemClassInfos[itemclass].AmountOfItems > found )
+            m_ItemInfo[quality].ItemClassInfos[itemclass].MissItems=m_ItemInfo[quality].ItemClassInfos[itemclass].AmountOfItems - found;
+        else
+            m_ItemInfo[quality].ItemClassInfos[itemclass].MissItems = 0;
     }
+    uint32      GetMissedItemsPerClass(e_ahb_quality quality, ItemClass itemclass) { return m_ItemInfo[quality].ItemClassInfos[itemclass].MissItems; }
+
+    // Data for every quality of item //
+    void        SetItemsAmountPerQuality(e_ahb_quality quality, uint32 cnt) { m_ItemInfo[quality].AmountOfItems=cnt; }
+    uint32      GetItemsAmountPerQuality(e_ahb_quality quality) { return m_ItemInfo[quality].AmountOfItems; }
+    void        SetPriceRatioPerQuality(e_ahb_quality quality, uint32 value) { m_ItemInfo[quality].PriceRatio=value; }
+    uint32      GetPriceRatioPerQuality(e_ahb_quality quality) { return m_ItemInfo[quality].PriceRatio; }
+    void        SetMaxStackPerQuality(e_ahb_quality quality, uint32 value) { m_ItemInfo[quality].MaxStack=value; }
+    uint32      GetMaxStackPerQuality(e_ahb_quality quality) { return m_ItemInfo[quality].MaxStack; }
+    void        SetBuyerPricePerQuality(e_ahb_quality quality, uint32 value) { m_ItemInfo[quality].buyerPrice = value; }
+    uint32      GetBuyerPricePerQuality(e_ahb_quality quality) { return m_ItemInfo[quality].buyerPrice; }
+
+    ~AHB_Seller_Config() { }
 
 private:
     uint32 m_AHID;
     uint32 m_minTime;
     uint32 m_maxTime;
-};
+    std::vector<s_SellerItemInfo> m_ItemInfo;
 
-class AHB_Buyer_Config
-{
-public:
-    typedef std::map< uint32 , s_itemInfo > t_itemInfo;
-    typedef std::map< uint32, s_itemEval > t_checkEntryMap;
-
-    uint32 m_FactionChance;
-
-    t_itemInfo m_SameItemInfo;
-    t_checkEntryMap m_CheckedEntry;
-
-    bool   BuyerEnabled;
-    uint32 Buyer_Price_Ratio;
-
-    AHB_Buyer_Config(uint32 ahid=7)
-    {
-        m_AHID = ahid;
-    }
-
-    uint32 GetAHID()
-    {
-        return m_AHID;
-    }
-
-    ~AHB_Buyer_Config()
-    {
-    }
-
-private:
-    uint32 m_AHID;
-};
-
-struct s_randomArray
-{
-    uint32 color;
-    uint32 itemclass;
+    // std::vector<c_ItemClassInfos> m_ItemClassInfo;
 };
 
 class AHB_Base
@@ -379,6 +270,7 @@ public :
     uint32      GetItemPerCycleBoost()  { return m_ItemsPerCycleBoost; }
     uint32      GetItemPerCycleNormal() { return m_ItemsPerCycleNormal; }
     bool        Reload();
+    const std::string GetItemClassName(ItemClass itemclass);
 
 private :
     ObjectGuid      m_FakeGuid;
@@ -453,39 +345,46 @@ private:
     void        LoadSellerValues(AHB_Seller_Config& config);
     uint32      SetStat(AHB_Seller_Config& config);
     bool        getRandomArray( AHB_Seller_Config& config, std::vector<s_randomArray>& ra, const std::vector<std::vector<uint32> >& addedItem  );
-    void        SetPricesOfItem(const Item *item, AHB_Seller_Config& config, uint32& buyp, uint32& bidp, uint32& stackcnt, e_ahb_quality AHB_ITEMS);
+    void        SetPricesOfItem(const Item *item, AHB_Seller_Config& config, uint32& buyp, uint32& bidp, uint32& stackcnt, e_ahb_quality itemQuality);
     void        LoadItemsQuantity(AHB_Seller_Config& config);
 };
 
 class AuctionHouseBot
 {
 public:
+    typedef std::vector < std::vector < uint32 > > t_AhBotInfos;
+
     AuctionHouseBot();
     ~AuctionHouseBot();
-
-    std::vector < std::vector < uint32 > > AhBotInfos;
-    uint32 AllianceItemsCount;
-    uint32 HordeItemsCount;
-    uint32 NeutralItemsCount;
 
     void        Update();
     void        Initialize();
     ObjectGuid  GetAHBObjectGuid() { return sAHB_BaseConfig.GetAHBObjectGuid(); }
     const char* GetAHBotName() const { return sAHB_BaseConfig.GetAHBotName(); }
+
+    // Followed method is mainly used by level3.cpp for ingame/console command
     uint32      getConfig(e_AHBOTConfigUInt32Values index) const { return sAHB_BaseConfig.getConfig(index); }
     void        SetItemsRatio(uint32* al, uint32* ho, uint32* ne);
     void        SetItemsAmount(uint32* grey_i, uint32* white_i, uint32* green_i, uint32* blue_i, uint32* purple_i, uint32* orange_i, uint32* yellow_i);
     bool        ReloadAllConfig();
     void        PrepStatusInfos();
     void        Rebuild(bool all);
+    uint32      GetAllianceItemsCount() { return m_AllianceItemsCount; } 
+    uint32      GetHordeItemsCount() { return m_HordeItemsCount; }
+    uint32      GetNeutralItemsCount() { return m_NeutralItemsCount; }
+    uint32      GetAHBotItemInfos(uint32 FactionNum, e_ahb_quality Quality) { return m_AhBotInfos[FactionNum][Quality]; } 
 
 private:
+    AHB_Buyer*      m_Buyer;
+    AHB_Seller*     m_Seller;
     uint32          m_OperationSelector;
     time_t          m_LastBuyableEntryChecked;
     bool            m_BuyerEnabled;
     bool            m_SellerEnabled;
-    AHB_Buyer*      m_Buyer;
-    AHB_Seller*     m_Seller;
+    uint32          m_AllianceItemsCount;
+    uint32          m_HordeItemsCount;
+    uint32          m_NeutralItemsCount;
+    t_AhBotInfos    m_AhBotInfos;
 };
 
 #define auctionbot MaNGOS::Singleton<AuctionHouseBot>::Instance()
