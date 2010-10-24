@@ -126,6 +126,13 @@ void Map::UnloadNavMesh(int gx, int gy)
 
 dtNavMesh* Map::GetNavMesh()
 {
-    return m_navMesh;
+    __try
+    {
+        return m_navMesh;
+    }
+    __except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        return NULL;
+    }
 }
 

@@ -2148,9 +2148,7 @@ void PlayerbotAI::MovementReset()
 void PlayerbotAI::MovementUpdate()
 {
     // send heartbeats to world
-    WorldPacket data;
-    m_bot->BuildHeartBeatMsg(data);
-    m_bot->SendMessageToSet(&data, false);
+    m_bot->SendHeartBeat(false);
 
     float x = m_bot->GetPositionX();
     float y = m_bot->GetPositionY();
@@ -2650,7 +2648,7 @@ bool PlayerbotAI::PickPocket(Unit* pTarget)
 {
     bool looted = false;
 
-	ObjectGuid markGuid = pTarget->GetObjectGuid();
+    ObjectGuid markGuid = pTarget->GetObjectGuid();
     Creature *c = m_bot->GetMap()->GetCreature(markGuid);
     m_bot->SendLoot(markGuid, LOOT_PICKPOCKETING);
     Loot *loot = &c->loot;

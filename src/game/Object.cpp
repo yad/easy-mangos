@@ -1852,8 +1852,9 @@ void WorldObject::SetMap(Map * map)
 
 Map const* WorldObject::GetBaseMap() const
 {
-    MANGOS_ASSERT(m_currMap);
-    return m_currMap->GetParent();
+    if (m_currMap)
+        return m_currMap->GetParent();
+    return NULL;
 }
 
 void WorldObject::AddObjectToRemoveList()
