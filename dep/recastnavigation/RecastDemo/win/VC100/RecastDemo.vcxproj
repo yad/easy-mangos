@@ -100,7 +100,6 @@ copy ..\..\..\SDL\lib\SDL.dll $(TargetDir)\SDL.dll</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\..\contrib\mmap\src\MMapCommon.h" />
     <ClInclude Include="..\..\Include\ChunkyTriMesh.h" />
     <ClInclude Include="..\..\Include\ConvexVolumeTool.h" />
     <ClInclude Include="..\..\Include\CrowdTool.h" />

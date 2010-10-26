@@ -28,19 +28,19 @@ class Sample_Debug : public Sample_SoloMeshTiled
 {
 protected:
     int m_hfCount;
-    rcHeightfield** m_hf;
+    rcHeightfield* m_hf;
 
     int m_chfCount;
-	rcCompactHeightfield** m_chf;
+	rcCompactHeightfield* m_chf;
 
     int m_csetCount;
-	rcContourSet** m_cset;
+	rcContourSet* m_cset;
 
     int m_pmeshCount;
-    rcPolyMesh** m_pmeshes;
+    rcPolyMesh* m_pmeshes;
 
     int m_dmeshCount;
-    rcPolyMeshDetail** m_dmeshes;
+    rcPolyMeshDetail* m_dmeshes;
 
     int m_tile;
 

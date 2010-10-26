@@ -131,6 +131,7 @@ int main(int /*argc*/, char** /*argv*/)
 	bool showLog = false;
 	bool showDebugMode = true;
 	bool showTools = true;
+    bool showMaps = false;
 	bool showLevels = false;
 	bool showSample = false;
 	bool showTestCases = false;
@@ -142,8 +143,10 @@ int main(int /*argc*/, char** /*argv*/)
 	
 	char sampleName[64] = "Choose Sample..."; 
 	
+    FileList maps;
+    char mapName[128] = "Choose Map...";
 	FileList files;
-	char meshName[128] = "Choose Mesh...";
+	char meshName[128] = "Choose Tile...";
 	
 	float mpos[3] = {0,0,0};
 	bool mposSet = false;
@@ -530,6 +533,7 @@ int main(int /*argc*/, char** /*argv*/)
 				}
 				else
 				{
+                    showMaps = false;
 					showSample = true;
 					showLevels = false;
 					showTestCases = false;
@@ -537,8 +541,26 @@ int main(int /*argc*/, char** /*argv*/)
 			}
 			
 			imguiSeparator();
-			imguiLabel("Input Mesh");
-			if (imguiButton(meshName))
+            imguiLabel("Map");
+            if (imguiButton(mapName, strncmp(sampleName, "Choose Sample...", 16)))
+            {
+                if (showMaps)
+                {
+                    showMaps = false;
+                }
+                else
+                {
+                    showMaps = true;
+					showSample = false;
+					showTestCases = false;
+					showLevels = false;
+                    scanDirectory("Meshes", ".map", maps);
+                }
+            }
+
+            imguiSeparator();
+			imguiLabel("Tile");
+			if (imguiButton(meshName, strncmp(mapName, "Choose Map...", 13)))
 			{
 				if (showLevels)
 				{
@@ -546,10 +568,11 @@ int main(int /*argc*/, char** /*argv*/)
 				}
 				else
 				{
+                    showMaps = false;
 					showSample = false;
 					showTestCases = false;
 					showLevels = true;
-					scanDirectory("Meshes", ".obj", files);
+					scanDirectory("Meshes", ".mesh", files);
 				}
 			}
 			if (geom)
@@ -622,7 +645,6 @@ int main(int /*argc*/, char** /*argv*/)
 				delete sample;
 				sample = newSample;
 				sample->setContext(&ctx);
-				sample->setMeshName(meshName);
 				if (geom && sample)
 				{
 					sample->handleMeshChanged(geom);
@@ -664,18 +686,47 @@ int main(int /*argc*/, char** /*argv*/)
 			imguiEndScrollArea();
 		}
 		
+        // map selection dialog
+        if (showMaps)
+        {
+            static int scrolPos = 0;
+            if (imguiBeginScrollArea("Choose Map", width-10-250-10-200, height-10-450, 200, 450, &scrolPos))
+                mouseOverMenu = true;
+
+            int selectedMap = -1;
+            for (int i = 0; i < maps.size; ++i)
+                if (imguiItem(maps.files[i]))
+                    selectedMap = i;
+
+            if (selectedMap != -1)
+            {
+                strncpy(mapName, maps.files[selectedMap], sizeof(mapName));
+                mapName[sizeof(mapName)-1] = '\0';
+                showMaps = false;
+
+                delete geom;
+                geom = NULL;
+
+                if (sample)
+				    sample->setMeshName(meshName);
+            }
+        }
+
 		// Level selection dialog.
 		if (showLevels)
 		{
 			static int levelScroll = 0;
-			if (imguiBeginScrollArea("Choose Level", width-10-250-10-200, height-10-450, 200, 450, &levelScroll))
+			if (imguiBeginScrollArea("Choose Tile", width-10-250-10-200, height-10-450, 200, 450, &levelScroll))
 				mouseOverMenu = true;
 			
 			int levelToLoad = -1;
 			for (int i = 0; i < files.size; ++i)
 			{
-				if (imguiItem(files.files[i]))
-					levelToLoad = i;
+                if (!strncmp(mapName, files.files[i], 3))
+                {
+				    if (imguiItem(files.files[i]))
+					    levelToLoad = i;
+                }
 			}
 			
 			if (levelToLoad != -1)

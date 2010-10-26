@@ -20,12 +20,12 @@ enum NavTerrain
 };
 
 //void duReadObjMesh(int mapID, rcInputGeom* geom);
-void duReadNavMesh(int mapID, dtNavMesh* &navMesh);
-int duReadHeightfield(int mapID, rcHeightfield** &hf);
-int duReadCompactHeightfield(int mapID, rcCompactHeightfield** &chf);
-int duReadContourSet(int mapID, rcContourSet** &cs);
-int duReadPolyMesh(int mapID, rcPolyMesh** &mesh);
-int duReadDetailMesh(int mapID, rcPolyMeshDetail** &mesh);
+void duReadNavMesh(char* tile, dtNavMesh* &navMesh);
+int duReadHeightfield(char* tile, rcHeightfield* &hf);
+int duReadCompactHeightfield(char* tile, rcCompactHeightfield* &chf);
+int duReadContourSet(char* tile, rcContourSet* &cs);
+int duReadPolyMesh(char* tile, rcPolyMesh* &mesh);
+int duReadDetailMesh(char* tile, rcPolyMeshDetail* &mesh);
 
 class myMeshLoaderObj
 {

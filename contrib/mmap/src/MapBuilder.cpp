@@ -944,7 +944,7 @@ namespace MMAP
 
         char b = '\0';
 
-        sprintf(objFileName, "meshes/%03u.obj", mapID);
+        sprintf(objFileName, "meshes/%03u.map", mapID);
         if(!(objFile = fopen(objFileName, "wb")))
         {
             char message[1024];

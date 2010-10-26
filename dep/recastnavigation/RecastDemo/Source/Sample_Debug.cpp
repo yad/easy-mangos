@@ -42,7 +42,8 @@ Sample_Debug::Sample_Debug() : Sample_SoloMeshTiled(),
     m_hf(0), m_hfCount(0),
     m_chf(0), m_chfCount(0),
     m_cset(0), m_csetCount(0),
-    m_pmeshCount(0), m_dmeshCount(0),
+    m_pmeshes(0), m_pmeshCount(0),
+    m_dmeshes(0), m_dmeshCount(0),
     m_tile(0)
 {
 	resetCommonSettings();
@@ -59,24 +60,19 @@ void Sample_Debug::cleanup()
 {
     int i;
 
-    for (i = 0; i < m_hfCount; i++)
-        rcFreeHeightField(m_hf[i]);
+    rcFreeHeightField(m_hf);
     m_hf = 0;
 
-    for (i = 0; i < m_chfCount; i++)
-        rcFreeCompactHeightfield(m_chf[i]);
+    rcFreeCompactHeightfield(m_chf);
     m_chf = 0;
 
-    for (i = 0; i < m_csetCount; i++)
-        rcFreeContourSet(m_cset[i]);
+    rcFreeContourSet(m_cset);
     m_cset = 0;
 
-    for (i = 0; i < m_pmeshCount; i++)
-        rcFreePolyMesh(m_pmeshes[i]);
+    rcFreePolyMesh(m_pmeshes);
     m_pmeshes = 0;
 
-    for (i = 0; i < m_dmeshCount; i++)
-        rcFreePolyMeshDetail(m_dmeshes[i]);
+    rcFreePolyMeshDetail(m_dmeshes);
     m_dmeshes = 0;
 
     dtFreeNavMesh(m_navMesh);
@@ -232,95 +228,69 @@ void Sample_Debug::handleRender()
 	glDepthMask(GL_TRUE);
 	
     if (m_drawMode == DRAWMODE_COMPACT)
-		for (int i = 0; i < m_chfCount; ++i)
-            if(i == m_tile)
-			duDebugDrawCompactHeightfieldSolid(&dd, *m_chf[i]);
+		duDebugDrawCompactHeightfieldSolid(&dd, *m_chf);
 
 	if (m_drawMode == DRAWMODE_COMPACT_DISTANCE)
-		for (int i = 0; i < m_chfCount; ++i)
-            if(i == m_tile)
-			duDebugDrawCompactHeightfieldDistance(&dd, *m_chf[i]);
+		duDebugDrawCompactHeightfieldDistance(&dd, *m_chf);
 
 	if (m_drawMode == DRAWMODE_COMPACT_REGIONS)
-		for (int i = 0; i < m_chfCount; ++i)
-            if(i == m_tile)
-			duDebugDrawCompactHeightfieldRegions(&dd, *m_chf[i]);
+		duDebugDrawCompactHeightfieldRegions(&dd, *m_chf);
 	
 	if (m_drawMode == DRAWMODE_VOXELS)
 	{
 		glEnable(GL_FOG);
-		for (int i = 0; i < m_hfCount; ++i)
-            if(i == m_tile)
-			duDebugDrawHeightfieldSolid(&dd, *m_hf[i]);
+		duDebugDrawHeightfieldSolid(&dd, *m_hf);
 		glDisable(GL_FOG);
 	}
 
 	if (m_drawMode == DRAWMODE_VOXELS_WALKABLE)
 	{
 		glEnable(GL_FOG);
-		for (int i = 0; i < m_hfCount; ++i)
-            if(i == m_tile)
-			duDebugDrawHeightfieldWalkable(&dd, *m_hf[i]);
+		duDebugDrawHeightfieldWalkable(&dd, *m_hf);
 		glDisable(GL_FOG);
 	}
 
 	if (m_drawMode == DRAWMODE_RAW_CONTOURS)
 	{
 		glDepthMask(GL_FALSE);
-		for (int i = 0; i < m_csetCount; ++i)
-            if(i == m_tile)
-			duDebugDrawRawContours(&dd, *m_cset[i]);
+		duDebugDrawRawContours(&dd, *m_cset);
 		glDepthMask(GL_TRUE);
 	}
 
 	if (m_drawMode == DRAWMODE_BOTH_CONTOURS)
 	{
 		glDepthMask(GL_FALSE);
-		for (int i = 0; i < m_csetCount; ++i)
-            if(i == m_tile)
-		{
-			duDebugDrawRawContours(&dd, *m_cset[i], 0.5f);
-			duDebugDrawContours(&dd, *m_cset[i]);
-		}
+		duDebugDrawRawContours(&dd, *m_cset, 0.5f);
+		duDebugDrawContours(&dd, *m_cset);
 		glDepthMask(GL_TRUE);
 	}
 
 	if (m_drawMode == DRAWMODE_CONTOURS)
 	{
 		glDepthMask(GL_FALSE);
-		for (int i = 0; i < m_csetCount; ++i)
-            if(i == m_tile)
-			duDebugDrawContours(&dd, *m_cset[i]);
+		duDebugDrawContours(&dd, *m_cset);
 		glDepthMask(GL_TRUE);
 	}
 
 	if (m_drawMode == DRAWMODE_REGION_CONNECTIONS)
 	{
-		for (int i = 0; i < m_chfCount; ++i)
-            if(i == m_tile)
-			duDebugDrawCompactHeightfieldRegions(&dd, *m_chf[i]);
+		duDebugDrawCompactHeightfieldRegions(&dd, *m_chf);
 		
 		glDepthMask(GL_FALSE);
-		for (int i = 0; i < m_csetCount; ++i)
-            if(i == m_tile)
-			duDebugDrawRegionConnections(&dd, *m_cset[i]);
+		duDebugDrawRegionConnections(&dd, *m_cset);
 		glDepthMask(GL_TRUE);
 	}
 
 	if (/*m_pmesh &&*/ m_drawMode == DRAWMODE_POLYMESH)
 	{
 		glDepthMask(GL_FALSE);
-        for(int i = 0; i < m_pmeshCount; ++i)
-            if(i == m_tile)
-		    duDebugDrawPolyMesh(&dd, *m_pmeshes[i]);
+		duDebugDrawPolyMesh(&dd, *m_pmeshes);
 		glDepthMask(GL_TRUE);
 	}
 	if (/*m_dmesh &&*/ m_drawMode == DRAWMODE_POLYMESH_DETAIL)
 	{
 		glDepthMask(GL_FALSE);
-        for(int i = 0; i < m_dmeshCount; ++i)
-            if(i == m_tile)
-		    duDebugDrawPolyMeshDetail(&dd, *m_dmeshes[i]);
+		duDebugDrawPolyMeshDetail(&dd, *m_dmeshes);
 		glDepthMask(GL_TRUE);
 	}
 	
@@ -364,18 +334,14 @@ void Sample_Debug::handleStep()
 
 bool Sample_Debug::handleBuild()
 {
-    char sMapID[5];
-    sprintf(sMapID, "%.3s", m_meshName);
-    int mapID = atoi(sMapID);
-
     cleanup();
 
-    duReadNavMesh(mapID, m_navMesh);
-    m_pmeshCount = duReadPolyMesh(mapID, m_pmeshes);
-    m_hfCount = duReadHeightfield(mapID, m_hf);
-    m_chfCount = duReadCompactHeightfield(mapID, m_chf);
-    m_dmeshCount = duReadDetailMesh(mapID, m_dmeshes);
-    m_csetCount = duReadContourSet(mapID, m_cset);
+    duReadNavMesh(m_meshName, m_navMesh);
+    m_pmeshCount = duReadPolyMesh(m_meshName, m_pmeshes);
+    m_hfCount = duReadHeightfield(m_meshName, m_hf);
+    m_chfCount = duReadCompactHeightfield(m_meshName, m_chf);
+    m_dmeshCount = duReadDetailMesh(m_meshName, m_dmeshes);
+    m_csetCount = duReadContourSet(m_meshName, m_cset);
 
     if(m_navMesh)
     {
