@@ -320,9 +320,9 @@ namespace MMAP
                         liquidType = getLiquidType(i, (const uint8 (*)[16])liquid_type);
                         switch(liquidType)
                         {
+                            default:
                             case 0:
-                                // unknown liquid gets no terrain type
-                                liquidType = 0;
+                                useLiquid = false;
                                 break;
                             case MAP_LIQUID_TYPE_WATER:
                             case MAP_LIQUID_TYPE_OCEAN:
