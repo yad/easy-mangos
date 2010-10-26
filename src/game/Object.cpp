@@ -219,7 +219,7 @@ void Object::DestroyForPlayer( Player *target, bool anim ) const
 {
     MANGOS_ASSERT(target);
 
-    WorldPacket data(SMSG_DESTROY_OBJECT, 8);
+    WorldPacket data(SMSG_DESTROY_OBJECT, 9);
     data << GetObjectGuid();
     data << uint8(anim ? 1 : 0);                            // WotLK (bool), may be despawn animation
     target->GetSession()->SendPacket(&data);
@@ -755,21 +755,6 @@ void Object::BuildValuesUpdate(uint8 updatetype, ByteBuffer * data, UpdateMask *
                 }
                 else
                     *data << m_uint32Values[index];         // other cases
-            }
-        }
-    }
-    else if (isType(TYPEMASK_ITEM))
-    {
-        for (uint16 index = 0; index < m_valuesCount; ++index)
-        {
-            if (updateMask->GetBit(index))
-            {
-                uint32 value = m_uint32Values[index];
-
-                if (index == ITEM_FIELD_FLAGS && GetGuidValue(ITEM_FIELD_GIFTCREATOR).IsEmpty())
-                    value &= ~ITEM_FLAGS_HEROIC;
-
-                *data << value;
             }
         }
     }
