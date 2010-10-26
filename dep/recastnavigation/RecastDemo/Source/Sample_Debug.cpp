@@ -43,8 +43,7 @@ Sample_Debug::Sample_Debug() : Sample_SoloMeshTiled(),
     m_chf(0), m_chfCount(0),
     m_cset(0), m_csetCount(0),
     m_pmeshes(0), m_pmeshCount(0),
-    m_dmeshes(0), m_dmeshCount(0),
-    m_tile(0)
+    m_dmeshes(0), m_dmeshCount(0)
 {
 	resetCommonSettings();
 
@@ -58,8 +57,6 @@ Sample_Debug::~Sample_Debug()
 
 void Sample_Debug::cleanup()
 {
-    int i;
-
     rcFreeHeightField(m_hf);
     m_hf = 0;
 
@@ -166,10 +163,6 @@ void Sample_Debug::handleDebugMode()
 		m_drawMode = DRAWMODE_POLYMESH;
 	if (imguiCheck("Poly Mesh Detail", m_drawMode == DRAWMODE_POLYMESH_DETAIL, valid[DRAWMODE_POLYMESH_DETAIL]))
 		m_drawMode = DRAWMODE_POLYMESH_DETAIL;
-
-    float tile = m_tile;
-    imguiSlider("Tile", &tile, 0.f, float(m_pmeshCount - 1), 1.f, true);
-    m_tile = int(tile);
 }
 
 void Sample_Debug::handleRender()

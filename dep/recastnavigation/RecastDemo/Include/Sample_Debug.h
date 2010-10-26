@@ -42,8 +42,6 @@ protected:
     int m_dmeshCount;
     rcPolyMeshDetail* m_dmeshes;
 
-    int m_tile;
-
 	float m_ext[3];
 	float m_center[3];
 	float m_bmin[3], m_bmax[3];
