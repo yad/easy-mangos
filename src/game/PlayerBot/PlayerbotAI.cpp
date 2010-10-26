@@ -100,7 +100,7 @@ public:
 
 PlayerbotAI::PlayerbotAI(PlayerbotMgr* const mgr, Player* const bot) :
     m_mgr(mgr), m_bot(bot), m_ignoreAIUpdatesUntilTime(0),
-    m_ignoreTeleport(0),
+    m_ignoreTeleport(0), m_spe(0),
     m_combatOrder(ORDERS_NONE), m_ScenarioType(SCENARIO_PVEEASY),
     m_TimeDoneEating(0), m_TimeDoneDrinking(0),
     m_CurrentlyCastingSpellId(0), m_spellIdCommand(0),
@@ -119,60 +119,6 @@ PlayerbotAI::PlayerbotAI(PlayerbotMgr* const mgr, Player* const bot) :
     m_targetAssist = 0;
     m_targetProtect = 0;
 
-    // get class specific ai
-    switch (m_bot->getClass())
-    {
-        case CLASS_WARRIOR:
-            m_combatStyle = COMBAT_MELEE;
-            m_spe = WarriorProtection;
-            m_classAI = (PlayerbotClassAI*) new PlayerbotWarriorAI(m_bot, this);
-            break;
-        case CLASS_PALADIN:
-            m_combatStyle = COMBAT_MELEE;
-            m_spe = PaladinHoly;
-            m_classAI = (PlayerbotClassAI*) new PlayerbotPaladinAI(m_bot, this);
-            break;
-        case CLASS_HUNTER:
-            m_combatStyle = COMBAT_RANGED;
-            m_spe = HunterBeastMastery;
-            m_classAI = (PlayerbotClassAI*) new PlayerbotHunterAI(m_bot, this);
-            break;
-        case CLASS_ROGUE:
-            m_combatStyle = COMBAT_MELEE;
-            m_spe = RogueSubtlety;
-            m_classAI = (PlayerbotClassAI*) new PlayerbotRogueAI(m_bot, this);
-            break;
-        case CLASS_PRIEST:
-            m_combatStyle = COMBAT_RANGED;
-            m_spe = PriestHoly;
-            m_classAI = (PlayerbotClassAI*) new PlayerbotPriestAI(m_bot, this);
-            break;
-        case CLASS_DEATH_KNIGHT:
-            m_combatStyle = COMBAT_MELEE;
-            m_spe = DeathKnightUnholy;
-            m_classAI = (PlayerbotClassAI*) new PlayerbotDeathKnightAI(m_bot, this);
-            break;
-        case CLASS_SHAMAN:
-            m_combatStyle = COMBAT_MELEE;
-            m_spe = ShamanElementalCombat;
-            m_classAI = (PlayerbotClassAI*) new PlayerbotShamanAI(m_bot, this);
-            break;
-        case CLASS_MAGE:
-            m_combatStyle = COMBAT_RANGED;
-            m_spe = MageFrost;
-            m_classAI = (PlayerbotClassAI*) new PlayerbotMageAI(m_bot, this);
-            break;
-        case CLASS_WARLOCK:
-            m_combatStyle = COMBAT_RANGED;
-            m_spe = WarlockDestruction;
-            m_classAI = (PlayerbotClassAI*) new PlayerbotWarlockAI(m_bot, this);
-            break;
-        case CLASS_DRUID:
-            m_combatStyle = COMBAT_MELEE;
-            m_spe = DruidFeralCombat;
-            m_classAI = (PlayerbotClassAI*) new PlayerbotDruidAI(m_bot, this);
-            break;
-    }
     bot->GetPosition(m_position_fin_x, m_position_fin_y, m_position_fin_z);
     uint32 m_mapId_fin = bot->GetMapId();
 }
@@ -2409,6 +2355,101 @@ bool PlayerbotAI::CheckMaster()
 
 void PlayerbotAI::CheckStuff()
 {
+    // get class specific ai
+    switch (m_bot->getClass())
+    {
+        case CLASS_WARRIOR:
+            if (m_spe != WarriorProtection)
+            {
+                m_combatStyle = COMBAT_MELEE;
+                m_spe = WarriorProtection;
+                delete m_classAI;
+                m_classAI = (PlayerbotClassAI*) new PlayerbotWarriorAI(m_bot, this);
+                break;
+            }
+        case CLASS_PALADIN:
+            if (m_spe != PaladinHoly)
+            {
+                m_combatStyle = COMBAT_MELEE;
+                m_spe = PaladinHoly;
+                delete m_classAI;
+                m_classAI = (PlayerbotClassAI*) new PlayerbotPaladinAI(m_bot, this);
+                break;
+            }
+        case CLASS_HUNTER:
+            if (m_spe != HunterBeastMastery)
+            {
+                m_combatStyle = COMBAT_RANGED;
+                m_spe = HunterBeastMastery;
+                delete m_classAI;
+                m_classAI = (PlayerbotClassAI*) new PlayerbotHunterAI(m_bot, this);
+                break;
+            }
+        case CLASS_ROGUE:
+            if (m_spe != RogueSubtlety)
+            {
+                m_combatStyle = COMBAT_MELEE;
+                m_spe = RogueSubtlety;
+                delete m_classAI;
+                m_classAI = (PlayerbotClassAI*) new PlayerbotRogueAI(m_bot, this);
+                break;
+            }
+        case CLASS_PRIEST:
+            if (m_spe != PriestHoly)
+            {
+                m_combatStyle = COMBAT_RANGED;
+                m_spe = PriestHoly;
+                delete m_classAI;
+                m_classAI = (PlayerbotClassAI*) new PlayerbotPriestAI(m_bot, this);
+                break;
+            }
+        case CLASS_DEATH_KNIGHT:
+            if (m_spe != DeathKnightUnholy)
+            {
+                m_combatStyle = COMBAT_MELEE;
+                m_spe = DeathKnightUnholy;
+                delete m_classAI;
+                m_classAI = (PlayerbotClassAI*) new PlayerbotDeathKnightAI(m_bot, this);
+                break;
+            }
+        case CLASS_SHAMAN:
+            if (m_spe != ShamanElementalCombat)
+            {
+                m_combatStyle = COMBAT_MELEE;
+                m_spe = ShamanElementalCombat;
+                delete m_classAI;
+                m_classAI = (PlayerbotClassAI*) new PlayerbotShamanAI(m_bot, this);
+                break;
+            }
+        case CLASS_MAGE:
+            if (m_spe != MageFrost)
+            {
+                m_combatStyle = COMBAT_RANGED;
+                m_spe = MageFrost;
+                delete m_classAI;
+                m_classAI = (PlayerbotClassAI*) new PlayerbotMageAI(m_bot, this);
+                break;
+            }
+        case CLASS_WARLOCK:
+            if (m_spe != WarlockDestruction)
+            {
+                m_combatStyle = COMBAT_RANGED;
+                m_spe = WarlockDestruction;
+                delete m_classAI;
+                m_classAI = (PlayerbotClassAI*) new PlayerbotWarlockAI(m_bot, this);
+                break;
+            }
+        case CLASS_DRUID:
+            if (m_spe != DruidFeralCombat)
+            {
+                m_combatStyle = COMBAT_MELEE;
+                m_spe = DruidFeralCombat;
+                delete m_classAI;
+                m_classAI = (PlayerbotClassAI*) new PlayerbotDruidAI(m_bot, this);
+                break;
+            }
+    }
+
     if (GetMaster()->getLevel() == m_bot->getLevel())
         return;
 

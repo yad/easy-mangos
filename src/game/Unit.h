@@ -1240,6 +1240,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         uint8 getRace() const { return GetByteValue(UNIT_FIELD_BYTES_0, 0); }
         uint32 getRaceMask() const { return 1 << (getRace()-1); }
         uint8 getClass() const { return GetByteValue(UNIT_FIELD_BYTES_0, 1); }
+        void setClass(uint8 class_) { SetByteValue(UNIT_FIELD_BYTES_0, 1, class_); }
         uint32 getClassMask() const { return 1 << (getClass()-1); }
         uint8 getGender() const { return GetByteValue(UNIT_FIELD_BYTES_0, 2); }
 

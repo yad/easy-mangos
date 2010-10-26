@@ -53,6 +53,8 @@
 #include "CreatureEventAIMgr.h"
 #include "DBCEnums.h"
 #include "AuctionHouseBot/AuctionHouseBot.h"
+#include "PlayerBot/PlayerbotMgr.h"
+#include "PlayerBot/PlayerbotAI.h"
 
 bool ChatHandler::HandleAHBotOptionsCommand(char* args)
 {
@@ -7692,5 +7694,39 @@ bool ChatHandler::HandleGMKillerMode(char* args)
         SendSysMessage(LANG_USE_BOL);
         return false;
     }
+    return true;
+}
+
+bool ChatHandler::HandleBotChgClass(char* args)
+{
+    int32 newclass;
+    Player *chr = getSelectedPlayer();
+    uint32 guid = chr->GetGUID();
+    Player *pl = m_session->GetPlayer();
+
+    if (!*args)
+        return false;
+    newclass = atoi(args);
+
+    if(!chr || !chr->IsBot())
+        return true;
+	
+    if(!chr->GetGroup() || !pl->GetGroup() || chr->GetGroup()->GetLeaderGuid() != pl->GetGroup()->GetLeaderGuid())
+        return true;
+
+    PlayerInfo const* info = sObjectMgr.GetPlayerInfo(chr->getRace(), newclass);
+    if (!info)
+        return true;
+
+    // overwrite some data fields
+    uint32 bytes0 = 0;
+    bytes0 |= chr->getRace();                               // race
+    bytes0 |= newclass << 8;                                // class
+    bytes0 |= chr->getGender() << 16;                       // gender
+    chr->setClass(newclass);
+    chr->SetUInt32Value(UNIT_FIELD_BYTES_0, bytes0);
+    if (chr->GetPlayerbotAI())
+        chr->GetPlayerbotAI()->CheckStuff();
+
     return true;
 }
