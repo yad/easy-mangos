@@ -229,7 +229,7 @@ int main(int argc, char** argv)
          skipContinents = false,
          skipJunkMaps = false,
          skipBattlegrounds = false,
-         hiResHeightmaps = true,
+         hiResHeightmaps = false,
          debugOutput = false,
          badParam = false;
 

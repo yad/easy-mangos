@@ -54,7 +54,6 @@
     <ClInclude Include="..\..\Include\SlideShow.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\contrib\mmap\src\MMapCommon.h" />
     <ClInclude Include="..\..\Include\Debug.h" />
     <ClInclude Include="..\..\Include\InputGeom.h" />
     <ClInclude Include="..\..\Include\Sample_Debug.h" />

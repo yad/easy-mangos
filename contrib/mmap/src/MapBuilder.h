@@ -69,8 +69,6 @@ namespace MMAP
             void copyIndices(G3D::Array<int> &dest, G3D::Array<int> src, int offset);
             void cleanVertices(G3D::Array<float> &verts, G3D::Array<int> &tris);
 
-            void cleanup();
-
             // move map building
             void buildMoveMap(uint32 mapID);
             void buildNavMesh(uint32 mapID, dtNavMesh* &navMesh);
@@ -104,7 +102,7 @@ namespace MMAP
             void debugWrite(FILE* file, const rcPolyMeshDetail* mesh);
 
             IVMapManager* m_vmapManager;
-            TerrainBuilder* m_tileBuilder;
+            TerrainBuilder* m_terrainBuilder;
 
             TileList m_tiles;
 
