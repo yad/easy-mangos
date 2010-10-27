@@ -7712,18 +7712,33 @@ bool ChatHandler::HandleGMKillerMode(char* args)
 
 bool ChatHandler::HandleBotChgClass(char* args)
 {
-    int32 newclass;
-    Player *chr = getSelectedPlayer();
-    uint32 guid = chr->GetGUID();
-    Player *pl = m_session->GetPlayer();
-
     if (!*args)
         return false;
-    newclass = atoi(args);
+
+    int32 newclass = 0;
+    char* nameStr = NULL;
+    Player* chr;
+
+    nameStr = ExtractOptNotLastArg(&args);
+    if (!ExtractInt32(&args, newclass))
+    {
+        if (!nameStr)
+            nameStr = ExtractArg(&args);
+        else
+            return false;
+    }
+
+    if (newclass == 0)
+        return false;
+
+    if (!ExtractPlayerTarget(&nameStr, &chr))
+        return false;
+
+    Player *pl = m_session->GetPlayer();
 
     if(!chr || !chr->IsBot())
         return true;
-	
+    
     if(!chr->GetGroup() || !pl->GetGroup() || chr->GetGroup()->GetLeaderGuid() != pl->GetGroup()->GetLeaderGuid())
         return true;
 
@@ -7738,8 +7753,8 @@ bool ChatHandler::HandleBotChgClass(char* args)
     bytes0 |= chr->getGender() << 16;                       // gender
     chr->setClass(newclass);
     chr->SetUInt32Value(UNIT_FIELD_BYTES_0, bytes0);
-    if (chr->GetPlayerbotAI())
-        chr->GetPlayerbotAI()->CheckStuff();
+    chr->GiveLevel(chr->getLevel()+1);
+    chr->RemoveAllAuras();
 
     return true;
 }
