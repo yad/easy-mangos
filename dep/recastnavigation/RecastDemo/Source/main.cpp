@@ -52,10 +52,10 @@ Sample* createDebug() { return new Sample_Debug(); }
 
 static SampleItem g_samples[] =
 {
-	//{ createSoloSimple, "Solo Mesh Simple" },
+	{ createSoloSimple, "Test Recast Params" },
 	//{ createSoloTiled, "Solo Mesh Tiled" },
 	//{ createTile, "Tile Mesh" },
-	{ createDebug, "Debug" },
+	{ createDebug, "Debug Generator Navmesh" },
 };
 static const int g_nsamples = sizeof(g_samples)/sizeof(SampleItem); 
 
