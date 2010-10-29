@@ -174,7 +174,7 @@ namespace MMAP
         } while(0);
 
         // build navMesh
-        dtNavMesh* navMesh = 0;
+        dtNavMesh* navMesh = NULL;
         buildNavMesh(mapID, navMesh);
         if(!navMesh)
         {
@@ -284,7 +284,7 @@ namespace MMAP
         }
 
         // build navMesh
-        dtNavMesh* navMesh = 0;
+        dtNavMesh* navMesh = NULL;
         buildNavMesh(mapID, navMesh);
         if(!navMesh)
         {
@@ -357,7 +357,7 @@ namespace MMAP
         if (result == VMAP_LOAD_RESULT_ERROR)
             return false;
 
-        ModelInstance* models = 0;
+        ModelInstance* models = NULL;
         uint32 count = 0;
 
         InstanceTreeMap instanceTrees;
@@ -810,7 +810,7 @@ namespace MMAP
             params.tileSize = config.tileSize;
 
             // will hold final navmesh
-            unsigned char* navData = 0;
+            unsigned char* navData = NULL;
             int navDataSize = 0;
 
             // these values are checked within dtCreateNavMeshData - handle them here
@@ -913,12 +913,12 @@ namespace MMAP
 
     void MapBuilder::initIntermediateValues(IntermediateValues &iv)
     {
-        iv.compactHeightfield = 0;
-        iv.heightfield = 0;
-        iv.triFlags = 0;
-        iv.contours = 0;
-        iv.polyMesh = 0;
-        iv.polyMeshDetail = 0;
+        iv.compactHeightfield = NULL;
+        iv.heightfield = NULL;
+        iv.triFlags = NULL;
+        iv.contours = NULL;
+        iv.polyMesh = NULL;
+        iv.polyMeshDetail = NULL;
     }
 
     void MapBuilder::clearIntermediateValues(IntermediateValues &iv)

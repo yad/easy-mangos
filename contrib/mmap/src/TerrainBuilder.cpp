@@ -106,7 +106,9 @@ namespace MMAP
 
         // data used later
         uint16 holes[16][16];
-        uint8* liquid_type = 0;
+        memset(holes, 0, sizeof(holes));
+        uint8 liquid_type[16][16];
+        memset(liquid_type, 0, sizeof(liquid_type));
         G3D::Array<int> ltriangles;
         G3D::Array<int> ttriangles;
 
@@ -209,10 +211,8 @@ namespace MMAP
                 float* liquid_map = 0;
 
                 if (!(lheader.flags & MAP_LIQUID_NO_TYPE))
-                {
-                    liquid_type = new uint8 [16*16];
-                    fread(liquid_type, sizeof(uint8), 16*16, mapFile);
-                }
+                    fread(liquid_type, sizeof(liquid_type), 1, mapFile);
+
                 if (!(lheader.flags & MAP_LIQUID_NO_HEIGHT))
                 {
                     liquid_map = new float [lheader.width*lheader.height];
@@ -317,11 +317,10 @@ namespace MMAP
                         useLiquid = false;
                     else
                     {
-                        liquidType = getLiquidType(i, (const uint8 (*)[16])liquid_type);
+                        liquidType = getLiquidType(i, liquid_type);
                         switch(liquidType)
                         {
                             default:
-                            case 0:
                                 useLiquid = false;
                                 break;
                             case MAP_LIQUID_TYPE_WATER:
@@ -408,8 +407,6 @@ namespace MMAP
                 }
             }
         }
-
-        delete [] liquid_type;
 
         return true;
     }
