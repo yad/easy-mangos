@@ -87,12 +87,9 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner, bool upd
     //timer.elapsed_microseconds(elapsed);
     //sLog.outDebug("Path found in %llu microseconds", elapsed);
 
-    // we need to evade - evade code must be called from outside movement master
+    // nothing we can do here ...
     if(i_path->getPathType() & PATHFIND_NOPATH)
-    {
-        owner.evadeWhenCan();
         return;
-    }
 
     PointPath pointPath = i_path->getFullPath();
 
@@ -190,6 +187,9 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
         return true;
     }
 
+    if(i_path && (i_path->getPathType() & PATHFIND_NOPATH))
+        return true;
+
     Traveller<T> traveller(owner);
 
     if (!i_destinationHolder.HasDestination())
@@ -204,12 +204,11 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
         if (owner.GetObjectBoundingRadius())
             i_destinationHolder.ResetUpdate(100);
 
-         //More distance let have better performance, less distance let have more sensitive reaction at target move.
+        //More distance let have better performance, less distance let have more sensitive reaction at target move.
         float dist = i_target->GetObjectBoundingRadius() + owner.GetObjectBoundingRadius() + sWorld.getConfig(CONFIG_FLOAT_RATE_TARGET_POS_RECALCULATION_RANGE);
 
         float x,y,z;
         i_target->GetPosition(x, y, z);
-        PathNode target_point(x, y, z);
         PathNode next_point(x, y, z);
 
         bool targetMoved = false, needNewDest = false;
@@ -217,23 +216,6 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
         {
             PathNode end_point = i_path->getEndPosition();
             next_point = i_path->getNextPosition();
-
-            // check if we cannot hit the target while we are at the end of the path
-            // if so, evade after EVADE_TIME
-            if(i_destinationHolder.HasArrived()
-                && inRange(next_point, i_path->getActualEndPosition(), dist, dist)
-                && ((i_path->getPathType() & PATHFIND_INCOMPLETE)
-                        || !inRange(end_point, target_point, 2*dist, dist + CREATURE_Z_ATTACK_RANGE))
-                )
-            {
-                if (i_evade_timer < time_diff)
-                {
-                    owner.evadeWhenCan();
-                    return true;
-                }
-                else i_evade_timer -= time_diff;
-            }
-            else i_evade_timer = EVADE_TIME;
 
             needNewDest = i_destinationHolder.HasArrived() && !inRange(next_point, i_path->getActualEndPosition(), dist, 2*dist);
 

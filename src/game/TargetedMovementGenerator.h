@@ -25,8 +25,6 @@
 #include "FollowerReference.h"
 #include "PathFinder.h"
 
-#define EVADE_TIME 2000 // in ms
-
 class MANGOS_DLL_SPEC TargetedMovementGeneratorBase
 {
     public:
@@ -43,13 +41,13 @@ class MANGOS_DLL_SPEC TargetedMovementGeneratorMedium
     protected:
         TargetedMovementGeneratorMedium()
             : TargetedMovementGeneratorBase(), i_offset(0), i_angle(0), i_recalculateTravel(false),
-                i_path(NULL), m_pathPointsSent(0), i_evade_timer(EVADE_TIME) {}
+                i_path(NULL), m_pathPointsSent(0) {}
         TargetedMovementGeneratorMedium(Unit &target)
             : TargetedMovementGeneratorBase(target), i_offset(0), i_angle(0), i_recalculateTravel(false),
-                i_path(NULL), m_pathPointsSent(0), i_evade_timer(EVADE_TIME) {}
+                i_path(NULL), m_pathPointsSent(0) {}
         TargetedMovementGeneratorMedium(Unit &target, float offset, float angle)
             : TargetedMovementGeneratorBase(target), i_offset(offset), i_angle(angle), i_recalculateTravel(false),
-                i_path(NULL), m_pathPointsSent(0), i_evade_timer(EVADE_TIME) {}
+                i_path(NULL), m_pathPointsSent(0) {}
         ~TargetedMovementGeneratorMedium() { delete i_path; }
 
     public:
@@ -62,6 +60,11 @@ class MANGOS_DLL_SPEC TargetedMovementGeneratorMedium
             if(!i_destinationHolder.HasDestination()) return false;
             i_destinationHolder.GetDestination(x,y,z);
             return true;
+        }
+
+        bool IsReachable() const
+        {
+            return (i_path) ? (i_path->getPathType() & PATHFIND_NORMAL) : true;
         }
 
         void unitSpeedChanged() { i_recalculateTravel=true; }
@@ -77,8 +80,6 @@ class MANGOS_DLL_SPEC TargetedMovementGeneratorMedium
 
         PathInfo* i_path;
         uint32 m_pathPointsSent;
-
-        uint32 i_evade_timer;
 };
 
 template<class T>
