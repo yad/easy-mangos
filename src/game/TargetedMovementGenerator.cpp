@@ -78,10 +78,11 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner)
     //ACE_hrtime_t elapsed;
     //timer.start();
 
+    bool newPathCalculated = true;
     if(!i_path)
         i_path = new PathInfo(&owner, x, y, z);
     else
-        i_path->Update(x, y, z);
+        newPathCalculated = i_path->Update(x, y, z);
 
     //timer.stop();
     //timer.elapsed_microseconds(elapsed);
@@ -93,9 +94,6 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner)
 
     PointPath pointPath = i_path->getFullPath();
 
-    // get current dest node's index
-    uint32 startIndex = i_path->getPathPointer();
-
     if (i_destinationHolder.HasArrived() && m_pathPointsSent)
         --m_pathPointsSent;
 
@@ -104,26 +102,26 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner)
     i_destinationHolder.SetDestination(traveller, x, y, z, false);
 
     // send the path if:
+    //    we have brand new path
     //    we have visited almost all of the previously sent points
-    //    the path appears to be new
     //    movespeed has changed
     //    the owner is stopped
-    if (m_pathPointsSent < 2 || startIndex == 1 || i_recalculateTravel || owner.IsStopped())
+    if (newPathCalculated || m_pathPointsSent < 2 || i_recalculateTravel || owner.IsStopped())
     {
         // send 10 nodes, or send all nodes if there are less than 10 left
-        m_pathPointsSent = std::min<uint32>(10, pointPath.size() - startIndex);
-        uint32 endIndex = m_pathPointsSent + startIndex;
+        m_pathPointsSent = std::min<uint32>(10, pointPath.size() - 1);
+        uint32 endIndex = m_pathPointsSent + 1;
 
         // dist to next node + world-unit length of the path
         x -= owner.GetPositionX();
         y -= owner.GetPositionY();
         z -= owner.GetPositionZ();
-        float dist = sqrt(x*x + y*y + z*z) + pointPath.GetTotalLength(startIndex, endIndex);
+        float dist = sqrt(x*x + y*y + z*z) + pointPath.GetTotalLength(1, endIndex);
 
         // calculate travel time, set spline, then send path
         uint32 traveltime = uint32(dist / (traveller.Speed()*0.001f));
         SplineFlags flags = (owner.GetTypeId() == TYPEID_UNIT) ? ((Creature*)&owner)->GetSplineFlags() : SPLINEFLAG_WALKMODE;
-        owner.SendMonsterMoveByPath(pointPath, startIndex, endIndex, flags, traveltime);
+        owner.SendMonsterMoveByPath(pointPath, 1, endIndex, flags, traveltime);
     }
 
     D::_addUnitStateMove(owner);

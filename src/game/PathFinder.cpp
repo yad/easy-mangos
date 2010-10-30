@@ -23,7 +23,7 @@
 
 ////////////////// PathInfo //////////////////
 PathInfo::PathInfo(const WorldObject* from, const float destX, const float destY, const float destZ, bool useStraightPath) :
-    m_pathPolyRefs(NULL), m_polyLength(0), m_pointPathPointer(0), m_type(PATHFIND_BLANK), m_useStraightPath(useStraightPath),
+    m_pathPolyRefs(NULL), m_polyLength(0), m_type(PATHFIND_BLANK), m_useStraightPath(useStraightPath),
     m_sourceObject(from), m_navMesh(NULL), m_navMeshQuery(NULL)
 {
     PathNode endPoint(destX, destY, destZ);
@@ -61,7 +61,7 @@ PathInfo::~PathInfo()
         dtFreeNavMeshQuery(m_navMeshQuery);
 }
 
-void PathInfo::Update(const float destX, const float destY, const float destZ, bool useStraightPath)
+bool PathInfo::Update(const float destX, const float destY, const float destZ, bool useStraightPath)
 {
     PathNode newDest(destX, destY, destZ);
     PathNode oldDest = getEndPosition();
@@ -82,33 +82,34 @@ void PathInfo::Update(const float destX, const float destY, const float destZ, b
     {
         BuildShortcut();
         m_type = PathType(PATHFIND_NORMAL | PATHFIND_NOT_USING_PATH);
-        return;
+        return true;
     }
 
-    float dist = 2*m_sourceObject->GetObjectBoundingRadius();
+    float dist = m_sourceObject->GetObjectBoundingRadius();
     bool oldDestInRange = inRange(oldDest, newDest, dist, dist);
 
     // this can happen only if caller did a bad job calculating the need for path update
     if(oldDestInRange && inRange(newStart, oldStart, dist, dist))
-        return;
+        return false;
 
     // check if destination moved - if not we can optimize something here
     // we are following old, precalculated path?
-    if(oldDestInRange && m_pathPoints.size() > 2 && m_pointPathPointer + 1 < m_pathPoints.size())
+    if(oldDestInRange && m_pathPoints.size() > 2)
     {
         // our target is not moving - we just coming closer
-        // increment pointPathPointer to the next point in the path
-        m_pointPathPointer++;
-
         // we are moving on precalculated path - enjoy the ride
         PATH_DEBUG("++ PathInfo::Update:: precalculated path\n");
-        setNextPosition(m_pathPoints[m_pointPathPointer]);
+
+        m_pathPoints.crop(1, 0);
+        setNextPosition(m_pathPoints[1]);
+
+        return false;
     }
     else
     {
         // target moved, so we need to update the poly path
-        m_pointPathPointer = 0;
         BuildPolyPath(newStart, newDest);
+        return true;
     }
 }
 
@@ -164,7 +165,7 @@ void PathInfo::BuildPolyPath(PathNode startPos, PathNode endPos)
     // use huge vertical range here
     if(startPoly == INVALID_POLYREF || endPoly == INVALID_POLYREF)
     {
-        float extents[VERTEX_SIZE] = {3.f, 500.f, 3.f};    // bounds of poly search area
+        float extents[VERTEX_SIZE] = {3.f, 200.f, 3.f};    // bounds of poly search area
         dtQueryFilter filter = dtQueryFilter();            // filter for poly search
         float closestPoint[VERTEX_SIZE];
 
@@ -446,7 +447,6 @@ void PathInfo::BuildPointPath(float *startPoint, float *endPoint)
 
     // first point is always our current location - we need the next one
     setNextPosition(m_pathPoints[1]);
-    m_pointPathPointer = 1;
 
     PATH_DEBUG("++ PathInfo::BuildPointPath path type %d size %d poly-size %d\n", m_type, pointCount, m_polyLength);
 }
@@ -463,8 +463,6 @@ void PathInfo::BuildShortcut()
     m_pathPoints.set(1, getActualEndPosition());
 
     setNextPosition(getActualEndPosition());
-    m_pointPathPointer = 1;
-
     m_type = PATHFIND_SHORTCUT;
 }
 

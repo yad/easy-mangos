@@ -76,7 +76,8 @@ class PathInfo
         PathInfo(const WorldObject* from, const float destX, const float destY, const float destZ, bool useStraightPath = false);
         ~PathInfo();
 
-        void Update(const float destX, const float destY, const float destZ, bool useStraightPath = false);
+        // return value : true if new path was calculated
+        bool Update(const float destX, const float destY, const float destZ, bool useStraightPath = false);
 
         inline void getStartPosition(float &x, float &y, float &z) { x = m_startPosition.x; y = m_startPosition.y; z = m_startPosition.z; }
         inline void getNextPosition(float &x, float &y, float &z) { x = m_nextPosition.x; y = m_nextPosition.y; z = m_nextPosition.z; }
@@ -88,7 +89,6 @@ class PathInfo
         inline PathNode getEndPosition() { return m_endPosition; }
         inline PathNode getActualEndPosition() { return m_actualEndPosition; }
 
-        inline uint32 getPathPointer() { return m_pointPathPointer == 0 ? 1 : m_pointPathPointer; }
         inline PointPath& getFullPath() { return m_pathPoints; }
         inline PathType getPathType() {return m_type;}
 
@@ -98,8 +98,6 @@ class PathInfo
         uint32          m_polyLength;       // number of polygons in the path
 
         PointPath       m_pathPoints;       // our actual (x,y,z) path to the target
-        uint32          m_pointPathPointer; // points to current triple in m_pathPoints - used when dest do not change
-                                            // the triple is the one that is currently being moved toward
         PathType        m_type;             // tells what kind of path this is
 
         bool            m_useStraightPath;  // type of path will be generated
@@ -122,11 +120,9 @@ class PathInfo
         {
             delete [] m_pathPolyRefs;
             m_pathPolyRefs = NULL;
-
             m_polyLength = 0;
 
             m_pathPoints.clear();
-            m_pointPathPointer = 0;
         }
 
         dtPolyRef getPathPolyByPosition(PathNode p, float &distance);
