@@ -58,7 +58,7 @@ namespace MMAP
             set<uint32>* getTileList(uint32 mapID);
 
             // load and unload models
-            bool loadVMap(uint32 mapID, uint32 tileX, uint32 tileY, G3D::Array<float> &modelVerts, G3D::Array<int> &modelTris);
+            bool loadVMap(uint32 mapID, uint32 tileX, uint32 tileY, MeshData &meshData);
             void unloadVMap(uint32 mapID, uint32 tileX, uint32 tileY);
 
             // vert and triangle methods

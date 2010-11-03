@@ -66,6 +66,10 @@ namespace VMAP
             uint32 iType;    //!< liquid type
             float *iHeight;  //!< (tilesX + 1)*(tilesY + 1) height values
             uint8 *iFlags;   //!< info if liquid tile is used
+#ifdef MMAP_GENERATOR
+        public:
+            void getPosInfo(uint32 &tilesX, uint32 &tilesY, Vector3 &corner) const;
+#endif
     };
 
     /*! holding additional info for WMO group files */
@@ -101,7 +105,7 @@ namespace VMAP
 
 #ifdef MMAP_GENERATOR
         public:
-            void getMeshData(std::vector<Vector3> &vertices, std::vector<MeshTriangle> &triangles);
+            void getMeshData(std::vector<Vector3> &vertices, std::vector<MeshTriangle> &triangles, WmoLiquid* &liquid);
 #endif
     };
     /*! Holds a model (converted M2 or WMO) in its original coordinate space */

@@ -141,23 +141,25 @@ namespace MMAP
 
         // vars that are used in multiple locations...
         uint32 i, j, tileX, tileY;
-        float bmin[3], bmax[3];
+        float bmin[3], bmax[3], lmin[3], lmax[3];
 
         // scope the model data arrays
         do
         {
-            G3D::Array<float> modelVerts;
-            G3D::Array<int> modelTris;
+            MeshData meshData;
 
             // make sure we process maps which don't have tiles
             if(!tiles->size())
             {
                 // initialize the static tree, which loads WDT models
-                if (!loadVMap(mapID, 64, 64, modelVerts, modelTris) || !modelVerts.size())
+                if (!loadVMap(mapID, 64, 64, meshData) || !(meshData.solidVerts.size() && meshData.liquidVerts.size()))
                     break;
 
                 // get the coord bounds of the model data
-                rcCalcBounds(modelVerts.getCArray(), modelVerts.size() / 3, bmin, bmax);
+                rcCalcBounds(meshData.solidVerts.getCArray(), meshData.solidVerts.size() / 3, bmin, bmax);
+                rcCalcBounds(meshData.liquidVerts.getCArray(), meshData.liquidVerts.size() / 3, lmin, lmax);
+                rcVmin(bmin, lmin);
+                rcVmax(bmax, lmax);
 
                 // convert coord bounds to grid bounds
                 uint32 minX, minY, maxX, maxY;
@@ -207,7 +209,7 @@ namespace MMAP
 
             // get model data
             printf("%sLoading models...                              \r", tileString);
-            loadVMap(mapID, tileY, tileX, meshData.solidVerts, meshData.solidTris);
+            loadVMap(mapID, tileY, tileX, meshData);
             unloadVMap(mapID, tileY, tileX);
 
             // we only want tiles that people can actually walk on
@@ -255,19 +257,21 @@ namespace MMAP
     void MapBuilder::buildTile(uint32 mapID, uint32 tileX, uint32 tileY)
     {
         printf("Building map %03u, tile [%02u,%02u]\n", mapID, tileX, tileY);
-
-        float bmin[3], bmax[3];
-        G3D::Array<float> modelVerts;
-        G3D::Array<int> modelTris;
+        
+        float bmin[3], bmax[3], lmin[3], lmax[3];
+        MeshData meshData;
 
         // make sure we process maps which don't have tiles
         // initialize the static tree, which loads WDT models
-        loadVMap(mapID, 64, 64, modelVerts, modelTris);
+        loadVMap(mapID, 64, 64, meshData);
 
         // get the coord bounds of the model data
-        if(modelVerts.size())
+        if(meshData.solidVerts.size() || meshData.liquidVerts.size())
         {
-            rcCalcBounds(modelVerts.getCArray(), modelVerts.size() / 3, bmin, bmax);
+            rcCalcBounds(meshData.solidVerts.getCArray(), meshData.solidVerts.size() / 3, bmin, bmax);
+            rcCalcBounds(meshData.liquidVerts.getCArray(), meshData.liquidVerts.size() / 3, lmin, lmax);
+            rcVmin(bmin, lmin);
+            rcVmax(bmax, lmax);
 
             // convert coord bounds to grid bounds
             uint32 minX, minY, maxX, maxY;
@@ -308,7 +312,7 @@ namespace MMAP
 
             // get model data
             printf("%sLoading models...                              \r", tileString);
-            loadVMap(mapID, tileY, tileX, meshData.solidVerts, meshData.solidTris);
+            loadVMap(mapID, tileY, tileX, meshData);
             unloadVMap(mapID, tileY, tileX);
 
             // if there is no data, give up now
@@ -350,7 +354,7 @@ namespace MMAP
         printf("%sComplete!                                      \n\n", tileString);
     }
 
-    bool MapBuilder::loadVMap(uint32 mapID, uint32 tileX, uint32 tileY, G3D::Array<float> &modelVertices, G3D::Array<int> &modelTriangles)
+    bool MapBuilder::loadVMap(uint32 mapID, uint32 tileX, uint32 tileY, MeshData &meshData)
     {
         VMAPLoadResult result = m_vmapManager->loadMap("vmaps", mapID, tileX, tileY);
 
@@ -399,15 +403,95 @@ namespace MMAP
                 vector<Vector3> tempVertices;
                 vector<Vector3> transformedVertices;
                 vector<MeshTriangle> tempTriangles;
+                WmoLiquid* liquid = NULL;
 
-                (*it).getMeshData(tempVertices, tempTriangles);
+                (*it).getMeshData(tempVertices, tempTriangles, liquid);
 
+                // first handle collision mesh
                 transform(tempVertices, transformedVertices, scale, rotation, position);
 
-                int offset = modelVertices.size() / 3;
+                int offset = meshData.solidVerts.size() / 3;
 
-                copyVertices(transformedVertices, modelVertices);
-                copyIndices(tempTriangles, modelTriangles, offset, isM2);
+                copyVertices(transformedVertices, meshData.solidVerts);
+                copyIndices(tempTriangles, meshData.solidTris, offset, isM2);
+
+                // now handle liquid data
+                if (liquid)
+                {
+                    vector<Vector3> liqVerts;
+                    vector<int> liqTris;
+                    uint32 tilesX, tilesY, vertsX, vertsY;
+                    Vector3 corner;
+                    liquid->getPosInfo(tilesX, tilesY, corner);
+                    vertsX = tilesX + 1;
+                    vertsY = tilesY + 1;
+                    uint8* flags = liquid->GetFlagsStorage();
+                    float* data = liquid->GetHeightStorage();
+                    uint8 type;
+
+                    // convert liquid type to NavTerrain
+                    switch (liquid->GetType())
+                    {
+                        case 0:
+                        case 1:
+                            type = NAV_WATER;
+                            break;
+                        case 2:
+                            type = NAV_MAGMA;
+                            break;
+                        case 3:
+                            type = NAV_SLIME;
+                            break;
+                    }
+
+                    // indexing is weird...
+                    // after a lot of trial and error, this is what works:
+                    // vertex = y*vertsX+x
+                    // tile   = x*tilesY+y
+                    // flag   = y*tilesY+x
+
+                    Vector3 vert;
+                    for (uint32 x = 0; x < vertsX; ++x)
+                        for (uint32 y = 0; y < vertsY; ++y)
+                        {
+                            vert = Vector3(corner.x + x * GRID_PART_SIZE, corner.y + y * GRID_PART_SIZE, data[y*vertsX + x]);
+                            vert = vert * rotation * scale + position;
+                            vert.x *= -1.f;
+                            vert.y *= -1.f;
+                            liqVerts.push_back(vert);
+                        }
+
+                    int idx1, idx2, idx3, idx4;
+                    uint32 square;
+                    for (uint32 x = 0; x < tilesX; ++x)
+                        for (uint32 y = 0; y < tilesY; ++y)
+                            if ((flags[x+y*tilesX] & 0x0f) != 0x0f)
+                            {
+                                square = x * tilesY + y;
+                                idx1 = square+x;
+                                idx2 = square+1+x;
+                                idx3 = square+tilesY+1+1+x;
+                                idx4 = square+tilesY+1+x;
+
+                                // top triangle
+                                liqTris.push_back(idx3);
+                                liqTris.push_back(idx2);
+                                liqTris.push_back(idx1);
+                                // bottom triangle
+                                liqTris.push_back(idx4);
+                                liqTris.push_back(idx3);
+                                liqTris.push_back(idx1);
+                            }
+
+                    uint32 liqOffset = meshData.liquidVerts.size() / 3;
+                    for (uint32 i = 0; i < liqVerts.size(); ++i)
+                        meshData.liquidVerts.append(liqVerts[i].y, liqVerts[i].z, liqVerts[i].x);
+                    for (uint32 i = 0; i < liqTris.size() / 3; ++i)
+                    {
+                        meshData.liquidTris.append(liqTris[i*3+1] + liqOffset, liqTris[i*3+2] + liqOffset, liqTris[i*3] + liqOffset);
+                        meshData.liquidType.append(type);
+                    }
+                }
             }
         }
 
