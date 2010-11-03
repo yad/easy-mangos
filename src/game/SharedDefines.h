@@ -275,9 +275,9 @@ const uint32 ItemQualityColors[MAX_ITEM_QUALITY] = {
 #define SPELL_ATTR_EX_UNK17                       0x00020000            // 17 for auras SPELL_AURA_TRACK_CREATURES, SPELL_AURA_TRACK_RESOURCES and SPELL_AURA_TRACK_STEALTHED select non-stacking tracking spells
 #define SPELL_ATTR_EX_UNK18                       0x00040000            // 18
 #define SPELL_ATTR_EX_UNK19                       0x00080000            // 19
-#define SPELL_ATTR_EX_REQ_COMBO_POINTS1           0x00100000            // 20 Req combo points on target
+#define SPELL_ATTR_EX_REQ_TARGET_COMBO_POINTS     0x00100000            // 20 Req combo points on target
 #define SPELL_ATTR_EX_UNK21                       0x00200000            // 21
-#define SPELL_ATTR_EX_REQ_COMBO_POINTS2           0x00400000            // 22 Req combo points on target
+#define SPELL_ATTR_EX_REQ_COMBO_POINTS            0x00400000            // 22 Use combo points (in 4.x not required combo point target selected)
 #define SPELL_ATTR_EX_UNK23                       0x00800000            // 23
 #define SPELL_ATTR_EX_UNK24                       0x01000000            // 24 Req fishing pole??
 #define SPELL_ATTR_EX_UNK25                       0x02000000            // 25
@@ -1217,6 +1217,14 @@ enum GameObjectFlags
     GO_FLAG_UNK_9           = 0x00000100,                   //? Seen on type 33, possible meaning "destruct in progress"
     GO_FLAG_UNK_10          = 0x00000200,                   //? Seen on type 33
     GO_FLAG_UNK_11          = 0x00000400                    //? Seen on type 33, possibly meaning "destructed"
+};
+
+enum GameObjectDynamicLowFlags
+{
+    GO_DYNFLAG_LO_ACTIVATE          = 0x01,                 // enables interaction with GO
+    GO_DYNFLAG_LO_ANIMATE           = 0x02,                 // possibly more distinct animation of GO
+    GO_DYNFLAG_LO_NO_INTERACT       = 0x04,                 // appears to disable interaction (not fully verified)
+    GO_DYNFLAG_LO_SPARKLE           = 0x08,                 // makes GO sparkle
 };
 
 enum TextEmotes

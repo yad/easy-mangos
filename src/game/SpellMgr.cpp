@@ -637,6 +637,8 @@ bool IsPositiveEffect(uint32 spellId, SpellEffectIndex effIndex)
             {
                 case 28441:                                 // AB Effect 000
                     return false;
+                case 54530:                                 // Opening
+                    return true;
                 default:
                     break;
             }
@@ -685,6 +687,7 @@ bool IsPositiveEffect(uint32 spellId, SpellEffectIndex effIndex)
                 case SPELL_AURA_MOD_DAMAGE_DONE:            // dependent from base point sign (negative -> negative)
                 case SPELL_AURA_MOD_STAT:
                 case SPELL_AURA_MOD_SKILL:
+                case SPELL_AURA_MOD_DODGE_PERCENT:
                 case SPELL_AURA_MOD_HEALING_PCT:
                 case SPELL_AURA_MOD_HEALING_DONE:
                     if(spellproto->CalculateSimpleValue(effIndex) < 0)
@@ -2443,9 +2446,8 @@ void SpellMgr::LoadSpellChains()
                 continue;
 
             // some forward spells still exist but excluded from real use as ranks and not listed in skill abilities now
-            SkillLineAbilityMap::const_iterator forward_ab_low = mSkillLineAbilityMap.lower_bound(forward_id);
-            SkillLineAbilityMap::const_iterator forward_ab_up  = mSkillLineAbilityMap.upper_bound(forward_id);
-            if (forward_ab_low == forward_ab_up)
+            SkillLineAbilityMapBounds bounds = mSkillLineAbilityMap.equal_range(forward_id);
+            if (bounds.first == bounds.second)
                 continue;
 
             // spell already listed in chains store
@@ -2639,11 +2641,11 @@ void SpellMgr::LoadSpellChains()
         {
             bool skip = false;
             // some forward spells still exist but excluded from real use as ranks and not listed in skill abilities now
-            SkillLineAbilityMap::const_iterator forward_ab_low = mSkillLineAbilityMap.lower_bound(spell_id);
-            SkillLineAbilityMap::const_iterator forward_ab_up  = mSkillLineAbilityMap.upper_bound(spell_id);
-            if (forward_ab_low == forward_ab_up)
+            SkillLineAbilityMapBounds bounds = mSkillLineAbilityMap.equal_range(spell_id);
+            if (bounds.first == bounds.second)
             {
-                for(SkillLineAbilityMap::const_iterator ab_itr = mSkillLineAbilityMap.lower_bound(node.prev); ab_itr != mSkillLineAbilityMap.upper_bound(node.prev); ++ab_itr)
+                SkillLineAbilityMapBounds prev_bounds = mSkillLineAbilityMap.equal_range(node.prev);
+                for(SkillLineAbilityMap::const_iterator ab_itr = prev_bounds.first; ab_itr != prev_bounds.second; ++ab_itr)
                 {
                     // spell listed as forward and not listed as ability
                     // this is marker for removed ranks

@@ -42,8 +42,6 @@
 
 #define MAX_STEALTH_DETECT_RANGE    45.0f
 
-uint32 GuidHigh2TypeId(uint32 guid_hi);
-
 enum TempSummonType
 {
     TEMPSUMMON_TIMED_OR_DEAD_DESPAWN       = 1,             // despawns after a specified time OR when the creature disappears
@@ -225,6 +223,9 @@ class MANGOS_DLL_SPEC Object
         void SetByteFlag( uint16 index, uint8 offset, uint8 newFlag );
         void RemoveByteFlag( uint16 index, uint8 offset, uint8 newFlag );
 
+        void SetShortFlag(uint16 index, bool highpart, uint16 newFlag);
+        void RemoveShortFlag(uint16 index, bool highpart, uint16 oldFlag);
+
         void ToggleFlag( uint16 index, uint8 offset, uint8 flag )
         {
             if(HasByteFlag(index, offset, flag))
@@ -286,8 +287,8 @@ class MANGOS_DLL_SPEC Object
 
         void InitValues() { _InitValues(); }
 
-        virtual bool hasQuest(uint32 /* quest_id */) const { return false; }
-        virtual bool hasInvolvedQuest(uint32 /* quest_id */) const { return false; }
+        virtual bool HasQuest(uint32 /* quest_id */) const { return false; }
+        virtual bool HasInvolvedQuest(uint32 /* quest_id */) const { return false; }
     protected:
 
         Object ( );
@@ -341,7 +342,7 @@ class MANGOS_DLL_SPEC WorldObject : public Object
     public:
         virtual ~WorldObject ( ) {}
 
-        virtual void Update ( uint32 /*time_diff*/ ) { }
+        void UpdateCall(uint32 newtime, uint32 diff);       // tick time and tick diff in msecs, must be called instead direct call Update
 
         void _Create( uint32 guidlow, HighGuid guidhigh, uint32 phaseMask);
 
@@ -493,8 +494,11 @@ class MANGOS_DLL_SPEC WorldObject : public Object
         bool isActiveObject() const { return m_isActiveObject || m_viewPoint.hasViewers(); }
 
         ViewPoint& GetViewPoint() { return m_viewPoint; }
+
     protected:
         explicit WorldObject();
+
+        virtual void Update(uint32 /*update_diff*/, uint32 /*tick_diff*/) { }
 
         //these functions are used mostly for Relocate() and Corpse/Player specific stuff...
         //use them ONLY in LoadFromDB()/Create() funcs and nowhere else!
@@ -518,6 +522,8 @@ class MANGOS_DLL_SPEC WorldObject : public Object
         float m_orientation;
 
         ViewPoint m_viewPoint;
+
+        uint32 m_lastUpdateTime;
 };
 
 #endif

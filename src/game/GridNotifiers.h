@@ -61,13 +61,14 @@ namespace MaNGOS
     struct MANGOS_DLL_DECL GridUpdater
     {
         GridType &i_grid;
+        uint32 i_time;
         uint32 i_timeDiff;
-        GridUpdater(GridType &grid, uint32 diff) : i_grid(grid), i_timeDiff(diff) {}
+        GridUpdater(GridType &grid, uint32 time_, uint32 diff) : i_grid(grid), i_time(time_), i_timeDiff(diff) {}
 
         template<class T> void updateObjects(GridRefManager<T> &m)
         {
             for(typename GridRefManager<T>::iterator iter = m.begin(); iter != m.end(); ++iter)
-                iter->getSource()->Update(i_timeDiff);
+                iter->getSource()->UpdateCall(i_time, i_timeDiff);
         }
 
         void Visit(PlayerMapType &m) { updateObjects<Player>(m); }
@@ -136,8 +137,9 @@ namespace MaNGOS
 
     struct MANGOS_DLL_DECL ObjectUpdater
     {
-        uint32 i_timeDiff;
-        explicit ObjectUpdater(const uint32 &diff) : i_timeDiff(diff) {}
+        uint32 i_time;                                      // current tick time in msecs 
+        uint32 i_diff;                                      // current tick time diff in msecs 
+        explicit ObjectUpdater(uint32 time_, uint32 diff) : i_time(time_), i_diff(diff) {}
         template<class T> void Visit(GridRefManager<T> &m);
         void Visit(PlayerMapType &) {}
         void Visit(CorpseMapType &) {}
@@ -150,7 +152,6 @@ namespace MaNGOS
         Player &i_player;
         PlayerRelocationNotifier(Player &pl) : i_player(pl) {}
         template<class T> void Visit(GridRefManager<T> &) {}
-        void Visit(PlayerMapType &);
         void Visit(CreatureMapType &);
     };
 
@@ -554,7 +555,7 @@ namespace MaNGOS
             bool operator()(Creature* u)
             {
                 if (i_fobj->isHonorOrXPTarget(u) ||
-                    u->getDeathState() != CORPSE || u->isDeadByDefault() || u->IsTaxiFlying() ||
+                    u->getDeathState() != CORPSE || u->IsDeadByDefault() || u->IsTaxiFlying() ||
                     ( u->GetCreatureTypeMask() & (1 << (CREATURE_TYPE_HUMANOID-1)) )==0 ||
                     (u->GetDisplayId() != u->GetNativeDisplayId()))
                     return false;
@@ -582,7 +583,7 @@ namespace MaNGOS
             }
             bool operator()(Creature* u)
             {
-                if (u->getDeathState()!=CORPSE || u->IsTaxiFlying() || u->isDeadByDefault() ||
+                if (u->getDeathState()!=CORPSE || u->IsTaxiFlying() || u->IsDeadByDefault() ||
                     (u->GetDisplayId() != u->GetNativeDisplayId()) ||
                     (u->GetCreatureTypeMask() & CREATURE_TYPEMASK_MECHANICAL_OR_ELEMENTAL)!=0)
                     return false;
@@ -628,8 +629,8 @@ namespace MaNGOS
     {
         public:
             RespawnDo() {}
-            void operator()(Creature* u) const { u->Respawn(); }
-            void operator()(GameObject* u) const { u->Respawn(); }
+            void operator()(Creature* u) const;
+            void operator()(GameObject* u) const;
             void operator()(WorldObject*) const {}
             void operator()(Corpse*) const {}
     };
@@ -896,7 +897,7 @@ namespace MaNGOS
                     return false;
 
                 // ignore totems as AoE targets
-                if(u->GetTypeId()==TYPEID_UNIT && ((Creature*)u)->isTotem())
+                if(u->GetTypeId()==TYPEID_UNIT && ((Creature*)u)->IsTotem())
                     return false;
 
                 // check visibility only for unit-like original casters
@@ -931,7 +932,7 @@ namespace MaNGOS
                 if (!u->isTargetableForAttack())
                     return false;
 
-                if(u->GetTypeId()==TYPEID_UNIT && ((Creature*)u)->isTotem())
+                if(u->GetTypeId()==TYPEID_UNIT && ((Creature*)u)->IsTotem())
                     return false;
 
                 if(( i_targetForPlayer ? !i_obj->IsFriendlyTo(u) : i_obj->IsHostileTo(u) )&& i_obj->IsWithinDistInMap(u, i_range))
@@ -1170,7 +1171,6 @@ namespace MaNGOS
 
     #ifndef WIN32
     template<> void PlayerRelocationNotifier::Visit<Creature>(CreatureMapType &);
-    template<> void PlayerRelocationNotifier::Visit<Player>(PlayerMapType &);
     template<> void CreatureRelocationNotifier::Visit<Player>(PlayerMapType &);
     template<> void CreatureRelocationNotifier::Visit<Creature>(CreatureMapType &);
     template<> inline void DynamicObjectUpdater::Visit<Creature>(CreatureMapType &);

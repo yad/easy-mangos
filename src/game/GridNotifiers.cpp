@@ -24,6 +24,7 @@
 #include "Map.h"
 #include "Transports.h"
 #include "ObjectAccessor.h"
+#include "BattleGroundMgr.h"
 
 using namespace MaNGOS;
 
@@ -186,9 +187,7 @@ template<class T> void
 ObjectUpdater::Visit(GridRefManager<T> &m)
 {
     for(typename GridRefManager<T>::iterator iter = m.begin(); iter != m.end(); ++iter)
-    {
-        iter->getSource()->Update(i_timeDiff);
-    }
+        iter->getSource()->UpdateCall(i_time, i_diff);
 }
 
 bool CannibalizeObjectCheck::operator()(Corpse* u)
@@ -207,6 +206,35 @@ bool CannibalizeObjectCheck::operator()(Corpse* u)
 
     return false;
 }
+
+void MaNGOS::RespawnDo::operator()( Creature* u ) const
+{
+    // prevent respawn creatures for not active BG event
+    Map* map = u->GetMap();
+    if (map->IsBattleGroundOrArena())
+    {
+        BattleGroundEventIdx eventId = sBattleGroundMgr.GetCreatureEventIndex(u->GetDBTableGUIDLow());
+        if (!((BattleGroundMap*)map)->GetBG()->IsActiveEvent(eventId.event1, eventId.event2))
+            return;
+    }
+
+    u->Respawn();
+}
+
+void MaNGOS::RespawnDo::operator()( GameObject* u ) const
+{
+    // prevent respawn gameobject for not active BG event
+    Map* map = u->GetMap();
+    if (map->IsBattleGroundOrArena())
+    {
+        BattleGroundEventIdx eventId = sBattleGroundMgr.GetGameObjectEventIndex(u->GetDBTableGUIDLow());
+        if (!((BattleGroundMap*)map)->GetBG()->IsActiveEvent(eventId.event1, eventId.event2))
+            return;
+    }
+
+    u->Respawn();
+}
+
 
 template void ObjectUpdater::Visit<GameObject>(GameObjectMapType &);
 template void ObjectUpdater::Visit<DynamicObject>(DynamicObjectMapType &);

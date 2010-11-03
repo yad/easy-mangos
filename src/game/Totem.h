@@ -33,7 +33,6 @@ class Totem : public Creature
     public:
         explicit Totem();
         virtual ~Totem(){};
-        void Update( uint32 time );
         void Summon(Unit* owner);
         void UnSummon();
         uint32 GetSpell() const { return m_spells[0]; }
@@ -53,9 +52,11 @@ class Totem : public Creature
         void UpdateAttackPowerAndDamage(bool /*ranged*/ ) {}
         void UpdateDamagePhysical(WeaponAttackType /*attType*/) {}
 
-        bool IsImmunedToSpellEffect(SpellEntry const* spellInfo, SpellEffectIndex index) const;
+        bool IsImmuneToSpellEffect(SpellEntry const* spellInfo, SpellEffectIndex index) const;
 
     protected:
+        void Update(uint32 update_diff, uint32 tick_diff);  // overwrite Creature::Update
+
         TotemType m_type;
         uint32 m_duration;
 };

@@ -41,24 +41,7 @@ inline void MaNGOS::VisibleNotifier::Visit(GridRefManager<T> &m)
 inline void MaNGOS::ObjectUpdater::Visit(CreatureMapType &m)
 {
     for(CreatureMapType::iterator iter = m.begin(); iter != m.end(); ++iter)
-        iter->getSource()->Update(i_timeDiff);
-}
-
-inline void MaNGOS::PlayerRelocationNotifier::Visit(PlayerMapType &m)
-{
-    for(PlayerMapType::iterator iter = m.begin(); iter != m.end(); ++iter)
-    {
-        if (&i_player==iter->getSource())
-            continue;
-
-        // visibility for players updated by ObjectAccessor::UpdateVisibilityFor calls in appropriate places
-
-        // Cancel Trade
-        if (i_player.GetTrader()==iter->getSource())
-                                                            // iteraction distance
-            if (!i_player.IsWithinDistInMap(iter->getSource(), INTERACTION_DISTANCE))
-                i_player.GetSession()->SendCancelTrade();   // will clode both side trade windows
-    }
+        iter->getSource()->UpdateCall(i_time, i_diff);
 }
 
 inline void PlayerCreatureRelocationWorker(Player* pl, WorldObject const* viewPoint, Creature* c)
@@ -132,7 +115,7 @@ inline void MaNGOS::DynamicObjectUpdater::VisitHelper(Unit* target)
     if (!target->isAlive() || target->IsTaxiFlying() )
         return;
 
-    if (target->GetTypeId() == TYPEID_UNIT && ((Creature*)target)->isTotem())
+    if (target->GetTypeId() == TYPEID_UNIT && ((Creature*)target)->IsTotem())
         return;
 
     if (!i_dynobject.IsWithinDistInMap(target, i_dynobject.GetRadius()))
@@ -168,7 +151,7 @@ inline void MaNGOS::DynamicObjectUpdater::VisitHelper(Unit* target)
     SpellEffectIndex eff_index  = i_dynobject.GetEffIndex();
 
     // Check target immune to spell or aura
-    if (target->IsImmunedToSpell(spellInfo) || target->IsImmunedToSpellEffect(spellInfo, eff_index))
+    if (target->IsImmuneToSpell(spellInfo) || target->IsImmuneToSpellEffect(spellInfo, eff_index))
         return;
 
     // Apply PersistentAreaAura on target

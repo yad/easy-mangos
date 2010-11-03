@@ -21,7 +21,7 @@
 
 DROP TABLE IF EXISTS `character_db_version`;
 CREATE TABLE `character_db_version` (
-  `required_10503_02_characters_gameobject_respawn` bit(1) default NULL
+  `required_10664_01_characters_arena_team_stats` bit(1) default NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 ROW_FORMAT=FIXED COMMENT='Last applied sql update to DB';
 
 --
@@ -117,10 +117,10 @@ DROP TABLE IF EXISTS `arena_team_stats`;
 CREATE TABLE `arena_team_stats` (
   `arenateamid` int(10) unsigned NOT NULL default '0',
   `rating` int(10) unsigned NOT NULL default '0',
-  `games` int(10) unsigned NOT NULL default '0',
-  `wins` int(10) unsigned NOT NULL default '0',
-  `played` int(10) unsigned NOT NULL default '0',
-  `wins2` int(10) unsigned NOT NULL default '0',
+  `games_week` int(10) unsigned NOT NULL default '0',
+  `wins_week` int(10) unsigned NOT NULL default '0',
+  `games_season` int(10) unsigned NOT NULL default '0',
+  `wins_season` int(10) unsigned NOT NULL default '0',
   `rank` int(10) unsigned NOT NULL default '0',
   PRIMARY KEY  (`arenateamid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -726,6 +726,27 @@ LOCK TABLES `character_queststatus_daily` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `character_queststatus_monthly`
+--
+
+DROP TABLE IF EXISTS `character_queststatus_monthly`;
+CREATE TABLE `character_queststatus_monthly` (
+  `guid` int(11) unsigned NOT NULL default '0' COMMENT 'Global Unique Identifier',
+  `quest` int(11) unsigned NOT NULL default '0' COMMENT 'Quest Identifier',
+  PRIMARY KEY  (`guid`,`quest`),
+  KEY `idx_guid` (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC COMMENT='Player System';
+
+--
+-- Dumping data for table `character_queststatus_monthly`
+--
+
+LOCK TABLES `character_queststatus_monthly` WRITE;
+/*!40000 ALTER TABLE `character_queststatus_monthly` DISABLE KEYS */;
+/*!40000 ALTER TABLE `character_queststatus_monthly` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `character_queststatus_weekly`
 --
 
@@ -964,7 +985,6 @@ UNLOCK TABLES;
 DROP TABLE IF EXISTS `character_tutorial`;
 CREATE TABLE `character_tutorial` (
   `account` bigint(20) unsigned NOT NULL auto_increment COMMENT 'Account Identifier',
-  `realmid` int(11) unsigned NOT NULL default '0' COMMENT 'Realm Identifier',
   `tut0` int(11) unsigned NOT NULL default '0',
   `tut1` int(11) unsigned NOT NULL default '0',
   `tut2` int(11) unsigned NOT NULL default '0',
@@ -973,8 +993,7 @@ CREATE TABLE `character_tutorial` (
   `tut5` int(11) unsigned NOT NULL default '0',
   `tut6` int(11) unsigned NOT NULL default '0',
   `tut7` int(11) unsigned NOT NULL default '0',
-  PRIMARY KEY  (`account`,`realmid`),
-  KEY acc_key (`account`)
+  PRIMARY KEY  (`account`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC COMMENT='Player System';
 
 --
@@ -1437,6 +1456,31 @@ LOCK TABLES `item_instance` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `item_loot`
+--
+
+DROP TABLE IF EXISTS `item_loot`;
+CREATE TABLE `item_loot` (
+  `guid` int(11) unsigned NOT NULL default '0',
+  `owner_guid` int(11) unsigned NOT NULL default '0',
+  `itemid` int(11) unsigned NOT NULL default '0',
+  `amount` int(11) unsigned NOT NULL default '0',
+  `suffix` int(11) unsigned NOT NULL default '0',
+  `property` int(11) NOT NULL default '0',
+  PRIMARY KEY  (`guid`,`itemid`),
+  KEY `idx_owner_guid` (`owner_guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC COMMENT='Item System';
+
+--
+-- Dumping data for table `item_instance`
+--
+
+LOCK TABLES `item_loot` WRITE;
+/*!40000 ALTER TABLE `item_loot` DISABLE KEYS */;
+/*!40000 ALTER TABLE `item_loot` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `mail`
 --
 
@@ -1626,6 +1670,7 @@ CREATE TABLE `saved_variables` (
     `NextArenaPointDistributionTime` bigint(40) UNSIGNED NOT NULL DEFAULT '0',
     `NextDailyQuestResetTime` bigint(40) unsigned NOT NULL default '0',
     `NextWeeklyQuestResetTime` bigint(40) unsigned NOT NULL default '0',
+    `NextMonthlyQuestResetTime` bigint(40) unsigned NOT NULL default '0',
     `cleaning_flags` int(11) unsigned NOT NULL default '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=FIXED COMMENT='Variable Saves';
 

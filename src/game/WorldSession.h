@@ -25,6 +25,7 @@
 
 #include "Common.h"
 #include "SharedDefines.h"
+#include "ObjectGuid.h"
 
 struct ItemPrototype;
 struct AuctionEntry;
@@ -43,6 +44,7 @@ class QueryResult;
 class LoginQueryHolder;
 class CharacterHandler;
 class GMTicket;
+class MovementInfo;
 
 struct OpcodeHandler;
 
@@ -206,16 +208,16 @@ class MANGOS_DLL_SPEC WorldSession
         /// Handle the authentication waiting queue (to be completed)
         void SendAuthWaitQue(uint32 position);
 
-        //void SendTestCreatureQueryOpcode( uint32 entry, uint64 guid, uint32 testvalue );
         void SendNameQueryOpcode(Player* p);
-        void SendNameQueryOpcodeFromDB(uint64 guid);
+        void SendNameQueryOpcodeFromDB(ObjectGuid guid);
         static void SendNameQueryOpcodeFromDBCallBack(QueryResult *result, uint32 accountId);
 
-        void SendTrainerList( uint64 guid );
-        void SendTrainerList( uint64 guid, const std::string& strTitle );
-        void SendListInventory( uint64 guid );
-        void SendShowBank( uint64 guid );
-        void SendTabardVendorActivate( uint64 guid );
+        void SendTrainerList(ObjectGuid guid);
+        void SendTrainerList(ObjectGuid guid, const std::string& strTitle );
+        void SendListInventory(ObjectGuid guid);
+        bool CheckBanker(ObjectGuid guid);
+        void SendShowBank(ObjectGuid guid);
+        void SendTabardVendorActivate(ObjectGuid guid);
         void SendSpiritResurrect();
         void SendBindPoint(Creature* npc);
         void SendGMTicketGetTicket(uint32 status, GMTicket *ticket = NULL);
@@ -277,7 +279,7 @@ class MANGOS_DLL_SPEC WorldSession
         void SendItemEnchantTimeUpdate(uint64 Playerguid, uint64 Itemguid,uint32 slot,uint32 Duration);
 
         //Taxi
-        void SendTaxiStatus( uint64 guid );
+        void SendTaxiStatus(ObjectGuid guid);
         void SendTaxiMenu( Creature* unit );
         void SendDoFlight( uint32 mountDisplayId, uint32 path, uint32 pathNode = 0 );
         bool SendLearnNewTaxiNode( Creature* unit );
@@ -286,7 +288,7 @@ class MANGOS_DLL_SPEC WorldSession
         void SendGuildCommandResult(uint32 typecmd, const std::string& str, uint32 cmdresult);
         void SendArenaTeamCommandResult(uint32 team_action, const std::string& team, const std::string& player, uint32 error_id);
         void SendNotInArenaTeamPacket(uint8 type);
-        void SendPetitionShowList( uint64 guid );
+        void SendPetitionShowList(ObjectGuid guid);
         void SendSaveGuildEmblem( uint32 msg );
 
         // Looking For Group
@@ -431,9 +433,6 @@ class MANGOS_DLL_SPEC WorldSession
         void HandleMoveTimeSkippedOpcode(WorldPacket &recv_data);
 
         void HandleRequestRaidInfoOpcode( WorldPacket & recv_data );
-
-        void HandleBattlefieldStatusOpcode(WorldPacket &recv_data);
-        void HandleBattleMasterHelloOpcode(WorldPacket &recv_data);
 
         void HandleGroupInviteOpcode(WorldPacket& recvPacket);
         void HandleGroupAcceptOpcode(WorldPacket& recvPacket);
@@ -645,6 +644,7 @@ class MANGOS_DLL_SPEC WorldSession
 
         //Pet
         void HandlePetAction( WorldPacket & recv_data );
+        void HandlePetStopAttack(WorldPacket& recv_data);
         void HandlePetNameQueryOpcode( WorldPacket & recv_data );
         void HandlePetSetAction( WorldPacket & recv_data );
         void HandlePetAbandon( WorldPacket & recv_data );
@@ -669,6 +669,7 @@ class MANGOS_DLL_SPEC WorldSession
         void HandleBattlemasterJoinOpcode(WorldPacket &recv_data);
         void HandleBattleGroundPlayerPositionsOpcode(WorldPacket& recv_data);
         void HandlePVPLogDataOpcode( WorldPacket &recv_data );
+        void HandleBattlefieldStatusOpcode(WorldPacket &recv_data);
         void HandleBattleFieldPortOpcode( WorldPacket &recv_data );
         void HandleBattlefieldListOpcode( WorldPacket &recv_data );
         void HandleLeaveBattlefieldOpcode( WorldPacket &recv_data );
@@ -777,6 +778,8 @@ class MANGOS_DLL_SPEC WorldSession
     private:
         // private trade methods
         void moveItems(Item* myItems[], Item* hisItems[]);
+        bool VerifyMovementInfo(MovementInfo&,ObjectGuid&, Unit*) const;
+        void HandleMoverRelocation(MovementInfo&, Unit*, Player*);
 
         void ExecuteOpcode( OpcodeHandler const& opHandle, WorldPacket* packet );
 

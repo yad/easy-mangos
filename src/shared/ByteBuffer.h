@@ -34,7 +34,7 @@ class ByteBufferException
 
         void PrintPosError() const
         {
-            sLog.outError("ERROR: Attempted to %s in ByteBuffer (pos: " SIZEFMTD " size: "SIZEFMTD") value with size: " SIZEFMTD,
+            sLog.outError("Attempted to %s in ByteBuffer (pos: " SIZEFMTD " size: "SIZEFMTD") value with size: " SIZEFMTD,
                 (add ? "put" : "get"), pos, size, esize);
         }
     private:
@@ -446,48 +446,23 @@ class ByteBuffer
             {
                 if ((i == (j * 8)) && ((i != (k * 16))))
                 {
-                    if (read<uint8>(i) < 0x10)
-                    {
-                        sLog.outDebugInLine("| 0%X ", read<uint8>(i) );
-                    }
-                    else
-                    {
-                        sLog.outDebugInLine("| %X ", read<uint8>(i) );
-                    }
+                    sLog.outDebugInLine("| %02X ", read<uint8>(i));
                     ++j;
                 }
                 else if (i == (k * 16))
                 {
-                    if (read<uint8>(i) < 0x10)
-                    {
-                        sLog.outDebugInLine("\n");
-                        if(sLog.IsIncludeTime())
-                            sLog.outDebugInLine("         ");
+                    sLog.outDebugInLine("\n");
+                    if(sLog.IsIncludeTime())
+                        sLog.outDebugInLine("         ");
 
-                        sLog.outDebugInLine("0%X ", read<uint8>(i) );
-                    }
-                    else
-                    {
-                        sLog.outDebugInLine("\n");
-                        if(sLog.IsIncludeTime())
-                            sLog.outDebugInLine("         ");
-
-                        sLog.outDebugInLine("%X ", read<uint8>(i) );
-                    }
+                    sLog.outDebugInLine("%02X ", read<uint8>(i));
 
                     ++k;
                     ++j;
                 }
                 else
                 {
-                    if (read<uint8>(i) < 0x10)
-                    {
-                        sLog.outDebugInLine("0%X ", read<uint8>(i) );
-                    }
-                    else
-                    {
-                        sLog.outDebugInLine("%X ", read<uint8>(i) );
-                    }
+                    sLog.outDebugInLine("%02X ", read<uint8>(i));
                 }
             }
             sLog.outDebugInLine("\n");

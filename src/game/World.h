@@ -169,6 +169,7 @@ enum eConfigUInt32Values
     CONFIG_UINT32_ARENA_RATING_DISCARD_TIMER,
     CONFIG_UINT32_ARENA_AUTO_DISTRIBUTE_INTERVAL_DAYS,
     CONFIG_UINT32_ARENA_SEASON_ID,
+    CONFIG_UINT32_ARENA_SEASON_PREVIOUS_ID,
     CONFIG_UINT32_CLIENTCACHE_VERSION,
     CONFIG_UINT32_GUILD_EVENT_LOG_COUNT,
     CONFIG_UINT32_GUILD_BANK_EVENT_LOG_COUNT,
@@ -273,7 +274,6 @@ enum eConfigBoolValues
     CONFIG_BOOL_GRID_UNLOAD = 0,
     CONFIG_BOOL_SAVE_RESPAWN_TIME_IMMEDIATLY,
     CONFIG_BOOL_OFFHAND_CHECK_AT_TALENTS_RESET,
-    CONFIG_BOOL_ARENA_SEASON_IN_PROGRESS,
     CONFIG_BOOL_ALLOW_TWO_SIDE_ACCOUNTS,
     CONFIG_BOOL_ALLOW_TWO_SIDE_INTERACTION_CHAT,
     CONFIG_BOOL_ALLOW_TWO_SIDE_INTERACTION_CHANNEL,
@@ -509,7 +509,7 @@ class World
         static void StopNow(uint8 exitcode) { m_stopEvent = true; m_ExitCode = exitcode; }
         static bool IsStopped() { return m_stopEvent; }
 
-        void Update(uint32 diff);
+        void Update(uint32 time_, uint32 diff);
 
         void UpdateSessions( uint32 diff );
 
@@ -583,8 +583,11 @@ class World
 
         void InitDailyQuestResetTime();
         void InitWeeklyQuestResetTime();
+        void SetMonthlyQuestResetTime(bool initialize = true);
         void ResetDailyQuests();
         void ResetWeeklyQuests();
+        void ResetMonthlyQuests();
+
     private:
         void setConfig(eConfigUInt32Values index, char const* fieldname, uint32 defvalue);
         void setConfig(eConfigInt32Values index, char const* fieldname, int32 defvalue);
@@ -655,6 +658,7 @@ class World
         // next daily quests reset time
         time_t m_NextDailyQuestReset;
         time_t m_NextWeeklyQuestReset;
+        time_t m_NextMonthlyQuestReset;
 
         //Player Queue
         Queue m_QueuedPlayer;

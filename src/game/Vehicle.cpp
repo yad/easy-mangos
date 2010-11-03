@@ -51,14 +51,14 @@ void Vehicle::RemoveFromWorld()
     Unit::RemoveFromWorld();
 }
 
-void Vehicle::setDeathState(DeathState s)                       // overwrite virtual Creature::setDeathState and Unit::setDeathState
+void Vehicle::SetDeathState(DeathState s)                       // overwrite virtual Creature::SetDeathState and Unit::SetDeathState
 {
-    Creature::setDeathState(s);
+    Creature::SetDeathState(s);
 }
 
-void Vehicle::Update(uint32 diff)
+void Vehicle::Update(uint32 update_diff, uint32 tick_diff)
 {
-    Creature::Update(diff);
+    Creature::Update(update_diff, tick_diff);
 }
 
 bool Vehicle::Create(uint32 guidlow, Map *map, uint32 Entry, uint32 vehicleId, uint32 team)
