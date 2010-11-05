@@ -359,6 +359,7 @@ bool ChatHandler::HandleDebugMoveMapCommand(char* args)
         int32 gx = 32 - player->GetPositionX() / 533.33333f;
         int32 gy = 32 - player->GetPositionY() / 533.33333f;
 
+        PSendSysMessage("%03u%02i%02i.mmtile", player->GetMapId(), gy, gx);
         PSendSysMessage("gridloc [%i,%i]", gx, gy);
 
         // calculate navmesh tile location
