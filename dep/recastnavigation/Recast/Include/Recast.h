@@ -109,16 +109,16 @@ struct rcConfig
 
 // Define number of bits in the above structure for smin/smax.
 // The max height is used for clamping rasterized values.
-static const int RC_SPAN_HEIGHT_BITS = 13;
+static const int RC_SPAN_HEIGHT_BITS = 16;
 static const int RC_SPAN_MAX_HEIGHT = (1<<RC_SPAN_HEIGHT_BITS)-1;
 
 // Heightfield span.
 struct rcSpan
 {
-	unsigned int smin : 13;			// Span min height.
-	unsigned int smax : 13;			// Span max height.
-	unsigned int area : 6;			// Span area type.
+	unsigned int smin : 16;			// Span min height.
+	unsigned int smax : 16;			// Span max height.
 	rcSpan* next;					// Next span in column.
+	unsigned char area;				// Span area type.
 };
 
 // Number of spans allocated per pool.
