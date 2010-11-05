@@ -324,7 +324,7 @@ void PathInfo::BuildPolyPath(PathNode startPos, PathNode endPos)
                     endPoint,           // end position
                     &filter,            // polygon search filter
                     suffixPathPolys,    // [out] path
-                    MAX_PATH_LENGTH);   // max number of polygons in output path
+                    MAX_PATH_LENGTH-prefixPolyLength);   // max number of polygons in output path
 
         if(suffixPolyLength == 0)
         {
