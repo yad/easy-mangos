@@ -36,7 +36,8 @@ PathInfo::PathInfo(const WorldObject* from, const float destX, const float destY
 
     PATH_DEBUG("++ PathInfo::PathInfo for %u \n", m_sourceObject->GetGUID());
 
-    if(m_navMesh = m_sourceObject->GetMap()->GetNavMesh())
+    Map* map = m_sourceObject->GetMap();
+    if(map->IsPathfindingEnabled() && (m_navMesh = map->GetNavMesh()))
     {
         m_navMeshQuery = dtAllocNavMeshQuery();
         m_navMeshQuery->init(m_navMesh, MESH_MAX_NODES);

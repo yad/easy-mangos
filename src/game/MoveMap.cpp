@@ -129,3 +129,27 @@ dtNavMesh* Map::GetNavMesh()
     return m_navMesh;
 }
 
+std::set<uint32> Map::m_mmapDisabledIds = std::set<uint32>();
+
+void Map::preventPathfindingOnMaps(std::string ignoreMapIds)
+{
+    m_mmapDisabledIds.clear();
+
+    char* mapList = new char[ignoreMapIds.length()];
+    strcpy(mapList, ignoreMapIds.c_str());
+
+    char* idstr = strtok(mapList, ",");
+
+    while (idstr)
+    {
+        m_mmapDisabledIds.insert(uint32(atoi(idstr)));
+        idstr = strtok(NULL, ",");
+    }
+
+    delete[] mapList;
+}
+
+bool Map::IsPathfindingEnabled() const
+{
+    return sWorld.getConfig(CONFIG_BOOL_MMAP_ENABLED) && m_mmapDisabledIds.find(i_id) == m_mmapDisabledIds.end();
+}
