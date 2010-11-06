@@ -23,7 +23,7 @@
 #include "../recastnavigation/Detour/Include/DetourNavMesh.h"
 #include "../recastnavigation/Detour/Include/DetourNavMeshQuery.h"
 
-class WorldObject;
+class Unit;
 
 #define PRINT_DEBUG_INFO    0
 #define PATH_DEBUG(...)             \
@@ -75,7 +75,7 @@ enum PathType
 class PathInfo
 {
     public:
-        PathInfo(const WorldObject* from, const float destX, const float destY, const float destZ, bool useStraightPath = false);
+        PathInfo(const Unit* owner, const float destX, const float destY, const float destZ, bool useStraightPath = false);
         ~PathInfo();
 
         // return value : true if new path was calculated
@@ -96,7 +96,7 @@ class PathInfo
 
     private:
 
-        dtPolyRef   *   m_pathPolyRefs;     // array of detour polygon references
+        dtPolyRef      *m_pathPolyRefs;     // array of detour polygon references
         uint32          m_polyLength;       // number of polygons in the path
 
         PointPath       m_pathPoints;       // our actual (x,y,z) path to the target
@@ -109,8 +109,8 @@ class PathInfo
         PathNode        m_endPosition;      // {x, y, z} of the destination
         PathNode        m_actualEndPosition;  // {x, y, z} of the closest possible point to given destination
 
-        const WorldObject *m_sourceObject;  // the object that is moving (safe pointer because PathInfo is only accessed from the mover?)
-        dtNavMesh   *   m_navMesh;          // the nav mesh
+        const Unit     *m_sourceUnit;       // the unit that is moving
+        dtNavMesh      *m_navMesh;          // the nav mesh
         dtNavMeshQuery* m_navMeshQuery;     // the nav mesh query used to find the path
 
         inline void setNextPosition(PathNode point) { m_nextPosition = point; }
@@ -133,10 +133,6 @@ class PathInfo
         void BuildPointPath(float *startPoint, float *endPoint);
         void BuildShortcut();
 
-        // owner calls
-        bool canFly();
-        bool canSwim();
-
         NavTerrain getNavTerrain(float x, float y, float z);
         dtQueryFilter createFilter();
 
@@ -145,8 +141,7 @@ class PathInfo
                              const dtPolyRef* visited, const uint32 nvisited);
         bool getSteerTarget(const float* startPos, const float* endPos, const float minTargetDist,
                             const dtPolyRef* path, const uint32 pathSize, float* steerPos,
-                            unsigned char& steerPosFlag, dtPolyRef& steerPosRef,
-                            float* outPoints = 0, uint32* outPountcount = 0);
+                            unsigned char& steerPosFlag, dtPolyRef& steerPosRef);
         uint32 findSmoothPath(const float* startPos, const float* endPos,
                               const dtPolyRef* path, const uint32 pathSize,
                               float* smoothPath, const uint32 smoothPathMaxSize);
