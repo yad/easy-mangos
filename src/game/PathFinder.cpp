@@ -37,9 +37,11 @@ PathInfo::PathInfo(const Unit* owner, const float destX, const float destY, cons
     PATH_DEBUG("++ PathInfo::PathInfo for %u \n", m_sourceUnit->GetGUID());
 
     Map* map = m_sourceUnit->GetMap();
-    if(map->IsPathfindingEnabled() && (m_navMesh = map->GetNavMesh()))
+    m_navMesh = map->GetNavMesh();
+    if(m_navMesh && map->IsPathfindingEnabled())
     {
         m_navMeshQuery = dtAllocNavMeshQuery();
+        MANGOS_ASSERT(m_navMeshQuery);
         m_navMeshQuery->init(m_navMesh, MESH_MAX_NODES);
 
         BuildPolyPath(startPoint, endPoint);
@@ -58,6 +60,7 @@ PathInfo::~PathInfo()
     if (m_pathPolyRefs)
         delete [] m_pathPolyRefs;
 
+    // m_navMesh is not ours to delete
     if(m_navMesh && m_navMeshQuery)
         dtFreeNavMeshQuery(m_navMeshQuery);
 }

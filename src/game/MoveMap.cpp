@@ -26,17 +26,17 @@ inline void unpackTileID(uint32 ID, uint32 &tileX, uint32 &tileY) { tileX = ID>>
 
 void Map::LoadNavMesh(int gx, int gy)
 {
-    char fileName[512];
-    FILE* file;
-
     if(!m_navMesh)
     {
-        sprintf(fileName, "%smmaps/%03i.mmap", sWorld.GetDataPath().c_str(), i_id);
-        file = fopen(fileName, "rb");
+        uint32 pathLen = sWorld.GetDataPath().length() + strlen("mmaps/%03i.mmap")+1;
+        char *fileName = new char[pathLen];
+        snprintf(fileName, pathLen, (char*)(sWorld.GetDataPath()+"mmaps/%03i.mmap").c_str(), i_id);
 
+        FILE* file = fopen(fileName, "rb");
         if(!file)
         {
             sLog.outDebug("Error: Could not open mmap file '%s'", fileName);
+            delete [] fileName;
             return;
         }
 
@@ -45,12 +45,13 @@ void Map::LoadNavMesh(int gx, int gy)
         fread(&params, sizeof(dtNavMeshParams), 1, file);
         fread(&offset, sizeof(uint32), 1, file);
         fclose(file);
+        delete [] fileName;
 
         m_navMesh = dtAllocNavMesh();
         if(!m_navMesh->init(&params))
         {
-            delete m_navMesh;
-            m_navMesh = 0;
+            dtFreeNavMesh(m_navMesh);
+            m_navMesh = NULL;
             sLog.outError("Error: Failed to initialize mmap %03u from file %s", i_id, fileName);
             return;
         }
@@ -61,12 +62,15 @@ void Map::LoadNavMesh(int gx, int gy)
         return;
 
     // mmaps/0000000.mmtile
-    sprintf(fileName, "%smmaps/%03i%02i%02i.mmtile", sWorld.GetDataPath().c_str(), i_id, gx, gy);
-    file = fopen(fileName, "rb");
+    uint32 pathLen = sWorld.GetDataPath().length() + strlen("mmaps/%03i%02i%02i.mmtile")+1;
+    char *fileName = new char[pathLen];
+    snprintf(fileName, pathLen, (char*)(sWorld.GetDataPath()+"mmaps/%03i%02i%02i.mmtile").c_str(), i_id, gx, gy);
 
+    FILE *file = fopen(fileName, "rb");
     if(!file)
     {
         sLog.outDebug("Error: Could not open mmtile file '%s'", fileName);
+        delete [] fileName;
         return;
     }
 
@@ -75,8 +79,11 @@ void Map::LoadNavMesh(int gx, int gy)
     fseek(file, 0, SEEK_SET);
 
     unsigned char* data =  (unsigned char*)dtAlloc(length, DT_ALLOC_PERM);
+    MANGOS_ASSERT(data);
+
     fread(data, length, 1, file);
     fclose(file);
+    delete [] fileName;
 
     dtMeshHeader* header = (dtMeshHeader*)data;
     if (header->magic != DT_NAVMESH_MAGIC)
@@ -87,8 +94,7 @@ void Map::LoadNavMesh(int gx, int gy)
     }
     if (header->version != DT_NAVMESH_VERSION)
     {
-        sLog.outError("Error: %03u%02i%02i.mmtile was built with Detour v%i, expected v%i",
-                              i_id, gx, gy,                 header->version, DT_NAVMESH_VERSION);
+        sLog.outError("Error: %03u%02i%02i.mmtile was built with Detour v%i, expected v%i",i_id, gx, gy, header->version, DT_NAVMESH_VERSION);
         dtFree(data);
         return;
     }
