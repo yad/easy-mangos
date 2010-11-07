@@ -37,8 +37,10 @@ PathInfo::PathInfo(const Unit* owner, const float destX, const float destY, cons
     PATH_DEBUG("++ PathInfo::PathInfo for %u \n", m_sourceUnit->GetGUID());
 
     Map* map = m_sourceUnit->GetMap();
-    m_navMesh = map->GetNavMesh();
-    if(m_navMesh && map->IsPathfindingEnabled())
+    if(map->IsPathfindingEnabled())
+        m_navMesh = map->GetNavMesh();
+
+    if(m_navMesh)
     {
         m_navMeshQuery = dtAllocNavMeshQuery();
         MANGOS_ASSERT(m_navMeshQuery);
