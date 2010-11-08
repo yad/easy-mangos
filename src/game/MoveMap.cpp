@@ -124,10 +124,15 @@ void Map::UnloadNavMesh(int gx, int gy)
     unpackTileID(packedTilePos, tileX, tileY);
 
     // unload, and mark as non loaded
-    m_navMesh->removeTile(m_navMesh->getTileRefAt(int(tileX), int(tileY)), 0, 0);
-    m_mmapTileMap.erase(packedGridPos);
-
-    sLog.outDetail("Unloaded mmtile %03i[%02i,%02i] from %03i(%u)", i_id, gx, gy, i_id, GetInstanceId());
+    if(!m_navMesh->removeTile(m_navMesh->getTileRefAt(int(tileX), int(tileY)), 0, 0))
+    {
+        sLog.outError("Error: could not unload %03u%02i%02i.mmtile from navmesh", i_id, gx, gy);
+    }
+    else
+    {
+        m_mmapTileMap.erase(packedGridPos);
+        sLog.outDetail("Unloaded mmtile %03i[%02i,%02i] from %03i(%u)", i_id, gx, gy, i_id, GetInstanceId());
+    }
 }
 
 dtNavMesh* Map::GetNavMesh()
