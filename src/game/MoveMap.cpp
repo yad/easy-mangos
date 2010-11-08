@@ -41,9 +41,7 @@ void Map::LoadNavMesh(int gx, int gy)
         }
 
         dtNavMeshParams params;
-        uint32 offset;
         fread(&params, sizeof(dtNavMeshParams), 1, file);
-        fread(&offset, sizeof(uint32), 1, file);
         fclose(file);
         delete [] fileName;
 
