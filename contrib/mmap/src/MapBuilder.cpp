@@ -152,14 +152,25 @@ namespace MMAP
             if(!tiles->size())
             {
                 // initialize the static tree, which loads WDT models
-                if (!loadVMap(mapID, 64, 64, meshData) || !(meshData.solidVerts.size() && meshData.liquidVerts.size()))
+                if (!loadVMap(mapID, 64, 64, meshData) || !(meshData.solidVerts.size() || meshData.liquidVerts.size()))
                     break;
 
                 // get the coord bounds of the model data
-                rcCalcBounds(meshData.solidVerts.getCArray(), meshData.solidVerts.size() / 3, bmin, bmax);
-                rcCalcBounds(meshData.liquidVerts.getCArray(), meshData.liquidVerts.size() / 3, lmin, lmax);
-                rcVmin(bmin, lmin);
-                rcVmax(bmax, lmax);
+                if (meshData.solidVerts.size() && meshData.liquidVerts.size())
+                {
+                    rcCalcBounds(meshData.solidVerts.getCArray(), meshData.solidVerts.size() / 3, bmin, bmax);
+                    rcCalcBounds(meshData.liquidVerts.getCArray(), meshData.liquidVerts.size() / 3, lmin, lmax);
+                    rcVmin(bmin, lmin);
+                    rcVmax(bmax, lmax);
+                }
+                else if (meshData.solidVerts.size())
+                {
+                    rcCalcBounds(meshData.solidVerts.getCArray(), meshData.solidVerts.size() / 3, bmin, bmax);
+                }
+                else
+                {
+                    rcCalcBounds(meshData.liquidVerts.getCArray(), meshData.liquidVerts.size() / 3, lmin, lmax);
+                }
 
                 // convert coord bounds to grid bounds
                 uint32 minX, minY, maxX, maxY;
@@ -268,10 +279,22 @@ namespace MMAP
         // get the coord bounds of the model data
         if(meshData.solidVerts.size() || meshData.liquidVerts.size())
         {
-            rcCalcBounds(meshData.solidVerts.getCArray(), meshData.solidVerts.size() / 3, bmin, bmax);
-            rcCalcBounds(meshData.liquidVerts.getCArray(), meshData.liquidVerts.size() / 3, lmin, lmax);
-            rcVmin(bmin, lmin);
-            rcVmax(bmax, lmax);
+            // get the coord bounds of the model data
+            if (meshData.solidVerts.size() && meshData.liquidVerts.size())
+            {
+                rcCalcBounds(meshData.solidVerts.getCArray(), meshData.solidVerts.size() / 3, bmin, bmax);
+                rcCalcBounds(meshData.liquidVerts.getCArray(), meshData.liquidVerts.size() / 3, lmin, lmax);
+                rcVmin(bmin, lmin);
+                rcVmax(bmax, lmax);
+            }
+            else if (meshData.solidVerts.size())
+            {
+                rcCalcBounds(meshData.solidVerts.getCArray(), meshData.solidVerts.size() / 3, bmin, bmax);
+            }
+            else
+            {
+                rcCalcBounds(meshData.liquidVerts.getCArray(), meshData.liquidVerts.size() / 3, lmin, lmax);
+            }
 
             // convert coord bounds to grid bounds
             uint32 minX, minY, maxX, maxY;
