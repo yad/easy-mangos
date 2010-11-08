@@ -141,11 +141,10 @@ void Map::preventPathfindingOnMaps(std::string ignoreMapIds)
 {
     m_mmapDisabledIds.clear();
 
-    char* mapList = new char[ignoreMapIds.length()];
+    char* mapList = new char[ignoreMapIds.length()+1];
     strcpy(mapList, ignoreMapIds.c_str());
 
     char* idstr = strtok(mapList, ",");
-
     while (idstr)
     {
         m_mmapDisabledIds.insert(uint32(atoi(idstr)));
