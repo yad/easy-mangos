@@ -190,7 +190,6 @@ class ChatHandler
         bool HandleDebugSpellCheckCommand(char* args);
         bool HandleDebugSpellModsCommand(char* args);
         bool HandleDebugUpdateWorldStateCommand(char* args);
-        bool HandleDebugMoveMapCommand(char* args);
 
         bool HandleDebugPlayCinematicCommand(char* args);
         bool HandleDebugPlayMovieCommand(char* args);
@@ -563,6 +562,11 @@ class ChatHandler
         bool HandleStableCommand(char* args);
         bool HandleWaterwalkCommand(char* args);
         bool HandleQuitCommand(char* args);
+
+        bool HandleMmapPathCommand(char* args);
+        bool HandleMmapLocCommand(char* args);
+        bool HandleMmapLoadedTilesCommand(char* args);
+        bool HandleMmapStatsCommand(char* args);
 
         //! Development Commands
         bool HandleSaveAllCommand(char* args);

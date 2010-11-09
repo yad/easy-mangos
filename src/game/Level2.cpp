@@ -43,6 +43,7 @@
 #include <map>
 
 #include "TargetedMovementGenerator.h"                      // for HandleNpcUnFollowCommand
+#include "PathFinder.h"                                     // for mmap commands
 
 static uint32 ReputationRankStrIndex[MAX_REPUTATION_RANK] =
 {
@@ -5038,6 +5039,222 @@ bool ChatHandler::HandleTitlesCurrentCommand(char* args)
     target->SetUInt32Value(PLAYER_CHOSEN_TITLE,titleInfo->bit_index);
 
     PSendSysMessage(LANG_TITLE_CURRENT_RES, id, titleInfo->name[GetSessionDbcLocale()], tNameLink.c_str());
+
+    return true;
+}
+
+bool ChatHandler::HandleMmapPathCommand(char* args)
+{
+    if (!m_session->GetPlayer()->GetMap()->GetNavMesh())
+    {
+        PSendSysMessage("NavMesh not loaded for current map.");
+        return true;
+    }
+
+    PSendSysMessage("mmap path:");
+
+    // units
+    Player* player = m_session->GetPlayer();
+    Unit* target = getSelectedUnit();
+    if (!player || !target)
+    {
+        PSendSysMessage("Invalid target/source selection.");
+        return true;
+    }
+
+    char* para = strtok(args, " ");
+
+    bool useStraightPath = false;
+    if (para && strcmp(para, "true") == 0)
+        useStraightPath = true;
+
+    // unit locations
+    float x, y, z;
+    player->GetPosition(x, y, z);
+
+    // path
+    PathInfo path(target, x, y, z, useStraightPath);
+    PointPath pointPath = path.getFullPath();
+    PSendSysMessage("%s's path to %s:", target->GetName(), player->GetName());
+    PSendSysMessage("Building %s", useStraightPath ? "StraightPath" : "SmoothPath");
+    PSendSysMessage("length %i type %u", pointPath.size(), path.getPathType());
+
+    PathNode start = path.getStartPosition();
+    PathNode next = path.getNextPosition();
+    PathNode end = path.getEndPosition();
+    PathNode actualEnd = path.getActualEndPosition();
+
+    PSendSysMessage("start      (%.3f, %.3f, %.3f)", start.x, start.y, start.z);
+    PSendSysMessage("next       (%.3f, %.3f, %.3f)", next.x, next.y, next.z);
+    PSendSysMessage("end        (%.3f, %.3f, %.3f)", end.x, end.y, end.z);
+    PSendSysMessage("actual end (%.3f, %.3f, %.3f)", actualEnd.x, actualEnd.y, actualEnd.z);
+
+    if (!player->isGameMaster())
+        PSendSysMessage("Enable GM mode to see the path points.");
+
+    // this entry visible only to GM's with "gm on"
+    static const uint32 WAYPOINT_NPC_ENTRY = 1;
+    for (uint32 i = 0; i < pointPath.size(); ++i)
+        player->SummonCreature(WAYPOINT_NPC_ENTRY, pointPath[i].x, pointPath[i].y, pointPath[i].z, 0, TEMPSUMMON_TIMED_DESPAWN, 9000);
+
+    return true;
+}
+
+bool ChatHandler::HandleMmapLocCommand(char* args)
+{
+    PSendSysMessage("mmap tileloc:");
+
+    // grid tile location
+    Player* player = m_session->GetPlayer();
+
+    int32 gx = 32 - player->GetPositionX() / 533.33333f;
+    int32 gy = 32 - player->GetPositionY() / 533.33333f;
+
+    PSendSysMessage("%03u%02i%02i.mmtile", player->GetMapId(), gy, gx);
+    PSendSysMessage("gridloc [%i,%i]", gx, gy);
+
+    // calculate navmesh tile location
+    dtNavMesh* navmesh = player->GetMap()->GetNavMesh();
+
+    if (!navmesh)
+    {
+        PSendSysMessage("NavMesh not loaded for current map.");
+        return true;
+    }
+
+    dtNavMeshQuery* query = dtAllocNavMeshQuery();
+    MANGOS_ASSERT(query);
+    query->init(navmesh, MESH_MAX_NODES);
+
+    const float* min = navmesh->getParams()->orig;
+
+    float x, y, z;
+    player->GetPosition(x, y, z);
+    float location[VERTEX_SIZE] = {y, z, x};
+    float extents[VERTEX_SIZE] = {2.f,4.f,2.f};
+
+    int32 tilex = int32((y - min[0]) / 533.33333);
+    int32 tiley = int32((x - min[2]) / 533.33333);
+
+    PSendSysMessage("Calc   [%02i,%02i]", tilex, tiley);
+
+    // navmesh poly -> navmesh tile location
+    dtQueryFilter filter = dtQueryFilter();
+    dtPolyRef polyRef = query->findNearestPoly(location, extents, &filter, NULL);
+
+    if (polyRef == INVALID_POLYREF)
+        PSendSysMessage("Dt     [??,??] (invalid poly, probably no tile loaded)");
+    else
+    {
+        const dtMeshTile* tile;
+        const dtPoly* poly;
+        navmesh->getTileAndPolyByRef(polyRef, &tile, &poly);
+        if (tile)
+            PSendSysMessage("Dt     [%02i,%02i]", tile->header->x, tile->header->y);
+        else
+            PSendSysMessage("Dt     [??,??] (no tile loaded)");
+    }
+
+    // mmtile file header -> navmesh tile location
+    uint32 pathLen = sWorld.GetDataPath().length() + strlen("mmaps/%03i%02i%02i.mmtile")+1;
+    char *fileName = new char[pathLen];
+    snprintf(fileName, pathLen, (char*)(sWorld.GetDataPath()+"mmaps/%03i%02i%02i.mmtile").c_str(), player->GetMapId(), gx, gy);
+
+    FILE* file = fopen(fileName, "rb");
+    if (!file)
+        PSendSysMessage("mmtile [??,??] (file %03u%02i%02i.mmtile not found)", player->GetMapId(), gx, gy);
+    else
+    {
+        fseek(file, 0, SEEK_END);
+        int32 length = ftell(file);
+        fseek(file, 0, SEEK_SET);
+
+        unsigned char* data = new unsigned char[length];
+        fread(data, length, 1, file);
+        fclose(file);
+
+        dtMeshHeader* header = (dtMeshHeader*)data;
+
+        PSendSysMessage("mmtile [%02i,%02i]", header->x, header->y);
+
+        delete [] data;
+    }
+
+    delete [] fileName;
+    dtFreeNavMeshQuery(query);
+    return true;
+}
+
+bool ChatHandler::HandleMmapLoadedTilesCommand(char* args)
+{
+    dtNavMesh* navmesh = m_session->GetPlayer()->GetMap()->GetNavMesh();
+
+    if (!navmesh)
+    {
+        PSendSysMessage("NavMesh not loaded for current map.");
+        return true;
+    }
+
+    PSendSysMessage("mmap loadedtiles:");
+
+    dtNavMeshQuery* query = dtAllocNavMeshQuery();
+    MANGOS_ASSERT(query);
+    query->init(navmesh, MESH_MAX_NODES);
+
+    for (int32 i = 0; i < navmesh->getMaxTiles(); ++i)
+    {
+        const dtMeshTile* tile = ((dtNavMesh const*)navmesh)->getTile(i);
+        if (!tile || !tile->header)
+            continue;
+
+        PSendSysMessage("[%02i,%02i]", tile->header->x, tile->header->y);
+    }
+
+    dtFreeNavMeshQuery(query);
+    return true;
+}
+
+bool ChatHandler::HandleMmapStatsCommand(char* args)
+{
+    PSendSysMessage("mmap stats:");
+    PSendSysMessage("  global mmap pathfinding is %sabled", sWorld.getConfig(CONFIG_BOOL_MMAP_ENABLED) ? "en" : "dis");
+
+    dtNavMesh* navmesh = m_session->GetPlayer()->GetMap()->GetNavMesh();
+
+    if (!navmesh)
+    {
+        PSendSysMessage("NavMesh not loaded for current map.");
+        return true;
+    }
+
+    uint32 tileCount = 0;
+    uint32 nodeCount = 0;
+    uint32 polyCount = 0;
+    uint32 vertCount = 0;
+    uint32 triCount = 0;
+    uint32 triVertCount = 0;
+    uint32 dataSize = 0;
+    for (int32 i = 0; i < navmesh->getMaxTiles(); ++i)
+    {
+        const dtMeshTile* tile = ((dtNavMesh const*)navmesh)->getTile(i);
+        if (!tile || !tile->header)
+            continue;
+
+        tileCount ++;
+        nodeCount += tile->header->bvNodeCount;
+        polyCount += tile->header->polyCount;
+        vertCount += tile->header->vertCount;
+        triCount += tile->header->detailTriCount;
+        triVertCount += tile->header->detailVertCount;
+        dataSize += tile->dataSize;
+    }
+
+    PSendSysMessage("Navmesh stats:");
+    PSendSysMessage(" %u tiles loaded", tileCount);
+    PSendSysMessage(" %u BVTree nodes", nodeCount);
+    PSendSysMessage(" %u polygons (%u vertices)", polyCount, vertCount);
+    PSendSysMessage(" %u triangles (%u vertices)", triCount, triVertCount);
+    PSendSysMessage(" %.2f MB of data (not including pointers)", ((float)dataSize / sizeof(unsigned char)) / 1048576);
 
     return true;
 }
