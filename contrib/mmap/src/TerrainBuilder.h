@@ -16,19 +16,16 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _MMAP_TILE_BUILDER_H
-#define _MMAP_TILE_BUILDER_H
+#ifndef _MMAP_TERRAIN_BUILDER_H
+#define _MMAP_TERRAIN_BUILDER_H
 
 #include "MMapCommon.h"
 #include "MangosMap.h"
-#include "IVMapManager.h"
-#include "WorldModel.h"
 
 #include "G3D/Array.h"
 #include "G3D/Vector3.h"
 #include "G3D/Matrix3.h"
 
-using namespace VMAP;
 using namespace MaNGOS;
 
 namespace MMAP

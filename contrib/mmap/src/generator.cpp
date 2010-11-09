@@ -15,16 +15,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-#include <map>
-#include <set>
 
 #include "MMapCommon.h"
-#include "VMapManager2.h"
 #include "MapBuilder.h"
-#include "TerrainBuilder.h"
-#include "MapTree.h"
 
-using namespace std;
 using namespace MMAP;
 
 bool checkDirectories(bool debugOutput)

@@ -16,16 +16,17 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _MAP_BUILDER_2_H
-#define _MAP_BUILDER_2_H
+#ifndef _MAP_BUILDER_H
+#define _MAP_BUILDER_H
 
 #include <vector>
 #include <set>
 #include <map>
 
 #include "TerrainBuilder.h"
+
 #include "IVMapManager.h"
-#include "G3D/Array.h"
+#include "WorldModel.h"
 
 #include "Recast.h"
 #include "DetourNavMesh.h"

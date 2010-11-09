@@ -19,8 +19,6 @@
 #ifndef _MMAP_MANGOS_MAP_H
 #define _MMAP_MANGOS_MAP_H
 
-#include "MMapCommon.h"
-
 // following is copied from src/game/GridMap.h (too many useless includes there to use original file)
 namespace MaNGOS
 {

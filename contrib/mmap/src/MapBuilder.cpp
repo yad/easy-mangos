@@ -16,19 +16,15 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <set>
 #include "MMapCommon.h"
 #include "MapBuilder.h"
+
 #include "VMapManager2.h"
 #include "MapTree.h"
 #include "ModelInstance.h"
 
-#include "Recast.h"
 #include "DetourNavMeshBuilder.h"
-#include "DetourNavMesh.h"
 #include "DetourCommon.h"
-
-using namespace std;
 
 namespace MMAP
 {

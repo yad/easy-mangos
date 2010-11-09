@@ -16,12 +16,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "MMapCommon.h"
+#include <vector>
 
 #include "MapTree.h"
 #include "VMapManager2.h"
 #include "WorldModel.h"
 #include "ModelInstance.h"
+
+using namespace std;
 
 namespace VMAP
 {

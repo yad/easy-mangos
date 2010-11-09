@@ -15,18 +15,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-#include <sstream>
 
 #include "TerrainBuilder.h"
-
-#include "IVMapManager.h"
-#include "VMapManager2.h"
-#include "MapTree.h"
-#include "ModelInstance.h"
-#include "G3D/Array.h"
-
-using namespace VMAP;
-using namespace MaNGOS;
 
 // see following files:
 // contrib/extractor/system.cpp
