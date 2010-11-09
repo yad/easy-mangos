@@ -6691,3 +6691,16 @@ bool ChatHandler::HandleModifyGenderCommand(char *args)
 
     return true;
 }
+
+bool ChatHandler::HandleMmapToggle(char* args)
+{
+    bool newState = !sWorld.getConfig(CONFIG_BOOL_MMAP_ENABLED);
+    sWorld.setConfig(CONFIG_BOOL_MMAP_ENABLED, newState);
+
+    if (newState)
+        SendSysMessage("mmaps are now ENABLED (individual map settings still in effect)");
+    else
+        SendSysMessage("mmaps are now DISABLED");
+
+    return true;
+}
