@@ -632,7 +632,7 @@ namespace MMAP
         /*** calculate number of bits needed to store tiles & polys ***/
         int tileBits = rcMin((int)dtIlog2(dtNextPow2(tiles->size())), 12);
         if (tileBits < 1) tileBits = 1;                                     // need at least one bit!
-        int polyBits = 22 - tileBits;
+        int polyBits = sizeof(dtPolyRef)*8 - SALT_MIN_BITS - tileBits;
         int maxTiles = 1 << tileBits;
         int maxPolysPerTile = 1 << polyBits;
 

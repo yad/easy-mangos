@@ -226,7 +226,7 @@ bool dtNavMesh::init(const dtNavMeshParams* params)
 	m_tileBits = dtMax((unsigned int)1, dtIlog2(dtNextPow2((unsigned int)params->maxTiles)));
 	m_polyBits = dtMax((unsigned int)1, dtIlog2(dtNextPow2((unsigned int)params->maxPolys)));
 	m_saltBits = 32 - m_tileBits - m_polyBits;
-	if (m_saltBits < 10)
+	if (m_saltBits < SALT_MIN_BITS)
 		return false;
 	
 	return true;

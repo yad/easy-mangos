@@ -42,6 +42,8 @@ static const unsigned int DT_OFFMESH_CON_BIDIR = 1;
 
 static const int DT_MAX_AREAS = 64;
 
+static const int SALT_MIN_BITS = 4;
+
 // Flags for addTile
 enum dtTileFlags
 {
