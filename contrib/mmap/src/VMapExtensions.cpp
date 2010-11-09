@@ -46,21 +46,21 @@ namespace VMAP
     // declared in src/shared/vmap/WorldModel.h
     void WorldModel::getGroupModels(vector<GroupModel> &groupModels)
     {
-        groupModels = this->groupModels;
+        groupModels = groupModels;
     }
-    
+
     // declared in src/shared/vmap/WorldModel.h
     void GroupModel::getMeshData(vector<Vector3> &vertices, vector<MeshTriangle> &triangles, WmoLiquid* &liquid)
     {
-        vertices = this->vertices;
-        triangles = this->triangles;
+        vertices = vertices;
+        triangles = triangles;
         liquid = iLiquid;
     }
 
     // declared in src/shared/vmap/ModelInstance.h
     WorldModel* const ModelInstance::getWorldModel()
     {
-        return this->iModel;
+        return iModel;
     }
 
     // declared in src/shared/vmap/WorldModel.h

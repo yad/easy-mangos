@@ -49,7 +49,7 @@ namespace MMAP
 
     MapBuilder::~MapBuilder()
     {
-        for(TileList::iterator it = m_tiles.begin(); it != m_tiles.end(); ++it)
+        for (TileList::iterator it = m_tiles.begin(); it != m_tiles.end(); ++it)
         {
             (*it).second->clear();
             delete (*it).second;
@@ -69,7 +69,7 @@ namespace MMAP
 
         printf("Discovering maps... ");
         getDirContents(files, "maps");
-        for(i = 0; i < files.size(); ++i)
+        for (i = 0; i < files.size(); ++i)
         {
             mapID = uint32(atoi(files[i].substr(0,3).c_str()));
             if (m_tiles.find(mapID) == m_tiles.end())
@@ -81,7 +81,7 @@ namespace MMAP
 
         files.clear();
         getDirContents(files, "vmaps", "*.vmtree");
-        for(i = 0; i < files.size(); ++i)
+        for (i = 0; i < files.size(); ++i)
         {
             mapID = uint32(atoi(files[i].substr(0,3).c_str()));
             m_tiles.insert(pair<uint32,set<uint32>*>(mapID, new set<uint32>));
@@ -91,7 +91,7 @@ namespace MMAP
 
         count = 0;
         printf("Discovering tiles... ");
-        for(TileList::iterator itr = m_tiles.begin(); itr != m_tiles.end(); itr++)
+        for (TileList::iterator itr = m_tiles.begin(); itr != m_tiles.end(); itr++)
         {
             set<uint32>* tiles = (*itr).second;
             mapID = (*itr).first;
@@ -99,7 +99,7 @@ namespace MMAP
             sprintf(filter, "%03u*.vmtile", mapID);
             files.clear();
             getDirContents(files, "vmaps", filter);
-            for(i = 0; i < files.size(); ++i)
+            for (i = 0; i < files.size(); ++i)
             {
                 tileX = uint32(atoi(files[i].substr(7,2).c_str()));
                 tileY = uint32(atoi(files[i].substr(4,2).c_str()));
@@ -112,7 +112,7 @@ namespace MMAP
             sprintf(filter, "%03u*", mapID);
             files.clear();
             getDirContents(files, "maps", filter);
-            for(i = 0; i < files.size(); ++i)
+            for (i = 0; i < files.size(); ++i)
             {
                 tileY = uint32(atoi(files[i].substr(3,2).c_str()));
                 tileX = uint32(atoi(files[i].substr(5,2).c_str()));
@@ -138,10 +138,10 @@ namespace MMAP
 
     void MapBuilder::buildAll()
     {
-        for(TileList::iterator it = m_tiles.begin(); it != m_tiles.end(); ++it)
+        for (TileList::iterator it = m_tiles.begin(); it != m_tiles.end(); ++it)
         {
             uint32 mapID = (*it).first;
-            if(!shouldSkipMap((*it).first))
+            if (!shouldSkipMap((*it).first))
                 build((*it).first);
         }
     }
@@ -162,7 +162,7 @@ namespace MMAP
             MeshData meshData;
 
             // make sure we process maps which don't have tiles
-            if(!tiles->size())
+            if (!tiles->size())
             {
                 // initialize the static tree, which loads WDT models
                 if (!loadVMap(mapID, 64, 64, meshData) || !(meshData.solidVerts.size() || meshData.liquidVerts.size()))
@@ -193,16 +193,16 @@ namespace MMAP
                 minY = 32 - bmax[2] / GRID_SIZE;
 
                 // add all tiles within bounds to tile list.
-                for(i = minX; i <= maxX; ++i)
-                    for(j = minY; j <= maxY; ++j)
+                for (i = minX; i <= maxX; ++i)
+                    for (j = minY; j <= maxY; ++j)
                         tiles->insert(StaticMapTree::packTileID(i, j));
             }
-        } while(0);
+        } while (0);
 
         // build navMesh
         dtNavMesh* navMesh = NULL;
         buildNavMesh(mapID, navMesh);
-        if(!navMesh)
+        if (!navMesh)
         {
             printf("Failed creating navmesh!              \n");
             printf("Failed!                               \n\n");
@@ -216,7 +216,7 @@ namespace MMAP
 
         // now start building mmtiles for each tile
         printf("We have %u tiles.                          \n", (unsigned int)tiles->size());
-        for(set<uint32>::iterator it = tiles->begin(); it != tiles->end(); ++it)
+        for (set<uint32>::iterator it = tiles->begin(); it != tiles->end(); ++it)
         {
             allVerts.fastClear();
             allTris.fastClear();
@@ -237,7 +237,7 @@ namespace MMAP
             unloadVMap(mapID, tileY, tileX);
 
             // we only want tiles that people can actually walk on
-            if(!meshData.solidVerts.size() && !meshData.liquidVerts.size())
+            if (!meshData.solidVerts.size() && !meshData.liquidVerts.size())
                 continue;
 
             printf("%sAggregating mesh data...                        \r", tileString);
@@ -252,7 +252,7 @@ namespace MMAP
             copyIndices(allTris, meshData.solidTris, allVerts.size() / 3);
             allVerts.append(meshData.solidVerts);
 
-            if(!allVerts.size() || !allTris.size())
+            if (!allVerts.size() || !allTris.size())
                 continue;
 
             // get bounds of current tile
@@ -290,7 +290,7 @@ namespace MMAP
         loadVMap(mapID, 64, 64, meshData);
 
         // get the coord bounds of the model data
-        if(meshData.solidVerts.size() || meshData.liquidVerts.size())
+        if (meshData.solidVerts.size() || meshData.liquidVerts.size())
         {
             // get the coord bounds of the model data
             if (meshData.solidVerts.size() && meshData.liquidVerts.size())
@@ -317,16 +317,16 @@ namespace MMAP
             minY = 32 - bmax[2] / GRID_SIZE;
 
             // if specified tile is outside of bounds, give up now
-            if(tileX < minX || tileX > maxX)
+            if (tileX < minX || tileX > maxX)
                 return;
-            if(tileY < minY || tileY > maxY)
+            if (tileY < minY || tileY > maxY)
                 return;
         }
 
         // build navMesh
         dtNavMesh* navMesh = NULL;
         buildNavMesh(mapID, navMesh);
-        if(!navMesh)
+        if (!navMesh)
         {
             printf("Failed creating navmesh!              \n");
             printf("Failed!                               \n\n");
@@ -352,8 +352,8 @@ namespace MMAP
             unloadVMap(mapID, tileY, tileX);
 
             // if there is no data, give up now
-            if(!meshData.solidVerts.size() && !meshData.liquidVerts.size())
-                break;
+            if (!meshData.solidVerts.size() && !meshData.liquidVerts.size())
+                continue;
 
             printf("%sAggregating mesh data...                        \r", tileString);
 
@@ -367,8 +367,8 @@ namespace MMAP
             copyIndices(allTris, meshData.solidTris, allVerts.size() / 3);
             allVerts.append(meshData.solidVerts);
 
-            if(!allVerts.size() || !allTris.size())
-                break;
+            if (!allVerts.size() || !allTris.size())
+                continue;
 
             // get bounds of current tile
             getTileBounds(tileX, tileY, allVerts.getCArray(), allVerts.size() / 3, bmin, bmax);
@@ -384,8 +384,7 @@ namespace MMAP
                                 bmin,
                                 bmax,
                                 navMesh);
-
-        } while(0);
+        } while (0);
 
         dtFreeNavMesh(navMesh);
 
@@ -405,22 +404,22 @@ namespace MMAP
         InstanceTreeMap instanceTrees;
         ((VMapManager2*)m_vmapManager)->getInstanceMapTree(instanceTrees);
 
-        if(!instanceTrees[mapID])
+        if (!instanceTrees[mapID])
             return false;
 
         instanceTrees[mapID]->getModelInstances(models, count);
 
-        if(!models || !count)
+        if (!models || !count)
             return false;
 
         uint32 i;
-        for(i = 0; i < count; ++i)
+        for (i = 0; i < count; ++i)
         {
             ModelInstance instance = models[i];
 
             // model instances exist in tree even though there are instances of that model in this tile
             WorldModel* worldModel = instance.getWorldModel();
-            if(!worldModel)
+            if (!worldModel)
                 continue;
 
             vector<GroupModel> groupModels;
@@ -433,10 +432,10 @@ namespace MMAP
             float scale = models[i].iScale;
             G3D::Matrix3 rotation = G3D::Matrix3::fromEulerAnglesZYX(-1*G3D::pi()*instance.iRot.y/180.f, -1*G3D::pi()*instance.iRot.x/180.f, -1*G3D::pi()*instance.iRot.z/180.f);
             Vector3 position = instance.iPos;
-            position.x -= 32*533.33333f;
-            position.y -= 32*533.33333f;
+            position.x -= 32*GRID_SIZE;
+            position.y -= 32*GRID_SIZE;
 
-            for(vector<GroupModel>::iterator it = groupModels.begin(); it != groupModels.end(); ++it)
+            for (vector<GroupModel>::iterator it = groupModels.begin(); it != groupModels.end(); ++it)
             {
                 vector<Vector3> tempVertices;
                 vector<Vector3> transformedVertices;
@@ -543,9 +542,9 @@ namespace MMAP
         m_vmapManager->unloadMap(mapID, tileX, tileY);
     }
 
-    inline void MapBuilder::transform(vector<Vector3> source, vector<Vector3> &transformedVertices, float scale, G3D::Matrix3 rotation, Vector3 position)
+    void MapBuilder::transform(vector<Vector3> source, vector<Vector3> &transformedVertices, float scale, G3D::Matrix3 rotation, Vector3 position)
     {
-        for(vector<Vector3>::iterator it = source.begin(); it != source.end(); ++it)
+        for (vector<Vector3>::iterator it = source.begin(); it != source.end(); ++it)
         {
             // apply tranform, then mirror along the horizontal axes
             Vector3 v((*it) * rotation * scale + position);
@@ -555,9 +554,9 @@ namespace MMAP
         }
     }
 
-    inline void MapBuilder::copyVertices(vector<Vector3> source, G3D::Array<float> &dest)
+    void MapBuilder::copyVertices(vector<Vector3> source, G3D::Array<float> &dest)
     {
-        for(vector<Vector3>::iterator it = source.begin(); it != source.end(); ++it)
+        for (vector<Vector3>::iterator it = source.begin(); it != source.end(); ++it)
         {
             dest.push_back((*it).y);
             dest.push_back((*it).z);
@@ -565,11 +564,11 @@ namespace MMAP
         }
     }
 
-    inline void MapBuilder::copyIndices(vector<MeshTriangle> source, G3D::Array<int> &dest, int offset, bool flip)
+    void MapBuilder::copyIndices(vector<MeshTriangle> source, G3D::Array<int> &dest, int offset, bool flip)
     {
-        if(flip)
+        if (flip)
         {
-            for(vector<MeshTriangle>::iterator it = source.begin(); it != source.end(); ++it)
+            for (vector<MeshTriangle>::iterator it = source.begin(); it != source.end(); ++it)
             {
                 dest.push_back((*it).idx2+offset);
                 dest.push_back((*it).idx1+offset);
@@ -578,7 +577,7 @@ namespace MMAP
         }
         else
         {
-            for(vector<MeshTriangle>::iterator it = source.begin(); it != source.end(); ++it)
+            for (vector<MeshTriangle>::iterator it = source.begin(); it != source.end(); ++it)
             {
                 dest.push_back((*it).idx0+offset);
                 dest.push_back((*it).idx1+offset);
@@ -587,10 +586,10 @@ namespace MMAP
         }
     }
 
-    inline void MapBuilder::copyIndices(G3D::Array<int> &dest, G3D::Array<int> source, int offset)
+    void MapBuilder::copyIndices(G3D::Array<int> &dest, G3D::Array<int> source, int offset)
     {
         int* src = source.getCArray();
-        for(int i = 0; i < source.size(); ++i)
+        for (int i = 0; i < source.size(); ++i)
             dest.append(src[i] + offset);
     }
 
@@ -602,9 +601,9 @@ namespace MMAP
         float* v = verts.getCArray();
 
         // collect all the vertex indices from triangle
-        for(int i = 0; i < tris.size(); ++i)
+        for (int i = 0; i < tris.size(); ++i)
         {
-            if(vertMap.find(t[i]) != vertMap.end())
+            if (vertMap.find(t[i]) != vertMap.end())
                 continue;
 
             vertMap.insert(std::pair<int, int>(t[i], 0));
@@ -613,7 +612,7 @@ namespace MMAP
         // collect the vertices
         G3D::Array<float> cleanVerts;
         int index, count = 0;
-        for(map<int, int>::iterator it = vertMap.begin(); it != vertMap.end(); ++it)
+        for (map<int, int>::iterator it = vertMap.begin(); it != vertMap.end(); ++it)
         {
             index = (*it).first;
             (*it).second = count;
@@ -625,10 +624,10 @@ namespace MMAP
         cleanVerts.clear();
 
         // update triangles to use new indices
-        for(int i = 0; i < tris.size(); ++i)
+        for (int i = 0; i < tris.size(); ++i)
         {
             map<int, int>::iterator it;
-            if((it = vertMap.find(t[i])) == vertMap.end())
+            if ((it = vertMap.find(t[i])) == vertMap.end())
                 continue;
 
             t[i] = (*it).second;
@@ -654,18 +653,18 @@ namespace MMAP
         /***          calculate bounds of map         ***/
 
         uint32 tileXMin = 64, tileYMin = 64, tileXMax = 0, tileYMax = 0, tileX, tileY;
-        for(set<uint32>::iterator it = tiles->begin(); it != tiles->end(); ++it)
+        for (set<uint32>::iterator it = tiles->begin(); it != tiles->end(); ++it)
         {
             StaticMapTree::unpackTileID((*it), tileX, tileY);
 
-            if(tileX > tileXMax)
+            if (tileX > tileXMax)
                 tileXMax = tileX;
-            else if(tileX < tileXMin)
+            else if (tileX < tileXMin)
                 tileXMin = tileX;
 
-            if(tileY > tileYMax)
+            if (tileY > tileYMax)
                 tileYMax = tileY;
-            else if(tileY < tileYMin)
+            else if (tileY < tileYMin)
                 tileYMin = tileY;
         }
 
@@ -687,14 +686,14 @@ namespace MMAP
 
         navMesh = dtAllocNavMesh();
         printf("Creating navMesh...                     \r");
-        if(!navMesh->init(&navMeshParams))
+        if (!navMesh->init(&navMeshParams))
         {
             printf("Failed creating navmesh!                \n");
             return;
         }
 
         sprintf(fileName, "mmaps/%03u.mmap", mapID);
-        if(!(file = fopen(fileName, "wb")))
+        if (!(file = fopen(fileName, "wb")))
         {
             dtFreeNavMesh(navMesh);
             char message[1024];
@@ -784,10 +783,10 @@ namespace MMAP
             // build heightfield
             printf("%sBuilding Recast Heightfield...          \r", tileString);
             iv.heightfield = rcAllocHeightfield();
-            if(!iv.heightfield || !rcCreateHeightfield(&context, *iv.heightfield, config.width, config.height, config.bmin, config.bmax, config.cs, config.ch))
+            if (!iv.heightfield || !rcCreateHeightfield(&context, *iv.heightfield, config.width, config.height, config.bmin, config.bmax, config.cs, config.ch))
             {
                 printf("%sFailed building heightfield!            \n", tileString);
-                break;
+                continue;
             }
 
             printf("%sRasterizing triangles...                   \r", tileString);
@@ -810,13 +809,13 @@ namespace MMAP
             // compact heightfield spans
             printf("%sCompacting heightfield...               \r", tileString);
             iv.compactHeightfield = rcAllocCompactHeightfield();
-            if(!iv.compactHeightfield || !rcBuildCompactHeightfield(&context, config.walkableHeight, config.walkableClimb, *iv.heightfield, *iv.compactHeightfield))
+            if (!iv.compactHeightfield || !rcBuildCompactHeightfield(&context, config.walkableHeight, config.walkableClimb, *iv.heightfield, *iv.compactHeightfield))
             {
                 printf("%sFailed compacting heightfield!            \n", tileString);
-                break;
+                continue;
             }
 
-            if(!m_debugOutput)
+            if (!m_debugOutput)
             {
                 rcFreeHeightField(iv.heightfield);
                 iv.heightfield = NULL;
@@ -824,60 +823,60 @@ namespace MMAP
 
             // build polymesh intermediates
             printf("%sEroding walkable area width...          \r", tileString);
-            if(!rcErodeWalkableArea(&context, config.walkableRadius, *iv.compactHeightfield))
+            if (!rcErodeWalkableArea(&context, config.walkableRadius, *iv.compactHeightfield))
             {
                 printf("%sFailed eroding area!                    \n", tileString);
-                break;
+                continue;
             }
 
             printf("%sSmoothing area boundaries...          \r", tileString);
-            if(!rcMedianFilterWalkableArea(&context, *iv.compactHeightfield))
+            if (!rcMedianFilterWalkableArea(&context, *iv.compactHeightfield))
             {
                 printf("%sFailed median filter!                    \n", tileString);
-                break;
+                continue;
             }
 
             printf("%sBuilding distance field...              \r", tileString);
-            if(!rcBuildDistanceField(&context, *iv.compactHeightfield))
+            if (!rcBuildDistanceField(&context, *iv.compactHeightfield))
             {
                 printf("%sFailed building distance field!         \n", tileString);
-                break;
+                continue;
             }
 
             // bottleneck is here
             printf("%sBuilding regions...                     \r", tileString);
-            if(!rcBuildRegions(&context, *iv.compactHeightfield, config.borderSize, config.minRegionSize, config.mergeRegionSize))
+            if (!rcBuildRegions(&context, *iv.compactHeightfield, config.borderSize, config.minRegionSize, config.mergeRegionSize))
             {
                 printf("%sFailed building regions!                \n", tileString);
-                break;
+                continue;
             }
 
             printf("%sBuilding contours...                    \r", tileString);
             iv.contours = rcAllocContourSet();
-            if(!iv.contours || !rcBuildContours(&context, *iv.compactHeightfield, config.maxSimplificationError, config.maxEdgeLen, *iv.contours))
+            if (!iv.contours || !rcBuildContours(&context, *iv.compactHeightfield, config.maxSimplificationError, config.maxEdgeLen, *iv.contours))
             {
                 printf("%sFailed building contours!               \n", tileString);
-                break;
+                continue;
             }
 
             // build polymesh
             printf("%sBuilding polymesh...                    \r", tileString);
             iv.polyMesh = rcAllocPolyMesh();
-            if(!iv.polyMesh || !rcBuildPolyMesh(&context, *iv.contours, config.maxVertsPerPoly, *iv.polyMesh))
+            if (!iv.polyMesh || !rcBuildPolyMesh(&context, *iv.contours, config.maxVertsPerPoly, *iv.polyMesh))
             {
                 printf("%sFailed building polymesh!               \n", tileString);
-                break;
+                continue;
             }
 
             printf("%sBuilding polymesh detail...             \r", tileString);
             iv.polyMeshDetail = rcAllocPolyMeshDetail();
-            if(!iv.polyMeshDetail || !rcBuildPolyMeshDetail(&context, *iv.polyMesh, *iv.compactHeightfield, config.detailSampleDist, config.detailSampleMaxError, *iv.polyMeshDetail))
+            if (!iv.polyMeshDetail || !rcBuildPolyMeshDetail(&context, *iv.polyMesh, *iv.compactHeightfield, config.detailSampleDist, config.detailSampleMaxError, *iv.polyMeshDetail))
             {
                 printf("%sFailed building polymesh detail!        \n", tileString);
-                break;
+                continue;
             }
 
-            if(!m_debugOutput)
+            if (!m_debugOutput)
             {
                 rcFreeCompactHeightfield(iv.compactHeightfield);
                 iv.compactHeightfield = NULL;
@@ -887,7 +886,7 @@ namespace MMAP
 
             // this might be handled within Recast at some point
             printf("%sCleaning vertex padding...              \r", tileString);
-            for(int i = 0; i < iv.polyMesh->nverts; ++i)
+            for (int i = 0; i < iv.polyMesh->nverts; ++i)
             {
                 unsigned short* v = &iv.polyMesh->verts[i*3];
                 v[0] -= (unsigned short)config.borderSize;
@@ -895,15 +894,15 @@ namespace MMAP
             }
 
             // polymesh vertex indices are stored with ushorts in detour, can't have more than 65535
-            if(iv.polyMesh->nverts >= 0xffff)
+            if (iv.polyMesh->nverts >= 0xffff)
             {
                 printf("%sToo many vertices!                      \n", tileString);
-                break;
+                continue;
             }
 
             printf("%sSetting polys as walkable...            \r", tileString);
-            for(int i = 0; i < iv.polyMesh->npolys; ++i)
-                if(iv.polyMesh->areas[i] & RC_WALKABLE_AREA)
+            for (int i = 0; i < iv.polyMesh->npolys; ++i)
+                if (iv.polyMesh->areas[i] & RC_WALKABLE_AREA)
                     iv.polyMesh->flags[i] = iv.polyMesh->areas[i];
 
             dtNavMeshCreateParams params;
@@ -940,12 +939,12 @@ namespace MMAP
             if (params.nvp > DT_VERTS_PER_POLYGON)
             {
                 printf("%s Invalid verts-per-polygon value!        \n", tileString);
-                break;
+                continue;
             }
             if (params.vertCount >= 0xffff)
             {
                 printf("%s Too many vertices!                      \n", tileString);
-                break;
+                continue;
             }
             if (!params.vertCount || !params.verts)
             {
@@ -954,44 +953,44 @@ namespace MMAP
 
                 // message is an annoyance
                 //printf("%sNo vertices to build tile!              \n", tileString);
-                break;
+                continue;
             }
             if (!params.polyCount || !params.polys)
             {
                 printf("%s No polygons to build tile!              \n", tileString);
-                break;
+                continue;
             }
             if (!params.detailMeshes || !params.detailVerts || !params.detailTris)
             {
                 printf("%s No detail mesh to build tile!           \n", tileString);
-                break;
+                continue;
             }
 
             printf("%s Building navmesh tile...                \r", tileString);
-            if(!dtCreateNavMeshData(&params, &navData, &navDataSize))
+            if (!dtCreateNavMeshData(&params, &navData, &navDataSize))
             {
                 printf("%s Failed building navmesh tile!           \n", tileString);
-                break;
+                continue;
             }
 
             dtTileRef tileRef = 0;
             printf("%s Adding tile to navmesh...                \r", tileString);
             // DT_TILE_FREE_DATA tells detour to unallocate memory when the tile
             // is removed via removeTile()
-            if(!(tileRef = navMesh->addTile(navData, navDataSize, DT_TILE_FREE_DATA)))
+            if (!(tileRef = navMesh->addTile(navData, navDataSize, DT_TILE_FREE_DATA)))
             {
                 printf("%s Failed adding tile to navmesh!           \n", tileString);
-                break;
+                continue;
             }
 
             sprintf(fileName, "mmaps/%03u%02i%02i.mmtile", mapID, tileY, tileX);
-            if(!(file = fopen(fileName, "wb")))
+            if (!(file = fopen(fileName, "wb")))
             {
                 char message[1024];
                 sprintf(message, "Failed to open %s for writing!\n", fileName);
                 perror(message);
                 navMesh->removeTile(tileRef, 0, 0);
-                break;
+                continue;
             }
 
             printf("%s Writing to file...                      \r", tileString);
@@ -1001,10 +1000,9 @@ namespace MMAP
 
             // now that tile is written to disk, we can unload it
             navMesh->removeTile(tileRef, 0, 0);
+        } while (0);
 
-        }while(0);
-
-        if(m_debugOutput)
+        if (m_debugOutput)
         {
             generateObjFile(mapID, tileX, tileY, meshData);
             writeIV(mapID, tileX, tileY, iv);
@@ -1016,7 +1014,7 @@ namespace MMAP
     void MapBuilder::getTileBounds(uint32 tileX, uint32 tileY, float* verts, int vertCount, float* bmin, float* bmax)
     {
         // this is for elevation
-        if(verts && vertCount)
+        if (verts && vertCount)
             rcCalcBounds(verts, vertCount, bmin, bmax);
         else
         {
@@ -1062,10 +1060,8 @@ namespace MMAP
         char objFileName[255];
         FILE* objFile;
 
-        char b = '\0';
-
         sprintf(objFileName, "meshes/%03u.map", mapID);
-        if(!(objFile = fopen(objFileName, "wb")))
+        if (!(objFile = fopen(objFileName, "wb")))
         {
             char message[1024];
             sprintf(message, "Failed to open %s for writing!\n", objFileName);
@@ -1073,12 +1069,13 @@ namespace MMAP
             return;
         }
 
+        char b = '\0';
         fwrite(&b, sizeof(char), 1, objFile);
         fclose(objFile);
 
         sprintf(objFileName, "meshes/%03u%02u%02u.mesh", mapID, tileX, tileY);
         objFile = fopen(objFileName, "wb");
-        if(!objFile)
+        if (!objFile)
         {
             char message[1024];
             sprintf(message, "Failed to open %s for writing!\n", objFileName);
@@ -1116,7 +1113,7 @@ namespace MMAP
         FILE* objFile;
 
         sprintf(objFileName, "meshes/map%03u.obj", mapID);
-        if(!(objFile = fopen(objFileName, "wb")))
+        if (!(objFile = fopen(objFileName, "wb")))
         {
             char message[1024];
             sprintf(message, "Failed to open %s for writing!\n", objFileName);
@@ -1135,10 +1132,10 @@ namespace MMAP
         float* verts = allVerts.getCArray();
         int* tris = allTris.getCArray();
 
-        for(int i = 0; i < allVerts.size() / 3; i++)
+        for (int i = 0; i < allVerts.size() / 3; i++)
             fprintf(objFile, "v %f %f %f\n", verts[i*3], verts[i*3 + 1], verts[i*3 + 2]);
 
-        for(int i = 0; i < allTris.size() / 3; i++)
+        for (int i = 0; i < allTris.size() / 3; i++)
             fprintf(objFile, "f %i %i %i\n", tris[i*3] + 1, tris[i*3 + 1] + 1, tris[i*3 + 2] + 1);
 
         fclose(objFile);
@@ -1157,17 +1154,17 @@ namespace MMAP
         string name("meshes/%03u%02i%02i.");
 
 #define DEBUG_WRITE(fileExtension,data) \
-    sprintf(fileName, (name + fileExtension).c_str(), mapID, tileX, tileY); \
-    if (!(file = fopen(fileName, "wb"))) \
-    { \
-        char message[1024]; \
-        sprintf(message, "%sFailed to open %s for writing!\n",  tileString, fileName); \
-        perror(message); \
-    } \
-    else \
-        debugWrite(file, data); \
-    if(file) fclose(file); \
-    printf("%sWriting debug output...                       \r", tileString)
+        sprintf(fileName, (name + fileExtension).c_str(), mapID, tileX, tileY); \
+        if (!(file = fopen(fileName, "wb"))) \
+        { \
+            char message[1024]; \
+            sprintf(message, "%sFailed to open %s for writing!\n",  tileString, fileName); \
+            perror(message); \
+        } \
+        else \
+            debugWrite(file, data); \
+        if(file) fclose(file); \
+        printf("%sWriting debug output...                       \r", tileString)
 
         DEBUG_WRITE("hf", iv.heightfield);
         DEBUG_WRITE("chf", iv.compactHeightfield);
@@ -1180,7 +1177,7 @@ namespace MMAP
 
     void MapBuilder::debugWrite(FILE* file, const rcHeightfield* mesh)
     {
-        if(!file || !mesh)
+        if (!file || !mesh)
             return;
 
         fwrite(&(mesh->cs), sizeof(float), 1, file);
@@ -1190,14 +1187,14 @@ namespace MMAP
         fwrite(mesh->bmin, sizeof(float), 3, file);
         fwrite(mesh->bmax, sizeof(float), 3, file);
 
-        for(int y = 0; y < mesh->height; ++y)
-            for(int x = 0; x < mesh->width; ++x)
+        for (int y = 0; y < mesh->height; ++y)
+            for (int x = 0; x < mesh->width; ++x)
             {
                 rcSpan* span = mesh->spans[x+y*mesh->width];
 
                 // first, count the number of spans
                 int spanCount = 0;
-                while(span)
+                while (span)
                 {
                     spanCount++;
                     span = span->next;
@@ -1208,7 +1205,7 @@ namespace MMAP
 
                 // write the spans
                 span = mesh->spans[x+y*mesh->width];
-                while(span)
+                while (span)
                 {
                     fwrite(span, sizeof(rcSpan), 1, file);
                     span = span->next;
@@ -1218,7 +1215,7 @@ namespace MMAP
 
     void MapBuilder::debugWrite(FILE* file, const rcCompactHeightfield* chf)
     {
-        if(!file | !chf)
+        if (!file | !chf)
             return;
 
         fwrite(&(chf->width), sizeof(chf->width), 1, file);
@@ -1257,7 +1254,7 @@ namespace MMAP
 
     void MapBuilder::debugWrite(FILE* file, const rcContourSet* cs)
     {
-        if(!file || !cs)
+        if (!file || !cs)
             return;
 
         fwrite(&(cs->cs), sizeof(float), 1, file);
@@ -1265,7 +1262,7 @@ namespace MMAP
         fwrite(cs->bmin, sizeof(float), 3, file);
         fwrite(cs->bmax, sizeof(float), 3, file);
         fwrite(&(cs->nconts), sizeof(int), 1, file);
-        for(int i = 0; i < cs->nconts; ++i)
+        for (int i = 0; i < cs->nconts; ++i)
         {
             fwrite(&cs->conts[i].area, sizeof(unsigned char), 1, file);
             fwrite(&cs->conts[i].reg, sizeof(unsigned short), 1, file);
@@ -1278,7 +1275,7 @@ namespace MMAP
 
     void MapBuilder::debugWrite(FILE* file, const rcPolyMesh* mesh)
     {
-        if(!file || !mesh)
+        if (!file || !mesh)
             return;
 
         fwrite(&(mesh->cs), sizeof(float), 1, file);
@@ -1297,7 +1294,7 @@ namespace MMAP
 
     void MapBuilder::debugWrite(FILE* file, const rcPolyMeshDetail* mesh)
     {
-        if(!file || !mesh)
+        if (!file || !mesh)
             return;
 
         fwrite(&(mesh->nverts), sizeof(int), 1, file);
@@ -1319,8 +1316,8 @@ namespace MMAP
         //        return true;
         //}
 
-        if(m_skipContinents)
-            switch(mapID)
+        if (m_skipContinents)
+            switch (mapID)
             {
                 case 0:
                 case 1:
@@ -1331,8 +1328,8 @@ namespace MMAP
                     break;
             }
 
-        if(m_skipJunkMaps)
-            switch(mapID)
+        if (m_skipJunkMaps)
+            switch (mapID)
             {
                 case 13:    // test.wdt
                 case 25:    // ScottTest.wdt
@@ -1346,13 +1343,13 @@ namespace MMAP
                 case 606:   // QA_DVD.wdt
                     return true;
                 default:
-                    if(isTransportMap(mapID))
+                    if (isTransportMap(mapID))
                         return true;
                     break;
             }
 
-        if(m_skipBattlegrounds)
-            switch(mapID)
+        if (m_skipBattlegrounds)
+            switch (mapID)
             {
                 case 30:    // AV
                 case 37:    // ?
@@ -1371,7 +1368,7 @@ namespace MMAP
 
     bool MapBuilder::isTransportMap(uint32 mapID)
     {
-        switch(mapID)
+        switch (mapID)
         {
             // transport maps
             case 582:

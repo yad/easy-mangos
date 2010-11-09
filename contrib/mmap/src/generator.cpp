@@ -25,29 +25,29 @@ bool checkDirectories(bool debugOutput)
 {
     vector<string> dirFiles;
 
-    if(getDirContents(dirFiles, "maps") == LISTFILE_DIRECTORY_NOT_FOUND || !dirFiles.size())
+    if (getDirContents(dirFiles, "maps") == LISTFILE_DIRECTORY_NOT_FOUND || !dirFiles.size())
     {
         printf("'maps' directory is empty or does not exist\n");
         return false;
     }
 
     dirFiles.clear();
-    if(getDirContents(dirFiles, "vmaps", "*.vmtree") == LISTFILE_DIRECTORY_NOT_FOUND || !dirFiles.size())
+    if (getDirContents(dirFiles, "vmaps", "*.vmtree") == LISTFILE_DIRECTORY_NOT_FOUND || !dirFiles.size())
     {
         printf("'vmaps' directory is empty or does not exist\n");
         return false;
     }
 
     dirFiles.clear();
-    if(getDirContents(dirFiles, "mmaps") == LISTFILE_DIRECTORY_NOT_FOUND)
+    if (getDirContents(dirFiles, "mmaps") == LISTFILE_DIRECTORY_NOT_FOUND)
     {
         printf("'mmaps' directory does not exist\n");
         return false;
     }
 
     dirFiles.clear();
-    if(debugOutput)
-        if(getDirContents(dirFiles, "meshes") == LISTFILE_DIRECTORY_NOT_FOUND)
+    if (debugOutput)
+        if (getDirContents(dirFiles, "meshes") == LISTFILE_DIRECTORY_NOT_FOUND)
         {
             printf("'meshes' directory does not exist (no place to put debugOutput files)\n");
             return false;
@@ -72,27 +72,27 @@ void handleArgs(int argc, char** argv,
     char zero[2] = "0";
     int i;
     char* param;
-    for(i = 1; i < argc; ++i)
+    for (i = 1; i < argc; ++i)
     {
-        if(strcmp(argv[i], "--maxAngle") == 0)
+        if (strcmp(argv[i], "--maxAngle") == 0)
         {
             param = argv[++i];
-            if(!param)
+            if (!param)
             {
                 badParam = true;
                 return;
             }
 
             float maxangle = atof(param);
-            if(maxangle <= 90.f && maxangle >= 45.f)
+            if (maxangle <= 90.f && maxangle >= 45.f)
                 maxAngle = maxangle;
             else
                 printf("invalid option for '--maxAngle', using default\n");
         }
-        else if(strcmp(argv[i], "--tile") == 0)
+        else if (strcmp(argv[i], "--tile") == 0)
         {
             param = argv[++i];
-            if(!param)
+            if (!param)
             {
                 badParam = true;
                 return;
@@ -103,29 +103,29 @@ void handleArgs(int argc, char** argv,
             int tilex = atoi(stileX);
             int tiley = atoi(stileY);
 
-            if((tilex > 0 && tilex < 64) || (tilex == 0 && strcmp(stileX, zero) == 0))
+            if ((tilex > 0 && tilex < 64) || (tilex == 0 && strcmp(stileX, zero) == 0))
                 tileX = tilex;
-            if((tiley > 0 && tiley < 64) || (tiley == 0 && strcmp(stileY, zero) == 0))
+            if ((tiley > 0 && tiley < 64) || (tiley == 0 && strcmp(stileY, zero) == 0))
                 tileY = tiley;
 
-            if(tileX < 0 || tileY < 0)
+            if (tileX < 0 || tileY < 0)
             {
                 printf("invalid tile coords.\n");
                 badParam = true;
             }
         }
-        else if(strcmp(argv[i], "--skipLiquid") == 0)
+        else if (strcmp(argv[i], "--skipLiquid") == 0)
         {
             param = argv[++i];
-            if(!param)
+            if (!param)
             {
                 badParam = true;
                 return;
             }
 
-            if(strcmp(param, "true") == 0)
+            if (strcmp(param, "true") == 0)
                 skipLiquid = true;
-            else if(strcmp(param, "false") == 0)
+            else if (strcmp(param, "false") == 0)
                 skipLiquid = false;
             else
                 printf("invalid option for '--skipLiquid', using default\n");
@@ -133,79 +133,79 @@ void handleArgs(int argc, char** argv,
         else if(strcmp(argv[i], "--skipContinents") == 0)
         {
             param = argv[++i];
-            if(!param)
+            if (!param)
             {
                 badParam = true;
                 return;
             }
 
-            if(strcmp(param, "true") == 0)
+            if (strcmp(param, "true") == 0)
                 skipContinents = true;
-            else if(strcmp(param, "false") == 0)
+            else if (strcmp(param, "false") == 0)
                 skipContinents = false;
             else
                 printf("invalid option for '--skipContinents', using default\n");
         }
-        else if(strcmp(argv[i], "--skipJunkMaps") == 0)
+        else if (strcmp(argv[i], "--skipJunkMaps") == 0)
         {
             param = argv[++i];
-            if(!param)
+            if (!param)
             {
                 badParam = true;
                 return;
             }
 
-            if(strcmp(param, "true") == 0)
+            if (strcmp(param, "true") == 0)
                 skipJunkMaps = true;
-            else if(strcmp(param, "false") == 0)
+            else if (strcmp(param, "false") == 0)
                 skipJunkMaps = false;
             else
                 printf("invalid option for '--skipJunkMaps', using default\n");
         }
-        else if(strcmp(argv[i], "--skipBattlegrounds") == 0)
+        else if (strcmp(argv[i], "--skipBattlegrounds") == 0)
         {
             param = argv[++i];
-            if(!param)
+            if (!param)
             {
                 badParam = true;
                 return;
             }
 
-            if(strcmp(param, "true") == 0)
+            if (strcmp(param, "true") == 0)
                 skipBattlegrounds = true;
-            else if(strcmp(param, "false") == 0)
+            else if (strcmp(param, "false") == 0)
                 skipBattlegrounds = false;
             else
                 printf("invalid option for '--skipBattlegrounds', using default\n");
         }
-        else if(strcmp(argv[i], "--hiResHeightmaps") == 0)
+        else if (strcmp(argv[i], "--hiResHeightmaps") == 0)
         {
             param = argv[++i];
-            if(!param)
+            if (!param)
             {
                 badParam = true;
                 return;
             }
 
-            if(strcmp(param, "true") == 0)
+            if(strcmp (param, "true") == 0)
                 hiResHeightmaps = true;
             else if(strcmp(param, "false") == 0)
                 hiResHeightmaps = false;
             else
                 printf("invalid option for '--hiResHeightmaps', using default\n");
         }
-        else if(strcmp(argv[i], "--debugOutput") == 0)
+        else if (strcmp(argv[i], "--debugOutput") == 0)
         {
             param = argv[++i];
-            if(!param)
+            if (!param)
             {
                 badParam = true;
                 return;
             }
 
-            if(strcmp(param, "true") == 0)
+            if (strcmp(param, "true") == 0)
                 debugOutput = true;
-            else if(strcmp(param, "false") == 0)
+            else if (strcmp(param, "false") == 0)
                 debugOutput = false;
             else
                 printf("invalid option for '--debugOutput', using default true\n");
@@ -213,7 +213,7 @@ void handleArgs(int argc, char** argv,
         else
         {
             int map = atoi(argv[i]);
-            if(map > 0 || (map == 0 && (strcmp(argv[i], zero) == 0)))
+            if (map > 0 || (map == 0 && (strcmp(argv[i], zero) == 0)))
                 mapnum = map;
             else
             {
@@ -258,19 +258,19 @@ int main(int argc, char** argv)
               debugOutput,
               badParam);
 
-    if(badParam)
+    if (badParam)
         return finish("You have specified invalid parameters", -1);
 
-    if(mapnum == -1 && debugOutput)
+    if (mapnum == -1 && debugOutput)
     {
         printf("You have specifed debug output, but didn't specify a map to generate.\n");
         printf("This will generate debug output for ALL maps.\n");
         printf("Are you sure you want to continue? (y/n) ");
-        if(getchar() != 'y')
+        if (getchar() != 'y')
             return 0;
     }
 
-    if(!checkDirectories(debugOutput))
+    if (!checkDirectories(debugOutput))
         return finish("Press any key to close...", -1);
 
     MapBuilder builder(maxAngle,
@@ -281,9 +281,9 @@ int main(int argc, char** argv)
                        hiResHeightmaps,
                        debugOutput);
 
-    if(tileX > -1 && tileY > -1 && mapnum >= 0)
+    if (tileX > -1 && tileY > -1 && mapnum >= 0)
         builder.buildTile(mapnum, tileX, tileY);
-    else if(mapnum >= 0)
+    else if (mapnum >= 0)
         builder.build(uint32(mapnum));
     else
         builder.buildAll();

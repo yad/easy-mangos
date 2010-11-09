@@ -105,7 +105,7 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner)
     //    we have brand new path
     //    we have visited almost all of the previously sent points
     //    movespeed has changed
-    //    the owner is stopped
+    //    the owner is stopped (caused by some movement effects)
     if (newPathCalculated || m_pathPointsSent < 2 || i_recalculateTravel || owner.IsStopped())
     {
         // send 10 nodes, or send all nodes if there are less than 10 left
@@ -185,7 +185,7 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
         return true;
     }
 
-    if(i_path && (i_path->getPathType() & PATHFIND_NOPATH))
+    if (i_path && (i_path->getPathType() & PATHFIND_NOPATH))
         return true;
 
     Traveller<T> traveller(owner);
@@ -210,7 +210,7 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
         PathNode next_point(x, y, z);
 
         bool targetMoved = false, needNewDest = false;
-        if(i_path)
+        if (i_path)
         {
             PathNode end_point = i_path->getEndPosition();
             next_point = i_path->getNextPosition();

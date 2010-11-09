@@ -37,7 +37,7 @@ namespace MMAP
 
     void TerrainBuilder::getLoopVars(Spot portion, int &loopStart, int &loopEnd, int &loopInc)
     {
-        switch(portion)
+        switch (portion)
         {
             case ENTIRE:
                 loopStart = 0;
@@ -69,7 +69,7 @@ namespace MMAP
 
     void TerrainBuilder::loadMap(uint32 mapID, uint32 tileX, uint32 tileY, MeshData &meshData)
     {
-        if(loadMap(mapID, tileX, tileY, meshData, ENTIRE))
+        if (loadMap(mapID, tileX, tileY, meshData, ENTIRE))
         {
             loadMap(mapID, tileX+1, tileY, meshData, LEFT);
             loadMap(mapID, tileX-1, tileY, meshData, RIGHT);
@@ -84,13 +84,13 @@ namespace MMAP
         sprintf(mapFileName, "maps/%03u%02u%02u.map", mapID, tileY, tileX);
 
         FILE* mapFile = fopen(mapFileName, "rb");
-        if(!mapFile)
+        if (!mapFile)
             return true;
 
         GridMapFileHeader fheader;
         fread(&fheader, sizeof(GridMapFileHeader), 1, mapFile);
 
-        if(fheader.versionMagic != *((uint32 const*)(MAP_VERSION_MAGIC)))
+        if (fheader.versionMagic != *((uint32 const*)(MAP_VERSION_MAGIC)))
         {
             fclose(mapFile);
             printf("%s is the wrong version, please extract new .map files\n", mapFileName);
@@ -105,7 +105,7 @@ namespace MMAP
         bool haveLiquid = fheader.liquidMapOffset && !m_skipLiquid;
 
         // no data in this map file
-        if(!haveTerrain && !haveLiquid)
+        if (!haveTerrain && !haveLiquid)
         {
             fclose(mapFile);
             return true;
@@ -120,13 +120,13 @@ namespace MMAP
         G3D::Array<int> ttriangles;
 
         // terrain data
-        if(haveTerrain)
+        if (haveTerrain)
         {
             int i;
             float heightMultiplier;
             float V9[V9_SIZE_SQ], V8[V8_SIZE_SQ];
 
-            if(hheader.flags & MAP_HEIGHT_AS_INT8)
+            if (hheader.flags & MAP_HEIGHT_AS_INT8)
             {
                 uint8 v9[V9_SIZE_SQ];
                 uint8 v8[V8_SIZE_SQ];
@@ -134,14 +134,14 @@ namespace MMAP
                 fread(v8, sizeof(uint8), V8_SIZE_SQ, mapFile);
                 heightMultiplier = (hheader.gridMaxHeight - hheader.gridHeight) / 255;
 
-                for(i = 0; i < V9_SIZE_SQ; ++i)
+                for (i = 0; i < V9_SIZE_SQ; ++i)
                     V9[i] = (float)v9[i]*heightMultiplier + hheader.gridHeight;
 
-                if(m_hiResHeightMaps)
-                    for(i = 0; i < V8_SIZE_SQ; ++i)
+                if (m_hiResHeightMaps)
+                    for (i = 0; i < V8_SIZE_SQ; ++i)
                         V8[i] = (float)v8[i]*heightMultiplier + hheader.gridHeight;
             }
-            else if(hheader.flags & MAP_HEIGHT_AS_INT16)
+            else if (hheader.flags & MAP_HEIGHT_AS_INT16)
             {
                 uint16 v9[V9_SIZE_SQ];
                 uint16 v8[V8_SIZE_SQ];
@@ -149,17 +149,17 @@ namespace MMAP
                 fread(v8, sizeof(uint16), V8_SIZE_SQ, mapFile);
                 heightMultiplier = (hheader.gridMaxHeight - hheader.gridHeight) / 65535;
 
-                for(i = 0; i < V9_SIZE_SQ; ++i)
+                for (i = 0; i < V9_SIZE_SQ; ++i)
                     V9[i] = (float)v9[i]*heightMultiplier + hheader.gridHeight;
 
-                if(m_hiResHeightMaps)
-                    for(i = 0; i < V8_SIZE_SQ; ++i)
+                if (m_hiResHeightMaps)
+                    for (i = 0; i < V8_SIZE_SQ; ++i)
                         V8[i] = (float)v8[i]*heightMultiplier + hheader.gridHeight;
             }
             else
             {
-                fread(V9, sizeof(float), V9_SIZE_SQ, mapFile);
-                if(m_hiResHeightMaps)
+                fread (V9, sizeof(float), V9_SIZE_SQ, mapFile);
+                if (m_hiResHeightMaps)
                     fread(V8, sizeof(float), V8_SIZE_SQ, mapFile);
             }
 
@@ -174,7 +174,7 @@ namespace MMAP
 
             float coord[3];
 
-            for(i = 0; i < V9_SIZE_SQ; ++i)
+            for (i = 0; i < V9_SIZE_SQ; ++i)
             {
                 getHeightCoord(i, GRID_V9, xoffset, yoffset, coord, V9);
                 meshData.solidVerts.append(coord[0]);
@@ -182,8 +182,8 @@ namespace MMAP
                 meshData.solidVerts.append(coord[1]);
             }
 
-            if(m_hiResHeightMaps)
-                for(i = 0; i < V8_SIZE_SQ; ++i)
+            if (m_hiResHeightMaps)
+                for (i = 0; i < V8_SIZE_SQ; ++i)
                 {
                     getHeightCoord(i, GRID_V8, xoffset, yoffset, coord, V8);
                     meshData.solidVerts.append(coord[0]);
@@ -196,18 +196,18 @@ namespace MMAP
 
             triInc = m_hiResHeightMaps ? 1 : BOTTOM-TOP;
 
-            for(i = loopStart; i < loopEnd; i+=loopInc)
-                    for(j = TOP; j <= BOTTOM; j+=triInc)
-                    {
-                        getHeightTriangle(i, Spot(j), indices);
-                        ttriangles.append(indices[2] + count);
-                        ttriangles.append(indices[1] + count);
-                        ttriangles.append(indices[0] + count);
-                    }
+            for (i = loopStart; i < loopEnd; i+=loopInc)
+                for (j = TOP; j <= BOTTOM; j+=triInc)
+                {
+                    getHeightTriangle(i, Spot(j), indices);
+                    ttriangles.append(indices[2] + count);
+                    ttriangles.append(indices[1] + count);
+                    ttriangles.append(indices[0] + count);
+                }
         }
 
         // liquid data
-        if(haveLiquid)
+        if (haveLiquid)
         {
             do
             {
@@ -226,7 +226,7 @@ namespace MMAP
                     fread(liquid_map, sizeof(float), lheader.width*lheader.height, mapFile);
                 }
 
-                if(!liquid_type && !liquid_map)
+                if (!liquid_type && !liquid_map)
                     break;
 
                 int count = meshData.liquidVerts.size() / 3;
@@ -240,12 +240,12 @@ namespace MMAP
                 if (!(lheader.flags & MAP_LIQUID_NO_HEIGHT))
                 {
                     int j = 0;
-                    for(int i = 0; i < V9_SIZE_SQ; ++i)
+                    for (int i = 0; i < V9_SIZE_SQ; ++i)
                     {
                         row = i / V9_SIZE;
                         col = i % V9_SIZE;
-                        if((row < (lheader.offsetY) || row >= (lheader.offsetY + lheader.height)) ||
-                           (col < (lheader.offsetX) || col >= (lheader.offsetX + lheader.width)))
+                        if ((row < (lheader.offsetY) || row >= (lheader.offsetY + lheader.height)) ||
+                            (col < (lheader.offsetX) || col >= (lheader.offsetX + lheader.width)))
                         {
                             // dummy vert using invalid height
                             meshData.liquidVerts.append((xoffset+col*GRID_PART_SIZE)*-1, -500.f, (yoffset+row*GRID_PART_SIZE)*-1);
@@ -261,7 +261,7 @@ namespace MMAP
                 }
                 else
                 {
-                    for(int i = 0; i < V9_SIZE_SQ; ++i)
+                    for (int i = 0; i < V9_SIZE_SQ; ++i)
                     {
                         row = i / V9_SIZE;
                         col = i % V9_SIZE;
@@ -276,8 +276,8 @@ namespace MMAP
                 triInc = BOTTOM-TOP;
 
                 // generate triangles
-                for(int i = loopStart; i < loopEnd; i+=loopInc)
-                    for(int j = TOP; j <= BOTTOM; j+= triInc)
+                for (int i = loopStart; i < loopEnd; i+=loopInc)
+                    for (int j = TOP; j <= BOTTOM; j+= triInc)
                     {
                         getHeightTriangle(i, Spot(j), indices, true);
                         ltriangles.append(indices[2] + count);
@@ -285,7 +285,7 @@ namespace MMAP
                         ltriangles.append(indices[0] + count);
                     }
 
-            }while(0);
+            } while (0);
         }
 
         fclose(mapFile);
@@ -306,11 +306,11 @@ namespace MMAP
         getLoopVars(portion, loopStart, loopEnd, loopInc);
         tTriCount = m_hiResHeightMaps ? 4 : 2;
 
-        if(ltriangles.size() || ttriangles.size())
+        if (ltriangles.size() || ttriangles.size())
         {
-            for(int i = loopStart; i < loopEnd; i+=loopInc)
+            for (int i = loopStart; i < loopEnd; i+=loopInc)
             {
-                for(int j = 0; j < 2; ++j)
+                for (int j = 0; j < 2; ++j)
                 {
                     // default is true, will change to false if needed
                     useTerrain = true;
@@ -318,14 +318,14 @@ namespace MMAP
                     uint8 liquidType;
 
                     // if there is no liquid, don't use liquid
-                    if(!liquid_type ||
-                       !meshData.liquidVerts.size() ||
-                       !ltriangles.size())
-                        useLiquid = false;
+                    if (!liquid_type ||
+                        !meshData.liquidVerts.size() ||
+                        !ltriangles.size())
+                         useLiquid = false;
                     else
                     {
                         liquidType = getLiquidType(i, liquid_type);
-                        switch(liquidType)
+                        switch (liquidType)
                         {
                             default:
                                 useLiquid = false;
@@ -350,29 +350,29 @@ namespace MMAP
                     }
 
                     // if there is no terrain, don't use terrain
-                    if(!ttriangles.size())
+                    if (!ttriangles.size())
                         useTerrain = false;
 
                     // liquid is rendered as quads.  If any triangle has invalid height,
                     // don't render any of the triangles in that quad
                     // contrib/extractor uses -500.0 for invalid height
-                    if(useLiquid)
-                        if((&lverts[ltris[0]*3])[1] == -500.f ||
-                           (&lverts[ltris[1]*3])[1] == -500.f ||
-                           (&lverts[ltris[2]*3])[1] == -500.f)
+                    if (useLiquid)
+                        if ((&lverts[ltris[0]*3])[1] == -500.f ||
+                            (&lverts[ltris[1]*3])[1] == -500.f ||
+                            (&lverts[ltris[2]*3])[1] == -500.f)
                         {
                             useLiquid = false;
                         }
 
                     // if there is a hole here, don't use the terrain
-                    if(useTerrain)
+                    if (useTerrain)
                         useTerrain = !isHole(i, holes);
 
-                    if(useTerrain && useLiquid)
+                    if (useTerrain && useLiquid)
                     {
                         // get the indexes of the corners of the quad
                         int idx1, idx2, idx3;
-                        if(j == 0)
+                        if (j == 0)
                         {
                             idx1 = 0;
                             idx2 = 1;
@@ -385,27 +385,27 @@ namespace MMAP
                             idx3 = 3*tTriCount/2-1;
                         }
 
-                        if(useTerrain &&
-                            (&lverts[ltris[0]*3])[1] - 1.5f > (&tverts[ttris[idx1]*3])[1] &&
-                            (&lverts[ltris[1]*3])[1] - 1.5f > (&tverts[ttris[idx2]*3])[1] &&
-                            (&lverts[ltris[2]*3])[1] - 1.5f > (&tverts[ttris[idx3]*3])[1])
+                        if (useTerrain &&
+                           (&lverts[ltris[0]*3])[1] - 1.5f > (&tverts[ttris[idx1]*3])[1] &&
+                           (&lverts[ltris[1]*3])[1] - 1.5f > (&tverts[ttris[idx2]*3])[1] &&
+                           (&lverts[ltris[2]*3])[1] - 1.5f > (&tverts[ttris[idx3]*3])[1])
                             useTerrain = false; // if the whole terrain triangle is 1.5yds under liquid, don't use it
-                        else if(useLiquid &&
+                        else if (useLiquid &&
                                 (&lverts[ltris[0]*3])[1] < (&tverts[ttris[idx1]*3])[1] &&
                                 (&lverts[ltris[1]*3])[1] < (&tverts[ttris[idx2]*3])[1] &&
                                 (&lverts[ltris[2]*3])[1] < (&tverts[ttris[idx3]*3])[1])
                             useLiquid = false;  // if the whole liquid triangle is under terrain, don't use it
                     }
 
-                    if(useLiquid)
+                    if (useLiquid)
                     {
                         meshData.liquidType.append(liquidType);
-                        for(int k = 0; k < 3; ++k)
+                        for (int k = 0; k < 3; ++k)
                             meshData.liquidTris.append(ltris[k]);
                     }
 
-                    if(useTerrain)
-                        for(int k = 0; k < 3*tTriCount/2; ++k)
+                    if (useTerrain)
+                        for (int k = 0; k < 3*tTriCount/2; ++k)
                             meshData.solidTris.append(ttris[k]);
 
                     // advance to next set of triangles
@@ -418,11 +418,11 @@ namespace MMAP
         return true;
     }
 
-    inline void TerrainBuilder::getHeightCoord(int index, Grid grid, float xOffset, float yOffset, float* coord, float* v)
+    void TerrainBuilder::getHeightCoord(int index, Grid grid, float xOffset, float yOffset, float* coord, float* v)
     {
         // wow coords: x, y, height
         // coord is mirroed about the horizontal axes
-        switch(grid)
+        switch (grid)
         {
             case GRID_V9:
                 coord[0] = (xOffset + index%(V9_SIZE)*GRID_PART_SIZE) * -1.f;
@@ -437,11 +437,11 @@ namespace MMAP
         }
     }
 
-    inline void TerrainBuilder::getHeightTriangle(int square, Spot triangle, int* indices, bool liquid/* = false*/)
+    void TerrainBuilder::getHeightTriangle(int square, Spot triangle, int* indices, bool liquid/* = false*/)
     {
         int rowOffset = square/V8_SIZE;
-        if(m_hiResHeightMaps && !liquid)
-            switch(triangle)
+        if (m_hiResHeightMaps && !liquid)
+            switch (triangle)
             {
                 case TOP:
                     indices[0] = square+rowOffset;                  //           0-----1 .... 128
@@ -466,7 +466,7 @@ namespace MMAP
                 default: break;
             }
         else
-            switch(triangle)
+            switch (triangle)
             {                                                           //           0-----1 .... 128
                 case TOP:                                               //           |\    |
                     indices[0] = square+rowOffset;                      //           | \ T |
@@ -483,7 +483,7 @@ namespace MMAP
 
     }
 
-    inline void TerrainBuilder::getLiquidCoord(int index, int index2, float xOffset, float yOffset, float* coord, float* v)
+    void TerrainBuilder::getLiquidCoord(int index, int index2, float xOffset, float yOffset, float* coord, float* v)
     {
         // wow coords: x, y, height
         // coord is mirroed about the horizontal axes
@@ -506,9 +506,7 @@ namespace MMAP
 
         uint16 hole = holes[cellRow][cellCol];
 
-        bool isHole = (hole & holetab_h[holeCol] & holetab_v[holeRow]) != 0;
-
-        return isHole;
+        return (hole & holetab_h[holeCol] & holetab_v[holeRow]) != 0;
     }
 
     uint8 TerrainBuilder::getLiquidType(int square, const uint8 liquid_type[16][16])

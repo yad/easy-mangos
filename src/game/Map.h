@@ -377,9 +377,9 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
         void LoadNavMesh(int gx, int gy);
         void UnloadNavMesh(int gx, int gy);
         dtNavMesh* m_navMesh;
-        UNORDERED_MAP<uint32, uint32> m_mmapTileMap;    // maps [map grid coords] to [dtTile coords]
+        UNORDERED_MAP<uint32, uint32> m_mmapLoadedTiles;    // maps [map grid coords] to [dtTile coords]
 
-        static std::set<uint32> m_mmapDisabledIds;      // stores list of mapids which do not use pathfinding
+        static std::set<uint32> s_mmapDisabledIds;      // stores list of mapids which do not use pathfinding
         // end movemap-related
 };
 

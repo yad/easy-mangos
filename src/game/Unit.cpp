@@ -10771,7 +10771,7 @@ void Unit::SendMonsterMoveByPath(Path<Elem,Node> const& path, uint32 start, uint
     if (flags & SplineFlags(SPLINEFLAG_FLYING | SPLINEFLAG_CATMULLROM))
     {
         // sending a taxi flight path
-        for(uint32 i = start; i < end; ++i)
+        for (uint32 i = start; i < end; ++i)
         {
             data << float(path[i].x);
             data << float(path[i].y);
