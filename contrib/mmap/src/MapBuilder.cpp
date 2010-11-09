@@ -277,7 +277,7 @@ namespace MMAP
 
         m_vmapManager->unloadMap(mapID);
 
-        DELETE(navMesh);
+        dtFreeNavMesh(navMesh);
 
         printf("Complete!                               \n\n");
     }
@@ -390,6 +390,8 @@ namespace MMAP
                                 navMesh);
 
         } while(0);
+
+        dtFreeNavMesh(navMesh);
 
         printf("%sComplete!                                      \n\n", tileString);
     }
@@ -687,7 +689,7 @@ namespace MMAP
         navMeshParams.maxTiles = maxTiles;
         navMeshParams.maxPolys = maxPolysPerTile;
 
-        navMesh = NEW(dtNavMesh);
+        navMesh = dtAllocNavMesh();
         printf("Creating navMesh...                     \r");
         if(!navMesh->init(&navMeshParams))
         {
@@ -698,7 +700,7 @@ namespace MMAP
         sprintf(fileName, "mmaps/%03u.mmap", mapID);
         if(!(file = fopen(fileName, "wb")))
         {
-            DELETE(navMesh);
+            dtFreeNavMesh(navMesh);
             char message[1024];
             sprintf(message, "Failed to open %s for writing!\n", fileName);
             perror(message);
@@ -795,11 +797,11 @@ namespace MMAP
             printf("%sRasterizing triangles...                   \r", tileString);
 
             // flag walkable terrain triangles
-            iv.triFlags = NEW_ARRAY(unsigned char,tTriCount);
+            iv.triFlags = (unsigned char*)dtAlloc(sizeof(unsigned char)*tTriCount, DT_ALLOC_PERM);
             memset(iv.triFlags, NAV_GROUND, tTriCount*sizeof(unsigned char));
             rcClearUnwalkableTriangles(&context, config.walkableSlopeAngle, tVerts, tVertCount, tTris, tTriCount, iv.triFlags);
             rcRasterizeTriangles(&context, tVerts, tVertCount, tTris, iv.triFlags, tTriCount, *iv.heightfield, config.walkableClimb);
-            DELETE_ARRAY(iv.triFlags);
+            dtFree(iv.triFlags);
 
             // filter out unwalkable spans (order of calls matters, see rcFilterLowHangingWalkableObstacles)
             rcFilterLowHangingWalkableObstacles(&context, config.walkableClimb, *iv.heightfield);
@@ -973,7 +975,6 @@ namespace MMAP
             if(!dtCreateNavMeshData(&params, &navData, &navDataSize))
             {
                 printf("%s Failed building navmesh tile!           \n", tileString);
-                delete [] navData;
                 break;
             }
 
@@ -984,7 +985,6 @@ namespace MMAP
             if(!(tileRef = navMesh->addTile(navData, navDataSize, DT_TILE_FREE_DATA)))
             {
                 printf("%s Failed adding tile to navmesh!           \n", tileString);
-                delete [] navData;
                 break;
             }
 
@@ -1052,7 +1052,7 @@ namespace MMAP
         rcFreeContourSet(iv.contours); iv.contours = NULL;
         rcFreePolyMesh(iv.polyMesh); iv.polyMesh = NULL;
         rcFreePolyMeshDetail(iv.polyMeshDetail); iv.polyMeshDetail = NULL;
-        DELETE_ARRAY(iv.triFlags); iv.triFlags = NULL;
+        dtFree(iv.triFlags); iv.triFlags = NULL;
     }
 
     void MapBuilder::generateObjFile(uint32 mapID, uint32 tileX, uint32 tileY, MeshData meshData)

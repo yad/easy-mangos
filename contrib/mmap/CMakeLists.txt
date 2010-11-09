@@ -164,7 +164,6 @@ add_library(Recast
 )
 
 set(SOURCES
-    ./src/DebugAlloc.cpp
     ./src/generator.cpp
     ./src/MapBuilder.cpp
     ./src/TerrainBuilder.cpp
