@@ -18,9 +18,6 @@
     <ClCompile Include="..\..\src\MapBuilder.cpp">
       <Filter>generator</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\DebugAlloc.cpp">
-      <Filter>generator</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\..\src\shared\vmap\BIH.cpp">
       <Filter>vmap</Filter>
     </ClCompile>
@@ -54,9 +51,6 @@
       <Filter>generator</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\MapBuilder.h">
-      <Filter>generator</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\DebugAlloc.h">
       <Filter>generator</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\..\src\shared\vmap\BIH.h">

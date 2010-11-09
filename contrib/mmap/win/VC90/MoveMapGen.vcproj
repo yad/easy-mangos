@@ -175,14 +175,6 @@
 			Name="generator"
 			>
 			<File
-				RelativePath="..\..\src\DebugAlloc.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\DebugAlloc.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\src\generator.cpp"
 				>
 			</File>
