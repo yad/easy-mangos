@@ -797,6 +797,7 @@ namespace MMAP
             rcClearUnwalkableTriangles(&context, config.walkableSlopeAngle, tVerts, tVertCount, tTris, tTriCount, iv.triFlags);
             rcRasterizeTriangles(&context, tVerts, tVertCount, tTris, iv.triFlags, tTriCount, *iv.heightfield, config.walkableClimb);
             dtFree(iv.triFlags);
+            iv.triFlags = NULL;
 
             // filter out unwalkable spans (order of calls matters, see rcFilterLowHangingWalkableObstacles)
             rcFilterLowHangingWalkableObstacles(&context, config.walkableClimb, *iv.heightfield);
