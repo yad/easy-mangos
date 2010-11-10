@@ -281,7 +281,7 @@ namespace MMAP
     void MapBuilder::buildTile(uint32 mapID, uint32 tileX, uint32 tileY)
     {
         printf("Building map %03u, tile [%02u,%02u]\n", mapID, tileX, tileY);
-        
+
         float bmin[3], bmax[3], lmin[3], lmax[3];
         MeshData meshData;
 
