@@ -91,7 +91,7 @@ namespace MMAP
 
         count = 0;
         printf("Discovering tiles... ");
-        for (TileList::iterator itr = m_tiles.begin(); itr != m_tiles.end(); itr++)
+        for (TileList::iterator itr = m_tiles.begin(); itr != m_tiles.end(); ++itr)
         {
             set<uint32>* tiles = (*itr).second;
             mapID = (*itr).first;
@@ -166,7 +166,7 @@ namespace MMAP
             {
                 // initialize the static tree, which loads WDT models
                 if (!loadVMap(mapID, 64, 64, meshData) || !(meshData.solidVerts.size() || meshData.liquidVerts.size()))
-                    break;
+                    continue;
 
                 // get the coord bounds of the model data
                 if (meshData.solidVerts.size() && meshData.liquidVerts.size())

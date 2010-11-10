@@ -85,7 +85,7 @@ namespace MMAP
 
         FILE* mapFile = fopen(mapFileName, "rb");
         if (!mapFile)
-            return true;
+            return false;
 
         GridMapFileHeader fheader;
         fread(&fheader, sizeof(GridMapFileHeader), 1, mapFile);
@@ -108,7 +108,7 @@ namespace MMAP
         if (!haveTerrain && !haveLiquid)
         {
             fclose(mapFile);
-            return true;
+            return false;
         }
 
         // data used later
@@ -248,7 +248,7 @@ namespace MMAP
                             (col < (lheader.offsetX) || col >= (lheader.offsetX + lheader.width)))
                         {
                             // dummy vert using invalid height
-                            meshData.liquidVerts.append((xoffset+col*GRID_PART_SIZE)*-1, -500.f, (yoffset+row*GRID_PART_SIZE)*-1);
+                            meshData.liquidVerts.append((xoffset+col*GRID_PART_SIZE)*-1, INVALID_MAP_LIQ_HEIGHT, (yoffset+row*GRID_PART_SIZE)*-1);
                             continue;
                         }
 
@@ -355,11 +355,10 @@ namespace MMAP
 
                     // liquid is rendered as quads.  If any triangle has invalid height,
                     // don't render any of the triangles in that quad
-                    // contrib/extractor uses -500.0 for invalid height
                     if (useLiquid)
-                        if ((&lverts[ltris[0]*3])[1] == -500.f ||
-                            (&lverts[ltris[1]*3])[1] == -500.f ||
-                            (&lverts[ltris[2]*3])[1] == -500.f)
+                        if ((&lverts[ltris[0]*3])[1] == INVALID_MAP_LIQ_HEIGHT ||
+                            (&lverts[ltris[1]*3])[1] == INVALID_MAP_LIQ_HEIGHT ||
+                            (&lverts[ltris[2]*3])[1] == INVALID_MAP_LIQ_HEIGHT)
                         {
                             useLiquid = false;
                         }
@@ -415,7 +414,7 @@ namespace MMAP
             }
         }
 
-        return true;
+        return meshData.solidTris.size() || meshData.liquidTris.size();
     }
 
     void TerrainBuilder::getHeightCoord(int index, Grid grid, float xOffset, float yOffset, float* coord, float* v)
