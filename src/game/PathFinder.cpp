@@ -623,15 +623,15 @@ bool PathInfo::getSteerTarget(const float* startPos, const float* endPos,
 }
 
 uint32 PathInfo::findSmoothPath(const float* startPos, const float* endPos,
-                                     const dtPolyRef* path, const uint32 pathSize,
+                                     const dtPolyRef* polyPath, const uint32 polyPathSize,
                                      float* smoothPath, const uint32 maxSmoothPathSize)
 {
-    MANGOS_ASSERT(pathSize <= MAX_PATH_LENGTH);
+    MANGOS_ASSERT(polyPathSize <= MAX_PATH_LENGTH);
     uint32 nsmoothPath = 0;
 
     dtPolyRef polys[MAX_PATH_LENGTH];
-    memcpy(polys, path, sizeof(dtPolyRef)*pathSize);
-    uint32 npolys = pathSize;
+    memcpy(polys, polyPath, sizeof(dtPolyRef)*polyPathSize);
+    uint32 npolys = polyPathSize;
 
     float iterPos[VERTEX_SIZE], targetPos[VERTEX_SIZE];
     m_navMeshQuery->closestPointOnPolyBoundary(polys[0], startPos, iterPos);
@@ -647,7 +647,7 @@ uint32 PathInfo::findSmoothPath(const float* startPos, const float* endPos,
         // Find location to steer towards.
         float steerPos[VERTEX_SIZE];
         unsigned char steerPosFlag;
-        dtPolyRef steerPosRef;
+        dtPolyRef steerPosRef = INVALID_POLYREF;
 
         if (!getSteerTarget(iterPos, targetPos, SMOOTH_PATH_SLOP, polys, npolys, steerPos, steerPosFlag, steerPosRef))
             break;
@@ -656,9 +656,9 @@ uint32 PathInfo::findSmoothPath(const float* startPos, const float* endPos,
         bool offMeshConnection = (steerPosFlag & DT_STRAIGHTPATH_OFFMESH_CONNECTION);
 
         // Find movement delta.
-        float delta[VERTEX_SIZE], len = 0.0f;
+        float delta[VERTEX_SIZE];
         dtVsub(delta, steerPos, iterPos);
-        len = dtSqrt(dtVdot(delta,delta));
+        float len = dtSqrt(dtVdot(delta,delta));
         // If the steer target is end of path or off-mesh link, do not move past the location.
         if ((endOfPath || offMeshConnection) && len < SMOOTH_PATH_STEP_SIZE)
             len = 1.0f;
@@ -670,15 +670,15 @@ uint32 PathInfo::findSmoothPath(const float* startPos, const float* endPos,
 
         // Move
         float result[VERTEX_SIZE];
-        dtPolyRef visited[16];
+        const static uint32 MAX_VISIT_POLY = 16;
+        dtPolyRef visited[MAX_VISIT_POLY];
         dtQueryFilter filter = createFilter();
 
-        uint32 nvisited = m_navMeshQuery->moveAlongSurface(polys[0], iterPos, moveTgt, &filter, result, visited, 16);
+        uint32 nvisited = m_navMeshQuery->moveAlongSurface(polys[0], iterPos, moveTgt, &filter, result, visited, MAX_VISIT_POLY);
 
         npolys = fixupCorridor(polys, npolys, MAX_PATH_LENGTH, visited, nvisited);
-        float h = 0;
-        m_navMeshQuery->getPolyHeight(polys[0], result, &h);
-        result[1] = h;
+
+        m_navMeshQuery->getPolyHeight(polys[0], result, &result[1]);
         dtVcopy(iterPos, result);
 
         // Handle end of path and off-mesh links when close enough.
@@ -699,7 +699,7 @@ uint32 PathInfo::findSmoothPath(const float* startPos, const float* endPos,
             float startPos[VERTEX_SIZE], endPos[VERTEX_SIZE];
 
             // Advance the path up to and over the off-mesh connection.
-            dtPolyRef prevRef = 0, polyRef = polys[0];
+            dtPolyRef prevRef = INVALID_POLYREF, polyRef = polys[0];
             uint32 npos = 0;
             while (npos < npolys && polyRef != steerPosRef)
             {
@@ -729,9 +729,7 @@ uint32 PathInfo::findSmoothPath(const float* startPos, const float* endPos,
                 }
                 // Move position at the other side of the off-mesh link.
                 dtVcopy(iterPos, endPos);
-                float h;
-                m_navMeshQuery->getPolyHeight(polys[0], iterPos, &h);
-                iterPos[1] = h;
+                m_navMeshQuery->getPolyHeight(polys[0], iterPos, &iterPos[1]);
              }
         }
 

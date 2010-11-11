@@ -143,7 +143,7 @@ class PathInfo
                             const dtPolyRef* path, const uint32 pathSize, float* steerPos,
                             unsigned char& steerPosFlag, dtPolyRef& steerPosRef);
         uint32 findSmoothPath(const float* startPos, const float* endPos,
-                              const dtPolyRef* path, const uint32 pathSize,
+                              const dtPolyRef* polyPath, const uint32 polyPathSize,
                               float* smoothPath, const uint32 smoothPathMaxSize);
 };
 
