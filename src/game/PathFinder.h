@@ -142,9 +142,9 @@ class PathInfo
         bool getSteerTarget(const float* startPos, const float* endPos, const float minTargetDist,
                             const dtPolyRef* path, const uint32 pathSize, float* steerPos,
                             unsigned char& steerPosFlag, dtPolyRef& steerPosRef);
-        uint32 findSmoothPath(const float* startPos, const float* endPos,
+        dtStatus findSmoothPath(const float* startPos, const float* endPos,
                               const dtPolyRef* polyPath, const uint32 polyPathSize,
-                              float* smoothPath, const uint32 smoothPathMaxSize);
+                              float* smoothPath, int* straightPathCount, const uint32 smoothPathMaxSize);
 };
 
 inline bool inRangeYZX(const float* v1, const float* v2, const float r, const float h)

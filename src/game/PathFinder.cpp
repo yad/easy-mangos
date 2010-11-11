@@ -179,13 +179,13 @@ void PathInfo::BuildPolyPath(PathNode startPos, PathNode endPos)
 
         if (startPoly == INVALID_POLYREF)
         {
-            startPoly = m_navMeshQuery->findNearestPoly(startPoint, extents, &filter, closestPoint);
+            m_navMeshQuery->findNearestPoly(startPoint, extents, &filter, &startPoly, closestPoint);
             distToStartPoly = dtVdist(closestPoint, startPoint);
         }
 
         if (endPoly == INVALID_POLYREF)
         {
-            endPoly = m_navMeshQuery->findNearestPoly(endPoint, extents, &filter, closestPoint);
+            m_navMeshQuery->findNearestPoly(endPoint, extents, &filter, &endPoly, closestPoint);
             distToEndPoly = dtVdist(closestPoint, endPoint);
         }
     }
@@ -343,17 +343,19 @@ void PathInfo::BuildPolyPath(PathNode startPos, PathNode endPos)
         // generate suffix
         dtQueryFilter filter = createFilter();
         dtPolyRef suffixPathPolys[MAX_PATH_LENGTH];
+        uint32 suffixPolyLength = 0;
 
-        uint32 suffixPolyLength = m_navMeshQuery->findPath(
-                    suffixStartPoly,    // start polygon
-                    endPoly,            // end polygon
-                    suffixEndPoint,     // start position
-                    endPoint,           // end position
-                    &filter,            // polygon search filter
-                    suffixPathPolys,    // [out] path
-                    MAX_PATH_LENGTH-prefixPolyLength);   // max number of polygons in output path
+        dtStatus dtResult = m_navMeshQuery->findPath(
+                                suffixStartPoly,    // start polygon
+                                endPoly,            // end polygon
+                                suffixEndPoint,     // start position
+                                endPoint,           // end position
+                                &filter,            // polygon search filter
+                                suffixPathPolys,    // [out] path
+                                (int*)&suffixPolyLength,
+                                MAX_PATH_LENGTH-prefixPolyLength);   // max number of polygons in output path
 
-        if (suffixPolyLength == 0)
+        if (!suffixPolyLength || dtResult != DT_SUCCESS)
         {
             // this is probably an error state, but we'll leave it
             // and hopefully recover on the next Update
@@ -388,17 +390,19 @@ void PathInfo::BuildPolyPath(PathNode startPos, PathNode endPos)
 
         dtQueryFilter filter = createFilter();      // use special filter so we use proper terrain types
         dtPolyRef pathPolys[MAX_PATH_LENGTH];
+        m_polyLength = 0;
 
-        m_polyLength = m_navMeshQuery->findPath(
+        dtStatus dtResult = m_navMeshQuery->findPath(
                 startPoly,          // start polygon
                 endPoly,            // end polygon
                 startPoint,         // start position
                 endPoint,           // end position
                 &filter,            // polygon search filter
                 pathPolys,          // [out] path
+                (int*)&m_polyLength,
                 MAX_PATH_LENGTH);   // max number of polygons in output path
 
-        if (m_polyLength == 0)
+        if (!m_polyLength || dtResult != DT_SUCCESS)
         {
             // only happens if we passed bad data to findPath(), or navmesh is messed up
             sLog.outError("%u's Path Build failed: 0 length path", m_sourceUnit->GetGUID());
@@ -434,9 +438,10 @@ void PathInfo::BuildPointPath(float *startPoint, float *endPoint)
 
     float pathPoints[MAX_POINT_PATH_LENGTH*VERTEX_SIZE];
     uint32 pointCount = 0;
+    dtStatus dtResult = DT_FAILURE;
     if (m_useStraightPath)
     {
-        pointCount = m_navMeshQuery->findStraightPath(
+        dtResult = m_navMeshQuery->findStraightPath(
                 startPoint,         // start position
                 endPoint,           // end position
                 m_pathPolyRefs,     // current path
@@ -444,20 +449,22 @@ void PathInfo::BuildPointPath(float *startPoint, float *endPoint)
                 pathPoints,         // [out] path corner points
                 NULL,               // [out] flags
                 NULL,               // [out] shortened path
+                (int*)&pointCount,
                 MAX_POINT_PATH_LENGTH);   // maximum number of points/polygons to use
     }
     else
     {
-        pointCount = findSmoothPath(
+        dtResult = findSmoothPath(
                 startPoint,         // start position
                 endPoint,           // end position
                 m_pathPolyRefs,     // current path
                 m_polyLength,       // length of current path
                 pathPoints,         // [out] path corner points
+                (int*)&pointCount,
                 MAX_POINT_PATH_LENGTH);    // maximum number of points
     }
 
-    if (pointCount < 2)
+    if (pointCount < 2 || dtResult != DT_SUCCESS)
     {
         // only happens if pass bad data to findStraightPath or navmesh is broken
         // single point paths can be generated here
@@ -503,20 +510,24 @@ dtQueryFilter PathInfo::createFilter()
         return filter;
 
     Creature* creature = (Creature*)m_sourceUnit;
-    filter.includeFlags = 0;
-    filter.excludeFlags = 0;
+
+    unsigned short includeFlags = 0;
+    unsigned short excludeFlags = 0;
 
     if (creature->CanWalk())
-        filter.includeFlags |= NAV_GROUND;          // walk
+        includeFlags |= NAV_GROUND;          // walk
 
     // creatures don't take environmental damage
     if (creature->CanSwim() || creature->IsPet())
-        filter.includeFlags |= (NAV_WATER | NAV_MAGMA | NAV_SLIME);           // swim
+        includeFlags |= (NAV_WATER | NAV_MAGMA | NAV_SLIME);           // swim
 
     // allow creatures to cheat and use different movement types if they are moved
     // forcefully into terrain they can't normally move in
     if (creature->IsInWater() || creature->IsUnderWater())
-        filter.includeFlags |= getNavTerrain(creature->GetPositionX(),creature->GetPositionY(),creature->GetPositionZ());
+        includeFlags |= getNavTerrain(creature->GetPositionX(),creature->GetPositionY(),creature->GetPositionZ());
+
+    filter.setIncludeFlags(includeFlags);
+    filter.setExcludeFlags(excludeFlags);
 
     return filter;
 }
@@ -595,8 +606,9 @@ bool PathInfo::getSteerTarget(const float* startPos, const float* endPos,
     float steerPath[MAX_STEER_POINTS*VERTEX_SIZE];
     unsigned char steerPathFlags[MAX_STEER_POINTS];
     dtPolyRef steerPathPolys[MAX_STEER_POINTS];
-    uint32 nsteerPath = m_navMeshQuery->findStraightPath(startPos, endPos, path, pathSize,
-                                                steerPath, steerPathFlags, steerPathPolys, MAX_STEER_POINTS);
+    uint32 nsteerPath = 0;
+    m_navMeshQuery->findStraightPath(startPos, endPos, path, pathSize,
+                                                steerPath, steerPathFlags, steerPathPolys, (int*)&nsteerPath, MAX_STEER_POINTS);
     if (!nsteerPath)
         return false;
 
@@ -622,11 +634,12 @@ bool PathInfo::getSteerTarget(const float* startPos, const float* endPos,
     return true;
 }
 
-uint32 PathInfo::findSmoothPath(const float* startPos, const float* endPos,
+dtStatus PathInfo::findSmoothPath(const float* startPos, const float* endPos,
                                      const dtPolyRef* polyPath, const uint32 polyPathSize,
-                                     float* smoothPath, const uint32 maxSmoothPathSize)
+                                     float* smoothPath, int* straightPathCount, const uint32 maxSmoothPathSize)
 {
     MANGOS_ASSERT(polyPathSize <= MAX_PATH_LENGTH);
+    *straightPathCount = 0;
     uint32 nsmoothPath = 0;
 
     dtPolyRef polys[MAX_PATH_LENGTH];
@@ -674,8 +687,8 @@ uint32 PathInfo::findSmoothPath(const float* startPos, const float* endPos,
         dtPolyRef visited[MAX_VISIT_POLY];
         dtQueryFilter filter = createFilter();
 
-        uint32 nvisited = m_navMeshQuery->moveAlongSurface(polys[0], iterPos, moveTgt, &filter, result, visited, MAX_VISIT_POLY);
-
+        uint32 nvisited = 0;
+        m_navMeshQuery->moveAlongSurface(polys[0], iterPos, moveTgt, &filter, result, visited, (int*)&nvisited, MAX_VISIT_POLY);
         npolys = fixupCorridor(polys, npolys, MAX_PATH_LENGTH, visited, nvisited);
 
         m_navMeshQuery->getPolyHeight(polys[0], result, &result[1]);
@@ -741,5 +754,6 @@ uint32 PathInfo::findSmoothPath(const float* startPos, const float* endPos,
         }
     }
 
-    return nsmoothPath;
+    *straightPathCount = nsmoothPath;
+    return DT_SUCCESS;
 }

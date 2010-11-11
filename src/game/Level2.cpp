@@ -5140,7 +5140,8 @@ bool ChatHandler::HandleMmapLocCommand(char* args)
 
     // navmesh poly -> navmesh tile location
     dtQueryFilter filter = dtQueryFilter();
-    dtPolyRef polyRef = query->findNearestPoly(location, extents, &filter, NULL);
+    dtPolyRef polyRef = INVALID_POLYREF;
+    query->findNearestPoly(location, extents, &filter, &polyRef, NULL);
 
     if (polyRef == INVALID_POLYREF)
         PSendSysMessage("Dt     [??,??] (invalid poly, probably no tile loaded)");

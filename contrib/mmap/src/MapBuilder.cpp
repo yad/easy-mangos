@@ -760,8 +760,8 @@ namespace MMAP
             config.maxEdgeLen = 1500;
             config.walkableHeight = (int)ceilf(agentHeight / config.ch);
             config.walkableClimb = (int)ceilf(agentHeight / config.ch);
-            config.minRegionSize = (int)rcSqr(50);
-            config.mergeRegionSize = (int)rcSqr(20);
+            config.minRegionArea = (int)rcSqr(50);
+            config.mergeRegionArea = (int)rcSqr(20);
             config.maxSimplificationError = 1.3f;
             config.detailSampleDist = config.cs * 16.f;
             config.detailSampleMaxError = config.ch * 1.f;
@@ -776,7 +776,7 @@ namespace MMAP
             rcCalcGridSize(config.bmin, config.bmax, config.cs, &config.width, &config.height);
 
             // build performance
-            rcBuildContext context;
+            rcContext context;
 
             /***********    start build     ***********/
 
@@ -846,7 +846,7 @@ namespace MMAP
 
             // bottleneck is here
             printf("%sBuilding regions...                     \r", tileString);
-            if (!rcBuildRegions(&context, *iv.compactHeightfield, config.borderSize, config.minRegionSize, config.mergeRegionSize))
+            if (!rcBuildRegions(&context, *iv.compactHeightfield, config.borderSize, config.minRegionArea, config.mergeRegionArea))
             {
                 printf("%sFailed building regions!                \n", tileString);
                 continue;
@@ -978,7 +978,8 @@ namespace MMAP
             printf("%s Adding tile to navmesh...                \r", tileString);
             // DT_TILE_FREE_DATA tells detour to unallocate memory when the tile
             // is removed via removeTile()
-            if (!(tileRef = navMesh->addTile(navData, navDataSize, DT_TILE_FREE_DATA)))
+            dtStatus dtResult = navMesh->addTile(navData, navDataSize, DT_TILE_FREE_DATA, 0, &tileRef);
+            if (!tileRef || dtResult != DT_SUCCESS)
             {
                 printf("%s Failed adding tile to navmesh!           \n", tileString);
                 continue;
@@ -990,7 +991,7 @@ namespace MMAP
                 char message[1024];
                 sprintf(message, "Failed to open %s for writing!\n", fileName);
                 perror(message);
-                navMesh->removeTile(tileRef, 0, 0);
+                navMesh->removeTile(tileRef, NULL, NULL);
                 continue;
             }
 
@@ -1303,7 +1304,7 @@ namespace MMAP
         fwrite(&(mesh->ntris), sizeof(int), 1, file);
         fwrite(mesh->tris, sizeof(char), mesh->ntris*4, file);
         fwrite(&(mesh->nmeshes), sizeof(int), 1, file);
-        fwrite(mesh->meshes, sizeof(short), mesh->nmeshes*4, file);
+        fwrite(mesh->meshes, sizeof(int), mesh->nmeshes*4, file);
     }
 
     bool MapBuilder::shouldSkipMap(uint32 mapID)
