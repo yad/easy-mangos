@@ -111,7 +111,7 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
         template<class T> void Add(T *);
         template<class T> void Remove(T *, bool);
 
-        virtual void Update(uint32 time_, uint32 diff);
+        virtual void Update(const uint32&);
 
         void MessageBroadcast(Player *, WorldPacket *, bool to_self);
         void MessageBroadcast(WorldObject *, WorldPacket *);
@@ -383,16 +383,6 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
         // end movemap-related
 };
 
-enum InstanceResetMethod
-{
-    INSTANCE_RESET_ALL,
-    INSTANCE_RESET_CHANGE_DIFFICULTY,
-    INSTANCE_RESET_GLOBAL,
-    INSTANCE_RESET_GROUP_DISBAND,
-    INSTANCE_RESET_GROUP_JOIN,
-    INSTANCE_RESET_RESPAWN_DELAY
-};
-
 class MANGOS_DLL_SPEC InstanceMap : public Map
 {
     public:
@@ -400,9 +390,9 @@ class MANGOS_DLL_SPEC InstanceMap : public Map
         ~InstanceMap();
         bool Add(Player *);
         void Remove(Player *, bool);
-        void Update(uint32 time_, uint32 diff);
+        void Update(const uint32&);
         void CreateInstanceData(bool load);
-        bool Reset(uint8 method);
+        bool Reset(InstanceResetMethod method);
         uint32 GetScriptId() { return i_script_id; }
         InstanceData* GetInstanceData() { return i_data; }
         void PermBindAllPlayers(Player *player);
@@ -425,7 +415,7 @@ class MANGOS_DLL_SPEC BattleGroundMap : public Map
         BattleGroundMap(uint32 id, time_t, uint32 InstanceId, Map* _parent, uint8 spawnMode);
         ~BattleGroundMap();
 
-        void Update(uint32 time_, uint32 diff);
+        void Update(const uint32&);
         bool Add(Player *);
         void Remove(Player *, bool);
         bool CanEnter(Player* player);
