@@ -528,7 +528,7 @@ void AHB_Buyer::addNewAuctionBuyerBotBid(AHB_Buyer_Config& config)
     if (config.CheckedEntry.size() > sAHB_BaseConfig.GetItemPerCycleBoost())
     {
         BuyCycles=sAHB_BaseConfig.GetItemPerCycleBoost();
-        sLog.outString("Boost value used for Buyer! (if this happens often adjust both ItemsPerCycle in mangosd.conf)");
+        //sLog.outString("Boost value used for Buyer! (if this happens often adjust both ItemsPerCycle in mangosd.conf)");
     }
     else BuyCycles=sAHB_BaseConfig.GetItemPerCycleNormal();
 
@@ -1262,7 +1262,7 @@ void AHB_Seller::addNewAuctions(AHB_Seller_Config& config)
     if (config.LastMissedItem > sAHB_BaseConfig.GetItemPerCycleBoost())
     {
         items=sAHB_BaseConfig.GetItemPerCycleBoost();
-        sLog.outString("AHBot> Boost value used to fill AH! (if this happens often adjust both ItemsPerCycle in mangosd.conf)");
+        //sLog.outString("AHBot> Boost value used to fill AH! (if this happens often adjust both ItemsPerCycle in mangosd.conf)");
     }
     else items=sAHB_BaseConfig.GetItemPerCycleNormal();
 

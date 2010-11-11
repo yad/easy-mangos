@@ -1142,7 +1142,7 @@ bool Map::GetAreaInfo(float x, float y, float z, uint32 &flags, int32 &adtId, in
 {
     float vmap_z = z;
     VMAP::IVMapManager* vmgr = VMAP::VMapFactory::createOrGetVMapManager();
-    if (vmgr->getAreaInfo(GetId(), x, y, vmap_z, flags, adtId, rootId, groupId))
+    if (vmgr && vmgr->getAreaInfo(GetId(), x, y, vmap_z, flags, adtId, rootId, groupId))
     {
         // check if there's terrain between player height and object height
         if(GridMap *gmap = const_cast<Map*>(this)->GetGrid(x, y))

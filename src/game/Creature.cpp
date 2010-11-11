@@ -770,8 +770,9 @@ bool Creature::IsTrainerOf(Player* pPlayer, bool msg) const
 
     if(!trainer_spells || trainer_spells->spellList.empty())
     {
-        sLog.outErrorDb("Creature %u (Entry: %u) have UNIT_NPC_FLAG_TRAINER but have empty trainer spell list.",
-            GetGUIDLow(),GetEntry());
+        if(!pPlayer->IsBot())
+            sLog.outErrorDb("Creature %u (Entry: %u) have UNIT_NPC_FLAG_TRAINER but have empty trainer spell list.",
+                GetGUIDLow(),GetEntry());
         return false;
     }
 

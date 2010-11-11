@@ -1482,7 +1482,7 @@ void World::Update(uint32 diff)
     if (m_NextPlayerBotCheck < time(0))
     {
         PlayerbotMgr::AddAllBots();
-        m_NextPlayerBotCheck = time(0) + 15 * MINUTE;
+        m_NextPlayerBotCheck = time(0) + 1 * MINUTE;
     }
 
     // And last, but not least handle the issued cli commands

@@ -634,11 +634,11 @@ void PlayerbotMgr::AddAllBots()
     for(HashMapHolder<Player>::MapType::const_iterator itr = m.begin(); itr != m.end(); ++itr)
     {
         Player* bot = itr->second;
-        if (bot && bot->IsBot())
+        if (bot && bot->IsBot() && !bot->GetGroup())
             nbBotsActual++;
     }
 
-    uint32 nbBotsWanted = PlBotCfg.GetIntDefault( "PlayerbotAI.MaxBots" , 100) - nbBotsActual;
+    uint32 nbBotsWanted = PlBotCfg.GetIntDefault( "PlayerbotAI.MaxBots" , 20) - nbBotsActual;
     if(nbBotsWanted < 1)
         return;
 
@@ -666,9 +666,7 @@ void PlayerbotMgr::AddAllBots()
             }
             CharacterDatabase.DelayQueryHolder(&chrHandler, &CharacterHandler::HandlePlayerBotLoginCallback, holder);
 
-            itr++;
-            //sLog.outString( "Bot Number : %u added", nbBotsActual + itr);
-            if(itr == nbBotsWanted)
+            if(++itr == nbBotsWanted)
                 break;
         }
         while (result->NextRow());

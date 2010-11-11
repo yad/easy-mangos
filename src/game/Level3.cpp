@@ -2494,10 +2494,7 @@ bool ChatHandler::HandleLearnAllMySpellsCommand(char* /*args*/)
                 TrainerSpellData const* trainer_spells = sObjectMgr.GetNpcTrainerSpells(id);
 
                 if(!trainer_spells || trainer_spells->spellList.empty())
-                {
-                    sLog.outErrorDb("Creature entry: %u have UNIT_NPC_FLAG_TRAINER but have empty trainer spell list.", id);
                     return false;
-                }
 
                 for(TrainerSpellMap::const_iterator itr = trainer_spells->spellList.begin(); itr != trainer_spells->spellList.end(); ++itr)
                 {
@@ -2692,10 +2689,7 @@ bool ChatHandler::HandleLearnAllMySpellsForMyLevelCommand(char* /*args*/)
                 TrainerSpellData const* trainer_spells = sObjectMgr.GetNpcTrainerSpells(id);
 
                 if(!trainer_spells || trainer_spells->spellList.empty())
-                {
-                    sLog.outErrorDb("Creature entry: %u have UNIT_NPC_FLAG_TRAINER but have empty trainer spell list.", id);
                     return false;
-                }
 
                 for(TrainerSpellMap::const_iterator itr = trainer_spells->spellList.begin(); itr != trainer_spells->spellList.end(); ++itr)
                 {
@@ -7736,7 +7730,7 @@ bool ChatHandler::HandleBotChgClass(char* args)
 
     Player *pl = m_session->GetPlayer();
 
-    if(!chr || !chr->IsBot())
+    if(!chr || !chr->IsBot()/* || (chr->getLevel() < 55 && newclass == CLASS_DEATH_KNIGHT)*/)
         return true;
     
     if(!chr->GetGroup() || !pl->GetGroup() || chr->GetGroup()->GetLeaderGuid() != pl->GetGroup()->GetLeaderGuid())
@@ -7754,7 +7748,62 @@ bool ChatHandler::HandleBotChgClass(char* args)
     chr->setClass(newclass);
     chr->SetUInt32Value(UNIT_FIELD_BYTES_0, bytes0);
     chr->GiveLevel(chr->getLevel()+1);
-    chr->RemoveAllAuras();
+    chr->RemoveAllAuras(AURA_REMOVE_BY_DELETE);
+    ChrClassesEntry const* cEntry = sChrClassesStore.LookupEntry(newclass);
+    if(cEntry && cEntry->powerType < MAX_POWERS && uint32(chr->getPowerType()) != cEntry->powerType)
+        chr->setPowerType(Powers(cEntry->powerType));
+    chr->InitRunes();
+    if (chr->GetPlayerbotAI())
+        chr->GetPlayerbotAI()->CheckStuff();
+    return true;
+}
 
+bool ChatHandler::HandleBotInvite(char* args)
+{
+    if (!*args)
+        return false;
+
+    int32 newclass = (int32)atoi(args);
+    if (newclass == 0)
+        return false;
+
+    Player *pl = m_session->GetPlayer();
+
+    HashMapHolder<Player>::MapType& m = sObjectAccessor.GetPlayers();
+    for(HashMapHolder<Player>::MapType::const_iterator itr = m.begin(); itr != m.end(); ++itr)
+    {
+        Player* chr = itr->second;
+
+        if(!chr || !chr->IsBot() || chr->GetGroup() || pl->GetTeam() != chr->GetTeam())
+            continue;
+    
+        PlayerInfo const* info = sObjectMgr.GetPlayerInfo(chr->getRace(), newclass);
+        if (!info)
+            continue;
+
+        WorldPacket p(CMSG_GROUP_INVITE, 10);                // guess size
+        p << chr->GetName();                                 // max len 48
+        p << uint32(0);
+        pl->GetSession()->HandleGroupInviteOpcode(p);
+
+        // overwrite some data fields
+        uint32 bytes0 = 0;
+        bytes0 |= chr->getRace();                               // race
+        bytes0 |= newclass << 8;                                // class
+        bytes0 |= chr->getGender() << 16;                       // gender
+        chr->setClass(newclass);
+        chr->SetUInt32Value(UNIT_FIELD_BYTES_0, bytes0);
+        chr->GiveLevel(chr->getLevel()+1);
+        chr->RemoveAllAuras(AURA_REMOVE_BY_DELETE);
+        ChrClassesEntry const* cEntry = sChrClassesStore.LookupEntry(newclass);
+        if(cEntry && cEntry->powerType < MAX_POWERS && uint32(chr->getPowerType()) != cEntry->powerType)
+            chr->setPowerType(Powers(cEntry->powerType));
+        chr->InitRunes();
+        if (chr->GetPlayerbotAI())
+            chr->GetPlayerbotAI()->CheckStuff();
+        
+        break;
+    }
+    
     return true;
 }

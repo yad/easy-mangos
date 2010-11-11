@@ -138,6 +138,7 @@ class ChatHandler
         bool HandleAccountSetPasswordCommand(char* args);
         bool HandleAHBotOptionsCommand(char* args);
         bool HandleBotChgClass(char* args);
+        bool HandleBotInvite(char* args);
 
         bool HandleAuctionAllianceCommand(char* args);
         bool HandleAuctionGoblinCommand(char* args);
