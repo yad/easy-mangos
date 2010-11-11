@@ -369,7 +369,7 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
 
         // begin movemap-related
     public:
-        dtNavMesh* GetNavMesh();
+        dtNavMesh const* GetNavMesh() const;
         static void preventPathfindingOnMaps(std::string ignoreMapIds);
         bool IsPathfindingEnabled() const;
 

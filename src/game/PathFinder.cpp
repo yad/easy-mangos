@@ -36,7 +36,7 @@ PathInfo::PathInfo(const Unit* owner, const float destX, const float destY, cons
 
     PATH_DEBUG("++ PathInfo::PathInfo for %u \n", m_sourceUnit->GetGUID());
 
-    Map* map = m_sourceUnit->GetMap();
+    const Map* map = m_sourceUnit->GetBaseMap();
     if (map->IsPathfindingEnabled())
         m_navMesh = map->GetNavMesh();
 
@@ -535,7 +535,7 @@ dtQueryFilter PathInfo::createFilter()
 NavTerrain PathInfo::getNavTerrain(float x, float y, float z)
 {
     GridMapLiquidData data;
-    m_sourceUnit->GetMap()->getLiquidStatus(x, y, z, MAP_ALL_LIQUIDS, &data);
+    m_sourceUnit->GetBaseMap()->getLiquidStatus(x, y, z, MAP_ALL_LIQUIDS, &data);
 
     switch (data.type)
     {

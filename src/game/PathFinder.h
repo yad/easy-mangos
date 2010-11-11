@@ -75,7 +75,7 @@ enum PathType
 class PathInfo
 {
     public:
-        PathInfo(const Unit* owner, const float destX, const float destY, const float destZ, bool useStraightPath = false);
+        PathInfo(Unit const* owner, const float destX, const float destY, const float destZ, bool useStraightPath = false);
         ~PathInfo();
 
         // return value : true if new path was calculated
@@ -86,13 +86,13 @@ class PathInfo
         inline void getEndPosition(float &x, float &y, float &z) { x = m_endPosition.x; y = m_endPosition.y; z = m_endPosition.z; }
         inline void getActualEndPosition(float &x, float &y, float &z) { x = m_actualEndPosition.x; y = m_actualEndPosition.y; z = m_actualEndPosition.z; }
 
-        inline PathNode getStartPosition() { return m_startPosition; }
-        inline PathNode getNextPosition() { return m_nextPosition; }
-        inline PathNode getEndPosition() { return m_endPosition; }
-        inline PathNode getActualEndPosition() { return m_actualEndPosition; }
+        inline PathNode getStartPosition() const { return m_startPosition; }
+        inline PathNode getNextPosition() const { return m_nextPosition; }
+        inline PathNode getEndPosition() const { return m_endPosition; }
+        inline PathNode getActualEndPosition() const { return m_actualEndPosition; }
 
         inline PointPath& getFullPath() { return m_pathPoints; }
-        inline PathType getPathType() {return m_type;}
+        inline PathType getPathType() const { return m_type; }
 
     private:
 
@@ -109,9 +109,9 @@ class PathInfo
         PathNode        m_endPosition;      // {x, y, z} of the destination
         PathNode        m_actualEndPosition;  // {x, y, z} of the closest possible point to given destination
 
-        const Unit     *m_sourceUnit;       // the unit that is moving
-        dtNavMesh      *m_navMesh;          // the nav mesh
-        dtNavMeshQuery* m_navMeshQuery;     // the nav mesh query used to find the path
+        const Unit* const m_sourceUnit;       // the unit that is moving
+        const dtNavMesh*  m_navMesh;          // the nav mesh
+        dtNavMeshQuery*   m_navMeshQuery;     // the nav mesh query used to find the path
 
         inline void setNextPosition(PathNode point) { m_nextPosition = point; }
         inline void setStartPosition(PathNode point) { m_startPosition = point; }

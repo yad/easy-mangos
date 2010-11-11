@@ -108,7 +108,7 @@ void Map::LoadNavMesh(int gx, int gy)
 
     uint32 packedTilePos = packTileID(uint32(header->x), uint32(header->y));
     m_mmapLoadedTiles.insert(std::pair<uint32, uint32>(packedGridPos, packedTilePos));
-    sLog.outDetail("Loaded mmtile %03i[%02i,%02i] into %03i(%u)[%02i,%02i]", i_id, gx, gy, i_id, GetInstanceId(), header->x, header->y);
+    sLog.outDetail("Loaded mmtile %03i[%02i,%02i] into %03i[%02i,%02i]", i_id, gx, gy, i_id, header->x, header->y);
 }
 
 void Map::UnloadNavMesh(int gx, int gy)
@@ -129,11 +129,11 @@ void Map::UnloadNavMesh(int gx, int gy)
     else
     {
         m_mmapLoadedTiles.erase(packedGridPos);
-        sLog.outDetail("Unloaded mmtile %03i[%02i,%02i] from %03i(%u)", i_id, gx, gy, i_id, GetInstanceId());
+        sLog.outDetail("Unloaded mmtile %03i[%02i,%02i] from %03i", i_id, gx, gy, i_id);
     }
 }
 
-dtNavMesh* Map::GetNavMesh()
+dtNavMesh const* Map::GetNavMesh() const
 {
     return m_navMesh;
 }

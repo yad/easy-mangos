@@ -131,8 +131,10 @@ void Map::LoadMapAndVMap(int gx,int gy)
 {
     LoadMap(gx,gy);
     if(i_InstanceId == 0)
+    {
         LoadVMap(gx, gy);                                   // Only load the data for the base map
-    LoadNavMesh(gx,gy);
+        LoadNavMesh(gx,gy);
+    }
 }
 
 Map::Map(uint32 id, time_t expiry, uint32 InstanceId, uint8 SpawnMode, Map* _parent)

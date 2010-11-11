@@ -5045,7 +5045,7 @@ bool ChatHandler::HandleTitlesCurrentCommand(char* args)
 
 bool ChatHandler::HandleMmapPathCommand(char* args)
 {
-    if (!m_session->GetPlayer()->GetMap()->GetNavMesh())
+    if (!m_session->GetPlayer()->GetBaseMap()->GetNavMesh())
     {
         PSendSysMessage("NavMesh not loaded for current map.");
         return true;
@@ -5114,7 +5114,7 @@ bool ChatHandler::HandleMmapLocCommand(char* args)
     PSendSysMessage("gridloc [%i,%i]", gx, gy);
 
     // calculate navmesh tile location
-    dtNavMesh* navmesh = player->GetMap()->GetNavMesh();
+    const dtNavMesh* navmesh = player->GetBaseMap()->GetNavMesh();
 
     if (!navmesh)
     {
@@ -5188,7 +5188,7 @@ bool ChatHandler::HandleMmapLocCommand(char* args)
 
 bool ChatHandler::HandleMmapLoadedTilesCommand(char* args)
 {
-    dtNavMesh* navmesh = m_session->GetPlayer()->GetMap()->GetNavMesh();
+    const dtNavMesh* navmesh = m_session->GetPlayer()->GetBaseMap()->GetNavMesh();
 
     if (!navmesh)
     {
@@ -5204,7 +5204,7 @@ bool ChatHandler::HandleMmapLoadedTilesCommand(char* args)
 
     for (int32 i = 0; i < navmesh->getMaxTiles(); ++i)
     {
-        const dtMeshTile* tile = ((dtNavMesh const*)navmesh)->getTile(i);
+        const dtMeshTile* tile = navmesh->getTile(i);
         if (!tile || !tile->header)
             continue;
 
@@ -5220,8 +5220,7 @@ bool ChatHandler::HandleMmapStatsCommand(char* args)
     PSendSysMessage("mmap stats:");
     PSendSysMessage("  global mmap pathfinding is %sabled", sWorld.getConfig(CONFIG_BOOL_MMAP_ENABLED) ? "en" : "dis");
 
-    dtNavMesh* navmesh = m_session->GetPlayer()->GetMap()->GetNavMesh();
-
+    const dtNavMesh* navmesh = m_session->GetPlayer()->GetBaseMap()->GetNavMesh();
     if (!navmesh)
     {
         PSendSysMessage("NavMesh not loaded for current map.");
@@ -5237,7 +5236,7 @@ bool ChatHandler::HandleMmapStatsCommand(char* args)
     uint32 dataSize = 0;
     for (int32 i = 0; i < navmesh->getMaxTiles(); ++i)
     {
-        const dtMeshTile* tile = ((dtNavMesh const*)navmesh)->getTile(i);
+        const dtMeshTile* tile = navmesh->getTile(i);
         if (!tile || !tile->header)
             continue;
 
