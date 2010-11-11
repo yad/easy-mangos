@@ -39,7 +39,7 @@ void duReadNavMesh(char* tile, dtNavMesh* &navMesh)
         fread(data, length, 1, file);
         fclose(file);
 
-        navMesh->addTile(data, length, DT_TILE_FREE_DATA);
+        navMesh->addTile(data, length, DT_TILE_FREE_DATA, 0 , NULL);
     }
     else
     {
@@ -263,8 +263,8 @@ int duReadDetailMesh(char* tile, rcPolyMeshDetail* &mesh)
     fread(mesh->tris, sizeof(char), mesh->ntris*4, file);
 
     fread(&(mesh->nmeshes), sizeof(int), 1, file);
-    mesh->meshes = new unsigned short[mesh->nmeshes*4];
-    fread(mesh->meshes, sizeof(short), mesh->nmeshes*4, file);
+    mesh->meshes = new unsigned int[mesh->nmeshes*4];
+    fread(mesh->meshes, sizeof(int), mesh->nmeshes*4, file);
 
     fclose(file);
 

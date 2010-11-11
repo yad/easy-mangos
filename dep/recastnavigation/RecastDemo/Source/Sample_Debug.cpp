@@ -31,7 +31,6 @@
 #include "SDL_opengl.h"
 
 #include "NavMeshTesterTool.h"
-
 #include "Debug.h"
 
 #ifdef WIN32
@@ -76,6 +75,8 @@ void Sample_Debug::cleanup()
     m_navMesh = 0;
 }
 
+
+
 void Sample_Debug::handleSettings()
 {
 }
@@ -86,7 +87,8 @@ void Sample_Debug::handleTools()
 }
 
 void Sample_Debug::handleDebugMode()
-{	// Check which modes are valid.
+{
+    // Check which modes are valid.
 	bool valid[MAX_DRAWMODE];
 	for (int i = 0; i < MAX_DRAWMODE; ++i)
 		valid[i] = false;
@@ -169,7 +171,7 @@ void Sample_Debug::handleRender()
 {
 	if (!m_geom || !m_geom->getMesh())
 		return;
-	
+
 	DebugDrawGL dd;
 	
 	glEnable(GL_FOG);
@@ -183,15 +185,15 @@ void Sample_Debug::handleRender()
 								m_agentMaxSlope);
 		m_geom->drawOffMeshConnections(&dd);
 	}
-	else if (m_drawMode != DRAWMODE_NAVMESH_TRANS)
-	{
-		// Draw mesh
+    else if (m_drawMode != DRAWMODE_NAVMESH_TRANS)
+    {
+    		// Draw mesh
 		duDebugDrawTriMesh(&dd, m_geom->getMesh()->getVerts(), m_geom->getMesh()->getVertCount(),
 						   m_geom->getMesh()->getTris(), m_geom->getMesh()->getNormals(), m_geom->getMesh()->getTriCount(), 0);
 		m_geom->drawOffMeshConnections(&dd);
-	}
-	
-	glDisable(GL_FOG);
+ 	}
+		
+    glDisable(GL_FOG);
 	glDepthMask(GL_FALSE);
 	
 	// Draw bounds
@@ -211,15 +213,15 @@ void Sample_Debug::handleRender()
 		 m_drawMode == DRAWMODE_NAVMESH_TRANS ||
 		 m_drawMode == DRAWMODE_NAVMESH_BVTREE ||
 		 m_drawMode == DRAWMODE_NAVMESH_INVIS))
-	{
+ 	{
 		if (m_drawMode != DRAWMODE_NAVMESH_INVIS)
 			duDebugDrawNavMesh(&dd, *m_navMesh, m_navMeshDrawFlags);
 		if (m_drawMode == DRAWMODE_NAVMESH_BVTREE)
 			duDebugDrawNavMeshBVTree(&dd, *m_navMesh);
-	}
-	
-	glDepthMask(GL_TRUE);
-	
+ 	}
+    
+    glDepthMask(GL_TRUE);
+
     if (m_drawMode == DRAWMODE_COMPACT)
 		duDebugDrawCompactHeightfieldSolid(&dd, *m_chf);
 
@@ -228,10 +230,10 @@ void Sample_Debug::handleRender()
 
 	if (m_drawMode == DRAWMODE_COMPACT_REGIONS)
 		duDebugDrawCompactHeightfieldRegions(&dd, *m_chf);
-	
+
 	if (m_drawMode == DRAWMODE_VOXELS)
-	{
-		glEnable(GL_FOG);
+ 	{
+    	glEnable(GL_FOG);
 		duDebugDrawHeightfieldSolid(&dd, *m_hf);
 		glDisable(GL_FOG);
 	}
@@ -268,18 +270,19 @@ void Sample_Debug::handleRender()
 	if (m_drawMode == DRAWMODE_REGION_CONNECTIONS)
 	{
 		duDebugDrawCompactHeightfieldRegions(&dd, *m_chf);
-		
+ 		
 		glDepthMask(GL_FALSE);
 		duDebugDrawRegionConnections(&dd, *m_cset);
 		glDepthMask(GL_TRUE);
-	}
-
-	if (/*m_pmesh &&*/ m_drawMode == DRAWMODE_POLYMESH)
+ 	}
+    
+    if (/*m_pmesh &&*/ m_drawMode == DRAWMODE_POLYMESH)
 	{
 		glDepthMask(GL_FALSE);
 		duDebugDrawPolyMesh(&dd, *m_pmeshes);
 		glDepthMask(GL_TRUE);
 	}
+    
 	if (/*m_dmesh &&*/ m_drawMode == DRAWMODE_POLYMESH_DETAIL)
 	{
 		glDepthMask(GL_FALSE);
@@ -302,25 +305,25 @@ void Sample_Debug::handleRenderOverlay(double* proj, double* model, int* view)
 
 void Sample_Debug::handleMeshChanged(InputGeom* geom)
 {
-    Sample_SoloMeshTiled::handleMeshChanged(geom);
+	Sample_SoloMeshTiled::handleMeshChanged(geom);
 }
 
 const float* Sample_Debug::getBoundsMin()
 {
-    return Sample_SoloMeshTiled::getBoundsMin();
+	return Sample_SoloMeshTiled::getBoundsMin();
 }
 
 const float* Sample_Debug::getBoundsMax()
 {
-    return Sample_SoloMeshTiled::getBoundsMax();
+	return Sample_SoloMeshTiled::getBoundsMax();
 }
 
 void Sample_Debug::handleClick(const float* p, bool shift)
 {
-    Sample_SoloMeshTiled::handleClick(NULL, p, shift);
+	Sample_SoloMeshTiled::handleClick(NULL, p, shift);
 }
 
-void Sample_Debug::handleStep()
+void Sample_Debug::handleToggle()
 {
     Sample_SoloMeshTiled::handleStep();
 }
@@ -328,7 +331,7 @@ void Sample_Debug::handleStep()
 bool Sample_Debug::handleBuild()
 {
     cleanup();
-
+ 
     duReadNavMesh(m_meshName, m_navMesh);
     m_pmeshCount = duReadPolyMesh(m_meshName, m_pmeshes);
     m_hfCount = duReadHeightfield(m_meshName, m_hf);
@@ -355,19 +358,23 @@ void Sample_Debug::setHighlightedTile(const float* pos)
 {
 
 	if (!pos || !m_navMesh)
-	{
+ 	{
 		m_highLightedTileX = -1;
 		m_highLightedTileY = -1;
 		return;
-	}
+ 	}
 
     dtNavMeshQuery* query = dtAllocNavMeshQuery();
     query->init(m_navMesh, 2048);
 
     float extents[3] = {2.f, 4.f, 2.f};
-    dtPolyRef polyRef = query->findNearestPoly(pos, extents, &dtQueryFilter(), 0);
-    unsigned char area = m_navMesh->getPolyArea(polyRef);
-    unsigned short flags = m_navMesh->getPolyFlags(polyRef);
+    dtPolyRef polyRef = 0;
+    dtQueryFilter filter;
+    query->findNearestPoly(pos, extents, &filter, &polyRef, NULL);
+    unsigned char area = 0;
+    m_navMesh->getPolyArea(polyRef, &area);
+    unsigned short flags = 0;
+    m_navMesh->getPolyFlags(polyRef, &flags);
 
     const dtMeshTile* tile;
     const dtPoly* poly;

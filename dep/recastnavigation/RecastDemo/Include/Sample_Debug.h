@@ -32,9 +32,9 @@ protected:
 
     int m_chfCount;
 	rcCompactHeightfield* m_chf;
-
-    int m_csetCount;
 	rcContourSet* m_cset;
+	
+    int m_csetCount;
 
     int m_pmeshCount;
     rcPolyMesh* m_pmeshes;
@@ -48,21 +48,21 @@ protected:
 	dtPolyRef m_ref;
 	
 public:
+    virtual void cleanup();
 	Sample_Debug();
 	virtual ~Sample_Debug();
 	
-    virtual void cleanup();
 	virtual void handleSettings();
 	virtual void handleTools();
 	virtual void handleDebugMode();
 	virtual void handleClick(const float* p, bool shift);
-	virtual void handleStep();
+	virtual void handleToggle();
 	virtual void handleRender();
 	virtual void handleRenderOverlay(double* proj, double* model, int* view);
 	virtual void handleMeshChanged(class InputGeom* geom);
 	virtual bool handleBuild();
     virtual void setHighlightedTile(const float* pos);
-
+    
 	virtual const float* getBoundsMin();
 	virtual const float* getBoundsMax();
 };

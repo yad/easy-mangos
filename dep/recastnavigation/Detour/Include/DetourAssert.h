@@ -19,8 +19,12 @@
 #ifndef DETOURASSERT_H
 #define DETOURASSERT_H
 
+// Note: This header file's only purpose is to include define assert.
+// Feel free to change the file and include your own implementation instead.
+
 #ifdef NDEBUG
-#	define dtAssert(x)
+// From http://cnicholson.net/2009/02/stupid-c-tricks-adventures-in-assert/
+#	define dtAssert(x) do { (void)sizeof(x); } while(__LINE__==-1,false)  
 #else
 #	include <assert.h> 
 #	define dtAssert assert

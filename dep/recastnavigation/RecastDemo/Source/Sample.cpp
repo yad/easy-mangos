@@ -38,7 +38,7 @@ Sample::Sample() :
 	m_geom(0),
 	m_navMesh(0),
 	m_navQuery(0),
-	m_navMeshDrawFlags(DU_DRAWNAVMESH_OFFMESHCONS),
+	m_navMeshDrawFlags(DU_DRAWNAVMESH_OFFMESHCONS|DU_DRAWNAVMESH_CLOSEDLIST),
 	m_tool(0),
 	m_ctx(0)
 {
@@ -118,7 +118,7 @@ void Sample::resetCommonSettings()
 	m_agentRadius = 0.6f;
 	m_agentMaxClimb = 0.9f;
 	m_agentMaxSlope = 45.0f;
-	m_regionMinSize = 50;
+	m_regionMinSize = 8;
 	m_regionMergeSize = 20;
 	m_edgeMaxLen = 12.0f;
 	m_edgeMaxError = 1.3f;
@@ -174,6 +174,12 @@ void Sample::handleClick(const float* s, const float* p, bool shift)
 {
 	if (m_tool)
 		m_tool->handleClick(s, p, shift);
+}
+
+void Sample::handleToggle()
+{
+	if (m_tool)
+		m_tool->handleToggle();
 }
 
 void Sample::handleStep()

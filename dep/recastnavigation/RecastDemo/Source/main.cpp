@@ -145,6 +145,7 @@ int main(int /*argc*/, char** /*argv*/)
 	
     FileList maps;
     char mapName[128] = "Choose Map...";
+
 	FileList files;
 	char meshName[128] = "Choose Tile...";
 	
@@ -207,14 +208,19 @@ int main(int /*argc*/, char** /*argv*/)
 					else if (event.key.keysym.sym == SDLK_SPACE)
 					{
 						if (sample)
-							sample->handleStep();
+							sample->handleToggle();
 					}
 					else if (event.key.keysym.sym == SDLK_1)
+					{
+						if (sample)
+							sample->handleStep();
+					}
+					else if (event.key.keysym.sym == SDLK_9)
 					{
 						if (geom)
 							geom->save("geomset.txt");
 					}
-					else if (event.key.keysym.sym == SDLK_2)
+					else if (event.key.keysym.sym == SDLK_0)
 					{
 						delete geom;
 						geom = new InputGeom;
@@ -368,7 +374,13 @@ int main(int /*argc*/, char** /*argv*/)
 		if (processHitTest && geom && sample)
 		{
 			float t;
-			if (geom->raycastMesh(rays, raye, t))
+			TimeVal t0 = getPerfTime();
+			bool hit = geom->raycastMesh(rays, raye, t);
+			TimeVal t1 = getPerfTime();
+			
+			printf("raycast() %.4fms\n", getPerfDeltaTimeUsec(t0,t1)/1000.0f);
+			
+			if (hit)
 			{
 				if (SDL_GetModState() & KMOD_CTRL)
 				{
@@ -476,7 +488,7 @@ int main(int /*argc*/, char** /*argv*/)
 			sample->handleRender();
 		if (test)
 			test->handleRender();
-
+		
 		glDisable(GL_FOG);
 		
 		// Render GUI
@@ -533,7 +545,7 @@ int main(int /*argc*/, char** /*argv*/)
 				}
 				else
 				{
-                    showMaps = false;
+                	showMaps = false;
 					showSample = true;
 					showLevels = false;
 					showTestCases = false;
@@ -541,7 +553,7 @@ int main(int /*argc*/, char** /*argv*/)
 			}
 			
 			imguiSeparator();
-            imguiLabel("Map");
+			imguiLabel("Map");
             if (imguiButton(mapName, strncmp(sampleName, "Choose Sample...", 16)))
             {
                 if (showMaps)
@@ -722,7 +734,7 @@ int main(int /*argc*/, char** /*argv*/)
 			int levelToLoad = -1;
 			for (int i = 0; i < files.size; ++i)
 			{
-                if (!strncmp(mapName, files.files[i], 3))
+				if (!strncmp(mapName, files.files[i], 3))
                 {
 				    if (imguiItem(files.files[i]))
 					    levelToLoad = i;
@@ -755,7 +767,7 @@ int main(int /*argc*/, char** /*argv*/)
 				if (sample && geom)
 				{
 					sample->handleMeshChanged(geom);
-					sample->setMeshName(meshName);
+                    sample->setMeshName(meshName);
 				}
 
 				if (geom || sample)
@@ -905,7 +917,7 @@ int main(int /*argc*/, char** /*argv*/)
 					
 					// Do the tests.
 					if (sample)
-						test->doTests(&ctx, sample->getNavMesh(), sample->getNavMeshQuery());
+						test->doTests(sample->getNavMesh(), sample->getNavMeshQuery());
 				}
 			}				
 				
@@ -947,7 +959,7 @@ int main(int /*argc*/, char** /*argv*/)
 			const float r = 25.0f;
 			for (int i = 0; i < 20; ++i)
 			{
-				const float a = (float)i / 20.0f * (float)M_PI*2;
+				const float a = (float)i / 20.0f * RC_PI*2;
 				const float fx = (float)x + cosf(a)*r;
 				const float fy = (float)y + sinf(a)*r;
 				glVertex2f(fx,fy);

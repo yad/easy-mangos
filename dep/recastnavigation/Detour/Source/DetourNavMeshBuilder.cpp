@@ -430,8 +430,8 @@ bool dtCreateNavMeshData(dtNavMeshCreateParams* params, unsigned char** outData,
 		dtPoly* p = &navPolys[i];
 		p->vertCount = 0;
 		p->flags = params->polyFlags[i];
-		p->area = params->polyAreas[i];
-		p->type = DT_POLYTYPE_GROUND;
+		p->setArea(params->polyAreas[i]);
+		p->setType(DT_POLYTYPE_GROUND);
 		for (int j = 0; j < nvp; ++j)
 		{
 			if (src[j] == MESH_NULL_IDX) break;
@@ -453,8 +453,8 @@ bool dtCreateNavMeshData(dtNavMeshCreateParams* params, unsigned char** outData,
 			p->verts[0] = (unsigned short)(offMeshVertsBase + n*2+0);
 			p->verts[1] = (unsigned short)(offMeshVertsBase + n*2+1);
 			p->flags = params->offMeshConFlags[i];
-			p->area = params->offMeshConAreas[i];
-			p->type = DT_POLYTYPE_OFFMESH_CONNECTION;
+			p->setArea(params->offMeshConAreas[i]);
+			p->setType(DT_POLYTYPE_OFFMESH_CONNECTION);
 			n++;
 		}
 	}
@@ -492,13 +492,13 @@ bool dtCreateNavMeshData(dtNavMeshCreateParams* params, unsigned char** outData,
 	for (int i = 0; i < params->polyCount; ++i)
 	{
 		dtPolyDetail& dtl = navDMeshes[i];
-		const int vb = params->detailMeshes[i*4+0];
-		const int ndv = params->detailMeshes[i*4+1];
+		const int vb = (int)params->detailMeshes[i*4+0];
+		const int ndv = (int)params->detailMeshes[i*4+1];
 		const int nv = navPolys[i].vertCount;
-		dtl.vertBase = vbase;
-		dtl.vertCount = (unsigned short)(ndv-nv);
-		dtl.triBase = params->detailMeshes[i*4+2];
-		dtl.triCount = params->detailMeshes[i*4+3];
+		dtl.vertBase = (unsigned int)vbase;
+		dtl.vertCount = (unsigned char)(ndv-nv);
+		dtl.triBase = (unsigned int)params->detailMeshes[i*4+2];
+		dtl.triCount = (unsigned char)params->detailMeshes[i*4+3];
 		// Copy vertices except the first 'nv' verts which are equal to nav poly verts.
 		if (ndv-nv)
 		{
@@ -530,6 +530,8 @@ bool dtCreateNavMeshData(dtNavMeshCreateParams* params, unsigned char** outData,
 			con->rad = params->offMeshConRad[i];
 			con->flags = params->offMeshConDir[i] ? DT_OFFMESH_CON_BIDIR : 0;
 			con->side = offMeshConClass[i*2+1];
+			if (params->offMeshConUserID)
+				con->userId = params->offMeshConUserID[i];
 			n++;
 		}
 	}
@@ -680,9 +682,7 @@ bool dtNavMeshDataSwapEndian(unsigned char* data, const int /*dataSize*/)
 	{
 		dtPolyDetail* pd = &detailMeshes[i];
 		swapEndian(&pd->vertBase);
-		swapEndian(&pd->vertCount);
 		swapEndian(&pd->triBase);
-		swapEndian(&pd->triCount);
 	}
 	
 	// Detail verts
