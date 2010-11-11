@@ -141,8 +141,8 @@ namespace MMAP
         for (TileList::iterator it = m_tiles.begin(); it != m_tiles.end(); ++it)
         {
             uint32 mapID = (*it).first;
-            if (!shouldSkipMap((*it).first))
-                build((*it).first);
+            if (!shouldSkipMap(mapID))
+                build(mapID);
         }
     }
 
@@ -640,9 +640,6 @@ namespace MMAP
     {
         set<uint32>* tiles = getTileList(mapID);
 
-        char fileName[25];
-        FILE* file = 0;
-
         /*** calculate number of bits needed to store tiles & polys ***/
         int tileBits = rcMin((int)dtIlog2(dtNextPow2(tiles->size())), 12);
         if (tileBits < 1) tileBits = 1;                                     // need at least one bit!
@@ -692,8 +689,11 @@ namespace MMAP
             return;
         }
 
+        char fileName[25];
         sprintf(fileName, "mmaps/%03u.mmap", mapID);
-        if (!(file = fopen(fileName, "wb")))
+
+        FILE* file = fopen(fileName, "wb");
+        if (!file)
         {
             dtFreeNavMesh(navMesh);
             char message[1024];
@@ -714,10 +714,6 @@ namespace MMAP
         // console output
         char tileString[10];
         sprintf(tileString, "[%02i,%02i]: ", tileX, tileY);
-
-        // file output
-        char fileName[255];
-        FILE* file = 0;
 
         float cellSize = .5f;       // larger number => less voxels => faster build time
                                     // too large, and tight spaces won't be pathable.
@@ -985,8 +981,11 @@ namespace MMAP
                 continue;
             }
 
+            // file output
+            char fileName[255];
             sprintf(fileName, "mmaps/%03u%02i%02i.mmtile", mapID, tileY, tileX);
-            if (!(file = fopen(fileName, "wb")))
+            FILE* file = fopen(fileName, "wb");
+            if (!file)
             {
                 char message[1024];
                 sprintf(message, "Failed to open %s for writing!\n", fileName);
@@ -1060,10 +1059,10 @@ namespace MMAP
         printf("%sWriting debug output...                       \r", tileString);
 
         char objFileName[255];
-        FILE* objFile;
-
         sprintf(objFileName, "meshes/%03u.map", mapID);
-        if (!(objFile = fopen(objFileName, "wb")))
+
+        FILE* objFile = fopen(objFileName, "wb");
+        if (!objFile)
         {
             char message[1024];
             sprintf(message, "Failed to open %s for writing!\n", objFileName);
@@ -1112,10 +1111,10 @@ namespace MMAP
     void MapBuilder::generateRealObj(uint32 mapID, uint32 tileX, uint32 tileY, MeshData meshData)
     {
         char objFileName[255];
-        FILE* objFile;
-
         sprintf(objFileName, "meshes/map%03u.obj", mapID);
-        if (!(objFile = fopen(objFileName, "wb")))
+
+        FILE* objFile = fopen(objFileName, "wb");
+        if (!objFile)
         {
             char message[1024];
             sprintf(message, "Failed to open %s for writing!\n", objFileName);
@@ -1157,7 +1156,8 @@ namespace MMAP
 
 #define DEBUG_WRITE(fileExtension,data) \
         sprintf(fileName, (name + fileExtension).c_str(), mapID, tileX, tileY); \
-        if (!(file = fopen(fileName, "wb"))) \
+        file = fopen(fileName, "wb"); \
+        if (!file) \
         { \
             char message[1024]; \
             sprintf(message, "%sFailed to open %s for writing!\n",  tileString, fileName); \
