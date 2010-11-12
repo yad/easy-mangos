@@ -21,8 +21,7 @@
 #include "Utilities/UnorderedMapSet.h"
 #include "World.h"
 
-uint32 packTileID(uint32 tileX, uint32 tileY) { return tileX<<16 | tileY; }
-void unpackTileID(uint32 ID, uint32 &tileX, uint32 &tileY) { tileX = ID>>16; tileY = ID&0xFF; }
+uint32 packTileID(int x, int y) { return uint32(x << 16 | y); }
 
 void Map::LoadNavMesh(int gx, int gy)
 {
@@ -55,9 +54,13 @@ void Map::LoadNavMesh(int gx, int gy)
         }
     }
 
-    uint32 packedGridPos = packTileID(uint32(gx), uint32(gy));
+    // check if we already have this tile loaded
+    uint32 packedGridPos = packTileID(gx, gy);
     if (m_mmapLoadedTiles.find(packedGridPos) != m_mmapLoadedTiles.end())
+    {
+        sLog.outError("Asked to load already loaded navmesh tile. %03u%02i%02i.mmtile", i_id, gx, gy);
         return;
+    }
 
     // mmaps/0000000.mmtile
     uint32 pathLen = sWorld.GetDataPath().length() + strlen("mmaps/%03i%02i%02i.mmtile")+1;
@@ -84,45 +87,58 @@ void Map::LoadNavMesh(int gx, int gy)
     delete [] fileName;
 
     dtMeshHeader* header = (dtMeshHeader*)data;
-    if (header->magic != DT_NAVMESH_MAGIC)
-    {
-        sLog.outError("%03u%02i%02i.mmtile has an invalid header", i_id, gx, gy);
-        dtFree(data);
-        return;
-    }
-    if (header->version != DT_NAVMESH_VERSION)
-    {
-        sLog.outError("%03u%02i%02i.mmtile was built with Detour v%i, expected v%i",i_id, gx, gy, header->version, DT_NAVMESH_VERSION);
-        dtFree(data);
-        return;
-    }
-
-    if (DT_SUCCESS != m_navMesh->addTile(data, length, DT_TILE_FREE_DATA, 0, NULL))
-    {
-        sLog.outError("Could not load %03u%02i%02i.mmtile into navmesh", i_id, gx, gy);
-        dtFree(data);
-        return;
-    }
+    dtTileRef tileRef = 0;
 
     // memory allocated for data is now managed by detour, and will be deallocated when the tile is removed
-
-    uint32 packedTilePos = packTileID(uint32(header->x), uint32(header->y));
-    m_mmapLoadedTiles.insert(std::pair<uint32, uint32>(packedGridPos, packedTilePos));
-    sLog.outDetail("Loaded mmtile %03i[%02i,%02i] into %03i[%02i,%02i]", i_id, gx, gy, i_id, header->x, header->y);
+    dtStatus dtResult = m_navMesh->addTile(data, length, DT_TILE_FREE_DATA, 0, &tileRef);
+    switch(dtResult)
+    {
+        case DT_SUCCESS:
+        {
+            m_mmapLoadedTiles.insert(std::pair<uint32, dtTileRef>(packedGridPos, tileRef));
+            sLog.outDetail("Loaded mmtile %03i[%02i,%02i] into %03i[%02i,%02i]", i_id, gx, gy, i_id, header->x, header->y);
+        }
+        break;
+        case DT_FAILURE_DATA_MAGIC:
+        {
+            sLog.outError("%03u%02i%02i.mmtile has an invalid header", i_id, gx, gy);
+            dtFree(data);
+        }
+        break;
+        case DT_FAILURE_DATA_VERSION:
+        {
+            sLog.outError("%03u%02i%02i.mmtile was built with Detour v%i, expected v%i",i_id, gx, gy, header->version, DT_NAVMESH_VERSION);
+            dtFree(data);
+        }
+        break;
+        case DT_FAILURE_OUT_OF_MEMORY:
+        case DT_FAILURE:
+        default:
+        {
+            sLog.outError("Could not load %03u%02i%02i.mmtile into navmesh", i_id, gx, gy);
+            dtFree(data);
+        }
+        break;
+    }
 }
 
 void Map::UnloadNavMesh(int gx, int gy)
 {
-    uint32 packedGridPos = packTileID(uint32(gx), uint32(gy));
-    if (m_mmapLoadedTiles.find(packedGridPos) == m_mmapLoadedTiles.end())
+    // navMesh was not loaded for this map
+    if (!m_navMesh)
         return;
 
-    uint32 packedTilePos = m_mmapLoadedTiles[packedGridPos];
-    uint32 tileX, tileY;
-    unpackTileID(packedTilePos, tileX, tileY);
+    uint32 packedGridPos = packTileID(gx, gy);
+    if (m_mmapLoadedTiles.find(packedGridPos) == m_mmapLoadedTiles.end())
+    {
+        sLog.outError("Asked to unload not loaded navmesh tile. %03u%02i%02i.mmtile", i_id, gx, gy);
+        return;
+    }
+
+    dtTileRef tileRef = m_mmapLoadedTiles[packedGridPos];
 
     // unload, and mark as non loaded
-    if(DT_SUCCESS != m_navMesh->removeTile(m_navMesh->getTileRefAt(int(tileX), int(tileY)), NULL, NULL))
+    if(DT_SUCCESS != m_navMesh->removeTile(tileRef, NULL, NULL))
     {
         sLog.outError("Could not unload %03u%02i%02i.mmtile from navmesh", i_id, gx, gy);
     }
