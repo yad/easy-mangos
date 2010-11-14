@@ -44,7 +44,11 @@ PathInfo::PathInfo(const Unit* owner, const float destX, const float destY, cons
     {
         m_navMeshQuery = dtAllocNavMeshQuery();
         MANGOS_ASSERT(m_navMeshQuery);
-        m_navMeshQuery->init(m_navMesh, MESH_MAX_NODES);
+        if(DT_SUCCESS != m_navMeshQuery->init(m_navMesh, MESH_MAX_NODES))
+        {
+            sLog.outError("%u's PathInfo navMeshQuery failed to init", m_sourceUnit->GetGUID());
+            return;
+        }
 
         BuildPolyPath(startPoint, endPoint);
     }
@@ -132,7 +136,7 @@ dtPolyRef PathInfo::getPathPolyByPosition(dtPolyRef *polyPath, uint32 polyPathSi
     for (uint32 i = 0; i < polyPathSize; ++i)
     {
         float closestPoint[VERTEX_SIZE];
-        if (!m_navMeshQuery->closestPointOnPoly(polyPath[i], point, closestPoint))
+        if (DT_SUCCESS != m_navMeshQuery->closestPointOnPoly(polyPath[i], point, closestPoint))
             continue;
 
         float d = dtVdist2DSqr(point, closestPoint);
@@ -179,14 +183,14 @@ void PathInfo::BuildPolyPath(PathNode startPos, PathNode endPos)
 
         if (startPoly == INVALID_POLYREF)
         {
-            m_navMeshQuery->findNearestPoly(startPoint, extents, &filter, &startPoly, closestPoint);
-            distToStartPoly = dtVdist(closestPoint, startPoint);
+            if(DT_SUCCESS == m_navMeshQuery->findNearestPoly(startPoint, extents, &filter, &startPoly, closestPoint))
+                distToStartPoly = dtVdist(closestPoint, startPoint);
         }
 
         if (endPoly == INVALID_POLYREF)
         {
-            m_navMeshQuery->findNearestPoly(endPoint, extents, &filter, &endPoly, closestPoint);
-            distToEndPoly = dtVdist(closestPoint, endPoint);
+            if(DT_SUCCESS == m_navMeshQuery->findNearestPoly(endPoint, extents, &filter, &endPoly, closestPoint))
+                distToEndPoly = dtVdist(closestPoint, endPoint);
         }
     }
 
@@ -238,7 +242,7 @@ void PathInfo::BuildPolyPath(PathNode startPos, PathNode endPos)
         {
             float closestPoint[VERTEX_SIZE];
             // we may want to use closestPointOnPolyBoundary instead
-            if (m_navMeshQuery->closestPointOnPoly(endPoly, endPoint, closestPoint))
+            if (DT_SUCCESS == m_navMeshQuery->closestPointOnPoly(endPoly, endPoint, closestPoint))
             {
                 dtVcopy(endPoint, closestPoint);
                 setActualEndPosition(PathNode(endPoint[2],endPoint[0],endPoint[1]));
@@ -330,7 +334,7 @@ void PathInfo::BuildPolyPath(PathNode startPos, PathNode endPos)
 
         // we need any point on our suffix start poly to generate poly-path, so we need last poly in prefix data
         float suffixEndPoint[VERTEX_SIZE];
-        if (!m_navMeshQuery->closestPointOnPoly(suffixStartPoly, endPoint, suffixEndPoint))
+        if (DT_SUCCESS != m_navMeshQuery->closestPointOnPoly(suffixStartPoly, endPoint, suffixEndPoint))
         {
             // suffixStartPoly is invalid somehow, or the navmesh is broken => error state
             sLog.outError("%u's Path Build failed: invalid polyRef in path", m_sourceUnit->GetGUID());
@@ -430,7 +434,7 @@ void PathInfo::BuildPointPath(float *startPoint, float *endPoint)
     // get the actual reachable point on last poly in path
     float closestPoint[VERTEX_SIZE];
     if ((m_type & PATHFIND_INCOMPLETE)
-        && m_navMeshQuery->closestPointOnPoly(m_pathPolyRefs[m_polyLength-1], endPoint, closestPoint))
+        && DT_SUCCESS == m_navMeshQuery->closestPointOnPoly(m_pathPolyRefs[m_polyLength-1], endPoint, closestPoint))
     {
         dtVcopy(endPoint, closestPoint);
         setActualEndPosition(PathNode(endPoint[2],endPoint[0],endPoint[1]));
@@ -607,9 +611,9 @@ bool PathInfo::getSteerTarget(const float* startPos, const float* endPos,
     unsigned char steerPathFlags[MAX_STEER_POINTS];
     dtPolyRef steerPathPolys[MAX_STEER_POINTS];
     uint32 nsteerPath = 0;
-    m_navMeshQuery->findStraightPath(startPos, endPos, path, pathSize,
+    dtStatus dtResult = m_navMeshQuery->findStraightPath(startPos, endPos, path, pathSize,
                                                 steerPath, steerPathFlags, steerPathPolys, (int*)&nsteerPath, MAX_STEER_POINTS);
-    if (!nsteerPath)
+    if (!nsteerPath || DT_SUCCESS != dtResult)
         return false;
 
     // Find vertex far enough to steer to.
@@ -647,8 +651,11 @@ dtStatus PathInfo::findSmoothPath(const float* startPos, const float* endPos,
     uint32 npolys = polyPathSize;
 
     float iterPos[VERTEX_SIZE], targetPos[VERTEX_SIZE];
-    m_navMeshQuery->closestPointOnPolyBoundary(polys[0], startPos, iterPos);
-    m_navMeshQuery->closestPointOnPolyBoundary(polys[npolys-1], endPos, targetPos);
+    if(DT_SUCCESS != m_navMeshQuery->closestPointOnPolyBoundary(polys[0], startPos, iterPos))
+        return DT_FAILURE;
+
+    if(DT_SUCCESS != m_navMeshQuery->closestPointOnPolyBoundary(polys[npolys-1], endPos, targetPos))
+        return DT_FAILURE;
 
     dtVcopy(&smoothPath[nsmoothPath*VERTEX_SIZE], iterPos);
     nsmoothPath++;
@@ -712,7 +719,8 @@ dtStatus PathInfo::findSmoothPath(const float* startPos, const float* endPos,
             float startPos[VERTEX_SIZE], endPos[VERTEX_SIZE];
 
             // Advance the path up to and over the off-mesh connection.
-            dtPolyRef prevRef = INVALID_POLYREF, polyRef = polys[0];
+            dtPolyRef prevRef = INVALID_POLYREF;
+            dtPolyRef polyRef = polys[0];
             uint32 npos = 0;
             while (npos < npolys && polyRef != steerPosRef)
             {
@@ -727,7 +735,7 @@ dtStatus PathInfo::findSmoothPath(const float* startPos, const float* endPos,
             npolys -= npos;
 
             // Handle the connection.
-            if (m_navMesh->getOffMeshConnectionPolyEndPoints(prevRef, polyRef, startPos, endPos))
+            if (DT_SUCCESS == m_navMesh->getOffMeshConnectionPolyEndPoints(prevRef, polyRef, startPos, endPos))
             {
                 if (nsmoothPath < maxSmoothPathSize)
                 {
