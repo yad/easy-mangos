@@ -568,7 +568,8 @@ class ChatHandler
         bool HandleMmapLocCommand(char* args);
         bool HandleMmapLoadedTilesCommand(char* args);
         bool HandleMmapStatsCommand(char* args);
-        bool HandleMmapToggle(char* args);
+        bool HandleMmap(char* args);
+        bool HandleMmapTestArea(char* args);
 
         //! Development Commands
         bool HandleSaveAllCommand(char* args);
