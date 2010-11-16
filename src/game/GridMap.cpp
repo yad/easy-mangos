@@ -618,7 +618,7 @@ bool GridMap::ExistVMap(uint32 mapid,int gx,int gy)
 }
 
 //////////////////////////////////////////////////////////////////////////
-TerrainInfo::TerrainInfo(uint32 mapid) : m_mapId(mapid)
+TerrainInfo::TerrainInfo(uint32 mapid) : m_mapId(mapid), m_navMesh(NULL)
 {
     for (int k = 0; k < MAX_NUMBER_OF_GRIDS; ++k)
     {
@@ -645,6 +645,12 @@ TerrainInfo::~TerrainInfo()
             delete m_GridMaps[i][k];
 
     VMAP::VMapFactory::createOrGetVMapManager()->unloadMap(m_mapId);
+
+    if (m_navMesh)
+    {
+        dtFreeNavMesh(m_navMesh);
+        m_navMesh = NULL;
+    }
 }
 
 GridMap * TerrainInfo::Load(const uint32 x, const uint32 y)
@@ -705,6 +711,9 @@ void TerrainInfo::CleanUpGrids(const uint32 diff)
 
                 //unload VMAPS...
                 VMAP::VMapFactory::createOrGetVMapManager()->unloadMap(m_mapId, x, y);
+
+                //unload mmap...
+                UnloadNavMesh(x, y);
             }
         }
     }
@@ -1088,6 +1097,9 @@ GridMap * TerrainInfo::LoadMapAndVMap( const uint32 x, const uint32 y )
                 DEBUG_LOG("Ignored VMAP name:%s, id:%d, x:%d, y:%d (vmap rep.: x:%d, y:%d)", mapName, m_mapId, x,y,x,y);
                 break;
             }
+
+            // load navmesh
+            LoadNavMesh(x, y);
         }
     }
 

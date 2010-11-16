@@ -16,20 +16,20 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "Map.h"
+#include "GridMap.h"
 #include "Log.h"
 #include "Utilities/UnorderedMapSet.h"
 #include "World.h"
 
 uint32 packTileID(int x, int y) { return uint32(x << 16 | y); }
 
-void Map::LoadNavMesh(int gx, int gy)
+void TerrainInfo::LoadNavMesh(int gx, int gy)
 {
     if (!m_navMesh)
     {
         uint32 pathLen = sWorld.GetDataPath().length() + strlen("mmaps/%03i.mmap")+1;
         char *fileName = new char[pathLen];
-        snprintf(fileName, pathLen, (sWorld.GetDataPath()+"mmaps/%03i.mmap").c_str(), i_id);
+        snprintf(fileName, pathLen, (sWorld.GetDataPath()+"mmaps/%03i.mmap").c_str(), m_mapId);
 
         FILE* file = fopen(fileName, "rb");
         if (!file)
@@ -49,7 +49,7 @@ void Map::LoadNavMesh(int gx, int gy)
         {
             dtFreeNavMesh(m_navMesh);
             m_navMesh = NULL;
-            sLog.outError("Failed to initialize mmap %03u from file %s", i_id, fileName);
+            sLog.outError("Failed to initialize mmap %03u from file %s", m_mapId, fileName);
             return;
         }
     }
@@ -58,14 +58,14 @@ void Map::LoadNavMesh(int gx, int gy)
     uint32 packedGridPos = packTileID(gx, gy);
     if (m_mmapLoadedTiles.find(packedGridPos) != m_mmapLoadedTiles.end())
     {
-        sLog.outError("Asked to load already loaded navmesh tile. %03u%02i%02i.mmtile", i_id, gx, gy);
+        sLog.outError("Asked to load already loaded navmesh tile. %03u%02i%02i.mmtile", m_mapId, gx, gy);
         return;
     }
 
     // mmaps/0000000.mmtile
     uint32 pathLen = sWorld.GetDataPath().length() + strlen("mmaps/%03i%02i%02i.mmtile")+1;
     char *fileName = new char[pathLen];
-    snprintf(fileName, pathLen, (sWorld.GetDataPath()+"mmaps/%03i%02i%02i.mmtile").c_str(), i_id, gx, gy);
+    snprintf(fileName, pathLen, (sWorld.GetDataPath()+"mmaps/%03i%02i%02i.mmtile").c_str(), m_mapId, gx, gy);
 
     FILE *file = fopen(fileName, "rb");
     if (!file)
@@ -96,18 +96,18 @@ void Map::LoadNavMesh(int gx, int gy)
         case DT_SUCCESS:
         {
             m_mmapLoadedTiles.insert(std::pair<uint32, dtTileRef>(packedGridPos, tileRef));
-            sLog.outDetail("Loaded mmtile %03i[%02i,%02i] into %03i[%02i,%02i]", i_id, gx, gy, i_id, header->x, header->y);
+            sLog.outDetail("Loaded mmtile %03i[%02i,%02i] into %03i[%02i,%02i]", m_mapId, gx, gy, m_mapId, header->x, header->y);
         }
         break;
         case DT_FAILURE_DATA_MAGIC:
         {
-            sLog.outError("%03u%02i%02i.mmtile has an invalid header", i_id, gx, gy);
+            sLog.outError("%03u%02i%02i.mmtile has an invalid header", m_mapId, gx, gy);
             dtFree(data);
         }
         break;
         case DT_FAILURE_DATA_VERSION:
         {
-            sLog.outError("%03u%02i%02i.mmtile was built with Detour v%i, expected v%i",i_id, gx, gy, header->version, DT_NAVMESH_VERSION);
+            sLog.outError("%03u%02i%02i.mmtile was built with Detour v%i, expected v%i",m_mapId, gx, gy, header->version, DT_NAVMESH_VERSION);
             dtFree(data);
         }
         break;
@@ -115,14 +115,14 @@ void Map::LoadNavMesh(int gx, int gy)
         case DT_FAILURE:
         default:
         {
-            sLog.outError("Could not load %03u%02i%02i.mmtile into navmesh", i_id, gx, gy);
+            sLog.outError("Could not load %03u%02i%02i.mmtile into navmesh", m_mapId, gx, gy);
             dtFree(data);
         }
         break;
     }
 }
 
-void Map::UnloadNavMesh(int gx, int gy)
+void TerrainInfo::UnloadNavMesh(int gx, int gy)
 {
     // navMesh was not loaded for this map
     if (!m_navMesh)
@@ -131,7 +131,7 @@ void Map::UnloadNavMesh(int gx, int gy)
     uint32 packedGridPos = packTileID(gx, gy);
     if (m_mmapLoadedTiles.find(packedGridPos) == m_mmapLoadedTiles.end())
     {
-        sLog.outError("Asked to unload not loaded navmesh tile. %03u%02i%02i.mmtile", i_id, gx, gy);
+        sLog.outError("Asked to unload not loaded navmesh tile. %03u%02i%02i.mmtile", m_mapId, gx, gy);
         return;
     }
 
@@ -140,23 +140,23 @@ void Map::UnloadNavMesh(int gx, int gy)
     // unload, and mark as non loaded
     if(DT_SUCCESS != m_navMesh->removeTile(tileRef, NULL, NULL))
     {
-        sLog.outError("Could not unload %03u%02i%02i.mmtile from navmesh", i_id, gx, gy);
+        sLog.outError("Could not unload %03u%02i%02i.mmtile from navmesh", m_mapId, gx, gy);
     }
     else
     {
         m_mmapLoadedTiles.erase(packedGridPos);
-        sLog.outDetail("Unloaded mmtile %03i[%02i,%02i] from %03i", i_id, gx, gy, i_id);
+        sLog.outDetail("Unloaded mmtile %03i[%02i,%02i] from %03i", m_mapId, gx, gy, m_mapId);
     }
 }
 
-dtNavMesh const* Map::GetNavMesh() const
+dtNavMesh const* TerrainInfo::GetNavMesh() const
 {
     return m_navMesh;
 }
 
-std::set<uint32> Map::s_mmapDisabledIds = std::set<uint32>();
+std::set<uint32> TerrainInfo::s_mmapDisabledIds = std::set<uint32>();
 
-void Map::preventPathfindingOnMaps(std::string ignoreMapIds)
+void TerrainInfo::preventPathfindingOnMaps(std::string ignoreMapIds)
 {
     s_mmapDisabledIds.clear();
 
@@ -173,7 +173,7 @@ void Map::preventPathfindingOnMaps(std::string ignoreMapIds)
     delete[] mapList;
 }
 
-bool Map::IsPathfindingEnabled() const
+bool TerrainInfo::IsPathfindingEnabled() const
 {
-    return sWorld.getConfig(CONFIG_BOOL_MMAP_ENABLED) && s_mmapDisabledIds.find(i_id) == s_mmapDisabledIds.end();
+    return sWorld.getConfig(CONFIG_BOOL_MMAP_ENABLED) && s_mmapDisabledIds.find(m_mapId) == s_mmapDisabledIds.end();
 }

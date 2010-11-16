@@ -26,6 +26,8 @@
 #include "Object.h"
 #include "SharedDefines.h"
 
+#include "../../dep/recastnavigation/Detour/Include/DetourNavMesh.h"
+
 #include <bitset>
 #include <list>
 
@@ -274,6 +276,20 @@ private:
     LOCK_TYPE m_mutex;
     LOCK_TYPE m_refMutex;
 
+    // begin movemap-related
+public:
+    dtNavMesh const* GetNavMesh() const;
+    static void preventPathfindingOnMaps(std::string ignoreMapIds);
+    bool IsPathfindingEnabled() const;
+
+private:
+    void LoadNavMesh(int gx, int gy);
+    void UnloadNavMesh(int gx, int gy);
+    dtNavMesh* m_navMesh;
+    UNORDERED_MAP<uint32, dtTileRef> m_mmapLoadedTiles;    // maps [map grid coords] to [dtTile]
+
+    static std::set<uint32> s_mmapDisabledIds;      // stores list of mapids which do not use pathfinding
+    // end movemap-related
 };
 
 //class for managing TerrainData object and all sort of geometry querying operations

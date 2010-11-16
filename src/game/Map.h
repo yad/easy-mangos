@@ -40,8 +40,6 @@
 #include <list>
 #include <set>
 
-#include "../recastnavigation/Detour/Include/DetourNavMesh.h"
-
 class Creature;
 class Unit;
 class WorldPacket;
@@ -327,21 +325,6 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
 
         template<class T>
             void DeleteFromWorld(T*);
-
-        // begin movemap-related
-    public:
-        dtNavMesh const* GetNavMesh() const;
-        static void preventPathfindingOnMaps(std::string ignoreMapIds);
-        bool IsPathfindingEnabled() const;
-
-    private:
-        void LoadNavMesh(int gx, int gy);
-        void UnloadNavMesh(int gx, int gy);
-        dtNavMesh* m_navMesh;
-        UNORDERED_MAP<uint32, dtTileRef> m_mmapLoadedTiles;    // maps [map grid coords] to [dtTile]
-
-        static std::set<uint32> s_mmapDisabledIds;      // stores list of mapids which do not use pathfinding
-        // end movemap-related
 };
 
 class MANGOS_DLL_SPEC InstanceMap : public Map

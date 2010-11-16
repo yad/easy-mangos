@@ -36,9 +36,9 @@ PathInfo::PathInfo(const Unit* owner, const float destX, const float destY, cons
 
     PATH_DEBUG("++ PathInfo::PathInfo for %u \n", m_sourceUnit->GetGUID());
 
-    const Map* map = m_sourceUnit->GetBaseMap();
-    if (map->IsPathfindingEnabled())
-        m_navMesh = map->GetNavMesh();
+    const TerrainInfo* terrain = m_sourceUnit->GetTerrain();
+    if (terrain->IsPathfindingEnabled())
+        m_navMesh = terrain->GetNavMesh();
 
     if (m_navMesh)
     {
@@ -218,7 +218,7 @@ void PathInfo::BuildPolyPath(PathNode startPos, PathNode endPos)
         {
             Creature* owner = (Creature*)m_sourceUnit;
 
-            if (m_sourceUnit->GetBaseMap()->IsUnderWater(endPos.x, endPos.y, endPos.z))
+            if (m_sourceUnit->GetTerrain()->IsUnderWater(endPos.x, endPos.y, endPos.z))
             {
                 PATH_DEBUG("++ BuildPolyPath :: underWater case\n");
                 if (owner->CanSwim() || owner->IsPet())
@@ -539,7 +539,7 @@ dtQueryFilter PathInfo::createFilter()
 NavTerrain PathInfo::getNavTerrain(float x, float y, float z)
 {
     GridMapLiquidData data;
-    m_sourceUnit->GetBaseMap()->getLiquidStatus(x, y, z, MAP_ALL_LIQUIDS, &data);
+    m_sourceUnit->GetTerrain()->getLiquidStatus(x, y, z, MAP_ALL_LIQUIDS, &data);
 
     switch (data.type)
     {
