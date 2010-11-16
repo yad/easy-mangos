@@ -835,14 +835,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\game\MapInstanced.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\game\MapInstanced.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\src\game\MapManager.cpp"
 				>
 			</File>
@@ -963,10 +955,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\game\UnitAuraProcHandler.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\src\game\SpellEffects.cpp"
 				>
 			</File>
@@ -988,6 +976,10 @@
 			</File>
 			<File
 				RelativePath="..\..\src\game\Transports.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\game\UnitAuraProcHandler.cpp"
 				>
 			</File>
 			<File
