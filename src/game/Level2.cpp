@@ -5045,7 +5045,7 @@ bool ChatHandler::HandleTitlesCurrentCommand(char* args)
 
 bool ChatHandler::HandleMmapPathCommand(char* args)
 {
-    if (!m_session->GetPlayer()->GetMap()->GetTerrain()->GetNavMesh())
+    if (!m_session->GetPlayer()->GetTerrain()->GetNavMesh())
     {
         PSendSysMessage("NavMesh not loaded for current map.");
         return true;
@@ -5114,7 +5114,7 @@ bool ChatHandler::HandleMmapLocCommand(char* args)
     PSendSysMessage("gridloc [%i,%i]", gx, gy);
 
     // calculate navmesh tile location
-    const dtNavMesh* navmesh = player->GetMap()->GetTerrain()->GetNavMesh();
+    const dtNavMesh* navmesh = player->GetTerrain()->GetNavMesh();
 
     if (!navmesh)
     {
@@ -5188,7 +5188,7 @@ bool ChatHandler::HandleMmapLocCommand(char* args)
 
 bool ChatHandler::HandleMmapLoadedTilesCommand(char* args)
 {
-    const dtNavMesh* navmesh = m_session->GetPlayer()->GetMap()->GetTerrain()->GetNavMesh();
+    const dtNavMesh* navmesh = m_session->GetPlayer()->GetTerrain()->GetNavMesh();
 
     if (!navmesh)
     {
@@ -5220,7 +5220,7 @@ bool ChatHandler::HandleMmapStatsCommand(char* args)
     PSendSysMessage("mmap stats:");
     PSendSysMessage("  global mmap pathfinding is %sabled", sWorld.getConfig(CONFIG_BOOL_MMAP_ENABLED) ? "en" : "dis");
 
-    const dtNavMesh* navmesh = m_session->GetPlayer()->GetMap()->GetTerrain()->GetNavMesh();
+    const dtNavMesh* navmesh = m_session->GetPlayer()->GetTerrain()->GetNavMesh();
     if (!navmesh)
     {
         PSendSysMessage("NavMesh not loaded for current map.");
