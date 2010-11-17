@@ -38,8 +38,6 @@
 #include "VMapFactory.h"
 #include "BattleGroundMgr.h"
 
-#include "../recastnavigation/Detour/Include/DetourNavMesh.h"
-
 struct ScriptAction
 {
     uint64 sourceGUID;
