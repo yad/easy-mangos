@@ -61,6 +61,8 @@
 #include "Util.h"
 #include "CharacterDatabaseCleaner.h"
 
+#include "MoveMap.h"
+
 INSTANTIATE_SINGLETON_1( World );
 
 volatile bool World::m_stopEvent = false;
@@ -883,6 +885,9 @@ void World::SetInitialWorldSettings()
 
     ///- Time server startup
     uint32 uStartTime = getMSTime();
+
+    ///- Initialize detour memory management
+    dtAllocSetCustom(dtCustomAlloc, dtCustomFree);
 
     ///- Initialize config settings
     LoadConfigSettings();
