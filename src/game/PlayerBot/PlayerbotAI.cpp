@@ -945,6 +945,20 @@ void PlayerbotAI::CheckMount()
     if (currentTime < m_ignoreTeleport)
         return;
 
+    if (m_bot->IsBeingTeleported())
+        return;
+
+    if (m_bot->GetGroup())
+    {
+        GroupReference *ref = m_bot->GetGroup()->GetFirstMember();
+        while (ref)
+        {
+            if (ref->getSource()->IsBeingTeleported() ||!m_bot->IsWithinDistInMap(ref->getSource(), 100, true))
+                return;
+            ref = ref->next();
+        }
+    }
+
     if ((GetMaster()->IsMounted()) && (!m_bot->IsMounted()))
     {
         if (!GetMaster()->GetAurasByType(SPELL_AURA_MOUNTED).empty())
