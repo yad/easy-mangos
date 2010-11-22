@@ -784,6 +784,12 @@ void BattleGround::EndBattleGround(uint32 winner)
                     plr->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_WIN_RATED_ARENA, member->personal_rating);
 
                 winner_arena_team->MemberWon(plr,loser_rating);
+
+                if (member)
+                {
+                    plr->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HIGHEST_PERSONAL_RATING, GetArenaType(), member->personal_rating);
+                    plr->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HIGHEST_TEAM_RATING, GetArenaType(), winner_arena_team->GetStats().rating);
+                }
             }
             else
             {
@@ -1039,7 +1045,7 @@ void BattleGround::RemovePlayerAtLeave(uint64 guid, bool Transport, bool SendPac
                 bgTypeId=BATTLEGROUND_AA;                   // set the bg type to all arenas (it will be used for queue refreshing)
 
                 // unsummon current and summon old pet if there was one and there isn't a current pet
-                plr->RemovePet(NULL, PET_SAVE_NOT_IN_SLOT);
+                plr->RemovePet(PET_SAVE_NOT_IN_SLOT);
                 plr->ResummonPetTemporaryUnSummonedIfAny();
 
                 if (isRated() && GetStatus() == STATUS_IN_PROGRESS)

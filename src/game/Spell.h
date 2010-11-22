@@ -111,10 +111,12 @@ class SpellCastTargets
             m_itemTarget = target.m_itemTarget;
             m_GOTarget   = target.m_GOTarget;
 
-            m_unitTargetGUID   = target.m_unitTargetGUID;
-            m_GOTargetGUID     = target.m_GOTargetGUID;
-            m_CorpseTargetGUID = target.m_CorpseTargetGUID;
-            m_itemTargetGUID   = target.m_itemTargetGUID;
+            m_unitTargetGUID    = target.m_unitTargetGUID;
+            m_GOTargetGUID      = target.m_GOTargetGUID;
+            m_CorpseTargetGUID  = target.m_CorpseTargetGUID;
+            m_itemTargetGUID    = target.m_itemTargetGUID;
+            m_srcTransportGUID  = target.m_srcTransportGUID;
+            m_destTransportGUID = target.m_destTransportGUID;
 
             m_itemTargetEntry  = target.m_itemTargetEntry;
 
@@ -179,6 +181,8 @@ class SpellCastTargets
         ObjectGuid m_GOTargetGUID;
         ObjectGuid m_CorpseTargetGUID;
         ObjectGuid m_itemTargetGUID;
+        ObjectGuid m_srcTransportGUID;
+        ObjectGuid m_destTransportGUID;
         uint32 m_itemTargetEntry;
 };
 
@@ -332,7 +336,7 @@ class Spell
         void EffectTriggerSpellWithValue(SpellEffectIndex eff_idx);
         void EffectTriggerRitualOfSummoning(SpellEffectIndex eff_idx);
         void EffectKillCreditPersonal(SpellEffectIndex eff_idx);
-        void EffectKillCredit(SpellEffectIndex eff_idx);
+        void EffectKillCreditGroup(SpellEffectIndex eff_idx);
         void EffectQuestFail(SpellEffectIndex eff_idx);
         void EffectActivateRune(SpellEffectIndex eff_idx);
 
@@ -374,7 +378,7 @@ class Spell
         SpellCastResult CheckCasterAuras() const;
 
         int32 CalculateDamage(SpellEffectIndex i, Unit* target) { return m_caster->CalculateSpellDamage(target, m_spellInfo, i, &m_currentBasePoints[i]); }
-        int32 CalculatePowerCost();
+        static uint32 CalculatePowerCost(SpellEntry const* spellInfo, Unit* caster, Spell const* spell = NULL, Item* castItem = NULL);
 
         bool HaveTargetsForEffect(SpellEffectIndex effect) const;
         void Delayed();
@@ -462,14 +466,14 @@ class Spell
         // caster types:
         // formal spell caster, in game source of spell affects cast
         Unit* GetCaster() const { return m_caster; }
-        // real source of cast affects, explcit caster, or DoT/HoT applier, or GO owner, or wild GO itself. Can be NULL
+        // real source of cast affects, explicit caster, or DoT/HoT applier, or GO owner, or wild GO itself. Can be NULL
         WorldObject* GetAffectiveCasterObject() const;
         // limited version returning NULL in cases not Unit* caster object, need for Aura (auras currently not support non-Unit caster)
         Unit* GetAffectiveCaster() const { return !m_originalCasterGUID.IsEmpty() ? m_originalCaster : m_caster; }
         // m_originalCasterGUID can store GO guid, and in this case this is visual caster
         WorldObject* GetCastingObject() const;
 
-        int32 GetPowerCost() const { return m_powerCost; }
+        uint32 GetPowerCost() const { return m_powerCost; }
 
         void UpdatePointers();                              // must be used at call Spell code after time delay (non triggered spell cast/update spell call/etc)
 
@@ -506,7 +510,7 @@ class Spell
         //Spell data
         SpellSchoolMask m_spellSchoolMask;                  // Spell school (can be overwrite for some spells (wand shoot for example)
         WeaponAttackType m_attackType;                      // For weapon based attack
-        int32 m_powerCost;                                  // Calculated spell cost     initialized only in Spell::prepare
+        uint32 m_powerCost;                                 // Calculated spell cost     initialized only in Spell::prepare
         int32 m_casttime;                                   // Calculated spell cast time initialized only in Spell::prepare
         bool m_canReflect;                                  // can reflect this spell?
         bool m_autoRepeat;
@@ -685,7 +689,7 @@ namespace MaNGOS
         float i_radius;
         SpellTargets i_TargetType;
         WorldObject* i_originalCaster;
-        bool i_playerControled;
+        bool i_playerControlled;
 
         SpellNotifierCreatureAndPlayer(Spell &spell, std::list<Unit*> &data, float radius, SpellNotifyPushType type,
             SpellTargets TargetType = SPELL_TARGETS_NOT_FRIENDLY, WorldObject* originalCaster = NULL)
@@ -694,7 +698,7 @@ namespace MaNGOS
         {
             if (!i_originalCaster)
                 i_originalCaster = i_spell.GetAffectiveCasterObject();
-            i_playerControled = i_originalCaster  ? i_originalCaster->IsControlledByPlayer() : false;
+            i_playerControlled = i_originalCaster  ? i_originalCaster->IsControlledByPlayer() : false;
         }
 
         template<class T> inline void Visit(GridRefManager<T>  &m)
@@ -733,10 +737,10 @@ namespace MaNGOS
                         break;
                     case SPELL_TARGETS_AOE_DAMAGE:
                     {
-                        if(itr->getSource()->GetTypeId()==TYPEID_UNIT && ((Creature*)itr->getSource())->IsTotem())
+                        if (itr->getSource()->GetTypeId()==TYPEID_UNIT && ((Creature*)itr->getSource())->IsTotem())
                             continue;
 
-                        if (i_playerControled)
+                        if (i_playerControlled)
                         {
                             if (i_originalCaster->IsFriendlyTo( itr->getSource() ))
                                 continue;

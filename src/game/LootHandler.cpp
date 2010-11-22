@@ -38,6 +38,7 @@ void WorldSession::HandleAutostoreLootItemOpcode( WorldPacket & recv_data )
     ObjectGuid lguid = player->GetLootGUID();
     Loot    *loot;
     uint8    lootSlot;
+    Item* pItem = NULL;
 
     recv_data >> lootSlot;
 
@@ -48,7 +49,7 @@ void WorldSession::HandleAutostoreLootItemOpcode( WorldPacket & recv_data )
             GameObject *go = player->GetMap()->GetGameObject(lguid);
 
             // not check distance for GO in case owned GO (fishing bobber case, for example) or Fishing hole GO
-            if (!go || ((go->GetOwnerGUID() != _player->GetGUID() && go->GetGoType() != GAMEOBJECT_TYPE_FISHINGHOLE) && !go->IsWithinDistInMap(_player,INTERACTION_DISTANCE)))
+            if (!go || ((go->GetOwnerGuid() != _player->GetObjectGuid() && go->GetGoType() != GAMEOBJECT_TYPE_FISHINGHOLE) && !go->IsWithinDistInMap(_player,INTERACTION_DISTANCE)))
             {
                 player->SendLootRelease(lguid);
                 return;
@@ -59,9 +60,9 @@ void WorldSession::HandleAutostoreLootItemOpcode( WorldPacket & recv_data )
         }
         case HIGHGUID_ITEM:
         {
-            Item *pItem = player->GetItemByGuid( lguid );
+            pItem = player->GetItemByGuid( lguid );
 
-            if (!pItem)
+            if (!pItem || !pItem->HasGeneratedLoot())
             {
                 player->SendLootRelease(lguid);
                 return;
@@ -122,6 +123,9 @@ void WorldSession::HandleAutostoreLootItemOpcode( WorldPacket & recv_data )
         return;
     }
 
+    if (pItem)
+        pItem->SetLootState(ITEM_LOOT_CHANGED);
+
     ItemPosCountVec dest;
     uint8 msg = player->CanStoreNewItem( NULL_BAG, NULL_SLOT, dest, item->itemid, item->count );
     if ( msg == EQUIP_ERR_OK )
@@ -179,6 +183,7 @@ void WorldSession::HandleLootMoneyOpcode( WorldPacket & /*recv_data*/ )
         return;
 
     Loot *pLoot = NULL;
+    Item* pItem = NULL;
 
     switch(guid.GetHigh())
     {
@@ -187,7 +192,7 @@ void WorldSession::HandleLootMoneyOpcode( WorldPacket & /*recv_data*/ )
             GameObject *pGameObject = GetPlayer()->GetMap()->GetGameObject(guid);
 
             // not check distance for GO in case owned GO (fishing bobber case, for example)
-            if( pGameObject && (pGameObject->GetOwnerGUID()==_player->GetGUID() || pGameObject->IsWithinDistInMap(_player,INTERACTION_DISTANCE)) )
+            if( pGameObject && (pGameObject->GetOwnerGuid() == _player->GetObjectGuid() || pGameObject->IsWithinDistInMap(_player,INTERACTION_DISTANCE)) )
                 pLoot = &pGameObject->loot;
 
             break;
@@ -203,8 +208,11 @@ void WorldSession::HandleLootMoneyOpcode( WorldPacket & /*recv_data*/ )
         }
         case HIGHGUID_ITEM:
         {
-            if(Item *item = GetPlayer()->GetItemByGuid(guid))
-                pLoot = &item->loot;
+            pItem = GetPlayer()->GetItemByGuid(guid);
+            if (!pItem || !pItem->HasGeneratedLoot())
+                return;
+
+            pLoot = &pItem->loot;
             break;
         }
         case HIGHGUID_UNIT:
@@ -255,7 +263,12 @@ void WorldSession::HandleLootMoneyOpcode( WorldPacket & /*recv_data*/ )
             player->ModifyMoney( pLoot->gold );
             player->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_LOOT_MONEY, pLoot->gold);
         }
+
         pLoot->gold = 0;
+
+        if (pItem)
+            pItem->SetLootState(ITEM_LOOT_CHANGED);
+
         pLoot->NotifyMoneyRemoved();
     }
 }
@@ -306,7 +319,7 @@ void WorldSession::DoLootRelease(ObjectGuid lguid)
             GameObject *go = GetPlayer()->GetMap()->GetGameObject(lguid);
 
             // not check distance for GO in case owned GO (fishing bobber case, for example) or Fishing hole GO
-            if (!go || ((go->GetOwnerGUID() != _player->GetGUID() && go->GetGoType() != GAMEOBJECT_TYPE_FISHINGHOLE) && !go->IsWithinDistInMap(_player,INTERACTION_DISTANCE)))
+            if (!go || ((go->GetOwnerGuid() != _player->GetObjectGuid() && go->GetGoType() != GAMEOBJECT_TYPE_FISHINGHOLE) && !go->IsWithinDistInMap(_player,INTERACTION_DISTANCE)))
                 return;
 
             loot = &go->loot;
@@ -400,29 +413,51 @@ void WorldSession::DoLootRelease(ObjectGuid lguid)
         case HIGHGUID_ITEM:
         {
             Item *pItem = player->GetItemByGuid(lguid );
-            if(!pItem)
+            if (!pItem)
                 return;
 
-            ItemPrototype const* proto = pItem->GetProto();
-
-            // destroy only 5 items from stack in case prospecting and milling
-            if ((proto->Flags & (ITEM_FLAG_PROSPECTABLE | ITEM_FLAG_MILLABLE)))
+            switch (pItem->loot.loot_type)
             {
-                pItem->m_lootGenerated = false;
-                pItem->loot.clear();
+                // temporary loot in stacking items, clear loot state, no auto loot move
+                case LOOT_MILLING:
+                case LOOT_PROSPECTING:
+                {
+                    uint32 count = pItem->GetCount();
 
-                uint32 count = pItem->GetCount();
+                    // >=5 checked in spell code, but will work for cheating cases also with removing from another stacks.
+                    if(count > 5)
+                        count = 5;
 
-                // >=5 checked in spell code, but will work for cheating cases also with removing from another stacks.
-                if(count > 5)
-                    count = 5;
+                    // reset loot for allow repeat looting if stack > 5
+                    pItem->loot.clear();
+                    pItem->SetLootState(ITEM_LOOT_REMOVED);
 
-                player->DestroyItemCount(pItem, count, true);
+                    player->DestroyItemCount(pItem, count, true);
+                    break;
+                }
+                // temporary loot, auto loot move
+                case LOOT_DISENCHANTING:
+                {
+                    if (!pItem->loot.isLooted())
+                        player->AutoStoreLoot(pItem->loot); // can be lost if no space
+                    pItem->loot.clear();
+                    pItem->SetLootState(ITEM_LOOT_REMOVED);
+                    player->DestroyItem( pItem->GetBagSlot(),pItem->GetSlot(), true);
+                    break;
+                }
+                // normal persistence loot
+                default:
+                {
+                    // must be destroyed only if no loot 
+                    if (pItem->loot.isLooted())
+                    {
+                        pItem->SetLootState(ITEM_LOOT_REMOVED);
+                        player->DestroyItem( pItem->GetBagSlot(),pItem->GetSlot(), true);
+                    }
+                    break;
+                }
             }
-            else
-                // FIXME: item don't must be deleted in case not fully looted state. But this pre-request implement loot saving in DB at item save. Or checting possible.
-                player->DestroyItem( pItem->GetBagSlot(),pItem->GetSlot(), true);
-            return;                                             // item can be looted only single player
+            return;                                         // item can be looted only single player
         }
         case HIGHGUID_UNIT:
         {

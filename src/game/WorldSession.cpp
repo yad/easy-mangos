@@ -391,7 +391,7 @@ void WorldSession::LogoutPlayer(bool Save)
         }
 
         ///- Remove pet
-        _player->RemovePet(NULL, PET_SAVE_AS_CURRENT, true);
+        _player->RemovePet(PET_SAVE_AS_CURRENT);
 
         ///- empty buyback items and save the player in the database
         // some save parts only correctly work in case player present in map/player_lists (pets, etc)
@@ -704,6 +704,8 @@ void WorldSession::SaveTutorialsData()
         case TUTORIALDATA_NEW:
             CharacterDatabase.PExecute("INSERT INTO character_tutorial (account,tut0,tut1,tut2,tut3,tut4,tut5,tut6,tut7) VALUES ('%u', '%u', '%u', '%u', '%u', '%u', '%u', '%u', '%u')",
                 GetAccountId(), m_Tutorials[0], m_Tutorials[1], m_Tutorials[2], m_Tutorials[3], m_Tutorials[4], m_Tutorials[5], m_Tutorials[6], m_Tutorials[7]);
+            break;
+        case TUTORIALDATA_UNCHANGED:
             break;
     }
 

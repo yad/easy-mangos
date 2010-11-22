@@ -26,6 +26,7 @@
 
 struct SpellEntry;
 class Bag;
+class Field;
 class QueryResult;
 class Unit;
 
@@ -202,6 +203,15 @@ enum ItemUpdateState
     ITEM_REMOVED                                 = 3
 };
 
+enum ItemLootUpdateState
+{
+    ITEM_LOOT_NONE                                = 0,      // loot not generated
+    ITEM_LOOT_TEMPORARY                           = 1,      // generated loot is temporary (will deleted at loot window close)
+    ITEM_LOOT_UNCHANGED                           = 2,
+    ITEM_LOOT_CHANGED                             = 3,
+    ITEM_LOOT_NEW                                 = 4,
+    ITEM_LOOT_REMOVED                             = 5
+};
 
 // masks for ITEM_FIELD_FLAGS field
 enum ItemDynFlags
@@ -272,8 +282,8 @@ class MANGOS_DLL_SPEC Item : public Object
 
         ItemPrototype const* GetProto() const;
 
-        uint64 const& GetOwnerGUID()    const { return GetUInt64Value(ITEM_FIELD_OWNER); }
-        void SetOwnerGUID(uint64 guid) { SetUInt64Value(ITEM_FIELD_OWNER, guid); }
+        ObjectGuid const& GetOwnerGuid()    const { return GetGuidValue(ITEM_FIELD_OWNER); }
+        void SetOwnerGuid(ObjectGuid guid) { SetGuidValue(ITEM_FIELD_OWNER, guid); }
         Player* GetOwner()const;
 
         void SetBinding(bool val) { ApplyModFlag(ITEM_FIELD_FLAGS, ITEM_DYNFLAG_BINDED,val); }
@@ -282,9 +292,10 @@ class MANGOS_DLL_SPEC Item : public Object
         bool IsBindedNotWith(Player const* player) const;
         bool IsBoundByEnchant() const;
         virtual void SaveToDB();
-        virtual bool LoadFromDB(uint32 guid, uint64 owner_guid, QueryResult *result);
+        virtual bool LoadFromDB(uint32 guidLow, Field *fields, ObjectGuid ownerGuid = ObjectGuid());
         virtual void DeleteFromDB();
         void DeleteFromInventoryDB();
+        void LoadLootFromDB(Field *fields);
 
         bool IsBag() const { return GetProto()->InventoryType == INVTYPE_BAG; }
         bool IsBroken() const { return GetUInt32Value(ITEM_FIELD_MAXDURABILITY) > 0 && GetUInt32Value(ITEM_FIELD_DURABILITY) == 0; }
@@ -346,7 +357,12 @@ class MANGOS_DLL_SPEC Item : public Object
         void RestoreCharges();
 
         Loot loot;
-        bool m_lootGenerated;
+
+        void SetLootState(ItemLootUpdateState state);
+        bool HasGeneratedLoot() const { return m_lootState != ITEM_LOOT_NONE && m_lootState != ITEM_LOOT_REMOVED; }
+        bool HasTemporaryLoot() const { return m_lootState == ITEM_LOOT_TEMPORARY; }
+
+        bool HasSavedLoot() const { return m_lootState != ITEM_LOOT_NONE && m_lootState != ITEM_LOOT_NEW && m_lootState != ITEM_LOOT_TEMPORARY; }
 
         // Update States
         ItemUpdateState GetState() const { return uState; }
@@ -375,5 +391,7 @@ class MANGOS_DLL_SPEC Item : public Object
         ItemUpdateState uState;
         int16 uQueuePos;
         bool mb_in_trade;                                   // true if item is currently in trade-window
+        ItemLootUpdateState m_lootState;
 };
+
 #endif

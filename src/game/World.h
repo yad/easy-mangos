@@ -47,11 +47,15 @@ class WorldSocket;
 // ServerMessages.dbc
 enum ServerMessageType
 {
-    SERVER_MSG_SHUTDOWN_TIME      = 1,
-    SERVER_MSG_RESTART_TIME       = 2,
-    SERVER_MSG_STRING             = 3,
-    SERVER_MSG_SHUTDOWN_CANCELLED = 4,
-    SERVER_MSG_RESTART_CANCELLED  = 5
+    SERVER_MSG_SHUTDOWN_TIME          = 1,
+    SERVER_MSG_RESTART_TIME           = 2,
+    SERVER_MSG_CUSTOM                 = 3,
+    SERVER_MSG_SHUTDOWN_CANCELLED     = 4,
+    SERVER_MSG_RESTART_CANCELLED      = 5,
+    SERVER_MSG_BG_SHUTDOWN_TIME       = 6,
+    SERVER_MSG_BG_RESTART_TIME        = 7,
+    SERVER_MSG_INSTANCE_SHUTDOWN_TIME = 8,
+    SERVER_MSG_INSTANCE_RESTART_TIME  = 9,
 };
 
 enum ShutdownMask
@@ -584,8 +588,11 @@ class World
 
         void InitDailyQuestResetTime();
         void InitWeeklyQuestResetTime();
+        void SetMonthlyQuestResetTime(bool initialize = true);
         void ResetDailyQuests();
         void ResetWeeklyQuests();
+        void ResetMonthlyQuests();
+
     private:
         void setConfig(eConfigUInt32Values index, char const* fieldname, uint32 defvalue);
         void setConfig(eConfigInt32Values index, char const* fieldname, int32 defvalue);
@@ -656,6 +663,7 @@ class World
         // next daily quests reset time
         time_t m_NextDailyQuestReset;
         time_t m_NextWeeklyQuestReset;
+        time_t m_NextMonthlyQuestReset;
 
         //Player Queue
         Queue m_QueuedPlayer;

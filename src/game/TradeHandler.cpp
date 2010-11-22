@@ -135,7 +135,6 @@ void WorldSession::moveItems(Item* myItems[], Item* hisItems[])
     if (!trader)
         return;
 
-
     for(int i = 0; i < TRADE_SLOT_TRADED_COUNT; ++i)
     {
         ItemPosCountVec traderDst;
@@ -217,7 +216,7 @@ static void setAcceptTradeMode(TradeData* myTrade, TradeData* hisTrade, Item **m
     {
         if (Item* item = myTrade->GetItem(TradeSlots(i)))
         {
-            DEBUG_LOG("player trade item %s bag: %u slot: %u", item->GetObjectGuid().GetString().c_str(), item->GetBagSlot(), item->GetSlot());
+            DEBUG_LOG("player trade %s bag: %u slot: %u", item->GetObjectGuid().GetString().c_str(), item->GetBagSlot(), item->GetSlot());
             //Can return NULL
             myItems[i] = item;
             myItems[i]->SetInTrade();
@@ -225,7 +224,7 @@ static void setAcceptTradeMode(TradeData* myTrade, TradeData* hisTrade, Item **m
 
         if (Item* item = hisTrade->GetItem(TradeSlots(i)))
         {
-            DEBUG_LOG("partner trade item %s bag: %u slot: %u", item->GetObjectGuid().GetString().c_str(), item->GetBagSlot(), item->GetSlot());
+            DEBUG_LOG("partner trade %s bag: %u slot: %u", item->GetObjectGuid().GetString().c_str(), item->GetBagSlot(), item->GetSlot());
             hisItems[i] = item;
             hisItems[i]->SetInTrade();
         }
@@ -268,7 +267,7 @@ void WorldSession::HandleAcceptTradeOpcode(WorldPacket& recvPacket)
     Item *hisItems[TRADE_SLOT_TRADED_COUNT] = { NULL, NULL, NULL, NULL, NULL, NULL };
     bool myCanCompleteTrade=true,hisCanCompleteTrade=true;
 
-    // set before checks for propertly undo at problems (it already set in to client)
+    // set before checks to properly undo at problems (it already set in to client)
     my_trade->SetAccepted(true);
 
     // not accept case incorrect money amount
@@ -326,7 +325,7 @@ void WorldSession::HandleAcceptTradeOpcode(WorldPacket& recvPacket)
             Item* castItem = my_trade->GetSpellCastItem();
 
             if (!spellEntry || !his_trade->GetItem(TRADE_SLOT_NONTRADED) ||
-                my_trade->HasSpellCastItem() && !castItem)
+                (my_trade->HasSpellCastItem() && !castItem))
             {
                 clearAcceptTradeMode(my_trade, his_trade);
                 clearAcceptTradeMode(myItems, hisItems);
@@ -361,7 +360,7 @@ void WorldSession::HandleAcceptTradeOpcode(WorldPacket& recvPacket)
             Item* castItem = his_trade->GetSpellCastItem();
 
             if (!spellEntry || !my_trade->GetItem(TRADE_SLOT_NONTRADED) ||
-                his_trade->HasSpellCastItem() && !castItem)
+                (his_trade->HasSpellCastItem() && !castItem))
             {
                 delete my_spell;
                 his_trade->SetSpell(0);
@@ -523,7 +522,7 @@ void WorldSession::SendCancelTrade()
 
 void WorldSession::HandleCancelTradeOpcode(WorldPacket& /*recvPacket*/)
 {
-    // sended also after LOGOUT COMPLETE
+    // sent also after LOGOUT COMPLETE
     if (_player)                                            // needed because STATUS_LOGGEDIN_OR_RECENTLY_LOGGOUT
         _player->TradeCancel(true);
 }
