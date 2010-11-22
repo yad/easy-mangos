@@ -1322,7 +1322,7 @@ void AHB_Seller::addNewAuctions(AHB_Seller_Config& config)
         SetPricesOfItem(item, config, buyoutPrice, bidPrice, stackCount, ((e_ahb_quality) prototype->Quality));
 
         item->SetCount(stackCount);
-        item->SetOwnerGUID(sAHB_BaseConfig.GetAHBObjectGuid().GetRawValue());
+        item->SetOwnerGuid(sAHB_BaseConfig.GetAHBObjectGuid());
         // Add Auction now on the AH
         AuctionEntry* auctionEntry = new AuctionEntry;
         auctionEntry->Id = sObjectMgr.GenerateAuctionID();
