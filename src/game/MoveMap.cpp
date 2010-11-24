@@ -131,7 +131,8 @@ void TerrainInfo::UnloadNavMesh(int gx, int gy)
     uint32 packedGridPos = packTileID(gx, gy);
     if (m_mmapLoadedTiles.find(packedGridPos) == m_mmapLoadedTiles.end())
     {
-        sLog.outError("Asked to unload not loaded navmesh tile. %03u%02i%02i.mmtile", m_mapId, gx, gy);
+        // file may not exist, therefore not loaded
+        sLog.outDebug("Asked to unload not loaded navmesh tile. %03u%02i%02i.mmtile", m_mapId, gx, gy);
         return;
     }
 
