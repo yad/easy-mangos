@@ -204,11 +204,11 @@ dtStatus dtNavMesh::init(const dtNavMeshParams* params)
 	}
 	
 	// Init ID generator values.
-	m_tileBits = dtIlog2(dtNextPow2((unsigned int)params->maxTiles));
-	m_polyBits = dtIlog2(dtNextPow2((unsigned int)params->maxPolys));
-	m_saltBits = 32 - m_tileBits - m_polyBits;
-	if (m_saltBits < SALT_MIN_BITS)
-		return DT_FAILURE;
+	m_tileBits = STATIC_TILE_BITS;    //dtIlog2(dtNextPow2((unsigned int)params->maxTiles));
+	m_polyBits = STATIC_POLY_BITS;    //dtIlog2(dtNextPow2((unsigned int)params->maxPolys));
+	m_saltBits = STATIC_SALT_BITS;    //sizeof(dtPolyRef)*8 - m_tileBits - m_polyBits;
+	//if (m_saltBits < SALT_MIN_BITS)
+		//return DT_FAILURE;
 	
 	return DT_SUCCESS;
 }
