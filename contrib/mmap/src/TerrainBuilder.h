@@ -50,7 +50,7 @@ namespace MMAP
     static const int V8_SIZE = 128;
     static const int V8_SIZE_SQ = V8_SIZE*V8_SIZE;
     static const float GRID_SIZE = 533.33333f;
-    static const float GRID_PART_SIZE = (float)GRID_SIZE/V8_SIZE;
+    static const float GRID_PART_SIZE = GRID_SIZE/V8_SIZE;
 
     // see contrib/extractor/system.cpp, CONF_use_minHeight
     static const float INVALID_MAP_LIQ_HEIGHT = -500.f;
@@ -86,6 +86,8 @@ namespace MMAP
             ~TerrainBuilder();
 
             void loadMap(uint32 mapID, uint32 tileX, uint32 tileY, MeshData &meshData);
+            inline bool usesHiRes() { return m_hiResHeightMaps; }
+            inline bool usesLiquids() { return !m_skipLiquid; }
 
         private:
 

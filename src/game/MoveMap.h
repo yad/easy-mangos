@@ -20,6 +20,9 @@
 #define _MOVE_MAP_H
 
 #include "../../dep/recastnavigation/Detour/Include/DetourAlloc.h"
+#include "../../dep/recastnavigation/Detour/Include/DetourNavMesh.h"
+
+/*  memory management  */
 
 inline void* dtCustomAlloc(int size, dtAllocHint hint)
 {
@@ -31,4 +34,34 @@ inline void dtCustomFree(void* ptr)
     delete [] ptr;
 }
 
-#endif
+/*  mmap tile structure  */
+
+#define MMAP_MAGIC 0x4d4d4150   // 'MMAP'
+#define MMAP_VERSION 1
+
+struct mmapTileHeader
+{
+    uint32 mmapMagic;
+    uint32 dtVersion;
+    uint32 mmapVersion;
+    uint32 tileCount;
+    bool usesHiRes : 1;
+    bool usesLiquids : 1;
+};
+
+class MmapTileReader
+{
+public:
+    MmapTileReader(char* fileName);
+    ~MmapTileReader();
+
+    bool MmapTileReader::check();
+    bool MmapTileReader::read(unsigned char* &data, uint32 &dataLength);
+
+private:
+    FILE* m_mmapTileFile;
+    mmapTileHeader m_header;
+    uint32 m_currentTile;
+};
+
+#endif  // _MOVE_MAP_H

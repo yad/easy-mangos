@@ -35,6 +35,12 @@ using namespace std;
 using namespace VMAP;
 // G3D namespace typedefs conflicts with ACE typedefs
 
+#define MMAP_MAGIC 0x4d4d4150   // 'MMAP'
+#define MMAP_VERSION 1
+
+#define TILES_PER_MMTILE 16
+#define TILE_SIZE (GRID_SIZE / TILES_PER_MMTILE)
+
 namespace MMAP
 {
     typedef map<uint32,set<uint32>*> TileList;
@@ -49,11 +55,41 @@ namespace MMAP
         rcPolyMeshDetail* polyMeshDetail;
     };
 
+    struct mmapTileHeader
+    {
+        uint32 mmapMagic;
+        uint32 dtVersion;
+        uint32 mmapVersion;
+        uint32 tileCount;
+        bool usesHiRes : 1;
+        bool usesLiquids : 1;
+
+        mmapTileHeader() :
+            mmapMagic(MMAP_MAGIC),
+            dtVersion(DT_NAVMESH_VERSION),
+            mmapVersion(MMAP_VERSION),
+            tileCount(0)
+        {}
+
+        mmapTileHeader(TerrainBuilder* terrainBuilder) :
+            mmapMagic(MMAP_MAGIC),
+            dtVersion(DT_NAVMESH_VERSION),
+            mmapVersion(MMAP_VERSION),
+            tileCount(0)
+        {
+            usesHiRes = terrainBuilder->usesHiRes();
+            usesLiquids = terrainBuilder->usesLiquids();
+        }
+
+    private:
+        mmapTileHeader(const mmapTileHeader &header);
+    };
+
     class MapBuilder
     {
         public:
             MapBuilder(float maxWalkableAngle   = 60.f,
-                       bool skipLiquid          = true,
+                       bool skipLiquid          = false,
                        bool skipContinents      = true,
                        bool skipJunkMaps        = true,
                        bool skipBattlegrounds   = true,
@@ -78,7 +114,6 @@ namespace MMAP
 
             // load and unload models
             bool loadVMap(uint32 mapID, uint32 tileX, uint32 tileY, MeshData &meshData);
-            void unloadVMap(uint32 mapID, uint32 tileX, uint32 tileY);
 
             // vert and triangle methods
             void transform(vector<Vector3> original, vector<Vector3> &transformed,
@@ -95,8 +130,8 @@ namespace MMAP
                                   uint32 tileX,
                                   uint32 tileY,
                                   MeshData meshData,
-                                  float* bmin,
-                                  float* bmax,
+                                  float bmin[3],
+                                  float bmax[3],
                                   dtNavMesh* navMesh);
 
             void getTileBounds(uint32 tileX, uint32 tileY,
@@ -108,6 +143,7 @@ namespace MMAP
 
             bool shouldSkipMap(uint32 mapID);
             bool isTransportMap(uint32 mapID);
+            bool shouldSkipTile(uint32 mapID, uint32 tileX, uint32 tileY);
 
             // debug output
             void generateObjFile(uint32 mapID, uint32 tileX, uint32 tileY, MeshData meshData);
@@ -132,6 +168,8 @@ namespace MMAP
             bool m_skipBattlegrounds;
 
             float m_maxWalkableAngle;
+
+            rcContext* m_rcContext;
     };
 }
 

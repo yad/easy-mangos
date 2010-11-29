@@ -24,24 +24,54 @@ void duReadNavMesh(char* tile, dtNavMesh* &navMesh)
     fread(&params, sizeof(dtNavMeshParams), 1, file);
     fclose(file);
 
-    dtFreeNavMesh(navMesh);
-    navMesh = dtAllocNavMesh();
-    navMesh->init(&params);
-
-    file = fopen(("mmaps/" + tileName.substr(0, 3) + tileName.substr(5, 2) + tileName.substr(3, 2) + ".mmtile").c_str(), "rb");
-    if(file)
+    if (!navMesh)
     {
-        fseek(file, 0, SEEK_END);
-        int length = ftell(file);
-        fseek(file, 0, SEEK_SET);
-
-        unsigned char* data = new unsigned char[length];
-        fread(data, length, 1, file);
-        fclose(file);
-
-        navMesh->addTile(data, length, DT_TILE_FREE_DATA, 0 , NULL);
+        dtFreeNavMesh(navMesh);
+        navMesh = dtAllocNavMesh();
+        navMesh->init(&params);
     }
-    else
+
+    int map = atoi(tileName.substr(0, 3).c_str());
+    int x = atoi(tileName.substr(5, 2).c_str());
+    int y = atoi(tileName.substr(3, 2).c_str());
+    bool loaded = false;
+
+    char fname[50];
+
+    int count = 0;
+    for (int i = x-1; i <= x+1; ++i)
+        for (int j = y-1; j <= y+1; ++j)
+    //int i = x;
+    //int j = y;
+        {
+            sprintf(fname, "mmaps/%03i%02i%02i.mmtile", map, j, i);
+            file = fopen(fname, "rb");
+            if(file)
+            {
+                mmapTileHeader header;
+                fread(&header, sizeof(header), 1, file);
+
+                unsigned int length;
+
+                for (unsigned int i2 = 0; i2 < header.tileCount; ++i2)
+                {
+                    fread(&length, sizeof(length), 1, file);
+
+                    unsigned char* data = (unsigned char*)dtAlloc(length, DT_ALLOC_PERM);
+                    fread(data, length, 1, file);
+
+                    dtStatus status = navMesh->addTile(data, length, DT_TILE_FREE_DATA, 0 , NULL);
+
+                    if (status != DT_SUCCESS)
+                        dtFree(data);
+                    else
+                        count++;
+                }
+                fclose(file);
+            }
+        }
+
+    if (!count)
     {
         dtFreeNavMesh(navMesh);
         navMesh = NULL;

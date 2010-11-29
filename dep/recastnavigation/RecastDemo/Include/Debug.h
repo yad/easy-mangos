@@ -51,4 +51,22 @@ public:
 	inline const char* getFileName() const { return m_filename; }
 };
 
+#define MMAP_MAGIC 0x4d4d4150   // 'MMAP'
+#define MMAP_VERSION 1
+
+struct mmapTileHeader
+{
+    unsigned int mmapMagic;
+    unsigned int dtVersion;
+    unsigned int mmapVersion;
+    unsigned int tileCount;
+    bool usesHiRes : 1;
+    bool usesLiquid : 1;
+
+    mmapTileHeader() :
+    mmapMagic(MMAP_MAGIC), dtVersion(DT_NAVMESH_VERSION),
+    mmapVersion(MMAP_VERSION), tileCount(0)
+    {}
+};
+
 #endif
