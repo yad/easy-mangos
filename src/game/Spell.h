@@ -336,7 +336,7 @@ class Spell
         void EffectTriggerSpellWithValue(SpellEffectIndex eff_idx);
         void EffectTriggerRitualOfSummoning(SpellEffectIndex eff_idx);
         void EffectKillCreditPersonal(SpellEffectIndex eff_idx);
-        void EffectKillCredit(SpellEffectIndex eff_idx);
+        void EffectKillCreditGroup(SpellEffectIndex eff_idx);
         void EffectQuestFail(SpellEffectIndex eff_idx);
         void EffectActivateRune(SpellEffectIndex eff_idx);
 
@@ -689,7 +689,7 @@ namespace MaNGOS
         float i_radius;
         SpellTargets i_TargetType;
         WorldObject* i_originalCaster;
-        bool i_playerControled;
+        bool i_playerControlled;
 
         SpellNotifierCreatureAndPlayer(Spell &spell, std::list<Unit*> &data, float radius, SpellNotifyPushType type,
             SpellTargets TargetType = SPELL_TARGETS_NOT_FRIENDLY, WorldObject* originalCaster = NULL)
@@ -698,7 +698,7 @@ namespace MaNGOS
         {
             if (!i_originalCaster)
                 i_originalCaster = i_spell.GetAffectiveCasterObject();
-            i_playerControled = i_originalCaster  ? i_originalCaster->IsControlledByPlayer() : false;
+            i_playerControlled = i_originalCaster  ? i_originalCaster->IsControlledByPlayer() : false;
         }
 
         template<class T> inline void Visit(GridRefManager<T>  &m)
@@ -737,10 +737,10 @@ namespace MaNGOS
                         break;
                     case SPELL_TARGETS_AOE_DAMAGE:
                     {
-                        if(itr->getSource()->GetTypeId()==TYPEID_UNIT && ((Creature*)itr->getSource())->IsTotem())
+                        if (itr->getSource()->GetTypeId()==TYPEID_UNIT && ((Creature*)itr->getSource())->IsTotem())
                             continue;
 
-                        if (i_playerControled)
+                        if (i_playerControlled)
                         {
                             if (i_originalCaster->IsFriendlyTo( itr->getSource() ))
                                 continue;
