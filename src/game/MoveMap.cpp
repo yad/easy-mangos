@@ -82,6 +82,7 @@ void TerrainInfo::LoadNavMesh(int gx, int gy)
 
             // memory allocated for data is now managed by detour, and will be deallocated when the tile is removed
             dtStatus dtResult = m_navMesh->addTile(data, length, DT_TILE_FREE_DATA, 0, &tileRef);
+            // TODO: report errors once per mmtile, not once per dtTile
             switch(dtResult)
             {
                 case DT_SUCCESS:
