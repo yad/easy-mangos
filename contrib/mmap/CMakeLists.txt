@@ -23,7 +23,7 @@ ADD_DEFINITIONS("-O3")
 include_directories(
     ../../src
     ../../src/shared
-    ../../src/shared/vmap
+    ../../src/game/vmap
     ../../dep/include/g3dlite
     ../../src/framework
     ../../dep/ACE_wrappers
@@ -132,12 +132,12 @@ add_library(g3dlite
 )
 
 add_library(vmap
-	../../src/shared/vmap/BIH.cpp
-	../../src/shared/vmap/VMapManager2.cpp
-	../../src/shared/vmap/MapTree.cpp
-	../../src/shared/vmap/TileAssembler.cpp
-	../../src/shared/vmap/WorldModel.cpp
-	../../src/shared/vmap/ModelInstance.cpp
+	../../src/game/vmap/BIH.cpp
+	../../src/game/vmap/VMapManager2.cpp
+	../../src/game/vmap/MapTree.cpp
+	../../src/game/vmap/TileAssembler.cpp
+	../../src/game/vmap/WorldModel.cpp
+	../../src/game/vmap/ModelInstance.cpp
 )
 
 target_link_libraries(vmap g3dlite zlib)

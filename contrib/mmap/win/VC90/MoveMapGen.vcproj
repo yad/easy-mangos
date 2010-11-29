@@ -43,7 +43,7 @@
 				Optimization="0"
 				FavorSizeOrSpeed="1"
 				WholeProgramOptimization="false"
-				AdditionalIncludeDirectories="..\..\src\;..\..\..\..\src\shared\vmap;..\..\..\..\dep\include\g3dlite\;..\..\..\..\src\framework\;..\..\..\..\dep\ACE_wrappers\;..\..\..\..\dep\recastnavigation\Detour\Include\;..\..\..\..\dep\recastnavigation\Recast\Include\;"
+				AdditionalIncludeDirectories="..\..\src\;..\..\..\..\src\game\vmap;..\..\..\..\dep\include\g3dlite\;..\..\..\..\src\framework\;..\..\..\..\dep\ACE_wrappers\;..\..\..\..\dep\recastnavigation\Detour\Include\;..\..\..\..\dep\recastnavigation\Recast\Include\;"
 				PreprocessorDefinitions="WIN32;DEBUG;MMAP_GENERATOR;NO_CORE_FUNCS;"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -119,7 +119,7 @@
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				AdditionalIncludeDirectories="..\..\src\;..\..\..\..\src\shared\vmap;..\..\..\..\dep\include\g3dlite\;..\..\..\..\src\framework\;..\..\..\..\dep\ACE_wrappers\;..\..\..\..\dep\recastnavigation\Detour\Include\;..\..\..\..\dep\recastnavigation\Recast\Include\;"
+				AdditionalIncludeDirectories="..\..\src\;..\..\..\..\src\game\vmap;..\..\..\..\dep\include\g3dlite\;..\..\..\..\src\framework\;..\..\..\..\dep\ACE_wrappers\;..\..\..\..\dep\recastnavigation\Detour\Include\;..\..\..\..\dep\recastnavigation\Recast\Include\;"
 				PreprocessorDefinitions="WIN32;NDEBUG;MMAP_GENERATOR;NO_CORE_FUNCS;"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
@@ -211,71 +211,71 @@
 			Name="vmap"
 			>
 			<File
-				RelativePath="..\..\..\..\src\shared\vmap\BIH.cpp"
+				RelativePath="..\..\..\..\src\game\vmap\BIH.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\shared\vmap\BIH.h"
+				RelativePath="..\..\..\..\src\game\vmap\BIH.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\shared\vmap\IVMapManager.h"
+				RelativePath="..\..\..\..\src\game\vmap\IVMapManager.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\shared\vmap\MapTree.cpp"
+				RelativePath="..\..\..\..\src\game\vmap\MapTree.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\shared\vmap\MapTree.h"
+				RelativePath="..\..\..\..\src\game\vmap\MapTree.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\shared\vmap\ModelInstance.cpp"
+				RelativePath="..\..\..\..\src\game\vmap\ModelInstance.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\shared\vmap\ModelInstance.h"
+				RelativePath="..\..\..\..\src\game\vmap\ModelInstance.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\shared\vmap\TileAssembler.cpp"
+				RelativePath="..\..\..\..\src\game\vmap\TileAssembler.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\shared\vmap\TileAssembler.h"
+				RelativePath="..\..\..\..\src\game\vmap\TileAssembler.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\shared\vmap\VMapDefinitions.h"
+				RelativePath="..\..\..\..\src\game\vmap\VMapDefinitions.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\shared\vmap\VMapFactory.cpp"
+				RelativePath="..\..\..\..\src\game\vmap\VMapFactory.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\shared\vmap\VMapFactory.h"
+				RelativePath="..\..\..\..\src\game\vmap\VMapFactory.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\shared\vmap\VMapManager2.cpp"
+				RelativePath="..\..\..\..\src\game\vmap\VMapManager2.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\shared\vmap\VMapManager2.h"
+				RelativePath="..\..\..\..\src\game\vmap\VMapManager2.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\shared\vmap\VMapTools.h"
+				RelativePath="..\..\..\..\src\game\vmap\VMapTools.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\shared\vmap\WorldModel.cpp"
+				RelativePath="..\..\..\..\src\game\vmap\WorldModel.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\shared\vmap\WorldModel.h"
+				RelativePath="..\..\..\..\src\game\vmap\WorldModel.h"
 				>
 			</File>
 		</Filter>
