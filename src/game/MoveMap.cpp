@@ -35,7 +35,7 @@ void TerrainInfo::LoadNavMesh(int gx, int gy)
         FILE* file = fopen(fileName, "rb");
         if (!file)
         {
-            sLog.outDebug("Error: Could not open mmap file '%s'", fileName);
+            sLog.outDebug("MMAP: Error: Could not open mmap file '%s'", fileName);
             delete [] fileName;
             return;
         }
@@ -50,7 +50,7 @@ void TerrainInfo::LoadNavMesh(int gx, int gy)
         {
             dtFreeNavMesh(m_navMesh);
             m_navMesh = NULL;
-            sLog.outError("Failed to initialize mmap %03u from file %s", m_mapId, fileName);
+            sLog.outError("MMAP: Failed to initialize mmap %03u from file %s", m_mapId, fileName);
             return;
         }
     }
@@ -58,64 +58,60 @@ void TerrainInfo::LoadNavMesh(int gx, int gy)
     // check if we already have this tile loaded
     uint32 packedGridPos = packTileID(gx, gy);
     if (m_mmapLoadedTiles.find(packedGridPos) != m_mmapLoadedTiles.end())
-        sLog.outError("Asked to load already loaded navmesh tile. %03u%02i%02i.mmtile", m_mapId, gx, gy);
-
-    // mmaps/0000000.mmtile
-    uint32 pathLen = sWorld.GetDataPath().length() + strlen("mmaps/%03i%02i%02i.mmtile")+1;
-    char *fileName = new char[pathLen];
-    snprintf(fileName, pathLen, (sWorld.GetDataPath()+"mmaps/%03i%02i%02i.mmtile").c_str(), m_mapId, gx, gy);
-
-    MmapTileReader reader(fileName);
-
-    if (reader.check())
     {
-        std::list<dtTileRef>* newTiles = new std::list<dtTileRef>;
-        m_mmapLoadedTiles.insert(std::pair<uint32, std::list<dtTileRef>*>(packedGridPos, newTiles));
-
-        unsigned char* data = NULL;
-        uint32 length = 0;
-
-        while (reader.read(data, length))
-        {
-            dtMeshHeader* header = (dtMeshHeader*)data;
-            dtTileRef tileRef = 0;
-
-            // memory allocated for data is now managed by detour, and will be deallocated when the tile is removed
-            dtStatus dtResult = m_navMesh->addTile(data, length, DT_TILE_FREE_DATA, 0, &tileRef);
-            // TODO: report errors once per mmtile, not once per dtTile
-            switch(dtResult)
-            {
-                case DT_SUCCESS:
-                {
-                    newTiles->push_back(tileRef);
-                    sLog.outDebug("Loaded mmtile %03i[%02i,%02i] into %03i[%02i,%02i]", m_mapId, gx, gy, m_mapId, header->x, header->y);
-                }
-                break;
-                case DT_FAILURE_DATA_MAGIC:
-                {
-                    sLog.outError("%03u%02i%02i.mmtile has an invalid tile header", m_mapId, gx, gy);
-                    dtFree(data);
-                }
-                break;
-                case DT_FAILURE_DATA_VERSION:
-                {
-                    sLog.outError("%03u%02i%02i.mmtile was built with Detour v%i, expected v%i",m_mapId, gx, gy, header->version, DT_NAVMESH_VERSION);
-                    dtFree(data);
-                }
-                break;
-                case DT_FAILURE_OUT_OF_MEMORY:
-                case DT_FAILURE:
-                default:
-                {
-                    sLog.outError("Could not load %03u%02i%02i.mmtile into navmesh", m_mapId, gx, gy);
-                    dtFree(data);
-                }
-                break;
-            }
-        }
+        sLog.outError("MMAP: Asked to load already loaded navmesh tile. %03u%02i%02i.mmtile", m_mapId, gx, gy);
+        return;
     }
 
-    delete [] fileName;
+    MmapTileReader reader(m_mapId, gx, gy);
+    if (!reader.check())
+    {
+        sLog.outError("MMAP: Bad header in mmap %03u%02i%02i.mmtile", m_mapId, gx, gy);
+        return;
+    }
+
+    tileRefList* newTiles = new tileRefList();
+    unsigned char* data = NULL;
+    uint32 length = 0;
+
+    while (reader.read(data, length))
+    {
+        dtMeshHeader* header = (dtMeshHeader*)data;
+        dtTileRef tileRef = 0;
+
+        // memory allocated for data is now managed by detour, and will be deallocated when the tile is removed
+        dtStatus dtResult = m_navMesh->addTile(data, length, DT_TILE_FREE_DATA, 0, &tileRef);
+        if(dtResult == DT_SUCCESS)
+             newTiles->push_back(tileRef);
+        else
+             dtFree(data);
+    }
+
+    // have we loaded everything we expected?
+    if(reader.getTileCount() == newTiles->size())
+    {
+        sLog.outDetail("MMAP: Loaded mmtile %03i[%02i,%02i]", m_mapId, gx, gy);
+        m_mmapLoadedTiles.insert(std::pair<uint32, tileRefList*>(packedGridPos, newTiles));
+    }
+    else
+    {
+        // one or more of the tiles failed
+        // we cannot allow having partially loaded maps
+        sLog.outError("MMAP: Could not load %03u%02i%02i.mmtile into navmesh", m_mapId, gx, gy);
+
+        // unload everything we can
+        for (tileRefList::iterator itr = newTiles->begin(); itr != newTiles->end(); )
+        {
+            if(DT_SUCCESS == m_navMesh->removeTile(*itr, NULL, NULL))
+                itr = newTiles->erase(itr);
+            else
+                ++itr;
+        }
+
+        // if we got here with newTiles not empty its really bad - but again, we cannot recover
+        MANGOS_ASSERT(newTiles->empty());
+        delete newTiles;
+    }
 }
 
 void TerrainInfo::UnloadNavMesh(int gx, int gy)
@@ -128,38 +124,33 @@ void TerrainInfo::UnloadNavMesh(int gx, int gy)
     if (m_mmapLoadedTiles.find(packedGridPos) == m_mmapLoadedTiles.end())
     {
         // file may not exist, therefore not loaded
-        sLog.outDebug("Asked to unload not loaded navmesh tile. %03u%02i%02i.mmtile", m_mapId, gx, gy);
+        sLog.outDebug("MMAP: Asked to unload not loaded navmesh tile. %03u%02i%02i.mmtile", m_mapId, gx, gy);
         return;
     }
 
-    std::list<dtTileRef>* tiles = m_mmapLoadedTiles[packedGridPos];
-    std::list<dtTileRef> removedTiles;
-    bool success = true;
-
-    for (std::list<dtTileRef>::iterator it = tiles->begin(); it != tiles->end(); ++it)
+    tileRefList* tiles = m_mmapLoadedTiles[packedGridPos];
+    for (tileRefList::iterator itr = tiles->begin(); itr != tiles->end(); )
     {
         // unload, and mark as non loaded
-        if(DT_SUCCESS != m_navMesh->removeTile(*it, NULL, NULL))
-            success = false;
+        if(DT_SUCCESS == m_navMesh->removeTile(*itr, NULL, NULL))
+            itr = tiles->erase(itr);
         else
-            removedTiles.push_back(*it);
+            ++itr;
     }
 
-    if (success)
-    {
-        sLog.outDetail("Unloaded mmtile %03i[%02i,%02i] from %03i", m_mapId, gx, gy, m_mapId);
-        delete tiles;
-        m_mmapLoadedTiles.erase(packedGridPos);
-    }
+    if (tiles->empty())
+        sLog.outDetail("MMAP: Unloaded mmtile %03i[%02i,%02i] from %03i", m_mapId, gx, gy, m_mapId);
     else
     {
-        for (std::list<dtTileRef>::iterator it = removedTiles.begin(); it != removedTiles.end(); ++it)
-            tiles->remove(*it);
-
         // because the Terrain unloads the grid, this is technically a memory leak
         // if the grid is later loaded, dtNavMesh::addTile will return errors for the dtTileRefs we were unable to unload
-        sLog.outError("Could not unload tile from navmesh (%03u%02i%02i.mmtile)", m_mapId, gx, gy);
+        // if we got here, something is really worng - we cannot recover anyway
+        sLog.outError("MMAP: Could not unload %u tile(s) from navmesh (%03u%02i%02i.mmtile)", tiles->size(), m_mapId, gx, gy);
+        MANGOS_ASSERT(false);
     }
+
+    delete tiles;
+    m_mmapLoadedTiles.erase(packedGridPos);
 }
 
 dtNavMesh const* TerrainInfo::GetNavMesh() const
@@ -191,19 +182,23 @@ bool TerrainInfo::IsPathfindingEnabled() const
     return sWorld.getConfig(CONFIG_BOOL_MMAP_ENABLED) && s_mmapDisabledIds.find(m_mapId) == s_mmapDisabledIds.end();
 }
 
-MmapTileReader::MmapTileReader(char* fileName)
+MmapTileReader::MmapTileReader(uint32 mapId, int32 x, int32 y)
     : m_mmapTileFile(NULL), m_currentTile(0)
 {
-    m_mmapTileFile = fopen(fileName, "rb");
+    // mmaps/0000000.mmtile
+    uint32 pathLen = sWorld.GetDataPath().length() + strlen("mmaps/%03i%02i%02i.mmtile")+1;
+    char *fileName = new char[pathLen];
+    snprintf(fileName, pathLen, (sWorld.GetDataPath()+"mmaps/%03i%02i%02i.mmtile").c_str(), mapId, x, y);
 
+    m_mmapTileFile = fopen(fileName, "rb");
     if (!m_mmapTileFile)
         return;
 
-    uint32 length;
-
-    length = fread(&m_header, 1, sizeof(mmapTileHeader), m_mmapTileFile);
+    uint32 length = fread(&m_header, 1, sizeof(mmapTileHeader), m_mmapTileFile);
     if (length != sizeof(mmapTileHeader))
         memset(&m_header, 0, sizeof(mmapTileHeader));
+
+    delete [] fileName;
 }
 
 MmapTileReader::~MmapTileReader()
@@ -235,10 +230,8 @@ bool MmapTileReader::read(unsigned char* &data, uint32 &dataLength)
     if (!m_mmapTileFile || m_header.tileCount <= m_currentTile++)
         return false;
 
-    uint32 length;
-
-    length = fread(&dataLength, 1, sizeof(dataLength), m_mmapTileFile);
-    if (sizeof(dataLength) != length)
+    uint32 length = fread(&dataLength, 1, sizeof(uint32), m_mmapTileFile);
+    if (sizeof(uint32) != length)
         return false;
 
     data = (unsigned char*)dtAlloc(dataLength, DT_ALLOC_PERM);

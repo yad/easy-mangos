@@ -50,15 +50,17 @@ struct mmapTileHeader
     bool usesLiquids : 1;
 };
 
+typedef std::list<dtTileRef> tileRefList;
+
 class MmapTileReader
 {
 public:
-    MmapTileReader(char* fileName);
+    MmapTileReader(uint32 mapId, int32 x, int32 y);
     ~MmapTileReader();
 
     bool check();
     bool read(unsigned char* &data, uint32 &dataLength);
-
+    uint32 getTileCount() { return m_header.tileCount; }
 private:
     FILE* m_mmapTileFile;
     mmapTileHeader m_header;
