@@ -19,6 +19,7 @@
 #ifndef _MOVE_MAP_H
 #define _MOVE_MAP_H
 
+#include "Platform/Define.h"
 #include "../../dep/recastnavigation/Detour/Include/DetourAlloc.h"
 #include "../../dep/recastnavigation/Detour/Include/DetourNavMesh.h"
 
@@ -55,8 +56,8 @@ public:
     MmapTileReader(char* fileName);
     ~MmapTileReader();
 
-    bool MmapTileReader::check();
-    bool MmapTileReader::read(unsigned char* &data, uint32 &dataLength);
+    bool check();
+    bool read(unsigned char* &data, uint32 &dataLength);
 
 private:
     FILE* m_mmapTileFile;
