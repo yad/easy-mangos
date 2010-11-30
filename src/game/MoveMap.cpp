@@ -88,7 +88,7 @@ void TerrainInfo::LoadNavMesh(int gx, int gy)
                 case DT_SUCCESS:
                 {
                     newTiles->push_back(tileRef);
-                    sLog.outDetail("Loaded mmtile %03i[%02i,%02i] into %03i[%02i,%02i]", m_mapId, gx, gy, m_mapId, header->x, header->y);
+                    sLog.outDebug("Loaded mmtile %03i[%02i,%02i] into %03i[%02i,%02i]", m_mapId, gx, gy, m_mapId, header->x, header->y);
                 }
                 break;
                 case DT_FAILURE_DATA_MAGIC:

@@ -25,14 +25,14 @@
 
 /*  memory management  */
 
-inline void* dtCustomAlloc(int size, dtAllocHint hint)
+inline void* dtCustomAlloc(int size, dtAllocHint /*hint*/)
 {
     return (void*)new unsigned char[size];
 }
 
 inline void dtCustomFree(void* ptr)
 {
-    delete [] ptr;
+    delete [] (unsigned char*)ptr;
 }
 
 /*  mmap tile structure  */

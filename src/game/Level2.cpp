@@ -5100,22 +5100,21 @@ bool ChatHandler::HandleMmapPathCommand(char* args)
     return true;
 }
 
-bool ChatHandler::HandleMmapLocCommand(char* args)
+bool ChatHandler::HandleMmapLocCommand(char* /*args*/)
 {
     PSendSysMessage("mmap tileloc:");
 
     // grid tile location
     Player* player = m_session->GetPlayer();
 
-    int32 gx = 32 - player->GetPositionX() / 533.33333f;
-    int32 gy = 32 - player->GetPositionY() / 533.33333f;
+    int32 gx = 32 - player->GetPositionX() / SIZE_OF_GRIDS;
+    int32 gy = 32 - player->GetPositionY() / SIZE_OF_GRIDS;
 
     PSendSysMessage("%03u%02i%02i.mmtile", player->GetMapId(), gy, gx);
     PSendSysMessage("gridloc [%i,%i]", gx, gy);
 
     // calculate navmesh tile location
     const dtNavMesh* navmesh = player->GetTerrain()->GetNavMesh();
-
     if (!navmesh)
     {
         PSendSysMessage("NavMesh not loaded for current map.");
@@ -5133,8 +5132,8 @@ bool ChatHandler::HandleMmapLocCommand(char* args)
     float location[VERTEX_SIZE] = {y, z, x};
     float extents[VERTEX_SIZE] = {2.f,4.f,2.f};
 
-    int32 tilex = int32((y - min[0]) / 533.33333);
-    int32 tiley = int32((x - min[2]) / 533.33333);
+    int32 tilex = int32((y - min[0]) / SIZE_OF_GRIDS);
+    int32 tiley = int32((x - min[2]) / SIZE_OF_GRIDS);
 
     PSendSysMessage("Calc   [%02i,%02i]", tilex, tiley);
 
@@ -5156,37 +5155,11 @@ bool ChatHandler::HandleMmapLocCommand(char* args)
             PSendSysMessage("Dt     [??,??] (no tile loaded)");
     }
 
-    // mmtile file header -> navmesh tile location
-    uint32 pathLen = sWorld.GetDataPath().length() + strlen("mmaps/%03i%02i%02i.mmtile")+1;
-    char *fileName = new char[pathLen];
-    snprintf(fileName, pathLen, (char*)(sWorld.GetDataPath()+"mmaps/%03i%02i%02i.mmtile").c_str(), player->GetMapId(), gx, gy);
-
-    FILE* file = fopen(fileName, "rb");
-    if (!file)
-        PSendSysMessage("mmtile [??,??] (file %03u%02i%02i.mmtile not found)", player->GetMapId(), gx, gy);
-    else
-    {
-        fseek(file, 0, SEEK_END);
-        int32 length = ftell(file);
-        fseek(file, 0, SEEK_SET);
-
-        unsigned char* data = new unsigned char[length];
-        fread(data, length, 1, file);
-        fclose(file);
-
-        dtMeshHeader* header = (dtMeshHeader*)data;
-
-        PSendSysMessage("mmtile [%02i,%02i]", header->x, header->y);
-
-        delete [] data;
-    }
-
-    delete [] fileName;
     dtFreeNavMeshQuery(query);
     return true;
 }
 
-bool ChatHandler::HandleMmapLoadedTilesCommand(char* args)
+bool ChatHandler::HandleMmapLoadedTilesCommand(char* /*args*/)
 {
     const dtNavMesh* navmesh = m_session->GetPlayer()->GetTerrain()->GetNavMesh();
 
@@ -5215,7 +5188,7 @@ bool ChatHandler::HandleMmapLoadedTilesCommand(char* args)
     return true;
 }
 
-bool ChatHandler::HandleMmapStatsCommand(char* args)
+bool ChatHandler::HandleMmapStatsCommand(char* /*args*/)
 {
     PSendSysMessage("mmap stats:");
     PSendSysMessage("  global mmap pathfinding is %sabled", sWorld.getConfig(CONFIG_BOOL_MMAP_ENABLED) ? "en" : "dis");
