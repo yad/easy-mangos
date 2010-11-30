@@ -744,10 +744,10 @@ namespace MMAP
         mmapTileHeader header(m_terrainBuilder);
         fwrite(&header, sizeof(header), 1, file);
 
-        float cellSize = .5f;       // larger number => less voxels => faster build time
+        float cellSize = 0.5f;      // larger number => less voxels => faster build time
                                     // too large, and tight spaces won't be pathable.
         float agentHeight = 1.5f;
-        float agentRadius = .1f;
+        float agentRadius = 0.5f;
         float agentMaxClimb = 1.65f;
 
         IntermediateValues iv;
