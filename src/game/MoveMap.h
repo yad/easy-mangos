@@ -58,10 +58,14 @@ public:
     MmapTileReader(uint32 mapId, int32 x, int32 y);
     ~MmapTileReader();
 
+    // validates the mmtile file
     bool check();
+
+    // reads and returns the next dtMeshTile data
     bool read(unsigned char* &data, uint32 &dataLength);
     uint32 getTileCount() { return m_header.tileCount; }
 private:
+    char* m_mmapFileName;
     FILE* m_mmapTileFile;
     mmapTileHeader m_header;
     uint32 m_currentTile;

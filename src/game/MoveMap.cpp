@@ -22,10 +22,13 @@
 #include "Utilities/UnorderedMapSet.h"
 #include "World.h"
 
+/****** TerrainInfo navmesh load/unload ******/
+
 uint32 packTileID(int x, int y) { return uint32(x << 16 | y); }
 
 void TerrainInfo::LoadNavMesh(int gx, int gy)
 {
+    // load the navmesh first
     if (!m_navMesh)
     {
         uint32 pathLen = sWorld.GetDataPath().length() + strlen("mmaps/%03i.mmap")+1;
@@ -63,6 +66,7 @@ void TerrainInfo::LoadNavMesh(int gx, int gy)
         return;
     }
 
+    // now load the tile
     MmapTileReader reader(m_mapId, gx, gy);
     if (!reader.check())
     {
@@ -158,6 +162,8 @@ dtNavMesh const* TerrainInfo::GetNavMesh() const
     return m_navMesh;
 }
 
+/****** pathfinding enabled/disabled ******/
+
 std::set<uint32> TerrainInfo::s_mmapDisabledIds = std::set<uint32>();
 
 void TerrainInfo::preventPathfindingOnMaps(std::string ignoreMapIds)
@@ -182,67 +188,86 @@ bool TerrainInfo::IsPathfindingEnabled() const
     return sWorld.getConfig(CONFIG_BOOL_MMAP_ENABLED) && s_mmapDisabledIds.find(m_mapId) == s_mmapDisabledIds.end();
 }
 
+/****** MmapTileReader ******/
 MmapTileReader::MmapTileReader(uint32 mapId, int32 x, int32 y)
-    : m_mmapTileFile(NULL), m_currentTile(0)
+    : m_mmapTileFile(NULL), m_currentTile(0), m_mmapFileName(NULL)
 {
     // mmaps/0000000.mmtile
     uint32 pathLen = sWorld.GetDataPath().length() + strlen("mmaps/%03i%02i%02i.mmtile")+1;
-    char *fileName = new char[pathLen];
-    snprintf(fileName, pathLen, (sWorld.GetDataPath()+"mmaps/%03i%02i%02i.mmtile").c_str(), mapId, x, y);
+    m_mmapFileName = new char[pathLen];
+    snprintf(m_mmapFileName, pathLen, (sWorld.GetDataPath()+"mmaps/%03i%02i%02i.mmtile").c_str(), mapId, x, y);
 
-    m_mmapTileFile = fopen(fileName, "rb");
+    m_mmapTileFile = fopen(m_mmapFileName, "rb");
     if (!m_mmapTileFile)
         return;
 
-    uint32 length = fread(&m_header, 1, sizeof(mmapTileHeader), m_mmapTileFile);
-    if (length != sizeof(mmapTileHeader))
+    uint32 bytesRead = fread(&m_header, 1, sizeof(mmapTileHeader), m_mmapTileFile);
+    if (bytesRead != sizeof(mmapTileHeader))
         memset(&m_header, 0, sizeof(mmapTileHeader));
-
-    delete [] fileName;
 }
 
 MmapTileReader::~MmapTileReader()
 {
+    delete [] m_mmapFileName;
+
     if (m_mmapTileFile)
         fclose(m_mmapTileFile);
 }
 
 bool MmapTileReader::check()
 {
-    // TODO: log error/debug
     if (!m_mmapTileFile)
+    {
+        sLog.outDebug("Could not open mmtile file '%s'", m_mmapFileName);
         return false;
+    }
 
     if (m_header.mmapMagic != MMAP_MAGIC)
+    {
+        sLog.outError("mmtile file '%s' has wrong format", m_mmapFileName);
         return false;
+    }
 
     if (m_header.dtVersion != DT_NAVMESH_VERSION)
+    {
+        sLog.outError("mmtile file '%s' was built with Detour v%i, expected v%", m_mmapFileName, m_header.dtVersion, DT_NAVMESH_VERSION);
         return false;
+    }
 
     if (m_header.tileCount == 0)
+    {
+        sLog.outDebug("mmtile file '%s' contains 0 tiles", m_mmapFileName);
         return false;
+    }
 
     return true;
 }
 
 bool MmapTileReader::read(unsigned char* &data, uint32 &dataLength)
 {
-    if (!m_mmapTileFile || m_header.tileCount <= m_currentTile++)
+    if (!m_mmapTileFile)
         return false;
 
-    uint32 length = fread(&dataLength, 1, sizeof(uint32), m_mmapTileFile);
-    if (sizeof(uint32) != length)
+    uint32 bytesRead = fread(&dataLength, 1, sizeof(uint32), m_mmapTileFile);
+    if (sizeof(uint32) != bytesRead)
         return false;
 
+    // check if we have read all the tiles
+    if (m_header.tileCount <= m_currentTile)
+        return false;
+
+    // allocate and read tile data
     data = (unsigned char*)dtAlloc(dataLength, DT_ALLOC_PERM);
     MANGOS_ASSERT(data);
 
-    length = fread(data, 1, dataLength, m_mmapTileFile);
-    if (length != dataLength)
+    bytesRead = fread(data, 1, dataLength, m_mmapTileFile);
+    if (bytesRead != dataLength)
     {
         dtFree(data);
         return false;
     }
+
+    m_currentTile++;
 
     return true;
 }
