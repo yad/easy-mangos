@@ -22,50 +22,51 @@
 #include "Utilities/UnorderedMapSet.h"
 #include "World.h"
 
+/****** TerrainInfo navmesh load/unload ******/
+
 uint32 packTileID(int x, int y) { return uint32(x << 16 | y); }
 
 void TerrainInfo::LoadNavMesh(int gx, int gy)
 {
+    // load the navmesh first
     if (!m_navMesh)
     {
         uint32 pathLen = sWorld.GetDataPath().length() + strlen("mmaps/%03i.mmap")+1;
-        char *fileName = new char[pathLen];
-        snprintf(fileName, pathLen, (sWorld.GetDataPath()+"mmaps/%03i.mmap").c_str(), m_mapId);
+        char *temp = new char[pathLen];
+        snprintf(temp, pathLen, (sWorld.GetDataPath()+"mmaps/%03i.mmap").c_str(), m_mapId);
 
-        FILE* file = fopen(fileName, "rb");
+        std::string fileName = temp;
+        delete [] temp;
+
+        FILE* file = fopen(fileName.c_str(), "rb");
         if (!file)
         {
-            sLog.outDebug("Error: Could not open mmap file '%s'", fileName);
-            delete [] fileName;
+            sLog.outDebug("Error: Could not open mmap file '%s'", fileName.c_str());
             return;
         }
 
         dtNavMeshParams params;
         fread(&params, sizeof(dtNavMeshParams), 1, file);
         fclose(file);
-        delete [] fileName;
 
         m_navMesh = dtAllocNavMesh();
         if (!m_navMesh->init(&params))
         {
             dtFreeNavMesh(m_navMesh);
             m_navMesh = NULL;
-            sLog.outError("Failed to initialize mmap %03u from file %s", m_mapId, fileName);
+            sLog.outError("Failed to initialize mmap %03u from file %s", m_mapId, fileName.c_str());
             return;
         }
     }
 
     // check if we already have this tile loaded
+    // even though this is an error, we must continue trying to load incase this tile was partially unloaded earlier
     uint32 packedGridPos = packTileID(gx, gy);
     if (m_mmapLoadedTiles.find(packedGridPos) != m_mmapLoadedTiles.end())
         sLog.outError("Asked to load already loaded navmesh tile. %03u%02i%02i.mmtile", m_mapId, gx, gy);
 
-    // mmaps/0000000.mmtile
-    uint32 pathLen = sWorld.GetDataPath().length() + strlen("mmaps/%03i%02i%02i.mmtile")+1;
-    char *fileName = new char[pathLen];
-    snprintf(fileName, pathLen, (sWorld.GetDataPath()+"mmaps/%03i%02i%02i.mmtile").c_str(), m_mapId, gx, gy);
-
-    MmapTileReader reader(fileName);
+    // now load the tile
+    MmapTileReader reader(m_mapId, gx, gy);
 
     if (reader.check())
     {
@@ -114,8 +115,6 @@ void TerrainInfo::LoadNavMesh(int gx, int gy)
             }
         }
     }
-
-    delete [] fileName;
 }
 
 void TerrainInfo::UnloadNavMesh(int gx, int gy)
@@ -167,6 +166,8 @@ dtNavMesh const* TerrainInfo::GetNavMesh() const
     return m_navMesh;
 }
 
+/****** pathfinding enabled/disabled ******/
+
 std::set<uint32> TerrainInfo::s_mmapDisabledIds = std::set<uint32>();
 
 void TerrainInfo::preventPathfindingOnMaps(std::string ignoreMapIds)
@@ -191,65 +192,93 @@ bool TerrainInfo::IsPathfindingEnabled() const
     return sWorld.getConfig(CONFIG_BOOL_MMAP_ENABLED) && s_mmapDisabledIds.find(m_mapId) == s_mmapDisabledIds.end();
 }
 
-MmapTileReader::MmapTileReader(char* fileName)
-    : m_mmapTileFile(NULL), m_currentTile(0)
-{
-    m_mmapTileFile = fopen(fileName, "rb");
+/****** MmapTileReader ******/
 
+MmapTileReader::MmapTileReader(uint32 mapId, uint32 x, uint32 y)
+    : m_mmapFileName(NULL), m_mmapTileFile(NULL), m_currentTile(0)
+{
+    // construct file name
+    uint32 pathLen = sWorld.GetDataPath().length() + strlen("mmaps/%03i%02i%02i.mmtile")+1;
+    m_mmapFileName = new char[pathLen];
+    snprintf(m_mmapFileName, pathLen, (sWorld.GetDataPath()+"mmaps/%03i%02i%02i.mmtile").c_str(), mapId, x, y);
+
+    // now open file and read header
+    m_mmapTileFile = fopen(m_mmapFileName, "rb");
     if (!m_mmapTileFile)
         return;
 
-    uint32 length;
+    uint32 bytesRead;
 
-    length = fread(&m_header, 1, sizeof(mmapTileHeader), m_mmapTileFile);
-    if (length != sizeof(mmapTileHeader))
+    bytesRead = fread(&m_header, 1, sizeof(mmapTileHeader), m_mmapTileFile);
+    if (bytesRead != sizeof(mmapTileHeader))
         memset(&m_header, 0, sizeof(mmapTileHeader));
 }
 
 MmapTileReader::~MmapTileReader()
 {
+    delete [] m_mmapFileName;
+
     if (m_mmapTileFile)
         fclose(m_mmapTileFile);
 }
 
 bool MmapTileReader::check()
 {
-    // TODO: log error/debug
     if (!m_mmapTileFile)
+    {
+        sLog.outDebug("Could not open mmtile file '%s'", m_mmapFileName);
         return false;
+    }
 
     if (m_header.mmapMagic != MMAP_MAGIC)
+    {
+        sLog.outError("mmtile file '%s' has wrong format", m_mmapFileName);
         return false;
+    }
 
     if (m_header.dtVersion != DT_NAVMESH_VERSION)
+    {
+        sLog.outError("mmtile file '%s' was built with Detour v%i, expected v%", m_mmapFileName, m_header.dtVersion, DT_NAVMESH_VERSION);
         return false;
+    }
 
     if (m_header.tileCount == 0)
+    {
+        sLog.outDebug("mmtile file '%s' contains 0 tiles", m_mmapFileName);
         return false;
+    }
 
     return true;
 }
 
 bool MmapTileReader::read(unsigned char* &data, uint32 &dataLength)
 {
-    if (!m_mmapTileFile || m_header.tileCount <= m_currentTile++)
+    if (!m_mmapTileFile)
         return false;
 
-    uint32 length;
-
-    length = fread(&dataLength, 1, sizeof(dataLength), m_mmapTileFile);
-    if (sizeof(dataLength) != length)
+    // check if we have read all the tiles
+    if (m_header.tileCount <= m_currentTile)
         return false;
 
+    uint32 bytesRead;
+
+    // read the size of the tile data
+    bytesRead = fread(&dataLength, 1, sizeof(uint32), m_mmapTileFile);
+    if (bytesRead != sizeof(uint32))
+        return false;
+
+    // allocate and read tile data
     data = (unsigned char*)dtAlloc(dataLength, DT_ALLOC_PERM);
     MANGOS_ASSERT(data);
 
-    length = fread(data, 1, dataLength, m_mmapTileFile);
-    if (length != dataLength)
+    bytesRead = fread(data, 1, dataLength, m_mmapTileFile);
+    if (bytesRead != dataLength)
     {
         dtFree(data);
         return false;
     }
+
+    m_currentTile++;
 
     return true;
 }

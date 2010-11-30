@@ -53,13 +53,17 @@ struct mmapTileHeader
 class MmapTileReader
 {
 public:
-    MmapTileReader(char* fileName);
+    MmapTileReader(uint32 mapId, uint32 x, uint32 y);
     ~MmapTileReader();
 
+    // validates the mmtile file
     bool check();
+
+    // reads and returns the next dtMeshTile data
     bool read(unsigned char* &data, uint32 &dataLength);
 
 private:
+    char* m_mmapFileName;
     FILE* m_mmapTileFile;
     mmapTileHeader m_header;
     uint32 m_currentTile;
