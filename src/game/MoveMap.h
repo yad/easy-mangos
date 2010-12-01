@@ -20,6 +20,8 @@
 #define _MOVE_MAP_H
 
 #include "Platform/Define.h"
+#include <list>
+
 #include "../../dep/recastnavigation/Detour/Include/DetourAlloc.h"
 #include "../../dep/recastnavigation/Detour/Include/DetourNavMesh.h"
 
