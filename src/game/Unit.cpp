@@ -785,18 +785,10 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
 
         // Call KilledUnit for creatures
         if (GetTypeId() == TYPEID_UNIT && ((Creature*)this)->AI())
-        {
             ((Creature*)this)->AI()->KilledUnit(pVictim);
-        }
-        else if (GetTypeId() == TYPEID_PLAYER)
-        {
-            // currently not known if other pet types (not controllable) may have some action at owner kills
-            if (Pet* pProtector = GetProtectorPet())
-            {
-                if (pProtector->AI())
-                    pProtector->AI()->OwnerKilledUnit(pVictim);
-            }
-        }
+
+        // Call AI OwnerKilledUnit (for any current summoned minipet/guardian/protector)
+        PetOwnerKilledUnit(pVictim);
 
         // achievement stuff
         if (pVictim->GetTypeId() == TYPEID_PLAYER)
@@ -1082,6 +1074,27 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
     return damage;
 }
 
+struct PetOwnerKilledUnitHelper
+{
+    explicit PetOwnerKilledUnitHelper(Unit* pVictim) : m_victim(pVictim) {}
+    void operator()(Unit* pTarget) const
+    {
+        if (pTarget->GetTypeId() == TYPEID_UNIT)
+        {
+            if (((Creature*)pTarget)->AI())
+                ((Creature*)pTarget)->AI()->OwnerKilledUnit(m_victim);
+        }
+    }
+
+    Unit* m_victim;
+};
+
+void Unit::PetOwnerKilledUnit(Unit* pVictim)
+{
+    // for minipet and guardians (including protector)
+    CallForAllControlledUnits(PetOwnerKilledUnitHelper(pVictim), CONTROLLED_MINIPET|CONTROLLED_GUARDIANS);
+}
+
 void Unit::CastStop(uint32 except_spellid)
 {
     for (uint32 i = CURRENT_FIRST_NON_MELEE_SPELL; i < CURRENT_MAX_SPELL; ++i)
@@ -1096,9 +1109,9 @@ void Unit::CastSpell(Unit* Victim, uint32 spellId, bool triggered, Item *castIte
     if(!spellInfo)
     {
         if (triggeredByAura)
-            sLog.outError("CastSpell: unknown spell id %i by caster: %s triggered by aura %u (eff %u)", spellId, GetObjectGuid().GetString().c_str(), triggeredByAura->GetId(), triggeredByAura->GetEffIndex());
+            sLog.outError("CastSpell: unknown spell id %i by caster: %s triggered by aura %u (eff %u)", spellId, GetGuidStr().c_str(), triggeredByAura->GetId(), triggeredByAura->GetEffIndex());
         else
-            sLog.outError("CastSpell: unknown spell id %i by caster: %s", spellId, GetObjectGuid().GetString().c_str());
+            sLog.outError("CastSpell: unknown spell id %i by caster: %s", spellId, GetGuidStr().c_str());
         return;
     }
 
@@ -1110,9 +1123,9 @@ void Unit::CastSpell(Unit* Victim, SpellEntry const *spellInfo, bool triggered, 
     if(!spellInfo)
     {
         if (triggeredByAura)
-            sLog.outError("CastSpell: unknown spell by caster: %s triggered by aura %u (eff %u)", GetObjectGuid().GetString().c_str(), triggeredByAura->GetId(), triggeredByAura->GetEffIndex());
+            sLog.outError("CastSpell: unknown spell by caster: %s triggered by aura %u (eff %u)", GetGuidStr().c_str(), triggeredByAura->GetId(), triggeredByAura->GetEffIndex());
         else
-            sLog.outError("CastSpell: unknown spell by caster: %s", GetObjectGuid().GetString().c_str());
+            sLog.outError("CastSpell: unknown spell by caster: %s", GetGuidStr().c_str());
         return;
     }
 
@@ -1142,9 +1155,9 @@ void Unit::CastCustomSpell(Unit* Victim,uint32 spellId, int32 const* bp0, int32 
     if(!spellInfo)
     {
         if (triggeredByAura)
-            sLog.outError("CastCustomSpell: unknown spell id %i by caster: %s triggered by aura %u (eff %u)", spellId, GetObjectGuid().GetString().c_str(), triggeredByAura->GetId(), triggeredByAura->GetEffIndex());
+            sLog.outError("CastCustomSpell: unknown spell id %i by caster: %s triggered by aura %u (eff %u)", spellId, GetGuidStr().c_str(), triggeredByAura->GetId(), triggeredByAura->GetEffIndex());
         else
-            sLog.outError("CastCustomSpell: unknown spell id %i by caster: %s", spellId, GetObjectGuid().GetString().c_str());
+            sLog.outError("CastCustomSpell: unknown spell id %i by caster: %s", spellId, GetGuidStr().c_str());
         return;
     }
 
@@ -1156,9 +1169,9 @@ void Unit::CastCustomSpell(Unit* Victim, SpellEntry const *spellInfo, int32 cons
     if(!spellInfo)
     {
         if (triggeredByAura)
-            sLog.outError("CastCustomSpell: unknown spell by caster: %s triggered by aura %u (eff %u)", GetObjectGuid().GetString().c_str(), triggeredByAura->GetId(), triggeredByAura->GetEffIndex());
+            sLog.outError("CastCustomSpell: unknown spell by caster: %s triggered by aura %u (eff %u)", GetGuidStr().c_str(), triggeredByAura->GetId(), triggeredByAura->GetEffIndex());
         else
-            sLog.outError("CastCustomSpell: unknown spell by caster: %s", GetObjectGuid().GetString().c_str());
+            sLog.outError("CastCustomSpell: unknown spell by caster: %s", GetGuidStr().c_str());
         return;
     }
 
@@ -1198,9 +1211,9 @@ void Unit::CastSpell(float x, float y, float z, uint32 spellId, bool triggered, 
     if(!spellInfo)
     {
         if (triggeredByAura)
-            sLog.outError("CastSpell(x,y,z): unknown spell id %i by caster: %s triggered by aura %u (eff %u)", spellId, GetObjectGuid().GetString().c_str(), triggeredByAura->GetId(), triggeredByAura->GetEffIndex());
+            sLog.outError("CastSpell(x,y,z): unknown spell id %i by caster: %s triggered by aura %u (eff %u)", spellId, GetGuidStr().c_str(), triggeredByAura->GetId(), triggeredByAura->GetEffIndex());
         else
-            sLog.outError("CastSpell(x,y,z): unknown spell id %i by caster: %s", spellId, GetObjectGuid().GetString().c_str());
+            sLog.outError("CastSpell(x,y,z): unknown spell id %i by caster: %s", spellId, GetGuidStr().c_str());
         return;
     }
 
@@ -1213,9 +1226,9 @@ void Unit::CastSpell(float x, float y, float z, SpellEntry const *spellInfo, boo
     if(!spellInfo)
     {
         if (triggeredByAura)
-            sLog.outError("CastSpell(x,y,z): unknown spell by caster: %s triggered by aura %u (eff %u)", GetObjectGuid().GetString().c_str(), triggeredByAura->GetId(), triggeredByAura->GetEffIndex());
+            sLog.outError("CastSpell(x,y,z): unknown spell by caster: %s triggered by aura %u (eff %u)", GetGuidStr().c_str(), triggeredByAura->GetId(), triggeredByAura->GetEffIndex());
         else
-            sLog.outError("CastSpell(x,y,z): unknown spell by caster: %s", GetObjectGuid().GetString().c_str());
+            sLog.outError("CastSpell(x,y,z): unknown spell by caster: %s", GetGuidStr().c_str());
         return;
     }
 
@@ -4566,7 +4579,7 @@ void Unit::RemoveAurasDueToItemSpell(Item* castItem,uint32 spellId)
     SpellAuraHolderBounds bounds = GetSpellAuraHolderBounds(spellId);
     for (SpellAuraHolderMap::iterator iter = bounds.first; iter != bounds.second; )
     {
-        if (iter->second->GetCastItemGUID() == castItem->GetGUID())
+        if (iter->second->GetCastItemGuid() == castItem->GetObjectGuid())
         {
             RemoveSpellAuraHolder(iter->second);
             bounds = GetSpellAuraHolderBounds(spellId);
@@ -7850,30 +7863,9 @@ bool Unit::isVisibleForOrDetect(Unit const* u, WorldObject const* viewPoint, boo
         if (!IsWithinDistInMap(viewPoint,World::GetMaxVisibleDistanceForObject()+(inVisibleList ? World::GetVisibleObjectGreyDistance() : 0.0f), is3dDistance))
             return false;
     }
-    else if(GetTypeId()==TYPEID_PLAYER)                     // distance for show player
+    else if(!at_same_transport)                             // distance for show player/pet/creature (no transport case)
     {
-        if(u->GetTypeId()==TYPEID_PLAYER)
-        {
-            // Players far than max visible distance for player or not in our map are not visible too
-            if (!at_same_transport && !IsWithinDistInMap(viewPoint, _map.GetVisibilityDistance() + (inVisibleList ? World::GetVisibleUnitGreyDistance() : 0.0f), is3dDistance))
-                return false;
-        }
-        else
-        {
-            // Units far than max visible distance for creature or not in our map are not visible too
-            if (!IsWithinDistInMap(viewPoint, _map.GetVisibilityDistance() + (inVisibleList ? World::GetVisibleUnitGreyDistance() : 0.0f), is3dDistance))
-                return false;
-        }
-    }
-    else if (!GetCharmerOrOwnerGuid().IsEmpty())             // distance for show pet/charmed
-    {
-        // Pet/charmed far than max visible distance for player or not in our map are not visible too
-        if (!IsWithinDistInMap(viewPoint, _map.GetVisibilityDistance() + (inVisibleList ? World::GetVisibleUnitGreyDistance() : 0.0f), is3dDistance))
-            return false;
-    }
-    else                                                    // distance for show creature
-    {
-        // Units far than max visible distance for creature or not in our map are not visible too
+        // Any units far than max visible distance for viewer or not in our map are not visible too
         if (!IsWithinDistInMap(viewPoint, _map.GetVisibilityDistance() + (inVisibleList ? World::GetVisibleUnitGreyDistance() : 0.0f), is3dDistance))
             return false;
     }
@@ -8258,6 +8250,22 @@ void Unit::UpdateSpeed(UnitMoveType mtype, bool forced, float ratio)
         if (speed < min_speed)
             speed = min_speed;
     }
+
+    if (GetTypeId() == TYPEID_UNIT)
+    {
+        switch(mtype)
+        {
+        case MOVE_RUN:
+            speed *= ((Creature*)this)->GetCreatureInfo()->speed_run;
+            break;
+        case MOVE_WALK:
+            speed *= ((Creature*)this)->GetCreatureInfo()->speed_walk;
+            break;
+        default:
+            break;
+        }
+    }
+
     SetSpeedRate(mtype, speed * ratio, forced);
 }
 
