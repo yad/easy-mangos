@@ -28,10 +28,8 @@
 
 namespace MMAP
 {
-    MapBuilder::MapBuilder(float maxWalkableAngle,
-                           bool skipLiquid,
-                           bool skipContinents, bool skipJunkMaps, bool skipBattlegrounds,
-                           bool hiResHeightmaps, bool debugOutput) :
+    MapBuilder::MapBuilder(float maxWalkableAngle, bool skipLiquid,
+                           bool skipContinents, bool skipJunkMaps, bool skipBattlegrounds, bool debugOutput) :
                            m_vmapManager(NULL),
                            m_terrainBuilder(NULL),
                            m_debugOutput        (debugOutput),
@@ -42,9 +40,9 @@ namespace MMAP
                            m_rcContext          (NULL)
     {
         m_vmapManager = new VMapManager2();
-        m_terrainBuilder = new TerrainBuilder(skipLiquid, hiResHeightmaps);
+        m_terrainBuilder = new TerrainBuilder(skipLiquid);
 
-        m_rcContext = new rcContext;
+        m_rcContext = new rcContext(false);
 
         discoverTiles();
     }
@@ -65,14 +63,13 @@ namespace MMAP
 
     void MapBuilder::discoverTiles()
     {
-        uint32 i;
         vector<string> files;
         uint32 mapID, tileX, tileY, tileID, count = 0;
         char filter[12];
 
         printf("Discovering maps... ");
         getDirContents(files, "maps");
-        for (i = 0; i < files.size(); ++i)
+        for (uint32 i = 0; i < files.size(); ++i)
         {
             mapID = uint32(atoi(files[i].substr(0,3).c_str()));
             if (m_tiles.find(mapID) == m_tiles.end())
@@ -84,7 +81,7 @@ namespace MMAP
 
         files.clear();
         getDirContents(files, "vmaps", "*.vmtree");
-        for (i = 0; i < files.size(); ++i)
+        for (uint32 i = 0; i < files.size(); ++i)
         {
             mapID = uint32(atoi(files[i].substr(0,3).c_str()));
             m_tiles.insert(pair<uint32,set<uint32>*>(mapID, new set<uint32>));
@@ -102,7 +99,7 @@ namespace MMAP
             sprintf(filter, "%03u*.vmtile", mapID);
             files.clear();
             getDirContents(files, "vmaps", filter);
-            for (i = 0; i < files.size(); ++i)
+            for (uint32 i = 0; i < files.size(); ++i)
             {
                 tileX = uint32(atoi(files[i].substr(7,2).c_str()));
                 tileY = uint32(atoi(files[i].substr(4,2).c_str()));
@@ -115,7 +112,7 @@ namespace MMAP
             sprintf(filter, "%03u*", mapID);
             files.clear();
             getDirContents(files, "maps", filter);
-            for (i = 0; i < files.size(); ++i)
+            for (uint32 i = 0; i < files.size(); ++i)
             {
                 tileY = uint32(atoi(files[i].substr(3,2).c_str()));
                 tileX = uint32(atoi(files[i].substr(5,2).c_str()));
@@ -156,7 +153,7 @@ namespace MMAP
         set<uint32>* tiles = getTileList(mapID);
 
         // vars that are used in multiple locations...
-        uint32 i, j, tileX, tileY;
+        uint32 tileX, tileY;
         float bmin[3], bmax[3], lmin[3], lmax[3];
 
         // scope the model data arrays
@@ -196,8 +193,8 @@ namespace MMAP
                 minY = 32 - bmax[2] / GRID_SIZE;
 
                 // add all tiles within bounds to tile list.
-                for (i = minX; i <= maxX; ++i)
-                    for (j = minY; j <= maxY; ++j)
+                for (uint32 i = minX; i <= maxX; ++i)
+                    for (uint32 j = minY; j <= maxY; ++j)
                         tiles->insert(StaticMapTree::packTileID(i, j));
             }
         } while (0);
@@ -268,13 +265,7 @@ namespace MMAP
             allTris.fastClear();
 
             // build navmesh tile
-            buildMoveMapTile(mapID,
-                             tileX,
-                             tileY,
-                             meshData,
-                             bmin,
-                             bmax,
-                             navMesh);
+            buildMoveMapTile(mapID, tileX, tileY, meshData, bmin, bmax, navMesh);
         }
 
         m_vmapManager->unloadMap(mapID);
@@ -382,13 +373,7 @@ namespace MMAP
             allTris.clear();
 
             // build navmesh tile
-            buildMoveMapTile(mapID,
-                                tileX,
-                                tileY,
-                                meshData,
-                                bmin,
-                                bmax,
-                                navMesh);
+            buildMoveMapTile(mapID, tileX, tileY, meshData, bmin, bmax, navMesh);
         } while (0);
 
         dtFreeNavMesh(navMesh);
@@ -420,8 +405,7 @@ namespace MMAP
             if (!models || !count)
                 break;
 
-            uint32 i;
-            for (i = 0; i < count; ++i)
+            for (uint32 i = 0; i < count; ++i)
             {
                 ModelInstance instance = models[i];
 
@@ -730,7 +714,6 @@ namespace MMAP
         printf("%s Building movemap tiles...                        \r", tileString);
 
         IntermediateValues iv;
-        initIntermediateValues(iv);
 
         float* tVerts = meshData.solidVerts.getCArray();
         int tVertCount = meshData.solidVerts.size() / 3;
@@ -1090,10 +1073,8 @@ namespace MMAP
             }
 
             generateObjFile(mapID, tileX, tileY, meshData);
-            writeIV(mapID, tileX, tileY, iv);
+            iv.writeIV(mapID, tileX, tileY);
         }
-
-        clearIntermediateValues(iv);
     }
 
     void MapBuilder::getTileBounds(uint32 tileX, uint32 tileY, float* verts, int vertCount, float* bmin, float* bmax)
@@ -1112,24 +1093,6 @@ namespace MMAP
         bmax[2] = (32 - int(tileY)) * GRID_SIZE;
         bmin[0] = bmax[0] - GRID_SIZE;
         bmin[2] = bmax[2] - GRID_SIZE;
-    }
-
-    void MapBuilder::initIntermediateValues(IntermediateValues &iv)
-    {
-        iv.compactHeightfield = NULL;
-        iv.heightfield = NULL;
-        iv.contours = NULL;
-        iv.polyMesh = NULL;
-        iv.polyMeshDetail = NULL;
-    }
-
-    void MapBuilder::clearIntermediateValues(IntermediateValues &iv)
-    {
-        rcFreeCompactHeightfield(iv.compactHeightfield); iv.compactHeightfield = NULL;
-        rcFreeHeightField(iv.heightfield); iv.heightfield = NULL;
-        rcFreeContourSet(iv.contours); iv.contours = NULL;
-        rcFreePolyMesh(iv.polyMesh); iv.polyMesh = NULL;
-        rcFreePolyMeshDetail(iv.polyMeshDetail); iv.polyMeshDetail = NULL;
     }
 
     void MapBuilder::generateObjFile(uint32 mapID, uint32 tileX, uint32 tileY, MeshData meshData)
@@ -1222,173 +1185,6 @@ namespace MMAP
             fprintf(objFile, "f %i %i %i\n", tris[i*3] + 1, tris[i*3 + 1] + 1, tris[i*3 + 2] + 1);
 
         fclose(objFile);
-    }
-
-    void MapBuilder::writeIV(uint32 mapID, uint32 tileX, uint32 tileY, IntermediateValues iv)
-    {
-        char fileName[255];
-        char tileString[25];
-        FILE* file;
-
-        sprintf(tileString, "[%02u,%02u]: ", tileX, tileY);
-
-        printf("%sWriting debug output...                       \r", tileString);
-
-        string name("meshes/%03u%02i%02i.");
-
-#define DEBUG_WRITE(fileExtension,data) \
-        do { \
-            sprintf(fileName, (name + fileExtension).c_str(), mapID, tileY, tileX); \
-            file = fopen(fileName, "wb"); \
-            if (!file) \
-            { \
-                char message[1024]; \
-                sprintf(message, "%sFailed to open %s for writing!\n",  tileString, fileName); \
-                perror(message); \
-            } \
-            else \
-                debugWrite(file, data); \
-            if(file) fclose(file); \
-            printf("%sWriting debug output...                       \r", tileString); \
-        } while (false)
-
-        if (iv.heightfield)         DEBUG_WRITE("hf", iv.heightfield);
-        if (iv.compactHeightfield)  DEBUG_WRITE("chf", iv.compactHeightfield);
-        if (iv.contours)            DEBUG_WRITE("cs", iv.contours);
-        if (iv.polyMesh)            DEBUG_WRITE("pmesh", iv.polyMesh);
-        if (iv.polyMeshDetail)      DEBUG_WRITE("dmesh", iv.polyMeshDetail);
-
-#undef DEBUG_WRITE
-    }
-
-    void MapBuilder::debugWrite(FILE* file, const rcHeightfield* mesh)
-    {
-        if (!file || !mesh)
-            return;
-
-        fwrite(&(mesh->cs), sizeof(float), 1, file);
-        fwrite(&(mesh->ch), sizeof(float), 1, file);
-        fwrite(&(mesh->width), sizeof(int), 1, file);
-        fwrite(&(mesh->height), sizeof(int), 1, file);
-        fwrite(mesh->bmin, sizeof(float), 3, file);
-        fwrite(mesh->bmax, sizeof(float), 3, file);
-
-        for (int y = 0; y < mesh->height; ++y)
-            for (int x = 0; x < mesh->width; ++x)
-            {
-                rcSpan* span = mesh->spans[x+y*mesh->width];
-
-                // first, count the number of spans
-                int spanCount = 0;
-                while (span)
-                {
-                    spanCount++;
-                    span = span->next;
-                }
-
-                // write the span count
-                fwrite(&spanCount, sizeof(int), 1, file);
-
-                // write the spans
-                span = mesh->spans[x+y*mesh->width];
-                while (span)
-                {
-                    fwrite(span, sizeof(rcSpan), 1, file);
-                    span = span->next;
-                }
-            }
-    }
-
-    void MapBuilder::debugWrite(FILE* file, const rcCompactHeightfield* chf)
-    {
-        if (!file | !chf)
-            return;
-
-        fwrite(&(chf->width), sizeof(chf->width), 1, file);
-        fwrite(&(chf->height), sizeof(chf->height), 1, file);
-        fwrite(&(chf->spanCount), sizeof(chf->spanCount), 1, file);
-
-        fwrite(&(chf->walkableHeight), sizeof(chf->walkableHeight), 1, file);
-        fwrite(&(chf->walkableClimb), sizeof(chf->walkableClimb), 1, file);
-
-        fwrite(&(chf->maxDistance), sizeof(chf->maxDistance), 1, file);
-        fwrite(&(chf->maxRegions), sizeof(chf->maxRegions), 1, file);
-
-        fwrite(chf->bmin, sizeof(chf->bmin), 1, file);
-        fwrite(chf->bmax, sizeof(chf->bmax), 1, file);
-
-        fwrite(&(chf->cs), sizeof(chf->cs), 1, file);
-        fwrite(&(chf->ch), sizeof(chf->ch), 1, file);
-
-        int tmp = 0;
-        if (chf->cells) tmp |= 1;
-        if (chf->spans) tmp |= 2;
-        if (chf->dist) tmp |= 4;
-        if (chf->areas) tmp |= 8;
-
-        fwrite(&tmp, sizeof(tmp), 1, file);
-
-        if (chf->cells)
-            fwrite(chf->cells, sizeof(rcCompactCell), chf->width*chf->height, file);
-        if (chf->spans)
-            fwrite(chf->spans, sizeof(rcCompactSpan), chf->spanCount, file);
-        if (chf->dist)
-            fwrite(chf->dist, sizeof(unsigned short), chf->spanCount, file);
-        if (chf->areas)
-            fwrite(chf->areas, sizeof(unsigned char), chf->spanCount, file);
-    }
-
-    void MapBuilder::debugWrite(FILE* file, const rcContourSet* cs)
-    {
-        if (!file || !cs)
-            return;
-
-        fwrite(&(cs->cs), sizeof(float), 1, file);
-        fwrite(&(cs->ch), sizeof(float), 1, file);
-        fwrite(cs->bmin, sizeof(float), 3, file);
-        fwrite(cs->bmax, sizeof(float), 3, file);
-        fwrite(&(cs->nconts), sizeof(int), 1, file);
-        for (int i = 0; i < cs->nconts; ++i)
-        {
-            fwrite(&cs->conts[i].area, sizeof(unsigned char), 1, file);
-            fwrite(&cs->conts[i].reg, sizeof(unsigned short), 1, file);
-            fwrite(&cs->conts[i].nverts, sizeof(int), 1, file);
-            fwrite(cs->conts[i].verts, sizeof(int), cs->conts[i].nverts*4, file);
-            fwrite(&cs->conts[i].nrverts, sizeof(int), 1, file);
-            fwrite(cs->conts[i].rverts, sizeof(int), cs->conts[i].nrverts*4, file);
-        }
-    }
-
-    void MapBuilder::debugWrite(FILE* file, const rcPolyMesh* mesh)
-    {
-        if (!file || !mesh)
-            return;
-
-        fwrite(&(mesh->cs), sizeof(float), 1, file);
-        fwrite(&(mesh->ch), sizeof(float), 1, file);
-        fwrite(&(mesh->nvp), sizeof(int), 1, file);
-        fwrite(mesh->bmin, sizeof(float), 3, file);
-        fwrite(mesh->bmax, sizeof(float), 3, file);
-        fwrite(&(mesh->nverts), sizeof(int), 1, file);
-        fwrite(mesh->verts, sizeof(unsigned short), mesh->nverts*3, file);
-        fwrite(&(mesh->npolys), sizeof(int), 1, file);
-        fwrite(mesh->polys, sizeof(unsigned short), mesh->npolys*mesh->nvp*2, file);
-        fwrite(mesh->flags, sizeof(unsigned short), mesh->npolys, file);
-        fwrite(mesh->areas, sizeof(unsigned char), mesh->npolys, file);
-        fwrite(mesh->regs, sizeof(unsigned short), mesh->npolys, file);
-    }
-
-    void MapBuilder::debugWrite(FILE* file, const rcPolyMeshDetail* mesh)
-    {
-        if (!file || !mesh)
-            return;
-
-        fwrite(&(mesh->nverts), sizeof(int), 1, file);
-        fwrite(mesh->verts, sizeof(float), mesh->nverts*3, file);
-        fwrite(&(mesh->ntris), sizeof(int), 1, file);
-        fwrite(mesh->tris, sizeof(char), mesh->ntris*4, file);
-        fwrite(&(mesh->nmeshes), sizeof(int), 1, file);
-        fwrite(mesh->meshes, sizeof(int), mesh->nmeshes*4, file);
     }
 
     bool MapBuilder::shouldSkipMap(uint32 mapID)

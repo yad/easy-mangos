@@ -51,8 +51,9 @@ public:
 	inline const char* getFileName() const { return m_filename; }
 };
 
+// all those things should be in sharead location
 #define MMAP_MAGIC 0x4d4d4150   // 'MMAP'
-#define MMAP_VERSION 2
+#define MMAP_VERSION 3
 
 struct MmapTileHeader
 {
@@ -60,7 +61,6 @@ struct MmapTileHeader
     unsigned int dtVersion;
     unsigned int mmapVersion;
     unsigned int size;
-    bool usesHiRes : 1;
     bool usesLiquid : 1;
 
     MmapTileHeader() :

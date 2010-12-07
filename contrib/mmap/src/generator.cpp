@@ -47,11 +47,13 @@ bool checkDirectories(bool debugOutput)
 
     dirFiles.clear();
     if (debugOutput)
+    {
         if (getDirContents(dirFiles, "meshes") == LISTFILE_DIRECTORY_NOT_FOUND)
         {
             printf("'meshes' directory does not exist (no place to put debugOutput files)\n");
             return false;
         }
+    }
 
     return true;
 }
@@ -65,7 +67,6 @@ void handleArgs(int argc, char** argv,
                bool &skipContinents,
                bool &skipJunkMaps,
                bool &skipBattlegrounds,
-               bool &hiResHeightmaps,
                bool &debugOutput,
                bool &badParam)
 {
@@ -178,22 +179,6 @@ void handleArgs(int argc, char** argv,
             else
                 printf("invalid option for '--skipBattlegrounds', using default\n");
         }
-        else if (strcmp(argv[i], "--hiResHeightmaps") == 0)
-        {
-            param = argv[++i];
-            if (!param)
-            {
-                badParam = true;
-                return;
-            }
-
-            if(strcmp (param, "true") == 0)
-                hiResHeightmaps = true;
-            else if(strcmp(param, "false") == 0)
-                hiResHeightmaps = false;
-            else
-                printf("invalid option for '--hiResHeightmaps', using default\n");
-        }
         else if (strcmp(argv[i], "--debugOutput") == 0)
         {
             param = argv[++i];
@@ -234,29 +219,19 @@ int finish(const char* message, int returnValue)
 int main(int argc, char** argv)
 {
     int mapnum = -1;
-    float maxAngle = 60.f;
+    float maxAngle = 60.0f;
     int tileX = -1, tileY = -1;
     bool skipLiquid = false,
-         skipContinents = true,
+         skipContinents = false,
          skipJunkMaps = true,
          skipBattlegrounds = true,
-         hiResHeightmaps = false,
          debugOutput = false,
          badParam = false;
 
-    handleArgs(argc,
-              argv,
-              mapnum,
-              tileX,
-              tileY,
-              maxAngle,
-              skipLiquid,
-              skipContinents,
-              skipJunkMaps,
-              skipBattlegrounds,
-              hiResHeightmaps,
-              debugOutput,
-              badParam);
+    handleArgs(argc, argv, mapnum,
+              tileX, tileY, maxAngle,
+              skipLiquid, skipContinents, skipJunkMaps, skipBattlegrounds,
+              debugOutput, badParam);
 
     if (badParam)
         return finish("You have specified invalid parameters", -1);
@@ -273,13 +248,8 @@ int main(int argc, char** argv)
     if (!checkDirectories(debugOutput))
         return finish("Press any key to close...", -1);
 
-    MapBuilder builder(maxAngle,
-                       skipLiquid,
-                       skipContinents,
-                       skipJunkMaps,
-                       skipBattlegrounds,
-                       hiResHeightmaps,
-                       debugOutput);
+    MapBuilder builder(maxAngle, skipLiquid, skipContinents, skipJunkMaps,
+                       skipBattlegrounds, debugOutput);
 
     if (tileX > -1 && tileY > -1 && mapnum >= 0)
         builder.buildTile(mapnum, tileX, tileY);

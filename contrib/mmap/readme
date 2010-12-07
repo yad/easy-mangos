@@ -11,7 +11,7 @@ generator command line args
 --skipContinents	[true|false]	continents are maps 0 (Eastern Kingdoms),
 									1 (Kalimdor), 530 (Outlands), 571 (Northrend)
 
-									true: skip continents (default)
+									false: skip continents (default)
 
 --skipJunkMaps		[true|false]	junk maps include some unused
 									maps, transport maps, and some other
@@ -21,11 +21,6 @@ generator command line args
 --skipBattlegrouns	[true|false]	does not include PVP arenas
 
 									true: skip battlegrounds (default)
-
---hiResHeightmaps	[true|false]	hi-res heightmaps may result in better maps,
-									but dramatically increase memory requirements
-
-									false: use low-res heightmaps (default)
 
 --debugOutput		[true|false]	create debugging files for use with RecastDemo
 									if you are only creating mmaps for use with MaNGOS,

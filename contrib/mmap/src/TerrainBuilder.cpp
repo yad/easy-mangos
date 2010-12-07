@@ -25,15 +25,8 @@ char const* MAP_VERSION_MAGIC = "v1.2";
 
 namespace MMAP
 {
-    TerrainBuilder::TerrainBuilder(bool skipLiquid, bool hiRes) :
-        m_hiResHeightMaps   (hiRes),
-        m_skipLiquid        (skipLiquid)
-    {
-    }
-
-    TerrainBuilder::~TerrainBuilder()
-    {
-    }
+    TerrainBuilder::TerrainBuilder(bool skipLiquid) : m_skipLiquid (skipLiquid){ }
+    TerrainBuilder::~TerrainBuilder() { }
 
     void TerrainBuilder::getLoopVars(Spot portion, int &loopStart, int &loopEnd, int &loopInc)
     {
@@ -137,9 +130,8 @@ namespace MMAP
                 for (i = 0; i < V9_SIZE_SQ; ++i)
                     V9[i] = (float)v9[i]*heightMultiplier + hheader.gridHeight;
 
-                if (m_hiResHeightMaps)
-                    for (i = 0; i < V8_SIZE_SQ; ++i)
-                        V8[i] = (float)v8[i]*heightMultiplier + hheader.gridHeight;
+                for (i = 0; i < V8_SIZE_SQ; ++i)
+                    V8[i] = (float)v8[i]*heightMultiplier + hheader.gridHeight;
             }
             else if (hheader.flags & MAP_HEIGHT_AS_INT16)
             {
@@ -152,15 +144,13 @@ namespace MMAP
                 for (i = 0; i < V9_SIZE_SQ; ++i)
                     V9[i] = (float)v9[i]*heightMultiplier + hheader.gridHeight;
 
-                if (m_hiResHeightMaps)
-                    for (i = 0; i < V8_SIZE_SQ; ++i)
-                        V8[i] = (float)v8[i]*heightMultiplier + hheader.gridHeight;
+                for (i = 0; i < V8_SIZE_SQ; ++i)
+                    V8[i] = (float)v8[i]*heightMultiplier + hheader.gridHeight;
             }
             else
             {
                 fread (V9, sizeof(float), V9_SIZE_SQ, mapFile);
-                if (m_hiResHeightMaps)
-                    fread(V8, sizeof(float), V8_SIZE_SQ, mapFile);
+                fread(V8, sizeof(float), V8_SIZE_SQ, mapFile);
             }
 
             // hole data
@@ -182,22 +172,19 @@ namespace MMAP
                 meshData.solidVerts.append(coord[1]);
             }
 
-            if (m_hiResHeightMaps)
-                for (i = 0; i < V8_SIZE_SQ; ++i)
-                {
-                    getHeightCoord(i, GRID_V8, xoffset, yoffset, coord, V8);
-                    meshData.solidVerts.append(coord[0]);
-                    meshData.solidVerts.append(coord[2]);
-                    meshData.solidVerts.append(coord[1]);
-                }
+            for (i = 0; i < V8_SIZE_SQ; ++i)
+            {
+                getHeightCoord(i, GRID_V8, xoffset, yoffset, coord, V8);
+                meshData.solidVerts.append(coord[0]);
+                meshData.solidVerts.append(coord[2]);
+                meshData.solidVerts.append(coord[1]);
+            }
 
-            int triInc, j, indices[3], loopStart, loopEnd, loopInc;
+            int j, indices[3], loopStart, loopEnd, loopInc;
             getLoopVars(portion, loopStart, loopEnd, loopInc);
 
-            triInc = m_hiResHeightMaps ? 1 : BOTTOM-TOP;
-
             for (i = loopStart; i < loopEnd; i+=loopInc)
-                for (j = TOP; j <= BOTTOM; j+=triInc)
+                for (j = TOP; j <= BOTTOM; j+=1)
                 {
                     getHeightTriangle(i, Spot(j), indices);
                     ttriangles.append(indices[2] + count);
@@ -295,7 +282,7 @@ namespace MMAP
         // ground above any liquid type
         // ground below <1.5 yard of water
 
-        int loopStart, loopEnd, loopInc, tTriCount;
+        int loopStart, loopEnd, loopInc, tTriCount = 4;
         bool useTerrain, useLiquid;
 
         float* lverts = meshData.liquidVerts.getCArray();
@@ -304,7 +291,6 @@ namespace MMAP
         int* ttris = ttriangles.getCArray();
 
         getLoopVars(portion, loopStart, loopEnd, loopInc);
-        tTriCount = m_hiResHeightMaps ? 4 : 2;
 
         if (ltriangles.size() || ttriangles.size())
         {
@@ -375,7 +361,7 @@ namespace MMAP
                         {
                             idx1 = 0;
                             idx2 = 1;
-                            idx3 = tTriCount;   // accesses index from next triangle on low res
+                            idx3 = tTriCount;
                         }
                         else
                         {
@@ -436,10 +422,10 @@ namespace MMAP
         }
     }
 
-    void TerrainBuilder::getHeightTriangle(int square, Spot triangle, int* indices, bool liquid/* = false*/)
-    {
-        int rowOffset = square/V8_SIZE;
-        if (m_hiResHeightMaps && !liquid)
+void TerrainBuilder::getHeightTriangle(int square, Spot triangle, int* indices, bool liquid/* = false*/)
+     {
+         int rowOffset = square/V8_SIZE;
+        if (!liquid)
             switch (triangle)
             {
                 case TOP:

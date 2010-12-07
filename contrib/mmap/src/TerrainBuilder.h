@@ -82,12 +82,11 @@ namespace MMAP
     class TerrainBuilder
     {
         public:
-            TerrainBuilder(bool skipLiquid, bool hiRes);
+            TerrainBuilder(bool skipLiquid);
             ~TerrainBuilder();
 
             void loadMap(uint32 mapID, uint32 tileX, uint32 tileY, MeshData &meshData);
-            inline bool usesHiRes() { return m_hiResHeightMaps; }
-            inline bool usesLiquids() { return !m_skipLiquid; }
+            bool usesLiquids() { return !m_skipLiquid; }
 
         private:
 
@@ -97,8 +96,6 @@ namespace MMAP
             /// Sets loop variables for selecting only certain parts of a map's terrain
             void getLoopVars(Spot portion, int &loopStart, int &loopEnd, int &loopInc);
 
-            /// Controls map tesselation
-            bool m_hiResHeightMaps;
             /// Controls whether liquids are loaded
             bool m_skipLiquid;
 
