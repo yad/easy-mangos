@@ -52,7 +52,8 @@ Sample* createDebug() { return new Sample_Debug(); }
 
 static SampleItem g_samples[] =
 {
-	{ createSoloSimple, "Test Recast Params" },
+    { createSoloTiled, "Test Recast Params" },
+	//{ createSoloSimple, "Solo Mesh Simple" },
 	//{ createSoloTiled, "Solo Mesh Tiled" },
 	//{ createTile, "Tile Mesh" },
 	{ createDebug, "Debug Generator Navmesh" },

@@ -48,25 +48,19 @@ void duReadNavMesh(char* tile, dtNavMesh* &navMesh)
             file = fopen(fname, "rb");
             if(file)
             {
-                mmapTileHeader header;
-                fread(&header, sizeof(header), 1, file);
+                MmapTileHeader header;
+                fread(&header, sizeof(MmapTileHeader), 1, file);
 
-                unsigned int length;
+                unsigned char* data = (unsigned char*)dtAlloc(header.size, DT_ALLOC_PERM);
+                fread(data, header.size, 1, file);
 
-                for (unsigned int i2 = 0; i2 < header.tileCount; ++i2)
-                {
-                    fread(&length, sizeof(length), 1, file);
+                dtStatus status = navMesh->addTile(data, header.size, DT_TILE_FREE_DATA, 0 , NULL);
 
-                    unsigned char* data = (unsigned char*)dtAlloc(length, DT_ALLOC_PERM);
-                    fread(data, length, 1, file);
+                if (status != DT_SUCCESS)
+                    dtFree(data);
+                else
+                    count++;
 
-                    dtStatus status = navMesh->addTile(data, length, DT_TILE_FREE_DATA, 0 , NULL);
-
-                    if (status != DT_SUCCESS)
-                        dtFree(data);
-                    else
-                        count++;
-                }
                 fclose(file);
             }
         }

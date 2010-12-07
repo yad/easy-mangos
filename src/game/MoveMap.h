@@ -21,7 +21,6 @@
 
 #include "Platform/Define.h"
 #include "../../dep/recastnavigation/Detour/Include/DetourAlloc.h"
-#include "../../dep/recastnavigation/Detour/Include/DetourNavMesh.h"
 
 /*  memory management  */
 
@@ -35,40 +34,19 @@ inline void dtCustomFree(void* ptr)
     delete [] (unsigned char*)ptr;
 }
 
-/*  mmap tile structure  */
+/*  mmap file info  */
 
 #define MMAP_MAGIC 0x4d4d4150   // 'MMAP'
-#define MMAP_VERSION 1
+#define MMAP_VERSION 2
 
-struct mmapTileHeader
+struct MmapTileHeader
 {
     uint32 mmapMagic;
     uint32 dtVersion;
     uint32 mmapVersion;
-    uint32 tileCount;
+    uint32 size;
     bool usesHiRes : 1;
     bool usesLiquids : 1;
-};
-
-typedef std::list<dtTileRef> tileRefList;
-
-class MmapTileReader
-{
-public:
-    MmapTileReader(uint32 mapId, int32 x, int32 y);
-    ~MmapTileReader();
-
-    // validates the mmtile file
-    bool check();
-
-    // reads and returns the next dtMeshTile data
-    bool read(unsigned char* &data, uint32 &dataLength);
-    uint32 getTileCount() { return m_header.tileCount; }
-private:
-    char* m_mmapFileName;
-    FILE* m_mmapTileFile;
-    mmapTileHeader m_header;
-    uint32 m_currentTile;
 };
 
 #endif  // _MOVE_MAP_H

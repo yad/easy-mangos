@@ -286,7 +286,7 @@ private:
     void LoadNavMesh(int gx, int gy);
     void UnloadNavMesh(int gx, int gy);
     dtNavMesh* m_navMesh;
-    UNORDERED_MAP<uint32, std::list<dtTileRef>*> m_mmapLoadedTiles;    // maps [map grid coords] to [dtTile]
+    UNORDERED_MAP<uint32, dtTileRef> m_mmapLoadedTiles;    // maps [map grid coords] to [dtTile]
 
     static std::set<uint32> s_mmapDisabledIds;      // stores list of mapids which do not use pathfinding
     // end movemap-related

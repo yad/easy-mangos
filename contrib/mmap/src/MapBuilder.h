@@ -35,11 +35,8 @@ using namespace std;
 using namespace VMAP;
 // G3D namespace typedefs conflicts with ACE typedefs
 
-#define MMAP_MAGIC 0x4d4d4150   // 'MMAP'
-#define MMAP_VERSION 1
-
-#define TILES_PER_MMTILE 16
-#define TILE_SIZE (GRID_SIZE / TILES_PER_MMTILE)
+#define MMAP_MAGIC 0x4d4d4150
+#define MMAP_VERSION 2
 
 namespace MMAP
 {
@@ -48,41 +45,58 @@ namespace MMAP
     struct IntermediateValues
     {
         rcHeightfield* heightfield;
-        unsigned char* triFlags;
         rcCompactHeightfield* compactHeightfield;
         rcContourSet* contours;
         rcPolyMesh* polyMesh;
         rcPolyMeshDetail* polyMeshDetail;
     };
 
-    struct mmapTileHeader
+    struct MmapTileHeader
     {
         uint32 mmapMagic;
         uint32 dtVersion;
         uint32 mmapVersion;
-        uint32 tileCount;
+        uint32 size;
         bool usesHiRes : 1;
         bool usesLiquids : 1;
 
-        mmapTileHeader() :
+        MmapTileHeader() :
             mmapMagic(MMAP_MAGIC),
             dtVersion(DT_NAVMESH_VERSION),
             mmapVersion(MMAP_VERSION),
-            tileCount(0)
+            size(0)
         {}
 
-        mmapTileHeader(TerrainBuilder* terrainBuilder) :
+        MmapTileHeader(TerrainBuilder* terrainBuilder) :
             mmapMagic(MMAP_MAGIC),
             dtVersion(DT_NAVMESH_VERSION),
             mmapVersion(MMAP_VERSION),
-            tileCount(0)
+            size(0)
         {
             usesHiRes = terrainBuilder->usesHiRes();
             usesLiquids = terrainBuilder->usesLiquids();
         }
 
     private:
-        mmapTileHeader(const mmapTileHeader &header);
+        MmapTileHeader(const MmapTileHeader& header);
+    };
+
+    struct Tile
+    {
+        Tile() : chf(NULL), solid(NULL), cset(NULL), pmesh(NULL), dmesh(NULL) {}
+        ~Tile()
+        {
+            rcFreeCompactHeightfield(chf);
+            rcFreeContourSet(cset);
+            rcFreeHeightField(solid);
+            rcFreePolyMesh(pmesh);
+            rcFreePolyMeshDetail(dmesh);
+        }
+        rcCompactHeightfield* chf;
+        rcHeightfield* solid;
+        rcContourSet* cset;
+        rcPolyMesh* pmesh;
+        rcPolyMeshDetail* dmesh;
     };
 
     class MapBuilder
@@ -114,6 +128,7 @@ namespace MMAP
 
             // load and unload models
             bool loadVMap(uint32 mapID, uint32 tileX, uint32 tileY, MeshData &meshData);
+            void unloadVMap(uint32 mapID, uint32 tileX, uint32 tileY);
 
             // vert and triangle methods
             void transform(vector<Vector3> original, vector<Vector3> &transformed,
@@ -169,6 +184,7 @@ namespace MMAP
 
             float m_maxWalkableAngle;
 
+            // build performance - not really used for now
             rcContext* m_rcContext;
     };
 }

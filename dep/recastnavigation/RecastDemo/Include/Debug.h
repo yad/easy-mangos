@@ -52,20 +52,20 @@ public:
 };
 
 #define MMAP_MAGIC 0x4d4d4150   // 'MMAP'
-#define MMAP_VERSION 1
+#define MMAP_VERSION 2
 
-struct mmapTileHeader
+struct MmapTileHeader
 {
     unsigned int mmapMagic;
     unsigned int dtVersion;
     unsigned int mmapVersion;
-    unsigned int tileCount;
+    unsigned int size;
     bool usesHiRes : 1;
     bool usesLiquid : 1;
 
-    mmapTileHeader() :
+    MmapTileHeader() :
     mmapMagic(MMAP_MAGIC), dtVersion(DT_NAVMESH_VERSION),
-    mmapVersion(MMAP_VERSION), tileCount(0)
+    mmapVersion(MMAP_VERSION), size(0)
     {}
 };
 
