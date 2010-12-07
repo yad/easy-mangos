@@ -921,7 +921,7 @@ namespace MMAP
         delete [] pmmerge;
         delete [] dmmerge;
 
-        delete tiles;
+        delete [] tiles;
 
         // remove padding for extraction
         for (int i = 0; i < iv.polyMesh->nverts; ++i)
