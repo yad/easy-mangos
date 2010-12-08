@@ -199,6 +199,9 @@ namespace MMAP
             }
         } while (0);
 
+        if (!tiles->size())
+            return;
+
         // build navMesh
         dtNavMesh* navMesh = NULL;
         buildNavMesh(mapID, navMesh);

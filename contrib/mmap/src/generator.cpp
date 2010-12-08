@@ -68,6 +68,7 @@ void handleArgs(int argc, char** argv,
                bool &skipJunkMaps,
                bool &skipBattlegrounds,
                bool &debugOutput,
+               bool &silent,
                bool &badParam)
 {
     char zero[2] = "0";
@@ -195,6 +196,10 @@ void handleArgs(int argc, char** argv,
             else
                 printf("invalid option for '--debugOutput', using default true\n");
         }
+        else if (strcmp(argv[i], "--silent") == 0)
+        {
+            silent = true;
+        }
         else
         {
             int map = atoi(argv[i]);
@@ -226,18 +231,22 @@ int main(int argc, char** argv)
          skipJunkMaps = true,
          skipBattlegrounds = true,
          debugOutput = false,
+         silent = false,
          badParam = false;
 
     handleArgs(argc, argv, mapnum,
               tileX, tileY, maxAngle,
               skipLiquid, skipContinents, skipJunkMaps, skipBattlegrounds,
-              debugOutput, badParam);
+              debugOutput, silent, badParam);
 
     if (badParam)
-        return finish("You have specified invalid parameters", -1);
+        return silent ? -1 : finish("You have specified invalid parameters", -1);
 
     if (mapnum == -1 && debugOutput)
     {
+        if (silent)
+            return -2;
+
         printf("You have specifed debug output, but didn't specify a map to generate.\n");
         printf("This will generate debug output for ALL maps.\n");
         printf("Are you sure you want to continue? (y/n) ");
@@ -246,7 +255,7 @@ int main(int argc, char** argv)
     }
 
     if (!checkDirectories(debugOutput))
-        return finish("Press any key to close...", -1);
+        return silent ? -3 : finish("Press any key to close...", -3);
 
     MapBuilder builder(maxAngle, skipLiquid, skipContinents, skipJunkMaps,
                        skipBattlegrounds, debugOutput);
@@ -258,5 +267,5 @@ int main(int argc, char** argv)
     else
         builder.buildAll();
 
-    return finish("Movemap build is complete!", 1);
+    return silent ? 1 : finish("Movemap build is complete!", 1);
 }
