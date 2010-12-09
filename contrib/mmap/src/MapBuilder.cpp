@@ -758,8 +758,8 @@ namespace MMAP
         config.minRegionArea = rcSqr(50);
         config.mergeRegionArea = rcSqr(40);
         config.maxSimplificationError = 3.0f;       // eliminates most jagged edges (tinny polygons)
-        config.detailSampleDist = config.cs * 16;
-        config.detailSampleMaxError = config.ch * 3;
+        config.detailSampleDist = config.cs * 64;
+        config.detailSampleMaxError = config.ch * 4;
 
         // this sets the dimensions of the heightfield - should maybe happen before border padding
         rcCalcGridSize(config.bmin, config.bmax, config.cs, &config.width, &config.height);
@@ -932,16 +932,6 @@ namespace MMAP
             unsigned short* v = &iv.polyMesh->verts[i*3];
             v[0] -= (unsigned short)config.borderSize;
             v[2] -= (unsigned short)config.borderSize;
-        }
-
-        // little ugly hack to prevent unexpected polygon angles
-        // TODO: find why they are generated in the first place.
-        for (int k = 1; k < iv.polyMeshDetail->nverts; ++k)
-         {
-            float* v1 = &iv.polyMeshDetail->verts[k*3];
-            float* v0 = &iv.polyMeshDetail->verts[(k-1)*3];
-            if(fabsf(v1[1]- v0[1]) > 12*VERTEX_PER_TILE*BASE_UNIT_DIM)
-                v1[1] = v0[1];
         }
 
         // set polygons as walkable
