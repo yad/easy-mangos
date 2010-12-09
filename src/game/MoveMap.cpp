@@ -39,7 +39,7 @@ void TerrainInfo::LoadNavMesh(int gx, int gy)
             delete [] fileName;
             return;
         }
-        
+
         dtNavMeshParams params;
         fread(&params, sizeof(dtNavMeshParams), 1, file);
         fclose(file);
