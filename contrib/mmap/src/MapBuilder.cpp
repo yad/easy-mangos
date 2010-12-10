@@ -1042,7 +1042,8 @@ namespace MMAP
             printf("%s Writing to file...                      \r", tileString);
 
             // write header
-            MmapTileHeader header(m_terrainBuilder);
+            MmapTileHeader header;
+            header.usesLiquids = m_terrainBuilder->usesLiquids();
             header.size = uint32(navDataSize);
             fwrite(&header, sizeof(MmapTileHeader), 1, file);
 

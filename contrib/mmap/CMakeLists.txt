@@ -23,6 +23,7 @@ ADD_DEFINITIONS("-O3")
 include_directories(
     ../../src
     ../../src/shared
+    ../../src/game
     ../../src/game/vmap
     ../../dep/include/g3dlite
     ../../src/framework

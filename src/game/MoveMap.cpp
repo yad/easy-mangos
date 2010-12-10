@@ -16,11 +16,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "MoveMap.h"
 #include "GridMap.h"
 #include "Log.h"
-#include "Utilities/UnorderedMapSet.h"
 #include "World.h"
+
+#include "MoveMap.h"
+#include "MoveMapSharedDefines.h"
 
 uint32 packTileID(int x, int y) { return uint32(x << 16 | y); }
 

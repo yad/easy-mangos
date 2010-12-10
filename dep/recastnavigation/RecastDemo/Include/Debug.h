@@ -8,17 +8,6 @@
 #include "ChunkyTriMesh.h"
 #include "MeshLoaderObj.h"
 
-enum NavTerrain
-{
-    NAV_GROUND  = 0x01,
-    NAV_MAGMA   = 0x02,
-    NAV_SLIME   = 0x04,
-    NAV_WATER   = 0x08,
-    NAV_UNUSED1 = 0x10,
-    NAV_UNUSED2 = 0x20
-    // we only have 6 bits of a bitfield
-};
-
 //void duReadObjMesh(int mapID, rcInputGeom* geom);
 void duReadNavMesh(char* tile, dtNavMesh* &navMesh);
 int duReadHeightfield(char* tile, rcHeightfield* &hf);
@@ -51,9 +40,19 @@ public:
 	inline const char* getFileName() const { return m_filename; }
 };
 
-// all those things should be in sharead location
-#define MMAP_MAGIC 0x4d4d4150   // 'MMAP'
-#define MMAP_VERSION 3
+enum NavTerrain
+{
+    NAV_EMPTY   = 0x00,
+    NAV_GROUND  = 0x01,
+    NAV_MAGMA   = 0x02,
+    NAV_SLIME   = 0x04,
+    NAV_WATER   = 0x08,
+    NAV_UNUSED1 = 0x10,
+    NAV_UNUSED2 = 0x20,
+    NAV_UNUSED3 = 0x40,
+    NAV_UNUSED4 = 0x80
+    // we only have 8 bits
+};
 
 struct MmapTileHeader
 {
@@ -62,11 +61,6 @@ struct MmapTileHeader
     unsigned int mmapVersion;
     unsigned int size;
     bool usesLiquid : 1;
-
-    MmapTileHeader() :
-    mmapMagic(MMAP_MAGIC), dtVersion(DT_NAVMESH_VERSION),
-    mmapVersion(MMAP_VERSION), size(0)
-    {}
 };
 
 #endif

@@ -127,6 +127,7 @@
     <ClInclude Include="..\..\..\..\src\game\vmap\VMapManager2.h" />
     <ClInclude Include="..\..\..\..\src\game\vmap\VMapTools.h" />
     <ClInclude Include="..\..\..\..\src\game\vmap\WorldModel.h" />
+    <ClInclude Include="..\..\..\..\src\game\MoveMapSharedDefines.h" />
     <ClInclude Include="..\..\src\MangosMap.h" />
     <ClInclude Include="..\..\src\MapBuilder.h" />
     <ClInclude Include="..\..\src\MMapCommon.h" />

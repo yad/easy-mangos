@@ -35,9 +35,6 @@ using namespace std;
 using namespace VMAP;
 // G3D namespace typedefs conflicts with ACE typedefs
 
-#define MMAP_MAGIC 0x4d4d4150
-#define MMAP_VERSION 3
-
 namespace MMAP
 {
     typedef map<uint32,set<uint32>*> TileList;
@@ -226,34 +223,6 @@ namespace MMAP
             fwrite(mesh->meshes, sizeof(int), mesh->nmeshes*4, file);
         }
 
-    };
-
-    struct MmapTileHeader
-    {
-        uint32 mmapMagic;
-        uint32 dtVersion;
-        uint32 mmapVersion;
-        uint32 size;
-        bool usesLiquids : 1;
-
-        MmapTileHeader() :
-            mmapMagic(MMAP_MAGIC),
-            dtVersion(DT_NAVMESH_VERSION),
-            mmapVersion(MMAP_VERSION),
-            size(0)
-        {}
-
-        MmapTileHeader(TerrainBuilder* terrainBuilder) :
-            mmapMagic(MMAP_MAGIC),
-            dtVersion(DT_NAVMESH_VERSION),
-            mmapVersion(MMAP_VERSION),
-            size(0)
-        {
-            usesLiquids = terrainBuilder->usesLiquids();
-        }
-
-    private:
-        MmapTileHeader(const MmapTileHeader& header);
     };
 
     struct Tile

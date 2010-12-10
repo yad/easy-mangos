@@ -19,12 +19,9 @@
 #ifndef _MOVE_MAP_H
 #define _MOVE_MAP_H
 
-#include "Platform/Define.h"
-
 #include "../../dep/recastnavigation/Detour/Include/DetourAlloc.h"
 
 /*  memory management  */
-
 inline void* dtCustomAlloc(int size, dtAllocHint /*hint*/)
 {
     return (void*)new unsigned char[size];
@@ -34,19 +31,5 @@ inline void dtCustomFree(void* ptr)
 {
     delete [] (unsigned char*)ptr;
 }
-
-/*  mmap file info  */
-
-#define MMAP_MAGIC 0x4d4d4150   // 'MMAP'
-#define MMAP_VERSION 3
-
-struct MmapTileHeader
-{
-    uint32 mmapMagic;
-    uint32 dtVersion;
-    uint32 mmapVersion;
-    uint32 size;
-    bool usesLiquids : 1;
-};
 
 #endif  // _MOVE_MAP_H

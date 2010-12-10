@@ -849,6 +849,18 @@
 				RelativePath="..\..\src\game\MapManager.h"
 				>
 			</File>
+            <File
+				RelativePath="..\..\src\game\MoveMap.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\game\MoveMap.h"
+				>
+			</File>
+            <File
+				RelativePath="..\..\src\game\MoveMapSharedDefines.h"
+				>
+			</File>
 			<File
 				RelativePath="..\..\src\game\MiscHandler.cpp"
 				>

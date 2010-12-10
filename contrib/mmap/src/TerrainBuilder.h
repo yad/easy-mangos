@@ -21,6 +21,7 @@
 
 #include "MMapCommon.h"
 #include "MangosMap.h"
+#include "../../src/game/MoveMapSharedDefines.h"
 
 #include "G3D/Array.h"
 #include "G3D/Vector3.h"
@@ -63,20 +64,6 @@ namespace MMAP
         G3D::Array<float> liquidVerts;
         G3D::Array<int> liquidTris;
         G3D::Array<uint8> liquidType;
-    };
-
-    // see also game/src/PathFinder.h
-    enum NavTerrain
-    {
-        NAV_GROUND  = 0x01,
-        NAV_MAGMA   = 0x02,
-        NAV_SLIME   = 0x04,
-        NAV_WATER   = 0x08,
-        NAV_UNUSED1 = 0x10,
-        NAV_UNUSED2 = 0x20,
-        NAV_UNUSED3 = 0x40,
-        NAV_UNUSED4 = 0x80
-        // we only have 8 bits
     };
 
     class TerrainBuilder

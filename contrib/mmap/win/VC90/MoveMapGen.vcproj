@@ -182,6 +182,10 @@
 				RelativePath="..\..\src\MangosMap.h"
 				>
 			</File>
+            <File
+				RelativePath="..\..\..\..\src\game\MoveMapSharedDefines.h"
+				>
+			</File>
 			<File
 				RelativePath="..\..\src\MapBuilder.cpp"
 				>
