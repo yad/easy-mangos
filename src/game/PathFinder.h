@@ -111,7 +111,8 @@ class PathInfo
             m_pathPoints.clear();
         }
 
-        dtPolyRef getPathPolyByPosition(dtPolyRef *polyPath, uint32 polyPathSize, PathNode p, float *distance = NULL);
+        dtPolyRef getPathPolyByPosition(dtPolyRef *polyPath, uint32 polyPathSize, const float* point, float *distance = NULL);
+        dtPolyRef getPolyByLocation(const float* point, float *distance);
 
         void BuildPolyPath(PathNode startPos, PathNode endPos);
         void BuildPointPath(float *startPoint, float *endPoint);

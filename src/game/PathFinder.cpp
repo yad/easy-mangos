@@ -114,12 +114,11 @@ bool PathInfo::Update(const float destX, const float destY, const float destZ, b
     }
 }
 
-dtPolyRef PathInfo::getPathPolyByPosition(dtPolyRef *polyPath, uint32 polyPathSize, PathNode p, float *distance)
+dtPolyRef PathInfo::getPathPolyByPosition(dtPolyRef *polyPath, uint32 polyPathSize, const float* point, float *distance)
 {
-    if (!m_navMeshQuery || !polyPath || !polyPathSize)
+    if (!polyPath || !polyPathSize)
         return INVALID_POLYREF;
 
-    float point[VERTEX_SIZE] = {p.y, p.z, p.x};
     dtPolyRef nearestPoly = INVALID_POLYREF;
     float minDist2d = FLT_MAX;
     float minDist3d = 0.0f;
@@ -148,42 +147,50 @@ dtPolyRef PathInfo::getPathPolyByPosition(dtPolyRef *polyPath, uint32 polyPathSi
     return (minDist2d < 4.0f) ? nearestPoly : INVALID_POLYREF;
 }
 
+dtPolyRef PathInfo::getPolyByLocation(const float* point, float *distance)
+{
+    // first we check the current path
+    // if the current path doesn't contain the current poly,
+    // we need to use the expensive navMesh.findNearestPoly
+    dtPolyRef polyRef = getPathPolyByPosition(m_pathPolyRefs, m_polyLength, point, distance);
+    if(polyRef != INVALID_POLYREF)
+        return polyRef;
+
+    // we don't have it in our old path
+    // try to get it by findNearestPoly()
+    // first try with low search box
+    float extents[VERTEX_SIZE] = {3.0f, 5.0f, 3.0f};    // bounds of poly search area
+    dtQueryFilter filter = createFilter();
+    float closestPoint[VERTEX_SIZE];
+
+    if(DT_SUCCESS == m_navMeshQuery->findNearestPoly(point, extents, &filter, &polyRef, closestPoint))
+    {
+        *distance = dtVdist(closestPoint, point);
+        return polyRef;
+    }
+
+    // still nothing ..
+    // try with bigger search box
+    extents[1] = 200.0f;
+    if(DT_SUCCESS == m_navMeshQuery->findNearestPoly(point, extents, &filter, &polyRef, closestPoint))
+    {
+        *distance = dtVdist(closestPoint, point);
+        return polyRef;
+    }
+
+    return INVALID_POLYREF;
+}
+
 void PathInfo::BuildPolyPath(PathNode startPos, PathNode endPos)
 {
     // *** getting start/end poly logic ***
 
     float distToStartPoly, distToEndPoly;
-
-    // first we check the current path
-    // if the current path doesn't contain the current poly,
-    // we need to use the expensive navMesh.findNearestPoly
-    dtPolyRef startPoly = getPathPolyByPosition(m_pathPolyRefs, m_polyLength, startPos, &distToStartPoly);
-    dtPolyRef endPoly = getPathPolyByPosition(m_pathPolyRefs, m_polyLength, endPos, &distToEndPoly);
-
     float startPoint[VERTEX_SIZE] = {startPos.y, startPos.z, startPos.x};
     float endPoint[VERTEX_SIZE] = {endPos.y, endPos.z, endPos.x};
 
-    // we don't have it in our old path
-    // try to get it by findNearestPoly()
-    // use huge vertical range here
-    if (startPoly == INVALID_POLYREF || endPoly == INVALID_POLYREF)
-    {
-        float extents[VERTEX_SIZE] = {3.f, 200.f, 3.f};    // bounds of poly search area
-        dtQueryFilter filter = createFilter();
-        float closestPoint[VERTEX_SIZE];
-
-        if (startPoly == INVALID_POLYREF)
-        {
-            if(DT_SUCCESS == m_navMeshQuery->findNearestPoly(startPoint, extents, &filter, &startPoly, closestPoint))
-                distToStartPoly = dtVdist(closestPoint, startPoint);
-        }
-
-        if (endPoly == INVALID_POLYREF)
-        {
-            if(DT_SUCCESS == m_navMeshQuery->findNearestPoly(endPoint, extents, &filter, &endPoly, closestPoint))
-                distToEndPoly = dtVdist(closestPoint, endPoint);
-        }
-    }
+    dtPolyRef startPoly = getPolyByLocation(startPoint, &distToStartPoly);
+    dtPolyRef endPoly = getPolyByLocation(endPoint, &distToEndPoly);
 
     // we have a hole in our mesh
     // make shortcut path and mark it as NOPATH ( with flying exception )
@@ -194,7 +201,6 @@ void PathInfo::BuildPolyPath(PathNode startPos, PathNode endPos)
         BuildShortcut();
         m_type = (m_sourceUnit->GetTypeId() == TYPEID_UNIT && ((Creature*)m_sourceUnit)->CanFly())
                     ? PathType(PATHFIND_NORMAL | PATHFIND_NOT_USING_PATH) : PATHFIND_NOPATH;
-
         return;
     }
 
