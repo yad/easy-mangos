@@ -6732,7 +6732,7 @@ bool ChatHandler::HandleMmap(char* args)
 
 bool ChatHandler::HandleMmapTestArea(char* args)
 {
-    float radius = 40.f;
+    float radius = 40.0f;
     ExtractFloat(&args, radius);
 
     CellPair pair(MaNGOS::ComputeCellPair( m_session->GetPlayer()->GetPositionX(), m_session->GetPlayer()->GetPositionY()) );

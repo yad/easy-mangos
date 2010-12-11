@@ -618,7 +618,7 @@ bool GridMap::ExistVMap(uint32 mapid,int gx,int gy)
 }
 
 //////////////////////////////////////////////////////////////////////////
-TerrainInfo::TerrainInfo(uint32 mapid) : m_mapId(mapid), m_navMesh(NULL)
+TerrainInfo::TerrainInfo(uint32 mapid) : m_mapId(mapid), m_navMesh(NULL), m_navMeshQuery(NULL)
 {
     for (int k = 0; k < MAX_NUMBER_OF_GRIDS; ++k)
     {
@@ -645,6 +645,12 @@ TerrainInfo::~TerrainInfo()
             delete m_GridMaps[i][k];
 
     VMAP::VMapFactory::createOrGetVMapManager()->unloadMap(m_mapId);
+
+    if(m_navMeshQuery)
+    {
+        dtFreeNavMeshQuery(m_navMeshQuery);
+        m_navMeshQuery = NULL;
+    }
 
     if (m_navMesh)
     {

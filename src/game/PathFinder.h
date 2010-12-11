@@ -37,7 +37,6 @@ class Unit;
 // 128*6.0f=768y  number_of_points*interval = max_path_len
 // this is way more than actual evade range
 // I think we can safely cut those down even more
-#define MESH_MAX_NODES          1024
 #define MAX_PATH_LENGTH         128
 #define MAX_POINT_PATH_LENGTH   128
 
@@ -94,9 +93,9 @@ class PathInfo
         PathNode        m_endPosition;      // {x, y, z} of the destination
         PathNode        m_actualEndPosition;  // {x, y, z} of the closest possible point to given destination
 
-        const Unit* const m_sourceUnit;       // the unit that is moving
-        const dtNavMesh*  m_navMesh;          // the nav mesh
-        dtNavMeshQuery*   m_navMeshQuery;     // the nav mesh query used to find the path
+        const Unit* const       m_sourceUnit;       // the unit that is moving
+        const dtNavMesh*        m_navMesh;          // the nav mesh
+        const dtNavMeshQuery*   m_navMeshQuery;     // the nav mesh query used to find the path
 
         inline void setNextPosition(PathNode point) { m_nextPosition = point; }
         inline void setStartPosition(PathNode point) { m_startPosition = point; }

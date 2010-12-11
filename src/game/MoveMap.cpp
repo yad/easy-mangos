@@ -27,6 +27,7 @@ uint32 packTileID(int x, int y) { return uint32(x << 16 | y); }
 
 void TerrainInfo::LoadNavMesh(int gx, int gy)
 {
+    // load and allocate map's mesh
     if (!m_navMesh)
     {
         uint32 pathLen = sWorld.GetDataPath().length() + strlen("mmaps/%03i.mmap")+1;
@@ -56,6 +57,18 @@ void TerrainInfo::LoadNavMesh(int gx, int gy)
         }
 
         delete [] fileName;
+    }
+
+    // allocate mesh query
+    if(!m_navMeshQuery)
+    {
+        m_navMeshQuery = dtAllocNavMeshQuery();
+        MANGOS_ASSERT(m_navMeshQuery);
+        if(DT_SUCCESS != m_navMeshQuery->init(m_navMesh, 1024))
+        {
+            sLog.outError("MMAP: Failed to initialize mmap %03u%02i%02i.mmtile", m_mapId, gx, gy);
+            return;
+        }
     }
 
     // check if we already have this tile loaded
@@ -173,14 +186,20 @@ dtNavMesh const* TerrainInfo::GetNavMesh() const
     return m_navMesh;
 }
 
+dtNavMeshQuery const* TerrainInfo::GetNavMeshQuery() const
+{
+    return m_navMeshQuery;
+}
+
 std::set<uint32> TerrainInfo::s_mmapDisabledIds = std::set<uint32>();
 
 void TerrainInfo::preventPathfindingOnMaps(std::string ignoreMapIds)
 {
     s_mmapDisabledIds.clear();
 
-    char* mapList = new char[ignoreMapIds.length()+1];
-    strcpy(mapList, ignoreMapIds.c_str());
+    uint32 strLenght = ignoreMapIds.length()+1;
+    char* mapList = new char[strLenght];
+    memcpy(mapList, ignoreMapIds.c_str(), sizeof(char)*strLenght);
 
     char* idstr = strtok(mapList, ",");
     while (idstr)

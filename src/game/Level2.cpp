@@ -5115,15 +5115,12 @@ bool ChatHandler::HandleMmapLocCommand(char* /*args*/)
 
     // calculate navmesh tile location
     const dtNavMesh* navmesh = player->GetTerrain()->GetNavMesh();
-    if (!navmesh)
+    const dtNavMeshQuery* navmeshquery = player->GetTerrain()->GetNavMeshQuery();
+    if (!navmesh || !navmeshquery)
     {
         PSendSysMessage("NavMesh not loaded for current map.");
         return true;
     }
-
-    dtNavMeshQuery* query = dtAllocNavMeshQuery();
-    MANGOS_ASSERT(query);
-    query->init(navmesh, MESH_MAX_NODES);
 
     const float* min = navmesh->getParams()->orig;
 
@@ -5140,7 +5137,7 @@ bool ChatHandler::HandleMmapLocCommand(char* /*args*/)
     // navmesh poly -> navmesh tile location
     dtQueryFilter filter = dtQueryFilter();
     dtPolyRef polyRef = INVALID_POLYREF;
-    query->findNearestPoly(location, extents, &filter, &polyRef, NULL);
+    navmeshquery->findNearestPoly(location, extents, &filter, &polyRef, NULL);
 
     if (polyRef == INVALID_POLYREF)
         PSendSysMessage("Dt     [??,??] (invalid poly, probably no tile loaded)");
@@ -5155,25 +5152,20 @@ bool ChatHandler::HandleMmapLocCommand(char* /*args*/)
             PSendSysMessage("Dt     [??,??] (no tile loaded)");
     }
 
-    dtFreeNavMeshQuery(query);
     return true;
 }
 
 bool ChatHandler::HandleMmapLoadedTilesCommand(char* /*args*/)
 {
     const dtNavMesh* navmesh = m_session->GetPlayer()->GetTerrain()->GetNavMesh();
-
-    if (!navmesh)
+    const dtNavMeshQuery* navmeshquery = m_session->GetPlayer()->GetTerrain()->GetNavMeshQuery();
+    if (!navmesh || !navmeshquery)
     {
         PSendSysMessage("NavMesh not loaded for current map.");
         return true;
     }
 
     PSendSysMessage("mmap loadedtiles:");
-
-    dtNavMeshQuery* query = dtAllocNavMeshQuery();
-    MANGOS_ASSERT(query);
-    query->init(navmesh, MESH_MAX_NODES);
 
     for (int32 i = 0; i < navmesh->getMaxTiles(); ++i)
     {
@@ -5184,7 +5176,6 @@ bool ChatHandler::HandleMmapLoadedTilesCommand(char* /*args*/)
         PSendSysMessage("[%02i,%02i]", tile->header->x, tile->header->y);
     }
 
-    dtFreeNavMeshQuery(query);
     return true;
 }
 

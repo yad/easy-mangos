@@ -38,18 +38,13 @@ PathInfo::PathInfo(const Unit* owner, const float destX, const float destY, cons
 
     const TerrainInfo* terrain = m_sourceUnit->GetTerrain();
     if (terrain->IsPathfindingEnabled())
-        m_navMesh = terrain->GetNavMesh();
-
-    if (m_navMesh)
     {
-        m_navMeshQuery = dtAllocNavMeshQuery();
-        MANGOS_ASSERT(m_navMeshQuery);
-        if(DT_SUCCESS != m_navMeshQuery->init(m_navMesh, MESH_MAX_NODES))
-        {
-            sLog.outError("%u's PathInfo navMeshQuery failed to init", m_sourceUnit->GetGUID());
-            return;
-        }
+        m_navMesh = terrain->GetNavMesh();
+        m_navMeshQuery = terrain->GetNavMeshQuery();
+    }
 
+    if (m_navMesh && m_navMeshQuery)
+    {
         BuildPolyPath(startPoint, endPoint);
     }
     else
@@ -65,10 +60,6 @@ PathInfo::~PathInfo()
 
     if (m_pathPolyRefs)
         delete [] m_pathPolyRefs;
-
-    // m_navMesh is not ours to delete
-    if (m_navMesh && m_navMeshQuery)
-        dtFreeNavMeshQuery(m_navMeshQuery);
 }
 
 bool PathInfo::Update(const float destX, const float destY, const float destZ, bool useStraightPath)
@@ -88,7 +79,7 @@ bool PathInfo::Update(const float destX, const float destY, const float destZ, b
     PATH_DEBUG("++ PathInfo::Update() for %u \n", m_sourceUnit->GetGUID());
 
     // make sure navMesh works - we can run on map w/o mmap
-    if (!m_navMesh)
+    if (!m_navMesh || !m_navMeshQuery)
     {
         BuildShortcut();
         m_type = PathType(PATHFIND_NORMAL | PATHFIND_NOT_USING_PATH);
