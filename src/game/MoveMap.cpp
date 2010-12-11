@@ -64,9 +64,9 @@ void TerrainInfo::LoadNavMesh(int gx, int gy)
     {
         m_navMeshQuery = dtAllocNavMeshQuery();
         MANGOS_ASSERT(m_navMeshQuery);
-        if(DT_SUCCESS != m_navMeshQuery->init(m_navMesh, 1024))
+        if(DT_SUCCESS != m_navMeshQuery->init(m_navMesh, 2048))
         {
-            sLog.outError("MMAP: Failed to initialize mmap %03u%02i%02i.mmtile", m_mapId, gx, gy);
+            sLog.outError("MMAP: Failed to allocate dtNavMeshQuery for %03u%02i%02i.mmtile", m_mapId, gx, gy);
             return;
         }
     }
