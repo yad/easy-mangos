@@ -396,7 +396,7 @@ void WorldSession::HandleMailReturnToSender(WorldPacket & recv_data )
 
         if(m->HasItems())
         {
-            for(std::vector<MailItemInfo>::iterator itr2 = m->items.begin(); itr2 != m->items.end(); ++itr2)
+            for(MailItemInfoVec::iterator itr2 = m->items.begin(); itr2 != m->items.end(); ++itr2)
             {
                 if(Item *item = pl->GetMItem(itr2->item_guid))
                     draft.AddItem(item);
@@ -486,7 +486,7 @@ void WorldSession::HandleMailTakeItem(WorldPacket & recv_data )
             {
                 MailDraft(m->subject, "")
                     .AddMoney(m->COD)
-                    .SendMailTo(MailReceiver(sender, sender_guid), MailSender(MAIL_NORMAL, m->receiverGuid.GetCounter()), MAIL_CHECK_MASK_COD_PAYMENT);
+                    .SendMailTo(MailReceiver(sender, sender_guid), _player, MAIL_CHECK_MASK_COD_PAYMENT);
             }
 
             pl->ModifyMoney( -int32(m->COD) );

@@ -928,6 +928,14 @@ bool ChatHandler::HandleReloadSpellAreaCommand(char* /*args*/)
     return true;
 }
 
+bool ChatHandler::HandleReloadSpellBonusesCommand(char* /*args*/)
+{
+    sLog.outString( "Re-Loading Spell Bonus Data..." );
+    sSpellMgr.LoadSpellBonuses();
+    SendGlobalSysMessage("DB table `spell_bonus_data` (spell damage/healing coefficients) reloaded.");
+    return true;
+}
+
 bool ChatHandler::HandleReloadSpellChainCommand(char* /*args*/)
 {
     sLog.outString( "Re-Loading Spell Chain Data... " );
@@ -957,14 +965,6 @@ bool ChatHandler::HandleReloadSpellProcEventCommand(char* /*args*/)
     sLog.outString( "Re-Loading Spell Proc Event conditions..." );
     sSpellMgr.LoadSpellProcEvents();
     SendGlobalSysMessage("DB table `spell_proc_event` (spell proc trigger requirements) reloaded.");
-    return true;
-}
-
-bool ChatHandler::HandleReloadSpellBonusesCommand(char* /*args*/)
-{
-    sLog.outString( "Re-Loading Spell Bonus Data..." );
-    sSpellMgr.LoadSpellBonuses();
-    SendGlobalSysMessage("DB table `spell_bonus_data` (spell damage/healing coefficients) reloaded.");
     return true;
 }
 
@@ -5079,22 +5079,21 @@ static bool HandleResetStatsOrLevelHelper(Player* player)
     uint8 powertype = cEntry->powerType;
 
     // reset m_form if no aura
-    if(!player->HasAuraType(SPELL_AURA_MOD_SHAPESHIFT))
-        player->m_form = FORM_NONE;
+    if (!player->HasAuraType(SPELL_AURA_MOD_SHAPESHIFT))
+        player->SetShapeshiftForm(FORM_NONE);
 
     player->SetFloatValue(UNIT_FIELD_BOUNDINGRADIUS, DEFAULT_WORLD_OBJECT_SIZE );
     player->SetFloatValue(UNIT_FIELD_COMBATREACH, 1.5f   );
 
     player->setFactionForRace(player->getRace());
 
-    player->SetUInt32Value(UNIT_FIELD_BYTES_0, ( ( player->getRace() ) | ( player->getClass() << 8 ) | ( player->getGender() << 16 ) | ( powertype << 24 ) ) );
+    player->SetByteValue(UNIT_FIELD_BYTES_0, 3, powertype);
 
     // reset only if player not in some form;
-    if(player->m_form==FORM_NONE)
+    if (player->GetShapeshiftForm() == FORM_NONE)
         player->InitDisplayIds();
 
     player->SetByteValue(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_PVP );
-    player->SetByteValue(UNIT_FIELD_BYTES_2, 3, player->m_form);
 
     player->SetUInt32Value(UNIT_FIELD_FLAGS, UNIT_FLAG_PVP_ATTACKABLE);
 
@@ -5323,7 +5322,7 @@ bool ChatHandler::HandleServerShutDownCommand(char* args)
     // Exit code should be in range of 0-125, 126-255 is used
     // in many shells for their own return codes and code > 255
     // is not supported in many others
-    if (exitcode < 0 || exitcode > 125)
+    if (exitcode > 125)
         return false;
 
     sWorld.ShutdownServ (delay, 0, exitcode);
@@ -5343,7 +5342,7 @@ bool ChatHandler::HandleServerRestartCommand(char* args)
     // Exit code should be in range of 0-125, 126-255 is used
     // in many shells for their own return codes and code > 255
     // is not supported in many others
-    if (exitcode < 0 || exitcode > 125)
+    if (exitcode > 125)
         return false;
 
     sWorld.ShutdownServ(delay, SHUTDOWN_MASK_RESTART, exitcode);
@@ -5363,7 +5362,7 @@ bool ChatHandler::HandleServerIdleRestartCommand(char* args)
     // Exit code should be in range of 0-125, 126-255 is used
     // in many shells for their own return codes and code > 255
     // is not supported in many others
-    if (exitcode < 0 || exitcode > 125)
+    if (exitcode > 125)
         return false;
 
     sWorld.ShutdownServ(delay, SHUTDOWN_MASK_RESTART|SHUTDOWN_MASK_IDLE, exitcode);
@@ -5383,7 +5382,7 @@ bool ChatHandler::HandleServerIdleShutDownCommand(char* args)
     // Exit code should be in range of 0-125, 126-255 is used
     // in many shells for their own return codes and code > 255
     // is not supported in many others
-    if (exitcode < 0 || exitcode > 125)
+    if (exitcode > 125)
         return false;
 
     sWorld.ShutdownServ(delay, SHUTDOWN_MASK_IDLE, exitcode);
@@ -6907,7 +6906,7 @@ bool ChatHandler::HandleSendItemsCommand(char* args)
     }
 
     // from console show nonexistent sender
-    MailSender sender(m_session ? m_session->GetPlayer() : NULL, MAIL_STATIONERY_GM);
+    MailSender sender(MAIL_NORMAL, m_session ? m_session->GetPlayer()->GetObjectGuid().GetCounter() : 0, MAIL_STATIONERY_GM);
 
     // fill mail
     MailDraft draft(subject, text);
@@ -6959,7 +6958,7 @@ bool ChatHandler::HandleSendMoneyCommand(char* args)
     std::string text    = msgText;
 
     // from console show nonexistent sender
-    MailSender sender(m_session ? m_session->GetPlayer() : NULL, MAIL_STATIONERY_GM);
+    MailSender sender(MAIL_NORMAL, m_session ? m_session->GetPlayer()->GetObjectGuid().GetCounter() : 0, MAIL_STATIONERY_GM);
 
     MailDraft(subject, text)
         .AddMoney(money)
@@ -7053,7 +7052,7 @@ bool ChatHandler::HandleModifyGenderCommand(char *args)
 
     // Set gender
     player->SetByteValue(UNIT_FIELD_BYTES_0, 2, gender);
-    player->SetByteValue(PLAYER_BYTES_3, 0, gender);
+    player->SetUInt16Value(PLAYER_BYTES_3, 0, uint16(gender) | (player->GetDrunkValue() & 0xFFFE));
 
     // Change display ID
     player->InitDisplayIds();
