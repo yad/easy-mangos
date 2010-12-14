@@ -58,7 +58,7 @@ bool checkDirectories(bool debugOutput)
     return true;
 }
 
-void handleArgs(int argc, char** argv,
+bool handleArgs(int argc, char** argv,
                int &mapnum,
                int &tileX,
                int &tileY,
@@ -69,21 +69,16 @@ void handleArgs(int argc, char** argv,
                bool &skipBattlegrounds,
                bool &debugOutput,
                bool &silent,
-               bool &badParam)
+               bool &bigBaseUnit)
 {
-    char zero[2] = "0";
-    int i;
-    char* param;
-    for (i = 1; i < argc; ++i)
+    char* param = NULL;
+    for (int i = 1; i < argc; ++i)
     {
         if (strcmp(argv[i], "--maxAngle") == 0)
         {
             param = argv[++i];
             if (!param)
-            {
-                badParam = true;
-                return;
-            }
+                return false;
 
             float maxangle = atof(param);
             if (maxangle <= 90.f && maxangle >= 45.f)
@@ -95,35 +90,29 @@ void handleArgs(int argc, char** argv,
         {
             param = argv[++i];
             if (!param)
-            {
-                badParam = true;
-                return;
-            }
+                return false;
 
             char* stileX = strtok(param, ",");
             char* stileY = strtok(NULL, ",");
             int tilex = atoi(stileX);
             int tiley = atoi(stileY);
 
-            if ((tilex > 0 && tilex < 64) || (tilex == 0 && strcmp(stileX, zero) == 0))
+            if ((tilex > 0 && tilex < 64) || (tilex == 0 && strcmp(stileX, "0") == 0))
                 tileX = tilex;
-            if ((tiley > 0 && tiley < 64) || (tiley == 0 && strcmp(stileY, zero) == 0))
+            if ((tiley > 0 && tiley < 64) || (tiley == 0 && strcmp(stileY, "0") == 0))
                 tileY = tiley;
 
             if (tileX < 0 || tileY < 0)
             {
                 printf("invalid tile coords.\n");
-                badParam = true;
+                return false;
             }
         }
         else if (strcmp(argv[i], "--skipLiquid") == 0)
         {
             param = argv[++i];
             if (!param)
-            {
-                badParam = true;
-                return;
-            }
+                return false;
 
             if (strcmp(param, "true") == 0)
                 skipLiquid = true;
@@ -136,10 +125,7 @@ void handleArgs(int argc, char** argv,
         {
             param = argv[++i];
             if (!param)
-            {
-                badParam = true;
-                return;
-            }
+                return false;
 
             if (strcmp(param, "true") == 0)
                 skipContinents = true;
@@ -152,10 +138,7 @@ void handleArgs(int argc, char** argv,
         {
             param = argv[++i];
             if (!param)
-            {
-                badParam = true;
-                return;
-            }
+                return false;
 
             if (strcmp(param, "true") == 0)
                 skipJunkMaps = true;
@@ -168,10 +151,7 @@ void handleArgs(int argc, char** argv,
         {
             param = argv[++i];
             if (!param)
-            {
-                badParam = true;
-                return;
-            }
+                return false;
 
             if (strcmp(param, "true") == 0)
                 skipBattlegrounds = true;
@@ -184,10 +164,7 @@ void handleArgs(int argc, char** argv,
         {
             param = argv[++i];
             if (!param)
-            {
-                badParam = true;
-                return;
-            }
+                return false;
 
             if (strcmp(param, "true") == 0)
                 debugOutput = true;
@@ -200,18 +177,33 @@ void handleArgs(int argc, char** argv,
         {
             silent = true;
         }
+        else if (strcmp(argv[i], "--bigBaseUnit") == 0)
+        {
+            param = argv[++i];
+            if (!param)
+                return false;
+
+            if (strcmp(param, "true") == 0)
+                bigBaseUnit = true;
+            else if (strcmp(param, "false") == 0)
+                bigBaseUnit = false;
+            else
+                printf("invalid option for '--bigBaseUnit', using default false\n");
+        }
         else
         {
             int map = atoi(argv[i]);
-            if (map > 0 || (map == 0 && (strcmp(argv[i], zero) == 0)))
+            if (map > 0 || (map == 0 && (strcmp(argv[i], "0") == 0)))
                 mapnum = map;
             else
             {
-                printf("bad parameter\n");
-                badParam = true;
+                printf("invalid map id\n");
+                return false;
             }
         }
     }
+
+    return true;
 }
 
 int finish(const char* message, int returnValue)
@@ -232,14 +224,14 @@ int main(int argc, char** argv)
          skipBattlegrounds = true,
          debugOutput = false,
          silent = false,
-         badParam = false;
+         bigBaseUnit = false;
 
-    handleArgs(argc, argv, mapnum,
-              tileX, tileY, maxAngle,
-              skipLiquid, skipContinents, skipJunkMaps, skipBattlegrounds,
-              debugOutput, silent, badParam);
+    bool validParam = handleArgs(argc, argv, mapnum,
+                                 tileX, tileY, maxAngle,
+                                 skipLiquid, skipContinents, skipJunkMaps, skipBattlegrounds,
+                                 debugOutput, silent, bigBaseUnit);
 
-    if (badParam)
+    if (!validParam)
         return silent ? -1 : finish("You have specified invalid parameters", -1);
 
     if (mapnum == -1 && debugOutput)
@@ -258,7 +250,7 @@ int main(int argc, char** argv)
         return silent ? -3 : finish("Press any key to close...", -3);
 
     MapBuilder builder(maxAngle, skipLiquid, skipContinents, skipJunkMaps,
-                       skipBattlegrounds, debugOutput);
+                       skipBattlegrounds, debugOutput, bigBaseUnit);
 
     if (tileX > -1 && tileY > -1 && mapnum >= 0)
         builder.buildTile(mapnum, tileX, tileY);

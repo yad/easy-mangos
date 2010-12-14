@@ -29,7 +29,8 @@
 namespace MMAP
 {
     MapBuilder::MapBuilder(float maxWalkableAngle, bool skipLiquid,
-                           bool skipContinents, bool skipJunkMaps, bool skipBattlegrounds, bool debugOutput) :
+                           bool skipContinents, bool skipJunkMaps, bool skipBattlegrounds,
+                           bool debugOutput, bool bigBaseUnit) :
                            m_vmapManager(NULL),
                            m_terrainBuilder(NULL),
                            m_debugOutput        (debugOutput),
@@ -37,6 +38,7 @@ namespace MMAP
                            m_skipJunkMaps       (skipJunkMaps),
                            m_skipBattlegrounds  (skipBattlegrounds),
                            m_maxWalkableAngle   (maxWalkableAngle),
+                           m_bigBaseUnit        (bigBaseUnit),
                            m_rcContext          (NULL)
     {
         m_vmapManager = new VMapManager2();
@@ -732,11 +734,11 @@ namespace MMAP
         // these are WORLD UNIT based metrics
         // this are basic unit dimentions
         // value have to divide GRID_SIZE(533.33333f) ( aka: 0.5333, 0.2666, 0.3333, 0.1333, etc )
-        const static float BASE_UNIT_DIM = 0.266666f;
+        const static float BASE_UNIT_DIM = m_bigBaseUnit ? 0.533333f : 0.266666f;
 
         // All are in UNIT metrics!
         const static int VERTEX_PER_MAP = int(GRID_SIZE/BASE_UNIT_DIM + 0.5f);
-        const static int VERTEX_PER_TILE = 80; // must divide VERTEX_PER_MAP
+        const static int VERTEX_PER_TILE = m_bigBaseUnit ? 40 : 80; // must divide VERTEX_PER_MAP
         const static int TILES_PER_MAP = VERTEX_PER_MAP/VERTEX_PER_TILE;
 
         rcConfig config;
@@ -750,11 +752,11 @@ namespace MMAP
         config.ch = BASE_UNIT_DIM;
         config.walkableSlopeAngle = m_maxWalkableAngle;
         config.tileSize = VERTEX_PER_TILE;
-        config.walkableRadius = 2;
+        config.walkableRadius = m_bigBaseUnit ? 1 : 2;
         config.borderSize = config.walkableRadius + 3;
-        config.maxEdgeLen = VERTEX_PER_TILE + 1;    //anything bigger than tileSize
-        config.walkableHeight = 6;
-        config.walkableClimb = 4;                   // keep less than walkableHeight
+        config.maxEdgeLen = VERTEX_PER_TILE + 1;        //anything bigger than tileSize
+        config.walkableHeight = m_bigBaseUnit ? 3 : 6;
+        config.walkableClimb = m_bigBaseUnit ? 2 : 4;   // keep less than walkableHeight
         config.minRegionArea = rcSqr(50);
         config.mergeRegionArea = rcSqr(40);
         config.maxSimplificationError = 3.0f;       // eliminates most jagged edges (tinny polygons)
