@@ -14,19 +14,19 @@ Generator command line args
 
 --skipLiquid                        liquid data for maps
 
-                                    true: do not include liquid data (default)
+                                    false: include liquid data (default)
 
 --skipContinents    [true|false]    continents are maps 0 (Eastern Kingdoms),
                                     1 (Kalimdor), 530 (Outlands), 571 (Northrend)
 
-                                    false: skip continents (default)
+                                    false: build continents (default)
 
 --skipJunkMaps      [true|false]    junk maps include some unused
                                     maps, transport maps, and some other
 
                                     true: skip junk maps (default)
 
---skipBattlegrouns  [true|false]    does not include PVP arenas
+--skipBattlegrounds [true|false]    does not include PVP arenas
 
                                     true: skip battlegrounds (default)
 
@@ -51,11 +51,11 @@ examples:
 movemapgen
 builds maps using the default settings (see above for defaults)
 
-movemapgen --hiResHeightmaps true --skipContinents false
-builds the default maps, plus continents, using hi resolution heightmaps
+movemapgen --skipContinents true
+builds the default maps, except continents
 
 movemapgen 0
 builds all tiles of map 0
 
 movemapgen 0 --tile 34,46
-builds only tile 34,46 of map 0 (this is the souther face of blackrock mountain)
+builds only tile 34,46 of map 0 (this is the southern face of blackrock mountain)

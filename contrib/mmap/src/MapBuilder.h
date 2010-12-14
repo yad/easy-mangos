@@ -309,14 +309,14 @@ namespace MMAP
             // debug output
             void generateObjFile(uint32 mapID, uint32 tileX, uint32 tileY, MeshData meshData);
             void generateRealObj(uint32 mapID, uint32 tileX, uint32 tileY, MeshData meshData);
-            
+
             IVMapManager* m_vmapManager;
             TerrainBuilder* m_terrainBuilder;
 
             TileList m_tiles;
 
             bool m_debugOutput;
-    
+
             bool m_skipContinents;
             bool m_skipJunkMaps;
             bool m_skipBattlegrounds;

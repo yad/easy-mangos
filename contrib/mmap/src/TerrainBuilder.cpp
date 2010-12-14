@@ -423,7 +423,7 @@ namespace MMAP
     }
 
     void TerrainBuilder::getHeightTriangle(int square, Spot triangle, int* indices, bool liquid/* = false*/)
-     {
+    {
         int rowOffset = square/V8_SIZE;
         if (!liquid)
             switch (triangle)
