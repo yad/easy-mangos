@@ -25,6 +25,7 @@
 #include "DBCStores.h"
 #include "GridMap.h"
 #include "VMapFactory.h"
+#include "MoveMap.h"
 #include "World.h"
 #include "Policies/SingletonImp.h"
 #include "Util.h"
@@ -618,7 +619,7 @@ bool GridMap::ExistVMap(uint32 mapid,int gx,int gy)
 }
 
 //////////////////////////////////////////////////////////////////////////
-TerrainInfo::TerrainInfo(uint32 mapid) : m_mapId(mapid), m_navMesh(NULL), m_navMeshQuery(NULL)
+TerrainInfo::TerrainInfo(uint32 mapid) : m_mapId(mapid)
 {
     for (int k = 0; k < MAX_NUMBER_OF_GRIDS; ++k)
     {
@@ -645,18 +646,7 @@ TerrainInfo::~TerrainInfo()
             delete m_GridMaps[i][k];
 
     VMAP::VMapFactory::createOrGetVMapManager()->unloadMap(m_mapId);
-
-    if(m_navMeshQuery)
-    {
-        dtFreeNavMeshQuery(m_navMeshQuery);
-        m_navMeshQuery = NULL;
-    }
-
-    if (m_navMesh)
-    {
-        dtFreeNavMesh(m_navMesh);
-        m_navMesh = NULL;
-    }
+    MMAP::MMapFactory::createOrGetMMapManager()->unloadMap(m_mapId);
 }
 
 GridMap * TerrainInfo::Load(const uint32 x, const uint32 y)
@@ -719,7 +709,7 @@ void TerrainInfo::CleanUpGrids(const uint32 diff)
                 VMAP::VMapFactory::createOrGetVMapManager()->unloadMap(m_mapId, x, y);
 
                 //unload mmap...
-                UnloadNavMesh(x, y);
+                MMAP::MMapFactory::createOrGetMMapManager()->unloadMap(m_mapId, x, y);
             }
         }
     }
@@ -1105,7 +1095,7 @@ GridMap * TerrainInfo::LoadMapAndVMap( const uint32 x, const uint32 y )
             }
 
             // load navmesh
-            LoadNavMesh(x, y);
+            MMAP::MMapFactory::createOrGetMMapManager()->loadMap(m_mapId, x, y);
         }
     }
 

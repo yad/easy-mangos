@@ -43,6 +43,7 @@
 #include <map>
 
 #include "TargetedMovementGenerator.h"                      // for HandleNpcUnFollowCommand
+#include "MoveMap.h"                                        // for mmap manager
 #include "PathFinder.h"                                     // for mmap commands
 
 static uint32 ReputationRankStrIndex[MAX_REPUTATION_RANK] =
@@ -5041,7 +5042,7 @@ bool ChatHandler::HandleTitlesCurrentCommand(char* args)
 
 bool ChatHandler::HandleMmapPathCommand(char* args)
 {
-    if (!m_session->GetPlayer()->GetTerrain()->GetNavMesh())
+    if (!MMAP::MMapFactory::createOrGetMMapManager()->GetNavMesh(m_session->GetPlayer()->GetMapId()))
     {
         PSendSysMessage("NavMesh not loaded for current map.");
         return true;
@@ -5114,8 +5115,8 @@ bool ChatHandler::HandleMmapLocCommand(char* /*args*/)
     PSendSysMessage("gridloc [%i,%i]", gx, gy);
 
     // calculate navmesh tile location
-    const dtNavMesh* navmesh = player->GetTerrain()->GetNavMesh();
-    const dtNavMeshQuery* navmeshquery = player->GetTerrain()->GetNavMeshQuery();
+    const dtNavMesh* navmesh = MMAP::MMapFactory::createOrGetMMapManager()->GetNavMesh(player->GetMapId());
+    const dtNavMeshQuery* navmeshquery = MMAP::MMapFactory::createOrGetMMapManager()->GetNavMeshQuery(player->GetMapId());
     if (!navmesh || !navmeshquery)
     {
         PSendSysMessage("NavMesh not loaded for current map.");
@@ -5157,8 +5158,10 @@ bool ChatHandler::HandleMmapLocCommand(char* /*args*/)
 
 bool ChatHandler::HandleMmapLoadedTilesCommand(char* /*args*/)
 {
-    const dtNavMesh* navmesh = m_session->GetPlayer()->GetTerrain()->GetNavMesh();
-    const dtNavMeshQuery* navmeshquery = m_session->GetPlayer()->GetTerrain()->GetNavMeshQuery();
+    uint32 mapid = m_session->GetPlayer()->GetMapId();
+
+    const dtNavMesh* navmesh = MMAP::MMapFactory::createOrGetMMapManager()->GetNavMesh(mapid);
+    const dtNavMeshQuery* navmeshquery = MMAP::MMapFactory::createOrGetMMapManager()->GetNavMeshQuery(mapid);
     if (!navmesh || !navmeshquery)
     {
         PSendSysMessage("NavMesh not loaded for current map.");
@@ -5184,7 +5187,7 @@ bool ChatHandler::HandleMmapStatsCommand(char* /*args*/)
     PSendSysMessage("mmap stats:");
     PSendSysMessage("  global mmap pathfinding is %sabled", sWorld.getConfig(CONFIG_BOOL_MMAP_ENABLED) ? "en" : "dis");
 
-    const dtNavMesh* navmesh = m_session->GetPlayer()->GetTerrain()->GetNavMesh();
+    const dtNavMesh* navmesh = MMAP::MMapFactory::createOrGetMMapManager()->GetNavMesh(m_session->GetPlayer()->GetMapId());
     if (!navmesh)
     {
         PSendSysMessage("NavMesh not loaded for current map.");

@@ -16,9 +16,10 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "MoveMap.h"
 #include "Creature.h"
 #include "PathFinder.h"
-#include "Map.h"
+
 #include "../recastnavigation/Detour/Include/DetourCommon.h"
 
 ////////////////// PathInfo //////////////////
@@ -36,11 +37,12 @@ PathInfo::PathInfo(const Unit* owner, const float destX, const float destY, cons
 
     PATH_DEBUG("++ PathInfo::PathInfo for %u \n", m_sourceUnit->GetGUID());
 
-    const TerrainInfo* terrain = m_sourceUnit->GetTerrain();
-    if (terrain->IsPathfindingEnabled())
+    uint32 mapId = m_sourceUnit->GetMapId();
+    if (MMAP::MMapFactory::IsPathfindingEnabled(mapId))
     {
-        m_navMesh = terrain->GetNavMesh();
-        m_navMeshQuery = terrain->GetNavMeshQuery();
+        MMAP::MMapManager* mmap = MMAP::MMapFactory::createOrGetMMapManager();
+        m_navMesh = mmap->GetNavMesh(mapId);
+        m_navMeshQuery = mmap->GetNavMeshQuery(mapId);
     }
 
     if (m_navMesh && m_navMeshQuery)
