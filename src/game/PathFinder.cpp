@@ -163,9 +163,10 @@ dtPolyRef PathInfo::getPolyByLocation(const float* point, float *distance)
     // first try with low search box
     float extents[VERTEX_SIZE] = {3.0f, 5.0f, 3.0f};    // bounds of poly search area
     dtQueryFilter filter = createFilter();
-    float closestPoint[VERTEX_SIZE];
+    float closestPoint[VERTEX_SIZE] = {0.0f, 0.0f, 0.0f};
 
-    if(DT_SUCCESS == m_navMeshQuery->findNearestPoly(point, extents, &filter, &polyRef, closestPoint))
+    dtStatus result = m_navMeshQuery->findNearestPoly(point, extents, &filter, &polyRef, closestPoint);
+    if(DT_SUCCESS == result && polyRef != INVALID_POLYREF)
     {
         *distance = dtVdist(closestPoint, point);
         return polyRef;
@@ -174,7 +175,8 @@ dtPolyRef PathInfo::getPolyByLocation(const float* point, float *distance)
     // still nothing ..
     // try with bigger search box
     extents[1] = 200.0f;
-    if(DT_SUCCESS == m_navMeshQuery->findNearestPoly(point, extents, &filter, &polyRef, closestPoint))
+    result = m_navMeshQuery->findNearestPoly(point, extents, &filter, &polyRef, closestPoint);
+    if(DT_SUCCESS == result && polyRef != INVALID_POLYREF)
     {
         *distance = dtVdist(closestPoint, point);
         return polyRef;
