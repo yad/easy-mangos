@@ -646,7 +646,7 @@ namespace MMAP
         int tileBits = STATIC_TILE_BITS;
         int polyBits = STATIC_POLY_BITS;
 
-        int maxTiles = 1 << tileBits;
+        int maxTiles = tiles->size();
         int maxPolysPerTile = 1 << polyBits;
 
         /***          calculate bounds of map         ***/
