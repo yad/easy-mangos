@@ -219,7 +219,8 @@ void PathInfo::BuildPolyPath(PathNode startPos, PathNode endPos)
         {
             Creature* owner = (Creature*)m_sourceUnit;
 
-            if (m_sourceUnit->GetTerrain()->IsUnderWater(endPos.x, endPos.y, endPos.z))
+            PathNode p = (distToStartPoly > 7.0f) ? startPos : endPos;
+            if (m_sourceUnit->GetTerrain()->IsUnderWater(p.x, p.y, p.z))
             {
                 PATH_DEBUG("++ BuildPolyPath :: underWater case\n");
                 if (owner->CanSwim() || owner->IsPet())
