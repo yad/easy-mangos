@@ -874,25 +874,29 @@ void GameObject::TriggeringLinkedGameObject( uint32 trapEntry, Unit* target)
         return;
 
     SpellEntry const* trapSpell = sSpellStore.LookupEntry(trapInfo->trap.spellId);
-    if(!trapSpell)                                          // checked at load already
-        return;
 
-    float range = GetSpellMaxRange(sSpellRangeStore.LookupEntry(trapSpell->rangeIndex));
+    // The range to search for linked trap is weird. We set 0.5 as default. Most (all?)
+    // traps are probably expected to be pretty much at the same location as the used GO,
+    // so it appears that using range from spell is obsolete.
+    float range = 0.5f;
+
+    if (trapSpell)                                          // checked at load already
+        range = GetSpellMaxRange(sSpellRangeStore.LookupEntry(trapSpell->rangeIndex));
 
     // search nearest linked GO
     GameObject* trapGO = NULL;
+
     {
-        // using original GO distance
-        MaNGOS::NearestGameObjectEntryInObjectRangeCheck go_check(*target,trapEntry,range);
-        MaNGOS::GameObjectLastSearcher<MaNGOS::NearestGameObjectEntryInObjectRangeCheck> checker(trapGO,go_check);
+        // search closest with base of used GO, using max range of trap spell as search radius (why? See above)
+        MaNGOS::NearestGameObjectEntryInObjectRangeCheck go_check(*this, trapEntry, range);
+        MaNGOS::GameObjectLastSearcher<MaNGOS::NearestGameObjectEntryInObjectRangeCheck> checker(trapGO, go_check);
 
         Cell::VisitGridObjects(this, checker, range);
     }
 
     // found correct GO
-    // FIXME: when GO casting will be implemented trap must cast spell to target
-    if(trapGO)
-        target->CastSpell(target, trapSpell, true, NULL, NULL, GetGUID());
+    if (trapGO)
+        trapGO->Use(target);
 }
 
 GameObject* GameObject::LookupFishingHoleAround(float range)
@@ -1017,6 +1021,20 @@ void GameObject::Use(Unit* user)
         {
             // No known way to exclude some - only different approach is to select despawnable GOs by Entry
             SetLootState(GO_JUST_DEACTIVATED);
+            return;
+        }
+        case GAMEOBJECT_TYPE_TRAP:                          // 6
+        {
+            // Currently we do not expect trap code below to be Use()
+            // directly (except from spell effect). Code here will be called by TriggeringLinkedGameObject.
+
+            // FIXME: when GO casting will be implemented trap must cast spell to target
+            if (uint32 spellId = GetGOInfo()->trap.spellId)
+                user->CastSpell(user, spellId, true, NULL, NULL, GetGUID());
+
+            // TODO: all traps can be activated, also those without spell.
+            // Some may have have animation and/or are expected to despawn.
+
             return;
         }
         case GAMEOBJECT_TYPE_CHAIR:                         //7 Sitting: Wooden bench, chairs
@@ -1320,7 +1338,10 @@ void GameObject::Use(Unit* user)
             if (GetUniqueUseCount() < info->summoningRitual.reqParticipants)
                 return;
 
-            spellCaster = GetMap()->GetPlayer(m_firstUser);
+            // owner is first user for non-wild GO objects, if it offline value already set to current user
+            if (GetOwnerGuid().IsEmpty())
+                if (Player* firstUser = GetMap()->GetPlayer(m_firstUser))
+                    spellCaster = firstUser;
 
             spellId = info->summoningRitual.spellId;
 
