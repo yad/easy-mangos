@@ -614,6 +614,8 @@
     <ClInclude Include="..\..\src\game\MapRefManager.h" />
     <ClInclude Include="..\..\src\game\MapUpdater.h" />
     <ClInclude Include="..\..\src\game\MotionMaster.h" />
+    <ClInclude Include="..\..\src\game\MoveMap.h" />
+    <ClInclude Include="..\..\src\game\MoveMapSharedDefines.h" />
     <ClInclude Include="..\..\src\game\MovementGenerator.h" />
     <ClInclude Include="..\..\src\game\NPCHandler.h" />
     <ClInclude Include="..\..\src\game\NullCreatureAI.h" />

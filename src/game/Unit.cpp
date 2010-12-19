@@ -290,8 +290,6 @@ Unit::Unit()
     // Frozen Mod
     m_spoofSamePlayerFaction = false;
     // Frozen Mod
-
-    m_evadeWhenCan = false;
 }
 
 Unit::~Unit()
@@ -387,12 +385,6 @@ void Unit::Update( uint32 p_time )
     ModifyAuraState(AURA_STATE_HEALTHLESS_20_PERCENT, GetHealth() < GetMaxHealth()*0.20f);
     ModifyAuraState(AURA_STATE_HEALTHLESS_35_PERCENT, GetHealth() < GetMaxHealth()*0.35f);
     ModifyAuraState(AURA_STATE_HEALTH_ABOVE_75_PERCENT, GetHealth() > GetMaxHealth()*0.75f);
-
-    if (m_evadeWhenCan && GetTypeId() == TYPEID_UNIT)
-    {
-        ((Creature*)this)->AI()->EnterEvadeMode();
-        m_evadeWhenCan = false;
-    }
 
     i_motionMaster.UpdateMotion(p_time);
 }
@@ -9232,6 +9224,33 @@ bool Unit::SelectHostileTarget()
         {
             SetInFront(target);
             ((Creature*)this)->AI()->AttackStart(target);
+            
+            // check if currently selected target is reachable
+            // NOTE: path alrteady generated from AttackStart()
+            if(!GetMotionMaster()->operator->()->IsReachable())
+            {
+                // remove all taunts
+                RemoveSpellsCausingAura(SPELL_AURA_MOD_TAUNT);
+
+                if(m_ThreatManager.getThreatList().size() < 2)
+                {
+                    // only one target in list, we have to evade after timer
+                    // TODO: make timer - inside Creature class
+                    ((Creature*)this)->AI()->EnterEvadeMode();
+                }
+                else
+                {
+                    // remove unreachable target from our threat list
+                    // next iteration we will select next possible target
+                    m_HostileRefManager.deleteReference(target);
+                    m_ThreatManager.modifyThreatPercent(target, -101);
+                    
+                    _removeAttacker(target);
+                }
+
+                return false;
+            }
+       
         }
         return true;
     }
@@ -11486,6 +11505,11 @@ void Unit::MonsterMoveByPath(float x, float y, float z, uint32 speed, bool smoot
 {
     PathInfo path(this, x, y, z, !smoothPath);
     PointPath pointPath = path.getFullPath();
+    uint32 size = pointPath.size();
+    // tiny hack for underwater charge cases
+    pointPath[size-1].x = x;
+    pointPath[size-1].y = y;
+    pointPath[size-1].z = z;
 
     uint32 traveltime = uint32(pointPath.GetTotalLength()/float(speed));
     MonsterMoveByPath(pointPath, 1, pointPath.size(), traveltime);
@@ -11989,7 +12013,7 @@ void Unit::SendMonsterMoveByPath(Path<Elem,Node> const& path, uint32 start, uint
     if (flags & SplineFlags(SPLINEFLAG_FLYING | SPLINEFLAG_CATMULLROM))
     {
         // sending a taxi flight path
-        for(uint32 i = start; i < end; ++i)
+        for (uint32 i = start; i < end; ++i)
         {
             data << float(path[i].x);
             data << float(path[i].y);

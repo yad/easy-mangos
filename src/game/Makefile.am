@@ -196,6 +196,9 @@ libmangosgame_a_SOURCES = \
 	MiscHandler.cpp \
 	MotionMaster.cpp \
 	MotionMaster.h \
+	MoveMap.cpp \
+	MoveMap.h \
+	MoveMapSharedDefines.h \
 	MovementGenerator.cpp \
 	MovementGenerator.h \
 	MovementGeneratorImpl.h \

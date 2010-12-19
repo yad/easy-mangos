@@ -45,6 +45,7 @@ class InputGeom
 	unsigned char m_offMeshConDirs[MAX_OFFMESH_CONNECTIONS];
 	unsigned char m_offMeshConAreas[MAX_OFFMESH_CONNECTIONS];
 	unsigned short m_offMeshConFlags[MAX_OFFMESH_CONNECTIONS];
+	unsigned int m_offMeshConId[MAX_OFFMESH_CONNECTIONS];
 	int m_offMeshConCount;
 
 	// Convex Volumes.
@@ -56,9 +57,9 @@ public:
 	InputGeom();
 	~InputGeom();
 	
-	bool loadMesh(struct rcBuildContext* ctx, const char* filepath);
+	bool loadMesh(class rcContext* ctx, const char* filepath);
 	
-	bool load(struct rcBuildContext* ctx, const char* filepath);
+	bool load(class rcContext* ctx, const char* filepath);
 	bool save(const char* filepath);
 	
 	// Method to return static mesh data.
@@ -75,6 +76,7 @@ public:
 	const unsigned char* getOffMeshConnectionDirs() const { return m_offMeshConDirs; }
 	const unsigned char* getOffMeshConnectionAreas() const { return m_offMeshConAreas; }
 	const unsigned short* getOffMeshConnectionFlags() const { return m_offMeshConFlags; }
+	const unsigned int* getOffMeshConnectionId() const { return m_offMeshConId; }
 	void addOffMeshConnection(const float* spos, const float* epos, const float rad,
 							  unsigned char bidir, unsigned char area, unsigned short flags);
 	void deleteOffMeshConnection(int i);

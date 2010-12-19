@@ -46,9 +46,6 @@ public:
     virtual void DoNonCombatActions();
     virtual void InitSpells(PlayerbotAI* const ai);
 
-    // buff a specific player, usually a real PC who is not in group
-    virtual bool BuffPlayer(Player* target);
-
     // Utilities
     Player* GetMaster () { return m_master; }
     Player* GetPlayerBot() { return m_bot; }

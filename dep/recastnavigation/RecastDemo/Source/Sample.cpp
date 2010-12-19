@@ -38,7 +38,7 @@ Sample::Sample() :
 	m_geom(0),
 	m_navMesh(0),
 	m_navQuery(0),
-	m_navMeshDrawFlags(DU_DRAWNAVMESH_OFFMESHCONS),
+	m_navMeshDrawFlags(DU_DRAWNAVMESH_OFFMESHCONS|DU_DRAWNAVMESH_CLOSEDLIST),
 	m_tool(0),
 	m_ctx(0)
 {
@@ -118,7 +118,7 @@ void Sample::resetCommonSettings()
 	m_agentRadius = 0.6f;
 	m_agentMaxClimb = 0.9f;
 	m_agentMaxSlope = 45.0f;
-	m_regionMinSize = 50;
+	m_regionMinSize = 8;
 	m_regionMergeSize = 20;
 	m_edgeMaxLen = 12.0f;
 	m_edgeMaxError = 1.3f;
@@ -159,12 +159,12 @@ void Sample::handleCommonSettings()
 	imguiSeparator();
 	imguiLabel("Polygonization");
 	imguiSlider("Max Edge Length", &m_edgeMaxLen, 0.0f, 50.0f, 1.0f);
-	imguiSlider("Max Edge Error", &m_edgeMaxError, 0.1f, 3.0f, 0.1f);
+	imguiSlider("Max Edge Error", &m_edgeMaxError, 0.1f, 4.0f, 0.1f);
 	imguiSlider("Verts Per Poly", &m_vertsPerPoly, 3.0f, 12.0f, 1.0f);		
 
 	imguiSeparator();
 	imguiLabel("Detail Mesh");
-	imguiSlider("Sample Distance", &m_detailSampleDist, 0.0f, 16.0f, 1.0f);
+	imguiSlider("Sample Distance", &m_detailSampleDist, 0.0f, 32.0f, 1.0f);
 	imguiSlider("Max Sample Error", &m_detailSampleMaxError, 0.0f, 16.0f, 1.0f);
 	
 	imguiSeparator();
@@ -174,6 +174,12 @@ void Sample::handleClick(const float* s, const float* p, bool shift)
 {
 	if (m_tool)
 		m_tool->handleClick(s, p, shift);
+}
+
+void Sample::handleToggle()
+{
+	if (m_tool)
+		m_tool->handleToggle();
 }
 
 void Sample::handleStep()

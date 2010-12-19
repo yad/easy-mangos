@@ -39,8 +39,7 @@
 
 #include <bitset>
 #include <list>
-
-#include "../recastnavigation/Detour/Include/DetourNavMesh.h"
+#include <set>
 
 class Unit;
 class WorldPacket;
@@ -324,17 +323,6 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
 
         template<class T>
             void DeleteFromWorld(T*);
-
-        // begin movemap-related
-    public:
-        dtNavMesh* GetNavMesh();
-
-    private:
-        void LoadNavMesh(int gx, int gy);
-        void UnloadNavMesh(int gx, int gy);
-        dtNavMesh* m_navMesh;
-        UNORDERED_MAP<uint32, uint32> m_mmapTileMap;    // maps [map grid coords] to [dtTile coords]
-        // end movemap-related
 };
 
 class MANGOS_DLL_SPEC InstanceMap : public Map

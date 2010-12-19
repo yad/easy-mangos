@@ -1,16 +1,32 @@
-#ifndef _MMAP_TILE_BUILDER_H
-#define _MMAP_TILE_BUILDER_H
+/*
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+#ifndef _MMAP_TERRAIN_BUILDER_H
+#define _MMAP_TERRAIN_BUILDER_H
 
 #include "MMapCommon.h"
 #include "MangosMap.h"
-#include "IVMapManager.h"
-#include "WorldModel.h"
+#include "../../src/game/MoveMapSharedDefines.h"
 
 #include "G3D/Array.h"
 #include "G3D/Vector3.h"
 #include "G3D/Matrix3.h"
 
-using namespace VMAP;
 using namespace MaNGOS;
 
 namespace MMAP
@@ -35,7 +51,10 @@ namespace MMAP
     static const int V8_SIZE = 128;
     static const int V8_SIZE_SQ = V8_SIZE*V8_SIZE;
     static const float GRID_SIZE = 533.33333f;
-    static const float GRID_PART_SIZE = (float)1/V8_SIZE*GRID_SIZE;
+    static const float GRID_PART_SIZE = GRID_SIZE/V8_SIZE;
+
+    // see contrib/extractor/system.cpp, CONF_use_minHeight
+    static const float INVALID_MAP_LIQ_HEIGHT = -500.f;
 
     struct MeshData
     {
@@ -47,45 +66,42 @@ namespace MMAP
         G3D::Array<uint8> liquidType;
     };
 
-    // see also game/src/PathFinder.h
-    enum NavTerrain
-    {
-        NAV_GROUND  = 0x01,
-        NAV_MAGMA   = 0x02,
-        NAV_SLIME   = 0x04,
-        NAV_WATER   = 0x08,
-        NAV_UNUSED1 = 0x10,
-        NAV_UNUSED2 = 0x20
-        // we only have 6 bits of a bitfield
-    };
-
     class TerrainBuilder
     {
         public:
-            TerrainBuilder(bool skipLiquid, bool hiRes);
+            TerrainBuilder(bool skipLiquid);
             ~TerrainBuilder();
 
             void loadMap(uint32 mapID, uint32 tileX, uint32 tileY, MeshData &meshData);
+            bool usesLiquids() { return !m_skipLiquid; }
 
         private:
 
-            // general
+            /// Loads a portion of a map's terrain
             bool loadMap(uint32 mapID, uint32 tileX, uint32 tileY, MeshData &meshData, Spot portion);
+
+            /// Sets loop variables for selecting only certain parts of a map's terrain
             void getLoopVars(Spot portion, int &loopStart, int &loopEnd, int &loopInc);
 
-            // terrain
-            bool m_hiResHeightMaps;
-
-            bool loadHeightMap(uint32 mapID, uint32 tileX, uint32 tileY, G3D::Array<float> &vertices, G3D::Array<int> &triangles, Spot portion);
-            void getHeightCoord(int index, Grid grid, float xOffset, float yOffset, float* coord, float* v);
-            void getHeightTriangle(int square, Spot triangle, int* indices, bool liquid = false);
-            bool isHole(int square, const uint16 holes[16][16]);
-
-            // liquid
+            /// Controls whether liquids are loaded
             bool m_skipLiquid;
 
-            bool loadLiquidMap(uint32 mapID, uint32 tileX, uint32 tileY, G3D::Array<float> &vertices, G3D::Array<int> &triangles, Spot portion);
+            /// Load the map terrain from file
+            bool loadHeightMap(uint32 mapID, uint32 tileX, uint32 tileY, G3D::Array<float> &vertices, G3D::Array<int> &triangles, Spot portion);
+
+            /// Get the vector coordinate for a specific position
+            void getHeightCoord(int index, Grid grid, float xOffset, float yOffset, float* coord, float* v);
+
+            /// Get the triangle's vector indices for a specific position
+            void getHeightTriangle(int square, Spot triangle, int* indices, bool liquid = false);
+
+            /// Determines if the specific position's triangles should be rendered
+            bool isHole(int square, const uint16 holes[16][16]);
+
+            /// Get the liquid vector coordinate for a specific position
             void getLiquidCoord(int index, int index2, float xOffset, float yOffset, float* coord, float* v);
+
+            /// Get the liquid type for a specific position
             uint8 getLiquidType(int square, const uint8 liquid_type[16][16]);
 
             // hide parameterless and copy constructor

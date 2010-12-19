@@ -20,10 +20,11 @@
 #define MANGOS_PATH_FINDER_H
 
 #include "Path.h"
+#include "MoveMapSharedDefines.h"
 #include "../recastnavigation/Detour/Include/DetourNavMesh.h"
 #include "../recastnavigation/Detour/Include/DetourNavMeshQuery.h"
 
-class WorldObject;
+class Unit;
 
 #define PRINT_DEBUG_INFO    0
 #define PATH_DEBUG(...)             \
@@ -36,7 +37,6 @@ class WorldObject;
 // 128*6.0f=768y  number_of_points*interval = max_path_len
 // this is way more than actual evade range
 // I think we can safely cut those down even more
-#define MESH_MAX_NODES          1024
 #define MAX_PATH_LENGTH         128
 #define MAX_POINT_PATH_LENGTH   128
 
@@ -44,21 +44,7 @@ class WorldObject;
 #define SMOOTH_PATH_SLOP        0.4f
 
 #define VERTEX_SIZE       3
-
 #define INVALID_POLYREF   0
-
-// see contrib/mmap/src/TileBuilder.h
-enum NavTerrain
-{
-    NAV_EMPTY   = 0x00,
-    NAV_GROUND  = 0x01,
-    NAV_MAGMA   = 0x02,
-    NAV_SLIME   = 0x04,
-    NAV_WATER   = 0x08,
-    NAV_UNUSED1 = 0x10,
-    NAV_UNUSED2 = 0x20
-    // we only have 6 bits of a bitfield
-};
 
 enum PathType
 {
@@ -73,33 +59,31 @@ enum PathType
 class PathInfo
 {
     public:
-        PathInfo(const WorldObject* from, const float destX, const float destY, const float destZ, bool useStraightPath = false);
+        PathInfo(Unit const* owner, const float destX, const float destY, const float destZ, bool useStraightPath = false);
         ~PathInfo();
 
-        void Update(const float destX, const float destY, const float destZ, bool useStraightPath = false);
+        // return value : true if new path was calculated
+        bool Update(const float destX, const float destY, const float destZ, bool useStraightPath = false);
 
         inline void getStartPosition(float &x, float &y, float &z) { x = m_startPosition.x; y = m_startPosition.y; z = m_startPosition.z; }
         inline void getNextPosition(float &x, float &y, float &z) { x = m_nextPosition.x; y = m_nextPosition.y; z = m_nextPosition.z; }
         inline void getEndPosition(float &x, float &y, float &z) { x = m_endPosition.x; y = m_endPosition.y; z = m_endPosition.z; }
         inline void getActualEndPosition(float &x, float &y, float &z) { x = m_actualEndPosition.x; y = m_actualEndPosition.y; z = m_actualEndPosition.z; }
 
-        inline PathNode getStartPosition() { return m_startPosition; }
-        inline PathNode getNextPosition() { return m_nextPosition; }
-        inline PathNode getEndPosition() { return m_endPosition; }
-        inline PathNode getActualEndPosition() { return m_actualEndPosition; }
+        inline PathNode getStartPosition() const { return m_startPosition; }
+        inline PathNode getNextPosition() const { return m_nextPosition; }
+        inline PathNode getEndPosition() const { return m_endPosition; }
+        inline PathNode getActualEndPosition() const { return m_actualEndPosition; }
 
-        inline uint32 getPathPointer() { return m_pointPathPointer == 0 ? 1 : m_pointPathPointer; }
         inline PointPath& getFullPath() { return m_pathPoints; }
-        inline PathType getPathType() {return m_type;}
+        inline PathType getPathType() const { return m_type; }
 
     private:
 
-        dtPolyRef   *   m_pathPolyRefs;     // array of detour polygon references
+        dtPolyRef      *m_pathPolyRefs;     // array of detour polygon references
         uint32          m_polyLength;       // number of polygons in the path
 
         PointPath       m_pathPoints;       // our actual (x,y,z) path to the target
-        uint32          m_pointPathPointer; // points to current triple in m_pathPoints - used when dest do not change
-                                            // the triple is the one that is currently being moved toward
         PathType        m_type;             // tells what kind of path this is
 
         bool            m_useStraightPath;  // type of path will be generated
@@ -109,9 +93,9 @@ class PathInfo
         PathNode        m_endPosition;      // {x, y, z} of the destination
         PathNode        m_actualEndPosition;  // {x, y, z} of the closest possible point to given destination
 
-        const WorldObject *m_sourceObject;  // the object that is moving (safe pointer because PathInfo is only accessed from the mover?)
-        dtNavMesh   *   m_navMesh;          // the nav mesh
-        dtNavMeshQuery* m_navMeshQuery;     // the nav mesh query used to find the path
+        const Unit* const       m_sourceUnit;       // the unit that is moving
+        const dtNavMesh*        m_navMesh;          // the nav mesh
+        const dtNavMeshQuery*   m_navMeshQuery;     // the nav mesh query used to find the path
 
         inline void setNextPosition(PathNode point) { m_nextPosition = point; }
         inline void setStartPosition(PathNode point) { m_startPosition = point; }
@@ -122,22 +106,17 @@ class PathInfo
         {
             delete [] m_pathPolyRefs;
             m_pathPolyRefs = NULL;
-
             m_polyLength = 0;
 
             m_pathPoints.clear();
-            m_pointPathPointer = 0;
         }
 
-        dtPolyRef getPathPolyByPosition(PathNode p, float &distance);
+        dtPolyRef getPathPolyByPosition(dtPolyRef *polyPath, uint32 polyPathSize, const float* point, float *distance = NULL);
+        dtPolyRef getPolyByLocation(const float* point, float *distance);
 
         void BuildPolyPath(PathNode startPos, PathNode endPos);
         void BuildPointPath(float *startPoint, float *endPoint);
         void BuildShortcut();
-
-        // owner calls
-        bool canFly();
-        bool canSwim();
 
         NavTerrain getNavTerrain(float x, float y, float z);
         dtQueryFilter createFilter();
@@ -147,11 +126,10 @@ class PathInfo
                              const dtPolyRef* visited, const uint32 nvisited);
         bool getSteerTarget(const float* startPos, const float* endPos, const float minTargetDist,
                             const dtPolyRef* path, const uint32 pathSize, float* steerPos,
-                            unsigned char& steerPosFlag, dtPolyRef& steerPosRef,
-                            float* outPoints = 0, uint32* outPountcount = 0);
-        uint32 findSmoothPath(const float* startPos, const float* endPos,
-                              const dtPolyRef* path, const uint32 pathSize,
-                              float* smoothPath, const uint32 smoothPathMaxSize);
+                            unsigned char& steerPosFlag, dtPolyRef& steerPosRef);
+        dtStatus findSmoothPath(const float* startPos, const float* endPos,
+                              const dtPolyRef* polyPath, const uint32 polyPathSize,
+                              float* smoothPath, int* straightPathCount, const uint32 smoothPathMaxSize);
 };
 
 inline bool inRangeYZX(const float* v1, const float* v2, const float r, const float h)

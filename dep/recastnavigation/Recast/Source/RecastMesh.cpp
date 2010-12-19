@@ -483,7 +483,7 @@ static void pushBack(int v, int* arr, int& an)
 	an++;
 }
 
-static bool canRemoveVertex(rcBuildContext* ctx, rcPolyMesh& mesh, const unsigned short rem)
+static bool canRemoveVertex(rcContext* ctx, rcPolyMesh& mesh, const unsigned short rem)
 {
 	const int nvp = mesh.nvp;
 	
@@ -585,7 +585,7 @@ static bool canRemoveVertex(rcBuildContext* ctx, rcPolyMesh& mesh, const unsigne
 	return true;
 }
 
-static bool removeVertex(rcBuildContext* ctx, rcPolyMesh& mesh, const unsigned short rem, const int maxTris)
+static bool removeVertex(rcContext* ctx, rcPolyMesh& mesh, const unsigned short rem, const int maxTris)
 {
 	const int nvp = mesh.nvp;
 
@@ -893,11 +893,11 @@ static bool removeVertex(rcBuildContext* ctx, rcPolyMesh& mesh, const unsigned s
 }
 
 
-bool rcBuildPolyMesh(rcBuildContext* ctx, rcContourSet& cset, int nvp, rcPolyMesh& mesh)
+bool rcBuildPolyMesh(rcContext* ctx, rcContourSet& cset, int nvp, rcPolyMesh& mesh)
 {
 	rcAssert(ctx);
 	
-	rcTimeVal startTime = ctx->getTime();
+	ctx->startTimer(RC_TIMER_BUILD_POLYMESH);
 
 	rcVcopy(mesh.bmin, cset.bmin);
 	rcVcopy(mesh.bmax, cset.bmax);
@@ -1163,21 +1163,28 @@ bool rcBuildPolyMesh(rcBuildContext* ctx, rcContourSet& cset, int nvp, rcPolyMes
 	}
 	memset(mesh.flags, 0, sizeof(unsigned short) * mesh.npolys);
 	
-	rcTimeVal endTime = ctx->getTime();
+	if (mesh.nverts > 0xffff)
+	{
+		ctx->log(RC_LOG_ERROR, "rcMergePolyMeshes: The resulting mesh has too many vertices %d (max %d). Data can be corrupted.", mesh.nverts, 0xffff);
+	}
+	if (mesh.npolys > 0xffff)
+	{
+		ctx->log(RC_LOG_ERROR, "rcMergePolyMeshes: The resulting mesh has too many polygons %d (max %d). Data can be corrupted.", mesh.npolys, 0xffff);
+	}
 	
-	ctx->reportBuildTime(RC_TIME_BUILD_POLYMESH, ctx->getDeltaTimeUsec(startTime, endTime));
+	ctx->stopTimer(RC_TIMER_BUILD_POLYMESH);
 	
 	return true;
 }
 
-bool rcMergePolyMeshes(rcBuildContext* ctx, rcPolyMesh** meshes, const int nmeshes, rcPolyMesh& mesh)
+bool rcMergePolyMeshes(rcContext* ctx, rcPolyMesh** meshes, const int nmeshes, rcPolyMesh& mesh)
 {
 	rcAssert(ctx);
 	
 	if (!nmeshes || !meshes)
 		return true;
 
-	rcTimeVal startTime = ctx->getTime();
+	ctx->startTimer(RC_TIMER_MERGE_POLYMESH);
 
 	mesh.nvp = meshes[0]->nvp;
 	mesh.cs = meshes[0]->cs;
@@ -1299,11 +1306,17 @@ bool rcMergePolyMeshes(rcBuildContext* ctx, rcPolyMesh** meshes, const int nmesh
 		ctx->log(RC_LOG_ERROR, "rcMergePolyMeshes: Adjacency failed.");
 		return false;
 	}
-		
 
-	rcTimeVal endTime = ctx->getTime();
+	if (mesh.nverts > 0xffff)
+	{
+		ctx->log(RC_LOG_ERROR, "rcMergePolyMeshes: The resulting mesh has too many vertices %d (max %d). Data can be corrupted.", mesh.nverts, 0xffff);
+	}
+	if (mesh.npolys > 0xffff)
+	{
+		ctx->log(RC_LOG_ERROR, "rcMergePolyMeshes: The resulting mesh has too many polygons %d (max %d). Data can be corrupted.", mesh.npolys, 0xffff);
+	}
 	
-	ctx->reportBuildTime(RC_TIME_MERGE_POLYMESH, ctx->getDeltaTimeUsec(startTime, endTime));
+	ctx->stopTimer(RC_TIMER_MERGE_POLYMESH);
 	
 	return true;
 }
