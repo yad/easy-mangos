@@ -345,7 +345,7 @@ void PlayerbotWarlockAI::DoNonCombatActions()
         }
         else
         {
-            ai->UseItem(*stone, EQUIPMENT_SLOT_MAINHAND);
+            ai->UseItem(stone, EQUIPMENT_SLOT_MAINHAND);
             ai->SetIgnoreUpdateTime(5);
         }
     }
@@ -360,7 +360,7 @@ void PlayerbotWarlockAI::DoNonCombatActions()
     // mana check
     if (pItemDrink && ai->GetManaPercent() < 25)
     {
-        ai->UseItem(*pItemDrink);
+        ai->UseItem(pItemDrink);
         ai->SetIgnoreUpdateTime(30);
         return;
     }
@@ -371,13 +371,13 @@ void PlayerbotWarlockAI::DoNonCombatActions()
     // hp check
     else if (pItemFood && ai->GetHealthPercent() < 30)
     {
-        ai->UseItem(*pItemFood);
+        ai->UseItem(pItemFood);
         ai->SetIgnoreUpdateTime(30);
         return;
     }
     else if (!pItemFood && pItemBandage && !ai->HasAura(RECENTLY_BANDAGED, m_bot) && ai->GetHealthPercent() < 70)
     {
-        ai->UseItem(*pItemBandage);
+        ai->UseItem(pItemBandage);
         ai->SetIgnoreUpdateTime(8);
         return;
     }

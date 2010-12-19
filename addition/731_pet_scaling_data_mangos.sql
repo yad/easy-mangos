@@ -84,7 +84,9 @@ INSERT INTO `pet_scaling_data` (`creature_entry`, `aura`, `healthbase`, `health`
 -- Pet 17252 - warlock felguard
 DELETE FROM `pet_scaling_data` WHERE `creature_entry` = 17252;
 INSERT INTO `pet_scaling_data` (`creature_entry`, `aura`, `healthbase`, `health`, `powerbase`, `power`, `str`, `agi`, `sta`, `inte`, `spi`, `armor`, `resistance1`, `resistance2`, `resistance3`, `resistance4`, `resistance5`, `resistance6`, `apbase`, `apbasescale`, `attackpower`, `damage`, `spelldamage`, `spellhit`, `hit`, `expertize`, `attackspeed`, `crit`, `regen`) VALUES
-(17252, 0, 0, 1100, 0, 1150, 0, 0, 75, 30, 0, 35, 40, 40, 40, 40, 40, 40, 20, 200, 57, 0, 15, 100, 100, 100, 100, 0, 20);
+(17252,     0, 0, 1100, 0, 1150, 0, 0, 75, 30, 0, 35, 40, 40, 40, 40, 40, 40, 20, 200, 57, 0, 15, 100, 100, 100, 100, 0, 20),
+(17252, 56246, 0,    0, 0,    0, 0, 0,  0,  0, 0,  0,  0,  0,  0,  0,  0,  0,  0,   0, 20, 0,  0,   0,   0,   0,   0, 0,  0);
+
 
 -- Pet 37994 - Mage water elemental
 DELETE FROM `pet_scaling_data` WHERE `creature_entry` = 37994;
@@ -105,3 +107,19 @@ INSERT INTO `pet_scaling_data` (`creature_entry`, `aura`, `healthbase`, `health`
 DELETE FROM `pet_scaling_data` WHERE `creature_entry` = 27829;
 INSERT INTO `pet_scaling_data` (`creature_entry`, `aura`, `healthbase`, `health`, `powerbase`, `power`, `str`, `agi`, `sta`, `inte`, `spi`, `armor`, `resistance1`, `resistance2`, `resistance3`, `resistance4`, `resistance5`, `resistance6`, `apbase`, `apbasescale`, `attackpower`, `damage`, `spelldamage`, `spellhit`, `hit`, `expertize`, `attackspeed`, `crit`, `regen`) VALUES
 (27829, 0, 0, 1000, 0, 1500, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 20, 200, 0, 0, 50, 100, 100, 100, 100, 0, 0);
+
+-- Guardian 15352 - Greater Earth Elemental
+DELETE FROM `pet_scaling_data` WHERE `creature_entry` = 15352;
+INSERT INTO `pet_scaling_data` (`creature_entry`, `aura`, `healthbase`, `health`, `powerbase`, `power`, `str`, `agi`, `sta`, `inte`, `spi`, `armor`, `resistance1`, `resistance2`, `resistance3`, `resistance4`, `resistance5`, `resistance6`, `apbase`, `apbasescale`, `attackpower`, `damage`, `spelldamage`, `spellhit`, `hit`, `expertize`, `attackspeed`, `crit`, `regen`) VALUES
+(15352, 0, 0, 1000, 0, 1500, 0, 0, 50, 0, 0, 0, 0, 0, 0, 0, 0, 0, 20, 200, 40, 0, 30, 100, 100, 100, 100, 0, 0);
+
+-- Guardian 15438 - Greater Fire Elemental
+DELETE FROM `pet_scaling_data` WHERE `creature_entry` = 15438;
+INSERT INTO `pet_scaling_data` (`creature_entry`, `aura`, `healthbase`, `health`, `powerbase`, `power`, `str`, `agi`, `sta`, `inte`, `spi`, `armor`, `resistance1`, `resistance2`, `resistance3`, `resistance4`, `resistance5`, `resistance6`, `apbase`, `apbasescale`, `attackpower`, `damage`, `spelldamage`, `spellhit`, `hit`, `expertize`, `attackspeed`, `crit`, `regen`) VALUES
+(15438, 0, 0, 1000, 0, 1500, 0, 0, 20, 10, 0, 0, 0, 0, 0, 0, 0, 0, 20, 200, 80, 0, 40, 100, 100, 100, 100, 0, 0);
+
+-- Pet 510 - Mage water elemental (old guardian)
+DELETE FROM `pet_scaling_data` WHERE `creature_entry` = 510;
+INSERT INTO `pet_scaling_data` (`creature_entry`, `aura`, `healthbase`, `health`, `powerbase`, `power`, `str`, `agi`, `sta`, `inte`, `spi`, `armor`, `resistance1`, `resistance2`, `resistance3`, `resistance4`, `resistance5`, `resistance6`, `apbase`, `apbasescale`, `attackpower`, `damage`, `spelldamage`, `spellhit`, `hit`, `expertize`, `attackspeed`, `crit`, `regen`) VALUES
+(510, 0, 0, 1000, 0, 1500, 0, 0, 30, 30, 0, 35, 0, 0, 0, 0, 0, 0, 20, 200, 0, 0, 40, 100, 100, 100, 100, 0, 0);
+

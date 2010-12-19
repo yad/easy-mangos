@@ -52,7 +52,13 @@ void VehicleKit::RemoveAllPassengers()
     for (SeatMap::iterator itr = m_Seats.begin(); itr != m_Seats.end(); ++itr)
     {
         if (Unit *passenger = itr->second.passenger)
+        {
             passenger->ExitVehicle();
+
+            // remove creatures of player mounts
+            if (passenger->GetTypeId() == TYPEID_UNIT)
+                passenger->AddObjectToRemoveList();
+        }
     }
 }
 
@@ -141,12 +147,19 @@ bool VehicleKit::AddPassenger(Unit *passenger, int8 seatId)
 
     if (passenger->GetTypeId() == TYPEID_PLAYER)
     {
+        ((Player*)passenger)->UnsummonPetTemporaryIfAny();
+
         ((Player*)passenger)->GetCamera().SetView(m_pBase);
 
         WorldPacket data(SMSG_FORCE_MOVE_ROOT, 8+4);
         data << passenger->GetPackGUID();
         data << uint32((passenger->m_movementInfo.GetVehicleSeatFlags() & SEAT_FLAG_CAN_CAST) ? 2 : 0);
         passenger->SendMessageToSet(&data, true);
+    }
+
+    if (seatInfo->m_flags & SEAT_FLAG_CAN_CAST)
+    {
+        passenger->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
     }
 
     if (seatInfo->m_flags & SEAT_FLAG_CAN_CONTROL)
@@ -156,10 +169,19 @@ bool VehicleKit::AddPassenger(Unit *passenger, int8 seatId)
         m_pBase->CombatStop(true);
         m_pBase->DeleteThreatList();
         m_pBase->getHostileRefManager().deleteReferences();
-        m_pBase->SetCharmerGUID(passenger->GetGUID());
+        m_pBase->SetCharmerGuid(passenger->GetObjectGuid());
         m_pBase->addUnitState(UNIT_STAT_CONTROLLED);
 
         passenger->SetCharm(m_pBase);
+
+        if(m_pBase->HasAuraType(SPELL_AURA_FLY) || m_pBase->HasAuraType(SPELL_AURA_MOD_FLIGHT_SPEED))
+        {
+            WorldPacket data;
+            data.Initialize(SMSG_MOVE_SET_CAN_FLY, 12);
+            data << m_pBase->GetPackGUID();
+            data << (uint32)(0);
+            m_pBase->SendMessageToSet(&data,false);
+        }
 
         if (passenger->GetTypeId() == TYPEID_PLAYER)
         {
@@ -183,7 +205,7 @@ bool VehicleKit::AddPassenger(Unit *passenger, int8 seatId)
     passenger->SendMonsterMoveTransport(m_pBase, SPLINETYPE_FACINGANGLE, SPLINEFLAG_UNKNOWN5, 0, 0.0f);
 
     if (m_pBase->GetTypeId() == TYPEID_UNIT)
-        RelocatePassengers(m_pBase->GetPositionX(), m_pBase->GetPositionY(), m_pBase->GetPositionZ(), m_pBase->GetOrientation());
+        RelocatePassengers(m_pBase->GetPositionX(), m_pBase->GetPositionY(), m_pBase->GetPositionZ()+0.5f, m_pBase->GetOrientation());
 
     UpdateFreeSeatCount();
     return true;
@@ -203,15 +225,25 @@ void VehicleKit::RemovePassenger(Unit *passenger)
     seat->second.passenger = NULL;
     passenger->clearUnitState(UNIT_STAT_ON_VEHICLE);
 
+    float px, py, pz, po;
+    m_pBase->GetClosePoint(px, py, pz, m_pBase->GetObjectBoundingRadius(), 2.0f, M_PI_F);
+    po = m_pBase->GetOrientation();
+
     passenger->m_movementInfo.ClearTransportData();
     passenger->m_movementInfo.RemoveMovementFlag(MOVEFLAG_ONTRANSPORT);
 
+    if (seat->second.seatInfo->m_flags & SEAT_FLAG_CAN_CAST)
+    {
+        passenger->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+    }
+
     if (seat->second.seatInfo->m_flags & SEAT_FLAG_CAN_CONTROL)
     {
+
         passenger->SetCharm(NULL);
         passenger->RemoveSpellsCausingAura(SPELL_AURA_CONTROL_VEHICLE);
 
-        m_pBase->SetCharmerGUID(0);
+        m_pBase->SetCharmerGuid(ObjectGuid());
         m_pBase->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PLAYER_CONTROLLED);
         m_pBase->clearUnitState(UNIT_STAT_CONTROLLED);
 
@@ -232,16 +264,49 @@ void VehicleKit::RemovePassenger(Unit *passenger)
 
         WorldPacket data(SMSG_FORCE_MOVE_UNROOT, 8+4);
         data << passenger->GetPackGUID();
-        data << uint32(0);
+        data << uint32(2);
         passenger->SendMessageToSet(&data, true);
-    }
 
+        ((Player*)passenger)->ResummonPetTemporaryUnSummonedIfAny();
+    }
+    passenger->UpdateAllowedPositionZ(px, py, pz);
+    passenger->SetPosition(px, py, pz + 0.5f, po);
     UpdateFreeSeatCount();
 }
 
 void VehicleKit::Reset()
 {
+    InstallAllAccessories(m_pBase->GetEntry());
     UpdateFreeSeatCount();
+}
+
+void VehicleKit::InstallAllAccessories(uint32 entry)
+{
+    VehicleAccessoryList const* mVehicleList = sObjectMgr.GetVehicleAccessoryList(entry);
+    if (!mVehicleList)
+        return;
+
+    for (VehicleAccessoryList::const_iterator itr = mVehicleList->begin(); itr != mVehicleList->end(); ++itr)
+        InstallAccessory(itr->uiAccessory, itr->uiSeat, itr->bMinion);
+}
+
+void VehicleKit::InstallAccessory( uint32 entry, int8 seatId, bool minion)
+{
+    if (Unit *passenger = GetPassenger(seatId))
+    {
+        // already installed
+        if (passenger->GetEntry() == entry)
+            return;
+
+        passenger->ExitVehicle();
+    }
+
+    if (Creature *accessory = m_pBase->SummonCreature(entry, m_pBase->GetPositionX(), m_pBase->GetPositionY(), m_pBase->GetPositionZ(), 0.0f, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 30000))
+    {
+        accessory->SetCreatorGuid(ObjectGuid());
+        accessory->EnterVehicle(this, seatId);
+        accessory->SendHeartBeat(false);
+    }
 }
 
 void VehicleKit::UpdateFreeSeatCount()
@@ -273,6 +338,7 @@ void VehicleKit::RelocatePassengers(float x, float y, float z, float ang)
             float pz = z + passenger->m_movementInfo.GetTransportPos()->z;
             float po = ang + passenger->m_movementInfo.GetTransportPos()->o;
 
+            passenger->UpdateAllowedPositionZ(px, py, pz);
             passenger->SetPosition(px, py, pz, po);
         }
     }

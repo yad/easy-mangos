@@ -513,10 +513,10 @@ void WorldSession::HandleSellItemOpcode( WorldPacket & recv_data )
         GetPlayer()->RemoveSpellsCausingAura(SPELL_AURA_FEIGN_DEATH);
 
     Item *pItem = _player->GetItemByGuid( itemguid );
-    if( pItem )
+    if (pItem)
     {
         // prevent sell not owner item
-        if(_player->GetGUID() != pItem->GetOwnerGUID())
+        if (_player->GetObjectGuid() != pItem->GetOwnerGuid())
         {
             _player->SendSellError( SELL_ERR_CANT_SELL_ITEM, pCreature, itemguid, 0);
             return;
@@ -649,11 +649,12 @@ void WorldSession::HandleBuybackItem(WorldPacket & recv_data)
 void WorldSession::HandleBuyItemInSlotOpcode( WorldPacket & recv_data )
 {
     DEBUG_LOG( "WORLD: Received CMSG_BUY_ITEM_IN_SLOT" );
-    uint64 vendorguid, bagguid;
+    ObjectGuid vendorGuid;
+    ObjectGuid bagGuid;
     uint32 item, slot, count;
     uint8 bagslot;
 
-    recv_data >> vendorguid >> item  >> slot >> bagguid >> bagslot >> count;
+    recv_data >> vendorGuid >> item  >> slot >> bagGuid >> bagslot >> count;
 
     // client side expected counting from 1, and we send to client vendorslot+1 already
     if (slot > 0)
@@ -664,7 +665,7 @@ void WorldSession::HandleBuyItemInSlotOpcode( WorldPacket & recv_data )
     uint8 bag = NULL_BAG;                                   // init for case invalid bagGUID
 
     // find bag slot by bag guid
-    if (bagguid == _player->GetGUID())
+    if (bagGuid == _player->GetObjectGuid())
         bag = INVENTORY_SLOT_BAG_0;
     else
     {
@@ -672,7 +673,7 @@ void WorldSession::HandleBuyItemInSlotOpcode( WorldPacket & recv_data )
         {
             if (Bag *pBag = (Bag*)_player->GetItemByPos(INVENTORY_SLOT_BAG_0,i))
             {
-                if (bagguid == pBag->GetGUID())
+                if (bagGuid == pBag->GetObjectGuid())
                 {
                     bag = i;
                     break;
@@ -685,17 +686,17 @@ void WorldSession::HandleBuyItemInSlotOpcode( WorldPacket & recv_data )
     if (bag == NULL_BAG)
         return;
 
-    GetPlayer()->BuyItemFromVendorSlot(vendorguid, slot, item, count, bag, bagslot);
+    GetPlayer()->BuyItemFromVendorSlot(vendorGuid, slot, item, count, bag, bagslot);
 }
 
 void WorldSession::HandleBuyItemOpcode( WorldPacket & recv_data )
 {
     DEBUG_LOG( "WORLD: Received CMSG_BUY_ITEM" );
-    uint64 vendorguid;
+    ObjectGuid vendorGuid;
     uint32 item, slot, count;
     uint8 unk1;
 
-    recv_data >> vendorguid >> item >> slot >> count >> unk1;
+    recv_data >> vendorGuid >> item >> slot >> count >> unk1;
 
     // client side expected counting from 1, and we send to client vendorslot+1 already
     if (slot > 0)
@@ -703,7 +704,7 @@ void WorldSession::HandleBuyItemOpcode( WorldPacket & recv_data )
     else
         return;                                             // cheating
 
-    GetPlayer()->BuyItemFromVendorSlot(vendorguid, slot, item, count, NULL_BAG, NULL_SLOT);
+    GetPlayer()->BuyItemFromVendorSlot(vendorGuid, slot, item, count, NULL_BAG, NULL_SLOT);
 }
 
 void WorldSession::HandleListInventoryOpcode( WorldPacket & recv_data )
@@ -742,8 +743,9 @@ void WorldSession::SendListInventory(ObjectGuid vendorguid)
         pCreature->StopMoving();
 
     VendorItemData const* vItems = pCreature->GetVendorItems();
+    VendorItemData const* tItems = pCreature->GetVendorTemplateItems();
 
-    if (!vItems)
+    if (!vItems && !tItems)
     {
         WorldPacket data( SMSG_LIST_INVENTORY, (8+1+1) );
         data << ObjectGuid(vendorguid);
@@ -753,7 +755,9 @@ void WorldSession::SendListInventory(ObjectGuid vendorguid)
         return;
     }
 
-    uint8 numitems = vItems->GetItemCount();
+    uint8 customitems = vItems ? vItems->GetItemCount() : 0;
+    uint8 numitems = customitems + (tItems ? tItems->GetItemCount() : 0);
+
     uint8 count = 0;
 
     WorldPacket data( SMSG_LIST_INVENTORY, (8+1+numitems*8*4) );
@@ -766,9 +770,13 @@ void WorldSession::SendListInventory(ObjectGuid vendorguid)
 
     for(uint8 vendorslot = 0; vendorslot < numitems; ++vendorslot )
     {
-        if (VendorItem const* crItem = vItems->GetItem(vendorslot))
+        VendorItem const* crItem = vendorslot < customitems ? vItems->GetItem(vendorslot) : tItems->GetItem(vendorslot - customitems);
+
+        if (crItem)
         {
-            if (ItemPrototype const *pProto = ObjectMgr::GetItemPrototype(crItem->item))
+            uint32 itemId = crItem->item;
+            ItemPrototype const *pProto = ObjectMgr::GetItemPrototype(itemId);
+            if (pProto)
             {
                 if (!_player->isGameMaster())
                 {
@@ -787,13 +795,25 @@ void WorldSession::SendListInventory(ObjectGuid vendorguid)
                         continue;
                 }
 
+                // possible item coverting for BoA case
+                if (pProto->Flags & ITEM_FLAG_BOA)
+                {
+                    // convert if can use and then buy
+                    if (pProto->RequiredReputationFaction && uint32(_player->GetReputationRank(pProto->RequiredReputationFaction)) >= pProto->RequiredReputationRank)
+                    {
+                        itemId = sObjectMgr.GetItemConvert(itemId, _player->getRaceMask());
+                        // checked at convert data loading as existed
+                        pProto = ObjectMgr::GetItemPrototype(itemId);
+                    }
+                }
+
                 ++count;
 
                 // reputation discount
                 uint32 price = (crItem->ExtendedCost == 0 || pProto->Flags2 & ITEM_FLAG2_EXT_COST_REQUIRES_GOLD) ? uint32(floor(pProto->BuyPrice * discountMod)) : 0;
 
                 data << uint32(vendorslot +1);              // client size expected counting from 1
-                data << uint32(crItem->item);
+                data << uint32(itemId);
                 data << uint32(pProto->DisplayInfoID);
                 data << uint32(crItem->maxcount <= 0 ? 0xFFFFFFFF : pCreature->GetVendorItemCurrentCount(crItem));
                 data << uint32(price);
@@ -1170,7 +1190,7 @@ void WorldSession::HandleWrapItemOpcode(WorldPacket& recv_data)
     }
 
     CharacterDatabase.BeginTransaction();
-    CharacterDatabase.PExecute("INSERT INTO character_gifts VALUES ('%u', '%u', '%u', '%u')", GUID_LOPART(item->GetOwnerGUID()), item->GetGUIDLow(), item->GetEntry(), item->GetUInt32Value(ITEM_FIELD_FLAGS));
+    CharacterDatabase.PExecute("INSERT INTO character_gifts VALUES ('%u', '%u', '%u', '%u')", item->GetOwnerGuid().GetCounter(), item->GetGUIDLow(), item->GetEntry(), item->GetUInt32Value(ITEM_FIELD_FLAGS));
     item->SetEntry(gift->GetEntry());
 
     switch (item->GetEntry())
@@ -1455,22 +1475,22 @@ void WorldSession::HandleItemRefundInfoRequest(WorldPacket& recv_data)
  */
 void WorldSession::HandleItemTextQuery(WorldPacket & recv_data )
 {
-    uint64 itemGuid;
+    ObjectGuid itemGuid;
     recv_data >> itemGuid;
 
-    DEBUG_LOG("CMSG_ITEM_TEXT_QUERY item guid: %u", GUID_LOPART(itemGuid));
+    DEBUG_LOG("CMSG_ITEM_TEXT_QUERY item guid: %u", itemGuid.GetCounter());
 
-    WorldPacket data(SMSG_ITEM_TEXT_QUERY_RESPONSE, (4+10));    // guess size
+    WorldPacket data(SMSG_ITEM_TEXT_QUERY_RESPONSE, (4+10));// guess size
 
     if(Item *item = _player->GetItemByGuid(itemGuid))
     {
-        data << uint8(0);                                       // has text
-        data << uint64(itemGuid);                               // item guid
+        data << uint8(0);                                   // has text
+        data << ObjectGuid(itemGuid);                       // item guid
         data << item->GetText();
     }
     else
     {
-        data << uint8(1);                                       // no text
+        data << uint8(1);                                   // no text
     }
     SendPacket(&data);
 }

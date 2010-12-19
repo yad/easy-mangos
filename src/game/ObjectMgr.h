@@ -35,21 +35,12 @@
 #include "ObjectAccessor.h"
 #include "ObjectGuid.h"
 #include "Policies/Singleton.h"
-#include "Database/SQLStorage.h"
+#include "Vehicle.h"
+#include "SQLStorages.h"
 
 #include <string>
 #include <map>
 #include <limits>
-
-extern SQLStorage sCreatureStorage;
-extern SQLStorage sCreatureDataAddonStorage;
-extern SQLStorage sCreatureInfoAddonStorage;
-extern SQLStorage sCreatureModelStorage;
-extern SQLStorage sEquipmentStorage;
-extern SQLStorage sGOStorage;
-extern SQLStorage sPageTextStore;
-extern SQLStorage sItemStorage;
-extern SQLStorage sInstanceTemplate;
 
 class Group;
 class Guild;
@@ -450,6 +441,7 @@ typedef UNORDERED_MAP<uint32,PageTextLocale> PageTextLocaleMap;
 typedef UNORDERED_MAP<int32,MangosStringLocale> MangosStringLocaleMap;
 typedef UNORDERED_MAP<uint32,GossipMenuItemsLocale> GossipMenuItemsLocaleMap;
 typedef UNORDERED_MAP<uint32,PointOfInterestLocale> PointOfInterestLocaleMap;
+typedef UNORDERED_MAP<uint32,uint32> ItemConvertMap;
 
 typedef std::multimap<int32, uint32> ExclusiveQuestGroupsMap;
 typedef std::multimap<uint32, ItemRequiredTarget> ItemRequiredTargetMap;
@@ -537,6 +529,7 @@ struct ReputationOnKillEntry
     uint32 reputation_max_cap2;
     int32 repvalue2;
     bool team_dependent;
+    uint32 championingAura;
 };
 
 struct RepSpilloverTemplate
@@ -565,7 +558,7 @@ struct GossipMenuItems
     std::string     option_text;
     uint32          option_id;
     uint32          npc_option_npcflag;
-    uint32          action_menu_id;
+    int32           action_menu_id;
     uint32          action_poi_id;
     uint32          action_script_id;
     bool            box_coded;
@@ -632,7 +625,7 @@ struct WeatherZoneChances
 struct GraveYardData
 {
     uint32 safeLocId;
-    uint32 team;
+    Team team;
 };
 typedef std::multimap<uint32, GraveYardData> GraveYardMap;
 typedef std::pair<GraveYardMap::const_iterator, GraveYardMap::const_iterator> GraveYardMapBounds;
@@ -641,7 +634,7 @@ enum ConditionType
 {                                                           // value1       value2  for the Condition enumed
     CONDITION_NONE                  = 0,                    // 0            0
     CONDITION_AURA                  = 1,                    // spell_id     effindex
-    CONDITION_ITEM                  = 2,                    // item_id      count
+    CONDITION_ITEM                  = 2,                    // item_id      count   check present req. amount items in inventory
     CONDITION_ITEM_EQUIPPED         = 3,                    // item_id      0
     CONDITION_AREAID                = 4,                    // area_id      0, 1 (0: in (sub)area, 1: not in (sub)area)
     CONDITION_REPUTATION_RANK       = 5,                    // faction_id   min_rank
@@ -655,16 +648,18 @@ enum ConditionType
     CONDITION_AREA_FLAG             = 13,                   // area_flag    area_flag_not
     CONDITION_RACE_CLASS            = 14,                   // race_mask    class_mask
     CONDITION_LEVEL                 = 15,                   // player_level 0, 1 or 2 (0: equal to, 1: equal or higher than, 2: equal or less than)
-    CONDITION_NOITEM                = 16,                   // item_id      count
+    CONDITION_NOITEM                = 16,                   // item_id      count   check not present req. amount items in inventory
     CONDITION_SPELL                 = 17,                   // spell_id     0, 1 (0: has spell, 1: hasn't spell)
     CONDITION_INSTANCE_SCRIPT       = 18,                   // map_id       instance_condition_id (instance script specific enum)
     CONDITION_QUESTAVAILABLE        = 19,                   // quest_id     0       for case when loot/gossip possible only if player can start quest
     CONDITION_ACHIEVEMENT           = 20,                   // ach_id       0, 1 (0: has achievement, 1: hasn't achievement) for player
     CONDITION_ACHIEVEMENT_REALM     = 21,                   // ach_id       0, 1 (0: has achievement, 1: hasn't achievement) for server
-    CONDITION_QUEST_NONE            = 22                    // quest_id     0 (quest did not take and not rewarded)
+    CONDITION_QUEST_NONE            = 22,                   // quest_id     0 (quest did not take and not rewarded)
+    CONDITION_ITEM_WITH_BANK        = 23,                   // item_id      count   check present req. amount items in inventory or bank
+    CONDITION_NOITEM_WITH_BANK      = 24,                   // item_id      count   check not present req. amount items in inventory or bank
 };
 
-#define MAX_CONDITION                 23                    // maximum value in ConditionType enum
+#define MAX_CONDITION                 25                    // maximum value in ConditionType enum
 
 struct PlayerCondition
 {
@@ -858,13 +853,13 @@ class ObjectMgr
 
         uint64 GetPlayerGUIDByName(std::string name) const;
         bool GetPlayerNameByGUID(ObjectGuid guid, std::string &name) const;
-        uint32 GetPlayerTeamByGUID(ObjectGuid guid) const;
+        Team GetPlayerTeamByGUID(ObjectGuid guid) const;
         uint32 GetPlayerAccountIdByGUID(ObjectGuid guid) const;
         uint32 GetPlayerAccountIdByPlayerName(const std::string& name) const;
 
-        uint32 GetNearestTaxiNode( float x, float y, float z, uint32 mapid, uint32 team );
+        uint32 GetNearestTaxiNode( float x, float y, float z, uint32 mapid, Team team );
         void GetTaxiPath( uint32 source, uint32 destination, uint32 &path, uint32 &cost);
-        uint32 GetTaxiMountDisplayId( uint32 id, uint32 team, bool allowed_alt_team = false);
+        uint32 GetTaxiMountDisplayId( uint32 id, Team team, bool allowed_alt_team = false);
 
         Quest const* GetQuestTemplate(uint32 quest_id) const
         {
@@ -893,8 +888,8 @@ class ObjectMgr
         GossipText const* GetGossipText(uint32 Text_ID) const;
         BotSpawns const* GetBotSpawns(uint32 id) const;
 
-        WorldSafeLocsEntry const *GetClosestGraveYard(float x, float y, float z, uint32 MapId, uint32 team);
-        bool AddGraveYardLink(uint32 id, uint32 zone, uint32 team, bool inDB = true);
+        WorldSafeLocsEntry const *GetClosestGraveYard(float x, float y, float z, uint32 MapId, Team team);
+        bool AddGraveYardLink(uint32 id, uint32 zone, Team team, bool inDB = true);
         void LoadGraveyardZones();
         GraveYardData const* FindGraveYardData(uint32 id, uint32 zone) const;
 
@@ -954,6 +949,14 @@ class ObjectMgr
             return NULL;
         }
 
+        VehicleAccessoryList const* GetVehicleAccessoryList(uint32 uiEntry) const
+        {
+            VehicleAccessoryMap::const_iterator itr = m_VehicleAccessoryMap.find(uiEntry);
+            if (itr != m_VehicleAccessoryMap.end())
+                return &itr->second;
+            return NULL;
+        }
+
         void LoadGuilds();
         void LoadArenaTeams();
         void LoadGroups();
@@ -992,6 +995,7 @@ class ObjectMgr
         void LoadGameObjectLocales();
         void LoadGameobjects();
         void LoadGameobjectRespawnTimes();
+        void LoadItemConverts();
         void LoadItemPrototypes();
         void LoadItemSetPrototypes();
         void LoadItemRequiredTarget();
@@ -1042,8 +1046,11 @@ class ObjectMgr
         void LoadGossipMenu();
         void LoadGossipMenuItems();
 
-        void LoadVendors();
+        void LoadVendorTemplates();
+        void LoadVendors() { LoadVendors("npc_vendor", false); }
         void LoadTrainerSpell();
+
+        void LoadVehicleAccessories();
 
         std::string GeneratePetName(uint32 entry);
         uint32 GetBaseXP(uint32 level) const;
@@ -1291,9 +1298,18 @@ class ObjectMgr
             return &iter->second;
         }
 
+        VendorItemData const* GetNpcVendorTemplateItemList(uint32 entry) const
+        {
+            CacheVendorItemMap::const_iterator  iter = m_mCacheVendorTemplateItemMap.find(entry);
+            if(iter == m_mCacheVendorTemplateItemMap.end())
+                return NULL;
+
+            return &iter->second;
+        }
+
         void AddVendorItem(uint32 entry,uint32 item, uint32 maxcount, uint32 incrtime, uint32 ExtendedCost);
         bool RemoveVendorItem(uint32 entry,uint32 item);
-        bool IsVendorItemValid( uint32 vendor_entry, uint32 item, uint32 maxcount, uint32 ptime, uint32 ExtendedCost, Player* pl = NULL, std::set<uint32>* skip_vendors = NULL ) const;
+        bool IsVendorItemValid(bool isTemplate, char const* tableName, uint32 vendor_entry, uint32 item, uint32 maxcount, uint32 ptime, uint32 ExtendedCost, Player* pl = NULL, std::set<uint32>* skip_vendors = NULL) const;
 
         void LoadScriptNames();
         ScriptNameMap &GetScriptNames() { return m_scriptNames; }
@@ -1305,6 +1321,16 @@ class ObjectMgr
         SpellClickInfoMapBounds GetSpellClickInfoMapBounds(uint32 creature_id) const
         {
             return mSpellClickInfoMap.equal_range(creature_id);
+        }
+
+        uint32 GetItemConvert(uint32 itemEntry, uint32 raceMask) const
+        {
+            ItemConvertMap::const_iterator iter = m_ItemConvert.find(itemEntry);
+            if (iter == m_ItemConvert.end())
+                return itemEntry;
+
+            ItemPrototype const* proto = GetItemPrototype(iter->second);
+            return (proto && proto->AllowableRace & raceMask) ? iter->second : itemEntry;
         }
 
         ItemRequiredTargetMapBounds GetItemRequiredTargetMapBounds(uint32 uiItemEntry) const
@@ -1419,7 +1445,10 @@ class ObjectMgr
 
         SpellClickInfoMap   mSpellClickInfoMap;
 
+        ItemConvertMap        m_ItemConvert;
         ItemRequiredTargetMap m_ItemRequiredTarget;
+
+        VehicleAccessoryMap m_VehicleAccessoryMap;
 
         typedef             std::vector<LocaleConstant> LocalForIndex;
         LocalForIndex        m_LocalForIndex;
@@ -1439,6 +1468,7 @@ class ObjectMgr
         void LoadCreatureAddons(SQLStorage& creatureaddons, char const* entryName, char const* comment);
         void ConvertCreatureAddonAuras(CreatureDataAddon* addon, char const* table, char const* guidEntryStr);
         void LoadQuestRelationsHelper(QuestRelationsMap& map, char const* table);
+        void LoadVendors(char const* tableName, bool isTemplates);
 
         MailLevelRewardMap m_mailLevelRewardMap;
 
@@ -1489,6 +1519,7 @@ class ObjectMgr
         CreatureModelRaceMap    m_mCreatureModelRaceMap;
 
         CacheNpcTextIdMap m_mCacheNpcTextIdMap;
+        CacheVendorItemMap m_mCacheVendorTemplateItemMap;
         CacheVendorItemMap m_mCacheVendorItemMap;
         CacheTrainerSpellMap m_mCacheTrainerSpellMap;
 };

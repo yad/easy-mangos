@@ -24,7 +24,7 @@
 #include "../SpellMgr.h"
 #include "../Player.h"
 #include "../ObjectMgr.h"
-#include "../WorldPacket.h"
+#include "WorldPacket.h"
 #include "../Unit.h"
 #include "../SharedDefines.h"
 #include "PlayerbotAI.h"
@@ -38,16 +38,25 @@ public:
     PlayerbotClassAI(Player * const bot, PlayerbotAI * const ai);
     virtual ~PlayerbotClassAI();
 
-    // Utilities
-    Player* GetPlayerBot() {return m_bot; }
-    PlayerbotAI* GetAI (){return m_ai; };
-
+    // all combat actions go here
     virtual bool DoFirstCombatManeuver(Unit*);
     virtual void DoNextCombatManeuver(Unit*);
+
+    // all non combat actions go here, ex buffs, heals, rezzes
     virtual void DoNonCombatActions();
     virtual void InitSpells(PlayerbotAI* const ai);
 
-protected:
+    // buff a specific player, usually a real PC who is not in group
+    virtual bool BuffPlayer(Player* target);
+
+    // Utilities
+    Player* GetMaster () { return m_master; }
+    Player* GetPlayerBot() { return m_bot; }
+    PlayerbotAI* GetAI (){ return m_ai; };
+
+
+private:
+    Player* m_master;
     Player* m_bot;
     PlayerbotAI* m_ai;
 };

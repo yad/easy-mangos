@@ -102,7 +102,7 @@ public PathMovementBase<Creature, WaypointPath const*>
         void MoveToNextNode(CreatureTraveller &traveller);
 
     private:
-        TimeTrackerSmall i_nextMoveTime;
+        ShortTimeTracker i_nextMoveTime;
         bool m_isArrivalDone;
         bool m_isStoppedByPlayer;
 };

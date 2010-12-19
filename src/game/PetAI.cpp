@@ -104,17 +104,6 @@ bool PetAI::_needToStop() const
 void PetAI::_stopAttack()
 {
     inCombat = false;
-    if( !m_creature->isAlive() )
-    {
-        DEBUG_FILTER_LOG(LOG_FILTER_AI_AND_MOVEGENSS, "PetAI (guid = %u) stopped attack, he is dead.", m_creature->GetGUIDLow());
-        m_creature->StopMoving();
-        m_creature->GetMotionMaster()->Clear();
-        m_creature->GetMotionMaster()->MoveIdle();
-        m_creature->CombatStop();
-        m_creature->getHostileRefManager().deleteReferences();
-
-        return;
-    }
 
     Unit* owner = m_creature->GetCharmerOrOwner();
 
@@ -137,13 +126,13 @@ void PetAI::UpdateAI(const uint32 diff)
 
     Unit* owner = m_creature->GetCharmerOrOwner();
 
-    if(m_updateAlliesTimer <= diff)
+    if (m_updateAlliesTimer <= diff)
         // UpdateAllies self set update timer
         UpdateAllies();
     else
         m_updateAlliesTimer -= diff;
 
-    if (inCombat && (!m_creature->getVictim() || m_creature->IsPet() && ((Pet*)m_creature)->GetModeFlags() & PET_MODE_DISABLE_ACTIONS))
+    if (inCombat && (!m_creature->getVictim() || (m_creature->IsPet() && ((Pet*)m_creature)->GetModeFlags() & PET_MODE_DISABLE_ACTIONS)))
         _stopAttack();
 
     // i_pet.getVictim() can't be used for check in case stop fighting, i_pet.getVictim() clear at Unit death etc.
@@ -205,7 +194,7 @@ void PetAI::UpdateAI(const uint32 diff)
     }
 
     // Autocast (casted only in combat or persistent spells in any state)
-    if (!m_creature->IsNonMeleeSpellCasted(false))
+    if (!m_creature->IsNonMeleeSpellCasted(false) && !m_creature->GetObjectGuid().IsVehicle())
     {
         typedef std::vector<std::pair<Unit*, Spell*> > TargetSpellList;
         TargetSpellList targetSpellStore;

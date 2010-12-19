@@ -296,20 +296,20 @@ void PlayerbotHunterAI::DoNonCombatActions()
     // mana check        
     if (pItemDrink && ai->GetManaPercent() < 30)
     {
-        ai->UseItem(*pItemDrink);
+        ai->UseItem(pItemDrink);
         ai->SetIgnoreUpdateTime(30);
         return;
     }
     // hp check
     else if (pItemFood && ai->GetHealthPercent() < 30)
     {
-        ai->UseItem(*pItemFood);
+        ai->UseItem(pItemFood);
         ai->SetIgnoreUpdateTime(30);
         return;
     }
     else if (!pItemFood && pItemBandage && !ai->HasAura(RECENTLY_BANDAGED, m_bot) && ai->GetHealthPercent() < 70)
     {
-        ai->UseItem(*pItemBandage);
+        ai->UseItem(pItemBandage);
         ai->SetIgnoreUpdateTime(8);
         return;
     }

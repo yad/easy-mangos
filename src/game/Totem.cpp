@@ -106,23 +106,27 @@ void Totem::UnSummon()
             ((Creature*)owner)->AI()->SummonedCreatureDespawn((Creature*)this);
     }
 
+    // any totem unsummon look like as totem kill, req. for proper animation
+    if (isAlive())
+        SetDeathState(DEAD);
+
     AddObjectToRemoveList();
 }
 
 void Totem::SetOwner(Unit* owner)
 {
-    SetCreatorGUID(owner->GetGUID());
-    SetOwnerGUID(owner->GetGUID());
+    SetCreatorGuid(owner->GetObjectGuid());
+    SetOwnerGuid(owner->GetObjectGuid());
     setFaction(owner->getFaction());
     SetLevel(owner->getLevel());
 }
 
 Unit *Totem::GetOwner()
 {
-    uint64 ownerid = GetOwnerGUID();
-    if(!ownerid)
+    ObjectGuid ownerGuid = GetOwnerGuid();
+    if (ownerGuid.IsEmpty())
         return NULL;
-    return ObjectAccessor::GetUnit(*this, ownerid);
+    return ObjectAccessor::GetUnit(*this, ownerGuid);
 }
 
 void Totem::SetTypeBySummonSpell(SpellEntry const * spellProto)
@@ -134,9 +138,13 @@ void Totem::SetTypeBySummonSpell(SpellEntry const * spellProto)
         // If spell have cast time -> so its active totem
         if (GetSpellCastTime(totemSpell))
             m_type = TOTEM_ACTIVE;
+
+        if(totemSpell->Id == 40132 || totemSpell->Id == 40133)
+            m_type = TOTEM_PASSIVE;                             // Shaman summoning totems
     }
     if(spellProto->SpellIconID == 2056)
         m_type = TOTEM_STATUE;                              //Jewelery statue
+
 }
 
 bool Totem::IsImmuneToSpellEffect(SpellEntry const* spellInfo, SpellEffectIndex index) const

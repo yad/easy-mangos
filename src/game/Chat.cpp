@@ -485,6 +485,7 @@ ChatCommand * ChatHandler::getCommandTable()
         { "gossip_menu",                 SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadGossipMenuCommand,              "", NULL },
         { "gossip_menu_option",          SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadGossipMenuOptionCommand,        "", NULL },
         { "gossip_scripts",              SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadGossipScriptsCommand,           "", NULL },
+        { "item_convert",                SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadItemConvertCommand,             "", NULL },
         { "item_enchantment_template",   SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadItemEnchantementsCommand,       "", NULL },
         { "item_loot_template",          SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadLootTemplatesItemCommand,       "", NULL },
         { "item_required_target",        SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadItemRequiredTragetCommand,      "", NULL },
@@ -534,7 +535,6 @@ ChatCommand * ChatHandler::getCommandTable()
         { "spell_scripts",               SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadSpellScriptsCommand,            "", NULL },
         { "spell_target_position",       SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadSpellTargetPositionCommand,     "", NULL },
         { "spell_threats",               SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadSpellThreatsCommand,            "", NULL },
-
         { NULL,                          0,                 false, NULL,                                                     "", NULL }
     };
 
@@ -816,14 +816,14 @@ std::string ChatHandler::GetNameLink() const
     return GetNameLink(m_session->GetPlayer());
 }
 
-bool ChatHandler::HasLowerSecurity(Player* target, uint64 guid, bool strong)
+bool ChatHandler::HasLowerSecurity(Player* target, ObjectGuid guid, bool strong)
 {
     WorldSession* target_session = NULL;
     uint32 target_account = 0;
 
     if (target)
         target_session = target->GetSession();
-    else if (guid)
+    else if (!guid.IsEmpty())
         target_account = sObjectMgr.GetPlayerAccountIdByGUID(guid);
 
     if(!target_session && !target_account)
@@ -1250,7 +1250,7 @@ bool ChatHandler::SetDataForCommandInTable(ChatCommand *commandTable, const char
         {
             // command have subcommands, but not '' subcommand and then any data in `command` useless for it.
             if (cmdName.empty())
-                sLog.outErrorDb("Table `command` have command '%s' that only used with some subcommand selection, it can't have help or overwritten access level, skip.", cmdName.c_str(), fullcommand.c_str());
+                sLog.outErrorDb("Table `command` have command '%s' that only used with some subcommand selection, it can't have help or overwritten access level, skip.", cmdName.c_str());
             else
                 sLog.outErrorDb("Table `command` have unexpected subcommand '%s' in command '%s', skip.", cmdName.c_str(), fullcommand.c_str());
             return false;
@@ -2315,7 +2315,7 @@ char* ChatHandler::ExtractQuotedArg( char** args, bool asis /*= false*/ )
     while (*tail && *tail != guard)
         ++tail;
 
-    if (!*tail || tail[1] && !isWhiteSpace(tail[1]))        // fail
+    if (!*tail || (tail[1] && !isWhiteSpace(tail[1])))      // fail
         return NULL;
 
     if (!tail[1])                                           // quote is last char in string
@@ -2533,7 +2533,7 @@ char* ChatHandler::ExtractLinkArg(char** args, char const* const* linkTypes /*= 
     tail += 2;                                              // skip h|
 
     // r
-    if (!*tail || *tail != 'r' || *(tail+1) && !isWhiteSpace(*(tail+1)))
+    if (!*tail || *tail != 'r' || (*(tail+1) && !isWhiteSpace(*(tail+1))))
         return NULL;
 
     ++tail;                                                 // skip r
@@ -2948,12 +2948,13 @@ bool ChatHandler::ExtractLocationFromLink(char** text, uint32& mapid, float& x, 
                 return true;
             }
 
-            if (uint64 guid = sObjectMgr.GetPlayerGUIDByName(name))
+            ObjectGuid guid = sObjectMgr.GetPlayerGUIDByName(name);
+            if (!guid.IsEmpty())
             {
                 // to point where player stay (if loaded)
                 float o;
                 bool in_flight;
-                return Player::LoadPositionFromDB(mapid, x, y, z, o, in_flight, guid);
+                return Player::LoadPositionFromDB(guid, mapid, x, y, z, o, in_flight);
             }
 
             return false;
@@ -3154,7 +3155,7 @@ std::string ChatHandler::ExtractPlayerNameFromLink(char** text)
  *
  * @return           true if extraction successful
  */
-bool ChatHandler::ExtractPlayerTarget(char** args, Player** player /*= NULL*/, uint64* player_guid /*= NULL*/,std::string* player_name /*= NULL*/)
+bool ChatHandler::ExtractPlayerTarget(char** args, Player** player /*= NULL*/, ObjectGuid* player_guid /*= NULL*/,std::string* player_name /*= NULL*/)
 {
     if (*args && **args)
     {
@@ -3173,14 +3174,14 @@ bool ChatHandler::ExtractPlayerTarget(char** args, Player** player /*= NULL*/, u
             *player = pl;
 
         // if need guid value from DB (in name case for check player existence)
-        uint64 guid = !pl && (player_guid || player_name) ? sObjectMgr.GetPlayerGUIDByName(name) : 0;
+        ObjectGuid guid = !pl && (player_guid || player_name) ? sObjectMgr.GetPlayerGUIDByName(name) : uint64(0);
 
         // if allowed player guid (if no then only online players allowed)
         if(player_guid)
-            *player_guid = pl ? pl->GetGUID() : guid;
+            *player_guid = pl ? pl->GetObjectGuid() : guid;
 
         if(player_name)
-            *player_name = pl || guid ? name : "";
+            *player_name = pl || !guid.IsEmpty() ? name : "";
     }
     else
     {
@@ -3190,14 +3191,14 @@ bool ChatHandler::ExtractPlayerTarget(char** args, Player** player /*= NULL*/, u
             *player = pl;
         // if allowed player guid (if no then only online players allowed)
         if(player_guid)
-            *player_guid = pl ? pl->GetGUID() : 0;
+            *player_guid = pl ? pl->GetObjectGuid() : ObjectGuid();
 
         if(player_name)
             *player_name = pl ? pl->GetName() : "";
     }
 
     // some from req. data must be provided (note: name is empty if player not exist)
-    if((!player || !*player) && (!player_guid || !*player_guid) && (!player_name || player_name->empty()))
+    if((!player || !*player) && (!player_guid || player_guid->IsEmpty()) && (!player_name || player_name->empty()))
     {
         SendSysMessage(LANG_PLAYER_NOT_FOUND);
         SetSentErrorMessage(true);

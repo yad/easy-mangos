@@ -253,12 +253,12 @@ struct AchievementCriteriaEntry
             uint32  teamtype;                               // 3 {2,3,5}
         } highest_team_rating;
 
-        // ACHIEVEMENT_CRITERIA_TYPE_REACH_TEAM_RATING      = 39
+        // ACHIEVEMENT_CRITERIA_TYPE_HIGHEST_PERSONAL_RATING= 39
         struct
         {
             uint32  teamtype;                               // 3 {2,3,5}
             uint32  teamrating;                             // 4
-        } reach_team_rating;
+        } highest_personal_rating;
 
         // ACHIEVEMENT_CRITERIA_TYPE_LEARN_SKILL_LEVEL      = 40
         struct
@@ -496,7 +496,7 @@ struct AchievementCriteriaEntry
                                                             // 1: ByEventId(?) (serverside IDs),    2: ByQuestId,   5: ByCastSpellId(?)
                                                             // 6: BySpellIdTarget(some of these are unknown spells, some not, some maybe spells)
                                                             // 7: ByKillNpcId,  9: ByUseItemId
-    uint32  timedCriteriaMiscId;                            // 28 Alway appears with timed events, used internally to start the achievement, store 
+    uint32  timedCriteriaMiscId;                            // 28 Alway appears with timed events, used internally to start the achievement, store
     uint32  timeLimit;                                      // 29 time limit in seconds
     uint32  showOrder;                                      // 30 show order, also used in achievement shift-links as index in state bitmask
 
@@ -813,14 +813,28 @@ struct FactionEntry
     int32       BaseRepValue[4];                            // 10-13    m_reputationBase
     uint32      ReputationFlags[4];                         // 14-17    m_reputationFlags
     uint32      team;                                       // 18       m_parentFactionID
-    //float     spilloverRate1;                             // 19       Members of the team gain (received_rep*rate). If spilloverRate1 is (0.0 || 1.0), spilloverRate2 are used instead...
-    //float     spilloverRate2;                             // 20       ...but only if spilloverRate2 is not (1.0 || 0.0). Faction must be member of a team before spillover are given.
-    //uint32    spilloverMaxRank;                           // 21       The highest rank player will receive spillover at (the cap). Above this rank will not give any spillover for this faction
-    //uint32    spilloverRank_unk;                          // 22
+    float       spilloverRateIn;                            // 19       Faction gains incoming rep * spilloverRateIn
+    float       spilloverRateOut;                           // 20       Faction outputs rep * spilloverRateOut as spillover reputation
+    uint32      spilloverMaxRankIn;                         // 21       The highest rank the faction will profit from incoming spillover
+    //uint32    spilloverRank_unk;                          // 22       It does not seem to be the max standing at which a faction outputs spillover ...so no idea
     char*       name[16];                                   // 23-38    m_name_lang
                                                             // 39 string flags
     //char*     description[16];                            // 40-55    m_description_lang
                                                             // 56 string flags
+
+    // helpers
+
+    int GetIndexFitTo(uint32 raceMask, uint32 classMask) const
+    {
+        for (int i = 0; i < 4; ++i)
+        {
+            if ((BaseRepRaceMask[i] == 0 || (BaseRepRaceMask[i] & raceMask)) &&
+                (BaseRepClassMask[i] == 0 || (BaseRepClassMask[i] & classMask)))
+                return i;
+        }
+
+        return -1;
+    }
 };
 
 struct FactionTemplateEntry
@@ -878,8 +892,12 @@ struct GameObjectDisplayInfoEntry
     uint32      Displayid;                                  // 0        m_ID
     // char* filename;                                      // 1
     // uint32 unknown2[10];                                 // 2-11     unknown data
-    float  unknown12;                                       // 12-17    unknown size data, use first value as interact dist, mostly in hacks way
-    // float  unknown13[5];                                 // 12-17    unknown size data
+    float       minX;
+    float       minY;
+    float       minZ;
+    float       maxX;
+    float       maxY;
+    float       maxZ;
     // uint32 unknown18;                                    // 18       unknown data
 };
 
@@ -907,6 +925,8 @@ struct GlyphSlotEntry
 
 // All Gt* DBC store data for 100 levels, some by 100 per class/race
 #define GT_MAX_LEVEL    100
+// gtOCTClassCombatRatingScalar.dbc stores data for 32 ratings, look at MAX_COMBAT_RATING for real used amount
+#define GT_MAX_RATING   32
 
 struct GtBarberShopCostBaseEntry
 {
@@ -934,6 +954,11 @@ struct GtChanceToSpellCritBaseEntry
 };
 
 struct GtChanceToSpellCritEntry
+{
+    float    ratio;
+};
+
+struct GtOCTClassCombatRatingScalarEntry
 {
     float    ratio;
 };
@@ -1175,6 +1200,15 @@ struct MovieEntry
     //uint32      unk2;                                     // 2 always 100
 };
 
+#define MAX_OVERRIDE_SPELLS     10
+
+struct OverrideSpellDataEntry
+{
+    uint32      Id;                                         // 0 index
+    uint32      Spells[MAX_OVERRIDE_SPELLS];                // 1-10 spells
+    //uint32      unk2;                                     // 11 possibly flag
+};
+
 struct PvPDifficultyEntry
 {
     //uint32      id;                                       // 0        m_ID
@@ -1387,7 +1421,7 @@ struct SpellEntry
     uint32    AttributesEx4;                                // 8        m_attributesExD
     uint32    AttributesEx5;                                // 9        m_attributesExE
     uint32    AttributesEx6;                                // 10       m_attributesExF
-    // uint32 unk_320_1;                                    // 11       3.2.0 (0x20 - totems, 0x4 - paladin auras, etc...)
+    uint32    AttributesEx7;                                // 11       m_attributesExG (0x20 - totems, 0x4 - paladin auras, etc...)
     uint32    Stances;                                      // 12       m_shapeshiftMask
     // uint32 unk_320_2;                                    // 13       3.2.0
     uint32    StancesNot;                                   // 14       m_shapeshiftExclude
@@ -1421,7 +1455,7 @@ struct SpellEntry
     uint32    manaCost;                                     // 42       m_manaCost
     uint32    manaCostPerlevel;                             // 43       m_manaCostPerLevel
     uint32    manaPerSecond;                                // 44       m_manaPerSecond
-    uint32    manaPerSecondPerLevel;                        // 45       m_manaPerSecondPerLeve
+    uint32    manaPerSecondPerLevel;                        // 45       m_manaPerSecondPerLevel
     uint32    rangeIndex;                                   // 46       m_rangeIndex
     float     speed;                                        // 47       m_speed
     //uint32    modalNextSpell;                             // 48       m_modalNextSpell not used
@@ -1457,13 +1491,13 @@ struct SpellEntry
     uint32    activeIconID;                                 // 134      m_activeIconID
     //uint32    spellPriority;                              // 135      m_spellPriority not used
     char*     SpellName[16];                                // 136-151  m_name_lang
-    //uint32    SpellNameFlag;                              // 152 not used
+    //uint32    SpellNameFlag;                              // 152      m_name_flag not used
     char*     Rank[16];                                     // 153-168  m_nameSubtext_lang
-    //uint32    RankFlags;                                  // 169 not used
+    //uint32    RankFlags;                                  // 169      m_nameSubtext_flag not used
     //char*     Description[16];                            // 170-185  m_description_lang not used
-    //uint32    DescriptionFlags;                           // 186 not used
+    //uint32    DescriptionFlags;                           // 186      m_description_flag not used
     //char*     ToolTip[16];                                // 187-202  m_auraDescription_lang not used
-    //uint32    ToolTipFlags;                               // 203 not used
+    //uint32    ToolTipFlags;                               // 203      m_auraDescription_flag not used
     uint32    ManaCostPercentage;                           // 204      m_manaCostPct
     uint32    StartRecoveryCategory;                        // 205      m_startRecoveryCategory
     uint32    StartRecoveryTime;                            // 206      m_startRecoveryTime
@@ -1484,9 +1518,9 @@ struct SpellEntry
     uint32    SchoolMask;                                   // 225      m_schoolMask
     uint32    runeCostID;                                   // 226      m_runeCostID
     //uint32    spellMissileID;                             // 227      m_spellMissileID not used
-    //uint32  PowerDisplayId;                               // 228 PowerDisplay.dbc, new in 3.1
+    //uint32  PowerDisplayId;                               // 228      m_powerDisplayID - id from PowerDisplay.dbc, new in 3.1
     //float   unk_320_4[3];                                 // 229-231  3.2.0
-    //uint32  spellDescriptionVariableID;                   // 232      3.2.0
+    //uint32  spellDescriptionVariableID;                   // 232      m_spellDescriptionVariableID, 3.2.0
     uint32  SpellDifficultyId;                              // 233      m_spellDifficultyID - id from SpellDifficulty.dbc
 
     // helpers
@@ -1494,6 +1528,16 @@ struct SpellEntry
     uint32 const* GetEffectSpellClassMask(SpellEffectIndex effect) const
     {
         return EffectSpellClassMaskA + effect * 3;
+    }
+
+    bool IsFitToFamilyMask(uint64 familyFlags, uint32 familyFlags2 = 0) const
+    {
+        return (SpellFamilyFlags & familyFlags) || (SpellFamilyFlags2 & familyFlags2);
+    }
+
+    bool IsFitToFamily(SpellFamily family, uint64 familyFlags, uint32 familyFlags2 = 0) const
+    {
+        return SpellFamily(SpellFamilyName) == family && IsFitToFamilyMask(familyFlags, familyFlags2);
     }
 
     private:
@@ -1547,7 +1591,7 @@ struct SpellRuneCostEntry
     bool NoRunicPowerGain() const { return runePowerGain == 0; }
 };
 
-struct SpellShapeshiftEntry
+struct SpellShapeshiftFormEntry
 {
     uint32 ID;                                              // 0
     //uint32 buttonPosition;                                // 1 unused
@@ -1617,8 +1661,10 @@ struct SummonPropertiesEntry
     uint32  Id;                                             // 0
     uint32  Group;                                          // 1, enum SummonPropGroup
     uint32  FactionId;                                      // 2,                        14 rows > 0
-    uint32  Type;                                           // 3, enum SummonPropType
-    uint32  Slot;                                           // 4,   if type = SUMMON_PROP_TYPE_TOTEM, its actual slot    0-6
+    uint32  Title;                                          // 3, enum UnitNameSummonTitle
+    uint32  Slot;                                           // 4, if title = UNITNAME_SUMMON_TITLE_TOTEM, its actual slot (0-6).
+                                                            //    if title = UNITNAME_SUMMON_TITLE_COMPANION, slot=6 -> defensive guardian, in other cases criter/minipet
+                                                            //    Slot may have other uses, selection of pet type in some cases?
     uint32  Flags;                                          // 5, enum SummonPropFlags
 };
 
@@ -1690,6 +1736,12 @@ struct TaxiPathNodeEntry
     uint32    departureEventID;                             // 10       m_departureEventID
 };
 
+struct TeamContributionPoints
+{
+    //uint32    Entry;                                      // 0
+    float     Value;                                        // 1 (???)
+};
+
 struct TotemCategoryEntry
 {
     uint32    ID;                                           // 0
@@ -1733,7 +1785,7 @@ struct VehicleEntry
     uint32  m_uiLocomotionType;                             // 34
     float   m_msslTrgtImpactTexRadius;                      // 35
     uint32  m_uiSeatIndicatorType;                          // 36
-                                                            // 37, new in 3.1 - powerType
+    uint32  m_powerType;                                    // 37, new in 3.1 - powerType
                                                             // 38, new in 3.1
                                                             // 39, new in 3.1
 };

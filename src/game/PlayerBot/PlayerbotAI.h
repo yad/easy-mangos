@@ -22,6 +22,7 @@
 #include "Common.h"
 #include "../QuestDef.h"
 #include "../GameEventMgr.h"
+#include "../ObjectGuid.h"
 
 class WorldPacket;
 class WorldObject;
@@ -159,10 +160,10 @@ public:
     void HandleTeleportAck();
 
     // Returns what kind of situation we are in so the ai can react accordingly
-    ScenarioType GetScenarioType() {return m_ScenarioType; }
+    ScenarioType GetScenarioType() { return m_ScenarioType; }
 
-    PlayerbotClassAI* GetClassAI() {return m_classAI; }
-    PlayerbotMgr* const GetManager() {return m_mgr; }
+    PlayerbotClassAI* GetClassAI() { return m_classAI; }
+    PlayerbotMgr* const GetManager() { return m_mgr; }
 
     // finds spell ID for matching substring args
     // in priority of full text match, spells not taking reagents, and highest rank
@@ -170,6 +171,7 @@ public:
     uint32 getPetSpellId(const char* args) const;
     // Initialize spell using rank 1 spell id
     uint32 initSpell(uint32 spellId);
+    uint32 initPetSpell(uint32 spellIconId);
 
     // extracts item ids from links
     void extractItemIds(const std::string& text, std::list<uint32>& itemIds) const;
@@ -198,8 +200,11 @@ public:
     bool HasAura(const char* spellName, const Unit* target) const;
     bool HasAura(const char* spellName) const;
 
+    bool CanReceiveSpecificSpell(uint8 spec, Unit* target) const;
+
     bool PickPocket(Unit* pTarget);
     bool HasPick();
+    bool HasSpellReagents(uint32 spellId);
 
     uint8 GetHealthPercent(const Unit& target) const;
     uint8 GetHealthPercent() const;
@@ -232,7 +237,14 @@ public:
     bool CastSpell(uint32 spellId);
     bool CastSpell(uint32 spellId, Unit* target);
     bool CastPetSpell(uint32 spellId, Unit* target = NULL);
-    void UseItem(Item& item, uint8 targetSlot = 255);
+    bool Buff(uint32 spellId, Unit* target, void (*beforeCast)(Player *) = NULL);
+    bool SelfBuff(uint32 spellId);
+
+    void UseItem(Item *item, uint32 targetFlag, ObjectGuid targetGUID);
+    void UseItem(Item *item, uint8 targetInventorySlot);
+    void UseItem(Item *item, Unit *target);
+    void UseItem(Item *item);
+
     void EquipItem(Item& item);
     //void Stay();
     //bool Follow(Player& player);
@@ -243,10 +255,11 @@ public:
     Unit *GetCurrentTarget() { return m_targetCombat; };
     void DoNextCombatManeuver();
     void DoCombatMovement();
-    void SetIgnoreUpdateTime(uint8 t) {m_ignoreAIUpdatesUntilTime = time(0) + t; };
+    void SetIgnoreUpdateTime(uint8 t = 0) { m_ignoreAIUpdatesUntilTime = time(0) + t; };
     void SetIgnoreTeleport(uint8 t) {m_ignoreTeleport = time(0) + t; };
 
-    Player *GetPlayerBot() const {return m_bot; }
+    Player *GetPlayerBot() const { return m_bot; }
+    Player *GetPlayer() const { return m_bot; }
     Player *GetMaster() const;
     void SetMaster(Player* pl);
 
@@ -293,13 +306,16 @@ public:
 
     uint8 GetFreeBagSpace() const;
 
-protected:
+private:
     // ****** Closed Actions ********************************
     // These actions may only be called at special times.
     // Trade methods are only applicable when the trade window is open
     // and are only called from within HandleCommand.
     bool TradeItem(const Item& item, int8 slot = -1);
     bool TradeCopper(uint32 copper);
+
+    // Helper routines not needed by class AIs.
+    void UpdateAttackersForTarget(Unit *victim);
 
     // it is safe to keep these back reference pointers because m_bot
     // owns the "this" object and m_master owns m_bot. The owner always cleans up.
@@ -349,6 +365,7 @@ protected:
     Unit *m_targetProtect;      // check
 
     Unit *m_followTarget;       // whom to follow in non combat situation?
+
     std::map<uint32, float> m_spellRangeMap;
 
     float m_position_fin_x;

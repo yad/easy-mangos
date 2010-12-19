@@ -18,7 +18,7 @@
 
 #include "InstanceSaveMgr.h"
 
-#include "Database/SQLStorage.h"
+#include "SQLStorages.h"
 #include "Player.h"
 #include "GridNotifiers.h"
 #include "Log.h"
@@ -26,7 +26,6 @@
 #include "CellImpl.h"
 #include "Map.h"
 #include "MapManager.h"
-#include "MapInstanced.h"
 #include "Timer.h"
 #include "GridNotifiersImpl.h"
 #include "Transports.h"
@@ -581,8 +580,8 @@ void InstanceSaveManager::_ResetSave(InstanceSaveHashMap::iterator &itr)
 void InstanceSaveManager::_ResetInstance(uint32 mapid, uint32 instanceId)
 {
     DEBUG_LOG("InstanceSaveMgr::_ResetInstance %u, %u", mapid, instanceId);
-    Map *map = (MapInstanced*)sMapMgr.CreateBaseMap(mapid);
-    if (!map->Instanceable())
+    Map * iMap = sMapMgr.FindMap(mapid, instanceId);
+    if (!iMap || !iMap->Instanceable())
         return;
 
     InstanceSaveHashMap::iterator itr = m_instanceSaveById.find(instanceId);
@@ -591,8 +590,7 @@ void InstanceSaveManager::_ResetInstance(uint32 mapid, uint32 instanceId)
 
     DeleteInstanceFromDB(instanceId);                       // even if save not loaded
 
-    Map* iMap = ((MapInstanced*)map)->FindMap(instanceId);
-    if (iMap && iMap->IsDungeon())
+    if (iMap->IsDungeon())
         ((InstanceMap*)iMap)->Reset(INSTANCE_RESET_RESPAWN_DELAY);
     else
         sObjectMgr.DeleteRespawnTimeForInstance(instanceId);// even if map is not loaded
@@ -636,20 +634,20 @@ void InstanceSaveManager::_ResetOrWarnAll(uint32 mapid, Difficulty difficulty, b
         // all needed values are already in resetTime
         uint32 next_reset = resetTime + InstanceResetScheduler::GetMaxResetTimeFor(mapDiff);
         // update it in the DB
-        CharacterDatabase.PExecute("UPDATE instance_reset SET resettime = '%u' WHERE mapid = '%d' AND difficulty = '%d'", (uint64)next_reset, mapid, difficulty);
+        CharacterDatabase.PExecute("UPDATE instance_reset SET resettime = '%u' WHERE mapid = '%u' AND difficulty = '%u'", (uint64)next_reset, mapid, difficulty);
         m_Scheduler.SetResetTimeFor(mapid,difficulty,(time_t)next_reset);
         m_Scheduler.ScheduleReset(true, next_reset-3600, InstanceResetEvent(RESET_EVENT_INFORM_1, mapid, difficulty, 0));
     }
 
     // note: this isn't fast but it's meant to be executed very rarely
-    Map const *map = sMapMgr.CreateBaseMap(mapid);          // _not_ include difficulty
-    MapInstanced::InstancedMaps &instMaps = ((MapInstanced*)map)->GetInstancedMaps();
-    MapInstanced::InstancedMaps::iterator mitr;
-    for(mitr = instMaps.begin(); mitr != instMaps.end(); ++mitr)
+    const MapManager::MapMapType& maps = sMapMgr.Maps();
+
+    MapManager::MapMapType::const_iterator iter_last = maps.lower_bound(MapID(mapid + 1));
+    for(MapManager::MapMapType::const_iterator mitr = maps.lower_bound(MapID(mapid)); mitr != iter_last; ++mitr)
     {
         Map *map2 = mitr->second;
-        if (!map2->IsDungeon())
-            continue;
+        if(map2->GetId() != mapid)
+            break;
 
         if (warn)
             ((InstanceMap*)map2)->SendResetWarnings(timeLeft);

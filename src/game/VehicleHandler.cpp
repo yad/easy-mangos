@@ -39,11 +39,17 @@ void WorldSession::HandleDismissControlledVehicle(WorldPacket &recv_data)
     if(!GetPlayer()->GetVehicle())
         return;
 
+    bool dismiss = true;
+
+    if (GetPlayer()->GetVehicle()->GetVehicleInfo()->m_flags & (VEHICLE_FLAG_NOT_DISMISS | VEHICLE_FLAG_ACCESSORY))
+        dismiss = false;
+
     GetPlayer()->m_movementInfo = mi;
     GetPlayer()->ExitVehicle();
 
-    if (Creature* vehicle = GetPlayer()->GetMap()->GetAnyTypeCreature(guid))
-        vehicle->ForcedDespawn();
+    if (dismiss)
+        if (Creature* vehicle = GetPlayer()->GetMap()->GetAnyTypeCreature(guid))
+            vehicle->ForcedDespawn();
 
 }
 
@@ -82,6 +88,9 @@ void WorldSession::HandleRequestVehicleSwitchSeat(WorldPacket &recv_data)
     VehicleKit* pVehicle = GetPlayer()->GetVehicle();
 
     if (!pVehicle)
+        return;
+
+    if (GetPlayer()->GetVehicle()->GetVehicleInfo()->m_flags & VEHICLE_FLAG_DISABLE_SWITCH)
         return;
 
     if (pVehicle->GetBase()->GetObjectGuid() == guid)
@@ -131,4 +140,50 @@ void WorldSession::HandleEjectPasenger(WorldPacket &recv_data)
         return;
 
     passenger->ExitVehicle();
+
+    // eject and remove creatures of player mounts
+    if (passenger->GetTypeId() == TYPEID_UNIT)
+        passenger->AddObjectToRemoveList();
+}
+
+void WorldSession::HandleChangeSeatsOnControlledVehicle(WorldPacket &recv_data)
+{
+    sLog.outDebug("WORLD: Recvd CMSG_CHANGE_SEATS_ON_CONTROLLED_VEHICLE");
+    recv_data.hexlike();
+
+    ObjectGuid guid, guid2;
+    recv_data >> guid.ReadAsPacked();
+
+    MovementInfo mi;
+    recv_data >> mi;
+    GetPlayer()->m_movementInfo = mi;
+
+    recv_data >> guid2.ReadAsPacked(); //guid of vehicle or of vehicle in target seat
+
+    int8 seatId;
+    recv_data >> seatId;
+
+    VehicleKit* pVehicle = GetPlayer()->GetVehicle();
+
+    if (!pVehicle)
+        return;
+
+    if (GetPlayer()->GetVehicle()->GetVehicleInfo()->m_flags & VEHICLE_FLAG_DISABLE_SWITCH)
+        return;
+
+    if(guid.GetRawValue() == guid2.GetRawValue())
+        GetPlayer()->ChangeSeat(seatId, false);
+
+    else if (guid2.IsVehicle())
+    {
+        if (Creature* vehicle = GetPlayer()->GetMap()->GetAnyTypeCreature(guid2))
+        {
+            if (VehicleKit* pVehicle2 = vehicle->GetVehicleKit())
+                if(pVehicle2->HasEmptySeat(seatId))
+                {
+                    GetPlayer()->ExitVehicle();
+                    GetPlayer()->EnterVehicle(pVehicle2, seatId);
+                }
+        }
+    }
 }

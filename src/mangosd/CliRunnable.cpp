@@ -419,10 +419,10 @@ bool ChatHandler::HandleCharacterEraseCommand(char* args)
     if(!normalizePlayerName(target_name))
         return false;
 
-    uint64 target_guid = sObjectMgr.GetPlayerGUIDByName(nameStr);
+    ObjectGuid target_guid = sObjectMgr.GetPlayerGUIDByName(nameStr);
     uint32 account_id = sObjectMgr.GetPlayerAccountIdByGUID(target_guid);
 
-    if (!target_guid || !account_id)
+    if (target_guid.IsEmpty() || !account_id)
     {
         SendSysMessage(LANG_PLAYER_NOT_FOUND);
         SetSentErrorMessage(true);
@@ -439,7 +439,7 @@ bool ChatHandler::HandleCharacterEraseCommand(char* args)
     sAccountMgr.GetName(account_id,account_name);
 
     Player::DeleteFromDB(target_guid, account_id, true, true);
-    PSendSysMessage(LANG_CHARACTER_DELETED, target_name.c_str(), GUID_LOPART(target_guid), account_name.c_str(), account_id);
+    PSendSysMessage(LANG_CHARACTER_DELETED, target_name.c_str(), target_guid.GetCounter(), account_name.c_str(), account_id);
     return true;
 }
 
@@ -518,12 +518,10 @@ bool ChatHandler::HandleServerLogFilterCommand(char* args)
 {
     if (!*args)
     {
-        uint32 logfiler = sLog.getLogFilter();
-
         SendSysMessage(LANG_LOG_FILTERS_STATE_HEADER);
         for(int i = 0; i < LOG_FILTER_COUNT; ++i)
             if (*logFilterData[i].name)
-                PSendSysMessage("  %-20s = %s",logFilterData[i].name,(logfiler & (1 << i)) !=0 ? GetMangosString(LANG_ON) : GetMangosString(LANG_OFF));
+                PSendSysMessage("  %-20s = %s",logFilterData[i].name, sLog.HasLogFilter(1 << i) ? GetMangosString(LANG_ON) : GetMangosString(LANG_OFF));
         return true;
     }
 

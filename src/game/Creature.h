@@ -23,6 +23,7 @@
 #include "Unit.h"
 #include "UpdateMask.h"
 #include "ItemPrototype.h"
+#include "SharedDefines.h"
 #include "LootMgr.h"
 #include "DBCEnums.h"
 #include "Database/DatabaseEnv.h"
@@ -130,6 +131,7 @@ struct CreatureInfo
     uint32  movementId;
     bool    RegenHealth;
     uint32  equipmentId;
+    uint32  vendorId;
     uint32  MechanicImmuneMask;
     uint32  flags_extra;
     uint32  ScriptID;
@@ -196,13 +198,14 @@ struct CreatureDataAddonAura
     SpellEffectIndex effect_idx;
 };
 
-// from `creature_addon` table
+// from `creature_addon` and `creature_template_addon`tables
 struct CreatureDataAddon
 {
     uint32 guidOrEntry;
     uint32 mount;
     uint32 bytes1;
-    uint32 bytes2;
+    uint8  sheath_state;                                    // SheathState
+    uint8  pvp_state;                                       // UnitPVPStateFlags
     uint32 emote;
     uint32 splineFlags;
     CreatureDataAddonAura const* auras;                     // loaded as char* "spell1 eff1 spell2 eff2 ... "
@@ -393,7 +396,7 @@ class MANGOS_DLL_SPEC Creature : public Unit
         void AddToWorld();
         void RemoveFromWorld();
 
-        bool Create(uint32 guidlow, Map *map, uint32 phaseMask, uint32 Entry, uint32 team, const CreatureData *data = NULL);
+        bool Create(uint32 guidlow, Map *map, uint32 phaseMask, uint32 Entry, Team team = TEAM_NONE, const CreatureData *data = NULL);
         bool LoadCreatureAddon(bool reload = false);
         void SelectLevel(const CreatureInfo *cinfo, float percentHealth = 100.0f, float percentMana = 100.0f);
         void LoadEquipment(uint32 equip_entry, bool force=false);
@@ -410,6 +413,8 @@ class MANGOS_DLL_SPEC Creature : public Unit
         bool IsTotem() const { return m_subtype == CREATURE_SUBTYPE_TOTEM; }
         bool IsTemporarySummon() const { return m_subtype == CREATURE_SUBTYPE_TEMPORARY_SUMMON; }
 
+        bool IsCorpse() const { return getDeathState() ==  CORPSE; }
+        bool IsDespawned() const { return getDeathState() ==  DEAD; }
         void SetCorpseDelay(uint32 delay) { m_corpseDelay = delay; }
         bool IsRacialLeader() const { return GetCreatureInfo()->RacialLeader; }
         bool IsCivilian() const { return GetCreatureInfo()->flags_extra & CREATURE_FLAG_EXTRA_CIVILIAN; }
@@ -492,7 +497,7 @@ class MANGOS_DLL_SPEC Creature : public Unit
 
         bool HasSpell(uint32 spellID) const;
 
-        bool UpdateEntry(uint32 entry, uint32 team = ALLIANCE, const CreatureData* data = NULL, bool preserveHPAndPower = true);
+        bool UpdateEntry(uint32 entry, Team team = ALLIANCE, const CreatureData* data = NULL, bool preserveHPAndPower = true);
         bool UpdateStats(Stats stat);
         bool UpdateAllStats();
         void UpdateResistances(uint32 school);
@@ -505,6 +510,7 @@ class MANGOS_DLL_SPEC Creature : public Unit
         float GetSpellDamageMod(int32 Rank);
 
         VendorItemData const* GetVendorItems() const;
+        VendorItemData const* GetVendorTemplateItems() const;
         uint32 GetVendorItemCurrentCount(VendorItem const* vItem);
         uint32 UpdateVendorItemCurrentCount(VendorItem const* vItem, uint32 used_count);
 
@@ -518,12 +524,6 @@ class MANGOS_DLL_SPEC Creature : public Unit
         std::string GetAIName() const;
         std::string GetScriptName() const;
         uint32 GetScriptId() const;
-
-        void Say(int32 textId, uint32 language, uint64 TargetGuid) { MonsterSay(textId,language,TargetGuid); }
-        void Yell(int32 textId, uint32 language, uint64 TargetGuid) { MonsterYell(textId,language,TargetGuid); }
-        void TextEmote(int32 textId, uint64 TargetGuid, bool IsBossEmote = false) { MonsterTextEmote(textId,TargetGuid,IsBossEmote); }
-        void Whisper(int32 textId, uint64 receiver, bool IsBossWhisper = false) { MonsterWhisper(textId,receiver,IsBossWhisper); }
-        void YellToZone(int32 textId, uint32 language, uint64 TargetGuid) { MonsterYellToZone(textId,language,TargetGuid); }
 
         // overwrite WorldObject function for proper name localization
         const char* GetNameForLocaleIdx(int32 locale_idx) const;
@@ -629,8 +629,8 @@ class MANGOS_DLL_SPEC Creature : public Unit
         void LockAI(bool lock) { m_AI_locked = lock; }
 
     protected:
-        bool CreateFromProto(ObjectGuid guid, uint32 Entry, uint32 team, const CreatureData *data = NULL);
-        bool InitEntry(uint32 entry, uint32 team=ALLIANCE, const CreatureData* data=NULL);
+        bool CreateFromProto(ObjectGuid guid, uint32 Entry, Team team, const CreatureData *data = NULL);
+        bool InitEntry(uint32 entry, const CreatureData* data=NULL);
         void RelocationNotify();
 
         // vendor items

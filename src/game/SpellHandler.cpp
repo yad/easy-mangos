@@ -223,7 +223,7 @@ void WorldSession::HandleOpenItemOpcode(WorldPacket& recvPacket)
 
     // locked item
     uint32 lockId = proto->LockID;
-    if(lockId)
+    if(lockId && !pItem->HasFlag(ITEM_FIELD_FLAGS, ITEM_DYNFLAG_UNLOCKED))
     {
         LockEntry const *lockInfo = sLockStore.LookupEntry(lockId);
 
@@ -266,7 +266,7 @@ void WorldSession::HandleOpenItemOpcode(WorldPacket& recvPacket)
         CharacterDatabase.PExecute("DELETE FROM character_gifts WHERE item_guid = '%u'", pItem->GetGUIDLow());
     }
     else
-        pUser->SendLoot(pItem->GetGUID(),LOOT_CORPSE);
+        pUser->SendLoot(pItem->GetObjectGuid(),LOOT_CORPSE);
 }
 
 void WorldSession::HandleGameObjectUseOpcode( WorldPacket & recv_data )
@@ -525,13 +525,13 @@ void WorldSession::HandlePetCancelAuraOpcode( WorldPacket& recvPacket)
         return;
     }
 
-    if (guid.GetRawValue() != GetPlayer()->GetPetGUID() && guid.GetRawValue() != GetPlayer()->GetCharmGUID())
+    if (guid != GetPlayer()->GetPetGuid() && guid != GetPlayer()->GetCharmGuid())
     {
-        sLog.outError("HandlePetCancelAura. %s isn't pet of %s", guid.GetString().c_str(), GetPlayer()->GetObjectGuid().GetString().c_str());
+        sLog.outError("HandlePetCancelAura. %s isn't pet of %s", guid.GetString().c_str(), GetPlayer()->GetGuidStr().c_str());
         return;
     }
 
-    if(!pet->isAlive())
+    if (!pet->isAlive())
     {
         pet->SendPetActionFeedback(FEEDBACK_PET_DEAD);
         return;
@@ -606,7 +606,7 @@ void WorldSession::HandleSpellClick( WorldPacket & recv_data )
         return;
 
     Creature *unit = _player->GetMap()->GetAnyTypeCreature(guid);
-    if (!unit || unit->isInCombat())                        // client prevent click and set different icon at combat state
+    if (!unit)
         return;
 
     SpellClickInfoMapBounds clickPair = sObjectMgr.GetSpellClickInfoMapBounds(unit->GetEntry());

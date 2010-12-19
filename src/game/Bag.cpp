@@ -69,8 +69,8 @@ bool Bag::Create(uint32 guidlow, uint32 itemid, Player const* owner)
     SetEntry(itemid);
     SetObjectScale(DEFAULT_OBJECT_SCALE);
 
-    SetUInt64Value(ITEM_FIELD_OWNER, owner ? owner->GetGUID() : 0);
-    SetUInt64Value(ITEM_FIELD_CONTAINED, owner ? owner->GetGUID() : 0);
+    SetGuidValue(ITEM_FIELD_OWNER, owner ? owner->GetObjectGuid() : ObjectGuid());
+    SetGuidValue(ITEM_FIELD_CONTAINED, owner ? owner->GetObjectGuid() : ObjectGuid());
 
     SetUInt32Value(ITEM_FIELD_MAXDURABILITY, itemProto->MaxDurability);
     SetUInt32Value(ITEM_FIELD_DURABILITY, itemProto->MaxDurability);
@@ -82,7 +82,7 @@ bool Bag::Create(uint32 guidlow, uint32 itemid, Player const* owner)
     // Cleaning 20 slots
     for (uint8 i = 0; i < MAX_BAG_SIZE; ++i)
     {
-        SetUInt64Value(CONTAINER_FIELD_SLOT_1 + (i*2), 0);
+        SetGuidValue(CONTAINER_FIELD_SLOT_1 + (i*2), ObjectGuid());
         m_bagslot[i] = NULL;
     }
 
@@ -94,15 +94,15 @@ void Bag::SaveToDB()
     Item::SaveToDB();
 }
 
-bool Bag::LoadFromDB(uint32 guid, uint64 owner_guid, QueryResult *result)
+bool Bag::LoadFromDB(uint32 guidLow, Field *fields, ObjectGuid ownerGuid)
 {
-    if(!Item::LoadFromDB(guid, owner_guid, result))
+    if (!Item::LoadFromDB(guidLow, fields, ownerGuid))
         return false;
 
     // cleanup bag content related item value fields (its will be filled correctly from `character_inventory`)
     for (int i = 0; i < MAX_BAG_SIZE; ++i)
     {
-        SetUInt64Value(CONTAINER_FIELD_SLOT_1 + (i*2), 0);
+        SetGuidValue(CONTAINER_FIELD_SLOT_1 + (i*2), ObjectGuid());
         if (m_bagslot[i])
         {
             delete m_bagslot[i];
@@ -140,7 +140,7 @@ void Bag::RemoveItem( uint8 slot, bool /*update*/ )
         m_bagslot[slot]->SetContainer(NULL);
 
     m_bagslot[slot] = NULL;
-    SetUInt64Value( CONTAINER_FIELD_SLOT_1 + (slot * 2), 0 );
+    SetGuidValue(CONTAINER_FIELD_SLOT_1 + (slot*2), ObjectGuid());
 }
 
 void Bag::StoreItem( uint8 slot, Item *pItem, bool /*update*/ )
@@ -150,9 +150,9 @@ void Bag::StoreItem( uint8 slot, Item *pItem, bool /*update*/ )
     if( pItem )
     {
         m_bagslot[slot] = pItem;
-        SetUInt64Value(CONTAINER_FIELD_SLOT_1 + (slot * 2), pItem->GetGUID());
-        pItem->SetUInt64Value(ITEM_FIELD_CONTAINED, GetGUID());
-        pItem->SetUInt64Value( ITEM_FIELD_OWNER, GetOwnerGUID() );
+        SetGuidValue(CONTAINER_FIELD_SLOT_1 + (slot * 2), pItem->GetObjectGuid());
+        pItem->SetGuidValue(ITEM_FIELD_CONTAINED, GetObjectGuid());
+        pItem->SetGuidValue(ITEM_FIELD_OWNER, GetOwnerGuid());
         pItem->SetContainer(this);
         pItem->SetSlot(slot);
     }
@@ -195,36 +195,29 @@ Item* Bag::GetItemByLimitedCategory(uint32 limitedCategory) const
     return NULL;
 }
 
-uint32 Bag::GetItemCount( uint32 item, Item* eItem ) const
+uint32 Bag::GetItemCount(uint32 item, Item* eItem) const
 {
-    Item *pItem;
     uint32 count = 0;
     for(uint32 i=0; i < GetBagSize(); ++i)
-    {
-        pItem = m_bagslot[i];
-        if( pItem && pItem != eItem && pItem->GetEntry() == item )
-            count += pItem->GetCount();
-    }
+        if (m_bagslot[i])
+            if (m_bagslot[i] != eItem && m_bagslot[i]->GetEntry() == item)
+                count += m_bagslot[i]->GetCount();
 
-    if(eItem && eItem->GetProto()->GemProperties)
-    {
+    if (eItem && eItem->GetProto()->GemProperties)
         for(uint32 i=0; i < GetBagSize(); ++i)
-        {
-            pItem = m_bagslot[i];
-            if( pItem && pItem != eItem && pItem->GetProto()->Socket[0].Color )
-                count += pItem->GetGemCountWithID(item);
-        }
-    }
+            if (m_bagslot[i])
+                if (m_bagslot[i] != eItem && m_bagslot[i]->GetProto()->Socket[0].Color)
+                    count += m_bagslot[i]->GetGemCountWithID(item);
 
     return count;
 }
 
-uint32 Bag::GetItemCountWithLimitCategory(uint32 limitCategory) const
+uint32 Bag::GetItemCountWithLimitCategory(uint32 limitCategory, Item* eItem) const
 {
     uint32 count = 0;
     for(uint32 i = 0; i < GetBagSize(); ++i)
         if (m_bagslot[i])
-            if (m_bagslot[i]->GetProto()->ItemLimitCategory == limitCategory )
+            if (m_bagslot[i] != eItem && m_bagslot[i]->GetProto()->ItemLimitCategory == limitCategory )
                 count += m_bagslot[i]->GetCount();
 
     return count;
