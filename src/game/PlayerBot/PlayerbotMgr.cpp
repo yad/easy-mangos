@@ -1,3 +1,21 @@
+/*
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
 #include "Config/Config.h"
 #include "../Player.h"
 #include "PlayerbotAI.h"
@@ -13,20 +31,12 @@
 class LoginQueryHolder;
 class CharacterHandler;
 
-Config botConfig;
-
-PlayerbotMgr::PlayerbotMgr(Player* const master) : m_master(master)
+PlayerbotMgr::PlayerbotMgr()
 {
-    // load config variables
-    m_confMaxNumBots = botConfig.GetIntDefault("PlayerbotAI.MaxNumBots", 9);
-    m_confDebugWhisper = botConfig.GetBoolDefault("PlayerbotAI.DebugWhisper", false);
-    m_confFollowDistance[0] = botConfig.GetFloatDefault("PlayerbotAI.FollowDistanceMin", 0.5f);
-    m_confFollowDistance[1] = botConfig.GetFloatDefault("PlayerbotAI.FollowDistanceMin", 1.0f);
 }
 
 PlayerbotMgr::~PlayerbotMgr()
 {
-    LogoutAllBots();
 }
 
 void PlayerbotMgr::UpdateAI(const uint32 p_time) {}
@@ -38,7 +48,7 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
         // if master is logging out, log out all bots
         case CMSG_LOGOUT_REQUEST:
         {
-            LogoutAllBots();
+            PlayerbotMgr::RemoveAllBotsFromGroup(m_master);
             return;
         }
 
@@ -129,9 +139,12 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
                 case TEXTEMOTE_EAT:
                 case TEXTEMOTE_DRINK:
                 {
-                    for (PlayerBotMap::const_iterator it = GetPlayerBotsBegin(); it != GetPlayerBotsEnd(); ++it)
+                    if (!m_master->GetGroup())
+                        return;
+
+                    for (GroupReference *itr = m_master->GetGroup()->GetFirstMember(); itr != NULL; itr = itr->next())
                     {
-                        Player* const bot = it->second;
+                        Player* const bot = itr->getSource();
                         bot->GetPlayerbotAI()->Feast();
                     }
                     return;
@@ -148,9 +161,12 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
                     if (!thingToAttack) return;
 
                     Player *bot = 0;
-                    for (PlayerBotMap::iterator itr = m_playerBots.begin(); itr != m_playerBots.end(); ++itr)
+                    if (!m_master->GetGroup())
+                        return;
+
+                    for (GroupReference *itr = m_master->GetGroup()->GetFirstMember(); itr != NULL; itr = itr->next())
                     {
-                        bot = itr->second;
+                        bot = itr->getSource();
                         if (!bot->IsFriendlyTo(thingToAttack) && bot->IsWithinLOSInMap(thingToAttack))
                             bot->GetPlayerbotAI()->GetCombatTarget(thingToAttack);
                     }
@@ -164,11 +180,16 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
                     if (bot)
                         bot->GetPlayerbotAI()->SetMovementOrder(PlayerbotAI::MOVEMENT_STAY);
                     else
-                        for (PlayerBotMap::const_iterator it = GetPlayerBotsBegin(); it != GetPlayerBotsEnd(); ++it)
+                    {
+                        if (!m_master->GetGroup())
+                            return;
+
+                        for (GroupReference *itr = m_master->GetGroup()->GetFirstMember(); itr != NULL; itr = itr->next())
                         {
-                            Player* const bot = it->second;
+                            Player* const bot = itr->getSource();
                             bot->GetPlayerbotAI()->SetMovementOrder(PlayerbotAI::MOVEMENT_STAY);
                         }
+                    }
                     return;
                 }
 
@@ -181,14 +202,20 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
                     if (bot)
                         bot->GetPlayerbotAI()->SetMovementOrder(PlayerbotAI::MOVEMENT_FOLLOW, m_master);
                     else
-                        for (PlayerBotMap::const_iterator it = GetPlayerBotsBegin(); it != GetPlayerBotsEnd(); ++it)
+                    {
+                        if (!m_master->GetGroup())
+                            return;
+
+                        for (GroupReference *itr = m_master->GetGroup()->GetFirstMember(); itr != NULL; itr = itr->next())
                         {
-                            Player* const bot = it->second;
+                            Player* const bot = itr->getSource();
                             bot->GetPlayerbotAI()->SetMovementOrder(PlayerbotAI::MOVEMENT_FOLLOW, m_master);
                         }
+                    }
                     return;
                 }
             }
+
             return;
         } /* EMOTE ends here */
 
@@ -204,15 +231,20 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
             if (!obj)
                 return;
 
-            for (PlayerBotMap::const_iterator it = GetPlayerBotsBegin(); it != GetPlayerBotsEnd(); ++it)
+            if (!m_master->GetGroup())
+                return;
+
+            for (GroupReference *itr = m_master->GetGroup()->GetFirstMember(); itr != NULL; itr = itr->next())
             {
-                Player* const bot = it->second;
+                Player* const bot = itr->getSource();
 
                 if (obj->GetGoType() == GAMEOBJECT_TYPE_QUESTGIVER)
                     bot->GetPlayerbotAI()->TurnInQuests(obj);
                  // add other go types here, i.e.:
                 // GAMEOBJECT_TYPE_CHEST - loot quest items of chest
             }
+
+            return;
         }
         break;
 
@@ -229,10 +261,13 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
             if (!pNpc)
                 return;
 
+            if (!m_master->GetGroup())
+                return;                
+
             // for all master's bots
-            for (PlayerBotMap::const_iterator it = GetPlayerBotsBegin(); it != GetPlayerBotsEnd(); ++it)
+            for (GroupReference *itr = m_master->GetGroup()->GetFirstMember(); itr != NULL; itr = itr->next())
             {
-                Player* const bot = it->second;
+                Player* const bot = itr->getSource();
                 bot->GetPlayerbotAI()->TurnInQuests(pNpc);
             }
 
@@ -249,31 +284,36 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
             p >> guid >> quest;
             Quest const* qInfo = sObjectMgr.GetQuestTemplate(quest);
             if (qInfo)
-                for (PlayerBotMap::const_iterator it = GetPlayerBotsBegin(); it != GetPlayerBotsEnd(); ++it)
+            {
+                if (!m_master->GetGroup())
+                    return;
+
+                for (GroupReference *itr = m_master->GetGroup()->GetFirstMember(); itr != NULL; itr = itr->next())
                 {
-                    Player* const bot = it->second;
+                    Player* const bot = itr->getSource();
 
                     if (bot->GetQuestStatus(quest) == QUEST_STATUS_COMPLETE)
-                        bot->GetPlayerbotAI()->TellMaster("I already completed that quest.");
+                        bot->GetPlayerbotAI()->TellMaster("J'ai deja fini cette quete.");
                     else if (!bot->CanTakeQuest(qInfo, false))
                     {
                         if (!bot->SatisfyQuestStatus(qInfo, false))
-                            bot->GetPlayerbotAI()->TellMaster("I already have that quest.");
+                            bot->GetPlayerbotAI()->TellMaster("Je suis deja sur cette quete.");
                         else
-                            bot->GetPlayerbotAI()->TellMaster("I can't take that quest.");
+                            bot->GetPlayerbotAI()->TellMaster("Je ne peux pas prendre cette quete.");
                     }
                     else if (!bot->SatisfyQuestLog(false))
-                        bot->GetPlayerbotAI()->TellMaster("My quest log is full.");
+                        bot->GetPlayerbotAI()->TellMaster("Mon journal de quete est plein.");
                     else if (!bot->CanAddQuest(qInfo, false))
-                        bot->GetPlayerbotAI()->TellMaster("I can't take that quest because it requires that I take items, but my bags are full!");
+                        bot->GetPlayerbotAI()->TellMaster("Je ne peux pas prendre cette quete car je dois ramasser des objets pour la terminer et mes sacs sont pleins :(");
 
                     else
                     {
                         p.rpos(0);         // reset reader
                         bot->GetSession()->HandleQuestgiverAcceptQuestOpcode(p);
-                        bot->GetPlayerbotAI()->TellMaster("Got the quest.");
+                        bot->GetPlayerbotAI()->TellMaster("J'ai pris la quete.");
                     }
                 }
+            }
             return;
         }
         case CMSG_LOOT_ROLL:
@@ -288,15 +328,16 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
             p >> NumberOfPlayers;    //number of players invited to roll
             p >> rollType;    //need,greed or pass on roll
 
+            if (!m_master->GetGroup())
+                return;
 
-            for (PlayerBotMap::const_iterator it = GetPlayerBotsBegin(); it != GetPlayerBotsEnd(); ++it)
+            for (GroupReference *itr = m_master->GetGroup()->GetFirstMember(); itr != NULL; itr = itr->next())
             {
-
                 uint32 choice = urand(0, 3);    //returns 0,1,2 or 3
 
-                Player* const bot = it->second;
-                if (!bot)
-                    return;
+                Player* const bot = itr->getSource();
+                if(!bot)
+                     return;
 
                 Group* group = bot->GetGroup();
                 if (!group)
@@ -332,10 +373,12 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
             p >> itemGUID;     // Not used for bot but necessary opcode data retrieval
             p >> guildBank;    // Flagged if guild repair selected
 
-            for (PlayerBotMap::const_iterator it = GetPlayerBotsBegin(); it != GetPlayerBotsEnd(); ++it)
-            {
+            if (!m_master->GetGroup())
+                return;
 
-                Player* const bot = it->second;
+            for (GroupReference *itr = m_master->GetGroup()->GetFirstMember(); itr != NULL; itr = itr->next())
+            {
+                Player* const bot = itr->getSource();
                 if (!bot)
                     return;
 
@@ -387,9 +430,12 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
         case CMSG_SPIRIT_HEALER_ACTIVATE:
         {
             // sLog.outDebug("SpiritHealer is resurrecting the Player %s",m_master->GetName());
-            for (PlayerBotMap::iterator itr = m_playerBots.begin(); itr != m_playerBots.end(); ++itr)
+            if (!m_master->GetGroup())
+                return;
+
+            for (GroupReference *itr = m_master->GetGroup()->GetFirstMember(); itr != NULL; itr = itr->next())
             {
-                Player* const bot = itr->second;
+                Player* const bot = itr->getSource();
                 Group *grp = bot->GetGroup();
                 if (grp)
                     grp->RemoveMember(bot->GetGUID(), 1);
@@ -423,11 +469,12 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
 
                 std::ostringstream out;
                 out << "masterin: " << oc;
-                sLog.outError(out.str().c_str());
+                sLog.outDebug(out.str().c_str());
                }
              */
     }
 }
+
 void PlayerbotMgr::HandleMasterOutgoingPacket(const WorldPacket& packet)
 {
     /*
@@ -453,32 +500,22 @@ void PlayerbotMgr::HandleMasterOutgoingPacket(const WorldPacket& packet)
 
             std::ostringstream out;
             out << "masterout: " << oc;
-            sLog.outError(out.str().c_str());
+            sLog.outDebug(out.str().c_str());
         }
        }
      */
 }
 
-void PlayerbotMgr::LogoutAllBots()
-{
-    while (true)
-    {
-        PlayerBotMap::const_iterator itr = GetPlayerBotsBegin();
-        if (itr == GetPlayerBotsEnd()) break;
-        Player* bot = itr->second;
-        LogoutPlayerBot(bot->GetGUID());
-    }
-}
-
-
-
 void PlayerbotMgr::Stay()
 {
-    for (PlayerBotMap::const_iterator itr = GetPlayerBotsBegin(); itr != GetPlayerBotsEnd(); ++itr)
+    /*if (!player->GetGroup())
+        return;
+
+    for (GroupReference *itr = player->GetGroup()->GetFirstMember(); itr != NULL; itr = itr->next())
     {
-        Player* bot = itr->second;
+        Player* const bot = itr->getSource();
         bot->GetMotionMaster()->Clear();
-    }
+    }*/
 }
 
 
@@ -489,7 +526,6 @@ void PlayerbotMgr::LogoutPlayerBot(uint64 guid)
     if (bot)
     {
         WorldSession * botWorldSessionPtr = bot->GetSession();
-        m_playerBots.erase(guid);    // deletes bot player ptr inside this WorldSession PlayerBotMap
         botWorldSessionPtr->LogoutPlayer(true); // this will delete the bot Player object and PlayerbotAI object
         delete botWorldSessionPtr;  // finally delete the bot's WorldSession
     }
@@ -498,86 +534,72 @@ void PlayerbotMgr::LogoutPlayerBot(uint64 guid)
 // Playerbot mod: Gets a player bot Player object for this WorldSession master
 Player* PlayerbotMgr::GetPlayerBot(uint64 playerGuid) const
 {
-    PlayerBotMap::const_iterator it = m_playerBots.find(playerGuid);
-    return (it == m_playerBots.end()) ? 0 : it->second;
+    HashMapHolder < Player > ::MapType& m = sObjectAccessor.GetPlayers();
+    for (HashMapHolder < Player > ::MapType::const_iterator itr = m.begin(); itr != m.end(); ++itr)
+    {
+        Player* const bot = itr->second;
+        if (bot && bot->IsBot() && (bot->GetGUID() == playerGuid))
+            return bot;
+    }
+    return NULL;
 }
 
 void PlayerbotMgr::OnBotLogin(Player * const bot)
 {
-    // give the bot some AI, object is owned by the player class
-    PlayerbotAI* ai = new PlayerbotAI(this, bot);
-    bot->SetPlayerbotAI(ai);
+    PlayerbotAI* ai = bot->GetPlayerbotAI();
+    if (!ai)
+    {
+        PlayerbotAI* ai = new PlayerbotAI(this, bot);
+        if (ai)
+            bot->SetPlayerbotAI(ai);
+    }
+    ai = bot->GetPlayerbotAI();
 
-    // tell the world session that they now manage this new bot
-    m_playerBots[bot->GetGUID()] = bot;
-
-    // if bot is in a group and master is not in group then
-    // have bot leave their group
-    if (bot->GetGroup() &&
-        (m_master->GetGroup() == NULL ||
-         m_master->GetGroup()->IsMember(bot->GetGUID()) == false))
+    if (bot->GetGroup())
         bot->RemoveFromGroup();
 
-    // sometimes master can lose leadership, pass leadership to master check
-    const uint64 masterGuid = m_master->GetGUID();
-    if (m_master->GetGroup() &&
-        !m_master->GetGroup()->IsLeader(masterGuid))
-        m_master->GetGroup()->ChangeLeader(masterGuid);
+    ChatHandler ch(bot);
+    bot->RemoveMyEquipement();
+    bot->GiveLevel(bot->GetLevelAtLoading());
+    ch.HandleGMStartUpCommand("");
+    bot->SetHealth(bot->GetMaxHealth());
+    bot->SetPower(bot->getPowerType(), bot->GetMaxPower(bot->getPowerType()));
 }
 
-void PlayerbotMgr::RemoveAllBotsFromGroup()
+void PlayerbotMgr::RemoveAllBotsFromGroup(Player* player)
 {
-    for (PlayerBotMap::const_iterator it = GetPlayerBotsBegin(); m_master->GetGroup() && it != GetPlayerBotsEnd(); ++it)
-    {
-        Player* const bot = it->second;
-        if (bot->IsInSameGroupWith(m_master))
-            m_master->GetGroup()->RemoveMember(bot->GetGUID(), 0);
-    }
-}
-
-void Creature::LoadBotMenu(Player *pPlayer)
-{
-
-    if (pPlayer->GetPlayerbotAI()) return;
-    uint64 guid = pPlayer->GetGUID();
-    uint32 accountId = sObjectMgr.GetPlayerAccountIdByGUID(guid);
-    QueryResult *result = CharacterDatabase.PQuery("SELECT guid, name FROM characters WHERE account='%d'", accountId);
+    sLog.outDebug("PlayerbotMgr::RemoveAllBotsInGroup(...)");
+    bool removed = false;
     do
     {
-        Field *fields = result->Fetch();
-        uint64 guidlo = fields[0].GetUInt64();
-        std::string name = fields[1].GetString();
-        std::string word = "";
+        removed = false;
+        Player* bot = NULL;
 
-        if ((guid == 0) || (guid == guidlo))
+        if (player->GetGroup())
         {
-            //not found or himself
-        }
-        else
-        {
-            // if(sConfig.GetBoolDefault("PlayerbotAI.DisableBots", false)) return;
-            // create the manager if it doesn't already exist
-            if (!pPlayer->GetPlayerbotMgr())
-                pPlayer->SetPlayerbotMgr(new PlayerbotMgr(pPlayer));
-            if (pPlayer->GetPlayerbotMgr()->GetPlayerBot(guidlo) == NULL) // add (if not already in game)
+            GroupReference *ref = player->GetGroup()->GetFirstMember();
+            while (ref)
             {
-                word += "Recruit ";
-                word += name;
-                word += " as a Bot.";
-                pPlayer->PlayerTalkClass->GetGossipMenu().AddMenuItem((uint8) 9, word, guidlo, GOSSIP_OPTION_BOT, word, false);
-            }
-            else if (pPlayer->GetPlayerbotMgr()->GetPlayerBot(guidlo) != NULL) // remove (if in game)
-            {
-                word += "Dismiss ";
-                word += name;
-                word += " from duty.";
-                pPlayer->PlayerTalkClass->GetGossipMenu().AddMenuItem((uint8) 0, word, guidlo, GOSSIP_OPTION_BOT, word, false);
+                bot = ref->getSource();
+
+                if (!bot || !bot->IsBot() || bot == player)
+                {
+                    ref = ref->next();
+                    continue;
+                }
+
+                sLog.outDebug("Player name : %s, removed", bot->GetName());
+                bot->RemoveFromGroup();
+                bot->GetPlayerbotMgr()->LogoutPlayerBot(bot->GetGUID());
+                removed = true;
+                break;
             }
         }
-    }
-    while (result->NextRow());
-    delete result;
-}
+    }while(removed);
+    PlayerbotMgr::AddAllBots();
+}     
+
+
 
 void Player::chompAndTrim(std::string& str)
 {

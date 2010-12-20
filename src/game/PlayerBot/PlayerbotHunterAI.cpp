@@ -1,11 +1,34 @@
-// an improved Hunter by rrtn & Runsttren :)
+/*
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
 
 #include "PlayerbotHunterAI.h"
 #include "PlayerbotMgr.h"
 
 class PlayerbotAI;
 
-PlayerbotHunterAI::PlayerbotHunterAI(Player* const master, Player* const bot, PlayerbotAI* const ai) : PlayerbotClassAI(master, bot, ai)
+PlayerbotHunterAI::PlayerbotHunterAI(Player* const bot, PlayerbotAI* const ai): PlayerbotClassAI(bot, ai)
+{
+    InitSpells(ai);
+    m_petSummonFailed = false;
+    m_rangedCombat = true;
+}
+
+void PlayerbotHunterAI::InitSpells(PlayerbotAI* const ai)
 {
     // PET CTRL
     PET_SUMMON                    = ai->initSpell(CALL_PET_1);
@@ -86,7 +109,10 @@ bool PlayerbotHunterAI::HasPet(Player* bot)
     QueryResult* result = CharacterDatabase.PQuery("SELECT * FROM character_pet WHERE owner = '%u' AND (slot = '%u' OR slot = '%u')", bot->GetGUIDLow(), PET_SAVE_AS_CURRENT, PET_SAVE_NOT_IN_SLOT);
 
     if (result)
+    {
+        delete result;
         return true;  //hunter has current pet
+    }
     else
         return false;  //hunter either has no pet or stabled
 } // end HasPet
