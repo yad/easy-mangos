@@ -39,15 +39,15 @@ INSERT INTO `gameobject_template`
 (`entry`, `type`, `displayId`, `name`,                          `castBarCaption`, `faction`, `flags`, `size`, `data0`, `data1`, `data2`, `data3`, `data4`, `data5`, `data6`, `data7`, `data8`, `data9`, `data10`, `data11`, `data12`, `data13`, `data14`, `data15`, `data16`, `data17`, `data18`, `data19`, `data20`, `data21`, `data22`, `data23`, `ScriptName`) VALUES 
 ( 500000,  1,     6955,       'Portal to PVP Arena Gurubashi', '',                0,          0,       1,      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,        0,        0,        0,        0,        0,        0,        0,        0,        0,        0,        0,        0,        0,       '');
 INSERT INTO `gameobject_scripts` 
-(`id`, `delay`,`command`,`datalong`,`x`,     `y`,   `z`,   `o`) VALUE
-(500010,0,      6,        0,        -13232.8, 218.2, 31.82, 1.133),
-(500011,0,      6,        0,        -13232.8, 218.2, 31.82, 1.133),
-(500012,0,      6,        0,        -13232.8, 218.2, 31.82, 1.133),
-(500013,0,      6,        0,        -13232.8, 218.2, 31.82, 1.133),
-(500014,0,      6,        0,        -13232.8, 218.2, 31.82, 1.133),
-(500015,0,      6,        0,        -13232.8, 218.2, 31.82, 1.133),
-(500016,0,      6,        0,        -13232.8, 218.2, 31.82, 1.133),
-(500017,0,      6,        0,        -13232.8, 218.2, 31.82, 1.133);
+(`id`, `delay`,`command`,`datalong`,`x`,     `y`,   `z`,   `o`, `comments`) VALUE
+(500010,0,      6,        0,        -13232.8, 218.2, 31.82, 1.133, ''),
+(500011,0,      6,        0,        -13232.8, 218.2, 31.82, 1.133, ''),
+(500012,0,      6,        0,        -13232.8, 218.2, 31.82, 1.133, ''),
+(500013,0,      6,        0,        -13232.8, 218.2, 31.82, 1.133, ''),
+(500014,0,      6,        0,        -13232.8, 218.2, 31.82, 1.133, ''),
+(500015,0,      6,        0,        -13232.8, 218.2, 31.82, 1.133, ''),
+(500016,0,      6,        0,        -13232.8, 218.2, 31.82, 1.133, ''),
+(500017,0,      6,        0,        -13232.8, 218.2, 31.82, 1.133, '');
 INSERT INTO `gameobject` VALUES 
 ('500010', '500000', '1', '1', '1', '-1277.71', '119.821', '131.183', '5.28871', '0', '0', '0.477', '-0.878903', '25', '0', '1'),
 ('500011', '500000', '0', '1', '1', '1804.87', '247.557', '60.587', '0.0268662', '0', '0', '0.0134327', '0.99991', '25', '0', '1'),
@@ -86,7 +86,7 @@ INSERT INTO `creature_questrelation`    (`id`, `quest`) VALUES (500011, 500000);
 INSERT INTO `creature_involvedrelation` (`id`, `quest`) VALUES (500011, 500000);
 INSERT INTO `creature` VALUES ('500011', '500011', '0', '1', '1', '0', '0', '-13225.1', '235.282', '33.4367', '4.2376', '25', '0', '0', '10000', '5000', '0', '0');
 INSERT INTO `game_event_creature` VALUES ('500011', '109');
-INSERT INTO `game_event_creature_quest` VALUES ('500011', '500000', '109');
+INSERT INTO `game_event_quest` VALUES ('500000', '109');
 
 # Stone ---------------------------------------------------------------------------------
 INSERT INTO `item_template` 
@@ -95,7 +95,7 @@ INSERT INTO `item_template`
 
 # Quests --------------------------------------------------------------------------------
 INSERT INTO `quest_template` (
-`entry`, `Method`, `ZoneOrSort`, `SkillOrClass`, `MinLevel`, 
+`entry`, `Method`, `ZoneOrSort`, `MinLevel`, 
 `QuestLevel`, `Type`, `RequiredRaces`, `RequiredSkillValue`, `RepObjectiveFaction`, 
 `RepObjectiveValue`, `RequiredMinRepFaction`, `RequiredMinRepValue`, `RequiredMaxRepFaction`, `RequiredMaxRepValue`, 
 `SuggestedPlayers`, `LimitTime`, `QuestFlags`, `SpecialFlags`, `CharTitleId`, 
@@ -119,7 +119,7 @@ INSERT INTO `quest_template` (
 `PointX`, `PointY`, `PointOpt`, `DetailsEmote1`, `DetailsEmote2`, 
 `DetailsEmote3`, `DetailsEmote4`, `IncompleteEmote`, `CompleteEmote`, `OfferRewardEmote1`, 
 `OfferRewardEmote2`, `OfferRewardEmote3`, `OfferRewardEmote4`, `StartScript`, `CompleteScript`) VALUES 
-(500000,2,     0,     0,     80, 
+(500000,2,     0,     80, 
  80,    0,     0,     0,     0, 
  0,     0,     0,     0,     0, 
  0,     750,   2,     0,     0, 

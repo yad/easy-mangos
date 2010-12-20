@@ -39,7 +39,7 @@ INSERT INTO `game_event`
 
 # Quest --------------------------------------------------------------------------
 INSERT INTO `quest_template` 
-(`entry`,                `Method`,                `ZoneOrSort`,            `SkillOrClass`,          `MinLevel`, 
+(`entry`,                `Method`,                `ZoneOrSort`,            `MinLevel`, 
 `QuestLevel`,            `Type`,                  `RequiredRaces`,         `RequiredSkillValue`,    `RepObjectiveFaction`, 
 `RepObjectiveValue`,     `RequiredMinRepFaction`, `RequiredMinRepValue`,   `RequiredMaxRepFaction`, `RequiredMaxRepValue`, 
 `SuggestedPlayers`,      `LimitTime`,             `QuestFlags`,            `SpecialFlags`,          `CharTitleId`, 
@@ -63,7 +63,7 @@ INSERT INTO `quest_template`
 `PointX`,                `PointY`,                `PointOpt`,              `DetailsEmote1`,         `DetailsEmote2`, 
 `DetailsEmote3`,         `DetailsEmote4`,         `IncompleteEmote`,       `CompleteEmote`,         `OfferRewardEmote1`, 
 `OfferRewardEmote2`,     `OfferRewardEmote3`,     `OfferRewardEmote4`,     `StartScript`,           `CompleteScript`) VALUES 
-(500002, 2,    14,   0, 70, 
+(500002, 2,    14, 70, 
  80,     0,    0,    0, 0, 
  0,      0,    0,    0, 0, 
  0,      1020, 4232, 1, 0, 
@@ -91,7 +91,7 @@ INSERT INTO `quest_template`
  0,      0,  0,     0,      0,
  0,      0,  0,     1,      0,
  0,      0,  0,     0,      0);
-INSERT INTO game_event_creature_quest VALUES (500025,500002,105);
+INSERT INTO game_event_quest VALUES (500002,105);
 
 # QuestGiver ---------------------------------------------------------------------
 INSERT INTO `creature_template` 
