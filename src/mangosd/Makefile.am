@@ -45,6 +45,7 @@ mangos_worldd_LDADD = \
 	../game/vmap/libmangosvmaps.a \
 	../shared/Database/libmangosdatabase.a \
 	../shared/Config/libmangosconfig.a \
+	../game/playerbot/libmangosbot.a \
 	../shared/Auth/libmangosauth.a \
 	../shared/libmangosshared.a \
 	../framework/libmangosframework.a \

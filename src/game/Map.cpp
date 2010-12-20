@@ -629,7 +629,7 @@ void Map::Remove(Player *player, bool remove)
     SendRemoveTransports(player);
     UpdateObjectVisibility(player,cell,p);
 
-    player->ResetMap();
+    // player->ResetMap();
     if( remove )
         DeleteFromWorld(player);
 }

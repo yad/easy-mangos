@@ -469,48 +469,48 @@
     <ClCompile Include="..\..\src\game\AuctionHouseBot\AuctionHouseBot.cpp">
       <Filter>AhBot</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\game\PlayerBot\PlayerbotAI.cpp">
-      <Filter>Playerbot</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\game\PlayerBot\PlayerbotClassAI.cpp">
-      <Filter>Playerbot</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\game\PlayerBot\PlayerbotDeathKnightAI.cpp">
-      <Filter>Playerbot</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\game\PlayerBot\PlayerbotDruidAI.cpp">
-      <Filter>Playerbot</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\game\PlayerBot\PlayerbotHunterAI.cpp">
-      <Filter>Playerbot</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\game\PlayerBot\PlayerbotMageAI.cpp">
-      <Filter>Playerbot</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\game\PlayerBot\PlayerbotMgr.cpp">
-      <Filter>Playerbot</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\game\PlayerBot\PlayerbotPaladinAI.cpp">
-      <Filter>Playerbot</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\game\PlayerBot\PlayerbotPriestAI.cpp">
-      <Filter>Playerbot</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\game\PlayerBot\PlayerbotRogueAI.cpp">
-      <Filter>Playerbot</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\game\PlayerBot\PlayerbotShamanAI.cpp">
-      <Filter>Playerbot</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\game\PlayerBot\PlayerbotWarlockAI.cpp">
-      <Filter>Playerbot</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\game\PlayerBot\PlayerbotWarriorAI.cpp">
-      <Filter>Playerbot</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\game\VehicleHandler.cpp">
       <Filter>Object</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\game\playerbot\PlayerbotAI.cpp">
+      <Filter>World/Handlers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\game\playerbot\PlayerbotClassAI.cpp">
+      <Filter>World/Handlers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\game\playerbot\PlayerbotDeathKnightAI.cpp">
+      <Filter>World/Handlers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\game\playerbot\PlayerbotDruidAI.cpp">
+      <Filter>World/Handlers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\game\playerbot\PlayerbotHunterAI.cpp">
+      <Filter>World/Handlers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\game\playerbot\PlayerbotMageAI.cpp">
+      <Filter>World/Handlers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\game\playerbot\PlayerbotMgr.cpp">
+      <Filter>World/Handlers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\game\playerbot\PlayerbotPaladinAI.cpp">
+      <Filter>World/Handlers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\game\playerbot\PlayerbotPriestAI.cpp">
+      <Filter>World/Handlers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\game\playerbot\PlayerbotRogueAI.cpp">
+      <Filter>World/Handlers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\game\playerbot\PlayerbotShamanAI.cpp">
+      <Filter>World/Handlers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\game\playerbot\PlayerbotWarlockAI.cpp">
+      <Filter>World/Handlers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\game\playerbot\PlayerbotWarriorAI.cpp">
+      <Filter>World/Handlers</Filter>
+    </ClCompile>	  
     <ClCompile Include="..\..\src\game\vmap\BIH.cpp">
       <Filter>vmaps</Filter>
     </ClCompile>
@@ -934,52 +934,49 @@
     <ClInclude Include="..\..\src\game\AuctionHouseBot\AuctionHouseBot.h">
       <Filter>AhBot</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\game\PlayerBot\config.h">
-      <Filter>Playerbot</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game\PlayerBot\PlayerbotAI.h">
-      <Filter>Playerbot</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game\PlayerBot\PlayerbotClassAI.h">
-      <Filter>Playerbot</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game\PlayerBot\PlayerbotDeathKnightAI.h">
-      <Filter>Playerbot</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game\PlayerBot\PlayerbotDruidAI.h">
-      <Filter>Playerbot</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game\PlayerBot\PlayerbotHunterAI.h">
-      <Filter>Playerbot</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game\PlayerBot\PlayerbotMageAI.h">
-      <Filter>Playerbot</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game\PlayerBot\PlayerbotMgr.h">
-      <Filter>Playerbot</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game\PlayerBot\PlayerbotPaladinAI.h">
-      <Filter>Playerbot</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game\PlayerBot\PlayerbotPriestAI.h">
-      <Filter>Playerbot</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game\PlayerBot\PlayerbotRogueAI.h">
-      <Filter>Playerbot</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game\PlayerBot\PlayerbotShamanAI.h">
-      <Filter>Playerbot</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game\PlayerBot\PlayerbotWarlockAI.h">
-      <Filter>Playerbot</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game\PlayerBot\PlayerbotWarriorAI.h">
-      <Filter>Playerbot</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\game\MoveMap.h">
       <Filter>World/Handlers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\game\MoveMapSharedDefines.h">
+      <Filter>World/Handlers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\game\playerbot\PlayerbotAI.h">
+      <Filter>World/Handlers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\game\playerbot\PlayerbotClassAI.h">
+      <Filter>World/Handlers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\game\playerbot\PlayerbotDeathKnightAI.h">
+      <Filter>World/Handlers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\game\playerbot\PlayerbotDruidAI.h">
+      <Filter>World/Handlers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\game\playerbot\PlayerbotHunterAI.h">
+      <Filter>World/Handlers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\game\playerbot\PlayerbotMageAI.h">
+      <Filter>World/Handlers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\game\playerbot\PlayerbotMgr.h">
+      <Filter>World/Handlers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\game\playerbot\PlayerbotPaladinAI.h">
+      <Filter>World/Handlers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\game\playerbot\PlayerbotPriestAI.h">
+      <Filter>World/Handlers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\game\playerbot\PlayerbotRogueAI.h">
+      <Filter>World/Handlers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\game\playerbot\PlayerbotShamanAI.h">
+      <Filter>World/Handlers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\game\playerbot\PlayerbotWarlockAI.h">
+      <Filter>World/Handlers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\game\playerbot\PlayerbotWarriorAI.h">
       <Filter>World/Handlers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\game\vmap\BIH.h">
