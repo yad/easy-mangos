@@ -1,23 +1,5 @@
-/*
- * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
-
-#ifndef _PLAYERBOTPALADINAI_H
-#define _PLAYERBOTPALADINAI_H
+#ifndef _PlayerbotPaladinAI_H
+#define _PlayerbotPaladinAI_H
 
 #include "PlayerbotClassAI.h"
 
@@ -99,16 +81,24 @@ enum PaladinSpells
 class MANGOS_DLL_SPEC PlayerbotPaladinAI : PlayerbotClassAI
 {
 public:
-    PlayerbotPaladinAI(Player* const bot, PlayerbotAI* const ai);
+    PlayerbotPaladinAI(Player * const master, Player * const bot, PlayerbotAI * const ai);
     virtual ~PlayerbotPaladinAI();
 
-private:
-    void InitSpells(PlayerbotAI* const ai);
+    // all combat actions go here
     void DoNextCombatManeuver(Unit*);
-    void DoNonCombatActions();
-    bool HealTarget(Unit* target, uint8 hp);
 
-protected:
+    // all non combat actions go here, ex buffs, heals, rezzes
+    void DoNonCombatActions();
+
+    // buff a specific player, usually a real PC who is not in group
+    bool BuffPlayer(Player *target);
+
+private:
+    // Heals the target based off its hps
+    bool HealTarget (Unit *target);
+    // Bless target using greater blessing if possible
+    bool Bless(uint32 spellId, Unit *target);
+
     // Retribution
     uint32 RETRIBUTION_AURA,
            SEAL_OF_COMMAND,
@@ -139,6 +129,7 @@ protected:
            HOLY_WRATH,
            LAY_ON_HANDS,
            EXORCISM,
+           REDEMPTION,
            DIVINE_PLEA;
 
     // Protection
@@ -158,6 +149,7 @@ protected:
            HOLY_SHIELD,
            AVENGERS_SHIELD,
            RIGHTEOUS_DEFENSE,
+           BLESSING_OF_SANCTUARY,
            GREATER_BLESSING_OF_SANCTUARY,
            HAND_OF_SACRIFICE,
            SHIELD_OF_RIGHTEOUSNESS;
@@ -180,10 +172,7 @@ protected:
            BERSERKING,
            WILL_OF_THE_FORSAKEN;
 
-    uint32 SpellSequence,
-           CombatCounter,
-           HealCounter;
+    uint32 SpellSequence, CombatCounter, HealCounter;
 };
 
 #endif
-

@@ -1,23 +1,5 @@
-/*
- * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
-
-#ifndef _PLAYERBOTWARLOCKAI_H
-#define _PLAYERBOTWARLOCKAI_H
+#ifndef _PlayerbotWarlockAI_H
+#define _PlayerbotWarlockAI_H
 
 #include "PlayerbotClassAI.h"
 
@@ -34,9 +16,45 @@ enum
 
 enum StoneDisplayId
 {
-    FIRESTONE_DISPLAYID  = 7409,
-    SPELLSTONE_DISPLAYID = 13291,
-    SOULSTONE_DISPLAYID  = 6009
+    FIRESTONE_DISPLAYID   = 7409,
+    SPELLSTONE_DISPLAYID  = 13291,
+    SOULSTONE_DISPLAYID   = 6009,
+    HEALTHSTONE_DISPLAYID = 8026
+};
+
+enum DemonEntry
+{
+    DEMON_IMP        = 416,
+    DEMON_VOIDWALKER = 1860,
+    DEMON_SUCCUBUS   = 1863,
+    DEMON_FELHUNTER  = 417,
+    DEMON_FELGUARD   = 17252
+};
+
+enum DemonSpellIconIds
+{
+    // Imp
+    BLOOD_PACT_ICON       = 541,
+    FIREBOLT_ICON         = 18,
+    FIRE_SHIELD_ICON      = 16,
+    // Felguard
+    ANGUISH_ICON          = 173,
+    CLEAVE_ICON           = 277,
+    INTERCEPT_ICON        = 516,
+    // Felhunter
+    DEVOUR_MAGIC_ICON     = 47,
+    FEL_INTELLIGENCE_ICON = 1940,
+    SHADOW_BITE_ICON      = 2027,
+    SPELL_LOCK_ICON       = 77,
+    // Succubus
+    LASH_OF_PAIN_ICON     = 596,
+    SEDUCTION_ICON        = 48,
+    SOOTHING_KISS_ICON    = 694,
+    // Voidwalker
+    CONSUME_SHADOWS_ICON  = 207,
+    SACRIFICE_ICON        = 693,
+    SUFFERING_ICON        = 9,
+    TORMENT_ICON          = 173
 };
 
 enum WarlockSpells
@@ -113,16 +131,20 @@ enum WarlockSpells
 class MANGOS_DLL_SPEC PlayerbotWarlockAI : PlayerbotClassAI
 {
 public:
-    PlayerbotWarlockAI(Player* const bot, PlayerbotAI* const ai);
+    PlayerbotWarlockAI(Player * const master, Player * const bot, PlayerbotAI * const ai);
     virtual ~PlayerbotWarlockAI();
 
-private:
-    void InitSpells(PlayerbotAI* const ai);
+    // all combat actions go here
     void DoNextCombatManeuver(Unit*);
-    void DoNonCombatActions();
-    bool HealTarget(Unit* target, uint8 hp);
 
-protected:
+    // all non combat actions go here, ex buffs, heals, rezzes
+    void DoNonCombatActions();
+
+    // buff a specific player, usually a real PC who is not in group
+    //void BuffPlayer(Player *target);
+
+private:
+
     // CURSES
     uint32 CURSE_OF_WEAKNESS,
            CURSE_OF_AGONY,
@@ -161,6 +183,7 @@ protected:
     // DEMONOLOGY
     uint32 DEMON_SKIN,
            DEMON_ARMOR,
+           DEMONIC_EMPOWERMENT,
            SHADOW_WARD,
            FEL_ARMOR,
            SOULSHATTER,
@@ -168,7 +191,9 @@ protected:
            SOUL_LINK_AURA,
            HEALTH_FUNNEL,
            DETECT_INVISIBILITY,
-           CREATE_FIRESTONE;
+           CREATE_FIRESTONE,
+           CREATE_SOULSTONE,
+           CREATE_HEALTHSTONE;
 
     // DEMON SUMMON
     uint32 SUMMON_IMP,
@@ -179,8 +204,22 @@ protected:
 
     // DEMON SKILLS
     uint32 BLOOD_PACT,
+           FIREBOLT,
+           FIRE_SHIELD,
+           ANGUISH,
+           CLEAVE,
+           INTERCEPT,
+           DEVOUR_MAGIC,
+           FEL_INTELLIGENCE,
+           SHADOW_BITE,
+           SPELL_LOCK,
+           LASH_OF_PAIN,
+           SEDUCTION,
+           SOOTHING_KISS,
            CONSUME_SHADOWS,
-           FEL_INTELLIGENCE;
+           SACRIFICE,
+           SUFFERING,
+           TORMENT;
 
     // first aid
     uint32 RECENTLY_BANDAGED;
@@ -201,8 +240,10 @@ protected:
            LastSpellCurse,
            LastSpellAffliction,
            LastSpellDestruction;
-    
-    bool m_demonSummonFailed;    
+
+    uint32 m_lastDemon;      // Last demon entry used for spell initialization
+    uint32 m_demonOfChoice;  // Preferred demon entry
+    bool   m_isTempImp;      // True if imp summoned temporarily until soul shard acquired for demon of choice.
 };
 
 #endif

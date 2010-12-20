@@ -1,31 +1,9 @@
-/*
- * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
 
 #include "PlayerbotMageAI.h"
 
 class PlayerbotAI;
 
-PlayerbotMageAI::PlayerbotMageAI(Player* const bot, PlayerbotAI* const ai): PlayerbotClassAI(bot, ai)
-{
-    InitSpells(ai);
-}
-
-void PlayerbotMageAI::InitSpells(PlayerbotAI* const ai)
+PlayerbotMageAI::PlayerbotMageAI(Player* const master, Player* const bot, PlayerbotAI* const ai) : PlayerbotClassAI(master, bot, ai)
 {
     ARCANE_MISSILES         = ai->initSpell(ARCANE_MISSILES_1);
     ARCANE_EXPLOSION        = ai->initSpell(ARCANE_EXPLOSION_1);
@@ -85,312 +63,405 @@ void PlayerbotMageAI::InitSpells(PlayerbotAI* const ai)
 
 PlayerbotMageAI::~PlayerbotMageAI() {}
 
-void PlayerbotMageAI::DoNextCombatManeuver(Unit* pTarget)
+void PlayerbotMageAI::DoNextCombatManeuver(Unit *pTarget)
 {
     PlayerbotAI* ai = GetAI();
     if (!ai)
         return;
 
-    Player* m_bot = GetPlayerBot();
-    if (!m_bot)
-        return;
-
-    /*switch (ai->GetScenarioType())
+    switch (ai->GetScenarioType())
     {
-        //SCENARIO_PVEEASY,
-        //SCENARIO_PVEHARD,
-        //SCENARIO_DUEL,
-        //SCENARIO_PVPEASY,
-        //SCENARIO_PVPHARD
-        //return;
-    }*/
+        case PlayerbotAI::SCENARIO_DUEL:
+            if (FIREBALL > 0)
+                ai->CastSpell(FIREBALL);
+            return;
+    }
 
-    //ai->SetMovementOrder( PlayerbotAI::MOVEMENT_FOLLOW, m_master ); // dont want to melee mob
+    // ------- Non Duel combat ----------
+
+    //ai->SetMovementOrder( PlayerbotAI::MOVEMENT_FOLLOW, GetMaster() ); // dont want to melee mob
 
     // Damage Spells (primitive example)
     ai->SetInFront(pTarget);
+    Player *m_bot = GetPlayerBot();
     Unit* pVictim = pTarget->getVictim();
     float dist = m_bot->GetDistance(pTarget);
 
     switch (SpellSequence)
     {
-        case SPELL_FROST:        
-            if (!ai->HasAura(ICY_VEINS, m_bot) && LastSpellFrost < 1 && ai->GetManaPercent() >= 3 && ai->CastSpell(ICY_VEINS, m_bot))
+        case SPELL_FROST:
+            if (ICY_VEINS > 0 && !m_bot->HasAura(ICY_VEINS, EFFECT_INDEX_0) && LastSpellFrost < 1 && ai->GetManaPercent() >= 3)
             {
+                ai->CastSpell(ICY_VEINS, *m_bot);
                 SpellSequence = SPELL_FIRE;
-                ++LastSpellFrost;
+                LastSpellFrost = LastSpellFrost + 1;
+                break;
             }
-            else if (LastSpellFrost < 2 && !ai->HasAura(FROSTBOLT, pTarget) && ai->GetManaPercent() >= 16 && ai->CastSpell(FROSTBOLT, pTarget))
+            else if (FROSTBOLT > 0 && LastSpellFrost < 2 && !pTarget->HasAura(FROSTBOLT, EFFECT_INDEX_0) && ai->GetManaPercent() >= 16)
             {
+                ai->CastSpell(FROSTBOLT, *pTarget);
                 SpellSequence = SPELL_FIRE;
-                ++LastSpellFrost;
+                LastSpellFrost = LastSpellFrost + 1;
+                break;
             }
-            else if (LastSpellFrost < 3 && !ai->HasAura(FROST_WARD, m_bot) && ai->GetManaPercent() >= 19 && ai->CastSpell(FROST_WARD, m_bot))
+            else if (FROST_WARD > 0 && LastSpellFrost < 3 && !m_bot->HasAura(FROST_WARD, EFFECT_INDEX_0) && ai->GetManaPercent() >= 19)
             {
+                ai->CastSpell(FROST_WARD, *m_bot);
                 SpellSequence = SPELL_FIRE;
-                ++LastSpellFrost;
+                LastSpellFrost = LastSpellFrost + 1;
+                break;
             }
-            else if (LastSpellFrost < 4 && dist <= ATTACK_DISTANCE && !ai->HasAura(FROST_NOVA, pTarget) && ai->GetManaPercent() >= 10 && ai->CastSpell(FROST_NOVA, pTarget))
+            else if (FROST_NOVA > 0 && LastSpellFrost < 4 && dist <= ATTACK_DISTANCE && !pTarget->HasAura(FROST_NOVA, EFFECT_INDEX_0) && ai->GetManaPercent() >= 10)
             {
+                ai->CastSpell(FROST_NOVA, *pTarget);
                 SpellSequence = SPELL_FIRE;
-                ++LastSpellFrost;
+                LastSpellFrost = LastSpellFrost + 1;
+                break;
             }
-            else if (LastSpellFrost < 5 && ai->GetManaPercent() >= 7 && ai->CastSpell(ICE_LANCE, pTarget))
+            else if (ICE_LANCE > 0 && LastSpellFrost < 5 && ai->GetManaPercent() >= 7)
             {
+                ai->CastSpell(ICE_LANCE, *pTarget);
                 SpellSequence = SPELL_FIRE;
-                ++LastSpellFrost;
+                LastSpellFrost = LastSpellFrost + 1;
+                break;
             }
-            else if (LastSpellFrost < 6 && ai->GetAttackerCount() >= 5 && ai->GetManaPercent() >= 89 && ai->CastSpell(BLIZZARD, pTarget))
+            else if (BLIZZARD > 0 && LastSpellFrost < 6 && ai->GetAttackerCount() >= 5 && ai->GetManaPercent() >= 89)
             {
+                ai->CastSpell(BLIZZARD, *pTarget);
                 ai->SetIgnoreUpdateTime(8);
                 SpellSequence = SPELL_FIRE;
-                ++LastSpellFrost;
+                LastSpellFrost = LastSpellFrost + 1;
+                break;
             }
-            else if (LastSpellFrost < 7 && dist <= ATTACK_DISTANCE && !ai->HasAura(CONE_OF_COLD, pTarget) && ai->GetManaPercent() >= 35 && ai->CastSpell(CONE_OF_COLD, pTarget))
+            else if (CONE_OF_COLD > 0 && LastSpellFrost < 7 && dist <= ATTACK_DISTANCE && !pTarget->HasAura(CONE_OF_COLD, EFFECT_INDEX_0) && ai->GetManaPercent() >= 35)
             {
+                ai->CastSpell(CONE_OF_COLD, *pTarget);
                 SpellSequence = SPELL_FIRE;
-                ++LastSpellFrost;
+                LastSpellFrost = LastSpellFrost + 1;
+                break;
             }
-            else if (LastSpellFrost < 8 && ai->HasAura(AURA_STATE_FROZEN, pTarget) && !ai->HasAura(DEEP_FREEZE, pTarget) && ai->GetManaPercent() >= 9 && ai->CastSpell(DEEP_FREEZE, pTarget))
+            else if (DEEP_FREEZE > 0 && LastSpellFrost < 8 && pTarget->HasAura(AURA_STATE_FROZEN, EFFECT_INDEX_0) && !pTarget->HasAura(DEEP_FREEZE, EFFECT_INDEX_0) && ai->GetManaPercent() >= 9)
             {
+                ai->CastSpell(DEEP_FREEZE, *pTarget);
                 SpellSequence = SPELL_FIRE;
-                ++LastSpellFrost;
+                LastSpellFrost = LastSpellFrost + 1;
+                break;
             }
-            else if (LastSpellFrost < 9 && pVictim == m_bot && !ai->HasAura(ICE_BARRIER, m_bot) && ai->GetHealthPercent() < 50 && ai->GetManaPercent() >= 30 && ai->CastSpell(ICE_BARRIER, m_bot))
+            else if (ICE_BARRIER > 0 && LastSpellFrost < 9 && pVictim == m_bot && !m_bot->HasAura(ICE_BARRIER, EFFECT_INDEX_0) && ai->GetHealthPercent() < 50 && ai->GetManaPercent() >= 30)
             {
+                ai->CastSpell(ICE_BARRIER, *m_bot);
                 SpellSequence = SPELL_FIRE;
-                ++LastSpellFrost;
+                LastSpellFrost = LastSpellFrost + 1;
+                break;
             }
-            else if (LastSpellFrost < 10 && ai->GetManaPercent() >= 16 && ai->CastSpell(SUMMON_WATER_ELEMENTAL))
+            else if (SUMMON_WATER_ELEMENTAL > 0 && LastSpellFrost < 10 && ai->GetManaPercent() >= 16)
             {
+                ai->CastSpell(SUMMON_WATER_ELEMENTAL);
                 SpellSequence = SPELL_FIRE;
-                ++LastSpellFrost;
+                LastSpellFrost = LastSpellFrost + 1;
+                break;
             }
-            else if (LastSpellFrost < 11 && pVictim == m_bot && !ai->HasAura(ICE_BLOCK, m_bot) && ai->GetHealthPercent() < 30 && ai->CastSpell(ICE_BLOCK, m_bot))
+            else if (ICE_BLOCK > 0 && LastSpellFrost < 11 && pVictim == m_bot && !m_bot->HasAura(ICE_BLOCK, EFFECT_INDEX_0) && ai->GetHealthPercent() < 30)
             {
+                ai->CastSpell(ICE_BLOCK, *m_bot);
                 SpellSequence = SPELL_FIRE;
-                ++LastSpellFrost;
+                LastSpellFrost = LastSpellFrost + 1;
+                break;
             }
-            else if (LastSpellFrost < 12 && ai->CastSpell(COLD_SNAP, m_bot))
+            else if (COLD_SNAP > 0 && LastSpellFrost < 12)
             {
+                ai->CastSpell(COLD_SNAP, *m_bot);
                 SpellSequence = SPELL_FIRE;
-                ++LastSpellFrost;
+                LastSpellFrost = LastSpellFrost + 1;
+                break;
             }
-            else
-                LastSpellFrost = 0;
-                
-            return;
-            
-        case SPELL_FIRE:        
-            if (!ai->HasAura(FIRE_WARD, m_bot) && LastSpellFire < 1 && ai->GetManaPercent() >= 3 && ai->CastSpell(FIRE_WARD, m_bot))
+            LastSpellFrost = 0;
+        //SpellSequence = SPELL_FIRE;
+        //break;
+
+        case SPELL_FIRE:
+            if (FIRE_WARD > 0 && !m_bot->HasAura(FIRE_WARD, EFFECT_INDEX_0) && LastSpellFire < 1 && ai->GetManaPercent() >= 3)
             {
+                ai->CastSpell(FIRE_WARD, *m_bot);
                 SpellSequence = SPELL_ARCANE;
-                ++LastSpellFire;
+                LastSpellFire = LastSpellFire + 1;
+                break;
             }
-            else if (!ai->HasAura(COMBUSTION, m_bot) && LastSpellFire < 2 && ai->CastSpell(COMBUSTION, m_bot))
+            else if (COMBUSTION > 0 && !m_bot->HasAura(COMBUSTION, EFFECT_INDEX_0) && LastSpellFire < 2)
             {
+                ai->CastSpell(COMBUSTION, *m_bot);
                 SpellSequence = SPELL_ARCANE;
-                ++LastSpellFire;
+                LastSpellFire = LastSpellFire + 1;
+                break;
             }
-            else if (LastSpellFire < 3 && ai->GetManaPercent() >= 23 && ai->CastSpell(FIREBALL, pTarget))
+            else if (FIREBALL > 0 && LastSpellFire < 3 && ai->GetManaPercent() >= 23)
             {
+                ai->CastSpell(FIREBALL, *pTarget);
                 SpellSequence = SPELL_ARCANE;
-                ++LastSpellFire;
+                LastSpellFire = LastSpellFire + 1;
+                break;
             }
-            else if (LastSpellFire < 4 && ai->GetManaPercent() >= 25 && ai->CastSpell(FIRE_BLAST, pTarget))
+            else if (FIRE_BLAST > 0 && LastSpellFire < 4 && ai->GetManaPercent() >= 25)
             {
+                ai->CastSpell(FIRE_BLAST, *pTarget);
                 SpellSequence = SPELL_ARCANE;
-                ++LastSpellFire;
+                LastSpellFire = LastSpellFire + 1;
+                break;
             }
-            else if (LastSpellFire < 5 && ai->GetManaPercent() >= 35 && ai->CastSpell(FLAMESTRIKE, pTarget))
+            else if (FLAMESTRIKE > 0 && LastSpellFire < 5 && ai->GetManaPercent() >= 35)
             {
+                ai->CastSpell(FLAMESTRIKE, *pTarget);
                 SpellSequence = SPELL_ARCANE;
-                ++LastSpellFire;
+                LastSpellFire = LastSpellFire + 1;
+                break;
             }
-            else if (LastSpellFire < 6 && ai->GetManaPercent() >= 10 && ai->CastSpell(SCORCH, pTarget))
+            else if (SCORCH > 0 && LastSpellFire < 6 && ai->GetManaPercent() >= 10)
             {
+                ai->CastSpell(SCORCH, *pTarget);
                 SpellSequence = SPELL_ARCANE;
-                ++LastSpellFire;
+                LastSpellFire = LastSpellFire + 1;
+                break;
             }
-            else if (LastSpellFire < 7 && !ai->HasAura(PYROBLAST, pTarget) && ai->GetManaPercent() >= 27 && ai->CastSpell(PYROBLAST, pTarget))
+            else if (PYROBLAST > 0 && LastSpellFire < 7 && !pTarget->HasAura(PYROBLAST, EFFECT_INDEX_0) && ai->GetManaPercent() >= 27)
             {
+                ai->CastSpell(PYROBLAST, *pTarget);
                 SpellSequence = SPELL_ARCANE;
-                ++LastSpellFire;
+                LastSpellFire = LastSpellFire + 1;
+                break;
             }
-            else if (LastSpellFire < 8 && ai->GetAttackerCount() >= 3 && dist <= ATTACK_DISTANCE && ai->GetManaPercent() >= 34 && ai->CastSpell(BLAST_WAVE, pTarget))
+            else if (BLAST_WAVE > 0 && LastSpellFire < 8 && ai->GetAttackerCount() >= 3 && dist <= ATTACK_DISTANCE && ai->GetManaPercent() >= 34)
             {
+                ai->CastSpell(BLAST_WAVE, *pTarget);
                 SpellSequence = SPELL_ARCANE;
-                ++LastSpellFire;
+                LastSpellFire = LastSpellFire + 1;
+                break;
             }
-            else if (LastSpellFire < 9 && dist <= ATTACK_DISTANCE && ai->GetManaPercent() >= 37 && ai->CastSpell(DRAGONS_BREATH, pTarget))
+            else if (DRAGONS_BREATH > 0 && LastSpellFire < 9 && dist <= ATTACK_DISTANCE && ai->GetManaPercent() >= 37)
             {
+                ai->CastSpell(DRAGONS_BREATH, *pTarget);
                 SpellSequence = SPELL_ARCANE;
-                ++LastSpellFire;
+                LastSpellFire = LastSpellFire + 1;
+                break;
             }
-            else if (LastSpellFire < 10 && !ai->HasAura(LIVING_BOMB, pTarget) && ai->GetManaPercent() >= 27 && ai->CastSpell(LIVING_BOMB, pTarget))
+            else if (LIVING_BOMB > 0 && LastSpellFire < 10 && !pTarget->HasAura(LIVING_BOMB, EFFECT_INDEX_0) && ai->GetManaPercent() >= 27)
             {
+                ai->CastSpell(LIVING_BOMB, *pTarget);
                 SpellSequence = SPELL_ARCANE;
-                ++LastSpellFire;
+                LastSpellFire = LastSpellFire + 1;
+                break;
             }
-            else if (LastSpellFire < 11 && !ai->HasAura(FROSTFIRE_BOLT, pTarget) && ai->GetManaPercent() >= 14 && ai->CastSpell(FROSTFIRE_BOLT, pTarget))
+            else if (FROSTFIRE_BOLT > 0 && LastSpellFire < 11 && !pTarget->HasAura(FROSTFIRE_BOLT, EFFECT_INDEX_0) && ai->GetManaPercent() >= 14)
             {
+                ai->CastSpell(FROSTFIRE_BOLT, *pTarget);
                 SpellSequence = SPELL_ARCANE;
-                ++LastSpellFire;
+                LastSpellFire = LastSpellFire + 1;
+                break;
             }
-            else
-                LastSpellFire = 0;
-                
-            return;
+            LastSpellFire = 0;
+        //SpellSequence = SPELL_ARCANE;
+        //break;
 
         case SPELL_ARCANE:
-            if (LastSpellArcane < 1 && ai->GetManaPercent() >= 37 && ai->CastSpell(ARCANE_POWER, pTarget))
+            if (ARCANE_POWER > 0 && LastSpellArcane < 1 && ai->GetManaPercent() >= 37)
             {
+                ai->CastSpell(ARCANE_POWER, *pTarget);
                 SpellSequence = SPELL_FROST;
-                ++LastSpellArcane;
+                LastSpellArcane = LastSpellArcane + 1;
+                break;
             }
-            else if (LastSpellArcane < 2 && ai->GetManaPercent() >= 37 && ai->CastSpell(ARCANE_MISSILES, pTarget))
+            else if (ARCANE_MISSILES > 0 && LastSpellArcane < 2 && ai->GetManaPercent() >= 37)
             {
+                ai->CastSpell(ARCANE_MISSILES, *pTarget);
                 ai->SetIgnoreUpdateTime(3);
                 SpellSequence = SPELL_FROST;
-                ++LastSpellArcane;
+                LastSpellArcane = LastSpellArcane + 1;
+                break;
             }
-            else if (LastSpellArcane < 3 && ai->GetAttackerCount() >= 3 && dist <= ATTACK_DISTANCE && ai->GetManaPercent() >= 27 && ai->CastSpell(ARCANE_EXPLOSION, pTarget))
+            else if (ARCANE_EXPLOSION > 0 && LastSpellArcane < 3 && ai->GetAttackerCount() >= 3 && dist <= ATTACK_DISTANCE && ai->GetManaPercent() >= 27)
             {
+                ai->CastSpell(ARCANE_EXPLOSION, *pTarget);
                 SpellSequence = SPELL_FROST;
-                ++LastSpellArcane;
+                LastSpellArcane = LastSpellArcane + 1;
+                break;
             }
-            else if (pTarget->IsNonMeleeSpellCasted(true) && LastSpellArcane < 4 && ai->GetManaPercent() >= 9 && ai->CastSpell(COUNTERSPELL, pTarget))
+            else if (COUNTERSPELL > 0 && pTarget->IsNonMeleeSpellCasted(true) && LastSpellArcane < 4 && ai->GetManaPercent() >= 9)
             {
+                ai->CastSpell(COUNTERSPELL, *pTarget);
                 SpellSequence = SPELL_FROST;
-                ++LastSpellArcane;
+                LastSpellArcane = LastSpellArcane + 1;
+                break;
             }
-            else if (LastSpellArcane < 5 && !ai->HasAura(SLOW, pTarget) && ai->GetManaPercent() >= 12 && ai->CastSpell(SLOW, pTarget))
+            else if (SLOW > 0 && LastSpellArcane < 5 && !pTarget->HasAura(SLOW, EFFECT_INDEX_0) && ai->GetManaPercent() >= 12)
             {
+                ai->CastSpell(SLOW, *pTarget);
                 SpellSequence = SPELL_FROST;
-                ++LastSpellArcane;
+                LastSpellArcane = LastSpellArcane + 1;
+                break;
             }
-            else if (LastSpellArcane < 6 && ai->GetManaPercent() >= 27 && ai->CastSpell(ARCANE_BARRAGE, pTarget))
+            else if (ARCANE_BARRAGE > 0 && LastSpellArcane < 6 && ai->GetManaPercent() >= 27)
             {
+                ai->CastSpell(ARCANE_BARRAGE, *pTarget);
                 SpellSequence = SPELL_FROST;
-                ++LastSpellArcane;
+                LastSpellArcane = LastSpellArcane + 1;
+                break;
             }
-            else if (LastSpellArcane < 7 && ai->GetManaPercent() >= 8 && ai->CastSpell(ARCANE_BLAST, pTarget))
+            else if (ARCANE_BLAST > 0 && LastSpellArcane < 7 && ai->GetManaPercent() >= 8)
             {
+                ai->CastSpell(ARCANE_BLAST, *pTarget);
                 SpellSequence = SPELL_FROST;
-                ++LastSpellArcane;
+                LastSpellArcane = LastSpellArcane + 1;
+                break;
             }
-            else if (LastSpellArcane < 8 && ai->GetManaPercent() >= 10 && ai->CastSpell(MIRROR_IMAGE))
+            else if (MIRROR_IMAGE > 0 && LastSpellArcane < 8 && ai->GetManaPercent() >= 10)
             {
+                ai->CastSpell(MIRROR_IMAGE);
                 SpellSequence = SPELL_FROST;
-                ++LastSpellArcane;
+                LastSpellArcane = LastSpellArcane + 1;
+                break;
             }
-            else if (LastSpellArcane < 9 && ai->GetHealthPercent() < 70 && pVictim == m_bot && !ai->HasAura(MANA_SHIELD, m_bot) && ai->GetManaPercent() >= 8 && ai->CastSpell(MANA_SHIELD, m_bot))
+            else if (MANA_SHIELD > 0 && LastSpellArcane < 9 && ai->GetHealthPercent() < 70 && pVictim == m_bot && !m_bot->HasAura(MANA_SHIELD, EFFECT_INDEX_0) && ai->GetManaPercent() >= 8)
             {
+                ai->CastSpell(MANA_SHIELD, *m_bot);
                 SpellSequence = SPELL_FROST;
-                ++LastSpellArcane;
+                LastSpellArcane = LastSpellArcane + 1;
+                break;
             }
             else
             {
-                SpellSequence = SPELL_FROST;            
                 LastSpellArcane = 0;
+                SpellSequence = SPELL_FROST;
             }
-                
-            return;            
     }
-}
+} // end DoNextCombatManeuver
 
 void PlayerbotMageAI::DoNonCombatActions()
 {
-    PlayerbotAI* ai = GetAI();
-    if (!ai)
-        return;
+    Player * m_bot = GetPlayerBot();
+    Player * master = GetMaster();
 
-    Player* m_bot = GetPlayerBot();
-    if (!m_bot)
-        return;
-
-    Player* m_master = ai->GetMaster();
-    if (!m_master)
+    if (!m_bot || !master)
         return;
 
     SpellSequence = SPELL_FROST;
+    PlayerbotAI* ai = GetAI();
 
-    // buff master
-    if (!ai->HasAura(DALARAN_BRILLIANCE, m_master) && ai->GetManaPercent() >= 81 && ai->CastSpell(DALARAN_BRILLIANCE, m_master))
-        return;
-    else if (!ai->HasAura(ARCANE_BRILLIANCE, m_master) && !ai->HasAura(DALARAN_BRILLIANCE, m_master) && ai->GetManaPercent() >= 97 && ai->CastSpell(ARCANE_BRILLIANCE, m_master))
-        return;
-
-    // buff myself
-    else if (!ai->HasAura(DALARAN_INTELLECT, m_bot) && !ai->HasAura(DALARAN_BRILLIANCE, m_bot) && !ai->HasAura(ARCANE_BRILLIANCE, m_bot) && ai->GetManaPercent() >= 31 && ai->CastSpell(DALARAN_INTELLECT, m_bot))
-        return;
-    else if (!ai->HasAura(ARCANE_INTELLECT, m_bot) && !ai->HasAura(DALARAN_BRILLIANCE, m_bot) && !ai->HasAura(ARCANE_BRILLIANCE, m_bot) && !ai->HasAura(DALARAN_INTELLECT, m_bot) && ai->GetManaPercent() >= 37 && ai->CastSpell(ARCANE_INTELLECT, m_bot))
-        return;
-    else if (!ai->HasAura(MOLTEN_ARMOR, m_bot) && !ai->HasAura(MAGE_ARMOR, m_bot) && ai->GetManaPercent() >= 31 && ai->CastSpell(MOLTEN_ARMOR, m_bot))
-        return;    
-    else if (!ai->HasAura(MAGE_ARMOR, m_bot) && !ai->HasAura(MOLTEN_ARMOR, m_bot) && ai->GetManaPercent() >= 31 && ai->CastSpell(MAGE_ARMOR, m_bot))
-        return;    
-    else if (!ai->HasAura(ICE_ARMOR, m_bot) && !ai->HasAura(MOLTEN_ARMOR, m_bot) && !ai->HasAura(MAGE_ARMOR, m_bot) && ai->GetManaPercent() >= 34 && ai->CastSpell(ICE_ARMOR, m_bot))
-        return;    
-    else if (!ai->HasAura(FROST_ARMOR, m_bot) && !ai->HasAura(MOLTEN_ARMOR, m_bot) && !ai->HasAura(MAGE_ARMOR, m_bot) && !ai->HasAura(ICE_ARMOR, m_bot) && ai->GetManaPercent() >= 34 && ai->CastSpell(FROST_ARMOR, m_bot))
-        return;    
+    // Buff armor
+    if (MOLTEN_ARMOR)
+    {
+        if (ai->SelfBuff(MOLTEN_ARMOR))
+            return;
+    }
+    else if (MAGE_ARMOR)
+    {
+        if (ai->SelfBuff(MAGE_ARMOR))
+            return;
+    }
+    else if (ICE_ARMOR)
+    {
+        if (ai->SelfBuff(ICE_ARMOR))
+            return;
+    }
+    else if (FROST_ARMOR)
+    {
+        if (ai->SelfBuff(FROST_ARMOR))
+            return;
+    }
 
     // buff master's group
-    if (m_master->GetGroup())
+    if (master->GetGroup())
     {
-        Group::MemberSlotList const& groupSlot = m_master->GetGroup()->GetMemberSlots();
+        // Buff master with group buff...
+        if (ARCANE_BRILLIANCE && ai->HasSpellReagents(ARCANE_BRILLIANCE))
+        {
+            if (ai->Buff(ARCANE_BRILLIANCE, master))
+                return;
+        }
+
+        // ...and check group for new members joined or resurrected, or just buff everyone if no group buff available
+        Group::MemberSlotList const& groupSlot = GetMaster()->GetGroup()->GetMemberSlots();
         for (Group::member_citerator itr = groupSlot.begin(); itr != groupSlot.end(); itr++)
         {
             Player *tPlayer = sObjectMgr.GetPlayer(itr->guid);
-            if (!tPlayer || !tPlayer->isAlive())
+            if (!tPlayer || !tPlayer->isAlive() || tPlayer == m_bot)
                 continue;
             // buff
-            if (!ai->HasAura(ARCANE_INTELLECT, tPlayer) && !ai->HasAura(DALARAN_BRILLIANCE, tPlayer) && !ai->HasAura(ARCANE_BRILLIANCE, tPlayer) && !ai->HasAura(DALARAN_INTELLECT, tPlayer) && ai->GetManaPercent() >= 37 && ai->CastSpell(ARCANE_INTELLECT, tPlayer))
-                return;
-            else if (!ai->HasAura(DALARAN_INTELLECT, tPlayer) && !ai->HasAura(DALARAN_BRILLIANCE, tPlayer) && !ai->HasAura(ARCANE_BRILLIANCE, tPlayer) && ai->GetManaPercent() >= 31 && ai->CastSpell(DALARAN_INTELLECT, tPlayer))
-                return;            
-            else if (!ai->HasAura(DAMPEN_MAGIC, tPlayer) && !ai->HasAura(AMPLIFY_MAGIC, tPlayer) && ai->GetManaPercent() >= 32 && ai->CastSpell(DAMPEN_MAGIC, tPlayer))
-                return;            
-            else if (!ai->HasAura(AMPLIFY_MAGIC, tPlayer) && !ai->HasAura(DAMPEN_MAGIC, tPlayer) && ai->GetManaPercent() >= 32 && ai->CastSpell(AMPLIFY_MAGIC, tPlayer))
+            if (BuffPlayer(tPlayer))
                 return;
         }
+
+    }
+    // There is no group, buff master
+    else
+    {
+        if (master->isAlive() && BuffPlayer(master))
+            return;
     }
 
+    // Buff self finally
+    if (BuffPlayer(m_bot))
+        return;
+
+    // conjure food & water
     if (m_bot->getStandState() != UNIT_STAND_STATE_STAND)
         m_bot->SetStandState(UNIT_STAND_STATE_STAND);
 
-    Item* pItemDrink = ai->FindDrink();
-    Item* pItemFood = ai->FindFood();
-    Item* pItemBandage = ai->FindBandage();        
-    
-    // mana check + conjure water
-    if (!pItemDrink && CONJURE_WATER && ai->GetBaseManaPercent() >= 48 && ai->CastSpell(CONJURE_WATER, m_bot))
+    Item* pItem = ai->FindDrink();
+    Item* fItem = ai->FindBandage();
+
+    if (pItem == NULL && CONJURE_WATER && ai->GetBaseManaPercent() >= 48)
     {
+        ai->TellMaster("I'm conjuring some water.");
+        ai->CastSpell(CONJURE_WATER, *m_bot);
         ai->SetIgnoreUpdateTime(3);
         return;
     }
-    else if (pItemDrink && ai->GetManaPercent() < 30)
+    else if (pItem != NULL && ai->GetManaPercent() < 30)
     {
-        ai->UseItem(pItemDrink);
-        ai->SetIgnoreUpdateTime(30);
+        ai->TellMaster("I could use a drink.");
+        ai->UseItem(pItem);
         return;
     }
-    // hp check + conjure food
-    else if (pItemFood && CONJURE_FOOD && ai->GetBaseManaPercent() >= 48 && ai->CastSpell(CONJURE_FOOD, m_bot))
+
+    pItem = ai->FindFood();
+
+    if (pItem == NULL && CONJURE_FOOD && ai->GetBaseManaPercent() >= 48)
     {
+        ai->TellMaster("I'm conjuring some food.");
+        ai->CastSpell(CONJURE_FOOD, *m_bot);
         ai->SetIgnoreUpdateTime(3);
-        return;
-    }    
-    else if (pItemFood && ai->GetHealthPercent() < 30)
+    }
+
+    // hp check
+    if (m_bot->getStandState() != UNIT_STAND_STATE_STAND)
+        m_bot->SetStandState(UNIT_STAND_STATE_STAND);
+
+    pItem = ai->FindFood();
+
+    if (pItem != NULL && ai->GetHealthPercent() < 30)
     {
-        ai->UseItem(pItemFood);
-        ai->SetIgnoreUpdateTime(30);
+        ai->TellMaster("I could use some food.");
+        ai->UseItem(pItem);
         return;
     }
-    else if (!pItemFood && pItemBandage && !ai->HasAura(RECENTLY_BANDAGED, m_bot) && ai->GetHealthPercent() < 70)
+    else if (pItem == NULL && fItem != NULL && !m_bot->HasAura(RECENTLY_BANDAGED, EFFECT_INDEX_0) && ai->GetHealthPercent() < 70)
     {
-        ai->UseItem(pItemBandage);
-        ai->SetIgnoreUpdateTime(8);
+        ai->TellMaster("I could use first aid.");
+        ai->UseItem(fItem);
         return;
     }
+
+} // end DoNonCombatActions
+
+bool PlayerbotMageAI::BuffPlayer(Player* target)
+{
+    PlayerbotAI * ai = GetAI();
+    Pet * pet = target->GetPet();
+
+    if (pet && pet->getPowerType() == POWER_MANA && ai->Buff(ARCANE_INTELLECT, pet))
+        return true;
+
+    if (ARCANE_INTELLECT)
+        return ai->Buff(ARCANE_INTELLECT, target);
+    else
+        return false;
 }
