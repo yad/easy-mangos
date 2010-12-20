@@ -322,8 +322,7 @@ void PlayerbotPaladinAI::DoNextCombatManeuver(Unit *pTarget)
                 break;
             }
     }
-    if (ai->GetManager()->m_confDebugWhisper)
-        ai->TellMaster(out.str().c_str());
+    // ai->TellMaster(out.str().c_str());
 
     if (AVENGING_WRATH > 0 && !m_bot->HasAura(AVENGING_WRATH, EFFECT_INDEX_0) && ai->GetManaPercent() >= 8)
         ai->CastSpell(AVENGING_WRATH, *m_bot);

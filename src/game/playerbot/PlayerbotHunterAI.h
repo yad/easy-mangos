@@ -117,6 +117,8 @@ public:
     // buff a specific player, usually a real PC who is not in group
     //void BuffPlayer(Player *target);
 
+    void InitSpells(PlayerbotAI* const ai);
+
 private:
     // Hunter
     bool m_petSummonFailed;

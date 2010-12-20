@@ -438,7 +438,6 @@
     <ClCompile Include="..\..\src\shared\Database\Database.cpp" />
     <ClCompile Include="..\..\src\shared\Database\DatabaseMysql.cpp" />
     <ClCompile Include="..\..\src\shared\Database\DBCFileLoader.cpp" />
-    <ClCompile Include="..\..\src\shared\DelayExecutor.cpp" />
     <ClCompile Include="..\..\src\shared\Database\Field.cpp" />
     <ClCompile Include="..\..\src\shared\Database\QueryResultMysql.cpp" />
     <ClCompile Include="..\..\src\shared\Database\SqlDelayThread.cpp" />

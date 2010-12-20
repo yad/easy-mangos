@@ -481,8 +481,7 @@ void PlayerbotDeathKnightAI::DoNextCombatManeuver(Unit *pTarget)
                 SpellSequence = SPELL_DK_UNHOLY;
             }
     }
-    if (ai->GetManager()->m_confDebugWhisper)
-        ai->TellMaster(out.str().c_str());
+    //ai->TellMaster(out.str().c_str());
 
 } // end DoNextCombatManeuver
 

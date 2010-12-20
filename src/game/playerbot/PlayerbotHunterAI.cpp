@@ -97,9 +97,6 @@ void PlayerbotHunterAI::InitSpells(PlayerbotAI* const ai)
     BLOOD_FURY                    = ai->initSpell(BLOOD_FURY_MELEE_CLASSES); // orc
     WAR_STOMP                     = ai->initSpell(WAR_STOMP_ALL); // tauren
     BERSERKING                    = ai->initSpell(BERSERKING_ALL); // troll
-
-    m_petSummonFailed = false;
-    m_rangedCombat = true;
 }
 
 PlayerbotHunterAI::~PlayerbotHunterAI() {}
@@ -271,8 +268,7 @@ void PlayerbotHunterAI::DoNextCombatManeuver(Unit *pTarget)
         else
             out << " NONE!";
     }
-    if (ai->GetManager()->m_confDebugWhisper)
-        ai->TellMaster(out.str().c_str());
+    //ai->TellMaster(out.str().c_str());
 } // end DoNextCombatManeuver
 
 void PlayerbotHunterAI::DoNonCombatActions()

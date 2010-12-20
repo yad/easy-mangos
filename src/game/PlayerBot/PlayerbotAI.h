@@ -1,3 +1,21 @@
+/*
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
 #ifndef _PLAYERBOTAI_H
 #define _PLAYERBOTAI_H
 
@@ -121,6 +139,7 @@ public:
 public:
     PlayerbotAI(PlayerbotMgr * const mgr, Player * const bot);
     virtual ~PlayerbotAI();
+    void InitSpells(PlayerbotAI* const ai);
 
     // This is called from Unit.cpp and is called every second (I think)
     void UpdateAI(const uint32 p_time);
@@ -207,6 +226,7 @@ public:
     Item* FindMount(uint32 matchingRidingSkill) const;
     Item* FindItem(uint32 ItemId);
     Item* FindConsumable(uint32 displayId) const;
+    void CheckMount();
 
     // ******* Actions ****************************************
     // Your handlers can call these actions to make the bot do things.
@@ -236,10 +256,15 @@ public:
     void DoNextCombatManeuver();
     void DoCombatMovement();
     void SetIgnoreUpdateTime(uint8 t = 0) { m_ignoreAIUpdatesUntilTime = time(0) + t; };
+    void SetIgnoreTeleport(uint8 t) {m_ignoreTeleport = time(0) + t; };
 
     Player *GetPlayerBot() const { return m_bot; }
     Player *GetPlayer() const { return m_bot; }
     Player *GetMaster() const;
+    void SetMaster(Player* pl);
+
+    uint16 GetSpe() { return m_spe; };
+    void SetSpe(uint16 spe) { m_spe = spe; };
 
     BotState GetState() { return m_botState; };
     void SetState(BotState state);
@@ -248,6 +273,10 @@ public:
     void SendOrders(Player& player);
     bool FollowCheckTeleport(WorldObject &obj);
     void DoLoot();
+
+    bool CheckTeleport();
+    bool CheckMaster();
+    void CheckStuff();
 
     uint32 EstRepairAll();
     uint32 EstRepair(uint16 pos);
@@ -268,6 +297,7 @@ public:
     void MovementUpdate();
     void MovementClear();
     bool IsMoving();
+    void FindPOI(float &x, float &y, float &z, uint32 &mapId);
 
     void SetInFront(const Unit* obj);
 
@@ -292,10 +322,12 @@ private:
     PlayerbotMgr* const m_mgr;
     Player* const m_bot;
     PlayerbotClassAI* m_classAI;
+    uint16 m_spe;
 
     // ignores AI updates until time specified
     // no need to waste CPU cycles during casting etc
     time_t m_ignoreAIUpdatesUntilTime;
+    time_t m_ignoreTeleport;
 
     CombatStyle m_combatStyle;
     CombatOrderType m_combatOrder;
@@ -335,6 +367,11 @@ private:
     Unit *m_followTarget;       // whom to follow in non combat situation?
 
     std::map<uint32, float> m_spellRangeMap;
+
+    float m_position_fin_x;
+    float m_position_fin_y;
+    float m_position_fin_z;
+    uint32 m_mapId_fin;
 };
 
 #endif

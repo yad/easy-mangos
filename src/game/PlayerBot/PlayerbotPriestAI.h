@@ -105,6 +105,8 @@ public:
     // buff a specific player, usually a real PC who is not in group
     bool BuffPlayer(Player *target);
 
+    void InitSpells(PlayerbotAI* const ai);
+
 private:
     // Heals the target based off its hps
     bool HealTarget (Unit* target);

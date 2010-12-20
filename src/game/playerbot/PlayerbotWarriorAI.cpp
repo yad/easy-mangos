@@ -103,20 +103,17 @@ bool PlayerbotWarriorAI::DoFirstCombatManeuver(Unit *pTarget)
 
     if ((co & PlayerbotAI::ORDERS_TANK) && DEFENSIVE_STANCE > 0 && !m_bot->HasAura(DEFENSIVE_STANCE, EFFECT_INDEX_0) && ai->CastSpell(DEFENSIVE_STANCE))
     {
-        if (ai->GetManager()->m_confDebugWhisper)
-            ai->TellMaster("First > Defensive Stance (%d)", DEFENSIVE_STANCE);
+        //ai->TellMaster("First > Defensive Stance (%d)", DEFENSIVE_STANCE);
         return true;
     }
     else if ((co & PlayerbotAI::ORDERS_TANK) && TAUNT > 0 && m_bot->HasAura(DEFENSIVE_STANCE, EFFECT_INDEX_0) && ai->CastSpell(TAUNT, *pTarget))
     {
-        if (ai->GetManager()->m_confDebugWhisper)
-            ai->TellMaster("First > Taunt (%d)", TAUNT);
+        //ai->TellMaster("First > Taunt (%d)", TAUNT);
         return false;
     }
     else if (BATTLE_STANCE > 0 && !m_bot->HasAura(BATTLE_STANCE, EFFECT_INDEX_0) && ai->CastSpell(BATTLE_STANCE))
     {
-        if (ai->GetManager()->m_confDebugWhisper)
-            ai->TellMaster("First > Battle Stance (%d)", BATTLE_STANCE);
+        //ai->TellMaster("First > Battle Stance (%d)", BATTLE_STANCE);
         return true;
     }
     else if (BATTLE_STANCE > 0 && CHARGE > 0 && m_bot->HasAura(BATTLE_STANCE, EFFECT_INDEX_0))
@@ -131,8 +128,7 @@ bool PlayerbotWarriorAI::DoFirstCombatManeuver(Unit *pTarget)
             pTarget->GetContactPoint(m_bot, x, y, z, 3.666666f);
             m_bot->Relocate(x, y, z);
 
-            if (ai->GetManager()->m_confDebugWhisper)
-                ai->TellMaster("First > Charge (%d)", CHARGE);
+            //ai->TellMaster("First > Charge (%d)", CHARGE);
             return false;
         }
     }
@@ -167,11 +163,13 @@ void PlayerbotWarriorAI::DoNextCombatManeuver(Unit *pTarget)
 
     // decide what stance to use
     if ((co & PlayerbotAI::ORDERS_TANK) && !m_bot->HasAura(DEFENSIVE_STANCE, EFFECT_INDEX_0) && ai->CastSpell(DEFENSIVE_STANCE))
-        if (ai->GetManager()->m_confDebugWhisper)
-            ai->TellMaster("Stance > Defensive");
-        else if (!(co & PlayerbotAI::ORDERS_TANK) && !m_bot->HasAura(BATTLE_STANCE, EFFECT_INDEX_0) && ai->CastSpell(BATTLE_STANCE))
-            if (ai->GetManager()->m_confDebugWhisper)
-                ai->TellMaster("Stance > Battle");
+	{
+        //ai->TellMaster("Stance > Defensive");
+	}
+    else if (!(co & PlayerbotAI::ORDERS_TANK) && !m_bot->HasAura(BATTLE_STANCE, EFFECT_INDEX_0) && ai->CastSpell(BATTLE_STANCE))
+	{
+        //ai->TellMaster("Stance > Battle");
+	}
 
     // get spell sequence
     if (pTarget->IsNonMeleeSpellCasted(true))
@@ -185,14 +183,17 @@ void PlayerbotWarriorAI::DoNextCombatManeuver(Unit *pTarget)
 
     // do shouts, berserker rage, etc...
     if (BERSERKER_RAGE > 0 && !m_bot->HasAura(BERSERKER_RAGE, EFFECT_INDEX_0) && ai->CastSpell(BERSERKER_RAGE))
-        if (ai->GetManager()->m_confDebugWhisper)
-            ai->TellMaster("Pre > Berseker Rage");
-        else if (DEMORALIZING_SHOUT > 0 && ai->GetRageAmount() >= 10 && !pTarget->HasAura(DEMORALIZING_SHOUT, EFFECT_INDEX_0) && ai->CastSpell(DEMORALIZING_SHOUT))
-            if (ai->GetManager()->m_confDebugWhisper)
-                ai->TellMaster("Pre > Demoralizing Shout");
-            else if (BATTLE_SHOUT > 0 && ai->GetRageAmount() >= 10 && !m_bot->HasAura(BATTLE_SHOUT, EFFECT_INDEX_0) && ai->CastSpell(BATTLE_SHOUT))
-                if (ai->GetManager()->m_confDebugWhisper)
-                    ai->TellMaster("Pre > Battle Shout");
+	{
+        //ai->TellMaster("Pre > Berseker Rage");
+	}
+    else if (DEMORALIZING_SHOUT > 0 && ai->GetRageAmount() >= 10 && !pTarget->HasAura(DEMORALIZING_SHOUT, EFFECT_INDEX_0) && ai->CastSpell(DEMORALIZING_SHOUT))
+	{
+        //ai->TellMaster("Pre > Demoralizing Shout");
+	}
+    else if (BATTLE_SHOUT > 0 && ai->GetRageAmount() >= 10 && !m_bot->HasAura(BATTLE_SHOUT, EFFECT_INDEX_0) && ai->CastSpell(BATTLE_SHOUT))
+    {
+        //ai->TellMaster("Pre > Battle Shout");
+	}
 
     std::ostringstream out;
     switch (SpellSequence)
@@ -310,8 +311,7 @@ void PlayerbotWarriorAI::DoNextCombatManeuver(Unit *pTarget)
             out << " > NONE";
             break;
     }
-    if (ai->GetManager()->m_confDebugWhisper)
-        ai->TellMaster(out.str().c_str());
+    //ai->TellMaster(out.str().c_str());
 }
 
 void PlayerbotWarriorAI::DoNonCombatActions()

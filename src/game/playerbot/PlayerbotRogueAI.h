@@ -23,10 +23,10 @@
 
 enum
 {
-    //RogueCombat,
-    //RogueSpellPreventing,
-    //RogueThreat,
-    //RogueStealth
+    RogueSpeCombat,
+    RogueSpeSpellPreventing,
+    RogueSpeThreat,
+    RogueSpeStealth
 };
 
 enum RoguePoisonDisplayId
@@ -96,6 +96,8 @@ public:
 
     // all non combat actions go here, ex buffs, heals, rezzes
     void DoNonCombatActions();
+
+    void InitSpells(PlayerbotAI* const ai);
 
 private:
     // COMBAT

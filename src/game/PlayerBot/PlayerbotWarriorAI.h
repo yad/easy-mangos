@@ -71,7 +71,7 @@ enum WarriorSpells
 class MANGOS_DLL_SPEC PlayerbotWarriorAI : PlayerbotClassAI
 {
 public:
-    PlayerbotWarriorAI(Player * const master, Player * const bot, PlayerbotAI * const ai);
+    PlayerbotWarriorAI(Player* const bot, PlayerbotAI* const ai);
     virtual ~PlayerbotWarriorAI();
 
     // all combat actions go here
@@ -80,6 +80,8 @@ public:
 
     // all non combat actions go here, ex buffs, heals, rezzes
     void DoNonCombatActions();
+
+    void InitSpells(PlayerbotAI* const ai);
 
 private:
     // ARMS

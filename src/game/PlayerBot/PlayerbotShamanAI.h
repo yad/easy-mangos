@@ -111,6 +111,8 @@ public:
     // all non combat actions go here, ex buffs, heals, rezzes
     void DoNonCombatActions();
 
+    void InitSpells(PlayerbotAI* const ai);
+
 private:
     // Heals the target based off its hps
     void HealTarget (Unit& target, uint8 hp);

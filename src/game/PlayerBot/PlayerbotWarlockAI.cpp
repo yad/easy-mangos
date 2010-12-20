@@ -23,7 +23,9 @@ class PlayerbotAI;
 PlayerbotWarlockAI::PlayerbotWarlockAI(Player* const bot, PlayerbotAI* const ai): PlayerbotClassAI(bot, ai)
 {
     InitSpells(ai);
-    m_demonSummonFailed = false;
+    m_lastDemon = 0;
+    m_demonOfChoice = DEMON_IMP;
+    m_isTempImp = false;
 }
 
 void PlayerbotWarlockAI::InitSpells(PlayerbotAI* const ai)
@@ -93,10 +95,6 @@ void PlayerbotWarlockAI::InitSpells(PlayerbotAI* const ai)
     EVERY_MAN_FOR_HIMSELF = ai->initSpell(EVERY_MAN_FOR_HIMSELF_ALL); // human
     BLOOD_FURY            = ai->initSpell(BLOOD_FURY_WARLOCK); // orc
     WILL_OF_THE_FORSAKEN  = ai->initSpell(WILL_OF_THE_FORSAKEN_ALL); // undead
-
-    m_lastDemon = 0;
-    m_demonOfChoice = DEMON_IMP;
-    m_isTempImp = false;
 }
 
 PlayerbotWarlockAI::~PlayerbotWarlockAI() {}

@@ -2488,7 +2488,9 @@ bool ChatHandler::HandleLearnAllMyClassCommand(char* /*args*/)
 
 bool ChatHandler::HandleLearnAllMySpellsCommand(char* /*args*/)
 {
-    Player* player = m_session->GetPlayer();
+	Player *player = getSelectedPlayer();
+	if (!player)
+        player = m_session->GetPlayer();
 
     ChrClassesEntry const* clsEntry = sChrClassesStore.LookupEntry(player->getClass());
 
@@ -2681,7 +2683,10 @@ bool ChatHandler::HandleLearnAllMySpellsCommand(char* /*args*/)
 
 bool ChatHandler::HandleLearnAllMySpellsForMyLevelCommand(char* /*args*/)
 {
-    Player* player = m_session->GetPlayer();
+	Player *player = getSelectedPlayer();
+	if (!player)
+        player = m_session->GetPlayer();
+
     uint32 level = player->getLevel();
 
     ChrClassesEntry const* clsEntry = sChrClassesStore.LookupEntry(player->getClass());
@@ -2975,7 +2980,10 @@ bool ChatHandler::HandleLearnAllMySpellsForMyLevelCommand(char* /*args*/)
 
 bool ChatHandler::HandleLearnAllMyTalentsForMyLevelCommand(char* /*args*/)
 {
-    Player* player = m_session->GetPlayer();
+	Player *player = getSelectedPlayer();
+	if (!player)
+        player = m_session->GetPlayer();
+
     uint32 classMask = player->getClassMask();
     uint32 level = player->getLevel();
 
@@ -3053,7 +3061,10 @@ bool ChatHandler::HandleLearnAllMyTalentsForMyLevelCommand(char* /*args*/)
 
 bool ChatHandler::HandleLearnAllMyTalentsCommand(char* /*args*/)
 {
-    Player* player = m_session->GetPlayer();
+	Player *player = getSelectedPlayer();
+	if (!player)
+        player = m_session->GetPlayer();
+
     uint32 classMask = player->getClassMask();
 
     for (uint32 i = 0; i < sTalentStore.GetNumRows(); ++i)
@@ -7747,7 +7758,7 @@ bool ChatHandler::HandleBotChgClass(char* args)
 
     Player *pl = m_session->GetPlayer();
 
-    if(!chr || !chr->IsBot()/* || (chr->getLevel() < 55 && newclass == CLASS_DEATH_KNIGHT)*/)
+    if(!chr || !chr->IsBot())
         return true;
     
     if(!chr->GetGroup() || !pl->GetGroup() || chr->GetGroup()->GetLeaderGuid() != pl->GetGroup()->GetLeaderGuid())
@@ -7757,13 +7768,8 @@ bool ChatHandler::HandleBotChgClass(char* args)
     if (!info)
         return true;
 
-    // overwrite some data fields
-    uint32 bytes0 = 0;
-    bytes0 |= chr->getRace();                               // race
-    bytes0 |= newclass << 8;                                // class
-    bytes0 |= chr->getGender() << 16;                       // gender
     chr->setClass(newclass);
-    chr->SetUInt32Value(UNIT_FIELD_BYTES_0, bytes0);
+    chr->SetByteValue(UNIT_FIELD_BYTES_0,1,newclass);// class
     chr->GiveLevel(chr->getLevel()+1);
     chr->RemoveAllAuras(AURA_REMOVE_BY_DELETE);
     ChrClassesEntry const* cEntry = sChrClassesStore.LookupEntry(newclass);

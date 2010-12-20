@@ -83,8 +83,7 @@ bool PlayerbotRogueAI::DoFirstCombatManeuver(Unit *pTarget)
     if (STEALTH > 0 && !m_bot->HasAura(STEALTH, EFFECT_INDEX_0) && ai->CastSpell(STEALTH, *m_bot))
     {
 
-        if (ai->GetManager()->m_confDebugWhisper)
-            ai->TellMaster("First > Stealth (%d)", STEALTH);
+        //ai->TellMaster("First > Stealth (%d)", STEALTH);
 
         m_bot->addUnitState(UNIT_STAT_CHASE); // ensure that the bot does not use MoveChase(), as this doesn't seem to work with STEALTH
 
@@ -148,18 +147,17 @@ void PlayerbotRogueAI::DoNextCombatManeuver(Unit *pTarget)
     // decide what to do:
     if (pVictim == m_bot && CLOAK_OF_SHADOWS > 0 && pVictim->HasAura(SPELL_AURA_PERIODIC_DAMAGE) && !m_bot->HasAura(CLOAK_OF_SHADOWS, EFFECT_INDEX_0) && ai->CastSpell(CLOAK_OF_SHADOWS))
     {
-        if (ai->GetManager()->m_confDebugWhisper)
-            ai->TellMaster("CoS!");
+        //ai->TellMaster("CoS!");
         return;
     }
     else if (m_bot->HasAura(STEALTH, EFFECT_INDEX_0))
-	SpellSequence = RogueStealth;
+	SpellSequence = RogueSpeStealth;
     else if (pTarget->IsNonMeleeSpellCasted(true))
-        SpellSequence = RogueSpellPreventing;
+        SpellSequence = RogueSpeSpellPreventing;
     else if (pVictim == m_bot && ai->GetHealthPercent() < 40)
-        SpellSequence = RogueThreat;
+        SpellSequence = RogueSpeThreat;
     else
-        SpellSequence = RogueCombat;
+        SpellSequence = RogueSpeCombat;
 
     // we fight in melee, target is not in range, skip the next part!
     if (fTargetDist > ATTACK_DISTANCE)
@@ -168,7 +166,7 @@ void PlayerbotRogueAI::DoNextCombatManeuver(Unit *pTarget)
     std::ostringstream out;
     switch (SpellSequence)
     {
-        case RogueStealth:
+        case RogueSpeStealth:
 	    out << "Case Stealth";
             if (PICK_POCKET > 0 && ai->CastSpell(PICK_POCKET, *pTarget) && ai->PickPocket(pTarget))
                 out << "First > Pick Pocket"; // Should never display, as PickPocket will always return false
@@ -183,7 +181,7 @@ void PlayerbotRogueAI::DoNextCombatManeuver(Unit *pTarget)
             else
                 m_bot->RemoveSpellsCausingAura(SPELL_AURA_MOD_STEALTH);
 	    break;
-        case RogueThreat:
+        case RogueSpeThreat:
             out << "Case Threat";
             if (GOUGE > 0 && ai->GetEnergyAmount() >= 45 && !pTarget->HasAura(GOUGE, EFFECT_INDEX_0) && ai->CastSpell(GOUGE, *pTarget))
                 out << " > Gouge";
@@ -202,7 +200,7 @@ void PlayerbotRogueAI::DoNextCombatManeuver(Unit *pTarget)
             else
                 out << " NONE!";
             break;
-        case RogueSpellPreventing:
+        case RogueSpeSpellPreventing:
             out << "Case Prevent";
             if (KIDNEY_SHOT > 0 && ai->GetEnergyAmount() >= 25 && m_bot->GetComboPoints() >= 2 && ai->CastSpell(KIDNEY_SHOT, *pTarget))
                 out << " > Kidney Shot";
@@ -211,7 +209,7 @@ void PlayerbotRogueAI::DoNextCombatManeuver(Unit *pTarget)
             else
                 out << " NONE!";
             break;
-        case RogueCombat:
+        case RogueSpeCombat:
         default:
             out << "Case Combat";
             if (m_bot->GetComboPoints() <= 4)
@@ -284,8 +282,7 @@ void PlayerbotRogueAI::DoNextCombatManeuver(Unit *pTarget)
             }
             break;
     }
-    if (ai->GetManager()->m_confDebugWhisper)
-        ai->TellMaster(out.str().c_str());
+    //ai->TellMaster(out.str().c_str());
 }
 
 // end DoNextCombatManeuver
