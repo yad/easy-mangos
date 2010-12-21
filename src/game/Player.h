@@ -1312,16 +1312,14 @@ class MANGOS_DLL_SPEC Player : public Unit
         void AutoUnequipOffhandIfNeed();
         bool StoreNewItemInBestSlots(uint32 item_id, uint32 item_count);
         Item* StoreNewItemInInventorySlot(uint32 itemEntry, uint32 amount);
-        void AutoEquipItem();
-        void GiveMeBestItemsForMyLevel();
-        void XSwapItem(Item* eitem, Item* bitem, bool DPS);
-        ItemPrototype const* CheckItemSet(ItemPrototype const* bestItemInSlot, ItemPrototype const* bestItemFromSet);
-        void GiveItem(ItemPrototype const* bestItemInSlot);
+        void GiveMebIsForMyLevel();
+        ItemPrototype const* CheckItemSet(ItemPrototype const* bIInSlot, ItemPrototype const* bIFromSet);
+        bool StoreNewItemInBestSlots(ItemPrototype const* bIInSlot);
         bool OtherItemsInSetAreAllowedForMe(ItemPrototype const* pProto);
-        void RemoveMyEquipement();
+        void RemoveMyEquipement(bool destroy);
         bool IsForMyClass(ItemPrototype const* pProto);
         bool IsNotAllowedItem(ItemPrototype const* pProto);
-        ItemPrototype const* BestItemBetween(ItemPrototype const* pProto1, ItemPrototype const* pProto2, bool DPS);
+        ItemPrototype const* bIBetween(ItemPrototype const* pProto1, ItemPrototype const* pProto2, bool DPS);
         ItemPrototype const* CompareItem(ItemPrototype const* pProto1, ItemPrototype const* pProto2, ItemModType pType);
 
         void AutoStoreLoot(uint32 loot_id, LootStore const& store, bool broadcast = false, uint8 bag = NULL_BAG, uint8 slot = NULL_SLOT);
@@ -2543,7 +2541,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         void SetLevelAtLoading(uint32 lvl) { m_levelAtLoading = lvl; }
         uint32 GetLevelAtLoading() { return m_levelAtLoading; }
         bool IsBot() { return (GetSession()->IsBotSession()); }
-        uint16 GetSpe();
+        uint16 getRole();
+        void setRole(uint16 role);
     protected:
 
         uint32 m_contestedPvPTimer;
@@ -2782,7 +2781,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         DeclinedName *m_declinedname;
         Runes *m_runes;
         EquipmentSets m_EquipmentSets;
-        ItemPrototype const *bestItemFromSet;
+        ItemPrototype const *bIFromSet;
     private:
         // internal common parts for CanStore/StoreItem functions
         uint8 _CanStoreItem_InSpecificSlot( uint8 bag, uint8 slot, ItemPosCountVec& dest, ItemPrototype const *pProto, uint32& count, bool swap, Item *pSrcItem ) const;

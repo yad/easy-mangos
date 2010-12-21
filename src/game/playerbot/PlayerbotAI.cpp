@@ -67,7 +67,7 @@ public:
 
 PlayerbotAI::PlayerbotAI(PlayerbotMgr* const mgr, Player* const bot) :
     m_mgr(mgr), m_bot(bot), m_ignoreAIUpdatesUntilTime(0),
-    m_ignoreTeleport(0), m_spe(0),
+    m_ignoreTeleport(0), m_role(0), m_new_role(1),
     m_combatOrder(ORDERS_NONE), m_ScenarioType(SCENARIO_PVEEASY),
     m_TimeDoneEating(0), m_TimeDoneDrinking(0),
     m_CurrentlyCastingSpellId(0), m_spellIdCommand(0),
@@ -2187,7 +2187,8 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
     if (!CheckMaster())
         return;
 
-    CheckStuff();
+    if(!IsInCombat())
+        CheckStuff();
 
     // send heartbeat
     MovementUpdate();
@@ -2360,91 +2361,111 @@ void PlayerbotAI::CheckStuff()
     switch (m_bot->getClass())
     {
         case CLASS_WARRIOR:
-            if (m_spe != WarriorProtection)
+            if (m_role != m_new_role)
             {
                 m_combatStyle = COMBAT_MELEE;
-                m_spe = WarriorProtection;
+                if (m_new_role == 1)
+                    m_new_role = WarriorProtection;
+                m_role = m_new_role;
                 delete m_classAI;
                 m_classAI = (PlayerbotClassAI*) new PlayerbotWarriorAI(m_bot, this);
                 break;
             }
         case CLASS_PALADIN:
-            if (m_spe != PaladinHoly)
+            if (m_role != m_new_role)
             {
                 m_combatStyle = COMBAT_MELEE;
-                m_spe = PaladinHoly;
+                if (m_new_role == 1)
+                    m_new_role = PaladinHoly;
+                m_role = m_new_role;
                 delete m_classAI;
                 m_classAI = (PlayerbotClassAI*) new PlayerbotPaladinAI(m_bot, this);
                 break;
             }
         case CLASS_HUNTER:
-            if (m_spe != HunterBeastMastery)
+            if (m_role != m_new_role)
             {
                 m_combatStyle = COMBAT_RANGED;
-                m_spe = HunterBeastMastery;
+                if (m_new_role == 1)
+                    m_new_role = HunterBeastMastery;
+                m_role = m_new_role;
                 delete m_classAI;
                 m_classAI = (PlayerbotClassAI*) new PlayerbotHunterAI(m_bot, this);
                 break;
             }
         case CLASS_ROGUE:
-            if (m_spe != RogueSubtlety)
+            if (m_role != m_new_role)
             {
                 m_combatStyle = COMBAT_MELEE;
-                m_spe = RogueSubtlety;
+                if (m_new_role == 1)
+                    m_new_role = RogueSubtlety;
+                m_role = m_new_role;
                 delete m_classAI;
                 m_classAI = (PlayerbotClassAI*) new PlayerbotRogueAI(m_bot, this);
                 break;
             }
         case CLASS_PRIEST:
-            if (m_spe != PriestHoly)
+            if (m_role != m_new_role)
             {
                 m_combatStyle = COMBAT_RANGED;
-                m_spe = PriestHoly;
+                if (m_new_role == 1)
+                    m_new_role = PriestHoly;
+                m_role = m_new_role;
                 delete m_classAI;
                 m_classAI = (PlayerbotClassAI*) new PlayerbotPriestAI(m_bot, this);
                 break;
             }
         case CLASS_DEATH_KNIGHT:
-            if (m_spe != DeathKnightUnholy)
+            if (m_role != m_new_role)
             {
                 m_combatStyle = COMBAT_MELEE;
-                m_spe = DeathKnightUnholy;
+                if (m_new_role == 1)
+                    m_new_role = DeathKnightUnholy;
+                m_role = m_new_role;
                 delete m_classAI;
                 m_classAI = (PlayerbotClassAI*) new PlayerbotDeathKnightAI(m_bot, this);
                 break;
             }
         case CLASS_SHAMAN:
-            if (m_spe != ShamanElementalCombat)
+            if (m_role != m_new_role)
             {
                 m_combatStyle = COMBAT_MELEE;
-                m_spe = ShamanElementalCombat;
+                if (m_new_role == 1)
+                    m_new_role = ShamanElementalCombat;
+                m_role = m_new_role;
                 delete m_classAI;
                 m_classAI = (PlayerbotClassAI*) new PlayerbotShamanAI(m_bot, this);
                 break;
             }
         case CLASS_MAGE:
-            if (m_spe != MageFrost)
+            if (m_role != m_new_role)
             {
                 m_combatStyle = COMBAT_RANGED;
-                m_spe = MageFrost;
+                if (m_new_role == 1)
+                    m_new_role = MageFrost;
+                m_role = m_new_role;
                 delete m_classAI;
                 m_classAI = (PlayerbotClassAI*) new PlayerbotMageAI(m_bot, this);
                 break;
             }
         case CLASS_WARLOCK:
-            if (m_spe != WarlockDestruction)
+            if (m_role != m_new_role)
             {
                 m_combatStyle = COMBAT_RANGED;
-                m_spe = WarlockDestruction;
+                if (m_new_role == 1)
+                    m_new_role = WarlockDestruction;
+                m_role = m_new_role;
                 delete m_classAI;
                 m_classAI = (PlayerbotClassAI*) new PlayerbotWarlockAI(m_bot, this);
                 break;
             }
         case CLASS_DRUID:
-            if (m_spe != DruidFeralCombat)
+            if (m_role != m_new_role)
             {
                 m_combatStyle = COMBAT_MELEE;
-                m_spe = DruidFeralCombat;
+                if (m_new_role == 1)
+                    m_new_role = DruidFeralCombat;
+                m_role = m_new_role;
                 delete m_classAI;
                 m_classAI = (PlayerbotClassAI*) new PlayerbotDruidAI(m_bot, this);
                 break;
@@ -2454,10 +2475,9 @@ void PlayerbotAI::CheckStuff()
     if (GetMaster()->getLevel() == m_bot->getLevel())
         return;
 
-    ChatHandler ch(m_bot);
-    m_bot->RemoveMyEquipement();
+    PlayerbotChatHandler ch(m_bot);
     m_bot->GiveLevel(GetMaster()->getLevel());
-    ch.HandleGMStartUpCommand("");
+    ch.gmstartup("");
     m_bot->SetHealth(m_bot->GetMaxHealth());
     m_bot->SetPower(m_bot->getPowerType(), m_bot->GetMaxPower(m_bot->getPowerType()));
     GetClassAI()->InitSpells(m_bot->GetPlayerbotAI());

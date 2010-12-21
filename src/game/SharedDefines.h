@@ -82,7 +82,7 @@ enum Classes
     CLASS_DRUID         = 11,
 };
 
-enum Spe
+enum Role
 {
     MageFire              =  41,
     MageArcane            =  81,

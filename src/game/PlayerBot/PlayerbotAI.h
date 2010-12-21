@@ -263,8 +263,8 @@ public:
     Player *GetMaster() const;
     void SetMaster(Player* pl);
 
-    uint16 GetSpe() { return m_spe; };
-    void SetSpe(uint16 spe) { m_spe = spe; };
+    uint16 getRole() { return m_role; };
+    void setRole(uint16 role) { m_new_role = role; };
 
     BotState GetState() { return m_botState; };
     void SetState(BotState state);
@@ -322,7 +322,7 @@ private:
     PlayerbotMgr* const m_mgr;
     Player* const m_bot;
     PlayerbotClassAI* m_classAI;
-    uint16 m_spe;
+    uint16 m_role, m_new_role;
 
     // ignores AI updates until time specified
     // no need to waste CPU cycles during casting etc

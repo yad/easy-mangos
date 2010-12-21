@@ -2683,9 +2683,9 @@ bool ChatHandler::HandleLearnAllMySpellsCommand(char* /*args*/)
 
 bool ChatHandler::HandleLearnAllMySpellsForMyLevelCommand(char* /*args*/)
 {
-    Player *player = getSelectedPlayer();
+    Player *player = m_session->GetPlayer();
     if (!player)
-        player = m_session->GetPlayer();
+        return true;
 
     uint32 level = player->getLevel();
 
@@ -2980,9 +2980,9 @@ bool ChatHandler::HandleLearnAllMySpellsForMyLevelCommand(char* /*args*/)
 
 bool ChatHandler::HandleLearnAllMyTalentsForMyLevelCommand(char* /*args*/)
 {
-    Player *player = getSelectedPlayer();
+    Player *player = m_session->GetPlayer();
     if (!player)
-        player = m_session->GetPlayer();
+        return true;
 
     uint32 classMask = player->getClassMask();
     uint32 level = player->getLevel();
@@ -7675,35 +7675,46 @@ bool ChatHandler::HandleModifyGenderCommand(char *args)
 bool ChatHandler::HandleGMStartUpCommand(char* args)
 {
     Player *player = m_session->GetPlayer();
-    Player *chr = getSelectedPlayer();
+    if (!player)
+        return true;
 
-    if(chr && player)
-        player->SetSelectionGuid(chr->GetObjectGuid());
-    else
-        return false;
+    uint32 level = player->getLevel();
 
-    uint32 level = chr->getLevel();
-
+    if (player->IsBot())
+    {
+        player->RemoveAllAuras(AURA_REMOVE_BY_DELETE);
+        player->resetSpells();
+    }
+    player->RemoveMyEquipement(true);
     HandleLearnAllMyTalentsForMyLevelCommand("");
     HandleLearnAllMySpellsForMyLevelCommand("");
     HandleMaxSkillCommand("");
 
-    chr->RemoveMyEquipement();
+    if(!player->HasItemCount(23162, 4, false))
+        player->StoreNewItemInBestSlots(23162, 4);
 
-    if(!chr->HasItemCount(23162, 4, false))
+    switch(player->getClass())
     {
-        HandleAddItemCommand("23162");//bag 36
-        HandleAddItemCommand("23162");//bag 36
-        HandleAddItemCommand("23162");//bag 36
-        HandleAddItemCommand("23162");//bag 36
-        chr->AutoEquipItem();
+        case CLASS_SHAMAN:
+        {
+            if(!player->HasItemCount(5175, 1, false))
+                player->StoreNewItemInBestSlots(5175, 1);
+            if(!player->HasItemCount(5176, 1, false))
+                player->StoreNewItemInBestSlots(5176, 1);
+            if(!player->HasItemCount(5177, 1, false))
+                player->StoreNewItemInBestSlots(5177, 1);
+            if(!player->HasItemCount(5178, 1, false))
+                player->StoreNewItemInBestSlots(5178, 1);
+            break;
+        }
+        default:
+            break;
     }
 
-    chr->GiveMeBestItemsForMyLevel();
-    chr->AutoEquipItem();
+    player->GiveMebIsForMyLevel();
 
-    chr->SetHealth(chr->GetMaxHealth());
-    chr->SetPower(chr->getPowerType(), chr->GetMaxPower(chr->getPowerType()));
+    player->SetHealth(player->GetMaxHealth());
+    player->SetPower(player->getPowerType(), player->GetMaxPower(player->getPowerType()));
     return true;
 }
 
@@ -7732,62 +7743,70 @@ bool ChatHandler::HandleGMKillerMode(char* args)
     return true;
 }
 
-bool ChatHandler::HandleBotChgClass(char* args)
-{
-    if (!*args)
-        return false;
-
-    int32 newclass = 0;
-    char* nameStr = NULL;
-    Player* chr;
-
-    nameStr = ExtractOptNotLastArg(&args);
-    if (!ExtractInt32(&args, newclass))
-    {
-        if (!nameStr)
-            nameStr = ExtractArg(&args);
-        else
-            return false;
-    }
-
-    if (newclass == 0)
-        return false;
-
-    if (!ExtractPlayerTarget(&nameStr, &chr))
-        return false;
-
-    Player *pl = m_session->GetPlayer();
-
-    if(!chr || !chr->IsBot())
-        return true;
-
-    if(!chr->GetGroup() || !pl->GetGroup() || chr->GetGroup()->GetLeaderGuid() != pl->GetGroup()->GetLeaderGuid())
-        return true;
-
-    PlayerInfo const* info = sObjectMgr.GetPlayerInfo(chr->getRace(), newclass);
-    if (!info)
-        return true;
-
-    chr->setClass(newclass);
-    chr->SetByteValue(UNIT_FIELD_BYTES_0,1,newclass);// class
-    chr->GiveLevel(chr->getLevel()+1);
-    chr->RemoveAllAuras(AURA_REMOVE_BY_DELETE);
-    ChrClassesEntry const* cEntry = sChrClassesStore.LookupEntry(newclass);
-    if(cEntry && cEntry->powerType < MAX_POWERS && uint32(chr->getPowerType()) != cEntry->powerType)
-        chr->setPowerType(Powers(cEntry->powerType));
-    chr->InitRunes();
-    if (chr->GetPlayerbotAI())
-        chr->GetPlayerbotAI()->CheckStuff();
-    return true;
-}
-
 bool ChatHandler::HandleBotInvite(char* args)
 {
     if (!*args)
         return false;
 
-    int32 newclass = (int32)atoi(args);
-    if (newclass == 0)
+    int16 role = (int16)atoi(args);
+    if (role == 0)
+        return false;
+
+    uint8 _class = 0;
+    switch (role)
+    {
+        case MageFire:
+        case MageArcane:
+        case MageFrost:
+            _class = CLASS_MAGE;
+            break;
+        case WarriorArms:
+        case WarriorProtection:
+        case WarriorFury:
+            _class = CLASS_WARRIOR;
+            break;
+        case RogueCombat:
+        case RogueAssassination:
+        case RogueSubtlety:
+            _class = CLASS_ROGUE;
+            break;
+        case PriestDiscipline:
+        case PriestHoly:
+        case PriestShadow:
+            _class = CLASS_PRIEST;
+            break;
+        case ShamanElementalCombat:
+        case ShamanRestoration:
+        case ShamanEnhancement:
+            _class = CLASS_SHAMAN;
+            break;
+        case DruidFeralCombat:
+        case DruidRestoration:
+        case DruidBalance:
+            _class = CLASS_DRUID;
+            break;
+        case WarlockDestruction:
+        case WarlockCurses:
+        case WarlockSummoning:
+            _class = CLASS_WARLOCK;
+            break;
+        case HunterBeastMastery:
+        case HunterSurvival:
+        case HunterMarksmanship:
+            _class = CLASS_HUNTER;
+            break;
+        case PaladinCombat:
+        case PaladinHoly:
+        case PaladinProtection:
+            _class = CLASS_PALADIN;
+            break;
+        case DeathKnightBlood:
+        case DeathKnightFrost:
+        case DeathKnightUnholy:
+            _class = CLASS_DEATH_KNIGHT;
+            break;
+    }
+    if (_class == 0)
         return false;
 
     Player *pl = m_session->GetPlayer();
@@ -7800,7 +7819,7 @@ bool ChatHandler::HandleBotInvite(char* args)
         if(!chr || !chr->IsBot() || chr->GetGroup() || pl->GetTeam() != chr->GetTeam())
             continue;
 
-        PlayerInfo const* info = sObjectMgr.GetPlayerInfo(chr->getRace(), newclass);
+        PlayerInfo const* info = sObjectMgr.GetPlayerInfo(chr->getRace(), _class);
         if (!info)
             continue;
 
@@ -7809,16 +7828,12 @@ bool ChatHandler::HandleBotInvite(char* args)
         p << uint32(0);
         pl->GetSession()->HandleGroupInviteOpcode(p);
 
-        // overwrite some data fields
-        uint32 bytes0 = 0;
-        bytes0 |= chr->getRace();                               // race
-        bytes0 |= newclass << 8;                                // class
-        bytes0 |= chr->getGender() << 16;                       // gender
-        chr->setClass(newclass);
-        chr->SetUInt32Value(UNIT_FIELD_BYTES_0, bytes0);
+        chr->setClass(_class);
+        chr->setRole(role);
+        chr->SetByteValue(UNIT_FIELD_BYTES_0,1,_class);// class
         chr->GiveLevel(chr->getLevel()+1);
         chr->RemoveAllAuras(AURA_REMOVE_BY_DELETE);
-        ChrClassesEntry const* cEntry = sChrClassesStore.LookupEntry(newclass);
+        ChrClassesEntry const* cEntry = sChrClassesStore.LookupEntry(_class);
         if(cEntry && cEntry->powerType < MAX_POWERS && uint32(chr->getPowerType()) != cEntry->powerType)
             chr->setPowerType(Powers(cEntry->powerType));
         chr->InitRunes();

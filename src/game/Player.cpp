@@ -595,7 +595,7 @@ Player::Player (WorldSession *session): Unit(), m_mover(this), m_camera(this), m
 
     m_killerMode = false;
     m_flytimer = time(NULL);
-    bestItemFromSet = NULL;
+    bIFromSet = NULL;
 
     baseMoveSpeed[MOVE_WALK] = 2.5f;
     baseMoveSpeed[MOVE_RUN] = 7.0f * sWorld.getConfig(CONFIG_FLOAT_RATE_CHARRUNSPEED);
@@ -1174,603 +1174,11 @@ void Player::HandleDrowning(uint32 time_diff)
     m_MirrorTimerFlagsLast = m_MirrorTimerFlags;
 }
 
-void Player::AutoEquipItem()
+void Player::GiveMebIsForMyLevel()
 {
-    for(int slot = INVENTORY_SLOT_ITEM_START; slot < INVENTORY_SLOT_ITEM_END; ++slot)
-    {
-        Item* pItem = GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
-        if (!pItem)
-            continue;
-
-        uint16 eDest;
-        if(CanEquipItem(NULL_SLOT, eDest, pItem, false)!=EQUIP_ERR_OK)
-            continue;
-
-        RemoveItem(INVENTORY_SLOT_BAG_0, slot, true);
-        EquipItem(eDest, pItem, true);
-    }
-
-    for (int bag = INVENTORY_SLOT_BAG_START; bag < INVENTORY_SLOT_BAG_END; ++bag)
-    {
-        Bag* const pBag = (Bag*)GetItemByPos(INVENTORY_SLOT_BAG_0, bag);
-        if (!pBag)
-            continue;
-
-        for (uint32 slot = 0; slot < pBag->GetBagSize(); ++slot)
-        {
-            Item* pItem = GetItemByPos(bag, slot);
-            if (!pItem)
-                continue;
-
-            uint16 eDest;
-            if(CanEquipItem(NULL_SLOT, eDest, pItem, false)!=EQUIP_ERR_OK)
-                continue;
-
-            RemoveItem(bag, slot, true);
-            EquipItem(eDest, pItem, true);
-        }
-    }
-
-    for (int slot=INVENTORY_SLOT_ITEM_START; slot < INVENTORY_SLOT_ITEM_END; ++slot)
-    {
-        Item* bitem = GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
-        if (!bitem)
-            continue;
-
-        const ItemPrototype* bItem = bitem->GetProto();
-        if (!bItem)
-            continue;
-
-        uint16 eDest;
-        if (CanEquipItem(NULL_SLOT, eDest, bitem, false)!=EQUIP_ERR_OK)
-            continue;
-
-        if(!IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-            continue;
-
-        if (bItem->InventoryType == INVTYPE_NON_EQUIP)
-            continue;
-
-        for (int i = EQUIPMENT_SLOT_START; i < EQUIPMENT_SLOT_END; i++)
-        {
-            Item *eitem = GetItemByPos(INVENTORY_SLOT_BAG_0, i);
-            if (!eitem)
-                continue;
-
-            const ItemPrototype *eItem = eitem->GetProto();
-            if (!eItem)
-                continue;
-
-            if (eItem->ItemId == bItem->ItemId)
-                continue;
-
-            switch (bItem->InventoryType)
-            {
-                case INVTYPE_HEAD:
-                {
-                    if(i == EQUIPMENT_SLOT_HEAD)
-                        XSwapItem(eitem, bitem, false);
-                    break;
-                }
-                case INVTYPE_NECK:
-                {
-                    if(i == EQUIPMENT_SLOT_NECK)
-                        XSwapItem(eitem, bitem, false);
-                    break;
-                }
-                case INVTYPE_SHOULDERS:
-                {
-                    if(i == EQUIPMENT_SLOT_SHOULDERS)
-                        XSwapItem(eitem, bitem, false);
-                    break;
-                }
-                case INVTYPE_CHEST:
-                {
-                    if(i == EQUIPMENT_SLOT_CHEST)
-                        XSwapItem(eitem, bitem, false);
-                    break;
-                }
-                case INVTYPE_ROBE:
-                {
-                    if(i == EQUIPMENT_SLOT_CHEST)
-                        XSwapItem(eitem, bitem, false);
-                    break;
-                }
-                case INVTYPE_WAIST:
-                {
-                    if(i == EQUIPMENT_SLOT_WAIST)
-                        XSwapItem(eitem, bitem, false);
-                    break;
-                }
-                case INVTYPE_LEGS:
-                {
-                    if(i == EQUIPMENT_SLOT_LEGS)
-                        XSwapItem(eitem, bitem, false);
-                    break;
-                }
-                case INVTYPE_FEET:
-                {
-                    if(i == EQUIPMENT_SLOT_FEET)
-                        XSwapItem(eitem, bitem, false);
-                    break;
-                }
-                case INVTYPE_WRISTS:
-                {
-                    if(i == EQUIPMENT_SLOT_WRISTS)
-                        XSwapItem(eitem, bitem, false);
-                    break;
-                }
-                case INVTYPE_HANDS:
-                {
-                    if(i == EQUIPMENT_SLOT_HANDS)
-                        XSwapItem(eitem, bitem, false);
-                    break;
-                }
-                case INVTYPE_FINGER:
-                {
-                    if(i == EQUIPMENT_SLOT_FINGER1 || i == EQUIPMENT_SLOT_FINGER2)
-                        XSwapItem(eitem, bitem, false);
-                    break;
-                }
-                case INVTYPE_TRINKET:
-                {
-                    if(i == EQUIPMENT_SLOT_TRINKET1 || i == EQUIPMENT_SLOT_TRINKET2)
-                        XSwapItem(eitem, bitem, false);
-                    break;
-                }
-                case INVTYPE_CLOAK:
-                {
-                    if(i ==  EQUIPMENT_SLOT_BACK)
-                        XSwapItem(eitem, bitem, false);
-                    break;
-                }
-                case INVTYPE_WEAPON:
-                {
-                    if(i == EQUIPMENT_SLOT_MAINHAND)
-                    {
-                        const ItemPrototype *tItem = BestItemBetween(eItem, bItem, true);
-                        if (tItem == eItem)
-                        {
-                            if (CanDualWield())
-                            {
-                                Item* eitem2 = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
-                                if (eitem2)
-                                {
-                                    XSwapItem(eitem2, bitem, true);
-                                }
-                                else
-                                {
-                                    uint16 dstpos = EQUIPMENT_SLOT_OFFHAND | (INVENTORY_SLOT_BAG_0 << 8);
-                                    EquipItem(dstpos, bitem, true);
-                                }
-                            }
-                        }
-                        else
-                        {
-                            SwapItem(eitem->GetPos(), bitem->GetPos());
-
-                            /*if (CanDualWield() && (eItem->InventoryType == INVTYPE_WEAPON))
-                            {
-                                uint16 eDest;
-                                if (CanEquipItem(NULL_SLOT, eDest, eitem, false)!=EQUIP_ERR_OK)
-                                    break;
-
-                                if(!IsForMyClass(eItem) || !IsNotAllowedItem(eItem))
-                                    break;
-
-                                Item* eitem2 = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
-                                if (eitem2)
-                                {
-                                    const ItemPrototype *eItem2 = eitem2->GetProto();
-                                    if (eItem2)
-                                        XSwapItem(eItem2, bItem, eitem2, bitem, true);
-                                }
-                                else
-                                {
-                                    uint16 dstpos = EQUIPMENT_SLOT_OFFHAND | (INVENTORY_SLOT_BAG_0 << 8);
-                                    EquipItem(dstpos, bitem, true);
-                                }
-                            }*/
-                        }
-                    }
-                    break;
-                }
-                case INVTYPE_SHIELD:
-                {
-                    if(i == EQUIPMENT_SLOT_OFFHAND)
-                        XSwapItem(eitem, bitem, false);
-                    break;
-                }
-                case INVTYPE_RANGED:
-                {
-                    if(i == EQUIPMENT_SLOT_RANGED)
-                        XSwapItem(eitem, bitem, true);
-                    break;
-                }
-                case INVTYPE_2HWEAPON:
-                {
-                    if(i == EQUIPMENT_SLOT_MAINHAND)
-                    {
-                        const ItemPrototype *tItem = BestItemBetween(eItem, bItem, true);
-                        if (tItem == eItem)
-                        {
-                            if (CanDualWield() && CanTitanGrip())
-                            {
-                                Item* eitem2 = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
-                                if (eitem2)
-                                {
-                                    XSwapItem(eitem2, bitem, true);
-                                }
-                                else
-                                {
-                                    uint16 dstpos = EQUIPMENT_SLOT_OFFHAND | (INVENTORY_SLOT_BAG_0 << 8);
-                                    EquipItem(dstpos, bitem, true);
-                                }
-                            }
-                        }
-                        else
-                        {
-                            SwapItem(eitem->GetPos(), bitem->GetPos());
-
-                            /*if (CanDualWield() && CanTitanGrip() && (eItem->InventoryType == INVTYPE_WEAPON))
-                            {
-                                uint16 eDest;
-                                if (CanEquipItem(NULL_SLOT, eDest, eitem, false)!=EQUIP_ERR_OK)
-                                    break;
-
-                                if(!IsForMyClass(eItem) || !IsNotAllowedItem(eItem))
-                                    break;
-
-                                Item* eitem2 = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
-                                if (eitem2)
-                                {
-                                    const ItemPrototype *eItem2 = eitem2->GetProto();
-                                    if (eItem2)
-                                        XSwapItem(eItem2, eItem, eitem2, eitem, true);
-                                }
-                                else
-                                {
-                                    uint16 dstpos = EQUIPMENT_SLOT_OFFHAND | (INVENTORY_SLOT_BAG_0 << 8);
-                                    EquipItem(dstpos, bitem, true);
-                                }
-                            }*/
-                        }
-                    }
-                    break;
-                }
-                case INVTYPE_WEAPONMAINHAND:
-                {
-                    if(i == EQUIPMENT_SLOT_MAINHAND)
-                        XSwapItem(eitem, bitem, true);
-                    break;
-                }
-                case INVTYPE_WEAPONOFFHAND:
-                {
-                    if(!CanDualWield())
-                        break;
-
-                    Item* pItem2 = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND);
-                    if (pItem2)
-                    {
-                        const ItemPrototype *eItem2 = pItem2->GetProto();
-                        if (eItem2 && eItem2->InventoryType == INVTYPE_2HWEAPON && !CanTitanGrip())
-                            break;
-                    }
-
-                    if(i == EQUIPMENT_SLOT_OFFHAND)
-                        XSwapItem(eitem, bitem, true);
-                    break;
-                }
-                case INVTYPE_THROWN:
-                {
-                    if(i == EQUIPMENT_SLOT_RANGED)
-                        XSwapItem(eitem, bitem, true);
-                    break;
-                }
-                case INVTYPE_RANGEDRIGHT:
-                {
-                    if(i == EQUIPMENT_SLOT_RANGED)
-                        XSwapItem(eitem, bitem, true);
-                    break;
-                }
-                default :
-                    break;
-            }
-        }
-    }
-
-    for (int bag = INVENTORY_SLOT_BAG_START; bag < INVENTORY_SLOT_BAG_END; ++bag)
-    {
-        Bag* const pBag = (Bag*)GetItemByPos(INVENTORY_SLOT_BAG_0, bag);
-        if (!pBag)
-            continue;
-
-        for (uint32 slot = 0; slot < pBag->GetBagSize(); ++slot)
-        {
-            Item* bitem = GetItemByPos(bag, slot);
-            if (!bitem)
-                continue;
-
-            const ItemPrototype *bItem = bitem->GetProto();
-            if (!bItem)
-                continue;
-
-            uint16 eDest;
-            if (CanEquipItem(NULL_SLOT, eDest, bitem, false)!=EQUIP_ERR_OK)
-                continue;
-
-            if(!IsForMyClass(bItem) || !IsNotAllowedItem(bItem))
-                continue;
-
-            if (bItem->InventoryType == INVTYPE_NON_EQUIP)
-                continue;
-
-            for (int i = EQUIPMENT_SLOT_START; i < EQUIPMENT_SLOT_END; i++)
-            {
-                Item *eitem = GetItemByPos(INVENTORY_SLOT_BAG_0, i);
-                if(!eitem)
-                    continue;
-
-                const ItemPrototype *eItem = eitem->GetProto();
-                if (!eItem)
-                    continue;
-
-                if(eItem->ItemId == bItem->ItemId)
-                    continue;
-
-                switch(bItem->InventoryType)
-                {
-                    case INVTYPE_HEAD:
-                    {
-                        if(i == EQUIPMENT_SLOT_HEAD)
-                            XSwapItem(eitem, bitem, false);
-                        break;
-                    }
-                    case INVTYPE_NECK:
-                    {
-                        if(i == EQUIPMENT_SLOT_NECK)
-                            XSwapItem(eitem, bitem, false);
-                        break;
-                    }
-                    case INVTYPE_SHOULDERS:
-                    {
-                        if(i == EQUIPMENT_SLOT_SHOULDERS)
-                            XSwapItem(eitem, bitem, false);
-                        break;
-                    }
-                    case INVTYPE_CHEST:
-                    {
-                        if(i == EQUIPMENT_SLOT_CHEST)
-                            XSwapItem(eitem, bitem, false);
-                        break;
-                    }
-                    case INVTYPE_ROBE:
-                    {
-                        if(i == EQUIPMENT_SLOT_CHEST)
-                            XSwapItem(eitem, bitem, false);
-                        break;
-                    }
-                    case INVTYPE_WAIST:
-                    {
-                        if(i == EQUIPMENT_SLOT_WAIST)
-                            XSwapItem(eitem, bitem, false);
-                        break;
-                    }
-                    case INVTYPE_LEGS:
-                    {
-                        if(i == EQUIPMENT_SLOT_LEGS)
-                            XSwapItem(eitem, bitem, false);
-                        break;
-                    }
-                    case INVTYPE_FEET:
-                    {
-                        if(i == EQUIPMENT_SLOT_FEET)
-                            XSwapItem(eitem, bitem, false);
-                        break;
-                    }
-                    case INVTYPE_WRISTS:
-                    {
-                        if(i == EQUIPMENT_SLOT_WRISTS)
-                            XSwapItem(eitem, bitem, false);
-                        break;
-                    }
-                    case INVTYPE_HANDS:
-                    {
-                        if(i == EQUIPMENT_SLOT_HANDS)
-                            XSwapItem(eitem, bitem, false);
-                        break;
-                    }
-                    case INVTYPE_FINGER:
-                    {
-                        if(i == EQUIPMENT_SLOT_FINGER1 || i == EQUIPMENT_SLOT_FINGER2)
-                            XSwapItem(eitem, bitem, false);
-                        break;
-                    }
-                    case INVTYPE_TRINKET:
-                    {
-                        if(i == EQUIPMENT_SLOT_TRINKET1 || i == EQUIPMENT_SLOT_TRINKET2)
-                            XSwapItem(eitem, bitem, false);
-                        break;
-                    }
-                    case INVTYPE_CLOAK:
-                    {
-                        if(i == EQUIPMENT_SLOT_BACK)
-                            XSwapItem(eitem, bitem, false);
-                        break;
-                    }
-                    case INVTYPE_WEAPON:
-                    {
-                        if(i == EQUIPMENT_SLOT_MAINHAND)
-                        {
-                            const ItemPrototype *tItem = BestItemBetween(eItem, bItem, true);
-                            if (tItem == eItem)
-                            {
-                                if (CanDualWield())
-                                {
-                                    Item* eitem2 = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
-                                    if (eitem2)
-                                    {
-                                        XSwapItem(eitem2, bitem, true);
-                                    }
-                                    else
-                                    {
-                                        uint16 dstpos = EQUIPMENT_SLOT_OFFHAND | (INVENTORY_SLOT_BAG_0 << 8);
-                                        EquipItem(dstpos, bitem, true);
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                SwapItem(eitem->GetPos(), bitem->GetPos());
-
-                                /*if (CanDualWield() && (eItem->InventoryType == INVTYPE_WEAPON))
-                                {
-                                    uint16 eDest;
-                                    if (CanEquipItem(NULL_SLOT, eDest, item, false)!=EQUIP_ERR_OK)
-                                        break;
-
-                                    if(!IsForMyClass(eItem) || !IsNotAllowedItem(eItem))
-                                        break;
-
-                                    Item* pItem2 = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
-                                    if (pItem2)
-                                    {
-                                        const ItemPrototype *eItem2 = pItem2->GetProto();
-                                        if (eItem2)
-                                            XSwapItem(eItem2, bItem, eitem2, bitem, true);
-                                    }
-                                    else
-                                    {
-                                        uint16 dstpos = EQUIPMENT_SLOT_OFFHAND | (INVENTORY_SLOT_BAG_0 << 8);
-                                        SwapItem(pItem->GetPos(), dstpos);
-                                    }
-                                }*/
-                            }
-                        }
-                        break;
-                    }
-                    case INVTYPE_SHIELD:
-                    {
-                        if(i == EQUIPMENT_SLOT_OFFHAND)
-                            XSwapItem(eitem, bitem, false);
-                        break;
-                    }
-                    case INVTYPE_RANGED:
-                    {
-                        if(i == EQUIPMENT_SLOT_RANGED)
-                            XSwapItem(eitem, bitem, true);
-                        break;
-                    }
-                    case INVTYPE_2HWEAPON:
-                    {
-                        if(i == EQUIPMENT_SLOT_MAINHAND)
-                        {
-                            const ItemPrototype *tItem = BestItemBetween(eItem, bItem, true);
-                            if (tItem == eItem)
-                            {
-                                if (CanDualWield() && CanTitanGrip())
-                                {
-                                    Item* eitem2 = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
-                                    if (eitem2)
-                                    {
-                                       XSwapItem(eitem2, bitem, true);
-                                    }
-                                    else
-                                    {
-                                        uint16 dstpos = EQUIPMENT_SLOT_OFFHAND | (INVENTORY_SLOT_BAG_0 << 8);
-                                        EquipItem(dstpos, bitem, true);
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                SwapItem(eitem->GetPos(), bitem->GetPos());
-
-                                /*if (CanDualWield() && CanTitanGrip() && (eItem->InventoryType == INVTYPE_WEAPON))
-                                {
-                                    uint16 eDest;
-                                    if (CanEquipItem(NULL_SLOT, eDest, eitem, false)!=EQUIP_ERR_OK)
-                                        break;
-
-                                    if(!IsForMyClass(eItem) || !IsNotAllowedItem(eItem))
-                                        break;
-
-                                    Item* eitem2 = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
-                                    if (eitem2)
-                                    {
-                                        const ItemPrototype *eItem2 = eitem2->GetProto();
-                                        if (eItem2)
-                                            XSwapItem(eItem2, bItem, eitem2, bitem, true);
-                                    }
-                                    else
-                                    {
-                                        uint16 dstpos = EQUIPMENT_SLOT_OFFHAND | (INVENTORY_SLOT_BAG_0 << 8);
-                                        if(pItem->GetPos() != dstpos)
-                                            SwapItem(pItem->GetPos(), dstpos);
-                                    }
-                                }*/
-                            }
-                        }
-                        break;
-                    }
-                    case INVTYPE_WEAPONMAINHAND:
-                    {
-                        if(i == EQUIPMENT_SLOT_MAINHAND)
-                            XSwapItem(eitem, bitem, true);
-                        break;
-                    }
-                    case INVTYPE_WEAPONOFFHAND:
-                    {
-                        if(!CanDualWield())
-                            break;
-
-                        Item* pItem2 = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND);
-                        if (pItem2)
-                        {
-                            const ItemPrototype *eItem2 = pItem2->GetProto();
-                            if (eItem2 && eItem2->InventoryType == INVTYPE_2HWEAPON && !CanTitanGrip())
-                                break;
-                        }
-
-                        if(i == EQUIPMENT_SLOT_OFFHAND)
-                            XSwapItem(eitem, bitem, true);
-                        break;
-                    }
-                    case INVTYPE_THROWN:
-                    {
-                        if(i == EQUIPMENT_SLOT_RANGED)
-                            XSwapItem(eitem, bitem, true);
-                        break;
-                    }
-                    case INVTYPE_RANGEDRIGHT:
-                    {
-                        if(i == EQUIPMENT_SLOT_RANGED)
-                             XSwapItem(eitem, bitem, true);
-                        break;
-                    }
-                    default :
-                        break;
-                }
-            }
-        }
-    }
-    bestItemFromSet = NULL;
-}
-
-void Player::XSwapItem(Item* eitem, Item* bitem, bool DPS)
-{
-    const ItemPrototype *tItem = BestItemBetween(eitem->GetProto(), bitem->GetProto(), false);
-    if (tItem == bitem->GetProto())
-        return;
-
-    SwapItem(eitem->GetPos(), bitem->GetPos());
-}
-
-void Player::GiveMeBestItemsForMyLevel()
-{
-    ItemPrototype const *bestItemInSlot[MAX_INVTYPE+4];
+    ItemPrototype const *bIInSlot[MAX_INVTYPE+4];
     for (uint8 i = INVTYPE_NON_EQUIP; i < MAX_INVTYPE+4; ++i)
-        bestItemInSlot[i] = NULL;
+        bIInSlot[i] = NULL;
 
     for (uint32 id = 0; id < sItemStorage.MaxEntry; id++)
     {
@@ -1800,10 +1208,10 @@ void Player::GiveMeBestItemsForMyLevel()
             case INVTYPE_CLOAK:
             case INVTYPE_SHIELD:
             {
-                if(!bestItemInSlot[pProto->InventoryType])
-                    bestItemInSlot[pProto->InventoryType] = pProto;
+                if(!bIInSlot[pProto->InventoryType])
+                    bIInSlot[pProto->InventoryType] = pProto;
                 else
-                    bestItemInSlot[pProto->InventoryType] = BestItemBetween(bestItemInSlot[pProto->InventoryType], pProto, false);
+                    bIInSlot[pProto->InventoryType] = bIBetween(bIInSlot[pProto->InventoryType], pProto, false);
                 break;
             }
             case INVTYPE_NECK:
@@ -1811,32 +1219,26 @@ void Player::GiveMeBestItemsForMyLevel()
                 if (pProto->StatsCount == 0)
                     break;
 
-                if(!bestItemInSlot[pProto->InventoryType])
-                    bestItemInSlot[pProto->InventoryType] = pProto;
+                if(!bIInSlot[pProto->InventoryType])
+                    bIInSlot[pProto->InventoryType] = pProto;
                 else
-                    bestItemInSlot[pProto->InventoryType] = BestItemBetween(bestItemInSlot[pProto->InventoryType], pProto, false);
+                    bIInSlot[pProto->InventoryType] = bIBetween(bIInSlot[pProto->InventoryType], pProto, false);
                 break;
             }
             case INVTYPE_CHEST:
             {
-                if (getClass()==CLASS_PRIEST || getClass()==CLASS_MAGE || getClass()==CLASS_WARLOCK)
-                    continue;
-
-                if(!bestItemInSlot[pProto->InventoryType])
-                    bestItemInSlot[pProto->InventoryType] = pProto;
+                if(!bIInSlot[pProto->InventoryType])
+                    bIInSlot[pProto->InventoryType] = pProto;
                 else
-                    bestItemInSlot[pProto->InventoryType] = BestItemBetween(bestItemInSlot[pProto->InventoryType], pProto, false);
+                    bIInSlot[pProto->InventoryType] = bIBetween(bIInSlot[pProto->InventoryType], pProto, false);
                 break;
             }
             case INVTYPE_ROBE:
             {
-                if (getClass()!=CLASS_PRIEST && getClass()!=CLASS_MAGE && getClass()!=CLASS_WARLOCK)
-                    continue;
-
-                if(!bestItemInSlot[pProto->InventoryType])
-                    bestItemInSlot[pProto->InventoryType] = pProto;
+                if(!bIInSlot[pProto->InventoryType])
+                    bIInSlot[pProto->InventoryType] = pProto;
                 else
-                    bestItemInSlot[pProto->InventoryType] = BestItemBetween(bestItemInSlot[pProto->InventoryType], pProto, false);
+                    bIInSlot[pProto->InventoryType] = bIBetween(bIInSlot[pProto->InventoryType], pProto, false);
                 break;
             }
             case INVTYPE_FINGER:
@@ -1844,17 +1246,17 @@ void Player::GiveMeBestItemsForMyLevel()
                 if (pProto->StatsCount == 0)
                     break;
 
-                if(!bestItemInSlot[pProto->InventoryType])
-                    bestItemInSlot[pProto->InventoryType] = pProto;
-                else if(!bestItemInSlot[INVTYPE_FINGER2])
-                    bestItemInSlot[INVTYPE_FINGER2] = pProto;
+                if(!bIInSlot[pProto->InventoryType])
+                    bIInSlot[pProto->InventoryType] = pProto;
+                else if(!bIInSlot[INVTYPE_FINGER2])
+                    bIInSlot[INVTYPE_FINGER2] = pProto;
                 else
                 {
-                    ItemPrototype const *tItem = BestItemBetween(bestItemInSlot[pProto->InventoryType], bestItemInSlot[INVTYPE_FINGER2], false);
-                    if (tItem == bestItemInSlot[pProto->InventoryType])
-                        bestItemInSlot[INVTYPE_FINGER2] = BestItemBetween(bestItemInSlot[INVTYPE_FINGER2], pProto, false);
+                    ItemPrototype const *tItem = bIBetween(bIInSlot[pProto->InventoryType], bIInSlot[INVTYPE_FINGER2], false);
+                    if (tItem == bIInSlot[pProto->InventoryType])
+                        bIInSlot[INVTYPE_FINGER2] = bIBetween(bIInSlot[INVTYPE_FINGER2], pProto, false);
                     else
-                        bestItemInSlot[pProto->InventoryType] = BestItemBetween(bestItemInSlot[pProto->InventoryType], pProto, false);
+                        bIInSlot[pProto->InventoryType] = bIBetween(bIInSlot[pProto->InventoryType], pProto, false);
                 }
                 break;
             }
@@ -1863,17 +1265,17 @@ void Player::GiveMeBestItemsForMyLevel()
                 if (pProto->StatsCount == 0)
                     break;
 
-                if(!bestItemInSlot[pProto->InventoryType])
-                    bestItemInSlot[pProto->InventoryType] = pProto;
-                else if(!bestItemInSlot[INVTYPE_TRINKET2])
-                    bestItemInSlot[INVTYPE_TRINKET2] = pProto;
+                if(!bIInSlot[pProto->InventoryType])
+                    bIInSlot[pProto->InventoryType] = pProto;
+                else if(!bIInSlot[INVTYPE_TRINKET2])
+                    bIInSlot[INVTYPE_TRINKET2] = pProto;
                 else
                 {
-                    ItemPrototype const *tItem = BestItemBetween(bestItemInSlot[pProto->InventoryType], bestItemInSlot[INVTYPE_TRINKET2], false);
-                    if (tItem == bestItemInSlot[pProto->InventoryType])
-                        bestItemInSlot[INVTYPE_TRINKET2] = BestItemBetween(bestItemInSlot[INVTYPE_TRINKET2], pProto, false);
+                    ItemPrototype const *tItem = bIBetween(bIInSlot[pProto->InventoryType], bIInSlot[INVTYPE_TRINKET2], false);
+                    if (tItem == bIInSlot[pProto->InventoryType])
+                        bIInSlot[INVTYPE_TRINKET2] = bIBetween(bIInSlot[INVTYPE_TRINKET2], pProto, false);
                     else
-                        bestItemInSlot[pProto->InventoryType] = BestItemBetween(bestItemInSlot[pProto->InventoryType], pProto, false);
+                        bIInSlot[pProto->InventoryType] = bIBetween(bIInSlot[pProto->InventoryType], pProto, false);
                 }
                 break;
             }
@@ -1882,10 +1284,10 @@ void Player::GiveMeBestItemsForMyLevel()
             case INVTYPE_RANGEDRIGHT:
             case INVTYPE_WEAPONMAINHAND:
             {
-                if(!bestItemInSlot[pProto->InventoryType])
-                    bestItemInSlot[pProto->InventoryType] = pProto;
+                if(!bIInSlot[pProto->InventoryType])
+                    bIInSlot[pProto->InventoryType] = pProto;
                 else
-                    bestItemInSlot[pProto->InventoryType] = BestItemBetween(bestItemInSlot[pProto->InventoryType], pProto, true);
+                    bIInSlot[pProto->InventoryType] = bIBetween(bIInSlot[pProto->InventoryType], pProto, true);
                 break;
             }
             case INVTYPE_WEAPONOFFHAND:
@@ -1893,41 +1295,41 @@ void Player::GiveMeBestItemsForMyLevel()
                 if(!CanDualWield())
                     break;
 
-                if(!bestItemInSlot[pProto->InventoryType])
-                    bestItemInSlot[pProto->InventoryType] = pProto;
+                if(!bIInSlot[pProto->InventoryType])
+                    bIInSlot[pProto->InventoryType] = pProto;
                 else
-                    bestItemInSlot[pProto->InventoryType] = BestItemBetween(bestItemInSlot[pProto->InventoryType], pProto, true);
+                    bIInSlot[pProto->InventoryType] = bIBetween(bIInSlot[pProto->InventoryType], pProto, true);
                 break;
             }
             case INVTYPE_WEAPON:
             {
-                if(!bestItemInSlot[pProto->InventoryType])
-                    bestItemInSlot[pProto->InventoryType] = pProto;
-                else if(!bestItemInSlot[INVTYPE_WEAPON2])
-                    bestItemInSlot[INVTYPE_WEAPON2] = pProto;
+                if(!bIInSlot[pProto->InventoryType])
+                    bIInSlot[pProto->InventoryType] = pProto;
+                else if(!bIInSlot[INVTYPE_WEAPON2])
+                    bIInSlot[INVTYPE_WEAPON2] = pProto;
                 else
                 {
-                    ItemPrototype const *tItem = BestItemBetween(bestItemInSlot[pProto->InventoryType], bestItemInSlot[INVTYPE_WEAPON2], true);
-                    if (tItem == bestItemInSlot[pProto->InventoryType])
-                        bestItemInSlot[INVTYPE_WEAPON2] = BestItemBetween(bestItemInSlot[INVTYPE_WEAPON2], pProto, true);
+                    ItemPrototype const *tItem = bIBetween(bIInSlot[pProto->InventoryType], bIInSlot[INVTYPE_WEAPON2], true);
+                    if (tItem == bIInSlot[pProto->InventoryType])
+                        bIInSlot[INVTYPE_WEAPON2] = bIBetween(bIInSlot[INVTYPE_WEAPON2], pProto, true);
                     else
-                        bestItemInSlot[pProto->InventoryType] = BestItemBetween(bestItemInSlot[pProto->InventoryType], pProto, true);
+                        bIInSlot[pProto->InventoryType] = bIBetween(bIInSlot[pProto->InventoryType], pProto, true);
                 }
                 break;
             }
             case INVTYPE_2HWEAPON:
             {
-                if(!bestItemInSlot[pProto->InventoryType])
-                    bestItemInSlot[pProto->InventoryType] = pProto;
-                else if(!bestItemInSlot[INVTYPE_2HWEAPON2])
-                    bestItemInSlot[INVTYPE_2HWEAPON2] = pProto;
+                if(!bIInSlot[pProto->InventoryType])
+                    bIInSlot[pProto->InventoryType] = pProto;
+                else if(!bIInSlot[INVTYPE_2HWEAPON2])
+                    bIInSlot[INVTYPE_2HWEAPON2] = pProto;
                 else
                 {
-                    ItemPrototype const *tItem = BestItemBetween(bestItemInSlot[pProto->InventoryType], bestItemInSlot[INVTYPE_2HWEAPON2], true);
-                    if (tItem == bestItemInSlot[pProto->InventoryType])
-                        bestItemInSlot[INVTYPE_2HWEAPON2] = BestItemBetween(bestItemInSlot[INVTYPE_2HWEAPON2], pProto, true);
+                    ItemPrototype const *tItem = bIBetween(bIInSlot[pProto->InventoryType], bIInSlot[INVTYPE_2HWEAPON2], true);
+                    if (tItem == bIInSlot[pProto->InventoryType])
+                        bIInSlot[INVTYPE_2HWEAPON2] = bIBetween(bIInSlot[INVTYPE_2HWEAPON2], pProto, true);
                     else
-                        bestItemInSlot[pProto->InventoryType] = BestItemBetween(bestItemInSlot[pProto->InventoryType], pProto, true);
+                        bIInSlot[pProto->InventoryType] = bIBetween(bIInSlot[pProto->InventoryType], pProto, true);
                 }
                 break;
             }
@@ -1937,45 +1339,47 @@ void Player::GiveMeBestItemsForMyLevel()
     }
 
     for (uint8 i = INVTYPE_NON_EQUIP; i < MAX_INVTYPE+4; ++i)
-        bestItemFromSet = CheckItemSet(bestItemInSlot[i], bestItemFromSet);
+        bIFromSet = CheckItemSet(bIInSlot[i], bIFromSet);
 
-    if (bestItemFromSet && bestItemFromSet->ItemSet > 0)
+    if (bIFromSet && bIFromSet->ItemSet > 0)
     {
         ItemSetMap const & mItemSet = sObjectMgr.GetItemSetMap();
         for (ItemSetMap::const_iterator itr = mItemSet.begin(); itr != mItemSet.end(); ++itr)
         {
-            if (itr->second.ItemSet != bestItemFromSet->ItemSet)
+            if (itr->second.ItemSet != bIFromSet->ItemSet)
                 continue;
 
             //156 is The Twin Blades of Azzinoth
-            if (itr->second.ItemLevel > 155 && itr->second.ItemLevel != bestItemFromSet->ItemLevel)
+            if (itr->second.ItemLevel > 155 && itr->second.ItemLevel != bIFromSet->ItemLevel)
                 continue;
 
             if (itr->second.RequiredLevel > getLevel())
             {
-                bestItemFromSet = NULL;
+                bIFromSet = NULL;
                 break;
             }
         }
     }
 
-    if (bestItemFromSet && bestItemFromSet->ItemSet > 0)
+    if (bIFromSet && bIFromSet->ItemSet > 0)
     {
         ItemSetMap const & mItemSet = sObjectMgr.GetItemSetMap();
         for (ItemSetMap::const_iterator itr = mItemSet.begin(); itr != mItemSet.end(); ++itr)
         {
-            if (itr->second.ItemSet != bestItemFromSet->ItemSet)
+            if (itr->second.ItemSet != bIFromSet->ItemSet)
                 continue;
 
             //156 is The Twin Blades of Azzinoth
-            if (itr->second.ItemLevel > 155 && itr->second.ItemLevel != bestItemFromSet->ItemLevel)
+            if (itr->second.ItemLevel > 155 && itr->second.ItemLevel != bIFromSet->ItemLevel)
                 continue;
 
             ItemPrototype const *pProto = sObjectMgr.GetItemPrototype(itr->second.ItemId);
             if (!pProto)
                 continue;
 
-            switch( pProto->InventoryType )
+            bIInSlot[pProto->InventoryType] = pProto;
+
+            /*switch( pProto->InventoryType )
             {
                 case INVTYPE_HEAD:
                 case INVTYPE_NECK:
@@ -1994,68 +1398,169 @@ void Player::GiveMeBestItemsForMyLevel()
                 case INVTYPE_THROWN:
                 case INVTYPE_RANGEDRIGHT:
                 {
-                    bestItemInSlot[pProto->InventoryType] = pProto;
+                    bIInSlot[pProto->InventoryType] = pProto;
                     break;
                 }
                 case INVTYPE_WEAPONOFFHAND:
                 {
                     if(CanDualWield())
-                        bestItemInSlot[pProto->InventoryType] = pProto;
+                        bIInSlot[pProto->InventoryType] = pProto;
                     break;
                 }
                 case INVTYPE_FINGER:
                 {
-                    if((bestItemInSlot[pProto->InventoryType]->ItemSet != pProto->ItemSet) && (bestItemInSlot[pProto->InventoryType]->ItemLevel != pProto->ItemLevel))
-                        bestItemInSlot[pProto->InventoryType] = pProto;
-                    else if((bestItemInSlot[INVTYPE_FINGER2]->ItemSet != pProto->ItemSet) && (bestItemInSlot[INVTYPE_FINGER2]->ItemLevel != pProto->ItemLevel))
-                        bestItemInSlot[INVTYPE_FINGER2] = pProto;
+                    if((bIInSlot[pProto->InventoryType]->ItemSet != pProto->ItemSet) && (bIInSlot[pProto->InventoryType]->ItemLevel != pProto->ItemLevel))
+                        bIInSlot[pProto->InventoryType] = pProto;
+                    else if((bIInSlot[INVTYPE_FINGER2]->ItemSet != pProto->ItemSet) && (bIInSlot[INVTYPE_FINGER2]->ItemLevel != pProto->ItemLevel))
+                        bIInSlot[INVTYPE_FINGER2] = pProto;
                     break;
                 }
                 case INVTYPE_TRINKET:
                 {
-                    if((bestItemInSlot[pProto->InventoryType]->ItemSet != pProto->ItemSet) && (bestItemInSlot[pProto->InventoryType]->ItemLevel != pProto->ItemLevel))
-                        bestItemInSlot[pProto->InventoryType] = pProto;
-                    else if((bestItemInSlot[INVTYPE_TRINKET2]->ItemSet != pProto->ItemSet) && (bestItemInSlot[INVTYPE_TRINKET2]->ItemLevel != pProto->ItemLevel))
-                        bestItemInSlot[INVTYPE_TRINKET2] = pProto;
+                    if((bIInSlot[pProto->InventoryType]->ItemSet != pProto->ItemSet) && (bIInSlot[pProto->InventoryType]->ItemLevel != pProto->ItemLevel))
+                        bIInSlot[pProto->InventoryType] = pProto;
+                    else if((bIInSlot[INVTYPE_TRINKET2]->ItemSet != pProto->ItemSet) && (bIInSlot[INVTYPE_TRINKET2]->ItemLevel != pProto->ItemLevel))
+                        bIInSlot[INVTYPE_TRINKET2] = pProto;
                     break;
                 }
                 case INVTYPE_WEAPON:
                 {
-                    if((bestItemInSlot[pProto->InventoryType]->ItemSet != pProto->ItemSet) && (bestItemInSlot[pProto->InventoryType]->ItemLevel != pProto->ItemLevel))
-                        bestItemInSlot[pProto->InventoryType] = pProto;
-                    else if((bestItemInSlot[INVTYPE_WEAPON2]->ItemSet != pProto->ItemSet) && (bestItemInSlot[INVTYPE_WEAPON2]->ItemLevel != pProto->ItemLevel))
-                        bestItemInSlot[INVTYPE_WEAPON2] = pProto;
+                    if((bIInSlot[pProto->InventoryType]->ItemSet != pProto->ItemSet) && (bIInSlot[pProto->InventoryType]->ItemLevel != pProto->ItemLevel))
+                        bIInSlot[pProto->InventoryType] = pProto;
+                    else if((bIInSlot[INVTYPE_WEAPON2]->ItemSet != pProto->ItemSet) && (bIInSlot[INVTYPE_WEAPON2]->ItemLevel != pProto->ItemLevel))
+                        bIInSlot[INVTYPE_WEAPON2] = pProto;
                     break;
                 }
                 case INVTYPE_2HWEAPON:
                 {
-                    if((bestItemInSlot[pProto->InventoryType]->ItemSet != pProto->ItemSet) && (bestItemInSlot[pProto->InventoryType]->ItemLevel != pProto->ItemLevel))
-                        bestItemInSlot[pProto->InventoryType] = pProto;
-                    else if((bestItemInSlot[INVTYPE_2HWEAPON2]->ItemSet != pProto->ItemSet) && (bestItemInSlot[INVTYPE_2HWEAPON2]->ItemLevel != pProto->ItemLevel))
-                        bestItemInSlot[INVTYPE_2HWEAPON2] = pProto;
+                    if((bIInSlot[pProto->InventoryType]->ItemSet != pProto->ItemSet) && (bIInSlot[pProto->InventoryType]->ItemLevel != pProto->ItemLevel))
+                        bIInSlot[pProto->InventoryType] = pProto;
+                    else if((bIInSlot[INVTYPE_2HWEAPON2]->ItemSet != pProto->ItemSet) && (bIInSlot[INVTYPE_2HWEAPON2]->ItemLevel != pProto->ItemLevel))
+                        bIInSlot[INVTYPE_2HWEAPON2] = pProto;
                     break;
                 }
                 default:
                     break;
-            }
+            }*/
         }
     }
 
     for (uint8 i = INVTYPE_NON_EQUIP; i < MAX_INVTYPE+4; ++i)
     {
-        if (i == INVTYPE_WEAPON2)
+        switch (i)
         {
-            if (CanDualWield())
-                GiveItem(bestItemInSlot[i]);
+            case INVTYPE_CHEST:
+            case INVTYPE_ROBE:
+            case INVTYPE_RANGED:
+            case INVTYPE_RANGEDRIGHT:
+            case INVTYPE_WEAPON:
+            case INVTYPE_SHIELD:
+            case INVTYPE_2HWEAPON:
+            case INVTYPE_WEAPONMAINHAND:
+            case INVTYPE_WEAPONOFFHAND:
+            case INVTYPE_WEAPON2:
+            case INVTYPE_2HWEAPON2:
+            case INVTYPE_FINGER:
+            case INVTYPE_FINGER2:
+            case INVTYPE_TRINKET:
+            case INVTYPE_TRINKET2:
+            {
+                break;
+            }
+            default:
+            {
+                StoreNewItemInBestSlots(bIInSlot[i]);
+                break;
+            }
         }
-        else if(i == INVTYPE_2HWEAPON2)
+
+    }
+    //robe ou tunique
+    StoreNewItemInBestSlots(bIBetween(bIInSlot[INVTYPE_CHEST], bIInSlot[INVTYPE_ROBE], false));
+    //distance ou distance droite
+    StoreNewItemInBestSlots(bIBetween(bIInSlot[INVTYPE_RANGED], bIInSlot[INVTYPE_RANGEDRIGHT], false));
+
+    ItemPrototype const *mItem = NULL;
+    ItemPrototype const *sItem = NULL;
+    if (CanDualWield())
+    {
+        if (CanTitanGrip())
         {
-            if (CanDualWield() && CanTitanGrip())
-                GiveItem(bestItemInSlot[i]);
+            if (getRole() == WarriorProtection)
+            {
+                mItem = bIBetween(bIInSlot[INVTYPE_2HWEAPON], bIInSlot[INVTYPE_2HWEAPON2], true);
+                sItem = bIInSlot[INVTYPE_SHIELD];
+            }
+            else
+            {
+                mItem = bIBetween(bIInSlot[INVTYPE_2HWEAPON], bIInSlot[INVTYPE_2HWEAPON2], true);
+                if (mItem == bIInSlot[INVTYPE_2HWEAPON])
+                    sItem = bIInSlot[INVTYPE_2HWEAPON2];
+                else
+                    sItem = bIInSlot[INVTYPE_2HWEAPON];
+            }
         }
         else
-            GiveItem(bestItemInSlot[i]);
+        {
+            mItem = bIBetween(bIInSlot[INVTYPE_WEAPON], bIInSlot[INVTYPE_WEAPONMAINHAND], true);
+            mItem = bIBetween(mItem, bIInSlot[INVTYPE_WEAPON2], true);
+
+            if (mItem == bIInSlot[INVTYPE_WEAPON])
+                sItem = bIBetween(bIInSlot[INVTYPE_WEAPON2], bIInSlot[INVTYPE_WEAPONOFFHAND], true);
+            else if (mItem == bIInSlot[INVTYPE_WEAPON2])
+                sItem = bIBetween(bIInSlot[INVTYPE_WEAPON], bIInSlot[INVTYPE_WEAPONOFFHAND], true);
+            else
+            {
+                sItem = bIBetween(bIInSlot[INVTYPE_WEAPON], bIInSlot[INVTYPE_WEAPON2], true);
+                sItem = bIBetween(sItem, bIInSlot[INVTYPE_WEAPONOFFHAND], true);
+            }
+        }
     }
+    else
+    {
+        switch(getRole())
+        {
+            case PaladinHoly:
+            case PaladinProtection:
+            case ShamanElementalCombat:
+            case ShamanRestoration:
+            {
+                mItem = bIBetween(bIInSlot[INVTYPE_WEAPON], bIInSlot[INVTYPE_WEAPONMAINHAND], true);
+                mItem = bIBetween(mItem, bIInSlot[INVTYPE_WEAPON2], true);
+                sItem = bIInSlot[INVTYPE_SHIELD];
+                break;
+            }
+            default:
+            {
+                mItem = bIBetween(bIInSlot[INVTYPE_2HWEAPON], bIInSlot[INVTYPE_2HWEAPON2], true);
+                if (!mItem)
+                {
+                    mItem = bIBetween(bIInSlot[INVTYPE_WEAPON], bIInSlot[INVTYPE_WEAPONMAINHAND], true);
+                    mItem = bIBetween(mItem, bIInSlot[INVTYPE_WEAPON2], true);
+                }
+            }
+            break;
+        }
+    }
+    StoreNewItemInBestSlots(mItem);
+    if (StoreNewItemInBestSlots(mItem) && sItem->InventoryType != INVTYPE_SHIELD)
+        StoreNewItemInBestSlots(mItem);
+    else
+        StoreNewItemInBestSlots(sItem);
+
+    StoreNewItemInBestSlots(bIInSlot[INVTYPE_FINGER]);
+    if (StoreNewItemInBestSlots(bIInSlot[INVTYPE_FINGER]))
+        StoreNewItemInBestSlots(bIInSlot[INVTYPE_FINGER]);
+    else
+        StoreNewItemInBestSlots(bIInSlot[INVTYPE_FINGER2]);
+
+    StoreNewItemInBestSlots(bIInSlot[INVTYPE_TRINKET]);
+    if (StoreNewItemInBestSlots(bIInSlot[INVTYPE_TRINKET]))
+        StoreNewItemInBestSlots(bIInSlot[INVTYPE_TRINKET]);
+    else
+        StoreNewItemInBestSlots(bIInSlot[INVTYPE_TRINKET2]);
+
+    bIFromSet = NULL;
 }
 
 bool Player::OtherItemsInSetAreAllowedForMe(ItemPrototype const* pProto)
@@ -2084,60 +1589,64 @@ bool Player::OtherItemsInSetAreAllowedForMe(ItemPrototype const* pProto)
     return true;
 }
 
-ItemPrototype const* Player::CheckItemSet(ItemPrototype const* bestItemInSlot, ItemPrototype const* bestItemFromSet)
+ItemPrototype const* Player::CheckItemSet(ItemPrototype const* bIInSlot, ItemPrototype const* bIFromSet)
 {
-    if (!bestItemInSlot)
+    if (!bIInSlot)
     {
-        if (bestItemFromSet && bestItemFromSet->ItemSet > 0)
-            return bestItemFromSet;
+        if (bIFromSet && bIFromSet->ItemSet > 0)
+            return bIFromSet;
         else
             return NULL;
     }
 
-    if (!bestItemFromSet)
+    if (!bIFromSet)
     {
-        if (bestItemInSlot && bestItemInSlot->ItemSet > 0)
-            return bestItemInSlot;
+        if (bIInSlot && bIInSlot->ItemSet > 0)
+            return bIInSlot;
         else
             return NULL;
     }
 
-    if (bestItemFromSet->ItemSet == 0 && bestItemInSlot->ItemSet == 0)
+    if (bIFromSet->ItemSet == 0 && bIInSlot->ItemSet == 0)
         return NULL;
-    else if (bestItemFromSet->ItemSet > 0 && bestItemInSlot->ItemSet == 0)
-        return bestItemFromSet;
-    else if (bestItemFromSet->ItemSet == 0 && bestItemInSlot->ItemSet > 0)
-        return bestItemInSlot;
+    else if (bIFromSet->ItemSet > 0 && bIInSlot->ItemSet == 0)
+        return bIFromSet;
+    else if (bIFromSet->ItemSet == 0 && bIInSlot->ItemSet > 0)
+        return bIInSlot;
     else
     {
-        if (bestItemInSlot->ItemLevel > bestItemFromSet->ItemLevel)
-            return bestItemInSlot;
+        if (bIInSlot->ItemLevel > bIFromSet->ItemLevel)
+            return bIInSlot;
         else
-            return bestItemFromSet;
+            return bIFromSet;
     }
     return NULL;
 }
 
-void Player::GiveItem(ItemPrototype const* bestItemInSlot)
+bool Player::StoreNewItemInBestSlots(ItemPrototype const* bIInSlot)
 {
-    if (!bestItemInSlot || HasItemCount(bestItemInSlot->ItemId, 1))
-        return;
+    if (!bIInSlot)
+        return false;
 
-    char itemEntry[10] = "0";
-    sprintf(itemEntry, "%d", bestItemInSlot->ItemId);
-    ChatHandler(this).HandleAddItemCommand(itemEntry);
+    uint16 eDest;
+    uint8 msg = CanEquipNewItem( NULL_SLOT, eDest, bIInSlot->ItemId, false );
+    if( msg != EQUIP_ERR_OK )
+        return false;
+
+    EquipNewItem( eDest, bIInSlot->ItemId, true);
+    AutoUnequipOffhandIfNeed();
+
+    return true;
 }
 
-void Player::RemoveMyEquipement()
+void Player::RemoveMyEquipement(bool destroy)
 {
     for (int slot=EQUIPMENT_SLOT_START; slot < EQUIPMENT_SLOT_END; ++slot)
     {
         if (slot==EQUIPMENT_SLOT_BODY || slot==EQUIPMENT_SLOT_TABARD)
             continue;
 
-        Item* pItem = NULL;
-
-        pItem = GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
+        Item* pItem = GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
         if (!pItem)
             continue;
 
@@ -2147,20 +1656,19 @@ void Player::RemoveMyEquipement()
 
         RemoveItem(INVENTORY_SLOT_BAG_0, slot,true);
         pItem = StoreItem( sDest, pItem, true);
-        if (!pItem)
-            continue;
 
-        DestroyItem(pItem->GetBagSlot(), pItem->GetSlot(), true);
+        if (destroy && pItem)
+            DestroyItem(pItem->GetBagSlot(), pItem->GetSlot(), true);
     }
 }
 
 bool Player::IsForMyClass(ItemPrototype const* pProto)
 {
-    uint16 spe = GetSpe();
+    uint16 role = getRole();
     switch (pProto->Class)
     {
         case ITEM_CLASS_WEAPON:
-            switch (spe)
+            switch (role)
             {
                 case MageFire:
                 case MageArcane:
@@ -2175,6 +1683,7 @@ bool Player::IsForMyClass(ItemPrototype const* pProto)
                     }
                     break;
                 case WarriorArms:
+                case WarriorProtection:
                 case WarriorFury:
                     switch (pProto->SubClass)
                     {
@@ -2186,18 +1695,6 @@ bool Player::IsForMyClass(ItemPrototype const* pProto)
                         case ITEM_SUBCLASS_WEAPON_MACE2:    return HasSpell(199);
                         case ITEM_SUBCLASS_WEAPON_SWORD:    return HasSpell(201);
                         case ITEM_SUBCLASS_WEAPON_SWORD2:   return HasSpell(202);
-                        case ITEM_SUBCLASS_WEAPON_CROSSBOW: return HasSpell(5011);
-                        default: return false;
-                    }
-                    break;
-                case WarriorProtection:
-                    switch (pProto->SubClass)
-                    {
-                        case ITEM_SUBCLASS_WEAPON_AXE:      return HasSpell(196);
-                        case ITEM_SUBCLASS_WEAPON_BOW:      return HasSpell(264);
-                        case ITEM_SUBCLASS_WEAPON_GUN:      return HasSpell(266);
-                        case ITEM_SUBCLASS_WEAPON_MACE:     return HasSpell(198);
-                        case ITEM_SUBCLASS_WEAPON_SWORD:    return HasSpell(201);
                         case ITEM_SUBCLASS_WEAPON_CROSSBOW: return HasSpell(5011);
                         default: return false;
                     }
@@ -2416,21 +1913,28 @@ ItemPrototype const* Player::CompareItem(ItemPrototype const* pProto1, ItemProto
     return NULL;
 }
 
-ItemPrototype const* Player::BestItemBetween(ItemPrototype const* pProto1, ItemPrototype const* pProto2, bool DPS)
+ItemPrototype const* Player::bIBetween(ItemPrototype const* pProto1, ItemPrototype const* pProto2, bool DPS)
 {
-    if (bestItemFromSet)
+    if (!pProto1 && !pProto2)
+        return NULL;
+    if (!pProto1)
+        return pProto2;
+    if (!pProto2)
+        return pProto1;
+
+    if (bIFromSet)
     {
-        if (bestItemFromSet->ItemSet == pProto1->ItemSet)
+        if (bIFromSet->ItemSet == pProto1->ItemSet)
             return pProto1;
 
-        if (bestItemFromSet->ItemSet == pProto2->ItemSet)
+        if (bIFromSet->ItemSet == pProto2->ItemSet)
             return pProto2;
     }
 
-    uint16 spe = GetSpe();
+    uint16 role = getRole();
     ItemPrototype const *pProto = NULL;
 
-    switch (spe)
+    switch (role)
     {
         case MageFire:
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_INTELLECT);
@@ -2716,7 +2220,16 @@ ItemPrototype const* Player::BestItemBetween(ItemPrototype const* pProto1, ItemP
     }
 }
 
-uint16 Player::GetSpe()
+void Player::setRole(uint16 role)
+{
+    PlayerbotAI* ai = GetPlayerbotAI();
+    if(!ai)
+        return;
+
+    ai->setRole(role);
+}
+
+uint16 Player::getRole()
 {
     PlayerbotAI* ai = GetPlayerbotAI();
     if(!ai)
@@ -2750,28 +2263,28 @@ uint16 Player::GetSpe()
         switch(getClass())
         {
             case CLASS_WARRIOR:
-                return ai->GetSpe();
+                return ai->getRole();
             case CLASS_PALADIN:
-                return ai->GetSpe();
+                return ai->getRole();
             case CLASS_HUNTER:
-                return ai->GetSpe();
+                return ai->getRole();
             case CLASS_ROGUE:
-                return ai->GetSpe();
+                return ai->getRole();
             case CLASS_PRIEST:
-                return ai->GetSpe();
+                return ai->getRole();
             case CLASS_DEATH_KNIGHT:
-                return ai->GetSpe();
+                return ai->getRole();
             case CLASS_SHAMAN:
-                return ai->GetSpe();
+                return ai->getRole();
             case CLASS_MAGE:
-                return ai->GetSpe();
+                return ai->getRole();
             case CLASS_WARLOCK:
-                return ai->GetSpe();
+                return ai->getRole();
             case CLASS_DRUID:
-                return ai->GetSpe();
+                return ai->getRole();
         }
     }
-    return 0; //NEVER HAPPENS
+    return 0;
 }
 
 ///The player sobers by 256 every 10 seconds
