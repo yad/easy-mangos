@@ -348,14 +348,9 @@ void WorldSession::HandleCastSpellOpcode(WorldPacket& recvPacket)
     if (sWorld.getConfig(CONFIG_BOOL_ALLOW_FLYING_MOUNTS_EVERYWHERE))
     {
         if (_player->isRunningSpell(spellInfo))
-        {
             _player->Unmount();
-            _player->RemoveSpellsCausingAura(SPELL_AURA_MOUNTED);
-        }
         else if (_player->isRunningFormSpell(spellInfo))
-        {
             _player->RemoveFlyingSpells();
-        }
     }
 
     if (mover->GetTypeId()==TYPEID_PLAYER)

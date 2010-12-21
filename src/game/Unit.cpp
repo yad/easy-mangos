@@ -8172,6 +8172,9 @@ void Unit::Unmount()
             pet->ApplyModeFlags(PET_MODE_DISABLE_ACTIONS,false);
         else
             ((Player*)this)->ResummonPetTemporaryUnSummonedIfAny();
+
+        if (sWorld.getConfig(CONFIG_BOOL_ALLOW_FLYING_MOUNTS_EVERYWHERE))
+            ((Player*)this)->RemoveSpellsCausingAura(SPELL_AURA_MOUNTED);
     }
 
     if (GetTypeId() == TYPEID_PLAYER && GetVehicleKit())
