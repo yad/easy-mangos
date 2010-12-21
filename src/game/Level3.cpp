@@ -7830,6 +7830,7 @@ bool ChatHandler::HandleBotInvite(char* args)
 
         chr->setClass(_class);
         chr->setRole(role);
+        chr->RemovePet(PET_SAVE_AS_DELETED);
         chr->SetByteValue(UNIT_FIELD_BYTES_0,1,_class);// class
         chr->GiveLevel(chr->getLevel()+1);
         chr->RemoveAllAuras(AURA_REMOVE_BY_DELETE);

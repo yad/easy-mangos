@@ -18314,6 +18314,9 @@ void Player::_LoadBoundInstances(QueryResult *result)
 
 InstancePlayerBind* Player::GetBoundInstance(uint32 mapid, Difficulty difficulty)
 {
+    if (this->IsBot())
+        return NULL;
+
     // some instances only have one difficulty
     MapDifficulty const* mapDiff = GetMapDifficultyData(mapid,difficulty);
     if(!mapDiff)
@@ -18344,7 +18347,7 @@ void Player::UnbindInstance(BoundInstancesMap::iterator &itr, Difficulty difficu
 
 InstancePlayerBind* Player::BindToInstance(InstanceSave *save, bool permanent, bool load)
 {
-    if(save)
+    if(save && !IsBot())
     {
         InstancePlayerBind& bind = m_boundInstances[save->GetDifficulty()][save->GetMapId()];
         if(bind.save)
