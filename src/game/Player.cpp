@@ -8139,13 +8139,13 @@ void Player::RewardReputation(Unit *pVictim, float rate)
     uint32 Repfaction1 = Rep->repfaction1;
     uint32 Repfaction2 = Rep->repfaction2;
     uint32 tabardFactionID = 0;
-    
+
     // Championning tabard reputation system
     if(HasAura(Rep->championingAura))
     {
         if( Item* pItem = GetItemByPos( INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_TABARD ) )
-        {                 
-            if ( tabardFactionID = pItem->GetProto()->RequiredReputationFaction ) 
+        {
+            if ( tabardFactionID = pItem->GetProto()->RequiredReputationFaction )
             {
                 Repfaction1 = tabardFactionID;
                 Repfaction2 = tabardFactionID;
@@ -14168,7 +14168,7 @@ void Player::SendEquipError( uint8 msg, Item* pItem, Item *pItem2, uint32 itemid
                         {
                             LimitCategory=pGem->ItemLimitCategory;
                             break;
-                         
+
                         }
                     }
 
@@ -14878,7 +14878,7 @@ void Player::PrepareGossipMenu(WorldObject *pSource, uint32 menuId)
                 }
                 case GOSSIP_OPTION_TRAINER:
                     // pet trainers not have spells in fact now
-                    /* FIXME: gossip menu with single unlearn pet talents option not show by some reason 
+                    /* FIXME: gossip menu with single unlearn pet talents option not show by some reason
                     if (pCreature->GetCreatureInfo()->trainer_type == TRAINER_TYPE_PETS)
                         hasMenuItem = false;
                     else */
@@ -14894,7 +14894,7 @@ void Player::PrepareGossipMenu(WorldObject *pSource, uint32 menuId)
                         hasMenuItem = false;
                     break;
                 case GOSSIP_OPTION_UNLEARNPETSKILLS:
-                    if (pCreature->GetCreatureInfo()->trainer_type != TRAINER_TYPE_PETS || pCreature->GetCreatureInfo()->trainer_class != CLASS_HUNTER) 
+                    if (pCreature->GetCreatureInfo()->trainer_type != TRAINER_TYPE_PETS || pCreature->GetCreatureInfo()->trainer_class != CLASS_HUNTER)
                         hasMenuItem = false;
                     else if (Pet * pet = GetPet())
                     {
@@ -17255,7 +17255,7 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder *holder )
     // overwrite some data fields
     SetByteValue(UNIT_FIELD_BYTES_0,0,fields[3].GetUInt8());// race
 
-    uint8 bytes0_1 = fields[4].GetUInt8();                  // class    
+    uint8 bytes0_1 = fields[4].GetUInt8();                  // class
     if (IsBot())
     {
         bytes0_1 = urand(CLASS_WARRIOR, CLASS_DRUID);
@@ -17263,13 +17263,13 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder *holder )
         {
             PlayerInfo const* info = sObjectMgr.GetPlayerInfo(fields[3].GetUInt8(), bytes0_1);
             if (info)
-				break;
+                break;
 
             bytes0_1 = bytes0_1 % CLASS_DRUID;
             ++bytes0_1;
         }while(true);
     }
-	SetByteValue(UNIT_FIELD_BYTES_0,1,bytes0_1);// class
+    SetByteValue(UNIT_FIELD_BYTES_0,1,bytes0_1);// class
 
     uint8 gender = fields[5].GetUInt8() & 0x01;             // allowed only 1 bit values male/female cases (for fit drunk gender part)
     SetByteValue(UNIT_FIELD_BYTES_0,2,gender);              // gender
@@ -19218,7 +19218,7 @@ void Player::SaveToDB()
     ss << "',";
     ss << uint32(GetByteValue(PLAYER_FIELD_BYTES, 2));
     ss << ")";
-	
+
     CharacterDatabase.BeginTransaction();
 
     CharacterDatabase.Execute( ss.str().c_str() );

@@ -74,7 +74,7 @@ PlayerbotAI::PlayerbotAI(PlayerbotMgr* const mgr, Player* const bot) :
     m_targetGuidCommand(0), m_classAI(0)
 {
     SetMaster(bot);
-                        
+
     // set bot state and needed item list
     m_botState = BOTSTATE_NORMAL;
     SetQuestNeedItems();
@@ -2106,7 +2106,7 @@ void PlayerbotAI::MovementUpdate()
     float z = m_bot->GetPositionZ();
     float o = m_bot->GetOrientation();
 
-    m_bot->UpdateGroundPositionZ(x, y, z);       
+    m_bot->UpdateGroundPositionZ(x, y, z);
     m_bot->SetPosition(x, y, z, o, false);
 }
 
@@ -2187,8 +2187,8 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
     if (!CheckMaster())
         return;
 
-    CheckStuff();     
-      
+    CheckStuff();
+
     // send heartbeat
     MovementUpdate();
 
@@ -2278,15 +2278,15 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
         else if (IsInCombat())
         {
             if (!pSpell || !pSpell->IsChannelActive())
-			{
+            {
                 if (m_bot->getAttackers().empty() && !m_bot->IsWithinDistInMap(GetMaster(), 100, true))
                 {
                     PlayerbotChatHandler ch(GetMaster());
                     if (ch.teleport(*m_bot))
                         SetIgnoreTeleport(5);
-                }			
+                }
                 DoNextCombatManeuver();
-			}
+            }
             else
                 SetIgnoreUpdateTime(1); // It's better to update AI more frequently during combat
         }
@@ -3413,10 +3413,10 @@ void PlayerbotAI::HandleCommand(const std::string& text, Player& fromPlayer)
         m_lootCurrent = 0;
         m_targetCombat = 0;
         // do we want to reset all states on this command?
-//		m_combatOrder = ORDERS_NONE;
-//		m_targetCombat = 0;
-//		m_targetAssisst = 0;
-//		m_targetProtect = 0;
+//        m_combatOrder = ORDERS_NONE;
+//        m_targetCombat = 0;
+//        m_targetAssisst = 0;
+//        m_targetProtect = 0;
     }
     else if (text == "report")
         SendQuestItemList(*GetMaster());

@@ -111,9 +111,17 @@ void PlayerbotShamanAI::HealTarget(Unit &target, uint8 hp)
 
 void PlayerbotShamanAI::DoNextCombatManeuver(Unit *pTarget)
 {
-    PlayerbotAI* ai = GetAI();
+    PlayerbotAI *ai = GetAI();
     if (!ai)
         return;
+        
+    Player * m_bot = GetPlayerBot();
+    if (!m_bot)
+        return;
+        
+    Player* m_master = ai->GetMaster();
+    if (!m_master)
+        return;                
 
     switch (ai->GetScenarioType())
     {
@@ -124,9 +132,8 @@ void PlayerbotShamanAI::DoNextCombatManeuver(Unit *pTarget)
 
     // ------- Non Duel combat ----------
 
-    ai->SetMovementOrder(PlayerbotAI::MOVEMENT_FOLLOW, GetMaster());   // dont want to melee mob <----changed
+    ai->SetMovementOrder(PlayerbotAI::MOVEMENT_FOLLOW, m_master);   // dont want to melee mob <----changed
 
-    Player *m_bot = GetPlayerBot();
     Group *m_group = m_bot->GetGroup();
 
     // Heal myself
@@ -138,13 +145,13 @@ void PlayerbotShamanAI::DoNextCombatManeuver(Unit *pTarget)
         HealTarget (*m_bot, ai->GetHealthPercent());
 
     // Heal master
-    uint32 masterHP = GetMaster()->GetHealth() * 100 / GetMaster()->GetMaxHealth();
-    if (GetMaster()->isAlive())
+    uint32 masterHP = m_master->GetHealth() * 100 / m_master->GetMaxHealth();
+    if (m_master->isAlive())
     {
         if (masterHP < 30 && ai->GetManaPercent() >= 32)
-            ai->CastSpell(HEALING_WAVE, *(GetMaster()));
+            ai->CastSpell(HEALING_WAVE, *(m_master));
         else if (masterHP < 70)
-            HealTarget (*GetMaster(), masterHP);
+            HealTarget (*m_master, masterHP);
     }
 
     // Heal group
@@ -267,14 +274,14 @@ void PlayerbotShamanAI::DoNextCombatManeuver(Unit *pTarget)
                 LastSpellEnhancement = LastSpellEnhancement + 1;
                 break;
             }
-            else if (BLOODLUST > 0 && LastSpellEnhancement == 8 && (!GetMaster()->HasAura(BLOODLUST, EFFECT_INDEX_0)) && ai->GetManaPercent() >= 26)
+            else if (BLOODLUST > 0 && LastSpellEnhancement == 8 && (!m_master->HasAura(BLOODLUST, EFFECT_INDEX_0)) && ai->GetManaPercent() >= 26)
             {
                 ai->CastSpell(BLOODLUST);
                 SpellSequence = SPELL_RESTORATION;
                 LastSpellEnhancement = LastSpellEnhancement + 1;
                 break;
             }
-            else if (HEROISM > 0 && LastSpellEnhancement == 10 && (!GetMaster()->HasAura(HEROISM, EFFECT_INDEX_0)) && ai->GetManaPercent() >= 26)
+            else if (HEROISM > 0 && LastSpellEnhancement == 10 && (!m_master->HasAura(HEROISM, EFFECT_INDEX_0)) && ai->GetManaPercent() >= 26)
             {
                 ai->CastSpell(HEROISM);
                 SpellSequence = SPELL_RESTORATION;
@@ -466,16 +473,23 @@ void PlayerbotShamanAI::DoNextCombatManeuver(Unit *pTarget)
 
 void PlayerbotShamanAI::DoNonCombatActions()
 {
-    PlayerbotAI* ai = GetAI();
+    PlayerbotAI *ai = GetAI();
+    if (!ai)
+        return;
+        
     Player * m_bot = GetPlayerBot();
     if (!m_bot)
         return;
+        
+    Player* m_master = ai->GetMaster();
+    if (!m_master)
+        return;    
 
     SpellSequence = SPELL_ENHANCEMENT;
 
     // buff master with EARTH_SHIELD
     if (EARTH_SHIELD > 0)
-        (!GetMaster()->HasAura(EARTH_SHIELD, EFFECT_INDEX_0) && ai->CastSpell(EARTH_SHIELD, *(GetMaster())));
+        (!m_master->HasAura(EARTH_SHIELD, EFFECT_INDEX_0) && ai->CastSpell(EARTH_SHIELD, *(m_master)));
 
     // buff myself with WATER_SHIELD, LIGHTNING_SHIELD
     if (WATER_SHIELD > 0)
@@ -529,9 +543,9 @@ void PlayerbotShamanAI::DoNonCombatActions()
     }
 
     // heal master's group
-    if (GetMaster()->GetGroup())
+    if (m_master->GetGroup())
     {
-        Group::MemberSlotList const& groupSlot = GetMaster()->GetGroup()->GetMemberSlots();
+        Group::MemberSlotList const& groupSlot = m_master->GetGroup()->GetMemberSlots();
         for (Group::member_citerator itr = groupSlot.begin(); itr != groupSlot.end(); itr++)
         {
             Player *tPlayer = sObjectMgr.GetPlayer(itr->guid);

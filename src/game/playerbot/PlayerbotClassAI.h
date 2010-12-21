@@ -47,16 +47,14 @@ public:
 
     // buff a specific player, usually a real PC who is not in group
     virtual bool BuffPlayer(Player* target);
-	virtual void InitSpells(PlayerbotAI* const ai);
+    virtual void InitSpells(PlayerbotAI* const ai);
 
     // Utilities
-    Player* GetMaster () { return m_master; }
     Player* GetPlayerBot() { return m_bot; }
     PlayerbotAI* GetAI (){ return m_ai; };
 
 
 private:
-    Player* m_master;
     Player* m_bot;
     PlayerbotAI* m_ai;
 };

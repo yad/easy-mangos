@@ -2876,7 +2876,7 @@ void ObjectMgr::LoadPetScalingData()
     //                                                 0               1     2           3       4          5       6    7    8    9     10
     QueryResult *result  = WorldDatabase.Query("SELECT creature_entry, aura, healthbase, health, powerbase, power,  str, agi, sta, inte, spi,"
     //                                          11     12           13           14           15           16           17
-                                               "armor, resistance1, resistance2, resistance3, resistance4, resistance5, resistance6," 
+                                               "armor, resistance1, resistance2, resistance3, resistance4, resistance5, resistance6,"
     //                                          18      19           20           21      22           23        24   25         26           27    28
                                                "apbase, apbasescale, attackpower, damage, spelldamage, spellhit, hit, expertize, attackspeed, crit, regen"
                                                " FROM pet_scaling_data");
@@ -3726,7 +3726,7 @@ void ObjectMgr::LoadArenaTeams()
 
     //                                                     0                      1    2           3    4               5
     QueryResult *result = CharacterDatabase.Query( "SELECT arena_team.arenateamid,name,captainguid,type,BackgroundColor,EmblemStyle,"
-    //   6           7           8            9      10    	 11  	   12  		    13    	    14
+    //   6           7           8            9      10         11         12              13            14
         "EmblemColor,BorderStyle,BorderColor, rating,games_week,wins_week,games_season,wins_season,rank "
         "FROM arena_team LEFT JOIN arena_team_stats ON arena_team.arenateamid = arena_team_stats.arenateamid ORDER BY arena_team.arenateamid ASC" );
 
@@ -10052,7 +10052,7 @@ bool FindCreatureData::operator()( CreatureDataPair const& dataPair )
         i_mapDist = new_dist;
     }
 
-    // skip not spawned (in any state), 
+    // skip not spawned (in any state),
     uint16 pool_id = sPoolMgr.IsPartOfAPool<Creature>(dataPair.first);
     if (pool_id && !sPoolMgr.IsSpawnedObject<Creature>(dataPair.first))
         return false;

@@ -39,7 +39,7 @@ void GossipMenu::AddMenuItem(uint8 Icon, const std::string& Message, uint32 dtSe
 {
     if (m_gItems.size() > GOSSIP_MAX_MENU_ITEMS)
         return;
-        
+
     MANGOS_ASSERT( m_gItems.size() <= GOSSIP_MAX_MENU_ITEMS  );
 
     GossipMenuItem gItem;

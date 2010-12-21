@@ -784,7 +784,7 @@ float TerrainInfo::GetHeight(float x, float y, float z, bool pUseVmaps, float ma
     {
         mapHeight  += 200.0f;
         vmapHeight += 200.0f;
-    } 
+    }
 
     // mapHeight set for any above raw ground Z or <= INVALID_HEIGHT
     // vmapheight set for any under Z value or <= INVALID_HEIGHT
@@ -1069,7 +1069,7 @@ GridMap * TerrainInfo::GetGrid( const float x, const float y )
     // half opt method
     int gx=(int)(32-x/SIZE_OF_GRIDS);                       //grid x
     int gy=(int)(32-y/SIZE_OF_GRIDS);                       //grid y
-    
+
     //quick check if GridMap already loaded
     GridMap * pMap = m_GridMaps[gx][gy];
     if(!pMap)
@@ -1171,7 +1171,7 @@ TerrainManager::~TerrainManager()
 TerrainInfo * TerrainManager::LoadTerrain(const uint32 mapId)
 {
     Guard _guard(*this);
-    
+
     TerrainInfo * ptr = NULL;
     TerrainDataMap::const_iterator iter = i_TerrainMap.find(mapId);
     if(iter == i_TerrainMap.end())
@@ -1216,7 +1216,7 @@ void TerrainManager::UnloadAll()
 {
     for (TerrainDataMap::iterator it = i_TerrainMap.begin(); it != i_TerrainMap.end(); ++it)
         delete it->second;
-    
+
     i_TerrainMap.clear();
 }
 

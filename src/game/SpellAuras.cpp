@@ -2156,7 +2156,7 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                     case 75614:                             // Celestial Steed
                         Spell::SelectMountByAreaAndSkill(target, 75619, 75620, 75617, 75618, 76153);
                         return;
-                    case 75973:                             // X-53 Touring Rocket 
+                    case 75973:                             // X-53 Touring Rocket
                         Spell::SelectMountByAreaAndSkill(target, 0, 75957, 75972, 76154, 0);
                         return;
                 }
@@ -3069,7 +3069,7 @@ void Aura::HandleAuraModShapeshift(bool apply, bool Real)
                         else if (hairColour == 7) modelid = 29417;
                         else if (hairColour == 4) modelid = 29416;
                     }
-                } 
+                }
                 else if (Player::TeamForRace(target->getRace()) == HORDE)
                 {
                     uint8 skinColour = target->GetByteValue(PLAYER_BYTES, 0);
@@ -4593,11 +4593,11 @@ void Aura::HandleAuraModIncreaseSpeed(bool apply, bool Real)
     // all applied/removed only at real aura add/remove
     if(!Real)
         return;
-        
+
     Unit *target = GetTarget();
 
     GetTarget()->UpdateSpeed(MOVE_RUN, true);
-    
+
     if (apply && GetSpellProto()->Id == 58875)
         target->CastSpell(target, 58876, true);
 }
@@ -5075,7 +5075,7 @@ void Aura::HandleAuraPeriodicDummy(bool apply, bool Real)
             {
                 case 48018:
                     if (apply)
-                        target->CastSpell(target, 62388, true);                
+                        target->CastSpell(target, 62388, true);
                     else
                     {
                         target->RemoveGameObject(spell->Id,true);
@@ -6806,7 +6806,7 @@ void Aura::HandleSchoolAbsorb(bool apply, bool Real)
                 }
             }
         }
-        else if (caster && caster->GetTypeId() == TYPEID_PLAYER && spellProto->Id == 47788 && 
+        else if (caster && caster->GetTypeId() == TYPEID_PLAYER && spellProto->Id == 47788 &&
             m_removeMode == AURA_REMOVE_BY_EXPIRE)
         {
             Player* plr = (Player*)caster;

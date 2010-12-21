@@ -1214,7 +1214,7 @@ void WorldObject::Relocate(float x, float y, float z)
 }
 
 void WorldObject::SetOrientation(float orientation)
-{ 
+{
     m_orientation = orientation;
 
     if(isType(TYPEMASK_UNIT))
@@ -1571,7 +1571,7 @@ void WorldObject::UpdateGroundPositionZ(float x, float y, float &z, float maxDif
         useVmaps = !useVmaps;                                // try change vmap use
         normalizedZ = GetTerrain()->GetHeight(x, y, z, useVmaps);
         if(normalizedZ <= INVALID_HEIGHT || fabs(normalizedZ-z) > maxDiff)
-            return;                                        // Do nothing in case of another bad result 
+            return;                                        // Do nothing in case of another bad result
     }
     z = normalizedZ + 0.1f;                                // just to be sure that we are not a few pixel under the surface
 }

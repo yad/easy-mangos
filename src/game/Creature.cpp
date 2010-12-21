@@ -797,8 +797,8 @@ bool Creature::IsTrainerOf(Player* pPlayer, bool msg) const
         // for not pet trainer expected not empty trainer list always
         if ((!cSpells || cSpells->spellList.empty()) && (!tSpells || tSpells->spellList.empty()))
         {
-			if(pPlayer->IsBot())
-				return false;
+            if(pPlayer->IsBot())
+                return false;
 
             sLog.outErrorDb("Creature %u (Entry: %u) have UNIT_NPC_FLAG_TRAINER but have empty trainer spell list.",
                 GetGUIDLow(),GetEntry());

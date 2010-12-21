@@ -121,9 +121,17 @@ bool PlayerbotDruidAI::HealTarget(Unit *target)
 
 void PlayerbotDruidAI::DoNextCombatManeuver(Unit *pTarget)
 {
-    PlayerbotAI* ai = GetAI();
+    PlayerbotAI *ai = GetAI();
     if (!ai)
         return;
+        
+    Player * m_bot = GetPlayerBot();
+    if (!m_bot)
+        return;
+        
+    Player* m_master = ai->GetMaster();
+    if (!m_master)
+        return;    
 
     switch (ai->GetScenarioType())
     {
@@ -132,13 +140,12 @@ void PlayerbotDruidAI::DoNextCombatManeuver(Unit *pTarget)
             return;
     }
 
-    uint32 masterHP = GetMaster()->GetHealth() * 100 / GetMaster()->GetMaxHealth();
+    uint32 masterHP = m_master->GetHealth() * 100 / m_master->GetMaxHealth();
 
     ai->SetInFront(pTarget);
-    Player *m_bot = GetPlayerBot();
     Unit* pVictim = pTarget->getVictim();
 
-    if (pVictim && ai->GetHealthPercent() >= 40 && GetMaster()->GetHealth() >= GetMaster()->GetMaxHealth() * 0.4)
+    if (pVictim && ai->GetHealthPercent() >= 40 && m_master->GetHealth() >= m_master->GetMaxHealth() * 0.4)
     {
         if (pVictim == m_bot)
             SpellSequence = DruidTank;
@@ -148,7 +155,7 @@ void PlayerbotDruidAI::DoNextCombatManeuver(Unit *pTarget)
         if (pVictim != m_bot)
             SpellSequence = DruidSpell;
     }
-    else if (ai->GetHealthPercent() <= 40 || GetMaster()->GetHealth() <= GetMaster()->GetMaxHealth() * 0.4)
+    else if (ai->GetHealthPercent() <= 40 || m_master->GetHealth() <= m_master->GetMaxHealth() * 0.4)
         SpellSequence = DruidHeal;
     else
         SpellSequence = DruidCombat;
@@ -432,7 +439,7 @@ void PlayerbotDruidAI::DoNextCombatManeuver(Unit *pTarget)
             }
             if (masterHP <= 40)
             {
-                HealTarget (GetMaster());
+                HealTarget (m_master);
                 break;
             }
             else
@@ -556,12 +563,17 @@ void PlayerbotDruidAI::DoNextCombatManeuver(Unit *pTarget)
 
 void PlayerbotDruidAI::DoNonCombatActions()
 {
-    Player * m_bot = GetPlayerBot();
-    Player * master = GetMaster();
-    if (!m_bot || !master)
+    PlayerbotAI *ai = GetAI();
+    if (!ai)
         return;
-
-    PlayerbotAI* ai = GetAI();
+        
+    Player * m_bot = GetPlayerBot();
+    if (!m_bot)
+        return;
+        
+    Player* m_master = ai->GetMaster();
+    if (!m_master)
+        return;    
 
     // mana check
     if (m_bot->getStandState() != UNIT_STAND_STATE_STAND)
@@ -599,13 +611,13 @@ void PlayerbotDruidAI::DoNonCombatActions()
     }
 
     // buff and heal master's group
-    if (master->GetGroup())
+    if (m_master->GetGroup())
     {
         // Buff master with group buff
-       if (master->isAlive() && GIFT_OF_THE_WILD && ai->HasSpellReagents(GIFT_OF_THE_WILD) && ai->Buff(GIFT_OF_THE_WILD, master))
+       if (m_master->isAlive() && GIFT_OF_THE_WILD && ai->HasSpellReagents(GIFT_OF_THE_WILD) && ai->Buff(GIFT_OF_THE_WILD, m_master))
            return;
 
-        Group::MemberSlotList const& groupSlot = GetMaster()->GetGroup()->GetMemberSlots();
+        Group::MemberSlotList const& groupSlot = m_master->GetGroup()->GetMemberSlots();
         for (Group::member_citerator itr = groupSlot.begin(); itr != groupSlot.end(); itr++)
         {
             Player *tPlayer = sObjectMgr.GetPlayer(itr->guid);
@@ -638,15 +650,15 @@ void PlayerbotDruidAI::DoNonCombatActions()
     }
     else
     {
-        if (master->isAlive())
+        if (m_master->isAlive())
         {
-            if (BuffPlayer(master))
+            if (BuffPlayer(m_master))
                 return;
-            if (HealTarget(master))
+            if (HealTarget(m_master))
                 return;
         }
         else
-            if (ai->CastSpell(REVIVE, *master))
+            if (ai->CastSpell(REVIVE, *m_master))
                 ai->TellMaster("Resurrecting you, Master.");
     }
 

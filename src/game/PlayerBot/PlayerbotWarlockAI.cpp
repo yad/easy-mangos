@@ -101,9 +101,17 @@ PlayerbotWarlockAI::~PlayerbotWarlockAI() {}
 
 void PlayerbotWarlockAI::DoNextCombatManeuver(Unit *pTarget)
 {
-    PlayerbotAI* ai = GetAI();
+    PlayerbotAI *ai = GetAI();
     if (!ai)
         return;
+        
+    Player * m_bot = GetPlayerBot();
+    if (!m_bot)
+        return;
+        
+    Player* m_master = ai->GetMaster();
+    if (!m_master)
+        return;    
 
     switch (ai->GetScenarioType())
     {
@@ -115,10 +123,9 @@ void PlayerbotWarlockAI::DoNextCombatManeuver(Unit *pTarget)
 
     // ------- Non Duel combat ----------
 
-    //ai->SetMovementOrder( PlayerbotAI::MOVEMENT_FOLLOW, GetMaster() ); // dont want to melee mob
+    //ai->SetMovementOrder( PlayerbotAI::MOVEMENT_FOLLOW, m_master ); // dont want to melee mob
 
     ai->SetInFront(pTarget);
-    Player *m_bot = GetPlayerBot();
     Unit* pVictim = pTarget->getVictim();
     Pet *pet = m_bot->GetPet();
 
@@ -361,10 +368,17 @@ void PlayerbotWarlockAI::DoNonCombatActions()
     SpellSequence = SPELL_CURSES;
 
     PlayerbotAI *ai = GetAI();
-    Player * m_bot = GetPlayerBot();
-    if (!ai || !m_bot)
+    if (!ai)
         return;
-
+        
+    Player * m_bot = GetPlayerBot();
+    if (!m_bot)
+        return;
+        
+    Player* m_master = ai->GetMaster();
+    if (!m_master)
+        return;    
+        
     Pet *pet = m_bot->GetPet();
 
     // Initialize pet spells
@@ -460,10 +474,9 @@ void PlayerbotWarlockAI::DoNonCombatActions()
         else
         {
             uint32 soulStoneSpell = soulStone->GetProto()->Spells[0].SpellId;
-            Player * master = GetMaster();
-            if (!master->HasAura(soulStoneSpell) && !m_bot->HasSpellCooldown(soulStoneSpell))
+            if (!m_master->HasAura(soulStoneSpell) && !m_bot->HasSpellCooldown(soulStoneSpell))
             {
-                ai->UseItem(soulStone, master);
+                ai->UseItem(soulStone, m_master);
                 return;
             }
         }

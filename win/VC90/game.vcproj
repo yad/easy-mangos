@@ -539,14 +539,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\game\AntiCheat.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\game\AntiCheat.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\src\game\AuctionHouseHandler.cpp"
 				>
 			</File>
@@ -870,7 +862,7 @@
 				RelativePath="..\..\src\game\MoveMap.h"
 				>
 			</File>
-            <File
+			<File
 				RelativePath="..\..\src\game\MoveMapSharedDefines.h"
 				>
 			</File>
@@ -1172,14 +1164,6 @@
 			</File>
 			<File
 				RelativePath="..\..\src\game\ArenaTeam.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\game\AuctionHouseBot\AuctionHouseBot.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\game\AuctionHouseBot\AuctionHouseBot.h"
 				>
 			</File>
 			<File
@@ -1787,14 +1771,7 @@
 				>
 			</File>
 		</Filter>
-		<File
-			RelativePath="..\..\src\game\MapUpdater.cpp"
-			>
-		</File>
-		<File
-			RelativePath="..\..\src\game\MapUpdater.h"
-			>
-		</File>
+		<Filter
 			Name="vmaps"
 			>
 			<File
@@ -1866,6 +1843,26 @@
 				>
 			</File>
 		</Filter>
+		<Filter
+			Name="AuctionHouseBot"
+			>
+			<File
+				RelativePath="..\..\src\game\AuctionHouseBot\AuctionHouseBot.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\game\AuctionHouseBot\AuctionHouseBot.h"
+				>
+			</File>
+		</Filter>
+		<File
+			RelativePath="..\..\src\game\MapUpdater.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\src\game\MapUpdater.h"
+			>
+		</File>
 		<File
 			RelativePath="..\..\src\game\pchdef.cpp"
 			>

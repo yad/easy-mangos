@@ -262,7 +262,7 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
                 return;
 
             if (!m_master->GetGroup())
-                return;                
+                return;
 
             // for all master's bots
             for (GroupReference *itr = m_master->GetGroup()->GetFirstMember(); itr != NULL; itr = itr->next())
@@ -597,7 +597,7 @@ void PlayerbotMgr::RemoveAllBotsFromGroup(Player* player)
         }
     }while(removed);
     PlayerbotMgr::AddAllBots();
-}     
+}
 
 
 

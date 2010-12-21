@@ -571,7 +571,7 @@ bool ChatHandler::HandleDebugGetItemStateCommand(char* args)
                     if (container != bag)
                     {
                         PSendSysMessage("%s in bag %u at slot %u has a different container %s from slot %u!",
-                            item2->GetGuidStr().c_str(), bag->GetSlot(), item2->GetSlot(), 
+                            item2->GetGuidStr().c_str(), bag->GetSlot(), item2->GetSlot(),
                             container->GetGuidStr().c_str(), container->GetSlot());
                         error = true; continue;
                     }

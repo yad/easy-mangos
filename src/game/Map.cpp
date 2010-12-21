@@ -287,7 +287,7 @@ bool Map::EnsureGridLoaded(const Cell &cell)
         //otherwise there is a possibility of infinity chain (grid loading will be called many times for the same grid)
         //possible scenario:
         //active object A(loaded with loader.LoadN call and added to the  map)
-        //summons some active object B, while B added to map grid loading called again and so on.. 
+        //summons some active object B, while B added to map grid loading called again and so on..
         setGridObjectDataLoaded(true,cell.GridX(), cell.GridY());
         ObjectGridLoader loader(*grid, this, cell);
         loader.LoadN();
@@ -2871,7 +2871,7 @@ Player* Map::GetPlayer(ObjectGuid guid)
 }
 
 /**
- * Function return creature (non-pet and then most summoned by spell creatures) that in world at CURRENT map 
+ * Function return creature (non-pet and then most summoned by spell creatures) that in world at CURRENT map
  *
  * @param guid must be creature guid (HIGHGUID_UNIT)
  */

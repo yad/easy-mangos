@@ -87,9 +87,17 @@ PlayerbotMageAI::~PlayerbotMageAI() {}
 
 void PlayerbotMageAI::DoNextCombatManeuver(Unit *pTarget)
 {
-    PlayerbotAI* ai = GetAI();
+    PlayerbotAI *ai = GetAI();
     if (!ai)
         return;
+        
+    Player * m_bot = GetPlayerBot();
+    if (!m_bot)
+        return;
+        
+    Player* m_master = ai->GetMaster();
+    if (!m_master)
+        return;    
 
     switch (ai->GetScenarioType())
     {
@@ -101,11 +109,10 @@ void PlayerbotMageAI::DoNextCombatManeuver(Unit *pTarget)
 
     // ------- Non Duel combat ----------
 
-    //ai->SetMovementOrder( PlayerbotAI::MOVEMENT_FOLLOW, GetMaster() ); // dont want to melee mob
+    //ai->SetMovementOrder( PlayerbotAI::MOVEMENT_FOLLOW, m_master ); // dont want to melee mob
 
     // Damage Spells (primitive example)
     ai->SetInFront(pTarget);
-    Player *m_bot = GetPlayerBot();
     Unit* pVictim = pTarget->getVictim();
     float dist = m_bot->GetDistance(pTarget);
 
@@ -358,14 +365,19 @@ void PlayerbotMageAI::DoNextCombatManeuver(Unit *pTarget)
 
 void PlayerbotMageAI::DoNonCombatActions()
 {
-    Player * m_bot = GetPlayerBot();
-    Player * master = GetMaster();
-
-    if (!m_bot || !master)
+    PlayerbotAI *ai = GetAI();
+    if (!ai)
         return;
+        
+    Player * m_bot = GetPlayerBot();
+    if (!m_bot)
+        return;
+        
+    Player* m_master = ai->GetMaster();
+    if (!m_master)
+        return;                
 
     SpellSequence = SPELL_FROST;
-    PlayerbotAI* ai = GetAI();
 
     // Buff armor
     if (MOLTEN_ARMOR)
@@ -390,17 +402,17 @@ void PlayerbotMageAI::DoNonCombatActions()
     }
 
     // buff master's group
-    if (master->GetGroup())
+    if (m_master->GetGroup())
     {
         // Buff master with group buff...
         if (ARCANE_BRILLIANCE && ai->HasSpellReagents(ARCANE_BRILLIANCE))
         {
-            if (ai->Buff(ARCANE_BRILLIANCE, master))
+            if (ai->Buff(ARCANE_BRILLIANCE, m_master))
                 return;
         }
 
         // ...and check group for new members joined or resurrected, or just buff everyone if no group buff available
-        Group::MemberSlotList const& groupSlot = GetMaster()->GetGroup()->GetMemberSlots();
+        Group::MemberSlotList const& groupSlot = m_master->GetGroup()->GetMemberSlots();
         for (Group::member_citerator itr = groupSlot.begin(); itr != groupSlot.end(); itr++)
         {
             Player *tPlayer = sObjectMgr.GetPlayer(itr->guid);
@@ -415,7 +427,7 @@ void PlayerbotMageAI::DoNonCombatActions()
     // There is no group, buff master
     else
     {
-        if (master->isAlive() && BuffPlayer(master))
+        if (m_master->isAlive() && BuffPlayer(m_master))
             return;
     }
 

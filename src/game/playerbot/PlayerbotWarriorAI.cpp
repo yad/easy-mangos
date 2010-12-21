@@ -138,9 +138,17 @@ bool PlayerbotWarriorAI::DoFirstCombatManeuver(Unit *pTarget)
 
 void PlayerbotWarriorAI::DoNextCombatManeuver(Unit *pTarget)
 {
-    PlayerbotAI* ai = GetAI();
+    PlayerbotAI *ai = GetAI();
     if (!ai)
         return;
+        
+    Player * m_bot = GetPlayerBot();
+    if (!m_bot)
+        return;
+        
+    Player* m_master = ai->GetMaster();
+    if (!m_master)
+        return;    
 
     switch (ai->GetScenarioType())
     {
@@ -151,25 +159,24 @@ void PlayerbotWarriorAI::DoNextCombatManeuver(Unit *pTarget)
     }
     // ------- Non Duel combat ----------
 
-    //ai->SetMovementOrder( PlayerbotAI::MOVEMENT_FOLLOW, GetMaster() ); // dont want to melee mob
+    //ai->SetMovementOrder( PlayerbotAI::MOVEMENT_FOLLOW, m_master ); // dont want to melee mob
 
     // Damage Attacks
 
     ai->SetInFront(pTarget);
-    Player *m_bot = GetPlayerBot();
     Unit* pVictim = pTarget->getVictim();
     float fTargetDist = m_bot->GetDistance(pTarget);
     PlayerbotAI::CombatOrderType co = ai->GetCombatOrder();
 
     // decide what stance to use
     if ((co & PlayerbotAI::ORDERS_TANK) && !m_bot->HasAura(DEFENSIVE_STANCE, EFFECT_INDEX_0) && ai->CastSpell(DEFENSIVE_STANCE))
-	{
+    {
         //ai->TellMaster("Stance > Defensive");
-	}
+    }
     else if (!(co & PlayerbotAI::ORDERS_TANK) && !m_bot->HasAura(BATTLE_STANCE, EFFECT_INDEX_0) && ai->CastSpell(BATTLE_STANCE))
-	{
+    {
         //ai->TellMaster("Stance > Battle");
-	}
+    }
 
     // get spell sequence
     if (pTarget->IsNonMeleeSpellCasted(true))
@@ -183,17 +190,17 @@ void PlayerbotWarriorAI::DoNextCombatManeuver(Unit *pTarget)
 
     // do shouts, berserker rage, etc...
     if (BERSERKER_RAGE > 0 && !m_bot->HasAura(BERSERKER_RAGE, EFFECT_INDEX_0) && ai->CastSpell(BERSERKER_RAGE))
-	{
+    {
         //ai->TellMaster("Pre > Berseker Rage");
-	}
+    }
     else if (DEMORALIZING_SHOUT > 0 && ai->GetRageAmount() >= 10 && !pTarget->HasAura(DEMORALIZING_SHOUT, EFFECT_INDEX_0) && ai->CastSpell(DEMORALIZING_SHOUT))
-	{
+    {
         //ai->TellMaster("Pre > Demoralizing Shout");
-	}
+    }
     else if (BATTLE_SHOUT > 0 && ai->GetRageAmount() >= 10 && !m_bot->HasAura(BATTLE_SHOUT, EFFECT_INDEX_0) && ai->CastSpell(BATTLE_SHOUT))
     {
         //ai->TellMaster("Pre > Battle Shout");
-	}
+    }
 
     std::ostringstream out;
     switch (SpellSequence)
@@ -317,9 +324,16 @@ void PlayerbotWarriorAI::DoNextCombatManeuver(Unit *pTarget)
 void PlayerbotWarriorAI::DoNonCombatActions()
 {
     PlayerbotAI *ai = GetAI();
+    if (!ai)
+        return;
+        
     Player * m_bot = GetPlayerBot();
     if (!m_bot)
         return;
+        
+    Player* m_master = ai->GetMaster();
+    if (!m_master)
+        return;    
 
     // TODO (by Runsttren): check if shout aura bot has is casted by this bot,
     // otherwise cast other useful shout
@@ -341,7 +355,7 @@ void PlayerbotWarriorAI::DoNonCombatActions()
 
     // buff master with VIGILANCE
     if (VIGILANCE > 0)
-        (!GetMaster()->HasAura(VIGILANCE, EFFECT_INDEX_0) && ai->CastSpell(VIGILANCE, *GetMaster()));
+        (!m_master->HasAura(VIGILANCE, EFFECT_INDEX_0) && ai->CastSpell(VIGILANCE, *m_master));
 
     // hp check
     if (m_bot->getStandState() != UNIT_STAND_STATE_STAND)

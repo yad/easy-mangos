@@ -116,9 +116,18 @@ bool PlayerbotPaladinAI::HealTarget(Unit *target)
 void PlayerbotPaladinAI::DoNextCombatManeuver(Unit *pTarget)
 {
     Unit* pVictim = pTarget->getVictim();
-    PlayerbotAI* ai = GetAI();
+    
+    PlayerbotAI *ai = GetAI();
     if (!ai)
         return;
+        
+    Player * m_bot = GetPlayerBot();
+    if (!m_bot)
+        return;
+        
+    Player* m_master = ai->GetMaster();
+    if (!m_master)
+        return;            
 
     switch (ai->GetScenarioType())
     {
@@ -130,17 +139,16 @@ void PlayerbotPaladinAI::DoNextCombatManeuver(Unit *pTarget)
 
     // damage spells
     ai->SetInFront(pTarget);
-    Player *m_bot = GetPlayerBot();
     Group *m_group = m_bot->GetGroup();
     float dist = m_bot->GetDistance(pTarget);
     std::ostringstream out;
 
     //Shield master if low hp.
-    uint32 masterHP = GetMaster()->GetHealth() * 100 / GetMaster()->GetMaxHealth();
+    uint32 masterHP = m_master->GetHealth() * 100 / m_master->GetMaxHealth();
 
-    if (GetMaster()->isAlive())
-        if (masterHP < 25 && HAND_OF_PROTECTION > 0 && !GetMaster()->HasAura(FORBEARANCE, EFFECT_INDEX_0) && !GetMaster()->HasAura(HAND_OF_PROTECTION, EFFECT_INDEX_0) && !GetMaster()->HasAura(DIVINE_PROTECTION, EFFECT_INDEX_0) && !GetMaster()->HasAura(DIVINE_SHIELD, EFFECT_INDEX_0))
-            ai->CastSpell(HAND_OF_PROTECTION, *GetMaster());
+    if (m_master->isAlive())
+        if (masterHP < 25 && HAND_OF_PROTECTION > 0 && !m_master->HasAura(FORBEARANCE, EFFECT_INDEX_0) && !m_master->HasAura(HAND_OF_PROTECTION, EFFECT_INDEX_0) && !m_master->HasAura(DIVINE_PROTECTION, EFFECT_INDEX_0) && !m_master->HasAura(DIVINE_SHIELD, EFFECT_INDEX_0))
+            ai->CastSpell(HAND_OF_PROTECTION, *m_master);
 
     // heal group inside combat, but do not heal if tank
     if (m_group && pVictim != m_bot)  // possible tank
@@ -183,7 +191,7 @@ void PlayerbotPaladinAI::DoNextCombatManeuver(Unit *pTarget)
     if (DEVOTION_AURA > 0 && !m_bot->HasAura(DEVOTION_AURA, EFFECT_INDEX_0) && pTarget->getClass() == CLASS_PALADIN)
         ai->CastSpell (DEVOTION_AURA, *m_bot);
 
-    if (ai->GetHealthPercent() <= 40 || GetMaster()->GetHealth() <= GetMaster()->GetMaxHealth() * 0.4)
+    if (ai->GetHealthPercent() <= 40 || m_master->GetHealth() <= m_master->GetMaxHealth() * 0.4)
         SpellSequence = Healing;
     else
         SpellSequence = Combat;
@@ -254,9 +262,9 @@ void PlayerbotPaladinAI::DoNextCombatManeuver(Unit *pTarget)
                 CombatCounter++;
                 break;
             }
-            else if (HAND_OF_SACRIFICE > 0 && pVictim == GetMaster() && !GetMaster()->HasAura(HAND_OF_SACRIFICE, EFFECT_INDEX_0) && CombatCounter < 10 && ai->GetManaPercent() >= 6)
+            else if (HAND_OF_SACRIFICE > 0 && pVictim == m_master && !m_master->HasAura(HAND_OF_SACRIFICE, EFFECT_INDEX_0) && CombatCounter < 10 && ai->GetManaPercent() >= 6)
             {
-                ai->CastSpell (HAND_OF_SACRIFICE, *GetMaster());
+                ai->CastSpell (HAND_OF_SACRIFICE, *m_master);
                 out << " Hand of Sacrifice";
                 CombatCounter++;
                 break;
@@ -311,7 +319,7 @@ void PlayerbotPaladinAI::DoNextCombatManeuver(Unit *pTarget)
             }
             if (masterHP <= 40)
             {
-                HealTarget (GetMaster());
+                HealTarget (m_master);
                 out << " ...healing master";
                 break;
             }
@@ -336,10 +344,17 @@ void PlayerbotPaladinAI::DoNextCombatManeuver(Unit *pTarget)
 
 void PlayerbotPaladinAI::DoNonCombatActions()
 {
-    PlayerbotAI* ai = GetAI();
+    PlayerbotAI *ai = GetAI();
+    if (!ai)
+        return;
+        
     Player * m_bot = GetPlayerBot();
     if (!m_bot)
         return;
+        
+    Player* m_master = ai->GetMaster();
+    if (!m_master)
+        return;    
 
     // Buff myself
     if (ai->GetCombatOrder() == ai->ORDERS_TANK)
@@ -347,7 +362,7 @@ void PlayerbotPaladinAI::DoNonCombatActions()
     BuffPlayer(m_bot);
 
     // Buff master
-    BuffPlayer(ai->GetMaster());
+    BuffPlayer(m_master);
 
     // mana check
     if (m_bot->getStandState() != UNIT_STAND_STATE_STAND)
@@ -383,9 +398,9 @@ void PlayerbotPaladinAI::DoNonCombatActions()
     }
 
     // heal and buff group
-    if (GetMaster()->GetGroup())
+    if (m_master->GetGroup())
     {
-        Group::MemberSlotList const& groupSlot = GetMaster()->GetGroup()->GetMemberSlots();
+        Group::MemberSlotList const& groupSlot = m_master->GetGroup()->GetMemberSlots();
         for (Group::member_citerator itr = groupSlot.begin(); itr != groupSlot.end(); itr++)
         {
             Player *tPlayer = sObjectMgr.GetPlayer(itr->guid);
@@ -408,7 +423,7 @@ void PlayerbotPaladinAI::DoNonCombatActions()
             if (HealTarget(tPlayer))
                 return;
 
-            if (tPlayer != m_bot && tPlayer != GetMaster())
+            if (tPlayer != m_bot && tPlayer != m_master)
                 if (BuffPlayer(tPlayer))
                     return;
         }

@@ -338,14 +338,14 @@ void Spell::EffectSchoolDMG(SpellEffectIndex effect_idx)
                         damage /= count;                    // divide to all targets
                         break;
                     }
-                    // AoE spells, which damage is reduced with distance from the initial hit point 
-                    case 62598: case 62937:     // Detonate 
-                    case 65279:                 // Lightning Nova 
-                    case 62311: case 64596:     // Cosmic Smash 
-                    { 
-                        float distance = unitTarget->GetDistance2d(m_targets.m_destX, m_targets.m_destY); 
-                        damage *= exp(-distance/15.0f); 
-                        break; 
+                    // AoE spells, which damage is reduced with distance from the initial hit point
+                    case 62598: case 62937:     // Detonate
+                    case 65279:                 // Lightning Nova
+                    case 62311: case 64596:     // Cosmic Smash
+                    {
+                        float distance = unitTarget->GetDistance2d(m_targets.m_destX, m_targets.m_destY);
+                        damage *= exp(-distance/15.0f);
+                        break;
                     }
                     // percent from health with min
                     case 25599:                             // Thundercrash
@@ -411,7 +411,7 @@ void Spell::EffectSchoolDMG(SpellEffectIndex effect_idx)
                     case 72868:
                     case 72869:
                     {
-                        float distance = unitTarget->GetDistance2d(m_caster); 
+                        float distance = unitTarget->GetDistance2d(m_caster);
                         damage *= exp(-distance/(5.0f*m_caster->GetObjectScale()));
                         break;
                     }
@@ -421,7 +421,7 @@ void Spell::EffectSchoolDMG(SpellEffectIndex effect_idx)
                     case 70835:
                     case 70836:
                     {
-                        float distance = unitTarget->GetDistance2d(m_caster); 
+                        float distance = unitTarget->GetDistance2d(m_caster);
                         damage *= exp(-distance/(10.0f));
                         break;
                     }
@@ -444,7 +444,7 @@ void Spell::EffectSchoolDMG(SpellEffectIndex effect_idx)
                     case 77845:
                     case 77846:
                     {
-                        float distance = unitTarget->GetDistance2d(m_caster); 
+                        float distance = unitTarget->GetDistance2d(m_caster);
                         damage *= exp(-distance/(10.0f));
                         break;
                     }
@@ -723,7 +723,7 @@ void Spell::EffectSchoolDMG(SpellEffectIndex effect_idx)
                         // Eviscerate and Envenom Bonus Damage (item set effect)
                         if(m_caster->GetDummyAura(37169))
                             damage += combo*40;
-                            
+
                         // Apply spell mods
                         if (Player* modOwner = m_caster->GetSpellModOwner())
                             modOwner->ApplySpellMod(m_spellInfo->Id, SPELLMOD_DAMAGE, damage);
@@ -1841,7 +1841,7 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                         }
                         case EFFECT_INDEX_1:                // additional data for dummy[0]
                         case EFFECT_INDEX_2:
-                            return;                         
+                            return;
                     }
                     return;
                 }
@@ -5098,7 +5098,7 @@ void Spell::DoSummonVehicle(SpellEffectIndex eff_idx, uint32 forceFaction)
     {
         if (m_spellInfo->Attributes & SPELL_ATTR_UNK7)
             m_caster->RemoveSpellsCausingAura(SPELL_AURA_CONTROL_VEHICLE);
-        else 
+        else
             return;
     }
 
@@ -6368,18 +6368,18 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     m_caster->CastSpell(m_caster, 50217, true);
                     return;
                 }
-				case 43375:
-				case 43972:		// Mixing Blood for Quest 11306 
+                case 43375:
+                case 43972:        // Mixing Blood for Quest 11306
                 {
-					switch(urand(0, 2))
-					{
-						case 0 : m_caster->CastSpell(m_caster, 43378, true); break;
-						case 1 : m_caster->CastSpell(m_caster, 43376, true); break;
-						case 2 : m_caster->CastSpell(m_caster, 43377, true); break;
-						case 3 : m_caster->CastSpell(m_caster, 43970, true); break;
-					}
-					break;
-				}
+                    switch(urand(0, 2))
+                    {
+                        case 0 : m_caster->CastSpell(m_caster, 43378, true); break;
+                        case 1 : m_caster->CastSpell(m_caster, 43376, true); break;
+                        case 2 : m_caster->CastSpell(m_caster, 43377, true); break;
+                        case 3 : m_caster->CastSpell(m_caster, 43970, true); break;
+                    }
+                    break;
+                }
                 case 44455:                                 // Character Script Effect Reverse Cast
                 {
                     if (!unitTarget || unitTarget->GetTypeId() != TYPEID_UNIT)
@@ -6943,7 +6943,7 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
 
                     uint32 spellID;
                     uint32 entry  = m_caster->GetEntry();
- 
+
                     switch(entry)
                     {
                         case 31897: spellID = 7001; break;   // Lightwell Renew Rank 1
@@ -6980,27 +6980,27 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     }
                     return;
                 }
-                case 65917:                                 // Magic Rooster 
-                { 
-                    if (!unitTarget || unitTarget->GetTypeId() != TYPEID_PLAYER) 
-                        return; 
- 
-                    // Prevent stacking of mounts 
-                    unitTarget->RemoveSpellsCausingAura(SPELL_AURA_MOUNTED); 
- 
-                    uint32 spellId = 66122; // common case 
- 
-                    if (((Player*)unitTarget)->getGender() == GENDER_MALE) 
-                    { 
-                        switch (((Player*)unitTarget)->getRace()) 
-                        { 
-                            case RACE_TAUREN: spellId = 66124; break; 
-                            case RACE_DRAENEI: spellId = 66123; break; 
-                        } 
-                    } 
- 
-                    unitTarget->CastSpell(unitTarget, spellId, true); 
-                    return; 
+                case 65917:                                 // Magic Rooster
+                {
+                    if (!unitTarget || unitTarget->GetTypeId() != TYPEID_PLAYER)
+                        return;
+
+                    // Prevent stacking of mounts
+                    unitTarget->RemoveSpellsCausingAura(SPELL_AURA_MOUNTED);
+
+                    uint32 spellId = 66122; // common case
+
+                    if (((Player*)unitTarget)->getGender() == GENDER_MALE)
+                    {
+                        switch (((Player*)unitTarget)->getRace())
+                        {
+                            case RACE_TAUREN: spellId = 66124; break;
+                            case RACE_DRAENEI: spellId = 66123; break;
+                        }
+                    }
+
+                    unitTarget->CastSpell(unitTarget, spellId, true);
+                    return;
                 }
                 case 64104:                                 // Quest Credit - Trigger - Dummy - 01
                 case 64107:                                 // Quest Credit - Trigger - Dummy - 02
@@ -7385,7 +7385,7 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     if (spellId && m_caster->GetTypeId() == TYPEID_PLAYER && !((Player*)m_caster)->HasSpellCooldown(spellId))
                     {
                         m_caster->CastCustomSpell(target, spellId, &basePoint, 0, 0, true);
- 
+
                         if (spellId == 53359) // Disarm from Chimera Shot should have 1 min cooldown
                             ((Player*)m_caster)->AddSpellCooldown(spellId, 0, uint32(time(NULL) + MINUTE));
                     }
@@ -8212,7 +8212,7 @@ void Spell::EffectLeapForward(SpellEffectIndex eff_idx)
         float dx,dy,dz;
         float angle = unitTarget->GetOrientation();
         unitTarget->GetPosition(cx,cy,cz);
-          
+
         //Check use of vmaps//
         bool useVmap = false;
         bool swapZone = true;
@@ -8235,7 +8235,7 @@ void Spell::EffectLeapForward(SpellEffectIndex eff_idx)
             MaNGOS::NormalizeMapCoord(dx);
             MaNGOS::NormalizeMapCoord(dy);
             dz = cz;
-             
+
             //Prevent climbing and go around object maybe 2.0f is to small? use 3.0f?
             if (map->IsNextZcoordOK(dx, dy, dz, 3.0f) && (unitTarget->IsWithinLOS(dx, dy, dz)))
             {

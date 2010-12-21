@@ -115,6 +115,10 @@ void PlayerbotPriestAI::DoNextCombatManeuver(Unit *pTarget)
     PlayerbotAI* ai = GetAI();
     if (!ai)
         return;
+        
+    Player* m_master = ai->GetMaster();
+    if (!m_master)
+        return;                
 
     switch (ai->GetScenarioType())
     {
@@ -131,7 +135,7 @@ void PlayerbotPriestAI::DoNextCombatManeuver(Unit *pTarget)
 
     // ------- Non Duel combat ----------
 
-    ai->SetMovementOrder(PlayerbotAI::MOVEMENT_FOLLOW, GetMaster());   // dont want to melee mob
+    ai->SetMovementOrder(PlayerbotAI::MOVEMENT_FOLLOW, m_master);   // dont want to melee mob
 
     Player *m_bot = GetPlayerBot();
     Group *m_group = m_bot->GetGroup();
@@ -156,13 +160,13 @@ void PlayerbotPriestAI::DoNextCombatManeuver(Unit *pTarget)
         HealTarget (m_bot);
 
     // Heal master
-    uint32 masterHP = GetMaster()->GetHealth() * 100 / GetMaster()->GetMaxHealth();
-    if (GetMaster()->isAlive())
+    uint32 masterHP = m_master->GetHealth() * 100 / m_master->GetMaxHealth();
+    if (m_master->isAlive())
     {
-        if (masterHP < 25 && POWER_WORD_SHIELD > 0 && !GetMaster()->HasAura(POWER_WORD_SHIELD, EFFECT_INDEX_0))
-            ai->CastSpell(POWER_WORD_SHIELD, *(GetMaster()));
+        if (masterHP < 25 && POWER_WORD_SHIELD > 0 && !m_master->HasAura(POWER_WORD_SHIELD, EFFECT_INDEX_0))
+            ai->CastSpell(POWER_WORD_SHIELD, *(m_master));
         else if (masterHP < 80)
-            HealTarget (GetMaster());
+            HealTarget (m_master);
     }
 
     // Heal group
@@ -220,10 +224,10 @@ void PlayerbotPriestAI::DoNextCombatManeuver(Unit *pTarget)
                 LastSpellHoly = LastSpellHoly + 1;
                 break;
             }
-            else if (PRAYER_OF_MENDING > 0 && LastSpellHoly < 5 && pVictim == GetMaster() && GetMaster()->GetHealth() <= GetMaster()->GetMaxHealth() * 0.7 && !GetMaster()->HasAura(PRAYER_OF_MENDING, EFFECT_INDEX_0) && ai->GetManaPercent() >= 15)
+            else if (PRAYER_OF_MENDING > 0 && LastSpellHoly < 5 && pVictim == m_master && m_master->GetHealth() <= m_master->GetMaxHealth() * 0.7 && !m_master->HasAura(PRAYER_OF_MENDING, EFFECT_INDEX_0) && ai->GetManaPercent() >= 15)
             {
                 //ai->TellMaster("I'm casting prayer of mending on master.");
-                ai->CastSpell(PRAYER_OF_MENDING, *GetMaster());
+                ai->CastSpell(PRAYER_OF_MENDING, *m_master);
                 SpellSequence = SPELL_SHADOWMAGIC;
                 LastSpellHoly = LastSpellHoly + 1;
                 break;
@@ -323,7 +327,7 @@ void PlayerbotPriestAI::DoNextCombatManeuver(Unit *pTarget)
             if (FEAR_WARD > 0 && LastSpellDiscipline < 1 && ai->GetManaPercent() >= 3)
             {
                 //ai->TellMaster("I'm casting fear ward");
-                ai->CastSpell(FEAR_WARD, *(GetMaster()));
+                ai->CastSpell(FEAR_WARD, *(m_master));
                 SpellSequence = SPELL_HOLY;
                 LastSpellDiscipline = LastSpellDiscipline + 1;
                 break;
@@ -331,7 +335,7 @@ void PlayerbotPriestAI::DoNextCombatManeuver(Unit *pTarget)
             else if (POWER_INFUSION > 0 && LastSpellDiscipline < 2 && ai->GetManaPercent() >= 16)
             {
                 //ai->TellMaster("I'm casting power infusion");
-                ai->CastSpell(POWER_INFUSION, *(GetMaster()));
+                ai->CastSpell(POWER_INFUSION, *(m_master));
                 SpellSequence = SPELL_HOLY;
                 LastSpellDiscipline = LastSpellDiscipline + 1;
                 break;
@@ -376,11 +380,17 @@ void PlayerbotPriestAI::DoNextCombatManeuver(Unit *pTarget)
 
 void PlayerbotPriestAI::DoNonCombatActions()
 {
-    PlayerbotAI* ai = GetAI();
-    Player * m_bot = GetPlayerBot();
-    Player * master = GetMaster();
-    if (!m_bot || !master)
+    PlayerbotAI *ai = GetAI();
+    if (!ai)
         return;
+        
+    Player * m_bot = GetPlayerBot();
+    if (!m_bot)
+        return;
+        
+    Player* m_master = ai->GetMaster();
+    if (!m_master)
+        return;    ;                
 
     SpellSequence = SPELL_HOLY;
 
@@ -422,19 +432,19 @@ void PlayerbotPriestAI::DoNonCombatActions()
     }
 
     // buff and heal master's group
-    if (master->GetGroup())
+    if (m_master->GetGroup())
     {
         // Buff master with group buffs
-        if (master->isAlive())
+        if (m_master->isAlive())
         {
-            if (PRAYER_OF_FORTITUDE && ai->HasSpellReagents(PRAYER_OF_FORTITUDE) && ai->Buff(PRAYER_OF_FORTITUDE, master))
+            if (PRAYER_OF_FORTITUDE && ai->HasSpellReagents(PRAYER_OF_FORTITUDE) && ai->Buff(PRAYER_OF_FORTITUDE, m_master))
                 return;
 
-            if (PRAYER_OF_SPIRIT && ai->HasSpellReagents(PRAYER_OF_SPIRIT) && ai->Buff(PRAYER_OF_SPIRIT, master))
+            if (PRAYER_OF_SPIRIT && ai->HasSpellReagents(PRAYER_OF_SPIRIT) && ai->Buff(PRAYER_OF_SPIRIT, m_master))
                 return;
         }
 
-        Group::MemberSlotList const& groupSlot = GetMaster()->GetGroup()->GetMemberSlots();
+        Group::MemberSlotList const& groupSlot = m_master->GetGroup()->GetMemberSlots();
         for (Group::member_citerator itr = groupSlot.begin(); itr != groupSlot.end(); itr++)
         {
             Player *tPlayer = sObjectMgr.GetPlayer(itr->guid);
@@ -467,15 +477,15 @@ void PlayerbotPriestAI::DoNonCombatActions()
     }
     else
     {
-        if (master->isAlive())
+        if (m_master->isAlive())
         {
-            if (BuffPlayer(master))
+            if (BuffPlayer(m_master))
                 return;
-            if (HealTarget(master))
+            if (HealTarget(m_master))
                 return;
         }
         else
-            if (ai->CastSpell(RESURRECTION, *master))
+            if (ai->CastSpell(RESURRECTION, *m_master))
                 ai->TellMaster("Resurrecting you, Master.");
     }
 

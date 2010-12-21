@@ -1601,13 +1601,13 @@ void Unit::DealSpellDamage(SpellNonMeleeDamage *damageInfo, bool durabilityLoss)
     for (uint32 i = 0; i < 3; ++i)
     {
         if (spellProto->Effect[i] == SPELL_EFFECT_WEAPON_DAMAGE_NOSCHOOL || spellProto->Effect[i] == SPELL_EFFECT_WEAPON_PERCENT_DAMAGE || spellProto->Effect[i] == SPELL_EFFECT_WEAPON_DAMAGE || spellProto->Effect[i] == SPELL_EFFECT_NORMALIZED_WEAPON_DMG)
-        {    
+        {
             hasWeaponDmgEffect = true;
             break;
         }
     }
 
-    if (!(damageInfo->HitInfo & HITINFO_MISS) && hasWeaponDmgEffect) 
+    if (!(damageInfo->HitInfo & HITINFO_MISS) && hasWeaponDmgEffect)
     {
         WeaponAttackType attType = GetWeaponAttackType(spellProto);
         // on weapon hit casts
@@ -2496,7 +2496,7 @@ void Unit::CalculateDamageAbsorbAndResist(Unit *pCaster, SpellSchoolMask schoolM
                     if (absorbableDamage > 0)
                         RemainingDamage -= absorbableDamage * currentAbsorb / 100;
                     continue;
-                }      
+                }
                 break;
             }
             default:
@@ -6893,7 +6893,7 @@ uint32 Unit::SpellDamageBonusDone(Unit *pVictim, SpellEntry const *spellProto, u
                 for(Unit::AuraList::const_iterator i = dummyAuras.begin(); i != dummyAuras.end(); ++i)
                 {
                     if ((found && (*i)->GetSpellProto()->EffectMiscValue[(*i)->GetEffIndex()] == 7244) || //Glacier Rot
-                        (isIcyTouch && (*i)->GetSpellProto()->SpellIconID == 2721))                       //Improved Icy Touch 
+                        (isIcyTouch && (*i)->GetSpellProto()->SpellIconID == 2721))                       //Improved Icy Touch
                     {
                         DoneTotalMod *= ((*i)->GetModifier()->m_amount+100.0f) / 100.0f;
                     }
@@ -9224,7 +9224,7 @@ bool Unit::SelectHostileTarget()
         {
             SetInFront(target);
             ((Creature*)this)->AI()->AttackStart(target);
-            
+
             // check if currently selected target is reachable
             // NOTE: path alrteady generated from AttackStart()
             if(!GetMotionMaster()->operator->()->IsReachable())
@@ -9244,13 +9244,13 @@ bool Unit::SelectHostileTarget()
                     // next iteration we will select next possible target
                     m_HostileRefManager.deleteReference(target);
                     m_ThreatManager.modifyThreatPercent(target, -101);
-                    
+
                     _removeAttacker(target);
                 }
 
                 return false;
             }
-       
+
         }
         return true;
     }
@@ -11736,7 +11736,7 @@ void Unit::KnockBackFrom(Unit* target, float horizontalSpeed, float verticalSpee
     {
         float dh = verticalSpeed*verticalSpeed / (2*19.23f); // maximum parabola height
         float time = (verticalSpeed) ? sqrtf(dh/(0.124976 * verticalSpeed)) : 0.0f;  //full move time in seconds
- 
+
         float dis = time * horizontalSpeed;
 
         float ox, oy, oz;

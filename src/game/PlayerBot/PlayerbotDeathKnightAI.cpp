@@ -92,9 +92,17 @@ PlayerbotDeathKnightAI::~PlayerbotDeathKnightAI() {}
 
 void PlayerbotDeathKnightAI::DoNextCombatManeuver(Unit *pTarget)
 {
-    PlayerbotAI* ai = GetAI();
+    PlayerbotAI *ai = GetAI();
     if (!ai)
         return;
+        
+    Player * m_bot = GetPlayerBot();
+    if (!m_bot)
+        return;
+        
+    Player* m_master = ai->GetMaster();
+    if (!m_master)
+        return;    
 
     switch (ai->GetScenarioType())
     {
@@ -105,13 +113,12 @@ void PlayerbotDeathKnightAI::DoNextCombatManeuver(Unit *pTarget)
 
     // ------- Non Duel combat ----------
 
-    //ai->SetMovementOrder( PlayerbotAI::MOVEMENT_FOLLOW, GetMaster() ); // dont want to melee mob
+    //ai->SetMovementOrder( PlayerbotAI::MOVEMENT_FOLLOW, m_master ); // dont want to melee mob
 
     // DK Attacks: Unholy, Frost & Blood
 
     // damage spells
     ai->SetInFront(pTarget);  //<---
-    Player *m_bot = GetPlayerBot();
     Unit* pVictim = pTarget->getVictim();
     Pet *pet = m_bot->GetPet();
     float dist = m_bot->GetDistance(pTarget);
@@ -487,16 +494,23 @@ void PlayerbotDeathKnightAI::DoNextCombatManeuver(Unit *pTarget)
 
 void PlayerbotDeathKnightAI::DoNonCombatActions()
 {
-    PlayerbotAI* ai = GetAI();
-    Player *m_bot = GetPlayerBot();
+    PlayerbotAI *ai = GetAI();
+    if (!ai)
+        return;
+        
+    Player * m_bot = GetPlayerBot();
     if (!m_bot)
         return;
+        
+    Player* m_master = ai->GetMaster();
+    if (!m_master)
+        return;    
 
     SpellSequence = SPELL_DK_UNHOLY;
 
     // buff master with HORN_OF_WINTER
     if (HORN_OF_WINTER > 0)
-        (!GetMaster()->HasAura(HORN_OF_WINTER, EFFECT_INDEX_0) && ai->CastSpell (HORN_OF_WINTER, *GetMaster()));
+        (!m_master->HasAura(HORN_OF_WINTER, EFFECT_INDEX_0) && ai->CastSpell (HORN_OF_WINTER, *m_master));
 
     // hp check
     if (m_bot->getStandState() != UNIT_STAND_STATE_STAND)

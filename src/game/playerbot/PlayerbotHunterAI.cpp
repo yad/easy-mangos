@@ -116,9 +116,17 @@ bool PlayerbotHunterAI::HasPet(Player* bot)
 
 void PlayerbotHunterAI::DoNextCombatManeuver(Unit *pTarget)
 {
-    PlayerbotAI* ai = GetAI();
+    PlayerbotAI *ai = GetAI();
     if (!ai)
         return;
+        
+    Player * m_bot = GetPlayerBot();
+    if (!m_bot)
+        return;
+        
+    Player* m_master = ai->GetMaster();
+    if (!m_master)
+        return;    
 
     switch (ai->GetScenarioType())
     {
@@ -131,7 +139,6 @@ void PlayerbotHunterAI::DoNextCombatManeuver(Unit *pTarget)
 
     // Hunter
     ai->SetInFront(pTarget);
-    Player *m_bot = GetPlayerBot();
     Unit* pVictim = pTarget->getVictim();
 
     // check for pet and heal if neccessary
@@ -276,10 +283,14 @@ void PlayerbotHunterAI::DoNonCombatActions()
     PlayerbotAI *ai = GetAI();
     if (!ai)
         return;
-
+        
     Player * m_bot = GetPlayerBot();
     if (!m_bot)
         return;
+        
+    Player* m_master = ai->GetMaster();
+    if (!m_master)
+        return;    
 
     // reset ranged combat state
     if (!m_rangedCombat)

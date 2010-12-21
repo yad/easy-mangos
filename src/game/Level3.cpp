@@ -2488,8 +2488,8 @@ bool ChatHandler::HandleLearnAllMyClassCommand(char* /*args*/)
 
 bool ChatHandler::HandleLearnAllMySpellsCommand(char* /*args*/)
 {
-	Player *player = getSelectedPlayer();
-	if (!player)
+    Player *player = getSelectedPlayer();
+    if (!player)
         player = m_session->GetPlayer();
 
     ChrClassesEntry const* clsEntry = sChrClassesStore.LookupEntry(player->getClass());
@@ -2683,8 +2683,8 @@ bool ChatHandler::HandleLearnAllMySpellsCommand(char* /*args*/)
 
 bool ChatHandler::HandleLearnAllMySpellsForMyLevelCommand(char* /*args*/)
 {
-	Player *player = getSelectedPlayer();
-	if (!player)
+    Player *player = getSelectedPlayer();
+    if (!player)
         player = m_session->GetPlayer();
 
     uint32 level = player->getLevel();
@@ -2980,8 +2980,8 @@ bool ChatHandler::HandleLearnAllMySpellsForMyLevelCommand(char* /*args*/)
 
 bool ChatHandler::HandleLearnAllMyTalentsForMyLevelCommand(char* /*args*/)
 {
-	Player *player = getSelectedPlayer();
-	if (!player)
+    Player *player = getSelectedPlayer();
+    if (!player)
         player = m_session->GetPlayer();
 
     uint32 classMask = player->getClassMask();
@@ -3061,8 +3061,8 @@ bool ChatHandler::HandleLearnAllMyTalentsForMyLevelCommand(char* /*args*/)
 
 bool ChatHandler::HandleLearnAllMyTalentsCommand(char* /*args*/)
 {
-	Player *player = getSelectedPlayer();
-	if (!player)
+    Player *player = getSelectedPlayer();
+    if (!player)
         player = m_session->GetPlayer();
 
     uint32 classMask = player->getClassMask();
@@ -7760,7 +7760,7 @@ bool ChatHandler::HandleBotChgClass(char* args)
 
     if(!chr || !chr->IsBot())
         return true;
-    
+
     if(!chr->GetGroup() || !pl->GetGroup() || chr->GetGroup()->GetLeaderGuid() != pl->GetGroup()->GetLeaderGuid())
         return true;
 
@@ -7799,7 +7799,7 @@ bool ChatHandler::HandleBotInvite(char* args)
 
         if(!chr || !chr->IsBot() || chr->GetGroup() || pl->GetTeam() != chr->GetTeam())
             continue;
-    
+
         PlayerInfo const* info = sObjectMgr.GetPlayerInfo(chr->getRace(), newclass);
         if (!info)
             continue;
@@ -7824,10 +7824,10 @@ bool ChatHandler::HandleBotInvite(char* args)
         chr->InitRunes();
         if (chr->GetPlayerbotAI())
             chr->GetPlayerbotAI()->CheckStuff();
-        
+
         break;
     }
-    
+
     return true;
 }
 
