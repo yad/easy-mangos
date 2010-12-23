@@ -93,7 +93,11 @@ bool PathInfo::Update(const float destX, const float destY, const float destZ, b
 
     // this can happen only if caller did a bad job calculating the need for path update
     if (oldDestInRange && inRange(newStart, oldStart, dist, dist))
+    {
+        setEndPosition(oldDest);
+        setStartPosition(oldStart);
         return false;
+    }
 
     // check if destination moved - if not we can optimize something here
     // we are following old, precalculated path?

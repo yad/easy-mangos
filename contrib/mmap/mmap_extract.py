@@ -20,7 +20,7 @@ class workerThread(threading.Thread):
         print "++ %s" % (name)
         if sys.platform == 'win32':
             stInfo = subprocess.STARTUPINFO()
-            stInfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW   # this will not work on python 2.7
+            stInfo.dwFlags |= 0x00000001
             stInfo.wShowWindow = 7
             cFlags = subprocess.CREATE_NEW_CONSOLE
             binName = "MoveMapGen.exe"
