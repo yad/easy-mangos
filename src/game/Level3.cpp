@@ -7710,6 +7710,477 @@ bool ChatHandler::HandleGMStartUpCommand(char* args)
         default:
             break;
     }
+    switch (player->getRole())
+    {
+        case MageFire:
+        case MageArcane:
+        case MageFrost:
+            break;
+        case WarriorArms:
+        case WarriorProtection:
+        case WarriorFury:
+            break;
+        case RogueCombat:
+        case RogueAssassination:
+        case RogueSubtlety:
+            break;
+        case PriestDiscipline:
+        case PriestHoly:
+        case PriestShadow:
+            break;
+        case ShamanElementalCombat:
+            if (level >= 85)
+            {
+                if(!player->HasItemCount(64674, 1, false))
+                    player->StoreNewItemInBestSlots(64674, 1);
+            }
+            else if (level >= 80)
+            {
+                if(!player->HasItemCount(50463, 1, false))
+                    player->StoreNewItemInBestSlots(50463, 1);
+            }
+            else if (level >= 74)
+            {
+                if(!player->HasItemCount(38367, 1, false))
+                    player->StoreNewItemInBestSlots(38367, 1);
+            }
+            else if (level >= 70)
+            {
+                if(!player->HasItemCount(35104, 1, false))
+                    player->StoreNewItemInBestSlots(35104, 1);
+            }
+            else if (level >= 60)
+            {
+                if(!player->HasItemCount(23005, 1, false))
+                    player->StoreNewItemInBestSlots(23005, 1);
+            }
+            else if (level >= 57)
+            {
+                if(!player->HasItemCount(22345, 1, false))
+                    player->StoreNewItemInBestSlots(22345, 1);
+            }
+            else if (level >= 51)
+            {
+                if(!player->HasItemCount(22395, 1, false))
+                    player->StoreNewItemInBestSlots(22395, 1);
+            }
+            else if (level >= 40)
+            {
+                if(!player->HasItemCount(23200, 1, false))
+                    player->StoreNewItemInBestSlots(23200, 1);
+            }
+            break;
+        case ShamanRestoration:
+            if (level >= 85)
+            {
+                if(!player->HasItemCount(64673, 1, false))
+                    player->StoreNewItemInBestSlots(64673, 1);
+            }
+            else if (level >= 80)
+            {
+                if(!player->HasItemCount(50464, 1, false))
+                    player->StoreNewItemInBestSlots(50464, 1);
+            }
+            else if (level >= 74)
+            {
+                if(!player->HasItemCount(38368, 1, false))
+                    player->StoreNewItemInBestSlots(38368, 1);
+            }
+            else if (level >= 70)
+            {
+                if(!player->HasItemCount(35106, 1, false))
+                    player->StoreNewItemInBestSlots(35106, 1);
+            }
+            else if (level >= 60)
+            {
+                if(!player->HasItemCount(23005, 1, false))
+                    player->StoreNewItemInBestSlots(23005, 1);
+            }
+            else if (level >= 57)
+            {
+                if(!player->HasItemCount(22345, 1, false))
+                    player->StoreNewItemInBestSlots(22345, 1);
+            }
+            else if (level >= 51)
+            {
+                if(!player->HasItemCount(22395, 1, false))
+                    player->StoreNewItemInBestSlots(22395, 1);
+            }
+            else if (level >= 40)
+            {
+                if(!player->HasItemCount(23200, 1, false))
+                    player->StoreNewItemInBestSlots(23200, 1);
+            }
+            break;
+        case ShamanEnhancement:
+            if (level >= 85)
+            {
+                if(!player->HasItemCount(64672, 1, false))
+                    player->StoreNewItemInBestSlots(64672, 1);
+            }
+            else if (level >= 80)
+            {
+                if(!player->HasItemCount(50458, 1, false))
+                    player->StoreNewItemInBestSlots(50458, 1);
+            }
+            else if (level >= 74)
+            {
+                if(!player->HasItemCount(38361, 1, false))
+                    player->StoreNewItemInBestSlots(38361, 1);
+            }
+            else if (level >= 70)
+            {
+                if(!player->HasItemCount(35105, 1, false))
+                    player->StoreNewItemInBestSlots(35105, 1);
+            }
+            else if (level >= 60)
+            {
+                if(!player->HasItemCount(23005, 1, false))
+                    player->StoreNewItemInBestSlots(23005, 1);
+            }
+            else if (level >= 57)
+            {
+                if(!player->HasItemCount(22345, 1, false))
+                    player->StoreNewItemInBestSlots(22345, 1);
+            }
+            else if (level >= 51)
+            {
+                if(!player->HasItemCount(22395, 1, false))
+                    player->StoreNewItemInBestSlots(22395, 1);
+            }
+            else if (level >= 40)
+            {
+                if(!player->HasItemCount(23200, 1, false))
+                    player->StoreNewItemInBestSlots(23200, 1);
+            }
+            break;
+        case DruidFeralCombat:
+            if (level >= 85)
+            {
+                if(!player->HasItemCount(64676, 1, false))
+                    player->StoreNewItemInBestSlots(64676, 1);
+            }
+            else if (level >= 80)
+            {
+                if(!player->HasItemCount(50456, 1, false))
+                    player->StoreNewItemInBestSlots(50456, 1);
+            }
+            else if (level >= 74)
+            {
+                if(!player->HasItemCount(38365, 1, false))
+                    player->StoreNewItemInBestSlots(38365, 1);
+            }
+            else if (level >= 70)
+            {
+                if(!player->HasItemCount(33509, 1, false))
+                    player->StoreNewItemInBestSlots(33509, 1);
+            }
+            else if (level >= 60)
+            {
+                if(!player->HasItemCount(23004, 1, false))
+                    player->StoreNewItemInBestSlots(23004, 1);
+            }
+            else if (level >= 57)
+            {
+                if(!player->HasItemCount(22398, 1, false))
+                    player->StoreNewItemInBestSlots(22398, 1);
+            }
+            else if (level >= 48)
+            {
+                if(!player->HasItemCount(23198, 1, false))
+                    player->StoreNewItemInBestSlots(23198, 1);
+            }
+            break;
+        case DruidRestoration:
+            if (level >= 85)
+            {
+                if(!player->HasItemCount(64673, 1, false))
+                    player->StoreNewItemInBestSlots(64673, 1);
+            }
+            else if (level >= 80)
+            {
+                if(!player->HasItemCount(50454, 1, false))
+                    player->StoreNewItemInBestSlots(50454, 1);
+            }
+            else if (level >= 74)
+            {
+                if(!player->HasItemCount(38366, 1, false))
+                    player->StoreNewItemInBestSlots(38366, 1);
+            }
+            else if (level >= 70)
+            {
+                if(!player->HasItemCount(33508, 1, false))
+                    player->StoreNewItemInBestSlots(33508, 1);
+            }
+            else if (level >= 60)
+            {
+                if(!player->HasItemCount(23004, 1, false))
+                    player->StoreNewItemInBestSlots(23004, 1);
+            }
+            else if (level >= 57)
+            {
+                if(!player->HasItemCount(22398, 1, false))
+                    player->StoreNewItemInBestSlots(22398, 1);
+            }
+            else if (level >= 48)
+            {
+                if(!player->HasItemCount(23198, 1, false))
+                    player->StoreNewItemInBestSlots(23198, 1);
+            }
+            break;
+        case DruidBalance:
+            if (level >= 85)
+            {
+                if(!player->HasItemCount(64672, 1, false))
+                    player->StoreNewItemInBestSlots(64672, 1);
+            }
+            else if (level >= 80)
+            {
+                if(!player->HasItemCount(50457, 1, false))
+                    player->StoreNewItemInBestSlots(50457, 1);
+            }
+            else if (level >= 74)
+            {
+                if(!player->HasItemCount(38360, 1, false))
+                    player->StoreNewItemInBestSlots(38360, 1);
+            }
+            else if (level >= 70)
+            {
+                if(!player->HasItemCount(33510, 1, false))
+                    player->StoreNewItemInBestSlots(33510, 1);
+            }
+            else if (level >= 60)
+            {
+                if(!player->HasItemCount(23004, 1, false))
+                    player->StoreNewItemInBestSlots(23004, 1);
+            }
+            else if (level >= 57)
+            {
+                if(!player->HasItemCount(22398, 1, false))
+                    player->StoreNewItemInBestSlots(22398, 1);
+            }
+            else if (level >= 48)
+            {
+                if(!player->HasItemCount(23198, 1, false))
+                    player->StoreNewItemInBestSlots(23198, 1);
+            }
+            break;
+        case WarlockDestruction:
+        case WarlockCurses:
+        case WarlockSummoning:
+            break;
+        case HunterBeastMastery:
+        case HunterSurvival:
+        case HunterMarksmanship:
+            break;
+        case PaladinCombat:
+            if (level >= 85)
+            {
+                if(!player->HasItemCount(64674, 1, false))
+                    player->StoreNewItemInBestSlots(64674, 1);
+            }
+            else if (level >= 80)
+            {
+                if(!player->HasItemCount(50455, 1, false))
+                    player->StoreNewItemInBestSlots(50455, 1);
+            }
+            else if (level >= 74)
+            {
+                if(!player->HasItemCount(38362, 1, false))
+                    player->StoreNewItemInBestSlots(38362, 1);
+            }
+            else if (level >= 70)
+            {
+                if(!player->HasItemCount(33503, 1, false))
+                    player->StoreNewItemInBestSlots(33503, 1);
+            }
+            else if (level >= 60)
+            {
+                if(!player->HasItemCount(23006, 1, false))
+                    player->StoreNewItemInBestSlots(23006, 1);
+            }
+            else if (level >= 57)
+            {
+                if(!player->HasItemCount(22401, 1, false))
+                    player->StoreNewItemInBestSlots(22401, 1);
+            }
+            else if (level >= 51)
+            {
+                if(!player->HasItemCount(22400, 1, false))
+                    player->StoreNewItemInBestSlots(22400, 1);
+            }
+            else if (level >= 40)
+            {
+                if(!player->HasItemCount(23201, 1, false))
+                    player->StoreNewItemInBestSlots(23201, 1);
+            }
+            break;
+        case PaladinHoly:
+            if (level >= 85)
+            {
+                if(!player->HasItemCount(64673, 1, false))
+                    player->StoreNewItemInBestSlots(64673, 1);
+            }
+            else if (level >= 80)
+            {
+                if(!player->HasItemCount(50460, 1, false))
+                    player->StoreNewItemInBestSlots(50460, 1);
+            }
+            else if (level >= 74)
+            {
+                if(!player->HasItemCount(38364, 1, false))
+                    player->StoreNewItemInBestSlots(38364, 1);
+            }
+            else if (level >= 70)
+            {
+                if(!player->HasItemCount(33502, 1, false))
+                    player->StoreNewItemInBestSlots(33502, 1);
+            }
+            else if (level >= 60)
+            {
+                if(!player->HasItemCount(23006, 1, false))
+                    player->StoreNewItemInBestSlots(23006, 1);
+            }
+            else if (level >= 57)
+            {
+                if(!player->HasItemCount(22401, 1, false))
+                    player->StoreNewItemInBestSlots(22401, 1);
+            }
+            else if (level >= 51)
+            {
+                if(!player->HasItemCount(22400, 1, false))
+                    player->StoreNewItemInBestSlots(22400, 1);
+            }
+            else if (level >= 40)
+            {
+                if(!player->HasItemCount(23201, 1, false))
+                    player->StoreNewItemInBestSlots(23201, 1);
+            }
+            break;
+        case PaladinProtection:
+            if (level >= 85)
+            {
+                if(!player->HasItemCount(64676, 1, false))
+                    player->StoreNewItemInBestSlots(64676, 1);
+            }
+            else if (level >= 80)
+            {
+                if(!player->HasItemCount(50461, 1, false))
+                    player->StoreNewItemInBestSlots(50461, 1);
+            }
+            else if (level >= 74)
+            {
+                if(!player->HasItemCount(38363, 1, false))
+                    player->StoreNewItemInBestSlots(38363, 1);
+            }
+            else if (level >= 70)
+            {
+                if(!player->HasItemCount(33504, 1, false))
+                    player->StoreNewItemInBestSlots(33504, 1);
+            }
+            else if (level >= 60)
+            {
+                if(!player->HasItemCount(23006, 1, false))
+                    player->StoreNewItemInBestSlots(23006, 1);
+            }
+            else if (level >= 57)
+            {
+                if(!player->HasItemCount(22401, 1, false))
+                    player->StoreNewItemInBestSlots(22401, 1);
+            }
+            else if (level >= 51)
+            {
+                if(!player->HasItemCount(22400, 1, false))
+                    player->StoreNewItemInBestSlots(22400, 1);
+            }
+            else if (level >= 40)
+            {
+                if(!player->HasItemCount(23201, 1, false))
+                    player->StoreNewItemInBestSlots(23201, 1);
+            }
+            break;
+        case DeathKnightBlood:
+            if (level >= 85)
+            {
+                if(!player->HasItemCount(64672, 1, false))
+                    player->StoreNewItemInBestSlots(64672, 1);
+            }
+            else if (level >= 80)
+            {
+                if(!player->HasItemCount(50459, 1, false))
+                    player->StoreNewItemInBestSlots(50459, 1);
+            }
+            else if (level >= 74)
+            {
+                if(!player->HasItemCount(40867, 1, false))
+                    player->StoreNewItemInBestSlots(40867, 1);
+            }
+            else if (level >= 70)
+            {
+                if(!player->HasItemCount(39208, 1, false))
+                    player->StoreNewItemInBestSlots(39208, 1);
+            }
+            else if (level >= 51)
+            {
+                if(!player->HasItemCount(66050, 1, false))
+                    player->StoreNewItemInBestSlots(66050, 1);
+            }
+            break;
+        case DeathKnightFrost:
+            if (level >= 85)
+            {
+                if(!player->HasItemCount(64674, 1, false))
+                    player->StoreNewItemInBestSlots(64674, 1);
+            }
+            else if (level >= 80)
+            {
+                if(!player->HasItemCount(50462, 1, false))
+                    player->StoreNewItemInBestSlots(50462, 1);
+            }
+            else if (level >= 74)
+            {
+                if(!player->HasItemCount(40822, 1, false))
+                    player->StoreNewItemInBestSlots(40822, 1);
+            }
+            else if (level >= 70)
+            {
+                if(!player->HasItemCount(39208, 1, false))
+                    player->StoreNewItemInBestSlots(39208, 1);
+            }
+            else if (level >= 51)
+            {
+                if(!player->HasItemCount(66051, 1, false))
+                    player->StoreNewItemInBestSlots(66051, 1);
+            }
+            break;
+        case DeathKnightUnholy:
+            if (level >= 85)
+            {
+                if(!player->HasItemCount(64672, 1, false))
+                    player->StoreNewItemInBestSlots(64672, 1);
+            }
+            else if (level >= 80)
+            {
+                if(!player->HasItemCount(50459, 1, false))
+                    player->StoreNewItemInBestSlots(50459, 1);
+            }
+            else if (level >= 74)
+            {
+                if(!player->HasItemCount(40875, 1, false))
+                    player->StoreNewItemInBestSlots(40875, 1);
+            }
+            else if (level >= 70)
+            {
+                if(!player->HasItemCount(39208, 1, false))
+                    player->StoreNewItemInBestSlots(39208, 1);
+            }
+            else if (level >= 51)
+            {
+                if(!player->HasItemCount(66049, 1, false))
+                    player->StoreNewItemInBestSlots(66049, 1);
+            }
+            break;
+    }
 
     player->GiveMebIsForMyLevel();
 

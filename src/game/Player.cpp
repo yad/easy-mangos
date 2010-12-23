@@ -1524,6 +1524,8 @@ void Player::GiveMebIsForMyLevel()
             case PaladinProtection:
             case ShamanElementalCombat:
             case ShamanRestoration:
+            case WarriorProtection:
+            case DeathKnightFrost:
             {
                 mItem = bIBetween(bIInSlot[INVTYPE_WEAPON], bIInSlot[INVTYPE_WEAPONMAINHAND], true);
                 mItem = bIBetween(mItem, bIInSlot[INVTYPE_WEAPON2], true);

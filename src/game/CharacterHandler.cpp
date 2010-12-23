@@ -627,27 +627,39 @@ void PlayerbotMgr::AddAllBots()
         return;
 
     uint32 accountId = 1;
-    int nbBotsActual = 0;
+    int nbBotsCurrAlliance = 0;
+    int nbBotsCurrHorde = 0;
     HashMapHolder<Player>::MapType& m = sObjectAccessor.GetPlayers();
     for(HashMapHolder<Player>::MapType::const_iterator itr = m.begin(); itr != m.end(); ++itr)
     {
         Player* bot = itr->second;
         if (bot && bot->IsBot() && !bot->GetGroup())
-            nbBotsActual++;
+        {
+            if (bot->GetTeam() == ALLIANCE)
+                nbBotsCurrAlliance++;
+            else
+                nbBotsCurrHorde++;
+        }
     }
 
-    uint32 nbBotsWanted = PlBotCfg.GetIntDefault( "PlayerbotAI.MaxBots" , 20) - nbBotsActual;
-    if(nbBotsWanted < 1)
+    uint32 nbBotsWantedAlliance = PlBotCfg.GetIntDefault( "PlayerbotAI.MaxBots.Alliance" , 20) - nbBotsCurrAlliance;
+    uint32 nbBotsWantedHorde = PlBotCfg.GetIntDefault( "PlayerbotAI.MaxBots.Horde" , 20) - nbBotsCurrHorde;
+    if(nbBotsWantedAlliance < 1 && nbBotsCurrHorde < 1)
         return;
 
-    QueryResult *result = CharacterDatabase.PQuery("SELECT guid FROM characters WHERE account = '%u'", accountId);
+    QueryResult *result = CharacterDatabase.PQuery("SELECT guid, race FROM characters WHERE account = '%u'", accountId);
     if( result )
     {
-        int itr = 0;
+        int itrAlliance = 0;
+        int itrHorde = 0;
         do
         {
+            if(itrAlliance == nbBotsWantedAlliance && itrHorde == nbBotsWantedHorde)
+                break;
+
             Field *fields = result->Fetch();
             uint64 guid = fields[0].GetUInt64();
+            uint8 race = fields[1].GetUInt8();
 
             if (guid == 0)
                 continue;
@@ -656,16 +668,49 @@ void PlayerbotMgr::AddAllBots()
             if (sObjectMgr.GetPlayer(guid))
                 continue;
 
-            LoginQueryHolder *holder = new LoginQueryHolder(accountId, guid);
-            if(!holder->Initialize())
+            switch (race)
             {
-                delete holder;                                      // delete all unprocessed queries
-                continue;
+                case RACE_HUMAN:
+                case RACE_DWARF:
+                case RACE_NIGHTELF:
+                case RACE_GNOME:
+                case RACE_DRAENEI:
+                {
+                    if (itrAlliance < nbBotsWantedAlliance)
+                    {
+                        itrAlliance++;
+                        LoginQueryHolder *holder = new LoginQueryHolder(accountId, guid);
+                        if(!holder->Initialize())
+                        {
+                            delete holder;                                      // delete all unprocessed queries
+                            continue;
+                        }
+                        CharacterDatabase.DelayQueryHolder(&chrHandler, &CharacterHandler::HandlePlayerBotLoginCallback, holder);
+                    }
+                    break;
+                }
+                case RACE_ORC:
+                case RACE_UNDEAD_PLAYER:
+                case RACE_TAUREN:
+                case RACE_TROLL:
+                case RACE_BLOODELF:
+                {
+                    if (itrHorde < nbBotsWantedHorde)
+                    {
+                        itrHorde++;
+                        LoginQueryHolder *holder = new LoginQueryHolder(accountId, guid);
+                        if(!holder->Initialize())
+                        {
+                            delete holder;                                      // delete all unprocessed queries
+                            continue;
+                        }
+                        CharacterDatabase.DelayQueryHolder(&chrHandler, &CharacterHandler::HandlePlayerBotLoginCallback, holder);
+                    }
+                    break;
+                }
+                default:
+                    break;
             }
-            CharacterDatabase.DelayQueryHolder(&chrHandler, &CharacterHandler::HandlePlayerBotLoginCallback, holder);
-
-            if(++itr == nbBotsWanted)
-                break;
         }
         while (result->NextRow());
         delete result;
