@@ -1145,8 +1145,6 @@ class ObjectMgr
         GossipTextMap       mGossipText;
         AreaTriggerMap      mAreaTriggers;
 
-        //AreaTriggerScriptMap    m_AreaTriggerScripts;
-        //EventIdScriptMap        m_EventIdScripts;
         BotSpawnsMap            mBotSpawns;
 
         RepRewardRateMap    m_RepRewardRateMap;
