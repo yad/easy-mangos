@@ -1595,6 +1595,10 @@ CharDelete.KeepDays = 30
 #         If you do it, mounts are now used as item...
 #     Default : 0
 #
+#     Custom.UnLimitedAmmo
+#         Set it to 1 to have unlimited ammo
+#     Default : 0
+#
 ###################################################################################################################
  
 Custom.SpeedGame = 1
@@ -1603,3 +1607,4 @@ Custom.NoCooldown = 0
 Custom.HurtInRealTime = 0
 Custom.NoWaitAfterCast = 0
 Custom.AllowFlyingMountsEverywhere = 0
+Custom.UnLimitedAmmo = 0

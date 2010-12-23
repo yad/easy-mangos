@@ -1200,6 +1200,7 @@ void Player::GiveMebIsForMyLevel()
         {
             case INVTYPE_HEAD:
             case INVTYPE_SHOULDERS:
+            case INVTYPE_CHEST:
             case INVTYPE_WAIST:
             case INVTYPE_LEGS:
             case INVTYPE_FEET:
@@ -1207,6 +1208,7 @@ void Player::GiveMebIsForMyLevel()
             case INVTYPE_HANDS:
             case INVTYPE_CLOAK:
             case INVTYPE_SHIELD:
+            case INVTYPE_ROBE:
             {
                 if(!bIInSlot[pProto->InventoryType])
                     bIInSlot[pProto->InventoryType] = pProto;
@@ -1215,26 +1217,11 @@ void Player::GiveMebIsForMyLevel()
                 break;
             }
             case INVTYPE_NECK:
+            case INVTYPE_HOLDABLE:
             {
                 if (pProto->StatsCount == 0)
                     break;
 
-                if(!bIInSlot[pProto->InventoryType])
-                    bIInSlot[pProto->InventoryType] = pProto;
-                else
-                    bIInSlot[pProto->InventoryType] = bIBetween(bIInSlot[pProto->InventoryType], pProto, false);
-                break;
-            }
-            case INVTYPE_CHEST:
-            {
-                if(!bIInSlot[pProto->InventoryType])
-                    bIInSlot[pProto->InventoryType] = pProto;
-                else
-                    bIInSlot[pProto->InventoryType] = bIBetween(bIInSlot[pProto->InventoryType], pProto, false);
-                break;
-            }
-            case INVTYPE_ROBE:
-            {
                 if(!bIInSlot[pProto->InventoryType])
                     bIInSlot[pProto->InventoryType] = pProto;
                 else
@@ -1280,7 +1267,6 @@ void Player::GiveMebIsForMyLevel()
                 break;
             }
             case INVTYPE_RANGED:
-            case INVTYPE_THROWN:
             case INVTYPE_RANGEDRIGHT:
             case INVTYPE_WEAPONMAINHAND:
             {
@@ -1349,7 +1335,6 @@ void Player::GiveMebIsForMyLevel()
             if (itr->second.ItemSet != bIFromSet->ItemSet)
                 continue;
 
-            //156 is The Twin Blades of Azzinoth
             if (itr->second.ItemLevel > 155 && itr->second.ItemLevel != bIFromSet->ItemLevel)
                 continue;
 
@@ -1369,7 +1354,6 @@ void Player::GiveMebIsForMyLevel()
             if (itr->second.ItemSet != bIFromSet->ItemSet)
                 continue;
 
-            //156 is The Twin Blades of Azzinoth
             if (itr->second.ItemLevel > 155 && itr->second.ItemLevel != bIFromSet->ItemLevel)
                 continue;
 
@@ -1463,6 +1447,7 @@ void Player::GiveMebIsForMyLevel()
             case INVTYPE_FINGER:
             case INVTYPE_FINGER2:
             case INVTYPE_TRINKET:
+            case INVTYPE_HOLDABLE:
             case INVTYPE_TRINKET2:
             {
                 break;
@@ -1475,36 +1460,118 @@ void Player::GiveMebIsForMyLevel()
         }
 
     }
-    //robe ou tunique
     StoreNewItemInBestSlots(bIBetween(bIInSlot[INVTYPE_CHEST], bIInSlot[INVTYPE_ROBE], false));
-    //distance ou distance droite
     StoreNewItemInBestSlots(bIBetween(bIInSlot[INVTYPE_RANGED], bIInSlot[INVTYPE_RANGEDRIGHT], false));
 
     ItemPrototype const *mItem = NULL;
     ItemPrototype const *sItem = NULL;
-    if (CanDualWield())
+
+    switch(getRole())
     {
-        if (CanTitanGrip())
+        case MageFire:
+        case MageArcane:
+        case MageFrost:
+        case PriestHoly:
+        case DruidRestoration:
+        case WarlockDestruction:
+        case WarlockCurses:
+        case WarlockSummoning:
         {
-            if (getRole() == WarriorProtection)
-            {
+            mItem = bIBetween(bIInSlot[INVTYPE_WEAPON], bIInSlot[INVTYPE_WEAPONMAINHAND], true);
+            mItem = bIBetween(mItem, bIInSlot[INVTYPE_WEAPON2], true);
+            if (!mItem)
                 mItem = bIBetween(bIInSlot[INVTYPE_2HWEAPON], bIInSlot[INVTYPE_2HWEAPON2], true);
-                sItem = bIInSlot[INVTYPE_SHIELD];
+            else
+                sItem = bIInSlot[INVTYPE_HOLDABLE];
+            break;
+        }
+        case WarriorArms:
+        case ShamanEnhancement:
+        {
+            mItem = bIBetween(bIInSlot[INVTYPE_WEAPON], bIInSlot[INVTYPE_WEAPONMAINHAND], true);
+            mItem = bIBetween(mItem, bIInSlot[INVTYPE_WEAPON2], true);
+            if (CanDualWield())
+            {
+                if (mItem == bIInSlot[INVTYPE_WEAPON])
+                    sItem = bIBetween(bIInSlot[INVTYPE_WEAPON2], bIInSlot[INVTYPE_WEAPONOFFHAND], true);
+                else if (mItem == bIInSlot[INVTYPE_WEAPON2])
+                    sItem = bIBetween(bIInSlot[INVTYPE_WEAPON], bIInSlot[INVTYPE_WEAPONOFFHAND], true);
+                else
+                {
+                    sItem = bIBetween(bIInSlot[INVTYPE_WEAPON], bIInSlot[INVTYPE_WEAPON2], true);
+                    sItem = bIBetween(sItem, bIInSlot[INVTYPE_WEAPONOFFHAND], true);
+                }
+                if (!sItem)
+                    sItem = bIInSlot[INVTYPE_SHIELD];
             }
             else
+                sItem = bIInSlot[INVTYPE_SHIELD];
+            break;
+        }
+        case WarriorProtection:
+        {
+            mItem = bIBetween(bIInSlot[INVTYPE_WEAPON], bIInSlot[INVTYPE_WEAPONMAINHAND], true);
+            mItem = bIBetween(mItem, bIInSlot[INVTYPE_WEAPON2], true);
+            sItem = bIInSlot[INVTYPE_SHIELD];
+            if (!sItem && CanDualWield())
+            {
+                if (mItem == bIInSlot[INVTYPE_WEAPON])
+                    sItem = bIBetween(bIInSlot[INVTYPE_WEAPON2], bIInSlot[INVTYPE_WEAPONOFFHAND], true);
+                else if (mItem == bIInSlot[INVTYPE_WEAPON2])
+                    sItem = bIBetween(bIInSlot[INVTYPE_WEAPON], bIInSlot[INVTYPE_WEAPONOFFHAND], true);
+                else
+                {
+                    sItem = bIBetween(bIInSlot[INVTYPE_WEAPON], bIInSlot[INVTYPE_WEAPON2], true);
+                    sItem = bIBetween(sItem, bIInSlot[INVTYPE_WEAPONOFFHAND], true);
+                }
+            }
+            break;
+        }
+        case WarriorFury:
+        {
+            if (CanTitanGrip())
             {
                 mItem = bIBetween(bIInSlot[INVTYPE_2HWEAPON], bIInSlot[INVTYPE_2HWEAPON2], true);
                 if (mItem == bIInSlot[INVTYPE_2HWEAPON])
                     sItem = bIInSlot[INVTYPE_2HWEAPON2];
                 else
                     sItem = bIInSlot[INVTYPE_2HWEAPON];
+                if (!sItem)
+                    sItem = bIInSlot[INVTYPE_SHIELD];
             }
+            else
+            {
+                mItem = bIBetween(bIInSlot[INVTYPE_2HWEAPON], bIInSlot[INVTYPE_2HWEAPON2], true);
+                if (!mItem)
+                {
+                    mItem = bIBetween(bIInSlot[INVTYPE_WEAPON], bIInSlot[INVTYPE_WEAPONMAINHAND], true);
+                    mItem = bIBetween(mItem, bIInSlot[INVTYPE_WEAPON2], true);
+                    if (CanDualWield())
+                    {
+                        if (mItem == bIInSlot[INVTYPE_WEAPON])
+                            sItem = bIBetween(bIInSlot[INVTYPE_WEAPON2], bIInSlot[INVTYPE_WEAPONOFFHAND], true);
+                        else if (mItem == bIInSlot[INVTYPE_WEAPON2])
+                            sItem = bIBetween(bIInSlot[INVTYPE_WEAPON], bIInSlot[INVTYPE_WEAPONOFFHAND], true);
+                        else
+                        {
+                            sItem = bIBetween(bIInSlot[INVTYPE_WEAPON], bIInSlot[INVTYPE_WEAPON2], true);
+                            sItem = bIBetween(sItem, bIInSlot[INVTYPE_WEAPONOFFHAND], true);
+                        }
+                        if (!sItem)
+                            sItem = bIInSlot[INVTYPE_SHIELD];
+                    }
+                    else
+                        sItem = bIInSlot[INVTYPE_SHIELD];
+                }
+            }
+            break;
         }
-        else
+        case RogueCombat:
+        case RogueAssassination:
+        case RogueSubtlety:
         {
             mItem = bIBetween(bIInSlot[INVTYPE_WEAPON], bIInSlot[INVTYPE_WEAPONMAINHAND], true);
             mItem = bIBetween(mItem, bIInSlot[INVTYPE_WEAPON2], true);
-
             if (mItem == bIInSlot[INVTYPE_WEAPON])
                 sItem = bIBetween(bIInSlot[INVTYPE_WEAPON2], bIInSlot[INVTYPE_WEAPONOFFHAND], true);
             else if (mItem == bIInSlot[INVTYPE_WEAPON2])
@@ -1514,52 +1581,151 @@ void Player::GiveMebIsForMyLevel()
                 sItem = bIBetween(bIInSlot[INVTYPE_WEAPON], bIInSlot[INVTYPE_WEAPON2], true);
                 sItem = bIBetween(sItem, bIInSlot[INVTYPE_WEAPONOFFHAND], true);
             }
+            break;
         }
-    }
-    else
-    {
-        switch(getRole())
+        case PriestDiscipline:
+        case PriestShadow:
+        case ShamanElementalCombat:
+        case DruidFeralCombat:
+        case DruidBalance:
         {
-            case PaladinHoly:
-            case PaladinProtection:
-            case ShamanElementalCombat:
-            case ShamanRestoration:
-            case WarriorProtection:
-            case DeathKnightFrost:
+            mItem = bIBetween(bIInSlot[INVTYPE_2HWEAPON], bIInSlot[INVTYPE_2HWEAPON2], true);
+            if (!mItem)
             {
                 mItem = bIBetween(bIInSlot[INVTYPE_WEAPON], bIInSlot[INVTYPE_WEAPONMAINHAND], true);
                 mItem = bIBetween(mItem, bIInSlot[INVTYPE_WEAPON2], true);
-                sItem = bIInSlot[INVTYPE_SHIELD];
-                break;
+                if (!sItem)
+                    sItem = bIInSlot[INVTYPE_HOLDABLE];
             }
-            default:
+            break;
+        }
+        case PaladinCombat:
+        {
+            mItem = bIBetween(bIInSlot[INVTYPE_2HWEAPON], bIInSlot[INVTYPE_2HWEAPON2], true);
+            if (!mItem)
             {
-                mItem = bIBetween(bIInSlot[INVTYPE_2HWEAPON], bIInSlot[INVTYPE_2HWEAPON2], true);
-                if (!mItem)
+                mItem = bIBetween(bIInSlot[INVTYPE_WEAPON], bIInSlot[INVTYPE_WEAPONMAINHAND], true);
+                mItem = bIBetween(mItem, bIInSlot[INVTYPE_WEAPON2], true);
+                if (!sItem)
+                    sItem = bIInSlot[INVTYPE_SHIELD];
+            }
+            break;
+        }
+        case ShamanRestoration:
+        case DeathKnightFrost:
+        case PaladinHoly:
+        case PaladinProtection:
+        {
+            mItem = bIBetween(bIInSlot[INVTYPE_WEAPON], bIInSlot[INVTYPE_WEAPONMAINHAND], true);
+            mItem = bIBetween(mItem, bIInSlot[INVTYPE_WEAPON2], true);
+            sItem = bIInSlot[INVTYPE_SHIELD];
+            break;
+        }
+        case HunterBeastMastery:
+        case HunterSurvival:
+        case HunterMarksmanship:
+        case DeathKnightBlood:
+        case DeathKnightUnholy:
+        {
+            mItem = bIBetween(bIInSlot[INVTYPE_2HWEAPON], bIInSlot[INVTYPE_2HWEAPON2], true);
+            if (!mItem)
+            {
+                mItem = bIBetween(bIInSlot[INVTYPE_WEAPON], bIInSlot[INVTYPE_WEAPONMAINHAND], true);
+                mItem = bIBetween(mItem, bIInSlot[INVTYPE_WEAPON2], true);
+                if (CanDualWield())
                 {
-                    mItem = bIBetween(bIInSlot[INVTYPE_WEAPON], bIInSlot[INVTYPE_WEAPONMAINHAND], true);
-                    mItem = bIBetween(mItem, bIInSlot[INVTYPE_WEAPON2], true);
+                    if (mItem == bIInSlot[INVTYPE_WEAPON])
+                        sItem = bIBetween(bIInSlot[INVTYPE_WEAPON2], bIInSlot[INVTYPE_WEAPONOFFHAND], true);
+                    else if (mItem == bIInSlot[INVTYPE_WEAPON2])
+                        sItem = bIBetween(bIInSlot[INVTYPE_WEAPON], bIInSlot[INVTYPE_WEAPONOFFHAND], true);
+                    else
+                    {
+                        sItem = bIBetween(bIInSlot[INVTYPE_WEAPON], bIInSlot[INVTYPE_WEAPON2], true);
+                        sItem = bIBetween(sItem, bIInSlot[INVTYPE_WEAPONOFFHAND], true);
+                    }
+                    if (!sItem)
+                        sItem = bIInSlot[INVTYPE_SHIELD];
                 }
+                else
+                    sItem = bIInSlot[INVTYPE_SHIELD];
             }
             break;
         }
     }
+
     StoreNewItemInBestSlots(mItem);
-    if (StoreNewItemInBestSlots(mItem) && sItem->InventoryType != INVTYPE_SHIELD)
-        StoreNewItemInBestSlots(mItem);
-    else
+    if (sItem && (sItem->InventoryType==INVTYPE_SHIELD || sItem->InventoryType==INVTYPE_HOLDABLE))
+        StoreNewItemInBestSlots(sItem);
+    else if (!StoreNewItemInBestSlots(mItem))
         StoreNewItemInBestSlots(sItem);
 
+    ItemPrototype const *bIInSlotAmmo[3];
+    for (uint8 i = 0; i < 3; ++i)
+        bIInSlotAmmo[i] = NULL;
+
+    for (uint32 id = 0; id < sItemStorage.MaxEntry; id++)
+    {
+        ItemPrototype const *pProto = sObjectMgr.GetItemPrototype(id);
+        if(!pProto)
+            continue;
+
+        if(!IsForMyClass(pProto) || !IsNotAllowedItem(pProto))
+            continue;
+
+        switch( pProto->InventoryType )
+        {
+            case INVTYPE_AMMO:
+            {
+                if (CanUseAmmo(id)!=EQUIP_ERR_OK)
+                    break;
+                if(!bIInSlotAmmo[pProto->SubClass - 1])
+                    bIInSlotAmmo[pProto->SubClass - 1] = pProto;
+                else
+                    bIInSlotAmmo[pProto->SubClass - 1] = bIBetween(bIInSlotAmmo[pProto->SubClass - 1], pProto, true);
+                break;
+            }
+            case INVTYPE_THROWN:
+            {
+                uint16 eDest;
+                if (CanEquipNewItem(NULL_SLOT, eDest, id, false)!=EQUIP_ERR_OK)
+                    break;
+                if(!bIInSlotAmmo[0])
+                    bIInSlotAmmo[0] = pProto;
+                else
+                    bIInSlotAmmo[0] = bIBetween(bIInSlotAmmo[0], pProto, true);
+                break;
+            }
+            default:
+                break;
+        }
+    }
+    Item* it = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_RANGED);
+    if (it)
+    {
+        if (bIInSlotAmmo[1] && it->GetProto()->AmmoType == bIInSlotAmmo[1]->SubClass)
+        {
+            StoreNewItemInBestSlots(bIInSlotAmmo[1]->ItemId, 200);
+            SetAmmo(bIInSlotAmmo[1]->ItemId);
+        }
+        else if (bIInSlotAmmo[2] && it->GetProto()->AmmoType == bIInSlotAmmo[2]->SubClass)
+        {
+            StoreNewItemInBestSlots(bIInSlotAmmo[2]->ItemId, 200);
+            SetAmmo(bIInSlotAmmo[2]->ItemId);
+        }
+    }
+    else if (bIInSlotAmmo[0])
+    {
+        StoreNewItemInBestSlots(bIInSlotAmmo[0]);
+        Item* i = GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_RANGED);
+        if (i && i->GetMaxStackCount()!=1) i->SetCount(200);
+    }
+
     StoreNewItemInBestSlots(bIInSlot[INVTYPE_FINGER]);
-    if (StoreNewItemInBestSlots(bIInSlot[INVTYPE_FINGER]))
-        StoreNewItemInBestSlots(bIInSlot[INVTYPE_FINGER]);
-    else
+    if (!StoreNewItemInBestSlots(bIInSlot[INVTYPE_FINGER]))
         StoreNewItemInBestSlots(bIInSlot[INVTYPE_FINGER2]);
 
     StoreNewItemInBestSlots(bIInSlot[INVTYPE_TRINKET]);
-    if (StoreNewItemInBestSlots(bIInSlot[INVTYPE_TRINKET]))
-        StoreNewItemInBestSlots(bIInSlot[INVTYPE_TRINKET]);
-    else
+    if (!StoreNewItemInBestSlots(bIInSlot[INVTYPE_TRINKET]))
         StoreNewItemInBestSlots(bIInSlot[INVTYPE_TRINKET2]);
 
     bIFromSet = NULL;
@@ -1573,7 +1739,6 @@ bool Player::OtherItemsInSetAreAllowedForMe(ItemPrototype const* pProto)
         if (itr->second.ItemSet != pProto->ItemSet)
             continue;
 
-        //156 is The Twin Blades of Azzinoth
         if (itr->second.ItemLevel > 155 && itr->second.ItemLevel != pProto->ItemLevel)
             continue;
 
@@ -1617,7 +1782,11 @@ ItemPrototype const* Player::CheckItemSet(ItemPrototype const* bIInSlot, ItemPro
         return bIInSlot;
     else
     {
-        if (bIInSlot->ItemLevel > bIFromSet->ItemLevel)
+        if (bIInSlot->Quality > bIFromSet->Quality)
+            return bIInSlot;
+        else if (bIInSlot->Quality < bIFromSet->Quality)
+            return bIFromSet;
+        else if (bIInSlot->ItemLevel > bIFromSet->ItemLevel)
             return bIInSlot;
         else
             return bIFromSet;
@@ -1643,6 +1812,21 @@ bool Player::StoreNewItemInBestSlots(ItemPrototype const* bIInSlot)
 
 void Player::RemoveMyEquipement(bool destroy)
 {
+    if (GetUInt32Value(PLAYER_AMMO_ID))
+    {
+        uint32 ammo = GetUInt32Value(PLAYER_AMMO_ID);
+        RemoveAmmo();
+        if (destroy)
+        {
+            Item* i = GetItemByEntry(ammo);
+            if (i)
+            {
+                uint32 count = i->GetCount();
+                DestroyItemCount(i, count, true);
+            }
+        }
+    }
+
     for (int slot=EQUIPMENT_SLOT_START; slot < EQUIPMENT_SLOT_END; ++slot)
     {
         if (slot==EQUIPMENT_SLOT_BODY || slot==EQUIPMENT_SLOT_TABARD)
@@ -1651,6 +1835,21 @@ void Player::RemoveMyEquipement(bool destroy)
         Item* pItem = GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
         if (!pItem)
             continue;
+
+        if (destroy && pItem->GetProto()->InventoryType == INVTYPE_THROWN)
+        {
+            if(pItem->GetMaxStackCount()==1)
+            {
+                uint32 count = 1;
+                DestroyItemCount( pItem, count, true);
+            }
+            else
+            {
+                uint32 count = pItem->GetCount();
+                DestroyItemCount( pItem, count, true);
+            }
+            continue;
+        }
 
         ItemPosCountVec sDest;
         if(CanStoreItem( NULL_BAG, NULL_SLOT, sDest, pItem, false )!=EQUIP_ERR_OK)
@@ -1814,17 +2013,11 @@ bool Player::IsForMyClass(ItemPrototype const* pProto)
         case ITEM_CLASS_ARMOR:
             switch(pProto->SubClass)
             {
-                //case ITEM_SUBCLASS_ARMOR_MISC:
                 case ITEM_SUBCLASS_ARMOR_CLOTH:     return HasSpell(9078);
                 case ITEM_SUBCLASS_ARMOR_LEATHER:   return HasSpell(9077);
                 case ITEM_SUBCLASS_ARMOR_MAIL:      return HasSpell(8737);
                 case ITEM_SUBCLASS_ARMOR_PLATE:     return HasSpell(750);
-                //case ITEM_SUBCLASS_ARMOR_BUCKLER:
                 case ITEM_SUBCLASS_ARMOR_SHIELD:    return HasSpell(9116);
-                //case ITEM_SUBCLASS_ARMOR_LIBRAM:
-                //case ITEM_SUBCLASS_ARMOR_IDOL:
-                //case ITEM_SUBCLASS_ARMOR_TOTEM:
-                //case ITEM_SUBCLASS_ARMOR_SIGIL:
                 default: return true;
             }
     }
@@ -1938,6 +2131,8 @@ ItemPrototype const* Player::bIBetween(ItemPrototype const* pProto1, ItemPrototy
 
     switch (role)
     {
+        case MageArcane:
+        case MageFrost:
         case MageFire:
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_INTELLECT);
             if(pProto)
@@ -1948,20 +2143,6 @@ ItemPrototype const* Player::bIBetween(ItemPrototype const* pProto1, ItemPrototy
                 return pProto;
 
             pProto = CompareItem(pProto1, pProto2, ITEM_MOD_CRIT_SPELL_RATING);
-            if(pProto)
-                return pProto;
-            break;
-        case MageArcane:
-        case MageFrost:
-            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_INTELLECT);
-            if(pProto)
-                return pProto;
-
-            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_SPELL_POWER);
-            if(pProto)
-                return pProto;
-
-            pProto = CompareItem(pProto1, pProto2, ITEM_MOD_HIT_SPELL_RATING);
             if(pProto)
                 return pProto;
             break;
@@ -21288,7 +21469,8 @@ void Player::UpdateVisibilityOf(WorldObject const* viewPoint, T* target, UpdateD
             ObjectGuid t_guid = target->GetObjectGuid();
 
             target->BuildOutOfRangeUpdateBlock(&data);
-            m_clientGUIDs.erase(t_guid);
+            if (!m_clientGUIDs.empty())
+                m_clientGUIDs.erase(t_guid);
 
             DEBUG_FILTER_LOG(LOG_FILTER_VISIBILITY_CHANGES, "%s is out of range for %s. Distance = %f", t_guid.GetString().c_str(), GetGuidStr().c_str(), GetDistance(target));
         }

@@ -5989,11 +5989,13 @@ void Spell::EffectWeaponDmg(SpellEffectIndex eff_idx)
             {
                 // decrease items amount for stackable throw weapon
                 uint32 count = 1;
-                ((Player*)m_caster)->DestroyItemCount( pItem, count, true);
+                if (!sWorld.getConfig(CONFIG_BOOL_UNLIMITED_AMMO))
+                    ((Player*)m_caster)->DestroyItemCount( pItem, count, true);
             }
         }
         else if(uint32 ammo = ((Player*)m_caster)->GetUInt32Value(PLAYER_AMMO_ID))
-            ((Player*)m_caster)->DestroyItemCount(ammo, 1, true);
+            if (!sWorld.getConfig(CONFIG_BOOL_UNLIMITED_AMMO))
+                ((Player*)m_caster)->DestroyItemCount(ammo, 1, true);
     }
 }
 

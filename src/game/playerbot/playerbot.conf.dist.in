@@ -13,12 +13,14 @@ ConfVersion=2010062001
 #        Default: 0 - off
 #                 1 - on
 #
-#    PlayerbotAI.MaxBots = 100
+#    PlayerbotAI.MaxBots.Alliance
+#    PlayerbotAI.MaxBots.Horde
 #        Number max of bots ingame
 #        Database has 300, it's possible to generate more
-#        default: 100
+#        default: 20 on each side
 #
 ###################################################################################################################
 
 PlayerbotAI.Enable = 0
-PlayerbotAI.MaxBots = 100
+PlayerbotAI.MaxBots.Alliance = 20
+PlayerbotAI.MaxBots.Horde = 20

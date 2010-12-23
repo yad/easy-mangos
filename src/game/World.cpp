@@ -779,12 +779,13 @@ void World::LoadConfigSettings(bool reload)
 
     setConfig(CONFIG_BOOL_PET_UNSUMMON_AT_MOUNT,      "PetUnsummonAtMount", true);
 
-    setConfigPos(CONFIG_FLOAT_SPEED_GAME,                 "Custom.SpeedGame",                   1.0f);
+    setConfig(CONFIG_FLOAT_SPEED_GAME,                    "Custom.SpeedGame",                   1.0f);
     setConfig(CONFIG_BOOL_NO_CAST_TIME,                   "Custom.NoCastTime",                  false);
     setConfig(CONFIG_BOOL_NO_COOLDOWN,                    "Custom.NoCooldown",                  false);
     setConfig(CONFIG_BOOL_HURT_IN_REAL_TIME,              "Custom.HurtInRealTime",              false);
     setConfig(CONFIG_BOOL_NO_WAIT_AFTER_CAST,             "Custom.NoWaitAfterCast",             false);
     setConfig(CONFIG_BOOL_ALLOW_FLYING_MOUNTS_EVERYWHERE, "Custom.AllowFlyingMountsEverywhere", false);
+    setConfig(CONFIG_BOOL_UNLIMITED_AMMO,                 "Custom.UnLimitedAmmo",               false);
 
     setConfig(CONFIG_BOOL_ALLOW_FLIGHT_ON_OLD_MAPS, "AllowFlightOnOldMaps", false);
 

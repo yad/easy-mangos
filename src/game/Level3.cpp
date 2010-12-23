@@ -2994,7 +2994,7 @@ bool ChatHandler::HandleLearnAllMyTalentsForMyLevelCommand(char* /*args*/)
             continue;
 
         TalentTabEntry const *talentTabInfo = sTalentTabStore.LookupEntry( talentInfo->TalentTab );
-        if(!talentTabInfo)
+        if(!talentTabInfo || talentTabInfo->TalentTabID != player->getRole())
             continue;
 
         if( (classMask & talentTabInfo->ClassMask) == 0 )
@@ -7692,6 +7692,52 @@ bool ChatHandler::HandleGMStartUpCommand(char* args)
 
     if(!player->HasItemCount(23162, 4, false))
         player->StoreNewItemInBestSlots(23162, 4);
+
+    switch (player->getRace())
+    {
+        case RACE_HUMAN:
+            if (!player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_BODY))
+                player->StoreNewItemInBestSlots(41255, 1);
+            break;
+        case RACE_ORC:
+            if (!player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_BODY))
+                player->StoreNewItemInBestSlots(42369, 1);
+            break;
+        case RACE_DWARF:
+            if (!player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_BODY))
+                player->StoreNewItemInBestSlots(42371, 1);
+            break;
+        case RACE_NIGHTELF:
+            if (!player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_BODY))
+                player->StoreNewItemInBestSlots(42372, 1);
+            break;
+        case RACE_UNDEAD_PLAYER:
+            if (!player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_BODY))
+                player->StoreNewItemInBestSlots(14617, 1);
+            break;
+        case RACE_TAUREN:
+            if (!player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_BODY))
+                player->StoreNewItemInBestSlots(6125, 1);
+            break;
+        case RACE_GNOME:
+            if (!player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_BODY))
+                player->StoreNewItemInBestSlots(42373, 1);
+            break;
+        case RACE_TROLL:
+            if (!player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_BODY))
+                player->StoreNewItemInBestSlots(18231, 1);
+            break;
+        case RACE_BLOODELF:
+            if (!player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_BODY))
+                player->StoreNewItemInBestSlots(42370, 1);
+            break;
+        case RACE_DRAENEI:
+            if (!player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_BODY))
+                player->StoreNewItemInBestSlots(10054, 1);
+            break;
+        default:
+            break;
+    }
 
     switch(player->getClass())
     {
