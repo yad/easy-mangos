@@ -1906,6 +1906,9 @@ bool Player::IsForMyClass(ItemPrototype const* pProto)
                 case RogueSubtlety:
                     switch (pProto->SubClass)
                     {
+                        case ITEM_SUBCLASS_WEAPON_BOW:      return HasSpell(264);
+                        case ITEM_SUBCLASS_WEAPON_GUN:      return HasSpell(266);
+                        case ITEM_SUBCLASS_WEAPON_CROSSBOW: return HasSpell(5011);
                         case ITEM_SUBCLASS_WEAPON_DAGGER:   return HasSpell(1180);
                         case ITEM_SUBCLASS_WEAPON_THROWN:   return HasSpell(2567);
                         default: return false;
@@ -21472,8 +21475,7 @@ void Player::UpdateVisibilityOf(WorldObject const* viewPoint, T* target, UpdateD
             ObjectGuid t_guid = target->GetObjectGuid();
 
             target->BuildOutOfRangeUpdateBlock(&data);
-            if (!m_clientGUIDs.empty())
-                m_clientGUIDs.erase(t_guid);
+            m_clientGUIDs.erase(t_guid);
 
             DEBUG_FILTER_LOG(LOG_FILTER_VISIBILITY_CHANGES, "%s is out of range for %s. Distance = %f", t_guid.GetString().c_str(), GetGuidStr().c_str(), GetDistance(target));
         }
