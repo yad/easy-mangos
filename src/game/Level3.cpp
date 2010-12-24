@@ -2613,7 +2613,7 @@ bool ChatHandler::HandleLearnAllMySpellsCommand(char* /*args*/)
     if(!player->HasSpell(54197))
         player->learnSpell(54197, false);
 
-    switch (player->GetTeam())
+    /*switch (player->GetTeam())
     {
         case ALLIANCE:
         {
@@ -2675,7 +2675,7 @@ bool ChatHandler::HandleLearnAllMySpellsCommand(char* /*args*/)
 
     for(uint32* bsl = &nfMounts[0]; *bsl; ++bsl)
         if(!player->HasSpell(*bsl))
-            player->learnSpell(*bsl, false);
+            player->learnSpell(*bsl, false);*/
 
     SendSysMessage(LANG_COMMAND_LEARN_CLASS_SPELLS);
     return true;
@@ -2813,7 +2813,7 @@ bool ChatHandler::HandleLearnAllMySpellsForMyLevelCommand(char* /*args*/)
     if(!player->HasSpell(54197) && player->getLevel() > 76)
         player->learnSpell(54197, false);
 
-    switch (player->GetTeam())
+    /*switch (player->GetTeam())
     {
         case ALLIANCE:
         {
@@ -2972,7 +2972,7 @@ bool ChatHandler::HandleLearnAllMySpellsForMyLevelCommand(char* /*args*/)
                         player->learnSpell(*bsl, false);
             }
         }
-    }
+    }*/
 
     SendSysMessage(LANG_COMMAND_LEARN_CLASS_SPELLS);
     return true;
