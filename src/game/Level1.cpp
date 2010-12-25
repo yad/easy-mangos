@@ -373,7 +373,7 @@ bool ChatHandler::HandleNamegoCommand(char* args)
         if (HasLowerSecurity(target))
             return false;
 
-        if (target->IsBeingTeleported())
+        if (target->IsBeingTeleported() && !target->IsBot())
         {
             PSendSysMessage(LANG_IS_TELEPORTED, nameLink.c_str());
             SetSentErrorMessage(true);

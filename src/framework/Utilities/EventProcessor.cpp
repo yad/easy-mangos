@@ -60,6 +60,9 @@ void EventProcessor::Update(uint32 p_time)
 
 void EventProcessor::KillAllEvents(bool force)
 {
+    if (m_events.empty())
+        return;
+
     // prevent event insertions
     m_aborting = true;
 
