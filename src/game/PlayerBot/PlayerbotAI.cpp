@@ -1363,7 +1363,7 @@ void PlayerbotAI::GetCombatTarget(Unit* forcedTarget)
     }
 
     // check for new targets
-    if (!m_targetCombat || m_targetCombat->isDead() || !m_targetCombat->IsInWorld() || !m_bot->IsWithinDist(m_targetCombat, 50) || !m_bot->IsHostileTo(m_targetCombat) || !m_bot->IsInMap(m_targetCombat))
+    if (!m_targetCombat || m_targetCombat->isDead() || !m_targetCombat->IsInWorld() || !m_bot->IsWithinDistInMap(m_targetCombat, 50) || !m_bot->IsHostileTo(m_targetCombat) || !m_bot->IsInMap(m_targetCombat))
     {
         if (!m_bot->getAttackers().empty())
         {
@@ -1559,7 +1559,7 @@ void PlayerbotAI::DoNextCombatManeuver()
     GetCombatTarget();
     if (m_targetCombat && m_targetCombat->GetTypeId() == TYPEID_PLAYER)
     {        
-        if (!o_targetCombat || o_targetCombat->isDead() || !o_targetCombat->IsInWorld() || !m_bot->IsWithinDist(o_targetCombat, 50) || !m_bot->IsHostileTo(o_targetCombat) || !m_bot->IsInMap(o_targetCombat))
+        if (!o_targetCombat || o_targetCombat->isDead() || !o_targetCombat->IsInWorld() || !m_bot->IsWithinDistInMap(o_targetCombat, 50) || !m_bot->IsHostileTo(o_targetCombat) || !m_bot->IsInMap(o_targetCombat))
         {
             //changement de cible autorisé
         }
@@ -1573,7 +1573,7 @@ void PlayerbotAI::DoNextCombatManeuver()
     // check if we have a target - fixes crash reported by rrtn (kill hunter's pet bug)
     // if current target for attacks doesn't make sense anymore
     // clear our orders so we can get orders in next update
-    if (!m_targetCombat || m_targetCombat->isDead() || !m_targetCombat->IsInWorld() || !m_bot->IsWithinDist(m_targetCombat, 50) || !m_bot->IsHostileTo(m_targetCombat) || !m_bot->IsInMap(m_targetCombat))
+    if (!m_targetCombat || m_targetCombat->isDead() || !m_targetCombat->IsInWorld() || !m_bot->IsWithinDistInMap(m_targetCombat, 50) || !m_bot->IsHostileTo(m_targetCombat) || !m_bot->IsInMap(m_targetCombat))
     {
         m_bot->AttackStop();
         m_bot->SetSelectionGuid(ObjectGuid());
@@ -2279,47 +2279,70 @@ void PlayerbotAI::MovementReset()
 
         if (m_bot->isAlive())
         {
-            float angle = rand_float(0, M_PI_F);
-            float dist = rand_float(5.0f, 7.0f);
             if (m_bot == GetMaster() && m_bot == m_followTarget)
             {
-                if (m_bot->IsWithinDist(m_target_follow, 10.0f))
+                if (m_bot->IsWithinDistInMap(m_target_follow, 5.0f))
                 {
-                    FindPOI();
-                    m_bot->GetMotionMaster()->Clear(true);
-                    m_bot->GetMotionMaster()->MoveFollow(m_target_follow, dist, angle);
+                    if (FindPOI())
+                        m_bot->GetMotionMaster()->MoveFollow(m_target_follow, 1.0f, rand_float(0, M_PI_F));
                 }
-                else if (m_bot->IsWithinDist(m_target_follow, 550.0f))
+                else if (m_bot->IsWithinDistInMap(m_target_follow, 500.0f))
                 {
-                    m_bot->GetMotionMaster()->Clear(true);
-                    m_bot->GetMotionMaster()->MoveFollow(m_target_follow, dist, angle);
                 }
                 else
                 {
-                    FindPOI();
-                    m_bot->GetMotionMaster()->Clear(true);
-                    m_bot->GetMotionMaster()->MoveFollow(m_target_follow, dist, angle);
+                    if (FindPOI())
+                        m_bot->GetMotionMaster()->MoveFollow(m_target_follow, 1.0f, rand_float(0, M_PI_F));
                 }
             }
             else
             {
-                if (m_bot->IsWithinDist(GetMaster(), 7.0f))
+                if (m_bot->IsWithinDistInMap(GetMaster(), 7.0f))
                     return;
 
-                m_bot->GetMotionMaster()->Clear(true);
+                float angle = rand_float(0, M_PI_F);
+                float dist = rand_float(5.0f, 7.0f);
                 m_bot->GetMotionMaster()->MoveFollow(m_followTarget, dist, angle);
             }
         }
     }
 }
 
-void PlayerbotAI::FindPOI()
+bool PlayerbotAI::FindPOI()
 {
-    Unit* target = m_bot->SelectRandomFriendlyTarget(0, 500.0f);
-    if (target)
-        m_target_follow = target;
+    Unit* target = m_bot->SelectRandomFriendlyTargetBetween(0, 10.0f, 500.0f);
+    if (!m_target_follow)
+    {
+        if (target)
+        {
+            m_target_follow = target;
+            return true;
+        }
+        else
+            return false;
+    }
     else
-        m_target_follow = m_bot;
+    {
+        if (target)
+        {
+            if (target == m_target_follow)
+            {
+                m_target_follow = target;
+                return false;
+            }
+            else
+            {
+                m_target_follow = target;
+                return true;
+            }
+        }
+        else
+        {
+            m_target_follow = NULL;
+            return false;
+        }
+    }
+    return false;
 }
 
 Unit* PlayerbotAI::FindEnemy()
@@ -2338,14 +2361,14 @@ Unit* PlayerbotAI::FindEnemy()
 
 void PlayerbotAI::MovementClear()
 {
-    // stop...
+    /*// stop...
     m_bot->GetMotionMaster()->Clear(true);
     m_bot->clearUnitState(UNIT_STAT_CHASE);
     m_bot->clearUnitState(UNIT_STAT_FOLLOW);
 
     // stand up...
     if (!m_bot->IsStandState())
-        m_bot->SetStandState(UNIT_STAND_STATE_STAND);
+        m_bot->SetStandState(UNIT_STAND_STATE_STAND);*/
 }
 
 bool PlayerbotAI::IsMoving()
@@ -3467,49 +3490,6 @@ bool PlayerbotAI::TradeCopper(uint32 copper)
     }
     return false;
 }
-
-/*void PlayerbotAI::Stay()
-   {
-    m_IsFollowingMaster = false;
-    m_bot->GetMotionMaster()->Clear(true);
-    m_bot->HandleEmoteCommand(EMOTE_ONESHOT_SALUTE);
-   }*/
-
-/*bool PlayerbotAI::Follow(Player& player)
-   {
-    if (GetMaster()->IsBeingTeleported())
-        return false;
-
-    m_IsFollowingMaster = true;
-
-    if (!m_bot->IsStandState())
-        m_bot->SetStandState(UNIT_STAND_STATE_STAND);
-
-    if (!m_bot->isInCombat())
-    {
-        // follow player or his corpse if dead (stops bot from running to graveyard if player repops...)
-        if( player.GetCorpse() )
-        {
-            if( !FollowCheckTeleport( *player.GetCorpse() ) )
-                return false;
-        }
-        else
-        {
-            if( !FollowCheckTeleport( player ) )
-                return false;
-        }
-    }
-
-    if (m_bot->isAlive())
-    {
-        float angle = rand_float(0, M_PI);
-        float dist = rand_float(0.5f, 1.0f);
-        m_bot->GetMotionMaster()->Clear(true);
-        m_bot->GetMotionMaster()->MoveFollow(&player, dist, angle);
-        return true;
-    }
-    return false;
-   }*/
 
 bool PlayerbotAI::FollowCheckTeleport(WorldObject &obj)
 {

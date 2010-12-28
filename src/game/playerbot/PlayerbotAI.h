@@ -297,7 +297,7 @@ public:
     void MovementReset();
     void MovementClear();
     bool IsMoving();
-    void FindPOI();
+    bool FindPOI();
     Unit* FindEnemy();
 
     void SetInFront(const Unit* obj);

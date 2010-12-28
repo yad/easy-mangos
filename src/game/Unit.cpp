@@ -11230,6 +11230,44 @@ Unit* Unit::SelectRandomFriendlyTarget(Unit* except /*= NULL*/, float radius /*=
     return *tcIter;
 }
 
+Unit* Unit::SelectRandomFriendlyTargetBetween(Unit* except /*= NULL*/, float radiusmin /*= 0*/, float raduismax /*= ATTACK_DISTANCE*/) const
+{
+    std::list<Unit *> targets;
+
+    MaNGOS::AnyFriendlyUnitBetweenObjectRangeCheck u_check(this, radiusmin, raduismax);
+    MaNGOS::UnitListSearcher<MaNGOS::AnyFriendlyUnitBetweenObjectRangeCheck> searcher(targets, u_check);
+
+    Cell::VisitAllObjects(this, searcher, raduismax);
+    // remove current target
+    if(except)
+        targets.remove(except);
+
+    // remove not LoS targets
+    for(std::list<Unit *>::iterator tIter = targets.begin(); tIter != targets.end();)
+    {
+        if(!IsWithinLOSInMap(*tIter))
+        {
+            std::list<Unit *>::iterator tIter2 = tIter;
+            ++tIter;
+            targets.erase(tIter2);
+        }
+        else
+            ++tIter;
+    }
+
+    // no appropriate targets
+    if(targets.empty())
+        return NULL;
+
+    // select random
+    uint32 rIdx = urand(0,targets.size()-1);
+    std::list<Unit *>::const_iterator tcIter = targets.begin();
+    for(uint32 i = 0; i < rIdx; ++i)
+        ++tcIter;
+
+    return *tcIter;
+}
+
 bool Unit::hasNegativeAuraWithInterruptFlag(uint32 flag)
 {
     for (SpellAuraHolderMap::const_iterator iter = m_spellAuraHolders.begin(); iter != m_spellAuraHolders.end(); ++iter)
