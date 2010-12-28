@@ -11562,6 +11562,25 @@ void Unit::MonsterMoveByPath(Path<PathElem,PathNode> const& path, uint32 start, 
             if (MovementGenerator *movgen = c->GetMotionMaster()->top())
                 movgen->Reset(*c);
     }
+    else
+    {
+        Player* p = (Player*)this;
+        if (!p || !p->IsBot())
+            return;
+
+        // Creature relocation acts like instant movement generator, so current generator expects interrupt/reset calls to react properly
+        if (!p->GetMotionMaster()->empty())
+            if (MovementGenerator *movgen = p->GetMotionMaster()->top())
+                movgen->Interrupt(*p);
+
+        GetMap()->PlayerRelocation((Player*)this, path[end-1].x, path[end-1].y, path[end-1].z, 0.0f);
+
+        // finished relocation, movegen can different from top before creature relocation,
+        // but apply Reset expected to be safe in any case
+        if (!p->GetMotionMaster()->empty())
+            if (MovementGenerator *movgen = p->GetMotionMaster()->top())
+                movgen->Reset(*p);
+    }
 }
 
 template void Unit::MonsterMoveByPath<PathNode>(const Path<PathNode> &, uint32, uint32, uint32);
@@ -11585,6 +11604,25 @@ void Unit::MonsterJump(float x, float y, float z, float o, uint32 transitTime, u
         if (!c->GetMotionMaster()->empty())
             if (MovementGenerator *movgen = c->GetMotionMaster()->top())
                 movgen->Reset(*c);
+    }
+    else
+    {
+        Player* p = (Player*)this;
+        if (!p || !p->IsBot())
+            return;
+
+        // Creature relocation acts like instant movement generator, so current generator expects interrupt/reset calls to react properly
+        if (!p->GetMotionMaster()->empty())
+            if (MovementGenerator *movgen = p->GetMotionMaster()->top())
+                movgen->Interrupt(*p);
+
+        GetMap()->PlayerRelocation((Player*)this, x, y, z, o);
+
+        // finished relocation, movegen can different from top before creature relocation,
+        // but apply Reset expected to be safe in any case
+        if (!p->GetMotionMaster()->empty())
+            if (MovementGenerator *movgen = p->GetMotionMaster()->top())
+                movgen->Reset(*p);
     }
 }
 

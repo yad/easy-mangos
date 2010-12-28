@@ -2303,17 +2303,18 @@ void PlayerbotAI::MovementReset()
             else
             {
                 float angle = rand_float(0, M_PI_F);
-                float dist = rand_float(5.0f, 10.0f);
+                float dist = rand_float(5.0f, 7.0f);
 
-                if (m_bot->IsWithinDist(GetMaster(), 10.0f))
+                if (m_bot->IsWithinDist(GetMaster(), 7.0f))
                     return;
 
-                float distX, distY;
-                distX = m_followTarget->GetPositionX() + (dist * cos(angle));
+                //float distX, distY;
+                /*distX = m_followTarget->GetPositionX() + (dist * cos(angle));
                 distY = m_followTarget->GetPositionY() + (dist * sin(angle));
-                m_bot->GetMotionMaster()->MovePoint(m_followTarget->GetMapId(), distX, distY, m_followTarget->GetPositionZ());
-                m_bot->SetInFront(m_followTarget);
-                m_followTarget->SendCreateUpdateToPlayer(m_bot);
+                m_bot->GetMotionMaster()->MovePoint(m_followTarget->GetMapId(), distX, distY, m_followTarget->GetPositionZ());*/
+                //m_bot->SetInFront(m_followTarget);
+                //m_followTarget->SendCreateUpdateToPlayer(m_bot);
+                m_bot->GetMotionMaster()->MoveFollow(m_followTarget, dist, angle);
             }
         }
     }

@@ -130,15 +130,17 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner)
 }
 
 template<>
-void TargetedMovementGeneratorMedium<Player,ChaseMovementGenerator<Player> >::UpdateFinalDistance(float /*fDistance*/)
+void TargetedMovementGeneratorMedium<Player,ChaseMovementGenerator<Player> >::UpdateFinalDistance(float fDistance)
 {
-    // nothing to do for Player
+    i_offset = fDistance;
+    i_recalculateTravel = true;
 }
 
 template<>
-void TargetedMovementGeneratorMedium<Player,FollowMovementGenerator<Player> >::UpdateFinalDistance(float /*fDistance*/)
+void TargetedMovementGeneratorMedium<Player,FollowMovementGenerator<Player> >::UpdateFinalDistance(float fDistance)
 {
-    // nothing to do for Player
+    i_offset = fDistance;
+    i_recalculateTravel = true;
 }
 
 template<>
@@ -265,6 +267,11 @@ template<>
 void ChaseMovementGenerator<Player>::Initialize(Player &owner)
 {
     owner.addUnitState(UNIT_STAT_CHASE|UNIT_STAT_CHASE_MOVE);
+    //owner.RemoveSplineFlag(SPLINEFLAG_WALKMODE);
+    
+    /*if (((Creature*)&owner)->CanFly())
+        owner.AddSplineFlag(SPLINEFLAG_UNKNOWN7);*/
+        
     _setTargetLocation(owner);
 }
 
@@ -307,14 +314,21 @@ void FollowMovementGenerator<Creature>::_updateWalkMode(Creature &u)
 }
 
 template<>
-void FollowMovementGenerator<Player>::_updateWalkMode(Player &)
+void FollowMovementGenerator<Player>::_updateWalkMode(Player &u)
 {
+    if (i_target.isValid())
+        u.UpdateWalkMode(i_target.getTarget());
 }
 
 template<>
-void FollowMovementGenerator<Player>::_updateSpeed(Player &/*u*/)
+void FollowMovementGenerator<Player>::_updateSpeed(Player &u)
 {
-    // nothing to do for Player
+    if (!i_target.isValid() || i_target->GetObjectGuid() != u.GetOwnerGuid())
+        return;
+
+    u.UpdateSpeed(MOVE_RUN,true);
+    u.UpdateSpeed(MOVE_WALK,true);
+    u.UpdateSpeed(MOVE_SWIM,true);
 }
 
 template<>
@@ -335,6 +349,10 @@ void FollowMovementGenerator<Player>::Initialize(Player &owner)
     owner.addUnitState(UNIT_STAT_FOLLOW|UNIT_STAT_FOLLOW_MOVE);
     _updateWalkMode(owner);
     _updateSpeed(owner);
+    
+    /*if (((Creature*)&owner)->CanFly())
+        owner.AddSplineFlag(SPLINEFLAG_UNKNOWN7);*/
+        
     _setTargetLocation(owner);
 }
 

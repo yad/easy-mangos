@@ -644,7 +644,7 @@ void AchievementMgr::LoadFromDB(QueryResult *achievementResult, QueryResult *cri
 
 void AchievementMgr::SendAchievementEarned(AchievementEntry const* achievement)
 {
-    if(GetPlayer()->GetSession()->PlayerLoading())
+    if(GetPlayer()->GetSession()->PlayerLoading() || GetPlayer()->IsBot())
         return;
 
     DEBUG_FILTER_LOG(LOG_FILTER_ACHIEVEMENT_UPDATES, "AchievementMgr::SendAchievementEarned(%u)", achievement->ID);
