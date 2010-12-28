@@ -7095,11 +7095,11 @@ when attempting to use the PointMovementGenerator
 */
 bool ChatHandler::HandleComeToMeCommand(char *args)
 {
-    Creature* caster = getSelectedCreature();
+    Unit* target = getSelectedUnit();
 
-    if (!caster)
+    if (!target)
     {
-        SendSysMessage(LANG_SELECT_CREATURE);
+        SendSysMessage(LANG_SELECT_CHAR_OR_CREATURE);
         SetSentErrorMessage(true);
         return false;
     }
@@ -7108,11 +7108,12 @@ bool ChatHandler::HandleComeToMeCommand(char *args)
     if (!ExtractUInt32(&args, newFlags))
         return false;
 
-    caster->SetSplineFlags(SplineFlags(newFlags));
+    if (target->GetTypeId() == TYPEID_UNIT)
+        ((Creature*)target)->SetSplineFlags(SplineFlags(newFlags));
 
     Player* pl = m_session->GetPlayer();
 
-    caster->GetMotionMaster()->MovePoint(0, pl->GetPositionX(), pl->GetPositionY(), pl->GetPositionZ());
+    target->GetMotionMaster()->MovePoint(0, pl->GetPositionX(), pl->GetPositionY(), pl->GetPositionZ());
     return true;
 }
 
