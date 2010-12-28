@@ -45,6 +45,7 @@
 #include "Log.h"
 #include "../GossipDef.h"
 #include "../ArenaTeam.h"
+#include "../MotionMaster.h"
 
 // returns a float in range of..
 float rand_float(float low, float high)
@@ -1549,8 +1550,6 @@ void PlayerbotAI::GetCombatTarget(Unit* forcedTarget)
     // add thingToAttack to loot list
     m_lootCreature.push_back(m_targetCombat->GetGUID());
 
-    // set movement generators for combat movement
-    MovementClear();
     return;
 }
 
@@ -2320,20 +2319,6 @@ void PlayerbotAI::MovementReset()
     }
 }
 
-void PlayerbotAI::MovementUpdate()
-{
-    // send heartbeats to world
-    // m_bot->SendHeartBeat(false);
-
-    float x = m_bot->GetPositionX();
-    float y = m_bot->GetPositionY();
-    float z = m_bot->GetPositionZ();
-    float o = m_bot->GetOrientation();
-
-    m_bot->UpdateGroundPositionZ(x, y, z);
-    m_bot->SetPosition(x, y, z, o, false);
-}
-
 void PlayerbotAI::FindPOI(float &x, float &y, float &z, uint32 &mapId)
 {
     Unit* target = m_bot->SelectRandomFriendlyTarget(0, 500.0f);
@@ -2382,6 +2367,9 @@ bool PlayerbotAI::IsMoving()
 
 void PlayerbotAI::SetInFront(const Unit* obj)
 {
+    if (IsMoving())
+        return;
+
     m_bot->SetInFront(obj);
 
     // TODO: Schmoozerd wrote a patch which adds MovementInfo::ChangeOrientation()
@@ -2412,6 +2400,21 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
     if (m_bot->GetTrader())
         return;
 
+    // Send updates to world if chasing target or moving to point
+    MovementGeneratorType movementType = m_bot->GetMotionMaster()->GetCurrentMovementGeneratorType();
+    if (movementType == CHASE_MOTION_TYPE || movementType == POINT_MOTION_TYPE)
+    {
+        float x, y, z;
+        m_bot->GetMotionMaster()->GetDestination(x, y, z);
+        if (x != m_destX || y != m_destY || z != m_destZ)
+        {
+            m_bot->SendMonsterMoveWithSpeed(x, y, z);
+            m_destX = x;
+            m_destY = y;
+            m_destZ = z;
+        }
+    }
+
     time_t currentTime = time(0);
     if (currentTime < m_ignoreAIUpdatesUntilTime)
         return;
@@ -2427,9 +2430,6 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
 
     if(!IsInCombat())
         CheckStuff();
-
-    // send heartbeat
-    MovementUpdate();
 
     if (!m_bot->isAlive())
     {
@@ -2808,7 +2808,7 @@ bool PlayerbotAI::CastSpell(uint32 spellId)
         pTarget = m_bot;
 
     // Check spell range
-    std::map<uint32, float>::iterator it = m_spellRangeMap.find(spellId);
+    SpellRanges::iterator it = m_spellRangeMap.find(spellId);
     if (it != m_spellRangeMap.end() && (int)it->second != 0)
     {
         float dist = m_bot->GetCombatDistance(pTarget);
@@ -2908,10 +2908,7 @@ bool PlayerbotAI::CastPetSpell(uint32 spellId, Unit* target)
             return false;
 
         if (!pet->isInFrontInMap(pTarget, 10)) // distance probably should be calculated
-        {
             pet->SetInFront(pTarget);
-            MovementUpdate();
-        }
     }
 
     pet->CastSpell(pTarget, pSpellInfo, false);
