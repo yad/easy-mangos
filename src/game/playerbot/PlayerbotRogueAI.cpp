@@ -114,14 +114,6 @@ void PlayerbotRogueAI::DoNextCombatManeuver(Unit *pTarget)
     if (!m_master)
         return;    
 
-    switch (ai->GetScenarioType())
-    {
-        case PlayerbotAI::SCENARIO_DUEL:
-            if (SINISTER_STRIKE > 0)
-                ai->CastSpell(SINISTER_STRIKE);
-        return;
-    }
-
     ai->SetInFront(pTarget);
     Unit* pVictim = pTarget->getVictim();
     float fTargetDist = m_bot->GetDistance(pTarget);
@@ -175,9 +167,9 @@ void PlayerbotRogueAI::DoNextCombatManeuver(Unit *pTarget)
     {
         case RogueSpeStealth:
         out << "Case Stealth";
-            if (PICK_POCKET > 0 && ai->CastSpell(PICK_POCKET, *pTarget) && ai->PickPocket(pTarget))
+            /*if (PICK_POCKET > 0 && ai->CastSpell(PICK_POCKET, *pTarget) && ai->PickPocket(pTarget))
                 out << "First > Pick Pocket"; // Should never display, as PickPocket will always return false
-        else if (PREMEDITATION > 0 && ai->CastSpell(PREMEDITATION, *pTarget))
+        else */if (PREMEDITATION > 0 && ai->CastSpell(PREMEDITATION, *pTarget))
                 out << " > Premeditation";
             else if (AMBUSH > 0 && ai->GetEnergyAmount() >= 60 && ai->CastSpell(AMBUSH, *pTarget))
                 out << " > Ambush";

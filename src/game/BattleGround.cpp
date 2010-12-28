@@ -1215,6 +1215,16 @@ void BattleGround::AddPlayer(Player *plr)
     // score struct must be created in inherited class
 
     ObjectGuid guid = plr->GetObjectGuid();
+    if (plr->IsBot())
+    {
+        PlayerbotAI* ai = plr->GetPlayerbotAI();
+        if (ai)
+        {
+            Player* master = ai->GetMaster();
+            if (master)
+                plr->SetBGTeam(master->GetBGTeam());
+        }
+    }
     Team team = plr->GetBGTeam();
 
     BattleGroundPlayer bp;

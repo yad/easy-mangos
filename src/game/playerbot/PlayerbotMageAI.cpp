@@ -99,16 +99,6 @@ void PlayerbotMageAI::DoNextCombatManeuver(Unit *pTarget)
     if (!m_master)
         return;    
 
-    switch (ai->GetScenarioType())
-    {
-        case PlayerbotAI::SCENARIO_DUEL:
-            if (FIREBALL > 0)
-                ai->CastSpell(FIREBALL);
-            return;
-    }
-
-    // ------- Non Duel combat ----------
-
     //ai->SetMovementOrder( PlayerbotAI::MOVEMENT_FOLLOW, m_master ); // dont want to melee mob
 
     // Damage Spells (primitive example)

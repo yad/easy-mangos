@@ -135,6 +135,8 @@ void WorldSession::SendPacket(WorldPacket const* packet)
     // Playerbot mod: send packet to bot AI
     if (GetPlayer())
     {
+        /*(WorldPacket*)packet->Print();*/
+
         ReadInvitePaquet(packet);
         if (IsBotSession()
             && GetPlayer()->GetPlayerbotAI()
@@ -193,21 +195,30 @@ bool WorldSession::ReadInvitePaquet(WorldPacket const* packet)
 
     if (packet->GetOpcode() == SMSG_GROUP_INVITE)
     {
-        if (GetPlayer()->GetGroupInvite())
+        const Group* const grp = GetPlayer()->GetGroupInvite();
+        if (!grp)
+            return false;
+
+        Player* const inviter = sObjectMgr.GetPlayer(grp->GetLeaderGuid());
+        if (!inviter)
         {
-            const Group* const grp = GetPlayer()->GetGroupInvite();
-            if (!grp)
-                return false;
-
-            Player* const inviter = sObjectMgr.GetPlayer(grp->GetLeaderGuid());
-            if (!inviter)
-                return false;
-
-            if(!GetPlayer()->GetPlayerbotMgr())
-                return false;
-
-            GetPlayer()->GetPlayerbotMgr()->SetMaster(inviter);
+            GetPlayer()->SetGroupInvite(NULL);
+            return false;
         }
+
+        if (inviter->GetBattleGround() && inviter->GetBattleGround()->isArena())
+        {
+            GetPlayer()->SetGroupInvite(NULL);
+            return false;
+        }
+
+        if(!GetPlayer()->GetPlayerbotMgr())
+        {
+            GetPlayer()->SetGroupInvite(NULL);
+            return false;
+        }
+        
+        GetPlayer()->GetPlayerbotMgr()->SetMaster(inviter);
     }
     return true;
 }
@@ -270,6 +281,8 @@ bool WorldSession::Update(uint32 diff, PacketFilter& updater)
                     // playerbot mod
                     if (_player && !IsBotSession() && _player->GetPlayerbotMgr())
                         _player->GetPlayerbotMgr()->HandleMasterIncomingPacket(*packet);
+                    /*if (_player)
+                        packet->Print();*/
                     // playerbot mod end
                     break;
                 case STATUS_LOGGEDIN_OR_RECENTLY_LOGGEDOUT:

@@ -33,6 +33,7 @@
 #include "InstanceSaveMgr.h"
 #include "Mail.h"
 #include "Util.h"
+#include "ArenaTeam.h"
 #ifdef _DEBUG_VMAPS
 #include "VMapFactory.h"
 #endif
@@ -385,11 +386,58 @@ bool ChatHandler::HandleNamegoCommand(char* args)
         if (pMap->IsBattleGroundOrArena())
         {
             // only allow if gm mode is on
-            if (!target->isGameMaster() && !target->IsBot())
+            if (!target->isGameMaster())
             {
-                PSendSysMessage(LANG_CANNOT_GO_TO_BG_GM,nameLink.c_str());
-                SetSentErrorMessage(true);
-                return false;
+                if (!target->IsBot())
+                {
+                    PSendSysMessage(LANG_CANNOT_GO_TO_BG_GM,nameLink.c_str());
+                    SetSentErrorMessage(true);
+                    return false;
+                }
+                else
+                {
+                    PlayerbotAI* ai = target->GetPlayerbotAI();
+                    if (!ai)
+                        return false;
+                    Player* master = target->GetPlayerbotAI()->GetMaster();
+                    if (!master || !master->GetBattleGround())
+                        return false;
+
+                    if (pMap->IsBattleArena())
+                    {
+                        uint32 a_id = 0;
+                        switch(master->GetBattleGround()->GetArenaType())
+                        {
+
+                            case ARENA_TYPE_2v2:
+                                a_id = master->GetArenaTeamId(0);
+                                break;
+                            case ARENA_TYPE_3v3:
+                                a_id = master->GetArenaTeamId(1);
+                                break;
+                            case ARENA_TYPE_5v5:
+                                a_id = master->GetArenaTeamId(2);
+                                break;
+                        }
+                        if(a_id == 0)
+                            return false;
+
+                        bool ok = false;
+                        for (uint8 i = 0; i < MAX_ARENA_SLOT; ++i)
+                        {
+                            if(a_id == target->GetArenaTeamId(i))
+                            {
+                                ok = true;
+                                break;
+                            }
+                        }
+                        if (!ok) return false;
+
+                    }
+                    else if (pMap->IsBattleGround())
+                    {
+                    }
+                }
             }
             // if both players are in different bgs
             else if (target->GetBattleGroundId() && m_session->GetPlayer()->GetBattleGroundId() != target->GetBattleGroundId())
@@ -437,6 +485,7 @@ bool ChatHandler::HandleNamegoCommand(char* args)
 
         if(!target->IsBot())
             PSendSysMessage(LANG_SUMMONING, nameLink.c_str(),"");
+
         if (needReportToTarget(target))
             ChatHandler(target).PSendSysMessage(LANG_SUMMONED_BY, playerLink(_player->GetName()).c_str());
 

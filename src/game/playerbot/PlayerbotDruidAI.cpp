@@ -133,13 +133,6 @@ void PlayerbotDruidAI::DoNextCombatManeuver(Unit *pTarget)
     if (!m_master)
         return;    
 
-    switch (ai->GetScenarioType())
-    {
-        case PlayerbotAI::SCENARIO_DUEL:
-            ai->CastSpell(MOONFIRE);
-            return;
-    }
-
     uint32 masterHP = m_master->GetHealth() * 100 / m_master->GetMaxHealth();
 
     ai->SetInFront(pTarget);

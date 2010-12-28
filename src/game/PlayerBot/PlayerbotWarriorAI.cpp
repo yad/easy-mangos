@@ -150,15 +150,6 @@ void PlayerbotWarriorAI::DoNextCombatManeuver(Unit *pTarget)
     if (!m_master)
         return;    
 
-    switch (ai->GetScenarioType())
-    {
-        case PlayerbotAI::SCENARIO_DUEL:
-            if (HEROIC_STRIKE > 0)
-                ai->CastSpell(HEROIC_STRIKE);
-            return;
-    }
-    // ------- Non Duel combat ----------
-
     //ai->SetMovementOrder( PlayerbotAI::MOVEMENT_FOLLOW, m_master ); // dont want to melee mob
 
     // Damage Attacks

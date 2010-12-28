@@ -113,16 +113,6 @@ void PlayerbotWarlockAI::DoNextCombatManeuver(Unit *pTarget)
     if (!m_master)
         return;    
 
-    switch (ai->GetScenarioType())
-    {
-        case PlayerbotAI::SCENARIO_DUEL:
-            if (SHADOW_BOLT > 0)
-                ai->CastSpell(SHADOW_BOLT);
-            return;
-    }
-
-    // ------- Non Duel combat ----------
-
     //ai->SetMovementOrder( PlayerbotAI::MOVEMENT_FOLLOW, m_master ); // dont want to melee mob
 
     ai->SetInFront(pTarget);

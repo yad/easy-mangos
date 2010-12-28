@@ -120,21 +120,6 @@ void PlayerbotPriestAI::DoNextCombatManeuver(Unit *pTarget)
     if (!m_master)
         return;                
 
-    switch (ai->GetScenarioType())
-    {
-        case PlayerbotAI::SCENARIO_DUEL:
-            (ai->HasAura(SCREAM, *pTarget) && ai->GetHealthPercent() < 60 && ai->CastSpell(HEAL)) ||
-            ai->CastSpell(SHADOW_WORD_PAIN) ||
-            (ai->GetHealthPercent() < 80 && ai->CastSpell(RENEW)) ||
-            (ai->GetPlayerBot()->GetDistance(pTarget) <= 5 && ai->CastSpell(SCREAM)) ||
-            ai->CastSpell(MIND_BLAST) ||
-            (ai->GetHealthPercent() < 20 && ai->CastSpell(GREATER_HEAL)) ||
-            ai->CastSpell(SMITE);
-            return;
-    }
-
-    // ------- Non Duel combat ----------
-
     ai->SetMovementOrder(PlayerbotAI::MOVEMENT_FOLLOW, m_master);   // dont want to melee mob
 
     Player *m_bot = GetPlayerBot();

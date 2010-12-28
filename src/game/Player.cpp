@@ -8331,6 +8331,12 @@ void Player::UpdateZone(uint32 newZone, uint32 newArea)
         RemoveByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_SANCTUARY);
     }
 
+    if (IsBot())
+    {
+        SetByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_PVP );
+        SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PVP_ATTACKABLE );
+    }
+
     if(zone->flags & AREA_FLAG_CAPITAL)                     // in capital city
         SetRestType(REST_TYPE_IN_CITY);
     else if (HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_RESTING) && GetRestType() != REST_TYPE_IN_TAVERN)
@@ -17000,8 +17006,17 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder *holder )
     SetMoney(money);
 
     SetUInt32Value(PLAYER_BYTES, fields[9].GetUInt32());
-    SetUInt32Value(PLAYER_BYTES_2, fields[10].GetUInt32());
 
+    if (IsBot())
+    {
+        SetUInt32Value(PLAYER_BYTES_2, 33554438);
+        SetByteValue(PLAYER_BYTES_2, 0, fields[10].GetUInt32());        
+    }
+    else
+    {
+        SetUInt32Value(PLAYER_BYTES_2, fields[10].GetUInt32());
+    }
+            
     m_drunk = fields[49].GetUInt16();
 
     SetUInt16Value(PLAYER_BYTES_3, 0, (m_drunk & 0xFFFE) | gender);

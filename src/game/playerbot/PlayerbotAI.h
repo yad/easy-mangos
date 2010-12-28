@@ -66,7 +66,6 @@ public:
     {
         SCENARIO_PVEEASY,
         SCENARIO_PVEHARD,
-        SCENARIO_DUEL,
         SCENARIO_PVPEASY,
         SCENARIO_PVPHARD
     };
@@ -285,6 +284,7 @@ public:
     void TurnInQuests(WorldObject *questgiver);
 
     bool IsInCombat();
+    Player* TargetPlayerFocus();
     void UpdateAttackerInfo();
     Unit* FindAttacker(ATTACKERINFOTYPE ait = AIT_NONE, Unit *victim = 0);
     uint32 GetAttackerCount() { return m_attackerInfo.size(); };
@@ -298,6 +298,7 @@ public:
     void MovementClear();
     bool IsMoving();
     void FindPOI(float &x, float &y, float &z, uint32 &mapId);
+    Unit* FindEnemy();
 
     void SetInFront(const Unit* obj);
 

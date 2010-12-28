@@ -101,6 +101,9 @@ void Pet::RemoveFromWorld()
 
 bool Pet::LoadPetFromDB( Player* owner, uint32 petentry, uint32 petnumber, bool current,  float x, float y, float z )
 {
+    if(owner->IsBot())
+        return false;
+
     m_loading = true;
 
     uint32 ownerid = owner->GetGUIDLow();
@@ -356,7 +359,7 @@ void Pet::SavePetToDB(PetSaveMode mode)
         return;
 
     Player* pOwner = (Player*)GetOwner();
-    if (!pOwner)
+    if (!pOwner || pOwner->IsBot())
         return;
 
     // current/stable/not_in_slot

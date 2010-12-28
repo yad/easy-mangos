@@ -27,6 +27,7 @@
 #include "../Chat.h"
 #include "../Language.h"
 #include "../Guild.h"
+#include "../ArenaTeam.h"
 
 class LoginQueryHolder;
 class CharacterHandler;
@@ -525,6 +526,14 @@ void PlayerbotMgr::LogoutPlayerBot(uint64 guid)
     Player* bot = GetPlayerBot(guid);
     if (bot)
     {
+        for (uint8 i = 0; i < MAX_ARENA_SLOT; ++i)
+        {
+            if(uint32 a_id = bot->GetArenaTeamId(i))
+            {
+                if(ArenaTeam *at = sObjectMgr.GetArenaTeamById(a_id))
+                    at->DelMember(bot->GetGUID());
+            }
+        }
         WorldSession * botWorldSessionPtr = bot->GetSession();
         botWorldSessionPtr->LogoutPlayer(true); // this will delete the bot Player object and PlayerbotAI object
         delete botWorldSessionPtr;  // finally delete the bot's WorldSession

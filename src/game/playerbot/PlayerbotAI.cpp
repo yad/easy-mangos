@@ -44,6 +44,7 @@
 #include "../SharedDefines.h"
 #include "Log.h"
 #include "../GossipDef.h"
+#include "../ArenaTeam.h"
 
 // returns a float in range of..
 float rand_float(float low, float high)
@@ -88,6 +89,15 @@ PlayerbotAI::PlayerbotAI(PlayerbotMgr* const mgr, Player* const bot) :
 
     bot->GetPosition(m_position_fin_x, m_position_fin_y, m_position_fin_z);
     uint32 m_mapId_fin = bot->GetMapId();
+
+    for (uint8 i = 0; i < MAX_ARENA_SLOT; ++i)
+    {
+        if(uint32 a_id = bot->GetArenaTeamId(i))
+        {
+            if(ArenaTeam *at = sObjectMgr.GetArenaTeamById(a_id))
+                at->DelMember(bot->GetGUID());
+        }
+    }
 }
 
 PlayerbotAI::~PlayerbotAI()
@@ -499,7 +509,6 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
 
                 m_bot->SetSelectionGuid(ObjectGuid(playerGuid));
                 m_ignoreAIUpdatesUntilTime = time(0) + 4;
-                m_ScenarioType = SCENARIO_DUEL;
             }
             return;
         }
@@ -616,11 +625,40 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
 
                 Player* const inviter = sObjectMgr.GetPlayer(grp->GetLeaderGuid());
                 if (!inviter)
+                {
+                    m_bot->SetGroupInvite(NULL);
                     return;
+                }
+
+                if (inviter->GetBattleGround() && inviter->GetBattleGround()->isArena())
+                {
+                    m_bot->SetGroupInvite(NULL);
+                    return;
+                }
 
                 WorldPacket p;
                 m_bot->GetSession()->HandleGroupAcceptOpcode(p);
             }
+            return;
+        }
+
+        case SMSG_PETITION_SHOW_SIGNATURES:
+        {
+            WorldPacket p(packet);
+            ObjectGuid petitionguid;
+            p >> petitionguid;
+
+            WorldPacket* const packet = new WorldPacket(CMSG_PETITION_SIGN, 8+1);
+            *packet << petitionguid;
+            *packet << uint8(1);
+            m_bot->GetSession()->QueuePacket(packet);
+            return;
+        }
+
+        case SMSG_ARENA_TEAM_INVITE:
+        {
+            WorldPacket p;
+            m_bot->GetSession()->HandleArenaTeamAcceptOpcode(p);
             return;
         }
 
@@ -773,37 +811,30 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
             }
             return;
         }
-
-            /* uncomment this and your bots will tell you all their outgoing packet opcode names
-               case SMSG_MONSTER_MOVE:
-               case SMSG_UPDATE_WORLD_STATE:
-               case SMSG_COMPRESSED_UPDATE_OBJECT:
-               case MSG_MOVE_SET_FACING:
-               case MSG_MOVE_STOP:
-               case MSG_MOVE_HEARTBEAT:
-               case MSG_MOVE_STOP_STRAFE:
-               case MSG_MOVE_START_STRAFE_LEFT:
-               case SMSG_UPDATE_OBJECT:
-               case MSG_MOVE_START_FORWARD:
-               case MSG_MOVE_START_STRAFE_RIGHT:
-               case SMSG_DESTROY_OBJECT:
-               case MSG_MOVE_START_BACKWARD:
-               case SMSG_AURA_UPDATE_ALL:
-               case MSG_MOVE_FALL_LAND:
-               case MSG_MOVE_JUMP:
-                return;
-
-               default:
-               {
-                const char* oc = LookupOpcodeName(packet.GetOpcode());
-
-                std::ostringstream out;
-                out << "botout: " << oc;
-                sLog.outError(out.str().c_str());
-
-                //TellMaster(oc);
-               }
-             */
+        /*case SMSG_MONSTER_MOVE:
+        case SMSG_UPDATE_WORLD_STATE:
+        case SMSG_COMPRESSED_UPDATE_OBJECT:
+        case MSG_MOVE_SET_FACING:
+        case MSG_MOVE_STOP:
+        case MSG_MOVE_HEARTBEAT:
+        case MSG_MOVE_STOP_STRAFE:
+        case MSG_MOVE_START_STRAFE_LEFT:
+        case SMSG_UPDATE_OBJECT:
+        case MSG_MOVE_START_FORWARD:
+        case MSG_MOVE_START_STRAFE_RIGHT:
+        case SMSG_DESTROY_OBJECT:
+        case MSG_MOVE_START_BACKWARD:
+        case SMSG_AURA_UPDATE_ALL:
+        case MSG_MOVE_FALL_LAND:
+        case MSG_MOVE_JUMP:
+            return;
+        default:
+        {
+            const char* oc = LookupOpcodeName(packet.GetOpcode());
+            std::ostringstream out;
+            out << m_bot->GetName() << ":" << oc;
+            sLog.outString(out.str().c_str());
+        }*/             
     }
 }
 
@@ -1331,6 +1362,111 @@ void PlayerbotAI::GetCombatTarget(Unit* forcedTarget)
         m_targetCombat = 0;
     }
 
+    // check for new targets
+    if (!m_targetCombat || m_targetCombat->isDead() || !m_targetCombat->IsInWorld() || !m_bot->IsWithinDist(m_targetCombat, 50) || !m_bot->IsHostileTo(m_targetCombat) || !m_bot->IsInMap(m_targetCombat))
+    {
+        if (!m_bot->getAttackers().empty())
+        {
+            for(Unit::AttackerSet::const_iterator itr = m_bot->getAttackers().begin(); itr != m_bot->getAttackers().end(); ++itr)
+            {
+                Unit* owner = (*itr)->GetOwner();
+                if (!owner) owner = (*itr);
+                if (owner->GetTypeId() == TYPEID_PLAYER)
+                {
+                    m_targetCombat = owner;
+                    m_targetType = (m_combatOrder == ORDERS_TANK ? TARGET_THREATEN : TARGET_NORMAL);
+                    m_targetChanged = true;
+                    return;
+                }
+            }
+        }
+        if (m_bot->GetPet() && !m_bot->GetPet()->getAttackers().empty())
+        {
+            for(Unit::AttackerSet::const_iterator itr = m_bot->GetPet()->getAttackers().begin(); itr != m_bot->GetPet()->getAttackers().end(); ++itr)
+            {
+                Unit* owner = (*itr)->GetOwner();
+                if (!owner) owner = (*itr);
+                if (owner->GetTypeId() == TYPEID_PLAYER)
+                {
+                    m_targetCombat = owner;
+                    m_targetType = (m_combatOrder == ORDERS_TANK ? TARGET_THREATEN : TARGET_NORMAL);
+                    m_targetChanged = true;
+                    return;
+                }
+            }
+        }
+
+        if (!GetMaster()->getAttackers().empty())
+        {
+            for(Unit::AttackerSet::const_iterator itr = GetMaster()->getAttackers().begin(); itr != GetMaster()->getAttackers().end(); ++itr)
+            {
+                Unit* owner = (*itr)->GetOwner();
+                if (!owner) owner = (*itr);
+                if (owner->GetTypeId() == TYPEID_PLAYER)
+                {
+                    m_targetCombat = owner;
+                    m_targetType = (m_combatOrder == ORDERS_TANK ? TARGET_THREATEN : TARGET_NORMAL);
+                    m_targetChanged = true;
+                    return;
+                }
+            }
+        }
+        if (GetMaster()->GetPet() && !GetMaster()->GetPet()->getAttackers().empty())
+        {
+            for(Unit::AttackerSet::const_iterator itr = GetMaster()->GetPet()->getAttackers().begin(); itr != GetMaster()->GetPet()->getAttackers().end(); ++itr)
+            {
+                Unit* owner = (*itr)->GetOwner();
+                if (!owner) owner = (*itr);
+                if (owner->GetTypeId() == TYPEID_PLAYER)
+                {
+                    m_targetCombat = owner;
+                    m_targetType = (m_combatOrder == ORDERS_TANK ? TARGET_THREATEN : TARGET_NORMAL);
+                    m_targetChanged = true;
+                    return;
+                }
+            }
+        }
+
+        if (m_bot->GetGroup())
+        {
+            GroupReference *ref = m_bot->GetGroup()->GetFirstMember();
+            while (ref)
+            {
+                if (!ref->getSource()->getAttackers().empty())
+                {
+                    for(Unit::AttackerSet::const_iterator itr = ref->getSource()->getAttackers().begin(); itr != ref->getSource()->getAttackers().end(); ++itr)
+                    {
+                        Unit* owner = (*itr)->GetOwner();
+                        if (!owner) owner = (*itr);
+                        if (owner->GetTypeId() == TYPEID_PLAYER)
+                        {
+                            m_targetCombat = owner;
+                            m_targetType = (m_combatOrder == ORDERS_TANK ? TARGET_THREATEN : TARGET_NORMAL);
+                            m_targetChanged = true;
+                            return;
+                        }
+                    }
+                }
+                if (ref->getSource()->GetPet() && !ref->getSource()->GetPet()->getAttackers().empty())
+                {
+                    for(Unit::AttackerSet::const_iterator itr = ref->getSource()->GetPet()->getAttackers().begin(); itr != ref->getSource()->GetPet()->getAttackers().end(); ++itr)
+                    {
+                        Unit* owner = (*itr)->GetOwner();
+                        if (!owner) owner = (*itr);
+                        if (owner->GetTypeId() == TYPEID_PLAYER)
+                        {
+                            m_targetCombat = owner;
+                            m_targetType = (m_combatOrder == ORDERS_TANK ? TARGET_THREATEN : TARGET_NORMAL);
+                            m_targetChanged = true;
+                            return;
+                        }
+                    }
+                }
+                ref = ref->next();
+            }
+        }
+    }
+
     // update attacker info now
     UpdateAttackerInfo();
 
@@ -1377,6 +1513,14 @@ void PlayerbotAI::GetCombatTarget(Unit* forcedTarget)
         m_targetType = (m_combatOrder == ORDERS_TANK ? TARGET_THREATEN : TARGET_NORMAL);
         m_targetChanged = true;
     }
+
+    if (!m_targetCombat)
+    {
+        m_targetCombat = FindEnemy();
+        m_targetType = (m_combatOrder == ORDERS_TANK ? TARGET_THREATEN : TARGET_NORMAL);
+        m_targetChanged = true;
+    }
+
     // no attacker found anyway
     if (!m_targetCombat)
     {
@@ -1388,11 +1532,11 @@ void PlayerbotAI::GetCombatTarget(Unit* forcedTarget)
     // if thing to attack is in a duel, then ignore and don't call updateAI for 6 seconds
     // this method never gets called when the bot is in a duel and this code
     // prevents bot from helping
-    if (m_targetCombat->GetTypeId() == TYPEID_PLAYER && dynamic_cast<Player*> (m_targetCombat)->duel)
+    /*if (m_targetCombat->GetTypeId() == TYPEID_PLAYER && dynamic_cast<Player*> (m_targetCombat)->duel)
     {
         m_ignoreAIUpdatesUntilTime = time(0) + 6;
         return;
-    }
+    }*/
 
     m_bot->SetSelectionGuid((m_targetCombat->GetObjectGuid()));
     m_ignoreAIUpdatesUntilTime = time(0) + 1;
@@ -1412,12 +1556,26 @@ void PlayerbotAI::GetCombatTarget(Unit* forcedTarget)
 
 void PlayerbotAI::DoNextCombatManeuver()
 {
-    // check for new targets
+    Unit* o_targetCombat = m_targetCombat;
+    CombatTargetType o_targetType = m_targetType;
     GetCombatTarget();
+    if (m_targetCombat && m_targetCombat->GetTypeId() == TYPEID_PLAYER)
+    {        
+        if (!o_targetCombat || o_targetCombat->isDead() || !o_targetCombat->IsInWorld() || !m_bot->IsWithinDist(o_targetCombat, 50) || !m_bot->IsHostileTo(o_targetCombat) || !m_bot->IsInMap(o_targetCombat))
+        {
+            //changement de cible autorisé
+        }
+        else if (o_targetCombat && o_targetCombat == m_targetCombat)
+        {
+            m_targetType = o_targetType;
+            m_targetChanged = false;
+        }
+    }
+
     // check if we have a target - fixes crash reported by rrtn (kill hunter's pet bug)
     // if current target for attacks doesn't make sense anymore
     // clear our orders so we can get orders in next update
-    if (!m_targetCombat || m_targetCombat->isDead() || !m_targetCombat->IsInWorld() || !m_bot->IsHostileTo(m_targetCombat) || !m_bot->IsInMap(m_targetCombat))
+    if (!m_targetCombat || m_targetCombat->isDead() || !m_targetCombat->IsInWorld() || !m_bot->IsWithinDist(m_targetCombat, 50) || !m_bot->IsHostileTo(m_targetCombat) || !m_bot->IsInMap(m_targetCombat))
     {
         m_bot->AttackStop();
         m_bot->SetSelectionGuid(ObjectGuid());
@@ -1453,13 +1611,16 @@ void PlayerbotAI::DoCombatMovement()
 
     if (m_combatStyle == COMBAT_MELEE && !m_bot->hasUnitState(UNIT_STAT_CHASE) && ((m_movementOrder == MOVEMENT_STAY && targetDist <= ATTACK_DISTANCE) || (m_movementOrder != MOVEMENT_STAY)))
     {
-        float angle = rand_float(0, M_PI_F);
-        float dist = rand_float(1.0f, 3.0f);
-        float distX, distY;
-        m_bot->GetMotionMaster()->Clear(true);
-        distX = m_targetCombat->GetPositionX() + (dist * cos(angle));
-        distY = m_targetCombat->GetPositionY() + (dist * sin(angle));
-        m_bot->GetMotionMaster()->MovePoint(m_targetCombat->GetMapId(), distX, distY, m_targetCombat->GetPositionZ());
+        if (targetDist > 2.0f)
+        {
+            float angle = rand_float(0, M_PI_F);
+            float dist = rand_float(1.0f, 2.0f);
+            float distX, distY;
+            m_bot->GetMotionMaster()->Clear(true);
+            distX = m_targetCombat->GetPositionX() + (dist * cos(angle));
+            distY = m_targetCombat->GetPositionY() + (dist * sin(angle));
+            m_bot->GetMotionMaster()->MovePoint(m_targetCombat->GetMapId(), distX, distY, m_targetCombat->GetPositionZ());
+        }
         m_bot->SetInFront(m_targetCombat);
         m_targetCombat->SendCreateUpdateToPlayer(m_bot);
     }
@@ -1784,11 +1945,57 @@ void PlayerbotAI::TurnInQuests(WorldObject *questgiver)
     }
 }
 
+Player* PlayerbotAI::TargetPlayerFocus()
+{
+    if (GetCurrentTarget() && GetCurrentTarget()->GetTypeId()==TYPEID_PLAYER)
+    {
+        return (Player*)GetCurrentTarget();
+    }
+
+    if (GetMaster()->GetPlayerbotAI() 
+        && GetMaster()->GetPlayerbotAI()->GetCurrentTarget()
+        && GetMaster()->GetPlayerbotAI()->GetCurrentTarget()->GetTypeId()==TYPEID_PLAYER)
+    {
+        return (Player*)GetMaster()->GetPlayerbotAI()->GetCurrentTarget();
+    }
+
+    if (m_bot->GetGroup())
+    {
+        GroupReference *ref = m_bot->GetGroup()->GetFirstMember();
+        while (ref)
+        {
+            if (ref->getSource()->GetPlayerbotAI() 
+                && ref->getSource()->GetPlayerbotAI()->GetCurrentTarget()
+                && ref->getSource()->GetPlayerbotAI()->GetCurrentTarget()->GetTypeId()==TYPEID_PLAYER)
+            return (Player*)ref->getSource()->GetPlayerbotAI()->GetCurrentTarget();
+            ref = ref->next();
+        }
+    }
+    return NULL;
+}
+
 bool PlayerbotAI::IsInCombat()
 {
-    if (!m_bot->getAttackers().empty())
+    Player* plTarget = TargetPlayerFocus();
+    if (plTarget && plTarget->isAlive() && plTarget->IsInWorld() && m_bot->IsHostileTo(plTarget) && m_bot->IsInMap(plTarget))
+    {
+        int difflvl = ((int)plTarget->getLevel()) - ((int)m_bot->getLevel());
+        if (difflvl > 4)
+        {
+            if(m_bot->GetGroup() && !plTarget->GetGroup())
+                return true;
+            else
+                return false;
+        }
         return true;
-    if (!GetMaster()->getAttackers().empty())
+    }
+
+    if (!m_bot->getAttackers().empty() 
+        || (m_bot->GetPet() && !m_bot->GetPet()->getAttackers().empty()))
+        return true;
+
+    if (!GetMaster()->getAttackers().empty() 
+        || (GetMaster()->GetPet() && !GetMaster()->GetPet()->getAttackers().empty()))
         return true;
 
     if (m_bot->GetGroup())
@@ -1796,7 +2003,8 @@ bool PlayerbotAI::IsInCombat()
         GroupReference *ref = m_bot->GetGroup()->GetFirstMember();
         while (ref)
         {
-            if (!ref->getSource()->getAttackers().empty())
+            if (!ref->getSource()->getAttackers().empty() 
+                || (ref->getSource()->GetPet() && !ref->getSource()->GetPet()->getAttackers().empty()))
                 return true;
             ref = ref->next();
         }
@@ -1953,14 +2161,17 @@ Unit *PlayerbotAI::FindAttacker(ATTACKERINFOTYPE ait, Unit *victim)
 {
     // list empty? why are we here?
     if (m_attackerInfo.empty())
-        return 0;
+    {
+        return FindEnemy();
+        //return 0;
+    }
 
     // not searching something specific - return first in list
     if (!ait)
         return (m_attackerInfo.begin())->second.attacker;
 
     float t = ((ait & AIT_HIGHESTTHREAT) ? 0.00 : 9999.00);
-    Unit *a = 0;
+    Unit *a = NULL;
     AttackerInfoList::iterator itr = m_attackerInfo.begin();
     for (; itr != m_attackerInfo.end(); ++itr)
     {
@@ -1992,7 +2203,10 @@ Unit *PlayerbotAI::FindAttacker(ATTACKERINFOTYPE ait, Unit *victim)
             }
         }
     }
-    return a;
+    if (a)
+        return a;
+    else
+        return FindEnemy();
 }
 
 void PlayerbotAI::SetCombatOrderByStr(std::string str, Unit *target)
@@ -2048,22 +2262,26 @@ void PlayerbotAI::MovementReset()
         if (!m_followTarget) return;
 
         // target player is teleporting...
-        if (m_followTarget->GetTypeId() == TYPEID_PLAYER && ((Player*) m_followTarget)->IsBeingTeleported())
+        Player* target = NULL;
+        if (m_followTarget->GetTypeId() == TYPEID_PLAYER)
+            target = ((Player*)m_followTarget);
+
+        if (target && target->IsBeingTeleported())
             return;
 
         // check if bot needs to teleport to reach target...
         if (!IsInCombat())
         {
-            if (m_followTarget->GetTypeId() == TYPEID_PLAYER && ((Player*) m_followTarget)->GetCorpse())
+            if (target && target->GetCorpse())
             {
-                if (!FollowCheckTeleport(*((Player*) m_followTarget)->GetCorpse())) return;
+                if (!FollowCheckTeleport(*target->GetCorpse())) return;
             }
             else if (!FollowCheckTeleport(*m_followTarget)) return;
         }
 
         if (m_bot->isAlive())
         {
-            if (m_bot == GetMaster())
+            if (m_bot == GetMaster() && m_bot == m_followTarget)
             {
                 if (m_bot->IsInRange3d(m_position_fin_x, m_position_fin_y, m_position_fin_z, 0.0f, 10.0f))
                 {
@@ -2071,8 +2289,14 @@ void PlayerbotAI::MovementReset()
                     m_bot->GetMotionMaster()->Clear(true);
                     m_bot->GetMotionMaster()->MovePoint(m_mapId_fin, m_position_fin_x, m_position_fin_y, m_position_fin_z);
                 }
+                else if (m_bot->IsInRange3d(m_position_fin_x, m_position_fin_y, m_position_fin_z, 0.0f, 550.0f))
+                {
+                    m_bot->GetMotionMaster()->Clear(true);
+                    m_bot->GetMotionMaster()->MovePoint(m_mapId_fin, m_position_fin_x, m_position_fin_y, m_position_fin_z);
+                }
                 else
                 {
+                    FindPOI(m_position_fin_x, m_position_fin_y, m_position_fin_z, m_mapId_fin);
                     m_bot->GetMotionMaster()->Clear(true);
                     m_bot->GetMotionMaster()->MovePoint(m_mapId_fin, m_position_fin_x, m_position_fin_y, m_position_fin_z);
                 }
@@ -2123,6 +2347,20 @@ void PlayerbotAI::FindPOI(float &x, float &y, float &z, uint32 &mapId)
         m_bot->GetPosition(x, y, z);
         mapId = m_bot->GetMapId();
     }
+}
+
+Unit* PlayerbotAI::FindEnemy()
+{
+    Unit* target = m_bot->SelectRandomUnfriendlyTarget(0, 500.0f);
+    if (target)
+    {
+        int difflvl = ((int)target->getLevel()) - ((int)m_bot->getLevel());
+        if (3 >= difflvl && difflvl >= 0)
+            return target;
+        else
+            return NULL;
+    }
+    return NULL;
 }
 
 void PlayerbotAI::MovementClear()
@@ -2207,7 +2445,7 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
             // set state to dead
             SetState(BOTSTATE_DEAD);
             // wait 30sec
-            m_ignoreAIUpdatesUntilTime = time(0) + 30;
+            //m_ignoreAIUpdatesUntilTime = time(0) + 30;
         }
         else if (m_botState == BOTSTATE_DEAD)
         {
@@ -2249,10 +2487,17 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
             m_ignoreAIUpdatesUntilTime = time(0) + 6;
             PlayerbotChatHandler ch(GetMaster());
             if (!ch.revive(*m_bot))
-            {
-                ch.sysmessage(".. ne peut pas ressuciter ..");
                 return;
+
+            uint32 lvl = m_bot->getLevel() +1;
+            if (lvl < 81 && m_bot == GetMaster())
+            {
+                m_bot->GiveLevel(lvl);
+                GetClassAI()->InitSpells(m_bot->GetPlayerbotAI());
             }
+            ch.gmstartup("");
+            m_bot->SetHealth(m_bot->GetMaxHealth());
+            m_bot->SetPower(m_bot->getPowerType(), m_bot->GetMaxPower(m_bot->getPowerType()));
             // set back to normal
             SetState(BOTSTATE_NORMAL);
         }
@@ -2276,15 +2521,15 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
         }
 
         // handle combat (either self/master/group in combat, or combat state and valid target)
-        else if (IsInCombat())
+        else if (IsInCombat() || FindEnemy())
         {
             if (!pSpell || !pSpell->IsChannelActive())
             {
                 if (m_bot->getAttackers().empty() && !m_bot->IsWithinDistInMap(GetMaster(), 100, true))
                 {
                     PlayerbotChatHandler ch(GetMaster());
-                    if (ch.teleport(*m_bot))
-                        SetIgnoreTeleport(5);
+                    ch.teleport(*m_bot);
+                    SetIgnoreTeleport(5);
                 }
                 DoNextCombatManeuver();
             }
@@ -3308,12 +3553,9 @@ bool PlayerbotAI::FollowCheckTeleport(WorldObject &obj)
     {
         m_ignoreAIUpdatesUntilTime = time(0) + 6;
         PlayerbotChatHandler ch(GetMaster());
+        SetIgnoreTeleport(5);
         if (!ch.teleport(*m_bot))
-        {
-            ch.sysmessage("Téléportation impossible...");
-            //sLog.outDebug( "[PlayerbotAI]: %s failed to teleport", m_bot->GetName() );
             return false;
-        }
     }
     return true;
 }

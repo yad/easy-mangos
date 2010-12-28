@@ -102,16 +102,7 @@ void PlayerbotDeathKnightAI::DoNextCombatManeuver(Unit *pTarget)
         
     Player* m_master = ai->GetMaster();
     if (!m_master)
-        return;    
-
-    switch (ai->GetScenarioType())
-    {
-        case PlayerbotAI::SCENARIO_DUEL:
-            ai->CastSpell(PLAGUE_STRIKE);
-            return;
-    }
-
-    // ------- Non Duel combat ----------
+        return;  
 
     //ai->SetMovementOrder( PlayerbotAI::MOVEMENT_FOLLOW, m_master ); // dont want to melee mob
 

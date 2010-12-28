@@ -123,15 +123,6 @@ void PlayerbotShamanAI::DoNextCombatManeuver(Unit *pTarget)
     if (!m_master)
         return;                
 
-    switch (ai->GetScenarioType())
-    {
-        case PlayerbotAI::SCENARIO_DUEL:
-            ai->CastSpell(LIGHTNING_BOLT);
-            return;
-    }
-
-    // ------- Non Duel combat ----------
-
     ai->SetMovementOrder(PlayerbotAI::MOVEMENT_FOLLOW, m_master);   // dont want to melee mob <----changed
 
     Group *m_group = m_bot->GetGroup();

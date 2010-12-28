@@ -128,15 +128,6 @@ void PlayerbotHunterAI::DoNextCombatManeuver(Unit *pTarget)
     if (!m_master)
         return;    
 
-    switch (ai->GetScenarioType())
-    {
-        case PlayerbotAI::SCENARIO_DUEL:
-            ai->CastSpell(RAPTOR_STRIKE);
-            return;
-    }
-
-    // ------- Non Duel combat ----------
-
     // Hunter
     ai->SetInFront(pTarget);
     Unit* pVictim = pTarget->getVictim();

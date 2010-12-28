@@ -47,6 +47,48 @@ class WorldPacket : public ByteBuffer
         uint16 GetOpcode() const { return m_opcode; }
         void SetOpcode(uint16 opcode) { m_opcode = opcode; }
 
+        void Print()
+        {
+            switch (m_opcode)
+            {
+                case SMSG_MONSTER_MOVE:
+                case SMSG_UPDATE_WORLD_STATE:
+                case SMSG_COMPRESSED_UPDATE_OBJECT:
+                case MSG_MOVE_SET_FACING:
+                case MSG_MOVE_STOP:
+                case MSG_MOVE_HEARTBEAT:
+                case MSG_MOVE_STOP_STRAFE:
+                case MSG_MOVE_START_STRAFE_LEFT:
+                case SMSG_UPDATE_OBJECT:
+                case MSG_MOVE_START_FORWARD:
+                case MSG_MOVE_START_STRAFE_RIGHT:
+                case SMSG_DESTROY_OBJECT:
+                case MSG_MOVE_START_BACKWARD:
+                case SMSG_AURA_UPDATE_ALL:
+                case MSG_MOVE_FALL_LAND:
+                case MSG_MOVE_JUMP:
+                case CMSG_NAME_QUERY:
+                case CMSG_STANDSTATECHANGE:
+                case CMSG_QUERY_TIME:
+                case CMSG_CREATURE_QUERY:
+                case CMSG_GAMEOBJECT_QUERY:
+                case SMSG_SPELL_GO:
+                case SMSG_TIME_SYNC_REQ:
+                case CMSG_TIME_SYNC_RESP:
+                case CMSG_WORLD_STATE_UI_TIMER_UPDATE:
+                case SMSG_WORLD_STATE_UI_TIMER_UPDATE:
+                    break;
+                default:
+                {
+                    const char* oc = LookupOpcodeName(m_opcode);
+                    std::ostringstream out;
+                    out << oc;
+                    sLog.outString(out.str().c_str());
+                    break;
+                }  
+            }
+        }
+
     protected:
         uint16 m_opcode;
 };

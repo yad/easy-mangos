@@ -529,25 +529,28 @@ void WorldSession::HandlePetitionSignOpcode(WorldPacket & recv_data)
     if(++signs > type)                                        // client signs maximum
         return;
 
-    //client doesn't allow to sign petition two times by one character, but not check sign by another character from same account
-    //not allow sign another player from already sign player account
-    result = CharacterDatabase.PQuery("SELECT playerguid FROM petition_sign WHERE player_account = '%u' AND petitionguid = '%u'", GetAccountId(), petitionLowGuid);
-
-    if(result)
+    if (!_player->IsBot())
     {
-        delete result;
-        WorldPacket data(SMSG_PETITION_SIGN_RESULTS, (8+8+4));
-        data << ObjectGuid(petitionGuid);
-        data << ObjectGuid(_player->GetObjectGuid());
-        data << uint32(PETITION_SIGN_ALREADY_SIGNED);
+        //client doesn't allow to sign petition two times by one character, but not check sign by another character from same account
+        //not allow sign another player from already sign player account
+        result = CharacterDatabase.PQuery("SELECT playerguid FROM petition_sign WHERE player_account = '%u' AND petitionguid = '%u'", GetAccountId(), petitionLowGuid);
 
-        // close at signer side
-        SendPacket(&data);
+        if(result)
+        {
+            delete result;
+            WorldPacket data(SMSG_PETITION_SIGN_RESULTS, (8+8+4));
+            data << ObjectGuid(petitionGuid);
+            data << ObjectGuid(_player->GetObjectGuid());
+            data << uint32(PETITION_SIGN_ALREADY_SIGNED);
 
-        // update for owner if online
-        if(Player *owner = sObjectMgr.GetPlayer(ownerGuid))
-            owner->GetSession()->SendPacket(&data);
-        return;
+            // close at signer side
+            SendPacket(&data);
+
+            // update for owner if online
+            if(Player *owner = sObjectMgr.GetPlayer(ownerGuid))
+                owner->GetSession()->SendPacket(&data);
+            return;
+        }
     }
 
     CharacterDatabase.PExecute("INSERT INTO petition_sign (ownerguid,petitionguid, playerguid, player_account) VALUES ('%u', '%u', '%u','%u')",
