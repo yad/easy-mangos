@@ -297,7 +297,7 @@ public:
     void MovementReset();
     void MovementClear();
     bool IsMoving();
-    void FindPOI(float &x, float &y, float &z, uint32 &mapId);
+    void FindPOI();
     Unit* FindEnemy();
 
     void SetInFront(const Unit* obj);
@@ -369,12 +369,7 @@ private:
 
     SpellRanges m_spellRangeMap;
 
-    float m_destX, m_destY, m_destZ; // latest coordinates for chase and point movement types
-
-    float m_position_fin_x;
-    float m_position_fin_y;
-    float m_position_fin_z;
-    uint32 m_mapId_fin;
+    Unit* m_target_follow;
 };
 
 #endif

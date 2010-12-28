@@ -11502,6 +11502,25 @@ void Unit::MonsterMove(float x, float y, float z, uint32 transitTime)
             if (MovementGenerator *movgen = c->GetMotionMaster()->top())
                 movgen->Reset(*c);
     }
+    else
+    {
+        Player* p = (Player*)this;
+        if (!p || !p->IsBot())
+            return;
+
+        // Creature relocation acts like instant movement generator, so current generator expects interrupt/reset calls to react properly
+        if (!p->GetMotionMaster()->empty())
+            if (MovementGenerator *movgen = p->GetMotionMaster()->top())
+                movgen->Interrupt(*p);
+
+        GetMap()->PlayerRelocation((Player*)this, x, y, z, 0.0f);
+
+        // finished relocation, movegen can different from top before creature relocation,
+        // but apply Reset expected to be safe in any case
+        if (!p->GetMotionMaster()->empty())
+            if (MovementGenerator *movgen = p->GetMotionMaster()->top())
+                movgen->Reset(*p);
+    }
 }
 
 void Unit::MonsterMoveWithSpeed(float x, float y, float z, uint32 transitTime)
@@ -11523,6 +11542,25 @@ void Unit::MonsterMoveWithSpeed(float x, float y, float z, uint32 transitTime)
         if (!c->GetMotionMaster()->empty())
             if (MovementGenerator *movgen = c->GetMotionMaster()->top())
                 movgen->Reset(*c);
+    }
+    else
+    {
+        Player* p = (Player*)this;
+        if (!p || !p->IsBot())
+            return;
+
+        // Creature relocation acts like instant movement generator, so current generator expects interrupt/reset calls to react properly
+        if (!p->GetMotionMaster()->empty())
+            if (MovementGenerator *movgen = p->GetMotionMaster()->top())
+                movgen->Interrupt(*p);
+
+        GetMap()->PlayerRelocation((Player*)this, x, y, z, 0.0f);
+
+        // finished relocation, movegen can different from top before creature relocation,
+        // but apply Reset expected to be safe in any case
+        if (!p->GetMotionMaster()->empty())
+            if (MovementGenerator *movgen = p->GetMotionMaster()->top())
+                movgen->Reset(*p);
     }
 }
 

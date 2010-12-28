@@ -21472,9 +21472,20 @@ void Player::UpdateVisibilityOf(WorldObject const* viewPoint, WorldObject* targe
                 SendAurasForTarget((Unit*)target);
                 ((Unit*)target)->SendHeartBeat(false);
             }
+            else if(target!=this && target->GetTypeId()==TYPEID_PLAYER && ((Player*)target)->IsBot())
+            {
+                SendAurasForTarget((Unit*)target);
+                ((Unit*)target)->SendHeartBeat(false);
+            }
 
             if(target->GetTypeId()==TYPEID_UNIT && ((Creature*)target)->isAlive())
                 ((Creature*)target)->SendMonsterMoveWithSpeedToCurrentDestination(this);
+            else if (target->GetTypeId()==TYPEID_PLAYER && ((Player*)target)->isAlive() && ((Player*)target)->IsBot())
+            {
+                float x, y, z;
+                if(((Player*)target)->GetMotionMaster()->GetDestination(x, y, z))
+                     ((Player*)target)->SendMonsterMoveWithSpeed(x, y, z, 0, this);
+            }
         }
     }
 }

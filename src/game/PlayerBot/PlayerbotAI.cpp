@@ -88,8 +88,7 @@ PlayerbotAI::PlayerbotAI(PlayerbotMgr* const mgr, Player* const bot) :
     m_targetAssist = 0;
     m_targetProtect = 0;
 
-    bot->GetPosition(m_position_fin_x, m_position_fin_y, m_position_fin_z);
-    uint32 m_mapId_fin = bot->GetMapId();
+    m_target_follow = m_bot;
 
     for (uint8 i = 0; i < MAX_ARENA_SLOT; ++i)
     {
@@ -2280,59 +2279,47 @@ void PlayerbotAI::MovementReset()
 
         if (m_bot->isAlive())
         {
+            float angle = rand_float(0, M_PI_F);
+            float dist = rand_float(5.0f, 7.0f);
             if (m_bot == GetMaster() && m_bot == m_followTarget)
             {
-                if (m_bot->IsInRange3d(m_position_fin_x, m_position_fin_y, m_position_fin_z, 0.0f, 10.0f))
+                if (m_bot->IsWithinDist(m_target_follow, 10.0f))
                 {
-                    FindPOI(m_position_fin_x, m_position_fin_y, m_position_fin_z, m_mapId_fin);
+                    FindPOI();
                     m_bot->GetMotionMaster()->Clear(true);
-                    m_bot->GetMotionMaster()->MovePoint(m_mapId_fin, m_position_fin_x, m_position_fin_y, m_position_fin_z);
+                    m_bot->GetMotionMaster()->MoveFollow(m_target_follow, dist, angle);
                 }
-                else if (m_bot->IsInRange3d(m_position_fin_x, m_position_fin_y, m_position_fin_z, 0.0f, 550.0f))
+                else if (m_bot->IsWithinDist(m_target_follow, 550.0f))
                 {
                     m_bot->GetMotionMaster()->Clear(true);
-                    m_bot->GetMotionMaster()->MovePoint(m_mapId_fin, m_position_fin_x, m_position_fin_y, m_position_fin_z);
+                    m_bot->GetMotionMaster()->MoveFollow(m_target_follow, dist, angle);
                 }
                 else
                 {
-                    FindPOI(m_position_fin_x, m_position_fin_y, m_position_fin_z, m_mapId_fin);
+                    FindPOI();
                     m_bot->GetMotionMaster()->Clear(true);
-                    m_bot->GetMotionMaster()->MovePoint(m_mapId_fin, m_position_fin_x, m_position_fin_y, m_position_fin_z);
+                    m_bot->GetMotionMaster()->MoveFollow(m_target_follow, dist, angle);
                 }
             }
             else
             {
-                float angle = rand_float(0, M_PI_F);
-                float dist = rand_float(5.0f, 7.0f);
-
                 if (m_bot->IsWithinDist(GetMaster(), 7.0f))
                     return;
 
-                //float distX, distY;
-                /*distX = m_followTarget->GetPositionX() + (dist * cos(angle));
-                distY = m_followTarget->GetPositionY() + (dist * sin(angle));
-                m_bot->GetMotionMaster()->MovePoint(m_followTarget->GetMapId(), distX, distY, m_followTarget->GetPositionZ());*/
-                //m_bot->SetInFront(m_followTarget);
-                //m_followTarget->SendCreateUpdateToPlayer(m_bot);
+                m_bot->GetMotionMaster()->Clear(true);
                 m_bot->GetMotionMaster()->MoveFollow(m_followTarget, dist, angle);
             }
         }
     }
 }
 
-void PlayerbotAI::FindPOI(float &x, float &y, float &z, uint32 &mapId)
+void PlayerbotAI::FindPOI()
 {
     Unit* target = m_bot->SelectRandomFriendlyTarget(0, 500.0f);
     if (target)
-    {
-        target->GetPosition(x, y, z);
-        mapId = target->GetMapId();
-    }
+        m_target_follow = target;
     else
-    {
-        m_bot->GetPosition(x, y, z);
-        mapId = m_bot->GetMapId();
-    }
+        m_target_follow = m_bot;
 }
 
 Unit* PlayerbotAI::FindEnemy()
@@ -2401,20 +2388,8 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
     if (m_bot->GetTrader())
         return;
 
-    // Send updates to world if chasing target or moving to point
-    MovementGeneratorType movementType = m_bot->GetMotionMaster()->GetCurrentMovementGeneratorType();
-    if (movementType == CHASE_MOTION_TYPE || movementType == POINT_MOTION_TYPE)
-    {
-        float x, y, z;
-        m_bot->GetMotionMaster()->GetDestination(x, y, z);
-        if (x != m_destX || y != m_destY || z != m_destZ)
-        {
-            m_bot->SendMonsterMoveWithSpeed(x, y, z);
-            m_destX = x;
-            m_destY = y;
-            m_destZ = z;
-        }
-    }
+    if (!CheckTeleport())
+        return;
 
     time_t currentTime = time(0);
     if (currentTime < m_ignoreAIUpdatesUntilTime)
@@ -2422,9 +2397,6 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
 
     // default updates occur every two seconds
     m_ignoreAIUpdatesUntilTime = time(0) + 2;
-
-    if (!CheckTeleport())
-        return;
 
     if (!CheckMaster())
         return;
