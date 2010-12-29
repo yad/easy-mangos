@@ -28,7 +28,6 @@
 #include "DBCStores.h"
 #include "ProgressBar.h"
 #include "ScriptCalls.h"
-#include "ScriptMgr.h"
 
 void MapManager::LoadTransports()
 {
@@ -159,7 +158,7 @@ bool Transport::Create(uint32 guidlow, uint32 mapid, float x, float y, float z, 
         return false;
     }
 
-    Object::_Create(ObjectGuid(HIGHGUID_MO_TRANSPORT, guidlow));
+    Object::_Create(guidlow, 0, HIGHGUID_MO_TRANSPORT);
 
     GameObjectInfo const* goinfo = ObjectMgr::GetGameObjectInfo(guidlow);
 
@@ -421,7 +420,7 @@ bool Transport::GenerateWaypoints(uint32 pathid, std::set<uint32> &mapids)
 
     m_next = m_WayPoints.begin();                           // will used in MoveToNextWayPoint for init m_curr
     MoveToNextWayPoint();                                   // m_curr -> first point
-    MoveToNextWayPoint();                                   // skip first point
+    MoveToNextWayPoint();                                   // skip first point 
 
     m_pathTime = timer;
 

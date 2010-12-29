@@ -2411,8 +2411,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         template<class T>
             void UpdateVisibilityOf(WorldObject const* viewPoint,T* target, UpdateData& data, std::set<WorldObject*>& visibleNow);
 
-        static ACE_Thread_Mutex  v_Lock;
-
         // Stealth detection system
         void HandleStealthedUnitsDetection();
 
