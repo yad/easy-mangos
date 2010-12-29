@@ -34,6 +34,8 @@
 #include "Util.h"
 #include "Formulas.h"
 #include "GridNotifiersImpl.h"
+#include "Chat.h"
+#include "PlayerBot/PlayerbotClassAI.h"
 
 namespace MaNGOS
 {
@@ -1150,6 +1152,18 @@ void BattleGround::RemovePlayerAtLeave(ObjectGuid guid, bool Transport, bool Sen
         // reset destination bg team
         plr->SetBGTeam(TEAM_NONE);
 
+        uint8 index = plr->GetCptBotMapArena();
+        for (int i = 0; i < index; ++i)
+        {
+            plr->GetBotMapArena(i)->GetSession()->LogoutPlayer(false);
+            plr->SetBotMapArena(i, NULL);
+        }
+        plr->SetCptBotMapArena(0);
+        if (plr->GetPlayerbotMgr())
+            plr->GetPlayerbotMgr()->RemoveAllBotsFromGroup(plr);
+        else
+            PlayerbotMgr::AddAllBots();
+
         if (Transport)
             plr->TeleportToBGEntryPoint();
 
@@ -1215,14 +1229,17 @@ void BattleGround::AddPlayer(Player *plr)
     // score struct must be created in inherited class
 
     ObjectGuid guid = plr->GetObjectGuid();
-    if (plr->IsBot())
+    if (isArena())
     {
-        PlayerbotAI* ai = plr->GetPlayerbotAI();
-        if (ai)
+        if (plr->IsBot())
         {
-            Player* master = ai->GetMaster();
-            if (master)
-                plr->SetBGTeam(master->GetBGTeam());
+            PlayerbotAI* ai = plr->GetPlayerbotAI();
+            if (ai)
+            {
+                Player* master = ai->GetMaster();
+                if (master != plr)
+                    plr->SetBGTeam(master->GetBGTeam());
+            }
         }
     }
     Team team = plr->GetBGTeam();
@@ -1291,6 +1308,30 @@ void BattleGround::AddPlayer(Player *plr)
 
     // Log
     DETAIL_LOG("BATTLEGROUND: Player %s joined the battle.", plr->GetName());
+
+    if (isArena())
+    {
+        if(!plr->IsBot() && plr->GetCptBotMapArena() > 0)
+        {
+            uint8 GetCptBotMapArena = plr->GetCptBotMapArena();
+            for (uint8 i = 0; i < GetCptBotMapArena; ++i)
+            {
+                Player* p = plr->GetBotMapArena(i);
+                if (plr->GetBGTeam() == ALLIANCE)
+                    p->SetBGTeam(HORDE);
+                else
+                    p->SetBGTeam(ALLIANCE);
+                p->GiveLevel(plr->getLevel());
+                p->GetPlayerbotAI()->GetClassAI()->InitSpells(p->GetPlayerbotAI());
+                ChatHandler chbot (p);
+                chbot.HandleGMStartUpCommand("");
+                p->SetHealth(p->GetMaxHealth());
+                p->SetPower(p->getPowerType(), p->GetMaxPower(p->getPowerType()));
+                ChatHandler chmaster (plr);
+                chmaster.HandleNamegoCommand((char*)p->GetName());
+            }
+        }
+    }
 }
 
 /* this method adds player to his team's bg group, or sets his correct group if player is already in bg group */

@@ -576,7 +576,6 @@ void PlayerbotMgr::OnBotLogin(Player * const bot)
 
 void PlayerbotMgr::RemoveAllBotsFromGroup(Player* player)
 {
-    sLog.outDebug("PlayerbotMgr::RemoveAllBotsInGroup(...)");
     bool removed = false;
     do
     {
@@ -595,8 +594,6 @@ void PlayerbotMgr::RemoveAllBotsFromGroup(Player* player)
                     ref = ref->next();
                     continue;
                 }
-
-                sLog.outDebug("Player name : %s, removed", bot->GetName());
                 bot->RemoveFromGroup();
                 bot->GetPlayerbotMgr()->LogoutPlayerBot(bot->GetGUID());
                 removed = true;

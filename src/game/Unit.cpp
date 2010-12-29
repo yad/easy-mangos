@@ -11175,6 +11175,13 @@ Unit* Unit::SelectRandomUnfriendlyTarget(Unit* except /*= NULL*/, float radius /
             ++tIter;
             targets.erase(tIter2);
         }
+        else if(GetTypeId()==TYPEID_PLAYER && (*tIter)->GetTypeId()==TYPEID_PLAYER 
+            && ((Player*)this)->GetBGTeam()==((Player*)*tIter)->GetBGTeam())
+        {
+            std::list<Unit *>::iterator tIter2 = tIter;
+            ++tIter;
+            targets.erase(tIter2);
+        }
         else
             ++tIter;
     }

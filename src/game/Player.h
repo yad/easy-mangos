@@ -63,6 +63,7 @@ typedef std::deque<Mail*> PlayerMails;
 #define PLAYER_MAX_SKILLS           127
 #define PLAYER_MAX_DAILY_QUESTS     25
 #define PLAYER_EXPLORED_ZONES_SIZE  128
+#define MAX_PLAYER_IN_BG_ARENA      40
 
 // Note: SPELLMOD_* values is aura types in fact
 enum SpellModType
@@ -2546,6 +2547,14 @@ class MANGOS_DLL_SPEC Player : public Unit
         bool IsBot() { return (GetSession()->IsBotSession()); }
         uint16 getRole();
         void setRole(uint16 role);
+
+        uint8 GetCptBotMapArena() { return cptBotMapArena; }
+        void SetCptBotMapArena(uint8 index) { cptBotMapArena = index; }
+        Player* GetBotMapArena(uint8 index) { return botMapArena [index]; }
+        void SetBotMapArena(uint8 index, Player* pl) { botMapArena [index] = pl; }
+        time_t GetWaitArenaInQueue() { return waitArenaInQueue; }
+        void SetWaitArenaInQueue(time_t t) { waitArenaInQueue = t; }
+
     protected:
 
         uint32 m_contestedPvPTimer;
@@ -2827,6 +2836,9 @@ class MANGOS_DLL_SPEC Player : public Unit
         PlayerbotAI* m_playerbotAI;
         PlayerbotMgr* m_playerbotMgr;
         uint32 m_levelAtLoading;
+        Player* botMapArena [MAX_PLAYER_IN_BG_ARENA];
+        uint8 cptBotMapArena;
+        time_t waitArenaInQueue;
 
         // Homebind coordinates
         uint32 m_homebindMapId;

@@ -415,6 +415,10 @@ Player::Player (WorldSession *session): Unit(), m_mover(this), m_camera(this), m
     // Playerbot mod:
     m_playerbotAI = NULL;
     m_playerbotMgr = NULL;
+    for (uint8 i = 0; i < MAX_PLAYER_IN_BG_ARENA; ++i)
+        botMapArena [i] = NULL;
+    cptBotMapArena = 0;
+    waitArenaInQueue = 0;
 
     m_speakTime = 0;
     m_speakCount = 0;

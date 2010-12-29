@@ -400,42 +400,77 @@ bool ChatHandler::HandleNamegoCommand(char* args)
                     if (!ai)
                         return false;
                     Player* master = target->GetPlayerbotAI()->GetMaster();
-                    if (!master || !master->GetBattleGround())
+                    if (!master)
                         return false;
 
-                    if (pMap->IsBattleArena())
+                    if (master == target)
                     {
-                        uint32 a_id = 0;
-                        switch(master->GetBattleGround()->GetArenaType())
+                        if (target->GetBattleGroundId() && m_session->GetPlayer()->GetBattleGroundId() != target->GetBattleGroundId())
                         {
-
-                            case ARENA_TYPE_2v2:
-                                a_id = master->GetArenaTeamId(0);
-                                break;
-                            case ARENA_TYPE_3v3:
-                                a_id = master->GetArenaTeamId(1);
-                                break;
-                            case ARENA_TYPE_5v5:
-                                a_id = master->GetArenaTeamId(2);
-                                break;
+                            //PSendSysMessage(LANG_CANNOT_GO_TO_BG_FROM_BG,nameLink.c_str());
+                            //SetSentErrorMessage(true);
+                            return false;
                         }
-                        if(a_id == 0)
+
+                        if (!target->isAlive())
+                        {
+                            target->ResurrectPlayer(1.0f);
+                            target->SpawnCorpseBones();
+                        }
+
+                        target->SetBattleGroundId(m_session->GetPlayer()->GetBattleGroundId(), m_session->GetPlayer()->GetBattleGroundTypeId());
+                        if (!target->GetMap()->IsBattleGroundOrArena())
+                            target->SetBattleGroundEntryPoint();
+
+                        if (target->IsTaxiFlying())
+                        {
+                            target->GetMotionMaster()->MovementExpired();
+                            target->m_taxi.ClearTaxiDestinations();
+                        }
+                        else
+                            target->SaveRecallPosition();
+
+                        uint32 mapid = m_session->GetPlayer()->GetBattleGround()->GetMapId();
+                        float x, y, z, O;
+                        Team team = target->GetBGTeam();
+                        if (team==0)
+                            team = target->GetTeam();
+                        m_session->GetPlayer()->GetBattleGround()->GetTeamStartLoc(team, x, y, z, O);
+                        target->TeleportTo(mapid,x,y,z,O);
+                        m_session->GetPlayer()->GetBattleGround()->AddPlayer(target);
+                        return true;
+                    }
+                    else
+                    {                        
+                        if (!master->GetBattleGround())
                             return false;
 
-                        bool ok = false;
-                        for (uint8 i = 0; i < MAX_ARENA_SLOT; ++i)
+                        if (pMap->IsBattleArena())
                         {
-                            if(a_id == target->GetArenaTeamId(i))
+                            uint32 a_id = 0;
+                            switch(master->GetBattleGround()->GetArenaType())
                             {
-                                ok = true;
-                                break;
-                            }
-                        }
-                        if (!ok) return false;
 
-                    }
-                    else if (pMap->IsBattleGround())
-                    {
+                                case ARENA_TYPE_2v2: a_id = master->GetArenaTeamId(0); break;
+                                case ARENA_TYPE_3v3: a_id = master->GetArenaTeamId(1); break;
+                                case ARENA_TYPE_5v5: a_id = master->GetArenaTeamId(2); break;
+                            }
+                            if(a_id == 0) return false;
+                            bool ok = false;
+                            for (uint8 i = 0; i < MAX_ARENA_SLOT; ++i)
+                            {
+                                if(a_id == target->GetArenaTeamId(i))
+                                {
+                                    ok = true;
+                                    break;
+                                }
+                            }
+                            if (!ok) return false;
+                        }
+                        else if (pMap->IsBattleGround())
+                        {
+                            //ok
+                        }
                     }
                 }
             }

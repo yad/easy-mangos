@@ -2310,7 +2310,12 @@ void PlayerbotAI::MovementReset()
 
 bool PlayerbotAI::FindPOI()
 {
-    Unit* target = m_bot->SelectRandomFriendlyTargetBetween(0, 10.0f, 500.0f);
+    Unit* target = NULL;
+    if (m_bot->GetMap()->IsBattleArena())
+        target = FindEnemy();
+    else
+        target = m_bot->SelectRandomFriendlyTargetBetween(0, 10.0f, 500.0f);
+
     if (!m_target_follow)
     {
         if (target)
@@ -2347,7 +2352,15 @@ bool PlayerbotAI::FindPOI()
 
 Unit* PlayerbotAI::FindEnemy()
 {
-    Unit* target = m_bot->SelectRandomUnfriendlyTarget(0, 500.0f);
+    float range = 500.0f;
+    if (m_bot->GetMap() && m_bot->GetMap()->IsBattleArena())
+    {
+        if (m_bot->HasAura(32727))
+            return NULL;
+        range = 5000.0f;
+    }
+
+    Unit* target = m_bot->SelectRandomUnfriendlyTarget(0, range);
     if (target)
     {
         int difflvl = ((int)target->getLevel()) - ((int)m_bot->getLevel());
@@ -2445,6 +2458,11 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
         }
         else if (m_botState == BOTSTATE_DEAD)
         {
+            if (m_bot->GetMap())
+            {
+                m_bot->GetMap()->IsBattleArena();
+                return;
+            }
             // become ghost
             if (m_bot->GetCorpse()) {
                 //sLog.outDebug( "[PlayerbotAI]: %s already has a corpse...", m_bot->GetName() );
@@ -2846,20 +2864,6 @@ bool PlayerbotAI::CastSpell(uint32 spellId)
 
     m_CurrentlyCastingSpellId = spellId;
     m_ignoreAIUpdatesUntilTime = time(0) + (int32) ((float) pSpell->GetCastTime() / 1000.0f) + 1;
-
-    // if this caused the caster to move (blink) update the position
-    // I think this is normally done on the client
-    // this should be done on spell success
-    /*
-       if (name == "Blink") {
-       float x,y,z;
-       m_bot->GetPosition(x,y,z);
-       m_bot->GetNearPoint(m_bot, x, y, z, 1, 5, 0);
-       m_bot->Relocate(x,y,z);
-       m_bot->SendHeartBeat(true);
-
-       }
-     */
 
     return true;
 }
