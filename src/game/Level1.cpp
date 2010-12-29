@@ -406,11 +406,7 @@ bool ChatHandler::HandleNamegoCommand(char* args)
                     if (master == target)
                     {
                         if (target->GetBattleGroundId() && m_session->GetPlayer()->GetBattleGroundId() != target->GetBattleGroundId())
-                        {
-                            //PSendSysMessage(LANG_CANNOT_GO_TO_BG_FROM_BG,nameLink.c_str());
-                            //SetSentErrorMessage(true);
                             return false;
-                        }
 
                         if (!target->isAlive())
                         {
@@ -450,7 +446,6 @@ bool ChatHandler::HandleNamegoCommand(char* args)
                             uint32 a_id = 0;
                             switch(master->GetBattleGround()->GetArenaType())
                             {
-
                                 case ARENA_TYPE_2v2: a_id = master->GetArenaTeamId(0); break;
                                 case ARENA_TYPE_3v3: a_id = master->GetArenaTeamId(1); break;
                                 case ARENA_TYPE_5v5: a_id = master->GetArenaTeamId(2); break;
@@ -466,10 +461,6 @@ bool ChatHandler::HandleNamegoCommand(char* args)
                                 }
                             }
                             if (!ok) return false;
-                        }
-                        else if (pMap->IsBattleGround())
-                        {
-                            //ok
                         }
                     }
                 }

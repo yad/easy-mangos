@@ -43,6 +43,7 @@
 #include "WorldPacket.h"
 #include "GameEventMgr.h"
 #include "Formulas.h"
+#include "Player.h"
 #include "PlayerBot/PlayerbotClassAI.h"
 
 
@@ -899,6 +900,101 @@ void BattleGroundQueue::Update(BattleGroundTypeId bgTypeId, BattleGroundBracketI
             // start bg
             bg2->StartBattleGround();
         }
+        else if (!m_QueuedGroups[bracket_id][BG_QUEUE_NORMAL_ALLIANCE].empty() || !m_QueuedGroups[bracket_id][BG_QUEUE_NORMAL_HORDE].empty())
+        {
+            GroupsQueueType::iterator itr_team;
+            BattleGroundTeamIndex BG_TEAM = BG_TEAM_HORDE;
+            if (!m_QueuedGroups[bracket_id][BG_QUEUE_NORMAL_ALLIANCE].empty())
+            {
+                itr_team = m_QueuedGroups[bracket_id][BG_QUEUE_NORMAL_ALLIANCE].begin();
+                BG_TEAM = BG_TEAM_ALLIANCE;
+            }
+            else
+                itr_team = m_QueuedGroups[bracket_id][BG_QUEUE_NORMAL_HORDE].begin();
+
+            //CHECK MASTER (HUMAN PLAYER)
+            Player *master = NULL;
+            for(GroupQueueInfoPlayers::iterator itr = (*(itr_team))->Players.begin();
+                itr != (*(itr_team))->Players.end(); ++itr)
+            {
+                Player* plr = sObjectMgr.GetPlayer(itr->first);
+                if (!plr || !plr->IsBot())
+                    continue;
+
+                if (plr->GetPlayerbotAI())
+                {
+                    if (plr->GetPlayerbotAI()->GetMaster() == plr)
+                    {
+                        return;
+                    }
+                    else
+                        master = plr->GetPlayerbotAI()->GetMaster();
+                }
+                else
+                    return;
+            }
+            if (!master)
+                return;
+
+            if (master->GetWaitArenaInQueue() + 30 > time(NULL))
+            {
+                BattleGroundQueueTypeId bgQueueTypeId = BattleGroundMgr::BGQueueTypeId(bgTypeId, arenaType);
+                sBattleGroundMgr.ScheduleQueueUpdate(arenaRating, arenaType, bgQueueTypeId, bgTypeId, bracketEntry->GetBracketId());
+                return;
+            }
+            //CHECK MASTER (HUMAN PLAYER)
+            
+            //CREATE OPPOSITE TEAM
+            m_SelectionPools[BG_TEAM].AddGroup((*itr_team), MaxPlayersPerTeam);
+
+            master->SetCptBotMapArena(0);
+            for (int i = 0; i < MAX_PLAYER_IN_BG_ARENA; ++i)
+                master->SetBotMapArena(i, NULL);
+            HashMapHolder<Player>::MapType& m = sObjectAccessor.GetPlayers();
+            for(HashMapHolder<Player>::MapType::const_iterator itr = m.begin(); itr != m.end(); ++itr)
+            {
+                if(!(itr->second->IsInWorld()))
+                    continue;
+                
+                if (!itr->second->IsBot())
+                    continue;
+
+                if (itr->second->GetGroup())
+                    continue;
+
+                if (itr->second->GetTeam() == master->GetTeam())
+                    continue;
+
+                master->SetBotMapArena(master->GetCptBotMapArena(), itr->second);
+                master->SetCptBotMapArena(master->GetCptBotMapArena()+1);
+                
+                if (master->GetCptBotMapArena() == m_SelectionPools[BG_TEAM].GetPlayerCount())
+                    break;
+            }
+            if (master->GetCptBotMapArena() != m_SelectionPools[BG_TEAM].GetPlayerCount())
+            {
+                master->SetCptBotMapArena(0);
+                for (int i = 0; i < MAX_PLAYER_IN_BG_ARENA; ++i)
+                    master->SetBotMapArena(i, NULL);
+                return;
+            }
+            //END CREATE OPPOSITE TEAM
+
+            BattleGround * bg2 = sBattleGroundMgr.CreateNewBattleGround(bgTypeId, bracketEntry, 0, false);
+            if (!bg2)
+            {
+                master->SetCptBotMapArena(0);
+                for (int i = 0; i < MAX_PLAYER_IN_BG_ARENA; ++i)
+                    master->SetBotMapArena(i, NULL);
+                return;
+            }
+
+            for(GroupsQueueType::const_iterator citr = m_SelectionPools[BG_TEAM].SelectedGroups.begin(); citr != m_SelectionPools[BG_TEAM].SelectedGroups.end(); ++citr)
+                InviteGroupToBG((*citr), bg2, (*citr)->GroupTeam);
+
+            bg2->StartBattleGround();
+            m_SelectionPools[BG_TEAM].Init();
+        }
     }
     else if (bg_template->isArena())
     {
@@ -1043,11 +1139,7 @@ void BattleGroundQueue::Update(BattleGroundTypeId bgTypeId, BattleGroundBracketI
         }
         else if (m_SelectionPools[BG_TEAM_ALLIANCE].GetPlayerCount() || m_SelectionPools[BG_TEAM_HORDE].GetPlayerCount())
         {
-            BattleGround* arena = sBattleGroundMgr.CreateNewBattleGround(bgTypeId, bracketEntry, arenaType, true);
-            if (!arena)
-                return;
-
-            BattleGroundTeamIndex BG_TEAM =  BG_TEAM_HORDE;
+            BattleGroundTeamIndex BG_TEAM = BG_TEAM_HORDE;
             Team TM_TEAM = HORDE;
             if (m_SelectionPools[BG_TEAM_ALLIANCE].GetPlayerCount())
             {
@@ -1078,7 +1170,11 @@ void BattleGroundQueue::Update(BattleGroundTypeId bgTypeId, BattleGroundBracketI
                 return;
 
             if (master->GetWaitArenaInQueue() + 30 > time(NULL))
+            {
+                BattleGroundQueueTypeId bgQueueTypeId = BattleGroundMgr::BGQueueTypeId(bgTypeId, arenaType);
+                sBattleGroundMgr.ScheduleQueueUpdate(arenaRating, arenaType, bgQueueTypeId, bgTypeId, bracketEntry->GetBracketId());
                 return;
+            }
             //CHECK MASTER (HUMAN PLAYER)
             
             //CREATE OPPOSITE TEAM
@@ -1115,9 +1211,16 @@ void BattleGroundQueue::Update(BattleGroundTypeId bgTypeId, BattleGroundBracketI
             }
             //END CREATE OPPOSITE TEAM
 
+            BattleGround* arena = sBattleGroundMgr.CreateNewBattleGround(bgTypeId, bracketEntry, arenaType, true);
+            if (!arena)
+            {
+                master->SetCptBotMapArena(0);
+                for (int i = 0; i < MAX_PLAYER_IN_BG_ARENA; ++i)
+                    master->SetBotMapArena(i, NULL);
+                return;
+            }
+
             //START BG
-            /*(*(itr_team[BG_TEAM_ALLIANCE]))->OpponentsTeamRating = (*(itr_team[BG_TEAM_HORDE]))->ArenaTeamRating;
-            (*(itr_team[BG_TEAM_HORDE]))->OpponentsTeamRating = (*(itr_team[BG_TEAM_ALLIANCE]))->ArenaTeamRating;*/
             if ((*(itr_team[BG_TEAM]))->GroupTeam != TM_TEAM)
             {
                 m_QueuedGroups[bracket_id][BG_QUEUE_PREMADE_ALLIANCE].push_front(*(itr_team[BG_TEAM]));
@@ -1228,7 +1331,6 @@ BattleGroundMgr::BattleGroundMgr() : m_AutoDistributionTimeChecker(0), m_ArenaTe
     for(uint32 i = BATTLEGROUND_TYPE_NONE; i < MAX_BATTLEGROUND_TYPE_ID; i++)
         m_BattleGrounds[i].clear();
     m_NextRatingDiscardUpdate = sWorld.getConfig(CONFIG_UINT32_ARENA_RATING_DISCARD_TIMER);
-    m_NextForceCheck = time(NULL);
     m_Testing=false;
 }
 
@@ -1254,16 +1356,6 @@ void BattleGroundMgr::DeleteAllBattleGrounds()
 // used to update running battlegrounds, and delete finished ones
 void BattleGroundMgr::Update(uint32 diff)
 {
-    if (m_NextForceCheck < time(NULL))
-    {
-        for(int qtype = BATTLEGROUND_QUEUE_2v2; qtype <= BATTLEGROUND_QUEUE_5v5; ++qtype)
-        for(int bracket = BG_BRACKET_ID_FIRST; bracket < MAX_BATTLEGROUND_BRACKETS; ++bracket)
-            m_BattleGroundQueues[qtype].Update(
-                BATTLEGROUND_AA, BattleGroundBracketId(bracket),
-                BattleGroundMgr::BGArenaType(BattleGroundQueueTypeId(qtype)), true, 0);
-        m_NextForceCheck = time(NULL) + 2;
-    }
-
     // update scheduled queues
     if (!m_QueueUpdateScheduler.empty())
     {

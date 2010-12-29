@@ -290,7 +290,6 @@ class BattleGroundMgr
         uint32 m_NextRatingDiscardUpdate;
         time_t m_NextAutoDistributionTime;
         uint32 m_AutoDistributionTimeChecker;
-        time_t m_NextForceCheck;
         bool   m_ArenaTesting;
         bool   m_Testing;
 };

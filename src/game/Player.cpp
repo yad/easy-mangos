@@ -7985,13 +7985,6 @@ void Player::UpdateHonorFields()
 ///An exact honor value can also be given (overriding the calcs)
 bool Player::RewardHonor(Unit *uVictim, uint32 groupsize, float honor)
 {
-    Player* victim = NULL;
-    if(uVictim && (uVictim->GetTypeId() == TYPEID_PLAYER))
-        victim = ((Player*)uVictim);
-
-    if ( IsBot() || (victim && victim->IsBot()) )
-        return false;
-
     // do not reward honor in arenas, but enable onkill spellproc
     if(InArena())
     {

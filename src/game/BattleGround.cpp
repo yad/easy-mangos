@@ -1229,17 +1229,14 @@ void BattleGround::AddPlayer(Player *plr)
     // score struct must be created in inherited class
 
     ObjectGuid guid = plr->GetObjectGuid();
-    if (isArena())
+    if (plr->IsBot())
     {
-        if (plr->IsBot())
+        PlayerbotAI* ai = plr->GetPlayerbotAI();
+        if (ai)
         {
-            PlayerbotAI* ai = plr->GetPlayerbotAI();
-            if (ai)
-            {
-                Player* master = ai->GetMaster();
-                if (master != plr)
-                    plr->SetBGTeam(master->GetBGTeam());
-            }
+            Player* master = ai->GetMaster();
+            if (master != plr)
+                plr->SetBGTeam(master->GetBGTeam());
         }
     }
     Team team = plr->GetBGTeam();
@@ -1309,27 +1306,24 @@ void BattleGround::AddPlayer(Player *plr)
     // Log
     DETAIL_LOG("BATTLEGROUND: Player %s joined the battle.", plr->GetName());
 
-    if (isArena())
+    if(!plr->IsBot() && plr->GetCptBotMapArena() > 0)
     {
-        if(!plr->IsBot() && plr->GetCptBotMapArena() > 0)
+        uint8 GetCptBotMapArena = plr->GetCptBotMapArena();
+        for (uint8 i = 0; i < GetCptBotMapArena; ++i)
         {
-            uint8 GetCptBotMapArena = plr->GetCptBotMapArena();
-            for (uint8 i = 0; i < GetCptBotMapArena; ++i)
-            {
-                Player* p = plr->GetBotMapArena(i);
-                if (plr->GetBGTeam() == ALLIANCE)
-                    p->SetBGTeam(HORDE);
-                else
-                    p->SetBGTeam(ALLIANCE);
-                p->GiveLevel(plr->getLevel());
-                p->GetPlayerbotAI()->GetClassAI()->InitSpells(p->GetPlayerbotAI());
-                ChatHandler chbot (p);
-                chbot.HandleGMStartUpCommand("");
-                p->SetHealth(p->GetMaxHealth());
-                p->SetPower(p->getPowerType(), p->GetMaxPower(p->getPowerType()));
-                ChatHandler chmaster (plr);
-                chmaster.HandleNamegoCommand((char*)p->GetName());
-            }
+            Player* p = plr->GetBotMapArena(i);
+            if (plr->GetBGTeam() == ALLIANCE)
+                p->SetBGTeam(HORDE);
+            else
+                p->SetBGTeam(ALLIANCE);
+            p->GiveLevel(plr->getLevel());
+            p->GetPlayerbotAI()->GetClassAI()->InitSpells(p->GetPlayerbotAI());
+            ChatHandler chbot (p);
+            chbot.HandleGMStartUpCommand("");
+            p->SetHealth(p->GetMaxHealth());
+            p->SetPower(p->getPowerType(), p->GetMaxPower(p->getPowerType()));
+            ChatHandler chmaster (plr);
+            chmaster.HandleNamegoCommand((char*)p->GetName());
         }
     }
 }

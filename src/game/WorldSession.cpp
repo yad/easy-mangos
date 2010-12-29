@@ -206,7 +206,7 @@ bool WorldSession::ReadInvitePaquet(WorldPacket const* packet)
             return false;
         }
 
-        if (inviter->GetBattleGround() && inviter->GetBattleGround()->isArena())
+        if (inviter->GetBattleGround())
         {
             GetPlayer()->SetGroupInvite(NULL);
             return false;

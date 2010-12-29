@@ -630,7 +630,7 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
                     return;
                 }
 
-                if (inviter->GetBattleGround() && inviter->GetBattleGround()->isArena())
+                if (inviter->GetBattleGround())
                 {
                     m_bot->SetGroupInvite(NULL);
                     return;
@@ -2353,11 +2353,11 @@ bool PlayerbotAI::FindPOI()
 Unit* PlayerbotAI::FindEnemy()
 {
     float range = 500.0f;
-    if (m_bot->GetMap() && m_bot->GetMap()->IsBattleArena())
+    if (m_bot->GetMap()->IsBattleGroundOrArena())
     {
         if (m_bot->HasAura(32727))
             return NULL;
-        range = 5000.0f;
+        range = 50000000.0f;
     }
 
     Unit* target = m_bot->SelectRandomUnfriendlyTarget(0, range);
@@ -2458,11 +2458,9 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
         }
         else if (m_botState == BOTSTATE_DEAD)
         {
-            if (m_bot->GetMap())
-            {
-                m_bot->GetMap()->IsBattleArena();
+            if (m_bot->GetMap()->IsBattleArena())
                 return;
-            }
+
             // become ghost
             if (m_bot->GetCorpse()) {
                 //sLog.outDebug( "[PlayerbotAI]: %s already has a corpse...", m_bot->GetName() );
@@ -2471,13 +2469,16 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
             }
             m_bot->SetBotDeathTimer();
             m_bot->BuildPlayerRepop();
+            SetState(BOTSTATE_DEADRELEASED);
+
+            if (m_bot->GetMap()->IsBattleGround())
+                return;
+
             // relocate ghost
             WorldLocation loc;
             Corpse *corpse = m_bot->GetCorpse();
             corpse->GetPosition(loc);
             m_bot->TeleportTo(loc.mapid, loc.coord_x, loc.coord_y, loc.coord_z, m_bot->GetOrientation());
-            // set state to released
-            SetState(BOTSTATE_DEADRELEASED);
         }
         else if (m_botState == BOTSTATE_DEADRELEASED)
         {
