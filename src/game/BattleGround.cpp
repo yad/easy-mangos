@@ -1152,6 +1152,30 @@ void BattleGround::RemovePlayerAtLeave(ObjectGuid guid, bool Transport, bool Sen
         // reset destination bg team
         plr->SetBGTeam(TEAM_NONE);
 
+        uint8 index = plr->GetCptBotMapArena();
+        for (int i = 0; i < index; ++i)
+        {
+            Player* bot = plr->GetBotMapArena(i);
+            bot->LeaveBattleground();
+            bot->TeleportTo(bot->m_recallMap, bot->m_recallX, bot->m_recallY, bot->m_recallZ, bot->m_recallO);
+            plr->SetBotMapArena(i, NULL);
+        }
+        plr->SetCptBotMapArena(0);
+        if (plr->GetGroup())
+        {
+            GroupReference *ref = plr->GetGroup()->GetFirstMember();
+            while (ref)
+            {
+                Player* bot = ref->getSource();
+                if (bot && bot->IsBot() && bot != plr)
+                {                    
+                    bot->LeaveBattleground();
+                    bot->TeleportTo(bot->m_recallMap, bot->m_recallX, bot->m_recallY, bot->m_recallZ, bot->m_recallO);
+                }
+                ref = ref->next();
+            }
+        }
+
         if (Transport)
             plr->TeleportToBGEntryPoint();
 

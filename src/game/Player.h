@@ -1478,8 +1478,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         void TradeCancel(bool sendback);
 
         void UpdateEnchantTime(uint32 time);
-        void UpdateSoulboundTradeItems();
-        void RemoveTradeableItem(Item* item);
         void UpdateItemDuration(uint32 time, bool realtimeonly = false);
         void AddEnchantmentDurations(Item *item);
         void RemoveEnchantmentDurations(Item *item);
@@ -2714,7 +2712,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         int32 m_SpellModRemoveCount;
         EnchantDurationList m_enchantDuration;
         ItemDurationList m_itemDuration;
-        ItemDurationList m_itemSoulboundTradeable;
 
         ObjectGuid m_resurrectGuid;
         uint32 m_resurrectMap;
