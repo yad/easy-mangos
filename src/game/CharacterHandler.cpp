@@ -627,6 +627,7 @@ void PlayerbotMgr::AddAllBots()
         return;
 
     uint32 accountId = 1;
+    uint32 cycle = 0;
     int nbBotsCurrAlliance = 0;
     int nbBotsCurrHorde = 0;
     HashMapHolder<Player>::MapType& m = sObjectAccessor.GetPlayers();
@@ -686,6 +687,7 @@ void PlayerbotMgr::AddAllBots()
                             continue;
                         }
                         CharacterDatabase.DelayQueryHolder(&chrHandler, &CharacterHandler::HandlePlayerBotLoginCallback, holder);
+                        cycle++;
                     }
                     break;
                 }
@@ -705,12 +707,15 @@ void PlayerbotMgr::AddAllBots()
                             continue;
                         }
                         CharacterDatabase.DelayQueryHolder(&chrHandler, &CharacterHandler::HandlePlayerBotLoginCallback, holder);
+                        cycle++;
                     }
                     break;
                 }
                 default:
                     break;
             }
+            if (cycle > 5)
+                break;
         }
         while (result->NextRow());
         delete result;

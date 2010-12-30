@@ -95,7 +95,7 @@ World::World()
     m_resultQueue = NULL;
     m_NextDailyQuestReset = 0;
     m_NextWeeklyQuestReset = 0;
-    m_NextPlayerBotCheck = 0;
+    m_NextPlayerBotCheck = time(0) + 30;
     m_scheduledScripts = 0;
 
     m_defaultDbcLocale = LOCALE_enUS;
@@ -1575,7 +1575,7 @@ void World::Update(uint32 diff)
     if (m_NextPlayerBotCheck < time(0))
     {
         PlayerbotMgr::AddAllBots();
-        m_NextPlayerBotCheck = time(0) + 1 * MINUTE;
+        m_NextPlayerBotCheck = time(0) + 5;
     }
 
     // And last, but not least handle the issued cli commands
