@@ -11959,7 +11959,7 @@ uint8 Player::CanEquipItem( uint8 slot, uint16 &dest, Item *pItem, bool swap, bo
     dest = 0;
     if (pItem)
     {
-        DEBUG_LOG( "STORAGE: CanEquipItem slot = %u, item = %u, count = %u", slot, pItem->GetEntry(), pItem->GetCount());
+        //DEBUG_LOG( "STORAGE: CanEquipItem slot = %u, item = %u, count = %u", slot, pItem->GetEntry(), pItem->GetCount());
         ItemPrototype const *pProto = pItem->GetProto();
         if (pProto)
         {
@@ -12108,7 +12108,7 @@ uint8 Player::CanUnequipItem( uint16 pos, bool swap ) const
     if (!pItem)
         return EQUIP_ERR_OK;
 
-    DEBUG_LOG( "STORAGE: CanUnequipItem slot = %u, item = %u, count = %u", pos, pItem->GetEntry(), pItem->GetCount());
+    //DEBUG_LOG( "STORAGE: CanUnequipItem slot = %u, item = %u, count = %u", pos, pItem->GetEntry(), pItem->GetCount());
 
     ItemPrototype const *pProto = pItem->GetProto();
     if (!pProto)
@@ -12375,7 +12375,7 @@ uint8 Player::CanUseItem( Item *pItem, bool not_loading ) const
                 }
             }
         }
-        DEBUG_LOG( "STORAGE: CanUseItem item = %u", pItem->GetEntry());
+        //DEBUG_LOG( "STORAGE: CanUseItem item = %u", pItem->GetEntry());
 
         if (!isAlive() && not_loading)
             return EQUIP_ERR_YOU_ARE_DEAD;
@@ -12479,7 +12479,7 @@ uint8 Player::CanUseItem( ItemPrototype const *pProto ) const
 
 uint8 Player::CanUseAmmo( uint32 item ) const
 {
-    DEBUG_LOG( "STORAGE: CanUseAmmo item = %u", item);
+    //DEBUG_LOG( "STORAGE: CanUseAmmo item = %u", item);
     if( !isAlive() )
         return EQUIP_ERR_YOU_ARE_DEAD;
     //if( isStunned() )
