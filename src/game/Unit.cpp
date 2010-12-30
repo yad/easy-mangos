@@ -11241,8 +11241,8 @@ bool Unit::FindRealPlayerInRange(float radius /*= ATTACK_DISTANCE*/) const
 {
     std::list<Unit *> targets;
 
-    MaNGOS::AnyFriendlyUnitInObjectRangeCheck u_check(this, radius);
-    MaNGOS::UnitListSearcher<MaNGOS::AnyFriendlyUnitInObjectRangeCheck> searcher(targets, u_check);
+    MaNGOS::AnyUnitInObjectRangeCheck u_check(this, radius);
+    MaNGOS::UnitListSearcher<MaNGOS::AnyUnitInObjectRangeCheck> searcher(targets, u_check);
 
     Cell::VisitAllObjects(this, searcher, radius);
 
