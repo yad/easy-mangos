@@ -144,10 +144,6 @@ public:
     // This is called from Unit.cpp and is called every second (I think)
     void UpdateAI(const uint32 p_time);
 
-    // This is called from ChatHandler.cpp when there is an incoming message to the bot
-    // from a whisper or from the party channel
-    void HandleCommand(const std::string& text, Player& fromPlayer);
-
     // This is called by WorldSession.cpp
     // It provides a view of packets normally sent to the client.
     // Since there is no client at the other end, the packets are dropped of course.
@@ -196,9 +192,7 @@ public:
     // get current casting spell (will return NULL if no spell!)
     Spell* GetCurrentSpell() const;
 
-    bool HasAura(uint32 spellId, const Unit& player) const;
-    bool HasAura(const char* spellName, const Unit& player) const;
-    bool HasAura(const char* spellName) const;
+    bool HasAura(uint32 spellId, const Unit* unit) const;
 
     bool CanReceiveSpecificSpell(uint8 spec, Unit* target) const;
 
@@ -230,12 +224,9 @@ public:
 
     // ******* Actions ****************************************
     // Your handlers can call these actions to make the bot do things.
-    void TellMaster(const std::string& text) const;
-    void TellMaster(const char *fmt, ...) const;
-    void SendWhisper(const std::string& text, Player& player) const;
-    bool CastSpell(const char* args);
     bool CastSpell(uint32 spellId);
-    bool CastSpell(uint32 spellId, Unit& target);
+    bool CastSpell(uint32 spellId, Unit* target);
+    bool CastAura(uint32 spellId, Unit* target);
     bool CastPetSpell(uint32 spellId, Unit* target = NULL);
     bool Buff(uint32 spellId, Unit* target, void (*beforeCast)(Player *) = NULL);
     bool SelfBuff(uint32 spellId);
@@ -246,9 +237,6 @@ public:
     void UseItem(Item *item);
 
     void EquipItem(Item& item);
-    //void Stay();
-    //bool Follow(Player& player);
-    void SendNotEquipList(Player& player);
     void Feast();
     void InterruptCurrentCastingSpell();
     void GetCombatTarget(Unit* forcedTarged = 0);
@@ -270,13 +258,13 @@ public:
     void SetState(BotState state);
     void SetQuestNeedItems();
     void SendQuestItemList(Player& player);
-    void SendOrders(Player& player);
     bool FollowCheckTeleport(WorldObject &obj);
     void DoLoot();
 
     bool CheckTeleport();
     bool CheckMaster();
     void CheckStuff();
+    void CheckRoles();
 
     uint32 EstRepairAll();
     uint32 EstRepair(uint16 pos);
@@ -309,12 +297,6 @@ public:
 
 private:
     // ****** Closed Actions ********************************
-    // These actions may only be called at special times.
-    // Trade methods are only applicable when the trade window is open
-    // and are only called from within HandleCommand.
-    bool TradeItem(const Item& item, int8 slot = -1);
-    bool TradeCopper(uint32 copper);
-
     // Helper routines not needed by class AIs.
     void UpdateAttackersForTarget(Unit *victim);
 

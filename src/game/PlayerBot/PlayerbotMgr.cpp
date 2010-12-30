@@ -53,19 +53,6 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
             return;
         }
 
-        // If master inspects one of his bots, give the master useful info in chat window
-        // such as inventory that can be equipped
-        case CMSG_INSPECT:
-        {
-            WorldPacket p(packet);
-            p.rpos(0); // reset reader
-            uint64 guid;
-            p >> guid;
-            Player* const bot = GetPlayerBot(guid);
-            if (bot) bot->GetPlayerbotAI()->SendNotEquipList(*bot);
-            return;
-        }
-
         // handle emotes from the master
         //case CMSG_EMOTE:
         case CMSG_TEXT_EMOTE:
@@ -74,12 +61,6 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
             p.rpos(0); // reset reader
             uint32 emoteNum;
             p >> emoteNum;
-
-            /* std::ostringstream out;
-               out << "emote is: " << emoteNum;
-               ChatHandler ch(m_master);
-               ch.SendSysMessage(out.str().c_str()); */
-
             switch (emoteNum)
             {
                 case TEXTEMOTE_BOW:
@@ -101,36 +82,36 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
 
                     ChatHandler ch(m_master);
                     {
-                        std::ostringstream out;
-                        out << "time(0): " << time(0)
+
+
                             << " m_ignoreAIUpdatesUntilTime: " << pBot->m_ignoreAIUpdatesUntilTime;
                         ch.SendSysMessage(out.str().c_str());
                     }
                     {
-                        std::ostringstream out;
-                        out << "m_TimeDoneEating: " << pBot->m_TimeDoneEating
+
+
                             << " m_TimeDoneDrinking: " << pBot->m_TimeDoneDrinking;
                         ch.SendSysMessage(out.str().c_str());
                     }
                     {
-                        std::ostringstream out;
-                        out << "m_CurrentlyCastingSpellId: " << pBot->m_CurrentlyCastingSpellId;
+
+
                         ch.SendSysMessage(out.str().c_str());
                     }
                     {
-                        std::ostringstream out;
-                        out << "IsBeingTeleported() " << pBot->GetPlayer()->IsBeingTeleported();
+
+
                         ch.SendSysMessage(out.str().c_str());
                     }
                     {
-                        std::ostringstream out;
+
                         bool tradeActive = (pBot->GetPlayer()->GetTrader()) ? true : false;
-                        out << "tradeActive: " << tradeActive;
+
                         ch.SendSysMessage(out.str().c_str());
                     }
                     {
-                        std::ostringstream out;
-                        out << "IsCharmed() " << pBot->getPlayer()->isCharmed();
+
+
                         ch.SendSysMessage(out.str().c_str());
                     }
                     return;
@@ -294,24 +275,21 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
                     Player* const bot = itr->getSource();
 
                     if (bot->GetQuestStatus(quest) == QUEST_STATUS_COMPLETE)
-                        bot->GetPlayerbotAI()->TellMaster("J'ai deja fini cette quete.");
+                    {
+                    }
                     else if (!bot->CanTakeQuest(qInfo, false))
                     {
-                        if (!bot->SatisfyQuestStatus(qInfo, false))
-                            bot->GetPlayerbotAI()->TellMaster("Je suis deja sur cette quete.");
-                        else
-                            bot->GetPlayerbotAI()->TellMaster("Je ne peux pas prendre cette quete.");
                     }
                     else if (!bot->SatisfyQuestLog(false))
-                        bot->GetPlayerbotAI()->TellMaster("Mon journal de quete est plein.");
+                    {
+                    }
                     else if (!bot->CanAddQuest(qInfo, false))
-                        bot->GetPlayerbotAI()->TellMaster("Je ne peux pas prendre cette quete car je dois ramasser des objets pour la terminer et mes sacs sont pleins :(");
-
+                    {
+                    }
                     else
                     {
                         p.rpos(0);         // reset reader
                         bot->GetSession()->HandleQuestgiverAcceptQuestOpcode(p);
-                        bot->GetPlayerbotAI()->TellMaster("J'ai pris la quete.");
                     }
                 }
             }
@@ -468,8 +446,8 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
                 // ChatHandler ch(m_master);
                 // ch.SendSysMessage(oc);
 
-                std::ostringstream out;
-                out << "masterin: " << oc;
+
+
                 sLog.outDebug(out.str().c_str());
                }
              */
@@ -499,8 +477,8 @@ void PlayerbotMgr::HandleMasterOutgoingPacket(const WorldPacket& packet)
         {
             const char* oc = LookupOpcodeName(packet.GetOpcode());
 
-            std::ostringstream out;
-            out << "masterout: " << oc;
+
+
             sLog.outDebug(out.str().c_str());
         }
        }

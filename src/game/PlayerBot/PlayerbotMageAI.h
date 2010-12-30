@@ -21,13 +21,6 @@
 
 #include "PlayerbotClassAI.h"
 
-enum
-{
-    SPELL_FROST,
-    SPELL_FIRE,
-    SPELL_ARCANE
-};
-
 enum MageSpells
 {
     AMPLIFY_MAGIC_1                 = 1008,
@@ -171,11 +164,7 @@ private:
            BERSERKING,
            WILL_OF_THE_FORSAKEN;
 
-    uint32 SpellSequence,
-           LastSpellArcane,
-           LastSpellFire,
-           LastSpellFrost,
-           CONJURE_WATER,
+    uint32 CONJURE_WATER,
            CONJURE_FOOD;
 };
 
