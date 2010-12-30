@@ -2434,6 +2434,9 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
     // default updates occur every two seconds
     m_ignoreAIUpdatesUntilTime = time(0) + 2;
 
+    if (!m_bot->FindRealPlayerInRange(50000.0f))
+        return;
+
     if (!CheckMaster())
         return;
 
