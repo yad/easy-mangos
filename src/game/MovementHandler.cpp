@@ -523,23 +523,19 @@ void WorldSession::HandleMoverRelocation(MovementInfo& movementInfo)
 
     if (Player *plMover = mover->GetTypeId() == TYPEID_PLAYER ? (Player*)mover : NULL)
     {
-        if (movementInfo.HasMovementFlag(MOVEFLAG_ONTRANSPORT))
+        if (movementInfo.HasMovementFlag(MOVEFLAG_ONTRANSPORT) && !plMover->m_transport)
         {
-            if (!plMover->GetTransport())
+            // elevators also cause the client to send MOVEFLAG_ONTRANSPORT - just unmount if the guid can be found in the transport list
+            for (MapManager::TransportSet::const_iterator iter = sMapMgr.m_Transports.begin(); iter != sMapMgr.m_Transports.end(); ++iter)
             {
-                // elevators also cause the client to send MOVEFLAG_ONTRANSPORT - just unmount if the guid can be found in the transport list
-                for (MapManager::TransportSet::const_iterator iter = sMapMgr.m_Transports.begin(); iter != sMapMgr.m_Transports.end(); ++iter)
+                if ((*iter)->GetObjectGuid() == movementInfo.GetTransportGuid())
                 {
-                    if ((*iter)->GetObjectGuid() == movementInfo.GetTransportGuid())
-                    {
-                        plMover->m_transport = (*iter);
-                        (*iter)->AddPassenger(plMover);
-
-                        if (plMover->GetVehicleKit())
-                            plMover->GetVehicleKit()->RemoveAllPassengers();
-
-                        break;
-                    }
+                    plMover->m_transport = (*iter);
+                    (*iter)->AddPassenger(plMover);
+		            
+					if (plMover->GetVehicleKit())
+						plMover->GetVehicleKit()->RemoveAllPassengers();
+                    break;
                 }
             }
         }
