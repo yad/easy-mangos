@@ -126,20 +126,6 @@ void WorldSession::HandleMoveWorldportAckOpcode()
                 _player->SetBotMapArena(i, NULL);
             }
             _player->SetCptBotMapArena(0);
-            if (_player->GetGroup())
-            {
-                GroupReference *ref = _player->GetGroup()->GetFirstMember();
-                while (ref)
-                {
-                    Player* bot = ref->getSource();
-                    if (bot && bot->IsBot() && bot != _player)
-                    {                    
-                        bot->LeaveBattleground();
-                        bot->TeleportTo(bot->m_recallMap, bot->m_recallX, bot->m_recallY, bot->m_recallZ, bot->m_recallO);
-                    }
-                    ref = ref->next();
-                }
-            }
         }
         // join to bg case
         else if(BattleGround *bg = _player->GetBattleGround())

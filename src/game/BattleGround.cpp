@@ -742,6 +742,20 @@ void BattleGround::EndBattleGround(Team winner)
             SetArenaTeamRatingChangeForTeam(winner, winner_change);
             SetArenaTeamRatingChangeForTeam(GetOtherTeam(winner), loser_change);
         }
+        else if (winner_arena_team)
+        {
+            winner_rating = winner_arena_team->GetStats().rating;
+            int32 winner_change = winner_arena_team->WonAgainst(loser_rating);
+            SetArenaTeamRatingChangeForTeam(winner, winner_change);
+            SetArenaTeamRatingChangeForTeam(GetOtherTeam(winner), 0);
+        }
+        else if (loser_arena_team)
+        {
+            loser_rating = loser_arena_team->GetStats().rating;
+            int32 loser_change = loser_arena_team->LostAgainst(winner_rating);
+            SetArenaTeamRatingChangeForTeam(winner, 0);
+            SetArenaTeamRatingChangeForTeam(GetOtherTeam(winner), loser_change);
+        }
         else
         {
             SetArenaTeamRatingChangeForTeam(ALLIANCE, 0);
@@ -818,6 +832,35 @@ void BattleGround::EndBattleGround(Team winner)
                 plr->GetAchievementMgr().ResetAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_WIN_RATED_ARENA, ACHIEVEMENT_CRITERIA_CONDITION_NO_LOOSE);
             }
         }
+        else if (isArena() && isRated() && winner_arena_team)
+        {
+            if (team == winner)
+            {
+                // update achievement BEFORE personal rating update
+                ArenaTeamMember* member = winner_arena_team->GetMember(plr->GetObjectGuid());
+                if (member)
+                    plr->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_WIN_RATED_ARENA, member->personal_rating);
+
+                if (member)
+                {
+                    plr->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HIGHEST_PERSONAL_RATING, GetArenaType(), member->personal_rating);
+                    plr->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HIGHEST_TEAM_RATING, GetArenaType(), winner_arena_team->GetStats().rating);
+                }
+            }
+            else
+            {
+                // Arena lost => reset the win_rated_arena having the "no_loose" condition
+                plr->GetAchievementMgr().ResetAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_WIN_RATED_ARENA, ACHIEVEMENT_CRITERIA_CONDITION_NO_LOOSE);
+            }
+        }
+        else if (isArena() && isRated() && loser_arena_team)
+        {
+            if (team != winner)
+            {
+                // Arena lost => reset the win_rated_arena having the "no_loose" condition
+                plr->GetAchievementMgr().ResetAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_WIN_RATED_ARENA, ACHIEVEMENT_CRITERIA_CONDITION_NO_LOOSE);
+            }
+        }
 
         uint32 win_kills = plr->GetRandomWinner() ? BG_REWARD_WINNER_HONOR_LAST : BG_REWARD_WINNER_HONOR_FIRST;
         uint32 loos_kills = plr->GetRandomWinner() ? BG_REWARD_LOOSER_HONOR_LAST : BG_REWARD_LOOSER_HONOR_FIRST;
@@ -869,6 +912,16 @@ void BattleGround::EndBattleGround(Team winner)
         // send updated arena team stats to players
         // this way all arena team members will get notified, not only the ones who participated in this match
         winner_arena_team->NotifyStatsChanged();
+        loser_arena_team->NotifyStatsChanged();
+    }
+    else if (isArena() && isRated() && winner_arena_team)
+    {
+        winner_arena_team->SaveToDB();
+        winner_arena_team->NotifyStatsChanged();
+    }
+    else if (isArena() && isRated() && loser_arena_team)
+    {
+        loser_arena_team->SaveToDB();
         loser_arena_team->NotifyStatsChanged();
     }
 
@@ -1161,21 +1214,6 @@ void BattleGround::RemovePlayerAtLeave(ObjectGuid guid, bool Transport, bool Sen
             plr->SetBotMapArena(i, NULL);
         }
         plr->SetCptBotMapArena(0);
-        if (plr->GetGroup())
-        {
-            GroupReference *ref = plr->GetGroup()->GetFirstMember();
-            while (ref)
-            {
-                Player* bot = ref->getSource();
-                if (bot && bot->IsBot() && bot != plr)
-                {                    
-                    bot->LeaveBattleground();
-                    bot->TeleportTo(bot->m_recallMap, bot->m_recallX, bot->m_recallY, bot->m_recallZ, bot->m_recallO);
-                }
-                ref = ref->next();
-            }
-        }
-
         if (Transport)
             plr->TeleportToBGEntryPoint();
 
