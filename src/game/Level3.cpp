@@ -8357,7 +8357,11 @@ bool ChatHandler::HandleBotInvite(char* args)
             chr->setPowerType(Powers(cEntry->powerType));
         chr->InitRunes();
         if (chr->GetPlayerbotAI())
+        {
+            chr->GetPlayerbotAI()->SetMaster(pl);
+            chr->GetPlayerbotAI()->CheckRoles();
             chr->GetPlayerbotAI()->CheckStuff();
+        }
 
         break;
     }

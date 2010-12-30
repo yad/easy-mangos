@@ -116,18 +116,6 @@ void WorldSession::HandleMoveWorldportAckOpcode()
             _player->SetBattleGroundId(0, BATTLEGROUND_TYPE_NONE);
             // reset destination bg team
             _player->SetBGTeam(TEAM_NONE);
-
-            uint8 index = _player->GetCptBotMapArena();
-            for (int i = 0; i < index; ++i)
-            {
-                _player->GetBotMapArena(i)->GetSession()->LogoutPlayer(false);
-                _player->SetBotMapArena(i, NULL);
-            }
-            _player->SetCptBotMapArena(0);
-            if (_player->GetPlayerbotMgr())
-                _player->GetPlayerbotMgr()->RemoveAllBotsFromGroup(_player);
-            else
-                PlayerbotMgr::AddAllBots();
         }
         // join to bg case
         else if(BattleGround *bg = _player->GetBattleGround())

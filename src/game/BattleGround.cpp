@@ -1152,18 +1152,6 @@ void BattleGround::RemovePlayerAtLeave(ObjectGuid guid, bool Transport, bool Sen
         // reset destination bg team
         plr->SetBGTeam(TEAM_NONE);
 
-        uint8 index = plr->GetCptBotMapArena();
-        for (int i = 0; i < index; ++i)
-        {
-            plr->GetBotMapArena(i)->GetSession()->LogoutPlayer(false);
-            plr->SetBotMapArena(i, NULL);
-        }
-        plr->SetCptBotMapArena(0);
-        if (plr->GetPlayerbotMgr())
-            plr->GetPlayerbotMgr()->RemoveAllBotsFromGroup(plr);
-        else
-            PlayerbotMgr::AddAllBots();
-
         if (Transport)
             plr->TeleportToBGEntryPoint();
 
