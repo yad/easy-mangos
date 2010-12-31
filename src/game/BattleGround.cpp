@@ -777,6 +777,16 @@ void BattleGround::EndBattleGround(Team winner)
                 else
                     loser_arena_team->OfflineMemberLost(itr->first, winner_rating);
             }
+            else if (isArena() && isRated() && winner_arena_team)
+            {
+                if (team == winner)
+                    winner_arena_team->OfflineMemberLost(itr->first, loser_rating);
+            }
+            else if (isArena() && isRated() && loser_arena_team)
+            {
+                if (team != winner)
+                    loser_arena_team->OfflineMemberLost(itr->first, winner_rating);
+            }
             continue;
         }
 
@@ -841,6 +851,8 @@ void BattleGround::EndBattleGround(Team winner)
                 if (member)
                     plr->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_WIN_RATED_ARENA, member->personal_rating);
 
+                winner_arena_team->MemberWon(plr,loser_rating);
+
                 if (member)
                 {
                     plr->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HIGHEST_PERSONAL_RATING, GetArenaType(), member->personal_rating);
@@ -857,6 +869,8 @@ void BattleGround::EndBattleGround(Team winner)
         {
             if (team != winner)
             {
+                loser_arena_team->MemberLost(plr,winner_rating);
+
                 // Arena lost => reset the win_rated_arena having the "no_loose" condition
                 plr->GetAchievementMgr().ResetAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_WIN_RATED_ARENA, ACHIEVEMENT_CRITERIA_CONDITION_NO_LOOSE);
             }
