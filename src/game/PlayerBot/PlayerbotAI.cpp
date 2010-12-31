@@ -2624,7 +2624,7 @@ bool PlayerbotAI::CastSpell(uint32 spellId, Unit* target)
 bool PlayerbotAI::HasAura(uint32 spellId, const Unit* unit) const
 {
     if (spellId <= 0)
-        return true; //if (!HasAura) ==> arrete la recherche
+        return false;
 
     for (Unit::SpellAuraHolderMap::const_iterator iter = unit->GetSpellAuraHolderMap().begin(); iter != unit->GetSpellAuraHolderMap().end(); ++iter)
     {
