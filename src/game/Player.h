@@ -1760,7 +1760,7 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         bool HasSpell(uint32 spell) const;
         bool HasActiveSpell(uint32 spell) const;            // show in spellbook
-        TrainerSpellState GetTrainerSpellState(TrainerSpell const* trainer_spell) const;
+        TrainerSpellState GetTrainerSpellState(TrainerSpell const* trainer_spell, bool ignorelevel = false) const;
         bool IsSpellFitByClassAndRace( uint32 spell_id ) const;
         bool IsNeedCastPassiveSpellAtLearn(SpellEntry const* spellInfo) const;
         bool IsImmuneToSpellEffect(SpellEntry const* spellInfo, SpellEffectIndex index) const;
@@ -1775,6 +1775,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         void learnQuestRewardedSpells();
         void learnQuestRewardedSpells(Quest const* quest);
         void learnSpellHighRank(uint32 spellid);
+        bool isWtfSpell(uint32 spell_id);
+        void choseMount(uint32 *Mount, uint32 max);
 
         uint32 GetFreeTalentPoints() const { return GetUInt32Value(PLAYER_CHARACTER_POINTS1); }
         void SetFreeTalentPoints(uint32 points) { SetUInt32Value(PLAYER_CHARACTER_POINTS1,points); }

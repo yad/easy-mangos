@@ -5020,6 +5020,132 @@ void Player::removeSpell(uint32 spell_id, bool disabled, bool learn_low_rank, bo
     }
 }
 
+bool Player::isWtfSpell(uint32 spell_id)
+{
+    switch(getClass())
+    {
+        case CLASS_WARRIOR:
+        {
+            uint32 blackListedSpells[] = {25266, 20559, 20560, 7400, 7402, 25225, 7405, 8380,
+                11596, 11597, 23892, 23893, 23894, 30335, 25251, 6554, 6552};
+            uint32 max = sizeof(blackListedSpells)/sizeof(uint32);
+            for(uint32 i = 0; i < max; ++i)
+                if (spell_id == blackListedSpells[i])
+                    return true;
+            break;
+        }
+        case CLASS_PALADIN:
+        {
+            uint32 blackListedSpells[] = {51640, 53720, 2567};
+            uint32 max = sizeof(blackListedSpells)/sizeof(uint32);
+            for(uint32 i = 0; i < max; ++i)
+                if (spell_id == blackListedSpells[i])
+                    return true;
+            break;
+        }
+        case CLASS_HUNTER:
+        {
+            uint32 blackListedSpells[] = {23034, 23035, 23539, 23538, 31333};
+            uint32 max = sizeof(blackListedSpells)/sizeof(uint32);
+            for(uint32 i = 0; i < max; ++i)
+                if (spell_id == blackListedSpells[i])
+                    return true;
+            break;
+        }
+        case CLASS_ROGUE:
+        {
+            uint32 blackListedSpells[] = {1785, 1786, 1787, 9991};
+            uint32 max = sizeof(blackListedSpells)/sizeof(uint32);
+            for(uint32 i = 0; i < max; ++i)
+                if (spell_id == blackListedSpells[i])
+                    return true;
+            break;
+        }
+        case CLASS_PRIEST:
+        {
+            uint32 blackListedSpells[] = {16053, 35460, 39219, 38915, 38482, 36314, 34630, 2567};
+            uint32 max = sizeof(blackListedSpells)/sizeof(uint32);
+            for(uint32 i = 0; i < max; ++i)
+                if (spell_id == blackListedSpells[i])
+                    return true;
+            break;
+        }
+        case CLASS_DEATH_KNIGHT:
+        {
+            uint32 blackListedSpells[] = {49916, 49913, 49914, 49915, 51428, 51429, 51426, 51427, 2567};
+            uint32 max = sizeof(blackListedSpells)/sizeof(uint32);
+            for(uint32 i = 0; i < max; ++i)
+                if (spell_id == blackListedSpells[i])
+                    return true;
+            break;
+        }
+        case CLASS_SHAMAN:
+        {
+            uint32 blackListedSpells[] = {2567};
+            uint32 max = sizeof(blackListedSpells)/sizeof(uint32);
+            for(uint32 i = 0; i < max; ++i)
+                if (spell_id == blackListedSpells[i])
+                    return true;
+            break;
+        }
+        case CLASS_MAGE:
+        {
+            uint32 blackListedSpells[] = {26373, 29443, 57680, 73324, 10052, 10057, 10058, 27103, 42987, 12510, 41234, 2567};
+            uint32 max = sizeof(blackListedSpells)/sizeof(uint32);
+            for(uint32 i = 0; i < max; ++i)
+                if (spell_id == blackListedSpells[i])
+                    return true;
+            break;
+        }
+        case CLASS_WARLOCK:
+        {
+            uint32 blackListedSpells[] = {265, 5720, 5723, 6263, 6262, 11732, 23468, 23469, 23470, 23471, 23472,
+                23473, 23474, 23475, 23476, 23477, 27235, 27236, 27237, 47874, 47873, 47872, 47875, 47876, 47877,
+                55153, 55152, 55154, 2567};
+            uint32 max = sizeof(blackListedSpells)/sizeof(uint32);
+            for(uint32 i = 0; i < max; ++i)
+                if (spell_id == blackListedSpells[i])
+                    return true;
+            break;
+        }
+        case CLASS_DRUID:
+        {
+            uint32 blackListedSpells[] = {21163, 43816, 6783, 9913, 2567};
+            uint32 max = sizeof(blackListedSpells)/sizeof(uint32);
+            for(uint32 i = 0; i < max; ++i)
+                if (spell_id == blackListedSpells[i])
+                    return true;
+            break;
+        }
+    }
+    return false;
+}
+
+void Player::choseMount(uint32 *Mount, uint32 max)
+{
+    bool learn = true;
+    for (uint32 i = 0; i < max; ++i)
+    {
+        ItemPrototype const *pProto = sObjectMgr.GetItemPrototype(Mount[i]);
+        if (!pProto)
+            continue;
+
+        if (HasSpell(pProto->Spells[1].SpellId))
+        {
+            learn = false;
+            break;
+        }
+    }
+
+    if (learn)
+    {
+        ItemPrototype const *pProto = sObjectMgr.GetItemPrototype(Mount[urand(0, max-1)]);
+        if (!pProto)
+            return;
+        learnSpell(pProto->Spells[1].SpellId, false);
+    }
+}
+
 void Player::RemoveSpellCooldown( uint32 spell_id, bool update /* = false */ )
 {
     m_spellCooldowns.erase(spell_id);
@@ -5508,7 +5634,7 @@ bool Player::HasActiveSpell(uint32 spell) const
         itr->second.active && !itr->second.disabled);
 }
 
-TrainerSpellState Player::GetTrainerSpellState(TrainerSpell const* trainer_spell) const
+TrainerSpellState Player::GetTrainerSpellState(TrainerSpell const* trainer_spell, bool ignorelevel /*= false*/) const
 {
     if (!trainer_spell)
         return TRAINER_SPELL_RED;
@@ -5524,9 +5650,12 @@ TrainerSpellState Player::GetTrainerSpellState(TrainerSpell const* trainer_spell
     if(!IsSpellFitByClassAndRace(trainer_spell->learnedSpell))
         return TRAINER_SPELL_RED;
 
-    // check level requirement
-    if(getLevel() < trainer_spell->reqLevel)
-        return TRAINER_SPELL_RED;
+    if (!ignorelevel)
+    {
+        // check level requirement
+        if(getLevel() < trainer_spell->reqLevel)
+            return TRAINER_SPELL_RED;
+    }
 
     if(SpellChainNode const* spell_chain = sSpellMgr.GetSpellChainNode(trainer_spell->learnedSpell))
     {
@@ -5539,9 +5668,12 @@ TrainerSpellState Player::GetTrainerSpellState(TrainerSpell const* trainer_spell
             return TRAINER_SPELL_RED;
     }
 
-    // check skill requirement
-    if(trainer_spell->reqSkill && GetBaseSkillValue(trainer_spell->reqSkill) < trainer_spell->reqSkillValue)
-        return TRAINER_SPELL_RED;
+    if (!ignorelevel)
+    {
+        // check skill requirement
+        if(trainer_spell->reqSkill && GetBaseSkillValue(trainer_spell->reqSkill) < trainer_spell->reqSkillValue)
+            return TRAINER_SPELL_RED;
+    }
 
     // exist, already checked at loading
     SpellEntry const* spell = sSpellStore.LookupEntry(trainer_spell->learnedSpell);
@@ -16936,13 +17068,13 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder *holder )
     if (IsBot())
     {
         SetUInt32Value(PLAYER_BYTES_2, 33554438);
-        SetByteValue(PLAYER_BYTES_2, 0, fields[10].GetUInt32());        
+        SetByteValue(PLAYER_BYTES_2, 0, fields[10].GetUInt32());
     }
     else
     {
         SetUInt32Value(PLAYER_BYTES_2, fields[10].GetUInt32());
     }
-            
+
     m_drunk = fields[49].GetUInt16();
 
     SetUInt16Value(PLAYER_BYTES_3, 0, (m_drunk & 0xFFFE) | gender);

@@ -904,12 +904,12 @@ namespace MaNGOS
     class AnyFriendlyUnitBetweenObjectRangeCheck
     {
         public:
-            AnyFriendlyUnitBetweenObjectRangeCheck(WorldObject const* obj, float rangemin, float rangemax) : 
+            AnyFriendlyUnitBetweenObjectRangeCheck(WorldObject const* obj, float rangemin, float rangemax) :
               i_obj(obj), i_range_min(rangemin), i_range_max(rangemax) {}
             WorldObject const& GetFocusObject() const { return *i_obj; }
             bool operator()(Unit* u)
             {
-                if(u->isAlive() && !i_obj->IsWithinDistInMap(u, i_range_min) 
+                if(u->isAlive() && !i_obj->IsWithinDistInMap(u, i_range_min)
                     && i_obj->IsWithinDistInMap(u, i_range_max) && i_obj->IsFriendlyTo(u))
                     return true;
                 else

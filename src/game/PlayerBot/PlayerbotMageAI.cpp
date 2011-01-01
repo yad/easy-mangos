@@ -90,14 +90,14 @@ void PlayerbotMageAI::DoNextCombatManeuver(Unit *pTarget)
     PlayerbotAI *ai = GetAI();
     if (!ai)
         return;
-        
+
     Player * m_bot = GetPlayerBot();
     if (!m_bot)
         return;
-        
+
     Player* m_master = ai->GetMaster();
     if (!m_master)
-        return;    
+        return;
 
     //Brûlure > Givrefeu > Trait de feu > Brûlure > Fireball > Brûlure > Fireball > Brûlure > Pyro > Brûlure > Fireball
     //Eclair de Givre > Eclair de Givre > Javelot de Glace > Eclair de Givre > Eclair de Givre > Cône de froid > Eclair de Givre > Eclair de Givre > Javelot de Glace >Nova de Givre > Blizzard
@@ -365,14 +365,14 @@ void PlayerbotMageAI::DoNonCombatActions()
     PlayerbotAI* ai = GetAI();
     if (!ai)
         return;
-        
+
     Player* m_bot = GetPlayerBot();
     if (!m_bot)
         return;
-        
+
     Player* m_master = ai->GetMaster();
     if (!m_master)
-        return;                
+        return;
 
     switch (m_bot->getRole())
     {
@@ -394,6 +394,11 @@ void PlayerbotMageAI::DoNonCombatActions()
         {
             if (!ai->CastAura(ICE_ARMOR, m_bot))
                 (ai->CastAura(FROST_ARMOR, m_bot));
+            break;
+        }
+        default:
+        {
+            sLog.outString("WTF %u for player %s", m_bot->getRole(), m_bot->GetName());
             break;
         }
     }

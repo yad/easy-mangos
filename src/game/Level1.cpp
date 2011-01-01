@@ -437,7 +437,7 @@ bool ChatHandler::HandleNamegoCommand(char* args)
                         return true;
                     }
                     else
-                    {                        
+                    {
                         if (!master->GetBattleGround())
                             return false;
 

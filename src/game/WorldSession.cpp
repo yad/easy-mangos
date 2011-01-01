@@ -217,7 +217,7 @@ bool WorldSession::ReadInvitePaquet(WorldPacket const* packet)
             GetPlayer()->SetGroupInvite(NULL);
             return false;
         }
-        
+
         GetPlayer()->GetPlayerbotMgr()->SetMaster(inviter);
     }
     return true;

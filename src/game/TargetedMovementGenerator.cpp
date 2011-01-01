@@ -268,10 +268,10 @@ void ChaseMovementGenerator<Player>::Initialize(Player &owner)
 {
     owner.addUnitState(UNIT_STAT_CHASE|UNIT_STAT_CHASE_MOVE);
     //owner.RemoveSplineFlag(SPLINEFLAG_WALKMODE);
-    
+
     /*if (((Creature*)&owner)->CanFly())
         owner.AddSplineFlag(SPLINEFLAG_UNKNOWN7);*/
-        
+
     _setTargetLocation(owner);
 }
 
@@ -349,10 +349,10 @@ void FollowMovementGenerator<Player>::Initialize(Player &owner)
     owner.addUnitState(UNIT_STAT_FOLLOW|UNIT_STAT_FOLLOW_MOVE);
     _updateWalkMode(owner);
     _updateSpeed(owner);
-    
+
     /*if (((Creature*)&owner)->CanFly())
         owner.AddSplineFlag(SPLINEFLAG_UNKNOWN7);*/
-        
+
     _setTargetLocation(owner);
 }
 

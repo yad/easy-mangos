@@ -350,8 +350,6 @@ private:
     Unit *m_followTarget;       // whom to follow in non combat situation?
 
     SpellRanges m_spellRangeMap;
-
-    Unit* m_target_follow;
 };
 
 #endif
