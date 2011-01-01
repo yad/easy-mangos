@@ -1529,7 +1529,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         void AddQuest( Quest const *pQuest, Object *questGiver );
         void CompleteQuest( uint32 quest_id );
         void IncompleteQuest( uint32 quest_id );
-        void RewardQuest( Quest const *pQuest, uint32 reward, Object* questGiver, bool announce = true );
+        void RewardQuest( Quest const *pQuest, uint32 reward, Object* questGiver, bool announce = true, bool ignoreRew = false );
 
         void FailQuest( uint32 quest_id );
         bool SatisfyQuestSkill(Quest const* qInfo, bool msg) const;
@@ -2545,6 +2545,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         bool IsBot() { return (GetSession()->IsBotSession()); }
         uint16 getRole();
         void setRole(uint16 role);
+        void setRewardTalentCount (uint32 talent) { m_questRewardTalentCount = talent; }
+        uint32 getRewardTalentCount() { return m_questRewardTalentCount; }
 
         uint8 GetCptBotMapArena() { return cptBotMapArena; }
         void SetCptBotMapArena(uint8 index) { cptBotMapArena = index; }

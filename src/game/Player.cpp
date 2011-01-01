@@ -2022,12 +2022,81 @@ bool Player::IsForMyClass(ItemPrototype const* pProto)
         case ITEM_CLASS_ARMOR:
             switch(pProto->SubClass)
             {
-                case ITEM_SUBCLASS_ARMOR_CLOTH:     return HasSpell(9078);
-                case ITEM_SUBCLASS_ARMOR_LEATHER:   return HasSpell(9077);
-                case ITEM_SUBCLASS_ARMOR_MAIL:      return HasSpell(8737);
-                case ITEM_SUBCLASS_ARMOR_PLATE:     return HasSpell(750);
-                case ITEM_SUBCLASS_ARMOR_SHIELD:    return HasSpell(9116);
-                default: return true;
+                case ITEM_SUBCLASS_ARMOR_CLOTH:
+                {
+                    if (!HasSpell(9078))
+                        return false;
+                    
+                    switch(getClass())
+                    {
+                        case CLASS_PRIEST:
+                        case CLASS_MAGE:
+                        case CLASS_WARLOCK:
+                            return true;
+                        default:
+                            return false;
+                    }
+                }
+                case ITEM_SUBCLASS_ARMOR_LEATHER:
+                {
+                    if (!HasSpell(9077))
+                        return false;
+                    
+                    switch(getClass())
+                    {
+
+                        case CLASS_HUNTER:
+                        case CLASS_DRUID:
+                        case CLASS_ROGUE:
+                            return true;
+                        case CLASS_SHAMAN:
+                            if (getLevel()<40)
+                                return true;
+                            else
+                                return false;
+                        default:
+                            return false;
+                    }
+                }    
+                case ITEM_SUBCLASS_ARMOR_MAIL:
+                {
+                    if (!HasSpell(8737))
+                        return false;
+                    
+                    switch(getClass())
+                    {
+                        case CLASS_WARRIOR:
+                        case CLASS_SHAMAN:
+                        case CLASS_HUNTER:
+                            return true;
+                        case CLASS_PALADIN:
+                            if (getLevel()<40)
+                                return true;
+                            else
+                                return false;
+                        default:
+                            return false;
+                    }
+                }
+                case ITEM_SUBCLASS_ARMOR_PLATE:
+                {
+                    if (!HasSpell(750))
+                        return false;
+                    
+                    switch(getClass())
+                    {
+                        case CLASS_WARRIOR:
+                        case CLASS_PALADIN:
+                        case CLASS_DEATH_KNIGHT:
+                            return true;
+                        default:
+                            return false;
+                    }
+                }
+                case ITEM_SUBCLASS_ARMOR_SHIELD:
+                    return HasSpell(9116);
+                default:
+                    return true;
             }
     }
     return true;
@@ -15531,7 +15600,7 @@ void Player::IncompleteQuest(uint32 quest_id)
     }
 }
 
-void Player::RewardQuest(Quest const *pQuest, uint32 reward, Object* questGiver, bool announce)
+void Player::RewardQuest(Quest const *pQuest, uint32 reward, Object* questGiver, bool announce, bool ignoreRew)
 {
     uint32 quest_id = pQuest->GetQuestId();
 
@@ -15547,30 +15616,33 @@ void Player::RewardQuest(Quest const *pQuest, uint32 reward, Object* questGiver,
         if (bg->GetTypeID(true) == BATTLEGROUND_AV)
             ((BattleGroundAV*)bg)->HandleQuestComplete(pQuest->GetQuestId(), this);
 
-    if (pQuest->GetRewChoiceItemsCount() > 0)
+    if (!ignoreRew)
     {
-        if (uint32 itemId = pQuest->RewChoiceItemId[reward])
+        if (pQuest->GetRewChoiceItemsCount() > 0)
         {
-            ItemPosCountVec dest;
-            if (CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, itemId, pQuest->RewChoiceItemCount[reward]) == EQUIP_ERR_OK)
-            {
-                Item* item = StoreNewItem( dest, itemId, true, Item::GenerateItemRandomPropertyId(itemId));
-                SendNewItem(item, pQuest->RewChoiceItemCount[reward], true, false);
-            }
-        }
-    }
-
-    if (pQuest->GetRewItemsCount() > 0)
-    {
-        for (uint32 i=0; i < pQuest->GetRewItemsCount(); ++i)
-        {
-            if (uint32 itemId = pQuest->RewItemId[i])
+            if (uint32 itemId = pQuest->RewChoiceItemId[reward])
             {
                 ItemPosCountVec dest;
-                if (CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, itemId, pQuest->RewItemCount[i]) == EQUIP_ERR_OK)
+                if (CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, itemId, pQuest->RewChoiceItemCount[reward]) == EQUIP_ERR_OK)
                 {
                     Item* item = StoreNewItem( dest, itemId, true, Item::GenerateItemRandomPropertyId(itemId));
-                    SendNewItem(item, pQuest->RewItemCount[i], true, false);
+                    SendNewItem(item, pQuest->RewChoiceItemCount[reward], true, false);
+                }
+            }
+        }
+
+        if (pQuest->GetRewItemsCount() > 0)
+        {
+            for (uint32 i=0; i < pQuest->GetRewItemsCount(); ++i)
+            {
+                if (uint32 itemId = pQuest->RewItemId[i])
+                {
+                    ItemPosCountVec dest;
+                    if (CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, itemId, pQuest->RewItemCount[i]) == EQUIP_ERR_OK)
+                    {
+                        Item* item = StoreNewItem( dest, itemId, true, Item::GenerateItemRandomPropertyId(itemId));
+                        SendNewItem(item, pQuest->RewItemCount[i], true, false);
+                    }
                 }
             }
         }
@@ -15622,9 +15694,12 @@ void Player::RewardQuest(Quest const *pQuest, uint32 reward, Object* questGiver,
         InitTalentForLevel();
     }
 
-    // Send reward mail
-    if (uint32 mail_template_id = pQuest->GetRewMailTemplateId())
-        MailDraft(mail_template_id).SendMailTo(this, questGiver, MAIL_CHECK_MASK_HAS_BODY, pQuest->GetRewMailDelaySecs());
+    if (!ignoreRew)
+    {
+        // Send reward mail
+        if (uint32 mail_template_id = pQuest->GetRewMailTemplateId())
+            MailDraft(mail_template_id).SendMailTo(this, questGiver, MAIL_CHECK_MASK_HAS_BODY, pQuest->GetRewMailDelaySecs());
+    }
 
     if (pQuest->IsDaily())
     {
@@ -15650,11 +15725,14 @@ void Player::RewardQuest(Quest const *pQuest, uint32 reward, Object* questGiver,
     if (announce)
         SendQuestReward(pQuest, XP, questGiver);
 
-    // cast spells after mark quest complete (some spells have quest completed state reqyurements in spell_area data)
-    if (pQuest->GetRewSpellCast() > 0)
-        CastSpell(this, pQuest->GetRewSpellCast(), true);
-    else if (pQuest->GetRewSpell() > 0)
-        CastSpell(this, pQuest->GetRewSpell(), true);
+    if (!ignoreRew)
+    {
+        // cast spells after mark quest complete (some spells have quest completed state reqyurements in spell_area data)
+        if (pQuest->GetRewSpellCast() > 0)
+            CastSpell(this, pQuest->GetRewSpellCast(), true);
+        else if (pQuest->GetRewSpell() > 0)
+            CastSpell(this, pQuest->GetRewSpell(), true);
+    }
 
     if (pQuest->GetZoneOrSort() > 0)
         GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_COMPLETE_QUESTS_IN_ZONE, pQuest->GetZoneOrSort());

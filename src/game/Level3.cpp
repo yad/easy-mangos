@@ -2537,6 +2537,7 @@ bool ChatHandler::HandleLearnAllMySpellsCommand(char* /*args*/)
                         continue;
 
                     if (spellInfo1->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_WEAPON) {}
+                    else if (spellInfo1->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_PROFICIENCY) {}
                     else if(spellInfo1->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_LEARN_SPELL
                         && spellInfo1->Effect[EFFECT_INDEX_1] == SPELL_EFFECT_SKILL) {}
                     else if (spellInfo1->SpellFamilyName != family || spellInfo2->SpellFamilyName != family)
@@ -2576,6 +2577,7 @@ bool ChatHandler::HandleLearnAllMySpellsCommand(char* /*args*/)
                         continue;
 
                     if (spellInfo1->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_WEAPON) {}
+                    else if (spellInfo1->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_PROFICIENCY) {}
                     else if(spellInfo1->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_LEARN_SPELL
                         && spellInfo1->Effect[EFFECT_INDEX_1] == SPELL_EFFECT_SKILL) {}
                     else if (spellInfo1->SpellFamilyName != family || spellInfo2->SpellFamilyName != family)
@@ -2743,92 +2745,92 @@ bool ChatHandler::HandleLearnAllMySpellsCommand(char* /*args*/)
         {
             static uint32 Mounts20[] = {5665, 46099, 1132, 5668};
             static uint32 Mounts40[] = {18798, 18797, 18796};
-            player->choseMount(Mounts20);
-            player->choseMount(Mounts40);
+            player->choseMount(Mounts20, sizeof(Mounts20)/sizeof(uint32));
+            player->choseMount(Mounts40, sizeof(Mounts40)/sizeof(uint32));
             break;
         }
         case RACE_DWARF:
         {
             static uint32 Mounts20[] = {5864, 5872, 5873};
             static uint32 Mounts40[] = {18787, 18786, 18785};
-            player->choseMount(Mounts20);
-            player->choseMount(Mounts40);
+            player->choseMount(Mounts20, sizeof(Mounts20)/sizeof(uint32));
+            player->choseMount(Mounts40, sizeof(Mounts40)/sizeof(uint32));
             break;
         }
         case RACE_NIGHTELF:
         {
             static uint32 Mounts20[] = {8629, 47100, 8632, 8631};
             static uint32 Mounts40[] = {18902, 18766, 18767};
-            player->choseMount(Mounts20);
-            player->choseMount(Mounts40);
+            player->choseMount(Mounts20, sizeof(Mounts20)/sizeof(uint32));
+            player->choseMount(Mounts40, sizeof(Mounts40)/sizeof(uint32));
             break;
         }
         case RACE_UNDEAD_PLAYER:
         {
             static uint32 Mounts20[] = {13331, 46308, 13332, 13333};
             static uint32 Mounts40[] = {18791, 13334, 47101};
-            player->choseMount(Mounts20);
-            player->choseMount(Mounts40);
+            player->choseMount(Mounts20, sizeof(Mounts20)/sizeof(uint32));
+            player->choseMount(Mounts40, sizeof(Mounts40)/sizeof(uint32));
             break;
         }
         case RACE_TAUREN:
         {
             static uint32 Mounts20[] = {15277, 15290, 46100};
             static uint32 Mounts40[] = {18795, 18794, 18793};
-            player->choseMount(Mounts20);
-            player->choseMount(Mounts40);
+            player->choseMount(Mounts20, sizeof(Mounts20)/sizeof(uint32));
+            player->choseMount(Mounts40, sizeof(Mounts40)/sizeof(uint32));
             break;
         }
         case RACE_GNOME:
         {
             static uint32 Mounts20[] = {13321, 8563, 13322, 8595};
             static uint32 Mounts40[] = {18772, 18774, 18773};
-            player->choseMount(Mounts20);
-            player->choseMount(Mounts40);
+            player->choseMount(Mounts20, sizeof(Mounts20)/sizeof(uint32));
+            player->choseMount(Mounts40, sizeof(Mounts40)/sizeof(uint32));
             break;
         }
         case RACE_TROLL:
         {
             static uint32 Mounts20[] = {8592, 8591, 8588};
             static uint32 Mounts40[] = {18789, 18790, 18788};
-            player->choseMount(Mounts20);
-            player->choseMount(Mounts40);
+            player->choseMount(Mounts20, sizeof(Mounts20)/sizeof(uint32));
+            player->choseMount(Mounts40, sizeof(Mounts40)/sizeof(uint32));
             break;
         }
         case RACE_BLOODELF:
         {
             static uint32 Mounts20[] = {29222, 28927, 29221, 29220};
             static uint32 Mounts40[] = {29224, 29223, 28936};
-            player->choseMount(Mounts20);
-            player->choseMount(Mounts40);
+            player->choseMount(Mounts20, sizeof(Mounts20)/sizeof(uint32));
+            player->choseMount(Mounts40, sizeof(Mounts40)/sizeof(uint32));
             break;
         }
         case RACE_DRAENEI:
         {
             static uint32 Mounts20[] = {29743, 29744, 28481};
             static uint32 Mounts40[] = {29747, 29746, 29745};
-            player->choseMount(Mounts20);
-            player->choseMount(Mounts40);
+            player->choseMount(Mounts20, sizeof(Mounts20)/sizeof(uint32));
+            player->choseMount(Mounts40, sizeof(Mounts40)/sizeof(uint32));
             break;
         }
     }
 
-    switch(player->getFaction())
+    switch(player->GetTeam())
     {
         case ALLIANCE:
         {
-            static uint32 Mounts20[] = {25472, 25470, 25471};
-            static uint32 Mounts40[] = {25529, 25528, 25527, 25473};
-            player->choseMount(Mounts20);
-            player->choseMount(Mounts40);
+            static uint32 Mounts60[] = {25472, 25470, 25471};
+            static uint32 Mounts70[] = {25529, 25528, 25527, 25473};
+            player->choseMount(Mounts60, sizeof(Mounts60)/sizeof(uint32));
+            player->choseMount(Mounts70, sizeof(Mounts70)/sizeof(uint32));
             break;
         }
         case HORDE:
         {
-            static uint32 Mounts20[] = {25476, 25474, 25475};
-            static uint32 Mounts40[] = {25533, 25531, 25477, 25532};
-            player->choseMount(Mounts20);
-            player->choseMount(Mounts40);
+            static uint32 Mounts60[] = {25476, 25474, 25475};
+            static uint32 Mounts70[] = {25533, 25531, 25477, 25532};
+            player->choseMount(Mounts60, sizeof(Mounts60)/sizeof(uint32));
+            player->choseMount(Mounts70, sizeof(Mounts70)/sizeof(uint32));
             break;
         }
     }
@@ -2839,296 +2841,381 @@ bool ChatHandler::HandleLearnAllMySpellsCommand(char* /*args*/)
 
 bool ChatHandler::HandleLearnAllMySpellsForMyLevelCommand(char* /*args*/)
 {
-    Player *player = m_session->GetPlayer();
+    Player *player = getSelectedPlayer();
     if (!player)
-        return true;
+        player = m_session->GetPlayer();
 
-    uint32 level = player->getLevel();
+    player->learnDefaultSpells();
 
     ChrClassesEntry const* clsEntry = sChrClassesStore.LookupEntry(player->getClass());
+
     if(!clsEntry)
         return true;
 
     uint32 family = clsEntry->spellfamily;
 
-    player->learnDefaultSpells();
-
     for (uint32 id = 0; id< sCreatureStorage.MaxEntry; ++id)
     {
         CreatureInfo const *cinfo = sObjectMgr.GetCreatureTemplate(id);
-        if(cinfo)
+        if(!cinfo)
+            continue;
+
+        if((cinfo->npcflag & UNIT_NPC_FLAG_TRAINER) || (cinfo->npcflag & UNIT_NPC_FLAG_TRAINER_CLASS)
+            || (cinfo->npcflag & UNIT_NPC_FLAG_TRAINER_PROFESSION))
         {
-            if((cinfo->npcflag & UNIT_NPC_FLAG_TRAINER) && ( (cinfo->trainer_class == player->getClass())
-                                                                || id == 2704 || id == 11865 || id == 11866
-                                                                || id == 11867 || id == 11868 || id == 11869
-                                                                || id == 11870 || id == 13084 || id == 16621
-                                                                || id == 16773 || id == 17005 || id == 10256
-                                                                || id == 10365  ) ) //Hardcode... special flag for weapon trainer ???
+            TrainerSpellData const* cSpells = sObjectMgr.GetNpcTrainerSpells(id);
+            TrainerSpellData const* tSpells = sObjectMgr.GetNpcTrainerTemplateSpells(id);
+
+            if (!cSpells && !tSpells)
+                continue;
+
+            if (cSpells)
             {
-                TrainerSpellData const* trainer_spells = sObjectMgr.GetNpcTrainerSpells(id);
-
-                if(!trainer_spells || trainer_spells->spellList.empty())
-                    return false;
-
-                for(TrainerSpellMap::const_iterator itr = trainer_spells->spellList.begin(); itr != trainer_spells->spellList.end(); ++itr)
+                for(TrainerSpellMap::const_iterator itr = cSpells->spellList.begin(); itr != cSpells->spellList.end(); ++itr)
                 {
                     TrainerSpell const* tSpell = &itr->second;
 
-                    if(!player->IsSpellFitByClassAndRace(tSpell->learnedSpell))
+                    SpellEntry const* spellInfo1 = sSpellStore.LookupEntry(tSpell->spell);
+                    if (!spellInfo1)
                         continue;
 
-                    if((!player->HasSpell(tSpell->spell)) && (tSpell->reqLevel <= level))
-                        player->learnSpell(tSpell->spell,false);
+                    SpellEntry const* spellInfo2 = sSpellStore.LookupEntry(tSpell->learnedSpell);
+                    if (!spellInfo2)
+                        continue;
+
+                    if (player->GetTrainerSpellState(tSpell, true) != TRAINER_SPELL_GREEN)
+                        continue;
+
+                    if (sSpellMgr.IsProfessionSpell(tSpell->learnedSpell))
+                        continue;
+
+                    if (spellInfo1->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_WEAPON) {}
+                    else if (spellInfo1->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_PROFICIENCY) {}
+                    else if(spellInfo1->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_LEARN_SPELL
+                        && spellInfo1->Effect[EFFECT_INDEX_1] == SPELL_EFFECT_SKILL) {}
+                    else if (spellInfo1->SpellFamilyName != family || spellInfo2->SpellFamilyName != family)
+                        continue;
+
+                    if(tSpell->IsCastable())
+                    {
+                        if (!player->isWtfSpell(tSpell->learnedSpell) && tSpell->reqLevel <= player->getLevel())
+                            player->learnSpell(tSpell->learnedSpell, false);
+                    }
+                    else
+                    {
+                        if (!player->isWtfSpell(tSpell->spell) && tSpell->reqLevel <= player->getLevel())
+                            player->learnSpell(tSpell->spell, false);
+                    }
                 }
             }
-            if(cinfo->npcflag & UNIT_NPC_FLAG_QUESTGIVER)
-            {
-                QuestRelationsMapBounds bounds = sObjectMgr.GetCreatureQuestRelationsMapBounds(id);
-                for(QuestRelationsMap::const_iterator itr = bounds.first; itr != bounds.second; ++itr)
-                {
-                    Quest const *pQuest = sObjectMgr.GetQuestTemplate(itr->second);
 
-                    if (!pQuest)
+            if (tSpells)
+            {
+                for(TrainerSpellMap::const_iterator itr = tSpells->spellList.begin(); itr != tSpells->spellList.end(); ++itr)
+                {
+                    TrainerSpell const* tSpell = &itr->second;
+
+                    SpellEntry const* spellInfo1 = sSpellStore.LookupEntry(tSpell->spell);
+                    if (!spellInfo1)
                         continue;
 
-                    SpellEntry const* spellInfoSrcSpell = sSpellStore.LookupEntry(pQuest->GetSrcSpell());
-                    if
-                    (
-                        spellInfoSrcSpell
-                        && (player->IsSpellFitByClassAndRace(pQuest->GetSrcSpell()))
-                        && (spellInfoSrcSpell->SpellFamilyName == family)
-                        && (!player->HasSpell(pQuest->GetSrcSpell()))
-                        && (pQuest->GetMinLevel() <= level)
-                    )
-                    {
-                        player->learnSpell(pQuest->GetSrcSpell(),false);
-                    }
+                    SpellEntry const* spellInfo2 = sSpellStore.LookupEntry(tSpell->learnedSpell);
+                    if (!spellInfo2)
+                        continue;
 
-                    SpellEntry const* spellInfoRewSpell = sSpellStore.LookupEntry(pQuest->GetRewSpell());
-                    if
-                    (
-                        spellInfoRewSpell
-                        && (player->IsSpellFitByClassAndRace(spellInfoRewSpell->Id))
-                        && (spellInfoRewSpell->SpellFamilyName == family)
-                        && (!player->HasSpell(pQuest->GetRewSpell()))
-                        && (pQuest->GetMinLevel() <= level)
-                    )
-                    {
-                        player->learnSpell(pQuest->GetRewSpell(),false);
-                    }
+                    if (player->GetTrainerSpellState(tSpell, true) != TRAINER_SPELL_GREEN)
+                        continue;
 
+                    if (sSpellMgr.IsProfessionSpell(tSpell->learnedSpell))
+                        continue;
+
+                    if (spellInfo1->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_WEAPON) {}
+                    else if (spellInfo1->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_PROFICIENCY) {}
+                    else if(spellInfo1->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_LEARN_SPELL
+                        && spellInfo1->Effect[EFFECT_INDEX_1] == SPELL_EFFECT_SKILL) {}
+                    else if (spellInfo1->SpellFamilyName != family || spellInfo2->SpellFamilyName != family)
+                        continue;
+
+                    if(tSpell->IsCastable())
+                    {
+                        if (!player->isWtfSpell(tSpell->learnedSpell) && tSpell->reqLevel <= player->getLevel())
+                            player->learnSpell(tSpell->learnedSpell, false);
+                    }
+                    else
+                    {
+                        if (!player->isWtfSpell(tSpell->spell) && tSpell->reqLevel <= player->getLevel())
+                            player->learnSpell(tSpell->spell, false);
+                    }
+                }
+            }
+        }
+
+        if(cinfo->npcflag & UNIT_NPC_FLAG_QUESTGIVER)
+        {
+            QuestRelationsMapBounds bounds = sObjectMgr.GetCreatureQuestRelationsMapBounds(id);
+            for(QuestRelationsMap::const_iterator itr = bounds.first; itr != bounds.second; ++itr)
+            {
+                Quest const *pQuest = sObjectMgr.GetQuestTemplate(itr->second);
+
+                if (!pQuest || pQuest->GetMinLevel() > player->getLevel())
+                    continue;
+
+                SpellEntry const* spellInfo1 = sSpellStore.LookupEntry(pQuest->GetSrcSpell());
+                if (spellInfo1)
+                {
+                    if (player->IsSpellFitByClassAndRace(spellInfo1->Id) && !player->isWtfSpell(spellInfo1->Id))
+                    {
+                        if ( (spellInfo1->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_LEARN_SPELL && spellInfo1->Effect[EFFECT_INDEX_1] == SPELL_EFFECT_SKILL)
+                            || (spellInfo1->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_TRADE_SKILL) ) {}
+                        else if (spellInfo1->SpellFamilyName == family)
+                            player->learnSpell(spellInfo1->Id,false);
+                        else if  ( ((cinfo->npcflag & UNIT_NPC_FLAG_TRAINER) || (cinfo->npcflag & UNIT_NPC_FLAG_TRAINER_CLASS)
+                            || (cinfo->npcflag & UNIT_NPC_FLAG_TRAINER_PROFESSION)) && (cinfo->trainer_class == player->getClass()) )
+                            player->learnSpell(spellInfo1->Id,false);
+                    }
+                }
+
+                SpellEntry const* spellInfo2 = sSpellStore.LookupEntry(pQuest->GetRewSpell());
+                if (spellInfo2)
+                {
+                    if (player->IsSpellFitByClassAndRace(spellInfo2->Id) && !player->isWtfSpell(spellInfo2->Id))
+                    {
+                        if ( (spellInfo2->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_LEARN_SPELL && spellInfo2->Effect[EFFECT_INDEX_1] == SPELL_EFFECT_SKILL)
+                            || (spellInfo2->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_TRADE_SKILL) ) {}
+                        else if (spellInfo2->SpellFamilyName == family)
+                            player->learnSpell(spellInfo2->Id,false);
+                        else if  ( ((cinfo->npcflag & UNIT_NPC_FLAG_TRAINER) || (cinfo->npcflag & UNIT_NPC_FLAG_TRAINER_CLASS)
+                            || (cinfo->npcflag & UNIT_NPC_FLAG_TRAINER_PROFESSION)) && (cinfo->trainer_class == player->getClass()) )
+                            player->learnSpell(spellInfo2->Id,false);
+                    }
+                }
+
+                SpellEntry const* spellInfo3 = sSpellStore.LookupEntry(pQuest->GetRewSpellCast());
+                if (spellInfo3)
+                {
                     bool learn = false;
-                    SpellEntry const* spellInfoRewSpellCast = sSpellStore.LookupEntry(pQuest->GetRewSpellCast());
-                    if (spellInfoRewSpellCast && (pQuest->GetMinLevel() <= level))
+                    for(int j = 0; j < 3; j++)
                     {
-                        for(int j = 0; j < 3; j++)
+                        if(spellInfo3->Effect[j] == SPELL_EFFECT_LEARN_SPELL)
                         {
-                            if(spellInfoRewSpellCast->Effect[j] == SPELL_EFFECT_LEARN_SPELL)
+                            learn = true;
+                            SpellEntry const* spellInfo4 = sSpellStore.LookupEntry(spellInfo3->EffectTriggerSpell[j]);
+                            if (spellInfo4)
                             {
-                                learn = true;
-                                if((spellInfoRewSpellCast->EffectTriggerSpell[j] !=0) && (!player->HasSpell(spellInfoRewSpellCast->EffectTriggerSpell[j])))
+                                if (player->IsSpellFitByClassAndRace(spellInfo4->Id) && !player->isWtfSpell(spellInfo4->Id))
                                 {
-                                    SpellEntry const* spellInfoRewSpellCastEffectTriggerSpell = sSpellStore.LookupEntry(spellInfoRewSpellCast->EffectTriggerSpell[j]);
-                                    if
-                                    (
-                                        spellInfoRewSpellCastEffectTriggerSpell
-                                        && (player->IsSpellFitByClassAndRace(spellInfoRewSpellCastEffectTriggerSpell->Id))
-                                        && (spellInfoRewSpellCastEffectTriggerSpell->SpellFamilyName == family)
-                                        && (!player->HasSpell(spellInfoRewSpellCast->EffectTriggerSpell[j]))
-                                    )
-                                        player->learnSpell(spellInfoRewSpellCast->EffectTriggerSpell[j],false);
+                                    if ( (spellInfo4->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_LEARN_SPELL && spellInfo4->Effect[EFFECT_INDEX_1] == SPELL_EFFECT_SKILL)
+                                        || (spellInfo4->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_TRADE_SKILL) ) {}
+                                    else if (spellInfo4->SpellFamilyName == family)
+                                        player->learnSpell(spellInfo4->Id,false);
+                                    else if  ( ((cinfo->npcflag & UNIT_NPC_FLAG_TRAINER) || (cinfo->npcflag & UNIT_NPC_FLAG_TRAINER_CLASS)
+                                        || (cinfo->npcflag & UNIT_NPC_FLAG_TRAINER_PROFESSION)) && (cinfo->trainer_class == player->getClass()) )
+                                        player->learnSpell(spellInfo4->Id,false);
                                 }
                             }
                         }
-                        if
-                        (
-                            (!learn)
-                            && (player->IsSpellFitByClassAndRace(spellInfoRewSpellCast->Id))
-                            && (spellInfoRewSpellCast->SpellFamilyName == family)
-                            && (!player->HasSpell(pQuest->GetRewSpellCast()))
-                        )
-                            player->learnSpell(pQuest->GetRewSpellCast(),false);
+                    }
+                    if (!learn)
+                    {
+                        if (player->IsSpellFitByClassAndRace(spellInfo3->Id) && !player->isWtfSpell(spellInfo3->Id))
+                        {
+                            if ( (spellInfo3->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_LEARN_SPELL && spellInfo3->Effect[EFFECT_INDEX_1] == SPELL_EFFECT_SKILL)
+                                || (spellInfo3->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_TRADE_SKILL) ) {}
+                            else if (spellInfo3->SpellFamilyName == family)
+                                player->learnSpell(spellInfo3->Id,false);
+                            else if  ( ((cinfo->npcflag & UNIT_NPC_FLAG_TRAINER) || (cinfo->npcflag & UNIT_NPC_FLAG_TRAINER_CLASS)
+                                || (cinfo->npcflag & UNIT_NPC_FLAG_TRAINER_PROFESSION)) && (cinfo->trainer_class == player->getClass()) )
+                                player->learnSpell(spellInfo3->Id,false);
+                        }
                     }
                 }
             }
         }
     }
 
-    if(!player->HasSpell(33388) && player->getLevel() > 19)
+    for (uint32 id = 0; id < sItemStorage.MaxEntry; ++id)
+    {
+        ItemPrototype const *pProto = sObjectMgr.GetItemPrototype(id);
+        if(!pProto || pProto->Stackable > 1 || pProto->Class==ITEM_CLASS_WEAPON || pProto->Class==ITEM_CLASS_ARMOR || pProto->RequiredLevel > player->getLevel())
+            continue;
+
+        for (int i = 0; i < 5; ++i)
+        {
+            bool learn = false;
+            SpellEntry const* spellInfo1 = sSpellStore.LookupEntry(pProto->Spells[i].SpellId);
+            if (spellInfo1)
+            {
+                bool learn = false;
+                for(int j = 0; j < 3; j++)
+                {
+                    if(spellInfo1->Effect[j] == SPELL_EFFECT_LEARN_SPELL)
+                    {
+                        learn = true;
+                        SpellEntry const* spellInfo2 = sSpellStore.LookupEntry(spellInfo1->EffectTriggerSpell[j]);
+                        if (spellInfo2)
+                        {
+                            if (player->IsSpellFitByClassAndRace(spellInfo2->Id) && !player->isWtfSpell(spellInfo2->Id))
+                            {
+                                if ( (spellInfo2->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_LEARN_SPELL && spellInfo2->Effect[EFFECT_INDEX_1] == SPELL_EFFECT_SKILL)
+                                    || (spellInfo2->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_TRADE_SKILL) ) {}
+                                else if (spellInfo2->SpellFamilyName == family)
+                                    player->learnSpell(spellInfo2->Id,false);
+                            }
+                        }
+                    }
+                }
+                if (!learn)
+                {
+                    if (player->IsSpellFitByClassAndRace(spellInfo1->Id) && !player->isWtfSpell(spellInfo1->Id))
+                    {
+                        if ( (spellInfo1->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_LEARN_SPELL && spellInfo1->Effect[EFFECT_INDEX_1] == SPELL_EFFECT_SKILL)
+                            || (spellInfo1->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_TRADE_SKILL) ) {}
+                        else if (spellInfo1->SpellFamilyName == family)
+                            player->learnSpell(spellInfo1->Id,false);
+                    }
+                }
+            }
+        }
+    }
+
+    if(player->getLevel() > 19)
         player->learnSpell(33388, false);
-
-    if(!player->HasSpell(33391) && player->getLevel() > 39)
+    if(player->getLevel() > 39)
         player->learnSpell(33391, false);
-
-    if(!player->HasSpell(34090) && player->getLevel() > 59)
+    if(player->getLevel() > 59)
         player->learnSpell(34090, false);
-
-    if(!player->HasSpell(34091) && player->getLevel() > 69)
+    if(player->getLevel() > 69)
         player->learnSpell(34091, false);
-
-    if(!player->HasSpell(54197) && player->getLevel() > 76)
+    if(player->getLevel() > 76)
         player->learnSpell(54197, false);
 
-    /*switch (player->GetTeam())
+    switch (player->getRace())
+    {
+        case RACE_HUMAN:
+        {
+            static uint32 Mounts20[] = {2414, 5655, 5656};
+            static uint32 Mounts40[] = {18776, 18778, 18777};
+            if (player->getLevel() >= 20)
+                player->choseMount(Mounts20, sizeof(Mounts20)/sizeof(uint32));
+            if (player->getLevel() >= 40)
+                player->choseMount(Mounts40, sizeof(Mounts40)/sizeof(uint32));
+            break;
+        }
+        case RACE_ORC:
+        {
+            static uint32 Mounts20[] = {5665, 46099, 1132, 5668};
+            static uint32 Mounts40[] = {18798, 18797, 18796};
+            if (player->getLevel() >= 20)
+                player->choseMount(Mounts20, sizeof(Mounts20)/sizeof(uint32));
+            if (player->getLevel() >= 40)
+                player->choseMount(Mounts40, sizeof(Mounts40)/sizeof(uint32));
+            break;
+        }
+        case RACE_DWARF:
+        {
+            static uint32 Mounts20[] = {5864, 5872, 5873};
+            static uint32 Mounts40[] = {18787, 18786, 18785};
+            if (player->getLevel() >= 20)
+                player->choseMount(Mounts20, sizeof(Mounts20)/sizeof(uint32));
+            if (player->getLevel() >= 40)
+                player->choseMount(Mounts40, sizeof(Mounts40)/sizeof(uint32));
+            break;
+        }
+        case RACE_NIGHTELF:
+        {
+            static uint32 Mounts20[] = {8629, 47100, 8632, 8631};
+            static uint32 Mounts40[] = {18902, 18766, 18767};
+            if (player->getLevel() >= 20)
+                player->choseMount(Mounts20, sizeof(Mounts20)/sizeof(uint32));
+            if (player->getLevel() >= 40)
+                player->choseMount(Mounts40, sizeof(Mounts40)/sizeof(uint32));
+            break;
+        }
+        case RACE_UNDEAD_PLAYER:
+        {
+            static uint32 Mounts20[] = {13331, 46308, 13332, 13333};
+            static uint32 Mounts40[] = {18791, 13334, 47101};
+            if (player->getLevel() >= 20)
+                player->choseMount(Mounts20, sizeof(Mounts20)/sizeof(uint32));
+            if (player->getLevel() >= 40)
+                player->choseMount(Mounts40, sizeof(Mounts40)/sizeof(uint32));
+            break;
+        }
+        case RACE_TAUREN:
+        {
+            static uint32 Mounts20[] = {15277, 15290, 46100};
+            static uint32 Mounts40[] = {18795, 18794, 18793};
+            if (player->getLevel() >= 20)
+                player->choseMount(Mounts20, sizeof(Mounts20)/sizeof(uint32));
+            if (player->getLevel() >= 40)
+                player->choseMount(Mounts40, sizeof(Mounts40)/sizeof(uint32));
+            break;
+        }
+        case RACE_GNOME:
+        {
+            static uint32 Mounts20[] = {13321, 8563, 13322, 8595};
+            static uint32 Mounts40[] = {18772, 18774, 18773};
+            if (player->getLevel() >= 20)
+                player->choseMount(Mounts20, sizeof(Mounts20)/sizeof(uint32));
+            if (player->getLevel() >= 40)
+                player->choseMount(Mounts40, sizeof(Mounts40)/sizeof(uint32));
+            break;
+        }
+        case RACE_TROLL:
+        {
+            static uint32 Mounts20[] = {8592, 8591, 8588};
+            static uint32 Mounts40[] = {18789, 18790, 18788};
+            if (player->getLevel() >= 20)
+                player->choseMount(Mounts20, sizeof(Mounts20)/sizeof(uint32));
+            if (player->getLevel() >= 40)
+                player->choseMount(Mounts40, sizeof(Mounts40)/sizeof(uint32));
+            break;
+        }
+        case RACE_BLOODELF:
+        {
+            static uint32 Mounts20[] = {29222, 28927, 29221, 29220};
+            static uint32 Mounts40[] = {29224, 29223, 28936};
+            if (player->getLevel() >= 20)
+                player->choseMount(Mounts20, sizeof(Mounts20)/sizeof(uint32));
+            if (player->getLevel() >= 40)
+                player->choseMount(Mounts40, sizeof(Mounts40)/sizeof(uint32));
+            break;
+        }
+        case RACE_DRAENEI:
+        {
+            static uint32 Mounts20[] = {29743, 29744, 28481};
+            static uint32 Mounts40[] = {29747, 29746, 29745};
+            if (player->getLevel() >= 20)
+                player->choseMount(Mounts20, sizeof(Mounts20)/sizeof(uint32));
+            if (player->getLevel() >= 40)
+                player->choseMount(Mounts40, sizeof(Mounts40)/sizeof(uint32));
+            break;
+        }
+    }
+
+    switch(player->GetTeam())
     {
         case ALLIANCE:
         {
-            static uint32 atMounts[] = {458, 470, 472, 6648, 6777, 6898, 6898, 8394, 10789, 10793, 10873, 10969, 15779,
-                16055, 16056, 16082, 16083, 17229, 17453, 17454, 17459, 17460, 17461, 22717, 22719, 22720, 22723, 23219,
-                23221, 23222, 23223, 23225, 23227, 23228, 23229, 23238, 23239, 23240, 23338, 23510, 34406, 34896, 34897,
-                34898, 34899, 35710, 35711, 35712, 35713, 35714, 39315, 39317, 39318, 39319, 48027, 59785, 59791, 59799,
-                60114, 60118, 61425, 61465, 61470, 63232, 63636, 63637, 63638, 63639, 65637, 65638, 65640, 65642, 65643,
-                66090, 66847, 68057, 68809};
-
-            for(uint32* bsl = &atMounts[0]; *bsl; ++bsl)
-            {
-                SpellEntry const *sEntry = sSpellStore.LookupEntry(*bsl);
-                if (sEntry && player->isRunningSpell(sEntry))
-                {
-                    if (sEntry->CalculateSimpleValue(SpellEffectIndex(1)) < 100)
-                    {
-                        if (player->getLevel() > 19)
-                            if(!player->HasSpell(*bsl))
-                                player->learnSpell(*bsl, false);
-                    }
-                    else
-                    {
-                        if (player->getLevel() > 39)
-                            if(!player->HasSpell(*bsl))
-                                player->learnSpell(*bsl, false);
-                    }
-                }
-            }
-
-            static uint32 afMounts[] = {61996, 32242, 61229, 32289, 32290, 32292, 66087, 32239, 32235, 32240};
-
-            for(uint32* bsl = &afMounts[0]; *bsl; ++bsl)
-            {
-                SpellEntry const *sEntry = sSpellStore.LookupEntry(*bsl);
-                if (sEntry && player->isFlyingSpell(sEntry))
-                {
-                    if (sEntry->CalculateSimpleValue(SpellEffectIndex(1)) < 280)
-                    {
-                        if (player->getLevel() > 59)
-                            if(!player->HasSpell(*bsl))
-                                player->learnSpell(*bsl, false);
-                    }
-                    else
-                    {
-                        if (player->getLevel() > 69)
-                            if(!player->HasSpell(*bsl))
-                                player->learnSpell(*bsl, false);
-                    }
-                }
-            }
-
+            static uint32 Mounts60[] = {25472, 25470, 25471};
+            static uint32 Mounts70[] = {25529, 25528, 25527, 25473};
+            if (player->getLevel() >= 60)
+                player->choseMount(Mounts60, sizeof(Mounts60)/sizeof(uint32));
+            if (player->getLevel() >= 70)
+                player->choseMount(Mounts70, sizeof(Mounts70)/sizeof(uint32));
             break;
         }
         case HORDE:
         {
-            static uint32 htMounts[] = {580, 6653, 6654, 8395, 10796, 10799, 16080, 16081, 16084, 17450, 17462, 17463,
-                17464, 17465, 18989, 18990, 18991, 18992, 22718, 22721, 22722, 22724, 23241, 23242, 23243, 23246, 23247,
-                23248, 23249, 23250, 23251, 23252, 23509, 33660, 34767, 34769, 34795, 34896, 34897, 34898, 34899, 35018,
-                35020, 35022, 35025, 35027, 35028, 39315, 39317, 39318, 39319, 59788, 59793, 59797, 60116, 60119, 61447,
-                61467, 61469, 63635, 63640, 63641, 63642, 63643, 64656, 64657, 64658, 64659, 64977, 65639, 65641, 65644,
-                65645, 65646, 66091, 66846, 68056, 68768};
-
-            for(uint32* bsl = &htMounts[0]; *bsl; ++bsl)
-            {
-                SpellEntry const *sEntry = sSpellStore.LookupEntry(*bsl);
-                if (sEntry && player->isRunningSpell(sEntry))
-                {
-                    if (sEntry->CalculateSimpleValue(SpellEffectIndex(1)) < 100)
-                    {
-                        if (player->getLevel() > 19)
-                            if(!player->HasSpell(*bsl))
-                                player->learnSpell(*bsl, false);
-                    }
-                    else
-                    {
-                        if (player->getLevel() > 39)
-                            if(!player->HasSpell(*bsl))
-                                player->learnSpell(*bsl, false);
-                    }
-                }
-            }
-
-            static uint32 hfMounts[] = {32243, 32244, 32245, 32246, 32295, 32296, 32297, 61230, 61997, 66088};
-
-            for(uint32* bsl = &hfMounts[0]; *bsl; ++bsl)
-            {
-                SpellEntry const *sEntry = sSpellStore.LookupEntry(*bsl);
-                if (sEntry && player->isFlyingSpell(sEntry))
-                {
-                    if (sEntry->CalculateSimpleValue(SpellEffectIndex(1)) < 280)
-                    {
-                        if (player->getLevel() > 59)
-                            if(!player->HasSpell(*bsl))
-                                player->learnSpell(*bsl, false);
-                    }
-                    else
-                    {
-                        if (player->getLevel() > 69)
-                            if(!player->HasSpell(*bsl))
-                                player->learnSpell(*bsl, false);
-                    }
-                }
-            }
-
+            static uint32 Mounts60[] = {25476, 25474, 25475};
+            static uint32 Mounts70[] = {25533, 25531, 25477, 25532};
+            if (player->getLevel() >= 60)
+                player->choseMount(Mounts60, sizeof(Mounts60)/sizeof(uint32));
+            if (player->getLevel() >= 70)
+                player->choseMount(Mounts70, sizeof(Mounts70)/sizeof(uint32));
             break;
         }
-        default:
-            break;
     }
-
-    static uint32 ntMounts[] = {54197, 5784, 17481, 23161, 24242, 24252, 26656, 30174, 36702, 41252, 42668, 42776, 42777,
-                43688, 43899, 43900, 46628, 47977, 48025, 49322, 49379, 51412, 54753, 55531, 58983, 60424, 64731, 65917,
-                66906, 67466, 71342};
-
-    for(uint32* bsl = &ntMounts[0]; *bsl; ++bsl)
-    {
-        SpellEntry const *sEntry = sSpellStore.LookupEntry(*bsl);
-        if (sEntry && player->isRunningSpell(sEntry))
-        {
-            if (sEntry->CalculateSimpleValue(SpellEffectIndex(1)) < 100)
-            {
-                if (player->getLevel() > 19)
-                    if(!player->HasSpell(*bsl))
-                        player->learnSpell(*bsl, false);
-            }
-            else
-            {
-                if (player->getLevel() > 39)
-                    if(!player->HasSpell(*bsl))
-                        player->learnSpell(*bsl, false);
-            }
-        }
-    }
-
-    static uint32 nfMounts[] = {37015, 39798, 39800, 39801, 39802, 39803, 40192, 41513, 41514, 41515, 41516, 41517, 41518,
-                42667, 42668, 43927, 44151, 44153, 44744, 46197, 46199, 49193, 54729, 58615, 59567, 59568, 59569, 59570,
-                59571, 59650, 59961, 59976, 59996, 60002, 60021, 60024, 60025, 61294, 61309, 61451, 63796, 63844, 63956,
-                63963, 64927, 65439, 69395};
-
-    for(uint32* bsl = &nfMounts[0]; *bsl; ++bsl)
-    {
-        SpellEntry const *sEntry = sSpellStore.LookupEntry(*bsl);
-        if (sEntry && player->isFlyingSpell(sEntry))
-        {
-            if (sEntry->CalculateSimpleValue(SpellEffectIndex(1)) < 280)
-            {
-                if (player->getLevel() > 59)
-                    if(!player->HasSpell(*bsl))
-                        player->learnSpell(*bsl, false);
-            }
-            else
-            {
-                if (player->getLevel() > 69)
-                    if(!player->HasSpell(*bsl))
-                        player->learnSpell(*bsl, false);
-            }
-        }
-    }*/
 
     SendSysMessage(LANG_COMMAND_LEARN_CLASS_SPELLS);
     return true;
@@ -6204,7 +6291,7 @@ bool ChatHandler::HandleQuestCompleteCommand(char* args)
     }
 
     std::string cmd = args;
-    if(cmd == "all")
+    if(cmd == "set")
     {
         for(QuestStatusMap::const_iterator itr = player->getQuestStatusMap().begin(); itr!=player->getQuestStatusMap().end(); itr++)
         {
@@ -6226,6 +6313,93 @@ bool ChatHandler::HandleQuestCompleteCommand(char* args)
                     break;
             }
         }
+        return true;
+    }
+    else if(cmd == "all")
+    {
+        ObjectMgr::QuestMap const& qTemplates = sObjectMgr.GetQuestTemplates();
+        for (ObjectMgr::QuestMap::const_iterator iter = qTemplates.begin(); iter != qTemplates.end(); ++iter)
+        {
+            Quest const* qInfo = sObjectMgr.GetQuestTemplate(iter->first);
+            if (!qInfo)
+                continue;
+
+            if (!player->SatisfyQuestClass(qInfo, false))
+                continue;
+
+            if (!player->SatisfyQuestRace(qInfo, false))
+                continue;
+
+            if (!player->SatisfyQuestLevel(qInfo, false))
+                continue;
+
+            if (!player->SatisfyQuestSkill(qInfo, false))
+                continue;
+
+            if (!player->SatisfyQuestReputation(qInfo, false))
+                continue;
+
+            /*if (!player->SatisfyQuestDay(qInfo, false))
+                continue;
+            if (!player->SatisfyQuestWeek(qInfo, false))
+                continue;
+            if (!player->SatisfyQuestMonth(qInfo, false))
+                continue;*/
+
+            if (player->GetQuestStatus(qInfo->GetQuestId())==QUEST_STATUS_COMPLETE)
+                continue;
+
+            player->CompleteQuest(qInfo->GetQuestId());
+            player->RewardQuest(qInfo, 0, NULL, false, true);
+        }
+        return true;
+    }
+    else if(cmd == "dk")
+    {
+        if (player->getClass()!=CLASS_DEATH_KNIGHT)
+        {
+            SendSysMessage("Mauvaise classe...");
+            SetSentErrorMessage(true);
+            return false;
+        }
+        uint32 BonusTalent = 55;
+        ObjectMgr::QuestMap const& qTemplates = sObjectMgr.GetQuestTemplates();
+        for (ObjectMgr::QuestMap::const_iterator iter = qTemplates.begin(); iter != qTemplates.end(); ++iter)
+        {
+            Quest const* qInfo = sObjectMgr.GetQuestTemplate(iter->first);
+            if (!qInfo)
+                continue;
+
+            if (qInfo->GetBonusTalents() == 0)
+                continue;
+
+            if (!player->SatisfyQuestClass(qInfo, false))
+                continue;
+
+            if (!player->SatisfyQuestRace(qInfo, false))
+                continue;
+
+            if (!player->SatisfyQuestLevel(qInfo, false))
+                continue;
+
+            if (!player->SatisfyQuestSkill(qInfo, false))
+                continue;
+
+            if (!player->SatisfyQuestReputation(qInfo, false))
+                continue;
+
+            if (player->GetQuestStatus(qInfo->GetQuestId())==QUEST_STATUS_COMPLETE)
+                continue;
+
+            BonusTalent = BonusTalent - qInfo->GetBonusTalents();
+            player->CompleteQuest(qInfo->GetQuestId());
+            player->RewardQuest(qInfo, 0, NULL, false, true);
+        }
+        if (player->getRewardTalentCount() + BonusTalent > 55)
+            player->setRewardTalentCount(55);
+        else
+            player->setRewardTalentCount(player->getRewardTalentCount() + BonusTalent);
+        player->InitTalentForLevel();
         return true;
     }
 
