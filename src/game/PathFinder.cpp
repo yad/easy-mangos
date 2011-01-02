@@ -17,6 +17,7 @@
  */
 
 #include "MoveMap.h"
+#include "GridMap.h"
 #include "Creature.h"
 #include "PathFinder.h"
 
