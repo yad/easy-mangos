@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -302,7 +302,7 @@ void Object::BuildMovementUpdate(ByteBuffer * data, uint16 updateFlags) const
             unit->m_movementInfo.RemoveMovementFlag(MOVEFLAG_ONTRANSPORT);
 
         // Update movement info time
-        unit->m_movementInfo.UpdateTime(getMSTime());
+        unit->m_movementInfo.UpdateTime(WorldTimer::getMSTime());
         // Write movement info
         unit->m_movementInfo.Write(*data);
 
@@ -509,7 +509,7 @@ void Object::BuildMovementUpdate(ByteBuffer * data, uint16 updateFlags) const
     // 0x2
     if(updateFlags & UPDATEFLAG_TRANSPORT)
     {
-        *data << uint32(getMSTime());                       // ms time
+        *data << uint32(WorldTimer::getMSTime());                       // ms time
     }
 
     // 0x80

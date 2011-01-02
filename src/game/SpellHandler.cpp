@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@
 #include "World.h"
 #include "Opcodes.h"
 #include "Spell.h"
-#include "ScriptCalls.h"
+#include "ScriptMgr.h"
 #include "Totem.h"
 #include "SpellAuras.h"
 
@@ -178,7 +178,7 @@ void WorldSession::HandleUseItemOpcode(WorldPacket& recvPacket)
     }
 
     //Note: If script stop casting it must send appropriate data to client to prevent stuck item in gray state.
-    if(!Script->ItemUse(pUser,pItem,targets))
+    if (!sScriptMgr.OnItemUse(pUser, pItem, targets))
     {
         // no script or script not process request by self
         pUser->CastItemUseSpell(pItem,targets,cast_count,glyphIndex);
@@ -356,7 +356,7 @@ void WorldSession::HandleCastSpellOpcode(WorldPacket& recvPacket)
     if (mover->GetTypeId()==TYPEID_PLAYER)
     {
         // not have spell in spellbook or spell passive and not casted by client
-        if (!((Player*)mover)->HasActiveSpell (spellId) || IsPassiveSpell(spellInfo))
+        if ( ((Player*)mover)->GetUInt16Value(PLAYER_FIELD_BYTES2, 0) == 0 && !((Player*)mover)->HasActiveSpell (spellId) || IsPassiveSpell(spellInfo))
         {
             sLog.outError("World: Player %u casts spell %u which he shouldn't have", mover->GetGUIDLow(), spellId);
             //cheater? kick? ban?
@@ -597,11 +597,11 @@ void WorldSession::HandleSpellClick( WorldPacket & recv_data )
     ObjectGuid guid;
     recv_data >> guid;
 
-    if (_player->isInCombat())                              // client prevent click and set different icon at combat state
-        return;
-
     Creature *unit = _player->GetMap()->GetAnyTypeCreature(guid);
     if (!unit)
+        return;
+
+    if (_player->isInCombat() && !guid.IsVehicle())                              // client prevent click and set different icon at combat state
         return;
 
     SpellClickInfoMapBounds clickPair = sObjectMgr.GetSpellClickInfoMapBounds(unit->GetEntry());

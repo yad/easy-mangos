@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -72,6 +72,9 @@ void PetAI::AttackStart(Unit *u)
     if(!u || (m_creature->IsPet() && ((Pet*)m_creature)->getPetType() == MINI_PET))
         return;
 
+    if (!u->isVisibleForOrDetect(m_creature,m_creature,true))
+        return;
+
     if(m_creature->Attack(u,true))
     {
         // TMGs call CreatureRelocation which via MoveInLineOfSight can call this function
@@ -96,6 +99,9 @@ bool PetAI::_needToStop() const
 {
     // This is needed for charmed creatures, as once their target was reset other effects can trigger threat
     if(m_creature->isCharmed() && m_creature->getVictim() == m_creature->GetCharmer())
+        return true;
+
+    if (!m_creature->getVictim()->isVisibleForOrDetect(m_creature,m_creature,true))
         return true;
 
     return !m_creature->getVictim()->isTargetableForAttack();

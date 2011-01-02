@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -335,7 +335,7 @@ enum AuraType
     SPELL_AURA_297 = 297,
     SPELL_AURA_298 = 298,
     SPELL_AURA_299 = 299,
-    SPELL_AURA_300 = 300,
+    SPELL_AURA_SHARE_DAMAGE_PCT = 300,
     SPELL_AURA_HEAL_ABSORB = 301,
     SPELL_AURA_302 = 302,
     SPELL_AURA_303 = 303,

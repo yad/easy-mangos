@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@
 #include "ObjectAccessor.h"
 #include "ObjectMgr.h"
 #include "World.h"
-#include "ScriptCalls.h"
+#include "ScriptMgr.h"
 #include "Group.h"
 #include "MapRefManager.h"
 #include "DBCEnums.h"
@@ -455,7 +455,6 @@ void Map::Update(const uint32 &t_diff)
         Player* plr = m_mapRefIter->getSource();
         if(plr && plr->IsInWorld())
         {
-            //plr->Update(t_diff);
             WorldSession * pSession = plr->GetSession();
             MapSessionFilter updater(pSession);
 
@@ -468,7 +467,10 @@ void Map::Update(const uint32 &t_diff)
     {
         Player* plr = m_mapRefIter->getSource();
         if(plr && plr->IsInWorld())
-            plr->Update(t_diff);
+        {
+            WorldObject::UpdateHelper helper(plr);
+            helper.Update(t_diff);
+        }
     }
 
     /// update active cells around players and active objects
@@ -1466,7 +1468,7 @@ void InstanceMap::CreateInstanceData(bool load)
     if (mInstance)
     {
         i_script_id = mInstance->script_id;
-        i_data = Script->CreateInstanceData(this);
+        i_data = sScriptMgr.CreateInstanceData(this);
     }
 
     if(!i_data)

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -515,7 +515,7 @@ bool WorldSession::VerifyMovementInfo(MovementInfo const& movementInfo, ObjectGu
 
 void WorldSession::HandleMoverRelocation(MovementInfo& movementInfo)
 {
-    movementInfo.UpdateTime(getMSTime());
+    movementInfo.UpdateTime(WorldTimer::getMSTime());
 
     Unit *mover = _player->GetMover();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,6 +32,15 @@ VehicleKit::VehicleKit(Unit* base, VehicleEntry const* vehicleInfo) : m_vehicleI
 
         if (!seatId)
             continue;
+
+        if(base)
+        {
+            if(m_vehicleInfo->m_flags & VEHICLE_FLAG_NO_STRAFE)
+                base->m_movementInfo.AddMovementFlag2(MOVEFLAG2_NO_STRAFE);
+
+            if(m_vehicleInfo->m_flags & VEHICLE_FLAG_NO_JUMPING)
+                base->m_movementInfo.AddMovementFlag2(MOVEFLAG2_NO_JUMPING);
+        }
 
         if (VehicleSeatEntry const *seatInfo = sVehicleSeatStore.LookupEntry(seatId))
         {
@@ -143,7 +152,7 @@ bool VehicleKit::AddPassenger(Unit *passenger, int8 seatId)
     passenger->m_movementInfo.AddMovementFlag(MOVEFLAG_ONTRANSPORT);
     passenger->m_movementInfo.SetTransportData(m_pBase->GetGUID(),
         seatInfo->m_attachmentOffsetX, seatInfo->m_attachmentOffsetY, seatInfo->m_attachmentOffsetZ,
-        seatInfo->m_passengerYaw, getMSTime(), seat->first, seatInfo);
+        seatInfo->m_passengerYaw, WorldTimer::getMSTime(), seat->first, seatInfo);
 
     if (passenger->GetTypeId() == TYPEID_PLAYER)
     {
@@ -200,6 +209,14 @@ bool VehicleKit::AddPassenger(Unit *passenger, int8 seatId)
         }
 
         ((Creature*)m_pBase)->AIM_Initialize();
+
+        if(m_pBase->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_DISABLE_MOVE))
+        {
+            WorldPacket data2(SMSG_FORCE_MOVE_ROOT, 8+4);
+            data2 << m_pBase->GetPackGUID();
+            data2 << (uint32)(2);
+            m_pBase->SendMessageToSet(&data2,false);
+        }
     }
 
     passenger->SendMonsterMoveTransport(m_pBase, SPLINETYPE_FACINGANGLE, SPLINEFLAG_UNKNOWN5, 0, 0.0f);

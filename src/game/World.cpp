@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@
 #include "World.h"
 #include "Database/DatabaseEnv.h"
 #include "Config/Config.h"
+#include "Platform/Define.h"
 #include "SystemConfig.h"
 #include "Log.h"
 #include "Opcodes.h"
@@ -44,7 +45,6 @@
 #include "LootMgr.h"
 #include "ItemEnchantmentMgr.h"
 #include "MapManager.h"
-#include "ScriptCalls.h"
 #include "ScriptMgr.h"
 #include "CreatureAIRegistry.h"
 #include "Policies/SingletonImp.h"
@@ -907,7 +907,7 @@ void World::SetInitialWorldSettings()
     srand((unsigned int)time(NULL));
 
     ///- Time server startup
-    uint32 uStartTime = getMSTime();
+    uint32 uStartTime = WorldTimer::getMSTime();
 
     ///- Initialize detour memory management
     dtAllocSetCustom(dtCustomAlloc, dtCustomFree);
@@ -1192,7 +1192,7 @@ void World::SetInitialWorldSettings()
     sLog.outString();
 
     sLog.outString( "Loading Npc Text Id..." );
-    sObjectMgr.LoadNpcTextId();                             // must be after load Creature and LoadGossipText
+    sObjectMgr.LoadNpcGossips();                            // must be after load Creature and LoadGossipText
 
     sLog.outString( "Loading Gossip scripts..." );
     sScriptMgr.LoadGossipScripts();                         // must be before gossip menu options
@@ -1224,7 +1224,7 @@ void World::SetInitialWorldSettings()
     sObjectMgr.LoadGameObjectLocales();                     // must be after GameobjectInfo loading
     sObjectMgr.LoadItemLocales();                           // must be after ItemPrototypes loading
     sObjectMgr.LoadQuestLocales();                          // must be after QuestTemplates loading
-    sObjectMgr.LoadNpcTextLocales();                        // must be after LoadGossipText
+    sObjectMgr.LoadGossipTextLocales();                     // must be after LoadGossipText
     sObjectMgr.LoadPageTextLocales();                       // must be after PageText loading
     sObjectMgr.LoadGossipMenuItemsLocales();                // must be after gossip menu items loading
     sObjectMgr.LoadPointOfInterestLocales();                // must be after POI loading
@@ -1296,11 +1296,18 @@ void World::SetInitialWorldSettings()
     sLog.outString( "Loading CreatureEventAI Scripts...");
     sEventAIMgr.LoadCreatureEventAI_Scripts();
 
-    sLog.outString( "Initializing Scripts..." );
-    if(!LoadScriptingModule())
+    sLog.outString("Initializing Scripts...");
+    switch(sScriptMgr.LoadScriptLibrary(MANGOS_SCRIPT_NAME))
     {
-        Log::WaitBeforeContinueIfNeed();
-        exit(1);                                            // Error message displayed in function already
+        case SCRIPT_LOAD_OK:
+            sLog.outString("Scripting library loaded.");
+            break;
+        case SCRIPT_LOAD_ERR_NOT_FOUND:
+            sLog.outError("Scripting library not found or not accessible.");
+            break;
+        case SCRIPT_LOAD_ERR_WRONG_API:
+            sLog.outError("Scripting library has wrong list functions (outdated?).");
+            break;
     }
 
     ///- Initialize game time and timers
@@ -1388,7 +1395,7 @@ void World::SetInitialWorldSettings()
 
     sLog.outString( "WORLD: World initialized" );
 
-    uint32 uStartInterval = getMSTimeDiff(uStartTime, getMSTime());
+    uint32 uStartInterval = WorldTimer::getMSTimeDiff(uStartTime, WorldTimer::getMSTime());
     sLog.outString( "SERVER STARTUP TIME: %i minutes %i seconds", uStartInterval / 60000, (uStartInterval % 60000) / 1000 );
 
     m_NextPlayerBotCheck = time(0) + 10;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@
 #include "Guild.h"
 #include "ObjectAccessor.h"
 #include "MapManager.h"
-#include "ScriptCalls.h"
+#include "ScriptMgr.h"
 #include "Language.h"
 #include "GridNotifiersImpl.h"
 #include "CellImpl.h"
@@ -824,8 +824,16 @@ bool ChatHandler::HandleReloadMangosStringCommand(char* /*args*/)
 bool ChatHandler::HandleReloadNpcGossipCommand(char* /*args*/)
 {
     sLog.outString( "Re-Loading `npc_gossip` Table!" );
-    sObjectMgr.LoadNpcTextId();
+    sObjectMgr.LoadNpcGossips();
     SendGlobalSysMessage("DB table `npc_gossip` reloaded.");
+    return true;
+}
+
+bool ChatHandler::HandleReloadNpcTextCommand(char* /*args*/)
+{
+    sLog.outString( "Re-Loading `npc_text` Table!" );
+    sObjectMgr.LoadGossipText();
+    SendGlobalSysMessage("DB table `npc_text` reloaded.");
     return true;
 }
 
@@ -1252,7 +1260,7 @@ bool ChatHandler::HandleReloadLocalesItemCommand(char* /*args*/)
 bool ChatHandler::HandleReloadLocalesNpcTextCommand(char* /*args*/)
 {
     sLog.outString( "Re-Loading Locales NPC Text ... ");
-    sObjectMgr.LoadNpcTextLocales();
+    sObjectMgr.LoadGossipTextLocales();
     SendGlobalSysMessage("DB table `locales_npc_text` reloaded.");
     return true;
 }
@@ -1291,10 +1299,23 @@ bool ChatHandler::HandleReloadMailLevelRewardCommand(char* /*args*/)
 
 bool ChatHandler::HandleLoadScriptsCommand(char* args)
 {
-    if (!LoadScriptingModule(args))
-        return true;
+    if (!*args)
+        return false;
 
-    sWorld.SendWorldText(LANG_SCRIPTS_RELOADED);
+    switch(sScriptMgr.LoadScriptLibrary(args))
+    {
+    case SCRIPT_LOAD_OK:
+        sWorld.SendWorldText(LANG_SCRIPTS_RELOADED_ANNOUNCE);
+        SendSysMessage(LANG_SCRIPTS_RELOADED_OK);
+        break;
+    case SCRIPT_LOAD_ERR_NOT_FOUND:
+        SendSysMessage(LANG_SCRIPTS_NOT_FOUND);
+        break;
+    case SCRIPT_LOAD_ERR_WRONG_API:
+        SendSysMessage(LANG_SCRIPTS_WRONG_API);
+        break;
+    }
+
     return true;
 }
 
@@ -4971,7 +4992,7 @@ bool ChatHandler::HandleAuraCommand(char* args)
     if (!spellInfo)
         return false;
 
-    if (!IsSpellAppliesAura(spellInfo, (1 << EFFECT_INDEX_0) | (1 << EFFECT_INDEX_1) | (1 << EFFECT_INDEX_2)) &&
+    if (!IsSpellAppliesAura(spellInfo) &&
         !IsSpellHaveEffect(spellInfo, SPELL_EFFECT_PERSISTENT_AREA_AURA))
     {
         PSendSysMessage(LANG_SPELL_NO_HAVE_AURAS, spellID);

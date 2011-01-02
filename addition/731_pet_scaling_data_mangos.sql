@@ -49,7 +49,7 @@ INSERT INTO `pet_scaling_data` (`creature_entry`, `aura`, `healthbase`, `health`
 DELETE FROM `pet_scaling_data` WHERE `creature_entry` = 29264;
 INSERT INTO `pet_scaling_data` (`creature_entry`, `aura`, `healthbase`, `health`, `powerbase`, `power`, `str`, `agi`, `sta`, `inte`, `spi`, `armor`, `resistance1`, `resistance2`, `resistance3`, `resistance4`, `resistance5`, `resistance6`, `apbase`, `apbasescale`, `attackpower`, `damage`, `spelldamage`, `spellhit`, `hit`, `expertize`, `attackspeed`, `crit`, `regen`) VALUES
 (29264,     0, 0, 1000, 0, 1500, 0, 0, 30, 0, 0, 35, 40, 40, 40, 40, 40, 40, 20, 200, 22, 0, 13, 100, 100, 100, 100, 0, 0),
-(29264, 63271, 0,    0, 0,    0, 0, 0, 30, 0, 0,  0,  0,  0,  0,  0,  0,  0,  0,   0, 0,  0,  0,   0,   0,   0,   0, 0, 0);
+(29264, 63271, 0,    0, 0,    0, 0, 0,  0, 0, 0,  0,  0,  0,  0,  0,  0,  0,  0,   0, 30, 0,  0,   0,   0,   0,   0, 0, 0);
 
 -- Pet 26125 - DK ghoul
 DELETE FROM `pet_scaling_data` WHERE `creature_entry` = 26125;
@@ -58,7 +58,7 @@ INSERT INTO `pet_scaling_data` (`creature_entry`, `aura`, `healthbase`, `health`
 (26125, 48965, 0,    0, 0, 0, 14, 0,  6, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,   0, 0, 0, 0, 0,   0,   0,   0, 0, 0),
 (26125, 49571, 0,    0, 0, 0, 28, 0, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,   0, 0, 0, 0, 0,   0,   0,   0, 0, 0),
 (26125, 49572, 0,    0, 0, 0, 42, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,   0, 0, 0, 0, 0,   0,   0,   0, 0, 0),
-(26125, 58721, 0,    0, 0, 0, 40, 0, 40, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,   0, 0, 0, 0, 0,   0,   0,   0, 0, 0);
+(26125, 58686, 0,    0, 0, 0, 40, 0, 40, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,   0, 0, 0, 0, 0,   0,   0,   0, 0, 0);
 
 -- Pet 416 - warlock imp
 DELETE FROM `pet_scaling_data` WHERE `creature_entry` = 416;
