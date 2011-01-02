@@ -12348,7 +12348,7 @@ void Unit::SendMonsterMoveByPath(Path<Elem,Node> const& path, uint32 start, uint
     data << GetPositionX();
     data << GetPositionY();
     data << GetPositionZ();
-    data << uint32(getMSTime());
+    data << uint32(WorldTimer::getMSTime());
     data << uint8(SPLINETYPE_NORMAL);
     data << uint32(flags);
     data << uint32(traveltime);

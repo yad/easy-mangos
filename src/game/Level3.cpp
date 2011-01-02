@@ -2789,7 +2789,7 @@ bool ChatHandler::HandleLearnAllMySpellsCommand(char* /*args*/)
             player->choseMount(Mounts40, sizeof(Mounts40)/sizeof(uint32));
             break;
         }
-        case RACE_UNDEAD_PLAYER:
+        case RACE_UNDEAD:
         {
             static uint32 Mounts20[] = {13331, 46308, 13332, 13333};
             static uint32 Mounts40[] = {18791, 13334, 47101};
@@ -3155,7 +3155,7 @@ bool ChatHandler::HandleLearnAllMySpellsForMyLevelCommand(char* /*args*/)
                 player->choseMount(Mounts40, sizeof(Mounts40)/sizeof(uint32));
             break;
         }
-        case RACE_UNDEAD_PLAYER:
+        case RACE_UNDEAD:
         {
             static uint32 Mounts20[] = {13331, 46308, 13332, 13333};
             static uint32 Mounts40[] = {18791, 13334, 47101};
@@ -8066,7 +8066,7 @@ bool ChatHandler::HandleGMStartUpCommand(char* args)
             if (!player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_BODY))
                 player->StoreNewItemInBestSlots(42372, 1);
             break;
-        case RACE_UNDEAD_PLAYER:
+        case RACE_UNDEAD:
             if (!player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_BODY))
                 player->StoreNewItemInBestSlots(14617, 1);
             break;
@@ -8770,7 +8770,7 @@ bool ChatHandler::HandleMmapTestArea(char* args)
         PSendSysMessage("Found %i Creatures.", creatureList.size());
 
         uint32 paths = 0;
-        uint32 uStartTime = getMSTime();
+        uint32 uStartTime = WorldTimer::getMSTime();
 
         float gx,gy,gz;
         m_session->GetPlayer()->GetPosition(gx,gy,gz);
@@ -8780,7 +8780,7 @@ bool ChatHandler::HandleMmapTestArea(char* args)
             ++paths;
         }
 
-        uint32 uPathLoadTime = getMSTimeDiff(uStartTime, getMSTime());
+        uint32 uPathLoadTime = WorldTimer::getMSTimeDiff(uStartTime, WorldTimer::getMSTime());
         PSendSysMessage("Generated %i paths in %i ms", paths, uPathLoadTime);
     }
     else
