@@ -1264,7 +1264,8 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         Unit* SelectRandomUnfriendlyTargetWithBgCheck(Unit* except = NULL, float radius = ATTACK_DISTANCE) const;
         bool FindRealPlayerInRange(float radius = ATTACK_DISTANCE) const;
         Unit* SelectRandomFriendlyTarget(Unit* except = NULL, float radius = ATTACK_DISTANCE) const;
-        Unit* SelectRandomFriendlyTargetBetween(Unit* except = NULL, float radiusmin = 0, float raduismax = ATTACK_DISTANCE) const;
+        Unit* SelectRandomFriendlyTargetBetween(Unit* except = NULL, float radiusmin = 0, float radiusmax = ATTACK_DISTANCE) const;
+        Unit* SelectRandomPlayerToBuffHim(float radius = ATTACK_DISTANCE) const;
         bool hasNegativeAuraWithInterruptFlag(uint32 flag);
         void SendMeleeAttackStop(Unit* victim);
         void SendMeleeAttackStart(Unit* pVictim);

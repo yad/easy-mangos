@@ -72,7 +72,7 @@ PlayerbotAI::PlayerbotAI(PlayerbotMgr* const mgr, Player* const bot) :
     m_ignoreTeleport(0), m_role(0), m_new_role(1),
     m_combatOrder(ORDERS_NONE), m_ScenarioType(SCENARIO_PVEEASY),
     m_TimeDoneEating(0), m_TimeDoneDrinking(0),
-    m_CurrentlyCastingSpellId(0), m_spellIdCommand(0),
+    m_CurrentlyCastingSpellId(0),
     m_targetGuidCommand(0), m_classAI(0)
 {
     SetMaster(bot);
@@ -89,6 +89,7 @@ PlayerbotAI::PlayerbotAI(PlayerbotMgr* const mgr, Player* const bot) :
     m_targetProtect = 0;
 
     m_followTarget = m_bot;
+    m_bot->GetPosition(orig_x, orig_y, orig_z);
 
     for (uint8 i = 0; i < MAX_ARENA_SLOT; ++i)
     {
@@ -2027,7 +2028,8 @@ void PlayerbotAI::SetCombatOrder(CombatOrderType co, Unit *target)
 void PlayerbotAI::SetMovementOrder(MovementOrderType mo, Unit *followTarget)
 {
     m_movementOrder = mo;
-    m_followTarget = followTarget;
+    if (m_bot!=GetMaster())
+        m_followTarget = followTarget;
     MovementReset();
 }
 
@@ -2060,20 +2062,17 @@ void PlayerbotAI::MovementReset()
         {
             if (m_bot == GetMaster())
             {
-                if (m_bot->IsWithinDistInMap(m_followTarget, 5.0f))
+                if (m_bot->IsWithinDistInMap(m_followTarget, orig_x, orig_y, orig_z, 5.0f))
                 {
-                    if (urand(0, 1)==0)
+                    if (FindPOI())
                     {
-                        if (FindPOI())
-                            m_bot->GetMotionMaster()->MoveFollow(m_followTarget, 1.0f, rand_float(0, M_PI_F));
+                        m_ignoreAIUpdatesUntilTime = time(0) + urand(5, 30);
+                        m_bot->GetMotionMaster()->MoveFollow(m_followTarget, 1.0f, rand_float(0, M_PI_F));
                     }
                     else
-                    {
-                        m_bot->GetMotionMaster()->Clear(true);
-                        GetClassAI()->DoNonCombatActions();
-                    }
+                        m_bot->GetMotionMaster()->MovePoint(0, orig_x, orig_y, orig_z);
                 }
-                else if (m_bot->IsWithinDistInMap(m_followTarget, 500.0f))
+                else if (m_bot->IsWithinDistInMap(m_followTarget, orig_x, orig_y, orig_z, 500.0f))
                 {
                     SetInFront(m_followTarget);
                     float xb, yb, zb, xt, yt, zt;
@@ -2086,6 +2085,8 @@ void PlayerbotAI::MovementReset()
                 {
                     if (FindPOI())
                         m_bot->GetMotionMaster()->MoveFollow(m_followTarget, 1.0f, rand_float(0, M_PI_F));
+                    else
+                        m_bot->GetMotionMaster()->MovePoint(0, orig_x, orig_y, orig_z);
                 }
             }
             else
@@ -2097,15 +2098,18 @@ void PlayerbotAI::MovementReset()
                 }
                 else if (m_bot->IsWithinDistInMap(m_followTarget, 100.0f))
                 {
-                    SetInFront(m_followTarget);
-                    float xb, yb, zb, xt, yt, zt;
-                    m_bot->GetMotionMaster()->GetDestination(xb, yb, zb);
-                    m_followTarget->GetPosition(xt, yt, zt);
-                    if (xt != xb || yt != yb)
+                    if (!m_bot->IsWithinDistInMap(m_followTarget, 20.0f))
                     {
-                        float angle = rand_float(0, M_PI_F);
-                        float dist = rand_float(1.0f, 3.0f);
-                        m_bot->GetMotionMaster()->MoveFollow(m_followTarget, dist, angle);
+                        SetInFront(m_followTarget);
+                        float xb, yb, zb, xt, yt, zt;
+                        m_bot->GetMotionMaster()->GetDestination(xb, yb, zb);
+                        m_followTarget->GetPosition(xt, yt, zt);
+                        if (xt != xb || yt != yb)
+                        {
+                            float angle = rand_float(0, M_PI_F);
+                            float dist = rand_float(1.0f, 3.0f);
+                            m_bot->GetMotionMaster()->MoveFollow(m_followTarget, dist, angle);
+                        }
                     }
                 }
                 else
@@ -2207,7 +2211,7 @@ void PlayerbotAI::SetInFront(const Unit* obj)
     // and added a call to it inside WorldObject::SetOrientation. Check if it is
     // merged to the core.
     // http://getmangos.com/community/viewtopic.php?pid=128003
-    float ori = m_bot->GetAngle(obj) + M_PI;
+    float ori = m_bot->GetAngle(obj);
     float x, y, z;
     x = m_bot->m_movementInfo.GetPos()->x;
     y = m_bot->m_movementInfo.GetPos()->y;
@@ -2239,11 +2243,6 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
         return;
 
     m_ignoreAIUpdatesUntilTime = time(0) + 1;
-
-    if (m_bot == GetMaster())
-        if (!m_bot->GetMap()->IsBattleGroundOrArena())
-            if (!m_bot->FindRealPlayerInRange(50000.0f))
-                return;
 
     if (!CheckMaster())
         return;
@@ -2336,7 +2335,8 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
                 GetClassAI()->InitSpells(m_bot->GetPlayerbotAI());
             }
 
-            ch.gmstartup("");
+            PlayerbotChatHandler ch2(m_bot);
+            ch2.gmstartup("");
             m_bot->SetHealth(m_bot->GetMaxHealth());
             m_bot->SetPower(m_bot->getPowerType(), m_bot->GetMaxPower(m_bot->getPowerType()));
 
@@ -2348,15 +2348,6 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
         Spell* const pSpell = GetCurrentSpell();
         if (pSpell && !(pSpell->IsChannelActive() || pSpell->IsAutoRepeat()))
             InterruptCurrentCastingSpell();
-
-        else if (m_spellIdCommand != 0)
-        {
-            Unit* pTarget = ObjectAccessor::GetUnit(*m_bot, m_targetGuidCommand);
-            if (pTarget)
-                CastSpell(m_spellIdCommand, pTarget);
-            m_spellIdCommand = 0;
-            m_targetGuidCommand = 0;
-        }
 
         else if (IsInCombat() || FindEnemy())
         {
@@ -2387,17 +2378,10 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
             SetIgnoreUpdateTime();
         }
 
-        else if (!IsInCombat() && !IsMoving())
+        else if (!IsInCombat())
         {
-            //MovementReset();
             SetMovementOrder(MOVEMENT_FOLLOW, GetMaster());
-            CheckMount();
-        }
-
-        else if (GetClassAI())
-        {
             GetClassAI()->DoNonCombatActions();
-            //SetMovementOrder(MOVEMENT_FOLLOW, GetMaster());
             CheckMount();
         }
     }
@@ -2583,7 +2567,28 @@ void PlayerbotAI::CheckRoles()
                         default:       m_new_role = MageFrost;                break;
                     }
                 }
-                m_role = m_new_role;
+                if (m_new_role!=MageFire && m_bot->getLevel() < 10)
+                {
+                    m_role = MageFire;
+                    m_new_role = MageFire;
+                }
+                else if((m_new_role==MageArcane) && m_bot->getLevel() < 60)
+                {
+                    if (urand(0,1)==0)
+                    {
+                        m_role = MageFire;
+                        m_new_role = MageFire;
+                    }
+                    else
+                    {
+                        m_role = MageFrost;
+                        m_new_role = MageFrost;
+                    }
+                }
+                else
+                {
+                    m_role = m_new_role;
+                }
                 delete m_classAI;
                 m_classAI = (PlayerbotClassAI*) new PlayerbotMageAI(m_bot, this);
             }

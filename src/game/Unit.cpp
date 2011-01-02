@@ -11310,14 +11310,14 @@ Unit* Unit::SelectRandomFriendlyTarget(Unit* except /*= NULL*/, float radius /*=
     return *tcIter;
 }
 
-Unit* Unit::SelectRandomFriendlyTargetBetween(Unit* except /*= NULL*/, float radiusmin /*= 0*/, float raduismax /*= ATTACK_DISTANCE*/) const
+Unit* Unit::SelectRandomFriendlyTargetBetween(Unit* except /*= NULL*/, float radiusmin /*= 0*/, float radiusmax /*= ATTACK_DISTANCE*/) const
 {
     std::list<Unit *> targets;
 
-    MaNGOS::AnyFriendlyUnitBetweenObjectRangeCheck u_check(this, radiusmin, raduismax);
+    MaNGOS::AnyFriendlyUnitBetweenObjectRangeCheck u_check(this, radiusmin, radiusmax);
     MaNGOS::UnitListSearcher<MaNGOS::AnyFriendlyUnitBetweenObjectRangeCheck> searcher(targets, u_check);
 
-    Cell::VisitAllObjects(this, searcher, raduismax);
+    Cell::VisitAllObjects(this, searcher, radiusmax);
     // remove current target
     if(except)
         targets.remove(except);
@@ -11326,6 +11326,59 @@ Unit* Unit::SelectRandomFriendlyTargetBetween(Unit* except /*= NULL*/, float rad
     for(std::list<Unit *>::iterator tIter = targets.begin(); tIter != targets.end();)
     {
         if(!IsWithinLOSInMap(*tIter))
+        {
+            std::list<Unit *>::iterator tIter2 = tIter;
+            ++tIter;
+            targets.erase(tIter2);
+        }
+        else if((*tIter)->GetTypeId()==TYPEID_PLAYER && ((Player*)(*tIter))->IsBot())
+        {
+            std::list<Unit *>::iterator tIter2 = tIter;
+            ++tIter;
+            targets.erase(tIter2);
+        }
+        else
+            ++tIter;
+    }
+
+    // no appropriate targets
+    if(targets.empty())
+        return NULL;
+
+    // select random
+    uint32 rIdx = urand(0,targets.size()-1);
+    std::list<Unit *>::const_iterator tcIter = targets.begin();
+    for(uint32 i = 0; i < rIdx; ++i)
+        ++tcIter;
+
+    return *tcIter;
+}
+
+Unit* Unit::SelectRandomPlayerToBuffHim(float radius) const
+{
+    std::list<Unit *> targets;
+
+    MaNGOS::AnyFriendlyUnitInObjectRangeCheck u_check(this, radius);
+    MaNGOS::UnitListSearcher<MaNGOS::AnyFriendlyUnitInObjectRangeCheck> searcher(targets, u_check);
+
+    Cell::VisitAllObjects(this, searcher, radius);
+
+    // remove not LoS targets
+    for(std::list<Unit *>::iterator tIter = targets.begin(); tIter != targets.end();)
+    {
+        if(!IsWithinLOSInMap(*tIter))
+        {
+            std::list<Unit *>::iterator tIter2 = tIter;
+            ++tIter;
+            targets.erase(tIter2);
+        }
+        else if((*tIter)->GetTypeId()!=TYPEID_PLAYER)
+        {
+            std::list<Unit *>::iterator tIter2 = tIter;
+            ++tIter;
+            targets.erase(tIter2);
+        }
+        else if ((*tIter)->GetTypeId()==TYPEID_PLAYER && ((Player*)(*tIter))->IsBot() && !((Player*)(*tIter))->GetGroup())
         {
             std::list<Unit *>::iterator tIter2 = tIter;
             ++tIter;

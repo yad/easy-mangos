@@ -337,7 +337,6 @@ private:
 
     // if master commands bot to do something, store here until updateAI
     // can do it
-    uint32 m_spellIdCommand;
     uint64 m_targetGuidCommand;
 
     AttackerInfoList m_attackerInfo;
@@ -350,6 +349,7 @@ private:
     Unit *m_targetProtect;      // check
 
     Unit *m_followTarget;       // whom to follow in non combat situation?
+    float orig_x, orig_y, orig_z;
 
     SpellRanges m_spellRangeMap;
 };

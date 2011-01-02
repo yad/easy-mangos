@@ -456,6 +456,7 @@ class MANGOS_DLL_SPEC WorldObject : public Object
         bool IsWithinDist3d(float x, float y, float z, float dist2compare) const;
         bool IsWithinDist2d(float x, float y, float dist2compare) const;
         bool _IsWithinDist(WorldObject const* obj, float dist2compare, bool is3D) const;
+        bool _IsWithinDist(float x, float y, float z, float dist2compare, bool is3D) const;
 
         // use only if you will sure about placing both object at same map
         bool IsWithinDist(WorldObject const* obj, float dist2compare, bool is3D = true) const
@@ -466,6 +467,13 @@ class MANGOS_DLL_SPEC WorldObject : public Object
         bool IsWithinDistInMap(WorldObject const* obj, float dist2compare, bool is3D = true) const
         {
             return obj && IsInMap(obj) && _IsWithinDist(obj,dist2compare,is3D);
+        }
+
+        bool IsWithinDistInMap(WorldObject const* obj, float x, float y, float z, float dist2compare, bool is3D = true) const
+        {
+            if (obj)
+                return IsInMap(obj) && _IsWithinDist(obj,dist2compare,is3D);
+            return _IsWithinDist(x,y,z,dist2compare,is3D);
         }
         bool IsWithinLOS(float x, float y, float z) const;
         bool IsWithinLOSInMap(const WorldObject* obj) const;

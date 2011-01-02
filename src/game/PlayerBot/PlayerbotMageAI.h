@@ -166,6 +166,8 @@ private:
 
     uint32 CONJURE_WATER,
            CONJURE_FOOD;
+
+    uint32 LastSpellFrost, LastSpellFire, LastSpellArcane;
 };
 
 #endif
