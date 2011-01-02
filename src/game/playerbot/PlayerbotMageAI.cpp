@@ -380,26 +380,66 @@ void PlayerbotMageAI::DoNonCombatActions()
         {
             if (!ai->CastAura(MOLTEN_ARMOR, m_bot))
                 if (!ai->CastAura(ICE_ARMOR, m_bot))
-                    (ai->CastAura(FROST_ARMOR, m_bot));
+                    if (ai->CastAura(FROST_ARMOR, m_bot))
+                        return;
             break;
         }
         case MageArcane:
         {
             if (!ai->CastAura(MAGE_ARMOR, m_bot))
                 if (!ai->CastAura(ICE_ARMOR, m_bot))
-                    (ai->CastAura(FROST_ARMOR, m_bot));
+                    if (ai->CastAura(FROST_ARMOR, m_bot))
+                        return;
             break;
         }
         case MageFrost:
         {
             if (!ai->CastAura(ICE_ARMOR, m_bot))
-                (ai->CastAura(FROST_ARMOR, m_bot));
+                if (ai->CastAura(FROST_ARMOR, m_bot))
+                    return;
             break;
         }
-        default:
+    }
+
+    if (m_bot == m_master)
+    {
+        if (!ai->Buff(DALARAN_INTELLECT, m_bot))
+            if (ai->Buff(ARCANE_INTELLECT, m_bot))
+                return;
+
+        Unit* followTarget = ai->GetFollowTarget();
+        if (followTarget && followTarget->getPowerType()==POWER_MANA);
+            if (!ai->Buff(DALARAN_INTELLECT, followTarget))
+                if (ai->Buff(ARCANE_INTELLECT, followTarget))
+                    return;
+
+        /*ARCANE_INTELLECT,
+        ARCANE_BRILLIANCE,
+        DALARAN_INTELLECT,
+        DALARAN_BRILLIANCE,*/
+    }
+    else
+    {
+        if (!ai->Buff(DALARAN_INTELLECT, m_bot))
+            if (ai->Buff(ARCANE_INTELLECT, m_bot))
+                return;
+
+        if (!ai->Buff(DALARAN_INTELLECT, m_master))
+            if (ai->Buff(ARCANE_INTELLECT, m_master))
+                return;
+
+        if (m_bot->GetGroup())
         {
-            sLog.outString("WTF %u for player %s", m_bot->getRole(), m_bot->GetName());
-            break;
+            GroupReference *ref = m_bot->GetGroup()->GetFirstMember();
+            while (ref)
+            {
+                Player* pl = ref->getSource();
+                if (pl!=m_bot && pl!=m_master && pl->isAlive() && pl->getPowerType()==POWER_MANA)
+                    if (!ai->Buff(DALARAN_INTELLECT, pl))
+                        if (ai->Buff(ARCANE_INTELLECT, pl))
+                            return;
+                ref = ref->next();
+            }
         }
     }
 } // end DoNonCombatActions

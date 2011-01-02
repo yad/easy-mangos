@@ -295,6 +295,8 @@ public:
 
     uint8 GetFreeBagSpace() const;
 
+    Unit* GetFollowTarget() { return m_followTarget; }
+
 private:
     // ****** Closed Actions ********************************
     // Helper routines not needed by class AIs.

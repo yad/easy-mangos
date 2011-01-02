@@ -2546,12 +2546,12 @@ bool ChatHandler::HandleLearnAllMySpellsCommand(char* /*args*/)
                     if(tSpell->IsCastable())
                     {
                         if (!player->isWtfSpell(tSpell->learnedSpell))
-                            player->learnSpell(tSpell->learnedSpell, false);
+                            player->learnSpell(tSpell->learnedSpell, false, true);
                     }
                     else
                     {
                         if (!player->isWtfSpell(tSpell->spell))
-                            player->learnSpell(tSpell->spell, false);
+                            player->learnSpell(tSpell->spell, false, true);
                     }
                 }
             }
@@ -2586,12 +2586,12 @@ bool ChatHandler::HandleLearnAllMySpellsCommand(char* /*args*/)
                     if(tSpell->IsCastable())
                     {
                         if (!player->isWtfSpell(tSpell->learnedSpell))
-                            player->learnSpell(tSpell->learnedSpell, false);
+                            player->learnSpell(tSpell->learnedSpell, false, true);
                     }
                     else
                     {
                         if (!player->isWtfSpell(tSpell->spell))
-                            player->learnSpell(tSpell->spell, false);
+                            player->learnSpell(tSpell->spell, false, true);
                     }
                 }
             }
@@ -2615,10 +2615,10 @@ bool ChatHandler::HandleLearnAllMySpellsCommand(char* /*args*/)
                         if ( (spellInfo1->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_LEARN_SPELL && spellInfo1->Effect[EFFECT_INDEX_1] == SPELL_EFFECT_SKILL)
                             || (spellInfo1->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_TRADE_SKILL) ) {}
                         else if (spellInfo1->SpellFamilyName == family)
-                            player->learnSpell(spellInfo1->Id,false);
+                            player->learnSpell(spellInfo1->Id, false, true);
                         else if  ( ((cinfo->npcflag & UNIT_NPC_FLAG_TRAINER) || (cinfo->npcflag & UNIT_NPC_FLAG_TRAINER_CLASS)
                             || (cinfo->npcflag & UNIT_NPC_FLAG_TRAINER_PROFESSION)) && (cinfo->trainer_class == player->getClass()) )
-                            player->learnSpell(spellInfo1->Id,false);
+                            player->learnSpell(spellInfo1->Id, false, true);
                     }
                 }
 
@@ -2630,10 +2630,10 @@ bool ChatHandler::HandleLearnAllMySpellsCommand(char* /*args*/)
                         if ( (spellInfo2->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_LEARN_SPELL && spellInfo2->Effect[EFFECT_INDEX_1] == SPELL_EFFECT_SKILL)
                             || (spellInfo2->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_TRADE_SKILL) ) {}
                         else if (spellInfo2->SpellFamilyName == family)
-                            player->learnSpell(spellInfo2->Id,false);
+                            player->learnSpell(spellInfo2->Id, false, true);
                         else if  ( ((cinfo->npcflag & UNIT_NPC_FLAG_TRAINER) || (cinfo->npcflag & UNIT_NPC_FLAG_TRAINER_CLASS)
                             || (cinfo->npcflag & UNIT_NPC_FLAG_TRAINER_PROFESSION)) && (cinfo->trainer_class == player->getClass()) )
-                            player->learnSpell(spellInfo2->Id,false);
+                            player->learnSpell(spellInfo2->Id, false, true);
                     }
                 }
 
@@ -2654,10 +2654,10 @@ bool ChatHandler::HandleLearnAllMySpellsCommand(char* /*args*/)
                                     if ( (spellInfo4->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_LEARN_SPELL && spellInfo4->Effect[EFFECT_INDEX_1] == SPELL_EFFECT_SKILL)
                                         || (spellInfo4->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_TRADE_SKILL) ) {}
                                     else if (spellInfo4->SpellFamilyName == family)
-                                        player->learnSpell(spellInfo4->Id,false);
+                                        player->learnSpell(spellInfo4->Id, false, true);
                                     else if  ( ((cinfo->npcflag & UNIT_NPC_FLAG_TRAINER) || (cinfo->npcflag & UNIT_NPC_FLAG_TRAINER_CLASS)
                                         || (cinfo->npcflag & UNIT_NPC_FLAG_TRAINER_PROFESSION)) && (cinfo->trainer_class == player->getClass()) )
-                                        player->learnSpell(spellInfo4->Id,false);
+                                        player->learnSpell(spellInfo4->Id, false, true);
                                 }
                             }
                         }
@@ -2669,10 +2669,10 @@ bool ChatHandler::HandleLearnAllMySpellsCommand(char* /*args*/)
                             if ( (spellInfo3->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_LEARN_SPELL && spellInfo3->Effect[EFFECT_INDEX_1] == SPELL_EFFECT_SKILL)
                                 || (spellInfo3->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_TRADE_SKILL) ) {}
                             else if (spellInfo3->SpellFamilyName == family)
-                                player->learnSpell(spellInfo3->Id,false);
+                                player->learnSpell(spellInfo3->Id, false, true);
                             else if  ( ((cinfo->npcflag & UNIT_NPC_FLAG_TRAINER) || (cinfo->npcflag & UNIT_NPC_FLAG_TRAINER_CLASS)
                                 || (cinfo->npcflag & UNIT_NPC_FLAG_TRAINER_PROFESSION)) && (cinfo->trainer_class == player->getClass()) )
-                                player->learnSpell(spellInfo3->Id,false);
+                                player->learnSpell(spellInfo3->Id, false, true);
                         }
                     }
                 }
@@ -2706,7 +2706,7 @@ bool ChatHandler::HandleLearnAllMySpellsCommand(char* /*args*/)
                                 if ( (spellInfo2->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_LEARN_SPELL && spellInfo2->Effect[EFFECT_INDEX_1] == SPELL_EFFECT_SKILL)
                                     || (spellInfo2->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_TRADE_SKILL) ) {}
                                 else if (spellInfo2->SpellFamilyName == family)
-                                    player->learnSpell(spellInfo2->Id,false);
+                                    player->learnSpell(spellInfo2->Id, false, true);
                             }
                         }
                     }
@@ -2718,7 +2718,7 @@ bool ChatHandler::HandleLearnAllMySpellsCommand(char* /*args*/)
                         if ( (spellInfo1->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_LEARN_SPELL && spellInfo1->Effect[EFFECT_INDEX_1] == SPELL_EFFECT_SKILL)
                             || (spellInfo1->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_TRADE_SKILL) ) {}
                         else if (spellInfo1->SpellFamilyName == family)
-                            player->learnSpell(spellInfo1->Id,false);
+                            player->learnSpell(spellInfo1->Id, false, true);
                     }
                 }
             }
@@ -2899,12 +2899,12 @@ bool ChatHandler::HandleLearnAllMySpellsForMyLevelCommand(char* /*args*/)
                     if(tSpell->IsCastable())
                     {
                         if (!player->isWtfSpell(tSpell->learnedSpell) && tSpell->reqLevel <= player->getLevel())
-                            player->learnSpell(tSpell->learnedSpell, false);
+                            player->learnSpell(tSpell->learnedSpell, false, true);
                     }
                     else
                     {
                         if (!player->isWtfSpell(tSpell->spell) && tSpell->reqLevel <= player->getLevel())
-                            player->learnSpell(tSpell->spell, false);
+                            player->learnSpell(tSpell->spell, false, true);
                     }
                 }
             }
@@ -2939,12 +2939,12 @@ bool ChatHandler::HandleLearnAllMySpellsForMyLevelCommand(char* /*args*/)
                     if(tSpell->IsCastable())
                     {
                         if (!player->isWtfSpell(tSpell->learnedSpell) && tSpell->reqLevel <= player->getLevel())
-                            player->learnSpell(tSpell->learnedSpell, false);
+                            player->learnSpell(tSpell->learnedSpell, false, true);
                     }
                     else
                     {
                         if (!player->isWtfSpell(tSpell->spell) && tSpell->reqLevel <= player->getLevel())
-                            player->learnSpell(tSpell->spell, false);
+                            player->learnSpell(tSpell->spell, false, true);
                     }
                 }
             }
@@ -2968,10 +2968,10 @@ bool ChatHandler::HandleLearnAllMySpellsForMyLevelCommand(char* /*args*/)
                         if ( (spellInfo1->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_LEARN_SPELL && spellInfo1->Effect[EFFECT_INDEX_1] == SPELL_EFFECT_SKILL)
                             || (spellInfo1->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_TRADE_SKILL) ) {}
                         else if (spellInfo1->SpellFamilyName == family)
-                            player->learnSpell(spellInfo1->Id,false);
+                            player->learnSpell(spellInfo1->Id, false, true);
                         else if  ( ((cinfo->npcflag & UNIT_NPC_FLAG_TRAINER) || (cinfo->npcflag & UNIT_NPC_FLAG_TRAINER_CLASS)
                             || (cinfo->npcflag & UNIT_NPC_FLAG_TRAINER_PROFESSION)) && (cinfo->trainer_class == player->getClass()) )
-                            player->learnSpell(spellInfo1->Id,false);
+                            player->learnSpell(spellInfo1->Id, false, true);
                     }
                 }
 
@@ -2983,10 +2983,10 @@ bool ChatHandler::HandleLearnAllMySpellsForMyLevelCommand(char* /*args*/)
                         if ( (spellInfo2->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_LEARN_SPELL && spellInfo2->Effect[EFFECT_INDEX_1] == SPELL_EFFECT_SKILL)
                             || (spellInfo2->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_TRADE_SKILL) ) {}
                         else if (spellInfo2->SpellFamilyName == family)
-                            player->learnSpell(spellInfo2->Id,false);
+                            player->learnSpell(spellInfo2->Id, false, true);
                         else if  ( ((cinfo->npcflag & UNIT_NPC_FLAG_TRAINER) || (cinfo->npcflag & UNIT_NPC_FLAG_TRAINER_CLASS)
                             || (cinfo->npcflag & UNIT_NPC_FLAG_TRAINER_PROFESSION)) && (cinfo->trainer_class == player->getClass()) )
-                            player->learnSpell(spellInfo2->Id,false);
+                            player->learnSpell(spellInfo2->Id, false, true);
                     }
                 }
 
@@ -3007,10 +3007,10 @@ bool ChatHandler::HandleLearnAllMySpellsForMyLevelCommand(char* /*args*/)
                                     if ( (spellInfo4->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_LEARN_SPELL && spellInfo4->Effect[EFFECT_INDEX_1] == SPELL_EFFECT_SKILL)
                                         || (spellInfo4->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_TRADE_SKILL) ) {}
                                     else if (spellInfo4->SpellFamilyName == family)
-                                        player->learnSpell(spellInfo4->Id,false);
+                                        player->learnSpell(spellInfo4->Id, false, true);
                                     else if  ( ((cinfo->npcflag & UNIT_NPC_FLAG_TRAINER) || (cinfo->npcflag & UNIT_NPC_FLAG_TRAINER_CLASS)
                                         || (cinfo->npcflag & UNIT_NPC_FLAG_TRAINER_PROFESSION)) && (cinfo->trainer_class == player->getClass()) )
-                                        player->learnSpell(spellInfo4->Id,false);
+                                        player->learnSpell(spellInfo4->Id, false, true);
                                 }
                             }
                         }
@@ -3022,10 +3022,10 @@ bool ChatHandler::HandleLearnAllMySpellsForMyLevelCommand(char* /*args*/)
                             if ( (spellInfo3->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_LEARN_SPELL && spellInfo3->Effect[EFFECT_INDEX_1] == SPELL_EFFECT_SKILL)
                                 || (spellInfo3->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_TRADE_SKILL) ) {}
                             else if (spellInfo3->SpellFamilyName == family)
-                                player->learnSpell(spellInfo3->Id,false);
+                                player->learnSpell(spellInfo3->Id, false, true);
                             else if  ( ((cinfo->npcflag & UNIT_NPC_FLAG_TRAINER) || (cinfo->npcflag & UNIT_NPC_FLAG_TRAINER_CLASS)
                                 || (cinfo->npcflag & UNIT_NPC_FLAG_TRAINER_PROFESSION)) && (cinfo->trainer_class == player->getClass()) )
-                                player->learnSpell(spellInfo3->Id,false);
+                                player->learnSpell(spellInfo3->Id, false, true);
                         }
                     }
                 }
@@ -3059,7 +3059,7 @@ bool ChatHandler::HandleLearnAllMySpellsForMyLevelCommand(char* /*args*/)
                                 if ( (spellInfo2->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_LEARN_SPELL && spellInfo2->Effect[EFFECT_INDEX_1] == SPELL_EFFECT_SKILL)
                                     || (spellInfo2->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_TRADE_SKILL) ) {}
                                 else if (spellInfo2->SpellFamilyName == family)
-                                    player->learnSpell(spellInfo2->Id,false);
+                                    player->learnSpell(spellInfo2->Id, false, true);
                             }
                         }
                     }
@@ -3071,7 +3071,7 @@ bool ChatHandler::HandleLearnAllMySpellsForMyLevelCommand(char* /*args*/)
                         if ( (spellInfo1->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_LEARN_SPELL && spellInfo1->Effect[EFFECT_INDEX_1] == SPELL_EFFECT_SKILL)
                             || (spellInfo1->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_TRADE_SKILL) ) {}
                         else if (spellInfo1->SpellFamilyName == family)
-                            player->learnSpell(spellInfo1->Id,false);
+                            player->learnSpell(spellInfo1->Id, false, true);
                     }
                 }
             }

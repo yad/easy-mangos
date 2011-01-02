@@ -4838,8 +4838,13 @@ bool Player::IsNeedCastPassiveSpellAtLearn(SpellEntry const* spellInfo) const
     return need_cast && (!spellInfo->CasterAuraState || HasAuraState(AuraState(spellInfo->CasterAuraState)));
 }
 
-void Player::learnSpell(uint32 spell_id, bool dependent)
+void Player::learnSpell(uint32 spell_id, bool dependent, bool debug)
 {
+    /*if (debug)
+    {
+        SpellEntry const* spellInfo = sSpellStore.LookupEntry(spell_id);
+        sLog.outString("%u %s %s", spellInfo->Id, spellInfo->SpellName[2], spellInfo->Rank[2]);
+    }*/
     PlayerSpellMap::iterator itr = m_spells.find(spell_id);
 
     bool disabled = (itr != m_spells.end()) ? itr->second.disabled : false;
@@ -5096,7 +5101,8 @@ bool Player::isWtfSpell(uint32 spell_id)
         case CLASS_WARRIOR:
         {
             uint32 blackListedSpells[] = {25266, 20559, 20560, 7400, 7402, 25225, 7405, 8380,
-                11596, 11597, 23892, 23893, 23894, 30335, 25251, 6554, 6552};
+                11596, 11597, 23892, 23893, 23894, 30335, 25251, 6554, 6552, 25212, 1672, 1671,
+                29704, 7887, 11584, 11585, 20616, 20617, 25272, 25275, 7373, 7372};
             uint32 max = sizeof(blackListedSpells)/sizeof(uint32);
             for(uint32 i = 0; i < max; ++i)
                 if (spell_id == blackListedSpells[i])
@@ -5105,7 +5111,7 @@ bool Player::isWtfSpell(uint32 spell_id)
         }
         case CLASS_PALADIN:
         {
-            uint32 blackListedSpells[] = {51640, 53720, 2567};
+            uint32 blackListedSpells[] = {51640, 53720, 2567, 43940};
             uint32 max = sizeof(blackListedSpells)/sizeof(uint32);
             for(uint32 i = 0; i < max; ++i)
                 if (spell_id == blackListedSpells[i])
@@ -5114,7 +5120,7 @@ bool Player::isWtfSpell(uint32 spell_id)
         }
         case CLASS_HUNTER:
         {
-            uint32 blackListedSpells[] = {23034, 23035, 23539, 23538, 31333};
+            uint32 blackListedSpells[] = {23034, 23035, 23539, 23538, 31333, 23356, 23357};
             uint32 max = sizeof(blackListedSpells)/sizeof(uint32);
             for(uint32 i = 0; i < max; ++i)
                 if (spell_id == blackListedSpells[i])
@@ -5123,7 +5129,8 @@ bool Player::isWtfSpell(uint32 spell_id)
         }
         case CLASS_ROGUE:
         {
-            uint32 blackListedSpells[] = {1785, 1786, 1787, 9991};
+            uint32 blackListedSpells[] = {1785, 1786, 1787, 9991, 8649, 8650, 11197, 11198,
+                11279, 48669, 23726, 26866};
             uint32 max = sizeof(blackListedSpells)/sizeof(uint32);
             for(uint32 i = 0; i < max; ++i)
                 if (spell_id == blackListedSpells[i])
@@ -5132,7 +5139,8 @@ bool Player::isWtfSpell(uint32 spell_id)
         }
         case CLASS_PRIEST:
         {
-            uint32 blackListedSpells[] = {16053, 35460, 39219, 38915, 38482, 36314, 34630, 2567};
+            uint32 blackListedSpells[] = {16053, 35460, 39219, 38915, 38482, 36314, 34630, 2567,
+                43939};
             uint32 max = sizeof(blackListedSpells)/sizeof(uint32);
             for(uint32 i = 0; i < max; ++i)
                 if (spell_id == blackListedSpells[i])
@@ -5159,7 +5167,8 @@ bool Player::isWtfSpell(uint32 spell_id)
         }
         case CLASS_MAGE:
         {
-            uint32 blackListedSpells[] = {26373, 29443, 57680, 73324, 10052, 10057, 10058, 27103, 42987, 12510, 41234, 2567};
+            uint32 blackListedSpells[] = {26373, 29443, 57680, 73324, 10052, 10057, 10058, 27103, 42987,
+                12510, 41234, 2567, 47700, 26448};
             uint32 max = sizeof(blackListedSpells)/sizeof(uint32);
             for(uint32 i = 0; i < max; ++i)
                 if (spell_id == blackListedSpells[i])
