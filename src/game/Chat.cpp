@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -491,17 +491,18 @@ ChatCommand * ChatHandler::getCommandTable()
         { "locales_page_text",           SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadLocalesPageTextCommand,         "", NULL },
         { "locales_points_of_interest",  SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadLocalesPointsOfInterestCommand, "", NULL },
         { "locales_quest",               SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadLocalesQuestCommand,            "", NULL },
-        { "mail_level_reward",           SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadMailLevelRewardCommand,       "", NULL },
+        { "mail_level_reward",           SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadMailLevelRewardCommand,         "", NULL },
         { "mail_loot_template",          SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadLootTemplatesMailCommand,       "", NULL },
         { "mangos_string",               SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadMangosStringCommand,            "", NULL },
         { "milling_loot_template",       SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadLootTemplatesMillingCommand,    "", NULL },
         { "npc_gossip",                  SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadNpcGossipCommand,               "", NULL },
-        { "npc_spellclick_spells",       SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadSpellClickSpellsCommand,          "",NULL},
+        { "npc_text",                    SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadNpcTextCommand,                 "", NULL },
+        { "npc_spellclick_spells",       SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadSpellClickSpellsCommand,        "", NULL },
         { "npc_trainer",                 SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadNpcTrainerCommand,              "", NULL },
         { "npc_vendor",                  SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadNpcVendorCommand,               "", NULL },
         { "page_text",                   SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadPageTextsCommand,               "", NULL },
         { "pickpocketing_loot_template", SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadLootTemplatesPickpocketingCommand,"",NULL},
-        { "points_of_interest",          SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadPointsOfInterestCommand,        "",NULL},
+        { "points_of_interest",          SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadPointsOfInterestCommand,        "", NULL },
         { "prospecting_loot_template",   SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadLootTemplatesProspectingCommand,"", NULL },
         { "quest_end_scripts",           SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadQuestEndScriptsCommand,         "", NULL },
         { "quest_poi",                   SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadQuestPOICommand,                "", NULL },
@@ -545,8 +546,18 @@ ChatCommand * ChatHandler::getCommandTable()
         { NULL,             0,                  false, NULL,                                           "", NULL }
     };
 
+    static ChatCommand sendMassCommandTable[] =
+    {
+        { "items",          SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleSendMassItemsCommand,       "", NULL },
+        { "mail",           SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleSendMassMailCommand,        "", NULL },
+        { "money",          SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleSendMassMoneyCommand,       "", NULL },
+        { NULL,             0,                  false, NULL,                                           "", NULL }
+    };
+
     static ChatCommand sendCommandTable[] =
     {
+        { "mass",           SEC_ADMINISTRATOR,  true,  NULL,                                           "", sendMassCommandTable },
+
         { "items",          SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleSendItemsCommand,           "", NULL },
         { "mail",           SEC_MODERATOR,      true,  &ChatHandler::HandleSendMailCommand,            "", NULL },
         { "message",        SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleSendMessageCommand,         "", NULL },
@@ -3017,7 +3028,7 @@ bool ChatHandler::ExtractLocationFromLink(char** text, uint32& mapid, float& x, 
             if (!ExtractUInt32(&idS, id))
                 return false;
 
-            if (sObjectMgr.GetCreatureTemplate(id))
+            if (ObjectMgr::GetCreatureTemplate(id))
             {
                 FindCreatureData worker(id, m_session ? m_session->GetPlayer() : NULL);
 
@@ -3043,7 +3054,7 @@ bool ChatHandler::ExtractLocationFromLink(char** text, uint32& mapid, float& x, 
             if (!ExtractUInt32(&idS, id))
                 return false;
 
-            if (sObjectMgr.GetGameObjectInfo(id))
+            if (ObjectMgr::GetGameObjectInfo(id))
             {
                 FindGOData worker(id, m_session ? m_session->GetPlayer() : NULL);
 
@@ -3261,6 +3272,63 @@ uint32 ChatHandler::ExtractAccountId(char** args, std::string* accountName /*= N
         *targetIfNullArg = NULL;
 
     return account_id;
+}
+
+struct RaceMaskName
+{
+    char const* literal;
+    uint32 raceMask;
+};
+
+static RaceMaskName const raceMaskNames[] =
+{
+    // races
+    { "human",    (1<<(RACE_HUMAN-1))   },
+    { "orc",      (1<<(RACE_ORC-1))     },
+    { "dwarf",    (1<<(RACE_DWARF-1))   },
+    { "nightelf", (1<<(RACE_NIGHTELF-1))},
+    { "undead",   (1<<(RACE_UNDEAD-1))  },
+    { "tauren",   (1<<(RACE_TAUREN-1))  },
+    { "gnome",    (1<<(RACE_GNOME-1))   },
+    { "troll",    (1<<(RACE_TROLL-1))   },
+    { "bloodelf", (1<<(RACE_BLOODELF-1))},
+    { "draenei",  (1<<(RACE_DRAENEI-1)) },
+
+    // masks
+    { "alliance", RACEMASK_ALLIANCE },
+    { "horde",    RACEMASK_HORDE },
+    { "all", RACEMASK_ALL_PLAYABLE },
+
+    // terminator
+    { NULL, 0 }
+};
+
+bool ChatHandler::ExtractRaceMask(char** text, uint32& raceMask, char const** maskName /*=NULL*/)
+{
+    if (ExtractUInt32(text, raceMask))
+    {
+        if (maskName)
+            *maskName = "custom mask";
+    }
+    else
+    {
+        for (RaceMaskName const* itr = raceMaskNames; itr->literal; ++itr)
+        {
+            if (ExtractLiteralArg(text, itr->literal))
+            {
+                raceMask = itr->raceMask;
+
+                if (maskName)
+                    *maskName = itr->literal;
+                break;
+            }
+        }
+
+        if (!raceMask)
+            return false;
+    }
+
+    return true;
 }
 
 std::string ChatHandler::GetNameLink(Player* chr) const

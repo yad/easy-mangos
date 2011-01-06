@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,7 +33,8 @@
 #include "Guild.h"
 #include "ObjectAccessor.h"
 #include "MapManager.h"
-#include "ScriptCalls.h"
+#include "MassMailMgr.h"
+#include "ScriptMgr.h"
 #include "Language.h"
 #include "GridNotifiersImpl.h"
 #include "CellImpl.h"
@@ -297,7 +298,7 @@ bool ChatHandler::HandleReloadGossipScriptsCommand(char* args)
     if (*args!='a')
         sLog.outString( "Re-Loading Scripts from `gossip_scripts`...");
 
-    sObjectMgr.LoadGossipScripts();
+    sScriptMgr.LoadGossipScripts();
 
     if (*args!='a')
         SendGlobalSysMessage("DB table `gossip_scripts` reloaded.");
@@ -460,15 +461,27 @@ bool ChatHandler::HandleReloadMangosStringCommand(char* /*args*/)
 bool ChatHandler::HandleReloadNpcGossipCommand(char* /*args*/)
 {
     sLog.outString( "Re-Loading `npc_gossip` Table!" );
-    sObjectMgr.LoadNpcTextId();
+    sObjectMgr.LoadNpcGossips();
     SendGlobalSysMessage("DB table `npc_gossip` reloaded.");
+    return true;
+}
+
+bool ChatHandler::HandleReloadNpcTextCommand(char* /*args*/)
+{
+    sLog.outString( "Re-Loading `npc_text` Table!" );
+    sObjectMgr.LoadGossipText();
+    SendGlobalSysMessage("DB table `npc_text` reloaded.");
     return true;
 }
 
 bool ChatHandler::HandleReloadNpcTrainerCommand(char* /*args*/)
 {
+    sLog.outString( "Re-Loading `npc_trainer_template` Table!" );
+    sObjectMgr.LoadTrainerTemplates();
+    SendGlobalSysMessage("DB table `npc_trainer_template` reloaded.");
+
     sLog.outString( "Re-Loading `npc_trainer` Table!" );
-    sObjectMgr.LoadTrainerSpell();
+    sObjectMgr.LoadTrainers();
     SendGlobalSysMessage("DB table `npc_trainer` reloaded.");
     return true;
 }
@@ -698,7 +711,7 @@ bool ChatHandler::HandleReloadGameObjectScriptsCommand(char* args)
     if (*args!='a')
         sLog.outString( "Re-Loading Scripts from `gameobject_scripts`...");
 
-    sObjectMgr.LoadGameObjectScripts();
+    sScriptMgr.LoadGameObjectScripts();
 
     if (*args!='a')
         SendGlobalSysMessage("DB table `gameobject_scripts` reloaded.");
@@ -718,7 +731,7 @@ bool ChatHandler::HandleReloadEventScriptsCommand(char* args)
     if (*args!='a')
         sLog.outString( "Re-Loading Scripts from `event_scripts`...");
 
-    sObjectMgr.LoadEventScripts();
+    sScriptMgr.LoadEventScripts();
 
     if (*args!='a')
         SendGlobalSysMessage("DB table `event_scripts` reloaded.");
@@ -763,7 +776,7 @@ bool ChatHandler::HandleReloadQuestEndScriptsCommand(char* args)
     if (*args != 'a')
         sLog.outString( "Re-Loading Scripts from `quest_end_scripts`...");
 
-    sObjectMgr.LoadQuestEndScripts();
+    sScriptMgr.LoadQuestEndScripts();
 
     if (*args != 'a')
         SendGlobalSysMessage("DB table `quest_end_scripts` reloaded.");
@@ -783,7 +796,7 @@ bool ChatHandler::HandleReloadQuestStartScriptsCommand(char* args)
     if (*args != 'a')
         sLog.outString( "Re-Loading Scripts from `quest_start_scripts`...");
 
-    sObjectMgr.LoadQuestStartScripts();
+    sScriptMgr.LoadQuestStartScripts();
 
     if (*args != 'a')
         SendGlobalSysMessage("DB table `quest_start_scripts` reloaded.");
@@ -803,7 +816,7 @@ bool ChatHandler::HandleReloadSpellScriptsCommand(char* args)
     if (*args != 'a')
         sLog.outString( "Re-Loading Scripts from `spell_scripts`...");
 
-    sObjectMgr.LoadSpellScripts();
+    sScriptMgr.LoadSpellScripts();
 
     if (*args != 'a')
         SendGlobalSysMessage("DB table `spell_scripts` reloaded.");
@@ -814,7 +827,7 @@ bool ChatHandler::HandleReloadSpellScriptsCommand(char* args)
 bool ChatHandler::HandleReloadDbScriptStringCommand(char* /*args*/)
 {
     sLog.outString( "Re-Loading Script strings from `db_script_string`...");
-    sObjectMgr.LoadDbScriptStrings();
+    sScriptMgr.LoadDbScriptStrings();
     SendGlobalSysMessage("DB table `db_script_string` reloaded.");
     return true;
 }
@@ -884,7 +897,7 @@ bool ChatHandler::HandleReloadLocalesItemCommand(char* /*args*/)
 bool ChatHandler::HandleReloadLocalesNpcTextCommand(char* /*args*/)
 {
     sLog.outString( "Re-Loading Locales NPC Text ... ");
-    sObjectMgr.LoadNpcTextLocales();
+    sObjectMgr.LoadGossipTextLocales();
     SendGlobalSysMessage("DB table `locales_npc_text` reloaded.");
     return true;
 }
@@ -923,10 +936,26 @@ bool ChatHandler::HandleReloadMailLevelRewardCommand(char* /*args*/)
 
 bool ChatHandler::HandleLoadScriptsCommand(char* args)
 {
-    if (!LoadScriptingModule(args))
-        return true;
+    if (!*args)
+        return false;
 
-    sWorld.SendWorldText(LANG_SCRIPTS_RELOADED);
+    switch(sScriptMgr.LoadScriptLibrary(args))
+    {
+        case SCRIPT_LOAD_OK:
+            sWorld.SendWorldText(LANG_SCRIPTS_RELOADED_ANNOUNCE);
+            SendSysMessage(LANG_SCRIPTS_RELOADED_OK);
+            break;
+        case SCRIPT_LOAD_ERR_NOT_FOUND:
+            SendSysMessage(LANG_SCRIPTS_NOT_FOUND);
+            break;
+        case SCRIPT_LOAD_ERR_WRONG_API:
+            SendSysMessage(LANG_SCRIPTS_WRONG_API);
+            break;
+        case SCRIPT_LOAD_ERR_OUTDATED:
+            SendSysMessage(LANG_SCRIPTS_OUTDATED);
+            break;
+    }
+
     return true;
 }
 
@@ -3829,7 +3858,7 @@ bool ChatHandler::HandleAuraCommand(char* args)
     if (!spellInfo)
         return false;
 
-    if (!IsSpellAppliesAura(spellInfo, (1 << EFFECT_INDEX_0) | (1 << EFFECT_INDEX_1) | (1 << EFFECT_INDEX_2)) &&
+    if (!IsSpellAppliesAura(spellInfo) &&
         !IsSpellHaveEffect(spellInfo, SPELL_EFFECT_PERSISTENT_AREA_AURA))
     {
         PSendSysMessage(LANG_SPELL_NO_HAVE_AURAS, spellID);
@@ -6468,16 +6497,9 @@ bool ChatHandler::HandleAccountSetAddonCommand(char* args)
     return true;
 }
 
-//Send items by mail
-bool ChatHandler::HandleSendItemsCommand(char* args)
+bool ChatHandler::HandleSendMailHelper(MailDraft& draft, char* args)
 {
-    // format: name "subject text" "mail text" item1[:count1] item2[:count2] ... item12[:count12]
-    Player* receiver;
-    ObjectGuid receiver_guid;
-    std::string receiver_name;
-    if (!ExtractPlayerTarget(&args, &receiver, &receiver_guid, &receiver_name))
-        return false;
-
+    // format: "subject text" "mail text"
     char* msgSubject = ExtractQuotedArg(&args);
     if (!msgSubject)
         return false;
@@ -6487,8 +6509,51 @@ bool ChatHandler::HandleSendItemsCommand(char* args)
         return false;
 
     // msgSubject, msgText isn't NUL after prev. check
-    std::string subject = msgSubject;
-    std::string text    = msgText;
+    draft.SetSubjectAndBody(msgSubject, msgText);
+
+    return true;
+}
+
+bool ChatHandler::HandleSendMassMailCommand(char* args)
+{
+    // format: raceMask "subject text" "mail text"
+    uint32 raceMask = 0;
+    char const* name = NULL;
+
+    if (!ExtractRaceMask(&args, raceMask, &name))
+        return false;
+
+    // need dynamic object because it trasfered to mass mailer
+    MailDraft* draft = new MailDraft;
+
+    // fill mail
+    if (!HandleSendMailHelper(*draft, args))
+    {
+        delete draft;
+        return false;
+    }
+
+    // from console show nonexistent sender
+    MailSender sender(MAIL_NORMAL, m_session ? m_session->GetPlayer()->GetObjectGuid().GetCounter() : 0, MAIL_STATIONERY_GM);
+
+    sMassMailMgr.AddMassMailTask(draft, sender, raceMask);
+
+    PSendSysMessage(LANG_MAIL_SENT, name);
+    return true;
+}
+
+
+
+bool ChatHandler::HandleSendItemsHelper(MailDraft& draft, char* args)
+{
+    // format: "subject text" "mail text" item1[:count1] item2[:count2] ... item12[:count12]
+    char* msgSubject = ExtractQuotedArg(&args);
+    if (!msgSubject)
+        return false;
+
+    char* msgText = ExtractQuotedArg(&args);
+    if (!msgText)
+        return false;
 
     // extract items
     typedef std::pair<uint32,uint32> ItemPair;
@@ -6543,11 +6608,8 @@ bool ChatHandler::HandleSendItemsCommand(char* args)
         }
     }
 
-    // from console show nonexistent sender
-    MailSender sender(MAIL_NORMAL, m_session ? m_session->GetPlayer()->GetObjectGuid().GetCounter() : 0, MAIL_STATIONERY_GM);
-
     // fill mail
-    MailDraft draft(subject, text);
+    draft.SetSubjectAndBody(msgSubject, msgText);
 
     for(ItemPairs::const_iterator itr = items.begin(); itr != items.end(); ++itr)
     {
@@ -6558,6 +6620,27 @@ bool ChatHandler::HandleSendItemsCommand(char* args)
         }
     }
 
+    return true;
+}
+
+bool ChatHandler::HandleSendItemsCommand(char* args)
+{
+    // format: name "subject text" "mail text" item1[:count1] item2[:count2] ... item12[:count12]
+    Player* receiver;
+    ObjectGuid receiver_guid;
+    std::string receiver_name;
+    if (!ExtractPlayerTarget(&args, &receiver, &receiver_guid, &receiver_name))
+        return false;
+
+    MailDraft draft;
+
+    // fill mail
+    if (!HandleSendItemsHelper(draft, args))
+        return false;
+
+    // from console show nonexistent sender
+    MailSender sender(MAIL_NORMAL, m_session ? m_session->GetPlayer()->GetObjectGuid().GetCounter() : 0, MAIL_STATIONERY_GM);
+
     draft.SendMailTo(MailReceiver(receiver, receiver_guid), sender);
 
     std::string nameLink = playerLink(receiver_name);
@@ -6565,16 +6648,39 @@ bool ChatHandler::HandleSendItemsCommand(char* args)
     return true;
 }
 
-///Send money by mail
-bool ChatHandler::HandleSendMoneyCommand(char* args)
+bool ChatHandler::HandleSendMassItemsCommand(char* args)
 {
-    /// format: name "subject text" "mail text" money
+    // format: racemask "subject text" "mail text" item1[:count1] item2[:count2] ... item12[:count12]
 
-    Player* receiver;
-    ObjectGuid receiver_guid;
-    std::string receiver_name;
-    if (!ExtractPlayerTarget(&args, &receiver, &receiver_guid, &receiver_name))
+    uint32 raceMask = 0;
+    char const* name = NULL;
+
+    if (!ExtractRaceMask(&args, raceMask, &name))
         return false;
+
+    // need dynamic object because it trasfered to mass mailer
+    MailDraft* draft = new MailDraft;
+
+
+    // fill mail
+    if (!HandleSendItemsHelper(*draft, args))
+    {
+        delete draft;
+        return false;
+    }
+
+    // from console show nonexistent sender
+    MailSender sender(MAIL_NORMAL, m_session ? m_session->GetPlayer()->GetObjectGuid().GetCounter() : 0, MAIL_STATIONERY_GM);
+
+    sMassMailMgr.AddMassMailTask(draft, sender, raceMask);
+
+    PSendSysMessage(LANG_MAIL_SENT, name);
+    return true;
+}
+
+bool ChatHandler::HandleSendMoneyHelper(MailDraft& draft, char* args)
+{
+    /// format: "subject text" "mail text" money
 
     char* msgSubject = ExtractQuotedArg(&args);
     if (!msgSubject)
@@ -6592,18 +6698,63 @@ bool ChatHandler::HandleSendMoneyCommand(char* args)
         return false;
 
     // msgSubject, msgText isn't NUL after prev. check
-    std::string subject = msgSubject;
-    std::string text    = msgText;
+    draft.SetSubjectAndBody(msgSubject, msgText).SetMoney(money);
+
+    return true;
+}
+
+bool ChatHandler::HandleSendMoneyCommand(char* args)
+{
+    /// format: name "subject text" "mail text" money
+
+    Player* receiver;
+    ObjectGuid receiver_guid;
+    std::string receiver_name;
+    if (!ExtractPlayerTarget(&args, &receiver, &receiver_guid, &receiver_name))
+        return false;
+
+    MailDraft draft;
+
+    // fill mail
+    if (!HandleSendMoneyHelper(draft, args))
+        return false;
 
     // from console show nonexistent sender
     MailSender sender(MAIL_NORMAL, m_session ? m_session->GetPlayer()->GetObjectGuid().GetCounter() : 0, MAIL_STATIONERY_GM);
 
-    MailDraft(subject, text)
-        .AddMoney(money)
-        .SendMailTo(MailReceiver(receiver, receiver_guid),sender);
+    draft.SendMailTo(MailReceiver(receiver, receiver_guid),sender);
 
     std::string nameLink = playerLink(receiver_name);
     PSendSysMessage(LANG_MAIL_SENT, nameLink.c_str());
+    return true;
+}
+
+bool ChatHandler::HandleSendMassMoneyCommand(char* args)
+{
+    /// format: raceMask "subject text" "mail text" money
+
+    uint32 raceMask = 0;
+    char const* name = NULL;
+
+    if (!ExtractRaceMask(&args, raceMask, &name))
+        return false;
+
+    // need dynamic object because it trasfered to mass mailer
+    MailDraft* draft = new MailDraft;
+
+    // fill mail
+    if (!HandleSendMoneyHelper(*draft, args))
+    {
+        delete draft;
+        return false;
+    }
+
+    // from console show nonexistent sender
+    MailSender sender(MAIL_NORMAL, m_session ? m_session->GetPlayer()->GetObjectGuid().GetCounter() : 0, MAIL_STATIONERY_GM);
+
+    sMassMailMgr.AddMassMailTask(draft, sender, raceMask);
+
+    PSendSysMessage(LANG_MAIL_SENT, name);
     return true;
 }
 

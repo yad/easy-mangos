@@ -165,6 +165,9 @@
     <ClCompile Include="..\..\src\game\MapManager.cpp">
       <Filter>World/Handlers</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\game\MassMailMgr.cpp">
+      <Filter>World/Handlers</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\game\MiscHandler.cpp">
       <Filter>World/Handlers</Filter>
     </ClCompile>
@@ -195,7 +198,7 @@
     <ClCompile Include="..\..\src\game\QuestHandler.cpp">
       <Filter>World/Handlers</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\game\ScriptCalls.cpp">
+    <ClCompile Include="..\..\src\game\ScriptMgr.cpp">
       <Filter>World/Handlers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\game\SkillDiscovery.cpp">
@@ -579,6 +582,9 @@
     <ClInclude Include="..\..\src\game\MapManager.h">
       <Filter>World/Handlers</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\game\MassMailMgr.h">
+      <Filter>World/Handlers</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\src\game\NPCHandler.h">
       <Filter>World/Handlers</Filter>
     </ClInclude>
@@ -594,7 +600,7 @@
     <ClInclude Include="..\..\src\game\QuestDef.h">
       <Filter>World/Handlers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\game\ScriptCalls.h">
+    <ClInclude Include="..\..\src\game\ScriptMgr.h">
       <Filter>World/Handlers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\game\SkillDiscovery.h">

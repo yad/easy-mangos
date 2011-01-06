@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -924,7 +924,7 @@ void AuthSocket::LoadRealmlist(ByteBuffer &pkt, uint32 acctid)
                 }
 
                 // Show offline state for unsupported client builds and locked realms (1.x clients not support locked state show)
-                if (!ok_build || (i->second.allowedSecurityLevel >= _accountSecurityLevel))
+                if (!ok_build || (i->second.allowedSecurityLevel > _accountSecurityLevel))
                     realmflags = RealmFlags(realmflags | REALM_FLAG_OFFLINE);
 
                 pkt << uint32(i->second.icon);              // realm type
