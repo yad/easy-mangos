@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,6 +37,7 @@ class ChatHandler;
 class WorldSession;
 class WorldPacket;
 class GMTicket;
+class MailDraft;
 class Object;
 class GameObject;
 class Creature;
@@ -419,6 +420,7 @@ class ChatHandler
         bool HandleReloadMailLevelRewardCommand(char* args);
         bool HandleReloadMangosStringCommand(char* args);
         bool HandleReloadNpcGossipCommand(char* args);
+        bool HandleReloadNpcTextCommand(char* args);
         bool HandleReloadNpcTrainerCommand(char* args);
         bool HandleReloadNpcVendorCommand(char* args);
         bool HandleReloadPageTextsCommand(char* args);
@@ -461,6 +463,10 @@ class ChatHandler
         bool HandleSendMailCommand(char* args);
         bool HandleSendMessageCommand(char* args);
         bool HandleSendMoneyCommand(char* args);
+
+        bool HandleSendMassItemsCommand(char* args);
+        bool HandleSendMassMailCommand(char* args);
+        bool HandleSendMassMoneyCommand(char* args);
 
         bool HandleServerCorpsesCommand(char* args);
         bool HandleServerExitCommand(char* args);
@@ -601,6 +607,7 @@ class ChatHandler
         ObjectGuid ExtractGuidFromLink(char** text);
         GameTele const* ExtractGameTeleFromLink(char** text);
         bool   ExtractLocationFromLink(char** text, uint32& mapid, float& x, float& y, float& z);
+        bool   ExtractRaceMask(char** text, uint32& raceMask, char const** maskName = NULL);
         std::string ExtractPlayerNameFromLink(char** text);
         bool ExtractPlayerTarget(char** args, Player** player, ObjectGuid* player_guid = NULL, std::string* player_name = NULL);
                                                             // select by arg (name/link) or in-game selection online/offline player
@@ -633,6 +640,11 @@ class ChatHandler
         bool HandleGetValueHelper(Object* target, uint32 field, char* typeStr);
         bool HandlerDebugModValueHelper(Object* target, uint32 field, char* typeStr, char* valStr);
         bool HandleSetValueHelper(Object* target, uint32 field, char* typeStr, char* valStr);
+
+        bool HandleSendItemsHelper(MailDraft& draft, char* args);
+        bool HandleSendMailHelper(MailDraft& draft, char* args);
+        bool HandleSendMoneyHelper(MailDraft& draft, char* args);
+
         template<typename T>
         void ShowNpcOrGoSpawnInformation(uint32 guid);
         template <typename T>

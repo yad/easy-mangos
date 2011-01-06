@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1755,23 +1755,16 @@ bool ChatHandler::HandleSendMailCommand(char* args)
     if (!ExtractPlayerTarget(&args, &target, &target_guid, &target_name))
         return false;
 
-    char* msgSubject = ExtractQuotedArg(&args);
-    if (!msgSubject)
-        return false;
+    MailDraft draft;
 
-    char* msgText = ExtractQuotedArg(&args);
-    if (!msgText)
+    // fill draft
+    if (!HandleSendMailHelper(draft, args))
         return false;
-
-    // msgSubject, msgText isn't NUL after prev. check
-    std::string subject = msgSubject;
-    std::string text    = msgText;
 
     // from console show nonexistent sender
     MailSender sender(MAIL_NORMAL, m_session ? m_session->GetPlayer()->GetObjectGuid().GetCounter() : 0, MAIL_STATIONERY_GM);
 
-    MailDraft(subject, text)
-        .SendMailTo(MailReceiver(target, target_guid),sender);
+    draft.SendMailTo(MailReceiver(target, target_guid),sender);
 
     std::string nameLink = playerLink(target_name);
     PSendSysMessage(LANG_MAIL_SENT, nameLink.c_str());

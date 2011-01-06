@@ -1,4 +1,4 @@
-# Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
+# Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -133,6 +133,20 @@ pkgdata_DATA = \
 	10862_01_characters_mail.sql \
 	10863_01_mangos_spell_proc_event.sql \
 	10864_01_mangos_spell_proc_event.sql \
+	10867_01_mangos_npc_trainer_template.sql \
+	10867_02_mangos_creature_template.sql \
+	10883_01_mangos_spell_proc_event.sql \
+	10906_01_mangos_spell_proc_event.sql \
+	10906_02_mangos_spell_bonus_data.sql \
+	10932_01_mangos_game_event_creature_data.sql \
+	10945_01_mangos_mangos_string.sql \
+	10946_01_mangos_spell_proc_event.sql \
+	10949_01_mangos_mangos_string.sql \
+	10950_01_mangos_mangos_string.sql \
+	10951_01_mangos_spell_proc_event.sql \
+	10972_01_mangos_command.sql \
+	10973_01_characters_game_event_status.sql \
+	10973_01_mangos_game_event_mail.sql \
 	README
 
 ## Additional files to include when running 'make dist'
@@ -246,4 +260,18 @@ EXTRA_DIST = \
 	10862_01_characters_mail.sql \
 	10863_01_mangos_spell_proc_event.sql \
 	10864_01_mangos_spell_proc_event.sql \
+	10867_01_mangos_npc_trainer_template.sql \
+	10867_02_mangos_creature_template.sql \
+	10883_01_mangos_spell_proc_event.sql \
+	10906_01_mangos_spell_proc_event.sql \
+	10906_02_mangos_spell_bonus_data.sql \
+	10932_01_mangos_game_event_creature_data.sql \
+	10945_01_mangos_mangos_string.sql \
+	10946_01_mangos_spell_proc_event.sql \
+	10949_01_mangos_mangos_string.sql \
+	10950_01_mangos_mangos_string.sql \
+	10951_01_mangos_spell_proc_event.sql \
+	10972_01_mangos_command.sql \
+	10973_01_characters_game_event_status.sql \
+	10973_01_mangos_game_event_mail.sql \
 	README

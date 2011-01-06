@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@
 #include "ProgressBar.h"
 #include "MapManager.h"
 #include "ObjectMgr.h"
+#include "ScriptMgr.h"
 
 INSTANTIATE_SINGLETON_1(WaypointManager);
 
@@ -220,7 +221,7 @@ void WaypointManager::Load()
             for(std::set<uint32>::const_iterator itr = creatureNoMoveType.begin(); itr != creatureNoMoveType.end(); ++itr)
             {
                 const CreatureData* cData = sObjectMgr.GetCreatureData(*itr);
-                const CreatureInfo* cInfo = sObjectMgr.GetCreatureTemplate(cData->id);
+                const CreatureInfo* cInfo = ObjectMgr::GetCreatureTemplate(cData->id);
 
                 sLog.outErrorDb("Table creature_movement has waypoint for creature guid %u (entry %u), but MovementType is not WAYPOINT_MOTION_TYPE(2). Creature will not use this path.", *itr, cData->id);
 
@@ -287,7 +288,7 @@ void WaypointManager::Load()
             uint32 entry        = fields[0].GetUInt32();
             uint32 point        = fields[1].GetUInt32();
 
-            const CreatureInfo* cInfo = sObjectMgr.GetCreatureTemplate(entry);
+            const CreatureInfo* cInfo = ObjectMgr::GetCreatureTemplate(entry);
 
             if (!cInfo)
             {
