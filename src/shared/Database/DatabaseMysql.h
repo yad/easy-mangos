@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -65,7 +65,8 @@ class MANGOS_DLL_SPEC DatabaseMysql : public Database
         // must be call before finish thread run
         void ThreadEnd();
     private:
-        ACE_Thread_Mutex mMutex;
+        ACE_Thread_Mutex mMutex;        // For thread safe operations between core and mySQL server
+        ACE_Thread_Mutex nMutex;        // For thread safe operations on m_transQueues
 
         ACE_Based::Thread * tranThread;
 

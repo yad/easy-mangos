@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -59,10 +59,10 @@ void BattleGroundRV::AddPlayer(Player *plr)
     //create score and add it to map, default values are set in constructor
     BattleGroundRVScore* sc = new BattleGroundRVScore;
 
-    m_PlayerScores[plr->GetGUID()] = sc;
+    m_PlayerScores[plr->GetObjectGuid()] = sc;
 }
 
-void BattleGroundRV::RemovePlayer(Player * /*plr*/, uint64 /*guid*/)
+void BattleGroundRV::RemovePlayer(Player * /*plr*/, ObjectGuid /*guid*/)
 {
 }
 

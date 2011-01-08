@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@
 #include "Formulas.h"
 #include "BattleGround.h"
 #include "CreatureAI.h"
-#include "ScriptCalls.h"
+#include "ScriptMgr.h"
 #include "Util.h"
 #include "GridNotifiers.h"
 #include "GridNotifiersImpl.h"
@@ -188,7 +188,7 @@ pAuraHandler AuraHandler[TOTAL_AURAS]=
     &Aura::HandleModHealingDone,                            //135 SPELL_AURA_MOD_HEALING_DONE
     &Aura::HandleNoImmediateEffect,                         //136 SPELL_AURA_MOD_HEALING_DONE_PERCENT   implemented in Unit::SpellHealingBonusDone
     &Aura::HandleModTotalPercentStat,                       //137 SPELL_AURA_MOD_TOTAL_STAT_PERCENTAGE
-    &Aura::HandleHaste,                                     //138 SPELL_AURA_MOD_HASTE
+    &Aura::HandleModMeleeSpeedPct,                          //138 SPELL_AURA_MOD_MELEE_HASTE
     &Aura::HandleForceReaction,                             //139 SPELL_AURA_FORCE_REACTION
     &Aura::HandleAuraModRangedHaste,                        //140 SPELL_AURA_MOD_RANGED_HASTE
     &Aura::HandleRangedAmmoHaste,                           //141 SPELL_AURA_MOD_RANGED_AMMO_HASTE
@@ -242,7 +242,7 @@ pAuraHandler AuraHandler[TOTAL_AURAS]=
     &Aura::HandleModRating,                                 //189 SPELL_AURA_MOD_RATING
     &Aura::HandleNoImmediateEffect,                         //190 SPELL_AURA_MOD_FACTION_REPUTATION_GAIN     implemented in Player::CalculateReputationGain
     &Aura::HandleAuraModUseNormalSpeed,                     //191 SPELL_AURA_USE_NORMAL_MOVEMENT_SPEED
-    &Aura::HandleModMeleeRangedSpeedPct,                    //192 SPELL_AURA_HASTE_MELEE
+    &Aura::HandleModMeleeRangedSpeedPct,                    //192 SPELL_AURA_MOD_MELEE_RANGED_HASTE
     &Aura::HandleModCombatSpeedPct,                         //193 SPELL_AURA_HASTE_ALL (in fact combat (any type attack) speed pct)
     &Aura::HandleNoImmediateEffect,                         //194 SPELL_AURA_MOD_IGNORE_ABSORB_SCHOOL       implement in Unit::CalcNotIgnoreAbsorbDamage
     &Aura::HandleNoImmediateEffect,                         //195 SPELL_AURA_MOD_IGNORE_ABSORB_FOR_SPELL    implement in Unit::CalcNotIgnoreAbsorbDamage
@@ -304,7 +304,7 @@ pAuraHandler AuraHandler[TOTAL_AURAS]=
     &Aura::HandleNULL,                                      //251 SPELL_AURA_MOD_ENEMY_DODGE
     &Aura::HandleModCombatSpeedPct,                         //252 SPELL_AURA_SLOW_ALL
     &Aura::HandleNoImmediateEffect,                         //253 SPELL_AURA_MOD_BLOCK_CRIT_CHANCE             implemented in Unit::CalculateMeleeDamage
-    &Aura::HandleNULL,                                      //254 SPELL_AURA_MOD_DISARM_SHIELD disarm Shield
+    &Aura::HandleAuraModDisarm,                             //254 SPELL_AURA_MOD_DISARM_OFFHAND     also disarm shield
     &Aura::HandleNoImmediateEffect,                         //255 SPELL_AURA_MOD_MECHANIC_DAMAGE_TAKEN_PERCENT    implemented in Unit::SpellDamageBonusTaken
     &Aura::HandleNoReagentUseAura,                          //256 SPELL_AURA_NO_REAGENT_USE Use SpellClassMask for spell select
     &Aura::HandleNULL,                                      //257 SPELL_AURA_MOD_TARGET_RESIST_BY_SPELL_CLASS Use SpellClassMask for spell select
@@ -328,7 +328,7 @@ pAuraHandler AuraHandler[TOTAL_AURAS]=
     &Aura::HandleNoImmediateEffect,                         //275 SPELL_AURA_MOD_IGNORE_SHAPESHIFT Use SpellClassMask for spell select
     &Aura::HandleNULL,                                      //276 mod damage % mechanic?
     &Aura::HandleNoImmediateEffect,                         //277 SPELL_AURA_MOD_MAX_AFFECTED_TARGETS Use SpellClassMask for spell select
-    &Aura::HandleNULL,                                      //278 SPELL_AURA_MOD_DISARM_RANGED disarm ranged weapon
+    &Aura::HandleAuraModDisarm,                             //278 SPELL_AURA_MOD_DISARM_RANGED disarm ranged weapon
     &Aura::HandleNULL,                                      //279 visual effects? 58836 and 57507
     &Aura::HandleModTargetArmorPct,                         //280 SPELL_AURA_MOD_TARGET_ARMOR_PCT
     &Aura::HandleNoImmediateEffect,                         //281 SPELL_AURA_MOD_HONOR_GAIN             implemented in Player::RewardHonor
@@ -343,7 +343,7 @@ pAuraHandler AuraHandler[TOTAL_AURAS]=
     &Aura::HandleAuraModAllCritChance,                      //290 SPELL_AURA_MOD_ALL_CRIT_CHANCE
     &Aura::HandleNoImmediateEffect,                         //291 SPELL_AURA_MOD_QUEST_XP_PCT           implemented in Player::GiveXP
     &Aura::HandleAuraOpenStable,                            //292 call stabled pet
-    &Aura::HandleNULL,                                      //293 3 spells
+    &Aura::HandleAuraAddMechanicAbilities,                  //293 SPELL_AURA_ADD_MECHANIC_ABILITIES  replaces target's action bars with a predefined spellset
     &Aura::HandleNULL,                                      //294 2 spells, possible prevent mana regen
     &Aura::HandleUnused,                                    //295 unused (3.2.2a)
     &Aura::HandleNULL,                                      //296 2 spells
@@ -909,13 +909,13 @@ bool Aura::isAffectedOnSpell(SpellEntry const *spell) const
     return false;
 }
 
-bool Aura::CanProcFrom(SpellEntry const *spell, uint32 EventProcEx, uint32 procEx, bool active) const
+bool Aura::CanProcFrom(SpellEntry const *spell, uint32 EventProcEx, uint32 procEx, bool active, bool useClassMask) const
 {
     // Check EffectClassMask
     uint32 const *ptr = getAuraSpellClassMask();
 
-    // if no class mask defined - allow proc
-    if (!((uint64*)ptr)[0] && !ptr[2])
+    // if no class mask defined, or spell_proc_event has SpellFamilyName=0 - allow proc
+    if (!useClassMask || (!((uint64*)ptr)[0] && !ptr[2]))
     {
         if (!(EventProcEx & PROC_EX_EX_TRIGGER_ALWAYS))
         {
@@ -971,7 +971,7 @@ void Aura::ReapplyAffectedPassiveAuras( Unit* target, bool owner_mode )
         {
             // only applied by self or aura caster
             if (itr->second->GetCasterGuid() == target->GetObjectGuid())
-                affectedSelf[itr->second->GetId()] = itr->second->GetCastItemGUID();
+                affectedSelf[itr->second->GetId()] = itr->second->GetCastItemGuid();
             else if (itr->second->GetCasterGuid() == GetCasterGuid())
                 affectedAuraCaster.insert(itr->second->GetId());
         }
@@ -1335,7 +1335,7 @@ void Aura::TriggerSpell()
                     case 31373:                             // Spellcloth
                     {
                         // Summon Elemental after create item
-                        triggerTarget->SummonCreature(17870, 0, 0, 0, triggerTarget->GetOrientation(), TEMPSUMMON_DEAD_DESPAWN, 0);
+                        triggerTarget->SummonCreature(17870, 0.0f, 0.0f, 0.0f, triggerTarget->GetOrientation(), TEMPSUMMON_DEAD_DESPAWN, 0);
                         return;
                     }
 //                    // Bloodmyst Tesla
@@ -1903,7 +1903,7 @@ void Aura::TriggerSpell()
     {
         if (Unit* caster = GetCaster())
         {
-            if (triggerTarget->GetTypeId() != TYPEID_UNIT || !Script->EffectDummyCreature(caster, GetId(), GetEffIndex(), (Creature*)triggerTarget))
+            if (triggerTarget->GetTypeId() != TYPEID_UNIT || !sScriptMgr.OnEffectDummy(caster, GetId(), GetEffIndex(), (Creature*)triggerTarget))
                 sLog.outError("Aura::TriggerSpell: Spell %u have 0 in EffectTriggered[%d], not handled custom case?",GetId(),GetEffIndex());
         }
     }
@@ -2061,6 +2061,9 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                         return;
                     case 75614:                             // Celestial Steed
                         Spell::SelectMountByAreaAndSkill(target, 75619, 75620, 75617, 75618, 76153);
+                        return;
+                    case 75973:                             // X-53 Touring Rocket
+                        Spell::SelectMountByAreaAndSkill(target, 0, 0, 75957, 75972, 76154);
                         return;
                 }
                 break;
@@ -2249,6 +2252,18 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                 target->CastSpell(target, 36731, true, NULL, this);
                 return;
             }
+            case 42517:                                     // Beam to Zelfrax
+            {
+                // expecting target to be a dummy creature
+                Creature* pSummon = target->SummonCreature(23864, 0.0f, 0.0f, 0.0f, target->GetOrientation(), TEMPSUMMON_DEAD_DESPAWN, 0);
+
+                Unit* pCaster = GetCaster();
+
+                if (pSummon && pCaster)
+                    pSummon->GetMotionMaster()->MovePoint(0, pCaster->GetPositionX(), pCaster->GetPositionY(), pCaster->GetPositionZ());
+
+                return;
+            }
             case 44191:                                     // Flame Strike
             {
                 if (target->GetMap()->IsDungeon())
@@ -2298,6 +2313,14 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                     if (m_removeMode == AURA_REMOVE_BY_EXPIRE)
                         pCaster->CastSpell(target, 51872, true, NULL, this);
                 }
+
+                return;
+            }
+            case 56511:                                     // Towers of Certain Doom: Tower Bunny Smoke Flare Effect
+            {
+                // Towers of Certain Doom: Skorn Cannonfire
+                if (m_removeMode == AURA_REMOVE_BY_DEFAULT)
+                    target->CastSpell(target, 43069, true);
 
                 return;
             }
@@ -2471,6 +2494,22 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                     }
                     return;
                 }
+                case 42515:                                 // Jarl Beam
+                {
+                    // aura animate dead (fainted) state for the duration, but we need to animate the death itself (correct way below?)
+                    if (Unit* pCaster = GetCaster())
+                        pCaster->ApplyModFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_FEIGN_DEATH, apply);
+
+                    // Beam to Zelfrax at remove
+                    if (!apply)
+                        target->CastSpell(target, 42517, true);
+                    return;
+                }
+                case 43874:                                 // Scourge Mur'gul Camp: Force Shield Arcane Purple x3
+                    target->ApplyModFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_OOC_NOT_ATTACKABLE, apply);
+                    if (apply)
+                        target->addUnitState(UNIT_STAT_ROOT);
+                    return;
                 case 47178:                                 // Plague Effect Self
                     target->SetFeared(apply, GetCasterGuid(), GetId());
                     return;
@@ -2563,7 +2602,7 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                 {
                     if (apply)
                     {
-                        if (target->m_form != FORM_CAT)
+                        if (target->GetShapeshiftForm() != FORM_CAT)
                             return;
 
                         target->CastSpell(target, 62071, true);
@@ -2648,7 +2687,7 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
 
                 if (apply)
                 {
-                    if (target->m_form != FORM_MOONKIN)
+                    if (target->GetShapeshiftForm() != FORM_MOONKIN)
                         return;
 
                     target->CastSpell(target, spell_id, true);
@@ -2765,7 +2804,7 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
 
     // script has to "handle with care", only use where data are not ok to use in the above code.
     if (target->GetTypeId() == TYPEID_UNIT)
-        Script->EffectAuraDummy(this, apply);
+        sScriptMgr.OnAuraDummy(this, apply);
 }
 
 void Aura::HandleAuraMounted(bool apply, bool Real)
@@ -2930,7 +2969,7 @@ void Aura::HandleAuraModShapeshift(bool apply, bool Real)
         case FORM_MOONKIN:
         {
             // remove movement affects
-            target->RemoveSpellsCausingAura(SPELL_AURA_MOD_ROOT);
+            target->RemoveSpellsCausingAura(SPELL_AURA_MOD_ROOT, GetHolder());
             Unit::AuraList const& slowingAuras = target->GetAurasByType(SPELL_AURA_MOD_DECREASE_SPEED);
             for (Unit::AuraList::const_iterator iter = slowingAuras.begin(); iter != slowingAuras.end();)
             {
@@ -2966,10 +3005,7 @@ void Aura::HandleAuraModShapeshift(bool apply, bool Real)
     if(apply)
     {
         // remove other shapeshift before applying a new one
-        if(target->m_ShapeShiftFormSpellId)
-            target->RemoveAurasDueToSpell(target->m_ShapeShiftFormSpellId, GetHolder());
-
-        target->SetByteValue(UNIT_FIELD_BYTES_2, 3, form);
+        target->RemoveSpellsCausingAura(SPELL_AURA_MOD_SHAPESHIFT, GetHolder());
 
         if(modelid > 0)
             target->SetDisplayId(modelid);
@@ -3005,7 +3041,7 @@ void Aura::HandleAuraModShapeshift(bool apply, bool Real)
                         if ((int32)target->GetPower(POWER_ENERGY) > furorChance)
                         {
                             target->SetPower(POWER_ENERGY, 0);
-                            target->CastCustomSpell(target, 17099, &furorChance, NULL, NULL, this);
+                            target->CastCustomSpell(target, 17099, &furorChance, NULL, NULL, true, NULL, this);
                         }
                     }
                     else if(furorChance)                    // only if talent known
@@ -3043,8 +3079,7 @@ void Aura::HandleAuraModShapeshift(bool apply, bool Real)
             }
         }
 
-        target->m_ShapeShiftFormSpellId = GetId();
-        target->m_form = form;
+        target->SetShapeshiftForm(form);
 
         // a form can give the player a new castbar with some spells.. this is a clientside process..
         // serverside just needs to register the new spells so that player isn't kicked as cheater
@@ -3058,11 +3093,9 @@ void Aura::HandleAuraModShapeshift(bool apply, bool Real)
     {
         if(modelid > 0)
             target->SetDisplayId(target->GetNativeDisplayId());
-        target->SetByteValue(UNIT_FIELD_BYTES_2, 3, FORM_NONE);
         if(target->getClass() == CLASS_DRUID)
             target->setPowerType(POWER_MANA);
-        target->m_ShapeShiftFormSpellId = 0;
-        target->m_form = FORM_NONE;
+        target->SetShapeshiftForm(FORM_NONE);
 
         switch(form)
         {
@@ -3106,14 +3139,9 @@ void Aura::HandleAuraTransform(bool apply, bool Real)
         // special case (spell specific functionality)
         if (m_modifier.m_miscvalue == 0)
         {
-            // player applied only
-            if (target->GetTypeId() != TYPEID_PLAYER)
-                return;
-
             switch (GetId())
             {
-                // Orb of Deception
-                case 16739:
+                case 16739:                                 // Orb of Deception
                 {
                     uint32 orb_model = target->GetNativeDisplayId();
                     switch(orb_model)
@@ -3162,25 +3190,167 @@ void Aura::HandleAuraTransform(bool apply, bool Real)
                     }
                     break;
                 }
-                // Murloc costume
-                case 42365: target->SetDisplayId(21723); break;
-                // Honor the Dead
-                case 65386:
+                case 42365:                                 // Murloc costume
+                    target->SetDisplayId(21723);
+                    break;
+                //case 44186:                               // Gossip NPC Appearance - All, Brewfest
+                    //break;
+                //case 48305:                               // Gossip NPC Appearance - All, Spirit of Competition
+                    //break;
+                case 50517:                                 // Dread Corsair
+                case 51926:                                 // Corsair Costume
+                {
+                    // expected for players
+                    uint32 race = target->getRace();
+
+                    switch(race)
+                    {
+                        case RACE_HUMAN:
+                            target->SetDisplayId(target->getGender() == GENDER_MALE ? 25037 : 25048);
+                            break;
+                        case RACE_ORC:
+                            target->SetDisplayId(target->getGender() == GENDER_MALE ? 25039 : 25050);
+                            break;
+                        case RACE_DWARF:
+                            target->SetDisplayId(target->getGender() == GENDER_MALE ? 25034 : 25045);
+                            break;
+                        case RACE_NIGHTELF:
+                            target->SetDisplayId(target->getGender() == GENDER_MALE ? 25038 : 25049);
+                            break;
+                        case RACE_UNDEAD:
+                            target->SetDisplayId(target->getGender() == GENDER_MALE ? 25042 : 25053);
+                            break;
+                        case RACE_TAUREN:
+                            target->SetDisplayId(target->getGender() == GENDER_MALE ? 25040 : 25051);
+                            break;
+                        case RACE_GNOME:
+                            target->SetDisplayId(target->getGender() == GENDER_MALE ? 25035 : 25046);
+                            break;
+                        case RACE_TROLL:
+                            target->SetDisplayId(target->getGender() == GENDER_MALE ? 25041 : 25052);
+                            break;
+                        case RACE_GOBLIN:                   // not really player race (3.x), but model exist
+                            target->SetDisplayId(target->getGender() == GENDER_MALE ? 25036 : 25047);
+                            break;
+                        case RACE_BLOODELF:
+                            target->SetDisplayId(target->getGender() == GENDER_MALE ? 25032 : 25043);
+                            break;
+                        case RACE_DRAENEI:
+                            target->SetDisplayId(target->getGender() == GENDER_MALE ? 25033 : 25044);
+                            break;
+                    }
+
+                    break;
+                }
+                //case 50531:                               // Gossip NPC Appearance - All, Pirate Day
+                    //break;
+                //case 51010:                               // Dire Brew
+                    //break;
+                //case 53806:                               // Pygmy Oil
+                    //break;
+                //case 62847:                               // NPC Appearance - Valiant 02
+                    //break;
+                //case 62852:                               // NPC Appearance - Champion 01
+                    //break;
+                //case 63965:                               // NPC Appearance - Champion 02
+                    //break;
+                //case 63966:                               // NPC Appearance - Valiant 03
+                    //break;
+                case 65386:                                 // Honor the Dead
                 case 65495:
                 {
                     switch(target->getGender())
                     {
                         case GENDER_MALE:
-                            target->SetDisplayId(29203);  // Chapman
+                            target->SetDisplayId(29203);    // Chapman
                             break;
                         case GENDER_FEMALE:
                         case GENDER_NONE:
-                            target->SetDisplayId(29204);  // Catrina
+                            target->SetDisplayId(29204);    // Catrina
                             break;
                     }
                     break;
                 }
-                default: break;
+                //case 65511:                               // Gossip NPC Appearance - Brewfest
+                    //break;
+                //case 65522:                               // Gossip NPC Appearance - Winter Veil
+                    //break;
+                //case 65523:                               // Gossip NPC Appearance - Default
+                    //break;
+                //case 65524:                               // Gossip NPC Appearance - Lunar Festival
+                    //break;
+                //case 65525:                               // Gossip NPC Appearance - Hallow's End
+                    //break;
+                //case 65526:                               // Gossip NPC Appearance - Midsummer
+                    //break;
+                //case 65527:                               // Gossip NPC Appearance - Spirit of Competition
+                    //break;
+                case 65528:                                 // Gossip NPC Appearance - Pirates' Day
+                {
+                    // expecting npc's using this spell to have models with race info.
+                    uint32 race = GetCreatureModelRace(target->GetNativeDisplayId());
+
+                    // random gender, regardless of current gender
+                    switch(race)
+                    {
+                        case RACE_HUMAN:
+                            target->SetDisplayId(roll_chance_i(50) ? 25037 : 25048);
+                            break;
+                        case RACE_ORC:
+                            target->SetDisplayId(roll_chance_i(50) ? 25039 : 25050);
+                            break;
+                        case RACE_DWARF:
+                            target->SetDisplayId(roll_chance_i(50) ? 25034 : 25045);
+                            break;
+                        case RACE_NIGHTELF:
+                            target->SetDisplayId(roll_chance_i(50) ? 25038 : 25049);
+                            break;
+                        case RACE_UNDEAD:
+                            target->SetDisplayId(roll_chance_i(50) ? 25042 : 25053);
+                            break;
+                        case RACE_TAUREN:
+                            target->SetDisplayId(roll_chance_i(50) ? 25040 : 25051);
+                            break;
+                        case RACE_GNOME:
+                            target->SetDisplayId(roll_chance_i(50) ? 25035 : 25046);
+                            break;
+                        case RACE_TROLL:
+                            target->SetDisplayId(roll_chance_i(50) ? 25041 : 25052);
+                            break;
+                        case RACE_GOBLIN:
+                            target->SetDisplayId(roll_chance_i(50) ? 25036 : 25047);
+                            break;
+                        case RACE_BLOODELF:
+                            target->SetDisplayId(roll_chance_i(50) ? 25032 : 25043);
+                            break;
+                        case RACE_DRAENEI:
+                            target->SetDisplayId(roll_chance_i(50) ? 25033 : 25044);
+                            break;
+                    }
+
+                    break;
+                }
+                case 65529:                                 // Gossip NPC Appearance - Day of the Dead (DotD)
+                    // random, regardless of current gender
+                    target->SetDisplayId(roll_chance_i(50) ? 29203 : 29204);
+                    break;
+                //case 66236:                               // Incinerate Flesh
+                    //break;
+                //case 69999:                               // [DND] Swap IDs
+                    //break;
+                //case 70764:                               // Citizen Costume (note: many spells w/same name)
+                    //break;
+                //case 71309:                               // [DND] Spawn Portal
+                    //break;
+                //case 71450:                               // Crown Parcel Service Uniform
+                    //break;
+                //case 75531:                               // Gnomeregan Pride
+                    //break;
+                //case 75532:                               // Darkspear Pride
+                    //break;
+                default:
+                    sLog.outError("Aura::HandleAuraTransform, spell %u does not have creature entry defined, need custom defined model.", GetId());
+                    break;
             }
         }
         else
@@ -3227,7 +3397,7 @@ void Aura::HandleAuraTransform(bool apply, bool Real)
 
             //dismount polymorphed target (after patch 2.4.2)
             if (target->IsMounted())
-                target->RemoveSpellsCausingAura(SPELL_AURA_MOUNTED);
+                target->RemoveSpellsCausingAura(SPELL_AURA_MOUNTED, GetHolder());
         }
     }
     else
@@ -3429,7 +3599,7 @@ void Aura::HandleAuraTrackStealthed(bool apply, bool /*Real*/)
     if(apply)
         GetTarget()->RemoveNoStackAurasDueToAuraHolder(GetHolder());
 
-    GetTarget()->ApplyModFlag(PLAYER_FIELD_BYTES, PLAYER_FIELD_BYTE_TRACK_STEALTHED, apply);
+    GetTarget()->ApplyModByteFlag(PLAYER_FIELD_BYTES, 0, PLAYER_FIELD_BYTE_TRACK_STEALTHED, apply);
 }
 
 void Aura::HandleAuraModScale(bool apply, bool /*Real*/)
@@ -3639,11 +3809,9 @@ void Aura::HandleModCharm(bool apply, bool Real)
 
     if( apply )
     {
-        if (!target->GetCharmerGuid().IsEmpty())
-        {
-            target->RemoveSpellsCausingAura(SPELL_AURA_MOD_CHARM);
-            target->RemoveSpellsCausingAura(SPELL_AURA_MOD_POSSESS);
-        }
+        // is it really need after spell check checks?
+        target->RemoveSpellsCausingAura(SPELL_AURA_MOD_CHARM, GetHolder());
+        target->RemoveSpellsCausingAura(SPELL_AURA_MOD_POSSESS, GetHolder());
 
         target->SetCharmerGuid(GetCasterGuid());
         target->setFaction(caster->getFaction());
@@ -3771,16 +3939,41 @@ void Aura::HandleAuraModDisarm(bool apply, bool Real)
 
     Unit *target = GetTarget();
 
-    if(!apply && target->HasAuraType(SPELL_AURA_MOD_DISARM))
+    if(!apply && target->HasAuraType(GetModifier()->m_auraname))
         return;
 
-    // not sure for it's correctness
-    if(apply)
-        target->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_DISARMED);
-    else
-        target->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_DISARMED);
+    uint32 flags;
+    uint32 field;
+    WeaponAttackType attack_type;
 
-    // only at real add/remove aura
+    switch (GetModifier()->m_auraname)
+    {
+        default:
+        case SPELL_AURA_MOD_DISARM:
+        {
+            field = UNIT_FIELD_FLAGS;
+            flags = UNIT_FLAG_DISARMED;
+            attack_type = BASE_ATTACK;
+            break;
+        }
+        case SPELL_AURA_MOD_DISARM_OFFHAND:
+        {
+            field = UNIT_FIELD_FLAGS_2;
+            flags = UNIT_FLAG2_DISARM_OFFHAND;
+            attack_type = OFF_ATTACK;
+            break;
+        }
+        case SPELL_AURA_MOD_DISARM_RANGED:
+        {
+            field = UNIT_FIELD_FLAGS_2;
+            flags = UNIT_FLAG2_DISARM_RANGED;
+            attack_type = RANGED_ATTACK;
+            break;
+        }
+    }
+
+    target->ApplyModFlag(field, flags, apply);
+
     if (target->GetTypeId() != TYPEID_PLAYER)
         return;
 
@@ -3789,11 +3982,11 @@ void Aura::HandleAuraModDisarm(bool apply, bool Real)
         return;
 
     if (apply)
-        target->SetAttackTime(BASE_ATTACK,BASE_ATTACK_TIME);
+        target->SetAttackTime(attack_type, BASE_ATTACK_TIME);
     else
         ((Player *)target)->SetRegularAttackTime();
 
-    target->UpdateDamagePhysical(BASE_ATTACK);
+    target->UpdateDamagePhysical(attack_type);
 }
 
 void Aura::HandleAuraModStun(bool apply, bool Real)
@@ -3936,7 +4129,7 @@ void Aura::HandleModStealth(bool apply, bool Real)
             target->SetStandFlags(UNIT_STAND_FLAGS_CREEP);
 
             if (target->GetTypeId()==TYPEID_PLAYER)
-                target->SetFlag(PLAYER_FIELD_BYTES2, 0x2000);
+                target->SetByteFlag(PLAYER_FIELD_BYTES2, 3, PLAYER_FIELD_BYTE2_STEALTH);
 
             // apply only if not in GM invisibility (and overwrite invisibility state)
             if (target->GetVisibility()!=VISIBILITY_OFF)
@@ -3978,7 +4171,7 @@ void Aura::HandleModStealth(bool apply, bool Real)
                 target->RemoveStandFlags(UNIT_STAND_FLAGS_CREEP);
 
                 if (target->GetTypeId()==TYPEID_PLAYER)
-                    target->RemoveFlag(PLAYER_FIELD_BYTES2, 0x2000);
+                    target->RemoveByteFlag(PLAYER_FIELD_BYTES2, 3, PLAYER_FIELD_BYTE2_STEALTH);
 
                 // restore invisibility if any
                 if (target->HasAuraType(SPELL_AURA_MOD_INVISIBILITY))
@@ -4015,21 +4208,21 @@ void Aura::HandleInvisibility(bool apply, bool Real)
 {
     Unit *target = GetTarget();
 
-    if(apply)
+    if (apply)
     {
         target->m_invisibilityMask |= (1 << m_modifier.m_miscvalue);
 
         target->RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_IMMUNE_OR_LOST_SELECTION);
 
-        if(Real && target->GetTypeId()==TYPEID_PLAYER)
+        if (Real && target->GetTypeId()==TYPEID_PLAYER)
         {
             // apply glow vision
-            target->SetFlag(PLAYER_FIELD_BYTES2,PLAYER_FIELD_BYTE2_INVISIBILITY_GLOW);
+            target->SetByteFlag(PLAYER_FIELD_BYTES2, 3, PLAYER_FIELD_BYTE2_INVISIBILITY_GLOW);
 
         }
 
         // apply only if not in GM invisibility and not stealth
-        if(target->GetVisibility() == VISIBILITY_ON)
+        if (target->GetVisibility() == VISIBILITY_ON)
         {
             // Aura not added yet but visibility code expect temporary add aura
             target->SetVisibility(VISIBILITY_GROUP_NO_DETECT);
@@ -4045,17 +4238,17 @@ void Aura::HandleInvisibility(bool apply, bool Real)
             target->m_invisibilityMask |= (1 << (*itr)->GetModifier()->m_miscvalue);
 
         // only at real aura remove and if not have different invisibility auras.
-        if(Real && target->m_invisibilityMask == 0)
+        if (Real && target->m_invisibilityMask == 0)
         {
             // remove glow vision
-            if(target->GetTypeId() == TYPEID_PLAYER)
-                target->RemoveFlag(PLAYER_FIELD_BYTES2,PLAYER_FIELD_BYTE2_INVISIBILITY_GLOW);
+            if (target->GetTypeId() == TYPEID_PLAYER)
+                target->RemoveByteFlag(PLAYER_FIELD_BYTES2, 3, PLAYER_FIELD_BYTE2_INVISIBILITY_GLOW);
 
             // apply only if not in GM invisibility & not stealthed while invisible
-            if(target->GetVisibility() != VISIBILITY_OFF)
+            if (target->GetVisibility() != VISIBILITY_OFF)
             {
                 // if have stealth aura then already have stealth visibility
-                if(!target->HasAuraType(SPELL_AURA_MOD_STEALTH))
+                if (!target->HasAuraType(SPELL_AURA_MOD_STEALTH))
                     target->SetVisibility(VISIBILITY_ON);
             }
         }
@@ -4619,9 +4812,19 @@ void Aura::HandlePeriodicTriggerSpell(bool apply, bool /*Real*/)
                     target->CastSpell(target, 32612, true, NULL, this);
 
                 return;
-            case 42783:                                     //Wrath of the Astrom...
+            case 42783:                                     // Wrath of the Astrom...
                 if (m_removeMode == AURA_REMOVE_BY_EXPIRE && GetEffIndex() + 1 < MAX_EFFECT_INDEX)
                     target->CastSpell(target, GetSpellProto()->CalculateSimpleValue(SpellEffectIndex(GetEffIndex()+1)), true);
+
+                return;
+            case 46221:                                     // Animal Blood
+                if (target->GetTypeId() == TYPEID_PLAYER && m_removeMode == AURA_REMOVE_BY_DEFAULT && target->IsInWater())
+                {
+                    float position_z = target->GetTerrain()->GetWaterLevel(target->GetPositionX(), target->GetPositionY(), target->GetPositionZ());
+                    // Spawn Blood Pool
+                    target->CastSpell(target->GetPositionX(), target->GetPositionY(), position_z, 63471, true);
+                }
+
                 return;
             case 51912:                                     // Ultra-Advanced Proto-Typical Shortening Blaster
                 if (m_removeMode == AURA_REMOVE_BY_EXPIRE)
@@ -5286,6 +5489,7 @@ void Aura::HandleAuraModIncreaseHealth(bool apply, bool Real)
         case 34511:                                         // Valor (Bulwark of Kings, Bulwark of the Ancient Kings)
         case 44055: case 55915: case 55917: case 67596:     // Tremendous Fortitude (Battlemaster's Alacrity)
         case 50322:                                         // Survival Instincts
+        case 53479:                                         // Hunter pet - Last Stand
         case 54443:                                         // Demonic Empowerment (Voidwalker)
         case 55233:                                         // Vampiric Blood
         case 59465:                                         // Brood Rage (Ahn'Kahet)
@@ -5546,12 +5750,11 @@ void Aura::HandleModAttackSpeed(bool apply, bool /*Real*/)
     GetTarget()->ApplyAttackTimePercentMod(BASE_ATTACK,float(m_modifier.m_amount),apply);
 }
 
-void Aura::HandleHaste(bool apply, bool /*Real*/)
+void Aura::HandleModMeleeSpeedPct(bool apply, bool /*Real*/)
 {
     Unit *target = GetTarget();
     target->ApplyAttackTimePercentMod(BASE_ATTACK, float(m_modifier.m_amount), apply);
     target->ApplyAttackTimePercentMod(OFF_ATTACK, float(m_modifier.m_amount), apply);
-    target->ApplyAttackTimePercentMod(RANGED_ATTACK, float(m_modifier.m_amount), apply);
 }
 
 void Aura::HandleAuraModRangedHaste(bool apply, bool /*Real*/)
@@ -6115,10 +6318,7 @@ void Aura::HandleAuraUntrackable(bool apply, bool /*Real*/)
 
 void Aura::HandleAuraModPacify(bool apply, bool /*Real*/)
 {
-    if(GetTarget()->GetTypeId() != TYPEID_PLAYER)
-        return;
-
-    if(apply)
+    if (apply)
         GetTarget()->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PACIFIED);
     else
         GetTarget()->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PACIFIED);
@@ -6558,7 +6758,7 @@ void Aura::PeriodicTick()
             target->CalculateDamageAbsorbAndResist(pCaster, GetSpellSchoolMask(spellProto), DOT, pdamage, &absorb, &resist, !(GetSpellProto()->AttributesEx2 & SPELL_ATTR_EX2_CANT_REFLECTED));
 
             DETAIL_FILTER_LOG(LOG_FILTER_PERIODIC_AFFECTS, "PeriodicTick: %s attacked %s for %u dmg inflicted by %u abs is %u",
-                GetCasterGuid().GetString().c_str(), target->GetObjectGuid().GetString().c_str(), pdamage, GetId(),absorb);
+                GetCasterGuid().GetString().c_str(), target->GetGuidStr().c_str(), pdamage, GetId(),absorb);
 
             pCaster->DealDamageMods(target, pdamage, &absorb);
 
@@ -6650,7 +6850,7 @@ void Aura::PeriodicTick()
             target->CalculateDamageAbsorbAndResist(pCaster, GetSpellSchoolMask(spellProto), DOT, pdamage, &absorb, &resist, !(spellProto->AttributesEx2 & SPELL_ATTR_EX2_CANT_REFLECTED));
 
             DETAIL_FILTER_LOG(LOG_FILTER_PERIODIC_AFFECTS, "PeriodicTick: %s health leech of %s for %u dmg inflicted by %u abs is %u",
-                GetCasterGuid().GetString().c_str(), target->GetObjectGuid().GetString().c_str(), pdamage, GetId(),absorb);
+                GetCasterGuid().GetString().c_str(), target->GetGuidStr().c_str(), pdamage, GetId(),absorb);
 
             pCaster->DealDamageMods(target, pdamage, &absorb);
 
@@ -6740,7 +6940,7 @@ void Aura::PeriodicTick()
             pdamage -= absorbHeal;
 
             DETAIL_FILTER_LOG(LOG_FILTER_PERIODIC_AFFECTS, "PeriodicTick: %s heal of %s for %u health  (absorbed %u) inflicted by %u",
-                GetCasterGuid().GetString().c_str(), target->GetObjectGuid().GetString().c_str(), pdamage, absorbHeal, GetId());
+                GetCasterGuid().GetString().c_str(), target->GetGuidStr().c_str(), pdamage, absorbHeal, GetId());
 
             int32 gain = target->ModifyHealth(pdamage);
             SpellPeriodicAuraLogInfo pInfo(this, pdamage, (pdamage - uint32(gain)), absorbHeal, 0, 0.0f, isCrit);
@@ -6835,7 +7035,7 @@ void Aura::PeriodicTick()
             }
 
             DETAIL_FILTER_LOG(LOG_FILTER_PERIODIC_AFFECTS, "PeriodicTick: %s power leech of %s for %u dmg inflicted by %u",
-                GetCasterGuid().GetString().c_str(), target->GetObjectGuid().GetString().c_str(), pdamage, GetId());
+                GetCasterGuid().GetString().c_str(), target->GetGuidStr().c_str(), pdamage, GetId());
 
             int32 drain_amount = target->GetPower(power) > pdamage ? pdamage : target->GetPower(power);
 
@@ -6881,7 +7081,7 @@ void Aura::PeriodicTick()
             uint32 pdamage = m_modifier.m_amount > 0 ? m_modifier.m_amount : 0;
 
             DETAIL_FILTER_LOG(LOG_FILTER_PERIODIC_AFFECTS, "PeriodicTick: %s energize %s for %u dmg inflicted by %u",
-                GetCasterGuid().GetString().c_str(), target->GetObjectGuid().GetString().c_str(), pdamage, GetId());
+                GetCasterGuid().GetString().c_str(), target->GetGuidStr().c_str(), pdamage, GetId());
 
             if(m_modifier.m_miscvalue < 0 || m_modifier.m_miscvalue >= MAX_POWERS)
                 break;
@@ -6912,7 +7112,7 @@ void Aura::PeriodicTick()
             uint32 pdamage = uint32(target->GetMaxPower(POWER_MANA) * amount / 100);
 
             DETAIL_FILTER_LOG(LOG_FILTER_PERIODIC_AFFECTS, "PeriodicTick: %s energize %s for %u mana inflicted by %u",
-                GetCasterGuid().GetString().c_str(), target->GetObjectGuid().GetString().c_str(), pdamage, GetId());
+                GetCasterGuid().GetString().c_str(), target->GetGuidStr().c_str(), pdamage, GetId());
 
             if(target->GetMaxPower(POWER_MANA) == 0)
                 break;
@@ -7418,7 +7618,7 @@ void Aura::PeriodicDummyTick()
             if (spell->Id == 52179)
             {
                 // Periodic need for remove visual on stun/fear/silence lost
-                if (!(target->GetUInt32Value(UNIT_FIELD_FLAGS)&(UNIT_FLAG_STUNNED|UNIT_FLAG_FLEEING|UNIT_FLAG_SILENCED)))
+                if (!target->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_STUNNED | UNIT_FLAG_FLEEING | UNIT_FLAG_SILENCED))
                     target->RemoveAurasDueToSpell(52179);
                 return;
             }
@@ -7569,6 +7769,42 @@ void Aura::HandleAuraControlVehicle(bool apply, bool Real)
         caster->RemoveAurasDueToSpell(spell->Id);
 
         ((Player*)caster)->ExitVehicle(vehicle);
+    }
+}
+
+void Aura::HandleAuraAddMechanicAbilities(bool apply, bool Real)
+{
+    if (!Real)
+        return;
+
+    Unit* target = GetTarget();
+
+    if (!target || target->GetTypeId() != TYPEID_PLAYER)    // only players should be affected by this aura
+        return;
+
+    uint16 i_OverrideSetId = GetMiscValue();
+
+    const OverrideSpellDataEntry *spellSet = sOverrideSpellDataStore.LookupEntry(i_OverrideSetId);
+    if (!spellSet)
+        return;
+
+    if (apply)
+    {
+
+        // spell give the player a new castbar with some spells.. this is a clientside process..
+        // serverside just needs to register the new spells so that player isn't kicked as cheater
+        for (int i = 0; i < MAX_OVERRIDE_SPELLS; i++)
+            if (uint32 spellId = spellSet->Spells[i])
+                static_cast<Player*>(target)->addSpell(spellId, true, false, false, false);
+
+        target->SetUInt16Value(PLAYER_FIELD_BYTES2, 0, i_OverrideSetId);
+    }
+    else
+    {
+        target->SetUInt16Value(PLAYER_FIELD_BYTES2, 0, 0);
+        for (int i = 0; i < MAX_OVERRIDE_SPELLS; i++)
+            if (uint32 spellId = spellSet->Spells[i])
+                static_cast<Player*>(target)->removeSpell(spellId, false , false, false);
     }
 }
 
@@ -7762,7 +7998,7 @@ bool Aura::IsLastAuraOnHolder()
 }
 
 SpellAuraHolder::SpellAuraHolder(SpellEntry const* spellproto, Unit *target, WorldObject *caster, Item *castItem) :
-m_target(target), m_castItemGuid(castItem?castItem->GetGUID():0),
+m_target(target), m_castItemGuid(castItem ? castItem->GetObjectGuid() : ObjectGuid()),
 m_auraSlot(MAX_AURAS), m_auraFlags(AFLAG_NONE), m_auraLevel(1), m_procCharges(0),
 m_stackAmount(1), m_removeMode(AURA_REMOVE_BY_DEFAULT), m_AuraDRGroup(DIMINISHING_NONE),
 m_permanent(false), m_isRemovedOnShapeLost(true), m_deleted(false), m_in_use(0)
@@ -7863,7 +8099,7 @@ void SpellAuraHolder::_AddSpellAuraHolder()
     {
         if (m_spellProto->Attributes & SPELL_ATTR_DISABLED_WHILE_ACTIVE)
         {
-            Item* castItem = m_castItemGuid ? ((Player*)caster)->GetItemByGuid(m_castItemGuid) : NULL;
+            Item* castItem = !m_castItemGuid.IsEmpty() ? ((Player*)caster)->GetItemByGuid(m_castItemGuid) : NULL;
             ((Player*)caster)->AddSpellAndCategoryCooldowns(m_spellProto,castItem ? castItem->GetEntry() : 0, NULL,true);
         }
     }
@@ -8159,7 +8395,7 @@ Unit* SpellAuraHolder::GetCaster() const
 bool SpellAuraHolder::IsWeaponBuffCoexistableWith(SpellAuraHolder* ref)
 {
     // only item casted spells
-    if (!GetCastItemGUID())
+    if (GetCastItemGuid().IsEmpty())
         return false;
 
     // Exclude Debuffs
@@ -8178,7 +8414,7 @@ bool SpellAuraHolder::IsWeaponBuffCoexistableWith(SpellAuraHolder* ref)
     if (m_target->GetTypeId() != TYPEID_PLAYER || m_target->GetObjectGuid() != GetCasterGuid())
         return false;
 
-    Item* castItem = ((Player*)m_target)->GetItemByGuid(GetCastItemGUID());
+    Item* castItem = ((Player*)m_target)->GetItemByGuid(GetCastItemGuid());
     if (!castItem)
         return false;
 
@@ -8188,7 +8424,7 @@ bool SpellAuraHolder::IsWeaponBuffCoexistableWith(SpellAuraHolder* ref)
         return false;
 
     // form different weapons
-    return ref->GetCastItemGUID() && ref->GetCastItemGUID() != GetCastItemGUID();
+    return !ref->GetCastItemGuid().IsEmpty() && ref->GetCastItemGuid() != GetCastItemGuid();
 }
 
 bool SpellAuraHolder::IsNeedVisibleSlot(Unit const* caster) const
@@ -8790,8 +9026,9 @@ void SpellAuraHolder::HandleSpellSpecificBoosts(bool apply)
                     if (!aura)
                         return;
 
-                    int32 bp = aura->GetModifier()->m_amount;
-                    m_target->CastCustomSpell(m_target, 61261, &bp, NULL, NULL, true, NULL, NULL, GetCasterGuid());
+                    int32 bp0 = aura->GetModifier()->m_amount;
+                    int32 bp1 = 0;                          // disable threat mod part for not Frost Presence case
+                    m_target->CastCustomSpell(m_target, 61261, &bp0, &bp1, NULL, true, NULL, NULL, GetCasterGuid());
                 }
                 else
                     m_target->RemoveAurasDueToSpell(61261);

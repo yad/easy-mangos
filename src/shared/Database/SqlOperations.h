@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -55,9 +55,18 @@ class SqlTransaction : public SqlOperation
 {
     private:
         std::queue<const char *> m_queue;
+        ACE_Thread_Mutex m_Mutex;
     public:
         SqlTransaction() {}
-        void DelayExecute(const char *sql) { m_queue.push(mangos_strdup(sql)); }
+        void DelayExecute(const char *sql)
+        {
+            char* _sql = mangos_strdup(sql);
+            if (_sql)
+            {
+                ACE_Guard<ACE_Thread_Mutex> _lock(m_Mutex);
+                m_queue.push(_sql);
+            }
+        }
         void Execute(Database *db);
 };
 

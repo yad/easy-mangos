@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -67,13 +67,13 @@ void BattleGroundNA::AddPlayer(Player *plr)
     //create score and add it to map, default values are set in constructor
     BattleGroundNAScore* sc = new BattleGroundNAScore;
 
-    m_PlayerScores[plr->GetGUID()] = sc;
+    m_PlayerScores[plr->GetObjectGuid()] = sc;
 
     UpdateWorldState(0xa0f, GetAlivePlayersCountByTeam(ALLIANCE));
     UpdateWorldState(0xa10, GetAlivePlayersCountByTeam(HORDE));
 }
 
-void BattleGroundNA::RemovePlayer(Player* /*plr*/, uint64 /*guid*/)
+void BattleGroundNA::RemovePlayer(Player* /*plr*/, ObjectGuid /*guid*/)
 {
     if (GetStatus() == STATUS_WAIT_LEAVE)
         return;

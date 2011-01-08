@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -64,7 +64,7 @@ VisibleNotifier::Notify()
         player.m_clientGUIDs.erase(*itr);
 
         DEBUG_FILTER_LOG(LOG_FILTER_VISIBILITY_CHANGES, "%s is out of range (no in active cells set) now for %s",
-            itr->GetString().c_str(), player.GetObjectGuid().GetString().c_str());
+            itr->GetString().c_str(), player.GetGuidStr().c_str());
     }
 
     if (i_data.HasData())
@@ -188,7 +188,8 @@ ObjectUpdater::Visit(GridRefManager<T> &m)
 {
     for(typename GridRefManager<T>::iterator iter = m.begin(); iter != m.end(); ++iter)
     {
-        iter->getSource()->Update(i_timeDiff);
+        WorldObject::UpdateHelper helper(iter->getSource());
+        helper.Update(i_timeDiff);
     }
 }
 
@@ -198,7 +199,7 @@ bool CannibalizeObjectCheck::operator()(Corpse* u)
     if(u->GetType()==CORPSE_BONES)
         return false;
 
-    Player* owner = ObjectAccessor::FindPlayer(u->GetOwnerGUID());
+    Player* owner = ObjectAccessor::FindPlayer(u->GetOwnerGuid());
 
     if( !owner || i_fobj->IsFriendlyTo(owner))
         return false;

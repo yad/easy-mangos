@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -726,7 +726,7 @@ void Item::AddToUpdateQueueOf(Player *player)
         if (!player)
         {
             sLog.outError("Item::AddToUpdateQueueOf - %s current owner (%s) not in world!",
-                GetObjectGuid().GetString().c_str(), GetOwnerGuid().GetString().c_str());
+                GetGuidStr().c_str(), GetOwnerGuid().GetString().c_str());
             return;
         }
     }
@@ -734,7 +734,7 @@ void Item::AddToUpdateQueueOf(Player *player)
     if (player->GetObjectGuid() != GetOwnerGuid())
     {
         sLog.outError("Item::AddToUpdateQueueOf - %s current owner (%s) and inventory owner (%s) don't match!",
-            GetObjectGuid().GetString().c_str(), GetOwnerGuid().GetString().c_str(), player->GetObjectGuid().GetString().c_str());
+            GetGuidStr().c_str(), GetOwnerGuid().GetString().c_str(), player->GetGuidStr().c_str());
         return;
     }
 
@@ -756,7 +756,7 @@ void Item::RemoveFromUpdateQueueOf(Player *player)
         if (!player)
         {
             sLog.outError("Item::RemoveFromUpdateQueueOf - %s current owner (%s) not in world!",
-                GetObjectGuid().GetString().c_str(), GetOwnerGuid().GetString().c_str());
+                GetGuidStr().c_str(), GetOwnerGuid().GetString().c_str());
             return;
         }
     }
@@ -764,7 +764,7 @@ void Item::RemoveFromUpdateQueueOf(Player *player)
     if (player->GetObjectGuid() != GetOwnerGuid())
     {
         sLog.outError("Item::RemoveFromUpdateQueueOf - %s current owner (%s) and inventory owner (%s) don't match!",
-            GetObjectGuid().GetString().c_str(), GetOwnerGuid().GetString().c_str(), player->GetObjectGuid().GetString().c_str());
+            GetGuidStr().c_str(), GetOwnerGuid().GetString().c_str(), player->GetGuidStr().c_str());
         return;
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -94,7 +94,6 @@ enum eConfigUInt32Values
     CONFIG_UINT32_INTERVAL_MAPUPDATE,
     CONFIG_UINT32_INTERVAL_CHANGEWEATHER,
     CONFIG_UINT32_PORT_WORLD,
-    CONFIG_UINT32_SOCKET_SELECTTIME,
     CONFIG_UINT32_GAME_TYPE,
     CONFIG_UINT32_REALM_ZONE,
     CONFIG_UINT32_STRICT_PLAYER_NAMES,
@@ -132,6 +131,7 @@ enum eConfigUInt32Values
     CONFIG_UINT32_START_GM_LEVEL,
     CONFIG_UINT32_GROUP_VISIBILITY,
     CONFIG_UINT32_MAIL_DELIVERY_DELAY,
+    CONFIG_UINT32_MASS_MAILER_SEND_PER_TICK,
     CONFIG_UINT32_UPTIME_UPDATE,
     CONFIG_UINT32_AUCTION_DEPOSIT_MIN,
     CONFIG_UINT32_SKILL_CHANCE_ORANGE,
@@ -269,6 +269,8 @@ enum eConfigFloatValues
     CONFIG_FLOAT_CREATURE_FAMILY_ASSISTANCE_RADIUS,
     CONFIG_FLOAT_GROUP_XP_DISTANCE,
     CONFIG_FLOAT_THREAT_RADIUS,
+    CONFIG_FLOAT_GHOST_RUN_SPEED_WORLD,
+    CONFIG_FLOAT_GHOST_RUN_SPEED_BG,
     CONFIG_FLOAT_VALUE_COUNT
 };
 
@@ -437,8 +439,8 @@ class World
         /// Get the number of current active sessions
         void UpdateMaxSessionCounters();
         uint32 GetActiveAndQueuedSessionCount() const { return m_sessions.size(); }
-        uint32 GetActiveSessionCount() const { return m_sessions.size() - m_QueuedPlayer.size(); }
-        uint32 GetQueuedSessionCount() const { return m_QueuedPlayer.size(); }
+        uint32 GetActiveSessionCount() const { return m_sessions.size() - m_QueuedSessions.size(); }
+        uint32 GetQueuedSessionCount() const { return m_QueuedSessions.size(); }
         /// Get the maximum number of parallel sessions on the server since last reboot
         uint32 GetMaxQueuedSessionCount() const { return m_maxQueuedSessionCount; }
         uint32 GetMaxActiveSessionCount() const { return m_maxActiveSessionCount; }
@@ -457,10 +459,9 @@ class World
 
         //player Queue
         typedef std::list<WorldSession*> Queue;
-        void AddQueuedPlayer(WorldSession*);
-        bool RemoveQueuedPlayer(WorldSession* session);
-        int32 GetQueuePos(WorldSession*);
-        uint32 GetQueueSize() const { return m_QueuedPlayer.size(); }
+        void AddQueuedSession(WorldSession*);
+        bool RemoveQueuedSession(WorldSession* session);
+        int32 GetQueuedSessionPos(WorldSession*);
 
         /// \todo Actions on m_allowMovement still to be implemented
         /// Is movement allowed?
@@ -666,7 +667,7 @@ class World
         time_t m_NextMonthlyQuestReset;
 
         //Player Queue
-        Queue m_QueuedPlayer;
+        Queue m_QueuedSessions;
 
         //sessions that are added async
         void AddSession_(WorldSession* s);

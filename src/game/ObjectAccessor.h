@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -95,7 +95,7 @@ class MANGOS_DLL_DECL ObjectAccessor : public MaNGOS::Singleton<ObjectAccessor, 
     ObjectAccessor& operator=(const ObjectAccessor &);
 
     public:
-        typedef UNORDERED_MAP<uint64, Corpse* >      Player2CorpsesMapType;
+        typedef UNORDERED_MAP<ObjectGuid, Corpse*> Player2CorpsesMapType;
 
         // global (obj used for map only location local guid objects (pets currently)
         static Unit*   GetUnitInWorld(WorldObject const& obj, ObjectGuid guid);

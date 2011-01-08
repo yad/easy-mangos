@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,9 +18,11 @@
 
 /**
  * @addtogroup mailing The mail system
- * The mailing system in MaNGOS consists of mostly two files:
+ * The mailing system in MaNGOS consists of mostly 4 files:
  * - Mail.h
  * - Mail.cpp
+ * - MassMailMgr.h
+ * - MassMailMgr.cpp
  *
  * @{
  *
@@ -33,6 +35,7 @@
 #define MANGOS_MAIL_H
 
 #include "Common.h"
+#include "ObjectGuid.h"
 #include <map>
 
 struct AuctionEntry;
@@ -110,6 +113,8 @@ enum MailAuctionAnswers
 class MailSender
 {
     public:                                                 // Constructors
+        MailSender() : m_messageType(MAIL_NORMAL), m_senderId(0), m_stationery(MAIL_STATIONERY_DEFAULT) {}
+
        /**
         * Creates a new MailSender object.
         *
@@ -133,6 +138,9 @@ class MailSender
         /// The stationary associated with this MailSender
         MailStationery GetStationery() const { return m_stationery; }
     private:
+        // Trap for wrong used guid as low guid, no body
+        MailSender(MailMessageType messageType, uint64 wrong_guid, MailStationery stationery = MAIL_STATIONERY_DEFAULT);
+
         MailMessageType m_messageType;
         uint32 m_senderId;                                  // player low guid or other object entry
         MailStationery m_stationery;
@@ -143,9 +151,9 @@ class MailSender
 class MailReceiver
 {
     public:                                                 // Constructors
-        explicit MailReceiver(uint32 receiver_lowguid) : m_receiver(NULL), m_receiver_lowguid(receiver_lowguid) {}
+        explicit MailReceiver(ObjectGuid receiver_guid) : m_receiver(NULL), m_receiver_guid(receiver_guid) {}
         MailReceiver(Player* receiver);
-        MailReceiver(Player* receiver,uint32 receiver_lowguid);
+        MailReceiver(Player* receiver, ObjectGuid receiver_guid);
     public:                                                 // Accessors
         /**
          * Gets the player associated with this MailReciever
@@ -161,10 +169,10 @@ class MailReceiver
          *
          * @returns the low part of the GUID of the player associated with this MailReciever
          */
-        uint32  GetPlayerGUIDLow() const { return m_receiver_lowguid; }
+        ObjectGuid const& GetPlayerGuid() const { return m_receiver_guid; }
     private:
         Player* m_receiver;
-        uint32  m_receiver_lowguid;
+        ObjectGuid m_receiver_guid;
 };
 /**
  * The class to represent the draft of a mail.
@@ -177,6 +185,12 @@ class MailDraft
         typedef std::map<uint32, Item*> MailItemMap;
 
     public:                                                 // Constructors
+       /**
+        * Creates a new blank MailDraft object
+        *
+        */
+        MailDraft()
+            : m_mailTemplateId(0), m_mailTemplateItemsNeed(false), m_money(0), m_COD(0) {}
        /**
         * Creates a new MailDraft object using mail template id.
         *
@@ -207,23 +221,33 @@ class MailDraft
         /// Returns the Cost of delivery of this MailDraft.
         uint32 GetCOD() const { return m_COD; }
     public:                                                 // modifiers
+
+        // this two modifiers expected to be applied in normal case to blank draft and exclusively, it will work and with mixed cases but this will be not normal way use.
+        MailDraft& SetSubjectAndBody(std::string subject, std::string body) { m_subject = subject; m_body = body; return *this; }
+        MailDraft& SetMailTemplate(uint16 mailTemplateId, bool need_items = true) { m_mailTemplateId = mailTemplateId, m_mailTemplateItemsNeed = need_items; return *this; }
+
         MailDraft& AddItem(Item* item);
         /**
          * Modifies the amount of money in a MailDraft.
          *
          * @param money The amount of money included in this MailDraft.
          */
-        MailDraft& AddMoney(uint32 money) { m_money = money; return *this; }
+        MailDraft& SetMoney(uint32 money) { m_money = money; return *this; }
         /**
          * Modifies the cost of delivery of the MailDraft.
          *
          * @param COD the amount to which the cod should be set.
          */
-        MailDraft& AddCOD(uint32 COD) { m_COD = COD; return *this; }
+        MailDraft& SetCOD(uint32 COD) { m_COD = COD; return *this; }
+
+        void CloneFrom(MailDraft const& draft);
     public:                                                 // finishers
-        void SendReturnToSender(uint32 sender_acc, uint32 sender_lowguid, uint32 receiver_lowguid);
+        void SendReturnToSender(uint32 sender_acc, ObjectGuid sender_guid, ObjectGuid receiver_guid);
         void SendMailTo(MailReceiver const& receiver, MailSender const& sender, MailCheckMask checked = MAIL_CHECK_MASK_NONE, uint32 deliver_delay = 0);
     private:
+        MailDraft(MailDraft const&);                        // trap decl, no body, mail draft must cloned only explicitly...
+        MailDraft& operator=(MailDraft const&);             // trap decl, no body, ...because items clone is high price operation
+
         void deleteIncludedItems(bool inDB = false);
         void prepareItems(Player* receiver);                ///< called from SendMailTo for generate mailTemplateBase items
 
@@ -251,6 +275,8 @@ struct MailItemInfo
     uint32 item_guid;                                       ///< the GUID of the item.
     uint32 item_template;                                   ///< the ID of the template of the item.
 };
+
+typedef std::vector<MailItemInfo> MailItemInfoVec;
 /**
  * Structure that holds an actual mail.
  */
@@ -264,16 +290,16 @@ struct Mail
     uint8 stationery;
     /// the ID of the template this mail is based on.
     uint16 mailTemplateId;
-    /// the GUID of the player that sent this mail.
+    /// the LowGUID of the player that sent this mail, or creature low guid, or other id
     uint32 sender;
     /// the GUID of the player that this mail is sent to.
-    uint32 receiver;
+    ObjectGuid receiverGuid;
     /// the subject of the mail
     std::string subject;
     /// the body of the mail
     std::string body;
     /// A vector containing Information about the items in this mail.
-    std::vector<MailItemInfo> items;
+    MailItemInfoVec items;
     /// A vector containing Information about the items that where already take from this mail.
     std::vector<uint32> removedItems;
     /// The time at which this mail will expire
@@ -319,7 +345,7 @@ struct Mail
      */
     bool RemoveItem(uint32 item_guid)
     {
-        for(std::vector<MailItemInfo>::iterator itr = items.begin(); itr != items.end(); ++itr)
+        for(MailItemInfoVec::iterator itr = items.begin(); itr != items.end(); ++itr)
         {
             if(itr->item_guid == item_guid)
             {

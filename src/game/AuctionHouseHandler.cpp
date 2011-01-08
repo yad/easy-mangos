@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -128,8 +128,8 @@ void WorldSession::SendAuctionOutbiddedMail(AuctionEntry *auction, uint32 newPri
                 newPrice, auction->GetAuctionOutBid(), auction->item_template);
 
         MailDraft(msgAuctionOutbiddedSubject.str(), "")     // TODO: fix body
-            .AddMoney(auction->bid)
-            .SendMailTo(MailReceiver(oldBidder, auction->bidder), auction, MAIL_CHECK_MASK_COPIED);
+            .SetMoney(auction->bid)
+            .SendMailTo(MailReceiver(oldBidder, oldBidder_guid), auction, MAIL_CHECK_MASK_COPIED);
     }
 }
 
@@ -150,8 +150,8 @@ void WorldSession::SendAuctionCancelledToBidderMail( AuctionEntry* auction )
         msgAuctionCancelledSubject << auction->item_template << ":0:" << AUCTION_CANCELLED_TO_BIDDER << ":0:0";
 
         MailDraft(msgAuctionCancelledSubject.str(), "")     // TODO: fix body
-            .AddMoney(auction->bid)
-            .SendMailTo(MailReceiver(bidder, auction->bidder), auction, MAIL_CHECK_MASK_COPIED);
+            .SetMoney(auction->bid)
+            .SendMailTo(MailReceiver(bidder, bidder_guid), auction, MAIL_CHECK_MASK_COPIED);
     }
 }
 
@@ -193,17 +193,17 @@ void WorldSession::HandleAuctionSellItem( WorldPacket & recv_data )
     DEBUG_LOG("WORLD: HandleAuctionSellItem");
 
     ObjectGuid auctioneerGuid;
-    uint64 item;
+    ObjectGuid itemGuid;
     uint32 etime, bid, buyout;
     recv_data >> auctioneerGuid;
     recv_data.read_skip<uint32>();                          // const 1?
-    recv_data >> item;
+    recv_data >> itemGuid;
     recv_data.read_skip<uint32>();                          // stack size
     recv_data >> bid;
     recv_data >> buyout;
     recv_data >> etime;
 
-    if (!item || !bid || !etime)
+    if (itemGuid.IsEmpty() || !bid || !etime)
         return;                                             // check for cheaters
 
     Player *pl = GetPlayer();
@@ -233,11 +233,11 @@ void WorldSession::HandleAuctionSellItem( WorldPacket & recv_data )
     if(GetPlayer()->hasUnitState(UNIT_STAT_DIED))
         GetPlayer()->RemoveSpellsCausingAura(SPELL_AURA_FEIGN_DEATH);
 
-    Item *it = pl->GetItemByGuid( item );
+    Item *it = pl->GetItemByGuid(itemGuid);
     // do not allow to sell already auctioned items
-    if(sAuctionMgr.GetAItem(GUID_LOPART(item)))
+    if (sAuctionMgr.GetAItem(itemGuid.GetCounter()))
     {
-        sLog.outError("AuctionError, player %s is sending item id: %u, but item is already in another auction", pl->GetName(), GUID_LOPART(item));
+        sLog.outError("AuctionError, %s is sending %s, but item is already in another auction", pl->GetGuidStr().c_str(), itemGuid.GetString().c_str());
         SendAuctionCommandResult(0, AUCTION_SELL_ITEM, AUCTION_INTERNAL_ERROR);
         return;
     }
@@ -280,7 +280,7 @@ void WorldSession::HandleAuctionSellItem( WorldPacket & recv_data )
 
     AuctionEntry *AH = new AuctionEntry;
     AH->Id = sObjectMgr.GenerateAuctionID();
-    AH->item_guidlow = GUID_LOPART(item);
+    AH->item_guidlow = itemGuid.GetCounter();
     AH->item_template = it->GetEntry();
     AH->owner = pl->GetGUIDLow();
     AH->startbid = bid;
@@ -291,8 +291,8 @@ void WorldSession::HandleAuctionSellItem( WorldPacket & recv_data )
     AH->deposit = deposit;
     AH->auctionHouseEntry = auctionHouseEntry;
 
-    DETAIL_LOG("selling item %u to auctioneer %s with initial bid %u with buyout %u and with time %u (in sec) in auctionhouse %u",
-        GUID_LOPART(item), auctioneerGuid.GetString().c_str(), bid, buyout, auction_time, AH->GetHouseId());
+    DETAIL_LOG("selling %s to auctioneer %s with initial bid %u with buyout %u and with time %u (in sec) in auctionhouse %u",
+        itemGuid.GetString().c_str(), auctioneerGuid.GetString().c_str(), bid, buyout, auction_time, AH->GetHouseId());
     auctionHouse->AddAuction(AH);
 
     sAuctionMgr.AddAItem(it);
