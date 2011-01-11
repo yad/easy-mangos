@@ -345,6 +345,8 @@ void WorldSession::HandleGroupDisbandOpcode( WorldPacket & /*recv_data*/ )
 
     if(_player->InBattleGround())
     {
+        if (_player->IsBot())
+            return;
         SendPartyResult(PARTY_OP_INVITE, "", ERR_INVITE_RESTRICTED);
         return;
     }

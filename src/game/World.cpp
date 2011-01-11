@@ -898,6 +898,16 @@ void World::LoadConfigSettings(bool reload)
     std::string ignoreMapIds = sConfig.GetStringDefault("mmap.ignoreMapIds", "");
     MMAP::MMapFactory::preventPathfindingOnMaps(ignoreMapIds.c_str());
     sLog.outString("WORLD: mmap pathfinding %sabled", getConfig(CONFIG_BOOL_MMAP_ENABLED) ? "en" : "dis");
+
+    char const* cfg_file = _PLAYERBOT_CONFIG;
+    Config PlBotCfg;
+    if (!PlBotCfg.SetSource(cfg_file))
+        return;
+
+    setConfig(CONFIG_BOOL_BOTS_ENABLED,       PlBotCfg.GetBoolDefault( "PlayerBot.Enable" , false));
+    setConfig(CONFIG_UINT32_MAX_BOT_ALLIANCE, PlBotCfg.GetIntDefault(  "PlayerBot.MaxBots.Alliance" , 20));
+    setConfig(CONFIG_UINT32_MAX_BOT_HORDE,    PlBotCfg.GetIntDefault(  "PlayerBot.MaxBots.Horde" , 20));
+    setConfig(CONFIG_UINT32_BOT_JOIN_BG,      PlBotCfg.GetIntDefault(  "PlayerBot.Join.Battleground" , 0));
 }
 
 /// Initialize the World

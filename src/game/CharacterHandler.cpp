@@ -616,14 +616,7 @@ void PlayerbotMgr::AddPlayerBot(uint64 playerGuid)
 
 void PlayerbotMgr::AddAllBots()
 {
-    char const* cfg_file = _PLAYERBOT_CONFIG;
-    Config PlBotCfg;
-    if (!PlBotCfg.SetSource(cfg_file))
-    {
-        //sLog.outError("PLBot> Unable to open configuration file(%s). PLBOT is Disabled.",_PLAYERBOT_CONFIG);
-        return;
-    }
-    if (!PlBotCfg.GetBoolDefault( "PlayerbotAI.Enable" , false))
+    if (!sWorld.getConfig(CONFIG_BOOL_BOTS_ENABLED))
         return;
 
     uint32 accountId = 1;
@@ -643,16 +636,16 @@ void PlayerbotMgr::AddAllBots()
         }
     }
 
-    uint32 nbBotsWantedAlliance = PlBotCfg.GetIntDefault( "PlayerbotAI.MaxBots.Alliance" , 20) - nbBotsCurrAlliance;
-    uint32 nbBotsWantedHorde = PlBotCfg.GetIntDefault( "PlayerbotAI.MaxBots.Horde" , 20) - nbBotsCurrHorde;
+    uint32 nbBotsWantedAlliance = sWorld.getConfig(CONFIG_UINT32_MAX_BOT_ALLIANCE) - nbBotsCurrAlliance;
+    uint32 nbBotsWantedHorde    = sWorld.getConfig(CONFIG_UINT32_MAX_BOT_HORDE)    - nbBotsCurrHorde;
     if(nbBotsWantedAlliance < 1 && nbBotsCurrHorde < 1)
         return;
 
     QueryResult *result = CharacterDatabase.PQuery("SELECT guid, race FROM characters WHERE account = '%u'", accountId);
     if( result )
     {
-        int itrAlliance = 0;
-        int itrHorde = 0;
+        uint32 itrAlliance = 0;
+        uint32 itrHorde = 0;
         do
         {
             if(itrAlliance == nbBotsWantedAlliance && itrHorde == nbBotsWantedHorde)

@@ -902,6 +902,9 @@ void BattleGroundQueue::Update(BattleGroundTypeId bgTypeId, BattleGroundBracketI
         }
         else if (!m_QueuedGroups[bracket_id][BG_QUEUE_NORMAL_ALLIANCE].empty() || !m_QueuedGroups[bracket_id][BG_QUEUE_NORMAL_HORDE].empty())
         {
+            if (sWorld.getConfig(CONFIG_UINT32_BOT_JOIN_BG) == 0)
+                return;
+
             GroupsQueueType::iterator itr_team;
             BattleGroundTeamIndex BG_TEAM = BG_TEAM_HORDE;
             if (!m_QueuedGroups[bracket_id][BG_QUEUE_NORMAL_ALLIANCE].empty())
@@ -936,9 +939,9 @@ void BattleGroundQueue::Update(BattleGroundTypeId bgTypeId, BattleGroundBracketI
             if (!master)
                 return;
 
-            if (master->GetWaitArenaInQueue() + 30 > time(NULL))
+            BattleGroundQueueTypeId bgQueueTypeId = BattleGroundMgr::BGQueueTypeId(bgTypeId, arenaType);
+            if (master->GetWaitArenaInQueue(master->GetBattleGroundQueueIndex(bgQueueTypeId)) + (sWorld.getConfig(CONFIG_UINT32_BOT_JOIN_BG)*IN_MILLISECONDS) > WorldTimer::getMSTime())
             {
-                BattleGroundQueueTypeId bgQueueTypeId = BattleGroundMgr::BGQueueTypeId(bgTypeId, arenaType);
                 sBattleGroundMgr.ScheduleQueueUpdate(arenaRating, arenaType, bgQueueTypeId, bgTypeId, bracketEntry->GetBracketId());
                 return;
             }
@@ -1139,6 +1142,9 @@ void BattleGroundQueue::Update(BattleGroundTypeId bgTypeId, BattleGroundBracketI
         }
         else if (m_SelectionPools[BG_TEAM_ALLIANCE].GetPlayerCount() || m_SelectionPools[BG_TEAM_HORDE].GetPlayerCount())
         {
+            if (sWorld.getConfig(CONFIG_UINT32_BOT_JOIN_BG) == 0)
+                return;
+
             BattleGroundTeamIndex BG_TEAM = BG_TEAM_HORDE;
             Team TM_TEAM = HORDE;
             if (m_SelectionPools[BG_TEAM_ALLIANCE].GetPlayerCount())
@@ -1169,9 +1175,9 @@ void BattleGroundQueue::Update(BattleGroundTypeId bgTypeId, BattleGroundBracketI
             if (!master)
                 return;
 
-            if (master->GetWaitArenaInQueue() + 30 > time(NULL))
+            BattleGroundQueueTypeId bgQueueTypeId = BattleGroundMgr::BGQueueTypeId(bgTypeId, arenaType);
+            if (master->GetWaitArenaInQueue(master->GetBattleGroundQueueIndex(bgQueueTypeId)) + (sWorld.getConfig(CONFIG_UINT32_BOT_JOIN_BG)*IN_MILLISECONDS) > WorldTimer::getMSTime())
             {
-                BattleGroundQueueTypeId bgQueueTypeId = BattleGroundMgr::BGQueueTypeId(bgTypeId, arenaType);
                 sBattleGroundMgr.ScheduleQueueUpdate(arenaRating, arenaType, bgQueueTypeId, bgTypeId, bracketEntry->GetBracketId());
                 return;
             }

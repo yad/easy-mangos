@@ -2549,8 +2549,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         void SetCptBotMapArena(uint8 index) { cptBotMapArena = index; }
         Player* GetBotMapArena(uint8 index) { return botMapArena [index]; }
         void SetBotMapArena(uint8 index, Player* pl) { botMapArena [index] = pl; }
-        time_t GetWaitArenaInQueue() { return waitArenaInQueue; }
-        void SetWaitArenaInQueue(time_t t) { waitArenaInQueue = t; }
+        uint32 GetWaitArenaInQueue(uint8 index) { return waitArenaInQueue[index]; }
+        void SetWaitArenaInQueue(uint8 index, uint32 t) { waitArenaInQueue[index] = t; }
 
     protected:
 
@@ -2831,7 +2831,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         uint32 m_levelAtLoading;
         Player* botMapArena [MAX_PLAYER_IN_BG_ARENA];
         uint8 cptBotMapArena;
-        time_t waitArenaInQueue;
+        time_t waitArenaInQueue [PLAYER_MAX_BATTLEGROUND_QUEUES];
 
         // Homebind coordinates
         uint32 m_homebindMapId;
