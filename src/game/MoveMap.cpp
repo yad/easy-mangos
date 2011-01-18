@@ -220,6 +220,7 @@ namespace MMAP
         if(DT_SUCCESS == mmap->navMesh->addTile(data, fileHeader.size, DT_TILE_FREE_DATA, 0, &tileRef))
         {
             mmap->mmapLoadedTiles.insert(std::pair<uint32, dtTileRef>(packedGridPos, tileRef));
+            ++loadedTiles;
             sLog.outDetail("MMAP: Loaded mmtile %03i[%02i,%02i] into %03i[%02i,%02i]", mapId, x, y, mapId, header->x, header->y);
             return true;
         }
@@ -268,6 +269,7 @@ namespace MMAP
         else
         {
             mmap->mmapLoadedTiles.erase(packedGridPos);
+            --loadedTiles;
             sLog.outDetail("MMAP: Unloaded mmtile %03i[%02i,%02i] from %03i", mapId, x, y, mapId);
             return true;
         }
@@ -293,7 +295,10 @@ namespace MMAP
             if(DT_SUCCESS != mmap->navMesh->removeTile(i->second, NULL, NULL))
                 sLog.outError("MMAP: Could not unload %03u%02i%02i.mmtile from navmesh", mapId, x, y);
             else
+            {
+                --loadedTiles;
                 sLog.outDetail("MMAP: Unloaded mmtile %03i[%02i,%02i] from %03i", mapId, x, y, mapId);
+            }
         }
 
         delete mmap;
