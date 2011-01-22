@@ -676,6 +676,11 @@ LogColors = "13 7 11 9"
 #        Mail delivery delay time for item sending
 #        Default: 3600 sec (1 hour)
 #
+#    MassMailer.SendPerTick
+#        Max amount mail send each tick from mails list scheduled for mass mailer proccesing.
+#        More mails increase server load but speedup mass mail proccess. Normal tick length: 50 msecs, so 20 ticks in sec and 200 mails in sec by default.
+#        Default: 10
+#
 #    SkillChance.Prospecting
 #        For prospecting skillup impossible by default, but can be allowed as custom setting
 #        Default: 0 - no skilups
@@ -706,6 +711,11 @@ LogColors = "13 7 11 9"
 #
 #    BeepAtStart
 #        Beep at mangosd start finished (mostly work only at Unix/Linux systems)
+#        Default: 1 (true)
+#                 0 (false)
+#
+#    ShowProgressBars
+#        Control show progress bars for load steps at server startup
 #        Default: 1 (true)
 #                 0 (false)
 #
@@ -777,6 +787,7 @@ MaxPrimaryTradeSkill = 2
 MinPetitionSigns = 9
 MaxGroupXPDistance = 74
 MailDeliveryDelay = 3600
+MassMailer.SendPerTick = 10
 SkillChance.Prospecting = 0
 SkillChance.Milling = 0
 OffhandCheckAtTalentsReset = 0
@@ -785,6 +796,7 @@ AllowFlightOnOldMaps = 0
 ClientCacheVersion = 0
 Event.Announce = 0
 BeepAtStart = 0
+ShowProgressBars = 0
 WaitAtStartupError = 0
 Motd = "Welcome to the Massive Network Game Object Server."
 
@@ -1264,6 +1276,11 @@ GM.AllowAchievementGain  = 1
 #         Default: 1 (enabled)
 #                  0 (disabled)
 #
+#    Death.Ghost.RunSpeed.World
+#    Death.Ghost.RunSpeed.Battleground
+#         Modifies the speed of player's ghosts, removed upon reviving, not permanent/saved, in non-BG and BG maps
+#         Default: 1.0 (normal speed)
+#
 ###################################################################################################################
 
 Rate.Health = 1
@@ -1325,6 +1342,8 @@ Death.CorpseReclaimDelay.PvP = 1
 Death.CorpseReclaimDelay.PvE = 1
 Death.Bones.World = 1
 Death.Bones.BattlegroundOrArena = 1
+Death.Ghost.RunSpeed.World = 1.0
+Death.Ghost.RunSpeed.Battleground = 1.0
 
 ###################################################################################################################
 # BATTLEGROUND CONFIG

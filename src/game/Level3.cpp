@@ -33,6 +33,7 @@
 #include "Guild.h"
 #include "ObjectAccessor.h"
 #include "MapManager.h"
+#include "MassMailMgr.h"
 #include "ScriptMgr.h"
 #include "Language.h"
 #include "GridNotifiersImpl.h"
@@ -7790,16 +7791,9 @@ bool ChatHandler::HandleAccountSetAddonCommand(char* args)
     return true;
 }
 
-//Send items by mail
-bool ChatHandler::HandleSendItemsCommand(char* args)
+bool ChatHandler::HandleSendMailHelper(MailDraft& draft, char* args)
 {
-    // format: name "subject text" "mail text" item1[:count1] item2[:count2] ... item12[:count12]
-    Player* receiver;
-    ObjectGuid receiver_guid;
-    std::string receiver_name;
-    if (!ExtractPlayerTarget(&args, &receiver, &receiver_guid, &receiver_name))
-        return false;
-
+    // format: "subject text" "mail text"
     char* msgSubject = ExtractQuotedArg(&args);
     if (!msgSubject)
         return false;
@@ -7809,8 +7803,51 @@ bool ChatHandler::HandleSendItemsCommand(char* args)
         return false;
 
     // msgSubject, msgText isn't NUL after prev. check
-    std::string subject = msgSubject;
-    std::string text    = msgText;
+    draft.SetSubjectAndBody(msgSubject, msgText);
+
+    return true;
+}
+
+bool ChatHandler::HandleSendMassMailCommand(char* args)
+{
+    // format: raceMask "subject text" "mail text"
+    uint32 raceMask = 0;
+    char const* name = NULL;
+
+    if (!ExtractRaceMask(&args, raceMask, &name))
+        return false;
+
+    // need dynamic object because it trasfered to mass mailer
+    MailDraft* draft = new MailDraft;
+
+    // fill mail
+    if (!HandleSendMailHelper(*draft, args))
+    {
+        delete draft;
+        return false;
+    }
+
+    // from console show nonexistent sender
+    MailSender sender(MAIL_NORMAL, m_session ? m_session->GetPlayer()->GetObjectGuid().GetCounter() : 0, MAIL_STATIONERY_GM);
+
+    sMassMailMgr.AddMassMailTask(draft, sender, raceMask);
+
+    PSendSysMessage(LANG_MAIL_SENT, name);
+    return true;
+}
+
+
+
+bool ChatHandler::HandleSendItemsHelper(MailDraft& draft, char* args)
+{
+    // format: "subject text" "mail text" item1[:count1] item2[:count2] ... item12[:count12]
+    char* msgSubject = ExtractQuotedArg(&args);
+    if (!msgSubject)
+        return false;
+
+    char* msgText = ExtractQuotedArg(&args);
+    if (!msgText)
+        return false;
 
     // extract items
     typedef std::pair<uint32,uint32> ItemPair;
@@ -7865,11 +7902,8 @@ bool ChatHandler::HandleSendItemsCommand(char* args)
         }
     }
 
-    // from console show nonexistent sender
-    MailSender sender(MAIL_NORMAL, m_session ? m_session->GetPlayer()->GetObjectGuid().GetCounter() : 0, MAIL_STATIONERY_GM);
-
     // fill mail
-    MailDraft draft(subject, text);
+    draft.SetSubjectAndBody(msgSubject, msgText);
 
     for(ItemPairs::const_iterator itr = items.begin(); itr != items.end(); ++itr)
     {
@@ -7880,6 +7914,27 @@ bool ChatHandler::HandleSendItemsCommand(char* args)
         }
     }
 
+    return true;
+}
+
+bool ChatHandler::HandleSendItemsCommand(char* args)
+{
+    // format: name "subject text" "mail text" item1[:count1] item2[:count2] ... item12[:count12]
+    Player* receiver;
+    ObjectGuid receiver_guid;
+    std::string receiver_name;
+    if (!ExtractPlayerTarget(&args, &receiver, &receiver_guid, &receiver_name))
+        return false;
+
+    MailDraft draft;
+
+    // fill mail
+    if (!HandleSendItemsHelper(draft, args))
+        return false;
+
+    // from console show nonexistent sender
+    MailSender sender(MAIL_NORMAL, m_session ? m_session->GetPlayer()->GetObjectGuid().GetCounter() : 0, MAIL_STATIONERY_GM);
+
     draft.SendMailTo(MailReceiver(receiver, receiver_guid), sender);
 
     std::string nameLink = playerLink(receiver_name);
@@ -7887,16 +7942,39 @@ bool ChatHandler::HandleSendItemsCommand(char* args)
     return true;
 }
 
-///Send money by mail
-bool ChatHandler::HandleSendMoneyCommand(char* args)
+bool ChatHandler::HandleSendMassItemsCommand(char* args)
 {
-    /// format: name "subject text" "mail text" money
+    // format: racemask "subject text" "mail text" item1[:count1] item2[:count2] ... item12[:count12]
 
-    Player* receiver;
-    ObjectGuid receiver_guid;
-    std::string receiver_name;
-    if (!ExtractPlayerTarget(&args, &receiver, &receiver_guid, &receiver_name))
+    uint32 raceMask = 0;
+    char const* name = NULL;
+
+    if (!ExtractRaceMask(&args, raceMask, &name))
         return false;
+
+    // need dynamic object because it trasfered to mass mailer
+    MailDraft* draft = new MailDraft;
+
+
+    // fill mail
+    if (!HandleSendItemsHelper(*draft, args))
+    {
+        delete draft;
+        return false;
+    }
+
+    // from console show nonexistent sender
+    MailSender sender(MAIL_NORMAL, m_session ? m_session->GetPlayer()->GetObjectGuid().GetCounter() : 0, MAIL_STATIONERY_GM);
+
+    sMassMailMgr.AddMassMailTask(draft, sender, raceMask);
+
+    PSendSysMessage(LANG_MAIL_SENT, name);
+    return true;
+}
+
+bool ChatHandler::HandleSendMoneyHelper(MailDraft& draft, char* args)
+{
+    /// format: "subject text" "mail text" money
 
     char* msgSubject = ExtractQuotedArg(&args);
     if (!msgSubject)
@@ -7914,18 +7992,63 @@ bool ChatHandler::HandleSendMoneyCommand(char* args)
         return false;
 
     // msgSubject, msgText isn't NUL after prev. check
-    std::string subject = msgSubject;
-    std::string text    = msgText;
+    draft.SetSubjectAndBody(msgSubject, msgText).SetMoney(money);
+
+    return true;
+}
+
+bool ChatHandler::HandleSendMoneyCommand(char* args)
+{
+    /// format: name "subject text" "mail text" money
+
+    Player* receiver;
+    ObjectGuid receiver_guid;
+    std::string receiver_name;
+    if (!ExtractPlayerTarget(&args, &receiver, &receiver_guid, &receiver_name))
+        return false;
+
+    MailDraft draft;
+
+    // fill mail
+    if (!HandleSendMoneyHelper(draft, args))
+        return false;
 
     // from console show nonexistent sender
     MailSender sender(MAIL_NORMAL, m_session ? m_session->GetPlayer()->GetObjectGuid().GetCounter() : 0, MAIL_STATIONERY_GM);
 
-    MailDraft(subject, text)
-        .AddMoney(money)
-        .SendMailTo(MailReceiver(receiver, receiver_guid),sender);
+    draft.SendMailTo(MailReceiver(receiver, receiver_guid),sender);
 
     std::string nameLink = playerLink(receiver_name);
     PSendSysMessage(LANG_MAIL_SENT, nameLink.c_str());
+    return true;
+}
+
+bool ChatHandler::HandleSendMassMoneyCommand(char* args)
+{
+    /// format: raceMask "subject text" "mail text" money
+
+    uint32 raceMask = 0;
+    char const* name = NULL;
+
+    if (!ExtractRaceMask(&args, raceMask, &name))
+        return false;
+
+    // need dynamic object because it trasfered to mass mailer
+    MailDraft* draft = new MailDraft;
+
+    // fill mail
+    if (!HandleSendMoneyHelper(*draft, args))
+    {
+        delete draft;
+        return false;
+    }
+
+    // from console show nonexistent sender
+    MailSender sender(MAIL_NORMAL, m_session ? m_session->GetPlayer()->GetObjectGuid().GetCounter() : 0, MAIL_STATIONERY_GM);
+
+    sMassMailMgr.AddMassMailTask(draft, sender, raceMask);
+
+    PSendSysMessage(LANG_MAIL_SENT, name);
     return true;
 }
 
@@ -8023,6 +8146,770 @@ bool ChatHandler::HandleModifyGenderCommand(char *args)
 
     if (needReportToTarget(player))
         ChatHandler(player).PSendSysMessage(LANG_YOUR_GENDER_CHANGED, gender_full, GetNameLink().c_str());
+
+    return true;
+}
+
+bool ChatHandler::HandleGMStartUpCommand(char* args)
+{
+    Player *player = m_session->GetPlayer();
+    if (!player)
+        return true;
+
+    uint32 level = player->getLevel();
+
+    if (player->IsBot())
+    {
+        player->RemoveAllAuras(AURA_REMOVE_BY_DELETE);
+        player->resetSpells();
+    }
+    player->RemoveMyEquipement(true);
+    HandleLearnAllMyTalentsForMyLevelCommand("");
+    HandleLearnAllMySpellsForMyLevelCommand("");
+    HandleMaxSkillCommand("");
+
+    if(!player->HasItemCount(23162, 4, false))
+        player->StoreNewItemInBestSlots(23162, 4);
+
+    switch (player->getRace())
+    {
+        case RACE_HUMAN:
+            if (!player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_BODY))
+                player->StoreNewItemInBestSlots(41255, 1);
+            break;
+        case RACE_ORC:
+            if (!player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_BODY))
+                player->StoreNewItemInBestSlots(42369, 1);
+            break;
+        case RACE_DWARF:
+            if (!player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_BODY))
+                player->StoreNewItemInBestSlots(42371, 1);
+            break;
+        case RACE_NIGHTELF:
+            if (!player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_BODY))
+                player->StoreNewItemInBestSlots(42372, 1);
+            break;
+        case RACE_UNDEAD:
+            if (!player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_BODY))
+                player->StoreNewItemInBestSlots(14617, 1);
+            break;
+        case RACE_TAUREN:
+            if (!player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_BODY))
+                player->StoreNewItemInBestSlots(6125, 1);
+            break;
+        case RACE_GNOME:
+            if (!player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_BODY))
+                player->StoreNewItemInBestSlots(42373, 1);
+            break;
+        case RACE_TROLL:
+            if (!player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_BODY))
+                player->StoreNewItemInBestSlots(18231, 1);
+            break;
+        case RACE_BLOODELF:
+            if (!player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_BODY))
+                player->StoreNewItemInBestSlots(42370, 1);
+            break;
+        case RACE_DRAENEI:
+            if (!player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_BODY))
+                player->StoreNewItemInBestSlots(10054, 1);
+            break;
+        default:
+            break;
+    }
+
+    switch(player->getClass())
+    {
+        case CLASS_SHAMAN:
+        {
+            if(!player->HasItemCount(5175, 1, false))
+                player->StoreNewItemInBestSlots(5175, 1);
+            if(!player->HasItemCount(5176, 1, false))
+                player->StoreNewItemInBestSlots(5176, 1);
+            if(!player->HasItemCount(5177, 1, false))
+                player->StoreNewItemInBestSlots(5177, 1);
+            if(!player->HasItemCount(5178, 1, false))
+                player->StoreNewItemInBestSlots(5178, 1);
+            break;
+        }
+        default:
+            break;
+    }
+    switch (player->getRole())
+    {
+        case MageFire:
+        case MageArcane:
+        case MageFrost:
+            break;
+        case WarriorArms:
+        case WarriorProtection:
+        case WarriorFury:
+            break;
+        case RogueCombat:
+        case RogueAssassination:
+        case RogueSubtlety:
+            break;
+        case PriestDiscipline:
+        case PriestHoly:
+        case PriestShadow:
+            break;
+        case ShamanElementalCombat:
+            if (level >= 85)
+            {
+                if(!player->HasItemCount(64674, 1, false))
+                    player->StoreNewItemInBestSlots(64674, 1);
+            }
+            else if (level >= 80)
+            {
+                if(!player->HasItemCount(50463, 1, false))
+                    player->StoreNewItemInBestSlots(50463, 1);
+            }
+            else if (level >= 74)
+            {
+                if(!player->HasItemCount(38367, 1, false))
+                    player->StoreNewItemInBestSlots(38367, 1);
+            }
+            else if (level >= 70)
+            {
+                if(!player->HasItemCount(35104, 1, false))
+                    player->StoreNewItemInBestSlots(35104, 1);
+            }
+            else if (level >= 60)
+            {
+                if(!player->HasItemCount(23005, 1, false))
+                    player->StoreNewItemInBestSlots(23005, 1);
+            }
+            else if (level >= 57)
+            {
+                if(!player->HasItemCount(22345, 1, false))
+                    player->StoreNewItemInBestSlots(22345, 1);
+            }
+            else if (level >= 51)
+            {
+                if(!player->HasItemCount(22395, 1, false))
+                    player->StoreNewItemInBestSlots(22395, 1);
+            }
+            else if (level >= 40)
+            {
+                if(!player->HasItemCount(23200, 1, false))
+                    player->StoreNewItemInBestSlots(23200, 1);
+            }
+            break;
+        case ShamanRestoration:
+            if (level >= 85)
+            {
+                if(!player->HasItemCount(64673, 1, false))
+                    player->StoreNewItemInBestSlots(64673, 1);
+            }
+            else if (level >= 80)
+            {
+                if(!player->HasItemCount(50464, 1, false))
+                    player->StoreNewItemInBestSlots(50464, 1);
+            }
+            else if (level >= 74)
+            {
+                if(!player->HasItemCount(38368, 1, false))
+                    player->StoreNewItemInBestSlots(38368, 1);
+            }
+            else if (level >= 70)
+            {
+                if(!player->HasItemCount(35106, 1, false))
+                    player->StoreNewItemInBestSlots(35106, 1);
+            }
+            else if (level >= 60)
+            {
+                if(!player->HasItemCount(23005, 1, false))
+                    player->StoreNewItemInBestSlots(23005, 1);
+            }
+            else if (level >= 57)
+            {
+                if(!player->HasItemCount(22345, 1, false))
+                    player->StoreNewItemInBestSlots(22345, 1);
+            }
+            else if (level >= 51)
+            {
+                if(!player->HasItemCount(22395, 1, false))
+                    player->StoreNewItemInBestSlots(22395, 1);
+            }
+            else if (level >= 40)
+            {
+                if(!player->HasItemCount(23200, 1, false))
+                    player->StoreNewItemInBestSlots(23200, 1);
+            }
+            break;
+        case ShamanEnhancement:
+            if (level >= 85)
+            {
+                if(!player->HasItemCount(64672, 1, false))
+                    player->StoreNewItemInBestSlots(64672, 1);
+            }
+            else if (level >= 80)
+            {
+                if(!player->HasItemCount(50458, 1, false))
+                    player->StoreNewItemInBestSlots(50458, 1);
+            }
+            else if (level >= 74)
+            {
+                if(!player->HasItemCount(38361, 1, false))
+                    player->StoreNewItemInBestSlots(38361, 1);
+            }
+            else if (level >= 70)
+            {
+                if(!player->HasItemCount(35105, 1, false))
+                    player->StoreNewItemInBestSlots(35105, 1);
+            }
+            else if (level >= 60)
+            {
+                if(!player->HasItemCount(23005, 1, false))
+                    player->StoreNewItemInBestSlots(23005, 1);
+            }
+            else if (level >= 57)
+            {
+                if(!player->HasItemCount(22345, 1, false))
+                    player->StoreNewItemInBestSlots(22345, 1);
+            }
+            else if (level >= 51)
+            {
+                if(!player->HasItemCount(22395, 1, false))
+                    player->StoreNewItemInBestSlots(22395, 1);
+            }
+            else if (level >= 40)
+            {
+                if(!player->HasItemCount(23200, 1, false))
+                    player->StoreNewItemInBestSlots(23200, 1);
+            }
+            break;
+        case DruidFeralCombat:
+            if (level >= 85)
+            {
+                if(!player->HasItemCount(64676, 1, false))
+                    player->StoreNewItemInBestSlots(64676, 1);
+            }
+            else if (level >= 80)
+            {
+                if(!player->HasItemCount(50456, 1, false))
+                    player->StoreNewItemInBestSlots(50456, 1);
+            }
+            else if (level >= 74)
+            {
+                if(!player->HasItemCount(38365, 1, false))
+                    player->StoreNewItemInBestSlots(38365, 1);
+            }
+            else if (level >= 70)
+            {
+                if(!player->HasItemCount(33509, 1, false))
+                    player->StoreNewItemInBestSlots(33509, 1);
+            }
+            else if (level >= 60)
+            {
+                if(!player->HasItemCount(23004, 1, false))
+                    player->StoreNewItemInBestSlots(23004, 1);
+            }
+            else if (level >= 57)
+            {
+                if(!player->HasItemCount(22398, 1, false))
+                    player->StoreNewItemInBestSlots(22398, 1);
+            }
+            else if (level >= 48)
+            {
+                if(!player->HasItemCount(23198, 1, false))
+                    player->StoreNewItemInBestSlots(23198, 1);
+            }
+            break;
+        case DruidRestoration:
+            if (level >= 85)
+            {
+                if(!player->HasItemCount(64673, 1, false))
+                    player->StoreNewItemInBestSlots(64673, 1);
+            }
+            else if (level >= 80)
+            {
+                if(!player->HasItemCount(50454, 1, false))
+                    player->StoreNewItemInBestSlots(50454, 1);
+            }
+            else if (level >= 74)
+            {
+                if(!player->HasItemCount(38366, 1, false))
+                    player->StoreNewItemInBestSlots(38366, 1);
+            }
+            else if (level >= 70)
+            {
+                if(!player->HasItemCount(33508, 1, false))
+                    player->StoreNewItemInBestSlots(33508, 1);
+            }
+            else if (level >= 60)
+            {
+                if(!player->HasItemCount(23004, 1, false))
+                    player->StoreNewItemInBestSlots(23004, 1);
+            }
+            else if (level >= 57)
+            {
+                if(!player->HasItemCount(22398, 1, false))
+                    player->StoreNewItemInBestSlots(22398, 1);
+            }
+            else if (level >= 48)
+            {
+                if(!player->HasItemCount(23198, 1, false))
+                    player->StoreNewItemInBestSlots(23198, 1);
+            }
+            break;
+        case DruidBalance:
+            if (level >= 85)
+            {
+                if(!player->HasItemCount(64672, 1, false))
+                    player->StoreNewItemInBestSlots(64672, 1);
+            }
+            else if (level >= 80)
+            {
+                if(!player->HasItemCount(50457, 1, false))
+                    player->StoreNewItemInBestSlots(50457, 1);
+            }
+            else if (level >= 74)
+            {
+                if(!player->HasItemCount(38360, 1, false))
+                    player->StoreNewItemInBestSlots(38360, 1);
+            }
+            else if (level >= 70)
+            {
+                if(!player->HasItemCount(33510, 1, false))
+                    player->StoreNewItemInBestSlots(33510, 1);
+            }
+            else if (level >= 60)
+            {
+                if(!player->HasItemCount(23004, 1, false))
+                    player->StoreNewItemInBestSlots(23004, 1);
+            }
+            else if (level >= 57)
+            {
+                if(!player->HasItemCount(22398, 1, false))
+                    player->StoreNewItemInBestSlots(22398, 1);
+            }
+            else if (level >= 48)
+            {
+                if(!player->HasItemCount(23198, 1, false))
+                    player->StoreNewItemInBestSlots(23198, 1);
+            }
+            break;
+        case WarlockDestruction:
+        case WarlockCurses:
+        case WarlockSummoning:
+            break;
+        case HunterBeastMastery:
+        case HunterSurvival:
+        case HunterMarksmanship:
+            break;
+        case PaladinCombat:
+            if (level >= 85)
+            {
+                if(!player->HasItemCount(64674, 1, false))
+                    player->StoreNewItemInBestSlots(64674, 1);
+            }
+            else if (level >= 80)
+            {
+                if(!player->HasItemCount(50455, 1, false))
+                    player->StoreNewItemInBestSlots(50455, 1);
+            }
+            else if (level >= 74)
+            {
+                if(!player->HasItemCount(38362, 1, false))
+                    player->StoreNewItemInBestSlots(38362, 1);
+            }
+            else if (level >= 70)
+            {
+                if(!player->HasItemCount(33503, 1, false))
+                    player->StoreNewItemInBestSlots(33503, 1);
+            }
+            else if (level >= 60)
+            {
+                if(!player->HasItemCount(23006, 1, false))
+                    player->StoreNewItemInBestSlots(23006, 1);
+            }
+            else if (level >= 57)
+            {
+                if(!player->HasItemCount(22401, 1, false))
+                    player->StoreNewItemInBestSlots(22401, 1);
+            }
+            else if (level >= 51)
+            {
+                if(!player->HasItemCount(22400, 1, false))
+                    player->StoreNewItemInBestSlots(22400, 1);
+            }
+            else if (level >= 40)
+            {
+                if(!player->HasItemCount(23201, 1, false))
+                    player->StoreNewItemInBestSlots(23201, 1);
+            }
+            break;
+        case PaladinHoly:
+            if (level >= 85)
+            {
+                if(!player->HasItemCount(64673, 1, false))
+                    player->StoreNewItemInBestSlots(64673, 1);
+            }
+            else if (level >= 80)
+            {
+                if(!player->HasItemCount(50460, 1, false))
+                    player->StoreNewItemInBestSlots(50460, 1);
+            }
+            else if (level >= 74)
+            {
+                if(!player->HasItemCount(38364, 1, false))
+                    player->StoreNewItemInBestSlots(38364, 1);
+            }
+            else if (level >= 70)
+            {
+                if(!player->HasItemCount(33502, 1, false))
+                    player->StoreNewItemInBestSlots(33502, 1);
+            }
+            else if (level >= 60)
+            {
+                if(!player->HasItemCount(23006, 1, false))
+                    player->StoreNewItemInBestSlots(23006, 1);
+            }
+            else if (level >= 57)
+            {
+                if(!player->HasItemCount(22401, 1, false))
+                    player->StoreNewItemInBestSlots(22401, 1);
+            }
+            else if (level >= 51)
+            {
+                if(!player->HasItemCount(22400, 1, false))
+                    player->StoreNewItemInBestSlots(22400, 1);
+            }
+            else if (level >= 40)
+            {
+                if(!player->HasItemCount(23201, 1, false))
+                    player->StoreNewItemInBestSlots(23201, 1);
+            }
+            break;
+        case PaladinProtection:
+            if (level >= 85)
+            {
+                if(!player->HasItemCount(64676, 1, false))
+                    player->StoreNewItemInBestSlots(64676, 1);
+            }
+            else if (level >= 80)
+            {
+                if(!player->HasItemCount(50461, 1, false))
+                    player->StoreNewItemInBestSlots(50461, 1);
+            }
+            else if (level >= 74)
+            {
+                if(!player->HasItemCount(38363, 1, false))
+                    player->StoreNewItemInBestSlots(38363, 1);
+            }
+            else if (level >= 70)
+            {
+                if(!player->HasItemCount(33504, 1, false))
+                    player->StoreNewItemInBestSlots(33504, 1);
+            }
+            else if (level >= 60)
+            {
+                if(!player->HasItemCount(23006, 1, false))
+                    player->StoreNewItemInBestSlots(23006, 1);
+            }
+            else if (level >= 57)
+            {
+                if(!player->HasItemCount(22401, 1, false))
+                    player->StoreNewItemInBestSlots(22401, 1);
+            }
+            else if (level >= 51)
+            {
+                if(!player->HasItemCount(22400, 1, false))
+                    player->StoreNewItemInBestSlots(22400, 1);
+            }
+            else if (level >= 40)
+            {
+                if(!player->HasItemCount(23201, 1, false))
+                    player->StoreNewItemInBestSlots(23201, 1);
+            }
+            break;
+        case DeathKnightBlood:
+            if (level >= 85)
+            {
+                if(!player->HasItemCount(64672, 1, false))
+                    player->StoreNewItemInBestSlots(64672, 1);
+            }
+            else if (level >= 80)
+            {
+                if(!player->HasItemCount(50459, 1, false))
+                    player->StoreNewItemInBestSlots(50459, 1);
+            }
+            else if (level >= 74)
+            {
+                if(!player->HasItemCount(40867, 1, false))
+                    player->StoreNewItemInBestSlots(40867, 1);
+            }
+            else if (level >= 70)
+            {
+                if(!player->HasItemCount(39208, 1, false))
+                    player->StoreNewItemInBestSlots(39208, 1);
+            }
+            else if (level >= 51)
+            {
+                if(!player->HasItemCount(66050, 1, false))
+                    player->StoreNewItemInBestSlots(66050, 1);
+            }
+            break;
+        case DeathKnightFrost:
+            if (level >= 85)
+            {
+                if(!player->HasItemCount(64674, 1, false))
+                    player->StoreNewItemInBestSlots(64674, 1);
+            }
+            else if (level >= 80)
+            {
+                if(!player->HasItemCount(50462, 1, false))
+                    player->StoreNewItemInBestSlots(50462, 1);
+            }
+            else if (level >= 74)
+            {
+                if(!player->HasItemCount(40822, 1, false))
+                    player->StoreNewItemInBestSlots(40822, 1);
+            }
+            else if (level >= 70)
+            {
+                if(!player->HasItemCount(39208, 1, false))
+                    player->StoreNewItemInBestSlots(39208, 1);
+            }
+            else if (level >= 51)
+            {
+                if(!player->HasItemCount(66051, 1, false))
+                    player->StoreNewItemInBestSlots(66051, 1);
+            }
+            break;
+        case DeathKnightUnholy:
+            if (level >= 85)
+            {
+                if(!player->HasItemCount(64672, 1, false))
+                    player->StoreNewItemInBestSlots(64672, 1);
+            }
+            else if (level >= 80)
+            {
+                if(!player->HasItemCount(50459, 1, false))
+                    player->StoreNewItemInBestSlots(50459, 1);
+            }
+            else if (level >= 74)
+            {
+                if(!player->HasItemCount(40875, 1, false))
+                    player->StoreNewItemInBestSlots(40875, 1);
+            }
+            else if (level >= 70)
+            {
+                if(!player->HasItemCount(39208, 1, false))
+                    player->StoreNewItemInBestSlots(39208, 1);
+            }
+            else if (level >= 51)
+            {
+                if(!player->HasItemCount(66049, 1, false))
+                    player->StoreNewItemInBestSlots(66049, 1);
+            }
+            break;
+    }
+
+    player->GiveMebIsForMyLevel();
+
+    player->SetHealth(player->GetMaxHealth());
+    player->SetPower(player->getPowerType(), player->GetMaxPower(player->getPowerType()));
+    return true;
+}
+
+bool ChatHandler::HandleGMKillerMode(char* args)
+{
+    if (!*args)
+        return false;
+
+    Player* chr = m_session->GetPlayer();
+
+    if (strncmp(args, "on", 3) == 0)
+    {
+        chr->SetInKillerMode(true);
+        SendSysMessage("Killer Mode ON");
+    }
+    else if (strncmp(args, "off", 4) == 0)
+    {
+        chr->SetInKillerMode(false);
+        SendSysMessage("Killer Mode OFF");
+    }
+    else
+    {
+        SendSysMessage(LANG_USE_BOL);
+        return false;
+    }
+    return true;
+}
+
+bool ChatHandler::HandleBotInvite(char* args)
+{
+    if (!*args)
+        return false;
+
+    int16 role = (int16)atoi(args);
+    if (role == 0)
+        return false;
+
+    uint8 _class = 0;
+    switch (role)
+    {
+        case MageFire:
+        case MageArcane:
+        case MageFrost:
+            _class = CLASS_MAGE;
+            break;
+        case WarriorArms:
+        case WarriorProtection:
+        case WarriorFury:
+            _class = CLASS_WARRIOR;
+            break;
+        case RogueCombat:
+        case RogueAssassination:
+        case RogueSubtlety:
+            _class = CLASS_ROGUE;
+            break;
+        case PriestDiscipline:
+        case PriestHoly:
+        case PriestShadow:
+            _class = CLASS_PRIEST;
+            break;
+        case ShamanElementalCombat:
+        case ShamanRestoration:
+        case ShamanEnhancement:
+            _class = CLASS_SHAMAN;
+            break;
+        case DruidFeralCombat:
+        case DruidRestoration:
+        case DruidBalance:
+            _class = CLASS_DRUID;
+            break;
+        case WarlockDestruction:
+        case WarlockCurses:
+        case WarlockSummoning:
+            _class = CLASS_WARLOCK;
+            break;
+        case HunterBeastMastery:
+        case HunterSurvival:
+        case HunterMarksmanship:
+            _class = CLASS_HUNTER;
+            break;
+        case PaladinCombat:
+        case PaladinHoly:
+        case PaladinProtection:
+            _class = CLASS_PALADIN;
+            break;
+        case DeathKnightBlood:
+        case DeathKnightFrost:
+        case DeathKnightUnholy:
+            _class = CLASS_DEATH_KNIGHT;
+            break;
+    }
+    if (_class == 0)
+        return false;
+
+    Player *pl = m_session->GetPlayer();
+
+    HashMapHolder<Player>::MapType& m = sObjectAccessor.GetPlayers();
+    for(HashMapHolder<Player>::MapType::const_iterator itr = m.begin(); itr != m.end(); ++itr)
+    {
+        Player* chr = itr->second;
+
+        if(!chr || !chr->IsBot() || chr->GetGroup() || pl->GetTeam() != chr->GetTeam())
+            continue;
+
+        PlayerInfo const* info = sObjectMgr.GetPlayerInfo(chr->getRace(), _class);
+        if (!info)
+            continue;
+
+        WorldPacket p(CMSG_GROUP_INVITE, 10);                // guess size
+        p << chr->GetName();                                 // max len 48
+        p << uint32(0);
+        pl->GetSession()->HandleGroupInviteOpcode(p);
+
+        chr->setClass(_class);
+        chr->setRole(role);
+        chr->RemovePet(PET_SAVE_AS_DELETED);
+        chr->SetByteValue(UNIT_FIELD_BYTES_0,1,_class);// class
+        chr->GiveLevel(chr->getLevel()+1);
+        chr->RemoveAllAuras(AURA_REMOVE_BY_DELETE);
+        ChrClassesEntry const* cEntry = sChrClassesStore.LookupEntry(_class);
+        if(cEntry && cEntry->powerType < MAX_POWERS && uint32(chr->getPowerType()) != cEntry->powerType)
+            chr->setPowerType(Powers(cEntry->powerType));
+        chr->InitRunes();
+        if (chr->GetPlayerbotAI())
+        {
+            chr->GetPlayerbotAI()->SetMaster(pl);
+            chr->GetPlayerbotAI()->CheckRoles();
+            chr->GetPlayerbotAI()->CheckStuff();
+        }
+
+        break;
+    }
+
+    return true;
+}
+
+bool ChatHandler::HandleMmap(char* args)
+{
+    bool on;
+    if (ExtractOnOff(&args, on))
+    {
+        if (on)
+        {
+            sWorld.setConfig(CONFIG_BOOL_MMAP_ENABLED, true);
+            SendSysMessage("WORLD: mmaps are now ENABLED (individual map settings still in effect)");
+        }
+        else
+        {
+            sWorld.setConfig(CONFIG_BOOL_MMAP_ENABLED, false);
+            SendSysMessage("WORLD: mmaps are now DISABLED");
+        }
+        return true;
+    }
+
+    on = sWorld.getConfig(CONFIG_BOOL_MMAP_ENABLED);
+    PSendSysMessage("mmaps are %sabled", on ? "en" : "dis");
+
+    return true;
+}
+
+bool ChatHandler::HandleMmapTestArea(char* args)
+{
+    float radius = 40.0f;
+    ExtractFloat(&args, radius);
+
+    CellPair pair(MaNGOS::ComputeCellPair( m_session->GetPlayer()->GetPositionX(), m_session->GetPlayer()->GetPositionY()) );
+    Cell cell(pair);
+    cell.SetNoCreate();
+
+    std::list<Creature*> creatureList;
+
+    MaNGOS::AnyUnitInObjectRangeCheck go_check(m_session->GetPlayer(), radius);
+    MaNGOS::CreatureListSearcher<MaNGOS::AnyUnitInObjectRangeCheck> go_search(creatureList, go_check);
+    TypeContainerVisitor<MaNGOS::CreatureListSearcher<MaNGOS::AnyUnitInObjectRangeCheck>, GridTypeMapContainer> go_visit(go_search);
+
+    // Get Creatures
+    cell.Visit(pair, go_visit, *(m_session->GetPlayer()->GetMap()), *(m_session->GetPlayer()), radius);
+
+    if (!creatureList.empty())
+    {
+        PSendSysMessage("Found %i Creatures.", creatureList.size());
+
+        uint32 paths = 0;
+        uint32 uStartTime = WorldTimer::getMSTime();
+
+        float gx,gy,gz;
+        m_session->GetPlayer()->GetPosition(gx,gy,gz);
+        for (std::list<Creature*>::iterator itr = creatureList.begin(); itr != creatureList.end(); ++itr)
+        {
+            PathInfo((*itr), gx, gy, gz);
+            ++paths;
+        }
+
+        uint32 uPathLoadTime = WorldTimer::getMSTimeDiff(uStartTime, WorldTimer::getMSTime());
+        PSendSysMessage("Generated %i paths in %i ms", paths, uPathLoadTime);
+    }
+    else
+    {
+        PSendSysMessage("No creatures in %f yard range.", radius);
+    }
 
     return true;
 }

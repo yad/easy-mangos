@@ -523,7 +523,7 @@ bool ChatHandler::HandleGoCreatureCommand(char* args)
             if (!tEntry)
                 return false;
 
-            if (!sObjectMgr.GetCreatureTemplate(tEntry))
+            if (!ObjectMgr::GetCreatureTemplate(tEntry))
             {
                 SendSysMessage(LANG_COMMAND_GOCREATNOTFOUND);
                 SetSentErrorMessage(true);
@@ -668,7 +668,7 @@ bool ChatHandler::HandleGoObjectCommand(char* args)
             if (!tEntry)
                 return false;
 
-            if (!sObjectMgr.GetGameObjectInfo(tEntry))
+            if (!ObjectMgr::GetGameObjectInfo(tEntry))
             {
                 SendSysMessage(LANG_COMMAND_GOOBJNOTFOUND);
                 SetSentErrorMessage(true);
@@ -5142,7 +5142,10 @@ bool ChatHandler::HandleMmapStatsCommand(char* /*args*/)
     PSendSysMessage("mmap stats:");
     PSendSysMessage("  global mmap pathfinding is %sabled", sWorld.getConfig(CONFIG_BOOL_MMAP_ENABLED) ? "en" : "dis");
 
-    const dtNavMesh* navmesh = MMAP::MMapFactory::createOrGetMMapManager()->GetNavMesh(m_session->GetPlayer()->GetMapId());
+    MMAP::MMapManager *manager = MMAP::MMapFactory::createOrGetMMapManager();
+    PSendSysMessage(" %u maps loaded with %u tiles overall", manager->getLoadedMapsCount(), manager->getLoadedTilesCount());
+
+    const dtNavMesh* navmesh = manager->GetNavMesh(m_session->GetPlayer()->GetMapId());
     if (!navmesh)
     {
         PSendSysMessage("NavMesh not loaded for current map.");
@@ -5171,7 +5174,7 @@ bool ChatHandler::HandleMmapStatsCommand(char* /*args*/)
         dataSize += tile->dataSize;
     }
 
-    PSendSysMessage("Navmesh stats:");
+    PSendSysMessage("Navmesh stats on current map:");
     PSendSysMessage(" %u tiles loaded", tileCount);
     PSendSysMessage(" %u BVTree nodes", nodeCount);
     PSendSysMessage(" %u polygons (%u vertices)", polyCount, vertCount);
