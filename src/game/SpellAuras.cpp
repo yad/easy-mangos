@@ -346,7 +346,7 @@ pAuraHandler AuraHandler[TOTAL_AURAS]=
     &Aura::HandleAuraAddMechanicAbilities,                  //293 SPELL_AURA_ADD_MECHANIC_ABILITIES  replaces target's action bars with a predefined spellset
     &Aura::HandleNULL,                                      //294 2 spells, possible prevent mana regen
     &Aura::HandleUnused,                                    //295 unused (3.2.2a)
-    &Aura::HandleNULL,                                      //296 2 spells
+    &Aura::HandleAuraSetVehicle,                            //296 SPELL_AURA_SET_VEHICLE_ID sets vehicle on target
     &Aura::HandleNULL,                                      //297 1 spell (counter spell school?)
     &Aura::HandleUnused,                                    //298 unused (3.2.2a)
     &Aura::HandleUnused,                                    //299 unused (3.2.2a)
@@ -3909,9 +3909,7 @@ void Aura::HandleModPossess(bool apply, bool Real)
         if(target->GetTypeId() == TYPEID_UNIT)
         {
             ((Creature*)target)->AIM_Initialize();
-
-            if (((Creature*)target)->AI())
-                ((Creature*)target)->AI()->AttackedBy(caster);
+            target->AttackedBy(caster);
         }
     }
 }
@@ -4105,8 +4103,7 @@ void Aura::HandleModCharm(bool apply, bool Real)
         if(target->GetTypeId() == TYPEID_UNIT)
         {
             ((Creature*)target)->AIM_Initialize();
-            if (((Creature*)target)->AI())
-                ((Creature*)target)->AI()->AttackedBy(caster);
+            target->AttackedBy(caster);
         }
     }
 }
@@ -4185,7 +4182,10 @@ void Aura::HandleAuraModDisarm(bool apply, bool Real)
         return;
 
     if (apply)
-        target->SetAttackTime(attack_type, BASE_ATTACK_TIME);
+    {
+        target->RemoveAurasDueToSpell(46924); // Disarm should stop bladestorm
+        target->SetAttackTime(BASE_ATTACK,BASE_ATTACK_TIME);
+    }
     else
         ((Player *)target)->SetRegularAttackTime();
 
@@ -5062,6 +5062,7 @@ void Aura::HandlePeriodicTriggerSpell(bool apply, bool /*Real*/)
 
                 return;
             case 51912:                                     // Ultra-Advanced Proto-Typical Shortening Blaster
+            case 53102:                                     // Scepter of Domination
                 if (m_removeMode == AURA_REMOVE_BY_EXPIRE)
                 {
                     if (Unit* pCaster = GetCaster())
@@ -6375,6 +6376,7 @@ void Aura::HandleShapeshiftBoosts(bool apply)
             break;
         case FORM_MOONKIN:
             spellId1 = 24905;
+            spellId2 = 69366;
             MasterShaperSpellId = 48421;
             break;
         case FORM_FLIGHT:
@@ -8105,6 +8107,7 @@ void Aura::PeriodicDummyTick()
                 }
                 return;
             }
+            break;
 //            if (spell->SpellIconID == 30412)
 //                return;
             // Hysteria
@@ -9036,6 +9039,11 @@ void SpellAuraHolder::HandleSpellSpecificBoosts(bool apply)
         {
             switch(GetId())
             {
+                case 50720:                                 // Vigilance (warrior spell but not have warrior family)
+                {
+                    spellId1 = 68066;                       // Damage Reduction
+                    break;
+                }
                 case 55001:
                 {
                     if (apply)
@@ -9044,11 +9052,6 @@ void SpellAuraHolder::HandleSpellSpecificBoosts(bool apply)
                         m_target->RemoveSpellsCausingAura(SPELL_AURA_FLY);
                         m_target->RemoveSpellsCausingAura(SPELL_AURA_MOD_INCREASE_SPEED);
                     }
-                    break;
-                }
-                case 50720:                                 // Vigilance (warrior spell but not have warrior family)
-                {
-                    spellId1 = 68066;                       // Damage Reduction
                     break;
                 }
                 case 57350:                                 // Illusionary Barrier
@@ -9068,6 +9071,7 @@ void SpellAuraHolder::HandleSpellSpecificBoosts(bool apply)
                     if (!apply)
                         if(Unit* caster = GetCaster())
                             caster->RemoveAurasDueToSpell(34027);
+                    return;
                 }
                 case 70867:                                 // Soul of Blood Qween
                 case 71473:
@@ -9959,5 +9963,41 @@ void Aura::HandleAuraModReflectSpells(bool Apply, bool Real)
             default:
                 break;
         }
+    }
+}
+
+void Aura::HandleAuraSetVehicle(bool apply, bool real)
+{
+    if (!real)
+        return;
+
+    Unit* target = GetTarget();
+
+    if (target->GetTypeId() != TYPEID_PLAYER || !target->IsInWorld())
+        return;
+
+    uint32 vehicleId = GetMiscValue();
+
+    if (vehicleId == 0)
+        return;
+
+    if (apply)
+    {
+        if (!target->CreateVehicleKit(vehicleId))
+            return;
+    }
+    else
+        if (target->GetVehicleKit())
+            target->RemoveVehicleKit();
+
+    WorldPacket data(SMSG_PLAYER_VEHICLE_DATA, target->GetPackGUID().size()+4);
+    data.appendPackGUID(target->GetGUID());
+    data << uint32(apply ? vehicleId : 0);
+    target->SendMessageToSet(&data, true);
+
+    if (apply)
+    {
+        data.Initialize(SMSG_ON_CANCEL_EXPECTED_RIDE_VEHICLE_AURA, 0);
+        ((Player*)target)->GetSession()->SendPacket(&data);
     }
 }

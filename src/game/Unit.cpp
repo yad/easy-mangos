@@ -348,7 +348,7 @@ void Unit::Update( uint32 update_diff, uint32 p_time )
         getThreatManager().UpdateForClient(update_diff);
 
     // update combat timer only for players and pets
-    if (isInCombat() && (GetTypeId() == TYPEID_PLAYER || ((Creature*)this)->IsPet() || ((Creature*)this)->isCharmed()))
+    if (isInCombat() && GetCharmerOrOwnerPlayerOrPlayerItself())
     {
         // Check UNIT_STAT_MELEE_ATTACKING or UNIT_STAT_CHASE (without UNIT_STAT_FOLLOW in this case) so pets can reach far away
         // targets without stopping half way there and running off.
@@ -1053,6 +1053,13 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
                 cVictim->AllLootRemovedFromCorpse();
             }
 
+            // if vehicle and has passengers - remove his
+            if (cVictim->GetObjectGuid().IsVehicle())
+            {
+                if(cVictim->GetVehicleKit())
+                    cVictim->GetVehicleKit()->RemoveAllPassengers();
+            }
+
             // Call creature just died function
             if (cVictim->AI())
                 cVictim->AI()->JustDied(this);
@@ -1149,8 +1156,7 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
             }
 
             // if damage pVictim call AI reaction
-            if(pVictim->GetTypeId()==TYPEID_UNIT && ((Creature*)pVictim)->AI())
-                ((Creature*)pVictim)->AI()->AttackedBy(this);
+            pVictim->AttackedBy(this);
         }
 
         // polymorphed, hex and other negative transformed cases
@@ -2343,6 +2349,14 @@ void Unit::CalculateDamageAbsorbAndResist(Unit *pCaster, SpellSchoolMask schoolM
                         RemainingDamage -= RemainingDamage * currentAbsorb / 100;
                     continue;
                 }
+                // Moonkin Form passive
+                if (spellProto->Id == 69366)
+                {
+                    //reduces all damage taken while Stunned
+                    if (unitflag & UNIT_FLAG_STUNNED)
+                        RemainingDamage -= RemainingDamage * currentAbsorb / 100;
+                    continue;
+                }
                 break;
             }
             case SPELLFAMILY_ROGUE:
@@ -2885,8 +2899,7 @@ void Unit::AttackerStateUpdate (Unit *pVictim, WeaponAttackType attType, bool ex
             GetGUIDLow(), pVictim->GetGUIDLow(), pVictim->GetTypeId(), damageInfo.damage, damageInfo.absorb, damageInfo.blocked_amount, damageInfo.resist);
 
     // if damage pVictim call AI reaction
-    if(pVictim->GetTypeId()==TYPEID_UNIT && ((Creature*)pVictim)->AI())
-        ((Creature*)pVictim)->AI()->AttackedBy(this);
+    pVictim->AttackedBy(this);
 
     // extra attack only at any non extra attack (normal case)
     if(!extra && extraAttacks)
@@ -6030,6 +6043,17 @@ bool Unit::Attack(Unit *victim, bool meleeAttack)
     return true;
 }
 
+void Unit::AttackedBy(Unit *attacker)
+{
+    // trigger AI reaction
+    if (GetTypeId() == TYPEID_UNIT && ((Creature*)this)->AI())
+        ((Creature*)this)->AI()->AttackedBy(attacker);
+
+    // trigger pet AI reaction
+    if (Pet *pet = GetPet())
+        pet->AttackedBy(attacker);
+}
+
 bool Unit::AttackStop(bool targetSwitch /*=false*/)
 {
     if (!m_attacking)
@@ -6642,7 +6666,25 @@ uint32 Unit::SpellDamageBonusDone(Unit *pVictim, SpellEntry const *spellProto, u
             (*i)->GetSpellProto()->EquippedItemInventoryTypeMask == 0 )
                                                             // 0 == any inventory type (not wand then)
         {
-            DoneTotalMod *= ((*i)->GetModifier()->m_amount+100.0f)/100.0f;
+            // bonus stored in another auras basepoints
+            if ((*i)->GetModifier()->m_amount == 0)
+            {
+                // Clearcasting - bonus from Elemental Oath
+                if ((*i)->GetSpellProto()->Id == 16246)
+                {
+                    AuraList const& aurasCrit = GetAurasByType(SPELL_AURA_MOD_SPELL_CRIT_CHANCE);
+                    for (AuraList::const_iterator itr = aurasCrit.begin(); itr != aurasCrit.end(); itr++)
+                    {
+                        if ((*itr)->GetSpellProto()->SpellIconID == 3053)
+                        {
+                            DoneTotalMod *= ((*itr)->GetSpellProto()->CalculateSimpleValue(EFFECT_INDEX_1) + 100.0f) / 100.0f;
+                            break;
+                        }
+                    }
+                }
+            }
+            else
+                DoneTotalMod *= ((*i)->GetModifier()->m_amount+100.0f)/100.0f;
         }
     }
 
@@ -7260,7 +7302,7 @@ bool Unit::IsSpellCrit(Unit *pVictim, SpellEntry const *spellProto, SpellSchoolM
             {
                 if(spellProto->SpellFamilyFlags & UI64LIT(0x0000000000800000))
                 {
-                    if(pVictim->HasAuraState(AURA_STATE_MECHANIC_BLEED))
+                    if(pVictim->HasAuraState(AURA_STATE_BLEEDING))
                     {
                         Unit::AuraList const& aura = GetAurasByType(SPELL_AURA_DUMMY);
                         for(Unit::AuraList::const_iterator itr = aura.begin(); itr != aura.end(); ++itr)
@@ -9470,40 +9512,6 @@ int32 Unit::CalculateBaseSpellDuration(SpellEntry const* spellProto, uint32* per
         *periodicTime = _periodicTime;
     }
 
-    if (duration > 0 && unitPlayer && target == this)
-    {
-        switch(spellProto->SpellFamilyName)
-        {
-            case SPELLFAMILY_DRUID:
-                // Thorns
-                if (spellProto->SpellIconID == 53 && (spellProto->SpellFamilyFlags & UI64LIT(0x0000000000000100)))
-                {
-                    // Glyph of Thorns
-                    if (Aura *aur = GetAura(57862, EFFECT_INDEX_0))
-                        duration += aur->GetModifier()->m_amount * MINUTE * IN_MILLISECONDS;
-                }
-                break;
-            case SPELLFAMILY_PALADIN:
-                // Blessing of Might
-                if (spellProto->SpellIconID == 298 && spellProto->SpellFamilyFlags & UI64LIT(0x0000000000000002))
-                {
-                    // Glyph of Blessing of Might
-                    if (Aura *aur = GetAura(57958, EFFECT_INDEX_0))
-                        duration += aur->GetModifier()->m_amount * MINUTE * IN_MILLISECONDS;
-                }
-                // Blessing of Wisdom
-                else if (spellProto->SpellIconID == 306 && spellProto->SpellFamilyFlags & UI64LIT(0x0000000000010000))
-                {
-                    // Glyph of Blessing of Wisdom
-                    if (Aura *aur = GetAura(57979, EFFECT_INDEX_0))
-                        duration += aur->GetModifier()->m_amount * MINUTE * IN_MILLISECONDS;
-                }
-                break;
-            default:
-                break;
-        }
-    }
-
     return duration;
 }
 
@@ -9529,7 +9537,7 @@ uint32 Unit::CalculateSpellDuration(Unit const* caster, uint32 baseDuration, Spe
     else
         durationMod = durationMod_always;
 
-    if (caster == this)
+    if (baseDuration > 0 && caster == this)
     {
         switch(spellProto->SpellFamilyName)
         {
@@ -10987,8 +10995,7 @@ void Unit::SetFeared(bool apply, ObjectGuid casterGuid, uint32 spellID, uint32 t
 
             // attack caster if can
             if (Unit* caster = IsInWorld() ? GetMap()->GetUnit(casterGuid) : NULL)
-                if (c->AI())
-                    c->AI()->AttackedBy(caster);
+                c->AttackedBy(caster);
         }
     }
 
@@ -12003,6 +12010,10 @@ void Unit::ChangeSeat(int8 seatId, bool next)
     else if (seatId == m_movementInfo.GetTransportSeat() || !m_pVehicle->HasEmptySeat(seatId))
         return;
 
+    if (m_pVehicle->GetPassenger(seatId) &&
+       (!m_pVehicle->GetPassenger(seatId)->GetObjectGuid().IsVehicle() || !m_pVehicle->GetSeatInfo(m_pVehicle->GetPassenger(seatId))))
+        return;
+
     m_pVehicle->RemovePassenger(this);
     m_pVehicle->AddPassenger(this, seatId);
 }
@@ -12027,6 +12038,7 @@ void Unit::EnterVehicle(VehicleKit *vehicle, int8 seatId)
 
     InterruptNonMeleeSpells(false);
     RemoveSpellsCausingAura(SPELL_AURA_MOUNTED);
+    RemoveSpellsCausingAura(SPELL_AURA_MOD_SHAPESHIFT);
 
     if (!vehicle->AddPassenger(this, seatId))
         return;

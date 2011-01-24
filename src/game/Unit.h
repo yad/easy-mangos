@@ -559,7 +559,7 @@ enum UnitFlags2
     UNIT_FLAG2_DISARM_OFFHAND       = 0x00000080,           // also shield case
     UNIT_FLAG2_UNK8                 = 0x00000100,
     UNIT_FLAG2_UNK9                 = 0x00000200,
-    UNIT_FLAG2_DISARM_RANGED        = 0x00000400,
+    UNIT_FLAG2_DISARM_RANGED        = 0x00000400,           // disarm or something
     UNIT_FLAG2_REGENERATE_POWER     = 0x00000800,
 };
 
@@ -1221,6 +1221,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
             return NULL;
         }
         bool Attack(Unit *victim, bool meleeAttack);
+        void AttackedBy(Unit *attacker);
         void CastStop(uint32 except_spellid = 0);
         bool AttackStop(bool targetSwitch = false);
         void RemoveAllAttackers();

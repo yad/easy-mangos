@@ -1877,16 +1877,6 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                         (spellInfo_2->Id == 52441 && spellInfo_1->Id == 52443))
                         return false;
 
-                    // Thunderfury
-                    if ((spellInfo_1->Id == 21992 && spellInfo_2->Id == 27648) ||
-                        (spellInfo_2->Id == 21992 && spellInfo_1->Id == 27648))
-                        return false;
-
-                    // Lightning Speed (Mongoose) and Fury of the Crashing Waves (Tsunami Talisman)
-                    if ((spellInfo_1->Id == 28093 && spellInfo_2->Id == 42084) ||
-                        (spellInfo_2->Id == 28093 && spellInfo_1->Id == 42084))
-                        return false;
-
                     // Soulstone Resurrection and Twisting Nether (resurrector)
                     if (spellInfo_1->SpellIconID == 92 && spellInfo_2->SpellIconID == 92 && (
                         (spellInfo_1->SpellVisual[0] == 99 && spellInfo_2->SpellVisual[0] == 0) ||
@@ -4327,6 +4317,9 @@ DiminishingGroup GetDiminishingReturnsGroupForSpell(SpellEntry const* spellproto
             // Hamstring - limit duration to 10s in PvP
             if (spellproto->SpellFamilyFlags & UI64LIT(0x00000000002))
                 return DIMINISHING_LIMITONLY;
+            // Charge - since 3.1.0
+            if (spellproto->Id == 7922)
+                return DIMINISHING_CHARGE;
             break;
         }
         case SPELLFAMILY_PRIEST:

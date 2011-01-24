@@ -212,7 +212,7 @@ pEffect SpellEffects[TOTAL_SPELL_EFFECTS]=
     &Spell::EffectCharge2,                                  //149 SPELL_EFFECT_CHARGE2                  swoop
     &Spell::EffectQuestStart,                               //150 SPELL_EFFECT_QUEST_START
     &Spell::EffectTriggerRitualOfSummoning,                 //151 SPELL_EFFECT_TRIGGER_SPELL_2
-    &Spell::EffectNULL,                                     //152 SPELL_EFFECT_152                      summon Refer-a-Friend
+    &Spell::EffectFriendSummon,                             //152 SPELL_EFFECT_FRIEND_SUMMON    summon Refer-a-Friend
     &Spell::EffectNULL,                                     //153 SPELL_EFFECT_CREATE_PET               misc value is creature entry
     &Spell::EffectTeachTaxiNode,                            //154 SPELL_EFFECT_TEACH_TAXI_NODE          single spell: Teach River's Heart Taxi Path
     &Spell::EffectTitanGrip,                                //155 SPELL_EFFECT_TITAN_GRIP Allows you to equip two-handed axes, maces and swords in one hand, but you attack $49152s1% slower than normal.
@@ -4992,8 +4992,7 @@ void Spell::EffectPickPocket(SpellEffectIndex /*eff_idx*/)
         {
             // Reveal action + get attack
             m_caster->RemoveSpellsCausingAura(SPELL_AURA_MOD_STEALTH);
-            if (((Creature*)unitTarget)->AI())
-                ((Creature*)unitTarget)->AI()->AttackedBy(m_caster);
+            unitTarget->AttackedBy(m_caster);
         }
     }
 }
@@ -5834,7 +5833,7 @@ void Spell::EffectWeaponDmg(SpellEffectIndex eff_idx)
             // Rend and Tear ( on Maul / Shred )
             if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000000000008800))
             {
-                if(unitTarget && unitTarget->HasAuraState(AURA_STATE_MECHANIC_BLEED))
+                if(unitTarget && unitTarget->HasAuraState(AURA_STATE_BLEEDING))
                 {
                     Unit::AuraList const& aura = m_caster->GetAurasByType(SPELL_AURA_DUMMY);
                     for(Unit::AuraList::const_iterator itr = aura.begin(); itr != aura.end(); ++itr)
@@ -6501,7 +6500,7 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     return;
                 }
                 case 43375:
-                case 43972:        // Mixing Blood for Quest 11306
+                case 43972:                                // Mixing Blood for Quest 11306 
                 {
                     switch(urand(0, 2))
                     {
@@ -6781,6 +6780,11 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     unitTarget->CastSpell(unitTarget, 32756, true);
                     return;
                 }
+                case 49380:                                 // Consume: Spell of Trollgore nonhero
+                {
+                    m_caster->CastSpell(m_caster,49381,true);
+                    return;
+                }
                 case 50217:                                 // The Cleansing: Script Effect Player Cast Mirror Image
                 {
                     // Summon Your Inner Turmoil
@@ -7011,6 +7015,26 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     unitTarget->RemoveSpellsCausingAura(SPELL_AURA_MOD_STUN);
                     return;
                 }
+                // Glyph of Starfire
+                case 54846:
+                {
+                    if (Aura* aura = unitTarget->GetAura(SPELL_AURA_PERIODIC_DAMAGE, SPELLFAMILY_DRUID, UI64LIT(0x00000002), 0, m_caster->GetGUID()))
+                    {
+                        uint32 countMin = aura->GetAuraMaxDuration();
+                        uint32 countMax = GetSpellMaxDuration(aura->GetSpellProto());
+                        countMax += 9000;
+                        countMax += m_caster->HasAura(38414) ? 3000 : 0;
+                        countMax += m_caster->HasAura(57865) ? 3000 : 0;
+
+                        if (countMin < countMax)
+                        {
+                            aura->SetAuraDuration(aura->GetAuraDuration() + 3000);
+                            aura->SetAuraMaxDuration(countMin + 3000);
+                            aura->GetHolder()->SendAuraUpdate(false);
+                        }
+                    }
+                    return;
+                }
                 case 55328:                                    // Stoneclaw Totem I
                 case 55329:                                    // Stoneclaw Totem II
                 case 55330:                                    // Stoneclaw Totem III
@@ -7096,7 +7120,13 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                         unitTarget->CastSpell(unitTarget, 59314, true);
 
                     return;
-                }                                           // random spell learn instead placeholder
+                }
+                case 59803:                                 // Consume: Spell of Trollgore hero
+                {
+                    m_caster->CastSpell(m_caster,59805,true);
+                    return;
+                }
+                                                            // random spell learn instead placeholder
                 case 60893:                                 // Northrend Alchemy Research
                 case 61177:                                 // Northrend Inscription Research
                 case 61288:                                 // Minor Inscription Research
@@ -7269,6 +7299,32 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
 
                     m_caster->CastSpell(unitTarget, 72588, true);
                     return;
+                }
+                //Glyph of Scourge Strike
+                case 69961:
+                {
+                    Unit::SpellAuraHolderMap const& auras = unitTarget->GetSpellAuraHolderMap();
+                    for(Unit::SpellAuraHolderMap::const_iterator itr = auras.begin(); itr!=auras.end(); ++itr)
+                    {
+                        if (itr->second->GetSpellProto()->Dispel == DISPEL_DISEASE &&
+                            itr->second->GetCasterGuid() == m_caster->GetGUID())
+                        if (Aura* aura =itr->second->GetAuraByEffectIndex(EFFECT_INDEX_0))
+                        {
+                            uint32 countMin = aura->GetAuraMaxDuration();
+                            uint32 countMax = GetSpellMaxDuration(aura->GetSpellProto());
+                            countMax += 9000;
+                            countMax += m_caster->HasAura(49036) ? 3000 : 0; //Epidemic (Rank 1)
+                            countMax += m_caster->HasAura(49562) ? 6000 : 0; //Epidemic (Rank 2)
+
+                            if (countMin < countMax)
+                            {
+                                aura->SetAuraDuration(aura->GetAuraDuration() + 3000);
+                                aura->SetAuraMaxDuration(countMin + 3000);
+                                aura->GetHolder()->SendAuraUpdate(false);
+                            }
+                        }
+                    }
+                return;
                 }
                 case 70117:                                 // Ice grip (Sindragosa pull effect)
                 {
@@ -9454,4 +9510,20 @@ void Spell::EffectWMOChange(SpellEffectIndex eff_idx)
     else
         DEBUG_LOG( "Spell::EffectWMORepair called, but no valid targets. Spell ID %u", m_spellInfo->Id);
 
+}
+
+void Spell::EffectFriendSummon( SpellEffectIndex eff_idx )
+{
+    if (m_caster->GetTypeId() != TYPEID_PLAYER)
+        return;
+
+    if (((Player*)m_caster)->GetSelectionGuid().IsEmpty() || !((Player*)m_caster)->GetSelectionGuid().IsPlayer())
+    {
+        DEBUG_LOG( "Spell::EffectFriendSummon is called, but no selection or selection is not player");
+        return;
+    }
+
+    DEBUG_LOG( "Spell::EffectFriendSummon called for player %u", ((Player*)m_caster)->GetSelectionGuid().GetCounter());
+
+    m_caster->CastSpell(m_caster, m_spellInfo->EffectTriggerSpell[eff_idx], true);
 }

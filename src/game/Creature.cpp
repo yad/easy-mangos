@@ -1446,6 +1446,10 @@ void Creature::SetDeathState(DeathState s)
             UpdateSpeed(MOVE_RUN, false);
         }
 
+        // FIXME: may not be blizzlike
+        if (Pet* pet = GetPet())
+            pet->Unsummon(PET_SAVE_AS_DELETED, this);
+
         // return, since we promote to CORPSE_FALLING. CORPSE_FALLING is promoted to CORPSE at next update.
         if (CanFly() && FallGround())
             return;
@@ -1732,7 +1736,8 @@ void Creature::SendAIReaction(AiReaction reactionType)
 
 void Creature::CallAssistance()
 {
-    if( !m_AlreadyCallAssistance && getVictim() && !IsPet() && !isCharmed())
+    // FIXME: should player pets call for assistance?
+    if (!m_AlreadyCallAssistance && getVictim() && !isCharmed())
     {
         SetNoCallAssistance(true);
 
