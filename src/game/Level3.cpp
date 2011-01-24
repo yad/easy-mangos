@@ -8713,31 +8713,6 @@ bool ChatHandler::HandleGMStartUpCommand(char* args)
     return true;
 }
 
-bool ChatHandler::HandleGMKillerMode(char* args)
-{
-    if (!*args)
-        return false;
-
-    Player* chr = m_session->GetPlayer();
-
-    if (strncmp(args, "on", 3) == 0)
-    {
-        chr->SetInKillerMode(true);
-        SendSysMessage("Killer Mode ON");
-    }
-    else if (strncmp(args, "off", 4) == 0)
-    {
-        chr->SetInKillerMode(false);
-        SendSysMessage("Killer Mode OFF");
-    }
-    else
-    {
-        SendSysMessage(LANG_USE_BOL);
-        return false;
-    }
-    return true;
-}
-
 bool ChatHandler::HandleBotInvite(char* args)
 {
     if (!*args)
@@ -8913,74 +8888,3 @@ bool ChatHandler::HandleMmapTestArea(char* args)
 
     return true;
 }
-
-// Set friends for account
-bool ChatHandler::HandleAccountFriendAddCommand(char* args)
-{
-    ///- Get the command line arguments
-    std::string account_name;
-    uint32 targetAccountId = ExtractAccountId(&args, &account_name);
-
-    if (!targetAccountId)
-        return false;
-
-    std::string account_friend_name;
-    uint32 friendAccountId = ExtractAccountId(&args, &account_friend_name);
-
-    if (!friendAccountId)
-        return false;
-
-    AccountOpResult result = sAccountMgr.AddRAFLink(targetAccountId, friendAccountId);
-
-    switch(result)
-    {
-        case AOR_OK:
-            SendSysMessage(LANG_COMMAND_FRIEND);
-            break;
-        default:
-            SendSysMessage(LANG_COMMAND_FRIEND_ERROR);
-            SetSentErrorMessage(true);
-            return false;
-    }
-
-    return true;
-}
-
-// Delete friends for account
-bool ChatHandler::HandleAccountFriendDeleteCommand(char* args)
-{
-    ///- Get the command line arguments
-    std::string account_name;
-    uint32 targetAccountId = ExtractAccountId(&args, &account_name);
-
-    if (!targetAccountId)
-        return false;
-
-    std::string account_friend_name;
-    uint32 friendAccountId = ExtractAccountId(&args, &account_friend_name);
-
-    if (!friendAccountId)
-        return false;
-
-    AccountOpResult result = sAccountMgr.DeleteRAFLink(targetAccountId, friendAccountId);
-
-    switch(result)
-    {
-        case AOR_OK:
-            SendSysMessage(LANG_COMMAND_FRIEND);
-            break;
-        default:
-            SendSysMessage(LANG_COMMAND_FRIEND_ERROR);
-            SetSentErrorMessage(true);
-            return false;
-    }
-
-    return true;
-}
-
-// List friends for account
-bool ChatHandler::HandleAccountFriendListCommand(char* args)
-{
-    return false;
-}
-

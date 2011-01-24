@@ -141,10 +141,6 @@ class ChatHandler
         bool HandleAHBotOptionsCommand(char* args);
         bool HandleBotInvite(char* args);
 
-        bool HandleAccountFriendAddCommand(char* args);
-        bool HandleAccountFriendDeleteCommand(char* args);
-        bool HandleAccountFriendListCommand(char* args);
-
         bool HandleAuctionAllianceCommand(char* args);
         bool HandleAuctionGoblinCommand(char* args);
         bool HandleAuctionHordeCommand(char* args);
@@ -239,7 +235,6 @@ class ChatHandler
         bool HandleGMListFullCommand(char* args);
         bool HandleGMListIngameCommand(char* args);
         bool HandleGMVisibleCommand(char* args);
-        bool HandleGMKillerMode(char* args);
 
         bool HandleGoCreatureCommand(char* args);
         bool HandleGoGraveyardCommand(char* args);
@@ -289,7 +284,6 @@ class ChatHandler
         bool HandleLookupAccountEmailCommand(char* args);
         bool HandleLookupAccountIpCommand(char* args);
         bool HandleLookupAccountNameCommand(char* args);
-
         bool HandleLookupAchievementCommand(char* args);
         bool HandleLookupAreaCommand(char* args);
         bool HandleLookupCreatureCommand(char* args);

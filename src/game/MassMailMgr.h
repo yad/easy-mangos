@@ -122,7 +122,6 @@ class MassMailMgr
 
         /// List of current queued mass mail tasks
         MassMailList m_massMails;
-
 };
 
 #define sMassMailMgr MaNGOS::Singleton<MassMailMgr>::Instance()

@@ -74,14 +74,6 @@ ChatCommand * ChatHandler::getCommandTable()
         { NULL,             0,                  false, NULL,                                           "", NULL }
     };
 
-    static ChatCommand accountFriendCommandTable[] =
-    {
-        { "add"  ,          SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleAccountFriendAddCommand,    "", NULL },
-        { "delete",         SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleAccountFriendDeleteCommand, "", NULL },
-        { "list",           SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleAccountFriendListCommand,   "", NULL },
-        { NULL,             0,                  false, NULL,                                           "", NULL }
-    };
-
     static ChatCommand accountCommandTable[] =
     {
         { "characters",     SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleAccountCharactersCommand,   "", NULL },
@@ -90,7 +82,6 @@ ChatCommand * ChatHandler::getCommandTable()
         { "onlinelist",     SEC_CONSOLE,        true,  &ChatHandler::HandleAccountOnlineListCommand,   "", NULL },
         { "lock",           SEC_PLAYER,         true,  &ChatHandler::HandleAccountLockCommand,         "", NULL },
         { "set",            SEC_ADMINISTRATOR,  true,  NULL,                                           "", accountSetCommandTable },
-        { "friend",         SEC_ADMINISTRATOR,  true,  NULL,                                           "", accountFriendCommandTable },
         { "password",       SEC_PLAYER,         true,  &ChatHandler::HandleAccountPasswordCommand,     "", NULL },
         { "",               SEC_PLAYER,         true,  &ChatHandler::HandleAccountCommand,             "", NULL },
         { NULL,             0,                  false, NULL,                                           "", NULL }
@@ -243,7 +234,6 @@ ChatCommand * ChatHandler::getCommandTable()
         { "list",           SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleGMListFullCommand,          "", NULL },
         { "visible",        SEC_MODERATOR,      false, &ChatHandler::HandleGMVisibleCommand,           "", NULL },
         { "startup",        SEC_ADMINISTRATOR,  false, &ChatHandler::HandleGMStartUpCommand,           "", NULL },
-        { "killermode",     SEC_ADMINISTRATOR,  false, &ChatHandler::HandleGMKillerMode,               "", NULL },
         { "",               SEC_MODERATOR,      false, &ChatHandler::HandleGMCommand,                  "", NULL },
         { NULL,             0,                  false, NULL,                                           "", NULL }
     };
