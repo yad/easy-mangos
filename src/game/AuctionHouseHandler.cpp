@@ -29,6 +29,7 @@
 #include "Mail.h"
 #include "Util.h"
 #include "Chat.h"
+#include "AuctionHouseBot/AuctionHouseBot.h"
 
 // please DO NOT use iterator++, because it is slower than ++iterator!!!
 // post-incrementation is always slower than pre-incrementation !
@@ -122,12 +123,15 @@ void WorldSession::SendAuctionOutbiddedMail(AuctionEntry *auction, uint32 newPri
         std::ostringstream msgAuctionOutbiddedSubject;
         msgAuctionOutbiddedSubject << auction->item_template << ":0:" << AUCTION_OUTBIDDED << ":0:0";
 
-        if (oldBidder)
-            oldBidder->GetSession()->SendAuctionBidderNotification(
-                auction->GetHouseId(), auction->Id, _player->GetObjectGuid(),
-                newPrice, auction->GetAuctionOutBid(), auction->item_template);
+        // Added for AHBot
+        if (oldBidder && !_player)
+            oldBidder->GetSession()->SendAuctionBidderNotification( auction->GetHouseId(), auction->Id, auctionbot.GetAHBObjectGuid(), newPrice, auction->GetAuctionOutBid(), auction->item_template);
 
-        MailDraft(msgAuctionOutbiddedSubject.str(), "")     // TODO: fix body
+        // Modified for AHBot
+        if (oldBidder && _player)
+            oldBidder->GetSession()->SendAuctionBidderNotification( auction->GetHouseId(), auction->Id, _player->GetObjectGuid(), newPrice, auction->GetAuctionOutBid(), auction->item_template);
+
+			MailDraft(msgAuctionOutbiddedSubject.str(), "")     // TODO: fix body
             .SetMoney(auction->bid)
             .SendMailTo(MailReceiver(oldBidder, oldBidder_guid), auction, MAIL_CHECK_MASK_COPIED);
     }

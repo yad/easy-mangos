@@ -32,6 +32,8 @@
 #include "NPCHandler.h"
 #include "Pet.h"
 #include "MapManager.h"
+#include "Config/Config.h"
+#include "AuctionHouseBot/AuctionHouseBot.h"
 
 void WorldSession::SendNameQueryOpcode(Player *p)
 {
@@ -124,6 +126,23 @@ void WorldSession::SendNameQueryOpcodeFromDBCallBack(QueryResult *result, uint32
     delete result;
 }
 
+// Added By AHBot
+// Fake name for AHBot Guid
+void WorldSession::SendFakeNameForAHBotQueryOPcode()
+{
+                                                                        // guess size
+    WorldPacket data( SMSG_NAME_QUERY_RESPONSE, (8+1+1+1+1+1+10) );
+    data.appendPackGUID(auctionbot.GetAHBObjectGuid().GetRawValue());
+    data << uint8(0);                                                   // added in 3.1; if > 1, then end of packet
+    data << auctionbot.GetAHBotName();                                  // played name
+    data << uint8(0);                                                   // realm name for cross realm BG usage
+    data << uint8(0);                                                   // race
+    data << uint8(0);                                                   // gender
+    data << uint8(0);                                                   // class
+    data << uint8(0);                                                   // is not declined
+    SendPacket(&data);
+}
+
 void WorldSession::HandleNameQueryOpcode( WorldPacket & recv_data )
 {
     ObjectGuid guid;
@@ -131,11 +150,13 @@ void WorldSession::HandleNameQueryOpcode( WorldPacket & recv_data )
     recv_data >> guid;
 
     Player *pChar = sObjectMgr.GetPlayer(guid);
-
     if (pChar)
         SendNameQueryOpcode(pChar);
     else
-        SendNameQueryOpcodeFromDB(guid);
+        if (guid!=auctionbot.GetAHBObjectGuid().GetRawValue())
+            SendNameQueryOpcodeFromDB(guid);
+        else
+            SendFakeNameForAHBotQueryOPcode();
 }
 
 void WorldSession::HandleQueryTimeOpcode( WorldPacket & /*recv_data*/ )

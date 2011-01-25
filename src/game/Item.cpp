@@ -681,6 +681,44 @@ void Item::SetItemRandomProperties(int32 randomPropId)
     }
 }
 
+// Added by AHBot
+// Like SetItemRandomProperties() but no call of SetState() because there is no owner of the item
+void Item::SetItemRandomPropertiesNoUpdate(int32 randomPropId)
+{
+    if(!randomPropId)
+        return;
+
+    if(randomPropId > 0)
+    {
+        ItemRandomPropertiesEntry const *item_rand = sItemRandomPropertiesStore.LookupEntry(randomPropId);
+        if(item_rand)
+        {
+            if(GetInt32Value(ITEM_FIELD_RANDOM_PROPERTIES_ID) != int32(item_rand->ID))
+            {
+                SetInt32Value(ITEM_FIELD_RANDOM_PROPERTIES_ID,item_rand->ID);
+            }
+            for(uint32 i = PROP_ENCHANTMENT_SLOT_2; i < PROP_ENCHANTMENT_SLOT_2 + 3; ++i)
+                SetEnchantmentNoUpdate(EnchantmentSlot(i),item_rand->enchant_id[i - PROP_ENCHANTMENT_SLOT_2],0,0);
+        }
+    }
+    else
+    {
+        ItemRandomSuffixEntry const *item_rand = sItemRandomSuffixStore.LookupEntry(-randomPropId);
+        if(item_rand)
+        {
+            if( GetInt32Value(ITEM_FIELD_RANDOM_PROPERTIES_ID) != -int32(item_rand->ID) ||
+                !GetItemSuffixFactor())
+            {
+                SetInt32Value(ITEM_FIELD_RANDOM_PROPERTIES_ID,-int32(item_rand->ID));
+                UpdateItemSuffixFactor();
+            }
+
+            for(uint32 i = PROP_ENCHANTMENT_SLOT_0; i < PROP_ENCHANTMENT_SLOT_0 + 3; ++i)
+                SetEnchantmentNoUpdate(EnchantmentSlot(i),item_rand->enchant_id[i - PROP_ENCHANTMENT_SLOT_0],0,0);
+        }
+    }
+}
+
 bool Item::UpdateItemSuffixFactor()
 {
     uint32 suffixFactor = GenerateEnchSuffixFactor(GetEntry());
@@ -884,6 +922,19 @@ void Item::SetEnchantment(EnchantmentSlot slot, uint32 id, uint32 duration, uint
     SetUInt32Value(ITEM_FIELD_ENCHANTMENT_1_1 + slot*MAX_ENCHANTMENT_OFFSET + ENCHANTMENT_DURATION_OFFSET,duration);
     SetUInt32Value(ITEM_FIELD_ENCHANTMENT_1_1 + slot*MAX_ENCHANTMENT_OFFSET + ENCHANTMENT_CHARGES_OFFSET,charges);
     SetState(ITEM_CHANGED);
+}
+
+// Added by AHBot
+// Like SetEnchantment() but no call of SetState() because there is no owner of the item
+void Item::SetEnchantmentNoUpdate(EnchantmentSlot slot, uint32 id, uint32 duration, uint32 charges)
+{
+    // Better lost small time at check in comparison lost time at item save to DB.
+    if((GetEnchantmentId(slot) == id) && (GetEnchantmentDuration(slot) == duration) && (GetEnchantmentCharges(slot) == charges))
+        return;
+
+    SetUInt32Value(ITEM_FIELD_ENCHANTMENT_1_1 + slot*MAX_ENCHANTMENT_OFFSET + ENCHANTMENT_ID_OFFSET,id);
+    SetUInt32Value(ITEM_FIELD_ENCHANTMENT_1_1 + slot*MAX_ENCHANTMENT_OFFSET + ENCHANTMENT_DURATION_OFFSET,duration);
+    SetUInt32Value(ITEM_FIELD_ENCHANTMENT_1_1 + slot*MAX_ENCHANTMENT_OFFSET + ENCHANTMENT_CHARGES_OFFSET,charges);
 }
 
 void Item::SetEnchantmentDuration(EnchantmentSlot slot, uint32 duration)
