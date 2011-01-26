@@ -611,6 +611,8 @@ Player::Player (WorldSession *session): Unit(), m_mover(this), m_camera(this), m
     baseMoveSpeed[MOVE_FLIGHT] = 7.0f * sWorld.getConfig(CONFIG_FLOAT_RATE_CHARFLIGHTSPEED);
     baseMoveSpeed[MOVE_FLIGHT_BACK] = 4.5f;
     baseMoveSpeed[MOVE_PITCH_RATE] = 3.14f;
+
+    SetPendingBind(NULL, 0);
 }
 
 Player::~Player ()
@@ -2866,6 +2868,17 @@ void Player::Update( uint32 update_diff, uint32 p_time )
 
         if (m_drunkTimer > 10*IN_MILLISECONDS)
             HandleSobering();
+    }
+
+    if (HasPendingBind())
+    {
+        if (_pendingBindTimer <= p_time)
+        {
+            BindToInstance();
+            SetPendingBind(NULL, 0);
+        }
+        else
+            _pendingBindTimer -= p_time;
     }
 
     // not auto-free ghost from body in instances
@@ -18770,6 +18783,14 @@ InstanceSave* Player::GetBoundInstanceSaveForSelfOrGroup(uint32 mapid)
     }
 
     return pSave;
+}
+
+void Player::BindToInstance()
+{
+    WorldPacket data(SMSG_INSTANCE_SAVE_CREATED, 4);
+    data << uint32(0);
+    GetSession()->SendPacket(&data);
+    BindToInstance(_pendingBind, true);
 }
 
 void Player::SendRaidInfo()

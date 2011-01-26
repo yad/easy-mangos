@@ -28,7 +28,7 @@
 __fastcall thOpenFile::thOpenFile(bool CreateSuspended)
         : TThread(CreateSuspended)
 {
-     
+
 }
 //---------------------------------------------------------------------------
 void __fastcall thOpenFile::Execute()
@@ -57,7 +57,7 @@ void thOpenFile::ReadAndModifyFromBuff(char *pBuff, DWORD dwSize, const char* ps
     char szNewFileName[MAX_PATH];
     DWORD w;
         TIniFile *ini;
-        
+
 
     TypePtr p(pBuff);
     if('WDBC' != TAG(*p.dw))
@@ -95,14 +95,15 @@ void thOpenFile::ReadAndModifyFromBuff(char *pBuff, DWORD dwSize, const char* ps
         delete ini;
 
         //int   *ColType = new int[dwCols];
-        
-    DWORD dwTextStartPos = dwRows*dwRowLen+20;
-    char* pTextPtr = pBuff + dwTextStartPos;
-    char pszTemp[MAX_PATH];
-    float fTemp;
-    long lTemp;
-    DWORD i, j;
-    BOOL* pbString = new BOOL[dwRows*dwCols];
+
+	DWORD dwTextStartPos = dwRows*dwRowLen+20;
+	char* pTextPtr = pBuff + dwTextStartPos;
+	char pszTemp[MAX_PATH];
+	float fTemp;
+	long lTemp;
+	DWORD i, j;
+	BOOL* pbString = new BOOL[dwRows*dwCols];
+
         float newTmp;
         //int   ColType;
 

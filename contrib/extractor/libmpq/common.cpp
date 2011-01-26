@@ -98,29 +98,29 @@ int libmpq_decrypt_hashtable(mpq_archive *mpq_a, unsigned char *pbKey) {
  *  This function decrypts the blocktable.
  */
 int libmpq_decrypt_blocktable(mpq_archive *mpq_a, unsigned char *pbKey) {
-    unsigned int seed1 = 0x7FED7FED;
-    unsigned int seed2 = 0xEEEEEEEE;
-    unsigned int ch;            /* One key character */
-    unsigned int *pdwTable = (unsigned int *)(mpq_a->blocktable);
-    unsigned int length = mpq_a->header->blocktablesize * 4;
+	unsigned int seed1 = 0x7FED7FED;
+	unsigned int seed2 = 0xEEEEEEEE;
+	unsigned int ch;			/* One key character */
+	unsigned int *pdwTable = (unsigned int *)(mpq_a->blocktable);
+	unsigned int length = mpq_a->header->blocktablesize * 4;
 
-    /* Prepare seeds */
-    while(*pbKey != 0) {
-        ch = toupper(*pbKey++);
-        seed1 = mpq_a->buf[0x300 + ch] ^ (seed1 + seed2);
-        seed2 = ch + seed1 + seed2 + (seed2 << 5) + 3;
-    }         
+	/* Prepare seeds */
+	while(*pbKey != 0) {
+		ch = toupper(*pbKey++);
+		seed1 = mpq_a->buf[0x300 + ch] ^ (seed1 + seed2);
+		seed2 = ch + seed1 + seed2 + (seed2 << 5) + 3;
+	}
 
-    /* Decrypt it */
-    seed2 = 0xEEEEEEEE;
-    while(length-- > 0) {
-        seed2 += mpq_a->buf[0x400 + (seed1 & 0xFF)];
-        ch     = *pdwTable ^ (seed1 + seed2);
-        seed1  = ((~seed1 << 0x15) + 0x11111111) | (seed1 >> 0x0B);
-        seed2  = ch + seed2 + (seed2 << 5) + 3;
-        *pdwTable++ = ch;
-    }
-    return LIBMPQ_TOOLS_SUCCESS;
+	/* Decrypt it */
+	seed2 = 0xEEEEEEEE;
+	while(length-- > 0) {
+		seed2 += mpq_a->buf[0x400 + (seed1 & 0xFF)];
+		ch     = *pdwTable ^ (seed1 + seed2);
+		seed1  = ((~seed1 << 0x15) + 0x11111111) | (seed1 >> 0x0B);
+		seed2  = ch + seed2 + (seed2 << 5) + 3;
+		*pdwTable++ = ch;
+	}
+	return LIBMPQ_TOOLS_SUCCESS;
 }
 
 int libmpq_read_listfile(mpq_archive *mpq_a, FILE *fp) {
@@ -677,116 +677,116 @@ int libmpq_file_read_block(mpq_archive *mpq_a, mpq_file *mpq_f, unsigned int blo
 }
 
 int libmpq_file_read_file(mpq_archive *mpq_a, mpq_file *mpq_f, unsigned int filepos, char *buffer, unsigned int toread) {
-    unsigned int bytesread = 0;            /* Number of bytes read from the file */
-    unsigned int blockpos;                /* Position in the file aligned to the whole blocks */
-    unsigned int loaded = 0;
+	unsigned int bytesread = 0;			/* Number of bytes read from the file */
+	unsigned int blockpos;				/* Position in the file aligned to the whole blocks */
+	unsigned int loaded = 0;
 
-    /* File position is greater or equal to file size? */
-    if (filepos >= mpq_f->mpq_b->fsize) {
-        return 0;
-    }
+	/* File position is greater or equal to file size? */
+	if (filepos >= mpq_f->mpq_b->fsize) {
+		return 0;
+	}
 
-    /* If to few bytes in the file remaining, cut them */
-    if ((mpq_f->mpq_b->fsize - filepos) < toread) {
-        toread = (mpq_f->mpq_b->fsize - filepos);
-    }
+	/* If to few bytes in the file remaining, cut them */
+	if ((mpq_f->mpq_b->fsize - filepos) < toread) {
+		toread = (mpq_f->mpq_b->fsize - filepos);
+	}
 
-    /* Block position in the file */
-    blockpos = filepos & ~(mpq_a->blocksize - 1);
+	/* Block position in the file */
+	blockpos = filepos & ~(mpq_a->blocksize - 1);
 
-    /*
-     *  Load the first block, if noncomplete. It may be loaded in the cache buffer.
-     *  We have to check if this block is loaded. If not, load it.
-     */
-    if ((filepos % mpq_a->blocksize) != 0) {
-        /* Number of bytes remaining in the buffer */
-        unsigned int tocopy;
-        unsigned int loaded = mpq_a->blocksize;
+	/*
+	 *  Load the first block, if noncomplete. It may be loaded in the cache buffer.
+	 *  We have to check if this block is loaded. If not, load it.
+	 */
+	if ((filepos % mpq_a->blocksize) != 0) {
+		/* Number of bytes remaining in the buffer */
+		unsigned int tocopy;
+		unsigned int loaded = mpq_a->blocksize;
 
-        /* Check if data are loaded in the cache */
-        if (mpq_f->accessed == FALSE || blockpos != mpq_a->blockpos) {   
+		/* Check if data are loaded in the cache */
+		if (mpq_f->accessed == FALSE || blockpos != mpq_a->blockpos) {
 
-            /* Load one MPQ block into archive buffer */
-            loaded = libmpq_file_read_block(mpq_a, mpq_f, blockpos, (char *)mpq_a->blockbuf, mpq_a->blocksize);
-            if (loaded == 0) {
-                return 0;
-            }
+			/* Load one MPQ block into archive buffer */
+			loaded = libmpq_file_read_block(mpq_a, mpq_f, blockpos, (char *)mpq_a->blockbuf, mpq_a->blocksize);
+			if (loaded == 0) {
+				return 0;
+			}
 
-            /* Save lastly accessed file and block position for later use */
-            mpq_f->accessed = TRUE;
-            mpq_a->blockpos = blockpos;
-            mpq_a->bufpos   = filepos % mpq_a->blocksize;
-        }
-        tocopy = loaded - mpq_a->bufpos;
-        if (tocopy > toread) {
-            tocopy = toread;
-        }
+			/* Save lastly accessed file and block position for later use */
+			mpq_f->accessed = TRUE;
+			mpq_a->blockpos = blockpos;
+			mpq_a->bufpos   = filepos % mpq_a->blocksize;
+		}
+		tocopy = loaded - mpq_a->bufpos;
+		if (tocopy > toread) {
+			tocopy = toread;
+		}
 
-        /* Copy data from block buffer into target buffer */
-        memcpy(buffer, mpq_a->blockbuf + mpq_a->bufpos, tocopy);
+		/* Copy data from block buffer into target buffer */
+		memcpy(buffer, mpq_a->blockbuf + mpq_a->bufpos, tocopy);
 
-        /* Update pointers */
-        toread        -= tocopy;
-        bytesread     += tocopy;
-        buffer        += tocopy;
-        blockpos      += mpq_a->blocksize;
-        mpq_a->bufpos += tocopy;
+		/* Update pointers */
+		toread        -= tocopy;
+		bytesread     += tocopy;
+		buffer        += tocopy;
+		blockpos      += mpq_a->blocksize;
+		mpq_a->bufpos += tocopy;
 
-        /* If all, return. */
-        if (toread == 0) {
-            return bytesread;
-        }
-    }
+		/* If all, return. */
+		if (toread == 0) {
+			return bytesread;
+		}
+	}
 
-    /* Load the whole ("middle") blocks only if there are more or equal one block */
-    if (toread > mpq_a->blocksize) {
-        unsigned int blockbytes = toread & ~(mpq_a->blocksize - 1);
-        loaded = libmpq_file_read_block(mpq_a, mpq_f, blockpos, buffer, blockbytes);
-        if (loaded == 0) {
-            return 0;
-        }
+	/* Load the whole ("middle") blocks only if there are more or equal one block */
+	if (toread > mpq_a->blocksize) {
+		unsigned int blockbytes = toread & ~(mpq_a->blocksize - 1);
+		loaded = libmpq_file_read_block(mpq_a, mpq_f, blockpos, buffer, blockbytes);
+		if (loaded == 0) {
+			return 0;
+		}
 
-        /* Update pointers */
-        toread    -= loaded;
-        bytesread += loaded;
-        buffer    += loaded;
-        blockpos  += loaded;
+		/* Update pointers */
+		toread    -= loaded;
+		bytesread += loaded;
+		buffer    += loaded;
+		blockpos  += loaded;
 
-        /* If all, return. */
-        if (toread == 0) {
-            return bytesread;
-        }
-    }
+		/* If all, return. */
+		if (toread == 0) {
+			return bytesread;
+		}
+	}
 
-    /* Load the terminating block */
-    if (toread > 0) {
-        unsigned int tocopy = mpq_a->blocksize;
+	/* Load the terminating block */
+	if (toread > 0) {
+		unsigned int tocopy = mpq_a->blocksize;
 
-        /* Check if data are loaded in the cache */
-        if (mpq_f->accessed == FALSE || blockpos != mpq_a->blockpos) {
+		/* Check if data are loaded in the cache */
+		if (mpq_f->accessed == FALSE || blockpos != mpq_a->blockpos) {
 
-            /* Load one MPQ block into archive buffer */
-            tocopy = libmpq_file_read_block(mpq_a, mpq_f, blockpos, (char *)mpq_a->blockbuf, mpq_a->blocksize);
-            if (tocopy == 0) {
-                return 0;
-            }
+			/* Load one MPQ block into archive buffer */
+			tocopy = libmpq_file_read_block(mpq_a, mpq_f, blockpos, (char *)mpq_a->blockbuf, mpq_a->blocksize);
+			if (tocopy == 0) {
+				return 0;
+			}
 
-            /* Save lastly accessed file and block position for later use */
-            mpq_f->accessed = TRUE;
-            mpq_a->blockpos = blockpos;
-        }
-        mpq_a->bufpos  = 0;
+			/* Save lastly accessed file and block position for later use */
+			mpq_f->accessed = TRUE;
+			mpq_a->blockpos = blockpos;
+		}
+		mpq_a->bufpos  = 0;
 
-        /* Check number of bytes read */
-        if (tocopy > toread) {
-            tocopy = toread;
-        }
+		/* Check number of bytes read */
+		if (tocopy > toread) {
+			tocopy = toread;
+		}
 
-        memcpy(buffer, mpq_a->blockbuf, tocopy);
-        bytesread     += tocopy;
-        mpq_a->bufpos  = tocopy;
-    }
+		memcpy(buffer, mpq_a->blockbuf, tocopy);
+		bytesread     += tocopy;
+		mpq_a->bufpos  = tocopy;
+	}
 
-    /* Return what we've read */
-    return bytesread;
+	/* Return what we've read */
+	return bytesread;
 }
