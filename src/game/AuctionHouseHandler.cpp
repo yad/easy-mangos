@@ -131,7 +131,7 @@ void WorldSession::SendAuctionOutbiddedMail(AuctionEntry *auction, uint32 newPri
         if (oldBidder && _player)
             oldBidder->GetSession()->SendAuctionBidderNotification( auction->GetHouseId(), auction->Id, _player->GetObjectGuid(), newPrice, auction->GetAuctionOutBid(), auction->item_template);
 
-        MailDraft(msgAuctionOutbiddedSubject.str(), "")     // TODO: fix body
+			MailDraft(msgAuctionOutbiddedSubject.str(), "")     // TODO: fix body
             .SetMoney(auction->bid)
             .SendMailTo(MailReceiver(oldBidder, oldBidder_guid), auction, MAIL_CHECK_MASK_COPIED);
     }
