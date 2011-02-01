@@ -354,11 +354,6 @@ void WorldSession::HandleGroupDisbandOpcode( WorldPacket & /*recv_data*/ )
     /** error handling **/
     /********************/
 
-    PlayerbotMgr::RemoveAllBotsFromGroup(GetPlayer());
-
-    if(!GetPlayer()->GetGroup())
-        return;
-
     // everything is fine, do it
     SendPartyResult(PARTY_OP_LEAVE, GetPlayer()->GetName(), ERR_PARTY_RESULT_OK);
 

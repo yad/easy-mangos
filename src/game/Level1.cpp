@@ -399,11 +399,11 @@ bool ChatHandler::HandleNamegoCommand(char* args)
                     PlayerbotAI* ai = target->GetPlayerbotAI();
                     if (!ai)
                         return false;
-                    Player* master = target->GetPlayerbotAI()->GetMaster();
-                    if (!master)
+                    Player* leader = target->GetPlayerbotAI()->GetLeader();
+                    if (!leader)
                         return false;
 
-                    if (master == target)
+                    if (leader == target)
                     {
                         if (target->GetBattleGroundId() && m_session->GetPlayer()->GetBattleGroundId() != target->GetBattleGroundId())
                             return false;
@@ -438,17 +438,17 @@ bool ChatHandler::HandleNamegoCommand(char* args)
                     }
                     else
                     {
-                        if (!master->GetBattleGround())
+                        if (!leader->GetBattleGround())
                             return false;
 
                         if (pMap->IsBattleArena())
                         {
                             uint32 a_id = 0;
-                            switch(master->GetBattleGround()->GetArenaType())
+                            switch(leader->GetBattleGround()->GetArenaType())
                             {
-                                case ARENA_TYPE_2v2: a_id = master->GetArenaTeamId(0); break;
-                                case ARENA_TYPE_3v3: a_id = master->GetArenaTeamId(1); break;
-                                case ARENA_TYPE_5v5: a_id = master->GetArenaTeamId(2); break;
+                                case ARENA_TYPE_2v2: a_id = leader->GetArenaTeamId(0); break;
+                                case ARENA_TYPE_3v3: a_id = leader->GetArenaTeamId(1); break;
+                                case ARENA_TYPE_5v5: a_id = leader->GetArenaTeamId(2); break;
                             }
                             if(a_id == 0) return false;
                             bool ok = false;

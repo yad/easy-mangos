@@ -257,11 +257,11 @@ void
 MapManager::Update(uint32 diff)
 {
     i_timer.Update(diff);
-    if( !i_timer.Passed())
+    if( !i_timer.Passed() )
         return;
 
-    for (MapMapType::iterator iter=i_maps.begin(); iter != i_maps.end(); ++iter)
-            iter->second->Update((uint32)i_timer.GetCurrent());
+    for(MapMapType::iterator iter=i_maps.begin(); iter != i_maps.end(); ++iter)
+        iter->second->Update((uint32)i_timer.GetCurrent());
 
     for (TransportSet::iterator iter = m_Transports.begin(); iter != m_Transports.end(); ++iter)
     {
