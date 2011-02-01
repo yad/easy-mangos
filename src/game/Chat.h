@@ -284,6 +284,7 @@ class ChatHandler
         bool HandleLookupAccountEmailCommand(char* args);
         bool HandleLookupAccountIpCommand(char* args);
         bool HandleLookupAccountNameCommand(char* args);
+
         bool HandleLookupAchievementCommand(char* args);
         bool HandleLookupAreaCommand(char* args);
         bool HandleLookupCreatureCommand(char* args);
