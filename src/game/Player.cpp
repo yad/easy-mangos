@@ -2674,11 +2674,13 @@ void Player::Update( uint32 update_diff, uint32 p_time )
             // default combat reach 10
             // TODO add weapon,skill check
 
-            float pldistance = ATTACK_DISTANCE;
+            float dist = pVictim->GetTypeId() == TYPEID_PLAYER ? ATTACK_DISTANCE : (GetFloatValue(UNIT_FIELD_COMBATREACH) + pVictim->GetFloatValue(UNIT_FIELD_COMBATREACH));
+            // Check for creatures that somehow have lower combat-reach than minimal attack distance
+            if (dist < ATTACK_DISTANCE) dist = ATTACK_DISTANCE;
 
             if (isAttackReady(BASE_ATTACK))
             {
-                if(!IsWithinDistInMap(pVictim, pldistance))
+                if(!IsWithinDistInMap(pVictim, dist))
                 {
                     setAttackTimer(BASE_ATTACK,100);
                     if(m_swingErrorMsg != 1)                // send single time (client auto repeat)
@@ -2715,7 +2717,7 @@ void Player::Update( uint32 update_diff, uint32 p_time )
 
             if ( haveOffhandWeapon() && isAttackReady(OFF_ATTACK))
             {
-                if(!IsWithinDistInMap(pVictim, pldistance))
+                if(!IsWithinDistInMap(pVictim, dist))
                 {
                     setAttackTimer(OFF_ATTACK,100);
                 }
@@ -3260,7 +3262,7 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
         if(!GetSession()->PlayerLogout())
         {
             WorldPacket data;
-            BuildTeleportAckMsg(&data, x, y, z, orientation);
+            BuildTeleportAckMsg(data, x, y, z, orientation);
             GetSession()->SendPacket(&data);
         }
     }
@@ -4024,7 +4026,24 @@ void Player::GiveXP(uint32 xp, Unit* victim)
         newXP -= nextLvlXP;
 
         if ( level < sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL) )
+        {
             GiveLevel(level + 1);
+            level = getLevel();
+            // Refer-A-Friend
+            if (GetAccountLinkedState() == STATE_REFERRAL || GetAccountLinkedState() == STATE_DUAL)
+            {
+                if (level < sWorld.getConfig(CONFIG_UINT32_RAF_MAXGRANTLEVEL))
+                {
+                    if (sWorld.getConfig(CONFIG_FLOAT_RATE_RAF_LEVELPERLEVEL) < 1.0f)
+                    {
+                        if ( level%uint8(1.0f/sWorld.getConfig(CONFIG_FLOAT_RATE_RAF_LEVELPERLEVEL)) == 0 )
+                            ChangeGrantableLevels(1);
+                    }
+                    else
+                        ChangeGrantableLevels(uint8(sWorld.getConfig(CONFIG_FLOAT_RATE_RAF_LEVELPERLEVEL)));
+                }
+            }
+        }
 
         level = getLevel();
         nextLvlXP = GetUInt32Value(PLAYER_NEXT_LEVEL_XP);
@@ -4107,6 +4126,7 @@ void Player::GiveLevel(uint32 level)
         MailDraft(mailReward->mailTemplateId).SendMailTo(this,MailSender(MAIL_CREATURE,mailReward->senderEntry));
 
     GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_REACH_LEVEL);
+
 }
 
 void Player::UpdateFreeTalentPoints(bool resetIfNeed)
@@ -8067,6 +8087,11 @@ int32 Player::CalculateReputationGain(ReputationSource source, int32 rep, int32 
             return 0;
 
         percent *= repRate;
+    }
+
+    if (CheckRAFConditions())
+    {
+        percent *= sWorld.getConfig(CONFIG_FLOAT_RATE_RAF_XP);
     }
 
     return int32(sWorld.getConfig(CONFIG_FLOAT_RATE_REPUTATION_GAIN)*rep*percent/100.0f);
@@ -24433,19 +24458,15 @@ void Player::SendClearCooldown( uint32 spell_id, Unit* target )
     SendDirectMessage(&data);
 }
 
-void Player::BuildTeleportAckMsg( WorldPacket *data, float x, float y, float z, float ang ) const
+void Player::BuildTeleportAckMsg(WorldPacket& data, float x, float y, float z, float ang) const
 {
-    data->Initialize(MSG_MOVE_TELEPORT_ACK, 41);
-    *data << GetPackGUID();
-    *data << uint32(0);                                     // this value increments every time
-    *data << uint32(m_movementInfo.GetMovementFlags());     // movement flags
-    *data << uint16(0);                                     // 2.3.0
-    *data << uint32(WorldTimer::getMSTime());                           // time
-    *data << x;
-    *data << y;
-    *data << z;
-    *data << ang;
-    *data << uint32(0);
+    MovementInfo mi = m_movementInfo;
+    mi.ChangePosition(x, y, z, ang);
+
+    data.Initialize(MSG_MOVE_TELEPORT_ACK, 64);
+    data << GetPackGUID();
+    data << uint32(0);                                      // this value increments every time
+    data << mi;
 }
 
 bool Player::HasMovementFlag( MovementFlags f ) const
