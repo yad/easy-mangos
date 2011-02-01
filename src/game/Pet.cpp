@@ -3105,7 +3105,7 @@ PetScalingData* Pet::CalculateScalingData(bool recalculate)
 void Pet::Regenerate(Powers power, uint32 diff)
 {
     int32 curValue = GetPower(power);
-    uint32 maxValue = GetMaxPower(power);
+    int32 maxValue = GetMaxPower(power);
 
     float addvalue = 0.0f;
 
