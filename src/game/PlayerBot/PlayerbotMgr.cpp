@@ -46,13 +46,6 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
 {
     switch (packet.GetOpcode())
     {
-        // if master is logging out, log out all bots
-        case CMSG_LOGOUT_REQUEST:
-        {
-            PlayerbotMgr::RemoveAllBotsFromGroup(m_master);
-            return;
-        }
-
         // handle emotes from the master
         //case CMSG_EMOTE:
         case CMSG_TEXT_EMOTE:
@@ -550,94 +543,4 @@ void PlayerbotMgr::OnBotLogin(Player * const bot)
     ch.HandleGMStartUpCommand("");
     bot->SetHealth(bot->GetMaxHealth());
     bot->SetPower(bot->getPowerType(), bot->GetMaxPower(bot->getPowerType()));
-}
-
-void PlayerbotMgr::RemoveAllBotsFromGroup(Player* player)
-{
-    bool removed = false;
-    do
-    {
-        removed = false;
-        Player* bot = NULL;
-
-        if (player->GetGroup())
-        {
-            GroupReference *ref = player->GetGroup()->GetFirstMember();
-            while (ref)
-            {
-                bot = ref->getSource();
-
-                if (!bot || !bot->IsBot() || bot == player)
-                {
-                    ref = ref->next();
-                    continue;
-                }
-                bot->RemoveFromGroup();
-                bot->GetPlayerbotMgr()->LogoutPlayerBot(bot->GetGUID());
-                removed = true;
-                break;
-            }
-        }
-    }while(removed);
-    PlayerbotMgr::AddAllBots();
-}
-
-
-
-void Player::chompAndTrim(std::string& str)
-{
-    while (str.length() > 0)
-    {
-        char lc = str[str.length() - 1];
-        if (lc == '\r' || lc == '\n' || lc == ' ' || lc == '"' || lc == '\'')
-            str = str.substr(0, str.length() - 1);
-        else
-            break;
-        while (str.length() > 0)
-        {
-            char lc = str[0];
-            if (lc == ' ' || lc == '"' || lc == '\'')
-                str = str.substr(1, str.length() - 1);
-            else
-                break;
-        }
-    }
-}
-
-bool Player::getNextQuestId(const std::string& pString, unsigned int& pStartPos, unsigned int& pId)
-{
-    bool result = false;
-    unsigned int i;
-    for (i = pStartPos; i < pString.size(); ++i)
-    {
-        if (pString[i] == ',')
-            break;
-    }
-    if (i > pStartPos)
-    {
-        std::string idString = pString.substr(pStartPos, i - pStartPos);
-        pStartPos = i + 1;
-        chompAndTrim(idString);
-        pId = atoi(idString.c_str());
-        result = true;
-    }
-    return(result);
-}
-
-bool Player::requiredQuests(const char* pQuestIdString)
-{
-    if (pQuestIdString != NULL)
-    {
-        unsigned int pos = 0;
-        unsigned int id;
-        std::string confString(pQuestIdString);
-        chompAndTrim(confString);
-        while (getNextQuestId(confString, pos, id))
-        {
-            QuestStatus status = GetQuestStatus(id);
-            if (status == QUEST_STATUS_COMPLETE)
-                return true;
-        }
-    }
-    return false;
 }

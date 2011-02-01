@@ -46,16 +46,13 @@ public:
     void HandleMasterOutgoingPacket(const WorldPacket& packet);
 
     static void AddAllBots();
-    static void RemoveAllBotsFromGroup(Player* player);
 
-    void AddPlayerBot(uint64 guid);
     void LogoutPlayerBot(uint64 guid);
     Player* GetPlayerBot (uint64 guid) const;
-    Player* GetMaster() const { return m_master; };
+    Player* GetLeader() const { return m_master; };
     void SetMaster(Player* pl) { m_master = pl; };
 
     void LogoutAllBots();
-    //void RemoveAllBotsFromGroup();
     void OnBotLogin(Player * const bot);
     void Stay();
 

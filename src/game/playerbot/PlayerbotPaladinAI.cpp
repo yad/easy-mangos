@@ -125,7 +125,7 @@ void PlayerbotPaladinAI::DoNextCombatManeuver(Unit *pTarget)
     if (!m_bot)
         return;
         
-    Player* m_master = ai->GetMaster();
+    Player* m_master = ai->GetLeader();
     if (!m_master)
         return;            
 
@@ -344,7 +344,7 @@ void PlayerbotPaladinAI::DoNonCombatActions()
     if (!m_bot)
         return;
         
-    Player* m_master = ai->GetMaster();
+    Player* m_master = ai->GetLeader();
     if (!m_master)
         return;    
 

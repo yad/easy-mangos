@@ -90,6 +90,7 @@ PlayerbotAI::PlayerbotAI(PlayerbotMgr* const mgr, Player* const bot) :
 
     m_followTarget = m_bot;
     m_bot->GetPosition(orig_x, orig_y, orig_z);
+    orig_map = m_bot->GetMapId();
 
     for (uint8 i = 0; i < MAX_ARENA_SLOT; ++i)
     {
@@ -141,9 +142,54 @@ PlayerbotAI::~PlayerbotAI()
     delete m_classAI;
 }
 
-Player* PlayerbotAI::GetMaster() const
+void PlayerbotAI::ReinitAI()
 {
-    return m_mgr->GetMaster();
+    if (m_bot->GetGroup())
+	{
+		Player* const pl = sObjectMgr.GetPlayer(m_bot->GetGroup()->GetLeaderGuid());
+		if (pl)
+		{
+			SetMaster(pl);
+		}
+		else
+		{
+			m_bot->RemoveFromGroup();
+			SetMaster(m_bot);
+		}
+	}
+	else
+	{
+		SetMaster(m_bot);
+	}
+
+    // set bot state and needed item list
+    m_botState = BOTSTATE_NORMAL;
+
+    // reset some pointers
+    m_targetChanged = false;
+    m_targetType = TARGET_NORMAL;
+    m_targetCombat = 0;
+    m_targetAssist = 0;
+    m_targetProtect = 0;
+
+    m_followTarget = m_bot;
+
+	if (m_bot == GetLeader())
+		m_bot->TeleportTo(orig_map, orig_x, orig_y, orig_z, 0.0f);
+
+    for (uint8 i = 0; i < MAX_ARENA_SLOT; ++i)
+    {
+        if(uint32 a_id = m_bot->GetArenaTeamId(i))
+        {
+            if(ArenaTeam *at = sObjectMgr.GetArenaTeamById(a_id))
+                at->DelMember(m_bot->GetGUID());
+        }
+    }
+}
+
+Player* PlayerbotAI::GetLeader() const
+{
+    return m_mgr->GetLeader();
 }
 
 void PlayerbotAI::SetMaster(Player* pl)
@@ -169,7 +215,7 @@ uint32 PlayerbotAI::getSpellId(const char* args, bool master) const
 
     int loc = 0;
     if (master)
-        loc = GetMaster()->GetSession()->GetSessionDbcLocale();
+        loc = GetLeader()->GetSession()->GetSessionDbcLocale();
     else
         loc = m_bot->GetSession()->GetSessionDbcLocale();
 
@@ -235,7 +281,7 @@ uint32 PlayerbotAI::getPetSpellId(const char* args) const
     // converting string that we try to find to lower case
     wstrToLower(wnamepart);
 
-    int loc = GetMaster()->GetSession()->GetSessionDbcLocale();
+    int loc = GetLeader()->GetSession()->GetSessionDbcLocale();
 
     uint32 foundSpellId = 0;
     bool foundExactMatch = false;
@@ -434,7 +480,7 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
         {
             WorldPacket p(packet);
             uint64 guid = p.readPackGUID();
-            if (guid != GetMaster()->GetGUID())
+            if (guid != GetLeader()->GetGUID())
                 return;
             CheckMount();
             return;
@@ -448,7 +494,7 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
             if (guid != m_bot->GetGUID())
                 return;
             m_bot->m_movementInfo.AddMovementFlag(MOVEFLAG_FLYING);
-            //m_bot->SetSpeed(MOVE_RUN, GetMaster()->GetSpeed(MOVE_FLIGHT) +0.1f, true);
+            //m_bot->SetSpeed(MOVE_RUN, GetLeader()->GetSpeed(MOVE_FLIGHT) +0.1f, true);
             return;
         }
 
@@ -460,11 +506,11 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
             if (guid != m_bot->GetGUID())
                 return;
             m_bot->m_movementInfo.RemoveMovementFlag(MOVEFLAG_FLYING);
-            //m_bot->SetSpeed(MOVE_RUN,GetMaster()->GetSpeedRate(MOVE_RUN),true);
+            //m_bot->SetSpeed(MOVE_RUN,GetLeader()->GetSpeedRate(MOVE_RUN),true);
             return;
         }
 
-        // If the leader role was given to the bot automatically give it to the master
+        // If the master role was given to the bot automatically give it to the master
         // if the master is in the group, otherwise leave group
         case SMSG_GROUP_SET_LEADER:
         {
@@ -473,35 +519,17 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
             p >> name;
             if (m_bot->GetGroup() && name == m_bot->GetName())
             {
-                if (m_bot->GetGroup()->IsMember(GetMaster()->GetGUID()))
+                Player* newLeader = FindNewGroupLeader();
+                if (newLeader)
                 {
-                    p.resize(8);
-                    p << GetMaster()->GetGUID();
-                    m_bot->GetSession()->HandleGroupSetLeaderOpcode(p);
+                    SetMaster(newLeader);
+					m_bot->GetGroup()->ChangeLeader(newLeader->GetGUID());
                 }
-                else
+                else if (m_bot->GetGroup()->IsMember(GetLeader()->GetGUID()))
                 {
-                    p.clear(); // not really needed
-                    m_bot->GetSession()->HandleGroupDisbandOpcode(p); // packet not used updated code
+					m_bot->GetGroup()->ChangeLeader(newLeader->GetGUID());
                 }
             }
-            return;
-        }
-
-        // If the master leaves the group, then the bot leaves too
-        case SMSG_PARTY_COMMAND_RESULT:
-        {
-            WorldPacket p(packet);
-            uint32 operation;
-            p >> operation;
-            std::string member;
-            p >> member;
-            uint32 result;
-            p >> result;
-            p.clear();
-            if (operation == PARTY_OP_LEAVE)
-                if (member == GetMaster()->GetName())
-                    PlayerbotMgr::RemoveAllBotsFromGroup(GetMaster());
             return;
         }
 
@@ -838,20 +866,39 @@ Item* PlayerbotAI::FindMount(uint32 matchingRidingSkill) const
     return partialMatch;
 }
 
+Player* PlayerbotAI::FindNewGroupLeader()
+{
+    Player* pl = NULL;
+    if (m_bot->GetGroup())
+    {
+        GroupReference *ref = m_bot->GetGroup()->GetFirstMember();
+        while (ref)
+        {
+            if (!ref->getSource()->IsBot())
+            {
+                pl = ref->getSource();
+                break;
+            }            
+            ref = ref->next();
+        }
+    }
+    return pl;
+}
+
 void PlayerbotAI::CheckMount()
 {
     time_t currentTime = time(0);
     if (currentTime < m_ignoreTeleport)
         return;
 
-    if ((GetMaster()->IsMounted()) && (!m_bot->IsMounted()))
+    if ((GetLeader()->IsMounted()) && (!m_bot->IsMounted()))
     {
-        if (!GetMaster()->GetAurasByType(SPELL_AURA_MOUNTED).empty())
+        if (!GetLeader()->GetAurasByType(SPELL_AURA_MOUNTED).empty())
         {
             int32 master_speed1 = 0;
             int32 master_speed2 = 0;
-            master_speed1 = GetMaster()->GetAurasByType(SPELL_AURA_MOUNTED).front()->GetSpellProto()->EffectBasePoints[1];
-            master_speed2 = GetMaster()->GetAurasByType(SPELL_AURA_MOUNTED).front()->GetSpellProto()->EffectBasePoints[2];
+            master_speed1 = GetLeader()->GetAurasByType(SPELL_AURA_MOUNTED).front()->GetSpellProto()->EffectBasePoints[1];
+            master_speed2 = GetLeader()->GetAurasByType(SPELL_AURA_MOUNTED).front()->GetSpellProto()->EffectBasePoints[2];
 
             Item* pItem225 = NULL;
             Item* pItem300 = NULL;
@@ -917,7 +964,7 @@ void PlayerbotAI::CheckMount()
             if (spellMount > 0)m_bot->CastSpell(m_bot, spellMount, false);
         }
     }
-    else if (!GetMaster()->IsMounted() && m_bot->IsMounted())
+    else if (!GetLeader()->IsMounted() && m_bot->IsMounted())
     {
         WorldPacket emptyPacket;
         m_bot->GetSession()->HandleCancelMountAuraOpcode(emptyPacket);
@@ -1250,9 +1297,9 @@ void PlayerbotAI::GetCombatTarget(Unit* forcedTarget)
             }
         }
 
-        if (!GetMaster()->getAttackers().empty())
+        if (!GetLeader()->getAttackers().empty())
         {
-            for(Unit::AttackerSet::const_iterator itr = GetMaster()->getAttackers().begin(); itr != GetMaster()->getAttackers().end(); ++itr)
+            for(Unit::AttackerSet::const_iterator itr = GetLeader()->getAttackers().begin(); itr != GetLeader()->getAttackers().end(); ++itr)
             {
                 Unit* owner = (*itr)->GetOwner();
                 if (!owner) owner = (*itr);
@@ -1265,9 +1312,9 @@ void PlayerbotAI::GetCombatTarget(Unit* forcedTarget)
                 }
             }
         }
-        if (GetMaster()->GetPet() && !GetMaster()->GetPet()->getAttackers().empty())
+        if (GetLeader()->GetPet() && !GetLeader()->GetPet()->getAttackers().empty())
         {
-            for(Unit::AttackerSet::const_iterator itr = GetMaster()->GetPet()->getAttackers().begin(); itr != GetMaster()->GetPet()->getAttackers().end(); ++itr)
+            for(Unit::AttackerSet::const_iterator itr = GetLeader()->GetPet()->getAttackers().begin(); itr != GetLeader()->GetPet()->getAttackers().end(); ++itr)
             {
                 Unit* owner = (*itr)->GetOwner();
                 if (!owner) owner = (*itr);
@@ -1566,7 +1613,7 @@ void PlayerbotAI::DoLoot()
         m_lootCreature.pop_front();
         Creature *c = m_bot->GetMap()->GetCreature(m_lootCurrent);
         // check if we got a creature and if it is still a corpse, otherwise bot runs to spawn point
-        if (!c || c->getDeathState() != CORPSE || GetMaster()->GetDistance(c) > BOTLOOT_DISTANCE)
+        if (!c || c->getDeathState() != CORPSE || GetLeader()->GetDistance(c) > BOTLOOT_DISTANCE)
         {
             m_lootCurrent = 0;
             return;
@@ -1577,7 +1624,7 @@ void PlayerbotAI::DoLoot()
     else
     {
         Creature *c = m_bot->GetMap()->GetCreature(m_lootCurrent);
-        if (!c || c->getDeathState() != CORPSE || GetMaster()->GetDistance(c) > BOTLOOT_DISTANCE)
+        if (!c || c->getDeathState() != CORPSE || GetLeader()->GetDistance(c) > BOTLOOT_DISTANCE)
         {
             m_lootCurrent = 0;
             return;
@@ -1756,11 +1803,11 @@ Player* PlayerbotAI::TargetPlayerFocus()
         return (Player*)GetCurrentTarget();
     }
 
-    if (GetMaster()->GetPlayerbotAI()
-        && GetMaster()->GetPlayerbotAI()->GetCurrentTarget()
-        && GetMaster()->GetPlayerbotAI()->GetCurrentTarget()->GetTypeId()==TYPEID_PLAYER)
+    if (GetLeader()->GetPlayerbotAI()
+        && GetLeader()->GetPlayerbotAI()->GetCurrentTarget()
+        && GetLeader()->GetPlayerbotAI()->GetCurrentTarget()->GetTypeId()==TYPEID_PLAYER)
     {
-        return (Player*)GetMaster()->GetPlayerbotAI()->GetCurrentTarget();
+        return (Player*)GetLeader()->GetPlayerbotAI()->GetCurrentTarget();
     }
 
     if (m_bot->GetGroup())
@@ -1798,8 +1845,8 @@ bool PlayerbotAI::IsInCombat()
         || (m_bot->GetPet() && !m_bot->GetPet()->getAttackers().empty()))
         return true;
 
-    if (!GetMaster()->getAttackers().empty()
-        || (GetMaster()->GetPet() && !GetMaster()->GetPet()->getAttackers().empty()))
+    if (!GetLeader()->getAttackers().empty()
+        || (GetLeader()->GetPet() && !GetLeader()->GetPet()->getAttackers().empty()))
         return true;
 
     if (m_bot->GetGroup())
@@ -1844,8 +1891,8 @@ void PlayerbotAI::UpdateAttackerInfo()
         UpdateAttackersForTarget(pet);
 
     // check master's attackers
-    UpdateAttackersForTarget(GetMaster());
-    pet = GetMaster()->GetPet();
+    UpdateAttackersForTarget(GetLeader());
+    pet = GetLeader()->GetPet();
     if (pet)
         UpdateAttackersForTarget(pet);
 
@@ -1855,7 +1902,7 @@ void PlayerbotAI::UpdateAttackerInfo()
         GroupReference *gref = m_bot->GetGroup()->GetFirstMember();
         while (gref)
         {
-            if (gref->getSource() == m_bot || gref->getSource() == GetMaster())
+            if (gref->getSource() == m_bot || gref->getSource() == GetLeader())
             {
                 gref = gref->next();
                 continue;
@@ -2036,7 +2083,7 @@ void PlayerbotAI::SetCombatOrder(CombatOrderType co, Unit *target)
 void PlayerbotAI::SetMovementOrder(MovementOrderType mo, Unit *followTarget)
 {
     m_movementOrder = mo;
-    if (m_bot!=GetMaster())
+    if (m_bot!=GetLeader())
         m_followTarget = followTarget;
     MovementReset();
 }
@@ -2068,7 +2115,7 @@ void PlayerbotAI::MovementReset()
 
         if (m_bot->isAlive())
         {
-            if (m_bot == GetMaster())
+            if (m_bot == GetLeader())
             {
                 if (m_bot->IsWithinDistInMap(m_followTarget, orig_x, orig_y, orig_z, 5.0f))
                 {
@@ -2255,7 +2302,7 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
     if (!CheckMaster())
         return;
 
-    if (!GetMaster()->InBattleGround() && !GetMaster()->InArena())
+    if (!GetLeader()->InBattleGround() && !GetLeader()->InArena())
         if (m_bot->InBattleGround() || m_bot->InArena())
             m_bot->LeaveBattleground();
 
@@ -2277,7 +2324,7 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
         }
         else if (m_botState == BOTSTATE_DEAD)
         {
-            if (m_bot != GetMaster() && !GetMaster()->GetMap()->IsBattleGroundOrArena())
+            if (m_bot != GetLeader() && !GetLeader()->GetMap()->IsBattleGroundOrArena())
             {
                 if (m_bot->GetCorpse())
                 {
@@ -2332,12 +2379,12 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
             }
 
             m_ignoreAIUpdatesUntilTime = time(0) + 6;
-            PlayerbotChatHandler ch(GetMaster());
+            PlayerbotChatHandler ch(GetLeader());
             if (!ch.revive(*m_bot))
                 return;
 
             uint32 lvl = m_bot->getLevel() +1;
-            if (lvl < 81 && m_bot == GetMaster())
+            if (lvl < 81 && m_bot == GetLeader())
             {
                 m_bot->GiveLevel(lvl);
                 GetClassAI()->InitSpells(m_bot->GetPlayerbotAI());
@@ -2361,9 +2408,9 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
         {
             if (!pSpell || !pSpell->IsChannelActive())
             {
-                if (m_bot->getAttackers().empty() && !m_bot->IsWithinDistInMap(GetMaster(), 100, true))
+                if (m_bot->getAttackers().empty() && !m_bot->IsWithinDistInMap(GetLeader(), 100, true))
                 {
-                    PlayerbotChatHandler ch(GetMaster());
+                    PlayerbotChatHandler ch(GetLeader());
                     ch.teleport(*m_bot);
                     SetIgnoreTeleport(5);
                 }
@@ -2388,7 +2435,7 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
 
         else if (!IsInCombat())
         {
-            SetMovementOrder(MOVEMENT_FOLLOW, GetMaster());
+            SetMovementOrder(MOVEMENT_FOLLOW, GetLeader());
             GetClassAI()->DoNonCombatActions();
             CheckMount();
         }
@@ -2415,18 +2462,29 @@ bool PlayerbotAI::CheckTeleport()
 
 bool PlayerbotAI::CheckMaster()
 {
-    if (!GetMaster() || !GetMaster()->IsInWorld())
+    if (!GetLeader() || !GetLeader()->IsInWorld())
     {
-        if (m_bot->GetGroup())
-            m_bot->RemoveFromGroup();
-        m_bot->GetPlayerbotMgr()->LogoutPlayerBot(m_bot->GetGUID());
-        PlayerbotMgr::AddAllBots();
+        ReinitAI();
         return false;
     }
-    if ((GetMaster() != m_bot) && !m_bot->GetGroup())
+    if ((GetLeader() != m_bot) && !m_bot->GetGroup())
     {
-        m_bot->GetPlayerbotMgr()->LogoutPlayerBot(m_bot->GetGUID());
-        PlayerbotMgr::AddAllBots();
+        ReinitAI();
+        return false;
+    }
+    if (!GetLeader()->GetGroup())
+    {
+        ReinitAI();
+        return false;
+    }
+	if (m_bot->GetGroup()->GetLeaderGuid() != GetLeader()->GetGUID())
+    {
+        ReinitAI();
+        return false;
+    }
+    if (GetLeader()->GetGroup() != m_bot->GetGroup())
+    {
+        ReinitAI();
         return false;
     }
     return true;
@@ -2642,11 +2700,11 @@ void PlayerbotAI::CheckRoles()
 
 void PlayerbotAI::CheckStuff()
 {
-    if (GetMaster()->getLevel() == m_bot->getLevel())
+    if (GetLeader()->getLevel() == m_bot->getLevel())
         return;
 
     PlayerbotChatHandler ch(m_bot);
-    m_bot->GiveLevel(GetMaster()->getLevel());
+    m_bot->GiveLevel(GetLeader()->getLevel());
     ch.gmstartup("");
     m_bot->SetHealth(m_bot->GetMaxHealth());
     m_bot->SetPower(m_bot->getPowerType(), m_bot->GetMaxPower(m_bot->getPowerType()));
@@ -2664,7 +2722,7 @@ Spell* PlayerbotAI::GetCurrentSpell() const
 
 bool PlayerbotAI::canObeyCommandFrom(const Player& player) const
 {
-    return player.GetSession()->GetAccountId() == GetMaster()->GetSession()->GetAccountId();
+    return player.GetSession()->GetAccountId() == GetLeader()->GetSession()->GetAccountId();
 }
 
 bool PlayerbotAI::CastSpell(uint32 spellId, Unit* target)
@@ -3296,10 +3354,10 @@ bool PlayerbotAI::FollowCheckTeleport(WorldObject &obj)
     if (currentTime < m_ignoreTeleport)
         return false;
 
-    if (!m_bot->IsWithinDistInMap(&obj, 100, true) && GetMaster()->isAlive() && !GetMaster()->IsTaxiFlying())
+    if (!m_bot->IsWithinDistInMap(&obj, 100, true) && GetLeader()->isAlive() && !GetLeader()->IsTaxiFlying())
     {
         m_ignoreAIUpdatesUntilTime = time(0) + 6;
-        PlayerbotChatHandler ch(GetMaster());
+        PlayerbotChatHandler ch(GetLeader());
         SetIgnoreTeleport(5);
         if (!ch.teleport(*m_bot))
             return false;
@@ -3326,7 +3384,7 @@ void PlayerbotAI::HandleTeleportAck()
 // Localization support
 void PlayerbotAI::ItemLocalization(std::string& itemName, const uint32 itemID) const
 {
-    uint32 loc = GetMaster()->GetSession()->GetSessionDbLocaleIndex();
+    uint32 loc = GetLeader()->GetSession()->GetSessionDbLocaleIndex();
     std::wstring wnamepart;
 
     ItemLocale const *pItemInfo = sObjectMgr.GetItemLocale(itemID);
@@ -3341,7 +3399,7 @@ void PlayerbotAI::ItemLocalization(std::string& itemName, const uint32 itemID) c
 
 void PlayerbotAI::QuestLocalization(std::string& questTitle, const uint32 questID) const
 {
-    uint32 loc = GetMaster()->GetSession()->GetSessionDbLocaleIndex();
+    uint32 loc = GetLeader()->GetSession()->GetSessionDbLocaleIndex();
     std::wstring wnamepart;
 
     QuestLocale const *pQuestInfo = sObjectMgr.GetQuestLocale(questID);

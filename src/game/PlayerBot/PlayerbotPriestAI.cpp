@@ -116,7 +116,7 @@ void PlayerbotPriestAI::DoNextCombatManeuver(Unit *pTarget)
     if (!ai)
         return;
         
-    Player* m_master = ai->GetMaster();
+    Player* m_master = ai->GetLeader();
     if (!m_master)
         return;                
 
@@ -373,7 +373,7 @@ void PlayerbotPriestAI::DoNonCombatActions()
     if (!m_bot)
         return;
         
-    Player* m_master = ai->GetMaster();
+    Player* m_master = ai->GetLeader();
     if (!m_master)
         return;
 

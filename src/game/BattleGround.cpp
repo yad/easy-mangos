@@ -1298,9 +1298,9 @@ void BattleGround::AddPlayer(Player *plr)
         PlayerbotAI* ai = plr->GetPlayerbotAI();
         if (ai)
         {
-            Player* master = ai->GetMaster();
-            if (master != plr)
-                plr->SetBGTeam(master->GetBGTeam());
+            Player* leader = ai->GetLeader();
+            if (leader != plr)
+                plr->SetBGTeam(leader->GetBGTeam());
         }
     }
     Team team = plr->GetBGTeam();
@@ -1386,8 +1386,8 @@ void BattleGround::AddPlayer(Player *plr)
             chbot.HandleGMStartUpCommand("");
             p->SetHealth(p->GetMaxHealth());
             p->SetPower(p->getPowerType(), p->GetMaxPower(p->getPowerType()));
-            ChatHandler chmaster (plr);
-            chmaster.HandleNamegoCommand((char*)p->GetName());
+            ChatHandler chleader (plr);
+            chleader.HandleNamegoCommand((char*)p->GetName());
         }
     }
 }

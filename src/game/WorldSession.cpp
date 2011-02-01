@@ -140,8 +140,8 @@ void WorldSession::SendPacket(WorldPacket const* packet)
         ReadInvitePaquet(packet);
         if (IsBotSession()
             && GetPlayer()->GetPlayerbotAI()
-            && GetPlayer()->GetPlayerbotAI()->GetMaster()
-            && (GetPlayer()->GetPlayerbotAI()->GetMaster() != GetPlayer()))
+            && GetPlayer()->GetPlayerbotAI()->GetLeader()
+            && (GetPlayer()->GetPlayerbotAI()->GetLeader() != GetPlayer()))
             GetPlayer()->GetPlayerbotAI()->HandleBotOutgoingPacket(*packet);
     }
 
@@ -422,9 +422,6 @@ void WorldSession::LogoutPlayer(bool Save)
 
     if (_player)
     {
-        if (!IsBotSession() && _player->GetGroup())
-            PlayerbotMgr::RemoveAllBotsFromGroup(_player);
-
         sLog.outChar("Account: %d (IP: %s) Logout Character:[%s] (guid: %u)", GetAccountId(), GetRemoteAddress().c_str(), _player->GetName() ,_player->GetGUIDLow());
 
         if (uint64 lguid = GetPlayer()->GetLootGUID())

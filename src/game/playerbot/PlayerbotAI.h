@@ -139,6 +139,7 @@ public:
 public:
     PlayerbotAI(PlayerbotMgr * const mgr, Player * const bot);
     virtual ~PlayerbotAI();
+    void ReinitAI();
     void InitSpells(PlayerbotAI* const ai);
 
     // This is called from Unit.cpp and is called every second (I think)
@@ -221,6 +222,7 @@ public:
     Item* FindItem(uint32 ItemId);
     Item* FindConsumable(uint32 displayId) const;
     void CheckMount();
+    Player* FindNewGroupLeader();
 
     // ******* Actions ****************************************
     // Your handlers can call these actions to make the bot do things.
@@ -248,7 +250,7 @@ public:
 
     Player *GetPlayerBot() const { return m_bot; }
     Player *GetPlayer() const { return m_bot; }
-    Player *GetMaster() const;
+    Player *GetLeader() const;
     void SetMaster(Player* pl);
 
     uint16 getRole() { return m_role; };
@@ -350,6 +352,7 @@ private:
 
     Unit *m_followTarget;       // whom to follow in non combat situation?
     float orig_x, orig_y, orig_z;
+    uint32 orig_map;
 
     SpellRanges m_spellRangeMap;
 };
