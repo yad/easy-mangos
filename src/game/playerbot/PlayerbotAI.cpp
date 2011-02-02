@@ -145,22 +145,22 @@ PlayerbotAI::~PlayerbotAI()
 void PlayerbotAI::ReinitAI()
 {
     if (m_bot->GetGroup())
-	{
-		Player* const pl = sObjectMgr.GetPlayer(m_bot->GetGroup()->GetLeaderGuid());
-		if (pl)
-		{
-			SetMaster(pl);
-		}
-		else
-		{
-			m_bot->RemoveFromGroup();
-			SetMaster(m_bot);
-		}
-	}
-	else
-	{
-		SetMaster(m_bot);
-	}
+    {
+        Player* const pl = sObjectMgr.GetPlayer(m_bot->GetGroup()->GetLeaderGuid());
+        if (pl)
+        {
+            SetMaster(pl);
+        }
+        else
+        {
+            m_bot->RemoveFromGroup();
+            SetMaster(m_bot);
+        }
+    }
+    else
+    {
+        SetMaster(m_bot);
+    }
 
     // set bot state and needed item list
     m_botState = BOTSTATE_NORMAL;
@@ -174,8 +174,8 @@ void PlayerbotAI::ReinitAI()
 
     m_followTarget = m_bot;
 
-	if (m_bot == GetLeader())
-		m_bot->TeleportTo(orig_map, orig_x, orig_y, orig_z, 0.0f);
+    if (m_bot == GetLeader())
+        m_bot->TeleportTo(orig_map, orig_x, orig_y, orig_z, 0.0f);
 
     for (uint8 i = 0; i < MAX_ARENA_SLOT; ++i)
     {
@@ -523,11 +523,11 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
                 if (newLeader)
                 {
                     SetMaster(newLeader);
-					m_bot->GetGroup()->ChangeLeader(newLeader->GetGUID());
+                    m_bot->GetGroup()->ChangeLeader(newLeader->GetGUID());
                 }
                 else if (m_bot->GetGroup()->IsMember(GetLeader()->GetGUID()))
                 {
-					m_bot->GetGroup()->ChangeLeader(newLeader->GetGUID());
+                    m_bot->GetGroup()->ChangeLeader(newLeader->GetGUID());
                 }
             }
             return;
@@ -2477,7 +2477,7 @@ bool PlayerbotAI::CheckMaster()
         ReinitAI();
         return false;
     }
-	if (m_bot->GetGroup()->GetLeaderGuid() != GetLeader()->GetGUID())
+    if (m_bot->GetGroup()->GetLeaderGuid() != GetLeader()->GetGUID())
     {
         ReinitAI();
         return false;

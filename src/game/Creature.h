@@ -34,6 +34,7 @@
 struct SpellEntry;
 
 class CreatureAI;
+class Group;
 class Quest;
 class Player;
 class WorldSession;
@@ -79,7 +80,6 @@ struct CreatureInfo
     uint32  maxlevel;
     uint32  minhealth;
     uint32  maxhealth;
-    uint8   powerType;
     uint32  minmana;
     uint32  maxmana;
     uint32  armor;
@@ -121,14 +121,13 @@ struct CreatureInfo
     int32   resistance6;
     uint32  spells[CREATURE_MAX_SPELLS];
     uint32  PetSpellDataId;
-    uint32  VehicleId;
     uint32  mingold;
     uint32  maxgold;
     char const* AIName;
     uint32  MovementType;
     uint32  InhabitType;
     float   unk16;
-    float   power_mod;
+    float   unk17;
     bool    RacialLeader;
     uint32  questItems[6];
     uint32  movementId;
@@ -385,6 +384,7 @@ enum CreatureSubtype
     CREATURE_SUBTYPE_GENERIC,                               // new Creature
     CREATURE_SUBTYPE_PET,                                   // new Pet
     CREATURE_SUBTYPE_TOTEM,                                 // new Totem
+    CREATURE_SUBTYPE_VEHICLE,                               // new Vehicle
     CREATURE_SUBTYPE_TEMPORARY_SUMMON,                      // new TemporarySummon
 };
 
@@ -414,6 +414,7 @@ class MANGOS_DLL_SPEC Creature : public Unit
 
         CreatureSubtype GetSubtype() const { return m_subtype; }
         bool IsPet() const { return m_subtype == CREATURE_SUBTYPE_PET; }
+        bool IsVehicle() const { return m_subtype == CREATURE_SUBTYPE_VEHICLE; }
         bool IsTotem() const { return m_subtype == CREATURE_SUBTYPE_TOTEM; }
         bool IsTemporarySummon() const { return m_subtype == CREATURE_SUBTYPE_TEMPORARY_SUMMON; }
 
@@ -636,7 +637,7 @@ class MANGOS_DLL_SPEC Creature : public Unit
         void LockAI(bool lock) { m_AI_locked = lock; }
 
     protected:
-        bool CreateFromProto(ObjectGuid guid, uint32 Entry, Team team, const CreatureData *data = NULL, GameEventCreatureData const* eventData =NULL);
+        bool CreateFromProto(uint32 guidlow,uint32 Entry, Team team, const CreatureData *data = NULL, GameEventCreatureData const* eventData =NULL);
         bool InitEntry(uint32 entry, const CreatureData* data = NULL, GameEventCreatureData const* eventData = NULL);
         void RelocationNotify();
 
@@ -658,7 +659,7 @@ class MANGOS_DLL_SPEC Creature : public Unit
         float m_respawnradius;
 
         CreatureSubtype m_subtype;                          // set in Creatures subclasses for fast it detect without dynamic_cast use
-        void Regenerate(Powers power);
+        void RegenerateMana();
         void RegenerateHealth();
         MovementGeneratorType m_defaultMovementType;
         Cell m_currentCell;                                 // store current cell where creature listed

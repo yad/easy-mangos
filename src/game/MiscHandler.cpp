@@ -964,15 +964,13 @@ void WorldSession::HandleNextCinematicCamera( WorldPacket & /*recv_data*/ )
 void WorldSession::HandleMoveTimeSkippedOpcode( WorldPacket & recv_data )
 {
     /*  WorldSession::Update( WorldTimer::getMSTime() );*/
-//    DEBUG_LOG( "WORLD: Time Lag/Synchronization Resent/Update" );
+    DEBUG_LOG( "WORLD: Time Lag/Synchronization Resent/Update" );
 
     ObjectGuid guid;
-    uint32 time_skipped;
 
     recv_data >> guid.ReadAsPacked();
-    recv_data >> time_skipped;
+    recv_data >> Unused<uint32>();
 
-    DEBUG_LOG( "WORLD: Time Lag/Synchronization Resent/Update, data = %d", time_skipped);
     /*
         ObjectGuid guid;
         uint32 time_skipped;

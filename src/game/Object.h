@@ -139,7 +139,7 @@ class MANGOS_DLL_SPEC Object
         PackedGuid const& GetPackGUID() const { return m_PackGUID; }
         std::string GetGuidStr() const { return GetObjectGuid().GetString(); }
 
-        uint32 GetEntry() const { __try{ return GetUInt32Value(OBJECT_FIELD_ENTRY); } __except(EXCEPTION_EXECUTE_HANDLER){ return 0; } }
+        uint32 GetEntry() const { return GetUInt32Value(OBJECT_FIELD_ENTRY); }
         void SetEntry(uint32 entry) { SetUInt32Value(OBJECT_FIELD_ENTRY, entry); }
 
         float GetObjectScale() const
@@ -361,7 +361,7 @@ class MANGOS_DLL_SPEC Object
         Object ( );
 
         void _InitValues();
-        void _Create(ObjectGuid guid);
+        void _Create (uint32 guidlow, uint32 entry, HighGuid guidhigh);
 
         virtual void _SetUpdateBits(UpdateMask *updateMask, Player *target) const;
 
@@ -433,7 +433,7 @@ class MANGOS_DLL_SPEC WorldObject : public Object
 
         virtual void Update ( uint32 /*update_diff*/, uint32 /*time_diff*/ ) {}
 
-        void _Create(ObjectGuid guid, uint32 phaseMask);
+        void _Create( uint32 guidlow, HighGuid guidhigh, uint32 phaseMask);
 
         void Relocate(float x, float y, float z, float orientation);
         void Relocate(float x, float y, float z);

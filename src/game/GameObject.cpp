@@ -117,7 +117,7 @@ bool GameObject::Create(uint32 guidlow, uint32 name_id, Map *map, uint32 phaseMa
         return false;
     }
 
-    Object::_Create(ObjectGuid(HIGHGUID_GAMEOBJECT, goinfo->id, guidlow));
+    Object::_Create(guidlow, goinfo->id, HIGHGUID_GAMEOBJECT);
 
     m_goInfo = goinfo;
 
@@ -1447,8 +1447,6 @@ void GameObject::Use(Unit* user)
                 BattleGround *bg = player->GetBattleGround();
                 if (!bg)
                     return;
-                if (player->GetVehicle())
-                    return;
                 // BG flag click
                 // AB:
                 // 15001
@@ -1484,8 +1482,6 @@ void GameObject::Use(Unit* user)
                 // in battleground check
                 BattleGround *bg = player->GetBattleGround();
                 if (!bg)
-                    return;
-                if (player->GetVehicle())
                     return;
                 // BG flag dropped
                 // WS:

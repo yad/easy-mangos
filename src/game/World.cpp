@@ -1086,9 +1086,6 @@ void World::SetInitialWorldSettings()
     sLog.outString( ">>> Creature Addon Data loaded" );
     sLog.outString();
 
-    sLog.outString("Loading Vehicle Accessories...");
-    sObjectMgr.LoadVehicleAccessories();
-
     sLog.outString( "Loading Creature Respawn Data..." );   // must be after PackInstances()
     sObjectMgr.LoadCreatureRespawnTimes();
 

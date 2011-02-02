@@ -92,11 +92,12 @@ void Object::_InitValues()
     m_objectUpdated = false;
 }
 
-void Object::_Create(ObjectGuid guid)
+void Object::_Create(uint32 guidlow, uint32 entry, HighGuid guidhigh)
 {
     if(!m_uint32Values)
         _InitValues();
 
+    ObjectGuid guid = ObjectGuid(guidhigh, entry, guidlow);
     SetGuidValue(OBJECT_FIELD_GUID, guid);
     SetUInt32Value(OBJECT_FIELD_TYPE, m_objectType);
     m_PackGUID.Set(guid);
@@ -230,7 +231,7 @@ void Object::BuildMovementUpdate(ByteBuffer * data, uint16 updateFlags) const
     uint16 moveFlags2 = (isType(TYPEMASK_UNIT) ? ((Unit*)this)->m_movementInfo.GetMovementFlags2() : MOVEFLAG2_NONE);
 
     if(GetTypeId() == TYPEID_UNIT)
-        if(((Creature*)this)->GetVehicleKit())
+        if(((Creature*)this)->IsVehicle())
             moveFlags2 |= MOVEFLAG2_ALLOW_PITCHING;         // always allow pitch
 
     *data << uint16(updateFlags);                           // update flags
@@ -269,16 +270,13 @@ void Object::BuildMovementUpdate(ByteBuffer * data, uint16 updateFlags) const
                         }
                     }
                 }
-
-                if (unit->GetVehicle())
-                   unit->m_movementInfo.AddMovementFlag(MOVEFLAG_ONTRANSPORT);
             }
             break;
             case TYPEID_PLAYER:
             {
                 Player *player = ((Player*)unit);
 
-                if (player->GetTransport() || player->GetVehicle())
+                if(player->GetTransport())
                     player->m_movementInfo.AddMovementFlag(MOVEFLAG_ONTRANSPORT);
                 else
                     player->m_movementInfo.RemoveMovementFlag(MOVEFLAG_ONTRANSPORT);
@@ -295,11 +293,6 @@ void Object::BuildMovementUpdate(ByteBuffer * data, uint16 updateFlags) const
             }
             break;
         }
-
-        if (unit->GetTransport() || unit->GetVehicle())
-            unit->m_movementInfo.AddMovementFlag(MOVEFLAG_ONTRANSPORT);
-        else
-            unit->m_movementInfo.RemoveMovementFlag(MOVEFLAG_ONTRANSPORT);
 
         // Update movement info time
         unit->m_movementInfo.UpdateTime(WorldTimer::getMSTime());
@@ -513,9 +506,9 @@ void Object::BuildMovementUpdate(ByteBuffer * data, uint16 updateFlags) const
     }
 
     // 0x80
-    if(updateFlags & UPDATEFLAG_VEHICLE)
+    if(updateFlags & UPDATEFLAG_VEHICLE)                    // unused for now
     {
-        *data << uint32(((Unit*)this)->GetVehicleKit()->GetVehicleId());  // vehicle id
+        *data << uint32(((Vehicle*)this)->GetVehicleId());  // vehicle id
         *data << float(((WorldObject*)this)->GetOrientation());
     }
 
@@ -536,7 +529,7 @@ void Object::BuildValuesUpdate(uint8 updatetype, ByteBuffer * data, UpdateMask *
 
     if (updatetype == UPDATETYPE_CREATE_OBJECT || updatetype == UPDATETYPE_CREATE_OBJECT2)
     {
-        if (isType(TYPEMASK_GAMEOBJECT) && !((GameObject*)this)->IsDynTransport())
+        if (isType(TYPEMASK_GAMEOBJECT) && !((GameObject*)this)->IsTransport())
         {
             if (((GameObject*)this)->ActivateToQuest(target) || target->isGameMaster())
                 IsActivateToQuest = true;
@@ -554,7 +547,7 @@ void Object::BuildValuesUpdate(uint8 updatetype, ByteBuffer * data, UpdateMask *
     }
     else                                                    // case UPDATETYPE_VALUES
     {
-        if (isType(TYPEMASK_GAMEOBJECT) && !((GameObject*)this)->IsDynTransport())
+        if (isType(TYPEMASK_GAMEOBJECT) && !((GameObject*)this)->IsTransport())
         {
             if (((GameObject*)this)->ActivateToQuest(target) || target->isGameMaster())
                 IsActivateToQuest = true;
@@ -1102,9 +1095,9 @@ void WorldObject::CleanupsBeforeDelete()
     RemoveFromWorld();
 }
 
-void WorldObject::_Create(ObjectGuid guid, uint32 phaseMask)
+void WorldObject::_Create( uint32 guidlow, HighGuid guidhigh, uint32 phaseMask )
 {
-    Object::_Create(guid);
+    Object::_Create(guidlow, 0, guidhigh);
     m_phaseMask = phaseMask;
 }
 

@@ -469,9 +469,6 @@
     <ClCompile Include="..\..\src\game\AuctionHouseBot\AuctionHouseBot.cpp">
       <Filter>AhBot</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\game\VehicleHandler.cpp">
-      <Filter>Object</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\game\vmap\BIH.cpp">
       <Filter>vmaps</Filter>
     </ClCompile>

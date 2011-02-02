@@ -152,19 +152,16 @@ Creature::~Creature()
 void Creature::AddToWorld()
 {
     ///- Register the creature for guid lookup
-    if(!IsInWorld() && GetObjectGuid().IsCreatureOrVehicle())
+    if(!IsInWorld() && GetObjectGuid().GetHigh() == HIGHGUID_UNIT)
         GetMap()->GetObjectsStore().insert<Creature>(GetGUID(), (Creature*)this);
 
     Unit::AddToWorld();
-
-    if (GetVehicleKit())
-        GetVehicleKit()->Reset();
 }
 
 void Creature::RemoveFromWorld()
 {
     ///- Remove the creature from the accessor
-    if(IsInWorld() && GetObjectGuid().IsCreatureOrVehicle())
+    if(IsInWorld() && GetObjectGuid().GetHigh() == HIGHGUID_UNIT)
         GetMap()->GetObjectsStore().erase<Creature>(GetGUID(), (Creature*)NULL);
 
     Unit::RemoveFromWorld();
@@ -273,7 +270,6 @@ bool Creature::InitEntry(uint32 Entry, CreatureData const* data /*=NULL*/, GameE
     SetDisplayId(display_id);
 
     SetByteValue(UNIT_FIELD_BYTES_0, 2, minfo->gender);
-    SetByteValue(UNIT_FIELD_BYTES_0, 3, uint8(cinfo->powerType));
 
     // Load creature equipment
     if (eventData && eventData->equipment_id)
@@ -584,9 +580,9 @@ void Creature::Update(uint32 update_diff, uint32 diff)
             if (!isInCombat() || IsPolymorphed())
                 RegenerateHealth();
 
-            Regenerate(getPowerType());
-            m_regenTimer = REGEN_TIME_FULL;
+            RegenerateMana();
 
+            m_regenTimer = REGEN_TIME_FULL;
             break;
         }
         case CORPSE_FALLING:
@@ -598,78 +594,31 @@ void Creature::Update(uint32 update_diff, uint32 diff)
     }
 }
 
-void Creature::Regenerate(Powers power)
+void Creature::RegenerateMana()
 {
-    uint32 curValue = GetPower(power);
-    uint32 maxValue = GetMaxPower(power);
+    uint32 curValue = GetPower(POWER_MANA);
+    uint32 maxValue = GetMaxPower(POWER_MANA);
 
     if (curValue >= maxValue)
         return;
 
-    float addvalue = 0.0f;
+    uint32 addvalue = 0;
 
-    switch(power)
+    // Combat and any controlled creature
+    if (isInCombat() || !GetCharmerOrOwnerGuid().IsEmpty())
     {
-        case POWER_MANA:
+        if(!IsUnderLastManaUseEffect())
         {
-            // Combat and any controlled creature
-            if (isInCombat() || !GetCharmerOrOwnerGuid().IsEmpty())
-            {
-                if(!IsUnderLastManaUseEffect())
-                {
-                    float ManaIncreaseRate = sWorld.getConfig(CONFIG_FLOAT_RATE_POWER_MANA);
-                    float Spirit = GetStat(STAT_SPIRIT);
+            float ManaIncreaseRate = sWorld.getConfig(CONFIG_FLOAT_RATE_POWER_MANA);
+            float Spirit = GetStat(STAT_SPIRIT);
 
-                    addvalue = int32((Spirit / 5.0f + 17.0f) * ManaIncreaseRate);
-                }
-            }
-            else
-                addvalue = maxValue / 3;
-            break;
+            addvalue = uint32((Spirit / 5.0f + 17.0f) * ManaIncreaseRate);
         }
-        case POWER_ENERGY:
-            if (GetObjectGuid().IsVehicle())
-            {
-                if (VehicleEntry const* vehicleInfo = sVehicleStore.LookupEntry(GetCreatureInfo()->VehicleId))
-                {
-
-                    switch (vehicleInfo->m_powerType)
-                    {
-                        case ENERGY_TYPE_PYRITE:
-                        case ENERGY_TYPE_BLOOD:
-                        case ENERGY_TYPE_OOZE:
-                        break;
-
-                        case ENERGY_TYPE_STEAM:
-                        default:
-                            addvalue = 10 * sWorld.getConfig(CONFIG_FLOAT_RATE_POWER_ENERGY);
-                        break;
-                    }
-                }
-            }
-            else
-                addvalue = 20 * sWorld.getConfig(CONFIG_FLOAT_RATE_POWER_ENERGY);
-            break;
-        case POWER_FOCUS:
-            addvalue = 24 * sWorld.getConfig(CONFIG_FLOAT_RATE_POWER_FOCUS);
-            break;
-        default:
-            return;
     }
+    else
+        addvalue = maxValue / 3;
 
-    // Apply modifiers (if any)
-
-    AuraList const& ModPowerRegenAuras = GetAurasByType(SPELL_AURA_MOD_POWER_REGEN);
-    for(AuraList::const_iterator i = ModPowerRegenAuras.begin(); i != ModPowerRegenAuras.end(); ++i)
-        if ((*i)->GetModifier()->m_miscvalue == power)
-            addvalue += (*i)->GetModifier()->m_amount;
-
-    AuraList const& ModPowerRegenPCTAuras = GetAurasByType(SPELL_AURA_MOD_POWER_REGEN_PERCENT);
-    for(AuraList::const_iterator i = ModPowerRegenPCTAuras.begin(); i != ModPowerRegenPCTAuras.end(); ++i)
-        if ((*i)->GetModifier()->m_miscvalue == power)
-            addvalue *= ((*i)->GetModifier()->m_amount + 100) / 100.0f;
-
-    ModifyPower(power, int32(addvalue));
+    ModifyPower(POWER_MANA, addvalue);
 }
 
 void Creature::RegenerateHealth()
@@ -745,37 +694,12 @@ bool Creature::AIM_Initialize()
 
 bool Creature::Create(uint32 guidlow, Map *map, uint32 phaseMask, uint32 Entry, Team team /*= TEAM_NONE*/, const CreatureData *data /*= NULL*/, GameEventCreatureData const* eventData /*= NULL*/)
 {
-    CreatureInfo const *cinfo = sObjectMgr.GetCreatureTemplate(Entry);
-
-    if (!cinfo)
-    {
-        sLog.outErrorDb("Creature entry %u does not exist.", Entry);
-        return false;
-    }
-
     MANGOS_ASSERT(map);
-
-    HighGuid hi = cinfo->VehicleId ? HIGHGUID_VEHICLE : HIGHGUID_UNIT;
-
-    if (map->GetInstanceId() == 0)
-    {
-        // Creature can be loaded already in map if grid has been unloaded while creature walk to another grid
-        // FIXME: until creature guids is global and for instances used dynamic generated guids
-        // in instance possible load creature duplicates with same DB guid but different in game guids
-        // This will be until implementing per-map creature guids
-        if (map->GetCreature(ObjectGuid(hi, Entry, guidlow)))
-            return false;
-    }
-    else
-        guidlow = sObjectMgr.GenerateLowGuid(hi);
-
-    ObjectGuid guid(hi, Entry, guidlow);
-
     SetMap(map);
     SetPhaseMask(phaseMask,false);
 
     //oX = x;     oY = y;    dX = x;    dY = y;    m_moveTime = 0;    m_startMove = 0;
-    const bool bResult = CreateFromProto(guid, Entry, team, data, eventData);
+    const bool bResult = CreateFromProto(guidlow, Entry, team, data, eventData);
 
     if (bResult)
     {
@@ -1137,33 +1061,19 @@ void Creature::SelectLevel(const CreatureInfo *cinfo, float percentHealth, float
     else
         SetHealthPercent(percentHealth);
 
+    // mana
+    uint32 minmana = std::min(cinfo->maxmana, cinfo->minmana);
+    uint32 maxmana = std::max(cinfo->maxmana, cinfo->minmana);
+    uint32 mana = minmana + uint32(rellevel * (maxmana - minmana));
+
+    SetCreateMana(mana);
+    SetMaxPower(POWER_MANA, mana);                          //MAX Mana
+    SetPower(POWER_MANA, mana);
+
+    // TODO: set UNIT_FIELD_POWER*, for some creature class case (energy, etc)
+
     SetModifierValue(UNIT_MOD_HEALTH, BASE_VALUE, float(health));
-
-    Powers powerType = Powers(cinfo->powerType);
-    uint32 maxPower = 0;
-
-    switch(powerType)
-    {
-        case POWER_MANA:
-        {
-            uint32 minmana = std::min(cinfo->maxmana, cinfo->minmana);
-            uint32 maxmana = std::max(cinfo->maxmana, cinfo->minmana);
-            maxPower = minmana + uint32(rellevel * (maxmana - minmana));
-
-            SetCreateMana(maxPower);
-            break;
-        }
-        case POWER_ENERGY:
-        {
-            maxPower = uint32(GetCreatePowers(powerType) * cinfo->power_mod);
-            break;
-        }
-    }
-
-    SetMaxPower(powerType, maxPower);
-    SetPower(powerType, maxPower);
-
-    SetModifierValue(UnitMods(UNIT_MOD_POWER_START + powerType), BASE_VALUE, float(maxPower));
+    SetModifierValue(UNIT_MOD_MANA, BASE_VALUE, float(mana));
 
     // damage
     float damagemod = _GetDamageMod(rank);
@@ -1234,18 +1144,20 @@ float Creature::GetSpellDamageMod(int32 Rank)
     }
 }
 
-bool Creature::CreateFromProto(ObjectGuid guid, uint32 Entry, Team team, const CreatureData *data /*=NULL*/, GameEventCreatureData const* eventData /*=NULL*/)
+bool Creature::CreateFromProto(uint32 guidlow, uint32 Entry, Team team, const CreatureData *data /*=NULL*/, GameEventCreatureData const* eventData /*=NULL*/)
 {
+    CreatureInfo const *cinfo = ObjectMgr::GetCreatureTemplate(Entry);
+    if(!cinfo)
+    {
+        sLog.outErrorDb("Creature entry %u does not exist.", Entry);
+        return false;
+    }
     m_originalEntry = Entry;
 
-    Object::_Create(guid);
+    Object::_Create(guidlow, Entry, HIGHGUID_UNIT);
 
     if (!UpdateEntry(Entry, team, data, eventData, false))
         return false;
-
-    // Checked at startup
-    if (GetCreatureInfo()->VehicleId)
-        CreateVehicleKit(GetCreatureInfo()->VehicleId);
 
     return true;
 }
@@ -1263,6 +1175,17 @@ bool Creature::LoadFromDB(uint32 guidlow, Map *map)
     GameEventCreatureData const* eventData = sGameEventMgr.GetCreatureUpdateDataForActiveEvent(guidlow);
 
     m_DBTableGuid = guidlow;
+    if (map->GetInstanceId() == 0)
+    {
+        // Creature can be loaded already in map if grid has been unloaded while creature walk to another grid
+        // FIXME: until creature guids is global and for instances used dynamic generated guids
+        // in instance possible load creature duplicates with same DB guid but different in game guids
+        // This will be until implementing per-map creature guids
+        if (map->GetCreature(ObjectGuid(HIGHGUID_UNIT, data->id, guidlow)))
+            return false;
+    }
+    else
+        guidlow = sObjectMgr.GenerateLowGuid(HIGHGUID_UNIT);
 
     if (!Create(guidlow, map, data->phaseMask, data->id, TEAM_NONE, data, eventData))
         return false;
@@ -1869,19 +1792,12 @@ CreatureDataAddon const* Creature::GetCreatureAddon() const
 {
     if (m_DBTableGuid)
     {
-        if (CreatureDataAddon const* addon = ObjectMgr::GetCreatureAddon(m_DBTableGuid))
+        if(CreatureDataAddon const* addon = ObjectMgr::GetCreatureAddon(m_DBTableGuid))
             return addon;
     }
 
     // dependent from difficulty mode entry
-    if (GetEntry() != GetCreatureInfo()->Entry)
-    {
-        if (CreatureDataAddon const* addon =  ObjectMgr::GetCreatureTemplateAddon(GetCreatureInfo()->Entry))
-            return addon;
-    }
-
-    // fallback to entry of normal mode
-    return ObjectMgr::GetCreatureTemplateAddon(GetEntry());
+    return ObjectMgr::GetCreatureTemplateAddon(GetCreatureInfo()->Entry);
 }
 
 //creature_addon table
