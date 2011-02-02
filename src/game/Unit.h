@@ -30,11 +30,11 @@
 #include "FollowerReference.h"
 #include "FollowerRefManager.h"
 #include "Utilities/EventProcessor.h"
+#include "MapManager.h"
 #include "MotionMaster.h"
 #include "DBCStructure.h"
 #include "Path.h"
 #include "WorldPacket.h"
-#include "MapManager.h"
 #include "Timer.h"
 #include <list>
 

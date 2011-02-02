@@ -32,11 +32,6 @@
 #include "ObjectMgr.h"
 #include "ObjectGuid.h"
 #include "SpellMgr.h"
-#include "SpellAuras.h"
-#include "World.h"
-#include "CellImpl.h"
-#include "GridNotifiers.h"
-#include "GridNotifiersImpl.h"
 
 bool ChatHandler::HandleDebugSendSpellFailCommand(char* args)
 {

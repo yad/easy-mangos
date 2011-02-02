@@ -1184,8 +1184,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         void SetAcceptWhispers(bool on) { if(on) m_ExtraFlags |= PLAYER_EXTRA_ACCEPT_WHISPERS; else m_ExtraFlags &= ~PLAYER_EXTRA_ACCEPT_WHISPERS; }
         bool isGameMaster() const { return m_ExtraFlags & PLAYER_EXTRA_GM_ON; }
         void SetGameMaster(bool on);
-        bool isInKillerMode() const { return m_killerMode; }
-        void SetInKillerMode(bool enable) { m_killerMode = enable; }
         bool isGMChat() const { return GetSession()->GetSecurity() >= SEC_MODERATOR && (m_ExtraFlags & PLAYER_EXTRA_GM_CHAT); }
         void SetGMChat(bool on) { if(on) m_ExtraFlags |= PLAYER_EXTRA_GM_CHAT; else m_ExtraFlags &= ~PLAYER_EXTRA_GM_CHAT; }
         bool isTaxiCheater() const { return m_ExtraFlags & PLAYER_EXTRA_TAXICHEAT; }
@@ -1627,10 +1625,6 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         void AddTimedQuest( uint32 quest_id ) { m_timedquests.insert(quest_id); }
         void RemoveTimedQuest( uint32 quest_id ) { m_timedquests.erase(quest_id); }
-
-        void chompAndTrim(std::string& str);
-        bool getNextQuestId(const std::string& pString, unsigned int& pStartPos, unsigned int& pId);
-        bool requiredQuests(const char* pQuestIdString);
 
         /*********************************************************/
         /***                   LOAD SYSTEM                     ***/
@@ -2677,9 +2671,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         bool m_itemUpdateQueueBlocked;
 
         uint32 m_ExtraFlags;
-
-        bool m_killerMode;
-
         ObjectGuid m_curSelectionGuid;
 
         QuestStatusMap mQuestStatus;

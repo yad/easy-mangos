@@ -6102,7 +6102,7 @@ bool Spell::CanAutoCast(Unit* target)
         for(std::list<TargetInfo>::const_iterator ihit = m_UniqueTargetInfo.begin(); ihit != m_UniqueTargetInfo.end(); ++ihit)
             if (ihit->targetGUID == targetguid)
                 return true;
-        }
+    }
     return false;                                           //target invalid
 }
 
