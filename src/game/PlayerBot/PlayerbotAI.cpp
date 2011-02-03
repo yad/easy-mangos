@@ -84,9 +84,9 @@ PlayerbotAI::PlayerbotAI(PlayerbotMgr* const mgr, Player* const bot) :
     // reset some pointers
     m_targetChanged = false;
     m_targetType = TARGET_NORMAL;
-    m_targetCombat = 0;
-    m_targetAssist = 0;
-    m_targetProtect = 0;
+    m_targetCombat = NULL;
+    m_targetAssist = NULL;
+    m_targetProtect = NULL;
 
     m_followTarget = m_bot;
     m_bot->GetPosition(orig_x, orig_y, orig_z);
@@ -168,11 +168,13 @@ void PlayerbotAI::ReinitAI()
     // reset some pointers
     m_targetChanged = false;
     m_targetType = TARGET_NORMAL;
-    m_targetCombat = 0;
-    m_targetAssist = 0;
-    m_targetProtect = 0;
+    m_targetCombat = NULL;
+    m_targetAssist = NULL;
+    m_targetProtect = NULL;
 
     m_followTarget = m_bot;
+
+    m_bot->GiveLevel(m_bot->GetLevelAtLoading());
 
     if (m_bot == GetLeader())
         m_bot->TeleportTo(orig_map, orig_x, orig_y, orig_z, 0.0f);
@@ -1260,7 +1262,7 @@ void PlayerbotAI::GetCombatTarget(Unit* forcedTarget)
         SetQuestNeedItems();
         m_lootCreature.clear();
         m_lootCurrent = 0;
-        m_targetCombat = 0;
+        m_targetCombat = NULL;
     }
 
     // check for new targets
@@ -1281,22 +1283,6 @@ void PlayerbotAI::GetCombatTarget(Unit* forcedTarget)
                 }
             }
         }
-        if (m_bot->GetPet() && !m_bot->GetPet()->getAttackers().empty())
-        {
-            for(Unit::AttackerSet::const_iterator itr = m_bot->GetPet()->getAttackers().begin(); itr != m_bot->GetPet()->getAttackers().end(); ++itr)
-            {
-                Unit* owner = (*itr)->GetOwner();
-                if (!owner) owner = (*itr);
-                if (owner->GetTypeId() == TYPEID_PLAYER)
-                {
-                    m_targetCombat = owner;
-                    m_targetType = (m_combatOrder == ORDERS_TANK ? TARGET_THREATEN : TARGET_NORMAL);
-                    m_targetChanged = true;
-                    return;
-                }
-            }
-        }
-
         if (!GetLeader()->getAttackers().empty())
         {
             for(Unit::AttackerSet::const_iterator itr = GetLeader()->getAttackers().begin(); itr != GetLeader()->getAttackers().end(); ++itr)
@@ -1312,30 +1298,14 @@ void PlayerbotAI::GetCombatTarget(Unit* forcedTarget)
                 }
             }
         }
-        if (GetLeader()->GetPet() && !GetLeader()->GetPet()->getAttackers().empty())
-        {
-            for(Unit::AttackerSet::const_iterator itr = GetLeader()->GetPet()->getAttackers().begin(); itr != GetLeader()->GetPet()->getAttackers().end(); ++itr)
-            {
-                Unit* owner = (*itr)->GetOwner();
-                if (!owner) owner = (*itr);
-                if (owner->GetTypeId() == TYPEID_PLAYER)
-                {
-                    m_targetCombat = owner;
-                    m_targetType = (m_combatOrder == ORDERS_TANK ? TARGET_THREATEN : TARGET_NORMAL);
-                    m_targetChanged = true;
-                    return;
-                }
-            }
-        }
-
         if (m_bot->GetGroup())
         {
             GroupReference *ref = m_bot->GetGroup()->GetFirstMember();
             while (ref)
             {
-                if (!ref->getSource()->getAttackers().empty())
+                if (ref->getSource()->GetPet() && !ref->getSource()->GetPet()->getAttackers().empty())
                 {
-                    for(Unit::AttackerSet::const_iterator itr = ref->getSource()->getAttackers().begin(); itr != ref->getSource()->getAttackers().end(); ++itr)
+                    for(Unit::AttackerSet::const_iterator itr = ref->getSource()->GetPet()->getAttackers().begin(); itr != ref->getSource()->GetPet()->getAttackers().end(); ++itr)
                     {
                         Unit* owner = (*itr)->GetOwner();
                         if (!owner) owner = (*itr);
@@ -1348,12 +1318,54 @@ void PlayerbotAI::GetCombatTarget(Unit* forcedTarget)
                         }
                     }
                 }
-                if (ref->getSource()->GetPet() && !ref->getSource()->GetPet()->getAttackers().empty())
+                ref = ref->next();
+            }
+        }
+
+        if (m_bot->GetPet() && !m_bot->GetPet()->getAttackers().empty())
+        {
+            for(Unit::AttackerSet::const_iterator itr = m_bot->GetPet()->getAttackers().begin(); itr != m_bot->GetPet()->getAttackers().end(); ++itr)
+            {
+                Unit* owner = (*itr)->GetOwner();
+                if (!owner)
+                    owner = (*itr);
+                if (owner->GetTypeId() == TYPEID_PLAYER)
                 {
-                    for(Unit::AttackerSet::const_iterator itr = ref->getSource()->GetPet()->getAttackers().begin(); itr != ref->getSource()->GetPet()->getAttackers().end(); ++itr)
+                    m_targetCombat = owner;
+                    m_targetType = (m_combatOrder == ORDERS_TANK ? TARGET_THREATEN : TARGET_NORMAL);
+                    m_targetChanged = true;
+                    return;
+                }
+            }
+        }
+        if (GetLeader()->GetPet() && !GetLeader()->GetPet()->getAttackers().empty())
+        {
+            for(Unit::AttackerSet::const_iterator itr = GetLeader()->GetPet()->getAttackers().begin(); itr != GetLeader()->GetPet()->getAttackers().end(); ++itr)
+            {
+                Unit* owner = (*itr)->GetOwner();
+                if (!owner)
+                    owner = (*itr);
+                if (owner->GetTypeId() == TYPEID_PLAYER)
+                {
+                    m_targetCombat = owner;
+                    m_targetType = (m_combatOrder == ORDERS_TANK ? TARGET_THREATEN : TARGET_NORMAL);
+                    m_targetChanged = true;
+                    return;
+                }
+            }
+        }
+        if (m_bot->GetGroup())
+        {
+            GroupReference *ref = m_bot->GetGroup()->GetFirstMember();
+            while (ref)
+            {
+                if (!ref->getSource()->getAttackers().empty())
+                {
+                    for(Unit::AttackerSet::const_iterator itr = ref->getSource()->getAttackers().begin(); itr != ref->getSource()->getAttackers().end(); ++itr)
                     {
                         Unit* owner = (*itr)->GetOwner();
-                        if (!owner) owner = (*itr);
+                        if (!owner)
+                            owner = (*itr);
                         if (owner->GetTypeId() == TYPEID_PLAYER)
                         {
                             m_targetCombat = owner;
@@ -1449,34 +1461,27 @@ void PlayerbotAI::GetCombatTarget(Unit* forcedTarget)
 
 void PlayerbotAI::DoNextCombatManeuver()
 {
-    Unit* o_targetCombat = m_targetCombat;
-    CombatTargetType o_targetType = m_targetType;
-    GetCombatTarget();
-    if (m_targetCombat && m_targetCombat->GetTypeId() == TYPEID_PLAYER)
+    if (!m_targetCombat || m_targetCombat->isDead() || !m_targetCombat->IsInWorld() 
+        || !m_bot->IsWithinDistInMap(m_targetCombat, 50) || !m_bot->IsHostileTo(m_targetCombat) 
+        || !m_bot->IsInMap(m_targetCombat))
     {
-        if (!o_targetCombat || o_targetCombat->isDead() || !o_targetCombat->IsInWorld() || !m_bot->IsWithinDistInMap(o_targetCombat, 50) || !m_bot->IsHostileTo(o_targetCombat) || !m_bot->IsInMap(o_targetCombat))
-        {
-            //changement de cible autorisé
-        }
-        else if (o_targetCombat && o_targetCombat == m_targetCombat)
-        {
-            m_targetType = o_targetType;
-            m_targetChanged = false;
-        }
+        GetCombatTarget();
     }
 
     // check if we have a target - fixes crash reported by rrtn (kill hunter's pet bug)
     // if current target for attacks doesn't make sense anymore
     // clear our orders so we can get orders in next update
-    if (!m_targetCombat || m_targetCombat->isDead() || !m_targetCombat->IsInWorld() || !m_bot->IsWithinDistInMap(m_targetCombat, 50) || !m_bot->IsHostileTo(m_targetCombat) || !m_bot->IsInMap(m_targetCombat))
+    if (!m_targetCombat || m_targetCombat->isDead() || !m_targetCombat->IsInWorld() 
+        || !m_bot->IsWithinDistInMap(m_targetCombat, 50) || !m_bot->IsHostileTo(m_targetCombat) 
+        || !m_bot->IsInMap(m_targetCombat))
     {
         m_bot->AttackStop();
         m_bot->SetSelectionGuid(ObjectGuid());
-        MovementReset();
         m_bot->InterruptNonMeleeSpells(true);
-        m_targetCombat = 0;
+        m_targetCombat = NULL;
         m_targetChanged = false;
         m_targetType = TARGET_NORMAL;
+        SetMovementTarget(GetLeader());
         return;
     }
 
@@ -1489,59 +1494,10 @@ void PlayerbotAI::DoNextCombatManeuver()
             m_targetChanged = false;
     }
 
-    // do normal combat movement
-    DoCombatMovement();
+    SetMovementTarget(m_targetCombat);
 
     if (GetClassAI() && !m_targetChanged)
         (GetClassAI())->DoNextCombatManeuver(m_targetCombat);
-}
-
-void PlayerbotAI::DoCombatMovement()
-{
-    if (!m_targetCombat) return;
-
-    float targetDist = m_bot->GetDistance(m_targetCombat);
-
-    // if m_bot has it's back to the attacker, turn
-    if(!m_bot->HasInArc(M_PI_F,m_targetCombat))
-    {
-        // TellMaster("%s is facing the wrong way!", m_bot->GetName());
-        m_bot->GetMotionMaster()->Clear(true);
-        m_bot->SetOrientation(m_bot->GetAngle(m_targetCombat));
-    }
-
-    if (m_combatStyle == COMBAT_MELEE && !m_bot->hasUnitState(UNIT_STAT_CHASE) && ((m_movementOrder == MOVEMENT_STAY && targetDist <= ATTACK_DISTANCE) || (m_movementOrder != MOVEMENT_STAY)))
-    {
-        if (targetDist > 2.0f)
-        {
-            float angle = rand_float(0, M_PI_F);
-            float dist = rand_float(1.0f, 2.0f);
-            float distX, distY;
-            m_bot->GetMotionMaster()->Clear(true);
-            distX = m_targetCombat->GetPositionX() + (dist * cos(angle));
-            distY = m_targetCombat->GetPositionY() + (dist * sin(angle));
-            m_bot->GetMotionMaster()->MovePoint(m_targetCombat->GetMapId(), distX, distY, m_targetCombat->GetPositionZ());
-        }
-        SetInFront(m_targetCombat);
-        m_targetCombat->SendCreateUpdateToPlayer(m_bot);
-    }
-    else if (m_combatStyle ==COMBAT_RANGED && m_movementOrder != MOVEMENT_STAY)
-    {
-        if (targetDist > 25.0f)
-        {
-            float angle = rand_float(0, M_PI_F);
-            float dist = rand_float(10.0f, 20.0f);
-            float distX, distY;
-            m_bot->GetMotionMaster()->Clear(true);
-            distX = m_targetCombat->GetPositionX() + (dist * cos(angle));
-            distY = m_targetCombat->GetPositionY() + (dist * sin(angle));
-            m_bot->GetMotionMaster()->MovePoint(m_targetCombat->GetMapId(), distX, distY, m_targetCombat->GetPositionZ());
-            SetInFront(m_targetCombat);
-            m_targetCombat->SendCreateUpdateToPlayer(m_bot);
-        }
-        else
-            MovementClear();
-    }
 }
 
 void PlayerbotAI::SetQuestNeedItems()
@@ -2080,94 +2036,79 @@ void PlayerbotAI::SetCombatOrder(CombatOrderType co, Unit *target)
         m_combatOrder = (CombatOrderType) (((uint32) m_combatOrder & (uint32) ORDERS_PRIMARY) | (uint32) co);
 }
 
-void PlayerbotAI::SetMovementOrder(MovementOrderType mo, Unit *followTarget)
+void PlayerbotAI::SetMovementTarget(Unit *followTarget)
 {
-    m_movementOrder = mo;
-    if (m_bot!=GetLeader())
-        m_followTarget = followTarget;
-    MovementReset();
-}
-
-void PlayerbotAI::MovementReset()
-{
-    if (m_movementOrder == MOVEMENT_FOLLOW)
+    if (!followTarget)
     {
-        if (!m_followTarget)
+        MovementClear();
+        return;
+    }
+
+    m_followTarget = followTarget;
+
+    //Just checks...
+    Player* target = NULL;
+    if (m_followTarget->GetTypeId() == TYPEID_PLAYER)
+        target = ((Player*)m_followTarget);
+
+    if (target && target->IsBeingTeleported())
+        return;
+    //===============
+    if (target && target->GetCorpse())
+    {
+        if (!FollowCheckTeleport(*target->GetCorpse()))
             return;
+    }
+    else if (!FollowCheckTeleport(*m_followTarget))
+        return;
+    //end check
 
-        Player* target = NULL;
-        if (m_followTarget->GetTypeId() == TYPEID_PLAYER)
-            target = ((Player*)m_followTarget);
-
-        if (target && target->IsBeingTeleported())
-            return;
-
-        if (!IsInCombat())
+    //AUTOBOT
+    if (m_bot == GetLeader())
+    {
+        if (m_bot->IsWithinDistInMap(m_followTarget, orig_x, orig_y, orig_z, 5.0f))
         {
-            if (target && target->GetCorpse())
+            if (FindPOI())
             {
-                if (!FollowCheckTeleport(*target->GetCorpse()))
-                    return;
-            }
-            else if (!FollowCheckTeleport(*m_followTarget))
-                return;
-        }
-
-        if (m_bot->isAlive())
-        {
-            if (m_bot == GetLeader())
-            {
-                if (m_bot->IsWithinDistInMap(m_followTarget, orig_x, orig_y, orig_z, 5.0f))
-                {
-                    if (FindPOI())
-                    {
-                        m_ignoreAIUpdatesUntilTime = time(0) + urand(5, 30);
-                        m_bot->GetMotionMaster()->MoveFollow(m_followTarget, 1.0f, rand_float(0, M_PI_F));
-                    }
-                    else
-                        m_bot->GetMotionMaster()->MovePoint(0, orig_x, orig_y, orig_z);
-                }
-                else if (m_bot->IsWithinDistInMap(m_followTarget, orig_x, orig_y, orig_z, 500.0f))
-                {
-                    SetInFront(m_followTarget);
-                    float xb, yb, zb, xt, yt, zt;
-                    m_bot->GetMotionMaster()->GetDestination(xb, yb, zb);
-                    m_followTarget->GetPosition(xt, yt, zt);
-                    if (xt != xb || yt != yb)
-                        m_bot->GetMotionMaster()->MoveFollow(m_followTarget, 1.0f, rand_float(0, M_PI_F));
-                }
-                else
-                {
-                    if (FindPOI())
-                        m_bot->GetMotionMaster()->MoveFollow(m_followTarget, 1.0f, rand_float(0, M_PI_F));
-                    else
-                        m_bot->GetMotionMaster()->MovePoint(0, orig_x, orig_y, orig_z);
-                }
+                m_ignoreAIUpdatesUntilTime = time(0) + urand(5, 30);
+                m_bot->GetMotionMaster()->MoveFollow(m_followTarget, 1.0f, rand_float(0, M_PI_F));
             }
             else
+                m_bot->GetMotionMaster()->MovePoint(0, orig_x, orig_y, orig_z);
+        }
+        else if (m_bot->IsWithinDistInMap(m_followTarget, orig_x, orig_y, orig_z, 500.0f))
+        {
+            SetInFront(m_followTarget);
+            float xb, yb, zb, xt, yt, zt;
+            m_bot->GetMotionMaster()->GetDestination(xb, yb, zb);
+            m_followTarget->GetPosition(xt, yt, zt);
+            if (xt != xb || yt != yb)
+                m_bot->GetMotionMaster()->MoveFollow(m_followTarget, 1.0f, rand_float(0, M_PI_F));
+        }
+        else
+        {
+            if (FindPOI())
+                m_bot->GetMotionMaster()->MoveFollow(m_followTarget, 1.0f, rand_float(0, M_PI_F));
+            else
+                m_bot->GetMotionMaster()->MovePoint(0, orig_x, orig_y, orig_z);
+        }
+    }
+    else
+    {
+        if (m_bot->IsWithinDistInMap(m_followTarget, 3.0f))
+        {
+            MovementClear();
+            SetInFront(m_followTarget);
+        }
+        else if (m_bot->IsWithinDistInMap(m_followTarget, 100.0f))
+        {
+            if (!m_bot->IsWithinDistInMap(m_followTarget, 15.0f))
             {
-                if (m_bot->IsWithinDistInMap(m_followTarget, 3.0f))
-                {
-                    MovementClear();
-                    SetInFront(m_followTarget);
-                }
-                else if (m_bot->IsWithinDistInMap(m_followTarget, 100.0f))
-                {
-                    if (!m_bot->IsWithinDistInMap(m_followTarget, 20.0f))
-                    {
-                        SetInFront(m_followTarget);
-                        float xb, yb, zb, xt, yt, zt;
-                        m_bot->GetMotionMaster()->GetDestination(xb, yb, zb);
-                        m_followTarget->GetPosition(xt, yt, zt);
-                        if (xt != xb || yt != yb)
-                        {
-                            float angle = rand_float(0, M_PI_F);
-                            float dist = rand_float(1.0f, 3.0f);
-                            m_bot->GetMotionMaster()->MoveFollow(m_followTarget, dist, angle);
-                        }
-                    }
-                }
-                else
+                SetInFront(m_followTarget);
+                float xb, yb, zb, xt, yt, zt;
+                m_bot->GetMotionMaster()->GetDestination(xb, yb, zb);
+                m_followTarget->GetPosition(xt, yt, zt);
+                if (xt != xb || yt != yb)
                 {
                     float angle = rand_float(0, M_PI_F);
                     float dist = rand_float(1.0f, 3.0f);
@@ -2404,18 +2345,10 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
         if (pSpell && !(pSpell->IsChannelActive() || pSpell->IsAutoRepeat()))
             InterruptCurrentCastingSpell();
 
-        else if (IsInCombat() || FindEnemy())
+        else if (IsInCombat() || m_targetCombat)
         {
             if (!pSpell || !pSpell->IsChannelActive())
-            {
-                if (m_bot->getAttackers().empty() && !m_bot->IsWithinDistInMap(GetLeader(), 100, true))
-                {
-                    PlayerbotChatHandler ch(GetLeader());
-                    ch.teleport(*m_bot);
-                    SetIgnoreTeleport(5);
-                }
                 DoNextCombatManeuver();
-            }
             else
                 SetIgnoreUpdateTime(1);
         }
@@ -2435,7 +2368,7 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
 
         else if (!IsInCombat())
         {
-            SetMovementOrder(MOVEMENT_FOLLOW, GetLeader());
+            SetMovementTarget(GetLeader());
             GetClassAI()->DoNonCombatActions();
             CheckMount();
         }
@@ -2467,17 +2400,12 @@ bool PlayerbotAI::CheckMaster()
         ReinitAI();
         return false;
     }
-    if ((GetLeader() != m_bot) && !m_bot->GetGroup())
+    if ((GetLeader() != m_bot) && (!m_bot->GetGroup() || !GetLeader()->GetGroup()))
     {
         ReinitAI();
         return false;
     }
-    if (!GetLeader()->GetGroup())
-    {
-        ReinitAI();
-        return false;
-    }
-    if (m_bot->GetGroup()->GetLeaderGuid() != GetLeader()->GetGUID())
+    if (m_bot->GetGroup() && m_bot->GetGroup()->GetLeaderGuid() != GetLeader()->GetGUID())
     {
         ReinitAI();
         return false;

@@ -120,7 +120,7 @@ void PlayerbotPriestAI::DoNextCombatManeuver(Unit *pTarget)
     if (!m_master)
         return;                
 
-    ai->SetMovementOrder(PlayerbotAI::MOVEMENT_FOLLOW, m_master);   // dont want to melee mob
+    //ai->SetMovementTarget(PlayerbotAI::MOVEMENT_FOLLOW, m_master);   // dont want to melee mob
 
     Player *m_bot = GetPlayerBot();
     Group *m_group = m_bot->GetGroup();

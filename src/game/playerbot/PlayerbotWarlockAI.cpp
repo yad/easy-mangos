@@ -113,7 +113,7 @@ void PlayerbotWarlockAI::DoNextCombatManeuver(Unit *pTarget)
     if (!m_master)
         return;    
 
-    //ai->SetMovementOrder( PlayerbotAI::MOVEMENT_FOLLOW, m_master ); // dont want to melee mob
+    //ai->SetMovementTarget( PlayerbotAI::MOVEMENT_FOLLOW, m_master ); // dont want to melee mob
 
     ai->SetInFront(pTarget);
     Unit* pVictim = pTarget->getVictim();

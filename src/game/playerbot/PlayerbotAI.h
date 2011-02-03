@@ -105,13 +105,6 @@ public:
         BOTSTATE_LOOTING            // looting mode, used just after combat
     };
 
-    enum MovementOrderType
-    {
-        MOVEMENT_NONE               = 0x00,
-        MOVEMENT_FOLLOW             = 0x01,
-        MOVEMENT_STAY               = 0x02
-    };
-
     typedef std::map<uint32, uint32> BotNeedItem;
     typedef std::list<uint64> BotLootCreature;
 
@@ -244,7 +237,6 @@ public:
     void GetCombatTarget(Unit* forcedTarged = 0);
     Unit *GetCurrentTarget() { return m_targetCombat; };
     void DoNextCombatManeuver();
-    void DoCombatMovement();
     void SetIgnoreUpdateTime(uint8 t = 0) { m_ignoreAIUpdatesUntilTime = time(0) + t; };
     void SetIgnoreTeleport(uint8 t) {m_ignoreTeleport = time(0) + t; };
 
@@ -282,9 +274,7 @@ public:
     void SetCombatOrderByStr(std::string str, Unit *target = 0);
     void SetCombatOrder(CombatOrderType co, Unit *target = 0);
     CombatOrderType GetCombatOrder() { return this->m_combatOrder; }
-    void SetMovementOrder(MovementOrderType mo, Unit *followTarget = 0);
-    MovementOrderType GetMovementOrder() { return this->m_movementOrder; }
-    void MovementReset();
+    void SetMovementTarget(Unit *followTarget = 0);
     void MovementClear();
     bool IsMoving();
     bool FindPOI();
@@ -318,7 +308,6 @@ private:
 
     CombatStyle m_combatStyle;
     CombatOrderType m_combatOrder;
-    MovementOrderType m_movementOrder;
 
     ScenarioType m_ScenarioType;
 

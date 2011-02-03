@@ -106,7 +106,7 @@ void PlayerbotMageAI::DoNextCombatManeuver(Unit *pTarget)
     //FROSTFIRE_BOLT > FROSTBOLT > FROSTBOLT > ICE_LANCE > FROSTBOLT > FROSTBOLT > CONE_OF_COLD > FROSTBOLT > FROSTBOLT > ICE_LANCE > FROST_NOVA > BLIZZARD
     //ARCANE_MISSILES > ARCANE_BLAST ARCANE_BLAST ARCANE_BLAST ARCANE_BLAST > ARCANE_MISSILES > ARCANE_BARRAGE
 
-    //ai->SetMovementOrder( PlayerbotAI::MOVEMENT_FOLLOW, m_master ); // dont want to melee mob
+    //ai->SetMovementTarget( PlayerbotAI::MOVEMENT_FOLLOW, m_master ); // dont want to melee mob
 
     // Damage Spells (primitive example)
     ai->SetInFront(pTarget);

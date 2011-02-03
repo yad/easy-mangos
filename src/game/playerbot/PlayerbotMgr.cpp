@@ -153,7 +153,7 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
                 {
                     Player* const bot = GetPlayerBot(m_master->GetSelectionGuid().GetRawValue());
                     if (bot)
-                        bot->GetPlayerbotAI()->SetMovementOrder(PlayerbotAI::MOVEMENT_STAY);
+                        bot->GetPlayerbotAI()->SetMovementTarget();
                     else
                     {
                         if (!m_master->GetGroup())
@@ -162,7 +162,7 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
                         for (GroupReference *itr = m_master->GetGroup()->GetFirstMember(); itr != NULL; itr = itr->next())
                         {
                             Player* const bot = itr->getSource();
-                            bot->GetPlayerbotAI()->SetMovementOrder(PlayerbotAI::MOVEMENT_STAY);
+                            bot->GetPlayerbotAI()->SetMovementTarget();
                         }
                     }
                     return;
@@ -175,7 +175,7 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
                 {
                     Player* const bot = GetPlayerBot(m_master->GetSelectionGuid().GetRawValue());
                     if (bot)
-                        bot->GetPlayerbotAI()->SetMovementOrder(PlayerbotAI::MOVEMENT_FOLLOW, m_master);
+                        bot->GetPlayerbotAI()->SetMovementTarget(m_master);
                     else
                     {
                         if (!m_master->GetGroup())
@@ -184,7 +184,7 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
                         for (GroupReference *itr = m_master->GetGroup()->GetFirstMember(); itr != NULL; itr = itr->next())
                         {
                             Player* const bot = itr->getSource();
-                            bot->GetPlayerbotAI()->SetMovementOrder(PlayerbotAI::MOVEMENT_FOLLOW, m_master);
+                            bot->GetPlayerbotAI()->SetMovementTarget(m_master);
                         }
                     }
                     return;
