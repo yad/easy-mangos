@@ -3414,7 +3414,7 @@ SpellAuraProcResult Unit::HandleProcTriggerSpellAuraProc(Unit *pVictim, uint32 d
                     trigger_spell_id = 64569;
                     basepoints[0] = triggerAmount;
                     break;
-                } 
+                }
                 case 67702:                                 // Death's Choice, Item - Coliseum 25 Normal Melee Trinket
                 {
                     float stat = 0.0f;

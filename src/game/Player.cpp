@@ -2028,7 +2028,7 @@ bool Player::IsForMyClass(ItemPrototype const* pProto)
                 {
                     if (!HasSpell(9078))
                         return false;
-                    
+
                     switch(getClass())
                     {
                         case CLASS_PRIEST:
@@ -2043,7 +2043,7 @@ bool Player::IsForMyClass(ItemPrototype const* pProto)
                 {
                     if (!HasSpell(9077))
                         return false;
-                    
+
                     switch(getClass())
                     {
 
@@ -2059,12 +2059,12 @@ bool Player::IsForMyClass(ItemPrototype const* pProto)
                         default:
                             return false;
                     }
-                }    
+                }
                 case ITEM_SUBCLASS_ARMOR_MAIL:
                 {
                     if (!HasSpell(8737))
                         return false;
-                    
+
                     switch(getClass())
                     {
                         case CLASS_WARRIOR:
@@ -2084,7 +2084,7 @@ bool Player::IsForMyClass(ItemPrototype const* pProto)
                 {
                     if (!HasSpell(750))
                         return false;
-                    
+
                     switch(getClass())
                     {
                         case CLASS_WARRIOR:
@@ -15788,24 +15788,27 @@ void Player::RewardQuest(Quest const *pQuest, uint32 reward, Object* questGiver,
 
     bool handled = false;
 
-    switch(questGiver->GetTypeId())
+    if (questGiver)
     {
-        case TYPEID_UNIT:
-            handled = sScriptMgr.OnQuestRewarded(this, (Creature*)questGiver, pQuest);
-            break;
-        case TYPEID_GAMEOBJECT:
-            handled = sScriptMgr.OnQuestRewarded(this, (GameObject*)questGiver, pQuest);
-            break;
+        switch(questGiver->GetTypeId())
+        {
+            case TYPEID_UNIT:
+                handled = sScriptMgr.OnQuestRewarded(this, (Creature*)questGiver, pQuest);
+                break;
+            case TYPEID_GAMEOBJECT:
+                handled = sScriptMgr.OnQuestRewarded(this, (GameObject*)questGiver, pQuest);
+                break;
+        }
+
+        if (!handled && pQuest->GetQuestCompleteScript() != 0)
+            GetMap()->ScriptsStart(sQuestEndScripts, pQuest->GetQuestCompleteScript(), questGiver, this);
+
+        // cast spells after mark quest complete (some spells have quest completed state reqyurements in spell_area data)
+        if (pQuest->GetRewSpellCast() > 0)
+            CastSpell(this, pQuest->GetRewSpellCast(), true);
+        else if (pQuest->GetRewSpell() > 0)
+            CastSpell(this, pQuest->GetRewSpell(), true);
     }
-
-    if (!handled && pQuest->GetQuestCompleteScript() != 0)
-        GetMap()->ScriptsStart(sQuestEndScripts, pQuest->GetQuestCompleteScript(), questGiver, this);
-
-    // cast spells after mark quest complete (some spells have quest completed state reqyurements in spell_area data)
-    if (pQuest->GetRewSpellCast() > 0)
-        CastSpell(this, pQuest->GetRewSpellCast(), true);
-    else if (pQuest->GetRewSpell() > 0)
-        CastSpell(this, pQuest->GetRewSpell(), true);
 
     if (pQuest->GetZoneOrSort() > 0)
         GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_COMPLETE_QUESTS_IN_ZONE, pQuest->GetZoneOrSort());

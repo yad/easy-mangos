@@ -1070,7 +1070,7 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
     }
 
     // recheck for visibility of target
-    if ((m_spellInfo->speed > 0.0f || 
+    if ((m_spellInfo->speed > 0.0f ||
         (m_spellInfo->EffectImplicitTargetA[0] == TARGET_CHAIN_DAMAGE && GetSpellCastTime(m_spellInfo, this) > 0)) &&
         !unit->isVisibleForOrDetect(m_caster, m_caster, false))
     {

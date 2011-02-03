@@ -46,8 +46,8 @@ m_declinedname(NULL), m_petModeFlags(PET_MODE_DEFAULT)
     else if(type == PROTECTOR_PET)                          // always defensive
         charmInfo->SetReactState(REACT_DEFENSIVE);
     else if(type == GUARDIAN_PET)                           // always aggressive
-        charmInfo->SetReactState(REACT_AGGRESSIVE);			   
-		
+        charmInfo->SetReactState(REACT_AGGRESSIVE);
+
     baseMoveSpeed[MOVE_WALK] = 2.5f;
     baseMoveSpeed[MOVE_RUN] = 7.0f * sWorld.getConfig(CONFIG_FLOAT_RATE_CHARRUNSPEED);
     baseMoveSpeed[MOVE_RUN_BACK] = 1.25f;

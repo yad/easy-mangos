@@ -878,7 +878,7 @@ Player* PlayerbotAI::FindNewGroupLeader()
             {
                 pl = ref->getSource();
                 break;
-            }            
+            }
             ref = ref->next();
         }
     }

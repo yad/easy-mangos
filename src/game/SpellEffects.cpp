@@ -6469,7 +6469,7 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     return;
                 }
                 case 43375:
-                case 43972:                                // Mixing Blood for Quest 11306 
+                case 43972:                                // Mixing Blood for Quest 11306
                 {
                     switch(urand(0, 2))
                     {

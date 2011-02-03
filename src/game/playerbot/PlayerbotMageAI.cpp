@@ -117,8 +117,8 @@ void PlayerbotMageAI::DoNextCombatManeuver(Unit *pTarget)
     {
         case MageFire:
         {
-            static uint32 SpellFire[] = {SCORCH, FROSTFIRE_BOLT, FIRE_BLAST, SCORCH, FIREBALL, 
-                FLAMESTRIKE, SCORCH, FIREBALL, BLAST_WAVE, SCORCH, PYROBLAST, SCORCH, FIREBALL, 
+            static uint32 SpellFire[] = {SCORCH, FROSTFIRE_BOLT, FIRE_BLAST, SCORCH, FIREBALL,
+                FLAMESTRIKE, SCORCH, FIREBALL, BLAST_WAVE, SCORCH, PYROBLAST, SCORCH, FIREBALL,
                 LIVING_BOMB, DRAGONS_BREATH};
             static uint32 elt = sizeof(SpellFire)/sizeof(uint32);
 
@@ -150,7 +150,7 @@ void PlayerbotMageAI::DoNextCombatManeuver(Unit *pTarget)
         }
         case MageFrost:
         {
-            static uint32 SpellFrost[] = {FROSTFIRE_BOLT, FROSTBOLT, FROSTBOLT, ICE_LANCE, FROSTBOLT, 
+            static uint32 SpellFrost[] = {FROSTFIRE_BOLT, FROSTBOLT, FROSTBOLT, ICE_LANCE, FROSTBOLT,
                 FROSTBOLT, CONE_OF_COLD, FROSTBOLT, FROSTBOLT, ICE_LANCE, FROST_NOVA, BLIZZARD};
             static uint32 elt = sizeof(SpellFrost)/sizeof(uint32);
 

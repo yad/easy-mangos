@@ -1695,7 +1695,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         QuestStatusMap& getQuestStatusMap() { return mQuestStatus; };
 
         ObjectGuid const& GetSelectionGuid( ) const { return m_curSelectionGuid; }
-        void SetSelectionGuid(ObjectGuid guid) { m_curSelectionGuid = guid; SetTargetGuid(guid); } 
+        void SetSelectionGuid(ObjectGuid guid) { m_curSelectionGuid = guid; SetTargetGuid(guid); }
         void SendCalendarResult(CalendarResponseResult result, std::string str);
 
         uint8 GetComboPoints() { return m_comboPoints; }
