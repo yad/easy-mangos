@@ -339,7 +339,7 @@ void Unit::Update( uint32 update_diff, uint32 p_time )
         getThreatManager().UpdateForClient(update_diff);
 
     // update combat timer only for players and pets
-    if (isInCombat() && GetCharmerOrOwnerPlayerOrPlayerItself())
+    if (isInCombat() && (GetTypeId() == TYPEID_PLAYER || ((Creature*)this)->IsPet() || ((Creature*)this)->isCharmed()))
     {
         // Check UNIT_STAT_MELEE_ATTACKING or UNIT_STAT_CHASE (without UNIT_STAT_FOLLOW in this case) so pets can reach far away
         // targets without stopping half way there and running off.
@@ -6085,14 +6085,6 @@ Unit *Unit::GetCharmer() const
     return NULL;
 }
 
-Unit *Unit::GetCreator() const
-{
-    ObjectGuid creatorid = GetCreatorGuid();
-    if(!creatorid.IsEmpty())
-        return ObjectAccessor::GetUnit(*this, creatorid);
-    return NULL;
-}
-
 bool Unit::IsCharmerOrOwnerPlayerOrPlayerItself() const
 {
     if (GetTypeId()==TYPEID_PLAYER)
@@ -8937,10 +8929,6 @@ bool Unit::CanHaveThreatList() const
 
     // charmed units can not have a threat list if charmed by player
     if (creature->GetCharmerGuid().IsPlayer())
-        return false;
-
-    // Is it correct?
-    if (isCharmed())
         return false;
 
     return true;

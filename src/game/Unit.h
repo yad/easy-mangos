@@ -1118,7 +1118,6 @@ enum IgnoreUnitState
 };
 
 typedef std::set<uint64> GuardianPetList;
-typedef std::set<ObjectGuid> GroupPetList;
 
 // delay time next attack to prevent client attack animation problems
 #define ATTACK_DISPLAY_DELAY 200
@@ -1542,7 +1541,6 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         Pet* GetPet() const;
         Unit* GetCharmer() const;
         Unit* GetCharm() const;
-        Unit* GetCreator() const;
         void Uncharm();
         Unit* GetCharmerOrOwner() const { return !GetCharmerGuid().IsEmpty() ? GetCharmer() : GetOwner(); }
         Unit* GetCharmerOrOwnerOrSelf()
@@ -1559,15 +1557,10 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         void SetPet(Pet* pet);
         void SetCharm(Unit* pet);
 
-        void AddPetToList(Pet* pet);
-        void RemovePetFromList(Pet* pet);
-        GroupPetList const& GetPets() { return m_groupPets; }
-
         void AddGuardian(Pet* pet);
         void RemoveGuardian(Pet* pet);
         void RemoveGuardians();
         Pet* FindGuardianWithEntry(uint32 entry);
-        GuardianPetList const& GetGuardians() const { return m_guardianPets; }
         Pet* GetProtectorPet();                             // expected single case in guardian list
 
         bool isCharmed() const { return !GetCharmerGuid().IsEmpty(); }
@@ -1957,8 +1950,6 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         void SendPetTalk (uint32 pettalk);
         void SendPetAIReaction();
         ///----------End of Pet responses methods----------
-        void DoPetAction (Player* owner, uint8 flag, uint32 spellid, ObjectGuid petGuid, ObjectGuid targetGuid);
-        void DoPetCastSpell (Player *owner, uint8 cast_count, SpellCastTargets* targets, SpellEntry const* spellInfo);
 
         void propagateSpeedChange() { GetMotionMaster()->propagateSpeedChange(); }
 
@@ -2074,8 +2065,6 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
 
         ComboPointHolderSet m_ComboPointHolders;
 
-        GroupPetList m_groupPets;
-
         GuardianPetList m_guardianPets;
         uint32 m_ThreatRedirectionPercent;
         uint64 m_misdirectionTargetGUID;
@@ -2103,17 +2092,8 @@ template<typename Func>
 void Unit::CallForAllControlledUnits(Func const& func, uint32 controlledMask)
 {
     if (controlledMask & CONTROLLED_PET)
-    {
-        if (!m_groupPets.empty())
-        {
-            GroupPetList m_groupPetsTmp = GetPets();  // Original list may be modified in this function
-            for (GroupPetList::const_iterator itr = m_groupPetsTmp.begin(); itr != m_groupPetsTmp.end(); ++itr)
-            {
-                if (Pet* pet = _GetPet(*itr))
+        if (Pet* pet = GetPet())
                     func(pet);
-            }
-        }
-    }
 
     if (controlledMask & CONTROLLED_MINIPET)
         if (Unit* mini = GetMiniPet())
@@ -2143,10 +2123,9 @@ template<typename Func>
 bool Unit::CheckAllControlledUnits(Func const& func, uint32 controlledMask) const
 {
     if (controlledMask & CONTROLLED_PET)
-        for (GroupPetList::const_iterator itr = m_groupPets.begin(); itr != m_groupPets.end(); ++itr)
-           if (Pet* pet = _GetPet(*itr))
-               if (func(pet))
-                   return true;
+        if (Pet const* pet = GetPet())
+           if (func(pet))
+               return true;
 
     if (controlledMask & CONTROLLED_MINIPET)
         if(Unit const* mini = GetMiniPet())

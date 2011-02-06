@@ -1861,16 +1861,8 @@ void Group::BroadcastGroupUpdate(void)
             DEBUG_LOG("-- Forced group value update for '%s'", pp->GetName());
             if(pp->GetPet())
             {
-                GroupPetList m_groupPets = pp->GetPets();
-                if  (!m_groupPets.empty())
-                {
-                     for (GroupPetList::const_iterator itr = m_groupPets.begin(); itr != m_groupPets.end(); ++itr)
-                         if (Pet* _pet = pp->GetMap()->GetPet(*itr))
-                         {
-                             _pet->ForceValuesUpdateAtIndex(UNIT_FIELD_BYTES_2);
-                             _pet->ForceValuesUpdateAtIndex(UNIT_FIELD_FACTIONTEMPLATE);
-                         }
-                }
+                pp->GetPet()->ForceValuesUpdateAtIndex(UNIT_FIELD_BYTES_2);
+                pp->GetPet()->ForceValuesUpdateAtIndex(UNIT_FIELD_FACTIONTEMPLATE);
                 DEBUG_LOG("-- Forced group value update for '%s' pet '%s'", pp->GetName(), pp->GetPet()->GetName());
             }
             for(uint32 i = 0; i < MAX_TOTEM_SLOT; ++i)
