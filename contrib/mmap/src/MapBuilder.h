@@ -257,18 +257,19 @@ namespace MMAP
                        bool skipJunkMaps        = true,
                        bool skipBattlegrounds   = true,
                        bool debugOutput         = false,
-                       bool bigBaseUnit         = false);
+                       bool bigBaseUnit         = false,
+                       const char* offMeshFilePath = NULL);
 
             ~MapBuilder();
 
             // builds all mmap tiles for the specified map id (ignores skip settings)
-            void build(uint32 mapID);
+            void buildMap(uint32 mapID);
 
             // builds an mmap tile for the specified map tile (ignores skip settings)
             void buildTile(uint32 mapID, uint32 tileX, uint32 tileY);
 
             // builds list of maps, then builds all of mmap tiles (based on the skip settings)
-            void buildAll();
+            void buildAllMaps();
 
         private:
             // detect maps and tiles
@@ -286,6 +287,8 @@ namespace MMAP
             void copyIndices(vector<MeshTriangle> source, G3D::Array<int> &dest, int offest, bool flip);
             void copyIndices(G3D::Array<int> &dest, G3D::Array<int> src, int offset);
             void cleanVertices(G3D::Array<float> &verts, G3D::Array<int> &tris);
+
+            void loadOffMeshConnections(uint32 map_id, uint32 tile_x, uint32 tile_y, MeshData* mesh);
 
             // move map building
             void buildMoveMap(uint32 mapID);
@@ -317,6 +320,7 @@ namespace MMAP
 
             bool m_debugOutput;
 
+            const char* m_offMeshFilePath;
             bool m_skipContinents;
             bool m_skipJunkMaps;
             bool m_skipBattlegrounds;

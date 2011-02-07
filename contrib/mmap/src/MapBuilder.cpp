@@ -30,7 +30,7 @@ namespace MMAP
 {
     MapBuilder::MapBuilder(float maxWalkableAngle, bool skipLiquid,
                            bool skipContinents, bool skipJunkMaps, bool skipBattlegrounds,
-                           bool debugOutput, bool bigBaseUnit) :
+                           bool debugOutput, bool bigBaseUnit, const char* offMeshFilePath) :
                            m_vmapManager(NULL),
                            m_terrainBuilder(NULL),
                            m_debugOutput        (debugOutput),
@@ -39,7 +39,8 @@ namespace MMAP
                            m_skipBattlegrounds  (skipBattlegrounds),
                            m_maxWalkableAngle   (maxWalkableAngle),
                            m_bigBaseUnit        (bigBaseUnit),
-                           m_rcContext          (NULL)
+                           m_rcContext          (NULL),
+                           m_offMeshFilePath    (offMeshFilePath)
     {
         m_vmapManager = new VMapManager2();
         m_terrainBuilder = new TerrainBuilder(skipLiquid);
@@ -138,17 +139,17 @@ namespace MMAP
         return tiles;
     }
 
-    void MapBuilder::buildAll()
+    void MapBuilder::buildAllMaps()
     {
         for (TileList::iterator it = m_tiles.begin(); it != m_tiles.end(); ++it)
         {
             uint32 mapID = (*it).first;
             if (!shouldSkipMap(mapID))
-                build(mapID);
+                buildMap(mapID);
         }
     }
 
-    void MapBuilder::build(uint32 mapID)
+    void MapBuilder::buildMap(uint32 mapID)
     {
         printf("Building map %03u:\n", mapID);
 
@@ -167,7 +168,10 @@ namespace MMAP
             if (!tiles->size())
             {
                 // initialize the static tree, which loads WDT models
-                if (!loadVMap(mapID, 64, 64, meshData) || !(meshData.solidVerts.size() || meshData.liquidVerts.size()))
+                if (!loadVMap(mapID, 64, 64, meshData))
+                    continue;
+
+                 if (!(meshData.solidVerts.size() || meshData.liquidVerts.size()))
                     continue;
 
                 // get the coord bounds of the model data
@@ -179,13 +183,9 @@ namespace MMAP
                     rcVmax(bmax, lmax);
                 }
                 else if (meshData.solidVerts.size())
-                {
                     rcCalcBounds(meshData.solidVerts.getCArray(), meshData.solidVerts.size() / 3, bmin, bmax);
-                }
                 else
-                {
                     rcCalcBounds(meshData.liquidVerts.getCArray(), meshData.liquidVerts.size() / 3, lmin, lmax);
-                }
 
                 // convert coord bounds to grid bounds
                 uint32 minX, minY, maxX, maxY;
@@ -268,6 +268,8 @@ namespace MMAP
 
             allVerts.fastClear();
             allTris.fastClear();
+
+            loadOffMeshConnections(mapID, tileX, tileY, &meshData);
 
             // build navmesh tile
             buildMoveMapTile(mapID, tileX, tileY, meshData, bmin, bmax, navMesh);
@@ -376,6 +378,8 @@ namespace MMAP
 
             allVerts.clear();
             allTris.clear();
+
+            loadOffMeshConnections(mapID, tileX, tileY, &meshData);
 
             // build navmesh tile
             buildMoveMapTile(mapID, tileX, tileY, meshData, bmin, bmax, navMesh);
@@ -523,6 +527,7 @@ namespace MMAP
                         uint32 liqOffset = meshData.liquidVerts.size() / 3;
                         for (uint32 i = 0; i < liqVerts.size(); ++i)
                             meshData.liquidVerts.append(liqVerts[i].y, liqVerts[i].z, liqVerts[i].x);
+
                         for (uint32 i = 0; i < liqTris.size() / 3; ++i)
                         {
                             meshData.liquidTris.append(liqTris[i*3+1] + liqOffset, liqTris[i*3+2] + liqOffset, liqTris[i*3] + liqOffset);
@@ -957,6 +962,14 @@ namespace MMAP
         params.detailVertsCount = iv.polyMeshDetail->nverts;
         params.detailTris = iv.polyMeshDetail->tris;
         params.detailTriCount = iv.polyMeshDetail->ntris;
+
+        params.offMeshConVerts = meshData.offMeshConnections.getCArray();
+        params.offMeshConCount = meshData.offMeshConnections.size()/6;
+        params.offMeshConRad = meshData.offMeshConnectionRads.getCArray();
+        params.offMeshConDir = meshData.offMeshConnectionDirs.getCArray();
+        params.offMeshConAreas = meshData.offMeshConnectionsAreas.getCArray();
+        params.offMeshConFlags = meshData.offMeshConnectionsFlags.getCArray();
+
         params.walkableHeight = BASE_UNIT_DIM*config.walkableHeight;    // agent height
         params.walkableRadius = BASE_UNIT_DIM*config.walkableRadius;    // agent radius
         params.walkableClimb = BASE_UNIT_DIM*config.walkableClimb;      // keep less that walkableHeight (aka agent height)!
@@ -1302,5 +1315,52 @@ namespace MMAP
             return false;
 
         return true;
+    }
+
+    void MapBuilder::loadOffMeshConnections(uint32 map_id, uint32 tile_x, uint32 tile_y, MeshData* mesh)
+    {
+        // no meshfile input given?
+        if(m_offMeshFilePath == NULL)
+            return;
+
+        FILE* fp = fopen(m_offMeshFilePath, "rb");
+        if (!fp)
+        {
+            printf(" loadOffMeshConnections:: input file %s not found!\n", m_offMeshFilePath);
+            return;
+        }
+
+        // pretty silly thing, as we parse entire file and load only the tile we need
+        // but we don't expect this file to be too large
+        char* buf = new char[512];
+        while(fgets(buf, 512, fp))
+        {
+            float p0[3], p1[3];
+            int mid, tx, ty;
+            float size;
+            sscanf(buf, "%d %d,%d (%f %f %f) (%f %f %f) %f", &mid, &tx, &ty,
+                                    &p0[0], &p0[1], &p0[2], &p1[0], &p1[1], &p1[2], &size);
+
+            if(map_id == mid, tile_x == tx, tile_y == ty)
+            {
+                mesh->offMeshConnections.append(p0[1]);
+                mesh->offMeshConnections.append(p0[2]);
+                mesh->offMeshConnections.append(p0[0]);
+
+                mesh->offMeshConnections.append(p1[1]);
+                mesh->offMeshConnections.append(p1[2]);
+                mesh->offMeshConnections.append(p1[0]);
+
+                mesh->offMeshConnectionDirs.append(1);          // 1 - both direction, 0 - one sided
+                mesh->offMeshConnectionRads.append(size);       // agent size equivalent
+                // can be used same way as polygon flags
+                mesh->offMeshConnectionsAreas.append((unsigned char)0xFF);
+                mesh->offMeshConnectionsFlags.append((unsigned short)0xFF);  // all movement masks can make this path
+            }
+
+        }
+
+        delete [] buf;
+        fclose(fp);
     }
 }
