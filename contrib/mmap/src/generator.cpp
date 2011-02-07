@@ -69,7 +69,8 @@ bool handleArgs(int argc, char** argv,
                bool &skipBattlegrounds,
                bool &debugOutput,
                bool &silent,
-               bool &bigBaseUnit)
+               bool &bigBaseUnit,
+               char* &offMeshInputPath)
 {
     char* param = NULL;
     for (int i = 1; i < argc; ++i)
@@ -190,6 +191,14 @@ bool handleArgs(int argc, char** argv,
             else
                 printf("invalid option for '--bigBaseUnit', using default false\n");
         }
+        else if (strcmp(argv[i], "--offMeshInput") == 0)
+        {
+            param = argv[++i];
+            if (!param)
+                return false;
+
+            offMeshInputPath = param;
+        }
         else
         {
             int map = atoi(argv[i]);
@@ -225,11 +234,12 @@ int main(int argc, char** argv)
          debugOutput = false,
          silent = false,
          bigBaseUnit = false;
+    char* offMeshInputPath = NULL;
 
     bool validParam = handleArgs(argc, argv, mapnum,
                                  tileX, tileY, maxAngle,
                                  skipLiquid, skipContinents, skipJunkMaps, skipBattlegrounds,
-                                 debugOutput, silent, bigBaseUnit);
+                                 debugOutput, silent, bigBaseUnit, offMeshInputPath);
 
     if (!validParam)
         return silent ? -1 : finish("You have specified invalid parameters", -1);
@@ -250,14 +260,14 @@ int main(int argc, char** argv)
         return silent ? -3 : finish("Press any key to close...", -3);
 
     MapBuilder builder(maxAngle, skipLiquid, skipContinents, skipJunkMaps,
-                       skipBattlegrounds, debugOutput, bigBaseUnit);
+                       skipBattlegrounds, debugOutput, bigBaseUnit, offMeshInputPath);
 
     if (tileX > -1 && tileY > -1 && mapnum >= 0)
         builder.buildTile(mapnum, tileX, tileY);
     else if (mapnum >= 0)
-        builder.build(uint32(mapnum));
+        builder.buildMap(uint32(mapnum));
     else
-        builder.buildAll();
+        builder.buildAllMaps();
 
     return silent ? 1 : finish("Movemap build is complete!", 1);
 }
