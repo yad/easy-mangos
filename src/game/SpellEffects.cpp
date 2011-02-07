@@ -6328,6 +6328,77 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                 case 24590:                                 // Brittle Armor - need remove one 24575 Brittle Armor aura
                     unitTarget->RemoveAuraHolderFromStack(24575);
                     return;
+                case 24717:                                 // Pirate Costume
+                {
+                    if (!unitTarget || unitTarget->GetTypeId() != TYPEID_PLAYER)
+                        return;
+
+                    // Pirate Costume (male or female)
+                    m_caster->CastSpell(unitTarget, unitTarget->getGender() == GENDER_MALE ? 24708 : 24709, true);
+                    return;
+                }
+                case 24718:                                 // Ninja Costume
+                {
+                    if (!unitTarget || unitTarget->GetTypeId() != TYPEID_PLAYER)
+                        return;
+
+                    // Ninja Costume (male or female)
+                    m_caster->CastSpell(unitTarget, unitTarget->getGender() == GENDER_MALE ? 24711 : 24710, true);
+                    return;
+                }
+                case 24719:                                 // Leper Gnome Costume
+                {
+                    if (!unitTarget || unitTarget->GetTypeId() != TYPEID_PLAYER)
+                        return;
+
+                    // Leper Gnome Costume (male or female)
+                    m_caster->CastSpell(unitTarget, unitTarget->getGender() == GENDER_MALE ? 24712 : 24713, true);
+                    return;
+                }
+                case 24720:                                 // Random Costume
+                {
+                    if (!unitTarget || unitTarget->GetTypeId() != TYPEID_PLAYER)
+                        return;
+
+                    uint32 spellId = 0;
+
+                    switch(urand(0, 6))
+                    {
+                        case 0:
+                            spellId = unitTarget->getGender() == GENDER_MALE ? 24708 : 24709;
+                            break;
+                        case 1:
+                            spellId = unitTarget->getGender() == GENDER_MALE ? 24711 : 24710;
+                            break;
+                        case 2:
+                            spellId = unitTarget->getGender() == GENDER_MALE ? 24712 : 24713;
+                            break;
+                        case 3:
+                            spellId = 24723;
+                            break;
+                        case 4:
+                            spellId = 24732;
+                            break;
+                        case 5:
+                            spellId = unitTarget->getGender() == GENDER_MALE ? 24735 : 24736;
+                            break;
+                        case 6:
+                            spellId = 24740;
+                            break;
+                    }
+
+                    m_caster->CastSpell(unitTarget, spellId, true);
+                    return;
+                }
+                case 24737:                                 // Ghost Costume
+                {
+                    if (!unitTarget || unitTarget->GetTypeId() != TYPEID_PLAYER)
+                        return;
+
+                    // Ghost Costume (male or female)
+                    m_caster->CastSpell(unitTarget, unitTarget->getGender() == GENDER_MALE ? 24735 : 24736, true);
+                    return;
+                }
                 case 26275:                                 // PX-238 Winter Wondervolt TRAP
                 {
                     uint32 spells[4] = { 26272, 26157, 26273, 26274 };
@@ -6402,6 +6473,32 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                         unitTarget->CastSpell(unitTarget, 26655, false);
 
                     return;
+                }
+                case 26678:                                 //Heart Candy
+                {
+                    uint32 item=0;
+                    switch ( urand(0, 7) )
+                    {
+                        case 0:
+                            item = 21816; break;
+                        case 1:
+                            item = 21817; break;
+                        case 2:
+                            item = 21818; break;
+                        case 3:
+                            item = 21819; break;
+                        case 4:
+                            item = 21820; break;
+                        case 5:
+                            item = 21821; break;
+                        case 6:
+                            item = 21822; break;
+                        case 7: 
+                            item = 21823; break;
+                    }
+                    if (item)
+                        DoCreateItem(eff_idx,item);
+                    break;
                 }
                 case 29830:                                 // Mirren's Drinking Hat
                 {
@@ -6953,24 +7050,6 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
 
                     // Summon Main Mammoth Meat
                     m_caster->CastSpell(m_caster, 57444, true);
-                    return;
-                }
-                case 54729:                                 // Winged Steed of the Ebon Blade
-                {
-                    if (!unitTarget || unitTarget->GetTypeId() != TYPEID_PLAYER)
-                        return;
-
-                    // Prevent stacking of mounts
-                    unitTarget->RemoveSpellsCausingAura(SPELL_AURA_MOUNTED);
-
-                    // Triggered spell id dependent of riding skill
-                    if (uint16 skillval = ((Player*)unitTarget)->GetSkillValue(SKILL_RIDING))
-                    {
-                        if (skillval >= 300)
-                            unitTarget->CastSpell(unitTarget, 54727, true);
-                        else
-                            unitTarget->CastSpell(unitTarget, 54726, true);
-                    }
                     return;
                 }
                 case 54436:                                 // Demonic Empowerment (succubus Vanish effect)

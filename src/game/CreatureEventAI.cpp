@@ -1367,10 +1367,10 @@ void CreatureEventAI::DoScriptText(int32 textEntry, WorldObject* pSource, Unit* 
 void CreatureEventAI::DoMeleeAttackIfReady()
 {
     //Make sure our attack is ready before checking distance
-    if (m_creature->isAttackReady())
+    if (m_creature->isAttackReady() && m_creature->getVictim())
     {
         //If we are within range melee the target
-        if (m_creature->IsWithinDistInMap(m_creature->getVictim(), ATTACK_DISTANCE))
+        if (m_creature->CanReachWithMeleeAttack(m_creature->getVictim()))
         {
             m_creature->AttackerStateUpdate(m_creature->getVictim());
             m_creature->resetAttackTimer();
