@@ -2093,7 +2093,7 @@ void Unit::CallForAllControlledUnits(Func const& func, uint32 controlledMask)
 {
     if (controlledMask & CONTROLLED_PET)
         if (Pet* pet = GetPet())
-                    func(pet);
+            func(pet);
 
     if (controlledMask & CONTROLLED_MINIPET)
         if (Unit* mini = GetMiniPet())
@@ -2124,8 +2124,8 @@ bool Unit::CheckAllControlledUnits(Func const& func, uint32 controlledMask) cons
 {
     if (controlledMask & CONTROLLED_PET)
         if (Pet const* pet = GetPet())
-           if (func(pet))
-               return true;
+            if (func(pet))
+                return true;
 
     if (controlledMask & CONTROLLED_MINIPET)
         if(Unit const* mini = GetMiniPet())
