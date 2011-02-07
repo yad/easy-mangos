@@ -1323,11 +1323,11 @@ namespace MMAP
         if(m_offMeshFilePath == NULL)
             return;
 
-	    FILE* fp = fopen(m_offMeshFilePath, "rb");
-	    if (!fp)
+        FILE* fp = fopen(m_offMeshFilePath, "rb");
+        if (!fp)
         {
             printf(" loadOffMeshConnections:: input file %s not found!\n", m_offMeshFilePath);
-		    return;
+            return;
         }
 
         // pretty silly thing, as we parse entire file and load only the tile we need
@@ -1338,8 +1338,8 @@ namespace MMAP
             float p0[3], p1[3];
             int mid, tx, ty;
             float size;
-			sscanf(buf, "%d %d,%d (%f %f %f) (%f %f %f) %f", &mid, &tx, &ty,
-                                        &p0[0], &p0[1], &p0[2], &p1[0], &p1[1], &p1[2], &size);
+            sscanf(buf, "%d %d,%d (%f %f %f) (%f %f %f) %f", &mid, &tx, &ty,
+                                    &p0[0], &p0[1], &p0[2], &p1[0], &p1[1], &p1[2], &size);
 
             if(map_id == mid, tile_x == tx, tile_y == ty)
             {
@@ -1351,7 +1351,7 @@ namespace MMAP
                 mesh->offMeshConnections.append(p1[2]);
                 mesh->offMeshConnections.append(p1[0]);
 
-                mesh->offMeshConnectionDirs.append(1);          // 1- both direction, 0 - one sided
+                mesh->offMeshConnectionDirs.append(1);          // 1 - both direction, 0 - one sided
                 mesh->offMeshConnectionRads.append(size);       // agent size equivalent
                 // can be used same way as polygon flags
                 mesh->offMeshConnectionsAreas.append((unsigned char)0xFF);
@@ -1360,7 +1360,7 @@ namespace MMAP
 
         }
 
-	    delete [] buf;
+        delete [] buf;
         fclose(fp);
     }
 }
