@@ -49,6 +49,12 @@ Map::~Map()
     if (m_instanceSave)
         m_instanceSave->SetUsedByMapState(false);           // field pointer can be deleted after this
 
+    if(i_data)
+    {
+        delete i_data;
+        i_data = NULL;
+    }
+
     //release reference count
     if(m_TerrainData->Release())
         sTerrainMgr.UnloadTerrain(m_TerrainData->GetMapId());
@@ -69,7 +75,8 @@ Map::Map(uint32 id, time_t expiry, uint32 InstanceId, uint8 SpawnMode)
   i_id(id), i_InstanceId(InstanceId), m_unloadTimer(0),
   m_VisibleDistance(DEFAULT_VISIBILITY_DISTANCE), m_instanceSave(NULL),
   m_activeNonPlayersIter(m_activeNonPlayers.end()),
-  i_gridExpiry(expiry), m_TerrainData(sTerrainMgr.LoadTerrain(id))
+  i_gridExpiry(expiry), m_TerrainData(sTerrainMgr.LoadTerrain(id)),
+  i_data(NULL), i_script_id(0)
 {
     for(unsigned int j=0; j < MAX_NUMBER_OF_GRIDS; ++j)
     {
@@ -87,6 +94,9 @@ Map::Map(uint32 id, time_t expiry, uint32 InstanceId, uint8 SpawnMode)
 
     //add reference for TerrainData object
     m_TerrainData->AddRef();
+
+    m_instanceSave = sInstanceSaveMgr.AddInstanceSave(GetId(), GetInstanceId(), GetDifficulty(), 0, Instanceable());
+    m_instanceSave->SetUsedByMapState(true);
 }
 
 void Map::InitVisibilityDistance()
@@ -307,6 +317,10 @@ bool Map::Add(Player *player)
     UpdateObjectVisibility(player,cell,p);
 
     AddNotifier(player,cell,p);
+
+    if (i_data)
+        i_data->OnPlayerEnter(player);
+
     return true;
 }
 
@@ -565,10 +579,16 @@ void Map::Update(const uint32 &t_diff)
     ///- Process necessary scripts
     if (!m_scriptSchedule.empty())
         ScriptsProcess();
+
+    if(i_data)
+        i_data->Update(t_diff);
 }
 
 void Map::Remove(Player *player, bool remove)
 {
+    if (i_data)
+        i_data->OnPlayerLeave(player);
+
     if(remove)
         player->CleanupsBeforeDelete();
     else
@@ -1214,6 +1234,64 @@ void Map::RemoveFromActive( WorldObject* obj )
     }
 }
 
+void Map::CreateInstanceData(bool load)
+{
+    if(i_data != NULL)
+        return;
+
+    if (Instanceable())
+    {
+        if (InstanceTemplate const* mInstance = ObjectMgr::GetInstanceTemplate(GetId()))
+            i_script_id = mInstance->script_id;
+    }
+    else
+    {
+        if (WorldTemplate const* mInstance = ObjectMgr::GetWorldTemplate(GetId()))
+            i_script_id = mInstance->script_id;
+    }
+
+    if (!i_script_id)
+        return;
+
+    i_data = sScriptMgr.CreateInstanceData(this);
+    if(!i_data)
+        return;
+
+    if (load)
+    {
+        // TODO: make a global storage for this
+        QueryResult* result;
+
+        if (Instanceable())
+            result = CharacterDatabase.PQuery("SELECT data FROM instance WHERE id = '%u'", i_InstanceId);
+        else
+            result = CharacterDatabase.PQuery("SELECT data FROM world WHERE map = '%u'", GetId());
+
+        if (result)
+        {
+            Field* fields = result->Fetch();
+            const char* data = fields[0].GetString();
+            if (data)
+            {
+                DEBUG_LOG("Loading instance data for `%s` (Map: %u Instance: %u)", sScriptMgr.GetScriptName(i_script_id), GetId(), i_InstanceId);
+                i_data->Load(data);
+            }
+            delete result;
+        }
+        else
+        {
+            // for non-instanceable map always add data to table if not found, later code expected that for map in `word` exist always after load
+            if (!Instanceable())
+                CharacterDatabase.PExecute("INSERT INTO world VALUES ('%u', '')", GetId());
+        }
+    }
+    else
+    {
+        DEBUG_LOG("New instance data, \"%s\" ,initialized!", sScriptMgr.GetScriptName(i_script_id));
+        i_data->Initialize();
+    }
+}
+
 template void Map::Add(Corpse *);
 template void Map::Add(Creature *);
 template void Map::Add(GameObject *);
@@ -1228,8 +1306,7 @@ template void Map::Remove(DynamicObject *, bool);
 
 InstanceMap::InstanceMap(uint32 id, time_t expiry, uint32 InstanceId, uint8 SpawnMode)
   : Map(id, expiry, InstanceId, SpawnMode),
-    m_resetAfterUnload(false), m_unloadWhenEmpty(false),
-    i_data(NULL), i_script_id(0)
+    m_resetAfterUnload(false), m_unloadWhenEmpty(false)
 {
     //lets initialize visibility distance for dungeons
     InstanceMap::InitVisibilityDistance();
@@ -1237,22 +1314,10 @@ InstanceMap::InstanceMap(uint32 id, time_t expiry, uint32 InstanceId, uint8 Spaw
     // the timer is started by default, and stopped when the first player joins
     // this make sure it gets unloaded if for some reason no player joins
     m_unloadTimer = std::max(sWorld.getConfig(CONFIG_UINT32_INSTANCE_UNLOAD_DELAY), (uint32)MIN_UNLOAD_DELAY);
-
-    // Dungeon only code
-    if(IsDungeon())
-    {
-        m_instanceSave = sInstanceSaveMgr.AddInstanceSave(GetId(), GetInstanceId(), Difficulty(GetSpawnMode()), 0, true);
-        m_instanceSave->SetUsedByMapState(true);
-    }
 }
 
 InstanceMap::~InstanceMap()
 {
-    if(i_data)
-    {
-        delete i_data;
-        i_data = NULL;
-    }
 }
 
 void InstanceMap::InitVisibilityDistance()
@@ -1366,11 +1431,8 @@ bool InstanceMap::Add(Player *player)
                             pGroup->GetId(), groupBind->save->GetMapId(),
                             groupBind->save->GetInstanceId(), groupBind->save->GetDifficulty());
 
-                        if (GetInstanceSave())
-                            sLog.outError("MapSave players: %d, group count: %d",
+                        sLog.outError("MapSave players: %d, group count: %d",
                             GetInstanceSave()->GetPlayerCount(), GetInstanceSave()->GetGroupCount());
-                        else
-                            sLog.outError("MapSave NULL");
 
                         if (groupBind->save)
                             sLog.outError("GroupBind save players: %d, group count: %d", groupBind->save->GetPlayerCount(), groupBind->save->GetGroupCount());
@@ -1419,18 +1481,12 @@ bool InstanceMap::Add(Player *player)
     // this will acquire the same mutex so it cannot be in the previous block
     Map::Add(player);
 
-    if (i_data)
-        i_data->OnPlayerEnter(player);
-
     return true;
 }
 
 void InstanceMap::Update(const uint32& t_diff)
 {
     Map::Update(t_diff);
-
-    if(i_data)
-        i_data->Update(t_diff);
 }
 
 void BattleGroundMap::Update(const uint32& diff)
@@ -1448,51 +1504,10 @@ void InstanceMap::Remove(Player *player, bool remove)
     if(!m_unloadTimer && m_mapRefManager.getSize() == 1)
         m_unloadTimer = m_unloadWhenEmpty ? MIN_UNLOAD_DELAY : std::max(sWorld.getConfig(CONFIG_UINT32_INSTANCE_UNLOAD_DELAY), (uint32)MIN_UNLOAD_DELAY);
 
-    if (i_data)
-        i_data->OnPlayerLeave(player);
-
     Map::Remove(player, remove);
 
     // for normal instances schedule the reset after all players have left
     SetResetSchedule(true);
-}
-
-void InstanceMap::CreateInstanceData(bool load)
-{
-    if(i_data != NULL)
-        return;
-
-    InstanceTemplate const* mInstance = ObjectMgr::GetInstanceTemplate(GetId());
-    if (mInstance)
-    {
-        i_script_id = mInstance->script_id;
-        i_data = sScriptMgr.CreateInstanceData(this);
-    }
-
-    if(!i_data)
-        return;
-
-    if(load)
-    {
-        // TODO: make a global storage for this
-        QueryResult* result = CharacterDatabase.PQuery("SELECT data FROM instance WHERE map = '%u' AND id = '%u'", GetId(), i_InstanceId);
-        if (result)
-        {
-            Field* fields = result->Fetch();
-            const char* data = fields[0].GetString();
-            if(data)
-            {
-                DEBUG_LOG("Loading instance data for `%s` with id %u", sScriptMgr.GetScriptName(i_script_id), i_InstanceId);
-                i_data->Load(data);
-            }
-            delete result;
-        }
-    }
-    else
-    {
-        DEBUG_LOG("New instance data, \"%s\" ,initialized!", sScriptMgr.GetScriptName(i_script_id));
-        i_data->Initialize();
-    }
 }
 
 /*
@@ -1576,7 +1591,7 @@ void InstanceMap::UnloadAll(bool pForce)
     }
 
     if(m_resetAfterUnload == true)
-        sObjectMgr.DeleteRespawnTimeForInstance(GetInstanceId());
+        GetInstanceSave()->DeleteRespawnTimes();
 
     Map::UnloadAll(pForce);
 }

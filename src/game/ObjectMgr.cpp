@@ -1618,90 +1618,6 @@ void ObjectMgr::RemoveGameobjectFromGrid(uint32 guid, GameObjectData const* data
     }
 }
 
-void ObjectMgr::LoadCreatureRespawnTimes()
-{
-    // remove outdated data
-    CharacterDatabase.DirectExecute("DELETE FROM creature_respawn WHERE respawntime <= UNIX_TIMESTAMP(NOW())");
-
-    uint32 count = 0;
-
-    QueryResult *result = CharacterDatabase.Query("SELECT guid, respawntime, instance FROM creature_respawn");
-
-    if(!result)
-    {
-        barGoLink bar(1);
-
-        bar.step();
-
-        sLog.outString();
-        sLog.outString(">> Loaded 0 creature respawn time.");
-        return;
-    }
-
-    barGoLink bar((int)result->GetRowCount());
-
-    do
-    {
-        Field *fields = result->Fetch();
-        bar.step();
-
-        uint32 loguid       = fields[0].GetUInt32();
-        uint64 respawn_time = fields[1].GetUInt64();
-        uint32 instance     = fields[2].GetUInt32();
-
-        mCreatureRespawnTimes[MAKE_PAIR64(loguid,instance)] = time_t(respawn_time);
-
-        ++count;
-    } while (result->NextRow());
-
-    delete result;
-
-    sLog.outString( ">> Loaded %lu creature respawn times", (unsigned long)mCreatureRespawnTimes.size() );
-    sLog.outString();
-}
-
-void ObjectMgr::LoadGameobjectRespawnTimes()
-{
-    // remove outdated data
-    CharacterDatabase.DirectExecute("DELETE FROM gameobject_respawn WHERE respawntime <= UNIX_TIMESTAMP(NOW())");
-
-    uint32 count = 0;
-
-    QueryResult *result = CharacterDatabase.Query("SELECT guid, respawntime, instance FROM gameobject_respawn");
-
-    if(!result)
-    {
-        barGoLink bar(1);
-
-        bar.step();
-
-        sLog.outString();
-        sLog.outString(">> Loaded 0 gameobject respawn time.");
-        return;
-    }
-
-    barGoLink bar((int)result->GetRowCount());
-
-    do
-    {
-        Field *fields = result->Fetch();
-        bar.step();
-
-        uint32 loguid       = fields[0].GetUInt32();
-        uint64 respawn_time = fields[1].GetUInt64();
-        uint32 instance     = fields[2].GetUInt32();
-
-        mGORespawnTimes[MAKE_PAIR64(loguid,instance)] = time_t(respawn_time);
-
-        ++count;
-    } while (result->NextRow());
-
-    delete result;
-
-    sLog.outString( ">> Loaded %lu gameobject respawn times", (unsigned long)mGORespawnTimes.size() );
-    sLog.outString();
-}
-
 // name must be checked to correctness (if received) before call this function
 uint64 ObjectMgr::GetPlayerGUIDByName(std::string name) const
 {
@@ -4844,9 +4760,9 @@ void ObjectMgr::LoadInstanceTemplate()
             continue;
         }
 
-        if (mapEntry->IsContinent())
+        if (!mapEntry->Instanceable())
         {
-            sLog.outErrorDb("ObjectMgr::LoadInstanceTemplate: continent mapid %d for template!", temp->map);
+            sLog.outErrorDb("ObjectMgr::LoadInstanceTemplate: non-instanceable mapid %d for template!", temp->map);
             sInstanceTemplate.EraseEntry(i);
             continue;
         }
@@ -4927,6 +4843,46 @@ BotSpawns const *ObjectMgr::GetBotSpawns(uint32 id) const
     if(itr != mBotSpawns.end())
         return &itr->second;
     return NULL;
+}
+
+struct SQLWorldLoader : public SQLStorageLoaderBase<SQLWorldLoader>
+{
+    template<class D>
+    void convert_from_str(uint32 /*field_pos*/, char const *src, D &dst)
+    {
+        dst = D(sScriptMgr.GetScriptId(src));
+    }
+};
+
+void ObjectMgr::LoadWorldTemplate()
+{
+    SQLWorldLoader loader;
+    loader.Load(sWorldTemplate, false);
+
+    for(uint32 i = 0; i < sWorldTemplate.MaxEntry; i++)
+    {
+        WorldTemplate const* temp = GetWorldTemplate(i);
+        if (!temp)
+            continue;
+
+        MapEntry const* mapEntry = sMapStore.LookupEntry(temp->map);
+        if (!mapEntry)
+        {
+            sLog.outErrorDb("ObjectMgr::LoadWorldTemplate: bad mapid %d for template!", temp->map);
+            sWorldTemplate.EraseEntry(i);
+            continue;
+        }
+
+        if (mapEntry->Instanceable())
+        {
+            sLog.outErrorDb("ObjectMgr::LoadWorldTemplate: instanceable mapid %d for template!", temp->map);
+            sWorldTemplate.EraseEntry(i);
+            continue;
+        }
+    }
+
+    sLog.outString( ">> Loaded %u World Template definitions", sWorldTemplate.RecordCount );
+    sLog.outString();
 }
 
 GossipText const *ObjectMgr::GetGossipText(uint32 Text_ID) const
@@ -7012,17 +6968,6 @@ void ObjectMgr::LoadWeatherZoneChances()
     sLog.outString(">> Loaded %u weather definitions", count);
 }
 
-void ObjectMgr::SaveCreatureRespawnTime(uint32 loguid, uint32 instance, time_t t)
-{
-    mCreatureRespawnTimes[MAKE_PAIR64(loguid,instance)] = t;
-
-    CharacterDatabase.BeginTransaction();
-    CharacterDatabase.PExecute("DELETE FROM creature_respawn WHERE guid = '%u' AND instance = '%u'", loguid, instance);
-    if(t)
-        CharacterDatabase.PExecute("INSERT INTO creature_respawn VALUES ( '%u', '" UI64FMTD "', '%u' )", loguid, uint64(t), instance);
-    CharacterDatabase.CommitTransaction();
-}
-
 void ObjectMgr::DeleteCreatureData(uint32 guid)
 {
     // remove mapid*cellid -> guid_set map
@@ -7031,45 +6976,6 @@ void ObjectMgr::DeleteCreatureData(uint32 guid)
         RemoveCreatureFromGrid(guid, data);
 
     mCreatureDataMap.erase(guid);
-}
-
-void ObjectMgr::SaveGORespawnTime(uint32 loguid, uint32 instance, time_t t)
-{
-    mGORespawnTimes[MAKE_PAIR64(loguid,instance)] = t;
-
-    CharacterDatabase.BeginTransaction();
-    CharacterDatabase.PExecute("DELETE FROM gameobject_respawn WHERE guid = '%u' AND instance = '%u'", loguid, instance);
-    if(t)
-        CharacterDatabase.PExecute("INSERT INTO gameobject_respawn VALUES ( '%u', '" UI64FMTD "', '%u' )", loguid, uint64(t), instance);
-    CharacterDatabase.CommitTransaction();
-}
-
-void ObjectMgr::DeleteRespawnTimeForInstance(uint32 instance)
-{
-    RespawnTimes::iterator next;
-
-    for(RespawnTimes::iterator itr = mGORespawnTimes.begin(); itr != mGORespawnTimes.end(); itr = next)
-    {
-        next = itr;
-        ++next;
-
-        if (PAIR64_HIPART(itr->first)==instance)
-            mGORespawnTimes.erase(itr);
-    }
-
-    for(RespawnTimes::iterator itr = mCreatureRespawnTimes.begin(); itr != mCreatureRespawnTimes.end(); itr = next)
-    {
-        next = itr;
-        ++next;
-
-        if (PAIR64_HIPART(itr->first)==instance)
-            mCreatureRespawnTimes.erase(itr);
-    }
-
-    CharacterDatabase.BeginTransaction();
-    CharacterDatabase.PExecute("DELETE FROM creature_respawn WHERE instance = '%u'", instance);
-    CharacterDatabase.PExecute("DELETE FROM gameobject_respawn WHERE instance = '%u'", instance);
-    CharacterDatabase.CommitTransaction();
 }
 
 void ObjectMgr::DeleteGOData(uint32 guid)

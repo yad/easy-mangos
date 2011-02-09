@@ -580,6 +580,7 @@ void Spell::FillTargetMap()
                     case TARGET_AREAEFFECT_CUSTOM:
                     case TARGET_ALL_ENEMY_IN_AREA:
                     case TARGET_ALL_ENEMY_IN_AREA_INSTANT:
+                        if (FillCustomTargetMap(SpellEffectIndex(i),tmpUnitMap)) break;
                     case TARGET_ALL_ENEMY_IN_AREA_CHANNELED:
                     case TARGET_ALL_FRIENDLY_UNITS_IN_AREA:
                     case TARGET_AREAEFFECT_GO_AROUND_DEST:
