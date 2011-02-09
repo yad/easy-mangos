@@ -70,7 +70,6 @@ public:
 PlayerbotAI::PlayerbotAI(PlayerbotMgr* const mgr, Player* const bot) :
     m_mgr(mgr), m_bot(bot), m_ignoreAIUpdatesUntilTime(0),
     m_ignoreTeleport(0), m_role(0), m_new_role(1),
-    m_combatOrder(ORDERS_NONE), m_ScenarioType(SCENARIO_PVEEASY),
     m_TimeDoneEating(0), m_TimeDoneDrinking(0),
     m_CurrentlyCastingSpellId(0),
     m_targetGuidCommand(0), m_classAI(0)
@@ -79,16 +78,11 @@ PlayerbotAI::PlayerbotAI(PlayerbotMgr* const mgr, Player* const bot) :
 
     // set bot state and needed item list
     m_botState = BOTSTATE_NORMAL;
+    m_targetCombat = NULL;
+    m_followTarget = m_bot;
+
     SetQuestNeedItems();
 
-    // reset some pointers
-    m_targetChanged = false;
-    m_targetType = TARGET_NORMAL;
-    m_targetCombat = NULL;
-    m_targetAssist = NULL;
-    m_targetProtect = NULL;
-
-    m_followTarget = m_bot;
     m_bot->GetPosition(orig_x, orig_y, orig_z);
     orig_map = m_bot->GetMapId();
 
@@ -162,16 +156,8 @@ void PlayerbotAI::ReinitAI()
         SetMaster(m_bot);
     }
 
-    // set bot state and needed item list
     m_botState = BOTSTATE_NORMAL;
-
-    // reset some pointers
-    m_targetChanged = false;
-    m_targetType = TARGET_NORMAL;
     m_targetCombat = NULL;
-    m_targetAssist = NULL;
-    m_targetProtect = NULL;
-
     m_followTarget = m_bot;
 
     m_bot->GiveLevel(m_bot->GetLevelAtLoading());
@@ -414,8 +400,6 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
         }
         case SMSG_DUEL_COMPLETE:
         {
-            m_ignoreAIUpdatesUntilTime = time(0) + 4;
-            m_ScenarioType = SCENARIO_PVEEASY;
             m_bot->GetMotionMaster()->Clear(true);
             return;
         }
@@ -426,34 +410,17 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
         }
         case SMSG_DUEL_REQUESTED:
         {
-            m_ignoreAIUpdatesUntilTime = 0;
             WorldPacket p(packet);
             uint64 flagGuid;
             p >> flagGuid;
             uint64 playerGuid;
             p >> playerGuid;
-            Player* const pPlayer = ObjectAccessor::FindPlayer(playerGuid);
-            if (canObeyCommandFrom(*pPlayer))
-            {
-                m_bot->GetMotionMaster()->Clear(true);
-                WorldPacket* const packet = new WorldPacket(CMSG_DUEL_ACCEPTED, 8);
-                *packet << flagGuid;
-                m_bot->GetSession()->QueuePacket(packet); // queue the packet to get around race condition
 
-                // follow target in casting range
-                float angle = rand_float(0, M_PI_F);
-                float dist = rand_float(4, 10);
-                float distX, distY;
-                m_bot->GetMotionMaster()->Clear(true);
-                distX = pPlayer->GetPositionX() + (dist * cos(angle));
-                distY = pPlayer->GetPositionY() + (dist * sin(angle));
-                m_bot->GetMotionMaster()->MovePoint(pPlayer->GetMapId(), distX, distY, pPlayer->GetPositionZ());
-                SetInFront(pPlayer);
-                pPlayer->SendCreateUpdateToPlayer(m_bot);
+            WorldPacket* const packet = new WorldPacket(CMSG_DUEL_ACCEPTED, 8);
+            *packet << flagGuid;
+            m_bot->GetSession()->QueuePacket(packet); // queue the packet to get around race condition
 
-                m_bot->SetSelectionGuid(ObjectGuid(playerGuid));
-                m_ignoreAIUpdatesUntilTime = time(0) + 4;
-            }
+            m_ignoreAIUpdatesUntilTime = time(0) + 3;
             return;
         }
 
@@ -1253,9 +1220,8 @@ void PlayerbotAI::Feast()
 
 // intelligently sets a reasonable combat order for this bot
 // based on its class / level / etc
-void PlayerbotAI::GetCombatTarget(Unit* forcedTarget)
+bool PlayerbotAI::GetCombatTarget(Unit* forcedTarget)
 {
-    // set combat state, and clear looting, etc...
     if (m_botState != BOTSTATE_COMBAT)
     {
         SetState(BOTSTATE_COMBAT);
@@ -1265,212 +1231,171 @@ void PlayerbotAI::GetCombatTarget(Unit* forcedTarget)
         m_targetCombat = NULL;
     }
 
-    // check for new targets
-    if (!m_targetCombat || m_targetCombat->isDead() || !m_targetCombat->IsInWorld() || !m_bot->IsWithinDistInMap(m_targetCombat, 50) || !m_bot->IsHostileTo(m_targetCombat) || !m_bot->IsInMap(m_targetCombat))
-    {
-        if (!m_bot->getAttackers().empty())
-        {
-            for(Unit::AttackerSet::const_iterator itr = m_bot->getAttackers().begin(); itr != m_bot->getAttackers().end(); ++itr)
-            {
-                Unit* owner = (*itr)->GetOwner();
-                if (!owner) owner = (*itr);
-                if (owner->GetTypeId() == TYPEID_PLAYER)
-                {
-                    m_targetCombat = owner;
-                    m_targetType = (m_combatOrder == ORDERS_TANK ? TARGET_THREATEN : TARGET_NORMAL);
-                    m_targetChanged = true;
-                    return;
-                }
-            }
-        }
-        if (!GetLeader()->getAttackers().empty())
-        {
-            for(Unit::AttackerSet::const_iterator itr = GetLeader()->getAttackers().begin(); itr != GetLeader()->getAttackers().end(); ++itr)
-            {
-                Unit* owner = (*itr)->GetOwner();
-                if (!owner) owner = (*itr);
-                if (owner->GetTypeId() == TYPEID_PLAYER)
-                {
-                    m_targetCombat = owner;
-                    m_targetType = (m_combatOrder == ORDERS_TANK ? TARGET_THREATEN : TARGET_NORMAL);
-                    m_targetChanged = true;
-                    return;
-                }
-            }
-        }
-        if (m_bot->GetGroup())
-        {
-            GroupReference *ref = m_bot->GetGroup()->GetFirstMember();
-            while (ref)
-            {
-                if (ref->getSource()->GetPet() && !ref->getSource()->GetPet()->getAttackers().empty())
-                {
-                    for(Unit::AttackerSet::const_iterator itr = ref->getSource()->GetPet()->getAttackers().begin(); itr != ref->getSource()->GetPet()->getAttackers().end(); ++itr)
-                    {
-                        Unit* owner = (*itr)->GetOwner();
-                        if (!owner) owner = (*itr);
-                        if (owner->GetTypeId() == TYPEID_PLAYER)
-                        {
-                            m_targetCombat = owner;
-                            m_targetType = (m_combatOrder == ORDERS_TANK ? TARGET_THREATEN : TARGET_NORMAL);
-                            m_targetChanged = true;
-                            return;
-                        }
-                    }
-                }
-                ref = ref->next();
-            }
-        }
-
-        if (m_bot->GetPet() && !m_bot->GetPet()->getAttackers().empty())
-        {
-            for(Unit::AttackerSet::const_iterator itr = m_bot->GetPet()->getAttackers().begin(); itr != m_bot->GetPet()->getAttackers().end(); ++itr)
-            {
-                Unit* owner = (*itr)->GetOwner();
-                if (!owner)
-                    owner = (*itr);
-                if (owner->GetTypeId() == TYPEID_PLAYER)
-                {
-                    m_targetCombat = owner;
-                    m_targetType = (m_combatOrder == ORDERS_TANK ? TARGET_THREATEN : TARGET_NORMAL);
-                    m_targetChanged = true;
-                    return;
-                }
-            }
-        }
-        if (GetLeader()->GetPet() && !GetLeader()->GetPet()->getAttackers().empty())
-        {
-            for(Unit::AttackerSet::const_iterator itr = GetLeader()->GetPet()->getAttackers().begin(); itr != GetLeader()->GetPet()->getAttackers().end(); ++itr)
-            {
-                Unit* owner = (*itr)->GetOwner();
-                if (!owner)
-                    owner = (*itr);
-                if (owner->GetTypeId() == TYPEID_PLAYER)
-                {
-                    m_targetCombat = owner;
-                    m_targetType = (m_combatOrder == ORDERS_TANK ? TARGET_THREATEN : TARGET_NORMAL);
-                    m_targetChanged = true;
-                    return;
-                }
-            }
-        }
-        if (m_bot->GetGroup())
-        {
-            GroupReference *ref = m_bot->GetGroup()->GetFirstMember();
-            while (ref)
-            {
-                if (!ref->getSource()->getAttackers().empty())
-                {
-                    for(Unit::AttackerSet::const_iterator itr = ref->getSource()->getAttackers().begin(); itr != ref->getSource()->getAttackers().end(); ++itr)
-                    {
-                        Unit* owner = (*itr)->GetOwner();
-                        if (!owner)
-                            owner = (*itr);
-                        if (owner->GetTypeId() == TYPEID_PLAYER)
-                        {
-                            m_targetCombat = owner;
-                            m_targetType = (m_combatOrder == ORDERS_TANK ? TARGET_THREATEN : TARGET_NORMAL);
-                            m_targetChanged = true;
-                            return;
-                        }
-                    }
-                }
-                ref = ref->next();
-            }
-        }
-    }
-
-    // update attacker info now
-    UpdateAttackerInfo();
-
-    // check for attackers on protected unit, and make it a forcedTarget if any
-    if (!forcedTarget && (m_combatOrder & ORDERS_PROTECT) && m_targetProtect != 0)
-    {
-        Unit *newTarget = FindAttacker((ATTACKERINFOTYPE) (AIT_VICTIMNOTSELF | AIT_HIGHESTTHREAT), m_targetProtect);
-        if (newTarget && newTarget != m_targetCombat)
-        {
-            forcedTarget = newTarget;
-            m_targetType = TARGET_THREATEN;
-        }
-    }
-    else if (forcedTarget)
-        m_targetType = (m_combatOrder == ORDERS_TANK ? TARGET_THREATEN : TARGET_NORMAL);
-
-    // we already have a target and we are not forced to change it
-    if (m_targetCombat && !forcedTarget)
-        return;
-
-    // are we forced on a target?
     if (forcedTarget)
     {
         m_targetCombat = forcedTarget;
-        m_targetChanged = true;
-    }
-    // do we have to assist someone?
-    if (!m_targetCombat && (m_combatOrder & ORDERS_ASSIST) && m_targetAssist != 0)
-    {
-        m_targetCombat = FindAttacker((ATTACKERINFOTYPE) (AIT_VICTIMNOTSELF | AIT_LOWESTTHREAT), m_targetAssist);
-        m_targetType = (m_combatOrder == ORDERS_TANK ? TARGET_THREATEN : TARGET_NORMAL);
-        m_targetChanged = true;
-    }
-    // are there any other attackers?
-    if (!m_targetCombat)
-    {
-        m_targetCombat = FindAttacker();
-        m_targetType = (m_combatOrder == ORDERS_TANK ? TARGET_THREATEN : TARGET_NORMAL);
-        m_targetChanged = true;
+        return true;
     }
 
-    if (!m_targetCombat)
+    if (!m_bot->getAttackers().empty())
     {
-        m_targetCombat = FindEnemy();
-        m_targetType = (m_combatOrder == ORDERS_TANK ? TARGET_THREATEN : TARGET_NORMAL);
-        m_targetChanged = true;
+        for(Unit::AttackerSet::const_iterator itr = m_bot->getAttackers().begin(); itr != m_bot->getAttackers().end(); ++itr)
+        {
+            Unit* owner = (*itr)->GetOwner();
+            if (!owner)
+                owner = (*itr);
+            if (owner->GetTypeId() == TYPEID_PLAYER)
+            {
+                m_targetCombat = owner;
+                if (!m_targetCombat)
+                {
+                    m_targetCombat = FindEnemy();
+                    if (!m_targetCombat)
+                        return false;
+                    return true;
+                }
+                return true;
+            }
+        }
+    }
+    if (!GetLeader()->getAttackers().empty())
+    {
+        for(Unit::AttackerSet::const_iterator itr = GetLeader()->getAttackers().begin(); itr != GetLeader()->getAttackers().end(); ++itr)
+        {
+            Unit* owner = (*itr)->GetOwner();
+            if (!owner)
+                owner = (*itr);
+            if (owner->GetTypeId() == TYPEID_PLAYER)
+            {
+                m_targetCombat = owner;
+                if (!m_targetCombat)
+                {
+                    m_targetCombat = FindEnemy();
+                    if (!m_targetCombat)
+                        return false;
+                    return true;
+                }
+                return true;
+            }
+        }
+    }
+    if (m_bot->GetGroup())
+    {
+        GroupReference *ref = m_bot->GetGroup()->GetFirstMember();
+        while (ref)
+        {
+            if (ref->getSource()->GetPet() && !ref->getSource()->GetPet()->getAttackers().empty())
+            {
+                for(Unit::AttackerSet::const_iterator itr = ref->getSource()->GetPet()->getAttackers().begin(); itr != ref->getSource()->GetPet()->getAttackers().end(); ++itr)
+                {
+                    Unit* owner = (*itr)->GetOwner();
+                    if (!owner)
+                        owner = (*itr);
+                    if (owner->GetTypeId() == TYPEID_PLAYER)
+                    {
+                        m_targetCombat = owner;
+                        if (!m_targetCombat)
+                        {
+                            m_targetCombat = FindEnemy();
+                            if (!m_targetCombat)
+                                return false;
+                            return true;
+                        }
+                        return true;
+                    }
+                }
+            }
+            ref = ref->next();
+        }
     }
 
-    // no attacker found anyway
-    if (!m_targetCombat)
+    if (m_bot->GetPet() && !m_bot->GetPet()->getAttackers().empty())
     {
-        m_targetType = TARGET_NORMAL;
-        m_targetChanged = false;
-        return;
+        for(Unit::AttackerSet::const_iterator itr = m_bot->GetPet()->getAttackers().begin(); itr != m_bot->GetPet()->getAttackers().end(); ++itr)
+        {
+            Unit* owner = (*itr)->GetOwner();
+            if (!owner)
+                owner = (*itr);
+            if (owner->GetTypeId() == TYPEID_PLAYER)
+            {
+                m_targetCombat = owner;
+                if (!m_targetCombat)
+                {
+                    m_targetCombat = FindEnemy();
+                    if (!m_targetCombat)
+                        return false;
+                    return true;
+                }
+                return true;
+            }
+        }
+    }
+    if (GetLeader()->GetPet() && !GetLeader()->GetPet()->getAttackers().empty())
+    {
+        for(Unit::AttackerSet::const_iterator itr = GetLeader()->GetPet()->getAttackers().begin(); itr != GetLeader()->GetPet()->getAttackers().end(); ++itr)
+        {
+            Unit* owner = (*itr)->GetOwner();
+            if (!owner)
+                owner = (*itr);
+            if (owner->GetTypeId() == TYPEID_PLAYER)
+            {
+                m_targetCombat = owner;
+                if (!m_targetCombat)
+                {
+                    m_targetCombat = FindEnemy();
+                    if (!m_targetCombat)
+                        return false;
+                    return true;
+                }
+                return true;
+            }
+        }
+    }
+    if (m_bot->GetGroup())
+    {
+        GroupReference *ref = m_bot->GetGroup()->GetFirstMember();
+        while (ref)
+        {
+            if (!ref->getSource()->getAttackers().empty())
+            {
+                for(Unit::AttackerSet::const_iterator itr = ref->getSource()->getAttackers().begin(); itr != ref->getSource()->getAttackers().end(); ++itr)
+                {
+                    Unit* owner = (*itr)->GetOwner();
+                    if (!owner)
+                        owner = (*itr);
+                    if (owner->GetTypeId() == TYPEID_PLAYER)
+                    {
+                        m_targetCombat = owner;
+                        if (!m_targetCombat)
+                        {
+                            m_targetCombat = FindEnemy();
+                            if (!m_targetCombat)
+                                return false;
+                            return true;
+                        }
+                        return true;
+                    }
+                }
+            }
+            ref = ref->next();
+        }
     }
 
-    // if thing to attack is in a duel, then ignore and don't call updateAI for 6 seconds
-    // this method never gets called when the bot is in a duel and this code
-    // prevents bot from helping
-    /*if (m_targetCombat->GetTypeId() == TYPEID_PLAYER && dynamic_cast<Player*> (m_targetCombat)->duel)
-    {
-        m_ignoreAIUpdatesUntilTime = time(0) + 6;
-        return;
-    }*/
-
-    m_bot->SetSelectionGuid((m_targetCombat->GetObjectGuid()));
-    m_ignoreAIUpdatesUntilTime = time(0) + 1;
-
-    if (m_bot->getStandState() != UNIT_STAND_STATE_STAND)
-        m_bot->SetStandState(UNIT_STAND_STATE_STAND);
-
-    m_bot->Attack(m_targetCombat, true);
-
-    // add thingToAttack to loot list
-    m_lootCreature.push_back(m_targetCombat->GetGUID());
-
-    return;
+    m_targetCombat = NULL;
+    return false;
 }
 
 void PlayerbotAI::DoNextCombatManeuver()
 {
+    bool targetChanged = false;
+
     if (!m_targetCombat || m_targetCombat->isDead() || !m_targetCombat->IsInWorld() 
         || !m_bot->IsWithinDistInMap(m_targetCombat, 50) || !m_bot->IsHostileTo(m_targetCombat) 
         || !m_bot->IsInMap(m_targetCombat))
     {
-        GetCombatTarget();
+        targetChanged = GetCombatTarget();
     }
 
-    // check if we have a target - fixes crash reported by rrtn (kill hunter's pet bug)
-    // if current target for attacks doesn't make sense anymore
-    // clear our orders so we can get orders in next update
     if (!m_targetCombat || m_targetCombat->isDead() || !m_targetCombat->IsInWorld() 
         || !m_bot->IsWithinDistInMap(m_targetCombat, 50) || !m_bot->IsHostileTo(m_targetCombat) 
         || !m_bot->IsInMap(m_targetCombat))
@@ -1479,25 +1404,24 @@ void PlayerbotAI::DoNextCombatManeuver()
         m_bot->SetSelectionGuid(ObjectGuid());
         m_bot->InterruptNonMeleeSpells(true);
         m_targetCombat = NULL;
-        m_targetChanged = false;
-        m_targetType = TARGET_NORMAL;
         SetMovementTarget(GetLeader());
         return;
     }
-
-    // do opening moves, if we changed target
-    if (m_targetChanged)
-    {
-        if (GetClassAI())
-            m_targetChanged = GetClassAI()->DoFirstCombatManeuver(m_targetCombat);
-        else
-            m_targetChanged = false;
+    else
+    {    
+        SetMovementTarget(m_targetCombat);
+        if (targetChanged)
+        {
+            m_bot->SetSelectionGuid((m_targetCombat->GetObjectGuid()));
+            if (m_bot->getStandState() != UNIT_STAND_STATE_STAND)
+                m_bot->SetStandState(UNIT_STAND_STATE_STAND);
+            m_bot->Attack(m_targetCombat, true);
+            m_lootCreature.push_back(m_targetCombat->GetGUID());
+            GetClassAI()->DoFirstCombatManeuver(m_targetCombat);
+        }
+        else    
+            GetClassAI()->DoNextCombatManeuver(m_targetCombat);
     }
-
-    SetMovementTarget(m_targetCombat);
-
-    if (GetClassAI() && !m_targetChanged)
-        (GetClassAI())->DoNextCombatManeuver(m_targetCombat);
 }
 
 void PlayerbotAI::SetQuestNeedItems()
@@ -1783,6 +1707,9 @@ Player* PlayerbotAI::TargetPlayerFocus()
 
 bool PlayerbotAI::IsInCombat()
 {
+    if (m_bot->duel)
+        return true;
+
     Player* plTarget = TargetPlayerFocus();
     if (plTarget && plTarget->isAlive() && plTarget->IsInWorld() && m_bot->IsHostileTo(plTarget) && m_bot->IsInMap(plTarget))
     {
@@ -1817,77 +1744,6 @@ bool PlayerbotAI::IsInCombat()
         }
     }
     return false;
-}
-
-void PlayerbotAI::UpdateAttackersForTarget(Unit *victim)
-{
-    HostileReference *ref = victim->getHostileRefManager().getFirst();
-    while (ref)
-    {
-        ThreatManager *target = ref->getSource();
-        uint64 guid = target->getOwner()->GetGUID();
-        m_attackerInfo[guid].attacker = target->getOwner();
-        m_attackerInfo[guid].victim = target->getOwner()->getVictim();
-        m_attackerInfo[guid].threat = target->getThreat(victim);
-        m_attackerInfo[guid].count = 1;
-        //m_attackerInfo[guid].source = 1; // source is not used so far.
-        ref = ref->next();
-    }
-}
-
-void PlayerbotAI::UpdateAttackerInfo()
-{
-    // clear old list
-    m_attackerInfo.clear();
-
-    // check own attackers
-    UpdateAttackersForTarget(m_bot);
-    Pet *pet = m_bot->GetPet();
-    if (pet)
-        UpdateAttackersForTarget(pet);
-
-    // check master's attackers
-    UpdateAttackersForTarget(GetLeader());
-    pet = GetLeader()->GetPet();
-    if (pet)
-        UpdateAttackersForTarget(pet);
-
-    // check all group members now
-    if (m_bot->GetGroup())
-    {
-        GroupReference *gref = m_bot->GetGroup()->GetFirstMember();
-        while (gref)
-        {
-            if (gref->getSource() == m_bot || gref->getSource() == GetLeader())
-            {
-                gref = gref->next();
-                continue;
-            }
-
-            UpdateAttackersForTarget(gref->getSource());
-            pet = gref->getSource()->GetPet();
-            if (pet)
-                UpdateAttackersForTarget(pet);
-
-            gref = gref->next();
-        }
-    }
-
-    // get highest threat not caused by bot for every entry in AttackerInfoList...
-    for (AttackerInfoList::iterator itr = m_attackerInfo.begin(); itr != m_attackerInfo.end(); ++itr)
-    {
-        if (!itr->second.attacker)
-            continue;
-        Unit *a = itr->second.attacker;
-        float t = 0.00;
-        std::list<HostileReference*>::const_iterator i = a->getThreatManager().getThreatList().begin();
-        for (; i != a->getThreatManager().getThreatList().end(); ++i)
-        {
-            if ((*i)->getThreat() > t && (*i)->getTarget() != m_bot)
-                t = (*i)->getThreat();
-        }
-        m_attackerInfo[itr->first].threat2 = t;
-    }
 }
 
 uint32 PlayerbotAI::EstRepairAll()
@@ -1951,91 +1807,6 @@ uint32 PlayerbotAI::EstRepair(uint16 pos)
     return TotalCost;
 }
 
-Unit *PlayerbotAI::FindAttacker(ATTACKERINFOTYPE ait, Unit *victim)
-{
-    // list empty? why are we here?
-    if (m_attackerInfo.empty())
-    {
-        return FindEnemy();
-        //return 0;
-    }
-
-    // not searching something specific - return first in list
-    if (!ait)
-        return (m_attackerInfo.begin())->second.attacker;
-
-    float t = ((ait & AIT_HIGHESTTHREAT) ? 0.00 : 9999.00);
-    Unit *a = NULL;
-    AttackerInfoList::iterator itr = m_attackerInfo.begin();
-    for (; itr != m_attackerInfo.end(); ++itr)
-    {
-        if ((ait & AIT_VICTIMSELF) && !(ait & AIT_VICTIMNOTSELF) && itr->second.victim != m_bot)
-            continue;
-
-        if (!(ait & AIT_VICTIMSELF) && (ait & AIT_VICTIMNOTSELF) && itr->second.victim == m_bot)
-            continue;
-
-        if ((ait & AIT_VICTIMNOTSELF) && victim && itr->second.victim != victim)
-            continue;
-
-        if (!(ait & (AIT_LOWESTTHREAT | AIT_HIGHESTTHREAT)))
-        {
-            a = itr->second.attacker;
-            itr = m_attackerInfo.end();
-        }
-        else
-        {
-            if ((ait & AIT_HIGHESTTHREAT) && /*(itr->second.victim==m_bot) &&*/ itr->second.threat >= t)
-            {
-                t = itr->second.threat;
-                a = itr->second.attacker;
-            }
-            else if ((ait & AIT_LOWESTTHREAT) && /*(itr->second.victim==m_bot) &&*/ itr->second.threat <= t)
-            {
-                t = itr->second.threat;
-                a = itr->second.attacker;
-            }
-        }
-    }
-    if (a)
-        return a;
-    else
-        return FindEnemy();
-}
-
-void PlayerbotAI::SetCombatOrderByStr(std::string str, Unit *target)
-{
-    CombatOrderType co;
-    if (str == "tank") co = ORDERS_TANK;
-    else if (str == "assist") co = ORDERS_ASSIST;
-    else if (str == "heal") co = ORDERS_HEAL;
-    else if (str == "protect") co = ORDERS_PROTECT;
-    else
-        co = ORDERS_RESET;
-    SetCombatOrder(co, target);
-}
-
-void PlayerbotAI::SetCombatOrder(CombatOrderType co, Unit *target)
-{
-    if ((co == ORDERS_ASSIST || co == ORDERS_PROTECT) && !target) {
-        return;
-    }
-    if (co == ORDERS_RESET) {
-        m_combatOrder = ORDERS_NONE;
-        m_targetAssist = 0;
-        m_targetProtect = 0;
-        return;
-    }
-    if (co == ORDERS_PROTECT)
-        m_targetProtect = target;
-    else if (co == ORDERS_ASSIST)
-        m_targetAssist = target;
-    if ((co & ORDERS_PRIMARY))
-        m_combatOrder = (CombatOrderType) (((uint32) m_combatOrder & (uint32) ORDERS_SECONDARY) | (uint32) co);
-    else
-        m_combatOrder = (CombatOrderType) (((uint32) m_combatOrder & (uint32) ORDERS_PRIMARY) | (uint32) co);
-}
-
 void PlayerbotAI::SetMovementTarget(Unit *followTarget)
 {
     if (!followTarget)
@@ -2063,8 +1834,7 @@ void PlayerbotAI::SetMovementTarget(Unit *followTarget)
         return;
     //end check
 
-    //AUTOBOT
-    if (m_bot == GetLeader())
+    if (m_bot == GetLeader()) //AUTOBOT
     {
         if (m_bot->IsWithinDistInMap(m_followTarget, orig_x, orig_y, orig_z, 5.0f))
         {
@@ -2093,7 +1863,7 @@ void PlayerbotAI::SetMovementTarget(Unit *followTarget)
                 m_bot->GetMotionMaster()->MovePoint(0, orig_x, orig_y, orig_z);
         }
     }
-    else
+    else //LEADERBOT
     {
         if (m_bot->IsWithinDistInMap(m_followTarget, 3.0f))
         {
@@ -2163,6 +1933,9 @@ bool PlayerbotAI::FindPOI()
 
 Unit* PlayerbotAI::FindEnemy()
 {
+    if (m_bot->duel)
+        return m_bot->duel->opponent;
+
     float range = 500.0f;
     if (m_bot->GetMap()->IsBattleGroundOrArena())
     {
@@ -2198,22 +1971,13 @@ bool PlayerbotAI::IsMoving()
 
 void PlayerbotAI::SetInFront(const Unit* obj)
 {
-    /*if (IsMoving())
-        return;*/
-
     m_bot->SetInFront(obj);
-
-    // TODO: Schmoozerd wrote a patch which adds MovementInfo::ChangeOrientation()
-    // and added a call to it inside WorldObject::SetOrientation. Check if it is
-    // merged to the core.
-    // http://getmangos.com/community/viewtopic.php?pid=128003
     float ori = m_bot->GetAngle(obj);
     float x, y, z;
     x = m_bot->m_movementInfo.GetPos()->x;
     y = m_bot->m_movementInfo.GetPos()->y;
     z = m_bot->m_movementInfo.GetPos()->z;
     m_bot->m_movementInfo.ChangePosition(x,y,z,ori);
-
     m_bot->SendHeartBeat(false);
 }
 
@@ -2228,30 +1992,23 @@ void PlayerbotAI::SetInFront(const Unit* obj)
 
 void PlayerbotAI::UpdateAI(const uint32 p_time)
 {
+    time_t currentTime = time(0);
+    if (currentTime < m_ignoreAIUpdatesUntilTime)
+        return;
+    m_ignoreAIUpdatesUntilTime = currentTime + 1;
+    
     if (m_bot->GetTrader())
         return;
 
     if (!CheckTeleport())
         return;
 
-    time_t currentTime = time(0);
-    if (currentTime < m_ignoreAIUpdatesUntilTime)
-        return;
-
-    m_ignoreAIUpdatesUntilTime = time(0) + 1;
-
     if (!CheckMaster())
         return;
 
-    if (!GetLeader()->InBattleGround() && !GetLeader()->InArena())
+    /*if (!GetLeader()->InBattleGround() && !GetLeader()->InArena())
         if (m_bot->InBattleGround() || m_bot->InArena())
-            m_bot->LeaveBattleground();
-
-    if(!IsInCombat())
-    {
-        CheckRoles();
-        CheckStuff();
-    }
+            m_bot->LeaveBattleground();*/
 
     if (!m_bot->isAlive())
     {
@@ -2356,7 +2113,6 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
         else if (m_botState == BOTSTATE_COMBAT)
         {
             SetState(BOTSTATE_LOOTING);
-            m_attackerInfo.clear();
             SetIgnoreUpdateTime();
         }
 
@@ -2370,6 +2126,8 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
         {
             SetMovementTarget(GetLeader());
             GetClassAI()->DoNonCombatActions();
+            CheckRoles();
+            CheckStuff();
             CheckMount();
         }
     }
@@ -2425,7 +2183,6 @@ void PlayerbotAI::CheckRoles()
         case CLASS_WARRIOR:
             if (m_role != m_new_role)
             {
-                m_combatStyle = COMBAT_MELEE;
                 if (m_new_role == 1)
                 {
                     switch (urand(0, 2))
@@ -2443,7 +2200,6 @@ void PlayerbotAI::CheckRoles()
         case CLASS_PALADIN:
             if (m_role != m_new_role)
             {
-                m_combatStyle = COMBAT_MELEE;
                 if (m_new_role == 1)
                 {
                     switch (urand(0, 2))
@@ -2461,7 +2217,6 @@ void PlayerbotAI::CheckRoles()
         case CLASS_HUNTER:
             if (m_role != m_new_role)
             {
-                m_combatStyle = COMBAT_RANGED;
                 if (m_new_role == 1)
                 {
                     switch (urand(0, 2))
@@ -2479,7 +2234,6 @@ void PlayerbotAI::CheckRoles()
         case CLASS_ROGUE:
             if (m_role != m_new_role)
             {
-                m_combatStyle = COMBAT_MELEE;
                 if (m_new_role == 1)
                 {
                     switch (urand(0, 2))
@@ -2497,7 +2251,6 @@ void PlayerbotAI::CheckRoles()
         case CLASS_PRIEST:
             if (m_role != m_new_role)
             {
-                m_combatStyle = COMBAT_RANGED;
                 if (m_new_role == 1)
                 {
                     switch (urand(0, 2))
@@ -2515,7 +2268,6 @@ void PlayerbotAI::CheckRoles()
         case CLASS_DEATH_KNIGHT:
             if (m_role != m_new_role)
             {
-                m_combatStyle = COMBAT_MELEE;
                 if (m_new_role == 1)
                 {
                     switch (urand(0, 2))
@@ -2533,7 +2285,6 @@ void PlayerbotAI::CheckRoles()
         case CLASS_SHAMAN:
             if (m_role != m_new_role)
             {
-                m_combatStyle = COMBAT_MELEE;
                 if (m_new_role == 1)
                 {
                     switch (urand(0, 2))
@@ -2551,7 +2302,6 @@ void PlayerbotAI::CheckRoles()
         case CLASS_MAGE:
             if (m_role != m_new_role)
             {
-                m_combatStyle = COMBAT_RANGED;
                 if (m_new_role == 1)
                 {
                     switch (urand(0, 2))
@@ -2590,7 +2340,6 @@ void PlayerbotAI::CheckRoles()
         case CLASS_WARLOCK:
             if (m_role != m_new_role)
             {
-                m_combatStyle = COMBAT_RANGED;
                 if (m_new_role == 1)
                 {
                     switch (urand(0, 2))
@@ -2608,7 +2357,6 @@ void PlayerbotAI::CheckRoles()
         case CLASS_DRUID:
             if (m_role != m_new_role)
             {
-                m_combatStyle = COMBAT_MELEE;
                 if (m_new_role == 1)
                 {
                     switch (urand(0, 2))
@@ -3284,7 +3032,6 @@ bool PlayerbotAI::FollowCheckTeleport(WorldObject &obj)
 
     if (!m_bot->IsWithinDistInMap(&obj, 100, true) && GetLeader()->isAlive() && !GetLeader()->IsTaxiFlying())
     {
-        m_ignoreAIUpdatesUntilTime = time(0) + 6;
         PlayerbotChatHandler ch(GetLeader());
         SetIgnoreTeleport(5);
         if (!ch.teleport(*m_bot))
@@ -3295,7 +3042,6 @@ bool PlayerbotAI::FollowCheckTeleport(WorldObject &obj)
 
 void PlayerbotAI::HandleTeleportAck()
 {
-    m_ignoreAIUpdatesUntilTime = time(0) + 6;
     m_bot->GetMotionMaster()->Clear(true);
     if (m_bot->IsBeingTeleportedNear())
     {

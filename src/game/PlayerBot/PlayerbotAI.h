@@ -62,40 +62,6 @@ enum RacialTraits
 class MANGOS_DLL_SPEC PlayerbotAI
 {
 public:
-    enum ScenarioType
-    {
-        SCENARIO_PVEEASY,
-        SCENARIO_PVEHARD,
-        SCENARIO_PVPEASY,
-        SCENARIO_PVPHARD
-    };
-
-    enum CombatStyle
-    {
-        COMBAT_MELEE                = 0x01,             // class melee attacker
-        COMBAT_RANGED               = 0x02              // class is ranged attacker
-    };
-
-    // masters orders that should be obeyed by the AI during the updteAI routine
-    // the master will auto set the target of the bot
-    enum CombatOrderType
-    {
-        ORDERS_NONE                 = 0x00,             // no special orders given
-        ORDERS_TANK                 = 0x01,             // bind attackers by gaining threat
-        ORDERS_ASSIST               = 0x02,             // assist someone (dps type)
-        ORDERS_HEAL                 = 0x04,             // concentrate on healing (no attacks, only self defense)
-        ORDERS_PROTECT              = 0x10,             // combinable state: check if protectee is attacked
-        ORDERS_PRIMARY              = 0x0F,
-        ORDERS_SECONDARY            = 0xF0,
-        ORDERS_RESET                = 0xFF
-    };
-
-    enum CombatTargetType
-    {
-        TARGET_NORMAL               = 0x00,
-        TARGET_THREATEN             = 0x01
-    };
-
     enum BotState
     {
         BOTSTATE_NORMAL,            // normal AI routines are processed
@@ -107,26 +73,6 @@ public:
 
     typedef std::map<uint32, uint32> BotNeedItem;
     typedef std::list<uint64> BotLootCreature;
-
-    // attacker query used in PlayerbotAI::FindAttacker()
-    enum ATTACKERINFOTYPE
-    {
-        AIT_NONE                    = 0x00,
-        AIT_LOWESTTHREAT            = 0x01,
-        AIT_HIGHESTTHREAT           = 0x02,
-        AIT_VICTIMSELF              = 0x04,
-        AIT_VICTIMNOTSELF           = 0x08      // !!! must use victim param in FindAttackers
-    };
-    struct AttackerInfo
-    {
-        Unit*    attacker;            // reference to the attacker
-        Unit*    victim;              // combatant's current victim
-        float threat;                 // own threat on this combatant
-        float threat2;                // highest threat not caused by bot
-        uint32 count;                 // number of units attacking
-        uint32 source;                // 1=bot, 2=master, 3=group
-    };
-    typedef std::map<uint64, AttackerInfo> AttackerInfoList;
     typedef std::map<uint32, float> SpellRanges;
 
 public:
@@ -148,9 +94,6 @@ public:
     // when it detects that a bot is being teleported. It acknowledges to the server to complete the
     // teleportation
     void HandleTeleportAck();
-
-    // Returns what kind of situation we are in so the ai can react accordingly
-    ScenarioType GetScenarioType() { return m_ScenarioType; }
 
     PlayerbotClassAI* GetClassAI() { return m_classAI; }
     PlayerbotMgr* const GetManager() { return m_mgr; }
@@ -234,7 +177,7 @@ public:
     void EquipItem(Item& item);
     void Feast();
     void InterruptCurrentCastingSpell();
-    void GetCombatTarget(Unit* forcedTarged = 0);
+    bool GetCombatTarget(Unit* forcedTarged = NULL);
     Unit *GetCurrentTarget() { return m_targetCombat; };
     void DoNextCombatManeuver();
     void SetIgnoreUpdateTime(uint8 t = 0) { m_ignoreAIUpdatesUntilTime = time(0) + t; };
@@ -268,13 +211,7 @@ public:
 
     bool IsInCombat();
     Player* TargetPlayerFocus();
-    void UpdateAttackerInfo();
-    Unit* FindAttacker(ATTACKERINFOTYPE ait = AIT_NONE, Unit *victim = 0);
-    uint32 GetAttackerCount() { return m_attackerInfo.size(); };
-    void SetCombatOrderByStr(std::string str, Unit *target = 0);
-    void SetCombatOrder(CombatOrderType co, Unit *target = 0);
-    CombatOrderType GetCombatOrder() { return this->m_combatOrder; }
-    void SetMovementTarget(Unit *followTarget = 0);
+    void SetMovementTarget(Unit *followTarget = NULL);
     void MovementClear();
     bool IsMoving();
     bool FindPOI();
@@ -291,9 +228,6 @@ public:
 
 private:
     // ****** Closed Actions ********************************
-    // Helper routines not needed by class AIs.
-    void UpdateAttackersForTarget(Unit *victim);
-
     // it is safe to keep these back reference pointers because m_bot
     // owns the "this" object and m_master owns m_bot. The owner always cleans up.
     PlayerbotMgr* const m_mgr;
@@ -305,11 +239,6 @@ private:
     // no need to waste CPU cycles during casting etc
     time_t m_ignoreAIUpdatesUntilTime;
     time_t m_ignoreTeleport;
-
-    CombatStyle m_combatStyle;
-    CombatOrderType m_combatOrder;
-
-    ScenarioType m_ScenarioType;
 
     // defines the state of behaviour of the bot
     BotState m_botState;
@@ -324,22 +253,14 @@ private:
     time_t m_TimeDoneEating;
     time_t m_TimeDoneDrinking;
     uint32 m_CurrentlyCastingSpellId;
-    //bool m_IsFollowingMaster;
 
     // if master commands bot to do something, store here until updateAI
     // can do it
     uint64 m_targetGuidCommand;
 
-    AttackerInfoList m_attackerInfo;
-
-    bool m_targetChanged;
-    CombatTargetType m_targetType;
-
     Unit *m_targetCombat;       // current combat target
-    Unit *m_targetAssist;       // get new target by checking attacker list of assisted player
-    Unit *m_targetProtect;      // check
-
     Unit *m_followTarget;       // whom to follow in non combat situation?
+
     float orig_x, orig_y, orig_z;
     uint32 orig_map;
 

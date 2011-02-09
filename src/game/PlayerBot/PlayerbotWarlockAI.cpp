@@ -226,7 +226,7 @@ void PlayerbotWarlockAI::DoNextCombatManeuver(Unit *pTarget)
                 ++LastSpellAffliction;
                 break;
             }
-            else if (HOWL_OF_TERROR && !pTarget->HasAura(HOWL_OF_TERROR) && ai->GetAttackerCount() > 3 && LastSpellAffliction < 8)
+            else if (HOWL_OF_TERROR && !pTarget->HasAura(HOWL_OF_TERROR) && LastSpellAffliction < 8)
             {
                 ai->CastSpell(HOWL_OF_TERROR, pTarget);
 
@@ -234,7 +234,7 @@ void PlayerbotWarlockAI::DoNextCombatManeuver(Unit *pTarget)
                 ++LastSpellAffliction;
                 break;
             }
-            else if (FEAR && !pTarget->HasAura(FEAR) && pVictim == m_bot && ai->GetAttackerCount() >= 2 && LastSpellAffliction < 9)
+            else if (FEAR && !pTarget->HasAura(FEAR) && pVictim == m_bot && LastSpellAffliction < 9)
             {
                 ai->CastSpell(FEAR, pTarget);
 
@@ -270,7 +270,7 @@ void PlayerbotWarlockAI::DoNextCombatManeuver(Unit *pTarget)
                 ++LastSpellDestruction;
                 break;
             }
-            else if (RAIN_OF_FIRE && LastSpellDestruction < 3 && ai->GetAttackerCount() >= 3)
+            else if (RAIN_OF_FIRE && LastSpellDestruction < 3)
             {
                 ai->CastSpell(RAIN_OF_FIRE, pTarget);
 
@@ -336,7 +336,7 @@ void PlayerbotWarlockAI::DoNextCombatManeuver(Unit *pTarget)
                 ++LastSpellDestruction;
                 break;
             }
-            else if (HELLFIRE && LastSpellDestruction < 12 && !m_bot->HasAura(HELLFIRE) && ai->GetAttackerCount() >= 5 && ai->GetHealthPercent() >= 50)
+            else if (HELLFIRE && LastSpellDestruction < 12 && !m_bot->HasAura(HELLFIRE) && ai->GetHealthPercent() >= 50)
             {
                 ai->CastSpell(HELLFIRE);
 

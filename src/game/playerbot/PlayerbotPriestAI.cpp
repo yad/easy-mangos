@@ -244,7 +244,7 @@ void PlayerbotPriestAI::DoNextCombatManeuver(Unit *pTarget)
                 LastSpellShadowMagic = LastSpellShadowMagic + 1;
                 break;
             }
-            else if (SCREAM > 0 && LastSpellShadowMagic < 3 && ai->GetAttackerCount() >= 3 && ai->GetManaPercent() >= 15)
+            else if (SCREAM > 0 && LastSpellShadowMagic < 3 && ai->GetManaPercent() >= 15)
             {
 
                 ai->CastSpell(SCREAM);
@@ -290,7 +290,7 @@ void PlayerbotPriestAI::DoNextCombatManeuver(Unit *pTarget)
                 LastSpellShadowMagic = LastSpellShadowMagic + 1;
                 break;
             }
-            else if (MIND_SEAR > 0 && LastSpellShadowMagic < 9 && ai->GetAttackerCount() >= 3 && ai->GetManaPercent() >= 28)
+            else if (MIND_SEAR > 0 && LastSpellShadowMagic < 9 && ai->GetManaPercent() >= 28)
             {
                 ai->CastSpell(MIND_SEAR, pTarget);
                 ai->SetIgnoreUpdateTime(5);

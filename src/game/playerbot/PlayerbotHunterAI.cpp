@@ -196,7 +196,7 @@ void PlayerbotHunterAI::DoNextCombatManeuver(Unit *pTarget)
         {}
         else if (RAPID_FIRE > 0 && ai->GetManaPercent() >= 3 && !m_bot->HasAura(RAPID_FIRE, EFFECT_INDEX_0) && ai->CastSpell(RAPID_FIRE, m_bot))
         {}
-        else if (MULTI_SHOT > 0 && ai->GetManaPercent() >= 13 && ai->GetAttackerCount() >= 3 && ai->CastSpell(MULTI_SHOT, pTarget))
+        else if (MULTI_SHOT > 0 && ai->GetManaPercent() >= 13 && ai->CastSpell(MULTI_SHOT, pTarget))
         {}
         else if (ARCANE_SHOT > 0 && ai->GetManaPercent() >= 7 && ai->CastSpell(ARCANE_SHOT, pTarget))
         {}
@@ -212,7 +212,7 @@ void PlayerbotHunterAI::DoNextCombatManeuver(Unit *pTarget)
         {}
         else if (CHIMERA_SHOT > 0 && ai->GetManaPercent() >= 12 && ai->CastSpell(CHIMERA_SHOT, pTarget))
         {}
-        else if (VOLLEY > 0 && ai->GetManaPercent() >= 24 && ai->GetAttackerCount() >= 3 && ai->CastSpell(VOLLEY, pTarget))
+        else if (VOLLEY > 0 && ai->GetManaPercent() >= 24 && ai->CastSpell(VOLLEY, pTarget))
         {}
         else if (BLACK_ARROW > 0 && ai->GetManaPercent() >= 6 && !pTarget->HasAura(BLACK_ARROW, EFFECT_INDEX_0) && ai->CastSpell(BLACK_ARROW, pTarget))
         {}

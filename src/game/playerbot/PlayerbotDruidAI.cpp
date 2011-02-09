@@ -190,7 +190,7 @@ void PlayerbotDruidAI::DoNextCombatManeuver(Unit *pTarget)
                 DruidSpellCombat++;
                 break;
             }
-            else if (HURRICANE > 0 && m_bot->HasAura(MOONKIN_FORM, EFFECT_INDEX_0) && ai->GetAttackerCount() >= 5 && DruidSpellCombat < 4 && ai->GetManaPercent() >= 91)
+            else if (HURRICANE > 0 && m_bot->HasAura(MOONKIN_FORM, EFFECT_INDEX_0) && DruidSpellCombat < 4 && ai->GetManaPercent() >= 91)
             {
                 ai->CastSpell(HURRICANE, pTarget);
                 ai->SetIgnoreUpdateTime(10);
@@ -221,7 +221,7 @@ void PlayerbotDruidAI::DoNextCombatManeuver(Unit *pTarget)
                 DruidSpellCombat++;
                 break;
             }
-            else if (STARFALL > 0 && m_bot->HasAura(MOONKIN_FORM, EFFECT_INDEX_0) && !m_bot->HasAura(STARFALL, EFFECT_INDEX_0) && ai->GetAttackerCount() >= 3 && DruidSpellCombat < 9 && ai->GetManaPercent() >= 39)
+            else if (STARFALL > 0 && m_bot->HasAura(MOONKIN_FORM, EFFECT_INDEX_0) && !m_bot->HasAura(STARFALL, EFFECT_INDEX_0) && DruidSpellCombat < 9 && ai->GetManaPercent() >= 39)
             {
                 ai->CastSpell(STARFALL, pTarget);
                 DruidSpellCombat++;
@@ -330,7 +330,7 @@ void PlayerbotDruidAI::DoNextCombatManeuver(Unit *pTarget)
                 DruidSpellCombat++;
                 break;
             }
-            else if (HURRICANE > 0 && ai->GetAttackerCount() >= 5 && DruidSpellCombat < 4 && ai->GetManaPercent() >= 91)
+            else if (HURRICANE > 0 && DruidSpellCombat < 4 && ai->GetManaPercent() >= 91)
             {
 
                 ai->CastSpell(HURRICANE, pTarget);
@@ -363,7 +363,7 @@ void PlayerbotDruidAI::DoNextCombatManeuver(Unit *pTarget)
                 DruidSpellCombat++;
                 break;
             }
-            else if (STARFALL > 0 && !m_bot->HasAura(STARFALL, EFFECT_INDEX_0) && ai->GetAttackerCount() >= 3 && DruidSpellCombat < 9 && ai->GetManaPercent() >= 39)
+            else if (STARFALL > 0 && !m_bot->HasAura(STARFALL, EFFECT_INDEX_0) && DruidSpellCombat < 9 && ai->GetManaPercent() >= 39)
             {
                 ai->CastSpell(STARFALL, pTarget);
                 DruidSpellCombat++;

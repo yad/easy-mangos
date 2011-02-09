@@ -233,7 +233,7 @@ void PlayerbotPaladinAI::DoNextCombatManeuver(Unit *pTarget)
                 CombatCounter++;
                 break;
             }
-            else if (DIVINE_STORM > 0 && CombatCounter < 7 && ai->GetAttackerCount() >= 3 && dist <= ATTACK_DISTANCE && ai->GetManaPercent() >= 12)
+            else if (DIVINE_STORM > 0 && CombatCounter < 7 && dist <= ATTACK_DISTANCE && ai->GetManaPercent() >= 12)
             {
                 ai->CastSpell (DIVINE_STORM, pTarget);
 
@@ -247,7 +247,7 @@ void PlayerbotPaladinAI::DoNextCombatManeuver(Unit *pTarget)
                 CombatCounter++;
                 break;
             }
-            else if (HOLY_WRATH > 0 && CombatCounter < 9 && ai->GetAttackerCount() >= 3 && dist <= ATTACK_DISTANCE && ai->GetManaPercent() >= 24)
+            else if (HOLY_WRATH > 0 && CombatCounter < 9 && dist <= ATTACK_DISTANCE && ai->GetManaPercent() >= 24)
             {
                 ai->CastSpell (HOLY_WRATH, pTarget);
 
@@ -349,8 +349,6 @@ void PlayerbotPaladinAI::DoNonCombatActions()
         return;    
 
     // Buff myself
-    if (ai->GetCombatOrder() == ai->ORDERS_TANK)
-        ai->SelfBuff(RIGHTEOUS_FURY);
     BuffPlayer(m_bot);
 
     // Buff master

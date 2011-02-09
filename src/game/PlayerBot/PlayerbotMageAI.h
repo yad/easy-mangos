@@ -94,7 +94,7 @@ public:
     void DoNonCombatActions();
 
     // buff a specific player, usually a real PC who is not in group
-    bool BuffPlayer(Player *target);
+    bool BuffPlayer();
 
     void InitSpells(PlayerbotAI* const ai);
 

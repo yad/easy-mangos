@@ -230,8 +230,6 @@ enum eConfigFloatValues
     CONFIG_FLOAT_RATE_XP_KILL,
     CONFIG_FLOAT_RATE_XP_QUEST,
     CONFIG_FLOAT_RATE_XP_EXPLORE,
-    CONFIG_FLOAT_RATE_RAF_XP,
-    CONFIG_FLOAT_RATE_RAF_LEVELPERLEVEL,
     CONFIG_FLOAT_RATE_REPUTATION_GAIN,
     CONFIG_FLOAT_RATE_REPUTATION_LOWLEVEL_KILL,
     CONFIG_FLOAT_RATE_REPUTATION_LOWLEVEL_QUEST,
@@ -460,7 +458,6 @@ class World
 
         WorldSession* FindSession(uint32 id) const;
         void AddSession(WorldSession *s);
-        void SendBroadcast();
         bool RemoveSession(uint32 id);
         /// Get the number of current active sessions
         void UpdateMaxSessionCounters();
@@ -613,7 +610,6 @@ class World
 
         void InitDailyQuestResetTime();
         void InitWeeklyQuestResetTime();
-
         void SetMonthlyQuestResetTime(bool initialize = true);
         void ResetDailyQuests();
         void ResetWeeklyQuests();

@@ -90,28 +90,11 @@ PlayerbotMageAI::~PlayerbotMageAI() {}
 
 void PlayerbotMageAI::DoNextCombatManeuver(Unit *pTarget)
 {
-    PlayerbotAI *ai = GetAI();
-    if (!ai)
-        return;
-
-    Player * m_bot = GetPlayerBot();
-    if (!m_bot)
-        return;
-
+    PlayerbotAI* ai = GetAI();
+    Player* m_bot = GetPlayerBot();
     Player* m_master = ai->GetLeader();
-    if (!m_master)
-        return;
 
-    //SCORCH > FROSTFIRE_BOLT > FIRE_BLAST > SCORCH > FIREBALL > FLAMESTRIKE >  SCORCH > FIREBALL > BLAST_WAVE > SCORCH > PYROBLAST > SCORCH > FIREBALL > LIVING_BOMB > DRAGONS_BREATH
-    //FROSTFIRE_BOLT > FROSTBOLT > FROSTBOLT > ICE_LANCE > FROSTBOLT > FROSTBOLT > CONE_OF_COLD > FROSTBOLT > FROSTBOLT > ICE_LANCE > FROST_NOVA > BLIZZARD
-    //ARCANE_MISSILES > ARCANE_BLAST ARCANE_BLAST ARCANE_BLAST ARCANE_BLAST > ARCANE_MISSILES > ARCANE_BARRAGE
-
-    //ai->SetMovementTarget( PlayerbotAI::MOVEMENT_FOLLOW, m_master ); // dont want to melee mob
-
-    // Damage Spells (primitive example)
     ai->SetInFront(pTarget);
-
-    /*float dist = m_bot->GetDistance(pTarget);*/
 
     switch (m_bot->getRole())
     {
@@ -165,21 +148,16 @@ void PlayerbotMageAI::DoNextCombatManeuver(Unit *pTarget)
             break;
         }
     }
-} // end DoNextCombatManeuver
+
+    if (BuffPlayer())
+        return;
+}
 
 void PlayerbotMageAI::DoNonCombatActions()
 {
     PlayerbotAI* ai = GetAI();
-    if (!ai)
-        return;
-
     Player* m_bot = GetPlayerBot();
-    if (!m_bot)
-        return;
-
     Player* m_master = ai->GetLeader();
-    if (!m_master)
-        return;
 
     switch (m_bot->getRole())
     {
@@ -208,62 +186,65 @@ void PlayerbotMageAI::DoNonCombatActions()
         }
     }
 
+    if (BuffPlayer())
+        return;
+}
+
+bool PlayerbotMageAI::BuffPlayer()
+{
+    PlayerbotAI* ai = GetAI();
+    Player* m_bot = GetPlayerBot();
+    Player* m_master = ai->GetLeader();
+
     if (m_bot == m_master)
     {
         if (!ai->Buff(DALARAN_INTELLECT, m_bot))
             if (ai->Buff(ARCANE_INTELLECT, m_bot))
-                return;
+                return true;
 
         Unit* buffTarget = m_bot->SelectRandomPlayerToBuffHim(10.0f);
         if (buffTarget && buffTarget->getPowerType()==POWER_MANA)
             if (!ai->Buff(DALARAN_INTELLECT, buffTarget))
                 if (ai->Buff(ARCANE_INTELLECT, buffTarget))
-                    return;
-
-        /*ARCANE_INTELLECT,
-        ARCANE_BRILLIANCE,
-        DALARAN_INTELLECT,
-        DALARAN_BRILLIANCE,*/
+                    return true;
     }
     else
     {
         if (!ai->Buff(DALARAN_INTELLECT, m_bot))
             if (ai->Buff(ARCANE_INTELLECT, m_bot))
-                return;
+                return true;
 
         if (m_master->isAlive() && m_master->getPowerType()==POWER_MANA)
         {
             if (!ai->Buff(DALARAN_INTELLECT, m_master))
                 if (ai->Buff(ARCANE_INTELLECT, m_master))
-                    return;
+                    return true;
         }
 
         if (m_bot->GetGroup())
         {
-            GroupReference *ref = m_bot->GetGroup()->GetFirstMember();
+            GroupReference *ref = NULL;
+            ref = m_bot->GetGroup()->GetFirstMember();
             while (ref)
             {
                 Player* pl = ref->getSource();
-                if (pl!=m_bot && pl!=m_master && pl->isAlive() && pl->getPowerType()==POWER_MANA)
+                if (pl!=m_bot && pl!=m_master && pl->isAlive() && !pl->duel && pl->getPowerType()==POWER_MANA)
                     if (!ai->Buff(DALARAN_INTELLECT, pl))
                         if (ai->Buff(ARCANE_INTELLECT, pl))
-                            return;
+                            return true;
+                ref = ref->next();
+            }
+            ref = m_bot->GetGroup()->GetFirstMember();
+            while (ref)
+            {
+                Player* pl = ref->getSource();
+                if (pl!=m_bot && pl!=m_master && pl->isAlive() && !pl->duel && pl->GetPet() && pl->GetPet()->getPowerType()==POWER_MANA)
+                    if (!ai->Buff(DALARAN_INTELLECT, pl->GetPet()))
+                        if (ai->Buff(ARCANE_INTELLECT, pl->GetPet()))
+                            return true;
                 ref = ref->next();
             }
         }
     }
-} // end DoNonCombatActions
-
-bool PlayerbotMageAI::BuffPlayer(Player* target)
-{
-    PlayerbotAI * ai = GetAI();
-    Pet * pet = target->GetPet();
-
-    if (pet && pet->getPowerType() == POWER_MANA && ai->Buff(ARCANE_INTELLECT, pet))
-        return true;
-
-    if (ARCANE_INTELLECT)
-        return ai->Buff(ARCANE_INTELLECT, target);
-    else
-        return false;
+    return false;
 }

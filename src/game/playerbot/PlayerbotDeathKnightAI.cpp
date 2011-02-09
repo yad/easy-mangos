@@ -125,7 +125,7 @@ void PlayerbotDeathKnightAI::DoNextCombatManeuver(Unit *pTarget)
             if (BONE_SHIELD > 0)
                 (!m_bot->HasAura(BONE_SHIELD, EFFECT_INDEX_0) && !m_bot->HasAura(ARMY_OF_THE_DEAD, EFFECT_INDEX_0) && ai->CastSpell (BONE_SHIELD, m_bot));
 
-            if (ARMY_OF_THE_DEAD > 0 && ai->GetAttackerCount() >= 5 && LastSpellUnholyDK < 1)
+            if (ARMY_OF_THE_DEAD > 0 && LastSpellUnholyDK < 1)
             {
                 ai->CastSpell(ARMY_OF_THE_DEAD);
 
@@ -183,7 +183,7 @@ void PlayerbotDeathKnightAI::DoNextCombatManeuver(Unit *pTarget)
                 LastSpellUnholyDK = LastSpellUnholyDK + 1;
                 break;
             }
-            else if (DEATH_AND_DECAY > 0 && ai->GetAttackerCount() >= 3 && dist <= ATTACK_DISTANCE && !pTarget->HasAura(DEATH_AND_DECAY, EFFECT_INDEX_0) && LastSpellUnholyDK < 8)
+            else if (DEATH_AND_DECAY > 0 && dist <= ATTACK_DISTANCE && !pTarget->HasAura(DEATH_AND_DECAY, EFFECT_INDEX_0) && LastSpellUnholyDK < 8)
             {
                 ai->CastSpell(DEATH_AND_DECAY);
 
@@ -285,7 +285,7 @@ void PlayerbotDeathKnightAI::DoNextCombatManeuver(Unit *pTarget)
                 LastSpellFrostDK = LastSpellFrostDK + 1;
                 break;
             }
-            else if (HOWLING_BLAST > 0 && ai->GetAttackerCount() >= 3 && LastSpellFrostDK < 4)
+            else if (HOWLING_BLAST > 0 && LastSpellFrostDK < 4)
             {
                 ai->CastSpell(HOWLING_BLAST, pTarget);
 
@@ -333,7 +333,7 @@ void PlayerbotDeathKnightAI::DoNextCombatManeuver(Unit *pTarget)
                 LastSpellFrostDK = LastSpellFrostDK + 1;
                 break;
             }
-            else if (HUNGERING_COLD > 0 && ai->GetAttackerCount() >= 3 && dist <= ATTACK_DISTANCE && LastSpellFrostDK < 10 && ai->GetRunicPower() >= 40)
+            else if (HUNGERING_COLD > 0 && dist <= ATTACK_DISTANCE && LastSpellFrostDK < 10 && ai->GetRunicPower() >= 40)
             {
                 ai->CastSpell(HUNGERING_COLD, pTarget);
 
@@ -386,7 +386,7 @@ void PlayerbotDeathKnightAI::DoNextCombatManeuver(Unit *pTarget)
                 LastSpellBloodDK =  LastSpellBloodDK + 1;
                 break;
             }
-            else if (PESTILENCE > 0 && dist <= ATTACK_DISTANCE && ai->GetAttackerCount() >= 3 && LastSpellBloodDK < 3)
+            else if (PESTILENCE > 0 && dist <= ATTACK_DISTANCE && LastSpellBloodDK < 3)
             {
                 ai->CastSpell(PESTILENCE, pTarget);
 
@@ -402,7 +402,7 @@ void PlayerbotDeathKnightAI::DoNextCombatManeuver(Unit *pTarget)
                 LastSpellBloodDK = LastSpellBloodDK + 1;
                 break;
             }
-            else if (BLOOD_BOIL > 0 && ai->GetAttackerCount() >= 5 && dist <= ATTACK_DISTANCE && LastSpellBloodDK < 5)
+            else if (BLOOD_BOIL > 0 && dist <= ATTACK_DISTANCE && LastSpellBloodDK < 5)
             {
                 ai->CastSpell(BLOOD_BOIL, pTarget);
 

@@ -98,15 +98,14 @@ bool PlayerbotWarriorAI::DoFirstCombatManeuver(Unit *pTarget)
 {
     Player *m_bot = GetPlayerBot();
     PlayerbotAI *ai = GetAI();
-    PlayerbotAI::CombatOrderType co = ai->GetCombatOrder();
     float fTargetDist = m_bot->GetDistance(pTarget);
 
-    if ((co & PlayerbotAI::ORDERS_TANK) && DEFENSIVE_STANCE > 0 && !m_bot->HasAura(DEFENSIVE_STANCE, EFFECT_INDEX_0) && ai->CastSpell(DEFENSIVE_STANCE))
+    if (DEFENSIVE_STANCE > 0 && !m_bot->HasAura(DEFENSIVE_STANCE, EFFECT_INDEX_0) && ai->CastSpell(DEFENSIVE_STANCE))
     {
 
         return true;
     }
-    else if ((co & PlayerbotAI::ORDERS_TANK) && TAUNT > 0 && m_bot->HasAura(DEFENSIVE_STANCE, EFFECT_INDEX_0) && ai->CastSpell(TAUNT, pTarget))
+    else if (TAUNT > 0 && m_bot->HasAura(DEFENSIVE_STANCE, EFFECT_INDEX_0) && ai->CastSpell(TAUNT, pTarget))
     {
 
         return false;
@@ -157,16 +156,13 @@ void PlayerbotWarriorAI::DoNextCombatManeuver(Unit *pTarget)
     ai->SetInFront(pTarget);
     Unit* pVictim = pTarget->getVictim();
     float fTargetDist = m_bot->GetDistance(pTarget);
-    PlayerbotAI::CombatOrderType co = ai->GetCombatOrder();
 
     // decide what stance to use
-    if ((co & PlayerbotAI::ORDERS_TANK) && !m_bot->HasAura(DEFENSIVE_STANCE, EFFECT_INDEX_0) && ai->CastSpell(DEFENSIVE_STANCE))
+    if (!m_bot->HasAura(DEFENSIVE_STANCE, EFFECT_INDEX_0) && ai->CastSpell(DEFENSIVE_STANCE))
     {
-
     }
-    else if (!(co & PlayerbotAI::ORDERS_TANK) && !m_bot->HasAura(BATTLE_STANCE, EFFECT_INDEX_0) && ai->CastSpell(BATTLE_STANCE))
+    else if (!m_bot->HasAura(BATTLE_STANCE, EFFECT_INDEX_0) && ai->CastSpell(BATTLE_STANCE))
     {
-
     }
 
     // get spell sequence
@@ -213,17 +209,17 @@ void PlayerbotWarriorAI::DoNextCombatManeuver(Unit *pTarget)
         {}
             else if (DEATH_WISH > 0 && ai->GetRageAmount() >= 10 && !m_bot->HasAura(DEATH_WISH, EFFECT_INDEX_0) && ai->CastSpell(DEATH_WISH, m_bot))
         {}
-            else if (RETALIATION > 0 && pVictim == m_bot && ai->GetAttackerCount() >= 2 && !m_bot->HasAura(RETALIATION, EFFECT_INDEX_0) && ai->CastSpell(RETALIATION, m_bot))
+            else if (RETALIATION > 0 && pVictim == m_bot && !m_bot->HasAura(RETALIATION, EFFECT_INDEX_0) && ai->CastSpell(RETALIATION, m_bot))
         {}
             else if (DEMORALIZING_SHOUT > 0 && ai->GetRageAmount() >= 10 && !pTarget->HasAura(DEMORALIZING_SHOUT, EFFECT_INDEX_0) && ai->CastSpell(DEMORALIZING_SHOUT, pTarget))
         {}
-            else if (SWEEPING_STRIKES > 0 && ai->GetRageAmount() >= 30 && ai->GetAttackerCount() >= 2 && !m_bot->HasAura(SWEEPING_STRIKES, EFFECT_INDEX_0) && ai->CastSpell(SWEEPING_STRIKES, m_bot))
+            else if (SWEEPING_STRIKES > 0 && ai->GetRageAmount() >= 30 && !m_bot->HasAura(SWEEPING_STRIKES, EFFECT_INDEX_0) && ai->CastSpell(SWEEPING_STRIKES, m_bot))
         {}
-            else if (BLADESTORM > 0 && ai->GetRageAmount() >= 25 && pVictim == m_bot && !m_bot->HasAura(BLADESTORM, EFFECT_INDEX_0) && ai->GetAttackerCount() >= 3 && ai->CastSpell(BLADESTORM, pTarget))
+            else if (BLADESTORM > 0 && ai->GetRageAmount() >= 25 && pVictim == m_bot && !m_bot->HasAura(BLADESTORM, EFFECT_INDEX_0) && ai->CastSpell(BLADESTORM, pTarget))
         {}
             else if (MORTAL_STRIKE > 0 && ai->GetRageAmount() >= 30 && !pTarget->HasAura(MORTAL_STRIKE, EFFECT_INDEX_0) && ai->CastSpell(MORTAL_STRIKE, pTarget))
         {}
-            else if (INTIMIDATING_SHOUT > 0 && ai->GetRageAmount() >= 25 && ai->GetAttackerCount() > 5 && ai->CastSpell(INTIMIDATING_SHOUT, pTarget))
+            else if (INTIMIDATING_SHOUT > 0 && ai->GetRageAmount() >= 25 && ai->CastSpell(INTIMIDATING_SHOUT, pTarget))
         {}
             else if (THUNDER_CLAP > 0 && ai->GetRageAmount() >= 20 && pVictim == m_bot && !pTarget->HasAura(THUNDER_CLAP, EFFECT_INDEX_0) && ai->CastSpell(THUNDER_CLAP, pTarget))
         {}
@@ -247,7 +243,7 @@ void PlayerbotWarriorAI::DoNextCombatManeuver(Unit *pTarget)
         {}
             else if (SLAM > 0 && ai->GetRageAmount() >= 15 && ai->CastSpell(SLAM, pTarget))
         {}
-            else if (PIERCING_HOWL > 0 && ai->GetRageAmount() >= 10 && ai->GetAttackerCount() >= 3 && !pTarget->HasAura(WAR_STOMP, EFFECT_INDEX_0) && !pTarget->HasAura(PIERCING_HOWL, EFFECT_INDEX_0) && !pTarget->HasAura(SHOCKWAVE, EFFECT_INDEX_0) && !pTarget->HasAura(CONCUSSION_BLOW, EFFECT_INDEX_0) && ai->CastSpell(PIERCING_HOWL, pTarget))
+            else if (PIERCING_HOWL > 0 && ai->GetRageAmount() >= 10 && !pTarget->HasAura(WAR_STOMP, EFFECT_INDEX_0) && !pTarget->HasAura(PIERCING_HOWL, EFFECT_INDEX_0) && !pTarget->HasAura(SHOCKWAVE, EFFECT_INDEX_0) && !pTarget->HasAura(CONCUSSION_BLOW, EFFECT_INDEX_0) && ai->CastSpell(PIERCING_HOWL, pTarget))
         {}
             else if (MOCKING_BLOW > 0 && ai->GetRageAmount() >= 10 && pVictim != m_bot && ai->GetHealthPercent() > 25 && !pTarget->HasAura(MOCKING_BLOW, EFFECT_INDEX_0) && !pTarget->HasAura(CHALLENGING_SHOUT, EFFECT_INDEX_0) && ai->CastSpell(MOCKING_BLOW, pTarget))
         {}
