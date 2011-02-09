@@ -1241,19 +1241,14 @@ bool PlayerbotAI::GetCombatTarget(Unit* forcedTarget)
     {
         for(Unit::AttackerSet::const_iterator itr = m_bot->getAttackers().begin(); itr != m_bot->getAttackers().end(); ++itr)
         {
-            Unit* owner = (*itr)->GetOwner();
-            if (!owner)
-                owner = (*itr);
-            if (owner->GetTypeId() == TYPEID_PLAYER)
+            m_targetCombat = (*itr)->GetOwner();
+            if (!m_targetCombat)
+                m_targetCombat = (*itr);
+            if (!m_targetCombat)
             {
-                m_targetCombat = owner;
+                m_targetCombat = FindEnemy();
                 if (!m_targetCombat)
-                {
-                    m_targetCombat = FindEnemy();
-                    if (!m_targetCombat)
-                        return false;
-                    return true;
-                }
+                    return false;
                 return true;
             }
         }
@@ -1262,19 +1257,14 @@ bool PlayerbotAI::GetCombatTarget(Unit* forcedTarget)
     {
         for(Unit::AttackerSet::const_iterator itr = GetLeader()->getAttackers().begin(); itr != GetLeader()->getAttackers().end(); ++itr)
         {
-            Unit* owner = (*itr)->GetOwner();
-            if (!owner)
-                owner = (*itr);
-            if (owner->GetTypeId() == TYPEID_PLAYER)
+            m_targetCombat = (*itr)->GetOwner();
+            if (!m_targetCombat)
+                m_targetCombat = (*itr);
+            if (!m_targetCombat)
             {
-                m_targetCombat = owner;
+                m_targetCombat = FindEnemy();
                 if (!m_targetCombat)
-                {
-                    m_targetCombat = FindEnemy();
-                    if (!m_targetCombat)
-                        return false;
-                    return true;
-                }
+                    return false;
                 return true;
             }
         }
@@ -1288,19 +1278,14 @@ bool PlayerbotAI::GetCombatTarget(Unit* forcedTarget)
             {
                 for(Unit::AttackerSet::const_iterator itr = ref->getSource()->GetPet()->getAttackers().begin(); itr != ref->getSource()->GetPet()->getAttackers().end(); ++itr)
                 {
-                    Unit* owner = (*itr)->GetOwner();
-                    if (!owner)
-                        owner = (*itr);
-                    if (owner->GetTypeId() == TYPEID_PLAYER)
+                    m_targetCombat = (*itr)->GetOwner();
+                    if (!m_targetCombat)
+                        m_targetCombat = (*itr);
+                    if (!m_targetCombat)
                     {
-                        m_targetCombat = owner;
+                        m_targetCombat = FindEnemy();
                         if (!m_targetCombat)
-                        {
-                            m_targetCombat = FindEnemy();
-                            if (!m_targetCombat)
-                                return false;
-                            return true;
-                        }
+                            return false;
                         return true;
                     }
                 }
@@ -1313,19 +1298,14 @@ bool PlayerbotAI::GetCombatTarget(Unit* forcedTarget)
     {
         for(Unit::AttackerSet::const_iterator itr = m_bot->GetPet()->getAttackers().begin(); itr != m_bot->GetPet()->getAttackers().end(); ++itr)
         {
-            Unit* owner = (*itr)->GetOwner();
-            if (!owner)
-                owner = (*itr);
-            if (owner->GetTypeId() == TYPEID_PLAYER)
+            m_targetCombat = (*itr)->GetOwner();
+            if (!m_targetCombat)
+                m_targetCombat = (*itr);
+            if (!m_targetCombat)
             {
-                m_targetCombat = owner;
+                m_targetCombat = FindEnemy();
                 if (!m_targetCombat)
-                {
-                    m_targetCombat = FindEnemy();
-                    if (!m_targetCombat)
-                        return false;
-                    return true;
-                }
+                    return false;
                 return true;
             }
         }
@@ -1334,19 +1314,14 @@ bool PlayerbotAI::GetCombatTarget(Unit* forcedTarget)
     {
         for(Unit::AttackerSet::const_iterator itr = GetLeader()->GetPet()->getAttackers().begin(); itr != GetLeader()->GetPet()->getAttackers().end(); ++itr)
         {
-            Unit* owner = (*itr)->GetOwner();
-            if (!owner)
-                owner = (*itr);
-            if (owner->GetTypeId() == TYPEID_PLAYER)
+            m_targetCombat = (*itr)->GetOwner();
+            if (!m_targetCombat)
+                m_targetCombat = (*itr);
+            if (!m_targetCombat)
             {
-                m_targetCombat = owner;
+                m_targetCombat = FindEnemy();
                 if (!m_targetCombat)
-                {
-                    m_targetCombat = FindEnemy();
-                    if (!m_targetCombat)
-                        return false;
-                    return true;
-                }
+                    return false;
                 return true;
             }
         }
@@ -1360,19 +1335,14 @@ bool PlayerbotAI::GetCombatTarget(Unit* forcedTarget)
             {
                 for(Unit::AttackerSet::const_iterator itr = ref->getSource()->getAttackers().begin(); itr != ref->getSource()->getAttackers().end(); ++itr)
                 {
-                    Unit* owner = (*itr)->GetOwner();
-                    if (!owner)
-                        owner = (*itr);
-                    if (owner->GetTypeId() == TYPEID_PLAYER)
+                    m_targetCombat = (*itr)->GetOwner();
+                    if (!m_targetCombat)
+                        m_targetCombat = (*itr);
+                    if (!m_targetCombat)
                     {
-                        m_targetCombat = owner;
+                        m_targetCombat = FindEnemy();
                         if (!m_targetCombat)
-                        {
-                            m_targetCombat = FindEnemy();
-                            if (!m_targetCombat)
-                                return false;
-                            return true;
-                        }
+                            return false;
                         return true;
                     }
                 }
