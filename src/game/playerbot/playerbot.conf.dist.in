@@ -28,4 +28,4 @@ ConfVersion=2010062001
 PlayerBot.Enable = 0
 PlayerBot.MaxBots.Alliance = 20
 PlayerBot.MaxBots.Horde = 20
-PlayerBot.Join.Battleground = 1
+PlayerBot.Join.Battleground = 0
