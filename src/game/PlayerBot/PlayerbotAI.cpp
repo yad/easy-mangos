@@ -1237,12 +1237,14 @@ bool PlayerbotAI::GetCombatTarget(Unit* forcedTarget)
         return true;
     }
 
+    m_targetCombat = NULL;
+
     if (!m_bot->getAttackers().empty())
     {
         for(Unit::AttackerSet::const_iterator itr = m_bot->getAttackers().begin(); itr != m_bot->getAttackers().end(); ++itr)
         {
             m_targetCombat = (*itr)->GetOwner();
-            if (!m_targetCombat)
+            if (!m_targetCombat || m_targetCombat->isAlive())
                 m_targetCombat = (*itr);
             if (!m_targetCombat)
             {
@@ -1251,6 +1253,8 @@ bool PlayerbotAI::GetCombatTarget(Unit* forcedTarget)
                     return false;
                 return true;
             }
+            else
+                return true;
         }
     }
     if (!GetLeader()->getAttackers().empty())
@@ -1258,7 +1262,7 @@ bool PlayerbotAI::GetCombatTarget(Unit* forcedTarget)
         for(Unit::AttackerSet::const_iterator itr = GetLeader()->getAttackers().begin(); itr != GetLeader()->getAttackers().end(); ++itr)
         {
             m_targetCombat = (*itr)->GetOwner();
-            if (!m_targetCombat)
+            if (!m_targetCombat || m_targetCombat->isAlive())
                 m_targetCombat = (*itr);
             if (!m_targetCombat)
             {
@@ -1267,6 +1271,8 @@ bool PlayerbotAI::GetCombatTarget(Unit* forcedTarget)
                     return false;
                 return true;
             }
+            else
+                return true;
         }
     }
     if (m_bot->GetGroup())
@@ -1279,7 +1285,7 @@ bool PlayerbotAI::GetCombatTarget(Unit* forcedTarget)
                 for(Unit::AttackerSet::const_iterator itr = ref->getSource()->GetPet()->getAttackers().begin(); itr != ref->getSource()->GetPet()->getAttackers().end(); ++itr)
                 {
                     m_targetCombat = (*itr)->GetOwner();
-                    if (!m_targetCombat)
+                    if (!m_targetCombat || m_targetCombat->isAlive())
                         m_targetCombat = (*itr);
                     if (!m_targetCombat)
                     {
@@ -1288,6 +1294,8 @@ bool PlayerbotAI::GetCombatTarget(Unit* forcedTarget)
                             return false;
                         return true;
                     }
+                    else
+                        return true;
                 }
             }
             ref = ref->next();
@@ -1299,7 +1307,7 @@ bool PlayerbotAI::GetCombatTarget(Unit* forcedTarget)
         for(Unit::AttackerSet::const_iterator itr = m_bot->GetPet()->getAttackers().begin(); itr != m_bot->GetPet()->getAttackers().end(); ++itr)
         {
             m_targetCombat = (*itr)->GetOwner();
-            if (!m_targetCombat)
+            if (!m_targetCombat || m_targetCombat->isAlive())
                 m_targetCombat = (*itr);
             if (!m_targetCombat)
             {
@@ -1308,6 +1316,8 @@ bool PlayerbotAI::GetCombatTarget(Unit* forcedTarget)
                     return false;
                 return true;
             }
+            else
+                return true;
         }
     }
     if (GetLeader()->GetPet() && !GetLeader()->GetPet()->getAttackers().empty())
@@ -1315,7 +1325,7 @@ bool PlayerbotAI::GetCombatTarget(Unit* forcedTarget)
         for(Unit::AttackerSet::const_iterator itr = GetLeader()->GetPet()->getAttackers().begin(); itr != GetLeader()->GetPet()->getAttackers().end(); ++itr)
         {
             m_targetCombat = (*itr)->GetOwner();
-            if (!m_targetCombat)
+            if (!m_targetCombat || m_targetCombat->isAlive())
                 m_targetCombat = (*itr);
             if (!m_targetCombat)
             {
@@ -1324,6 +1334,8 @@ bool PlayerbotAI::GetCombatTarget(Unit* forcedTarget)
                     return false;
                 return true;
             }
+            else
+                return true;
         }
     }
     if (m_bot->GetGroup())
@@ -1336,7 +1348,7 @@ bool PlayerbotAI::GetCombatTarget(Unit* forcedTarget)
                 for(Unit::AttackerSet::const_iterator itr = ref->getSource()->getAttackers().begin(); itr != ref->getSource()->getAttackers().end(); ++itr)
                 {
                     m_targetCombat = (*itr)->GetOwner();
-                    if (!m_targetCombat)
+                    if (!m_targetCombat || m_targetCombat->isAlive())
                         m_targetCombat = (*itr);
                     if (!m_targetCombat)
                     {
@@ -1345,13 +1357,14 @@ bool PlayerbotAI::GetCombatTarget(Unit* forcedTarget)
                             return false;
                         return true;
                     }
+                    else
+                        return true;
                 }
             }
             ref = ref->next();
         }
     }
-
-    m_targetCombat = NULL;
+    
     return false;
 }
 
