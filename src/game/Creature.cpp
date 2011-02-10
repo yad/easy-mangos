@@ -38,6 +38,7 @@
 #include "Formulas.h"
 #include "WaypointMovementGenerator.h"
 #include "InstanceData.h"
+#include "MapPersistentStateMgr.h"
 #include "BattleGroundMgr.h"
 #include "Spell.h"
 #include "Util.h"
@@ -454,6 +455,9 @@ void Creature::Update(uint32 update_diff, uint32 diff)
                 lootForBody         = false;
                 lootForSkin         = false;
 
+                // Clear possible auras having IsDeathPersistent() attribute
+                RemoveAllAuras();
+
                 if(m_originalEntry != GetEntry())
                 {
                     // need preserver gameevent state
@@ -721,8 +725,8 @@ bool Creature::Create(uint32 guidlow, Map *map, uint32 phaseMask, uint32 Entry, 
         //Notify the map's instance data.
         //Only works if you create the object in it, not if it is moves to that map.
         //Normally non-players do not teleport to other maps.
-        if(map->IsDungeon() && ((InstanceMap*)map)->GetInstanceData())
-            ((InstanceMap*)map)->GetInstanceData()->OnCreatureCreate(this);
+        if (InstanceData* iData = map->GetInstanceData())
+            iData->OnCreatureCreate(this);
 
         switch (GetCreatureInfo()->rank)
         {
@@ -1068,7 +1072,7 @@ void Creature::SaveToDB(uint32 mapid, uint8 spawnMask, uint32 phaseMask)
     // updated in DB
     WorldDatabase.BeginTransaction();
 
-    WorldDatabase.PExecuteLog("DELETE FROM creature WHERE guid = '%u'", m_DBTableGuid);
+    WorldDatabase.PExecuteLog("DELETE FROM creature WHERE guid=%u", m_DBTableGuid);
 
     std::ostringstream ss;
     ss << "INSERT INTO creature VALUES ("
@@ -1266,7 +1270,8 @@ bool Creature::LoadFromDB(uint32 guidlow, Map *map)
     m_isDeadByDefault = data->is_dead;
     m_deathState = m_isDeadByDefault ? DEAD : ALIVE;
 
-    m_respawnTime  = sObjectMgr.GetCreatureRespawnTime(m_DBTableGuid, GetInstanceId());
+    m_respawnTime  = map->GetPersistentState()->GetCreatureRespawnTime(m_DBTableGuid);
+
     if(m_respawnTime > time(NULL))                          // not ready to respawn
     {
         m_deathState = DEAD;
@@ -1280,7 +1285,8 @@ bool Creature::LoadFromDB(uint32 guidlow, Map *map)
     else if(m_respawnTime)                                  // respawn time set but expired
     {
         m_respawnTime = 0;
-        sObjectMgr.SaveCreatureRespawnTime(m_DBTableGuid,GetInstanceId(),0);
+
+        GetMap()->GetPersistentState()->SaveCreatureRespawnTime(m_DBTableGuid, 0);
     }
 
     uint32 curhealth = data->curhealth;
@@ -1355,16 +1361,19 @@ void Creature::DeleteFromDB()
         return;
     }
 
-    sObjectMgr.SaveCreatureRespawnTime(m_DBTableGuid,GetInstanceId(),0);
+    // FIXME: this not safe for another map copies can be
+    if (MapPersistentState* save = sMapPersistentStateMgr.GetPersistentState(GetMapId(), GetInstanceId()))
+        save->SaveCreatureRespawnTime(m_DBTableGuid, 0);
+
     sObjectMgr.DeleteCreatureData(m_DBTableGuid);
 
     WorldDatabase.BeginTransaction();
-    WorldDatabase.PExecuteLog("DELETE FROM creature WHERE guid = '%u'", m_DBTableGuid);
-    WorldDatabase.PExecuteLog("DELETE FROM creature_addon WHERE guid = '%u'", m_DBTableGuid);
-    WorldDatabase.PExecuteLog("DELETE FROM creature_movement WHERE id = '%u'", m_DBTableGuid);
-    WorldDatabase.PExecuteLog("DELETE FROM game_event_creature WHERE guid = '%u'", m_DBTableGuid);
-    WorldDatabase.PExecuteLog("DELETE FROM game_event_creature_data WHERE guid = '%u'", m_DBTableGuid);
-    WorldDatabase.PExecuteLog("DELETE FROM creature_battleground WHERE guid = '%u'", m_DBTableGuid);
+    WorldDatabase.PExecuteLog("DELETE FROM creature WHERE guid=%u", m_DBTableGuid);
+    WorldDatabase.PExecuteLog("DELETE FROM creature_addon WHERE guid=%u", m_DBTableGuid);
+    WorldDatabase.PExecuteLog("DELETE FROM creature_movement WHERE id=%u", m_DBTableGuid);
+    WorldDatabase.PExecuteLog("DELETE FROM game_event_creature WHERE guid=%u", m_DBTableGuid);
+    WorldDatabase.PExecuteLog("DELETE FROM game_event_creature_data WHERE guid=%u", m_DBTableGuid);
+    WorldDatabase.PExecuteLog("DELETE FROM creature_battleground WHERE guid=%u", m_DBTableGuid);
     WorldDatabase.CommitTransaction();
 }
 
@@ -1513,7 +1522,7 @@ void Creature::Respawn()
     if (IsDespawned())
     {
         if (m_DBTableGuid)
-            sObjectMgr.SaveCreatureRespawnTime(m_DBTableGuid,GetInstanceId(), 0);
+            GetMap()->GetPersistentState()->SaveCreatureRespawnTime(m_DBTableGuid, 0);
         m_respawnTime = time(NULL);                         // respawn at next tick
     }
 }
@@ -1812,9 +1821,9 @@ void Creature::SaveRespawnTime()
         return;
 
     if(m_respawnTime > time(NULL))                          // dead (no corpse)
-        sObjectMgr.SaveCreatureRespawnTime(m_DBTableGuid, GetInstanceId(), m_respawnTime);
+        GetMap()->GetPersistentState()->SaveCreatureRespawnTime(m_DBTableGuid, m_respawnTime);
     else if (m_corpseDecayTimer > 0)                        // dead (corpse)
-        sObjectMgr.SaveCreatureRespawnTime(m_DBTableGuid, GetInstanceId(), time(NULL) + m_respawnDelay + m_corpseDecayTimer / IN_MILLISECONDS);
+        GetMap()->GetPersistentState()->SaveCreatureRespawnTime(m_DBTableGuid, time(NULL) + m_respawnDelay + m_corpseDecayTimer / IN_MILLISECONDS);
 }
 
 bool Creature::IsOutOfThreatArea(Unit* pVictim) const

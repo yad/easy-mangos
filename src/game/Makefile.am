@@ -160,8 +160,6 @@ libmangosgame_a_SOURCES = \
 	IdleMovementGenerator.h \
 	InstanceData.cpp \
 	InstanceData.h \
-	InstanceSaveMgr.cpp \
-	InstanceSaveMgr.h \
 	Item.cpp \
 	Item.h \
 	ItemEnchantmentMgr.cpp \
@@ -183,6 +181,8 @@ libmangosgame_a_SOURCES = \
 	Map.h \
 	MapManager.cpp \
 	MapManager.h \
+	MapPersistentStateMgr.cpp \
+	MapPersistentStateMgr.h \
 	MapReference.h \
 	MapRefManager.h \
 	MassMailMgr.cpp \

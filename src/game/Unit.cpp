@@ -41,7 +41,7 @@
 #include "Totem.h"
 #include "BattleGround.h"
 #include "InstanceData.h"
-#include "InstanceSaveMgr.h"
+#include "MapPersistentStateMgr.h"
 #include "GridNotifiersImpl.h"
 #include "CellImpl.h"
 #include "Path.h"
@@ -445,13 +445,23 @@ void Unit::resetAttackTimer(WeaponAttackType type)
     m_attackTimer[type] = uint32(GetAttackTime(type) * m_modAttackSpeedPct[type]);
 }
 
-bool Unit::canReachWithAttack(Unit *pVictim) const
+bool Unit::CanReachWithMeleeAttack(Unit* pVictim, float flat_mod /*= 0.0f*/) const
 {
     MANGOS_ASSERT(pVictim);
-    float reach = GetFloatValue(UNIT_FIELD_COMBATREACH);
-    if( reach <= 0.0f )
-        reach = 1.0f;
-    return IsWithinDistInMap(pVictim, reach);
+
+    // The measured values show BASE_MELEE_OFFSET in (1.3224, 1.342)
+    float reach = GetFloatValue(UNIT_FIELD_COMBATREACH) + pVictim->GetFloatValue(UNIT_FIELD_COMBATREACH) +
+        BASE_MELEERANGE_OFFSET + flat_mod;
+
+    if (reach < ATTACK_DISTANCE)
+        reach = ATTACK_DISTANCE;
+
+    // This check is not related to bounding radius
+    float dx = GetPositionX() - pVictim->GetPositionX();
+    float dy = GetPositionY() - pVictim->GetPositionY();
+    float dz = GetPositionZ() - pVictim->GetPositionZ();
+
+    return dx*dx + dy*dy + dz*dz < reach*reach;
 }
 
 void Unit::RemoveSpellsCausingAura(AuraType auraType)
@@ -865,16 +875,16 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
                     if (m->IsRaidOrHeroicDungeon())
                     {
                         if(cVictim->GetCreatureInfo()->flags_extra & CREATURE_FLAG_EXTRA_INSTANCE_BIND)
-                            ((InstanceMap *)m)->PermBindAllPlayers(creditedPlayer);
+                            ((DungeonMap *)m)->PermBindAllPlayers(creditedPlayer);
                     }
                     else
                     {
+                        DungeonPersistentState* save = ((DungeonMap*)m)->GetPersistanceState();
                         // the reset time is set but not added to the scheduler
                         // until the players leave the instance
                         time_t resettime = cVictim->GetRespawnTimeEx() + 2 * HOUR;
-                        if (InstanceSave *save = m->GetInstanceSave())
-                            if (save->GetResetTime() < resettime)
-                                save->SetResetTime(resettime);
+                        if (save->GetResetTime() < resettime)
+                            save->SetResetTime(resettime);
                     }
                 }
             }
@@ -7638,7 +7648,7 @@ void Unit::Mount(uint32 mount, uint32 spellId)
     }
 }
 
-void Unit::Unmount()
+void Unit::Unmount(bool from_aura)
 {
     if (!IsMounted())
         return;
@@ -7648,9 +7658,13 @@ void Unit::Unmount()
     SetUInt32Value(UNIT_FIELD_MOUNTDISPLAYID, 0);
     RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_MOUNT);
 
-    WorldPacket data(SMSG_DISMOUNT, 8);
-    data << GetPackGUID();
-    SendMessageToSet(&data, true);
+    // Called NOT by Taxi system / GM command
+    if (from_aura)
+    {
+        WorldPacket data(SMSG_DISMOUNT, 8);
+        data << GetPackGUID();
+        SendMessageToSet(&data, true);
+    }
 
     // only resummon old pet if the player is already added to a map
     // this prevents adding a pet to a not created map which would otherwise cause a crash
@@ -7724,7 +7738,7 @@ void Unit::SetInCombatState(bool PvP, Unit* enemy)
             pCreature->AI()->EnterCombat(enemy);
 
         // Some bosses are set into combat with zone
-        if (GetMap()->IsDungeon() && (pCreature->GetCreatureInfo()->flags_extra & CREATURE_FLAG_EXTRA_AGGRO_ZONE))
+        if (GetMap()->IsDungeon() && (pCreature->GetCreatureInfo()->flags_extra & CREATURE_FLAG_EXTRA_AGGRO_ZONE) && enemy && enemy->IsControlledByPlayer())
             pCreature->SetInCombatWithZone();
 
         if (InstanceData* mapInstance = GetInstanceData())
@@ -9808,14 +9822,14 @@ void Unit::ProcDamageAndSpellFor( bool isVictim, Unit * pTarget, uint32 procFlag
         return;
 
     // Handle effects proceed this time
-    for(ProcTriggeredList::const_iterator i = procTriggered.begin(); i != procTriggered.end(); ++i)
+    for(ProcTriggeredList::const_iterator itr = procTriggered.begin(); itr != procTriggered.end(); ++itr)
     {
         // Some auras can be deleted in function called in this loop (except first, ofc)
-        SpellAuraHolder *triggeredByHolder = i->triggeredByHolder;
+        SpellAuraHolder *triggeredByHolder = itr->triggeredByHolder;
         if(triggeredByHolder->IsDeleted())
             continue;
 
-        SpellProcEventEntry const *spellProcEvent = i->spellProcEvent;
+        SpellProcEventEntry const *spellProcEvent = itr->spellProcEvent;
         bool useCharges = triggeredByHolder->GetAuraCharges() > 0;
         bool procSuccess = true;
         bool anyAuraProc = false;
