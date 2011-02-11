@@ -192,6 +192,17 @@ enum Powers
 
 #define MAX_POWERS                        7
 
+enum EnergyType
+{
+    ENERGY_TYPE_UNK0      = 0,                          // Possible mana or flat energy.
+    ENERGY_TYPE_UNK1      = 1,                          // 2 vehicles in 3.3.5a
+    ENERGY_TYPE_PYRITE    = 41,                         // 2 vehicles in 3.3.5a
+    ENERGY_TYPE_STEAM     = 61,                         // 9 vehicles in 3.3.5a
+    ENERGY_TYPE_OOZE      = 121,                        // 1 vehicle  in 3.3.5a
+    ENERGY_TYPE_BLOOD     = 141,                        // 1 vehicle  in 3.3.5a
+    ENERGY_TYPE_UNK142    = 142,                        // 1 vehicle  in 3.3.5a
+};
+
 enum SpellSchools
 {
     SPELL_SCHOOL_NORMAL                 = 0,
@@ -1155,6 +1166,16 @@ enum Targets
     TARGET_SELF2                       = 87,
     TARGET_DIRECTLY_FORWARD            = 89,
     TARGET_NONCOMBAT_PET               = 90,
+    TARGET_OWNED_VEHICLE               = 94,
+    TARGET_UNIT_DRIVER                 = 95,
+    TARGET_UNIT_PASSENGER_0            = 96,
+    TARGET_UNIT_PASSENGER_1            = 97,
+    TARGET_UNIT_PASSENGER_2            = 98,
+    TARGET_UNIT_PASSENGER_3            = 99,
+    TARGET_UNIT_PASSENGER_4            = 100,
+    TARGET_UNIT_PASSENGER_5            = 101,
+    TARGET_UNIT_PASSENGER_6            = 102,
+    TARGET_UNIT_PASSENGER_7            = 103,
     TARGET_IN_FRONT_OF_CASTER_30       = 104,
 };
 

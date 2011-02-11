@@ -356,7 +356,8 @@ enum SummonPropGroup
     SUMMON_PROP_GROUP_FRIENDLY       = 1,
     SUMMON_PROP_GROUP_PETS           = 2,
     SUMMON_PROP_GROUP_CONTROLLABLE   = 3,
-    SUMMON_PROP_GROUP_VEHICLE        = 4
+    SUMMON_PROP_GROUP_VEHICLE        = 4,
+    SUMMON_PROP_GROUP_UNCONTROLLABLE_VEHICLE = 5
 };
 
 // SummonProperties.dbc, col 3
@@ -462,15 +463,20 @@ enum VehicleFlags
     VEHICLE_FLAG_ALLOW_PITCHING     = 0x00000010,           // Sets MOVEFLAG2_ALLOW_PITCHING
     VEHICLE_FLAG_FULLSPEEDPITCHING  = 0x00000020,           // Sets MOVEFLAG2_FULLSPEEDPITCHING
     VEHICLE_FLAG_CUSTOM_PITCH       = 0x00000040,           // If set use pitchMin and pitchMax from DBC, otherwise pitchMin = -pi/2, pitchMax = pi/2
+    VEHICLE_FLAG_ACCESSORY          = 0x00000200,           // Vehicle is accessory? Need additional check!
     VEHICLE_FLAG_ADJUST_AIM_ANGLE   = 0x00000400,           // Lua_IsVehicleAimAngleAdjustable
     VEHICLE_FLAG_ADJUST_AIM_POWER   = 0x00000800,           // Lua_IsVehicleAimPowerAdjustable
+    VEHICLE_FLAG_DISABLE_SWITCH     = 0x00400000,           // Can't change seats, VEHICLE_ID = 335 chopper
+    VEHICLE_FLAG_NOT_DISMISS        = 0x10000000,           // Vehicle not dismissed after eject passenger?
 };
 
 enum VehicleSeatFlags
 {
     SEAT_FLAG_HIDE_PASSENGER        = 0x00000200,           // Passenger is hidden
     SEAT_FLAG_CAN_CONTROL           = 0x00000800,           // Lua_UnitInVehicleControlSeat
+    SEAT_FLAG_UNCONTROLLED          = 0x00002000,           // Seat uncontrolled for passenger?
     SEAT_FLAG_CAN_ATTACK            = 0x00004000,           // Can attack, cast spells and use items from vehicle?
+    SEAT_FLAG_UNATTACKABLE          = 0x00008000,           // Passenger is not attackable?
     SEAT_FLAG_USABLE                = 0x02000000,           // Lua_CanExitVehicle
     SEAT_FLAG_CAN_SWITCH            = 0x04000000,           // Lua_CanSwitchVehicleSeats
     SEAT_FLAG_CAN_CAST              = 0x20000000,           // Lua_UnitHasVehicleUI
