@@ -69,10 +69,10 @@ public:
 
 PlayerbotAI::PlayerbotAI(PlayerbotMgr* const mgr, Player* const bot) :
     m_mgr(mgr), m_bot(bot), m_ignoreAIUpdatesUntilTime(0),
-    m_ignoreTeleport(0), m_role(0), m_new_role(1),
     m_TimeDoneEating(0), m_TimeDoneDrinking(0),
     m_CurrentlyCastingSpellId(0),
-    m_targetGuidCommand(0), m_classAI(0)
+    m_targetGuidCommand(0), m_classAI(0),
+    m_role(0), m_new_role(1)
 {
     SetMaster(bot);
 
@@ -856,10 +856,6 @@ Player* PlayerbotAI::FindNewGroupLeader()
 
 void PlayerbotAI::CheckMount()
 {
-    time_t currentTime = time(0);
-    if (currentTime < m_ignoreTeleport)
-        return;
-
     if ((GetLeader()->IsMounted()) && (!m_bot->IsMounted()))
     {
         if (!GetLeader()->GetAurasByType(SPELL_AURA_MOUNTED).empty())
@@ -1244,7 +1240,7 @@ bool PlayerbotAI::GetCombatTarget(Unit* forcedTarget)
         for(Unit::AttackerSet::const_iterator itr = m_bot->getAttackers().begin(); itr != m_bot->getAttackers().end(); ++itr)
         {
             m_targetCombat = (*itr)->GetOwner();
-            if (!m_targetCombat || m_targetCombat->isAlive())
+            if (!m_targetCombat || !m_targetCombat->isAlive())
                 m_targetCombat = (*itr);
             if (!m_targetCombat)
             {
@@ -1262,7 +1258,7 @@ bool PlayerbotAI::GetCombatTarget(Unit* forcedTarget)
         for(Unit::AttackerSet::const_iterator itr = GetLeader()->getAttackers().begin(); itr != GetLeader()->getAttackers().end(); ++itr)
         {
             m_targetCombat = (*itr)->GetOwner();
-            if (!m_targetCombat || m_targetCombat->isAlive())
+            if (!m_targetCombat || !m_targetCombat->isAlive())
                 m_targetCombat = (*itr);
             if (!m_targetCombat)
             {
@@ -1285,7 +1281,7 @@ bool PlayerbotAI::GetCombatTarget(Unit* forcedTarget)
                 for(Unit::AttackerSet::const_iterator itr = ref->getSource()->GetPet()->getAttackers().begin(); itr != ref->getSource()->GetPet()->getAttackers().end(); ++itr)
                 {
                     m_targetCombat = (*itr)->GetOwner();
-                    if (!m_targetCombat || m_targetCombat->isAlive())
+                    if (!m_targetCombat || !m_targetCombat->isAlive())
                         m_targetCombat = (*itr);
                     if (!m_targetCombat)
                     {
@@ -1307,7 +1303,7 @@ bool PlayerbotAI::GetCombatTarget(Unit* forcedTarget)
         for(Unit::AttackerSet::const_iterator itr = m_bot->GetPet()->getAttackers().begin(); itr != m_bot->GetPet()->getAttackers().end(); ++itr)
         {
             m_targetCombat = (*itr)->GetOwner();
-            if (!m_targetCombat || m_targetCombat->isAlive())
+            if (!m_targetCombat || !m_targetCombat->isAlive())
                 m_targetCombat = (*itr);
             if (!m_targetCombat)
             {
@@ -1325,7 +1321,7 @@ bool PlayerbotAI::GetCombatTarget(Unit* forcedTarget)
         for(Unit::AttackerSet::const_iterator itr = GetLeader()->GetPet()->getAttackers().begin(); itr != GetLeader()->GetPet()->getAttackers().end(); ++itr)
         {
             m_targetCombat = (*itr)->GetOwner();
-            if (!m_targetCombat || m_targetCombat->isAlive())
+            if (!m_targetCombat || !m_targetCombat->isAlive())
                 m_targetCombat = (*itr);
             if (!m_targetCombat)
             {
@@ -1348,7 +1344,7 @@ bool PlayerbotAI::GetCombatTarget(Unit* forcedTarget)
                 for(Unit::AttackerSet::const_iterator itr = ref->getSource()->getAttackers().begin(); itr != ref->getSource()->getAttackers().end(); ++itr)
                 {
                     m_targetCombat = (*itr)->GetOwner();
-                    if (!m_targetCombat || m_targetCombat->isAlive())
+                    if (!m_targetCombat || !m_targetCombat->isAlive())
                         m_targetCombat = (*itr);
                     if (!m_targetCombat)
                     {
@@ -1810,10 +1806,10 @@ void PlayerbotAI::SetMovementTarget(Unit *followTarget)
     //===============
     if (target && target->GetCorpse())
     {
-        if (!FollowCheckTeleport(*target->GetCorpse()))
+        if (!FollowCheckTeleport(target->GetCorpse()))
             return;
     }
-    else if (!FollowCheckTeleport(*m_followTarget))
+    else if (!FollowCheckTeleport(m_followTarget))
         return;
     //end check
 
@@ -1941,7 +1937,6 @@ Unit* PlayerbotAI::FindEnemy()
 
 void PlayerbotAI::MovementClear()
 {
-    // stop...
     m_bot->GetMotionMaster()->Clear(true);
     m_bot->clearUnitState(UNIT_STAT_CHASE);
     m_bot->clearUnitState(UNIT_STAT_FOLLOW);
@@ -1963,15 +1958,6 @@ void PlayerbotAI::SetInFront(const Unit* obj)
     m_bot->m_movementInfo.ChangePosition(x,y,z,ori);
     m_bot->SendHeartBeat(false);
 }
-
-// some possible things to use in AI
-//GetRandomContactPoint
-//GetPower, GetMaxPower
-// HasSpellCooldown
-// IsAffectedBySpellmod
-// isMoving
-// hasUnitState(FLAG) FLAG like: UNIT_STAT_ROOT, UNIT_STAT_CONFUSED, UNIT_STAT_STUNNED
-// hasAuraType
 
 void PlayerbotAI::UpdateAI(const uint32 p_time)
 {
@@ -2051,7 +2037,7 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
             if (!corpse)
                 return;
 
-            FollowCheckTeleport(*corpse);
+            FollowCheckTeleport(corpse);
 
             if (corpse->GetGhostTime() + m_bot->GetCorpseReclaimDelay(corpse->GetType() == CORPSE_RESURRECTABLE_PVP) > time(0))
             {
@@ -3005,20 +2991,14 @@ void PlayerbotAI::EquipItem(Item& item)
     m_bot->GetSession()->QueuePacket(packet);
 }
 
-bool PlayerbotAI::FollowCheckTeleport(WorldObject &obj)
+bool PlayerbotAI::FollowCheckTeleport(WorldObject *obj)
 {
-    // if bot has strayed too far from the master, teleport bot
-
-    time_t currentTime = time(0);
-    if (currentTime < m_ignoreTeleport)
-        return false;
-
-    if (!m_bot->IsWithinDistInMap(&obj, 100, true) && GetLeader()->isAlive() && !GetLeader()->IsTaxiFlying())
+    if (!m_bot->IsWithinDistInMap(obj, 100, true) && GetLeader()->isAlive() && !GetLeader()->IsTaxiFlying())
     {
+        m_targetCombat = NULL;
+        m_followTarget = NULL;
         PlayerbotChatHandler ch(GetLeader());
-        SetIgnoreTeleport(5);
-        if (!ch.teleport(*m_bot))
-            return false;
+        return ch.teleport(*m_bot);
     }
     return true;
 }

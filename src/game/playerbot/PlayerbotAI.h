@@ -181,7 +181,6 @@ public:
     Unit *GetCurrentTarget() { return m_targetCombat; };
     void DoNextCombatManeuver();
     void SetIgnoreUpdateTime(uint8 t = 0) { m_ignoreAIUpdatesUntilTime = time(0) + t; };
-    void SetIgnoreTeleport(uint8 t) {m_ignoreTeleport = time(0) + t; };
 
     Player *GetPlayerBot() const { return m_bot; }
     Player *GetPlayer() const { return m_bot; }
@@ -195,7 +194,7 @@ public:
     void SetState(BotState state);
     void SetQuestNeedItems();
     void SendQuestItemList(Player& player);
-    bool FollowCheckTeleport(WorldObject &obj);
+    bool FollowCheckTeleport(WorldObject *obj);
     void DoLoot();
 
     bool CheckTeleport();
@@ -238,7 +237,6 @@ private:
     // ignores AI updates until time specified
     // no need to waste CPU cycles during casting etc
     time_t m_ignoreAIUpdatesUntilTime;
-    time_t m_ignoreTeleport;
 
     // defines the state of behaviour of the bot
     BotState m_botState;
