@@ -42,9 +42,15 @@
     <ClCompile Include="..\..\src\TerrainBuilder.cpp">
       <Filter>generator</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\IntermediateValues.cpp">
+      <Filter>generator</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\MMapCommon.h">
+      <Filter>generator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\IntermediateValues.h">
       <Filter>generator</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\MangosMap.h">

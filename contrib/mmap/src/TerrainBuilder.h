@@ -23,6 +23,8 @@
 #include "MangosMap.h"
 #include "../../src/game/MoveMapSharedDefines.h"
 
+#include "WorldModel.h"
+
 #include "G3D/Array.h"
 #include "G3D/Vector3.h"
 #include "G3D/Matrix3.h"
@@ -56,6 +58,11 @@ namespace MMAP
     // see contrib/extractor/system.cpp, CONF_use_minHeight
     static const float INVALID_MAP_LIQ_HEIGHT = -500.f;
 
+    // see following files:
+    // contrib/extractor/system.cpp
+    // src/game/GridMap.cpp
+    static char const* MAP_VERSION_MAGIC = "v1.2";
+
     struct MeshData
     {
         G3D::Array<float> solidVerts;
@@ -80,10 +87,19 @@ namespace MMAP
             ~TerrainBuilder();
 
             void loadMap(uint32 mapID, uint32 tileX, uint32 tileY, MeshData &meshData);
+            bool loadVMap(uint32 mapID, uint32 tileX, uint32 tileY, MeshData &meshData);
+            void loadOffMeshConnections(uint32 mapID, uint32 tileX, uint32 tileY, MeshData &meshData, const char* offMeshFilePath);
+
             bool usesLiquids() { return !m_skipLiquid; }
 
+            // vert and triangle methods
+            static void transform(vector<G3D::Vector3> original, vector<G3D::Vector3> &transformed,
+                                    float scale, G3D::Matrix3 rotation, G3D::Vector3 position);
+            static void copyVertices(vector<G3D::Vector3> source, G3D::Array<float> &dest);
+            static void copyIndices(vector<VMAP::MeshTriangle> source, G3D::Array<int> &dest, int offest, bool flip);
+            static void copyIndices(G3D::Array<int> &dest, G3D::Array<int> src, int offset);
+            static void cleanVertices(G3D::Array<float> &verts, G3D::Array<int> &tris);
         private:
-
             /// Loads a portion of a map's terrain
             bool loadMap(uint32 mapID, uint32 tileX, uint32 tileY, MeshData &meshData, Spot portion);
 

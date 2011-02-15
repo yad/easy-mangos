@@ -18,10 +18,13 @@
 
 #include "TerrainBuilder.h"
 
-// see following files:
-// contrib/extractor/system.cpp
-// src/game/GridMap.cpp
-char const* MAP_VERSION_MAGIC = "v1.2";
+#include "MMapCommon.h"
+#include "MapBuilder.h"
+
+#include "VMapManager2.h"
+#include "MapTree.h"
+#include "ModelInstance.h"
+
 
 namespace MMAP
 {
@@ -502,5 +505,304 @@ namespace MMAP
         int cellCol = col / 8;
 
         return liquid_type[cellRow][cellCol];
+    }
+
+    bool TerrainBuilder::loadVMap(uint32 mapID, uint32 tileX, uint32 tileY, MeshData &meshData)
+    {
+        IVMapManager* vmapManager = new VMapManager2();
+        VMAPLoadResult result = vmapManager->loadMap("vmaps", mapID, tileX, tileY);
+        bool retval = false;
+
+        do
+        {
+            if (result == VMAP_LOAD_RESULT_ERROR)
+                break;
+
+            ModelInstance* models = NULL;
+            uint32 count = 0;
+
+            InstanceTreeMap instanceTrees;
+            ((VMapManager2*)vmapManager)->getInstanceMapTree(instanceTrees);
+
+            if (!instanceTrees[mapID])
+                break;
+
+            instanceTrees[mapID]->getModelInstances(models, count);
+
+            if (!models || !count)
+                break;
+
+            for (uint32 i = 0; i < count; ++i)
+            {
+                ModelInstance instance = models[i];
+
+                // model instances exist in tree even though there are instances of that model in this tile
+                WorldModel* worldModel = instance.getWorldModel();
+                if (!worldModel)
+                    continue;
+
+                // now we have a model to add to the meshdata
+                retval = true;
+
+                vector<GroupModel> groupModels;
+                worldModel->getGroupModels(groupModels);
+
+                // all M2s need to have triangle indices reversed
+                bool isM2 = instance.name.find(".m2") != instance.name.npos || instance.name.find(".M2") != instance.name.npos;
+
+                // transform data
+                float scale = models[i].iScale;
+                G3D::Matrix3 rotation = G3D::Matrix3::fromEulerAnglesZYX(-1*G3D::pi()*instance.iRot.y/180.f, -1*G3D::pi()*instance.iRot.x/180.f, -1*G3D::pi()*instance.iRot.z/180.f);
+                Vector3 position = instance.iPos;
+                position.x -= 32*GRID_SIZE;
+                position.y -= 32*GRID_SIZE;
+
+                for (vector<GroupModel>::iterator it = groupModels.begin(); it != groupModels.end(); ++it)
+                {
+                    vector<Vector3> tempVertices;
+                    vector<Vector3> transformedVertices;
+                    vector<MeshTriangle> tempTriangles;
+                    WmoLiquid* liquid = NULL;
+
+                    (*it).getMeshData(tempVertices, tempTriangles, liquid);
+
+                    // first handle collision mesh
+                    transform(tempVertices, transformedVertices, scale, rotation, position);
+
+                    int offset = meshData.solidVerts.size() / 3;
+
+                    copyVertices(transformedVertices, meshData.solidVerts);
+                    copyIndices(tempTriangles, meshData.solidTris, offset, isM2);
+
+                    // now handle liquid data
+                    if (liquid)
+                    {
+                        vector<Vector3> liqVerts;
+                        vector<int> liqTris;
+                        uint32 tilesX, tilesY, vertsX, vertsY;
+                        Vector3 corner;
+                        liquid->getPosInfo(tilesX, tilesY, corner);
+                        vertsX = tilesX + 1;
+                        vertsY = tilesY + 1;
+                        uint8* flags = liquid->GetFlagsStorage();
+                        float* data = liquid->GetHeightStorage();
+                        uint8 type;
+
+                        // convert liquid type to NavTerrain
+                        switch (liquid->GetType())
+                        {
+                            case 0:
+                            case 1:
+                                type = NAV_WATER;
+                                break;
+                            case 2:
+                                type = NAV_MAGMA;
+                                break;
+                            case 3:
+                                type = NAV_SLIME;
+                                break;
+                        }
+
+                        // indexing is weird...
+                        // after a lot of trial and error, this is what works:
+                        // vertex = y*vertsX+x
+                        // tile   = x*tilesY+y
+                        // flag   = y*tilesY+x
+
+                        Vector3 vert;
+                        for (uint32 x = 0; x < vertsX; ++x)
+                            for (uint32 y = 0; y < vertsY; ++y)
+                            {
+                                vert = Vector3(corner.x + x * GRID_PART_SIZE, corner.y + y * GRID_PART_SIZE, data[y*vertsX + x]);
+                                vert = vert * rotation * scale + position;
+                                vert.x *= -1.f;
+                                vert.y *= -1.f;
+                                liqVerts.push_back(vert);
+                            }
+
+                        int idx1, idx2, idx3, idx4;
+                        uint32 square;
+                        for (uint32 x = 0; x < tilesX; ++x)
+                            for (uint32 y = 0; y < tilesY; ++y)
+                                if ((flags[x+y*tilesX] & 0x0f) != 0x0f)
+                                {
+                                    square = x * tilesY + y;
+                                    idx1 = square+x;
+                                    idx2 = square+1+x;
+                                    idx3 = square+tilesY+1+1+x;
+                                    idx4 = square+tilesY+1+x;
+
+                                    // top triangle
+                                    liqTris.push_back(idx3);
+                                    liqTris.push_back(idx2);
+                                    liqTris.push_back(idx1);
+                                    // bottom triangle
+                                    liqTris.push_back(idx4);
+                                    liqTris.push_back(idx3);
+                                    liqTris.push_back(idx1);
+                                }
+
+                        uint32 liqOffset = meshData.liquidVerts.size() / 3;
+                        for (uint32 i = 0; i < liqVerts.size(); ++i)
+                            meshData.liquidVerts.append(liqVerts[i].y, liqVerts[i].z, liqVerts[i].x);
+
+                        for (uint32 i = 0; i < liqTris.size() / 3; ++i)
+                        {
+                            meshData.liquidTris.append(liqTris[i*3+1] + liqOffset, liqTris[i*3+2] + liqOffset, liqTris[i*3] + liqOffset);
+                            meshData.liquidType.append(type);
+                        }
+                    }
+                }
+            }
+        }
+        while (false);
+
+        vmapManager->unloadMap(mapID, tileX, tileY);
+        delete vmapManager;
+
+        return retval;
+    }
+
+
+    void TerrainBuilder::transform(vector<Vector3> source, vector<Vector3> &transformedVertices, float scale, G3D::Matrix3 rotation, Vector3 position)
+    {
+        for (vector<Vector3>::iterator it = source.begin(); it != source.end(); ++it)
+        {
+            // apply tranform, then mirror along the horizontal axes
+            Vector3 v((*it) * rotation * scale + position);
+            v.x *= -1.f;
+            v.y *= -1.f;
+            transformedVertices.push_back(v);
+        }
+    }
+
+    void TerrainBuilder::copyVertices(vector<Vector3> source, G3D::Array<float> &dest)
+    {
+        for (vector<Vector3>::iterator it = source.begin(); it != source.end(); ++it)
+        {
+            dest.push_back((*it).y);
+            dest.push_back((*it).z);
+            dest.push_back((*it).x);
+        }
+    }
+
+    void TerrainBuilder::copyIndices(vector<MeshTriangle> source, G3D::Array<int> &dest, int offset, bool flip)
+    {
+        if (flip)
+        {
+            for (vector<MeshTriangle>::iterator it = source.begin(); it != source.end(); ++it)
+            {
+                dest.push_back((*it).idx2+offset);
+                dest.push_back((*it).idx1+offset);
+                dest.push_back((*it).idx0+offset);
+            }
+        }
+        else
+        {
+            for (vector<MeshTriangle>::iterator it = source.begin(); it != source.end(); ++it)
+            {
+                dest.push_back((*it).idx0+offset);
+                dest.push_back((*it).idx1+offset);
+                dest.push_back((*it).idx2+offset);
+            }
+        }
+    }
+
+    void TerrainBuilder::copyIndices(G3D::Array<int> &dest, G3D::Array<int> source, int offset)
+    {
+        int* src = source.getCArray();
+        for (int i = 0; i < source.size(); ++i)
+            dest.append(src[i] + offset);
+    }
+
+    void TerrainBuilder::cleanVertices(G3D::Array<float> &verts, G3D::Array<int> &tris)
+    {
+        map<int, int> vertMap;
+
+        int* t = tris.getCArray();
+        float* v = verts.getCArray();
+
+        // collect all the vertex indices from triangle
+        for (int i = 0; i < tris.size(); ++i)
+        {
+            if (vertMap.find(t[i]) != vertMap.end())
+                continue;
+
+            vertMap.insert(std::pair<int, int>(t[i], 0));
+        }
+
+        // collect the vertices
+        G3D::Array<float> cleanVerts;
+        int index, count = 0;
+        for (map<int, int>::iterator it = vertMap.begin(); it != vertMap.end(); ++it)
+        {
+            index = (*it).first;
+            (*it).second = count;
+            cleanVerts.append(v[index*3], v[index*3+1], v[index*3+2]);
+            count++;
+        }
+        verts.fastClear();
+        verts.append(cleanVerts);
+        cleanVerts.clear();
+
+        // update triangles to use new indices
+        for (int i = 0; i < tris.size(); ++i)
+        {
+            map<int, int>::iterator it;
+            if ((it = vertMap.find(t[i])) == vertMap.end())
+                continue;
+
+            t[i] = (*it).second;
+        }
+
+        vertMap.clear();
+    }
+
+    void TerrainBuilder::loadOffMeshConnections(uint32 mapID, uint32 tileX, uint32 tileY, MeshData &meshData, const char* offMeshFilePath)
+    {
+        // no meshfile input given?
+        if(offMeshFilePath == NULL)
+            return;
+
+        FILE* fp = fopen(offMeshFilePath, "rb");
+        if (!fp)
+        {
+            printf(" loadOffMeshConnections:: input file %s not found!\n", offMeshFilePath);
+            return;
+        }
+
+        // pretty silly thing, as we parse entire file and load only the tile we need
+        // but we don't expect this file to be too large
+        char* buf = new char[512];
+        while(fgets(buf, 512, fp))
+        {
+            float p0[3], p1[3];
+            int mid, tx, ty;
+            float size;
+            if(10 != sscanf(buf, "%d %d,%d (%f %f %f) (%f %f %f) %f", &mid, &tx, &ty,
+                                    &p0[0], &p0[1], &p0[2], &p1[0], &p1[1], &p1[2], &size))
+                continue;
+
+            if(mapID == mid, tileX == tx, tileY == ty)
+            {
+                meshData.offMeshConnections.append(p0[1]);
+                meshData.offMeshConnections.append(p0[2]);
+                meshData.offMeshConnections.append(p0[0]);
+
+                meshData.offMeshConnections.append(p1[1]);
+                meshData.offMeshConnections.append(p1[2]);
+                meshData.offMeshConnections.append(p1[0]);
+
+                meshData.offMeshConnectionDirs.append(1);          // 1 - both direction, 0 - one sided
+                meshData.offMeshConnectionRads.append(size);       // agent size equivalent
+                // can be used same way as polygon flags
+                meshData.offMeshConnectionsAreas.append((unsigned char)0xFF);
+                meshData.offMeshConnectionsFlags.append((unsigned short)0xFF);  // all movement masks can make this path
+            }
+
+        }
+
+        delete [] buf;
+        fclose(fp);
     }
 }
