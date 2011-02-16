@@ -181,11 +181,11 @@ public:
     Unit *GetCurrentTarget() { return m_targetCombat; };
     void DoNextCombatManeuver();
     void SetIgnoreUpdateTime(uint8 t = 0) { m_ignoreAIUpdatesUntilTime = time(0) + t; };
+    void SetEnterBGTime(uint8 t = 0) { m_enterBg = time(0) + t; };
 
-    Player *GetPlayerBot() const { return m_bot; }
     Player *GetPlayer() const { return m_bot; }
     Player *GetLeader() const;
-    void SetMaster(Player* pl);
+    void SetLeader(Player* pl);
 
     uint16 getRole() { return m_role; };
     void setRole(uint16 role) { m_new_role = role; };
@@ -199,8 +199,10 @@ public:
 
     bool CheckTeleport();
     bool CheckMaster();
+    bool CheckLevel();
     void CheckStuff();
     void CheckRoles();
+    void CheckBG();
 
     uint32 EstRepairAll();
     uint32 EstRepair(uint16 pos);
@@ -211,6 +213,7 @@ public:
     bool IsInCombat();
     Player* TargetPlayerFocus();
     void SetMovementTarget(Unit *followTarget = NULL);
+    bool isInside(float x1, float y1, float x2, float y2, float x3, float y3, float delta);
     void MovementClear();
     bool IsMoving();
     bool FindPOI();
@@ -237,6 +240,7 @@ private:
     // ignores AI updates until time specified
     // no need to waste CPU cycles during casting etc
     time_t m_ignoreAIUpdatesUntilTime;
+    time_t m_enterBg, m_leaveBg;
 
     // defines the state of behaviour of the bot
     BotState m_botState;

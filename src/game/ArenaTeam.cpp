@@ -187,6 +187,64 @@ bool ArenaTeam::AddMember(ObjectGuid playerGuid)
     return true;
 }
 
+bool ArenaTeam::AddMemberNoSave(Player* pl)
+{
+    if (GetMembersSize() >= GetType() * 2)
+        return false;
+
+    if (pl->GetArenaTeamId(GetSlot()))
+    {
+        sLog.outError("Arena::AddMember() : player already in this sized team");
+        return false;
+    }
+
+    Player::RemovePetitionsAndSigns(pl->GetGUID(), GetType());
+
+    ArenaTeamMember newmember;
+    newmember.name              = pl->GetName();
+    newmember.guid              = pl->GetGUID();
+    newmember.Class             = pl->getClass();
+    newmember.games_season      = 0;
+    newmember.games_week        = 0;
+    newmember.wins_season       = 0;
+    newmember.wins_week         = 0;
+
+    int32 conf_value = sWorld.getConfig(CONFIG_INT32_ARENA_STARTPERSONALRATING);
+    if (conf_value < 0)                                     // -1 = select by season id
+    {
+        if (sWorld.getConfig(CONFIG_UINT32_ARENA_SEASON_ID) >= 6)
+        {
+            if (m_stats.rating < 1000)
+                newmember.personal_rating = 0;
+            else
+                newmember.personal_rating = 1000;
+        }
+        else
+        {
+            newmember.personal_rating = 1500;
+        }
+    }
+    else
+        newmember.personal_rating = uint32(conf_value);
+
+    m_members.push_back(newmember);
+
+    if(pl)
+    {
+        uint8 arenaSlot = GetSlot();
+        pl->SetInArenaTeam(m_TeamId, arenaSlot, GetType());
+        pl->SetArenaTeamIdInvited(0);
+        pl->SetArenaTeamInfoField(arenaSlot, ARENA_TEAM_ID, m_TeamId);
+        pl->SetArenaTeamInfoField(arenaSlot, ARENA_TEAM_TYPE, GetType());
+        pl->SetArenaTeamInfoField(arenaSlot, ARENA_TEAM_MEMBER, (GetCaptainGuid() == pl->GetGUID()) ? 0 : 1);
+        pl->SetArenaTeamInfoField(arenaSlot, ARENA_TEAM_GAMES_WEEK, newmember.games_week);
+        pl->SetArenaTeamInfoField(arenaSlot, ARENA_TEAM_GAMES_SEASON, newmember.games_season);
+        pl->SetArenaTeamInfoField(arenaSlot, ARENA_TEAM_WINS_SEASON, newmember.wins_season);
+        pl->SetArenaTeamInfoField(arenaSlot, ARENA_TEAM_PERSONAL_RATING, newmember.personal_rating);
+    }
+    return true;
+}
+
 bool ArenaTeam::LoadArenaTeamFromDB(QueryResult *arenaTeamDataResult)
 {
     if(!arenaTeamDataResult)
@@ -333,6 +391,30 @@ void ArenaTeam::Disband(WorldSession *session)
     CharacterDatabase.PExecute("DELETE FROM arena_team_member WHERE arenateamid = '%u'", m_TeamId); //< this should be already done by calling DelMember(memberGuids[j]); for each member
     CharacterDatabase.PExecute("DELETE FROM arena_team_stats WHERE arenateamid = '%u'", m_TeamId);
     CharacterDatabase.CommitTransaction();
+    sObjectMgr.RemoveArenaTeam(m_TeamId);
+}
+
+void ArenaTeam::DisbandNoSave()
+{
+    while (!m_members.empty())
+    {
+        for (MemberList::iterator itr = m_members.begin(); itr != m_members.end(); ++itr)
+        {
+            if (itr->guid == m_members.front().guid)
+            {
+                m_members.erase(itr);
+                break;
+            }
+        }
+
+        if(Player *player = sObjectMgr.GetPlayer(m_members.front().guid))
+        {
+            player->GetSession()->SendArenaTeamCommandResult(ERR_ARENA_TEAM_QUIT_S, GetName(), "", 0);
+            player->SetInArenaTeam(0, GetSlot(), 0);
+            for(int i = 0; i < ARENA_TEAM_END; ++i)
+                player->SetArenaTeamInfoField(GetSlot(), ArenaTeamInfoType(i), 0);
+        }
+    }
     sObjectMgr.RemoveArenaTeam(m_TeamId);
 }
 

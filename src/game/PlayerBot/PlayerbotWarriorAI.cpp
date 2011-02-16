@@ -140,14 +140,14 @@ void PlayerbotWarriorAI::DoNextCombatManeuver(Unit *pTarget)
     PlayerbotAI *ai = GetAI();
     if (!ai)
         return;
-        
+
     Player * m_bot = GetPlayerBot();
     if (!m_bot)
         return;
-        
+
     Player* m_master = ai->GetLeader();
     if (!m_master)
-        return;    
+        return;
 
     //ai->SetMovementTarget( PlayerbotAI::MOVEMENT_FOLLOW, m_master ); // dont want to melee mob
 
@@ -303,14 +303,14 @@ void PlayerbotWarriorAI::DoNonCombatActions()
     PlayerbotAI *ai = GetAI();
     if (!ai)
         return;
-        
+
     Player * m_bot = GetPlayerBot();
     if (!m_bot)
         return;
-        
+
     Player* m_master = ai->GetLeader();
     if (!m_master)
-        return;    
+        return;
 
     // TODO (by Runsttren): check if shout aura bot has is casted by this bot,
     // otherwise cast other useful shout

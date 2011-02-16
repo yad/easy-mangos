@@ -50,7 +50,7 @@ public:
     void LogoutPlayerBot(uint64 guid);
     Player* GetPlayerBot (uint64 guid) const;
     Player* GetLeader() const { return m_master; };
-    void SetMaster(Player* pl) { m_master = pl; };
+    void SetLeader(Player* pl) { m_master = pl; };
 
     void LogoutAllBots();
     void OnBotLogin(Player * const bot);

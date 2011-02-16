@@ -64,7 +64,6 @@ typedef std::deque<Mail*> PlayerMails;
 #define PLAYER_MAX_SKILLS           127
 #define PLAYER_MAX_DAILY_QUESTS     25
 #define PLAYER_EXPLORED_ZONES_SIZE  128
-#define MAX_PLAYER_IN_BG_ARENA      40
 
 // Note: SPELLMOD_* values is aura types in fact
 enum SpellModType
@@ -2545,12 +2544,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         void setRewardTalentCount (uint32 talent) { m_questRewardTalentCount = talent; }
         uint32 getRewardTalentCount() { return m_questRewardTalentCount; }
 
-        uint8 GetCptBotMapArena() { return cptBotMapArena; }
-        void SetCptBotMapArena(uint8 index) { cptBotMapArena = index; }
-        Player* GetBotMapArena(uint8 index) { return botMapArena [index]; }
-        void SetBotMapArena(uint8 index, Player* pl) { botMapArena [index] = pl; }
-        uint32 GetWaitArenaInQueue(uint8 index) { return waitArenaInQueue[index]; }
-        void SetWaitArenaInQueue(uint8 index, uint32 t) { waitArenaInQueue[index] = t; }
+        uint32 GetTimeInArenaQueue(uint8 index) { return timeInArenaQueue[index]; }
+        void SetTimeInArenaQueue(uint8 index, uint32 t) { timeInArenaQueue[index] = t; }
 
     protected:
 
@@ -2826,9 +2821,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         PlayerbotAI* m_playerbotAI;
         PlayerbotMgr* m_playerbotMgr;
         uint32 m_levelAtLoading;
-        Player* botMapArena [MAX_PLAYER_IN_BG_ARENA];
-        uint8 cptBotMapArena;
-        time_t waitArenaInQueue [PLAYER_MAX_BATTLEGROUND_QUEUES];
+        time_t timeInArenaQueue [PLAYER_MAX_BATTLEGROUND_QUEUES];
 
         // Homebind coordinates
         uint32 m_homebindMapId;

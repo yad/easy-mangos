@@ -135,7 +135,11 @@ void WorldSession::SendPacket(WorldPacket const* packet)
     // Playerbot mod: send packet to bot AI
     if (GetPlayer())
     {
-        /*(WorldPacket*)packet->Print();*/
+        /*if (!GetPlayer()->IsBot())
+        {
+            WorldPacket *p = (WorldPacket *)packet;
+            p->Print();
+        }*/
 
         ReadInvitePaquet(packet);
         if (IsBotSession()
@@ -218,7 +222,7 @@ bool WorldSession::ReadInvitePaquet(WorldPacket const* packet)
             return false;
         }
 
-        GetPlayer()->GetPlayerbotMgr()->SetMaster(inviter);
+        GetPlayer()->GetPlayerbotMgr()->SetLeader(inviter);
     }
     return true;
 }
@@ -281,7 +285,7 @@ bool WorldSession::Update(uint32 diff, PacketFilter& updater)
                     // playerbot mod
                     if (_player && !IsBotSession() && _player->GetPlayerbotMgr())
                         _player->GetPlayerbotMgr()->HandleMasterIncomingPacket(*packet);
-                    /*if (_player)
+                    /*if (_player && !_player->IsBot())
                         packet->Print();*/
                     // playerbot mod end
                     break;

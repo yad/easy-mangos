@@ -116,18 +116,18 @@ bool PlayerbotPaladinAI::HealTarget(Unit *target)
 void PlayerbotPaladinAI::DoNextCombatManeuver(Unit *pTarget)
 {
     Unit* pVictim = pTarget->getVictim();
-    
+
     PlayerbotAI *ai = GetAI();
     if (!ai)
         return;
-        
+
     Player * m_bot = GetPlayerBot();
     if (!m_bot)
         return;
-        
+
     Player* m_master = ai->GetLeader();
     if (!m_master)
-        return;            
+        return;
 
     // damage spells
     ai->SetInFront(pTarget);
@@ -339,14 +339,14 @@ void PlayerbotPaladinAI::DoNonCombatActions()
     PlayerbotAI *ai = GetAI();
     if (!ai)
         return;
-        
+
     Player * m_bot = GetPlayerBot();
     if (!m_bot)
         return;
-        
+
     Player* m_master = ai->GetLeader();
     if (!m_master)
-        return;    
+        return;
 
     // Buff myself
     BuffPlayer(m_bot);

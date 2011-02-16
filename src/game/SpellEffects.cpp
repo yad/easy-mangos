@@ -6563,7 +6563,7 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                             item = 21821; break;
                         case 6:
                             item = 21822; break;
-                        case 7: 
+                        case 7:
                             item = 21823; break;
                     }
                     if (item)

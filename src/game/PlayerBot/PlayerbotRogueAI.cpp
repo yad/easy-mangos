@@ -103,14 +103,14 @@ void PlayerbotRogueAI::DoNextCombatManeuver(Unit *pTarget)
     PlayerbotAI *ai = GetAI();
     if (!ai)
         return;
-        
+
     Player * m_bot = GetPlayerBot();
     if (!m_bot)
         return;
-        
+
     Player* m_master = ai->GetLeader();
     if (!m_master)
-        return;    
+        return;
 
     ai->SetInFront(pTarget);
     Unit* pVictim = pTarget->getVictim();
@@ -281,14 +281,14 @@ void PlayerbotRogueAI::DoNonCombatActions()
     PlayerbotAI *ai = GetAI();
     if (!ai)
         return;
-        
+
     Player * m_bot = GetPlayerBot();
     if (!m_bot)
         return;
-        
+
     Player* m_master = ai->GetLeader();
     if (!m_master)
-        return;    
+        return;
 
     // remove stealth
     if (m_bot->HasAura(STEALTH))

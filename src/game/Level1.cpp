@@ -392,78 +392,8 @@ bool ChatHandler::HandleNamegoCommand(char* args)
                 {
                     PSendSysMessage(LANG_CANNOT_GO_TO_BG_GM,nameLink.c_str());
                     SetSentErrorMessage(true);
-                    return false;
                 }
-                else
-                {
-                    PlayerbotAI* ai = target->GetPlayerbotAI();
-                    if (!ai)
-                        return false;
-                    Player* leader = target->GetPlayerbotAI()->GetLeader();
-                    if (!leader)
-                        return false;
-
-                    if (leader == target)
-                    {
-                        if (target->GetBattleGroundId() && m_session->GetPlayer()->GetBattleGroundId() != target->GetBattleGroundId())
-                            return false;
-
-                        if (!target->isAlive())
-                        {
-                            target->ResurrectPlayer(1.0f);
-                            target->SpawnCorpseBones();
-                        }
-
-                        target->SetBattleGroundId(m_session->GetPlayer()->GetBattleGroundId(), m_session->GetPlayer()->GetBattleGroundTypeId());
-                        if (!target->GetMap()->IsBattleGroundOrArena())
-                            target->SetBattleGroundEntryPoint();
-
-                        if (target->IsTaxiFlying())
-                        {
-                            target->GetMotionMaster()->MovementExpired();
-                            target->m_taxi.ClearTaxiDestinations();
-                        }
-                        else
-                            target->SaveRecallPosition();
-
-                        uint32 mapid = m_session->GetPlayer()->GetBattleGround()->GetMapId();
-                        float x, y, z, O;
-                        Team team = target->GetBGTeam();
-                        if (team==0)
-                            team = target->GetTeam();
-                        m_session->GetPlayer()->GetBattleGround()->GetTeamStartLoc(team, x, y, z, O);
-                        target->TeleportTo(mapid,x,y,z,O);
-                        m_session->GetPlayer()->GetBattleGround()->AddPlayer(target);
-                        return true;
-                    }
-                    else
-                    {
-                        if (!leader->GetBattleGround())
-                            return false;
-
-                        if (pMap->IsBattleArena())
-                        {
-                            uint32 a_id = 0;
-                            switch(leader->GetBattleGround()->GetArenaType())
-                            {
-                                case ARENA_TYPE_2v2: a_id = leader->GetArenaTeamId(0); break;
-                                case ARENA_TYPE_3v3: a_id = leader->GetArenaTeamId(1); break;
-                                case ARENA_TYPE_5v5: a_id = leader->GetArenaTeamId(2); break;
-                            }
-                            if(a_id == 0) return false;
-                            bool ok = false;
-                            for (uint8 i = 0; i < MAX_ARENA_SLOT; ++i)
-                            {
-                                if(a_id == target->GetArenaTeamId(i))
-                                {
-                                    ok = true;
-                                    break;
-                                }
-                            }
-                            if (!ok) return false;
-                        }
-                    }
-                }
+                return false;
             }
             // if both players are in different bgs
             else if (target->GetBattleGroundId() && m_session->GetPlayer()->GetBattleGroundId() != target->GetBattleGroundId())

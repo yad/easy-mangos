@@ -115,10 +115,10 @@ void PlayerbotPriestAI::DoNextCombatManeuver(Unit *pTarget)
     PlayerbotAI* ai = GetAI();
     if (!ai)
         return;
-        
+
     Player* m_master = ai->GetLeader();
     if (!m_master)
-        return;                
+        return;
 
     //ai->SetMovementTarget(PlayerbotAI::MOVEMENT_FOLLOW, m_master);   // dont want to melee mob
 
@@ -368,11 +368,11 @@ void PlayerbotPriestAI::DoNonCombatActions()
     PlayerbotAI *ai = GetAI();
     if (!ai)
         return;
-        
+
     Player * m_bot = GetPlayerBot();
     if (!m_bot)
         return;
-        
+
     Player* m_master = ai->GetLeader();
     if (!m_master)
         return;
@@ -466,7 +466,7 @@ void PlayerbotPriestAI::DoNonCombatActions()
             if (HealTarget(m_master))
                 return;
         }
-        else 
+        else
             ai->CastSpell(RESURRECTION, m_master);
     }
 

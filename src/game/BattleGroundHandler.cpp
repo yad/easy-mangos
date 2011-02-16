@@ -212,7 +212,7 @@ void WorldSession::HandleBattlemasterJoinOpcode( WorldPacket & recv_data )
 
             // add to queue
             uint32 queueSlot = member->AddBattleGroundQueueId(bgQueueTypeId);
-            _player->SetWaitArenaInQueue(queueSlot, WorldTimer::getMSTime());
+            _player->SetTimeInArenaQueue(queueSlot, WorldTimer::getMSTime());
 
             // send status packet (in queue)
             sBattleGroundMgr.BuildBattleGroundStatusPacket(&data, bg, queueSlot, STATUS_WAIT_QUEUE, avgTime, 0, ginfo->ArenaType);
@@ -229,7 +229,7 @@ void WorldSession::HandleBattlemasterJoinOpcode( WorldPacket & recv_data )
         uint32 avgTime = bgQueue.GetAverageQueueWaitTime(ginfo, bracketEntry->GetBracketId());
         // already checked if queueSlot is valid, now just get it
         uint32 queueSlot = _player->AddBattleGroundQueueId(bgQueueTypeId);
-        _player->SetWaitArenaInQueue(queueSlot, WorldTimer::getMSTime());
+        _player->SetTimeInArenaQueue(queueSlot, WorldTimer::getMSTime());
 
         WorldPacket data;
                                                             // send status packet (in queue)
@@ -402,6 +402,7 @@ void WorldSession::HandleBattleFieldPortOpcode( WorldPacket &recv_data )
 
     // expected bracket entry
     PvPDifficultyEntry const* bracketEntry = GetBattlegroundBracketByLevel(bg->GetMapId(),_player->getLevel());
+
     if (!bracketEntry)
         return;
 
@@ -570,6 +571,7 @@ void WorldSession::HandleBattlefieldStatusOpcode( WorldPacket & /*recv_data*/ )
 
             // expected bracket entry
             PvPDifficultyEntry const* bracketEntry = GetBattlegroundBracketByLevel(bg->GetMapId(),_player->getLevel());
+                
             if (!bracketEntry)
                 continue;
 
@@ -639,12 +641,15 @@ void WorldSession::HandleBattlemasterJoinArena( WorldPacket & recv_data )
     if (_player->InBattleGround())
         return;
 
-    Creature *unit = GetPlayer()->GetMap()->GetCreature(guid);
-    if (!unit)
-        return;
+    if (!_player->IsBot())
+    {
+        Creature *unit = GetPlayer()->GetMap()->GetCreature(guid);
+        if (!unit)
+            return;
 
-    if(!unit->isBattleMaster())                             // it's not battle master
-        return;
+        if(!unit->isBattleMaster())                             // it's not battle master
+            return;
+    }
 
     uint8 arenatype = 0;
     uint32 arenaRating = 0;
@@ -775,7 +780,8 @@ void WorldSession::HandleBattlemasterJoinArena( WorldPacket & recv_data )
 
             // add to queue
             uint32 queueSlot = member->AddBattleGroundQueueId(bgQueueTypeId);
-            _player->SetWaitArenaInQueue(queueSlot, WorldTimer::getMSTime());
+            if (!_player->IsBot())
+                _player->SetTimeInArenaQueue(queueSlot, WorldTimer::getMSTime());
 
             // send status packet (in queue)
             sBattleGroundMgr.BuildBattleGroundStatusPacket(&data, bg, queueSlot, STATUS_WAIT_QUEUE, avgTime, 0, arenatype);
@@ -791,7 +797,8 @@ void WorldSession::HandleBattlemasterJoinArena( WorldPacket & recv_data )
         GroupQueueInfo * ginfo = bgQueue.AddGroup(_player, NULL, bgTypeId, bracketEntry, arenatype, isRated, false, arenaRating, ateamId);
         uint32 avgTime = bgQueue.GetAverageQueueWaitTime(ginfo, bracketEntry->GetBracketId());
         uint32 queueSlot = _player->AddBattleGroundQueueId(bgQueueTypeId);
-        _player->SetWaitArenaInQueue(queueSlot, WorldTimer::getMSTime());
+        if (!_player->IsBot())
+            _player->SetTimeInArenaQueue(queueSlot, WorldTimer::getMSTime());
 
         WorldPacket data;
         // send status packet (in queue)

@@ -173,11 +173,23 @@ void WorldSession::HandleArenaTeamAcceptOpcode(WorldPacket & /*recv_data*/)
         return;
     }
 
-    if (!at->AddMember(_player->GetObjectGuid()))
+    if (!_player->IsBot())
     {
-        // arena team not found
-        SendArenaTeamCommandResult(ERR_ARENA_TEAM_CREATE_S,"","",ERR_ARENA_TEAM_INTERNAL);
-        return;
+        if (!at->AddMember(_player->GetObjectGuid()))
+        {
+            // arena team not found
+            SendArenaTeamCommandResult(ERR_ARENA_TEAM_CREATE_S,"","",ERR_ARENA_TEAM_INTERNAL);
+            return;
+        }
+    }
+    else
+    {
+        if (!at->AddMemberNoSave(_player))
+        {
+            // arena team not found
+            SendArenaTeamCommandResult(ERR_ARENA_TEAM_CREATE_S,"","",ERR_ARENA_TEAM_INTERNAL);
+            return;
+        }
     }
 
     // event

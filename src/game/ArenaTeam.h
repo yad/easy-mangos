@@ -127,6 +127,7 @@ class ArenaTeam
 
         bool Create(ObjectGuid captainGuid, uint32 type, std::string arenaTeamName);
         void Disband(WorldSession *session);
+        void DisbandNoSave();
 
         typedef std::list<ArenaTeamMember> MemberList;
 
@@ -148,7 +149,13 @@ class ArenaTeam
 
         void SetCaptain(ObjectGuid guid);
         bool AddMember(ObjectGuid playerGuid);
+        bool AddMemberNoSave(Player* pl);
         void DelMember(ObjectGuid guid);
+
+        void  ForceCaptain(ObjectGuid guid)     { m_CaptainGuid = guid; }
+        void  ForceName(std::string name)       { m_Name = name; }
+        void  ForceType(uint32 type)            { m_Type = type; }
+        void  ForceTeamId(uint32 teamid)        { m_TeamId = teamid; }
 
         void SetEmblem(uint32 backgroundColor, uint32 emblemStyle, uint32 emblemColor, uint32 borderStyle, uint32 borderColor);
 

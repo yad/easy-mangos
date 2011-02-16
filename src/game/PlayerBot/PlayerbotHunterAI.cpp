@@ -119,14 +119,14 @@ void PlayerbotHunterAI::DoNextCombatManeuver(Unit *pTarget)
     PlayerbotAI *ai = GetAI();
     if (!ai)
         return;
-        
+
     Player * m_bot = GetPlayerBot();
     if (!m_bot)
         return;
-        
+
     Player* m_master = ai->GetLeader();
     if (!m_master)
-        return;    
+        return;
 
     // Hunter
     ai->SetInFront(pTarget);
@@ -263,14 +263,14 @@ void PlayerbotHunterAI::DoNonCombatActions()
     PlayerbotAI *ai = GetAI();
     if (!ai)
         return;
-        
+
     Player * m_bot = GetPlayerBot();
     if (!m_bot)
         return;
-        
+
     Player* m_master = ai->GetLeader();
     if (!m_master)
-        return;    
+        return;
 
     // reset ranged combat state
     if (!m_rangedCombat)

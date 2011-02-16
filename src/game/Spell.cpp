@@ -5005,7 +5005,8 @@ SpellCastResult Spell::CheckCast(bool strict)
     }
     // zone check
     uint32 zone, area;
-    m_caster->GetZoneAndAreaId(zone, area);
+    if (!m_caster->GetZoneAndAreaId(zone, area))
+        return SPELL_FAILED_DONT_REPORT;
 
     SpellCastResult locRes= sSpellMgr.GetSpellAllowedInLocationError(m_spellInfo, m_caster->GetMapId(), zone, area,
         m_caster->GetCharmerOrOwnerPlayerOrPlayerItself());

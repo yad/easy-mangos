@@ -34,8 +34,6 @@
 #include "Util.h"
 #include "Formulas.h"
 #include "GridNotifiersImpl.h"
-#include "Chat.h"
-#include "PlayerBot/PlayerbotClassAI.h"
 
 namespace MaNGOS
 {
@@ -732,20 +730,6 @@ void BattleGround::EndBattleGround(Team winner)
             SetArenaTeamRatingChangeForTeam(winner, winner_change);
             SetArenaTeamRatingChangeForTeam(GetOtherTeam(winner), loser_change);
         }
-        else if (winner_arena_team)
-        {
-            winner_rating = winner_arena_team->GetStats().rating;
-            int32 winner_change = winner_arena_team->WonAgainst(loser_rating);
-            SetArenaTeamRatingChangeForTeam(winner, winner_change);
-            SetArenaTeamRatingChangeForTeam(GetOtherTeam(winner), 0);
-        }
-        else if (loser_arena_team)
-        {
-            loser_rating = loser_arena_team->GetStats().rating;
-            int32 loser_change = loser_arena_team->LostAgainst(winner_rating);
-            SetArenaTeamRatingChangeForTeam(winner, 0);
-            SetArenaTeamRatingChangeForTeam(GetOtherTeam(winner), loser_change);
-        }
         else
         {
             SetArenaTeamRatingChangeForTeam(ALLIANCE, 0);
@@ -765,16 +749,6 @@ void BattleGround::EndBattleGround(Team winner)
                 if (team == winner)
                     winner_arena_team->OfflineMemberLost(itr->first, loser_rating);
                 else
-                    loser_arena_team->OfflineMemberLost(itr->first, winner_rating);
-            }
-            else if (isArena() && isRated() && winner_arena_team)
-            {
-                if (team == winner)
-                    winner_arena_team->OfflineMemberLost(itr->first, loser_rating);
-            }
-            else if (isArena() && isRated() && loser_arena_team)
-            {
-                if (team != winner)
                     loser_arena_team->OfflineMemberLost(itr->first, winner_rating);
             }
             continue;
@@ -825,39 +799,6 @@ void BattleGround::EndBattleGround(Team winner)
                 }
             }
             else
-            {
-                loser_arena_team->MemberLost(plr,winner_rating);
-
-                // Arena lost => reset the win_rated_arena having the "no_loose" condition
-                plr->GetAchievementMgr().ResetAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_WIN_RATED_ARENA, ACHIEVEMENT_CRITERIA_CONDITION_NO_LOOSE);
-            }
-        }
-        else if (isArena() && isRated() && winner_arena_team)
-        {
-            if (team == winner)
-            {
-                // update achievement BEFORE personal rating update
-                ArenaTeamMember* member = winner_arena_team->GetMember(plr->GetObjectGuid());
-                if (member)
-                    plr->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_WIN_RATED_ARENA, member->personal_rating);
-
-                winner_arena_team->MemberWon(plr,loser_rating);
-
-                if (member)
-                {
-                    plr->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HIGHEST_PERSONAL_RATING, GetArenaType(), member->personal_rating);
-                    plr->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HIGHEST_TEAM_RATING, GetArenaType(), winner_arena_team->GetStats().rating);
-                }
-            }
-            else
-            {
-                // Arena lost => reset the win_rated_arena having the "no_loose" condition
-                plr->GetAchievementMgr().ResetAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_WIN_RATED_ARENA, ACHIEVEMENT_CRITERIA_CONDITION_NO_LOOSE);
-            }
-        }
-        else if (isArena() && isRated() && loser_arena_team)
-        {
-            if (team != winner)
             {
                 loser_arena_team->MemberLost(plr,winner_rating);
 
@@ -916,16 +857,6 @@ void BattleGround::EndBattleGround(Team winner)
         // send updated arena team stats to players
         // this way all arena team members will get notified, not only the ones who participated in this match
         winner_arena_team->NotifyStatsChanged();
-        loser_arena_team->NotifyStatsChanged();
-    }
-    else if (isArena() && isRated() && winner_arena_team)
-    {
-        winner_arena_team->SaveToDB();
-        winner_arena_team->NotifyStatsChanged();
-    }
-    else if (isArena() && isRated() && loser_arena_team)
-    {
-        loser_arena_team->SaveToDB();
         loser_arena_team->NotifyStatsChanged();
     }
 
@@ -1209,15 +1140,6 @@ void BattleGround::RemovePlayerAtLeave(ObjectGuid guid, bool Transport, bool Sen
         // reset destination bg team
         plr->SetBGTeam(TEAM_NONE);
 
-        uint8 index = plr->GetCptBotMapArena();
-        for (int i = 0; i < index; ++i)
-        {
-            Player* bot = plr->GetBotMapArena(i);
-            bot->LeaveBattleground();
-            bot->TeleportTo(bot->m_recallMap, bot->m_recallX, bot->m_recallY, bot->m_recallZ, bot->m_recallO);
-            plr->SetBotMapArena(i, NULL);
-        }
-        plr->SetCptBotMapArena(0);
         if (Transport)
             plr->TeleportToBGEntryPoint();
 
@@ -1283,16 +1205,6 @@ void BattleGround::AddPlayer(Player *plr)
     // score struct must be created in inherited class
 
     ObjectGuid guid = plr->GetObjectGuid();
-    if (plr->IsBot())
-    {
-        PlayerbotAI* ai = plr->GetPlayerbotAI();
-        if (ai)
-        {
-            Player* leader = ai->GetLeader();
-            if (leader != plr)
-                plr->SetBGTeam(leader->GetBGTeam());
-        }
-    }
     Team team = plr->GetBGTeam();
 
     BattleGroundPlayer bp;
@@ -1359,27 +1271,6 @@ void BattleGround::AddPlayer(Player *plr)
 
     // Log
     DETAIL_LOG("BATTLEGROUND: Player %s joined the battle.", plr->GetName());
-
-    if(!plr->IsBot() && plr->GetCptBotMapArena() > 0)
-    {
-        uint8 GetCptBotMapArena = plr->GetCptBotMapArena();
-        for (uint8 i = 0; i < GetCptBotMapArena; ++i)
-        {
-            Player* p = plr->GetBotMapArena(i);
-            if (plr->GetBGTeam() == ALLIANCE)
-                p->SetBGTeam(HORDE);
-            else
-                p->SetBGTeam(ALLIANCE);
-            p->GiveLevel(plr->getLevel());
-            p->GetPlayerbotAI()->GetClassAI()->InitSpells(p->GetPlayerbotAI());
-            ChatHandler chbot (p);
-            chbot.HandleGMStartUpCommand("");
-            p->SetHealth(p->GetMaxHealth());
-            p->SetPower(p->getPowerType(), p->GetMaxPower(p->getPowerType()));
-            ChatHandler chleader (plr);
-            chleader.HandleNamegoCommand((char*)p->GetName());
-        }
-    }
 }
 
 /* this method adds player to his team's bg group, or sets his correct group if player is already in bg group */

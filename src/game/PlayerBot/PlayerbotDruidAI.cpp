@@ -124,14 +124,14 @@ void PlayerbotDruidAI::DoNextCombatManeuver(Unit *pTarget)
     PlayerbotAI *ai = GetAI();
     if (!ai)
         return;
-        
+
     Player * m_bot = GetPlayerBot();
     if (!m_bot)
         return;
-        
+
     Player* m_master = ai->GetLeader();
     if (!m_master)
-        return;    
+        return;
 
     uint32 masterHP = m_master->GetHealth() * 100 / m_master->GetMaxHealth();
 
@@ -159,8 +159,6 @@ void PlayerbotDruidAI::DoNextCombatManeuver(Unit *pTarget)
             if (!m_bot->HasInArc(M_PI_F, pTarget))
             {
                 m_bot->SetInFront(pTarget);
-                if (pVictim)
-                    pVictim->Attack(pTarget, true);
             }
             if (m_bot->HasAura(CAT_FORM, EFFECT_INDEX_0))
                 m_bot->RemoveAurasDueToSpell(768);
@@ -441,8 +439,6 @@ void PlayerbotDruidAI::DoNextCombatManeuver(Unit *pTarget)
             if (!m_bot->HasInArc(M_PI_F, pTarget))
             {
                 m_bot->SetInFront(pTarget);
-                if (pVictim)
-                    pVictim->Attack(pTarget, true);
             }
             if (m_bot->HasAura(BEAR_FORM, EFFECT_INDEX_0))
             {
@@ -553,14 +549,14 @@ void PlayerbotDruidAI::DoNonCombatActions()
     PlayerbotAI *ai = GetAI();
     if (!ai)
         return;
-        
+
     Player * m_bot = GetPlayerBot();
     if (!m_bot)
         return;
-        
+
     Player* m_master = ai->GetLeader();
     if (!m_master)
-        return;    
+        return;
 
     // mana check
     if (m_bot->getStandState() != UNIT_STAND_STATE_STAND)

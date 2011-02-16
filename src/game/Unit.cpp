@@ -319,6 +319,13 @@ void Unit::Update( uint32 update_diff, uint32 p_time )
     if(!IsInWorld())
         return;
 
+    if(GetTypeId()==TYPEID_PLAYER)
+    {
+        Player* pl = ((Player*)this);
+        if (pl->IsBeingTeleported())
+            return;
+    }
+
     /*if(p_time > m_AurasCheck)
     {
     m_AurasCheck = 2000;
@@ -11057,6 +11064,9 @@ Unit* Unit::SelectRandomFriendlyTargetBetween(Unit* except /*= NULL*/, float rad
 
 Unit* Unit::SelectRandomPlayerToBuffHim(float radius) const
 {
+    if (!GetMap())
+        return NULL;
+
     std::list<Unit *> targets;
 
     MaNGOS::AnyFriendlyUnitInObjectRangeCheck u_check(this, radius);

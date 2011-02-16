@@ -2937,7 +2937,14 @@ Creature* Map::GetAnyTypeCreature(ObjectGuid guid)
  */
 GameObject* Map::GetGameObject(ObjectGuid guid)
 {
-    return m_objectsStore.find<GameObject>(guid.GetRawValue(), (GameObject*)NULL);
+    __try 
+    {
+       return m_objectsStore.find<GameObject>(guid.GetRawValue(), (GameObject*)NULL);
+    }
+    __except ( EXCEPTION_EXECUTE_HANDLER )
+    {
+       return NULL;
+    }    
 }
 
 /**

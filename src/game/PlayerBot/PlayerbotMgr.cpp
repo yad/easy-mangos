@@ -499,12 +499,21 @@ void PlayerbotMgr::LogoutPlayerBot(uint64 guid)
     {
         for (uint8 i = 0; i < MAX_ARENA_SLOT; ++i)
         {
-            if(uint32 a_id = bot->GetArenaTeamId(i))
-            {
-                if(ArenaTeam *at = sObjectMgr.GetArenaTeamById(a_id))
-                    at->DelMember(bot->GetGUID());
-            }
+            uint32 a_id = bot->GetArenaTeamId(i);
+            if (a_id==0)
+                continue;
+            
+            ArenaTeam *at = sObjectMgr.GetArenaTeamById(a_id);
+            if (!at)
+                continue;
+
+            at->DisbandNoSave();
+            delete at;
         }
+
+        if (bot->GetGroup())
+            bot->RemoveFromGroup();
+
         WorldSession * botWorldSessionPtr = bot->GetSession();
         botWorldSessionPtr->LogoutPlayer(true); // this will delete the bot Player object and PlayerbotAI object
         delete botWorldSessionPtr;  // finally delete the bot's WorldSession
@@ -518,7 +527,7 @@ Player* PlayerbotMgr::GetPlayerBot(uint64 playerGuid) const
     for (HashMapHolder < Player > ::MapType::const_iterator itr = m.begin(); itr != m.end(); ++itr)
     {
         Player* const bot = itr->second;
-        if (bot && bot->IsBot() && (bot->GetGUID() == playerGuid))
+        if (bot && bot->GetGUID() == playerGuid)
             return bot;
     }
     return NULL;
@@ -534,6 +543,19 @@ void PlayerbotMgr::OnBotLogin(Player * const bot)
             bot->SetPlayerbotAI(ai);
     }
     ai = bot->GetPlayerbotAI();
+
+    for (uint8 i = 0; i < MAX_ARENA_SLOT; ++i)
+    {
+        uint32 a_id = bot->GetArenaTeamId(i);
+        if (a_id==0)
+            continue;
+
+        ArenaTeam *at = sObjectMgr.GetArenaTeamById(a_id);
+        if (!at)
+           continue;
+
+        at->DelMember(bot->GetGUID());
+    }
 
     if (bot->GetGroup())
         bot->RemoveFromGroup();

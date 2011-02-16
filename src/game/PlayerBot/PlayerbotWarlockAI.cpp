@@ -104,14 +104,14 @@ void PlayerbotWarlockAI::DoNextCombatManeuver(Unit *pTarget)
     PlayerbotAI *ai = GetAI();
     if (!ai)
         return;
-        
+
     Player * m_bot = GetPlayerBot();
     if (!m_bot)
         return;
-        
+
     Player* m_master = ai->GetLeader();
     if (!m_master)
-        return;    
+        return;
 
     //ai->SetMovementTarget( PlayerbotAI::MOVEMENT_FOLLOW, m_master ); // dont want to melee mob
 
@@ -360,15 +360,15 @@ void PlayerbotWarlockAI::DoNonCombatActions()
     PlayerbotAI *ai = GetAI();
     if (!ai)
         return;
-        
+
     Player * m_bot = GetPlayerBot();
     if (!m_bot)
         return;
-        
+
     Player* m_master = ai->GetLeader();
     if (!m_master)
-        return;    
-        
+        return;
+
     Pet *pet = m_bot->GetPet();
 
     // Initialize pet spells

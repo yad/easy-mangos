@@ -53,6 +53,7 @@
 #include "InstanceData.h"
 #include "CreatureEventAIMgr.h"
 #include "DBCEnums.h"
+#include "ArenaTeam.h"
 #include "AuctionHouseBot/AuctionHouseBot.h"
 #include "PlayerBot/PlayerbotMgr.h"
 #include "PlayerBot/PlayerbotAI.h"
@@ -8800,19 +8801,138 @@ bool ChatHandler::HandleBotInvite(char* args)
         chr->setRole(role);
         chr->RemovePet(PET_SAVE_AS_DELETED);
         chr->SetByteValue(UNIT_FIELD_BYTES_0,1,_class);// class
-        chr->GiveLevel(chr->getLevel()+1);
+
+        uint32 lvl = pl->getLevel();
+        if (lvl == DEFAULT_MAX_LEVEL)
+            chr->GiveLevel(pl->getLevel()-1);
+        else
+            chr->GiveLevel(pl->getLevel()+1);
+
         chr->RemoveAllAuras(AURA_REMOVE_BY_DELETE);
         ChrClassesEntry const* cEntry = sChrClassesStore.LookupEntry(_class);
         if(cEntry && cEntry->powerType < MAX_POWERS && uint32(chr->getPowerType()) != cEntry->powerType)
             chr->setPowerType(Powers(cEntry->powerType));
         chr->InitRunes();
-        if (chr->GetPlayerbotAI())
+        break;
+    }
+
+    return true;
+}
+
+bool ChatHandler::HandleBotInviteArena(char* args)
+{
+    if (!*args)
+        return false;
+
+    int16 role = (int16)atoi(args);
+    if (role == 0)
+        return false;
+
+    uint8 _class = 0;
+    switch (role)
+    {
+        case MageFire:
+        case MageArcane:
+        case MageFrost:
+            _class = CLASS_MAGE;
+            break;
+        case WarriorArms:
+        case WarriorProtection:
+        case WarriorFury:
+            _class = CLASS_WARRIOR;
+            break;
+        case RogueCombat:
+        case RogueAssassination:
+        case RogueSubtlety:
+            _class = CLASS_ROGUE;
+            break;
+        case PriestDiscipline:
+        case PriestHoly:
+        case PriestShadow:
+            _class = CLASS_PRIEST;
+            break;
+        case ShamanElementalCombat:
+        case ShamanRestoration:
+        case ShamanEnhancement:
+            _class = CLASS_SHAMAN;
+            break;
+        case DruidFeralCombat:
+        case DruidRestoration:
+        case DruidBalance:
+            _class = CLASS_DRUID;
+            break;
+        case WarlockDestruction:
+        case WarlockCurses:
+        case WarlockSummoning:
+            _class = CLASS_WARLOCK;
+            break;
+        case HunterBeastMastery:
+        case HunterSurvival:
+        case HunterMarksmanship:
+            _class = CLASS_HUNTER;
+            break;
+        case PaladinCombat:
+        case PaladinHoly:
+        case PaladinProtection:
+            _class = CLASS_PALADIN;
+            break;
+        case DeathKnightBlood:
+        case DeathKnightFrost:
+        case DeathKnightUnholy:
+            _class = CLASS_DEATH_KNIGHT;
+            break;
+    }
+    if (_class == 0)
+        return false;
+
+    Player *pl = m_session->GetPlayer();
+
+    HashMapHolder<Player>::MapType& m = sObjectAccessor.GetPlayers();
+    for(HashMapHolder<Player>::MapType::const_iterator itr = m.begin(); itr != m.end(); ++itr)
+    {
+        Player* chr = itr->second;
+
+        if(!chr || !chr->IsBot() || chr->GetGroup() || pl->GetTeam() != chr->GetTeam())
+            continue;
+
+        PlayerInfo const* info = sObjectMgr.GetPlayerInfo(chr->getRace(), _class);
+        if (!info)
+            continue;
+
+        WorldPacket pk1(CMSG_GROUP_INVITE, 10);                // guess size
+        pk1 << chr->GetName();                                 // max len 48
+        pk1 << uint32(0);
+        pl->GetSession()->HandleGroupInviteOpcode(pk1);
+        for (uint8 i = 0; i < MAX_ARENA_SLOT; ++i)
         {
-            chr->GetPlayerbotAI()->SetMaster(pl);
-            chr->GetPlayerbotAI()->CheckRoles();
-            chr->GetPlayerbotAI()->CheckStuff();
+            if(uint32 a_id = pl->GetArenaTeamId(i))
+            {
+                if(ArenaTeam *at = sObjectMgr.GetArenaTeamById(a_id))
+                {
+                    chr->SetArenaTeamIdInvited(at->GetId());
+                    WorldPacket pk2;
+                    chr->GetSession()->HandleArenaTeamAcceptOpcode(pk2);
+                    break;
+                }
+            }
         }
 
+        chr->setClass(_class);
+        chr->setRole(role);
+        chr->RemovePet(PET_SAVE_AS_DELETED);
+        chr->SetByteValue(UNIT_FIELD_BYTES_0,1,_class);// class
+
+        uint32 lvl = pl->getLevel();
+        if (lvl == DEFAULT_MAX_LEVEL)
+            chr->GiveLevel(pl->getLevel()-1);
+        else
+            chr->GiveLevel(pl->getLevel()+1);
+
+        chr->RemoveAllAuras(AURA_REMOVE_BY_DELETE);
+        ChrClassesEntry const* cEntry = sChrClassesStore.LookupEntry(_class);
+        if(cEntry && cEntry->powerType < MAX_POWERS && uint32(chr->getPowerType()) != cEntry->powerType)
+            chr->setPowerType(Powers(cEntry->powerType));
+        chr->InitRunes();
         break;
     }
 

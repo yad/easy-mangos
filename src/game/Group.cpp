@@ -1593,6 +1593,9 @@ GroupJoinBattlegroundResult Group::CanJoinBattleGroundQueue(BattleGround const* 
         return ERR_BATTLEGROUND_JOIN_FAILED;
 
     PvPDifficultyEntry const* bracketEntry = GetBattlegroundBracketByLevel(bgOrTemplate->GetMapId(), reference->getLevel());
+    /*if (reference->IsBot())
+        bracketEntry = GetBattlegroundBracketByLevel(bgOrTemplate->GetMapId(), reference->GetPlayerbotAI()->getLevel());*/
+
     if(!bracketEntry)
         return ERR_BATTLEGROUND_JOIN_FAILED;
 
@@ -1615,6 +1618,8 @@ GroupJoinBattlegroundResult Group::CanJoinBattleGroundQueue(BattleGround const* 
             return ERR_BATTLEGROUND_JOIN_TIMED_OUT;
         // not in the same battleground level bracket, don't let join
         PvPDifficultyEntry const* memberBracketEntry = GetBattlegroundBracketByLevel(bracketEntry->mapId, member->getLevel());
+        /*if (member->IsBot())
+            memberBracketEntry = GetBattlegroundBracketByLevel(bracketEntry->mapId, member->GetPlayerbotAI()->getLevel());*/
         if(memberBracketEntry != bracketEntry)
             return ERR_BATTLEGROUND_JOIN_RANGE_INDEX;
         // don't let join rated matches if the arena team id doesn't match
