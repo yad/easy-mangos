@@ -728,10 +728,14 @@ struct CreatureDisplayInfoExtraEntry
 {
     uint32      DisplayExtraId;                             // 0        CreatureDisplayInfoEntry::m_extendedDisplayInfoID
     uint32      Race;                                       // 1
-    //uint32      Gender;                                   // 2        Model gender, exist not small amount cases when query creature data return different gender from used model, so can't be replacement for model gender field.
-                                                            // 3-7      unknown, 0..~2x
-    //uint32      Equipment[11]                             // 8-18     equipped static items EQUIPMENT_SLOT_HEAD..EQUIPMENT_SLOT_HANDS, client show its by self
-                                                            // 19       unknown, 0/1
+    //uint32    Gender;                                     // 2        Model gender, exist not small amount cases when query creature data return different gender from used model, so can't be replacement for model gender field.
+    //uint32    SkinColor;                                  // 3
+    //uint32    FaceType;                                   // 4
+    //uint32    HairType;                                   // 5        CharHairGeosets.dbc
+    //uint32    HairStyle;                                  // 6        CharSections.dbc, where GeneralType=3
+    //uint32    BeardStyle;                                 // 7
+    //uint32    Equipment[11];                              // 8-18     equipped static items EQUIPMENT_SLOT_HEAD..EQUIPMENT_SLOT_HANDS, client show its by self
+    //uint32    CanEquip;                                   // 19       0..1 Can equip additional things when used for players
     //char*                                                 // 20       CreatureDisplayExtra-*.blp
 };
 
@@ -1430,9 +1434,9 @@ struct SpellEntry
     uint32    AttributesEx6;                                // 10       m_attributesExF
     uint32    AttributesEx7;                                // 11       m_attributesExG (0x20 - totems, 0x4 - paladin auras, etc...)
     uint32    Stances;                                      // 12       m_shapeshiftMask
-    // uint32 unk_320_2;                                    // 13       3.2.0
+    // uint32 unk_320_1;                                    // 13       3.2.0
     uint32    StancesNot;                                   // 14       m_shapeshiftExclude
-    // uint32 unk_320_3;                                    // 15       3.2.0
+    // uint32 unk_320_2;                                    // 15       3.2.0
     uint32    Targets;                                      // 16       m_targets
     uint32    TargetCreatureType;                           // 17       m_targetCreatureType
     uint32    RequiresSpellFocus;                           // 18       m_requiresSpellFocus
@@ -1526,7 +1530,7 @@ struct SpellEntry
     uint32    runeCostID;                                   // 226      m_runeCostID
     //uint32    spellMissileID;                             // 227      m_spellMissileID not used
     //uint32  PowerDisplayId;                               // 228      m_powerDisplayID - id from PowerDisplay.dbc, new in 3.1
-    //float   unk_320_4[3];                                 // 229-231  3.2.0
+    //float   unk_320_3[3];                                 // 229-231  3.2.0
     //uint32  spellDescriptionVariableID;                   // 232      m_spellDescriptionVariableID, 3.2.0
     uint32  SpellDifficultyId;                              // 233      m_spellDifficultyID - id from SpellDifficulty.dbc
 

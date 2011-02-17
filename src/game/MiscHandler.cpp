@@ -1090,17 +1090,15 @@ void WorldSession::HandleInspectOpcode(WorldPacket& recv_data)
     data << plr->GetPackGUID();
 
     if(sWorld.getConfig(CONFIG_BOOL_TALENTS_INSPECTING) || _player->isGameMaster())
-    {
         plr->BuildPlayerTalentsInfoData(&data);
-        plr->BuildEnchantmentsInfoData(&data);
-    }
     else
     {
         data << uint32(0);                                  // unspentTalentPoints
         data << uint8(0);                                   // talentGroupCount
         data << uint8(0);                                   // talentGroupIndex
-        data << uint32(0);                                  // slotUsedMask
     }
+
+    plr->BuildEnchantmentsInfoData(&data);
 
     SendPacket(&data);
 }
@@ -1471,7 +1469,7 @@ void WorldSession::HandleCancelMountAuraOpcode( WorldPacket & /*recv_data*/ )
         return;
     }
 
-    _player->Unmount();
+    _player->Unmount(_player->HasAuraType(SPELL_AURA_MOUNTED));
     _player->RemoveSpellsCausingAura(SPELL_AURA_MOUNTED);
 }
 

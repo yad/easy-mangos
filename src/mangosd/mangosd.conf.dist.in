@@ -14,7 +14,7 @@ ConfVersion=2010100901
 #    DataDir
 #        Data directory setting.
 #        Important: DataDir needs to be quoted, as it is a string which may contain space characters.
-#        Example: "@prefix@/share/mangos"
+#        Example: "@CMAKE_INSTALL_PREFIX@/share/mangos"
 #
 #    LogsDir
 #        Logs directory setting.
@@ -37,6 +37,14 @@ ConfVersion=2010100901
 #                    hostname;port;username;password;database
 #                    .;/path/to/unix_socket/DIRECTORY or . for default path;username;password;database - use Unix sockets at Unix/Linux
 #
+#	LoginDatabaseConnections
+#	WorldDatabaseConnections
+#	CharacterDatabaseConnections
+#		 Amount of connections to database which will be used for SELECT queries. Maximum 16 connections per database.
+#		 Please, note, for data consistency only one connection for each database is used for transactions and async SELECTs.
+#		 So formula to find out how many connections will be established: X = ¹_connections + 1
+#		 Default: 1 connection for SELECT statements
+#
 #    MaxPingTime
 #        Settings for maximum database-ping interval (minutes between pings)
 #
@@ -57,6 +65,9 @@ LogsDir = ""
 LoginDatabaseInfo     = "127.0.0.1;3306;mangos;mangos;realmd"
 WorldDatabaseInfo     = "127.0.0.1;3306;mangos;mangos;mangos"
 CharacterDatabaseInfo = "127.0.0.1;3306;mangos;mangos;characters"
+LoginDatabaseConnections = 1
+WorldDatabaseConnections = 1
+CharacterDatabaseConnections = 1
 MaxPingTime = 30
 WorldServerPort = 8085
 BindIP = "0.0.0.0"
@@ -568,6 +579,10 @@ LogColors = ""
 #                 0 (no limit)
 #        Default: 10
 #
+#   BirthdayTime
+#        Set to birthday (date in unix time), By default 28th August 2005, when MaNGOS got it’s name
+#        Default: 1125180000
+#
 #    Instance.IgnoreLevel
 #        Ignore level requirement to enter instance
 #        Default: 0 (false)
@@ -758,6 +773,7 @@ AlwaysMaxSkillForLevel = 0
 ActivateWeather = 1
 CastUnstuck = 1
 MaxSpellCastsInChain = 10
+BirthdayTime = 1125180000
 Instance.IgnoreLevel = 0
 Instance.IgnoreRaid = 0
 Instance.ResetTimeHour = 4
@@ -1250,6 +1266,21 @@ Visibility.Distance.Grey.Object = 10
 #         Default: 0  - no decrease
 #                  75 - in 2 times each 75 skill points
 #
+#    SkillFail.Loot.Fishing
+#         For fishing instead fail provided junk loot
+#         Default: 1 (enabled)
+#                  0 (disabled)
+#
+#    SkillFail.Gain.Fishing
+#         For fishing skill gain possible at fail also
+#         Default: 1 (enabled)
+#                  0 (disabled)
+#
+#    SkillFail.Possible.FishingPool
+#         For fishing pool impossible fail from low skill by default
+#         Default: 0 (disabled)
+#                  1 (enabled)
+#
 #    DurabilityLossChance.Damage
 #         Chance lost one from equiped items durability point at damage apply or receive.
 #         Default: 0.5 (100/0.5 = 200) Each 200 damage apply one from 19 possible equipped items
@@ -1338,6 +1369,9 @@ SkillChance.Green  = 25
 SkillChance.Grey   = 0
 SkillChance.MiningSteps   = 0
 SkillChance.SkinningSteps = 0
+SkillFail.Loot.Fishing = 1
+SkillFail.Gain.Fishing = 1
+SkillFail.Possible.FishingPool = 0
 DurabilityLossChance.Damage = 0.5
 DurabilityLossChance.Absorb = 0.5
 DurabilityLossChance.Parry  = 0.05
