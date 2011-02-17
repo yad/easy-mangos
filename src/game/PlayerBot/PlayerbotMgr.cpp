@@ -414,80 +414,15 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
             }
             return;
         }
-
-            /*
-               case CMSG_NAME_QUERY:
-               case MSG_MOVE_START_FORWARD:
-               case MSG_MOVE_STOP:
-               case MSG_MOVE_SET_FACING:
-               case MSG_MOVE_START_STRAFE_LEFT:
-               case MSG_MOVE_START_STRAFE_RIGHT:
-               case MSG_MOVE_STOP_STRAFE:
-               case MSG_MOVE_START_BACKWARD:
-               case MSG_MOVE_HEARTBEAT:
-               case CMSG_STANDSTATECHANGE:
-               case CMSG_QUERY_TIME:
-               case CMSG_CREATURE_QUERY:
-               case CMSG_GAMEOBJECT_QUERY:
-               case MSG_MOVE_JUMP:
-               case MSG_MOVE_FALL_LAND:
-                return;
-
-               default:
-               {
-                const char* oc = LookupOpcodeName(packet.GetOpcode());
-                // ChatHandler ch(m_master);
-                // ch.SendSysMessage(oc);
-
-
-
-                sLog.outDebug(out.str().c_str());
-               }
-             */
     }
 }
 
 void PlayerbotMgr::HandleMasterOutgoingPacket(const WorldPacket& packet)
 {
-    /*
-       switch (packet.GetOpcode())
-       {
-        // maybe our bots should only start looting after the master loots?
-        //case SMSG_LOOT_RELEASE_RESPONSE: {}
-        case SMSG_NAME_QUERY_RESPONSE:
-        case SMSG_MONSTER_MOVE:
-        case SMSG_COMPRESSED_UPDATE_OBJECT:
-        case SMSG_DESTROY_OBJECT:
-        case SMSG_UPDATE_OBJECT:
-        case SMSG_STANDSTATE_UPDATE:
-        case MSG_MOVE_HEARTBEAT:
-        case SMSG_QUERY_TIME_RESPONSE:
-        case SMSG_AURA_UPDATE_ALL:
-        case SMSG_CREATURE_QUERY_RESPONSE:
-        case SMSG_GAMEOBJECT_QUERY_RESPONSE:
-            return;
-        default:
-        {
-            const char* oc = LookupOpcodeName(packet.GetOpcode());
-
-
-
-            sLog.outDebug(out.str().c_str());
-        }
-       }
-     */
 }
 
 void PlayerbotMgr::Stay()
 {
-    /*if (!player->GetGroup())
-        return;
-
-    for (GroupReference *itr = player->GetGroup()->GetFirstMember(); itr != NULL; itr = itr->next())
-    {
-        Player* const bot = itr->getSource();
-        bot->GetMotionMaster()->Clear();
-    }*/
 }
 
 

@@ -525,6 +525,15 @@ void ArenaTeam::SetEmblem(uint32 backgroundColor, uint32 emblemStyle, uint32 emb
     CharacterDatabase.PExecute("UPDATE arena_team SET BackgroundColor='%u', EmblemStyle='%u', EmblemColor='%u', BorderStyle='%u', BorderColor='%u' WHERE arenateamid='%u'", m_BackgroundColor, m_EmblemStyle, m_EmblemColor, m_BorderStyle, m_BorderColor, m_TeamId);
 }
 
+void ArenaTeam::ForceEmblem(uint32 backgroundColor, uint32 emblemStyle, uint32 emblemColor, uint32 borderStyle, uint32 borderColor)
+{
+    m_BackgroundColor = backgroundColor;
+    m_EmblemStyle = emblemStyle;
+    m_EmblemColor = emblemColor;
+    m_BorderStyle = borderStyle;
+    m_BorderColor = borderColor;
+}
+
 void ArenaTeam::SetStats(uint32 stat_type, uint32 value)
 {
     switch(stat_type)

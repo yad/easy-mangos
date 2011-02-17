@@ -524,10 +524,10 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
             ObjectGuid petitionguid;
             p >> petitionguid;
 
-            WorldPacket* const packet = new WorldPacket(CMSG_PETITION_SIGN, 8+1);
-            *packet << petitionguid;
-            *packet << uint8(1);
-            m_bot->GetSession()->HandlePetitionSignOpcode(*packet);
+            WorldPacket packet = WorldPacket(CMSG_PETITION_SIGN, 8+1);
+            packet << petitionguid;
+            packet << uint8(1);
+            m_bot->GetSession()->HandlePetitionSignOpcode(packet);
             return;
         }
 
@@ -549,22 +549,14 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
 
             if (StatusID == STATUS_WAIT_JOIN)
             {
-                for(GroupReference *itr = m_bot->GetGroup()->GetFirstMember(); itr != NULL; itr = itr->next())
-                {
-                    Player *member = itr->getSource();
-                    if(!member || !member->IsBot())
-                        continue;
-
-                    WorldPacket* const packet = new WorldPacket(CMSG_BATTLEFIELD_PORT,1+1+4+2+1);
-                    *packet << uint64(Type);
-                    *packet << uint8(member->InBattleGroundQueue());   // enter battle 0x1, leave queue 0x0
-                    member->GetSession()->HandleBattleFieldPortOpcode(*packet);
-                    member->GetPlayerbotAI()->SetEnterBGTime(60);
-                }
+                WorldPacket packet = WorldPacket(CMSG_BATTLEFIELD_PORT,1+1+4+2+1);
+                packet << uint64(Type);
+                packet << uint8(m_bot->InBattleGroundQueue());   // enter battle 0x1, leave queue 0x0
+                m_bot->GetSession()->HandleBattleFieldPortOpcode(packet);
+                m_bot->GetPlayerbotAI()->SetEnterBGTime(60);
             }
             return;
         }
-
         case MSG_PVP_LOG_DATA:
         {
             BattleGround *bg = m_bot->GetBattleGround();
@@ -2177,12 +2169,15 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
 
     CheckBG();
 
-    if(m_bot->GetGroup())
-        sLog.outString("Group + %s", m_bot->GetName());
+    if (GetLeader()->IsBot())
+    {
+        if(m_bot->GetGroup())
+            sLog.outString("Group + %s", m_bot->GetName());
 
-    for (uint8 i = 0; i < MAX_ARENA_SLOT; ++i)
-        if(m_bot->GetArenaTeamId(i)!=0)
-            sLog.outString("Team %d + %s", i, m_bot->GetName());
+        for (uint8 i = 0; i < MAX_ARENA_SLOT; ++i)
+            if(m_bot->GetArenaTeamId(i)!=0)
+                sLog.outString("Team %d + %s", i, m_bot->GetName());
+    }
 
     if (!m_bot->isAlive())
     {
@@ -3220,7 +3215,8 @@ void PlayerbotAI::EquipItem(Item& item)
 
 bool PlayerbotAI::FollowCheckTeleport(WorldObject *obj)
 {
-    if (m_bot->GetMap() && m_bot->GetMap()->IsBattleGroundOrArena())
+    //if (m_bot->GetMap() && m_bot->GetMap()->IsBattleGroundOrArena())
+    if (m_bot->GetBattleGround())
         return true;
     if (!m_bot->IsWithinDistInMap(obj, 100, true) && GetLeader()->isAlive() && !GetLeader()->IsTaxiFlying())
     {
