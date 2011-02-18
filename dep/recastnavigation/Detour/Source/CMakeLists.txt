@@ -15,14 +15,23 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
+set(detour_SRCS
+    DetourAlloc.cpp
+    DetourCommon.cpp
+    DetourNavMeshBuilder.cpp
+    DetourNavMesh.cpp
+    DetourNavMeshQuery.cpp
+    DetourNode.cpp
+    DetourObstacleAvoidance.cpp
+)
 
-if(NOT TBB_USE_EXTERNAL)
-  add_subdirectory(tbb)
-endif()
+include_directories(
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_SOURCE_DIR}/dep/recastnavigation
+  ${CMAKE_SOURCE_DIR}/dep/recastnavigation/Detour
+  ${CMAKE_SOURCE_DIR}/dep/recastnavigation/Detour/Include
+)
 
-if(NOT ACE_USE_EXTERNAL)
-  add_subdirectory(ACE_wrappers)
-endif()
-
-add_subdirectory(recastnavigation)
-add_subdirectory(src)
+add_library(detour STATIC
+  ${detour_SRCS}
+)
