@@ -531,6 +531,13 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
             return;
         }
 
+        case SMSG_ARENA_TEAM_INVITE:
+        {
+            WorldPacket pk;
+            m_bot->GetSession()->HandleArenaTeamAcceptOpcode(pk);
+            break;
+        }
+
         case SMSG_BATTLEFIELD_STATUS:
         {
             WorldPacket p(packet);
@@ -1280,7 +1287,8 @@ bool PlayerbotAI::GetCombatTarget(Unit* forcedTarget)
         return true;
     }
 
-    if (m_bot->GetBattleGround() && m_bot->GetBattleGround()->isArena())
+    /*TODO BG WP*/
+    if (m_bot->GetBattleGround())
     {
         Unit* target = FindEnemy();
         if (target && target != m_targetCombat)
@@ -1929,7 +1937,6 @@ void PlayerbotAI::SetMovementTarget(Unit *followTarget)
                 m_bot->GetMotionMaster()->GetDestination(xdb, ydb, zdb);
                 m_bot->GetPosition(xcb, ycb, zcb);
                 m_followTarget->GetPosition(xt, yt, zt);
-                //if (xt != xb || yt != yb)
                 if (!isInside(xcb, ycb, xdb, ydb, xt, yt, 10.0f))
                 {
                     SetInFront(m_followTarget);
@@ -1948,8 +1955,8 @@ void PlayerbotAI::SetMovementTarget(Unit *followTarget)
         {
             if (m_bot->IsWithinDistInMap(m_followTarget, orig_x, orig_y, orig_z, 3.0f))
             {
-                MovementClear();
-                SetInFront(m_followTarget);
+                if (SetInFront(m_followTarget))
+                    MovementClear();
             }
             else
             {
@@ -1959,10 +1966,8 @@ void PlayerbotAI::SetMovementTarget(Unit *followTarget)
                 m_bot->GetMotionMaster()->GetDestination(xdb, ydb, zdb);
                 m_bot->GetPosition(xcb, ycb, zcb);
                 m_followTarget->GetPosition(xt, yt, zt);
-                //if (xt != xb || yt != yb)
-                if (!isInside(xcb, ycb, xdb, ydb, xt, yt, 10.0f))
+                if (!isInside(xcb, ycb, xdb, ydb, xt, yt, 3.0f))
                 {
-                    SetInFront(m_followTarget);
                     m_bot->GetMotionMaster()->MoveFollow(m_followTarget, 1.0f, rand_float(0, M_PI_F));
                 }                    
             }
@@ -1974,8 +1979,8 @@ void PlayerbotAI::SetMovementTarget(Unit *followTarget)
         {
             if (m_bot->IsWithinDistInMap(m_followTarget, 3.0f))
             {
-                MovementClear();
-                SetInFront(m_followTarget);
+                if (SetInFront(m_followTarget))
+                    MovementClear();
             }
             else if (m_bot->IsWithinDistInMap(m_followTarget, 100.0f))
             {
@@ -1987,10 +1992,8 @@ void PlayerbotAI::SetMovementTarget(Unit *followTarget)
                     m_bot->GetMotionMaster()->GetDestination(xdb, ydb, zdb);
                     m_bot->GetPosition(xcb, ycb, zcb);
                     m_followTarget->GetPosition(xt, yt, zt);
-                    //if (xt != xb || yt != yb)
                     if (!isInside(xcb, ycb, xdb, ydb, xt, yt, 10.0f))
                     {
-                        SetInFront(m_followTarget);
                         float angle = rand_float(0, M_PI_F);
                         float dist = rand_float(1.0f, 3.0f);
                         m_bot->GetMotionMaster()->MoveFollow(m_followTarget, dist, angle);
@@ -2002,8 +2005,8 @@ void PlayerbotAI::SetMovementTarget(Unit *followTarget)
         {
             if (m_bot->IsWithinDistInMap(m_followTarget, 3.0f))
             {
-                MovementClear();
-                SetInFront(m_followTarget);
+                if (SetInFront(m_followTarget))
+                    MovementClear();
             }
             else
             {
@@ -2013,8 +2016,7 @@ void PlayerbotAI::SetMovementTarget(Unit *followTarget)
                 m_bot->GetMotionMaster()->GetDestination(xdb, ydb, zdb);
                 m_bot->GetPosition(xcb, ycb, zcb);
                 m_followTarget->GetPosition(xt, yt, zt);
-                //if (xt != xb || yt != yb)
-                if (!isInside(xcb, ycb, xdb, ydb, xt, yt, 10.0f))
+                if (!isInside(xcb, ycb, xdb, ydb, xt, yt, 3.0f))
                 {
                     SetInFront(m_followTarget);
                     float angle = rand_float(0, M_PI_F);
@@ -2026,23 +2028,14 @@ void PlayerbotAI::SetMovementTarget(Unit *followTarget)
     }
 }
 
-bool PlayerbotAI::isInside(float x1, float y1, float x2, float y2, float x3, float y3, float delta)
+bool PlayerbotAI::isInside(float Ax, float Ay, float Bx, float By, float Cx, float Cy, float delta)
 {
-    if(x1==x3)
-    {
-        if(x2 < x1 - delta)
-            return false;
-        if(x2 > x1 + delta)
-            return false;
-        return true;
-    }
-    float coeffDir = (y3 - y1) / (x3 - x1);
-    float origin= y1 - x1 * coeffDir;
-    if(y2 < origin + coeffDir * x2 - delta)
+    float distAC = sqrt(pow(Cx-Ax, 2)+pow(Cy-Ay, 2));
+    float distABC = sqrt(pow(Bx-Ax, 2)+pow(By-Ay, 2)) + sqrt(pow(Cx-Bx, 2)+pow(Cy-By, 2));
+
+    if ((distAC * (1+delta/100)) < distABC)
         return false;
 
-    if(y2 > origin+coeffDir * x2 + delta)
-        return false;
     return true;
 }
 
@@ -2139,8 +2132,11 @@ bool PlayerbotAI::IsMoving()
     return (m_bot->GetMotionMaster()->GetCurrentMovementGeneratorType() == IDLE_MOTION_TYPE ? false : true);
 }
 
-void PlayerbotAI::SetInFront(const Unit* obj)
+bool PlayerbotAI::SetInFront(const Unit* obj)
 {
+    if (m_bot->HasInArc((float)M_PI/16.0f, obj))
+        return false;
+
     m_bot->SetInFront(obj);
     float ori = m_bot->GetAngle(obj);
     float x, y, z;
@@ -2149,6 +2145,7 @@ void PlayerbotAI::SetInFront(const Unit* obj)
     z = m_bot->m_movementInfo.GetPos()->z;
     m_bot->m_movementInfo.ChangePosition(x,y,z,ori);
     m_bot->SendHeartBeat(false);
+    return true;
 }
 
 void PlayerbotAI::UpdateAI(const uint32 p_time)
@@ -2168,16 +2165,6 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
         return;
 
     CheckBG();
-
-    if (GetLeader()->IsBot())
-    {
-        if(m_bot->GetGroup())
-            sLog.outString("Group + %s", m_bot->GetName());
-
-        for (uint8 i = 0; i < MAX_ARENA_SLOT; ++i)
-            if(m_bot->GetArenaTeamId(i)!=0)
-                sLog.outString("Team %d + %s", i, m_bot->GetName());
-    }
 
     if (!m_bot->isAlive())
     {
@@ -2355,10 +2342,6 @@ bool PlayerbotAI::CheckMaster()
             return false;
         }
     }
-    else
-    {
-    }
-
     return true;
 }
 
@@ -3215,8 +3198,8 @@ void PlayerbotAI::EquipItem(Item& item)
 
 bool PlayerbotAI::FollowCheckTeleport(WorldObject *obj)
 {
-    //if (m_bot->GetMap() && m_bot->GetMap()->IsBattleGroundOrArena())
-    if (m_bot->GetBattleGround())
+    if (m_bot->GetMap() && m_bot->GetMap()->IsBattleGroundOrArena())
+    //if (m_bot->GetBattleGround())
         return true;
     if (!m_bot->IsWithinDistInMap(obj, 100, true) && GetLeader()->isAlive() && !GetLeader()->IsTaxiFlying())
     {

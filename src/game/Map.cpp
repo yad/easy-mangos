@@ -2886,7 +2886,14 @@ Player* Map::GetPlayer(ObjectGuid guid)
  */
 Creature* Map::GetCreature(ObjectGuid guid)
 {
-    return m_objectsStore.find<Creature>(guid.GetRawValue(), (Creature*)NULL);
+    __try 
+    {
+       return m_objectsStore.find<Creature>(guid.GetRawValue(), (Creature*)NULL);
+    }
+    __except ( EXCEPTION_EXECUTE_HANDLER )
+    {
+       return NULL;
+    }   
 }
 
 /**
@@ -2896,7 +2903,14 @@ Creature* Map::GetCreature(ObjectGuid guid)
  */
 Pet* Map::GetPet(ObjectGuid guid)
 {
-    return m_objectsStore.find<Pet>(guid.GetRawValue(), (Pet*)NULL);
+    __try 
+    {
+       return m_objectsStore.find<Pet>(guid.GetRawValue(), (Pet*)NULL);
+    }
+    __except ( EXCEPTION_EXECUTE_HANDLER )
+    {
+       return NULL;
+    }  
 }
 
 /**
@@ -2954,7 +2968,14 @@ GameObject* Map::GetGameObject(ObjectGuid guid)
  */
 DynamicObject* Map::GetDynamicObject(ObjectGuid guid)
 {
-    return m_objectsStore.find<DynamicObject>(guid.GetRawValue(), (DynamicObject*)NULL);
+    __try 
+    {
+       return m_objectsStore.find<DynamicObject>(guid.GetRawValue(), (DynamicObject*)NULL);
+    }
+    __except ( EXCEPTION_EXECUTE_HANDLER )
+    {
+       return NULL;
+    }    
 }
 
 /**

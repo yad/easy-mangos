@@ -219,7 +219,7 @@ public:
     bool FindPOI();
     Unit* FindEnemy();
 
-    void SetInFront(const Unit* obj);
+    bool SetInFront(const Unit* obj);
 
     void ItemLocalization(std::string& itemName, const uint32 itemID) const;
     void QuestLocalization(std::string& questTitle, const uint32 questID) const;

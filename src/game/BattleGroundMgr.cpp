@@ -900,18 +900,21 @@ void BattleGroundQueue::Update(BattleGroundTypeId bgTypeId, BattleGroundBracketI
             // start bg
             bg2->StartBattleGround();
         }
-        /*else if (!m_QueuedGroups[bracket_id][BG_QUEUE_NORMAL_ALLIANCE].empty() || !m_QueuedGroups[bracket_id][BG_QUEUE_NORMAL_HORDE].empty())
+        else if (!m_QueuedGroups[bracket_id][BG_QUEUE_NORMAL_ALLIANCE].empty() || !m_QueuedGroups[bracket_id][BG_QUEUE_NORMAL_HORDE].empty())
         {
             if (sWorld.getConfig(CONFIG_UINT32_BOT_JOIN_BG) == 0)
                 return;
 
             GroupsQueueType::iterator itr_team;
+            BattleGroundTeamIndex BG_TEAM = BG_TEAM_HORDE;
             if (!m_QueuedGroups[bracket_id][BG_QUEUE_NORMAL_ALLIANCE].empty())
+            {
                 itr_team = m_QueuedGroups[bracket_id][BG_QUEUE_NORMAL_ALLIANCE].begin();
+                BG_TEAM = BG_TEAM_ALLIANCE;
+            }
             else
                 itr_team = m_QueuedGroups[bracket_id][BG_QUEUE_NORMAL_HORDE].begin();
 
-            //SEARCH MASTER
             Player *leader = NULL;
             for(GroupQueueInfoPlayers::iterator itr = (*(itr_team))->Players.begin(); itr != (*(itr_team))->Players.end(); ++itr)
             {
@@ -938,11 +941,96 @@ void BattleGroundQueue::Update(BattleGroundTypeId bgTypeId, BattleGroundBracketI
                 sBattleGroundMgr.ScheduleQueueUpdate(arenaRating, arenaType, bgQueueTypeId, bgTypeId, bracketEntry->GetBracketId());
                 return;
             }
-            //CHECK MASTER (HUMAN PLAYER)
-            //TODO IMPLEMENTS BG !
 
-            sBattleGroundMgr.ScheduleQueueUpdate(arenaRating, arenaType, bgQueueTypeId, bgTypeId, bracketEntry->GetBracketId());
-        }*/
+            std::list<Player *> team;
+            HashMapHolder<Player>::MapType& m = sObjectAccessor.GetPlayers();
+            for(HashMapHolder<Player>::MapType::const_iterator itr = m.begin(); itr != m.end(); ++itr)
+            {
+                Player* p = itr->second;
+                if(!p->IsInWorld() || !p->IsBot() || !p->isAlive() || !p->getAttackers().empty()
+                    || p->InBattleGroundQueue() || p->InBattleGround() || p->GetGroup()
+                    || !p->GetPlayerbotAI()->GetLeader()->IsBot()
+                    || p->GetTeam() == leader->GetTeam())
+                    continue;
+
+                team.push_back(p);
+
+                if (team.size() == m_SelectionPools[BG_TEAM].GetPlayerCount())
+                    break;
+            }
+
+            if (!team.empty() && team.size() == m_SelectionPools[BG_TEAM].GetPlayerCount())
+            {
+                for(std::list<Player *>::iterator tIter = team.begin(); tIter != team.end(); ++tIter)
+                {
+                    Player* p = *tIter;
+
+                    if (team.front() != p)
+                    {
+                        WorldPacket pk1(CMSG_GROUP_INVITE, 10);                // guess size
+                        pk1 << p->GetName();                                   // max len 48
+                        pk1 << uint32(0);
+                        team.front()->GetSession()->HandleGroupInviteOpcode(pk1);
+                    }
+                }
+
+                if (team.front()->GetGroup())
+                {
+                    GroupReference *ref = team.front()->GetGroup()->GetFirstMember();
+                    while (ref)
+                    {
+                        Player* p = ref->getSource();
+                        p->GiveLevel(leader->getLevel());
+                        p->GetPlayerbotAI()->CheckStuff();
+                        ref = ref->next();
+                    }
+                    WorldPacket packet(CMSG_BATTLEMASTER_JOIN, 8+4+4+1);
+                    packet << uint64(team.front()->GetGUID());
+                    packet << uint32(bgTypeId);
+                    packet << uint32(bg_template->GetInstanceID());
+                    packet << uint8(1);
+                    team.front()->GetSession()->HandleBattlemasterJoinOpcode(packet);
+
+                    BattleGround * bg2 = sBattleGroundMgr.CreateNewBattleGround(bgTypeId, bracketEntry, arenaType, false);
+                    if (!bg2)
+                    {
+                        for(std::list<Player *>::iterator tIter = team.begin(); tIter != team.end(); ++tIter)
+                        {
+                            Player* p = *tIter;
+                            p->GetPlayerbotAI()->SetLeader(p);
+                            p->GetPlayerbotAI()->ReinitAI();                        
+                        }
+                        leader->SetTimeInArenaQueue(leader->GetBattleGroundQueueIndex(bgQueueTypeId), WorldTimer::getMSTime());
+                        sBattleGroundMgr.ScheduleQueueUpdate(arenaRating, arenaType, bgQueueTypeId, bgTypeId, bracket_id);
+                        return;
+                    }
+                    for(uint32 i = 0; i < BG_TEAMS_COUNT; i++)
+                        for(GroupsQueueType::const_iterator citr = m_SelectionPools[BG_TEAM_ALLIANCE + i].SelectedGroups.begin(); citr != m_SelectionPools[BG_TEAM_ALLIANCE + i].SelectedGroups.end(); ++citr)
+                            InviteGroupToBG((*citr), bg2, (*citr)->GroupTeam);
+
+                    bg2->StartBattleGround();
+                    return;
+                }
+                else
+                {
+                    for(std::list<Player *>::iterator tIter = team.begin(); tIter != team.end(); ++tIter)
+                    {
+                        Player* p = *tIter;
+                        p->GetPlayerbotAI()->SetLeader(p);
+                        p->GetPlayerbotAI()->ReinitAI();                        
+                    }
+                    leader->SetTimeInArenaQueue(leader->GetBattleGroundQueueIndex(bgQueueTypeId), WorldTimer::getMSTime());
+                    sBattleGroundMgr.ScheduleQueueUpdate(arenaRating, arenaType, bgQueueTypeId, bgTypeId, bracket_id);
+                    return;
+                }
+            }
+            else
+            {
+                leader->SetTimeInArenaQueue(leader->GetBattleGroundQueueIndex(bgQueueTypeId), WorldTimer::getMSTime());
+                sBattleGroundMgr.ScheduleQueueUpdate(arenaRating, arenaType, bgQueueTypeId, bgTypeId, bracket_id);
+                return;
+            }
+        }
     }
     else if (bg_template->isArena())
     {
@@ -1055,12 +1143,8 @@ void BattleGroundQueue::Update(BattleGroundTypeId bgTypeId, BattleGroundBracketI
         else if ((sWorld.getConfig(CONFIG_UINT32_BOT_JOIN_BG) != 0) && ((m_SelectionPools[BG_TEAM_ALLIANCE].GetPlayerCount() == 0 || m_SelectionPools[BG_TEAM_HORDE].GetPlayerCount() == 0)))
         {
             BattleGroundTeamIndex BG_TEAM = BG_TEAM_HORDE;
-            BattleGroundTeamIndex BG_TEAM_OTHER = BG_TEAM_ALLIANCE;
             if (m_SelectionPools[BG_TEAM_ALLIANCE].GetPlayerCount())
-            {
                 BG_TEAM = BG_TEAM_ALLIANCE;
-                BG_TEAM_OTHER = BG_TEAM_HORDE;
-            }
 
             Player *leader = NULL;
             for(GroupQueueInfoPlayers::iterator itr = (*(itr_team[BG_TEAM]))->Players.begin(); itr != (*(itr_team[BG_TEAM]))->Players.end(); ++itr)
@@ -1102,6 +1186,7 @@ void BattleGroundQueue::Update(BattleGroundTypeId bgTypeId, BattleGroundBracketI
                     || p->InBattleGroundQueue() || p->InBattleGround() || p->GetGroup()
                     || !p->GetPlayerbotAI()->GetLeader()->IsBot() || p->GetArenaTeamId(arenaSlot)!=0
                     || p->GetTeam() == leader->GetTeam())
+                    continue;
 
                 team.push_back(p);
                 if (team.size() == m_SelectionPools[BG_TEAM].GetPlayerCount())
@@ -1115,11 +1200,6 @@ void BattleGroundQueue::Update(BattleGroundTypeId bgTypeId, BattleGroundBracketI
                 for(std::list<Player *>::iterator tIter = team.begin(); tIter != team.end(); ++tIter)
                 {
                     Player* p = *tIter;
-                    if(!p->IsInWorld() || !p->IsBot() || !p->isAlive() || !p->getAttackers().empty()
-                        || p->InBattleGroundQueue() || p->InBattleGround() || p->GetGroup()
-                        || !p->GetPlayerbotAI()->GetLeader()->IsBot() || p->GetArenaTeamId(arenaSlot)!=0
-                        || p->GetTeam() == leader->GetTeam())
-                        continue;
 
                     if (team.front() == p)
                     {
@@ -1158,19 +1238,6 @@ void BattleGroundQueue::Update(BattleGroundTypeId bgTypeId, BattleGroundBracketI
                     packet << uint8(1);            // asGroup
                     packet << uint8(isRated);      // isRated
                     team.front()->GetSession()->HandleBattlemasterJoinArena(packet);
-
-                    if (m_SelectionPools[BG_TEAM_ALLIANCE].GetPlayerCount() != m_SelectionPools[BG_TEAM_HORDE].GetPlayerCount())
-                    {
-                        for(std::list<Player *>::iterator tIter = team.begin(); tIter != team.end(); ++tIter)
-                        {
-                            Player* p = *tIter;
-                            p->GetPlayerbotAI()->SetLeader(p);
-                            p->GetPlayerbotAI()->ReinitAI();                            
-                        }
-                        leader->SetTimeInArenaQueue(leader->GetBattleGroundQueueIndex(bgQueueTypeId), WorldTimer::getMSTime());
-                        sBattleGroundMgr.ScheduleQueueUpdate(arenaRating, arenaType, bgQueueTypeId, bgTypeId, bracket_id);
-                        return;
-                    }
                 }
                 else
                 {
@@ -2075,7 +2142,49 @@ void BattleGroundMgr::SendToBattleGround(Player *pl, uint32 instanceId, BattleGr
         if (team==0)
             team = pl->GetTeam();
         bg->GetTeamStartLoc(team, x, y, z, O);
+        //Temp hack for dalaran server and ring of valor
+        if (pl->GetGroup())
+        {
+            bool withbots = false;
+            GroupReference *ref = pl->GetGroup()->GetFirstMember();
+            while (ref)
+            {
+                Player* gpl = ref->getSource();
+                if (gpl && gpl->IsBot())
+                {
+                    withbots = true;
+                    break;
+                }
+                ref = ref->next();
+            }
 
+            if (withbots)
+            {
+                switch(bg->GetTypeID())
+                {
+                    case BATTLEGROUND_DS:
+                    {
+                        switch(team)
+                        {
+                            case ALLIANCE: { x = 1270.35f; y = 769.11f; z = 7.11f; O = 0.0f; break; }
+                            case HORDE:    { x = 1313.72f; y = 813.08f; z = 7.11f; O = 0.0f; break; }
+                        }
+                        break;
+                    }
+                    case BATTLEGROUND_RV:
+                    {
+                        switch(team)
+                        {
+                            case ALLIANCE: { x = 723.87f; y = -284.54f; z = 28.27f; O = 0.0f; break; }
+                            case HORDE:    { x = 802.31f; y = -284.44f; z = 28.27f; O = 0.0f; break; }
+                        }
+                        break;
+                    }
+                    default:
+                        break;
+                }
+            } 
+        }
         DETAIL_LOG("BATTLEGROUND: Sending %s to map %u, X %f, Y %f, Z %f, O %f", pl->GetName(), mapid, x, y, z, O);
         pl->TeleportTo(mapid, x, y, z, O);
     }
