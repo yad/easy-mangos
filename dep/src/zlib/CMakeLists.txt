@@ -35,14 +35,6 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-<<<<<<< HEAD:dep/Makefile.am
-# pathfinding
-SUBDIRS += recastnavigation
-
-## Additional files to include when running 'make dist'
-#  Nothing yet.
-=======
 add_library(zlib STATIC
   ${zlib_SRCS}
 )
->>>>>>> 6800ccd52332276ab167dfa693f4e18953946257:dep/src/zlib/CMakeLists.txt
