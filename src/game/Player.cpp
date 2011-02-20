@@ -675,7 +675,7 @@ bool Player::Create( uint32 guidlow, const std::string& name, uint8 race, uint8 
 {
     //FIXME: outfitId not used in player creating
 
-    Object::_Create(ObjectGuid(HIGHGUID_PLAYER, guidlow));
+    Object::_Create(guidlow, 0, HIGHGUID_PLAYER);
 
     m_name = name;
 
@@ -6226,7 +6226,7 @@ Corpse* Player::CreateCorpse()
     Corpse *corpse = new Corpse( (m_ExtraFlags & PLAYER_EXTRA_PVP_DEATH) ? CORPSE_RESURRECTABLE_PVP : CORPSE_RESURRECTABLE_PVE );
     SetPvPDeath(false);
 
-    if (!corpse->Create(sObjectMgr.GenerateLowGuid(HIGHGUID_CORPSE), this))
+    if (!corpse->Create(sObjectMgr.GenerateCorpseLowGuid(), this))
     {
         delete corpse;
         return NULL;
@@ -7706,7 +7706,9 @@ bool Player::IsActionButtonDataValid(uint8 button, uint32 action, uint8 type, Pl
     switch(type)
     {
         case ACTION_BUTTON_SPELL:
-            if(!sSpellStore.LookupEntry(action))
+        {
+            SpellEntry const* spellProto = sSpellStore.LookupEntry(action);
+            if(!spellProto)
             {
                 if (msg)
                 {
@@ -7718,14 +7720,33 @@ bool Player::IsActionButtonDataValid(uint8 button, uint32 action, uint8 type, Pl
                 return false;
             }
 
-            if(player && !player->HasSpell(action))
+            if(player)
             {
-                if (msg)
-                    sLog.outError( "Spell action %u not added into button %u for player %s: player don't known this spell", action, button, player->GetName() );
-                return false;
+                if(!player->HasSpell(spellProto->Id))
+                {
+                    if (msg)
+                        sLog.outError( "Spell action %u not added into button %u for player %s: player don't known this spell", action, button, player->GetName() );
+                    return false;
+                }
+                else if(IsPassiveSpell(spellProto))
+                {
+                    if (msg)
+                        sLog.outError( "Spell action %u not added into button %u for player %s: spell is passive", action, button, player->GetName() );
+                    return false;
+                }
+                // current range for button of totem bar is from ACTION_BUTTON_SHAMAN_TOTEMS_BAR to (but not including) ACTION_BUTTON_SHAMAN_TOTEMS_BAR + 12
+                else if(button >= ACTION_BUTTON_SHAMAN_TOTEMS_BAR && button < (ACTION_BUTTON_SHAMAN_TOTEMS_BAR + 12)
+                    && !(spellProto->AttributesEx7 & SPELL_ATTR_EX7_TOTEM_SPELL))
+                {
+                    if (msg)
+                        sLog.outError( "Spell action %u not added into button %u for player %s: attempt to add non totem spell to totem bar", action, button, player->GetName() );
+                    return false;
+                }
             }
             break;
+        }
         case ACTION_BUTTON_ITEM:
+        {
             if(!ObjectMgr::GetItemPrototype(action))
             {
                 if (msg)
@@ -7738,6 +7759,7 @@ bool Player::IsActionButtonDataValid(uint8 button, uint32 action, uint8 type, Pl
                 return false;
             }
             break;
+        }
         default:
             break;                                          // other cases not checked at this moment
     }
@@ -15055,10 +15077,10 @@ void Player::OnGossipSelect(WorldObject* pSource, uint32 gossipListId, uint32 me
 
 uint32 Player::GetGossipTextId(WorldObject *pSource)
 {
-    if (!pSource || pSource->GetTypeId() != TYPEID_UNIT || !((Creature*)pSource)->GetDBTableGUIDLow())
+    if (!pSource || pSource->GetTypeId() != TYPEID_UNIT)
         return DEFAULT_GOSSIP_MESSAGE;
 
-    if (uint32 pos = sObjectMgr.GetNpcGossip(((Creature*)pSource)->GetDBTableGUIDLow()))
+    if (uint32 pos = sObjectMgr.GetNpcGossip(((Creature*)pSource)->GetGUIDLow()))
         return pos;
 
     return DEFAULT_GOSSIP_MESSAGE;
@@ -17130,7 +17152,7 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder *holder )
         return false;
     }
 
-    Object::_Create(guid);
+    Object::_Create(guid.GetCounter(), 0, HIGHGUID_PLAYER );
 
     m_name = fields[2].GetCppString();
 
@@ -23193,7 +23215,7 @@ bool Player::isTotalImmune()
     return false;
 }
 
-bool Player::HasTitle(uint32 bitIndex)
+bool Player::HasTitle(uint32 bitIndex) const
 {
     if (bitIndex > MAX_TITLE_INDEX)
         return false;

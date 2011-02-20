@@ -19,19 +19,19 @@
 #include "MMapCommon.h"
 #include "MapBuilder.h"
 
-#include "VMapManager2.h"
 #include "MapTree.h"
 #include "ModelInstance.h"
 
 #include "DetourNavMeshBuilder.h"
 #include "DetourCommon.h"
 
+using namespace VMAP;
+
 namespace MMAP
 {
     MapBuilder::MapBuilder(float maxWalkableAngle, bool skipLiquid,
                            bool skipContinents, bool skipJunkMaps, bool skipBattlegrounds,
                            bool debugOutput, bool bigBaseUnit, const char* offMeshFilePath) :
-                           m_vmapManager(NULL),
                            m_terrainBuilder(NULL),
                            m_debugOutput        (debugOutput),
                            m_skipContinents     (skipContinents),
@@ -42,7 +42,6 @@ namespace MMAP
                            m_rcContext          (NULL),
                            m_offMeshFilePath    (offMeshFilePath)
     {
-        m_vmapManager = new VMapManager2();
         m_terrainBuilder = new TerrainBuilder(skipLiquid);
 
         m_rcContext = new rcContext(false);
@@ -60,7 +59,6 @@ namespace MMAP
         m_tiles.clear();
 
         delete m_terrainBuilder;
-        delete m_vmapManager;
         delete m_rcContext;
     }
 
@@ -153,6 +151,15 @@ namespace MMAP
     {
         printf("Building map %03u:\n", mapID);
 
+        // build navMesh
+        dtNavMesh* navMesh = NULL;
+        buildNavMesh(mapID, navMesh);
+        if (!navMesh)
+        {
+            printf("Failed creating navmesh!              \n");
+            return;
+        }
+
         set<uint32>* tiles = getTileList(mapID);
 
         // vars that are used in multiple locations...
@@ -168,7 +175,7 @@ namespace MMAP
             if (!tiles->size())
             {
                 // initialize the static tree, which loads WDT models
-                if (!loadVMap(mapID, 64, 64, meshData))
+                if (!m_terrainBuilder->loadVMap(mapID, 64, 64, meshData))
                     continue;
 
                  if (!(meshData.solidVerts.size() || meshData.liquidVerts.size()))
@@ -199,25 +206,11 @@ namespace MMAP
                     for (uint32 j = minY; j <= maxY; ++j)
                         tiles->insert(StaticMapTree::packTileID(i, j));
             }
-        } while (0);
+        }
+        while (0);
 
         if (!tiles->size())
             return;
-
-        // build navMesh
-        dtNavMesh* navMesh = NULL;
-        buildNavMesh(mapID, navMesh);
-        if (!navMesh)
-        {
-            printf("Failed creating navmesh!              \n");
-            printf("Failed!                               \n\n");
-            return;
-        }
-
-        // more data storage
-        G3D::Array<float> allVerts;
-        G3D::Array<int> allTris;
-        char tileString[10];
 
         // now start building mmtiles for each tile
         printf("We have %u tiles.                          \n", (unsigned int)tiles->size());
@@ -229,10 +222,11 @@ namespace MMAP
             if (shouldSkipTile(mapID, tileX, tileY))
                 continue;
 
-            sprintf(tileString, "[%02u,%02u]: ", tileX, tileY);
+            G3D::Array<float> allVerts;
+            G3D::Array<int> allTris;
+            char tileString[10];
 
-            allVerts.fastClear();
-            allTris.fastClear();
+            sprintf(tileString, "[%02u,%02u]: ", tileX, tileY);
 
             MeshData meshData;
 
@@ -242,7 +236,7 @@ namespace MMAP
 
             // get model data
             printf("%sLoading models...                              \r", tileString);
-            loadVMap(mapID, tileY, tileX, meshData);
+            m_terrainBuilder->loadVMap(mapID, tileY, tileX, meshData);
 
             // we only want tiles that people can actually walk on
             if (!meshData.solidVerts.size() && !meshData.liquidVerts.size())
@@ -251,13 +245,13 @@ namespace MMAP
             printf("%sAggregating mesh data...                        \r", tileString);
 
             // remove unused vertices
-            cleanVertices(meshData.solidVerts, meshData.solidTris);
-            cleanVertices(meshData.liquidVerts, meshData.liquidTris);
+            TerrainBuilder::cleanVertices(meshData.solidVerts, meshData.solidTris);
+            TerrainBuilder::cleanVertices(meshData.liquidVerts, meshData.liquidTris);
 
             // gather all mesh data for final data check, and bounds calculation
             allTris.append(meshData.liquidTris);
             allVerts.append(meshData.liquidVerts);
-            copyIndices(allTris, meshData.solidTris, allVerts.size() / 3);
+            TerrainBuilder::copyIndices(allTris, meshData.solidTris, allVerts.size() / 3);
             allVerts.append(meshData.solidVerts);
 
             if (!allVerts.size() || !allTris.size())
@@ -266,16 +260,11 @@ namespace MMAP
             // get bounds of current tile
             getTileBounds(tileX, tileY, allVerts.getCArray(), allVerts.size() / 3, bmin, bmax);
 
-            allVerts.fastClear();
-            allTris.fastClear();
-
-            loadOffMeshConnections(mapID, tileX, tileY, &meshData);
+            m_terrainBuilder->loadOffMeshConnections(mapID, tileX, tileY, meshData, m_offMeshFilePath);
 
             // build navmesh tile
             buildMoveMapTile(mapID, tileX, tileY, meshData, bmin, bmax, navMesh);
         }
-
-        m_vmapManager->unloadMap(mapID);
 
         dtFreeNavMesh(navMesh);
 
@@ -286,12 +275,21 @@ namespace MMAP
     {
         printf("Building map %03u, tile [%02u,%02u]\n", mapID, tileX, tileY);
 
+        // build navMesh
+        dtNavMesh* navMesh = NULL;
+        buildNavMesh(mapID, navMesh);
+        if (!navMesh)
+        {
+            printf("Failed creating navmesh!              \n");
+            return;
+        }
+
         float bmin[3], bmax[3], lmin[3], lmax[3];
         MeshData meshData;
 
         // make sure we process maps which don't have tiles
         // initialize the static tree, which loads WDT models
-        loadVMap(mapID, 64, 64, meshData);
+        m_terrainBuilder->loadVMap(mapID, 64, 64, meshData);
 
         // get the coord bounds of the model data
         if (meshData.solidVerts.size() || meshData.liquidVerts.size())
@@ -305,13 +303,9 @@ namespace MMAP
                 rcVmax(bmax, lmax);
             }
             else if (meshData.solidVerts.size())
-            {
                 rcCalcBounds(meshData.solidVerts.getCArray(), meshData.solidVerts.size() / 3, bmin, bmax);
-            }
             else
-            {
                 rcCalcBounds(meshData.liquidVerts.getCArray(), meshData.liquidVerts.size() / 3, lmin, lmax);
-            }
 
             // convert coord bounds to grid bounds
             uint32 minX, minY, maxX, maxY;
@@ -325,16 +319,6 @@ namespace MMAP
                 return;
             if (tileY < minY || tileY > maxY)
                 return;
-        }
-
-        // build navMesh
-        dtNavMesh* navMesh = NULL;
-        buildNavMesh(mapID, navMesh);
-        if (!navMesh)
-        {
-            printf("Failed creating navmesh!              \n");
-            printf("Failed!                               \n\n");
-            return;
         }
 
         G3D::Array<float> allVerts;
@@ -352,7 +336,7 @@ namespace MMAP
 
             // get model data
             printf("%sLoading models...                              \r", tileString);
-            loadVMap(mapID, tileY, tileX, meshData);
+            m_terrainBuilder->loadVMap(mapID, tileY, tileX, meshData);
 
             // if there is no data, give up now
             if (!meshData.solidVerts.size() && !meshData.liquidVerts.size())
@@ -361,13 +345,13 @@ namespace MMAP
             printf("%sAggregating mesh data...                        \r", tileString);
 
             // remove unused vertices
-            cleanVertices(meshData.solidVerts, meshData.solidTris);
-            cleanVertices(meshData.liquidVerts, meshData.liquidTris);
+            TerrainBuilder::cleanVertices(meshData.solidVerts, meshData.solidTris);
+            TerrainBuilder::cleanVertices(meshData.liquidVerts, meshData.liquidTris);
 
             // gather all mesh data for final data check, and bounds calculation
             allTris.append(meshData.liquidTris);
             allVerts.append(meshData.liquidVerts);
-            copyIndices(allTris, meshData.solidTris, allVerts.size() / 3);
+            TerrainBuilder::copyIndices(allTris, meshData.solidTris, allVerts.size() / 3);
             allVerts.append(meshData.solidVerts);
 
             if (!allVerts.size() || !allTris.size())
@@ -379,263 +363,16 @@ namespace MMAP
             allVerts.clear();
             allTris.clear();
 
-            loadOffMeshConnections(mapID, tileX, tileY, &meshData);
+            m_terrainBuilder->loadOffMeshConnections(mapID, tileX, tileY, meshData, m_offMeshFilePath);
 
             // build navmesh tile
             buildMoveMapTile(mapID, tileX, tileY, meshData, bmin, bmax, navMesh);
-        } while (0);
+        }
+        while (0);
 
         dtFreeNavMesh(navMesh);
 
         printf("%sComplete!                                      \n\n", tileString);
-    }
-
-    bool MapBuilder::loadVMap(uint32 mapID, uint32 tileX, uint32 tileY, MeshData &meshData)
-    {
-        VMAPLoadResult result = m_vmapManager->loadMap("vmaps", mapID, tileX, tileY);
-        bool retval = false;
-
-        do
-        {
-            if (result == VMAP_LOAD_RESULT_ERROR)
-                break;
-
-            ModelInstance* models = NULL;
-            uint32 count = 0;
-
-            InstanceTreeMap instanceTrees;
-            ((VMapManager2*)m_vmapManager)->getInstanceMapTree(instanceTrees);
-
-            if (!instanceTrees[mapID])
-                break;
-
-            instanceTrees[mapID]->getModelInstances(models, count);
-
-            if (!models || !count)
-                break;
-
-            for (uint32 i = 0; i < count; ++i)
-            {
-                ModelInstance instance = models[i];
-
-                // model instances exist in tree even though there are instances of that model in this tile
-                WorldModel* worldModel = instance.getWorldModel();
-                if (!worldModel)
-                    continue;
-
-                // now we have a model to add to the meshdata
-                retval = true;
-
-                vector<GroupModel> groupModels;
-                worldModel->getGroupModels(groupModels);
-
-                // all M2s need to have triangle indices reversed
-                bool isM2 = instance.name.find(".m2") != instance.name.npos || instance.name.find(".M2") != instance.name.npos;
-
-                // transform data
-                float scale = models[i].iScale;
-                G3D::Matrix3 rotation = G3D::Matrix3::fromEulerAnglesZYX(-1*G3D::pi()*instance.iRot.y/180.f, -1*G3D::pi()*instance.iRot.x/180.f, -1*G3D::pi()*instance.iRot.z/180.f);
-                Vector3 position = instance.iPos;
-                position.x -= 32*GRID_SIZE;
-                position.y -= 32*GRID_SIZE;
-
-                for (vector<GroupModel>::iterator it = groupModels.begin(); it != groupModels.end(); ++it)
-                {
-                    vector<Vector3> tempVertices;
-                    vector<Vector3> transformedVertices;
-                    vector<MeshTriangle> tempTriangles;
-                    WmoLiquid* liquid = NULL;
-
-                    (*it).getMeshData(tempVertices, tempTriangles, liquid);
-
-                    // first handle collision mesh
-                    transform(tempVertices, transformedVertices, scale, rotation, position);
-
-                    int offset = meshData.solidVerts.size() / 3;
-
-                    copyVertices(transformedVertices, meshData.solidVerts);
-                    copyIndices(tempTriangles, meshData.solidTris, offset, isM2);
-
-                    // now handle liquid data
-                    if (liquid)
-                    {
-                        vector<Vector3> liqVerts;
-                        vector<int> liqTris;
-                        uint32 tilesX, tilesY, vertsX, vertsY;
-                        Vector3 corner;
-                        liquid->getPosInfo(tilesX, tilesY, corner);
-                        vertsX = tilesX + 1;
-                        vertsY = tilesY + 1;
-                        uint8* flags = liquid->GetFlagsStorage();
-                        float* data = liquid->GetHeightStorage();
-                        uint8 type;
-
-                        // convert liquid type to NavTerrain
-                        switch (liquid->GetType())
-                        {
-                            case 0:
-                            case 1:
-                                type = NAV_WATER;
-                                break;
-                            case 2:
-                                type = NAV_MAGMA;
-                                break;
-                            case 3:
-                                type = NAV_SLIME;
-                                break;
-                        }
-
-                        // indexing is weird...
-                        // after a lot of trial and error, this is what works:
-                        // vertex = y*vertsX+x
-                        // tile   = x*tilesY+y
-                        // flag   = y*tilesY+x
-
-                        Vector3 vert;
-                        for (uint32 x = 0; x < vertsX; ++x)
-                            for (uint32 y = 0; y < vertsY; ++y)
-                            {
-                                vert = Vector3(corner.x + x * GRID_PART_SIZE, corner.y + y * GRID_PART_SIZE, data[y*vertsX + x]);
-                                vert = vert * rotation * scale + position;
-                                vert.x *= -1.f;
-                                vert.y *= -1.f;
-                                liqVerts.push_back(vert);
-                            }
-
-                        int idx1, idx2, idx3, idx4;
-                        uint32 square;
-                        for (uint32 x = 0; x < tilesX; ++x)
-                            for (uint32 y = 0; y < tilesY; ++y)
-                                if ((flags[x+y*tilesX] & 0x0f) != 0x0f)
-                                {
-                                    square = x * tilesY + y;
-                                    idx1 = square+x;
-                                    idx2 = square+1+x;
-                                    idx3 = square+tilesY+1+1+x;
-                                    idx4 = square+tilesY+1+x;
-
-                                    // top triangle
-                                    liqTris.push_back(idx3);
-                                    liqTris.push_back(idx2);
-                                    liqTris.push_back(idx1);
-                                    // bottom triangle
-                                    liqTris.push_back(idx4);
-                                    liqTris.push_back(idx3);
-                                    liqTris.push_back(idx1);
-                                }
-
-                        uint32 liqOffset = meshData.liquidVerts.size() / 3;
-                        for (uint32 i = 0; i < liqVerts.size(); ++i)
-                            meshData.liquidVerts.append(liqVerts[i].y, liqVerts[i].z, liqVerts[i].x);
-
-                        for (uint32 i = 0; i < liqTris.size() / 3; ++i)
-                        {
-                            meshData.liquidTris.append(liqTris[i*3+1] + liqOffset, liqTris[i*3+2] + liqOffset, liqTris[i*3] + liqOffset);
-                            meshData.liquidType.append(type);
-                        }
-                    }
-                }
-            }
-        }
-        while (false);
-
-        m_vmapManager->unloadMap(mapID, tileX, tileY);
-
-        return retval;
-    }
-
-    void MapBuilder::transform(vector<Vector3> source, vector<Vector3> &transformedVertices, float scale, G3D::Matrix3 rotation, Vector3 position)
-    {
-        for (vector<Vector3>::iterator it = source.begin(); it != source.end(); ++it)
-        {
-            // apply tranform, then mirror along the horizontal axes
-            Vector3 v((*it) * rotation * scale + position);
-            v.x *= -1.f;
-            v.y *= -1.f;
-            transformedVertices.push_back(v);
-        }
-    }
-
-    void MapBuilder::copyVertices(vector<Vector3> source, G3D::Array<float> &dest)
-    {
-        for (vector<Vector3>::iterator it = source.begin(); it != source.end(); ++it)
-        {
-            dest.push_back((*it).y);
-            dest.push_back((*it).z);
-            dest.push_back((*it).x);
-        }
-    }
-
-    void MapBuilder::copyIndices(vector<MeshTriangle> source, G3D::Array<int> &dest, int offset, bool flip)
-    {
-        if (flip)
-        {
-            for (vector<MeshTriangle>::iterator it = source.begin(); it != source.end(); ++it)
-            {
-                dest.push_back((*it).idx2+offset);
-                dest.push_back((*it).idx1+offset);
-                dest.push_back((*it).idx0+offset);
-            }
-        }
-        else
-        {
-            for (vector<MeshTriangle>::iterator it = source.begin(); it != source.end(); ++it)
-            {
-                dest.push_back((*it).idx0+offset);
-                dest.push_back((*it).idx1+offset);
-                dest.push_back((*it).idx2+offset);
-            }
-        }
-    }
-
-    void MapBuilder::copyIndices(G3D::Array<int> &dest, G3D::Array<int> source, int offset)
-    {
-        int* src = source.getCArray();
-        for (int i = 0; i < source.size(); ++i)
-            dest.append(src[i] + offset);
-    }
-
-    void MapBuilder::cleanVertices(G3D::Array<float> &verts, G3D::Array<int> &tris)
-    {
-        map<int, int> vertMap;
-
-        int* t = tris.getCArray();
-        float* v = verts.getCArray();
-
-        // collect all the vertex indices from triangle
-        for (int i = 0; i < tris.size(); ++i)
-        {
-            if (vertMap.find(t[i]) != vertMap.end())
-                continue;
-
-            vertMap.insert(std::pair<int, int>(t[i], 0));
-        }
-
-        // collect the vertices
-        G3D::Array<float> cleanVerts;
-        int index, count = 0;
-        for (map<int, int>::iterator it = vertMap.begin(); it != vertMap.end(); ++it)
-        {
-            index = (*it).first;
-            (*it).second = count;
-            cleanVerts.append(v[index*3], v[index*3+1], v[index*3+2]);
-            count++;
-        }
-        verts.fastClear();
-        verts.append(cleanVerts);
-        cleanVerts.clear();
-
-        // update triangles to use new indices
-        for (int i = 0; i < tris.size(); ++i)
-        {
-            map<int, int>::iterator it;
-            if ((it = vertMap.find(t[i])) == vertMap.end())
-                continue;
-
-            t[i] = (*it).second;
-        }
-
-        vertMap.clear();
     }
 
     void MapBuilder::buildNavMesh(uint32 mapID, dtNavMesh* &navMesh)
@@ -1068,8 +805,8 @@ namespace MMAP
 
             // now that tile is written to disk, we can unload it
             navMesh->removeTile(tileRef, NULL, NULL);
-        } while (0);
-
+        }
+        while (0);
 
         if (m_debugOutput)
         {
@@ -1081,7 +818,7 @@ namespace MMAP
                 v[2] += (unsigned short)config.borderSize;
             }
 
-            generateObjFile(mapID, tileX, tileY, meshData);
+            iv.generateObjFile(mapID, tileX, tileY, meshData);
             iv.writeIV(mapID, tileX, tileY);
         }
     }
@@ -1104,109 +841,8 @@ namespace MMAP
         bmin[2] = bmax[2] - GRID_SIZE;
     }
 
-    void MapBuilder::generateObjFile(uint32 mapID, uint32 tileX, uint32 tileY, MeshData meshData)
-    {
-        generateRealObj(mapID, tileX, tileY, meshData);
-
-        char tileString[25];
-        sprintf(tileString, "[%02u,%02u]: ", tileY, tileX);
-        printf("%sWriting debug output...                       \r", tileString);
-
-        char objFileName[255];
-        sprintf(objFileName, "meshes/%03u.map", mapID);
-
-        FILE* objFile = fopen(objFileName, "wb");
-        if (!objFile)
-        {
-            char message[1024];
-            sprintf(message, "Failed to open %s for writing!\n", objFileName);
-            perror(message);
-            return;
-        }
-
-        char b = '\0';
-        fwrite(&b, sizeof(char), 1, objFile);
-        fclose(objFile);
-
-        sprintf(objFileName, "meshes/%03u%02u%02u.mesh", mapID, tileY, tileX);
-        objFile = fopen(objFileName, "wb");
-        if (!objFile)
-        {
-            char message[1024];
-            sprintf(message, "Failed to open %s for writing!\n", objFileName);
-            perror(message);
-            return;
-        }
-
-        G3D::Array<float> allVerts;
-        G3D::Array<int> allTris;
-
-        allTris.append(meshData.liquidTris);
-        allVerts.append(meshData.liquidVerts);
-        copyIndices(allTris, meshData.solidTris, allVerts.size() / 3);
-        allVerts.append(meshData.solidVerts);
-
-        float* verts = allVerts.getCArray();
-        int vertCount = allVerts.size() / 3;
-        int* tris = allTris.getCArray();
-        int triCount = allTris.size() / 3;
-
-        fwrite(&vertCount, sizeof(int), 1, objFile);
-        fwrite(verts, sizeof(float), vertCount*3, objFile);
-        fflush(objFile);
-
-        fwrite(&triCount, sizeof(int), 1, objFile);
-        fwrite(tris, sizeof(int), triCount*3, objFile);
-        fflush(objFile);
-
-        fclose(objFile);
-    }
-
-    void MapBuilder::generateRealObj(uint32 mapID, uint32 tileX, uint32 tileY, MeshData meshData)
-    {
-        char objFileName[255];
-        sprintf(objFileName, "meshes/map%03u.obj", mapID);
-
-        FILE* objFile = fopen(objFileName, "wb");
-        if (!objFile)
-        {
-            char message[1024];
-            sprintf(message, "Failed to open %s for writing!\n", objFileName);
-            perror(message);
-            return;
-        }
-
-        G3D::Array<float> allVerts;
-        G3D::Array<int> allTris;
-
-        allTris.append(meshData.liquidTris);
-        allVerts.append(meshData.liquidVerts);
-        copyIndices(allTris, meshData.solidTris, allVerts.size() / 3);
-        allVerts.append(meshData.solidVerts);
-
-        float* verts = allVerts.getCArray();
-        int* tris = allTris.getCArray();
-
-        for (int i = 0; i < allVerts.size() / 3; i++)
-            fprintf(objFile, "v %f %f %f\n", verts[i*3], verts[i*3 + 1], verts[i*3 + 2]);
-
-        for (int i = 0; i < allTris.size() / 3; i++)
-            fprintf(objFile, "f %i %i %i\n", tris[i*3] + 1, tris[i*3 + 1] + 1, tris[i*3 + 2] + 1);
-
-        fclose(objFile);
-    }
-
     bool MapBuilder::shouldSkipMap(uint32 mapID)
     {
-        // debug
-        //switch(mapID)
-        //{
-        //    case 309:
-        //        return false;
-        //    default:
-        //        return true;
-        //}
-
         if (m_skipContinents)
             switch (mapID)
             {
@@ -1317,50 +953,4 @@ namespace MMAP
         return true;
     }
 
-    void MapBuilder::loadOffMeshConnections(uint32 map_id, uint32 tile_x, uint32 tile_y, MeshData* mesh)
-    {
-        // no meshfile input given?
-        if(m_offMeshFilePath == NULL)
-            return;
-
-        FILE* fp = fopen(m_offMeshFilePath, "rb");
-        if (!fp)
-        {
-            printf(" loadOffMeshConnections:: input file %s not found!\n", m_offMeshFilePath);
-            return;
-        }
-
-        // pretty silly thing, as we parse entire file and load only the tile we need
-        // but we don't expect this file to be too large
-        char* buf = new char[512];
-        while(fgets(buf, 512, fp))
-        {
-            float p0[3], p1[3];
-            int mid, tx, ty;
-            float size;
-            sscanf(buf, "%d %d,%d (%f %f %f) (%f %f %f) %f", &mid, &tx, &ty,
-                                    &p0[0], &p0[1], &p0[2], &p1[0], &p1[1], &p1[2], &size);
-
-            if(map_id == mid, tile_x == tx, tile_y == ty)
-            {
-                mesh->offMeshConnections.append(p0[1]);
-                mesh->offMeshConnections.append(p0[2]);
-                mesh->offMeshConnections.append(p0[0]);
-
-                mesh->offMeshConnections.append(p1[1]);
-                mesh->offMeshConnections.append(p1[2]);
-                mesh->offMeshConnections.append(p1[0]);
-
-                mesh->offMeshConnectionDirs.append(1);          // 1 - both direction, 0 - one sided
-                mesh->offMeshConnectionRads.append(size);       // agent size equivalent
-                // can be used same way as polygon flags
-                mesh->offMeshConnectionsAreas.append((unsigned char)0xFF);
-                mesh->offMeshConnectionsFlags.append((unsigned short)0xFF);  // all movement masks can make this path
-            }
-
-        }
-
-        delete [] buf;
-        fclose(fp);
-    }
 }

@@ -2522,8 +2522,9 @@ class MANGOS_DLL_SPEC Player : public Unit
         void CompletedAchievement(uint32 uiAchievementID);
         void StartTimedAchievementCriteria(AchievementCriteriaTypes type, uint32 timedRequirementId, time_t startTime = 0);
 
-        bool HasTitle(uint32 bitIndex);
-        bool HasTitle(CharTitlesEntry const* title) { return HasTitle(title->bit_index); }
+
+        bool HasTitle(uint32 bitIndex) const;
+        bool HasTitle(CharTitlesEntry const* title) const { return HasTitle(title->bit_index); }
         void SetTitle(CharTitlesEntry const* title, bool lost = false);
 
         bool canSeeSpellClickOn(Creature const* creature) const;

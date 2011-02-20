@@ -92,11 +92,12 @@ void Object::_InitValues()
     m_objectUpdated = false;
 }
 
-void Object::_Create(ObjectGuid guid)
+void Object::_Create(uint32 guidlow, uint32 entry, HighGuid guidhigh)
 {
     if(!m_uint32Values)
         _InitValues();
 
+    ObjectGuid guid = ObjectGuid(guidhigh, entry, guidlow);
     SetGuidValue(OBJECT_FIELD_GUID, guid);
     SetUInt32Value(OBJECT_FIELD_TYPE, m_objectType);
     m_PackGUID.Set(guid);
@@ -1094,9 +1095,9 @@ void WorldObject::CleanupsBeforeDelete()
     RemoveFromWorld();
 }
 
-void WorldObject::_Create(ObjectGuid guid, uint32 phaseMask)
+void WorldObject::_Create( uint32 guidlow, HighGuid guidhigh, uint32 phaseMask )
 {
-    Object::_Create(guid);
+    Object::_Create(guidlow, 0, guidhigh);
     m_phaseMask = phaseMask;
 }
 
@@ -1767,7 +1768,7 @@ Creature* WorldObject::SummonCreature(uint32 id, float x, float y, float z, floa
     if (GetTypeId()==TYPEID_PLAYER)
         team = ((Player*)this)->GetTeam();
 
-    if (!pCreature->Create(sObjectMgr.GenerateLowGuid(HIGHGUID_UNIT), GetMap(), GetPhaseMask(), id, team))
+    if (!pCreature->Create(GetMap()->GenerateLocalLowGuid(HIGHGUID_UNIT), GetMap(), GetPhaseMask(), id, team))
     {
         delete pCreature;
         return NULL;
@@ -1807,7 +1808,7 @@ GameObject* WorldObject::SummonGameobject(uint32 id, float x, float y, float z, 
 
     Map *map = GetMap();
 
-    if(!pGameObj->Create(sObjectMgr.GenerateLowGuid(HIGHGUID_GAMEOBJECT), id, map,
+    if(!pGameObj->Create(map->GenerateLocalLowGuid(HIGHGUID_GAMEOBJECT), id, map,
         GetPhaseMask(), x, y, z, angle, 0.0f, 0.0f, 0.0f, 0.0f, 100, GO_STATE_READY))
     {
         delete pGameObj;

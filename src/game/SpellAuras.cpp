@@ -4359,7 +4359,7 @@ void Aura::HandleAuraModStun(bool apply, bool Real)
         if(GetId() == 39837)
         {
             GameObject* pObj = new GameObject;
-            if(pObj->Create(sObjectMgr.GenerateLowGuid(HIGHGUID_GAMEOBJECT), 185584, target->GetMap(), target->GetPhaseMask(),
+            if(pObj->Create(target->GetMap()->GenerateLocalLowGuid(HIGHGUID_GAMEOBJECT), 185584, target->GetMap(), target->GetPhaseMask(),
                 target->GetPositionX(), target->GetPositionY(), target->GetPositionZ(), target->GetOrientation(), 0.0f, 0.0f, 0.0f, 0.0f, GO_ANIMPROGRESS_DEFAULT, GO_STATE_READY))
             {
                 pObj->SetRespawnTime(GetAuraDuration()/IN_MILLISECONDS);
@@ -8620,6 +8620,12 @@ bool Aura::IsLastAuraOnHolder()
     return true;
 }
 
+bool Aura::HasMechanic(uint32 mechanic) const
+{
+    return GetSpellProto()->Mechanic == mechanic ||
+        GetSpellProto()->EffectMechanic[m_effIndex] == mechanic;
+}
+
 SpellAuraHolder::SpellAuraHolder(SpellEntry const* spellproto, Unit *target, WorldObject *caster, Item *castItem) :
 m_target(target), m_castItemGuid(castItem ? castItem->GetObjectGuid() : ObjectGuid()),
 m_auraSlot(MAX_AURAS), m_auraFlags(AFLAG_NONE), m_auraLevel(1), m_procCharges(0),
@@ -9051,10 +9057,7 @@ Unit* SpellAuraHolder::GetCaster() const
     if(GetCasterGuid() == m_target->GetObjectGuid())
         return m_target;
 
-    //return ObjectAccessor::GetUnit(*m_target,m_caster_guid);
-    //must return caster even if it's in another grid/map
-    Unit *unit = ObjectAccessor::GetUnitInWorld(*m_target, m_casterGuid);
-    return unit && unit->IsInWorld() ? unit : NULL;
+    return ObjectAccessor::GetUnit(*m_target, m_casterGuid);// player will search at any maps
 }
 
 bool SpellAuraHolder::IsWeaponBuffCoexistableWith(SpellAuraHolder* ref)

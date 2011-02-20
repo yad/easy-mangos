@@ -30,12 +30,27 @@
 #include "DBCEnums.h"
 #include "DBCStores.h"
 #include "ObjectGuid.h"
+#include "PoolManager.h"
 
 struct InstanceTemplate;
 struct MapEntry;
 struct MapDifficulty;
+struct GameObjectData;
+struct CreatureData;
+
 class Player;
 class Group;
+class Map;
+
+typedef std::set<uint32> CellGuidSet;
+
+struct MapCellObjectGuids
+{
+    CellGuidSet creatures;
+    CellGuidSet gameobjects;
+};
+
+typedef UNORDERED_MAP<uint32/*cell_id*/,MapCellObjectGuids> MapCellObjectGuidsMap;
 
 class MapPersistentStateManager;
 
@@ -76,10 +91,11 @@ class MapPersistentState
         Difficulty GetDifficulty() const { return m_difficulty; }
 
         bool IsUsedByMap() const { return m_usedByMap; }
-        void SetUsedByMapState(bool state)
+        Map* GetMap() const { return m_usedByMap; }         // Can be NULL if map not loaded for persistent state
+        void SetUsedByMapState(Map* map)
         {
-            m_usedByMap = state;
-            if (!state)
+            m_usedByMap = map;
+            if (!map)
                 UnloadIfEmpty();
         }
 
@@ -96,12 +112,24 @@ class MapPersistentState
         }
         void SaveGORespawnTime(uint32 loguid, time_t t);
 
+        // pool system
+        virtual SpawnedPoolData& GetSpawnedPoolData() =0;
+
+        template<typename T>
+        bool IsSpawnedPoolObject(uint32 db_guid_or_pool_id) { return GetSpawnedPoolData().IsSpawnedObject<T>(db_guid_or_pool_id); }
+
+        // grid objects (Dynamic map/instance specific added/removed grid spawns from pool system/etc)
+        MapCellObjectGuids const& GetCellObjectGuids(uint32 cell_id) { return m_gridObjectGuids[cell_id]; }
+        void AddCreatureToGrid(uint32 guid, CreatureData const* data);
+        void RemoveCreatureFromGrid(uint32 guid, CreatureData const* data);
+        void AddGameobjectToGrid(uint32 guid, GameObjectData const* data);
+        void RemoveGameobjectFromGrid(uint32 guid, GameObjectData const* data);
     protected:
         virtual bool CanBeUnload() const =0;                // body provided for subclasses
 
         bool UnloadIfEmpty();
         void ClearRespawnTimes();
-        bool HasRespawnTimes() const { return m_creatureRespawnTimes.empty() && m_goRespawnTimes.empty(); }
+        bool HasRespawnTimes() const { return !m_creatureRespawnTimes.empty() || !m_goRespawnTimes.empty(); }
 
     private:
         void SetCreatureRespawnTime(uint32 loguid, time_t t);
@@ -113,11 +141,12 @@ class MapPersistentState
         uint32 m_instanceid;
         uint32 m_mapid;
         Difficulty m_difficulty;
-        bool m_usedByMap;                                   // true when instance map loaded, lock MapPersistentState from unload
+        Map* m_usedByMap;                                   // NULL if map not loaded, non-NULL lock MapPersistentState from unload
 
         // persistent data
         RespawnTimes m_creatureRespawnTimes;                // lock MapPersistentState from unload, for example for temporary bound dungeon unload delay
         RespawnTimes m_goRespawnTimes;                      // lock MapPersistentState from unload, for example for temporary bound dungeon unload delay
+        MapCellObjectGuidsMap m_gridObjectGuids;            // Single map copy specific grid spawn data, like pool spawns
 };
 
 inline bool MapPersistentState::CanBeUnload() const
@@ -137,8 +166,12 @@ class WorldPersistentState : public MapPersistentState
 
         ~WorldPersistentState() {}
 
+        SpawnedPoolData& GetSpawnedPoolData() { return m_sharedSpawnedPoolData; }
     protected:
         bool CanBeUnload() const;                           // overwrite MapPersistentState::CanBeUnload
+
+    private:
+        static SpawnedPoolData m_sharedSpawnedPoolData;     // Pools spawns state for map, shared by all non-instanced maps
 };
 
 /*
@@ -160,6 +193,8 @@ class DungeonPersistentState : public MapPersistentState
         DungeonPersistentState(uint16 MapId, uint32 InstanceId, Difficulty difficulty, time_t resetTime, bool canReset);
 
         ~DungeonPersistentState();
+
+        SpawnedPoolData& GetSpawnedPoolData() { return m_spawnedPoolData; }
 
         InstanceTemplate const* GetTemplate() const;
 
@@ -195,7 +230,7 @@ class DungeonPersistentState : public MapPersistentState
 
     protected:
         bool CanBeUnload() const;                           // overwrite MapPersistentState::CanBeUnload
-        bool HasBounds() const { return m_playerList.empty() && m_groupList.empty(); }
+        bool HasBounds() const { return !m_playerList.empty() || !m_groupList.empty(); }
 
     private:
         typedef std::list<Player*> PlayerListType;
@@ -209,6 +244,8 @@ class DungeonPersistentState : public MapPersistentState
            TODO: maybe it's enough to just store the number of players/groups */
         PlayerListType m_playerList;                        // lock MapPersistentState from unload
         GroupListType m_groupList;                          // lock MapPersistentState from unload
+
+        SpawnedPoolData m_spawnedPoolData;                  // Pools spawns state for map copy
 };
 
 class BattleGroundPersistentState : public MapPersistentState
@@ -222,8 +259,12 @@ class BattleGroundPersistentState : public MapPersistentState
 
         ~BattleGroundPersistentState() {}
 
+        SpawnedPoolData& GetSpawnedPoolData() { return m_spawnedPoolData; }
     protected:
         bool CanBeUnload() const;                           // overwrite MapPersistentState::CanBeUnload
+
+    private:
+        SpawnedPoolData m_spawnedPoolData;                  // Pools spawns state for map copy
 };
 
 enum ResetEventType
@@ -326,7 +367,7 @@ class MANGOS_DLL_DECL MapPersistentStateManager : public MaNGOS::Singleton<MapPe
     private:
         typedef UNORDERED_MAP<uint32 /*InstanceId or MapId*/, MapPersistentState*> PersistentStateMap;
 
-        //  called by scheduler
+        //  called by scheduler for DungeonPersistentStates
         void _ResetOrWarnAll(uint32 mapid, Difficulty difficulty, bool warn, uint32 timeleft);
         void _ResetInstance(uint32 mapid, uint32 instanceId);
         void _CleanupExpiredInstancesAtTime(time_t t);

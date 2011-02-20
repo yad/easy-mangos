@@ -602,6 +602,8 @@ void World::LoadConfigSettings(bool reload)
 
     setConfig(CONFIG_BOOL_CAST_UNSTUCK, "CastUnstuck", true);
     setConfig(CONFIG_UINT32_MAX_SPELL_CASTS_IN_CHAIN, "MaxSpellCastsInChain", 10);
+    setConfig(CONFIG_UINT32_BIRTHDAY_TIME, "BirthdayTime", 1125180000);
+
     setConfig(CONFIG_UINT32_INSTANCE_RESET_TIME_HOUR, "Instance.ResetTimeHour", 4);
     setConfig(CONFIG_UINT32_INSTANCE_UNLOAD_DELAY,    "Instance.UnloadDelay", 30 * MINUTE * IN_MILLISECONDS);
 
@@ -1092,14 +1094,8 @@ void World::SetInitialWorldSettings()
     sLog.outString("Loading Vehicle Accessories...");
     sObjectMgr.LoadVehicleAccessories();
 
-    sLog.outString( "Loading Creature Respawn Data..." );   // must be after PackInstances()
-    sMapPersistentStateMgr.LoadCreatureRespawnTimes();
-
     sLog.outString( "Loading Gameobject Data..." );
     sObjectMgr.LoadGameobjects();
-
-    sLog.outString( "Loading Gameobject Respawn Data..." ); // must be after PackInstances()
-    sMapPersistentStateMgr.LoadGameobjectRespawnTimes();
 
     sLog.outString( "Loading Objects Pooling Data...");
     sPoolMgr.LoadFromDB();
@@ -1124,6 +1120,12 @@ void World::SetInitialWorldSettings()
     sGameEventMgr.LoadFromDB();
     sLog.outString( ">>> Game Event Data loaded" );
     sLog.outString();
+
+    sLog.outString( "Loading Creature Respawn Data..." );   // must be after PackInstances(), LoadCreatures(), sPoolMgr.LoadFromDB(), sGameEventMgr.LoadFromDB();
+    sMapPersistentStateMgr.LoadCreatureRespawnTimes();
+
+    sLog.outString( "Loading Gameobject Respawn Data..." ); // must be after PackInstances(), LoadGameobjects(), sPoolMgr.LoadFromDB(), sGameEventMgr.LoadFromDB();
+    sMapPersistentStateMgr.LoadGameobjectRespawnTimes();
 
     sLog.outString( "Loading UNIT_NPC_FLAG_SPELLCLICK Data..." );
     sObjectMgr.LoadNPCSpellClickSpells();
@@ -1398,9 +1400,6 @@ void World::SetInitialWorldSettings()
 
     sLog.outString("Calculate random battleground reset time..." );
     InitRandomBGResetTime();
-
-    sLog.outString("Starting objects Pooling system..." );
-    sPoolMgr.Initialize();
 
     sLog.outString("Starting Game Event system..." );
     uint32 nextGameEvent = sGameEventMgr.Initialize();
