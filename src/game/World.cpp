@@ -76,7 +76,6 @@ volatile uint32 World::m_worldLoopCounter = 0;
 float World::m_MaxVisibleDistanceOnContinents = DEFAULT_VISIBILITY_DISTANCE;
 float World::m_MaxVisibleDistanceInInstances  = DEFAULT_VISIBILITY_INSTANCE;
 float World::m_MaxVisibleDistanceInBGArenas   = DEFAULT_VISIBILITY_BGARENAS;
-float World::m_MaxVisibleDistanceForObject    = DEFAULT_VISIBILITY_DISTANCE;
 
 float World::m_MaxVisibleDistanceInFlight     = DEFAULT_VISIBILITY_DISTANCE;
 float World::m_VisibleUnitGreyDistance        = 0;
@@ -848,17 +847,6 @@ void World::LoadConfigSettings(bool reload)
         m_MaxVisibleDistanceInBGArenas = MAX_VISIBILITY_DISTANCE - m_VisibleUnitGreyDistance;
     }
 
-    m_MaxVisibleDistanceForObject    = sConfig.GetFloatDefault("Visibility.Distance.Object",   DEFAULT_VISIBILITY_DISTANCE);
-    if(m_MaxVisibleDistanceForObject < INTERACTION_DISTANCE)
-    {
-        sLog.outError("Visibility.Distance.Object can't be less max aggro radius %f",float(INTERACTION_DISTANCE));
-        m_MaxVisibleDistanceForObject = INTERACTION_DISTANCE;
-    }
-    else if(m_MaxVisibleDistanceForObject + m_VisibleObjectGreyDistance >  MAX_VISIBILITY_DISTANCE)
-    {
-        sLog.outError("Visibility.Distance.Object can't be greater %f",MAX_VISIBILITY_DISTANCE-m_VisibleObjectGreyDistance);
-        m_MaxVisibleDistanceForObject = MAX_VISIBILITY_DISTANCE - m_VisibleObjectGreyDistance;
-    }
     m_MaxVisibleDistanceInFlight    = sConfig.GetFloatDefault("Visibility.Distance.InFlight",      DEFAULT_VISIBILITY_DISTANCE);
     if(m_MaxVisibleDistanceInFlight + m_VisibleObjectGreyDistance > MAX_VISIBILITY_DISTANCE)
     {
@@ -1121,10 +1109,13 @@ void World::SetInitialWorldSettings()
     sLog.outString( ">>> Game Event Data loaded" );
     sLog.outString();
 
-    sLog.outString( "Loading Creature Respawn Data..." );   // must be after PackInstances(), LoadCreatures(), sPoolMgr.LoadFromDB(), sGameEventMgr.LoadFromDB();
+    sLog.outString( "Creating map persistent states for non-instanceable maps..." );   // must be after PackInstances(), LoadCreatures(), sPoolMgr.LoadFromDB(), sGameEventMgr.LoadFromDB();
+    sMapPersistentStateMgr.InitWorldMaps();
+
+    sLog.outString( "Loading Creature Respawn Data..." );   // must be after LoadCreatures(), and sMapPersistentStateMgr.InitWorldMaps()
     sMapPersistentStateMgr.LoadCreatureRespawnTimes();
 
-    sLog.outString( "Loading Gameobject Respawn Data..." ); // must be after PackInstances(), LoadGameobjects(), sPoolMgr.LoadFromDB(), sGameEventMgr.LoadFromDB();
+    sLog.outString( "Loading Gameobject Respawn Data..." ); // must be after LoadGameobjects(), and sMapPersistentStateMgr.InitWorldMaps()
     sMapPersistentStateMgr.LoadGameobjectRespawnTimes();
 
     sLog.outString( "Loading UNIT_NPC_FLAG_SPELLCLICK Data..." );

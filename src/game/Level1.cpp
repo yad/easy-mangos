@@ -1644,9 +1644,9 @@ bool ChatHandler::HandleModifyHKillCommand (char* args)
 
     int32 amount = (uint32)atoi(args);
 
-    target->ModifyHKillPoints(amount);
+    target->ModifyHonorKillPoints(amount);
 
-    PSendSysMessage(LANG_COMMAND_MODIFY_HKILL, GetNameLink(target).c_str(), target->GetHKillPoints());
+    PSendSysMessage(LANG_COMMAND_MODIFY_HKILL, GetNameLink(target).c_str(), target->GetHonorKillPoints());
 
     return true;
 }
