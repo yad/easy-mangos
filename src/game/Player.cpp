@@ -12250,7 +12250,7 @@ uint8 Player::CanEquipItem( uint8 slot, uint16 &dest, Item *pItem, bool swap, bo
                 // - in-progress arenas
                 if (!pProto->CanChangeEquipStateInCombat())
                 {
-                    if( isInCombat() )
+                    if( isInCombat() && !((Player*)this)->IsBot() )
                         return EQUIP_ERR_NOT_IN_COMBAT;
 
                     if (BattleGround* bg = GetBattleGround())
@@ -12262,7 +12262,7 @@ uint8 Player::CanEquipItem( uint8 slot, uint16 &dest, Item *pItem, bool swap, bo
                 if (GetSession()->isLogingOut())
                     return EQUIP_ERR_YOU_ARE_STUNNED;
 
-                if (isInCombat()&& pProto->Class == ITEM_CLASS_WEAPON && m_weaponChangeTimer != 0)
+                if (isInCombat() && !((Player*)this)->IsBot() && pProto->Class == ITEM_CLASS_WEAPON && m_weaponChangeTimer != 0)
                     return EQUIP_ERR_CANT_DO_RIGHT_NOW;         // maybe exist better err
 
                 if (IsNonMeleeSpellCasted(false))
@@ -12385,7 +12385,7 @@ uint8 Player::CanUnequipItem( uint16 pos, bool swap ) const
     // - in-progress arenas
     if( !pProto->CanChangeEquipStateInCombat() )
     {
-        if( isInCombat() )
+        if( isInCombat() && !((Player*)this)->IsBot() )
             return EQUIP_ERR_NOT_IN_COMBAT;
 
         if(BattleGround* bg = GetBattleGround())
@@ -19014,7 +19014,7 @@ void Player::SaveToDB()
     // first save/honor gain after midnight will also update the player's honor fields
     UpdateHonorFields();
 
-    DEBUG_FILTER_LOG(	LOG_FILTER_PLAYER_STATS, "The value of player %s at save: ", m_name.c_str());
+    DEBUG_FILTER_LOG(    LOG_FILTER_PLAYER_STATS, "The value of player %s at save: ", m_name.c_str());
     outDebugStatsValues();
 
     CharacterDatabase.BeginTransaction();
