@@ -427,18 +427,6 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
             return;
         }
 
-        // if a change in speed was detected for the master
-        // make sure we have the same mount status
-        case SMSG_FORCE_RUN_SPEED_CHANGE:
-        {
-            WorldPacket p(packet);
-            uint64 guid = p.readPackGUID();
-            if (guid != GetLeader()->GetGUID())
-                return;
-            CheckMount();
-            return;
-        }
-
         // handle flying acknowledgement
         case SMSG_MOVE_SET_CAN_FLY:
         {
