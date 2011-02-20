@@ -758,17 +758,8 @@ bool Creature::Create(uint32 guidlow, Map *map, uint32 phaseMask, uint32 Entry, 
 
     HighGuid hi = cinfo->VehicleId ? HIGHGUID_VEHICLE : HIGHGUID_UNIT;
 
-    if (map->GetInstanceId() == 0)
-    {
-        // Creature can be loaded already in map if grid has been unloaded while creature walk to another grid
-        // FIXME: until creature guids is global and for instances used dynamic generated guids
-        // in instance possible load creature duplicates with same DB guid but different in game guids
-        // This will be until implementing per-map creature guids
-        if (map->GetCreature(ObjectGuid(hi, Entry, guidlow)))
-            return false;
-    }
-    else
-        guidlow = map->GenerateLocalLowGuid(hi);
+    if (map->GetCreature(ObjectGuid(hi, Entry, guidlow)))
+        return false;
 
     ObjectGuid guid(hi, Entry, guidlow);
 

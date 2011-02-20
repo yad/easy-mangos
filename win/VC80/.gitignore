@@ -7,6 +7,10 @@
 # command after changing this file, to see if there are
 # any tracked files which get ignored after the change.
 #
-# Doxygen generic files
+# MaNGOS generated files at Windows build
 #
-!config.h.in
+
+*__Win32_Debug*
+*__x64_Debug*
+*__Win32_Release*
+*__x64_Release*

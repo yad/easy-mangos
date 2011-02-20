@@ -405,6 +405,19 @@ void Spell::EffectSchoolDMG(SpellEffectIndex effect_idx)
                     case 67485:
                         damage += uint32(0.5f * m_caster->GetTotalAttackPowerValue(BASE_ATTACK));
                         break;
+                    //Magic Bane normal (Forge of Souls - Bronjahm)
+                    case 68793:
+                    {
+                        damage += uint32(unitTarget->GetMaxPower(POWER_MANA) / 2);
+                        damage = std::min(damage, 10000);
+                        break;
+                    }
+                    //Magic Bane heroic (Forge of Souls - Bronjahm)
+                    case 69050:
+                    {
+                        damage += uint32(unitTarget->GetMaxPower(POWER_MANA) / 2);
+                        damage = std::min(damage, 15000);
+                    }
                     // Defile damage depending from scale.
                     case 72754:
                     case 73708:
@@ -466,20 +479,6 @@ void Spell::EffectSchoolDMG(SpellEffectIndex effect_idx)
                             m_caster->RemoveAurasDueToSpell(74795);
                         }
                         else damage = 0;
-                        break;
-                    }
-                    //Magic Bane normal (Forge of Souls - Bronjahm)
-                    case 68793:
-                    {
-                        damage += uint32(unitTarget->GetMaxPower(POWER_MANA) / 2);
-                        damage = std::min(damage, 10000);
-                        break;
-                    }
-                    //Magic Bane heroic (Forge of Souls - Bronjahm)
-                    case 69050:
-                    {
-                        damage += uint32(unitTarget->GetMaxPower(POWER_MANA) / 2);
-                        damage = std::min(damage, 15000);
                         break;
                     }
                 }
@@ -2269,11 +2268,6 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     m_caster->CastSpell(m_caster, spell_id, true);
                     return;
                 }
-                case 70769:                                 // Divine Storm!
-                {
-                    ((Player*)m_caster)->RemoveSpellCooldown(53385, true);
-                    return;
-                }
                 case 69922:                                 // Temper Quel'Delar
                 {
                     if (!unitTarget)
@@ -2282,6 +2276,27 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     // Return Tempered Quel'Delar
                     unitTarget->CastSpell(m_caster, 69956, true);
                     return;
+                }
+                case 70769:                                 // Divine Storm!
+                {
+                    ((Player*)m_caster)->RemoveSpellCooldown(53385, true);
+                    return;
+                }
+                case 71390:                                 // Pact of darkfallen
+                {
+                    if (!unitTarget)
+                        return;
+
+                    unitTarget->CastSpell(unitTarget, 71341, true);
+                    break;
+                }
+                case 72202:                                 // Blade power
+                {
+                    if (!unitTarget)
+                        return;
+
+                    unitTarget->CastSpell(unitTarget, 72195, true);
+                    break;
                 }
             }
             break;
