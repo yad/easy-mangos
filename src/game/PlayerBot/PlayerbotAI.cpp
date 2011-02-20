@@ -151,8 +151,8 @@ void PlayerbotAI::ReinitAI()
             if (!at)
                 continue;
 
-            at->DisbandNoSave();
-            delete at;
+            if (at->DisbandNoSave(m_bot))
+                delete at;
         }
         if (m_bot->GetGroup())
             m_bot->RemoveFromGroup();

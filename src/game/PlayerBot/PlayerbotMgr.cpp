@@ -442,8 +442,8 @@ void PlayerbotMgr::LogoutPlayerBot(uint64 guid)
             if (!at)
                 continue;
 
-            at->DisbandNoSave();
-            delete at;
+            if (at->DisbandNoSave(bot))
+                delete at;
         }
 
         if (bot->GetGroup())

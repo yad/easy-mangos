@@ -127,7 +127,7 @@ class ArenaTeam
 
         bool Create(ObjectGuid captainGuid, uint32 type, std::string arenaTeamName);
         void Disband(WorldSession *session);
-        void DisbandNoSave();
+        bool DisbandNoSave(Player* player);
 
         typedef std::list<ArenaTeamMember> MemberList;
 

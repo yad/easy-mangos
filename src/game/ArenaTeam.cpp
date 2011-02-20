@@ -394,28 +394,53 @@ void ArenaTeam::Disband(WorldSession *session)
     sObjectMgr.RemoveArenaTeam(m_TeamId);
 }
 
-void ArenaTeam::DisbandNoSave()
+bool ArenaTeam::DisbandNoSave(Player* player)
 {
-    while (!m_members.empty())
+    bool destroy = true;
+    for (MemberList::iterator itr = m_members.begin(); itr != m_members.end(); ++itr)
     {
-        for (MemberList::iterator itr = m_members.begin(); itr != m_members.end(); ++itr)
-        {
-            if (itr->guid == m_members.front().guid)
-            {
-                m_members.erase(itr);
-                break;
-            }
-        }
+        Player *pl = sObjectMgr.GetPlayer(m_members.front().guid);
+        if (!pl)
+            continue;
 
-        if(Player *player = sObjectMgr.GetPlayer(m_members.front().guid))
+        if (!pl->IsBot())
         {
-            player->GetSession()->SendArenaTeamCommandResult(ERR_ARENA_TEAM_QUIT_S, GetName(), "", 0);
-            player->SetInArenaTeam(0, GetSlot(), 0);
-            for(int i = 0; i < ARENA_TEAM_END; ++i)
-                player->SetArenaTeamInfoField(GetSlot(), ArenaTeamInfoType(i), 0);
+            destroy = false;
+            break;
         }
     }
-    sObjectMgr.RemoveArenaTeam(m_TeamId);
+
+    if (destroy)
+    {
+        while (!m_members.empty())
+        {
+            for (MemberList::iterator itr = m_members.begin(); itr != m_members.end(); ++itr)
+            {
+                if (itr->guid == m_members.front().guid)
+                {
+                    m_members.erase(itr);
+                    break;
+                }
+            }
+
+            if (Player *pl = sObjectMgr.GetPlayer(m_members.front().guid))
+            {
+                pl->GetSession()->SendArenaTeamCommandResult(ERR_ARENA_TEAM_QUIT_S, GetName(), "", 0);
+                pl->SetInArenaTeam(0, GetSlot(), 0);
+                for(int i = 0; i < ARENA_TEAM_END; ++i)
+                    pl->SetArenaTeamInfoField(GetSlot(), ArenaTeamInfoType(i), 0);
+            }
+        }
+        sObjectMgr.RemoveArenaTeam(m_TeamId);
+    }
+    else
+    {
+        player->GetSession()->SendArenaTeamCommandResult(ERR_ARENA_TEAM_QUIT_S, GetName(), "", 0);
+        player->SetInArenaTeam(0, GetSlot(), 0);
+        for(int i = 0; i < ARENA_TEAM_END; ++i)
+            player->SetArenaTeamInfoField(GetSlot(), ArenaTeamInfoType(i), 0);
+    }
+    return destroy;
 }
 
 void ArenaTeam::Roster(WorldSession *session)
