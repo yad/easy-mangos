@@ -8792,10 +8792,16 @@ bool ChatHandler::HandleBotInvite(char* args)
         if (!info)
             continue;
 
+        if (pl->GetGroup() && !pl->GetGroup()->isRaidGroup() && pl->GetGroup()->IsFull())
+        {
+            WorldPacket pk;
+            m_session->HandleGroupRaidConvertOpcode(pk);
+        }
+
         WorldPacket p(CMSG_GROUP_INVITE, 10);                // guess size
         p << chr->GetName();                                 // max len 48
         p << uint32(0);
-        pl->GetSession()->HandleGroupInviteOpcode(p);
+        m_session->HandleGroupInviteOpcode(p);
 
         chr->setClass(_class);
         chr->setRole(role);
@@ -8902,7 +8908,7 @@ bool ChatHandler::HandleBotInviteArena(char* args)
         WorldPacket pk1(CMSG_GROUP_INVITE, 10);                // guess size
         pk1 << chr->GetName();                                 // max len 48
         pk1 << uint32(0);
-        pl->GetSession()->HandleGroupInviteOpcode(pk1);
+        m_session->HandleGroupInviteOpcode(pk1);
         for (uint8 i = 0; i < MAX_ARENA_SLOT; ++i)
         {
             if(uint32 a_id = pl->GetArenaTeamId(i))

@@ -2091,7 +2091,7 @@ Unit* PlayerbotAI::FindEnemy()
             if (!plr || !plr->IsInWorld() || !plr->isAlive())
                 continue;
 
-            if (plr->HasAura(32727) || plr->HasAura(32728))
+            if (plr->HasAura(32727) || plr->HasAura(32728) || plr->HasAura(44521))
                 return NULL;
         }
 

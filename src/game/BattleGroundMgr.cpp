@@ -965,6 +965,12 @@ void BattleGroundQueue::Update(BattleGroundTypeId bgTypeId, BattleGroundBracketI
                 {
                     Player* p = *tIter;
 
+                    if (team.front()->GetGroup() && !team.front()->GetGroup()->isRaidGroup() && team.front()->GetGroup()->IsFull())
+                    {
+                        WorldPacket pk;
+                        team.front()->GetSession()->HandleGroupRaidConvertOpcode(pk);
+                    }
+
                     if (team.front() != p)
                     {
                         WorldPacket pk1(CMSG_GROUP_INVITE, 10);                // guess size
@@ -2175,8 +2181,8 @@ void BattleGroundMgr::SendToBattleGround(Player *pl, uint32 instanceId, BattleGr
                     {
                         switch(team)
                         {
-                            case ALLIANCE: { x = 723.87f; y = -284.54f; z = 28.27f; O = 0.0f; break; }
-                            case HORDE:    { x = 802.31f; y = -284.44f; z = 28.27f; O = 0.0f; break; }
+                            case ALLIANCE: { x = 723.87f; y = -284.54f; z = 29.0f; O = 0.0f; break; }
+                            case HORDE:    { x = 802.31f; y = -284.44f; z = 29.0f; O = 0.0f; break; }
                         }
                         break;
                     }
