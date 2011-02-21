@@ -850,7 +850,9 @@ void ScriptMgr::LoadScriptNames()
       "UNION "
       "SELECT DISTINCT(ScriptName) FROM scripted_event_id WHERE ScriptName <> '' "
       "UNION "
-      "SELECT DISTINCT(ScriptName) FROM instance_template WHERE ScriptName <> ''");
+      "SELECT DISTINCT(ScriptName) FROM instance_template WHERE ScriptName <> '' "
+      "UNION "
+      "SELECT DISTINCT(ScriptName) FROM world_template WHERE ScriptName <> ''");
 
     if (!result)
     {
@@ -915,7 +917,7 @@ char const* ScriptMgr::GetScriptLibraryVersion() const
 {
     if (!m_pGetScriptLibraryVersion)
         return "";
-    
+
     return m_pGetScriptLibraryVersion();
 }
 

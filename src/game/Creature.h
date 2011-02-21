@@ -52,6 +52,7 @@ enum CreatureFlagsExtra
     CREATURE_FLAG_EXTRA_NO_XP_AT_KILL   = 0x00000040,       // creature kill not provide XP
     CREATURE_FLAG_EXTRA_INVISIBLE       = 0x00000080,       // creature is always invisible for player (mostly trigger creatures)
     CREATURE_FLAG_EXTRA_NOT_TAUNTABLE   = 0x00000100,       // creature is immune to taunt auras and effect attack me
+    CREATURE_FLAG_EXTRA_AGGRO_ZONE      = 0x00000200,       // creature sets itself in combat with zone on aggro
 };
 
 // GCC have alternative #pragma pack(N) syntax and old gcc version not support pack(push,N), also any gcc version not support it at some platform
@@ -404,7 +405,8 @@ class MANGOS_DLL_SPEC Creature : public Unit
         void SelectLevel(const CreatureInfo *cinfo, float percentHealth = 100.0f, float percentMana = 100.0f);
         void LoadEquipment(uint32 equip_entry, bool force=false);
 
-        uint32 GetDBTableGUIDLow() const { return m_DBTableGuid; }
+        bool HasStaticDBSpawnData() const;                  // listed in `creature` table and have fixed in DB guid
+
         char const* GetSubName() const { return GetCreatureInfo()->SubName; }
 
         void Update(uint32 update_diff, uint32 time);                           // overwrite Unit::Update
@@ -429,7 +431,10 @@ class MANGOS_DLL_SPEC Creature : public Unit
         bool IsTrainerOf(Player* player, bool msg) const;
         bool CanInteractWithBattleMaster(Player* player, bool msg) const;
         bool CanTrainAndResetTalentsOf(Player* pPlayer) const;
+
         bool IsOutOfThreatArea(Unit* pVictim) const;
+        void FillGuidsListFromThreatList(std::vector<ObjectGuid>& guids, uint32 maxamount = 0);
+
         bool IsImmuneToSpell(SpellEntry const* spellInfo);
                                                             // redefine Unit::IsImmuneToSpell
         bool IsImmuneToSpellEffect(SpellEntry const* spellInfo, SpellEffectIndex index) const;
@@ -606,6 +611,10 @@ class MANGOS_DLL_SPEC Creature : public Unit
         float GetRespawnRadius() const { return m_respawnradius; }
         void SetRespawnRadius(float dist) { m_respawnradius = dist; }
 
+        // Functions spawn/remove creature with DB guid in all loaded map copies (if point grid loaded in map)
+        static void AddToRemoveListInMaps(uint32 db_guid, CreatureData const* data);
+        static void SpawnInMaps(uint32 db_guid, CreatureData const* data);
+
         void StartGroupLoot(Group* group, uint32 timer);
 
         void SendZoneUnderAttackMessage(Player* attacker);
@@ -675,7 +684,6 @@ class MANGOS_DLL_SPEC Creature : public Unit
         void RegenerateHealth();
         MovementGeneratorType m_defaultMovementType;
         Cell m_currentCell;                                 // store current cell where creature listed
-        uint32 m_DBTableGuid;                               ///< For new or temporary creatures is 0 for saved it is lowguid
         uint32 m_equipmentId;
 
         bool m_AlreadyCallAssistance;

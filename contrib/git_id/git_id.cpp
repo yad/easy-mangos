@@ -92,7 +92,7 @@ bool local = false;
 bool do_fetch = false;
 bool do_sql = false;
 bool use_new_index = true;
-
+bool generate_makefile = false;                             // not need for cmake build systems
 // aux
 
 char origins[NUM_REMOTES][MAX_REMOTE];
@@ -122,7 +122,7 @@ bool find_path()
     getcwd(cur_path, MAX_PATH);
     size_t len = strlen(cur_path);
     strncpy(base_path, cur_path, len+1);
-    
+
     if(cur_path[len-1] == '/' || cur_path[len-1] == '\\')
     {
         // we're in root, don't bother
@@ -910,7 +910,8 @@ int main(int argc, char *argv[])
     if(do_sql)
     {
         DO( convert_sql_updates()       );
-        DO( generate_sql_makefile()     );
+        if (generate_makefile)
+            DO( generate_sql_makefile() );
         DO( change_sql_database()       );
         DO( write_rev_sql()             );
     }

@@ -115,6 +115,7 @@
     <ClCompile Include="..\..\src\MapBuilder.cpp" />
     <ClCompile Include="..\..\src\TerrainBuilder.cpp" />
     <ClCompile Include="..\..\src\VMapExtensions.cpp" />
+    <ClCompile Include="..\..\src\IntermediateValues.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\src\game\vmap\BIH.h" />
@@ -132,6 +133,7 @@
     <ClInclude Include="..\..\src\MapBuilder.h" />
     <ClInclude Include="..\..\src\MMapCommon.h" />
     <ClInclude Include="..\..\src\TerrainBuilder.h" />
+    <ClInclude Include="..\..\src\IntermediateValues.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\dep\recastnavigation\Detour\win\VC100\Detour.vcxproj">

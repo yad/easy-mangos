@@ -77,7 +77,7 @@ class MANGOS_DLL_SPEC SpellAuraHolder
         void SetTarget(Unit* target) { m_target = target; }
 
         bool IsPermanent() const { return m_permanent; }
-		void SetPermanent (bool permanent) { m_permanent = permanent; }
+        void SetPermanent(bool permanent) { m_permanent = permanent; }
         bool IsPassive() const { return m_isPassive; }
         bool IsDeathPersistent() const { return m_isDeathPersist; }
         bool IsPersistent() const;
@@ -436,6 +436,8 @@ class MANGOS_DLL_SPEC Aura
         SpellAuraHolder* const GetHolder() const { return m_spellAuraHolder; }
 
         bool IsLastAuraOnHolder();
+
+        bool HasMechanic(uint32 mechanic) const;
     protected:
         Aura(SpellEntry const* spellproto, SpellEffectIndex eff, int32 *currentBasePoints, SpellAuraHolder *holder, Unit *target, Unit *caster = NULL, Item* castItem = NULL);
 

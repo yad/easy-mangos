@@ -210,6 +210,14 @@
 				RelativePath="..\..\src\VMapExtensions.cpp"
 				>
 			</File>
+            <File
+				RelativePath="..\..\src\IntermediateValues.h"
+				>
+			</File>
+            <File
+				RelativePath="..\..\src\IntermediateValues.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="vmap"

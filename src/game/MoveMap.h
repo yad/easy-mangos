@@ -67,7 +67,7 @@ namespace MMAP
     class MMapManager
     {
         public:
-            MMapManager(){}
+            MMapManager() : loadedTiles(0) {}
             ~MMapManager();
 
             bool loadMap(uint32 mapId, int32 x, int32 y);
@@ -77,12 +77,14 @@ namespace MMAP
             dtNavMesh const* GetNavMesh(uint32 mapId);
             dtNavMeshQuery const* GetNavMeshQuery(uint32 mapId);
 
-            // TODO: add statistics functions here
+            uint32 getLoadedTilesCount() const { return loadedTiles; }
+            uint32 getLoadedMapsCount() const { return loadedMMaps.size(); }
         private:
             bool loadMapData(uint32 mapId);
             uint32 packTileID(int32 x, int32 y);
 
             MMapDataSet loadedMMaps;
+            uint32 loadedTiles;
     };
 
     // static class
