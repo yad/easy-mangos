@@ -603,7 +603,7 @@ class MANGOS_DLL_SPEC GameObject : public WorldObject
 
         bool IsTransport() const;
 
-        uint32 GetDBTableGUIDLow() const { return m_DBTableGuid; }
+        bool HasStaticDBSpawnData() const;                  // listed in `gameobject` table and have fixed in DB guid
 
         void UpdateRotationFields(float rotation2 = 0.0f, float rotation3 = 0.0f);
 
@@ -656,6 +656,11 @@ class MANGOS_DLL_SPEC GameObject : public WorldObject
         uint32 GetRespawnDelay() const { return m_respawnDelayTime; }
         void Refresh();
         void Delete();
+
+        // Functions spawn/remove gameobject with DB guid in all loaded map copies (if point grid loaded in map)
+        static void AddToRemoveListInMaps(uint32 db_guid, GameObjectData const* data);
+        static void SpawnInMaps(uint32 db_guid, GameObjectData const* data);
+
         void getFishLoot(Loot *loot, Player* loot_owner);
         GameobjectTypes GetGoType() const { return GameobjectTypes(GetByteValue(GAMEOBJECT_BYTES_1, 1)); }
         void SetGoType(GameobjectTypes type) { SetByteValue(GAMEOBJECT_BYTES_1, 1, type); }
@@ -733,7 +738,6 @@ class MANGOS_DLL_SPEC GameObject : public WorldObject
         ObjectGuid m_firstUser;                             // first GO user, in most used cases owner, but in some cases no, for example non-summoned multi-use GAMEOBJECT_TYPE_SUMMONING_RITUAL
         GuidsSet m_UniqueUsers;                             // all players who use item, some items activated after specific amount unique uses
 
-        uint32 m_DBTableGuid;                               ///< For new or temporary gameobjects is 0 for saved it is lowguid
         GameObjectInfo const* m_goInfo;
         uint64 m_rotation;
     private:

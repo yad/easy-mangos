@@ -32,6 +32,7 @@
 #include "NPCHandler.h"
 #include "Database/DatabaseEnv.h"
 #include "Map.h"
+#include "MapPersistentStateMgr.h"
 #include "ObjectAccessor.h"
 #include "ObjectGuid.h"
 #include "Policies/Singleton.h"
@@ -91,7 +92,6 @@ struct AreaTrigger
     float  target_Orientation;
 };
 
-typedef std::set<uint32> CellGuidSet;
 typedef std::map<uint32/*player guid*/,uint32/*instance*/> CellCorpseSet;
 struct CellObjectGuids
 {
@@ -717,7 +717,16 @@ class ObjectMgr
         void ReturnOrDeleteOldMails(bool serverUp);
 
         void SetHighestGuids();
-        uint32 GenerateLowGuid(HighGuid guidhigh);
+
+        // used for set initial guid counter for map local guids
+        uint32 GetFirstCreatureLowGuid() const { return m_CreatureFirstGuid; }
+        uint32 GetFirstGameObjectLowGuid() const { return m_GameObjectFirstGuid; }
+
+        uint32 GeneratePlayerLowGuid() { return m_CharGuids.Generate(); }
+        uint32 GenerateItemLowGuid() { return m_ItemGuids.Generate(); }
+        uint32 GenerateCorpseLowGuid() { return m_CorpseGuids.Generate(); }
+        uint32 GenerateInstanceLowGuid() { return m_InstanceGuids.Generate(); }
+
         uint32 GenerateArenaTeamId() { return m_ArenaTeamIds.Generate(); }
         uint32 GenerateAuctionID() { return m_AuctionIds.Generate(); }
         uint64 GenerateEquipmentSetGuid() { return m_EquipmentSetIds.Generate(); }
@@ -747,11 +756,6 @@ class ObjectMgr
                 return &itr->second;
             else
                 return NULL;
-        }
-
-        CellObjectGuids const& GetCellObjectGuids(uint16 mapid, uint8 spawnMode, uint32 cell_id)
-        {
-            return mMapObjectGuids[MAKE_PAIR32(mapid,spawnMode)][cell_id];
         }
 
         CreatureDataPair const* GetCreatureDataPair(uint32 guid) const
@@ -870,14 +874,20 @@ class ObjectMgr
         int32 GetDBCLocaleIndex() const { return DBCLocaleIndex; }
         void SetDBCLocaleIndex(uint32 lang) { DBCLocaleIndex = GetIndexForLocale(LocaleConstant(lang)); }
 
-        void AddCorpseCellData(uint32 mapid, uint32 cellid, uint32 player_guid, uint32 instance);
-        void DeleteCorpseCellData(uint32 mapid, uint32 cellid, uint32 player_guid);
+        // global grid objects state (static DB spawns, global spawn mods from gameevent system)
+        CellObjectGuids const& GetCellObjectGuids(uint16 mapid, uint8 spawnMode, uint32 cell_id)
+        {
+            return mMapObjectGuids[MAKE_PAIR32(mapid,spawnMode)][cell_id];
+        }
 
-        // grid objects
+        // modifiers for global grid objects state (static DB spawns, global spawn mods from gameevent system)
+        // Don't must be used for modify instance specific spawn state modifications
         void AddCreatureToGrid(uint32 guid, CreatureData const* data);
         void RemoveCreatureFromGrid(uint32 guid, CreatureData const* data);
         void AddGameobjectToGrid(uint32 guid, GameObjectData const* data);
         void RemoveGameobjectFromGrid(uint32 guid, GameObjectData const* data);
+        void AddCorpseCellData(uint32 mapid, uint32 cellid, uint32 player_guid, uint32 instance);
+        void DeleteCorpseCellData(uint32 mapid, uint32 cellid, uint32 player_guid);
 
         // reserved names
         void LoadReservedPlayersNames();
@@ -1034,11 +1044,13 @@ class ObjectMgr
         IdGenerator<uint32> m_PetNumbers;
         IdGenerator<uint32> m_GroupIds;
 
+        // initial free low guid for selected guid type for map local guids
+        uint32 m_CreatureFirstGuid;
+        uint32 m_GameObjectFirstGuid;
+
         // first free low guid for selected guid type
         ObjectGuidGenerator<HIGHGUID_PLAYER>     m_CharGuids;
-        ObjectGuidGenerator<HIGHGUID_UNIT>       m_CreatureGuids;
         ObjectGuidGenerator<HIGHGUID_ITEM>       m_ItemGuids;
-        ObjectGuidGenerator<HIGHGUID_GAMEOBJECT> m_GameobjectGuids;
         ObjectGuidGenerator<HIGHGUID_CORPSE>     m_CorpseGuids;
         ObjectGuidGenerator<HIGHGUID_INSTANCE>   m_InstanceGuids;
 

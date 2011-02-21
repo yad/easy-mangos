@@ -141,6 +141,9 @@ template uint32 IdGenerator<uint32>::Generate();
 template uint64 IdGenerator<uint64>::Generate();
 
 ObjectMgr::ObjectMgr() :
+    m_CreatureFirstGuid(1),
+    m_GameObjectFirstGuid(1),
+
     m_ArenaTeamIds("Arena team ids"),
     m_AuctionIds("Auction ids"),
     m_EquipmentSetIds("Equipment set ids"),
@@ -1228,14 +1231,18 @@ void ObjectMgr::LoadCreatureModelRace()
 void ObjectMgr::LoadCreatures()
 {
     uint32 count = 0;
-    //                                                0              1   2    3
-    QueryResult *result = WorldDatabase.Query("SELECT creature.guid, id, map, modelid,"
+    //                                                0                       1   2    3
+    QueryResult *result = WorldDatabase.Query("SELECT creature.guid, creature.id, map, modelid,"
     //   4             5           6           7           8            9              10         11
         "equipment_id, position_x, position_y, position_z, orientation, spawntimesecs, spawndist, currentwaypoint,"
-    //   12         13       14          15            16         17         18     19
-        "curhealth, curmana, DeathState, MovementType, spawnMask, phaseMask, event, pool_entry "
-        "FROM creature LEFT OUTER JOIN game_event_creature ON creature.guid = game_event_creature.guid "
-        "LEFT OUTER JOIN pool_creature ON creature.guid = pool_creature.guid");
+    //   12         13       14          15            16         17         18
+        "curhealth, curmana, DeathState, MovementType, spawnMask, phaseMask, event,"
+    //   19                        20
+        "pool_creature.pool_entry, pool_creature_template.pool_entry "
+        "FROM creature "
+        "LEFT OUTER JOIN game_event_creature ON creature.guid = game_event_creature.guid "
+        "LEFT OUTER JOIN pool_creature ON creature.guid = pool_creature.guid "
+        "LEFT OUTER JOIN pool_creature_template ON creature.id = pool_creature_template.id");
 
     if(!result)
     {
@@ -1301,7 +1308,8 @@ void ObjectMgr::LoadCreatures()
         data.spawnMask          = fields[16].GetUInt8();
         data.phaseMask          = fields[17].GetUInt16();
         int16 gameEvent         = fields[18].GetInt16();
-        int16 PoolId            = fields[19].GetInt16();
+        int16 GuidPoolId        = fields[19].GetInt16();
+        int16 EntryPoolId       = fields[20].GetInt16();
 
         MapEntry const* mapEntry = sMapStore.LookupEntry(data.mapid);
         if(!mapEntry)
@@ -1395,7 +1403,7 @@ void ObjectMgr::LoadCreatures()
             data.phaseMask = 1;
         }
 
-        if (gameEvent==0 && PoolId==0)                      // if not this is to be managed by GameEvent System or Pool system
+        if (gameEvent==0 && GuidPoolId==0 && EntryPoolId==0)// if not this is to be managed by GameEvent System or Pool system
             AddCreatureToGrid(guid, &data);
 
         ++count;
@@ -1444,12 +1452,16 @@ void ObjectMgr::LoadGameobjects()
 {
     uint32 count = 0;
 
-    //                                                0                1   2    3           4           5           6
-    QueryResult *result = WorldDatabase.Query("SELECT gameobject.guid, id, map, position_x, position_y, position_z, orientation,"
-    //   7          8          9          10         11             12            13     14         15         16     17
-        "rotation0, rotation1, rotation2, rotation3, spawntimesecs, animprogress, state, spawnMask, phaseMask, event, pool_entry "
-        "FROM gameobject LEFT OUTER JOIN game_event_gameobject ON gameobject.guid = game_event_gameobject.guid "
-        "LEFT OUTER JOIN pool_gameobject ON gameobject.guid = pool_gameobject.guid");
+    //                                                0                           1   2    3           4           5           6
+    QueryResult *result = WorldDatabase.Query("SELECT gameobject.guid, gameobject.id, map, position_x, position_y, position_z, orientation,"
+    //   7          8          9          10         11             12            13     14         15         16
+        "rotation0, rotation1, rotation2, rotation3, spawntimesecs, animprogress, state, spawnMask, phaseMask, event,"
+    //   17                          18
+        "pool_gameobject.pool_entry, pool_gameobject_template.pool_entry "
+        "FROM gameobject "
+        "LEFT OUTER JOIN game_event_gameobject ON gameobject.guid = game_event_gameobject.guid "
+        "LEFT OUTER JOIN pool_gameobject ON gameobject.guid = pool_gameobject.guid "
+        "LEFT OUTER JOIN pool_gameobject_template ON gameobject.id = pool_gameobject_template.id");
 
     if(!result)
     {
@@ -1548,7 +1560,8 @@ void ObjectMgr::LoadGameobjects()
         data.spawnMask      = fields[14].GetUInt8();
         data.phaseMask      = fields[15].GetUInt16();
         int16 gameEvent     = fields[16].GetInt16();
-        int16 PoolId        = fields[17].GetInt16();
+        int16 GuidPoolId    = fields[17].GetInt16();
+        int16 EntryPoolId   = fields[18].GetInt16();
 
         if (data.rotation2 < -1.0f || data.rotation2 > 1.0f)
         {
@@ -1574,7 +1587,7 @@ void ObjectMgr::LoadGameobjects()
             data.phaseMask = 1;
         }
 
-        if (gameEvent == 0 && PoolId == 0)                  // if not this is to be managed by GameEvent System or Pool system
+        if (gameEvent==0 && GuidPoolId==0 && EntryPoolId==0)// if not this is to be managed by GameEvent System or Pool system
             AddGameobjectToGrid(guid, &data);
         ++count;
 
@@ -5602,7 +5615,7 @@ void ObjectMgr::SetHighestGuids()
     result = WorldDatabase.Query( "SELECT MAX(guid) FROM creature" );
     if( result )
     {
-        m_CreatureGuids.Set((*result)[0].GetUInt32()+1);
+        m_CreatureFirstGuid = (*result)[0].GetUInt32()+1;
         delete result;
     }
 
@@ -5631,7 +5644,7 @@ void ObjectMgr::SetHighestGuids()
     result = WorldDatabase.Query("SELECT MAX(guid) FROM gameobject" );
     if( result )
     {
-        m_GameobjectGuids.Set((*result)[0].GetUInt32()+1);
+        m_GameObjectFirstGuid = (*result)[0].GetUInt32()+1;
         delete result;
     }
 
@@ -5683,30 +5696,6 @@ void ObjectMgr::SetHighestGuids()
         m_GroupIds.Set((*result)[0].GetUInt32()+1);
         delete result;
     }
-}
-
-uint32 ObjectMgr::GenerateLowGuid(HighGuid guidhigh)
-{
-    switch(guidhigh)
-    {
-        case HIGHGUID_ITEM:
-            return m_ItemGuids.Generate();
-        case HIGHGUID_UNIT:
-            return m_CreatureGuids.Generate();
-        case HIGHGUID_PLAYER:
-            return m_CharGuids.Generate();
-        case HIGHGUID_GAMEOBJECT:
-            return m_GameobjectGuids.Generate();
-        case HIGHGUID_CORPSE:
-            return m_CorpseGuids.Generate();
-        case HIGHGUID_INSTANCE:
-            return m_InstanceGuids.Generate();
-        default:
-            MANGOS_ASSERT(0);
-    }
-
-    MANGOS_ASSERT(0);
-    return 0;
 }
 
 void ObjectMgr::LoadGameObjectLocales()
@@ -8849,7 +8838,7 @@ bool FindCreatureData::operator()( CreatureDataPair const& dataPair )
 
     // skip not spawned (in any state),
     uint16 pool_id = sPoolMgr.IsPartOfAPool<Creature>(dataPair.first);
-    if (pool_id && !sPoolMgr.IsSpawnedObject<Creature>(dataPair.first))
+    if (pool_id && !i_player->GetMap()->GetPersistentState()->IsSpawnedPoolObject<Creature>(dataPair.first))
         return false;
 
     if (!i_spawnedData || new_dist < i_spawnedDist)
@@ -8899,7 +8888,7 @@ bool FindGOData::operator()( GameObjectDataPair const& dataPair )
 
     // skip not spawned (in any state)
     uint16 pool_id = sPoolMgr.IsPartOfAPool<GameObject>(dataPair.first);
-    if (pool_id && !sPoolMgr.IsSpawnedObject<GameObject>(dataPair.first))
+    if (pool_id && !i_player->GetMap()->GetPersistentState()->IsSpawnedPoolObject<GameObject>(dataPair.first))
         return false;
 
     if (!i_spawnedData || new_dist < i_spawnedDist)
