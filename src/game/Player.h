@@ -1311,14 +1311,14 @@ class MANGOS_DLL_SPEC Player : public Unit
         void AutoUnequipOffhandIfNeed();
         bool StoreNewItemInBestSlots(uint32 item_id, uint32 item_count);
         Item* StoreNewItemInInventorySlot(uint32 itemEntry, uint32 amount);
-        void GiveMebIsForMyLevel();
+        void GiveMeBestItemForMyLevel();
         ItemPrototype const* CheckItemSet(ItemPrototype const* bIInSlot, ItemPrototype const* bIFromSet);
         bool StoreNewItemInBestSlots(ItemPrototype const* bIInSlot);
         bool OtherItemsInSetAreAllowedForMe(ItemPrototype const* pProto);
         void RemoveMyEquipement(bool destroy);
         bool IsForMyClass(ItemPrototype const* pProto);
         bool IsNotAllowedItem(ItemPrototype const* pProto);
-        ItemPrototype const* bIBetween(ItemPrototype const* pProto1, ItemPrototype const* pProto2, bool DPS);
+        ItemPrototype const* BestItemBetween(ItemPrototype const* pProto1, ItemPrototype const* pProto2, bool DPS);
         ItemPrototype const* CompareItem(ItemPrototype const* pProto1, ItemPrototype const* pProto2, ItemModType pType);
 
         void AutoStoreLoot(uint32 loot_id, LootStore const& store, bool broadcast = false, uint8 bag = NULL_BAG, uint8 slot = NULL_SLOT);

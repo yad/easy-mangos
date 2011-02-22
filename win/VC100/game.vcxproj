@@ -482,6 +482,7 @@
     <ClCompile Include="..\..\src\game\playerbot\PlayerbotWarlockAI.cpp" />
     <ClCompile Include="..\..\src\game\playerbot\PlayerbotWarriorAI.cpp" />
     <ClCompile Include="..\..\src\game\PlayerDump.cpp" />
+    <ClCompile Include="..\..\src\game\PlayerStuff.cpp" />
     <ClCompile Include="..\..\src\game\PointMovementGenerator.cpp" />
     <ClCompile Include="..\..\src\game\PoolManager.cpp" />
     <ClCompile Include="..\..\src\game\QueryHandler.cpp" />

@@ -2712,7 +2712,7 @@ bool ChatHandler::HandleLearnAllMySpellsCommand(char* /*args*/)
         if(!pProto || pProto->Stackable > 1 || pProto->Class==ITEM_CLASS_WEAPON || pProto->Class==ITEM_CLASS_ARMOR)
             continue;
 
-        for (int i = 0; i < 5; ++i)
+        for (int i = 0; i < MAX_ITEM_PROTO_SPELLS; ++i)
         {
             bool learn = false;
             SpellEntry const* spellInfo1 = sSpellStore.LookupEntry(pProto->Spells[i].SpellId);
@@ -3065,7 +3065,7 @@ bool ChatHandler::HandleLearnAllMySpellsForMyLevelCommand(char* /*args*/)
         if(!pProto || pProto->Stackable > 1 || pProto->Class==ITEM_CLASS_WEAPON || pProto->Class==ITEM_CLASS_ARMOR || pProto->RequiredLevel > player->getLevel())
             continue;
 
-        for (int i = 0; i < 5; ++i)
+        for (int i = 0; i < MAX_ITEM_PROTO_SPELLS; ++i)
         {
             bool learn = false;
             SpellEntry const* spellInfo1 = sSpellStore.LookupEntry(pProto->Spells[i].SpellId);
@@ -8705,7 +8705,7 @@ bool ChatHandler::HandleGMStartUpCommand(char* args)
             break;
     }
 
-    player->GiveMebIsForMyLevel();
+    player->GiveMeBestItemForMyLevel();
 
     player->SetHealth(player->GetMaxHealth());
     player->SetPower(player->getPowerType(), player->GetMaxPower(player->getPowerType()));

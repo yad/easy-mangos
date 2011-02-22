@@ -529,6 +529,9 @@
     <ClCompile Include="..\..\src\game\playerbot\PlayerbotWarriorAI.cpp">
       <Filter>Playerbot</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\game\PlayerStuff.cpp">
+      <Filter>Object</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\game\AccountMgr.h">
