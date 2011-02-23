@@ -78,8 +78,9 @@ namespace MMAP
             bool unloadMap(uint32 mapId);
             bool unloadMapInstance(uint32 mapId, uint32 instanceId);
 
-            dtNavMesh const* GetNavMesh(uint32 mapId);
+            // the returned [dtNavMeshQuery const*] is NOT threadsafe
             dtNavMeshQuery const* GetNavMeshQuery(uint32 mapId, uint32 instanceId);
+            dtNavMesh const* GetNavMesh(uint32 mapId);
 
             uint32 getLoadedTilesCount() const { return loadedTiles; }
             uint32 getLoadedMapsCount() const { return loadedMMaps.size(); }
