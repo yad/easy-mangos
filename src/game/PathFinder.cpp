@@ -43,7 +43,7 @@ PathInfo::PathInfo(const Unit* owner, const float destX, const float destY, cons
     {
         MMAP::MMapManager* mmap = MMAP::MMapFactory::createOrGetMMapManager();
         m_navMesh = mmap->GetNavMesh(mapId);
-        m_navMeshQuery = mmap->GetNavMeshQuery(mapId);
+        m_navMeshQuery = mmap->GetNavMeshQuery(mapId, m_sourceUnit->GetInstanceId());
     }
 
     createFilter();

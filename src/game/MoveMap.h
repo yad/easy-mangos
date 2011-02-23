@@ -40,23 +40,26 @@ inline void dtCustomFree(void* ptr)
 namespace MMAP
 {
     typedef UNORDERED_MAP<uint32, dtTileRef> MMapTileSet;
+    typedef UNORDERED_MAP<uint32, dtNavMeshQuery*> NavMeshQuerySet;
 
     // dummy struct to hold map's mmap data
     struct MMapData
     {
-        MMapData(dtNavMesh* mesh, dtNavMeshQuery* query) : navMesh(mesh), navMeshQuery(query) {}
+        MMapData(dtNavMesh* mesh) : navMesh(mesh) {}
         ~MMapData()
         {
-            if(navMeshQuery)
-                dtFreeNavMeshQuery(navMeshQuery);
+            for (NavMeshQuerySet::iterator i = navMeshQueries.begin(); i != navMeshQueries.end(); ++i)
+                dtFreeNavMeshQuery(i->second);
 
             if (navMesh)
                 dtFreeNavMesh(navMesh);
         }
 
         dtNavMesh* navMesh;
-        dtNavMeshQuery* navMeshQuery;
-        MMapTileSet mmapLoadedTiles;    // maps [map grid coords] to [dtTile]
+
+        // we have to use single dtNavMeshQuery for every instance, since those are not thread safe
+        NavMeshQuerySet navMeshQueries;     // instanceId to query
+        MMapTileSet mmapLoadedTiles;        // maps [map grid coords] to [dtTile]
     };
 
 
@@ -73,9 +76,10 @@ namespace MMAP
             bool loadMap(uint32 mapId, int32 x, int32 y);
             bool unloadMap(uint32 mapId, int32 x, int32 y);
             bool unloadMap(uint32 mapId);
+            bool unloadMapInstance(uint32 mapId, uint32 instanceId);
 
             dtNavMesh const* GetNavMesh(uint32 mapId);
-            dtNavMeshQuery const* GetNavMeshQuery(uint32 mapId);
+            dtNavMeshQuery const* GetNavMeshQuery(uint32 mapId, uint32 instanceId);
 
             uint32 getLoadedTilesCount() const { return loadedTiles; }
             uint32 getLoadedMapsCount() const { return loadedMMaps.size(); }

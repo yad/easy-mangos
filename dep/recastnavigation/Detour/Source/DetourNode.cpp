@@ -88,16 +88,14 @@ dtNode* dtNodePool::getNode(dtPolyRef id)
 	unsigned int bucket = dtHashRef(id) & (m_hashSize-1);
 	unsigned short i = m_first[bucket];
 	dtNode* node = 0;
-    int counter = 0;
-	while (i != DT_NULL_IDX && counter < m_maxNodes)
+	while (i != DT_NULL_IDX)
 	{
 		if (m_nodes[i].id == id)
 			return &m_nodes[i];
 		i = m_next[i];
-        counter++;
 	}
 	
-	if (m_nodeCount >= m_maxNodes - 1)
+	if (m_nodeCount >= m_maxNodes)
 		return 0;
 	
 	i = (unsigned short)m_nodeCount;

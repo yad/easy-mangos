@@ -34,11 +34,11 @@ class Unit;
     } while(0)
 
 
-// 128*6.0f=768y  number_of_points*interval = max_path_len
+// 64*6.0f=384y  number_of_points*interval = max_path_len
 // this is way more than actual evade range
 // I think we can safely cut those down even more
-#define MAX_PATH_LENGTH         128
-#define MAX_POINT_PATH_LENGTH   128
+#define MAX_PATH_LENGTH         64
+#define MAX_POINT_PATH_LENGTH   64
 
 #define SMOOTH_PATH_STEP_SIZE   6.0f
 #define SMOOTH_PATH_SLOP        0.4f
