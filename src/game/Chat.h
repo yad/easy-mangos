@@ -96,9 +96,7 @@ class ChatHandler
 
         bool isValidChatMessage(const char* msg);
         bool HasSentErrorMessage() { return sentErrorMessage;}
-        bool HandleAddItemCommand(char* args);
         bool HandleNamegoCommand(char* args);
-        bool HandleGMStartUpCommand(char* args);
         bool HandleGoCommand(char* args);
     protected:
         explicit ChatHandler() : m_session(NULL) {}      // for CLI subclass
@@ -236,6 +234,7 @@ class ChatHandler
         bool HandleGMListFullCommand(char* args);
         bool HandleGMListIngameCommand(char* args);
         bool HandleGMVisibleCommand(char* args);
+        bool HandleGMStartUpCommand(char* args);
 
         bool HandleGoCreatureCommand(char* args);
         bool HandleGoGraveyardCommand(char* args);
@@ -285,7 +284,6 @@ class ChatHandler
         bool HandleLookupAccountEmailCommand(char* args);
         bool HandleLookupAccountIpCommand(char* args);
         bool HandleLookupAccountNameCommand(char* args);
-
         bool HandleLookupAchievementCommand(char* args);
         bool HandleLookupAreaCommand(char* args);
         bool HandleLookupCreatureCommand(char* args);
@@ -326,7 +324,6 @@ class ChatHandler
         bool HandleModifyArenaCommand(char* args);
         bool HandleModifyPhaseCommand(char* args);
         bool HandleModifyGenderCommand(char* args);
-
         bool HandleModifyPowerTypeCommand(char* args);
 
         //-----------------------Npc Commands-----------------------
@@ -567,6 +564,7 @@ class ChatHandler
         bool HandleLevelUpCommand(char* args);
         bool HandleShowAreaCommand(char* args);
         bool HandleHideAreaCommand(char* args);
+        bool HandleAddItemCommand(char* args);
         bool HandleAddItemSetCommand(char* args);
 
         bool HandleBankCommand(char* args);

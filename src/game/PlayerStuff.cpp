@@ -17,6 +17,9 @@
  */
 
 #include "Player.h"
+#include "Chat.h"
+#include "ArenaTeam.h"
+#include "SpellMgr.h"
 #include "PlayerBot/PlayerbotAI.h"
 
 void Player::GiveMeBestItemForMyLevel()
@@ -1256,6 +1259,1015 @@ ItemPrototype const* Player::BestItemBetween(ItemPrototype const* pProto1, ItemP
     }
 }
 
+void Player::GMStartup()
+{
+    uint32 level = getLevel();
+
+    if (IsBot())
+    {
+        RemoveAllAuras(AURA_REMOVE_BY_DELETE);
+        resetSpells();
+    }
+    RemoveMyEquipement(true);
+
+    LearnAllMyTalentsForMyLevel();
+    LearnAllMySpellsForMyLevel();
+    UpdateSkillsToMaxSkillsForLevel();
+
+    if(!HasItemCount(23162, 4, false))
+        StoreNewItemInBestSlots(23162, 4);
+
+    switch (getRace())
+    {
+        case RACE_HUMAN:
+            if (!GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_BODY))
+                StoreNewItemInBestSlots(41255, 1);
+            break;
+        case RACE_ORC:
+            if (!GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_BODY))
+                StoreNewItemInBestSlots(42369, 1);
+            break;
+        case RACE_DWARF:
+            if (!GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_BODY))
+                StoreNewItemInBestSlots(42371, 1);
+            break;
+        case RACE_NIGHTELF:
+            if (!GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_BODY))
+                StoreNewItemInBestSlots(42372, 1);
+            break;
+        case RACE_UNDEAD:
+            if (!GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_BODY))
+                StoreNewItemInBestSlots(14617, 1);
+            break;
+        case RACE_TAUREN:
+            if (!GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_BODY))
+                StoreNewItemInBestSlots(6125, 1);
+            break;
+        case RACE_GNOME:
+            if (!GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_BODY))
+                StoreNewItemInBestSlots(42373, 1);
+            break;
+        case RACE_TROLL:
+            if (!GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_BODY))
+                StoreNewItemInBestSlots(18231, 1);
+            break;
+        case RACE_BLOODELF:
+            if (!GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_BODY))
+                StoreNewItemInBestSlots(42370, 1);
+            break;
+        case RACE_DRAENEI:
+            if (!GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_BODY))
+                StoreNewItemInBestSlots(10054, 1);
+            break;
+        default:
+            break;
+    }
+
+    switch(getClass())
+    {
+        case CLASS_SHAMAN:
+        {
+            if(!HasItemCount(5175, 1, false))
+                StoreNewItemInBestSlots(5175, 1);
+            if(!HasItemCount(5176, 1, false))
+                StoreNewItemInBestSlots(5176, 1);
+            if(!HasItemCount(5177, 1, false))
+                StoreNewItemInBestSlots(5177, 1);
+            if(!HasItemCount(5178, 1, false))
+                StoreNewItemInBestSlots(5178, 1);
+            break;
+        }
+        default:
+            break;
+    }
+    switch (getRole())
+    {
+        case MageFire:
+        case MageArcane:
+        case MageFrost:
+            break;
+        case WarriorArms:
+        case WarriorProtection:
+        case WarriorFury:
+            break;
+        case RogueCombat:
+        case RogueAssassination:
+        case RogueSubtlety:
+            break;
+        case PriestDiscipline:
+        case PriestHoly:
+        case PriestShadow:
+            break;
+        case ShamanElementalCombat:
+            if (level >= 85)
+            {
+                if(!HasItemCount(64674, 1, false))
+                    StoreNewItemInBestSlots(64674, 1);
+            }
+            else if (level >= 80)
+            {
+                if(!HasItemCount(50463, 1, false))
+                    StoreNewItemInBestSlots(50463, 1);
+            }
+            else if (level >= 74)
+            {
+                if(!HasItemCount(38367, 1, false))
+                    StoreNewItemInBestSlots(38367, 1);
+            }
+            else if (level >= 70)
+            {
+                if(!HasItemCount(35104, 1, false))
+                    StoreNewItemInBestSlots(35104, 1);
+            }
+            else if (level >= 60)
+            {
+                if(!HasItemCount(23005, 1, false))
+                    StoreNewItemInBestSlots(23005, 1);
+            }
+            else if (level >= 57)
+            {
+                if(!HasItemCount(22345, 1, false))
+                    StoreNewItemInBestSlots(22345, 1);
+            }
+            else if (level >= 51)
+            {
+                if(!HasItemCount(22395, 1, false))
+                    StoreNewItemInBestSlots(22395, 1);
+            }
+            else if (level >= 40)
+            {
+                if(!HasItemCount(23200, 1, false))
+                    StoreNewItemInBestSlots(23200, 1);
+            }
+            break;
+        case ShamanRestoration:
+            if (level >= 85)
+            {
+                if(!HasItemCount(64673, 1, false))
+                    StoreNewItemInBestSlots(64673, 1);
+            }
+            else if (level >= 80)
+            {
+                if(!HasItemCount(50464, 1, false))
+                    StoreNewItemInBestSlots(50464, 1);
+            }
+            else if (level >= 74)
+            {
+                if(!HasItemCount(38368, 1, false))
+                    StoreNewItemInBestSlots(38368, 1);
+            }
+            else if (level >= 70)
+            {
+                if(!HasItemCount(35106, 1, false))
+                    StoreNewItemInBestSlots(35106, 1);
+            }
+            else if (level >= 60)
+            {
+                if(!HasItemCount(23005, 1, false))
+                    StoreNewItemInBestSlots(23005, 1);
+            }
+            else if (level >= 57)
+            {
+                if(!HasItemCount(22345, 1, false))
+                    StoreNewItemInBestSlots(22345, 1);
+            }
+            else if (level >= 51)
+            {
+                if(!HasItemCount(22395, 1, false))
+                    StoreNewItemInBestSlots(22395, 1);
+            }
+            else if (level >= 40)
+            {
+                if(!HasItemCount(23200, 1, false))
+                    StoreNewItemInBestSlots(23200, 1);
+            }
+            break;
+        case ShamanEnhancement:
+            if (level >= 85)
+            {
+                if(!HasItemCount(64672, 1, false))
+                    StoreNewItemInBestSlots(64672, 1);
+            }
+            else if (level >= 80)
+            {
+                if(!HasItemCount(50458, 1, false))
+                    StoreNewItemInBestSlots(50458, 1);
+            }
+            else if (level >= 74)
+            {
+                if(!HasItemCount(38361, 1, false))
+                    StoreNewItemInBestSlots(38361, 1);
+            }
+            else if (level >= 70)
+            {
+                if(!HasItemCount(35105, 1, false))
+                    StoreNewItemInBestSlots(35105, 1);
+            }
+            else if (level >= 60)
+            {
+                if(!HasItemCount(23005, 1, false))
+                    StoreNewItemInBestSlots(23005, 1);
+            }
+            else if (level >= 57)
+            {
+                if(!HasItemCount(22345, 1, false))
+                    StoreNewItemInBestSlots(22345, 1);
+            }
+            else if (level >= 51)
+            {
+                if(!HasItemCount(22395, 1, false))
+                    StoreNewItemInBestSlots(22395, 1);
+            }
+            else if (level >= 40)
+            {
+                if(!HasItemCount(23200, 1, false))
+                    StoreNewItemInBestSlots(23200, 1);
+            }
+            break;
+        case DruidFeralCombat:
+            if (level >= 85)
+            {
+                if(!HasItemCount(64676, 1, false))
+                    StoreNewItemInBestSlots(64676, 1);
+            }
+            else if (level >= 80)
+            {
+                if(!HasItemCount(50456, 1, false))
+                    StoreNewItemInBestSlots(50456, 1);
+            }
+            else if (level >= 74)
+            {
+                if(!HasItemCount(38365, 1, false))
+                    StoreNewItemInBestSlots(38365, 1);
+            }
+            else if (level >= 70)
+            {
+                if(!HasItemCount(33509, 1, false))
+                    StoreNewItemInBestSlots(33509, 1);
+            }
+            else if (level >= 60)
+            {
+                if(!HasItemCount(23004, 1, false))
+                    StoreNewItemInBestSlots(23004, 1);
+            }
+            else if (level >= 57)
+            {
+                if(!HasItemCount(22398, 1, false))
+                    StoreNewItemInBestSlots(22398, 1);
+            }
+            else if (level >= 48)
+            {
+                if(!HasItemCount(23198, 1, false))
+                    StoreNewItemInBestSlots(23198, 1);
+            }
+            break;
+        case DruidRestoration:
+            if (level >= 85)
+            {
+                if(!HasItemCount(64673, 1, false))
+                    StoreNewItemInBestSlots(64673, 1);
+            }
+            else if (level >= 80)
+            {
+                if(!HasItemCount(50454, 1, false))
+                    StoreNewItemInBestSlots(50454, 1);
+            }
+            else if (level >= 74)
+            {
+                if(!HasItemCount(38366, 1, false))
+                    StoreNewItemInBestSlots(38366, 1);
+            }
+            else if (level >= 70)
+            {
+                if(!HasItemCount(33508, 1, false))
+                    StoreNewItemInBestSlots(33508, 1);
+            }
+            else if (level >= 60)
+            {
+                if(!HasItemCount(23004, 1, false))
+                    StoreNewItemInBestSlots(23004, 1);
+            }
+            else if (level >= 57)
+            {
+                if(!HasItemCount(22398, 1, false))
+                    StoreNewItemInBestSlots(22398, 1);
+            }
+            else if (level >= 48)
+            {
+                if(!HasItemCount(23198, 1, false))
+                    StoreNewItemInBestSlots(23198, 1);
+            }
+            break;
+        case DruidBalance:
+            if (level >= 85)
+            {
+                if(!HasItemCount(64672, 1, false))
+                    StoreNewItemInBestSlots(64672, 1);
+            }
+            else if (level >= 80)
+            {
+                if(!HasItemCount(50457, 1, false))
+                    StoreNewItemInBestSlots(50457, 1);
+            }
+            else if (level >= 74)
+            {
+                if(!HasItemCount(38360, 1, false))
+                    StoreNewItemInBestSlots(38360, 1);
+            }
+            else if (level >= 70)
+            {
+                if(!HasItemCount(33510, 1, false))
+                    StoreNewItemInBestSlots(33510, 1);
+            }
+            else if (level >= 60)
+            {
+                if(!HasItemCount(23004, 1, false))
+                    StoreNewItemInBestSlots(23004, 1);
+            }
+            else if (level >= 57)
+            {
+                if(!HasItemCount(22398, 1, false))
+                    StoreNewItemInBestSlots(22398, 1);
+            }
+            else if (level >= 48)
+            {
+                if(!HasItemCount(23198, 1, false))
+                    StoreNewItemInBestSlots(23198, 1);
+            }
+            break;
+        case WarlockDestruction:
+        case WarlockCurses:
+        case WarlockSummoning:
+            break;
+        case HunterBeastMastery:
+        case HunterSurvival:
+        case HunterMarksmanship:
+            break;
+        case PaladinCombat:
+            if (level >= 85)
+            {
+                if(!HasItemCount(64674, 1, false))
+                    StoreNewItemInBestSlots(64674, 1);
+            }
+            else if (level >= 80)
+            {
+                if(!HasItemCount(50455, 1, false))
+                    StoreNewItemInBestSlots(50455, 1);
+            }
+            else if (level >= 74)
+            {
+                if(!HasItemCount(38362, 1, false))
+                    StoreNewItemInBestSlots(38362, 1);
+            }
+            else if (level >= 70)
+            {
+                if(!HasItemCount(33503, 1, false))
+                    StoreNewItemInBestSlots(33503, 1);
+            }
+            else if (level >= 60)
+            {
+                if(!HasItemCount(23006, 1, false))
+                    StoreNewItemInBestSlots(23006, 1);
+            }
+            else if (level >= 57)
+            {
+                if(!HasItemCount(22401, 1, false))
+                    StoreNewItemInBestSlots(22401, 1);
+            }
+            else if (level >= 51)
+            {
+                if(!HasItemCount(22400, 1, false))
+                    StoreNewItemInBestSlots(22400, 1);
+            }
+            else if (level >= 40)
+            {
+                if(!HasItemCount(23201, 1, false))
+                    StoreNewItemInBestSlots(23201, 1);
+            }
+            break;
+        case PaladinHoly:
+            if (level >= 85)
+            {
+                if(!HasItemCount(64673, 1, false))
+                    StoreNewItemInBestSlots(64673, 1);
+            }
+            else if (level >= 80)
+            {
+                if(!HasItemCount(50460, 1, false))
+                    StoreNewItemInBestSlots(50460, 1);
+            }
+            else if (level >= 74)
+            {
+                if(!HasItemCount(38364, 1, false))
+                    StoreNewItemInBestSlots(38364, 1);
+            }
+            else if (level >= 70)
+            {
+                if(!HasItemCount(33502, 1, false))
+                    StoreNewItemInBestSlots(33502, 1);
+            }
+            else if (level >= 60)
+            {
+                if(!HasItemCount(23006, 1, false))
+                    StoreNewItemInBestSlots(23006, 1);
+            }
+            else if (level >= 57)
+            {
+                if(!HasItemCount(22401, 1, false))
+                    StoreNewItemInBestSlots(22401, 1);
+            }
+            else if (level >= 51)
+            {
+                if(!HasItemCount(22400, 1, false))
+                    StoreNewItemInBestSlots(22400, 1);
+            }
+            else if (level >= 40)
+            {
+                if(!HasItemCount(23201, 1, false))
+                    StoreNewItemInBestSlots(23201, 1);
+            }
+            break;
+        case PaladinProtection:
+            if (level >= 85)
+            {
+                if(!HasItemCount(64676, 1, false))
+                    StoreNewItemInBestSlots(64676, 1);
+            }
+            else if (level >= 80)
+            {
+                if(!HasItemCount(50461, 1, false))
+                    StoreNewItemInBestSlots(50461, 1);
+            }
+            else if (level >= 74)
+            {
+                if(!HasItemCount(38363, 1, false))
+                    StoreNewItemInBestSlots(38363, 1);
+            }
+            else if (level >= 70)
+            {
+                if(!HasItemCount(33504, 1, false))
+                    StoreNewItemInBestSlots(33504, 1);
+            }
+            else if (level >= 60)
+            {
+                if(!HasItemCount(23006, 1, false))
+                    StoreNewItemInBestSlots(23006, 1);
+            }
+            else if (level >= 57)
+            {
+                if(!HasItemCount(22401, 1, false))
+                    StoreNewItemInBestSlots(22401, 1);
+            }
+            else if (level >= 51)
+            {
+                if(!HasItemCount(22400, 1, false))
+                    StoreNewItemInBestSlots(22400, 1);
+            }
+            else if (level >= 40)
+            {
+                if(!HasItemCount(23201, 1, false))
+                    StoreNewItemInBestSlots(23201, 1);
+            }
+            break;
+        case DeathKnightBlood:
+            if (level >= 85)
+            {
+                if(!HasItemCount(64672, 1, false))
+                    StoreNewItemInBestSlots(64672, 1);
+            }
+            else if (level >= 80)
+            {
+                if(!HasItemCount(50459, 1, false))
+                    StoreNewItemInBestSlots(50459, 1);
+            }
+            else if (level >= 74)
+            {
+                if(!HasItemCount(40867, 1, false))
+                    StoreNewItemInBestSlots(40867, 1);
+            }
+            else if (level >= 70)
+            {
+                if(!HasItemCount(39208, 1, false))
+                    StoreNewItemInBestSlots(39208, 1);
+            }
+            else if (level >= 51)
+            {
+                if(!HasItemCount(66050, 1, false))
+                    StoreNewItemInBestSlots(66050, 1);
+            }
+            break;
+        case DeathKnightFrost:
+            if (level >= 85)
+            {
+                if(!HasItemCount(64674, 1, false))
+                    StoreNewItemInBestSlots(64674, 1);
+            }
+            else if (level >= 80)
+            {
+                if(!HasItemCount(50462, 1, false))
+                    StoreNewItemInBestSlots(50462, 1);
+            }
+            else if (level >= 74)
+            {
+                if(!HasItemCount(40822, 1, false))
+                    StoreNewItemInBestSlots(40822, 1);
+            }
+            else if (level >= 70)
+            {
+                if(!HasItemCount(39208, 1, false))
+                    StoreNewItemInBestSlots(39208, 1);
+            }
+            else if (level >= 51)
+            {
+                if(!HasItemCount(66051, 1, false))
+                    StoreNewItemInBestSlots(66051, 1);
+            }
+            break;
+        case DeathKnightUnholy:
+            if (level >= 85)
+            {
+                if(!HasItemCount(64672, 1, false))
+                    StoreNewItemInBestSlots(64672, 1);
+            }
+            else if (level >= 80)
+            {
+                if(!HasItemCount(50459, 1, false))
+                    StoreNewItemInBestSlots(50459, 1);
+            }
+            else if (level >= 74)
+            {
+                if(!HasItemCount(40875, 1, false))
+                    StoreNewItemInBestSlots(40875, 1);
+            }
+            else if (level >= 70)
+            {
+                if(!HasItemCount(39208, 1, false))
+                    StoreNewItemInBestSlots(39208, 1);
+            }
+            else if (level >= 51)
+            {
+                if(!HasItemCount(66049, 1, false))
+                    StoreNewItemInBestSlots(66049, 1);
+            }
+            break;
+    }
+
+    GiveMeBestItemForMyLevel();
+
+    SetHealth(GetMaxHealth());
+    SetPower(getPowerType(), GetMaxPower(getPowerType()));
+}
+
+bool Player::LearnAllMySpellsForMyLevel()
+{
+    learnDefaultSpells();
+
+    ChrClassesEntry const* clsEntry = sChrClassesStore.LookupEntry(getClass());
+    if(!clsEntry)
+        return false;
+
+    uint32 family = clsEntry->spellfamily;
+
+    for (uint32 id = 0; id< sCreatureStorage.MaxEntry; ++id)
+    {
+        CreatureInfo const *cinfo = sObjectMgr.GetCreatureTemplate(id);
+        if(!cinfo)
+            continue;
+
+        if((cinfo->npcflag & UNIT_NPC_FLAG_TRAINER) || (cinfo->npcflag & UNIT_NPC_FLAG_TRAINER_CLASS)
+            || (cinfo->npcflag & UNIT_NPC_FLAG_TRAINER_PROFESSION))
+        {
+            TrainerSpellData const* cSpells = sObjectMgr.GetNpcTrainerSpells(id);
+            TrainerSpellData const* tSpells = sObjectMgr.GetNpcTrainerTemplateSpells(id);
+
+            if (!cSpells && !tSpells)
+                continue;
+
+            if (cSpells)
+            {
+                for(TrainerSpellMap::const_iterator itr = cSpells->spellList.begin(); itr != cSpells->spellList.end(); ++itr)
+                {
+                    TrainerSpell const* tSpell = &itr->second;
+
+                    SpellEntry const* spellInfo1 = sSpellStore.LookupEntry(tSpell->spell);
+                    if (!spellInfo1)
+                        continue;
+
+                    SpellEntry const* spellInfo2 = sSpellStore.LookupEntry(tSpell->learnedSpell);
+                    if (!spellInfo2)
+                        continue;
+
+                    if (GetTrainerSpellState(tSpell, true) != TRAINER_SPELL_GREEN)
+                        continue;
+
+                    if (sSpellMgr.IsProfessionSpell(tSpell->learnedSpell))
+                        continue;
+
+                    if (spellInfo1->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_WEAPON) {}
+                    else if (spellInfo1->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_PROFICIENCY) {}
+                    else if(spellInfo1->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_LEARN_SPELL
+                        && spellInfo1->Effect[EFFECT_INDEX_1] == SPELL_EFFECT_SKILL) {}
+                    else if (spellInfo1->SpellFamilyName != family || spellInfo2->SpellFamilyName != family)
+                        continue;
+
+                    if(tSpell->IsCastable())
+                    {
+                        if (!isWtfSpell(tSpell->learnedSpell) && tSpell->reqLevel <= getLevel())
+                            learnSpell(tSpell->learnedSpell, false, true);
+                    }
+                    else
+                    {
+                        if (!isWtfSpell(tSpell->spell) && tSpell->reqLevel <= getLevel())
+                            learnSpell(tSpell->spell, false, true);
+                    }
+                }
+            }
+
+            if (tSpells)
+            {
+                for(TrainerSpellMap::const_iterator itr = tSpells->spellList.begin(); itr != tSpells->spellList.end(); ++itr)
+                {
+                    TrainerSpell const* tSpell = &itr->second;
+
+                    SpellEntry const* spellInfo1 = sSpellStore.LookupEntry(tSpell->spell);
+                    if (!spellInfo1)
+                        continue;
+
+                    SpellEntry const* spellInfo2 = sSpellStore.LookupEntry(tSpell->learnedSpell);
+                    if (!spellInfo2)
+                        continue;
+
+                    if (GetTrainerSpellState(tSpell, true) != TRAINER_SPELL_GREEN)
+                        continue;
+
+                    if (sSpellMgr.IsProfessionSpell(tSpell->learnedSpell))
+                        continue;
+
+                    if (spellInfo1->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_WEAPON) {}
+                    else if (spellInfo1->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_PROFICIENCY) {}
+                    else if(spellInfo1->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_LEARN_SPELL
+                        && spellInfo1->Effect[EFFECT_INDEX_1] == SPELL_EFFECT_SKILL) {}
+                    else if (spellInfo1->SpellFamilyName != family || spellInfo2->SpellFamilyName != family)
+                        continue;
+
+                    if(tSpell->IsCastable())
+                    {
+                        if (!isWtfSpell(tSpell->learnedSpell) && tSpell->reqLevel <= getLevel())
+                            learnSpell(tSpell->learnedSpell, false, true);
+                    }
+                    else
+                    {
+                        if (!isWtfSpell(tSpell->spell) && tSpell->reqLevel <= getLevel())
+                            learnSpell(tSpell->spell, false, true);
+                    }
+                }
+            }
+        }
+
+        if(cinfo->npcflag & UNIT_NPC_FLAG_QUESTGIVER)
+        {
+            QuestRelationsMapBounds bounds = sObjectMgr.GetCreatureQuestRelationsMapBounds(id);
+            for(QuestRelationsMap::const_iterator itr = bounds.first; itr != bounds.second; ++itr)
+            {
+                Quest const *pQuest = sObjectMgr.GetQuestTemplate(itr->second);
+
+                if (!pQuest || pQuest->GetMinLevel() > getLevel())
+                    continue;
+
+                SpellEntry const* spellInfo1 = sSpellStore.LookupEntry(pQuest->GetSrcSpell());
+                if (spellInfo1)
+                {
+                    if (IsSpellFitByClassAndRace(spellInfo1->Id) && !isWtfSpell(spellInfo1->Id))
+                    {
+                        if ( (spellInfo1->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_LEARN_SPELL && spellInfo1->Effect[EFFECT_INDEX_1] == SPELL_EFFECT_SKILL)
+                            || (spellInfo1->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_TRADE_SKILL) ) {}
+                        else if (spellInfo1->SpellFamilyName == family)
+                            learnSpell(spellInfo1->Id, false, true);
+                        else if  ( ((cinfo->npcflag & UNIT_NPC_FLAG_TRAINER) || (cinfo->npcflag & UNIT_NPC_FLAG_TRAINER_CLASS)
+                            || (cinfo->npcflag & UNIT_NPC_FLAG_TRAINER_PROFESSION)) && (cinfo->trainer_class == getClass()) )
+                            learnSpell(spellInfo1->Id, false, true);
+                    }
+                }
+
+                SpellEntry const* spellInfo2 = sSpellStore.LookupEntry(pQuest->GetRewSpell());
+                if (spellInfo2)
+                {
+                    if (IsSpellFitByClassAndRace(spellInfo2->Id) && !isWtfSpell(spellInfo2->Id))
+                    {
+                        if ( (spellInfo2->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_LEARN_SPELL && spellInfo2->Effect[EFFECT_INDEX_1] == SPELL_EFFECT_SKILL)
+                            || (spellInfo2->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_TRADE_SKILL) ) {}
+                        else if (spellInfo2->SpellFamilyName == family)
+                            learnSpell(spellInfo2->Id, false, true);
+                        else if  ( ((cinfo->npcflag & UNIT_NPC_FLAG_TRAINER) || (cinfo->npcflag & UNIT_NPC_FLAG_TRAINER_CLASS)
+                            || (cinfo->npcflag & UNIT_NPC_FLAG_TRAINER_PROFESSION)) && (cinfo->trainer_class == getClass()) )
+                            learnSpell(spellInfo2->Id, false, true);
+                    }
+                }
+
+                SpellEntry const* spellInfo3 = sSpellStore.LookupEntry(pQuest->GetRewSpellCast());
+                if (spellInfo3)
+                {
+                    bool learn = false;
+                    for(int j = 0; j < 3; j++)
+                    {
+                        if(spellInfo3->Effect[j] == SPELL_EFFECT_LEARN_SPELL)
+                        {
+                            learn = true;
+                            SpellEntry const* spellInfo4 = sSpellStore.LookupEntry(spellInfo3->EffectTriggerSpell[j]);
+                            if (spellInfo4)
+                            {
+                                if (IsSpellFitByClassAndRace(spellInfo4->Id) && !isWtfSpell(spellInfo4->Id))
+                                {
+                                    if ( (spellInfo4->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_LEARN_SPELL && spellInfo4->Effect[EFFECT_INDEX_1] == SPELL_EFFECT_SKILL)
+                                        || (spellInfo4->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_TRADE_SKILL) ) {}
+                                    else if (spellInfo4->SpellFamilyName == family)
+                                        learnSpell(spellInfo4->Id, false, true);
+                                    else if  ( ((cinfo->npcflag & UNIT_NPC_FLAG_TRAINER) || (cinfo->npcflag & UNIT_NPC_FLAG_TRAINER_CLASS)
+                                        || (cinfo->npcflag & UNIT_NPC_FLAG_TRAINER_PROFESSION)) && (cinfo->trainer_class == getClass()) )
+                                        learnSpell(spellInfo4->Id, false, true);
+                                }
+                            }
+                        }
+                    }
+                    if (!learn)
+                    {
+                        if (IsSpellFitByClassAndRace(spellInfo3->Id) && !isWtfSpell(spellInfo3->Id))
+                        {
+                            if ( (spellInfo3->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_LEARN_SPELL && spellInfo3->Effect[EFFECT_INDEX_1] == SPELL_EFFECT_SKILL)
+                                || (spellInfo3->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_TRADE_SKILL) ) {}
+                            else if (spellInfo3->SpellFamilyName == family)
+                                learnSpell(spellInfo3->Id, false, true);
+                            else if  ( ((cinfo->npcflag & UNIT_NPC_FLAG_TRAINER) || (cinfo->npcflag & UNIT_NPC_FLAG_TRAINER_CLASS)
+                                || (cinfo->npcflag & UNIT_NPC_FLAG_TRAINER_PROFESSION)) && (cinfo->trainer_class == getClass()) )
+                                learnSpell(spellInfo3->Id, false, true);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    for (uint32 id = 0; id < sItemStorage.MaxEntry; ++id)
+    {
+        ItemPrototype const *pProto = sObjectMgr.GetItemPrototype(id);
+        if(!pProto || pProto->Stackable > 1 || pProto->Class==ITEM_CLASS_WEAPON || pProto->Class==ITEM_CLASS_ARMOR || pProto->RequiredLevel > getLevel())
+            continue;
+
+        for (int i = 0; i < MAX_ITEM_PROTO_SPELLS; ++i)
+        {
+            bool learn = false;
+            SpellEntry const* spellInfo1 = sSpellStore.LookupEntry(pProto->Spells[i].SpellId);
+            if (spellInfo1)
+            {
+                bool learn = false;
+                for(int j = 0; j < 3; j++)
+                {
+                    if(spellInfo1->Effect[j] == SPELL_EFFECT_LEARN_SPELL)
+                    {
+                        learn = true;
+                        SpellEntry const* spellInfo2 = sSpellStore.LookupEntry(spellInfo1->EffectTriggerSpell[j]);
+                        if (spellInfo2)
+                        {
+                            if (IsSpellFitByClassAndRace(spellInfo2->Id) && !isWtfSpell(spellInfo2->Id))
+                            {
+                                if ( (spellInfo2->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_LEARN_SPELL && spellInfo2->Effect[EFFECT_INDEX_1] == SPELL_EFFECT_SKILL)
+                                    || (spellInfo2->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_TRADE_SKILL) ) {}
+                                else if (spellInfo2->SpellFamilyName == family)
+                                    learnSpell(spellInfo2->Id, false, true);
+                            }
+                        }
+                    }
+                }
+                if (!learn)
+                {
+                    if (IsSpellFitByClassAndRace(spellInfo1->Id) && !isWtfSpell(spellInfo1->Id))
+                    {
+                        if ( (spellInfo1->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_LEARN_SPELL && spellInfo1->Effect[EFFECT_INDEX_1] == SPELL_EFFECT_SKILL)
+                            || (spellInfo1->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_TRADE_SKILL) ) {}
+                        else if (spellInfo1->SpellFamilyName == family)
+                            learnSpell(spellInfo1->Id, false, true);
+                    }
+                }
+            }
+        }
+    }
+
+    if(getLevel() > 19)
+        learnSpell(33388, false);
+    if(getLevel() > 39)
+        learnSpell(33391, false);
+    if(getLevel() > 59)
+        learnSpell(34090, false);
+    if(getLevel() > 69)
+        learnSpell(34091, false);
+    if(getLevel() > 76)
+        learnSpell(54197, false);
+
+    switch (getRace())
+    {
+        case RACE_HUMAN:
+        {
+            static uint32 Mounts20[] = {2414, 5655, 5656};
+            static uint32 Mounts40[] = {18776, 18778, 18777};
+            if (getLevel() >= 20)
+                choseMount(Mounts20, sizeof(Mounts20)/sizeof(uint32));
+            if (getLevel() >= 40)
+                choseMount(Mounts40, sizeof(Mounts40)/sizeof(uint32));
+            break;
+        }
+        case RACE_ORC:
+        {
+            static uint32 Mounts20[] = {5665, 46099, 1132, 5668};
+            static uint32 Mounts40[] = {18798, 18797, 18796};
+            if (getLevel() >= 20)
+                choseMount(Mounts20, sizeof(Mounts20)/sizeof(uint32));
+            if (getLevel() >= 40)
+                choseMount(Mounts40, sizeof(Mounts40)/sizeof(uint32));
+            break;
+        }
+        case RACE_DWARF:
+        {
+            static uint32 Mounts20[] = {5864, 5872, 5873};
+            static uint32 Mounts40[] = {18787, 18786, 18785};
+            if (getLevel() >= 20)
+                choseMount(Mounts20, sizeof(Mounts20)/sizeof(uint32));
+            if (getLevel() >= 40)
+                choseMount(Mounts40, sizeof(Mounts40)/sizeof(uint32));
+            break;
+        }
+        case RACE_NIGHTELF:
+        {
+            static uint32 Mounts20[] = {8629, 47100, 8632, 8631};
+            static uint32 Mounts40[] = {18902, 18766, 18767};
+            if (getLevel() >= 20)
+                choseMount(Mounts20, sizeof(Mounts20)/sizeof(uint32));
+            if (getLevel() >= 40)
+                choseMount(Mounts40, sizeof(Mounts40)/sizeof(uint32));
+            break;
+        }
+        case RACE_UNDEAD:
+        {
+            static uint32 Mounts20[] = {13331, 46308, 13332, 13333};
+            static uint32 Mounts40[] = {18791, 13334, 47101};
+            if (getLevel() >= 20)
+                choseMount(Mounts20, sizeof(Mounts20)/sizeof(uint32));
+            if (getLevel() >= 40)
+                choseMount(Mounts40, sizeof(Mounts40)/sizeof(uint32));
+            break;
+        }
+        case RACE_TAUREN:
+        {
+            static uint32 Mounts20[] = {15277, 15290, 46100};
+            static uint32 Mounts40[] = {18795, 18794, 18793};
+            if (getLevel() >= 20)
+                choseMount(Mounts20, sizeof(Mounts20)/sizeof(uint32));
+            if (getLevel() >= 40)
+                choseMount(Mounts40, sizeof(Mounts40)/sizeof(uint32));
+            break;
+        }
+        case RACE_GNOME:
+        {
+            static uint32 Mounts20[] = {13321, 8563, 13322, 8595};
+            static uint32 Mounts40[] = {18772, 18774, 18773};
+            if (getLevel() >= 20)
+                choseMount(Mounts20, sizeof(Mounts20)/sizeof(uint32));
+            if (getLevel() >= 40)
+                choseMount(Mounts40, sizeof(Mounts40)/sizeof(uint32));
+            break;
+        }
+        case RACE_TROLL:
+        {
+            static uint32 Mounts20[] = {8592, 8591, 8588};
+            static uint32 Mounts40[] = {18789, 18790, 18788};
+            if (getLevel() >= 20)
+                choseMount(Mounts20, sizeof(Mounts20)/sizeof(uint32));
+            if (getLevel() >= 40)
+                choseMount(Mounts40, sizeof(Mounts40)/sizeof(uint32));
+            break;
+        }
+        case RACE_BLOODELF:
+        {
+            static uint32 Mounts20[] = {29222, 28927, 29221, 29220};
+            static uint32 Mounts40[] = {29224, 29223, 28936};
+            if (getLevel() >= 20)
+                choseMount(Mounts20, sizeof(Mounts20)/sizeof(uint32));
+            if (getLevel() >= 40)
+                choseMount(Mounts40, sizeof(Mounts40)/sizeof(uint32));
+            break;
+        }
+        case RACE_DRAENEI:
+        {
+            static uint32 Mounts20[] = {29743, 29744, 28481};
+            static uint32 Mounts40[] = {29747, 29746, 29745};
+            if (getLevel() >= 20)
+                choseMount(Mounts20, sizeof(Mounts20)/sizeof(uint32));
+            if (getLevel() >= 40)
+                choseMount(Mounts40, sizeof(Mounts40)/sizeof(uint32));
+            break;
+        }
+    }
+
+    switch(GetTeam())
+    {
+        case ALLIANCE:
+        {
+            static uint32 Mounts60[] = {25472, 25470, 25471};
+            static uint32 Mounts70[] = {25529, 25528, 25527, 25473};
+            if (getLevel() >= 60)
+                choseMount(Mounts60, sizeof(Mounts60)/sizeof(uint32));
+            if (getLevel() >= 70)
+                choseMount(Mounts70, sizeof(Mounts70)/sizeof(uint32));
+            break;
+        }
+        case HORDE:
+        {
+            static uint32 Mounts60[] = {25476, 25474, 25475};
+            static uint32 Mounts70[] = {25533, 25531, 25477, 25532};
+            if (getLevel() >= 60)
+                choseMount(Mounts60, sizeof(Mounts60)/sizeof(uint32));
+            if (getLevel() >= 70)
+                choseMount(Mounts70, sizeof(Mounts70)/sizeof(uint32));
+            break;
+        }
+    }
+    return true;
+}
+
+bool Player::LearnAllMyTalentsForMyLevel()
+{
+    uint32 classMask = getClassMask();
+    uint32 level = getLevel();
+
+    for (uint32 i = 0; i < sTalentStore.GetNumRows(); ++i)
+    {
+        TalentEntry const *talentInfo = sTalentStore.LookupEntry(i);
+        if(!talentInfo)
+            continue;
+
+        TalentTabEntry const *talentTabInfo = sTalentTabStore.LookupEntry( talentInfo->TalentTab );
+        if(!talentTabInfo || talentTabInfo->TalentTabID != getRole())
+            continue;
+
+        if( (classMask & talentTabInfo->ClassMask) == 0 )
+            continue;
+
+        // search highest talent rank
+        uint32 spellid = 0;
+
+        for(int rank = MAX_TALENT_RANK-1; rank >= 0; --rank)
+        {
+            if(talentInfo->RankID[rank]!=0)
+            {
+                spellid = talentInfo->RankID[rank];
+                break;
+            }
+        }
+
+        if(!spellid)                                        // ??? none spells in talent
+            continue;
+
+        SpellEntry const* spellInfo = sSpellStore.LookupEntry(spellid);
+        if(!spellInfo || !SpellMgr::IsSpellValid(spellInfo,m_session->GetPlayer(),false))
+            continue;
+
+        if(level < 10)
+            continue;
+
+        if(level < 20 && talentInfo->Row > 0)
+            continue;
+
+        if(level < 30 && talentInfo->Row > 1)
+            continue;
+
+        if(level < 38 && talentInfo->Row > 2)
+            continue;
+
+        if(level < 46 && talentInfo->Row > 3)
+            continue;
+
+        if(level < 53 && talentInfo->Row > 4)
+            continue;
+
+        if(level < 60 && talentInfo->Row > 5)
+            continue;
+
+        if(level < 66 && talentInfo->Row > 6)
+            continue;
+
+        if(level < 71 && talentInfo->Row > 7)
+            continue;
+
+        if(level < 77 && talentInfo->Row > 8)
+            continue;
+
+        // learn highest rank of talent and learn all non-talent spell ranks (recursive by tree)
+        learnSpellHighRank(spellid);
+    }
+
+    SendTalentsInfoData(false);
+    return true;
+}
+
 void Player::setRole(uint16 role)
 {
     PlayerbotAI* ai = GetPlayerbotAI();
@@ -1590,5 +2602,248 @@ bool Player::CanUseFlyingMounts(SpellEntry const* sEntry)
         GetSession()->SendPacket(&data);
         return false;
     }
+    return true;
+}
+
+bool ChatHandler::HandleGMStartUpCommand(char* args)
+{
+    Player *player = m_session->GetPlayer();
+    if (!player)
+        return true;
+
+    player->GMStartup();
+    return true;
+}
+
+bool ChatHandler::HandleBotInvite(char* args)
+{
+    if (!*args)
+        return false;
+
+    int16 role = (int16)atoi(args);
+    if (role == 0)
+        return false;
+
+    uint8 _class = 0;
+    switch (role)
+    {
+        case MageFire:
+        case MageArcane:
+        case MageFrost:
+            _class = CLASS_MAGE;
+            break;
+        case WarriorArms:
+        case WarriorProtection:
+        case WarriorFury:
+            _class = CLASS_WARRIOR;
+            break;
+        case RogueCombat:
+        case RogueAssassination:
+        case RogueSubtlety:
+            _class = CLASS_ROGUE;
+            break;
+        case PriestDiscipline:
+        case PriestHoly:
+        case PriestShadow:
+            _class = CLASS_PRIEST;
+            break;
+        case ShamanElementalCombat:
+        case ShamanRestoration:
+        case ShamanEnhancement:
+            _class = CLASS_SHAMAN;
+            break;
+        case DruidFeralCombat:
+        case DruidRestoration:
+        case DruidBalance:
+            _class = CLASS_DRUID;
+            break;
+        case WarlockDestruction:
+        case WarlockCurses:
+        case WarlockSummoning:
+            _class = CLASS_WARLOCK;
+            break;
+        case HunterBeastMastery:
+        case HunterSurvival:
+        case HunterMarksmanship:
+            _class = CLASS_HUNTER;
+            break;
+        case PaladinCombat:
+        case PaladinHoly:
+        case PaladinProtection:
+            _class = CLASS_PALADIN;
+            break;
+        case DeathKnightBlood:
+        case DeathKnightFrost:
+        case DeathKnightUnholy:
+            _class = CLASS_DEATH_KNIGHT;
+            break;
+    }
+    if (_class == 0)
+        return false;
+
+    Player *pl = m_session->GetPlayer();
+
+    HashMapHolder<Player>::MapType& m = sObjectAccessor.GetPlayers();
+    for(HashMapHolder<Player>::MapType::const_iterator itr = m.begin(); itr != m.end(); ++itr)
+    {
+        Player* chr = itr->second;
+
+        if(!chr || !chr->IsBot() || chr->GetGroup() || pl->GetTeam() != chr->GetTeam())
+            continue;
+
+        PlayerInfo const* info = sObjectMgr.GetPlayerInfo(chr->getRace(), _class);
+        if (!info)
+            continue;
+
+        if (pl->GetGroup() && !pl->GetGroup()->isRaidGroup() && pl->GetGroup()->IsFull())
+        {
+            WorldPacket pk;
+            m_session->HandleGroupRaidConvertOpcode(pk);
+        }
+
+        WorldPacket p(CMSG_GROUP_INVITE, 10);                // guess size
+        p << chr->GetName();                                 // max len 48
+        p << uint32(0);
+        m_session->HandleGroupInviteOpcode(p);
+
+        chr->setClass(_class);
+        chr->setRole(role);
+        chr->RemovePet(PET_SAVE_AS_DELETED);
+        chr->SetByteValue(UNIT_FIELD_BYTES_0,1,_class);// class
+
+        uint32 lvl = pl->getLevel();
+        if (lvl == DEFAULT_MAX_LEVEL)
+            chr->GiveLevel(pl->getLevel()-1);
+        else
+            chr->GiveLevel(pl->getLevel()+1);
+
+        chr->RemoveAllAuras(AURA_REMOVE_BY_DELETE);
+        ChrClassesEntry const* cEntry = sChrClassesStore.LookupEntry(_class);
+        if(cEntry && cEntry->powerType < MAX_POWERS && uint32(chr->getPowerType()) != cEntry->powerType)
+            chr->setPowerType(Powers(cEntry->powerType));
+        chr->InitRunes();
+        break;
+    }
+
+    return true;
+}
+
+bool ChatHandler::HandleBotInviteArena(char* args)
+{
+    if (!*args)
+        return false;
+
+    int16 role = (int16)atoi(args);
+    if (role == 0)
+        return false;
+
+    uint8 _class = 0;
+    switch (role)
+    {
+        case MageFire:
+        case MageArcane:
+        case MageFrost:
+            _class = CLASS_MAGE;
+            break;
+        case WarriorArms:
+        case WarriorProtection:
+        case WarriorFury:
+            _class = CLASS_WARRIOR;
+            break;
+        case RogueCombat:
+        case RogueAssassination:
+        case RogueSubtlety:
+            _class = CLASS_ROGUE;
+            break;
+        case PriestDiscipline:
+        case PriestHoly:
+        case PriestShadow:
+            _class = CLASS_PRIEST;
+            break;
+        case ShamanElementalCombat:
+        case ShamanRestoration:
+        case ShamanEnhancement:
+            _class = CLASS_SHAMAN;
+            break;
+        case DruidFeralCombat:
+        case DruidRestoration:
+        case DruidBalance:
+            _class = CLASS_DRUID;
+            break;
+        case WarlockDestruction:
+        case WarlockCurses:
+        case WarlockSummoning:
+            _class = CLASS_WARLOCK;
+            break;
+        case HunterBeastMastery:
+        case HunterSurvival:
+        case HunterMarksmanship:
+            _class = CLASS_HUNTER;
+            break;
+        case PaladinCombat:
+        case PaladinHoly:
+        case PaladinProtection:
+            _class = CLASS_PALADIN;
+            break;
+        case DeathKnightBlood:
+        case DeathKnightFrost:
+        case DeathKnightUnholy:
+            _class = CLASS_DEATH_KNIGHT;
+            break;
+    }
+    if (_class == 0)
+        return false;
+
+    Player *pl = m_session->GetPlayer();
+
+    HashMapHolder<Player>::MapType& m = sObjectAccessor.GetPlayers();
+    for(HashMapHolder<Player>::MapType::const_iterator itr = m.begin(); itr != m.end(); ++itr)
+    {
+        Player* chr = itr->second;
+
+        if(!chr || !chr->IsBot() || chr->GetGroup() || pl->GetTeam() != chr->GetTeam())
+            continue;
+
+        PlayerInfo const* info = sObjectMgr.GetPlayerInfo(chr->getRace(), _class);
+        if (!info)
+            continue;
+
+        WorldPacket pk1(CMSG_GROUP_INVITE, 10);                // guess size
+        pk1 << chr->GetName();                                 // max len 48
+        pk1 << uint32(0);
+        m_session->HandleGroupInviteOpcode(pk1);
+        for (uint8 i = 0; i < MAX_ARENA_SLOT; ++i)
+        {
+            if(uint32 a_id = pl->GetArenaTeamId(i))
+            {
+                if(ArenaTeam *at = sObjectMgr.GetArenaTeamById(a_id))
+                {
+                    chr->SetArenaTeamIdInvited(at->GetId());
+                    WorldPacket pk2;
+                    chr->GetSession()->HandleArenaTeamAcceptOpcode(pk2);
+                    break;
+                }
+            }
+        }
+
+        chr->setClass(_class);
+        chr->setRole(role);
+        chr->RemovePet(PET_SAVE_AS_DELETED);
+        chr->SetByteValue(UNIT_FIELD_BYTES_0,1,_class);// class
+
+        uint32 lvl = pl->getLevel();
+        if (lvl == DEFAULT_MAX_LEVEL)
+            chr->GiveLevel(pl->getLevel()-1);
+        else
+            chr->GiveLevel(pl->getLevel()+1);
+
+        chr->RemoveAllAuras(AURA_REMOVE_BY_DELETE);
+        ChrClassesEntry const* cEntry = sChrClassesStore.LookupEntry(_class);
+        if(cEntry && cEntry->powerType < MAX_POWERS && uint32(chr->getPowerType()) != cEntry->powerType)
+            chr->setPowerType(Powers(cEntry->powerType));
+        chr->InitRunes();
+        break;
+    }
+
     return true;
 }

@@ -495,9 +495,8 @@ void PlayerbotMgr::OnBotLogin(Player * const bot)
     if (bot->GetGroup())
         bot->RemoveFromGroup();
 
-    ChatHandler ch(bot);
     bot->GiveLevel(bot->GetLevelAtLoading());
-    ch.HandleGMStartUpCommand("");
+    bot->GMStartup();
     bot->SetHealth(bot->GetMaxHealth());
     bot->SetPower(bot->getPowerType(), bot->GetMaxPower(bot->getPowerType()));
 }

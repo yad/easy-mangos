@@ -67,7 +67,6 @@ public:
     bool teleport(Player& botPlayer) { return HandleNamegoCommand((char*) botPlayer.GetName()); }
     void sysmessage(const char *str) { SendSysMessage(str); }
     bool dropQuest(char *str) { return HandleQuestRemoveCommand(str); }
-    bool gmstartup(char *str) { return HandleGMStartUpCommand(str); }
 };
 
 PlayerbotAI::PlayerbotAI(PlayerbotMgr* const mgr, Player* const bot) :
@@ -2153,6 +2152,7 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
         return;
 
     CheckBG();
+    CheckMMaps();
 
     if (!m_bot->isAlive())
     {
@@ -2233,8 +2233,7 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
                     m_bot->GiveLevel(lvl);
                     GetClassAI()->InitSpells(m_bot->GetPlayerbotAI());
                 }
-                PlayerbotChatHandler ch2(m_bot);
-                ch2.gmstartup("");
+                m_bot->GMStartup();
                 m_bot->SetHealth(m_bot->GetMaxHealth());
                 m_bot->SetPower(m_bot->getPowerType(), m_bot->GetMaxPower(m_bot->getPowerType()));
             }
@@ -2331,6 +2330,21 @@ bool PlayerbotAI::CheckMaster()
         }
     }
     return true;
+}
+
+void PlayerbotAI::CheckMMaps()
+{
+    Player* leader = GetLeader();
+    if (leader->GetTransport() || (m_bot->GetBattleGround() && m_bot->GetBattleGround()->isArena()))
+    {
+        if(!m_bot->hasUnitState(UNIT_STAT_IGNORE_PATHFINDING))
+            m_bot->addUnitState(UNIT_STAT_IGNORE_PATHFINDING);
+    }
+    else
+    {
+        if(m_bot->hasUnitState(UNIT_STAT_IGNORE_PATHFINDING))
+            m_bot->clearUnitState(UNIT_STAT_IGNORE_PATHFINDING);
+    }
 }
 
 void PlayerbotAI::CheckRoles()
@@ -2542,8 +2556,7 @@ bool PlayerbotAI::CheckLevel()
 
 void PlayerbotAI::CheckStuff()
 {
-    PlayerbotChatHandler ch(m_bot);
-    ch.gmstartup("");
+    m_bot->GMStartup();
     m_bot->SetHealth(m_bot->GetMaxHealth());
     m_bot->SetPower(m_bot->getPowerType(), m_bot->GetMaxPower(m_bot->getPowerType()));
     GetClassAI()->InitSpells(m_bot->GetPlayerbotAI());
