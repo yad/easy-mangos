@@ -495,19 +495,26 @@ void PathInfo::BuildShortcut()
 
 void PathInfo::createFilter()
 {
-    if (m_sourceUnit->GetTypeId() != TYPEID_UNIT)
-        return;
-
     unsigned short includeFlags = 0;
     unsigned short excludeFlags = 0;
 
-    Creature* creature = (Creature*)m_sourceUnit;
-    if (creature->CanWalk())
-        includeFlags |= NAV_GROUND;          // walk
+    if (m_sourceUnit->GetTypeId() == TYPEID_UNIT)
+    {
+        Creature* creature = (Creature*)m_sourceUnit;
+        if (creature->CanWalk())
+            includeFlags |= NAV_GROUND;          // walk
 
-    // creatures don't take environmental damage
-    if (creature->CanSwim() || creature->IsPet())
-        includeFlags |= (NAV_WATER | NAV_MAGMA | NAV_SLIME);           // swim
+        // creatures don't take environmental damage
+        if (creature->CanSwim() || creature->IsPet())
+            includeFlags |= (NAV_WATER | NAV_MAGMA | NAV_SLIME);           // swim
+    }
+    else if (m_sourceUnit->GetTypeId() == TYPEID_PLAYER)
+    {
+        Player* player = (Player*)m_sourceUnit;
+
+        // perfect support not possible, just stay 'safe'
+        includeFlags |= (NAV_GROUND | NAV_WATER);
+    }
 
     m_filter.setIncludeFlags(includeFlags);
     m_filter.setExcludeFlags(excludeFlags);
