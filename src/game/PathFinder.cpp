@@ -520,9 +520,14 @@ void PathInfo::updateFilter()
     // allow creatures to cheat and use different movement types if they are moved
     // forcefully into terrain they can't normally move in
     if (m_sourceUnit->IsInWater() || m_sourceUnit->IsUnderWater())
-        m_filter.setIncludeFlags(getNavTerrain(m_sourceUnit->GetPositionX(),
-                                               m_sourceUnit->GetPositionY(),
-                                               m_sourceUnit->GetPositionZ()));
+    {
+        unsigned short includedFlags = m_filter.getIncludeFlags();
+        includedFlags |= getNavTerrain(m_sourceUnit->GetPositionX(),
+                                       m_sourceUnit->GetPositionY(),
+                                       m_sourceUnit->GetPositionZ());
+
+        m_filter.setIncludeFlags(includedFlags);
+    }
 }
 
 NavTerrain PathInfo::getNavTerrain(float x, float y, float z)
