@@ -88,22 +88,12 @@ bool PathInfo::Update(const float destX, const float destY, const float destZ, b
         return true;
     }
 
-    float dist = m_sourceUnit->GetObjectBoundingRadius();
-    bool oldDestInRange = inRange(oldDest, newDest, dist, dist);
-
-    // this can happen only if caller did a bad job calculating the need for path update
-    if (oldDestInRange && inRange(newStart, oldStart, dist, dist))
-    {
-        setEndPosition(oldDest);
-        setStartPosition(oldStart);
-        return false;
-    }
-
     updateFilter();
 
     // check if destination moved - if not we can optimize something here
     // we are following old, precalculated path?
-    if (oldDestInRange && m_pathPoints.size() > 2)
+    float dist = m_sourceUnit->GetObjectBoundingRadius();
+    if (inRange(oldDest, newDest, dist, dist) && m_pathPoints.size() > 2)
     {
         // our target is not moving - we just coming closer
         // we are moving on precalculated path - enjoy the ride
@@ -418,18 +408,10 @@ void PathInfo::BuildPolyPath(PathNode startPos, PathNode endPos)
 
 void PathInfo::BuildPointPath(float *startPoint, float *endPoint)
 {
-    // get the actual reachable point on last poly in path
-    float closestPoint[VERTEX_SIZE];
-    if ((m_type & PATHFIND_INCOMPLETE)
-        && DT_SUCCESS == m_navMeshQuery->closestPointOnPoly(m_pathPolyRefs[m_polyLength-1], endPoint, closestPoint))
-    {
-        dtVcopy(endPoint, closestPoint);
-        setActualEndPosition(PathNode(endPoint[2],endPoint[0],endPoint[1]));
-    }
-
     float pathPoints[MAX_POINT_PATH_LENGTH*VERTEX_SIZE];
     uint32 pointCount = 0;
     dtStatus dtResult = DT_FAILURE;
+    bool usedOffmesh = false;
     if (m_useStraightPath)
     {
         dtResult = m_navMeshQuery->findStraightPath(
@@ -452,6 +434,7 @@ void PathInfo::BuildPointPath(float *startPoint, float *endPoint)
                 m_polyLength,       // length of current path
                 pathPoints,         // [out] path corner points
                 (int*)&pointCount,
+                usedOffmesh,
                 MAX_POINT_PATH_LENGTH);    // maximum number of points
     }
 
@@ -466,12 +449,18 @@ void PathInfo::BuildPointPath(float *startPoint, float *endPoint)
         return;
     }
 
+    // we need to flash our poly path to prevent it being used as subpath next cycle
+    // in case of off mesh connection was used
+    if(usedOffmesh)
+        m_polyLength = 0;
+
     m_pathPoints.resize(pointCount);
     for (uint32 i = 0; i < pointCount; ++i)
         m_pathPoints.set(i, PathNode(pathPoints[i*VERTEX_SIZE+2], pathPoints[i*VERTEX_SIZE], pathPoints[i*VERTEX_SIZE+1]));
 
     // first point is always our current location - we need the next one
     setNextPosition(m_pathPoints[1]);
+    setActualEndPosition(m_pathPoints[pointCount-1]);
 
     PATH_DEBUG("++ PathInfo::BuildPointPath path type %d size %d poly-size %d\n", m_type, pointCount, m_polyLength);
 }
@@ -641,11 +630,12 @@ bool PathInfo::getSteerTarget(const float* startPos, const float* endPos,
 
 dtStatus PathInfo::findSmoothPath(const float* startPos, const float* endPos,
                                      const dtPolyRef* polyPath, const uint32 polyPathSize,
-                                     float* smoothPath, int* smoothPathSize, const uint32 maxSmoothPathSize)
+                                     float* smoothPath, int* smoothPathSize, bool &usedOffmesh, const uint32 maxSmoothPathSize)
 {
     MANGOS_ASSERT(polyPathSize <= MAX_PATH_LENGTH);
     *smoothPathSize = 0;
     uint32 nsmoothPath = 0;
+    usedOffmesh = false;
 
     dtPolyRef polys[MAX_PATH_LENGTH];
     memcpy(polys, polyPath, sizeof(dtPolyRef)*polyPathSize);
@@ -716,7 +706,7 @@ dtStatus PathInfo::findSmoothPath(const float* startPos, const float* endPos,
         else if (offMeshConnection && inRangeYZX(iterPos, steerPos, SMOOTH_PATH_SLOP, 2.0f))
         {
             // Reached off-mesh connection.
-            float startPos[VERTEX_SIZE], endPos[VERTEX_SIZE];
+            usedOffmesh = true;
 
             // Advance the path up to and over the off-mesh connection.
             dtPolyRef prevRef = INVALID_POLYREF;
@@ -735,23 +725,18 @@ dtStatus PathInfo::findSmoothPath(const float* startPos, const float* endPos,
             npolys -= npos;
 
             // Handle the connection.
+            float startPos[VERTEX_SIZE], endPos[VERTEX_SIZE];
             if (DT_SUCCESS == m_navMesh->getOffMeshConnectionPolyEndPoints(prevRef, polyRef, startPos, endPos))
             {
                 if (nsmoothPath < maxSmoothPathSize)
                 {
                     dtVcopy(&smoothPath[nsmoothPath*VERTEX_SIZE], startPos);
                     nsmoothPath++;
-                    // Hack to make the dotted path not visible during off-mesh connection.
-                    if (nsmoothPath & 1)
-                    {
-                        dtVcopy(&smoothPath[nsmoothPath*VERTEX_SIZE], startPos);
-                        nsmoothPath++;
-                    }
                 }
                 // Move position at the other side of the off-mesh link.
                 dtVcopy(iterPos, endPos);
                 m_navMeshQuery->getPolyHeight(polys[0], iterPos, &iterPos[1]);
-             }
+            }
         }
 
         // Store results.
@@ -763,5 +748,7 @@ dtStatus PathInfo::findSmoothPath(const float* startPos, const float* endPos,
     }
 
     *smoothPathSize = nsmoothPath;
-    return DT_SUCCESS;
+
+    // this is most likely loop
+    return nsmoothPath < maxSmoothPathSize ? DT_SUCCESS : DT_FAILURE;
 }
