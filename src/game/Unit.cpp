@@ -219,6 +219,7 @@ Unit::Unit()
     m_AuraFlags = 0;
 
     m_Visibility = VISIBILITY_ON;
+    m_AINotifyScheduled = false;
 
     m_detectInvisibilityMask = 0;
     m_invisibilityMask = 0;
@@ -7902,11 +7903,6 @@ bool Unit::isVisibleForOrDetect(Unit const* u, WorldObject const* viewPoint, boo
         if (!IsWithinDistInMap(viewPoint,World::GetMaxVisibleDistanceInFlight()+(inVisibleList ? World::GetVisibleObjectGreyDistance() : 0.0f), is3dDistance))
             return false;
     }
-    else if(!isAlive())                                     // distance for show body
-    {
-        if (!IsWithinDistInMap(viewPoint,World::GetMaxVisibleDistanceForObject()+(inVisibleList ? World::GetVisibleObjectGreyDistance() : 0.0f), is3dDistance))
-            return false;
-    }
     else if(!at_same_transport)                             // distance for show player/pet/creature (no transport case)
     {
         // Any units far than max visible distance for viewer or not in our map are not visible too
@@ -7926,7 +7922,7 @@ bool Unit::isVisibleForOrDetect(Unit const* u, WorldObject const* viewPoint, boo
             return false;
 
     // Visible units, always are visible for all units, except for units under invisibility and phases
-    if (m_Visibility == VISIBILITY_ON && u->m_invisibilityMask==0 && InSamePhase(u))
+    if (m_Visibility == VISIBILITY_ON && u->m_invisibilityMask==0)
         return true;
 
     // GMs see any players, not higher GMs and all units in any phase
@@ -7940,10 +7936,6 @@ bool Unit::isVisibleForOrDetect(Unit const* u, WorldObject const* viewPoint, boo
 
     // non faction visibility non-breakable for non-GMs
     if (m_Visibility == VISIBILITY_OFF)
-        return false;
-
-    // phased visibility (both must phased in same way)
-    if(!InSamePhase(u))
         return false;
 
     // raw invisibility
@@ -8099,12 +8091,9 @@ void Unit::SetVisibility(UnitVisibility x)
             }
         }
 
-        Map *m = GetMap();
-
-        if(GetTypeId()==TYPEID_PLAYER)
-            m->PlayerRelocation((Player*)this,GetPositionX(),GetPositionY(),GetPositionZ(),GetOrientation());
-        else
-            m->CreatureRelocation((Creature*)this,GetPositionX(),GetPositionY(),GetPositionZ(),GetOrientation());
+        GetViewPoint().Call_UpdateVisibilityForOwner();
+        UpdateObjectVisibility();
+        ScheduleAINotify(0);
 
         GetViewPoint().Event_ViewPointVisibilityChanged();
     }
@@ -9394,6 +9383,7 @@ uint32 Unit::GetCreatePowers( Powers power ) const
 void Unit::AddToWorld()
 {
     Object::AddToWorld();
+    ScheduleAINotify(0);
 }
 
 void Unit::RemoveFromWorld()
@@ -10967,4 +10957,63 @@ bool Unit::IsAllowedDamageInArea(Unit* pVictim) const
         return false;
 
     return true;
+}
+
+class RelocationNotifyEvent : public BasicEvent
+{
+public:
+    RelocationNotifyEvent(Unit& owner) : BasicEvent(), m_owner(owner)
+    {
+        m_owner._SetAINotifyScheduled(true);
+    }
+
+    bool Execute(uint64 /*e_time*/, uint32 /*p_time*/)
+    {
+        float radius = MAX_CREATURE_ATTACK_RADIUS * sWorld.getConfig(CONFIG_FLOAT_RATE_CREATURE_AGGRO);
+        if (m_owner.GetTypeId() == TYPEID_PLAYER)
+        {
+            MaNGOS::PlayerRelocationNotifier notify((Player&)m_owner);
+            Cell::VisitAllObjects(&m_owner,notify,radius);
+        } 
+        else //if(m_owner.GetTypeId() == TYPEID_UNIT)
+        {
+            MaNGOS::CreatureRelocationNotifier notify((Creature&)m_owner);
+            Cell::VisitAllObjects(&m_owner,notify,radius);
+        }
+        m_owner._SetAINotifyScheduled(false);
+        return true;
+    }
+
+    void Abort(uint64)
+    {
+        m_owner._SetAINotifyScheduled(false);
+    }
+
+private:
+    Unit& m_owner;
+};
+
+void Unit::ScheduleAINotify(uint32 delay)
+{
+    if (!IsAINotifyScheduled())
+        m_Events.AddEvent(new RelocationNotifyEvent(*this), m_Events.CalculateTime(delay));
+}
+
+void Unit::OnRelocated()
+{
+    // switch to use G3D::Vector3 is good idea, maybe
+    float dx = m_last_notified_position.x - GetPositionX();
+    float dy = m_last_notified_position.y - GetPositionY();
+    float dz = m_last_notified_position.z - GetPositionZ();
+    float distsq = dx*dx+dy*dy+dz*dz;
+    if (distsq > World::GetRelocationLowerLimitSq())
+    {
+        m_last_notified_position.x = GetPositionX();
+        m_last_notified_position.y = GetPositionY();
+        m_last_notified_position.z = GetPositionZ();
+
+        GetViewPoint().Call_UpdateVisibilityForOwner();
+        UpdateObjectVisibility();
+    }
+    ScheduleAINotify(World::GetRelocationAINotifyDelay());
 }

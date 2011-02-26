@@ -2010,10 +2010,13 @@ class MANGOS_DLL_SPEC Player : public Unit
         void UpdateArenaFields();
         void UpdateHonorFields();
         bool RewardHonor(Unit *pVictim, uint32 groupsize, float honor = -1);
-        uint32 GetHonorPoints() { return GetUInt32Value(PLAYER_FIELD_HONOR_CURRENCY); }
-        uint32 GetArenaPoints() { return GetUInt32Value(PLAYER_FIELD_ARENA_CURRENCY); }
-        void ModifyHonorPoints( int32 value );
-        void ModifyArenaPoints( int32 value );
+        uint32 GetHonorPoints() const { return GetUInt32Value(PLAYER_FIELD_HONOR_CURRENCY); }
+        uint32 GetArenaPoints() const { return GetUInt32Value(PLAYER_FIELD_ARENA_CURRENCY); }
+        void SetHonorPoints(uint32 value);
+        void SetArenaPoints(uint32 value);
+        void ModifyHonorPoints(int32 value);
+        void ModifyArenaPoints(int32 value);
+
         uint32 GetMaxPersonalArenaRatingRequirement(uint32 minarenaslot);
 
         //End of PvP System
@@ -2627,6 +2630,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         Runes *m_runes;
         EquipmentSets m_EquipmentSets;
     private:
+        void _HandleDeadlyPoison(Unit* Target, WeaponAttackType attType, SpellEntry const *spellInfo);
         // internal common parts for CanStore/StoreItem functions
         uint8 _CanStoreItem_InSpecificSlot( uint8 bag, uint8 slot, ItemPosCountVec& dest, ItemPrototype const *pProto, uint32& count, bool swap, Item *pSrcItem ) const;
         uint8 _CanStoreItem_InBag( uint8 bag, ItemPosCountVec& dest, ItemPrototype const *pProto, uint32& count, bool merge, bool non_specialized, Item *pSrcItem, uint8 skip_bag, uint8 skip_slot ) const;

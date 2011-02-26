@@ -24,7 +24,7 @@ CREATE TABLE `db_version` (
   `version` varchar(120) default NULL,
   `creature_ai_version` varchar(120) default NULL,
   `cache_id` int(10) default '0',
-  `required_11169_02_mangos_command` bit(1) default NULL
+  `required_11200_01_mangos_spell_bonus_data` bit(1) default NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 ROW_FORMAT=FIXED COMMENT='Used DB version notes';
 
 --
@@ -13787,7 +13787,6 @@ LOCK TABLES `points_of_interest` WRITE;
 /*!40000 ALTER TABLE `points_of_interest` ENABLE KEYS */;
 UNLOCK TABLES;
 
-
 --
 -- Table structure for table `pool_creature`
 --
@@ -13802,7 +13801,6 @@ CREATE TABLE `pool_creature` (
   INDEX `pool_idx` (pool_entry)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
-
 --
 -- Dumping data for table `pool_creature`
 --
@@ -13810,6 +13808,29 @@ CREATE TABLE `pool_creature` (
 LOCK TABLES `pool_creature` WRITE;
 /*!40000 ALTER TABLE `pool_creature` DISABLE KEYS */;
 /*!40000 ALTER TABLE `pool_creature` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `pool_creature_template`
+--
+
+DROP TABLE IF EXISTS `pool_creature_template`;
+CREATE TABLE `pool_creature_template` (
+  `id` int(10) unsigned NOT NULL default '0',
+  `pool_entry` mediumint(8) unsigned NOT NULL default '0',
+  `chance` float unsigned NOT NULL default '0',
+  `description` varchar(255) NOT NULL,
+  PRIMARY KEY  (`id`),
+  INDEX `pool_idx` (pool_entry)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+--
+-- Dumping data for table `pool_creature_template`
+--
+
+LOCK TABLES `pool_creature_template` WRITE;
+/*!40000 ALTER TABLE `pool_creature_template` DISABLE KEYS */;
+/*!40000 ALTER TABLE `pool_creature_template` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -13833,6 +13854,29 @@ CREATE TABLE `pool_gameobject` (
 LOCK TABLES `pool_gameobject` WRITE;
 /*!40000 ALTER TABLE `pool_gameobject` DISABLE KEYS */;
 /*!40000 ALTER TABLE `pool_gameobject` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `pool_gameobject_template`
+--
+
+DROP TABLE IF EXISTS `pool_gameobject_template`;
+CREATE TABLE `pool_gameobject_template` (
+  `id` int(10) unsigned NOT NULL default '0',
+  `pool_entry` mediumint(8) unsigned NOT NULL default '0',
+  `chance` float unsigned NOT NULL default '0',
+  `description` varchar(255) NOT NULL,
+  PRIMARY KEY  (`id`),
+  INDEX `pool_idx` (pool_entry)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+--
+-- Dumping data for table `pool_gameobject_template`
+--
+
+LOCK TABLES `pool_gameobject_template` WRITE;
+/*!40000 ALTER TABLE `pool_gameobject_template` DISABLE KEYS */;
+/*!40000 ALTER TABLE `pool_gameobject_template` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -14559,6 +14603,9 @@ INSERT INTO `spell_bonus_data` VALUES
 /* Rogue */
 (2818,  0,      0,       0,     0.03,  'Rogue - Deadly Poison'),
 (703,   0,      0,       0,     0.07,  'Rogue - Garrote'),
+(1776,  0,      0,       0.21,  0,     'Rogue - Gouge'),
+(8680,  0,      0,       0.10,  0,     'Rogue - Instant Poison'),
+(13218, 0,      0,       0.04,  0,     'Rogue - Wound Poison'),
 /* Shaman */
 (974,   0.4762, 0,       0,     0,     'Shaman - Earth Shield'),
 (379,   0,      0,       0,     0,     'Shaman - Earth Shield Triggered'),

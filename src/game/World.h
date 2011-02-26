@@ -561,11 +561,13 @@ class World
         static float GetMaxVisibleDistanceOnContinents()    { return m_MaxVisibleDistanceOnContinents; }
         static float GetMaxVisibleDistanceInInstances()     { return m_MaxVisibleDistanceInInstances;  }
         static float GetMaxVisibleDistanceInBGArenas()      { return m_MaxVisibleDistanceInBGArenas;   }
-        static float GetMaxVisibleDistanceForObject()       { return m_MaxVisibleDistanceForObject;   }
 
         static float GetMaxVisibleDistanceInFlight()        { return m_MaxVisibleDistanceInFlight;    }
         static float GetVisibleUnitGreyDistance()           { return m_VisibleUnitGreyDistance;       }
         static float GetVisibleObjectGreyDistance()         { return m_VisibleObjectGreyDistance;     }
+
+        static float GetRelocationLowerLimitSq()            { return m_relocation_lower_limit_sq; }
+        static uint32 GetRelocationAINotifyDelay()          { return m_relocation_ai_notify_delay; }
 
         void ProcessCliCommands();
         void QueueCliCommand(CliCommandHolder* commandHolder) { cliCmdQueue.add(commandHolder); }
@@ -651,11 +653,13 @@ class World
         static float m_MaxVisibleDistanceOnContinents;
         static float m_MaxVisibleDistanceInInstances;
         static float m_MaxVisibleDistanceInBGArenas;
-        static float m_MaxVisibleDistanceForObject;
 
         static float m_MaxVisibleDistanceInFlight;
         static float m_VisibleUnitGreyDistance;
         static float m_VisibleObjectGreyDistance;
+
+        static float  m_relocation_lower_limit_sq;
+        static uint32 m_relocation_ai_notify_delay;
 
         // CLI command holder to be thread safe
         ACE_Based::LockedQueue<CliCommandHolder*,ACE_Thread_Mutex> cliCmdQueue;

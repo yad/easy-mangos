@@ -650,21 +650,6 @@ void Spell::EffectSchoolDMG(SpellEffectIndex effect_idx)
                             damage += combo*40;
                     }
                 }
-                // Gouge
-                else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000000000000008))
-                {
-                    damage += int32(m_caster->GetTotalAttackPowerValue(BASE_ATTACK)*0.21f);
-                }
-                // Instant Poison
-                else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000000000002000))
-                {
-                    damage += int32(m_caster->GetTotalAttackPowerValue(BASE_ATTACK)*0.10f);
-                }
-                // Wound Poison
-                else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000000010000000))
-                {
-                    damage += int32(m_caster->GetTotalAttackPowerValue(BASE_ATTACK)*0.04f);
-                }
                 break;
             }
             case SPELLFAMILY_HUNTER:
@@ -1449,6 +1434,7 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     return;
                 }
                 case 46167:                                 // Planning for the Future: Create Snowfall Glade Pup Cover
+                case 50918:                                 // Gluttonous Lurkers: Create Basilisk Crystals Cover
                 case 50926:                                 // Gluttonous Lurkers: Create Zul'Drak Rat Cover
                 case 51026:                                 // Create Drakkari Medallion Cover
                 case 51592:                                 // Pickup Primordial Hatchling
@@ -1465,6 +1451,7 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     switch(m_spellInfo->Id)
                     {
                         case 46167: spellId = 46773; break;
+                        case 50918: spellId = 50919; break;
                         case 50926: spellId = 50927; break;
                         case 51026: spellId = 50737; break;
                         case 51592: spellId = 51593; break;
@@ -2048,6 +2035,20 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     m_caster->SetFacingTo(frand(0, M_PI_F*2), true);
                     return;
                 }
+                case 64981:                                 // Summon Random Vanquished Tentacle
+                {
+                    uint32 spell_id = 0;
+
+                    switch(urand(0, 2))
+                    {
+                        case 0: spell_id = 64982; break;    // Summon Vanquished Crusher Tentacle
+                        case 1: spell_id = 64983; break;    // Summon Vanquished Constrictor Tentacle
+                        case 2: spell_id = 64984; break;    // Summon Vanquished Corruptor Tentacle
+                    }
+
+                    m_caster->CastSpell(m_caster, spell_id, true);
+                    return;
+                }
                 case 66390:                                 // Read Last Rites
                 {
                     if (!unitTarget || unitTarget->GetTypeId() != TYPEID_UNIT || m_caster->GetTypeId() != TYPEID_PLAYER)
@@ -2101,6 +2102,15 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                             break;
                     }
                     m_caster->CastSpell(m_caster, spell_id, true);
+                    return;
+                }
+                case 69922:                                 // Temper Quel'Delar
+                {
+                    if (!unitTarget)
+                        return;
+
+                    // Return Tempered Quel'Delar
+                    unitTarget->CastSpell(m_caster, 69956, true);
                     return;
                 }
             }
@@ -5008,11 +5018,6 @@ void Spell::EffectEnchantItemPerm(SpellEffectIndex eff_idx)
     if (!itemTarget)
         return;
 
-    Player* p_caster = (Player*)m_caster;
-
-    // not grow at item use at item case
-    p_caster->UpdateCraftSkill(m_spellInfo->Id);
-
     uint32 enchant_id = m_spellInfo->EffectMiscValue[eff_idx];
     if (!enchant_id)
         return;
@@ -5025,6 +5030,25 @@ void Spell::EffectEnchantItemPerm(SpellEffectIndex eff_idx)
     Player* item_owner = itemTarget->GetOwner();
     if (!item_owner)
         return;
+
+    Player* p_caster = (Player*)m_caster;
+
+    // Enchanting a vellum requires special handling, as it creates a new item
+    // instead of modifying an existing one.
+    ItemPrototype const* targetProto = itemTarget->GetProto();
+    if (targetProto->IsVellum() && m_spellInfo->EffectItemType[eff_idx])
+    {
+        unitTarget = m_caster;
+        DoCreateItem(eff_idx,m_spellInfo->EffectItemType[eff_idx]);
+        // Vellum target case: Target becomes additional reagent, new scroll item created instead in Spell::EffectEnchantItemPerm()
+        // cannot already delete in TakeReagents() unfortunately
+        p_caster->DestroyItemCount(targetProto->ItemId, 1, true);
+        return;
+    }
+
+    // Using enchant stored on scroll does not increase enchanting skill! (Already granted on scroll creation)
+    if (!(m_CastItem && m_CastItem->GetProto()->Flags & ITEM_FLAG_ENCHANT_SCROLL))
+        p_caster->UpdateCraftSkill(m_spellInfo->Id);
 
     if (item_owner!=p_caster && p_caster->GetSession()->GetSecurity() > SEC_PLAYER && sWorld.getConfig(CONFIG_BOOL_GM_LOG_TRADE) )
     {
@@ -6536,6 +6560,23 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                         return;
 
                     ((Player*)caster)->RemoveSpellCategoryCooldown(82, true);
+                    return;
+                }
+                case 50894:                                 // Zul'Drak Rat
+                {
+                    if (!unitTarget || unitTarget->GetTypeId() != TYPEID_UNIT)
+                        return;
+
+                    if (SpellAuraHolder* pHolder = unitTarget->GetSpellAuraHolder(m_spellInfo->Id))
+                    {
+                        if (pHolder->GetStackAmount() + 1 >= m_spellInfo->StackAmount)
+                        {
+                            // Gluttonous Lurkers: Summon Gorged Lurking Basilisk
+                            unitTarget->CastSpell(m_caster, 50928, true);
+                            ((Creature*)unitTarget)->ForcedDespawn(1);
+                        }
+                    }
+
                     return;
                 }
                 case 51770:                                 // Emblazon Runeblade
