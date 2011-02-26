@@ -26,14 +26,6 @@
 
 class Unit;
 
-#define PRINT_DEBUG_INFO    0
-#define PATH_DEBUG(...)             \
-    do {                            \
-        if (PRINT_DEBUG_INFO)       \
-            printf(__VA_ARGS__);    \
-    } while(0)
-
-
 // 64*6.0f=384y  number_of_points*interval = max_path_len
 // this is way more than actual evade range
 // I think we can safely cut those down even more
