@@ -1230,16 +1230,17 @@ bool Creature::LoadFromDB(uint32 guidlow, Map *map)
     if (map->GetCreature(ObjectGuid(HIGHGUID_UNIT, data->id, guidlow)))
         return false;
 
-    if (!Create(guidlow, map, data->phaseMask, data->id, TEAM_NONE, data, eventData))
-        return false;
-
+    // set coordinates before call Create because some code can be depend from correct coordinates values.
     Relocate(data->posX, data->posY, data->posZ, data->orientation);
 
-    if(!IsPositionValid())
+    if (!IsPositionValid())
     {
         sLog.outError("Creature (guidlow %d, entry %d) not loaded. Suggested coordinates isn't valid (X: %f Y: %f)", GetGUIDLow(), GetEntry(), GetPositionX(), GetPositionY());
         return false;
     }
+
+    if (!Create(guidlow, map, data->phaseMask, data->id, TEAM_NONE, data, eventData))
+        return false;
 
     m_respawnradius = data->spawndist;
 
@@ -1907,37 +1908,15 @@ bool Creature::LoadCreatureAddon(bool reload)
                 continue;
             }
 
-            // skip already applied aura
-            if(HasAura(cAura->spell_id,cAura->effect_idx))
+            if (HasAura(cAura->spell_id))
             {
                 if(!reload)
-                    sLog.outErrorDb("Creature (GUIDLow: %u Entry: %u ) has duplicate aura (spell %u effect %u) in `auras` field.",GetGUIDLow(),GetEntry(),cAura->spell_id,cAura->effect_idx);
+                    sLog.outErrorDb("Creature (GUIDLow: %u Entry: %u) has duplicate spell %u in `auras` field.", GetGUIDLow(), GetEntry(), cAura->spell_id);
 
                 continue;
             }
 
-            SpellAuraHolder *holder = GetSpellAuraHolder(cAura->spell_id, GetGUID());
-
-            bool addedToExisting = true;
-            if (!holder)
-            {
-                holder = CreateSpellAuraHolder(AdditionalSpellInfo, this, this);
-                addedToExisting = false;
-            }
-            Aura* AdditionalAura = CreateAura(AdditionalSpellInfo, cAura->effect_idx, NULL, holder, this, this, 0);
-            holder->AddAura(AdditionalAura, cAura->effect_idx);
-
-            if (addedToExisting)
-            {
-                AddAuraToModList(AdditionalAura);
-                holder->SetInUse(true);
-                AdditionalAura->ApplyModifier(true,true);
-                holder->SetInUse(false);
-            }
-            else
-                AddSpellAuraHolder(holder);
-
-            DEBUG_FILTER_LOG(LOG_FILTER_SPELL_CAST, "Spell: %u - Aura %u added to creature (GUIDLow: %u Entry: %u )", cAura->spell_id, AdditionalSpellInfo->EffectApplyAuraName[EFFECT_INDEX_0],GetGUIDLow(),GetEntry());
+            CastSpell(this, AdditionalSpellInfo, true);
         }
     }
     return true;

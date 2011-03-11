@@ -1558,8 +1558,6 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         CharmInfo* GetCharmInfo() { return m_charmInfo; }
         CharmInfo* InitCharmInfo(Unit* charm);
 
-        Pet* CreateTamedPetFrom(Creature* creatureTarget,uint32 spell_id = 0);
-
         uint64 const& GetTotemGUID(TotemSlot slot) const { return m_TotemSlot[slot]; }
         Totem* GetTotem(TotemSlot slot) const;
         bool IsAllTotemSlotsUsed() const;
@@ -1716,6 +1714,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         // Visibility system
         UnitVisibility GetVisibility() const { return m_Visibility; }
         void SetVisibility(UnitVisibility x);
+        void UpdateVisibilityAndView();                     // overwrite WorldObject::UpdateVisibilityAndView()
 
         // common function for visibility checks for player/creatures with detection code
         bool isVisibleForOrDetect(Unit const* u, WorldObject const* viewPoint, bool detect, bool inVisibleList = false, bool is3dDistance = true) const;

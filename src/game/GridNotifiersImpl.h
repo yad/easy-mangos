@@ -136,14 +136,15 @@ inline void MaNGOS::DynamicObjectUpdater::VisitHelper(Unit* target)
     if (target->GetTypeId() == TYPEID_PLAYER && target != i_check && (((Player*)target)->isGameMaster() || ((Player*)target)->GetVisibility() == VISIBILITY_OFF))
         return;
 
+    // for player casts use less strict negative and more stricted positive targeting
     if (i_check->GetTypeId() == TYPEID_PLAYER )
     {
-        if (i_check->IsFriendlyTo( target ))
-            return;
+        if (i_check->IsFriendlyTo( target ) != i_positive)
+                return;
     }
     else
     {
-        if (!i_check->IsHostileTo( target ))
+        if (i_check->IsHostileTo( target ) == i_positive)
             return;
     }
 
@@ -159,7 +160,7 @@ inline void MaNGOS::DynamicObjectUpdater::VisitHelper(Unit* target)
 
     // Apply PersistentAreaAura on target
     // in case 2 dynobject overlap areas for same spell, same holder is selected, so dynobjects share holder
-    SpellAuraHolder *holder = target->GetSpellAuraHolder(spellInfo->Id, i_dynobject.GetCaster()->GetGUID());
+    SpellAuraHolder *holder = target->GetSpellAuraHolder(spellInfo->Id, i_dynobject.GetCasterGuid().GetRawValue());
 
     if (holder)
     {
