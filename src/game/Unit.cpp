@@ -10548,13 +10548,8 @@ void Unit::MonsterMoveWithSpeed(float x, float y, float z, uint32 transitTime)
 
 void Unit::MonsterMoveByPath(float x, float y, float z, uint32 speed, bool smoothPath)
 {
-    PathInfo path(this, x, y, z, !smoothPath);
+    PathInfo path(this, x, y, z, !smoothPath, true);
     PointPath pointPath = path.getFullPath();
-    uint32 size = pointPath.size();
-    // tiny hack for underwater charge cases
-    pointPath[size-1].x = x;
-    pointPath[size-1].y = y;
-    pointPath[size-1].z = z;
 
     uint32 traveltime = uint32(pointPath.GetTotalLength()/float(speed));
     MonsterMoveByPath(pointPath, 1, pointPath.size(), traveltime);

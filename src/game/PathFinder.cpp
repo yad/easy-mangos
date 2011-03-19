@@ -25,8 +25,10 @@
 #include "../recastnavigation/Detour/Include/DetourCommon.h"
 
 ////////////////// PathInfo //////////////////
-PathInfo::PathInfo(const Unit* owner, const float destX, const float destY, const float destZ, bool useStraightPath) :
-    m_polyLength(0), m_type(PATHFIND_BLANK), m_useStraightPath(useStraightPath),
+PathInfo::PathInfo(const Unit* owner, const float destX, const float destY, const float destZ,
+                   bool useStraightPath, bool forceDest) :
+    m_polyLength(0), m_type(PATHFIND_BLANK),
+    m_useStraightPath(useStraightPath), m_forceDestination(forceDest),
     m_sourceUnit(owner), m_navMesh(NULL), m_navMeshQuery(NULL)
 {
     PathNode endPoint(destX, destY, destZ);
@@ -66,7 +68,8 @@ PathInfo::~PathInfo()
     DEBUG_FILTER_LOG(LOG_FILTER_PATHFINDING, "++ PathInfo::~PathInfo() for %u \n", m_sourceUnit->GetGUID());
 }
 
-bool PathInfo::Update(const float destX, const float destY, const float destZ, bool useStraightPath)
+bool PathInfo::Update(const float destX, const float destY, const float destZ,
+                      bool useStraightPath, bool forceDest)
 {
     PathNode newDest(destX, destY, destZ);
     PathNode oldDest = getEndPosition();
@@ -79,6 +82,7 @@ bool PathInfo::Update(const float destX, const float destY, const float destZ, b
     setStartPosition(newStart);
 
     m_useStraightPath = useStraightPath;
+    m_forceDestination = forceDest;
 
     DEBUG_FILTER_LOG(LOG_FILTER_PATHFINDING, "++ PathInfo::Update() for %u \n", m_sourceUnit->GetGUID());
 
@@ -464,6 +468,16 @@ void PathInfo::BuildPointPath(float *startPoint, float *endPoint)
     // first point is always our current location - we need the next one
     setNextPosition(m_pathPoints[1]);
     setActualEndPosition(m_pathPoints[pointCount-1]);
+
+    // force the given destination, if needed
+    if(m_forceDestination &&
+        (!(m_type & PATHFIND_NORMAL) || !inRange(getEndPosition(), getActualEndPosition(), 1.0f, 1.0f)))
+    {
+        setActualEndPosition(getEndPosition());
+        BuildShortcut();
+        m_type = PathType(PATHFIND_NORMAL | PATHFIND_NOT_USING_PATH);
+        return;
+    }
 
     DEBUG_FILTER_LOG(LOG_FILTER_PATHFINDING, "++ PathInfo::BuildPointPath path type %d size %d poly-size %d\n", m_type, pointCount, m_polyLength);
 }

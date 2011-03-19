@@ -78,11 +78,17 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner)
     //ACE_hrtime_t elapsed;
     //timer.start();
 
+    bool forceDest = false;
+    // allow pets following their master to cheat while generating paths
+    if(owner.GetTypeId() == TYPEID_UNIT && ((Creature*)&owner)->IsPet()
+        && GetMovementGeneratorType() == FOLLOW_MOTION_TYPE)
+        forceDest = true;
+
     bool newPathCalculated = true;
     if(!i_path)
-        i_path = new PathInfo(&owner, x, y, z);
+        i_path = new PathInfo(&owner, x, y, z, false, forceDest);
     else
-        newPathCalculated = i_path->Update(x, y, z);
+        newPathCalculated = i_path->Update(x, y, z, false, forceDest);
 
     //timer.stop();
     //timer.elapsed_microseconds(elapsed);
