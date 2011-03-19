@@ -226,7 +226,7 @@ void PathInfo::BuildPolyPath(PathNode startPos, PathNode endPos)
             if (m_sourceUnit->GetTerrain()->IsUnderWater(p.x, p.y, p.z))
             {
                 DEBUG_FILTER_LOG(LOG_FILTER_PATHFINDING, "++ BuildPolyPath :: underWater case\n");
-                if (owner->CanSwim() || owner->IsPet())
+                if (owner->CanSwim())
                     buildShotrcut = true;
             }
             else
@@ -511,13 +511,11 @@ void PathInfo::createFilter()
             includeFlags |= NAV_GROUND;          // walk
 
         // creatures don't take environmental damage
-        if (creature->CanSwim() || creature->IsPet())
+        if (creature->CanSwim())
             includeFlags |= (NAV_WATER | NAV_MAGMA | NAV_SLIME);           // swim
     }
     else if (m_sourceUnit->GetTypeId() == TYPEID_PLAYER)
     {
-        Player* player = (Player*)m_sourceUnit;
-
         // perfect support not possible, just stay 'safe'
         includeFlags |= (NAV_GROUND | NAV_WATER);
     }
