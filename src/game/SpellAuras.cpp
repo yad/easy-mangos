@@ -2385,31 +2385,31 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
             if (!caster || !caster->isAlive())
                 return;
 
-            uint32 finalSpelId = 0;
+            uint32 finalSpellId = 0;
             switch(GetId())
             {
-                case 19548: finalSpelId = 19597; break;
-                case 19674: finalSpelId = 19677; break;
-                case 19687: finalSpelId = 19676; break;
-                case 19688: finalSpelId = 19678; break;
-                case 19689: finalSpelId = 19679; break;
-                case 19692: finalSpelId = 19680; break;
-                case 19693: finalSpelId = 19684; break;
-                case 19694: finalSpelId = 19681; break;
-                case 19696: finalSpelId = 19682; break;
-                case 19697: finalSpelId = 19683; break;
-                case 19699: finalSpelId = 19685; break;
-                case 19700: finalSpelId = 19686; break;
-                case 30646: finalSpelId = 30647; break;
-                case 30653: finalSpelId = 30648; break;
-                case 30654: finalSpelId = 30652; break;
-                case 30099: finalSpelId = 30100; break;
-                case 30102: finalSpelId = 30103; break;
-                case 30105: finalSpelId = 30104; break;
+                case 19548: finalSpellId = 19597; break;
+                case 19674: finalSpellId = 19677; break;
+                case 19687: finalSpellId = 19676; break;
+                case 19688: finalSpellId = 19678; break;
+                case 19689: finalSpellId = 19679; break;
+                case 19692: finalSpellId = 19680; break;
+                case 19693: finalSpellId = 19684; break;
+                case 19694: finalSpellId = 19681; break;
+                case 19696: finalSpellId = 19682; break;
+                case 19697: finalSpellId = 19683; break;
+                case 19699: finalSpellId = 19685; break;
+                case 19700: finalSpellId = 19686; break;
+                case 30646: finalSpellId = 30647; break;
+                case 30653: finalSpellId = 30648; break;
+                case 30654: finalSpellId = 30652; break;
+                case 30099: finalSpellId = 30100; break;
+                case 30102: finalSpellId = 30103; break;
+                case 30105: finalSpellId = 30104; break;
             }
 
-            if (finalSpelId)
-                caster->CastSpell(target, finalSpelId, true, NULL, this);
+            if (finalSpellId)
+                caster->CastSpell(target, finalSpellId, true, NULL, this);
 
             return;
         }
@@ -2506,6 +2506,14 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
 
                 if (pSummon && pCaster)
                     pSummon->GetMotionMaster()->MovePoint(0, pCaster->GetPositionX(), pCaster->GetPositionY(), pCaster->GetPositionZ());
+
+                return;
+            }
+            case 43969:                                     // Feathered Charm
+            {
+                // Steelfeather Quest Credit, Are there any requirements for this, like area?
+                if (m_removeMode == AURA_REMOVE_BY_EXPIRE)
+                    target->CastSpell(target, 43984, true);
 
                 return;
             }
@@ -8530,9 +8538,7 @@ void Aura::HandlePhase(bool apply, bool Real)
     else
         target->SetPhaseMask(phase, false);
 
-    // need triggering visibility update base at phase update of not GM invisible (other GMs anyway see in any phases)
-    if(target->GetVisibility() != VISIBILITY_OFF)
-        target->SetVisibility(target->GetVisibility());
+    target->UpdateVisibilityAndView();
 }
 
 void Aura::HandleAuraSafeFall( bool Apply, bool Real )
@@ -9060,7 +9066,7 @@ Unit* SpellAuraHolder::GetCaster() const
     return ObjectAccessor::GetUnit(*m_target, m_casterGuid);// player will search at any maps
 }
 
-bool SpellAuraHolder::IsWeaponBuffCoexistableWith(SpellAuraHolder* ref)
+bool SpellAuraHolder::IsWeaponBuffCoexistableWith(SpellAuraHolder const* ref) const
 {
     // only item casted spells
     if (GetCastItemGuid().IsEmpty())
@@ -9112,7 +9118,7 @@ bool SpellAuraHolder::IsNeedVisibleSlot(Unit const* caster) const
     return !m_isPassive || totemAura || HasAreaAuraEffect(m_spellProto);
 }
 
-void SpellAuraHolder::SendAuraUpdate(bool remove)
+void SpellAuraHolder::SendAuraUpdate(bool remove) const
 {
     WorldPacket data(SMSG_AURA_UPDATE);
     data << m_target->GetPackGUID();
@@ -9502,6 +9508,8 @@ void SpellAuraHolder::HandleSpellSpecificBoosts(bool apply)
             // Barkskin
             if (GetId()==22812 && m_target->HasAura(63057)) // Glyph of Barkskin
                 spellId1 = 63058;                           // Glyph - Barkskin 01
+            else if (!apply && GetId() == 5229)             // Enrage (Druid Bear)
+                spellId1 = 51185;                           // King of the Jungle (Enrage damage aura)
             else
                 return;
             break;

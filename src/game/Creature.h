@@ -200,7 +200,6 @@ struct CreatureData
 struct CreatureDataAddonAura
 {
     uint32 spell_id;
-    SpellEffectIndex effect_idx;
 };
 
 // from `creature_addon` and `creature_template_addon`tables
@@ -213,7 +212,7 @@ struct CreatureDataAddon
     uint8  pvp_state;                                       // UnitPVPStateFlags
     uint32 emote;
     uint32 splineFlags;
-    CreatureDataAddonAura const* auras;                     // loaded as char* "spell1 eff1 spell2 eff2 ... "
+    CreatureDataAddonAura const* auras;                     // loaded as char* "spell1 spell2 ... "
 };
 
 struct CreatureModelInfo
@@ -638,8 +637,6 @@ class MANGOS_DLL_SPEC Creature : public Unit
 
         void SetActiveObjectState(bool on);
 
-        void SetNeedNotify() { m_needNotify = true; }
-
         void SendAreaSpiritHealerQueryOpcode(Player *pl);
 
         void LockAI(bool lock) { m_AI_locked = lock; }
@@ -647,7 +644,6 @@ class MANGOS_DLL_SPEC Creature : public Unit
     protected:
         bool CreateFromProto(uint32 guidlow,uint32 Entry, Team team, const CreatureData *data = NULL, GameEventCreatureData const* eventData =NULL);
         bool InitEntry(uint32 entry, const CreatureData* data = NULL, GameEventCreatureData const* eventData = NULL);
-        void RelocationNotify();
 
         // vendor items
         VendorItemCounts m_vendorItemCounts;
@@ -678,7 +674,6 @@ class MANGOS_DLL_SPEC Creature : public Unit
         bool m_regenHealth;
         bool m_AI_locked;
         bool m_isDeadByDefault;
-        bool m_needNotify;
 
         SpellSchoolMask m_meleeDamageSchoolMask;
         uint32 m_originalEntry;

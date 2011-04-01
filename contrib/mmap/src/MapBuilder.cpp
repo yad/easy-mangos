@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -151,15 +151,6 @@ namespace MMAP
     {
         printf("Building map %03u:\n", mapID);
 
-        // build navMesh
-        dtNavMesh* navMesh = NULL;
-        buildNavMesh(mapID, navMesh);
-        if (!navMesh)
-        {
-            printf("Failed creating navmesh!              \n");
-            return;
-        }
-
         set<uint32>* tiles = getTileList(mapID);
 
         // vars that are used in multiple locations...
@@ -211,6 +202,15 @@ namespace MMAP
 
         if (!tiles->size())
             return;
+
+        // build navMesh
+        dtNavMesh* navMesh = NULL;
+        buildNavMesh(mapID, navMesh);
+        if (!navMesh)
+        {
+            printf("Failed creating navmesh!              \n");
+            return;
+        }
 
         // now start building mmtiles for each tile
         printf("We have %u tiles.                          \n", (unsigned int)tiles->size());
@@ -275,15 +275,6 @@ namespace MMAP
     {
         printf("Building map %03u, tile [%02u,%02u]\n", mapID, tileX, tileY);
 
-        // build navMesh
-        dtNavMesh* navMesh = NULL;
-        buildNavMesh(mapID, navMesh);
-        if (!navMesh)
-        {
-            printf("Failed creating navmesh!              \n");
-            return;
-        }
-
         float bmin[3], bmax[3], lmin[3], lmax[3];
         MeshData meshData;
 
@@ -319,6 +310,15 @@ namespace MMAP
                 return;
             if (tileY < minY || tileY > maxY)
                 return;
+        }
+
+        // build navMesh
+        dtNavMesh* navMesh = NULL;
+        buildNavMesh(mapID, navMesh);
+        if (!navMesh)
+        {
+            printf("Failed creating navmesh!              \n");
+            return;
         }
 
         G3D::Array<float> allVerts;

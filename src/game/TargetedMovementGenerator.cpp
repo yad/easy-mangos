@@ -78,11 +78,17 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner)
     //ACE_hrtime_t elapsed;
     //timer.start();
 
+    bool forceDest = false;
+    // allow pets following their master to cheat while generating paths
+    if(owner.GetTypeId() == TYPEID_UNIT && ((Creature*)&owner)->IsPet()
+        && owner.hasUnitState(UNIT_STAT_FOLLOW))
+        forceDest = true;
+
     bool newPathCalculated = true;
     if(!i_path)
-        i_path = new PathInfo(&owner, x, y, z);
+        i_path = new PathInfo(&owner, x, y, z, false, forceDest);
     else
-        newPathCalculated = i_path->Update(x, y, z);
+        newPathCalculated = i_path->Update(x, y, z, false, forceDest);
 
     //timer.stop();
     //timer.elapsed_microseconds(elapsed);
@@ -217,7 +223,7 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
             PathNode end_point = i_path->getEndPosition();
             next_point = i_path->getNextPosition();
 
-            needNewDest = i_destinationHolder.HasArrived() && !inRange(next_point, i_path->getActualEndPosition(), dist, 2*dist);
+            needNewDest = i_destinationHolder.HasArrived() && !inRange(next_point, i_path->getActualEndPosition(), dist, dist);
 
             // GetClosePoint() will always return a point on the ground, so we need to
             // handle the difference in elevation when the creature is flying

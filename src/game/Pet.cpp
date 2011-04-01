@@ -162,6 +162,13 @@ bool Pet::LoadPetFromDB( Player* owner, uint32 petentry, uint32 petnumber, bool 
         return false;
     }
 
+    // FIXME: Setup near to finish point because GetObjectBoundingRadius set in Create but some Create calls can be dependent from proper position
+    // if pet have creature_template_addon.auras with persistent point for example or script call
+    float px, py, pz;
+    owner->GetClosePoint(px, py, pz, 0, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE);
+
+    Relocate(px, py, pz, owner->GetOrientation());
+
     Map *map = owner->GetMap();
     uint32 guid = map->GenerateLocalLowGuid(HIGHGUID_PET);
     if (!Create(guid, map, owner->GetPhaseMask(), petentry, pet_number))
@@ -170,7 +177,6 @@ bool Pet::LoadPetFromDB( Player* owner, uint32 petentry, uint32 petnumber, bool 
         return false;
     }
 
-    float px, py, pz;
     owner->GetClosePoint(px, py, pz, GetObjectBoundingRadius(), PET_FOLLOW_DIST, PET_FOLLOW_ANGLE, this);
 
     Relocate(px, py, pz, owner->GetOrientation());
@@ -816,16 +822,9 @@ bool Pet::CreateBaseAtCreature(Creature* creature)
 {
     if(!creature)
     {
-        sLog.outError("CRITICAL: NULL pointer parsed into CreateBaseAtCreature()");
+        sLog.outError("CRITICAL: NULL pointer passed into CreateBaseAtCreature()");
         return false;
     }
-
-    uint32 guid = creature->GetMap()->GenerateLocalLowGuid(HIGHGUID_PET);
-
-    BASIC_LOG("Create pet");
-    uint32 pet_number = sObjectMgr.GeneratePetNumber();
-    if(!Create(guid, creature->GetMap(), creature->GetPhaseMask(), creature->GetEntry(), pet_number))
-        return false;
 
     Relocate(creature->GetPositionX(), creature->GetPositionY(), creature->GetPositionZ(), creature->GetOrientation());
 
@@ -835,6 +834,13 @@ bool Pet::CreateBaseAtCreature(Creature* creature)
             GetGUIDLow(), GetEntry(), GetPositionX(), GetPositionY());
         return false;
     }
+
+    uint32 guid = creature->GetMap()->GenerateLocalLowGuid(HIGHGUID_PET);
+
+    BASIC_LOG("Create pet");
+    uint32 pet_number = sObjectMgr.GeneratePetNumber();
+    if(!Create(guid, creature->GetMap(), creature->GetPhaseMask(), creature->GetEntry(), pet_number))
+        return false;
 
     CreatureInfo const *cinfo = GetCreatureInfo();
     if(!cinfo)
