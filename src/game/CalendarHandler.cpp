@@ -27,19 +27,19 @@
 
 void WorldSession::HandleCalendarGetCalendar(WorldPacket &/*recv_data*/)
 {
-    DEBUG_LOG("WORLD: CMSG_CALENDAR_GET_CALENDAR");     // empty
+    DEBUG_LOG("WORLD: CMSG_CALENDAR_GET_CALENDAR");         // empty
 
     time_t cur_time = time(NULL);
 
-    WorldPacket data(SMSG_CALENDAR_SEND_CALENDAR,4+4*0+4+4*0+4+4);
+    WorldPacket data(SMSG_CALENDAR_SEND_CALENDAR, 4+4*0+4+4*0+4+4);
 
     // TODO: calendar invite event output
-    data << (uint32) 0;                                     //invite node count
+    data << (uint32) 0;                                     // invite node count
     // TODO: calendar event output
-    data << (uint32) 0;                                     //event count
+    data << (uint32) 0;                                     // event count
 
-    data << uint32(cur_time);                               // current time, unix timestamp
-    data << uint32(secsToTimeBitFields(cur_time));          // current time, time bit fields
+    data << (uint32) cur_time;                              // current time, unix timestamp
+    data << (uint32) secsToTimeBitFields(cur_time);         // current packed time
 
     uint32 counter = 0;
     size_t p_counter = data.wpos();

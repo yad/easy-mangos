@@ -66,7 +66,9 @@ ScriptMgr::ScriptMgr() :
     m_pOnEffectDummyCreature(NULL),
     m_pOnEffectDummyGO(NULL),
     m_pOnEffectDummyItem(NULL),
-    m_pOnAuraDummy(NULL)
+    m_pOnAuraDummy(NULL),
+
+    m_scheduledScripts(0)
 {
 }
 
@@ -77,7 +79,7 @@ ScriptMgr::~ScriptMgr()
 
 void ScriptMgr::LoadScripts(ScriptMapMap& scripts, const char* tablename)
 {
-    if (sWorld.IsScriptScheduled())                         // function don't must be called in time scripts use.
+    if (IsScriptScheduled())                                // function don't must be called in time scripts use.
         return;
 
     sLog.outString("%s :", tablename);
@@ -604,9 +606,25 @@ void ScriptMgr::LoadEventScripts()
 
     // Load all possible script entries from gameobjects
     for(uint32 i = 1; i < sGOStorage.MaxEntry; ++i)
+    {
         if (GameObjectInfo const* goInfo = sGOStorage.LookupEntry<GameObjectInfo>(i))
+        {
             if (uint32 eventId = goInfo->GetEventScriptId())
                 evt_scripts.insert(eventId);
+
+            if (goInfo->type == GAMEOBJECT_TYPE_CAPTURE_POINT)
+            {
+                evt_scripts.insert(goInfo->capturePoint.neutralEventID1);
+                evt_scripts.insert(goInfo->capturePoint.neutralEventID2);
+                evt_scripts.insert(goInfo->capturePoint.contestedEventID1);
+                evt_scripts.insert(goInfo->capturePoint.contestedEventID2);
+                evt_scripts.insert(goInfo->capturePoint.progressEventID1);
+                evt_scripts.insert(goInfo->capturePoint.progressEventID2);
+                evt_scripts.insert(goInfo->capturePoint.winEventID1);
+                evt_scripts.insert(goInfo->capturePoint.winEventID2);
+            }
+        }
+    }
 
     // Load all possible script entries from spells
     for(uint32 i = 1; i < sSpellStore.GetNumRows(); ++i)
@@ -644,7 +662,7 @@ void ScriptMgr::LoadEventScripts()
     {
         std::set<uint32>::const_iterator itr2 = evt_scripts.find(itr->first);
         if (itr2 == evt_scripts.end())
-            sLog.outErrorDb("Table `event_scripts` has script (Id: %u) not referring to any gameobject_template type 10 data2 field, type 3 data6 field, type 13 data 2 field or any spell effect %u or path taxi node data",
+            sLog.outErrorDb("Table `event_scripts` has script (Id: %u) not referring to any gameobject_template type 10 data2 field, type 3 data6 field, type 13 data 2 field, type 29 or any spell effect %u or path taxi node data",
                 itr->first, SPELL_EFFECT_SEND_EVENT);
     }
 }
@@ -776,9 +794,25 @@ void ScriptMgr::LoadEventIdScripts()
 
     // Load all possible event entries from gameobjects
     for(uint32 i = 1; i < sGOStorage.MaxEntry; ++i)
+    {
         if (GameObjectInfo const* goInfo = sGOStorage.LookupEntry<GameObjectInfo>(i))
+        {
             if (uint32 eventId = goInfo->GetEventScriptId())
                 evt_scripts.insert(eventId);
+
+            if (goInfo->type == GAMEOBJECT_TYPE_CAPTURE_POINT)
+            {
+                evt_scripts.insert(goInfo->capturePoint.neutralEventID1);
+                evt_scripts.insert(goInfo->capturePoint.neutralEventID2);
+                evt_scripts.insert(goInfo->capturePoint.contestedEventID1);
+                evt_scripts.insert(goInfo->capturePoint.contestedEventID2);
+                evt_scripts.insert(goInfo->capturePoint.progressEventID1);
+                evt_scripts.insert(goInfo->capturePoint.progressEventID2);
+                evt_scripts.insert(goInfo->capturePoint.winEventID1);
+                evt_scripts.insert(goInfo->capturePoint.winEventID2);
+            }
+        }
+    }
 
     // Load all possible event entries from spells
     for(uint32 i = 1; i < sSpellStore.GetNumRows(); ++i)
@@ -824,7 +858,7 @@ void ScriptMgr::LoadEventIdScripts()
 
         std::set<uint32>::const_iterator itr = evt_scripts.find(eventId);
         if (itr == evt_scripts.end())
-            sLog.outErrorDb("Table `scripted_event_id` has id %u not referring to any gameobject_template type 10 data2 field, type 3 data6 field, type 13 data 2 field or any spell effect %u or path taxi node data",
+            sLog.outErrorDb("Table `scripted_event_id` has id %u not referring to any gameobject_template type 10 data2 field, type 3 data6 field, type 13 data 2 field, type 29 or any spell effect %u or path taxi node data",
                 eventId, SPELL_EFFECT_SEND_EVENT);
 
         m_EventIdScripts[eventId] = GetScriptId(scriptName);

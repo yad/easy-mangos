@@ -282,9 +282,9 @@ pAuraHandler AuraHandler[TOTAL_AURAS]=
     &Aura::HandleNoImmediateEffect,                         //229 SPELL_AURA_MOD_AOE_DAMAGE_AVOIDANCE        implemented in Unit::SpellDamageBonusTaken
     &Aura::HandleAuraModIncreaseMaxHealth,                  //230 Commanding Shout
     &Aura::HandleNoImmediateEffect,                         //231 SPELL_AURA_PROC_TRIGGER_SPELL_WITH_VALUE
-    &Aura::HandleNoImmediateEffect,                         //232 SPELL_AURA_MECHANIC_DURATION_MOD           implement in Unit::CalculateSpellDuration
+    &Aura::HandleNoImmediateEffect,                         //232 SPELL_AURA_MECHANIC_DURATION_MOD           implement in Unit::CalculateAuraDuration
     &Aura::HandleNULL,                                      //233 set model id to the one of the creature with id m_modifier.m_miscvalue
-    &Aura::HandleNoImmediateEffect,                         //234 SPELL_AURA_MECHANIC_DURATION_MOD_NOT_STACK implement in Unit::CalculateSpellDuration
+    &Aura::HandleNoImmediateEffect,                         //234 SPELL_AURA_MECHANIC_DURATION_MOD_NOT_STACK implement in Unit::CalculateAuraDuration
     &Aura::HandleAuraModDispelResist,                       //235 SPELL_AURA_MOD_DISPEL_RESIST               implement in Unit::MagicSpellHitResult
     &Aura::HandleAuraControlVehicle,                        //236 SPELL_AURA_CONTROL_VEHICLE
     &Aura::HandleModSpellDamagePercentFromAttackPower,      //237 SPELL_AURA_MOD_SPELL_DAMAGE_OF_ATTACK_POWER  implemented in Unit::SpellBaseDamageBonusDone
@@ -295,8 +295,8 @@ pAuraHandler AuraHandler[TOTAL_AURAS]=
     &Aura::HandleUnused,                                    //242 SPELL_AURA_MOD_SPELL_DAMAGE_FROM_HEALING (only 2 test spels in 3.2.2a)
     &Aura::HandleNULL,                                      //243 faction reaction override spells
     &Aura::HandleComprehendLanguage,                        //244 SPELL_AURA_COMPREHEND_LANGUAGE
-    &Aura::HandleNoImmediateEffect,                         //245 SPELL_AURA_MOD_DURATION_OF_MAGIC_EFFECTS     implemented in Unit::CalculateSpellDuration
-    &Aura::HandleNoImmediateEffect,                         //246 SPELL_AURA_MOD_DURATION_OF_EFFECTS_BY_DISPEL implemented in Unit::CalculateSpellDuration
+    &Aura::HandleNoImmediateEffect,                         //245 SPELL_AURA_MOD_DURATION_OF_MAGIC_EFFECTS     implemented in Unit::CalculateAuraDuration
+    &Aura::HandleNoImmediateEffect,                         //246 SPELL_AURA_MOD_DURATION_OF_EFFECTS_BY_DISPEL implemented in Unit::CalculateAuraDuration
     &Aura::HandleAuraMirrorImage,                           //247 SPELL_AURA_MIRROR_IMAGE
     &Aura::HandleNoImmediateEffect,                         //248 SPELL_AURA_MOD_COMBAT_RESULT_CHANCE         implemented in Unit::RollMeleeOutcomeAgainst
     &Aura::HandleAuraConvertRune,                           //249 SPELL_AURA_CONVERT_RUNE
@@ -372,31 +372,24 @@ pAuraHandler AuraHandler[TOTAL_AURAS]=
 static AuraType const frozenAuraTypes[] = { SPELL_AURA_MOD_ROOT, SPELL_AURA_MOD_STUN, SPELL_AURA_NONE };
 
 Aura::Aura(SpellEntry const* spellproto, SpellEffectIndex eff, int32 *currentBasePoints, SpellAuraHolder *holder, Unit *target, Unit *caster, Item* castItem) :
-m_spellmod(NULL),
-m_timeCla(1000), m_periodicTimer(0), m_periodicTick(0), m_removeMode(AURA_REMOVE_BY_DEFAULT),
+m_spellmod(NULL), m_periodicTimer(0), m_periodicTick(0), m_removeMode(AURA_REMOVE_BY_DEFAULT),
 m_effIndex(eff), m_positive(false), m_isPeriodic(false), m_isAreaAura(false),
 m_isPersistent(false), m_in_use(0), m_spellAuraHolder(holder)
 {
     MANGOS_ASSERT(target);
-
     MANGOS_ASSERT(spellproto && spellproto == sSpellStore.LookupEntry( spellproto->Id ) && "`info` must be pointer to sSpellStore element");
 
     m_currentBasePoints = currentBasePoints ? *currentBasePoints : spellproto->CalculateSimpleValue(eff);
 
-    bool isPassive = IsPassiveSpell(GetSpellProto());
-    bool isPermanent = false;
-    m_positive = IsPositiveEffect(spellproto->Id, m_effIndex);
-
+    m_positive = IsPositiveEffect(spellproto, m_effIndex);
     m_applyTime = time(NULL);
 
     int32 damage;
     if (!caster)
-    {
         damage = m_currentBasePoints;
-    }
     else
     {
-        damage        = caster->CalculateSpellDamage(target, spellproto, m_effIndex, &m_currentBasePoints);
+        damage = caster->CalculateSpellDamage(target, spellproto, m_effIndex, &m_currentBasePoints);
 
         if (!damage && castItem && castItem->GetItemSuffixFactor())
         {
@@ -449,7 +442,7 @@ m_isPersistent(false), m_in_use(0), m_spellAuraHolder(holder)
 
     // Start periodic on next tick or at aura apply
     if (!(spellproto->AttributesEx5 & SPELL_ATTR_EX5_START_PERIODIC_AT_APPLY))
-        m_periodicTimer += m_modifier.periodictime;
+        m_periodicTimer = m_modifier.periodictime;
 }
 
 Aura::~Aura()
@@ -775,8 +768,9 @@ void AreaAura::Update(uint32 diff)
                         addedToExisting = false;
                     }
 
+                    holder->SetAuraDuration(GetAuraDuration());
+
                     AreaAura *aur = new AreaAura(actualSpellInfo, m_effIndex, &actualBasePoints, holder, (*tIter), caster, NULL);
-                    aur->SetAuraDuration(GetAuraDuration());
                     holder->AddAura(aur, m_effIndex);
 
                     if (addedToExisting)
@@ -2015,7 +2009,7 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                         // max duration is 2 minutes, but expected to be random duration
                         // real time randomness is unclear, using max 30 seconds here
                         // see further down for expire of this aura
-                        SetAuraDuration(rand()%30*IN_MILLISECONDS);
+                        GetHolder()->SetAuraDuration(urand(1, 30)*IN_MILLISECONDS);
                         return;
                     }
                     // Gender spells
@@ -2099,6 +2093,10 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                             // Reindeer Transformation
                             target->CastSpell(target, 25860, true, NULL, this);
                         return;
+                    case 62109:                             // Tails Up: Aura
+                        target->setFaction(1990);           // Ambient (hostile)
+                        target->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_OOC_NOT_ATTACKABLE);
+                        return;
                     case 63624:                             // Learn a Second Talent Specialization
                         // Teach Learn Talent Specialization Switches, required for client triggered casts, allow after 30 sec delay
                         if (target->GetTypeId() == TYPEID_PLAYER)
@@ -2156,9 +2154,9 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                         target->CastSpell(target, 41106, true, NULL, this);
 
                         // equipment
-                        target->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 0, 32614);
-                        target->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 1, 0);
-                        target->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 2, 0);
+                        ((Creature*)target)->SetVirtualItem(VIRTUAL_ITEM_SLOT_0, 32614);
+                        ((Creature*)target)->SetVirtualItem(VIRTUAL_ITEM_SLOT_1, 0);
+                        ((Creature*)target)->SetVirtualItem(VIRTUAL_ITEM_SLOT_2, 0);
                         return;
                     }
                     case 41100:                             // Berserker Stance
@@ -2173,9 +2171,9 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                         target->CastSpell(target, 41107, true, NULL, this);
 
                         // equipment
-                        target->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 0, 32614);
-                        target->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 1, 0);
-                        target->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 2, 0);
+                        ((Creature*)target)->SetVirtualItem(VIRTUAL_ITEM_SLOT_0, 32614);
+                        ((Creature*)target)->SetVirtualItem(VIRTUAL_ITEM_SLOT_1, 0);
+                        ((Creature*)target)->SetVirtualItem(VIRTUAL_ITEM_SLOT_2, 0);
                         return;
                     }
                     case 41101:                             // Defensive Stance
@@ -2190,9 +2188,9 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                         target->CastSpell(target, 41105, true, NULL, this);
 
                         // equipment
-                        target->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 0, 32604);
-                        target->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 1, 31467);
-                        target->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 2, 0);
+                        ((Creature*)target)->SetVirtualItem(VIRTUAL_ITEM_SLOT_0, 32604);
+                        ((Creature*)target)->SetVirtualItem(VIRTUAL_ITEM_SLOT_1, 31467);
+                        ((Creature*)target)->SetVirtualItem(VIRTUAL_ITEM_SLOT_2, 0);
                         return;
                     }
                     case 53790:                             // Defensive Stance
@@ -2207,9 +2205,9 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                         target->CastSpell(target, 41105, true, NULL, this);
 
                         // equipment
-                        target->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 0, 43625);
-                        target->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 1, 39384);
-                        target->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 2, 0);
+                        ((Creature*)target)->SetVirtualItem(VIRTUAL_ITEM_SLOT_0, 43625);
+                        ((Creature*)target)->SetVirtualItem(VIRTUAL_ITEM_SLOT_1, 39384);
+                        ((Creature*)target)->SetVirtualItem(VIRTUAL_ITEM_SLOT_2, 0);
                         return;
                     }
                     case 53791:                             // Berserker Stance
@@ -2224,9 +2222,9 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                         target->CastSpell(target, 41107, true, NULL, this);
 
                         // equipment
-                        target->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 0, 43625);
-                        target->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 1, 43625);
-                        target->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 2, 0);
+                        ((Creature*)target)->SetVirtualItem(VIRTUAL_ITEM_SLOT_0, 43625);
+                        ((Creature*)target)->SetVirtualItem(VIRTUAL_ITEM_SLOT_1, 43625);
+                        ((Creature*)target)->SetVirtualItem(VIRTUAL_ITEM_SLOT_2, 0);
                         return;
                     }
                     case 53792:                             // Battle Stance
@@ -2241,9 +2239,9 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                         target->CastSpell(target, 41106, true, NULL, this);
 
                         // equipment
-                        target->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 0, 43623);
-                        target->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 1, 0);
-                        target->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 2, 0);
+                        ((Creature*)target)->SetVirtualItem(VIRTUAL_ITEM_SLOT_0, 43623);
+                        ((Creature*)target)->SetVirtualItem(VIRTUAL_ITEM_SLOT_1, 0);
+                        ((Creature*)target)->SetVirtualItem(VIRTUAL_ITEM_SLOT_2, 0);
                         return;
                     }
                 }
@@ -2581,6 +2579,12 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                 if (m_removeMode == AURA_REMOVE_BY_EXPIRE)
                     target->CastSpell(target, 52092, true, NULL, this);
 
+                return;
+            }
+            case 53039:                                     // Deploy Parachute
+            {
+                // Crusader Parachute
+                target->RemoveAurasDueToSpell(53031);
                 return;
             }
             case 53790:                                     // Defensive Stance
@@ -4534,10 +4538,10 @@ void Aura::HandleModStealth(bool apply, bool Real)
                 // Overkill
                 else if ((*i)->GetId() == 58426)//Overkill we should remove anyway
                 {
-                    if (Aura* aura = target->GetAura(58427, EFFECT_INDEX_0))
+                    if (SpellAuraHolder* holder = target->GetSpellAuraHolder(58427))
                     {
-                        aura->SetAuraMaxDuration(20*IN_MILLISECONDS);
-                        aura->GetHolder()->RefreshHolder();
+                        holder->SetAuraMaxDuration(20*IN_MILLISECONDS);
+                        holder->RefreshHolder();
                     }
                 }
             }
@@ -8604,20 +8608,6 @@ void Aura::HandleAuraModAllCritChance(bool apply, bool Real)
     ((Player*)target)->UpdateAllSpellCritChances();
 }
 
-void Aura::SetAuraMaxDuration(int32 duration)
-{
-    m_maxduration = duration;
-
-    // possible overwrite persistent state
-    if (duration > 0)
-    {
-        if (!(GetHolder()->IsPassive() && GetSpellProto()->DurationIndex == 0))
-            GetHolder()->SetPermanent(false);
-
-        GetHolder()->SetAuraFlags(GetHolder()->GetAuraFlags() | AFLAG_DURATION);
-    }
-}
-
 bool Aura::IsLastAuraOnHolder()
 {
     for (int32 i = 0; i < MAX_EFFECT_INDEX; ++i)
@@ -8633,9 +8623,9 @@ bool Aura::HasMechanic(uint32 mechanic) const
 }
 
 SpellAuraHolder::SpellAuraHolder(SpellEntry const* spellproto, Unit *target, WorldObject *caster, Item *castItem) :
-m_target(target), m_castItemGuid(castItem ? castItem->GetObjectGuid() : ObjectGuid()),
+m_spellProto(spellproto), m_target(target), m_castItemGuid(castItem ? castItem->GetObjectGuid() : ObjectGuid()),
 m_auraSlot(MAX_AURAS), m_auraFlags(AFLAG_NONE), m_auraLevel(1), m_procCharges(0),
-m_stackAmount(1), m_removeMode(AURA_REMOVE_BY_DEFAULT), m_AuraDRGroup(DIMINISHING_NONE),
+m_stackAmount(1), m_removeMode(AURA_REMOVE_BY_DEFAULT), m_AuraDRGroup(DIMINISHING_NONE), m_timeCla(1000),
 m_permanent(false), m_isRemovedOnShapeLost(true), m_deleted(false), m_in_use(0)
 {
     MANGOS_ASSERT(target);
@@ -8646,39 +8636,37 @@ m_permanent(false), m_isRemovedOnShapeLost(true), m_deleted(false), m_in_use(0)
     else
     {
         // remove this assert when not unit casters will be supported
-        MANGOS_ASSERT(caster->GetObjectGuid().IsUnit())
+        MANGOS_ASSERT(caster->isType(TYPEMASK_UNIT))
         m_casterGuid = caster->GetObjectGuid();
     }
 
-    m_applyTime = time(NULL);
-    m_spellProto = spellproto;
-    m_isPassive = IsPassiveSpell(GetId());
-    m_isDeathPersist = IsDeathPersistentSpell(m_spellProto);
+    m_applyTime      = time(NULL);
+    m_isPassive      = IsPassiveSpell(spellproto);
+    m_isDeathPersist = IsDeathPersistentSpell(spellproto);
     m_isSingleTarget = IsSingleTargetSpell(spellproto);
-
-    if (GetSpellMaxDuration(m_spellProto) == -1 || (m_isPassive && m_spellProto->DurationIndex == 0))
-        m_permanent = true;
+    m_procCharges    = spellproto->procCharges;
 
     m_isRemovedOnShapeLost = (GetCasterGuid() == m_target->GetObjectGuid() &&
                               m_spellProto->Stances &&
                             !(m_spellProto->AttributesEx2 & SPELL_ATTR_EX2_NOT_NEED_SHAPESHIFT) &&
                             !(m_spellProto->Attributes & SPELL_ATTR_NOT_SHAPESHIFT));
 
-    Player* modOwner = caster && caster->GetObjectGuid().IsUnit() ? ((Unit*)caster)->GetSpellModOwner() : NULL;
+    Unit* unitCaster = caster && caster->isType(TYPEMASK_UNIT) ? (Unit*)caster : NULL;
 
-    m_procCharges = m_spellProto->procCharges;
-    if(modOwner)
-        modOwner->ApplySpellMod(GetId(), SPELLMOD_CHARGES, m_procCharges);
+    m_duration = m_maxDuration = CalculateSpellDuration(spellproto, unitCaster);
+
+    if (m_maxDuration == -1 || (m_isPassive && spellproto->DurationIndex == 0))
+        m_permanent = true;
+
+    if (unitCaster)
+    {
+        if (Player* modOwner = unitCaster->GetSpellModOwner())
+            modOwner->ApplySpellMod(GetId(), SPELLMOD_CHARGES, m_procCharges);
+    }
 
     // some custom stack values at aura holder create
     switch (m_spellProto->Id)
     {
-        case 22959:                                         // Improved Scorch
-            if (caster && caster->GetObjectGuid().IsUnit())
-                // Glyph of Improved Scorch
-                if (Aura* glyph = ((Unit*)caster)->GetDummyAura(56371))
-                    m_stackAmount = glyph->GetModifier()->m_amount;
-            break;
         // some auras applied with max stack
         case 24575:                                         // Brittle Armor
         case 24659:                                         // Unstable Power
@@ -8728,11 +8716,11 @@ void SpellAuraHolder::_AddSpellAuraHolder()
     // Lookup free slot
     if (m_target->GetVisibleAurasCount() < MAX_AURAS)
     {
-        Unit::VisibleAuraMap const *visibleAuras = m_target->GetVisibleAuras();
+        Unit::VisibleAuraMap const& visibleAuras = m_target->GetVisibleAuras();
         for(uint8 i = 0; i < MAX_AURAS; ++i)
         {
-            Unit::VisibleAuraMap::const_iterator itr = visibleAuras->find(i);
-            if(itr == visibleAuras->end())
+            Unit::VisibleAuraMap::const_iterator itr = visibleAuras.find(i);
+            if (itr == visibleAuras.end())
             {
                 slot = i;
                 // update for out of range group members (on 1 slot use)
@@ -9028,8 +9016,8 @@ void SpellAuraHolder::SetStackAmount(uint32 stackAmount)
     if (!target || !caster)
         return;
 
-    bool refresh = stackAmount >= uint32(m_stackAmount);
-    if (stackAmount != uint32(m_stackAmount))
+    bool refresh = stackAmount >= m_stackAmount;
+    if (stackAmount != m_stackAmount)
     {
         m_stackAmount = stackAmount;
 
@@ -9118,23 +9106,17 @@ bool SpellAuraHolder::IsNeedVisibleSlot(Unit const* caster) const
     return !m_isPassive || totemAura || HasAreaAuraEffect(m_spellProto);
 }
 
-void SpellAuraHolder::SendAuraUpdate(bool remove) const
+void SpellAuraHolder::BuildUpdatePacket(WorldPacket& data) const
 {
-    WorldPacket data(SMSG_AURA_UPDATE);
-    data << m_target->GetPackGUID();
     data << uint8(GetAuraSlot());
-    data << uint32(remove ? 0 : GetId());
-
-    if(remove)
-    {
-        m_target->SendMessageToSet(&data, true);
-        return;
-    }
+    data << uint32(GetId());
 
     uint8 auraFlags = GetAuraFlags();
     data << uint8(auraFlags);
     data << uint8(GetAuraLevel());
-    data << uint8(m_procCharges ? m_procCharges*m_stackAmount : m_stackAmount);
+
+    uint32 stackCount = m_procCharges ? m_procCharges*m_stackAmount : m_stackAmount;
+    data << uint8(stackCount <= 255 ? stackCount : 255);
 
     if(!(auraFlags & AFLAG_NOT_CASTER))
     {
@@ -9143,24 +9125,23 @@ void SpellAuraHolder::SendAuraUpdate(bool remove) const
 
     if(auraFlags & AFLAG_DURATION)
     {
-        // take highest - to display icon even if stun fades
-        uint32 max_duration = 0;
-        uint32 duration = 0;
-        for (int32 i = 0; i < MAX_EFFECT_INDEX; ++i)
-        {
-            if (Aura *aura = m_auras[i])
-            {
-                if (uint32(aura->GetAuraMaxDuration()) > max_duration)
-                {
-                    max_duration = aura->GetAuraMaxDuration();
-                    duration = aura->GetAuraDuration();
-                }
-            }
-        }
-
-        data << uint32(max_duration);
-        data << uint32(duration);
+        data << uint32(GetAuraMaxDuration());
+        data << uint32(GetAuraDuration());
     }
+}
+
+void SpellAuraHolder::SendAuraUpdate(bool remove) const
+{
+    WorldPacket data(SMSG_AURA_UPDATE);
+    data << m_target->GetPackGUID();
+
+    if(remove)
+    {
+        data << uint8(GetAuraSlot());
+        data << uint32(0);
+    }
+    else
+        BuildUpdatePacket(data);
 
     m_target->SendMessageToSet(&data, true);
 }
@@ -9941,6 +9922,33 @@ SpellAuraHolder::~SpellAuraHolder()
 
 void SpellAuraHolder::Update(uint32 diff)
 {
+    if (m_duration > 0)
+    {
+        m_duration -= diff;
+        if (m_duration < 0)
+            m_duration = 0;
+
+        m_timeCla -= diff;
+
+        if (m_timeCla <= 0)
+        {
+            if (Unit* caster = GetCaster())
+            {
+                Powers powertype = Powers(GetSpellProto()->powerType);
+                int32 manaPerSecond = GetSpellProto()->manaPerSecond + GetSpellProto()->manaPerSecondPerLevel * caster->getLevel();
+                m_timeCla = 1*IN_MILLISECONDS;
+
+                if (manaPerSecond)
+                {
+                    if (powertype == POWER_HEALTH)
+                        caster->ModifyHealth(-manaPerSecond);
+                    else
+                        caster->ModifyPower(powertype, -manaPerSecond);
+                }
+            }
+        }
+    }
+
     for (int32 i = 0; i < MAX_EFFECT_INDEX; ++i)
         if (Aura *aura = m_auras[i])
             aura->UpdateAura(diff);
@@ -9975,11 +9983,24 @@ void SpellAuraHolder::Update(uint32 diff)
 
 void SpellAuraHolder::RefreshHolder()
 {
-    for (int32 i = 0; i < MAX_EFFECT_INDEX; ++i)
-        if (Aura *aura = m_auras[i])
-            aura->SetAuraDuration(aura->GetAuraMaxDuration());
-
+    SetAuraDuration(GetAuraMaxDuration());
     SendAuraUpdate(false);
+}
+
+void SpellAuraHolder::SetAuraMaxDuration(int32 duration)
+{
+    m_maxDuration = duration;
+
+    // possible overwrite persistent state
+    if (duration > 0)
+    {
+        if (!(IsPassive() && GetSpellProto()->DurationIndex == 0))
+            SetPermanent(false);
+
+        SetAuraFlags(GetAuraFlags() | AFLAG_DURATION);
+    }
+    else
+        SetAuraFlags(GetAuraFlags() & ~AFLAG_DURATION);
 }
 
 bool SpellAuraHolder::HasMechanic(uint32 mechanic) const

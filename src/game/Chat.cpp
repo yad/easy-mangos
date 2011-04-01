@@ -236,9 +236,9 @@ ChatCommand * ChatHandler::getCommandTable()
         { "ingame",         SEC_PLAYER,         true,  &ChatHandler::HandleGMListIngameCommand,        "", NULL },
         { "list",           SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleGMListFullCommand,          "", NULL },
         { "visible",        SEC_MODERATOR,      false, &ChatHandler::HandleGMVisibleCommand,           "", NULL },
+        { "setview",        SEC_MODERATOR,      false, &ChatHandler::HandleSetViewCommand,             "", NULL },
         { "startup",        SEC_ADMINISTRATOR,  false, &ChatHandler::HandleGMStartUpCommand,           "", NULL },
         { "",               SEC_MODERATOR,      false, &ChatHandler::HandleGMCommand,                  "", NULL },
-        { "setview",        SEC_MODERATOR,      false, &ChatHandler::HandleSetViewCommand,             "", NULL },
         { NULL,             0,                  false, NULL,                                           "", NULL }
     };
 

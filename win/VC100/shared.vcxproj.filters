@@ -48,9 +48,6 @@
     <ClCompile Include="..\..\src\shared\Log.cpp">
       <Filter>Log</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\shared\MemoryLeaks.cpp">
-      <Filter>Util</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\shared\ProgressBar.cpp">
       <Filter>Util</Filter>
     </ClCompile>
@@ -82,6 +79,9 @@
     <ClCompile Include="..\..\src\shared\vmap\ModelInstance.cpp" />
     <ClCompile Include="..\..\src\shared\vmap\VMapManager2.cpp" />
     <ClCompile Include="..\..\src\shared\vmap\WorldModel.cpp" />
+    <ClCompile Include="..\..\src\shared\Database\SqlPreparedStatement.cpp">
+      <Filter>Database</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\shared\Database\Database.h">
@@ -135,9 +135,6 @@
     <ClInclude Include="..\..\src\shared\Errors.h">
       <Filter>Util</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\shared\MemoryLeaks.h">
-      <Filter>Util</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\dep\include\mersennetwister\MersenneTwister.h">
       <Filter>Util</Filter>
     </ClInclude>
@@ -181,6 +178,9 @@
     <ClInclude Include="..\..\src\shared\vmap\ModelInstance.h" />
     <ClInclude Include="..\..\src\shared\vmap\VMapManager2.h" />
     <ClInclude Include="..\..\src\shared\vmap\WorldModel.h" />
+    <ClInclude Include="..\..\src\shared\Database\SqlPreparedStatement.h">
+      <Filter>Database</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="..\..\src\shared\revision.h" />
