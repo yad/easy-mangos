@@ -38,7 +38,7 @@ void WorldSession::HandleCalendarGetCalendar(WorldPacket &/*recv_data*/)
     // TODO: calendar event output
     data << (uint32) 0;                                     // event count
 
-    data << (uint32) cur_time;                              // current time, unix timestamp
+    data << uint32(cur_time);                               // current time, unix timestamp
     data << (uint32) secsToTimeBitFields(cur_time);         // current packed time
 
     uint32 counter = 0;
@@ -68,29 +68,48 @@ void WorldSession::HandleCalendarGetCalendar(WorldPacket &/*recv_data*/)
     data << uint32(counter);                                // Instance reset intervals
     for(MapDifficultyMap::const_iterator itr = sMapDifficultyMap.begin(); itr != sMapDifficultyMap.end(); ++itr)
     {
-        uint32 map_diff_pair = itr->first;
-        uint32 mapid = PAIR32_LOPART(map_diff_pair);
-        int difficulty = PAIR32_HIPART(map_diff_pair);
-        MapDifficulty const* mapDiff = &itr->second;
-        if(!mapDiff->resetTime || difficulty != (int)REGULAR_DIFFICULTY)
+        MapDifficultyEntry const* mapDiff = itr->second;
+
+        if(!mapDiff || mapDiff->resetTime == 0)
             continue;
 
-        const MapEntry* map = sMapStore.LookupEntry(mapid);
-        if(!map->IsRaid())
+        const MapEntry* map = sMapStore.LookupEntry(mapDiff->MapId);
+        if(!map || !map->IsRaid())
             continue;
 
         uint32 period =  uint32(mapDiff->resetTime / DAY * sWorld.getConfig(CONFIG_FLOAT_RATE_INSTANCE_RESET_TIME)) * DAY;
         if (period < DAY)
             period = DAY;
 
-        data << uint32(mapid);
+        data << uint32(mapDiff->MapId);
         data << uint32(period);
-        data << uint32(map->instanceResetOffset);
+        data << uint32(mapDiff->resetTime);
         ++counter;
     }
     data.put<uint32>(p_counter,counter);
 
     data << (uint32) 0;                                     // unk counter 5
+/*
+    for(uint32 i = 0; i < holidays_count; ++i)
+    {
+        data << uint32(0);                                   // holiday id
+        data << uint32(0);                                   // Holidays.dbc field 37 (flags)
+        data << uint32(0);                                   // Holidays.dbc field 38 (flags)
+        data << uint32(0);                                   // Holidays.dbc field 52
+        data << uint32(0);                                   // Holidays.dbc field RepeatingMethod
+
+        for(uint32 j = 0; j < 26; j++)
+            data << uint32(0);                               // Holidays.dbc field Dates
+
+        for(uint32 j = 0; j < 10; j++)
+            data << uint32(0);                               // Holidays.dbc field unk1
+
+        for(uint32 j = 0; j < 10; j++)
+            data << uint32(0);                               // Holidays.dbc field unk39
+
+        data << "";                                          // Holidays.dbc field texture
+    }
+*/
     //DEBUG_LOG("Sending calendar");
     //data.hexlike();
     SendPacket(&data);

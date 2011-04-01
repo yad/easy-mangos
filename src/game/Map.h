@@ -181,7 +181,7 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>
         bool IsRegularDifficulty() const { return GetDifficulty() == REGULAR_DIFFICULTY; }
         uint32 GetMaxPlayers() const;                       // dependent from map difficulty
         uint32 GetMaxResetDelay() const;                    // dependent from map difficulty
-        MapDifficulty const* GetMapDifficulty() const;      // dependent from map difficulty
+        MapDifficultyEntry const* GetMapDifficulty() const; // dependent from map difficulty
 
         bool Instanceable() const { return i_mapEntry && i_mapEntry->Instanceable(); }
         // NOTE: this duplicate of Instanceable(), but Instanceable() can be changed when BG also will be instanceable
@@ -362,7 +362,7 @@ class MANGOS_DLL_SPEC DungeonMap : public Map
         void Remove(Player *, bool);
         void Update(const uint32&);
         bool Reset(InstanceResetMethod method);
-        void PermBindAllPlayers(Player *player);
+        void PermBindAllPlayers(Player *player, bool permanent = true);
         void UnloadAll(bool pForce);
         bool CanEnter(Player* player);
         void SendResetWarnings(uint32 timeLeft) const;

@@ -1594,6 +1594,18 @@ CharDelete.MinLevel = 0
 CharDelete.KeepDays = 30
 
 ###################################################################################################################
+#    LFG Dungeon finder system
+#
+#    LFG.Enable              = 0
+#    LFG.MaxKicks            = 3
+#    LFG.KickVotes           = 3
+###################################################################################################################
+
+LFG.Enable              = 0
+LFG.MaxKicks            = 3
+LFG.KickVotes           = 3
+
+###################################################################################################################
 #
 #     Custom.SpeedGame
 #         Set it to a number upper than 1 to speed up realm timer

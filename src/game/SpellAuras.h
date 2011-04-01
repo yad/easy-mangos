@@ -374,6 +374,7 @@ class MANGOS_DLL_SPEC Aura
         void HandleAuraOpenStable(bool apply, bool Real);
         void HandleAuraAddMechanicAbilities(bool apply, bool Real);
         void HandleAuraSetVehicle(bool apply, bool Real);
+        void HandleAuraFactionChange(bool apply, bool real);
 
         virtual ~Aura();
 
@@ -398,10 +399,15 @@ class MANGOS_DLL_SPEC Aura
         int32 GetAuraDuration() const { return GetHolder()->GetAuraDuration(); }
         time_t GetAuraApplyTime() const { return m_applyTime; }
         uint32 GetAuraTicks() const { return m_periodicTick; }
-        uint32 GetAuraMaxTicks() const { return m_maxduration > 0 && m_modifier.periodictime > 0 ? m_maxduration / m_modifier.periodictime : 0; }
-        uint32 GetStackAmount() const { return ( GetHolder() ? GetHolder()->GetStackAmount() : 0); }
-        void SetAuraPeriodicTimer (int32 timer) { m_periodicTimer = timer; }
+        uint32 GetAuraMaxTicks() const
+        {
+            int32 maxDuration = GetAuraMaxDuration();
+            return maxDuration > 0 && m_modifier.periodictime > 0 ? maxDuration / m_modifier.periodictime : 0;
+        }
 
+        void SetAuraPeriodicTimer(int32 timer) { if (IsInUse()) return; SetInUse(true); m_modifier.periodictime = timer; SetInUse(false);}
+
+        uint32 GetStackAmount() const { return GetHolder()->GetStackAmount(); }
         void SetLoadedState(int32 damage, uint32 periodicTime)
         {
             m_modifier.m_amount = damage;
@@ -429,7 +435,7 @@ class MANGOS_DLL_SPEC Aura
         }
         void ApplyModifier(bool apply, bool Real = false);
 
-        void UpdateAura(uint32 diff) { SetInUse(true); Update(diff); SetInUse(false); }
+        void UpdateAura(uint32 diff) { if (IsInUse()) return;  SetInUse(true); Update(diff); SetInUse(false); }
 
         void SetRemoveMode(AuraRemoveMode mode) { m_removeMode = mode; }
 

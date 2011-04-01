@@ -392,6 +392,11 @@ bool LootItem::AllowedForPlayer(Player const * player) const
     return true;
 }
 
+void LootItem::AddAllowedLooter(const Player *player)
+{
+    allowedGUIDs.insert(player->GetObjectGuid().GetCounter());
+}
+
 LootSlotType LootItem::GetSlotTypeForSharedLoot(PermissionTypes permission, Player* viewer, bool condition_ok /*= false*/) const
 {
     // ignore looted, FFA (each player get own copy) and not allowed items
