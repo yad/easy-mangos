@@ -798,7 +798,8 @@ void World::LoadConfigSettings(bool reload)
     setConfig(CONFIG_BOOL_HURT_IN_REAL_TIME,              "Custom.HurtInRealTime",              false);
     setConfig(CONFIG_BOOL_NO_WAIT_AFTER_CAST,             "Custom.NoWaitAfterCast",             false);
     setConfig(CONFIG_BOOL_ALLOW_FLYING_MOUNTS_EVERYWHERE, "Custom.AllowFlyingMountsEverywhere", false);
-    setConfig(CONFIG_BOOL_UNLIMITED_AMMO,                 "Custom.UnLimitedAmmo",               false);
+    setConfig(CONFIG_BOOL_UNLIMITED_AMMO,                 "Custom.UnLimitedAmmo",               false);	
+    setConfig(CONFIG_BOOL_ARMORY_SUPPORT, "WOWArmorySupport", false);
 
     ///- Load the CharDelete related config options
     setConfigMinMax(CONFIG_UINT32_CHARDELETE_METHOD, "CharDelete.Method", 0, 0, 1);

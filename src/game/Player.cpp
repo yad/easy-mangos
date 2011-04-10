@@ -1269,6 +1269,9 @@ void Player::Update( uint32 update_diff, uint32 p_time )
     if (now>m_Last_tick)
         UpdateItemDuration(uint32(now- m_Last_tick));
 
+    if (now > m_Last_tick + IN_MILLISECONDS)
+        UpdateSoulboundTradeItems();
+
     if (!m_timedquests.empty())
     {
         QuestSet::iterator iter = m_timedquests.begin();
@@ -11361,6 +11364,23 @@ Item* Player::StoreNewItem(ItemPosCountVec const& dest, uint32 item, bool update
         if(randomPropertyId)
             pItem->SetItemRandomProperties(randomPropertyId);
         pItem = StoreItem( dest, pItem, update );
+
+        if (allowedLooters && pItem->GetProto()->GetMaxStackSize() == 1 && pItem->IsSoulBound())
+        {
+            pItem->SetSoulboundTradeable(allowedLooters, this, true);
+            pItem->SetUInt32Value(ITEM_FIELD_CREATE_PLAYED_TIME, GetTotalPlayedTime());
+            m_itemSoulboundTradeable.push_back(pItem);
+
+            // save data
+            std::ostringstream ss;
+            ss << "REPLACE INTO `item_soulbound_trade_data` VALUES (";
+            ss << pItem->GetGUIDLow();
+            ss << ", '";
+            for (AllowedLooterSet::iterator itr = allowedLooters->begin(); itr != allowedLooters->end(); ++itr)
+                ss << *itr << " ";
+            ss << "');";
+            CharacterDatabase.PExecute(ss.str().c_str());
+        }
     }
     return pItem;
 }
@@ -11482,6 +11502,8 @@ Item* Player::_StoreItem( uint16 pos, Item *pItem, uint32 count, bool clone, boo
             RemoveItemDurations(pItem);
 
             pItem->SetOwnerGuid(GetObjectGuid());           // prevent error at next SetState in case trade/mail/buy from vendor
+            pItem->SetSoulboundTradeable(NULL, this, false);
+            RemoveTradeableItem(pItem);
             pItem->SetState(ITEM_REMOVED, this);
         }
 
@@ -11592,6 +11614,8 @@ Item* Player::EquipItem( uint16 pos, Item *pItem, bool update )
         RemoveItemDurations(pItem);
 
         pItem->SetOwnerGuid(GetObjectGuid());               // prevent error at next SetState in case trade/mail/buy from vendor
+        pItem->SetSoulboundTradeable(NULL, this, false);
+        RemoveTradeableItem(pItem);
         pItem->SetState(ITEM_REMOVED, this);
         pItem2->SetState(ITEM_CHANGED, this);
 
@@ -11796,6 +11820,9 @@ void Player::MoveItemToInventory(ItemPosCountVec const& dest, Item* pItem, bool 
         // in case trade we already have item in other player inventory
         pLastItem->SetState(in_characterInventoryDB ? ITEM_CHANGED : ITEM_NEW, this);
     }
+
+    if (pLastItem->HasFlag(ITEM_FIELD_FLAGS, ITEM_DYNFLAG_BOP_TRADEABLE))
+        m_itemSoulboundTradeable.push_back(pLastItem);
 }
 
 void Player::DestroyItem( uint8 bag, uint8 slot, bool update )
@@ -11822,6 +11849,9 @@ void Player::DestroyItem( uint8 bag, uint8 slot, bool update )
 
         RemoveEnchantmentDurations(pItem);
         RemoveItemDurations(pItem);
+
+        pItem->SetSoulboundTradeable(NULL, this, false);
+        RemoveTradeableItem(pItem);
 
         ItemRemovedQuestCheck( pItem->GetEntry(), pItem->GetCount() );
 
@@ -12715,6 +12745,45 @@ void Player::TradeCancel(bool sendback)
         m_trade = NULL;
         delete trader->m_trade;
         trader->m_trade = NULL;
+    }
+}
+
+void Player::UpdateSoulboundTradeItems()
+{
+    if (m_itemSoulboundTradeable.empty())
+        return;
+
+    // also checks for garbage data
+    for (ItemDurationList::iterator itr = m_itemSoulboundTradeable.begin(); itr != m_itemSoulboundTradeable.end();)
+    {
+        if (!*itr)
+        {
+            itr = m_itemSoulboundTradeable.erase(itr++);
+            continue;
+        }
+        if ((*itr)->GetOwnerGuid() != GetObjectGuid())
+        {
+            itr = m_itemSoulboundTradeable.erase(itr++);
+            continue;
+        }
+        if ((*itr)->CheckSoulboundTradeExpire())
+        {
+            itr = m_itemSoulboundTradeable.erase(itr++);
+            continue;
+        }
+        ++itr;
+    }
+}
+
+void Player::RemoveTradeableItem(Item* item)
+{
+    for (ItemDurationList::iterator itr = m_itemSoulboundTradeable.begin(); itr != m_itemSoulboundTradeable.end(); ++itr)
+    {
+        if ((*itr) == item)
+        {
+            m_itemSoulboundTradeable.erase(itr);
+            break;
+        }
     }
 }
 
@@ -16646,6 +16715,27 @@ void Player::_LoadInventory(QueryResult *result, uint32 timediff)
                 continue;
             }
 
+            if (item->HasFlag(ITEM_FIELD_FLAGS, ITEM_DYNFLAG_BOP_TRADEABLE))
+            {
+                QueryResult *result = CharacterDatabase.PQuery("SELECT allowedPlayers FROM item_soulbound_trade_data WHERE itemGuid = '%u'", item->GetGUIDLow());
+                if (!result)
+                {
+                    sLog.outError("Item::LoadFromDB, Item GUID: %u has flag ITEM_FLAG_BOP_TRADEABLE but has no data in item_soulbound_trade_data, removing flag.", item->GetGUIDLow());
+                    item->RemoveFlag(ITEM_FIELD_FLAGS, ITEM_DYNFLAG_BOP_TRADEABLE);
+                }
+                else
+                {
+                    Field* fields2 = result->Fetch();
+                    std::string guidsList = fields2[0].GetCppString();
+                    Tokens GUIDlist = StrSplit(guidsList, " ");
+                    AllowedLooterSet looters;
+                    for (Tokens::iterator itr = GUIDlist.begin(); itr != GUIDlist.end(); ++itr)
+                        looters.insert(atol(itr->c_str()));
+                    item->SetSoulboundTradeable(&looters, this, true);
+                    m_itemSoulboundTradeable.push_back(item);
+                }
+            }
+
             bool success = true;
 
             // the item/bag is not in a bag
@@ -17600,6 +17690,20 @@ void Player::SaveToDB()
 
     DEBUG_FILTER_LOG(    LOG_FILTER_PLAYER_STATS, "The value of player %s at save: ", m_name.c_str());
     outDebugStatsValues();
+
+    /** World of Warcraft Armory **/
+    if (sWorld.getConfig(CONFIG_BOOL_ARMORY_SUPPORT))
+    {
+        std::ostringstream ps;
+        ps << "REPLACE INTO armory_character_stats (guid,data) VALUES ('" << GetGUIDLow() << "', '";
+        for(uint16 i = 0; i < m_valuesCount; ++i )
+        {
+            ps << GetUInt32Value(i) << " ";
+        }
+        ps << "')";
+        CharacterDatabase.Execute( ps.str().c_str() );
+    }
+    /** World of Warcraft Armory **/
 
     CharacterDatabase.BeginTransaction();
 
@@ -23397,6 +23501,45 @@ void Player::_LoadRandomBGStatus(QueryResult *result)
         delete result;
     }
 }
+
+/** World of Warcraft Armory **/
+void Player::WriteWowArmoryDatabaseLog(uint32 type, uint32 data)
+{
+    if (!sWorld.getConfig(CONFIG_BOOL_ARMORY_SUPPORT))
+        return;
+    /*
+        Log types:
+        1 - achievement feed
+        2 - loot feed
+        3 - boss kill feed
+    */
+    uint32 pGuid = GetGUIDLow();
+    sLog.outDetail("WoWArmory: write feed log (guid: %u, type: %u, data: %u", pGuid, type, data);
+    if (type <= 0 || type > 3)	// Unknown type
+    {
+        sLog.outError("WoWArmory: unknown type id: %d, ignore.", type);
+        return;
+    }
+    if (type == 3)	// Do not write same bosses many times - just update counter.
+    {
+        uint8 Difficulty = GetMap()->GetDifficulty();
+        QueryResult *result = CharacterDatabase.PQuery("SELECT counter FROM armory_character_feed_log WHERE guid='%u' AND type=3 AND data='%u' AND difficulty='%u' LIMIT 1", pGuid, data, Difficulty);
+        if (result)
+        {
+            CharacterDatabase.PExecute("UPDATE armory_character_feed_log SET counter=counter+1, date=UNIX_TIMESTAMP(NOW()) WHERE guid='%u' AND type=3 AND data='%u' AND difficulty='%u' LIMIT 1", pGuid, data, Difficulty);
+        }
+        else
+        {
+            CharacterDatabase.PExecute("INSERT INTO armory_character_feed_log (guid, type, data, date, counter, difficulty) VALUES('%u', '%d', '%u', UNIX_TIMESTAMP(NOW()), 1, '%u')", pGuid, type, data, Difficulty);
+        }
+        delete result;
+    }
+    else
+    {
+        CharacterDatabase.PExecute("REPLACE INTO armory_character_feed_log (guid, type, data, date, counter) VALUES('%u', '%d', '%u', UNIX_TIMESTAMP(NOW()), 1)", pGuid, type, data);
+    }
+}
+/** World of Warcraft Armory **/
 
 AreaLockStatus Player::GetAreaTriggerLockStatus(AreaTrigger const* at, Difficulty difficulty)
 {

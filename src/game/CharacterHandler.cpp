@@ -623,9 +623,6 @@ void PlayerbotMgr::AddAllBots()
         uint32 itrHorde = 0;
         do
         {
-            if(itrAlliance == nbBotsWantedAlliance && itrHorde == nbBotsWantedHorde)
-                break;
-
             Field *fields = result->Fetch();
             uint64 guid = fields[0].GetUInt64();
             uint8 race = fields[1].GetUInt8();
@@ -682,10 +679,8 @@ void PlayerbotMgr::AddAllBots()
                 default:
                     break;
             }
-            if (cycle > 5)
-                break;
         }
-        while (result->NextRow());
+        while (result->NextRow() && cycle < 6 && itrAlliance < nbBotsWantedAlliance && itrHorde < nbBotsWantedHorde);
         delete result;
     }
 }
