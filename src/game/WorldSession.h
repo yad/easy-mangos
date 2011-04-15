@@ -26,6 +26,7 @@
 #include "Common.h"
 #include "SharedDefines.h"
 #include "ObjectGuid.h"
+#include "LFG.h"
 
 struct ItemPrototype;
 struct AuctionEntry;
@@ -351,8 +352,6 @@ class MANGOS_DLL_SPEC WorldSession
         uint32 getDialogStatus(Player *pPlayer, Object* questgiver, uint32 defstatus);
 
         // LFG
-        void SendLfgResult(uint32 type, uint32 entry, uint8 lfg_type);
-        void SendLfgUpdate(uint8 unk1, uint8 unk2, uint8 unk3);
         // TRUE values set by client sending CMSG_LFG_SET_AUTOJOIN and CMSG_LFM_CLEAR_AUTOFILL before player login
         bool LookingForGroup_auto_join;
         bool LookingForGroup_auto_add;
@@ -840,6 +839,11 @@ class MANGOS_DLL_SPEC WorldSession
         void HandleLfgPlayerLockInfoRequestOpcode(WorldPacket &recv_data);
         void HandleLfgTeleportOpcode(WorldPacket &recv_data);
         void HandleLfgPartyLockInfoRequestOpcode(WorldPacket &recv_data);
+        // send date
+        void SendLfgUpdatePlayer(LFGUpdateType updateType);
+        void SendLfgUpdateParty(LFGUpdateType updateType);
+        void SendLfgUpdateSearch(bool update);
+        void SendLfgJoinResult(LFGJoinResult checkResult, uint8 checkValue = 0);
 
     private:
         // private trade methods

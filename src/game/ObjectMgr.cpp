@@ -141,8 +141,8 @@ template uint32 IdGenerator<uint32>::Generate();
 template uint64 IdGenerator<uint64>::Generate();
 
 ObjectMgr::ObjectMgr() :
-    m_CreatureFirstGuid(1),
-    m_GameObjectFirstGuid(1),
+    m_FirstTemporaryCreatureGuid(1),
+    m_FirstTemporaryGameObjectGuid(1),
 
     m_ArenaTeamIds("Arena team ids"),
     m_AuctionIds("Auction ids"),
@@ -5862,7 +5862,7 @@ void ObjectMgr::SetHighestGuids()
     result = WorldDatabase.Query( "SELECT MAX(guid) FROM creature" );
     if( result )
     {
-        m_CreatureFirstGuid = (*result)[0].GetUInt32()+1;
+        m_FirstTemporaryCreatureGuid = (*result)[0].GetUInt32()+1;
         delete result;
     }
 
@@ -5891,7 +5891,7 @@ void ObjectMgr::SetHighestGuids()
     result = WorldDatabase.Query("SELECT MAX(guid) FROM gameobject" );
     if( result )
     {
-        m_GameObjectFirstGuid = (*result)[0].GetUInt32()+1;
+        m_FirstTemporaryGameObjectGuid = (*result)[0].GetUInt32()+1;
         delete result;
     }
 
@@ -5943,6 +5943,13 @@ void ObjectMgr::SetHighestGuids()
         m_GroupGuids.Set((*result)[0].GetUInt32()+1);
         delete result;
     }
+
+    // setup reserved ranges for static guids spawn
+    m_StaticCreatureGuids.Set(m_FirstTemporaryCreatureGuid);
+    m_FirstTemporaryCreatureGuid += sWorld.getConfig(CONFIG_UINT32_GUID_RESERVE_SIZE_CREATURE);
+
+    m_StaticGameObjectGuids.Set(m_FirstTemporaryGameObjectGuid);
+    m_FirstTemporaryGameObjectGuid += sWorld.getConfig(CONFIG_UINT32_GUID_RESERVE_SIZE_GAMEOBJECT);
 }
 
 void ObjectMgr::LoadGameObjectLocales()

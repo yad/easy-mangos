@@ -25,6 +25,7 @@
 
 class Group;
 class Player;
+class ObjectGuid;
 
 
 // Reward info
@@ -50,8 +51,20 @@ struct LFGReward
     }
 };
 
+// Stores player or group queue info
+struct LFGQueueInfo
+{
+    LFGQueueInfo(): tanks(LFG_TANKS_NEEDED), healers(LFG_HEALERS_NEEDED), dps(LFG_DPS_NEEDED) {};
+    time_t joinTime;                                        // Player queue join time (to calculate wait times)
+    uint8 tanks;                                            // Tanks needed
+    uint8 healers;                                          // Healers needed
+    uint8 dps;                                              // Dps needed
+};
+
 typedef std::multimap<uint32, LFGReward const*> LFGRewardMap;
 typedef std::pair<LFGRewardMap::const_iterator, LFGRewardMap::const_iterator> LFGRewardMapBounds;
+typedef std::map<ObjectGuid, LFGQueueInfo*> LFGQueueInfoMap;
+typedef std::map<uint32/*ID*/, LFGDungeonEntry const*> LFGDungeonMap;
 
 class LFGMgr
 {
@@ -61,13 +74,31 @@ class LFGMgr
 
         void Update(uint32 diff);
 
-        void LoadRewards();
-        LFGReward const* GetRandomDungeonReward(uint32 dungeon, uint32 level, Difficulty difficulty);
+        void Join(Player* player);
+        void Leave(Player* player);
 
-        bool IsRandomDungeon(uint32 dungeonId);
+        void LoadRewards();
+        LFGReward const* GetRandomDungeonReward(LFGDungeonEntry const* dungeon, Player* player);
+
+        LFGDungeonEntry const* GetDungeon(uint32 dungeonID);
+
+        bool IsRandomDungeon(LFGDungeonEntry const* dungeon);
+        LFGDungeonSet GetRandomDungeonsForPlayer(Player* player);
+
+        // Checks
+        LFGJoinResult GetPlayerJoinResult(Player* player);
+        LFGJoinResult GetGroupJoinResult(Group* group);
+
+        LFGLockStatusType GetPlayerLockStatus(Player* player, LFGDungeonEntry const* dungeon);
+        LFGLockStatusType GetGroupLockStatus(Group* group, LFGDungeonEntry const* dungeon);
+
+        LFGLockStatusMap GetPlayerLockMap(Player* player);
+        LFGLockStatusMap GetGroupLockMap(Group* group);
 
     private:
         LFGRewardMap m_RewardMap;                           // Stores rewards for random dungeons
+        LFGQueueInfoMap m_queueInfoMap;                     // Queued groups
+        LFGDungeonMap   m_dungeonMap;                       // sorted dungeon map
 
 };
 

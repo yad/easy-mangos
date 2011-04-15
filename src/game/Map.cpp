@@ -81,8 +81,8 @@ Map::Map(uint32 id, time_t expiry, uint32 InstanceId, uint8 SpawnMode)
   i_gridExpiry(expiry), m_TerrainData(sTerrainMgr.LoadTerrain(id)),
   i_data(NULL), i_script_id(0)
 {
-    m_CreatureGuids.Set(sObjectMgr.GetFirstCreatureLowGuid());
-    m_GameObjectGuids.Set(sObjectMgr.GetFirstGameObjectLowGuid());
+    m_CreatureGuids.Set(sObjectMgr.GetFirstTemporaryCreatureLowGuid());
+    m_GameObjectGuids.Set(sObjectMgr.GetFirstTemporaryGameObjectLowGuid());
 
     for(unsigned int j=0; j < MAX_NUMBER_OF_GRIDS; ++j)
     {
@@ -1914,20 +1914,56 @@ void Map::ScriptsProcess()
                 break;
             }
             case SCRIPT_COMMAND_EMOTE:
+            {
                 if (!source)
                 {
-                    sLog.outError("SCRIPT_COMMAND_EMOTE (script id %u) call for NULL creature.", step.script->id);
+                    sLog.outError("SCRIPT_COMMAND_EMOTE (script id %u) call for NULL source.", step.script->id);
                     break;
                 }
 
-                if (source->GetTypeId()!=TYPEID_UNIT)
+                if (!source->isType(TYPEMASK_WORLDOBJECT))
                 {
-                    sLog.outError("SCRIPT_COMMAND_EMOTE (script id %u) call for non-creature (TypeId: %u), skipping.", step.script->id, source->GetTypeId());
+                    sLog.outError("SCRIPT_COMMAND_EMOTE (script id %u) call for non-worldobject (TypeId: %u), skipping.", step.script->id, source->GetTypeId());
                     break;
                 }
+                // When creatureEntry is not defined, GameObject can not be source
+                else if (!step.script->emote.creatureEntry)
+                {
+                    if (!source->isType(TYPEMASK_UNIT))
+                    {
+                        sLog.outError("SCRIPT_COMMAND_EMOTE (script id %u) are missing datalong2 (creature entry). Unsupported call for non-unit (TypeId: %u), skipping.", step.script->id, source->GetTypeId());
+                        break;
+                    }
+                }
 
-                ((Creature*)source)->HandleEmote(step.script->emote.emoteId);
+                WorldObject* pSource = (WorldObject*)source;
+                Creature* pBuddy = NULL;
+
+                // flag_target_as_source            0x01
+
+                // If target is Unit* and should do the emote (or should be source of searcher below)
+                if (target && target->isType(TYPEMASK_UNIT) && step.script->emote.flags & 0x01)
+                    pSource = (WorldObject*)target;
+
+                // If step has a buddy entry defined, search for it.
+                if (step.script->emote.creatureEntry)
+                {
+                    MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck u_check(*pSource, step.script->emote.creatureEntry, true, step.script->emote.searchRadius);
+                    MaNGOS::CreatureLastSearcher<MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck> searcher(pBuddy, u_check);
+
+                    Cell::VisitGridObjects(pSource, searcher, step.script->emote.searchRadius);
+
+                    // If buddy found, then use it or break (break since we must assume pBuddy was defined for a reason)
+                    if (pBuddy)
+                        pSource = (WorldObject*)pBuddy;
+                    else
+                        break;
+                }
+
+                // Must be safe cast to Unit*
+                ((Unit*)pSource)->HandleEmote(step.script->emote.emoteId);
                 break;
+            }
             case SCRIPT_COMMAND_FIELD_SET:
                 if (!source)
                 {
@@ -2649,9 +2685,9 @@ void Map::ScriptsProcess()
                 }
 
                 if (step.script->faction.factionId)
-                    pOwner->setFaction(step.script->faction.factionId);
+                    pOwner->SetFactionTemporary(step.script->faction.factionId, step.script->faction.flags);
                 else
-                    pOwner->setFaction(pOwner->GetCreatureInfo()->faction_A);
+                    pOwner->ClearTemporaryFaction();
 
                 break;
             }
@@ -2817,6 +2853,77 @@ void Map::ScriptsProcess()
                 else
                     pOwner->AddSplineFlag(SPLINEFLAG_WALKMODE);
 
+                break;
+            }
+            case SCRIPT_COMMAND_ATTACK_START:
+            {
+                if (!source)
+                {
+                    sLog.outError("SCRIPT_COMMAND_ATTACK_START (script id %u) call for NULL source.", step.script->id);
+                    break;
+                }
+
+                if (!source->isType(TYPEMASK_WORLDOBJECT))
+                {
+                    sLog.outError("SCRIPT_COMMAND_ATTACK_START (script id %u) call for unsupported non-worldobject (TypeId: %u), skipping.", step.script->id, source->GetTypeId());
+                    break;
+                }
+
+                WorldObject* pSource = (WorldObject*)source;
+                Creature* pBuddy = NULL;
+
+                // flag_original_source_as_target   0x02
+                // flag_buddy_as_target             0x04
+
+                // If step has a buddy entry defined, search for it.
+                if (step.script->attack.creatureEntry)
+                {
+                    MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck u_check(*pSource, step.script->attack.creatureEntry, true, step.script->attack.searchRadius);
+                    MaNGOS::CreatureLastSearcher<MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck> searcher(pBuddy, u_check);
+
+                    Cell::VisitGridObjects(pSource, searcher, step.script->attack.searchRadius);
+
+                    // If buddy found, then use it
+                    if (pBuddy)
+                    {
+                        if (step.script->attack.flags & 0x04)
+                        {
+                            // pBuddy is target of attack
+                            target = (Object*)pBuddy;
+                        }
+                        else
+                        {
+                            // If not target of attack, then set pBuddy as source, the attacker
+                            pSource = (WorldObject*)pBuddy;
+                        }
+                    }
+                    else
+                    {
+                        // No buddy found, so don't do anything                     
+                        break;
+                    }
+                }
+
+                // If we should attack the original source instead of target
+                if (step.script->attack.flags & 0x02)
+                    target = source;
+
+                Unit* unitTarget = target && target->isType(TYPEMASK_UNIT) ? static_cast<Unit*>(target) : NULL;
+                Creature* pAttacker = pSource && pSource->GetTypeId() == TYPEID_UNIT ? static_cast<Creature*>(pSource) : NULL;
+
+                if (pAttacker && unitTarget)
+                {
+                    if (pAttacker->IsFriendlyTo(unitTarget))
+                    {
+                        sLog.outError("SCRIPT_COMMAND_ATTACK_START (script id %u) attacker is friendly to target, can not attack.", step.script->id);
+                        break;
+                    }
+
+                    pAttacker->AI()->AttackStart(unitTarget);
+                    break;
+                }
+
+                sLog.outError("SCRIPT_COMMAND_ATTACK_START (script id %u) unexpected error, attacker or victim could not be found, no action.", step.script->id);
                 break;
             }
             default:

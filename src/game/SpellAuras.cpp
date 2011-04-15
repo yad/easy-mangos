@@ -425,9 +425,46 @@ m_isPersistent(false), m_in_use(0), m_spellAuraHolder(holder)
 
     Player* modOwner = caster ? caster->GetSpellModOwner() : NULL;
 
+
     // Apply periodic time mod
     if (modOwner && m_modifier.periodictime)
+    {
         modOwner->ApplySpellMod(spellproto->Id, SPELLMOD_ACTIVATION_TIME, m_modifier.periodictime);
+
+        bool applyHaste = (spellproto->AttributesEx5 & SPELL_ATTR_EX5_AFFECTED_BY_HASTE) != 0;
+
+        if (!applyHaste)
+        {
+            Unit::AuraList const& mModByHaste = caster->GetAurasByType(SPELL_AURA_MOD_PERIODIC_HASTE);
+            for (Unit::AuraList::const_iterator itr = mModByHaste.begin(); itr != mModByHaste.end(); ++itr)
+            {
+                if ((*itr)->isAffectedOnSpell(spellproto))
+                {
+                    applyHaste = true;
+                    break;
+                }
+            }
+        }
+
+        // Apply haste to duration
+        if (applyHaste)
+        {
+            uint32 oldDuration = GetHolder()->GetAuraDuration();
+
+            int32 new_duration = (int32)(oldDuration * caster->GetFloatValue(UNIT_MOD_CAST_SPEED));
+            GetHolder()->SetAuraMaxDuration(new_duration);
+            GetHolder()->SetAuraDuration(new_duration);
+
+            uint32 _periodicTime = m_modifier.periodictime;
+
+            // Calculate new periodic timer
+            int32 ticks = oldDuration / _periodicTime;
+
+            _periodicTime = new_duration / ticks;
+
+            m_modifier.periodictime = _periodicTime;
+        }
+    }
 
     // Start periodic on next tick or at aura apply
     if (!(spellproto->AttributesEx5 & SPELL_ATTR_EX5_START_PERIODIC_AT_APPLY))
@@ -2684,6 +2721,21 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
         {
             switch(GetId())
             {
+                case 6606:                                  // Self Visual - Sleep Until Cancelled (DND)
+                {
+                    if (apply)
+                    {
+                        target->SetStandState(UNIT_STAND_STATE_SLEEP);
+                        target->addUnitState(UNIT_STAT_ROOT);
+                    }
+                    else
+                    {
+                        target->clearUnitState(UNIT_STAT_ROOT);
+                        target->SetStandState(UNIT_STAND_STATE_STAND);
+                    }
+
+                    return;
+                }
                 case 11196:                                 // Recently Bandaged
                     target->ApplySpellImmune(GetId(), IMMUNITY_MECHANIC, GetMiscValue(), apply);
                     return;
@@ -5346,19 +5398,41 @@ void Aura::HandleAuraPeriodicDummy(bool apply, bool Real)
     {
         case SPELLFAMILY_GENERIC:
         {
-            case 62717:                                   // Slag Pot (Ulduar: Ignis)
-            case 63477:
+            switch(spell->Id)
             {
-                Unit *caster = GetCaster();
+                case 55093:                                   // Grip of Slad'ran
+                case 61474:                                   // Grip of Slad'ran (h)
+                {
+                    if (apply)
+                    {
+                        if (target->HasAura(55126) || target->HasAura(61476))
+                        {
+                            target->RemoveSpellAuraHolder(GetHolder());
+                            return;
+                        }
 
-                if (!caster || !target)
-                    return;
+                        if (GetHolder()->GetStackAmount() >= 5)
+                        {
+                            target->RemoveAura(this);
+                            target->CastSpell(target, (spell->Id == 55093) ? 55126 : 61476, true);
+                        }
+                    }
+                    break;
+                }
+                case 62717:                                   // Slag Pot (Ulduar: Ignis)
+                case 63477:
+                {
+                    Unit *caster = GetCaster();
 
-                // Haste buff (Slag Imbued)
-                if (!apply)
-                    target->CastSpell(caster, (spell->Id == 62717) ? 62836 : 63536, true);
+                    if (!caster || !target)
+                        return;
 
-                break;
+                    // Haste buff (Slag Imbued)
+                    if (!apply)
+                        target->CastSpell(caster, (spell->Id == 62717) ? 62836 : 63536, true);
+
+                    break;
+                }
             }
         }
         case SPELLFAMILY_ROGUE:

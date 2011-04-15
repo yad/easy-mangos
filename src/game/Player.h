@@ -2452,6 +2452,11 @@ class MANGOS_DLL_SPEC Player : public Unit
         bool CanEnterToArea(uint32 mapId, Difficulty difficulty) { return GetAreaLockStatus(mapId, difficulty) == AREA_LOCKSTATUS_OK; };
         bool CanUseAreaTrigger(AreaTrigger const* at, Difficulty difficulty) { return GetAreaTriggerLockStatus(at, difficulty) == AREA_LOCKSTATUS_OK; };
 
+        // LFG
+        LFGPlayerState* GetLFGState() { return m_LFGState;};
+        uint32 GetEquipGearScore(bool withBags = true, bool withBank = false);
+        typedef std::vector<uint32/*item level*/> GearScoreMap;
+
         /*********************************************************/
         /***                   GROUP SYSTEM                    ***/
         /*********************************************************/
@@ -2863,6 +2868,10 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         DungeonPersistentState* _pendingBind;
         uint32 _pendingBindTimer;
+
+        // LFG
+        LFGPlayerState* m_LFGState;
+        void _fillGearScoreData(Item* item, GearScoreMap* gearScore);
 };
 
 void AddItemsSetItem(Player*player,Item *item);
