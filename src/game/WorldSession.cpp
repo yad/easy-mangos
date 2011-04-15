@@ -35,6 +35,7 @@
 #include "BattleGroundMgr.h"
 #include "MapManager.h"
 #include "SocialMgr.h"
+#include "LFGMgr.h"
 #include "Auth/AuthCrypt.h"
 #include "Auth/HMACSHA1.h"
 #include "zlib/zlib.h"
@@ -559,6 +560,9 @@ void WorldSession::LogoutPlayer(bool Save)
         ///- Leave all channels before player delete...
         _player->CleanupChannels();
 
+        // LFG cleanup
+        sLFGMgr.Leave(_player);
+
         ///- If the player is in a group (or invited), remove him. If the group if then only 1 person, disband the group.
         _player->UninviteFromGroup();
 
@@ -1041,7 +1045,7 @@ void WorldSession::SetPlayer( Player *plr )
 void WorldSession::SendRedirectClient(std::string& ip, uint16 port)
 {
     uint32 ip2 = ACE_OS::inet_addr(ip.c_str());
-    WorldPacket pkt(SMSG_REDIRECT_CLIENT, 4 + 2 + 4 + 20);
+    WorldPacket pkt(SMSG_CONNECT_TO, 4 + 2 + 4 + 20);
 
     pkt << uint32(ip2);                                     // inet_addr(ipstr)
     pkt << uint16(port);                                    // port

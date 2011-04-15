@@ -2604,6 +2604,14 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                     }
                 }
             }
+            case 50141:                                     // Blood Oath
+            {
+                // Blood Oath
+                if (m_removeMode == AURA_REMOVE_BY_EXPIRE)
+                    target->CastSpell(target, 50001, true, NULL, this);
+
+                return;
+            }
             case 51405:                                     // Digging for Treasure
             {
                 const uint32 spell_list[7] =
@@ -5916,7 +5924,15 @@ void Aura::HandleModTotalPercentStat(bool apply, bool /*Real*/)
     if ((m_modifier.m_miscvalue == STAT_STAMINA) && (maxHPValue > 0) && (GetSpellProto()->Attributes & 0x10))
     {
         // newHP = (curHP / maxHP) * newMaxHP = (newMaxHP * curHP) / maxHP -> which is better because no int -> double -> int conversion is needed
-        uint32 newHPValue = (target->GetMaxHealth() * curHPValue) / maxHPValue;
+        // Multiplication of large numbers cause uint32 overflow so using trick
+        // a*b/c = (a/c) * (b/c) * c + (a%c) * (b%c) / c + (a/c) * (b%c) + (a%c) * (b/c)
+        uint32 max_hp = target->GetMaxHealth();
+        // max_hp * curHPValue / maxHPValue
+        uint32 newHPValue =
+            (max_hp/maxHPValue) * (curHPValue/maxHPValue) * maxHPValue
+            + (max_hp%maxHPValue) * (curHPValue%maxHPValue) / maxHPValue
+            + (max_hp/maxHPValue) * (curHPValue%maxHPValue)
+            + (max_hp%maxHPValue) * (curHPValue/maxHPValue);
         target->SetHealth(newHPValue);
     }
 }
@@ -8498,7 +8514,7 @@ void Aura::HandleAuraControlVehicle(bool apply, bool Real)
         // some SPELL_AURA_CONTROL_VEHICLE auras have a dummy effect on the player - remove them
         caster->RemoveAurasDueToSpell(GetId());
 
-        if (caster->GetVehicleKit() == pVehicle)
+        if (caster->GetVehicle() == pVehicle)
             caster->ExitVehicle();
     }
 }
@@ -10278,7 +10294,7 @@ void Aura::HandleAuraSetVehicle(bool apply, bool real)
         if (target->GetVehicleKit())
             target->RemoveVehicleKit();
 
-    WorldPacket data(SMSG_PLAYER_VEHICLE_DATA, target->GetPackGUID().size()+4);
+    WorldPacket data(SMSG_SET_VEHICLE_REC_ID, target->GetPackGUID().size()+4);
     data.appendPackGUID(target->GetGUID());
     data << uint32(apply ? vehicleId : 0);
     target->SendMessageToSet(&data, true);

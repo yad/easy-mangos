@@ -414,55 +414,6 @@ struct EnchantDuration
 typedef std::list<EnchantDuration> EnchantDurationList;
 typedef std::list<Item*> ItemDurationList;
 
-struct LookingForGroupSlot
-{
-    LookingForGroupSlot() : entry(0), type(0) {}
-    bool Empty() const { return !entry && !type; }
-    void Clear() { entry = 0; type = 0; }
-    void Set(uint32 _entry, uint32 _type ) { entry = _entry; type = _type; }
-    bool Is(uint32 _entry, uint32 _type) const { return entry == _entry && type == _type; }
-    bool canAutoJoin() const { return entry && (type == LFG_TYPE_DUNGEON || type == LFG_TYPE_HEROIC_DUNGEON); }
-
-    uint32 entry;
-    uint32 type;
-};
-
-#define MAX_LOOKING_FOR_GROUP_SLOT 3
-
-struct LookingForGroup
-{
-    LookingForGroup() {}
-    bool HaveInSlot(LookingForGroupSlot const& slot) const { return HaveInSlot(slot.entry, slot.type); }
-    bool HaveInSlot(uint32 _entry, uint32 _type) const
-    {
-        for(int i = 0; i < MAX_LOOKING_FOR_GROUP_SLOT; ++i)
-            if(slots[i].Is(_entry, _type))
-                return true;
-        return false;
-    }
-
-    bool canAutoJoin() const
-    {
-        for(int i = 0; i < MAX_LOOKING_FOR_GROUP_SLOT; ++i)
-            if(slots[i].canAutoJoin())
-                return true;
-        return false;
-    }
-
-    bool Empty() const
-    {
-        for(int i = 0; i < MAX_LOOKING_FOR_GROUP_SLOT; ++i)
-            if(!slots[i].Empty())
-                return false;
-        return more.Empty();
-    }
-
-    LookingForGroupSlot slots[MAX_LOOKING_FOR_GROUP_SLOT];
-    LookingForGroupSlot more;
-    std::string comment;
-    uint8 roles;
-};
-
 enum RaidGroupError
 {
     ERR_RAID_GROUP_NONE                 = 0,
@@ -492,33 +443,33 @@ enum DrunkenState
 
 enum PlayerFlags
 {
-    PLAYER_FLAGS_NONE              = 0x00000000,
-    PLAYER_FLAGS_GROUP_LEADER      = 0x00000001,
-    PLAYER_FLAGS_AFK               = 0x00000002,
-    PLAYER_FLAGS_DND               = 0x00000004,
-    PLAYER_FLAGS_GM                = 0x00000008,
-    PLAYER_FLAGS_GHOST             = 0x00000010,
-    PLAYER_FLAGS_RESTING           = 0x00000020,
-    PLAYER_FLAGS_UNK7              = 0x00000040,            // admin?
-    PLAYER_FLAGS_UNK8              = 0x00000080,            // pre-3.0.3 PLAYER_FLAGS_FFA_PVP flag for FFA PVP state
-    PLAYER_FLAGS_CONTESTED_PVP     = 0x00000100,            // Player has been involved in a PvP combat and will be attacked by contested guards
-    PLAYER_FLAGS_IN_PVP            = 0x00000200,
-    PLAYER_FLAGS_HIDE_HELM         = 0x00000400,
-    PLAYER_FLAGS_HIDE_CLOAK        = 0x00000800,
-    PLAYER_FLAGS_PARTIAL_PLAY_TIME = 0x00001000,            // played long time
-    PLAYER_FLAGS_NO_PLAY_TIME      = 0x00002000,            // played too long time
-    PLAYER_FLAGS_IS_OUT_OF_BOUNDS  = 0x00004000,            // Lua_IsOutOfBounds
-    PLAYER_FLAGS_DEVELOPER         = 0x00008000,            // <Dev> chat tag, name prefix
-    PLAYER_FLAGS_UNK17             = 0x00010000,            // pre-3.0.3 PLAYER_FLAGS_SANCTUARY flag for player entered sanctuary
-    PLAYER_FLAGS_TAXI_BENCHMARK    = 0x00020000,            // taxi benchmark mode (on/off) (2.0.1)
-    PLAYER_FLAGS_PVP_TIMER         = 0x00040000,            // 3.0.2, pvp timer active (after you disable pvp manually)
-    PLAYER_FLAGS_COMMENTATOR       = 0x00080000,
-    PLAYER_FLAGS_UNK21             = 0x00100000,
-    PLAYER_FLAGS_UNK22             = 0x00200000,
-    PLAYER_FLAGS_COMMENTATOR2      = 0x00400000,            // something like COMMENTATOR_CAN_USE_INSTANCE_COMMAND
-    PLAYER_FLAGS_UNK24             = 0x00800000,            // EVENT_SPELL_UPDATE_USABLE and EVENT_UPDATE_SHAPESHIFT_USABLE, disabled all abilitys on tab except autoattack
-    PLAYER_FLAGS_UNK25             = 0x01000000,            // EVENT_SPELL_UPDATE_USABLE and EVENT_UPDATE_SHAPESHIFT_USABLE, disabled all melee ability on tab include autoattack
-    PLAYER_FLAGS_XP_USER_DISABLED  = 0x02000000,
+    PLAYER_FLAGS_NONE                   = 0x00000000,
+    PLAYER_FLAGS_GROUP_LEADER           = 0x00000001,
+    PLAYER_FLAGS_AFK                    = 0x00000002,
+    PLAYER_FLAGS_DND                    = 0x00000004,
+    PLAYER_FLAGS_GM                     = 0x00000008,
+    PLAYER_FLAGS_GHOST                  = 0x00000010,
+    PLAYER_FLAGS_RESTING                = 0x00000020,
+    PLAYER_FLAGS_UNK7                   = 0x00000040,       // admin?
+    PLAYER_FLAGS_UNK8                   = 0x00000080,       // pre-3.0.3 PLAYER_FLAGS_FFA_PVP flag for FFA PVP state
+    PLAYER_FLAGS_CONTESTED_PVP          = 0x00000100,       // Player has been involved in a PvP combat and will be attacked by contested guards
+    PLAYER_FLAGS_IN_PVP                 = 0x00000200,
+    PLAYER_FLAGS_HIDE_HELM              = 0x00000400,
+    PLAYER_FLAGS_HIDE_CLOAK             = 0x00000800,
+    PLAYER_FLAGS_PARTIAL_PLAY_TIME      = 0x00001000,       // played long time
+    PLAYER_FLAGS_NO_PLAY_TIME           = 0x00002000,       // played too long time
+    PLAYER_FLAGS_IS_OUT_OF_BOUNDS       = 0x00004000,       // Lua_IsOutOfBounds
+    PLAYER_FLAGS_DEVELOPER              = 0x00008000,       // <Dev> chat tag, name prefix
+    PLAYER_FLAGS_ENABLE_LOW_LEVEL_RAID  = 0x00010000,       // triggers lua event EVENT_ENABLE_LOW_LEVEL_RAID
+    PLAYER_FLAGS_TAXI_BENCHMARK         = 0x00020000,       // taxi benchmark mode (on/off) (2.0.1)
+    PLAYER_FLAGS_PVP_TIMER              = 0x00040000,       // 3.0.2, pvp timer active (after you disable pvp manually)
+    PLAYER_FLAGS_COMMENTATOR            = 0x00080000,
+    PLAYER_FLAGS_UNK21                  = 0x00100000,
+    PLAYER_FLAGS_UNK22                  = 0x00200000,
+    PLAYER_FLAGS_COMMENTATOR_UBER       = 0x00400000,       // something like COMMENTATOR_CAN_USE_INSTANCE_COMMAND
+    PLAYER_FLAGS_UNK24                  = 0x00800000,       // EVENT_SPELL_UPDATE_USABLE and EVENT_UPDATE_SHAPESHIFT_USABLE, disabled all abilitys on tab except autoattack
+    PLAYER_FLAGS_UNK25                  = 0x01000000,       // EVENT_SPELL_UPDATE_USABLE and EVENT_UPDATE_SHAPESHIFT_USABLE, disabled all melee ability on tab include autoattack
+    PLAYER_FLAGS_XP_USER_DISABLED       = 0x02000000,
 };
 
 // used for PLAYER__FIELD_KNOWN_TITLES field (uint64), (1<<bit_index) without (-1)
@@ -1604,7 +1555,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         void SendCanTakeQuestResponse( uint32 msg ) const;
         void SendQuestConfirmAccept(Quest const* pQuest, Player* pReceiver);
         void SendPushToPartyResponse( Player *pPlayer, uint32 msg );
-        void SendQuestUpdateAddItem( Quest const* pQuest, uint32 item_idx, uint32 count );
         void SendQuestUpdateAddCreatureOrGo(Quest const* pQuest, ObjectGuid guid, uint32 creatureOrGO_idx, uint32 count);
 
         uint64 GetDivider() { return m_divider; }
@@ -1902,6 +1852,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         static void RemoveFromGroup(Group* group, ObjectGuid guid);
         void RemoveFromGroup() { RemoveFromGroup(GetGroup(), GetObjectGuid()); }
         void SendUpdateToOutOfRangeGroupMembers();
+        void SetAllowLowLevelRaid(bool allow) { ApplyModFlag(PLAYER_FLAGS, PLAYER_FLAGS_ENABLE_LOW_LEVEL_RAID, allow); }
+        bool GetAllowLowLevelRaid() const { return HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_ENABLE_LOW_LEVEL_RAID); }
 
         void SetInGuild(uint32 GuildId) { SetUInt32Value(PLAYER_GUILDID, GuildId); }
         void SetRank(uint32 rankId){ SetUInt32Value(PLAYER_GUILDRANK, rankId); }
@@ -2410,8 +2362,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         void SetAtLoginFlag(AtLoginFlags f) { m_atLoginFlags |= f; }
         void RemoveAtLoginFlag(AtLoginFlags f, bool in_db_also = false);
 
-        LookingForGroup m_lookingForGroup;
-
         // Temporarily removed pet cache
         uint32 GetTemporaryUnsummonedPetNumber() const { return m_temporaryUnsummonedPetNumber; }
         void SetTemporaryUnsummonedPetNumber(uint32 petnumber) { m_temporaryUnsummonedPetNumber = petnumber; }
@@ -2456,6 +2406,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         LFGPlayerState* GetLFGState() { return m_LFGState;};
         uint32 GetEquipGearScore(bool withBags = true, bool withBank = false);
         typedef std::vector<uint32/*item level*/> GearScoreMap;
+        uint8 GetTalentsCount(uint8 tab);
 
         /*********************************************************/
         /***                   GROUP SYSTEM                    ***/

@@ -21,8 +21,12 @@
 #include "DBCStores.h"
 #include "ObjectMgr.h"
 #include "ObjectGuid.h"
-#include "Player.h"
 #include "Item.h"
+#include "Player.h"
+#include "TemporarySummon.h"
+#include "Totem.h"
+#include "Pet.h"
+#include "Vehicle.h"
 #include "GameObject.h"
 #include "Opcodes.h"
 #include "Chat.h"
@@ -276,10 +280,11 @@ bool ChatHandler::HandleTriggerCommand(char* args)
                 ShowItemListHelper(at->requiredItem2, loc_idx, pl);
         }
 
-        if (at->requiredQuest)
+        if (at->requiredQuestA || at->requiredQuestH)
         {
             SendSysMessage(LANG_TRIGGER_REQ_QUEST_NORMAL);
-            ShowQuestListHelper(at->requiredQuest, loc_idx, pl);
+            ShowQuestListHelper(at->requiredQuestA, loc_idx, pl);
+            ShowQuestListHelper(at->requiredQuestH, loc_idx, pl);
         }
 
         if (at->heroicKey || at->heroicKey2)
@@ -292,10 +297,11 @@ bool ChatHandler::HandleTriggerCommand(char* args)
                 ShowItemListHelper(at->heroicKey2, loc_idx, pl);
         }
 
-        if (at->requiredQuestHeroic)
+        if (at->requiredQuestHeroicA || at->requiredQuestHeroicH)
         {
             SendSysMessage(LANG_TRIGGER_REQ_QUEST_HEROIC);
-            ShowQuestListHelper(at->requiredQuestHeroic, loc_idx, pl);
+            ShowQuestListHelper(at->requiredQuestHeroicA, loc_idx, pl);
+            ShowQuestListHelper(at->requiredQuestHeroicH, loc_idx, pl);
         }
     }
 
@@ -1839,17 +1845,40 @@ bool ChatHandler::HandleNpcDeleteCommand(char* args)
     else
         unit = getSelectedCreature();
 
-    if (!unit || unit->IsPet() || unit->IsTotem())
+    if (!unit)
     {
         SendSysMessage(LANG_SELECT_CREATURE);
         SetSentErrorMessage(true);
         return false;
     }
 
-    // Delete the creature
-    unit->CombatStop();
-    unit->DeleteFromDB();
-    unit->AddObjectToRemoveList();
+    switch (unit->GetSubtype())
+    {
+        case CREATURE_SUBTYPE_GENERIC:
+//        case CREATURE_SUBTYPE_VEHICLE:
+        {
+            unit->CombatStop();
+            if (CreatureData const* data = sObjectMgr.GetCreatureData(unit->GetGUIDLow()))
+            {
+                Creature::AddToRemoveListInMaps(unit->GetGUIDLow(), data);
+                Creature::DeleteFromDB(unit->GetGUIDLow(), data);
+            }
+            else
+                unit->AddObjectToRemoveList();
+            break;
+        }
+        case CREATURE_SUBTYPE_PET:
+            ((Pet*)unit)->Unsummon(PET_SAVE_AS_CURRENT);
+            break;
+        case CREATURE_SUBTYPE_TOTEM:
+            ((Totem*)unit)->UnSummon();
+            break;
+        case CREATURE_SUBTYPE_TEMPORARY_SUMMON:
+            ((TemporarySummon*)unit)->UnSummon();
+            break;
+        default:
+            return false;
+    }
 
     SendSysMessage(LANG_COMMAND_DELCREATMESSAGE);
 

@@ -1320,7 +1320,8 @@ void Spell::DoSpellHitOnUnit(Unit *unit, uint32 effectMask)
                 if (!unit->IsStandState() && !unit->hasUnitState(UNIT_STAT_STUNNED))
                     unit->SetStandState(UNIT_STAND_STATE_STAND);
 
-                if (!unit->isInCombat() && unit->GetTypeId() != TYPEID_PLAYER && ((Creature*)unit)->AI())
+                if (!(m_spellInfo->AttributesEx & SPELL_ATTR_EX_NO_THREAT) && 
+                    !unit->isInCombat() && unit->GetTypeId() != TYPEID_PLAYER && ((Creature*)unit)->AI())
                     unit->AttackedBy(realCaster);
 
                 unit->AddThreat(realCaster);
@@ -5358,7 +5359,7 @@ SpellCastResult Spell::CheckCast(bool strict)
                 if (m_spellInfo->SpellFamilyName == SPELLFAMILY_SHAMAN && m_spellInfo->SpellIconID == 33)
                 {
                     // fire totems slot
-                    if (!m_caster->GetTotemGUID(TOTEM_SLOT_FIRE))
+                    if (m_caster->GetTotemGuid(TOTEM_SLOT_FIRE).IsEmpty())
                         return SPELL_FAILED_TOTEMS;
                 }
                 break;

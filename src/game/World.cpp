@@ -593,6 +593,7 @@ void World::LoadConfigSettings(bool reload)
     setConfigMinMax(CONFIG_UINT32_START_HEROIC_PLAYER_LEVEL, "StartHeroicPlayerLevel", 55, 1, getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL));
 
     setConfig(CONFIG_BOOL_LFG_ENABLE, "LFG.Enable",false);
+    setConfig(CONFIG_BOOL_LFR_ENABLE, "LFR.Enable",false);
     setConfigMinMax(CONFIG_UINT32_LFG_MAXKICKS, "LFG.MaxKicks", 5, 1, getConfig(CONFIG_UINT32_LFG_MAXKICKS));
     setConfigMinMax(CONFIG_UINT32_LFG_KICKVOTES, "LFG.KickVotes", 4, 1, getConfig(CONFIG_UINT32_LFG_KICKVOTES));
 
@@ -815,6 +816,8 @@ void World::LoadConfigSettings(bool reload)
         setConfigPos(CONFIG_UINT32_GUID_RESERVE_SIZE_CREATURE,   "GuidReserveSize.Creature",   100);
     if (configNoReload(reload, CONFIG_UINT32_GUID_RESERVE_SIZE_GAMEOBJECT, "GuidReserveSize.GameObject", 100))
         setConfigPos(CONFIG_UINT32_GUID_RESERVE_SIZE_GAMEOBJECT, "GuidReserveSize.GameObject", 100);
+
+    setConfig(CONFIG_UINT32_MIN_LEVEL_FOR_RAID, "Raid.MinLevel", 10);
 
     ///- Read the "Data" directory from the config file
     std::string dataPath = sConfig.GetStringDefault("DataDir", "./");

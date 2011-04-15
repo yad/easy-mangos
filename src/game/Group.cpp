@@ -33,6 +33,7 @@
 #include "MapPersistentStateMgr.h"
 #include "Util.h"
 #include "LootMgr.h"
+#include "LFGMgr.h"
 
 #define LOOT_ROLL_TIMEOUT  (1*MINUTE*IN_MILLISECONDS)
 
@@ -345,6 +346,8 @@ bool Group::AddMember(ObjectGuid guid, const char* name)
         // quest related GO state dependent from raid membership
         if(isRaidGroup())
             player->UpdateForQuestWorldObjects();
+
+        sLFGMgr.Leave(player);
     }
 
     return true;
@@ -389,6 +392,8 @@ uint32 Group::RemoveMember(ObjectGuid guid, uint8 method)
             }
 
             _homebindIfInstance(player);
+
+            sLFGMgr.Leave(player);
         }
 
         if (leaderChanged)
@@ -1890,7 +1895,7 @@ void Group::BroadcastGroupUpdate(void)
             }
             for(uint32 i = 0; i < MAX_TOTEM_SLOT; ++i)
             {
-                if(Unit *totem = pp->GetMap()->GetUnit(pp->GetTotemGUID(TotemSlot(i))))
+                if(Unit *totem = pp->GetMap()->GetUnit(pp->GetTotemGuid(TotemSlot(i))))
                 {
                     totem->ForceValuesUpdateAtIndex(UNIT_FIELD_BYTES_2);
                     totem->ForceValuesUpdateAtIndex(UNIT_FIELD_FACTIONTEMPLATE);

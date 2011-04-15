@@ -1364,6 +1364,15 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
 
                     return;
                 }
+                case 32146:                                 // Liquid Fire
+                {
+                    if (!unitTarget || unitTarget->GetTypeId() != TYPEID_UNIT || m_caster->GetTypeId() != TYPEID_PLAYER)
+                        return;
+
+                    ((Player*)m_caster)->KilledMonsterCredit(unitTarget->GetEntry(), unitTarget->GetObjectGuid());
+                    ((Creature*)unitTarget)->ForcedDespawn();
+                    return;
+                }
                 case 33060:                                 // Make a Wish
                 {
                     if (m_caster->GetTypeId()!=TYPEID_PLAYER)
@@ -1403,14 +1412,6 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
 
                     int32 basepoints0 = 100;
                     m_caster->CastCustomSpell(unitTarget, 37675, &basepoints0, NULL, NULL, true);
-                    return;
-                }
-                case 38194:                                 // Blink
-                {
-                    // Blink
-                    if (unitTarget)
-                        m_caster->CastSpell(unitTarget, 38203, true);
-
                     return;
                 }
                 case 39189:                                 // Sha'tari Torch
@@ -2544,8 +2545,14 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     }
                     return;
                 }
+                case 38194:                                 // Blink
+                {
+                    // Blink
+                    if (unitTarget)
+                        m_caster->CastSpell(unitTarget, 38203, true);
 
-
+                    return;
+                }
             }
 
             // Conjure Mana Gem
