@@ -36,8 +36,8 @@
 #include "ObjectAccessor.h"
 #include "ObjectGuid.h"
 #include "Policies/Singleton.h"
-#include "SQLStorages.h"
 #include "Vehicle.h"
+#include "SQLStorages.h"
 
 #include <string>
 #include <map>

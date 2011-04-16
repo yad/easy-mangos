@@ -96,8 +96,6 @@ class ChatHandler
 
         bool isValidChatMessage(const char* msg);
         bool HasSentErrorMessage() { return sentErrorMessage;}
-        bool HandleNamegoCommand(char* args);
-        bool HandleGoCommand(char* args);
     protected:
         explicit ChatHandler() : m_session(NULL) {}      // for CLI subclass
 
@@ -237,6 +235,7 @@ class ChatHandler
         bool HandleGMVisibleCommand(char* args);
         bool HandleGMStartUpCommand(char* args);
 
+        bool HandleGoCommand(char* args);
         bool HandleGoCreatureCommand(char* args);
         bool HandleGoGraveyardCommand(char* args);
         bool HandleGoGridCommand(char* args);
@@ -528,6 +527,7 @@ class ChatHandler
         bool HandleDismountCommand(char* args);
         bool HandleSaveCommand(char* args);
 
+        bool HandleNamegoCommand(char* args);
         bool HandleGonameCommand(char* args);
         bool HandleGroupgoCommand(char* args);
         bool HandleRecallCommand(char* args);

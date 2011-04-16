@@ -128,7 +128,7 @@ struct CreatureInfo
     char const* AIName;
     uint32  MovementType;
     uint32  InhabitType;
-    float   health_mod;
+    float   unk16;
     float   power_mod;
     bool    RacialLeader;
     uint32  questItems[6];

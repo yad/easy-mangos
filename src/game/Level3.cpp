@@ -2754,6 +2754,25 @@ bool ChatHandler::HandleLearnAllMySpellsCommand(char* /*args*/)
     player->learnSpell(34091, false);
     player->learnSpell(54197, false);
 
+    switch (player->getClass())
+    {
+        case CLASS_WARRIOR:
+        case CLASS_PALADIN:
+        case CLASS_DEATH_KNIGHT:
+        {
+            player->learnSpell(750, false);
+            break;
+        }
+        case CLASS_HUNTER:
+        case CLASS_SHAMAN:
+        {
+            player->learnSpell(8737, false);
+            break;
+        }
+        default:
+            break;
+    }
+
     switch (player->getRace())
     {
         case RACE_HUMAN:

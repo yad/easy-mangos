@@ -2063,6 +2063,27 @@ bool Player::LearnAllMySpellsForMyLevel()
     if(getLevel() > 76)
         learnSpell(54197, false);
 
+    switch (getClass())
+    {
+        case CLASS_WARRIOR:
+        case CLASS_PALADIN:
+        case CLASS_DEATH_KNIGHT:
+        {
+            if(getLevel() > 39)
+                learnSpell(750, false);
+            break;
+        }
+        case CLASS_HUNTER:
+        case CLASS_SHAMAN:
+        {
+            if(getLevel() > 39)
+                learnSpell(8737, false);
+            break;
+        }
+        default:
+            break;
+    }
+
     switch (getRace())
     {
         case RACE_HUMAN:

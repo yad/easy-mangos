@@ -1615,9 +1615,6 @@ GroupJoinBattlegroundResult Group::CanJoinBattleGroundQueue(BattleGround const* 
         return ERR_BATTLEGROUND_JOIN_FAILED;
 
     PvPDifficultyEntry const* bracketEntry = GetBattlegroundBracketByLevel(bgOrTemplate->GetMapId(), reference->getLevel());
-    /*if (reference->IsBot())
-        bracketEntry = GetBattlegroundBracketByLevel(bgOrTemplate->GetMapId(), reference->GetPlayerbotAI()->getLevel());*/
-
     if(!bracketEntry)
         return ERR_BATTLEGROUND_JOIN_FAILED;
 
@@ -1640,8 +1637,6 @@ GroupJoinBattlegroundResult Group::CanJoinBattleGroundQueue(BattleGround const* 
             return ERR_BATTLEGROUND_JOIN_TIMED_OUT;
         // not in the same battleground level bracket, don't let join
         PvPDifficultyEntry const* memberBracketEntry = GetBattlegroundBracketByLevel(bracketEntry->mapId, member->getLevel());
-        /*if (member->IsBot())
-            memberBracketEntry = GetBattlegroundBracketByLevel(bracketEntry->mapId, member->GetPlayerbotAI()->getLevel());*/
         if(memberBracketEntry != bracketEntry)
             return ERR_BATTLEGROUND_JOIN_RANGE_INDEX;
         // don't let join rated matches if the arena team id doesn't match
@@ -1889,8 +1884,16 @@ void Group::BroadcastGroupUpdate(void)
             DEBUG_LOG("-- Forced group value update for '%s'", pp->GetName());
             if(pp->GetPet())
             {
-                pp->GetPet()->ForceValuesUpdateAtIndex(UNIT_FIELD_BYTES_2);
-                pp->GetPet()->ForceValuesUpdateAtIndex(UNIT_FIELD_FACTIONTEMPLATE);
+                GroupPetList m_groupPets = pp->GetPets();
+                if  (!m_groupPets.empty())
+                {
+                     for (GroupPetList::const_iterator itr = m_groupPets.begin(); itr != m_groupPets.end(); ++itr)
+                         if (Pet* _pet = pp->GetMap()->GetPet(*itr))
+                         {
+                             _pet->ForceValuesUpdateAtIndex(UNIT_FIELD_BYTES_2);
+                             _pet->ForceValuesUpdateAtIndex(UNIT_FIELD_FACTIONTEMPLATE);
+                         }
+                }
                 DEBUG_LOG("-- Forced group value update for '%s' pet '%s'", pp->GetName(), pp->GetPet()->GetName());
             }
             for(uint32 i = 0; i < MAX_TOTEM_SLOT; ++i)

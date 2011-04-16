@@ -33,7 +33,6 @@
 #include "MapPersistentStateMgr.h"
 #include "Mail.h"
 #include "Util.h"
-#include "ArenaTeam.h"
 #ifdef _DEBUG_VMAPS
 #include "VMapFactory.h"
 #endif
@@ -357,9 +356,6 @@ bool ChatHandler::HandleNamegoCommand(char* args)
         return false;
 
     Player* _player = m_session->GetPlayer();
-    if (!_player)
-        return false;
-
     if (target == _player || target_guid == _player->GetObjectGuid())
     {
         PSendSysMessage(LANG_CANT_TELEPORT_SELF);
@@ -374,7 +370,7 @@ bool ChatHandler::HandleNamegoCommand(char* args)
         if (HasLowerSecurity(target))
             return false;
 
-        if (target->IsBeingTeleported() && !target->IsBot())
+        if (target->IsBeingTeleported())
         {
             PSendSysMessage(LANG_IS_TELEPORTED, nameLink.c_str());
             SetSentErrorMessage(true);
@@ -388,11 +384,8 @@ bool ChatHandler::HandleNamegoCommand(char* args)
             // only allow if gm mode is on
             if (!target->isGameMaster())
             {
-                if (!target->IsBot())
-                {
-                    PSendSysMessage(LANG_CANNOT_GO_TO_BG_GM,nameLink.c_str());
-                    SetSentErrorMessage(true);
-                }
+                PSendSysMessage(LANG_CANNOT_GO_TO_BG_GM,nameLink.c_str());
+                SetSentErrorMessage(true);
                 return false;
             }
             // if both players are in different bgs
@@ -415,12 +408,9 @@ bool ChatHandler::HandleNamegoCommand(char* args)
             if (cMap->Instanceable() && cMap->GetInstanceId() != pMap->GetInstanceId())
             {
                 // cannot summon from instance to instance
-                if(!target->IsBot())
-                {   //normal player
-                    PSendSysMessage(LANG_CANNOT_SUMMON_TO_INST,nameLink.c_str());
-                    SetSentErrorMessage(true);
-                    return false;
-                }
+                PSendSysMessage(LANG_CANNOT_SUMMON_TO_INST,nameLink.c_str());
+                SetSentErrorMessage(true);
+                return false;
             }
 
             // we are in instance, and can summon only player in our group with us as lead
@@ -429,19 +419,13 @@ bool ChatHandler::HandleNamegoCommand(char* args)
                 (m_session->GetPlayer()->GetGroup()->GetLeaderGuid() != m_session->GetPlayer()->GetObjectGuid()))
                 // the last check is a bit excessive, but let it be, just in case
             {
-                // cannot summon from instance to instance
-                if(!target->IsBot())
-                {   //normal player
-                    PSendSysMessage(LANG_CANNOT_SUMMON_TO_INST,nameLink.c_str());
-                    SetSentErrorMessage(true);
-                    return false;
-                }
+                PSendSysMessage(LANG_CANNOT_SUMMON_TO_INST,nameLink.c_str());
+                SetSentErrorMessage(true);
+                return false;
             }
         }
 
-        if(!target->IsBot())
-            PSendSysMessage(LANG_SUMMONING, nameLink.c_str(),"");
-
+        PSendSysMessage(LANG_SUMMONING, nameLink.c_str(),"");
         if (needReportToTarget(target))
             ChatHandler(target).PSendSysMessage(LANG_SUMMONED_BY, playerLink(_player->GetName()).c_str());
 

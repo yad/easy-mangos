@@ -732,7 +732,9 @@ void ObjectMgr::LoadCreatureTemplates()
 
         if (cInfo->VehicleId)
         {
-            if (!sVehicleStore.LookupEntry(cInfo->VehicleId))
+            VehicleEntry const* pVehicleEntry = sVehicleStore.LookupEntry(cInfo->VehicleId);
+
+            if (!pVehicleEntry)
             {
                 sLog.outErrorDb("Creature (Entry: %u) has non-existing VehicleId (%u)", cInfo->Entry, cInfo->VehicleId);
                 const_cast<CreatureInfo*>(cInfo)->VehicleId = 0;
