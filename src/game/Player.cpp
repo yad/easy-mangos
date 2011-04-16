@@ -13435,10 +13435,6 @@ void Player::PrepareGossipMenu(WorldObject *pSource, uint32 menuId)
                     if (!pCreature->IsTrainerOf(this, false))
                         hasMenuItem = false;
                     break;
-                case GOSSIP_OPTION_LEARNDUALSPEC:
-                    if(!(GetSpecsCount() == 1 && pCreature->CanTrainAndResetTalentsOf(this) && !(getLevel() < 40))) //Level added manually, in original patch it was in config !
-                        hasMenuItem = false;
-                    break;
                 case GOSSIP_OPTION_UNLEARNTALENTS:
                     if (!pCreature->CanTrainAndResetTalentsOf(this))
                         hasMenuItem = false;
@@ -13668,18 +13664,6 @@ void Player::OnGossipSelect(WorldObject* pSource, uint32 gossipListId, uint32 me
             break;
         case GOSSIP_OPTION_TRAINER:
             GetSession()->SendTrainerList(guid);
-            break;
-        case GOSSIP_OPTION_LEARNDUALSPEC:
-            if(GetSpecsCount() == 1 && !(getLevel() < 40)) //Level added manually, in original patch it was in config !
-            {
-                // Cast spells that teach dual spec
-                // Both are also ImplicitTarget self and must be cast by player
-                CastSpell(this,63680,true,NULL,NULL,GetGUID());
-                CastSpell(this,63624,true,NULL,NULL,GetGUID());
-
-                // Should show another Gossip text with "Congratulations..."
-                PlayerTalkClass->CloseGossip();
-            }
             break;
         case GOSSIP_OPTION_UNLEARNTALENTS:
             PlayerTalkClass->CloseGossip();
