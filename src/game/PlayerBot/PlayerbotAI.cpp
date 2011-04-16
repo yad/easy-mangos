@@ -63,7 +63,6 @@ class PlayerbotChatHandler : protected ChatHandler
 {
 public:
     explicit PlayerbotChatHandler(Player* pMasterPlayer) : ChatHandler(pMasterPlayer) {}
-    bool revive(Player& botPlayer) { return HandleReviveCommand((char*) botPlayer.GetName()); }
     void sysmessage(const char *str) { SendSysMessage(str); }
     bool dropQuest(char *str) { return HandleQuestRemoveCommand(str); }
 };
@@ -2221,8 +2220,9 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
 
             m_ignoreAIUpdatesUntilTime = time(0) + 6;
             PlayerbotChatHandler ch(GetLeader());
-            if (!ch.revive(*m_bot))
-                return;
+
+            m_bot->ResurrectPlayer(0.5f);
+            m_bot->SpawnCorpseBones();
 
             if (m_bot->getAttackers().empty())
             {
