@@ -226,26 +226,25 @@ struct LFGPlayerState
         Clear();
     };
 
-    void Clear();
+    void Clear() {};
     void Update(bool _update = true) { update = _update; };
     LFGDungeonSet* GetDungeons()   { return &m_DungeonsList; };
     LFGLockStatusMap* GetLockMap();
 
     std::string    GetComment()    { return m_comment; };
-    void SetComment(std::string comment);
+    void SetComment(std::string comment) { m_comment = comment; };
 
     void SetState(LFGState _state) { m_state = _state; };
     LFGState GetState() { return m_state; };
 
-    LFGRoleMask    GetRoles();
-    void SetRoles(uint8 roles);
+    LFGRoleMask    GetRoles() { return LFG_ROLE_MASK_NONE; };
+    void SetRoles(uint8 roles) {};
     void AddRole(LFGRoles role) { rolesMask = LFGRoleMask( rolesMask | (1 << role)); };
     void RemoveRole(LFGRoles role) { rolesMask = LFGRoleMask( rolesMask & ~(1 << role)); };
 
     uint32*        GetFlags()    { return &m_flags;};
-    LFGType        GetType();
+    LFGType        GetType() { return LFG_TYPE_NONE; };
 
-private:
     LFGRoleMask   rolesMask;
     uint32        m_flags;
     bool          update;
@@ -263,7 +262,7 @@ struct LFGGroupState
         Clear();
     };
 
-    void Clear();
+    void Clear() {};
     void Update(bool _update = true) { update = _update; };
     LFGDungeonSet* GetDungeons()   { return &m_DungeonsList; };
 

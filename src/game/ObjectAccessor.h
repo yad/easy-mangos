@@ -129,6 +129,10 @@ class MANGOS_DLL_DECL ObjectAccessor : public MaNGOS::Singleton<ObjectAccessor, 
         void RemoveObject(Corpse *object) { HashMapHolder<Corpse>::Remove(object); }
         void RemoveObject(Player *object) { HashMapHolder<Player>::Remove(object); }
 
+        // For call from Pet AddToWorld/RemoveFromWorld only
+        void AddObject(Pet* object) { HashMapHolder<Pet>::Insert(object); }
+        void RemoveObject(Pet* object) { HashMapHolder<Pet>::Remove(object); }
+
     private:
 
         Player2CorpsesMapType   i_player2corpse;

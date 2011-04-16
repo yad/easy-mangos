@@ -437,7 +437,7 @@ bool ArenaTeam::DisbandNoSave(Player* player)
             if (Player *pl = sObjectMgr.GetPlayer(m_members.front().guid))
             {
                 pl->GetSession()->SendArenaTeamCommandResult(ERR_ARENA_TEAM_QUIT_S, GetName(), "", 0);
-                pl->SetInArenaTeam(0, GetSlot(), 0);
+                pl->SetInArenaTeam(0, GetSlot(), ARENA_TYPE_NONE);
                 for(int i = 0; i < ARENA_TEAM_END; ++i)
                     pl->SetArenaTeamInfoField(GetSlot(), ArenaTeamInfoType(i), 0);
             }
@@ -447,7 +447,7 @@ bool ArenaTeam::DisbandNoSave(Player* player)
     else
     {
         player->GetSession()->SendArenaTeamCommandResult(ERR_ARENA_TEAM_QUIT_S, GetName(), "", 0);
-        player->SetInArenaTeam(0, GetSlot(), 0);
+        player->SetInArenaTeam(0, GetSlot(), ARENA_TYPE_NONE);
         for(int i = 0; i < ARENA_TEAM_END; ++i)
             player->SetArenaTeamInfoField(GetSlot(), ArenaTeamInfoType(i), 0);
     }

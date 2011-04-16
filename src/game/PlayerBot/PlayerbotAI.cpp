@@ -145,7 +145,7 @@ void PlayerbotAI::ReinitAI()
             uint32 a_id = m_bot->GetArenaTeamId(i);
             if (a_id==0)
                 continue;
-            
+
             ArenaTeam *at = sObjectMgr.GetArenaTeamById(a_id);
             if (!at)
                 continue;
@@ -1928,7 +1928,7 @@ void PlayerbotAI::SetMovementTarget(Unit *followTarget)
                 {
                     SetInFront(m_followTarget);
                     m_bot->GetMotionMaster()->MoveFollow(m_followTarget, 1.0f, rand_float(0, M_PI_F));
-                }                    
+                }
             }
             else
             {
@@ -1956,7 +1956,7 @@ void PlayerbotAI::SetMovementTarget(Unit *followTarget)
                 if (!isInside(xcb, ycb, xdb, ydb, xt, yt, 3.0f))
                 {
                     m_bot->GetMotionMaster()->MoveFollow(m_followTarget, 1.0f, rand_float(0, M_PI_F));
-                }                    
+                }
             }
         }
     }

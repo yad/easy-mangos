@@ -162,7 +162,7 @@ bool Group::Create(ObjectGuid guid, const char * name)
             m_targetIcons[6].GetRawValue(), m_targetIcons[7].GetRawValue(),
             uint8(m_groupType), uint32(m_dungeonDifficulty), uint32(m_raidDifficulty));
     }
-    else 
+    else
         m_Guid =  ObjectGuid(HIGHGUID_GROUP,uint32(0));
 
     if (!AddMember(guid, name))
@@ -1626,7 +1626,7 @@ GroupJoinBattlegroundResult Group::CanJoinBattleGroundQueue(BattleGround const* 
 
     uint32 allowedPlayerCount = 0;
 
-    BattleGroundQueueTypeId bgQueueTypeIdRandom = BattleGroundMgr::BGQueueTypeId(BATTLEGROUND_RB, 0);
+    BattleGroundQueueTypeId bgQueueTypeIdRandom = BattleGroundMgr::BGQueueTypeId(BATTLEGROUND_RB, ARENA_TYPE_NONE);
 
     // check every member of the group to be able to join
     for(GroupReference *itr = GetFirstMember(); itr != NULL; itr = itr->next())

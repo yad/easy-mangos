@@ -1004,7 +1004,7 @@ void BattleGroundQueue::Update(BattleGroundTypeId bgTypeId, BattleGroundBracketI
                         {
                             Player* p = *tIter;
                             p->GetPlayerbotAI()->SetLeader(p);
-                            p->GetPlayerbotAI()->ReinitAI();                        
+                            p->GetPlayerbotAI()->ReinitAI();
                         }
                         leader->SetTimeInArenaQueue(leader->GetBattleGroundQueueIndex(bgQueueTypeId), WorldTimer::getMSTime());
                         sBattleGroundMgr.ScheduleQueueUpdate(arenaRating, arenaType, bgQueueTypeId, bgTypeId, bracket_id);
@@ -1023,7 +1023,7 @@ void BattleGroundQueue::Update(BattleGroundTypeId bgTypeId, BattleGroundBracketI
                     {
                         Player* p = *tIter;
                         p->GetPlayerbotAI()->SetLeader(p);
-                        p->GetPlayerbotAI()->ReinitAI();                        
+                        p->GetPlayerbotAI()->ReinitAI();
                     }
                     leader->SetTimeInArenaQueue(leader->GetBattleGroundQueueIndex(bgQueueTypeId), WorldTimer::getMSTime());
                     sBattleGroundMgr.ScheduleQueueUpdate(arenaRating, arenaType, bgQueueTypeId, bgTypeId, bracket_id);
@@ -1201,7 +1201,7 @@ void BattleGroundQueue::Update(BattleGroundTypeId bgTypeId, BattleGroundBracketI
 
             if (!team.empty() && team.size() == m_SelectionPools[BG_TEAM].GetPlayerCount())
             {
-                ArenaTeam* at = new ArenaTeam;                
+                ArenaTeam* at = new ArenaTeam;
 
                 for(std::list<Player *>::iterator tIter = team.begin(); tIter != team.end(); ++tIter)
                 {
@@ -1251,7 +1251,7 @@ void BattleGroundQueue::Update(BattleGroundTypeId bgTypeId, BattleGroundBracketI
                     {
                         Player* p = *tIter;
                         p->GetPlayerbotAI()->SetLeader(p);
-                        p->GetPlayerbotAI()->ReinitAI();                        
+                        p->GetPlayerbotAI()->ReinitAI();
                     }
                     leader->SetTimeInArenaQueue(leader->GetBattleGroundQueueIndex(bgQueueTypeId), WorldTimer::getMSTime());
                     sBattleGroundMgr.ScheduleQueueUpdate(arenaRating, arenaType, bgQueueTypeId, bgTypeId, bracket_id);
@@ -2189,7 +2189,7 @@ void BattleGroundMgr::SendToBattleGround(Player *pl, uint32 instanceId, BattleGr
                     default:
                         break;
                 }
-            } 
+            }
         }
         DETAIL_LOG("BATTLEGROUND: Sending %s to map %u, X %f, Y %f, Z %f, O %f", pl->GetName(), mapid, x, y, z, O);
         pl->TeleportTo(mapid, x, y, z, O);

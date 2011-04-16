@@ -579,7 +579,7 @@ void WorldSession::HandleBattlefieldStatusOpcode( WorldPacket & /*recv_data*/ )
 
             // expected bracket entry
             PvPDifficultyEntry const* bracketEntry = GetBattlegroundBracketByLevel(bg->GetMapId(),_player->getLevel());
-                
+
             if (!bracketEntry)
                 continue;
 

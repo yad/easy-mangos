@@ -596,7 +596,25 @@ void Creature::Update(uint32 update_diff, uint32 diff)
             if(!isAlive())
                 break;
 
-            RegenerateAll(update_diff);
+            if (IsPet())                           // Regenerated before
+                break;
+
+            if(m_regenTimer > 0)
+            {
+                if(update_diff >= m_regenTimer)
+                    m_regenTimer = 0;
+                else
+                    m_regenTimer -= update_diff;
+            }
+            if (m_regenTimer != 0)
+                break;
+
+            if (!isInCombat() || IsPolymorphed())
+                RegenerateHealth();
+
+            Regenerate(getPowerType());
+            m_regenTimer = REGEN_TIME_FULL;
+
             break;
         }
         case CORPSE_FALLING:
@@ -608,45 +626,7 @@ void Creature::Update(uint32 update_diff, uint32 diff)
     }
 }
 
-void Creature::StartGroupLoot( Group* group, uint32 timer )
-{
-    m_groupLootId = group->GetId();
-    m_groupLootTimer = timer;
-}
-
-void Creature::StopGroupLoot()
-{
-    if (!m_groupLootId)
-        return;
-
-    if (Group* group = sObjectMgr.GetGroupById(m_groupLootId))
-        group->EndRoll();
-
-    m_groupLootTimer = 0;
-    m_groupLootId = 0;
-}
-
-void Creature::RegenerateAll(uint32 update_diff)
-{
-    if (m_regenTimer > 0)
-    {
-        if(update_diff >= m_regenTimer)
-            m_regenTimer = 0;
-        else
-            m_regenTimer -= update_diff;
-    }
-    if (m_regenTimer != 0)
-        return;
-
-    if (!isInCombat() || IsPolymorphed())
-        RegenerateHealth();
-
-    RegenerateMana();
-
-    m_regenTimer = REGEN_TIME_FULL;
-}
-
-void Creature::RegenerateMana()
+void Creature::Regenerate(Powers power)
 {
     uint32 curValue = GetPower(power);
     uint32 maxValue = GetMaxPower(power);
@@ -799,12 +779,12 @@ bool Creature::Create(uint32 guidlow, CreatureCreatePos& cPos, CreatureInfo cons
 
     HighGuid hi = cinfo->VehicleId ? HIGHGUID_VEHICLE : HIGHGUID_UNIT;
 
-    ObjectGuid guid(hi, Entry, guidlow);
+    ObjectGuid guid(hi, cinfo->Entry, guidlow);
 
     if (cPos.GetMap()->GetCreature(guid))
         return false;
 
-    if (!CreateFromProto(guidlow, Entry, team, data, eventData))
+    if (!CreateFromProto(guidlow, cinfo, team, data, eventData))
         return false;
 
     cPos.SelectFinalPoint(this);
@@ -1200,6 +1180,7 @@ void Creature::SelectLevel(const CreatureInfo *cinfo, float percentHealth, float
 
     SetMaxPower(powerType, maxPower);
     SetPower(powerType, maxPower);
+
     SetModifierValue(UnitMods(UNIT_MOD_POWER_START + powerType), BASE_VALUE, float(maxPower));
 
     // damage
@@ -1271,11 +1252,11 @@ float Creature::GetSpellDamageMod(int32 Rank)
     }
 }
 
-bool Creature::CreateFromProto(uint32 guidlow, uint32 Entry, Team team, const CreatureData *data /*=NULL*/, GameEventCreatureData const* eventData /*=NULL*/)
+bool Creature::CreateFromProto(uint32 guidlow, CreatureInfo const* cinfo, Team team, const CreatureData *data /*=NULL*/, GameEventCreatureData const* eventData /*=NULL*/)
 {
     m_originalEntry = cinfo->Entry;
 
-    Object::_Create(guidlow, Entry, HIGHGUID_UNIT);
+    Object::_Create(guidlow, cinfo->Entry, cinfo->GetHighGuid());
 
     if (!UpdateEntry(cinfo->Entry, team, data, eventData, false))
         return false;
@@ -1522,12 +1503,13 @@ void Creature::SetDeathState(DeathState s)
 
     if (s == JUST_ALIVED)
     {
-        CreatureInfo const *cinfo = GetCreatureInfo();
-
         SetHealth(GetMaxHealth());
         SetLootRecipient(NULL);
-
+        CreatureInfo const *cinfo = GetCreatureInfo();
+        SetUInt32Value(UNIT_DYNAMIC_FLAGS, 0);
+        RemoveFlag (UNIT_FIELD_FLAGS, UNIT_FLAG_SKINNABLE);
         AddSplineFlag(SPLINEFLAG_WALKMODE);
+        SetUInt32Value(UNIT_NPC_FLAGS, cinfo->npcflag);
 
         if (GetTemporaryFactionFlags() & TEMPFACTION_RESTORE_RESPAWN)
             ClearTemporaryFaction();
@@ -1536,18 +1518,8 @@ void Creature::SetDeathState(DeathState s)
 
         clearUnitState(UNIT_STAT_ALL_STATE);
         i_motionMaster.Clear();
-
         SetMeleeDamageSchool(SpellSchools(cinfo->dmgschool));
-
-        // Dynamic flags may be adjusted by spells. Clear them
-        // first and let spell from *addon apply where needed.
-        SetUInt32Value(UNIT_DYNAMIC_FLAGS, UNIT_DYNFLAG_NONE);
         LoadCreatureAddon(true);
-
-        // Flags after LoadCreatureAddon. Any spell in *addon
-        // will not be able to adjust these.
-        SetUInt32Value(UNIT_NPC_FLAGS, cinfo->npcflag);
-        RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_SKINNABLE);
     }
 }
 
@@ -1948,7 +1920,14 @@ CreatureDataAddon const* Creature::GetCreatureAddon() const
         return addon;
 
     // dependent from difficulty mode entry
-    return ObjectMgr::GetCreatureTemplateAddon(GetCreatureInfo()->Entry);
+    if (GetEntry() != GetCreatureInfo()->Entry)
+    {
+        if (CreatureDataAddon const* addon =  ObjectMgr::GetCreatureTemplateAddon(GetCreatureInfo()->Entry))
+            return addon;
+    }
+
+    // fallback to entry of normal mode
+    return ObjectMgr::GetCreatureTemplateAddon(GetEntry());
 }
 
 //creature_addon table

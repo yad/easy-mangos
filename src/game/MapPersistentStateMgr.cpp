@@ -445,7 +445,7 @@ void DungeonResetScheduler::LoadResetTimes()
                 oldresettime = DungeonResetScheduler::CalculateNextResetTime(mapDiff, time(NULL));
                 sLog.outErrorDb("Wrong reset time in group_instance corrected to: %d", oldresettime);
             }
-            else 
+            else
                 oldresettime = time_t(_oldresettime);
 
             MapEntry const* mapEntry = sMapStore.LookupEntry(mapid);

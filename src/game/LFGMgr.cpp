@@ -511,7 +511,7 @@ LFGDungeonSet LFGMgr::GetRandomDungeonsForPlayer(Player* player)
     {
         if (LFGDungeonEntry const* dungeon = sLFGDungeonStore.LookupEntry(i))
         {
-            if (dungeon && 
+            if (dungeon &&
                 dungeon->type == LFG_TYPE_RANDOM_DUNGEON &&
                 GetPlayerLockStatus(player, dungeon) == LFG_LOCKSTATUS_OK)
                 list.insert(dungeon);

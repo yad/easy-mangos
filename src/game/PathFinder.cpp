@@ -287,7 +287,7 @@ void PathInfo::BuildPolyPath(PathNode startPos, PathNode endPos)
         {
             // here to carch few bugs
             MANGOS_ASSERT(m_pathPolyRefs[pathStartIndex] != INVALID_POLYREF);
-            
+
             if (m_pathPolyRefs[pathStartIndex] == startPoly)
             {
                 startPolyFound = true;

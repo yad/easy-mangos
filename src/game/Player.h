@@ -1635,14 +1635,11 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         ObjectGuid const& GetSelectionGuid( ) const { return m_curSelectionGuid; }
         void SetSelectionGuid(ObjectGuid guid) { m_curSelectionGuid = guid; SetTargetGuid(guid); }
+
+        void SendComboPoints(ObjectGuid targetGuid, uint8 combopoints);
+        void SendPetComboPoints(Unit* pet, ObjectGuid targetGuid, uint8 combopoints);
+
         void SendCalendarResult(CalendarResponseResult result, std::string str);
-
-        uint8 GetComboPoints() const { return m_comboPoints; }
-        ObjectGuid const& GetComboTargetGuid() const { return m_comboTargetGuid; }
-
-        void AddComboPoints(Unit* target, int8 count);
-        void ClearComboPoints();
-        void SendComboPoints();
 
         void SendMailResult(uint32 mailId, MailResponseType mailAction, MailResponseResult mailError, uint32 equipError = 0, uint32 item_guid = 0, uint32 item_count = 0);
         void SendNewMail();
@@ -1923,7 +1920,7 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         void UpdateDefenseBonusesMod();
         float GetMeleeCritFromAgility();
-        float GetDodgeFromAgility();
+        void GetDodgeFromAgility(float &diminishing, float &nondiminishing);
         float GetSpellCritFromIntellect();
         float OCTRegenHPPerSpirit();
         float OCTRegenMPPerSpirit();
@@ -2368,6 +2365,9 @@ class MANGOS_DLL_SPEC Player : public Unit
         void UnsummonPetTemporaryIfAny();
         void ResummonPetTemporaryUnSummonedIfAny();
         bool IsPetNeedBeTemporaryUnsummoned() const { return !IsInWorld() || !isAlive() || IsMounted() /*+in flight*/; }
+        KnownPetNames m_knownPetNames;
+        std::string GetKnownPetName(uint32 petnumber);
+        void AddKnownPetName(uint32 petnumber, std::string name);
 
         void SendCinematicStart(uint32 CinematicSequenceId);
         void SendMovieStart(uint32 MovieId);
@@ -2620,9 +2620,6 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         uint32 m_ExtraFlags;
         ObjectGuid m_curSelectionGuid;
-
-        ObjectGuid m_comboTargetGuid;
-        int8 m_comboPoints;
 
         QuestStatusMap mQuestStatus;
 

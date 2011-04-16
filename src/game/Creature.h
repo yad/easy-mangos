@@ -34,7 +34,6 @@
 struct SpellEntry;
 
 class CreatureAI;
-class Group;
 class Quest;
 class Player;
 class WorldSession;
@@ -81,7 +80,7 @@ struct CreatureInfo
     uint32  maxlevel;
     uint32  minhealth;
     uint32  maxhealth;
-    uint32  powerType;
+    uint8   powerType;
     uint32  minmana;
     uint32  maxmana;
     uint32  armor;
@@ -459,9 +458,7 @@ class MANGOS_DLL_SPEC Creature : public Unit
 
         char const* GetSubName() const { return GetCreatureInfo()->SubName; }
 
-        void Update(uint32 update_diff, uint32 time);       // overwrite Unit::Update
-
-        virtual void RegenerateAll(uint32 update_diff);
+        void Update(uint32 update_diff, uint32 time);                           // overwrite Unit::Update
         void GetRespawnCoord(float &x, float &y, float &z, float* ori = NULL, float* dist =NULL) const;
         uint32 GetEquipmentId() const { return m_equipmentId; }
 
@@ -706,7 +703,7 @@ class MANGOS_DLL_SPEC Creature : public Unit
         void SetVirtualItem(VirtualItemSlot slot, uint32 item_id) { SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + slot, item_id); }
 
     protected:
-        bool CreateFromProto(uint32 guidlow,uint32 Entry, Team team, const CreatureData *data = NULL, GameEventCreatureData const* eventData =NULL);
+        bool CreateFromProto(uint32 guidlow, CreatureInfo const* cinfo, Team team, const CreatureData *data = NULL, GameEventCreatureData const* eventData =NULL);
         bool InitEntry(uint32 entry, const CreatureData* data = NULL, GameEventCreatureData const* eventData = NULL);
 
         // vendor items

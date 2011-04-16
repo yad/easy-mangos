@@ -150,7 +150,7 @@ class ArenaTeam
 
         void ForceCaptain(ObjectGuid guid)     { m_CaptainGuid = guid; }
         void ForceName(std::string name)       { m_Name = name; }
-        void ForceType(uint32 type)            { m_Type = type; }
+        void ForceType(ArenaType type)         { m_Type = type; }
         void ForceTeamId(uint32 teamid)        { m_TeamId = teamid; }
         void ForceEmblem(uint32 backgroundColor, uint32 emblemStyle, uint32 emblemColor, uint32 borderStyle, uint32 borderColor);
 

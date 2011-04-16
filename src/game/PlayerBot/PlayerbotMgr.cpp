@@ -437,7 +437,7 @@ void PlayerbotMgr::LogoutPlayerBot(uint64 guid)
             uint32 a_id = bot->GetArenaTeamId(i);
             if (a_id==0)
                 continue;
-            
+
             ArenaTeam *at = sObjectMgr.GetArenaTeamById(a_id);
             if (!at)
                 continue;

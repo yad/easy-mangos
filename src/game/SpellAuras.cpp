@@ -2057,7 +2057,7 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                             Caster->CombatStop(true);
                         }
                         return;
-                    } 
+                    }
                     case 47977:                             // Magic Broom
                         Spell::SelectMountByAreaAndSkill(target, GetSpellProto(), 42680, 42683, 42667, 42668, 0);
                         return;
@@ -4524,7 +4524,7 @@ void Aura::HandleAuraModStun(bool apply, bool Real)
             Unit* pCaster = GetCaster();
             if(!pCaster)
                 return;
-            
+
             pCaster->InterruptSpell(CURRENT_CHANNELED_SPELL,false);
             return;
         }

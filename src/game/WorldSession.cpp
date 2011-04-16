@@ -518,12 +518,12 @@ void WorldSession::LogoutPlayer(bool Save)
         // no point resetting online in character table here as Player::SaveToDB() will set it to 1 since player has not been removed from world at this stage
         // No SQL injection as AccountID is uint32
         if (!IsBotSession())
-		{
-			static SqlStatementID id;
+        {
+            static SqlStatementID id;
 
-			SqlStatement stmt = LoginDatabase.CreateStatement(id, "UPDATE account SET active_realm_id = ? WHERE id = ?");
-			stmt.PExecute(uint32(0), GetAccountId());
-		}
+            SqlStatement stmt1 = LoginDatabase.CreateStatement(id, "UPDATE account SET active_realm_id = ? WHERE id = ?");
+            stmt1.PExecute(uint32(0), GetAccountId());
+        }
 
         ///- If the player is in a guild, update the guild roster and broadcast a logout message to other guild members
         if (Guild *guild = sObjectMgr.GetGuildById(_player->GetGuildId()))
@@ -608,8 +608,8 @@ void WorldSession::LogoutPlayer(bool Save)
 
         static SqlStatementID updChars;
 
-        stmt = CharacterDatabase.CreateStatement(updChars, "UPDATE characters SET online = 0 WHERE guid = ?");
-        stmt.PExecute(guid);
+        SqlStatement stmt2 = CharacterDatabase.CreateStatement(updChars, "UPDATE characters SET online = 0 WHERE guid = ?");
+        stmt2.PExecute(guid);
 
         DEBUG_LOG( "SESSION: Sent SMSG_LOGOUT_COMPLETE Message" );
     }

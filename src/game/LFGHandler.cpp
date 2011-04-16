@@ -185,7 +185,7 @@ void WorldSession::HandleLfgTeleportOpcode(WorldPacket &recv_data)
 
 void WorldSession::HandleLfgPlayerLockInfoRequestOpcode(WorldPacket &/*recv_data*/)
 {
-    if (!sWorld.getConfig(CONFIG_BOOL_LFR_ENABLE) && !sWorld.getConfig(CONFIG_BOOL_LFG_ENABLE))
+    /*if (!sWorld.getConfig(CONFIG_BOOL_LFR_ENABLE) && !sWorld.getConfig(CONFIG_BOOL_LFG_ENABLE))
     {
         DEBUG_LOG("CMSG_LFD_PLAYER_LOCK_INFO_REQUEST %u failed - Dungeon finder disabled", GetPlayer()->GetObjectGuid().GetCounter());
         return;
@@ -279,12 +279,12 @@ void WorldSession::HandleLfgPlayerLockInfoRequestOpcode(WorldPacket &/*recv_data
             data << uint32(itr->second);                             // Lock status
         }
     }
-    SendPacket(&data);
+    SendPacket(&data);*/
 }
 
 void WorldSession::HandleLfgPartyLockInfoRequestOpcode(WorldPacket & /*recv_data*/)
 {
-    if (!sWorld.getConfig(CONFIG_BOOL_LFR_ENABLE) && !sWorld.getConfig(CONFIG_BOOL_LFG_ENABLE))
+    /*if (!sWorld.getConfig(CONFIG_BOOL_LFR_ENABLE) && !sWorld.getConfig(CONFIG_BOOL_LFG_ENABLE))
     {
         DEBUG_LOG("CMSG_LFD_PARTY_LOCK_INFO_REQUEST %u failed - Dungeon finder disabled", GetPlayer()->GetObjectGuid().GetCounter());
         return;
@@ -337,7 +337,7 @@ void WorldSession::HandleLfgPartyLockInfoRequestOpcode(WorldPacket & /*recv_data
         }
 
         SendPacket(&data);
-    }
+    }*/
 }
 
 void WorldSession::HandleLfgProposalResultOpcode(WorldPacket &recv_data)
@@ -353,7 +353,7 @@ void WorldSession::HandleLfgProposalResultOpcode(WorldPacket &recv_data)
 
 void WorldSession::SendLfgJoinResult(LFGJoinResult checkResult, uint8 checkValue, bool withLockMap)
 {
-    if (!sWorld.getConfig(CONFIG_BOOL_LFR_ENABLE) && !sWorld.getConfig(CONFIG_BOOL_LFG_ENABLE))
+    /*if (!sWorld.getConfig(CONFIG_BOOL_LFR_ENABLE) && !sWorld.getConfig(CONFIG_BOOL_LFG_ENABLE))
     {
         DEBUG_LOG("SendLfgJoinResult %u failed - Dungeon finder disabled", GetPlayer()->GetObjectGuid().GetCounter());
         return;
@@ -408,7 +408,7 @@ void WorldSession::SendLfgJoinResult(LFGJoinResult checkResult, uint8 checkValue
         }
     }
 
-    SendPacket(&data);
+    SendPacket(&data);*/
 }
 
 void WorldSession::SendLfgUpdateParty(LFGUpdateType updateType, LFGType type)
@@ -436,7 +436,7 @@ void WorldSession::SendLfgUpdateParty(LFGUpdateType updateType, LFGType type)
             queued = true;
             break;
         case LFG_UPDATETYPE_CLEAR_LOCK_LIST:
-            // join = true;  
+            // join = true;
             // TODO: Sometimes queued and extrainfo - Check ocurrences...
             queued = true;
             extrainfo = false;

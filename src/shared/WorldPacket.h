@@ -75,8 +75,6 @@ class WorldPacket : public ByteBuffer
                 case SMSG_SPELL_GO:
                 case SMSG_TIME_SYNC_REQ:
                 case CMSG_TIME_SYNC_RESP:
-                case CMSG_WORLD_STATE_UI_TIMER_UPDATE:
-                case SMSG_WORLD_STATE_UI_TIMER_UPDATE:
                 case SMSG_EMOTE:
                 case SMSG_POWER_UPDATE:
                 case SMSG_AURA_UPDATE:

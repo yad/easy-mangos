@@ -1123,6 +1123,7 @@ enum IgnoreUnitState
 };
 
 typedef std::set<uint64> GuardianPetList;
+typedef std::set<ObjectGuid> GroupPetList;
 
 // delay time next attack to prevent client attack animation problems
 #define ATTACK_DISPLAY_DELAY 200
@@ -1145,7 +1146,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         typedef std::list<SpellAuraHolder *> SpellAuraHolderList;
         typedef std::list<Aura *> AuraList;
         typedef std::list<DiminishingReturn> Diminishing;
-        typedef std::set<uint32> ComboPointHolderSet;
+        typedef std::set<ObjectGuid> ComboPointHolderSet;
         typedef std::map<uint8, uint32> VisibleAuraMap;
         typedef std::map<SpellEntry const*, ObjectGuid> SingleCastSpellTargetMap;
 
@@ -1549,6 +1550,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         Pet* GetPet() const;
         Unit* GetCharmer() const;
         Unit* GetCharm() const;
+        Unit* GetCreator() const;
         void Uncharm();
         Unit* GetCharmerOrOwner() const { return !GetCharmerGuid().IsEmpty() ? GetCharmer() : GetOwner(); }
         Unit* GetCharmerOrOwnerOrSelf()
@@ -1565,10 +1567,15 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         void SetPet(Pet* pet);
         void SetCharm(Unit* pet);
 
+        void AddPetToList(Pet* pet);
+        void RemovePetFromList(Pet* pet);
+        GroupPetList const& GetPets() { return m_groupPets; }
+
         void AddGuardian(Pet* pet);
         void RemoveGuardian(Pet* pet);
         void RemoveGuardians();
         Pet* FindGuardianWithEntry(uint32 entry);
+        GuardianPetList const& GetGuardians() const { return m_guardianPets; }
         Pet* GetProtectorPet();                             // expected single case in guardian list
 
         bool isCharmed() const { return !GetCharmerGuid().IsEmpty(); }
@@ -1951,9 +1958,15 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         void SetConfused(bool apply, ObjectGuid casterGuid = ObjectGuid(), uint32 spellID = 0);
         void SetFeignDeath(bool apply, ObjectGuid casterGuid = ObjectGuid(), uint32 spellID = 0);
 
-        void AddComboPointHolder(uint32 lowguid) { m_ComboPointHolders.insert(lowguid); }
-        void RemoveComboPointHolder(uint32 lowguid) { m_ComboPointHolders.erase(lowguid); }
+        void AddComboPointHolder(ObjectGuid guid) { m_ComboPointHolders.insert(guid); }
+        void RemoveComboPointHolder(ObjectGuid guid) { m_ComboPointHolders.erase(guid); }
         void ClearComboPointHolders();
+
+        uint8 GetComboPoints() const { return m_comboPoints; }
+        ObjectGuid const& GetComboTargetGuid() const { return m_comboTargetGuid; }
+
+        void AddComboPoints(Unit* target, int8 count);
+        void ClearComboPoints();
 
         ///----------Pet responses methods-----------------
         void SendPetCastFail(uint32 spellid, SpellCastResult msg);
@@ -1961,6 +1974,8 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         void SendPetTalk (uint32 pettalk);
         void SendPetAIReaction();
         ///----------End of Pet responses methods----------
+        void DoPetAction (Player* owner, uint8 flag, uint32 spellid, ObjectGuid petGuid, ObjectGuid targetGuid);
+        void DoPetCastSpell (Player *owner, uint8 cast_count, SpellCastTargets* targets, SpellEntry const* spellInfo);
 
         void propagateSpeedChange() { GetMotionMaster()->propagateSpeedChange(); }
 
@@ -2055,6 +2070,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         float m_auraModifiersGroup[UNIT_MOD_END][MODIFIER_TYPE_END];
         float m_weaponDamage[MAX_ATTACK][2];
         bool m_canModifyStats;
+
         //std::list< spellEffectPair > AuraSpells[TOTAL_AURAS];  // TODO: use this if ok for mem
         VisibleAuraMap m_visibleAuras;
 
@@ -2080,6 +2096,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
 
         VehicleKit* m_pVehicle;
         VehicleKit* m_pVehicleKit;
+
     private:
         void CleanupDeletedAuras();
 
@@ -2109,8 +2126,12 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         FollowerRefManager m_FollowingRefManager;
 
         ComboPointHolderSet m_ComboPointHolders;
+        ObjectGuid m_comboTargetGuid;
+        int8 m_comboPoints;
 
         uint32 m_originalFaction;
+
+        GroupPetList m_groupPets;
 
         GuardianPetList m_guardianPets;
         uint32 m_ThreatRedirectionPercent;
@@ -2139,8 +2160,17 @@ template<typename Func>
 void Unit::CallForAllControlledUnits(Func const& func, uint32 controlledMask)
 {
     if (controlledMask & CONTROLLED_PET)
-        if (Pet* pet = GetPet())
-            func(pet);
+    {
+        if (!m_groupPets.empty())
+        {
+            GroupPetList m_groupPetsTmp = GetPets();  // Original list may be modified in this function
+            for (GroupPetList::const_iterator itr = m_groupPetsTmp.begin(); itr != m_groupPetsTmp.end(); ++itr)
+            {
+                if (Pet* pet = _GetPet(*itr))
+                    func(pet);
+            }
+        }
+    }
 
     if (controlledMask & CONTROLLED_MINIPET)
         if (Unit* mini = GetMiniPet())
@@ -2163,6 +2193,7 @@ void Unit::CallForAllControlledUnits(Func const& func, uint32 controlledMask)
     if (controlledMask & CONTROLLED_CHARM)
         if (Unit* charm = GetCharm())
             func(charm);
+
 }
 
 
@@ -2170,9 +2201,10 @@ template<typename Func>
 bool Unit::CheckAllControlledUnits(Func const& func, uint32 controlledMask) const
 {
     if (controlledMask & CONTROLLED_PET)
-        if (Pet const* pet = GetPet())
-            if (func(pet))
-                return true;
+        for (GroupPetList::const_iterator itr = m_groupPets.begin(); itr != m_groupPets.end(); ++itr)
+           if (Pet* pet = _GetPet(*itr))
+               if (func(pet))
+                   return true;
 
     if (controlledMask & CONTROLLED_MINIPET)
         if(Unit const* mini = GetMiniPet())

@@ -54,7 +54,7 @@ struct LFGReward
 // Stores player or group queue info
 struct LFGQueueInfo
 {
-    LFGQueueInfo(): tanks(LFG_TANKS_NEEDED), healers(LFG_HEALERS_NEEDED), dps(LFG_DPS_NEEDED) 
+    LFGQueueInfo(): tanks(LFG_TANKS_NEEDED), healers(LFG_HEALERS_NEEDED), dps(LFG_DPS_NEEDED)
     {
         joinTime = time_t(time(NULL));
     };

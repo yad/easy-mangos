@@ -956,7 +956,7 @@ uint32 TerrainInfo::GetZoneId(float x, float y, float z) const
 
 bool TerrainInfo::GetZoneAndAreaId(uint32& zoneid, uint32& areaid, float x, float y, float z) const
 {
-    __try 
+    __try
     {
        TerrainManager::GetZoneAndAreaIdByAreaFlag(zoneid,areaid,GetAreaFlag(x,y,z),m_mapId);
        return true;
@@ -964,7 +964,7 @@ bool TerrainInfo::GetZoneAndAreaId(uint32& zoneid, uint32& areaid, float x, floa
     __except ( EXCEPTION_EXECUTE_HANDLER )
     {
        return false;
-    }    
+    }
 }
 
 
