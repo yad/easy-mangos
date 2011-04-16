@@ -64,7 +64,6 @@ class PlayerbotChatHandler : protected ChatHandler
 public:
     explicit PlayerbotChatHandler(Player* pMasterPlayer) : ChatHandler(pMasterPlayer) {}
     bool revive(Player& botPlayer) { return HandleReviveCommand((char*) botPlayer.GetName()); }
-    bool teleport(Player& botPlayer) { return HandleNamegoCommand((char*) botPlayer.GetName()); }
     void sysmessage(const char *str) { SendSysMessage(str); }
     bool dropQuest(char *str) { return HandleQuestRemoveCommand(str); }
 };
@@ -3200,14 +3199,53 @@ void PlayerbotAI::EquipItem(Item& item)
 bool PlayerbotAI::FollowCheckTeleport(WorldObject *obj)
 {
     if (m_bot->GetMap() && m_bot->GetMap()->IsBattleGroundOrArena())
-    //if (m_bot->GetBattleGround())
         return true;
+
     if (!m_bot->IsWithinDistInMap(obj, 100, true) && GetLeader()->isAlive() && !GetLeader()->IsTaxiFlying())
     {
         m_targetCombat = NULL;
         m_followTarget = NULL;
-        PlayerbotChatHandler ch(GetLeader());
-        return ch.teleport(*m_bot);
+
+        if (m_bot == GetLeader())
+            return false;
+
+        if (m_bot->IsBeingTeleported())
+            return false;
+
+        Map* pMap = GetLeader()->GetMap();
+
+        if (pMap->IsBattleGroundOrArena())
+        {
+            if (m_bot->GetBattleGroundId() && GetLeader()->GetBattleGroundId() != m_bot->GetBattleGroundId())
+                return false;
+
+            m_bot->SetBattleGroundId(GetLeader()->GetBattleGroundId(), GetLeader()->GetBattleGroundTypeId());
+            if (!m_bot->GetMap()->IsBattleGroundOrArena())
+                m_bot->SetBattleGroundEntryPoint();
+        }
+        else if (pMap->IsDungeon())
+        {
+            Map* cMap = m_bot->GetMap();
+            if (cMap->Instanceable() && cMap->GetInstanceId() != pMap->GetInstanceId())
+                return false;
+
+            if (!GetLeader()->GetGroup() || !m_bot->GetGroup() ||
+                (m_bot->GetGroup()->GetLeaderGuid() != GetLeader()->GetObjectGuid()) ||
+                (GetLeader()->GetGroup()->GetLeaderGuid() != GetLeader()->GetObjectGuid()))
+                return false;
+        }
+
+        if (m_bot->IsTaxiFlying())
+        {
+            m_bot->GetMotionMaster()->MovementExpired();
+            m_bot->m_taxi.ClearTaxiDestinations();
+        }
+        else
+            m_bot->SaveRecallPosition();
+
+        float x,y,z;
+        GetLeader()->GetClosePoint(x, y, z, m_bot->GetObjectBoundingRadius());
+        m_bot->TeleportTo(GetLeader()->GetMapId(),x,y,z,m_bot->GetOrientation());
     }
     return true;
 }
