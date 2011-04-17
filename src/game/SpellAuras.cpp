@@ -8441,6 +8441,7 @@ void Aura::PeriodicDummyTick()
                     if (rune == RUNE_DEATH)
                         plr->ConvertRune(i, plr->GetBaseRune(i));
                 }
+
                 return;
             }
             break;
@@ -8530,10 +8531,12 @@ void Aura::HandleAuraControlVehicle(bool apply, bool Real)
         return;
 
     Unit* caster = GetCaster();
+
     if (!caster)
         return;
 
     Unit* target = GetTarget();
+
     if (!target)
         return;
 
@@ -8544,7 +8547,8 @@ void Aura::HandleAuraControlVehicle(bool apply, bool Real)
 
     if (apply)
     {
-        //((Player*)caster)->RemovePet(PET_SAVE_AS_CURRENT);
+//        ((Player*)caster)->RemovePet(PET_SAVE_AS_CURRENT);
+        // Maybe seat number stored somewhere
         caster->EnterVehicle(pVehicle);
     }
     else

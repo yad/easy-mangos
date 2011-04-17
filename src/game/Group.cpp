@@ -418,6 +418,8 @@ void Group::ChangeLeader(ObjectGuid guid)
     if (slot == m_memberSlots.end())
         return;
 
+    sLFGMgr.Leave(this);
+
     _setLeader(guid);
 
     WorldPacket data(SMSG_GROUP_SET_LEADER, slot->name.size()+1);
@@ -1407,7 +1409,7 @@ void Group::SetGroupUniqueFlag(ObjectGuid guid, GroupFlagsAssignment assignment,
             {
                 if (itr->guid != guid )
                 {
-                    if (itr->flags & mask)
+                    if ((itr->flags & mask) && sWorld.getConfig(CONFIG_BOOL_RAID_FLAGS_UNIQUE))
                     {
                         GroupFlagMask oldMask = itr->flags;
                         itr->flags = GroupFlagMask(oldMask & ~mask);

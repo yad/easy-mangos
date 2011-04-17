@@ -430,6 +430,7 @@
     <ClCompile Include="..\..\src\game\Level1.cpp" />
     <ClCompile Include="..\..\src\game\Level2.cpp" />
     <ClCompile Include="..\..\src\game\Level3.cpp" />
+    <ClCompile Include="..\..\src\game\LFG.cpp" />
     <ClCompile Include="..\..\src\game\LFGHandler.cpp" />
     <ClCompile Include="..\..\src\game\LFGMgr.cpp" />
     <ClCompile Include="..\..\src\game\LootHandler.cpp" />

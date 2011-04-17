@@ -594,8 +594,8 @@ void World::LoadConfigSettings(bool reload)
 
     setConfig(CONFIG_BOOL_LFG_ENABLE, "LFG.Enable",false);
     setConfig(CONFIG_BOOL_LFR_ENABLE, "LFR.Enable",false);
-    setConfigMinMax(CONFIG_UINT32_LFG_MAXKICKS, "LFG.MaxKicks", 5, 1, getConfig(CONFIG_UINT32_LFG_MAXKICKS));
-    setConfigMinMax(CONFIG_UINT32_LFG_KICKVOTES, "LFG.KickVotes", 4, 1, getConfig(CONFIG_UINT32_LFG_KICKVOTES));
+    setConfigMinMax(CONFIG_UINT32_LFG_MAXKICKS, "LFG.MaxKicks", 5, 1, 10);
+    setConfigMinMax(CONFIG_UINT32_LFG_KICKVOTES, "LFG.KickVotes", 3, 1, 5);
 
     setConfigMinMax(CONFIG_UINT32_START_PLAYER_MONEY, "StartPlayerMoney", 0, 0, MAX_MONEY_AMOUNT);
 
@@ -805,6 +805,8 @@ void World::LoadConfigSettings(bool reload)
     setConfig(CONFIG_BOOL_NO_WAIT_AFTER_CAST,             "Custom.NoWaitAfterCast",             false);
     setConfig(CONFIG_BOOL_ALLOW_FLYING_MOUNTS_EVERYWHERE, "Custom.AllowFlyingMountsEverywhere", false);
     setConfig(CONFIG_BOOL_UNLIMITED_AMMO,                 "Custom.UnLimitedAmmo",               false);
+
+    setConfig(CONFIG_BOOL_RAID_FLAGS_UNIQUE,      "RaidFlags.Unique", false);
     setConfig(CONFIG_BOOL_ARMORY_SUPPORT, "WOWArmorySupport", false);
 
     ///- Load the CharDelete related config options
