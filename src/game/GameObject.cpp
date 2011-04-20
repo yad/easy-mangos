@@ -39,7 +39,9 @@
 #include "Util.h"
 #include "ScriptMgr.h"
 
-GameObject::GameObject() : WorldObject()
+GameObject::GameObject() : WorldObject(),
+    m_goInfo(NULL),
+    m_displayInfo(NULL)
 {
     m_objectType |= TYPEMASK_GAMEOBJECT;
     m_objectTypeId = TYPEID_GAMEOBJECT;
@@ -54,7 +56,6 @@ GameObject::GameObject() : WorldObject()
     m_useTimes = 0;
     m_spellId = 0;
     m_cooldownTime = 0;
-    m_goInfo = NULL;
 
     m_rotation = 0;
 }
@@ -140,8 +141,7 @@ bool GameObject::Create(uint32 guidlow, uint32 name_id, Map *map, uint32 phaseMa
         SetFlag(GAMEOBJECT_FLAGS, (GO_FLAG_TRANSPORT | GO_FLAG_NODESPAWN));
 
     SetEntry(goinfo->id);
-
-    SetUInt32Value(GAMEOBJECT_DISPLAYID, goinfo->displayId);
+    SetDisplayId(goinfo->displayId);
 
     // GAMEOBJECT_BYTES_1, index at 0, 1, 2 and 3
     SetGoState(go_state);
@@ -1500,6 +1500,79 @@ void GameObject::Use(Unit* user)
             }
             break;
         }
+        case GAMEOBJECT_TYPE_CAPTURE_POINT:                 // 29
+        {
+            // Code here is not even halfway complete, and only added for further development.
+            // Computer may very well blow up after stealing your bank accounts and wreck your car.
+            // Use() object at own risk.
+
+            GameObjectInfo const* info = GetGOInfo();
+
+            if (!info)
+                return;
+
+            // Can we expect that only player object are able to trigger a capture point or
+            // could dummy creatures be involved?
+            //if (user->GetTypeId() != TYPEID_PLAYER)
+                //return;
+
+            //Player* player = (Player*)user;
+
+            // ID1 vs ID2 are possibly related to team. The world states should probably
+            // control which event to be used. For this to work, we need a far better system for
+            // sWorldStateMgr (system to store and keep track of states) so that we at all times
+            // know the state of every part of the world.
+
+            // Call every event, which is obviously wrong, but can help in further development. For
+            // the time being script side can process events and determine which one to use. It
+            // require of course that some object call go->Use()
+            if (info->capturePoint.winEventID1)
+            {
+                if (!sScriptMgr.OnProcessEvent(info->capturePoint.winEventID1, user, this, true))
+                    GetMap()->ScriptsStart(sEventScripts, info->capturePoint.winEventID1, user, this);
+            }
+            if (info->capturePoint.winEventID2)
+            {
+                if (!sScriptMgr.OnProcessEvent(info->capturePoint.winEventID2, user, this, true))
+                    GetMap()->ScriptsStart(sEventScripts, info->capturePoint.winEventID2, user, this);
+            }
+
+            if (info->capturePoint.contestedEventID1)
+            {
+                if (!sScriptMgr.OnProcessEvent(info->capturePoint.contestedEventID1, user, this, true))
+                    GetMap()->ScriptsStart(sEventScripts, info->capturePoint.contestedEventID1, user, this);
+            }
+            if (info->capturePoint.contestedEventID2)
+            {
+                if (!sScriptMgr.OnProcessEvent(info->capturePoint.contestedEventID2, user, this, true))
+                    GetMap()->ScriptsStart(sEventScripts, info->capturePoint.contestedEventID2, user, this);
+            }
+
+            if (info->capturePoint.progressEventID1)
+            {
+                if (!sScriptMgr.OnProcessEvent(info->capturePoint.progressEventID1, user, this, true))
+                    GetMap()->ScriptsStart(sEventScripts, info->capturePoint.progressEventID1, user, this);
+            }
+            if (info->capturePoint.progressEventID2)
+            {
+                if (!sScriptMgr.OnProcessEvent(info->capturePoint.progressEventID2, user, this, true))
+                    GetMap()->ScriptsStart(sEventScripts, info->capturePoint.progressEventID2, user, this);
+            }
+
+            if (info->capturePoint.neutralEventID1)
+            {
+                if (!sScriptMgr.OnProcessEvent(info->capturePoint.neutralEventID1, user, this, true))
+                    GetMap()->ScriptsStart(sEventScripts, info->capturePoint.neutralEventID1, user, this);
+            }
+            if (info->capturePoint.neutralEventID2)
+            {
+                if (!sScriptMgr.OnProcessEvent(info->capturePoint.neutralEventID2, user, this, true))
+                    GetMap()->ScriptsStart(sEventScripts, info->capturePoint.neutralEventID2, user, this);
+            }
+
+            // Some has spell, need to process those further.
+            return;
+        }
         case GAMEOBJECT_TYPE_BARBER_CHAIR:                  //32
         {
             GameObjectInfo const* info = GetGOInfo();
@@ -1676,13 +1749,19 @@ bool GameObject::IsFriendlyTo(Unit const* unit) const
     return tester_faction->IsFriendlyTo(*target_faction);
 }
 
+void GameObject::SetDisplayId(uint32 modelId)
+{
+    SetUInt32Value(GAMEOBJECT_DISPLAYID, modelId);
+    m_displayInfo = sGameObjectDisplayInfoStore.LookupEntry(modelId);
+}
+
 float GameObject::GetObjectBoundingRadius() const
 {
     //FIXME:
     // 1. This is clearly hack way because GameObjectDisplayInfoEntry have 6 floats related to GO sizes, but better that use DEFAULT_WORLD_OBJECT_SIZE
     // 2. In some cases this must be only interactive size, not GO size, current way can affect creature target point auto-selection in strange ways for big underground/virtual GOs
-    if (GameObjectDisplayInfoEntry const* dispEntry = sGameObjectDisplayInfoStore.LookupEntry(GetGOInfo()->displayId))
-        return fabs(dispEntry->unknown12) * GetObjectScale();
+    if (m_displayInfo)
+        return fabs(m_displayInfo->unknown12) * GetObjectScale();
 
     return DEFAULT_WORLD_OBJECT_SIZE;
 }
