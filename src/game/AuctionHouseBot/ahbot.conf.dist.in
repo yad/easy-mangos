@@ -162,9 +162,9 @@ AuctionHouseBot.Name = "AhBot"
 AuctionHouseBot.MinTime = 1
 AuctionHouseBot.MaxTime = 72
 
-AuctionHouseBot.Items.Vendor = 1
+AuctionHouseBot.Items.Vendor = 0
 AuctionHouseBot.Items.Loot = 1
-AuctionHouseBot.Items.Misc = 1
+AuctionHouseBot.Items.Misc = 0
 AuctionHouseBot.Bind.No = 1
 AuctionHouseBot.Bind.Pickup = 0
 AuctionHouseBot.Bind.Equip = 1
