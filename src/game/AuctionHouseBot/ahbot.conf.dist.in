@@ -130,6 +130,10 @@ ConfVersion=2010102201
 #        Prevent seller from listing glyphs below/above this required level
 #    Default 0
 #
+#    AuctionHouseBot.Class.Glyph.ItemLevel.*
+#        Prevent seller from listing glyphs below/above this item level
+#    Default 0
+#
 #    AuctionHouseBot.Class.TradeGood.ItemLevel.*
 #        Prevent seller from listing trade good items below/above this item level
 #    Default 0
@@ -204,6 +208,8 @@ AuctionHouseBot.Class.Misc.Mount.ReqSkill.Min = 0
 AuctionHouseBot.Class.Misc.Mount.ReqSkill.Max = 0
 AuctionHouseBot.Class.Glyph.ReqLevel.Min = 0
 AuctionHouseBot.Class.Glyph.ReqLevel.Max = 0
+AuctionHouseBot.Class.Glyph.ItemLevel.Min = 0
+AuctionHouseBot.Class.Glyph.ItemLevel.Max = 0
 AuctionHouseBot.Class.TradeGood.ItemLevel.Min = 0
 AuctionHouseBot.Class.TradeGood.ItemLevel.Max = 0
 AuctionHouseBot.Class.Container.ItemLevel.Min = 0
