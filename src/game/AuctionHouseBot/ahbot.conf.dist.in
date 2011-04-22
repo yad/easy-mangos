@@ -114,6 +114,30 @@ ConfVersion=2010102201
 #    Default 6,4,8,3,8,1,2,10,1,6,1,1,1,5,3
 #
 #
+# ITEM FINE TUNING
+#    The following are usefull for limiting what character levels can
+#    benefit from the auction house
+#
+#    AuctionHouseBot.Class.Misc.Mount.ReqLevel.*
+#        Prevent seller from listing mounts below/above this required level
+#    Default 0
+#
+#    AuctionHouseBot.Class.Misc.Mount.ReqSkill.*
+#        Prevent seller from listing mounts below/above this skill level
+#    Default 0
+#
+#    AuctionHouseBot.Class.Glyph.ReqLevel.*
+#        Prevent seller from listing glyphs below/above this required level
+#    Default 0
+#
+#    AuctionHouseBot.Class.TradeGood.ItemLevel.*
+#        Prevent seller from listing trade good items below/above this item level
+#    Default 0
+#
+#    AuctionHouseBot.Class.Container.ItemLevel.*
+#        Prevent seller from listing contianers below/above this item level
+#    Default 0
+#
 ###################################################################################################################
 
 AuctionHouseBot.Seller.Enabled = 1
@@ -173,6 +197,17 @@ AuctionHouseBot.Class.Quest = 1
 AuctionHouseBot.Class.Key = 1
 AuctionHouseBot.Class.Misc = 5
 AuctionHouseBot.Class.Glyph = 3
+
+AuctionHouseBot.Class.Misc.Mount.ReqLevel.Min = 0
+AuctionHouseBot.Class.Misc.Mount.ReqLevel.Max = 0
+AuctionHouseBot.Class.Misc.Mount.ReqSkill.Min = 0
+AuctionHouseBot.Class.Misc.Mount.ReqSkill.Max = 0
+AuctionHouseBot.Class.Glyph.ReqLevel.Min = 0
+AuctionHouseBot.Class.Glyph.ReqLevel.Max = 0
+AuctionHouseBot.Class.TradeGood.ItemLevel.Min = 0
+AuctionHouseBot.Class.TradeGood.ItemLevel.Max = 0
+AuctionHouseBot.Class.Container.ItemLevel.Min = 0
+AuctionHouseBot.Class.Container.ItemLevel.Max = 0
 
 ###################################################################################################################
 # Buyer config
