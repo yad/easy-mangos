@@ -269,7 +269,7 @@ uint32 AHB_Buyer::GetBuyableEntry(AHB_Buyer_Config& config)
     for (AuctionHouseObject::AuctionEntryMap::const_iterator itr = auctionHouse->GetAuctionsBegin();itr != auctionHouse->GetAuctionsEnd();++itr)
     {
         AuctionEntry *Aentry = itr->second;
-        Item *item = sAuctionMgr.GetAItem(Aentry->item_guidlow);
+        Item *item = sAuctionMgr.GetAItem(Aentry->itemGuidLow);
         if (item)
         {
             ItemPrototype const *prototype = item->GetProto();
@@ -483,7 +483,7 @@ void AHB_Buyer::PlaceBidToEntry(AuctionHouseObject* auctionHouse, AuctionEntry* 
     if ((auction->bidder!=0)&&(auction->bidder != sAHB_BaseConfig.GetAHBObjectGuid().GetRawValue()))
     {
         // If Entry is already bidded send mail and money back.
-        m_Session->SendAuctionOutbiddedMail(auction, bidPrice);
+        m_Session->SendAuctionOutbiddedMail(auction);
     }
 
     auction->bidder = sAHB_BaseConfig.GetAHBObjectGuid().GetRawValue();
@@ -498,7 +498,7 @@ void AHB_Buyer::BuyEntry(AuctionHouseObject* auctionHouse, AuctionEntry* auction
     if ((auction->bidder!=0)&&(auction->bidder != sAHB_BaseConfig.GetAHBObjectGuid().GetRawValue()))
     {
         // If Entry is already bidded send mail and money back.
-        m_Session->SendAuctionOutbiddedMail(auction, auction->buyout);
+        m_Session->SendAuctionOutbiddedMail(auction);
     }
     auction->bidder = sAHB_BaseConfig.GetAHBObjectGuid().GetRawValue();
     auction->bid = auction->buyout;
@@ -508,7 +508,7 @@ void AHB_Buyer::BuyEntry(AuctionHouseObject* auctionHouse, AuctionEntry* auction
     sAuctionMgr.SendAuctionWonMail(auction);
 
     // Remove item from auctionhouse
-    sAuctionMgr.RemoveAItem(auction->item_guidlow);
+    sAuctionMgr.RemoveAItem(auction->itemGuidLow);
     // Remove auction
     auctionHouse->RemoveAuction(auction->Id);
     // Remove from database
@@ -1155,7 +1155,7 @@ uint32 AHB_Seller::SetStat(AHB_Seller_Config& config)
     for (AuctionHouseObject::AuctionEntryMap::const_iterator itr = auctionHouse->GetAuctionsBegin();itr != auctionHouse->GetAuctionsEnd();++itr)
     {
         AuctionEntry *Aentry = itr->second;
-        Item *item = sAuctionMgr.GetAItem(Aentry->item_guidlow);
+        Item *item = sAuctionMgr.GetAItem(Aentry->itemGuidLow);
         if (item)
         {
             ItemPrototype const *prototype = item->GetProto();
@@ -1326,15 +1326,15 @@ void AHB_Seller::addNewAuctions(AHB_Seller_Config& config)
         // Add Auction now on the AH
         AuctionEntry* auctionEntry = new AuctionEntry;
         auctionEntry->Id = sObjectMgr.GenerateAuctionID();
-        auctionEntry->item_guidlow = item->GetGUIDLow();
-        auctionEntry->item_template = item->GetEntry();
+        auctionEntry->itemGuidLow = item->GetGUIDLow();
+        auctionEntry->itemTemplate = item->GetEntry();
         auctionEntry->owner =((uint32) sAHB_BaseConfig.GetAHBObjectGuid().GetRawValue());
         auctionEntry->startbid = bidPrice;
         auctionEntry->buyout = buyoutPrice;
         auctionEntry->bidder = 0;
         auctionEntry->bid = 0;
         auctionEntry->deposit = 0;
-        auctionEntry->expire_time = (time_t) (urand(config.GetMinTime(), config.GetMaxTime()) * 60 * 60 + time(NULL));
+        auctionEntry->expireTime = (time_t) (urand(config.GetMinTime(), config.GetMaxTime()) * 60 * 60 + time(NULL));
         auctionEntry->auctionHouseEntry = ahEntry;
         item->SaveToDB();
         sAuctionMgr.AddAItem(item);
@@ -1482,7 +1482,7 @@ void AuctionHouseBot::PrepStatusInfos()
         for (AuctionHouseObject::AuctionEntryMap::const_iterator itr = auctionHouse->GetAuctionsBegin();itr != auctionHouse->GetAuctionsEnd();++itr)
         {
             AuctionEntry *Aentry = itr->second;
-            Item *item = sAuctionMgr.GetAItem(Aentry->item_guidlow);
+            Item *item = sAuctionMgr.GetAItem(Aentry->itemGuidLow);
             if (item)
             {
                 ItemPrototype const *prototype = item->GetProto();
@@ -1526,8 +1526,8 @@ void AuctionHouseBot::Rebuild(bool all)
         {
             if (itr->second->owner == sAHB_BaseConfig.GetAHBObjectGuid().GetRawValue())
             {
-                if (all==true) itr->second->expire_time = sWorld.GetGameTime();
-                else if (itr->second->bid == 0) itr->second->expire_time = sWorld.GetGameTime();
+                if (all==true) itr->second->expireTime = sWorld.GetGameTime();
+                else if (itr->second->bid == 0) itr->second->expireTime = sWorld.GetGameTime();
             }
         }
     }
