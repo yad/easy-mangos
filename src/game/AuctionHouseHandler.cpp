@@ -178,11 +178,11 @@ void WorldSession::SendAuctionOutbiddedMail(AuctionEntry *auction)
 
         // Added for AHBot
         if (oldBidder && !_player)
-            oldBidder->GetSession()->SendAuctionBidderNotification( auction);
+            oldBidder->GetSession()->SendAuctionBidderNotification(auction);
 
         // Modified for AHBot
         if (oldBidder && _player)
-            oldBidder->GetSession()->SendAuctionBidderNotification( auction);
+            oldBidder->GetSession()->SendAuctionBidderNotification(auction);
 
         MailDraft(msgAuctionOutbiddedSubject.str(), "")     // TODO: fix body
             .SetMoney(auction->bid)
