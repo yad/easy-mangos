@@ -78,6 +78,9 @@ void AHB_Base::GetConfigFromFile()
 
     SetAHBotName( m_AhBotCfg.GetStringDefault("AuctionHouseBot.Name", "AHBot" ) );
 
+    SetAHBotIncludes(m_AhBotCfg.GetStringDefault("AuctionHouseBot.forceIncludeItems", ""));
+    SetAHBotExcludes(m_AhBotCfg.GetStringDefault("AuctionHouseBot.forceExcludeItems", ""));
+
     setConfig(CONFIG_BOOL_AHBOT_BUYER_ALLIANCE_ENABLED       , "AuctionHouseBot.Buyer.Alliance.Enabled"      , false);
     setConfig(CONFIG_BOOL_AHBOT_BUYER_HORDE_ENABLED          , "AuctionHouseBot.Buyer.Horde.Enabled"         , false);
     setConfig(CONFIG_BOOL_AHBOT_BUYER_NEUTRAL_ENABLED        , "AuctionHouseBot.Buyer.Neutral.Enabled"       , false);
@@ -715,6 +718,26 @@ bool AHB_Seller::Initialize()
     std::vector<uint32> lootItems;
     uint32 itemsAdded = 0;
     QueryResult* results = (QueryResult*) NULL;
+
+    bool isIncludeItem = false;
+    std::vector<uint32> includeItems;
+    std::vector<uint32> excludeItems;
+    std::stringstream includeStream(sAHB_BaseConfig.GetAHBotIncludes());
+    std::stringstream excludeStream(sAHB_BaseConfig.GetAHBotExcludes());
+    std::string temp;
+
+    sLog.outString("AHBot> The following items will override all filters!");
+    sLog.outString(">> Forced Inclusion: %s",sAHB_BaseConfig.GetAHBotIncludes());
+    sLog.outString(">> Forced Exclusion: %s",sAHB_BaseConfig.GetAHBotExcludes());
+
+    while(getline(includeStream,temp,',')){
+        includeItems.push_back(atoi(temp.c_str()));
+    }
+
+    while(getline(excludeStream,temp,',')){
+        excludeItems.push_back(atoi(temp.c_str()));
+    }
+
     char npcQuery[] = "SELECT distinct `item` FROM `npc_vendor`";
 
     sLog.outString(">> Loading npc...");
@@ -775,6 +798,28 @@ bool AHB_Seller::Initialize()
         bar.step();
         if (prototype == NULL)
             continue;
+        if (excludeItems.size()>0)
+        {
+            bool isExcludeItem = false;
+            for (unsigned int i = 0; (i < excludeItems.size() && (!isExcludeItem)); i++)
+            {
+                if (itemID ==excludeItems[i])
+                    isExcludeItem = true;
+            }
+            if (isExcludeItem)
+                continue;
+        }
+        if (includeItems.size()>0)
+        {
+            isIncludeItem = false;
+            for (unsigned int i = 0; (i < includeItems.size() && (!isIncludeItem)); i++)
+            {
+                if (itemID == includeItems[i])
+                    isIncludeItem = true;
+            }
+        }
+        if(!isIncludeItem)
+        {
         switch (prototype->Bonding)
         {
         case 0:
@@ -910,6 +955,7 @@ bool AHB_Seller::Initialize()
                 if (!sAHB_BaseConfig.getConfig(CONFIG_BOOL_AHBOT_LOCKBOX_ENABLED))
                     continue;
             }
+        }
         }
 
         m_ItemPool[prototype->Quality][prototype->Class].push_back(itemID);

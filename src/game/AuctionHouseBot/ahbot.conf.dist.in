@@ -142,6 +142,17 @@ ConfVersion=2010102201
 #        Prevent seller from listing contianers below/above this item level
 #    Default 0
 #
+#    AuctionHouseBot.forceIncludeItems
+#        Include these items and ignore ALL filters
+#        List of ids with delimiter ','
+#    Default ""
+#
+#    AuctionHouseBot.forceExcludeItems
+#        Exclude these items even if they would pass the filters
+#        List of ids with delimiter ','
+#        Example "21878,27774,27811,28117,28122,43949" (this removes zzOld items)
+#    Default ""
+#
 ###################################################################################################################
 
 AuctionHouseBot.Seller.Enabled = 1
@@ -214,6 +225,9 @@ AuctionHouseBot.Class.TradeGood.ItemLevel.Min = 0
 AuctionHouseBot.Class.TradeGood.ItemLevel.Max = 0
 AuctionHouseBot.Class.Container.ItemLevel.Min = 0
 AuctionHouseBot.Class.Container.ItemLevel.Max = 0
+
+AuctionHouseBot.forceIncludeItems = ""
+AuctionHouseBot.forceExcludeItems = ""
 
 ###################################################################################################################
 # Buyer config
