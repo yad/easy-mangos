@@ -132,7 +132,7 @@ char const* WorldSession::GetPlayerName() const
 /// Send a packet to the client
 void WorldSession::SendPacket(WorldPacket const* packet)
 {
-    if (GetPlayer())
+    if (GetPlayer() && GetPlayer()->IsInWorld())
     {
         /*if (!GetPlayer()->IsBot())
         {

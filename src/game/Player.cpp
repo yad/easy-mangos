@@ -646,11 +646,14 @@ Player::~Player ()
     delete m_runes;
     delete m_LFGState;
 
-    if (m_playerbotAI) {
+    if (m_playerbotAI)
+    {
         delete m_playerbotAI;
         m_playerbotAI = NULL;
     }
-    if (m_playerbotMgr) {
+
+    if (m_playerbotMgr)
+    {
         delete m_playerbotMgr;
         m_playerbotMgr = NULL;
     }
