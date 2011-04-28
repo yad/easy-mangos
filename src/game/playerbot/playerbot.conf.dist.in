@@ -1,0 +1,31 @@
+#####################################
+# Playerbot Configuration file      #
+#####################################
+
+[PlayerbotConf]
+ConfVersion=2010062001
+
+###################################################################################################################
+# PLAYERBOTAI CONFIGURATION
+#
+#    PlayerBot.Enable
+#        Enable bot system (Work In Progress, use it at your own risks)
+#        Default: 0 - off
+#                 1 - on
+#
+#    PlayerBot.MaxBots.Alliance
+#    PlayerBot.MaxBots.Horde
+#        Number max of bots ingame
+#        Database has 300, it's possible to generate more
+#        default: 20 on each side
+#
+#    PlayerBot.Join.Battleground
+#        Number of seconds before the bots join a battleground
+#        default: 0 disable
+#
+###################################################################################################################
+
+PlayerBot.Enable = 0
+PlayerBot.MaxBots.Alliance = 20
+PlayerBot.MaxBots.Horde = 20
+PlayerBot.Join.Battleground = 0
