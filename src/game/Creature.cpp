@@ -189,7 +189,7 @@ Creature::~Creature()
 void Creature::AddToWorld()
 {
     ///- Register the creature for guid lookup
-    if(!IsInWorld() && GetObjectGuid().IsCreatureOrVehicle())
+    if (!IsInWorld() && GetObjectGuid().IsCreatureOrVehicle())
         GetMap()->GetObjectsStore().insert<Creature>(GetGUID(), (Creature*)this);
 
     Unit::AddToWorld();
@@ -201,7 +201,7 @@ void Creature::AddToWorld()
 void Creature::RemoveFromWorld()
 {
     ///- Remove the creature from the accessor
-    if(IsInWorld() && GetObjectGuid().IsCreatureOrVehicle())
+    if (IsInWorld() && GetObjectGuid().IsCreatureOrVehicle())
         GetMap()->GetObjectsStore().erase<Creature>(GetGUID(), (Creature*)NULL);
 
     Unit::RemoveFromWorld();
@@ -401,6 +401,8 @@ bool Creature::UpdateEntry(uint32 Entry, Team team, const CreatureData *data /*=
     for(int i = 0; i < CREATURE_MAX_SPELLS; ++i)
         m_spells[i] = GetCreatureInfo()->spells[i];
 
+    SetVehicleId(GetCreatureInfo()->vehicleId);
+
     // if eventData set then event active and need apply spell_start
     if (eventData)
         ApplyGameEventSpells(eventData, true);
@@ -495,6 +497,9 @@ void Creature::Update(uint32 update_diff, uint32 diff)
                     UpdateEntry(m_originalEntry, TEAM_NONE, NULL, eventData);
                 }
 
+                if (GetDisplayId() != GetNativeDisplayId() )
+                    SetDisplayId(GetNativeDisplayId() );
+
                 CreatureInfo const *cinfo = GetCreatureInfo();
 
                 SelectLevel(cinfo);
@@ -545,8 +550,9 @@ void Creature::Update(uint32 update_diff, uint32 diff)
                     else
                         StopGroupLoot();
                 }
+                m_Events.Update(update_diff);
+                _UpdateSpells(update_diff);
             }
-
             break;
         }
         case ALIVE:
@@ -661,9 +667,9 @@ void Creature::Regenerate(Powers power)
             break;
         }
         case POWER_ENERGY:
-            if (GetObjectGuid().IsVehicle())
+            if (IsVehicle())
             {
-                if (VehicleEntry const* vehicleInfo = sVehicleStore.LookupEntry(GetCreatureInfo()->VehicleId))
+                if (VehicleEntry const* vehicleInfo = sVehicleStore.LookupEntry(GetCreatureInfo()->vehicleId))
                 {
 
                     switch (vehicleInfo->m_powerType)
@@ -781,13 +787,6 @@ bool Creature::Create(uint32 guidlow, CreatureCreatePos& cPos, CreatureInfo cons
 
     SetMap(cPos.GetMap());
     SetPhaseMask(cPos.GetPhaseMask(), false);
-
-    HighGuid hi = cinfo->VehicleId ? HIGHGUID_VEHICLE : HIGHGUID_UNIT;
-
-    ObjectGuid guid(hi, cinfo->Entry, guidlow);
-
-    if (cPos.GetMap()->GetCreature(guid))
-        return false;
 
     if (!CreateFromProto(guidlow, cinfo, team, data, eventData))
         return false;
@@ -1267,8 +1266,8 @@ bool Creature::CreateFromProto(uint32 guidlow, CreatureInfo const* cinfo, Team t
         return false;
 
     // Checked at startup
-    if (GetCreatureInfo()->VehicleId)
-        CreateVehicleKit(GetCreatureInfo()->VehicleId);
+    if (GetCreatureInfo()->vehicleId)
+        SetVehicleId(GetCreatureInfo()->vehicleId);
 
     return true;
 }

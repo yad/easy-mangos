@@ -20,7 +20,7 @@
 #include "Chat.h"
 #include "ArenaTeam.h"
 #include "SpellMgr.h"
-#include "PlayerBot/PlayerbotAI.h"
+#include "playerbot/PlayerbotAI.h"
 
 void Player::GiveMeBestItemForMyLevel()
 {

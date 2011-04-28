@@ -29,7 +29,7 @@
 #include "ObjectAccessor.h"
 #include "ScriptMgr.h"
 #include "Group.h"
-#include "PlayerBot/PlayerbotAI.h"
+#include "playerbot/PlayerbotAI.h"
 
 void WorldSession::HandleQuestgiverStatusQueryOpcode( WorldPacket & recv_data )
 {

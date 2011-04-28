@@ -38,7 +38,7 @@
 #include "Util.h"
 #include "ArenaTeam.h"
 #include "Language.h"
-#include "PlayerBot/PlayerbotMgr.h"
+#include "playerbot/PlayerbotMgr.h"
 #include "SystemConfig.h"
 
 // config option SkipCinematics supported values
@@ -137,21 +137,15 @@ class CharacterHandler
             }
             session->HandlePlayerLogin((LoginQueryHolder*)holder);
         }
-        // Playerbot mod: is different from the normal HandlePlayerLoginCallback in that it
-        // sets up the bot's world session and also stores the pointer to the bot player in the master's
-        // world session m_playerBots map
         void HandlePlayerBotLoginCallback(QueryResult * /*dummy*/, SqlQueryHolder * holder)
         {
             if (!holder)
                 return;
 
             LoginQueryHolder* lqh = (LoginQueryHolder*) holder;
-
-            // The bot's WorldSession is owned by the bot's Player object
-            // The bot's WorldSession is deleted by PlayerbotMgr::LogoutPlayerBot
             WorldSession *botSession = new WorldSession(lqh->GetAccountId(), NULL, SEC_ADMINISTRATOR, 3, 0, LOCALE_enUS);
             botSession->m_Address = "bot";
-            botSession->HandlePlayerLogin(lqh); // will delete lqh
+            botSession->HandlePlayerLogin(lqh);
         }
 } chrHandler;
 
@@ -221,6 +215,11 @@ void WorldSession::HandleCharCreateOpcode( WorldPacket & recv_data )
 
     recv_data >> race_;
     recv_data >> class_;
+
+    // extract other data required for player creating
+    uint8 gender, skin, face, hairStyle, hairColor, facialHair, outfitId;
+    recv_data >> gender >> skin >> face;
+    recv_data >> hairStyle >> hairColor >> facialHair >> outfitId;
 
     WorldPacket data(SMSG_CHAR_CREATE, 1);                  // returned with diff.values in all cases
 
@@ -461,11 +460,6 @@ void WorldSession::HandleCharCreateOpcode( WorldPacket & recv_data )
         SendPacket( &data );
         return;
     }
-
-    // extract other data required for player creating
-    uint8 gender, skin, face, hairStyle, hairColor, facialHair, outfitId;
-    recv_data >> gender >> skin >> face;
-    recv_data >> hairStyle >> hairColor >> facialHair >> outfitId;
 
     Player *pNewChar = new Player(this);
     if (!pNewChar->Create(sObjectMgr.GeneratePlayerLowGuid(), name, race_, class_, gender, skin, face, hairStyle, hairColor, facialHair, outfitId))
@@ -710,6 +704,7 @@ void PlayerbotMgr::AddAllBots()
         }
     }
 }
+
 void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
 {
     ObjectGuid playerGuid = holder->GetGuid();
@@ -1455,7 +1450,7 @@ void WorldSession::HandleEquipmentSetUseOpcode(WorldPacket &recv_data)
                 continue;
 
             ItemPosCountVec sDest;
-            uint8 msg = _player->CanStoreItem( NULL_BAG, NULL_SLOT, sDest, uItem, false );
+            InventoryResult msg = _player->CanStoreItem( NULL_BAG, NULL_SLOT, sDest, uItem, false );
             if(msg == EQUIP_ERR_OK)
             {
                 _player->RemoveItem(INVENTORY_SLOT_BAG_0, i, true);
@@ -1474,6 +1469,6 @@ void WorldSession::HandleEquipmentSetUseOpcode(WorldPacket &recv_data)
     }
 
     WorldPacket data(SMSG_USE_EQUIPMENT_SET_RESULT, 1);
-    data << uint8(0);                                       // 4 - equipment swap failed - inventory is full
+    data << uint8(0);   // 4 - equipment swap failed - inventory is full
     SendPacket(&data);
 }

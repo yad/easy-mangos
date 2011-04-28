@@ -48,7 +48,7 @@ void PointMovementGenerator<T>::Initialize(T &unit)
     }
 
     if (unit.GetTypeId() == TYPEID_UNIT && ((Creature*)&unit)->CanFly())
-        ((Creature&)unit).AddSplineFlag(SPLINEFLAG_UNKNOWN7);
+        ((Creature&)unit).AddSplineFlag(SPLINEFLAG_FLYING);
 }
 
 template<class T>

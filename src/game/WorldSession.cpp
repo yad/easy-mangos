@@ -20,7 +20,7 @@
     \ingroup u2w
 */
 
-#include "WorldSocket.h"                                    // must be first to make ACE happy with ACE includes in it
+#include "WorldSocket.h"                                   // must be first to make ACE happy with ACE includes in it
 #include "Common.h"
 #include "Database/DatabaseEnv.h"
 #include "Log.h"
@@ -39,8 +39,8 @@
 #include "Auth/AuthCrypt.h"
 #include "Auth/HMACSHA1.h"
 #include "zlib/zlib.h"
-#include "PlayerBot/PlayerbotMgr.h"
-#include "PlayerBot/PlayerbotAI.h"
+#include "playerbot/PlayerbotMgr.h"
+#include "playerbot/PlayerbotAI.h"
 
 // select opcodes appropriate for processing in Map::Update context for current session state
 static bool MapSessionFilterHelper(WorldSession* session, OpcodeHandler const& opHandle)
@@ -132,7 +132,6 @@ char const* WorldSession::GetPlayerName() const
 /// Send a packet to the client
 void WorldSession::SendPacket(WorldPacket const* packet)
 {
-    // Playerbot mod: send packet to bot AI
     if (GetPlayer())
     {
         /*if (!GetPlayer()->IsBot())
@@ -249,7 +248,7 @@ void WorldSession::LogUnprocessedTail(WorldPacket *packet)
 }
 
 /// Update the WorldSession (triggered by World update)
-bool WorldSession::Update(uint32 diff, PacketFilter& updater)
+bool WorldSession::Update(PacketFilter& updater)
 {
     ///- Retrieve packets from the receive queue and call the appropriate handlers
     /// not process packets if socket already closed
@@ -279,12 +278,10 @@ bool WorldSession::Update(uint32 diff, PacketFilter& updater)
 
                     // lag can cause STATUS_LOGGEDIN opcodes to arrive after the player started a transfer
 
-                    // playerbot mod
                     if (_player && !IsBotSession() && _player->GetPlayerbotMgr())
                         _player->GetPlayerbotMgr()->HandleMasterIncomingPacket(*packet);
                     /*if (_player && !_player->IsBot())
                         packet->Print();*/
-                    // playerbot mod end
                     break;
                 case STATUS_LOGGEDIN_OR_RECENTLY_LOGGEDOUT:
                     if(!_player && !m_playerRecentlyLogout)
@@ -357,10 +354,6 @@ bool WorldSession::Update(uint32 diff, PacketFilter& updater)
         delete packet;
     }
 
-    // Playerbot mod - Process player bot packets
-    // The PlayerbotAI class adds to the packet queue to simulate a real player
-    // since Playerbots are known to the World obj only by its master's WorldSession object
-    // we need to process all master's bot's packets.
     if (GetPlayer())
     {
         HashMapHolder<Player>::MapType& m = sObjectAccessor.GetPlayers();
@@ -520,8 +513,8 @@ void WorldSession::LogoutPlayer(bool Save)
         {
             static SqlStatementID id;
 
-            SqlStatement stmt1 = LoginDatabase.CreateStatement(id, "UPDATE account SET active_realm_id = ? WHERE id = ?");
-            stmt1.PExecute(uint32(0), GetAccountId());
+            SqlStatement stmt = LoginDatabase.CreateStatement(id, "UPDATE account SET active_realm_id = ? WHERE id = ?");
+            stmt.PExecute(uint32(0), GetAccountId());
         }
 
         ///- If the player is in a guild, update the guild roster and broadcast a logout message to other guild members
@@ -579,7 +572,7 @@ void WorldSession::LogoutPlayer(bool Save)
         sSocialMgr.RemovePlayerSocial (_player->GetGUIDLow ());
 
         // Playerbot - remember player GUID for update SQL below
-        uint32 guid = _player->GetGUIDLow();
+        uint32 guid = GetPlayer()->GetGUIDLow();
 
         ///- Remove the player from the world
         // the player may not be in the world when logging out
@@ -602,13 +595,10 @@ void WorldSession::LogoutPlayer(bool Save)
         WorldPacket data( SMSG_LOGOUT_COMPLETE, 0 );
         SendPacket( &data );
 
-        ///- Since each account can only have one online character at any given time, ensure all characters for active account are marked as offline
-        //No SQL injection as AccountId is uint32
-
         static SqlStatementID updChars;
 
-        SqlStatement stmt2 = CharacterDatabase.CreateStatement(updChars, "UPDATE characters SET online = 0 WHERE guid = ?");
-        stmt2.PExecute(guid);
+        SqlStatement stmt = CharacterDatabase.CreateStatement(updChars, "UPDATE characters SET online = 0 WHERE guid = ?");
+        stmt.PExecute(guid);
 
         DEBUG_LOG( "SESSION: Sent SMSG_LOGOUT_COMPLETE Message" );
     }

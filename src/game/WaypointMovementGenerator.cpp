@@ -76,7 +76,7 @@ void WaypointMovementGenerator<Creature>::LoadPath(Creature &creature)
     }
 
     if (creature.CanFly())
-        creature.AddSplineFlag(SPLINEFLAG_UNKNOWN7);
+        creature.AddSplineFlag(SPLINEFLAG_FLYING);
 
     // We have to set the destination here (for the first point), right after Initialize. Without, we may not have valid xyz for GetResetPosition
     CreatureTraveller traveller(creature);
@@ -153,7 +153,7 @@ bool WaypointMovementGenerator<Creature>::Update(Creature &creature, const uint3
             creature.addUnitState(UNIT_STAT_ROAMING_MOVE);
 
             if (creature.CanFly())
-                creature.AddSplineFlag(SPLINEFLAG_UNKNOWN7);
+                creature.AddSplineFlag(SPLINEFLAG_FLYING);
 
             // Now we re-set destination to same node and start travel
             MoveToNextNode(traveller);
@@ -249,7 +249,7 @@ bool WaypointMovementGenerator<Creature>::Update(Creature &creature, const uint3
             creature.addUnitState(UNIT_STAT_ROAMING_MOVE);
 
             if (creature.CanFly())
-                creature.AddSplineFlag(SPLINEFLAG_UNKNOWN7);
+                creature.AddSplineFlag(SPLINEFLAG_FLYING);
 
             if (WaypointBehavior *behavior = i_path->at(i_currentNode).behavior)
             {

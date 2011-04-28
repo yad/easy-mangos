@@ -44,7 +44,7 @@
 #include "GameEventMgr.h"
 #include "Formulas.h"
 #include "Player.h"
-#include "PlayerBot/PlayerbotClassAI.h"
+#include "playerbot/PlayerbotClassAI.h"
 
 
 #include "Policies/SingletonImp.h"

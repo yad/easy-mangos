@@ -26,7 +26,6 @@
 #include "TemporarySummon.h"
 #include "Totem.h"
 #include "Pet.h"
-#include "Vehicle.h"
 #include "GameObject.h"
 #include "Opcodes.h"
 #include "Chat.h"
@@ -1594,8 +1593,7 @@ bool ChatHandler::HandleNpcAddCommand(char* args)
         return false;
 
     CreatureInfo const *cinfo = ObjectMgr::GetCreatureTemplate(id);
-    //FIXME: need vehicle support like GenerateStaticCreatureLowGuid when its will allowed static spawns
-    if (!cinfo || cinfo->GetHighGuid() != HIGHGUID_UNIT)
+    if (!cinfo)
     {
         PSendSysMessage(LANG_COMMAND_INVALIDCREATUREID, id);
         SetSentErrorMessage(true);
