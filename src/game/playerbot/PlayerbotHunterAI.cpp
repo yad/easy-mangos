@@ -89,6 +89,13 @@ void PlayerbotHunterAI::InitSpells(PlayerbotAI* const ai)
 
     RECENTLY_BANDAGED             = 11196; // first aid check
 
+    ASPECT_OF_THE_VIPER           = ai->initSP(ASPECT_OF_THE_VIPER_1);
+    ASPECT_OF_THE_DRAGONHAWK      = ai->initSP(ASPECT_OF_THE_DRAGONHAWK_1);
+    MY_EXPLOSIVE_SHOT             = ai->initSP(EXPLOSIVE_SHOT_1);
+    MY_BLACK_ARROW                = ai->initSP(BLACK_ARROW_1);
+    MY_TRUESHOT_AURA              = ai->initSP(TRUESHOT_AURA_1);
+    FEIGN_DEATH                   = ai->initSP(FEIGN_DEATH_1);
+
     // racial
     ARCANE_TORRENT                = ai->initSpell(ARCANE_TORRENT_MANA_CLASSES);
     GIFT_OF_THE_NAARU             = ai->initSpell(GIFT_OF_THE_NAARU_HUNTER); // draenei
@@ -129,7 +136,6 @@ void PlayerbotHunterAI::DoNextCombatManeuver(Unit *pTarget)
         return;
 
     // Hunter
-    ai->SetInFront(pTarget);
     Unit* pVictim = pTarget->getVictim();
 
     // check for pet and heal if neccessary
@@ -147,115 +153,156 @@ void PlayerbotHunterAI::DoNextCombatManeuver(Unit *pTarget)
         return;
 
     // racial traits
-    if (m_bot->getRace() == RACE_ORC && !m_bot->HasAura(BLOOD_FURY, EFFECT_INDEX_0))
-        ai->CastSpell(BLOOD_FURY, m_bot);
-
-    else if (m_bot->getRace() == RACE_TROLL && !m_bot->HasAura(BERSERKING, EFFECT_INDEX_0))
-        ai->CastSpell(BERSERKING, m_bot);
-
-
-    // check if ranged combat is possible (set m_rangedCombat and switch auras
-    float dist = m_bot->GetDistance(pTarget);
-    if ((dist <= ATTACK_DISTANCE || !m_bot->GetUInt32Value(PLAYER_AMMO_ID)) && m_rangedCombat)
-    {
-        // switch to melee combat (target in melee range, out of ammo)
+    if (m_bot->getRace() == RACE_ORC && !m_bot->HasAura(BLOOD_FURY, EFFECT_INDEX_0) && ai->CastSpell(BLOOD_FURY, m_bot))
+        return;
+    else if (m_bot->getRace() == RACE_TROLL && !m_bot->HasAura(BERSERKING, EFFECT_INDEX_0) && ai->CastSpell(BERSERKING, m_bot))
+        return;
+    
+    if (m_bot->IsWithinDist(pTarget, ATTACK_DISTANCE))
         m_rangedCombat = false;
-        if (!m_bot->GetUInt32Value(PLAYER_AMMO_ID))
-
-        // become monkey (increases dodge chance)...
-        (ASPECT_OF_THE_MONKEY > 0 && !m_bot->HasAura(ASPECT_OF_THE_MONKEY, EFFECT_INDEX_0) && ai->CastSpell(ASPECT_OF_THE_MONKEY, m_bot));
-    }
-    else if (dist > ATTACK_DISTANCE && !m_rangedCombat)
-    {
-        // switch to ranged combat
+    else
         m_rangedCombat = true;
-        // increase ranged attack power...
-        (ASPECT_OF_THE_HAWK > 0 && !m_bot->HasAura(ASPECT_OF_THE_HAWK, EFFECT_INDEX_0) && ai->CastSpell(ASPECT_OF_THE_HAWK, m_bot));
+
+    if (!m_rangedCombat)
+    {
+        if (pTarget->getVictim() == m_bot)
+        {
+            if (FROST_TRAP && ai->CastSpell(FROST_TRAP))
+                return;
+            else if (FEIGN_DEATH && !m_bot->HasAura(FEIGN_DEATH) && ai->CastSpell(FEIGN_DEATH))
+                return;
+        }
+        else if (!m_bot->isMoving() && !m_bot->hasUnitState(UNIT_STAT_NO_FREE_MOVE) && !m_bot->hasUnitState(UNIT_STAT_CONTROLLED))
+        {
+            float xb, yb, zb, xt, yt, zt, xbt, ybt, angle;
+            m_bot->GetPosition(xb,yb,zb);
+            pTarget->GetPosition(xt,yt,zt);
+            angle = acos(abs(yb - yt) / sqrt(pow(abs(xb - xt), 2) + pow(abs(yb - yt), 2)));
+
+            if (xb < xt)
+                xbt = xt - (ATTACK_DISTANCE * 2 * sin(angle));
+            else
+                xbt = xt + (ATTACK_DISTANCE * 2 * sin(angle));
+
+            if (yb < yt)
+                ybt = yt - (ATTACK_DISTANCE * 2 * cos(angle));
+            else
+                ybt = yt + (ATTACK_DISTANCE * 2 * cos(angle));
+
+            const TerrainInfo *map = m_bot->GetTerrain();
+            m_bot->AttackStop();
+            m_bot->GetMotionMaster()->MovePoint(m_master->GetMapId(), xbt, ybt, map->GetHeight(xbt, ybt, zt+10.0f, true));
+            return;
+        }
     }
-    else if (m_rangedCombat && !m_bot->HasAura(ASPECT_OF_THE_HAWK, EFFECT_INDEX_0))
-        // check if we have hawk aspect in ranged combat
-        (ASPECT_OF_THE_HAWK > 0 && ai->CastSpell(ASPECT_OF_THE_HAWK, m_bot));
-    else if (!m_rangedCombat && !m_bot->HasAura(ASPECT_OF_THE_MONKEY, EFFECT_INDEX_0))
-        // check if we have monkey aspect in melee combat
-        (ASPECT_OF_THE_MONKEY > 0 && ai->CastSpell(ASPECT_OF_THE_MONKEY, m_bot));
 
+    if (!m_bot->isInFront(pTarget, 50.0f, 0) && !m_bot->hasUnitState(UNIT_STAT_NO_FREE_MOVE) && !m_bot->hasUnitState(UNIT_STAT_CONTROLLED))
+        ai->SetInFront(pTarget);
+
+    if (!m_bot->HasAura(ASPECT_OF_THE_VIPER) && ai->GetManaPercent() < 50 && ai->CastSpell(ASPECT_OF_THE_VIPER, m_bot))
+        return;
+    else if (!m_bot->HasAura(ASPECT_OF_THE_DRAGONHAWK) && ai->GetManaPercent() >= 80 && ai->CastSpell(ASPECT_OF_THE_DRAGONHAWK, m_bot))
+        return;
+    
     // activate auto shot
-    if (AUTO_SHOT > 0 && m_rangedCombat && !m_bot->FindCurrentSpellBySpellId(AUTO_SHOT))
+    if (!m_bot->FindCurrentSpellBySpellId(AUTO_SHOT))
         ai->CastSpell(AUTO_SHOT, pTarget);
-
-    else if (AUTO_SHOT > 0 && m_bot->FindCurrentSpellBySpellId(AUTO_SHOT))
+    else if (m_bot->FindCurrentSpellBySpellId(AUTO_SHOT))
         m_bot->InterruptNonMeleeSpells(true, AUTO_SHOT);
-
-
+    
     // damage spells
 
-    if (m_rangedCombat)
-    {
+    if (!pTarget->HasAura(HUNTERS_MARK, EFFECT_INDEX_0) && ai->CastSpell(HUNTERS_MARK, pTarget))
+        return;
 
-        if (HUNTERS_MARK > 0 && ai->GetManaPercent() >= 3 && !pTarget->HasAura(HUNTERS_MARK, EFFECT_INDEX_0) && ai->CastSpell(HUNTERS_MARK, pTarget))
-        {}
-        else if (RAPID_FIRE > 0 && ai->GetManaPercent() >= 3 && !m_bot->HasAura(RAPID_FIRE, EFFECT_INDEX_0) && ai->CastSpell(RAPID_FIRE, m_bot))
-        {}
-        else if (MULTI_SHOT > 0 && ai->GetManaPercent() >= 13 && ai->CastSpell(MULTI_SHOT, pTarget))
-        {}
-        else if (ARCANE_SHOT > 0 && ai->GetManaPercent() >= 7 && ai->CastSpell(ARCANE_SHOT, pTarget))
-        {}
-        else if (CONCUSSIVE_SHOT > 0 && ai->GetManaPercent() >= 6 && !pTarget->HasAura(CONCUSSIVE_SHOT, EFFECT_INDEX_0) && ai->CastSpell(CONCUSSIVE_SHOT, pTarget))
-        {}
-        else if (EXPLOSIVE_SHOT > 0 && ai->GetManaPercent() >= 10 && !pTarget->HasAura(EXPLOSIVE_SHOT, EFFECT_INDEX_0) && ai->CastSpell(EXPLOSIVE_SHOT, pTarget))
-        {}
-        else if (VIPER_STING > 0 && ai->GetManaPercent() >= 8 && pTarget->GetPower(POWER_MANA) > 0 && ai->GetManaPercent() < 70 && !pTarget->HasAura(VIPER_STING, EFFECT_INDEX_0) && ai->CastSpell(VIPER_STING, pTarget))
-        {}
-        else if (SERPENT_STING > 0 && ai->GetManaPercent() >= 13 && !pTarget->HasAura(SERPENT_STING, EFFECT_INDEX_0) && !pTarget->HasAura(SCORPID_STING, EFFECT_INDEX_0) &&  !pTarget->HasAura(VIPER_STING, EFFECT_INDEX_0) && ai->CastSpell(SERPENT_STING, pTarget))
-        {}
-        else if (SCORPID_STING > 0 && ai->GetManaPercent() >= 11 && !pTarget->HasAura(WYVERN_STING, EFFECT_INDEX_0) && !pTarget->HasAura(SCORPID_STING, EFFECT_INDEX_0) && !pTarget->HasAura(SERPENT_STING, EFFECT_INDEX_0) && !pTarget->HasAura(VIPER_STING, EFFECT_INDEX_0) && ai->CastSpell(SCORPID_STING, pTarget))
-        {}
-        else if (CHIMERA_SHOT > 0 && ai->GetManaPercent() >= 12 && ai->CastSpell(CHIMERA_SHOT, pTarget))
-        {}
-        else if (VOLLEY > 0 && ai->GetManaPercent() >= 24 && ai->CastSpell(VOLLEY, pTarget))
-        {}
-        else if (BLACK_ARROW > 0 && ai->GetManaPercent() >= 6 && !pTarget->HasAura(BLACK_ARROW, EFFECT_INDEX_0) && ai->CastSpell(BLACK_ARROW, pTarget))
-        {}
-        else if (AIMED_SHOT > 0 && ai->GetManaPercent() >= 12 && ai->CastSpell(AIMED_SHOT, pTarget))
-        {}
-        else if (STEADY_SHOT > 0 && ai->GetManaPercent() >= 5 && ai->CastSpell(STEADY_SHOT, pTarget))
-        {}
-        else if (KILL_SHOT > 0 && ai->GetManaPercent() >= 7 && pTarget->GetHealth() < pTarget->GetMaxHealth() * 0.2 && ai->CastSpell(KILL_SHOT, pTarget))
-        {}
+    static uint32 RangedSpell[] = {KILL_SHOT, RAPID_FIRE, SERPENT_STING, MY_BLACK_ARROW, ARCANE_SHOT, MY_EXPLOSIVE_SHOT, AIMED_SHOT, MULTI_SHOT, STEADY_SHOT, VOLLEY};
+    static uint32 MeleeSpell[] = {MONGOOSE_BITE, RAPTOR_STRIKE, IMMOLATION_TRAP, EXPLOSIVE_TRAP, VOLLEY};
+    static uint32 eltRanged = sizeof(RangedSpell)/sizeof(uint32);
+    static uint32 eltMelee = sizeof(MeleeSpell)/sizeof(uint32);
+    char *RangedSpellEnabled = "0000000000";
+    char *MeleeSpellEnabled = "00000";
+    uint32 bot_lvl = m_bot->getLevel();
+
+    if (bot_lvl <= 15)
+    {
+        RangedSpellEnabled = "0010100000";
+        MeleeSpellEnabled = "01000";
+    }
+    else if (bot_lvl == 16 || bot_lvl == 17)
+    {
+        RangedSpellEnabled = "0010100000";
+        MeleeSpellEnabled = "11100";
+    }
+    else if (bot_lvl >= 18 && bot_lvl < 26)
+    {
+        RangedSpellEnabled = "0010100F00";
+        MeleeSpellEnabled = "11100";
+    }
+    else if (bot_lvl >= 26 && bot_lvl < 34)
+    {
+        RangedSpellEnabled = "0V10100F00";
+        MeleeSpellEnabled = "11100";
+    }
+    else if (bot_lvl >= 34 && bot_lvl < 40)
+    {
+        RangedSpellEnabled = "0V10100F00";
+        MeleeSpellEnabled = "11010";
+    }
+    else if (bot_lvl >= 40 && bot_lvl < 50)
+    {
+        RangedSpellEnabled = "0V10100F0F";
+        MeleeSpellEnabled = "11011";
+    }
+    else if (bot_lvl >= 50 && bot_lvl < 60)
+    {
+        RangedSpellEnabled = "0V11100FFF";
+        MeleeSpellEnabled = "11011";
+    }
+    else if (bot_lvl >= 60 && bot_lvl < 71)
+    {
+        RangedSpellEnabled = "0V11010FFF";
+        MeleeSpellEnabled = "11011";
     }
     else
     {
-        if (RAPTOR_STRIKE > 0 && ai->GetManaPercent() >= 6 && ai->CastSpell(RAPTOR_STRIKE, pTarget))
-        {}
-        else if (EXPLOSIVE_TRAP > 0 && ai->GetManaPercent() >= 27 && !pTarget->HasAura(EXPLOSIVE_TRAP, EFFECT_INDEX_0) && !pTarget->HasAura(ARCANE_TRAP, EFFECT_INDEX_0) && !pTarget->HasAura(IMMOLATION_TRAP, EFFECT_INDEX_0) && !pTarget->HasAura(FROST_TRAP, EFFECT_INDEX_0) && !pTarget->HasAura(BEAR_TRAP, EFFECT_INDEX_0) && ai->CastSpell(EXPLOSIVE_TRAP, pTarget))
-        {}
-        else if (WING_CLIP > 0 && ai->GetManaPercent() >= 6 && !pTarget->HasAura(WING_CLIP, EFFECT_INDEX_0) && ai->CastSpell(WING_CLIP, pTarget))
-        {}
-        else if (IMMOLATION_TRAP > 0 && ai->GetManaPercent() >= 13 && !pTarget->HasAura(IMMOLATION_TRAP, EFFECT_INDEX_0) && !pTarget->HasAura(ARCANE_TRAP, EFFECT_INDEX_0) && !pTarget->HasAura(EXPLOSIVE_TRAP, EFFECT_INDEX_0) && !pTarget->HasAura(FROST_TRAP, EFFECT_INDEX_0) && !pTarget->HasAura(BEAR_TRAP, EFFECT_INDEX_0) && ai->CastSpell(IMMOLATION_TRAP, pTarget))
-        {}
-        else if (MONGOOSE_BITE > 0 && ai->GetManaPercent() >= 4 && ai->CastSpell(MONGOOSE_BITE, pTarget))
-        {}
-        else if (FROST_TRAP > 0 && ai->GetManaPercent() >= 2 && !pTarget->HasAura(FROST_TRAP, EFFECT_INDEX_0) && !pTarget->HasAura(ARCANE_TRAP, EFFECT_INDEX_0) && !pTarget->HasAura(IMMOLATION_TRAP, EFFECT_INDEX_0) && !pTarget->HasAura(EXPLOSIVE_TRAP, EFFECT_INDEX_0) && !pTarget->HasAura(BEAR_TRAP, EFFECT_INDEX_0) && ai->CastSpell(FROST_TRAP, pTarget))
-        {}
-        else if (ARCANE_TRAP > 0 && !pTarget->HasAura(ARCANE_TRAP, EFFECT_INDEX_0) && !pTarget->HasAura(BEAR_TRAP, EFFECT_INDEX_0) && !pTarget->HasAura(EXPLOSIVE_TRAP, EFFECT_INDEX_0) && !pTarget->HasAura(IMMOLATION_TRAP, EFFECT_INDEX_0) && !pTarget->HasAura(FROST_TRAP, EFFECT_INDEX_0) && ai->CastSpell(ARCANE_TRAP, pTarget))
-        {}
-        else if (DETERRENCE > 0 && pVictim == m_bot && m_bot->GetHealth() < m_bot->GetMaxHealth() * 0.5 && !m_bot->HasAura(DETERRENCE, EFFECT_INDEX_0) && ai->CastSpell(DETERRENCE, m_bot))
-        {}
-        else if (m_bot->getRace() == RACE_TAUREN && !pTarget->HasAura(WAR_STOMP, EFFECT_INDEX_0) && ai->CastSpell(WAR_STOMP, pTarget))
-        {}
-        else if (m_bot->getRace() == RACE_BLOODELF && !pTarget->HasAura(ARCANE_TORRENT, EFFECT_INDEX_0) && ai->CastSpell(ARCANE_TORRENT, pTarget))
-        {}
-        else if (m_bot->getRace() == RACE_DWARF && m_bot->HasAuraState(AURA_STATE_DEADLY_POISON) && ai->CastSpell(STONEFORM, m_bot))
-        {}
-        else if (m_bot->getRace() == RACE_NIGHTELF && pVictim == m_bot && ai->GetHealthPercent() < 25 && !m_bot->HasAura(SHADOWMELD, EFFECT_INDEX_0) && ai->CastSpell(SHADOWMELD, m_bot))
-        {}
-        else if (m_bot->getRace() == RACE_DRAENEI && ai->GetHealthPercent() < 25 && !m_bot->HasAura(GIFT_OF_THE_NAARU, EFFECT_INDEX_0) && ai->CastSpell(GIFT_OF_THE_NAARU, m_bot))
-        {}
-        else if ((pet && !pet->getDeathState() != ALIVE)
-                 && (MISDIRECTION > 0 && pVictim == m_bot && !m_bot->HasAura(MISDIRECTION, EFFECT_INDEX_0) && ai->GetManaPercent() >= 9 && ai->CastSpell(MISDIRECTION, pet)))
-        {}
+        RangedSpellEnabled = "1V11011FFF";
+        MeleeSpellEnabled = "11011";
     }
 
+    if (m_rangedCombat)
+    {
+        for (uint32 i = 0; i < eltRanged; ++i)
+        {
+            if (RangedSpellEnabled[i] == 'V')
+			{
+                if (m_bot->HasAura(ASPECT_OF_THE_VIPER) && !pTarget->HasAura(RangedSpell[i]) && ai->CastSpell(RangedSpell[i], pTarget))
+                    return;
+                else
+                    continue;
+			}
+            else if (RangedSpellEnabled[i] == 'F')
+			{
+                if (m_bot->HasAura(ASPECT_OF_THE_DRAGONHAWK) && !pTarget->HasAura(RangedSpell[i]) && ai->CastSpell(RangedSpell[i], pTarget))
+                    return;
+                else
+                    continue;
+			}
+			else if (RangedSpellEnabled[i] == '1')
+            {
+                if (!pTarget->HasAura(RangedSpell[i]) && ai->CastSpell(RangedSpell[i], pTarget))
+                    return;
+            }
+        }
+    }
+    else
+    {
+        for (uint32 i = 0; i < eltMelee; ++i)
+        {
+            if (!pTarget->HasAura(MeleeSpell[i], EFFECT_INDEX_0) && ai->CastSpell(MeleeSpell[i], pTarget))
+                return;
+        }
+    }
+ 
 } // end DoNextCombatManeuver
 
 void PlayerbotHunterAI::DoNonCombatActions()
@@ -272,17 +319,17 @@ void PlayerbotHunterAI::DoNonCombatActions()
     if (!m_master)
         return;
 
+    if (!m_bot->HasAura(MY_TRUESHOT_AURA, EFFECT_INDEX_0))
+        ai->CastSpell(MY_TRUESHOT_AURA, m_bot);
+
+    if (!m_bot->HasAura(ASPECT_OF_THE_VIPER, EFFECT_INDEX_0) && ai->GetManaPercent() < 90)
+        ai->CastSpell(ASPECT_OF_THE_VIPER, m_bot);
+    else if (!m_bot->HasAura(ASPECT_OF_THE_DRAGONHAWK, EFFECT_INDEX_0) && ai->GetManaPercent() >= 90)
+        ai->CastSpell(ASPECT_OF_THE_DRAGONHAWK, m_bot);
+
     // reset ranged combat state
     if (!m_rangedCombat)
         m_rangedCombat = true;
-
-    // buff group
-    if (TRUESHOT_AURA > 0)
-        (!m_bot->HasAura(TRUESHOT_AURA, EFFECT_INDEX_0) && ai->CastSpell (TRUESHOT_AURA, m_bot));
-
-    // buff myself
-    if (ASPECT_OF_THE_HAWK > 0)
-        (!m_bot->HasAura(ASPECT_OF_THE_HAWK, EFFECT_INDEX_0) && ai->CastSpell (ASPECT_OF_THE_HAWK, m_bot));
 
     // mana check
     if (m_bot->getStandState() != UNIT_STAND_STATE_STAND)

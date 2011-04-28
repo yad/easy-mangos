@@ -1436,6 +1436,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
             return m_spellAuraHolders.equal_range(spell_id);
         }
 
+        bool HasAuraFromUnit(uint32 Spell, Unit *caster);
         bool HasAuraType(AuraType auraType) const;
         bool HasAura(uint32 spellId, SpellEffectIndex effIndex) const;
         bool HasAura(uint32 spellId) const

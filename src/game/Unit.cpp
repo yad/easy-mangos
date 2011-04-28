@@ -632,6 +632,20 @@ void Unit::RemoveSpellsCausingAura(AuraType auraType, SpellAuraHolder* except)
     }
 }
 
+bool Unit::HasAuraFromUnit(uint32 Spell, Unit *caster)
+{
+    SpellAuraHolderMap& auras = GetSpellAuraHolderMap();
+
+    for(SpellAuraHolderMap::const_iterator itr = auras.begin(); itr != auras.end(); ++itr)
+    {
+        SpellAuraHolder *holder = itr->second;
+
+        if (holder->GetId() == Spell && holder->GetCasterGUID() == caster->GetGUID())
+            return true;
+    }
+    return false;
+}
+
 bool Unit::HasAuraType(AuraType auraType) const
 {
     return (!m_modAuras[auraType].empty());

@@ -105,6 +105,7 @@ public:
     // Initialize spell using rank 1 spell id
     uint32 initSpell(uint32 spellId);
     uint32 initPetSpell(uint32 spellIconId);
+    uint32 initSP(uint32 spellId);
 
     // extracts item ids from links
     void extractItemIds(const std::string& text, std::list<uint32>& itemIds) const;
@@ -158,6 +159,7 @@ public:
     Item* FindItem(uint32 ItemId);
     Item* FindConsumable(uint32 displayId) const;
     void CheckMount();
+    void UnMount();
     Player* FindNewGroupLeader();
 
     // ******* Actions ****************************************

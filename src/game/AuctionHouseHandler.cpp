@@ -176,10 +176,15 @@ void WorldSession::SendAuctionOutbiddedMail(AuctionEntry *auction)
         std::ostringstream msgAuctionOutbiddedSubject;
         msgAuctionOutbiddedSubject << auction->itemTemplate << ":0:" << AUCTION_OUTBIDDED << ":0:0";
 
-        if (oldBidder)
-            oldBidder->GetSession()->SendAuctionBidderNotification(auction);
+        // Added for AHBot
+        if (oldBidder && !_player)
+            oldBidder->GetSession()->SendAuctionBidderNotification( auction);
+ 
+         // Modified for AHBot
+        if (oldBidder && _player)
+            oldBidder->GetSession()->SendAuctionBidderNotification( auction);
 
-            MailDraft(msgAuctionOutbiddedSubject.str(), "")     // TODO: fix body
+        MailDraft(msgAuctionOutbiddedSubject.str(), "")     // TODO: fix body
             .SetMoney(auction->bid)
             .SendMailTo(MailReceiver(oldBidder, oldBidder_guid), auction, MAIL_CHECK_MASK_COPIED);
     }

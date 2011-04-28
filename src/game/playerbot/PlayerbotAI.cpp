@@ -902,6 +902,50 @@ void PlayerbotAI::CheckBG()
     }
 }
 
+uint32 PlayerbotAI::initSP(uint32 spellId)
+{
+    uint32 next = 0;
+    SpellChainMapNext const& nextMap = sSpellMgr.GetSpellChainNext();
+    for (SpellChainMapNext::const_iterator itr = nextMap.lower_bound(spellId); itr != nextMap.upper_bound(spellId); ++itr)
+    {
+        if (sSpellStore.LookupEntry(spellId)->SpellIconID != sSpellStore.LookupEntry(itr->second)->SpellIconID)
+            continue;
+
+        SpellChainNode const* node = sSpellMgr.GetSpellChainNode(itr->second);
+
+        if (node->req == spellId)
+            continue;
+        if (node->prev == spellId)
+        {
+            next = initSpell(itr->second);
+            break;
+        }
+    }
+    if (next == 0)
+    {
+        const SpellEntry* const pSpellInfo = sSpellStore.LookupEntry(spellId);
+        sLog.outDebug("Playerbot spell init: %s is %u", pSpellInfo->SpellName[0], spellId);
+
+        Spell *spell = new Spell(m_bot, pSpellInfo, false);
+        SpellRangeEntry const* srange = sSpellRangeStore.LookupEntry(pSpellInfo->rangeIndex);
+        float range = GetSpellMaxRange(srange, IsPositiveSpell(spellId));
+        m_bot->ApplySpellMod(spellId, SPELLMOD_RANGE, range, spell);
+        m_spellRangeMap.insert(std::pair<uint32,float>(spellId, range));
+        delete spell;
+    }
+    return (next == 0) ? spellId : next;
+}
+
+void PlayerbotAI::UnMount()
+{
+    WorldPacket emptyPacket;
+    m_bot->GetSession()->HandleCancelMountAuraOpcode(emptyPacket);
+    m_bot->Unmount();
+    m_bot->RemoveSpellsCausingAura(SPELL_AURA_MOUNTED);
+    m_bot->RemoveSpellsCausingAura(SPELL_AURA_MOD_FLIGHT_SPEED_MOUNTED);
+    m_bot->RemoveSpellsCausingAura(SPELL_AURA_MOD_INCREASE_MOUNTED_SPEED);
+}
+
 void PlayerbotAI::CheckMount()
 {
     if ((GetLeader()->IsMounted()) && (!m_bot->IsMounted()))
@@ -1416,6 +1460,12 @@ bool PlayerbotAI::GetCombatTarget(Unit* forcedTarget)
 
 void PlayerbotAI::DoNextCombatManeuver()
 {
+    if (m_bot->GetGroup())
+    {
+        if ((!GetLeader()->IsMounted()) && (m_bot->IsMounted()))
+            UnMount();
+    }
+
     bool targetChanged = false;
     if (m_bot->GetBattleGround())
     {
@@ -1473,7 +1523,9 @@ void PlayerbotAI::DoNextCombatManeuver()
         }
         else
         {
-            SetMovementTarget(m_targetCombat);
+            if (m_bot->getClass() != CLASS_HUNTER/* && m_bot->getClass() != CLASS_PRIEST && m_bot->getClass() != CLASS_MAGE && m_bot->getClass() != CLASS_WARLOCK*/)
+                SetMovementTarget(m_targetCombat);
+
             if (targetChanged)
             {
                 m_bot->SetSelectionGuid((m_targetCombat->GetObjectGuid()));
@@ -1556,6 +1608,7 @@ void PlayerbotAI::DoLoot()
     {
         m_lootCurrent = m_lootCreature.front();
         m_lootCreature.pop_front();
+        Player *m_master = GetLeader();
         Creature *c = m_bot->GetMap()->GetCreature(m_lootCurrent);
         // check if we got a creature and if it is still a corpse, otherwise bot runs to spawn point
         if (!c || c->getDeathState() != CORPSE || GetLeader()->GetDistance(c) > BOTLOOT_DISTANCE)
@@ -1563,18 +1616,19 @@ void PlayerbotAI::DoLoot()
             m_lootCurrent = 0;
             return;
         }
-        m_bot->GetMotionMaster()->MovePoint(c->GetMapId(), c->GetPositionX(), c->GetPositionY(), c->GetPositionZ());
+        SetMovementTarget(m_master);
         //sLog.outDebug( "[PlayerbotAI]: %s is going to loot '%s' deathState=%d", m_bot->GetName(), c->GetName(), c->getDeathState() );
     }
     else
     {
+        Player *m_master = GetLeader();
         Creature *c = m_bot->GetMap()->GetCreature(m_lootCurrent);
         if (!c || c->getDeathState() != CORPSE || GetLeader()->GetDistance(c) > BOTLOOT_DISTANCE)
         {
             m_lootCurrent = 0;
             return;
         }
-        if (m_bot->IsWithinDistInMap(c, INTERACTION_DISTANCE))
+        if (m_master->IsWithinDistInMap(m_bot, 100.0f))
         {
             // check for needed items
             m_bot->SendLoot(m_lootCurrent, LOOT_CORPSE);
@@ -1902,6 +1956,9 @@ void PlayerbotAI::SetMovementTarget(Unit *followTarget)
 
     if (m_bot == GetLeader())
     {
+        if (m_bot->GetSpeedRate(MOVE_RUN) != 1.0f)
+            m_bot->SetSpeedRate(MOVE_RUN, 1.0f, true);
+
         if (!m_bot->GetBattleGround())
         {
             if (m_bot->IsWithinDistInMap(m_followTarget, orig_x, orig_y, orig_z, 5.0f))
@@ -1922,7 +1979,7 @@ void PlayerbotAI::SetMovementTarget(Unit *followTarget)
                 m_bot->GetMotionMaster()->GetDestination(xdb, ydb, zdb);
                 m_bot->GetPosition(xcb, ycb, zcb);
                 m_followTarget->GetPosition(xt, yt, zt);
-                if (!isInside(xcb, ycb, xdb, ydb, xt, yt, 10.0f))
+                if (!isInside(xcb, ycb, xdb, ydb, xt, yt, 3.0f))
                 {
                     SetInFront(m_followTarget);
                     m_bot->GetMotionMaster()->MoveFollow(m_followTarget, 1.0f, rand_float(0, M_PI_F));
@@ -1962,14 +2019,19 @@ void PlayerbotAI::SetMovementTarget(Unit *followTarget)
     {
         if (!m_bot->GetBattleGround())
         {
-            if (m_bot->IsWithinDistInMap(m_followTarget, 3.0f))
+            Group *gr = m_bot->GetGroup();
+            
+            if (m_bot->GetSpeedRate(MOVE_RUN) != 1.3f)
+                m_bot->SetSpeedRate(MOVE_RUN, 1.3f, true);
+            
+            if (m_bot->IsWithinDistInMap(m_followTarget, 3.0f) || (m_bot->IsWithinDistInMap(m_followTarget, 5.0f) && gr->GetMembersCount() >= 6))
             {
-                if (SetInFront(m_followTarget))
-                    MovementClear();
+                MovementClear();
             }
-            else if (m_bot->IsWithinDistInMap(m_followTarget, 100.0f))
+            
+            if (m_bot->IsWithinDistInMap(m_followTarget, 100.0f))
             {
-                if (!m_bot->IsWithinDistInMap(m_followTarget, 15.0f))
+                if (gr->GetMembersCount() >= 6 && !m_bot->IsWithinDistInMap(m_followTarget, 5.0f))
                 {
                     float xcb, ycb, zcb;
                     float xdb, ydb, zdb;
@@ -1977,7 +2039,20 @@ void PlayerbotAI::SetMovementTarget(Unit *followTarget)
                     m_bot->GetMotionMaster()->GetDestination(xdb, ydb, zdb);
                     m_bot->GetPosition(xcb, ycb, zcb);
                     m_followTarget->GetPosition(xt, yt, zt);
-                    if (!isInside(xcb, ycb, xdb, ydb, xt, yt, 10.0f))
+                    if (!isInside(xcb, ycb, xdb, ydb, xt, yt, 5.0f))
+                    {
+                        m_bot->GetMotionMaster()->MoveFollow(m_followTarget, rand_float(1.0f, 5.0f), rand_float(0, M_PI_F));
+                    }
+                }
+                if (!m_bot->IsWithinDistInMap(m_followTarget, 3.0f))
+                {
+                    float xcb, ycb, zcb;
+                    float xdb, ydb, zdb;
+                    float xt, yt, zt;
+                    m_bot->GetMotionMaster()->GetDestination(xdb, ydb, zdb);
+                    m_bot->GetPosition(xcb, ycb, zcb);
+                    m_followTarget->GetPosition(xt, yt, zt);
+                    if (!isInside(xcb, ycb, xdb, ydb, xt, yt, 3.0f))
                     {
                         float angle = rand_float(0, M_PI_F);
                         float dist = rand_float(1.0f, 3.0f);
@@ -1988,6 +2063,9 @@ void PlayerbotAI::SetMovementTarget(Unit *followTarget)
         }
         else
         {
+            if (m_bot->GetSpeedRate(MOVE_RUN) != 1.0f)
+                m_bot->SetSpeedRate(MOVE_RUN, 1.0f, true);
+
             if (m_bot->IsWithinDistInMap(m_followTarget, 3.0f))
             {
                 if (SetInFront(m_followTarget))
@@ -2269,8 +2347,10 @@ void PlayerbotAI::UpdateAI(const uint32 p_time)
 
         else if (m_botState == BOTSTATE_LOOTING)
         {
+            if (m_bot->getClass() == CLASS_HUNTER)
+                   m_bot->HandleEmote(1);
+
             DoLoot();
-            SetIgnoreUpdateTime();
         }
 
         else if (!IsInCombat())

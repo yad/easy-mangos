@@ -86,7 +86,8 @@ enum PriestSpells
     SILENCE_1                       = 15487,
     SMITE_1                         = 585,
     VAMPIRIC_EMBRACE_1              = 15286,
-    VAMPIRIC_TOUCH_1                = 34914
+    VAMPIRIC_TOUCH_1                = 34914,
+    WEAKENED_SOUL                   = 6788
 };
 //class Player;
 

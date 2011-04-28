@@ -354,6 +354,9 @@ void PlayerbotPaladinAI::DoNonCombatActions()
     // Buff master
     BuffPlayer(m_master);
 
+    if (DEVOTION_AURA > 0 && !m_bot->HasAura(DEVOTION_AURA, EFFECT_INDEX_0))
+        ai->CastSpell (DEVOTION_AURA, m_bot);
+
     // mana check
     if (m_bot->getStandState() != UNIT_STAND_STATE_STAND)
         m_bot->SetStandState(UNIT_STAND_STATE_STAND);
