@@ -1,6 +1,6 @@
 /* Arcane Potency */
 DELETE FROM spell_chain WHERE spell_ID IN (57529, 57531);
-INSERT INTO spell_chain	(spell_id, prev_spell, first_spell, rank, req_spell) VALUES
+INSERT INTO spell_chain (spell_id, prev_spell, first_spell, rank, req_spell) VALUES
 (57529, 0, 57529, 1, 0),
 (57531,57529, 57529, 2,0);
 
@@ -12,4 +12,4 @@ INSERT INTO spell_proc_event (entry, SchoolMask, SpellFamilyName, SpellFamilyMas
 -- from FallenangelX
 DELETE FROM `spell_proc_event` WHERE `entry` IN (51682); 
 INSERT INTO `spell_proc_event` VALUES 
-(51682, 0x00,  8, 0x10014000, 0x10014000, 0x10014000, 0x00080000, 0x00080000, 0x00080000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0), 
+(51682, 0x00,  8, 0x10014000, 0x10014000, 0x10014000, 0x00080000, 0x00080000, 0x00080000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0);
