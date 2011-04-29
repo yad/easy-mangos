@@ -68,12 +68,14 @@ public:
         BOTSTATE_COMBAT,            // bot is in combat
         BOTSTATE_DEAD,              // we are dead and wait for becoming ghost
         BOTSTATE_DEADRELEASED,      // we released as ghost and wait to revive
-        BOTSTATE_LOOTING            // looting mode, used just after combat
+        BOTSTATE_LOOTING,           // looting mode, used just after combat
+        BOTSTATE_FLYING             // bot is flying
     };
 
     typedef std::map<uint32, uint32> BotNeedItem;
     typedef std::list<uint64> BotLootCreature;
     typedef std::map<uint32, float> SpellRanges;
+    typedef std::vector<uint32> BotTaxiNode;
 
 public:
     PlayerbotAI(PlayerbotMgr * const mgr, Player * const bot);
@@ -198,6 +200,8 @@ public:
     void SendQuestItemList(Player& player);
     bool FollowCheckTeleport(WorldObject *obj);
     void DoLoot();
+    void DoFlight();
+    void GetTaxi(ObjectGuid guid, BotTaxiNode& nodes);
 
     bool CheckTeleport();
     bool CheckMaster();
@@ -252,8 +256,9 @@ private:
     BotNeedItem m_needItemList;
 
     // list of creatures we recently attacked and want to loot
-    BotLootCreature m_lootCreature;      // list of creatures
-    uint64 m_lootCurrent;                // current remains of interest
+    BotLootCreature m_lootCreature;     // list of creatures
+    uint64 m_lootCurrent;               // current remains of interest
+    BotTaxiNode m_taxiNodes;            // flight node chain;
 
     time_t m_TimeDoneEating;
     time_t m_TimeDoneDrinking;
@@ -262,6 +267,7 @@ private:
     // if master commands bot to do something, store here until updateAI
     // can do it
     uint64 m_targetGuidCommand;
+    ObjectGuid m_taxiMaster;
 
     Unit *m_targetCombat;       // current combat target
     Unit *m_followTarget;       // whom to follow in non combat situation?

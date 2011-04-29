@@ -72,6 +72,7 @@ PlayerbotAI::PlayerbotAI(PlayerbotMgr* const mgr, Player* const bot) :
     m_TimeDoneEating(0), m_TimeDoneDrinking(0),
     m_CurrentlyCastingSpellId(0), m_enterBg(0), m_leaveBg(0),
     m_targetGuidCommand(0), m_classAI(0),
+    m_taxiMaster(ObjectGuid()),
     m_role(0), m_new_role(1)
 {
     SetLeader(bot);
@@ -1592,6 +1593,20 @@ uint8 PlayerbotAI::GetFreeBagSpace() const
             space += pBag->GetFreeSlots();
     }
     return space;
+}
+
+void PlayerbotAI::DoFlight()
+{
+    DEBUG_LOG("DoFlight %s : %s", m_bot->GetName(), m_taxiMaster.GetString().c_str());
+
+    Creature *npc = m_bot->GetNPCIfCanInteractWith(m_taxiMaster, UNIT_NPC_FLAG_FLIGHTMASTER);
+    if (!npc)
+    {
+        DEBUG_LOG("PlayerbotAI: DoFlight - %s not found or you can't interact with it.", m_taxiMaster.GetString().c_str());
+        return;
+    }
+
+    m_bot->ActivateTaxiPathTo(m_taxiNodes, npc);
 }
 
 void PlayerbotAI::DoLoot()
@@ -3374,4 +3389,26 @@ void PlayerbotAI::QuestLocalization(std::string& questTitle, const uint32 questI
             if (Utf8FitTo(title, wnamepart))
                 questTitle = title.c_str();
         }
+}
+
+void PlayerbotAI::GetTaxi(ObjectGuid guid, BotTaxiNode& nodes)
+{
+    DEBUG_LOG("PlayerbotAI: GetTaxi %s node[0] %d node[1] %d", m_bot->GetName(), nodes[0], nodes[1]);
+
+    Creature *unit = m_bot->GetNPCIfCanInteractWith(guid, UNIT_NPC_FLAG_FLIGHTMASTER);
+    if (!unit)
+    {
+        DEBUG_LOG("PlayerbotAI: GetTaxi - %s not found or you can't interact with it.", guid.GetString().c_str());
+        return;
+    }
+
+    if (m_bot->m_taxi.IsTaximaskNodeKnown(nodes[0]) ? 0 : 1)
+        return;
+
+    if (m_bot->m_taxi.IsTaximaskNodeKnown(nodes[nodes.size() - 1]) ? 0 : 1)
+        return;
+
+    m_taxiNodes = nodes;
+    m_taxiMaster = guid;
+    SetState(BOTSTATE_FLYING);
 }
