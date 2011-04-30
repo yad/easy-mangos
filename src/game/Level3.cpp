@@ -2533,8 +2533,8 @@ bool ChatHandler::HandleLearnAllMySpellsCommand(char* /*args*/)
         if((cinfo->npcflag & UNIT_NPC_FLAG_TRAINER) || (cinfo->npcflag & UNIT_NPC_FLAG_TRAINER_CLASS)
             || (cinfo->npcflag & UNIT_NPC_FLAG_TRAINER_PROFESSION))
         {
-            TrainerSpellData const* cSpells = sObjectMgr.GetNpcTrainerSpells(id);
-            TrainerSpellData const* tSpells = sObjectMgr.GetNpcTrainerTemplateSpells(id);
+            TrainerSpellData const* cSpells = sObjectMgr.GetNpcTrainerSpells(cinfo->Entry);
+            TrainerSpellData const* tSpells = sObjectMgr.GetNpcTrainerTemplateSpells(cinfo->trainerId);
 
             if (!cSpells && !tSpells)
                 continue;
