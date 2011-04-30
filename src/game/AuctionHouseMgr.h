@@ -21,9 +21,12 @@
 
 #include "Common.h"
 #include "SharedDefines.h"
+#include "Platform/Define.h"
 #include "Policies/Singleton.h"
 #include "DBCStructure.h"
 #include "Item.h"
+#include <ace/Thread_Mutex.h>
+#include <ace/RW_Thread_Mutex.h>
 
 class Player;
 class Unit;
@@ -152,11 +155,15 @@ class AuctionHouseMgr
         ~AuctionHouseMgr();
 
         typedef UNORDERED_MAP<uint32, Item*> ItemMap;
+        typedef ACE_RW_Thread_Mutex          LockType;
+        typedef ACE_Read_Guard<LockType>     ReadGuard;
+        typedef ACE_Write_Guard<LockType>    WriteGuard;
 
         AuctionHouseObject* GetAuctionsMap(AuctionHouseEntry const* house);
 
         Item* GetAItem(uint32 id)
         {
+            ReadGuard guard(i_lock);
             ItemMap::const_iterator itr = mAitems.find(id);
             if (itr != mAitems.end())
             {
@@ -167,6 +174,7 @@ class AuctionHouseMgr
 
         ItemPrototype const* GetAItemProto(uint32 id)
         {
+            ReadGuard guard(i_lock);
             ItemMap::const_iterator itr = mAitems.find(id);
             if (itr != mAitems.end())
             {
@@ -195,6 +203,9 @@ class AuctionHouseMgr
         void AddAItem(Item* it);
         bool RemoveAItem(uint32 id);
 
+        void AddAItemToRemoveList(Item* item);
+        void ClearRemovedAItems();
+
         void Update();
 
     private:
@@ -203,6 +214,9 @@ class AuctionHouseMgr
         AuctionHouseObject  mNeutralAuctions;
 
         ItemMap             mAitems;
+
+        LockType            i_lock;
+        std::queue<Item*>   m_deletedItems;
 };
 
 #define sAuctionMgr MaNGOS::Singleton<AuctionHouseMgr>::Instance()

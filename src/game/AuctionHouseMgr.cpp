@@ -168,7 +168,7 @@ void AuctionHouseMgr::SendAuctionWonMail(AuctionEntry *auction)
     {
         CharacterDatabase.PExecute("DELETE FROM item_instance WHERE guid='%u'", pItem->GetGUIDLow());
         RemoveAItem(pItem->GetGUIDLow());                   // we have to remove the item, before we delete it !!
-        delete pItem;
+        AddAItemToRemoveList(pItem);
     }
 }
 
@@ -280,7 +280,7 @@ void AuctionHouseMgr::SendAuctionExpiredMail(AuctionEntry * auction)
     {
         CharacterDatabase.PExecute("DELETE FROM item_instance WHERE guid='%u'",pItem->GetGUIDLow());
         RemoveAItem(pItem->GetGUIDLow());                   // we have to remove the item, before we delete it !!
-        delete pItem;
+        AddAItemToRemoveList(pItem);
     }
 }
 
@@ -446,6 +446,7 @@ void AuctionHouseMgr::LoadAuctions()
 
 void AuctionHouseMgr::AddAItem(Item* it)
 {
+    WriteGuard guard(i_lock);
     MANGOS_ASSERT(it);
     MANGOS_ASSERT(mAitems.find(it->GetGUIDLow()) == mAitems.end());
     mAitems[it->GetGUIDLow()] = it;
@@ -453,6 +454,7 @@ void AuctionHouseMgr::AddAItem(Item* it)
 
 bool AuctionHouseMgr::RemoveAItem(uint32 id)
 {
+    WriteGuard guard(i_lock);
     ItemMap::iterator i = mAitems.find(id);
     if (i == mAitems.end())
     {
@@ -462,11 +464,31 @@ bool AuctionHouseMgr::RemoveAItem(uint32 id)
     return true;
 }
 
+void AuctionHouseMgr::AddAItemToRemoveList(Item* item)
+{
+    if (!item)
+        return;
+    WriteGuard guard(i_lock);
+    m_deletedItems.push(item);
+}
+
+void AuctionHouseMgr::ClearRemovedAItems()
+{
+    WriteGuard guard(i_lock);
+    while(!m_deletedItems.empty())
+    {
+        delete m_deletedItems.front();
+//        m_deletedItems.pop();
+    }
+}
+
 void AuctionHouseMgr::Update()
 {
     mHordeAuctions.Update();
     mAllianceAuctions.Update();
     mNeutralAuctions.Update();
+
+    ClearRemovedAItems();
 }
 
 uint32 AuctionHouseMgr::GetAuctionHouseTeam(AuctionHouseEntry const* house)
@@ -631,6 +653,7 @@ void AuctionHouseObject::BuildListOwnerItems(WorldPacket& data, Player* player, 
 
 bool AuctionHouseMgr::CompareAuctionEntry(uint32 column, const AuctionEntry *auc1, const AuctionEntry *auc2) const
 {
+
     if (auc1->IsDeleted() || auc2->IsDeleted())
         return false;
 
@@ -881,6 +904,10 @@ void AuctionHouseObject::BuildListPendingSales(WorldPacket& data, Player* player
     for (AuctionEntryMap::const_iterator itr = AuctionsMap.begin(); itr != AuctionsMap.end(); ++itr)
     {
         AuctionEntry *Aentry = itr->second;
+
+        if (Aentry->IsDeleted())
+            continue;
+
         if (!Aentry->moneyDeliveryTime)
             continue;
         if (Aentry && Aentry->owner == player->GetGUIDLow())
@@ -914,6 +941,9 @@ void AuctionHouseObject::BuildListPendingSales(WorldPacket& data, Player* player
 // this function inserts to WorldPacket auction's data
 bool AuctionEntry::BuildAuctionInfo(WorldPacket & data) const
 {
+    if (IsDeleted())
+        return false;
+
     Item *pItem = sAuctionMgr.GetAItem(itemGuidLow);
     if (!pItem)
     {
