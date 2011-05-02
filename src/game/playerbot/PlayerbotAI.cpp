@@ -296,10 +296,9 @@ uint32 PlayerbotAI::getPetSpellId(const char* args) const
     return foundSpellId;
 }
 
-uint32 PlayerbotAI::initSpell(uint32 spellId)
+uint32 PlayerbotAI::initSpell(uint32 spellId, bool ignorePossession)
 {
-    // Check if bot knows this spell
-    if (!m_bot->HasSpell(spellId))
+    if (!ignorePossession && !m_bot->HasSpell(spellId))
         return 0;
 
     uint32 next = 0;
@@ -314,9 +313,9 @@ uint32 PlayerbotAI::initSpell(uint32 spellId)
         // If next spell is a requirement for this one then skip it
         if (node->req == spellId)
             continue;
-        if (node->prev == spellId)
+        if (node->prev == spellId && m_bot->getLevel() >= sSpellStore.LookupEntry(spellId)->spellLevel)
         {
-            next = initSpell(itr->second);
+            next = initSpell(itr->second, ignorePossession);
             break;
         }
     }
@@ -901,40 +900,6 @@ void PlayerbotAI::CheckBG()
             }
         }
     }
-}
-
-uint32 PlayerbotAI::initSP(uint32 spellId)
-{
-    uint32 next = 0;
-    SpellChainMapNext const& nextMap = sSpellMgr.GetSpellChainNext();
-    for (SpellChainMapNext::const_iterator itr = nextMap.lower_bound(spellId); itr != nextMap.upper_bound(spellId); ++itr)
-    {
-        if (sSpellStore.LookupEntry(spellId)->SpellIconID != sSpellStore.LookupEntry(itr->second)->SpellIconID)
-            continue;
-
-        SpellChainNode const* node = sSpellMgr.GetSpellChainNode(itr->second);
-
-        if (node->req == spellId)
-            continue;
-        if (node->prev == spellId)
-        {
-            next = initSpell(itr->second);
-            break;
-        }
-    }
-    if (next == 0)
-    {
-        const SpellEntry* const pSpellInfo = sSpellStore.LookupEntry(spellId);
-        sLog.outDebug("Playerbot spell init: %s is %u", pSpellInfo->SpellName[0], spellId);
-
-        Spell *spell = new Spell(m_bot, pSpellInfo, false);
-        SpellRangeEntry const* srange = sSpellRangeStore.LookupEntry(pSpellInfo->rangeIndex);
-        float range = GetSpellMaxRange(srange, IsPositiveSpell(spellId));
-        m_bot->ApplySpellMod(spellId, SPELLMOD_RANGE, range, spell);
-        m_spellRangeMap.insert(std::pair<uint32,float>(spellId, range));
-        delete spell;
-    }
-    return (next == 0) ? spellId : next;
 }
 
 void PlayerbotAI::UnMount()

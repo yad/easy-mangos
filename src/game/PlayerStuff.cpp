@@ -2226,7 +2226,10 @@ bool Player::LearnAllMyTalentsForMyLevel()
             continue;
 
         TalentTabEntry const *talentTabInfo = sTalentTabStore.LookupEntry( talentInfo->TalentTab );
-        if(!talentTabInfo || talentTabInfo->TalentTabID != getRole())
+        if(!talentTabInfo)
+            continue;
+
+        if(!IsBot() && talentTabInfo->TalentTabID != getRole())
             continue;
 
         if( (classMask & talentTabInfo->ClassMask) == 0 )
@@ -2254,33 +2257,33 @@ bool Player::LearnAllMyTalentsForMyLevel()
         if(level < 10)
             continue;
 
-        if(level < 20 && talentInfo->Row > 0)
+        if(level < 15 && talentInfo->Row > 0)
             continue;
 
-        if(level < 30 && talentInfo->Row > 1)
+        if(level < 20 && talentInfo->Row > 1)
             continue;
 
-        if(level < 38 && talentInfo->Row > 2)
+        if(level < 25 && talentInfo->Row > 2)
             continue;
 
-        if(level < 46 && talentInfo->Row > 3)
+        if(level < 30 && talentInfo->Row > 3)
             continue;
 
-        if(level < 53 && talentInfo->Row > 4)
+        if(level < 35 && talentInfo->Row > 4)
             continue;
 
-        if(level < 60 && talentInfo->Row > 5)
+        if(level < 40 && talentInfo->Row > 5)
             continue;
 
-        if(level < 66 && talentInfo->Row > 6)
+        if(level < 45 && talentInfo->Row > 6)
             continue;
 
-        if(level < 71 && talentInfo->Row > 7)
+        if(level < 50 && talentInfo->Row > 7)
             continue;
 
-        if(level < 77 && talentInfo->Row > 8)
+        if(level < 55 && talentInfo->Row > 8)
             continue;
-
+        
         // learn highest rank of talent and learn all non-talent spell ranks (recursive by tree)
         learnSpellHighRank(spellid);
     }

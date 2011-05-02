@@ -63,6 +63,7 @@ void PlayerbotHunterAI::InitSpells(PlayerbotAI* const ai)
     VOLLEY                        = ai->initSpell(VOLLEY_1);
     BLACK_ARROW                   = ai->initSpell(BLACK_ARROW_1);
     KILL_SHOT                     = ai->initSpell(KILL_SHOT_1);
+    FEIGN_DEATH                   = ai->initSpell(FEIGN_DEATH_1, true);
 
     // MELEE
     RAPTOR_STRIKE                 = ai->initSpell(RAPTOR_STRIKE_1);
@@ -84,17 +85,12 @@ void PlayerbotHunterAI::InitSpells(PlayerbotAI* const ai)
     // BUFFS
     ASPECT_OF_THE_HAWK            = ai->initSpell(ASPECT_OF_THE_HAWK_1);
     ASPECT_OF_THE_MONKEY          = ai->initSpell(ASPECT_OF_THE_MONKEY_1);
+    ASPECT_OF_THE_VIPER           = ai->initSpell(ASPECT_OF_THE_VIPER_1, true);
+    ASPECT_OF_THE_DRAGONHAWK      = ai->initSpell(ASPECT_OF_THE_DRAGONHAWK_1, true);
     RAPID_FIRE                    = ai->initSpell(RAPID_FIRE_1);
-    TRUESHOT_AURA                 = ai->initSpell(TRUESHOT_AURA_1);
+    TRUESHOT_AURA                 = ai->initSpell(TRUESHOT_AURA_1, true);
 
     RECENTLY_BANDAGED             = 11196; // first aid check
-
-    ASPECT_OF_THE_VIPER           = ai->initSP(ASPECT_OF_THE_VIPER_1);
-    ASPECT_OF_THE_DRAGONHAWK      = ai->initSP(ASPECT_OF_THE_DRAGONHAWK_1);
-    MY_EXPLOSIVE_SHOT             = ai->initSP(EXPLOSIVE_SHOT_1);
-    MY_BLACK_ARROW                = ai->initSP(BLACK_ARROW_1);
-    MY_TRUESHOT_AURA              = ai->initSP(TRUESHOT_AURA_1);
-    FEIGN_DEATH                   = ai->initSP(FEIGN_DEATH_1);
 
     // racial
     ARCANE_TORRENT                = ai->initSpell(ARCANE_TORRENT_MANA_CLASSES);
@@ -167,9 +163,7 @@ void PlayerbotHunterAI::DoNextCombatManeuver(Unit *pTarget)
     {
         if (pTarget->getVictim() == m_bot)
         {
-            if (FROST_TRAP && ai->CastSpell(FROST_TRAP))
-                return;
-            else if (FEIGN_DEATH && !m_bot->HasAura(FEIGN_DEATH) && ai->CastSpell(FEIGN_DEATH))
+            if (FEIGN_DEATH && !m_bot->HasAura(FEIGN_DEATH) && ai->CastSpell(FEIGN_DEATH))
                 return;
         }
         else if (!m_bot->isMoving() && !m_bot->hasUnitState(UNIT_STAT_NO_FREE_MOVE) && !m_bot->hasUnitState(UNIT_STAT_CONTROLLED))
@@ -191,7 +185,7 @@ void PlayerbotHunterAI::DoNextCombatManeuver(Unit *pTarget)
 
             const TerrainInfo *map = m_bot->GetTerrain();
             m_bot->AttackStop();
-            m_bot->GetMotionMaster()->MovePoint(m_master->GetMapId(), xbt, ybt, map->GetHeight(xbt, ybt, zt+10.0f, true));
+            m_bot->GetMotionMaster()->MovePoint(m_master->GetMapId(), xbt, ybt, map->GetHeight(xbt, ybt, zt+1.0f, true));
             return;
         }
     }
@@ -215,7 +209,7 @@ void PlayerbotHunterAI::DoNextCombatManeuver(Unit *pTarget)
     if (!pTarget->HasAura(HUNTERS_MARK, EFFECT_INDEX_0) && ai->CastSpell(HUNTERS_MARK, pTarget))
         return;
 
-    static uint32 RangedSpell[] = {KILL_SHOT, RAPID_FIRE, SERPENT_STING, MY_BLACK_ARROW, ARCANE_SHOT, MY_EXPLOSIVE_SHOT, AIMED_SHOT, MULTI_SHOT, STEADY_SHOT, VOLLEY};
+    static uint32 RangedSpell[] = {KILL_SHOT, RAPID_FIRE, SERPENT_STING, BLACK_ARROW, ARCANE_SHOT, EXPLOSIVE_SHOT, AIMED_SHOT, MULTI_SHOT, STEADY_SHOT, VOLLEY};
     static uint32 MeleeSpell[] = {MONGOOSE_BITE, RAPTOR_STRIKE, IMMOLATION_TRAP, EXPLOSIVE_TRAP, VOLLEY};
     static uint32 eltRanged = sizeof(RangedSpell)/sizeof(uint32);
     static uint32 eltMelee = sizeof(MeleeSpell)/sizeof(uint32);
@@ -319,8 +313,8 @@ void PlayerbotHunterAI::DoNonCombatActions()
     if (!m_master)
         return;
 
-    if (!m_bot->HasAura(MY_TRUESHOT_AURA, EFFECT_INDEX_0))
-        ai->CastSpell(MY_TRUESHOT_AURA, m_bot);
+    if (!m_bot->HasAura(TRUESHOT_AURA, EFFECT_INDEX_0))
+        ai->CastSpell(TRUESHOT_AURA, m_bot);
 
     if (!m_bot->HasAura(ASPECT_OF_THE_VIPER, EFFECT_INDEX_0) && ai->GetManaPercent() < 90)
         ai->CastSpell(ASPECT_OF_THE_VIPER, m_bot);
