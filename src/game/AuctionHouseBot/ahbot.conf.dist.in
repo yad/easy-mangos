@@ -20,9 +20,6 @@ ConfVersion=2010102201
 #        Enable/Disable (disabled if 0) the part of AHBot that puts items up for auction on Neutral AH
 #    Default 100 (Enabled with 100% of items specified in AuctionHouse.Items.Amount.color section)
 #
-#    AuctionHouseBot.Alliance.Items.Amount.Ratio
-#        Enable/Disable (disabled if 0) the part of AHBot that puts items up for auction on Alliance AH
-#    Default 100 (Enabled with 100% of items specified in AuctionHouse.Items.Amount.color section)
 #    AuctionHouseBot.Buyer.Enabled
 #        Enable/Disable the part of AHBot that buys items from players
 #    Default 0 (disabled)
