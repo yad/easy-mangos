@@ -114,6 +114,8 @@ bool ConfusedMovementGenerator<T>::Update(T &unit, const uint32 &diff)
             unit.SendMonsterMoveByPath(pointPath, 1, pointPath.size(), flags, traveltime);
 
             PathNode p = pointPath[pointPath.size()-1];
+            // we do not really need it with mmaps active
+            unit.UpdateAllowedPositionZ(p.x, p.y, p.z);
             i_destinationHolder.SetDestination(traveller, p.x, p.y, p.z, false);
         }
     }

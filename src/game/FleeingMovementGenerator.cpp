@@ -58,6 +58,8 @@ void FleeingMovementGenerator<T>::_setTargetLocation(T &owner)
     owner.SendMonsterMoveByPath(pointPath, 1, pointPath.size(), flags, traveltime);
 
     PathNode p = pointPath[pointPath.size()-1];
+    owner.UpdateAllowedPositionZ(p.x, p.y, p.z);
+
     i_destinationHolder.SetDestination(traveller, p.x, p.y, p.z, false);
 
     i_nextCheckTime.Reset(traveltime + urand(800, 1500));
@@ -108,7 +110,7 @@ bool FleeingMovementGenerator<T>::_getPoint(T &owner, float &x, float &y, float 
     y = curr_y + dist*sin(angle);
     z = curr_z;
 
-    owner.UpdateAllowedPositionZ(x, y, curr_z);
+    owner.UpdateAllowedPositionZ(x, y, z);
     
     return true;
 }
