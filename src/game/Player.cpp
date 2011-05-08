@@ -7045,6 +7045,10 @@ void Player::UpdateZone(uint32 newZone, uint32 newArea)
         if (InstanceData* mapInstance = GetInstanceData())
             mapInstance->OnPlayerEnterZone(this, newZone, newArea);
 
+        // call this method in order to handle some scripted zones
+        if (InstanceData* mapInstance = GetInstanceData())
+            mapInstance->OnPlayerEnterZone(this, newZone);
+
         if (sWorld.getConfig(CONFIG_BOOL_WEATHER))
         {
             if(Weather *wth = sWorld.FindWeather(zone->ID))

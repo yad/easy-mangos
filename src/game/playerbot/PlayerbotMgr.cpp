@@ -268,26 +268,59 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
                     Player* const bot = itr->getSource();
 
                     if (bot->GetQuestStatus(quest) == QUEST_STATUS_COMPLETE)
-                    {
-                    }
-                    else if (!bot->CanTakeQuest(qInfo, false))
-                    {
-                    }
-                    else if (!bot->SatisfyQuestLog(false))
-                    {
-                    }
-                    else if (!bot->CanAddQuest(qInfo, false))
-                    {
-                    }
-                    else
-                    {
-                        p.rpos(0);         // reset reader
-                        bot->GetSession()->HandleQuestgiverAcceptQuestOpcode(p);
-                    }
+                        continue;
+
+                    if (!bot->CanTakeQuest(qInfo, false))
+                        continue;
+
+                    if (!bot->SatisfyQuestLog(false))
+                        continue;
+
+                    if (!bot->CanAddQuest(qInfo, false))
+                        continue;
+
+                    p.rpos(0);         // reset reader
+                    bot->GetSession()->HandleQuestgiverAcceptQuestOpcode(p);
                 }
             }
             return;
         }
+
+        case CMSG_AREATRIGGER:
+        {
+            WorldPacket p(packet);
+
+            for (GroupReference *itr = m_master->GetGroup()->GetFirstMember(); itr != NULL; itr = itr->next())
+            {
+                Player* const bot = itr->getSource();
+
+                p.rpos(0);         // reset reader
+                bot->GetSession()->HandleAreaTriggerOpcode(p);
+            }
+            return;
+        }
+
+        case CMSG_QUESTGIVER_COMPLETE_QUEST:
+        {
+            WorldPacket p(packet);
+            p.rpos(0);    // reset reader
+            uint32 quest;
+            ObjectGuid npcGUID;
+            p >> npcGUID >> quest;
+
+            WorldObject* pNpc = m_master->GetMap()->GetWorldObject(npcGUID);
+            if (!pNpc)
+                return;
+
+            // for all master's bots
+            for (GroupReference *itr = m_master->GetGroup()->GetFirstMember(); itr != NULL; itr = itr->next())
+            {
+                Player* const bot = itr->getSource();
+                bot->GetPlayerbotAI()->TurnInQuests(pNpc);
+            }
+            return;
+        }
+
         case CMSG_LOOT_ROLL:
         {
 
